@@ -100,13 +100,13 @@ int CppTextEmbedderClose(void* embedder, char** error_msg) {
 extern "C" {
 
 void* text_embedder_create(struct TextEmbedderOptions* options,
-                             char** error_msg) {
+                           char** error_msg) {
   return mediapipe::tasks::c::text::text_embedder::CppTextEmbedderCreate(
       *options, error_msg);
 }
 
 int text_embedder_embed(void* embedder, const char* utf8_str,
-                             TextEmbedderResult* result, char** error_msg) {
+                        TextEmbedderResult* result, char** error_msg) {
   return mediapipe::tasks::c::text::text_embedder::CppTextEmbedderEmbed(
       embedder, utf8_str, result, error_msg);
 }

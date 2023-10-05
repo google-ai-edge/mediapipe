@@ -70,10 +70,13 @@ void CppCloseEmbeddingResult(EmbeddingResult* in) {
 
     delete[] embedding_in.float_embedding;
     delete[] embedding_in.quantized_embedding;
+    embedding_in.float_embedding = nullptr;
+    embedding_in.quantized_embedding = nullptr;
 
     free(embedding_in.head_name);
   }
   delete[] in->embeddings;
+  in.head_name = nullptr;
 }
 
 }  // namespace mediapipe::tasks::c::components::containers

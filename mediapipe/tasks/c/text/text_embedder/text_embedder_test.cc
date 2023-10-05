@@ -44,8 +44,7 @@ TEST(TextEmbedderTest, SmokeTest) {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
                            /* model_asset_path= */ model_path.c_str()},
       /* embedder_options= */
-      {/* l2_normalize= */ false,
-       /* quantize= */ true},
+      {/* l2_normalize= */ false, /* quantize= */ true},
   };
 
   void* embedder = text_embedder_create(&options);

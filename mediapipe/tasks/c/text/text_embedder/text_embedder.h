@@ -36,22 +36,22 @@ struct TextEmbedderOptions {
   // file with metadata, accelerator options, op resolver, etc.
   struct BaseOptions base_options;
 
-  // Options for configuring the embedder behavior, such as score threshold,
-  // number of results, etc.
+  // Options for configuring the embedder behavior, such as l2_normalize
+  // and quantize.
   struct EmbedderOptions embedder_options;
 };
 
 // Creates a TextEmbedder from the provided `options`.
 // Returns a pointer to the text embedder on success.
 // If an error occurs, returns `nullptr` and sets the error parameter to an
-// an error message (if `error_msg` is not nullptr). You must free the memory
+// an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
 MP_EXPORT void* text_embedder_create(struct TextEmbedderOptions* options,
                                        char** error_msg = nullptr);
 
 // Performs embedding extraction on the input `text`. Returns `0` on success.
 // If an error occurs, returns an error code and sets the error parameter to an
-// an error message (if `error_msg` is not nullptr). You must free the memory
+// an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
 MP_EXPORT int text_embedder_embed(void* embedder, const char* utf8_str,
                                   TextEmbedderResult* result,
@@ -63,7 +63,7 @@ MP_EXPORT void text_embedder_close_result(TextEmbedderResult* result);
 
 // Shuts down the TextEmbedder when all the work is done. Frees all memory.
 // If an error occurs, returns an error code and sets the error parameter to an
-// an error message (if `error_msg` is not nullptr). You must free the memory
+// an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
 MP_EXPORT int text_embedder_close(void* embedder,
                                   char** error_msg = nullptr);

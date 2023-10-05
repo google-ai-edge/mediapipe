@@ -55,6 +55,9 @@ TEST(EmbeddingResultConverterTest, ConvertsEmbeddingResultCustomEmbedding) {
   EXPECT_NE(c_embedding_result.embeddings[0].float_embedding, nullptr);
   EXPECT_EQ(c_embedding_result.embeddings[0].values_count, 5);
   EXPECT_EQ(c_embedding_result.embeddings[0].head_index, 0);
+  EXPECT_NE(c_embedding_result.embeddings[1].quantized_embedding, nullptr);
+  EXPECT_EQ(c_embedding_result.embeddings[1].values_count, 5);
+  EXPECT_EQ(c_embedding_result.embeddings[1].head_index, 0);
   EXPECT_EQ(std::string(c_embedding_result.embeddings[0].head_name), "foo");
   EXPECT_EQ(c_embedding_result.timestamp_ms, 42);
   EXPECT_EQ(c_embedding_result.has_timestamp_ms, true);
