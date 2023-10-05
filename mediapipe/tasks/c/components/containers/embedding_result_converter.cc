@@ -36,25 +36,29 @@ void CppConvertToEmbeddingResult(
   for (uint32_t i = 0; i < out->embeddings_count; ++i) {
     auto embedding_in = in.embeddings[i];
     auto& embedding_out = out->embeddings[i];
-
+    // Handling float embeddings
     if (!embedding_in.float_embedding.empty()) {
       embedding_out.values_count = embedding_in.float_embedding.size();
-      embedding_out.float_embedding =
-          embedding_out.values_count ? new float[embedding_out.values_count]
-                                     : nullptr;
+      embedding_out.float_embedding = new float[embedding_out.values_count];
+
       std::copy(embedding_in.float_embedding.begin(),
                 embedding_in.float_embedding.end(),
                 embedding_out.float_embedding);
+
       embedding_out.quantized_embedding = nullptr;
-    } else if (!embedding_in.quantized_embedding.empty()) {
+
+    }
+    // Handling quantized embeddings
+    else if (!embedding_in.quantized_embedding.empty()) {
       embedding_out.values_count = embedding_in.quantized_embedding.size();
-      embedding_out.quantized_embedding =
-          embedding_out.values_count ? new char[embedding_out.values_count]
-                                     : nullptr;
+      embedding_out.quantized_embedding = new char[embedding_out.values_count];
+
       std::copy(embedding_in.quantized_embedding.begin(),
                 embedding_in.quantized_embedding.end(),
                 embedding_out.quantized_embedding);
+
       embedding_out.float_embedding = nullptr;
+
     }
 
     embedding_out.head_index = embedding_in.head_index;
@@ -76,7 +80,7 @@ void CppCloseEmbeddingResult(EmbeddingResult* in) {
     free(embedding_in.head_name);
   }
   delete[] in->embeddings;
-  in.head_name = nullptr;
+  in->embeddings = nullptr;
 }
 
 }  // namespace mediapipe::tasks::c::components::containers

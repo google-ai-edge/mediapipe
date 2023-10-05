@@ -29,12 +29,12 @@ extern "C" {
 // contain data, based on whether or not the embedder was configured to perform
 // scalar quantization.
 struct Embedding {
-  // Floating-point embedding. Empty/nullptr if the embedder was configured to perform
-  // scalar-quantization.
+  // Floating-point embedding. Empty/nullptr if the embedder was configured to
+  // perform scalar-quantization.
   float* float_embedding;
 
-  // Scalar-quantized embedding. Empty/nullptr if the embedder was not configured to
-  // perform scalar quantization.
+  // Scalar-quantized embedding. Empty/nullptr if the embedder was not
+  // configured to perform scalar quantization.
   char* quantized_embedding;
 
   // Keep the count of embedding values.
