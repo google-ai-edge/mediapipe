@@ -71,3 +71,30 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
+
+cc_library(
+    name = "embedding_result",
+    hdrs = ["embedding_result.h"],
+)
+
+cc_library(
+    name = "embedding_result_converter",
+    srcs = ["embedding_result_converter.cc"],
+    hdrs = ["embedding_result_converter.h"],
+    deps = [
+        ":embedding_result",
+        "//mediapipe/tasks/cc/components/containers:embedding_result",
+    ],
+)
+
+cc_test(
+    name = "embedding_result_converter_test",
+    srcs = ["embedding_result_converter_test.cc"],
+    deps = [
+        ":embedding_result",
+        ":embedding_result_converter",
+        "//mediapipe/framework/port:gtest",
+        "//mediapipe/tasks/cc/components/containers:embedding_result",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
