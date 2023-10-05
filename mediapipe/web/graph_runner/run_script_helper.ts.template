@@ -13,8 +13,8 @@ export async function runScript(scriptUrl: string) {
     importScripts(scriptUrl.toString());
   } else {
     const script = document.createElement('script');
-    script.setAttribute('src', scriptUrl);
-    script.setAttribute('crossorigin', 'anonymous');
+    (script as {src:string}).src = scriptUrl.toString();
+    script.crossOrigin = 'anonymous';
     return new Promise<void>((resolve, revoke) => {
       script.addEventListener('load', () => {
         resolve();
