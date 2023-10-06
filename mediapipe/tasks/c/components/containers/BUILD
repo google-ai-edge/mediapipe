@@ -98,3 +98,18 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
+
+cc_library(
+    name = "language_detection_result",
+    hdrs = ["language_detection_result.h"],
+)
+
+cc_library(
+    name = "language_detection_result_converter",
+    srcs = ["language_detection_result_converter.cc"],
+    hdrs = ["language_detection_result_converter.h"],
+    deps = [
+        ":language_detection_result",
+        "//mediapipe/tasks/cc/text/language_detector:language_detector",
+    ],
+)
