@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@bazel_skylib//lib:selects.bzl", "selects")
+load("@bazel_skylib//lib:selects.bzl", "selects")  # buildifier: disable=out-of-order-load
 load("//mediapipe/gpu:metal.bzl", "metal_library")
 load("@build_bazel_rules_apple//apple:ios.bzl", "ios_unit_test")
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
-load("//mediapipe/framework:mediapipe_cc_test.bzl", "mediapipe_cc_test")
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")  # buildifier: disable=out-of-order-load
+load("//mediapipe/framework:mediapipe_cc_test.bzl", "mediapipe_cc_test")  # buildifier: disable=out-of-order-load
 load("//mediapipe/framework:more_selects.bzl", "more_selects")
 
 licenses(["notice"])
