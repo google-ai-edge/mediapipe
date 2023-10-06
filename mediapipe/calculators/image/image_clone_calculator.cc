@@ -81,7 +81,8 @@ class ImageCloneCalculator : public Node {
   absl::Status Process(CalculatorContext* cc) override {
     std::unique_ptr<Image> output;
     const auto& input = *kIn(cc);
-    if (input.UsesGpu()) {
+    bool input_on_gpu = input.UsesGpu();
+    if (input_on_gpu) {
 #if !MEDIAPIPE_DISABLE_GPU
       // Create an output Image that co-owns the underlying texture buffer as
       // the input Image.
@@ -97,15 +98,15 @@ class ImageCloneCalculator : public Node {
       // Image. This ensures a correct life span of the shared pixel data.
       output = std::make_unique<Image>(std::make_unique<mediapipe::ImageFrame>(
           input.image_format(), input.width(), input.height(), input.step(),
-          const_cast<uint8*>(input.GetImageFrameSharedPtr()->PixelData()),
-          [packet_copy_ptr](uint8*) { delete packet_copy_ptr; }));
+          const_cast<uint8_t*>(input.GetImageFrameSharedPtr()->PixelData()),
+          [packet_copy_ptr](uint8_t*) { delete packet_copy_ptr; }));
     }
 
-    if (output_on_gpu_) {
+    if (output_on_gpu_ && !input_on_gpu) {
 #if !MEDIAPIPE_DISABLE_GPU
       gpu_helper_.RunInGlContext([&output]() { output->ConvertToGpu(); });
 #endif  // !MEDIAPIPE_DISABLE_GPU
-    } else {
+    } else if (!output_on_gpu_ && input_on_gpu) {
       output->ConvertToCpu();
     }
     kOut(cc).Send(std::move(output));

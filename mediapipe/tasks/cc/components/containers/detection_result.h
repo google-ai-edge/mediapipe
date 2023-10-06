@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ limitations under the License.
 
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/tasks/cc/components/containers/category.h"
+#include "mediapipe/tasks/cc/components/containers/keypoint.h"
 #include "mediapipe/tasks/cc/components/containers/rect.h"
 
 namespace mediapipe::tasks::components::containers {
@@ -32,6 +33,12 @@ struct Detection {
   std::vector<Category> categories;
   // The bounding box location.
   Rect bounding_box;
+  // Optional list of keypoints associated with the detection. Keypoints
+  // represent interesting points related to the detection. For example, the
+  // keypoints represent the eye, ear and mouth from face detection model. Or
+  // in the template matching detection, e.g. KNIFT, they can represent the
+  // feature points for template matching.
+  std::optional<std::vector<NormalizedKeypoint>> keypoints = std::nullopt;
 };
 
 // Detection results of a model.

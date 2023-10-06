@@ -19,7 +19,14 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface MPPClassifications (Helpers)
 
-+ (MPPClassifications *)classificationsWithProto:
+/** Creates a new `MPPClassifications` object from the given proto, head index and head name. */
++ (MPPClassifications *)classificationsWithClassificationListProto:
+                            (const ::mediapipe::ClassificationList &)proto
+                                                         headIndex:(NSInteger)headIndex
+                                                          headName:(NSString *)headName;
+
+/** Creates a new `MPPClassifications` object from the given classifications proto. */
++ (MPPClassifications *)classificationsWithClassificationsProto:
     (const mediapipe::tasks::components::containers::proto::Classifications &)classificationsProto;
 
 @end

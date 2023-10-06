@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -182,17 +182,18 @@ absl::StatusOr<ImageTensorSpecs> BuildInputImageTensorSpecs(
                                    "Only RGB color space is supported for now.",
                                    MediaPipeTasksStatus::kInvalidArgumentError);
   }
-  if (batch != 1 || depth != 3) {
+  if (batch != 1 || (depth != 3 && depth != 4)) {
     return CreateStatusWithPayload(
         StatusCode::kInvalidArgument,
         absl::StrCat("The input tensor should have dimensions 1 x height x "
-                     "width x 3. Got ",
+                     "width x depth, where depth = 3 or 4. Got ",
                      batch, " x ", height, " x ", width, " x ", depth, "."),
         MediaPipeTasksStatus::kInvalidInputTensorDimensionsError);
   }
 
-  size_t byte_depth =
-      tensor_type == tflite::TensorType_FLOAT32 ? sizeof(float) : sizeof(uint8);
+  size_t byte_depth = tensor_type == tflite::TensorType_FLOAT32
+                          ? sizeof(float)
+                          : sizeof(uint8_t);
   int bytes_size = byte_depth * batch * height * width * depth;
   // Sanity checks.
   if (tensor_type == tflite::TensorType_FLOAT32) {
@@ -234,6 +235,32 @@ absl::StatusOr<ImageTensorSpecs> BuildInputImageTensorSpecs(
   result.normalization_options = normalization_options;
 
   return result;
+}
+
+// Builds an ImageTensorSpecs for configuring the preprocessing calculators.
+absl::StatusOr<ImageTensorSpecs> BuildInputImageTensorSpecs(
+    const core::ModelResources& model_resources) {
+  const tflite::Model& model = *model_resources.GetTfLiteModel();
+  if (model.subgraphs()->size() != 1) {
+    return CreateStatusWithPayload(
+        absl::StatusCode::kInvalidArgument,
+        "Image tflite models are assumed to have a single subgraph.",
+        MediaPipeTasksStatus::kInvalidArgumentError);
+  }
+  const auto* primary_subgraph = (*model.subgraphs())[0];
+  if (primary_subgraph->inputs()->size() != 1) {
+    return CreateStatusWithPayload(
+        absl::StatusCode::kInvalidArgument,
+        "Image tflite models are assumed to have a single input.",
+        MediaPipeTasksStatus::kInvalidArgumentError);
+  }
+  const auto* input_tensor =
+      (*primary_subgraph->tensors())[(*primary_subgraph->inputs())[0]];
+  ASSIGN_OR_RETURN(const auto* image_tensor_metadata,
+                   vision::GetImageTensorMetadataIfAny(
+                       *model_resources.GetMetadataExtractor(), 0));
+  return vision::BuildInputImageTensorSpecs(*input_tensor,
+                                            image_tensor_metadata);
 }
 
 }  // namespace vision

@@ -234,6 +234,11 @@ absl::Status TFLiteGPURunner::InitializeOpenCL(
   MP_RETURN_IF_ERROR(
       cl::NewInferenceEnvironment(env_options, &cl_environment_, &properties));
 
+  if (serialized_model_.empty() &&
+      opencl_init_from_serialized_model_is_forced_) {
+    ASSIGN_OR_RETURN(serialized_model_, GetSerializedModel());
+  }
+
   // Try to initialize from serialized model first.
   if (!serialized_model_.empty()) {
     absl::Status init_status = InitializeOpenCLFromSerializedModel(builder);
@@ -270,7 +275,6 @@ absl::Status TFLiteGPURunner::InitializeOpenCLFromSerializedModel(
 }
 
 absl::StatusOr<std::vector<uint8_t>> TFLiteGPURunner::GetSerializedModel() {
-  RET_CHECK(runner_) << "Runner is in invalid state.";
   if (serialized_model_used_) {
     return serialized_model_;
   }

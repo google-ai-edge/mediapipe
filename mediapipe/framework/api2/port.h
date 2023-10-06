@@ -21,6 +21,7 @@
 #include <utility>
 
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "mediapipe/framework/api2/const_str.h"
 #include "mediapipe/framework/api2/packet.h"
 #include "mediapipe/framework/calculator_context.h"
@@ -36,6 +37,13 @@ namespace api2 {
 // directly by node code.
 class PortBase {
  public:
+  constexpr PortBase(absl::string_view tag, TypeId type_id, bool optional,
+                     bool multiple)
+      : tag_(tag.size(), tag.data()),
+        optional_(optional),
+        multiple_(multiple),
+        type_id_(type_id) {}
+
   constexpr PortBase(std::size_t tag_size, const char* tag, TypeId type_id,
                      bool optional, bool multiple)
       : tag_(tag_size, tag),
@@ -123,7 +131,7 @@ auto GetCollection(CC* cc, const SideOutputBase& port)
 }
 
 template <class Collection>
-auto GetOrNull(Collection& collection, const std::string& tag, int index)
+auto GetOrNull(Collection& collection, const absl::string_view& tag, int index)
     -> decltype(&collection.Get(std::declval<CollectionItemId>())) {
   CollectionItemId id = collection.GetId(tag, index);
   return id.IsValid() ? &collection.Get(id) : nullptr;
@@ -332,6 +340,9 @@ class PortCommon : public Base {
   using Multiple = PortCommon<Base, ValueT, IsOptionalV, true>;
   using SideFallback = SideFallbackT<Base, ValueT, IsOptionalV, IsMultipleV>;
 
+  explicit constexpr PortCommon(absl::string_view tag)
+      : Base(tag, kTypeId<ValueT>, IsOptionalV, IsMultipleV) {}
+
   template <std::size_t N>
   explicit constexpr PortCommon(const char (&tag)[N])
       : Base(N, tag, kTypeId<ValueT>, IsOptionalV, IsMultipleV) {}
@@ -456,6 +467,11 @@ class SideFallbackT : public Base {
 // CalculatorContext (e.g. kOut(cc)), and provides a type-safe interface to
 // OutputStreamShard. Like that class, this class will not be usually named in
 // calculator code, but used as a temporary object (e.g. kOut(cc).Send(...)).
+//
+// If not connected (!IsConnected()) SetNextTimestampBound is safe to call and
+// does nothing.
+// All the sub-classes that define Send should implement it to be safe to to
+// call if not connected and do nothing in such case.
 class OutputShardAccessBase {
  public:
   OutputShardAccessBase(const CalculatorContext& cc, OutputStreamShard* output)

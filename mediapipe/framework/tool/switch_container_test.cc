@@ -144,7 +144,7 @@ void RunTestContainer(CalculatorGraphConfig supergraph,
 
   if (!send_bounds) {
     // Send enable == true signal at 5000 us.
-    const int64 enable_ts = 5000;
+    const int64_t enable_ts = 5000;
     MP_EXPECT_OK(graph.AddPacketToInputStream(
         "enable", MakePacket<bool>(true).At(Timestamp(enable_ts))));
     MP_ASSERT_OK(graph.WaitUntilIdle());
@@ -152,7 +152,7 @@ void RunTestContainer(CalculatorGraphConfig supergraph,
 
   const int packet_count = 10;
   // Send int value packets at {10K, 20K, 30K, ..., 100K}.
-  for (uint64 t = 1; t <= packet_count; ++t) {
+  for (uint64_t t = 1; t <= packet_count; ++t) {
     if (send_bounds) {
       MP_EXPECT_OK(graph.AddPacketToInputStream(
           "enable", MakePacket<bool>(true).At(Timestamp(t * 10000))));
@@ -180,7 +180,7 @@ void RunTestContainer(CalculatorGraphConfig supergraph,
   }
 
   // Send int value packets at {110K, 120K, ..., 200K}.
-  for (uint64 t = 11; t <= packet_count * 2; ++t) {
+  for (uint64_t t = 11; t <= packet_count * 2; ++t) {
     if (send_bounds) {
       MP_EXPECT_OK(graph.AddPacketToInputStream(
           "enable", MakePacket<bool>(false).At(Timestamp(t * 10000))));

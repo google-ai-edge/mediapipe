@@ -1,0 +1,53 @@
+/* Copyright 2023 The MediaPipe Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+==============================================================================*/
+
+syntax = "proto2";
+
+package mediapipe.tasks.vision.face_landmarker.proto;
+
+import "mediapipe/framework/calculator.proto";
+import "mediapipe/framework/calculator_options.proto";
+import "mediapipe/tasks/cc/core/proto/base_options.proto";
+import "mediapipe/tasks/cc/vision/face_detector/proto/face_detector_graph_options.proto";
+import "mediapipe/tasks/cc/vision/face_geometry/proto/face_geometry_graph_options.proto";
+import "mediapipe/tasks/cc/vision/face_landmarker/proto/face_landmarks_detector_graph_options.proto";
+
+option java_package = "com.google.mediapipe.tasks.vision.facelandmarker.proto";
+option java_outer_classname = "FaceLandmarkerGraphOptionsProto";
+
+message FaceLandmarkerGraphOptions {
+  extend mediapipe.CalculatorOptions {
+    optional FaceLandmarkerGraphOptions ext = 508968150;
+  }
+  // Base options for configuring Task library, such as specifying the TfLite
+  // model file with metadata, accelerator options, etc.
+  optional core.proto.BaseOptions base_options = 1;
+
+  // Options for face detector graph.
+  optional face_detector.proto.FaceDetectorGraphOptions
+      face_detector_graph_options = 2;
+
+  // Options for face landmarks detector graph.
+  optional FaceLandmarksDetectorGraphOptions
+      face_landmarks_detector_graph_options = 3;
+
+  // Minimum confidence for face landmarks tracking to be considered
+  // successfully.
+  optional float min_tracking_confidence = 4 [default = 0.5];
+
+  // Options for FaceGeometryGraph to get facial transformation matrix.
+  optional face_geometry.proto.FaceGeometryGraphOptions
+      face_geometry_graph_options = 5;
+}

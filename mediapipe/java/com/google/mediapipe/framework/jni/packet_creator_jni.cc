@@ -132,7 +132,8 @@ CreateImageFrameFromByteBuffer(JNIEnv* env, jobject byte_buffer, jint width,
   // code might expect to be able to overwrite the buffer after creating an
   // ImageFrame from it.
   image_frame->CopyPixelData(
-      format, width, height, width_step, static_cast<const uint8*>(buffer_data),
+      format, width, height, width_step,
+      static_cast<const uint8_t*>(buffer_data),
       mediapipe::ImageFrame::kGlDefaultAlignmentBoundary);
 
   return image_frame;

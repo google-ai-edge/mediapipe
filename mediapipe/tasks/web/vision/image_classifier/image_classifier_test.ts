@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2022 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,6 +66,10 @@ describe('ImageClassifier', () => {
         {baseOptions: {modelAssetBuffer: new Uint8Array([])}});
   });
 
+  afterEach(() => {
+    imageClassifier.close();
+  });
+
   it('initializes graph', async () => {
     verifyGraph(imageClassifier);
     verifyListenersRegistered(imageClassifier);
@@ -117,12 +121,12 @@ describe('ImageClassifier', () => {
     classifcations.setHeadIndex(1);
     classifcations.setHeadName('headName');
     const classificationList = new ClassificationList();
-    const clasification = new Classification();
-    clasification.setIndex(1);
-    clasification.setScore(0.2);
-    clasification.setDisplayName('displayName');
-    clasification.setLabel('categoryName');
-    classificationList.addClassification(clasification);
+    const classification = new Classification();
+    classification.setIndex(1);
+    classification.setScore(0.2);
+    classification.setDisplayName('displayName');
+    classification.setLabel('categoryName');
+    classificationList.addClassification(classification);
     classifcations.setClassificationList(classificationList);
     classificationResult.addClassifications(classifcations);
 

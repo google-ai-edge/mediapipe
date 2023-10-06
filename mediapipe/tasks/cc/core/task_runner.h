@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -65,7 +65,7 @@ class TaskRunner {
   // Creates the task runner with a CalculatorGraphConfig proto.
   // If a tflite op resolver object is provided, the task runner will take
   // it as the global op resolver for all models running within this task.
-  // The op resolver's owernship will be transferred into the pipeleine runner.
+  // The op resolver's ownership will be transferred into the pipeleine runner.
   // When a user-defined PacketsCallback is provided, clients must use the
   // asynchronous method, Send(), to provide the input packets. If the packets
   // callback is absent, clients must use the synchronous method, Process(), to
@@ -84,7 +84,7 @@ class TaskRunner {
   // frames from a video file and an audio file. The call blocks the current
   // thread until a failure status or a successful result is returned.
   // If the input packets have no timestamp, an internal timestamp will be
-  // assigend per invocation. Otherwise, when the timestamp is set in the
+  // assigned per invocation. Otherwise, when the timestamp is set in the
   // input packets, the caller must ensure that the input packet timestamps are
   // greater than the timestamps of the previous invocation. This method is
   // thread-unsafe and it is the caller's responsibility to synchronize access

@@ -24,7 +24,7 @@
 
 namespace mediapipe {
 
-typedef FilterCollectionCalculator<std::vector<uint64>>
+typedef FilterCollectionCalculator<std::vector<uint64_t>>
     FilterUInt64CollectionCalculator;
 REGISTER_CALCULATOR(FilterUInt64CollectionCalculator);
 

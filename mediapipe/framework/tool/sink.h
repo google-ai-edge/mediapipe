@@ -62,9 +62,9 @@ namespace tool {
 // Example usage:
 //   CalculatorGraphConfig config = tool::ParseGraphFromFileOrDie("config.txt");
 //   std::vector<Packet> packet_dump;
-//   tool::AddVectorSink("output_samples", &config, &packet_dump,
-//                       /*use_std_function=*/true);
-//   // Call tool::AddVectorSink() more times if you wish.
+//   tool::AddVectorSink("output_samples", &config, &packet_dump);
+//   // Call tool::AddVectorSink() more times if you wish. Note that each stream
+//   // needs to get its own packet vector.
 //   CalculatorGraph graph;
 //   CHECK_OK(graph.Initialize(config));
 //   // Set other input side packets.

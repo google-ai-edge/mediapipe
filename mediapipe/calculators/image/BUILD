@@ -135,7 +135,6 @@ cc_library(
     deps = [
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:image_frame_opencv",
-        "//mediapipe/framework/port:opencv_imgcodecs",
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:status",
     ],
@@ -147,36 +146,9 @@ cc_library(
     srcs = ["set_alpha_calculator.cc"],
     deps = [
         ":set_alpha_calculator_cc_proto",
-        "//mediapipe/framework/formats:image_format_cc_proto",
-        "//mediapipe/framework:calculator_options_cc_proto",
         "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework/formats:image_frame",
-        "//mediapipe/framework/formats:image_frame_opencv",
-        "//mediapipe/framework/port:logging",
-        "//mediapipe/framework/port:opencv_core",
-        "//mediapipe/framework/port:status",
-        "//mediapipe/framework/port:vector",
-    ] + select({
-        "//mediapipe/gpu:disable_gpu": [],
-        "//conditions:default": [
-            "//mediapipe/gpu:gl_calculator_helper",
-            "//mediapipe/gpu:gl_simple_shaders",
-            "//mediapipe/gpu:gl_quad_renderer",
-            "//mediapipe/gpu:shader_util",
-        ],
-    }),
-    alwayslink = 1,
-)
-
-cc_library(
-    name = "bilateral_filter_calculator",
-    srcs = ["bilateral_filter_calculator.cc"],
-    deps = [
-        ":bilateral_filter_calculator_cc_proto",
-        "//mediapipe/framework/formats:image_format_cc_proto",
         "//mediapipe/framework:calculator_options_cc_proto",
-        "@com_google_absl//absl/strings",
-        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:image_format_cc_proto",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:image_frame_opencv",
         "//mediapipe/framework/port:logging",
@@ -188,8 +160,55 @@ cc_library(
         "//mediapipe/gpu:disable_gpu": [],
         "//conditions:default": [
             "//mediapipe/gpu:gl_calculator_helper",
-            "//mediapipe/gpu:gl_simple_shaders",
             "//mediapipe/gpu:gl_quad_renderer",
+            "//mediapipe/gpu:gl_simple_shaders",
+            "//mediapipe/gpu:shader_util",
+        ],
+    }),
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "set_alpha_calculator_test",
+    srcs = ["set_alpha_calculator_test.cc"],
+    deps = [
+        ":set_alpha_calculator",
+        ":set_alpha_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:opencv_core",
+        "//mediapipe/framework/port:opencv_imgproc",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "bilateral_filter_calculator",
+    srcs = ["bilateral_filter_calculator.cc"],
+    deps = [
+        ":bilateral_filter_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_options_cc_proto",
+        "//mediapipe/framework/formats:image_format_cc_proto",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:opencv_core",
+        "//mediapipe/framework/port:opencv_imgproc",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/port:vector",
+        "@com_google_absl//absl/strings",
+    ] + select({
+        "//mediapipe/gpu:disable_gpu": [],
+        "//conditions:default": [
+            "//mediapipe/gpu:gl_calculator_helper",
+            "//mediapipe/gpu:gl_quad_renderer",
+            "//mediapipe/gpu:gl_simple_shaders",
             "//mediapipe/gpu:shader_util",
         ],
     }),
@@ -229,12 +248,11 @@ cc_library(
         "//conditions:default": [],
     }),
     deps = [
-        ":rotation_mode_cc_proto",
         ":image_transformation_calculator_cc_proto",
+        ":rotation_mode_cc_proto",
+        "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:packet",
         "//mediapipe/framework:timestamp",
-        "//mediapipe/gpu:scale_mode_cc_proto",
-        "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:image_frame_opencv",
         "//mediapipe/framework/formats:video_stream_header",
@@ -242,12 +260,13 @@ cc_library(
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "//mediapipe/gpu:scale_mode_cc_proto",
     ] + select({
         "//mediapipe/gpu:disable_gpu": [],
         "//conditions:default": [
             "//mediapipe/gpu:gl_calculator_helper",
-            "//mediapipe/gpu:gl_simple_shaders",
             "//mediapipe/gpu:gl_quad_renderer",
+            "//mediapipe/gpu:gl_simple_shaders",
             "//mediapipe/gpu:shader_util",
         ],
     }),
@@ -273,10 +292,10 @@ cc_library(
     }),
     deps = [
         ":image_cropping_calculator_cc_proto",
-        "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:ret_check",
@@ -285,8 +304,8 @@ cc_library(
         "//mediapipe/gpu:disable_gpu": [],
         "//conditions:default": [
             "//mediapipe/gpu:gl_calculator_helper",
-            "//mediapipe/gpu:gl_simple_shaders",
             "//mediapipe/gpu:gl_quad_renderer",
+            "//mediapipe/gpu:gl_simple_shaders",
             "//mediapipe/gpu:gpu_buffer",
             "//mediapipe/gpu:shader_util",
         ],
@@ -297,16 +316,23 @@ cc_library(
 cc_test(
     name = "image_cropping_calculator_test",
     srcs = ["image_cropping_calculator_test.cc"],
+    tags = ["not_run:arm"],
     deps = [
         ":image_cropping_calculator",
         ":image_cropping_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/formats:image_frame_opencv",
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:opencv_core",
+        "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/tool:tag_map",
         "//mediapipe/framework/tool:tag_map_helper",
+        "//mediapipe/gpu:gpu_buffer_to_image_frame_calculator",
+        "//mediapipe/gpu:image_frame_to_gpu_buffer_calculator",
     ],
 )
 
@@ -341,20 +367,20 @@ cc_library(
     srcs = ["recolor_calculator.cc"],
     deps = [
         ":recolor_calculator_cc_proto",
-        "//mediapipe/util:color_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:image_frame_opencv",
-        "//mediapipe/framework/port:status",
-        "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:opencv_imgproc",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/util:color_cc_proto",
     ] + select({
         "//mediapipe/gpu:disable_gpu": [],
         "//conditions:default": [
             "//mediapipe/gpu:gl_calculator_helper",
-            "//mediapipe/gpu:gl_simple_shaders",
             "//mediapipe/gpu:gl_quad_renderer",
+            "//mediapipe/gpu:gl_simple_shaders",
             "//mediapipe/gpu:shader_util",
         ],
     }),
@@ -414,8 +440,8 @@ cc_library(
     srcs = ["image_clone_calculator.cc"],
     deps = [
         ":image_clone_calculator_cc_proto",
-        "//mediapipe/framework/api2:node",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
@@ -432,8 +458,8 @@ cc_library(
     name = "image_properties_calculator",
     srcs = ["image_properties_calculator.cc"],
     deps = [
-        "//mediapipe/framework/api2:node",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/port:ret_check",
@@ -594,11 +620,11 @@ cc_library(
     srcs = ["segmentation_smoothing_calculator.cc"],
     deps = [
         ":segmentation_smoothing_calculator_cc_proto",
-        "//mediapipe/framework/formats:image_format_cc_proto",
-        "//mediapipe/framework:calculator_options_cc_proto",
         "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework:calculator_options_cc_proto",
         "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:image_format_cc_proto",
+        "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:vector",
@@ -606,8 +632,8 @@ cc_library(
         "//mediapipe/gpu:disable_gpu": [],
         "//conditions:default": [
             "//mediapipe/gpu:gl_calculator_helper",
-            "//mediapipe/gpu:gl_simple_shaders",
             "//mediapipe/gpu:gl_quad_renderer",
+            "//mediapipe/gpu:gl_simple_shaders",
             "//mediapipe/gpu:shader_util",
         ],
     }) + select({
@@ -624,6 +650,7 @@ cc_library(
 cc_test(
     name = "segmentation_smoothing_calculator_test",
     srcs = ["segmentation_smoothing_calculator_test.cc"],
+    tags = ["not_run:arm"],
     deps = [
         ":image_clone_calculator",
         ":image_clone_calculator_cc_proto",
@@ -702,8 +729,6 @@ cc_library(
     deps = [
         ":affine_transformation",
         ":warp_affine_calculator_cc_proto",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:statusor",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/api2:port",
@@ -711,12 +736,14 @@ cc_library(
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
     ] + select({
         "//mediapipe/gpu:disable_gpu": [],
         "//conditions:default": [
+            ":affine_transformation_runner_gl",
             "//mediapipe/gpu:gl_calculator_helper",
             "//mediapipe/gpu:gpu_buffer",
-            ":affine_transformation_runner_gl",
         ],
     }) + select({
         "//mediapipe/framework/port:disable_opencv": [],
@@ -742,9 +769,13 @@ cc_test(
         "//mediapipe/calculators/tensor:testdata/image_to_tensor/medium_sub_rect_keep_aspect_with_rotation_border_zero.png",
         "//mediapipe/calculators/tensor:testdata/image_to_tensor/medium_sub_rect_with_rotation.png",
         "//mediapipe/calculators/tensor:testdata/image_to_tensor/medium_sub_rect_with_rotation_border_zero.png",
+        "//mediapipe/calculators/tensor:testdata/image_to_tensor/medium_sub_rect_with_rotation_border_zero_interp_cubic.png",
         "//mediapipe/calculators/tensor:testdata/image_to_tensor/noop_except_range.png",
     ],
-    tags = ["desktop_only_test"],
+    tags = [
+        "desktop_only_test",
+        "not_run:arm",
+    ],
     deps = [
         ":affine_transformation",
         ":image_transformation_calculator",

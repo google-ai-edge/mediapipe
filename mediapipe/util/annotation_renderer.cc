@@ -22,6 +22,7 @@
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/vector.h"
 #include "mediapipe/util/color.pb.h"
+#include "mediapipe/util/render_data.pb.h"
 
 namespace mediapipe {
 namespace {
@@ -56,8 +57,8 @@ bool NormalizedtoPixelCoordinates(double normalized_x, double normalized_y,
     VLOG(1) << "Normalized coordinates must be between 0.0 and 1.0";
   }
 
-  *x_px = static_cast<int32>(round(normalized_x * image_width));
-  *y_px = static_cast<int32>(round(normalized_y * image_height));
+  *x_px = static_cast<int32_t>(round(normalized_x * image_width));
+  *y_px = static_cast<int32_t>(round(normalized_y * image_height));
 
   return true;
 }
@@ -112,6 +113,8 @@ void AnnotationRenderer::RenderDataOnImage(const RenderData& render_data) {
       DrawGradientLine(annotation);
     } else if (annotation.data_case() == RenderAnnotation::kArrow) {
       DrawArrow(annotation);
+    } else if (annotation.data_case() == RenderAnnotation::kScribble) {
+      DrawScribble(annotation);
     } else {
       LOG(FATAL) << "Unknown annotation type: " << annotation.data_case();
     }
@@ -442,7 +445,11 @@ void AnnotationRenderer::DrawArrow(const RenderAnnotation& annotation) {
 }
 
 void AnnotationRenderer::DrawPoint(const RenderAnnotation& annotation) {
-  const auto& point = annotation.point();
+  DrawPoint(annotation.point(), annotation);
+}
+
+void AnnotationRenderer::DrawPoint(const RenderAnnotation::Point& point,
+                                   const RenderAnnotation& annotation) {
   int x = -1;
   int y = -1;
   if (point.normalized()) {
@@ -458,6 +465,12 @@ void AnnotationRenderer::DrawPoint(const RenderAnnotation& annotation) {
   const int thickness =
       ClampThickness(round(annotation.thickness() * scale_factor_));
   cv::circle(mat_image_, point_to_draw, thickness, color, -1);
+}
+
+void AnnotationRenderer::DrawScribble(const RenderAnnotation& annotation) {
+  for (const RenderAnnotation::Point& point : annotation.scribble().point()) {
+    DrawPoint(point, annotation);
+  }
 }
 
 void AnnotationRenderer::DrawLine(const RenderAnnotation& annotation) {

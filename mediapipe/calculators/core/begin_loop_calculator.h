@@ -15,47 +15,57 @@
 #ifndef MEDIAPIPE_CALCULATORS_CORE_BEGIN_LOOP_CALCULATOR_H_
 #define MEDIAPIPE_CALCULATORS_CORE_BEGIN_LOOP_CALCULATOR_H_
 
-#include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_contract.h"
 #include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/collection_item_id.h"
 #include "mediapipe/framework/packet.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
 
 // Calculator for implementing loops on iterable collections inside a MediaPipe
-// graph.
+// graph. Assume InputIterT is an iterable for type InputT, and OutputIterT is
+// an iterable for type OutputT, e.g. vector<InputT> and vector<OutputT>.
+// First, instantiate specializations in the loop calculators' implementations
+// if missing:
+//   BeginLoopInputTCalculator = BeginLoopCalculator<InputIterT>
+//   EndLoopOutputTCalculator = EndLoopCalculator<OutputIterT>
+// Then, the following graph transforms an item of type InputIterT to an
+// OutputIterT by applying InputToOutputConverter to every element:
 //
-// It is designed to be used like:
-//
-// node {
-//   calculator:    "BeginLoopWithIterableCalculator"
-//   input_stream:  "ITERABLE:input_iterable"      # IterableT @ext_ts
-//   output_stream: "ITEM:input_element"           # ItemT     @loop_internal_ts
-//   output_stream: "BATCH_END:ext_ts"             # Timestamp @loop_internal_ts
+// node {                                        # Type        @timestamp
+//   calculator:    "BeginLoopInputTCalculator"
+//   input_stream:  "ITERABLE:input_iterable"    # InputIterT  @iterable_ts
+//   input_stream:  "CLONE:extra_input"          # ExtraT      @extra_ts
+//   output_stream: "ITEM:input_iterator"        # InputT      @loop_internal_ts
+//   output_stream: "CLONE:cloned_extra_input"   # ExtraT      @loop_internal_ts
+//   output_stream: "BATCH_END:iterable_ts"      # Timestamp   @loop_internal_ts
 // }
 //
 // node {
-//   calculator:    "ElementToBlaConverterSubgraph"
-//   input_stream:  "ITEM:input_to_loop_body"      # ItemT     @loop_internal_ts
-//   output_stream: "BLA:output_of_loop_body"      # ItemU     @loop_internal_ts
+//   calculator:    "InputToOutputConverter"
+//   input_stream:  "INPUT:input_iterator"       # InputT      @loop_internal_ts
+//   input_stream:  "EXTRA:cloned_extra_input"   # ExtraT      @loop_internal_ts
+//   output_stream: "OUTPUT:output_iterator"     # OutputT     @loop_internal_ts
 // }
 //
 // node {
-//   calculator:    "EndLoopWithOutputCalculator"
-//   input_stream:  "ITEM:output_of_loop_body"     # ItemU     @loop_internal_ts
-//   input_stream:  "BATCH_END:ext_ts"             # Timestamp @loop_internal_ts
-//   output_stream: "OUTPUT:aggregated_result"     # IterableU @ext_ts
+//   calculator:    "EndLoopOutputTCalculator"
+//   input_stream:  "ITEM:output_iterator"       # OutputT     @loop_internal_ts
+//   input_stream:  "BATCH_END:iterable_ts"      # Timestamp   @loop_internal_ts
+//   output_stream: "ITERABLE:output_iterable"   # OutputIterT @iterable_ts
 // }
+//
+// The resulting 'output_iterable' has the same timestamp as 'input_iterable'.
+// The output packets of this calculator are part of the loop body and have
+// loop-internal timestamps that are unrelated to the input iterator timestamp.
 //
 // Input streams tagged with "CLONE" are cloned to the corresponding output
-// streams at loop timestamps. This ensures that a MediaPipe graph or sub-graph
-// can run multiple times, once per element in the "ITERABLE" for each pakcet
-// clone of the packets in the "CLONE" input streams.
+// streams at loop-internal timestamps. This ensures that a MediaPipe graph or
+// sub-graph can run multiple times, once per element in the "ITERABLE" for each
+// packet clone of the packets in the "CLONE" input streams. Think of CLONEd
+// inputs as loop-wide constants.
 template <typename IterableT>
 class BeginLoopCalculator : public CalculatorBase {
   using ItemT = typename IterableT::value_type;
@@ -112,13 +122,38 @@ class BeginLoopCalculator : public CalculatorBase {
   absl::Status Process(CalculatorContext* cc) final {
     Timestamp last_timestamp = loop_internal_timestamp_;
     if (!cc->Inputs().Tag("ITERABLE").IsEmpty()) {
-      const IterableT& collection =
-          cc->Inputs().Tag("ITERABLE").template Get<IterableT>();
-      for (const auto& item : collection) {
-        cc->Outputs().Tag("ITEM").AddPacket(
-            MakePacket<ItemT>(item).At(loop_internal_timestamp_));
-        ForwardClonePackets(cc, loop_internal_timestamp_);
-        ++loop_internal_timestamp_;
+      // Try to consume the ITERABLE packet if possible to obtain the ownership
+      // and emit the item packets by moving them.
+      // If the ITERABLE packet is not consumable, then try to copy each item
+      // instead. If the ITEM type is not copy constructible, an error will be
+      // returned.
+      auto iterable_ptr_or =
+          cc->Inputs().Tag("ITERABLE").Value().Consume<IterableT>();
+      if (iterable_ptr_or.ok()) {
+        for (auto& item : *iterable_ptr_or.value()) {
+          Packet item_packet = MakePacket<ItemT>(std::move(item));
+          cc->Outputs().Tag("ITEM").AddPacket(
+              item_packet.At(loop_internal_timestamp_));
+          ForwardClonePackets(cc, loop_internal_timestamp_);
+          ++loop_internal_timestamp_;
+        }
+      } else {
+        if constexpr (std::is_copy_constructible<ItemT>()) {
+          const IterableT& collection =
+              cc->Inputs().Tag("ITERABLE").template Get<IterableT>();
+          for (const auto& item : collection) {
+            cc->Outputs().Tag("ITEM").AddPacket(
+                MakePacket<ItemT>(item).At(loop_internal_timestamp_));
+            ForwardClonePackets(cc, loop_internal_timestamp_);
+            ++loop_internal_timestamp_;
+          }
+        } else {
+          return absl::InternalError(
+              "The element type is not copiable. Consider making the "
+              "BeginLoopCalculator the sole owner of the input packet so that "
+              "the "
+              "items can be consumed and moved.");
+        }
       }
     }
 
@@ -138,7 +173,6 @@ class BeginLoopCalculator : public CalculatorBase {
         .Tag("BATCH_END")
         .AddPacket(MakePacket<Timestamp>(cc->InputTimestamp())
                        .At(Timestamp(loop_internal_timestamp_ - 1)));
-
     return absl::OkStatus();
   }
 

@@ -18,7 +18,7 @@
 
 namespace {
 // Reflect an integer against the lower and upper bound of an interval.
-int64 ReflectBetween(int64 ts, int64 ts_min, int64 ts_max) {
+int64_t ReflectBetween(int64_t ts, int64_t ts_min, int64_t ts_max) {
   if (ts < ts_min) return 2 * ts_min - ts - 1;
   if (ts >= ts_max) return 2 * ts_max - ts - 1;
   return ts;
@@ -47,7 +47,7 @@ constexpr char kOptionsTag[] = "OPTIONS";
 // Returns a TimestampDiff (assuming microseconds) corresponding to the
 // given time in seconds.
 TimestampDiff TimestampDiffFromSeconds(double seconds) {
-  return TimestampDiff(MathUtil::SafeRound<int64, double>(
+  return TimestampDiff(MathUtil::SafeRound<int64_t, double>(
       seconds * Timestamp::kTimestampUnitsPerSecond));
 }
 }  // namespace
@@ -117,8 +117,8 @@ absl::Status PacketResamplerCalculator::Open(CalculatorContext* cc) {
       << "The output frame rate must be smaller than "
       << Timestamp::kTimestampUnitsPerSecond;
 
-  frame_time_usec_ = static_cast<int64>(1000000.0 / frame_rate_);
-  jitter_usec_ = static_cast<int64>(1000000.0 * jitter_ / frame_rate_);
+  frame_time_usec_ = static_cast<int64_t>(1000000.0 / frame_rate_);
+  jitter_usec_ = static_cast<int64_t>(1000000.0 * jitter_ / frame_rate_);
   RET_CHECK_LE(jitter_usec_, frame_time_usec_);
 
   video_header_.frame_rate = frame_rate_;
@@ -198,17 +198,18 @@ PacketResamplerCalculator::GetSamplingStrategy(
   return absl::make_unique<JitterWithoutReflectionStrategy>(this);
 }
 
-Timestamp PacketResamplerCalculator::PeriodIndexToTimestamp(int64 index) const {
+Timestamp PacketResamplerCalculator::PeriodIndexToTimestamp(
+    int64_t index) const {
   CHECK_EQ(jitter_, 0.0);
   CHECK_NE(first_timestamp_, Timestamp::Unset());
   return first_timestamp_ + TimestampDiffFromSeconds(index / frame_rate_);
 }
 
-int64 PacketResamplerCalculator::TimestampToPeriodIndex(
+int64_t PacketResamplerCalculator::TimestampToPeriodIndex(
     Timestamp timestamp) const {
   CHECK_EQ(jitter_, 0.0);
   CHECK_NE(first_timestamp_, Timestamp::Unset());
-  return MathUtil::SafeRound<int64, double>(
+  return MathUtil::SafeRound<int64_t, double>(
       (timestamp - first_timestamp_).Seconds() * frame_rate_);
 }
 
@@ -289,11 +290,11 @@ absl::Status LegacyJitterWithReflectionStrategy::Process(
   }
 
   while (true) {
-    const int64 last_diff =
+    const int64_t last_diff =
         (next_output_timestamp_ - calculator_->last_packet_.Timestamp())
             .Value();
     RET_CHECK_GT(last_diff, 0);
-    const int64 curr_diff =
+    const int64_t curr_diff =
         (next_output_timestamp_ - cc->InputTimestamp()).Value();
     if (curr_diff > 0) {
       break;
@@ -559,11 +560,11 @@ absl::Status JitterWithoutReflectionStrategy::Process(CalculatorContext* cc) {
   }
 
   while (true) {
-    const int64 last_diff =
+    const int64_t last_diff =
         (next_output_timestamp_ - calculator_->last_packet_.Timestamp())
             .Value();
     RET_CHECK_GT(last_diff, 0);
-    const int64 curr_diff =
+    const int64_t curr_diff =
         (next_output_timestamp_ - cc->InputTimestamp()).Value();
     if (curr_diff > 0) {
       break;
@@ -631,7 +632,7 @@ absl::Status NoJitterStrategy::Process(CalculatorContext* cc) {
     } else {
       // Initialize first_timestamp_ with the first packet timestamp
       // aligned to the base_timestamp_.
-      int64 first_index = MathUtil::SafeRound<int64, double>(
+      int64_t first_index = MathUtil::SafeRound<int64_t, double>(
           (cc->InputTimestamp() - base_timestamp_).Seconds() *
           calculator_->frame_rate_);
       calculator_->first_timestamp_ =
@@ -646,7 +647,7 @@ absl::Status NoJitterStrategy::Process(CalculatorContext* cc) {
     }
   }
   const Timestamp received_timestamp = cc->InputTimestamp();
-  const int64 received_timestamp_idx =
+  const int64_t received_timestamp_idx =
       calculator_->TimestampToPeriodIndex(received_timestamp);
   // Only consider the received packet if it belongs to the current period
   // (== period_count_) or to a newer one (> period_count_).

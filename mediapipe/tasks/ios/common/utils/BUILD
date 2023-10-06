@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ objc_library(
         "//mediapipe/tasks/cc:common",
         "//mediapipe/tasks/ios/common:MPPCommon",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:cord",
     ],
 )

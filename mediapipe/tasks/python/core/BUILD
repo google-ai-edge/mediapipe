@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,11 +29,13 @@ py_library(
     name = "base_options",
     srcs = ["base_options.py"],
     visibility = [
-        "//mediapipe/model_maker/python/vision/gesture_recognizer:__subpackages__",
+        "//mediapipe/model_maker:__subpackages__",
         "//mediapipe/tasks:users",
     ],
     deps = [
         ":optional_dependencies",
+        "//mediapipe/calculators/tensor:inference_calculator_py_pb2",
+        "//mediapipe/tasks/cc/core/proto:acceleration_py_pb2",
         "//mediapipe/tasks/cc/core/proto:base_options_py_pb2",
         "//mediapipe/tasks/cc/core/proto:external_file_py_pb2",
     ],

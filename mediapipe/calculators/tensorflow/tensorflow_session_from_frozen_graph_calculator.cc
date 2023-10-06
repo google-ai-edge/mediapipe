@@ -102,7 +102,7 @@ class TensorFlowSessionFromFrozenGraphCalculator : public CalculatorBase {
   absl::Status Open(CalculatorContext* cc) override {
     auto clock = std::unique_ptr<mediapipe::Clock>(
         mediapipe::MonotonicClock::CreateSynchronizedMonotonicClock());
-    const uint64 start_time = absl::ToUnixMicros(clock->TimeNow());
+    const uint64_t start_time = absl::ToUnixMicros(clock->TimeNow());
     const auto& options =
         cc->Options<TensorFlowSessionFromFrozenGraphCalculatorOptions>();
     // Output bundle packet.
@@ -155,7 +155,7 @@ class TensorFlowSessionFromFrozenGraphCalculator : public CalculatorBase {
     }
 
     cc->OutputSidePackets().Tag(kSessionTag).Set(Adopt(session.release()));
-    const uint64 end_time = absl::ToUnixMicros(clock->TimeNow());
+    const uint64_t end_time = absl::ToUnixMicros(clock->TimeNow());
     LOG(INFO) << "Loaded frozen model in: " << end_time - start_time
               << " microseconds.";
     return absl::OkStatus();

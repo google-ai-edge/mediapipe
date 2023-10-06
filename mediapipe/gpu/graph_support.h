@@ -16,13 +16,7 @@
 #ifndef MEDIAPIPE_GPU_GRAPH_SUPPORT_H_
 #define MEDIAPIPE_GPU_GRAPH_SUPPORT_H_
 
-#include "mediapipe/framework/graph_service.h"
-
 namespace mediapipe {
-
-// Forward declaration to avoid depending on GpuResources here.
-class GpuResources;
-extern const GraphService<GpuResources> kGpuService;
 
 static constexpr char kGpuSharedTagName[] = "GPU_SHARED";
 static constexpr char kGpuSharedSidePacketName[] = "gpu_shared";

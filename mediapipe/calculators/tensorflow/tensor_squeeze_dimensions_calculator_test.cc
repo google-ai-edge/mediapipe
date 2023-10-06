@@ -32,7 +32,7 @@ class TensorSqueezeDimensionsCalculatorTest : public ::testing::Test {
     // Initialize tensor_ with deterministic values.
     tensor_shape_ = tf::TensorShape(std::vector<tf::int64>({1, 3, 1, 3, 1}));
     tensor_ = tf::Tensor(tf::DT_INT32, tensor_shape_);
-    auto tensor_values = tensor_.tensor<int32, 5>();
+    auto tensor_values = tensor_.tensor<int32_t, 5>();
     for (int i = 0; i < 3; ++i) {
       for (int j = 0; j < 3; ++j) {
         tensor_values(0, i, 0, j, 0) = i * (j + 1);
@@ -71,7 +71,7 @@ TEST_F(TensorSqueezeDimensionsCalculatorTest, CanSqueezeAllSingleDimensions) {
   const tf::Tensor& output_tensor = output_packets[0].Get<tf::Tensor>();
   const tf::TensorShape expected_shape(std::vector<tf::int64>({3, 3}));
   EXPECT_EQ(expected_shape.DebugString(), output_tensor.shape().DebugString());
-  const auto tensor_values = output_tensor.tensor<int32, 2>();
+  const auto tensor_values = output_tensor.tensor<int32_t, 2>();
   for (int i = 0; i < 3; ++i) {
     for (int j = 0; j < 3; ++j) {
       const int expected_value = i * (j + 1);
@@ -107,7 +107,7 @@ TEST_F(TensorSqueezeDimensionsCalculatorTest, CanSqueezeSpecifiedDimensions) {
   const tf::Tensor& output_tensor = output_packets[0].Get<tf::Tensor>();
   const tf::TensorShape expected_shape(std::vector<tf::int64>({3, 1, 3}));
   EXPECT_EQ(expected_shape.DebugString(), output_tensor.shape().DebugString());
-  const auto tensor_values = output_tensor.tensor<int32, 3>();
+  const auto tensor_values = output_tensor.tensor<int32_t, 3>();
   for (int i = 0; i < 3; ++i) {
     for (int j = 0; j < 3; ++j) {
       const int expected_value = i * (j + 1);

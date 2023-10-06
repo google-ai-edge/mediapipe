@@ -535,8 +535,9 @@ absl::Status TfLiteInferenceCalculator::ProcessInputsCpu(
     const TfLiteTensor* input_tensor = &input_tensors[i];
     RET_CHECK(input_tensor->data.raw);
     if (use_quantized_tensors_) {
-      const uint8* input_tensor_buffer = input_tensor->data.uint8;
-      uint8* local_tensor_buffer = interpreter_->typed_input_tensor<uint8>(i);
+      const uint8_t* input_tensor_buffer = input_tensor->data.uint8;
+      uint8_t* local_tensor_buffer =
+          interpreter_->typed_input_tensor<uint8_t>(i);
       std::memcpy(local_tensor_buffer, input_tensor_buffer,
                   input_tensor->bytes);
     } else {
@@ -941,8 +942,6 @@ absl::Status TfLiteInferenceCalculator::LoadDelegate(CalculatorContext* cc) {
     if (use_xnnpack) {
       auto xnnpack_opts = TfLiteXNNPackDelegateOptionsDefault();
       xnnpack_opts.num_threads = GetXnnpackNumThreads(calculator_opts);
-      // TODO Remove once XNNPACK is enabled by default.
-      xnnpack_opts.flags |= TFLITE_XNNPACK_DELEGATE_FLAG_QU8;
       delegate_ = TfLiteDelegatePtr(TfLiteXNNPackDelegateCreate(&xnnpack_opts),
                                     &TfLiteXNNPackDelegateDelete);
       RET_CHECK_EQ(interpreter_->ModifyGraphWithDelegate(delegate_.get()),

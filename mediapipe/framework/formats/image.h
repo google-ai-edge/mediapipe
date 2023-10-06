@@ -111,12 +111,15 @@ class Image {
     return gpu_buffer_.internal_storage<mediapipe::GlTextureBuffer>();
   }
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
-  // Get a GPU view. Automatically uploads from CPU if needed.
-  const mediapipe::GpuBuffer GetGpuBuffer() const {
-    if (use_gpu_ == false) ConvertToGpu();
+#endif  // !MEDIAPIPE_DISABLE_GPU
+
+  // Provides access to the underlying GpuBuffer storage.
+  // Automatically uploads from CPU to GPU if needed and requested through the
+  // `upload_to_gpu` argument.
+  const mediapipe::GpuBuffer GetGpuBuffer(bool upload_to_gpu = true) const {
+    if (!use_gpu_ && upload_to_gpu) ConvertToGpu();
     return gpu_buffer_;
   }
-#endif  // !MEDIAPIPE_DISABLE_GPU
 
   // Returns image properties.
   int width() const;

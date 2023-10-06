@@ -1,7 +1,8 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe/solutions/vision/object_detector/
 title: Object Detection
-parent: Solutions
+parent: MediaPipe Legacy Solutions
 nav_order: 9
 ---
 
@@ -17,6 +18,14 @@ nav_order: 9
 {:toc}
 </details>
 ---
+
+**Attention:** *Thank you for your interest in MediaPipe Solutions.
+As of March 1, 2023, this solution was upgraded to a new MediaPipe
+Solution. For more information, see the
+[MediaPipe Solutions](https://developers.google.com/mediapipe/solutions/vision/object_detector/)
+site.*
+
+----
 
 ![object_detection_android_gpu.gif](https://mediapipe.dev/images/mobile/object_detection_android_gpu.gif)
 
@@ -108,9 +117,9 @@ on how to build MediaPipe examples.
 *   With a TensorFlow Model
 
     This uses the
-    [TensorFlow model](https://github.com/google/mediapipe/tree/master/mediapipe/models/object_detection_saved_model)
+    [TensorFlow model](https://storage.googleapis.com/mediapipe-assets/object_detection_saved_model/archive.zip)
     ( see also
-    [model info](https://github.com/google/mediapipe/tree/master/mediapipe/models/object_detection_saved_model/README.md)),
+    [model info](https://storage.googleapis.com/mediapipe-assets/object_detection_saved_model/README.md)),
     and the pipeline is implemented in this
     [graph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/object_detection/object_detection_mobile_cpu.pbtxt).
 

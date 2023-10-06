@@ -1,7 +1,8 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe/solutions/guide#legacy
 title: AutoFlip (Saliency-aware Video Cropping)
-parent: Solutions
+parent: MediaPipe Legacy Solutions
 nav_order: 14
 ---
 
@@ -17,6 +18,14 @@ nav_order: 14
 {:toc}
 </details>
 ---
+
+**Attention:** *Thank you for your interest in MediaPipe Solutions.
+We have ended support for this MediaPipe Legacy Solution as of March 1, 2023.
+For more information, see the
+[MediaPipe Solutions](https://developers.google.com/mediapipe/solutions/guide#legacy)
+site.*
+
+----
 
 ## Overview
 

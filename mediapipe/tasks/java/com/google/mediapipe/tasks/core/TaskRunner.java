@@ -1,4 +1,4 @@
-// Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+// Copyright 2022 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,13 +16,14 @@ package com.google.mediapipe.tasks.core;
 
 import android.content.Context;
 import android.util.Log;
+import com.google.mediapipe.proto.CalculatorProto.CalculatorGraphConfig;
 import com.google.mediapipe.framework.AndroidAssetUtil;
 import com.google.mediapipe.framework.AndroidPacketCreator;
 import com.google.mediapipe.framework.Graph;
 import com.google.mediapipe.framework.MediaPipeException;
 import com.google.mediapipe.framework.Packet;
-import com.google.mediapipe.tasks.core.logging.TasksStatsLogger;
 import com.google.mediapipe.tasks.core.logging.TasksStatsDummyLogger;
+import com.google.mediapipe.tasks.core.logging.TasksStatsLogger;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -93,7 +94,7 @@ public class TaskRunner implements AutoCloseable {
    *
    * <p>Note: This method is designed for processing batch data such as unrelated images and texts.
    * The call blocks the current thread until a failure status or a successful result is returned.
-   * An internal timestamp will be assigend per invocation. This method is thread-safe and allows
+   * An internal timestamp will be assigned per invocation. This method is thread-safe and allows
    * clients to call it from different threads.
    *
    * @param inputs a map contains (input stream {@link String}, data {@link Packet}) pairs.
@@ -199,6 +200,10 @@ public class TaskRunner implements AutoCloseable {
     } catch (MediaPipeException e) {
       reportError(e);
     }
+  }
+
+  public CalculatorGraphConfig getCalculatorGraphConfig() {
+    return graph.getCalculatorGraphConfig();
   }
 
   private synchronized void addPackets(Map<String, Packet> inputs, long inputTimestamp) {

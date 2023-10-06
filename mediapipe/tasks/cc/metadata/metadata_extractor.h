@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -135,6 +135,19 @@ class ModelMetadataExtractor {
   // Gets the count of output process units. In particular, 0 is returned when
   // there is no output process units.
   int GetOutputProcessUnitsCount() const;
+
+  // Gets a list of custom metadata from SubgraphMetadata.custom_metadata,
+  // could be nullptr.
+  const flatbuffers::Vector<flatbuffers::Offset<tflite::CustomMetadata>>*
+  GetCustomMetadataList() const;
+
+  // Gets the custom metadata specified by the given index, or nullptr in case
+  // there is no custom metadata or the index is out of range.
+  const tflite::CustomMetadata* GetCustomMetadata(int index) const;
+
+  // Gets the count of custom metadata. In particular, 0 is returned when
+  // there is no custom metadata.
+  int GetCustomMetadataCount() const;
 
  private:
   static constexpr int kDefaultSubgraphIndex = 0;

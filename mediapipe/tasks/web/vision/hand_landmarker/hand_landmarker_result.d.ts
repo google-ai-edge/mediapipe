@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2022 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ export declare interface HandLandmarkerResult {
   /** Hand landmarks of detected hands. */
   landmarks: NormalizedLandmark[][];
 
-  /** Hand landmarks in world coordniates of detected hands. */
+  /** Hand landmarks in world coordinates of detected hands. */
   worldLandmarks: Landmark[][];
 
   /** Handedness of detected hands. */

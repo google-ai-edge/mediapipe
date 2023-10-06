@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,6 +24,11 @@ mediapipe_proto_library(
 )
 
 mediapipe_proto_library(
+    name = "detector_options_proto",
+    srcs = ["detector_options.proto"],
+)
+
+mediapipe_proto_library(
     name = "classification_postprocessing_graph_options_proto",
     srcs = ["classification_postprocessing_graph_options.proto"],
     deps = [
@@ -31,6 +36,20 @@ mediapipe_proto_library(
         "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
         "//mediapipe/tasks/cc/components/calculators:classification_aggregation_calculator_proto",
+        "//mediapipe/tasks/cc/components/calculators:score_calibration_calculator_proto",
+    ],
+)
+
+mediapipe_proto_library(
+    name = "detection_postprocessing_graph_options_proto",
+    srcs = ["detection_postprocessing_graph_options.proto"],
+    deps = [
+        "//mediapipe/calculators/tensor:tensors_to_detections_calculator_proto",
+        "//mediapipe/calculators/tflite:ssd_anchors_calculator_proto",
+        "//mediapipe/calculators/util:detection_label_id_to_text_calculator_proto",
+        "//mediapipe/calculators/util:non_max_suppression_calculator_proto",
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
         "//mediapipe/tasks/cc/components/calculators:score_calibration_calculator_proto",
     ],
 )
@@ -73,4 +92,9 @@ mediapipe_proto_library(
         "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
     ],
+)
+
+mediapipe_proto_library(
+    name = "transformer_params_proto",
+    srcs = ["transformer_params.proto"],
 )

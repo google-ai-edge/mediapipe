@@ -89,6 +89,7 @@ objc_library(
         "//mediapipe/gpu:metal_shared_resources",
         "//mediapipe/gpu:pixel_buffer_pool_util",
         "//mediapipe/util:cpu_util",
+        "//third_party/apple_frameworks:AVFoundation",
         "//third_party/apple_frameworks:Accelerate",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/memory",
@@ -124,8 +125,10 @@ objc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//third_party/apple_frameworks:AVFoundation",
+        "//third_party/apple_frameworks:CoreAudio",
         "//third_party/apple_frameworks:CoreVideo",
         "//third_party/apple_frameworks:Foundation",
+        "//third_party/apple_frameworks:MediaToolbox",
     ],
 )
 
@@ -194,6 +197,21 @@ objc_library(
 )
 
 objc_library(
+    name = "mediapipe_audio_util",
+    srcs = ["MediaPipeAudioUtil.mm"],
+    hdrs = ["MediaPipeAudioUtil.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework/formats:matrix",
+        "//mediapipe/framework/port:statusor",
+        "//third_party/apple_frameworks:AVFoundation",
+        "//third_party/apple_frameworks:CoreAudio",
+        "//third_party/apple_frameworks:CoreMedia",
+        "@eigen_archive//:eigen3",
+    ],
+)
+
+objc_library(
     name = "MPPGraphTestBase",
     testonly = 1,
     srcs = [
@@ -230,6 +248,7 @@ objc_library(
         "CFHolderTests.mm",
         "MPPDisplayLinkWeakTargetTests.mm",
         "MPPGraphTests.mm",
+        "MediaPipeAudioUtilTests.mm",
     ],
     copts = [
         "-Wno-shorten-64-to-32",
@@ -242,11 +261,13 @@ objc_library(
         ":CGImageRefUtils",
         ":MPPGraphTestBase",
         ":Weakify",
+        ":mediapipe_audio_util",
         ":mediapipe_framework_ios",
         ":mediapipe_input_sources_ios",
         "//mediapipe/calculators/core:pass_through_calculator",
         "//third_party/apple_frameworks:AVFoundation",
         "//third_party/apple_frameworks:Accelerate",
+        "//third_party/apple_frameworks:CoreAudio",
         "//third_party/apple_frameworks:CoreGraphics",
         "//third_party/apple_frameworks:CoreMedia",
         "//third_party/apple_frameworks:CoreVideo",

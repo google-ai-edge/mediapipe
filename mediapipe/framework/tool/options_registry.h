@@ -28,7 +28,7 @@ class OptionsRegistry {
   // Finds the descriptor for a protobuf.
   static const Descriptor* GetProtobufDescriptor(const std::string& type_name);
 
-  // Returns all known google::protobuf extensions to a type.
+  // Returns all known proto2 extensions to a type.
   static void FindAllExtensions(absl::string_view extendee,
                                 std::vector<const FieldDescriptor*>* result);
 

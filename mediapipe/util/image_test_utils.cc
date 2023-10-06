@@ -43,14 +43,14 @@ mediapipe::ImageFormat::Format GetImageFormat(int image_channels) {
 
 Packet MakeImageFramePacket(cv::Mat input, int timestamp) {
   ImageFrame input_image(GetImageFormat(input.channels()), input.cols,
-                         input.rows, input.step, input.data, [](uint8*) {});
+                         input.rows, input.step, input.data, [](uint8_t*) {});
   return MakePacket<ImageFrame>(std::move(input_image)).At(Timestamp(0));
 }
 
 Packet MakeImagePacket(cv::Mat input, int timestamp) {
   mediapipe::Image input_image(std::make_shared<mediapipe::ImageFrame>(
       GetImageFormat(input.channels()), input.cols, input.rows, input.step,
-      input.data, [](uint8*) {}));
+      input.data, [](uint8_t*) {}));
   return MakePacket<mediapipe::Image>(std::move(input_image)).At(Timestamp(0));
 }
 

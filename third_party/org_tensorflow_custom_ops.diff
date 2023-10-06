@@ -3,9 +3,9 @@ index c49f2ce731d..d72773c0a5b 100644
 --- a/tensorflow/lite/delegates/gpu/common/BUILD
 +++ b/tensorflow/lite/delegates/gpu/common/BUILD
 @@ -173,7 +173,7 @@ cc_library(
-         "//tensorflow/lite/kernels:kernel_util",
-         "//tensorflow/lite/kernels/internal:reference_base",
-         "//tensorflow/lite/kernels/internal:tensor",
+         "@com_google_absl//absl/container:flat_hash_set",
+         "@com_google_absl//absl/status",
+         "@com_google_absl//absl/strings",
 -    ] + tf_platform_alias("custom_parsers", "//tensorflow/lite/delegates/gpu/common/"),
 +    ] + ["//tensorflow/lite/delegates/gpu/common/mediapipe:custom_parsers"],
  )

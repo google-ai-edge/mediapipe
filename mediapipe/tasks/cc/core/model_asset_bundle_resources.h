@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,8 +28,8 @@ namespace core {
 // The mediapipe task model asset bundle resources class.
 // A ModelAssetBundleResources object, created from an external file proto,
 // contains model asset bundle related resources and the method to extract the
-// tflite models or model asset bundles for the mediapipe sub-tasks. As the
-// resources are owned by the ModelAssetBundleResources object
+// tflite models, resource files or model asset bundles for the mediapipe
+// sub-tasks. As the resources are owned by the ModelAssetBundleResources object
 // callers must keep ModelAssetBundleResources alive while using any of the
 // resources.
 class ModelAssetBundleResources {
@@ -50,14 +50,13 @@ class ModelAssetBundleResources {
   // Returns the model asset bundle resources tag.
   std::string GetTag() const { return tag_; }
 
-  // Gets the contents of the model file (either tflite model file or model
-  // bundle file) with the provided name. An error is returned if there is no
-  // such model file.
-  absl::StatusOr<absl::string_view> GetModelFile(
-      const std::string& filename) const;
+  // Gets the contents of the model file (either tflite model file, resource
+  // file or model bundle file) with the provided name. An error is returned if
+  // there is no such model file.
+  absl::StatusOr<absl::string_view> GetFile(const std::string& filename) const;
 
-  // Lists all the model file names in the model asset model.
-  std::vector<std::string> ListModelFiles() const;
+  // Lists all the file names in the model asset model.
+  std::vector<std::string> ListFiles() const;
 
  private:
   // Constructor.
@@ -65,9 +64,9 @@ class ModelAssetBundleResources {
       const std::string& tag,
       std::unique_ptr<proto::ExternalFile> model_asset_bundle_file);
 
-  // Extracts the model files (either tflite model file or model bundle file)
-  // from the external file proto.
-  absl::Status ExtractModelFilesFromExternalFileProto();
+  // Extracts the model files (either tflite model file, resource file or model
+  // bundle file) from the external file proto.
+  absl::Status ExtractFilesFromExternalFileProto();
 
   // The model asset bundle resources tag.
   const std::string tag_;
@@ -78,11 +77,11 @@ class ModelAssetBundleResources {
   // The ExternalFileHandler for the model asset bundle.
   std::unique_ptr<ExternalFileHandler> model_asset_bundle_file_handler_;
 
-  // The model files bundled in model asset bundle, as a map with the filename
+  // The files bundled in model asset bundle, as a map with the filename
   // (corresponding to a basename, e.g. "hand_detector.tflite") as key and
-  // a pointer to the file contents as value. Each model file can be either
-  // a TFLite model file or a model bundle file for sub-task.
-  absl::flat_hash_map<std::string, absl::string_view> model_files_;
+  // a pointer to the file contents as value. Each file can be either a TFLite
+  // model file, resource file or a model bundle file for sub-task.
+  absl::flat_hash_map<std::string, absl::string_view> files_;
 };
 
 }  // namespace core

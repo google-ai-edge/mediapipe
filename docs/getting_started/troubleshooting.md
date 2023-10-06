@@ -1,5 +1,6 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe/framework/getting_started/troubleshooting
 title: Troubleshooting
 parent: Getting Started
 nav_order: 10
@@ -11,6 +12,12 @@ nav_order: 10
 1. TOC
 {:toc}
 ---
+
+**Attention:** *Thanks for your interest in MediaPipe! We have moved to
+[https://developers.google.com/mediapipe](https://developers.google.com/mediapipe)
+as the primary developer documentation site for MediaPipe as of April 3, 2023.*
+
+----
 
 ## Missing Python binary path
 
@@ -65,7 +72,7 @@ WARNING: Download from https://storage.googleapis.com/mirror.tensorflow.org/gith
 ```
 
 usually indicates that Bazel fails to download necessary dependency repositories
-that MediaPipe needs. MedaiPipe has several dependency repositories that are
+that MediaPipe needs. MediaPipe has several dependency repositories that are
 hosted by Google sites. In some regions, you may need to set up a network proxy
 or use a VPN to access those resources. You may also need to append
 `--host_jvm_args "-DsocksProxyHost=<ip address> -DsocksProxyPort=<port number>"`

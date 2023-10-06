@@ -26,10 +26,11 @@
 namespace mediapipe {
 namespace {
 static bool SafeMultiply(int x, int y, int* result) {
-  static_assert(sizeof(int64) >= 2 * sizeof(int),
+  static_assert(sizeof(int64_t) >= 2 * sizeof(int),
                 "Unable to detect overflow after multiplication");
-  const int64 big = static_cast<int64>(x) * static_cast<int64>(y);
-  if (big > static_cast<int64>(INT_MIN) && big < static_cast<int64>(INT_MAX)) {
+  const int64_t big = static_cast<int64_t>(x) * static_cast<int64_t>(y);
+  if (big > static_cast<int64_t>(INT_MIN) &&
+      big < static_cast<int64_t>(INT_MAX)) {
     if (result != nullptr) *result = static_cast<int>(big);
     return true;
   } else {

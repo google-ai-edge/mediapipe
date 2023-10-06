@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ constexpr absl::string_view kMediaPipeTasksPayload = "MediaPipeTasksStatus";
 //
 // At runtime, such codes are meant to be attached (where applicable) to a
 // `absl::Status` in a key-value manner with `kMediaPipeTasksPayload` as key and
-// stringifed error code as value (aka payload). This logic is encapsulated in
+// stringified error code as value (aka payload). This logic is encapsulated in
 // the `CreateStatusWithPayload` helper below for convenience.
 //
 // The returned status includes:

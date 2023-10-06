@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ cc_library_with_tflite(
     ],
     tflite_deps = [
         "//mediapipe/tasks/cc/core:model_resources_cache",
-        "@org_tensorflow//tensorflow/lite/core/shims:builtin_ops",
+        "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
     ],
     deps = [
         "//mediapipe/java/com/google/mediapipe/framework/jni:mediapipe_framework_jni",

@@ -42,8 +42,8 @@ namespace mediapipe {
 struct RectSpec {
   int width;
   int height;
-  int center_x;
-  int center_y;
+  float center_x;
+  float center_y;
   float rotation;
 
   bool operator==(const RectSpec& rect) const {

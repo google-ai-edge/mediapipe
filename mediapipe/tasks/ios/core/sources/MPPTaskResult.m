@@ -1,4 +1,4 @@
-// Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+// Copyright 2022 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,16 +16,16 @@
 
 @implementation MPPTaskResult
 
-- (instancetype)initWithTimestampMs:(NSInteger)timestampMs {
+- (instancetype)initWithTimestampInMilliseconds:(NSInteger)timestampInMilliseconds {
   self = [super init];
   if (self) {
-    _timestampMs = timestampMs;
+    _timestampInMilliseconds = timestampInMilliseconds;
   }
   return self;
 }
 
 - (id)copyWithZone:(NSZone *)zone {
-  return [[MPPTaskResult alloc] initWithTimestampMs:self.timestampMs];
+  return [[MPPTaskResult alloc] initWithTimestampInMilliseconds:self.timestampInMilliseconds];
 }
 
 @end

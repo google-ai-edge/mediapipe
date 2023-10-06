@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -52,8 +52,9 @@ class ImageClassifierTest(tf.test.TestCase, parameterized.TestCase):
     ds = tf.data.Dataset.from_generator(
         self._gen, (tf.uint8, tf.int64), (tf.TensorShape(
             [self.IMAGE_SIZE, self.IMAGE_SIZE, 3]), tf.TensorShape([])))
-    data = image_classifier.Dataset(ds, self.IMAGES_PER_CLASS * 3,
-                                    ['cyan', 'magenta', 'yellow'])
+    data = image_classifier.Dataset(
+        ds, ['cyan', 'magenta', 'yellow'], self.IMAGES_PER_CLASS * 3
+    )
     return data
 
   def setUp(self):

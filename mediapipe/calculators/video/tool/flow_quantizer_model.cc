@@ -20,7 +20,7 @@
 namespace mediapipe {
 
 // Uniform normalization to 0-255.
-uint8 FlowQuantizerModel::Apply(const float val, const int channel) const {
+uint8_t FlowQuantizerModel::Apply(const float val, const int channel) const {
   CHECK_LT(channel, model_.min_value_size());
   const auto& min_value = model_.min_value(channel);
   const auto& max_value = model_.max_value(channel);
@@ -31,7 +31,7 @@ uint8 FlowQuantizerModel::Apply(const float val, const int channel) const {
   } else if (res > 1.0) {
     res = 1.0;
   }
-  return static_cast<uint8>(res * 255);
+  return static_cast<uint8_t>(res * 255);
 }
 
 void FlowQuantizerModel::LoadFromProto(const QuantizerModelData& data) {

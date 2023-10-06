@@ -117,8 +117,8 @@ MtlBufferView MtlBufferView::GetReadView(const Tensor& tensor,
       << "Tensor must be written prior to read from.";
   LOG_IF(FATAL,
          !(tensor.valid_ & (Tensor::kValidCpu | Tensor::kValidMetalBuffer)))
-      << "Tensor conversion between different GPU resources is not supported "
-         "yet.";
+      << "Tensor conversion between different GPU backing formats is not "
+         "supported yet.";
   auto lock(absl::make_unique<absl::MutexLock>(&tensor.view_mutex_));
   tensor.valid_ |= Tensor::kValidMetalBuffer;
   AllocateMtlBuffer(tensor, [command_buffer device]);
@@ -164,8 +164,8 @@ Tensor::OpenGlTexture2dView Tensor::GetOpenGlTexture2dReadView() const {
   LOG_IF(FATAL, valid_ == kValidNone)
       << "Tensor must be written prior to read from.";
   LOG_IF(FATAL, !(valid_ & (kValidCpu | kValidOpenGlTexture2d)))
-      << "Tensor conversion between different GPU resources is not supported "
-         "yet.";
+      << "Tensor conversion between different GPU backing formats is not "
+         "supported yet.";
   auto lock = absl::make_unique<absl::MutexLock>(&view_mutex_);
   AllocateOpenGlTexture2d();
   if (!(valid_ & kValidOpenGlTexture2d)) {
@@ -335,7 +335,8 @@ Tensor::OpenGlBufferView Tensor::GetOpenGlBufferReadView() const {
                             kValidAHardwareBuffer |
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
                             kValidOpenGlBuffer)))
-      << "Tensor conversion between different GPU resources is not supported.";
+      << "Tensor conversion between different GPU backing formats is not "
+         "supported yet.";
   auto lock(absl::make_unique<absl::MutexLock>(&view_mutex_));
   AllocateOpenGlBuffer();
   if (!(valid_ & kValidOpenGlBuffer)) {
@@ -399,6 +400,7 @@ void Tensor::Move(Tensor* src) {
   valid_ = src->valid_;
   src->valid_ = kValidNone;
   shape_ = src->shape();
+  quantization_parameters_ = src->quantization_parameters();
   element_type_ = src->element_type();
   src->element_type_ = ElementType::kNone;  // Mark as invalidated.
   cpu_buffer_ = src->cpu_buffer_;

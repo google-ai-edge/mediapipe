@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,16 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@org_tensorflow//tensorflow/lite/core/shims:cc_library_with_tflite.bzl", "cc_test_with_tflite")
+load("@org_tensorflow//tensorflow/lite/core/shims:cc_library_with_tflite.bzl", "cc_library_with_tflite", "cc_test_with_tflite")
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
 
-cc_library(
+cc_library_with_tflite(
     name = "image_tensor_specs",
     srcs = ["image_tensor_specs.cc"],
     hdrs = ["image_tensor_specs.h"],
+    tflite_deps = [
+        "//mediapipe/tasks/cc/core:model_resources",
+    ],
+    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:status",
@@ -44,11 +48,11 @@ cc_test_with_tflite(
     srcs = ["image_tensor_specs_test.cc"],
     data = ["//mediapipe/tasks/testdata/vision:test_models"],
     tflite_deps = [
+        ":image_tensor_specs",
         "//mediapipe/tasks/cc/core:model_resources",
-        "@org_tensorflow//tensorflow/lite/core/shims:cc_shims_test_util",
+        "@org_tensorflow//tensorflow/lite:test_util",
     ],
     deps = [
-        ":image_tensor_specs",
         "//mediapipe/framework/deps:file_path",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/tasks/cc:common",

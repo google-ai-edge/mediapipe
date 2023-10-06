@@ -264,7 +264,7 @@ TEST_F(LappedTensorBufferCalculatorTest, OneToThreeBatchTimestampOffset) {
   ASSERT_EQ(num_timesteps - buffer_size + 1, output_packets.size());
   for (int i = 0; i < num_timesteps - buffer_size + 1; ++i) {
     for (int j = 0; j < buffer_size; ++j) {
-      int64 value = output_packets[i].Timestamp().Value();
+      int64_t value = output_packets[i].Timestamp().Value();
       ASSERT_EQ(i + timestamp_offset, value);
     }
   }
@@ -294,7 +294,7 @@ TEST_F(LappedTensorBufferCalculatorTest,
       runner_->Outputs().Index(0).packets;
   ASSERT_EQ(output_size, output_packets.size());
   for (int i = 0; i < output_size; ++i) {
-    int64 value = output_packets[i].Timestamp().Value();
+    int64_t value = output_packets[i].Timestamp().Value();
     ASSERT_EQ(i * overlap + timestamp_offset, value);
   }
   const std::vector<Packet>& output_timestamps =

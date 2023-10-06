@@ -87,6 +87,9 @@ build:ios_fat --config=ios
 build:ios_fat --ios_multi_cpus=armv7,arm64
 build:ios_fat --watchos_cpus=armv7k
 
+build:ios_sim_fat --config=ios
+build:ios_sim_fat --ios_multi_cpus=x86_64,sim_arm64
+
 build:darwin_x86_64 --apple_platform_type=macos
 build:darwin_x86_64 --macos_minimum_os=10.12
 build:darwin_x86_64 --cpu=darwin_x86_64

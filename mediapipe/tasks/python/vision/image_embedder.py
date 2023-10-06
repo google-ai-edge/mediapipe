@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,7 +34,9 @@ from mediapipe.tasks.python.vision.core import vision_task_running_mode as runni
 
 ImageEmbedderResult = embedding_result_module.EmbeddingResult
 _BaseOptions = base_options_module.BaseOptions
-_ImageEmbedderGraphOptionsProto = image_embedder_graph_options_pb2.ImageEmbedderGraphOptions
+_ImageEmbedderGraphOptionsProto = (
+    image_embedder_graph_options_pb2.ImageEmbedderGraphOptions
+)
 _EmbedderOptionsProto = embedder_options_pb2.EmbedderOptions
 _RunningMode = running_mode_module.VisionTaskRunningMode
 _TaskInfo = task_info_module.TaskInfo
@@ -74,24 +76,29 @@ class ImageEmbedderOptions:
       data. The result callback should only be specified when the running mode
       is set to the live stream mode.
   """
+
   base_options: _BaseOptions
   running_mode: _RunningMode = _RunningMode.IMAGE
   l2_normalize: Optional[bool] = None
   quantize: Optional[bool] = None
-  result_callback: Optional[Callable[
-      [ImageEmbedderResult, image_module.Image, int], None]] = None
+  result_callback: Optional[
+      Callable[[ImageEmbedderResult, image_module.Image, int], None]
+  ] = None
 
   @doc_controls.do_not_generate_docs
   def to_pb2(self) -> _ImageEmbedderGraphOptionsProto:
     """Generates an ImageEmbedderOptions protobuf object."""
     base_options_proto = self.base_options.to_pb2()
-    base_options_proto.use_stream_mode = False if self.running_mode == _RunningMode.IMAGE else True
+    base_options_proto.use_stream_mode = (
+        False if self.running_mode == _RunningMode.IMAGE else True
+    )
     embedder_options_proto = _EmbedderOptionsProto(
-        l2_normalize=self.l2_normalize, quantize=self.quantize)
+        l2_normalize=self.l2_normalize, quantize=self.quantize
+    )
 
     return _ImageEmbedderGraphOptionsProto(
-        base_options=base_options_proto,
-        embedder_options=embedder_options_proto)
+        base_options=base_options_proto, embedder_options=embedder_options_proto
+    )
 
 
 class ImageEmbedder(base_vision_task_api.BaseVisionTaskApi):
@@ -135,12 +142,14 @@ class ImageEmbedder(base_vision_task_api.BaseVisionTaskApi):
     """
     base_options = _BaseOptions(model_asset_path=model_path)
     options = ImageEmbedderOptions(
-        base_options=base_options, running_mode=_RunningMode.IMAGE)
+        base_options=base_options, running_mode=_RunningMode.IMAGE
+    )
     return cls.create_from_options(options)
 
   @classmethod
-  def create_from_options(cls,
-                          options: ImageEmbedderOptions) -> 'ImageEmbedder':
+  def create_from_options(
+      cls, options: ImageEmbedderOptions
+  ) -> 'ImageEmbedder':
     """Creates the `ImageEmbedder` object from image embedder options.
 
     Args:
@@ -161,13 +170,16 @@ class ImageEmbedder(base_vision_task_api.BaseVisionTaskApi):
 
       embedding_result_proto = embeddings_pb2.EmbeddingResult()
       embedding_result_proto.CopyFrom(
-          packet_getter.get_proto(output_packets[_EMBEDDINGS_OUT_STREAM_NAME]))
+          packet_getter.get_proto(output_packets[_EMBEDDINGS_OUT_STREAM_NAME])
+      )
 
       image = packet_getter.get_image(output_packets[_IMAGE_OUT_STREAM_NAME])
       timestamp = output_packets[_IMAGE_OUT_STREAM_NAME].timestamp
       options.result_callback(
-          ImageEmbedderResult.create_from_pb2(embedding_result_proto), image,
-          timestamp.value // _MICRO_SECONDS_PER_MILLISECOND)
+          ImageEmbedderResult.create_from_pb2(embedding_result_proto),
+          image,
+          timestamp.value // _MICRO_SECONDS_PER_MILLISECOND,
+      )
 
     task_info = _TaskInfo(
         task_graph=_TASK_GRAPH_NAME,
@@ -177,19 +189,23 @@ class ImageEmbedder(base_vision_task_api.BaseVisionTaskApi):
         ],
         output_streams=[
             ':'.join([_EMBEDDINGS_TAG, _EMBEDDINGS_OUT_STREAM_NAME]),
-            ':'.join([_IMAGE_TAG, _IMAGE_OUT_STREAM_NAME])
+            ':'.join([_IMAGE_TAG, _IMAGE_OUT_STREAM_NAME]),
         ],
-        task_options=options)
+        task_options=options,
+    )
     return cls(
         task_info.generate_graph_config(
-            enable_flow_limiting=options.running_mode ==
-            _RunningMode.LIVE_STREAM), options.running_mode,
-        packets_callback if options.result_callback else None)
+            enable_flow_limiting=options.running_mode
+            == _RunningMode.LIVE_STREAM
+        ),
+        options.running_mode,
+        packets_callback if options.result_callback else None,
+    )
 
   def embed(
       self,
       image: image_module.Image,
-      image_processing_options: Optional[_ImageProcessingOptions] = None
+      image_processing_options: Optional[_ImageProcessingOptions] = None,
   ) -> ImageEmbedderResult:
     """Performs image embedding extraction on the provided MediaPipe Image.
 
@@ -207,17 +223,20 @@ class ImageEmbedder(base_vision_task_api.BaseVisionTaskApi):
       ValueError: If any of the input arguments is invalid.
       RuntimeError: If image embedder failed to run.
     """
-    normalized_rect = self.convert_to_normalized_rect(image_processing_options)
+    normalized_rect = self.convert_to_normalized_rect(
+        image_processing_options, image
+    )
     output_packets = self._process_image_data({
-        _IMAGE_IN_STREAM_NAME:
-            packet_creator.create_image(image),
-        _NORM_RECT_STREAM_NAME:
-            packet_creator.create_proto(normalized_rect.to_pb2())
+        _IMAGE_IN_STREAM_NAME: packet_creator.create_image(image),
+        _NORM_RECT_STREAM_NAME: packet_creator.create_proto(
+            normalized_rect.to_pb2()
+        ),
     })
 
     embedding_result_proto = embeddings_pb2.EmbeddingResult()
     embedding_result_proto.CopyFrom(
-        packet_getter.get_proto(output_packets[_EMBEDDINGS_OUT_STREAM_NAME]))
+        packet_getter.get_proto(output_packets[_EMBEDDINGS_OUT_STREAM_NAME])
+    )
 
     return ImageEmbedderResult.create_from_pb2(embedding_result_proto)
 
@@ -225,7 +244,7 @@ class ImageEmbedder(base_vision_task_api.BaseVisionTaskApi):
       self,
       image: image_module.Image,
       timestamp_ms: int,
-      image_processing_options: Optional[_ImageProcessingOptions] = None
+      image_processing_options: Optional[_ImageProcessingOptions] = None,
   ) -> ImageEmbedderResult:
     """Performs image embedding extraction on the provided video frames.
 
@@ -249,18 +268,21 @@ class ImageEmbedder(base_vision_task_api.BaseVisionTaskApi):
       ValueError: If any of the input arguments is invalid.
       RuntimeError: If image embedder failed to run.
     """
-    normalized_rect = self.convert_to_normalized_rect(image_processing_options)
+    normalized_rect = self.convert_to_normalized_rect(
+        image_processing_options, image
+    )
     output_packets = self._process_video_data({
-        _IMAGE_IN_STREAM_NAME:
-            packet_creator.create_image(image).at(
-                timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND),
-        _NORM_RECT_STREAM_NAME:
-            packet_creator.create_proto(normalized_rect.to_pb2()).at(
-                timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND)
+        _IMAGE_IN_STREAM_NAME: packet_creator.create_image(image).at(
+            timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND
+        ),
+        _NORM_RECT_STREAM_NAME: packet_creator.create_proto(
+            normalized_rect.to_pb2()
+        ).at(timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND),
     })
     embedding_result_proto = embeddings_pb2.EmbeddingResult()
     embedding_result_proto.CopyFrom(
-        packet_getter.get_proto(output_packets[_EMBEDDINGS_OUT_STREAM_NAME]))
+        packet_getter.get_proto(output_packets[_EMBEDDINGS_OUT_STREAM_NAME])
+    )
 
     return ImageEmbedderResult.create_from_pb2(embedding_result_proto)
 
@@ -268,7 +290,7 @@ class ImageEmbedder(base_vision_task_api.BaseVisionTaskApi):
       self,
       image: image_module.Image,
       timestamp_ms: int,
-      image_processing_options: Optional[_ImageProcessingOptions] = None
+      image_processing_options: Optional[_ImageProcessingOptions] = None,
   ) -> None:
     """Sends live image data to embedder.
 
@@ -301,19 +323,24 @@ class ImageEmbedder(base_vision_task_api.BaseVisionTaskApi):
       ValueError: If the current input timestamp is smaller than what the image
         embedder has already processed.
     """
-    normalized_rect = self.convert_to_normalized_rect(image_processing_options)
+    normalized_rect = self.convert_to_normalized_rect(
+        image_processing_options, image
+    )
     self._send_live_stream_data({
-        _IMAGE_IN_STREAM_NAME:
-            packet_creator.create_image(image).at(
-                timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND),
-        _NORM_RECT_STREAM_NAME:
-            packet_creator.create_proto(normalized_rect.to_pb2()).at(
-                timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND)
+        _IMAGE_IN_STREAM_NAME: packet_creator.create_image(image).at(
+            timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND
+        ),
+        _NORM_RECT_STREAM_NAME: packet_creator.create_proto(
+            normalized_rect.to_pb2()
+        ).at(timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND),
     })
 
   @classmethod
-  def cosine_similarity(cls, u: embedding_result_module.Embedding,
-                        v: embedding_result_module.Embedding) -> float:
+  def cosine_similarity(
+      cls,
+      u: embedding_result_module.Embedding,
+      v: embedding_result_module.Embedding,
+  ) -> float:
     """Utility function to compute cosine similarity between two embedding entries.
 
     May return an InvalidArgumentError if e.g. the feature vectors are of

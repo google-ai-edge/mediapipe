@@ -57,7 +57,7 @@ namespace mediapipe {
 // have underflow/overflow etc.  This type is used internally by Timestamp
 // and TimestampDiff.
 MEDIAPIPE_DEFINE_SAFE_INT_TYPE(TimestampBaseType, int64,
-                               mediapipe::intops::LogFatalOnError);
+                               mediapipe::intops::LogFatalOnError)
 
 class TimestampDiff;
 
@@ -185,6 +185,10 @@ class Timestamp {
   // OneOverPostStream() if no Packets may follow one with this timestamp.
   // CHECKs that this->IsAllowedInStream().
   Timestamp NextAllowedInStream() const;
+
+  // Returns true if there's a next timestamp in the range [Min .. Max] after
+  // this one.
+  bool HasNextAllowedInStream() const;
 
   // Returns the previous timestamp in the range [Min .. Max], or
   // Unstarted() if no Packets may preceed one with this timestamp.

@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ cc_library(
         ":hand_association_calculator_cc_proto",
         "//mediapipe/calculators/util:association_calculator",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:collection_item_id",
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework/port:rectangle",

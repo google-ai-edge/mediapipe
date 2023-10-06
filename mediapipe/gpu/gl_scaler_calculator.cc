@@ -104,6 +104,7 @@ class GlScalerCalculator : public CalculatorBase {
   bool vertical_flip_output_;
   bool horizontal_flip_output_;
   FrameScaleMode scale_mode_ = FrameScaleMode::kStretch;
+  bool use_nearest_neighbor_interpolation_ = false;
 };
 REGISTER_CALCULATOR(GlScalerCalculator);
 
@@ -186,7 +187,8 @@ absl::Status GlScalerCalculator::Open(CalculatorContext* cc) {
     scale_mode_ =
         FrameScaleModeFromProto(options.scale_mode(), FrameScaleMode::kStretch);
   }
-
+  use_nearest_neighbor_interpolation_ =
+      options.use_nearest_neighbor_interpolation();
   if (HasTagOrIndex(cc->InputSidePackets(), "OUTPUT_DIMENSIONS", 1)) {
     const auto& dimensions =
         TagOrIndex(cc->InputSidePackets(), "OUTPUT_DIMENSIONS", 1)
@@ -295,6 +297,11 @@ absl::Status GlScalerCalculator::Process(CalculatorContext* cc) {
     if (src2.name()) {
       glActiveTexture(GL_TEXTURE2);
       glBindTexture(src2.target(), src2.name());
+    }
+
+    if (use_nearest_neighbor_interpolation_) {
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     }
 
     MP_RETURN_IF_ERROR(renderer->GlRender(

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2022 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,6 +74,10 @@ describe('AudioEmbedder', () => {
     audioEmbedder = new AudioEmbedderFake();
     await audioEmbedder.setOptions(
         {baseOptions: {modelAssetBuffer: new Uint8Array([])}});
+  });
+
+  afterEach(() => {
+    audioEmbedder.close();
   });
 
   it('initializes graph', () => {
@@ -161,7 +165,7 @@ describe('AudioEmbedder', () => {
               {floatEmbedding: [0.1, 0.9], headIndex: 1, headName: 'headName'});
     }
 
-    it('from embeddings strem', async () => {
+    it('from embeddings stream', async () => {
       audioEmbedder.fakeWasmModule._waitUntilIdle.and.callFake(() => {
         verifyListenersRegistered(audioEmbedder);
         // Pass the test data to our listener

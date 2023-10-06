@@ -33,6 +33,11 @@ cc_library(
 )
 
 cc_library(
+    name = "MetalKit",
+    linkopts = ["-framework MetalKit"],
+)
+
+cc_library(
     name = "MetalPerformanceShaders",
     linkopts = ["-framework MetalPerformanceShaders"],
 )
@@ -70,4 +75,14 @@ cc_library(
 cc_library(
     name = "QuartzCore",
     linkopts = ["-framework QuartzCore"],
+)
+
+cc_library(
+    name = "CoreAudio",
+    linkopts = ["-framework CoreAudio"],
+)
+
+cc_library(
+    name = "MediaToolbox",
+    linkopts = ["-framework MediaToolbox"],
 )

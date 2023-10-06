@@ -78,16 +78,20 @@ public class AppTextureFrame implements TextureFrame {
    * Use {@link waitUntilReleasedWithGpuSync} whenever possible.
    */
   public void waitUntilReleased() throws InterruptedException {
+    GlSyncToken tokenToRelease = null;
     synchronized (this) {
       while (inUse && releaseSyncToken == null) {
         wait();
       }
       if (releaseSyncToken != null) {
-        releaseSyncToken.waitOnCpu();
-        releaseSyncToken.release();
+        tokenToRelease = releaseSyncToken;
         inUse = false;
         releaseSyncToken = null;
       }
+    }
+    if (tokenToRelease != null) {
+      tokenToRelease.waitOnCpu();
+      tokenToRelease.release();
     }
   }
 
@@ -98,16 +102,20 @@ public class AppTextureFrame implements TextureFrame {
    * TextureFrame.
    */
   public void waitUntilReleasedWithGpuSync() throws InterruptedException {
+    GlSyncToken tokenToRelease = null;
     synchronized (this) {
       while (inUse && releaseSyncToken == null) {
         wait();
       }
       if (releaseSyncToken != null) {
-        releaseSyncToken.waitOnGpu();
-        releaseSyncToken.release();
+        tokenToRelease = releaseSyncToken;
         inUse = false;
         releaseSyncToken = null;
       }
+    }
+    if (tokenToRelease != null) {
+      tokenToRelease.waitOnGpu();
+      tokenToRelease.release();
     }
   }
 

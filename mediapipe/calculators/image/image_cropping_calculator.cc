@@ -223,8 +223,8 @@ absl::Status ImageCroppingCalculator::RenderCpu(CalculatorContext* cc) {
   cv::Mat input_mat = formats::MatView(&input_img);
 
   RectSpec specs = GetCropSpecs(cc, input_img.Width(), input_img.Height());
-  int target_width = specs.width, target_height = specs.height,
-      rect_center_x = specs.center_x, rect_center_y = specs.center_y;
+  int target_width = specs.width, target_height = specs.height;
+  float rect_center_x = specs.center_x, rect_center_y = specs.center_y;
   float rotation = specs.rotation;
 
   // Get border mode and value for OpenCV.
@@ -244,19 +244,29 @@ absl::Status ImageCroppingCalculator::RenderCpu(CalculatorContext* cc) {
   output_width *= scale;
   output_height *= scale;
 
-  float dst_corners[8] = {0,
-                          output_height - 1,
-                          0,
-                          0,
-                          output_width - 1,
-                          0,
-                          output_width - 1,
-                          output_height - 1};
-  cv::Mat dst_points = cv::Mat(4, 2, CV_32F, dst_corners);
-  cv::Mat projection_matrix =
+  float dst_corners[8] = {
+      0, output_height, 0, 0, output_width, 0, output_width, output_height};
+  const cv::Mat dst_points = cv::Mat(4, 2, CV_32F, dst_corners);
+  // The projection matrix is computed using the corners of rects, not the
+  // centers of corner pixels
+  const cv::Mat projection_matrix =
       cv::getPerspectiveTransform(src_points, dst_points);
+  // The projection matrix need to be adjusted because `cv::warpPerspective` is
+  // based on integer centers.
+  // clang-format off
+  double shift_src_vec[9] = {1.0, 0.0, 0.5,
+                             0.0, 1.0, 0.5,
+                             0.0, 0.0, 1.0};
+  double shift_dst_vec[9] = {1.0, 0.0, -0.5,
+                             0.0, 1.0, -0.5,
+                             0.0, 0.0,  1.0};
+  // clang-format on
+  const cv::Mat shift_src = cv::Mat(3, 3, CV_64F, shift_src_vec);
+  const cv::Mat shift_dst = cv::Mat(3, 3, CV_64F, shift_dst_vec);
+  const cv::Mat adjusted_projection_matrix =
+      shift_dst * projection_matrix * shift_src;
   cv::Mat cropped_image;
-  cv::warpPerspective(input_mat, cropped_image, projection_matrix,
+  cv::warpPerspective(input_mat, cropped_image, adjusted_projection_matrix,
                       cv::Size(output_width, output_height),
                       /* flags = */ 0,
                       /* borderMode = */ border_mode);
@@ -416,8 +426,8 @@ void ImageCroppingCalculator::GetOutputDimensions(CalculatorContext* cc,
                                                   int* dst_width,
                                                   int* dst_height) {
   RectSpec specs = GetCropSpecs(cc, src_width, src_height);
-  int crop_width = specs.width, crop_height = specs.height,
-      x_center = specs.center_x, y_center = specs.center_y;
+  int crop_width = specs.width, crop_height = specs.height;
+  float x_center = specs.center_x, y_center = specs.center_y;
   float rotation = specs.rotation;
 
   const float half_width = crop_width / 2.0f;
@@ -466,8 +476,8 @@ RectSpec ImageCroppingCalculator::GetCropSpecs(const CalculatorContext* cc,
   int crop_width = src_width;
   int crop_height = src_height;
   // Get the center of cropping box. Default is the at the center.
-  int x_center = src_width / 2;
-  int y_center = src_height / 2;
+  float x_center = src_width / 2.0f;
+  float y_center = src_height / 2.0f;
   // Get the rotation of the cropping box.
   float rotation = 0.0f;
   // Get the normalized width and height if specified by the inputs or options.
@@ -494,8 +504,8 @@ RectSpec ImageCroppingCalculator::GetCropSpecs(const CalculatorContext* cc,
     if (norm_rect.width() > 0.0 && norm_rect.height() > 0.0) {
       normalized_width = norm_rect.width();
       normalized_height = norm_rect.height();
-      x_center = std::round(norm_rect.x_center() * src_width);
-      y_center = std::round(norm_rect.y_center() * src_height);
+      x_center = norm_rect.x_center() * src_width;
+      y_center = norm_rect.y_center() * src_height;
       rotation = norm_rect.rotation();
     }
   } else if (cc->Inputs().HasTag(kWidthTag) &&
@@ -521,11 +531,27 @@ RectSpec ImageCroppingCalculator::GetCropSpecs(const CalculatorContext* cc,
   // present from the inputs.
   if (!cc->Inputs().HasTag(kRectTag) && !cc->Inputs().HasTag(kNormRectTag)) {
     if (options.has_norm_center_x() && options.has_norm_center_y()) {
-      x_center = std::round(options.norm_center_x() * src_width);
-      y_center = std::round(options.norm_center_y() * src_height);
+      x_center = options.norm_center_x() * src_width;
+      y_center = options.norm_center_y() * src_height;
     }
     if (options.has_rotation()) {
       rotation = options.rotation();
+    }
+  }
+
+  if (rotation == 0.0f) {
+    // Adjust the center to the closest integer when the crop size is
+    // even-number and to the closest half-integer when the crop size is
+    // odd-number.
+    if (crop_width % 2 == 0) {
+      x_center = std::round(x_center);
+    } else {
+      x_center = std::round(x_center + 0.5f) - 0.5f;
+    }
+    if (crop_height % 2 == 0) {
+      y_center = std::round(y_center);
+    } else {
+      y_center = std::round(y_center + 0.5f) - 0.5f;
     }
   }
 

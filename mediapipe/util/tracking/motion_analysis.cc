@@ -338,13 +338,13 @@ void MotionAnalysis::InitPolicyOptions() {
   }
 }
 
-bool MotionAnalysis::AddFrame(const cv::Mat& frame, int64 timestamp_usec,
+bool MotionAnalysis::AddFrame(const cv::Mat& frame, int64_t timestamp_usec,
                               RegionFlowFeatureList* feature_list) {
   return AddFrameWithSeed(frame, timestamp_usec, Homography(), feature_list);
 }
 
 bool MotionAnalysis::AddFrameWithSeed(const cv::Mat& frame,
-                                      int64 timestamp_usec,
+                                      int64_t timestamp_usec,
                                       const Homography& initial_transform,
                                       RegionFlowFeatureList* feature_list) {
   return AddFrameGeneric(frame, timestamp_usec, initial_transform,
@@ -355,7 +355,7 @@ bool MotionAnalysis::AddFrameWithSeed(const cv::Mat& frame,
 }
 
 bool MotionAnalysis::AddFrameGeneric(
-    const cv::Mat& frame, int64 timestamp_usec,
+    const cv::Mat& frame, int64_t timestamp_usec,
     const Homography& initial_transform, const Homography* rejection_transform,
     const RegionFlowFeatureList* external_features,
     std::function<void(RegionFlowFeatureList*)>* modify_features,
@@ -730,7 +730,7 @@ void MotionAnalysis::ComputeDenseForeground(
   foreground_mask->create(frame_height_, frame_width_, CV_8U);
   for (int i = 0; i < frame_height_; ++i) {
     const float* src_ptr = foreground_map.ptr<float>(i);
-    uint8* dst_ptr = foreground_mask->ptr<uint8>(i);
+    uint8_t* dst_ptr = foreground_mask->ptr<uint8_t>(i);
     for (int j = 0; j < frame_width_; ++j) {
       // Result is in first channel (second is confidence).
       dst_ptr[j] =
@@ -758,8 +758,8 @@ void MotionAnalysis::VisualizeDenseForeground(const cv::Mat& foreground_mask,
   // Burn-in alpha compositing.
   const float alpha = 1.3f;
   for (int i = 0; i < frame_height_; ++i) {
-    uint8* image_ptr = output->ptr<uint8>(i);
-    const uint8* foreground_ptr = foreground_mask.ptr<uint8>(i);
+    uint8_t* image_ptr = output->ptr<uint8_t>(i);
+    const uint8_t* foreground_ptr = foreground_mask.ptr<uint8_t>(i);
 
     for (int j = 0; j < frame_width_; ++j) {
       const float norm_foreground = foreground_ptr[j] * (1.0 / 255.0f);

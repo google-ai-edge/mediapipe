@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,6 +15,11 @@
 package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
+
+cc_library(
+    name = "keypoint",
+    hdrs = ["keypoint.h"],
+)
 
 cc_library(
     name = "rect",
@@ -48,6 +53,7 @@ cc_library(
     hdrs = ["detection_result.h"],
     deps = [
         ":category",
+        ":keypoint",
         ":rect",
         "//mediapipe/framework/formats:detection_cc_proto",
         "//mediapipe/framework/formats:location_data_cc_proto",

@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ import tempfile
 
 from absl.testing import absltest
 
+from mediapipe.tasks.metadata import metadata_schema_py_generated as _metadata_fb
+from mediapipe.tasks.python.metadata.metadata_writers import metadata_info
 from mediapipe.tasks.python.metadata.metadata_writers import metadata_writer
 from mediapipe.tasks.python.test import test_utils
 
@@ -27,6 +29,16 @@ _IMAGE_CLASSIFIER_MODEL = test_utils.get_test_data_path(
     os.path.join(_TEST_DATA_DIR, 'mobilenet_v1_0.25_224_1_default_1.tflite'))
 _SCORE_CALIBRATION_FILE = test_utils.get_test_data_path(
     os.path.join(_TEST_DATA_DIR, 'score_calibration.txt'))
+
+
+class TestCustomMetadataMd(metadata_info.CustomMetadataMd):
+
+  def create_metadata(self) -> _metadata_fb.CustomMetadataT:
+    """Creates the custom metadata based on the information."""
+    custom_metadata_field = _metadata_fb.CustomMetadataT()
+    custom_metadata_field.name = self.name
+    custom_metadata_field.data = b'\x01\x02'
+    return custom_metadata_field
 
 
 class LabelsTest(absltest.TestCase):
@@ -415,7 +427,6 @@ class MetadataWriterForTaskTest(absltest.TestCase):
         score_thresholding=metadata_writer.ScoreThresholding(
             global_score_threshold=0.5))
     _, metadata_json = writer.populate()
-    print(metadata_json)
     self.assertJsonEqual(
         metadata_json, """{
         "subgraph_metadata": [
@@ -464,6 +475,46 @@ class MetadataWriterForTaskTest(absltest.TestCase):
         "min_parser_version": "1.0.0"
       }
       """)
+
+  def test_add_custom_metadata(self):
+    writer = metadata_writer.MetadataWriter.create(
+        self.image_classifier_model_buffer
+    )
+    writer.add_custom_metadata(
+        TestCustomMetadataMd(name='test_custom_metadata')
+    )
+    _, metadata_json = writer.populate()
+    self.assertJsonEqual(
+        metadata_json,
+        """
+        {
+          "subgraph_metadata": [
+            {
+              "input_tensor_metadata": [
+                {
+                  "name": "input"
+                }
+              ],
+              "output_tensor_metadata": [
+                {
+                  "name": "MobilenetV1/Predictions/Reshape_1"
+                }
+              ],
+              "custom_metadata": [
+                {
+                  "name": "test_custom_metadata",
+                  "data": [
+                    1,
+                    2
+                  ]
+                }
+              ]
+            }
+          ],
+          "min_parser_version": "1.5.0"
+        }
+        """,
+    )
 
 
 if __name__ == '__main__':

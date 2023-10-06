@@ -31,13 +31,13 @@ NS_SWIFT_NAME(TextClassifierResult)
  *
  * @param classificationResult The `MPPClassificationResult` instance containing one set of results
  * per classifier head.
- * @param timestampMs The timestamp for this result.
+ * @param timestampInMilliseconds The timestamp (in milliseconds) for this result.
  *
  * @return An instance of `MPPTextClassifierResult` initialized with the given
  * `MPPClassificationResult` and timestamp (in milliseconds).
  */
 - (instancetype)initWithClassificationResult:(MPPClassificationResult *)classificationResult
-                                 timestampMs:(NSInteger)timestampMs;
+                     timestampInMilliseconds:(NSInteger)timestampInMilliseconds;
 
 @end
 

@@ -84,7 +84,7 @@ class TensorsToClassificationCalculator : public Node {
  private:
   int top_k_ = 0;
   bool sort_by_descending_score_ = false;
-  proto_ns::Map<int64, LabelMapItem> local_label_map_;
+  proto_ns::Map<int64_t, LabelMapItem> local_label_map_;
   bool label_map_loaded_ = false;
   bool is_binary_classification_ = false;
   float min_score_threshold_ = std::numeric_limits<float>::lowest();
@@ -98,7 +98,8 @@ class TensorsToClassificationCalculator : public Node {
   // These are used to filter out the output classification results.
   ClassIndexSet class_index_set_;
   bool IsClassIndexAllowed(int class_index);
-  const proto_ns::Map<int64, LabelMapItem>& GetLabelMap(CalculatorContext* cc);
+  const proto_ns::Map<int64_t, LabelMapItem>& GetLabelMap(
+      CalculatorContext* cc);
 };
 MEDIAPIPE_REGISTER_NODE(TensorsToClassificationCalculator);
 
@@ -252,7 +253,7 @@ bool TensorsToClassificationCalculator::IsClassIndexAllowed(int class_index) {
   }
 }
 
-const proto_ns::Map<int64, LabelMapItem>&
+const proto_ns::Map<int64_t, LabelMapItem>&
 TensorsToClassificationCalculator::GetLabelMap(CalculatorContext* cc) {
   return !local_label_map_.empty()
              ? local_label_map_

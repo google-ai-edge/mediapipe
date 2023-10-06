@@ -112,9 +112,9 @@ absl::Status VectorIntToTensorCalculator::Process(CalculatorContext* cc) {
             .Value()
             .Get<std::vector<std::vector<int>>>();
 
-    const int32 rows = input.size();
+    const int32_t rows = input.size();
     CHECK_GE(rows, 1);
-    const int32 cols = input[0].size();
+    const int32_t cols = input[0].size();
     CHECK_GE(cols, 1);
     for (int i = 1; i < rows; ++i) {
       CHECK_EQ(input[i].size(), cols);
@@ -134,7 +134,7 @@ absl::Status VectorIntToTensorCalculator::Process(CalculatorContext* cc) {
               AssignMatrixValue<tf::int64>(c, r, input[r][c], output.get());
               break;
             case tf::DT_UINT8:
-              AssignMatrixValue<uint8>(c, r, input[r][c], output.get());
+              AssignMatrixValue<uint8_t>(c, r, input[r][c], output.get());
               break;
             case tf::DT_INT32:
               AssignMatrixValue<int>(c, r, input[r][c], output.get());
@@ -152,7 +152,7 @@ absl::Status VectorIntToTensorCalculator::Process(CalculatorContext* cc) {
               AssignMatrixValue<tf::int64>(r, c, input[r][c], output.get());
               break;
             case tf::DT_UINT8:
-              AssignMatrixValue<uint8>(r, c, input[r][c], output.get());
+              AssignMatrixValue<uint8_t>(r, c, input[r][c], output.get());
               break;
             case tf::DT_INT32:
               AssignMatrixValue<int>(r, c, input[r][c], output.get());
@@ -172,7 +172,7 @@ absl::Status VectorIntToTensorCalculator::Process(CalculatorContext* cc) {
       input = cc->Inputs().Tag(kVectorInt).Value().Get<std::vector<int>>();
     }
     CHECK_GE(input.size(), 1);
-    const int32 length = input.size();
+    const int32_t length = input.size();
     tensor_shape = tf::TensorShape({length});
     auto output = ::absl::make_unique<tf::Tensor>(options_.tensor_data_type(),
                                                   tensor_shape);
@@ -182,7 +182,7 @@ absl::Status VectorIntToTensorCalculator::Process(CalculatorContext* cc) {
           output->tensor<tf::int64, 1>()(i) = input.at(i);
           break;
         case tf::DT_UINT8:
-          output->tensor<uint8, 1>()(i) = input.at(i);
+          output->tensor<uint8_t, 1>()(i) = input.at(i);
           break;
         case tf::DT_INT32:
           output->tensor<int, 1>()(i) = input.at(i);

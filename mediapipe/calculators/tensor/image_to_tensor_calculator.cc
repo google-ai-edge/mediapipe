@@ -34,6 +34,8 @@
 
 #if !MEDIAPIPE_DISABLE_OPENCV
 #include "mediapipe/calculators/tensor/image_to_tensor_converter_opencv.h"
+#elif MEDIAPIPE_ENABLE_HALIDE
+#include "mediapipe/calculators/tensor/image_to_tensor_converter_frame_buffer.h"
 #endif
 
 #if !MEDIAPIPE_DISABLE_GPU
@@ -45,9 +47,11 @@
 #elif MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
 #include "mediapipe/calculators/tensor/image_to_tensor_converter_gl_buffer.h"
 #include "mediapipe/gpu/gl_calculator_helper.h"
+#include "mediapipe/gpu/gpu_service.h"
 #else
 #include "mediapipe/calculators/tensor/image_to_tensor_converter_gl_texture.h"
 #include "mediapipe/gpu/gl_calculator_helper.h"
+#include "mediapipe/gpu/gpu_service.h"
 #endif  // MEDIAPIPE_METAL_ENABLED
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
@@ -147,7 +151,7 @@ class ImageToTensorCalculator : public Node {
 #if MEDIAPIPE_METAL_ENABLED
     MP_RETURN_IF_ERROR([MPPMetalHelper updateContract:cc]);
 #else
-    MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
+    cc->UseService(kGpuService).Optional();
 #endif  // MEDIAPIPE_METAL_ENABLED
 #endif  // MEDIAPIPE_DISABLE_GPU
 
@@ -195,8 +199,9 @@ class ImageToTensorCalculator : public Node {
 #endif  // MEDIAPIPE_DISABLE_GPU
 
     RotatedRect roi = GetRoi(image->width(), image->height(), norm_rect);
-    ASSIGN_OR_RETURN(auto padding, PadRoi(options_.output_tensor_width(),
-                                          options_.output_tensor_height(),
+    const int tensor_width = params_.output_width.value_or(image->width());
+    const int tensor_height = params_.output_height.value_or(image->height());
+    ASSIGN_OR_RETURN(auto padding, PadRoi(tensor_width, tensor_height,
                                           options_.keep_aspect_ratio(), &roi));
     if (kOutLetterboxPadding(cc).IsConnected()) {
       kOutLetterboxPadding(cc).Send(padding);
@@ -214,9 +219,8 @@ class ImageToTensorCalculator : public Node {
 
     Tensor::ElementType output_tensor_type =
         GetOutputTensorType(image->UsesGpu(), params_);
-    Tensor tensor(output_tensor_type,
-                  {1, params_.output_height, params_.output_width,
-                   GetNumOutputChannels(*image)});
+    Tensor tensor(output_tensor_type, {1, tensor_height, tensor_width,
+                                       GetNumOutputChannels(*image)});
     MP_RETURN_IF_ERROR((image->UsesGpu() ? gpu_converter_ : cpu_converter_)
                            ->Convert(*image, roi, params_.range_min,
                                      params_.range_max,
@@ -271,10 +275,19 @@ class ImageToTensorCalculator : public Node {
                          CreateOpenCvConverter(
                              cc, GetBorderMode(options_.border_mode()),
                              GetOutputTensorType(/*uses_gpu=*/false, params_)));
+// TODO: FrameBuffer-based converter needs to call GetGpuBuffer()
+// to get access to a FrameBuffer view. Investigate if GetGpuBuffer() can be
+// made available even with MEDIAPIPE_DISABLE_GPU set.
+#elif MEDIAPIPE_ENABLE_HALIDE
+        ASSIGN_OR_RETURN(cpu_converter_,
+                         CreateFrameBufferConverter(
+                             cc, GetBorderMode(options_.border_mode()),
+                             GetOutputTensorType(/*uses_gpu=*/false, params_)));
 #else
-        LOG(FATAL) << "Cannot create image to tensor opencv converter since "
-                      "MEDIAPIPE_DISABLE_OPENCV is defined.";
-#endif  // !MEDIAPIPE_DISABLE_OPENCV
+        LOG(FATAL) << "Cannot create image to tensor CPU converter since "
+                      "MEDIAPIPE_DISABLE_OPENCV is defined and "
+                      "MEDIAPIPE_ENABLE_HALIDE is not defined.";
+#endif  // !MEDIAPIPE_DISABLE_HALIDE
       }
     }
     return absl::OkStatus();

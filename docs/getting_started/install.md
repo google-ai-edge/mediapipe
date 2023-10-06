@@ -1,5 +1,6 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe/framework/getting_started/install
 title: Installation
 parent: Getting Started
 nav_order: 6
@@ -11,6 +12,12 @@ nav_order: 6
 1. TOC
 {:toc}
 ---
+
+**Attention:** *Thanks for your interest in MediaPipe! We have moved to
+[https://developers.google.com/mediapipe](https://developers.google.com/mediapipe)
+as the primary developer documentation site for MediaPipe as of April 3, 2023.*
+
+----
 
 Note: To interoperate with OpenCV, OpenCV 3.x to 4.1 are preferred. OpenCV
 2.x currently works but interoperability support may be deprecated in the
@@ -35,7 +42,7 @@ install --user six`.
 
     ```bash
     $ cd $HOME
-    $ git clone https://github.com/google/mediapipe.git
+    $ git clone --depth 1 https://github.com/google/mediapipe.git
 
     # Change directory into MediaPipe root directory
     $ cd mediapipe
@@ -65,6 +72,13 @@ install --user six`.
         libopencv-features2d-dev \
         libopencv-imgproc-dev \
         libopencv-video-dev
+    ```
+
+    **Note**. On Debian 11/Ubuntu 21.04 where OpenCV 4.5 is installed with
+    `libopencv-video-dev`, `libopencv-contrib-dev` should also be installed.
+
+    ```bash
+    $ sudo apt-get install -y libopencv-contrib-dev
     ```
 
     MediaPipe's [`opencv_linux.BUILD`] and [`WORKSPACE`] are already configured
@@ -287,7 +301,7 @@ build issues.
 2.  Checkout MediaPipe repository.
 
     ```bash
-    $ git clone https://github.com/google/mediapipe.git
+    $ git clone --depth 1 https://github.com/google/mediapipe.git
 
     # Change directory into MediaPipe root directory
     $ cd mediapipe
@@ -416,7 +430,7 @@ build issues.
 3.  Checkout MediaPipe repository.
 
     ```bash
-    $ git clone https://github.com/google/mediapipe.git
+    $ git clone --depth 1 https://github.com/google/mediapipe.git
 
     $ cd mediapipe
     ```
@@ -569,7 +583,7 @@ next section.
 
     Option 1. Follow
     [the official Bazel documentation](https://docs.bazel.build/versions/master/install-windows.html)
-    to install Bazel 5.2.0 or higher.
+    to install Bazel 6.1.1 or higher.
 
     Option 2. Follow the official
     [Bazel documentation](https://docs.bazel.build/versions/master/install-bazelisk.html)
@@ -590,7 +604,7 @@ next section.
 7.  Checkout MediaPipe repository.
 
     ```
-    C:\Users\Username\mediapipe_repo> git clone https://github.com/google/mediapipe.git
+    C:\Users\Username\mediapipe_repo> git clone --depth 1 https://github.com/google/mediapipe.git
 
     # Change directory into MediaPipe root directory
     C:\Users\Username\mediapipe_repo> cd mediapipe
@@ -651,7 +665,7 @@ cameras. Alternatively, you use a video file as input.
 
 1.  Follow the
     [instruction](https://docs.microsoft.com/en-us/windows/wsl/install-win10) to
-    install Windows Sysystem for Linux (Ubuntu).
+    install Windows Subsystem for Linux (Ubuntu).
 
 2.  Install Windows ADB and start the ADB server in Windows.
 
@@ -680,7 +694,7 @@ cameras. Alternatively, you use a video file as input.
 6.  Checkout MediaPipe repository.
 
     ```bash
-    username@DESKTOP-TMVLBJ1:~$ git clone https://github.com/google/mediapipe.git
+    username@DESKTOP-TMVLBJ1:~$ git clone --depth 1 https://github.com/google/mediapipe.git
 
     username@DESKTOP-TMVLBJ1:~$ cd mediapipe
     ```
@@ -771,7 +785,7 @@ This will use a Docker image that will isolate mediapipe's installation from the
 2.  Build a docker image with tag "mediapipe".
 
     ```bash
-    $ git clone https://github.com/google/mediapipe.git
+    $ git clone --depth 1 https://github.com/google/mediapipe.git
     $ cd mediapipe
     $ docker build --tag=mediapipe .
 

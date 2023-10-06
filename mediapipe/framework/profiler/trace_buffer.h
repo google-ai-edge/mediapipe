@@ -112,10 +112,10 @@ struct TraceEvent {
   static constexpr EventType GPU_TASK_INVOKE = GraphTrace::GPU_TASK_INVOKE;
   static constexpr EventType TPU_TASK_INVOKE = GraphTrace::TPU_TASK_INVOKE;
   static constexpr EventType CPU_TASK_INVOKE = GraphTrace::CPU_TASK_INVOKE;
-
-  //  //depot/mediapipe/framework/mediapipe_profiling.h:profiler_census_tags,
-  //  //depot/mediapipe/framework/calculator_profile.proto:event_type,
-  // )
+  static constexpr EventType GPU_TASK_INVOKE_ADVANCED =
+      GraphTrace::GPU_TASK_INVOKE_ADVANCED;
+  static constexpr EventType TPU_TASK_INVOKE_ASYNC =
+      GraphTrace::TPU_TASK_INVOKE_ASYNC;
 };
 
 // Packet trace log buffer.

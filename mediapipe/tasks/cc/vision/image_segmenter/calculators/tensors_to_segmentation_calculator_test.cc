@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -79,8 +79,9 @@ void PushTensorsToRunner(int tensor_height, int tensor_width,
 std::vector<Packet> GetPackets(const CalculatorRunner& runner) {
   std::vector<Packet> mask_packets;
   for (int i = 0; i < runner.Outputs().NumEntries(); ++i) {
-    EXPECT_EQ(runner.Outputs().Get("SEGMENTATION", i).packets.size(), 1);
-    mask_packets.push_back(runner.Outputs().Get("SEGMENTATION", i).packets[0]);
+    EXPECT_EQ(runner.Outputs().Get("CONFIDENCE_MASK", i).packets.size(), 1);
+    mask_packets.push_back(
+        runner.Outputs().Get("CONFIDENCE_MASK", i).packets[0]);
   }
   return mask_packets;
 }
@@ -118,13 +119,10 @@ TEST(TensorsToSegmentationCalculatorTest, FailsInvalidTensorDimensionOne) {
           R"pb(
             calculator: "mediapipe.tasks.TensorsToSegmentationCalculator"
             input_stream: "TENSORS:tensors"
-            output_stream: "SEGMENTATION:segmentation"
+            output_stream: "CONFIDENCE_MASK:segmentation"
             options {
               [mediapipe.tasks.TensorsToSegmentationCalculatorOptions.ext] {
-                segmenter_options {
-                  activation: SOFTMAX
-                  output_type: CONFIDENCE_MASK
-                }
+                segmenter_options { activation: SOFTMAX }
               }
             }
           )pb"));
@@ -145,13 +143,10 @@ TEST(TensorsToSegmentationCalculatorTest, FailsInvalidTensorDimensionFive) {
           R"pb(
             calculator: "mediapipe.tasks.TensorsToSegmentationCalculator"
             input_stream: "TENSORS:tensors"
-            output_stream: "SEGMENTATION:segmentation"
+            output_stream: "CONFIDENCE_MASK:segmentation"
             options {
               [mediapipe.tasks.TensorsToSegmentationCalculatorOptions.ext] {
-                segmenter_options {
-                  activation: SOFTMAX
-                  output_type: CONFIDENCE_MASK
-                }
+                segmenter_options { activation: SOFTMAX }
               }
             }
           )pb"));
@@ -173,16 +168,13 @@ TEST(TensorsToSegmentationCalculatorTest, SucceedsConfidenceMaskWithSoftmax) {
           R"pb(
             calculator: "mediapipe.tasks.TensorsToSegmentationCalculator"
             input_stream: "TENSORS:tensors"
-            output_stream: "SEGMENTATION:0:segmented_mask_0"
-            output_stream: "SEGMENTATION:1:segmented_mask_1"
-            output_stream: "SEGMENTATION:2:segmented_mask_2"
-            output_stream: "SEGMENTATION:3:segmented_mask_3"
+            output_stream: "CONFIDENCE_MASK:0:segmented_mask_0"
+            output_stream: "CONFIDENCE_MASK:1:segmented_mask_1"
+            output_stream: "CONFIDENCE_MASK:2:segmented_mask_2"
+            output_stream: "CONFIDENCE_MASK:3:segmented_mask_3"
             options {
               [mediapipe.tasks.TensorsToSegmentationCalculatorOptions.ext] {
-                segmenter_options {
-                  activation: SOFTMAX
-                  output_type: CONFIDENCE_MASK
-                }
+                segmenter_options { activation: SOFTMAX }
               }
             }
           )pb"));
@@ -218,16 +210,13 @@ TEST(TensorsToSegmentationCalculatorTest, SucceedsConfidenceMaskWithNone) {
           R"pb(
             calculator: "mediapipe.tasks.TensorsToSegmentationCalculator"
             input_stream: "TENSORS:tensors"
-            output_stream: "SEGMENTATION:0:segmented_mask_0"
-            output_stream: "SEGMENTATION:1:segmented_mask_1"
-            output_stream: "SEGMENTATION:2:segmented_mask_2"
-            output_stream: "SEGMENTATION:3:segmented_mask_3"
+            output_stream: "CONFIDENCE_MASK:0:segmented_mask_0"
+            output_stream: "CONFIDENCE_MASK:1:segmented_mask_1"
+            output_stream: "CONFIDENCE_MASK:2:segmented_mask_2"
+            output_stream: "CONFIDENCE_MASK:3:segmented_mask_3"
             options {
               [mediapipe.tasks.TensorsToSegmentationCalculatorOptions.ext] {
-                segmenter_options {
-                  activation: NONE
-                  output_type: CONFIDENCE_MASK
-                }
+                segmenter_options { activation: NONE }
               }
             }
           )pb"));
@@ -259,16 +248,13 @@ TEST(TensorsToSegmentationCalculatorTest, SucceedsConfidenceMaskWithSigmoid) {
           R"pb(
             calculator: "mediapipe.tasks.TensorsToSegmentationCalculator"
             input_stream: "TENSORS:tensors"
-            output_stream: "SEGMENTATION:0:segmented_mask_0"
-            output_stream: "SEGMENTATION:1:segmented_mask_1"
-            output_stream: "SEGMENTATION:2:segmented_mask_2"
-            output_stream: "SEGMENTATION:3:segmented_mask_3"
+            output_stream: "CONFIDENCE_MASK:0:segmented_mask_0"
+            output_stream: "CONFIDENCE_MASK:1:segmented_mask_1"
+            output_stream: "CONFIDENCE_MASK:2:segmented_mask_2"
+            output_stream: "CONFIDENCE_MASK:3:segmented_mask_3"
             options {
               [mediapipe.tasks.TensorsToSegmentationCalculatorOptions.ext] {
-                segmenter_options {
-                  activation: SIGMOID
-                  output_type: CONFIDENCE_MASK
-                }
+                segmenter_options { activation: SIGMOID }
               }
             }
           )pb"));
@@ -301,13 +287,14 @@ TEST(TensorsToSegmentationCalculatorTest, SucceedsCategoryMask) {
           R"pb(
             calculator: "mediapipe.tasks.TensorsToSegmentationCalculator"
             input_stream: "TENSORS:tensors"
-            output_stream: "SEGMENTATION:segmentation"
+            output_stream: "CONFIDENCE_MASK:0:segmented_mask_0"
+            output_stream: "CONFIDENCE_MASK:1:segmented_mask_1"
+            output_stream: "CONFIDENCE_MASK:2:segmented_mask_2"
+            output_stream: "CONFIDENCE_MASK:3:segmented_mask_3"
+            output_stream: "CATEGORY_MASK:segmentation"
             options {
               [mediapipe.tasks.TensorsToSegmentationCalculatorOptions.ext] {
-                segmenter_options {
-                  activation: NONE
-                  output_type: CATEGORY_MASK
-                }
+                segmenter_options { activation: NONE }
               }
             }
           )pb"));
@@ -318,11 +305,11 @@ TEST(TensorsToSegmentationCalculatorTest, SucceedsCategoryMask) {
       tensor_height, tensor_width,
       std::vector<float>(kTestValues.begin(), kTestValues.end()), &runner);
   MP_ASSERT_OK(runner.Run());
-  ASSERT_EQ(runner.Outputs().NumEntries(), 1);
+  ASSERT_EQ(runner.Outputs().NumEntries(), 5);
   // Largest element index is 3.
   const int expected_index = 3;
   const std::vector<int> buffer_indices = {0};
-  std::vector<Packet> packets = GetPackets(runner);
+  std::vector<Packet> packets = runner.Outputs().Tag("CATEGORY_MASK").packets;
   EXPECT_THAT(packets, testing::ElementsAre(
                            Uint8ImagePacket(tensor_height, tensor_width,
                                             expected_index, buffer_indices)));
@@ -335,13 +322,14 @@ TEST(TensorsToSegmentationCalculatorTest, SucceedsCategoryMaskResize) {
             calculator: "mediapipe.tasks.TensorsToSegmentationCalculator"
             input_stream: "TENSORS:tensors"
             input_stream: "OUTPUT_SIZE:size"
-            output_stream: "SEGMENTATION:segmentation"
+            output_stream: "CONFIDENCE_MASK:0:segmented_mask_0"
+            output_stream: "CONFIDENCE_MASK:1:segmented_mask_1"
+            output_stream: "CONFIDENCE_MASK:2:segmented_mask_2"
+            output_stream: "CONFIDENCE_MASK:3:segmented_mask_3"
+            output_stream: "CATEGORY_MASK:segmentation"
             options {
               [mediapipe.tasks.TensorsToSegmentationCalculatorOptions.ext] {
-                segmenter_options {
-                  activation: NONE
-                  output_type: CATEGORY_MASK
-                }
+                segmenter_options { activation: NONE }
               }
             }
           )pb"));
@@ -367,7 +355,7 @@ TEST(TensorsToSegmentationCalculatorTest, SucceedsCategoryMaskResize) {
   const std::vector<int> buffer_indices = {
       0 * output_width + 0, 0 * output_width + 1, 1 * output_width + 0,
       1 * output_width + 1};
-  std::vector<Packet> packets = GetPackets(runner);
+  std::vector<Packet> packets = runner.Outputs().Tag("CATEGORY_MASK").packets;
   EXPECT_THAT(packets, testing::ElementsAre(
                            Uint8ImagePacket(output_height, output_width,
                                             expected_index, buffer_indices)));

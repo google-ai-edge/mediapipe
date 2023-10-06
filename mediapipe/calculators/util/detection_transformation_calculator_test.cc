@@ -39,8 +39,8 @@ constexpr char kPixelDetectionsTag[] = "PIXEL_DETECTIONS";
 constexpr char kRelativeDetectionListTag[] = "RELATIVE_DETECTION_LIST";
 constexpr char kRelativeDetectionsTag[] = "RELATIVE_DETECTIONS";
 
-Detection DetectionWithBoundingBox(int32 xmin, int32 ymin, int32 width,
-                                   int32 height) {
+Detection DetectionWithBoundingBox(int32_t xmin, int32_t ymin, int32_t width,
+                                   int32_t height) {
   Detection detection;
   LocationData* location_data = detection.mutable_location_data();
   location_data->set_format(LocationData::BOUNDING_BOX);
@@ -159,6 +159,42 @@ TEST(DetectionsTransformationCalculatorTest, WrongLocationDataFormat) {
   EXPECT_THAT(status.message(),
               testing::HasSubstr("location data format must be either "
                                  "RELATIVE_BOUNDING_BOX or BOUNDING_BOX"));
+}
+
+TEST(DetectionsTransformationCalculatorTest, EmptyDetection) {
+  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
+    calculator: "DetectionTransformationCalculator"
+    input_stream: "DETECTION:input_detection"
+    input_stream: "IMAGE_SIZE:image_size"
+    output_stream: "PIXEL_DETECTION:output_detection"
+  )pb"));
+
+  std::pair<int, int> image_size({2000, 1000});
+  runner.MutableInputs()
+      ->Tag(kImageSizeTag)
+      .packets.push_back(
+          MakePacket<std::pair<int, int>>(image_size).At(Timestamp(0)));
+
+  auto status = runner.Run();
+  ASSERT_TRUE(status.ok());
+}
+
+TEST(DetectionsTransformationCalculatorTest, EmptyDetections) {
+  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
+    calculator: "DetectionTransformationCalculator"
+    input_stream: "DETECTIONS:input_detection"
+    input_stream: "IMAGE_SIZE:image_size"
+    output_stream: "PIXEL_DETECTIONS:output_detection"
+  )pb"));
+
+  std::pair<int, int> image_size({2000, 1000});
+  runner.MutableInputs()
+      ->Tag(kImageSizeTag)
+      .packets.push_back(
+          MakePacket<std::pair<int, int>>(image_size).At(Timestamp(0)));
+
+  auto status = runner.Run();
+  ASSERT_TRUE(status.ok());
 }
 
 TEST(DetectionsTransformationCalculatorTest,

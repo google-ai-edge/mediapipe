@@ -63,7 +63,8 @@ void RunTest(const std::string& graph_text, const std::string& tag,
              const cv::Mat& input, cv::Mat expected_result,
              float similarity_threshold, std::array<float, 16> matrix,
              int out_width, int out_height,
-             absl::optional<AffineTransformation::BorderMode> border_mode) {
+             std::optional<AffineTransformation::BorderMode> border_mode,
+             std::optional<AffineTransformation::Interpolation> interpolation) {
   std::string border_mode_str;
   if (border_mode) {
     switch (*border_mode) {
@@ -75,8 +76,20 @@ void RunTest(const std::string& graph_text, const std::string& tag,
         break;
     }
   }
+  std::string interpolation_str;
+  if (interpolation) {
+    switch (*interpolation) {
+      case AffineTransformation::Interpolation::kLinear:
+        interpolation_str = "interpolation: INTER_LINEAR";
+        break;
+      case AffineTransformation::Interpolation::kCubic:
+        interpolation_str = "interpolation: INTER_CUBIC";
+        break;
+    }
+  }
   auto graph_config = mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
-      absl::Substitute(graph_text, /*$0=*/border_mode_str));
+      absl::Substitute(graph_text, /*$0=*/border_mode_str,
+                       /*$1=*/interpolation_str));
 
   std::vector<Packet> output_packets;
   tool::AddVectorSink("output_image", &graph_config, &output_packets);
@@ -88,7 +101,7 @@ void RunTest(const std::string& graph_text, const std::string& tag,
 
   ImageFrame input_image(
       input.channels() == 4 ? ImageFormat::SRGBA : ImageFormat::SRGB,
-      input.cols, input.rows, input.step, input.data, [](uint8*) {});
+      input.cols, input.rows, input.step, input.data, [](uint8_t*) {});
   MP_ASSERT_OK(graph.AddPacketToInputStream(
       "input_image",
       MakePacket<ImageFrame>(std::move(input_image)).At(Timestamp(0))));
@@ -132,7 +145,8 @@ struct SimilarityConfig {
 void RunTest(cv::Mat input, cv::Mat expected_result,
              const SimilarityConfig& similarity, std::array<float, 16> matrix,
              int out_width, int out_height,
-             absl::optional<AffineTransformation::BorderMode> border_mode) {
+             std::optional<AffineTransformation::BorderMode> border_mode,
+             std::optional<AffineTransformation::Interpolation> interpolation) {
   RunTest(R"(
         input_stream: "input_image"
         input_stream: "output_size"
@@ -146,12 +160,13 @@ void RunTest(cv::Mat input, cv::Mat expected_result,
           options {
             [mediapipe.WarpAffineCalculatorOptions.ext] {
               $0 # border mode
+              $1 # interpolation
             }
           }
         }
         )",
           "cpu", input, expected_result, similarity.threshold_on_cpu, matrix,
-          out_width, out_height, border_mode);
+          out_width, out_height, border_mode, interpolation);
 
   RunTest(R"(
         input_stream: "input_image"
@@ -171,6 +186,7 @@ void RunTest(cv::Mat input, cv::Mat expected_result,
           options {
             [mediapipe.WarpAffineCalculatorOptions.ext] {
               $0 # border mode
+              $1 # interpolation
             }
           }
         }
@@ -181,7 +197,7 @@ void RunTest(cv::Mat input, cv::Mat expected_result,
         }
         )",
           "cpu_image", input, expected_result, similarity.threshold_on_cpu,
-          matrix, out_width, out_height, border_mode);
+          matrix, out_width, out_height, border_mode, interpolation);
 
   RunTest(R"(
         input_stream: "input_image"
@@ -201,6 +217,7 @@ void RunTest(cv::Mat input, cv::Mat expected_result,
           options {
             [mediapipe.WarpAffineCalculatorOptions.ext] {
               $0 # border mode
+              $1 # interpolation
               gpu_origin: TOP_LEFT
             }
           }
@@ -212,7 +229,7 @@ void RunTest(cv::Mat input, cv::Mat expected_result,
         }
         )",
           "gpu", input, expected_result, similarity.threshold_on_gpu, matrix,
-          out_width, out_height, border_mode);
+          out_width, out_height, border_mode, interpolation);
 
   RunTest(R"(
         input_stream: "input_image"
@@ -237,6 +254,7 @@ void RunTest(cv::Mat input, cv::Mat expected_result,
           options {
             [mediapipe.WarpAffineCalculatorOptions.ext] {
               $0 # border mode
+              $1 # interpolation
               gpu_origin: TOP_LEFT
             }
           }
@@ -253,7 +271,7 @@ void RunTest(cv::Mat input, cv::Mat expected_result,
         }
         )",
           "gpu_image", input, expected_result, similarity.threshold_on_gpu,
-          matrix, out_width, out_height, border_mode);
+          matrix, out_width, out_height, border_mode, interpolation);
 }
 
 std::array<float, 16> GetMatrix(cv::Mat input, mediapipe::NormalizedRect roi,
@@ -287,10 +305,11 @@ TEST(WarpAffineCalculatorTest, MediumSubRectKeepAspect) {
   int out_height = 256;
   bool keep_aspect_ratio = true;
   std::optional<AffineTransformation::BorderMode> border_mode = {};
+  std::optional<AffineTransformation::Interpolation> interpolation = {};
   RunTest(input, expected_output,
           {.threshold_on_cpu = 0.99, .threshold_on_gpu = 0.82},
           GetMatrix(input, roi, keep_aspect_ratio, out_width, out_height),
-          out_width, out_height, border_mode);
+          out_width, out_height, border_mode, interpolation);
 }
 
 TEST(WarpAffineCalculatorTest, MediumSubRectKeepAspectBorderZero) {
@@ -312,10 +331,11 @@ TEST(WarpAffineCalculatorTest, MediumSubRectKeepAspectBorderZero) {
   bool keep_aspect_ratio = true;
   std::optional<AffineTransformation::BorderMode> border_mode =
       AffineTransformation::BorderMode::kZero;
+  std::optional<AffineTransformation::Interpolation> interpolation = {};
   RunTest(input, expected_output,
           {.threshold_on_cpu = 0.99, .threshold_on_gpu = 0.81},
           GetMatrix(input, roi, keep_aspect_ratio, out_width, out_height),
-          out_width, out_height, border_mode);
+          out_width, out_height, border_mode, interpolation);
 }
 
 TEST(WarpAffineCalculatorTest, MediumSubRectKeepAspectWithRotation) {
@@ -337,10 +357,11 @@ TEST(WarpAffineCalculatorTest, MediumSubRectKeepAspectWithRotation) {
   bool keep_aspect_ratio = true;
   std::optional<AffineTransformation::BorderMode> border_mode =
       AffineTransformation::BorderMode::kReplicate;
+  std::optional<AffineTransformation::Interpolation> interpolation = {};
   RunTest(input, expected_output,
           {.threshold_on_cpu = 0.99, .threshold_on_gpu = 0.77},
           GetMatrix(input, roi, keep_aspect_ratio, out_width, out_height),
-          out_width, out_height, border_mode);
+          out_width, out_height, border_mode, interpolation);
 }
 
 TEST(WarpAffineCalculatorTest, MediumSubRectKeepAspectWithRotationBorderZero) {
@@ -362,10 +383,11 @@ TEST(WarpAffineCalculatorTest, MediumSubRectKeepAspectWithRotationBorderZero) {
   bool keep_aspect_ratio = true;
   std::optional<AffineTransformation::BorderMode> border_mode =
       AffineTransformation::BorderMode::kZero;
+  std::optional<AffineTransformation::Interpolation> interpolation = {};
   RunTest(input, expected_output,
           {.threshold_on_cpu = 0.99, .threshold_on_gpu = 0.75},
           GetMatrix(input, roi, keep_aspect_ratio, out_width, out_height),
-          out_width, out_height, border_mode);
+          out_width, out_height, border_mode, interpolation);
 }
 
 TEST(WarpAffineCalculatorTest, MediumSubRectWithRotation) {
@@ -386,10 +408,11 @@ TEST(WarpAffineCalculatorTest, MediumSubRectWithRotation) {
   bool keep_aspect_ratio = false;
   std::optional<AffineTransformation::BorderMode> border_mode =
       AffineTransformation::BorderMode::kReplicate;
+  std::optional<AffineTransformation::Interpolation> interpolation = {};
   RunTest(input, expected_output,
           {.threshold_on_cpu = 0.99, .threshold_on_gpu = 0.81},
           GetMatrix(input, roi, keep_aspect_ratio, out_width, out_height),
-          out_width, out_height, border_mode);
+          out_width, out_height, border_mode, interpolation);
 }
 
 TEST(WarpAffineCalculatorTest, MediumSubRectWithRotationBorderZero) {
@@ -411,10 +434,38 @@ TEST(WarpAffineCalculatorTest, MediumSubRectWithRotationBorderZero) {
   bool keep_aspect_ratio = false;
   std::optional<AffineTransformation::BorderMode> border_mode =
       AffineTransformation::BorderMode::kZero;
+  std::optional<AffineTransformation::Interpolation> interpolation = {};
   RunTest(input, expected_output,
           {.threshold_on_cpu = 0.99, .threshold_on_gpu = 0.80},
           GetMatrix(input, roi, keep_aspect_ratio, out_width, out_height),
-          out_width, out_height, border_mode);
+          out_width, out_height, border_mode, interpolation);
+}
+
+TEST(WarpAffineCalculatorTest, MediumSubRectWithRotationBorderZeroInterpCubic) {
+  mediapipe::NormalizedRect roi;
+  roi.set_x_center(0.65f);
+  roi.set_y_center(0.4f);
+  roi.set_width(0.5f);
+  roi.set_height(0.5f);
+  roi.set_rotation(M_PI * -45.0f / 180.0f);
+  auto input = GetRgb(
+      "/mediapipe/calculators/"
+      "tensor/testdata/image_to_tensor/input.jpg");
+  auto expected_output = GetRgb(
+      "/mediapipe/calculators/"
+      "tensor/testdata/image_to_tensor/"
+      "medium_sub_rect_with_rotation_border_zero_interp_cubic.png");
+  int out_width = 256;
+  int out_height = 256;
+  bool keep_aspect_ratio = false;
+  std::optional<AffineTransformation::BorderMode> border_mode =
+      AffineTransformation::BorderMode::kZero;
+  std::optional<AffineTransformation::Interpolation> interpolation =
+      AffineTransformation::Interpolation::kCubic;
+  RunTest(input, expected_output,
+          {.threshold_on_cpu = 0.99, .threshold_on_gpu = 0.78},
+          GetMatrix(input, roi, keep_aspect_ratio, out_width, out_height),
+          out_width, out_height, border_mode, interpolation);
 }
 
 TEST(WarpAffineCalculatorTest, LargeSubRect) {
@@ -435,10 +486,11 @@ TEST(WarpAffineCalculatorTest, LargeSubRect) {
   bool keep_aspect_ratio = false;
   std::optional<AffineTransformation::BorderMode> border_mode =
       AffineTransformation::BorderMode::kReplicate;
+  std::optional<AffineTransformation::Interpolation> interpolation = {};
   RunTest(input, expected_output,
           {.threshold_on_cpu = 0.99, .threshold_on_gpu = 0.95},
           GetMatrix(input, roi, keep_aspect_ratio, out_width, out_height),
-          out_width, out_height, border_mode);
+          out_width, out_height, border_mode, interpolation);
 }
 
 TEST(WarpAffineCalculatorTest, LargeSubRectBorderZero) {
@@ -459,10 +511,11 @@ TEST(WarpAffineCalculatorTest, LargeSubRectBorderZero) {
   bool keep_aspect_ratio = false;
   std::optional<AffineTransformation::BorderMode> border_mode =
       AffineTransformation::BorderMode::kZero;
+  std::optional<AffineTransformation::Interpolation> interpolation = {};
   RunTest(input, expected_output,
           {.threshold_on_cpu = 0.99, .threshold_on_gpu = 0.92},
           GetMatrix(input, roi, keep_aspect_ratio, out_width, out_height),
-          out_width, out_height, border_mode);
+          out_width, out_height, border_mode, interpolation);
 }
 
 TEST(WarpAffineCalculatorTest, LargeSubRectKeepAspect) {
@@ -483,10 +536,11 @@ TEST(WarpAffineCalculatorTest, LargeSubRectKeepAspect) {
   bool keep_aspect_ratio = true;
   std::optional<AffineTransformation::BorderMode> border_mode =
       AffineTransformation::BorderMode::kReplicate;
+  std::optional<AffineTransformation::Interpolation> interpolation = {};
   RunTest(input, expected_output,
           {.threshold_on_cpu = 0.99, .threshold_on_gpu = 0.97},
           GetMatrix(input, roi, keep_aspect_ratio, out_width, out_height),
-          out_width, out_height, border_mode);
+          out_width, out_height, border_mode, interpolation);
 }
 
 TEST(WarpAffineCalculatorTest, LargeSubRectKeepAspectBorderZero) {
@@ -508,10 +562,11 @@ TEST(WarpAffineCalculatorTest, LargeSubRectKeepAspectBorderZero) {
   bool keep_aspect_ratio = true;
   std::optional<AffineTransformation::BorderMode> border_mode =
       AffineTransformation::BorderMode::kZero;
+  std::optional<AffineTransformation::Interpolation> interpolation = {};
   RunTest(input, expected_output,
           {.threshold_on_cpu = 0.99, .threshold_on_gpu = 0.97},
           GetMatrix(input, roi, keep_aspect_ratio, out_width, out_height),
-          out_width, out_height, border_mode);
+          out_width, out_height, border_mode, interpolation);
 }
 
 TEST(WarpAffineCalculatorTest, LargeSubRectKeepAspectWithRotation) {
@@ -532,10 +587,11 @@ TEST(WarpAffineCalculatorTest, LargeSubRectKeepAspectWithRotation) {
   int out_height = 128;
   bool keep_aspect_ratio = true;
   std::optional<AffineTransformation::BorderMode> border_mode = {};
+  std::optional<AffineTransformation::Interpolation> interpolation = {};
   RunTest(input, expected_output,
           {.threshold_on_cpu = 0.99, .threshold_on_gpu = 0.91},
           GetMatrix(input, roi, keep_aspect_ratio, out_width, out_height),
-          out_width, out_height, border_mode);
+          out_width, out_height, border_mode, interpolation);
 }
 
 TEST(WarpAffineCalculatorTest, LargeSubRectKeepAspectWithRotationBorderZero) {
@@ -557,10 +613,11 @@ TEST(WarpAffineCalculatorTest, LargeSubRectKeepAspectWithRotationBorderZero) {
   bool keep_aspect_ratio = true;
   std::optional<AffineTransformation::BorderMode> border_mode =
       AffineTransformation::BorderMode::kZero;
+  std::optional<AffineTransformation::Interpolation> interpolation = {};
   RunTest(input, expected_output,
           {.threshold_on_cpu = 0.99, .threshold_on_gpu = 0.88},
           GetMatrix(input, roi, keep_aspect_ratio, out_width, out_height),
-          out_width, out_height, border_mode);
+          out_width, out_height, border_mode, interpolation);
 }
 
 TEST(WarpAffineCalculatorTest, NoOp) {
@@ -581,10 +638,11 @@ TEST(WarpAffineCalculatorTest, NoOp) {
   bool keep_aspect_ratio = true;
   std::optional<AffineTransformation::BorderMode> border_mode =
       AffineTransformation::BorderMode::kReplicate;
+  std::optional<AffineTransformation::Interpolation> interpolation = {};
   RunTest(input, expected_output,
           {.threshold_on_cpu = 0.99, .threshold_on_gpu = 0.99},
           GetMatrix(input, roi, keep_aspect_ratio, out_width, out_height),
-          out_width, out_height, border_mode);
+          out_width, out_height, border_mode, interpolation);
 }
 
 TEST(WarpAffineCalculatorTest, NoOpBorderZero) {
@@ -605,10 +663,11 @@ TEST(WarpAffineCalculatorTest, NoOpBorderZero) {
   bool keep_aspect_ratio = true;
   std::optional<AffineTransformation::BorderMode> border_mode =
       AffineTransformation::BorderMode::kZero;
+  std::optional<AffineTransformation::Interpolation> interpolation = {};
   RunTest(input, expected_output,
           {.threshold_on_cpu = 0.99, .threshold_on_gpu = 0.99},
           GetMatrix(input, roi, keep_aspect_ratio, out_width, out_height),
-          out_width, out_height, border_mode);
+          out_width, out_height, border_mode, interpolation);
 }
 
 }  // namespace

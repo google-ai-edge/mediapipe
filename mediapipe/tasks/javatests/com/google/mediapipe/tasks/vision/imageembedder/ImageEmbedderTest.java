@@ -1,4 +1,4 @@
-// Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+// Copyright 2022 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -188,7 +188,7 @@ public class ImageEmbedderTest {
           ImageEmbedder.cosineSimilarity(
               result.embeddingResult().embeddings().get(0),
               resultRotated.embeddingResult().embeddings().get(0));
-      assertThat(similarity).isWithin(DOUBLE_DIFF_TOLERANCE).of(0.571648426f);
+      assertThat(similarity).isWithin(DOUBLE_DIFF_TOLERANCE).of(0.982316669f);
     }
 
     @Test
@@ -212,7 +212,7 @@ public class ImageEmbedderTest {
           ImageEmbedder.cosineSimilarity(
               resultRoiRotated.embeddingResult().embeddings().get(0),
               resultCrop.embeddingResult().embeddings().get(0));
-      assertThat(similarity).isWithin(DOUBLE_DIFF_TOLERANCE).of(0.62780395f);
+      assertThat(similarity).isWithin(DOUBLE_DIFF_TOLERANCE).of(0.9745944861f);
     }
   }
 

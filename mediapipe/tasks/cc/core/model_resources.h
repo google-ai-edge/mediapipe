@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -32,10 +32,10 @@ limitations under the License.
 #include "mediapipe/util/tflite/error_reporter.h"
 #include "tensorflow/lite/core/api/error_reporter.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
-#include "tensorflow/lite/core/shims/cc/kernels/register.h"
-#include "tensorflow/lite/core/shims/cc/model.h"
-#include "tensorflow/lite/core/shims/cc/model_builder.h"
-#include "tensorflow/lite/core/shims/cc/tools/verifier.h"
+#include "tensorflow/lite/kernels/register.h"
+#include "tensorflow/lite/model.h"
+#include "tensorflow/lite/model_builder.h"
+#include "tensorflow/lite/tools/verifier.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -51,8 +51,8 @@ class ModelResources {
  public:
   // Represents a TfLite model as a FlatBuffer.
   using ModelPtr =
-      std::unique_ptr<tflite_shims::FlatBufferModel,
-                      std::function<void(tflite_shims::FlatBufferModel*)>>;
+      std::unique_ptr<tflite::FlatBufferModel,
+                      std::function<void(tflite::FlatBufferModel*)>>;
 
   // Takes the ownership of the provided ExternalFile proto and creates
   // ModelResources from the proto and an op resolver object. A non-empty tag
@@ -61,7 +61,7 @@ class ModelResources {
   static absl::StatusOr<std::unique_ptr<ModelResources>> Create(
       const std::string& tag, std::unique_ptr<proto::ExternalFile> model_file,
       std::unique_ptr<tflite::OpResolver> op_resolver =
-          absl::make_unique<tflite_shims::ops::builtin::BuiltinOpResolver>());
+          absl::make_unique<tflite::ops::builtin::BuiltinOpResolver>());
 
   // Takes the ownership of the provided ExternalFile proto and creates
   // ModelResources from the proto and an op resolver mediapipe packet. A

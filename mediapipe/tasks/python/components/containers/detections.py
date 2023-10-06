@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,12 +14,13 @@
 """Detections data class."""
 
 import dataclasses
-from typing import Any, List
+from typing import Any, List, Optional
 
 from mediapipe.framework.formats import detection_pb2
 from mediapipe.framework.formats import location_data_pb2
 from mediapipe.tasks.python.components.containers import bounding_box as bounding_box_module
 from mediapipe.tasks.python.components.containers import category as category_module
+from mediapipe.tasks.python.components.containers import keypoint as keypoint_module
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 
 _DetectionListProto = detection_pb2.DetectionList
@@ -34,10 +35,12 @@ class Detection:
   Attributes:
     bounding_box: A BoundingBox object.
     categories: A list of Category objects.
+    keypoints: A list of NormalizedKeypoint objects.
   """
 
   bounding_box: bounding_box_module.BoundingBox
   categories: List[category_module.Category]
+  keypoints: Optional[List[keypoint_module.NormalizedKeypoint]] = None
 
   @doc_controls.do_not_generate_docs
   def to_pb2(self) -> _DetectionProto:
@@ -46,6 +49,8 @@ class Detection:
     label_ids = []
     scores = []
     display_names = []
+    relative_keypoints = []
+
     for category in self.categories:
       scores.append(category.score)
       if category.index:
@@ -54,6 +59,20 @@ class Detection:
         labels.append(category.category_name)
       if category.display_name:
         display_names.append(category.display_name)
+
+    if self.keypoints:
+      for keypoint in self.keypoints:
+        relative_keypoint_proto = _LocationDataProto.RelativeKeypoint()
+        if keypoint.x:
+          relative_keypoint_proto.x = keypoint.x
+        if keypoint.y:
+          relative_keypoint_proto.y = keypoint.y
+        if keypoint.label:
+          relative_keypoint_proto.keypoint_label = keypoint.label
+        if keypoint.score:
+          relative_keypoint_proto.score = keypoint.score
+        relative_keypoints.append(relative_keypoint_proto)
+
     return _DetectionProto(
         label=labels,
         label_id=label_ids,
@@ -61,28 +80,52 @@ class Detection:
         display_name=display_names,
         location_data=_LocationDataProto(
             format=_LocationDataProto.Format.BOUNDING_BOX,
-            bounding_box=self.bounding_box.to_pb2()))
+            bounding_box=self.bounding_box.to_pb2(),
+            relative_keypoints=relative_keypoints,
+        ),
+    )
 
   @classmethod
   @doc_controls.do_not_generate_docs
   def create_from_pb2(cls, pb2_obj: _DetectionProto) -> 'Detection':
     """Creates a `Detection` object from the given protobuf object."""
     categories = []
+    keypoints = []
+
     for idx, score in enumerate(pb2_obj.score):
       categories.append(
           category_module.Category(
               score=score,
               index=pb2_obj.label_id[idx]
-              if idx < len(pb2_obj.label_id) else None,
+              if idx < len(pb2_obj.label_id)
+              else None,
               category_name=pb2_obj.label[idx]
-              if idx < len(pb2_obj.label) else None,
+              if idx < len(pb2_obj.label)
+              else None,
               display_name=pb2_obj.display_name[idx]
-              if idx < len(pb2_obj.display_name) else None))
+              if idx < len(pb2_obj.display_name)
+              else None,
+          )
+      )
+
+    if pb2_obj.location_data.relative_keypoints:
+      for idx, elem in enumerate(pb2_obj.location_data.relative_keypoints):
+        keypoints.append(
+            keypoint_module.NormalizedKeypoint(
+                x=elem.x,
+                y=elem.y,
+                label=elem.keypoint_label,
+                score=elem.score,
+            )
+        )
 
     return Detection(
         bounding_box=bounding_box_module.BoundingBox.create_from_pb2(
-            pb2_obj.location_data.bounding_box),
-        categories=categories)
+            pb2_obj.location_data.bounding_box
+        ),
+        categories=categories,
+        keypoints=keypoints,
+    )
 
   def __eq__(self, other: Any) -> bool:
     """Checks if this object is equal to the given object.

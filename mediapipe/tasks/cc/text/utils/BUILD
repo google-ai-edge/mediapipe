@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ cc_library(
         "vocab_utils.h",
     ],
     deps = [
+        "//mediapipe/util:resource_util",
         "@com_google_absl//absl/container:node_hash_map",
         "@com_google_absl//absl/strings",
     ],
@@ -69,6 +70,7 @@ cc_test(
         "//mediapipe/tasks/testdata/text:mobilebert_embedding_model",
         "//mediapipe/tasks/testdata/text:regex_embedding_with_metadata",
         "//mediapipe/tasks/testdata/text:text_classifier_models",
+        "//mediapipe/tasks/testdata/text:universal_sentence_encoder_qa",
     ],
     deps = [
         ":text_model_utils",
@@ -80,6 +82,6 @@ cc_test(
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
-        "@org_tensorflow//tensorflow/lite/core/shims:cc_shims_test_util",
+        "@org_tensorflow//tensorflow/lite:test_util",
     ],
 )

@@ -32,8 +32,8 @@ float FrameDifferenceMedian(const cv::Mat& img_1, const cv::Mat& img_2) {
   color_diffs.reserve(img_1.cols * img_1.rows);
   const int channels = img_1.channels();
   for (int j = 0; j < img_1.rows; ++j) {
-    const uint8* src_1 = img_1.ptr<uint8>(j);
-    const uint8* src_2 = img_2.ptr<uint8>(j);
+    const uint8_t* src_1 = img_1.ptr<uint8_t>(j);
+    const uint8_t* src_2 = img_2.ptr<uint8_t>(j);
     const int end_i = channels * img_1.cols;
     const float inverse = 1.0f / channels;
     for (int i = 0; i < end_i;) {

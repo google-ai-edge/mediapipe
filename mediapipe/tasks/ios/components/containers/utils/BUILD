@@ -1,4 +1,4 @@
-# Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2023 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,5 +36,51 @@ objc_library(
         "//mediapipe/tasks/cc/components/containers/proto:classifications_cc_proto",
         "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
         "//mediapipe/tasks/ios/components/containers:MPPClassificationResult",
+    ],
+)
+
+objc_library(
+    name = "MPPEmbeddingHelpers",
+    srcs = ["sources/MPPEmbedding+Helpers.mm"],
+    hdrs = ["sources/MPPEmbedding+Helpers.h"],
+    deps = [
+        "//mediapipe/tasks/cc/components/containers/proto:embeddings_cc_proto",
+        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
+        "//mediapipe/tasks/ios/components/containers:MPPEmbedding",
+    ],
+)
+
+objc_library(
+    name = "MPPEmbeddingResultHelpers",
+    srcs = ["sources/MPPEmbeddingResult+Helpers.mm"],
+    hdrs = ["sources/MPPEmbeddingResult+Helpers.h"],
+    deps = [
+        ":MPPEmbeddingHelpers",
+        "//mediapipe/tasks/cc/components/containers/proto:embeddings_cc_proto",
+        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
+        "//mediapipe/tasks/ios/components/containers:MPPEmbeddingResult",
+    ],
+)
+
+objc_library(
+    name = "MPPDetectionHelpers",
+    srcs = ["sources/MPPDetection+Helpers.mm"],
+    hdrs = ["sources/MPPDetection+Helpers.h"],
+    deps = [
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/formats:location_data_cc_proto",
+        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
+        "//mediapipe/tasks/ios/components/containers:MPPDetection",
+    ],
+)
+
+objc_library(
+    name = "MPPLandmarkHelpers",
+    srcs = ["sources/MPPLandmark+Helpers.mm"],
+    hdrs = ["sources/MPPLandmark+Helpers.h"],
+    deps = [
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
+        "//mediapipe/tasks/ios/components/containers:MPPLandmark",
     ],
 )

@@ -44,6 +44,7 @@ cc_library(
     hdrs = ["one_euro_filter.h"],
     deps = [
         ":low_pass_filter",
+        "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:logging",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/time",

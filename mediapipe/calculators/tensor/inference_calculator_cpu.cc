@@ -115,7 +115,7 @@ InferenceCalculatorCpuImpl::MaybeCreateDelegate(CalculatorContext* cc) {
   const bool opts_has_delegate =
       calculator_opts.has_delegate() || !kDelegate(cc).IsEmpty();
   if (opts_has_delegate && opts_delegate.has_tflite()) {
-    // Default tflite inference requeqsted - no need to modify graph.
+    // Default tflite inference requested - no need to modify graph.
     return nullptr;
   }
 
@@ -151,8 +151,6 @@ InferenceCalculatorCpuImpl::MaybeCreateDelegate(CalculatorContext* cc) {
     auto xnnpack_opts = TfLiteXNNPackDelegateOptionsDefault();
     xnnpack_opts.num_threads =
         GetXnnpackNumThreads(opts_has_delegate, opts_delegate);
-    // TODO Remove once XNNPACK is enabled by default.
-    xnnpack_opts.flags |= TFLITE_XNNPACK_DELEGATE_FLAG_QU8;
     return TfLiteDelegatePtr(TfLiteXNNPackDelegateCreate(&xnnpack_opts),
                              &TfLiteXNNPackDelegateDelete);
   }

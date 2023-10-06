@@ -156,9 +156,9 @@ class SplitListsCalculator : public CalculatorBase {
   virtual ItemType* AddItem(ListType& list) const = 0;
 
  private:
-  std::vector<std::pair<int32, int32>> ranges_;
-  int32 max_range_end_ = -1;
-  int32 total_elements_ = 0;
+  std::vector<std::pair<int32_t, int32_t>> ranges_;
+  int32_t max_range_end_ = -1;
+  int32_t total_elements_ = 0;
   bool element_only_ = false;
   bool combine_outputs_ = false;
 };

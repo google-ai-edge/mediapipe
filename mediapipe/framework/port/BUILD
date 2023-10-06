@@ -222,6 +222,18 @@ config_setting(
     },
 )
 
+# Enable Halide when defining MEDIAPIPE_ENABLE_HALIDE to 1 in bazel command.
+# This will  automatically disable opencv, i.e. will set MEDIAPIPE_DISABLE_OPENCV to 1.
+# Note that this only applies to a select few calculators/framework components currently.
+# TODO: Improve this. This only sets MEDIAPIPE_DISABLE_OPENCV as a "defines" Make value,
+# not as a bazel "--define" variable, which has effects in C++ code but not in select() statements.
+config_setting(
+    name = "enable_halide",
+    define_values = {
+        "MEDIAPIPE_ENABLE_HALIDE": "1",
+    },
+)
+
 cc_library(
     name = "opencv_core",
     hdrs = ["opencv_core_inc.h"],
@@ -249,8 +261,8 @@ cc_library(
 )
 
 cc_library(
-    name = "opencv_highgui",
-    hdrs = ["opencv_highgui_inc.h"],
+    name = "opencv_photo",
+    hdrs = ["opencv_photo_inc.h"],
     deps = [
         ":opencv_core",
         "//third_party:opencv",
@@ -279,6 +291,15 @@ cc_library(
 cc_library(
     name = "opencv_calib3d",
     hdrs = ["opencv_calib3d_inc.h"],
+    deps = [
+        ":opencv_core",
+        "//third_party:opencv",
+    ],
+)
+
+cc_library(
+    name = "opencv_highgui",
+    hdrs = ["opencv_highgui_inc.h"],
     deps = [
         ":opencv_core",
         "//third_party:opencv",
@@ -432,4 +453,10 @@ cc_library(
     name = "vector",
     hdrs = ["vector.h"],
     deps = ["//mediapipe/framework/deps:vector"],
+)
+
+cc_library(
+    name = "requires",
+    hdrs = ["requires.h"],
+    deps = ["//mediapipe/framework/deps:requires"],
 )

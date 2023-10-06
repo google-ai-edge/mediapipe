@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@
 
 licenses(["notice"])
 
-package(
-    default_visibility = ["//mediapipe:__subpackages__"],
-)
+package(default_visibility = [
+    "//mediapipe:__subpackages__",
+])
 
 py_library(
     name = "image_preprocessing",
@@ -30,4 +30,23 @@ py_test(
     name = "image_preprocessing_test",
     srcs = ["image_preprocessing_test.py"],
     deps = [":image_preprocessing"],
+)
+
+py_library(
+    name = "image_utils",
+    srcs = ["image_utils.py"],
+)
+
+py_test(
+    name = "image_utils_test",
+    srcs = ["image_utils_test.py"],
+    deps = [
+        ":image_utils",
+        ":test_utils",
+    ],
+)
+
+py_library(
+    name = "test_utils",
+    srcs = ["test_utils.py"],
 )

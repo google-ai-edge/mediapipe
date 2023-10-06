@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -39,9 +39,9 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
-#include "tensorflow/lite/core/shims/cc/shims_test_util.h"
 #include "tensorflow/lite/kernels/builtin_op_kernels.h"
 #include "tensorflow/lite/mutable_op_resolver.h"
+#include "tensorflow/lite/test_util.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -148,7 +148,7 @@ class MobileNetQuantizedOpResolverMissingOps
       const MobileNetQuantizedOpResolverMissingOps& r) = delete;
 };
 
-class CreateTest : public tflite_shims::testing::Test {};
+class CreateTest : public tflite::testing::Test {};
 
 TEST_F(CreateTest, SucceedsWithSelectiveOpResolver) {
   auto options = std::make_unique<ImageClassifierOptions>();
@@ -233,7 +233,7 @@ TEST_F(CreateTest, FailsWithIllegalCallbackInImageOrVideoMode) {
         JoinPath("./", kTestDataDirectory, kMobileNetQuantizedWithMetadata);
     options->running_mode = running_mode;
     options->result_callback = [](absl::StatusOr<ImageClassifierResult>,
-                                  const Image& image, int64 timestamp_ms) {};
+                                  const Image& image, int64_t timestamp_ms) {};
 
     auto image_classifier = ImageClassifier::Create(std::move(options));
 
@@ -265,7 +265,7 @@ TEST_F(CreateTest, FailsWithMissingCallbackInLiveStreamMode) {
                   MediaPipeTasksStatus::kInvalidTaskGraphConfigError))));
 }
 
-class ImageModeTest : public tflite_shims::testing::Test {};
+class ImageModeTest : public tflite::testing::Test {};
 
 TEST_F(ImageModeTest, FailsWithCallingWrongMethod) {
   MP_ASSERT_OK_AND_ASSIGN(
@@ -505,11 +505,9 @@ TEST_F(ImageModeTest, SucceedsWithRotation) {
   ImageClassifierResult expected;
   expected.classifications.emplace_back(Classifications{
       /*categories=*/{
-          {/*index=*/934, /*score=*/0.6371766,
-           /*category_name=*/"cheeseburger"},
-          {/*index=*/963, /*score=*/0.049443405, /*category_name=*/"meat loaf"},
-          {/*index=*/925, /*score=*/0.047918003,
-           /*category_name=*/"guacamole"}},
+          {/*index=*/934, /*score=*/0.754467, /*category_name=*/"cheeseburger"},
+          {/*index=*/925, /*score=*/0.0288028, /*category_name=*/"guacamole"},
+          {/*index=*/932, /*score=*/0.0286119, /*category_name=*/"bagel"}},
       /*head_index=*/0,
       /*head_name=*/"probability"});
   ExpectApproximatelyEqual(results, expected);
@@ -525,9 +523,10 @@ TEST_F(ImageModeTest, SucceedsWithRegionOfInterestAndRotation) {
   options->classifier_options.max_results = 1;
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageClassifier> image_classifier,
                           ImageClassifier::Create(std::move(options)));
-  // Region-of-interest around the chair, with 90° anti-clockwise rotation.
-  RectF roi{/*left=*/0.006, /*top=*/0.1763, /*right=*/0.5702,
-            /*bottom=*/0.3049};
+  // Region-of-interest around the soccer ball, with 90° anti-clockwise
+  // rotation.
+  RectF roi{/*left=*/0.2655, /*top=*/0.45, /*right=*/0.6925,
+            /*bottom=*/0.614};
   ImageProcessingOptions image_processing_options{roi,
                                                   /*rotation_degrees=*/-90};
 
@@ -536,8 +535,8 @@ TEST_F(ImageModeTest, SucceedsWithRegionOfInterestAndRotation) {
 
   ImageClassifierResult expected;
   expected.classifications.emplace_back(
-      Classifications{/*categories=*/{{/*index=*/560, /*score=*/0.6522213,
-                                       /*category_name=*/"folding chair"}},
+      Classifications{/*categories=*/{{/*index=*/806, /*score=*/0.997684,
+                                       /*category_name=*/"soccer ball"}},
                       /*head_index=*/0,
                       /*head_name=*/"probability"});
   ExpectApproximatelyEqual(results, expected);
@@ -606,7 +605,7 @@ TEST_F(ImageModeTest, FailsWithInvalidImageProcessingOptions) {
           MediaPipeTasksStatus::kImageProcessingInvalidArgumentError))));
 }
 
-class VideoModeTest : public tflite_shims::testing::Test {};
+class VideoModeTest : public tflite::testing::Test {};
 
 TEST_F(VideoModeTest, FailsWithCallingWrongMethod) {
   MP_ASSERT_OK_AND_ASSIGN(
@@ -708,7 +707,7 @@ TEST_F(VideoModeTest, SucceedsWithRegionOfInterest) {
   MP_ASSERT_OK(image_classifier->Close());
 }
 
-class LiveStreamModeTest : public tflite_shims::testing::Test {};
+class LiveStreamModeTest : public tflite::testing::Test {};
 
 TEST_F(LiveStreamModeTest, FailsWithCallingWrongMethod) {
   MP_ASSERT_OK_AND_ASSIGN(
@@ -719,7 +718,7 @@ TEST_F(LiveStreamModeTest, FailsWithCallingWrongMethod) {
       JoinPath("./", kTestDataDirectory, kMobileNetFloatWithMetadata);
   options->running_mode = core::RunningMode::LIVE_STREAM;
   options->result_callback = [](absl::StatusOr<ImageClassifierResult>,
-                                const Image& image, int64 timestamp_ms) {};
+                                const Image& image, int64_t timestamp_ms) {};
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageClassifier> image_classifier,
                           ImageClassifier::Create(std::move(options)));
 
@@ -750,7 +749,7 @@ TEST_F(LiveStreamModeTest, FailsWithOutOfOrderInputTimestamps) {
       JoinPath("./", kTestDataDirectory, kMobileNetFloatWithMetadata);
   options->running_mode = core::RunningMode::LIVE_STREAM;
   options->result_callback = [](absl::StatusOr<ImageClassifierResult>,
-                                const Image& image, int64 timestamp_ms) {};
+                                const Image& image, int64_t timestamp_ms) {};
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageClassifier> image_classifier,
                           ImageClassifier::Create(std::move(options)));
 
@@ -769,7 +768,7 @@ TEST_F(LiveStreamModeTest, FailsWithOutOfOrderInputTimestamps) {
 struct LiveStreamModeResults {
   ImageClassifierResult classification_result;
   std::pair<int, int> image_size;
-  int64 timestamp_ms;
+  int64_t timestamp_ms;
 };
 
 TEST_F(LiveStreamModeTest, Succeeds) {
@@ -785,7 +784,7 @@ TEST_F(LiveStreamModeTest, Succeeds) {
   options->classifier_options.max_results = 3;
   options->result_callback =
       [&results](absl::StatusOr<ImageClassifierResult> classification_result,
-                 const Image& image, int64 timestamp_ms) {
+                 const Image& image, int64_t timestamp_ms) {
         MP_ASSERT_OK(classification_result.status());
         results.push_back(
             {.classification_result = std::move(classification_result).value(),
@@ -804,7 +803,7 @@ TEST_F(LiveStreamModeTest, Succeeds) {
   // number of iterations.
   ASSERT_LE(results.size(), iterations);
   ASSERT_GT(results.size(), 0);
-  int64 timestamp_ms = -1;
+  int64_t timestamp_ms = -1;
   for (const auto& result : results) {
     EXPECT_GT(result.timestamp_ms, timestamp_ms);
     timestamp_ms = result.timestamp_ms;
@@ -828,7 +827,7 @@ TEST_F(LiveStreamModeTest, SucceedsWithRegionOfInterest) {
   options->classifier_options.max_results = 1;
   options->result_callback =
       [&results](absl::StatusOr<ImageClassifierResult> classification_result,
-                 const Image& image, int64 timestamp_ms) {
+                 const Image& image, int64_t timestamp_ms) {
         MP_ASSERT_OK(classification_result.status());
         results.push_back(
             {.classification_result = std::move(classification_result).value(),
@@ -851,7 +850,7 @@ TEST_F(LiveStreamModeTest, SucceedsWithRegionOfInterest) {
   // number of iterations.
   ASSERT_LE(results.size(), iterations);
   ASSERT_GT(results.size(), 0);
-  int64 timestamp_ms = -1;
+  int64_t timestamp_ms = -1;
   for (const auto& result : results) {
     EXPECT_GT(result.timestamp_ms, timestamp_ms);
     timestamp_ms = result.timestamp_ms;

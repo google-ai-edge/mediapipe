@@ -1,4 +1,4 @@
-# Copyright 2019-2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2019-2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -354,9 +354,30 @@ def mediapipe_java_proto_srcs(name = ""):
     ))
 
     proto_src_list.append(mediapipe_java_proto_src_extractor(
+        target = "//mediapipe/framework/formats:matrix_data_java_proto_lite",
+        src_out = "com/google/mediapipe/formats/proto/MatrixDataProto.java",
+    ))
+
+    proto_src_list.append(mediapipe_java_proto_src_extractor(
         target = "//mediapipe/framework/formats:rect_java_proto_lite",
         src_out = "com/google/mediapipe/formats/proto/RectProto.java",
     ))
+
+    proto_src_list.append(mediapipe_java_proto_src_extractor(
+        target = "//mediapipe/util:color_java_proto_lite",
+        src_out = "com/google/mediapipe/util/proto/ColorProto.java",
+    ))
+
+    proto_src_list.append(mediapipe_java_proto_src_extractor(
+        target = "//mediapipe/util:label_map_java_proto_lite",
+        src_out = "com/google/mediapipe/util/proto/LabelMapProto.java",
+    ))
+
+    proto_src_list.append(mediapipe_java_proto_src_extractor(
+        target = "//mediapipe/util:render_data_java_proto_lite",
+        src_out = "com/google/mediapipe/util/proto/RenderDataProto.java",
+    ))
+
     return proto_src_list
 
 def mediapipe_logging_java_proto_srcs(name = ""):

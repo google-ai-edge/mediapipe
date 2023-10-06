@@ -68,11 +68,11 @@ StatusBuilder&& StatusBuilder::SetNoLogging() && {
   return std::move(SetNoLogging());
 }
 
-StatusBuilder::operator Status() const& {
+StatusBuilder::operator absl::Status() const& {
   return StatusBuilder(*this).JoinMessageToStatus();
 }
 
-StatusBuilder::operator Status() && { return JoinMessageToStatus(); }
+StatusBuilder::operator absl::Status() && { return JoinMessageToStatus(); }
 
 absl::Status StatusBuilder::JoinMessageToStatus() {
   if (!impl_) {

@@ -185,15 +185,15 @@ TEST_P(CalibrationWithoutIndicesTest, Succeeds) {
 
 INSTANTIATE_TEST_SUITE_P(
     ScoreCalibrationCalculatorTest, CalibrationWithoutIndicesTest,
-    Values(CalibrationTestParams{.score_transformation = "IDENTITY",
-                                 .expected_results = {0.4948505976,
-                                                      0.5059588508, 0.2, 0.2}},
+    Values(CalibrationTestParams{
+               /* score_transformation= */ "IDENTITY",
+               /* expected_results= */ {0.4948505976, 0.5059588508, 0.2, 0.2}},
            CalibrationTestParams{
-               .score_transformation = "LOG",
-               .expected_results = {0.2976901255, 0.3393665735, 0.2, 0.2}},
+               /* score_transformation= */ "LOG",
+               /* expected_results= */ {0.2976901255, 0.3393665735, 0.2, 0.2}},
            CalibrationTestParams{
-               .score_transformation = "INVERSE_LOGISTIC",
-               .expected_results = {0.3203217641, 0.3778080605, 0.2, 0.2}}),
+               /* score_transformation= */ "INVERSE_LOGISTIC",
+               /* expected_results= */ {0.3203217641, 0.3778080605, 0.2, 0.2}}),
     [](const TestParamInfo<CalibrationWithoutIndicesTest::ParamType>& info) {
       return info.param.score_transformation;
     });

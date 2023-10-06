@@ -17,9 +17,8 @@
 
 #include <string>
 
-// Temporary forward declarations for google::protobuf support on portable
-// targets. Use proto_ns inside namespace mediapipe instead of google::protobuf
-// namespace.
+// Temporary forward declarations for proto2 support on portable targets.
+// Use proto_ns inside namespace mediapipe instead of proto2 namespace.
 #include "google/protobuf/message.h"
 #include "google/protobuf/message_lite.h"
 #include "google/protobuf/repeated_field.h"

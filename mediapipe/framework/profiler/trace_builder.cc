@@ -57,7 +57,6 @@ struct hash<mediapipe::TaskId> {
 namespace mediapipe {
 
 namespace {
-
 void BasicTraceEventTypes(TraceEventRegistry* result) {
   // The initializer arguments below are: event_type, description,
   // is_packet_event, is_stream_event, id_event_data.
@@ -84,6 +83,15 @@ void BasicTraceEventTypes(TraceEventRegistry* result) {
        "A time measured by GPU clock and by CPU clock.", true, false},
       {TraceEvent::PACKET_QUEUED, "An input queue size when a packet arrives.",
        true, true, false},
+
+      {TraceEvent::GPU_TASK_INVOKE, "CPU timing for initiating a GPU task."},
+      {TraceEvent::TPU_TASK_INVOKE, "CPU timing for initiating a TPU task."},
+      {TraceEvent::CPU_TASK_INVOKE, "CPU timing for initiating a CPU task."},
+      {TraceEvent::GPU_TASK_INVOKE_ADVANCED,
+       "CPU timing for initiating a GPU task bypassing the TFLite "
+       "interpreter."},
+      {TraceEvent::TPU_TASK_INVOKE_ASYNC,
+       "CPU timing for async initiation of a TPU task."},
   };
   for (const TraceEventType& t : basic_types) {
     (*result)[t.event_type()] = t;

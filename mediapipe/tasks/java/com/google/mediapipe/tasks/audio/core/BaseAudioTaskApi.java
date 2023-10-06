@@ -1,4 +1,4 @@
-// Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+// Copyright 2022 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -164,12 +164,14 @@ public class BaseAudioTaskApi implements AutoCloseable {
    *
    * @param numChannels the number of audio channels.
    * @param sampleRate the audio sample rate.
+   * @param requiredInputBufferSize the required input buffer size in number of float elements.
    * @return an {@link android.media.AudioRecord} instance in {@link
    *     android.media.AudioRecord#STATE_INITIALIZED}
    * @throws IllegalArgumentException if the model required channel count is unsupported
    * @throws IllegalStateException if AudioRecord instance failed to initialize
    */
-  public static AudioRecord createAudioRecord(int numChannels, int sampleRate) {
+  public AudioRecord createAudioRecord(
+      int numChannels, int sampleRate, int requiredInputBufferSize) {
     int channelConfig = 0;
     switch (numChannels) {
       case 1:
@@ -189,6 +191,11 @@ public class BaseAudioTaskApi implements AutoCloseable {
         || bufferSizeInBytes == AudioRecord.ERROR_BAD_VALUE) {
       throw new IllegalStateException(
           String.format("AudioRecord.getMinBufferSize failed. Returned: %d", bufferSizeInBytes));
+    }
+    int bufferSizeMultiplier = 2;
+    int modelRequiredBufferSize = requiredInputBufferSize * Float.BYTES * bufferSizeMultiplier;
+    if (bufferSizeInBytes < modelRequiredBufferSize) {
+      bufferSizeInBytes = modelRequiredBufferSize;
     }
     AudioRecord audioRecord =
         new AudioRecord(
@@ -215,8 +222,8 @@ public class BaseAudioTaskApi implements AutoCloseable {
    * @throws IllegalArgumentException if the model required channel count is unsupported
    * @throws IllegalStateException if AudioRecord instance failed to initialize
    */
-  public static AudioRecord createAudioRecord() {
+  public AudioRecord createAudioRecord() {
     // TODO: Support creating AudioRecord based on the model specifications.
-    return createAudioRecord(1, 16000);
+    return createAudioRecord(1, 16000, 16000);
   }
 }

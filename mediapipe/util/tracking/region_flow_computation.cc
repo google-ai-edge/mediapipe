@@ -149,7 +149,7 @@ void GetPatchDescriptorAtPoint(const cv::Mat& rgb_frame, const Vector2_i& pt,
   // Compute channel sums and means.
   int sum[3] = {0, 0, 0};
   for (int y = 0; y < diameter; ++y) {
-    const uint8* data = rgb_window.ptr<uint8>(y);
+    const uint8_t* data = rgb_window.ptr<uint8_t>(y);
     for (int x = 0; x < diameter; ++x, data += 3) {
       for (int c = 0; c < 3; ++c) {
         sum[c] += data[c];
@@ -175,7 +175,7 @@ void GetPatchDescriptorAtPoint(const cv::Mat& rgb_frame, const Vector2_i& pt,
       // using N = diameter * diameter and sum[c] = N * mean[c].
       product[c][d] = -sum[c] * sum[d] * denom;
       for (int y = 0; y < diameter; ++y) {
-        const uint8* data = rgb_window.ptr<uint8>(y);
+        const uint8_t* data = rgb_window.ptr<uint8_t>(y);
         for (int x = 0; x < diameter; ++x, data += 3) {
           product[c][d] += static_cast<int>(data[c]) * data[d];
         }
@@ -355,7 +355,7 @@ struct RegionFlowComputation::FrameTrackingData {
   int frame_num = 0;
 
   // Timestamp of the underlying frame.
-  int64 timestamp_usec = 0;
+  int64_t timestamp_usec = 0;
 
   // Difference of this FrameTrackingData's tiny_image w.r.t. previous one,
   // i.e. one frame earlier.
@@ -407,7 +407,7 @@ struct RegionFlowComputation::FrameTrackingData {
     }
   }
 
-  void Reset(int frame_num_, int64 timestamp_) {
+  void Reset(int frame_num_, int64_t timestamp_) {
     frame_num = frame_num_;
     timestamp_usec = timestamp_;
     pyramid_levels = 0;
@@ -834,19 +834,19 @@ RegionFlowComputation::RegionFlowComputation(
 RegionFlowComputation::~RegionFlowComputation() {}
 
 bool RegionFlowComputation::AddImage(const cv::Mat& source,
-                                     int64 timestamp_usec) {
+                                     int64_t timestamp_usec) {
   return AddImageAndTrack(source, cv::Mat(), timestamp_usec, Homography());
 }
 
 bool RegionFlowComputation::AddImageWithSeed(
-    const cv::Mat& source, int64 timestamp_usec,
+    const cv::Mat& source, int64_t timestamp_usec,
     const Homography& initial_transform) {
   return AddImageAndTrack(source, cv::Mat(), timestamp_usec, initial_transform);
 }
 
 bool RegionFlowComputation::AddImageWithMask(const cv::Mat& source,
                                              const cv::Mat& source_mask,
-                                             int64 timestamp_usec) {
+                                             int64_t timestamp_usec) {
   return AddImageAndTrack(source, source_mask, timestamp_usec, Homography());
 }
 
@@ -1035,7 +1035,7 @@ bool RegionFlowComputation::InitFrame(const cv::Mat& source,
 }
 
 bool RegionFlowComputation::AddImageAndTrack(
-    const cv::Mat& source, const cv::Mat& source_mask, int64 timestamp_usec,
+    const cv::Mat& source, const cv::Mat& source_mask, int64_t timestamp_usec,
     const Homography& initial_transform) {
   VLOG(1) << "Processing frame " << frame_num_ << " at " << timestamp_usec;
   MEASURE_TIME << "AddImageAndTrack";
@@ -1622,12 +1622,12 @@ inline void SetMaskNeighborhood(int mask_x, int mask_y, cv::Mat* mask) {
 
   if (!add) {
     for (int i = mask_start_y; i <= mask_end_y; ++i) {
-      uint8* mask_ptr = mask->ptr<uint8>(i) + mask_start_x;
+      uint8_t* mask_ptr = mask->ptr<uint8_t>(i) + mask_start_x;
       memset(mask_ptr, K, mask_dx * sizeof(*mask_ptr));
     }
   } else {
     for (int i = mask_start_y; i <= mask_end_y; ++i) {
-      uint8* mask_ptr = mask->ptr<uint8>(i);
+      uint8_t* mask_ptr = mask->ptr<uint8_t>(i);
       for (int j = mask_start_x; j <= mask_end_x; ++j) {
         mask_ptr[j] = (mask_ptr[j] & 0x7F) + K;  // Limit to 128.
       }
@@ -1764,7 +1764,7 @@ void RegionFlowComputation::AdaptiveGoodFeaturesToTrack(
         const int mask_y = corner_y * mask_scale;
 
         // Test if neighboring element is already set.
-        if (mask->at<uint8>(mask_y, mask_x) >= 1) {
+        if (mask->at<uint8_t>(mask_y, mask_x) >= 1) {
           continue;
         }
 
@@ -1829,8 +1829,8 @@ void RegionFlowComputation::AdaptiveGoodFeaturesToTrack(
             }
 
             // Map corner pointer to x and y location.
-            const int offset = reinterpret_cast<const uint8*>(corner_ptr) -
-                               eig_image->ptr<const uint8>(0);
+            const int offset = reinterpret_cast<const uint8_t*>(corner_ptr) -
+                               eig_image->ptr<const uint8_t>(0);
 
             const int corner_y = offset / eig_image->step[0];
             const int corner_x =
@@ -1846,7 +1846,7 @@ void RegionFlowComputation::AdaptiveGoodFeaturesToTrack(
             const int mask_y = corner_y * mask_scale;
 
             // Test if neighboring element is already set.
-            if (mask->at<uint8>(mask_y, mask_x) >= 1) {
+            if (mask->at<uint8_t>(mask_y, mask_x) >= 1) {
               continue;
             }
 
@@ -2208,7 +2208,7 @@ void RegionFlowComputation::RemoveFeaturesOutsideMask(FrameTrackingData* data) {
   for (int k = data->features.size() - 1; k >= 0; --k) {
     const int x = static_cast<int>(data->features[k].x + 0.5);
     const int y = static_cast<int>(data->features[k].y + 0.5);
-    if (data->mask.at<uint8>(y, x) == 0) {
+    if (data->mask.at<uint8_t>(y, x) == 0) {
       data->RemoveFeature(k);
     }
   }
@@ -2290,7 +2290,7 @@ void RegionFlowComputation::ExtractFeatures(
   if (!data->mask.empty()) {
     cv::resize(data->mask, mask, mask.size(), 0, 0, cv::INTER_NEAREST);
     for (int y = 0; y < mask.rows; ++y) {
-      uint8* mask_ptr = mask.ptr<uint8>(y);
+      uint8_t* mask_ptr = mask.ptr<uint8_t>(y);
       for (int x = 0; x < mask.cols; ++x) {
         mask_ptr[x] = mask_ptr[x] == 0 ? 1 : 0;
       }
@@ -2403,7 +2403,7 @@ void RegionFlowComputation::ExtractFeatures(
       // to "join", without having to explicitly represent this.
       // Value of 2 improves number of connected features.
       constexpr int kMaxFeaturesPerBin = 1;
-      if (mask.at<uint8>(mask_y, mask_x) >= kMaxFeaturesPerBin) {
+      if (mask.at<uint8_t>(mask_y, mask_x) >= kMaxFeaturesPerBin) {
         data->actively_discarded_tracked_ids.push_back(track_id);
         continue;
       }

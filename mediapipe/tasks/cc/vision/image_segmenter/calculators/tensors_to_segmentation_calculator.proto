@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,9 +18,12 @@ syntax = "proto2";
 // TODO: consolidate TensorToSegmentationCalculator.
 package mediapipe.tasks;
 
-import "mediapipe/framework/calculator.proto";
+import "mediapipe/framework/calculator_options.proto";
 import "mediapipe/tasks/cc/vision/image_segmenter/proto/segmenter_options.proto";
 import "mediapipe/util/label_map.proto";
+
+option java_package = "com.google.mediapipe.tasks";
+option java_outer_classname = "TensorsToSegmentationCalculatorOptionsProto";
 
 message TensorsToSegmentationCalculatorOptions {
   extend mediapipe.CalculatorOptions {

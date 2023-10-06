@@ -13,24 +13,24 @@
 # limitations under the License.
 #
 
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 
 licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
-proto_library(
+mediapipe_proto_library(
     name = "tone_models_proto",
     srcs = ["tone_models.proto"],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "tone_estimation_proto",
     srcs = ["tone_estimation.proto"],
     deps = [":tone_models_proto"],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "region_flow_computation_proto",
     srcs = ["region_flow_computation.proto"],
     deps = [
@@ -38,17 +38,17 @@ proto_library(
     ],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "motion_saliency_proto",
     srcs = ["motion_saliency.proto"],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "motion_estimation_proto",
     srcs = ["motion_estimation.proto"],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "motion_analysis_proto",
     srcs = ["motion_analysis.proto"],
     deps = [
@@ -58,33 +58,33 @@ proto_library(
     ],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "region_flow_proto",
     srcs = ["region_flow.proto"],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "motion_models_proto",
     srcs = ["motion_models.proto"],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "camera_motion_proto",
     srcs = ["camera_motion.proto"],
     deps = [":motion_models_proto"],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "push_pull_filtering_proto",
     srcs = ["push_pull_filtering.proto"],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "frame_selection_solution_evaluator_proto",
     srcs = ["frame_selection_solution_evaluator.proto"],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "frame_selection_proto",
     srcs = ["frame_selection.proto"],
     deps = [
@@ -94,7 +94,7 @@ proto_library(
     ],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "flow_packager_proto",
     srcs = ["flow_packager.proto"],
     deps = [
@@ -103,7 +103,7 @@ proto_library(
     ],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "tracking_proto",
     srcs = ["tracking.proto"],
     deps = [
@@ -111,153 +111,24 @@ proto_library(
     ],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "box_tracker_proto",
     srcs = ["box_tracker.proto"],
     deps = [":tracking_proto"],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "tracked_detection_manager_config_proto",
     srcs = ["tracked_detection_manager_config.proto"],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "box_detector_proto",
     srcs = ["box_detector.proto"],
     deps = [
         ":box_tracker_proto",
         ":region_flow_proto",
     ],
-)
-
-mediapipe_cc_proto_library(
-    name = "tone_models_cc_proto",
-    srcs = ["tone_models.proto"],
-    deps = [":tone_models_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "tone_estimation_cc_proto",
-    srcs = ["tone_estimation.proto"],
-    cc_deps = [":tone_models_cc_proto"],
-    deps = [":tone_estimation_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "region_flow_computation_cc_proto",
-    srcs = ["region_flow_computation.proto"],
-    cc_deps = [
-        ":tone_estimation_cc_proto",
-        ":tone_models_cc_proto",
-    ],
-    deps = [":region_flow_computation_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "motion_saliency_cc_proto",
-    srcs = ["motion_saliency.proto"],
-    deps = [":motion_saliency_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "motion_estimation_cc_proto",
-    srcs = ["motion_estimation.proto"],
-    deps = [":motion_estimation_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "motion_analysis_cc_proto",
-    srcs = ["motion_analysis.proto"],
-    cc_deps = [
-        ":motion_estimation_cc_proto",
-        ":motion_saliency_cc_proto",
-        ":region_flow_computation_cc_proto",
-    ],
-    deps = [":motion_analysis_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "region_flow_cc_proto",
-    srcs = ["region_flow.proto"],
-    cc_deps = [":motion_models_cc_proto"],
-    deps = [":region_flow_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "motion_models_cc_proto",
-    srcs = ["motion_models.proto"],
-    deps = [":motion_models_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "camera_motion_cc_proto",
-    srcs = ["camera_motion.proto"],
-    cc_deps = [":motion_models_cc_proto"],
-    deps = [":camera_motion_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "push_pull_filtering_cc_proto",
-    srcs = ["push_pull_filtering.proto"],
-    deps = [":push_pull_filtering_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "frame_selection_solution_evaluator_cc_proto",
-    srcs = ["frame_selection_solution_evaluator.proto"],
-    deps = [":frame_selection_solution_evaluator_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "frame_selection_cc_proto",
-    srcs = ["frame_selection.proto"],
-    cc_deps = [
-        ":camera_motion_cc_proto",
-        ":frame_selection_solution_evaluator_cc_proto",
-        ":region_flow_cc_proto",
-    ],
-    deps = [":frame_selection_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "flow_packager_cc_proto",
-    srcs = ["flow_packager.proto"],
-    cc_deps = [
-        ":motion_models_cc_proto",
-        ":region_flow_cc_proto",
-    ],
-    deps = [":flow_packager_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "tracking_cc_proto",
-    srcs = ["tracking.proto"],
-    cc_deps = [":motion_models_cc_proto"],
-    deps = [":tracking_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "box_tracker_cc_proto",
-    srcs = ["box_tracker.proto"],
-    cc_deps = [":tracking_cc_proto"],
-    deps = [":box_tracker_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "tracked_detection_manager_config_cc_proto",
-    srcs = ["tracked_detection_manager_config.proto"],
-    deps = [":tracked_detection_manager_config_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "box_detector_cc_proto",
-    srcs = ["box_detector.proto"],
-    cc_deps = [
-        ":box_tracker_cc_proto",
-        ":region_flow_cc_proto",
-    ],
-    deps = [":box_detector_proto"],
 )
 
 cc_library(

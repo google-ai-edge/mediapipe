@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ message SegmenterOptions {
     CONFIDENCE_MASK = 2;
   }
   // Optional output mask type.
-  optional OutputType output_type = 1 [default = CATEGORY_MASK];
+  optional OutputType output_type = 1 [deprecated = true];
 
   // Supported activation functions for filtering.
   enum Activation {

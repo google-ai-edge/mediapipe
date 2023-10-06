@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -37,8 +37,8 @@ limitations under the License.
 #include "mediapipe/util/tflite/error_reporter.h"
 #include "tensorflow/lite/core/api/error_reporter.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
-#include "tensorflow/lite/core/shims/cc/model_builder.h"
-#include "tensorflow/lite/core/shims/cc/tools/verifier.h"
+#include "tensorflow/lite/model_builder.h"
+#include "tensorflow/lite/tools/verifier.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -52,7 +52,7 @@ using ::mediapipe::tasks::metadata::ModelMetadataExtractor;
 
 bool ModelResources::Verifier::Verify(const char* data, int length,
                                       tflite::ErrorReporter* reporter) {
-  return tflite_shims::Verify(data, length, reporter);
+  return tflite::Verify(data, length, reporter);
 }
 
 ModelResources::ModelResources(const std::string& tag,
@@ -124,7 +124,7 @@ absl::Status ModelResources::BuildModelFromExternalFileProto() {
   // and that it uses only operators that are supported by the OpResolver
   // that was passed to the ModelResources constructor, and then builds
   // the model from the buffer.
-  auto model = tflite_shims::FlatBufferModel::VerifyAndBuildFromBuffer(
+  auto model = tflite::FlatBufferModel::VerifyAndBuildFromBuffer(
       buffer_data, buffer_size, &verifier_, &error_reporter_);
   if (model == nullptr) {
     static constexpr char kInvalidFlatbufferMessage[] =
@@ -151,8 +151,7 @@ absl::Status ModelResources::BuildModelFromExternalFileProto() {
   }
 
   model_packet_ = MakePacket<ModelPtr>(
-      model.release(),
-      [](tflite_shims::FlatBufferModel* model) { delete model; });
+      model.release(), [](tflite::FlatBufferModel* model) { delete model; });
   ASSIGN_OR_RETURN(auto model_metadata_extractor,
                    metadata::ModelMetadataExtractor::CreateFromModelBuffer(
                        buffer_data, buffer_size));

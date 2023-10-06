@@ -66,6 +66,10 @@ class CalculatorState {
   const T& Options() const {
     return options_.Get<T>();
   }
+  template <class T>
+  bool HasOptions() const {
+    return options_.Has<T>();
+  }
   const std::string& NodeName() const { return node_name_; }
   const int& NodeId() const { return node_id_; }
 

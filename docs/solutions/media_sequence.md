@@ -1,7 +1,8 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe/solutions/guide#legacy
 title: Dataset Preparation with MediaSequence
-parent: Solutions
+parent: MediaPipe Legacy Solutions
 nav_order: 15
 ---
 
@@ -17,6 +18,14 @@ nav_order: 15
 {:toc}
 </details>
 ---
+
+**Attention:** *Thank you for your interest in MediaPipe Solutions.
+We have ended support for this MediaPipe Legacy Solution as of March 1, 2023.
+For more information, see the new
+[MediaPipe Solutions](https://developers.google.com/mediapipe/solutions/guide#legacy)
+site.*
+
+----
 
 ## Overview
 
@@ -85,7 +94,7 @@ process new data sets, in the documentation of
 
     MediaSequence uses SequenceExamples as the format of both inputs and
     outputs. Annotations are encoded as inputs in a SequenceExample of metadata
-    that defines the labels and the path to the cooresponding video file. This
+    that defines the labels and the path to the corresponding video file. This
     metadata is passed as input to the C++ `media_sequence_demo` binary, and the
     output is a SequenceExample filled with images and annotations ready for
     model training.

@@ -1,4 +1,4 @@
-// Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+// Copyright 2022 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ extern NSString *const MPPTasksErrorDomain;
  * @param error Pointer to the memory location where errors if any should be saved. If `nil`, no
  * error will be saved.
  *
- * @return Pointer to the allocated block of memory on successfull allocation. `nil` in case as
+ * @return Pointer to the allocated block of memory on successful allocation. `nil` in case as
  * error is encountered because of invalid `memSize`. If failure is due to any other reason, method
  * terminates program execution.
  */

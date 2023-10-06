@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -129,9 +129,17 @@ absl::StatusOr<std::unique_ptr<ObjectDetector>> ObjectDetector::Create(
           if (status_or_packets.value()[kImageOutStreamName].IsEmpty()) {
             return;
           }
+          Packet image_packet = status_or_packets.value()[kImageOutStreamName];
           Packet detections_packet =
               status_or_packets.value()[kDetectionsOutStreamName];
-          Packet image_packet = status_or_packets.value()[kImageOutStreamName];
+          if (detections_packet.IsEmpty()) {
+            Packet empty_packet =
+                status_or_packets.value()[kDetectionsOutStreamName];
+            result_callback(
+                {ConvertToDetectionResult({})}, image_packet.Get<Image>(),
+                empty_packet.Timestamp().Value() / kMicroSecondsPerMilliSecond);
+            return;
+          }
           result_callback(ConvertToDetectionResult(
                               detections_packet.Get<std::vector<Detection>>()),
                           image_packet.Get<Image>(),
@@ -157,20 +165,23 @@ absl::StatusOr<ObjectDetectorResult> ObjectDetector::Detect(
         absl::StrCat("GPU input images are currently not supported."),
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  ASSIGN_OR_RETURN(
-      NormalizedRect norm_rect,
-      ConvertToNormalizedRect(image_processing_options, /*roi_allowed=*/false));
+  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                   ConvertToNormalizedRect(image_processing_options, image,
+                                           /*roi_allowed=*/false));
   ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessImageData(
           {{kImageInStreamName, MakePacket<Image>(std::move(image))},
            {kNormRectName, MakePacket<NormalizedRect>(std::move(norm_rect))}}));
+  if (output_packets[kDetectionsOutStreamName].IsEmpty()) {
+    return {ConvertToDetectionResult({})};
+  }
   return ConvertToDetectionResult(
       output_packets[kDetectionsOutStreamName].Get<std::vector<Detection>>());
 }
 
 absl::StatusOr<ObjectDetectorResult> ObjectDetector::DetectForVideo(
-    mediapipe::Image image, int64 timestamp_ms,
+    mediapipe::Image image, int64_t timestamp_ms,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
@@ -178,9 +189,9 @@ absl::StatusOr<ObjectDetectorResult> ObjectDetector::DetectForVideo(
         absl::StrCat("GPU input images are currently not supported."),
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  ASSIGN_OR_RETURN(
-      NormalizedRect norm_rect,
-      ConvertToNormalizedRect(image_processing_options, /*roi_allowed=*/false));
+  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                   ConvertToNormalizedRect(image_processing_options, image,
+                                           /*roi_allowed=*/false));
   ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessVideoData(
@@ -190,12 +201,15 @@ absl::StatusOr<ObjectDetectorResult> ObjectDetector::DetectForVideo(
            {kNormRectName,
             MakePacket<NormalizedRect>(std::move(norm_rect))
                 .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))}}));
+  if (output_packets[kDetectionsOutStreamName].IsEmpty()) {
+    return {ConvertToDetectionResult({})};
+  }
   return ConvertToDetectionResult(
       output_packets[kDetectionsOutStreamName].Get<std::vector<Detection>>());
 }
 
 absl::Status ObjectDetector::DetectAsync(
-    Image image, int64 timestamp_ms,
+    Image image, int64_t timestamp_ms,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
@@ -203,9 +217,9 @@ absl::Status ObjectDetector::DetectAsync(
         absl::StrCat("GPU input images are currently not supported."),
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  ASSIGN_OR_RETURN(
-      NormalizedRect norm_rect,
-      ConvertToNormalizedRect(image_processing_options, /*roi_allowed=*/false));
+  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                   ConvertToNormalizedRect(image_processing_options, image,
+                                           /*roi_allowed=*/false));
   return SendLiveStreamData(
       {{kImageInStreamName,
         MakePacket<Image>(std::move(image))

@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -207,7 +207,7 @@ class SingleHandGestureRecognizerGraph : public core::ModelTaskGraph {
                                      HandGestureRecognizerGraphOptions* options,
                                      bool is_copy) {
     ASSIGN_OR_RETURN(const auto gesture_embedder_file,
-                     resources.GetModelFile(kGestureEmbedderTFLiteName));
+                     resources.GetFile(kGestureEmbedderTFLiteName));
     auto* gesture_embedder_graph_options =
         options->mutable_gesture_embedder_graph_options();
     SetExternalFile(gesture_embedder_file,
@@ -218,9 +218,8 @@ class SingleHandGestureRecognizerGraph : public core::ModelTaskGraph {
         options->base_options(),
         gesture_embedder_graph_options->mutable_base_options());
 
-    ASSIGN_OR_RETURN(
-        const auto canned_gesture_classifier_file,
-        resources.GetModelFile(kCannedGestureClassifierTFLiteName));
+    ASSIGN_OR_RETURN(const auto canned_gesture_classifier_file,
+                     resources.GetFile(kCannedGestureClassifierTFLiteName));
     auto* canned_gesture_classifier_graph_options =
         options->mutable_canned_gesture_classifier_graph_options();
     SetExternalFile(
@@ -233,7 +232,7 @@ class SingleHandGestureRecognizerGraph : public core::ModelTaskGraph {
         canned_gesture_classifier_graph_options->mutable_base_options());
 
     const auto custom_gesture_classifier_file =
-        resources.GetModelFile(kCustomGestureClassifierTFLiteName);
+        resources.GetFile(kCustomGestureClassifierTFLiteName);
     if (custom_gesture_classifier_file.ok()) {
       has_custom_gesture_classifier = true;
       auto* custom_gesture_classifier_graph_options =
@@ -375,22 +374,22 @@ class SingleHandGestureRecognizerGraph : public core::ModelTaskGraph {
     // Inference for custom gesture classifier if it exists.
     if (has_custom_gesture_classifier) {
       ASSIGN_OR_RETURN(
-          auto gesture_clasification_list,
+          auto gesture_classification_list,
           GetGestureClassificationList(
               sub_task_model_resources.custom_gesture_classifier_model_resource,
               graph_options.custom_gesture_classifier_graph_options(),
               embedding_tensors, graph));
-      gesture_clasification_list >> combine_predictions.In(classifier_nums++);
+      gesture_classification_list >> combine_predictions.In(classifier_nums++);
     }
 
     // Inference for canned gesture classifier.
     ASSIGN_OR_RETURN(
-        auto gesture_clasification_list,
+        auto gesture_classification_list,
         GetGestureClassificationList(
             sub_task_model_resources.canned_gesture_classifier_model_resource,
             graph_options.canned_gesture_classifier_graph_options(),
             embedding_tensors, graph));
-    gesture_clasification_list >> combine_predictions.In(classifier_nums++);
+    gesture_classification_list >> combine_predictions.In(classifier_nums++);
 
     auto combined_classification_list =
         combine_predictions.Out(kPredictionTag).Cast<ClassificationList>();

@@ -31,12 +31,12 @@ namespace {
 
 using ::testing::HasSubstr;
 
-const int64 kTimestamp = 0;
+const int64_t kTimestamp = 0;
 const int kOriginalWidth = 100;
 const int kOriginalHeight = 100;
 const double kTargetAspectRatio = 1.5;
 const int kNumKeyFrames = 5;
-const int64 kKeyFrameTimestampDiff = 1e6 / kNumKeyFrames;
+const int64_t kKeyFrameTimestampDiff = 1e6 / kNumKeyFrames;
 const int kTargetWidth = 50;
 const int kTargetHeight = 50;
 
@@ -874,7 +874,7 @@ TEST(UtilTest, ComputeSceneStaticBordersSizeHasBorders) {
 // Checks that FindSolidBackgroundColor checks output not null.
 TEST(UtilTest, FindSolidBackgroundColorChecksOutputNotNull) {
   std::vector<StaticFeatures> static_features;
-  std::vector<int64> static_features_timestamps;
+  std::vector<int64_t> static_features_timestamps;
   const double min_fraction_solid_background_color = 0.8;
   bool has_solid_background_color;
   PiecewiseLinearFunction l_function, a_function, b_function;
@@ -903,7 +903,7 @@ TEST(UtilTest, FindSolidBackgroundColorReturnsTrue) {
   color->set_r(255);
   color->set_g(255);
   color->set_b(255);
-  std::vector<int64> static_features_timestamps(1);
+  std::vector<int64_t> static_features_timestamps(1);
   static_features_timestamps[0] = 0;
   const double min_fraction_solid_background_color = 0.8;
   bool has_solid_background_color;
@@ -920,7 +920,7 @@ TEST(UtilTest, FindSolidBackgroundColorReturnsTrue) {
 // background color.
 TEST(UtilTest, FindSolidBackgroundColorReturnsFalse) {
   std::vector<StaticFeatures> static_features(1);
-  std::vector<int64> static_features_timestamps(1);
+  std::vector<int64_t> static_features_timestamps(1);
   static_features_timestamps[0] = 0;
   const double min_fraction_solid_background_color = 0.8;
   bool has_solid_background_color;
@@ -935,12 +935,12 @@ TEST(UtilTest, FindSolidBackgroundColorReturnsFalse) {
 
 // Checks that FindSolidBackgroundColor sets the interpolation functions.
 TEST(UtilTest, FindSolidBackgroundColorSetsInterpolationFunctions) {
-  const uint8 rgb1[] = {255, 255, 0};  // cyan in bgr
+  const uint8_t rgb1[] = {255, 255, 0};  // cyan in bgr
   const double lab1[] = {91.1133, -48.0938, -14.125};
-  const int64 time1 = 0;
-  const uint8 rgb2[] = {255, 0, 255};  // magenta in bgr
+  const int64_t time1 = 0;
+  const uint8_t rgb2[] = {255, 0, 255};  // magenta in bgr
   const double lab2[] = {60.321, 98.2344, -60.8281};
-  const int64 time2 = 2000;
+  const int64_t time2 = 2000;
   std::vector<StaticFeatures> static_features(2);
   auto* color1 = static_features[0].mutable_solid_background();
   color1->set_r(rgb1[0]);
@@ -950,7 +950,7 @@ TEST(UtilTest, FindSolidBackgroundColorSetsInterpolationFunctions) {
   color2->set_r(rgb2[0]);
   color2->set_g(rgb2[1]);
   color2->set_b(rgb2[2]);
-  std::vector<int64> static_features_timestamps(2);
+  std::vector<int64_t> static_features_timestamps(2);
   static_features_timestamps[0] = time1;
   static_features_timestamps[1] = time2;
   const double min_fraction_solid_background_color = 0.8;

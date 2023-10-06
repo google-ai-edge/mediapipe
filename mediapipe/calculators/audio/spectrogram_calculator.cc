@@ -182,12 +182,12 @@ class SpectrogramCalculator : public CalculatorBase {
   int frame_duration_samples_;
   int frame_overlap_samples_;
   // How many samples we've been passed, used for checking input time stamps.
-  int64 cumulative_input_samples_;
+  int64_t cumulative_input_samples_;
   // How many frames we've emitted, used for calculating output time stamps.
-  int64 cumulative_completed_frames_;
+  int64_t cumulative_completed_frames_;
   // How many frames were emitted last, used for estimating the timestamp on
   // Close when use_local_timestamp_ is true;
-  int64 last_completed_frames_;
+  int64_t last_completed_frames_;
   Timestamp initial_input_timestamp_;
   int num_input_channels_;
   // How many frequency bins we emit (=N_FFT/2 + 1).
@@ -209,6 +209,23 @@ REGISTER_CALCULATOR(SpectrogramCalculator);
 // =10/ln(10)*ln(SQUARED_MAGNITUDE).
 // Factor to convert ln(SQUARED_MAGNITUDE) to deciBels = 10.0/ln(10.0).
 const float SpectrogramCalculator::kLnSquaredMagnitudeToDb = 4.342944819032518;
+
+namespace {
+std::unique_ptr<audio_dsp::WindowFunction> MakeWindowFun(
+    const SpectrogramCalculatorOptions::WindowType window_type) {
+  switch (window_type) {
+    // The cosine window and square root of Hann are equivalent.
+    case SpectrogramCalculatorOptions::COSINE:
+    case SpectrogramCalculatorOptions::SQRT_HANN:
+      return std::make_unique<audio_dsp::CosineWindow>();
+    case SpectrogramCalculatorOptions::HANN:
+      return std::make_unique<audio_dsp::HannWindow>();
+    case SpectrogramCalculatorOptions::HAMMING:
+      return std::make_unique<audio_dsp::HammingWindow>();
+  }
+  return nullptr;
+}
+}  // namespace
 
 absl::Status SpectrogramCalculator::Open(CalculatorContext* cc) {
   SpectrogramCalculatorOptions spectrogram_options =
@@ -266,28 +283,14 @@ absl::Status SpectrogramCalculator::Open(CalculatorContext* cc) {
 
   output_scale_ = spectrogram_options.output_scale();
 
-  std::vector<double> window;
-  switch (spectrogram_options.window_type()) {
-    case SpectrogramCalculatorOptions::COSINE:
-      audio_dsp::CosineWindow().GetPeriodicSamples(frame_duration_samples_,
-                                                   &window);
-      break;
-    case SpectrogramCalculatorOptions::HANN:
-      audio_dsp::HannWindow().GetPeriodicSamples(frame_duration_samples_,
-                                                 &window);
-      break;
-    case SpectrogramCalculatorOptions::HAMMING:
-      audio_dsp::HammingWindow().GetPeriodicSamples(frame_duration_samples_,
-                                                    &window);
-      break;
-    case SpectrogramCalculatorOptions::SQRT_HANN: {
-      audio_dsp::HannWindow().GetPeriodicSamples(frame_duration_samples_,
-                                                 &window);
-      absl::c_transform(window, window.begin(),
-                        [](double x) { return std::sqrt(x); });
-      break;
-    }
+  auto window_fun = MakeWindowFun(spectrogram_options.window_type());
+  if (window_fun == nullptr) {
+    return absl::Status(absl::StatusCode::kInvalidArgument,
+                        absl::StrCat("Invalid window type ",
+                                     spectrogram_options.window_type()));
   }
+  std::vector<double> window;
+  window_fun->GetPeriodicSamples(frame_duration_samples_, &window);
 
   // Propagate settings down to the actual Spectrogram object.
   spectrogram_generators_.clear();
@@ -433,9 +436,9 @@ absl::Status SpectrogramCalculator::ProcessVectorToOutput(
 absl::Status SpectrogramCalculator::ProcessVector(const Matrix& input_stream,
                                                   CalculatorContext* cc) {
   switch (output_type_) {
-    // These blocks deliberately ignore clang-format to preserve the
-    // "silhouette" of the different cases.
-    // clang-format off
+      // These blocks deliberately ignore clang-format to preserve the
+      // "silhouette" of the different cases.
+      // clang-format off
     case SpectrogramCalculatorOptions::COMPLEX: {
       return ProcessVectorToOutput(
           input_stream,

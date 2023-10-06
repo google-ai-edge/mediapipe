@@ -679,7 +679,7 @@ REGISTER_CALCULATOR(BoundToPacketCalculator);
 // A Calculator that produces packets at timestamps beyond the input timestamp.
 class FuturePacketCalculator : public CalculatorBase {
  public:
-  static constexpr int64 kOutputFutureMicros = 3;
+  static constexpr int64_t kOutputFutureMicros = 3;
 
   static absl::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).Set<int>();

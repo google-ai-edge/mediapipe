@@ -154,8 +154,8 @@ void ToneEstimation::IntensityPercentiles(const cv::Mat& frame,
   std::vector<float> histogram(256, 0.0f);
 
   for (int i = 0; i < intensity.rows; ++i) {
-    const uint8* intensity_ptr = intensity.ptr<uint8>(i);
-    const uint8* clip_ptr = clip_mask.ptr<uint8>(i);
+    const uint8_t* intensity_ptr = intensity.ptr<uint8_t>(i);
+    const uint8_t* clip_ptr = clip_mask.ptr<uint8_t>(i);
 
     for (int j = 0; j < intensity.cols; ++j) {
       if (!clip_ptr[j]) {

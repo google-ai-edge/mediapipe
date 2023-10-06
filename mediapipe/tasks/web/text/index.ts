@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2022 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,15 @@
  */
 
 import {FilesetResolver as FilesetResolverImpl} from '../../../tasks/web/core/fileset_resolver';
+import {LanguageDetector as LanguageDetectorImpl} from '../../../tasks/web/text/language_detector/language_detector';
 import {TextClassifier as TextClassifierImpl} from '../../../tasks/web/text/text_classifier/text_classifier';
 import {TextEmbedder as TextEmbedderImpl} from '../../../tasks/web/text/text_embedder/text_embedder';
 
 // Declare the variables locally so that Rollup in OSS includes them explicitly
 // as exports.
 const FilesetResolver = FilesetResolverImpl;
+const LanguageDetector = LanguageDetectorImpl;
 const TextClassifier = TextClassifierImpl;
 const TextEmbedder = TextEmbedderImpl;
 
-export {FilesetResolver, TextClassifier, TextEmbedder};
+export {LanguageDetector, FilesetResolver, TextClassifier, TextEmbedder};

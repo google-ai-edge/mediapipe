@@ -64,6 +64,8 @@ bool CanUseGpu() {
 namespace mediapipe {
 namespace api2 {
 
+using BoxFormat = ::mediapipe::TensorsToDetectionsCalculatorOptions::BoxFormat;
+
 namespace {
 
 void ConvertRawValuesToAnchors(const float* raw_anchors, int num_boxes,
@@ -124,6 +126,15 @@ absl::Status CheckCustomTensorMapping(
                                 "cover index 0, 1, 2 and 3.";
   }
   return absl::OkStatus();
+}
+
+BoxFormat GetBoxFormat(const TensorsToDetectionsCalculatorOptions& options) {
+  if (options.has_box_format()) {
+    return options.box_format();
+  } else if (options.reverse_output_order()) {
+    return mediapipe::TensorsToDetectionsCalculatorOptions::XYWH;
+  }
+  return mediapipe::TensorsToDetectionsCalculatorOptions::YXHW;
 }
 
 }  // namespace
@@ -211,6 +222,8 @@ class TensorsToDetectionsCalculator : public Node {
   int num_boxes_ = 0;
   int num_coords_ = 0;
   int max_results_ = -1;
+  BoxFormat box_output_format_ =
+      mediapipe::TensorsToDetectionsCalculatorOptions::YXHW;
 
   // Set of allowed or ignored class indices.
   struct ClassIndexSet {
@@ -243,6 +256,7 @@ class TensorsToDetectionsCalculator : public Node {
 
   bool gpu_inited_ = false;
   bool gpu_input_ = false;
+  bool gpu_has_enough_work_groups_ = true;
   bool anchors_init_ = false;
 };
 MEDIAPIPE_REGISTER_NODE(TensorsToDetectionsCalculator);
@@ -278,7 +292,7 @@ absl::Status TensorsToDetectionsCalculator::Open(CalculatorContext* cc) {
 absl::Status TensorsToDetectionsCalculator::Process(CalculatorContext* cc) {
   auto output_detections = absl::make_unique<std::vector<Detection>>();
   bool gpu_processing = false;
-  if (CanUseGpu()) {
+  if (CanUseGpu() && gpu_has_enough_work_groups_) {
     // Use GPU processing only if at least one input tensor is already on GPU
     // (to avoid CPU->GPU overhead).
     for (const auto& tensor : *kInTensors(cc)) {
@@ -308,11 +322,20 @@ absl::Status TensorsToDetectionsCalculator::Process(CalculatorContext* cc) {
     RET_CHECK(!has_custom_box_indices_);
   }
 
-  if (gpu_processing) {
-    if (!gpu_inited_) {
-      MP_RETURN_IF_ERROR(GpuInit(cc));
+  if (gpu_processing && !gpu_inited_) {
+    auto status = GpuInit(cc);
+    if (status.ok()) {
       gpu_inited_ = true;
+    } else if (status.code() == absl::StatusCode::kFailedPrecondition) {
+      // For initialization error because of hardware limitation, fallback to
+      // CPU processing.
+      LOG(WARNING) << status.message();
+    } else {
+      // For other error, let the error propagates.
+      return status;
     }
+  }
+  if (gpu_processing && gpu_inited_) {
     MP_RETURN_IF_ERROR(ProcessGPU(cc, output_detections.get()));
   } else {
     MP_RETURN_IF_ERROR(ProcessCPU(cc, output_detections.get()));
@@ -333,17 +356,41 @@ absl::Status TensorsToDetectionsCalculator::ProcessCPU(
     // TODO: Add flexible input tensor size handling.
     auto raw_box_tensor =
         &input_tensors[tensor_mapping_.detections_tensor_index()];
-    RET_CHECK_EQ(raw_box_tensor->shape().dims.size(), 3);
-    RET_CHECK_EQ(raw_box_tensor->shape().dims[0], 1);
     RET_CHECK_GT(num_boxes_, 0) << "Please set num_boxes in calculator options";
-    RET_CHECK_EQ(raw_box_tensor->shape().dims[1], num_boxes_);
-    RET_CHECK_EQ(raw_box_tensor->shape().dims[2], num_coords_);
+    if (raw_box_tensor->shape().dims.size() == 3) {
+      // The tensors from CPU inference has dim 3.
+      RET_CHECK_EQ(raw_box_tensor->shape().dims[0], 1);
+      RET_CHECK_EQ(raw_box_tensor->shape().dims[1], num_boxes_);
+      RET_CHECK_EQ(raw_box_tensor->shape().dims[2], num_coords_);
+    } else if (raw_box_tensor->shape().dims.size() == 4) {
+      // The tensors from GPU inference has dim 4. For gpu-cpu fallback support,
+      // we allow tensors with 4 dims.
+      RET_CHECK_EQ(raw_box_tensor->shape().dims[0], 1);
+      RET_CHECK_EQ(raw_box_tensor->shape().dims[1], 1);
+      RET_CHECK_EQ(raw_box_tensor->shape().dims[2], num_boxes_);
+      RET_CHECK_EQ(raw_box_tensor->shape().dims[3], num_coords_);
+    } else {
+      return absl::InvalidArgumentError(
+          "The dimensions of box Tensor must be 3 or 4.");
+    }
     auto raw_score_tensor =
         &input_tensors[tensor_mapping_.scores_tensor_index()];
-    RET_CHECK_EQ(raw_score_tensor->shape().dims.size(), 3);
-    RET_CHECK_EQ(raw_score_tensor->shape().dims[0], 1);
-    RET_CHECK_EQ(raw_score_tensor->shape().dims[1], num_boxes_);
-    RET_CHECK_EQ(raw_score_tensor->shape().dims[2], num_classes_);
+    if (raw_score_tensor->shape().dims.size() == 3) {
+      // The tensors from CPU inference has dim 3.
+      RET_CHECK_EQ(raw_score_tensor->shape().dims[0], 1);
+      RET_CHECK_EQ(raw_score_tensor->shape().dims[1], num_boxes_);
+      RET_CHECK_EQ(raw_score_tensor->shape().dims[2], num_classes_);
+    } else if (raw_score_tensor->shape().dims.size() == 4) {
+      // The tensors from GPU inference has dim 4. For gpu-cpu fallback support,
+      // we allow tensors with 4 dims.
+      RET_CHECK_EQ(raw_score_tensor->shape().dims[0], 1);
+      RET_CHECK_EQ(raw_score_tensor->shape().dims[1], 1);
+      RET_CHECK_EQ(raw_score_tensor->shape().dims[2], num_boxes_);
+      RET_CHECK_EQ(raw_score_tensor->shape().dims[3], num_classes_);
+    } else {
+      return absl::InvalidArgumentError(
+          "The dimensions of score Tensor must be 3 or 4.");
+    }
     auto raw_box_view = raw_box_tensor->GetCpuReadView();
     auto raw_boxes = raw_box_view.buffer<float>();
     auto raw_scores_view = raw_score_tensor->GetCpuReadView();
@@ -655,6 +702,7 @@ absl::Status TensorsToDetectionsCalculator::LoadOptions(CalculatorContext* cc) {
   num_classes_ = options_.num_classes();
   num_boxes_ = options_.num_boxes();
   num_coords_ = options_.num_coords();
+  box_output_format_ = GetBoxFormat(options_);
   CHECK_NE(options_.max_results(), 0)
       << "The maximum number of the top-scored detection results must be "
          "non-zero.";
@@ -728,17 +776,32 @@ absl::Status TensorsToDetectionsCalculator::DecodeBoxes(
   for (int i = 0; i < num_boxes_; ++i) {
     const int box_offset = i * num_coords_ + options_.box_coord_offset();
 
-    float y_center = raw_boxes[box_offset];
-    float x_center = raw_boxes[box_offset + 1];
-    float h = raw_boxes[box_offset + 2];
-    float w = raw_boxes[box_offset + 3];
-    if (options_.reverse_output_order()) {
-      x_center = raw_boxes[box_offset];
-      y_center = raw_boxes[box_offset + 1];
-      w = raw_boxes[box_offset + 2];
-      h = raw_boxes[box_offset + 3];
+    float y_center = 0.0;
+    float x_center = 0.0;
+    float h = 0.0;
+    float w = 0.0;
+    // TODO
+    switch (box_output_format_) {
+      case mediapipe::TensorsToDetectionsCalculatorOptions::UNSPECIFIED:
+      case mediapipe::TensorsToDetectionsCalculatorOptions::YXHW:
+        y_center = raw_boxes[box_offset];
+        x_center = raw_boxes[box_offset + 1];
+        h = raw_boxes[box_offset + 2];
+        w = raw_boxes[box_offset + 3];
+        break;
+      case mediapipe::TensorsToDetectionsCalculatorOptions::XYWH:
+        x_center = raw_boxes[box_offset];
+        y_center = raw_boxes[box_offset + 1];
+        w = raw_boxes[box_offset + 2];
+        h = raw_boxes[box_offset + 3];
+        break;
+      case mediapipe::TensorsToDetectionsCalculatorOptions::XYXY:
+        x_center = (-raw_boxes[box_offset] + raw_boxes[box_offset + 2]) / 2;
+        y_center = (-raw_boxes[box_offset + 1] + raw_boxes[box_offset + 3]) / 2;
+        w = raw_boxes[box_offset + 2] + raw_boxes[box_offset];
+        h = raw_boxes[box_offset + 3] + raw_boxes[box_offset + 1];
+        break;
     }
-
     x_center =
         x_center / options_.x_scale() * anchors[i].w() + anchors[i].x_center();
     y_center =
@@ -767,11 +830,19 @@ absl::Status TensorsToDetectionsCalculator::DecodeBoxes(
         const int offset = i * num_coords_ + options_.keypoint_coord_offset() +
                            k * options_.num_values_per_keypoint();
 
-        float keypoint_y = raw_boxes[offset];
-        float keypoint_x = raw_boxes[offset + 1];
-        if (options_.reverse_output_order()) {
-          keypoint_x = raw_boxes[offset];
-          keypoint_y = raw_boxes[offset + 1];
+        float keypoint_y = 0.0;
+        float keypoint_x = 0.0;
+        switch (box_output_format_) {
+          case mediapipe::TensorsToDetectionsCalculatorOptions::UNSPECIFIED:
+          case mediapipe::TensorsToDetectionsCalculatorOptions::YXHW:
+            keypoint_y = raw_boxes[offset];
+            keypoint_x = raw_boxes[offset + 1];
+            break;
+          case mediapipe::TensorsToDetectionsCalculatorOptions::XYWH:
+          case mediapipe::TensorsToDetectionsCalculatorOptions::XYXY:
+            keypoint_x = raw_boxes[offset];
+            keypoint_y = raw_boxes[offset + 1];
+            break;
         }
 
         (*boxes)[offset] = keypoint_x / options_.x_scale() * anchors[i].w() +
@@ -856,8 +927,22 @@ Detection TensorsToDetectionsCalculator::ConvertToDetection(
 }
 
 absl::Status TensorsToDetectionsCalculator::GpuInit(CalculatorContext* cc) {
+  int output_format_flag = 0;
+  switch (box_output_format_) {
+    case mediapipe::TensorsToDetectionsCalculatorOptions::UNSPECIFIED:
+    case mediapipe::TensorsToDetectionsCalculatorOptions::YXHW:
+      output_format_flag = 0;
+      break;
+    case mediapipe::TensorsToDetectionsCalculatorOptions::XYWH:
+      output_format_flag = 1;
+      break;
+    case mediapipe::TensorsToDetectionsCalculatorOptions::XYXY:
+      output_format_flag = 2;
+      break;
+  }
 #ifndef MEDIAPIPE_DISABLE_GL_COMPUTE
-  MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext([this]() -> absl::Status {
+  MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext([this, output_format_flag]()
+                                                    -> absl::Status {
     // A shader to decode detection boxes.
     const std::string decode_src = absl::Substitute(
         R"( #version 310 es
@@ -879,7 +964,7 @@ layout(std430, binding = 2) readonly buffer Input1 {
 } raw_anchors;
 
 uint num_coords = uint($0);
-int reverse_output_order = int($1);
+int output_format_flag = int($1);
 int apply_exponential = int($2);
 int box_coord_offset = int($3);
 int num_keypoints = int($4);
@@ -892,17 +977,25 @@ void main() {
   uint anchor_offset = g_idx * uint(4);  // check kNumCoordsPerBox
 
   float y_center, x_center, h, w;
-
-  if (reverse_output_order == int(0)) {
+  if (output_format_flag == int(0)) {
     y_center = raw_boxes.data[box_offset + uint(0)];
     x_center = raw_boxes.data[box_offset + uint(1)];
     h = raw_boxes.data[box_offset + uint(2)];
     w = raw_boxes.data[box_offset + uint(3)];
-  } else {
+  } else if (output_format_flag == int(1)) {
     x_center = raw_boxes.data[box_offset + uint(0)];
     y_center = raw_boxes.data[box_offset + uint(1)];
     w = raw_boxes.data[box_offset + uint(2)];
     h = raw_boxes.data[box_offset + uint(3)];
+  } else if (output_format_flag == int(2)) {
+    x_center = (-raw_boxes.data[box_offset + uint(0)]
+                +raw_boxes.data[box_offset + uint(2)]) / 2.0;
+    y_center = (-raw_boxes.data[box_offset + uint(1)]
+                +raw_boxes.data[box_offset + uint(3)]) / 2.0;
+    w = raw_boxes.data[box_offset + uint(0)]
+      + raw_boxes.data[box_offset + uint(2)];
+    h = raw_boxes.data[box_offset + uint(1)]
+      + raw_boxes.data[box_offset + uint(3)];
   }
 
   float anchor_yc = raw_anchors.data[anchor_offset + uint(0)];
@@ -936,7 +1029,7 @@ void main() {
       int kp_offset =
         int(g_idx * num_coords) + keypt_coord_offset + k * num_values_per_keypt;
       float kp_y, kp_x;
-      if (reverse_output_order == int(0)) {
+      if (output_format_flag == int(0)) {
         kp_y = raw_boxes.data[kp_offset + int(0)];
         kp_x = raw_boxes.data[kp_offset + int(1)];
       } else {
@@ -949,8 +1042,7 @@ void main() {
   }
 })",
         options_.num_coords(),  // box xywh
-        options_.reverse_output_order() ? 1 : 0,
-        options_.apply_exponential_on_box_size() ? 1 : 0,
+        output_format_flag, options_.apply_exponential_on_box_size() ? 1 : 0,
         options_.box_coord_offset(), options_.num_keypoints(),
         options_.keypoint_coord_offset(), options_.num_values_per_keypoint());
 
@@ -1053,8 +1145,13 @@ void main() {
     int max_wg_size;  //  typically <= 1024
     glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 1,
                     &max_wg_size);  // y-dim
-    CHECK_LT(num_classes_, max_wg_size)
-        << "# classes must be < " << max_wg_size;
+    gpu_has_enough_work_groups_ = num_classes_ < max_wg_size;
+    if (!gpu_has_enough_work_groups_) {
+      return absl::FailedPreconditionError(absl::StrFormat(
+          "Hardware limitation: Processing will be done on CPU, because "
+          "num_classes %d exceeds the max work_group size %d.",
+          num_classes_, max_wg_size));
+    }
     // TODO support better filtering.
     if (class_index_set_.is_allowlist) {
       CHECK_EQ(class_index_set_.values.size(),
@@ -1104,7 +1201,7 @@ kernel void decodeKernel(
     uint2                           gid         [[ thread_position_in_grid ]]) {
 
   uint num_coords = uint($0);
-  int reverse_output_order = int($1);
+  int output_format_flag = int($1);
   int apply_exponential = int($2);
   int box_coord_offset = int($3);
   int num_keypoints = int($4);
@@ -1112,8 +1209,7 @@ kernel void decodeKernel(
   int num_values_per_keypt = int($6);
 )",
       options_.num_coords(),  // box xywh
-      options_.reverse_output_order() ? 1 : 0,
-      options_.apply_exponential_on_box_size() ? 1 : 0,
+      output_format_flag, options_.apply_exponential_on_box_size() ? 1 : 0,
       options_.box_coord_offset(), options_.num_keypoints(),
       options_.keypoint_coord_offset(), options_.num_values_per_keypoint());
   decode_src += absl::Substitute(
@@ -1129,16 +1225,25 @@ kernel void decodeKernel(
 
   float y_center, x_center, h, w;
 
-  if (reverse_output_order == int(0)) {
+  if (output_format_flag == int(0)) {
     y_center = raw_boxes[box_offset + uint(0)];
     x_center = raw_boxes[box_offset + uint(1)];
     h = raw_boxes[box_offset + uint(2)];
     w = raw_boxes[box_offset + uint(3)];
-  } else {
+  } else if (output_format_flag == int(1)) {
     x_center = raw_boxes[box_offset + uint(0)];
     y_center = raw_boxes[box_offset + uint(1)];
     w = raw_boxes[box_offset + uint(2)];
     h = raw_boxes[box_offset + uint(3)];
+  } else if (output_format_flag == int(2)) {
+    x_center = (-raw_boxes[box_offset + uint(0)]
+                +raw_boxes[box_offset + uint(2)]) / 2.0;
+    y_center = (-raw_boxes[box_offset + uint(1)]
+                +raw_boxes[box_offset + uint(3)]) / 2.0;
+    w = raw_boxes[box_offset + uint(0)]
+      + raw_boxes[box_offset + uint(2)];
+    h = raw_boxes[box_offset + uint(1)]
+      + raw_boxes[box_offset + uint(3)];
   }
 
   float anchor_yc = raw_anchors[anchor_offset + uint(0)];
@@ -1172,7 +1277,7 @@ kernel void decodeKernel(
       int kp_offset =
         int(g_idx * num_coords) + keypt_coord_offset + k * num_values_per_keypt;
       float kp_y, kp_x;
-      if (reverse_output_order == int(0)) {
+      if (output_format_flag == int(0)) {
         kp_y = raw_boxes[kp_offset + int(0)];
         kp_x = raw_boxes[kp_offset + int(1)];
       } else {
@@ -1304,7 +1409,13 @@ kernel void scoreKernel(
         Tensor::ElementType::kFloat32, Tensor::Shape{1, num_boxes_ * 2});
     // # filter classes supported is hardware dependent.
     int max_wg_size = score_program_.maxTotalThreadsPerThreadgroup;
-    CHECK_LT(num_classes_, max_wg_size) << "# classes must be <" << max_wg_size;
+    gpu_has_enough_work_groups_ = num_classes_ < max_wg_size;
+    if (!gpu_has_enough_work_groups_) {
+      return absl::FailedPreconditionError(absl::StrFormat(
+          "Hardware limitation: Processing will be done on CPU, because "
+          "num_classes %d exceeds the max work_group size %d.",
+          num_classes_, max_wg_size));
+    }
   }
 
 #endif  // !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)

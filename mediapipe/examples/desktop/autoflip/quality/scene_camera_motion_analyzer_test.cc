@@ -39,8 +39,8 @@ using ::testing::HasSubstr;
 const int kNumKeyFrames = 5;
 const int kNumSceneFrames = 30;
 
-const int64 kKeyFrameTimestampDiff = 1e6 / kNumKeyFrames;
-const int64 kSceneFrameTimestampDiff = 1e6 / kNumSceneFrames;
+const int64_t kKeyFrameTimestampDiff = 1e6 / kNumKeyFrames;
+const int64_t kSceneFrameTimestampDiff = 1e6 / kNumSceneFrames;
 // Default time span of a scene in seconds.
 const double kSceneTimeSpanSec = 1.0;
 
@@ -66,8 +66,8 @@ Rect MakeRect(const int x, const int y, const int width, const int height) {
 
 // Returns default values for scene frame timestamps. Populates timestamps using
 // the default spacing kSceneFrameTimestampDiff starting from 0.
-std::vector<int64> GetDefaultSceneFrameTimestamps() {
-  std::vector<int64> scene_frame_timestamps(kNumSceneFrames);
+std::vector<int64_t> GetDefaultSceneFrameTimestamps() {
+  std::vector<int64_t> scene_frame_timestamps(kNumSceneFrames);
   for (int i = 0; i < kNumSceneFrames; ++i) {
     scene_frame_timestamps[i] = kSceneFrameTimestampDiff * i;
   }
@@ -426,7 +426,7 @@ TEST(SceneCameraMotionAnalyzerTest,
   SceneCameraMotionAnalyzerOptions options;
   TestableSceneCameraMotionAnalyzer analyzer(options);
   SceneCameraMotion camera_motion;
-  std::vector<int64> scene_frame_timestamps(0);
+  std::vector<int64_t> scene_frame_timestamps(0);
   std::vector<FocusPointFrame> focus_point_frames;
 
   const auto status = analyzer.PopulateFocusPointFrames(
@@ -624,7 +624,7 @@ TEST(SceneCameraMotionAnalyzerTest, PopulateFocusPointFramesSweeping) {
                                           55, 65, 75, 85, 95};
   const std::vector<float> positions_y = {50, 50, 50, 50, 50,
                                           50, 50, 50, 50, 50};
-  std::vector<int64> scene_frame_timestamps(num_frames);
+  std::vector<int64_t> scene_frame_timestamps(num_frames);
   std::iota(scene_frame_timestamps.begin(), scene_frame_timestamps.end(), 0);
   std::vector<FocusPointFrame> focus_point_frames;
 
@@ -691,7 +691,7 @@ TEST(SceneCameraMotionAnalyzerTest,
   // Aligns timestamps of scene frames with key frames.
   scene_summary.mutable_key_frame_compact_infos(0)->set_timestamp_ms(10);
   scene_summary.mutable_key_frame_compact_infos(1)->set_timestamp_ms(20);
-  std::vector<int64> scene_frame_timestamps = {10, 20};
+  std::vector<int64_t> scene_frame_timestamps = {10, 20};
 
   std::vector<FocusPointFrame> focus_point_frames;
   MP_EXPECT_OK(analyzer.PopulateFocusPointFrames(scene_summary, camera_motion,

@@ -135,6 +135,12 @@ class GlCalculatorHelper {
   // This is deprecated because: 1) it encourages the use of GlTexture as a
   // long-lived object; 2) it requires copying the ImageFrame's contents,
   // which may not always be necessary.
+  //
+  // WARNING: do NOT use as a destination texture which will be sent to
+  // downstream calculators as it may lead to synchronization issues. The result
+  // is meant to be a short-lived object, local to a single calculator and
+  // single GL thread. Use `CreateDestinationTexture` instead, if you need a
+  // destination texture.
   ABSL_DEPRECATED("Use `GpuBufferWithImageFrame`.")
   GlTexture CreateSourceTexture(const ImageFrame& image_frame);
 
@@ -155,6 +161,14 @@ class GlCalculatorHelper {
   GlTexture CreateDestinationTexture(
       int output_width, int output_height,
       GpuBufferFormat format = GpuBufferFormat::kBGRA32);
+
+  // Creates a destination texture copying and uploading passed image frame.
+  //
+  // WARNING: mind that this functions creates a new texture every time and
+  // doesn't use MediaPipe's gpu buffer pool.
+  // TODO: ensure buffer pool is used when creating textures out of
+  // ImageFrame.
+  GlTexture CreateDestinationTexture(const ImageFrame& image_frame);
 
   // The OpenGL name of the output framebuffer.
   GLuint framebuffer() const;
@@ -196,7 +210,7 @@ class GlCalculatorHelper {
 // This class should be the main way to interface with GL memory within a single
 // calculator. This is the preferred way to utilize the memory pool inside of
 // the helper, because GlTexture manages efficiently releasing memory back into
-// the pool. A GPU backed Image can be extracted from the unerlying
+// the pool. A GPU backed Image can be extracted from the underlying
 // memory.
 class GlTexture {
  public:

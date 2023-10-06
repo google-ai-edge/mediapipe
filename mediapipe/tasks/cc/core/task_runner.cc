@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -301,7 +301,7 @@ absl::Status TaskRunner::Close() {
   }
   is_running_ = false;
   MP_RETURN_IF_ERROR(
-      AddPayload(graph_.CloseAllInputStreams(), "Fail to close intput streams",
+      AddPayload(graph_.CloseAllInputStreams(), "Fail to close input streams",
                  MediaPipeTasksStatus::kRunnerFailsToCloseError));
   MP_RETURN_IF_ERROR(AddPayload(
       graph_.WaitUntilDone(), "Fail to shutdown the MediaPipe graph.",

@@ -197,15 +197,15 @@ class UnpackMediaSequenceCalculator : public CalculatorBase {
     // timestamp and the associated feature. This information is used in process
     // to output batches of packets in order.
     timestamps_.clear();
-    int64 last_timestamp_seen = Timestamp::PreStream().Value();
+    int64_t last_timestamp_seen = Timestamp::PreStream().Value();
     first_timestamp_seen_ = Timestamp::OneOverPostStream().Value();
     for (const auto& map_kv : sequence_->feature_lists().feature_list()) {
       if (absl::StrContains(map_kv.first, "/timestamp")) {
         LOG(INFO) << "Found feature timestamps: " << map_kv.first
                   << " with size: " << map_kv.second.feature_size();
-        int64 recent_timestamp = Timestamp::PreStream().Value();
+        int64_t recent_timestamp = Timestamp::PreStream().Value();
         for (int i = 0; i < map_kv.second.feature_size(); ++i) {
-          int64 next_timestamp =
+          int64_t next_timestamp =
               mpms::GetInt64sAt(*sequence_, map_kv.first, i).Get(0);
           RET_CHECK_GT(next_timestamp, recent_timestamp)
               << "Timestamps must be sequential. If you're seeing this message "
@@ -361,8 +361,8 @@ class UnpackMediaSequenceCalculator : public CalculatorBase {
     // any particular call to Process(). At the every end, we output the
     // poststream packets. If we only have poststream packets,
     // last_timestamp_key_ will be empty.
-    int64 start_timestamp = 0;
-    int64 end_timestamp = 0;
+    int64_t start_timestamp = 0;
+    int64_t end_timestamp = 0;
     if (last_timestamp_key_.empty() || process_poststream_) {
       process_poststream_ = true;
       start_timestamp = Timestamp::PostStream().Value();
@@ -481,14 +481,14 @@ class UnpackMediaSequenceCalculator : public CalculatorBase {
   // Store a map from the keys for each stream to the timestamps for each
   // key. This allows us to identify which packets to output for each stream
   // for timestamps within a given time window.
-  std::map<std::string, std::vector<int64>> timestamps_;
+  std::map<std::string, std::vector<int64_t>> timestamps_;
   // Store the stream with the latest timestamp in the SequenceExample.
   std::string last_timestamp_key_;
   // Store the index of the current timestamp. Will be less than
   // timestamps_[last_timestamp_key_].size().
   int current_timestamp_index_;
   // Store the very first timestamp, so we output everything on the first frame.
-  int64 first_timestamp_seen_;
+  int64_t first_timestamp_seen_;
   // List of keypoint names.
   std::vector<std::string> keypoint_names_;
   // Default keypoint location when missing.

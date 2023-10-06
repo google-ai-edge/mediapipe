@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <vector>
 
+#include "absl/container/flat_hash_set.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_format.h"
 #include "mediapipe/framework/api2/node.h"
@@ -76,6 +77,7 @@ class TensorsToEmbeddingsCalculator : public Node {
   bool l2_normalize_;
   bool quantize_;
   std::vector<std::string> head_names_;
+  absl::flat_hash_set<std::string> ignored_head_names_;
 
   void FillFloatEmbedding(const Tensor& tensor, Embedding* embedding);
   void FillQuantizedEmbedding(const Tensor& tensor, Embedding* embedding);
@@ -88,6 +90,9 @@ absl::Status TensorsToEmbeddingsCalculator::Open(CalculatorContext* cc) {
   if (!options.head_names().empty()) {
     head_names_.assign(options.head_names().begin(),
                        options.head_names().end());
+  }
+  for (const absl::string_view head_name : options.ignored_head_names()) {
+    ignored_head_names_.insert(std::string(head_name));
   }
   return absl::OkStatus();
 }
@@ -102,6 +107,9 @@ absl::Status TensorsToEmbeddingsCalculator::Process(CalculatorContext* cc) {
         head_names_.size(), tensors.size()));
   }
   for (int i = 0; i < tensors.size(); ++i) {
+    if (!head_names_.empty() && ignored_head_names_.contains(head_names_[i])) {
+      continue;
+    }
     const auto& tensor = tensors[i];
     RET_CHECK(tensor.element_type() == Tensor::ElementType::kFloat32);
     auto* embedding = result.add_embeddings();

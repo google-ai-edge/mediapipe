@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ py_test(
         "//mediapipe/tasks/testdata/vision:test_images",
         "//mediapipe/tasks/testdata/vision:test_models",
     ],
+    tags = ["not_run:arm"],
     deps = [
         "//mediapipe/python:_framework_bindings",
         "//mediapipe/tasks/python/components/containers:bounding_box",
@@ -33,6 +34,7 @@ py_test(
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/test:test_utils",
         "//mediapipe/tasks/python/vision:object_detector",
+        "//mediapipe/tasks/python/vision/core:image_processing_options",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
     ],
 )
@@ -44,6 +46,7 @@ py_test(
         "//mediapipe/tasks/testdata/vision:test_images",
         "//mediapipe/tasks/testdata/vision:test_models",
     ],
+    tags = ["not_run:arm"],
     deps = [
         "//mediapipe/python:_framework_bindings",
         "//mediapipe/tasks/python/components/containers:category",
@@ -64,6 +67,7 @@ py_test(
         "//mediapipe/tasks/testdata/vision:test_images",
         "//mediapipe/tasks/testdata/vision:test_models",
     ],
+    tags = ["not_run:arm"],
     deps = [
         "//mediapipe/python:_framework_bindings",
         "//mediapipe/tasks/python/components/containers:embedding_result",
@@ -83,12 +87,62 @@ py_test(
         "//mediapipe/tasks/testdata/vision:test_images",
         "//mediapipe/tasks/testdata/vision:test_models",
     ],
+    tags = ["not_run:arm"],
     deps = [
         "//mediapipe/python:_framework_bindings",
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/test:test_utils",
         "//mediapipe/tasks/python/vision:image_segmenter",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
+    ],
+)
+
+py_test(
+    name = "face_detector_test",
+    srcs = ["face_detector_test.py"],
+    data = [
+        "//mediapipe/tasks/testdata/vision:test_images",
+        "//mediapipe/tasks/testdata/vision:test_models",
+        "//mediapipe/tasks/testdata/vision:test_protos",
+    ],
+    tags = ["not_run:arm"],
+    deps = [
+        "//mediapipe/framework/formats:detection_py_pb2",
+        "//mediapipe/python:_framework_bindings",
+        "//mediapipe/tasks/python/components/containers:bounding_box",
+        "//mediapipe/tasks/python/components/containers:category",
+        "//mediapipe/tasks/python/components/containers:detections",
+        "//mediapipe/tasks/python/core:base_options",
+        "//mediapipe/tasks/python/test:test_utils",
+        "//mediapipe/tasks/python/vision:face_detector",
+        "//mediapipe/tasks/python/vision/core:image_processing_options",
+        "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
+        "@com_google_protobuf//:protobuf_python",
+    ],
+)
+
+py_test(
+    name = "face_landmarker_test",
+    srcs = ["face_landmarker_test.py"],
+    data = [
+        "//mediapipe/tasks/testdata/vision:test_images",
+        "//mediapipe/tasks/testdata/vision:test_models",
+        "//mediapipe/tasks/testdata/vision:test_protos",
+    ],
+    tags = ["not_run:arm"],
+    deps = [
+        "//mediapipe/framework/formats:classification_py_pb2",
+        "//mediapipe/framework/formats:landmark_py_pb2",
+        "//mediapipe/python:_framework_bindings",
+        "//mediapipe/tasks/python/components/containers:category",
+        "//mediapipe/tasks/python/components/containers:landmark",
+        "//mediapipe/tasks/python/components/containers:rect",
+        "//mediapipe/tasks/python/core:base_options",
+        "//mediapipe/tasks/python/test:test_utils",
+        "//mediapipe/tasks/python/vision:face_landmarker",
+        "//mediapipe/tasks/python/vision/core:image_processing_options",
+        "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
+        "@com_google_protobuf//:protobuf_python",
     ],
 )
 
@@ -100,6 +154,7 @@ py_test(
         "//mediapipe/tasks/testdata/vision:test_models",
         "//mediapipe/tasks/testdata/vision:test_protos",
     ],
+    tags = ["not_run:arm"],
     deps = [
         "//mediapipe/python:_framework_bindings",
         "//mediapipe/tasks/cc/components/containers/proto:landmarks_detection_result_py_pb2",
@@ -112,5 +167,47 @@ py_test(
         "//mediapipe/tasks/python/vision/core:image_processing_options",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
         "@com_google_protobuf//:protobuf_python",
+    ],
+)
+
+py_test(
+    name = "pose_landmarker_test",
+    srcs = ["pose_landmarker_test.py"],
+    data = [
+        "//mediapipe/tasks/testdata/vision:test_images",
+        "//mediapipe/tasks/testdata/vision:test_models",
+        "//mediapipe/tasks/testdata/vision:test_protos",
+    ],
+    tags = ["not_run:arm"],
+    deps = [
+        "//mediapipe/python:_framework_bindings",
+        "//mediapipe/tasks/cc/components/containers/proto:landmarks_detection_result_py_pb2",
+        "//mediapipe/tasks/python/components/containers:landmark",
+        "//mediapipe/tasks/python/components/containers:landmark_detection_result",
+        "//mediapipe/tasks/python/components/containers:rect",
+        "//mediapipe/tasks/python/core:base_options",
+        "//mediapipe/tasks/python/test:test_utils",
+        "//mediapipe/tasks/python/vision:pose_landmarker",
+        "//mediapipe/tasks/python/vision/core:image_processing_options",
+        "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
+        "@com_google_protobuf//:protobuf_python",
+    ],
+)
+
+py_test(
+    name = "face_aligner_test",
+    srcs = ["face_aligner_test.py"],
+    data = [
+        "//mediapipe/tasks/testdata/vision:test_images",
+        "//mediapipe/tasks/testdata/vision:test_models",
+    ],
+    tags = ["not_run:arm"],
+    deps = [
+        "//mediapipe/python:_framework_bindings",
+        "//mediapipe/tasks/python/components/containers:rect",
+        "//mediapipe/tasks/python/core:base_options",
+        "//mediapipe/tasks/python/test:test_utils",
+        "//mediapipe/tasks/python/vision:face_aligner",
+        "//mediapipe/tasks/python/vision/core:image_processing_options",
     ],
 )

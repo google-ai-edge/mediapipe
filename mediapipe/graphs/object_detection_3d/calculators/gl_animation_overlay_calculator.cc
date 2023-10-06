@@ -116,7 +116,7 @@ struct TriangleMesh {
   std::unique_ptr<float[]> normals = nullptr;
   std::unique_ptr<float[]> vertices = nullptr;
   std::unique_ptr<float[]> texture_coords = nullptr;
-  std::unique_ptr<int16[]> triangle_indices = nullptr;
+  std::unique_ptr<int16_t[]> triangle_indices = nullptr;
 };
 
 typedef std::unique_ptr<float[]> ModelMatrix;
@@ -444,7 +444,7 @@ bool GlAnimationOverlayCalculator::LoadAnimation(const std::string &filename) {
   }
 
   frame_count_ = 0;
-  int32 lengths[3];
+  int32_t lengths[3];
   while (true) {
     // See if we have more initial size counts to read in.
     infile.read((char *)(lengths), sizeof(lengths[0]) * 3);
@@ -478,9 +478,9 @@ bool GlAnimationOverlayCalculator::LoadAnimation(const std::string &filename) {
 
     // Try to read in the triangle indices (2-byte shorts)
     triangle_mesh.index_count = lengths[2];
-    triangle_mesh.triangle_indices.reset(new int16[lengths[2]]);
+    triangle_mesh.triangle_indices.reset(new int16_t[lengths[2]]);
     infile.read((char *)(triangle_mesh.triangle_indices.get()),
-                sizeof(int16) * lengths[2]);
+                sizeof(int16_t) * lengths[2]);
     if (!infile) {
       LOG(ERROR) << "Failed to read triangle indices for frame "
                  << frame_count_;

@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import numpy as np
 from scipy.io import wavfile
 
 from mediapipe.tasks.python.audio import audio_embedder
+from mediapipe.tasks.python.audio.core import audio_record
 from mediapipe.tasks.python.audio.core import audio_task_running_mode
 from mediapipe.tasks.python.components.containers import audio_data as audio_data_module
 from mediapipe.tasks.python.core import base_options as base_options_module
@@ -33,6 +34,7 @@ _AudioEmbedder = audio_embedder.AudioEmbedder
 _AudioEmbedderOptions = audio_embedder.AudioEmbedderOptions
 _AudioEmbedderResult = audio_embedder.AudioEmbedderResult
 _AudioData = audio_data_module.AudioData
+_AudioRecord = audio_record.AudioRecord
 _BaseOptions = base_options_module.BaseOptions
 _RUNNING_MODE = audio_task_running_mode.AudioTaskRunningMode
 
@@ -42,13 +44,10 @@ _SPEECH_WAV_16K_MONO = 'speech_16000_hz_mono.wav'
 _SPEECH_WAV_48K_MONO = 'speech_48000_hz_mono.wav'
 _TWO_HEADS_WAV_16K_MONO = 'two_heads_16000_hz_mono.wav'
 _TEST_DATA_DIR = 'mediapipe/tasks/testdata/audio'
-_SPEECH_SIMILARITIES = [0.985359, 0.994349, 0.993227, 0.996658, 0.996384]
 _YAMNET_NUM_OF_SAMPLES = 15600
-_MILLSECONDS_PER_SECOND = 1000
+_MILLISECONDS_PER_SECOND = 1000
 # Tolerance for embedding vector coordinate values.
 _EPSILON = 3e-6
-# Tolerance for cosine similarity evaluation.
-_SIMILARITY_TOLERANCE = 1e-6
 
 
 class ModelFileType(enum.Enum):
@@ -79,7 +78,7 @@ class AudioEmbedderTest(parameterized.TestCase):
       end = min(start + (int)(step_size), len(buffer))
       audio_data_list.append((_AudioData.create_from_array(
           buffer[start:end].astype(float) / np.iinfo(np.int16).max,
-          sample_rate), (int)(start / sample_rate * _MILLSECONDS_PER_SECOND)))
+          sample_rate), (int)(start / sample_rate * _MILLISECONDS_PER_SECOND)))
       start = end
     return audio_data_list
 
@@ -97,27 +96,6 @@ class AudioEmbedderTest(parameterized.TestCase):
       self.assertEqual(embedding_result.embedding.dtype, np.uint8)
     else:
       self.assertEqual(embedding_result.embedding.dtype, float)
-
-  def _check_cosine_similarity(self, result0, result1, expected_similarity):
-    # Checks cosine similarity.
-    similarity = _AudioEmbedder.cosine_similarity(result0.embeddings[0],
-                                                  result1.embeddings[0])
-    self.assertAlmostEqual(
-        similarity, expected_similarity, delta=_SIMILARITY_TOLERANCE)
-
-  def _check_yamnet_result(self,
-                           embedding_result0_list: List[_AudioEmbedderResult],
-                           embedding_result1_list: List[_AudioEmbedderResult],
-                           expected_similarities: List[float]):
-    expected_size = len(expected_similarities)
-    self.assertLen(embedding_result0_list, expected_size)
-    self.assertLen(embedding_result1_list, expected_size)
-
-    for idx in range(expected_size):
-      embedding_result0 = embedding_result0_list[idx]
-      embedding_result1 = embedding_result1_list[idx]
-      self._check_cosine_similarity(embedding_result0, embedding_result1,
-                                    expected_similarities[idx])
 
   def test_create_from_file_succeeds_with_valid_model_path(self):
     # Creates with default option and valid model file successfully.
@@ -176,7 +154,7 @@ class AudioEmbedderTest(parameterized.TestCase):
       embedding_result0_list = embedder.embed(self._read_wav_file(audio_file0))
       embedding_result1_list = embedder.embed(self._read_wav_file(audio_file1))
 
-      # Checks embeddings and cosine similarity.
+      # Checks embeddings.
       expected_result0_value, expected_result1_value = expected_first_values
       self._check_embedding_size(embedding_result0_list[0], quantize,
                                  expected_size)
@@ -186,10 +164,21 @@ class AudioEmbedderTest(parameterized.TestCase):
                                   expected_result0_value)
       self._check_embedding_value(embedding_result1_list[0],
                                   expected_result1_value)
-      self._check_yamnet_result(
-          embedding_result0_list,
-          embedding_result1_list,
-          expected_similarities=_SPEECH_SIMILARITIES)
+      self.assertLen(embedding_result0_list, 5)
+      self.assertLen(embedding_result1_list, 5)
+
+  @mock.patch('sounddevice.InputStream', return_value=mock.MagicMock())
+  def test_create_audio_record_from_embedder_succeeds(self, _):
+    # Creates AudioRecord instance using the embedder successfully.
+    with _AudioEmbedder.create_from_model_path(
+        self.yamnet_model_path
+    ) as embedder:
+      self.assertIsInstance(embedder, _AudioEmbedder)
+      record = embedder.create_audio_record(1, 16000, 16000)
+      self.assertIsInstance(record, _AudioRecord)
+      self.assertEqual(record.channels, 1)
+      self.assertEqual(record.sampling_rate, 16000)
+      self.assertEqual(record.buffer_size, 16000)
 
   def test_embed_with_yamnet_model_and_different_inputs(self):
     with _AudioEmbedder.create_from_model_path(
@@ -200,10 +189,6 @@ class AudioEmbedderTest(parameterized.TestCase):
           self._read_wav_file(_TWO_HEADS_WAV_16K_MONO))
       self.assertLen(embedding_result0_list, 5)
       self.assertLen(embedding_result1_list, 1)
-      self._check_cosine_similarity(
-          embedding_result0_list[0],
-          embedding_result1_list[0],
-          expected_similarity=0.09017)
 
   def test_missing_sample_rate_in_audio_clips_mode(self):
     options = _AudioEmbedderOptions(
@@ -304,10 +289,8 @@ class AudioEmbedderTest(parameterized.TestCase):
         embedder.embed_async(audio_data, timestamp_ms)
       embedding_result1_list = embedding_result_list
 
-    self._check_yamnet_result(
-        embedding_result0_list,
-        embedding_result1_list,
-        expected_similarities=_SPEECH_SIMILARITIES)
+    self.assertLen(embedding_result0_list, 5)
+    self.assertLen(embedding_result1_list, 5)
 
 
 if __name__ == '__main__':

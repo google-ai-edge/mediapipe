@@ -20,21 +20,21 @@
 
 #include "mediapipe/framework/port/gtest.h"
 
-MEDIAPIPE_DEFINE_SAFE_INT_TYPE(SafeInt8, int8,
+MEDIAPIPE_DEFINE_SAFE_INT_TYPE(SafeInt8, int8_t,
                                mediapipe::intops::LogFatalOnError);
-MEDIAPIPE_DEFINE_SAFE_INT_TYPE(SafeUInt8, uint8,
+MEDIAPIPE_DEFINE_SAFE_INT_TYPE(SafeUInt8, uint8_t,
                                mediapipe::intops::LogFatalOnError);
-MEDIAPIPE_DEFINE_SAFE_INT_TYPE(SafeInt16, int16,
+MEDIAPIPE_DEFINE_SAFE_INT_TYPE(SafeInt16, int16_t,
                                mediapipe::intops::LogFatalOnError);
-MEDIAPIPE_DEFINE_SAFE_INT_TYPE(SafeUInt16, uint16,
+MEDIAPIPE_DEFINE_SAFE_INT_TYPE(SafeUInt16, uint16_t,
                                mediapipe::intops::LogFatalOnError);
-MEDIAPIPE_DEFINE_SAFE_INT_TYPE(SafeInt32, int32,
+MEDIAPIPE_DEFINE_SAFE_INT_TYPE(SafeInt32, int32_t,
                                mediapipe::intops::LogFatalOnError);
-MEDIAPIPE_DEFINE_SAFE_INT_TYPE(SafeInt64, int64,
+MEDIAPIPE_DEFINE_SAFE_INT_TYPE(SafeInt64, int64_t,
                                mediapipe::intops::LogFatalOnError);
-MEDIAPIPE_DEFINE_SAFE_INT_TYPE(SafeUInt32, uint32,
+MEDIAPIPE_DEFINE_SAFE_INT_TYPE(SafeUInt32, uint32_t,
                                mediapipe::intops::LogFatalOnError);
-MEDIAPIPE_DEFINE_SAFE_INT_TYPE(SafeUInt64, uint64,
+MEDIAPIPE_DEFINE_SAFE_INT_TYPE(SafeUInt64, uint64_t,
                                mediapipe::intops::LogFatalOnError);
 
 namespace mediapipe {
@@ -102,8 +102,8 @@ TYPED_TEST(SignNeutralSafeIntTest, TestCtorFailures) {
   typedef typename T::ValueType V;
 
   {  // Test out-of-bounds construction.
-    if (std::numeric_limits<V>::is_signed || sizeof(V) < sizeof(uint64)) {
-      EXPECT_DEATH((T(std::numeric_limits<uint64>::max())), "bounds");
+    if (std::numeric_limits<V>::is_signed || sizeof(V) < sizeof(uint64_t)) {
+      EXPECT_DEATH((T(std::numeric_limits<uint64_t>::max())), "bounds");
     }
   }
   {  // Test out-of-bounds construction from float.
@@ -233,20 +233,20 @@ TYPED_TEST(SignNeutralSafeIntTest, TestMultiply) {
   typedef typename T::ValueType V;
 
   // Test positive vs. positive multiplication across types.
-  TEST_T_OP_NUM(9, *, int32, 3);
-  TEST_T_OP_NUM(9, *, uint32, 3);
+  TEST_T_OP_NUM(9, *, int32_t, 3);
+  TEST_T_OP_NUM(9, *, uint32_t, 3);
   TEST_T_OP_NUM(9, *, float, 3);
   TEST_T_OP_NUM(9, *, double, 3);
 
   // Test positive vs. zero multiplication commutatively across types.  This
   // was a real bug.
-  TEST_T_OP_NUM(93, *, int32, 0);
-  TEST_T_OP_NUM(93, *, uint32, 0);
+  TEST_T_OP_NUM(93, *, int32_t, 0);
+  TEST_T_OP_NUM(93, *, uint32_t, 0);
   TEST_T_OP_NUM(93, *, float, 0);
   TEST_T_OP_NUM(93, *, double, 0);
 
-  TEST_T_OP_NUM(0, *, int32, 76);
-  TEST_T_OP_NUM(0, *, uint32, 76);
+  TEST_T_OP_NUM(0, *, int32_t, 76);
+  TEST_T_OP_NUM(0, *, uint32_t, 76);
   TEST_T_OP_NUM(0, *, float, 76);
   TEST_T_OP_NUM(0, *, double, 76);
 
@@ -279,14 +279,14 @@ TYPED_TEST(SignNeutralSafeIntTest, TestDivide) {
   typedef typename T::ValueType V;
 
   // Test positive vs. positive division across types.
-  TEST_T_OP_NUM(9, /, int32, 3);
-  TEST_T_OP_NUM(9, /, uint32, 3);
+  TEST_T_OP_NUM(9, /, int32_t, 3);
+  TEST_T_OP_NUM(9, /, uint32_t, 3);
   TEST_T_OP_NUM(9, /, float, 3);
   TEST_T_OP_NUM(9, /, double, 3);
 
   // Test zero vs. positive division across types.
-  TEST_T_OP_NUM(0, /, int32, 76);
-  TEST_T_OP_NUM(0, /, uint32, 76);
+  TEST_T_OP_NUM(0, /, int32_t, 76);
+  TEST_T_OP_NUM(0, /, uint32_t, 76);
   TEST_T_OP_NUM(0, /, float, 76);
   TEST_T_OP_NUM(0, /, double, 76);
 }
@@ -307,12 +307,12 @@ TYPED_TEST(SignNeutralSafeIntTest, TestModulo) {
   typedef typename T::ValueType V;
 
   // Test positive vs. positive modulo across signedness.
-  TEST_T_OP_NUM(7, %, int32, 6);
-  TEST_T_OP_NUM(7, %, uint32, 6);
+  TEST_T_OP_NUM(7, %, int32_t, 6);
+  TEST_T_OP_NUM(7, %, uint32_t, 6);
 
   // Test zero vs. positive modulo across signedness.
-  TEST_T_OP_NUM(0, %, int32, 6);
-  TEST_T_OP_NUM(0, %, uint32, 6);
+  TEST_T_OP_NUM(0, %, int32_t, 6);
+  TEST_T_OP_NUM(0, %, uint32_t, 6);
 }
 
 TYPED_TEST(SignNeutralSafeIntTest, TestModuloFailures) {
@@ -534,28 +534,28 @@ TYPED_TEST(SignedSafeIntTest, TestMultiply) {
   typedef typename T::ValueType V;
 
   // Test negative vs. positive multiplication across types.
-  TEST_T_OP_NUM(-9, *, int32, 3);
-  TEST_T_OP_NUM(-9, *, uint32, 3);
+  TEST_T_OP_NUM(-9, *, int32_t, 3);
+  TEST_T_OP_NUM(-9, *, uint32_t, 3);
   TEST_T_OP_NUM(-9, *, float, 3);
   TEST_T_OP_NUM(-9, *, double, 3);
   // Test positive vs. negative multiplication across types.
-  TEST_T_OP_NUM(9, *, int32, -3);
+  TEST_T_OP_NUM(9, *, int32_t, -3);
   // Don't cover unsigneds that are initialized from negative values.
   TEST_T_OP_NUM(9, *, float, -3);
   TEST_T_OP_NUM(9, *, double, -3);
   // Test negative vs. negative multiplication across types.
-  TEST_T_OP_NUM(-9, *, int32, -3);
+  TEST_T_OP_NUM(-9, *, int32_t, -3);
   // Don't cover unsigneds that are initialized from negative values.
   TEST_T_OP_NUM(-9, *, float, -3);
   TEST_T_OP_NUM(-9, *, double, -3);
 
   // Test negative vs. zero multiplication commutatively across types.
-  TEST_T_OP_NUM(-93, *, int32, 0);
-  TEST_T_OP_NUM(-93, *, uint32, 0);
+  TEST_T_OP_NUM(-93, *, int32_t, 0);
+  TEST_T_OP_NUM(-93, *, uint32_t, 0);
   TEST_T_OP_NUM(-93, *, float, 0);
   TEST_T_OP_NUM(-93, *, double, 0);
-  TEST_T_OP_NUM(0, *, int32, -76);
-  TEST_T_OP_NUM(0, *, uint32, -76);
+  TEST_T_OP_NUM(0, *, int32_t, -76);
+  TEST_T_OP_NUM(0, *, uint32_t, -76);
   TEST_T_OP_NUM(0, *, float, -76);
   TEST_T_OP_NUM(0, *, double, -76);
 
@@ -600,24 +600,24 @@ TYPED_TEST(SignedSafeIntTest, TestDivide) {
   typedef typename T::ValueType V;
 
   // Test negative vs. positive division across types.
-  TEST_T_OP_NUM(-9, /, int32, 3);
-  TEST_T_OP_NUM(-9, /, uint32, 3);
+  TEST_T_OP_NUM(-9, /, int32_t, 3);
+  TEST_T_OP_NUM(-9, /, uint32_t, 3);
   TEST_T_OP_NUM(-9, /, float, 3);
   TEST_T_OP_NUM(-9, /, double, 3);
   // Test positive vs. negative division across types.
-  TEST_T_OP_NUM(9, /, int32, -3);
-  TEST_T_OP_NUM(9, /, uint32, -3);
+  TEST_T_OP_NUM(9, /, int32_t, -3);
+  TEST_T_OP_NUM(9, /, uint32_t, -3);
   TEST_T_OP_NUM(9, /, float, -3);
   TEST_T_OP_NUM(9, /, double, -3);
   // Test negative vs. negative division across types.
-  TEST_T_OP_NUM(-9, /, int32, -3);
-  TEST_T_OP_NUM(-9, /, uint32, -3);
+  TEST_T_OP_NUM(-9, /, int32_t, -3);
+  TEST_T_OP_NUM(-9, /, uint32_t, -3);
   TEST_T_OP_NUM(-9, /, float, -3);
   TEST_T_OP_NUM(-9, /, double, -3);
 
   // Test zero vs. negative division across types.
-  TEST_T_OP_NUM(0, /, int32, -76);
-  TEST_T_OP_NUM(0, /, uint32, -76);
+  TEST_T_OP_NUM(0, /, int32_t, -76);
+  TEST_T_OP_NUM(0, /, uint32_t, -76);
   TEST_T_OP_NUM(0, /, float, -76);
   TEST_T_OP_NUM(0, /, double, -76);
 }
@@ -638,18 +638,18 @@ TYPED_TEST(SignedSafeIntTest, TestModulo) {
   typedef typename T::ValueType V;
 
   // Test negative vs. positive modulo across signedness.
-  TEST_T_OP_NUM(-7, %, int32, 6);
-  TEST_T_OP_NUM(-7, %, uint32, 6);
+  TEST_T_OP_NUM(-7, %, int32_t, 6);
+  TEST_T_OP_NUM(-7, %, uint32_t, 6);
   // Test positive vs. negative modulo across signedness.
-  TEST_T_OP_NUM(7, %, int32, -6);
-  TEST_T_OP_NUM(7, %, uint32, -6);
+  TEST_T_OP_NUM(7, %, int32_t, -6);
+  TEST_T_OP_NUM(7, %, uint32_t, -6);
   // Test negative vs. negative modulo across signedness.
-  TEST_T_OP_NUM(-7, %, int32, -6);
-  TEST_T_OP_NUM(-7, %, uint32, -6);
+  TEST_T_OP_NUM(-7, %, int32_t, -6);
+  TEST_T_OP_NUM(-7, %, uint32_t, -6);
 
   // Test zero vs. negative modulo across signedness.
-  TEST_T_OP_NUM(0, %, int32, -6);
-  TEST_T_OP_NUM(0, %, uint32, -6);
+  TEST_T_OP_NUM(0, %, int32_t, -6);
+  TEST_T_OP_NUM(0, %, uint32_t, -6);
 }
 
 TYPED_TEST(SignedSafeIntTest, TestModuloFailures) {

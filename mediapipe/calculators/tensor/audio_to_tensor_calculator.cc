@@ -192,7 +192,7 @@ class AudioToTensorCalculator : public Node {
   DftTensorFormat dft_tensor_format_;
 
   Timestamp initial_timestamp_ = Timestamp::Unstarted();
-  int64 cumulative_input_samples_ = 0;
+  int64_t cumulative_input_samples_ = 0;
   Timestamp next_output_timestamp_ = Timestamp::Unstarted();
 
   double source_sample_rate_ = -1;
@@ -203,6 +203,7 @@ class AudioToTensorCalculator : public Node {
   std::unique_ptr<audio_dsp::QResampler<float>> resampler_;
   Matrix sample_buffer_;
   int processed_buffer_cols_ = 0;
+  double gain_ = 1.0;
 
   // The internal state of the FFT library.
   PFFFT_Setup* fft_state_ = nullptr;
@@ -278,19 +279,26 @@ absl::Status AudioToTensorCalculator::Open(CalculatorContext* cc) {
   padding_samples_after_ = options.padding_samples_after();
   dft_tensor_format_ = options.dft_tensor_format();
   flush_mode_ = options.flush_mode();
-
-  RET_CHECK(kAudioSampleRateIn(cc).IsConnected() ^
-            !kAudioIn(cc).Header().IsEmpty())
-      << "Must either specify the time series header of the \"AUDIO\" stream "
-         "or have the \"SAMPLE_RATE\" stream connected.";
-  if (!kAudioIn(cc).Header().IsEmpty()) {
-    mediapipe::TimeSeriesHeader input_header;
-    MP_RETURN_IF_ERROR(mediapipe::time_series_util::FillTimeSeriesHeaderIfValid(
-        kAudioIn(cc).Header(), &input_header));
-    if (stream_mode_) {
-      MP_RETURN_IF_ERROR(SetupStreamingResampler(input_header.sample_rate()));
-    } else {
-      source_sample_rate_ = input_header.sample_rate();
+  if (options.has_volume_gain_db()) {
+    gain_ = pow(10, options.volume_gain_db() / 20.0);
+  }
+  if (options.has_source_sample_rate()) {
+    source_sample_rate_ = options.source_sample_rate();
+  } else {
+    RET_CHECK(kAudioSampleRateIn(cc).IsConnected() ^
+              !kAudioIn(cc).Header().IsEmpty())
+        << "Must either specify the time series header of the \"AUDIO\" stream "
+           "or have the \"SAMPLE_RATE\" stream connected.";
+    if (!kAudioIn(cc).Header().IsEmpty()) {
+      mediapipe::TimeSeriesHeader input_header;
+      MP_RETURN_IF_ERROR(
+          mediapipe::time_series_util::FillTimeSeriesHeaderIfValid(
+              kAudioIn(cc).Header(), &input_header));
+      if (stream_mode_) {
+        MP_RETURN_IF_ERROR(SetupStreamingResampler(input_header.sample_rate()));
+      } else {
+        source_sample_rate_ = input_header.sample_rate();
+      }
     }
   }
   AppendZerosToSampleBuffer(padding_samples_before_);
@@ -344,6 +352,10 @@ absl::Status AudioToTensorCalculator::Process(CalculatorContext* cc) {
   const Matrix& input = channels_match ? input_frame
                                        // Mono mixdown.
                                        : input_frame.colwise().mean();
+  if (gain_ != 1.0) {
+    return stream_mode_ ? ProcessStreamingData(cc, input * gain_)
+                        : ProcessNonStreamingData(cc, input * gain_);
+  }
   return stream_mode_ ? ProcessStreamingData(cc, input)
                       : ProcessNonStreamingData(cc, input);
 }

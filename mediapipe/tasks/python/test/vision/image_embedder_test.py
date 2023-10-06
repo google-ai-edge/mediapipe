@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -119,14 +119,43 @@ class ImageEmbedderTest(parameterized.TestCase):
         similarity, expected_similarity, delta=_SIMILARITY_TOLERANCE)
 
   @parameterized.parameters(
-      (False, False, False, ModelFileType.FILE_NAME, 0.925519, 1024,
-       (-0.2101883, -0.193027)),
-      (True, False, False, ModelFileType.FILE_NAME, 0.925519, 1024,
-       (-0.0142344, -0.0131606)),
-      # (False, True, False, ModelFileType.FILE_NAME,
-      #  0.926791, 1024, (229, 231)),
-      (False, False, True, ModelFileType.FILE_CONTENT, 0.999931, 1024,
-       (-0.195062, -0.193027)))
+      (
+          False,
+          False,
+          False,
+          ModelFileType.FILE_NAME,
+          0.925519,
+          1024,
+          (-0.2101883, -0.193027),
+      ),
+      (
+          True,
+          False,
+          False,
+          ModelFileType.FILE_NAME,
+          0.925519,
+          1024,
+          (-0.0142344, -0.0131606),
+      ),
+      (
+          False,
+          True,
+          False,
+          ModelFileType.FILE_NAME,
+          0.926791,
+          1024,
+          (229, 231),
+      ),
+      (
+          False,
+          False,
+          True,
+          ModelFileType.FILE_CONTENT,
+          0.999931,
+          1024,
+          (-0.195062, -0.193027),
+      ),
+  )
   def test_embed(self, l2_normalize, quantize, with_roi, model_file_type,
                  expected_similarity, expected_size, expected_first_values):
     # Creates embedder.

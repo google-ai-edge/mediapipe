@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -59,7 +59,6 @@ using ::mediapipe::api2::Output;
 using ::mediapipe::api2::builder::Graph;
 using ::mediapipe::api2::builder::Source;
 using ::mediapipe::tasks::components::utils::AllowIf;
-using ::mediapipe::tasks::core::ModelResources;
 using ::mediapipe::tasks::vision::hand_landmarker::proto::
     HandLandmarksDetectorGraphOptions;
 using LabelItems = mediapipe::proto_ns::Map<int64, ::mediapipe::LabelMapItem>;
@@ -107,32 +106,6 @@ absl::Status SanityCheckOptions(
                                    MediaPipeTasksStatus::kInvalidArgumentError);
   }
   return absl::OkStatus();
-}
-
-// Builds an ImageTensorSpecs for configuring the image preprocessing subgraph.
-absl::StatusOr<ImageTensorSpecs> BuildImageTensorSpecs(
-    const ModelResources& model_resources) {
-  const tflite::Model& model = *model_resources.GetTfLiteModel();
-  if (model.subgraphs()->size() != 1) {
-    return CreateStatusWithPayload(
-        absl::StatusCode::kInvalidArgument,
-        "Hand landmark model is assumed to have a single subgraph.",
-        MediaPipeTasksStatus::kInvalidArgumentError);
-  }
-  const auto* primary_subgraph = (*model.subgraphs())[0];
-  if (primary_subgraph->inputs()->size() != 1) {
-    return CreateStatusWithPayload(
-        absl::StatusCode::kInvalidArgument,
-        "Hand landmark model is assumed to have a single input.",
-        MediaPipeTasksStatus::kInvalidArgumentError);
-  }
-  const auto* input_tensor =
-      (*primary_subgraph->tensors())[(*primary_subgraph->inputs())[0]];
-  ASSIGN_OR_RETURN(const auto* image_tensor_metadata,
-                   vision::GetImageTensorMetadataIfAny(
-                       *model_resources.GetMetadataExtractor(), 0));
-  return vision::BuildInputImageTensorSpecs(*input_tensor,
-                                            image_tensor_metadata);
 }
 
 // Split hand landmark detection model output tensor into four parts,
@@ -243,11 +216,12 @@ class SingleHandLandmarksDetectorGraph : public core::ModelTaskGraph {
         const auto* model_resources,
         CreateModelResources<HandLandmarksDetectorGraphOptions>(sc));
     Graph graph;
-    ASSIGN_OR_RETURN(auto hand_landmark_detection_outs,
-                     BuildSingleHandLandmarksDetectorGraph(
-                         sc->Options<HandLandmarksDetectorGraphOptions>(),
-                         *model_resources, graph[Input<Image>(kImageTag)],
-                         graph[Input<NormalizedRect>(kHandRectTag)], graph));
+    ASSIGN_OR_RETURN(
+        auto hand_landmark_detection_outs,
+        BuildSingleHandLandmarksDetectorGraph(
+            sc->Options<HandLandmarksDetectorGraphOptions>(), *model_resources,
+            graph[Input<Image>(kImageTag)],
+            graph[Input<NormalizedRect>::Optional(kHandRectTag)], graph));
     hand_landmark_detection_outs.hand_landmarks >>
         graph[Output<NormalizedLandmarkList>(kLandmarksTag)];
     hand_landmark_detection_outs.world_hand_landmarks >>
@@ -296,7 +270,7 @@ class SingleHandLandmarksDetectorGraph : public core::ModelTaskGraph {
     auto image_size = preprocessing[Output<std::pair<int, int>>("IMAGE_SIZE")];
 
     ASSIGN_OR_RETURN(auto image_tensor_specs,
-                     BuildImageTensorSpecs(model_resources));
+                     BuildInputImageTensorSpecs(model_resources));
 
     auto& inference = AddInference(
         model_resources, subgraph_options.base_options().acceleration(), graph);
@@ -434,7 +408,7 @@ REGISTER_MEDIAPIPE_GRAPH(
 // - Accepts CPU input image and a vector of hand rect RoIs to detect the
 //   multiple hands landmarks enclosed by the RoIs. Output vectors of
 //   hand landmarks related results, where each element in the vectors
-//   corrresponds to the result of the same hand.
+//   corresponds to the result of the same hand.
 //
 // Inputs:
 //   IMAGE - Image

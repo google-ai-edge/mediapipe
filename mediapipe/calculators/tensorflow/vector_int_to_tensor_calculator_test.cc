@@ -63,7 +63,7 @@ class VectorIntToTensorCalculatorTest : public ::testing::Test {
       }
     }
 
-    const int64 time = 1234;
+    const int64_t time = 1234;
     runner_->MutableInputs()
         ->Tag(kVectorIntTag)
         .packets.push_back(Adopt(input.release()).At(Timestamp(time)));
@@ -97,7 +97,7 @@ class VectorIntToTensorCalculatorTest : public ::testing::Test {
 TEST_F(VectorIntToTensorCalculatorTest, TestSingleValue) {
   SetUpRunner(VectorIntToTensorCalculatorOptions::INPUT_1D,
               tensorflow::DT_INT32, false, true);
-  const int64 time = 1234;
+  const int64_t time = 1234;
   runner_->MutableInputs()
       ->Tag(kSingleIntTag)
       .packets.push_back(MakePacket<int>(1).At(Timestamp(time)));
@@ -112,7 +112,7 @@ TEST_F(VectorIntToTensorCalculatorTest, TestSingleValue) {
 
   EXPECT_EQ(1, output_tensor.dims());
   EXPECT_EQ(tf::DT_INT32, output_tensor.dtype());
-  const auto vec = output_tensor.vec<int32>();
+  const auto vec = output_tensor.vec<int32_t>();
   EXPECT_EQ(1, vec(0));
 }
 
@@ -123,7 +123,7 @@ TEST_F(VectorIntToTensorCalculatorTest, TesOneDim) {
   for (int i = 0; i < 5; ++i) {
     input->at(i) = i;
   }
-  const int64 time = 1234;
+  const int64_t time = 1234;
   runner_->MutableInputs()
       ->Tag(kVectorIntTag)
       .packets.push_back(Adopt(input.release()).At(Timestamp(time)));
@@ -138,7 +138,7 @@ TEST_F(VectorIntToTensorCalculatorTest, TesOneDim) {
 
   EXPECT_EQ(1, output_tensor.dims());
   EXPECT_EQ(tf::DT_INT32, output_tensor.dtype());
-  const auto vec = output_tensor.vec<int32>();
+  const auto vec = output_tensor.vec<int32_t>();
 
   for (int i = 0; i < 5; ++i) {
     EXPECT_EQ(i, vec(i));
@@ -154,7 +154,7 @@ TEST_F(VectorIntToTensorCalculatorTest, TestTwoDims) {
 TEST_F(VectorIntToTensorCalculatorTest, TestInt64) {
   SetUpRunner(VectorIntToTensorCalculatorOptions::INPUT_1D,
               tensorflow::DT_INT64, false, true);
-  const int64 time = 1234;
+  const int64_t time = 1234;
   runner_->MutableInputs()
       ->Tag(kSingleIntTag)
       .packets.push_back(MakePacket<int>(1LL << 31).At(Timestamp(time)));
@@ -181,7 +181,7 @@ TEST_F(VectorIntToTensorCalculatorTest, TestUint8) {
   for (int i = 0; i < 5; ++i) {
     input->at(i) = i;
   }
-  const int64 time = 1234;
+  const int64_t time = 1234;
   runner_->MutableInputs()
       ->Tag(kVectorIntTag)
       .packets.push_back(Adopt(input.release()).At(Timestamp(time)));
@@ -196,7 +196,7 @@ TEST_F(VectorIntToTensorCalculatorTest, TestUint8) {
 
   EXPECT_EQ(1, output_tensor.dims());
   EXPECT_EQ(tf::DT_UINT8, output_tensor.dtype());
-  const auto vec = output_tensor.vec<uint8>();
+  const auto vec = output_tensor.vec<uint8_t>();
 
   for (int i = 0; i < 5; ++i) {
     EXPECT_EQ(i, vec(i));

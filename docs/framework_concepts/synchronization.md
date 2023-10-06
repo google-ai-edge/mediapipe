@@ -1,5 +1,6 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe/framework/framework_concepts/synchronization
 title: Synchronization
 parent: Framework Concepts
 nav_order: 4
@@ -11,6 +12,12 @@ nav_order: 4
 1. TOC
 {:toc}
 ---
+
+**Attention:** *Thanks for your interest in MediaPipe! We have moved to
+[https://developers.google.com/mediapipe](https://developers.google.com/mediapipe)
+as the primary developer documentation site for MediaPipe as of April 3, 2023.*
+
+----
 
 ## Scheduling mechanics
 
@@ -112,14 +119,14 @@ Warning: On the other hand, it is not guaranteed that an input packet will
 always be available for all streams.
 
 To explain how it works, we need to introduce the definition of a settled
-timestamp. We say that a timestamp in a stream is *settled* if it lower than the
-timestamp bound. In other words, a timestamp is settled for a stream once the
-state of the input at that timestamp is irrevocably known: either there is a
+timestamp. We say that a timestamp in a stream is *settled* if it is lower than
+the timestamp bound. In other words, a timestamp is settled for a stream once
+the state of the input at that timestamp is irrevocably known: either there is a
 packet, or there is the certainty that a packet with that timestamp will not
 arrive.
 
 Note: For this reason, MediaPipe also allows a stream producer to explicitly
-advance the timestamp bound farther that what the last packet implies, i.e. to
+advance the timestamp bound farther than what the last packet implies, i.e. to
 provide a tighter bound. This can allow the downstream nodes to settle their
 inputs sooner.
 

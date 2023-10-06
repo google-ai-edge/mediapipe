@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/components/containers/category.h"
 #include "mediapipe/tasks/cc/components/containers/classification_result.h"
-#include "tensorflow/lite/core/shims/cc/shims_test_util.h"
+#include "tensorflow/lite/test_util.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -77,7 +77,7 @@ void CheckSpeechResult(const std::vector<AudioClassifierResult>& result,
   EXPECT_EQ(result.size(), 5);
   // Ignore last result, which operates on a too small chunk to return relevant
   // results.
-  std::vector<int64> timestamps_ms = {0, 975, 1950, 2925};
+  std::vector<int64_t> timestamps_ms = {0, 975, 1950, 2925};
   for (int i = 0; i < timestamps_ms.size(); i++) {
     EXPECT_EQ(result[i].timestamp_ms, timestamps_ms[i]);
     EXPECT_EQ(result[i].classifications.size(), 1);
@@ -143,7 +143,7 @@ void CheckStreamingModeResults(std::vector<AudioClassifierResult> outputs) {
   EXPECT_EQ(outputs.size(), 5);
   // Ignore last result, which operates on a too small chunk to return relevant
   // results.
-  std::vector<int64> timestamps_ms = {0, 975, 1950, 2925};
+  std::vector<int64_t> timestamps_ms = {0, 975, 1950, 2925};
   for (int i = 0; i < outputs.size() - 1; i++) {
     EXPECT_EQ(outputs[i].timestamp_ms.value(), timestamps_ms[i]);
     EXPECT_EQ(outputs[i].classifications.size(), 1);
@@ -157,7 +157,7 @@ void CheckStreamingModeResults(std::vector<AudioClassifierResult> outputs) {
   }
 }
 
-class CreateFromOptionsTest : public tflite_shims::testing::Test {};
+class CreateFromOptionsTest : public tflite::testing::Test {};
 
 TEST_F(CreateFromOptionsTest, SucceedsForModelWithMetadata) {
   auto options = std::make_unique<AudioClassifierOptions>();
@@ -270,7 +270,7 @@ TEST_F(CreateFromOptionsTest, FailsWithUnnecessaryCallback) {
                   MediaPipeTasksStatus::kInvalidTaskGraphConfigError))));
 }
 
-class ClassifyTest : public tflite_shims::testing::Test {};
+class ClassifyTest : public tflite::testing::Test {};
 
 TEST_F(ClassifyTest, Succeeds) {
   auto audio_buffer = GetAudioData(k16kTestWavFilename);
@@ -456,7 +456,7 @@ TEST_F(ClassifyTest, SucceedsWithCategoryDenylist) {
                                               /*audio_sample_rate=*/48000));
   MP_ASSERT_OK(audio_classifier->Close());
   // All categories with the "Speech" label are filtered out.
-  std::vector<int64> timestamps_ms = {0, 975, 1950, 2925};
+  std::vector<int64_t> timestamps_ms = {0, 975, 1950, 2925};
   for (int i = 0; i < timestamps_ms.size(); i++) {
     EXPECT_EQ(result[i].timestamp_ms, timestamps_ms[i]);
     EXPECT_EQ(result[i].classifications.size(), 1);
@@ -467,7 +467,7 @@ TEST_F(ClassifyTest, SucceedsWithCategoryDenylist) {
   }
 }
 
-class ClassifyAsyncTest : public tflite_shims::testing::Test {};
+class ClassifyAsyncTest : public tflite::testing::Test {};
 
 TEST_F(ClassifyAsyncTest, Succeeds) {
   constexpr int kSampleRateHz = 48000;

@@ -27,10 +27,6 @@ namespace options_field_util {
 
 using ::mediapipe::proto_ns::internal::WireFormatLite;
 using FieldType = WireFormatLite::FieldType;
-using ::mediapipe::proto_ns::io::ArrayInputStream;
-using ::mediapipe::proto_ns::io::CodedInputStream;
-using ::mediapipe::proto_ns::io::CodedOutputStream;
-using ::mediapipe::proto_ns::io::StringOutputStream;
 
 // Utility functions for OptionsFieldUtil.
 namespace {
@@ -487,24 +483,24 @@ FieldData AsFieldData(const proto_ns::MessageLite& message) {
 
 // Represents a protobuf enum value stored in a Packet.
 struct ProtoEnum {
-  ProtoEnum(int32 v) : value(v) {}
-  int32 value;
+  ProtoEnum(int32_t v) : value(v) {}
+  int32_t value;
 };
 
 absl::StatusOr<Packet> AsPacket(const FieldData& data) {
   Packet result;
   switch (data.value_case()) {
     case FieldData::ValueCase::kInt32Value:
-      result = MakePacket<int32>(data.int32_value());
+      result = MakePacket<int32_t>(data.int32_value());
       break;
     case FieldData::ValueCase::kInt64Value:
-      result = MakePacket<int64>(data.int64_value());
+      result = MakePacket<int64_t>(data.int64_value());
       break;
     case FieldData::ValueCase::kUint32Value:
-      result = MakePacket<uint32>(data.uint32_value());
+      result = MakePacket<uint32_t>(data.uint32_value());
       break;
     case FieldData::ValueCase::kUint64Value:
-      result = MakePacket<uint64>(data.uint64_value());
+      result = MakePacket<uint64_t>(data.uint64_value());
       break;
     case FieldData::ValueCase::kDoubleValue:
       result = MakePacket<double>(data.double_value());
@@ -538,11 +534,11 @@ absl::StatusOr<Packet> AsPacket(const FieldData& data) {
 }
 
 absl::StatusOr<FieldData> AsFieldData(Packet packet) {
-  static const auto* kTypeIds = new std::map<TypeId, int32>{
-      {kTypeId<int32>, WireFormatLite::CPPTYPE_INT32},
-      {kTypeId<int64>, WireFormatLite::CPPTYPE_INT64},
-      {kTypeId<uint32>, WireFormatLite::CPPTYPE_UINT32},
-      {kTypeId<uint64>, WireFormatLite::CPPTYPE_UINT64},
+  static const auto* kTypeIds = new std::map<TypeId, int32_t>{
+      {kTypeId<int32_t>, WireFormatLite::CPPTYPE_INT32},
+      {kTypeId<int64_t>, WireFormatLite::CPPTYPE_INT64},
+      {kTypeId<uint32_t>, WireFormatLite::CPPTYPE_UINT32},
+      {kTypeId<uint64_t>, WireFormatLite::CPPTYPE_UINT64},
       {kTypeId<double>, WireFormatLite::CPPTYPE_DOUBLE},
       {kTypeId<float>, WireFormatLite::CPPTYPE_FLOAT},
       {kTypeId<bool>, WireFormatLite::CPPTYPE_BOOL},
@@ -566,16 +562,16 @@ absl::StatusOr<FieldData> AsFieldData(Packet packet) {
 
   switch (kTypeIds->at(packet.GetTypeId())) {
     case WireFormatLite::CPPTYPE_INT32:
-      result.set_int32_value(packet.Get<int32>());
+      result.set_int32_value(packet.Get<int32_t>());
       break;
     case WireFormatLite::CPPTYPE_INT64:
-      result.set_int64_value(packet.Get<int64>());
+      result.set_int64_value(packet.Get<int64_t>());
       break;
     case WireFormatLite::CPPTYPE_UINT32:
-      result.set_uint32_value(packet.Get<uint32>());
+      result.set_uint32_value(packet.Get<uint32_t>());
       break;
     case WireFormatLite::CPPTYPE_UINT64:
-      result.set_uint64_value(packet.Get<uint64>());
+      result.set_uint64_value(packet.Get<uint64_t>());
       break;
     case WireFormatLite::CPPTYPE_DOUBLE:
       result.set_double_value(packet.Get<double>());

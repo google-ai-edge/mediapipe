@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,10 +29,12 @@ py_library(
         "//mediapipe/python:packet_getter",
         "//mediapipe/tasks/cc/vision/object_detector/proto:object_detector_options_py_pb2",
         "//mediapipe/tasks/python/components/containers:detections",
+        "//mediapipe/tasks/python/components/containers:rect",
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/core:optional_dependencies",
         "//mediapipe/tasks/python/core:task_info",
         "//mediapipe/tasks/python/vision/core:base_vision_task_api",
+        "//mediapipe/tasks/python/vision/core:image_processing_options",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
     ],
 )
@@ -69,12 +71,15 @@ py_library(
         "//mediapipe/python:_framework_bindings",
         "//mediapipe/python:packet_creator",
         "//mediapipe/python:packet_getter",
+        "//mediapipe/tasks/cc/vision/image_segmenter/calculators:tensors_to_segmentation_calculator_py_pb2",
         "//mediapipe/tasks/cc/vision/image_segmenter/proto:image_segmenter_graph_options_py_pb2",
         "//mediapipe/tasks/cc/vision/image_segmenter/proto:segmenter_options_py_pb2",
+        "//mediapipe/tasks/python/components/containers:rect",
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/core:optional_dependencies",
         "//mediapipe/tasks/python/core:task_info",
         "//mediapipe/tasks/python/vision/core:base_vision_task_api",
+        "//mediapipe/tasks/python/vision/core:image_processing_options",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
     ],
 )
@@ -99,6 +104,28 @@ py_library(
         "//mediapipe/tasks/python/vision/core:base_vision_task_api",
         "//mediapipe/tasks/python/vision/core:image_processing_options",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
+    ],
+)
+
+py_library(
+    name = "interactive_segmenter",
+    srcs = [
+        "interactive_segmenter.py",
+    ],
+    deps = [
+        "//mediapipe/python:_framework_bindings",
+        "//mediapipe/python:packet_creator",
+        "//mediapipe/python:packet_getter",
+        "//mediapipe/tasks/cc/vision/image_segmenter/proto:image_segmenter_graph_options_py_pb2",
+        "//mediapipe/tasks/cc/vision/image_segmenter/proto:segmenter_options_py_pb2",
+        "//mediapipe/tasks/python/components/containers:keypoint",
+        "//mediapipe/tasks/python/core:base_options",
+        "//mediapipe/tasks/python/core:optional_dependencies",
+        "//mediapipe/tasks/python/core:task_info",
+        "//mediapipe/tasks/python/vision/core:base_vision_task_api",
+        "//mediapipe/tasks/python/vision/core:image_processing_options",
+        "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
+        "//mediapipe/util:render_data_py_pb2",
     ],
 )
 
@@ -131,10 +158,6 @@ py_library(
     srcs = [
         "hand_landmarker.py",
     ],
-    visibility = [
-        "//mediapipe/model_maker/python/vision/gesture_recognizer:__subpackages__",
-        "//mediapipe/tasks:internal",
-    ],
     deps = [
         "//mediapipe/framework/formats:classification_py_pb2",
         "//mediapipe/framework/formats:landmark_py_pb2",
@@ -144,6 +167,110 @@ py_library(
         "//mediapipe/tasks/cc/vision/hand_landmarker/proto:hand_landmarker_graph_options_py_pb2",
         "//mediapipe/tasks/python/components/containers:category",
         "//mediapipe/tasks/python/components/containers:landmark",
+        "//mediapipe/tasks/python/core:base_options",
+        "//mediapipe/tasks/python/core:optional_dependencies",
+        "//mediapipe/tasks/python/core:task_info",
+        "//mediapipe/tasks/python/vision/core:base_vision_task_api",
+        "//mediapipe/tasks/python/vision/core:image_processing_options",
+        "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
+    ],
+)
+
+py_library(
+    name = "pose_landmarker",
+    srcs = [
+        "pose_landmarker.py",
+    ],
+    deps = [
+        "//mediapipe/framework/formats:landmark_py_pb2",
+        "//mediapipe/python:_framework_bindings",
+        "//mediapipe/python:packet_creator",
+        "//mediapipe/python:packet_getter",
+        "//mediapipe/tasks/cc/vision/pose_landmarker/proto:pose_landmarker_graph_options_py_pb2",
+        "//mediapipe/tasks/python/components/containers:landmark",
+        "//mediapipe/tasks/python/core:base_options",
+        "//mediapipe/tasks/python/core:optional_dependencies",
+        "//mediapipe/tasks/python/core:task_info",
+        "//mediapipe/tasks/python/vision/core:base_vision_task_api",
+        "//mediapipe/tasks/python/vision/core:image_processing_options",
+        "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
+    ],
+)
+
+py_library(
+    name = "face_detector",
+    srcs = [
+        "face_detector.py",
+    ],
+    deps = [
+        "//mediapipe/python:_framework_bindings",
+        "//mediapipe/python:packet_creator",
+        "//mediapipe/python:packet_getter",
+        "//mediapipe/tasks/cc/vision/face_detector/proto:face_detector_graph_options_py_pb2",
+        "//mediapipe/tasks/python/components/containers:detections",
+        "//mediapipe/tasks/python/core:base_options",
+        "//mediapipe/tasks/python/core:optional_dependencies",
+        "//mediapipe/tasks/python/core:task_info",
+        "//mediapipe/tasks/python/vision/core:base_vision_task_api",
+        "//mediapipe/tasks/python/vision/core:image_processing_options",
+        "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
+    ],
+)
+
+py_library(
+    name = "face_landmarker",
+    srcs = [
+        "face_landmarker.py",
+    ],
+    deps = [
+        "//mediapipe/framework/formats:classification_py_pb2",
+        "//mediapipe/framework/formats:landmark_py_pb2",
+        "//mediapipe/framework/formats:matrix_data_py_pb2",
+        "//mediapipe/python:_framework_bindings",
+        "//mediapipe/python:packet_creator",
+        "//mediapipe/python:packet_getter",
+        "//mediapipe/tasks/cc/vision/face_geometry/proto:face_geometry_py_pb2",
+        "//mediapipe/tasks/cc/vision/face_landmarker/proto:face_landmarker_graph_options_py_pb2",
+        "//mediapipe/tasks/python/components/containers:category",
+        "//mediapipe/tasks/python/components/containers:landmark",
+        "//mediapipe/tasks/python/core:base_options",
+        "//mediapipe/tasks/python/core:optional_dependencies",
+        "//mediapipe/tasks/python/core:task_info",
+        "//mediapipe/tasks/python/vision/core:base_vision_task_api",
+        "//mediapipe/tasks/python/vision/core:image_processing_options",
+        "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
+    ],
+)
+
+py_library(
+    name = "face_stylizer",
+    srcs = [
+        "face_stylizer.py",
+    ],
+    deps = [
+        "//mediapipe/python:_framework_bindings",
+        "//mediapipe/python:packet_creator",
+        "//mediapipe/python:packet_getter",
+        "//mediapipe/tasks/cc/vision/face_stylizer/proto:face_stylizer_graph_options_py_pb2",
+        "//mediapipe/tasks/python/core:base_options",
+        "//mediapipe/tasks/python/core:optional_dependencies",
+        "//mediapipe/tasks/python/core:task_info",
+        "//mediapipe/tasks/python/vision/core:base_vision_task_api",
+        "//mediapipe/tasks/python/vision/core:image_processing_options",
+        "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
+    ],
+)
+
+py_library(
+    name = "face_aligner",
+    srcs = [
+        "face_aligner.py",
+    ],
+    deps = [
+        "//mediapipe/python:_framework_bindings",
+        "//mediapipe/python:packet_creator",
+        "//mediapipe/python:packet_getter",
+        "//mediapipe/tasks/cc/vision/face_stylizer/proto:face_stylizer_graph_options_py_pb2",
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/core:optional_dependencies",
         "//mediapipe/tasks/python/core:task_info",

@@ -72,7 +72,6 @@ cc_test(
         "//mediapipe/framework/formats:location",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:opencv_imgcodecs",
-        "//mediapipe/framework/port:status",
         "@org_tensorflow//tensorflow/core:protos_all_cc",
     ],
 )

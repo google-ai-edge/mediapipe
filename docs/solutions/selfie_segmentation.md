@@ -1,7 +1,8 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe/solutions/vision/image_segmenter/
 title: Selfie Segmentation
-parent: Solutions
+parent: MediaPipe Legacy Solutions
 nav_order: 7
 ---
 
@@ -17,6 +18,14 @@ nav_order: 7
 {:toc}
 </details>
 ---
+
+**Attention:** *Thank you for your interest in MediaPipe Solutions.
+As of April 4, 2023, this solution was upgraded to a new MediaPipe
+Solution. For more information, see the
+[MediaPipe Solutions](https://developers.google.com/mediapipe/solutions/vision/image_segmenter/)
+site.*
+
+----
 
 ## Overview
 

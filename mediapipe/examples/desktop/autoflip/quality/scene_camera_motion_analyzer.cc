@@ -34,7 +34,7 @@ absl::Status SceneCameraMotionAnalyzer::AnalyzeSceneAndPopulateFocusPointFrames(
     const KeyFrameCropOptions& key_frame_crop_options,
     const std::vector<KeyFrameCropResult>& key_frame_crop_results,
     const int scene_frame_width, const int scene_frame_height,
-    const std::vector<int64>& scene_frame_timestamps,
+    const std::vector<int64_t>& scene_frame_timestamps,
     const bool has_solid_color_background,
     SceneKeyFrameCropSummary* scene_summary,
     std::vector<FocusPointFrame>* focus_point_frames,
@@ -45,7 +45,7 @@ absl::Status SceneCameraMotionAnalyzer::AnalyzeSceneAndPopulateFocusPointFrames(
       key_frame_crop_options, key_frame_crop_results, scene_frame_width,
       scene_frame_height, scene_summary));
 
-  const int64 scene_span_ms =
+  const int64_t scene_span_ms =
       scene_frame_timestamps.empty()
           ? 0
           : scene_frame_timestamps.back() - scene_frame_timestamps.front();
@@ -103,7 +103,7 @@ absl::Status SceneCameraMotionAnalyzer::ToUseSweepingMotion(
 
 absl::Status SceneCameraMotionAnalyzer::DecideCameraMotionType(
     const KeyFrameCropOptions& key_frame_crop_options,
-    const double scene_span_sec, const int64 end_time_us,
+    const double scene_span_sec, const int64_t end_time_us,
     SceneKeyFrameCropSummary* scene_summary,
     SceneCameraMotion* scene_camera_motion) const {
   RET_CHECK_GE(scene_span_sec, 0.0) << "Scene time span is negative.";
@@ -298,7 +298,7 @@ absl::Status SceneCameraMotionAnalyzer::AddFocusPointsFromCenterTypeAndWeight(
 absl::Status SceneCameraMotionAnalyzer::PopulateFocusPointFrames(
     const SceneKeyFrameCropSummary& scene_summary,
     const SceneCameraMotion& scene_camera_motion,
-    const std::vector<int64>& scene_frame_timestamps,
+    const std::vector<int64_t>& scene_frame_timestamps,
     std::vector<FocusPointFrame>* focus_point_frames) const {
   RET_CHECK_NE(focus_point_frames, nullptr)
       << "Output vector of FocusPointFrame is null.";
@@ -380,7 +380,7 @@ absl::Status SceneCameraMotionAnalyzer::PopulateFocusPointFrames(
 absl::Status SceneCameraMotionAnalyzer::PopulateFocusPointFramesForTracking(
     const SceneKeyFrameCropSummary& scene_summary,
     const FocusPointFrameType focus_point_frame_type,
-    const std::vector<int64>& scene_frame_timestamps,
+    const std::vector<int64_t>& scene_frame_timestamps,
     std::vector<FocusPointFrame>* focus_point_frames) const {
   RET_CHECK_GE(scene_summary.key_frame_max_score(), 0.0)
       << "Maximum score is negative.";
@@ -392,7 +392,7 @@ absl::Status SceneCameraMotionAnalyzer::PopulateFocusPointFramesForTracking(
   const int scene_frame_height = scene_summary.scene_frame_height();
 
   PiecewiseLinearFunction center_x_function, center_y_function, score_function;
-  const int64 timestamp_offset = key_frame_compact_infos[0].timestamp_ms();
+  const int64_t timestamp_offset = key_frame_compact_infos[0].timestamp_ms();
   for (int i = 0; i < num_key_frames; ++i) {
     const float center_x = key_frame_compact_infos[i].center_x();
     const float center_y = key_frame_compact_infos[i].center_y();
