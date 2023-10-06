@@ -191,6 +191,11 @@ absl::Status InferenceCalculatorMetalImpl::Process(CalculatorContext* cc) {
     [output_encoder endEncoding];
   }
   [command_buffer commit];
+  // The below call is found (manual testing) to resolve flickering issues for
+  // some use cases where multiple Metal calculators are involved.
+  // TODO: investigate and ensure proper synchronization
+  // (e.g. fences/barriers/events).
+  [command_buffer waitUntilScheduled];
 
   kOutTensors(cc).Send(std::move(output_tensors));
   return absl::OkStatus();
