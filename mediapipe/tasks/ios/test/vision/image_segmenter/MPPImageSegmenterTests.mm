@@ -468,6 +468,45 @@ double softIOU(const float *mask1, const float *mask2, size_t size) {
   }
 }
 
+#pragma mark Mask No Copy Tests
+
+- (void)testSegmentWithNoCopyConfidenceMasksAndImageModeSucceeds {
+  MPPImageSegmenterOptions *options =
+      [self imageSegmenterOptionsWithModelFileInfo:kImageSegmenterModelFileInfo];
+
+  MPPImageSegmenter *imageSegmenter = [self createImageSegmenterWithOptionsSucceeds:options];
+
+  MPPImage *image = [MPPImage imageWithFileInfo:kCatImageFileInfo];
+  [imageSegmenter segmentImage:image withCompletionHandler:^(MPPImageSegmenterResult *result, NSError *error) {
+      [self assertImageSegmenterResult:result
+                                         hasConfidenceMasksCount:
+                                             kExpectedDeeplabV3ConfidenceMaskCount
+      approximatelyEqualsExpectedConfidenceMaskImageWithFileInfo:kCatGoldenImageFileInfo
+                                                         atIndex:8
+                                          shouldHaveCategoryMask:NO];
+  }];
+}
+
+- (void)testSegmentWithNoCopyConfidenceMasksAndVideoModeSucceeds {
+  MPPImageSegmenterOptions *options =
+      [self imageSegmenterOptionsWithModelFileInfo:kImageSegmenterModelFileInfo];
+  options.runningMode = MPPRunningModeVideo;
+
+  MPPImageSegmenter *imageSegmenter = [self createImageSegmenterWithOptionsSucceeds:options];
+
+  const NSInteger timestampInMilliseconds = 0;
+
+  MPPImage *image = [MPPImage imageWithFileInfo:kCatImageFileInfo];
+  [imageSegmenter segmentVideoFrame:image timestampInMilliseconds:timestampInMilliseconds withCompletionHandler:^(MPPImageSegmenterResult *result, NSError *error) {
+      [self assertImageSegmenterResult:result
+                                         hasConfidenceMasksCount:
+                                             kExpectedDeeplabV3ConfidenceMaskCount
+      approximatelyEqualsExpectedConfidenceMaskImageWithFileInfo:kCatGoldenImageFileInfo
+                                                         atIndex:8
+                                          shouldHaveCategoryMask:NO];
+  }];
+}
+
 #pragma mark - Image Segmenter Initializers
 
 - (MPPImageSegmenterOptions *)imageSegmenterOptionsWithModelFileInfo:(MPPFileInfo *)fileInfo {
