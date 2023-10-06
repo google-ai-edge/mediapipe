@@ -204,7 +204,20 @@ http_archive(
     urls = ["https://github.com/protocolbuffers/protobuf/archive/v3.19.1.tar.gz"],
 )
 
-load("@//third_party/flatbuffers:workspace.bzl", flatbuffers = "repo")
+http_archive(
+    name = "com_google_protobuf",
+    sha256 = "87407cd28e7a9c95d9f61a098a53cf031109d451a7763e7dd1253abf8b4df422",
+    strip_prefix = "protobuf-3.19.1",
+    urls = ["https://github.com/protocolbuffers/protobuf/archive/v3.19.1.tar.gz"],
+    patches = [
+        "@//third_party:com_google_protobuf_fixes.diff"
+    ],
+    patch_args = [
+        "-p1",
+    ],
+)
+
+load("//third_party/flatbuffers:workspace.bzl", flatbuffers = "repo")
 flatbuffers()
 
 http_archive(
@@ -486,6 +499,7 @@ http_archive(
 
 # TensorFlow repo should always go after the other external dependencies.
 # TF on 2023-06-13.
+#_TENSORFLOW_GIT_COMMIT = "491681a5620e41bf079a582ac39c585cc86878b9"
 _TENSORFLOW_GIT_COMMIT = "491681a5620e41bf079a582ac39c585cc86878b9"
 # curl -L https://github.com/tensorflow/tensorflow/archive/<TENSORFLOW_GIT_COMMIT>.tar.gz | shasum -a 256
 _TENSORFLOW_SHA256 = "9f76389af7a2835e68413322c1eaabfadc912f02a76d71dc16be507f9ca3d3ac"
@@ -612,4 +626,197 @@ http_archive(
     strip_prefix = "Halide-15.0.1-x86-64-windows",
     urls = ["https://github.com/halide/Halide/releases/download/v15.0.1/Halide-15.0.1-x86-64-windows-4c63f1befa1063184c5982b11b6a2cc17d4e5815.zip"],
     build_file = "@//third_party:halide.BUILD",
+)
+
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    name = "ovms",
+    remote = "https://github.com/openvinotoolkit/model_server",
+    commit = "25dcb5273bcf656c81e21fd56767b1535079b6b4", # branch with fix:  Move to ovms_dependencies
+)
+
+# DEV ovms - adjust local repository path for build
+#new_local_repository(
+#    name = "ovms",
+#    path = "/ovms/",
+#    build_file = "/ovms/BUILD.bazel",
+#)
+
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "new_git_repository")
+
+# minitrace
+new_git_repository(
+    name = "minitrace",
+    remote = "https://github.com/hrydgard/minitrace.git",
+    commit = "020f42b189e8d6ad50e4d8f45d69edee0a6b3f23",
+    build_file_content = """
+cc_library(
+    name = "trace",
+    hdrs = ["minitrace.h"],
+    srcs = ["minitrace.c"],
+    visibility = ["//visibility:public"],
+    local_defines = [
+    ],
+)
+""",
+)
+
+# Tensorflow serving
+git_repository(
+    name = "tensorflow_serving",
+    remote = "https://github.com/tensorflow/serving.git",
+    tag = "2.13.0",
+    patch_args = ["-p1"],
+    patches = ["@ovms//external:net_http.patch", "@ovms//external:listen.patch"]
+    #                             ^^^^^^^^^^^^
+    #                       make bind address configurable
+    #          ^^^^^^^^^^^^
+    #        allow all http methods
+)
+
+# AWS S3 SDK
+new_local_repository(
+    name = "awssdk",
+    build_file = "@ovms//third_party/aws:BUILD",
+    path = "/awssdk",
+)
+
+# Azure Storage SDK
+new_local_repository(
+    name = "azure",
+    build_file = "@ovms//third_party/azure:BUILD",
+    path = "/azure/azure-storage-cpp",
+)
+
+# Azure Storage SDK dependency - cpprest
+new_local_repository(
+    name = "cpprest",
+    build_file = "@ovms//third_party/cpprest:BUILD",
+    path = "/azure/cpprestsdk",
+)
+
+# Boost (needed for Azure Storage SDK)
+
+new_local_repository(
+    name = "boost",
+    path = "/usr/local/lib/",
+    build_file = "@ovms//third_party/boost:BUILD"
+)
+
+# Google Cloud SDK
+http_archive(
+    name = "com_github_googleapis_google_cloud_cpp",
+    sha256 = "a370bcf2913717c674a7250c4a310250448ffeb751b930be559a6f1887155f3b",
+    strip_prefix = "google-cloud-cpp-0.21.0",
+    url = "https://github.com/googleapis/google-cloud-cpp/archive/v0.21.0.tar.gz",
+    repo_mapping = {"@com_github_curl_curl" : "@curl"}
+)
+
+load("@com_github_googleapis_google_cloud_cpp//bazel:google_cloud_cpp_deps.bzl", "google_cloud_cpp_deps")
+google_cloud_cpp_deps()
+
+load("@com_google_googleapis//:repository_rules.bzl", "switched_rules_by_language")
+switched_rules_by_language(
+    name = "com_google_googleapis_imports",
+    cc = True,  # C++ support is only "Partially implemented", roll our own.
+    grpc = True,
+)
+
+load("@com_github_googleapis_google_cloud_cpp_common//bazel:google_cloud_cpp_common_deps.bzl", "google_cloud_cpp_common_deps")
+google_cloud_cpp_common_deps()
+
+load("@com_github_grpc_grpc//bazel:grpc_deps.bzl", "grpc_deps")
+grpc_deps()
+
+load("@com_github_grpc_grpc//bazel:grpc_extra_deps.bzl", "grpc_extra_deps")
+grpc_extra_deps()
+
+# cxxopts
+http_archive(
+    name = "com_github_jarro2783_cxxopts",
+    url = "https://github.com/jarro2783/cxxopts/archive/v2.2.0.zip",
+    sha256 = "f9640c00d9938bedb291a21f9287902a3a8cee38db6910b905f8eba4a6416204",
+    strip_prefix = "cxxopts-2.2.0",
+    build_file = "@ovms//third_party/cxxopts:BUILD",
+)
+
+# RapidJSON
+http_archive(
+    name = "com_github_tencent_rapidjson",
+    url = "https://github.com/Tencent/rapidjson/archive/v1.1.0.zip",
+    sha256 = "8e00c38829d6785a2dfb951bb87c6974fa07dfe488aa5b25deec4b8bc0f6a3ab",
+    strip_prefix = "rapidjson-1.1.0",
+    build_file = "@ovms//third_party/rapidjson:BUILD"
+)
+
+# spdlog
+http_archive(
+    name = "com_github_gabime_spdlog",
+    url = "https://github.com/gabime/spdlog/archive/v1.4.0.tar.gz",
+    sha256 = "afd18f62d1bc466c60bef088e6b637b0284be88c515cedc59ad4554150af6043",
+    strip_prefix = "spdlog-1.4.0",
+    build_file = "@ovms//third_party/spdlog:BUILD"
+)
+
+# fmtlib
+http_archive(
+    name = "fmtlib",
+    url = "https://github.com/fmtlib/fmt/archive/6.0.0.tar.gz",
+    sha256 = "f1907a58d5e86e6c382e51441d92ad9e23aea63827ba47fd647eacc0d3a16c78",
+    strip_prefix = "fmt-6.0.0",
+    build_file = "@ovms//third_party/fmtlib:BUILD"
+)
+
+# libevent
+http_archive(
+    name = "com_github_libevent_libevent",
+    url = "https://github.com/libevent/libevent/archive/release-2.1.8-stable.zip",
+    sha256 = "70158101eab7ed44fd9cc34e7f247b3cae91a8e4490745d9d6eb7edc184e4d96",
+    strip_prefix = "libevent-release-2.1.8-stable",
+    build_file = "@ovms//third_party/libevent:BUILD",
+)
+
+# prometheus-cpp
+http_archive(
+    name = "com_github_jupp0r_prometheus_cpp",
+    strip_prefix = "prometheus-cpp-1.0.1",
+    urls = ["https://github.com/jupp0r/prometheus-cpp/archive/refs/tags/v1.0.1.zip"],
+)
+load("@com_github_jupp0r_prometheus_cpp//bazel:repositories.bzl", "prometheus_cpp_repositories")
+prometheus_cpp_repositories()
+
+new_local_repository(
+    name = "mediapipe_calculators",
+    build_file = "@ovms//third_party/mediapipe_calculators:BUILD",
+    path = "/opt/ovms/",
+)
+
+new_local_repository(
+    name = "linux_openvino",
+    build_file = "@ovms//third_party/openvino:BUILD",
+    path = "/opt/intel/openvino/runtime",
+)
+
+git_repository(
+    name = "oneTBB",
+    branch = "v2021.10.0",
+    remote = "https://github.com/oneapi-src/oneTBB/",
+    patch_args = ["-p1"],
+    patches = ["@ovms//external:mwaitpkg.patch",]
+)
+
+new_git_repository(
+    name = "model_api",
+    remote = "https:///github.com/openvinotoolkit/model_api/",
+    build_file_content = """
+cc_library(
+    name = "adapter_api",
+    hdrs = ["model_api/cpp/adapters/include/adapters/inference_adapter.h",],
+    includes = ["model_api/cpp/adapters/include"],
+    deps = ["@linux_openvino//:openvino"],
+    visibility = ["//visibility:public"],
+)
+    """,
+    commit = "ca5a91ed5b3dbf428dc4de6b72f0a3da93d2aa0a"
 )

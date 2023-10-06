@@ -474,6 +474,39 @@ cc_library(
 )
 
 cc_library(
+    name = "ovms_inference_calculator",
+    srcs = ["ovms_inference_calculator.cc"],
+    deps = [
+        ":ovms_inference_calculator_cc_proto",
+        "@com_google_absl//absl/log:check",
+        "//mediapipe/framework:timestamp",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/memory",
+        "//mediapipe/framework:calculator_context",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/tool:status_util",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/synchronization",
+        "//mediapipe/framework/deps:clock",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:map_util",
+        "//mediapipe/framework:packet",
+    ] + select({
+        "//conditions:default": [
+            "@org_tensorflow//tensorflow/core:framework",
+        ],
+        "//mediapipe:android": [
+            "@org_tensorflow//tensorflow/core:portable_tensorflow_lib_lite",
+        ],
+        "//mediapipe:ios": [
+            "@org_tensorflow//tensorflow/core:portable_tensorflow_lib",
+        ],
+    }),
+    alwayslink = 1,
+)
+
+cc_library(
     name = "tensorflow_session",
     hdrs = [
         "tensorflow_session.h",
