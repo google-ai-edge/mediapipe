@@ -54,7 +54,7 @@ async function createFileset(
   return {
     wasmLoaderPath: `${basePath}/${taskName}_${suffix}.js`,
     wasmBinaryPath: `${basePath}/${taskName}_${suffix}.wasm`,
-  };
+  } as unknown as WasmFileset;
 }
 
 // tslint:disable:class-as-namespace
