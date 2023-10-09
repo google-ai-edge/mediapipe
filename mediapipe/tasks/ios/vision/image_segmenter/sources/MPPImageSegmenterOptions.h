@@ -30,7 +30,7 @@ NS_ASSUME_NONNULL_BEGIN
  * The delegate of `ImageSegmenter` must adopt `ImageSegmenterLiveStreamDelegate` protocol.
  * The methods in this protocol are optional.
  */
-NS_SWIFT_NAME(ObjectDetectorLiveStreamDelegate)
+NS_SWIFT_NAME(ImageSegmenterLiveStreamDelegate)
 @protocol MPPImageSegmenterLiveStreamDelegate <NSObject>
 
 @optional
