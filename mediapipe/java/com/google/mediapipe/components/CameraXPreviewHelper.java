@@ -59,6 +59,14 @@ import javax.microedition.khronos.egl.EGLSurface;
  * <p>{@link CameraX} connects to the camera and provides video frames.
  */
 public class CameraXPreviewHelper extends CameraHelper {
+  /** Listener invoked when the camera instance is available. */
+  public interface OnCameraBoundListener {
+    /**
+     * Called after CameraX has been bound to the lifecycle and the camera instance is available.
+     */
+    public void onCameraBound(Camera camera);
+  }
+
   /**
    * Provides an Executor that wraps a single-threaded Handler.
    *
@@ -129,6 +137,10 @@ public class CameraXPreviewHelper extends CameraHelper {
   // CameraCharacteristics.SENSOR_INFO_TIMESTAMP_SOURCE. When CameraCharacteristics is not available
   // the source is CameraCharacteristics.SENSOR_INFO_TIMESTAMP_SOURCE_UNKNOWN.
   private int cameraTimestampSource = CameraCharacteristics.SENSOR_INFO_TIMESTAMP_SOURCE_UNKNOWN;
+
+  @Nullable private OnCameraBoundListener onCameraBoundListener = null;
+
+  private boolean isLandscapeOrientation = false;
 
   /**
    * Initializes the camera and sets it up for accessing frames, using the default 1280 * 720
@@ -211,7 +223,7 @@ public class CameraXPreviewHelper extends CameraHelper {
    * @param targetSize a predefined constant {@link #TARGET_SIZE}. If set to {@code null}, the
    *     helper will default to 1280 * 720.
    */
-  private void startCamera(
+  public void startCamera(
       Context context,
       LifecycleOwner lifecycleOwner,
       CameraFacing cameraFacing,
@@ -237,9 +249,11 @@ public class CameraXPreviewHelper extends CameraHelper {
     // (https://developer.android.com/training/camerax/configuration#specify-resolution):
     // "Express the resolution Size in the coordinate frame after rotating the supported sizes by
     // the target rotation."
-    // Since we only support portrait orientation, we unconditionally transpose width and height.
+    // Transpose width and height if using portrait orientation.
     Size rotatedSize =
-        new Size(/* width= */ targetSize.getHeight(), /* height= */ targetSize.getWidth());
+        isLandscapeOrientation
+            ? new Size(/* width= */ targetSize.getWidth(), /* height= */ targetSize.getHeight())
+            : new Size(/* width= */ targetSize.getHeight(), /* height= */ targetSize.getWidth());
 
     cameraProviderFuture.addListener(
         () -> {
@@ -325,15 +339,22 @@ public class CameraXPreviewHelper extends CameraHelper {
           cameraProvider.unbindAll();
 
           // Bind use case(s) to camera.
+          final Camera boundCamera;
           if (imageCaptureBuilder != null) {
             imageCapture = imageCaptureBuilder.build();
-            camera =
+            boundCamera =
                 cameraProvider.bindToLifecycle(
                     lifecycleOwner, cameraSelector, preview, imageCapture);
             imageCaptureExecutorService = Executors.newSingleThreadExecutor();
             isImageCaptureEnabled = true;
           } else {
-            camera = cameraProvider.bindToLifecycle(lifecycleOwner, cameraSelector, preview);
+            boundCamera = cameraProvider.bindToLifecycle(lifecycleOwner, cameraSelector, preview);
+          }
+          CameraXPreviewHelper.this.camera = boundCamera;
+          OnCameraBoundListener listener = onCameraBoundListener;
+          if (listener != null) {
+            ContextCompat.getMainExecutor(context)
+                .execute(() -> listener.onCameraBound(boundCamera));
           }
         },
         mainThreadExecutor);
@@ -460,6 +481,26 @@ public class CameraXPreviewHelper extends CameraHelper {
 
   public Size getFrameSize() {
     return frameSize;
+  }
+
+  /**
+   * Sets whether the device is in landscape orientation.
+   *
+   * <p>Must be called before {@link #startCamera}. Portrait orientation is assumed by default.
+   */
+  public void setLandscapeOrientation(boolean landscapeOrientation) {
+    this.isLandscapeOrientation = landscapeOrientation;
+  }
+
+  /**
+   * Sets a listener that will be invoked when CameraX is bound.
+   *
+   * <p>The listener will be invoked on the main thread after the next call to {@link #startCamera}.
+   * The {@link Camera} instance can be used to get camera info and control the camera (e.g. zoom
+   * level).
+   */
+  public void setOnCameraBoundListener(@Nullable OnCameraBoundListener listener) {
+    this.onCameraBoundListener = listener;
   }
 
   private void updateCameraCharacteristics() {
