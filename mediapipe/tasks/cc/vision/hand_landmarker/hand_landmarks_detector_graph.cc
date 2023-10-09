@@ -13,8 +13,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#include <memory>
-#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -31,20 +29,16 @@ limitations under the License.
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"
-#include "mediapipe/framework/formats/tensor.h"
+#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/components/processors/image_preprocessing_graph.h"
 #include "mediapipe/tasks/cc/components/utils/gate.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
 #include "mediapipe/tasks/cc/core/proto/inference_subgraph.pb.h"
-#include "mediapipe/tasks/cc/core/utils.h"
-#include "mediapipe/tasks/cc/metadata/metadata_extractor.h"
 #include "mediapipe/tasks/cc/vision/hand_landmarker/proto/hand_landmarks_detector_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/utils/image_tensor_specs.h"
-#include "mediapipe/tasks/metadata/metadata_schema_generated.h"
 #include "mediapipe/util/label_map.pb.h"
-#include "mediapipe/util/label_map_util.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -214,7 +208,7 @@ class SingleHandLandmarksDetectorGraph : public core::ModelTaskGraph {
       SubgraphContext* sc) override {
     MP_ASSIGN_OR_RETURN(
         const auto* model_resources,
-        CreateModelResources<HandLandmarksDetectorGraphOptions>(sc));
+        GetOrCreateModelResources<HandLandmarksDetectorGraphOptions>(sc));
     Graph graph;
     MP_ASSIGN_OR_RETURN(
         auto hand_landmark_detection_outs,
@@ -492,8 +486,8 @@ class MultipleHandLandmarksDetectorGraph : public core::ModelTaskGraph {
     auto& hand_landmark_subgraph = graph.AddNode(
         "mediapipe.tasks.vision.hand_landmarker."
         "SingleHandLandmarksDetectorGraph");
-    hand_landmark_subgraph.GetOptions<HandLandmarksDetectorGraphOptions>()
-        .CopyFrom(subgraph_options);
+    hand_landmark_subgraph.GetOptions<HandLandmarksDetectorGraphOptions>() =
+        subgraph_options;
 
     auto& begin_loop_multi_hand_rects =
         graph.AddNode("BeginLoopNormalizedRectCalculator");
