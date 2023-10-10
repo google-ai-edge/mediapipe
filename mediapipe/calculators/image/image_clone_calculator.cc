@@ -64,7 +64,8 @@ class ImageCloneCalculator : public Node {
           "GPU processing is disabled in build flags");
     }
 #else
-    MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
+    MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(
+        cc, /*requesst_gpu_as_optional=*/true));
 #endif  // MEDIAPIPE_DISABLE_GPU
     return absl::OkStatus();
   }
@@ -72,9 +73,6 @@ class ImageCloneCalculator : public Node {
   absl::Status Open(CalculatorContext* cc) override {
     const auto& options = cc->Options<mediapipe::ImageCloneCalculatorOptions>();
     output_on_gpu_ = options.output_on_gpu();
-#if !MEDIAPIPE_DISABLE_GPU
-    MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
-#endif  // !MEDIAPIPE_DISABLE_GPU
     return absl::OkStatus();
   }
 
@@ -104,6 +102,10 @@ class ImageCloneCalculator : public Node {
 
     if (output_on_gpu_ && !input_on_gpu) {
 #if !MEDIAPIPE_DISABLE_GPU
+      if (!gpu_initialized_) {
+        MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
+        gpu_initialized_ = true;
+      }
       gpu_helper_.RunInGlContext([&output]() { output->ConvertToGpu(); });
 #endif  // !MEDIAPIPE_DISABLE_GPU
     } else if (!output_on_gpu_ && input_on_gpu) {
@@ -118,6 +120,7 @@ class ImageCloneCalculator : public Node {
   bool output_on_gpu_;
 #if !MEDIAPIPE_DISABLE_GPU
   mediapipe::GlCalculatorHelper gpu_helper_;
+  bool gpu_initialized_ = false;
 #endif  // !MEDIAPIPE_DISABLE_GPU
 };
 MEDIAPIPE_REGISTER_NODE(ImageCloneCalculator);

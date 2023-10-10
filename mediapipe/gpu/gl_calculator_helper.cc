@@ -56,8 +56,13 @@ void GlCalculatorHelper::InitializeForTest(GpuResources* gpu_resources) {
 }
 
 // static
-absl::Status GlCalculatorHelper::UpdateContract(CalculatorContract* cc) {
-  cc->UseService(kGpuService);
+absl::Status GlCalculatorHelper::UpdateContract(CalculatorContract* cc,
+                                                bool requesst_gpu_as_optional) {
+  if (requesst_gpu_as_optional) {
+    cc->UseService(kGpuService).Optional();
+  } else {
+    cc->UseService(kGpuService);
+  }
   // Allow the legacy side packet to be provided, too, for backwards
   // compatibility with existing graphs. It will just be ignored.
   auto& input_side_packets = cc->InputSidePackets();

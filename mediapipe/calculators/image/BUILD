@@ -786,6 +786,7 @@ cc_library(
             ":affine_transformation_runner_gl",
             "//mediapipe/gpu:gl_calculator_helper",
             "//mediapipe/gpu:gpu_buffer",
+            "//mediapipe/gpu:gpu_service",
         ],
     }) + select({
         "//mediapipe/framework/port:disable_opencv": [],
