@@ -167,6 +167,6 @@ cc_library(
 )
 
 cc_library(
-    name = "pose_landmark",
-    hdrs = ["pose_landmark.h"],
+    name = "pose_topology",
+    hdrs = ["pose_topology.h"],
 )
