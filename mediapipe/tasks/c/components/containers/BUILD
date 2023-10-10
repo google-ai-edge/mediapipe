@@ -98,3 +98,26 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
+
+cc_library(
+    name = "language_detection_result_converter",
+    srcs = ["language_detection_result_converter.cc"],
+    hdrs = ["language_detection_result_converter.h"],
+    deps = [
+        "//mediapipe/tasks/c/text/language_detector",
+        "//mediapipe/tasks/cc/text/language_detector",
+    ],
+)
+
+cc_test(
+    name = "language_detection_result_converter_test",
+    srcs = ["language_detection_result_converter_test.cc"],
+    linkstatic = 1,
+    deps = [
+        ":language_detection_result_converter",
+        "//mediapipe/framework/port:gtest",
+        "//mediapipe/tasks/c/text/language_detector",
+        "//mediapipe/tasks/cc/text/language_detector",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
