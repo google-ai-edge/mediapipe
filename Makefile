@@ -33,13 +33,20 @@ docker_build:
 
 tests: run_unit_tests run_hello_world run_hello_ovms
 run_hello_ovms:
-	docker run -it $(OVMS_MEDIA_DOCKER_IMAGE):$(OVMS_MEDIA_IMAGE_TAG) bazel-bin/mediapipe/examples/desktop/hello_ovms/hello_ovms | grep "Output tensor data: 9 - 11"
+	docker run $(OVMS_MEDIA_DOCKER_IMAGE):$(OVMS_MEDIA_IMAGE_TAG) bazel-bin/mediapipe/examples/desktop/hello_ovms/hello_ovms | grep -q "Output tensor data: 9 - 11"
 
 run_unit_tests:
-	docker run -it $(OVMS_MEDIA_DOCKER_IMAGE):$(OVMS_MEDIA_IMAGE_TAG) bazel test --define=MEDIAPIPE_DISABLE_GPU=1 //mediapipe/framework/... | grep "Build completed successfully"
+	docker run -e http_proxy=$(HTTP_PROXY) -e https_proxy=$(HTTPS_PROXY) $(OVMS_MEDIA_DOCKER_IMAGE):$(OVMS_MEDIA_IMAGE_TAG) bazel test --define=MEDIAPIPE_DISABLE_GPU=1 //mediapipe/framework/...
 
 run_hello_world:
-	docker run -it $(OVMS_MEDIA_DOCKER_IMAGE):$(OVMS_MEDIA_IMAGE_TAG) bazel-bin/mediapipe/examples/desktop/hello_world/hello_world | grep "Hello World!"
+	docker run $(OVMS_MEDIA_DOCKER_IMAGE):$(OVMS_MEDIA_IMAGE_TAG) bazel-bin/mediapipe/examples/desktop/hello_world/hello_world
+
+run_demos_in_docker:
+	docker run $(OVMS_MEDIA_DOCKER_IMAGE):$(OVMS_MEDIA_IMAGE_TAG) make run_demos 2>&1 | tee test_demos.log 
+	cat test_demos.log | grep -a FPS | grep -v echo
+	if [ `cat test_demos.log | grep FPS: | wc -l` != "5" ]; then echo "Some demo was not executed correctly. Check the logs"; fi
+	# report error if performance reported for less then 5 demos
+	cat test_demos.log | grep FPS: | wc -l | grep -q "5"
 
 # Targets to use inside running mediapipe_ovms container
 run_demos: run_holistic_tracking run_face_detection run_iris_tracking run_object_detection run_pose_tracking
@@ -47,7 +54,7 @@ run_demos: run_holistic_tracking run_face_detection run_iris_tracking run_object
 run_object_detection:
 	echo "Running FPS test for object_detection demo"
 	rm -rf /mediapipe/output_object_detection_ovms.mp4
-	bazel-bin/mediapipe/examples/desktop/object_detection/object_detection_ovms --calculator_graph_config_file mediapipe/graphs/object_detection/object_detection_desktop_ovms_graph.pbtxt --input_video_path=/mediapipe/mediapipe/examples/desktop/object_detection/test_video.mp4 --output_video_path=/mediapipe/mediapipe/object_detection_ovms.mp4
+	bazel-bin/mediapipe/examples/desktop/object_detection/object_detection_ovms --calculator_graph_config_file mediapipe/graphs/object_detection/object_detection_desktop_ovms_graph.pbtxt --input_video_path=/mediapipe/mediapipe/examples/desktop/object_detection/test_video.mp4 --output_video_path=/mediapipe/object_detection_ovms.mp4
 	
 run_holistic_tracking:
 	echo "Running FPS test for holistic_tracking demo"
