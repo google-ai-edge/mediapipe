@@ -69,10 +69,7 @@ else
   unzip /tmp/android_sdk/commandline_tools.zip -d /tmp/android_sdk/
   mkdir -p $android_sdk_path
   /tmp/android_sdk/cmdline-tools/bin/sdkmanager --update --sdk_root=${android_sdk_path}
-  if [ "$licenses" == "--accept-licenses" ]
-  then
-    yes | /tmp/android_sdk/cmdline-tools/bin/sdkmanager --licenses --sdk_root=${android_sdk_path}
-  fi
+  yes | /tmp/android_sdk/cmdline-tools/bin/sdkmanager --licenses --sdk_root=${android_sdk_path}
   /tmp/android_sdk/cmdline-tools/bin/sdkmanager "build-tools;30.0.3" "platform-tools" "platforms;android-30" "extras;android;m2repository" --sdk_root=${android_sdk_path}
   rm -rf /tmp/android_sdk/
   echo "Android SDK is now installed. Consider setting \$ANDROID_HOME environment variable to be ${android_sdk_path}"
