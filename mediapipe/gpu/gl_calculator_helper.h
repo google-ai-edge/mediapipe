@@ -67,8 +67,7 @@ class GlCalculatorHelper {
 
   // This method can be called from GetContract to set up the needed GPU
   // resources.
-  static absl::Status UpdateContract(CalculatorContract* cc,
-                                     bool requesst_gpu_as_optional = false);
+  static absl::Status UpdateContract(CalculatorContract* cc);
 
   // This method can be called from FillExpectations to set the correct types
   // for the shared GL input side packet(s).
