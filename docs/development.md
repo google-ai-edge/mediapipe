@@ -11,7 +11,7 @@ make docker_build
 docker run -it mediapipe_ovms:latest bash
 ```
 
-- modify the contents of global [config_holistic.json](mediapipe/models/ovms/config_holistic.json) or specific [object_detection config.json](mediapipe/calculators/ovms/config.json) to change the models and graphs that are loaded for your example application
+- modify the contents of global [config_holistic.json](../mediapipe/models/ovms/config_holistic.json) or specific [object_detection config.json](../mediapipe/calculators/ovms/config.json) to change the models and graphs that are loaded for your example application
 - make sure the new pbtxt and model files are present in the mediapipe/models/ovms/ directory during the application execution and are setup according to the config json file paths. Currently the existing demos setup is prepared automatically with the  command.
 ```bash
 python setup_ovms.py --get_models'
