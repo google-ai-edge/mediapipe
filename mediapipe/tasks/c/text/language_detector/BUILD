@@ -22,7 +22,6 @@ cc_library(
     hdrs = ["language_detector.h"],
     visibility = ["//visibility:public"],
     deps = [
-        "//mediapipe/tasks/c/components/containers:language_detection_result",
         "//mediapipe/tasks/c/components/containers:language_detection_result_converter",
         "//mediapipe/tasks/c/components/processors:classifier_options",
         "//mediapipe/tasks/c/components/processors:classifier_options_converter",
@@ -67,6 +66,15 @@ cc_binary(
         "notap",
     ],
     deps = [":language_detector_lib"],
+)
+
+cc_library(
+    name = "language_detector",
+    hdrs = ["language_detector.h"],
+    deps = [
+        "//mediapipe/tasks/c/components/processors:classifier_options",
+        "//mediapipe/tasks/c/core:base_options",
+    ],
 )
 
 cc_test(

@@ -16,7 +16,7 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_C_COMPONENTS_CONTAINERS_LANGUAGE_DETECTION_RESULT_CONVERTER_H_
 #define MEDIAPIPE_TASKS_C_COMPONENTS_CONTAINERS_LANGUAGE_DETECTION_RESULT_CONVERTER_H_
 
-#include "mediapipe/tasks/c/components/containers/language_detection_result.h"
+#include "mediapipe/tasks/c/text/language_detector/language_detector.h"
 #include "mediapipe/tasks/cc/text/language_detector/language_detector.h"
 
 namespace mediapipe::tasks::c::components::containers {

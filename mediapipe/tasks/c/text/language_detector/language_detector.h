@@ -16,7 +16,6 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_C_TEXT_LANGUAGE_DETECTOR_LANGUAGE_DETECTOR_H_
 #define MEDIAPIPE_TASKS_C_TEXT_LANGUAGE_DETECTOR_LANGUAGE_DETECTOR_H_
 
-#include "mediapipe/tasks/c/components/containers/language_detection_result.h"
 #include "mediapipe/tasks/c/components/processors/classifier_options.h"
 #include "mediapipe/tasks/c/core/base_options.h"
 
@@ -27,6 +26,23 @@ limitations under the License.
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+// A language code and its probability.
+struct LanguageDetectorPrediction {
+    // An i18n language / locale code, e.g. "en" for English, "uz" for Uzbek,
+    // "ja"-Latn for Japanese (romaji).
+    char* language_code;
+
+    float probability;
+};
+
+// Task output.
+struct LanguageDetectorResult {
+    struct LanguageDetectorPrediction* predictions;
+
+    // The count of predictions.
+    uint32_t predictions_count;
+};
 
 // The options for configuring a MediaPipe language detector task.
 struct LanguageDetectorOptions {

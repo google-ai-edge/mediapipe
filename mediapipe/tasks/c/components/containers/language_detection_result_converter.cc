@@ -17,7 +17,7 @@ limitations under the License.
 
 #include <cstdlib>
 
-#include "mediapipe/tasks/c/components/containers/language_detection_result.h"
+#include "mediapipe/tasks/c/text/language_detector/language_detector.h"
 #include "mediapipe/tasks/cc/text/language_detector/language_detector.h"
 
 namespace mediapipe::tasks::c::components::containers {
