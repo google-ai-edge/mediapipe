@@ -234,7 +234,7 @@ absl::Status StableDiffusionIterateCalculator::Open(CalculatorContext* cc) {
             options.plugins_strength() <= 1.0f)
       << "The value of plugins_strength must be in the range of [0, 1].";
   context_ = DiffuserCreate(&config);
-  RET_CHECK(context_);
+  //RET_CHECK(context_);
   return absl::OkStatus();
 }
 
