@@ -46,4 +46,7 @@ message DetectionPostprocessingGraphOptions {
   // Optional detection label id to text calculator options.
   optional mediapipe.DetectionLabelIdToTextCalculatorOptions
       detection_label_ids_to_text_options = 5;
+
+  // Whether output tensors are quantized (kTfLiteUint8) or not (kFloat32).
+  optional bool has_quantized_outputs = 6;
 }

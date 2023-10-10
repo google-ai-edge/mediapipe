@@ -213,6 +213,7 @@ TEST_F(ConfigureTest, SucceedsWithScoreThreshold) {
                  }
                  box_boundaries_indices { ymin: 0 xmin: 1 ymax: 2 xmax: 3 }
                }
+               has_quantized_outputs: false
           )pb"))));
   EXPECT_THAT(
       options_out.detection_label_ids_to_text_options().label_items_size(), 90);
@@ -244,6 +245,7 @@ TEST_F(ConfigureTest, SucceedsWithAllowlist) {
                  }
                  box_boundaries_indices { ymin: 0 xmin: 1 ymax: 2 xmax: 3 }
                }
+               has_quantized_outputs: false
           )pb")));
 }
 
@@ -273,6 +275,7 @@ TEST_F(ConfigureTest, SucceedsWithDenylist) {
                  }
                  box_boundaries_indices { ymin: 0 xmin: 1 ymax: 2 xmax: 3 }
                }
+               has_quantized_outputs: false
           )pb")));
 }
 
@@ -311,6 +314,7 @@ TEST_F(ConfigureTest, SucceedsWithScoreCalibration) {
                  score_transformation: IDENTITY
                  default_score: 0.5
                }
+               has_quantized_outputs: false
           )pb")));
 }
 

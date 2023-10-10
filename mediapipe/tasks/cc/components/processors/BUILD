@@ -169,6 +169,7 @@ cc_library(
     deps = [
         "//mediapipe/calculators/core:split_vector_calculator",
         "//mediapipe/calculators/core:split_vector_calculator_cc_proto",
+        "//mediapipe/calculators/tensor:tensors_dequantization_calculator",
         "//mediapipe/calculators/tensor:tensors_to_detections_calculator",
         "//mediapipe/calculators/tensor:tensors_to_detections_calculator_cc_proto",
         "//mediapipe/calculators/tflite:ssd_anchors_calculator",
