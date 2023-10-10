@@ -117,7 +117,8 @@ absl::Status SegmentationSmoothingCalculator::GetContract(
   cc->Outputs().Tag(kOutputMaskTag).Set<Image>();
 
 #if !MEDIAPIPE_DISABLE_GPU
-  MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
+  MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(
+      cc, /*requesst_gpu_as_optional=*/true));
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
   return absl::OkStatus();
@@ -129,10 +130,6 @@ absl::Status SegmentationSmoothingCalculator::Open(CalculatorContext* cc) {
   auto options =
       cc->Options<mediapipe::SegmentationSmoothingCalculatorOptions>();
   combine_with_previous_ratio_ = options.combine_with_previous_ratio();
-
-#if !MEDIAPIPE_DISABLE_GPU
-  MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
-#endif  //  !MEDIAPIPE_DISABLE_GPU
 
   return absl::OkStatus();
 }
@@ -154,6 +151,9 @@ absl::Status SegmentationSmoothingCalculator::Process(CalculatorContext* cc) {
 
   if (use_gpu) {
 #if !MEDIAPIPE_DISABLE_GPU
+    if (!gpu_initialized_) {
+      MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
+    }
     MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext([this, cc]() -> absl::Status {
       if (!gpu_initialized_) {
         MP_RETURN_IF_ERROR(GlSetup(cc));
@@ -178,10 +178,12 @@ absl::Status SegmentationSmoothingCalculator::Process(CalculatorContext* cc) {
 
 absl::Status SegmentationSmoothingCalculator::Close(CalculatorContext* cc) {
 #if !MEDIAPIPE_DISABLE_GPU
-  gpu_helper_.RunInGlContext([this] {
-    if (program_) glDeleteProgram(program_);
-    program_ = 0;
-  });
+  if (gpu_initialized_) {
+    gpu_helper_.RunInGlContext([this] {
+      if (program_) glDeleteProgram(program_);
+      program_ = 0;
+    });
+  }
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
   return absl::OkStatus();
