@@ -55,12 +55,6 @@ cc_library(
 )
 
 cc_library(
-    name = "hand_landmark",
-    hdrs = ["hand_landmark.h"],
-    visibility = ["//visibility:public"],
-)
-
-cc_library(
     name = "hand_landmarks_detector_graph",
     srcs = ["hand_landmarks_detector_graph.cc"],
     deps = [
@@ -175,3 +169,8 @@ cc_library(
 )
 
 # TODO: Enable this test
+
+cc_library(
+    name = "hand_topology",
+    hdrs = ["hand_topology.h"],
+)
