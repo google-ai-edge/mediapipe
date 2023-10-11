@@ -73,7 +73,7 @@ cc_library(
         "//mediapipe/framework/port:logging",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/strings",
-        "@com_google_sentencepiece//src:sentencepiece_processor",
+        "@com_google_sentencepiece//:sentencepiece_processor",
     ],
 )
 
@@ -88,7 +88,7 @@ cc_test(
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/tasks/cc/core:utils",
         "@com_google_absl//absl/log:absl_check",
-        "@com_google_sentencepiece//src:sentencepiece_processor",
+        "@com_google_sentencepiece//:sentencepiece_processor",
     ],
 )
 
@@ -140,7 +140,7 @@ cc_test(
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:cord",
-        "@com_google_sentencepiece//src:sentencepiece_processor",
+        "@com_google_sentencepiece//:sentencepiece_processor",
     ],
 )
 

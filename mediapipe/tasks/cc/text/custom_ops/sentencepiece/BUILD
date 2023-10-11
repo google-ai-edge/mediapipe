@@ -108,7 +108,7 @@ cc_library(
         ":sentencepiece_constants",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
-        "@com_google_sentencepiece//src:sentencepiece_model_cc_proto",
+        "@com_google_sentencepiece//:sentencepiece_model_cc_proto",
     ],
 )
 
@@ -165,8 +165,8 @@ cc_test(
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings:str_format",
-        "@com_google_sentencepiece//src:sentencepiece_cc_proto",
-        "@com_google_sentencepiece//src:sentencepiece_processor",
+        "@com_google_sentencepiece//:sentencepiece_cc_proto",
+        "@com_google_sentencepiece//:sentencepiece_processor",
         "@org_tensorflow//tensorflow/core:lib",
     ],
 )

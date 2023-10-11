@@ -244,16 +244,14 @@ http_archive(
 # sentencepiece
 http_archive(
     name = "com_google_sentencepiece",
-    strip_prefix = "sentencepiece-1.0.0",
-    sha256 = "c05901f30a1d0ed64cbcf40eba08e48894e1b0e985777217b7c9036cac631346",
+    strip_prefix = "sentencepiece-0.1.96",
+    sha256 = "8409b0126ebd62b256c685d5757150cf7fcb2b92a2f2b98efb3f38fc36719754",
     urls = [
-        "https://github.com/google/sentencepiece/archive/1.0.0.zip",
+        "https://github.com/google/sentencepiece/archive/refs/tags/v0.1.96.zip"
     ],
-    patches = [
-        "@//third_party:com_google_sentencepiece_no_gflag_no_gtest.diff",
-    ],
+    build_file = "@//third_party:sentencepiece.BUILD",
+    patches = ["@//third_party:com_google_sentencepiece.diff"],
     patch_args = ["-p1"],
-    repo_mapping = {"@com_google_glog" : "@com_github_glog_glog_no_gflags"},
 )
 
 http_archive(
