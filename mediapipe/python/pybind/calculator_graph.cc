@@ -112,11 +112,6 @@ void CalculatorGraphSubmodule(pybind11::module* module) {
                              "graph with a ValidatedGraphConfig object.");
         }
         auto calculator_graph = absl::make_unique<CalculatorGraph>();
-        // Disable default service initialization. This allows us to use
-        // the CPU versions of calculators that only optionally request
-        // kGpuService.
-        RaisePyErrorIfNotOk(
-            calculator_graph->DisallowServiceDefaultInitialization());
         RaisePyErrorIfNotOk(calculator_graph->Initialize(graph_config_proto));
         return calculator_graph.release();
       }),
