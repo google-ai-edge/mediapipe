@@ -44,7 +44,7 @@ run_hello_world:
 run_demos_in_docker:
 	docker run $(OVMS_MEDIA_DOCKER_IMAGE):$(OVMS_MEDIA_IMAGE_TAG) make run_demos 2>&1 | tee test_demos.log 
 	cat test_demos.log | grep -a FPS | grep -v echo
-	if [ `cat test_demos.log | grep FPS: | wc -l` != "5" ]; then echo "Some demo was not executed correctly. Check the logs"; fi
+	if [ `cat test_demos.log | grep -a FPS: | wc -l` != "5" ]; then echo "Some demo was not executed correctly. Check the logs"; fi
 	# report error if performance reported for less then 5 demos
 	cat test_demos.log | grep FPS: | wc -l | grep -q "5"
 
