@@ -50,6 +50,16 @@ export declare interface WasmModule {
       (data: number, streamNamePtr: number, timestamp: number) => void;
   _addStringToInputStream:
       (dataPtr: number, streamNamePtr: number, timestamp: number) => void;
+  _addBoolVectorToInputStream:
+      (vecPtr: number, streamNamePtr: number, timestamp: number) => void;
+  _addDoubleVectorToInputStream:
+      (vecPtr: number, streamNamePtr: number, timestamp: number) => void;
+  _addFloatVectorToInputStream:
+      (vecPtr: number, streamNamePtr: number, timestamp: number) => void;
+  _addIntVectorToInputStream:
+      (vecPtr: number, streamNamePtr: number, timestamp: number) => void;
+  _addStringVectorToInputStream:
+      (vecPtr: number, streamNamePtr: number, timestamp: number) => void;
   _addFlatHashMapToInputStream:
       (keysPtr: number, valuesPtr: number, count: number, streamNamePtr: number,
        timestamp: number) => void;
@@ -68,6 +78,28 @@ export declare interface WasmModule {
   _addProtoToInputSidePacket:
       (dataPtr: number, dataSize: number, protoNamePtr: number,
        streamNamePtr: number) => void;
+  _addBoolVectorToInputSidePacket:
+      (vecPtr: number, streamNamePtr: number) => void;
+  _addDoubleVectorToInputSidePacket:
+      (vecPtr: number, streamNamePtr: number) => void;
+  _addFloatVectorToInputSidePacket:
+      (vecPtr: number, streamNamePtr: number) => void;
+  _addIntVectorToInputSidePacket:
+      (vecPtr: number, streamNamePtr: number) => void;
+  _addStringVectorToInputSidePacket:
+      (vecPtr: number, streamNamePtr: number) => void;
+
+  // Vector input creation
+  _allocateBoolVector: (size: number) => number;
+  _allocateDoubleVector: (size: number) => number;
+  _allocateFloatVector: (size: number) => number;
+  _allocateIntVector: (size: number) => number;
+  _allocateStringVector: (size: number) => number;
+  _addBoolVectorEntry: (vecPtr: number, entry: boolean) => void;
+  _addDoubleVectorEntry: (vecPtr: number, entry: number) => void;
+  _addFloatVectorEntry: (vecPtr: number, entry: number) => void;
+  _addIntVectorEntry: (vecPtr: number, entry: number) => void;
+  _addStringVectorEntry: (vecPtr: number, entryStringPtr: number) => void;
 
   // Map of output streams to packet listeners.  Also built as part of
   // gl_graph_runner_internal_multi_input.

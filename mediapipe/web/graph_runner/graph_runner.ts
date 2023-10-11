@@ -476,6 +476,88 @@ export class GraphRunner implements GraphRunnerApi {
   }
 
   /** {@override GraphRunnerApi} */
+  addBoolVectorToStream(data: boolean[], streamName: string, timestamp: number):
+      void {
+    this.wrapStringPtr(streamName, (streamNamePtr: number) => {
+      const vecPtr = this.wasmModule._allocateBoolVector(data.length);
+      if (!vecPtr) {
+        throw new Error('Unable to allocate new bool vector on heap.');
+      }
+      for (const entry of data) {
+        this.wasmModule._addBoolVectorEntry(vecPtr, entry);
+      }
+      this.wasmModule._addBoolVectorToInputStream(
+          vecPtr, streamNamePtr, timestamp);
+    });
+  }
+
+  /** {@override GraphRunnerApi} */
+  addDoubleVectorToStream(
+      data: number[], streamName: string, timestamp: number): void {
+    this.wrapStringPtr(streamName, (streamNamePtr: number) => {
+      const vecPtr = this.wasmModule._allocateDoubleVector(data.length);
+      if (!vecPtr) {
+        throw new Error('Unable to allocate new double vector on heap.');
+      }
+      for (const entry of data) {
+        this.wasmModule._addDoubleVectorEntry(vecPtr, entry);
+      }
+      this.wasmModule._addDoubleVectorToInputStream(
+          vecPtr, streamNamePtr, timestamp);
+    });
+  }
+
+  /** {@override GraphRunnerApi} */
+  addFloatVectorToStream(data: number[], streamName: string, timestamp: number):
+      void {
+    this.wrapStringPtr(streamName, (streamNamePtr: number) => {
+      const vecPtr = this.wasmModule._allocateFloatVector(data.length);
+      if (!vecPtr) {
+        throw new Error('Unable to allocate new float vector on heap.');
+      }
+      for (const entry of data) {
+        this.wasmModule._addFloatVectorEntry(vecPtr, entry);
+      }
+      this.wasmModule._addFloatVectorToInputStream(
+          vecPtr, streamNamePtr, timestamp);
+    });
+  }
+
+  /** {@override GraphRunnerApi} */
+  addIntVectorToStream(data: number[], streamName: string, timestamp: number):
+      void {
+    this.wrapStringPtr(streamName, (streamNamePtr: number) => {
+      const vecPtr = this.wasmModule._allocateIntVector(data.length);
+      if (!vecPtr) {
+        throw new Error('Unable to allocate new int vector on heap.');
+      }
+      for (const entry of data) {
+        this.wasmModule._addIntVectorEntry(vecPtr, entry);
+      }
+      this.wasmModule._addIntVectorToInputStream(
+          vecPtr, streamNamePtr, timestamp);
+    });
+  }
+
+  /** {@override GraphRunnerApi} */
+  addStringVectorToStream(
+      data: string[], streamName: string, timestamp: number): void {
+    this.wrapStringPtr(streamName, (streamNamePtr: number) => {
+      const vecPtr = this.wasmModule._allocateStringVector(data.length);
+      if (!vecPtr) {
+        throw new Error('Unable to allocate new string vector on heap.');
+      }
+      for (const entry of data) {
+        this.wrapStringPtr(entry, (entryStringPtr: number) => {
+          this.wasmModule._addStringVectorEntry(vecPtr, entryStringPtr);
+        });
+      }
+      this.wasmModule._addStringVectorToInputStream(
+          vecPtr, streamNamePtr, timestamp);
+    });
+  }
+
+  /** {@override GraphRunnerApi} */
   addBoolToInputSidePacket(data: boolean, sidePacketName: string): void {
     this.wrapStringPtr(sidePacketName, (sidePacketNamePtr: number) => {
       this.wasmModule._addBoolToInputSidePacket(data, sidePacketNamePtr);
@@ -525,6 +607,86 @@ export class GraphRunner implements GraphRunnerApi {
             dataPtr, data.length, protoTypePtr, sidePacketNamePtr);
         this.wasmModule._free(dataPtr);
       });
+    });
+  }
+
+  /** {@override GraphRunnerApi} */
+  addBoolVectorToInputSidePacket(data: boolean[], sidePacketName: string):
+      void {
+    this.wrapStringPtr(sidePacketName, (sidePacketNamePtr: number) => {
+      const vecPtr = this.wasmModule._allocateBoolVector(data.length);
+      if (!vecPtr) {
+        throw new Error('Unable to allocate new bool vector on heap.');
+      }
+      for (const entry of data) {
+        this.wasmModule._addBoolVectorEntry(vecPtr, entry);
+      }
+      this.wasmModule._addBoolVectorToInputSidePacket(
+          vecPtr, sidePacketNamePtr);
+    });
+  }
+
+  /** {@override GraphRunnerApi} */
+  addDoubleVectorToInputSidePacket(data: number[], sidePacketName: string):
+      void {
+    this.wrapStringPtr(sidePacketName, (sidePacketNamePtr: number) => {
+      const vecPtr = this.wasmModule._allocateDoubleVector(data.length);
+      if (!vecPtr) {
+        throw new Error('Unable to allocate new double vector on heap.');
+      }
+      for (const entry of data) {
+        this.wasmModule._addDoubleVectorEntry(vecPtr, entry);
+      }
+      this.wasmModule._addDoubleVectorToInputSidePacket(
+          vecPtr, sidePacketNamePtr);
+    });
+  }
+
+  /** {@override GraphRunnerApi} */
+  addFloatVectorToInputSidePacket(data: number[], sidePacketName: string):
+      void {
+    this.wrapStringPtr(sidePacketName, (sidePacketNamePtr: number) => {
+      const vecPtr = this.wasmModule._allocateFloatVector(data.length);
+      if (!vecPtr) {
+        throw new Error('Unable to allocate new float vector on heap.');
+      }
+      for (const entry of data) {
+        this.wasmModule._addFloatVectorEntry(vecPtr, entry);
+      }
+      this.wasmModule._addFloatVectorToInputSidePacket(
+          vecPtr, sidePacketNamePtr);
+    });
+  }
+
+  /** {@override GraphRunnerApi} */
+  addIntVectorToInputSidePacket(data: number[], sidePacketName: string): void {
+    this.wrapStringPtr(sidePacketName, (sidePacketNamePtr: number) => {
+      const vecPtr = this.wasmModule._allocateIntVector(data.length);
+      if (!vecPtr) {
+        throw new Error('Unable to allocate new int vector on heap.');
+      }
+      for (const entry of data) {
+        this.wasmModule._addIntVectorEntry(vecPtr, entry);
+      }
+      this.wasmModule._addIntVectorToInputSidePacket(vecPtr, sidePacketNamePtr);
+    });
+  }
+
+  /** {@override GraphRunnerApi} */
+  addStringVectorToInputSidePacket(data: string[], sidePacketName: string):
+      void {
+    this.wrapStringPtr(sidePacketName, (sidePacketNamePtr: number) => {
+      const vecPtr = this.wasmModule._allocateStringVector(data.length);
+      if (!vecPtr) {
+        throw new Error('Unable to allocate new string vector on heap.');
+      }
+      for (const entry of data) {
+        this.wrapStringPtr(entry, (entryStringPtr: number) => {
+          this.wasmModule._addStringVectorEntry(vecPtr, entryStringPtr);
+        });
+      }
+      this.wasmModule._addStringVectorToInputSidePacket(
+          vecPtr, sidePacketNamePtr);
     });
   }
 

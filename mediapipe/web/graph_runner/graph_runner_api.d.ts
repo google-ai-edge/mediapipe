@@ -321,6 +321,57 @@ export interface GraphRunnerApi {
   addEmptyPacketToStream(streamName: string, timestamp: number): void;
 
   /**
+   * Sends a vector<bool> packet into the specified stream at the given
+   * timestamp.
+   * @param data The ordered array of boolean data to send as a vector.
+   * @param streamName The name of the graph input stream to send data into.
+   * @param timestamp The timestamp of the input data, in ms.
+   */
+  addBoolVectorToStream(data: boolean[], streamName: string, timestamp: number):
+      void;
+
+  /**
+   * Sends a vector<double> packet into the specified stream at the given
+   * timestamp.
+   * @param data The ordered array of double-precision float data to send as a
+   *     vector.
+   * @param streamName The name of the graph input stream to send data into.
+   * @param timestamp The timestamp of the input data, in ms.
+   */
+  addDoubleVectorToStream(
+      data: number[], streamName: string, timestamp: number): void;
+
+  /**
+   * Sends a vector<float> packet into the specified stream at the given
+   * timestamp.
+   * @param data The ordered array of float data to send as a vector.
+   * @param streamName The name of the graph input stream to send data into.
+   * @param timestamp The timestamp of the input data, in ms.
+   */
+  addFloatVectorToStream(data: number[], streamName: string, timestamp: number):
+      void;
+
+  /**
+   * Sends a vector<int> packet into the specified stream at the given
+   * timestamp.
+   * @param data The ordered array of integer data to send as a vector.
+   * @param streamName The name of the graph input stream to send data into.
+   * @param timestamp The timestamp of the input data, in ms.
+   */
+  addIntVectorToStream(data: number[], streamName: string, timestamp: number):
+      void;
+
+  /**
+   * Sends a vector<string> packet into the specified stream at the given
+   * timestamp.
+   * @param data The ordered array of string data to send as a vector.
+   * @param streamName The name of the graph input stream to send data into.
+   * @param timestamp The timestamp of the input data, in ms.
+   */
+  addStringVectorToStream(
+      data: string[], streamName: string, timestamp: number): void;
+
+  /**
    * Attaches a boolean packet to the specified input_side_packet.
    * @param data The boolean data to send.
    * @param sidePacketName The name of the graph input side packet to send data
@@ -370,6 +421,49 @@ export interface GraphRunnerApi {
    */
   addProtoToInputSidePacket(
       data: Uint8Array, protoType: string, sidePacketName: string): void;
+
+  /**
+   * Attaches a vector<bool> packet to the specified input_side_packet.
+   * @param data The ordered array of boolean data to send as a vector.
+   * @param sidePacketName The name of the graph input side packet to send data
+   *     into.
+   */
+  addBoolVectorToInputSidePacket(data: boolean[], sidePacketName: string): void;
+
+  /**
+   * Attaches a vector<double> packet to the specified input_side_packet.
+   * @param data The ordered array of double-precision float data to send as a
+   *     vector.
+   * @param sidePacketName The name of the graph input side packet to send data
+   *     into.
+   */
+  addDoubleVectorToInputSidePacket(data: number[], sidePacketName: string):
+      void;
+
+  /**
+   * Attaches a vector<float> packet to the specified input_side_packet.
+   * @param data The ordered array of float data to send as a vector.
+   * @param sidePacketName The name of the graph input side packet to send data
+   *     into.
+   */
+  addFloatVectorToInputSidePacket(data: number[], sidePacketName: string): void;
+
+  /**
+   * Attaches a vector<int> packet to the specified input_side_packet.
+   * @param data The ordered array of integer data to send as a vector.
+   * @param sidePacketName The name of the graph input side packet to send data
+   *     into.
+   */
+  addIntVectorToInputSidePacket(data: number[], sidePacketName: string): void;
+
+  /**
+   * Attaches a vector<string> packet to the specified input_side_packet.
+   * @param data The ordered array of string data to send as a vector.
+   * @param sidePacketName The name of the graph input side packet to send data
+   *     into.
+   */
+  addStringVectorToInputSidePacket(data: string[], sidePacketName: string):
+      void;
 
   /**
    * Attaches a boolean packet listener to the specified output_stream.
