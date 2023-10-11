@@ -137,7 +137,7 @@ class ObjectDetectionTensorsToDetectionsCalculator : public CalculatorBase {
     const auto& tensor_dim_to_squeeze_field =
         cc->Options<ObjectDetectionsTensorToDetectionsCalculatorOptions>()
             .tensor_dim_to_squeeze();
-    tensor_dims_to_squeeze_ = std::vector<int32>(
+    tensor_dims_to_squeeze_ = std::vector<int32_t>(
         tensor_dim_to_squeeze_field.begin(), tensor_dim_to_squeeze_field.end());
     std::sort(tensor_dims_to_squeeze_.rbegin(), tensor_dims_to_squeeze_.rend());
     cc->SetOffset(0);
@@ -210,7 +210,7 @@ class ObjectDetectionTensorsToDetectionsCalculator : public CalculatorBase {
 
  private:
   std::map<int, std::string>* label_map_;
-  std::vector<int32> tensor_dims_to_squeeze_;
+  std::vector<int32_t> tensor_dims_to_squeeze_;
 
   absl::StatusOr<tf::Tensor> MaybeSqueezeDims(const std::string& tensor_tag,
                                               const tf::Tensor& input_tensor) {

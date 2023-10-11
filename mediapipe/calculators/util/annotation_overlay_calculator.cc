@@ -172,7 +172,7 @@ class AnnotationOverlayCalculator : public CalculatorBase {
 REGISTER_CALCULATOR(AnnotationOverlayCalculator);
 
 absl::Status AnnotationOverlayCalculator::GetContract(CalculatorContract* cc) {
-  CHECK_GE(cc->Inputs().NumEntries(), 1);
+  RET_CHECK_GE(cc->Inputs().NumEntries(), 1);
 
   bool use_gpu = false;
 
@@ -189,13 +189,13 @@ absl::Status AnnotationOverlayCalculator::GetContract(CalculatorContract* cc) {
 #if !MEDIAPIPE_DISABLE_GPU
   if (cc->Inputs().HasTag(kGpuBufferTag)) {
     cc->Inputs().Tag(kGpuBufferTag).Set<mediapipe::GpuBuffer>();
-    CHECK(cc->Outputs().HasTag(kGpuBufferTag));
+    RET_CHECK(cc->Outputs().HasTag(kGpuBufferTag));
     use_gpu = true;
   }
 #endif  // !MEDIAPIPE_DISABLE_GPU
   if (cc->Inputs().HasTag(kImageFrameTag)) {
     cc->Inputs().Tag(kImageFrameTag).Set<ImageFrame>();
-    CHECK(cc->Outputs().HasTag(kImageFrameTag));
+    RET_CHECK(cc->Outputs().HasTag(kImageFrameTag));
   }
 
   // Data streams to render.
@@ -471,7 +471,7 @@ absl::Status AnnotationOverlayCalculator::CreateRenderTargetCpu(
     auto input_mat = formats::MatView(&input_frame);
     if (input_frame.Format() == ImageFormat::GRAY8) {
       cv::Mat rgb_mat;
-      cv::cvtColor(input_mat, rgb_mat, CV_GRAY2RGB);
+      cv::cvtColor(input_mat, rgb_mat, cv::COLOR_GRAY2RGB);
       rgb_mat.copyTo(*image_mat);
     } else {
       input_mat.copyTo(*image_mat);
@@ -658,7 +658,7 @@ absl::Status AnnotationOverlayCalculator::GlSetup(CalculatorContext* cc) {
     glBindTexture(GL_TEXTURE_2D, image_mat_tex_);
     // TODO
     // OpenCV only renders to RGB images, not RGBA. Ideally this should be RGBA.
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, width_canvas_, height_canvas_, 0,
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width_canvas_, height_canvas_, 0,
                  GL_RGB, GL_UNSIGNED_BYTE, nullptr);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);

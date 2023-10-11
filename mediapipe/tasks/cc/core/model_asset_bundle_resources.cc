@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -51,12 +51,11 @@ ModelAssetBundleResources::Create(
   auto model_bundle_resources = absl::WrapUnique(
       new ModelAssetBundleResources(tag, std::move(model_asset_bundle_file)));
   MP_RETURN_IF_ERROR(
-      model_bundle_resources->ExtractModelFilesFromExternalFileProto());
+      model_bundle_resources->ExtractFilesFromExternalFileProto());
   return model_bundle_resources;
 }
 
-absl::Status
-ModelAssetBundleResources::ExtractModelFilesFromExternalFileProto() {
+absl::Status ModelAssetBundleResources::ExtractFilesFromExternalFileProto() {
   if (model_asset_bundle_file_->has_file_name()) {
     // If the model asset bundle file name is a relative path, searches the file
     // in a platform-specific location and returns the absolute path on success.
@@ -72,34 +71,32 @@ ModelAssetBundleResources::ExtractModelFilesFromExternalFileProto() {
       model_asset_bundle_file_handler_->GetFileContent().data();
   size_t buffer_size =
       model_asset_bundle_file_handler_->GetFileContent().size();
-  return metadata::ExtractFilesfromZipFile(buffer_data, buffer_size,
-                                           &model_files_);
+  return metadata::ExtractFilesfromZipFile(buffer_data, buffer_size, &files_);
 }
 
-absl::StatusOr<absl::string_view> ModelAssetBundleResources::GetModelFile(
+absl::StatusOr<absl::string_view> ModelAssetBundleResources::GetFile(
     const std::string& filename) const {
-  auto it = model_files_.find(filename);
-  if (it == model_files_.end()) {
-    auto model_files = ListModelFiles();
-    std::string all_model_files =
-        absl::StrJoin(model_files.begin(), model_files.end(), ", ");
+  auto it = files_.find(filename);
+  if (it == files_.end()) {
+    auto files = ListFiles();
+    std::string all_files = absl::StrJoin(files.begin(), files.end(), ", ");
 
     return CreateStatusWithPayload(
         StatusCode::kNotFound,
-        absl::StrFormat("No model file with name: %s. All model files in the "
-                        "model asset bundle are: %s.",
-                        filename, all_model_files),
+        absl::StrFormat("No file with name: %s. All files in the model asset "
+                        "bundle are: %s.",
+                        filename, all_files),
         MediaPipeTasksStatus::kFileNotFoundError);
   }
   return it->second;
 }
 
-std::vector<std::string> ModelAssetBundleResources::ListModelFiles() const {
-  std::vector<std::string> model_names;
-  for (const auto& [model_name, _] : model_files_) {
-    model_names.push_back(model_name);
+std::vector<std::string> ModelAssetBundleResources::ListFiles() const {
+  std::vector<std::string> file_names;
+  for (const auto& [file_name, _] : files_) {
+    file_names.push_back(file_name);
   }
-  return model_names;
+  return file_names;
 }
 
 }  // namespace core

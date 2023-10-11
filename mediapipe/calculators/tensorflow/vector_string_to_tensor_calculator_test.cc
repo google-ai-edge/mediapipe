@@ -53,7 +53,7 @@ class VectorStringToTensorCalculatorTest : public ::testing::Test {
       }
     }
 
-    const int64 time = 1234;
+    const int64_t time = 1234;
     runner_->MutableInputs()->Index(0).packets.push_back(
         Adopt(input.release()).At(Timestamp(time)));
 
@@ -89,7 +89,7 @@ TEST_F(VectorStringToTensorCalculatorTest, ConvertsFromVectorString) {
   for (int i = 0; i < 5; ++i) {
     input->at(i) = absl::StrCat(i);
   }
-  const int64 time = 1234;
+  const int64_t time = 1234;
   runner_->MutableInputs()->Index(0).packets.push_back(
       Adopt(input.release()).At(Timestamp(time)));
 

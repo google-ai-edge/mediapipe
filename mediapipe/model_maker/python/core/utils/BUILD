@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,9 +17,7 @@
 
 licenses(["notice"])
 
-package(
-    default_visibility = ["//mediapipe:__subpackages__"],
-)
+package(default_visibility = ["//mediapipe:__subpackages__"])
 
 py_library(
     name = "test_util",
@@ -35,7 +33,6 @@ py_library(
     name = "model_util",
     srcs = ["model_util.py"],
     deps = [
-        ":file_util",
         ":quantization",
         "//mediapipe/model_maker/python/core/data:dataset",
     ],
@@ -45,7 +42,6 @@ py_test(
     name = "model_util_test",
     srcs = ["model_util_test.py"],
     deps = [
-        ":file_util",
         ":model_util",
         ":quantization",
         ":test_util",
@@ -61,6 +57,7 @@ py_test(
     name = "file_util_test",
     srcs = ["file_util_test.py"],
     data = ["//mediapipe/model_maker/python/core/utils/testdata"],
+    tags = ["requires-net:external"],
     deps = [":file_util"],
 )
 
@@ -68,18 +65,45 @@ py_library(
     name = "loss_functions",
     srcs = ["loss_functions.py"],
     srcs_version = "PY3",
+    deps = [
+        ":file_util",
+        ":model_util",
+    ],
 )
 
 py_test(
     name = "loss_functions_test",
     srcs = ["loss_functions_test.py"],
+    tags = [
+        "requires-net:external",
+    ],
     deps = [":loss_functions"],
+)
+
+######################################################################
+# Public target of the MediaPipe Model Maker Quantization Config.
+
+# Quantization Config is used to export a quantized model. Please refer
+# to the specific task documentations such as:
+# https://developers.google.com/mediapipe/solutions/vision/image_classifier/customize
+# for usage information.
+######################################################################
+py_library(
+    name = "metrics",
+    srcs = ["metrics.py"],
+)
+
+py_test(
+    name = "metrics_test",
+    srcs = ["metrics_test.py"],
+    deps = [":metrics"],
 )
 
 py_library(
     name = "quantization",
     srcs = ["quantization.py"],
     srcs_version = "PY3",
+    visibility = ["//visibility:public"],
     deps = ["//mediapipe/model_maker/python/core/data:dataset"],
 )
 

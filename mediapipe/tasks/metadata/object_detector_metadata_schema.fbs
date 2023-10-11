@@ -1,0 +1,98 @@
+// Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+namespace mediapipe.tasks;
+
+// ObjectDetectorOptions.min_parser_version indicates the minimum necessary
+// object detector metadata parser version to fully understand all fields in a
+// given metadata flatbuffer. This min_parser_version is specific for the
+// object detector metadata defined in this schema file.
+//
+// New fields and types will have associated comments with the schema version
+// for which they were added.
+//
+// Schema Semantic version: 1.0.0
+
+// This indicates the flatbuffer compatibility. The number will bump up when a
+// break change is applied to the schema, such as removing fields or adding new
+// fields to the middle of a table.
+file_identifier "V001";
+
+
+// History:
+// 1.0.0 - Initial version.
+
+// A fixed size anchor.
+table FixedAnchor {
+  x_center: float;
+  y_center: float;
+  width: float;
+  height: float;
+}
+
+// The schema for a list of anchors with fixed size.
+table FixedAnchorsSchema {
+  anchors: [FixedAnchor];
+}
+
+// The ssd anchors options used in the object detector.
+table SsdAnchorsOptions {
+  fixed_anchors_schema: FixedAnchorsSchema;
+}
+
+// The options for decoding the raw model output tensors. The options are mostly
+// used in TensorsToDetectionsCalculatorOptions.
+table TensorsDecodingOptions {
+  // The number of output classes predicted by the detection model.
+  num_classes: int;
+  // The number of output boxes predicted by the detection model.
+  num_boxes: int;
+  // The number of output values per boxes predicted by the detection
+  // model. The values contain bounding boxes, keypoints, etc.
+  num_coords: int;
+  // The offset of keypoint coordinates in the location tensor.
+  keypoint_coord_offset: int;
+  // The number of predicted keypoints.
+  num_keypoints: int;
+  // The dimension of each keypoint, e.g. number of values predicted for each
+  // keypoint.
+  num_values_per_keypoint: int;
+  // Parameters for decoding SSD detection model.
+  x_scale: float;
+  y_scale: float;
+  w_scale: float;
+  h_scale: float;
+  // Whether to apply exponential on box size.
+  apply_exponential_on_box_size: bool;
+  // Whether to apply sigmod function on the score.
+  sigmoid_score: bool;
+}
+
+table ObjectDetectorOptions {
+  // TODO: automatically populate min parser string.
+  // The minimum necessary object detector metadata parser version to fully
+  // understand all fields in a given metadata flatbuffer. This field is
+  // automatically populated by the MetadataPopulator when the metadata is
+  // populated into a TFLite model. This min_parser_version is specific for the
+  // object detector metadata defined in this schema file.
+  min_parser_version:string;
+
+  // The options of ssd anchors configs used by the detection model.
+  ssd_anchors_options:SsdAnchorsOptions;
+
+  // The tensors decoding options to convert raw tensors to detection results.
+  tensors_decoding_options:TensorsDecodingOptions;
+}
+
+root_type ObjectDetectorOptions;

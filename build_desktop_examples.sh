@@ -37,7 +37,7 @@ run_only=false
 one_target=false
 app_dir="mediapipe/examples/desktop"
 bin_dir="bazel-bin"
-declare -a default_bazel_flags=(build -c opt --define MEDIAPIPE_DISABLE_GPU=1)
+declare -a default_bazel_flags=(build -c opt --define MEDIAPIPE_DISABLE_GPU=1 --define=MEDIAPIPE_DISABLE=1 --define=PYTHON_DISABLE=1 --cxxopt=-DPYTHON_DISABLE=1 --cxxopt=-DMEDIAPIPE_DISABLE=1)
 
 while [[ -n $1 ]]; do
   case $1 in

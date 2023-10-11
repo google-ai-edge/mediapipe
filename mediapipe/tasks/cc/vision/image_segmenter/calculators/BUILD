@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ mediapipe_proto_library(
     srcs = ["tensors_to_segmentation_calculator.proto"],
     deps = [
         "//mediapipe/framework:calculator_options_proto",
-        "//mediapipe/framework:calculator_proto",
         "//mediapipe/framework/formats:image_format_proto",
         "//mediapipe/tasks/cc/vision/image_segmenter/proto:segmenter_options_proto",
         "//mediapipe/util:label_map_proto",
@@ -51,8 +50,57 @@ cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/types:span",
-    ],
+    ] + select({
+        "//conditions:default": [],
+        "//mediapipe:android": [
+            ":segmentation_postprocessor_gl",
+        ],
+    }),
     alwayslink = 1,
+)
+
+cc_library(
+    name = "segmentation_postprocessor_gl",
+    srcs = ["segmentation_postprocessor_gl.cc"],
+    hdrs = ["segmentation_postprocessor_gl.h"],
+    tags = ["nomac"],
+    deps = [
+        ":tensors_to_segmentation_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/gpu:gl_calculator_helper",
+        "//mediapipe/gpu:gl_simple_shaders",
+        "//mediapipe/gpu:shader_util",
+        "//mediapipe/tasks/cc/vision/image_segmenter/proto:segmenter_options_cc_proto",
+        "//mediapipe/tasks/cc/vision/utils:image_utils",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings:str_format",
+    ] + select({
+        "//conditions:default": [],
+        "//mediapipe:android": [
+            "ssbo_to_texture_converter",
+        ],
+    }),
+)
+
+cc_library(
+    name = "ssbo_to_texture_converter",
+    srcs = ["ssbo_to_texture_converter.cc"],
+    hdrs = ["ssbo_to_texture_converter.h"],
+    tags = [
+        "nomac",
+        "notap",
+    ],
+    deps = [
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/gpu:gl_base",
+        "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:gl_program",
+        "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:gl_shader",
+        "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:gl_texture",
+        "@org_tensorflow//tensorflow/lite/delegates/gpu/gl/converters:util",
+    ],
 )
 
 cc_test(

@@ -90,9 +90,9 @@ absl::Status VectorFloatToTensorCalculator::Process(CalculatorContext* cc) {
     const std::vector<std::vector<float>>& input =
         cc->Inputs().Index(0).Value().Get<std::vector<std::vector<float>>>();
 
-    const int32 rows = input.size();
+    const int32_t rows = input.size();
     RET_CHECK_GE(rows, 1);
-    const int32 cols = input[0].size();
+    const int32_t cols = input[0].size();
     RET_CHECK_GE(cols, 1);
     for (int i = 1; i < rows; ++i) {
       RET_CHECK_EQ(input[i].size(), cols);
@@ -117,7 +117,7 @@ absl::Status VectorFloatToTensorCalculator::Process(CalculatorContext* cc) {
     const std::vector<float>& input =
         cc->Inputs().Index(0).Value().Get<std::vector<float>>();
     RET_CHECK_GE(input.size(), 1);
-    const int32 length = input.size();
+    const int32_t length = input.size();
     tensor_shape = tf::TensorShape({length});
     auto output = ::absl::make_unique<tf::Tensor>(tf::DT_FLOAT, tensor_shape);
     for (int i = 0; i < length; ++i) {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2022 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-// Placeholder for internal dependency on trusted resource URL builder
+// Placeholder for internal dependency on resourceUrlSafeByReview
 
 import {WasmFileset} from './wasm_fileset';
 
@@ -30,6 +30,9 @@ const WASM_SIMD_CHECK = new Uint8Array([
   2, 1,  0,   10,  10, 1, 8, 0, 65, 0, 253, 15, 253, 98, 11
 ]);
 
+/** The categories of tasks supported by MediaPipe. */
+type MediapipeTaskCategory = 'audio'|'text'|'vision';
+
 async function isSimdSupported(): Promise<boolean> {
   if (supportsSimd === undefined) {
     try {
@@ -44,7 +47,7 @@ async function isSimdSupported(): Promise<boolean> {
 }
 
 async function createFileset(
-    taskName: string, basePath: string = ''): Promise<WasmFileset> {
+    taskName: MediapipeTaskCategory, basePath = ''): Promise<WasmFileset> {
   const suffix =
       await isSimdSupported() ? 'wasm_internal' : 'wasm_nosimd_internal';
 

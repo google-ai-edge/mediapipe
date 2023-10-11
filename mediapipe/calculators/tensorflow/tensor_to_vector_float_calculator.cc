@@ -102,7 +102,7 @@ absl::Status TensorToVectorFloatCalculator::Process(CalculatorContext* cc) {
     }
     auto output =
         absl::make_unique<std::vector<float>>(input_tensor.NumElements());
-    const auto& tensor_values = input_tensor.flat<float>();
+    const auto& tensor_values = input_tensor.unaligned_flat<float>();
     for (int i = 0; i < input_tensor.NumElements(); ++i) {
       output->at(i) = tensor_values(i);
     }

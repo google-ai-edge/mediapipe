@@ -42,7 +42,15 @@ public class GraphTextureFrame implements TextureFrame {
     this(nativeHandle, timestamp, false);
   }
 
-  GraphTextureFrame(long nativeHandle, long timestamp, boolean deferredSync) {
+  /**
+   * Create a GraphTextureFrame based on a raw C++ handle.
+   *
+   * @param nativeHandle C++ pointer a std::shared_ptr<GlTextureBuffer>
+   * @param timestamp Raw packet timestamp obtained by Timestamp.Value()
+   * @param deferredSync If true, a GPU wait will automatically occur when
+   *     GraphTextureFrame#getTextureName is called
+   */
+  public GraphTextureFrame(long nativeHandle, long timestamp, boolean deferredSync) {
     nativeBufferHandle = nativeHandle;
     // TODO: use a single JNI call to fill in all info
     textureName = nativeGetTextureName(nativeBufferHandle);
@@ -66,7 +74,8 @@ public class GraphTextureFrame implements TextureFrame {
     if (nativeBufferHandle == 0) {
       return 0;
     }
-    if (activeConsumerContextHandleSet.add(nativeGetCurrentExternalContextHandle())) {
+    long contextHandle = nativeGetCurrentExternalContextHandle();
+    if (contextHandle != 0 && activeConsumerContextHandleSet.add(contextHandle)) {
       // Gpu wait only if deferredSync is true, such as when this GraphTextureFrame is created using
       // PacketGetter.getTextureFrameDeferredSync().
       if (deferredSync) {
@@ -116,7 +125,14 @@ public class GraphTextureFrame implements TextureFrame {
     GlSyncToken consumerToken = null;
     // Note that this remove should be moved to the other overload of release when b/68808951 is
     // addressed.
-    if (activeConsumerContextHandleSet.remove(nativeGetCurrentExternalContextHandle())) {
+    final long contextHandle = nativeGetCurrentExternalContextHandle();
+    if (contextHandle == 0 && !activeConsumerContextHandleSet.isEmpty()) {
+      logger.atWarning().log(
+          "GraphTextureFrame is being released on non GL thread while having active consumers,"
+              + " which may lead to external / internal GL contexts synchronization issues.");
+    }
+
+    if (contextHandle != 0 && activeConsumerContextHandleSet.remove(contextHandle)) {
       consumerToken =
           new GraphGlSyncToken(nativeCreateSyncTokenForCurrentExternalContext(nativeBufferHandle));
     }
@@ -158,7 +174,7 @@ public class GraphTextureFrame implements TextureFrame {
 
   @Override
   protected void finalize() throws Throwable {
-    if (refCount >= 0 || nativeBufferHandle != 0) {
+    if (refCount > 0 || nativeBufferHandle != 0) {
       logger.atWarning().log("release was not called before finalize");
     }
     if (!activeConsumerContextHandleSet.isEmpty()) {
@@ -169,7 +185,9 @@ public class GraphTextureFrame implements TextureFrame {
   private native void nativeReleaseBuffer(long nativeHandle);
 
   private native int nativeGetTextureName(long nativeHandle);
+
   private native int nativeGetWidth(long nativeHandle);
+
   private native int nativeGetHeight(long nativeHandle);
 
   private native void nativeGpuWait(long nativeHandle);

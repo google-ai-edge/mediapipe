@@ -97,7 +97,7 @@ class PacketThinnerCalculator : public CalculatorBase {
     cc->Inputs().Index(0).SetAny();
     cc->Outputs().Index(0).SetSameAs(&cc->Inputs().Index(0));
     if (cc->InputSidePackets().HasTag(kPeriodTag)) {
-      cc->InputSidePackets().Tag(kPeriodTag).Set<int64>();
+      cc->InputSidePackets().Tag(kPeriodTag).Set<int64_t>();
     }
     return absl::OkStatus();
   }
@@ -173,7 +173,7 @@ absl::Status PacketThinnerCalculator::Open(CalculatorContext* cc) {
 
   if (cc->InputSidePackets().HasTag(kPeriodTag)) {
     period_ =
-        TimestampDiff(cc->InputSidePackets().Tag(kPeriodTag).Get<int64>());
+        TimestampDiff(cc->InputSidePackets().Tag(kPeriodTag).Get<int64_t>());
   } else {
     period_ = TimestampDiff(options.period());
   }
@@ -300,13 +300,13 @@ Timestamp PacketThinnerCalculator::NearestSyncTimestamp(Timestamp now) const {
 
   // Computation is done using int64 arithmetic.  No easy way to avoid
   // since Timestamps don't support div and multiply.
-  const int64 now64 = now.Value();
-  const int64 start64 = start_time_.Value();
-  const int64 period64 = period_.Value();
+  const int64_t now64 = now.Value();
+  const int64_t start64 = start_time_.Value();
+  const int64_t period64 = period_.Value();
   CHECK_LE(0, period64);
 
   // Round now64 to its closest interval (units of period64).
-  int64 sync64 =
+  int64_t sync64 =
       (now64 - start64 + period64 / 2) / period64 * period64 + start64;
   CHECK_LE(abs(now64 - sync64), period64 / 2)
       << "start64: " << start64 << "; now64: " << now64

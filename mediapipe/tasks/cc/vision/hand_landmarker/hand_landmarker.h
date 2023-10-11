@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -101,7 +101,7 @@ class HandLandmarker : tasks::vision::core::BaseVisionTaskApi {
   // three running modes:
   // 1) Image mode for detecting hand landmarks on single image inputs. Users
   //    provide mediapipe::Image to the `Detect` method, and will receive the
-  //    deteced hand landmarks results as the return value.
+  //    detected hand landmarks results as the return value.
   // 2) Video mode for detecting hand landmarks on the decoded frames of a
   //    video. Users call `DetectForVideo` method, and will receive the detected
   //    hand landmarks results as the return value.

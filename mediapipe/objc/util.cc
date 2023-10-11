@@ -365,6 +365,10 @@ absl::StatusOr<CFHolder<CVPixelBufferRef>> CreateCVPixelBufferForImageFrame(
       pixel_format = kCVPixelFormatType_TwoComponent32Float;
       break;
 
+    case mediapipe::ImageFormat::VEC32F4:
+      pixel_format = kCVPixelFormatType_128RGBAFloat;
+      break;
+
     default:
       return ::mediapipe::UnknownErrorBuilder(MEDIAPIPE_LOC)
              << "unsupported ImageFrame format: " << image_format;
@@ -438,6 +442,10 @@ absl::StatusOr<CFHolder<CVPixelBufferRef>> CreateCVPixelBufferCopyingImageFrame(
 
     case mediapipe::ImageFormat::VEC32F2:
       pixel_format = kCVPixelFormatType_TwoComponent32Float;
+      break;
+
+    case mediapipe::ImageFormat::VEC32F4:
+      pixel_format = kCVPixelFormatType_128RGBAFloat;
       break;
 
     default:

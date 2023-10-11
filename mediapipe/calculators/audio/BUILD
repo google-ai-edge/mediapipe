@@ -219,12 +219,10 @@ cc_library(
     deps = [
         ":time_series_framer_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:timestamp",
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/framework/formats:time_series_header_cc_proto",
-        "//mediapipe/framework/port:integral_types",
-        "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:ret_check",
-        "//mediapipe/framework/port:status",
         "//mediapipe/util:time_series_util",
         "@com_google_audio_tools//audio/dsp:window_functions",
         "@eigen_archive//:eigen3",
@@ -316,6 +314,20 @@ cc_test(
         "//mediapipe/framework/port:status",
         "//mediapipe/util:time_series_test_util",
         "@eigen_archive//:eigen3",
+    ],
+)
+
+cc_binary(
+    name = "time_series_framer_calculator_benchmark",
+    srcs = ["time_series_framer_calculator_benchmark.cc"],
+    deps = [
+        ":time_series_framer_calculator",
+        ":time_series_framer_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework/formats:matrix",
+        "//mediapipe/framework/formats:time_series_header_cc_proto",
+        "@com_google_benchmark//:benchmark",
     ],
 )
 

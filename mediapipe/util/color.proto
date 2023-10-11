@@ -16,6 +16,9 @@ syntax = "proto2";
 
 package mediapipe;
 
+option java_package = "com.google.mediapipe.util.proto";
+option java_outer_classname = "ColorProto";
+
 message Color {
   optional int32 r = 1;
   optional int32 g = 2;

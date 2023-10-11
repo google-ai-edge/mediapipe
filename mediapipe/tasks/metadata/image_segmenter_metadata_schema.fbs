@@ -1,0 +1,59 @@
+// Copyright 2023 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+namespace mediapipe.tasks;
+
+// Image segmenter metadata contains information specific for the image
+// segmentation task. The metadata can be added in
+// SubGraphMetadata.custom_metadata [1] in model metadata.
+// [1]: https://github.com/google/mediapipe/blob/46b5c4012d2ef76c9d92bb0d88a6b107aee83814/mediapipe/tasks/metadata/metadata_schema.fbs#L685
+
+// ImageSegmenterOptions.min_parser_version indicates the minimum necessary
+// image segmenter metadata parser version to fully understand all fields in a
+// given metadata flatbuffer. This min_parser_version is specific for the
+// image segmenter metadata defined in this schema file.
+//
+// New fields and types will have associated comments with the schema version
+// for which they were added.
+//
+// Schema Semantic version: 1.0.0
+
+// This indicates the flatbuffer compatibility. The number will bump up when a
+// break change is applied to the schema, such as removing fields or adding new
+// fields to the middle of a table.
+file_identifier "V001";
+
+// History:
+// 1.0.0 - Initial version.
+
+// Supported activation functions.
+enum Activation: byte {
+  NONE = 0,
+  SIGMOID = 1,
+  SOFTMAX = 2
+}
+
+table ImageSegmenterOptions {
+  // The activation function of the output layer in the image segmenter.
+  activation: Activation;
+
+  // The minimum necessary image segmenter metadata parser version to fully
+  // understand all fields in a given metadata flatbuffer. This field is
+  // automatically populated by the MetadataPopulator when the metadata is
+  // populated into a TFLite model. This min_parser_version is specific for the
+  // image segmenter metadata defined in this schema file.
+  min_parser_version:string;
+}
+
+root_type ImageSegmenterOptions;

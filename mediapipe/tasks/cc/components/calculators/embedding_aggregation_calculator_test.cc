@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ limitations under the License.
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/framework/timestamp.h"
 #include "mediapipe/tasks/cc/components/containers/proto/embeddings.pb.h"
-#include "tensorflow/lite/core/shims/cc/shims_test_util.h"
+#include "tensorflow/lite/test_util.h"
 
 namespace mediapipe {
 namespace {
@@ -52,7 +52,7 @@ constexpr char kTimestampsName[] = "timestamps_in";
 constexpr char kTimestampedEmbeddingsTag[] = "TIMESTAMPED_EMBEDDINGS";
 constexpr char kTimestampedEmbeddingsName[] = "timestamped_embeddings_out";
 
-class EmbeddingAggregationCalculatorTest : public tflite_shims::testing::Test {
+class EmbeddingAggregationCalculatorTest : public tflite::testing::Test {
  protected:
   absl::StatusOr<OutputStreamPoller> BuildGraph(bool connect_timestamps) {
     Graph graph;

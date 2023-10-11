@@ -106,8 +106,8 @@ BoxDetectorInterface::BoxDetectorInterface(const BoxDetectorOptions &options)
 
 void BoxDetectorInterface::DetectAndAddBoxFromFeatures(
     const std::vector<Vector2_f> &features, const cv::Mat &descriptors,
-    const TimedBoxProtoList &tracked_boxes, int64 timestamp_msec, float scale_x,
-    float scale_y, TimedBoxProtoList *detected_boxes) {
+    const TimedBoxProtoList &tracked_boxes, int64_t timestamp_msec,
+    float scale_x, float scale_y, TimedBoxProtoList *detected_boxes) {
   absl::MutexLock lock_access(&access_to_index_);
   image_scale_ = std::min(scale_x, scale_y);
   image_aspect_ = scale_x / scale_y;
@@ -177,7 +177,7 @@ void BoxDetectorInterface::DetectAndAddBoxFromFeatures(
 
 void BoxDetectorInterface::DetectAndAddBox(
     const TrackingData &tracking_data, const TimedBoxProtoList &tracked_boxes,
-    int64 timestamp_msec, TimedBoxProtoList *detected_boxes) {
+    int64_t timestamp_msec, TimedBoxProtoList *detected_boxes) {
   std::vector<Vector2_f> features_from_tracking_data;
   std::vector<std::string> descriptors_from_tracking_data;
   FeatureAndDescriptorFromTrackingData(tracking_data,
@@ -255,7 +255,7 @@ bool BoxDetectorInterface::CheckDetectAndAddBox(
 
 void BoxDetectorInterface::DetectAndAddBox(
     const cv::Mat &image, const TimedBoxProtoList &tracked_boxes,
-    int64 timestamp_msec, TimedBoxProtoList *detected_boxes) {
+    int64_t timestamp_msec, TimedBoxProtoList *detected_boxes) {
   // Determine if we need execute feature extraction.
   if (!CheckDetectAndAddBox(tracked_boxes)) {
     return;

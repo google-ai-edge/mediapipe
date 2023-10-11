@@ -16,6 +16,7 @@
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
 #include "mediapipe/framework/port/gtest.h"
+#include "mediapipe/util/packet_test_util.h"
 #include "tensorflow/core/framework/tensor.h"
 #include "tensorflow/core/framework/types.pb.h"
 
@@ -52,7 +53,7 @@ TEST_F(TensorToVectorFloatCalculatorTest, ConvertsToVectorFloat) {
     tensor_vec(i) = static_cast<float>(1 << i);
   }
 
-  const int64 time = 1234;
+  const int64_t time = 1234;
   runner_->MutableInputs()->Index(0).packets.push_back(
       Adopt(tensor.release()).At(Timestamp(time)));
 
@@ -81,7 +82,7 @@ TEST_F(TensorToVectorFloatCalculatorTest, ConvertsBatchedToVectorVectorFloat) {
     slice(i) = static_cast<float>(1 << i);
   }
 
-  const int64 time = 1234;
+  const int64_t time = 1234;
   runner_->MutableInputs()->Index(0).packets.push_back(
       Adopt(tensor.release()).At(Timestamp(time)));
 
@@ -111,7 +112,7 @@ TEST_F(TensorToVectorFloatCalculatorTest, FlattenShouldTakeAllDimensions) {
     slice(i) = static_cast<float>(1 << i);
   }
 
-  const int64 time = 1234;
+  const int64_t time = 1234;
   runner_->MutableInputs()->Index(0).packets.push_back(
       Adopt(tensor.release()).At(Timestamp(time)));
 
@@ -127,6 +128,29 @@ TEST_F(TensorToVectorFloatCalculatorTest, FlattenShouldTakeAllDimensions) {
     const float expected = static_cast<float>(1 << i);
     EXPECT_EQ(expected, output_vector[i]);
   }
+}
+
+TEST_F(TensorToVectorFloatCalculatorTest, AcceptsUnalignedTensors) {
+  SetUpRunner(/*tensor_is_2d=*/false, /*flatten_nd=*/false);
+
+  const tf::TensorShape tensor_shape(std::vector<tf::int64>{2, 5});
+  tf::Tensor tensor(tf::DT_FLOAT, tensor_shape);
+  auto slice = tensor.Slice(1, 1).flat<float>();
+  for (int i = 0; i < 5; ++i) {
+    slice(i) = i;
+  }
+
+  auto input_tensor = tensor.SubSlice(1);
+  // Ensure that the input tensor is unaligned.
+  ASSERT_FALSE(input_tensor.IsAligned());
+  runner_->MutableInputs()->Index(0).packets.push_back(
+      MakePacket<tf::Tensor>(input_tensor).At(Timestamp(5)));
+
+  ASSERT_TRUE(runner_->Run().ok());
+
+  EXPECT_THAT(runner_->Outputs().Index(0).packets,
+              ElementsAre(PacketContainsTimestampAndPayload<std::vector<float>>(
+                  Timestamp(5), std::vector<float>({0, 1, 2, 3, 4}))));
 }
 
 }  // namespace

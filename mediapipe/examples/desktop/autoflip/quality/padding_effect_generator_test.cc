@@ -138,7 +138,23 @@ void TestWithAspectRatio(const double aspect_ratio,
     std::string result_image;
     MP_ASSERT_OK(
         mediapipe::file::GetContents(result_string_path, &result_image));
-    EXPECT_EQ(result_image, output_string);
+    if (result_image != output_string) {
+      // There may be slight differences due to the way the JPEG was encoded or
+      // the OpenCV version used to generate the reference files. Compare
+      // pixel-by-pixel using the Peak Signal-to-Noise Ratio instead.
+      cv::Mat result_mat =
+          cv::imdecode(cv::Mat(1, result_image.size(), CV_8UC1,
+                               const_cast<char*>(result_image.data())),
+                       cv::IMREAD_UNCHANGED);
+      cv::Mat output_mat =
+          cv::imdecode(cv::Mat(1, output_string.size(), CV_8UC1,
+                               const_cast<char*>(output_string.data())),
+                       cv::IMREAD_UNCHANGED);
+      ASSERT_EQ(result_mat.rows, output_mat.rows);
+      ASSERT_EQ(result_mat.cols, output_mat.cols);
+      ASSERT_EQ(result_mat.type(), output_mat.type());
+      EXPECT_GT(cv::PSNR(result_mat, output_mat), 45.0);
+    }
   } else {
     std::string output_string_path = mediapipe::file::JoinPath(
         absl::GetFlag(FLAGS_output_folder),
@@ -174,14 +190,16 @@ TEST(PaddingEffectGeneratorTest, ScaleToMultipleOfTwo) {
   double target_aspect_ratio = 0.5;
   int expect_width = 14;
   int expect_height = input_height;
-  auto test_frame = absl::make_unique<ImageFrame>(/*format=*/ImageFormat::SRGB,
-                                                  input_width, input_height);
+  ImageFrame test_frame(/*format=*/ImageFormat::SRGB, input_width,
+                        input_height);
+  cv::Mat mat = formats::MatView(&test_frame);
+  mat = cv::Scalar(0, 0, 0);
 
-  PaddingEffectGenerator generator(test_frame->Width(), test_frame->Height(),
+  PaddingEffectGenerator generator(test_frame.Width(), test_frame.Height(),
                                    target_aspect_ratio,
                                    /*scale_to_multiple_of_two=*/true);
   ImageFrame result_frame;
-  MP_ASSERT_OK(generator.Process(*test_frame, 0.3, 40, 0.0, &result_frame));
+  MP_ASSERT_OK(generator.Process(test_frame, 0.3, 40, 0.0, &result_frame));
   EXPECT_EQ(result_frame.Width(), expect_width);
   EXPECT_EQ(result_frame.Height(), expect_height);
 }

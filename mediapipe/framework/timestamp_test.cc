@@ -125,6 +125,22 @@ TEST(TimestampTest, NextAllowedInStream) {
             Timestamp::PostStream().NextAllowedInStream());
 }
 
+TEST(TimestampTest, HasNextAllowedInStream) {
+  EXPECT_TRUE(Timestamp::Min().HasNextAllowedInStream());
+  EXPECT_TRUE((Timestamp::Min() + 1).HasNextAllowedInStream());
+  EXPECT_TRUE(Timestamp(-1000).HasNextAllowedInStream());
+  EXPECT_TRUE(Timestamp(0).HasNextAllowedInStream());
+  EXPECT_TRUE(Timestamp(1000).HasNextAllowedInStream());
+  EXPECT_TRUE((Timestamp::Max() - 2).HasNextAllowedInStream());
+  EXPECT_TRUE((Timestamp::Max() - 1).HasNextAllowedInStream());
+
+  EXPECT_FALSE(Timestamp::PreStream().HasNextAllowedInStream());
+  EXPECT_FALSE(Timestamp::Max().HasNextAllowedInStream());
+  EXPECT_FALSE(Timestamp::PostStream().HasNextAllowedInStream());
+  EXPECT_FALSE(Timestamp::OneOverPostStream().HasNextAllowedInStream());
+  EXPECT_FALSE(Timestamp::Done().HasNextAllowedInStream());
+}
+
 TEST(TimestampTest, SpecialValueDifferences) {
   {  // Lower range
     const std::vector<Timestamp> timestamps = {

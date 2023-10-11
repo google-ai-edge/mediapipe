@@ -17,6 +17,7 @@
 #include <string>
 
 #include "absl/strings/str_format.h"
+#include "mediapipe/calculators/core/constant_side_packet_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/graph_service_manager.h"
 #include "mediapipe/framework/port/gmock.h"
@@ -131,6 +132,60 @@ TEST(SubgraphServicesTest, EmitStringFromTestService) {
   MP_ASSERT_OK(graph.WaitUntilDone());
 
   EXPECT_EQ(side_string.Get<std::string>(), "Expected STRING");
+}
+
+class OptionsCheckingSubgraph : public Subgraph {
+ public:
+  absl::StatusOr<CalculatorGraphConfig> GetConfig(
+      mediapipe::SubgraphContext* sc) override {
+    std::string subgraph_side_packet_val;
+    if (sc->HasOptions<ConstantSidePacketCalculatorOptions>()) {
+      subgraph_side_packet_val =
+          sc->Options<ConstantSidePacketCalculatorOptions>()
+              .packet(0)
+              .string_value();
+    }
+    CalculatorGraphConfig config =
+        mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
+            absl::StrFormat(R"(
+          output_side_packet: "string"
+          node {
+            calculator: "ConstantSidePacketCalculator"
+            output_side_packet: "PACKET:string"
+            options: {
+              [mediapipe.ConstantSidePacketCalculatorOptions.ext]: {
+                packet { string_value: "%s" }
+              }
+            }
+          }
+        )",
+                            subgraph_side_packet_val));
+    return config;
+  }
+};
+REGISTER_MEDIAPIPE_GRAPH(OptionsCheckingSubgraph);
+
+TEST_F(SubgraphTest, CheckSubgraphOptionsPassedIn) {
+  CalculatorGraphConfig config =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        output_side_packet: "str"
+        node {
+          calculator: "OptionsCheckingSubgraph"
+          output_side_packet: "str"
+          options: {
+            [mediapipe.ConstantSidePacketCalculatorOptions.ext]: {
+              packet { string_value: "test" }
+            }
+          }
+        }
+      )pb");
+  CalculatorGraph graph;
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.WaitUntilDone());
+  auto packet = graph.GetOutputSidePacket("str");
+  MP_ASSERT_OK(packet);
+  EXPECT_EQ(packet.value().Get<std::string>(), "test");
 }
 
 }  // namespace

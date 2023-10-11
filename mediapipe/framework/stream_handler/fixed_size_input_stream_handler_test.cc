@@ -30,15 +30,15 @@ namespace mediapipe {
 
 namespace {
 
-const int64 kMaxPacketId = 100;
-const int64 kSlowCalculatorRate = 10;
+const int64_t kMaxPacketId = 100;
+const int64_t kSlowCalculatorRate = 10;
 
 // Rate limiter for TestSlowCalculator.
 ABSL_CONST_INIT absl::Mutex g_source_mutex(absl::kConstInit);
-int64 g_source_counter ABSL_GUARDED_BY(g_source_mutex);
+int64_t g_source_counter ABSL_GUARDED_BY(g_source_mutex);
 
 // Rate limiter for TestSourceCalculator.
-int64 g_slow_counter ABSL_GUARDED_BY(g_source_mutex);
+int64_t g_slow_counter ABSL_GUARDED_BY(g_source_mutex);
 
 // Flag that indicates that the source is done.
 bool g_source_done ABSL_GUARDED_BY(g_source_mutex);
@@ -47,7 +47,7 @@ class TestSourceCalculator : public CalculatorBase {
  public:
   TestSourceCalculator() : current_packet_id_(0) {}
   static absl::Status GetContract(CalculatorContract* cc) {
-    cc->Outputs().Index(0).Set<int64>();
+    cc->Outputs().Index(0).Set<int64_t>();
     return absl::OkStatus();
   }
   absl::Status Open(CalculatorContext* cc) override {
@@ -62,7 +62,7 @@ class TestSourceCalculator : public CalculatorBase {
       g_source_done = true;
       return tool::StatusStop();
     }
-    cc->Outputs().Index(0).Add(new int64(0), Timestamp(current_packet_id_));
+    cc->Outputs().Index(0).Add(new int64_t(0), Timestamp(current_packet_id_));
     ++current_packet_id_;
     {
       absl::MutexLock lock(&g_source_mutex);
@@ -78,7 +78,7 @@ class TestSourceCalculator : public CalculatorBase {
     return g_source_counter <= kSlowCalculatorRate * g_slow_counter ||
            g_source_counter <= 1;
   }
-  int64 current_packet_id_;
+  int64_t current_packet_id_;
 };
 
 REGISTER_CALCULATOR(TestSourceCalculator);
@@ -87,8 +87,8 @@ class TestSlowCalculator : public CalculatorBase {
  public:
   TestSlowCalculator() = default;
   static absl::Status GetContract(CalculatorContract* cc) {
-    cc->Inputs().Index(0).Set<int64>();
-    cc->Outputs().Index(0).Set<int64>();
+    cc->Inputs().Index(0).Set<int64_t>();
+    cc->Outputs().Index(0).Set<int64_t>();
     return absl::OkStatus();
   }
   absl::Status Open(CalculatorContext* cc) override {
@@ -97,7 +97,7 @@ class TestSlowCalculator : public CalculatorBase {
     return absl::OkStatus();
   }
   absl::Status Process(CalculatorContext* cc) override {
-    cc->Outputs().Index(0).Add(new int64(0),
+    cc->Outputs().Index(0).Add(new int64_t(0),
                                cc->Inputs().Index(0).Value().Timestamp());
     {
       absl::MutexLock lock(&g_source_mutex);
@@ -118,8 +118,9 @@ class TestSlowCalculator : public CalculatorBase {
 REGISTER_CALCULATOR(TestSlowCalculator);
 
 // Return the values of the timestamps of a vector of Packets.
-static std::vector<int64> TimestampValues(const std::vector<Packet>& packets) {
-  std::vector<int64> result;
+static std::vector<int64_t> TimestampValues(
+    const std::vector<Packet>& packets) {
+  std::vector<int64_t> result;
   for (const Packet& p : packets) {
     result.push_back(p.Timestamp().Value());
   }
@@ -174,7 +175,7 @@ TEST_P(FixedSizeInputStreamHandlerTest, DropsPackets) {
   // consumed.  In this way, the TestSlowCalculator consumes and outputs only
   // every tenth packet.
   EXPECT_EQ(output_packets.size(), 11);
-  std::vector<int64> expected_ts = {0, 9, 19, 29, 39, 49, 59, 69, 79, 89, 99};
+  std::vector<int64_t> expected_ts = {0, 9, 19, 29, 39, 49, 59, 69, 79, 89, 99};
   EXPECT_THAT(TimestampValues(output_packets),
               testing::ContainerEq(expected_ts));
 }
@@ -344,18 +345,18 @@ TEST_P(FixedSizeInputStreamHandlerTest, LateArrivalDrop) {
 
   if (GetParam()) {
     EXPECT_THAT(TimestampValues(output_packets[0]),
-                testing::ContainerEq(std::vector<int64>{1, 2, 3, 4, 5, 6}));
+                testing::ContainerEq(std::vector<int64_t>{1, 2, 3, 4, 5, 6}));
     EXPECT_THAT(TimestampValues(output_packets[1]),
-                testing::ContainerEq(std::vector<int64>{3, 4, 5, 6, 7}));
+                testing::ContainerEq(std::vector<int64_t>{3, 4, 5, 6, 7}));
     EXPECT_THAT(TimestampValues(output_packets[2]),
-                testing::ContainerEq(std::vector<int64>{4, 5, 6, 7}));
+                testing::ContainerEq(std::vector<int64_t>{4, 5, 6, 7}));
   } else {
     EXPECT_THAT(TimestampValues(output_packets[0]),
-                testing::ContainerEq(std::vector<int64>{5, 6}));
+                testing::ContainerEq(std::vector<int64_t>{5, 6}));
     EXPECT_THAT(TimestampValues(output_packets[1]),
-                testing::ContainerEq(std::vector<int64>{5, 6, 7}));
+                testing::ContainerEq(std::vector<int64_t>{5, 6, 7}));
     EXPECT_THAT(TimestampValues(output_packets[2]),
-                testing::ContainerEq(std::vector<int64>{5, 6, 7}));
+                testing::ContainerEq(std::vector<int64_t>{5, 6, 7}));
   }
 }
 

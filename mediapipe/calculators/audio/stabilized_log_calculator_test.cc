@@ -54,7 +54,8 @@ TEST_F(StabilizedLogCalculatorTest, BasicOperation) {
 
   std::vector<Matrix> input_data_matrices;
   for (int input_packet = 0; input_packet < kNumPackets; ++input_packet) {
-    const int64 timestamp = input_packet * Timestamp::kTimestampUnitsPerSecond;
+    const int64_t timestamp =
+        input_packet * Timestamp::kTimestampUnitsPerSecond;
     Matrix input_data_matrix =
         Matrix::Random(kNumChannels, kNumSamples).array().abs();
     input_data_matrices.push_back(input_data_matrix);
@@ -80,7 +81,8 @@ TEST_F(StabilizedLogCalculatorTest, OutputScaleWorks) {
 
   std::vector<Matrix> input_data_matrices;
   for (int input_packet = 0; input_packet < kNumPackets; ++input_packet) {
-    const int64 timestamp = input_packet * Timestamp::kTimestampUnitsPerSecond;
+    const int64_t timestamp =
+        input_packet * Timestamp::kTimestampUnitsPerSecond;
     Matrix input_data_matrix =
         Matrix::Random(kNumChannels, kNumSamples).array().abs();
     input_data_matrices.push_back(input_data_matrix);

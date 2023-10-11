@@ -20,6 +20,7 @@
 #include "absl/base/macros.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 #include "absl/types/optional.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/deps/registration.h"
@@ -59,6 +60,11 @@ class SubgraphContext {
   template <typename T>
   T* MutableOptions() {
     return options_map_.GetMutable<T>();
+  }
+
+  template <typename T>
+  bool HasOptions() {
+    return options_map_.Has<T>();
   }
 
   const CalculatorGraphConfig::Node& OriginalNode() const {
@@ -116,6 +122,11 @@ class Subgraph {
   template <typename T>
   static T GetOptions(const Subgraph::SubgraphOptions& supgraph_options) {
     return tool::OptionsMap().Initialize(supgraph_options).Get<T>();
+  }
+
+  template <typename T>
+  static bool HasOptions(const Subgraph::SubgraphOptions& supgraph_options) {
+    return tool::OptionsMap().Initialize(supgraph_options).Has<T>();
   }
 
   // Returns the CalculatorGraphConfig::Node specifying the subgraph.
@@ -187,7 +198,7 @@ class GraphRegistry {
 
   // Returns the specified graph config.
   absl::StatusOr<CalculatorGraphConfig> CreateByName(
-      const std::string& ns, const std::string& type_name,
+      absl::string_view ns, absl::string_view type_name,
       SubgraphContext* context = nullptr) const;
 
   static GraphRegistry global_graph_registry;

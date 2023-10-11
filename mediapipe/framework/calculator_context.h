@@ -69,6 +69,11 @@ class CalculatorContext {
     return calculator_state_->Options<T>();
   }
 
+  template <class T>
+  bool HasOptions() const {
+    return calculator_state_->HasOptions<T>();
+  }
+
   // Returns a counter using the graph's counter factory. The counter's name is
   // the passed-in name, prefixed by the calculator node's name (if present) or
   // the calculator's type (if not).
@@ -104,9 +109,20 @@ class CalculatorContext {
   // use OutputStream::SetOffset() directly.
   void SetOffset(TimestampDiff offset);
 
-  // Returns the status of the graph run.
+  // DEPRECATED: This was intended to get graph run status during
+  // `CalculatorBase::Close` call. However, `Close` can run simultaneously with
+  // other calculators `CalculatorBase::Process`, hence the actual graph
+  // status may change any time and returned graph status here does not
+  // necessarily reflect the actual graph status.
   //
-  // NOTE: This method should only be called during CalculatorBase::Close().
+  // As an alternative, instead of checking graph status in `Close` and doing
+  // work for "done" state, you can enable timestamp bound processing for your
+  // calculator (`CalculatorContract::SetProcessTimestampBounds`) to trigger
+  // `Process` on timestamp bound updates and handle "done" state there.
+  // Check examples in:
+  // mediapipe/framework/calculator_graph_summary_packet_test.cc.
+  //
+  ABSL_DEPRECATED("Does not reflect the actual graph status.")
   absl::Status GraphStatus() const { return graph_status_; }
 
   ProfilingContext* GetProfilingContext() const {

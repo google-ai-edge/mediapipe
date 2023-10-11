@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2023 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,5 +15,6 @@
  */
 
 export * from '../../../tasks/web/core/fileset_resolver';
+export * from '../../../tasks/web/text/language_detector/language_detector';
 export * from '../../../tasks/web/text/text_classifier/text_classifier';
 export * from '../../../tasks/web/text/text_embedder/text_embedder';

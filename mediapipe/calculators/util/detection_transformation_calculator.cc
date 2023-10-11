@@ -227,6 +227,9 @@ class DetectionTransformationCalculator : public Node {
     std::pair<int, int> image_size = kInImageSize(cc).Get();
     std::vector<Detection> transformed_detections;
     LocationData::Format input_location_data_format;
+    if (kInDetections(cc).IsEmpty() && kInDetection(cc).IsEmpty()) {
+      return absl::OkStatus();
+    }
     if (kInDetections(cc).IsConnected()) {
       transformed_detections = kInDetections(cc).Visit(
           [&](const DetectionList& detection_list) {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2022 The MediaPipe Authors.
  *
  * <p>Licensed under the Apache License, Version 2.0 (the "License"); you may
  * not use this file except in compliance with the License. You may obtain a
@@ -70,12 +70,12 @@ describe('computeCosineSimilarity', () => {
 
   it('succeeds with quantized embeddings', () => {
     const u: Embedding = {
-      quantizedEmbedding: new Uint8Array([255, 128, 128, 128]),
+      quantizedEmbedding: new Uint8Array([127, 0, 0, 0]),
       headIndex: 0,
       headName: ''
     };
     const v: Embedding = {
-      quantizedEmbedding: new Uint8Array([0, 128, 128, 128]),
+      quantizedEmbedding: new Uint8Array([128, 0, 0, 0]),
       headIndex: 0,
       headName: ''
     };

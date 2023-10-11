@@ -20,9 +20,19 @@ import "mediapipe/calculators/image/rotation_mode.proto";
 import "mediapipe/framework/calculator.proto";
 import "mediapipe/gpu/scale_mode.proto";
 
+option java_package = "com.google.mediapipe.calculator.proto";
+option java_outer_classname = "ImageTransformationCalculatorOptionsProto";
+
 message ImageTransformationCalculatorOptions {
   extend CalculatorOptions {
     optional ImageTransformationCalculatorOptions ext = 251952830;
+  }
+
+  // RGB values in range of 0 - 255
+  message Color {
+    optional int32 red = 1 [default = 0];
+    optional int32 green = 2 [default = 0];
+    optional int32 blue = 3 [default = 0];
   }
 
   // Output dimensions. Set to 0 if they should be the same as the input.
@@ -40,4 +50,8 @@ message ImageTransformationCalculatorOptions {
   // Default is to use BORDER_CONSTANT. If set to false, it will use
   // BORDER_REPLICATE instead.
   optional bool constant_padding = 7 [default = true];
+
+  // The color for the padding. This option is only used when the scale mode is
+  // FIT. Default is black. This is for CPU only.
+  optional Color padding_color = 8;
 }

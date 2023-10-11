@@ -163,8 +163,8 @@ absl::Status FromImageCalculator::Process(CalculatorContext* cc) {
     std::unique_ptr<mediapipe::ImageFrame> output =
         std::make_unique<mediapipe::ImageFrame>(
             input.image_format(), input.width(), input.height(), input.step(),
-            const_cast<uint8*>(input.GetImageFrameSharedPtr()->PixelData()),
-            [packet_copy_ptr](uint8*) { delete packet_copy_ptr; });
+            const_cast<uint8_t*>(input.GetImageFrameSharedPtr()->PixelData()),
+            [packet_copy_ptr](uint8_t*) { delete packet_copy_ptr; });
     cc->Outputs()
         .Tag(kImageFrameTag)
         .Add(output.release(), cc->InputTimestamp());

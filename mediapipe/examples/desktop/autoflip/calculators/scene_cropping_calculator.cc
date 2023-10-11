@@ -200,7 +200,7 @@ absl::Status ParseAspectRatioString(const std::string& aspect_ratio_string,
 }
 void ConstructExternalRenderMessage(
     const cv::Rect& crop_from_location, const cv::Rect& render_to_location,
-    const cv::Scalar& padding_color, const uint64 timestamp_us,
+    const cv::Scalar& padding_color, const uint64_t timestamp_us,
     ExternalRenderFrame* external_render_message, int frame_width,
     int frame_height) {
   auto crop_from_message =
@@ -717,7 +717,7 @@ absl::Status SceneCroppingCalculator::FormatAndOutputCroppedFrames(
   for (int i = 0; i < num_frames; ++i) {
     // Set default padding color to white.
     cv::Scalar padding_color_to_add = cv::Scalar(255, 255, 255);
-    const int64 time_ms = scene_frame_timestamps_[i];
+    const int64_t time_ms = scene_frame_timestamps_[i];
     if (*apply_padding) {
       if (has_solid_background_) {
         double lab[3];
@@ -747,7 +747,7 @@ absl::Status SceneCroppingCalculator::FormatAndOutputCroppedFrames(
 
   // Resizes cropped frames, pads frames, and output frames.
   for (int i = 0; i < num_frames; ++i) {
-    const int64 time_ms = scene_frame_timestamps_[i];
+    const int64_t time_ms = scene_frame_timestamps_[i];
     const Timestamp timestamp(time_ms);
     auto scaled_frame = absl::make_unique<ImageFrame>(
         frame_format_, scaled_width, scaled_height);

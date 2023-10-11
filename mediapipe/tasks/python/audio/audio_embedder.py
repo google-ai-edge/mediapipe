@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ from mediapipe.tasks.python.audio.core import audio_task_running_mode as running
 from mediapipe.tasks.python.audio.core import base_audio_task_api
 from mediapipe.tasks.python.components.containers import audio_data as audio_data_module
 from mediapipe.tasks.python.components.containers import embedding_result as embedding_result_module
-from mediapipe.tasks.python.components.utils import cosine_similarity
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.core import task_info as task_info_module
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
@@ -284,26 +283,3 @@ class AudioEmbedder(base_audio_task_api.BaseAudioTaskApi):
             packet_creator.create_matrix(audio_block.buffer, transpose=True).at(
                 timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND)
     })
-
-  @classmethod
-  def cosine_similarity(cls, u: embedding_result_module.Embedding,
-                        v: embedding_result_module.Embedding) -> float:
-    """Utility function to compute cosine similarity between two embedding entries.
-
-    May return an InvalidArgumentError if e.g. the feature vectors are
-    of different types (quantized vs. float), have different sizes, or have a
-    an L2-norm of 0.
-
-    Args:
-      u: An embedding entry.
-      v: An embedding entry.
-
-    Returns:
-      The cosine similarity for the two embeddings.
-
-    Raises:
-      ValueError: May return an error if e.g. the feature vectors are of
-        different types (quantized vs. float), have different sizes, or have
-        an L2-norm of 0.
-    """
-    return cosine_similarity.cosine_similarity(u, v)

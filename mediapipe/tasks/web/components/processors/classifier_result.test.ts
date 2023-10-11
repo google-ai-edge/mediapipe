@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2022 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,12 +32,12 @@ describe('convertFromClassificationResultProto()', () => {
     classifcations.setHeadIndex(1);
     classifcations.setHeadName('headName');
     const classificationList = new ClassificationList();
-    const clasification = new Classification();
-    clasification.setIndex(2);
-    clasification.setScore(0.3);
-    clasification.setDisplayName('displayName');
-    clasification.setLabel('categoryName');
-    classificationList.addClassification(clasification);
+    const classification = new Classification();
+    classification.setIndex(2);
+    classification.setScore(0.3);
+    classification.setDisplayName('displayName');
+    classification.setLabel('categoryName');
+    classificationList.addClassification(classification);
     classifcations.setClassificationList(classificationList);
     classificationResult.addClassifications(classifcations);
 
@@ -62,8 +62,8 @@ describe('convertFromClassificationResultProto()', () => {
     const classificationResult = new ClassificationResult();
     const classifcations = new Classifications();
     const classificationList = new ClassificationList();
-    const clasification = new Classification();
-    classificationList.addClassification(clasification);
+    const classification = new Classification();
+    classificationList.addClassification(classification);
     classifcations.setClassificationList(classificationList);
     classificationResult.addClassifications(classifcations);
 

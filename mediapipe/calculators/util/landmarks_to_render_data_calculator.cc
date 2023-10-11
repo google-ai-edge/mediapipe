@@ -322,27 +322,30 @@ absl::Status LandmarksToRenderDataCalculator::Process(CalculatorContext* cc) {
           options_.presence_threshold(), options_.connection_color(), thickness,
           /*normalized=*/false, render_data.get());
     }
-    for (int i = 0; i < landmarks.landmark_size(); ++i) {
-      const Landmark& landmark = landmarks.landmark(i);
+    if (options_.render_landmarks()) {
+      for (int i = 0; i < landmarks.landmark_size(); ++i) {
+        const Landmark& landmark = landmarks.landmark(i);
 
-      if (!IsLandmarkVisibleAndPresent<Landmark>(
-              landmark, options_.utilize_visibility(),
-              options_.visibility_threshold(), options_.utilize_presence(),
-              options_.presence_threshold())) {
-        continue;
-      }
+        if (!IsLandmarkVisibleAndPresent<Landmark>(
+                landmark, options_.utilize_visibility(),
+                options_.visibility_threshold(), options_.utilize_presence(),
+                options_.presence_threshold())) {
+          continue;
+        }
 
-      auto* landmark_data_render = AddPointRenderData(
-          options_.landmark_color(), thickness, render_data.get());
-      if (visualize_depth) {
-        SetColorSizeValueFromZ(landmark.z(), z_min, z_max, landmark_data_render,
-                               options_.min_depth_circle_thickness(),
-                               options_.max_depth_circle_thickness());
+        auto* landmark_data_render = AddPointRenderData(
+            options_.landmark_color(), thickness, render_data.get());
+        if (visualize_depth) {
+          SetColorSizeValueFromZ(landmark.z(), z_min, z_max,
+                                 landmark_data_render,
+                                 options_.min_depth_circle_thickness(),
+                                 options_.max_depth_circle_thickness());
+        }
+        auto* landmark_data = landmark_data_render->mutable_point();
+        landmark_data->set_normalized(false);
+        landmark_data->set_x(landmark.x());
+        landmark_data->set_y(landmark.y());
       }
-      auto* landmark_data = landmark_data_render->mutable_point();
-      landmark_data->set_normalized(false);
-      landmark_data->set_x(landmark.x());
-      landmark_data->set_y(landmark.y());
     }
   }
 
@@ -368,27 +371,30 @@ absl::Status LandmarksToRenderDataCalculator::Process(CalculatorContext* cc) {
           options_.presence_threshold(), options_.connection_color(), thickness,
           /*normalized=*/true, render_data.get());
     }
-    for (int i = 0; i < landmarks.landmark_size(); ++i) {
-      const NormalizedLandmark& landmark = landmarks.landmark(i);
+    if (options_.render_landmarks()) {
+      for (int i = 0; i < landmarks.landmark_size(); ++i) {
+        const NormalizedLandmark& landmark = landmarks.landmark(i);
 
-      if (!IsLandmarkVisibleAndPresent<NormalizedLandmark>(
-              landmark, options_.utilize_visibility(),
-              options_.visibility_threshold(), options_.utilize_presence(),
-              options_.presence_threshold())) {
-        continue;
-      }
+        if (!IsLandmarkVisibleAndPresent<NormalizedLandmark>(
+                landmark, options_.utilize_visibility(),
+                options_.visibility_threshold(), options_.utilize_presence(),
+                options_.presence_threshold())) {
+          continue;
+        }
 
-      auto* landmark_data_render = AddPointRenderData(
-          options_.landmark_color(), thickness, render_data.get());
-      if (visualize_depth) {
-        SetColorSizeValueFromZ(landmark.z(), z_min, z_max, landmark_data_render,
-                               options_.min_depth_circle_thickness(),
-                               options_.max_depth_circle_thickness());
+        auto* landmark_data_render = AddPointRenderData(
+            options_.landmark_color(), thickness, render_data.get());
+        if (visualize_depth) {
+          SetColorSizeValueFromZ(landmark.z(), z_min, z_max,
+                                 landmark_data_render,
+                                 options_.min_depth_circle_thickness(),
+                                 options_.max_depth_circle_thickness());
+        }
+        auto* landmark_data = landmark_data_render->mutable_point();
+        landmark_data->set_normalized(true);
+        landmark_data->set_x(landmark.x());
+        landmark_data->set_y(landmark.y());
       }
-      auto* landmark_data = landmark_data_render->mutable_point();
-      landmark_data->set_normalized(true);
-      landmark_data->set_x(landmark.x());
-      landmark_data->set_y(landmark.y());
     }
   }
 

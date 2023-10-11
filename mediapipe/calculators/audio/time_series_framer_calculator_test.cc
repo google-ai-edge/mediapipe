@@ -49,7 +49,7 @@ class TimeSeriesFramerCalculatorTest
 
   // Returns a float value with the channel and timestamp separated by
   // an order of magnitude, for easy parsing by humans.
-  float TestValue(int64 timestamp_in_microseconds, int channel) {
+  float TestValue(int64_t timestamp_in_microseconds, int channel) {
     return timestamp_in_microseconds + channel / 10.0;
   }
 
@@ -59,7 +59,7 @@ class TimeSeriesFramerCalculatorTest
     auto matrix = new Matrix(num_channels, num_samples);
     for (int c = 0; c < num_channels; ++c) {
       for (int i = 0; i < num_samples; ++i) {
-        int64 timestamp = time_series_util::SecondsToSamples(
+        int64_t timestamp = time_series_util::SecondsToSamples(
             starting_timestamp_seconds + i / input_sample_rate_,
             Timestamp::kTimestampUnitsPerSecond);
         (*matrix)(c, i) = TestValue(timestamp, c);
@@ -429,7 +429,7 @@ class TimeSeriesFramerCalculatorTimestampingTest
       num_full_packets -= 1;
     }
 
-    int64 num_samples = 0;
+    int64_t num_samples = 0;
     for (int packet_num = 0; packet_num < num_full_packets; ++packet_num) {
       const Packet& packet = output().packets[packet_num];
       num_samples += FrameDurationSamples();

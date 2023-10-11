@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -151,7 +151,7 @@ absl::StatusOr<ImageEmbedderResult> ImageEmbedder::Embed(
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
   ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                   ConvertToNormalizedRect(image_processing_options));
+                   ConvertToNormalizedRect(image_processing_options, image));
   ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessImageData(
@@ -163,7 +163,7 @@ absl::StatusOr<ImageEmbedderResult> ImageEmbedder::Embed(
 }
 
 absl::StatusOr<ImageEmbedderResult> ImageEmbedder::EmbedForVideo(
-    Image image, int64 timestamp_ms,
+    Image image, int64_t timestamp_ms,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
@@ -172,7 +172,7 @@ absl::StatusOr<ImageEmbedderResult> ImageEmbedder::EmbedForVideo(
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
   ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                   ConvertToNormalizedRect(image_processing_options));
+                   ConvertToNormalizedRect(image_processing_options, image));
   ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessVideoData(
@@ -187,7 +187,7 @@ absl::StatusOr<ImageEmbedderResult> ImageEmbedder::EmbedForVideo(
 }
 
 absl::Status ImageEmbedder::EmbedAsync(
-    Image image, int64 timestamp_ms,
+    Image image, int64_t timestamp_ms,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
@@ -196,7 +196,7 @@ absl::Status ImageEmbedder::EmbedAsync(
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
   ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                   ConvertToNormalizedRect(image_processing_options));
+                   ConvertToNormalizedRect(image_processing_options, image));
   return SendLiveStreamData(
       {{kImageInStreamName,
         MakePacket<Image>(std::move(image))

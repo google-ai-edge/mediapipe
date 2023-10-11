@@ -31,6 +31,13 @@ message WarpAffineCalculatorOptions {
     BORDER_REPLICATE = 2;
   }
 
+  // Pixel sampling interpolation methods. See @interpolation.
+  enum Interpolation {
+    INTER_UNSPECIFIED = 0;
+    INTER_LINEAR = 1;
+    INTER_CUBIC = 2;
+  }
+
   // Pixel extrapolation method.
   // When converting image to tensor it may happen that tensor needs to read
   // pixels outside image boundaries. Border mode helps to specify how such
@@ -43,4 +50,10 @@ message WarpAffineCalculatorOptions {
   // to be flipped vertically as tensors are expected to start at top.
   // (DEFAULT or unset interpreted as CONVENTIONAL.)
   optional GpuOrigin.Mode gpu_origin = 2;
+
+  // Sampling method for neighboring pixels.
+  // INTER_LINEAR (bilinear) linearly interpolates from the nearest 4 neighbors.
+  // INTER_CUBIC (bicubic) interpolates a small neighborhood with cubic weights.
+  // INTER_UNSPECIFIED or unset interpreted as INTER_LINEAR.
+  optional Interpolation interpolation = 3;
 }

@@ -52,7 +52,7 @@ int select = cc->Inputs().Tag(kSelectTag).Get<int>();
 write
 
 ```
-int select = kSelectTag(cc).Get();  // alternative: *kSelectTag(cc)
+int select = kSelect(cc).Get();  // alternative: *kSelect(cc)
 ```
 
 Sets of multiple ports can be declared with `::Multiple`. Note, also, that a tag

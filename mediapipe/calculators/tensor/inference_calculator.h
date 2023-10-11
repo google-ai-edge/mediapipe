@@ -112,7 +112,8 @@ class InferenceCalculator : public NodeIntf {
 
  protected:
   using TfLiteDelegatePtr =
-      std::unique_ptr<TfLiteDelegate, std::function<void(TfLiteDelegate*)>>;
+      std::unique_ptr<TfLiteOpaqueDelegate,
+                      std::function<void(TfLiteOpaqueDelegate*)>>;
 
   static absl::StatusOr<Packet<TfLiteModelPtr>> GetModelAsPacket(
       CalculatorContext* cc);

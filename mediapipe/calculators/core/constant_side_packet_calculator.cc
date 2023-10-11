@@ -19,6 +19,8 @@
 #include "mediapipe/framework/collection_item_id.h"
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
+#include "mediapipe/framework/formats/matrix_data.pb.h"
+#include "mediapipe/framework/formats/time_series_header.pb.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/ret_check.h"
@@ -77,13 +79,19 @@ class ConstantSidePacketCalculator : public CalculatorBase {
       } else if (packet_options.has_string_value()) {
         packet.Set<std::string>();
       } else if (packet_options.has_uint64_value()) {
-        packet.Set<uint64>();
+        packet.Set<uint64_t>();
       } else if (packet_options.has_classification_list_value()) {
         packet.Set<ClassificationList>();
       } else if (packet_options.has_landmark_list_value()) {
         packet.Set<LandmarkList>();
       } else if (packet_options.has_double_value()) {
         packet.Set<double>();
+      } else if (packet_options.has_matrix_data_value()) {
+        packet.Set<MatrixData>();
+      } else if (packet_options.has_time_series_header_value()) {
+        packet.Set<TimeSeriesHeader>();
+      } else if (packet_options.has_int64_value()) {
+        packet.Set<int64_t>();
       } else {
         return absl::InvalidArgumentError(
             "None of supported values were specified in options.");
@@ -109,7 +117,7 @@ class ConstantSidePacketCalculator : public CalculatorBase {
       } else if (packet_options.has_string_value()) {
         packet.Set(MakePacket<std::string>(packet_options.string_value()));
       } else if (packet_options.has_uint64_value()) {
-        packet.Set(MakePacket<uint64>(packet_options.uint64_value()));
+        packet.Set(MakePacket<uint64_t>(packet_options.uint64_value()));
       } else if (packet_options.has_classification_list_value()) {
         packet.Set(MakePacket<ClassificationList>(
             packet_options.classification_list_value()));
@@ -118,6 +126,13 @@ class ConstantSidePacketCalculator : public CalculatorBase {
             MakePacket<LandmarkList>(packet_options.landmark_list_value()));
       } else if (packet_options.has_double_value()) {
         packet.Set(MakePacket<double>(packet_options.double_value()));
+      } else if (packet_options.has_matrix_data_value()) {
+        packet.Set(MakePacket<MatrixData>(packet_options.matrix_data_value()));
+      } else if (packet_options.has_time_series_header_value()) {
+        packet.Set(MakePacket<TimeSeriesHeader>(
+            packet_options.time_series_header_value()));
+      } else if (packet_options.has_int64_value()) {
+        packet.Set(MakePacket<int64_t>(packet_options.int64_value()));
       } else {
         return absl::InvalidArgumentError(
             "None of supported values were specified in options.");

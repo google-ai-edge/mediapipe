@@ -20,6 +20,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/container/flat_hash_set.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/numbers.h"
@@ -511,7 +512,7 @@ class TemplateParser::Parser::ParserImpl {
       DO(ConsumeIdentifier(&field_name));
 
       if (allow_field_number_) {
-        int32 field_number = std::atoi(field_name.c_str());  // NOLINT
+        int32_t field_number = std::atoi(field_name.c_str());  // NOLINT
         if (descriptor->IsExtensionNumber(field_number)) {
           field = reflection->FindKnownExtensionByNumber(field_number);
         } else if (descriptor->IsReservedNumber(field_number)) {
@@ -765,28 +766,28 @@ class TemplateParser::Parser::ParserImpl {
 
     switch (field->cpp_type()) {
       case FieldDescriptor::CPPTYPE_INT32: {
-        int64 value;
+        int64_t value;
         DO(ConsumeSignedInteger(&value, kint32max));
-        SET_FIELD(Int32, static_cast<int32>(value));
+        SET_FIELD(Int32, static_cast<int32_t>(value));
         break;
       }
 
       case FieldDescriptor::CPPTYPE_UINT32: {
-        uint64 value;
+        uint64_t value;
         DO(ConsumeUnsignedInteger(&value, kuint32max));
-        SET_FIELD(UInt32, static_cast<uint32>(value));
+        SET_FIELD(UInt32, static_cast<uint32_t>(value));
         break;
       }
 
       case FieldDescriptor::CPPTYPE_INT64: {
-        int64 value;
+        int64_t value;
         DO(ConsumeSignedInteger(&value, kint64max));
         SET_FIELD(Int64, value);
         break;
       }
 
       case FieldDescriptor::CPPTYPE_UINT64: {
-        uint64 value;
+        uint64_t value;
         DO(ConsumeUnsignedInteger(&value, kuint64max));
         SET_FIELD(UInt64, value);
         break;
@@ -815,7 +816,7 @@ class TemplateParser::Parser::ParserImpl {
 
       case FieldDescriptor::CPPTYPE_BOOL: {
         if (LookingAtType(io::Tokenizer::TYPE_INTEGER)) {
-          uint64 value;
+          uint64_t value;
           DO(ConsumeUnsignedInteger(&value, 1));
           SET_FIELD(Bool, value);
         } else {
@@ -836,7 +837,7 @@ class TemplateParser::Parser::ParserImpl {
 
       case FieldDescriptor::CPPTYPE_ENUM: {
         std::string value;
-        int64 int_value = kint64max;
+        int64_t int_value = kint64max;
         const EnumDescriptor* enum_type = field->enum_type();
         const EnumValueDescriptor* enum_value = NULL;
 
@@ -974,7 +975,7 @@ class TemplateParser::Parser::ParserImpl {
   }
 
   // Consumes an identifier and saves its value in the identifier parameter.
-  // Returns false if the token is not of type IDENTFIER.
+  // Returns false if the token is not of type IDENTIFIER.
   bool ConsumeIdentifier(std::string* identifier) {
     if (LookingAtType(io::Tokenizer::TYPE_IDENTIFIER)) {
       *identifier = tokenizer_.current().text;
@@ -1037,7 +1038,7 @@ class TemplateParser::Parser::ParserImpl {
 
   // Consumes a uint64 and saves its value in the value parameter.
   // Returns false if the token is not of type INTEGER.
-  bool ConsumeUnsignedInteger(uint64* value, uint64 max_value) {
+  bool ConsumeUnsignedInteger(uint64_t* value, uint64_t max_value) {
     if (!LookingAtType(io::Tokenizer::TYPE_INTEGER)) {
       ReportError("Expected integer, got: " + tokenizer_.current().text);
       return false;
@@ -1058,7 +1059,7 @@ class TemplateParser::Parser::ParserImpl {
   // we actually may consume an additional token (for the minus sign) in this
   // method. Returns false if the token is not an integer
   // (signed or otherwise).
-  bool ConsumeSignedInteger(int64* value, uint64 max_value) {
+  bool ConsumeSignedInteger(int64_t* value, uint64_t max_value) {
     bool negative = false;
 #ifndef PROTO2_OPENSOURCE
     if (absl::StartsWith(tokenizer_.current().text, "0x")) {
@@ -1075,18 +1076,18 @@ class TemplateParser::Parser::ParserImpl {
       ++max_value;
     }
 
-    uint64 unsigned_value;
+    uint64_t unsigned_value;
 
     DO(ConsumeUnsignedInteger(&unsigned_value, max_value));
 
     if (negative) {
-      if ((static_cast<uint64>(kint64max) + 1) == unsigned_value) {
+      if ((static_cast<uint64_t>(kint64max) + 1) == unsigned_value) {
         *value = kint64min;
       } else {
-        *value = -static_cast<int64>(unsigned_value);
+        *value = -static_cast<int64_t>(unsigned_value);
       }
     } else {
-      *value = static_cast<int64>(unsigned_value);
+      *value = static_cast<int64_t>(unsigned_value);
     }
 
     return true;
@@ -1094,7 +1095,7 @@ class TemplateParser::Parser::ParserImpl {
 
   // Consumes a uint64 and saves its value in the value parameter.
   // Accepts decimal numbers only, rejects hex or oct numbers.
-  bool ConsumeUnsignedDecimalInteger(uint64* value, uint64 max_value) {
+  bool ConsumeUnsignedDecimalInteger(uint64_t* value, uint64_t max_value) {
     if (!LookingAtType(io::Tokenizer::TYPE_INTEGER)) {
       ReportError("Expected integer, got: " + tokenizer_.current().text);
       return false;
@@ -1131,7 +1132,7 @@ class TemplateParser::Parser::ParserImpl {
     // Therefore, we must check both cases here.
     if (LookingAtType(io::Tokenizer::TYPE_INTEGER)) {
       // We have found an integer value for the double.
-      uint64 integer_value;
+      uint64_t integer_value;
       DO(ConsumeUnsignedDecimalInteger(&integer_value, kuint64max));
 
       *value = static_cast<double>(integer_value);
@@ -1430,10 +1431,10 @@ std::vector<const FieldDescriptor*> GetFields(const Message* src) {
 
 // Orders map entries in dst to match src.
 void OrderMapEntries(const Message* src, Message* dst,
-                     std::set<const Message*>* seen = nullptr) {
-  std::unique_ptr<std::set<const Message*>> seen_owner;
+                     absl::flat_hash_set<const Message*>* seen = nullptr) {
+  std::unique_ptr<absl::flat_hash_set<const Message*>> seen_owner;
   if (!seen) {
-    seen_owner = std::make_unique<std::set<const Message*>>();
+    seen_owner = std::make_unique<absl::flat_hash_set<const Message*>>();
     seen = seen_owner.get();
   }
   if (seen->count(src) > 0) {
@@ -1672,19 +1673,24 @@ class TemplateParser::Parser::MediaPipeParserImpl
     if (field_type == ProtoUtilLite::FieldType::TYPE_MESSAGE) {
       *args = {""};
     } else {
-      MEDIAPIPE_CHECK_OK(ProtoUtilLite::Serialize({"1"}, field_type, args));
+      constexpr char kPlaceholderValue[] = "1";
+      MEDIAPIPE_CHECK_OK(
+          ProtoUtilLite::Serialize({kPlaceholderValue}, field_type, args));
     }
   }
 
-  // Inserts one value into the specified field.
-  static void InsertFieldValue(
+  // Appends one value to the specified field.
+  static void AppendFieldValue(
       Message* message, const FieldDescriptor* field,
       const std::vector<ProtoUtilLite::FieldValue>& args) {
     auto field_type = static_cast<ProtoUtilLite::FieldType>(field->type());
     ProtoUtilLite::FieldValue message_bytes;
     CHECK(message->SerializePartialToString(&message_bytes));
+    int count;
+    MEDIAPIPE_CHECK_OK(ProtoUtilLite::GetFieldCount(
+        message_bytes, {{field->number(), 0}}, field_type, &count));
     MEDIAPIPE_CHECK_OK(ProtoUtilLite::ReplaceFieldRange(
-        &message_bytes, {{field->number(), 0}}, 0, field_type, args));
+        &message_bytes, {{field->number(), count}}, 0, field_type, args));
     CHECK(message->ParsePartialFromString(message_bytes));
   }
 
@@ -1701,7 +1707,7 @@ class TemplateParser::Parser::MediaPipeParserImpl
     // Leave a dummy value in place of the consumed field.
     std::vector<ProtoUtilLite::FieldValue> args;
     GetEmptyFieldValue(field, &args);
-    InsertFieldValue(message, field, args);
+    AppendFieldValue(message, field, args);
     return true;
   }
 
@@ -1718,7 +1724,7 @@ class TemplateParser::Parser::MediaPipeParserImpl
     // Leave a dummy value in place of the consumed field.
     std::vector<ProtoUtilLite::FieldValue> args;
     GetEmptyFieldValue(field, &args);
-    InsertFieldValue(message, field, args);
+    AppendFieldValue(message, field, args);
     return true;
   }
 

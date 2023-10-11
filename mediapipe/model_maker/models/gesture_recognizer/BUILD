@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,25 +19,9 @@ load(
 
 licenses(["notice"])
 
-package(
-    default_visibility = ["//mediapipe/model_maker/python/vision/gesture_recognizer:__subpackages__"],
-)
+package(default_visibility = ["//mediapipe/model_maker/python/vision/gesture_recognizer:__subpackages__"])
 
 mediapipe_files(
-    srcs = [
-        "canned_gesture_classifier.tflite",
-        "gesture_embedder.tflite",
-        "gesture_embedder/keras_metadata.pb",
-        "gesture_embedder/saved_model.pb",
-        "gesture_embedder/variables/variables.data-00000-of-00001",
-        "gesture_embedder/variables/variables.index",
-        "hand_landmark_full.tflite",
-        "palm_detection_full.tflite",
-    ],
-)
-
-filegroup(
-    name = "models",
     srcs = [
         "canned_gesture_classifier.tflite",
         "gesture_embedder.tflite",

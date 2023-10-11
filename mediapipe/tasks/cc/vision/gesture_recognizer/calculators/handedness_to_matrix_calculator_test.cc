@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -84,8 +84,8 @@ TEST_P(HandednessToMatrixCalculatorTest, OutputsCorrectResult) {
 INSTANTIATE_TEST_CASE_P(
     HandednessToMatrixCalculatorTests, HandednessToMatrixCalculatorTest,
     testing::ValuesIn<HandednessToMatrixCalculatorTestCase>(
-        {{.test_name = "TestWithRightHand", .handedness = 0.01f},
-         {.test_name = "TestWithLeftHand", .handedness = 0.99f}}),
+        {{/* test_name= */ "TestWithRightHand", /* handedness= */ 0.01f},
+         {/* test_name= */ "TestWithLeftHand", /* handedness= */ 0.99f}}),
     [](const testing::TestParamInfo<
         HandednessToMatrixCalculatorTest::ParamType>& info) {
       return info.param.test_name;

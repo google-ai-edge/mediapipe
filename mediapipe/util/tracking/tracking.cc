@@ -1845,8 +1845,8 @@ void MotionBox::TranslationIrlsInitialization(
 
   // Bool indicator which features agree with model in each round.
   // In case no RANSAC rounds are performed considered all features inliers.
-  std::vector<uint8> best_features(num_features, 1);
-  std::vector<uint8> curr_features(num_features);
+  std::vector<uint8_t> best_features(num_features, 1);
+  std::vector<uint8_t> curr_features(num_features);
   float best_sum = 0;
 
   unsigned int seed = 900913;
@@ -1867,7 +1867,7 @@ void MotionBox::TranslationIrlsInitialization(
     for (int i = 0; i < num_features; ++i) {
       const Vector2_f diff = vectors[i]->object - flow;
       const float error = ErrorDiff(diff, error_system);
-      curr_features[i] = static_cast<uint8>(error < sq_cutoff);
+      curr_features[i] = static_cast<uint8_t>(error < sq_cutoff);
       if (curr_features[i]) {
         curr_sum += (*weights)[i];
       }

@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@ limitations under the License.
 #include "flatbuffers/flatbuffers.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/tasks/cc/common.h"
+#include "mediapipe/tasks/cc/metadata/metadata_parser.h"
+#include "mediapipe/tasks/cc/metadata/metadata_version_utils.h"
 #include "mediapipe/tasks/cc/metadata/utils/zip_utils.h"
 #include "mediapipe/tasks/metadata/metadata_schema_generated.h"
 #include "tensorflow/lite/schema/schema_generated.h"
@@ -164,6 +166,18 @@ absl::Status ModelMetadataExtractor::InitFromModelBuffer(
       return CreateStatusWithPayload(StatusCode::kInternal,
                                      "Expected Model Metadata not to be null.");
     }
+    auto min_parser_version = model_metadata_->min_parser_version();
+    if (min_parser_version != nullptr &&
+        CompareVersions(min_parser_version->c_str(), kMetadataParserVersion) >
+            0) {
+      return CreateStatusWithPayload(
+          StatusCode::kInvalidArgument,
+          absl::StrFormat(
+              "Metadata schema version %s is smaller than the minimum version "
+              "%s to parse the metadata flatbuffer.",
+              kMetadataParserVersion, min_parser_version->c_str()),
+          MediaPipeTasksStatus::kMetadataInvalidSchemaVersionError);
+    }
     return ExtractAssociatedFiles(buffer_data, buffer_size);
     break;
   }
@@ -297,6 +311,29 @@ int ModelMetadataExtractor::GetOutputProcessUnitsCount() const {
   const Vector<flatbuffers::Offset<tflite::ProcessUnit>>* output_process_units =
       GetOutputProcessUnits();
   return output_process_units == nullptr ? 0 : output_process_units->size();
+}
+
+const flatbuffers::Vector<flatbuffers::Offset<tflite::CustomMetadata>>*
+ModelMetadataExtractor::GetCustomMetadataList() const {
+  if (model_metadata_ == nullptr ||
+      model_metadata_->subgraph_metadata() == nullptr) {
+    return nullptr;
+  }
+  return model_metadata_->subgraph_metadata()
+      ->Get(kDefaultSubgraphIndex)
+      ->custom_metadata();
+}
+
+const tflite::CustomMetadata* ModelMetadataExtractor::GetCustomMetadata(
+    int index) const {
+  return GetItemFromVector<tflite::CustomMetadata>(GetCustomMetadataList(),
+                                                   index);
+}
+
+int ModelMetadataExtractor::GetCustomMetadataCount() const {
+  const Vector<flatbuffers::Offset<tflite::CustomMetadata>>* custom_medata_vec =
+      GetCustomMetadataList();
+  return custom_medata_vec == nullptr ? 0 : custom_medata_vec->size();
 }
 
 }  // namespace metadata

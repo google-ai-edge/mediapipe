@@ -1,7 +1,8 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe/solutions/guide#legacy
 title: Models and Model Cards
-parent: Solutions
+parent: MediaPipe Legacy Solutions
 nav_order: 30
 ---
 
@@ -11,6 +12,18 @@ nav_order: 30
 1. TOC
 {:toc}
 ---
+
+**Attention:** *Thank you for your interest in MediaPipe Solutions.
+We have ended support for
+[these MediaPipe Legacy Solutions](https://developers.google.com/mediapipe/solutions/guide#legacy)
+as of March 1, 2023. All other
+[MediaPipe Legacy Solutions will be upgraded](https://developers.google.com/mediapipe/solutions/guide#legacy)
+to a new MediaPipe Solution. The code repository and prebuilt binaries for all
+MediaPipe Legacy Solutions will continue to be provided on an as-is basis.
+We encourage you to check out the new MediaPipe Solutions at:
+[https://developers.google.com/mediapipe/solutions](https://developers.google.com/mediapipe/solutions)*
+
+----
 
 ### [Face Detection](https://google.github.io/mediapipe/solutions/face_detection)
 
@@ -94,6 +107,8 @@ one over the other.
 
 *   [TFLite model](https://storage.googleapis.com/mediapipe-assets/ssdlite_object_detection.tflite)
 *   [TFLite model quantized for EdgeTPU/Coral](https://github.com/google/mediapipe/tree/master/mediapipe/examples/coral/models/object-detector-quantized_edgetpu.tflite)
+*   [TensorFlow model](https://storage.googleapis.com/mediapipe-assets/object_detection_saved_model/archive.zip)
+*   [Model information](https://storage.googleapis.com/mediapipe-assets/object_detection_saved_model/README.md)
 
 ### [Objectron](https://google.github.io/mediapipe/solutions/objectron)
 

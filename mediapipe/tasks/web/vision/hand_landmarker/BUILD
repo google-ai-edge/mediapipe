@@ -16,6 +16,7 @@ mediapipe_ts_library(
     visibility = ["//visibility:public"],
     deps = [
         ":hand_landmarker_types",
+        ":hand_landmarks_connections",
         "//mediapipe/framework:calculator_jspb_proto",
         "//mediapipe/framework:calculator_options_jspb_proto",
         "//mediapipe/framework/formats:classification_jspb_proto",
@@ -26,6 +27,7 @@ mediapipe_ts_library(
         "//mediapipe/tasks/cc/vision/hand_landmarker/proto:hand_landmarks_detector_graph_options_jspb_proto",
         "//mediapipe/tasks/web/components/containers:category",
         "//mediapipe/tasks/web/components/containers:landmark",
+        "//mediapipe/tasks/web/components/processors:landmark_result",
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/vision/core:image_processing_options",
         "//mediapipe/tasks/web/vision/core:vision_task_runner",
@@ -60,7 +62,7 @@ mediapipe_ts_library(
         ":hand_landmarker_types",
         "//mediapipe/framework:calculator_jspb_proto",
         "//mediapipe/framework/formats:classification_jspb_proto",
-        "//mediapipe/framework/formats:landmark_jspb_proto",
+        "//mediapipe/tasks/web/components/processors:landmark_result",
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/core:task_runner_test_utils",
         "//mediapipe/tasks/web/vision/core:vision_task_runner",
@@ -71,4 +73,10 @@ jasmine_node_test(
     name = "hand_landmarker_test",
     tags = ["nomsan"],
     deps = [":hand_landmarker_test_lib"],
+)
+
+mediapipe_ts_library(
+    name = "hand_landmarks_connections",
+    srcs = ["hand_landmarks_connections.ts"],
+    deps = ["//mediapipe/tasks/web/vision/core:types"],
 )

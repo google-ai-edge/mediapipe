@@ -47,6 +47,7 @@ std::unique_ptr<GlTextureBuffer> GlTextureBuffer::Create(int width, int height,
   auto buf = absl::make_unique<GlTextureBuffer>(GL_TEXTURE_2D, 0, width, height,
                                                 format, nullptr);
   if (!buf->CreateInternal(data, alignment)) {
+    LOG(WARNING) << "Failed to create a GL texture";
     return nullptr;
   }
   return buf;
@@ -64,7 +65,7 @@ std::unique_ptr<GlTextureBuffer> GlTextureBuffer::Create(
   int actual_ws = image_frame.WidthStep();
   int alignment = 0;
   std::unique_ptr<ImageFrame> temp;
-  const uint8* data = image_frame.PixelData();
+  const uint8_t* data = image_frame.PixelData();
 
   // Let's see if the pixel data is tightly aligned to one of the alignments
   // supported by OpenGL, preferring 4 if possible since it's the default.
@@ -106,7 +107,10 @@ GlTextureBuffer::GlTextureBuffer(GLenum target, GLuint name, int width,
 
 bool GlTextureBuffer::CreateInternal(const void* data, int alignment) {
   auto context = GlContext::GetCurrent();
-  if (!context) return false;
+  if (!context) {
+    LOG(WARNING) << "Cannot create a GL texture without a valid context";
+    return false;
+  }
 
   producer_context_ = context;  // Save creation GL context.
 

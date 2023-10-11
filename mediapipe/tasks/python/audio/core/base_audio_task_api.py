@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ from mediapipe.python import packet_creator
 from mediapipe.python._framework_bindings import packet as packet_module
 from mediapipe.python._framework_bindings import task_runner as task_runner_module
 from mediapipe.python._framework_bindings import timestamp as timestamp_module
+from mediapipe.tasks.python.audio.core import audio_record
 from mediapipe.tasks.python.audio.core import audio_task_running_mode as running_mode_module
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 
@@ -83,12 +84,15 @@ class BaseAudioTaskApi(object):
     """
     if self._running_mode != _RunningMode.AUDIO_CLIPS:
       raise ValueError(
-          'Task is not initialized with the audio clips mode. Current running mode:'
-          + self._running_mode.name)
+          'Task is not initialized with the audio clips mode. Current running'
+          ' mode:'
+          + self._running_mode.name
+      )
     return self._runner.process(inputs)
 
-  def _set_sample_rate(self, sample_rate_stream_name: str,
-                       sample_rate: float) -> None:
+  def _set_sample_rate(
+      self, sample_rate_stream_name: str, sample_rate: float
+  ) -> None:
     """An asynchronous method to set audio sample rate in the audio stream mode.
 
     Args:
@@ -122,9 +126,39 @@ class BaseAudioTaskApi(object):
     """
     if self._running_mode != _RunningMode.AUDIO_STREAM:
       raise ValueError(
-          'Task is not initialized with the audio stream mode. Current running mode:'
-          + self._running_mode.name)
+          'Task is not initialized with the audio stream mode. Current running'
+          ' mode:'
+          + self._running_mode.name
+      )
     self._runner.send(inputs)
+
+  def create_audio_record(
+      self, num_channels: int, sample_rate: int, required_input_buffer_size: int
+  ) -> audio_record.AudioRecord:
+    """Creates an AudioRecord instance to record audio stream.
+
+    The returned AudioRecord instance is initialized and client needs to call
+    the appropriate method to start recording.
+
+    Note that MediaPipe Audio tasks will up/down sample automatically to fit the
+    sample rate required by the model. The default sample rate of the MediaPipe
+    pretrained audio model, Yamnet is 16kHz.
+
+    Args:
+      num_channels: The number of audio channels.
+      sample_rate: The audio sample rate.
+      required_input_buffer_size: The required input buffer size in number of
+        float elements.
+
+    Returns:
+      An AudioRecord instance.
+
+    Raises:
+      ValueError: If there's a problem creating the AudioRecord instance.
+    """
+    return audio_record.AudioRecord(
+        num_channels, sample_rate, required_input_buffer_size
+    )
 
   def close(self) -> None:
     """Shuts down the mediapipe audio task instance.

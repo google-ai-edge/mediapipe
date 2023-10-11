@@ -14,6 +14,8 @@
 
 #include "mediapipe/framework/graph_service.h"
 
+#include <type_traits>
+
 #include "mediapipe/framework/calculator_contract.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/canonical_errors.h"
@@ -155,6 +157,210 @@ TEST_F(GraphServiceTest, CreateDefault) {
   MP_EXPECT_OK(kAnotherService.CreateDefaultObject());
   EXPECT_FALSE(kNoDefaultService.CreateDefaultObject().ok());
   MP_EXPECT_OK(kNeedsCreateService.CreateDefaultObject());
+}
+
+struct TestServiceData {};
+
+constexpr GraphService<TestServiceData> kTestServiceAllowDefaultInitialization(
+    "kTestServiceAllowDefaultInitialization",
+    GraphServiceBase::kAllowDefaultInitialization);
+
+// This is only for test purposes. Ideally, a calculator that fails when service
+// is not available, should request the service as non-Optional.
+class FailOnUnavailableOptionalServiceCalculator : public CalculatorBase {
+ public:
+  static absl::Status GetContract(CalculatorContract* cc) {
+    cc->UseService(kTestServiceAllowDefaultInitialization).Optional();
+    return absl::OkStatus();
+  }
+  absl::Status Open(CalculatorContext* cc) final {
+    RET_CHECK(cc->Service(kTestServiceAllowDefaultInitialization).IsAvailable())
+        << "Service is unavailable.";
+    return absl::OkStatus();
+  }
+  absl::Status Process(CalculatorContext* cc) final { return absl::OkStatus(); }
+};
+REGISTER_CALCULATOR(FailOnUnavailableOptionalServiceCalculator);
+
+// Documents and ensures current behavior for requesting optional
+// "AllowDefaultInitialization" services:
+// - Service object is created by default.
+TEST(AllowDefaultInitializationGraphServiceTest,
+     ServiceIsAvailableWithOptionalUse) {
+  CalculatorGraphConfig config =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        node { calculator: 'FailOnUnavailableOptionalServiceCalculator' }
+      )pb");
+
+  CalculatorGraph graph;
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.StartRun({}));
+  MP_EXPECT_OK(graph.WaitUntilIdle());
+}
+
+// Documents and ensures current behavior for setting `nullptr` service objects
+// for "AllowDefaultInitialization" optional services.
+// - It's allowed.
+// - It disables creation of "AllowDefaultInitialization" service objects, hence
+//   results in optional service unavailability.
+TEST(AllowDefaultInitializationGraphServiceTest,
+     NullServiceObjectIsAllowAndResultsInOptionalServiceUnavailability) {
+  CalculatorGraphConfig config =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        node { calculator: 'FailOnUnavailableOptionalServiceCalculator' }
+      )pb");
+
+  CalculatorGraph graph;
+  std::shared_ptr<TestServiceData> object = nullptr;
+  MP_ASSERT_OK(
+      graph.SetServiceObject(kTestServiceAllowDefaultInitialization, object));
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.StartRun({}));
+  EXPECT_THAT(graph.WaitUntilIdle(),
+              StatusIs(absl::StatusCode::kInternal,
+                       HasSubstr("Service is unavailable.")));
+}
+
+class FailOnUnavailableServiceCalculator : public CalculatorBase {
+ public:
+  static absl::Status GetContract(CalculatorContract* cc) {
+    cc->UseService(kTestServiceAllowDefaultInitialization);
+    return absl::OkStatus();
+  }
+  absl::Status Open(CalculatorContext* cc) final {
+    RET_CHECK(cc->Service(kTestServiceAllowDefaultInitialization).IsAvailable())
+        << "Service is unavailable.";
+    return absl::OkStatus();
+  }
+  absl::Status Process(CalculatorContext* cc) final { return absl::OkStatus(); }
+};
+REGISTER_CALCULATOR(FailOnUnavailableServiceCalculator);
+
+// Documents and ensures current behavior for requesting optional
+// "AllowDefaultInitialization" services:
+// - Service object is created by default.
+TEST(AllowDefaultInitializationGraphServiceTest, ServiceIsAvailable) {
+  CalculatorGraphConfig config =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        node { calculator: 'FailOnUnavailableServiceCalculator' }
+      )pb");
+
+  CalculatorGraph graph;
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.StartRun({}));
+  MP_EXPECT_OK(graph.WaitUntilIdle());
+}
+
+// Documents and ensures current behavior for setting `nullptr` service objects
+// for "AllowDefaultInitialization" services.
+// - It's allowed.
+// - It disables creation of "AllowDefaultInitialization" service objects, hence
+//   in service unavaialbility.
+TEST(AllowDefaultInitializationGraphServiceTest,
+     NullServiceObjectIsAllowAndResultsInServiceUnavailability) {
+  CalculatorGraphConfig config =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        node { calculator: 'FailOnUnavailableServiceCalculator' }
+      )pb");
+
+  CalculatorGraph graph;
+  std::shared_ptr<TestServiceData> object = nullptr;
+  MP_ASSERT_OK(
+      graph.SetServiceObject(kTestServiceAllowDefaultInitialization, object));
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.StartRun({}));
+  EXPECT_THAT(graph.WaitUntilIdle(),
+              StatusIs(absl::StatusCode::kInternal,
+                       HasSubstr("Service is unavailable.")));
+}
+
+constexpr GraphService<TestServiceData>
+    kTestServiceDisallowDefaultInitialization(
+        "kTestServiceDisallowDefaultInitialization",
+        GraphServiceBase::kDisallowDefaultInitialization);
+
+static_assert(std::is_trivially_destructible_v<GraphService<TestServiceData>>,
+              "GraphService is not trivially destructible");
+
+class FailOnUnavailableOptionalDisallowDefaultInitServiceCalculator
+    : public CalculatorBase {
+ public:
+  static absl::Status GetContract(CalculatorContract* cc) {
+    cc->UseService(kTestServiceDisallowDefaultInitialization).Optional();
+    return absl::OkStatus();
+  }
+  absl::Status Open(CalculatorContext* cc) final {
+    RET_CHECK(
+        cc->Service(kTestServiceDisallowDefaultInitialization).IsAvailable())
+        << "Service is unavailable.";
+    return absl::OkStatus();
+  }
+  absl::Status Process(CalculatorContext* cc) final { return absl::OkStatus(); }
+};
+REGISTER_CALCULATOR(
+    FailOnUnavailableOptionalDisallowDefaultInitServiceCalculator);
+
+// Documents and ensures current behavior for requesting optional
+// "DisallowDefaultInitialization" services:
+// - Service object is not created by default.
+TEST(DisallowDefaultInitializationGraphServiceTest,
+     ServiceIsUnavailableWithOptionalUse) {
+  CalculatorGraphConfig config = mediapipe::ParseTextProtoOrDie<
+      CalculatorGraphConfig>(R"pb(
+    node {
+      calculator: 'FailOnUnavailableOptionalDisallowDefaultInitServiceCalculator'
+    }
+  )pb");
+
+  CalculatorGraph graph;
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.StartRun({}));
+  EXPECT_THAT(graph.WaitUntilIdle(),
+              StatusIs(absl::StatusCode::kInternal,
+                       HasSubstr("Service is unavailable.")));
+}
+
+class UseDisallowDefaultInitServiceCalculator : public CalculatorBase {
+ public:
+  static absl::Status GetContract(CalculatorContract* cc) {
+    cc->UseService(kTestServiceDisallowDefaultInitialization);
+    return absl::OkStatus();
+  }
+  absl::Status Open(CalculatorContext* cc) final { return absl::OkStatus(); }
+  absl::Status Process(CalculatorContext* cc) final { return absl::OkStatus(); }
+};
+REGISTER_CALCULATOR(UseDisallowDefaultInitServiceCalculator);
+
+// Documents and ensures current behavior for requesting
+// "DisallowDefaultInitialization" services:
+// - Service object is not created by default.
+// - Graph run fails.
+TEST(DisallowDefaultInitializationGraphServiceTest,
+     StartRunFailsMissingService) {
+  CalculatorGraphConfig config =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        node { calculator: 'UseDisallowDefaultInitServiceCalculator' }
+      )pb");
+
+  CalculatorGraph graph;
+  MP_ASSERT_OK(graph.Initialize(config));
+  EXPECT_THAT(graph.StartRun({}),
+              StatusIs(absl::StatusCode::kInternal,
+                       HasSubstr("was not provided and cannot be created")));
+}
+
+TEST(ServiceBindingTest, CrashesWhenGettingNullServiceObject) {
+  ASSERT_DEATH(
+      {
+        ServiceBinding<TestServiceData> binding(nullptr);
+        (void)binding.GetObject();
+      },
+      testing::ContainsRegex("Check failed: [a-z_]* Service is unavailable"));
+}
+
+TEST(ServiceBindingTest, IsAvailableReturnsFalsOnNullServiceObject) {
+  ServiceBinding<TestServiceData> binding(nullptr);
+  EXPECT_FALSE(binding.IsAvailable());
 }
 
 }  // namespace

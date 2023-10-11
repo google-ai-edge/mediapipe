@@ -181,18 +181,10 @@ public:
                 OVMS_ModelsSettingsNew(&guard.modelsSettings);
                 OVMS_ModelsSettingsSetConfigPath(guard.modelsSettings, options.server_config().c_str());
                 LOG(INFO) << "state config file:" << options.server_config();
-                if (options.log_level() == "DEBUG"){
-                    OVMS_ServerSettingsSetLogLevel(guard.serverSettings, OVMS_LOG_DEBUG);
-                }else if (options.log_level() == "ERROR"){
-                  OVMS_ServerSettingsSetLogLevel(guard.serverSettings, OVMS_LOG_ERROR);
-                }else if (options.log_level() == "WARN"){
-                    OVMS_ServerSettingsSetLogLevel(guard.serverSettings, OVMS_LOG_WARNING);
-                }else if (options.log_level() == "TRACE"){
-                    OVMS_ServerSettingsSetLogLevel(guard.serverSettings, OVMS_LOG_TRACE);
-                }else if (options.log_level() == "INFO"){
-                    OVMS_ServerSettingsSetLogLevel(guard.serverSettings, OVMS_LOG_INFO);
-                }
+                OVMS_ServerSettingsSetLogLevel(guard.serverSettings, OVMS_LOG_DEBUG);
+
                 ASSERT_CAPI_STATUS_NULL(OVMS_ServerStartFromConfigurationFile(cserver, guard.serverSettings, guard.modelsSettings));
+
                 ASSERT_CAPI_STATUS_NULL(OVMS_ServerReady(cserver, &isServerReady));
                 RET_CHECK(isServerReady);
                 LOG(INFO) << "Server started";

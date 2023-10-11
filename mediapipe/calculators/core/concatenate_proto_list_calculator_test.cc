@@ -63,7 +63,7 @@ void ValidateCombinedLandmarks(
 
 void AddInputLandmarkLists(
     const std::vector<NormalizedLandmarkList>& input_landmarks_vec,
-    int64 timestamp, CalculatorRunner* runner) {
+    int64_t timestamp, CalculatorRunner* runner) {
   for (int i = 0; i < input_landmarks_vec.size(); ++i) {
     runner->MutableInputs()->Index(i).packets.push_back(
         MakePacket<NormalizedLandmarkList>(input_landmarks_vec[i])
@@ -73,7 +73,7 @@ void AddInputLandmarkLists(
 
 void AddInputClassificationLists(
     const std::vector<ClassificationList>& input_classifications_vec,
-    int64 timestamp, CalculatorRunner* runner) {
+    int64_t timestamp, CalculatorRunner* runner) {
   for (int i = 0; i < input_classifications_vec.size(); ++i) {
     runner->MutableInputs()->Index(i).packets.push_back(
         MakePacket<ClassificationList>(input_classifications_vec[i])

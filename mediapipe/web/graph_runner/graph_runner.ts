@@ -1,5 +1,6 @@
 // Placeholder for internal dependency on assertTruthy
 // Placeholder for internal dependency on jsloader
+import {isWebKit} from '../../web/graph_runner/platform_utils';
 // Placeholder for internal dependency on trusted resource url
 
 // This file can serve as a common interface for most simple TypeScript
@@ -13,7 +14,40 @@
  */
 export declare interface FileLocator {
   locateFile: (filename: string) => string;
+  mainScriptUrlOrBlob?: string;
 }
+
+/**
+ * A listener that receives the contents of a non-empty MediaPipe packet and
+ * its timestamp.
+ */
+export type SimpleListener<T> = (data: T, timestamp: number) => void;
+
+/**
+ * A listener that receives the current MediaPipe packet timestamp. This is
+ * invoked even for empty packet.
+ */
+export type EmptyPacketListener = (timestamp: number) => void;
+
+/**
+ * A listener that receives a single element of vector-returning output packet.
+ * Receives one element at a time (in order). Once all elements are processed,
+ * the listener is invoked with `data` set to `unknown` and `done` set to true.
+ * Intended for internal usage.
+ */
+export type VectorListener<T> = (data: T, done: boolean, timestamp: number) =>
+    void;
+
+/**
+ * A listener that receives the CalculatorGraphConfig in binary encoding.
+ */
+export type CalculatorGraphConfigListener = (graphConfig: Uint8Array) => void;
+
+/**
+ * The name of the internal listener that we use to obtain the calculator graph
+ * config. Intended for internal usage. Exported for testing only.
+ */
+export const CALCULATOR_GRAPH_CONFIG_LISTENER_NAME = '__graph_config__';
 
 /**
  * Declarations for Emscripten's WebAssembly Module behavior, so TS compiler
@@ -25,10 +59,19 @@ export declare interface WasmModule {
   HEAPU32: Uint32Array;
   HEAPF32: Float32Array;
   HEAPF64: Float64Array;
+  FS_createDataFile:
+      (parent: string, name: string, data: Uint8Array, canRead: boolean,
+       canWrite: boolean, canOwn: boolean) => void;
+  FS_createPath:
+      (parent: string, name: string, canRead: boolean,
+       canWrite: boolean) => void;
+  FS_unlink(path: string): void;
+
   errorListener?: ErrorListener;
   _bindTextureToCanvas: () => boolean;
   _changeBinaryGraph: (size: number, dataPtr: number) => void;
   _changeTextGraph: (size: number, dataPtr: number) => void;
+  _closeGraph: () => void;
   _free: (ptr: number) => void;
   _malloc: (size: number) => number;
   _processFrame: (width: number, height: number, timestamp: number) => void;
@@ -61,6 +104,9 @@ export declare interface WasmModule {
   _addProtoToInputStream:
       (dataPtr: number, dataSize: number, protoNamePtr: number,
        streamNamePtr: number, timestamp: number) => void;
+  _addEmptyPacketToInputStream:
+      (streamNamePtr: number, timestamp: number) => void;
+
   // Input side packets
   _addBoolToInputSidePacket: (data: boolean, streamNamePtr: number) => void;
   _addDoubleToInputSidePacket: (data: number, streamNamePtr: number) => void;
@@ -71,14 +117,12 @@ export declare interface WasmModule {
       (dataPtr: number, dataSize: number, protoNamePtr: number,
        streamNamePtr: number) => void;
 
-  // Wasm Module output listener entrypoints.  Also built as part of
+  // Map of output streams to packet listeners.  Also built as part of
   // gl_graph_runner_internal_multi_input.
   simpleListeners?:
-      {[outputStreamName: string]: (data: unknown, timestamp: number) => void};
-  vectorListeners?: {
-    [outputStreamName: string]: (
-        data: unknown, index: number, length: number, timestamp: number) => void
-  };
+      Record<string, SimpleListener<unknown>|VectorListener<unknown>>;
+  // Map of output streams to empty packet listeners.
+  emptyPacketListeners?: Record<string, EmptyPacketListener>;
   _attachBoolListener: (streamNamePtr: number) => void;
   _attachBoolVectorListener: (streamNamePtr: number) => void;
   _attachDoubleListener: (streamNamePtr: number) => void;
@@ -101,6 +145,10 @@ export declare interface WasmModule {
       numSamples: number, streamNamePtr: number, timestamp: number) => void;
   _configureAudio: (channels: number, samples: number, sampleRate: number,
       streamNamePtr: number, headerNamePtr: number) => void;
+
+  // Get the graph configuration and invoke the listener configured under
+  // streamNamePtr
+  _getGraphConfig: (streamNamePtr: number, makeDeepCopy?: boolean) => void;
 
   // TODO: Refactor to just use a few numbers (perhaps refactor away
   //   from gl_graph_runner_internal.cc entirely to use something a little more
@@ -147,7 +195,7 @@ export type WasmMediaPipeConstructor<LibType> =
  * Simple class to run an arbitrary image-in/image-out MediaPipe graph (i.e.
  * as created by wasm_mediapipe_demo BUILD macro), and either render results
  * into canvas, or else return the output WebGLTexture. Takes a WebAssembly
- * Module (must be instantiated to self.Module).
+ * Module.
  */
 export class GraphRunner {
   // TODO: These should be protected/private, but are left exposed for
@@ -179,13 +227,15 @@ export class GraphRunner {
 
     if (glCanvas !== undefined) {
       this.wasmModule.canvas = glCanvas;
-    } else if (typeof OffscreenCanvas !== 'undefined') {
+    } else if (typeof OffscreenCanvas !== 'undefined' && !isWebKit()) {
       // If no canvas is provided, assume Chrome/Firefox and just make an
-      // OffscreenCanvas for GPU processing.
+      // OffscreenCanvas for GPU processing. Note that we exclude Safari
+      // since it does not (yet) support WebGL for OffscreenCanvas.
       this.wasmModule.canvas = new OffscreenCanvas(1, 1);
     } else {
-      console.warn('OffscreenCanvas not detected and GraphRunner constructor '
-                 + 'glCanvas parameter is undefined. Creating backup canvas.');
+      console.warn(
+          'OffscreenCanvas not supported and GraphRunner constructor ' +
+          'glCanvas parameter is undefined. Creating backup canvas.');
       this.wasmModule.canvas = document.createElement('canvas');
     }
   }
@@ -315,10 +365,15 @@ export class GraphRunner {
     } else {
       this.wasmModule._bindTextureToStream(streamNamePtr);
     }
-    const gl: any =
-        this.wasmModule.canvas.getContext('webgl2') ||
-        this.wasmModule.canvas.getContext('webgl');
-    console.assert(gl);
+    const gl =
+        (this.wasmModule.canvas.getContext('webgl2') ||
+         this.wasmModule.canvas.getContext('webgl')) as WebGL2RenderingContext |
+        WebGLRenderingContext | null;
+    if (!gl) {
+      throw new Error(
+          'Failed to obtain WebGL context from the provided canvas. ' +
+          '`getContext()` should only be invoked with `webgl` or `webgl2`.');
+    }
     gl.texImage2D(
         gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, imageSource);
 
@@ -416,15 +471,36 @@ export class GraphRunner {
   }
 
   /**
+   * Invokes the callback with the current calculator configuration (in binary
+   * format).
+   *
+   * Consumers must deserialize the binary representation themselves as this
+   * avoids addding a direct dependency on the Protobuf JSPB target in the graph
+   * library.
+   */
+  getCalculatorGraphConfig(
+      callback: CalculatorGraphConfigListener, makeDeepCopy?: boolean): void {
+    const listener = CALCULATOR_GRAPH_CONFIG_LISTENER_NAME;
+
+    // Create a short-lived listener to receive the binary encoded proto
+    this.setListener(listener, (data: Uint8Array) => {
+      callback(data);
+    });
+    this.wrapStringPtr(listener, (outputStreamNamePtr: number) => {
+      this.wasmModule._getGraphConfig(outputStreamNamePtr, makeDeepCopy);
+    });
+
+    delete this.wasmModule.simpleListeners![listener];
+  }
+
+  /**
    * Ensures existence of the simple listeners table and registers the callback.
    * Intended for internal usage.
    */
-  setListener<T>(
-      outputStreamName: string,
-      callbackFcn: (data: T, timestamp: number) => void) {
+  setListener<T>(outputStreamName: string, callbackFcn: SimpleListener<T>) {
     this.wasmModule.simpleListeners = this.wasmModule.simpleListeners || {};
     this.wasmModule.simpleListeners[outputStreamName] =
-        callbackFcn as (data: unknown, timestamp: number) => void;
+        callbackFcn as SimpleListener<unknown>;
   }
 
   /**
@@ -432,22 +508,16 @@ export class GraphRunner {
    * Intended for internal usage.
    */
   setVectorListener<T>(
-      outputStreamName: string,
-      callbackFcn: (data: T[], timestamp: number) => void) {
+      outputStreamName: string, callbackFcn: SimpleListener<T[]>) {
     let buffer: T[] = [];
-    this.wasmModule.vectorListeners = this.wasmModule.vectorListeners || {};
-    this.wasmModule.vectorListeners[outputStreamName] =
-        (data: unknown, index: number, length: number, timestamp: number) => {
-          // The Wasm listener gets invoked once for each element. Once we
-          // receive all elements, we invoke the registered callback with the
-          // full array.
-          buffer[index] = data as T;
-          if (index === length - 1) {
-            // Invoke the user callback directly, as the Wasm layer may clean up
-            // the underlying data elements once we leave the scope of the
-            // listener.
+    this.wasmModule.simpleListeners = this.wasmModule.simpleListeners || {};
+    this.wasmModule.simpleListeners[outputStreamName] =
+        (data: unknown, done: boolean, timestamp: number) => {
+          if (done) {
             callbackFcn(buffer, timestamp);
             buffer = [];
+          } else {
+            buffer.push(data as T);
           }
         };
   }
@@ -458,6 +528,25 @@ export class GraphRunner {
    */
   attachErrorListener(callbackFcn: (code: number, message: string) => void) {
     this.wasmModule.errorListener = callbackFcn;
+  }
+
+  /**
+   * Attaches a listener that will be invoked when the MediaPipe framework
+   * receives an empty packet on the provided output stream. This can be used
+   * to receive the latest output timestamp.
+   *
+   * Empty packet listeners are only active if there is a corresponding packet
+   * listener.
+   *
+   * @param outputStreamName The name of the graph output stream to receive
+   *    empty packets from.
+   * @param callbackFcn The callback to receive the timestamp.
+   */
+  attachEmptyPacketListener(
+      outputStreamName: string, callbackFcn: EmptyPacketListener) {
+    this.wasmModule.emptyPacketListeners =
+        this.wasmModule.emptyPacketListeners || {};
+    this.wasmModule.emptyPacketListeners[outputStreamName] = callbackFcn;
   }
 
   /**
@@ -628,8 +717,8 @@ export class GraphRunner {
    *     given timestamp, to be parsed into the specified protobuffer type.
    * @param data The binary (serialized) raw protobuffer data.
    * @param protoType The C++ namespaced type this protobuffer data corresponds
-   *     to. It will be converted to this type when output as a packet into the
-   *     graph.
+   *     to (e.g. "foo.Bar"). It will be converted to this type when output as a
+   *     packet into the graph.
    * @param streamName The name of the graph input stream to send data into.
    * @param timestamp The timestamp of the input data, in ms.
    */
@@ -646,6 +735,20 @@ export class GraphRunner {
             dataPtr, data.length, protoTypePtr, streamNamePtr, timestamp);
         this.wasmModule._free(dataPtr);
       });
+    });
+  }
+
+  /**
+   * Sends an empty packet into the specified stream at the given timestamp,
+   *     effectively advancing that input stream's timestamp bounds without
+   *     sending additional data packets.
+   * @param streamName The name of the graph input stream to send the empty
+   *     packet into.
+   * @param timestamp The timestamp of the empty packet, in ms.
+   */
+  addEmptyPacketToStream(streamName: string, timestamp: number): void {
+    this.wrapStringPtr(streamName, (streamNamePtr: number) => {
+      this.wasmModule._addEmptyPacketToInputStream(streamNamePtr, timestamp);
     });
   }
 
@@ -744,8 +847,7 @@ export class GraphRunner {
    *     should not perform overly complicated (or any async) behavior.
    */
   attachBoolListener(
-      outputStreamName: string,
-      callbackFcn: (data: boolean, timestamp: number) => void): void {
+      outputStreamName: string, callbackFcn: SimpleListener<boolean>): void {
     // Set up our TS listener to receive any packets for this stream.
     this.setListener(outputStreamName, callbackFcn);
 
@@ -765,8 +867,7 @@ export class GraphRunner {
    *     should not perform overly complicated (or any async) behavior.
    */
   attachBoolVectorListener(
-      outputStreamName: string,
-      callbackFcn: (data: boolean[], timestamp: number) => void): void {
+      outputStreamName: string, callbackFcn: SimpleListener<boolean[]>): void {
     // Set up our TS listener to receive any packets for this stream.
     this.setVectorListener(outputStreamName, callbackFcn);
 
@@ -786,8 +887,7 @@ export class GraphRunner {
    *     should not perform overly complicated (or any async) behavior.
    */
   attachIntListener(
-      outputStreamName: string,
-      callbackFcn: (data: number, timestamp: number) => void): void {
+      outputStreamName: string, callbackFcn: SimpleListener<number>): void {
     // Set up our TS listener to receive any packets for this stream.
     this.setListener(outputStreamName, callbackFcn);
 
@@ -807,8 +907,7 @@ export class GraphRunner {
    *     should not perform overly complicated (or any async) behavior.
    */
   attachIntVectorListener(
-      outputStreamName: string,
-      callbackFcn: (data: number[], timestamp: number) => void): void {
+      outputStreamName: string, callbackFcn: SimpleListener<number[]>): void {
     // Set up our TS listener to receive any packets for this stream.
     this.setVectorListener(outputStreamName, callbackFcn);
 
@@ -828,8 +927,7 @@ export class GraphRunner {
    *     should not perform overly complicated (or any async) behavior.
    */
   attachDoubleListener(
-      outputStreamName: string,
-      callbackFcn: (data: number, timestamp: number) => void): void {
+      outputStreamName: string, callbackFcn: SimpleListener<number>): void {
     // Set up our TS listener to receive any packets for this stream.
     this.setListener(outputStreamName, callbackFcn);
 
@@ -849,8 +947,7 @@ export class GraphRunner {
    *     should not perform overly complicated (or any async) behavior.
    */
   attachDoubleVectorListener(
-      outputStreamName: string,
-      callbackFcn: (data: number[], timestamp: number) => void): void {
+      outputStreamName: string, callbackFcn: SimpleListener<number[]>): void {
     // Set up our TS listener to receive any packets for this stream.
     this.setVectorListener(outputStreamName, callbackFcn);
 
@@ -870,8 +967,7 @@ export class GraphRunner {
    *     should not perform overly complicated (or any async) behavior.
    */
   attachFloatListener(
-      outputStreamName: string,
-      callbackFcn: (data: number, timestamp: number) => void): void {
+      outputStreamName: string, callbackFcn: SimpleListener<number>): void {
     // Set up our TS listener to receive any packets for this stream.
     this.setListener(outputStreamName, callbackFcn);
 
@@ -891,8 +987,7 @@ export class GraphRunner {
    *     should not perform overly complicated (or any async) behavior.
    */
   attachFloatVectorListener(
-      outputStreamName: string,
-      callbackFcn: (data: number[], timestamp: number) => void): void {
+      outputStreamName: string, callbackFcn: SimpleListener<number[]>): void {
     // Set up our TS listener to receive any packets for this stream.
     this.setVectorListener(outputStreamName, callbackFcn);
 
@@ -912,8 +1007,7 @@ export class GraphRunner {
    *     should not perform overly complicated (or any async) behavior.
    */
   attachStringListener(
-      outputStreamName: string,
-      callbackFcn: (data: string, timestamp: number) => void): void {
+      outputStreamName: string, callbackFcn: SimpleListener<string>): void {
     // Set up our TS listener to receive any packets for this stream.
     this.setListener(outputStreamName, callbackFcn);
 
@@ -933,8 +1027,7 @@ export class GraphRunner {
    *     should not perform overly complicated (or any async) behavior.
    */
   attachStringVectorListener(
-      outputStreamName: string,
-      callbackFcn: (data: string[], timestamp: number) => void): void {
+      outputStreamName: string, callbackFcn: SimpleListener<string[]>): void {
     // Set up our TS listener to receive any packets for this stream.
     this.setVectorListener(outputStreamName, callbackFcn);
 
@@ -964,8 +1057,7 @@ export class GraphRunner {
    *     with it).
    */
   attachProtoListener(
-      outputStreamName: string,
-      callbackFcn: (data: Uint8Array, timestamp: number) => void,
+      outputStreamName: string, callbackFcn: SimpleListener<Uint8Array>,
       makeDeepCopy?: boolean): void {
     // Set up our TS listener to receive any packets for this stream.
     this.setListener(outputStreamName, callbackFcn);
@@ -999,8 +1091,7 @@ export class GraphRunner {
    *     with it).
    */
   attachProtoVectorListener(
-      outputStreamName: string,
-      callbackFcn: (data: Uint8Array[], timestamp: number) => void,
+      outputStreamName: string, callbackFcn: SimpleListener<Uint8Array[]>,
       makeDeepCopy?: boolean): void {
     // Set up our TS listener to receive any packets for this stream.
     this.setVectorListener(outputStreamName, callbackFcn);
@@ -1034,8 +1125,7 @@ export class GraphRunner {
    *     with it).
    */
   attachAudioListener(
-      outputStreamName: string,
-      callbackFcn: (data: Float32Array, timestamp: number) => void,
+      outputStreamName: string, callbackFcn: SimpleListener<Float32Array>,
       makeDeepCopy?: boolean): void {
     if (!this.wasmModule._attachAudioListener) {
       console.warn(
@@ -1045,13 +1135,12 @@ export class GraphRunner {
 
     // Set up our TS listener to receive any packets for this stream, and
     // additionally reformat our Uint8Array into a Float32Array for the user.
-    this.setListener(
-        outputStreamName, (data: Uint8Array, timestamp: number) => {
-          // Should be very fast
-          const floatArray =
-              new Float32Array(data.buffer, data.byteOffset, data.length / 4);
-          callbackFcn(floatArray, timestamp);
-        });
+    this.setListener<Uint8Array>(outputStreamName, (data, timestamp) => {
+      // Should be very fast
+      const floatArray =
+          new Float32Array(data.buffer, data.byteOffset, data.length / 4);
+      callbackFcn(floatArray, timestamp);
+    });
 
     // Tell our graph to listen for string packets on this stream.
     this.wrapStringPtr(outputStreamName, (outputStreamNamePtr: number) => {
@@ -1067,6 +1156,16 @@ export class GraphRunner {
    */
   finishProcessing(): void {
     this.wasmModule._waitUntilIdle();
+  }
+
+  /**
+   * Closes the input streams and all calculators for this graph and frees up
+   * any C++ resources. The graph will not be usable once closed.
+   */
+  closeGraph(): void {
+    this.wasmModule._closeGraph();
+    this.wasmModule.simpleListeners = undefined;
+    this.wasmModule.emptyPacketListeners = undefined;
   }
 }
 
@@ -1089,6 +1188,18 @@ async function runScript(scriptUrl: string) {
     });
   }
 }
+
+/**
+ * Helper type macro for use with createMediaPipeLib. Allows us to easily infer
+ * the type of a mixin-extended GraphRunner. Example usage:
+ * const GraphRunnerConstructor =
+ *     SupportImage(SupportSerialization(GraphRunner));
+ * let mediaPipe: ReturnType<typeof GraphRunnerConstructor>;
+ * ...
+ * mediaPipe = await createMediaPipeLib(GraphRunnerConstructor, ...);
+ */
+// tslint:disable-next-line:no-any
+export type ReturnType<T> = T extends (...args: unknown[]) => infer R ? R : any;
 
 /**
  * Global function to initialize Wasm blob and load runtime assets for a
@@ -1126,10 +1237,21 @@ export async function createMediaPipeLib<LibType>(
   if (!self.ModuleFactory) {
     throw new Error('ModuleFactory not set.');
   }
+
+  // Until asset scripts work nicely with MODULARIZE, when we are given both
+  // self.Module and a fileLocator, we manually merge them into self.Module and
+  // use that. TODO: Remove this when asset scripts are fixed.
+  if (self.Module && fileLocator) {
+    const moduleFileLocator = self.Module as FileLocator;
+    moduleFileLocator.locateFile = fileLocator.locateFile;
+    if (fileLocator.mainScriptUrlOrBlob) {
+      moduleFileLocator.mainScriptUrlOrBlob = fileLocator.mainScriptUrlOrBlob;
+    }
+  }
   // TODO: Ensure that fileLocator is passed in by all users
   // and make it required
   const module =
-      await self.ModuleFactory(fileLocator || self.Module as FileLocator);
+      await self.ModuleFactory(self.Module as FileLocator || fileLocator);
   // Don't reuse factory or module seed
   self.ModuleFactory = self.Module = undefined;
   return new constructorFcn(module, glCanvas);

@@ -99,17 +99,17 @@ class SimulationClockTest : public ::testing::Test {
   void SetupRealClock() { clock_ = mediapipe::Clock::RealClock(); }
 
   // Return the values of the timestamps of a vector of Packets.
-  static std::vector<int64> TimestampValues(
+  static std::vector<int64_t> TimestampValues(
       const std::vector<Packet>& packets) {
-    std::vector<int64> result;
+    std::vector<int64_t> result;
     for (const Packet& p : packets) {
       result.push_back(p.Timestamp().Value());
     }
     return result;
   }
 
-  static std::vector<int64> TimeValues(const std::vector<absl::Time>& times) {
-    std::vector<int64> result;
+  static std::vector<int64_t> TimeValues(const std::vector<absl::Time>& times) {
+    std::vector<int64_t> result;
     for (const absl::Time& t : times) {
       result.push_back(absl::ToUnixMicros(t));
     }
@@ -225,9 +225,9 @@ TEST_F(SimulationClockTest, InFlight) {
   // Add 10 input packets to the graph, one each 10 ms, starting after 11 ms
   // of clock time.  Timestamps lag clock times by 1 ms.
   clock_->Sleep(absl::Microseconds(11000));
-  for (uint64 ts = 10000; ts <= 100000; ts += 10000) {
+  for (uint64_t ts = 10000; ts <= 100000; ts += 10000) {
     MP_EXPECT_OK(graph_.AddPacketToInputStream(
-        "input_packets_0", MakePacket<uint64>(ts).At(Timestamp(ts))));
+        "input_packets_0", MakePacket<uint64_t>(ts).At(Timestamp(ts))));
     clock_->Sleep(absl::Microseconds(10000));
   }
 
@@ -266,7 +266,7 @@ TEST_F(SimulationClockTest, DestroyClock) {
     clock_->Sleep(absl::Microseconds(20000));
     if (++input_count < 4) {
       outputs->Index(0).AddPacket(
-          MakePacket<uint64>(input_count).At(Timestamp(input_count)));
+          MakePacket<uint64_t>(input_count).At(Timestamp(input_count)));
       return absl::OkStatus();
     } else {
       return tool::StatusStop();

@@ -1,6 +1,4 @@
-import {GraphRunner, ImageSource} from './graph_runner';
-
-
+import {GraphRunner, ImageSource, SimpleListener} from './graph_runner';
 
 /**
  * We extend from a GraphRunner constructor. This ensures our mixin has
@@ -12,10 +10,11 @@ type LibConstructor = new (...args: any[]) => GraphRunner;
 
 /** An image returned from a MediaPipe graph. */
 export interface WasmImage {
-  data: Uint8Array|Float32Array;
+  data: Uint8Array|Float32Array|WebGLTexture;
   width: number;
   height: number;
 }
+
 /**
  * Declarations for Emscripten's WebAssembly Module behavior, so TS compiler
  * doesn't break our JS/C++ bridge.
@@ -76,7 +75,7 @@ export function SupportImage<TBase extends LibConstructor>(Base: TBase) {
      */
     attachImageListener(
         outputStreamName: string,
-        callbackFcn: (data: WasmImage, timestamp: number) => void): void {
+        callbackFcn: SimpleListener<WasmImage>): void {
       // Set up our TS listener to receive any packets for this stream.
       this.setListener(outputStreamName, callbackFcn);
 
@@ -99,7 +98,7 @@ export function SupportImage<TBase extends LibConstructor>(Base: TBase) {
      */
     attachImageVectorListener(
         outputStreamName: string,
-        callbackFcn: (data: WasmImage[], timestamp: number) => void): void {
+        callbackFcn: SimpleListener<WasmImage[]>): void {
       // Set up our TS listener to receive any packets for this stream.
       this.setVectorListener(outputStreamName, callbackFcn);
 

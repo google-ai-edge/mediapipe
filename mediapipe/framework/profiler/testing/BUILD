@@ -15,9 +15,7 @@
 
 licenses(["notice"])
 
-package(
-    default_visibility = ["//mediapipe/framework:__subpackages__"],
-)
+package(default_visibility = ["//mediapipe/framework:__subpackages__"])
 
 cc_library(
     name = "simple_calculator",

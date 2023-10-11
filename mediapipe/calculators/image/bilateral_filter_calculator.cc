@@ -112,7 +112,7 @@ class BilateralFilterCalculator : public CalculatorBase {
 REGISTER_CALCULATOR(BilateralFilterCalculator);
 
 absl::Status BilateralFilterCalculator::GetContract(CalculatorContract* cc) {
-  CHECK_GE(cc->Inputs().NumEntries(), 1);
+  RET_CHECK_GE(cc->Inputs().NumEntries(), 1);
 
   if (cc->Inputs().HasTag(kInputFrameTag) &&
       cc->Inputs().HasTag(kInputFrameTagGpu)) {

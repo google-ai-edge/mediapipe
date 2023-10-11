@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "absl/base/macros.h"
+#include "absl/strings/string_view.h"
 #include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
@@ -34,16 +35,16 @@ absl::Status StatusStop();
 // Return a status which signals an invalid initial condition (for
 // example an InputSidePacket does not include all necessary fields).
 ABSL_DEPRECATED("Use absl::InvalidArgumentError(error_message) instead.")
-absl::Status StatusInvalid(const std::string& error_message);
+absl::Status StatusInvalid(absl::string_view error_message);
 
 // Return a status which signals that something unexpectedly failed.
 ABSL_DEPRECATED("Use absl::UnknownError(error_message) instead.")
-absl::Status StatusFail(const std::string& error_message);
+absl::Status StatusFail(absl::string_view error_message);
 
 // Prefixes the given string to the error message in status.
 // This function should be considered internal to the framework.
 // TODO Replace usage of AddStatusPrefix with util::Annotate().
-absl::Status AddStatusPrefix(const std::string& prefix,
+absl::Status AddStatusPrefix(absl::string_view prefix,
                              const absl::Status& status);
 
 // Combine a vector of absl::Status into a single composite status.
@@ -51,7 +52,7 @@ absl::Status AddStatusPrefix(const std::string& prefix,
 // will be returned.
 // This function should be considered internal to the framework.
 // TODO Move this function to somewhere with less visibility.
-absl::Status CombinedStatus(const std::string& general_comment,
+absl::Status CombinedStatus(absl::string_view general_comment,
                             const std::vector<absl::Status>& statuses);
 
 }  // namespace tool

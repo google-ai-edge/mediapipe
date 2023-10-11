@@ -1,0 +1,24 @@
+diff --git a/audio/dsp/number_util.cc b/audio/dsp/number_util.cc
+index 756e1f8..6a0c6d6 100644
+--- a/audio/dsp/number_util.cc
++++ b/audio/dsp/number_util.cc
+@@ -16,6 +16,7 @@
+ 
+ #include "audio/dsp/number_util.h"
+ 
++#include <algorithm>
+ #include <cmath>
+ #include <iomanip>
+ #include <limits>
+diff --git a/audio/dsp/porting.cc b/audio/dsp/porting.cc
+index e906d2d..753c286 100644
+--- a/audio/dsp/porting.cc
++++ b/audio/dsp/porting.cc
+@@ -16,6 +16,7 @@
+ 
+ #include "audio/dsp/porting.h"
+ 
++#include <algorithm>
+ #include <cfloat>
+ #include <cstdarg>
+ 

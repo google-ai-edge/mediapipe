@@ -22,7 +22,7 @@
 namespace mediapipe {
 namespace tool {
 
-void EnsureMinimumDefaultExecutorStackSize(const int32 min_stack_size,
+void EnsureMinimumDefaultExecutorStackSize(const int32_t min_stack_size,
                                            CalculatorGraphConfig* config) {
   mediapipe::ExecutorConfig* default_executor_config = nullptr;
   for (mediapipe::ExecutorConfig& executor_config :

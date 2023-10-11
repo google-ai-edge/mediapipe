@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -68,8 +68,8 @@ TEST(DisallowGate, VerifyConfig) {
                     input_stream: "VALUE_3:__stream_3"
                   )pb")));
 
-  CalculatorGraph calcualtor_graph;
-  MP_EXPECT_OK(calcualtor_graph.Initialize(graph.GetConfig()));
+  CalculatorGraph calculator_graph;
+  MP_EXPECT_OK(calculator_graph.Initialize(graph.GetConfig()));
 }
 
 TEST(DisallowIf, VerifyConfig) {
@@ -99,8 +99,8 @@ TEST(DisallowIf, VerifyConfig) {
                     input_stream: "VALUE:__stream_1"
                   )pb")));
 
-  CalculatorGraph calcualtor_graph;
-  MP_EXPECT_OK(calcualtor_graph.Initialize(graph.GetConfig()));
+  CalculatorGraph calculator_graph;
+  MP_EXPECT_OK(calculator_graph.Initialize(graph.GetConfig()));
 }
 
 TEST(DisallowIf, VerifyConfigWithSideCondition) {
@@ -130,8 +130,8 @@ TEST(DisallowIf, VerifyConfigWithSideCondition) {
                     input_side_packet: "CONDITION:__side_packet_1"
                   )pb")));
 
-  CalculatorGraph calcualtor_graph;
-  MP_EXPECT_OK(calcualtor_graph.Initialize(graph.GetConfig()));
+  CalculatorGraph calculator_graph;
+  MP_EXPECT_OK(calculator_graph.Initialize(graph.GetConfig()));
 }
 
 TEST(AllowGate, VerifyConfig) {
@@ -166,8 +166,8 @@ TEST(AllowGate, VerifyConfig) {
                     input_stream: "VALUE_3:__stream_3"
                   )pb")));
 
-  CalculatorGraph calcualtor_graph;
-  MP_EXPECT_OK(calcualtor_graph.Initialize(graph.GetConfig()));
+  CalculatorGraph calculator_graph;
+  MP_EXPECT_OK(calculator_graph.Initialize(graph.GetConfig()));
 }
 
 TEST(AllowIf, VerifyConfig) {
@@ -192,8 +192,8 @@ TEST(AllowIf, VerifyConfig) {
                     input_stream: "VALUE:__stream_1"
                   )pb")));
 
-  CalculatorGraph calcualtor_graph;
-  MP_EXPECT_OK(calcualtor_graph.Initialize(graph.GetConfig()));
+  CalculatorGraph calculator_graph;
+  MP_EXPECT_OK(calculator_graph.Initialize(graph.GetConfig()));
 }
 
 TEST(AllowIf, VerifyConfigWithSideConition) {
@@ -218,8 +218,8 @@ TEST(AllowIf, VerifyConfigWithSideConition) {
                     input_side_packet: "CONDITION:__side_packet_1"
                   )pb")));
 
-  CalculatorGraph calcualtor_graph;
-  MP_EXPECT_OK(calcualtor_graph.Initialize(graph.GetConfig()));
+  CalculatorGraph calculator_graph;
+  MP_EXPECT_OK(calculator_graph.Initialize(graph.GetConfig()));
 }
 
 }  // namespace

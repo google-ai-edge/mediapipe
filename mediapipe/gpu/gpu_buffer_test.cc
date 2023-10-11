@@ -31,7 +31,8 @@
 namespace mediapipe {
 namespace {
 
-void FillImageFrameRGBA(ImageFrame& image, uint8 r, uint8 g, uint8 b, uint8 a) {
+void FillImageFrameRGBA(ImageFrame& image, uint8_t r, uint8_t g, uint8_t b,
+                        uint8_t a) {
   auto* data = image.MutablePixelData();
   for (int y = 0; y < image.Height(); ++y) {
     auto* row = data + image.WidthStep() * y;

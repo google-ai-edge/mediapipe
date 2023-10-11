@@ -101,7 +101,7 @@ RUN apt-get install -y curl libpugixml1v5 libtbb2 libxml2-dev uuid-dev uuid libs
 RUN apt-get update && apt-get install --no-install-recommends -y libtool
 
 # Install bazel
-ARG BAZEL_VERSION=5.3.1
+ARG BAZEL_VERSION=6.1.1
 RUN mkdir /bazel && \
     wget --no-check-certificate -O /bazel/installer.sh "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/b\
 azel-${BAZEL_VERSION}-installer-linux-x86_64.sh" && \

@@ -31,4 +31,13 @@ message GateCalculatorOptions {
   // Whether to allow or disallow the input streams to pass when no
   // ALLOW/DISALLOW input or side input is specified.
   optional bool allow = 2 [default = false];
+
+  enum GateState {
+    UNSPECIFIED = 0;
+    GATE_UNINITIALIZED = 1;
+    GATE_ALLOW = 2;
+    GATE_DISALLOW = 3;
+  }
+
+  optional GateState initial_gate_state = 3 [default = GATE_UNINITIALIZED];
 }

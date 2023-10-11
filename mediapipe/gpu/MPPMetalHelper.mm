@@ -16,6 +16,7 @@
 
 #import "mediapipe/gpu/gpu_buffer.h"
 #import "mediapipe/gpu/graph_support.h"
+#import "mediapipe/gpu/gpu_service.h"
 #import "mediapipe/gpu/metal_shared_resources.h"
 #import "GTMDefines.h"
 

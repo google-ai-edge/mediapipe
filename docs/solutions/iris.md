@@ -1,7 +1,8 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe/solutions/vision/face_landmarker/
 title: Iris
-parent: Solutions
+parent: MediaPipe Legacy Solutions
 nav_order: 3
 ---
 
@@ -17,6 +18,14 @@ nav_order: 3
 {:toc}
 </details>
 ---
+
+**Attention:** *Thank you for your interest in MediaPipe Solutions.
+As of May 10, 2023, this solution was upgraded to a new MediaPipe
+Solution. For more information, see the
+[MediaPipe Solutions](https://developers.google.com/mediapipe/solutions/vision/face_landmarker)
+site.*
+
+----
 
 ## Overview
 
@@ -38,7 +47,7 @@ camera, in real-time, without the need for specialized hardware. Through use of
 iris landmarks, the solution is also able to determine the metric distance
 between the subject and the camera with relative error less than 10%. Note that
 iris tracking does not infer the location at which people are looking, nor does
-it provide any form of identity recognition. With the cross-platfrom capability
+it provide any form of identity recognition. With the cross-platform capability
 of the MediaPipe framework, MediaPipe Iris can run on most modern
 [mobile phones](#mobile), [desktops/laptops](#desktop) and even on the
 [web](#web).
@@ -99,7 +108,7 @@ You can also find more details in this
 ### Iris Landmark Model
 
 The iris model takes an image patch of the eye region and estimates both the eye
-landmarks (along the eyelid) and iris landmarks (along ths iris contour). You
+landmarks (along the eyelid) and iris landmarks (along this iris contour). You
 can find more details in this [paper](https://arxiv.org/abs/2006.11341).
 
 ![iris_tracking_eye_and_iris_landmarks.png](https://mediapipe.dev/images/mobile/iris_tracking_eye_and_iris_landmarks.png) |

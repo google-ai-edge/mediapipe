@@ -1,4 +1,4 @@
-// Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+// Copyright 2022 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,10 +26,8 @@ import com.google.mediapipe.tasks.audio.audioembedder.proto.AudioEmbedderGraphOp
 import com.google.mediapipe.tasks.audio.core.BaseAudioTaskApi;
 import com.google.mediapipe.tasks.audio.core.RunningMode;
 import com.google.mediapipe.tasks.components.containers.AudioData;
-import com.google.mediapipe.tasks.components.containers.Embedding;
 import com.google.mediapipe.tasks.components.containers.proto.EmbeddingsProto;
 import com.google.mediapipe.tasks.components.processors.proto.EmbedderOptionsProto;
-import com.google.mediapipe.tasks.components.utils.CosineSimilarity;
 import com.google.mediapipe.tasks.core.BaseOptions;
 import com.google.mediapipe.tasks.core.ErrorListener;
 import com.google.mediapipe.tasks.core.OutputHandler;
@@ -271,17 +269,6 @@ public final class AudioEmbedder extends BaseAudioTaskApi {
   public void embedAsync(AudioData audioBlock, long timestampMs) {
     checkOrSetSampleRate(audioBlock.getFormat().getSampleRate());
     sendAudioStreamData(audioBlock, timestampMs);
-  }
-
-  /**
-   * Utility function to compute <a href="https://en.wikipedia.org/wiki/Cosine_similarity">cosine
-   * similarity</a> between two {@link Embedding} objects.
-   *
-   * @throws IllegalArgumentException if the embeddings are of different types (float vs.
-   *     quantized), have different sizes, or have an L2-norm of 0.
-   */
-  public static double cosineSimilarity(Embedding u, Embedding v) {
-    return CosineSimilarity.compute(u, v);
   }
 
   /** Options for setting up and {@link AudioEmbedder}. */

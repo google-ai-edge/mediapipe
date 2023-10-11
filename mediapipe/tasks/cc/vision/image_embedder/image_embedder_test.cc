@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -30,9 +30,9 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
-#include "tensorflow/lite/core/shims/cc/shims_test_util.h"
 #include "tensorflow/lite/kernels/builtin_op_kernels.h"
 #include "tensorflow/lite/mutable_op_resolver.h"
+#include "tensorflow/lite/test_util.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -52,7 +52,7 @@ constexpr char kMobileNetV3Embedder[] =
 constexpr double kSimilarityTolerancy = 1e-6;
 
 // Utility function to check the sizes, head_index and head_names of a result
-// procuded by kMobileNetV3Embedder.
+// produced by kMobileNetV3Embedder.
 void CheckMobileNetV3Result(const ImageEmbedderResult& result, bool quantized) {
   EXPECT_EQ(result.embeddings.size(), 1);
   EXPECT_EQ(result.embeddings[0].head_index, 0);
@@ -103,7 +103,7 @@ class MobileNetV3OpResolverMissingOps : public ::tflite::MutableOpResolver {
       delete;
 };
 
-class CreateTest : public tflite_shims::testing::Test {};
+class CreateTest : public tflite::testing::Test {};
 
 TEST_F(CreateTest, SucceedsWithSelectiveOpResolver) {
   auto options = std::make_unique<ImageEmbedderOptions>();
@@ -150,7 +150,7 @@ TEST_F(CreateTest, FailsWithIllegalCallbackInImageOrVideoMode) {
         JoinPath("./", kTestDataDirectory, kMobileNetV3Embedder);
     options->running_mode = running_mode;
     options->result_callback = [](absl::StatusOr<ImageEmbedderResult>,
-                                  const Image& image, int64 timestamp_ms) {};
+                                  const Image& image, int64_t timestamp_ms) {};
 
     auto image_embedder = ImageEmbedder::Create(std::move(options));
 
@@ -181,7 +181,7 @@ TEST_F(CreateTest, FailsWithMissingCallbackInLiveStreamMode) {
                   MediaPipeTasksStatus::kInvalidTaskGraphConfigError))));
 }
 
-class ImageModeTest : public tflite_shims::testing::Test {};
+class ImageModeTest : public tflite::testing::Test {};
 
 TEST_F(ImageModeTest, FailsWithCallingWrongMethod) {
   MP_ASSERT_OK_AND_ASSIGN(
@@ -371,7 +371,7 @@ TEST_F(ImageModeTest, SucceedsWithRotation) {
   MP_ASSERT_OK_AND_ASSIGN(double similarity, ImageEmbedder::CosineSimilarity(
                                                  image_result.embeddings[0],
                                                  rotated_result.embeddings[0]));
-  double expected_similarity = 0.572265;
+  double expected_similarity = 0.98223;
   EXPECT_LE(abs(similarity - expected_similarity), kSimilarityTolerancy);
 }
 
@@ -406,11 +406,11 @@ TEST_F(ImageModeTest, SucceedsWithRegionOfInterestAndRotation) {
   MP_ASSERT_OK_AND_ASSIGN(double similarity, ImageEmbedder::CosineSimilarity(
                                                  crop_result.embeddings[0],
                                                  rotated_result.embeddings[0]));
-  double expected_similarity = 0.62838;
+  double expected_similarity = 0.974683;
   EXPECT_LE(abs(similarity - expected_similarity), kSimilarityTolerancy);
 }
 
-class VideoModeTest : public tflite_shims::testing::Test {};
+class VideoModeTest : public tflite::testing::Test {};
 
 TEST_F(VideoModeTest, FailsWithCallingWrongMethod) {
   MP_ASSERT_OK_AND_ASSIGN(
@@ -494,7 +494,7 @@ TEST_F(VideoModeTest, Succeeds) {
   MP_ASSERT_OK(image_embedder->Close());
 }
 
-class LiveStreamModeTest : public tflite_shims::testing::Test {};
+class LiveStreamModeTest : public tflite::testing::Test {};
 
 TEST_F(LiveStreamModeTest, FailsWithCallingWrongMethod) {
   MP_ASSERT_OK_AND_ASSIGN(
@@ -505,7 +505,7 @@ TEST_F(LiveStreamModeTest, FailsWithCallingWrongMethod) {
       JoinPath("./", kTestDataDirectory, kMobileNetV3Embedder);
   options->running_mode = core::RunningMode::LIVE_STREAM;
   options->result_callback = [](absl::StatusOr<ImageEmbedderResult>,
-                                const Image& image, int64 timestamp_ms) {};
+                                const Image& image, int64_t timestamp_ms) {};
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageEmbedder> image_embedder,
                           ImageEmbedder::Create(std::move(options)));
 
@@ -536,7 +536,7 @@ TEST_F(LiveStreamModeTest, FailsWithOutOfOrderInputTimestamps) {
       JoinPath("./", kTestDataDirectory, kMobileNetV3Embedder);
   options->running_mode = core::RunningMode::LIVE_STREAM;
   options->result_callback = [](absl::StatusOr<ImageEmbedderResult>,
-                                const Image& image, int64 timestamp_ms) {};
+                                const Image& image, int64_t timestamp_ms) {};
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageEmbedder> image_embedder,
                           ImageEmbedder::Create(std::move(options)));
 
@@ -555,7 +555,7 @@ TEST_F(LiveStreamModeTest, FailsWithOutOfOrderInputTimestamps) {
 struct LiveStreamModeResults {
   ImageEmbedderResult embedding_result;
   std::pair<int, int> image_size;
-  int64 timestamp_ms;
+  int64_t timestamp_ms;
 };
 
 TEST_F(LiveStreamModeTest, Succeeds) {
@@ -570,7 +570,7 @@ TEST_F(LiveStreamModeTest, Succeeds) {
   options->running_mode = core::RunningMode::LIVE_STREAM;
   options->result_callback =
       [&results](absl::StatusOr<ImageEmbedderResult> embedding_result,
-                 const Image& image, int64 timestamp_ms) {
+                 const Image& image, int64_t timestamp_ms) {
         MP_ASSERT_OK(embedding_result.status());
         results.push_back(
             {.embedding_result = std::move(embedding_result).value(),
@@ -589,7 +589,7 @@ TEST_F(LiveStreamModeTest, Succeeds) {
   // number of iterations.
   ASSERT_LE(results.size(), iterations);
   ASSERT_GT(results.size(), 0);
-  int64 timestamp_ms = -1;
+  int64_t timestamp_ms = -1;
   for (int i = 0; i < results.size(); ++i) {
     const auto& result = results[i];
     EXPECT_GT(result.timestamp_ms, timestamp_ms);

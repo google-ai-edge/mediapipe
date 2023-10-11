@@ -21,22 +21,27 @@ using ClassificationProto = ::mediapipe::Classification;
 
 @implementation MPPCategory (Helpers)
 
-+ (MPPCategory *)categoryWithProto:(const ClassificationProto &)clasificationProto {
++ (MPPCategory *)categoryWithProto:(const ClassificationProto &)classificationProto
+                             index:(NSInteger)index {
   NSString *categoryName;
   NSString *displayName;
 
-  if (clasificationProto.has_label()) {
-    categoryName = [NSString stringWithCppString:clasificationProto.label()];
+  if (classificationProto.has_label()) {
+    categoryName = [NSString stringWithCppString:classificationProto.label()];
   }
 
-  if (clasificationProto.has_display_name()) {
-    displayName = [NSString stringWithCppString:clasificationProto.display_name()];
+  if (classificationProto.has_display_name()) {
+    displayName = [NSString stringWithCppString:classificationProto.display_name()];
   }
 
-  return [[MPPCategory alloc] initWithIndex:clasificationProto.index()
-                                      score:clasificationProto.score()
+  return [[MPPCategory alloc] initWithIndex:index
+                                      score:classificationProto.score()
                                categoryName:categoryName
                                 displayName:displayName];
+}
+
++ (MPPCategory *)categoryWithProto:(const ClassificationProto &)classificationProto {
+  return [MPPCategory categoryWithProto:classificationProto index:classificationProto.index()];
 }
 
 @end

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<annotation>
+  <folder>images</folder>
+  <filename>d86b20e0-IMG_0509.jpg</filename>
+  <source>
+    <database>MyDatabase</database>
+    <annotation>COCO2017</annotation>
+    <image>flickr</image>
+    <flickrid>NULL</flickrid>
+    <annotator>1</annotator>
+  </source>
+  <owner>
+    <flickrid>NULL</flickrid>
+    <name>Label Studio</name>
+  </owner>
+  <size>
+    <width>800</width>
+    <height>600</height>
+    <depth>3</depth>
+  </size>
+  <segmented>0</segmented>
+  <object>
+    <name>android</name>
+    <pose>Unspecified</pose>
+    <truncated>0</truncated>
+    <difficult>0</difficult>
+    <bndbox>
+    <xmin>7</xmin>
+    <ymin>122</ymin>
+    <xmax>296</xmax>
+    <ymax>402</ymax>
+    </bndbox>
+  </object>
+  <object>
+    <name>pig_android</name>
+    <pose>Unspecified</pose>
+    <truncated>0</truncated>
+    <difficult>0</difficult>
+    <bndbox>
+    <xmin>523</xmin>
+    <ymin>69</ymin>
+    <xmax>723</xmax>
+    <ymax>329</ymax>
+    </bndbox>
+  </object>
+</annotation>

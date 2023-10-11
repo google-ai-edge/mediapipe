@@ -51,7 +51,7 @@ TEST_F(TensorToVectorStringCalculatorTest, ConvertsToVectorFloat) {
     tensor_vec(i) = absl::StrCat("foo", i);
   }
 
-  const int64 time = 1234;
+  const int64_t time = 1234;
   runner_->MutableInputs()->Index(0).packets.push_back(
       Adopt(tensor.release()).At(Timestamp(time)));
 
@@ -79,7 +79,7 @@ TEST_F(TensorToVectorStringCalculatorTest, ConvertsBatchedToVectorVectorFloat) {
     slice(i) = absl::StrCat("foo", i);
   }
 
-  const int64 time = 1234;
+  const int64_t time = 1234;
   runner_->MutableInputs()->Index(0).packets.push_back(
       Adopt(tensor.release()).At(Timestamp(time)));
 
@@ -108,7 +108,7 @@ TEST_F(TensorToVectorStringCalculatorTest, FlattenShouldTakeAllDimensions) {
     slice(i) = absl::StrCat("foo", i);
   }
 
-  const int64 time = 1234;
+  const int64_t time = 1234;
   runner_->MutableInputs()->Index(0).packets.push_back(
       Adopt(tensor.release()).At(Timestamp(time)));
 

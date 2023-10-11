@@ -15,7 +15,9 @@
 package com.google.mediapipe.components;
 
 import static java.lang.Math.max;
+import static java.lang.Math.min;
 
+import android.graphics.Bitmap;
 import android.graphics.SurfaceTexture;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
@@ -25,10 +27,14 @@ import android.util.Log;
 import com.google.mediapipe.framework.TextureFrame;
 import com.google.mediapipe.glutil.CommonShaders;
 import com.google.mediapipe.glutil.ShaderUtil;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.annotation.Nullable;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
@@ -44,6 +50,23 @@ import javax.microedition.khronos.opengles.GL10;
  * {@link TextureFrame} (call {@link #setNextFrame(TextureFrame)}).
  */
 public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
+  /**
+   * Listener for Bitmap capture requests.
+   */
+  public interface BitmapCaptureListener {
+    void onBitmapCaptured(Bitmap result);
+  }
+
+  /**
+   * Scale to use when the frame and view have different aspect ratios.
+   */
+  public enum Scale {
+    FILL,
+    FIT,
+    FIT_TO_WIDTH,
+    FIT_TO_HEIGHT
+  };
+
   private static final String TAG = "DemoRenderer";
   private static final int ATTRIB_POSITION = 1;
   private static final int ATTRIB_TEXTURE_COORDINATE = 2;
@@ -62,6 +85,28 @@ public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
   private float[] textureTransformMatrix = new float[16];
   private SurfaceTexture surfaceTexture = null;
   private final AtomicReference<TextureFrame> nextFrame = new AtomicReference<>();
+  private final AtomicBoolean captureNextFrameBitmap = new AtomicBoolean();
+  private BitmapCaptureListener bitmapCaptureListener;
+  // Specifies whether a black CLAMP_TO_BORDER effect should be used.
+  private boolean shouldClampToBorder = false;
+  private Scale scale = Scale.FILL;
+
+  /**
+   * Sets the {@link BitmapCaptureListener}.
+   */
+  public void setBitmapCaptureListener(BitmapCaptureListener bitmapCaptureListener) {
+    this.bitmapCaptureListener = bitmapCaptureListener;
+  }
+
+  /**
+   * Request to capture Bitmap of the next frame.
+   *
+   * The result will be provided to the {@link BitmapCaptureListener} if one is set. Please note
+   * this is an expensive operation and the result may not be available for a while.
+   */
+  public void captureNextFrameBitmap() {
+    captureNextFrameBitmap.set(true);
+  }
 
   @Override
   public void onSurfaceCreated(GL10 gl, EGLConfig config) {
@@ -72,12 +117,20 @@ public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
     attributeLocations.put("position", ATTRIB_POSITION);
     attributeLocations.put("texture_coordinate", ATTRIB_TEXTURE_COORDINATE);
     Log.d(TAG, "external texture: " + isExternalTexture());
+    String fragmentShader;
+    if (shouldClampToBorder) {
+      fragmentShader = isExternalTexture()
+          ? CommonShaders.FRAGMENT_SHADER_EXTERNAL_CLAMP_TO_BORDER
+          : CommonShaders.FRAGMENT_SHADER_CLAMP_TO_BORDER;
+    } else {
+      fragmentShader = isExternalTexture()
+          ? CommonShaders.FRAGMENT_SHADER_EXTERNAL
+          : CommonShaders.FRAGMENT_SHADER;
+    }
     program =
         ShaderUtil.createProgram(
             CommonShaders.VERTEX_SHADER,
-            isExternalTexture()
-                ? CommonShaders.FRAGMENT_SHADER_EXTERNAL
-                : CommonShaders.FRAGMENT_SHADER,
+            fragmentShader,
             attributeLocations);
     frameUniform = GLES20.glGetUniformLocation(program, "video_frame");
     textureTransformUniform = GLES20.glGetUniformLocation(program, "texture_transform");
@@ -147,6 +200,31 @@ public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
 
     GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
     ShaderUtil.checkGlError("glDrawArrays");
+
+    // Capture Bitmap if requested.
+    BitmapCaptureListener bitmapCaptureListener = this.bitmapCaptureListener;
+    if (captureNextFrameBitmap.getAndSet(false) && bitmapCaptureListener != null) {
+      int bitmapSize = surfaceWidth * surfaceHeight;
+      ByteBuffer byteBuffer = ByteBuffer.allocateDirect(bitmapSize * 4);
+      byteBuffer.order(ByteOrder.nativeOrder());
+      GLES20.glReadPixels(
+          0, 0, surfaceWidth, surfaceHeight, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, byteBuffer);
+      int[] pixelBuffer = new int[bitmapSize];
+      byteBuffer.asIntBuffer().get(pixelBuffer);
+      for (int i = 0; i < bitmapSize; i++) {
+        // Swap R and B channels.
+        pixelBuffer[i] =
+            (pixelBuffer[i] & 0xff00ff00)
+                | ((pixelBuffer[i] & 0x000000ff) << 16)
+                | ((pixelBuffer[i] & 0x00ff0000) >> 16);
+      }
+      Bitmap bitmap = Bitmap.createBitmap(surfaceWidth, surfaceHeight, Bitmap.Config.ARGB_8888);
+      bitmap.setPixels(
+          pixelBuffer, /* offset= */bitmapSize - surfaceWidth, /* stride= */-surfaceWidth,
+          /* x= */0, /* y= */0, surfaceWidth, surfaceHeight);
+      bitmapCaptureListener.onBitmapCaptured(bitmap);
+    }
+
     GLES20.glBindTexture(textureTarget, 0);
     ShaderUtil.checkGlError("unbind surfaceTexture");
 
@@ -154,17 +232,27 @@ public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
   }
 
   /** Returns the texture left, right, bottom, and top visible boundaries. */
-  protected float[] calculateTextureBoundary() {
+  public float[] calculateTextureBoundary() {
     // TODO: compute scale from surfaceTexture size.
     float scaleWidth = frameWidth > 0 ? (float) surfaceWidth / (float) frameWidth : 1.0f;
     float scaleHeight = frameHeight > 0 ? (float) surfaceHeight / (float) frameHeight : 1.0f;
-    // Whichever of the two scales is greater corresponds to the dimension where the image
-    // is proportionally smaller than the view. Dividing both scales by that number results
-    // in that dimension having scale 1.0, and thus touching the edges of the view, while the
-    // other is cropped proportionally.
-    float maxScale = max(scaleWidth, scaleHeight);
-    scaleWidth /= maxScale;
-    scaleHeight /= maxScale;
+
+    // By default, FILL setting is used. That is, whichever of the two scales is greater corresponds
+    // to the dimension where the image is proportionally smaller than the view. Dividing both
+    // scales by that number results in that dimension having scale 1.0, and thus touching the edges
+    // of the view, while the other is cropped proportionally.
+    float scale = max(scaleWidth, scaleHeight);
+
+    // If any of the FIT settings are used, the min scale is divided so the frame doesn't exceed
+    // the view in that direction (or both for FIT).
+    if (this.scale == Scale.FIT
+        || (this.scale == Scale.FIT_TO_WIDTH && (frameWidth > frameHeight))
+        || (this.scale == Scale.FIT_TO_HEIGHT && (frameHeight > frameWidth))) {
+      scale = min(scaleWidth, scaleHeight);
+    }
+
+    scaleWidth /= scale;
+    scaleHeight /= scale;
 
     // Alignment controls where the visible section is placed within the full camera frame, with
     // (0, 0) being the bottom left, and (1, 1) being the top right.
@@ -216,7 +304,7 @@ public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
   }
 
   // Use this when the texture is not a SurfaceTexture.
-  public void setNextFrame(TextureFrame frame) {
+  public void setNextFrame(@Nullable TextureFrame frame) {
     if (surfaceTexture != null) {
       Matrix.setIdentityM(textureTransformMatrix, 0 /* offset */);
     }
@@ -240,6 +328,23 @@ public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
   public void setAlignment(float horizontal, float vertical) {
     alignmentHorizontal = horizontal;
     alignmentVertical = vertical;
+  }
+
+  /**
+   * Whether to use GL_CLAMP_TO_BORDER-like mode. This is useful when rendering landscape or
+   * different aspect ratio frames. The remaining area will be rendered black.
+   */
+  public void setClampToBorder(boolean shouldClampToBorder) {
+    if (program != 0) {
+      throw new IllegalStateException(
+          "setClampToBorder must be called before the surface is created");
+    }
+    this.shouldClampToBorder = shouldClampToBorder;
+  }
+
+  /** {@link Scale} option to use when frame and view have different aspect ratios. */
+  public void setScale(Scale scale) {
+    this.scale = scale;
   }
 
   private boolean isExternalTexture() {

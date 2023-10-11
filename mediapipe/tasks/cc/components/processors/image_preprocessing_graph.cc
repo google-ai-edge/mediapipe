@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -71,32 +71,6 @@ struct ImagePreprocessingOutputStreams {
   Source<Image> image;
 };
 
-// Builds an ImageTensorSpecs for configuring the preprocessing calculators.
-absl::StatusOr<ImageTensorSpecs> BuildImageTensorSpecs(
-    const ModelResources& model_resources) {
-  const tflite::Model& model = *model_resources.GetTfLiteModel();
-  if (model.subgraphs()->size() != 1) {
-    return CreateStatusWithPayload(
-        absl::StatusCode::kInvalidArgument,
-        "Image tflite models are assumed to have a single subgraph.",
-        MediaPipeTasksStatus::kInvalidArgumentError);
-  }
-  const auto* primary_subgraph = (*model.subgraphs())[0];
-  if (primary_subgraph->inputs()->size() != 1) {
-    return CreateStatusWithPayload(
-        absl::StatusCode::kInvalidArgument,
-        "Image tflite models are assumed to have a single input.",
-        MediaPipeTasksStatus::kInvalidArgumentError);
-  }
-  const auto* input_tensor =
-      (*primary_subgraph->tensors())[(*primary_subgraph->inputs())[0]];
-  ASSIGN_OR_RETURN(const auto* image_tensor_metadata,
-                   vision::GetImageTensorMetadataIfAny(
-                       *model_resources.GetMetadataExtractor(), 0));
-  return vision::BuildInputImageTensorSpecs(*input_tensor,
-                                            image_tensor_metadata);
-}
-
 // Fills in the ImageToTensorCalculatorOptions based on the ImageTensorSpecs.
 absl::Status ConfigureImageToTensorCalculator(
     const ImageTensorSpecs& image_tensor_specs,
@@ -133,7 +107,7 @@ absl::Status ConfigureImageToTensorCalculator(
     options->mutable_output_tensor_float_range()->set_max((255.0f - mean) /
                                                           std);
   }
-  // TODO: need to support different GPU origin on differnt
+  // TODO: need to support different GPU origin on different
   // platforms or applications.
   options->set_gpu_origin(mediapipe::GpuOrigin::TOP_LEFT);
   return absl::OkStatus();
@@ -143,14 +117,16 @@ absl::Status ConfigureImageToTensorCalculator(
 
 bool DetermineImagePreprocessingGpuBackend(
     const core::proto::Acceleration& acceleration) {
-  return acceleration.has_gpu();
+  return acceleration.has_gpu() ||
+         (acceleration.has_nnapi() &&
+          acceleration.nnapi().accelerator_name() == "google-edgetpu");
 }
 
 absl::Status ConfigureImagePreprocessingGraph(
     const ModelResources& model_resources, bool use_gpu,
     proto::ImagePreprocessingGraphOptions* options) {
   ASSIGN_OR_RETURN(auto image_tensor_specs,
-                   BuildImageTensorSpecs(model_resources));
+                   vision::BuildInputImageTensorSpecs(model_resources));
   MP_RETURN_IF_ERROR(ConfigureImageToTensorCalculator(
       image_tensor_specs, options->mutable_image_to_tensor_options()));
   // The GPU backend isn't able to process int data. If the input tensor is

@@ -629,7 +629,6 @@ public:
                     TfLiteTensor* tflitetensor = interpreter_->tensor(interpreterTensorId);
                     void* tensor_ptr = tflitetensor->data.f;
                     std::memcpy(tensor_ptr, tensor.data(), tensor.get_byte_size());
-                    auto tflitedims = tflitetensor->dims;
                     outputStreamTensors.emplace_back(*tflitetensor);
                     ++tensorId;
                 }

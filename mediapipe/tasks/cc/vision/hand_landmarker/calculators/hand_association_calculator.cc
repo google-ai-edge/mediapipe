@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ limitations under the License.
 
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/collection_item_id.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/port/rectangle.h"
 #include "mediapipe/framework/port/status.h"
@@ -29,30 +30,55 @@ namespace mediapipe::api2 {
 
 using ::mediapipe::NormalizedRect;
 
-// HandAssociationCalculator accepts multiple inputs of vectors of
-// NormalizedRect. The output is a vector of NormalizedRect that contains
-// rects from the input vectors that don't overlap with each other. When two
-// rects overlap, the rect that comes in from an earlier input stream is
-// kept in the output. If a rect has no ID (i.e. from detection stream),
-// then a unique rect ID is assigned for it.
-
-// The rects in multiple input streams are effectively flattened to a single
-// list.  For example:
-// Stream1 : rect 1, rect 2
-// Stream2:  rect 3, rect 4
-// Stream3: rect 5, rect 6
-// (Conceptually) flattened list : rect 1, 2, 3, 4, 5, 6
-// In the flattened list, if a rect with a higher index overlaps with a rect a
-// lower index, beyond a specified IOU threshold, the rect with the lower
-// index will be in the output, and the rect with higher index will be
-// discarded.
+// Input:
+//  BASE_RECTS - Vector of NormalizedRect.
+//  RECTS - Vector of NormalizedRect.
+//
+// Output:
+//  No tag - Vector of NormalizedRect.
+//
+// Example use:
+// node {
+//   calculator: "HandAssociationCalculator"
+//   input_stream: "BASE_RECTS:base_rects"
+//   input_stream: "RECTS:0:rects0"
+//   input_stream: "RECTS:1:rects1"
+//   input_stream: "RECTS:2:rects2"
+//   output_stream: "output_rects"
+//   options {
+//     [mediapipe.HandAssociationCalculatorOptions.ext] {
+//       min_similarity_threshold: 0.1
+//   }
+// }
+//
+// IMPORTANT Notes:
+//  - Rects from input streams tagged with "BASE_RECTS" are always preserved.
+//  - This calculator checks for overlap among rects from input streams tagged
+//    with "RECTS". Rects are prioritized based on their index in the vector and
+//    input streams to the calculator. When two rects overlap, the rect that
+//    comes from an input stream with lower tag-index is kept in the output.
+//  - Example of inputs for the node above:
+//      "base_rects": rect 0, rect 1
+//      "rects0": rect 2, rect 3
+//      "rects1": rect 4, rect 5
+//      "rects2": rect 6, rect 7
+//    (Conceptually) flattened list: 0, 1, 2, 3, 4, 5, 6, 7.
+//    Rects 0, 1 will be preserved. Rects 2, 3, 4, 5, 6, 7 will be checked for
+//    overlap. If a rect with a higher index overlaps with a rect with lower
+//    index, beyond a specified IOU threshold, the rect with the lower index
+//    will be in the output, and the rect with higher index will be discarded.
 // TODO: Upgrade this to latest API for calculators
 class HandAssociationCalculator : public CalculatorBase {
  public:
   static absl::Status GetContract(CalculatorContract* cc) {
     // Initialize input and output streams.
-    for (auto& input_stream : cc->Inputs()) {
-      input_stream.Set<std::vector<NormalizedRect>>();
+    for (CollectionItemId id = cc->Inputs().BeginId("BASE_RECTS");
+         id != cc->Inputs().EndId("BASE_RECTS"); ++id) {
+      cc->Inputs().Get(id).Set<std::vector<NormalizedRect>>();
+    }
+    for (CollectionItemId id = cc->Inputs().BeginId("RECTS");
+         id != cc->Inputs().EndId("RECTS"); ++id) {
+      cc->Inputs().Get(id).Set<std::vector<NormalizedRect>>();
     }
     cc->Outputs().Index(0).Set<std::vector<NormalizedRect>>();
 
@@ -89,7 +115,24 @@ class HandAssociationCalculator : public CalculatorBase {
       CalculatorContext* cc) {
     std::vector<NormalizedRect> result;
 
-    for (const auto& input_stream : cc->Inputs()) {
+    for (CollectionItemId id = cc->Inputs().BeginId("BASE_RECTS");
+         id != cc->Inputs().EndId("BASE_RECTS"); ++id) {
+      const auto& input_stream = cc->Inputs().Get(id);
+      if (input_stream.IsEmpty()) {
+        continue;
+      }
+
+      for (auto rect : input_stream.Get<std::vector<NormalizedRect>>()) {
+        if (!rect.has_rect_id()) {
+          rect.set_rect_id(GetNextRectId());
+        }
+        result.push_back(rect);
+      }
+    }
+
+    for (CollectionItemId id = cc->Inputs().BeginId("RECTS");
+         id != cc->Inputs().EndId("RECTS"); ++id) {
+      const auto& input_stream = cc->Inputs().Get(id);
       if (input_stream.IsEmpty()) {
         continue;
       }

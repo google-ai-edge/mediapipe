@@ -1,0 +1,235 @@
+# proto-file: mediapipe/tasks/cc/components/containers/proto/landmarks_detection_result.proto
+# proto-message: LandmarksDetectionResult
+landmarks {
+  landmark {
+    x: 0.46507242
+    y: 0.41610304
+    z: -0.14999297
+    visibility: 0.99998844
+    presence: 0.99998903
+  }
+  landmark {
+    x: 0.47030905
+    y: 0.40309227
+    z: -0.14747797
+    visibility: 0.9999664
+    presence: 0.99995553
+  }
+  landmark {
+    x: 0.47342995
+    y: 0.40156996
+    z: -0.14745711
+    visibility: 0.9999546
+    presence: 0.9999534
+  }
+  landmark {
+    x: 0.47663194
+    y: 0.39997125
+    z: -0.14746517
+    visibility: 0.99994385
+    presence: 0.99994576
+  }
+  landmark {
+    x: 0.46315864
+    y: 0.4074311
+    z: -0.12709364
+    visibility: 0.99994826
+    presence: 0.99996126
+  }
+  landmark {
+    x: 0.46167478
+    y: 0.4089059
+    z: -0.12713416
+    visibility: 0.9999267
+    presence: 0.99996483
+  }
+  landmark {
+    x: 0.45983645
+    y: 0.41042596
+    z: -0.12708154
+    visibility: 0.9999249
+    presence: 0.9999635
+  }
+  landmark {
+    x: 0.48985234
+    y: 0.4053322
+    z: -0.10685073
+    visibility: 0.99990225
+    presence: 0.9999591
+  }
+  landmark {
+    x: 0.46542352
+    y: 0.41843837
+    z: -0.011494645
+    visibility: 0.999894
+    presence: 0.9999794
+  }
+  landmark {
+    x: 0.4757115
+    y: 0.42860925
+    z: -0.13509856
+    visibility: 0.9999609
+    presence: 0.9999964
+  }
+  landmark {
+    x: 0.46715724
+    y: 0.4335927
+    z: -0.10763592
+    visibility: 0.9999547
+    presence: 0.99999654
+  }
+  landmark {
+    x: 0.5383015
+    y: 0.47349828
+    z: -0.09904624
+    visibility: 0.99999046
+    presence: 0.99997306
+  }
+  landmark {
+    x: 0.45313644
+    y: 0.48936796
+    z: 0.06387678
+    visibility: 0.9999919
+    presence: 0.99999344
+  }
+  landmark {
+    x: 0.6247076
+    y: 0.47583634
+    z: -0.16247825
+    visibility: 0.9971179
+    presence: 0.9997496
+  }
+  landmark {
+    x: 0.36646777
+    y: 0.48342204
+    z: 0.08566214
+    visibility: 0.98212147
+    presence: 0.9999796
+  }
+  landmark {
+    x: 0.6950672
+    y: 0.47276276
+    z: -0.23432226
+    visibility: 0.99190086
+    presence: 0.99751616
+  }
+  landmark {
+    x: 0.29679844
+    y: 0.46896482
+    z: -0.020334292
+    visibility: 0.9826943
+    presence: 0.99966264
+  }
+  landmark {
+    x: 0.71771
+    y: 0.466713
+    z: -0.25376678
+    visibility: 0.97681385
+    presence: 0.9940614
+  }
+  landmark {
+    x: 0.2762509
+    y: 0.46507546
+    z: -0.030049918
+    visibility: 0.9577505
+    presence: 0.9986953
+  }
+  landmark {
+    x: 0.71468514
+    y: 0.46545807
+    z: -0.27873537
+    visibility: 0.9773756
+    presence: 0.99447954
+  }
+  landmark {
+    x: 0.27898294
+    y: 0.45952708
+    z: -0.061881505
+    visibility: 0.9598176
+    presence: 0.9987778
+  }
+  landmark {
+    x: 0.70616376
+    y: 0.47313935
+    z: -0.2473996
+    visibility: 0.97479546
+    presence: 0.9961171
+  }
+  landmark {
+    x: 0.2866556
+    y: 0.4661593
+    z: -0.039750997
+    visibility: 0.96074265
+    presence: 0.9992084
+  }
+  landmark {
+    x: 0.5199628
+    y: 0.71132404
+    z: -0.05568369
+    visibility: 0.9997075
+    presence: 0.9997811
+  }
+  landmark {
+    x: 0.46290728
+    y: 0.7031081
+    z: 0.05579845
+    visibility: 0.99977857
+    presence: 0.99986553
+  }
+  landmark {
+    x: 0.60217524
+    y: 0.81984437
+    z: -0.14303333
+    visibility: 0.99511355
+    presence: 0.9993449
+  }
+  landmark {
+    x: 0.36314535
+    y: 0.7332305
+    z: -0.063036785
+    visibility: 0.9963553
+    presence: 0.9997341
+  }
+  landmark {
+    x: 0.70064104
+    y: 0.93365943
+    z: -0.031219501
+    visibility: 0.9909759
+    presence: 0.9935846
+  }
+  landmark {
+    x: 0.35170174
+    y: 0.9031892
+    z: 0.0022715325
+    visibility: 0.9929086
+    presence: 0.99870515
+  }
+  landmark {
+    x: 0.70923454
+    y: 0.954628
+    z: -0.024844522
+    visibility: 0.93651295
+    presence: 0.99121124
+  }
+  landmark {
+    x: 0.36733973
+    y: 0.93519753
+    z: 0.003870454
+    visibility: 0.96783006
+    presence: 0.99829334
+  }
+  landmark {
+    x: 0.72855467
+    y: 0.96812284
+    z: -0.12364431
+    visibility: 0.9639738
+    presence: 0.98293763
+  }
+  landmark {
+    x: 0.30121577
+    y: 0.94473803
+    z: -0.08448716
+    visibility: 0.97545445
+    presence: 0.99386966
+  }
+}

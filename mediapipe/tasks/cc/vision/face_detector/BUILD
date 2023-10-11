@@ -1,4 +1,4 @@
-# Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2023 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,8 +13,7 @@
 # limitations under the License.
 
 package(default_visibility = [
-    # "//mediapipe/tasks:internal",
-    "//visibility:public",
+    "//mediapipe/tasks:internal",
 ])
 
 licenses(["notice"])
@@ -31,9 +30,8 @@ cc_library(
         "//mediapipe/calculators/tensor:tensors_to_detections_calculator_cc_proto",
         "//mediapipe/calculators/tflite:ssd_anchors_calculator",
         "//mediapipe/calculators/tflite:ssd_anchors_calculator_cc_proto",
-        "//mediapipe/calculators/util:detection_label_id_to_text_calculator",
-        "//mediapipe/calculators/util:detection_label_id_to_text_calculator_cc_proto",
         "//mediapipe/calculators/util:detection_projection_calculator",
+        "//mediapipe/calculators/util:detection_transformation_calculator",
         "//mediapipe/calculators/util:detections_to_rects_calculator",
         "//mediapipe/calculators/util:detections_to_rects_calculator_cc_proto",
         "//mediapipe/calculators/util:non_max_suppression_calculator",
@@ -58,4 +56,27 @@ cc_library(
         "@com_google_absl//absl/status:statusor",
     ],
     alwayslink = 1,
+)
+
+cc_library(
+    name = "face_detector",
+    srcs = ["face_detector.cc"],
+    hdrs = ["face_detector.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":face_detector_graph",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/tasks/cc/components/containers:detection_result",
+        "//mediapipe/tasks/cc/core:base_options",
+        "//mediapipe/tasks/cc/core:utils",
+        "//mediapipe/tasks/cc/vision/core:base_vision_task_api",
+        "//mediapipe/tasks/cc/vision/core:image_processing_options",
+        "//mediapipe/tasks/cc/vision/core:running_mode",
+        "//mediapipe/tasks/cc/vision/core:vision_task_api_factory",
+        "//mediapipe/tasks/cc/vision/face_detector/proto:face_detector_graph_options_cc_proto",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+    ],
 )

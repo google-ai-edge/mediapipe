@@ -51,9 +51,9 @@ class SimpleRunner : public CalculatorRunner {
 
   virtual ~SimpleRunner() {}
 
-  void SetInput(const std::vector<int64>& timestamp_list) {
+  void SetInput(const std::vector<int64_t>& timestamp_list) {
     MutableInputs()->Index(0).packets.clear();
-    for (const int64 ts : timestamp_list) {
+    for (const int64_t ts : timestamp_list) {
       MutableInputs()->Index(0).packets.push_back(
           Adopt(new std::string(absl::StrCat("Frame #", ts)))
               .At(Timestamp(ts)));
@@ -72,8 +72,8 @@ class SimpleRunner : public CalculatorRunner {
   }
 
   void CheckOutputTimestamps(
-      const std::vector<int64>& expected_frames,
-      const std::vector<int64>& expected_timestamps) const {
+      const std::vector<int64_t>& expected_frames,
+      const std::vector<int64_t>& expected_timestamps) const {
     EXPECT_EQ(expected_frames.size(), Outputs().Index(0).packets.size());
     EXPECT_EQ(expected_timestamps.size(), Outputs().Index(0).packets.size());
     int count = 0;
@@ -112,7 +112,7 @@ MATCHER_P2(PacketAtTimestamp, payload, timestamp,
     *result_listener << "at incorrect timestamp = " << arg.Timestamp().Value();
     return false;
   }
-  int64 actual_payload = arg.template Get<int64>();
+  int64_t actual_payload = arg.template Get<int64_t>();
   if (actual_payload != payload) {
     *result_listener << "with incorrect payload = " << actual_payload;
     return false;
@@ -137,18 +137,18 @@ class ReproducibleJitterWithReflectionStrategyForTesting
   //
   // An EXPECT will fail if sequence is less than the number requested during
   // processing.
-  static std::vector<uint64> random_sequence;
+  static std::vector<uint64_t> random_sequence;
 
  protected:
-  virtual uint64 GetNextRandom(uint64 n) {
+  virtual uint64_t GetNextRandom(uint64_t n) {
     EXPECT_LT(sequence_index_, random_sequence.size());
     return random_sequence[sequence_index_++] % n;
   }
 
  private:
-  int32 sequence_index_ = 0;
+  int32_t sequence_index_ = 0;
 };
-std::vector<uint64>
+std::vector<uint64_t>
     ReproducibleJitterWithReflectionStrategyForTesting::random_sequence;
 
 // PacketResamplerCalculator child class which injects a specified stream
@@ -469,7 +469,7 @@ TEST(PacketResamplerCalculatorTest, SetVideoHeader) {
     }
   )pb"));
 
-  for (const int64 ts : {0, 5000, 10010, 15001, 19990}) {
+  for (const int64_t ts : {0, 5000, 10010, 15001, 19990}) {
     runner.MutableInputs()->Tag(kDataTag).packets.push_back(
         Adopt(new std::string(absl::StrCat("Frame #", ts))).At(Timestamp(ts)));
   }

@@ -273,8 +273,8 @@ absl::Status Scheduler::WaitForObservedOutput() {
 // Idleness requires:
 // 1. either the graph has no source nodes or all source nodes are closed, and
 // 2. no packets are added to graph input streams.
-// For simplicity, we only allow WaitUntilIdle() to be called on a graph with
-// no source nodes. (This is enforced by CalculatorGraph::WaitUntilIdle().)
+// For simplicity, we only fully support WaitUntilIdle() to be called on a graph
+// with no source nodes.
 // The application must ensure no other threads are adding packets to graph
 // input streams while a WaitUntilIdle() call is in progress.
 absl::Status Scheduler::WaitUntilIdle() {

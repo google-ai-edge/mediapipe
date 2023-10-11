@@ -244,7 +244,7 @@ TEST_F(MonotonicClockTest, RealTime) {
   // Call mono_clock->Now() continuously for FLAGS_real_test_secs seconds.
   absl::Time start = absl::Now();
   absl::Time time = start;
-  int64 num_calls = 0;
+  int64_t num_calls = 0;
   do {
     absl::Time last_time = time;
     time = mono_clock->TimeNow();
@@ -406,7 +406,7 @@ class ClockFrenzy {
     while (Running()) {
       // 40% of the time, advance a simulated clock.
       // 50% of the time, read a monotonic clock.
-      const int32 u = UniformRandom(100);
+      const int32_t u = UniformRandom(100);
       if (u < 40) {
         // Pick a simulated clock and advance it.
         const int nclocks = sim_clocks_.size();
@@ -463,9 +463,9 @@ class ClockFrenzy {
 
   // Thread-safe random number generation functions for use by other class
   // member functions.
-  int32 UniformRandom(int32 n) {
+  int32_t UniformRandom(int32_t n) {
     absl::MutexLock l(&lock_);
-    return std::uniform_int_distribution<int32>(0, n - 1)(*random_);
+    return std::uniform_int_distribution<int32_t>(0, n - 1)(*random_);
   }
 
   float RndFloatRandom() {

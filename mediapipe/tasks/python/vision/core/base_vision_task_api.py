@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ import math
 from typing import Callable, Mapping, Optional
 
 from mediapipe.framework import calculator_pb2
+from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.python._framework_bindings import packet as packet_module
 from mediapipe.python._framework_bindings import task_runner as task_runner_module
 from mediapipe.tasks.python.components.containers import rect as rect_module
@@ -39,8 +40,9 @@ class BaseVisionTaskApi(object):
       self,
       graph_config: calculator_pb2.CalculatorGraphConfig,
       running_mode: _RunningMode,
-      packet_callback: Optional[Callable[[Mapping[str, packet_module.Packet]],
-                                         None]] = None
+      packet_callback: Optional[
+          Callable[[Mapping[str, packet_module.Packet]], None]
+      ] = None,
   ) -> None:
     """Initializes the `BaseVisionTaskApi` object.
 
@@ -48,7 +50,7 @@ class BaseVisionTaskApi(object):
       graph_config: The mediapipe vision task graph config proto.
       running_mode: The running mode of the mediapipe vision task.
       packet_callback: The optional packet callback for getting results
-      asynchronously in the live stream mode.
+        asynchronously in the live stream mode.
 
     Raises:
       ValueError: The packet callback is not properly set based on the task's
@@ -58,16 +60,19 @@ class BaseVisionTaskApi(object):
       if packet_callback is None:
         raise ValueError(
             'The vision task is in live stream mode, a user-defined result '
-            'callback must be provided.')
+            'callback must be provided.'
+        )
     elif packet_callback:
       raise ValueError(
           'The vision task is in image or video mode, a user-defined result '
-          'callback should not be provided.')
+          'callback should not be provided.'
+      )
     self._runner = _TaskRunner.create(graph_config, packet_callback)
     self._running_mode = running_mode
 
   def _process_image_data(
-      self, inputs: Mapping[str, _Packet]) -> Mapping[str, _Packet]:
+      self, inputs: Mapping[str, _Packet]
+  ) -> Mapping[str, _Packet]:
     """A synchronous method to process single image inputs.
 
     The call blocks the current thread until a failure status or a successful
@@ -84,12 +89,14 @@ class BaseVisionTaskApi(object):
     """
     if self._running_mode != _RunningMode.IMAGE:
       raise ValueError(
-          'Task is not initialized with the image mode. Current running mode:' +
-          self._running_mode.name)
+          'Task is not initialized with the image mode. Current running mode:'
+          + self._running_mode.name
+      )
     return self._runner.process(inputs)
 
   def _process_video_data(
-      self, inputs: Mapping[str, _Packet]) -> Mapping[str, _Packet]:
+      self, inputs: Mapping[str, _Packet]
+  ) -> Mapping[str, _Packet]:
     """A synchronous method to process continuous video frames.
 
     The call blocks the current thread until a failure status or a successful
@@ -106,8 +113,9 @@ class BaseVisionTaskApi(object):
     """
     if self._running_mode != _RunningMode.VIDEO:
       raise ValueError(
-          'Task is not initialized with the video mode. Current running mode:' +
-          self._running_mode.name)
+          'Task is not initialized with the video mode. Current running mode:'
+          + self._running_mode.name
+      )
     return self._runner.process(inputs)
 
   def _send_live_stream_data(self, inputs: Mapping[str, _Packet]) -> None:
@@ -124,13 +132,18 @@ class BaseVisionTaskApi(object):
     """
     if self._running_mode != _RunningMode.LIVE_STREAM:
       raise ValueError(
-          'Task is not initialized with the live stream mode. Current running mode:'
-          + self._running_mode.name)
+          'Task is not initialized with the live stream mode. Current running'
+          ' mode:'
+          + self._running_mode.name
+      )
     self._runner.send(inputs)
 
-  def convert_to_normalized_rect(self,
-                                 options: _ImageProcessingOptions,
-                                 roi_allowed: bool = True) -> _NormalizedRect:
+  def convert_to_normalized_rect(
+      self,
+      options: _ImageProcessingOptions,
+      image: image_module.Image,
+      roi_allowed: bool = True,
+  ) -> _NormalizedRect:
     """Converts from ImageProcessingOptions to NormalizedRect, performing sanity checks on-the-fly.
 
     If the input ImageProcessingOptions is not present, returns a default
@@ -140,14 +153,16 @@ class BaseVisionTaskApi(object):
 
     Args:
       options: Options for image processing.
+      image: The image to process.
       roi_allowed: Indicates if the `region_of_interest` field is allowed to be
         set. By default, it's set to True.
 
     Returns:
-      A normalized rect proto that repesents the image processing options.
+      A normalized rect proto that represents the image processing options.
     """
     normalized_rect = _NormalizedRect(
-        rotation=0, x_center=0.5, y_center=0.5, width=1, height=1)
+        rotation=0, x_center=0.5, y_center=0.5, width=1, height=1
+    )
     if options is None:
       return normalized_rect
 
@@ -169,6 +184,20 @@ class BaseVisionTaskApi(object):
       normalized_rect.y_center = (roi.top + roi.bottom) / 2.0
       normalized_rect.width = roi.right - roi.left
       normalized_rect.height = roi.bottom - roi.top
+
+    # For 90° and 270° rotations, we need to swap width and height.
+    # This is due to the internal behavior of ImageToTensorCalculator, which:
+    # - first denormalizes the provided rect by multiplying the rect width or
+    #   height by the image width or height, respectively.
+    # - then rotates this by denormalized rect by the provided rotation, and
+    #   uses this for cropping,
+    # - then finally rotates this back.
+    if abs(options.rotation_degrees % 180) != 0:
+      w = normalized_rect.height * image.height / image.width
+      h = normalized_rect.width * image.width / image.height
+      normalized_rect.width = w
+      normalized_rect.height = h
+
     return normalized_rect
 
   def close(self) -> None:
@@ -178,6 +207,11 @@ class BaseVisionTaskApi(object):
       RuntimeError: If the mediapipe vision task failed to close.
     """
     self._runner.close()
+
+  def get_graph_config(self) -> calculator_pb2.CalculatorGraphConfig:
+    """Returns the canonicalized CalculatorGraphConfig of the underlying graph.
+    """
+    return self._runner.get_graph_config()
 
   def __enter__(self):
     """Return `self` upon entering the runtime context."""

@@ -17,8 +17,11 @@ cc_library(
         ":port",
         "//mediapipe/framework:calculator_base",
         "//mediapipe/framework:calculator_contract",
+        "//mediapipe/framework/port:any_proto",
+        "//mediapipe/framework/port:ret_check",
         "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/strings",
+        "@com_google_protobuf//:protobuf",
     ],
 )
 
@@ -35,6 +38,8 @@ cc_test(
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/testdata:night_light_calculator_cc_proto",
+        "//mediapipe/framework/testdata:sky_light_calculator_cc_proto",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -160,6 +165,7 @@ cc_test(
     deps = [
         ":port",
         "//mediapipe/framework/port:gtest_main",
+        "@com_google_absl//absl/strings",
     ],
 )
 

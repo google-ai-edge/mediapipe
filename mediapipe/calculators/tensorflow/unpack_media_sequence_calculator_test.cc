@@ -101,10 +101,10 @@ class UnpackMediaSequenceCalculatorTest : public ::testing::Test {
   std::unique_ptr<CalculatorRunner> runner_;
   const std::string video_id_ = "test_video_id";
   const std::string data_path_ = "test_directory";
-  const int64 start_time_ = 3000000;
-  const int64 end_time_ = 5000000;
+  const int64_t start_time_ = 3000000;
+  const int64_t end_time_ = 5000000;
   const std::string encoded_video_data_ = "encoded_video_data";
-  const int64 encoded_video_start_timestamp_ = 1000000;
+  const int64_t encoded_video_start_timestamp_ = 1000000;
   const double image_frame_rate_ = 1.0;
 };
 
@@ -220,7 +220,7 @@ TEST_F(UnpackMediaSequenceCalculatorTest, UnpacksOneForwardFlowImage) {
   for (int i = 0; i < num_forward_flow_images; ++i) {
     const std::string& output_image = output_packets[i].Get<std::string>();
     ASSERT_EQ(output_image, test_image_string);
-    ASSERT_EQ(output_packets[i].Timestamp().Value(), static_cast<int64>(i));
+    ASSERT_EQ(output_packets[i].Timestamp().Value(), static_cast<int64_t>(i));
   }
 }
 
@@ -249,7 +249,7 @@ TEST_F(UnpackMediaSequenceCalculatorTest, UnpacksTwoForwardFlowImages) {
   for (int i = 0; i < num_forward_flow_images; ++i) {
     const std::string& output_image = output_packets[i].Get<std::string>();
     ASSERT_EQ(output_image, test_image_strings[i]);
-    ASSERT_EQ(output_packets[i].Timestamp().Value(), static_cast<int64>(i));
+    ASSERT_EQ(output_packets[i].Timestamp().Value(), static_cast<int64_t>(i));
   }
 }
 
@@ -647,7 +647,7 @@ TEST_F(UnpackMediaSequenceCalculatorTest, GetAudioDecoderOptionsOverride) {
 
 TEST_F(UnpackMediaSequenceCalculatorTest, GetPacketResamplingOptions) {
   // TODO: Suport proto3 proto.Any in CalculatorOptions.
-  // TODO: Avoid google::protobuf extensions in "RESAMPLER_OPTIONS".
+  // TODO: Avoid proto2 extensions in "RESAMPLER_OPTIONS".
   CalculatorOptions options;
   options.MutableExtension(UnpackMediaSequenceCalculatorOptions::ext)
       ->set_padding_before_label(1);

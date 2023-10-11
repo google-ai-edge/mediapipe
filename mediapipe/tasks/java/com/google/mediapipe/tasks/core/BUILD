@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ android_library(
         "//mediapipe/tasks/cc/core/proto:base_options_java_proto_lite",
         "//mediapipe/tasks/cc/core/proto:external_file_java_proto_lite",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:model_resources_cache_jni",
+        "//third_party:any_java_proto",
         "//third_party:autovalue",
         "@com_google_protobuf//:protobuf_javalite",
         "@maven//:com_google_guava_guava",
@@ -54,10 +55,10 @@ load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl"
 mediapipe_tasks_core_aar(
     name = "tasks_core",
     srcs = glob(["**/*.java"]) + [
+        "//mediapipe/java/com/google/mediapipe/framework/image:java_src",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:java_src",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/processors:java_src",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/utils:java_src",
-        "//mediapipe/java/com/google/mediapipe/framework/image:java_src",
     ],
     manifest = "AndroidManifest.xml",
 )

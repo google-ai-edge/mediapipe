@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2022 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,9 +60,8 @@ export class ImageClassifier extends VisionTaskRunner {
   static createFromOptions(
       wasmFileset: WasmFileset, imageClassifierOptions: ImageClassifierOptions):
       Promise<ImageClassifier> {
-    return VisionTaskRunner.createInstance(
-        ImageClassifier, /* initializeCanvas= */ true, wasmFileset,
-        imageClassifierOptions);
+    return VisionTaskRunner.createVisionInstance(
+        ImageClassifier, wasmFileset, imageClassifierOptions);
   }
 
   /**
@@ -75,9 +74,8 @@ export class ImageClassifier extends VisionTaskRunner {
   static createFromModelBuffer(
       wasmFileset: WasmFileset,
       modelAssetBuffer: Uint8Array): Promise<ImageClassifier> {
-    return VisionTaskRunner.createInstance(
-        ImageClassifier, /* initializeCanvas= */ true, wasmFileset,
-        {baseOptions: {modelAssetBuffer}});
+    return VisionTaskRunner.createVisionInstance(
+        ImageClassifier, wasmFileset, {baseOptions: {modelAssetBuffer}});
   }
 
   /**
@@ -90,9 +88,8 @@ export class ImageClassifier extends VisionTaskRunner {
   static createFromModelPath(
       wasmFileset: WasmFileset,
       modelAssetPath: string): Promise<ImageClassifier> {
-    return VisionTaskRunner.createInstance(
-        ImageClassifier, /* initializeCanvas= */ true, wasmFileset,
-        {baseOptions: {modelAssetPath}});
+    return VisionTaskRunner.createVisionInstance(
+        ImageClassifier, wasmFileset, {baseOptions: {modelAssetPath}});
   }
 
   /** @hideconstructor */
@@ -190,6 +187,10 @@ export class ImageClassifier extends VisionTaskRunner {
         CLASSIFICATIONS_STREAM, (binaryProto, timestamp) => {
           this.classificationResult = convertFromClassificationResultProto(
               ClassificationResult.deserializeBinary(binaryProto));
+          this.setLatestOutputTimestamp(timestamp);
+        });
+    this.graphRunner.attachEmptyPacketListener(
+        CLASSIFICATIONS_STREAM, timestamp => {
           this.setLatestOutputTimestamp(timestamp);
         });
 

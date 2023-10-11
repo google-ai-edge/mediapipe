@@ -1,4 +1,4 @@
-/* Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2023 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ limitations under the License.
 #define MEDIAPIPE_TASKS_CC_COMPONENTS_CONTAINERS_LANDMARK_H_
 
 #include <cstdlib>
+#include <optional>
 #include <string>
 #include <vector>
 

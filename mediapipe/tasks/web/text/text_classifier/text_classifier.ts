@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2022 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ export class TextClassifier extends TaskRunner {
       wasmFileset: WasmFileset,
       textClassifierOptions: TextClassifierOptions): Promise<TextClassifier> {
     return TaskRunner.createInstance(
-        TextClassifier, /* initializeCanvas= */ false, wasmFileset,
+        TextClassifier, /* canvas= */ null, wasmFileset,
         textClassifierOptions);
   }
 
@@ -73,7 +73,7 @@ export class TextClassifier extends TaskRunner {
       wasmFileset: WasmFileset,
       modelAssetBuffer: Uint8Array): Promise<TextClassifier> {
     return TaskRunner.createInstance(
-        TextClassifier, /* initializeCanvas= */ false, wasmFileset,
+        TextClassifier, /* canvas= */ null, wasmFileset,
         {baseOptions: {modelAssetBuffer}});
   }
 
@@ -88,7 +88,7 @@ export class TextClassifier extends TaskRunner {
       wasmFileset: WasmFileset,
       modelAssetPath: string): Promise<TextClassifier> {
     return TaskRunner.createInstance(
-        TextClassifier, /* initializeCanvas= */ false, wasmFileset,
+        TextClassifier, /* canvas= */ null, wasmFileset,
         {baseOptions: {modelAssetPath}});
   }
 
@@ -131,11 +131,9 @@ export class TextClassifier extends TaskRunner {
    * @return The classification result of the text
    */
   classify(text: string): TextClassifierResult {
-    // Increment the timestamp by 1 millisecond to guarantee that we send
-    // monotonically increasing timestamps to the graph.
-    const syntheticTimestamp = this.getLatestOutputTimestamp() + 1;
     this.classificationResult = {classifications: []};
-    this.graphRunner.addStringToStream(text, INPUT_STREAM, syntheticTimestamp);
+    this.graphRunner.addStringToStream(
+        text, INPUT_STREAM, this.getSynctheticTimestamp());
     this.finishProcessing();
     return this.classificationResult;
   }
@@ -162,6 +160,10 @@ export class TextClassifier extends TaskRunner {
         CLASSIFICATIONS_STREAM, (binaryProto, timestamp) => {
           this.classificationResult = convertFromClassificationResultProto(
               ClassificationResult.deserializeBinary(binaryProto));
+          this.setLatestOutputTimestamp(timestamp);
+        });
+    this.graphRunner.attachEmptyPacketListener(
+        CLASSIFICATIONS_STREAM, timestamp => {
           this.setLatestOutputTimestamp(timestamp);
         });
 

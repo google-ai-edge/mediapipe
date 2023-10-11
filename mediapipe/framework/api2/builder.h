@@ -1,16 +1,23 @@
 #ifndef MEDIAPIPE_FRAMEWORK_API2_BUILDER_H_
 #define MEDIAPIPE_FRAMEWORK_API2_BUILDER_H_
 
+#include <functional>
+#include <map>
 #include <memory>
+#include <optional>
 #include <string>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 #include "absl/container/btree_map.h"
 #include "absl/strings/string_view.h"
+#include "google/protobuf/message_lite.h"
 #include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/calculator_base.h"
 #include "mediapipe/framework/calculator_contract.h"
+#include "mediapipe/framework/port/any_proto.h"
+#include "mediapipe/framework/port/ret_check.h"
 
 namespace mediapipe {
 namespace api2 {
@@ -25,7 +32,7 @@ template <class T>
 struct dependent_false : std::false_type {};
 
 template <typename T>
-T& GetWithAutoGrow(std::vector<std::unique_ptr<T>>* vecp, int index) {
+T& GetWithAutoGrow(std::vector<std::unique_ptr<T>>* vecp, size_t index) {
   auto& vec = *vecp;
   if (vec.size() <= index) {
     vec.resize(index + 1);
@@ -216,6 +223,16 @@ class SourceImpl {
     return !(*this == other);
   }
 
+  Src& SetName(const char* name) {
+    base_->name_ = std::string(name);
+    return *this;
+  }
+
+  Src& SetName(absl::string_view name) {
+    base_->name_ = std::string(name);
+    return *this;
+  }
+
   Src& SetName(std::string name) {
     base_->name_ = std::move(name);
     return *this;
@@ -380,20 +397,47 @@ class NodeBase {
 
   SideDestination<> SideIn(int index) { return SideIn("")[index]; }
 
-  template <typename T>
-  T& GetOptions() {
-    return GetOptions(T::ext);
+  // Get mutable node options of type Options.
+  template <
+      typename OptionsT,
+      typename std::enable_if<std::is_base_of<
+          google::protobuf::MessageLite, OptionsT>::value>::type* = nullptr>
+  OptionsT& GetOptions() {
+    return GetOptionsInternal<OptionsT>(nullptr);
   }
 
   // Use this API when the proto extension does not follow the "ext" naming
   // convention.
-  template <typename E>
-  auto& GetOptions(const E& extension) {
-    options_used_ = true;
-    return *options_.MutableExtension(extension);
+  template <typename ExtensionT>
+  auto& GetOptions(const ExtensionT& ext) {
+    if (!calculator_option_.has_value()) {
+      calculator_option_ = CalculatorOptions();
+    }
+    return *calculator_option_->MutableExtension(ext);
   }
 
  protected:
+  // GetOptionsInternal resolutes the overload greedily, which finds the first
+  // match then succeed (template specialization tries all matches, thus could
+  // be ambiguous)
+  template <typename OptionsT>
+  OptionsT& GetOptionsInternal(decltype(&OptionsT::ext) /*unused*/) {
+    return GetOptions(OptionsT::ext);
+  }
+  template <typename OptionsT>
+  OptionsT& GetOptionsInternal(...) {
+    if (node_options_.count(kTypeId<OptionsT>)) {
+      return *static_cast<OptionsT*>(
+          node_options_[kTypeId<OptionsT>].message.get());
+    }
+    auto option = std::make_unique<OptionsT>();
+    OptionsT* option_ptr = option.get();
+    node_options_[kTypeId<OptionsT>] = {
+        std::move(option),
+        [option_ptr](protobuf::Any& any) { return any.PackFrom(*option_ptr); }};
+    return *option_ptr;
+  }
+
   NodeBase(std::string type) : type_(std::move(type)) {}
 
   std::string type_;
@@ -401,9 +445,14 @@ class NodeBase {
   TagIndexMap<SourceBase> out_streams_;
   TagIndexMap<DestinationBase> in_sides_;
   TagIndexMap<SourceBase> out_sides_;
-  CalculatorOptions options_;
-  // ideally we'd just check if any extensions are set on options_
-  bool options_used_ = false;
+  std::optional<CalculatorOptions> calculator_option_;
+  // Stores real proto config, and lambda for packing config into Any.
+  // We need the lambda because PackFrom() does not work with MessageLite.
+  struct MessageAndPacker {
+    std::unique_ptr<google::protobuf::MessageLite> message;
+    std::function<bool(protobuf::Any&)> packer;
+  };
+  std::map<TypeId, MessageAndPacker> node_options_;
   friend class Graph;
 };
 
@@ -425,7 +474,10 @@ using GenericNode = Node<internal::Generic>;
 template <class Calc>
 class Node : public NodeBase {
  public:
-  Node() : NodeBase(std::string(Calc::kCalculatorName)) {}
+  Node()
+      : NodeBase(
+            FunctionRegistry<NodeBase>::GetLookupName(Calc::kCalculatorName)) {}
+
   // Overrides the built-in calculator type string with the provided argument.
   // Can be used to create nodes from pure interfaces.
   // TODO: only use this for pure interfaces
@@ -546,6 +598,7 @@ class Graph {
 
   // Creates a node of a specific type. Should be used for pure interfaces,
   // which do not have a built-in type string.
+  // `type` is a calculator type-name with dot-separated namespaces.
   template <class Calc>
   Node<Calc>& AddNode(absl::string_view type) {
     auto node =
@@ -557,6 +610,7 @@ class Graph {
 
   // Creates a generic node, with no compile-time checking of inputs and
   // outputs. This can be used for calculators whose contract is not visible.
+  // `type` is a calculator type-name with dot-separated namespaces.
   GenericNode& AddNode(absl::string_view type) {
     auto node =
         std::make_unique<GenericNode>(std::string(type.data(), type.size()));
@@ -708,12 +762,12 @@ class Graph {
     }
   }
 
-  std::string TaggedName(const TagIndexLocation& loc, const std::string& name) {
+  std::string TaggedName(const TagIndexLocation& loc, absl::string_view name) {
     if (loc.tag.empty()) {
       // ParseTagIndexName does not allow using explicit indices without tags,
       // while ParseTagIndex does.
       // TODO: decide whether we should just allow it.
-      return name;
+      return std::string(name);
     } else {
       if (loc.count <= 1) {
         return absl::StrCat(loc.tag, ":", name);
@@ -744,8 +798,11 @@ class Graph {
         [&](const TagIndexLocation& loc, const SourceBase& endpoint) {
           config->add_output_side_packet(TaggedName(loc, endpoint.name_));
         });
-    if (node.options_used_) {
-      *config->mutable_options() = node.options_;
+    if (node.calculator_option_.has_value()) {
+      *config->mutable_options() = *node.calculator_option_;
+    }
+    for (auto& [type_id, message_and_packer] : node.node_options_) {
+      RET_CHECK(message_and_packer.packer(*config->add_node_options()));
     }
     return {};
   }

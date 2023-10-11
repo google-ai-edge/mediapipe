@@ -82,10 +82,10 @@ absl::Status TensorsDequantizationCalculator::Process(CalculatorContext* cc) {
                                  input_tensor.shape());
     switch (input_tensor.element_type()) {
       case Tensor::ElementType::kUInt8:
-        Dequantize<uint8>(input_tensor, &output_tensors->back());
+        Dequantize<uint8_t>(input_tensor, &output_tensors->back());
         break;
       case Tensor::ElementType::kInt8:
-        Dequantize<int8>(input_tensor, &output_tensors->back());
+        Dequantize<int8_t>(input_tensor, &output_tensors->back());
         break;
       case Tensor::ElementType::kBool:
         Dequantize<bool>(input_tensor, &output_tensors->back());

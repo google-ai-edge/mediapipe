@@ -61,8 +61,8 @@ class AtomicSemaphore {
 };
 
 // Returns the timestamp values for a vector of Packets.
-std::vector<int64> TimestampValues(const std::vector<Packet>& packets) {
-  std::vector<int64> result;
+std::vector<int64_t> TimestampValues(const std::vector<Packet>& packets) {
+  std::vector<int64_t> result;
   for (const Packet& packet : packets) {
     result.push_back(packet.Timestamp().Value());
   }
@@ -180,9 +180,9 @@ TEST_F(FlowLimiterCalculatorSemaphoreTest, FramesDropped) {
   InitializeGraph(1);
   MP_ASSERT_OK(graph_.StartRun({}));
 
-  auto send_packet = [this](const std::string& input_name, int64 n) {
+  auto send_packet = [this](const std::string& input_name, int64_t n) {
     MP_EXPECT_OK(graph_.AddPacketToInputStream(
-        input_name, MakePacket<int64>(n).At(Timestamp(n))));
+        input_name, MakePacket<int64_t>(n).At(Timestamp(n))));
   };
 
   Packet allow_packet;
@@ -207,12 +207,12 @@ TEST_F(FlowLimiterCalculatorSemaphoreTest, FramesDropped) {
   EXPECT_EQ(10, out_1_packets_.size());
 
   // Timestamps have not been altered.
-  EXPECT_EQ(PacketValues<int64>(out_1_packets_),
+  EXPECT_EQ(PacketValues<int64_t>(out_1_packets_),
             TimestampValues(out_1_packets_));
 
   // Extra inputs on in_1 have been dropped.
   EXPECT_EQ(TimestampValues(out_1_packets_),
-            (std::vector<int64>{0, 10, 20, 30, 40, 50, 60, 70, 80, 90}));
+            (std::vector<int64_t>{0, 10, 20, 30, 40, 50, 60, 70, 80, 90}));
 }
 
 // A calculator that sleeps during Process.
@@ -221,8 +221,8 @@ class SleepCalculator : public CalculatorBase {
   static absl::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Tag(kPacketTag).SetAny();
     cc->Outputs().Tag(kPacketTag).SetSameAs(&cc->Inputs().Tag(kPacketTag));
-    cc->InputSidePackets().Tag(kSleepTimeTag).Set<int64>();
-    cc->InputSidePackets().Tag(kWarmupTimeTag).Set<int64>();
+    cc->InputSidePackets().Tag(kSleepTimeTag).Set<int64_t>();
+    cc->InputSidePackets().Tag(kWarmupTimeTag).Set<int64_t>();
     cc->InputSidePackets().Tag(kClockTag).Set<mediapipe::Clock*>();
     cc->SetTimestampOffset(0);
     return absl::OkStatus();
@@ -237,8 +237,8 @@ class SleepCalculator : public CalculatorBase {
     ++packet_count;
     absl::Duration sleep_time = absl::Microseconds(
         packet_count == 1
-            ? cc->InputSidePackets().Tag(kWarmupTimeTag).Get<int64>()
-            : cc->InputSidePackets().Tag(kSleepTimeTag).Get<int64>());
+            ? cc->InputSidePackets().Tag(kWarmupTimeTag).Get<int64_t>()
+            : cc->InputSidePackets().Tag(kSleepTimeTag).Get<int64_t>());
     clock_->Sleep(sleep_time);
     cc->Outputs()
         .Tag(kPacketTag)
@@ -375,8 +375,8 @@ TEST_F(FlowLimiterCalculatorTest, FinishedTimestamps) {
   std::map<std::string, Packet> side_packets = {
       {"limiter_options",
        MakePacket<FlowLimiterCalculatorOptions>(limiter_options)},
-      {"warmup_time", MakePacket<int64>(22000)},
-      {"sleep_time", MakePacket<int64>(22000)},
+      {"warmup_time", MakePacket<int64_t>(22000)},
+      {"sleep_time", MakePacket<int64_t>(22000)},
       {"drop_timesamps", MakePacket<bool>(false)},
       {"clock", MakePacket<mediapipe::Clock*>(clock_)},
   };
@@ -447,8 +447,8 @@ TEST_F(FlowLimiterCalculatorTest, FinishedLost) {
   std::map<std::string, Packet> side_packets = {
       {"limiter_options",
        MakePacket<FlowLimiterCalculatorOptions>(limiter_options)},
-      {"warmup_time", MakePacket<int64>(22000)},
-      {"sleep_time", MakePacket<int64>(22000)},
+      {"warmup_time", MakePacket<int64_t>(22000)},
+      {"sleep_time", MakePacket<int64_t>(22000)},
       {"drop_timesamps", MakePacket<bool>(true)},
       {"clock", MakePacket<mediapipe::Clock*>(clock_)},
   };
@@ -511,8 +511,8 @@ TEST_F(FlowLimiterCalculatorTest, FinishedDelayed) {
   std::map<std::string, Packet> side_packets = {
       {"limiter_options",
        MakePacket<FlowLimiterCalculatorOptions>(limiter_options)},
-      {"warmup_time", MakePacket<int64>(500000)},
-      {"sleep_time", MakePacket<int64>(22000)},
+      {"warmup_time", MakePacket<int64_t>(500000)},
+      {"sleep_time", MakePacket<int64_t>(22000)},
       {"drop_timesamps", MakePacket<bool>(false)},
       {"clock", MakePacket<mediapipe::Clock*>(clock_)},
   };
@@ -606,8 +606,8 @@ TEST_F(FlowLimiterCalculatorTest, TwoInputStreams) {
   std::map<std::string, Packet> side_packets = {
       {"limiter_options",
        MakePacket<FlowLimiterCalculatorOptions>(limiter_options)},
-      {"warmup_time", MakePacket<int64>(22000)},
-      {"sleep_time", MakePacket<int64>(22000)},
+      {"warmup_time", MakePacket<int64_t>(22000)},
+      {"sleep_time", MakePacket<int64_t>(22000)},
       {"drop_timesamps", MakePacket<bool>(true)},
       {"clock", MakePacket<mediapipe::Clock*>(clock_)},
   };
@@ -715,8 +715,8 @@ TEST_F(FlowLimiterCalculatorTest, ZeroQueue) {
   std::map<std::string, Packet> side_packets = {
       {"limiter_options",
        MakePacket<FlowLimiterCalculatorOptions>(limiter_options)},
-      {"warmup_time", MakePacket<int64>(12000)},
-      {"sleep_time", MakePacket<int64>(12000)},
+      {"warmup_time", MakePacket<int64_t>(12000)},
+      {"sleep_time", MakePacket<int64_t>(12000)},
       {"drop_timesamps", MakePacket<bool>(true)},
       {"clock", MakePacket<mediapipe::Clock*>(clock_)},
   };
@@ -862,9 +862,9 @@ TEST_F(FlowLimiterCalculatorTest, AuxiliaryInputs) {
 
   std::map<std::string, Packet> side_packets = {
       // Fake processing lazy initialization time in microseconds.
-      {"warmup_time", MakePacket<int64>(22000)},
+      {"warmup_time", MakePacket<int64_t>(22000)},
       // Fake processing duration in microseconds.
-      {"sleep_time", MakePacket<int64>(22000)},
+      {"sleep_time", MakePacket<int64_t>(22000)},
       // The SimulationClock to count virtual elapsed time.
       {"clock", MakePacket<mediapipe::Clock*>(clock_)},
   };

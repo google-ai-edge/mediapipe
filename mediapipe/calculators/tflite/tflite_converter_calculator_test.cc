@@ -42,7 +42,7 @@ constexpr char kTransposeOptionsString[] =
 
 using RandomEngine = std::mt19937_64;
 using testing::Eq;
-const uint32 kSeed = 1234;
+const uint32_t kSeed = 1234;
 const int kNumSizes = 8;
 const int sizes[kNumSizes][2] = {{1, 1}, {12, 1}, {1, 9},   {2, 2},
                                  {5, 3}, {7, 13}, {16, 32}, {101, 2}};
@@ -50,7 +50,7 @@ const int sizes[kNumSizes][2] = {{1, 1}, {12, 1}, {1, 9},   {2, 2},
 class TfLiteConverterCalculatorTest : public ::testing::Test {
  protected:
   // Adds a packet with a matrix filled with random values in [0,1].
-  void AddRandomMatrix(int num_rows, int num_columns, uint32 seed,
+  void AddRandomMatrix(int num_rows, int num_columns, uint32_t seed,
                        bool row_major_matrix = false) {
     RandomEngine random(kSeed);
     std::uniform_real_distribution<> uniform_dist(0, 1.0);
@@ -228,7 +228,7 @@ TEST_F(TfLiteConverterCalculatorTest, CustomDivAndSub) {
   MP_ASSERT_OK(graph.StartRun({}));
   auto input_image = absl::make_unique<ImageFrame>(ImageFormat::GRAY8, 1, 1);
   cv::Mat mat = mediapipe::formats::MatView(input_image.get());
-  mat.at<uint8>(0, 0) = 200;
+  mat.at<uint8_t>(0, 0) = 200;
   MP_ASSERT_OK(graph.AddPacketToInputStream(
       "input_image", Adopt(input_image.release()).At(Timestamp(0))));
 
@@ -284,7 +284,7 @@ TEST_F(TfLiteConverterCalculatorTest, SetOutputRange) {
     MP_ASSERT_OK(graph.StartRun({}));
     auto input_image = absl::make_unique<ImageFrame>(ImageFormat::GRAY8, 1, 1);
     cv::Mat mat = mediapipe::formats::MatView(input_image.get());
-    mat.at<uint8>(0, 0) = 200;
+    mat.at<uint8_t>(0, 0) = 200;
     MP_ASSERT_OK(graph.AddPacketToInputStream(
         "input_image", Adopt(input_image.release()).At(Timestamp(0))));
 

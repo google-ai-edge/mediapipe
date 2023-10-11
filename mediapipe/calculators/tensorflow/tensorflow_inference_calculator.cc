@@ -61,12 +61,12 @@ constexpr char kSessionBundleTag[] = "SESSION_BUNDLE";
 // overload GPU/TPU/...
 class SimpleSemaphore {
  public:
-  explicit SimpleSemaphore(uint32 initial_count) : count_(initial_count) {}
+  explicit SimpleSemaphore(uint32_t initial_count) : count_(initial_count) {}
   SimpleSemaphore(const SimpleSemaphore&) = delete;
   SimpleSemaphore(SimpleSemaphore&&) = delete;
 
   // Acquires the semaphore by certain amount.
-  void Acquire(uint32 amount) {
+  void Acquire(uint32_t amount) {
     mutex_.Lock();
     while (count_ < amount) {
       cond_.Wait(&mutex_);
@@ -76,7 +76,7 @@ class SimpleSemaphore {
   }
 
   // Releases the semaphore by certain amount.
-  void Release(uint32 amount) {
+  void Release(uint32_t amount) {
     mutex_.Lock();
     count_ += amount;
     cond_.SignalAll();
@@ -84,7 +84,7 @@ class SimpleSemaphore {
   }
 
  private:
-  uint32 count_;
+  uint32_t count_;
   absl::Mutex mutex_;
   absl::CondVar cond_;
 };
@@ -488,7 +488,7 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
   // necessary.
   absl::Status OutputBatch(CalculatorContext* cc,
                            std::unique_ptr<InferenceState> inference_state) {
-    const int64 start_time = absl::ToUnixMicros(clock_->TimeNow());
+    const int64_t start_time = absl::ToUnixMicros(clock_->TimeNow());
     std::vector<std::pair<mediapipe::ProtoString, tf::Tensor>> input_tensors;
 
     for (auto& keyed_tensors : inference_state->input_tensor_batches_) {
@@ -544,7 +544,7 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
           get_session_run_throttle(options_.max_concurrent_session_runs());
       session_run_throttle->Acquire(1);
     }
-    const int64 run_start_time = absl::ToUnixMicros(clock_->TimeNow());
+    const int64_t run_start_time = absl::ToUnixMicros(clock_->TimeNow());
     tf::Status tf_status;
     {
 #if !defined(MEDIAPIPE_MOBILE) && !defined(__APPLE__)
@@ -562,7 +562,7 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
     // informative error message.
     RET_CHECK(tf_status.ok()) << "Run failed: " << tf_status.ToString();
 
-    const int64 run_end_time = absl::ToUnixMicros(clock_->TimeNow());
+    const int64_t run_end_time = absl::ToUnixMicros(clock_->TimeNow());
     cc->GetCounter(kTotalSessionRunsTimeUsecsCounterSuffix)
         ->IncrementBy(run_end_time - run_start_time);
     cc->GetCounter(kTotalNumSessionRunsCounterSuffix)->Increment();
@@ -611,7 +611,7 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
     }
 
     // Get end time and report.
-    const int64 end_time = absl::ToUnixMicros(clock_->TimeNow());
+    const int64_t end_time = absl::ToUnixMicros(clock_->TimeNow());
     cc->GetCounter(kTotalUsecsCounterSuffix)
         ->IncrementBy(end_time - start_time);
     cc->GetCounter(kTotalProcessedTimestampsCounterSuffix)
@@ -650,7 +650,7 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
 
   // The static singleton semaphore to throttle concurrent session runs.
   static SimpleSemaphore* get_session_run_throttle(
-      int32 max_concurrent_session_runs) {
+      int32_t max_concurrent_session_runs) {
     static SimpleSemaphore* session_run_throttle =
         new SimpleSemaphore(max_concurrent_session_runs);
     return session_run_throttle;

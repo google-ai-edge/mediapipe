@@ -33,7 +33,9 @@ bzl_library(
     srcs = [
         "transitive_protos.bzl",
     ],
-    visibility = ["//mediapipe/framework:__subpackages__"],
+    visibility = [
+        "//mediapipe/framework:__subpackages__",
+    ],
 )
 
 bzl_library(
@@ -42,6 +44,9 @@ bzl_library(
         "encode_binary_proto.bzl",
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "@bazel_skylib//lib:paths",
+    ],
 )
 
 alias(
@@ -302,15 +307,16 @@ cc_library(
     ],
     deps = [
         ":calculator_base",
+        ":calculator_cc_proto",
         ":calculator_node",
         ":counter_factory",
         ":delegating_executor",
-        ":mediapipe_profiling",
         ":executor",
         ":graph_output_stream",
         ":graph_service",
         ":graph_service_manager",
         ":input_stream_manager",
+        ":mediapipe_profiling",
         ":output_side_packet_impl",
         ":output_stream",
         ":output_stream_manager",
@@ -318,28 +324,18 @@ cc_library(
         ":output_stream_shard",
         ":packet",
         ":packet_generator",
+        ":packet_generator_cc_proto",
         ":packet_generator_graph",
         ":packet_set",
         ":packet_type",
         ":port",
         ":scheduler_queue",
         ":status_handler",
+        ":status_handler_cc_proto",
         ":thread_pool_executor",
+        ":thread_pool_executor_cc_proto",
         ":timestamp",
         ":validated_graph_config",
-        ":calculator_cc_proto",
-        ":packet_generator_cc_proto",
-        ":status_handler_cc_proto",
-        ":thread_pool_executor_cc_proto",
-        "@com_google_absl//absl/base:core_headers",
-        "@com_google_absl//absl/container:fixed_array",
-        "@com_google_absl//absl/container:flat_hash_map",
-        "@com_google_absl//absl/container:flat_hash_set",
-        "@com_google_absl//absl/memory",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:str_format",
-        "@com_google_absl//absl/synchronization",
         "//mediapipe/framework/port:core_proto",
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:logging",
@@ -352,13 +348,19 @@ cc_library(
         "//mediapipe/framework/tool:tag_map",
         "//mediapipe/framework/tool:validate",
         "//mediapipe/framework/tool:validate_name",
-        "//mediapipe/gpu:graph_support",
         "//mediapipe/gpu:gpu_service",
+        "//mediapipe/gpu:graph_support",
         "//mediapipe/util:cpu_util",
-    ] + select({
-        "//conditions:default": ["//mediapipe/gpu:gpu_shared_data_internal"],
-        "//mediapipe/gpu:disable_gpu": [],
-    }),
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/container:fixed_array",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/synchronization",
+    ],
 )
 
 cc_library(
@@ -971,6 +973,15 @@ cc_library(
         "//mediapipe/framework/port:disable_opencv": ["MEDIAPIPE_DISABLE_OPENCV=1"],
     }) + select({
         "//conditions:default": [],
+        # TODO: Improve this. This only sets MEDIAPIPE_DISABLE_OPENCV as a "defines" Make
+        # value, not as a bazel "--define" variable, which has effects in C++ code but not in
+        # select() statements.
+        "//mediapipe/framework/port:enable_halide": [
+            "MEDIAPIPE_ENABLE_HALIDE=1",
+            "MEDIAPIPE_DISABLE_OPENCV=1",
+        ],
+    }) + select({
+        "//conditions:default": [],
         "//mediapipe/framework:disable_rtti_and_exceptions": [
             "MEDIAPIPE_HAS_RTTI=0",
         ],
@@ -1048,6 +1059,7 @@ cc_library(
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:optional",
     ],
 )
@@ -1087,6 +1099,7 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
     ],
+    alwayslink = True,  # Defines TestServiceCalculator
 )
 
 cc_library(
@@ -1343,6 +1356,23 @@ cc_test(
 )
 
 cc_test(
+    name = "calculator_graph_summary_packet_test",
+    srcs = ["calculator_graph_summary_packet_test.cc"],
+    deps = [
+        ":calculator_framework",
+        ":packet",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/api2:packet",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/stream_handler:immediate_input_stream_handler",
+        "//mediapipe/framework/tool:sink",
+        "@com_google_absl//absl/status",
+    ],
+)
+
+cc_test(
     name = "calculator_runner_test",
     size = "medium",
     srcs = ["calculator_runner_test.cc"],
@@ -1393,6 +1423,7 @@ cc_test(
         "calculator_graph_test.cc",
     ],
     linkstatic = 1,
+    tags = ["not_run:arm"],
     visibility = ["//visibility:public"],
     deps = [
         ":calculator_framework",
@@ -1430,7 +1461,7 @@ cc_test(
         "//mediapipe/framework/stream_handler:timestamp_align_input_stream_handler",
         "//mediapipe/framework/tool:sink",
         "//mediapipe/framework/tool:status_util",
-        "//mediapipe/gpu:graph_support",
+        "//mediapipe/gpu:gpu_service",
         "@com_google_absl//absl/container:fixed_array",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
@@ -1529,6 +1560,7 @@ cc_test(
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "//mediapipe/framework/port:status_matchers",
         "//mediapipe/framework/tool:sink",
     ],
 )
@@ -1673,6 +1705,7 @@ cc_test(
         ":subgraph",
         ":test_calculators",
         "//mediapipe/calculators/core:constant_side_packet_calculator",
+        "//mediapipe/calculators/core:constant_side_packet_calculator_cc_proto",
         "//mediapipe/calculators/core:pass_through_calculator",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",

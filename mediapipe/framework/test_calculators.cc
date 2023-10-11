@@ -79,8 +79,8 @@ class IntSplitterPacketGenerator : public PacketGenerator {
       const PacketGeneratorOptions& extendable_options,  //
       PacketTypeSet* input_side_packets,                 //
       PacketTypeSet* output_side_packets) {
-    input_side_packets->Index(0).Set<uint64>();
-    output_side_packets->Index(0).Set<std::pair<uint32, uint32>>();
+    input_side_packets->Index(0).Set<uint64_t>();
+    output_side_packets->Index(0).Set<std::pair<uint32_t, uint32_t>>();
     return absl::OkStatus();
   }
 
@@ -88,11 +88,11 @@ class IntSplitterPacketGenerator : public PacketGenerator {
       const PacketGeneratorOptions& extendable_options,  //
       const PacketSet& input_side_packets,               //
       PacketSet* output_side_packets) {
-    uint64 value = input_side_packets.Index(0).Get<uint64>();
-    uint32 high = value >> 32;
-    uint32 low = value & 0xFFFFFFFF;
+    uint64_t value = input_side_packets.Index(0).Get<uint64_t>();
+    uint32_t high = value >> 32;
+    uint32_t low = value & 0xFFFFFFFF;
     output_side_packets->Index(0) =
-        Adopt(new std::pair<uint32, uint32>(high, low));
+        Adopt(new std::pair<uint32_t, uint32_t>(high, low));
     return absl::OkStatus();
   }
 };
@@ -107,10 +107,10 @@ class TaggedIntSplitterPacketGenerator : public PacketGenerator {
       const PacketGeneratorOptions& extendable_options,  //
       PacketTypeSet* input_side_packets,                 //
       PacketTypeSet* output_side_packets) {
-    input_side_packets->Index(0).Set<uint64>();
-    output_side_packets->Tag(kHighTag).Set<uint32>();
-    output_side_packets->Tag(kLowTag).Set<uint32>();
-    output_side_packets->Tag(kPairTag).Set<std::pair<uint32, uint32>>();
+    input_side_packets->Index(0).Set<uint64_t>();
+    output_side_packets->Tag(kHighTag).Set<uint32_t>();
+    output_side_packets->Tag(kLowTag).Set<uint32_t>();
+    output_side_packets->Tag(kPairTag).Set<std::pair<uint32_t, uint32_t>>();
     return absl::OkStatus();
   }
 
@@ -118,13 +118,13 @@ class TaggedIntSplitterPacketGenerator : public PacketGenerator {
       const PacketGeneratorOptions& extendable_options,  //
       const PacketSet& input_side_packets,               //
       PacketSet* output_side_packets) {
-    uint64 value = input_side_packets.Index(0).Get<uint64>();
-    uint32 high = value >> 32;
-    uint32 low = value & 0xFFFFFFFF;
-    output_side_packets->Tag(kHighTag) = Adopt(new uint32(high));
-    output_side_packets->Tag(kLowTag) = Adopt(new uint32(low));
+    uint64_t value = input_side_packets.Index(0).Get<uint64_t>();
+    uint32_t high = value >> 32;
+    uint32_t low = value & 0xFFFFFFFF;
+    output_side_packets->Tag(kHighTag) = Adopt(new uint32_t(high));
+    output_side_packets->Tag(kLowTag) = Adopt(new uint32_t(low));
     output_side_packets->Tag(kPairTag) =
-        Adopt(new std::pair<uint32, uint32>(high, low));
+        Adopt(new std::pair<uint32_t, uint32_t>(high, low));
     return absl::OkStatus();
   }
 };
@@ -146,7 +146,7 @@ class RangeCalculator : public CalculatorBase {
     cc->Outputs().Index(0).Set<int>();
     cc->Outputs().Index(1).Set<int>();
     cc->Outputs().Index(2).Set<double>();
-    cc->InputSidePackets().Index(0).Set<std::pair<uint32, uint32>>();
+    cc->InputSidePackets().Index(0).Set<std::pair<uint32_t, uint32_t>>();
     return absl::OkStatus();
   }
 
@@ -207,7 +207,7 @@ class RangeCalculator : public CalculatorBase {
 
     cc->Options();  // Ensure Options() can be called here.
     std::tie(n_, k_) =
-        cc->InputSidePackets().Index(0).Get<std::pair<uint32, uint32>>();
+        cc->InputSidePackets().Index(0).Get<std::pair<uint32_t, uint32_t>>();
 
     index_ = 0;
     total_ = 0;
@@ -488,7 +488,7 @@ class MeanAndCovarianceCalculator : public CalculatorBase {
  private:
   Eigen::VectorXd sum_vector_;
   Eigen::MatrixXd outer_product_sum_;
-  int64 num_samples_;
+  int64_t num_samples_;
   int rows_;
 };
 REGISTER_CALCULATOR(MeanAndCovarianceCalculator);

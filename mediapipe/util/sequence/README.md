@@ -555,9 +555,9 @@ without timestamps, use the `context`.
 |`PREFIX/feature/dimensions`|context int list|`set_feature_dimensions` / `SetFeatureDimensions`|A list of integer dimensions for each feature.|
 |`PREFIX/feature/rate`|context float|`set_feature_rate` / `SetFeatureRate`|The rate that features are calculated as features per second.|
 |`PREFIX/feature/bytes/format`|context bytes|`set_feature_bytes_format` / `SetFeatureBytesFormat`|The encoding format if any for features stored as bytes.|
-|`PREFIX/context_feature/floats`|context float list|`add_context_feature_floats` / `AddContextFeatureFloats`|A list of floats for the entire example.|
-|`PREFIX/context_feature/bytes`|context bytes list|`add_context_feature_bytes` / `AddContextFeatureBytes`|A list of bytes for the entire example. Maybe be encoded.|
-|`PREFIX/context_feature/ints`|context int list|`add_context_feature_ints` / `AddContextFeatureInts`|A list of ints for the entire example.|
+|`PREFIX/context_feature/floats`|context float list|`set_context_feature_floats` / `AddContextFeatureFloats`|A list of floats for the entire example.|
+|`PREFIX/context_feature/bytes`|context bytes list|`set_context_feature_bytes` / `AddContextFeatureBytes`|A list of bytes for the entire example. Maybe be encoded.|
+|`PREFIX/context_feature/ints`|context int list|`set_context_feature_ints` / `AddContextFeatureInts`|A list of ints for the entire example.|
 
 ### Keys related to audio
 Audio is a special subtype of generic features with additional data about the
@@ -593,6 +593,8 @@ ground truth transcripts.
 |-----|------|------------------------|-------------|
 |`text/language`|context bytes|`set_text_langage` / `SetTextLanguage`|The language for the corresponding text.|
 |`text/context/content`|context bytes|`set_text_context_content` / `SetTextContextContent`|Storage for large blocks of text in the context.|
+|`text/context/token_id`|context int list|`set_text_context_token_id` / `SetTextContextTokenId`|Storage for large blocks of text in the context as token ids.|
+|`text/context/embedding`|context float list|`set_text_context_embedding` / `SetTextContextEmbedding`|Storage for large blocks of text in the context as embeddings.|
 |`text/content`|feature list bytes|`add_text_content` / `AddTextContent`|One (or a few) text tokens that occur at one timestamp.|
 |`text/timestamp`|feature list int|`add_text_timestamp` / `AddTextTimestamp`|When a text token occurs in microseconds.|
 |`text/duration`|feature list int|`add_text_duration` / `SetTextDuration`|The duration in microseconds for the corresponding text tokens.|

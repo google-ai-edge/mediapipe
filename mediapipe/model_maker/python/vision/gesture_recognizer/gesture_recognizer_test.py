@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -45,6 +45,17 @@ class GestureRecognizerTest(tf.test.TestCase):
   def setUp(self):
     super().setUp()
     tf.keras.utils.set_random_seed(87654321)
+    # Mock tempfile.gettempdir() to be unique for each test to avoid race
+    # condition when downloading model since these tests may run in parallel.
+    mock_gettempdir = unittest_mock.patch.object(
+        tempfile,
+        'gettempdir',
+        return_value=self.create_tempdir(),
+        autospec=True,
+    )
+    self.mock_gettempdir = mock_gettempdir.start()
+    self.addCleanup(mock_gettempdir.stop)
+    # Load dataset used by tests
     all_data = self._load_data()
     # Splits data, 90% data for training, 10% for validation
     self._train_data, self._validation_data = all_data.split(0.9)
@@ -63,7 +74,8 @@ class GestureRecognizerTest(tf.test.TestCase):
     self._test_accuracy(model)
 
   @unittest_mock.patch.object(
-      tf.keras.layers, 'Dense', wraps=tf.keras.layers.Dense)
+      tf.keras.layers, 'Dense', wraps=tf.keras.layers.Dense
+  )
   def test_gesture_recognizer_model_layer_widths(self, mock_dense):
     layer_widths = [64, 32]
     mo = gesture_recognizer.ModelOptions(layer_widths=layer_widths)
@@ -133,12 +145,14 @@ class GestureRecognizerTest(tf.test.TestCase):
       hyperparameters,
       'HParams',
       autospec=True,
-      return_value=gesture_recognizer.HParams(epochs=1))
+      return_value=gesture_recognizer.HParams(epochs=1),
+  )
   @unittest_mock.patch.object(
       model_options,
       'GestureRecognizerModelOptions',
       autospec=True,
-      return_value=gesture_recognizer.ModelOptions())
+      return_value=gesture_recognizer.ModelOptions(),
+  )
   def test_create_hparams_and_model_options_if_none_in_gesture_recognizer_options(
       self, mock_hparams, mock_model_options):
     options = gesture_recognizer.GestureRecognizerOptions()

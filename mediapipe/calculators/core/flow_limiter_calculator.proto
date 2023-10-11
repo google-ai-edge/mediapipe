@@ -35,7 +35,6 @@ message FlowLimiterCalculatorOptions {
   optional int32 max_in_queue = 2 [default = 0];
 
   // The maximum time in microseconds to wait for a frame to finish processing.
-  // The default value stops waiting after 1 sec.
-  // The value 0 specifies no timeout.
-  optional int64 in_flight_timeout = 3 [default = 1000000];
+  // The default value 0 specifies no timeout.
+  optional int64 in_flight_timeout = 3 [default = 0];
 }

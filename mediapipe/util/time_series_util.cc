@@ -29,7 +29,7 @@ namespace time_series_util {
 
 bool LogWarningIfTimestampIsInconsistent(const Timestamp& current_timestamp,
                                          const Timestamp& initial_timestamp,
-                                         int64 cumulative_samples,
+                                         int64_t cumulative_samples,
                                          double sample_rate) {
   // Ignore the "special" timestamp value Done().
   if (current_timestamp == Timestamp::Done()) return true;
@@ -122,11 +122,11 @@ absl::Status IsMatrixShapeConsistentWithHeader(const Matrix& matrix,
   return absl::OkStatus();
 }
 
-int64 SecondsToSamples(double time_in_seconds, double sample_rate) {
+int64_t SecondsToSamples(double time_in_seconds, double sample_rate) {
   return round(time_in_seconds * sample_rate);
 }
 
-double SamplesToSeconds(int64 num_samples, double sample_rate) {
+double SamplesToSeconds(int64_t num_samples, double sample_rate) {
   DCHECK_NE(sample_rate, 0.0);
   return (num_samples / sample_rate);
 }

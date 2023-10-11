@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import numpy as np
 import tensorflow as tf
 
 from mediapipe.model_maker.python.core.data import dataset
-from mediapipe.model_maker.python.core.utils import file_util
 from mediapipe.model_maker.python.core.utils import quantization
 
 DEFAULT_SCALE, DEFAULT_ZERO_POINT = 0, 0
@@ -53,8 +52,8 @@ def load_keras_model(model_path: str,
   """Loads a tensorflow Keras model from file and returns the Keras model.
 
   Args:
-    model_path: Relative path to a directory containing model data, such as
-      <parent_path>/saved_model/.
+    model_path: Absolute path to a directory containing model data, such as
+      /<parent_path>/saved_model/.
     compile_on_load: Whether the model should be compiled while loading. If
       False, the model returned has to be compiled with the appropriate loss
       function and custom metrics before running for inference on a test
@@ -63,22 +62,22 @@ def load_keras_model(model_path: str,
   Returns:
     A tensorflow Keras model.
   """
-  absolute_path = file_util.get_absolute_path(model_path)
   return tf.keras.models.load_model(
-      absolute_path, custom_objects={'tf': tf}, compile=compile_on_load)
+      model_path, custom_objects={'tf': tf}, compile=compile_on_load
+  )
 
 
 def load_tflite_model_buffer(model_path: str) -> bytearray:
   """Loads a TFLite model buffer from file.
 
   Args:
-    model_path: Relative path to a TFLite file
+    model_path: Absolute path to a TFLite file, such as
+      /<parent_path>/<model_file>.tflite.
 
   Returns:
     A TFLite model buffer
   """
-  absolute_path = file_util.get_absolute_path(model_path)
-  with tf.io.gfile.GFile(absolute_path, 'rb') as f:
+  with tf.io.gfile.GFile(model_path, 'rb') as f:
     tflite_model_buffer = f.read()
   return tflite_model_buffer
 
@@ -116,9 +115,11 @@ def get_steps_per_epoch(steps_per_epoch: Optional[int] = None,
 def convert_to_tflite(
     model: tf.keras.Model,
     quantization_config: Optional[quantization.QuantizationConfig] = None,
-    supported_ops: Tuple[tf.lite.OpsSet,
-                         ...] = (tf.lite.OpsSet.TFLITE_BUILTINS,),
-    preprocess: Optional[Callable[..., bool]] = None) -> bytearray:
+    supported_ops: Tuple[tf.lite.OpsSet, ...] = (
+        tf.lite.OpsSet.TFLITE_BUILTINS,
+    ),
+    preprocess: Optional[Callable[..., Any]] = None,
+) -> bytearray:
   """Converts the input Keras model to TFLite format.
 
   Args:

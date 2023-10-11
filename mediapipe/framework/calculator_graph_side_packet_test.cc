@@ -188,21 +188,21 @@ class Uint64PacketGenerator : public PacketGenerator {
   static absl::Status FillExpectations(
       const PacketGeneratorOptions& extendable_options,
       PacketTypeSet* input_side_packets, PacketTypeSet* output_side_packets) {
-    output_side_packets->Index(0).Set<uint64>();
+    output_side_packets->Index(0).Set<uint64_t>();
     return absl::OkStatus();
   }
 
   static absl::Status Generate(const PacketGeneratorOptions& extendable_options,
                                const PacketSet& input_side_packets,
                                PacketSet* output_side_packets) {
-    output_side_packets->Index(0) = Adopt(new uint64(15LL << 32 | 5));
+    output_side_packets->Index(0) = Adopt(new uint64_t(15LL << 32 | 5));
     return absl::OkStatus();
   }
 };
 REGISTER_PACKET_GENERATOR(Uint64PacketGenerator);
 
 TEST(CalculatorGraph, OutputSidePacketInProcess) {
-  const int64 offset = 100;
+  const int64_t offset = 100;
   CalculatorGraphConfig config =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: "offset"
@@ -400,7 +400,7 @@ TEST(CalculatorGraph, SharePacketGeneratorGraph) {
 }
 
 TEST(CalculatorGraph, OutputSidePacketAlreadySet) {
-  const int64 offset = 100;
+  const int64_t offset = 100;
   CalculatorGraphConfig config =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: "offset"
@@ -427,7 +427,7 @@ TEST(CalculatorGraph, OutputSidePacketAlreadySet) {
 }
 
 TEST(CalculatorGraph, OutputSidePacketWithTimestamp) {
-  const int64 offset = 100;
+  const int64_t offset = 100;
   CalculatorGraphConfig config =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: "offset"
@@ -716,7 +716,7 @@ TEST(CalculatorGraph, GetOutputSidePacket) {
   // Run the graph twice.
   int max_count = 100;
   std::map<std::string, Packet> extra_side_packets;
-  extra_side_packets.insert({"input_uint64", MakePacket<uint64>(1123)});
+  extra_side_packets.insert({"input_uint64", MakePacket<uint64_t>(1123)});
   for (int run = 0; run < 1; ++run) {
     MP_ASSERT_OK(graph.StartRun(extra_side_packets));
     status_or_packet = graph.GetOutputSidePacket("output_uint32_pair");

@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -66,10 +66,9 @@ TEST(ModelAssetBundleResourcesTest, CreateFromBinaryContent) {
       ModelAssetBundleResources::Create(kTestModelBundleResourcesTag,
                                         std::move(model_file)));
   MP_EXPECT_OK(
-      model_bundle_resources->GetModelFile("dummy_hand_landmarker.task")
-          .status());
+      model_bundle_resources->GetFile("dummy_hand_landmarker.task").status());
   MP_EXPECT_OK(
-      model_bundle_resources->GetModelFile("dummy_gesture_recognizer.tflite")
+      model_bundle_resources->GetFile("dummy_gesture_recognizer.tflite")
           .status());
 }
 
@@ -81,13 +80,13 @@ TEST(ModelAssetBundleResourcesTest, CreateFromFile) {
       ModelAssetBundleResources::Create(kTestModelBundleResourcesTag,
                                         std::move(model_file)));
   MP_EXPECT_OK(
-      model_bundle_resources->GetModelFile("dummy_hand_landmarker.task")
-          .status());
+      model_bundle_resources->GetFile("dummy_hand_landmarker.task").status());
   MP_EXPECT_OK(
-      model_bundle_resources->GetModelFile("dummy_gesture_recognizer.tflite")
+      model_bundle_resources->GetFile("dummy_gesture_recognizer.tflite")
           .status());
 }
 
+#ifndef _WIN32
 TEST(ModelAssetBundleResourcesTest, CreateFromFileDescriptor) {
   const int model_file_descriptor = open(kTestModelBundlePath, O_RDONLY);
   auto model_file = std::make_unique<proto::ExternalFile>();
@@ -97,12 +96,12 @@ TEST(ModelAssetBundleResourcesTest, CreateFromFileDescriptor) {
       ModelAssetBundleResources::Create(kTestModelBundleResourcesTag,
                                         std::move(model_file)));
   MP_EXPECT_OK(
-      model_bundle_resources->GetModelFile("dummy_hand_landmarker.task")
-          .status());
+      model_bundle_resources->GetFile("dummy_hand_landmarker.task").status());
   MP_EXPECT_OK(
-      model_bundle_resources->GetModelFile("dummy_gesture_recognizer.tflite")
+      model_bundle_resources->GetFile("dummy_gesture_recognizer.tflite")
           .status());
 }
+#endif  // _WIN32
 
 TEST(ModelAssetBundleResourcesTest, CreateFromFilePointer) {
   auto file_content = LoadBinaryContent(kTestModelBundlePath);
@@ -113,10 +112,9 @@ TEST(ModelAssetBundleResourcesTest, CreateFromFilePointer) {
       ModelAssetBundleResources::Create(kTestModelBundleResourcesTag,
                                         std::move(model_file)));
   MP_EXPECT_OK(
-      model_bundle_resources->GetModelFile("dummy_hand_landmarker.task")
-          .status());
+      model_bundle_resources->GetFile("dummy_hand_landmarker.task").status());
   MP_EXPECT_OK(
-      model_bundle_resources->GetModelFile("dummy_gesture_recognizer.tflite")
+      model_bundle_resources->GetFile("dummy_gesture_recognizer.tflite")
           .status());
 }
 
@@ -145,7 +143,7 @@ TEST(ModelAssetBundleResourcesTest, ExtractValidModelBundleFile) {
       ModelAssetBundleResources::Create(kTestModelBundleResourcesTag,
                                         std::move(model_file)));
   auto status_or_model_bundle_file =
-      model_bundle_resources->GetModelFile("dummy_hand_landmarker.task");
+      model_bundle_resources->GetFile("dummy_hand_landmarker.task");
   MP_EXPECT_OK(status_or_model_bundle_file.status());
 
   // Creates sub-task model asset bundle resources.
@@ -157,10 +155,10 @@ TEST(ModelAssetBundleResourcesTest, ExtractValidModelBundleFile) {
       ModelAssetBundleResources::Create(kTestModelBundleResourcesTag,
                                         std::move(hand_landmaker_model_file)));
   MP_EXPECT_OK(hand_landmaker_model_bundle_resources
-                   ->GetModelFile("dummy_hand_detector.tflite")
+                   ->GetFile("dummy_hand_detector.tflite")
                    .status());
   MP_EXPECT_OK(hand_landmaker_model_bundle_resources
-                   ->GetModelFile("dummy_hand_landmarker.tflite")
+                   ->GetFile("dummy_hand_landmarker.tflite")
                    .status());
 }
 
@@ -173,7 +171,7 @@ TEST(ModelAssetBundleResourcesTest, ExtractValidTFLiteModelFile) {
       ModelAssetBundleResources::Create(kTestModelBundleResourcesTag,
                                         std::move(model_file)));
   auto status_or_model_bundle_file =
-      model_bundle_resources->GetModelFile("dummy_gesture_recognizer.tflite");
+      model_bundle_resources->GetFile("dummy_gesture_recognizer.tflite");
   MP_EXPECT_OK(status_or_model_bundle_file.status());
 
   // Verify tflite model works.
@@ -198,12 +196,12 @@ TEST(ModelAssetBundleResourcesTest, ExtractInvalidModelFile) {
       auto model_bundle_resources,
       ModelAssetBundleResources::Create(kTestModelBundleResourcesTag,
                                         std::move(model_file)));
-  auto status = model_bundle_resources->GetModelFile("not_found.task").status();
+  auto status = model_bundle_resources->GetFile("not_found.task").status();
   EXPECT_EQ(status.code(), absl::StatusCode::kNotFound);
-  EXPECT_THAT(status.message(),
-              testing::HasSubstr(
-                  "No model file with name: not_found.task. All model files in "
-                  "the model asset bundle are: "));
+  EXPECT_THAT(
+      status.message(),
+      testing::HasSubstr("No file with name: not_found.task. All files in "
+                         "the model asset bundle are: "));
   EXPECT_THAT(status.GetPayload(kMediaPipeTasksPayload),
               testing::Optional(absl::Cord(
                   absl::StrCat(MediaPipeTasksStatus::kFileNotFoundError))));
@@ -217,7 +215,7 @@ TEST(ModelAssetBundleResourcesTest, ListModelFiles) {
       auto model_bundle_resources,
       ModelAssetBundleResources::Create(kTestModelBundleResourcesTag,
                                         std::move(model_file)));
-  auto model_files = model_bundle_resources->ListModelFiles();
+  auto model_files = model_bundle_resources->ListFiles();
   std::vector<std::string> expected_model_files = {
       "dummy_gesture_recognizer.tflite", "dummy_hand_landmarker.task"};
   std::sort(model_files.begin(), model_files.end());

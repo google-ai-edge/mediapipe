@@ -1,0 +1,13 @@
+diff --git a/absl/types/compare.h b/absl/types/compare.h
+index 19b076e..0201004 100644
+--- a/absl/types/compare.h
++++ b/absl/types/compare.h
+@@ -84,7 +84,7 @@ enum class ncmp : value_type { unordered = -127 };
+ // based on whether the feature is supported. Note: we can't use
+ // ABSL_INTERNAL_INLINE_CONSTEXPR here because the variables here are of
+ // incomplete types so they need to be defined after the types are complete.
+-#ifdef __cpp_inline_variables
++#if defined(__cpp_inline_variables) && !(defined(_MSC_VER) && _MSC_VER <= 1916)
+
+ // A no-op expansion that can be followed by a semicolon at class level.
+ #define ABSL_COMPARE_INLINE_BASECLASS_DECL(name) static_assert(true, "")

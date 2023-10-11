@@ -241,9 +241,9 @@ class StaticMap {
 #define DEFINE_MEDIAPIPE_TYPE_MAP(MapName, KeyType) \
   class MapName : public type_map_internal::StaticMap<MapName, KeyType> {};
 // Defines a map from unique typeid number to MediaPipeTypeData.
-DEFINE_MEDIAPIPE_TYPE_MAP(PacketTypeIdToMediaPipeTypeData, size_t);
+DEFINE_MEDIAPIPE_TYPE_MAP(PacketTypeIdToMediaPipeTypeData, size_t)
 // Defines a map from unique type string to MediaPipeTypeData.
-DEFINE_MEDIAPIPE_TYPE_MAP(PacketTypeStringToMediaPipeTypeData, std::string);
+DEFINE_MEDIAPIPE_TYPE_MAP(PacketTypeStringToMediaPipeTypeData, std::string)
 
 // MEDIAPIPE_REGISTER_TYPE can be used to register a type.
 // Convention:
@@ -272,17 +272,20 @@ DEFINE_MEDIAPIPE_TYPE_MAP(PacketTypeStringToMediaPipeTypeData, std::string);
 #define MEDIAPIPE_REGISTER_TYPE(type, type_name, serialize_fn, deserialize_fn) \
   SET_MEDIAPIPE_TYPE_MAP_VALUE(                                                \
       mediapipe::PacketTypeIdToMediaPipeTypeData,                              \
-      mediapipe::tool::GetTypeHash<                                            \
-          mediapipe::type_map_internal::ReflectType<void(type*)>::Type>(),     \
+      mediapipe::TypeId::Of<                                                   \
+          mediapipe::type_map_internal::ReflectType<void(type*)>::Type>()      \
+          .hash_code(),                                                        \
       (mediapipe::MediaPipeTypeData{                                           \
-          mediapipe::tool::GetTypeHash<                                        \
-              mediapipe::type_map_internal::ReflectType<void(type*)>::Type>(), \
+          mediapipe::TypeId::Of<                                               \
+              mediapipe::type_map_internal::ReflectType<void(type*)>::Type>()  \
+              .hash_code(),                                                    \
           type_name, serialize_fn, deserialize_fn}));                          \
   SET_MEDIAPIPE_TYPE_MAP_VALUE(                                                \
       mediapipe::PacketTypeStringToMediaPipeTypeData, type_name,               \
       (mediapipe::MediaPipeTypeData{                                           \
-          mediapipe::tool::GetTypeHash<                                        \
-              mediapipe::type_map_internal::ReflectType<void(type*)>::Type>(), \
+          mediapipe::TypeId::Of<                                               \
+              mediapipe::type_map_internal::ReflectType<void(type*)>::Type>()  \
+              .hash_code(),                                                    \
           type_name, serialize_fn, deserialize_fn}));
 // End define MEDIAPIPE_REGISTER_TYPE.
 

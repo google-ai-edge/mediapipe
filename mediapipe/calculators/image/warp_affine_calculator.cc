@@ -53,6 +53,17 @@ AffineTransformation::BorderMode GetBorderMode(
   }
 }
 
+AffineTransformation::Interpolation GetInterpolation(
+    mediapipe::WarpAffineCalculatorOptions::Interpolation interpolation) {
+  switch (interpolation) {
+    case mediapipe::WarpAffineCalculatorOptions::INTER_UNSPECIFIED:
+    case mediapipe::WarpAffineCalculatorOptions::INTER_LINEAR:
+      return AffineTransformation::Interpolation::kLinear;
+    case mediapipe::WarpAffineCalculatorOptions::INTER_CUBIC:
+      return AffineTransformation::Interpolation::kCubic;
+  }
+}
+
 template <typename ImageT>
 class WarpAffineRunnerHolder {};
 
@@ -61,16 +72,22 @@ template <>
 class WarpAffineRunnerHolder<ImageFrame> {
  public:
   using RunnerType = AffineTransformation::Runner<ImageFrame, ImageFrame>;
-  absl::Status Open(CalculatorContext* cc) { return absl::OkStatus(); }
+  absl::Status Open(CalculatorContext* cc) {
+    interpolation_ = GetInterpolation(
+        cc->Options<mediapipe::WarpAffineCalculatorOptions>().interpolation());
+    return absl::OkStatus();
+  }
   absl::StatusOr<RunnerType*> GetRunner() {
     if (!runner_) {
-      ASSIGN_OR_RETURN(runner_, CreateAffineTransformationOpenCvRunner());
+      ASSIGN_OR_RETURN(runner_,
+                       CreateAffineTransformationOpenCvRunner(interpolation_));
     }
     return runner_.get();
   }
 
  private:
   std::unique_ptr<RunnerType> runner_;
+  AffineTransformation::Interpolation interpolation_;
 };
 #endif  // !MEDIAPIPE_DISABLE_OPENCV
 
@@ -85,12 +102,14 @@ class WarpAffineRunnerHolder<mediapipe::GpuBuffer> {
     gpu_origin_ =
         cc->Options<mediapipe::WarpAffineCalculatorOptions>().gpu_origin();
     gl_helper_ = std::make_shared<mediapipe::GlCalculatorHelper>();
+    interpolation_ = GetInterpolation(
+        cc->Options<mediapipe::WarpAffineCalculatorOptions>().interpolation());
     return gl_helper_->Open(cc);
   }
   absl::StatusOr<RunnerType*> GetRunner() {
     if (!runner_) {
-      ASSIGN_OR_RETURN(
-          runner_, CreateAffineTransformationGlRunner(gl_helper_, gpu_origin_));
+      ASSIGN_OR_RETURN(runner_, CreateAffineTransformationGlRunner(
+                                    gl_helper_, gpu_origin_, interpolation_));
     }
     return runner_.get();
   }
@@ -99,6 +118,7 @@ class WarpAffineRunnerHolder<mediapipe::GpuBuffer> {
   mediapipe::GpuOrigin::Mode gpu_origin_;
   std::shared_ptr<mediapipe::GlCalculatorHelper> gl_helper_;
   std::unique_ptr<RunnerType> runner_;
+  AffineTransformation::Interpolation interpolation_;
 };
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
@@ -146,7 +166,7 @@ class WarpAffineRunnerHolder<mediapipe::Image> {
       const ImageFrame image_frame(frame_ptr->Format(), frame_ptr->Width(),
                                    frame_ptr->Height(), frame_ptr->WidthStep(),
                                    const_cast<uint8_t*>(frame_ptr->PixelData()),
-                                   [](uint8* data){});
+                                   [](uint8_t* data){});
       ASSIGN_OR_RETURN(auto result,
                        runner->Run(image_frame, matrix, size, border_mode));
       return mediapipe::Image(std::make_shared<ImageFrame>(std::move(result)));

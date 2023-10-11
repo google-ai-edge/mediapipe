@@ -1,4 +1,4 @@
-// Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+// Copyright 2022 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ public class OutputHandler<OutputT extends TaskResult, InputT> {
 
   /**
    * Interface for the customizable MediaPipe task result listener that can reteive both task result
-   * objects and the correpsonding input data.
+   * objects and the corresponding input data.
    */
   public interface ResultListener<OutputT extends TaskResult, InputT> {
     void run(OutputT result, InputT input);
@@ -90,8 +90,8 @@ public class OutputHandler<OutputT extends TaskResult, InputT> {
   }
 
   /**
-   * Sets whether the output handler should react to the timestamp bound changes that are reprsented
-   * as empty output {@link Packet}s.
+   * Sets whether the output handler should react to the timestamp bound changes that are
+   * represented as empty output {@link Packet}s.
    *
    * @param handleTimestampBoundChanges A boolean value.
    */

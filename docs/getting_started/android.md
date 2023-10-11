@@ -1,5 +1,6 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe/framework/getting_started/android
 title: MediaPipe on Android
 parent: Getting Started
 has_children: true
@@ -13,6 +14,12 @@ nav_order: 1
 1. TOC
 {:toc}
 ---
+
+**Attention:** *Thanks for your interest in MediaPipe! We have moved to
+[https://developers.google.com/mediapipe](https://developers.google.com/mediapipe)
+as the primary developer documentation site for MediaPipe as of April 3, 2023.*
+
+----
 
 Please follow instructions below to build Android example apps in the supported
 MediaPipe [solutions](../solutions/solutions.md). To learn more about these

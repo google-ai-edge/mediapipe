@@ -1,4 +1,4 @@
-// Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+// Copyright 2022 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -403,10 +403,10 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
       public abstract Builder setMinTrackingConfidence(Float value);
 
       /**
-       * Sets the optional {@link ClassifierOptions} controling the canned gestures classifier, such
-       * as score threshold, allow list and deny list of gestures. The categories for canned gesture
-       * classifiers are: ["None", "Closed_Fist", "Open_Palm", "Pointing_Up", "Thumb_Down",
-       * "Thumb_Up", "Victory", "ILoveYou"]
+       * Sets the optional {@link ClassifierOptions} controlling the canned gestures classifier,
+       * such as score threshold, allow list and deny list of gestures. The categories
+       * for canned gesture classifiers are: ["None", "Closed_Fist", "Open_Palm",
+       * "Pointing_Up", "Thumb_Down", "Thumb_Up", "Victory", "ILoveYou"]
        *
        * <p>TODO  Note this option is subject to change, after scoring merging
        * calculator is implemented.
@@ -415,8 +415,8 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
           ClassifierOptions classifierOptions);
 
       /**
-       * Sets the optional {@link ClassifierOptions} controling the custom gestures classifier, such
-       * as score threshold, allow list and deny list of gestures.
+       * Sets the optional {@link ClassifierOptions} controlling the custom gestures classifier,
+       * such as score threshold, allow list and deny list of gestures.
        *
        * <p>TODO  Note this option is subject to change, after scoring merging
        * calculator is implemented.

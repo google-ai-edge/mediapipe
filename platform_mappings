@@ -1,0 +1,64 @@
+# This file allows automatically mapping flags such as '--cpu' to the more
+# modern Bazel platforms (https://bazel.build/concepts/platforms).
+
+# In particular, Bazel platforms lack support for Apple for now if no such
+# mapping is put into place. It's inspired from:
+# https://github.com/bazelbuild/rules_apple/issues/1764
+
+platforms:
+  @build_bazel_apple_support//platforms:macos_x86_64
+    --cpu=darwin_x86_64
+
+  @build_bazel_apple_support//platforms:macos_arm64
+    --cpu=darwin_arm64
+
+  @build_bazel_apple_support//platforms:ios_i386
+    --cpu=ios_i386
+
+  @build_bazel_apple_support//platforms:ios_x86_64
+    --cpu=ios_x86_64
+
+  @build_bazel_apple_support//platforms:ios_sim_arm64
+    --cpu=ios_sim_arm64
+
+  @build_bazel_apple_support//platforms:ios_armv7
+    --cpu=ios_armv7
+
+  @build_bazel_apple_support//platforms:ios_arm64
+    --cpu=ios_arm64
+
+  @build_bazel_apple_support//platforms:ios_arm64e
+    --cpu=ios_arm64e
+
+flags:
+  --cpu=darwin_x86_64
+  --apple_platform_type=macos
+    @build_bazel_apple_support//platforms:macos_x86_64
+
+  --cpu=darwin_arm64
+  --apple_platform_type=macos
+    @build_bazel_apple_support//platforms:macos_arm64
+
+  --cpu=ios_i386
+  --apple_platform_type=ios
+    @build_bazel_apple_support//platforms:ios_i386
+
+  --cpu=ios_x86_64
+  --apple_platform_type=ios
+    @build_bazel_apple_support//platforms:ios_x86_64
+
+  --cpu=ios_sim_arm64
+  --apple_platform_type=ios
+    @build_bazel_apple_support//platforms:ios_sim_arm64
+
+  --cpu=ios_armv7
+  --apple_platform_type=ios
+    @build_bazel_apple_support//platforms:ios_armv7
+
+  --cpu=ios_arm64
+  --apple_platform_type=ios
+    @build_bazel_apple_support//platforms:ios_arm64
+
+  --cpu=ios_arm64e
+  --apple_platform_type=ios
+    @build_bazel_apple_support//platforms:ios_arm64e

@@ -30,6 +30,18 @@ struct IsExtension {
 
 template <class T,
           typename std::enable_if<IsExtension<T>::value, int>::type = 0>
+bool HasExtension(const CalculatorOptions& options) {
+  return options.HasExtension(T::ext);
+}
+
+template <class T,
+          typename std::enable_if<!IsExtension<T>::value, int>::type = 0>
+bool HasExtension(const CalculatorOptions& options) {
+  return false;
+}
+
+template <class T,
+          typename std::enable_if<IsExtension<T>::value, int>::type = 0>
 T* GetExtension(CalculatorOptions& options) {
   if (options.HasExtension(T::ext)) {
     return options.MutableExtension(T::ext);
@@ -122,6 +134,27 @@ class OptionsMap {
       GetNodeOptions(*node_config_, result);
     }
     return *result;
+  }
+
+  template <class T>
+  bool Has() const {
+    if (options_.Has<T>()) {
+      return true;
+    }
+    if (node_config_->has_options()) {
+      return HasExtension<T>(node_config_->options());
+    }
+#if defined(MEDIAPIPE_PROTO_LITE) && defined(MEDIAPIPE_PROTO_THIRD_PARTY)
+    // protobuf::Any is unavailable with third_party/protobuf:protobuf-lite.
+#else
+    for (const mediapipe::protobuf::Any& options :
+         node_config_->node_options()) {
+      if (options.Is<T>()) {
+        return true;
+      }
+    }
+#endif
+    return false;
   }
 
   CalculatorGraphConfig::Node* node_config_;

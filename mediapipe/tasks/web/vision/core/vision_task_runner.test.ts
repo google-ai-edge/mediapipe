@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2022 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,8 @@ const IMAGE = {} as unknown as HTMLImageElement;
 const TIMESTAMP = 42;
 
 class VisionTaskRunnerFake extends VisionTaskRunner {
+  override graphRunner!: VisionGraphRunner;
+
   baseOptions = new BaseOptionsProto();
   fakeGraphRunner: jasmine.SpyObj<VisionGraphRunner>;
   expectedImageSource?: ImageSource;
@@ -46,7 +48,7 @@ class VisionTaskRunnerFake extends VisionTaskRunner {
         jasmine.createSpyObj<VisionGraphRunner>([
           'addProtoToStream', 'addGpuBufferAsImageToStream',
           'setAutoRenderToScreen', 'registerModelResourcesGraphService',
-          'finishProcessing'
+          'finishProcessing', 'wasmModule'
         ]),
         IMAGE_STREAM, NORM_RECT_STREAM, roiAllowed);
 
@@ -72,7 +74,7 @@ class VisionTaskRunnerFake extends VisionTaskRunner {
           expect(imageSource).toBe(this.expectedImageSource!);
         });
 
-    // SetOptions with a modelAssetBuffer runs synchonously
+    // SetOptions with a modelAssetBuffer runs synchronously
     void this.setOptions({baseOptions: {modelAssetBuffer: new Uint8Array([])}});
   }
 
@@ -164,6 +166,41 @@ describe('VisionTaskRunner', () => {
           IMAGE, /* imageProcessingOptions= */ undefined, TIMESTAMP);
     }).toThrowError(/Task is not initialized with video mode./);
   });
+
+  it('validates that the canvas cannot be changed', async () => {
+    if (typeof OffscreenCanvas === 'undefined') {
+      console.log('Test is not supported under Node.');
+      return;
+    }
+
+    const visionTaskRunner = new VisionTaskRunnerFake();
+    const canvas = new OffscreenCanvas(1, 1);
+    visionTaskRunner.graphRunner.wasmModule.canvas = canvas;
+    expect(() => {
+      visionTaskRunner.setOptions({canvas});
+    }).not.toThrow();
+
+    expect(() => {
+      visionTaskRunner.setOptions({canvas: new OffscreenCanvas(2, 2)});
+    }).toThrowError(/You must create a new task to reset the canvas./);
+  });
+
+  it('validates that an undefined canvas leaves the graph unmodified',
+     async () => {
+       if (typeof OffscreenCanvas === 'undefined') {
+         console.log('Test is not supported under Node.');
+         return;
+       }
+
+       const visionTaskRunner = new VisionTaskRunnerFake();
+       const canvas = new OffscreenCanvas(1, 1);
+       visionTaskRunner.graphRunner.wasmModule.canvas = canvas;
+
+       await visionTaskRunner.setOptions({canvas});
+       await visionTaskRunner.setOptions({canvas: undefined});
+
+       expect(visionTaskRunner.graphRunner.wasmModule.canvas).toBe(canvas);
+     });
 
   it('sends packets to graph', async () => {
     const visionTaskRunner = new VisionTaskRunnerFake();

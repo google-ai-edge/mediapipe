@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,15 +13,13 @@
 # limitations under the License.
 
 # Placeholder for internal Python strict test compatibility macro.
-# Placeholder for internal Python strict library and test compatibility macro.
+# Placeholder for internal Python strict binary and library compatibility macro.
 
 licenses(["notice"])
 
-package(
-    default_visibility = ["//mediapipe:__subpackages__"],
-)
+package(default_visibility = ["//mediapipe:__subpackages__"])
 
-# TODO: Remove the unncessary test data once the demo data are moved to an open-sourced
+# TODO: Remove the unnecessary test data once the demo data are moved to an open-sourced
 # directory.
 filegroup(
     name = "testdata",
@@ -33,6 +31,9 @@ filegroup(
 py_library(
     name = "constants",
     srcs = ["constants.py"],
+    deps = [
+        "//mediapipe/model_maker/python/core/utils:file_util",
+    ],
 )
 
 py_library(
@@ -53,11 +54,12 @@ py_library(
 py_test(
     name = "dataset_test",
     srcs = ["dataset_test.py"],
-    data = [
-        ":testdata",
-        "//mediapipe/model_maker/models/gesture_recognizer:models",
+    data = [":testdata"],
+    tags = [
+        "not_run:arm",
+        "notsan",
+        "requires-net:external",
     ],
-    tags = ["notsan"],
     deps = [
         ":dataset",
         "//mediapipe/tasks/python/test:test_utils",
@@ -90,7 +92,6 @@ py_library(
 py_library(
     name = "gesture_recognizer",
     srcs = ["gesture_recognizer.py"],
-    data = ["//mediapipe/model_maker/models/gesture_recognizer:models"],
     deps = [
         ":constants",
         ":gesture_recognizer_options",
@@ -129,7 +130,7 @@ py_library(
     srcs = ["metadata_writer.py"],
     deps = [
         "//mediapipe/tasks/python/metadata/metadata_writers:metadata_writer",
-        "//mediapipe/tasks/python/metadata/metadata_writers:writer_utils",
+        "//mediapipe/tasks/python/metadata/metadata_writers:model_asset_bundle_utils",
     ],
 )
 
@@ -138,12 +139,13 @@ py_test(
     name = "gesture_recognizer_test",
     size = "large",
     srcs = ["gesture_recognizer_test.py"],
-    data = [
-        ":testdata",
-        "//mediapipe/model_maker/models/gesture_recognizer:models",
-    ],
+    data = [":testdata"],
     shard_count = 2,
-    tags = ["notsan"],
+    tags = [
+        "not_run:arm",
+        "notsan",
+        "requires-net:external",
+    ],
     deps = [
         ":gesture_recognizer_import",
         ":hyperparameters",
@@ -156,9 +158,7 @@ py_test(
 py_test(
     name = "metadata_writer_test",
     srcs = ["metadata_writer_test.py"],
-    data = [
-        ":testdata",
-    ],
+    data = [":testdata"],
     deps = [
         ":metadata_writer",
         "//mediapipe/tasks/python/metadata/metadata_writers:metadata_writer",
@@ -169,10 +169,8 @@ py_test(
 py_binary(
     name = "gesture_recognizer_demo",
     srcs = ["gesture_recognizer_demo.py"],
-    data = [
-        ":testdata",
-        "//mediapipe/model_maker/models/gesture_recognizer:models",
-    ],
+    data = [":testdata"],
     python_version = "PY3",
+    tags = ["requires-net:external"],
     deps = [":gesture_recognizer_import"],
 )

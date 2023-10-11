@@ -347,7 +347,8 @@ message CalculatorGraphConfig {
   // PacketGenerators can take as a input side packet the output side
   // packet of another PacketGenerator.  The graph of PacketGenerators
   // must be a directed acyclic graph.
-  repeated PacketGeneratorConfig packet_generator = 7;
+  // DEPRECATED: Use a Node to generate side packets.
+  repeated PacketGeneratorConfig packet_generator = 7 [deprecated = true];
   // Number of threads for running calculators in multithreaded mode.
   // If not specified, the scheduler will pick an appropriate number
   // of threads depending on the number of available processors.

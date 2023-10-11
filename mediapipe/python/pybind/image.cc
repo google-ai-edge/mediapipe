@@ -87,7 +87,7 @@ void ImageSubmodule(pybind11::module* module) {
   image
       .def(
           py::init([](mediapipe::ImageFormat::Format format,
-                      const py::array_t<uint8, py::array::c_style>& data) {
+                      const py::array_t<uint8_t, py::array::c_style>& data) {
             if (format != mediapipe::ImageFormat::GRAY8 &&
                 format != mediapipe::ImageFormat::SRGB &&
                 format != mediapipe::ImageFormat::SRGBA) {
@@ -96,13 +96,13 @@ void ImageSubmodule(pybind11::module* module) {
                                  "SRGB, and SRGBA MediaPipe image formats.");
             }
             return Image(std::shared_ptr<ImageFrame>(
-                CreateImageFrame<uint8>(format, data)));
+                CreateImageFrame<uint8_t>(format, data)));
           }),
           R"doc(For uint8 data type, valid ImageFormat are GRAY8, SGRB, and SRGBA.)doc",
           py::arg("image_format"), py::arg("data").noconvert())
       .def(
           py::init([](mediapipe::ImageFormat::Format format,
-                      const py::array_t<uint16, py::array::c_style>& data) {
+                      const py::array_t<uint16_t, py::array::c_style>& data) {
             if (format != mediapipe::ImageFormat::GRAY16 &&
                 format != mediapipe::ImageFormat::SRGB48 &&
                 format != mediapipe::ImageFormat::SRGBA64) {
@@ -112,7 +112,7 @@ void ImageSubmodule(pybind11::module* module) {
                   "SRGB48, and SRGBA64 MediaPipe image formats.");
             }
             return Image(std::shared_ptr<ImageFrame>(
-                CreateImageFrame<uint16>(format, data)));
+                CreateImageFrame<uint16_t>(format, data)));
           }),
           R"doc(For uint16 data type, valid ImageFormat are GRAY16, SRGB48, and SRGBA64.)doc",
           py::arg("image_format"), py::arg("data").noconvert())
@@ -120,16 +120,17 @@ void ImageSubmodule(pybind11::module* module) {
           py::init([](mediapipe::ImageFormat::Format format,
                       const py::array_t<float, py::array::c_style>& data) {
             if (format != mediapipe::ImageFormat::VEC32F1 &&
-                format != mediapipe::ImageFormat::VEC32F2) {
+                format != mediapipe::ImageFormat::VEC32F2 &&
+                format != mediapipe::ImageFormat::VEC32F4) {
               throw RaisePyError(
                   PyExc_RuntimeError,
-                  "float image data should be either VEC32F1 or VEC32F2 "
-                  "MediaPipe image formats.");
+                  "float image data should be either VEC32F1, VEC32F2, or "
+                  "VEC32F4 MediaPipe image formats.");
             }
             return Image(std::shared_ptr<ImageFrame>(
                 CreateImageFrame<float>(format, data)));
           }),
-          R"doc(For float data type, valid ImageFormat are VEC32F1 and VEC32F2.)doc",
+          R"doc(For float data type, valid ImageFormat are VEC32F1, VEC32F2, and VEC32F4.)doc",
           py::arg("image_format"), py::arg("data").noconvert());
 
   image.def(
@@ -182,11 +183,11 @@ void ImageSubmodule(pybind11::module* module) {
             py::cast(self, py::return_value_policy::reference);
         switch (self.GetImageFrameSharedPtr()->ByteDepth()) {
           case 1:
-            return GetValue<uint8>(*self.GetImageFrameSharedPtr(), pos,
-                                   py_object);
+            return GetValue<uint8_t>(*self.GetImageFrameSharedPtr(), pos,
+                                     py_object);
           case 2:
-            return GetValue<uint16>(*self.GetImageFrameSharedPtr(), pos,
-                                    py_object);
+            return GetValue<uint16_t>(*self.GetImageFrameSharedPtr(), pos,
+                                      py_object);
           case 4:
             return GetValue<float>(*self.GetImageFrameSharedPtr(), pos,
                                    py_object);
@@ -223,7 +224,7 @@ void ImageSubmodule(pybind11::module* module) {
           R"doc(Return True if the pixel data is unallocated.)doc")
       .def(
           "is_aligned",
-          [](Image& self, uint32 alignment_boundary) {
+          [](Image& self, uint32_t alignment_boundary) {
             return self.GetImageFrameSharedPtr()->IsAligned(alignment_boundary);
           },
           R"doc(Return True if each row of the data is aligned to alignment boundary, which must be 1 or a power of 2.

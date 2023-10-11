@@ -59,7 +59,7 @@ class GraphTensorsPacketGenerator : public PacketGenerator {
 
     for (int i = 0; i < options.tensor_tag_size(); ++i) {
       const std::string& tensor_tag = options.tensor_tag(i);
-      const int32 tensor_num_nodes = options.tensor_num_nodes(i);
+      const int32_t tensor_num_nodes = options.tensor_num_nodes(i);
       (*tensor_map)[tensor_tag] =
           tf::Tensor(tf::DT_FLOAT, tf::TensorShape{1, tensor_num_nodes});
       (*tensor_map)[tensor_tag].flat<float>().setZero();

@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ limitations under the License.
 #include "mediapipe/tasks/cc/components/containers/proto/embeddings.pb.h"
 #include "mediapipe/tasks/cc/components/processors/embedder_options.h"
 #include "mediapipe/tasks/cc/components/processors/proto/embedder_options.pb.h"
-#include "mediapipe/tasks/cc/components/utils/cosine_similarity.h"
 #include "mediapipe/tasks/cc/core/proto/inference_subgraph.pb.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
@@ -139,18 +138,12 @@ absl::StatusOr<std::vector<AudioEmbedderResult>> AudioEmbedder::Embed(
 
 absl::Status AudioEmbedder::EmbedAsync(Matrix audio_block,
                                        double audio_sample_rate,
-                                       int64 timestamp_ms) {
+                                       int64_t timestamp_ms) {
   MP_RETURN_IF_ERROR(CheckOrSetSampleRate(kSampleRateName, audio_sample_rate));
   return SendAudioStreamData(
       {{kAudioStreamName,
         MakePacket<Matrix>(std::move(audio_block))
             .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))}});
-}
-
-absl::StatusOr<double> AudioEmbedder::CosineSimilarity(
-    const components::containers::Embedding& u,
-    const components::containers::Embedding& v) {
-  return components::utils::CosineSimilarity(u, v);
 }
 
 }  // namespace mediapipe::tasks::audio::audio_embedder

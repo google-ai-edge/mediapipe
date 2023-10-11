@@ -30,7 +30,7 @@ namespace mediapipe {
 typedef ClipVectorSizeCalculator<int> TestClipIntVectorSizeCalculator;
 REGISTER_CALCULATOR(TestClipIntVectorSizeCalculator);
 
-void AddInputVector(const std::vector<int>& input, int64 timestamp,
+void AddInputVector(const std::vector<int>& input, int64_t timestamp,
                     CalculatorRunner* runner) {
   runner->MutableInputs()->Index(0).packets.push_back(
       MakePacket<std::vector<int>>(input).At(Timestamp(timestamp)));

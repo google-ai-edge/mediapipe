@@ -1,0 +1,49 @@
+//*****************************************************************************
+// Copyright 2023 Intel Corporation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//*****************************************************************************
+
+syntax = "proto2";
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+
+message OVMSCalculatorOptions {
+  extend mediapipe.CalculatorOptions {
+    // https://github.com/google/mediapipe/issues/634 have to be unique in app
+    // no rule to obtain this
+    optional OVMSCalculatorOptions ext = 113473742;
+    }
+    required string servable_name = 1;
+    // [1-9][0-9]*
+    required string servable_version = 2;  // TODO decide if follow KFS proto or use int
+    // keep mappings separately in case input/output tensor have the same name
+/*
+      tag_to_input_tensor_names {$
+        key: "INPUT"$
+        value: "input_tensor/input_features:0"$
+      }$
+      tag_to_input_tensor_names {$
+        key: "DATA"$
+        value: "data_tensor"$
+      }$
+*/
+    map<string, string> tag_to_input_tensor_names = 3;
+    map<string, string> tag_to_output_tensor_names = 4;
+    // service_url: "13.21.212.171:9718"
+    optional string service_url = 5;
+    // config_path: "/models/config.json"
+    // TODO decide if it should be at all possible since OVMS does not have a C-API way to stop and then restart
+    optional string config_path = 6;
+}

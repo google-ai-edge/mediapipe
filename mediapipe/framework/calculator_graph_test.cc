@@ -60,7 +60,7 @@
 #include "mediapipe/framework/tool/sink.h"
 #include "mediapipe/framework/tool/status_util.h"
 #include "mediapipe/framework/type_map.h"
-#include "mediapipe/gpu/graph_support.h"
+#include "mediapipe/gpu/gpu_service.h"
 
 namespace mediapipe {
 
@@ -439,7 +439,7 @@ class GlobalCountSourceCalculator : public CalculatorBase {
     ++local_count_;
   }
 
-  int64 local_count_ = 0;
+  int64_t local_count_ = 0;
 };
 const int GlobalCountSourceCalculator::kNumOutputPackets = 5;
 REGISTER_CALCULATOR(GlobalCountSourceCalculator);
@@ -765,7 +765,7 @@ class TypedStatusHandler : public StatusHandler {
   }
 };
 typedef TypedStatusHandler<std::string> StringStatusHandler;
-typedef TypedStatusHandler<uint32> Uint32StatusHandler;
+typedef TypedStatusHandler<uint32_t> Uint32StatusHandler;
 REGISTER_STATUS_HANDLER(StringStatusHandler);
 REGISTER_STATUS_HANDLER(Uint32StatusHandler);
 
@@ -1398,9 +1398,9 @@ void RunComprehensiveTest(CalculatorGraph* graph,
   MP_ASSERT_OK(graph->Initialize(proto));
 
   std::map<std::string, Packet> extra_side_packets;
-  extra_side_packets.emplace("node_3", Adopt(new uint64((15LL << 32) | 3)));
+  extra_side_packets.emplace("node_3", Adopt(new uint64_t((15LL << 32) | 3)));
   if (define_node_5) {
-    extra_side_packets.emplace("node_5", Adopt(new uint64((15LL << 32) | 5)));
+    extra_side_packets.emplace("node_5", Adopt(new uint64_t((15LL << 32) | 5)));
   }
 
   // Call graph->Run() several times, to make sure that the appropriate
@@ -1452,9 +1452,9 @@ void RunComprehensiveTest(CalculatorGraph* graph,
   // Verify that the graph can still run (but not successfully) when
   // one of the nodes is caused to fail.
   extra_side_packets.clear();
-  extra_side_packets.emplace("node_3", Adopt(new uint64((15LL << 32) | 0)));
+  extra_side_packets.emplace("node_3", Adopt(new uint64_t((15LL << 32) | 0)));
   if (define_node_5) {
-    extra_side_packets.emplace("node_5", Adopt(new uint64((15LL << 32) | 5)));
+    extra_side_packets.emplace("node_5", Adopt(new uint64_t((15LL << 32) | 5)));
   }
   dumped_final_sum_packet = Packet();
   dumped_final_stddev_packet = Packet();
@@ -1579,14 +1579,14 @@ class Uint64PacketGenerator : public PacketGenerator {
   static absl::Status FillExpectations(
       const PacketGeneratorOptions& extendable_options,
       PacketTypeSet* input_side_packets, PacketTypeSet* output_side_packets) {
-    output_side_packets->Index(0).Set<uint64>();
+    output_side_packets->Index(0).Set<uint64_t>();
     return absl::OkStatus();
   }
 
   static absl::Status Generate(const PacketGeneratorOptions& extendable_options,
                                const PacketSet& input_side_packets,
                                PacketSet* output_side_packets) {
-    output_side_packets->Index(0) = Adopt(new uint64(15LL << 32 | 5));
+    output_side_packets->Index(0) = Adopt(new uint64_t(15LL << 32 | 5));
     return absl::OkStatus();
   }
 };
@@ -1759,7 +1759,7 @@ TEST(CalculatorGraph, StatusHandlerInputVerification) {
       )pb");
   MP_ASSERT_OK(graph->Initialize(config));
   Packet extra_string = Adopt(new std::string("foo"));
-  Packet a_uint64 = Adopt(new uint64(0));
+  Packet a_uint64 = Adopt(new uint64_t(0));
   MP_EXPECT_OK(
       graph->Run({{"extra_string", extra_string}, {"a_uint64", a_uint64}}));
 
@@ -1789,7 +1789,7 @@ TEST(CalculatorGraph, StatusHandlerInputVerification) {
                              testing::HasSubstr("string"),
                              // Expected type.
                              testing::HasSubstr(
-                                 MediaPipeTypeStringOrDemangled<uint32>())));
+                                 MediaPipeTypeStringOrDemangled<uint32_t>())));
 
   // Should fail verification when the type of a to-be-generated packet is
   // wrong. The added handler now expects a string but will receive the uint32
@@ -1802,14 +1802,14 @@ TEST(CalculatorGraph, StatusHandlerInputVerification) {
 
   status = graph->Initialize(config);
   EXPECT_THAT(status.message(),
-              testing::AllOf(
-                  testing::HasSubstr("StringStatusHandler"),
-                  // The problematic input side packet.
-                  testing::HasSubstr("generated_by_generator"),
-                  // Actual type.
-                  testing::HasSubstr(MediaPipeTypeStringOrDemangled<uint32>()),
-                  // Expected type.
-                  testing::HasSubstr("string")));
+              testing::AllOf(testing::HasSubstr("StringStatusHandler"),
+                             // The problematic input side packet.
+                             testing::HasSubstr("generated_by_generator"),
+                             // Actual type.
+                             testing::HasSubstr(
+                                 MediaPipeTypeStringOrDemangled<uint32_t>()),
+                             // Expected type.
+                             testing::HasSubstr("string")));
 }
 
 TEST(CalculatorGraph, GenerateInInitialize) {

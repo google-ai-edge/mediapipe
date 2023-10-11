@@ -1,4 +1,4 @@
-// Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+// Copyright 2022 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,11 +26,12 @@ NS_SWIFT_NAME(TaskResult)
 /**
  * Timestamp that is associated with the task result object.
  */
-@property(nonatomic, assign, readonly) NSInteger timestampMs;
+@property(nonatomic, assign, readonly) NSInteger timestampInMilliseconds;
 
 - (instancetype)init NS_UNAVAILABLE;
 
-- (instancetype)initWithTimestampMs:(NSInteger)timestampMs NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithTimestampInMilliseconds:(NSInteger)timestampInMilliseconds
+    NS_DESIGNATED_INITIALIZER;
 
 @end
 

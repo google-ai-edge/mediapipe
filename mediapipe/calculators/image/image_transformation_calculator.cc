@@ -207,6 +207,7 @@ class ImageTransformationCalculator : public CalculatorBase {
   bool flip_vertically_ = false;
 
   bool use_gpu_ = false;
+  cv::Scalar padding_color_;
 #if !MEDIAPIPE_DISABLE_GPU
   GlCalculatorHelper gpu_helper_;
   std::unique_ptr<QuadRenderer> rgb_renderer_;
@@ -338,6 +339,9 @@ absl::Status ImageTransformationCalculator::Open(CalculatorContext* cc) {
   }
 
   scale_mode_ = ParseScaleMode(options_.scale_mode(), DEFAULT_SCALE_MODE);
+  padding_color_ = cv::Scalar(options_.padding_color().red(),
+                              options_.padding_color().green(),
+                              options_.padding_color().blue());
 
   if (use_gpu_) {
 #if !MEDIAPIPE_DISABLE_GPU
@@ -480,7 +484,8 @@ absl::Status ImageTransformationCalculator::RenderCpu(CalculatorContext* cc) {
         cv::copyMakeBorder(intermediate_mat, scaled_mat, top, bottom, left,
                            right,
                            options_.constant_padding() ? cv::BORDER_CONSTANT
-                                                       : cv::BORDER_REPLICATE);
+                                                       : cv::BORDER_REPLICATE,
+                           padding_color_);
       } else {
         cv::resize(input_mat, scaled_mat, cv::Size(target_width, target_height),
                    0, 0, scale_flag);

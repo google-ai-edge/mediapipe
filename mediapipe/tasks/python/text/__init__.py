@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,9 +14,13 @@
 
 """MediaPipe Tasks Text API."""
 
+import mediapipe.tasks.python.text.language_detector
 import mediapipe.tasks.python.text.text_classifier
 import mediapipe.tasks.python.text.text_embedder
 
+LanguageDetector = language_detector.LanguageDetector
+LanguageDetectorOptions = language_detector.LanguageDetectorOptions
+LanguageDetectorResult = language_detector.LanguageDetectorResult
 TextClassifier = text_classifier.TextClassifier
 TextClassifierOptions = text_classifier.TextClassifierOptions
 TextClassifierResult = text_classifier.TextClassifierResult
@@ -26,5 +30,6 @@ TextEmbedderResult = text_embedder.TextEmbedderResult
 
 # Remove unnecessary modules to avoid duplication in API docs.
 del mediapipe
+del language_detector
 del text_classifier
 del text_embedder

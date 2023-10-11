@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -46,12 +46,12 @@ _BERT_NEGATIVE_RESULTS = TextClassifierResult(
             categories=[
                 _Category(
                     index=0,
-                    score=0.999479,
+                    score=0.9995,
                     display_name='',
                     category_name='negative'),
                 _Category(
                     index=1,
-                    score=0.00052154,
+                    score=0.0005,
                     display_name='',
                     category_name='positive')
             ],
@@ -65,12 +65,12 @@ _BERT_POSITIVE_RESULTS = TextClassifierResult(
             categories=[
                 _Category(
                     index=1,
-                    score=0.999466,
+                    score=0.9995,
                     display_name='',
                     category_name='positive'),
                 _Category(
                     index=0,
-                    score=0.000533596,
+                    score=0.0005,
                     display_name='',
                     category_name='negative')
             ],

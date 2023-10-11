@@ -251,8 +251,8 @@ absl::Status TensorConverterCalculator::ProcessCPU(CalculatorContext* cc) {
 
     // Copy image data into tensor.
     if (image_frame.ByteDepth() == 1) {
-      MP_RETURN_IF_ERROR(NormalizeImage<uint8>(image_frame, flip_vertically_,
-                                               cpu_view.buffer<float>()));
+      MP_RETURN_IF_ERROR(NormalizeImage<uint8_t>(image_frame, flip_vertically_,
+                                                 cpu_view.buffer<float>()));
     } else if (image_frame.ByteDepth() == 4) {
       MP_RETURN_IF_ERROR(NormalizeImage<float>(image_frame, flip_vertically_,
                                                cpu_view.buffer<float>()));
