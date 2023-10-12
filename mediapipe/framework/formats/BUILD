@@ -483,9 +483,7 @@ cc_library(
         ],
         "//conditions:default": [],
         "//mediapipe/framework:android_no_jni": [],
-        "//mediapipe:android": [
-            "-landroid",
-        ],
+        "//mediapipe:android": ["-landroid"],
         ":android_link_native_window": [
             "-lnativewindow",  # Provides <android/hardware_buffer.h> to vendor processes on Android API >= 26.
         ],
@@ -502,6 +500,10 @@ cc_library(
         "//conditions:default": [
             "//mediapipe/gpu:gl_base",
             "//mediapipe/gpu:gl_context",
+        ],
+    }) + select({
+        "//conditions:default": [],
+        "//mediapipe:android": [
         ],
     }),
 )
