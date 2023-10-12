@@ -37,10 +37,3 @@ cc_library(
     visibility = ["//visibility:public"],
 )
 
-cc_library(
-   name = "adapter_api",
-   hdrs = ["model_api/cpp/adapters/include/adapters/inference_adapter.h",],
-   includes = ["model_api/cpp/adapters/include"],
-   deps = ["@linux_openvino//:openvino"],
-   visibility = ["//visibility:public"],
-)
