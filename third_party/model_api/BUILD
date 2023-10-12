@@ -8,8 +8,6 @@ filegroup(
 )
 """
 
-
-
 visibility = ["//visibility:public"]
 
 filegroup(
@@ -24,11 +22,6 @@ cmake(
         "CMAKE_POSITION_INDEPENDENT_CODE": "ON",
         "OpenVINO_DIR": "/opt/intel/openvino/runtime/cmake",
     },
-    env = {
-        "HTTP_PROXY": "http://proxy-dmz.intel.com:911",
-        "HTTPS_PROXY": "http://proxy-dmz.intel.com:912",
-    },
-    #lib_source = "@model_api_geti//:all_srcs",
     lib_source = ":all_srcs",
     out_static_libs = ["libmodel_api.a"],
     tags = ["requires-network"]
