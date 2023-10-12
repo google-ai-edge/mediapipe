@@ -71,12 +71,6 @@ http_archive(
     urls = ["https://github.com/bazelbuild/rules_cc/archive/2f8c04c04462ab83c545ab14c0da68c3b4c96191.zip"],
 )
 
-#http_archive(
-#    name = "rules_foreign_cc",
-#    sha256 = "2a4d07cd64b0719b39a7c12218a3e507672b82a97b98c6a89d38565894cf7c51",
-#    strip_prefix = "rules_foreign_cc-0.9.0",
-#    url = "https://github.com/bazelbuild/rules_foreign_cc/archive/refs/tags/0.9.0.tar.gz",
-#)
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 git_repository( # Using commit past 0.9.0 that adds cmake 3.26.2 for model api. Be sure to update to 0.10.0 when available.
