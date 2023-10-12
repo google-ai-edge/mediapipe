@@ -36,6 +36,32 @@ cc_library(
 )
 
 mediapipe_proto_library(
+    name = "align_hand_to_pose_in_world_calculator_proto",
+    srcs = ["align_hand_to_pose_in_world_calculator.proto"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
+cc_library(
+    name = "align_hand_to_pose_in_world_calculator",
+    srcs = ["align_hand_to_pose_in_world_calculator.cc"],
+    hdrs = ["align_hand_to_pose_in_world_calculator.h"],
+    deps = [
+        ":align_hand_to_pose_in_world_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/status",
+    ],
+    alwayslink = 1,
+)
+
+mediapipe_proto_library(
     name = "annotation_overlay_calculator_proto",
     srcs = ["annotation_overlay_calculator.proto"],
     deps = [

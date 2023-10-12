@@ -5,7 +5,6 @@ rewrite_target_list = [
     "adaptive_crop_calculator_proto",
     "affine_transform_data_proto",
     "affine_transform_from_rect_calculator_proto",
-    "align_hand_to_pose_in_world_calculator_proto",
     "anchor_proto",
     "annotation_overlay_calculator_proto",
     "annotation_proto",

@@ -165,12 +165,12 @@ node {
   }
 }
 node {
-  calculator: "mediapipe.aimatter.AlignHandToPoseInWorldCalculator"
+  calculator: "AlignHandToPoseInWorldCalculator"
   input_stream: "HAND_LANDMARKS:__stream_14"
   input_stream: "POSE_LANDMARKS:pose_world_landmarks_in"
   output_stream: "HAND_LANDMARKS:left_hand_world_landmarks_out"
   options {
-    [mediapipe.aimatter.AlignHandToPoseInWorldCalculatorOptions.ext] {
+    [mediapipe.AlignHandToPoseInWorldCalculatorOptions.ext] {
       hand_wrist_idx: 0
       pose_wrist_idx: 15
     }
