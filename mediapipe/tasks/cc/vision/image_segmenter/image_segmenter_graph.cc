@@ -255,8 +255,8 @@ void ConfigureTensorConverterCalculator(
 // the tflite model.
 absl::StatusOr<ImageAndTensorsOnDevice> ConvertImageToTensors(
     Source<Image> image_in, Source<NormalizedRect> norm_rect_in, bool use_gpu,
-    bool is_hair_segmentation, const core::ModelResources& model_resources,
-    Graph& graph) {
+    const core::proto::BaseOptions& base_options, bool is_hair_segmentation,
+    const core::ModelResources& model_resources, Graph& graph) {
   MP_ASSIGN_OR_RETURN(const tflite::Tensor* tflite_input_tensor,
                       GetInputTensor(model_resources));
   if (tflite_input_tensor->shape()->size() != 4) {
@@ -279,7 +279,7 @@ absl::StatusOr<ImageAndTensorsOnDevice> ConvertImageToTensors(
     auto& preprocessing = graph.AddNode(
         "mediapipe.tasks.components.processors.ImagePreprocessingGraph");
     MP_RETURN_IF_ERROR(components::processors::ConfigureImagePreprocessingGraph(
-        model_resources, use_gpu,
+        model_resources, use_gpu, base_options.gpu_origin(),
         &preprocessing.GetOptions<tasks::components::processors::proto::
                                       ImagePreprocessingGraphOptions>()));
     image_in >> preprocessing.In(kImageTag);
@@ -518,7 +518,8 @@ class ImageSegmenterGraph : public core::ModelTaskGraph {
     MP_ASSIGN_OR_RETURN(
         auto image_and_tensors,
         ConvertImageToTensors(image_in, norm_rect_in, use_gpu,
-                              is_hair_segmentation, model_resources, graph));
+                              task_options.base_options(), is_hair_segmentation,
+                              model_resources, graph));
     // Adds inference subgraph and connects its input stream to the output
     // tensors produced by the ImageToTensorCalculator.
     auto& inference = AddInference(

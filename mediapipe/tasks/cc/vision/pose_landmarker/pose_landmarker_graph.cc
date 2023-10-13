@@ -134,6 +134,11 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
   pose_landmarks_detector_graph_options->mutable_base_options()
       ->set_use_stream_mode(options->base_options().use_stream_mode());
 
+  pose_detector_graph_options->mutable_base_options()->set_gpu_origin(
+      options->base_options().gpu_origin());
+  pose_landmarks_detector_graph_options->mutable_base_options()->set_gpu_origin(
+      options->base_options().gpu_origin());
+
   return absl::OkStatus();
 }
 

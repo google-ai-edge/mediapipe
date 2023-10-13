@@ -134,6 +134,9 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
       ->CopyFrom(options->base_options().acceleration());
   face_detector_graph_options->mutable_base_options()->set_use_stream_mode(
       options->base_options().use_stream_mode());
+  face_detector_graph_options->mutable_base_options()->set_gpu_origin(
+      options->base_options().gpu_origin());
+
   auto* face_landmarks_detector_graph_options =
       options->mutable_face_landmarks_detector_graph_options();
   if (!face_landmarks_detector_graph_options->base_options()
@@ -151,6 +154,8 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
       ->CopyFrom(options->base_options().acceleration());
   face_landmarks_detector_graph_options->mutable_base_options()
       ->set_use_stream_mode(options->base_options().use_stream_mode());
+  face_landmarks_detector_graph_options->mutable_base_options()->set_gpu_origin(
+      options->base_options().gpu_origin());
 
   absl::StatusOr<absl::string_view> face_blendshape_model =
       resources.GetFile(kFaceBlendshapeTFLiteName);

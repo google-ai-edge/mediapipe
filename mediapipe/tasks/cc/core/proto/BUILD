@@ -46,6 +46,7 @@ mediapipe_proto_library(
     deps = [
         ":acceleration_proto",
         ":external_file_proto",
+        "//mediapipe/gpu:gpu_origin_proto",
     ],
 )
 

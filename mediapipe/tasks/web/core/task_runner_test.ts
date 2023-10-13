@@ -17,6 +17,7 @@ import 'jasmine';
 
 // Placeholder for internal dependency on encodeByteArray
 import {InferenceCalculatorOptions} from '../../../calculators/tensor/inference_calculator_pb';
+import {GpuOrigin as GpuOriginProto} from '../../../gpu/gpu_origin_pb';
 import {BaseOptions as BaseOptionsProto} from '../../../tasks/cc/core/proto/base_options_pb';
 import {TaskRunner} from '../../../tasks/web/core/task_runner';
 import {createSpyWasmModule, SpyWasmModule} from '../../../tasks/web/core/task_runner_test_utils';
@@ -111,6 +112,7 @@ describe('TaskRunner', () => {
       tflite: {},
       nnapi: undefined,
     },
+    gpuOrigin: GpuOriginProto.Mode.TOP_LEFT,
   };
   const mockBytesResultWithGpuDelegate = {
     ...mockBytesResult,
@@ -146,6 +148,7 @@ describe('TaskRunner', () => {
       tflite: {},
       nnapi: undefined,
     },
+    gpuOrigin: GpuOriginProto.Mode.TOP_LEFT,
   };
 
   let fetchSpy: jasmine.Spy;

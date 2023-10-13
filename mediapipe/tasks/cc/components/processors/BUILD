@@ -122,6 +122,7 @@ cc_library(
         "//mediapipe/tasks/cc/components/processors/proto:image_preprocessing_graph_options_cc_proto",
         "//mediapipe/tasks/cc/core:model_resources",
         "//mediapipe/tasks/cc/core/proto:acceleration_cc_proto",
+        "//mediapipe/tasks/cc/core/proto:base_options_cc_proto",
         "//mediapipe/tasks/cc/vision/utils:image_tensor_specs",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",

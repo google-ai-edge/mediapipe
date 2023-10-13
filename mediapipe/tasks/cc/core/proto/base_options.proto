@@ -17,6 +17,7 @@ syntax = "proto2";
 
 package mediapipe.tasks.core.proto;
 
+import "mediapipe/gpu/gpu_origin.proto";
 import "mediapipe/tasks/cc/core/proto/acceleration.proto";
 import "mediapipe/tasks/cc/core/proto/external_file.proto";
 
@@ -24,7 +25,7 @@ option java_package = "com.google.mediapipe.tasks.core.proto";
 option java_outer_classname = "BaseOptionsProto";
 
 // Base options for mediapipe tasks.
-// Next Id: 4
+// Next Id: 5
 message BaseOptions {
   // The external model asset, as a single standalone TFLite file. It could be
   // packed with TFLite Model Metadata[1] and associated files if exist. Fail to
@@ -40,4 +41,7 @@ message BaseOptions {
 
   // Acceleration setting to use available delegate on the device.
   optional Acceleration acceleration = 3;
+
+  // Gpu origin for calculators with gpu supported.
+  optional mediapipe.GpuOrigin.Mode gpu_origin = 4 [default = TOP_LEFT];
 }

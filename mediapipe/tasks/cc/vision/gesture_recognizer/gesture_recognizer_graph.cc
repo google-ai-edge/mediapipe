@@ -131,6 +131,11 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
   }
   hand_gesture_recognizer_graph_options->mutable_base_options()
       ->set_use_stream_mode(options->base_options().use_stream_mode());
+
+  hand_landmarker_graph_options->mutable_base_options()->set_gpu_origin(
+      options->base_options().gpu_origin());
+  hand_gesture_recognizer_graph_options->mutable_base_options()->set_gpu_origin(
+      options->base_options().gpu_origin());
   return absl::OkStatus();
 }
 

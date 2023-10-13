@@ -36,6 +36,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/components/processors/proto/image_preprocessing_graph_options.pb.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/proto/acceleration.pb.h"
+#include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #include "mediapipe/tasks/cc/vision/utils/image_tensor_specs.h"
 #include "tensorflow/lite/schema/schema_generated.h"
 
@@ -73,7 +74,7 @@ struct ImagePreprocessingOutputStreams {
 
 // Fills in the ImageToTensorCalculatorOptions based on the ImageTensorSpecs.
 absl::Status ConfigureImageToTensorCalculator(
-    const ImageTensorSpecs& image_tensor_specs,
+    const ImageTensorSpecs& image_tensor_specs, GpuOrigin::Mode gpu_origin,
     mediapipe::ImageToTensorCalculatorOptions* options) {
   options->set_output_tensor_width(image_tensor_specs.image_width);
   options->set_output_tensor_height(image_tensor_specs.image_height);
@@ -109,7 +110,7 @@ absl::Status ConfigureImageToTensorCalculator(
   }
   // TODO: need to support different GPU origin on different
   // platforms or applications.
-  options->set_gpu_origin(mediapipe::GpuOrigin::TOP_LEFT);
+  options->set_gpu_origin(gpu_origin);
   return absl::OkStatus();
 }
 
@@ -125,10 +126,19 @@ bool DetermineImagePreprocessingGpuBackend(
 absl::Status ConfigureImagePreprocessingGraph(
     const ModelResources& model_resources, bool use_gpu,
     proto::ImagePreprocessingGraphOptions* options) {
+  return ConfigureImagePreprocessingGraph(model_resources, use_gpu,
+                                          GpuOrigin::TOP_LEFT, options);
+}
+
+absl::Status ConfigureImagePreprocessingGraph(
+    const ModelResources& model_resources, bool use_gpu,
+    GpuOrigin::Mode gpu_origin,
+    proto::ImagePreprocessingGraphOptions* options) {
   MP_ASSIGN_OR_RETURN(auto image_tensor_specs,
                       vision::BuildInputImageTensorSpecs(model_resources));
   MP_RETURN_IF_ERROR(ConfigureImageToTensorCalculator(
-      image_tensor_specs, options->mutable_image_to_tensor_options()));
+      image_tensor_specs, gpu_origin,
+      options->mutable_image_to_tensor_options()));
   // The GPU backend isn't able to process int data. If the input tensor is
   // quantized, forces the image preprocessing graph to use CPU backend.
   if (use_gpu && image_tensor_specs.tensor_type != tflite::TensorType_UINT8) {
