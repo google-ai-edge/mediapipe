@@ -145,7 +145,6 @@ class AverageWordEmbeddingClassifierPreprocessor:
     """Returns the vocab of the AverageWordEmbeddingClassifierPreprocessor."""
     return self._vocab
 
-  # TODO: Align with MediaPipe's RegexTokenizer.
   def _regex_tokenize(self, text: str) -> Sequence[str]:
     """Splits `text` by words but does not split on single quotes.
 

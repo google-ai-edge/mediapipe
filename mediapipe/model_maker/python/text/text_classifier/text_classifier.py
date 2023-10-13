@@ -353,7 +353,6 @@ class _AverageWordEmbeddingClassifier(TextClassifier):
     return text_classifier_writer.MetadataWriter.create_for_regex_model(
         model_buffer=tflite_model,
         regex_tokenizer=metadata_writer.RegexTokenizer(
-            # TODO: Align with MediaPipe's RegexTokenizer.
             delim_regex_pattern=self._DELIM_REGEX_PATTERN,
             vocab_file_path=vocab_filepath),
         labels=metadata_writer.Labels().add(list(self._label_names)))
