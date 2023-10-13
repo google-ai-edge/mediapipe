@@ -132,8 +132,6 @@ cc_library(
 
 # TODO: Enable this test
 
-# TODO: Investigate rewriting the build rule to only link
-# the Bert Preprocessor if it's needed.
 cc_library(
     name = "text_preprocessing_graph",
     srcs = ["text_preprocessing_graph.cc"],

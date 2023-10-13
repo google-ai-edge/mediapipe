@@ -68,7 +68,6 @@ constexpr absl::string_view kSeparatorToken = "[SEP]";
 //
 // This calculator is currently configured for the TextClassifier Task but it
 // will eventually be generalized for other Text Tasks.
-// TODO: Handle preprocessing for other Text Tasks too.
 //
 // Inputs:
 //   TEXT - std::string
