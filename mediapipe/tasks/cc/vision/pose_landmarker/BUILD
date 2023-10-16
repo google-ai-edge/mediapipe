@@ -138,6 +138,7 @@ cc_library(
         "//mediapipe/tasks/cc/core:model_asset_bundle_resources",
         "//mediapipe/tasks/cc/core:model_resources_cache",
         "//mediapipe/tasks/cc/core:model_task_graph",
+        "//mediapipe/tasks/cc/core:utils",
         "//mediapipe/tasks/cc/metadata/utils:zip_utils",
         "//mediapipe/tasks/cc/vision/pose_detector:pose_detector_graph",
         "//mediapipe/tasks/cc/vision/pose_detector/proto:pose_detector_graph_options_cc_proto",

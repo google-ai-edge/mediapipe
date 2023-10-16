@@ -31,6 +31,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/model_asset_bundle_resources.h"
 #include "mediapipe/tasks/cc/core/model_resources_cache.h"
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
+#include "mediapipe/tasks/cc/core/utils.h"
 #include "mediapipe/tasks/cc/metadata/utils/zip_utils.h"
 #include "mediapipe/tasks/cc/vision/pose_detector/proto/pose_detector_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/pose_landmarker/proto/pose_landmarker_graph_options.pb.h"
@@ -259,19 +260,8 @@ class PoseLandmarkerGraph : public core::ModelTaskGraph {
           graph[Output<std::vector<Image>>(kSegmentationMaskTag)];
     }
 
-    // TODO remove when support is fixed.
-    // As mediapipe GraphBuilder currently doesn't support configuring
-    // InputStreamInfo, modifying the CalculatorGraphConfig proto directly.
     CalculatorGraphConfig config = graph.GetConfig();
-    for (int i = 0; i < config.node_size(); ++i) {
-      if (config.node(i).calculator() == "PreviousLoopbackCalculator") {
-        auto* info = config.mutable_node(i)->add_input_stream_info();
-        info->set_tag_index(kLoopTag);
-        info->set_back_edge(true);
-        break;
-      }
-    }
-
+    core::FixGraphBackEdges(config);
     return config;
   }
 

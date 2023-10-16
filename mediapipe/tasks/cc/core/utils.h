@@ -84,6 +84,10 @@ static TensorType* FindTensorByName(
     std::vector<std::string> input_stream_tags, std::string finished_stream_tag,
     int max_in_flight = 1, int max_in_queue = 1);
 
+// Fixs the graph config containing PreviousLoopbackCalculator where the edge
+// forming a loop needs to be tagged as back edge.
+void FixGraphBackEdges(::mediapipe::CalculatorGraphConfig& graph_config);
+
 }  // namespace core
 }  // namespace tasks
 }  // namespace mediapipe

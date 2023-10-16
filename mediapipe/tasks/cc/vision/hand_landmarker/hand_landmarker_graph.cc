@@ -254,18 +254,8 @@ class HandLandmarkerGraph : public core::ModelTaskGraph {
         graph[Output<std::vector<Detection>>(kPalmDetectionsTag)];
     hand_landmarker_outputs.image >> graph[Output<Image>(kImageTag)];
 
-    // TODO remove when support is fixed.
-    // As mediapipe GraphBuilder currently doesn't support configuring
-    // InputStreamInfo, modifying the CalculatorGraphConfig proto directly.
     CalculatorGraphConfig config = graph.GetConfig();
-    for (int i = 0; i < config.node_size(); ++i) {
-      if (config.node(i).calculator() == kPreviousLoopbackCalculatorName) {
-        auto* info = config.mutable_node(i)->add_input_stream_info();
-        info->set_tag_index("LOOP");
-        info->set_back_edge(true);
-        break;
-      }
-    }
+    core::FixGraphBackEdges(config);
     return config;
   }
 
