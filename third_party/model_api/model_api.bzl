@@ -56,8 +56,6 @@ cc_library(
 )
 
 """
-    #repository_ctx.file("BUILD", build_file_content)
-    #repository_ctx.file("BUILD", build_file_content.format(http_proxy="ER"))
     repository_ctx.file("BUILD", build_file_content.format(http_proxy=http_proxy, https_proxy=https_proxy))
 
 model_api_repository = repository_rule(
