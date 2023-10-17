@@ -71,16 +71,18 @@ http_archive(
     urls = ["https://github.com/bazelbuild/rules_cc/archive/2f8c04c04462ab83c545ab14c0da68c3b4c96191.zip"],
 )
 
-http_archive(
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository( # Using commit past 0.9.0 that adds cmake 3.26.2 for model api. Be sure to update to 0.10.0 when available.
     name = "rules_foreign_cc",
-    sha256 = "2a4d07cd64b0719b39a7c12218a3e507672b82a97b98c6a89d38565894cf7c51",
-    strip_prefix = "rules_foreign_cc-0.9.0",
-    url = "https://github.com/bazelbuild/rules_foreign_cc/archive/refs/tags/0.9.0.tar.gz",
+    remote = "https://github.com/bazelbuild/rules_foreign_cc.git",
+    commit = "1fb8a1e",
+ #   strip_prefix = "rules_foreign_cc-0.9.0",
 )
 
 load("@rules_foreign_cc//foreign_cc:repositories.bzl", "rules_foreign_cc_dependencies")
 
-rules_foreign_cc_dependencies()
+rules_foreign_cc_dependencies(cmake_version="3.26.2")
 
 http_archive(
     name = "com_google_protobuf",
@@ -636,12 +638,10 @@ http_archive(
     build_file = "@//third_party:halide.BUILD",
 )
 
-load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
-
 git_repository(
     name = "ovms",
     remote = "https://github.com/openvinotoolkit/model_server",
-    commit = "7db8f3d53c6627ea42ba6b90a3441a48593c7337", # MP update to 10.3 in OVMS
+    commit = "77c30dc3f153b3ee78336a3a75c09af4e23c14a4", # MP update to 10.3 in OVMS
 )
 
 # DEV ovms - adjust local repository path for build
@@ -834,17 +834,12 @@ git_repository(
     patches = ["@ovms//external:mwaitpkg.patch",]
 )
 
+load("@rules_foreign_cc//foreign_cc:cmake.bzl", "cmake")
+load("@//third_party/model_api:model_api.bzl", "model_api_repository")
+model_api_repository(name="_model-api")
 new_git_repository(
     name = "model_api",
     remote = "https:///github.com/openvinotoolkit/model_api/",
-    build_file_content = """
-cc_library(
-    name = "adapter_api",
-    hdrs = ["model_api/cpp/adapters/include/adapters/inference_adapter.h",],
-    includes = ["model_api/cpp/adapters/include"],
-    deps = ["@linux_openvino//:openvino"],
-    visibility = ["//visibility:public"],
-)
-    """,
-    commit = "ca5a91ed5b3dbf428dc4de6b72f0a3da93d2aa0a"
+    build_file = "@_model-api//:BUILD",
+    commit = "03a6cee5d486ee9eabb625e4388e69fe9c50ef20"
 )
