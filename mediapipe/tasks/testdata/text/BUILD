@@ -107,6 +107,8 @@ filegroup(
     srcs = ["universal_sentence_encoder_qa_with_metadata.tflite"],
 )
 
+# models for use with text classifier task
+
 filegroup(
     name = "language_detector",
     srcs = ["language_detector.tflite"],
