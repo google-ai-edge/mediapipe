@@ -835,10 +835,11 @@ git_repository(
 )
 
 load("@rules_foreign_cc//foreign_cc:cmake.bzl", "cmake")
-
+load("@//third_party/model_api:model_api.bzl", "model_api_repository")
+model_api_repository(name="_model-api")
 new_git_repository(
     name = "model_api",
     remote = "https:///github.com/openvinotoolkit/model_api/",
-    build_file = "@//third_party/model_api:BUILD",
+    build_file = "@_model-api//:BUILD",
     commit = "03a6cee5d486ee9eabb625e4388e69fe9c50ef20"
 )
