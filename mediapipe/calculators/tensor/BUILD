@@ -1450,6 +1450,30 @@ cc_library(
     alwayslink = 1,
 )
 
+cc_test(
+    name = "tensors_to_segmentation_calculator_test",
+    srcs = ["tensors_to_segmentation_calculator_test.cc"],
+    deps = [
+        ":tensors_to_segmentation_calculator",
+        ":tensors_to_segmentation_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:image_format_cc_proto",
+        "//mediapipe/framework/formats:image_opencv",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "tensors_dequantization_calculator",
     srcs = ["tensors_dequantization_calculator.cc"],
