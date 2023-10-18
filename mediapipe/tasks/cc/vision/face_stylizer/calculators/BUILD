@@ -12,11 +12,42 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@bazel_skylib//lib:selects.bzl", "selects")
+load("//mediapipe/framework:more_selects.bzl", "more_selects")
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 
 licenses(["notice"])
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
+
+config_setting(
+    name = "disable_gpu",
+    define_values = {
+        "MEDIAPIPE_DISABLE_GPU": "1",
+    },
+    visibility = ["//visibility:public"],
+)
+
+more_selects.config_setting_negation(
+    name = "not_disable_gpu",
+    negate = ":disable_gpu",
+)
+
+selects.config_setting_group(
+    name = "platform_apple_with_gpu",
+    match_all = [
+        ":not_disable_gpu",
+        "//mediapipe:apple",
+    ],
+)
+
+selects.config_setting_group(
+    name = "platform_apple_without_gpu",
+    match_all = [
+        ":disable_gpu",
+        "//mediapipe:apple",
+    ],
+)
 
 mediapipe_proto_library(
     name = "tensors_to_image_calculator_proto",
@@ -91,13 +122,14 @@ cc_library(
             "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:gl_texture",
             "@org_tensorflow//tensorflow/lite/delegates/gpu/gl/converters:util",
         ],
-        "//mediapipe:ios": [
+        ":platform_apple_with_gpu": [
             "//mediapipe/gpu:MPPMetalHelper",
             "//mediapipe/gpu:MPPMetalUtil",
             "//mediapipe/gpu:gl_calculator_helper",
             "//mediapipe/gpu:gpu_buffer",
         ],
-        "//mediapipe:macos": [],
+        # This setting is needed to allow bazel to build all targets on Mac with GPU disabled
+        ":platform_apple_without_gpu": [],
         "//conditions:default": [
             "//mediapipe/gpu:gl_calculator_helper",
             "//mediapipe/gpu:gl_quad_renderer",

@@ -96,7 +96,7 @@ GL_BASE_LINK_OPTS_OSS = GL_BASE_LINK_OPTS + select({
         "-lEGL",
     ],
     "//mediapipe:android": [],
-    "//mediapipe:ios": [],
+    ":platform_apple_with_gpu": [],
     ":disable_gpu": [],
 })
 
@@ -246,7 +246,7 @@ cc_library(
         "//mediapipe/framework/formats:image_frame",
     ] + select({
         "//conditions:default": [],
-        ":platform_ios_with_gpu": [
+        ":platform_apple_with_gpu": [
             ":gl_texture_util",
             ":gpu_buffer_storage_cv_pixel_buffer",
         ],
@@ -287,6 +287,14 @@ selects.config_setting_group(
     ],
 )
 
+selects.config_setting_group(
+    name = "platform_apple_with_gpu",
+    match_all = [
+        ":not_disable_gpu",
+        "//mediapipe:apple",
+    ],
+)
+
 cc_library(
     name = "gpu_buffer",
     srcs = ["gpu_buffer.cc"],
@@ -315,6 +323,7 @@ cc_library(
         ":platform_macos_with_gpu": [
             ":gl_texture_buffer",
             ":gl_texture_view",
+            ":gpu_buffer_storage_cv_pixel_buffer",
             "//mediapipe/objc:CFHolder",
         ],
         ":disable_gpu": [],

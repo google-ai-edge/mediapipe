@@ -43,7 +43,7 @@ GlTextureView GpuBufferStorageCvPixelBuffer::GetTexture(
   cv_texture.adopt(cv_texture_temp);
   return GlTextureView(
       gl_context.get(), CVOpenGLTextureGetTarget(*cv_texture),
-      CVOpenGLTextureGetName(*cv_texture), width(), height(), *this, plane,
+      CVOpenGLTextureGetName(*cv_texture), width(), height(), plane,
       [cv_texture](mediapipe::GlTextureView&) { /* only retains cv_texture */ },
       done_writing);
 #else

@@ -21,10 +21,10 @@ licenses(["notice"])
 package(default_visibility = ["//visibility:public"])
 
 selects.config_setting_group(
-    name = "ios_or_disable_gpu",
+    name = "apple_or_disable_gpu",
     match_any = [
         "//mediapipe/gpu:disable_gpu",
-        "//mediapipe:ios",
+        "//mediapipe:apple",
     ],
 )
 
@@ -299,7 +299,7 @@ cc_library(
         "//mediapipe/util:render_data_cc_proto",
         "@org_tensorflow//tensorflow/lite:framework",
     ] + select({
-        ":ios_or_disable_gpu": [],
+        ":apple_or_disable_gpu": [],
         "//conditions:default": [
             "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:gl_buffer",
         ],
@@ -913,7 +913,7 @@ cc_library(
         "@org_tensorflow//tensorflow/lite:framework",
         "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
     ] + select({
-        ":ios_or_disable_gpu": [],
+        ":apple_or_disable_gpu": [],
         "//conditions:default": [
             "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:gl_buffer",
         ],

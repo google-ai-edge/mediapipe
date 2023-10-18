@@ -50,10 +50,18 @@ more_selects.config_setting_negation(
 )
 
 selects.config_setting_group(
-    name = "platform_ios_with_gpu",
+    name = "platform_apple_with_gpu",
     match_all = [
         ":not_disable_gpu",
-        "//mediapipe:ios",
+        "//mediapipe:apple",
+    ],
+)
+
+selects.config_setting_group(
+    name = "platform_apple_without_gpu",
+    match_all = [
+        ":disable_gpu",
+        "//mediapipe:apple",
     ],
 )
 
@@ -614,7 +622,7 @@ cc_library(
         ":inference_calculator_interface",
     ] + select({
         "//conditions:default": [":inference_calculator_gl_if_compute_shader_available"],
-        ":platform_ios_with_gpu": [":inference_calculator_metal"],
+        ":platform_apple_with_gpu": [":inference_calculator_metal"],
     }),
     alwayslink = 1,
 )
@@ -687,12 +695,13 @@ cc_library(
             "//mediapipe/gpu:gl_calculator_helper",
             "//mediapipe/gpu:gpu_buffer",
         ],
-        "//mediapipe:ios": [
+        ":platform_apple_with_gpu": [
             "//mediapipe/gpu:MPPMetalHelper",
             "//mediapipe/gpu:MPPMetalUtil",
             "//mediapipe/objc:mediapipe_framework_ios",
         ],
-        "//mediapipe:macos": [],
+        # This setting is needed to allow bazel to build all targets on Mac with GPU disabled
+        ":platform_apple_without_gpu": [],
         "//conditions:default": [
             "//mediapipe/gpu:gl_calculator_helper",
             "//mediapipe/gpu:gl_simple_shaders",
@@ -777,11 +786,12 @@ cc_library(
     name = "tensors_to_detections_calculator_gpu_deps",
     visibility = ["//visibility:private"],
     deps = select({
-        "//mediapipe:ios": [
+        ":platform_apple_with_gpu": [
             "//mediapipe/gpu:MPPMetalHelper",
             "//mediapipe/gpu:MPPMetalUtil",
         ],
-        "//mediapipe:macos": [],
+        # This setting is needed to allow bazel to build all targets on Mac with GPU disabled
+        ":platform_apple_without_gpu": [],
         "//conditions:default": [
             "//mediapipe/gpu:gl_calculator_helper",
         ],
@@ -1428,7 +1438,7 @@ cc_library(
         ],
     }) + selects.with_or({
         ":gpu_inference_disabled": [],
-        "//mediapipe:ios": [
+        ":platform_apple_with_gpu": [
             "//mediapipe/gpu:MPPMetalUtil",
             "//mediapipe/gpu:MPPMetalHelper",
             "//third_party/apple_frameworks:MetalKit",

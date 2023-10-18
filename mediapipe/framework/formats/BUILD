@@ -456,7 +456,7 @@ cc_library(
         "tensor.h",
         "//mediapipe/framework/formats/tensor:internal.h",
     ] + select({
-        "//mediapipe:ios": ["tensor_mtl_buffer_view.h"],
+        "//mediapipe:apple": ["tensor_mtl_buffer_view.h"],
         "//conditions:default": [],
     }),
     copts = select({
@@ -477,7 +477,7 @@ cc_library(
         "//conditions:default": [],
     }),
     linkopts = select({
-        "//mediapipe:ios": [
+        "//mediapipe:apple": [
             "-framework CoreVideo",
             "-framework MetalKit",
         ],
