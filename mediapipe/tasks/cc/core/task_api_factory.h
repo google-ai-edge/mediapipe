@@ -17,6 +17,7 @@ limitations under the License.
 #define MEDIAPIPE_TASKS_CC_CORE_TASK_API_FACTORY_H_
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <type_traits>
 #include <utility>
@@ -26,6 +27,7 @@ limitations under the License.
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/calculator.pb.h"
+#include "mediapipe/framework/executor.h"
 #include "mediapipe/framework/port/requires.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/tasks/cc/common.h"
@@ -56,7 +58,9 @@ class TaskApiFactory {
   static absl::StatusOr<std::unique_ptr<T>> Create(
       CalculatorGraphConfig graph_config,
       std::unique_ptr<tflite::OpResolver> resolver,
-      PacketsCallback packets_callback = nullptr) {
+      PacketsCallback packets_callback = nullptr,
+      std::shared_ptr<Executor> default_executor = nullptr,
+      std::optional<PacketMap> input_side_packets = std::nullopt) {
     bool found_task_subgraph = false;
     // This for-loop ensures there's only one subgraph besides
     // FlowLimiterCalculator.
@@ -77,7 +81,9 @@ class TaskApiFactory {
     MP_ASSIGN_OR_RETURN(
         auto runner,
         core::TaskRunner::Create(std::move(graph_config), std::move(resolver),
-                                 std::move(packets_callback)));
+                                 std::move(packets_callback),
+                                 std::move(default_executor),
+                                 std::move(input_side_packets)));
     return std::make_unique<T>(std::move(runner));
   }
 
