@@ -18,6 +18,7 @@ load("//mediapipe/java/com/google/mediapipe:mediapipe_aar.bzl", "mediapipe_build
 load("@build_bazel_rules_android//android:rules.bzl", "android_library")
 
 _CORE_TASKS_JAVA_PROTO_LITE_TARGETS = [
+    "//mediapipe/gpu:gpu_origin_java_proto_lite",
     "//mediapipe/tasks/cc/components/containers/proto:classifications_java_proto_lite",
     "//mediapipe/tasks/cc/components/containers/proto:embeddings_java_proto_lite",
     "//mediapipe/tasks/cc/components/containers/proto:landmarks_detection_result_java_proto_lite",

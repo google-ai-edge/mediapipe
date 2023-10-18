@@ -41,6 +41,7 @@ android_library(
         "//mediapipe/calculators/tensor:inference_calculator_java_proto_lite",
         "//mediapipe/framework:calculator_java_proto_lite",
         "//mediapipe/framework:calculator_options_java_proto_lite",
+        "//mediapipe/gpu:gpu_origin_java_proto_lite",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework_no_mff",
         "//mediapipe/tasks/cc/core/proto:acceleration_java_proto_lite",
         "//mediapipe/tasks/cc/core/proto:base_options_java_proto_lite",
