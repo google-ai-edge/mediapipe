@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "absl/base/macros.h"
+#include "absl/strings/string_view.h"
 #include "mediapipe/framework/port/proto_ns.h"
 #include "mediapipe/framework/port/status.h"
 
@@ -85,7 +86,7 @@ absl::Status ValidateTag(const std::string& tag);
 // The format is an optional tag and colon, followed by a name.
 // Example 1: "VIDEO:frames2" -> tag: "VIDEO", name: "frames2"
 // Example 2: "video_frames_1" -> tag: "", name: "video_frames_1"
-absl::Status ParseTagAndName(const std::string& tag_and_name, std::string* tag,
+absl::Status ParseTagAndName(absl::string_view tag_and_name, std::string* tag,
                              std::string* name);
 
 // Parse a generic TAG:index:name string.  The format is a tag, then an

@@ -127,7 +127,7 @@ absl::Status ValidateTag(const std::string& tag) {
                    "\" does not match \"" MEDIAPIPE_TAG_REGEX "\"."));
 }
 
-absl::Status ParseTagAndName(const std::string& tag_and_name, std::string* tag,
+absl::Status ParseTagAndName(absl::string_view tag_and_name, std::string* tag,
                              std::string* name) {
   // An optional tag and colon, followed by a name.
   RET_CHECK(tag);
