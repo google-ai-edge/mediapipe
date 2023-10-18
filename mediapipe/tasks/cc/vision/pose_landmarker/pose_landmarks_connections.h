@@ -23,12 +23,42 @@ namespace tasks {
 namespace vision {
 namespace pose_landmarker {
 
-static constexpr std::array<std::array<int, 2>, 34> kPoseLandmarksConnections{{
-    {1, 2},   {0, 1},   {2, 3},   {3, 7},   {0, 4},   {4, 5},   {5, 6},
-    {6, 8},   {9, 10},  {11, 12}, {11, 13}, {13, 15}, {15, 17}, {15, 19},
-    {15, 21}, {17, 19}, {12, 14}, {14, 16}, {16, 18}, {16, 20}, {16, 22},
-    {18, 20}, {11, 23}, {12, 24}, {23, 24}, {23, 25}, {24, 26}, {25, 27},
-    {26, 28}, {27, 29}, {28, 30}, {29, 31}, {30, 32}, {27, 31},
+static constexpr std::array<std::array<int, 2>, 35> kPoseLandmarksConnections{{
+    {0, 4},    // (nose, right_eye_inner)
+    {4, 5},    // (right_eye_inner, right_eye)
+    {5, 6},    // (right_eye, right_eye_outer)
+    {6, 8},    // (right_eye_outer, right_ear)
+    {0, 1},    // (nose, left_eye_inner)
+    {1, 2},    // (left_eye_inner, left_eye)
+    {2, 3},    // (left_eye, left_eye_outer)
+    {3, 7},    // (left_eye_outer, left_ear)
+    {10, 9},   // (mouth_right, mouth_left)
+    {12, 11},  // (right_shoulder, left_shoulder)
+    {12, 14},  // (right_shoulder, right_elbow)
+    {14, 16},  // (right_elbow, right_wrist)
+    {16, 18},  // (right_wrist, right_pinky_1)
+    {16, 20},  // (right_wrist, right_index_1)
+    {16, 22},  // (right_wrist, right_thumb_2)
+    {18, 20},  // (right_pinky_1, right_index_1)
+    {11, 13},  // (left_shoulder, left_elbow)
+    {13, 15},  // (left_elbow, left_wrist)
+    {15, 17},  // (left_wrist, left_pinky_1)
+    {15, 19},  // (left_wrist, left_index_1)
+    {15, 21},  // (left_wrist, left_thumb_2)
+    {17, 19},  // (left_pinky_1, left_index_1)
+    {12, 24},  // (right_shoulder, right_hip)
+    {11, 23},  // (left_shoulder, left_hip)
+    {24, 23},  // (right_hip, left_hip)
+    {24, 26},  // (right_hip, right_knee)
+    {23, 25},  // (left_hip, left_knee)
+    {26, 28},  // (right_knee, right_ankle)
+    {25, 27},  // (left_knee, left_ankle)
+    {28, 30},  // (right_ankle, right_heel)
+    {27, 29},  // (left_ankle, left_heel)
+    {30, 32},  // (right_heel, right_foot_index)
+    {29, 31},  // (left_heel, left_foot_index)
+    {28, 32},  // (right_ankle, right_foot_index)
+    {27, 31},  // (left_ankle, left_foot_index)
 }};
 
 }  // namespace pose_landmarker

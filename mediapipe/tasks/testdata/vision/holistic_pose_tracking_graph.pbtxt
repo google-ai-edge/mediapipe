@@ -1,0 +1,238 @@
+node {
+  calculator: "PreviousLoopbackCalculator"
+  input_stream: "LOOP:__stream_17"
+  input_stream: "MAIN:image_in"
+  output_stream: "PREV_LOOP:__stream_0"
+  input_stream_info {
+    tag_index: "LOOP"
+    back_edge: true
+  }
+}
+node {
+  calculator: "PacketPresenceCalculator"
+  input_stream: "PACKET:__stream_0"
+  output_stream: "PRESENCE:__stream_1"
+}
+node {
+  calculator: "GateCalculator"
+  input_stream: "image_in"
+  input_stream: "DISALLOW:__stream_1"
+  output_stream: "__stream_2"
+  options {
+    [mediapipe.GateCalculatorOptions.ext] {
+      empty_packets_as_allow: true
+    }
+  }
+}
+node {
+  calculator: "mediapipe.tasks.vision.pose_detector.PoseDetectorGraph"
+  input_stream: "IMAGE:__stream_2"
+  output_stream: "DETECTIONS:__stream_3"
+  options {
+    [mediapipe.tasks.vision.pose_detector.proto.PoseDetectorGraphOptions.ext] {
+      base_options {
+        model_asset {
+          file_name: "$0/mediapipe/tasks/testdata/vision/pose_detection.tflite"
+        }
+      }
+      num_poses: 1
+    }
+  }
+}
+node {
+  calculator: "ImagePropertiesCalculator"
+  input_stream: "IMAGE:__stream_2"
+  output_stream: "SIZE:__stream_4"
+}
+node {
+  calculator: "AlignmentPointsRectsCalculator"
+  input_stream: "DETECTIONS:__stream_3"
+  input_stream: "IMAGE_SIZE:__stream_4"
+  output_stream: "NORM_RECT:__stream_5"
+  options {
+    [mediapipe.DetectionsToRectsCalculatorOptions.ext] {
+      rotation_vector_start_keypoint_index: 0
+      rotation_vector_end_keypoint_index: 1
+      rotation_vector_target_angle_degrees: 90
+    }
+  }
+}
+node {
+  calculator: "RectTransformationCalculator"
+  input_stream: "IMAGE_SIZE:__stream_4"
+  input_stream: "NORM_RECT:__stream_5"
+  output_stream: "__stream_6"
+  options {
+    [mediapipe.RectTransformationCalculatorOptions.ext] {
+      scale_x: 1.25
+      scale_y: 1.25
+      square_long: true
+    }
+  }
+}
+node {
+  calculator: "MergeCalculator"
+  input_stream: "__stream_6"
+  input_stream: "__stream_0"
+  output_stream: "__stream_7"
+}
+node {
+  calculator: "mediapipe.tasks.vision.pose_landmarker.SinglePoseLandmarksDetectorGraph"
+  input_stream: "IMAGE:image_in"
+  input_stream: "NORM_RECT:__stream_7"
+  output_stream: "AUXILIARY_LANDMARKS:__stream_8"
+  output_stream: "LANDMARKS:__stream_9"
+  output_stream: "WORLD_LANDMARKS:__stream_10"
+  options {
+    [mediapipe.tasks.vision.pose_landmarker.proto.PoseLandmarksDetectorGraphOptions.ext] {
+      base_options {
+        model_asset {
+          file_name: "$1/mediapipe/tasks/testdata/vision/pose_landmark_lite.tflite"
+        }
+      }
+    }
+  }
+}
+node {
+  calculator: "ImagePropertiesCalculator"
+  input_stream: "IMAGE:image_in"
+  output_stream: "SIZE:__stream_11"
+}
+node {
+  calculator: "LandmarksToDetectionCalculator"
+  input_stream: "NORM_LANDMARKS:__stream_8"
+  output_stream: "DETECTION:__stream_12"
+}
+node {
+  calculator: "AlignmentPointsRectsCalculator"
+  input_stream: "DETECTION:__stream_12"
+  input_stream: "IMAGE_SIZE:__stream_11"
+  output_stream: "NORM_RECT:__stream_13"
+  options {
+    [mediapipe.DetectionsToRectsCalculatorOptions.ext] {
+      rotation_vector_start_keypoint_index: 0
+      rotation_vector_end_keypoint_index: 1
+      rotation_vector_target_angle_degrees: 90
+    }
+  }
+}
+node {
+  calculator: "LandmarksSmoothingCalculator"
+  input_stream: "IMAGE_SIZE:__stream_11"
+  input_stream: "NORM_LANDMARKS:__stream_8"
+  input_stream: "OBJECT_SCALE_ROI:__stream_13"
+  output_stream: "NORM_FILTERED_LANDMARKS:__stream_14"
+  options {
+    [mediapipe.LandmarksSmoothingCalculatorOptions.ext] {
+      one_euro_filter {
+        min_cutoff: 0.01
+        beta: 10
+        derivate_cutoff: 1
+        disable_value_scaling: false
+      }
+    }
+  }
+}
+node {
+  calculator: "LandmarksToDetectionCalculator"
+  input_stream: "NORM_LANDMARKS:__stream_14"
+  output_stream: "DETECTION:__stream_15"
+}
+node {
+  calculator: "AlignmentPointsRectsCalculator"
+  input_stream: "DETECTION:__stream_15"
+  input_stream: "IMAGE_SIZE:__stream_11"
+  output_stream: "NORM_RECT:__stream_16"
+  options {
+    [mediapipe.DetectionsToRectsCalculatorOptions.ext] {
+      rotation_vector_start_keypoint_index: 0
+      rotation_vector_end_keypoint_index: 1
+      rotation_vector_target_angle_degrees: 90
+    }
+  }
+}
+node {
+  calculator: "RectTransformationCalculator"
+  input_stream: "IMAGE_SIZE:__stream_11"
+  input_stream: "NORM_RECT:__stream_16"
+  output_stream: "__stream_17"
+  options {
+    [mediapipe.RectTransformationCalculatorOptions.ext] {
+      scale_x: 1.25
+      scale_y: 1.25
+      square_long: true
+    }
+  }
+}
+node {
+  calculator: "VisibilitySmoothingCalculator"
+  input_stream: "NORM_LANDMARKS:__stream_9"
+  output_stream: "NORM_FILTERED_LANDMARKS:__stream_18"
+  options {
+    [mediapipe.VisibilitySmoothingCalculatorOptions.ext] {
+      low_pass_filter {
+        alpha: 0.1
+      }
+    }
+  }
+}
+node {
+  calculator: "LandmarksSmoothingCalculator"
+  input_stream: "IMAGE_SIZE:__stream_11"
+  input_stream: "NORM_LANDMARKS:__stream_18"
+  input_stream: "OBJECT_SCALE_ROI:__stream_13"
+  output_stream: "NORM_FILTERED_LANDMARKS:pose_landmarks_out"
+  options {
+    [mediapipe.LandmarksSmoothingCalculatorOptions.ext] {
+      one_euro_filter {
+        min_cutoff: 0.05
+        beta: 80
+        derivate_cutoff: 1
+        disable_value_scaling: false
+      }
+    }
+  }
+}
+node {
+  calculator: "SplitLandmarkListCalculator"
+  input_stream: "__stream_10"
+  output_stream: "__stream_19"
+  options {
+    [mediapipe.SplitVectorCalculatorOptions.ext] {
+      ranges {
+        begin: 0
+        end: 33
+      }
+    }
+  }
+}
+node {
+  calculator: "VisibilitySmoothingCalculator"
+  input_stream: "LANDMARKS:__stream_19"
+  output_stream: "FILTERED_LANDMARKS:__stream_20"
+  options {
+    [mediapipe.VisibilitySmoothingCalculatorOptions.ext] {
+      low_pass_filter {
+        alpha: 0.1
+      }
+    }
+  }
+}
+node {
+  calculator: "LandmarksSmoothingCalculator"
+  input_stream: "LANDMARKS:__stream_20"
+  output_stream: "FILTERED_LANDMARKS:pose_world_landmarks_out"
+  options {
+    [mediapipe.LandmarksSmoothingCalculatorOptions.ext] {
+      one_euro_filter {
+        min_cutoff: 0.1
+        beta: 40
+        derivate_cutoff: 1
+        disable_value_scaling: true
+      }
+    }
+  }
+}
+input_stream: "IMAGE:image_in"
+output_stream: "POSE_LANDMARKS:pose_landmarks_out"
+output_stream: "POSE_WORLD_LANDMARKS:pose_world_landmarks_out"
