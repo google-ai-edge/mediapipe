@@ -78,6 +78,24 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { d
 + (std::unique_ptr<ImageFrame>)imageFrameFromCVPixelBuffer:(CVPixelBufferRef)pixelBuffer
                                                      error:(NSError **)error;
 
+// Always copies the pixel data of the image frame to the created `CVPixelBuffer`.
+
+// This method is used to create CVPixelBuffer from output images of tasks like `FaceStylizer` only
+// when the input `MPImage` source type is `pixelBuffer`.
+//
+// The only possible 32 RGBA pixel format of input `CVPixelBuffer` is `kCVPixelFormatType_32BGRA`.
+// But Mediapipe does not support inference on images of format `BGRA`. Hence the channels of the
+// underlying pixel data of `CVPixelBuffer` are permuted to the supported RGBA format before passing
+// them to the task for inference. The pixel format of the output images of any MediaPipe task will
+// be the same as the pixel format of the input image. (RGBA in this case).
+//
+// Since creation of `CVPixelBuffer` from the output image pixels with a format of
+// `kCVPixelFormatType_32RGBA` is not possible, the channels of the output C++ image `RGBA` have to
+// be permuted to the format `BGRA`. When the pixels are copied to create `CVPixelBuffer` this does
+// not pose a challenge.
+//
+// TODO: Investigate if permuting channels of output `mediapipe::Image` in place is possible for
+// creating `CVPixelBuffer`s without copying the underlying pixels.
 + (CVPixelBufferRef)cvPixelBufferFromImageFrame:(ImageFrame &)imageFrame error:(NSError **)error;
 @end
 
@@ -120,6 +138,9 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { d
 
   // Convert the raw pixel data to RGBA format and un-premultiply the alpha from the R, G, B values
   // since MediaPipe C++ APIs only accept un pre-multiplied channels.
+  //
+  // This method is commonly used for `MPImage`s of all source types. Hence supporting BGRA and RGBA
+  // formats. Only `pixelBuffer` source type is restricted to `BGRA` format.
   switch (pixelBufferFormatType) {
     case kCVPixelFormatType_32RGBA: {
       destBuffer = allocatedVImageBuffer((vImagePixelCount)width, (vImagePixelCount)height,
@@ -128,6 +149,8 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { d
       break;
     }
     case kCVPixelFormatType_32BGRA: {
+      // Permute channels to `RGBA` since MediaPipe tasks don't support inference on images of
+      // format `BGRA`.
       const uint8_t permute_map[4] = {2, 1, 0, 3};
       destBuffer = allocatedVImageBuffer((vImagePixelCount)width, (vImagePixelCount)height,
                                          destinationBytesPerRow);
@@ -206,6 +229,8 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { d
   std::unique_ptr<ImageFrame> imageFrame = nullptr;
 
   switch (pixelBufferFormat) {
+    // Core Video only supports pixel data of order BGRA for 32 bit RGBA images.
+    // Thus other formats like `kCVPixelFormatType_32BGRA` don't need to be accounted for.
     case kCVPixelFormatType_32BGRA: {
       CVPixelBufferLockBaseAddress(pixelBuffer, 0);
       imageFrame = [MPPPixelDataUtils
@@ -230,10 +255,6 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { d
 }
 
 + (CVPixelBufferRef)cvPixelBufferFromImageFrame:(ImageFrame &)imageFrame error:(NSError **)error {
-  // Supporting only RGBA and BGRA since creation of CVPixelBuffers with RGB format
-  // is restrictred in iOS. Thus, the APIs will never receive an input pixel buffer in RGB format
-  // and in turn the resulting image frame will never be of the RGB format. Moreover, writing unit
-  // tests for RGB images will also be not possible.
   switch (imageFrame.Format()) {
     case ImageFormat::SRGBA:
       break;
@@ -269,9 +290,8 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { d
 
   OSType pixelBufferFormatType = kCVPixelFormatType_32BGRA;
 
-  // If pixel data is copied, then pass in a release callback that will be invoked when the
-  // pixel buffer is destroyed. If data is not copied, the responsibility of deletion is on the
-  // owner of the data (a.k.a C++ Image Frame).
+  // Since data is copied, pass in a release callback that will be invoked when the
+  // pixel buffer is destroyed.
   if (CVPixelBufferCreateWithBytes(kCFAllocatorDefault, imageFrame.Width(), imageFrame.Height(),
                                    pixelBufferFormatType, pixelData, imageFrame.WidthStep(),
                                    FreeRefConReleaseCallback, pixelData, NULL,
@@ -450,6 +470,9 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { d
     }
     case MPPImageSourceTypePixelBuffer: {
       if (!shouldCopyPixelData) {
+        // TODO: Investigate possibility of permuting channels of `mediapipe::Image` returned by
+        // vision tasks in place to ensure that we can support creating `CVPixelBuffer`s without
+        // copying the pixel data.
         [MPPCommonUtils
             createCustomError:error
                      withCode:MPPTasksErrorCodeInvalidArgumentError
