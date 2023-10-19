@@ -347,7 +347,14 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) {
   CGBitmapInfo bitmapInfo = kCGImageAlphaNoneSkipLast | kCGBitmapByteOrderDefault;
 
   ImageFrame *internalImageFrame = imageFrame.get();
-  size_t channelCount = 4;
+
+  UInt8 *pixelData = [MPPPixelDataUtils pixelDataFromImageFrame:*internalImageFrame
+                                                     shouldCopy:shouldCopyPixelData
+                                                          error:error];
+
+  if (!pixelData) {
+    return NULL;
+  }
 
   switch (internalImageFrame->Format()) {
     case ImageFormat::SRGBA: {
@@ -358,54 +365,38 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) {
       [MPPCommonUtils createCustomError:error
                                withCode:MPPTasksErrorCodeInternalError
                             description:@"An internal error occured."];
-      return nullptr;
+      return NULL;
   }
-
-  size_t bitsPerComponent = 8;
-
-  vImage_Buffer sourceBuffer = {
-      .data = (void *)internalImageFrame->MutablePixelData(),
-      .height = static_cast<vImagePixelCount>(internalImageFrame->Height()),
-      .width = static_cast<vImagePixelCount>(internalImageFrame->Width()),
-      .rowBytes = static_cast<size_t>(internalImageFrame->WidthStep())};
-
-  vImage_Buffer destBuffer;
 
   CGDataProviderReleaseDataCallback callback = nullptr;
 
-  if (shouldCopyPixelData) {
-    destBuffer = allocatedVImageBuffer(static_cast<vImagePixelCount>(internalImageFrame->Width()),
-                                       static_cast<vImagePixelCount>(internalImageFrame->Height()),
-                                       static_cast<size_t>(internalImageFrame->WidthStep()));
-    callback = FreeDataProviderReleaseCallback;
-  } else {
-    destBuffer = sourceBuffer;
-  }
-
-  // Pre-multiply the raw pixels from a `mediapipe::Image` before creating a `CGImage` to ensure
-  // that pixels are displayed correctly irrespective of their alpha values.
-  vImage_Error premultiplyError =
-      vImagePremultiplyData_RGBA8888(&sourceBuffer, &destBuffer, kvImageNoFlags);
-
-  if (premultiplyError != kvImageNoError) {
-    [MPPCommonUtils createCustomError:error
-                             withCode:MPPTasksErrorCodeInternalError
-                          description:@"An internal error occured."];
-
-    return nullptr;
-  }
-
   CGDataProviderRef provider = CGDataProviderCreateWithData(
-      destBuffer.data, destBuffer.data,
+      pixelData, pixelData,
       internalImageFrame->WidthStep() * internalImageFrame->Height(), callback);
+
   CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-  CGImageRef cgImageRef =
+
+  CGImageRef cgImageRef = NULL;
+
+  if (provider && colorSpace) {
+      size_t bitsPerComponent = 8;
+      size_t channelCount = 4;
+
+      cgImageRef =
       CGImageCreate(internalImageFrame->Width(), internalImageFrame->Height(), bitsPerComponent,
                     bitsPerComponent * channelCount, internalImageFrame->WidthStep(), colorSpace,
                     bitmapInfo, provider, nullptr, YES, kCGRenderingIntentDefault);
+  }
 
+  // Can safely pass `NULL` to these functions according to iOS docs.
   CGDataProviderRelease(provider);
   CGColorSpaceRelease(colorSpace);
+  
+  if (!cgImageRef) {
+    [MPPCommonUtils createCustomError:error
+                               withCode:MPPTasksErrorCodeInternalError
+                            description:@"An internal error occured."];
+  }
 
   return cgImageRef;
 }
