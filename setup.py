@@ -404,6 +404,8 @@ class BuildExtension(build_ext.build_ext):
             arm64_name,
         ]
         _invoke_shell_command(lipo_command)
+        # Delete the arm64 file (the x86 file was overwritten by lipo)
+        _invoke_shell_command(['rm', arm64_name])
     else:
       for ext in self.extensions:
         self._build_binary(ext)
