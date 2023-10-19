@@ -57,14 +57,17 @@ struct ImageFrame {
 };
 
 // TODO: Add GPU buffer declaration and proccessing logic for it.
-struct GpuBuffer {};
+struct GpuBuffer {
+  int width;
+  int height;
+};
 
 // The object to contain an image, realizes `OneOf` concept.
 struct MpImage {
   enum { IMAGE_FRAME, GPU_BUFFER } type;
   union {
-    ImageFrame image_frame;
-    GpuBuffer gpu_buffer;
+    struct ImageFrame image_frame;
+    struct GpuBuffer gpu_buffer;
   };
 };
 
