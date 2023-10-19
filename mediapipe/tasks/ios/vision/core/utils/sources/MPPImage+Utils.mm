@@ -30,6 +30,20 @@ namespace {
 using ::mediapipe::ImageFormat;
 using ::mediapipe::ImageFrame;
 
+vImage_Buffer EmptyVImageBufferFromImageFrame(ImageFrame &imageFrame, bool shouldAllocate) {
+  UInt8 *data = shouldAllocate ? new UInt8[imageFrame.Height() * imageFrame.WidthStep()] : NULL;
+  return {.data = data,
+          .height = static_cast<vImagePixelCount>(imageFrame.Height()),
+          .width = static_cast<vImagePixelCount>(imageFrame.Width()),
+          .rowBytes = static_cast<size_t>(imageFrame.WidthStep())};
+}
+
+vImage_Buffer VImageBufferFromImageFrame(ImageFrame &imageFrame) {
+  vImage_Buffer imageBuffer = EmptyVImageBufferFromImageFrame(imageFrame, false);
+  imageBuffer.data = imageFrame.MutablePixelData();
+  return imageBuffer;
+}
+
 vImage_Buffer allocatedVImageBuffer(vImagePixelCount width, vImagePixelCount height,
                                     size_t rowBytes) {
   UInt8 *data = new UInt8[height * rowBytes];
@@ -37,7 +51,11 @@ vImage_Buffer allocatedVImageBuffer(vImagePixelCount width, vImagePixelCount hei
 }
 
 static void FreeDataProviderReleaseCallback(void *buffer, const void *data, size_t size) {
-  delete (vImage_Buffer *)buffer;
+  delete[] buffer;
+}
+
+static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { 
+  delete[] refCon; 
 }
 
 }  // namespace
@@ -51,6 +69,10 @@ static void FreeDataProviderReleaseCallback(void *buffer, const void *data, size
                                      pixelBufferFormat:(OSType)pixelBufferFormatType
                                                  error:(NSError **)error;
 
++ (UInt8 *)pixelDataFromImageFrame:(ImageFrame &)imageFrame
+                          shouldCopy:(BOOL)shouldCopy
+                               error:(NSError **)error;
+
 @end
 
 @interface MPPCVPixelBufferUtils : NSObject
@@ -58,6 +80,9 @@ static void FreeDataProviderReleaseCallback(void *buffer, const void *data, size
 + (std::unique_ptr<ImageFrame>)imageFrameFromCVPixelBuffer:(CVPixelBufferRef)pixelBuffer
                                                      error:(NSError **)error;
 
+
++ (CVPixelBufferRef)cvPixelBufferFromImageFrame:(ImageFrame &)imageFrame
+                                          error:(NSError **)error;
 @end
 
 @interface MPPCGImageUtils : NSObject
@@ -138,6 +163,42 @@ static void FreeDataProviderReleaseCallback(void *buffer, const void *data, size
                                        static_cast<uint8 *>(destBuffer.data));
 }
 
++ (UInt8 *)pixelDataFromImageFrame:(ImageFrame &)imageFrame
+                        shouldCopy:(BOOL)shouldCopy
+                             error:(NSError **)error {                           
+  vImage_Buffer sourceBuffer = VImageBufferFromImageFrame(imageFrame);
+
+  // Pre-multiply the raw pixels from a `mediapipe::Image` before creating a `CGImage` to ensure
+  // that pixels are displayed correctly irrespective of their alpha values.
+  vImage_Error premultiplyError;
+  vImage_Buffer destinationBuffer;
+
+  switch (imageFrame.Format()) {
+    case ImageFormat::SRGBA: {
+      destinationBuffer =
+          shouldCopy ? EmptyVImageBufferFromImageFrame(imageFrame, true) : sourceBuffer;
+      premultiplyError = vImagePremultiplyData_RGBA8888(&sourceBuffer, &destinationBuffer, kvImageNoFlags);
+      break;
+    }
+    default: {
+      [MPPCommonUtils createCustomError:error
+                               withCode:MPPTasksErrorCodeInternalError
+                            description:@"An internal error occured"];
+      return NULL;
+    }
+  }
+
+  if (premultiplyError != kvImageNoError) {
+    [MPPCommonUtils createCustomError:error
+                             withCode:MPPTasksErrorCodeInternalError
+                          description:@"An internal error occured."];
+
+    return NULL;
+  }
+
+  return (UInt8 *)destinationBuffer.data;
+}
+
 @end
 
 @implementation MPPCVPixelBufferUtils
@@ -169,6 +230,64 @@ static void FreeDataProviderReleaseCallback(void *buffer, const void *data, size
 
   return imageFrame;
 }
+
++ (CVPixelBufferRef)cvPixelBufferFromImageFrame:(ImageFrame &)imageFrame
+                                          error:(NSError **)error {
+  
+  // Supporting only RGBA and BGRA since creation of CVPixelBuffers with RGB format
+  // is restrictred in iOS. Thus, the APIs will never receive an input pixel buffer in RGB format
+  // and in turn the resulting image frame will never be of the RGB format. Moreover, writing unit
+  // tests for RGB images will also be not possible.
+  switch (imageFrame.Format()) {
+    case ImageFormat::SRGBA:
+      break;
+    default: {
+      [MPPCommonUtils createCustomError:error
+                               withCode:MPPTasksErrorCodeInternalError
+                            description:@"An internal error occured."];
+      return NULL;
+    }
+  }
+
+    UInt8 *pixelData = [MPPPixelDataUtils pixelDataFromImageFrame:imageFrame
+                                                      shouldCopy:YES
+                                                           error:error];
+
+    if (!pixelData) {
+      return NULL;
+    }
+
+    const uint8_t permute_map[4] = {2, 1, 0, 3};
+    vImage_Buffer sourceBuffer =  EmptyVImageBufferFromImageFrame(imageFrame, NO);
+    sourceBuffer.data = pixelData;
+
+    if (vImagePermuteChannels_ARGB8888(&sourceBuffer, &sourceBuffer, permute_map, kvImageNoFlags) != kvImageNoError) {
+      [MPPCommonUtils createCustomError:error
+                               withCode:MPPTasksErrorCodeInternalError
+                            description:@"An internal error occured."];
+      return NULL;
+    }
+ 
+    CVPixelBufferRef outputBuffer;
+
+    OSType pixelBufferFormatType = kCVPixelFormatType_32BGRA;
+
+
+      // If pixel data is copied, then pass in a release callback that will be invoked when the
+      // pixel buffer is destroyed. If data is not copied, the responsibility of deletion is on the
+      // owner of the data (a.k.a C++ Image Frame).
+      if(CVPixelBufferCreateWithBytes(kCFAllocatorDefault, imageFrame.Width(), imageFrame.Height(),
+                                   pixelBufferFormatType, pixelData, imageFrame.WidthStep(),
+                                   FreeRefConReleaseCallback,
+                                   pixelData, NULL, &outputBuffer) == kCVReturnSuccess) {
+        return outputBuffer;                          
+      }
+      [MPPCommonUtils createCustomError:error
+                               withCode:MPPTasksErrorCodeInternalError
+                            description:@"An internal error occured."];
+      return NULL;
+}
+
 
 @end
 
@@ -343,8 +462,24 @@ static void FreeDataProviderReleaseCallback(void *buffer, const void *data, size
 
       return [self initWithUIImage:image orientation:sourceImage.orientation error:nil];
     }
+    case MPPImageSourceTypePixelBuffer: {
+      if (!shouldCopyPixelData) {
+        [MPPCommonUtils createCustomError:error
+                             withCode:MPPTasksErrorCodeInvalidArgumentError
+                          description:@"When the source type is pixel buffer, you cannot request uncopied data"];
+        return nil;                              
+      }
+      CVPixelBufferRef pixelBuffer =
+          [MPPCVPixelBufferUtils cvPixelBufferFromImageFrame:*(image.GetImageFrameSharedPtr())
+                                                       error:error];
+      MPPImage *image = [self initWithPixelBuffer:pixelBuffer
+                                      orientation:sourceImage.orientation
+                                            error:nil];
+      CVPixelBufferRelease(pixelBuffer);
+      return image;
+    }
     default:
-      // TODO Implement Other Source Types.
+      // TODO Implement CMSampleBuffer.
       return nil;
   }
 }
