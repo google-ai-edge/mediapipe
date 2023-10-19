@@ -120,8 +120,7 @@ static void FreeDataProviderReleaseCallback(void *buffer, const void *data, size
     default: {
       [MPPCommonUtils createCustomError:error
                                withCode:MPPTasksErrorCodeInvalidArgumentError
-                            description:@"Invalid source pixel buffer format. Expecting one of "
-                                        @"kCVPixelFormatType_32RGBA, kCVPixelFormatType_32BGRA"];
+                            description:@"Some internal error occured."];
       return nullptr;
     }
   }
@@ -149,7 +148,6 @@ static void FreeDataProviderReleaseCallback(void *buffer, const void *data, size
   std::unique_ptr<ImageFrame> imageFrame = nullptr;
 
   switch (pixelBufferFormat) {
-    case kCVPixelFormatType_32RGBA:
     case kCVPixelFormatType_32BGRA: {
       CVPixelBufferLockBaseAddress(pixelBuffer, 0);
       imageFrame = [MPPPixelDataUtils
@@ -165,9 +163,7 @@ static void FreeDataProviderReleaseCallback(void *buffer, const void *data, size
     default: {
       [MPPCommonUtils createCustomError:error
                                withCode:MPPTasksErrorCodeInvalidArgumentError
-                            description:@"Unsupported pixel format for CVPixelBuffer. Supported "
-                                        @"pixel format types are kCVPixelFormatType_32BGRA and "
-                                        @"kCVPixelFormatType_32RGBA"];
+                            description:@"Unsupported pixel format for CVPixelBuffer. Supported pixel format is kCVPixelFormatType_32BGRA"];
     }
   }
 
