@@ -33,6 +33,10 @@ using TaskRunnerCpp = ::mediapipe::tasks::core::TaskRunner;
 
 @implementation MPPTaskRunner
 
+- (const CalculatorGraphConfig &)graphConfig {
+  return _cppTaskRunner->GetGraphConfig();
+}
+
 - (instancetype)initWithCalculatorGraphConfig:(CalculatorGraphConfig)graphConfig
                               packetsCallback:(PacketsCallback)packetsCallback
                                         error:(NSError **)error {

@@ -29,27 +29,31 @@ NS_SWIFT_NAME(ImageSegmenter)
 @interface MPPImageSegmenter : NSObject
 
 /**
- * Creates a new instance of `MPPImageSegmenter` from an absolute path to a TensorFlow Lite model
- * file stored locally on the device and the default `MPPImageSegmenterOptions`.
+ * Get the category label list of the `ImageSegmenter` can recognize. For CATEGORY_MASK type, the
+ * index in the category mask corresponds to the category in the label list. For CONFIDENCE_MASK
+ * type, the output mask list at index corresponds to the category in the label list. If there is no
+ * labelmap provided in the model file, empty array is returned.
+ */
+@property(nonatomic, readonly) NSArray<NSString *> *labels;
+
+/**
+ * Creates a new instance of `ImageSegmenter` from an absolute path to a TensorFlow Lite model
+ * file stored locally on the device and the default `ImageSegmenterOptions`.
  *
  * @param modelPath An absolute path to a TensorFlow Lite model file stored locally on the device.
- * @param error An optional error parameter populated when there is an error in initializing the
- * image segmenter.
  *
- * @return A new instance of `MPPImageSegmenter` with the given model path. `nil` if there is an
+ * @return A new instance of `ImageSegmenter` with the given model path. `nil` if there is an
  * error in initializing the image segmenter.
  */
 - (nullable instancetype)initWithModelPath:(NSString *)modelPath error:(NSError **)error;
 
 /**
- * Creates a new instance of `MPPImageSegmenter` from the given `MPPImageSegmenterOptions`.
+ * Creates a new instance of `ImageSegmenter` from the given `ImageSegmenterOptions`.
  *
- * @param options The options of type `MPPImageSegmenterOptions` to use for configuring the
- * `MPPImageSegmenter`.
- * @param error An optional error parameter populated when there is an error in initializing the
- * image segmenter.
+ * @param options The options of type `ImageSegmenterOptions` to use for configuring the
+ * `ImageSegmenter`.
  *
- * @return A new instance of `MPPImageSegmenter` with the given options. `nil` if there is an error
+ * @return A new instance of `ImageSegmenter` with the given options. `nil` if there is an error
  * in initializing the image segmenter.
  */
 - (nullable instancetype)initWithOptions:(MPPImageSegmenterOptions *)options
@@ -57,23 +61,20 @@ NS_SWIFT_NAME(ImageSegmenter)
 
 /**
  * Performs segmentation on the provided MPPImage using the whole image as region of interest.
- * Rotation will be applied according to the `orientation` property of the provided `MPPImage`. Only
- * use this method when the `MPPImageSegmenter` is created with `MPPRunningModeImage`.
+ * Rotation will be applied according to the `orientation` property of the provided `MPImage`. Only
+ * use this method when the `ImageSegmenter` is created with running mode, `image`.
  *
- * This method supports RGBA images. If your `MPPImage` has a source type of
- * `MPPImageSourceTypePixelBuffer` or `MPPImageSourceTypeSampleBuffer`, the underlying pixel buffer
- * must have one of the following pixel format types:
+ * This method supports RGBA images. If your `MPImage` has a source type of `pixelBuffer` or
+ * `sampleBuffer`, the underlying pixel buffer must have one of the following pixel format types:
  * 1. kCVPixelFormatType_32BGRA
  * 2. kCVPixelFormatType_32RGBA
  *
- * If your `MPPImage` has a source type of `MPPImageSourceTypeImage` ensure that the color space is
- * RGB with an Alpha channel.
+ * If your `MPImage` has a source type of `.image` ensure that the color space is RGB with an Alpha
+ * channel.
  *
- * @param image The `MPPImage` on which segmentation is to be performed.
- * @param error An optional error parameter populated when there is an error in performing
- * segmentation on the input image.
+ * @param image The `MPImage` on which segmentation is to be performed.
  *
- * @return An `MPPImageSegmenterResult` that contains the segmented masks.
+ * @return An `ImageSegmenterResult` that contains the segmented masks.
  */
 - (nullable MPPImageSegmenterResult *)segmentImage:(MPPImage *)image
                                              error:(NSError **)error NS_SWIFT_NAME(segment(image:));
@@ -83,22 +84,20 @@ NS_SWIFT_NAME(ImageSegmenter)
  * invokes the given completion handler block with the response. The method returns synchronously
  * once the completion handler returns.
  *
- * Rotation will be applied according to the `orientation` property of the provided
- * `MPPImage`. Only use this method when the `MPPImageSegmenter` is created with
- * `MPPRunningModeImage`.
+ * Rotation will be applied according to the `orientation` property of the provided `MPImage`. Only
+ * use this method when the `ImageSegmenter` is created with running mode, `image`.
  *
- * This method supports RGBA images. If your `MPPImage` has a source type of
- * `MPPImageSourceTypePixelBuffer` or `MPPImageSourceTypeSampleBuffer`, the underlying pixel buffer
- * must have one of the following pixel format types:
+ * This method supports RGBA images. If your `MPImage` has a source type of `pixelBuffer` or
+ * `sampleBuffer`, the underlying pixel buffer must have one of the following pixel format types:
  * 1. kCVPixelFormatType_32BGRA
  * 2. kCVPixelFormatType_32RGBA
  *
- * If your `MPPImage` has a source type of `MPPImageSourceTypeImage` ensure that the color space is
- * RGB with an Alpha channel.
+ * If your `MPImage` has a source type of `image` ensure that the color space is RGB with an Alpha
+ * channel.
  *
- * @param image The `MPPImage` on which segmentation is to be performed.
+ * @param image The `MPImage` on which segmentation is to be performed.
  * @param completionHandler A block to be invoked with the results of performing segmentation on the
- * image. The block takes two arguments, the optional `MPPImageSegmenterResult` that contains the
+ * image. The block takes two arguments, the optional `ImageSegmenterResult` that contains the
  * segmented masks if the segmentation was successful and an optional error populated upon failure.
  * The lifetime of the returned masks is only guaranteed for the duration of the block.
  */
@@ -108,28 +107,25 @@ NS_SWIFT_NAME(ImageSegmenter)
     NS_SWIFT_NAME(segment(image:completion:));
 
 /**
- * Performs segmentation on the provided video frame of type `MPPImage` using the whole image as
+ * Performs segmentation on the provided video frame of type `MPImage` using the whole image as
  * region of interest.
  *
- * Rotation will be applied according to the `orientation` property of the provided `MPPImage`. Only
- * use this method when the `MPPImageSegmenter` is created with `MPPRunningModeVideo`.
+ * Rotation will be applied according to the `orientation` property of the provided `MPImage`. Only
+ * use this method when the `ImageSegmenter` is created with `video`.
  *
- * This method supports RGBA images. If your `MPPImage` has a source type of
- * `MPPImageSourceTypePixelBuffer` or `MPPImageSourceTypeSampleBuffer`, the underlying pixel buffer
- * must have one of the following pixel format types:
+ * This method supports RGBA images. If your `MPImage` has a source type of `pixelBuffer` or
+ * `sampleBuffer`, the underlying pixel buffer must have one of the following pixel format types:
  * 1. kCVPixelFormatType_32BGRA
  * 2. kCVPixelFormatType_32RGBA
  *
- * If your `MPPImage` has a source type of `MPPImageSourceTypeImage` ensure that the color space is
- * RGB with an Alpha channel.
+ * If your `MPImage` has a source type of `image` ensure that the color space is RGB with an Alpha
+ * channel.
  *
- * @param image The `MPPImage` on which segmentation is to be performed.
+ * @param image The `MPImage` on which segmentation is to be performed.
  * @param timestampInMilliseconds The video frame's timestamp (in milliseconds). The input
  * timestamps must be monotonically increasing.
- * @param error An optional error parameter populated when there is an error in performing
- * segmentation on the input image.
  *
- * @return An `MPPImageSegmenterResult` that contains a the segmented masks.
+ * @return An `ImageSegmenterResult` that contains a the segmented masks.
  */
 - (nullable MPPImageSegmenterResult *)segmentVideoFrame:(MPPImage *)image
                                 timestampInMilliseconds:(NSInteger)timestampInMilliseconds
@@ -137,27 +133,26 @@ NS_SWIFT_NAME(ImageSegmenter)
     NS_SWIFT_NAME(segment(videoFrame:timestampInMilliseconds:));
 
 /**
- * Performs segmentation on the provided video frame of type `MPPImage` using the whole image as
+ * Performs segmentation on the provided video frame of type `MPImage` using the whole image as
  * region of interest invokes the given completion handler block with the response. The method
  * returns synchronously once the completion handler returns.
  *
- * Rotation will be applied according to the `orientation` property of the provided `MPPImage`. Only
- * use this method when the `MPPImageSegmenter` is created with `MPPRunningModeVideo`.
+ * Rotation will be applied according to the `orientation` property of the provided `MPImage`. Only
+ * use this method when the `ImageSegmenter` is created with running mode, `video`.
  *
- * This method supports RGBA images. If your `MPPImage` has a source type of
- * `MPPImageSourceTypePixelBuffer` or `MPPImageSourceTypeSampleBuffer`, the underlying pixel buffer
- * must have one of the following pixel format types:
+ * This method supports RGBA images. If your `MPImage` has a source type of `pixelBuffer` or
+ * `sampleBuffer`, the underlying pixel buffer must have one of the following pixel format types:
  * 1. kCVPixelFormatType_32BGRA
  * 2. kCVPixelFormatType_32RGBA
  *
- * If your `MPPImage` has a source type of `MPPImageSourceTypeImage` ensure that the color space is
- * RGB with an Alpha channel.
+ * If your `MPImage` has a source type of `image` ensure that the color space is RGB with an Alpha
+ * channel.
  *
- * @param image The `MPPImage` on which segmentation is to be performed.
+ * @param image The `MPImage` on which segmentation is to be performed.
  * @param timestampInMilliseconds The video frame's timestamp (in milliseconds). The input
  * timestamps must be monotonically increasing.
  * @param completionHandler A block to be invoked with the results of performing segmentation on the
- * image. The block takes two arguments, the optional `MPPImageSegmenterResult` that contains the
+ * image. The block takes two arguments, the optional `ImageSegmenterResult` that contains the
  * segmented masks if the segmentation was successful and an optional error only populated upon
  * failure. The lifetime of the returned masks is only guaranteed for the duration of the block.
  */
@@ -168,38 +163,36 @@ NS_SWIFT_NAME(ImageSegmenter)
     NS_SWIFT_NAME(segment(videoFrame:timestampInMilliseconds:completion:));
 
 /**
- * Sends live stream image data of type `MPPImage` to perform segmentation using the whole image as
- * region of interest.
+ * Sends live stream image data of type `MPImage` to perform segmentation using the whole image as
+ *region of interest.
  *
- * Rotation will be applied according to the `orientation` property of the provided `MPPImage`. Only
- * use this method when the `MPPImageSegmenter` is created with`MPPRunningModeLiveStream`.
+ * Rotation will be applied according to the `orientation` property of the provided `MPImage`. Only
+ *use this method when the `ImageSegmenter` is created with running mode, `liveStream`.
  *
  * The object which needs to be continuously notified of the available results of image segmentation
- * must confirm to `MPPImageSegmenterLiveStreamDelegate` protocol and implement the
- *`imageSegmenter:didFinishSegmentationWithResult:timestampInMilliseconds:error:` delegate method.
+ * must confirm to `ImageSegmenterLiveStreamDelegate` protocol and implement the
+ * `imageSegmenter(_:didFinishSegmentationWithResult:timestampInMilliseconds:error:)` delegate
+ * method.
  *
  * It's required to provide a timestamp (in milliseconds) to indicate when the input image is sent
  * to the segmenter. The input timestamps must be monotonically increasing.
  *
- * This method supports RGBA images. If your `MPPImage` has a source type of
- *`MPPImageSourceTypePixelBuffer` or `MPPImageSourceTypeSampleBuffer`, the underlying pixel buffer
- * must have one of the following pixel format types:
+ * This method supports RGBA images. If your `MPImage` has a source type of `pixelBuffer` or
+ *`sampleBuffer`, the underlying pixel buffer must have one of the following pixel format types:
  * 1. kCVPixelFormatType_32BGRA
  * 2. kCVPixelFormatType_32RGBA
  *
- * If the input `MPPImage` has a source type of `MPPImageSourceTypeImage` ensure that the color
- * space is RGB with an Alpha channel.
+ * If the input `MPImage` has a source type of `image` ensure that the color space is RGB with an
+ * Alpha channel.
  *
  * If this method is used for classifying live camera frames using `AVFoundation`, ensure that you
  * request `AVCaptureVideoDataOutput` to output frames in `kCMPixelFormat_32RGBA` using its
  * `videoSettings` property.
  *
- * @param image A live stream image data of type `MPPImage` on which segmentation is to be
+ * @param image A live stream image data of type `MPImage` on which segmentation is to be
  * performed.
  * @param timestampInMilliseconds The timestamp (in milliseconds) which indicates when the input
  * image is sent to the segmenter. The input timestamps must be monotonically increasing.
- * @param error An optional error parameter populated when there is an error when sending the input
- * image to the graph.
  *
  * @return `YES` if the image was sent to the task successfully, otherwise `NO`.
  */

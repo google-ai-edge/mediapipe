@@ -507,6 +507,23 @@ double softIOU(const float *mask1, const float *mask2, size_t size) {
   }];
 }
 
+#pragma mark GetLabelsTest
+
+- (void)testGetLabelsSucceeds {
+  MPPImageSegmenterOptions *options =
+      [self imageSegmenterOptionsWithModelFileInfo:kImageSegmenterModelFileInfo];
+
+  MPPImageSegmenter *imageSegmenter = [self createImageSegmenterWithOptionsSucceeds:options];
+
+  NSArray<NSString *> *expectedLabels = @[
+    @"background", @"aeroplane", @"bicycle",      @"bird",  @"boat",         @"bottle", @"bus",
+    @"car",        @"cat",       @"chair",        @"cow",   @"dining table", @"dog",    @"horse",
+    @"motorbike",  @"person",    @"potted plant", @"sheep", @"sofa",         @"train",  @"tv"
+  ];
+
+  XCTAssertEqualObjects(imageSegmenter.labels, expectedLabels);
+}
+
 #pragma mark - Image Segmenter Initializers
 
 - (MPPImageSegmenterOptions *)imageSegmenterOptionsWithModelFileInfo:(MPPFileInfo *)fileInfo {
