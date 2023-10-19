@@ -86,6 +86,20 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "image_utils_test",
+    srcs = ["image_utils_test.cc"],
+    deps = [
+        ":image_utils",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/port:gtest_main",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "landmarks_duplicates_finder",
     hdrs = ["landmarks_duplicates_finder.h"],
