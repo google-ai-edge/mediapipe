@@ -27,7 +27,7 @@ NS_SWIFT_NAME(HandLandmarkerResult)
 /** Hand landmarks of detected hands. */
 @property(nonatomic, readonly) NSArray<NSArray<MPPNormalizedLandmark *> *> *landmarks;
 
-/** Hand landmarks in world coordniates of detected hands. */
+/** Hand landmarks in world coordinates of detected hands. */
 @property(nonatomic, readonly) NSArray<NSArray<MPPLandmark *> *> *worldLandmarks;
 
 /** Handedness of detected hands. */
@@ -38,7 +38,7 @@ NS_SWIFT_NAME(HandLandmarkerResult)
  * and timestamp (in milliseconds).
  *
  * @param landmarks The hand landmarks of detected hands.
- * @param worldLandmarks The hand landmarks in world coordniates of detected hands.
+ * @param worldLandmarks The hand landmarks in world coordinates of detected hands.
  * @param handedness The handedness of detected hands.
  * @param timestampInMilliseconds The timestamp for this result.
  *

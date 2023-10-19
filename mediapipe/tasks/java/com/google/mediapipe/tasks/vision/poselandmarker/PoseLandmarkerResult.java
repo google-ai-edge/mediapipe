@@ -100,7 +100,7 @@ public abstract class PoseLandmarkerResult implements TaskResult {
   /** Pose landmarks of detected poses. */
   public abstract List<List<NormalizedLandmark>> landmarks();
 
-  /** Pose landmarks in world coordniates of detected poses. */
+  /** Pose landmarks in world coordinates of detected poses. */
   public abstract List<List<Landmark>> worldLandmarks();
 
   /** Pose segmentation masks. */
