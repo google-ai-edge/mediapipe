@@ -82,10 +82,9 @@ NS_SWIFT_NAME(ImageClassifier)
  * `.image`.
  *
  * This method supports classification of RGBA images. If your `MPImage` has a source type
- * ofm`.pixelBuffer` or `.sampleBuffer`, the underlying pixel buffer must have one of the following
+ * of `.pixelBuffer` or `.sampleBuffer`, the underlying pixel buffer must have one of the following
  * pixel format types:
  * 1. kCVPixelFormatType_32BGRA
- * 2. kCVPixelFormatType_32RGBA
  *
  * If your `MPImage` has a source type of `.image` ensure that the color space is RGB with an Alpha
  * channel.
@@ -108,7 +107,6 @@ NS_SWIFT_NAME(ImageClassifier)
  * `.pixelBuffer` or `.sampleBuffer`, the underlying pixel buffer must have one of the following
  * pixel format types:
  * 1. kCVPixelFormatType_32BGRA
- * 2. kCVPixelFormatType_32RGBA
  *
  * If your `MPImage` has a source type of `.image` ensure that the color space is RGB with an Alpha
  * channel.
@@ -137,7 +135,6 @@ NS_SWIFT_NAME(ImageClassifier)
  * `.pixelBuffer` or `.sampleBuffer`, the underlying pixel buffer must have one of the following
  * pixel format types:
  * 1. kCVPixelFormatType_32BGRA
- * 2. kCVPixelFormatType_32RGBA
  *
  * If your `MPImage` has a source type of `.image` ensure that the color space is RGB with an Alpha
  * channel.
@@ -165,7 +162,6 @@ NS_SWIFT_NAME(ImageClassifier)
  * `.pixelBuffer` or `.sampleBuffer`, the underlying pixel buffer must have one of the following
  * pixel format types:
  * 1. kCVPixelFormatType_32BGRA
- * 2. kCVPixelFormatType_32RGBA
  *
  * If your `MPImage` has a source type of `.image` ensure that the color space is RGB with an Alpha
  * channel.
@@ -203,7 +199,6 @@ NS_SWIFT_NAME(ImageClassifier)
  * .pixelBuffer` or `.sampleBuffer`, the underlying pixel buffer must have one of the following
  * pixel format types:
  * 1. kCVPixelFormatType_32BGRA
- * 2. kCVPixelFormatType_32RGBA
  *
  * If the input `MPImage` has a source type of `.image` ensure that the color space is RGB with an
  * Alpha channel.
@@ -242,13 +237,12 @@ NS_SWIFT_NAME(ImageClassifier)
  * `.pixelBuffer` or `.sampleBuffer`, the underlying pixel buffer must have one of the following
  * pixel format types:
  * 1. kCVPixelFormatType_32BGRA
- * 2. kCVPixelFormatType_32RGBA
  *
  * If the input `MPImage` has a source type of `.image` ensure that the color space is RGB with an
  * Alpha channel.
  *
  * If this method is used for classifying live camera frames using `AVFoundation`, ensure that you
- * request `AVCaptureVideoDataOutput` to output frames in `kCMPixelFormat_32RGBA` using its
+ * request `AVCaptureVideoDataOutput` to output frames in `kCMPixelFormat_32BGRA` using its
  * `videoSettings` property.
  *
  * @param image A live stream image data of type `MPImage` on which image classification is to be
