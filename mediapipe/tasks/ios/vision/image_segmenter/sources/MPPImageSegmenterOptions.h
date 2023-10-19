@@ -23,28 +23,28 @@ NS_ASSUME_NONNULL_BEGIN
 @class MPPImageSegmenter;
 
 /**
- * This protocol defines an interface for the delegates of `MPPImageSegmenter` object to receive
+ * This protocol defines an interface for the delegates of `ImageSegmenter` object to receive
  * results of performing asynchronous segmentation on images (i.e, when `runningMode` =
- * `MPPRunningModeLiveStream`).
+ * `liveStream`).
  *
- * The delegate of `MPPImageSegmenter` must adopt `MPPImageSegmenterLiveStreamDelegate` protocol.
+ * The delegate of `ImageSegmenter` must adopt `ImageSegmenterLiveStreamDelegate` protocol.
  * The methods in this protocol are optional.
  */
-NS_SWIFT_NAME(ObjectDetectorLiveStreamDelegate)
+NS_SWIFT_NAME(ImageSegmenterLiveStreamDelegate)
 @protocol MPPImageSegmenterLiveStreamDelegate <NSObject>
 
 @optional
 
 /**
  * This method notifies a delegate that the results of asynchronous segmentation of
- * an image submitted to the `MPPImageSegmenter` is available.
+ * an image submitted to the `ImageSegmenter` is available.
  *
- * This method is called on a private serial dispatch queue created by the `MPPImageSegmenter`
+ * This method is called on a private serial dispatch queue created by the `ImageSegmenter`
  * for performing the asynchronous delegates calls.
  *
  * @param imageSegmenter The image segmenter which performed the segmentation. This is useful to
- * test equality when there are multiple instances of `MPPImageSegmenter`.
- * @param result The `MPPImageSegmenterResult` object that contains a list of category or confidence
+ * test equality when there are multiple instances of `ImageSegmenter`.
+ * @param result The `ImageSegmenterResult` object that contains a list of category or confidence
  * masks and optional quality scores.
  * @param timestampInMilliseconds The timestamp (in milliseconds) which indicates when the input
  * image was sent to the image segmenter.
@@ -58,26 +58,26 @@ NS_SWIFT_NAME(ObjectDetectorLiveStreamDelegate)
     NS_SWIFT_NAME(imageSegmenter(_:didFinishSegmentation:timestampInMilliseconds:error:));
 @end
 
-/** Options for setting up a `MPPImageSegmenter`. */
+/** Options for setting up a `ImageSegmenter`. */
 NS_SWIFT_NAME(ImageSegmenterOptions)
 @interface MPPImageSegmenterOptions : MPPTaskOptions <NSCopying>
 
 /**
- * Running mode of the image segmenter task. Defaults to `MPPRunningModeImage`.
- * `MPPImageSegmenter` can be created with one of the following running modes:
- *  1. `MPPRunningModeImage`: The mode for performing segmentation on single image inputs.
- *  2. `MPPRunningModeVideo`: The mode for performing segmentation on the decoded frames of a
+ * Running mode of the image segmenter task. Defaults to `image`.
+ * `ImageSegmenter` can be created with one of the following running modes:
+ *  1. `image`: The mode for performing segmentation on single image inputs.
+ *  2. `video`: The mode for performing segmentation on the decoded frames of a
  *      video.
- *  3. `MPPRunningModeLiveStream`: The mode for performing segmentation on a live stream of
+ *  3. `liveStream`: The mode for performing segmentation on a live stream of
  *      input data, such as from the camera.
  */
 @property(nonatomic) MPPRunningMode runningMode;
 
 /**
- * An object that confirms to `MPPImageSegmenterLiveStreamDelegate` protocol. This object must
- * implement `imageSegmenter:didFinishSegmentationWithResult:timestampInMilliseconds:error:` to
+ * An object that confirms to `ImageSegmenterLiveStreamDelegate` protocol. This object must
+ * implement `imageSegmenter(_:didFinishSegmentationWithResult:timestampInMilliseconds:error:)` to
  * receive the results of performing asynchronous segmentation on images (i.e, when `runningMode` =
- * `MPPRunningModeLiveStream`).
+ * `liveStream`).
  */
 @property(nonatomic, weak, nullable) id<MPPImageSegmenterLiveStreamDelegate>
     imageSegmenterLiveStreamDelegate;
