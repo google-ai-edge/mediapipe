@@ -45,7 +45,7 @@ static const int kMicroSecondsPerMilliSecond = 1000;
  * images.
  *
  * @param landmarksProto A vector of protos of type `std::vector<NormalizedlandmarkListProto>`.
- * @param worldLandmarksPacket A vector of protos of type `std::vector<LandmarkListProto>`.
+ * @param worldLandmarksProto A vector of protos of type `std::vector<LandmarkListProto>`.
  * @param segmentationMasks A vector of type `std::vector<Image>`.
  * @param timestampInMilliSeconds The timestamp of the Packet that contained the result.
  *
