@@ -45,3 +45,15 @@ objc_library(
     deps = ["//mediapipe/tasks/ios/components/containers:MPPConnection"],
 )
 
+objc_library(
+    name = "MPPPoseLandmarker",
+    hdrs = ["sources/MPPPoseLandmarker.h"],
+    module_name = "MPPPoseLandmarker",
+    deps = [
+        ":MPPPoseLandmarkerOptions",
+        ":MPPPoseLandmarkerResult",
+        ":MPPPoseLandmarksConnections",
+        "//mediapipe/tasks/ios/components/containers:MPPConnection",
+        "//mediapipe/tasks/ios/vision/core:MPPImage",
+    ],
+)
