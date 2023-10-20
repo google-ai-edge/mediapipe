@@ -46,7 +46,7 @@ NS_SWIFT_NAME(PoseLandmarkerResult)
  */
 - (instancetype)initWithLandmarks:(NSArray<NSArray<MPPNormalizedLandmark *> *> *)landmarks
                    worldLandmarks:(NSArray<NSArray<MPPLandmark *> *> *)worldLandmarks
-                segmentationMasks:(NSArray<MPPMask *> *)segmentationMasks
+                segmentationMasks:(nullable NSArray<MPPMask *> *)segmentationMasks
           timestampInMilliseconds:(NSInteger)timestampInMilliseconds NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)initWithTimestampInMilliseconds:(NSInteger)timestampInMilliseconds NS_UNAVAILABLE;
