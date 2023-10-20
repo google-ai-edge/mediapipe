@@ -25,6 +25,7 @@ import android.opengl.GLES31;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.util.Log;
+import android.util.Pair;
 import com.google.mediapipe.framework.TextureFrame;
 import com.google.mediapipe.glutil.CommonShaders;
 import com.google.mediapipe.glutil.ShaderUtil;
@@ -91,6 +92,9 @@ public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
   // Specifies whether a black CLAMP_TO_BORDER effect should be used.
   private boolean shouldClampToBorder = false;
   private Scale scale = Scale.FILL;
+
+  private float zoomFactor = 1.0f;
+  private Pair<Float, Float> zoomLocation = new Pair<>(0.5f, 0.5f);
 
   /**
    * Sets the {@link BitmapCaptureListener}.
@@ -294,6 +298,15 @@ public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
     float textureBottom = (1.0f - scaleHeight) * alignmentVertical;
     float textureTop = textureBottom + scaleHeight;
 
+    Pair<Float, Float> currentZoomLocation = this.zoomLocation;
+    float zoomLocationX = currentZoomLocation.first;
+    float zoomLocationY = currentZoomLocation.second;
+
+    textureLeft = (textureLeft - 0.5f) / zoomFactor + zoomLocationX;
+    textureRight = (textureRight - 0.5f) / zoomFactor + zoomLocationX;
+    textureBottom = (textureBottom - 0.5f) / zoomFactor + zoomLocationY;
+    textureTop = (textureTop - 0.5f) / zoomFactor + zoomLocationY;
+
     return new float[] {textureLeft, textureRight, textureBottom, textureTop};
   }
 
@@ -378,6 +391,22 @@ public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
   /** {@link Scale} option to use when frame and view have different aspect ratios. */
   public void setScale(Scale scale) {
     this.scale = scale;
+  }
+
+  /** Zoom factor applied to the frame, must not be 0. */
+  public void setZoomFactor(float zoomFactor) {
+    if (zoomFactor == 0.f) {
+      return;
+    }
+    this.zoomFactor = zoomFactor;
+  }
+
+  /**
+   * Location where to apply the zooming of the frame to. Default is 0.5, 0.5 (scaling is applied to
+   * the center).
+   */
+  public void setZoomLocation(float zoomLocationX, float zoomLocationY) {
+    this.zoomLocation = new Pair<>(zoomLocationX, zoomLocationY);
   }
 
   private boolean isExternalTexture() {
