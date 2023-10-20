@@ -37,3 +37,11 @@ objc_library(
         "//mediapipe/tasks/ios/vision/core:MPPRunningMode",
     ],
 )
+
+objc_library(
+    name = "MPPPoseLandmarksConnections",
+    hdrs = ["sources/MPPPoseLandmarksConnections.h"],
+    module_name = "MPPPoseLandmarksConnections",
+    deps = ["//mediapipe/tasks/ios/components/containers:MPPConnection"],
+)
+
