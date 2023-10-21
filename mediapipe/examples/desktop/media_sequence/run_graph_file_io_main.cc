@@ -55,7 +55,7 @@ absl::Status RunMPPGraph() {
   for (const std::string& kv_pair : kv_pairs) {
     std::vector<std::string> name_and_value = absl::StrSplit(kv_pair, '=');
     RET_CHECK(name_and_value.size() == 2);
-    RET_CHECK(!mediapipe::ContainsKey(input_side_packets, name_and_value[0]));
+    RET_CHECK(!input_side_packets.contains(name_and_value[0]));
     std::string input_side_packet_contents;
     MP_RETURN_IF_ERROR(mediapipe::file::GetContents(
         name_and_value[1], &input_side_packet_contents));
