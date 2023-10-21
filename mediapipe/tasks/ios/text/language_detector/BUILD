@@ -31,3 +31,28 @@ objc_library(
         "//mediapipe/tasks/ios/core:MPPTaskResult",
     ],
 )
+
+objc_library(
+    name = "MPPLanguageDetector",
+    srcs = ["sources/MPPLanguageDetector.mm"],
+    hdrs = ["sources/MPPLanguageDetector.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+        "-x objective-c++",
+    ],
+    module_name = "MPPLanguageDetector",
+    deps = [
+        ":MPPLanguageDetectorOptions",
+        ":MPPLanguageDetectorResult",
+        "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
+        "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
+        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
+        "//mediapipe/tasks/ios/core:MPPTaskInfo",
+        "//mediapipe/tasks/ios/core:MPPTaskOptions",
+        "//mediapipe/tasks/ios/core:MPPTextPacketCreator",
+        "//mediapipe/tasks/ios/text/core:MPPTextTaskRunner",
+        "//mediapipe/tasks/ios/text/language_detector/utils:MPPLanguageDetectorOptionsHelpers",
+        "//mediapipe/tasks/ios/text/language_detector/utils:MPPLanguageDetectorResultHelpers",
+    ],
+)
