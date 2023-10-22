@@ -291,8 +291,9 @@ void AnnotationRenderer::DrawFilledRoundedRectangle(
   const int corner_radius =
       annotation.rounded_rectangle().corner_radius() * scale_factor_;
   const int line_type = annotation.rounded_rectangle().line_type();
+  const int thickness = round(annotation.thickness() * scale_factor_);
   DrawRoundedRectangle(mat_image_, cv::Point(left, top),
-                       cv::Point(right, bottom), color, -1, line_type,
+                       cv::Point(right, bottom), color, thickness, line_type,
                        corner_radius);
 }
 

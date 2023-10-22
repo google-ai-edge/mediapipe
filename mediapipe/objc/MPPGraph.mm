@@ -46,7 +46,6 @@
   /// Number of frames currently being processed by the graph.
   std::atomic<int32_t> _framesInFlight;
   /// Used as a sequential timestamp for MediaPipe.
-  mediapipe::Timestamp _frameTimestamp;
   int64 _frameNumber;
 
   // Graph config modified to expose requested output streams.
@@ -389,21 +388,16 @@ if ([wrapper.delegate
                      timestamp:timestamp
                 allowOverwrite:NO];
 }
-
 - (BOOL)sendPixelBuffer:(CVPixelBufferRef)imageBuffer
              intoStream:(const std::string&)inputName
              packetType:(MPPPacketType)packetType {
-  _GTMDevAssert(_frameTimestamp < mediapipe::Timestamp::Done(),
-                @"Trying to send frame after stream is done.");
-  if (_frameTimestamp < mediapipe::Timestamp::Min()) {
-    _frameTimestamp = mediapipe::Timestamp::Min();
-  } else {
-    _frameTimestamp++;
-  }
+  uint64_t us = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::
+                                                                      now().time_since_epoch()).count();
   return [self sendPixelBuffer:imageBuffer
                     intoStream:inputName
                     packetType:packetType
-                     timestamp:_frameTimestamp];
+                     timestamp:mediapipe::Timestamp(us)];
+
 }
 
 - (void)debugPrintGlInfo {
