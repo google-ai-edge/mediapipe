@@ -47,7 +47,7 @@ using ::mediapipe::Packet;
                                                 ->PixelData()
                                       width:confidenceMask.width()
                                      height:confidenceMask.height()
-                                 shouldCopy:shouldCopyMaskPacketData ? YES : NO]];
+                                 shouldCopy:shouldCopyMaskPacketData]];
     }
   }
 
@@ -57,7 +57,7 @@ using ::mediapipe::Packet;
         initWithUInt8Data:(UInt8 *)cppCategoryMask.GetImageFrameSharedPtr().get()->PixelData()
                     width:cppCategoryMask.width()
                    height:cppCategoryMask.height()
-               shouldCopy:shouldCopyMaskPacketData ? YES : NO];
+               shouldCopy:shouldCopyMaskPacketData];
   }
 
   if (qualityScoresPacket.ValidateAsType<std::vector<float>>().ok()) {
