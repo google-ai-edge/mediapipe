@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#import "mediapipe/objc/MPPGraph.h"
+
 #import <AVFoundation/AVFoundation.h>
 #import <Accelerate/Accelerate.h>
 
@@ -25,7 +27,6 @@
 #include "mediapipe/framework/graph_service.h"
 #include "mediapipe/gpu/gl_base.h"
 #include "mediapipe/gpu/gpu_shared_data_internal.h"
-#import "mediapipe/objc/MPPGraph.h"
 #import "mediapipe/objc/NSError+util_status.h"
 #include "mediapipe/objc/util.h"
 
