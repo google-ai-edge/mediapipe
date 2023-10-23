@@ -20,8 +20,7 @@
   mediapipe::TimestampDiff _timestampOffset;
 }
 
-- (instancetype)init
-{
+- (instancetype)init {
   self = [super init];
   if (self) {
     [self reset];
@@ -36,11 +35,14 @@
 }
 
 - (mediapipe::Timestamp)timestampForMediaTime:(CMTime)mediaTime {
-  Float64 sampleSeconds = CMTIME_IS_VALID(mediaTime) ? CMTimeGetSeconds(mediaTime) : 0;
-  const int64 sampleUsec = sampleSeconds * mediapipe::Timestamp::kTimestampUnitsPerSecond;
+  Float64 sampleSeconds =
+      CMTIME_IS_VALID(mediaTime) ? CMTimeGetSeconds(mediaTime) : 0;
+  const int64 sampleUsec =
+      sampleSeconds * mediapipe::Timestamp::kTimestampUnitsPerSecond;
   _mediapipeTimestamp = mediapipe::Timestamp(sampleUsec) + _timestampOffset;
   if (_mediapipeTimestamp <= _lastTimestamp) {
-    _timestampOffset = _timestampOffset + _lastTimestamp + 1 - _mediapipeTimestamp;
+    _timestampOffset =
+        _timestampOffset + _lastTimestamp + 1 - _mediapipeTimestamp;
     _mediapipeTimestamp = _lastTimestamp + 1;
   }
   _lastTimestamp = _mediapipeTimestamp;

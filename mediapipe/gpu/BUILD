@@ -526,12 +526,14 @@ mediapipe_proto_library(
     visibility = ["//visibility:public"],
 )
 
-objc_library(
+cc_library(
     name = "pixel_buffer_pool_util",
-    srcs = ["pixel_buffer_pool_util.mm"],
+    srcs = ["pixel_buffer_pool_util.cc"],
     hdrs = ["pixel_buffer_pool_util.h"],
     copts = [
+        "-x objective-c++",
         "-Wno-shorten-64-to-32",
+        "-fobjc-arc",  # enable reference-counting
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -542,13 +544,14 @@ objc_library(
     ],
 )
 
-objc_library(
+cc_library(
     name = "metal_shared_resources",
-    srcs = ["metal_shared_resources.mm"],
+    srcs = ["metal_shared_resources.cc"],
     hdrs = ["metal_shared_resources.h"],
     copts = [
         "-x objective-c++",
         "-Wno-shorten-64-to-32",
+        "-fobjc-arc",  # enable reference-counting
     ],
     features = ["-layering_check"],
     visibility = ["//visibility:public"],
@@ -557,15 +560,17 @@ objc_library(
         "@google_toolbox_for_mac//:GTM_Defines",
     ] + [
     ],
+    alwayslink = 1,
 )
 
-objc_library(
+cc_library(
     name = "MPPMetalUtil",
-    srcs = ["MPPMetalUtil.mm"],
+    srcs = ["MPPMetalUtil.cc"],
     hdrs = ["MPPMetalUtil.h"],
     copts = [
         "-x objective-c++",
         "-Wno-shorten-64-to-32",
+        "-fobjc-arc",  # enable reference-counting
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -575,6 +580,7 @@ objc_library(
         "@com_google_absl//absl/time",
         "@google_toolbox_for_mac//:GTM_Defines",
     ],
+    alwayslink = 1,
 )
 
 mediapipe_proto_library(
