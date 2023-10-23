@@ -425,6 +425,12 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_face_stylizer_color_ink_task",
+        sha256 = "887a490b74046ecb2b1d092cc0173a961b4ed3640aaadeafa852b1122ca23b2a",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/face_stylizer_color_ink.task?generation=1697732437695259"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_face_stylizer_json",
         sha256 = "ad89860d5daba6a1c4163a576428713fc3ddab76d6bbaf06d675164423ae159f",
         urls = ["https://storage.googleapis.com/mediapipe-assets/face_stylizer.json?generation=1682960598942694"],
@@ -548,6 +554,18 @@ def external_files():
         name = "com_google_mediapipe_hand_roi_refinement_generated_graph_pbtxt",
         sha256 = "a2304dedc6f1d167996d7261cd5b5e5db843c3b5657a367d9341388f350bdcc2",
         urls = ["https://storage.googleapis.com/mediapipe-assets/hand_roi_refinement_generated_graph.pbtxt?generation=1695159196033618"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_holistic_hand_tracking_left_hand_graph_pbtxt",
+        sha256 = "c964589b448471c0cd9e0f68c243e232e6f8a4c0959b41a3cd1cbb14e9efa6b1",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/holistic_hand_tracking_left_hand_graph.pbtxt?generation=1697732440362430"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_holistic_pose_tracking_graph_pbtxt",
+        sha256 = "1d36d014d38c09fea73042471d5d1a616f3cc9f22c8ca625deabc38efd63f6aa",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/holistic_pose_tracking_graph.pbtxt?generation=1697732442566093"],
     )
 
     http_file(
