@@ -863,12 +863,14 @@ cc_library(
     }),
 )
 
-objc_library(
+cc_library(
     name = "MPPMetalHelper",
-    srcs = ["MPPMetalHelper.mm"],
+    srcs = ["MPPMetalHelper.cc"],
     hdrs = ["MPPMetalHelper.h"],
     copts = [
         "-Wno-shorten-64-to-32",
+        "-x objective-c++",
+        "-fobjc-arc",
     ],
     features = ["-layering_check"],
     visibility = ["//visibility:public"],

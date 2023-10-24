@@ -14,15 +14,14 @@
 
 #import "mediapipe/gpu/MPPMetalHelper.h"
 
+#import "GTMDefines.h"
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
+#include "mediapipe/framework/port/ret_check.h"
 #import "mediapipe/gpu/gpu_buffer.h"
 #import "mediapipe/gpu/gpu_service.h"
 #import "mediapipe/gpu/graph_support.h"
 #import "mediapipe/gpu/metal_shared_resources.h"
-#import "GTMDefines.h"
-
-#include "mediapipe/framework/port/ret_check.h"
 
 @interface MPPMetalHelper () {
   mediapipe::GpuResources* _gpuResources;
@@ -31,7 +30,8 @@
 
 namespace mediapipe {
 
-// Using a C++ class so it can be declared as a friend of LegacyCalculatorSupport.
+// Using a C++ class so it can be declared as a friend of
+// LegacyCalculatorSupport.
 class MetalHelperLegacySupport {
  public:
   static CalculatorContract* GetCalculatorContract() {
@@ -61,7 +61,8 @@ class MetalHelperLegacySupport {
 
 - (instancetype)initWithCalculatorContext:(mediapipe::CalculatorContext*)cc {
   if (!cc) return nil;
-  return [self initWithGpuResources:&cc->Service(mediapipe::kGpuService).GetObject()];
+  return [self
+      initWithGpuResources:&cc->Service(mediapipe::kGpuService).GetObject()];
 }
 
 + (absl::Status)updateContract:(mediapipe::CalculatorContract*)cc {
@@ -77,7 +78,8 @@ class MetalHelperLegacySupport {
 }
 
 // Legacy support.
-- (instancetype)initWithSidePackets:(const mediapipe::PacketSet&)inputSidePackets {
+- (instancetype)initWithSidePackets:
+    (const mediapipe::PacketSet&)inputSidePackets {
   auto cc = mediapipe::MetalHelperLegacySupport::GetCalculatorContext();
   if (cc) {
     ABSL_CHECK_EQ(&inputSidePackets, &cc->InputSidePackets());
@@ -85,16 +87,19 @@ class MetalHelperLegacySupport {
   }
 
   // TODO: remove when we can.
-  ABSL_LOG(WARNING) << "CalculatorContext not available. If this calculator uses "
-                       "CalculatorBase, call initWithCalculatorContext instead.";
+  ABSL_LOG(WARNING)
+      << "CalculatorContext not available. If this calculator uses "
+         "CalculatorBase, call initWithCalculatorContext instead.";
   mediapipe::GpuSharedData* gpu_shared =
-      inputSidePackets.Tag(mediapipe::kGpuSharedTagName).Get<mediapipe::GpuSharedData*>();
+      inputSidePackets.Tag(mediapipe::kGpuSharedTagName)
+          .Get<mediapipe::GpuSharedData*>();
 
   return [self initWithGpuResources:gpu_shared->gpu_resources.get()];
 }
 
 // Legacy support.
-+ (absl::Status)setupInputSidePackets:(mediapipe::PacketTypeSet*)inputSidePackets {
++ (absl::Status)setupInputSidePackets:
+    (mediapipe::PacketTypeSet*)inputSidePackets {
   auto cc = mediapipe::MetalHelperLegacySupport::GetCalculatorContract();
   if (cc) {
     ABSL_CHECK_EQ(inputSidePackets, &cc->InputSidePackets());
@@ -102,12 +107,12 @@ class MetalHelperLegacySupport {
   }
 
   // TODO: remove when we can.
-  ABSL_LOG(WARNING) << "CalculatorContract not available. If you're calling this "
-                       "from a GetContract method, call updateContract instead.";
+  ABSL_LOG(WARNING)
+      << "CalculatorContract not available. If you're calling this "
+         "from a GetContract method, call updateContract instead.";
   auto id = inputSidePackets->GetId(mediapipe::kGpuSharedTagName, 0);
-  RET_CHECK(id.IsValid())
-      << "A " << mediapipe::kGpuSharedTagName
-      << " input side packet is required here.";
+  RET_CHECK(id.IsValid()) << "A " << mediapipe::kGpuSharedTagName
+                          << " input side packet is required here.";
   inputSidePackets->Get(id).Set<mediapipe::GpuSharedData*>();
   return absl::OkStatus();
 }
@@ -125,10 +130,12 @@ class MetalHelperLegacySupport {
 }
 
 - (id<MTLCommandBuffer>)commandBuffer {
-  return [_gpuResources->metal_shared().resources().mtlCommandQueue commandBuffer];
+  return
+      [_gpuResources->metal_shared().resources().mtlCommandQueue commandBuffer];
 }
 
-- (CVMetalTextureRef)copyCVMetalTextureWithGpuBuffer:(const mediapipe::GpuBuffer&)gpuBuffer
+- (CVMetalTextureRef)copyCVMetalTextureWithGpuBuffer:
+                         (const mediapipe::GpuBuffer&)gpuBuffer
                                                plane:(size_t)plane {
   CVPixelBufferRef pixel_buffer = mediapipe::GetCVPixelBufferRef(gpuBuffer);
   OSType pixel_format = CVPixelBufferGetPixelFormatType(pixel_buffer);
@@ -178,41 +185,48 @@ class MetalHelperLegacySupport {
   CVMetalTextureRef texture;
   CVReturn err = CVMetalTextureCacheCreateTextureFromImage(
       NULL, _gpuResources->metal_shared().resources().mtlTextureCache,
-      mediapipe::GetCVPixelBufferRef(gpuBuffer), NULL, metalPixelFormat, width, height, plane,
-      &texture);
+      mediapipe::GetCVPixelBufferRef(gpuBuffer), NULL, metalPixelFormat, width,
+      height, plane, &texture);
   ABSL_CHECK_EQ(err, kCVReturnSuccess);
   return texture;
 }
 
-- (CVMetalTextureRef)copyCVMetalTextureWithGpuBuffer:(const mediapipe::GpuBuffer&)gpuBuffer {
+- (CVMetalTextureRef)copyCVMetalTextureWithGpuBuffer:
+    (const mediapipe::GpuBuffer&)gpuBuffer {
   return [self copyCVMetalTextureWithGpuBuffer:gpuBuffer plane:0];
 }
 
-- (id<MTLTexture>)metalTextureWithGpuBuffer:(const mediapipe::GpuBuffer&)gpuBuffer {
+- (id<MTLTexture>)metalTextureWithGpuBuffer:
+    (const mediapipe::GpuBuffer&)gpuBuffer {
   return [self metalTextureWithGpuBuffer:gpuBuffer plane:0];
 }
 
-- (id<MTLTexture>)metalTextureWithGpuBuffer:(const mediapipe::GpuBuffer&)gpuBuffer
-                                 plane:(size_t)plane {
+- (id<MTLTexture>)metalTextureWithGpuBuffer:
+                      (const mediapipe::GpuBuffer&)gpuBuffer
+                                      plane:(size_t)plane {
   CFHolder<CVMetalTextureRef> cvTexture;
   cvTexture.adopt([self copyCVMetalTextureWithGpuBuffer:gpuBuffer plane:plane]);
   return CVMetalTextureGetTexture(*cvTexture);
 }
 
-- (mediapipe::GpuBuffer)mediapipeGpuBufferWithWidth:(int)width height:(int)height {
+- (mediapipe::GpuBuffer)mediapipeGpuBufferWithWidth:(int)width
+                                             height:(int)height {
   return _gpuResources->gpu_buffer_pool().GetBuffer(width, height);
 }
 
 - (mediapipe::GpuBuffer)mediapipeGpuBufferWithWidth:(int)width
-                                         height:(int)height
-                                         format:(mediapipe::GpuBufferFormat)format {
+                                             height:(int)height
+                                             format:(mediapipe::GpuBufferFormat)
+                                                        format {
   return _gpuResources->gpu_buffer_pool().GetBuffer(width, height, format);
 }
 
-- (id<MTLLibrary>)newLibraryWithResourceName:(NSString*)name error:(NSError * _Nullable *)error {
+- (id<MTLLibrary>)newLibraryWithResourceName:(NSString*)name
+                                       error:(NSError* _Nullable*)error {
   return [_gpuResources->metal_shared().resources().mtlDevice
-      newLibraryWithFile:[[NSBundle bundleForClass:[self class]] pathForResource:name
-                                                                          ofType:@"metallib"]
+      newLibraryWithFile:[[NSBundle bundleForClass:[self class]]
+                             pathForResource:name
+                                      ofType:@"metallib"]
                    error:error];
 }
 
