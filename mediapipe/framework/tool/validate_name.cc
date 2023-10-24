@@ -134,7 +134,7 @@ absl::Status ParseTagAndName(absl::string_view tag_and_name, std::string* tag,
   RET_CHECK(name);
   absl::Status tag_status = absl::OkStatus();
   absl::Status name_status = absl::UnknownError("");
-  int name_index = 0;
+  int name_index = -1;
   std::vector<std::string> v = absl::StrSplit(tag_and_name, ':');
   if (v.size() == 1) {
     name_status = ValidateName(v[0]);
@@ -143,7 +143,7 @@ absl::Status ParseTagAndName(absl::string_view tag_and_name, std::string* tag,
     tag_status = ValidateTag(v[0]);
     name_status = ValidateName(v[1]);
     name_index = 1;
-  }
+  }  // else omitted, name_index == -1, triggering error.
   if (name_index == -1 || tag_status != absl::OkStatus() ||
       name_status != absl::OkStatus()) {
     tag->clear();
