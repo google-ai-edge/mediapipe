@@ -151,7 +151,7 @@ static std::shared_ptr<GpuBufferStorageCvPixelBuffer> ConvertFromImageFrame(
     std::shared_ptr<GpuBufferStorageImageFrame> frame) {
   auto status_or_buffer =
       CreateCVPixelBufferForImageFrame(frame->image_frame());
-  ABSL_CHECK(status_or_buffer.ok());
+  ABSL_CHECK_OK(status_or_buffer);
   return std::make_shared<GpuBufferStorageCvPixelBuffer>(
       std::move(status_or_buffer).value());
 }
