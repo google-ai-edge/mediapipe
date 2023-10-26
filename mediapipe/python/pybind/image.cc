@@ -52,9 +52,9 @@ void ImageSubmodule(pybind11::module* module) {
   ```python
   import cv2
   cv_mat = cv2.imread(input_file)[:, :, ::-1]
-  rgb_frame = mp.Image(image_format=ImageFormat.SRGB, data=cv_mat)
+  rgb_frame = mp.Image(image_format=mp.ImageFormat.SRGB, data=cv_mat)
   gray_frame = mp.Image(
-      image_format=ImageFormat.GRAY,
+      image_format=mp.ImageFormat.GRAY8,
       data=cv2.cvtColor(cv_mat, cv2.COLOR_RGB2GRAY))
 
   from PIL import Image
