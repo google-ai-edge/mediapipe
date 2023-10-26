@@ -14,6 +14,8 @@
 
 #include "mediapipe/gpu/gl_texture_buffer.h"
 
+#include <cstdint>
+
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "mediapipe/framework/formats/image_frame.h"
@@ -130,6 +132,12 @@ bool GlTextureBuffer::CreateInternal(const void* data, int alignment) {
       context->GetGlVersion() != GlVersion::kGLES2 &&
       SymbolAvailable(&glTexStorage2D)) {
     ABSL_CHECK(data == nullptr) << "unimplemented";
+    glTexStorage2D(target_, 1, info.gl_internal_format, width_, height_);
+  } else if (info.immutable) {
+    ABSL_CHECK(SymbolAvailable(&glTexStorage2D) &&
+               context->GetGlVersion() != GlVersion::kGLES2)
+        << "Immutable GpuBuffer format requested is not supported in this "
+        << "GLContext. Format was " << static_cast<uint32_t>(format_);
     glTexStorage2D(target_, 1, info.gl_internal_format, width_, height_);
   } else {
     glTexImage2D(target_, 0 /* level */, info.gl_internal_format, width_,
