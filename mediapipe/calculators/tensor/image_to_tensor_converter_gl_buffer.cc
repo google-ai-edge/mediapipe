@@ -57,7 +57,7 @@ class SubRectExtractorGl {
   absl::Status ExtractSubRectToBuffer(
       const tflite::gpu::gl::GlTexture& texture,
       const tflite::gpu::HW& texture_size, const RotatedRect& sub_rect,
-      bool flip_horizontaly, float alpha, float beta,
+      bool flip_horizontally, float alpha, float beta,
       const tflite::gpu::HW& destination_size,
       tflite::gpu::gl::CommandQueue* command_queue,
       tflite::gpu::gl::GlBuffer* destination);
@@ -154,13 +154,13 @@ void main() {
 absl::Status SubRectExtractorGl::ExtractSubRectToBuffer(
     const tflite::gpu::gl::GlTexture& texture,
     const tflite::gpu::HW& texture_size, const RotatedRect& texture_sub_rect,
-    bool flip_horizontaly, float alpha, float beta,
+    bool flip_horizontally, float alpha, float beta,
     const tflite::gpu::HW& destination_size,
     tflite::gpu::gl::CommandQueue* command_queue,
     tflite::gpu::gl::GlBuffer* destination) {
   std::array<float, 16> transform_mat;
   GetRotatedSubRectToRectTransformMatrix(texture_sub_rect, texture_size.w,
-                                         texture_size.h, flip_horizontaly,
+                                         texture_size.h, flip_horizontally,
                                          &transform_mat);
   MP_RETURN_IF_ERROR(texture.BindAsSampler2D(0));
 
@@ -308,7 +308,7 @@ class GlProcessor : public ImageToTensorConverter {
               input_texture,
               tflite::gpu::HW(source_texture.height(), source_texture.width()),
               roi,
-              /*flip_horizontaly=*/false, transform.scale, transform.offset,
+              /*flip_horizontally=*/false, transform.scale, transform.offset,
               tflite::gpu::HW(output_shape.dims[1], output_shape.dims[2]),
               command_queue_.get(), &output));
 

@@ -147,7 +147,7 @@ BoxFormat GetBoxFormat(const TensorsToDetectionsCalculatorOptions& options) {
 //  TENSORS - Vector of Tensors of type kFloat32. The vector of tensors can have
 //            2 or 3 tensors. First tensor is the predicted raw boxes/keypoints.
 //            The size of the values must be (num_boxes * num_predicted_values).
-//            Second tensor is the score tensor. The size of the valuse must be
+//            Second tensor is the score tensor. The size of the values must be
 //            (num_boxes * num_classes). It's optional to pass in a third tensor
 //            for anchors (e.g. for SSD models) depend on the outputs of the
 //            detection model. The size of anchor tensor must be (num_boxes *
@@ -267,7 +267,7 @@ absl::Status TensorsToDetectionsCalculator::UpdateContract(
   if (CanUseGpu()) {
 #ifndef MEDIAPIPE_DISABLE_GL_COMPUTE
     MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(
-        cc, /*requesst_gpu_as_optional=*/true));
+        cc, /*request_gpu_as_optional=*/true));
 #elif MEDIAPIPE_METAL_ENABLED
     MP_RETURN_IF_ERROR([MPPMetalHelper updateContract:cc]);
 #endif  // !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
