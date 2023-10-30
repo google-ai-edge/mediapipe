@@ -207,7 +207,9 @@ class ImageTest(absltest.TestCase):
     loaded_image = Image.create_from_file(image_path)
     self.assertEqual(loaded_image.width, 720)
     self.assertEqual(loaded_image.height, 382)
-    self.assertEqual(loaded_image.channels, 3)
+    # On Mac w/ GPU support, images use 4 channels. Otherwise, all images use
+    # 3 channels.
+    self.assertIn(loaded_image.channels, [3, 4])
     self.assertEqual(loaded_image.image_format, ImageFormat.SRGB)
 
 if __name__ == '__main__':
