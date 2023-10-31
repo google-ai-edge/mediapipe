@@ -879,13 +879,6 @@ absl::Status TensorsToDetectionsCalculator::ConvertToDetections(
     if (max_results_ > 0 && output_detections->size() == max_results_) {
       break;
     }
-    if (options_.has_min_score_thresh() &&
-        detection_scores[i] < options_.min_score_thresh()) {
-      continue;
-    }
-    if (!IsClassIndexAllowed(detection_classes[i])) {
-      continue;
-    }
     const int box_offset = i * num_coords_;
     Detection detection = ConvertToDetection(
         /*box_ymin=*/detection_boxes[box_offset + box_indices_[0]],
@@ -895,6 +888,11 @@ absl::Status TensorsToDetectionsCalculator::ConvertToDetections(
         absl::MakeConstSpan(detection_scores + i, classes_per_detection_),
         absl::MakeConstSpan(detection_classes + i, classes_per_detection_),
         options_.flip_vertically());
+    // if all the scores and classes are filtered out, we skip the empty
+    // detection.
+    if (detection.score().empty()) {
+      continue;
+    }
     const auto& bbox = detection.location_data().relative_bounding_box();
     if (bbox.width() < 0 || bbox.height() < 0 || std::isnan(bbox.width()) ||
         std::isnan(bbox.height())) {
@@ -930,6 +928,10 @@ Detection TensorsToDetectionsCalculator::ConvertToDetection(
   Detection detection;
   for (int i = 0; i < scores.size(); ++i) {
     if (!IsClassIndexAllowed(class_ids[i])) {
+      continue;
+    }
+    if (options_.has_min_score_thresh() &&
+        scores[i] < options_.min_score_thresh()) {
       continue;
     }
     detection.add_score(scores[i]);
