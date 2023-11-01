@@ -35,6 +35,10 @@ namespace mediapipe {
 #endif  // GL_HALF_FLOAT_OES
 #endif  // __EMSCRIPTEN__
 
+#ifndef GL_RGBA8
+#define GL_RGBA8 0x8058
+#endif  // GL_RGBA8
+
 #if !MEDIAPIPE_DISABLE_GPU
 #ifdef GL_ES_VERSION_2_0
 static void AdaptGlTextureInfoForGLES2(GlTextureInfo* info) {
@@ -163,6 +167,14 @@ const GlTextureInfo& GlTextureInfoForGpuBufferFormat(GpuBufferFormat format,
            {
                {GL_RGBA32F, GL_RGBA, GL_FLOAT, 1},
            }},
+          {GpuBufferFormat::kImmutableRGBAFloat128,
+           {
+               {GL_RGBA32F, GL_RGBA, GL_FLOAT, 1, true /* immutable */},
+           }},
+          {GpuBufferFormat::kImmutableRGBA32,
+           {
+               {GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, 1, true /* immutable */},
+           }},
       }};
 
   static const auto* gles2_format_info = ([] {
@@ -206,6 +218,7 @@ const GlTextureInfo& GlTextureInfoForGpuBufferFormat(GpuBufferFormat format,
 
 ImageFormat::Format ImageFormatForGpuBufferFormat(GpuBufferFormat format) {
   switch (format) {
+    case GpuBufferFormat::kImmutableRGBA32:
     case GpuBufferFormat::kBGRA32:
       // TODO: verify we are handling order of channels correctly.
       return ImageFormat::SRGBA;
@@ -221,6 +234,7 @@ ImageFormat::Format ImageFormatForGpuBufferFormat(GpuBufferFormat format) {
       return ImageFormat::SRGB;
     case GpuBufferFormat::kTwoComponentFloat32:
       return ImageFormat::VEC32F2;
+    case GpuBufferFormat::kImmutableRGBAFloat128:
     case GpuBufferFormat::kRGBAFloat128:
       return ImageFormat::VEC32F4;
     case GpuBufferFormat::kRGBA32:
