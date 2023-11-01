@@ -31,27 +31,57 @@ mediapipe_ts_library(
 
 mediapipe_ts_library(
     name = "drawing_utils",
-    srcs = ["drawing_utils.ts"],
+    srcs = [
+        "drawing_utils.ts",
+        "drawing_utils_category_mask.ts",
+    ],
     deps = [
+        ":image",
+        ":image_shader_context",
+        ":mask",
         ":types",
         "//mediapipe/tasks/web/components/containers:bounding_box",
         "//mediapipe/tasks/web/components/containers:landmark",
+        "//mediapipe/web/graph_runner:graph_runner_ts",
     ],
 )
 
 mediapipe_ts_library(
-    name = "image",
-    srcs = [
-        "image.ts",
-        "image_shader_context.ts",
+    name = "drawing_utils_test_lib",
+    testonly = True,
+    srcs = ["drawing_utils.test.ts"],
+    deps = [
+        ":drawing_utils",
+        ":image",
+        ":image_shader_context",
+        ":mask",
     ],
+)
+
+jasmine_node_test(
+    name = "drawing_utils_test",
+    deps = [":drawing_utils_test_lib"],
+)
+
+mediapipe_ts_library(
+    name = "image",
+    srcs = ["image.ts"],
+    deps = ["image_shader_context"],
+)
+
+mediapipe_ts_library(
+    name = "image_shader_context",
+    srcs = ["image_shader_context.ts"],
 )
 
 mediapipe_ts_library(
     name = "image_test_lib",
     testonly = True,
     srcs = ["image.test.ts"],
-    deps = [":image"],
+    deps = [
+        ":image",
+        ":image_shader_context",
+    ],
 )
 
 jasmine_node_test(
@@ -64,6 +94,7 @@ mediapipe_ts_library(
     srcs = ["mask.ts"],
     deps = [
         ":image",
+        ":image_shader_context",
         "//mediapipe/web/graph_runner:platform_utils",
     ],
 )
@@ -74,6 +105,7 @@ mediapipe_ts_library(
     srcs = ["mask.test.ts"],
     deps = [
         ":image",
+        ":image_shader_context",
         ":mask",
     ],
 )
@@ -89,6 +121,7 @@ mediapipe_ts_library(
     deps = [
         ":image",
         ":image_processing_options",
+        ":image_shader_context",
         ":mask",
         ":vision_task_options",
         "//mediapipe/framework/formats:rect_jspb_proto",
