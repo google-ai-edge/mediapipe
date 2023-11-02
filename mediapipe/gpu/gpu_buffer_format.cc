@@ -238,7 +238,7 @@ ImageFormat::Format ImageFormatForGpuBufferFormat(GpuBufferFormat format) {
     case GpuBufferFormat::kRGBAFloat128:
       return ImageFormat::VEC32F4;
     case GpuBufferFormat::kRGBA32:
-      // TODO: this likely maps to ImageFormat::SRGBA
+      return ImageFormat::SRGBA;
     case GpuBufferFormat::kGrayHalf16:
     case GpuBufferFormat::kOneComponent8Alpha:
     case GpuBufferFormat::kOneComponent8Red:
