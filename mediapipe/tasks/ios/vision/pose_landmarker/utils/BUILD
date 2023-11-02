@@ -36,3 +36,21 @@ objc_library(
         "//mediapipe/tasks/ios/vision/pose_landmarker:MPPPoseLandmarkerOptions",
     ],
 )
+
+objc_library(
+    name = "MPPPoseLandmarkerResultHelpers",
+    srcs = ["sources/MPPPoseLandmarkerResult+Helpers.mm"],
+    hdrs = ["sources/MPPPoseLandmarkerResult+Helpers.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+        "-x objective-c++",
+    ],
+    deps = [
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/tasks/ios/components/containers/utils:MPPLandmarkHelpers",
+        "//mediapipe/tasks/ios/vision/pose_landmarker:MPPPoseLandmarkerResult",
+    ],
+)
