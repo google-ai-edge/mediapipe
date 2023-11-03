@@ -84,7 +84,7 @@ void ImageFrameSubmodule(pybind11::module* module) {
 
   ```python
   import cv2
-  cv_mat = cv2.imread(input_file)[:, :, ::-1]
+  cv_mat = cv2.imread(input_file)
   rgb_frame = mp.ImageFrame(image_format=ImageFormat.SRGB, data=cv_mat)
   gray_frame = mp.ImageFrame(
       image_format=ImageFormat.GRAY,
