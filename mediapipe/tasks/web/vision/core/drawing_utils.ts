@@ -116,7 +116,8 @@ export {RGBAColor, CategoryToColorMap};
 export class DrawingUtils {
   private categoryMaskShaderContext?: CategoryMaskShaderContext;
   private convertToWebGLTextureShaderContext?: MPImageShaderContext;
-  private readonly context2d?: CanvasRenderingContext2D;
+  private readonly context2d?: CanvasRenderingContext2D|
+      OffscreenCanvasRenderingContext2D;
   private readonly contextWebGL?: WebGL2RenderingContext;
 
   /**
@@ -139,12 +140,14 @@ export class DrawingUtils {
    *     `setOptions({ canvas: .. })`).
    */
   constructor(
-      cpuContext: CanvasRenderingContext2D,
+      cpuContext: CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D,
       gpuContext?: WebGL2RenderingContext);
   constructor(
-      cpuOrGpuGontext: CanvasRenderingContext2D|WebGL2RenderingContext,
+      cpuOrGpuGontext: CanvasRenderingContext2D|
+      OffscreenCanvasRenderingContext2D|WebGL2RenderingContext,
       gpuContext?: WebGL2RenderingContext) {
-    if (cpuOrGpuGontext instanceof CanvasRenderingContext2D) {
+    if (cpuOrGpuGontext instanceof CanvasRenderingContext2D ||
+        cpuOrGpuGontext instanceof OffscreenCanvasRenderingContext2D) {
       this.context2d = cpuOrGpuGontext;
       this.contextWebGL = gpuContext;
     } else {
@@ -186,7 +189,8 @@ export class DrawingUtils {
     return DrawingUtils.clamp(out, y0, y1);
   }
 
-  private getCanvasRenderingContext(): CanvasRenderingContext2D {
+  private getCanvasRenderingContext(): CanvasRenderingContext2D
+      |OffscreenCanvasRenderingContext2D {
     if (!this.context2d) {
       throw new Error(
           'CPU rendering requested but CanvasRenderingContext2D not provided.');
