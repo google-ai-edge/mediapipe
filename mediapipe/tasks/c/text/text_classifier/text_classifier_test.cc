@@ -43,6 +43,7 @@ TEST(TextClassifierTest, SmokeTest) {
   std::string model_path = GetFullPath(kTestBertModelPath);
   TextClassifierOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
+                           /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ model_path.c_str()},
       /* classifier_options= */
       {/* display_names_locale= */ nullptr,
@@ -74,6 +75,7 @@ TEST(TextClassifierTest, ErrorHandling) {
   // It is an error to set neither the asset buffer nor the path.
   TextClassifierOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
+                           /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ nullptr},
       /* classifier_options= */ {},
   };

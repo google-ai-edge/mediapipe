@@ -50,6 +50,7 @@ TEST(ImageClassifierTest, ImageModeTest) {
   const std::string model_path = GetFullPath(kModelName);
   ImageClassifierOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
+                           /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ model_path.c_str()},
       /* running_mode= */ RunningMode::IMAGE,
       /* classifier_options= */
@@ -92,6 +93,7 @@ TEST(ImageClassifierTest, VideoModeTest) {
   const std::string model_path = GetFullPath(kModelName);
   ImageClassifierOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
+                           /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ model_path.c_str()},
       /* running_mode= */ RunningMode::VIDEO,
       /* classifier_options= */
@@ -164,6 +166,7 @@ TEST(ImageClassifierTest, LiveStreamModeTest) {
 
   ImageClassifierOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
+                           /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ model_path.c_str()},
       /* running_mode= */ RunningMode::LIVE_STREAM,
       /* classifier_options= */
@@ -203,6 +206,7 @@ TEST(ImageClassifierTest, InvalidArgumentHandling) {
   // It is an error to set neither the asset buffer nor the path.
   ImageClassifierOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
+                           /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ nullptr},
       /* classifier_options= */ {},
   };
@@ -220,6 +224,7 @@ TEST(ImageClassifierTest, FailedClassificationHandling) {
   const std::string model_path = GetFullPath(kModelName);
   ImageClassifierOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
+                           /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ model_path.c_str()},
       /* running_mode= */ RunningMode::IMAGE,
       /* classifier_options= */

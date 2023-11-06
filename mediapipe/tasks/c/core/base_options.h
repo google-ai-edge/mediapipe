@@ -22,8 +22,11 @@ extern "C" {
 
 // Base options for MediaPipe C Tasks.
 struct BaseOptions {
-  // The model asset file contents as a string.
+  // The model asset file contents as bytes.
   const char* model_asset_buffer;
+
+  // The size of the model assets buffer (or `0` if not set).
+  const unsigned int model_asset_buffer_count;
 
   // The path to the model asset to open and mmap in memory.
   const char* model_asset_path;

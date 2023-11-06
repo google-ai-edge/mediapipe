@@ -42,6 +42,7 @@ TEST(TextEmbedderTest, SmokeTest) {
   std::string model_path = GetFullPath(kTestBertModelPath);
   TextEmbedderOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
+                           /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ model_path.c_str()},
       /* embedder_options= */
       {/* l2_normalize= */ false, /* quantize= */ true},
@@ -63,6 +64,7 @@ TEST(TextEmbedderTest, ErrorHandling) {
   // It is an error to set neither the asset buffer nor the path.
   TextEmbedderOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
+                           /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ nullptr},
       /* embedder_options= */ {},
   };
