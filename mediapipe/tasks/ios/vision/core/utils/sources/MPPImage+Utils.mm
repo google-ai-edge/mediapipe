@@ -37,7 +37,7 @@ vImage_Buffer allocatedVImageBuffer(vImagePixelCount width, vImagePixelCount hei
 }
 
 static void FreeDataProviderReleaseCallback(void *buffer, const void *data, size_t size) {
-  delete (vImage_Buffer *)buffer;
+  delete[] (vImage_Buffer *)buffer;
 }
 
 }  // namespace

@@ -50,9 +50,10 @@
 - (CVMetalTextureCacheRef)mtlTextureCache {
   @synchronized(self) {
     if (!_mtlTextureCache) {
-      CVReturn __unused err =
-          CVMetalTextureCacheCreate(NULL, NULL, self.mtlDevice, NULL, &_mtlTextureCache);
-      NSAssert(err == kCVReturnSuccess, @"Error at CVMetalTextureCacheCreate %d ; device %@", err,
+      CVReturn __unused err = CVMetalTextureCacheCreate(
+          NULL, NULL, self.mtlDevice, NULL, &_mtlTextureCache);
+      NSAssert(err == kCVReturnSuccess,
+               @"Error at CVMetalTextureCacheCreate %d ; device %@", err,
                self.mtlDevice);
       // TODO: register and flush metal caches too.
     }

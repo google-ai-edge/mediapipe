@@ -15,6 +15,8 @@ limitations under the License.
 
 #include "mediapipe/tasks/c/vision/image_classifier/image_classifier.h"
 
+#include <cstdint>
+#include <cstdlib>
 #include <memory>
 #include <utility>
 
@@ -26,6 +28,7 @@ limitations under the License.
 #include "mediapipe/tasks/c/components/containers/classification_result_converter.h"
 #include "mediapipe/tasks/c/components/processors/classifier_options_converter.h"
 #include "mediapipe/tasks/c/core/base_options_converter.h"
+#include "mediapipe/tasks/cc/vision/core/running_mode.h"
 #include "mediapipe/tasks/cc/vision/image_classifier/image_classifier.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 
@@ -41,7 +44,10 @@ using ::mediapipe::tasks::c::components::processors::
     CppConvertToClassifierOptions;
 using ::mediapipe::tasks::c::core::CppConvertToBaseOptions;
 using ::mediapipe::tasks::vision::CreateImageFromBuffer;
+using ::mediapipe::tasks::vision::core::RunningMode;
 using ::mediapipe::tasks::vision::image_classifier::ImageClassifier;
+typedef ::mediapipe::tasks::vision::image_classifier::ImageClassifierResult
+    CppImageClassifierResult;
 
 int CppProcessError(absl::Status status, char** error_msg) {
   if (error_msg) {
@@ -60,6 +66,53 @@ ImageClassifier* CppImageClassifierCreate(const ImageClassifierOptions& options,
   CppConvertToBaseOptions(options.base_options, &cpp_options->base_options);
   CppConvertToClassifierOptions(options.classifier_options,
                                 &cpp_options->classifier_options);
+  cpp_options->running_mode = static_cast<RunningMode>(options.running_mode);
+
+  // Enable callback for processing live stream data when the running mode is
+  // set to RunningMode::LIVE_STREAM.
+  if (cpp_options->running_mode == RunningMode::LIVE_STREAM) {
+    if (options.result_callback == nullptr) {
+      const absl::Status status = absl::InvalidArgumentError(
+          "Provided null pointer to callback function.");
+      ABSL_LOG(ERROR) << "Failed to create ImageClassifier: " << status;
+      CppProcessError(status, error_msg);
+      return nullptr;
+    }
+
+    ImageClassifierOptions::result_callback_fn result_callback =
+        options.result_callback;
+    cpp_options->result_callback =
+        [result_callback](absl::StatusOr<CppImageClassifierResult> cpp_result,
+                          const Image& image, int64_t timestamp) {
+          char* error_msg = nullptr;
+
+          if (!cpp_result.ok()) {
+            ABSL_LOG(ERROR) << "Classification failed: " << cpp_result.status();
+            CppProcessError(cpp_result.status(), &error_msg);
+            result_callback(nullptr, MpImage(), timestamp, error_msg);
+            free(error_msg);
+            return;
+          }
+
+          // Result is valid for the lifetime of the callback function.
+          ImageClassifierResult result;
+          CppConvertToClassificationResult(*cpp_result, &result);
+
+          const auto& image_frame = image.GetImageFrameSharedPtr();
+          const MpImage mp_image = {
+              .type = MpImage::IMAGE_FRAME,
+              .image_frame = {
+                  .format = static_cast<::ImageFormat>(image_frame->Format()),
+                  .image_buffer = image_frame->PixelData(),
+                  .width = image_frame->Width(),
+                  .height = image_frame->Height()}};
+
+          result_callback(&result, mp_image, timestamp,
+                          /* error_msg= */ nullptr);
+
+          CppCloseClassificationResult(&result);
+        };
+  }
 
   auto classifier = ImageClassifier::Create(std::move(cpp_options));
   if (!classifier.ok()) {
@@ -75,8 +128,8 @@ int CppImageClassifierClassify(void* classifier, const MpImage* image,
                                ImageClassifierResult* result,
                                char** error_msg) {
   if (image->type == MpImage::GPU_BUFFER) {
-    absl::Status status =
-        absl::InvalidArgumentError("gpu buffer not supported yet");
+    const absl::Status status =
+        absl::InvalidArgumentError("GPU Buffer not supported yet.");
 
     ABSL_LOG(ERROR) << "Classification failed: " << status.message();
     return CppProcessError(status, error_msg);
@@ -99,6 +152,68 @@ int CppImageClassifierClassify(void* classifier, const MpImage* image,
     return CppProcessError(cpp_result.status(), error_msg);
   }
   CppConvertToClassificationResult(*cpp_result, result);
+  return 0;
+}
+
+int CppImageClassifierClassifyForVideo(void* classifier, const MpImage* image,
+                                       int64_t timestamp_ms,
+                                       ImageClassifierResult* result,
+                                       char** error_msg) {
+  if (image->type == MpImage::GPU_BUFFER) {
+    absl::Status status =
+        absl::InvalidArgumentError("GPU Buffer not supported yet");
+
+    ABSL_LOG(ERROR) << "Classification failed: " << status.message();
+    return CppProcessError(status, error_msg);
+  }
+
+  const auto img = CreateImageFromBuffer(
+      static_cast<ImageFormat::Format>(image->image_frame.format),
+      image->image_frame.image_buffer, image->image_frame.width,
+      image->image_frame.height);
+
+  if (!img.ok()) {
+    ABSL_LOG(ERROR) << "Failed to create Image: " << img.status();
+    return CppProcessError(img.status(), error_msg);
+  }
+
+  auto cpp_classifier = static_cast<ImageClassifier*>(classifier);
+  auto cpp_result = cpp_classifier->ClassifyForVideo(*img, timestamp_ms);
+  if (!cpp_result.ok()) {
+    ABSL_LOG(ERROR) << "Classification failed: " << cpp_result.status();
+    return CppProcessError(cpp_result.status(), error_msg);
+  }
+  CppConvertToClassificationResult(*cpp_result, result);
+  return 0;
+}
+
+int CppImageClassifierClassifyAsync(void* classifier, const MpImage* image,
+                                    int64_t timestamp_ms, char** error_msg) {
+  if (image->type == MpImage::GPU_BUFFER) {
+    absl::Status status =
+        absl::InvalidArgumentError("GPU Buffer not supported yet");
+
+    ABSL_LOG(ERROR) << "Classification failed: " << status.message();
+    return CppProcessError(status, error_msg);
+  }
+
+  const auto img = CreateImageFromBuffer(
+      static_cast<ImageFormat::Format>(image->image_frame.format),
+      image->image_frame.image_buffer, image->image_frame.width,
+      image->image_frame.height);
+
+  if (!img.ok()) {
+    ABSL_LOG(ERROR) << "Failed to create Image: " << img.status();
+    return CppProcessError(img.status(), error_msg);
+  }
+
+  auto cpp_classifier = static_cast<ImageClassifier*>(classifier);
+  auto cpp_result = cpp_classifier->ClassifyAsync(*img, timestamp_ms);
+  if (!cpp_result.ok()) {
+    ABSL_LOG(ERROR) << "Data preparation for the image classification failed: "
+                    << cpp_result;
+    return CppProcessError(cpp_result, error_msg);
+  }
   return 0;
 }
 
@@ -132,6 +247,22 @@ int image_classifier_classify_image(void* classifier, const MpImage* image,
                                     char** error_msg) {
   return mediapipe::tasks::c::vision::image_classifier::
       CppImageClassifierClassify(classifier, image, result, error_msg);
+}
+
+int image_classifier_classify_for_video(void* classifier, const MpImage* image,
+                                        int64_t timestamp_ms,
+                                        ImageClassifierResult* result,
+                                        char** error_msg) {
+  return mediapipe::tasks::c::vision::image_classifier::
+      CppImageClassifierClassifyForVideo(classifier, image, timestamp_ms,
+                                         result, error_msg);
+}
+
+int image_classifier_classify_async(void* classifier, const MpImage* image,
+                                    int64_t timestamp_ms, char** error_msg) {
+  return mediapipe::tasks::c::vision::image_classifier::
+      CppImageClassifierClassifyAsync(classifier, image, timestamp_ms,
+                                      error_msg);
 }
 
 void image_classifier_close_result(ImageClassifierResult* result) {

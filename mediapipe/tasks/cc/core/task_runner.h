@@ -42,6 +42,11 @@ limitations under the License.
 #include "tensorflow/lite/core/api/op_resolver.h"
 
 namespace mediapipe {
+
+#if !MEDIAPIPE_DISABLE_GPU
+class GpuResources;
+#endif  // !MEDIAPIPE_DISABLE_GPU
+
 namespace tasks {
 namespace core {
 
@@ -72,12 +77,22 @@ class TaskRunner {
   // asynchronous method, Send(), to provide the input packets. If the packets
   // callback is absent, clients must use the synchronous method, Process(), to
   // provide the input packets and receive the output packets.
+#if !MEDIAPIPE_DISABLE_GPU
+  static absl::StatusOr<std::unique_ptr<TaskRunner>> Create(
+      CalculatorGraphConfig config,
+      std::unique_ptr<tflite::OpResolver> op_resolver = nullptr,
+      PacketsCallback packets_callback = nullptr,
+      std::shared_ptr<Executor> default_executor = nullptr,
+      std::optional<PacketMap> input_side_packets = std::nullopt,
+      std::shared_ptr<::mediapipe::GpuResources> resources = nullptr);
+#else
   static absl::StatusOr<std::unique_ptr<TaskRunner>> Create(
       CalculatorGraphConfig config,
       std::unique_ptr<tflite::OpResolver> op_resolver = nullptr,
       PacketsCallback packets_callback = nullptr,
       std::shared_ptr<Executor> default_executor = nullptr,
       std::optional<PacketMap> input_side_packets = std::nullopt);
+#endif  // !MEDIAPIPE_DISABLE_GPU
 
   // TaskRunner is neither copyable nor movable.
   TaskRunner(const TaskRunner&) = delete;

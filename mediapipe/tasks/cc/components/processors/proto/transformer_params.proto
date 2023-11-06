@@ -44,6 +44,21 @@ message TransformerParameters {
   // Number of stacked transformers, `N` in the paper.
   int32 num_stacks = 7;
 
-  // Whether to use Multi-Query-Attention (MQA).
-  bool use_mqa = 8;
+  // Deprecated: bool use_mqa. Use num_kv_heads below.
+  reserved 8;
+
+  // Number of kv heads. 0 means Multi-Head-Attention (MHA), key and value have
+  // same number of heads as query; 1 means Multi-Query-Attention (MQA), key and
+  // value have one head; otherwise, this specifies the number of heads for key
+  // and value, and Grouped-Query-Attention (GQA) will be used. See
+  // https://arxiv.org/pdf/2305.13245.pdf for details.
+  int32 num_kv_heads = 9;
+
+  // Different types of attention mask type.
+  enum AttentionMaskType {
+    UNSPECIFIED = 0;
+    CAUSAL = 1;
+    PREFIX = 2;
+  }
+  AttentionMaskType attention_mask_type = 10;
 }

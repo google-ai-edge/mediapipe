@@ -206,7 +206,7 @@ mediapipe::ImageFormat::Format GetImageFormat(int image_channels) {
   } else if (image_channels == 1) {
     return ImageFormat::GRAY8;
   }
-  ABSL_CHECK(false) << "Unsupported input image channles: " << image_channels;
+  ABSL_CHECK(false) << "Unsupported input image channels: " << image_channels;
 }
 
 Packet MakeImageFramePacket(cv::Mat input) {

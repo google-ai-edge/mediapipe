@@ -19,6 +19,7 @@
 
 #include <atomic>
 
+#import "GTMDefines.h"
 #include "absl/memory/memory.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image.h"
@@ -26,22 +27,22 @@
 #include "mediapipe/framework/graph_service.h"
 #include "mediapipe/gpu/gl_base.h"
 #include "mediapipe/gpu/gpu_shared_data_internal.h"
+#import "mediapipe/objc/NSError+util_status.h"
 #include "mediapipe/objc/util.h"
 
-#import "mediapipe/objc/NSError+util_status.h"
-#import "GTMDefines.h"
-
 @implementation MPPGraph {
-  // Graph is wrapped in a unique_ptr because it was generating 39+KB of unnecessary ObjC runtime
-  // information. See https://medium.com/@dmaclach/objective-c-encoding-and-you-866624cc02de
-  // for details.
+  // Graph is wrapped in a unique_ptr because it was generating 39+KB of
+  // unnecessary ObjC runtime information. See
+  // https://medium.com/@dmaclach/objective-c-encoding-and-you-866624cc02de for
+  // details.
   std::unique_ptr<mediapipe::CalculatorGraph> _graph;
   /// Input side packets that will be added to the graph when it is started.
   std::map<std::string, mediapipe::Packet> _inputSidePackets;
   /// Packet headers that will be added to the graph when it is started.
   std::map<std::string, mediapipe::Packet> _streamHeaders;
   /// Service packets to be added to the graph when it is started.
-  std::map<const mediapipe::GraphServiceBase*, mediapipe::Packet> _servicePackets;
+  std::map<const mediapipe::GraphServiceBase*, mediapipe::Packet>
+      _servicePackets;
 
   /// Number of frames currently being processed by the graph.
   std::atomic<int32_t> _framesInFlight;
@@ -56,7 +57,8 @@
   BOOL _started;
 }
 
-- (instancetype)initWithGraphConfig:(const mediapipe::CalculatorGraphConfig&)config {
+- (instancetype)initWithGraphConfig:
+    (const mediapipe::CalculatorGraphConfig&)config {
   self = [super init];
   if (self) {
     // Turn on Cocoa multithreading, since MediaPipe uses threads.
@@ -76,40 +78,47 @@
   return _graph->GetGraphInputStreamAddMode();
 }
 
-- (void)setPacketAddMode:(mediapipe::CalculatorGraph::GraphInputStreamAddMode)mode {
+- (void)setPacketAddMode:
+    (mediapipe::CalculatorGraph::GraphInputStreamAddMode)mode {
   _graph->SetGraphInputStreamAddMode(mode);
 }
 
 - (void)addFrameOutputStream:(const std::string&)outputStreamName
             outputPacketType:(MPPPacketType)packetType {
   std::string callbackInputName;
-  mediapipe::tool::AddCallbackCalculator(outputStreamName, &_config, &callbackInputName,
-                                       /*use_std_function=*/true);
-  // No matter what ownership qualifiers are put on the pointer, NewPermanentCallback will
-  // still end up with a strong pointer to MPPGraph*. That is why we use void* instead.
+  mediapipe::tool::AddCallbackCalculator(outputStreamName, &_config,
+                                         &callbackInputName,
+                                         /*use_std_function=*/true);
+  // No matter what ownership qualifiers are put on the pointer,
+  // NewPermanentCallback will still end up with a strong pointer to MPPGraph*.
+  // That is why we use void* instead.
   void* wrapperVoid = (__bridge void*)self;
   _inputSidePackets[callbackInputName] =
       mediapipe::MakePacket<std::function<void(const mediapipe::Packet&)>>(
-          [wrapperVoid, outputStreamName, packetType](const mediapipe::Packet& packet) {
-            CallFrameDelegate(wrapperVoid, outputStreamName, packetType, packet);
+          [wrapperVoid, outputStreamName,
+           packetType](const mediapipe::Packet& packet) {
+            CallFrameDelegate(wrapperVoid, outputStreamName, packetType,
+                              packet);
           });
 }
 
-- (NSString *)description {
-  return [NSString stringWithFormat:@"<%@: %p; framesInFlight = %d>", [self class], self,
-                                    _framesInFlight.load(std::memory_order_relaxed)];
+- (NSString*)description {
+  return [NSString
+      stringWithFormat:@"<%@: %p; framesInFlight = %d>", [self class], self,
+                       _framesInFlight.load(std::memory_order_relaxed)];
 }
 
 /// This is the function that gets called by the CallbackCalculator that
 /// receives the graph's output.
 void CallFrameDelegate(void* wrapperVoid, const std::string& streamName,
-                       MPPPacketType packetType, const mediapipe::Packet& packet) {
+                       MPPPacketType packetType,
+                       const mediapipe::Packet& packet) {
   MPPGraph* wrapper = (__bridge MPPGraph*)wrapperVoid;
   @autoreleasepool {
     if (packetType == MPPPacketTypeRaw) {
       [wrapper.delegate mediapipeGraph:wrapper
-                     didOutputPacket:packet
-                          fromStream:streamName];
+                       didOutputPacket:packet
+                            fromStream:streamName];
     } else if (packetType == MPPPacketTypeImageFrame) {
       wrapper->_framesInFlight--;
       const auto& frame = packet.Get<mediapipe::ImageFrame>();
@@ -118,13 +127,16 @@ void CallFrameDelegate(void* wrapperVoid, const std::string& streamName,
       if (format == mediapipe::ImageFormat::SRGBA ||
           format == mediapipe::ImageFormat::GRAY8) {
         CVPixelBufferRef pixelBuffer;
-        // If kCVPixelFormatType_32RGBA does not work, it returns kCVReturnInvalidPixelFormat.
+        // If kCVPixelFormatType_32RGBA does not work, it returns
+        // kCVReturnInvalidPixelFormat.
         CVReturn error = CVPixelBufferCreate(
             NULL, frame.Width(), frame.Height(), kCVPixelFormatType_32BGRA,
             GetCVPixelBufferAttributesForGlCompatibility(), &pixelBuffer);
-        _GTMDevAssert(error == kCVReturnSuccess, @"CVPixelBufferCreate failed: %d", error);
+        _GTMDevAssert(error == kCVReturnSuccess,
+                      @"CVPixelBufferCreate failed: %d", error);
         error = CVPixelBufferLockBaseAddress(pixelBuffer, 0);
-        _GTMDevAssert(error == kCVReturnSuccess, @"CVPixelBufferLockBaseAddress failed: %d", error);
+        _GTMDevAssert(error == kCVReturnSuccess,
+                      @"CVPixelBufferLockBaseAddress failed: %d", error);
 
         vImage_Buffer vDestination = vImageForCVPixelBuffer(pixelBuffer);
         // Note: we have to throw away const here, but we should not overwrite
@@ -133,30 +145,35 @@ void CallFrameDelegate(void* wrapperVoid, const std::string& streamName,
         if (format == mediapipe::ImageFormat::SRGBA) {
           // Swap R and B channels.
           const uint8_t permuteMap[4] = {2, 1, 0, 3};
-          vImage_Error __unused vError =
-              vImagePermuteChannels_ARGB8888(&vSource, &vDestination, permuteMap, kvImageNoFlags);
-          _GTMDevAssert(vError == kvImageNoError, @"vImagePermuteChannels failed: %zd", vError);
+          vImage_Error __unused vError = vImagePermuteChannels_ARGB8888(
+              &vSource, &vDestination, permuteMap, kvImageNoFlags);
+          _GTMDevAssert(vError == kvImageNoError,
+                        @"vImagePermuteChannels failed: %zd", vError);
         } else {
           // Convert grayscale back to BGRA
-          vImage_Error __unused vError = vImageGrayToBGRA(&vSource, &vDestination);
-          _GTMDevAssert(vError == kvImageNoError, @"vImageGrayToBGRA failed: %zd", vError);
+          vImage_Error __unused vError =
+              vImageGrayToBGRA(&vSource, &vDestination);
+          _GTMDevAssert(vError == kvImageNoError,
+                        @"vImageGrayToBGRA failed: %zd", vError);
         }
 
         error = CVPixelBufferUnlockBaseAddress(pixelBuffer, 0);
         _GTMDevAssert(error == kCVReturnSuccess,
                       @"CVPixelBufferUnlockBaseAddress failed: %d", error);
 
-        if ([wrapper.delegate respondsToSelector:@selector
-                              (mediapipeGraph:didOutputPixelBuffer:fromStream:timestamp:)]) {
+        if ([wrapper.delegate
+                respondsToSelector:@selector
+                (mediapipeGraph:didOutputPixelBuffer:fromStream:timestamp:)]) {
           [wrapper.delegate mediapipeGraph:wrapper
-                    didOutputPixelBuffer:pixelBuffer
-                              fromStream:streamName
-                               timestamp:packet.Timestamp()];
-        } else if ([wrapper.delegate respondsToSelector:@selector
-                                     (mediapipeGraph:didOutputPixelBuffer:fromStream:)]) {
+                      didOutputPixelBuffer:pixelBuffer
+                                fromStream:streamName
+                                 timestamp:packet.Timestamp()];
+        } else if ([wrapper.delegate
+                       respondsToSelector:@selector
+                       (mediapipeGraph:didOutputPixelBuffer:fromStream:)]) {
           [wrapper.delegate mediapipeGraph:wrapper
-                    didOutputPixelBuffer:pixelBuffer
-                              fromStream:streamName];
+                      didOutputPixelBuffer:pixelBuffer
+                                fromStream:streamName];
         }
         CVPixelBufferRelease(pixelBuffer);
       } else {
@@ -168,22 +185,23 @@ void CallFrameDelegate(void* wrapperVoid, const std::string& streamName,
       wrapper->_framesInFlight--;
       CVPixelBufferRef pixelBuffer;
       if (packetType == MPPPacketTypePixelBuffer)
-        pixelBuffer = mediapipe::GetCVPixelBufferRef(packet.Get<mediapipe::GpuBuffer>());
+        pixelBuffer =
+            mediapipe::GetCVPixelBufferRef(packet.Get<mediapipe::GpuBuffer>());
       else
         pixelBuffer = packet.Get<mediapipe::Image>().GetCVPixelBufferRef();
-if ([wrapper.delegate
+      if ([wrapper.delegate
               respondsToSelector:@selector
               (mediapipeGraph:didOutputPixelBuffer:fromStream:timestamp:)]) {
         [wrapper.delegate mediapipeGraph:wrapper
-                  didOutputPixelBuffer:pixelBuffer
-                            fromStream:streamName
-                             timestamp:packet.Timestamp()];
+                    didOutputPixelBuffer:pixelBuffer
+                              fromStream:streamName
+                               timestamp:packet.Timestamp()];
       } else if ([wrapper.delegate
                      respondsToSelector:@selector
                      (mediapipeGraph:didOutputPixelBuffer:fromStream:)]) {
         [wrapper.delegate mediapipeGraph:wrapper
-                  didOutputPixelBuffer:pixelBuffer
-                            fromStream:streamName];
+                    didOutputPixelBuffer:pixelBuffer
+                              fromStream:streamName];
       }
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
     } else {
@@ -192,13 +210,15 @@ if ([wrapper.delegate
   }
 }
 
-- (void)setHeaderPacket:(const mediapipe::Packet&)packet forStream:(const std::string&)streamName {
+- (void)setHeaderPacket:(const mediapipe::Packet&)packet
+              forStream:(const std::string&)streamName {
   _GTMDevAssert(!_started, @"%@ must be called before the graph is started",
                 NSStringFromSelector(_cmd));
   _streamHeaders[streamName] = packet;
 }
 
-- (void)setSidePacket:(const mediapipe::Packet&)packet named:(const std::string&)name {
+- (void)setSidePacket:(const mediapipe::Packet&)packet
+                named:(const std::string&)name {
   _GTMDevAssert(!_started, @"%@ must be called before the graph is started",
                 NSStringFromSelector(_cmd));
   _inputSidePackets[name] = packet;
@@ -211,7 +231,8 @@ if ([wrapper.delegate
   _servicePackets[&service] = std::move(packet);
 }
 
-- (void)addSidePackets:(const std::map<std::string, mediapipe::Packet>&)extraSidePackets {
+- (void)addSidePackets:
+    (const std::map<std::string, mediapipe::Packet>&)extraSidePackets {
   _GTMDevAssert(!_started, @"%@ must be called before the graph is started",
                 NSStringFromSelector(_cmd));
   _inputSidePackets.insert(extraSidePackets.begin(), extraSidePackets.end());
@@ -232,7 +253,8 @@ if ([wrapper.delegate
 - (absl::Status)performStart {
   absl::Status status;
   for (const auto& service_packet : _servicePackets) {
-    status = _graph->SetServicePacket(*service_packet.first, service_packet.second);
+    status =
+        _graph->SetServicePacket(*service_packet.first, service_packet.second);
     if (!status.ok()) {
       return status;
     }
@@ -269,11 +291,12 @@ if ([wrapper.delegate
 }
 
 - (BOOL)waitUntilDoneWithError:(NSError**)error {
-  // Since this method blocks with no timeout, it should not be called in the main thread in
-  // an app. However, it's fine to allow that in a test.
+  // Since this method blocks with no timeout, it should not be called in the
+  // main thread in an app. However, it's fine to allow that in a test.
   // TODO: is this too heavy-handed? Maybe a warning would be fine.
-  _GTMDevAssert(![NSThread isMainThread] || (NSClassFromString(@"XCTest")),
-                @"waitUntilDoneWithError: should not be called on the main thread");
+  _GTMDevAssert(
+      ![NSThread isMainThread] || (NSClassFromString(@"XCTest")),
+      @"waitUntilDoneWithError: should not be called on the main thread");
   absl::Status status = _graph->WaitUntilDone();
   _started = NO;
   if (!status.ok() && error) *error = [NSError gus_errorWithStatus:status];
@@ -289,7 +312,8 @@ if ([wrapper.delegate
 - (BOOL)movePacket:(mediapipe::Packet&&)packet
         intoStream:(const std::string&)streamName
              error:(NSError**)error {
-  absl::Status status = _graph->AddPacketToInputStream(streamName, std::move(packet));
+  absl::Status status =
+      _graph->AddPacketToInputStream(streamName, std::move(packet));
   if (!status.ok() && error) *error = [NSError gus_errorWithStatus:status];
   return status.ok();
 }
@@ -305,15 +329,17 @@ if ([wrapper.delegate
 - (BOOL)setMaxQueueSize:(int)maxQueueSize
               forStream:(const std::string&)streamName
                   error:(NSError**)error {
-  absl::Status status = _graph->SetInputStreamMaxQueueSize(streamName, maxQueueSize);
+  absl::Status status =
+      _graph->SetInputStreamMaxQueueSize(streamName, maxQueueSize);
   if (!status.ok() && error) *error = [NSError gus_errorWithStatus:status];
   return status.ok();
 }
 
 - (mediapipe::Packet)packetWithPixelBuffer:(CVPixelBufferRef)imageBuffer
-                              packetType:(MPPPacketType)packetType {
+                                packetType:(MPPPacketType)packetType {
   mediapipe::Packet packet;
-  if (packetType == MPPPacketTypeImageFrame || packetType == MPPPacketTypeImageFrameBGRANoSwap) {
+  if (packetType == MPPPacketTypeImageFrame ||
+      packetType == MPPPacketTypeImageFrameBGRANoSwap) {
     auto frame = CreateImageFrameForCVPixelBuffer(
         imageBuffer, /* canOverwrite = */ false,
         /* bgrAsRgb = */ packetType == MPPPacketTypeImageFrameBGRANoSwap);
@@ -328,7 +354,8 @@ if ([wrapper.delegate
     packet = mediapipe::MakePacket<mediapipe::Image>(imageBuffer);
 #else
     // CPU
-    auto frame = CreateImageFrameForCVPixelBuffer(imageBuffer, /* canOverwrite = */ false,
+    auto frame = CreateImageFrameForCVPixelBuffer(imageBuffer,
+                                                  /* canOverwrite = */ false,
                                                   /* bgrAsRgb = */ false);
     packet = mediapipe::MakePacket<mediapipe::Image>(std::move(frame));
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
@@ -339,7 +366,8 @@ if ([wrapper.delegate
 }
 
 - (mediapipe::Packet)imagePacketWithPixelBuffer:(CVPixelBufferRef)pixelBuffer {
-  return [self packetWithPixelBuffer:(pixelBuffer) packetType:(MPPPacketTypeImage)];
+  return [self packetWithPixelBuffer:(pixelBuffer)
+                          packetType:(MPPPacketTypeImage)];
 }
 
 - (BOOL)sendPixelBuffer:(CVPixelBufferRef)imageBuffer
@@ -367,13 +395,16 @@ if ([wrapper.delegate
          allowOverwrite:(BOOL)allowOverwrite
                   error:(NSError**)error {
   if (_maxFramesInFlight && _framesInFlight >= _maxFramesInFlight) return NO;
-  mediapipe::Packet packet = [self packetWithPixelBuffer:imageBuffer packetType:packetType];
+  mediapipe::Packet packet =
+      [self packetWithPixelBuffer:imageBuffer packetType:packetType];
   BOOL success;
   if (allowOverwrite) {
     packet = std::move(packet).At(timestamp);
-    success = [self movePacket:std::move(packet) intoStream:inputName error:error];
+    success =
+        [self movePacket:std::move(packet) intoStream:inputName error:error];
   } else {
-    success = [self sendPacket:packet.At(timestamp) intoStream:inputName error:error];
+    success =
+        [self sendPacket:packet.At(timestamp) intoStream:inputName error:error];
   }
   if (success) _framesInFlight++;
   return success;
@@ -407,22 +438,24 @@ if ([wrapper.delegate
 }
 
 - (void)debugPrintGlInfo {
-  std::shared_ptr<mediapipe::GpuResources> gpu_resources = _graph->GetGpuResources();
+  std::shared_ptr<mediapipe::GpuResources> gpu_resources =
+      _graph->GetGpuResources();
   if (!gpu_resources) {
     NSLog(@"GPU not set up.");
     return;
   }
 
   NSString* extensionString;
-  (void)gpu_resources->gl_context()->Run([&extensionString]{
-    extensionString = [NSString stringWithUTF8String:(char*)glGetString(GL_EXTENSIONS)];
+  (void)gpu_resources->gl_context()->Run([&extensionString] {
+    extensionString =
+        [NSString stringWithUTF8String:(char*)glGetString(GL_EXTENSIONS)];
     return absl::OkStatus();
   });
 
-  NSArray* extensions = [extensionString componentsSeparatedByCharactersInSet:
-                         [NSCharacterSet whitespaceCharacterSet]];
-  for (NSString* oneExtension in extensions)
-    NSLog(@"%@", oneExtension);
+  NSArray* extensions = [extensionString
+      componentsSeparatedByCharactersInSet:[NSCharacterSet
+                                               whitespaceCharacterSet]];
+  for (NSString* oneExtension in extensions) NSLog(@"%@", oneExtension);
 }
 
 @end

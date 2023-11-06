@@ -16,7 +16,11 @@
 
 import {BoundingBox} from '../../../../tasks/web/components/containers/bounding_box';
 import {NormalizedLandmark} from '../../../../tasks/web/components/containers/landmark';
+import {CategoryMaskShaderContext, CategoryToColorMap, RGBAColor} from '../../../../tasks/web/vision/core/drawing_utils_category_mask';
+import {MPImageShaderContext} from '../../../../tasks/web/vision/core/image_shader_context';
+import {MPMask} from '../../../../tasks/web/vision/core/mask';
 import {Connection} from '../../../../tasks/web/vision/core/types';
+import {ImageSource} from '../../../../web/graph_runner/graph_runner';
 
 /**
  * A user-defined callback to take input data and map it to a custom output
@@ -24,12 +28,41 @@ import {Connection} from '../../../../tasks/web/vision/core/types';
  */
 export type Callback<I, O> = (input: I) => O;
 
+// Used in public API
+export {ImageSource};
+
 /** Data that a user can use to specialize drawing options. */
 export declare interface LandmarkData {
   index?: number;
   from?: NormalizedLandmark;
   to?: NormalizedLandmark;
 }
+
+/** A color map with 22 classes. Used in our demos. */
+export const DEFAULT_CATEGORY_TO_COLOR_MAP = [
+  [0, 0, 0, 0],          // class 0 is BG = transparent
+  [255, 0, 0, 255],      // class 1 is red
+  [0, 255, 0, 255],      // class 2 is light green
+  [0, 0, 255, 255],      // class 3 is blue
+  [255, 255, 0, 255],    // class 4 is yellow
+  [255, 0, 255, 255],    // class 5 is light purple / magenta
+  [0, 255, 255, 255],    // class 6 is light blue / aqua
+  [128, 128, 128, 255],  // class 7 is gray
+  [255, 100, 0, 255],    // class 8 is dark orange
+  [128, 0, 255, 255],    // class 9 is dark purple
+  [0, 150, 0, 255],      // class 10 is green
+  [255, 255, 255, 255],  // class 11 is white
+  [255, 105, 180, 255],  // class 12 is pink
+  [255, 150, 0, 255],    // class 13 is orange
+  [255, 250, 224, 255],  // class 14 is light yellow
+  [148, 0, 211, 255],    // class 15 is dark violet
+  [0, 100, 0, 255],      // class 16 is dark green
+  [0, 0, 128, 255],      // class 17 is navy blue
+  [165, 42, 42, 255],    // class 18 is brown
+  [64, 224, 208, 255],   // class 19 is turquoise
+  [255, 218, 185, 255],  // class 20 is peach
+  [192, 192, 192, 255],  // class 21 is silver
+];
 
 /**
  * Options for customizing the drawing routines
@@ -77,14 +110,50 @@ function resolve<O, I>(value: O|Callback<I, O>, data: I): O {
   return value instanceof Function ? value(data) : value;
 }
 
+export {RGBAColor, CategoryToColorMap};
+
 /** Helper class to visualize the result of a MediaPipe Vision task. */
 export class DrawingUtils {
+  private categoryMaskShaderContext?: CategoryMaskShaderContext;
+  private convertToWebGLTextureShaderContext?: MPImageShaderContext;
+  private readonly context2d?: CanvasRenderingContext2D|
+      OffscreenCanvasRenderingContext2D;
+  private readonly contextWebGL?: WebGL2RenderingContext;
+
   /**
    * Creates a new DrawingUtils class.
    *
-   * @param ctx The canvas to render onto.
+   * @param gpuContext The WebGL canvas rendering context to render into. If
+   *     your Task is using a GPU delegate, the context must be obtained from
+   * its canvas (provided via `setOptions({ canvas: .. })`).
    */
-  constructor(private readonly ctx: CanvasRenderingContext2D) {}
+  constructor(gpuContext: WebGL2RenderingContext);
+  /**
+   * Creates a new DrawingUtils class.
+   *
+   * @param cpuContext The 2D canvas rendering context to render into. If
+   *     you are rendering GPU data you must also provide `gpuContext` to allow
+   *     for data conversion.
+   * @param gpuContext A WebGL canvas that is used for GPU rendering and for
+   *     converting GPU to CPU data. If your Task is using a GPU delegate, the
+   *     context must be obtained from  its canvas (provided via
+   *     `setOptions({ canvas: .. })`).
+   */
+  constructor(
+      cpuContext: CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D,
+      gpuContext?: WebGL2RenderingContext);
+  constructor(
+      cpuOrGpuGontext: CanvasRenderingContext2D|
+      OffscreenCanvasRenderingContext2D|WebGL2RenderingContext,
+      gpuContext?: WebGL2RenderingContext) {
+    if (cpuOrGpuGontext instanceof CanvasRenderingContext2D ||
+        cpuOrGpuGontext instanceof OffscreenCanvasRenderingContext2D) {
+      this.context2d = cpuOrGpuGontext;
+      this.contextWebGL = gpuContext;
+    } else {
+      this.contextWebGL = cpuOrGpuGontext;
+    }
+  }
 
   /**
    * Restricts a number between two endpoints (order doesn't matter).
@@ -120,8 +189,35 @@ export class DrawingUtils {
     return DrawingUtils.clamp(out, y0, y1);
   }
 
+  private getCanvasRenderingContext(): CanvasRenderingContext2D
+      |OffscreenCanvasRenderingContext2D {
+    if (!this.context2d) {
+      throw new Error(
+          'CPU rendering requested but CanvasRenderingContext2D not provided.');
+    }
+    return this.context2d;
+  }
+
+  private getWebGLRenderingContext(): WebGL2RenderingContext {
+    if (!this.contextWebGL) {
+      throw new Error(
+          'GPU rendering requested but WebGL2RenderingContext not provided.');
+    }
+    return this.contextWebGL;
+  }
+
+  private getCategoryMaskShaderContext(): CategoryMaskShaderContext {
+    if (!this.categoryMaskShaderContext) {
+      this.categoryMaskShaderContext = new CategoryMaskShaderContext();
+    }
+    return this.categoryMaskShaderContext;
+  }
+
   /**
    * Draws circles onto the provided landmarks.
+   *
+   * This method can only be used when `DrawingUtils` is initialized with a
+   * `CanvasRenderingContext2D`.
    *
    * @export
    * @param landmarks The landmarks to draw.
@@ -132,7 +228,7 @@ export class DrawingUtils {
     if (!landmarks) {
       return;
     }
-    const ctx = this.ctx;
+    const ctx = this.getCanvasRenderingContext();
     const options = addDefaultOptions(style);
     ctx.save();
     const canvas = ctx.canvas;
@@ -159,6 +255,9 @@ export class DrawingUtils {
   /**
    * Draws lines between landmarks (given a connection graph).
    *
+   * This method can only be used when `DrawingUtils` is initialized with a
+   * `CanvasRenderingContext2D`.
+   *
    * @export
    * @param landmarks The landmarks to draw.
    * @param connections The connections array that contains the start and the
@@ -171,7 +270,7 @@ export class DrawingUtils {
     if (!landmarks || !connections) {
       return;
     }
-    const ctx = this.ctx;
+    const ctx = this.getCanvasRenderingContext();
     const options = addDefaultOptions(style);
     ctx.save();
     const canvas = ctx.canvas;
@@ -195,12 +294,15 @@ export class DrawingUtils {
   /**
    * Draws a bounding box.
    *
+   * This method can only be used when `DrawingUtils` is initialized with a
+   * `CanvasRenderingContext2D`.
+   *
    * @export
    * @param boundingBox The bounding box to draw.
    * @param style The style to visualize the boundin box.
    */
   drawBoundingBox(boundingBox: BoundingBox, style?: DrawingOptions): void {
-    const ctx = this.ctx;
+    const ctx = this.getCanvasRenderingContext();
     const options = addDefaultOptions(style);
     ctx.save();
     ctx.beginPath();
@@ -217,6 +319,118 @@ export class DrawingUtils {
     ctx.stroke();
     ctx.fill();
     ctx.restore();
+  }
+
+  /** Draws a category mask on a CanvasRenderingContext2D. */
+  private drawCategoryMask2D(
+      mask: MPMask, background: RGBAColor|ImageSource,
+      categoryToColorMap: Map<number, RGBAColor>|RGBAColor[]): void {
+    // Use the WebGL renderer to draw result on our internal canvas.
+    const gl = this.getWebGLRenderingContext();
+    this.runWithWebGLTexture(mask, texture => {
+      this.drawCategoryMaskWebGL(texture, background, categoryToColorMap);
+      // Draw the result on the user canvas.
+      const ctx = this.getCanvasRenderingContext();
+      ctx.drawImage(gl.canvas, 0, 0, ctx.canvas.width, ctx.canvas.height);
+    });
+  }
+
+  /** Draws a category mask on a WebGL2RenderingContext2D. */
+  private drawCategoryMaskWebGL(
+      categoryTexture: WebGLTexture, background: RGBAColor|ImageSource,
+      categoryToColorMap: Map<number, RGBAColor>|RGBAColor[]): void {
+    const shaderContext = this.getCategoryMaskShaderContext();
+    const gl = this.getWebGLRenderingContext();
+    const backgroundImage = Array.isArray(background) ?
+        new ImageData(new Uint8ClampedArray(background), 1, 1) :
+        background;
+
+    shaderContext.run(gl, /* flipTexturesVertically= */ true, () => {
+      shaderContext.bindAndUploadTextures(
+          categoryTexture, backgroundImage, categoryToColorMap);
+      gl.clearColor(0, 0, 0, 0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+      shaderContext.unbindTextures();
+    });
+  }
+
+  /**
+   * Draws a category mask using the provided category-to-color mapping.
+   *
+   * @export
+   * @param mask A category mask that was returned from a segmentation task.
+   * @param categoryToColorMap A map that maps category indices to RGBA
+   *     values. You must specify a map entry for each category.
+   * @param background A color or image to use as the background. Defaults to
+   *     black.
+   */
+  drawCategoryMask(
+      mask: MPMask, categoryToColorMap: Map<number, RGBAColor>,
+      background?: RGBAColor|ImageSource): void;
+  /**
+   * Draws a category mask using the provided color array.
+   *
+   * @export
+   * @param mask A category mask that was returned from a segmentation task.
+   * @param categoryToColorMap An array that maps indices to RGBA values. The
+   *     array's indices must correspond to the category indices of the model
+   *     and an entry must be provided for each category.
+   * @param background A color or image to use as the background. Defaults to
+   *     black.
+   */
+  drawCategoryMask(
+      mask: MPMask, categoryToColorMap: RGBAColor[],
+      background?: RGBAColor|ImageSource): void;
+  drawCategoryMask(
+      mask: MPMask, categoryToColorMap: CategoryToColorMap,
+      background: RGBAColor|ImageSource = [0, 0, 0, 255]): void {
+    if (this.context2d) {
+      this.drawCategoryMask2D(mask, background, categoryToColorMap);
+    } else {
+      this.drawCategoryMaskWebGL(
+          mask.getAsWebGLTexture(), background, categoryToColorMap);
+    }
+  }
+
+  /**
+   * Converts the given mask to a WebGLTexture and runs the callback. Cleans
+   * up any new resources after the callback finished executing.
+   */
+  private runWithWebGLTexture(
+      mask: MPMask, callback: (texture: WebGLTexture) => void): void {
+    if (!mask.hasWebGLTexture()) {
+      // Re-create the MPMask but use our the WebGL canvas so we can draw the
+      // texture directly.
+      const data = mask.hasFloat32Array() ? mask.getAsFloat32Array() :
+                                            mask.getAsUint8Array();
+      this.convertToWebGLTextureShaderContext =
+          this.convertToWebGLTextureShaderContext ?? new MPImageShaderContext();
+      const gl = this.getWebGLRenderingContext();
+
+      const convertedMask = new MPMask(
+          [data],
+          /* ownsWebGlTexture= */ false,
+          gl.canvas,
+          this.convertToWebGLTextureShaderContext,
+          mask.width,
+          mask.height,
+      );
+      callback(convertedMask.getAsWebGLTexture());
+      convertedMask.close();
+    } else {
+      callback(mask.getAsWebGLTexture());
+    }
+  }
+  /**
+   * Frees all WebGL resources held by this class.
+   * @export
+   */
+  close(): void {
+    this.categoryMaskShaderContext?.close();
+    this.categoryMaskShaderContext = undefined;
+    this.convertToWebGLTextureShaderContext?.close();
+    this.convertToWebGLTextureShaderContext = undefined;
   }
 }
 

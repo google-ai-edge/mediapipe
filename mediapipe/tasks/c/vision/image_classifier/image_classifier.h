@@ -92,9 +92,16 @@ struct ImageClassifierOptions {
 
   // The user-defined result callback for processing live stream data.
   // The result callback should only be specified when the running mode is set
-  // to RunningMode::LIVE_STREAM.
-  typedef void (*result_callback_fn)(ImageClassifierResult*, const MpImage*,
-                                     int64_t);
+  // to RunningMode::LIVE_STREAM. Arguments of the callback function include:
+  // the pointer to classification result, the image that result was obtained
+  // on, the timestamp relevant to classification results and pointer to error
+  // message in case of any failure. The validity of the passed arguments is
+  // true for the lifetime of the callback function.
+  //
+  // A caller is responsible for closing image classifier result.
+  typedef void (*result_callback_fn)(ImageClassifierResult* result,
+                                     const MpImage image, int64_t timestamp_ms,
+                                     char* error_msg);
   result_callback_fn result_callback;
 };
 
@@ -110,11 +117,20 @@ MP_EXPORT void* image_classifier_create(struct ImageClassifierOptions* options,
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not nullptr). You must free the memory
 // allocated for the error message.
-//
-// TODO: Add API for video and live stream processing.
 MP_EXPORT int image_classifier_classify_image(void* classifier,
                                               const MpImage* image,
                                               ImageClassifierResult* result,
+                                              char** error_msg = nullptr);
+
+MP_EXPORT int image_classifier_classify_for_video(void* classifier,
+                                                  const MpImage* image,
+                                                  int64_t timestamp_ms,
+                                                  ImageClassifierResult* result,
+                                                  char** error_msg = nullptr);
+
+MP_EXPORT int image_classifier_classify_async(void* classifier,
+                                              const MpImage* image,
+                                              int64_t timestamp_ms,
                                               char** error_msg = nullptr);
 
 // Frees the memory allocated inside a ImageClassifierResult result.

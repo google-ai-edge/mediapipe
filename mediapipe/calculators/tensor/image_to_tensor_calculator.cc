@@ -82,7 +82,7 @@ namespace api2 {
 //
 // Outputs:
 //   TENSORS - std::vector<Tensor>
-//     Vector containing a single Tensor populated with an extrated RGB image.
+//     Vector containing a single Tensor populated with an extracted RGB image.
 //   MATRIX - std::array<float, 16> @Optional
 //     An std::array<float, 16> representing a 4x4 row-major-order matrix that
 //     maps a point on the input image to a point on the output tensor, and
@@ -212,7 +212,7 @@ class ImageToTensorCalculator : public Node {
       std::array<float, 16> matrix;
       GetRotatedSubRectToRectTransformMatrix(
           roi, image->width(), image->height(),
-          /*flip_horizontaly=*/false, &matrix);
+          /*flip_horizontally=*/false, &matrix);
       kOutMatrix(cc).Send(std::move(matrix));
     }
 

@@ -92,7 +92,7 @@ absl::StatusOr<ValueTransformation> GetValueRangeTransformation(
 
 void GetRotatedSubRectToRectTransformMatrix(const RotatedRect& sub_rect,
                                             int rect_width, int rect_height,
-                                            bool flip_horizontaly,
+                                            bool flip_horizontally,
                                             std::array<float, 16>* matrix_ptr) {
   std::array<float, 16>& matrix = *matrix_ptr;
   // The resulting matrix is multiplication of below commented out matrices:
@@ -118,7 +118,7 @@ void GetRotatedSubRectToRectTransformMatrix(const RotatedRect& sub_rect,
   // {0.0f, 0.0f,    a, 0.0f}
   // {0.0f, 0.0f, 0.0f, 1.0f}
 
-  const float flip = flip_horizontaly ? -1 : 1;
+  const float flip = flip_horizontally ? -1 : 1;
   // Matrix for optional horizontal flip around middle of output image.
   // { fl  , 0.0f, 0.0f, 0.0f}
   // { 0.0f, 1.0f, 0.0f, 0.0f}
@@ -177,13 +177,13 @@ void GetRotatedSubRectToRectTransformMatrix(const RotatedRect& sub_rect,
 
 void GetTransposedRotatedSubRectToRectTransformMatrix(
     const RotatedRect& sub_rect, int rect_width, int rect_height,
-    bool flip_horizontaly, std::array<float, 16>* matrix_ptr) {
+    bool flip_horizontally, std::array<float, 16>* matrix_ptr) {
   std::array<float, 16>& matrix = *matrix_ptr;
   // See comments in GetRotatedSubRectToRectTransformMatrix for detailed
   // calculations.
   const float a = sub_rect.width;
   const float b = sub_rect.height;
-  const float flip = flip_horizontaly ? -1 : 1;
+  const float flip = flip_horizontally ? -1 : 1;
   const float c = std::cos(sub_rect.rotation);
   const float d = std::sin(sub_rect.rotation);
   const float e = sub_rect.center_x;

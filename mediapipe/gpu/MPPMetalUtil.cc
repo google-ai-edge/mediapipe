@@ -69,10 +69,10 @@
   while (!bufferCompleted) {
     auto duration = absl::Now() - start_time;
     // If the spin-lock takes more than 5 ms then go to blocking wait:
-    // - it frees the CPU core for another threads: increase the performance/decrease power
-    // consumption.
-    // - if a driver thread that notifies that the GPU buffer is completed has lower priority then
-    // the CPU core is allocated for the thread.
+    // - it frees the CPU core for another threads: increase the
+    // performance/decrease power consumption.
+    // - if a driver thread that notifies that the GPU buffer is completed has
+    // lower priority then the CPU core is allocated for the thread.
     if (duration >= absl::Milliseconds(5)) {
       [commandBuffer waitUntilCompleted];
       break;

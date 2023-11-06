@@ -206,7 +206,7 @@ class WarpAffineCalculatorImpl : public mediapipe::api2::NodeImpl<InterfaceT> {
     if constexpr (std::is_same_v<InterfaceT, WarpAffineCalculatorGpu> ||
                   std::is_same_v<InterfaceT, WarpAffineCalculator>) {
       MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(
-          cc, /*requesst_gpu_as_optional=*/true));
+          cc, /*request_gpu_as_optional=*/true));
     }
     return absl::OkStatus();
   }

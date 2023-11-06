@@ -32,6 +32,5 @@ export function isIOS() {
     // tslint:disable-next-line:deprecation
   ].includes(navigator.platform)
       // iPad on iOS 13 detection
-      || (navigator.userAgent.includes('Mac') &&
-          (typeof document !== undefined && 'ontouchend' in document));
+      || (navigator.userAgent.includes('Mac') && 'ontouchend' in self.document);
 }

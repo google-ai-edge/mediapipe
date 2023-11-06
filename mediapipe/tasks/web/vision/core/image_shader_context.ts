@@ -27,9 +27,9 @@ const FRAGMENT_SHADER = `
   precision mediump float;
   varying vec2 vTex;
   uniform sampler2D inputTexture;
-   void main() {
-     gl_FragColor = texture2D(inputTexture, vTex);
-   }
+  void main() {
+    gl_FragColor = texture2D(inputTexture, vTex);
+  }
  `;
 
 /** Helper to assert that `value` is not null.  */
@@ -73,9 +73,9 @@ class MPImageShaderBuffers {
  * For internal use only.
  */
 export class MPImageShaderContext {
-  private gl?: WebGL2RenderingContext;
+  protected gl?: WebGL2RenderingContext;
   private framebuffer?: WebGLFramebuffer;
-  private program?: WebGLProgram;
+  protected program?: WebGLProgram;
   private vertexShader?: WebGLShader;
   private fragmentShader?: WebGLShader;
   private aVertex?: GLint;
@@ -94,6 +94,14 @@ export class MPImageShaderContext {
    */
   private shaderBuffersFlipVertically?: MPImageShaderBuffers;
 
+  protected getFragmentShader(): string {
+    return FRAGMENT_SHADER;
+  }
+
+  protected getVertexShader(): string {
+    return VERTEX_SHADER;
+  }
+
   private compileShader(source: string, type: number): WebGLShader {
     const gl = this.gl!;
     const shader =
@@ -108,14 +116,15 @@ export class MPImageShaderContext {
     return shader;
   }
 
-  private setupShaders(): void {
+  protected setupShaders(): void {
     const gl = this.gl!;
     this.program =
         assertNotNull(gl.createProgram()!, 'Failed to create WebGL program');
 
-    this.vertexShader = this.compileShader(VERTEX_SHADER, gl.VERTEX_SHADER);
+    this.vertexShader =
+        this.compileShader(this.getVertexShader(), gl.VERTEX_SHADER);
     this.fragmentShader =
-        this.compileShader(FRAGMENT_SHADER, gl.FRAGMENT_SHADER);
+        this.compileShader(this.getFragmentShader(), gl.FRAGMENT_SHADER);
 
     gl.linkProgram(this.program);
     const linked = gl.getProgramParameter(this.program, gl.LINK_STATUS);
@@ -127,6 +136,10 @@ export class MPImageShaderContext {
     this.aVertex = gl.getAttribLocation(this.program, 'aVertex');
     this.aTex = gl.getAttribLocation(this.program, 'aTex');
   }
+
+  protected setupTextures(): void {}
+
+  protected configureUniforms(): void {}
 
   private createBuffers(flipVertically: boolean): MPImageShaderBuffers {
     const gl = this.gl!;
@@ -193,15 +206,42 @@ export class MPImageShaderContext {
 
     if (!this.program) {
       this.setupShaders();
+      this.setupTextures();
     }
 
     const shaderBuffers = this.getShaderBuffers(flipVertically);
     gl.useProgram(this.program!);
     shaderBuffers.bind();
+    this.configureUniforms();
     const result = callback();
     shaderBuffers.unbind();
 
     return result;
+  }
+
+  /**
+   * Creates and configures a texture.
+   *
+   * @param gl The rendering context.
+   * @param filter The setting to use for `gl.TEXTURE_MIN_FILTER` and
+   *     `gl.TEXTURE_MAG_FILTER`. Defaults to `gl.LINEAR`.
+   * @param wrapping The setting to use for `gl.TEXTURE_WRAP_S` and
+   *     `gl.TEXTURE_WRAP_T`. Defaults to `gl.CLAMP_TO_EDGE`.
+   */
+  createTexture(gl: WebGL2RenderingContext, filter?: GLenum, wrapping?: GLenum):
+      WebGLTexture {
+    this.maybeInitGL(gl);
+    const texture =
+        assertNotNull(gl.createTexture(), 'Failed to create texture');
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texParameteri(
+        gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrapping ?? gl.CLAMP_TO_EDGE);
+    gl.texParameteri(
+        gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrapping ?? gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter ?? gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter ?? gl.LINEAR);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    return texture;
   }
 
   /**

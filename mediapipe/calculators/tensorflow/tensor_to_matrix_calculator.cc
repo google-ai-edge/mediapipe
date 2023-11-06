@@ -67,8 +67,8 @@ absl::Status FillTimeSeriesHeaderIfValid(const Packet& header_packet,
 // -- 1-D or 2-D Tensor
 // Output:
 // -- Matrix with the same values as the Tensor
-// If input tensor is 1 dimensional, the ouput Matrix is of (1xn) shape.
-// If input tensor is 2 dimensional (batched), the ouput Matrix is (mxn) shape.
+// If input tensor is 1 dimensional, the output Matrix is of (1xn) shape.
+// If input tensor is 2 dimensional (batched), the output Matrix is (mxn) shape.
 //
 // Example Config
 // node: {

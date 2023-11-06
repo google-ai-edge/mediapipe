@@ -32,7 +32,7 @@ message TensorConverterCalculatorOptions {
   // Custom settings to override the internal scaling factors `div` and `sub`.
   // Both values must be set to non-negative values. Will only take effect on
   // CPU AND when |use_custom_normalization| is set to true. When these custom
-  // values take effect, the |zero_center| setting above will be overriden, and
+  // values take effect, the |zero_center| setting above will be overridden, and
   // the normalized_value will be calculated as:
   // normalized_value = input / custom_div - custom_sub.
   optional bool use_custom_normalization = 6 [default = false];

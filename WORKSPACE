@@ -513,6 +513,9 @@ http_archive(
         "@//third_party:org_tensorflow_system_python.diff",
         # Diff is generated with a script, don't update it manually.
         "@//third_party:org_tensorflow_custom_ops.diff",
+        # Works around Bazel issue with objc_library.
+        # See https://github.com/bazelbuild/bazel/issues/19912
+        "@//third_party:org_tensorflow_objc_build_fixes.diff",
     ],
     patch_args = [
         "-p1",

@@ -208,7 +208,7 @@ absl::Status TensorsToSegmentationCalculator::GetContract(
   if (CanUseGpu()) {
 #if !MEDIAPIPE_DISABLE_GPU
     MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(
-        cc, /*requesst_gpu_as_optional=*/true));
+        cc, /*request_gpu_as_optional=*/true));
 #if MEDIAPIPE_METAL_ENABLED
     MP_RETURN_IF_ERROR([MPPMetalHelper updateContract:cc]);
 #endif  // MEDIAPIPE_METAL_ENABLED

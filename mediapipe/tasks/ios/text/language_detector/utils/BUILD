@@ -30,3 +30,15 @@ objc_library(
         "//mediapipe/tasks/ios/text/language_detector:MPPLanguageDetectorOptions",
     ],
 )
+
+objc_library(
+    name = "MPPLanguageDetectorResultHelpers",
+    srcs = ["sources/MPPLanguageDetectorResult+Helpers.mm"],
+    hdrs = ["sources/MPPLanguageDetectorResult+Helpers.h"],
+    deps = [
+        "//mediapipe/framework:packet",
+        "//mediapipe/tasks/cc/components/containers/proto:classifications_cc_proto",
+        "//mediapipe/tasks/ios/components/containers/utils:MPPClassificationResultHelpers",
+        "//mediapipe/tasks/ios/text/language_detector:MPPLanguageDetectorResult",
+    ],
+)

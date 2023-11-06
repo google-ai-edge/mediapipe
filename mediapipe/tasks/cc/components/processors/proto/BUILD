@@ -98,3 +98,9 @@ mediapipe_proto_library(
     name = "transformer_params_proto",
     srcs = ["transformer_params.proto"],
 )
+
+mediapipe_proto_library(
+    name = "llm_params_proto",
+    srcs = ["llm_params.proto"],
+    deps = [":transformer_params_proto"],
+)
