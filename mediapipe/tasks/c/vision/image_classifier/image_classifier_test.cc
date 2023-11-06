@@ -63,7 +63,7 @@ TEST(ImageClassifierTest, ImageModeTest) {
        /* category_denylist_count= */ 0},
   };
 
-  void* classifier = image_classifier_create(&options);
+  void* classifier = image_classifier_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(classifier, nullptr);
 
   const auto& image_frame = image->GetImageFrameSharedPtr();
@@ -75,7 +75,8 @@ TEST(ImageClassifierTest, ImageModeTest) {
                       .height = image_frame->Height()}};
 
   ImageClassifierResult result;
-  image_classifier_classify_image(classifier, &mp_image, &result);
+  image_classifier_classify_image(classifier, &mp_image, &result,
+                                  /* error_msg */ nullptr);
   EXPECT_EQ(result.classifications_count, 1);
   EXPECT_EQ(result.classifications[0].categories_count, 1001);
   EXPECT_EQ(std::string{result.classifications[0].categories[0].category_name},
@@ -83,7 +84,7 @@ TEST(ImageClassifierTest, ImageModeTest) {
   EXPECT_NEAR(result.classifications[0].categories[0].score, 0.7939f,
               kPrecision);
   image_classifier_close_result(&result);
-  image_classifier_close(classifier);
+  image_classifier_close(classifier, /* error_msg */ nullptr);
 }
 
 TEST(ImageClassifierTest, VideoModeTest) {
@@ -107,7 +108,7 @@ TEST(ImageClassifierTest, VideoModeTest) {
       /* result_callback= */ nullptr,
   };
 
-  void* classifier = image_classifier_create(&options);
+  void* classifier = image_classifier_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(classifier, nullptr);
 
   const auto& image_frame = image->GetImageFrameSharedPtr();
@@ -120,7 +121,8 @@ TEST(ImageClassifierTest, VideoModeTest) {
 
   for (int i = 0; i < kIterations; ++i) {
     ImageClassifierResult result;
-    image_classifier_classify_for_video(classifier, &mp_image, i, &result);
+    image_classifier_classify_for_video(classifier, &mp_image, i, &result,
+                                        /* error_msg */ nullptr);
     EXPECT_EQ(result.classifications_count, 1);
     EXPECT_EQ(result.classifications[0].categories_count, 3);
     EXPECT_EQ(
@@ -130,7 +132,7 @@ TEST(ImageClassifierTest, VideoModeTest) {
                 kPrecision);
     image_classifier_close_result(&result);
   }
-  image_classifier_close(classifier);
+  image_classifier_close(classifier, /* error_msg */ nullptr);
 }
 
 // A structure to support LiveStreamModeTest below. This structure holds a
@@ -180,7 +182,7 @@ TEST(ImageClassifierTest, LiveStreamModeTest) {
       /* result_callback= */ LiveStreamModeCallback::Fn,
   };
 
-  void* classifier = image_classifier_create(&options);
+  void* classifier = image_classifier_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(classifier, nullptr);
 
   const auto& image_frame = image->GetImageFrameSharedPtr();
@@ -192,9 +194,11 @@ TEST(ImageClassifierTest, LiveStreamModeTest) {
                       .height = image_frame->Height()}};
 
   for (int i = 0; i < kIterations; ++i) {
-    EXPECT_GE(image_classifier_classify_async(classifier, &mp_image, i), 0);
+    EXPECT_GE(image_classifier_classify_async(classifier, &mp_image, i,
+                                              /* error_msg */ nullptr),
+              0);
   }
-  image_classifier_close(classifier);
+  image_classifier_close(classifier, /* error_msg */ nullptr);
 
   // Due to the flow limiter, the total of outputs might be smaller than the
   // number of iterations.
@@ -237,7 +241,7 @@ TEST(ImageClassifierTest, FailedClassificationHandling) {
        /* category_denylist_count= */ 0},
   };
 
-  void* classifier = image_classifier_create(&options);
+  void* classifier = image_classifier_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(classifier, nullptr);
 
   const MpImage mp_image = {.type = MpImage::GPU_BUFFER, .gpu_buffer = {}};
@@ -246,7 +250,7 @@ TEST(ImageClassifierTest, FailedClassificationHandling) {
   image_classifier_classify_image(classifier, &mp_image, &result, &error_msg);
   EXPECT_THAT(error_msg, HasSubstr("GPU Buffer not supported yet"));
   free(error_msg);
-  image_classifier_close(classifier);
+  image_classifier_close(classifier, /* error_msg */ nullptr);
 }
 
 }  // namespace

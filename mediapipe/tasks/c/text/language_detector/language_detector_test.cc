@@ -56,16 +56,17 @@ TEST(LanguageDetectorTest, SmokeTest) {
        /* category_denylist_count= */ 0},
   };
 
-  void* detector = language_detector_create(&options);
+  void* detector = language_detector_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(detector, nullptr);
 
   LanguageDetectorResult result;
-  language_detector_detect(detector, kTestString, &result);
+  language_detector_detect(detector, kTestString, &result,
+                           /* error_msg */ nullptr);
   EXPECT_EQ(std::string(result.predictions[0].language_code), "fr");
   EXPECT_NEAR(result.predictions[0].probability, 0.999781, kPrecision);
 
   language_detector_close_result(&result);
-  language_detector_close(detector);
+  language_detector_close(detector, /* error_msg */ nullptr);
 }
 
 TEST(LanguageDetectorTest, ErrorHandling) {

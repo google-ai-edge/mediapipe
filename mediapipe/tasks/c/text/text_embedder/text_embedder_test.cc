@@ -48,16 +48,16 @@ TEST(TextEmbedderTest, SmokeTest) {
       {/* l2_normalize= */ false, /* quantize= */ true},
   };
 
-  void* embedder = text_embedder_create(&options);
+  void* embedder = text_embedder_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(embedder, nullptr);
 
   TextEmbedderResult result;
-  text_embedder_embed(embedder, kTestString, &result);
+  text_embedder_embed(embedder, kTestString, &result, /* error_msg */ nullptr);
   EXPECT_EQ(result.embeddings_count, 1);
   EXPECT_EQ(result.embeddings[0].values_count, 512);
 
   text_embedder_close_result(&result);
-  text_embedder_close(embedder);
+  text_embedder_close(embedder, /* error_msg */ nullptr);
 }
 
 TEST(TextEmbedderTest, ErrorHandling) {
