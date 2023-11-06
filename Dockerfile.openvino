@@ -85,12 +85,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libopencv-imgproc-dev \
     libopencv-video-dev \
     build-essential \
-    libboost-filesystem1.71.0 \
-    libboost-thread1.71.0 \
-    libboost-program-options1.71.0 \
-    libboost-chrono1.71.0 \
-    libboost-date-time1.71.0 \
-    libboost-atomic1.71.0 \
     libjson-c4 \
     unzip
 

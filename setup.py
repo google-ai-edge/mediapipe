@@ -48,6 +48,7 @@ GPU_OPTIONS_ENBALED = [
 ]
 GPU_OPTIONS = GPU_OPTIONS_DISBALED if MP_DISABLE_GPU else GPU_OPTIONS_ENBALED
 
+OVMS_OPTIONS = ['--define=MEDIAPIPE_DISABLE=1 --define=PYTHON_DISABLE=1 --cxxopt=-DPYTHON_DISABLE=1 --cxxopt=-DMEDIAPIPE_DISABLE=1']
 
 def _normalize_path(path):
   return path.replace('\\', '/') if IS_WINDOWS else path
@@ -131,6 +132,8 @@ def _add_mp_init_files():
   # Save the original mediapipe/__init__.py file.
   shutil.copyfile(MP_DIR_INIT_PY, _get_backup_file(MP_DIR_INIT_PY))
   mp_dir_init_file = open(MP_DIR_INIT_PY, 'a')
+  # Removes licence but clears contents so that it doesnt get messed up with every build
+  mp_dir_init_file.truncate(0);
   mp_dir_init_file.writelines([
       '\n', 'from mediapipe.python import *\n',
       'import mediapipe.python.solutions as solutions \n',
@@ -272,7 +275,8 @@ class BuildModules(build_ext.build_ext):
         'hand_landmark/hand_landmark_tracking_cpu',
         'holistic_landmark/holistic_landmark_cpu', 'objectron/objectron_cpu',
         'pose_landmark/pose_landmark_cpu',
-        'selfie_segmentation/selfie_segmentation_cpu'
+        'selfie_segmentation/selfie_segmentation_cpu',
+        'ovms_modules/object_detection_ovms'
     ]
     for elem in binary_graphs:
       binary_graph = os.path.join('mediapipe/modules/', elem)
@@ -300,7 +304,7 @@ class BuildModules(build_ext.build_ext):
         '--copt=-DNDEBUG',
         '--action_env=PYTHON_BIN_PATH=' + _normalize_path(sys.executable),
         binary_graph_target,
-    ] + GPU_OPTIONS
+    ] + GPU_OPTIONS + OVMS_OPTIONS
 
     if not self.link_opencv and not IS_WINDOWS:
       bazel_command.append('--define=OPENCV=source')
@@ -326,7 +330,7 @@ class GenerateMetadataSchema(build_ext.build_ext):
           '--compilation_mode=opt',
           '--action_env=PYTHON_BIN_PATH=' + _normalize_path(sys.executable),
           '//mediapipe/tasks/metadata:' + target,
-      ] + GPU_OPTIONS
+      ] + GPU_OPTIONS + OVMS_OPTIONS
 
       _invoke_shell_command(bazel_command)
       _copy_to_build_lib_dir(
@@ -413,7 +417,7 @@ class BuildExtension(build_ext.build_ext):
         '--copt=-DNDEBUG',
         '--action_env=PYTHON_BIN_PATH=' + _normalize_path(sys.executable),
         str(ext.bazel_target + '.so'),
-    ] + GPU_OPTIONS
+    ] + GPU_OPTIONS + OVMS_OPTIONS
 
     if extra_args:
       bazel_command += extra_args

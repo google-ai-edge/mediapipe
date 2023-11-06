@@ -58,6 +58,8 @@ pybind_extension(
         "//mediapipe/framework/formats:rect_registration",
         "//mediapipe/modules/objectron/calculators:annotation_registration",
         "//mediapipe/tasks/cc/vision/face_geometry/proto:face_geometry_registration",
+        # OVMS lib
+        "@ovms//src:ovms_lib",
     ],
 )
 

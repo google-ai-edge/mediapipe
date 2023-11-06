@@ -27,23 +27,23 @@ import "mediapipe/tasks/cc/components/calculators/score_calibration_calculator.p
 message DetectionPostprocessingGraphOptions {
   // Optional SsdAnchorsCalculatorOptions for models without
   // non-maximum-suppression in tflite model graph.
-  optional mediapipe.SsdAnchorsCalculatorOptions ssd_anchors_options = 1;
+  mediapipe.SsdAnchorsCalculatorOptions ssd_anchors_options = 1;
 
   // Optional TensorsToDetectionsCalculatorOptions for models without
   // non-maximum-suppression in tflite model graph.
-  optional mediapipe.TensorsToDetectionsCalculatorOptions
+  mediapipe.TensorsToDetectionsCalculatorOptions
       tensors_to_detections_options = 2;
 
   // Optional NonMaxSuppressionCalculatorOptions for models without
   // non-maximum-suppression in tflite model graph.
-  optional mediapipe.NonMaxSuppressionCalculatorOptions
+  mediapipe.NonMaxSuppressionCalculatorOptions
       non_max_suppression_options = 3;
 
   // Optional score calibration options for models with non-maximum-suppression
   // in tflite model graph.
-  optional ScoreCalibrationCalculatorOptions score_calibration_options = 4;
+  ScoreCalibrationCalculatorOptions score_calibration_options = 4;
 
   // Optional detection label id to text calculator options.
-  optional mediapipe.DetectionLabelIdToTextCalculatorOptions
+  mediapipe.DetectionLabelIdToTextCalculatorOptions
       detection_label_ids_to_text_options = 5;
 }

@@ -638,10 +638,12 @@ http_archive(
     build_file = "@//third_party:halide.BUILD",
 )
 
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
 git_repository(
     name = "ovms",
     remote = "https://github.com/openvinotoolkit/model_server",
-    commit = "77c30dc3f153b3ee78336a3a75c09af4e23c14a4", # MP update to 10.3 in OVMS
+    commit = "ad1381fde838f2ac2d23117df78c186a96134fcc", # Fix azure patch (#2107)
 )
 
 # DEV ovms - adjust local repository path for build
