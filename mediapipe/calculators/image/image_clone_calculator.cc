@@ -65,7 +65,7 @@ class ImageCloneCalculator : public Node {
     }
 #else
     MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(
-        cc, /*requesst_gpu_as_optional=*/true));
+        cc, /*request_gpu_as_optional=*/true));
 #endif  // MEDIAPIPE_DISABLE_GPU
     return absl::OkStatus();
   }
