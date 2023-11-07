@@ -66,7 +66,7 @@ void CppConvertToEmbeddingResult(
   }
 }
 
-void ConvertToCppEmbedding(
+void CppConvertToCppEmbedding(
     const Embedding& in,  // C struct as input
     mediapipe::tasks::components::containers::Embedding* out) {
   // Handle float embeddings
@@ -85,7 +85,7 @@ void ConvertToCppEmbedding(
 
   // Copy head_name if it is present.
   if (in.head_name) {
-    out->head_name = std::make_optional(std::string(in.head_name));
+    out->head_name = std::string(in.head_name);
   }
 }
 

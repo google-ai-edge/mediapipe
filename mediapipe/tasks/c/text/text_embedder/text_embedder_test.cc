@@ -33,10 +33,10 @@ constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/text/";
 constexpr char kTestBertModelPath[] =
     "mobilebert_embedding_with_metadata.tflite";
 constexpr char kTestString0[] =
-        "When you go to this restaurant, they hold the pancake upside-down "
-        "before they hand it to you. It's a great gimmick.";
+    "When you go to this restaurant, they hold the pancake upside-down "
+    "before they hand it to you. It's a great gimmick.";
 constexpr char kTestString1[] =
-        "Let's make a plan to steal the declaration of independence.";
+    "Let's make a plan to steal the declaration of independence.";
 constexpr float kPrecision = 1e-3;
 
 std::string GetFullPath(absl::string_view file_name) {
@@ -81,14 +81,16 @@ TEST(TextEmbedderTest, SucceedsWithCosineSimilarity) {
 
   // Extract both embeddings.
   TextEmbedderResult result0;
-  text_embedder_embed(embedder, kTestString0, &result0, /* error_msg */ nullptr);
+  text_embedder_embed(embedder, kTestString0, &result0,
+                      /* error_msg */ nullptr);
   TextEmbedderResult result1;
-  text_embedder_embed(embedder, kTestString1, &result1, /* error_msg */ nullptr);
+  text_embedder_embed(embedder, kTestString1, &result1,
+                      /* error_msg */ nullptr);
 
   // Check cosine similarity.
   double similarity;
-  cosine_similarity(result0.embeddings[0], result1.embeddings[0],
-                    &similarity);
+  text_embedder_cosine_similarity(result0.embeddings[0], result1.embeddings[0],
+                                  &similarity, nullptr);
   double expected_similarity = 0.98077;
   EXPECT_LE(abs(similarity - expected_similarity), kPrecision);
   text_embedder_close(embedder, /* error_msg */ nullptr);

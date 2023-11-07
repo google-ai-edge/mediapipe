@@ -36,8 +36,8 @@ namespace mediapipe::tasks::c::vision::image_embedder {
 
 namespace {
 
-using ::mediapipe::tasks::c::components::containers::ConvertToCppEmbedding;
 using ::mediapipe::tasks::c::components::containers::CppCloseEmbeddingResult;
+using ::mediapipe::tasks::c::components::containers::CppConvertToCppEmbedding;
 using ::mediapipe::tasks::c::components::containers::
     CppConvertToEmbeddingResult;
 using ::mediapipe::tasks::c::components::processors::
@@ -235,9 +235,9 @@ int CppImageEmbedderClose(void* embedder, char** error_msg) {
 int CppImageEmbedderCosineSimilarity(const Embedding& u, const Embedding& v,
                                      double* similarity, char** error_msg) {
   CppEmbedding cpp_u;
-  ConvertToCppEmbedding(u, &cpp_u);
+  CppConvertToCppEmbedding(u, &cpp_u);
   CppEmbedding cpp_v;
-  ConvertToCppEmbedding(v, &cpp_v);
+  CppConvertToCppEmbedding(v, &cpp_v);
   auto status_or_similarity =
       mediapipe::tasks::vision::image_embedder::ImageEmbedder::CosineSimilarity(
           cpp_u, cpp_v);
@@ -291,8 +291,8 @@ int image_embedder_close(void* embedder, char** error_msg) {
       embedder, error_msg);
 }
 
-int cosine_similarity(const Embedding& u, const Embedding& v,
-                      double* similarity, char** error_msg) {
+int image_embedder_cosine_similarity(const Embedding& u, const Embedding& v,
+                                     double* similarity, char** error_msg) {
   return mediapipe::tasks::c::vision::image_embedder::
       CppImageEmbedderCosineSimilarity(u, v, similarity, error_msg);
 }

@@ -30,6 +30,7 @@ cc_library(
         "//mediapipe/tasks/c/components/processors:classifier_options_converter",
         "//mediapipe/tasks/c/core:base_options",
         "//mediapipe/tasks/c/core:base_options_converter",
+        "//mediapipe/tasks/c/vision/core:common",
         "//mediapipe/tasks/cc/vision/core:running_mode",
         "//mediapipe/tasks/cc/vision/image_classifier",
         "//mediapipe/tasks/cc/vision/utils:image_utils",

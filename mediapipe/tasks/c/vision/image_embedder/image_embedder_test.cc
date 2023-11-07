@@ -143,8 +143,9 @@ TEST(ImageEmbedderTest, SucceedsWithCosineSimilarity) {
   CheckMobileNetV3Result(crop_result, false);
   // Check cosine similarity.
   double similarity;
-  cosine_similarity(image_result.embeddings[0], crop_result.embeddings[0],
-                    &similarity, /* error_msg */ nullptr);
+  image_embedder_cosine_similarity(image_result.embeddings[0],
+                                   crop_result.embeddings[0], &similarity,
+                                   /* error_msg */ nullptr);
   double expected_similarity = 0.925519;
   EXPECT_LE(abs(similarity - expected_similarity), kPrecision);
   image_embedder_close_result(&image_result);
