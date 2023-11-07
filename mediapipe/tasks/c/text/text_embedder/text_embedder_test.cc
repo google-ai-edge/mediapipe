@@ -47,21 +47,22 @@ TEST(TextEmbedderTest, SmokeTest) {
   std::string model_path = GetFullPath(kTestBertModelPath);
   TextEmbedderOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
+                           /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ model_path.c_str()},
       /* embedder_options= */
       {/* l2_normalize= */ false, /* quantize= */ true},
   };
 
-  void* embedder = text_embedder_create(&options);
+  void* embedder = text_embedder_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(embedder, nullptr);
 
   TextEmbedderResult result;
-  text_embedder_embed(embedder, kTestString0, &result);
+  text_embedder_embed(embedder, kTestString0, &result, /* error_msg */ nullptr);
   EXPECT_EQ(result.embeddings_count, 1);
   EXPECT_EQ(result.embeddings[0].values_count, 512);
 
   text_embedder_close_result(&result);
-  text_embedder_close(embedder);
+  text_embedder_close(embedder, /* error_msg */ nullptr);
 }
 
 TEST(TextEmbedderTest, SucceedsWithCosineSimilarity) {
@@ -78,9 +79,9 @@ TEST(TextEmbedderTest, SucceedsWithCosineSimilarity) {
 
   // Extract both embeddings.
   TextEmbedderResult result0;
-  text_embedder_embed(embedder, kTestString0, &result0);
+  text_embedder_embed(embedder, kTestString0, &result0, /* error_msg */ nullptr);
   TextEmbedderResult result1;
-  text_embedder_embed(embedder, kTestString1, &result1);
+  text_embedder_embed(embedder, kTestString1, &result1, /* error_msg */ nullptr);
 
   // Check cosine similarity.
   double similarity;
@@ -95,6 +96,7 @@ TEST(TextEmbedderTest, ErrorHandling) {
   // It is an error to set neither the asset buffer nor the path.
   TextEmbedderOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
+                           /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ nullptr},
       /* embedder_options= */ {},
   };

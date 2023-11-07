@@ -108,30 +108,30 @@ struct ImageClassifierOptions {
 // Creates an ImageClassifier from provided `options`.
 // Returns a pointer to the image classifier on success.
 // If an error occurs, returns `nullptr` and sets the error parameter to an
-// an error message (if `error_msg` is not nullptr). You must free the memory
+// an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
 MP_EXPORT void* image_classifier_create(struct ImageClassifierOptions* options,
-                                        char** error_msg = nullptr);
+                                        char** error_msg);
 
 // Performs image classification on the input `image`. Returns `0` on success.
 // If an error occurs, returns an error code and sets the error parameter to an
-// an error message (if `error_msg` is not nullptr). You must free the memory
+// an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
 MP_EXPORT int image_classifier_classify_image(void* classifier,
                                               const MpImage* image,
                                               ImageClassifierResult* result,
-                                              char** error_msg = nullptr);
+                                              char** error_msg);
 
 MP_EXPORT int image_classifier_classify_for_video(void* classifier,
                                                   const MpImage* image,
                                                   int64_t timestamp_ms,
                                                   ImageClassifierResult* result,
-                                                  char** error_msg = nullptr);
+                                                  char** error_msg);
 
 MP_EXPORT int image_classifier_classify_async(void* classifier,
                                               const MpImage* image,
                                               int64_t timestamp_ms,
-                                              char** error_msg = nullptr);
+                                              char** error_msg);
 
 // Frees the memory allocated inside a ImageClassifierResult result.
 // Does not free the result pointer itself.
@@ -139,10 +139,9 @@ MP_EXPORT void image_classifier_close_result(ImageClassifierResult* result);
 
 // Frees image classifier.
 // If an error occurs, returns an error code and sets the error parameter to an
-// an error message (if `error_msg` is not nullptr). You must free the memory
+// an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT int image_classifier_close(void* classifier,
-                                     char** error_msg = nullptr);
+MP_EXPORT int image_classifier_close(void* classifier, char** error_msg);
 
 #ifdef __cplusplus
 }  // extern C

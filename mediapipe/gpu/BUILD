@@ -516,7 +516,6 @@ cc_library(
         ":gpu_buffer_storage",
         ":image_frame_view",
         "//mediapipe/framework/formats:image_frame",
-        "//mediapipe/framework/port:ret_check",
         "@com_google_absl//absl/strings:str_format",
     ],
 )
@@ -1224,13 +1223,9 @@ mediapipe_cc_test(
     ],
     requires_full_emulation = True,
     deps = [
-        ":gl_texture_buffer",
-        ":gl_texture_util",
         ":gpu_buffer_format",
         ":gpu_buffer_storage_ahwb",
-        ":gpu_test_base",
         "//mediapipe/framework/port:gtest_main",
-        "//mediapipe/framework/tool:test_util",
     ],
 )
 
