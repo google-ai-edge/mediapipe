@@ -244,7 +244,7 @@ int CppImageEmbedderCosineSimilarity(const Embedding& u, const Embedding& v,
   if (status_or_similarity.ok()) {
     *similarity = status_or_similarity.value();
   } else {
-    ABSL_LOG(ERROR) << "Cannot computer cosine similarity.";
+    ABSL_LOG(ERROR) << "Cannot compute cosine similarity.";
     return CppProcessError(status_or_similarity.status(), error_msg);
   }
   return 0;
