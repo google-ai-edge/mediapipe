@@ -63,6 +63,7 @@ TEST(ImageEmbedderTest, ImageModeTest) {
   const std::string model_path = GetFullPath(kModelName);
   ImageEmbedderOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
+                           /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ model_path.c_str()},
       /* running_mode= */ RunningMode::IMAGE,
       /* embedder_options= */
@@ -98,6 +99,7 @@ TEST(ImageEmbedderTest, SucceedsWithCosineSimilarity) {
   const std::string model_path = GetFullPath(kModelName);
   ImageEmbedderOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
+                           /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ model_path.c_str()},
       /* running_mode= */ RunningMode::IMAGE,
       /* embedder_options= */
@@ -152,6 +154,7 @@ TEST(ImageEmbedderTest, VideoModeTest) {
   const std::string model_path = GetFullPath(kModelName);
   ImageEmbedderOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
+                           /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ model_path.c_str()},
       /* running_mode= */ RunningMode::VIDEO,
       /* embedder_options= */
@@ -210,6 +213,7 @@ TEST(ImageEmbedderTest, LiveStreamModeTest) {
 
   ImageEmbedderOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
+                           /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ model_path.c_str()},
       /* running_mode= */ RunningMode::LIVE_STREAM,
       /* embedder_options= */
@@ -244,6 +248,7 @@ TEST(ImageEmbedderTest, InvalidArgumentHandling) {
   // It is an error to set neither the asset buffer nor the path.
   ImageEmbedderOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
+                           /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ nullptr},
       /* embedder_options= */ {},
   };
@@ -261,6 +266,7 @@ TEST(ImageEmbedderTest, FailedEmbeddingHandling) {
   const std::string model_path = GetFullPath(kModelName);
   ImageEmbedderOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
+                           /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ model_path.c_str()},
       /* running_mode= */ RunningMode::IMAGE,
       /* embedder_options= */

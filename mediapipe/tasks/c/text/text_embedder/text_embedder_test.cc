@@ -69,12 +69,14 @@ TEST(TextEmbedderTest, SucceedsWithCosineSimilarity) {
   std::string model_path = GetFullPath(kTestBertModelPath);
   TextEmbedderOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
+                           /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ model_path.c_str()},
       /* embedder_options= */
       {/* l2_normalize= */ false,
        /* quantize= */ false}};
 
-  void* embedder = text_embedder_create(&options);
+  void* embedder = text_embedder_create(&options,
+                                        /* error_msg */ nullptr);
   EXPECT_NE(embedder, nullptr);
 
   // Extract both embeddings.
@@ -89,7 +91,7 @@ TEST(TextEmbedderTest, SucceedsWithCosineSimilarity) {
                     &similarity);
   double expected_similarity = 0.98077;
   EXPECT_LE(abs(similarity - expected_similarity), kPrecision);
-  text_embedder_close(embedder);
+  text_embedder_close(embedder, /* error_msg */ nullptr);
 }
 
 TEST(TextEmbedderTest, ErrorHandling) {
