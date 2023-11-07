@@ -70,7 +70,8 @@ TEST(ImageEmbedderTest, ImageModeTest) {
       {/* l2_normalize= */ true,
        /* quantize= */ false}};
 
-  void* embedder = image_embedder_create(&options);
+  void* embedder = image_embedder_create(&options,
+                                         /* error_msg */ nullptr);
   EXPECT_NE(embedder, nullptr);
 
   const MpImage mp_image = {
@@ -83,11 +84,12 @@ TEST(ImageEmbedderTest, ImageModeTest) {
           .height = image->GetImageFrameSharedPtr()->Height()}};
 
   ImageEmbedderResult result;
-  image_embedder_embed_image(embedder, &mp_image, &result);
+  image_embedder_embed_image(embedder, &mp_image, &result,
+                             /* error_msg */ nullptr);
   CheckMobileNetV3Result(result, false);
   EXPECT_NEAR(result.embeddings[0].float_embedding[0], -0.0142344, kPrecision);
   image_embedder_close_result(&result);
-  image_embedder_close(embedder);
+  image_embedder_close(embedder, /* error_msg */ nullptr);
 }
 
 TEST(ImageEmbedderTest, SucceedsWithCosineSimilarity) {
@@ -106,7 +108,8 @@ TEST(ImageEmbedderTest, SucceedsWithCosineSimilarity) {
       {/* l2_normalize= */ true,
        /* quantize= */ false}};
 
-  void* embedder = image_embedder_create(&options);
+  void* embedder = image_embedder_create(&options,
+                                         /* error_msg */ nullptr);
   EXPECT_NE(embedder, nullptr);
 
   const MpImage mp_image = {
@@ -129,9 +132,11 @@ TEST(ImageEmbedderTest, SucceedsWithCosineSimilarity) {
 
   // Extract both embeddings.
   ImageEmbedderResult image_result;
-  image_embedder_embed_image(embedder, &mp_image, &image_result);
+  image_embedder_embed_image(embedder, &mp_image, &image_result,
+                             /* error_msg */ nullptr);
   ImageEmbedderResult crop_result;
-  image_embedder_embed_image(embedder, &mp_crop, &crop_result);
+  image_embedder_embed_image(embedder, &mp_crop, &crop_result,
+                             /* error_msg */ nullptr);
 
   // Check results.
   CheckMobileNetV3Result(image_result, false);
@@ -139,12 +144,12 @@ TEST(ImageEmbedderTest, SucceedsWithCosineSimilarity) {
   // Check cosine similarity.
   double similarity;
   cosine_similarity(image_result.embeddings[0], crop_result.embeddings[0],
-                    &similarity);
+                    &similarity, /* error_msg */ nullptr);
   double expected_similarity = 0.925519;
   EXPECT_LE(abs(similarity - expected_similarity), kPrecision);
   image_embedder_close_result(&image_result);
   image_embedder_close_result(&crop_result);
-  image_embedder_close(embedder);
+  image_embedder_close(embedder, /* error_msg */ nullptr);
 }
 
 TEST(ImageEmbedderTest, VideoModeTest) {
@@ -161,7 +166,8 @@ TEST(ImageEmbedderTest, VideoModeTest) {
       {/* l2_normalize= */ true,
        /* quantize= */ false}};
 
-  void* embedder = image_embedder_create(&options);
+  void* embedder = image_embedder_create(&options,
+                                         /* error_msg */ nullptr);
   EXPECT_NE(embedder, nullptr);
 
   const auto& image_frame = image->GetImageFrameSharedPtr();
@@ -174,13 +180,14 @@ TEST(ImageEmbedderTest, VideoModeTest) {
 
   for (int i = 0; i < kIterations; ++i) {
     ImageEmbedderResult result;
-    image_embedder_embed_for_video(embedder, &mp_image, i, &result);
+    image_embedder_embed_for_video(embedder, &mp_image, i, &result,
+                                   /* error_msg */ nullptr);
     CheckMobileNetV3Result(result, false);
     EXPECT_NEAR(result.embeddings[0].float_embedding[0], -0.0142344,
                 kPrecision);
     image_embedder_close_result(&result);
   }
-  image_embedder_close(embedder);
+  image_embedder_close(embedder, /* error_msg */ nullptr);
 }
 
 // A structure to support LiveStreamModeTest below. This structure holds a
@@ -222,7 +229,8 @@ TEST(ImageEmbedderTest, LiveStreamModeTest) {
       /* result_callback= */ LiveStreamModeCallback::Fn,
   };
 
-  void* embedder = image_embedder_create(&options);
+  void* embedder = image_embedder_create(&options,
+                                         /* error_msg */ nullptr);
   EXPECT_NE(embedder, nullptr);
 
   const auto& image_frame = image->GetImageFrameSharedPtr();
@@ -234,9 +242,11 @@ TEST(ImageEmbedderTest, LiveStreamModeTest) {
                       .height = image_frame->Height()}};
 
   for (int i = 0; i < kIterations; ++i) {
-    EXPECT_GE(image_embedder_embed_async(embedder, &mp_image, i), 0);
+    EXPECT_GE(image_embedder_embed_async(embedder, &mp_image, i,
+                                         /* error_msg */ nullptr),
+              0);
   }
-  image_embedder_close(embedder);
+  image_embedder_close(embedder, /* error_msg */ nullptr);
 
   // Due to the flow limiter, the total of outputs might be smaller than the
   // number of iterations.
@@ -274,7 +284,8 @@ TEST(ImageEmbedderTest, FailedEmbeddingHandling) {
        /* quantize= */ false},
   };
 
-  void* embedder = image_embedder_create(&options);
+  void* embedder = image_embedder_create(&options,
+                                         /* error_msg */ nullptr);
   EXPECT_NE(embedder, nullptr);
 
   const MpImage mp_image = {.type = MpImage::GPU_BUFFER, .gpu_buffer = {}};
@@ -283,7 +294,7 @@ TEST(ImageEmbedderTest, FailedEmbeddingHandling) {
   image_embedder_embed_image(embedder, &mp_image, &result, &error_msg);
   EXPECT_THAT(error_msg, HasSubstr("GPU Buffer not supported yet."));
   free(error_msg);
-  image_embedder_close(embedder);
+  image_embedder_close(embedder, /* error_msg */ nullptr);
 }
 
 }  // namespace

@@ -108,28 +108,28 @@ struct ImageEmbedderOptions {
 // Creates an ImageEmbedder from provided `options`.
 // Returns a pointer to the image embedder on success.
 // If an error occurs, returns `nullptr` and sets the error parameter to an
-// an error message (if `error_msg` is not nullptr). You must free the memory
+// an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
 MP_EXPORT void* image_embedder_create(struct ImageEmbedderOptions* options,
-                                      char** error_msg = nullptr);
+                                      char** error_msg);
 
 // Performs embedding extraction on the input `image`. Returns `0` on success.
 // If an error occurs, returns an error code and sets the error parameter to an
-// an error message (if `error_msg` is not nullptr). You must free the memory
+// an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
 MP_EXPORT int image_embedder_embed_image(void* embedder, const MpImage* image,
                                          ImageEmbedderResult* result,
-                                         char** error_msg = nullptr);
+                                         char** error_msg);
 
 MP_EXPORT int image_embedder_embed_for_video(void* embedder,
                                              const MpImage* image,
                                              int64_t timestamp_ms,
                                              ImageEmbedderResult* result,
-                                             char** error_msg = nullptr);
+                                             char** error_msg);
 
 MP_EXPORT int image_embedder_embed_async(void* embedder, const MpImage* image,
                                          int64_t timestamp_ms,
-                                         char** error_msg = nullptr);
+                                         char** error_msg);
 
 // Frees the memory allocated inside a ImageEmbedderResult result.
 // Does not free the result pointer itself.
@@ -137,9 +137,9 @@ MP_EXPORT void image_embedder_close_result(ImageEmbedderResult* result);
 
 // Frees image embedder.
 // If an error occurs, returns an error code and sets the error parameter to an
-// an error message (if `error_msg` is not nullptr). You must free the memory
+// an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT int image_embedder_close(void* embedder, char** error_msg = nullptr);
+MP_EXPORT int image_embedder_close(void* embedder, char** error_msg);
 
 // Utility function to compute cosine similarity [1] between two embeddings.
 // May return an InvalidArgumentError if e.g. the embeddings are of different
@@ -148,7 +148,7 @@ MP_EXPORT int image_embedder_close(void* embedder, char** error_msg = nullptr);
 //
 // [1]: https://en.wikipedia.org/wiki/Cosine_similarity
 MP_EXPORT int cosine_similarity(const Embedding& u, const Embedding& v,
-                                double* similarity, char** error_msg = nullptr);
+                                double* similarity, char** error_msg);
 
 #ifdef __cplusplus
 }  // extern C
