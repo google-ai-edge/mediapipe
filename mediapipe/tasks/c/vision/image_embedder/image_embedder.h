@@ -92,9 +92,16 @@ struct ImageEmbedderOptions {
 
   // The user-defined result callback for processing live stream data.
   // The result callback should only be specified when the running mode is set
-  // to RunningMode::LIVE_STREAM.
-  typedef void (*result_callback_fn)(ImageEmbedderResult*, const MpImage*,
-                                     int64_t);
+  // to RunningMode::LIVE_STREAM. Arguments of the callback function include:
+  // the pointer to embedding result, the image that result was obtained
+  // on, the timestamp relevant to embedding extraction results and pointer to
+  // error message in case of any failure. The validity of the passed arguments
+  // is true for the lifetime of the callback function.
+  //
+  // A caller is responsible for closing image embedder result.
+  typedef void (*result_callback_fn)(ImageEmbedderResult* result,
+                                     const MpImage image, int64_t timestamp_ms,
+                                     char* error_msg);
   result_callback_fn result_callback;
 };
 
@@ -110,10 +117,18 @@ MP_EXPORT void* image_embedder_create(struct ImageEmbedderOptions* options,
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not nullptr). You must free the memory
 // allocated for the error message.
-//
-// TODO: Add API for video and live stream processing.
 MP_EXPORT int image_embedder_embed_image(void* embedder, const MpImage* image,
                                          ImageEmbedderResult* result,
+                                         char** error_msg = nullptr);
+
+MP_EXPORT int image_embedder_embed_for_video(void* embedder,
+                                             const MpImage* image,
+                                             int64_t timestamp_ms,
+                                             ImageEmbedderResult* result,
+                                             char** error_msg = nullptr);
+
+MP_EXPORT int image_embedder_embed_async(void* embedder, const MpImage* image,
+                                         int64_t timestamp_ms,
                                          char** error_msg = nullptr);
 
 // Frees the memory allocated inside a ImageEmbedderResult result.
@@ -125,6 +140,15 @@ MP_EXPORT void image_embedder_close_result(ImageEmbedderResult* result);
 // an error message (if `error_msg` is not nullptr). You must free the memory
 // allocated for the error message.
 MP_EXPORT int image_embedder_close(void* embedder, char** error_msg = nullptr);
+
+// Utility function to compute cosine similarity [1] between two embeddings.
+// May return an InvalidArgumentError if e.g. the embeddings are of different
+// types (quantized vs. float), have different sizes, or have a an L2-norm of
+// 0.
+//
+// [1]: https://en.wikipedia.org/wiki/Cosine_similarity
+MP_EXPORT int cosine_similarity(const Embedding& u, const Embedding& v,
+                                double* similarity, char** error_msg = nullptr);
 
 #ifdef __cplusplus
 }  // extern C

@@ -67,6 +67,15 @@ MP_EXPORT void text_embedder_close_result(TextEmbedderResult* result);
 // allocated for the error message.
 MP_EXPORT int text_embedder_close(void* embedder, char** error_msg = nullptr);
 
+// Utility function to compute cosine similarity [1] between two embeddings.
+// May return an InvalidArgumentError if e.g. the embeddings are of different
+// types (quantized vs. float), have different sizes, or have a an L2-norm of
+// 0.
+//
+// [1]: https://en.wikipedia.org/wiki/Cosine_similarity
+MP_EXPORT int cosine_similarity(const Embedding& u, const Embedding& v,
+                                double* similarity, char** error_msg = nullptr);
+
 #ifdef __cplusplus
 }  // extern C
 #endif

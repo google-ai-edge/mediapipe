@@ -29,6 +29,10 @@ void CppConvertToEmbeddingResult(
     const mediapipe::tasks::components::containers::EmbeddingResult& in,
     EmbeddingResult* out);
 
+void ConvertToCppEmbedding(
+    const Embedding& in,
+    mediapipe::tasks::components::containers::Embedding* out);
+
 void CppCloseEmbedding(Embedding* in);
 
 void CppCloseEmbeddingResult(EmbeddingResult* in);

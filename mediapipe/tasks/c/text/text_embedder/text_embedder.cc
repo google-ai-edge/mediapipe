@@ -29,6 +29,8 @@ namespace mediapipe::tasks::c::text::text_embedder {
 
 namespace {
 
+
+using ::mediapipe::tasks::c::components::containers::ConvertToCppEmbedding;
 using ::mediapipe::tasks::c::components::containers::CppCloseEmbeddingResult;
 using ::mediapipe::tasks::c::components::containers::
     CppConvertToEmbeddingResult;
@@ -36,6 +38,7 @@ using ::mediapipe::tasks::c::components::processors::
     CppConvertToEmbedderOptions;
 using ::mediapipe::tasks::c::core::CppConvertToBaseOptions;
 using ::mediapipe::tasks::text::text_embedder::TextEmbedder;
+typedef ::mediapipe::tasks::components::containers::Embedding CppEmbedding;
 
 int CppProcessError(absl::Status status, char** error_msg) {
   if (error_msg) {
@@ -91,6 +94,24 @@ int CppTextEmbedderClose(void* embedder, char** error_msg) {
   return 0;
 }
 
+int CppTextEmbedderCosineSimilarity(const Embedding& u, const Embedding& v,
+                                    double* similarity, char** error_msg) {
+  CppEmbedding cpp_u;
+  ConvertToCppEmbedding(u, &cpp_u);
+  CppEmbedding cpp_v;
+  ConvertToCppEmbedding(v, &cpp_v);
+  auto status_or_similarity =
+      mediapipe::tasks::text::text_embedder::TextEmbedder::CosineSimilarity(
+          cpp_u, cpp_v);
+  if (status_or_similarity.ok()) {
+    *similarity = status_or_similarity.value();
+  } else {
+    ABSL_LOG(ERROR) << "Cannot computer cosine similarity.";
+    return CppProcessError(status_or_similarity.status(), error_msg);
+  }
+  return 0;
+}
+
 }  // namespace mediapipe::tasks::c::text::text_embedder
 
 extern "C" {
@@ -114,6 +135,12 @@ void text_embedder_close_result(TextEmbedderResult* result) {
 int text_embedder_close(void* embedder, char** error_ms) {
   return mediapipe::tasks::c::text::text_embedder::CppTextEmbedderClose(
       embedder, error_ms);
+}
+
+int cosine_similarity(const Embedding& u, const Embedding& v,
+                      double* similarity, char** error_msg) {
+  return mediapipe::tasks::c::text::text_embedder::
+      CppTextEmbedderCosineSimilarity(u, v, similarity, error_msg);
 }
 
 }  // extern "C"
