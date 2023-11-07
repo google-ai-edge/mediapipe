@@ -21,8 +21,6 @@ using LandmarkListProto = ::mediapipe::LandmarkList;
 using NormalizedLandmarkListProto = ::mediapipe::NormalizedLandmarkList;
 using ::mediapipe::Image;
 using ::mediapipe::Packet;
-
-static const int kMicroSecondsPerMilliSecond = 1000;
 }  // namespace
 
 @implementation MPPPoseLandmarkerResult (Helpers)
@@ -41,7 +39,7 @@ static const int kMicroSecondsPerMilliSecond = 1000;
                        worldLandmarksProto:
                            (const std::vector<LandmarkListProto> &)worldLandmarksProto
                          segmentationMasks:(const std::vector<Image> *)segmentationMasks
-                   timestampInMilliSeconds:(NSInteger)timestampInMilliseconds {
+                   timestampInMilliseconds:(NSInteger)timestampInMilliseconds {
   NSMutableArray<NSMutableArray<MPPNormalizedLandmark *> *> *multiplePoseLandmarks =
       [NSMutableArray arrayWithCapacity:(NSUInteger)landmarksProto.size()];
 
@@ -69,6 +67,12 @@ static const int kMicroSecondsPerMilliSecond = 1000;
     [multiplePoseWorldLandmarks addObject:worldLandmarks];
   }
 
+  if (!segmentationMasks) {
+    return [[MPPPoseLandmarkerResult alloc] initWithLandmarks:multiplePoseLandmarks
+                                               worldLandmarks:multiplePoseWorldLandmarks
+                                            segmentationMasks:nil
+                                      timestampInMilliseconds:timestampInMilliseconds];
+  }
   NSMutableArray<MPPMask *> *confidenceMasks =
       [NSMutableArray arrayWithCapacity:(NSUInteger)segmentationMasks->size()];
 
@@ -83,12 +87,11 @@ static const int kMicroSecondsPerMilliSecond = 1000;
                                                          shouldCopy:YES]];
   }
 
-  MPPPoseLandmarkerResult *poseLandmarkerResult =
-      [[MPPPoseLandmarkerResult alloc] initWithLandmarks:multiplePoseLandmarks
-                                          worldLandmarks:multiplePoseWorldLandmarks
-                                       segmentationMasks:confidenceMasks
-                                 timestampInMilliseconds:timestampInMilliseconds];
-  return poseLandmarkerResult;
+  return [[MPPPoseLandmarkerResult alloc] initWithLandmarks:multiplePoseLandmarks
+                                             worldLandmarks:multiplePoseWorldLandmarks
+                                          segmentationMasks:confidenceMasks
+                                    timestampInMilliseconds:timestampInMilliseconds];
+  ;
 }
 
 + (MPPPoseLandmarkerResult *)
@@ -96,7 +99,7 @@ static const int kMicroSecondsPerMilliSecond = 1000;
                        worldLandmarksPacket:(const Packet &)worldLandmarksPacket
                     segmentationMasksPacket:(const Packet *)segmentationMasksPacket {
   NSInteger timestampInMilliseconds =
-      (NSInteger)(landmarksPacket.Timestamp().Value() / kMicroSecondsPerMilliSecond);
+      (NSInteger)(landmarksPacket.Timestamp().Value() / kMicroSecondsPerMillisecond);
 
   if (landmarksPacket.IsEmpty()) {
     return [MPPPoseLandmarkerResult
@@ -118,7 +121,7 @@ static const int kMicroSecondsPerMilliSecond = 1000;
                          worldLandmarksProto:worldLandmarksPacket
                                                  .Get<std::vector<LandmarkListProto>>()
                            segmentationMasks:segmentationMasks
-                     timestampInMilliSeconds:timestampInMilliseconds];
+                     timestampInMilliseconds:timestampInMilliseconds];
 }
 
 @end
