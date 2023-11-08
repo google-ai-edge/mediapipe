@@ -198,7 +198,7 @@ static NSString *const kTaskName = @"gestureRecognizer";
 
   NSInteger timestampInMilliseconds =
       outputPacketMap[kImageOutStreamName.cppString].Timestamp().Value() /
-      kMicroSecondsPerMilliSecond;
+      kMicrosecondsPerMillisecond;
   dispatch_async(_callbackQueue, ^{
     [self.gestureRecognizerLiveStreamDelegate gestureRecognizer:self
                                  didFinishRecognitionWithResult:result

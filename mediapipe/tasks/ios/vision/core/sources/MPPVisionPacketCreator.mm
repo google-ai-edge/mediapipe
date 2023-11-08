@@ -18,7 +18,7 @@
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/timestamp.h"
 
-static const NSUInteger kMicroSecondsPerMilliSecond = 1000;
+static const NSUInteger kMicrosecondsPerMillisecond = 1000;
 
 namespace {
 using ::mediapipe::Image;
@@ -51,7 +51,7 @@ using ::mediapipe::Timestamp;
   }
 
   return MakePacket<Image>(std::move(imageFrame))
-      .At(Timestamp(int64(timestampInMilliseconds * kMicroSecondsPerMilliSecond)));
+      .At(Timestamp(int64(timestampInMilliseconds * kMicrosecondsPerMillisecond)));
 }
 
 + (Packet)createPacketWithNormalizedRect:(NormalizedRect &)normalizedRect {
@@ -61,7 +61,7 @@ using ::mediapipe::Timestamp;
 + (Packet)createPacketWithNormalizedRect:(NormalizedRect &)normalizedRect
                  timestampInMilliseconds:(NSInteger)timestampInMilliseconds {
   return MakePacket<NormalizedRect>(std::move(normalizedRect))
-      .At(Timestamp(int64(timestampInMilliseconds * kMicroSecondsPerMilliSecond)));
+      .At(Timestamp(int64(timestampInMilliseconds * kMicrosecondsPerMillisecond)));
 }
 
 @end

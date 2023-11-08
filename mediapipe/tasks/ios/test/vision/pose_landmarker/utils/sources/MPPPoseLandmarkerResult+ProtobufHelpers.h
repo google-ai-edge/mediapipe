@@ -12,26 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "mediapipe/tasks/ios/vision/object_detector/sources/MPPObjectDetectorResult.h"
-
-#include "mediapipe/framework/packet.h"
+#import <Foundation/Foundation.h>
+#import "mediapipe/tasks/ios/vision/pose_landmarker/sources/MPPPoseLandmarkerResult.h"
 
 NS_ASSUME_NONNULL_BEGIN
+@interface MPPPoseLandmarkerResult (ProtobufHelpers)
 
-static const int kMicrosecondsPerMillisecond = 1000;
-
-@interface MPPObjectDetectorResult (Helpers)
-
-/**
- * Creates an `MPPObjectDetectorResult` from a MediaPipe packet containing a
- * `std::vector<DetectionProto>`.
- *
- * @param packet a MediaPipe packet wrapping a `std::vector<DetectionProto>`.
- *
- * @return  An `MPPObjectDetectorResult` object that contains a list of detections.
- */
-+ (nullable MPPObjectDetectorResult *)objectDetectorResultWithDetectionsPacket:
-    (const mediapipe::Packet &)packet;
++ (MPPPoseLandmarkerResult *)poseLandmarkerResultFromProtobufFileWithName:(NSString *)fileName
+                                                    shouldRemoveZPosition:(BOOL)removeZPosition;
 
 @end
 

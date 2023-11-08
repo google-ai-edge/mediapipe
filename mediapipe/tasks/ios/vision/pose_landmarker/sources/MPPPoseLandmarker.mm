@@ -12,68 +12,82 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "mediapipe/tasks/ios/vision/object_detector/sources/MPPObjectDetector.h"
+#import "mediapipe/tasks/ios/vision/pose_landmarker/sources/MPPPoseLandmarker.h"
 
 #import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
 #import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
 #import "mediapipe/tasks/ios/core/sources/MPPTaskInfo.h"
 #import "mediapipe/tasks/ios/vision/core/sources/MPPVisionPacketCreator.h"
 #import "mediapipe/tasks/ios/vision/core/sources/MPPVisionTaskRunner.h"
-#import "mediapipe/tasks/ios/vision/object_detector/utils/sources/MPPObjectDetectorOptions+Helpers.h"
-#import "mediapipe/tasks/ios/vision/object_detector/utils/sources/MPPObjectDetectorResult+Helpers.h"
+#import "mediapipe/tasks/ios/vision/pose_landmarker/sources/MPPPoseLandmarksConnections.h"
+#import "mediapipe/tasks/ios/vision/pose_landmarker/utils/sources/MPPPoseLandmarkerOptions+Helpers.h"
+#import "mediapipe/tasks/ios/vision/pose_landmarker/utils/sources/MPPPoseLandmarkerResult+Helpers.h"
 
 namespace {
-using ::mediapipe::NormalizedRect;
-using ::mediapipe::Packet;
 using ::mediapipe::Timestamp;
 using ::mediapipe::tasks::core::PacketMap;
 using ::mediapipe::tasks::core::PacketsCallback;
 }  // namespace
 
-static NSString *const kDetectionsStreamName = @"detections_out";
-static NSString *const kDetectionsTag = @"DETECTIONS";
-static NSString *const kImageInStreamName = @"image_in";
-static NSString *const kImageOutStreamName = @"image_out";
 static NSString *const kImageTag = @"IMAGE";
-static NSString *const kNormRectStreamName = @"norm_rect_in";
+static NSString *const kImageInStreamName = @"image_in";
 static NSString *const kNormRectTag = @"NORM_RECT";
-static NSString *const kTaskGraphName = @"mediapipe.tasks.vision.ObjectDetectorGraph";
-static NSString *const kTaskName = @"objectDetector";
+static NSString *const kNormRectInStreamName = @"norm_rect_in";
+static NSString *const kImageOutStreamName = @"image_out";
+static NSString *const kPoseLandmarksTag = @"NORM_LANDMARKS";
+static NSString *const kPoseLandmarksOutStreamName = @"pose_landmarks";
+static NSString *const kWorldLandmarksTag = @"WORLD_LANDMARKS";
+static NSString *const kWorldLandmarksOutStreamName = @"world_landmarks";
+static NSString *const kSegmentationMasksTag = @"SEGMENTATION_MASK";
+static NSString *const kSegmentationMasksOutStreamName = @"segmentation_masks";
+static NSString *const kTaskGraphName =
+    @"mediapipe.tasks.vision.pose_landmarker.PoseLandmarkerGraph";
+static NSString *const kTaskName = @"poseLandmarker";
 
-#define InputPacketMap(imagePacket, normalizedRectPacket) \
-  {                                                       \
-    {kImageInStreamName.cppString, imagePacket}, {        \
-      kNormRectStreamName.cppString, normalizedRectPacket \
-    }                                                     \
+#define InputPacketMap(imagePacket, normalizedRectPacket)   \
+  {                                                         \
+    {kImageInStreamName.cppString, imagePacket}, {          \
+      kNormRectInStreamName.cppString, normalizedRectPacket \
+    }                                                       \
   }
 
-#define ObjectDetectorResultWithOutputPacketMap(outputPacketMap) \
-  ([MPPObjectDetectorResult                                      \
-      objectDetectorResultWithDetectionsPacket:outputPacketMap[kDetectionsStreamName.cppString]])
+#define PoseLandmarkerResultWithOutputPacketMap(outputPacketMap)                                \
+  ([MPPPoseLandmarkerResult                                                                     \
+      poseLandmarkerResultWithLandmarksPacket:outputPacketMap[kPoseLandmarksOutStreamName       \
+                                                                  .cppString]                   \
+                         worldLandmarksPacket:outputPacketMap[kWorldLandmarksOutStreamName      \
+                                                                  .cppString]                   \
+                      segmentationMasksPacket:&(outputPacketMap[kSegmentationMasksOutStreamName \
+                                                                    .cppString])])
 
-@interface MPPObjectDetector () {
+@interface MPPPoseLandmarker () {
   /** iOS Vision Task Runner */
   MPPVisionTaskRunner *_visionTaskRunner;
   dispatch_queue_t _callbackQueue;
 }
-@property(nonatomic, weak) id<MPPObjectDetectorLiveStreamDelegate> objectDetectorLiveStreamDelegate;
+@property(nonatomic, weak) id<MPPPoseLandmarkerLiveStreamDelegate> poseLandmarkerLiveStreamDelegate;
 @end
 
-@implementation MPPObjectDetector
+@implementation MPPPoseLandmarker
 
 #pragma mark - Public
 
-- (instancetype)initWithOptions:(MPPObjectDetectorOptions *)options error:(NSError **)error {
+- (instancetype)initWithOptions:(MPPPoseLandmarkerOptions *)options error:(NSError **)error {
   self = [super init];
   if (self) {
     MPPTaskInfo *taskInfo = [[MPPTaskInfo alloc]
         initWithTaskGraphName:kTaskGraphName
                  inputStreams:@[
                    [NSString stringWithFormat:@"%@:%@", kImageTag, kImageInStreamName],
-                   [NSString stringWithFormat:@"%@:%@", kNormRectTag, kNormRectStreamName]
+                   [NSString stringWithFormat:@"%@:%@", kNormRectTag, kNormRectInStreamName]
                  ]
                 outputStreams:@[
-                  [NSString stringWithFormat:@"%@:%@", kDetectionsTag, kDetectionsStreamName],
+                  [NSString
+                      stringWithFormat:@"%@:%@", kPoseLandmarksTag, kPoseLandmarksOutStreamName],
+                  [NSString
+                      stringWithFormat:@"%@:%@", kWorldLandmarksTag, kWorldLandmarksOutStreamName],
+                  [NSString stringWithFormat:@"%@:%@", kSegmentationMasksTag,
+                                             kSegmentationMasksOutStreamName],
                   [NSString stringWithFormat:@"%@:%@", kImageTag, kImageOutStreamName]
                 ]
                   taskOptions:options
@@ -86,19 +100,19 @@ static NSString *const kTaskName = @"objectDetector";
 
     PacketsCallback packetsCallback = nullptr;
 
-    if (options.objectDetectorLiveStreamDelegate) {
-      _objectDetectorLiveStreamDelegate = options.objectDetectorLiveStreamDelegate;
+    if (options.poseLandmarkerLiveStreamDelegate) {
+      _poseLandmarkerLiveStreamDelegate = options.poseLandmarkerLiveStreamDelegate;
 
-      // Create a private serial dispatch queue in which the delegate method will be called
+      // Create a private serial dispatch queue in which the deleagte method will be called
       // asynchronously. This is to ensure that if the client performs a long running operation in
       // the delegate method, the queue on which the C++ callbacks is invoked is not blocked and is
       // freed up to continue with its operations.
       _callbackQueue = dispatch_queue_create(
-          [MPPVisionTaskRunner uniqueDispatchQueueNameWithSuffix:kTaskName], NULL);
+          [MPPVisionTaskRunner uniqueDispatchQueueNameWithSuffix:kTaskName], nullptr);
 
       // Capturing `self` as weak in order to avoid `self` being kept in memory
       // and cause a retain cycle, after self is set to `nil`.
-      MPPObjectDetector *__weak weakSelf = self;
+      MPPPoseLandmarker *__weak weakSelf = self;
       packetsCallback = [=](absl::StatusOr<PacketMap> liveStreamResult) {
         [weakSelf processLiveStreamResult:liveStreamResult];
       };
@@ -109,40 +123,39 @@ static NSString *const kTaskName = @"objectDetector";
                                                            roiAllowed:NO
                                                       packetsCallback:std::move(packetsCallback)
                                                  imageInputStreamName:kImageInStreamName
-                                              normRectInputStreamName:kNormRectStreamName
+                                              normRectInputStreamName:kNormRectInStreamName
                                                                 error:error];
 
     if (!_visionTaskRunner) {
       return nil;
     }
   }
-
   return self;
 }
 
 - (instancetype)initWithModelPath:(NSString *)modelPath error:(NSError **)error {
-  MPPObjectDetectorOptions *options = [[MPPObjectDetectorOptions alloc] init];
+  MPPPoseLandmarkerOptions *options = [[MPPPoseLandmarkerOptions alloc] init];
 
   options.baseOptions.modelAssetPath = modelPath;
 
   return [self initWithOptions:options error:error];
 }
 
-- (nullable MPPObjectDetectorResult *)detectImage:(MPPImage *)image error:(NSError **)error {
+- (nullable MPPPoseLandmarkerResult *)detectImage:(MPPImage *)image error:(NSError **)error {
   std::optional<PacketMap> outputPacketMap = [_visionTaskRunner processImage:image error:error];
 
-  return [MPPObjectDetector objectDetectorResultWithOptionalOutputPacketMap:outputPacketMap];
+  return [MPPPoseLandmarker poseLandmarkerResultWithOptionalOutputPacketMap:outputPacketMap];
 }
 
-- (nullable MPPObjectDetectorResult *)detectVideoFrame:(MPPImage *)image
-                                 timestampInMilliseconds:(NSInteger)timestampInMilliseconds
-                                                   error:(NSError **)error {
+- (nullable MPPPoseLandmarkerResult *)detectVideoFrame:(MPPImage *)image
+                               timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                                                 error:(NSError **)error {
   std::optional<PacketMap> outputPacketMap =
       [_visionTaskRunner processVideoFrame:image
                    timestampInMilliseconds:timestampInMilliseconds
                                      error:error];
 
-  return [MPPObjectDetector objectDetectorResultWithOptionalOutputPacketMap:outputPacketMap];
+  return [MPPPoseLandmarker poseLandmarkerResultWithOptionalOutputPacketMap:outputPacketMap];
 }
 
 - (BOOL)detectAsyncImage:(MPPImage *)image
@@ -153,11 +166,15 @@ static NSString *const kTaskName = @"objectDetector";
                                              error:error];
 }
 
++ (NSArray<MPPConnection *> *)poseLandmarks {
+  return MPPPoseLandmarksConnections;
+}
+
 #pragma mark - Private
 
 - (void)processLiveStreamResult:(absl::StatusOr<PacketMap>)liveStreamResult {
-  if (![self.objectDetectorLiveStreamDelegate
-          respondsToSelector:@selector(objectDetector:
+  if (![self.poseLandmarkerLiveStreamDelegate
+          respondsToSelector:@selector(poseLandmarker:
                                  didFinishDetectionWithResult:timestampInMilliseconds:error:)]) {
     return;
   }
@@ -165,7 +182,7 @@ static NSString *const kTaskName = @"objectDetector";
   NSError *callbackError = nil;
   if (![MPPCommonUtils checkCppError:liveStreamResult.status() toError:&callbackError]) {
     dispatch_async(_callbackQueue, ^{
-      [self.objectDetectorLiveStreamDelegate objectDetector:self
+      [self.poseLandmarkerLiveStreamDelegate poseLandmarker:self
                                didFinishDetectionWithResult:nil
                                     timestampInMilliseconds:Timestamp::Unset().Value()
                                                       error:callbackError];
@@ -178,26 +195,26 @@ static NSString *const kTaskName = @"objectDetector";
     return;
   }
 
-  MPPObjectDetectorResult *result = ObjectDetectorResultWithOutputPacketMap(outputPacketMap);
+  MPPPoseLandmarkerResult *result = PoseLandmarkerResultWithOutputPacketMap(outputPacketMap);
 
   NSInteger timestampInMilliseconds =
       outputPacketMap[kImageOutStreamName.cppString].Timestamp().Value() /
       kMicrosecondsPerMillisecond;
   dispatch_async(_callbackQueue, ^{
-    [self.objectDetectorLiveStreamDelegate objectDetector:self
+    [self.poseLandmarkerLiveStreamDelegate poseLandmarker:self
                              didFinishDetectionWithResult:result
                                   timestampInMilliseconds:timestampInMilliseconds
                                                     error:callbackError];
   });
 }
 
-+ (nullable MPPObjectDetectorResult *)objectDetectorResultWithOptionalOutputPacketMap:
++ (nullable MPPPoseLandmarkerResult *)poseLandmarkerResultWithOptionalOutputPacketMap:
     (std::optional<PacketMap> &)outputPacketMap {
   if (!outputPacketMap.has_value()) {
     return nil;
   }
 
-  return ObjectDetectorResultWithOutputPacketMap(outputPacketMap.value());
+  return PoseLandmarkerResultWithOutputPacketMap(outputPacketMap.value());
 }
 
 @end

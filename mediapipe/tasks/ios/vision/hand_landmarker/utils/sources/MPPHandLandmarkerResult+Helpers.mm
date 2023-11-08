@@ -95,7 +95,7 @@ using ::mediapipe::Packet;
                        worldLandmarksPacket:(const Packet &)worldLandmarksPacket
                            handednessPacket:(const Packet &)handednessPacket {
   NSInteger timestampInMilliseconds =
-      (NSInteger)(landmarksPacket.Timestamp().Value() / kMicroSecondsPerMilliSecond);
+      (NSInteger)(landmarksPacket.Timestamp().Value() / kMicrosecondsPerMillisecond);
 
   if (landmarksPacket.IsEmpty()) {
     return [MPPHandLandmarkerResult

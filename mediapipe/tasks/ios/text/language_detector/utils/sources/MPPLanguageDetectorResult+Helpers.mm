@@ -17,14 +17,14 @@
 
 #include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
 
-static const int kMicroSecondsPerMilliSecond = 1000;
+static const int kMicrosecondsPerMillisecond = 1000;
 
 namespace {
 using ClassificationResultProto =
     ::mediapipe::tasks::components::containers::proto::ClassificationResult;
 }  // namespace
 
-#define int kMicroSecondsPerMilliSecond = 1000;
+#define int kMicrosecondsPerMillisecond = 1000;
 
 @implementation MPPLanguageDetectorResult (Helpers)
 
@@ -36,7 +36,7 @@ using ClassificationResultProto =
   return [MPPLanguageDetectorResult
       languageDetectorResultWithClassificationResult:classificationResult
                              timestampInMilliseconds:(NSInteger)(packet.Timestamp().Value() /
-                                                                 kMicroSecondsPerMilliSecond)];
+                                                                 kMicrosecondsPerMillisecond)];
 }
 
 + (MPPLanguageDetectorResult *)

@@ -20,6 +20,8 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+static const int kMicrosecondsPerMillisecond = 1000;
+
 @interface MPPPoseLandmarkerResult (Helpers)
 
 /**
@@ -55,8 +57,9 @@ NS_ASSUME_NONNULL_BEGIN
         (const std::vector<::mediapipe::NormalizedLandmarkList> &)landmarksProto
                        worldLandmarksProto:
                            (const std::vector<::mediapipe::LandmarkList> &)worldLandmarksProto
-                         segmentationMasks:(const std::vector<mediapipe::Image> *)segmentationMasks
-                   timestampInMilliSeconds:(NSInteger)timestampInMilliseconds;
+                         segmentationMasks:
+                             (nullable const std::vector<mediapipe::Image> *)segmentationMasks
+                   timestampInMilliseconds:(NSInteger)timestampInMilliseconds;
 
 @end
 
