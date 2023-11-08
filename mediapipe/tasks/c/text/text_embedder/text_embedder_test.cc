@@ -32,7 +32,12 @@ using testing::HasSubstr;
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/text/";
 constexpr char kTestBertModelPath[] =
     "mobilebert_embedding_with_metadata.tflite";
-constexpr char kTestString[] = "It's beautiful outside.";
+constexpr char kTestString0[] =
+    "When you go to this restaurant, they hold the pancake upside-down "
+    "before they hand it to you. It's a great gimmick.";
+constexpr char kTestString1[] =
+    "Let's make a plan to steal the declaration of independence.";
+constexpr float kPrecision = 1e-3;
 
 std::string GetFullPath(absl::string_view file_name) {
   return JoinPath("./", kTestDataDirectory, file_name);
@@ -52,11 +57,45 @@ TEST(TextEmbedderTest, SmokeTest) {
   EXPECT_NE(embedder, nullptr);
 
   TextEmbedderResult result;
-  text_embedder_embed(embedder, kTestString, &result, /* error_msg */ nullptr);
+  text_embedder_embed(embedder, kTestString0, &result, /* error_msg */ nullptr);
   EXPECT_EQ(result.embeddings_count, 1);
   EXPECT_EQ(result.embeddings[0].values_count, 512);
 
   text_embedder_close_result(&result);
+  text_embedder_close(embedder, /* error_msg */ nullptr);
+}
+
+TEST(TextEmbedderTest, SucceedsWithCosineSimilarity) {
+  std::string model_path = GetFullPath(kTestBertModelPath);
+  TextEmbedderOptions options = {
+      /* base_options= */ {/* model_asset_buffer= */ nullptr,
+                           /* model_asset_buffer_count= */ 0,
+                           /* model_asset_path= */ model_path.c_str()},
+      /* embedder_options= */
+      {/* l2_normalize= */ false,
+       /* quantize= */ false}};
+
+  void* embedder = text_embedder_create(&options,
+                                        /* error_msg */ nullptr);
+  EXPECT_NE(embedder, nullptr);
+
+  // Extract both embeddings.
+  TextEmbedderResult result0;
+  text_embedder_embed(embedder, kTestString0, &result0,
+                      /* error_msg */ nullptr);
+  TextEmbedderResult result1;
+  text_embedder_embed(embedder, kTestString1, &result1,
+                      /* error_msg */ nullptr);
+
+  // Check cosine similarity.
+  double similarity;
+  text_embedder_cosine_similarity(result0.embeddings[0], result1.embeddings[0],
+                                  &similarity, nullptr);
+  double expected_similarity = 0.98077;
+  EXPECT_LE(abs(similarity - expected_similarity), kPrecision);
+
+  text_embedder_close_result(&result0);
+  text_embedder_close_result(&result1);
   text_embedder_close(embedder, /* error_msg */ nullptr);
 }
 

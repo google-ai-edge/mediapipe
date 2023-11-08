@@ -20,9 +20,11 @@ limitations under the License.
 
 #include "absl/log/absl_log.h"
 #include "absl/status/status.h"
+#include "mediapipe/tasks/c/components/containers/embedding_result.h"
 #include "mediapipe/tasks/c/components/containers/embedding_result_converter.h"
 #include "mediapipe/tasks/c/components/processors/embedder_options_converter.h"
 #include "mediapipe/tasks/c/core/base_options_converter.h"
+#include "mediapipe/tasks/cc/components/containers/embedding_result.h"
 #include "mediapipe/tasks/cc/text/text_embedder/text_embedder.h"
 
 namespace mediapipe::tasks::c::text::text_embedder {
@@ -30,12 +32,14 @@ namespace mediapipe::tasks::c::text::text_embedder {
 namespace {
 
 using ::mediapipe::tasks::c::components::containers::CppCloseEmbeddingResult;
+using ::mediapipe::tasks::c::components::containers::CppConvertToCppEmbedding;
 using ::mediapipe::tasks::c::components::containers::
     CppConvertToEmbeddingResult;
 using ::mediapipe::tasks::c::components::processors::
     CppConvertToEmbedderOptions;
 using ::mediapipe::tasks::c::core::CppConvertToBaseOptions;
 using ::mediapipe::tasks::text::text_embedder::TextEmbedder;
+typedef ::mediapipe::tasks::components::containers::Embedding CppEmbedding;
 
 int CppProcessError(absl::Status status, char** error_msg) {
   if (error_msg) {
@@ -91,6 +95,24 @@ int CppTextEmbedderClose(void* embedder, char** error_msg) {
   return 0;
 }
 
+int CppTextEmbedderCosineSimilarity(const Embedding& u, const Embedding& v,
+                                    double* similarity, char** error_msg) {
+  CppEmbedding cpp_u;
+  CppConvertToCppEmbedding(u, &cpp_u);
+  CppEmbedding cpp_v;
+  CppConvertToCppEmbedding(v, &cpp_v);
+  auto status_or_similarity =
+      mediapipe::tasks::text::text_embedder::TextEmbedder::CosineSimilarity(
+          cpp_u, cpp_v);
+  if (status_or_similarity.ok()) {
+    *similarity = status_or_similarity.value();
+  } else {
+    ABSL_LOG(ERROR) << "Cannot compute cosine similarity.";
+    return CppProcessError(status_or_similarity.status(), error_msg);
+  }
+  return 0;
+}
+
 }  // namespace mediapipe::tasks::c::text::text_embedder
 
 extern "C" {
@@ -114,6 +136,12 @@ void text_embedder_close_result(TextEmbedderResult* result) {
 int text_embedder_close(void* embedder, char** error_ms) {
   return mediapipe::tasks::c::text::text_embedder::CppTextEmbedderClose(
       embedder, error_ms);
+}
+
+int text_embedder_cosine_similarity(const Embedding& u, const Embedding& v,
+                                    double* similarity, char** error_msg) {
+  return mediapipe::tasks::c::text::text_embedder::
+      CppTextEmbedderCosineSimilarity(u, v, similarity, error_msg);
 }
 
 }  // extern "C"

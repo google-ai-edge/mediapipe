@@ -66,6 +66,29 @@ void CppConvertToEmbeddingResult(
   }
 }
 
+void CppConvertToCppEmbedding(
+    const Embedding& in,  // C struct as input
+    mediapipe::tasks::components::containers::Embedding* out) {
+  // Handle float embeddings
+  if (in.float_embedding != nullptr) {
+    out->float_embedding.assign(in.float_embedding,
+                                in.float_embedding + in.values_count);
+  }
+
+  // Handle quantized embeddings
+  if (in.quantized_embedding != nullptr) {
+    out->quantized_embedding.assign(in.quantized_embedding,
+                                    in.quantized_embedding + in.values_count);
+  }
+
+  out->head_index = in.head_index;
+
+  // Copy head_name if it is present.
+  if (in.head_name) {
+    out->head_name = std::string(in.head_name);
+  }
+}
+
 void CppCloseEmbeddingResult(EmbeddingResult* in) {
   for (uint32_t i = 0; i < in->embeddings_count; ++i) {
     auto embedding_in = in->embeddings[i];

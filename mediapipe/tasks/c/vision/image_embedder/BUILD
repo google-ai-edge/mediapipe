@@ -17,22 +17,23 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 licenses(["notice"])
 
 cc_library(
-    name = "image_classifier_lib",
-    srcs = ["image_classifier.cc"],
-    hdrs = ["image_classifier.h"],
+    name = "image_embedder_lib",
+    srcs = ["image_embedder.cc"],
+    hdrs = ["image_embedder.h"],
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:image_frame",
-        "//mediapipe/tasks/c/components/containers:classification_result",
-        "//mediapipe/tasks/c/components/containers:classification_result_converter",
-        "//mediapipe/tasks/c/components/processors:classifier_options",
-        "//mediapipe/tasks/c/components/processors:classifier_options_converter",
+        "//mediapipe/tasks/c/components/containers:embedding_result",
+        "//mediapipe/tasks/c/components/containers:embedding_result_converter",
+        "//mediapipe/tasks/c/components/processors:embedder_options",
+        "//mediapipe/tasks/c/components/processors:embedder_options_converter",
         "//mediapipe/tasks/c/core:base_options",
         "//mediapipe/tasks/c/core:base_options_converter",
         "//mediapipe/tasks/c/vision/core:common",
+        "//mediapipe/tasks/cc/components/containers:embedding_result",
         "//mediapipe/tasks/cc/vision/core:running_mode",
-        "//mediapipe/tasks/cc/vision/image_classifier",
+        "//mediapipe/tasks/cc/vision/image_embedder",
         "//mediapipe/tasks/cc/vision/utils:image_utils",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
@@ -42,8 +43,8 @@ cc_library(
 )
 
 cc_test(
-    name = "image_classifier_test",
-    srcs = ["image_classifier_test.cc"],
+    name = "image_embedder_test",
+    srcs = ["image_embedder_test.cc"],
     data = [
         "//mediapipe/framework/formats:image_frame_opencv",
         "//mediapipe/framework/port:opencv_core",
@@ -53,11 +54,11 @@ cc_test(
     ],
     linkstatic = 1,
     deps = [
-        ":image_classifier_lib",
+        ":image_embedder_lib",
         "//mediapipe/framework/deps:file_path",
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/port:gtest",
-        "//mediapipe/tasks/c/components/containers:category",
+        "//mediapipe/tasks/c/vision/core:common",
         "//mediapipe/tasks/cc/vision/utils:image_utils",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
