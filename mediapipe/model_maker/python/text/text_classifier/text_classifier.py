@@ -372,7 +372,9 @@ class _BertClassifier(TextClassifier):
   ):
     super().__init__(model_spec, label_names, hparams.shuffle)
     self._hparams = hparams
-    self._callbacks = model_util.get_default_callbacks(self._hparams.export_dir)
+    self._callbacks = model_util.get_default_callbacks(
+        self._hparams.export_dir, self._hparams.checkpoint_frequency
+    )
     self._model_options = model_options
     self._text_preprocessor: preprocessor.BertClassifierPreprocessor = None
     with self._hparams.get_strategy().scope():

@@ -35,18 +35,23 @@ ESTIMITED_STEPS_PER_EPOCH = 1000
 
 def get_default_callbacks(
     export_dir: str,
+    checkpoint_frequency: int = 5,
 ) -> Sequence[tf.keras.callbacks.Callback]:
   """Gets default callbacks."""
+  callbacks = []
   summary_dir = os.path.join(export_dir, 'summaries')
   summary_callback = tf.keras.callbacks.TensorBoard(summary_dir)
+  callbacks.append(summary_callback)
 
-  checkpoint_path = os.path.join(export_dir, 'checkpoint')
-  checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
-      os.path.join(checkpoint_path, 'model-{epoch:04d}'),
-      save_weights_only=True,
-      period=5,
-  )
-  return [summary_callback, checkpoint_callback]
+  if checkpoint_frequency > 0:
+    checkpoint_path = os.path.join(export_dir, 'checkpoint')
+    checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
+        os.path.join(checkpoint_path, 'model-{epoch:04d}'),
+        save_weights_only=True,
+        period=checkpoint_frequency,
+    )
+    callbacks.append(checkpoint_callback)
+  return callbacks
 
 
 def load_keras_model(
