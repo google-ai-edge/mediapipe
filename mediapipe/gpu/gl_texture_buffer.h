@@ -19,6 +19,7 @@
 #define MEDIAPIPE_GPU_GL_TEXTURE_BUFFER_H_
 
 #include <atomic>
+#include <memory>
 
 #include "absl/memory/memory.h"
 #include "mediapipe/framework/formats/image_frame.h"
