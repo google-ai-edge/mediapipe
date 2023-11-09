@@ -24,7 +24,7 @@ message ImageCroppingCalculatorOptions {
   }
 
   // Output texture buffer dimensions. The values defined in the options will be
-  // overriden by the WIDTH and HEIGHT input streams if they exist.
+  // overridden by the WIDTH and HEIGHT input streams if they exist.
   optional int32 width = 1;
   optional int32 height = 2;
 

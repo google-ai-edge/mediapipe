@@ -95,7 +95,7 @@ struct GPUData {
 // into a TfLiteTensor (float 32) or a GpuBuffer to a tflite::gpu::GlBuffer
 // or MTLBuffer.
 //
-// This calculator is designed to be used with the TfLiteInferenceCalcualtor,
+// This calculator is designed to be used with the TfLiteInferenceCalculator,
 // as a pre-processing step for calculator inputs.
 //
 // IMAGE and IMAGE_GPU inputs are normalized to [-1,1] (default) or [0,1],

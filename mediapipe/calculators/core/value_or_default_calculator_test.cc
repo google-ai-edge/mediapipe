@@ -174,7 +174,7 @@ TEST(ValueOrDefaultCalculatorTest, DefaultAndValues) {
       ElementsAre(kDefaultValue, 1, 2, kDefaultValue, 3, kDefaultValue));
 }
 
-TEST(ValueOrDefaultCalculatorTest, TimestampsMissmatch) {
+TEST(ValueOrDefaultCalculatorTest, TimestampsMismatch) {
   // Check that when we provide the inputs not on time - we don't get them.
   ValueOrDefaultRunner runner;
   const std::vector<int64_t> ticks = {1, 2, 5, 8, 12, 33, 231};

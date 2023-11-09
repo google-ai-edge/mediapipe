@@ -77,7 +77,7 @@ absl::StatusOr<double> ComputeFocalLengthInPixels(int image_width,
   return focal_length_pixels;
 }
 
-absl::StatusOr<ImageFileProperties> GetImageFileProperites(
+absl::StatusOr<ImageFileProperties> GetImageFileProperties(
     const std::string& image_bytes) {
   easyexif::EXIFInfo result;
   int code = result.parseFrom(image_bytes);
@@ -151,7 +151,7 @@ class ImageFilePropertiesCalculator : public CalculatorBase {
     if (cc->InputSidePackets().NumEntries() == 1) {
       const std::string& image_bytes =
           cc->InputSidePackets().Index(0).Get<std::string>();
-      MP_ASSIGN_OR_RETURN(properties_, GetImageFileProperites(image_bytes));
+      MP_ASSIGN_OR_RETURN(properties_, GetImageFileProperties(image_bytes));
       read_properties_ = true;
     }
 
@@ -169,7 +169,7 @@ class ImageFilePropertiesCalculator : public CalculatorBase {
         return absl::OkStatus();
       }
       const std::string& image_bytes = cc->Inputs().Index(0).Get<std::string>();
-      MP_ASSIGN_OR_RETURN(properties_, GetImageFileProperites(image_bytes));
+      MP_ASSIGN_OR_RETURN(properties_, GetImageFileProperties(image_bytes));
       read_properties_ = true;
     }
     if (read_properties_) {
