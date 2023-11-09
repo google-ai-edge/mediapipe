@@ -208,11 +208,9 @@ android_library(
     deps = [
         ":core",
         "//mediapipe/framework:calculator_options_java_proto_lite",
-        "//mediapipe/framework/formats:classification_java_proto_lite",
         "//mediapipe/framework/formats:landmark_java_proto_lite",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework",
         "//mediapipe/java/com/google/mediapipe/framework/image",
-        "//mediapipe/tasks/cc/components/processors/proto:classifier_options_java_proto_lite",
         "//mediapipe/tasks/cc/core/proto:base_options_java_proto_lite",
         "//mediapipe/tasks/cc/vision/pose_detector/proto:pose_detector_graph_options_java_proto_lite",
         "//mediapipe/tasks/cc/vision/pose_landmarker/proto:pose_landmarker_graph_options_java_proto_lite",
@@ -222,7 +220,6 @@ android_library(
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:normalized_landmark",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
         "//third_party:autovalue",
-        "@maven//:androidx_annotation_annotation",
         "@maven//:com_google_guava_guava",
     ],
 )
@@ -246,7 +243,6 @@ android_library(
         "//mediapipe/framework/formats:landmark_java_proto_lite",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework",
         "//mediapipe/java/com/google/mediapipe/framework/image",
-        "//mediapipe/tasks/cc/components/processors/proto:classifier_options_java_proto_lite",
         "//mediapipe/tasks/cc/core/proto:base_options_java_proto_lite",
         "//mediapipe/tasks/cc/vision/hand_detector/proto:hand_detector_graph_options_java_proto_lite",
         "//mediapipe/tasks/cc/vision/hand_landmarker/proto:hand_landmarker_graph_options_java_proto_lite",

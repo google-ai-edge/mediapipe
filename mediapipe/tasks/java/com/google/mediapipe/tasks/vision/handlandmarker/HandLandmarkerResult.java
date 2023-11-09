@@ -16,7 +16,6 @@ package com.google.mediapipe.tasks.vision.handlandmarker;
 
 import com.google.auto.value.AutoValue;
 import com.google.mediapipe.formats.proto.LandmarkProto;
-import com.google.mediapipe.formats.proto.ClassificationProto.Classification;
 import com.google.mediapipe.formats.proto.ClassificationProto.ClassificationList;
 import com.google.mediapipe.tasks.components.containers.Category;
 import com.google.mediapipe.tasks.components.containers.Landmark;
@@ -84,16 +83,8 @@ public abstract class HandLandmarkerResult implements TaskResult {
       }
     }
     for (ClassificationList handednessProto : handednessesProto) {
-      List<Category> handedness = new ArrayList<>();
-      multiHandHandednesses.add(handedness);
-      for (Classification classification : handednessProto.getClassificationList()) {
-        handedness.add(
-            Category.create(
-                classification.getScore(),
-                classification.getIndex(),
-                classification.getLabel(),
-                classification.getDisplayName()));
-      }
+      List<Category> handedness = Category.createListFromProto(handednessProto);
+      multiHandHandednesses.add(Collections.unmodifiableList(handedness));
     }
     return new AutoValue_HandLandmarkerResult(
         timestampMs,

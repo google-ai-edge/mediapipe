@@ -16,7 +16,6 @@ package com.google.mediapipe.tasks.vision.facelandmarker;
 
 import com.google.auto.value.AutoValue;
 import com.google.mediapipe.formats.proto.LandmarkProto;
-import com.google.mediapipe.formats.proto.ClassificationProto.Classification;
 import com.google.mediapipe.formats.proto.ClassificationProto.ClassificationList;
 import com.google.mediapipe.tasks.components.containers.Category;
 import com.google.mediapipe.tasks.components.containers.NormalizedLandmark;
@@ -68,16 +67,8 @@ public abstract class FaceLandmarkerResult implements TaskResult {
     if (multiFaceBendshapesProto.isPresent()) {
       List<List<Category>> blendshapes = new ArrayList<>();
       for (ClassificationList faceBendshapeProto : multiFaceBendshapesProto.get()) {
-        List<Category> blendshape = new ArrayList<>();
-        blendshapes.add(blendshape);
-        for (Classification classification : faceBendshapeProto.getClassificationList()) {
-          blendshape.add(
-              Category.create(
-                  classification.getScore(),
-                  classification.getIndex(),
-                  classification.getLabel(),
-                  classification.getDisplayName()));
-        }
+        List<Category> blendshape = Category.createListFromProto(faceBendshapeProto);
+        blendshapes.add(Collections.unmodifiableList(blendshape));
       }
       multiFaceBlendshapes = Optional.of(Collections.unmodifiableList(blendshapes));
     }

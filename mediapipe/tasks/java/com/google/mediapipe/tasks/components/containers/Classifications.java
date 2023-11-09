@@ -15,9 +15,7 @@
 package com.google.mediapipe.tasks.components.containers;
 
 import com.google.auto.value.AutoValue;
-import com.google.mediapipe.formats.proto.ClassificationProto;
 import com.google.mediapipe.tasks.components.containers.proto.ClassificationsProto;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -49,11 +47,7 @@ public abstract class Classifications {
    * @param proto the {@link ClassificationsProto.Classifications} protobuf message to convert.
    */
   public static Classifications createFromProto(ClassificationsProto.Classifications proto) {
-    List<Category> categories = new ArrayList<>();
-    for (ClassificationProto.Classification classificationProto :
-        proto.getClassificationList().getClassificationList()) {
-      categories.add(Category.createFromProto(classificationProto));
-    }
+    List<Category> categories = Category.createListFromProto(proto.getClassificationList());
     Optional<String> headName =
         proto.hasHeadName() ? Optional.of(proto.getHeadName()) : Optional.empty();
     return create(categories, proto.getHeadIndex(), headName);

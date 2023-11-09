@@ -75,16 +75,8 @@ public abstract class GestureRecognizerResult implements TaskResult {
       }
     }
     for (ClassificationList handednessProto : handednessesProto) {
-      List<Category> handedness = new ArrayList<>();
-      multiHandHandednesses.add(handedness);
-      for (Classification classification : handednessProto.getClassificationList()) {
-        handedness.add(
-            Category.create(
-                classification.getScore(),
-                classification.getIndex(),
-                classification.getLabel(),
-                classification.getDisplayName()));
-      }
+      List<Category> handedness = Category.createListFromProto(handednessProto);
+      multiHandHandednesses.add(Collections.unmodifiableList(handedness));
     }
     for (ClassificationList gestureProto : gesturesProto) {
       List<Category> gestures = new ArrayList<>();
