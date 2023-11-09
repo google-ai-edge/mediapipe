@@ -104,4 +104,9 @@
 #endif
 #endif  // MEDIAPIPE_HAS_RTTI
 
+// AHardware buffers are only available since Android API 26.
+#if (__ANDROID_API__ >= 26)
+#define MEDIAPIPE_GPU_BUFFER_USE_AHWB 1
+#endif
+
 #endif  // MEDIAPIPE_FRAMEWORK_PORT_H_
