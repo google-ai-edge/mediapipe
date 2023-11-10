@@ -94,6 +94,23 @@ def _get_sparse_metric(metric: tf.metrics.Metric):
   return SparseMetric
 
 
+class BinaryAUC(tf.keras.metrics.AUC):
+  """A Binary AUC metric for binary classification tasks.
+
+  For update state, the shapes of y_true and y_pred are expected to be:
+    - y_true: [batch_size x 1] array of 0 for negatives and 1 for positives
+    - y_pred: [batch_size x 2] array of probabilities where y_pred[:,0] are the
+      probabilities of the 0th(negative) class and y_pred[:,1] are the
+      probabilities of the 1st(positive) class
+
+  See https://www.tensorflow.org/api_docs/python/tf/keras/metrics/AUC for
+    details.
+  """
+
+  def update_state(self, y_true, y_pred, sample_weight=None):
+    super().update_state(y_true, y_pred[:, 1], sample_weight)
+
+
 SparseRecall = _get_sparse_metric(tf.metrics.Recall)
 SparsePrecision = _get_sparse_metric(tf.metrics.Precision)
 BinarySparseRecallAtPrecision = _get_binary_sparse_metric(

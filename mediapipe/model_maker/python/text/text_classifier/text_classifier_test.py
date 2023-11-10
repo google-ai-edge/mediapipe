@@ -230,6 +230,7 @@ class TextClassifierTest(tf.test.TestCase, parameterized.TestCase):
         'accuracy',
         'recall',
         'precision',
+        'auc',
         'precision_at_recall_0.2',
         'recall_at_precision_0.9',
     ]

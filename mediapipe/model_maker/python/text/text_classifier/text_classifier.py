@@ -372,9 +372,19 @@ class _BertClassifier(TextClassifier):
   ):
     super().__init__(model_spec, label_names, hparams.shuffle)
     self._hparams = hparams
-    self._callbacks = model_util.get_default_callbacks(
-        self._hparams.export_dir, self._hparams.checkpoint_frequency
-    )
+    self._callbacks = list(
+        model_util.get_default_callbacks(
+            self._hparams.export_dir, self._hparams.checkpoint_frequency
+        )
+    ) + [
+        tf.keras.callbacks.ModelCheckpoint(
+            os.path.join(self._hparams.export_dir, "best_model"),
+            monitor="val_auc",
+            mode="max",
+            save_best_only=True,
+            save_weights_only=False,
+        )
+    ]
     self._model_options = model_options
     self._text_preprocessor: preprocessor.BertClassifierPreprocessor = None
     with self._hparams.get_strategy().scope():
@@ -465,6 +475,7 @@ class _BertClassifier(TextClassifier):
         ),
         metrics.SparsePrecision(name="precision", dtype=tf.float32),
         metrics.SparseRecall(name="recall", dtype=tf.float32),
+        metrics.BinaryAUC(name="auc", num_thresholds=1000),
     ]
     if self._num_classes == 2:
       if self._hparams.desired_precisions:
