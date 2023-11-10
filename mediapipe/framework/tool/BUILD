@@ -857,6 +857,7 @@ cc_library(
 mediapipe_cc_test(
     name = "switch_demux_calculator_test",
     srcs = ["switch_demux_calculator_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":container_util",
         ":switch_demux_calculator",
@@ -892,6 +893,7 @@ cc_library(
 mediapipe_cc_test(
     name = "switch_mux_calculator_test",
     srcs = ["switch_mux_calculator_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":container_util",
         ":switch_mux_calculator",
