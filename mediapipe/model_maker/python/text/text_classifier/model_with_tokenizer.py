@@ -32,4 +32,4 @@ class ModelWithTokenizer(tf.keras.Model):
     x = self._tokenizer.process_fn(input_tensor)
     x = {k: tf.expand_dims(v, axis=0) for k, v in x.items()}
     x = self._model(x)
-    return x
+    return x[0]  # TODO: Add back the batch dimension
