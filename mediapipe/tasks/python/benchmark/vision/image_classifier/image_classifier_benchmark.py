@@ -55,7 +55,8 @@ def main():
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument(
-        '--model', help='Path to image classification model.', required=True)
+        '--model', help='Path to image classification model.', required=True,
+        default='classifier.tflite')
     parser.add_argument(
         '--iterations', help='Number of iterations for benchmarking.', type=int,
         default=100)

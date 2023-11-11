@@ -7,7 +7,7 @@ First, clone this Git repo.
 Run this script to install the required dependencies and download the TFLite models:
 
 ```
-cd mediapipe/tasks/python/benchmark/vision/image_classifier
+cd mediapipe/mediapipe/tasks/python/benchmark/vision/image_classifier
 sh setup.sh
 ```
 
