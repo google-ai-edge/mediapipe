@@ -44,6 +44,60 @@ cc_test(
 )
 
 cc_library(
+    name = "rect",
+    hdrs = ["rect.h"],
+)
+
+cc_library(
+    name = "rect_converter",
+    srcs = ["rect_converter.cc"],
+    hdrs = ["rect_converter.h"],
+    deps = [
+        ":rect",
+        "//mediapipe/tasks/cc/components/containers:rect",
+    ],
+)
+
+cc_test(
+    name = "rect_converter_test",
+    srcs = ["rect_converter_test.cc"],
+    deps = [
+        ":rect",
+        ":rect_converter",
+        "//mediapipe/framework/port:gtest",
+        "//mediapipe/tasks/cc/components/containers:rect",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "keypoint",
+    hdrs = ["keypoint.h"],
+)
+
+cc_library(
+    name = "keypoint_converter",
+    srcs = ["keypoint_converter.cc"],
+    hdrs = ["keypoint_converter.h"],
+    deps = [
+        ":keypoint",
+        "//mediapipe/tasks/cc/components/containers:keypoint",
+    ],
+)
+
+cc_test(
+    name = "keypoint_converter_test",
+    srcs = ["keypoint_converter_test.cc"],
+    deps = [
+        ":keypoint",
+        ":keypoint_converter",
+        "//mediapipe/framework/port:gtest",
+        "//mediapipe/tasks/cc/components/containers:keypoint",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "classification_result",
     hdrs = ["classification_result.h"],
 )
@@ -68,6 +122,39 @@ cc_test(
         ":classification_result_converter",
         "//mediapipe/framework/port:gtest",
         "//mediapipe/tasks/cc/components/containers:classification_result",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "detection_result",
+    hdrs = ["detection_result.h"],
+)
+
+cc_library(
+    name = "detection_result_converter",
+    srcs = ["detection_result_converter.cc"],
+    hdrs = ["detection_result_converter.h"],
+    deps = [
+        ":rect",
+        ":rect_converter",
+        ":category",
+        ":category_converter",
+        ":keypoint",
+        ":keypoint_converter",
+        ":detection_result",
+        "//mediapipe/tasks/cc/components/containers:detection_result",
+    ],
+)
+
+cc_test(
+    name = "detection_result_converter_test",
+    srcs = ["detection_result_converter_test.cc"],
+    deps = [
+        ":detection_result",
+        ":detection_result_converter",
+        "//mediapipe/framework/port:gtest",
+        "//mediapipe/tasks/cc/components/containers:detection_result",
         "@com_google_googletest//:gtest_main",
     ],
 )
