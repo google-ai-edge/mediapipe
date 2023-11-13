@@ -50,43 +50,18 @@ public abstract class PoseLandmarkerResult implements TaskResult {
     }
 
     List<List<NormalizedLandmark>> multiPoseLandmarks = new ArrayList<>();
+    for (LandmarkProto.NormalizedLandmarkList handLandmarksProto : landmarksProto) {
+      List<NormalizedLandmark> poseLandmarks =
+          NormalizedLandmark.createListFromProto(handLandmarksProto);
+      multiPoseLandmarks.add(Collections.unmodifiableList(poseLandmarks));
+    }
+
     List<List<Landmark>> multiPoseWorldLandmarks = new ArrayList<>();
-    for (LandmarkProto.NormalizedLandmarkList poseLandmarksProto : landmarksProto) {
-      List<NormalizedLandmark> poseLandmarks = new ArrayList<>();
-      multiPoseLandmarks.add(poseLandmarks);
-      for (LandmarkProto.NormalizedLandmark poseLandmarkProto :
-          poseLandmarksProto.getLandmarkList()) {
-        poseLandmarks.add(
-            NormalizedLandmark.create(
-                poseLandmarkProto.getX(),
-                poseLandmarkProto.getY(),
-                poseLandmarkProto.getZ(),
-                poseLandmarkProto.hasVisibility()
-                    ? Optional.of(poseLandmarkProto.getVisibility())
-                    : Optional.empty(),
-                poseLandmarkProto.hasPresence()
-                    ? Optional.of(poseLandmarkProto.getPresence())
-                    : Optional.empty()));
-      }
-    }
     for (LandmarkProto.LandmarkList poseWorldLandmarksProto : worldLandmarksProto) {
-      List<Landmark> poseWorldLandmarks = new ArrayList<>();
-      multiPoseWorldLandmarks.add(poseWorldLandmarks);
-      for (LandmarkProto.Landmark poseWorldLandmarkProto :
-          poseWorldLandmarksProto.getLandmarkList()) {
-        poseWorldLandmarks.add(
-            Landmark.create(
-                poseWorldLandmarkProto.getX(),
-                poseWorldLandmarkProto.getY(),
-                poseWorldLandmarkProto.getZ(),
-                poseWorldLandmarkProto.hasVisibility()
-                    ? Optional.of(poseWorldLandmarkProto.getVisibility())
-                    : Optional.empty(),
-                poseWorldLandmarkProto.hasPresence()
-                    ? Optional.of(poseWorldLandmarkProto.getPresence())
-                    : Optional.empty()));
-      }
+      List<Landmark> poseWorldLandmarks = Landmark.createListFromProto(poseWorldLandmarksProto);
+      multiPoseWorldLandmarks.add(Collections.unmodifiableList(poseWorldLandmarks));
     }
+
     return new AutoValue_PoseLandmarkerResult(
         timestampMs,
         Collections.unmodifiableList(multiPoseLandmarks),
