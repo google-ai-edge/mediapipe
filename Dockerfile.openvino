@@ -124,16 +124,18 @@ tar xvf boost_1_69_0.tar.gz && cd boost_1_69_0 && ./bootstrap.sh && \
 --with-log --with-locale \
 install
 
-ARG OVMS_BRANCH="mediapipe_integration"
+# Main at Fix building without MediaPipe (#2129)
+# Update SHA in two places here and in WORKSPACE ovms git repository
+ARG OVMS_COMMIT="7f372bc9b0a94cf546ef5f1a43e4a9bf768d6f85"
 RUN mkdir /opt/ovms
-RUN wget -nv -P /opt/ovms https://raw.githubusercontent.com/openvinotoolkit/model_server/${OVMS_BRANCH}/third_party/cpprest/rest_sdk_v2.10.16.patch
-RUN wget -nv -P /opt/ovms https://raw.githubusercontent.com/openvinotoolkit/model_server/${OVMS_BRANCH}/third_party/azure/azure_sdk.patch
-RUN wget -nv -P /opt/ovms https://raw.githubusercontent.com/openvinotoolkit/model_server/${OVMS_BRANCH}/third_party/build_bazel_rules_apple/bazel_rules_apple.patch
+RUN wget -nv -P /opt/ovms https://raw.githubusercontent.com/openvinotoolkit/model_server/${OVMS_COMMIT}/third_party/cpprest/rest_sdk_v2.10.16.patch
+RUN wget -nv -P /opt/ovms https://raw.githubusercontent.com/openvinotoolkit/model_server/${OVMS_COMMIT}/third_party/azure/azure_sdk.patch
+RUN wget -nv -P /opt/ovms https://raw.githubusercontent.com/openvinotoolkit/model_server/${OVMS_COMMIT}/third_party/build_bazel_rules_apple/bazel_rules_apple.patch
 RUN mkdir -p /root/ovms/dummy/1
-RUN wget -nv -O /root/ovms/config.json https://raw.githubusercontent.com/openvinotoolkit/model_server/${OVMS_BRANCH}/src/test/mediapipe/config_standard_dummy.json
+RUN wget -nv -O /root/ovms/config.json https://raw.githubusercontent.com/openvinotoolkit/model_server/${OVMS_COMMIT}/src/test/mediapipe/config_standard_dummy.json
 RUN sed -i 's:/ovms/src/test/dummy:/root/ovms/dummy:g' /root/ovms/config.json
-RUN wget -nv -O /root/ovms/dummy/1/dummy.xml https://raw.githubusercontent.com/openvinotoolkit/model_server/${OVMS_BRANCH}/src/test/dummy/1/dummy.xml
-RUN wget -nv -O /root/ovms/dummy/1/dummy.bin https://raw.githubusercontent.com/openvinotoolkit/model_server/${OVMS_BRANCH}/src/test/dummy/1/dummy.bin
+RUN wget -nv -O /root/ovms/dummy/1/dummy.xml https://raw.githubusercontent.com/openvinotoolkit/model_server/${OVMS_COMMIT}/src/test/dummy/1/dummy.xml
+RUN wget -nv -O /root/ovms/dummy/1/dummy.bin https://raw.githubusercontent.com/openvinotoolkit/model_server/${OVMS_COMMIT}/src/test/dummy/1/dummy.bin
 
 ####### Azure SDK
 WORKDIR /azure
@@ -186,5 +188,9 @@ ENV LD_LIBRARY_PATH="/opt/intel/openvino/runtime/lib/intel64/:${LD_LIBRARY_PATH}
 RUN python setup_ovms.py --get_models && python setup_ovms.py --convert_pose --force
 RUN bash build_desktop_examples.sh -b
 RUN curl https://storage.googleapis.com/mediapipe-assets/ssdlite_object_detection_labelmap.txt -o mediapipe/models/ssdlite_object_detection_labelmap.txt
+
+# BUILD python framework
+RUN pip install -r requirements.txt
+RUN python setup.py install
 
 

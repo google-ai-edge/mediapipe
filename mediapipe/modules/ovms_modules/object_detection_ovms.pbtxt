@@ -58,7 +58,7 @@ node {
     [type.googleapis.com / mediapipe.OpenVINOModelServerSessionCalculatorOptions]: {
       servable_name: "ssdlite_object_detection"  # servable name inside OVMS
       servable_version: "1"
-      server_config: "mediapipe/calculators/ovms/config.json"
+      server_config: "/mediapipe/mediapipe/calculators/ovms/config.json"
     }
   }
 }

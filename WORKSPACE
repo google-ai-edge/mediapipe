@@ -640,10 +640,11 @@ http_archive(
 
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
+# Update SHA in two places Dockerfile.openvino - ARG OVMS_COMMIT and here
 git_repository(
     name = "ovms",
     remote = "https://github.com/openvinotoolkit/model_server",
-    commit = "ad1381fde838f2ac2d23117df78c186a96134fcc", # Fix azure patch (#2107)
+    commit = "7f372bc9b0a94cf546ef5f1a43e4a9bf768d6f85", # Fix building without MediaPipe (#2129)
 )
 
 # DEV ovms - adjust local repository path for build

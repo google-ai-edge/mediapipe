@@ -18,7 +18,8 @@ HTTP_PROXY := "$(http_proxy)"
 HTTPS_PROXY := "$(https_proxy)"
 OVMS_MEDIA_DOCKER_IMAGE ?= mediapipe_ovms
 OVMS_MEDIA_IMAGE_TAG ?= latest
-OVMS_BRANCH ?= "mediapipe_integration"
+# Main at Fix building without MediaPipe (#2129)
+OVMS_COMMIT ?="7f372bc9b0a94cf546ef5f1a43e4a9bf768d6f85"
 JOBS ?= $(shell python3 -c 'import multiprocessing as mp; print(mp.cpu_count())')
 DLDT_PACKAGE_URL ?= https://storage.openvinotoolkit.org/repositories/openvino/packages/2023.0/linux/l_openvino_toolkit_ubuntu20_2023.0.0.10926.b4452d56304_x86_64.tgz
 
@@ -28,7 +29,7 @@ docker_build:
 	--build-arg http_proxy=$(HTTP_PROXY) --build-arg https_proxy=$(HTTPS_PROXY) \
 	--build-arg DLDT_PACKAGE_URL=$(DLDT_PACKAGE_URL) \
 	--build-arg JOBS=$(JOBS) . \
-	--build-arg OVMS_BRANCH=$(OVMS_BRANCH) \
+	--build-arg OVMS_COMMIT=$(OVMS_COMMIT) \
 	-t $(OVMS_MEDIA_DOCKER_IMAGE):$(OVMS_MEDIA_IMAGE_TAG)
 
 tests: run_unit_tests run_hello_world run_hello_ovms
@@ -49,8 +50,13 @@ run_demos_in_docker:
 	# report error if performance reported for less then 5 demos
 	cat test_demos.log | grep -a FPS: | wc -l | grep -q "5"
 
+run_python_demos_in_docker:
+	docker run $(OVMS_MEDIA_DOCKER_IMAGE):$(OVMS_MEDIA_IMAGE_TAG) make run_python_demos
+
 # Targets to use inside running mediapipe_ovms container
 run_demos: run_holistic_tracking run_face_detection run_iris_tracking run_object_detection run_pose_tracking
+
+run_python_demos: run_python_object_detection
 
 run_object_detection:
 	echo "Running FPS test for object_detection demo"
@@ -80,4 +86,9 @@ run_pose_tracking:
 	rm -rf /mediapipe/output_pose_track_ovms.mp4
 	if [ ! -f video.mp4 ]; then wget -O video.mp4 "https://www.pexels.com/download/video/3044127/?fps=24.0&h=1080&w=1920"; fi
 	bazel-bin/mediapipe/examples/desktop/pose_tracking/pose_tracking_cpu --calculator_graph_config_file /mediapipe/mediapipe/graphs/pose_tracking/pose_tracking_cpu.pbtxt --input_video_path=/mediapipe/video.mp4 --output_video_path=/mediapipe/output_pose_track_ovms.mp4
+
+run_python_object_detection:
+	echo "Running python ovms object detection demo"
+	cp build/lib.linux-x86_64-cpython-38/mediapipe/examples/python/ovms_object_detection.py build/lib.linux-x86_64-cpython-38
+	python build/lib.linux-x86_64-cpython-38/ovms_object_detection.py
 
