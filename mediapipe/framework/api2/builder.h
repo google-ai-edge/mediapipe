@@ -330,6 +330,14 @@ using MultiSideDestination = MultiPort<SideDestination<T>>;
 
 class NodeBase {
  public:
+  NodeBase() = default;
+  ~NodeBase() = default;
+  NodeBase(NodeBase&&) = default;
+  NodeBase& operator=(NodeBase&&) = default;
+  // Explicitly delete copies to improve error messages.
+  NodeBase(const NodeBase&) = delete;
+  NodeBase& operator=(const NodeBase&) = delete;
+
   // TODO: right now access to an indexed port is made directly by
   // specifying both a tag and an index. It would be better to represent this
   // as a two-step lookup, first getting a multi-port, and then accessing one
@@ -585,6 +593,14 @@ class PacketGenerator {
 
 class Graph {
  public:
+  Graph() = default;
+  ~Graph() = default;
+  Graph(Graph&&) = default;
+  Graph& operator=(Graph&&) = default;
+  // Explicitly delete copies to improve error messages.
+  Graph(const Graph&) = delete;
+  Graph& operator=(const Graph&) = delete;
+
   void SetType(std::string type) { type_ = std::move(type); }
 
   // Creates a node of a specific type. Should be used for calculators whose
