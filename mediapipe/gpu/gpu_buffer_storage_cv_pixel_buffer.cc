@@ -50,11 +50,38 @@ GlTextureView GpuBufferStorageCvPixelBuffer::GetTexture(
   const GlTextureInfo info = GlTextureInfoForGpuBufferFormat(
       format(), plane, gl_context->GetGlVersion());
   CVTextureType cv_texture_temp;
+
+// The current pixel buffer was created by `CVPixelBufferCreate` with attribute
+// `kCVPixelBufferIOSurfacePropertiesKey` to ensure that it can be used to
+// create a `CVMetalTextureCache`. But creating an OPENGL ES texture from a
+// pixel buffer with IOSurface crashes on the simulator. To workaround this, a
+// new pixel buffer sharing the same storage of the current pixel buffer eith
+// IOSurface is created using `CVPixelBufferCreateWithBytes`. This pixel buffer
+// is then used to create the OPENGL ES texture on the simulator. On the device
+// OPENGL ES texture creation requires a pixel buffer with IOSurface and hence
+// the current piel buffer can be used.
+#if TARGET_IPHONE_SIMULATOR
+  CVPixelBufferRef simulator_pixel_buffer;
+  CVPixelBufferLockBaseAddress(**this, 0);
+  CVPixelBufferCreateWithBytes(
+      NULL, CVPixelBufferGetWidth(**this), CVPixelBufferGetHeight(**this),
+      CVPixelBufferGetPixelFormatType(**this),
+      CVPixelBufferGetBaseAddress(**this), CVPixelBufferGetBytesPerRow(**this),
+      NULL, NULL, NULL, &simulator_pixel_buffer);
+  CVPixelBufferUnlockBaseAddress(**this, 0);
+  err = CVOpenGLESTextureCacheCreateTextureFromImage(
+      kCFAllocatorDefault, gl_context->cv_texture_cache(),
+      simulator_pixel_buffer, NULL, GL_TEXTURE_2D, info.gl_internal_format,
+      width() / info.downscale, height() / info.downscale, info.gl_format,
+      info.gl_type, plane, &cv_texture_temp);
+#else
   err = CVOpenGLESTextureCacheCreateTextureFromImage(
       kCFAllocatorDefault, gl_context->cv_texture_cache(), **this, NULL,
       GL_TEXTURE_2D, info.gl_internal_format, width() / info.downscale,
       height() / info.downscale, info.gl_format, info.gl_type, plane,
       &cv_texture_temp);
+#endif
+
   ABSL_CHECK(cv_texture_temp && !err)
       << "CVOpenGLESTextureCacheCreateTextureFromImage failed: " << err;
   CFHolder<CVTextureType> cv_texture;
@@ -102,6 +129,7 @@ static void ViewDoneWritingSimulatorWorkaround(CVPixelBufferRef pixel_buffer,
         std::vector<uint8_t> contiguous_buffer(contiguous_bytes_per_row *
                                                view.height());
         uint8_t* temp_ptr = contiguous_buffer.data();
+        glPixelStorei(GL_PACK_ALIGNMENT, 4);
         glReadPixels(0, 0, view.width(), view.height(), GL_BGRA,
                      GL_UNSIGNED_BYTE, temp_ptr);
         for (int i = 0; i < view.height(); ++i) {
