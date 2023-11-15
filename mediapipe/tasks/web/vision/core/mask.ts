@@ -62,9 +62,25 @@ export class MPMask {
   /** The format used to write pixel values from textures. */
   private static texImage2DFormat?: GLenum;
 
-  /** @hideconstructor */
+  /**
+   * @param containers The data source for this mask as a `WebGLTexture`,
+   *     `Unit8Array` or `Float32Array`. Multiple sources of the same data can
+   *     be provided to reduce conversions.
+   * @param interpolateValues If enabled, uses `gl.LINEAR` instead of
+   *     `gl.NEAREST` to interpolate between mask values.
+   * @param ownsWebGLTexture Whether the MPMask should take ownership of the
+   *     `WebGLTexture` and free it when closed.
+   * @param canvas The canvas to use for rendering and conversion. Must be the
+   *     same canvas for any WebGL resources.
+   * @param shaderContext A shader context that is shared between all masks from
+   *     a single task.
+   * @param width The width of the mask.
+   * @param height The height of the mask.
+   * @hideconstructor
+   */
   constructor(
       private readonly containers: MPMaskContainer[],
+      readonly interpolateValues: boolean,
       private ownsWebGLTexture: boolean,
       /** Returns the canvas element that the mask is bound to. */
       readonly canvas: HTMLCanvasElement|OffscreenCanvas|undefined,
@@ -215,7 +231,8 @@ export class MPMask {
 
         // Create a new texture and use it to back a framebuffer
         gl.activeTexture(gl.TEXTURE1);
-        destinationContainer = shaderContext.createTexture(gl, gl.NEAREST);
+        destinationContainer = shaderContext.createTexture(
+            gl, this.interpolateValues ? gl.LINEAR : gl.NEAREST);
         gl.bindTexture(gl.TEXTURE_2D, destinationContainer);
         const format = this.getTexImage2DFormat();
         gl.texImage2D(
@@ -242,8 +259,8 @@ export class MPMask {
     }
 
     return new MPMask(
-        destinationContainers, this.hasWebGLTexture(), this.canvas,
-        this.shaderContext, this.width, this.height);
+        destinationContainers, this.interpolateValues, this.hasWebGLTexture(),
+        this.canvas, this.shaderContext, this.width, this.height);
   }
 
   private getGL(): WebGL2RenderingContext {
@@ -254,7 +271,7 @@ export class MPMask {
     }
     if (!this.gl) {
       this.gl = assertNotNull(
-          this.canvas.getContext('webgl2') as WebGL2RenderingContext | null,
+          this.canvas.getContext('webgl2'),
           'You cannot use a canvas that is already bound to a different ' +
               'type of rendering context.');
     }
@@ -350,11 +367,8 @@ export class MPMask {
     let webGLTexture = this.getContainer(MPMaskType.WEBGL_TEXTURE);
     if (!webGLTexture) {
       const shaderContext = this.getShaderContext();
-      // `gl.NEAREST` ensures that we do not get interpolated values for
-      // masks. In some cases, the user might want interpolation (e.g. for
-      // confidence masks), so we might want to make this user-configurable.
-      // Note that `MPImage` uses `gl.LINEAR`.
-      webGLTexture = shaderContext.createTexture(gl, gl.NEAREST);
+      webGLTexture = shaderContext.createTexture(
+          gl, this.interpolateValues ? gl.LINEAR : gl.NEAREST);
       this.containers.push(webGLTexture);
       this.ownsWebGLTexture = true;
     }

@@ -30,25 +30,20 @@ if (skip) {
 
 (skip ? xdescribe : describe)('DrawingUtils', () => {
   let shaderContext = new MPImageShaderContext();
-  let canvas2D: HTMLCanvasElement;
-  let context2D: CanvasRenderingContext2D;
+  let canvas2D: OffscreenCanvas;
+  let context2D: OffscreenCanvasRenderingContext2D;
   let drawingUtils2D: DrawingUtils;
-  let canvasWebGL: HTMLCanvasElement;
+  let canvasWebGL: OffscreenCanvas;
   let contextWebGL: WebGL2RenderingContext;
   let drawingUtilsWebGL: DrawingUtils;
 
   beforeEach(() => {
-    shaderContext = new MPImageShaderContext();
+    canvas2D = canvas2D ?? new OffscreenCanvas(WIDTH, HEIGHT);
+    canvasWebGL = canvasWebGL ?? new OffscreenCanvas(WIDTH, HEIGHT);
 
-    canvasWebGL = document.createElement('canvas');
-    canvasWebGL.width = WIDTH;
-    canvasWebGL.height = HEIGHT;
+    shaderContext = new MPImageShaderContext();
     contextWebGL = canvasWebGL.getContext('webgl2')!;
     drawingUtilsWebGL = new DrawingUtils(contextWebGL);
-
-    canvas2D = document.createElement('canvas');
-    canvas2D.width = WIDTH;
-    canvas2D.height = HEIGHT;
     context2D = canvas2D.getContext('2d')!;
     drawingUtils2D = new DrawingUtils(context2D, contextWebGL);
   });
@@ -61,11 +56,11 @@ if (skip) {
 
   describe(
       'drawConfidenceMask() blends background with foreground color', () => {
-        const foreground = new ImageData(
+        const defaultColor = [255, 255, 255, 255];
+        const overlayImage = new ImageData(
             new Uint8ClampedArray(
                 [0, 0, 0, 255, 0, 0, 0, 255, 0, 0, 0, 255, 0, 0, 0, 255]),
             WIDTH, HEIGHT);
-        const background = [255, 255, 255, 255];
         const expectedResult = new Uint8Array([
           255, 255, 255, 255, 178, 178, 178, 255, 102, 102, 102, 255, 0, 0, 0,
           255
@@ -74,47 +69,51 @@ if (skip) {
         it('on 2D canvas', () => {
           const confidenceMask = new MPMask(
               [new Float32Array([0.0, 0.3, 0.6, 1.0])],
+              /* interpolateValues= */ true,
               /* ownsWebGLTexture= */ false, canvas2D, shaderContext, WIDTH,
               HEIGHT);
 
           drawingUtils2D.drawConfidenceMask(
-              confidenceMask, background, foreground);
+              confidenceMask, defaultColor, overlayImage);
 
           const actualResult = context2D.getImageData(0, 0, WIDTH, HEIGHT).data;
           expect(actualResult)
               .toEqual(new Uint8ClampedArray(expectedResult.buffer));
+          confidenceMask.close();
         });
 
         it('on WebGL canvas', () => {
           const confidenceMask = new MPMask(
               [new Float32Array(
                   [0.6, 1.0, 0.0, 0.3])],  // Note: Vertically flipped
+              /* interpolateValues= */ true,
               /* ownsWebGLTexture= */ false, canvasWebGL, shaderContext, WIDTH,
               HEIGHT);
 
           drawingUtilsWebGL.drawConfidenceMask(
-              confidenceMask, background, foreground);
+              confidenceMask, defaultColor, overlayImage);
 
           const actualResult = new Uint8Array(WIDTH * HEIGHT * 4);
           contextWebGL.readPixels(
               0, 0, WIDTH, HEIGHT, contextWebGL.RGBA,
               contextWebGL.UNSIGNED_BYTE, actualResult);
           expect(actualResult).toEqual(expectedResult);
+          confidenceMask.close();
         });
       });
 
 
   describe(
       'drawConfidenceMask() blends background with foreground image', () => {
-        const foreground = new ImageData(
-            new Uint8ClampedArray(
-                [0, 0, 0, 255, 0, 0, 0, 255, 0, 0, 0, 255, 0, 0, 0, 255]),
-            WIDTH, HEIGHT);
-        const background = new ImageData(
+        const defaultImage = new ImageData(
             new Uint8ClampedArray([
               255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
               255, 255, 255
             ]),
+            WIDTH, HEIGHT);
+        const overlayImage = new ImageData(
+            new Uint8ClampedArray(
+                [0, 0, 0, 255, 0, 0, 0, 255, 0, 0, 0, 255, 0, 0, 0, 255]),
             WIDTH, HEIGHT);
         const expectedResult = new Uint8Array([
           255, 255, 255, 255, 178, 178, 178, 255, 102, 102, 102, 255, 0, 0, 0,
@@ -124,32 +123,36 @@ if (skip) {
         it('on 2D canvas', () => {
           const confidenceMask = new MPMask(
               [new Float32Array([0.0, 0.3, 0.6, 1.0])],
+              /* interpolateValues= */ true,
               /* ownsWebGLTexture= */ false, canvas2D, shaderContext, WIDTH,
               HEIGHT);
 
           drawingUtils2D.drawConfidenceMask(
-              confidenceMask, background, foreground);
+              confidenceMask, defaultImage, overlayImage);
 
           const actualResult = context2D.getImageData(0, 0, WIDTH, HEIGHT).data;
           expect(actualResult)
               .toEqual(new Uint8ClampedArray(expectedResult.buffer));
+          confidenceMask.close();
         });
 
         it('on WebGL canvas', () => {
           const confidenceMask = new MPMask(
               [new Float32Array(
                   [0.6, 1.0, 0.0, 0.3])],  // Note: Vertically flipped
+              /* interpolateValues= */ true,
               /* ownsWebGLTexture= */ false, canvasWebGL, shaderContext, WIDTH,
               HEIGHT);
 
           drawingUtilsWebGL.drawConfidenceMask(
-              confidenceMask, background, foreground);
+              confidenceMask, defaultImage, overlayImage);
 
           const actualResult = new Uint8Array(WIDTH * HEIGHT * 4);
           contextWebGL.readPixels(
               0, 0, WIDTH, HEIGHT, contextWebGL.RGBA,
               contextWebGL.UNSIGNED_BYTE, actualResult);
           expect(actualResult).toEqual(expectedResult);
+          confidenceMask.close();
         });
       });
 
@@ -167,6 +170,7 @@ if (skip) {
     it('on 2D canvas', () => {
       const categoryMask = new MPMask(
           [new Uint8Array([0, 1, 2, 3])],
+          /* interpolateValues= */ false,
           /* ownsWebGLTexture= */ false, canvas2D, shaderContext, WIDTH,
           HEIGHT);
 
@@ -175,11 +179,13 @@ if (skip) {
       const actualResult = context2D.getImageData(0, 0, WIDTH, HEIGHT).data;
       expect(actualResult)
           .toEqual(new Uint8ClampedArray(expectedResult.buffer));
+      categoryMask.close();
     });
 
     it('on WebGL canvas', () => {
       const categoryMask = new MPMask(
           [new Uint8Array([2, 3, 0, 1])],  // Note: Vertically flipped
+          /* interpolateValues= */ false,
           /* ownsWebGLTexture= */ false, canvasWebGL, shaderContext, WIDTH,
           HEIGHT);
 
@@ -190,6 +196,7 @@ if (skip) {
           0, 0, WIDTH, HEIGHT, contextWebGL.RGBA, contextWebGL.UNSIGNED_BYTE,
           actualResult);
       expect(actualResult).toEqual(expectedResult);
+      categoryMask.close();
     });
   });
 

@@ -92,11 +92,15 @@ export class CategoryMaskShaderContext extends MPImageShaderContext {
       colorMap: Map<number, number[]>|number[][]) {
     const gl = this.gl!;
 
+    // Bind category mask
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, categoryMask);
+
     // TODO: We should avoid uploading textures from CPU to GPU
     // if the textures haven't changed. This can lead to drastic performance
     // slowdowns (~50ms per frame). Users can reduce the penalty by passing a
     // canvas object instead of ImageData/HTMLImageElement.
-    gl.activeTexture(gl.TEXTURE0);
+    gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, this.backgroundTexture!);
     gl.texImage2D(
         gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, background);
@@ -117,19 +121,15 @@ export class CategoryMaskShaderContext extends MPImageShaderContext {
         pixels[index * 4 + 2] = rgba[2];
         pixels[index * 4 + 3] = rgba[3];
       });
-      gl.activeTexture(gl.TEXTURE1);
+      gl.activeTexture(gl.TEXTURE2);
       gl.bindTexture(gl.TEXTURE_2D, this.colorMappingTexture!);
       gl.texImage2D(
           gl.TEXTURE_2D, 0, gl.RGBA, 256, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,
           new Uint8Array(pixels));
     } else {
-      gl.activeTexture(gl.TEXTURE1);
+      gl.activeTexture(gl.TEXTURE2);
       gl.bindTexture(gl.TEXTURE_2D, this.colorMappingTexture!);
     }
-
-    // Bind category mask
-    gl.activeTexture(gl.TEXTURE2);
-    gl.bindTexture(gl.TEXTURE_2D, categoryMask);
   }
 
   unbindTextures() {
@@ -148,10 +148,11 @@ export class CategoryMaskShaderContext extends MPImageShaderContext {
 
   protected override setupTextures(): void {
     const gl = this.gl!;
-    gl.activeTexture(gl.TEXTURE0);
+    gl.activeTexture(gl.TEXTURE1);
     this.backgroundTexture = this.createTexture(gl, gl.LINEAR);
     // Use `gl.NEAREST` to prevent interpolating values in our category to
     // color map.
+    gl.activeTexture(gl.TEXTURE2);
     this.colorMappingTexture = this.createTexture(gl, gl.NEAREST);
   }
 
@@ -172,9 +173,9 @@ export class CategoryMaskShaderContext extends MPImageShaderContext {
   protected override configureUniforms(): void {
     super.configureUniforms();
     const gl = this.gl!;
-    gl.uniform1i(this.backgroundTextureUniform!, 0);
-    gl.uniform1i(this.colorMappingTextureUniform!, 1);
-    gl.uniform1i(this.maskTextureUniform!, 2);
+    gl.uniform1i(this.maskTextureUniform!, 0);
+    gl.uniform1i(this.backgroundTextureUniform!, 1);
+    gl.uniform1i(this.colorMappingTextureUniform!, 2);
   }
 
   override close(): void {

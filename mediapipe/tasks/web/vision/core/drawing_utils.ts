@@ -419,6 +419,7 @@ export class DrawingUtils {
 
       const convertedMask = new MPMask(
           [data],
+          mask.interpolateValues,
           /* ownsWebGlTexture= */ false,
           gl.canvas,
           this.convertToWebGLTextureShaderContext,

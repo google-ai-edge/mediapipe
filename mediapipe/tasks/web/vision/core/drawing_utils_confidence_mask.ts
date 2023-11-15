@@ -51,9 +51,9 @@ export class ConfidenceMaskShaderContext extends MPImageShaderContext {
 
   protected override setupTextures(): void {
     const gl = this.gl!;
-    gl.activeTexture(gl.TEXTURE0);
-    this.defaultTexture = this.createTexture(gl);
     gl.activeTexture(gl.TEXTURE1);
+    this.defaultTexture = this.createTexture(gl);
+    gl.activeTexture(gl.TEXTURE2);
     this.overlayTexture = this.createTexture(gl);
   }
 
@@ -74,9 +74,9 @@ export class ConfidenceMaskShaderContext extends MPImageShaderContext {
   protected override configureUniforms(): void {
     super.configureUniforms();
     const gl = this.gl!;
-    gl.uniform1i(this.defaultTextureUniform!, 0);
-    gl.uniform1i(this.overlayTextureUniform!, 1);
-    gl.uniform1i(this.maskTextureUniform!, 2);
+    gl.uniform1i(this.maskTextureUniform!, 0);
+    gl.uniform1i(this.defaultTextureUniform!, 1);
+    gl.uniform1i(this.overlayTextureUniform!, 2);
   }
 
   bindAndUploadTextures(
@@ -88,17 +88,17 @@ export class ConfidenceMaskShaderContext extends MPImageShaderContext {
     // canvas object instead of ImageData/HTMLImageElement.
     const gl = this.gl!;
     gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, confidenceMask);
+
+    gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, this.defaultTexture!);
     gl.texImage2D(
         gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, defaultImage);
 
-    gl.activeTexture(gl.TEXTURE1);
+    gl.activeTexture(gl.TEXTURE2);
     gl.bindTexture(gl.TEXTURE_2D, this.overlayTexture!);
     gl.texImage2D(
         gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, overlayImage);
-
-    gl.activeTexture(gl.TEXTURE2);
-    gl.bindTexture(gl.TEXTURE_2D, confidenceMask);
   }
 
   unbindTextures() {
