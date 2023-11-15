@@ -34,6 +34,7 @@ mediapipe_ts_library(
     srcs = [
         "drawing_utils.ts",
         "drawing_utils_category_mask.ts",
+        "drawing_utils_confidence_mask.ts",
     ],
     deps = [
         ":image",
@@ -147,11 +148,6 @@ mediapipe_ts_library(
         "//mediapipe/tasks/web/core:task_runner_test_utils",
         "//mediapipe/web/graph_runner:graph_runner_ts",
     ],
-)
-
-mediapipe_ts_library(
-    name = "render_utils",
-    srcs = ["render_utils.ts"],
 )
 
 jasmine_node_test(

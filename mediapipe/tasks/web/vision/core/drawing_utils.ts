@@ -17,6 +17,7 @@
 import {BoundingBox} from '../../../../tasks/web/components/containers/bounding_box';
 import {NormalizedLandmark} from '../../../../tasks/web/components/containers/landmark';
 import {CategoryMaskShaderContext, CategoryToColorMap, RGBAColor} from '../../../../tasks/web/vision/core/drawing_utils_category_mask';
+import {ConfidenceMaskShaderContext} from '../../../../tasks/web/vision/core/drawing_utils_confidence_mask';
 import {MPImageShaderContext} from '../../../../tasks/web/vision/core/image_shader_context';
 import {MPMask} from '../../../../tasks/web/vision/core/mask';
 import {Connection} from '../../../../tasks/web/vision/core/types';
@@ -115,6 +116,7 @@ export {RGBAColor, CategoryToColorMap};
 /** Helper class to visualize the result of a MediaPipe Vision task. */
 export class DrawingUtils {
   private categoryMaskShaderContext?: CategoryMaskShaderContext;
+  private confidenceMaskShaderContext?: ConfidenceMaskShaderContext;
   private convertToWebGLTextureShaderContext?: MPImageShaderContext;
   private readonly context2d?: CanvasRenderingContext2D|
       OffscreenCanvasRenderingContext2D;
@@ -211,6 +213,13 @@ export class DrawingUtils {
       this.categoryMaskShaderContext = new CategoryMaskShaderContext();
     }
     return this.categoryMaskShaderContext;
+  }
+
+  private getConfidenceMaskShaderContext(): ConfidenceMaskShaderContext {
+    if (!this.confidenceMaskShaderContext) {
+      this.confidenceMaskShaderContext = new ConfidenceMaskShaderContext();
+    }
+    return this.confidenceMaskShaderContext;
   }
 
   /**
@@ -422,6 +431,70 @@ export class DrawingUtils {
       callback(mask.getAsWebGLTexture());
     }
   }
+
+  /** Draws a confidence mask on a WebGL2RenderingContext2D. */
+  private drawConfidenceMaskWebGL(
+      maskTexture: WebGLTexture, defaultTexture: RGBAColor|ImageSource,
+      overlayTexture: RGBAColor|ImageSource): void {
+    const gl = this.getWebGLRenderingContext();
+    const shaderContext = this.getConfidenceMaskShaderContext();
+    const defaultImage = Array.isArray(defaultTexture) ?
+        new ImageData(new Uint8ClampedArray(defaultTexture), 1, 1) :
+        defaultTexture;
+    const overlayImage = Array.isArray(overlayTexture) ?
+        new ImageData(new Uint8ClampedArray(overlayTexture), 1, 1) :
+        overlayTexture;
+
+    shaderContext.run(gl, /* flipTexturesVertically= */ true, () => {
+      shaderContext.bindAndUploadTextures(
+          defaultImage, overlayImage, maskTexture);
+      gl.clearColor(0, 0, 0, 0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+      gl.bindTexture(gl.TEXTURE_2D, null);
+      shaderContext.unbindTextures();
+    });
+  }
+
+  /** Draws a confidence mask on a CanvasRenderingContext2D. */
+  private drawConfidenceMask2D(
+      mask: MPMask, defaultTexture: RGBAColor|ImageSource,
+      overlayTexture: RGBAColor|ImageSource): void {
+    // Use the WebGL renderer to draw result on our internal canvas.
+    const gl = this.getWebGLRenderingContext();
+    this.runWithWebGLTexture(mask, texture => {
+      this.drawConfidenceMaskWebGL(texture, defaultTexture, overlayTexture);
+      // Draw the result on the user canvas.
+      const ctx = this.getCanvasRenderingContext();
+      ctx.drawImage(gl.canvas, 0, 0, ctx.canvas.width, ctx.canvas.height);
+    });
+  }
+
+  /**
+   * Blends two images using the provided confidence mask.
+   *
+   * If you are using an `ImageData` or `HTMLImageElement` as your data source
+   * and drawing the result onto a `WebGL2RenderingContext`, this method uploads
+   * the image data to the GPU. For still image input that gets re-used every
+   * frame, you can reduce the cost of re-uploading these images by passing a
+   * `HTMLCanvasElement` instead.
+   *
+   * @param mask A confidence mask that was returned from a segmentation task.
+   * @param defaultTexture An image or a four-channel color that will be used
+   *     when confidence values are low.
+   * @param overlayTexture An image or four-channel color that will be used when
+   *     confidence values are high.
+   */
+  drawConfidenceMask(
+      mask: MPMask, defaultTexture: RGBAColor|ImageSource,
+      overlayTexture: RGBAColor|ImageSource): void {
+    if (this.context2d) {
+      this.drawConfidenceMask2D(mask, defaultTexture, overlayTexture);
+    } else {
+      this.drawConfidenceMaskWebGL(
+          mask.getAsWebGLTexture(), defaultTexture, overlayTexture);
+    }
+  }
   /**
    * Frees all WebGL resources held by this class.
    * @export
@@ -429,6 +502,8 @@ export class DrawingUtils {
   close(): void {
     this.categoryMaskShaderContext?.close();
     this.categoryMaskShaderContext = undefined;
+    this.confidenceMaskShaderContext?.close();
+    this.confidenceMaskShaderContext = undefined;
     this.convertToWebGLTextureShaderContext?.close();
     this.convertToWebGLTextureShaderContext = undefined;
   }

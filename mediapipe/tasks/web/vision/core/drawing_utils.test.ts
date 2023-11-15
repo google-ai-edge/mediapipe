@@ -59,6 +59,100 @@ if (skip) {
     drawingUtilsWebGL.close();
   });
 
+  describe(
+      'drawConfidenceMask() blends background with foreground color', () => {
+        const foreground = new ImageData(
+            new Uint8ClampedArray(
+                [0, 0, 0, 255, 0, 0, 0, 255, 0, 0, 0, 255, 0, 0, 0, 255]),
+            WIDTH, HEIGHT);
+        const background = [255, 255, 255, 255];
+        const expectedResult = new Uint8Array([
+          255, 255, 255, 255, 178, 178, 178, 255, 102, 102, 102, 255, 0, 0, 0,
+          255
+        ]);
+
+        it('on 2D canvas', () => {
+          const confidenceMask = new MPMask(
+              [new Float32Array([0.0, 0.3, 0.6, 1.0])],
+              /* ownsWebGLTexture= */ false, canvas2D, shaderContext, WIDTH,
+              HEIGHT);
+
+          drawingUtils2D.drawConfidenceMask(
+              confidenceMask, background, foreground);
+
+          const actualResult = context2D.getImageData(0, 0, WIDTH, HEIGHT).data;
+          expect(actualResult)
+              .toEqual(new Uint8ClampedArray(expectedResult.buffer));
+        });
+
+        it('on WebGL canvas', () => {
+          const confidenceMask = new MPMask(
+              [new Float32Array(
+                  [0.6, 1.0, 0.0, 0.3])],  // Note: Vertically flipped
+              /* ownsWebGLTexture= */ false, canvasWebGL, shaderContext, WIDTH,
+              HEIGHT);
+
+          drawingUtilsWebGL.drawConfidenceMask(
+              confidenceMask, background, foreground);
+
+          const actualResult = new Uint8Array(WIDTH * HEIGHT * 4);
+          contextWebGL.readPixels(
+              0, 0, WIDTH, HEIGHT, contextWebGL.RGBA,
+              contextWebGL.UNSIGNED_BYTE, actualResult);
+          expect(actualResult).toEqual(expectedResult);
+        });
+      });
+
+
+  describe(
+      'drawConfidenceMask() blends background with foreground image', () => {
+        const foreground = new ImageData(
+            new Uint8ClampedArray(
+                [0, 0, 0, 255, 0, 0, 0, 255, 0, 0, 0, 255, 0, 0, 0, 255]),
+            WIDTH, HEIGHT);
+        const background = new ImageData(
+            new Uint8ClampedArray([
+              255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+              255, 255, 255
+            ]),
+            WIDTH, HEIGHT);
+        const expectedResult = new Uint8Array([
+          255, 255, 255, 255, 178, 178, 178, 255, 102, 102, 102, 255, 0, 0, 0,
+          255
+        ]);
+
+        it('on 2D canvas', () => {
+          const confidenceMask = new MPMask(
+              [new Float32Array([0.0, 0.3, 0.6, 1.0])],
+              /* ownsWebGLTexture= */ false, canvas2D, shaderContext, WIDTH,
+              HEIGHT);
+
+          drawingUtils2D.drawConfidenceMask(
+              confidenceMask, background, foreground);
+
+          const actualResult = context2D.getImageData(0, 0, WIDTH, HEIGHT).data;
+          expect(actualResult)
+              .toEqual(new Uint8ClampedArray(expectedResult.buffer));
+        });
+
+        it('on WebGL canvas', () => {
+          const confidenceMask = new MPMask(
+              [new Float32Array(
+                  [0.6, 1.0, 0.0, 0.3])],  // Note: Vertically flipped
+              /* ownsWebGLTexture= */ false, canvasWebGL, shaderContext, WIDTH,
+              HEIGHT);
+
+          drawingUtilsWebGL.drawConfidenceMask(
+              confidenceMask, background, foreground);
+
+          const actualResult = new Uint8Array(WIDTH * HEIGHT * 4);
+          contextWebGL.readPixels(
+              0, 0, WIDTH, HEIGHT, contextWebGL.RGBA,
+              contextWebGL.UNSIGNED_BYTE, actualResult);
+          expect(actualResult).toEqual(expectedResult);
+        });
+      });
+
   describe('drawCategoryMask() ', () => {
     const colors = [
       [0, 0, 0, 255],
