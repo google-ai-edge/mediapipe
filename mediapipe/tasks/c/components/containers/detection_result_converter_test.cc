@@ -25,4 +25,54 @@ limitations under the License.
 
 namespace mediapipe::tasks::c::components::containers {
 
+TEST(DetectionResultConverterTest, ConvertsDetectionResultCustomCategory) {
+  mediapipe::tasks::components::containers::DetectionResult
+      cpp_detection_result = {/* detections= */ {
+          {/* categories= */ {{/* index= */ 1, /* score= */ 0.1,
+                               /* category_name= */ "cat",
+                               /* display_name= */ "cat"}},
+           /* bounding_box= */ {10, 10, 10, 10},
+           {/* keypoints */ {{0.1, 0.1, "foo", 0.5}}}}}};
+
+  DetectionResult c_detection_result;
+  CppConvertToDetectionResult(cpp_detection_result, &c_detection_result);
+  EXPECT_NE(c_detection_result.detections, nullptr);
+  EXPECT_EQ(c_detection_result.detections_count, 1);
+  EXPECT_NE(c_detection_result.detections[0].categories, nullptr);
+  EXPECT_EQ(c_detection_result.detections[0].categories_count, 1);
+  EXPECT_EQ(c_detection_result.detections[0].bounding_box.left, 10);
+  EXPECT_EQ(c_detection_result.detections[0].bounding_box.top, 10);
+  EXPECT_EQ(c_detection_result.detections[0].bounding_box.right, 10);
+  EXPECT_EQ(c_detection_result.detections[0].bounding_box.bottom, 10);
+  EXPECT_NE(c_detection_result.detections[0].keypoints, nullptr);
+
+  CppCloseDetectionResult(&c_detection_result);
+}
+
+TEST(DetectionResultConverterTest, ConvertsDetectionResultNoCategory) {
+  mediapipe::tasks::components::containers::DetectionResult
+      cpp_detection_result = {/* detections= */ {/* categories= */ {}}};
+
+  DetectionResult c_detection_result;
+  CppConvertToDetectionResult(cpp_detection_result, &c_detection_result);
+  EXPECT_NE(c_detection_result.detections, nullptr);
+  EXPECT_EQ(c_detection_result.detections_count, 1);
+  EXPECT_NE(c_detection_result.detections[0].categories, nullptr);
+  EXPECT_EQ(c_detection_result.detections[0].categories_count, 0);
+
+  CppCloseDetectionResult(&c_detection_result);
+}
+
+TEST(DetectionResultConverterTest, FreesMemory) {
+  mediapipe::tasks::components::containers::DetectionResult
+      cpp_detection_result = {/* detections= */ {{/* categories= */ {}}}};
+
+  DetectionResult c_detection_result;
+  CppConvertToDetectionResult(cpp_detection_result, &c_detection_result);
+  EXPECT_NE(c_detection_result.detections, nullptr);
+
+  CppCloseDetectionResult(&c_detection_result);
+  EXPECT_EQ(c_detection_result.detections, nullptr);
+}
+
 }  // namespace mediapipe::tasks::c::components::containers

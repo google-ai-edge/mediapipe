@@ -25,11 +25,29 @@ limitations under the License.
 
 namespace mediapipe::tasks::c::components::containers {
 
-TEST(RectConverterTest, ConvertsRectCustomValues) {
-  mediapipe::tasks::components::containers::Rect cpp_rect = {0, 0, 0, 0};
+constexpr float kPrecision = 1e-6;
 
-  Rect c_rect;
-  CppConvertToRect(cpp_rect, &c_rect);
+TEST(KeypointConverterTest, ConvertsKeypointCustomValues) {
+  mediapipe::tasks::components::containers::NormalizedKeypoint cpp_keypoint = {
+      0.1, 0.1, "foo", 0.5};
+
+  NormalizedKeypoint c_keypoint;
+  CppConvertToNormalizedKeypoint(cpp_keypoint, &c_keypoint);
+  EXPECT_NEAR(c_keypoint.x, 0.1f, kPrecision);
+  EXPECT_NEAR(c_keypoint.x, 0.1f, kPrecision);
+  EXPECT_EQ(std::string(c_keypoint.label), "foo");
+  EXPECT_NEAR(c_keypoint.score, 0.5f, kPrecision);
+}
+
+TEST(KeypointConverterTest, FreesMemory) {
+  mediapipe::tasks::components::containers::NormalizedKeypoint cpp_keypoint = {
+      0.1, 0.1, "foo", 0.5};
+
+  NormalizedKeypoint c_keypoint;
+  CppConvertToNormalizedKeypoint(cpp_keypoint, &c_keypoint);
+  EXPECT_NE(c_keypoint.label, nullptr);
+  CppCloseNormalizedKeypoint(&c_keypoint);
+  EXPECT_EQ(c_keypoint.label, nullptr);
 }
 
 }  // namespace mediapipe::tasks::c::components::containers

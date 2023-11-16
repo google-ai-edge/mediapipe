@@ -41,7 +41,7 @@ TEST(RectFConverterTest, ConvertsRectFCustomValues) {
                                                               0.1};
 
   RectF c_rect;
-  CppConvertToRect(cpp_rect, &c_rect);
+  CppConvertToRectF(cpp_rect, &c_rect);
   EXPECT_FLOAT_EQ(c_rect.left, 0.1);
   EXPECT_FLOAT_EQ(c_rect.right, 0.1);
   EXPECT_FLOAT_EQ(c_rect.top, 0.1);

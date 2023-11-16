@@ -15,8 +15,6 @@ limitations under the License.
 
 #include "mediapipe/tasks/c/components/containers/rect_converter.h"
 
-#include <cstdlib>
-
 #include "mediapipe/tasks/c/components/containers/rect.h"
 #include "mediapipe/tasks/cc/components/containers/rect.h"
 

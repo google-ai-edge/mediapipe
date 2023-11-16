@@ -15,7 +15,6 @@ limitations under the License.
 
 #include "mediapipe/tasks/c/components/containers/keypoint_converter.h"
 
-#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 
@@ -38,7 +37,7 @@ void CppConvertToNormalizedKeypoint(
 void CppCloseNormalizedKeypoint(NormalizedKeypoint* keypoint) {
   if (keypoint && keypoint->label) {
     free(keypoint->label);
-    keypoint->label = NULL;
+    keypoint->label = nullptr;
   }
 }
 
