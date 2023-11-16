@@ -657,7 +657,6 @@ cc_library(
     }),
     deps = [
         ":tensor_converter_calculator_cc_proto",
-        ":tensor_converter_cpu",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:port",
         "//mediapipe/framework/formats:image_frame",
@@ -666,7 +665,6 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:statusor",
-        "//mediapipe/gpu:gpu_buffer",
         "//mediapipe/gpu:gpu_buffer_format",
         "//mediapipe/gpu:gpu_origin_cc_proto",
         "//mediapipe/util:resource_util",
@@ -676,17 +674,10 @@ cc_library(
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
-        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ] + select({
         "//mediapipe/gpu:disable_gpu": [],
-        "//conditions:default": [
-            "tensor_converter_calculator_gpu_deps",
-            "//mediapipe/gpu:gl_base",
-            "//mediapipe/gpu:gl_calculator_helper",
-            "//mediapipe/gpu:gl_simple_shaders",
-            "//mediapipe/gpu:shader_util",
-        ],
+        "//conditions:default": ["tensor_converter_calculator_gpu_deps"],
     }) + select({
         "//mediapipe:apple": [
             "//third_party/apple_frameworks:MetalKit",
@@ -694,35 +685,6 @@ cc_library(
         "//conditions:default": [],
     }),
     alwayslink = 1,
-)
-
-cc_library(
-    name = "tensor_converter_cpu",
-    srcs = ["tensor_converter_cpu.cc"],
-    hdrs = ["tensor_converter_cpu.h"],
-    deps = [
-        "//mediapipe/framework/formats:image_frame",
-        "//mediapipe/framework/formats:matrix",
-        "//mediapipe/framework/formats:tensor",
-        "//mediapipe/framework/port:ret_check",
-        "//mediapipe/framework/port:status",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:statusor",
-    ],
-)
-
-cc_test(
-    name = "tensor_converter_cpu_test",
-    srcs = ["tensor_converter_cpu_test.cc"],
-    deps = [
-        ":tensor_converter_cpu",
-        "//mediapipe/framework/formats:matrix",
-        "//mediapipe/framework/formats:tensor",
-        "//mediapipe/framework/port:gtest",
-        "//mediapipe/framework/port:gtest_main",
-        "//mediapipe/framework/port:status_matchers",
-        "//mediapipe/util:image_test_utils",
-    ],
 )
 
 cc_library(
