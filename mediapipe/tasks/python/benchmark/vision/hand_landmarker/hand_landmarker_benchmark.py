@@ -11,18 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""MediaPipe image classsifier benchmark."""
+"""MediaPipe hand landmarker benchmark."""
 
 import argparse
 
 from mediapipe.python._framework_bindings import image
 from mediapipe.tasks.python.core import base_options
-from mediapipe.tasks.python.vision import image_classifier
+from mediapipe.tasks.python.vision import hand_landmarker
 from mediapipe.tasks.python.benchmark import benchmark_utils
 from mediapipe.tasks.python.benchmark.vision.core import base_vision_benchmark_api
 
-_MODEL_FILE = 'mobilenet_v2_1.0_224.tflite'
-_IMAGE_FILE = 'burger.jpg'
+_MODEL_FILE = 'hand_landmarker.task'
+_IMAGE_FILE = 'thumb_up.jpg'
 
 
 def run(
@@ -31,7 +31,7 @@ def run(
     delegate: base_options.BaseOptions.Delegate,
     percentile: float,
 ):
-  """Run an image classification benchmark.
+  """Run an hand landmarker benchmark.
 
   Args:
       model: Path to the TFLite model.
@@ -43,19 +43,18 @@ def run(
   Returns:
     The n-th percentile of the inference times.
   """
-  # Initialize the image classifier
+  # Initialize the hand landmarker
   default_model_path = benchmark_utils.get_test_data_path(
-      base_vision_benchmark_api.VISION_TEST_DATA_DIR, _MODEL_FILE
+    base_vision_benchmark_api.VISION_TEST_DATA_DIR, _MODEL_FILE
   )
   model_path = benchmark_utils.get_model_path(model, default_model_path)
-  options = image_classifier.ImageClassifierOptions(
+  options = hand_landmarker.HandLandmarkerOptions(
       base_options=base_options.BaseOptions(
           model_asset_path=model_path, delegate=delegate
-      ),
-      max_results=1,
+      )
   )
 
-  with image_classifier.ImageClassifier.create_from_options(options) as classifier:
+  with hand_landmarker.HandLandmarker.create_from_options(options) as landmarker:
     mp_image = image.Image.create_from_file(
         benchmark_utils.get_test_data_path(
             base_vision_benchmark_api.VISION_TEST_DATA_DIR, _IMAGE_FILE
@@ -63,7 +62,7 @@ def run(
     )
     # Run the benchmark and return the nth percentile of the inference times
     nth_percentile = base_vision_benchmark_api.nth_percentile(
-        classifier.classify, mp_image, n_iterations, percentile
+        landmarker.detect, mp_image, n_iterations, percentile
     )
   return nth_percentile
 
@@ -74,7 +73,7 @@ def main():
   )
   parser.add_argument(
       '--model',
-      help='Path to image classification model.',
+      help='Path to hand landmarker task.',
       required=False,
       default=None,
   )

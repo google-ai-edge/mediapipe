@@ -11,18 +11,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""MediaPipe image classsifier benchmark."""
+"""MediaPipe interactive segmenter benchmark."""
 
+from functools import partial
 import argparse
 
 from mediapipe.python._framework_bindings import image
 from mediapipe.tasks.python.core import base_options
-from mediapipe.tasks.python.vision import image_classifier
+from mediapipe.tasks.python.components.containers import keypoint
+from mediapipe.tasks.python.vision import interactive_segmenter
 from mediapipe.tasks.python.benchmark import benchmark_utils
 from mediapipe.tasks.python.benchmark.vision.core import base_vision_benchmark_api
 
-_MODEL_FILE = 'mobilenet_v2_1.0_224.tflite'
-_IMAGE_FILE = 'burger.jpg'
+_MODEL_FILE = 'deeplabv3.tflite'
+_IMAGE_FILE = 'segmentation_input_rotation0.jpg'
 
 
 def run(
@@ -31,7 +33,7 @@ def run(
     delegate: base_options.BaseOptions.Delegate,
     percentile: float,
 ):
-  """Run an image classification benchmark.
+  """Run an interactive segmentation benchmark.
 
   Args:
       model: Path to the TFLite model.
@@ -43,19 +45,24 @@ def run(
   Returns:
     The n-th percentile of the inference times.
   """
-  # Initialize the image classifier
+  # Initialize the interactive segmenter
   default_model_path = benchmark_utils.get_test_data_path(
       base_vision_benchmark_api.VISION_TEST_DATA_DIR, _MODEL_FILE
   )
   model_path = benchmark_utils.get_model_path(model, default_model_path)
-  options = image_classifier.ImageClassifierOptions(
+
+  options = interactive_segmenter.InteractiveSegmenterOptions(
       base_options=base_options.BaseOptions(
           model_asset_path=model_path, delegate=delegate
       ),
-      max_results=1,
+      output_category_mask=True, output_confidence_masks=False
+  )
+  roi = interactive_segmenter.RegionOfInterest(
+      format=interactive_segmenter.RegionOfInterest.Format.KEYPOINT,
+      keypoint=keypoint.NormalizedKeypoint(0.44, 0.7)
   )
 
-  with image_classifier.ImageClassifier.create_from_options(options) as classifier:
+  with interactive_segmenter.InteractiveSegmenter.create_from_options(options) as segmenter:
     mp_image = image.Image.create_from_file(
         benchmark_utils.get_test_data_path(
             base_vision_benchmark_api.VISION_TEST_DATA_DIR, _IMAGE_FILE
@@ -63,7 +70,7 @@ def run(
     )
     # Run the benchmark and return the nth percentile of the inference times
     nth_percentile = base_vision_benchmark_api.nth_percentile(
-        classifier.classify, mp_image, n_iterations, percentile
+        partial(segmenter.segment, roi=roi), mp_image, n_iterations, percentile
     )
   return nth_percentile
 
@@ -74,7 +81,7 @@ def main():
   )
   parser.add_argument(
       '--model',
-      help='Path to image classification model.',
+      help='Path to interactive segmentation model.',
       required=False,
       default=None,
   )

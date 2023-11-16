@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors.
+# Copyright 2023 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,19 +16,7 @@
 
 package(default_visibility = ["//visibility:public"])
 
-py_binary(
-    name = "image_classifier_benchmark",
-    main = "image_classifier_benchmark.py",
-    srcs = ["image_classifier_benchmark.py"],
-    data = [
-        "//mediapipe/tasks/testdata/vision:test_images",
-        "//mediapipe/tasks/testdata/vision:test_models",
-    ],
-    deps = [
-        "//mediapipe/python:_framework_bindings",
-        "//mediapipe/tasks/python/core:base_options",
-        "//mediapipe/tasks/python/vision:image_classifier",
-        "//mediapipe/tasks/python/benchmark:benchmark_utils",
-        "//mediapipe/tasks/python/benchmark/vision/core:base_vision_benchmark_api",
-    ],
+py_library(
+    name = "base_vision_benchmark_api",
+    srcs = ["base_vision_benchmark_api.py"]
 )

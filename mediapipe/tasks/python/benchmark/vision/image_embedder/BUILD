@@ -17,9 +17,9 @@
 package(default_visibility = ["//visibility:public"])
 
 py_binary(
-    name = "image_classifier_benchmark",
-    main = "image_classifier_benchmark.py",
-    srcs = ["image_classifier_benchmark.py"],
+    name = "image_embedder_benchmark",
+    main = "image_embedder_benchmark.py",
+    srcs = ["image_embedder_benchmark.py"],
     data = [
         "//mediapipe/tasks/testdata/vision:test_images",
         "//mediapipe/tasks/testdata/vision:test_models",
@@ -27,7 +27,7 @@ py_binary(
     deps = [
         "//mediapipe/python:_framework_bindings",
         "//mediapipe/tasks/python/core:base_options",
-        "//mediapipe/tasks/python/vision:image_classifier",
+        "//mediapipe/tasks/python/vision:image_embedder",
         "//mediapipe/tasks/python/benchmark:benchmark_utils",
         "//mediapipe/tasks/python/benchmark/vision/core:base_vision_benchmark_api",
     ],
