@@ -14,6 +14,17 @@
 """Benchmark utils for MediaPipe Tasks."""
 
 import os
+import numpy as np
+
+
+def nth_percentile(inference_times, percentile):
+  """Calculate the nth percentile of the inference times."""
+  return np.percentile(inference_times, percentile)
+
+
+def average(inference_times):
+  """Calculate the average of the inference times."""
+  return np.mean(inference_times)
 
 
 def get_test_data_path(test_srcdir, file_or_dirname_path: str) -> str:

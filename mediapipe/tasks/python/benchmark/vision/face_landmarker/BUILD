@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Placeholder for internal Python strict library and test compatibility macro.
+# Placeholder for internal Python strict binary compatibility macro.
 
 package(default_visibility = ["//visibility:public"])
 
@@ -30,5 +30,6 @@ py_binary(
         "//mediapipe/tasks/python/vision:face_landmarker",
         "//mediapipe/tasks/python/benchmark:benchmark_utils",
         "//mediapipe/tasks/python/benchmark/vision/core:base_vision_benchmark_api",
+        "//mediapipe/tasks/python/benchmark/vision:benchmark",
     ],
 )

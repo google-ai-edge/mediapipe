@@ -13,45 +13,32 @@
 # limitations under the License.
 """MediaPipe face aligner benchmark."""
 
-import argparse
-
 from mediapipe.python._framework_bindings import image
 from mediapipe.tasks.python.core import base_options
 from mediapipe.tasks.python.vision import face_aligner
 from mediapipe.tasks.python.benchmark import benchmark_utils
 from mediapipe.tasks.python.benchmark.vision.core import base_vision_benchmark_api
+from mediapipe.tasks.python.benchmark.vision import benchmark
 
 _MODEL_FILE = 'face_landmarker_v2.task'
 _IMAGE_FILE = 'portrait.jpg'
 
 
-def run(
-    model: str,
-    n_iterations: int,
-    delegate: base_options.BaseOptions.Delegate,
-    percentile: float,
-):
-  """Run an face aligner benchmark.
-
+def run(model_path, n_iterations, delegate):
+  """Run a face aligner benchmark.
   Args:
-      model: Path to the TFLite model.
+      model_path: Path to the TFLite model.
       n_iterations: Number of iterations to run the benchmark.
       delegate: CPU or GPU delegate for inference.
-      percentile: Percentage for the percentiles to compute. Values must be
-        between 0 and 100 inclusive.
 
   Returns:
-    The n-th percentile of the inference times.
+      List of inference times.
   """
   # Initialize the face aligner
-  default_model_path = benchmark_utils.get_test_data_path(
-    base_vision_benchmark_api.VISION_TEST_DATA_DIR, _MODEL_FILE
-  )
-  model_path = benchmark_utils.get_model_path(model, default_model_path)
   options = face_aligner.FaceAlignerOptions(
-      base_options=base_options.BaseOptions(
-          model_asset_path=model_path, delegate=delegate
-      )
+    base_options=base_options.BaseOptions(
+      model_asset_path=model_path, delegate=delegate
+    )
   )
 
   with face_aligner.FaceAligner.create_from_options(options) as aligner:
@@ -60,61 +47,11 @@ def run(
             base_vision_benchmark_api.VISION_TEST_DATA_DIR, _IMAGE_FILE
         )
     )
-    # Run the benchmark and return the nth percentile of the inference times
-    nth_percentile = base_vision_benchmark_api.nth_percentile(
-        aligner.align, mp_image, n_iterations, percentile
+    inference_times = base_vision_benchmark_api.benchmark_task(
+        aligner.align, mp_image, n_iterations
     )
-  return nth_percentile
-
-
-def main():
-  parser = argparse.ArgumentParser(
-      formatter_class=argparse.ArgumentDefaultsHelpFormatter
-  )
-  parser.add_argument(
-      '--model',
-      help='Path to face aligner task.',
-      required=False,
-      default=None,
-  )
-  parser.add_argument(
-      '--iterations',
-      help='Number of iterations for benchmarking.',
-      type=int,
-      default=100,
-  )
-  parser.add_argument(
-      '--percentile',
-      help='Percentile for benchmarking statistics.',
-      type=float,
-      default=95.0,
-  )
-  args = parser.parse_args()
-
-  # Run benchmark on CPU
-  cpu_time = run(
-      args.model,
-      args.iterations,
-      base_options.BaseOptions.Delegate.CPU,
-      args.percentile,
-  )
-  print(
-      f'{args.percentile}th Percentile Inference Time on CPU: '
-      f'{cpu_time:.6f} milliseconds'
-  )
-
-  # Run benchmark on GPU
-  gpu_time = run(
-      args.model,
-      args.iterations,
-      base_options.BaseOptions.Delegate.GPU,
-      args.percentile,
-  )
-  print(
-      f'{args.percentile}th Percentile Inference Time on GPU: '
-      f'{gpu_time:.6f} milliseconds'
-  )
+    return inference_times
 
 
 if __name__ == '__main__':
-  main()
+  benchmark.benchmarker(run, _MODEL_FILE)

@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Placeholder for internal Python strict binary compatibility macro.
+# Placeholder for internal Python strict library and test compatibility macro.
 
 package(default_visibility = ["//visibility:public"])
 
 py_binary(
-    name = "hand_landmarker_benchmark",
-    main = "hand_landmarker_benchmark.py",
-    srcs = ["hand_landmarker_benchmark.py"],
+    name = "benchmark",
+    main = "benchmark.py",
+    srcs = ["benchmark.py"],
     data = [
         "//mediapipe/tasks/testdata/vision:test_images",
         "//mediapipe/tasks/testdata/vision:test_models",
@@ -27,9 +27,7 @@ py_binary(
     deps = [
         "//mediapipe/python:_framework_bindings",
         "//mediapipe/tasks/python/core:base_options",
-        "//mediapipe/tasks/python/vision:hand_landmarker",
         "//mediapipe/tasks/python/benchmark:benchmark_utils",
         "//mediapipe/tasks/python/benchmark/vision/core:base_vision_benchmark_api",
-        "//mediapipe/tasks/python/benchmark/vision:benchmark",
     ],
 )

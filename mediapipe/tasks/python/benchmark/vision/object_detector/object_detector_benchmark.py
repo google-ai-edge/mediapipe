@@ -13,45 +13,33 @@
 # limitations under the License.
 """MediaPipe object detector benchmark."""
 
-import argparse
-
 from mediapipe.python._framework_bindings import image
 from mediapipe.tasks.python.core import base_options
 from mediapipe.tasks.python.vision import object_detector
 from mediapipe.tasks.python.benchmark import benchmark_utils
 from mediapipe.tasks.python.benchmark.vision.core import base_vision_benchmark_api
+from mediapipe.tasks.python.benchmark.vision import benchmark
 
 _MODEL_FILE = 'coco_efficientdet_lite0_v1_1.0_quant_2021_09_06.tflite'
 _IMAGE_FILE = 'cats_and_dogs.jpg'
 
 
-def run(
-    model: str,
-    n_iterations: int,
-    delegate: base_options.BaseOptions.Delegate,
-    percentile: float,
-):
+def run(model_path, n_iterations, delegate):
   """Run an object detector benchmark.
 
   Args:
-      model: Path to the TFLite model.
+      model_path: Path to the TFLite model.
       n_iterations: Number of iterations to run the benchmark.
       delegate: CPU or GPU delegate for inference.
-      percentile: Percentage for the percentiles to compute. Values must be
-        between 0 and 100 inclusive.
 
   Returns:
-    The n-th percentile of the inference times.
+      List of inference times.
   """
   # Initialize the object detector
-  default_model_path = benchmark_utils.get_test_data_path(
-      base_vision_benchmark_api.VISION_TEST_DATA_DIR, _MODEL_FILE
-  )
-  model_path = benchmark_utils.get_model_path(model, default_model_path)
   options = object_detector.ObjectDetectorOptions(
-      base_options=base_options.BaseOptions(
-          model_asset_path=model_path, delegate=delegate
-      )
+    base_options=base_options.BaseOptions(
+      model_asset_path=model_path, delegate=delegate
+    )
   )
 
   with object_detector.ObjectDetector.create_from_options(options) as detector:
@@ -60,61 +48,11 @@ def run(
             base_vision_benchmark_api.VISION_TEST_DATA_DIR, _IMAGE_FILE
         )
     )
-    # Run the benchmark and return the nth percentile of the inference times
-    nth_percentile = base_vision_benchmark_api.nth_percentile(
-        detector.detect, mp_image, n_iterations, percentile
+    inference_times = base_vision_benchmark_api.benchmark_task(
+        detector.detect, mp_image, n_iterations
     )
-  return nth_percentile
-
-
-def main():
-  parser = argparse.ArgumentParser(
-      formatter_class=argparse.ArgumentDefaultsHelpFormatter
-  )
-  parser.add_argument(
-      '--model',
-      help='Path to object detector model.',
-      required=False,
-      default=None,
-  )
-  parser.add_argument(
-      '--iterations',
-      help='Number of iterations for benchmarking.',
-      type=int,
-      default=100,
-  )
-  parser.add_argument(
-      '--percentile',
-      help='Percentile for benchmarking statistics.',
-      type=float,
-      default=95.0,
-  )
-  args = parser.parse_args()
-
-  # Run benchmark on CPU
-  cpu_time = run(
-      args.model,
-      args.iterations,
-      base_options.BaseOptions.Delegate.CPU,
-      args.percentile,
-  )
-  print(
-      f'{args.percentile}th Percentile Inference Time on CPU: '
-      f'{cpu_time:.6f} milliseconds'
-  )
-
-  # Run benchmark on GPU
-  gpu_time = run(
-      args.model,
-      args.iterations,
-      base_options.BaseOptions.Delegate.GPU,
-      args.percentile,
-  )
-  print(
-      f'{args.percentile}th Percentile Inference Time on GPU: '
-      f'{gpu_time:.6f} milliseconds'
-  )
+    return inference_times
 
 
 if __name__ == '__main__':
-  main()
+  benchmark.benchmarker(run, _MODEL_FILE)

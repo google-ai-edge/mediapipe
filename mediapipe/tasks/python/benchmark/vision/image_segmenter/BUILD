@@ -30,5 +30,6 @@ py_binary(
         "//mediapipe/tasks/python/vision:image_segmenter",
         "//mediapipe/tasks/python/benchmark:benchmark_utils",
         "//mediapipe/tasks/python/benchmark/vision/core:base_vision_benchmark_api",
+        "//mediapipe/tasks/python/benchmark/vision:benchmark",
     ],
 )

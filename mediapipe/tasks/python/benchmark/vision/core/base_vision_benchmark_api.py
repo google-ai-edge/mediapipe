@@ -12,25 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """MediaPipe vision benchmark base api."""
-import os
 import time
-import numpy as np
 
 VISION_TEST_DATA_DIR = 'mediapipe/tasks/testdata/vision'
 
 
-def nth_percentile(func, image, n_iterations, percentile):
-  """Run a nth percentile benchmark for a given task using the function.
+def benchmark_task(func, image, n_iterations):
+  """Collect inference times for a given task after benchmarking
 
   Args:
-      func: The method associated with a given task used for benchmarking.
+      func: The task function used for benchmarking.
       image: The input MediaPipe Image.
       n_iterations: Number of iterations to run the benchmark.
-      percentile: Percentage for the percentiles to compute. Values must be
-        between 0 and 100 inclusive.
 
   Returns:
-    The n-th percentile of the inference times in milliseconds.
+      List of inference times in milliseconds.
   """
   inference_times = []
 
@@ -41,4 +37,4 @@ def nth_percentile(func, image, n_iterations, percentile):
     end_time_ns = time.time_ns()
     inference_times.append((end_time_ns - start_time_ns) / 1_000_000)
 
-  return np.percentile(inference_times, percentile)
+  return inference_times
