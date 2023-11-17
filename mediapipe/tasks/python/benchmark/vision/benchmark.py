@@ -20,7 +20,7 @@ from mediapipe.tasks.python.benchmark import benchmark_utils as bu
 from mediapipe.tasks.python.benchmark.vision.core import base_vision_benchmark_api
 
 
-def benchmarker(benchmark_function, default_model_name, default_image_name):
+def benchmarker(benchmark_function, default_model_name):
   """Executes a benchmarking process using a specified function and
     a default model (or a specified model) and reports the benchmarking
     statistics.
