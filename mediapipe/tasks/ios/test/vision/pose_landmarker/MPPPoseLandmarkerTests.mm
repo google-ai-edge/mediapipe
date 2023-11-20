@@ -75,7 +75,8 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
 }
 
 - (void)testDetectWithOptionsSucceeds {
-  MPPPoseLandmarkerOptions *options = [self poseLandmarkerOptionsWithModelFileInfo:kPoseLandmarkerBundleAssetFileInfo];
+  MPPPoseLandmarkerOptions *options =
+      [self poseLandmarkerOptionsWithModelFileInfo:kPoseLandmarkerBundleAssetFileInfo];
   MPPPoseLandmarker *poseLandmarker = [self createPoseLandmarkerWithOptionsSucceeds:options];
 
   [self assertResultsOfDetectInImageWithFileInfo:kPoseImageFileInfo
@@ -85,13 +86,14 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
 }
 
 - (void)testDetectWithEmptyResultsSucceeds {
-  MPPPoseLandmarkerOptions *options = [self poseLandmarkerOptionsWithModelFileInfo:kPoseLandmarkerBundleAssetFileInfo];
+  MPPPoseLandmarkerOptions *options =
+      [self poseLandmarkerOptionsWithModelFileInfo:kPoseLandmarkerBundleAssetFileInfo];
   MPPPoseLandmarker *poseLandmarker = [self createPoseLandmarkerWithOptionsSucceeds:options];
 
-  [self assertResultsOfDetectInImageWithFileInfo:kNoPoseImageFileInfo
-                             usingPoseLandmarker:poseLandmarker
-         approximatelyEqualsPoseLandmarkerResult:[MPPPoseLandmarkerTests
-                                                     emptyPoseLandmarkerResult]];
+  [self
+      assertResultsOfDetectInImageWithFileInfo:kNoPoseImageFileInfo
+                           usingPoseLandmarker:poseLandmarker
+       approximatelyEqualsPoseLandmarkerResult:[MPPPoseLandmarkerTests emptyPoseLandmarkerResult]];
 }
 
 - (void)testCreatePoseLandmarkerFailsWithDelegateInNonLiveStreamMode {
@@ -432,7 +434,6 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   // Expects to have the same number of poses detected.
   [self assertMultiPoseLandmarks:poseLandmarkerResult.landmarks
       areApproximatelyEqualToExpectedMultiPoseLandmarks:expectedPoseLandmarkerResult.landmarks];
-  
 
   [self assertLandmarksAreVisibleAndPresentInPoseLandmarkerResult:poseLandmarkerResult];
 }
@@ -440,8 +441,8 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
 - (void)assertMultiPoseLandmarks:(NSArray<NSArray<MPPNormalizedLandmark *> *> *)multiPoseLandmarks
     areApproximatelyEqualToExpectedMultiPoseLandmarks:
         (NSArray<NSArray<MPPNormalizedLandmark *> *> *)expectedMultiPoseLandmarks {
-    XCTAssertEqual(multiPoseLandmarks.count, expectedMultiPoseLandmarks.count);
-  
+  XCTAssertEqual(multiPoseLandmarks.count, expectedMultiPoseLandmarks.count);
+
   if (multiPoseLandmarks.count == 0) {
     return;
   }
