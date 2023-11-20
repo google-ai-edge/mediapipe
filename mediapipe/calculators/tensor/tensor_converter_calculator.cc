@@ -14,6 +14,7 @@
 
 #include <cstdint>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/log/absl_check.h"
@@ -21,17 +22,22 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/substitute.h"
+#include "absl/types/optional.h"
 #include "mediapipe/calculators/tensor/tensor_converter_calculator.pb.h"
+#include "mediapipe/calculators/tensor/tensor_converter_cpu.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port.h"
 #include "mediapipe/framework/port/ret_check.h"
+#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/gpu/gpu_buffer_format.h"
 #include "mediapipe/gpu/gpu_origin.pb.h"
 
 #if !MEDIAPIPE_DISABLE_GPU
+#include "mediapipe/gpu/gl_base.h"
 #include "mediapipe/gpu/gpu_buffer.h"
 #if MEDIAPIPE_METAL_ENABLED
 #import <CoreVideo/CoreVideo.h>
@@ -94,15 +100,12 @@ absl::StatusOr<bool> ShouldFlipVertically(
   }
 }
 
-typedef Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-    RowMajorMatrixXf;
-typedef Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>
-    ColMajorMatrixXf;
-
 constexpr char kImageFrameTag[] = "IMAGE";
 constexpr char kGpuBufferTag[] = "IMAGE_GPU";
 constexpr char kTensorsTag[] = "TENSORS";
 constexpr char kMatrixTag[] = "MATRIX";
+
+constexpr std::pair<float, float> kDefaultOutputRange = {0.0f, 1.0f};
 
 }  // namespace
 
@@ -156,10 +159,6 @@ class TensorConverterCalculator : public CalculatorBase {
  private:
   absl::Status InitGpu(CalculatorContext* cc);
   absl::Status LoadOptions(CalculatorContext* cc, bool use_gpu);
-  template <class T>
-  absl::Status NormalizeImage(const ImageFrame& image_frame,
-                              bool flip_vertically, float* tensor_ptr);
-  absl::Status CopyMatrixToTensor(const Matrix& matrix, float* tensor_ptr);
   absl::Status ProcessCPU(CalculatorContext* cc);
   absl::Status ProcessGPU(CalculatorContext* cc);
 
@@ -279,46 +278,21 @@ absl::Status TensorConverterCalculator::ProcessCPU(CalculatorContext* cc) {
     }
     const auto& image_frame =
         cc->Inputs().Tag(kImageFrameTag).Get<ImageFrame>();
-    const int height = image_frame.Height();
-    const int width = image_frame.Width();
-    const int channels = image_frame.NumberOfChannels();
-    const int channels_preserved = std::min(channels, max_num_channels_);
-    const mediapipe::ImageFormat::Format format = image_frame.Format();
-
-    if (!(format == mediapipe::ImageFormat::SRGBA ||
-          format == mediapipe::ImageFormat::SRGB ||
-          format == mediapipe::ImageFormat::GRAY8 ||
-          format == mediapipe::ImageFormat::VEC32F1))
-      RET_CHECK_FAIL() << "Unsupported CPU input format.";
-
-    output_tensors->emplace_back(
-        Tensor::ElementType::kFloat32,
-        Tensor::Shape{1, height, width, channels_preserved});
-    auto cpu_view = output_tensors->back().GetCpuWriteView();
-
-    // Copy image data into tensor.
-    if (image_frame.ByteDepth() == 1) {
-      MP_RETURN_IF_ERROR(NormalizeImage<uint8_t>(image_frame, flip_vertically_,
-                                                 cpu_view.buffer<float>()));
-    } else if (image_frame.ByteDepth() == 4) {
-      MP_RETURN_IF_ERROR(NormalizeImage<float>(image_frame, flip_vertically_,
-                                               cpu_view.buffer<float>()));
-    } else {
-      return absl::InternalError(
-          "Only byte-based (8 bit) and float (32 bit) images supported.");
-    }
+    MP_ASSIGN_OR_RETURN(Tensor output,
+                        ConvertImageFrameToTensorOnCpu(
+                            image_frame,
+                            output_range_.has_value() ? output_range_.value()
+                                                      : kDefaultOutputRange,
+                            flip_vertically_, max_num_channels_));
+    output_tensors->emplace_back(std::move(output));
   } else if (cc->Inputs().HasTag(kMatrixTag)) {
     if (cc->Inputs().Tag(kMatrixTag).IsEmpty()) {
       return absl::OkStatus();
     }
     const auto& matrix = cc->Inputs().Tag(kMatrixTag).Get<Matrix>();
-    const int height = matrix.rows();
-    const int width = matrix.cols();
-    const int channels = 1;
-    output_tensors->emplace_back(Tensor::ElementType::kFloat32,
-                                 Tensor::Shape{1, height, width, channels});
-    MP_RETURN_IF_ERROR(CopyMatrixToTensor(
-        matrix, output_tensors->back().GetCpuWriteView().buffer<float>()));
+    MP_ASSIGN_OR_RETURN(Tensor output,
+                        ConvertMatrixToTensorOnCpu(matrix, row_major_matrix_));
+    output_tensors->emplace_back(std::move(output));
   } else {
     return absl::OkStatus();
   }
@@ -666,69 +640,6 @@ absl::Status TensorConverterCalculator::LoadOptions(CalculatorContext* cc,
   ABSL_CHECK_GE(max_num_channels_, 1);
   ABSL_CHECK_LE(max_num_channels_, 4);
   ABSL_CHECK_NE(max_num_channels_, 2);
-  return absl::OkStatus();
-}
-
-template <class T>
-absl::Status TensorConverterCalculator::NormalizeImage(
-    const ImageFrame& image_frame, bool flip_vertically, float* tensor_ptr) {
-  const int height = image_frame.Height();
-  const int width = image_frame.Width();
-  const int channels = image_frame.NumberOfChannels();
-  const int channels_preserved = std::min(channels, max_num_channels_);
-  const int channels_ignored = channels - channels_preserved;
-
-  if (output_range_.has_value()) {
-    // If the output float range is set and we are not using custom
-    // normalization, normalize the pixel values from [0, 255] to the specified
-    // output range.
-    RET_CHECK_NE(output_range_->first, output_range_->second);
-    const float scale = (output_range_->second - output_range_->first) / 255.0f;
-    const float bias = output_range_->first;
-
-    for (int i = 0; i < height; ++i) {
-      const T* image_ptr = reinterpret_cast<const T*>(
-          image_frame.PixelData() +
-          (flip_vertically ? height - 1 - i : i) * image_frame.WidthStep());
-      for (int j = 0; j < width; ++j) {
-        for (int c = 0; c < channels_preserved; ++c) {
-          *tensor_ptr++ = *image_ptr++ * scale + bias;
-        }
-        image_ptr += channels_ignored;
-      }
-    }
-  } else {
-    // [0,1], scale only (bias == 0)
-    // Verified that there are no precision issues with 1.0f / 255.0f expression
-    const float scale = 1.0f / 255.0f;
-    for (int i = 0; i < height; ++i) {
-      const T* image_ptr = reinterpret_cast<const T*>(
-          image_frame.PixelData() +
-          (flip_vertically ? height - 1 - i : i) * image_frame.WidthStep());
-      for (int j = 0; j < width; ++j) {
-        for (int c = 0; c < channels_preserved; ++c) {
-          *tensor_ptr++ = *image_ptr++ * scale;
-        }
-        image_ptr += channels_ignored;
-      }
-    }
-  }
-
-  return absl::OkStatus();
-}
-
-absl::Status TensorConverterCalculator::CopyMatrixToTensor(const Matrix& matrix,
-                                                           float* tensor_ptr) {
-  if (row_major_matrix_) {
-    auto matrix_map =
-        Eigen::Map<RowMajorMatrixXf>(tensor_ptr, matrix.rows(), matrix.cols());
-    matrix_map = matrix;
-  } else {
-    auto matrix_map =
-        Eigen::Map<ColMajorMatrixXf>(tensor_ptr, matrix.rows(), matrix.cols());
-    matrix_map = matrix;
-  }
-
   return absl::OkStatus();
 }
 
