@@ -31,6 +31,7 @@ limitations under the License.
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/calculator.pb.h"
+#include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/core/model_asset_bundle_resources.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
@@ -147,7 +148,8 @@ class InferenceSubgraph : public Subgraph {
     return delegate;
   }
 };
-REGISTER_MEDIAPIPE_GRAPH(::mediapipe::tasks::core::InferenceSubgraph);
+
+REGISTER_MEDIAPIPE_GRAPH(::mediapipe::tasks::core::InferenceSubgraph)
 
 absl::StatusOr<CalculatorGraphConfig> ModelTaskGraph::GetConfig(
     SubgraphContext* sc) {

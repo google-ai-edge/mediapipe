@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@org_tensorflow//tensorflow/lite/core/shims:cc_library_with_tflite.bzl", "cc_library_with_tflite")
+
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
@@ -99,10 +101,14 @@ cc_library(
     alwayslink = 1,
 )
 
-cc_library(
+cc_library_with_tflite(
     name = "image_preprocessing_graph",
     srcs = ["image_preprocessing_graph.cc"],
     hdrs = ["image_preprocessing_graph.h"],
+    tflite_deps = [
+        "//mediapipe/tasks/cc/core:model_resources",
+        "//mediapipe/tasks/cc/vision/utils:image_tensor_specs",
+    ],
     deps = [
         "//mediapipe/calculators/core:pass_through_calculator",
         "//mediapipe/calculators/image:image_clone_calculator",
@@ -120,10 +126,8 @@ cc_library(
         "//mediapipe/gpu:gpu_origin_cc_proto",
         "//mediapipe/tasks/cc:common",
         "//mediapipe/tasks/cc/components/processors/proto:image_preprocessing_graph_options_cc_proto",
-        "//mediapipe/tasks/cc/core:model_resources",
         "//mediapipe/tasks/cc/core/proto:acceleration_cc_proto",
         "//mediapipe/tasks/cc/core/proto:base_options_cc_proto",
-        "//mediapipe/tasks/cc/vision/utils:image_tensor_specs",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@org_tensorflow//tensorflow/lite/schema:schema_fbs",
