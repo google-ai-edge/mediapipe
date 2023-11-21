@@ -171,7 +171,7 @@ METAL_LIBRARY_ATTRS = dicts.add(apple_support.action_required_attrs(), {
 metal_library = rule(
     implementation = _metal_library_impl,
     attrs = METAL_LIBRARY_ATTRS,
-    fragments = ["apple", "objc", "swift"],
+    fragments = ["apple", "objc"],
     output_to_genfiles = True,
 )
 """
