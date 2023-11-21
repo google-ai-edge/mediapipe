@@ -14,8 +14,18 @@
 #
 
 import mediapipe as mp
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--input_video_path', required=False, default="/mediapipe/mediapipe/examples/desktop/object_detection/test_video.mp4", type=str, help='Path to a video file')
+parser.add_argument('--output_video_path', required=False, default="/mediapipe/object_output.mp4", type=str, help='Output path to a video file')
+args = parser.parse_args()
+
+source = args.input_video_path
+output = args.output_video_path
+
 ovms_object_detection = mp.solutions.ovms_object_detection
 with ovms_object_detection.OvmsObjectDetection(side_inputs=
-        {'input_video_path':'/mediapipe/mediapipe/examples/desktop/object_detection/test_video.mp4',
-         'output_video_path':'/mediapipe/tested_video.mp4'}) as ovms_object_detection:
+        {'input_video_path':source,
+         'output_video_path':output}) as ovms_object_detection:
         results = ovms_object_detection.process()

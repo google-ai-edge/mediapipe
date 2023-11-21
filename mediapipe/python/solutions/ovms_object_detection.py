@@ -24,7 +24,7 @@ class OvmsObjectDetection(SolutionBase):
   """Ovms Object Detection.
 
   Ovms Object Detection processes an input video returns output video
-  with detectec objects.
+  with detected objects.
   """
   """
   Oryginal params in desktop example

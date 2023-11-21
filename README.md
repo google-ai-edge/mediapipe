@@ -18,13 +18,13 @@ Check the included demos with pipeline examples or create your own graphs and ex
 - added [setup_ovms.py](setup_ovms.py) script to create models repository used in OpenVINO&trade; inference. The script needs to be executed to prepare specific directory structures with tflite models and config.json in the [mediapipe/models/ovms](directory).
 - modified setup_opecv.py to install 4.7.0 OpenCV version instead of previous 3.4.
 
-[]() OpenVINO&trade; demo                                                    | C++                                                     | Python                                                        | Original Google demo                                                        |
+[]() OpenVINO&trade; demo                                                    | C++                                                     | [Python](mediapipe/examples/python/README.md)                              | Original Google demo                                                        |
 :---------------------------------------------------------------------------------------- | :-----------------------------------------------------: | :-----------------------------------------------------------: | :---------------------------------------------------------------------------------------: |
-[Face Detection](mediapipe/examples/desktop/face_detection/README.md)                     | ✅                                                      |                                                                |[Face Detection](https://google.github.io/mediapipe/solutions/face_detection)             |
+[Face Detection](mediapipe/examples/desktop/face_detection/README.md)                     | ✅                                                      | ✅                                                              |[Face Detection](https://google.github.io/mediapipe/solutions/face_detection)             |
 [Iris](mediapipe/examples/desktop/iris_tracking/README.md)                                | ✅                                                      |                                                                |[Iris](https://google.github.io/mediapipe/solutions/iris)                                 |
 [Pose](mediapipe/examples/desktop/pose_tracking/README.md)                                | ✅                                                      |                                                                |[Pose](https://google.github.io/mediapipe/solutions/pose)                                 |
-[Holistic](mediapipe/examples/desktop/holistic_tracking/README.md)                        | ✅                                                      |                                                                |[Holistic](https://google.github.io/mediapipe/solutions/holistic)                         |
-[Object Detection](mediapipe/examples/desktop/object_detection/README.md)                 | ✅                                                      |                                                                |[Object Detection](https://google.github.io/mediapipe/solutions/object_detection)         |
+[Holistic](mediapipe/examples/desktop/holistic_tracking/README.md)                        | ✅                                                      | ✅                                                              |[Holistic](https://google.github.io/mediapipe/solutions/holistic)                         |
+[Object Detection](mediapipe/examples/desktop/object_detection/README.md)                 | ✅                                                      | ✅                                                              |[Object Detection](https://google.github.io/mediapipe/solutions/object_detection)         |
 
 # Quick start guide
 
@@ -56,6 +56,6 @@ Face Detection                                                                  
 [![face_detection](https://mediapipe.dev/images/mobile/face_detection_android_gpu_small.gif)](https://google.github.io/mediapipe/solutions/face_detection) | [![iris](https://mediapipe.dev/images/mobile/iris_tracking_android_gpu_small.gif)](https://google.github.io/mediapipe/solutions/iris) | [![pose](https://mediapipe.dev/images/mobile/pose_tracking_android_gpu_small.gif)](https://google.github.io/mediapipe/solutions/pose) | [![holistic_tracking](https://mediapipe.dev/images/mobile/holistic_tracking_android_gpu_small.gif)](https://google.github.io/mediapipe/solutions/holistic) | [![object_detection](https://mediapipe.dev/images/mobile/object_detection_android_gpu_small.gif)](https://google.github.io/mediapipe/solutions/object_detection) |
 
 ## Fork baseline
-The fork is based on original mediapipe release origin/v0.9.1 (Author: Sebastian Schmidt <mrschmidt@google.com> Date:   Tue Jan 24 12:11:53 2023).
+The fork is based on original mediapipe release origin/v0.10.3.
 
-Original v0.9.1 Google ML solutions in MediaPipe can be found [here](https://github.com/google/mediapipe/tree/v0.9.1)
+Original v0.10.3 Google ML solutions in MediaPipe can be found [here](https://github.com/google/mediapipe/tree/v0.10.3)

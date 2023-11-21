@@ -56,7 +56,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # python setup.py requirements
 RUN pip3 install --upgrade setuptools
-RUN pip3 install wheel future absl-py numpy opencv-contrib-python tensorflow==2.9.0 protobuf==3.20.1 six==1.14.0 tf_slim
+RUN pip3 install attrs matplotlib wheel future absl-py numpy opencv-contrib-python tensorflow==2.9.0 protobuf==3.20.1 six==1.14.0 tf_slim
 
 RUN ln -s /usr/bin/python3 /usr/bin/python
 RUN apt-get update && apt-get install -y protobuf-compiler
@@ -190,7 +190,4 @@ RUN bash build_desktop_examples.sh -b
 RUN curl https://storage.googleapis.com/mediapipe-assets/ssdlite_object_detection_labelmap.txt -o mediapipe/models/ssdlite_object_detection_labelmap.txt
 
 # BUILD python framework
-RUN pip install -r requirements.txt
 RUN python setup.py install
-
-
