@@ -44,6 +44,33 @@ cc_test(
 )
 
 cc_library(
+    name = "landmark",
+    hdrs = ["landmark.h"],
+)
+
+cc_library(
+    name = "landmark_converter",
+    srcs = ["landmark_converter.cc"],
+    hdrs = ["landmark_converter.h"],
+    deps = [
+        ":landmark",
+        "//mediapipe/tasks/cc/components/containers:landmark",
+    ],
+)
+
+cc_test(
+    name = "landmark_converter_test",
+    srcs = ["landmark_converter_test.cc"],
+    deps = [
+        ":landmark",
+        ":landmark_converter",
+        "//mediapipe/framework/port:gtest",
+        "//mediapipe/tasks/cc/components/containers:landmark",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "classification_result",
     hdrs = ["classification_result.h"],
 )
@@ -118,6 +145,31 @@ cc_test(
         "//mediapipe/framework/port:gtest",
         "//mediapipe/tasks/c/text/language_detector",
         "//mediapipe/tasks/cc/text/language_detector",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "gesture_recognizer_result_converter",
+    srcs = ["gesture_recognizer_result_converter.cc"],
+    hdrs = ["gesture_recognizer_result_converter.h"],
+    deps = [
+        ":category_converter",
+        ":landmark_converter",
+        "//mediapipe/tasks/c/vision/gesture_recognizer:gesture_recognizer_result",
+        "//mediapipe/tasks/cc/vision/gesture_recognizer:gesture_recognizer_result",
+    ],
+)
+
+cc_test(
+    name = "gesture_recognizer_result_converter_test",
+    srcs = ["gesture_recognizer_result_converter_test.cc"],
+    linkstatic = 1,
+    deps = [
+        ":gesture_recognizer_result_converter",
+        "//mediapipe/framework/port:gtest",
+        "//mediapipe/tasks/c/vision/gesture_recognizer:gesture_recognizer_result",
+        "//mediapipe/tasks/cc/vision/gesture_recognizer:gesture_recognizer_result",
         "@com_google_googletest//:gtest_main",
     ],
 )
