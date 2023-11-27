@@ -7,4 +7,4 @@ tensorflow-addons
 tensorflow-datasets
 tensorflow-hub
 tensorflow-text
-tf-models-official>=2.13.1
+tf-models-official>=2.13.2
