@@ -156,6 +156,37 @@ cc_library(
 # TODO: open source hand joints graph
 
 cc_library(
+    name = "hand_roi_refinement_graph",
+    srcs = ["hand_roi_refinement_graph.cc"],
+    deps = [
+        "//mediapipe/calculators/tensor:image_to_tensor_calculator_cc_proto",
+        "//mediapipe/calculators/tensor:inference_calculator",
+        "//mediapipe/calculators/tensor:tensors_to_landmarks_calculator",
+        "//mediapipe/calculators/tensor:tensors_to_landmarks_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/api2/stream:detections_to_rects",
+        "//mediapipe/framework/api2/stream:landmarks_projection",
+        "//mediapipe/framework/api2/stream:landmarks_to_detection",
+        "//mediapipe/framework/api2/stream:rect_transformation",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/port:statusor",
+        "//mediapipe/tasks/cc/components/processors:image_preprocessing_graph",
+        "//mediapipe/tasks/cc/components/processors/proto:image_preprocessing_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/core:model_task_graph",
+        "//mediapipe/tasks/cc/vision/hand_landmarker/proto:hand_roi_refinement_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/vision/utils:image_tensor_specs",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
     name = "hand_landmarker_result",
     srcs = ["hand_landmarker_result.cc"],
     hdrs = ["hand_landmarker_result.h"],
