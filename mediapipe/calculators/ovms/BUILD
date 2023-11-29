@@ -17,38 +17,85 @@
 licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
+
 cc_library(
     name = "ovms_calculator",
-    srcs = ["modelapiovmsadapter.cc",
-            "modelapiovmsadapter.hpp",
-            "openvinomodelserversessioncalculator.cc",
-            "openvinoinferencecalculator.cc"],
+    srcs = [
+    ],
     deps = [
-        "//mediapipe/calculators/ovms:openvinoinferencecalculator_cc_proto",
-        "//mediapipe/calculators/ovms:openvinomodelserversessioncalculator_cc_proto",
         "//mediapipe/calculators/openvino:openvino_tensors_to_classification_calculator_cc_proto",
         "//mediapipe/calculators/openvino:openvino_tensors_to_detections_calculator_cc_proto",
         "//mediapipe/calculators/openvino:openvino_converter_calculator_cc_proto",
         "//mediapipe/calculators/openvino:openvino_converter_calculator",
         "//mediapipe/calculators/openvino:openvino_tensors_to_classification_calculator",
         "//mediapipe/calculators/openvino:openvino_tensors_to_detections_calculator",
-        "//mediapipe/framework:calculator_framework",
-        "@org_tensorflow//tensorflow/core:framework",
-        "//mediapipe/framework/port:status",
-        "//mediapipe/framework/formats:tensor", # Tensor GetContract
-        "@ovms//src:ovms_header",
-        "@model_api//:model_api",
-        "@org_tensorflow//tensorflow/lite:framework_stable", # to use tflite
-        "@org_tensorflow//tensorflow/lite/c:c_api",
+        ":modelapiovmsadapter",
+        ":openvinoinferencecalculator",
+        ":openvinomodelserversessioncalculator",
     ],
     copts = ["-Iexternal/ovms/src","-Isrc"],
     linkopts = ["-Lmediapipe/"],
     alwayslink = 1,
 )
 
+cc_library(
+    name = "modelapiovmsadapter",
+    srcs = [
+        "modelapiovmsadapter.cc"
+    ],
+    hdrs = [
+        "modelapiovmsadapter.hpp"
+    ],
+    deps = [
+        "//mediapipe/framework/port:logging", # TODO remove logs but need better error handling/reporting in Model API
+        "@ovms//src:ovms_header",
+        "@model_api//:model_api",
+        "@linux_openvino//:openvino",
+    ],
+    copts = ["-Iexternal/ovms/src","-Isrc"],
+)
+
+cc_library(
+    name = "openvinoinferencecalculator",
+    srcs = [
+        "openvinoinferencecalculator.cc"
+    ],
+    hdrs = [
+        "openvinoinferencecalculator.h"
+    ],
+    deps = [
+        ":modelapiovmsadapter",
+        ":openvinoinferencecalculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:tensor", # Tensor GetContract
+        "@linux_openvino//:openvino",
+        "@org_tensorflow//tensorflow/core:framework",
+        "@org_tensorflow//tensorflow/lite/c:c_api",
+    ],
+    copts = ["-Iexternal/ovms/src","-Isrc"],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "openvinomodelserversessioncalculator",
+    srcs = [
+        "openvinomodelserversessioncalculator.cc"
+    ],
+    hdrs = [
+        "openvinomodelserversessioncalculator.h"
+    ],
+    deps = [
+        ":modelapiovmsadapter",
+        ":openvinomodelserversessioncalculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "@linux_openvino//:openvino",
+    ],
+    copts = ["-Iexternal/ovms/src","-Isrc"],
+    alwayslink = 1,
+)
+
 load("@mediapipe//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library", "mediapipe_proto_library")
 
-# ovms
 mediapipe_proto_library(
     name = "openvinoinferencecalculator_proto",
     srcs = ["openvinoinferencecalculator.proto"],
@@ -66,4 +113,32 @@ mediapipe_proto_library(
         "@mediapipe//mediapipe/framework:calculator_options_proto",
         "@mediapipe//mediapipe/framework:calculator_proto",
     ],
+)
+
+cc_test(
+    name = "openvinoinferencecalculator_test",
+    srcs = ["openvinoinferencecalculator_test.cc",
+    ],
+    deps = [
+        ":ovms_calculator",
+        "@ovms//src:ovms_header",
+        "@ovms//src:ovms_lib",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+    ],
+    copts = ["-Iexternal/ovms/src","-Isrc"],
+)
+
+cc_test(
+    name = "openvinomodelserversessioncalculator_test",
+    srcs = ["openvinomodelserversessioncalculator_test.cc",
+    ],
+    deps = [
+        ":ovms_calculator",
+        "@ovms//src:ovms_header",
+        "@ovms//src:ovms_lib",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+    ],
+    copts = ["-Iexternal/ovms/src","-Isrc"],
 )

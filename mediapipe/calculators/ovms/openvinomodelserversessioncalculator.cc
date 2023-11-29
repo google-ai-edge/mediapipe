@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //*****************************************************************************
+#include "openvinomodelserversessioncalculator.h"
 #include <iostream>
 #include <memory>
 #include <mutex>
@@ -26,17 +27,13 @@
 #include "ovms.h"           // NOLINT
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#include "mediapipe/calculators/ovms/openvinomodelserversessioncalculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "modelapiovmsadapter.hpp"
-#include "mediapipe/calculators/ovms/openvinomodelserversessioncalculator.pb.h"
 #pragma GCC diagnostic pop
-// here we need to decide if we have several calculators (1 for OVMS repository, 1-N inside mediapipe)
-// for the one inside OVMS repo it makes sense to reuse code from ovms lib
 namespace mediapipe {
-
 using ovms::OVMSInferenceAdapter;
-using std::endl;
 
 const std::string SESSION_TAG{"SESSION"};
 ov::Core UNUSED_OV_CORE;
@@ -117,107 +114,94 @@ public:
     }
 };
 
-class OpenVINOModelServerSessionCalculator : public CalculatorBase {
-    std::shared_ptr<::InferenceAdapter> adapter;
-    std::unordered_map<std::string, std::string> outputNameToTag;
-    // TODO where to place members
-    OVMS_Server* cserver{nullptr};
-    static bool triedToStartOVMS;
-    static std::mutex loadingMtx;
-public:
-    static absl::Status GetContract(CalculatorContract* cc) {
-        LOG(INFO) << "OpenVINOModelServerSessionCalculator GetContract start";
-        RET_CHECK(cc->Inputs().GetTags().empty());
-        RET_CHECK(cc->Outputs().GetTags().empty());
-        cc->OutputSidePackets().Tag(SESSION_TAG.c_str()).Set<std::shared_ptr<::InferenceAdapter>>();
-        const auto& options = cc->Options<OpenVINOModelServerSessionCalculatorOptions>();
-        RET_CHECK(!options.servable_name().empty());
-        // TODO validate version from string
-        // TODO validate service url format
-        // this is for later support for remote server inference
-        LOG(INFO) << "OpenVINOModelServerSessionCalculator GetContract end";
-        return absl::OkStatus();
+absl::Status OpenVINOModelServerSessionCalculator::GetContract(CalculatorContract* cc) {
+    LOG(INFO) << "OpenVINOModelServerSessionCalculator GetContract start";
+    RET_CHECK(cc->Inputs().GetTags().empty());
+    RET_CHECK(cc->Outputs().GetTags().empty());
+    cc->OutputSidePackets().Tag(SESSION_TAG.c_str()).Set<std::shared_ptr<::InferenceAdapter>>();
+    const auto& options = cc->Options<OpenVINOModelServerSessionCalculatorOptions>();
+    RET_CHECK(!options.servable_name().empty());
+    LOG(INFO) << "OpenVINOModelServerSessionCalculator GetContract end";
+    return absl::OkStatus();
+}
+
+absl::Status OpenVINOModelServerSessionCalculator::Close(CalculatorContext* cc) {
+    LOG(INFO) << "OpenVINOModelServerSessionCalculator Close";
+    return absl::OkStatus();
+}
+absl::Status OpenVINOModelServerSessionCalculator::Open(CalculatorContext* cc) {
+    LOG(INFO) << "OpenVINOModelServerSessionCalculator Open start";
+    for (CollectionItemId id = cc->Inputs().BeginId();
+         id < cc->Inputs().EndId(); ++id) {
+        if (!cc->Inputs().Get(id).Header().IsEmpty()) {
+            cc->Outputs().Get(id).SetHeader(cc->Inputs().Get(id).Header());
+        }
+    }
+    if (cc->OutputSidePackets().NumEntries() != 0) {
+        for (CollectionItemId id = cc->InputSidePackets().BeginId();
+             id < cc->InputSidePackets().EndId(); ++id) {
+            cc->OutputSidePackets().Get(id).Set(cc->InputSidePackets().Get(id));
+        }
+    }
+    cc->SetOffset(TimestampDiff(0));
+
+    const auto& options = cc->Options<OpenVINOModelServerSessionCalculatorOptions>();
+    // if config is in calc then we start the server
+    LOG(INFO) << "Will check if we want to start server";
+    if (!options.server_config().empty()) {
+        // Lock access to server from multiple calculator instances during the model loading phase
+        std::unique_lock<std::mutex> lk(OpenVINOModelServerSessionCalculator::loadingMtx);
+        bool isServerReady = false;
+        bool isServerLive = false;
+        OVMS_ServerNew(&cserver);
+
+        ASSERT_CAPI_STATUS_NULL(OVMS_ServerLive(cserver, &isServerLive));
+
+        if (triedToStartOVMS) {
+            RET_CHECK(isServerLive);
+        } else if (!isServerLive) {
+            LOG(INFO) << "Will start new server";
+            triedToStartOVMS = true;
+            SettingsGuard guard;
+            OVMS_ServerSettingsNew(&guard.serverSettings);
+            OVMS_ModelsSettingsNew(&guard.modelsSettings);
+            OVMS_ModelsSettingsSetConfigPath(guard.modelsSettings, options.server_config().c_str());
+            LOG(INFO) << "state config file:" << options.server_config();
+            OVMS_ServerSettingsSetLogLevel(guard.serverSettings, OVMS_LOG_DEBUG);
+
+            ASSERT_CAPI_STATUS_NULL(OVMS_ServerStartFromConfigurationFile(cserver, guard.serverSettings, guard.modelsSettings));
+
+            ASSERT_CAPI_STATUS_NULL(OVMS_ServerReady(cserver, &isServerReady));
+            RET_CHECK(isServerReady);
+            LOG(INFO) << "Server started";
+        }
+    }
+    const std::string& servableName = options.servable_name();
+    const std::string& servableVersionStr = options.servable_version();
+    auto servableVersionOpt = stou32(servableVersionStr);
+    // 0 means default
+    uint32_t servableVersion = servableVersionOpt.value_or(0);
+    auto session = std::make_shared<OVMSInferenceAdapter>(servableName, servableVersion);
+    try {
+        session->loadModel(nullptr, UNUSED_OV_CORE, "UNUSED", {});
+    } catch (const std::exception& e) {
+        LOG(INFO) << "Caught exception with message: " << e.what();
+        RET_CHECK(false);
+    } catch (...) {
+        LOG(INFO) << "Caught unknown exception";
+        RET_CHECK(false);
     }
 
-    absl::Status Close(CalculatorContext* cc) final {
-        LOG(INFO) << "OpenVINOModelServerSessionCalculator Close";
-        return absl::OkStatus();
-    }
-    absl::Status Open(CalculatorContext* cc) final {
-        LOG(INFO) << "OpenVINOModelServerSessionCalculator Open start";
-        for (CollectionItemId id = cc->Inputs().BeginId();
-             id < cc->Inputs().EndId(); ++id) {
-            if (!cc->Inputs().Get(id).Header().IsEmpty()) {
-                cc->Outputs().Get(id).SetHeader(cc->Inputs().Get(id).Header());
-            }
-        }
-        if (cc->OutputSidePackets().NumEntries() != 0) {
-            for (CollectionItemId id = cc->InputSidePackets().BeginId();
-                 id < cc->InputSidePackets().EndId(); ++id) {
-                cc->OutputSidePackets().Get(id).Set(cc->InputSidePackets().Get(id));
-            }
-        }
-        cc->SetOffset(TimestampDiff(0));
+    LOG(INFO) << "OpenVINOModelServerSessionCalculator create adapter";
+    cc->OutputSidePackets().Tag(SESSION_TAG.c_str()).Set(MakePacket<std::shared_ptr<InferenceAdapter>>(session));
+    LOG(INFO) << "OpenVINOModelServerSessionCalculator Open end";
+    return absl::OkStatus();
+}
 
-        const auto& options = cc->Options<OpenVINOModelServerSessionCalculatorOptions>();
-        // if config is in calc then we start the server
-        LOG(INFO) << "Will check if we want to start server";
-        if (!options.server_config().empty()) {
-            // Lock access to server from multiple calculator instances during the model loading phase
-            std::unique_lock<std::mutex> lk(OpenVINOModelServerSessionCalculator::loadingMtx);
-            bool isServerReady = false;
-            bool isServerLive = false;
-            OVMS_ServerNew(&cserver);
-
-            ASSERT_CAPI_STATUS_NULL(OVMS_ServerLive(cserver, &isServerLive));
-
-            if (triedToStartOVMS) {
-                RET_CHECK(isServerLive);
-            } else if (!isServerLive) {
-                LOG(INFO) << "Will start new server";
-                triedToStartOVMS = true;
-                SettingsGuard guard;
-                OVMS_ServerSettingsNew(&guard.serverSettings);
-                OVMS_ModelsSettingsNew(&guard.modelsSettings);
-                OVMS_ModelsSettingsSetConfigPath(guard.modelsSettings, options.server_config().c_str());
-                LOG(INFO) << "state config file:" << options.server_config();
-                OVMS_ServerSettingsSetLogLevel(guard.serverSettings, OVMS_LOG_DEBUG);
-
-                ASSERT_CAPI_STATUS_NULL(OVMS_ServerStartFromConfigurationFile(cserver, guard.serverSettings, guard.modelsSettings));
-
-                ASSERT_CAPI_STATUS_NULL(OVMS_ServerReady(cserver, &isServerReady));
-                RET_CHECK(isServerReady);
-                LOG(INFO) << "Server started";
-            }
-        }
-
-        const std::string& servableName = options.servable_name();
-        const std::string& servableVersionStr = options.servable_version();
-        auto servableVersionOpt = stou32(servableVersionStr);
-        // 0 means default
-        uint32_t servableVersion = servableVersionOpt.value_or(0);
-        auto session = std::make_shared<OVMSInferenceAdapter>(servableName, servableVersion);
-        try {
-            session->loadModel(nullptr, UNUSED_OV_CORE, "UNUSED", {});
-        } catch (const std::exception& e) {
-            LOG(INFO) << "Catched exception with message: " << e.what();
-            RET_CHECK(false);
-        } catch (...) {
-            LOG(INFO) << "Catched unknown exception";
-            RET_CHECK(false);
-        }
-
-        LOG(INFO) << "OpenVINOModelServerSessionCalculator create adapter";
-        cc->OutputSidePackets().Tag(SESSION_TAG.c_str()).Set(MakePacket<std::shared_ptr<InferenceAdapter>>(session));
-        LOG(INFO) << "OpenVINOModelServerSessionCalculator Open end";
-        return absl::OkStatus();
-    }
-
-    absl::Status Process(CalculatorContext* cc) final {
-        LOG(INFO) << "OpenVINOModelServerSessionCalculator Process";
-        return absl::OkStatus();
-    }
-};
+absl::Status OpenVINOModelServerSessionCalculator::Process(CalculatorContext* cc) {
+    LOG(INFO) << "OpenVINOModelServerSessionCalculator Process";
+    return absl::OkStatus();
+}
 
 bool OpenVINOModelServerSessionCalculator::triedToStartOVMS = false;
 std::mutex OpenVINOModelServerSessionCalculator::loadingMtx;

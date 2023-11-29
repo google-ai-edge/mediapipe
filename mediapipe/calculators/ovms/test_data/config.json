@@ -1,0 +1,10 @@
+{
+    "model_config_list" : [
+        {
+            "config": {
+                "name": "dummy",
+                "base_path": "./dummy"
+            }
+        }
+    ]
+}

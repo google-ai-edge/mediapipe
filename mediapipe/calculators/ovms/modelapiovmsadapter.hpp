@@ -26,15 +26,11 @@
 #include <adapters/inference_adapter.h>  // TODO fix path  model_api/model_api/cpp/adapters/include/adapters/inference_adapter.h
 #include <openvino/openvino.hpp>
 
-#include "ovms.h"  // NOLINT
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/port/canonical_errors.h"
-#pragma GCC diagnostic pop
 // here we need to decide if we have several calculators (1 for OVMS repository, 1-N inside mediapipe)
 // for the one inside OVMS repo it makes sense to reuse code from ovms lib
 
+class OVMS_Server_;
+typedef struct OVMS_Server_ OVMS_Server;
 namespace mediapipe {
 namespace ovms {
 
