@@ -24,3 +24,15 @@ objc_library(
         "//mediapipe/tasks/ios/core:MPPTaskOptions",
     ],
 )
+
+objc_library(
+    name = "MPPInteractiveSegmenter",
+    hdrs = ["sources/MPPInteractiveSegmenter.h"],
+    module_name = "MPPInteractiveSegmenter",
+    deps = [
+        ":MPPInteractiveSegmenterOptions",
+        "//mediapipe/tasks/ios/vision/components/containers:MPPRegionOfInterest",
+        "//mediapipe/tasks/ios/vision/core:MPPImage",
+        "//mediapipe/tasks/ios/vision/image_segmenter:MPPImageSegmenterResult",
+    ],
+)
