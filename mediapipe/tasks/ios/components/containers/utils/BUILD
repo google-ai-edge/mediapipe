@@ -16,6 +16,7 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
 
+
 objc_library(
     name = "MPPCategoryHelpers",
     srcs = ["sources/MPPCategory+Helpers.mm"],
@@ -82,5 +83,17 @@ objc_library(
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
         "//mediapipe/tasks/ios/components/containers:MPPLandmark",
+    ],
+)
+
+objc_library(
+    name = "MPPRegionOfInterestHelpers",
+    srcs = ["sources/MPPRegionOfInterest+Helpers.mm"],
+    hdrs = ["sources/MPPRegionOfInterest+Helpers.h"],
+    deps = [
+        "//mediapipe/util:render_data_cc_proto",
+        "//mediapipe/tasks/ios/common:MPPCommon",
+        "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
+        "//mediapipe/tasks/ios/components/containers:MPPRegionOfInterest",
     ],
 )
