@@ -16,7 +16,6 @@ limitations under the License.
 #include "mediapipe/tasks/c/components/containers/gesture_recognizer_result_converter.h"
 
 #include <cstdint>
-#include <cstdlib>
 
 #include "mediapipe/tasks/c/components/containers/category_converter.h"
 #include "mediapipe/tasks/c/components/containers/landmark_converter.h"

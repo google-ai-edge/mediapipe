@@ -23,28 +23,28 @@ namespace mediapipe::tasks::c::components::containers {
 
 void CppConvertToLandmark(
     const mediapipe::tasks::components::containers::Landmark& in,
-    Landmark* out);
+    ::Landmark* out);
 
 void CppConvertToNormalizedLandmark(
     const mediapipe::tasks::components::containers::NormalizedLandmark& in,
-    NormalizedLandmark* out);
+    ::NormalizedLandmark* out);
 
 void CppConvertToLandmarks(
     const std::vector<mediapipe::tasks::components::containers::Landmark>& in,
-    Landmarks* out);
+    ::Landmarks* out);
 
 void CppConvertToNormalizedLandmarks(
     const std::vector<
         mediapipe::tasks::components::containers::NormalizedLandmark>& in,
-    NormalizedLandmarks* out);
+    ::NormalizedLandmarks* out);
 
-void CppCloseLandmark(struct Landmark* in);
+void CppCloseLandmark(struct ::Landmark* in);
 
-void CppCloseLandmarks(struct Landmarks* in);
+void CppCloseLandmarks(struct ::Landmarks* in);
 
-void CppCloseNormalizedLandmark(struct NormalizedLandmark* in);
+void CppCloseNormalizedLandmark(struct ::NormalizedLandmark* in);
 
-void CppCloseNormalizedLandmarks(struct NormalizedLandmarks* in);
+void CppCloseNormalizedLandmarks(struct ::NormalizedLandmarks* in);
 
 }  // namespace mediapipe::tasks::c::components::containers
 

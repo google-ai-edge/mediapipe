@@ -18,19 +18,13 @@ limitations under the License.
 #include <cstring>
 
 #include "mediapipe/tasks/c/components/containers/landmark.h"
-
-typedef Landmark LandmarkC;
-typedef NormalizedLandmark NormalizedLandmarkC;
-typedef Landmarks LandmarksC;
-typedef NormalizedLandmarks NormalizedLandmarksC;
-
 #include "mediapipe/tasks/cc/components/containers/landmark.h"
 
 namespace mediapipe::tasks::c::components::containers {
 
 void CppConvertToLandmark(
     const mediapipe::tasks::components::containers::Landmark& in,
-    LandmarkC* out) {
+    ::Landmark* out) {
   out->x = in.x;
   out->y = in.y;
   out->z = in.z;
@@ -54,7 +48,7 @@ void CppConvertToLandmark(
 
 void CppConvertToNormalizedLandmark(
     const mediapipe::tasks::components::containers::NormalizedLandmark& in,
-    NormalizedLandmarkC* out) {
+    ::NormalizedLandmark* out) {
   out->x = in.x;
   out->y = in.y;
   out->z = in.z;
@@ -78,9 +72,9 @@ void CppConvertToNormalizedLandmark(
 
 void CppConvertToLandmarks(
     const std::vector<mediapipe::tasks::components::containers::Landmark>& in,
-    LandmarksC* out) {
+    ::Landmarks* out) {
   out->landmarks_count = in.size();
-  out->landmarks = new LandmarkC[out->landmarks_count];
+  out->landmarks = new ::Landmark[out->landmarks_count];
   for (uint32_t i = 0; i < out->landmarks_count; ++i) {
     CppConvertToLandmark(in[i], &out->landmarks[i]);
   }
@@ -89,22 +83,22 @@ void CppConvertToLandmarks(
 void CppConvertToNormalizedLandmarks(
     const std::vector<
         mediapipe::tasks::components::containers::NormalizedLandmark>& in,
-    NormalizedLandmarksC* out) {
+    ::NormalizedLandmarks* out) {
   out->landmarks_count = in.size();
-  out->landmarks = new NormalizedLandmarkC[out->landmarks_count];
+  out->landmarks = new ::NormalizedLandmark[out->landmarks_count];
   for (uint32_t i = 0; i < out->landmarks_count; ++i) {
     CppConvertToNormalizedLandmark(in[i], &out->landmarks[i]);
   }
 }
 
-void CppCloseLandmark(LandmarkC* in) {
+void CppCloseLandmark(::Landmark* in) {
   if (in && in->name) {
     free(in->name);
     in->name = nullptr;
   }
 }
 
-void CppCloseLandmarks(LandmarksC* in) {
+void CppCloseLandmarks(::Landmarks* in) {
   for (uint32_t i = 0; i < in->landmarks_count; ++i) {
     CppCloseLandmark(&in->landmarks[i]);
   }
@@ -113,14 +107,14 @@ void CppCloseLandmarks(LandmarksC* in) {
   in->landmarks_count = 0;
 }
 
-void CppCloseNormalizedLandmark(NormalizedLandmarkC* in) {
+void CppCloseNormalizedLandmark(::NormalizedLandmark* in) {
   if (in && in->name) {
     free(in->name);
     in->name = nullptr;
   }
 }
 
-void CppCloseNormalizedLandmarks(NormalizedLandmarksC* in) {
+void CppCloseNormalizedLandmarks(::NormalizedLandmarks* in) {
   for (uint32_t i = 0; i < in->landmarks_count; ++i) {
     CppCloseNormalizedLandmark(&in->landmarks[i]);
   }
