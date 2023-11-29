@@ -391,6 +391,7 @@ export class DrawingUtils {
   drawCategoryMask(
       mask: MPMask, categoryToColorMap: RGBAColor[],
       background?: RGBAColor|ImageSource): void;
+  /** @export */
   drawCategoryMask(
       mask: MPMask, categoryToColorMap: CategoryToColorMap,
       background: RGBAColor|ImageSource = [0, 0, 0, 255]): void {
@@ -480,6 +481,7 @@ export class DrawingUtils {
    * frame, you can reduce the cost of re-uploading these images by passing a
    * `HTMLCanvasElement` instead.
    *
+   * @export
    * @param mask A confidence mask that was returned from a segmentation task.
    * @param defaultTexture An image or a four-channel color that will be used
    *     when confidence values are low.

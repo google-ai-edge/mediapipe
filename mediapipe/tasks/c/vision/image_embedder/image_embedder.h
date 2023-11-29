@@ -62,12 +62,12 @@ struct ImageEmbedderOptions {
   //
   // A caller is responsible for closing image embedder result.
   typedef void (*result_callback_fn)(ImageEmbedderResult* result,
-                                     const MpImage image, int64_t timestamp_ms,
+                                     const MpImage& image, int64_t timestamp_ms,
                                      char* error_msg);
   result_callback_fn result_callback;
 };
 
-// Creates an ImageEmbedder from provided `options`.
+// Creates an ImageEmbedder from the provided `options`.
 // Returns a pointer to the image embedder on success.
 // If an error occurs, returns `nullptr` and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory

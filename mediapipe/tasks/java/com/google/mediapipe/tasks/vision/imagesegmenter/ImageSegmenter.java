@@ -15,7 +15,6 @@
 package com.google.mediapipe.tasks.vision.imagesegmenter;
 
 import android.content.Context;
-import android.util.Log;
 import com.google.auto.value.AutoValue;
 import com.google.mediapipe.proto.CalculatorOptionsProto.CalculatorOptions;
 import com.google.mediapipe.proto.CalculatorProto.CalculatorGraphConfig;

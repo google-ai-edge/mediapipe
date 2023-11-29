@@ -225,6 +225,7 @@ filegroup(
         "hand_detector_result_one_hand.pbtxt",
         "hand_detector_result_one_hand_rotated.pbtxt",
         "hand_detector_result_two_hands.pbtxt",
+        "male_full_height_hands_result_cpu.pbtxt",
         "pointing_up_landmarks.pbtxt",
         "pointing_up_rotated_landmarks.pbtxt",
         "portrait_expected_detection.pbtxt",
