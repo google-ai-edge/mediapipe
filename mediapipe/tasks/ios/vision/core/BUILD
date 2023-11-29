@@ -55,6 +55,8 @@ objc_library(
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/tasks/ios/vision/core/utils:MPPImageUtils",
+        "//mediapipe/tasks/ios/components/containers:MPPRegionOfInterest",
+        "//mediapipe/tasks/ios/components/containers/utils:MPPRegionOfInterestHelpers",
     ],
 )
 

@@ -14,6 +14,7 @@
 
 #import <Foundation/Foundation.h>
 
+#import "mediapipe/tasks/ios/components/containers/sources/MPPRegionOfInterest.h"
 #import "mediapipe/tasks/ios/vision/core/sources/MPPImage.h"
 
 #include "mediapipe/framework/formats/rect.pb.h"
@@ -72,5 +73,19 @@
  */
 + (mediapipe::Packet)createPacketWithNormalizedRect:(mediapipe::NormalizedRect &)normalizedRect
                             timestampInMilliseconds:(NSInteger)timestampInMilliseconds;
+
+/**
+ * Creates a MediapPipe Packet wrapping a `RenderData` constructed from an `MPPRegionOfInterest`.
+ *
+ * @param regionOfInterest The `MPPRegionOfInterest` to send to the MediaPipe graph.
+ * @param error Pointer to the memory location where errors if any should be saved. If @c NULL, no
+ * error will be saved.
+ *
+ * @return The MediaPipe packet containing the `RenderData` constructed from the given
+ * `MPPRegionOfInterest`.
+ */
++ (std::optional<mediapipe::Packet>)createRenderDataPacketWithRegionOfInterest:
+                                        (MPPRegionOfInterest *)regionOfInterest
+                                                                         error:(NSError **)error;
 
 @end
