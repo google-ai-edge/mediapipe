@@ -21,10 +21,9 @@ limitations under the License.
 
 namespace mediapipe::tasks::c::components::containers {
 
-TEST(GestureRecognizerResultConverterTest, ConvertsCustomResult) {
-  ::mediapipe::tasks::vision::gesture_recognizer::GestureRecognizerResult
-      cpp_result;
-
+void InitGestureRecognizerResult(
+    ::mediapipe::tasks::vision::gesture_recognizer::GestureRecognizerResult*
+        cpp_result) {
   // Initialize gestures
   Classification classification_for_gestures;
   classification_for_gestures.set_index(0);
@@ -33,7 +32,7 @@ TEST(GestureRecognizerResultConverterTest, ConvertsCustomResult) {
   classification_for_gestures.set_display_name("gesture_display_name_1");
   ClassificationList gestures_list;
   *gestures_list.add_classification() = classification_for_gestures;
-  cpp_result.gestures.push_back(gestures_list);
+  cpp_result->gestures.push_back(gestures_list);
 
   // Initialize handedness
   Classification classification_for_handedness;
@@ -43,7 +42,7 @@ TEST(GestureRecognizerResultConverterTest, ConvertsCustomResult) {
   classification_for_handedness.set_display_name("handeness_display_name_1");
   ClassificationList handedness_list;
   *handedness_list.add_classification() = classification_for_handedness;
-  cpp_result.handedness.push_back(handedness_list);
+  cpp_result->handedness.push_back(handedness_list);
 
   // Initialize hand_landmarks
   NormalizedLandmark normalized_landmark;
@@ -52,7 +51,7 @@ TEST(GestureRecognizerResultConverterTest, ConvertsCustomResult) {
   normalized_landmark.set_z(0.3f);
   NormalizedLandmarkList normalized_landmark_list;
   *normalized_landmark_list.add_landmark() = normalized_landmark;
-  cpp_result.hand_landmarks.push_back(normalized_landmark_list);
+  cpp_result->hand_landmarks.push_back(normalized_landmark_list);
 
   // Initialize hand_world_landmarks
   Landmark landmark;
@@ -62,7 +61,13 @@ TEST(GestureRecognizerResultConverterTest, ConvertsCustomResult) {
 
   LandmarkList landmark_list;
   *landmark_list.add_landmark() = landmark;
-  cpp_result.hand_world_landmarks.push_back(landmark_list);
+  cpp_result->hand_world_landmarks.push_back(landmark_list);
+}
+
+TEST(GestureRecognizerResultConverterTest, ConvertsCustomResult) {
+  ::mediapipe::tasks::vision::gesture_recognizer::GestureRecognizerResult
+      cpp_result;
+  InitGestureRecognizerResult(&cpp_result);
 
   GestureRecognizerResult c_result;
   CppConvertToGestureRecognizerResult(cpp_result, &c_result);
@@ -117,6 +122,27 @@ TEST(GestureRecognizerResultConverterTest, ConvertsCustomResult) {
   }
 
   CppCloseGestureRecognizerResult(&c_result);
+}
+
+TEST(GestureRecognizerResultConverterTest, FreesMemory) {
+  ::mediapipe::tasks::vision::gesture_recognizer::GestureRecognizerResult
+      cpp_result;
+  InitGestureRecognizerResult(&cpp_result);
+
+  GestureRecognizerResult c_result;
+  CppConvertToGestureRecognizerResult(cpp_result, &c_result);
+
+  EXPECT_NE(c_result.gestures, nullptr);
+  EXPECT_NE(c_result.handedness, nullptr);
+  EXPECT_NE(c_result.hand_landmarks, nullptr);
+  EXPECT_NE(c_result.hand_world_landmarks, nullptr);
+
+  CppCloseGestureRecognizerResult(&c_result);
+
+  EXPECT_EQ(c_result.gestures, nullptr);
+  EXPECT_EQ(c_result.handedness, nullptr);
+  EXPECT_EQ(c_result.hand_landmarks, nullptr);
+  EXPECT_EQ(c_result.hand_world_landmarks, nullptr);
 }
 
 }  // namespace mediapipe::tasks::c::components::containers
