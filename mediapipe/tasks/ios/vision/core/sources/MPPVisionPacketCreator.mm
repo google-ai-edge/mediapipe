@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #import "mediapipe/tasks/ios/vision/core/sources/MPPVisionPacketCreator.h"
+#import "mediapipe/tasks/ios/components/containers/utils/sources/MPPRegionOfInterest+Helpers.h"
 #import "mediapipe/tasks/ios/vision/core/utils/sources/MPPImage+Utils.h"
 
 #include "mediapipe/framework/formats/image.h"
@@ -21,6 +22,7 @@
 static const NSUInteger kMicrosecondsPerMillisecond = 1000;
 
 namespace {
+using ::mediapipe::RenderData;
 using ::mediapipe::Image;
 using ::mediapipe::ImageFrame;
 using ::mediapipe::MakePacket;
@@ -62,6 +64,18 @@ using ::mediapipe::Timestamp;
                  timestampInMilliseconds:(NSInteger)timestampInMilliseconds {
   return MakePacket<NormalizedRect>(std::move(normalizedRect))
       .At(Timestamp(int64(timestampInMilliseconds * kMicrosecondsPerMillisecond)));
+}
+
++ (std::optional<Packet>)createRenderDataPacketWithRegionOfInterest:
+                             (MPPRegionOfInterest *)regionOfInterest
+                                                              error:(NSError **)error {
+  std::optional<RenderData> renderData = [regionOfInterest getRenderDataWithError:error];
+
+  if (!renderData.has_value()) {
+    return std::nullopt;
+  }
+
+  return MakePacket<RenderData>(std::move(renderData.value()));
 }
 
 @end
