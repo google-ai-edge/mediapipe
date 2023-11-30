@@ -44,6 +44,33 @@ cc_test(
 )
 
 cc_library(
+    name = "landmark",
+    hdrs = ["landmark.h"],
+)
+
+cc_library(
+    name = "landmark_converter",
+    srcs = ["landmark_converter.cc"],
+    hdrs = ["landmark_converter.h"],
+    deps = [
+        ":landmark",
+        "//mediapipe/tasks/cc/components/containers:landmark",
+    ],
+)
+
+cc_test(
+    name = "landmark_converter_test",
+    srcs = ["landmark_converter_test.cc"],
+    deps = [
+        ":landmark",
+        ":landmark_converter",
+        "//mediapipe/framework/port:gtest",
+        "//mediapipe/tasks/cc/components/containers:landmark",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "rect",
     hdrs = ["rect.h"],
 )
@@ -142,7 +169,6 @@ cc_library(
         ":detection_result",
         ":keypoint",
         ":keypoint_converter",
-        ":rect",
         ":rect_converter",
         "//mediapipe/tasks/cc/components/containers:detection_result",
     ],

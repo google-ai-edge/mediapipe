@@ -13,22 +13,21 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#ifndef MEDIAPIPE_TASKS_C_COMPONENTS_CONTAINERS_CATEGORY_CONVERTER_H_
-#define MEDIAPIPE_TASKS_C_COMPONENTS_CONTAINERS_CATEGORY_CONVERTER_H_
+#ifndef MEDIAPIPE_TASKS_C_COMPONENTS_CONTAINERS_GESTURE_RECOGNIZER_RESULT_CONVERTER_H_
+#define MEDIAPIPE_TASKS_C_COMPONENTS_CONTAINERS_GESTURE_RECOGNIZER_RESULT_CONVERTER_H_
 
-#include "mediapipe/tasks/c/components/containers/category.h"
-#include "mediapipe/tasks/cc/components/containers/category.h"
+#include "mediapipe/tasks/c/vision/gesture_recognizer/gesture_recognizer_result.h"
+#include "mediapipe/tasks/cc/vision/gesture_recognizer/gesture_recognizer_result.h"
 
 namespace mediapipe::tasks::c::components::containers {
 
-void CppConvertToCategory(
-    const mediapipe::tasks::components::containers::Category& in,
-    Category* out);
+void CppConvertToGestureRecognizerResult(
+    const mediapipe::tasks::vision::gesture_recognizer::GestureRecognizerResult&
+        in,
+    GestureRecognizerResult* out);
 
-void CppCloseCategory(Category* in);
-
-void CppCloseCategories(Categories* in);
+void CppCloseGestureRecognizerResult(GestureRecognizerResult* result);
 
 }  // namespace mediapipe::tasks::c::components::containers
 
-#endif  // MEDIAPIPE_TASKS_C_COMPONENTS_CONTAINERS_CATEGORY_CONVERTER_H_
+#endif  // MEDIAPIPE_TASKS_C_COMPONENTS_CONTAINERS_GESTURE_RECOGNIZER_RESULT_CONVERTER_H_

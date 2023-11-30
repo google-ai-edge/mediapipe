@@ -186,6 +186,7 @@ filegroup(
         "face_landmarker.task",
         "face_landmarker_v2.task",
         "face_stylizer_color_ink.task",
+        "gesture_recognizer.task",
         "hair_segmentation.tflite",
         "hand_landmark_full.tflite",
         "hand_landmark_lite.tflite",
