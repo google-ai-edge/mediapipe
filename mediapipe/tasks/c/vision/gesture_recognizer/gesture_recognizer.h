@@ -100,7 +100,7 @@ MP_EXPORT void* gesture_recognizer_create(
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
 MP_EXPORT int gesture_recognizer_recognize_image(
-    void* recognizer, const MpImage* image, GestureRecognizerResult* result,
+    void* recognizer, const MpImage& image, GestureRecognizerResult* result,
     char** error_msg);
 
 // Performs gesture recognition on the provided video frame.
@@ -113,7 +113,7 @@ MP_EXPORT int gesture_recognizer_recognize_image(
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
 MP_EXPORT int gesture_recognizer_recognize_for_video(
-    void* recognizer, const MpImage* image, int64_t timestamp_ms,
+    void* recognizer, const MpImage& image, int64_t timestamp_ms,
     GestureRecognizerResult* result, char** error_msg);
 
 // Sends live image data to gesture recognition, and the results will be
@@ -135,7 +135,7 @@ MP_EXPORT int gesture_recognizer_recognize_for_video(
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
 MP_EXPORT int gesture_recognizer_recognize_async(void* recognizer,
-                                                 const MpImage* image,
+                                                 const MpImage& image,
                                                  int64_t timestamp_ms,
                                                  char** error_msg);
 

@@ -116,7 +116,7 @@ TEST(GestureRecognizerTest, ImageModeTest) {
                       .height = image_frame->Height()}};
 
   GestureRecognizerResult result;
-  gesture_recognizer_recognize_image(recognizer, &mp_image, &result,
+  gesture_recognizer_recognize_image(recognizer, mp_image, &result,
                                      /* error_msg */ nullptr);
   MatchesGestureRecognizerResult(&result, kScorePrecision, kLandmarkPrecision);
   gesture_recognizer_close_result(&result);
@@ -166,7 +166,7 @@ TEST(GestureRecognizerTest, VideoModeTest) {
 
   for (int i = 0; i < kIterations; ++i) {
     GestureRecognizerResult result;
-    gesture_recognizer_recognize_for_video(recognizer, &mp_image, i, &result,
+    gesture_recognizer_recognize_for_video(recognizer, mp_image, i, &result,
                                            /* error_msg */ nullptr);
 
     MatchesGestureRecognizerResult(&result, kScorePrecision,
@@ -242,7 +242,7 @@ TEST(GestureRecognizerTest, LiveStreamModeTest) {
                       .height = image_frame->Height()}};
 
   for (int i = 0; i < kIterations; ++i) {
-    EXPECT_GE(gesture_recognizer_recognize_async(recognizer, &mp_image, i,
+    EXPECT_GE(gesture_recognizer_recognize_async(recognizer, mp_image, i,
                                                  /* error_msg */ nullptr),
               0);
   }
@@ -311,8 +311,7 @@ TEST(GestureRecognizerTest, FailedRecognitionHandling) {
   const MpImage mp_image = {.type = MpImage::GPU_BUFFER, .gpu_buffer = {}};
   GestureRecognizerResult result;
   char* error_msg;
-  gesture_recognizer_recognize_image(recognizer, &mp_image, &result,
-                                     &error_msg);
+  gesture_recognizer_recognize_image(recognizer, mp_image, &result, &error_msg);
   EXPECT_THAT(error_msg, HasSubstr("GPU Buffer not supported yet"));
   free(error_msg);
   gesture_recognizer_close(recognizer, /* error_msg */ nullptr);

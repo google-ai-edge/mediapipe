@@ -47,18 +47,15 @@ void CppConvertToGestureRecognizerResult(
 
       CppCategory cpp_category;
       // Set fields from the Classification protobuf
-      if (classification.has_index()) {
-        cpp_category.index = classification.index();
-      }
-      if (classification.has_score()) {
-        cpp_category.score = classification.score();
-      }
-      if (classification.has_label()) {
-        cpp_category.category_name = classification.label();
-      }
-      if (classification.has_display_name()) {
-        cpp_category.display_name = classification.display_name();
-      }
+      cpp_category.index =
+          classification.has_index() ? classification.index() : 0;
+      cpp_category.score =
+          classification.has_score() ? classification.score() : 0.0f;
+      cpp_category.category_name =
+          classification.has_label() ? classification.label() : "";
+      cpp_category.display_name = classification.has_display_name()
+                                      ? classification.display_name()
+                                      : "";
 
       CppConvertToCategory(cpp_category, &out->gestures[i][j]);
     }
@@ -78,18 +75,15 @@ void CppConvertToGestureRecognizerResult(
 
       CppCategory cpp_category;
       // Set fields from the Classification protobuf
-      if (classification.has_index()) {
-        cpp_category.index = classification.index();
-      }
-      if (classification.has_score()) {
-        cpp_category.score = classification.score();
-      }
-      if (classification.has_label()) {
-        cpp_category.category_name = classification.label();
-      }
-      if (classification.has_display_name()) {
-        cpp_category.display_name = classification.display_name();
-      }
+      cpp_category.index =
+          classification.has_index() ? classification.index() : 0;
+      cpp_category.score =
+          classification.has_score() ? classification.score() : 0.0f;
+      cpp_category.category_name =
+          classification.has_label() ? classification.label() : "";
+      cpp_category.display_name = classification.has_display_name()
+                                      ? classification.display_name()
+                                      : "";
 
       CppConvertToCategory(cpp_category, &out->handedness[i][j]);
     }
