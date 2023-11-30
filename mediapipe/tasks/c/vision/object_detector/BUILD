@@ -63,3 +63,37 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
+
+# bazel build -c opt --linkopt -s --strip always --define MEDIAPIPE_DISABLE_GPU=1 \
+# //mediapipe/tasks/c/vision/object_detector:libobject_detector.so
+cc_binary(
+    name = "libobject_detector.so",
+    linkopts = [
+        "-Wl,-soname=libobject_detector.so",
+        "-fvisibility=hidden",
+    ],
+    linkshared = True,
+    tags = [
+        "manual",
+        "nobuilder",
+        "notap",
+    ],
+    deps = [":object_detector_lib"],
+)
+
+# bazel build --config darwin_arm64 -c opt --strip always --define MEDIAPIPE_DISABLE_GPU=1 \
+# //mediapipe/tasks/c/vision/object_detector:libobject_detector.dylib
+cc_binary(
+    name = "libobject_detector.dylib",
+    linkopts = [
+        "-Wl,-install_name,libobject_detector.dylib",
+        "-fvisibility=hidden",
+    ],
+    linkshared = True,
+    tags = [
+        "manual",
+        "nobuilder",
+        "notap",
+    ],
+    deps = [":object_detector_lib"],
+)

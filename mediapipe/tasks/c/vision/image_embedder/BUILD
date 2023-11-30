@@ -65,3 +65,37 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
+
+# bazel build -c opt --linkopt -s --strip always --define MEDIAPIPE_DISABLE_GPU=1 \
+# //mediapipe/tasks/c/vision/image_embedder:libimage_embedder.so
+cc_binary(
+    name = "libimage_embedder.so",
+    linkopts = [
+        "-Wl,-soname=libimage_embedder.so",
+        "-fvisibility=hidden",
+    ],
+    linkshared = True,
+    tags = [
+        "manual",
+        "nobuilder",
+        "notap",
+    ],
+    deps = [":image_embedder_lib"],
+)
+
+# bazel build --config darwin_arm64 -c opt --strip always --define MEDIAPIPE_DISABLE_GPU=1 \
+# //mediapipe/tasks/c/vision/image_embedder:libimage_embedder.dylib
+cc_binary(
+    name = "libimage_embedder.dylib",
+    linkopts = [
+        "-Wl,-install_name,libimage_embedder.dylib",
+        "-fvisibility=hidden",
+    ],
+    linkshared = True,
+    tags = [
+        "manual",
+        "nobuilder",
+        "notap",
+    ],
+    deps = [":image_embedder_lib"],
+)

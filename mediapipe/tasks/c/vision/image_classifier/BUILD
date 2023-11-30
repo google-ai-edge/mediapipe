@@ -64,3 +64,37 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
+
+# bazel build -c opt --linkopt -s --strip always --define MEDIAPIPE_DISABLE_GPU=1 \
+# //mediapipe/tasks/c/vision/image_classifier:libimage_classifier.so
+cc_binary(
+    name = "libimage_classifier.so",
+    linkopts = [
+        "-Wl,-soname=libimage_classifier.so",
+        "-fvisibility=hidden",
+    ],
+    linkshared = True,
+    tags = [
+        "manual",
+        "nobuilder",
+        "notap",
+    ],
+    deps = [":image_classifier_lib"],
+)
+
+# bazel build --config darwin_arm64 -c opt --strip always --define MEDIAPIPE_DISABLE_GPU=1 \
+# //mediapipe/tasks/c/vision/image_classifier:libimage_classifier.dylib
+cc_binary(
+    name = "libimage_classifier.dylib",
+    linkopts = [
+        "-Wl,-install_name,libimage_classifier.dylib",
+        "-fvisibility=hidden",
+    ],
+    linkshared = True,
+    tags = [
+        "manual",
+        "nobuilder",
+        "notap",
+    ],
+    deps = [":image_classifier_lib"],
+)
