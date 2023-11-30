@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#include "mediapipe/tasks/c/components/containers/language_detection_result_converter.h"
+#include "mediapipe/tasks/c/text/language_detector/language_detector_result_converter.h"
 
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/c/text/language_detector/language_detector.h"
@@ -21,8 +21,8 @@ limitations under the License.
 
 namespace mediapipe::tasks::c::components::containers {
 
-TEST(LanguageDetectionResultConverterTest,
-     ConvertsLanguageDetectionResultCustomResult) {
+TEST(LanguageDetectorResultConverterTest,
+     ConvertsLanguageDetectorResultCustomResult) {
   mediapipe::tasks::text::language_detector::LanguageDetectorResult
       cpp_detector_result = {{/* language_code= */ "fr",
                               /* probability= */ 0.5},
@@ -30,24 +30,24 @@ TEST(LanguageDetectionResultConverterTest,
                               /* probability= */ 0.5}};
 
   LanguageDetectorResult c_detector_result;
-  CppConvertToLanguageDetectionResult(cpp_detector_result, &c_detector_result);
+  CppConvertToLanguageDetectorResult(cpp_detector_result, &c_detector_result);
   EXPECT_NE(c_detector_result.predictions, nullptr);
   EXPECT_EQ(c_detector_result.predictions_count, 2);
   EXPECT_NE(c_detector_result.predictions[0].language_code, "fr");
   EXPECT_EQ(c_detector_result.predictions[0].probability, 0.5);
 
-  CppCloseLanguageDetectionResult(&c_detector_result);
+  CppCloseLanguageDetectorResult(&c_detector_result);
 }
 
-TEST(LanguageDetectionResultConverterTest, FreesMemory) {
+TEST(LanguageDetectorResultConverterTest, FreesMemory) {
   mediapipe::tasks::text::language_detector::LanguageDetectorResult
       cpp_detector_result = {{"fr", 0.5}};
 
   LanguageDetectorResult c_detector_result;
-  CppConvertToLanguageDetectionResult(cpp_detector_result, &c_detector_result);
+  CppConvertToLanguageDetectorResult(cpp_detector_result, &c_detector_result);
   EXPECT_NE(c_detector_result.predictions, nullptr);
 
-  CppCloseLanguageDetectionResult(&c_detector_result);
+  CppCloseLanguageDetectorResult(&c_detector_result);
   EXPECT_EQ(c_detector_result.predictions, nullptr);
 }
 

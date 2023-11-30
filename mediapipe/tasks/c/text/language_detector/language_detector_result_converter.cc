@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#include "mediapipe/tasks/c/components/containers/language_detection_result_converter.h"
+#include "mediapipe/tasks/c/text/language_detector/language_detector_result_converter.h"
 
 #include <cstdint>
 #include <cstdlib>
@@ -23,7 +23,7 @@ limitations under the License.
 
 namespace mediapipe::tasks::c::components::containers {
 
-void CppConvertToLanguageDetectionResult(
+void CppConvertToLanguageDetectorResult(
     const mediapipe::tasks::text::language_detector::LanguageDetectorResult& in,
     LanguageDetectorResult* out) {
   out->predictions_count = in.size();
@@ -42,7 +42,7 @@ void CppConvertToLanguageDetectionResult(
   }
 }
 
-void CppCloseLanguageDetectionResult(LanguageDetectorResult* in) {
+void CppCloseLanguageDetectorResult(LanguageDetectorResult* in) {
   for (uint32_t i = 0; i < in->predictions_count; ++i) {
     auto prediction_in = in->predictions[i];
 

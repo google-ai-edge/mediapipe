@@ -13,20 +13,20 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#ifndef MEDIAPIPE_TASKS_C_COMPONENTS_CONTAINERS_LANGUAGE_DETECTION_RESULT_CONVERTER_H_
-#define MEDIAPIPE_TASKS_C_COMPONENTS_CONTAINERS_LANGUAGE_DETECTION_RESULT_CONVERTER_H_
+#ifndef MEDIAPIPE_TASKS_C_COMPONENTS_CONTAINERS_LANGUAGE_DETECTOR_RESULT_CONVERTER_H_
+#define MEDIAPIPE_TASKS_C_COMPONENTS_CONTAINERS_LANGUAGE_DETECTOR_RESULT_CONVERTER_H_
 
 #include "mediapipe/tasks/c/text/language_detector/language_detector.h"
 #include "mediapipe/tasks/cc/text/language_detector/language_detector.h"
 
 namespace mediapipe::tasks::c::components::containers {
 
-void CppConvertToLanguageDetectionResult(
+void CppConvertToLanguageDetectorResult(
     const mediapipe::tasks::text::language_detector::LanguageDetectorResult& in,
     LanguageDetectorResult* out);
 
-void CppCloseLanguageDetectionResult(LanguageDetectorResult* in);
+void CppCloseLanguageDetectorResult(LanguageDetectorResult* in);
 
 }  // namespace mediapipe::tasks::c::components::containers
 
-#endif  // MEDIAPIPE_TASKS_C_COMPONENTS_CONTAINERS_LANGUAGE_DETECTION_RESULT_CONVERTER_H_
+#endif  // MEDIAPIPE_TASKS_C_COMPONENTS_CONTAINERS_LANGUAGE_DETECTOR_RESULT_CONVERTER_H_

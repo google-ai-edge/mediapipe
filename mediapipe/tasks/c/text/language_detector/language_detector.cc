@@ -20,9 +20,9 @@ limitations under the License.
 
 #include "absl/log/absl_log.h"
 #include "absl/status/status.h"
-#include "mediapipe/tasks/c/components/containers/language_detection_result_converter.h"
 #include "mediapipe/tasks/c/components/processors/classifier_options_converter.h"
 #include "mediapipe/tasks/c/core/base_options_converter.h"
+#include "mediapipe/tasks/c/text/language_detector/language_detector_result_converter.h"
 #include "mediapipe/tasks/cc/text/language_detector/language_detector.h"
 
 namespace mediapipe::tasks::c::text::language_detector {
@@ -30,9 +30,9 @@ namespace mediapipe::tasks::c::text::language_detector {
 namespace {
 
 using ::mediapipe::tasks::c::components::containers::
-    CppCloseLanguageDetectionResult;
+    CppCloseLanguageDetectorResult;
 using ::mediapipe::tasks::c::components::containers::
-    CppConvertToLanguageDetectionResult;
+    CppConvertToLanguageDetectorResult;
 using ::mediapipe::tasks::c::components::processors::
     CppConvertToClassifierOptions;
 using ::mediapipe::tasks::c::core::CppConvertToBaseOptions;
@@ -72,16 +72,16 @@ int CppLanguageDetectorDetect(void* detector, const char* utf8_str,
   auto cpp_detector = static_cast<LanguageDetector*>(detector);
   auto cpp_result = cpp_detector->Detect(utf8_str);
   if (!cpp_result.ok()) {
-    ABSL_LOG(ERROR) << "Language Detection failed: " << cpp_result.status();
+    ABSL_LOG(ERROR) << "Language Detector failed: " << cpp_result.status();
     return CppProcessError(cpp_result.status(), error_msg);
   }
 
-  CppConvertToLanguageDetectionResult(*cpp_result, result);
+  CppConvertToLanguageDetectorResult(*cpp_result, result);
   return 0;
 }
 
 void CppLanguageDetectorCloseResult(LanguageDetectorResult* result) {
-  CppCloseLanguageDetectionResult(result);
+  CppCloseLanguageDetectorResult(result);
 }
 
 int CppLanguageDetectorClose(void* detector, char** error_msg) {
