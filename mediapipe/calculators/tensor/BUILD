@@ -1555,12 +1555,37 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "tensors_to_segmentation_calculator_test_utils",
+    testonly = 1,
+    srcs = ["tensors_to_segmentation_calculator_test_utils.cc"],
+    hdrs = ["tensors_to_segmentation_calculator_test_utils.h"],
+    deps = [
+        ":tensors_to_segmentation_calculator_cc_proto",
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework/port:parse_text_proto",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "tensors_to_segmentation_calculator_test_utils_test",
+    srcs = ["tensors_to_segmentation_calculator_test_utils_test.cc"],
+    deps = [
+        ":tensors_to_segmentation_calculator_cc_proto",
+        ":tensors_to_segmentation_calculator_test_utils",
+        "//mediapipe/framework/port:gtest_main",
+    ],
+)
+
 cc_test(
     name = "tensors_to_segmentation_calculator_test",
     srcs = ["tensors_to_segmentation_calculator_test.cc"],
     deps = [
         ":tensors_to_segmentation_calculator",
         ":tensors_to_segmentation_calculator_cc_proto",
+        ":tensors_to_segmentation_calculator_test_utils",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_runner",
         "//mediapipe/framework:packet",
@@ -1571,10 +1596,6 @@ cc_test(
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:gtest_main",
-        "//mediapipe/framework/port:parse_text_proto",
-        "@com_google_absl//absl/log",
-        "@com_google_absl//absl/log:absl_log",
-        "@com_google_absl//absl/strings",
     ],
 )
 

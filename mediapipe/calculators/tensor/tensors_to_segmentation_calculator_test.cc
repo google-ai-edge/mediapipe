@@ -17,10 +17,8 @@
 #include <utility>
 #include <vector>
 
-#include "absl/log/absl_log.h"
-#include "absl/log/log.h"
-#include "absl/strings/substitute.h"
 #include "mediapipe/calculators/tensor/tensors_to_segmentation_calculator.pb.h"
+#include "mediapipe/calculators/tensor/tensors_to_segmentation_calculator_test_utils.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
 #include "mediapipe/framework/formats/image.h"
@@ -30,7 +28,6 @@
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/framework/timestamp.h"
 
@@ -40,58 +37,17 @@ namespace {
 using ::testing::SizeIs;
 using ::testing::TestWithParam;
 using Options = mediapipe::TensorsToSegmentationCalculatorOptions;
+namespace test_utils = ::mediapipe::tensors_to_segmentation_utils;
 
-std::string ActivationTypeToString(Options::Activation activation) {
-  switch (activation) {
-    case Options::NONE:
-      return "NONE";
-    case Options::SIGMOID:
-      return "SIGMOID";
-    case Options::SOFTMAX:
-      return "SOFTMAX";
-    default:
-      ABSL_LOG(FATAL) << "Unknown activation type: " << activation;
-      return "UNKNOWN";
-  }
-}
-
-struct FormattingTestCase {
-  std::string test_name;
-  std::vector<float> inputs;
-  std::vector<float> expected_outputs;
-  Options::Activation activation;
-  int rows = 1;
-  int cols = 1;
-  int rows_new = 1;
-  int cols_new = 1;
-  int channels = 1;
-  double max_abs_diff = 1e-7;
-};
-
-using TensorsToSegmentationCalculatorTest = TestWithParam<FormattingTestCase>;
+using TensorsToSegmentationCalculatorTest =
+    TestWithParam<test_utils::FormattingTestCase>;
 
 TEST_P(TensorsToSegmentationCalculatorTest, ParameterizedTests) {
   const auto& [test_name, inputs, expected_outputs, activation, rows, cols,
                rows_new, cols_new, channels, max_abs_diff] = GetParam();
 
   auto graph_config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(absl::Substitute(
-          R"pb(
-            input_stream: "tensors"
-            input_stream: "size"
-            node {
-              calculator: "TensorsToSegmentationCalculator"
-              input_stream: "TENSORS:tensors"
-              input_stream: "OUTPUT_SIZE:size"
-              output_stream: "MASK:image_as_mask"
-              options: {
-                [mediapipe.TensorsToSegmentationCalculatorOptions.ext] {
-                  activation: $0
-                }
-              }
-            }
-          )pb",
-          ActivationTypeToString(activation)));
+      test_utils::CreateGraphConfigForTest(/*test_gpu=*/false, activation);
 
   std::vector<Packet> output_packets;
   tool::AddVectorSink("image_as_mask", &graph_config, &output_packets);
@@ -151,7 +107,7 @@ TEST_P(TensorsToSegmentationCalculatorTest, ParameterizedTests) {
 
 INSTANTIATE_TEST_SUITE_P(
     TensorsToSegmentationCalculatorTests, TensorsToSegmentationCalculatorTest,
-    testing::ValuesIn<FormattingTestCase>({
+    testing::ValuesIn<test_utils::FormattingTestCase>({
         {.test_name = "NoActivationAndNoOutputResize",
          .inputs = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0,
                     12.0, 13.0, 14.0, 15.0, 16.0},
