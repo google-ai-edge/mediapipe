@@ -293,29 +293,29 @@ class HolisticLandmarkerOptions:
         base_options=base_options_proto
     )
     # Configure face detector and face landmarks detector options.
-    # holistic_landmarker_options_proto.face_detector_graph_options.min_detection_confidence = (
-    #     self.min_face_detection_confidence
-    # )
-    # holistic_landmarker_options_proto.face_detector_graph_options.min_suppression_threshold = (
-    #     self.min_face_suppression_threshold
-    # )
-    # holistic_landmarker_options_proto.face_landmarks_detector_graph_options.min_detection_confidence = (
-    #     self.min_face_landmarks_confidence
-    # )
-    # # Configure pose detector and pose landmarks detector options.
-    # holistic_landmarker_options_proto.pose_detector_graph_options.min_detection_confidence = (
-    #   self.min_pose_detection_confidence
-    # )
-    # holistic_landmarker_options_proto.pose_detector_graph_options.min_suppression_threshold = (
-    #   self.min_pose_suppression_threshold
-    # )
-    # holistic_landmarker_options_proto.face_landmarks_detector_graph_options.min_detection_confidence = (
-    #   self.min_pose_landmarks_confidence
-    # )
-    # # Configure hand landmarks detector options.
-    # holistic_landmarker_options_proto.hand_landmarks_detector_graph_options.min_detection_confidence = (
-    #   self.min_hand_landmarks_confidence
-    # )
+    holistic_landmarker_options_proto.face_detector_graph_options.min_detection_confidence = (
+        self.min_face_detection_confidence
+    )
+    holistic_landmarker_options_proto.face_detector_graph_options.min_suppression_threshold = (
+        self.min_face_suppression_threshold
+    )
+    holistic_landmarker_options_proto.face_landmarks_detector_graph_options.min_detection_confidence = (
+        self.min_face_landmarks_confidence
+    )
+    # Configure pose detector and pose landmarks detector options.
+    holistic_landmarker_options_proto.pose_detector_graph_options.min_detection_confidence = (
+      self.min_pose_detection_confidence
+    )
+    holistic_landmarker_options_proto.pose_detector_graph_options.min_suppression_threshold = (
+      self.min_pose_suppression_threshold
+    )
+    holistic_landmarker_options_proto.face_landmarks_detector_graph_options.min_detection_confidence = (
+      self.min_pose_landmarks_confidence
+    )
+    # Configure hand landmarks detector options.
+    holistic_landmarker_options_proto.hand_landmarks_detector_graph_options.min_detection_confidence = (
+      self.min_hand_landmarks_confidence
+    )
     return holistic_landmarker_options_proto
 
 
