@@ -26,14 +26,10 @@
 
 static MPPFileInfo *const kCatsAndDogsImageFileInfo =
     [[MPPFileInfo alloc] initWithName:@"cats_and_dogs" type:@"jpg"];
-static MPPFileInfo *const kCatGoldenImageFileInfo = [[MPPFileInfo alloc] initWithName:@"cat_mask"
-                                                                                 type:@"jpg"];
 static MPPFileInfo *const kCatsAndDogsMaskImage1FileInfo =
     [[MPPFileInfo alloc] initWithName:@"cats_and_dogs_mask_dog1" type:@"png"];
 static MPPFileInfo *const kCatsAndDogsMaskImage2FileInfo =
     [[MPPFileInfo alloc] initWithName:@"cats_and_dogs_mask_dog2" type:@"png"];
-static MPPFileInfo *const kSegmentationGoldenImageFileInfo =
-    [[MPPFileInfo alloc] initWithName:@"segmentation_golden_rotation0" type:@"png"];
 
 static MPPFileInfo *const kDeepLabModelFileInfo =
     [[MPPFileInfo alloc] initWithName:@"ptm_512_hdt_ptm_woid" type:@"tflite"];
