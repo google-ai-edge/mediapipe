@@ -15,9 +15,9 @@
 // Calculator converts from one-dimensional Tensor of DT_FLOAT to vector<float>
 // OR from (batched) two-dimensional Tensor of DT_FLOAT to vector<vector<float>.
 
+#include <cstdint>
 #include <memory>
 
-#include "absl/base/integral_types.h"
 #include "mediapipe/calculators/tensorflow/tensor_to_vector_int_calculator_options.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/status.h"
