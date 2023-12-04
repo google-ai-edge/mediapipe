@@ -82,8 +82,12 @@ class TaskInfo:
       )
     task_subgraph_options = calculator_options_pb2.CalculatorOptions()
     task_options_proto = self.task_options.to_pb2()
-    task_subgraph_options.Extensions[task_options_proto.ext].CopyFrom(
-        task_options_proto)
+
+    # For protobuf 2 compat.
+    if hasattr(task_options_proto, 'ext'):
+      task_subgraph_options.Extensions[task_options_proto.ext].CopyFrom(
+          task_options_proto)
+
     if not enable_flow_limiting:
       return calculator_pb2.CalculatorGraphConfig(
           node=[

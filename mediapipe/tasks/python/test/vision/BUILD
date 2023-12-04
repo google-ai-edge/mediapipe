@@ -195,6 +195,31 @@ py_test(
 )
 
 py_test(
+    name = "holistic_landmarker_test",
+    srcs = ["holistic_landmarker_test.py"],
+    data = [
+        "//mediapipe/tasks/testdata/vision:test_images",
+        "//mediapipe/tasks/testdata/vision:test_models",
+        "//mediapipe/tasks/testdata/vision:test_protos",
+    ],
+    tags = ["not_run:arm"],
+    deps = [
+        "//mediapipe/framework/formats:classification_py_pb2",
+        "//mediapipe/framework/formats:landmark_py_pb2",
+        "//mediapipe/python:_framework_bindings",
+        "//mediapipe/tasks/python/components/containers:category",
+        "//mediapipe/tasks/python/components/containers:landmark",
+        "//mediapipe/tasks/python/components/containers:rect",
+        "//mediapipe/tasks/python/core:base_options",
+        "//mediapipe/tasks/python/test:test_utils",
+        "//mediapipe/tasks/python/vision:holistic_landmarker",
+        "//mediapipe/tasks/python/vision/core:image_processing_options",
+        "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
+        "@com_google_protobuf//:protobuf_python",
+    ],
+)
+
+py_test(
     name = "face_aligner_test",
     srcs = ["face_aligner_test.py"],
     data = [

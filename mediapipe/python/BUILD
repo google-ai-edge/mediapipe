@@ -103,6 +103,7 @@ cc_library(
         "//mediapipe/tasks/cc/vision/interactive_segmenter:interactive_segmenter_graph",
         "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
         "//mediapipe/tasks/cc/vision/pose_landmarker:pose_landmarker_graph",
+        "//mediapipe/tasks/cc/vision/holistic_landmarker:holistic_landmarker_graph",
     ],
 )
 
