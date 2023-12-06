@@ -28,6 +28,7 @@
 #include "absl/container/flat_hash_set.h"
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
+#include "absl/log/check.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
@@ -890,12 +891,12 @@ absl::Status CalculatorGraph::WaitForObservedOutput() {
 }
 
 absl::Status CalculatorGraph::AddPacketToInputStream(
-    const std::string& stream_name, const Packet& packet) {
+    absl::string_view stream_name, const Packet& packet) {
   return AddPacketToInputStreamInternal(stream_name, packet);
 }
 
 absl::Status CalculatorGraph::AddPacketToInputStream(
-    const std::string& stream_name, Packet&& packet) {
+    absl::string_view stream_name, Packet&& packet) {
   return AddPacketToInputStreamInternal(stream_name, std::move(packet));
 }
 
@@ -918,14 +919,18 @@ absl::Status CalculatorGraph::SetInputStreamTimestampBound(
 // std::forward will deduce the correct type as we pass along packet.
 template <typename T>
 absl::Status CalculatorGraph::AddPacketToInputStreamInternal(
-    const std::string& stream_name, T&& packet) {
+    absl::string_view stream_name, T&& packet) {
+  auto stream_it = graph_input_streams_.find(stream_name);
   std::unique_ptr<GraphInputStream>* stream =
-      mediapipe::FindOrNull(graph_input_streams_, stream_name);
+      stream_it == graph_input_streams_.end() ? nullptr : &stream_it->second;
   RET_CHECK(stream).SetNoLogging() << absl::Substitute(
       "AddPacketToInputStream called on input stream \"$0\" which is not a "
       "graph input stream.",
       stream_name);
-  int node_id = mediapipe::FindOrDie(graph_input_stream_node_ids_, stream_name);
+  auto node_id_it = graph_input_stream_node_ids_.find(stream_name);
+  ABSL_CHECK(node_id_it != graph_input_stream_node_ids_.end())
+      << "Map key not found: " << stream_name;
+  int node_id = node_id_it->second;
   ABSL_CHECK_GE(node_id, validated_graph_->CalculatorInfos().size());
   {
     absl::MutexLock lock(&full_input_streams_mutex_);
