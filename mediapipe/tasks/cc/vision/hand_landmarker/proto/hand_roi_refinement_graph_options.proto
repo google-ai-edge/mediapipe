@@ -19,6 +19,9 @@ package mediapipe.tasks.vision.hand_landmarker.proto;
 
 import "mediapipe/tasks/cc/core/proto/base_options.proto";
 
+option java_package = "com.google.mediapipe.tasks.vision.handlandmarker.proto";
+option java_outer_classname = "HandRoiRefinementGraphOptionsProto";
+
 message HandRoiRefinementGraphOptions {
   core.proto.BaseOptions base_options = 1;
 }
