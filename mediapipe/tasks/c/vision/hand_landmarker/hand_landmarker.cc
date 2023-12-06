@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#include "mediapipe/tasks/c/vision/gesture_recognizer/gesture_recognizer.h"
+#include "mediapipe/tasks/c/vision/hand_landmarker/hand_landmarker.h"
 
 #include <cstdint>
 #include <cstdlib>
@@ -25,32 +25,29 @@ limitations under the License.
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame.h"
-#include "mediapipe/tasks/c/components/processors/classifier_options_converter.h"
 #include "mediapipe/tasks/c/core/base_options_converter.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
-#include "mediapipe/tasks/c/vision/gesture_recognizer/gesture_recognizer_result.h"
-#include "mediapipe/tasks/c/vision/gesture_recognizer/gesture_recognizer_result_converter.h"
+#include "mediapipe/tasks/c/vision/hand_landmarker/hand_landmarker_result.h"
+#include "mediapipe/tasks/c/vision/hand_landmarker/hand_landmarker_result_converter.h"
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
-#include "mediapipe/tasks/cc/vision/gesture_recognizer/gesture_recognizer.h"
-#include "mediapipe/tasks/cc/vision/gesture_recognizer/gesture_recognizer_result.h"
+#include "mediapipe/tasks/cc/vision/hand_landmarker/hand_landmarker.h"
+#include "mediapipe/tasks/cc/vision/hand_landmarker/hand_landmarker_result.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 
-namespace mediapipe::tasks::c::vision::gesture_recognizer {
+namespace mediapipe::tasks::c::vision::hand_landmarker {
 
 namespace {
 
 using ::mediapipe::tasks::c::components::containers::
-    CppCloseGestureRecognizerResult;
+    CppCloseHandLandmarkerResult;
 using ::mediapipe::tasks::c::components::containers::
-    CppConvertToGestureRecognizerResult;
-using ::mediapipe::tasks::c::components::processors::
-    CppConvertToClassifierOptions;
+    CppConvertToHandLandmarkerResult;
 using ::mediapipe::tasks::c::core::CppConvertToBaseOptions;
 using ::mediapipe::tasks::vision::CreateImageFromBuffer;
 using ::mediapipe::tasks::vision::core::RunningMode;
-using ::mediapipe::tasks::vision::gesture_recognizer::GestureRecognizer;
-typedef ::mediapipe::tasks::vision::gesture_recognizer::GestureRecognizerResult
-    CppGestureRecognizerResult;
+using ::mediapipe::tasks::vision::hand_landmarker::HandLandmarker;
+typedef ::mediapipe::tasks::vision::hand_landmarker::HandLandmarkerResult
+    CppHandLandmarkerResult;
 
 int CppProcessError(absl::Status status, char** error_msg) {
   if (error_msg) {
@@ -61,28 +58,22 @@ int CppProcessError(absl::Status status, char** error_msg) {
 
 }  // namespace
 
-void CppConvertToGestureRecognizerOptions(
-    const GestureRecognizerOptions& in,
-    mediapipe::tasks::vision::gesture_recognizer::GestureRecognizerOptions*
-        out) {
+void CppConvertToHandLandmarkerOptions(
+    const HandLandmarkerOptions& in,
+    mediapipe::tasks::vision::hand_landmarker::HandLandmarkerOptions* out) {
   out->num_hands = in.num_hands;
   out->min_hand_detection_confidence = in.min_hand_detection_confidence;
   out->min_hand_presence_confidence = in.min_hand_presence_confidence;
   out->min_tracking_confidence = in.min_tracking_confidence;
-  CppConvertToClassifierOptions(in.canned_gestures_classifier_options,
-                                &out->canned_gestures_classifier_options);
-  CppConvertToClassifierOptions(in.custom_gestures_classifier_options,
-                                &out->custom_gestures_classifier_options);
 }
 
-GestureRecognizer* CppGestureRecognizerCreate(
-    const GestureRecognizerOptions& options, char** error_msg) {
-  auto cpp_options =
-      std::make_unique<::mediapipe::tasks::vision::gesture_recognizer::
-                           GestureRecognizerOptions>();
+HandLandmarker* CppHandLandmarkerCreate(const HandLandmarkerOptions& options,
+                                        char** error_msg) {
+  auto cpp_options = std::make_unique<
+      ::mediapipe::tasks::vision::hand_landmarker::HandLandmarkerOptions>();
 
   CppConvertToBaseOptions(options.base_options, &cpp_options->base_options);
-  CppConvertToGestureRecognizerOptions(options, cpp_options.get());
+  CppConvertToHandLandmarkerOptions(options, cpp_options.get());
   cpp_options->running_mode = static_cast<RunningMode>(options.running_mode);
 
   // Enable callback for processing live stream data when the running mode is
@@ -91,15 +82,15 @@ GestureRecognizer* CppGestureRecognizerCreate(
     if (options.result_callback == nullptr) {
       const absl::Status status = absl::InvalidArgumentError(
           "Provided null pointer to callback function.");
-      ABSL_LOG(ERROR) << "Failed to create GestureRecognizer: " << status;
+      ABSL_LOG(ERROR) << "Failed to create HandLandmarker: " << status;
       CppProcessError(status, error_msg);
       return nullptr;
     }
 
-    GestureRecognizerOptions::result_callback_fn result_callback =
+    HandLandmarkerOptions::result_callback_fn result_callback =
         options.result_callback;
     cpp_options->result_callback =
-        [result_callback](absl::StatusOr<CppGestureRecognizerResult> cpp_result,
+        [result_callback](absl::StatusOr<CppHandLandmarkerResult> cpp_result,
                           const Image& image, int64_t timestamp) {
           char* error_msg = nullptr;
 
@@ -112,8 +103,8 @@ GestureRecognizer* CppGestureRecognizerCreate(
           }
 
           // Result is valid for the lifetime of the callback function.
-          GestureRecognizerResult result;
-          CppConvertToGestureRecognizerResult(*cpp_result, &result);
+          HandLandmarkerResult result;
+          CppConvertToHandLandmarkerResult(*cpp_result, &result);
 
           const auto& image_frame = image.GetImageFrameSharedPtr();
           const MpImage mp_image = {
@@ -127,23 +118,21 @@ GestureRecognizer* CppGestureRecognizerCreate(
           result_callback(&result, mp_image, timestamp,
                           /* error_msg= */ nullptr);
 
-          CppCloseGestureRecognizerResult(&result);
+          CppCloseHandLandmarkerResult(&result);
         };
   }
 
-  auto recognizer = GestureRecognizer::Create(std::move(cpp_options));
-  if (!recognizer.ok()) {
-    ABSL_LOG(ERROR) << "Failed to create GestureRecognizer: "
-                    << recognizer.status();
-    CppProcessError(recognizer.status(), error_msg);
+  auto detector = HandLandmarker::Create(std::move(cpp_options));
+  if (!detector.ok()) {
+    ABSL_LOG(ERROR) << "Failed to create HandLandmarker: " << detector.status();
+    CppProcessError(detector.status(), error_msg);
     return nullptr;
   }
-  return recognizer->release();
+  return detector->release();
 }
 
-int CppGestureRecognizerRecognize(void* recognizer, const MpImage& image,
-                                  GestureRecognizerResult* result,
-                                  char** error_msg) {
+int CppHandLandmarkerDetect(void* detector, const MpImage& image,
+                               HandLandmarkerResult* result, char** error_msg) {
   if (image.type == MpImage::GPU_BUFFER) {
     const absl::Status status =
         absl::InvalidArgumentError("GPU Buffer not supported yet.");
@@ -162,21 +151,20 @@ int CppGestureRecognizerRecognize(void* recognizer, const MpImage& image,
     return CppProcessError(img.status(), error_msg);
   }
 
-  auto cpp_recognizer = static_cast<GestureRecognizer*>(recognizer);
-  auto cpp_result = cpp_recognizer->Recognize(*img);
+  auto cpp_detector = static_cast<HandLandmarker*>(detector);
+  auto cpp_result = cpp_detector->Detect(*img);
   if (!cpp_result.ok()) {
     ABSL_LOG(ERROR) << "Recognition failed: " << cpp_result.status();
     return CppProcessError(cpp_result.status(), error_msg);
   }
-  CppConvertToGestureRecognizerResult(*cpp_result, result);
+  CppConvertToHandLandmarkerResult(*cpp_result, result);
   return 0;
 }
 
-int CppGestureRecognizerRecognizeForVideo(void* recognizer,
-                                          const MpImage& image,
-                                          int64_t timestamp_ms,
-                                          GestureRecognizerResult* result,
-                                          char** error_msg) {
+int CppHandLandmarkerDetectForVideo(void* detector, const MpImage& image,
+                                       int64_t timestamp_ms,
+                                       HandLandmarkerResult* result,
+                                       char** error_msg) {
   if (image.type == MpImage::GPU_BUFFER) {
     absl::Status status =
         absl::InvalidArgumentError("GPU Buffer not supported yet");
@@ -195,18 +183,18 @@ int CppGestureRecognizerRecognizeForVideo(void* recognizer,
     return CppProcessError(img.status(), error_msg);
   }
 
-  auto cpp_recognizer = static_cast<GestureRecognizer*>(recognizer);
-  auto cpp_result = cpp_recognizer->RecognizeForVideo(*img, timestamp_ms);
+  auto cpp_detector = static_cast<HandLandmarker*>(detector);
+  auto cpp_result = cpp_detector->DetectForVideo(*img, timestamp_ms);
   if (!cpp_result.ok()) {
     ABSL_LOG(ERROR) << "Recognition failed: " << cpp_result.status();
     return CppProcessError(cpp_result.status(), error_msg);
   }
-  CppConvertToGestureRecognizerResult(*cpp_result, result);
+  CppConvertToHandLandmarkerResult(*cpp_result, result);
   return 0;
 }
 
-int CppGestureRecognizerRecognizeAsync(void* recognizer, const MpImage& image,
-                                       int64_t timestamp_ms, char** error_msg) {
+int CppHandLandmarkerDetectAsync(void* detector, const MpImage& image,
+                                    int64_t timestamp_ms, char** error_msg) {
   if (image.type == MpImage::GPU_BUFFER) {
     absl::Status status =
         absl::InvalidArgumentError("GPU Buffer not supported yet");
@@ -225,73 +213,71 @@ int CppGestureRecognizerRecognizeAsync(void* recognizer, const MpImage& image,
     return CppProcessError(img.status(), error_msg);
   }
 
-  auto cpp_recognizer = static_cast<GestureRecognizer*>(recognizer);
-  auto cpp_result = cpp_recognizer->RecognizeAsync(*img, timestamp_ms);
+  auto cpp_detector = static_cast<HandLandmarker*>(detector);
+  auto cpp_result = cpp_detector->DetectAsync(*img, timestamp_ms);
   if (!cpp_result.ok()) {
-    ABSL_LOG(ERROR) << "Data preparation for the gesture recognition failed: "
+    ABSL_LOG(ERROR) << "Data preparation for the landmark detection failed: "
                     << cpp_result;
     return CppProcessError(cpp_result, error_msg);
   }
   return 0;
 }
 
-void CppGestureRecognizerCloseResult(GestureRecognizerResult* result) {
-  CppCloseGestureRecognizerResult(result);
+void CppHandLandmarkerCloseResult(HandLandmarkerResult* result) {
+  CppCloseHandLandmarkerResult(result);
 }
 
-int CppGestureRecognizerClose(void* recognizer, char** error_msg) {
-  auto cpp_recognizer = static_cast<GestureRecognizer*>(recognizer);
-  auto result = cpp_recognizer->Close();
+int CppHandLandmarkerClose(void* detector, char** error_msg) {
+  auto cpp_detector = static_cast<HandLandmarker*>(detector);
+  auto result = cpp_detector->Close();
   if (!result.ok()) {
-    ABSL_LOG(ERROR) << "Failed to close GestureRecognizer: " << result;
+    ABSL_LOG(ERROR) << "Failed to close HandLandmarker: " << result;
     return CppProcessError(result, error_msg);
   }
-  delete cpp_recognizer;
+  delete cpp_detector;
   return 0;
 }
 
-}  // namespace mediapipe::tasks::c::vision::gesture_recognizer
+}  // namespace mediapipe::tasks::c::vision::hand_landmarker
 
 extern "C" {
 
-void* gesture_recognizer_create(struct GestureRecognizerOptions* options,
-                                char** error_msg) {
-  return mediapipe::tasks::c::vision::gesture_recognizer::
-      CppGestureRecognizerCreate(*options, error_msg);
+void* hand_landmarker_create(struct HandLandmarkerOptions* options,
+                             char** error_msg) {
+  return mediapipe::tasks::c::vision::hand_landmarker::CppHandLandmarkerCreate(
+      *options, error_msg);
 }
 
-int gesture_recognizer_recognize_image(void* recognizer, const MpImage& image,
-                                       GestureRecognizerResult* result,
-                                       char** error_msg) {
-  return mediapipe::tasks::c::vision::gesture_recognizer::
-      CppGestureRecognizerRecognize(recognizer, image, result, error_msg);
+int hand_landmarker_detect_image(void* detector, const MpImage& image,
+                                 HandLandmarkerResult* result,
+                                 char** error_msg) {
+  return mediapipe::tasks::c::vision::hand_landmarker::
+      CppHandLandmarkerDetect(detector, image, result, error_msg);
 }
 
-int gesture_recognizer_recognize_for_video(void* recognizer,
-                                           const MpImage& image,
-                                           int64_t timestamp_ms,
-                                           GestureRecognizerResult* result,
-                                           char** error_msg) {
-  return mediapipe::tasks::c::vision::gesture_recognizer::
-      CppGestureRecognizerRecognizeForVideo(recognizer, image, timestamp_ms,
-                                            result, error_msg);
-}
-
-int gesture_recognizer_recognize_async(void* recognizer, const MpImage& image,
-                                       int64_t timestamp_ms, char** error_msg) {
-  return mediapipe::tasks::c::vision::gesture_recognizer::
-      CppGestureRecognizerRecognizeAsync(recognizer, image, timestamp_ms,
+int hand_landmarker_detect_for_video(void* detector, const MpImage& image,
+                                     int64_t timestamp_ms,
+                                     HandLandmarkerResult* result,
+                                     char** error_msg) {
+  return mediapipe::tasks::c::vision::hand_landmarker::
+      CppHandLandmarkerDetectForVideo(detector, image, timestamp_ms, result,
                                          error_msg);
 }
 
-void gesture_recognizer_close_result(GestureRecognizerResult* result) {
-  mediapipe::tasks::c::vision::gesture_recognizer::
-      CppGestureRecognizerCloseResult(result);
+int hand_landmarker_detect_async(void* detector, const MpImage& image,
+                                 int64_t timestamp_ms, char** error_msg) {
+  return mediapipe::tasks::c::vision::hand_landmarker::
+      CppHandLandmarkerDetectAsync(detector, image, timestamp_ms, error_msg);
 }
 
-int gesture_recognizer_close(void* recognizer, char** error_ms) {
-  return mediapipe::tasks::c::vision::gesture_recognizer::
-      CppGestureRecognizerClose(recognizer, error_ms);
+void hand_landmarker_close_result(HandLandmarkerResult* result) {
+  mediapipe::tasks::c::vision::hand_landmarker::CppHandLandmarkerCloseResult(
+      result);
+}
+
+int hand_landmarker_close(void* detector, char** error_ms) {
+  return mediapipe::tasks::c::vision::hand_landmarker::CppHandLandmarkerClose(
+      detector, error_ms);
 }
 
 }  // extern "C"

@@ -95,6 +95,22 @@ TEST(GestureRecognizerResultConverterTest, ConvertsCustomResult) {
     }
   }
 
+  // Verify conversion of handedness
+  EXPECT_NE(c_result.handedness, nullptr);
+  EXPECT_EQ(c_result.handedness_count, cpp_result.handedness.size());
+
+  for (uint32_t i = 0; i < c_result.handedness_count; ++i) {
+    EXPECT_EQ(c_result.handedness[i].categories_count,
+              cpp_result.handedness[i].classification_size());
+    for (uint32_t j = 0; j < c_result.handedness[i].categories_count; ++j) {
+      auto handedness = cpp_result.handedness[i].classification(j);
+      EXPECT_EQ(std::string(c_result.handedness[i].categories[j].category_name),
+                handedness.label());
+      EXPECT_FLOAT_EQ(c_result.handedness[i].categories[j].score,
+                      handedness.score());
+    }
+  }
+
   // Verify conversion of hand_landmarks
   EXPECT_NE(c_result.hand_landmarks, nullptr);
   EXPECT_EQ(c_result.hand_landmarks_count, cpp_result.hand_landmarks.size());
