@@ -31,3 +31,14 @@ objc_library(
     ],
 )
 
+objc_library(
+    name = "MPPImageEmbedderResultHelpers",
+    srcs = ["sources/MPPImageEmbedderResult+Helpers.mm"],
+    hdrs = ["sources/MPPImageEmbedderResult+Helpers.h"],
+    deps = [
+        "//mediapipe/framework:packet",
+        "//mediapipe/tasks/cc/components/containers/proto:embeddings_cc_proto",
+        "//mediapipe/tasks/ios/components/containers/utils:MPPEmbeddingResultHelpers",
+        "//mediapipe/tasks/ios/vision/image_embedder:MPPImageEmbedderResult",
+    ],
+)
