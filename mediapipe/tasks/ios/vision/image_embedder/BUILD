@@ -26,3 +26,14 @@ objc_library(
     ],
 )
 
+objc_library(
+    name = "MPPImageEmbedderOptions",
+    srcs = ["sources/MPPImageEmbedderOptions.m"],
+    hdrs = ["sources/MPPImageEmbedderOptions.h"],
+    deps = [
+        ":MPPImageEmbedderResult",
+        "//mediapipe/tasks/ios/core:MPPTaskOptions",
+        "//mediapipe/tasks/ios/vision/core:MPPRunningMode",
+    ],
+)
+
