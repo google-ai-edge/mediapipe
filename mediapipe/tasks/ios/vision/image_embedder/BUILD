@@ -37,3 +37,18 @@ objc_library(
     ],
 )
 
+objc_library(
+    name = "MPPImageEmbedder",
+    hdrs = ["sources/MPPImageEmbedder.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+        "-x objective-c++",
+    ],
+    module_name = "MPPImageEmbedder",
+    deps = [
+        ":MPPImageEmbedderOptions",
+        ":MPPImageEmbedderResult",
+        "//mediapipe/tasks/ios/vision/core:MPPImage",
+    ],
+)
