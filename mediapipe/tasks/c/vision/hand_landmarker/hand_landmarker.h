@@ -82,15 +82,15 @@ struct HandLandmarkerOptions {
 MP_EXPORT void* hand_landmarker_create(struct HandLandmarkerOptions* options,
                                        char** error_msg);
 
-// Performs gesture recognition on the input `image`. Returns `0` on success.
-// If an error occurs, returns an error code and sets the error parameter to an
-// an error message (if `error_msg` is not `nullptr`). You must free the memory
-// allocated for the error message.
-MP_EXPORT int hand_landmarker_detect_image(void* detector, const MpImage& image,
+// Performs hand landmark detection on the input `image`. Returns `0` on
+// success. If an error occurs, returns an error code and sets the error
+// parameter to an an error message (if `error_msg` is not `nullptr`). You must
+// free the memory allocated for the error message.
+MP_EXPORT int hand_landmarker_detect_image(void* landmarker, const MpImage& image,
                                            HandLandmarkerResult* result,
                                            char** error_msg);
 
-// Performs gesture recognition on the provided video frame.
+// Performs hand landmark detection on the provided video frame.
 // Only use this method when the HandLandmarker is created with the video
 // running mode.
 // The image can be of any size with format RGB or RGBA. It's required to
@@ -99,13 +99,13 @@ MP_EXPORT int hand_landmarker_detect_image(void* detector, const MpImage& image,
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT int hand_landmarker_detect_for_video(void* detector,
+MP_EXPORT int hand_landmarker_detect_for_video(void* landmarker,
                                                const MpImage& image,
                                                int64_t timestamp_ms,
                                                HandLandmarkerResult* result,
                                                char** error_msg);
 
-// Sends live image data to gesture recognition, and the results will be
+// Sends live image data to hand landmark detection, and the results will be
 // available via the `result_callback` provided in the HandLandmarkerOptions.
 // Only use this method when the HandLandmarker is created with the live
 // stream running mode.
@@ -115,15 +115,15 @@ MP_EXPORT int hand_landmarker_detect_for_video(void* detector,
 // increasing.
 // The `result_callback` provides:
 //   - The recognition results as an HandLandmarkerResult object.
-//   - The const reference to the corresponding input image that the gesture
-//     detector runs on. Note that the const reference to the image will no
+//   - The const reference to the corresponding input image that the hand
+//     landmarker runs on. Note that the const reference to the image will no
 //     longer be valid when the callback returns. To access the image data
 //     outside of the callback, callers need to make a copy of the image.
 //   - The input timestamp in milliseconds.
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT int hand_landmarker_detect_async(void* detector, const MpImage& image,
+MP_EXPORT int hand_landmarker_detect_async(void* landmarker, const MpImage& image,
                                            int64_t timestamp_ms,
                                            char** error_msg);
 
@@ -135,7 +135,7 @@ MP_EXPORT void hand_landmarker_close_result(HandLandmarkerResult* result);
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT int hand_landmarker_close(void* detector, char** error_msg);
+MP_EXPORT int hand_landmarker_close(void* landmarker, char** error_msg);
 
 #ifdef __cplusplus
 }  // extern C

@@ -90,8 +90,8 @@ TEST(HandLandmarkerTest, ImageModeTest) {
       /* min_tracking_confidence= */ 0.5,
   };
 
-  void* detector = hand_landmarker_create(&options, /* error_msg */ nullptr);
-  EXPECT_NE(detector, nullptr);
+  void* landmarker = hand_landmarker_create(&options, /* error_msg */ nullptr);
+  EXPECT_NE(landmarker, nullptr);
 
   const auto& image_frame = image->GetImageFrameSharedPtr();
   const MpImage mp_image = {
@@ -102,11 +102,11 @@ TEST(HandLandmarkerTest, ImageModeTest) {
                       .height = image_frame->Height()}};
 
   HandLandmarkerResult result;
-  hand_landmarker_detect_image(detector, mp_image, &result,
+  hand_landmarker_detect_image(landmarker, mp_image, &result,
                                /* error_msg */ nullptr);
   MatchesHandLandmarkerResult(&result, kScorePrecision, kLandmarkPrecision);
   hand_landmarker_close_result(&result);
-  hand_landmarker_close(detector, /* error_msg */ nullptr);
+  hand_landmarker_close(landmarker, /* error_msg */ nullptr);
 }
 
 TEST(HandLandmarkerTest, VideoModeTest) {
@@ -125,8 +125,8 @@ TEST(HandLandmarkerTest, VideoModeTest) {
       /* min_tracking_confidence= */ 0.5,
   };
 
-  void* detector = hand_landmarker_create(&options, /* error_msg */ nullptr);
-  EXPECT_NE(detector, nullptr);
+  void* landmarker = hand_landmarker_create(&options, /* error_msg */ nullptr);
+  EXPECT_NE(landmarker, nullptr);
 
   const auto& image_frame = image->GetImageFrameSharedPtr();
   const MpImage mp_image = {
@@ -138,13 +138,13 @@ TEST(HandLandmarkerTest, VideoModeTest) {
 
   for (int i = 0; i < kIterations; ++i) {
     HandLandmarkerResult result;
-    hand_landmarker_detect_for_video(detector, mp_image, i, &result,
+    hand_landmarker_detect_for_video(landmarker, mp_image, i, &result,
                                      /* error_msg */ nullptr);
 
     MatchesHandLandmarkerResult(&result, kScorePrecision, kLandmarkPrecision);
     hand_landmarker_close_result(&result);
   }
-  hand_landmarker_close(detector, /* error_msg */ nullptr);
+  hand_landmarker_close(landmarker, /* error_msg */ nullptr);
 }
 
 // A structure to support LiveStreamModeTest below. This structure holds a
@@ -154,16 +154,16 @@ TEST(HandLandmarkerTest, VideoModeTest) {
 // timestamp is greater than the previous one.
 struct LiveStreamModeCallback {
   static int64_t last_timestamp;
-  static void Fn(HandLandmarkerResult* detector_result, const MpImage& image,
+  static void Fn(HandLandmarkerResult* landmarker_result, const MpImage& image,
                  int64_t timestamp, char* error_msg) {
-    ASSERT_NE(detector_result, nullptr);
+    ASSERT_NE(landmarker_result, nullptr);
     ASSERT_EQ(error_msg, nullptr);
-    MatchesHandLandmarkerResult(detector_result, kScorePrecision,
+    MatchesHandLandmarkerResult(landmarker_result, kScorePrecision,
                                 kLandmarkPrecision);
     EXPECT_GT(image.image_frame.width, 0);
     EXPECT_GT(image.image_frame.height, 0);
     EXPECT_GT(timestamp, last_timestamp);
-    last_timestamp++;
+    ++last_timestamp;
   }
 };
 int64_t LiveStreamModeCallback::last_timestamp = -1;
@@ -186,8 +186,8 @@ TEST(HandLandmarkerTest, LiveStreamModeTest) {
       /* result_callback= */ LiveStreamModeCallback::Fn,
   };
 
-  void* detector = hand_landmarker_create(&options, /* error_msg */ nullptr);
-  EXPECT_NE(detector, nullptr);
+  void* landmarker = hand_landmarker_create(&options, /* error_msg */ nullptr);
+  EXPECT_NE(landmarker, nullptr);
 
   const auto& image_frame = image->GetImageFrameSharedPtr();
   const MpImage mp_image = {
@@ -198,11 +198,11 @@ TEST(HandLandmarkerTest, LiveStreamModeTest) {
                       .height = image_frame->Height()}};
 
   for (int i = 0; i < kIterations; ++i) {
-    EXPECT_GE(hand_landmarker_detect_async(detector, mp_image, i,
+    EXPECT_GE(hand_landmarker_detect_async(landmarker, mp_image, i,
                                            /* error_msg */ nullptr),
               0);
   }
-  hand_landmarker_close(detector, /* error_msg */ nullptr);
+  hand_landmarker_close(landmarker, /* error_msg */ nullptr);
 
   // Due to the flow limiter, the total of outputs might be smaller than the
   // number of iterations.
@@ -224,8 +224,8 @@ TEST(HandLandmarkerTest, InvalidArgumentHandling) {
   };
 
   char* error_msg;
-  void* detector = hand_landmarker_create(&options, &error_msg);
-  EXPECT_EQ(detector, nullptr);
+  void* landmarker = hand_landmarker_create(&options, &error_msg);
+  EXPECT_EQ(landmarker, nullptr);
 
   EXPECT_THAT(error_msg, HasSubstr("ExternalFile must specify"));
 
@@ -245,17 +245,17 @@ TEST(HandLandmarkerTest, FailedRecognitionHandling) {
       /* min_tracking_confidence= */ 0.5,
   };
 
-  void* detector = hand_landmarker_create(&options, /* error_msg */
-                                          nullptr);
-  EXPECT_NE(detector, nullptr);
+  void* landmarker = hand_landmarker_create(&options, /* error_msg */
+                                            nullptr);
+  EXPECT_NE(landmarker, nullptr);
 
   const MpImage mp_image = {.type = MpImage::GPU_BUFFER, .gpu_buffer = {}};
   HandLandmarkerResult result;
   char* error_msg;
-  hand_landmarker_detect_image(detector, mp_image, &result, &error_msg);
+  hand_landmarker_detect_image(landmarker, mp_image, &result, &error_msg);
   EXPECT_THAT(error_msg, HasSubstr("GPU Buffer not supported yet"));
   free(error_msg);
-  hand_landmarker_close(detector, /* error_msg */ nullptr);
+  hand_landmarker_close(landmarker, /* error_msg */ nullptr);
 }
 
 }  // namespace

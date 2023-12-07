@@ -122,17 +122,18 @@ HandLandmarker* CppHandLandmarkerCreate(const HandLandmarkerOptions& options,
         };
   }
 
-  auto detector = HandLandmarker::Create(std::move(cpp_options));
-  if (!detector.ok()) {
-    ABSL_LOG(ERROR) << "Failed to create HandLandmarker: " << detector.status();
-    CppProcessError(detector.status(), error_msg);
+  auto landmarker = HandLandmarker::Create(std::move(cpp_options));
+  if (!landmarker.ok()) {
+    ABSL_LOG(ERROR) << "Failed to create HandLandmarker: "
+                    << landmarker.status();
+    CppProcessError(landmarker.status(), error_msg);
     return nullptr;
   }
-  return detector->release();
+  return landmarker->release();
 }
 
-int CppHandLandmarkerDetect(void* detector, const MpImage& image,
-                               HandLandmarkerResult* result, char** error_msg) {
+int CppHandLandmarkerDetect(void* landmarker, const MpImage& image,
+                            HandLandmarkerResult* result, char** error_msg) {
   if (image.type == MpImage::GPU_BUFFER) {
     const absl::Status status =
         absl::InvalidArgumentError("GPU Buffer not supported yet.");
@@ -151,8 +152,8 @@ int CppHandLandmarkerDetect(void* detector, const MpImage& image,
     return CppProcessError(img.status(), error_msg);
   }
 
-  auto cpp_detector = static_cast<HandLandmarker*>(detector);
-  auto cpp_result = cpp_detector->Detect(*img);
+  auto cpp_landmarker = static_cast<HandLandmarker*>(landmarker);
+  auto cpp_result = cpp_landmarker->Detect(*img);
   if (!cpp_result.ok()) {
     ABSL_LOG(ERROR) << "Recognition failed: " << cpp_result.status();
     return CppProcessError(cpp_result.status(), error_msg);
@@ -161,10 +162,10 @@ int CppHandLandmarkerDetect(void* detector, const MpImage& image,
   return 0;
 }
 
-int CppHandLandmarkerDetectForVideo(void* detector, const MpImage& image,
-                                       int64_t timestamp_ms,
-                                       HandLandmarkerResult* result,
-                                       char** error_msg) {
+int CppHandLandmarkerDetectForVideo(void* landmarker, const MpImage& image,
+                                    int64_t timestamp_ms,
+                                    HandLandmarkerResult* result,
+                                    char** error_msg) {
   if (image.type == MpImage::GPU_BUFFER) {
     absl::Status status =
         absl::InvalidArgumentError("GPU Buffer not supported yet");
@@ -183,8 +184,8 @@ int CppHandLandmarkerDetectForVideo(void* detector, const MpImage& image,
     return CppProcessError(img.status(), error_msg);
   }
 
-  auto cpp_detector = static_cast<HandLandmarker*>(detector);
-  auto cpp_result = cpp_detector->DetectForVideo(*img, timestamp_ms);
+  auto cpp_landmarker = static_cast<HandLandmarker*>(landmarker);
+  auto cpp_result = cpp_landmarker->DetectForVideo(*img, timestamp_ms);
   if (!cpp_result.ok()) {
     ABSL_LOG(ERROR) << "Recognition failed: " << cpp_result.status();
     return CppProcessError(cpp_result.status(), error_msg);
@@ -193,8 +194,8 @@ int CppHandLandmarkerDetectForVideo(void* detector, const MpImage& image,
   return 0;
 }
 
-int CppHandLandmarkerDetectAsync(void* detector, const MpImage& image,
-                                    int64_t timestamp_ms, char** error_msg) {
+int CppHandLandmarkerDetectAsync(void* landmarker, const MpImage& image,
+                                 int64_t timestamp_ms, char** error_msg) {
   if (image.type == MpImage::GPU_BUFFER) {
     absl::Status status =
         absl::InvalidArgumentError("GPU Buffer not supported yet");
@@ -213,8 +214,8 @@ int CppHandLandmarkerDetectAsync(void* detector, const MpImage& image,
     return CppProcessError(img.status(), error_msg);
   }
 
-  auto cpp_detector = static_cast<HandLandmarker*>(detector);
-  auto cpp_result = cpp_detector->DetectAsync(*img, timestamp_ms);
+  auto cpp_landmarker = static_cast<HandLandmarker*>(landmarker);
+  auto cpp_result = cpp_landmarker->DetectAsync(*img, timestamp_ms);
   if (!cpp_result.ok()) {
     ABSL_LOG(ERROR) << "Data preparation for the landmark detection failed: "
                     << cpp_result;
@@ -227,14 +228,14 @@ void CppHandLandmarkerCloseResult(HandLandmarkerResult* result) {
   CppCloseHandLandmarkerResult(result);
 }
 
-int CppHandLandmarkerClose(void* detector, char** error_msg) {
-  auto cpp_detector = static_cast<HandLandmarker*>(detector);
-  auto result = cpp_detector->Close();
+int CppHandLandmarkerClose(void* landmarker, char** error_msg) {
+  auto cpp_landmarker = static_cast<HandLandmarker*>(landmarker);
+  auto result = cpp_landmarker->Close();
   if (!result.ok()) {
     ABSL_LOG(ERROR) << "Failed to close HandLandmarker: " << result;
     return CppProcessError(result, error_msg);
   }
-  delete cpp_detector;
+  delete cpp_landmarker;
   return 0;
 }
 
@@ -248,26 +249,26 @@ void* hand_landmarker_create(struct HandLandmarkerOptions* options,
       *options, error_msg);
 }
 
-int hand_landmarker_detect_image(void* detector, const MpImage& image,
+int hand_landmarker_detect_image(void* landmarker, const MpImage& image,
                                  HandLandmarkerResult* result,
                                  char** error_msg) {
-  return mediapipe::tasks::c::vision::hand_landmarker::
-      CppHandLandmarkerDetect(detector, image, result, error_msg);
+  return mediapipe::tasks::c::vision::hand_landmarker::CppHandLandmarkerDetect(
+      landmarker, image, result, error_msg);
 }
 
-int hand_landmarker_detect_for_video(void* detector, const MpImage& image,
+int hand_landmarker_detect_for_video(void* landmarker, const MpImage& image,
                                      int64_t timestamp_ms,
                                      HandLandmarkerResult* result,
                                      char** error_msg) {
   return mediapipe::tasks::c::vision::hand_landmarker::
-      CppHandLandmarkerDetectForVideo(detector, image, timestamp_ms, result,
-                                         error_msg);
+      CppHandLandmarkerDetectForVideo(landmarker, image, timestamp_ms, result,
+                                      error_msg);
 }
 
-int hand_landmarker_detect_async(void* detector, const MpImage& image,
+int hand_landmarker_detect_async(void* landmarker, const MpImage& image,
                                  int64_t timestamp_ms, char** error_msg) {
   return mediapipe::tasks::c::vision::hand_landmarker::
-      CppHandLandmarkerDetectAsync(detector, image, timestamp_ms, error_msg);
+      CppHandLandmarkerDetectAsync(landmarker, image, timestamp_ms, error_msg);
 }
 
 void hand_landmarker_close_result(HandLandmarkerResult* result) {
@@ -275,9 +276,9 @@ void hand_landmarker_close_result(HandLandmarkerResult* result) {
       result);
 }
 
-int hand_landmarker_close(void* detector, char** error_ms) {
+int hand_landmarker_close(void* landmarker, char** error_ms) {
   return mediapipe::tasks::c::vision::hand_landmarker::CppHandLandmarkerClose(
-      detector, error_ms);
+      landmarker, error_ms);
 }
 
 }  // extern "C"
