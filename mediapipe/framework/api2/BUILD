@@ -81,15 +81,13 @@ cc_library(
     srcs = ["node.cc"],
     hdrs = ["node.h"],
     deps = [
-        ":const_str",
         ":contract",
-        ":packet",
-        ":port",
         "//mediapipe/framework:calculator_base",
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:calculator_contract",
         "//mediapipe/framework:subgraph",
-        "//mediapipe/framework/deps:no_destructor",
+        "//mediapipe/framework/deps:registration",
+        "@com_google_absl//absl/status",
     ],
 )
 
