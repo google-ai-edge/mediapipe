@@ -274,6 +274,15 @@ public final class PacketGetter {
   }
 
   /**
+   * Converts an 8-bit alpha mediapipe image frame packet to an RGBA Byte buffer.
+   *
+   * <p>Use {@link ByteBuffer#allocateDirect} when allocating the buffer.
+   */
+  public static boolean getRgbaFromAlpha(final Packet packet, ByteBuffer buffer) {
+    return nativeGetRgbaFromAlpha(packet.getNativeHandle(), buffer);
+  }
+
+  /**
    * Converts the audio matrix data back into byte data.
    *
    * <p>The matrix is in column major order.
@@ -443,6 +452,7 @@ public final class PacketGetter {
       long nativePacketHandle, ByteBuffer[] bufferArray, boolean deepCopy);
 
   private static native boolean nativeGetRgbaFromRgb(long nativePacketHandle, ByteBuffer buffer);
+  private static native boolean nativeGetRgbaFromAlpha(long nativePacketHandle, ByteBuffer buffer);
   // Retrieves the values that are in the VideoHeader.
   private static native int nativeGetVideoHeaderWidth(long nativepackethandle);
 

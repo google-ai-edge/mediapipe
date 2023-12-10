@@ -116,5 +116,43 @@ public final class AndroidPacketGetter {
     mutableBitmap.copyPixelsFromBuffer(buffer);
   }
 
+  /**
+   * Gets an {@code ARGB_8888} bitmap from an 8-bit alpha mediapipe image frame packet.
+   *
+   * @param packet mediapipe packet
+   * @return {@link Bitmap} with pixels copied from the packet
+   */
+  public static Bitmap getBitmapFromAlpha(Packet packet) {
+    int width = PacketGetter.getImageWidth(packet);
+    int height = PacketGetter.getImageHeight(packet);
+    Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+    copyAlphaToBitmap(packet, bitmap, width, height);
+    return bitmap;
+  }
+
+  /**
+   * Copies data from an 8-bit alpha mediapipe image frame packet to {@code ARGB_8888} bitmap.
+   *
+   * @param packet mediapipe packet
+   * @param inBitmap mutable {@link Bitmap} of same dimension and config as the expected output, the
+   *     image would be copied to this {@link Bitmap}
+   */
+  public static void copyAlphaToBitmap(Packet packet, Bitmap inBitmap) {
+    checkArgument(inBitmap.isMutable(), "Input bitmap should be mutable.");
+    checkArgument(
+        inBitmap.getConfig() == Config.ARGB_8888, "Input bitmap should be of type ARGB_8888.");
+    int width = PacketGetter.getImageWidth(packet);
+    int height = PacketGetter.getImageHeight(packet);
+    checkArgument(inBitmap.getByteCount() == width * height, "Input bitmap size mismatch.");
+    copyAlphaToBitmap(packet, inBitmap, width, height);
+  }
+
+  private static void copyAlphaToBitmap(Packet packet, Bitmap mutableBitmap, int width, int height) {
+    // TODO: use NDK Bitmap access instead of copyPixelsToBuffer.
+    ByteBuffer buffer = ByteBuffer.allocateDirect(width * height * 4);
+    PacketGetter.getRgbaFromAlpha(packet, buffer);
+    mutableBitmap.copyPixelsFromBuffer(buffer);
+  }
+
   private AndroidPacketGetter() {}
 }

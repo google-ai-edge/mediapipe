@@ -137,6 +137,11 @@ JNIEXPORT jboolean JNICALL PACKET_GETTER_METHOD(nativeGetImageList)(
 JNIEXPORT jboolean JNICALL PACKET_GETTER_METHOD(nativeGetRgbaFromRgb)(
     JNIEnv* env, jobject thiz, jlong packet, jobject byte_buffer);
 
+// Before calling this, the byte_buffer needs to have the correct allocated
+// size.
+JNIEXPORT jboolean JNICALL PACKET_GETTER_METHOD(nativeGetRgbaFromAlpha)(
+    JNIEnv* env, jobject thiz, jlong packet, jobject byte_buffer);
+
 // Returns the width in VideoHeader packet.
 JNIEXPORT jint JNICALL PACKET_GETTER_METHOD(nativeGetVideoHeaderWidth)(
     JNIEnv* env, jobject thiz, jlong packet);
