@@ -98,7 +98,7 @@ FaceLandmarker* CppFaceLandmarkerCreate(const FaceLandmarkerOptions& options,
           char* error_msg = nullptr;
 
           if (!cpp_result.ok()) {
-            ABSL_LOG(ERROR) << "Recognition failed: " << cpp_result.status();
+            ABSL_LOG(ERROR) << "Detection failed: " << cpp_result.status();
             CppProcessError(cpp_result.status(), &error_msg);
             result_callback(nullptr, MpImage(), timestamp, error_msg);
             free(error_msg);
@@ -141,7 +141,7 @@ int CppFaceLandmarkerDetect(void* landmarker, const MpImage& image,
     const absl::Status status =
         absl::InvalidArgumentError("GPU Buffer not supported yet.");
 
-    ABSL_LOG(ERROR) << "Recognition failed: " << status.message();
+    ABSL_LOG(ERROR) << "Detection failed: " << status.message();
     return CppProcessError(status, error_msg);
   }
 
@@ -158,7 +158,7 @@ int CppFaceLandmarkerDetect(void* landmarker, const MpImage& image,
   auto cpp_landmarker = static_cast<FaceLandmarker*>(landmarker);
   auto cpp_result = cpp_landmarker->Detect(*img);
   if (!cpp_result.ok()) {
-    ABSL_LOG(ERROR) << "Recognition failed: " << cpp_result.status();
+    ABSL_LOG(ERROR) << "Detection failed: " << cpp_result.status();
     return CppProcessError(cpp_result.status(), error_msg);
   }
   CppConvertToFaceLandmarkerResult(*cpp_result, result);
@@ -173,7 +173,7 @@ int CppFaceLandmarkerDetectForVideo(void* landmarker, const MpImage& image,
     absl::Status status =
         absl::InvalidArgumentError("GPU Buffer not supported yet");
 
-    ABSL_LOG(ERROR) << "Recognition failed: " << status.message();
+    ABSL_LOG(ERROR) << "Detection failed: " << status.message();
     return CppProcessError(status, error_msg);
   }
 
@@ -190,7 +190,7 @@ int CppFaceLandmarkerDetectForVideo(void* landmarker, const MpImage& image,
   auto cpp_landmarker = static_cast<FaceLandmarker*>(landmarker);
   auto cpp_result = cpp_landmarker->DetectForVideo(*img, timestamp_ms);
   if (!cpp_result.ok()) {
-    ABSL_LOG(ERROR) << "Recognition failed: " << cpp_result.status();
+    ABSL_LOG(ERROR) << "Detection failed: " << cpp_result.status();
     return CppProcessError(cpp_result.status(), error_msg);
   }
   CppConvertToFaceLandmarkerResult(*cpp_result, result);
@@ -203,7 +203,7 @@ int CppFaceLandmarkerDetectAsync(void* landmarker, const MpImage& image,
     absl::Status status =
         absl::InvalidArgumentError("GPU Buffer not supported yet");
 
-    ABSL_LOG(ERROR) << "Recognition failed: " << status.message();
+    ABSL_LOG(ERROR) << "Detection failed: " << status.message();
     return CppProcessError(status, error_msg);
   }
 
