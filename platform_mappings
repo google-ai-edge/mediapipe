@@ -24,35 +24,35 @@ flags:
 
   --cpu=darwin_x86_64
   --apple_platform_type=macos
-    @@mediapipe//mediapipe:macos_x86_64_platform
+    @mediapipe//mediapipe:macos_x86_64_platform
 
   --cpu=darwin_arm64
   --apple_platform_type=macos
-    @@mediapipe//mediapipe:macos_arm64_platform
+    @mediapipe//mediapipe:macos_arm64_platform
 
   --cpu=ios_i386
   --apple_platform_type=ios
-    @@mediapipe//mediapipe:ios_i386_platform
+    @mediapipe//mediapipe:ios_i386_platform
 
   --cpu=ios_x86_64
   --apple_platform_type=ios
-    @@mediapipe//mediapipe:ios_x86_64_platform
+    @mediapipe//mediapipe:ios_x86_64_platform
 
   --cpu=ios_sim_arm64
   --apple_platform_type=ios
-    @@mediapipe//mediapipe:ios_sim_arm64_platform
+    @mediapipe//mediapipe:ios_sim_arm64_platform
 
   --cpu=ios_armv7
   --apple_platform_type=ios
-    @@mediapipe//mediapipe:ios_armv7_platform
+    @mediapipe//mediapipe:ios_armv7_platform
 
   --cpu=ios_arm64
   --apple_platform_type=ios
-    @@mediapipe//mediapipe:ios_arm64_platform
+    @mediapipe//mediapipe:ios_arm64_platform
 
   --cpu=ios_arm64e
   --apple_platform_type=ios
-    @@mediapipe//mediapipe:ios_arm64e_platform
+    @mediapipe//mediapipe:ios_arm64e_platform
 
   --cpu=x64_windows
     @mediapipe//mediapipe:windows_platform
