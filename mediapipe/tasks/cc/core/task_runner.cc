@@ -39,6 +39,10 @@ limitations under the License.
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/core/model_resources_cache.h"
 
+#if !MEDIAPIPE_DISABLE_GPU
+#include "mediapipe/gpu/gpu_shared_data_internal.h"
+#endif  // !MEDIAPIPE_DISABLE_GPU
+
 namespace mediapipe {
 namespace tasks {
 namespace core {
@@ -88,16 +92,34 @@ absl::StatusOr<PacketMap> GenerateOutputPacketMap(
 }  // namespace
 
 /* static */
+#if !MEDIAPIPE_DISABLE_GPU
+absl::StatusOr<std::unique_ptr<TaskRunner>> TaskRunner::Create(
+    CalculatorGraphConfig config,
+    std::unique_ptr<tflite::OpResolver> op_resolver,
+    PacketsCallback packets_callback,
+    std::shared_ptr<Executor> default_executor,
+    std::optional<PacketMap> input_side_packets,
+    std::shared_ptr<::mediapipe::GpuResources> resources) {
+#else
 absl::StatusOr<std::unique_ptr<TaskRunner>> TaskRunner::Create(
     CalculatorGraphConfig config,
     std::unique_ptr<tflite::OpResolver> op_resolver,
     PacketsCallback packets_callback,
     std::shared_ptr<Executor> default_executor,
     std::optional<PacketMap> input_side_packets) {
+#endif  // !MEDIAPIPE_DISABLE_GPU
   auto task_runner = absl::WrapUnique(new TaskRunner(packets_callback));
   MP_RETURN_IF_ERROR(task_runner->Initialize(
       std::move(config), std::move(op_resolver), std::move(default_executor),
       std::move(input_side_packets)));
+
+#if !MEDIAPIPE_DISABLE_GPU
+  if (resources) {
+    MP_RETURN_IF_ERROR(
+        task_runner->graph_.SetGpuResources(std::move(resources)));
+  }
+#endif  // !MEDIAPIPE_DISABLE_GPU
+
   MP_RETURN_IF_ERROR(task_runner->Start());
   return task_runner;
 }

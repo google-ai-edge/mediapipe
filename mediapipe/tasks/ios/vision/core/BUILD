@@ -54,6 +54,8 @@ objc_library(
         "//mediapipe/framework:timestamp",
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/tasks/ios/components/containers:MPPRegionOfInterest",
+        "//mediapipe/tasks/ios/components/containers/utils:MPPRegionOfInterestHelpers",
         "//mediapipe/tasks/ios/vision/core/utils:MPPImageUtils",
     ],
 )
@@ -71,6 +73,7 @@ objc_library(
         ":MPPRunningMode",
         ":MPPVisionPacketCreator",
         "//mediapipe/calculators/core:flow_limiter_calculator",
+        "//mediapipe/framework:packet",
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",

@@ -2854,7 +2854,262 @@ auxiliary_landmarks {
 face_blendshapes {
   classification {
     index: 0
-    score: 1.6770242e-05
-    label: "tongueOut"
+    score: 8.47715e-07
+    label: "_neutral"
+  }
+  classification {
+    index: 1
+    score: 0.020850565
+    label: "browDownLeft"
+  }
+  classification {
+    index: 2
+    score: 0.007629181
+    label: "browDownRight"
+  }
+  classification {
+    index: 3
+    score: 0.26410568
+    label: "browInnerUp"
+  }
+  classification {
+    index: 4
+    score: 0.04212071
+    label: "browOuterUpLeft"
+  }
+  classification {
+    index: 5
+    score: 0.07319052
+    label: "browOuterUpRight"
+  }
+  classification {
+    index: 6
+    score: 9.39117e-06
+    label: "cheekPuff"
+  }
+  classification {
+    index: 7
+    score: 1.9243858e-07
+    label: "cheekSquintLeft"
+  }
+  classification {
+    index: 8
+    score: 4.066475e-08
+    label: "cheekSquintRight"
+  }
+  classification {
+    index: 9
+    score: 0.46092203
+    label: "eyeBlinkLeft"
+  }
+  classification {
+    index: 10
+    score: 0.40371567
+    label: "eyeBlinkRight"
+  }
+  classification {
+    index: 11
+    score: 0.65011656
+    label: "eyeLookDownLeft"
+  }
+  classification {
+    index: 12
+    score: 0.6423024
+    label: "eyeLookDownRight"
+  }
+  classification {
+    index: 13
+    score: 0.04721973
+    label: "eyeLookInLeft"
+  }
+  classification {
+    index: 14
+    score: 0.08176838
+    label: "eyeLookInRight"
+  }
+  classification {
+    index: 15
+    score: 0.09520102
+    label: "eyeLookOutLeft"
+  }
+  classification {
+    index: 16
+    score: 0.07271895
+    label: "eyeLookOutRight"
+  }
+  classification {
+    index: 17
+    score: 0.011193463
+    label: "eyeLookUpLeft"
+  }
+  classification {
+    index: 18
+    score: 0.007041815
+    label: "eyeLookUpRight"
+  }
+  classification {
+    index: 19
+    score: 0.27120194
+    label: "eyeSquintLeft"
+  }
+  classification {
+    index: 20
+    score: 0.21675573
+    label: "eyeSquintRight"
+  }
+  classification {
+    index: 21
+    score: 0.0018824162
+    label: "eyeWideLeft"
+  }
+  classification {
+    index: 22
+    score: 0.0011966582
+    label: "eyeWideRight"
+  }
+  classification {
+    index: 23
+    score: 1.9298719e-05
+    label: "jawForward"
+  }
+  classification {
+    index: 24
+    score: 9.670858e-06
+    label: "jawLeft"
+  }
+  classification {
+    index: 25
+    score: 0.000115385694
+    label: "jawOpen"
+  }
+  classification {
+    index: 26
+    score: 0.00023342477
+    label: "jawRight"
+  }
+  classification {
+    index: 27
+    score: 2.8894076e-05
+    label: "mouthClose"
+  }
+  classification {
+    index: 28
+    score: 0.003933548
+    label: "mouthDimpleLeft"
+  }
+  classification {
+    index: 29
+    score: 0.0051949574
+    label: "mouthDimpleRight"
+  }
+  classification {
+    index: 30
+    score: 0.00067943585
+    label: "mouthFrownLeft"
+  }
+  classification {
+    index: 31
+    score: 0.0006520291
+    label: "mouthFrownRight"
+  }
+  classification {
+    index: 32
+    score: 0.0006695333
+    label: "mouthFunnel"
+  }
+  classification {
+    index: 33
+    score: 8.578597e-05
+    label: "mouthLeft"
+  }
+  classification {
+    index: 34
+    score: 2.6707421e-05
+    label: "mouthLowerDownLeft"
+  }
+  classification {
+    index: 35
+    score: 2.153054e-05
+    label: "mouthLowerDownRight"
+  }
+  classification {
+    index: 36
+    score: 0.0132145975
+    label: "mouthPressLeft"
+  }
+  classification {
+    index: 37
+    score: 0.009528495
+    label: "mouthPressRight"
+  }
+  classification {
+    index: 38
+    score: 0.056963783
+    label: "mouthPucker"
+  }
+  classification {
+    index: 39
+    score: 0.027331185
+    label: "mouthRight"
+  }
+  classification {
+    index: 40
+    score: 0.00072388636
+    label: "mouthRollLower"
+  }
+  classification {
+    index: 41
+    score: 0.00021191382
+    label: "mouthRollUpper"
+  }
+  classification {
+    index: 42
+    score: 0.23938002
+    label: "mouthShrugLower"
+  }
+  classification {
+    index: 43
+    score: 0.052946873
+    label: "mouthShrugUpper"
+  }
+  classification {
+    index: 44
+    score: 0.68681276
+    label: "mouthSmileLeft"
+  }
+  classification {
+    index: 45
+    score: 0.68557316
+    label: "mouthSmileRight"
+  }
+  classification {
+    index: 46
+    score: 0.0030625665
+    label: "mouthStretchLeft"
+  }
+  classification {
+    index: 47
+    score: 0.003999545
+    label: "mouthStretchRight"
+  }
+  classification {
+    index: 48
+    score: 0.013184475
+    label: "mouthUpperUpLeft"
+  }
+  classification {
+    index: 49
+    score: 0.017995607
+    label: "mouthUpperUpRight"
+  }
+  classification {
+    index: 50
+    score: 2.0452394e-06
+    label: "noseSneerLeft"
+  }
+  classification {
+    index: 51
+    score: 3.7912793e-07
+    label: "noseSneerRight"
   }
 }

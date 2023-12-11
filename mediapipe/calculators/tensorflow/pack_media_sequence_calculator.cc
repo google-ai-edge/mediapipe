@@ -79,7 +79,7 @@ namespace mpms = mediapipe::mediasequence;
 //   and label and label_id are optional but at least one of them should be set.
 // "IMAGE_${NAME}", "BBOX_${NAME}", and "KEYPOINTS_${NAME}" will also store
 // prefixed versions of each stream, which allows for multiple image streams to
-// be included. However, the default names are suppored by more tools.
+// be included. However, the default names are supported by more tools.
 //
 // Example config:
 // node {

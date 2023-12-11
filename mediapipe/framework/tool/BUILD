@@ -616,6 +616,7 @@ cc_test(
         "//mediapipe/framework:calculator_runner",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
+        "@com_google_absl//absl/functional:bind_front",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -856,6 +857,7 @@ cc_library(
 mediapipe_cc_test(
     name = "switch_demux_calculator_test",
     srcs = ["switch_demux_calculator_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":container_util",
         ":switch_demux_calculator",
@@ -891,6 +893,7 @@ cc_library(
 mediapipe_cc_test(
     name = "switch_mux_calculator_test",
     srcs = ["switch_mux_calculator_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":container_util",
         ":switch_mux_calculator",

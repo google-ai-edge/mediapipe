@@ -30,13 +30,13 @@ cc_library(
         "//mediapipe/tasks/c/components/processors:classifier_options_converter",
         "//mediapipe/tasks/c/core:base_options",
         "//mediapipe/tasks/c/core:base_options_converter",
+        "//mediapipe/tasks/c/vision/core:common",
+        "//mediapipe/tasks/cc/vision/core:running_mode",
         "//mediapipe/tasks/cc/vision/image_classifier",
         "//mediapipe/tasks/cc/vision/utils:image_utils",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
-        "@com_google_absl//absl/strings:str_format",
-        "@com_google_absl//absl/time",
     ],
     alwayslink = 1,
 )
@@ -56,15 +56,45 @@ cc_test(
         ":image_classifier_lib",
         "//mediapipe/framework/deps:file_path",
         "//mediapipe/framework/formats:image",
-        "//mediapipe/framework/formats:image_frame",
-        "//mediapipe/framework/formats:image_frame_opencv",
         "//mediapipe/framework/port:gtest",
-        "//mediapipe/framework/port:opencv_core",
-        "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/tasks/c/components/containers:category",
         "//mediapipe/tasks/cc/vision/utils:image_utils",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
+)
+
+# bazel build -c opt --linkopt -s --strip always --define MEDIAPIPE_DISABLE_GPU=1 \
+# //mediapipe/tasks/c/vision/image_classifier:libimage_classifier.so
+cc_binary(
+    name = "libimage_classifier.so",
+    linkopts = [
+        "-Wl,-soname=libimage_classifier.so",
+        "-fvisibility=hidden",
+    ],
+    linkshared = True,
+    tags = [
+        "manual",
+        "nobuilder",
+        "notap",
+    ],
+    deps = [":image_classifier_lib"],
+)
+
+# bazel build --config darwin_arm64 -c opt --strip always --define MEDIAPIPE_DISABLE_GPU=1 \
+# //mediapipe/tasks/c/vision/image_classifier:libimage_classifier.dylib
+cc_binary(
+    name = "libimage_classifier.dylib",
+    linkopts = [
+        "-Wl,-install_name,libimage_classifier.dylib",
+        "-fvisibility=hidden",
+    ],
+    linkshared = True,
+    tags = [
+        "manual",
+        "nobuilder",
+        "notap",
+    ],
+    deps = [":image_classifier_lib"],
 )

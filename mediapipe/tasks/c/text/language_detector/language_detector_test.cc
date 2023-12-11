@@ -44,6 +44,7 @@ TEST(LanguageDetectorTest, SmokeTest) {
   std::string model_path = GetFullPath(kTestLanguageDetectorModelPath);
   LanguageDetectorOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
+                           /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ model_path.c_str()},
       /* classifier_options= */
       {/* display_names_locale= */ nullptr,
@@ -55,22 +56,24 @@ TEST(LanguageDetectorTest, SmokeTest) {
        /* category_denylist_count= */ 0},
   };
 
-  void* detector = language_detector_create(&options);
+  void* detector = language_detector_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(detector, nullptr);
 
   LanguageDetectorResult result;
-  language_detector_detect(detector, kTestString, &result);
+  language_detector_detect(detector, kTestString, &result,
+                           /* error_msg */ nullptr);
   EXPECT_EQ(std::string(result.predictions[0].language_code), "fr");
   EXPECT_NEAR(result.predictions[0].probability, 0.999781, kPrecision);
 
   language_detector_close_result(&result);
-  language_detector_close(detector);
+  language_detector_close(detector, /* error_msg */ nullptr);
 }
 
 TEST(LanguageDetectorTest, ErrorHandling) {
   // It is an error to set neither the asset buffer nor the path.
   LanguageDetectorOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
+                           /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ nullptr},
       /* classifier_options= */ {},
   };

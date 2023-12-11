@@ -511,11 +511,19 @@ cc_library(
         ],
     }),
     deps = [
+        ":gl_base_hdr",
+        ":gl_context",
         ":gl_texture_buffer",
+        ":gl_texture_view",
         ":gpu_buffer_format",
         ":gpu_buffer_storage",
         ":image_frame_view",
+        "//mediapipe/framework:port",
+        "//mediapipe/framework/formats:ahwb_view",
         "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/port:ret_check",
+        "//third_party/GL:EGL_headers",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/strings:str_format",
     ],
 )
@@ -526,12 +534,14 @@ mediapipe_proto_library(
     visibility = ["//visibility:public"],
 )
 
-objc_library(
+cc_library(
     name = "pixel_buffer_pool_util",
-    srcs = ["pixel_buffer_pool_util.mm"],
+    srcs = ["pixel_buffer_pool_util.cc"],
     hdrs = ["pixel_buffer_pool_util.h"],
     copts = [
+        "-x objective-c++",
         "-Wno-shorten-64-to-32",
+        "-fobjc-arc",  # enable reference-counting
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -542,13 +552,14 @@ objc_library(
     ],
 )
 
-objc_library(
+cc_library(
     name = "metal_shared_resources",
-    srcs = ["metal_shared_resources.mm"],
+    srcs = ["metal_shared_resources.cc"],
     hdrs = ["metal_shared_resources.h"],
     copts = [
         "-x objective-c++",
         "-Wno-shorten-64-to-32",
+        "-fobjc-arc",  # enable reference-counting
     ],
     features = ["-layering_check"],
     visibility = ["//visibility:public"],
@@ -557,15 +568,17 @@ objc_library(
         "@google_toolbox_for_mac//:GTM_Defines",
     ] + [
     ],
+    alwayslink = 1,
 )
 
-objc_library(
+cc_library(
     name = "MPPMetalUtil",
-    srcs = ["MPPMetalUtil.mm"],
+    srcs = ["MPPMetalUtil.cc"],
     hdrs = ["MPPMetalUtil.h"],
     copts = [
         "-x objective-c++",
         "-Wno-shorten-64-to-32",
+        "-fobjc-arc",  # enable reference-counting
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -575,6 +588,7 @@ objc_library(
         "@com_google_absl//absl/time",
         "@google_toolbox_for_mac//:GTM_Defines",
     ],
+    alwayslink = 1,
 )
 
 mediapipe_proto_library(
@@ -655,6 +669,8 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/status",
     ] + select({
         "//conditions:default": [],
         "//mediapipe:apple": [
@@ -857,12 +873,14 @@ cc_library(
     }),
 )
 
-objc_library(
+cc_library(
     name = "MPPMetalHelper",
-    srcs = ["MPPMetalHelper.mm"],
+    srcs = ["MPPMetalHelper.cc"],
     hdrs = ["MPPMetalHelper.h"],
     copts = [
         "-Wno-shorten-64-to-32",
+        "-x objective-c++",
+        "-fobjc-arc",
     ],
     features = ["-layering_check"],
     visibility = ["//visibility:public"],
@@ -1215,9 +1233,13 @@ mediapipe_cc_test(
     ],
     requires_full_emulation = True,
     deps = [
+        ":gl_texture_buffer",
+        ":gl_texture_util",
         ":gpu_buffer_format",
         ":gpu_buffer_storage_ahwb",
+        ":gpu_test_base",
         "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/tool:test_util",
     ],
 )
 

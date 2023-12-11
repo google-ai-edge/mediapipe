@@ -57,8 +57,8 @@ void GlCalculatorHelper::InitializeForTest(GpuResources* gpu_resources) {
 
 // static
 absl::Status GlCalculatorHelper::UpdateContract(CalculatorContract* cc,
-                                                bool requesst_gpu_as_optional) {
-  if (requesst_gpu_as_optional) {
+                                                bool request_gpu_as_optional) {
+  if (request_gpu_as_optional) {
     cc->UseService(kGpuService).Optional();
   } else {
     cc->UseService(kGpuService);

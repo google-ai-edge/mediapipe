@@ -15,6 +15,7 @@ limitations under the License.
 
 #include "mediapipe/tasks/c/core/base_options_converter.h"
 
+#include <cstring>
 #include <string>
 
 #include "mediapipe/framework/port/gtest.h"
@@ -28,6 +29,8 @@ constexpr char kModelAssetPath[] = "abc.tflite";
 
 TEST(BaseOptionsConverterTest, ConvertsBaseOptionsAssetBuffer) {
   BaseOptions c_base_options = {/* model_asset_buffer= */ kAssetBuffer,
+                                /* model_asset_buffer_count= */
+                                static_cast<unsigned int>(strlen(kAssetBuffer)),
                                 /* model_asset_path= */ nullptr};
 
   mediapipe::tasks::core::BaseOptions cpp_base_options = {};
@@ -39,6 +42,7 @@ TEST(BaseOptionsConverterTest, ConvertsBaseOptionsAssetBuffer) {
 
 TEST(BaseOptionsConverterTest, ConvertsBaseOptionsAssetPath) {
   BaseOptions c_base_options = {/* model_asset_buffer= */ nullptr,
+                                /* model_asset_buffer_count= */ 0,
                                 /* model_asset_path= */ kModelAssetPath};
 
   mediapipe::tasks::core::BaseOptions cpp_base_options = {};

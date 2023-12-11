@@ -109,7 +109,7 @@ bool IsValidFftSize(int size) {
 //   Non-streaming mode: when "stream_mode" is set to false in the calculator
 //     options, the calculators treats the packets in the input audio stream as
 //     a batch of unrelated audio buffers. In each Process() call, the input
-//     buffer will be frist resampled, and framed as fixed-sized, possibly
+//     buffer will be first resampled, and framed as fixed-sized, possibly
 //     overlapping tensors. The last tensor produced by a Process() invocation
 //     will be zero-padding if the remaining samples are insufficient. As the
 //     calculator treats the input packets as unrelated, all samples will be
@@ -159,7 +159,7 @@ class AudioToTensorCalculator : public Node {
  public:
   static constexpr Input<Matrix> kAudioIn{"AUDIO"};
   // TODO: Removes this optional input stream when the "AUDIO" stream
-  // uses the new mediapipe audio data containers that carry audio metatdata,
+  // uses the new mediapipe audio data containers that carry audio metadata,
   // such as sample rate.
   static constexpr Input<double>::Optional kAudioSampleRateIn{"SAMPLE_RATE"};
   static constexpr Output<std::vector<Tensor>> kTensorsOut{"TENSORS"};

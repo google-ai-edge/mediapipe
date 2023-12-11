@@ -14,12 +14,16 @@
 
 #import "mediapipe/tasks/ios/vision/image_segmenter/sources/MPPImageSegmenter.h"
 
+#import "mediapipe/tasks/ios/common/sources/MPPCommon.h"
 #import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
 #import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
 #import "mediapipe/tasks/ios/core/sources/MPPTaskInfo.h"
 #import "mediapipe/tasks/ios/vision/core/sources/MPPVisionTaskRunner.h"
 #import "mediapipe/tasks/ios/vision/image_segmenter/utils/sources/MPPImageSegmenterOptions+Helpers.h"
 #import "mediapipe/tasks/ios/vision/image_segmenter/utils/sources/MPPImageSegmenterResult+Helpers.h"
+
+#include "mediapipe/tasks/cc/vision/image_segmenter/calculators/tensors_to_segmentation_calculator.pb.h"
+#include "mediapipe/util/label_map.pb.h"
 
 static constexpr int kMicrosecondsPerMillisecond = 1000;
 
@@ -48,7 +52,9 @@ static NSString *const kTaskName = @"imageSegmenter";
   }
 
 namespace {
+using ::mediapipe::CalculatorGraphConfig;
 using ::mediapipe::Timestamp;
+using ::mediapipe::tasks::TensorsToSegmentationCalculatorOptions;
 using ::mediapipe::tasks::core::PacketMap;
 using ::mediapipe::tasks::core::PacketsCallback;
 }  // anonymous namespace
@@ -125,8 +131,13 @@ using ::mediapipe::tasks::core::PacketsCallback;
                                                  imageInputStreamName:kImageInStreamName
                                               normRectInputStreamName:kNormRectStreamName
                                                                 error:error];
-
     if (!_visionTaskRunner) {
+      return nil;
+    }
+
+    _labels = [MPPImageSegmenter populateLabelsWithGraphConfig:_visionTaskRunner.graphConfig
+                                                         error:error];
+    if (!_labels) {
       return nil;
     }
   }
@@ -196,6 +207,43 @@ using ::mediapipe::tasks::core::PacketsCallback;
 }
 
 #pragma mark - Private
+
++ (NSArray<NSString *> *)populateLabelsWithGraphConfig:(const CalculatorGraphConfig &)graphConfig
+                                                 error:(NSError **)error {
+  bool found_tensor_to_segmentation_calculator = false;
+
+  NSMutableArray<NSString *> *labels = [NSMutableArray arrayWithCapacity:(NSUInteger)graphConfig.node_size()];
+  for (const auto &node : graphConfig.node()) {
+    if (node.calculator() == "mediapipe.tasks.TensorsToSegmentationCalculator") {
+      if (!found_tensor_to_segmentation_calculator) {
+        found_tensor_to_segmentation_calculator = true;
+      } else {
+        [MPPCommonUtils createCustomError:error
+                                 withCode:MPPTasksErrorCodeFailedPreconditionError
+                              description:@"The graph has more than one "
+                                          @"`mediapipe.tasks.TensorsToSegmentationCalculator`."];
+        return nil;
+      }
+      TensorsToSegmentationCalculatorOptions options =
+          node.options().GetExtension(TensorsToSegmentationCalculatorOptions::ext);
+      if (!options.label_items().empty()) {
+        for (int i = 0; i < options.label_items_size(); ++i) {
+          if (!options.label_items().contains(i)) {
+            [MPPCommonUtils
+                createCustomError:error
+                         withCode:MPPTasksErrorCodeFailedPreconditionError
+                      description:[NSString
+                                      stringWithFormat:@"The lablemap has no expected key %d.", i]];
+
+            return nil;
+          }
+          [labels addObject:[NSString stringWithCppString:options.label_items().at(i).name()]];
+        }
+      }
+    }
+  }
+  return labels;
+}
 
 + (nullable MPPImageSegmenterResult *)
     imageSegmenterResultWithOptionalOutputPacketMap:(std::optional<PacketMap> &)outputPacketMap

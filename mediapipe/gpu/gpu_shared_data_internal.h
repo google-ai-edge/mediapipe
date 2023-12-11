@@ -21,6 +21,8 @@
 #ifndef MEDIAPIPE_GPU_GPU_SHARED_DATA_INTERNAL_H_
 #define MEDIAPIPE_GPU_GPU_SHARED_DATA_INTERNAL_H_
 
+#include <memory>
+
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_node.h"
 #include "mediapipe/framework/executor.h"
@@ -82,7 +84,10 @@ class GpuResources {
   const std::string& ContextKey(const std::string& canonical_node_name);
 
   std::map<std::string, std::string> node_key_;
-  std::map<std::string, std::shared_ptr<GlContext>> gl_key_context_;
+
+  using GlContextMapType = std::map<std::string, std::shared_ptr<GlContext>>;
+  std::unique_ptr<GlContextMapType, void (*)(GlContextMapType*)>
+      gl_key_context_;
 
 #ifdef MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
   std::shared_ptr<CvTextureCacheManager> texture_caches_;

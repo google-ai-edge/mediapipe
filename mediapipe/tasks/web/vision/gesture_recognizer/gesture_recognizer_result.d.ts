@@ -26,7 +26,7 @@ export declare interface GestureRecognizerResult {
   /** Hand landmarks of detected hands. */
   landmarks: NormalizedLandmark[][];
 
-  /** Hand landmarks in world coordniates of detected hands. */
+  /** Hand landmarks in world coordinates of detected hands. */
   worldLandmarks: Landmark[][];
 
   /** Handedness of detected hands. */

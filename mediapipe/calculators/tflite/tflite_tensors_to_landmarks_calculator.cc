@@ -158,7 +158,7 @@ absl::Status TfLiteTensorsToLandmarksCalculator::Open(CalculatorContext* cc) {
     RET_CHECK(options_.has_input_image_height() &&
               options_.has_input_image_width())
         << "Must provide input width/height for using flip_vertically option "
-           "when outputing landmarks in absolute coordinates.";
+           "when outputting landmarks in absolute coordinates.";
   }
 
   flip_horizontally_ =

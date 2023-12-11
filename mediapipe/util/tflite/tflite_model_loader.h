@@ -25,6 +25,7 @@
 #include "tensorflow/lite/model.h"
 
 namespace mediapipe {
+
 // Represents a TfLite model as a FlatBuffer.
 using TfLiteModelPtr =
     std::unique_ptr<tflite::FlatBufferModel,

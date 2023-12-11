@@ -321,6 +321,61 @@ TEST_F(TensorConverterCalculatorTest, SetOutputRange) {
   }
 }
 
+TEST_F(TensorConverterCalculatorTest,
+       ShouldConvertImageWithDefaultOutputRange) {
+  CalculatorGraph graph;
+  CalculatorGraphConfig graph_config =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
+          R"pb(
+            input_stream: "input_image"
+            node {
+              calculator: "TensorConverterCalculator"
+              input_stream: "IMAGE:input_image"
+              output_stream: "TENSORS:tensor"
+              options {
+                [mediapipe.TensorConverterCalculatorOptions.ext] {
+                  zero_center: false
+                }
+              }
+            }
+          )pb");
+  std::vector<Packet> output_packets;
+  tool::AddVectorSink("tensor", &graph_config, &output_packets);
+
+  // Run the graph.
+  MP_ASSERT_OK(graph.Initialize(graph_config));
+  MP_ASSERT_OK(graph.StartRun({}));
+  auto input_image = std::make_unique<ImageFrame>(ImageFormat::GRAY8, 1, 1);
+  cv::Mat mat = mediapipe::formats::MatView(input_image.get());
+  mat.at<uint8_t>(0, 0) = 200;
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
+      "input_image", Adopt(input_image.release()).At(Timestamp(0))));
+
+  // Wait until the calculator finishes processing.
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+  ASSERT_EQ(output_packets.size(), 1);
+
+  // Get and process results.
+  const std::vector<Tensor>& tensor_vec =
+      output_packets[0].Get<std::vector<Tensor>>();
+  ASSERT_EQ(tensor_vec.size(), 1);
+
+  const Tensor* tensor = &tensor_vec[0];
+
+  // Calculate the expected normalized value:
+  float expected_value = 200.0 / 255.0;
+
+  EXPECT_EQ(tensor->element_type(), Tensor::ElementType::kFloat32);
+  auto view = tensor->GetCpuReadView();
+  float actual_value = *view.buffer<float>();
+  EXPECT_FLOAT_EQ(actual_value, expected_value);
+
+  // Fully close graph at end, otherwise calculator+tensors are destroyed
+  // after calling WaitUntilDone().
+  MP_ASSERT_OK(graph.CloseInputStream("input_image"));
+  MP_ASSERT_OK(graph.WaitUntilDone());
+}
+
 TEST_F(TensorConverterCalculatorTest, FlipVertically) {
   CalculatorGraph graph;
   CalculatorGraphConfig graph_config =

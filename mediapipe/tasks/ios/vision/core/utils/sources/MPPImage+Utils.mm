@@ -30,7 +30,7 @@ namespace {
 using ::mediapipe::ImageFormat;
 using ::mediapipe::ImageFrame;
 
-vImage_Buffer EmptyVImageBufferFromImageFrame(ImageFrame &imageFrame, bool shouldAllocate) {
+vImage_Buffer CreateEmptyVImageBufferFromImageFrame(ImageFrame &imageFrame, bool shouldAllocate) {
   UInt8 *data = shouldAllocate ? new UInt8[imageFrame.Height() * imageFrame.WidthStep()] : NULL;
   return {.data = data,
           .height = static_cast<vImagePixelCount>(imageFrame.Height()),
@@ -38,8 +38,8 @@ vImage_Buffer EmptyVImageBufferFromImageFrame(ImageFrame &imageFrame, bool shoul
           .rowBytes = static_cast<size_t>(imageFrame.WidthStep())};
 }
 
-vImage_Buffer VImageBufferFromImageFrame(ImageFrame &imageFrame) {
-  vImage_Buffer imageBuffer = EmptyVImageBufferFromImageFrame(imageFrame, false);
+vImage_Buffer CreateVImageBufferFromImageFrame(ImageFrame &imageFrame) {
+  vImage_Buffer imageBuffer = CreateEmptyVImageBufferFromImageFrame(imageFrame, false);
   imageBuffer.data = imageFrame.MutablePixelData();
   return imageBuffer;
 }
@@ -78,10 +78,9 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { d
 + (std::unique_ptr<ImageFrame>)imageFrameFromCVPixelBuffer:(CVPixelBufferRef)pixelBuffer
                                                      error:(NSError **)error;
 
-// Always copies the pixel data of the image frame to the created `CVPixelBuffer`.
-
 // This method is used to create CVPixelBuffer from output images of tasks like `FaceStylizer` only
 // when the input `MPImage` source type is `pixelBuffer`.
+// Always copies the pixel data of the image frame to the created `CVPixelBuffer`.
 //
 // The only possible 32 RGBA pixel format of input `CVPixelBuffer` is `kCVPixelFormatType_32BGRA`.
 // But Mediapipe does not support inference on images of format `BGRA`. Hence the channels of the
@@ -185,7 +184,7 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { d
 + (UInt8 *)pixelDataFromImageFrame:(ImageFrame &)imageFrame
                         shouldCopy:(BOOL)shouldCopy
                              error:(NSError **)error {
-  vImage_Buffer sourceBuffer = VImageBufferFromImageFrame(imageFrame);
+  vImage_Buffer sourceBuffer = CreateVImageBufferFromImageFrame(imageFrame);
 
   // Pre-multiply the raw pixels from a `mediapipe::Image` before creating a `CGImage` to ensure
   // that pixels are displayed correctly irrespective of their alpha values.
@@ -195,7 +194,7 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { d
   switch (imageFrame.Format()) {
     case ImageFormat::SRGBA: {
       destinationBuffer =
-          shouldCopy ? EmptyVImageBufferFromImageFrame(imageFrame, true) : sourceBuffer;
+          shouldCopy ? CreateEmptyVImageBufferFromImageFrame(imageFrame, true) : sourceBuffer;
       premultiplyError =
           vImagePremultiplyData_RGBA8888(&sourceBuffer, &destinationBuffer, kvImageNoFlags);
       break;
@@ -203,15 +202,18 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { d
     default: {
       [MPPCommonUtils createCustomError:error
                                withCode:MPPTasksErrorCodeInternalError
-                            description:@"An internal error occured"];
+                            description:@"An error occured while processing the output image "
+                                        @"pixels of the vision task."];
       return NULL;
     }
   }
 
   if (premultiplyError != kvImageNoError) {
-    [MPPCommonUtils createCustomError:error
-                             withCode:MPPTasksErrorCodeInternalError
-                          description:@"An internal error occured."];
+    [MPPCommonUtils
+        createCustomError:error
+                 withCode:MPPTasksErrorCodeInternalError
+              description:
+                  @"An error occured while processing the output image pixels of the vision task."];
 
     return NULL;
   }
@@ -261,7 +263,8 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { d
     default: {
       [MPPCommonUtils createCustomError:error
                                withCode:MPPTasksErrorCodeInternalError
-                            description:@"An internal error occured."];
+                            description:@"An error occured while creating a CVPixelBuffer from the "
+                                        @"output image of the vision task."];
       return NULL;
     }
   }
@@ -275,14 +278,15 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { d
   }
 
   const uint8_t permute_map[4] = {2, 1, 0, 3};
-  vImage_Buffer sourceBuffer = EmptyVImageBufferFromImageFrame(imageFrame, NO);
+  vImage_Buffer sourceBuffer = CreateEmptyVImageBufferFromImageFrame(imageFrame, NO);
   sourceBuffer.data = pixelData;
 
   if (vImagePermuteChannels_ARGB8888(&sourceBuffer, &sourceBuffer, permute_map, kvImageNoFlags) !=
       kvImageNoError) {
     [MPPCommonUtils createCustomError:error
                              withCode:MPPTasksErrorCodeInternalError
-                          description:@"An internal error occured."];
+                          description:@"An error occured while creating a CVPixelBuffer from the "
+                                      @"output image of the vision task."];
     return NULL;
   }
 
@@ -300,7 +304,8 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { d
   }
   [MPPCommonUtils createCustomError:error
                            withCode:MPPTasksErrorCodeInternalError
-                        description:@"An internal error occured."];
+                        description:@"An error occured while creating a CVPixelBuffer from the "
+                                    @"output image of the vision task."];
   return NULL;
 }
 
@@ -379,7 +384,8 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { d
     default:
       [MPPCommonUtils createCustomError:error
                                withCode:MPPTasksErrorCodeInternalError
-                            description:@"An internal error occured."];
+                            description:@"An error occured while creating a CGImage from the "
+                                        @"output image of the vision task."];
       return NULL;
   }
 
@@ -410,7 +416,8 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { d
   if (!cgImageRef) {
     [MPPCommonUtils createCustomError:error
                              withCode:MPPTasksErrorCodeInternalError
-                          description:@"An internal error occured."];
+                          description:@"An error occured while converting the output image of the "
+                                      @"vision task to a CGImage."];
   }
 
   return cgImageRef;

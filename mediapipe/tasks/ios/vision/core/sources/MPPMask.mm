@@ -30,7 +30,6 @@
                                      width:(NSInteger)width
                                     height:(NSInteger)height
                                 shouldCopy:(BOOL)shouldCopy {
-
   self = [super init];
   if (self) {
     _width = width;

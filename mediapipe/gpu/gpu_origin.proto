@@ -16,6 +16,9 @@ syntax = "proto3";
 
 package mediapipe;
 
+option java_package = "com.google.mediapipe.gpu";
+option java_outer_classname = "GpuOriginProto";
+
 message GpuOrigin {
   enum Mode {
     DEFAULT = 0;

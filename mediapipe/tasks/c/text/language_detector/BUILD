@@ -22,7 +22,7 @@ cc_library(
     hdrs = ["language_detector.h"],
     visibility = ["//visibility:public"],
     deps = [
-        "//mediapipe/tasks/c/components/containers:language_detection_result_converter",
+        ":language_detector_result_converter",
         "//mediapipe/tasks/c/components/processors:classifier_options",
         "//mediapipe/tasks/c/components/processors:classifier_options_converter",
         "//mediapipe/tasks/c/core:base_options",
@@ -74,6 +74,29 @@ cc_library(
     deps = [
         "//mediapipe/tasks/c/components/processors:classifier_options",
         "//mediapipe/tasks/c/core:base_options",
+    ],
+)
+
+cc_library(
+    name = "language_detector_result_converter",
+    srcs = ["language_detector_result_converter.cc"],
+    hdrs = ["language_detector_result_converter.h"],
+    deps = [
+        ":language_detector",
+        "//mediapipe/tasks/cc/text/language_detector",
+    ],
+)
+
+cc_test(
+    name = "language_detector_result_converter_test",
+    srcs = ["language_detector_result_converter_test.cc"],
+    linkstatic = 1,
+    deps = [
+        ":language_detector",
+        ":language_detector_result_converter",
+        "//mediapipe/framework/port:gtest",
+        "//mediapipe/tasks/cc/text/language_detector",
+        "@com_google_googletest//:gtest_main",
     ],
 )
 

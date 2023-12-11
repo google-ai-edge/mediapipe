@@ -284,7 +284,7 @@ std::array<float, 16> GetMatrix(cv::Mat input, mediapipe::NormalizedRect roi,
       .IgnoreError();
   mediapipe::GetRotatedSubRectToRectTransformMatrix(
       roi_absolute, input.cols, input.rows,
-      /*flip_horizontaly=*/false, &transform_mat);
+      /*flip_horizontally=*/false, &transform_mat);
   return transform_mat;
 }
 

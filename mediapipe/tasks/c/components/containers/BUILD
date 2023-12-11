@@ -44,6 +44,87 @@ cc_test(
 )
 
 cc_library(
+    name = "landmark",
+    hdrs = ["landmark.h"],
+)
+
+cc_library(
+    name = "landmark_converter",
+    srcs = ["landmark_converter.cc"],
+    hdrs = ["landmark_converter.h"],
+    deps = [
+        ":landmark",
+        "//mediapipe/tasks/cc/components/containers:landmark",
+    ],
+)
+
+cc_test(
+    name = "landmark_converter_test",
+    srcs = ["landmark_converter_test.cc"],
+    deps = [
+        ":landmark",
+        ":landmark_converter",
+        "//mediapipe/framework/port:gtest",
+        "//mediapipe/tasks/cc/components/containers:landmark",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "rect",
+    hdrs = ["rect.h"],
+)
+
+cc_library(
+    name = "rect_converter",
+    srcs = ["rect_converter.cc"],
+    hdrs = ["rect_converter.h"],
+    deps = [
+        ":rect",
+        "//mediapipe/tasks/cc/components/containers:rect",
+    ],
+)
+
+cc_test(
+    name = "rect_converter_test",
+    srcs = ["rect_converter_test.cc"],
+    deps = [
+        ":rect",
+        ":rect_converter",
+        "//mediapipe/framework/port:gtest",
+        "//mediapipe/tasks/cc/components/containers:rect",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "keypoint",
+    hdrs = ["keypoint.h"],
+)
+
+cc_library(
+    name = "keypoint_converter",
+    srcs = ["keypoint_converter.cc"],
+    hdrs = ["keypoint_converter.h"],
+    deps = [
+        ":keypoint",
+        "//mediapipe/tasks/cc/components/containers:keypoint",
+    ],
+)
+
+cc_test(
+    name = "keypoint_converter_test",
+    srcs = ["keypoint_converter_test.cc"],
+    deps = [
+        ":keypoint",
+        ":keypoint_converter",
+        "//mediapipe/framework/port:gtest",
+        "//mediapipe/tasks/cc/components/containers:keypoint",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "classification_result",
     hdrs = ["classification_result.h"],
 )
@@ -73,6 +154,39 @@ cc_test(
 )
 
 cc_library(
+    name = "detection_result",
+    hdrs = ["detection_result.h"],
+    deps = [":rect"],
+)
+
+cc_library(
+    name = "detection_result_converter",
+    srcs = ["detection_result_converter.cc"],
+    hdrs = ["detection_result_converter.h"],
+    deps = [
+        ":category",
+        ":category_converter",
+        ":detection_result",
+        ":keypoint",
+        ":keypoint_converter",
+        ":rect_converter",
+        "//mediapipe/tasks/cc/components/containers:detection_result",
+    ],
+)
+
+cc_test(
+    name = "detection_result_converter_test",
+    srcs = ["detection_result_converter_test.cc"],
+    deps = [
+        ":detection_result",
+        ":detection_result_converter",
+        "//mediapipe/framework/port:gtest",
+        "//mediapipe/tasks/cc/components/containers:detection_result",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "embedding_result",
     hdrs = ["embedding_result.h"],
 )
@@ -95,29 +209,6 @@ cc_test(
         ":embedding_result_converter",
         "//mediapipe/framework/port:gtest",
         "//mediapipe/tasks/cc/components/containers:embedding_result",
-        "@com_google_googletest//:gtest_main",
-    ],
-)
-
-cc_library(
-    name = "language_detection_result_converter",
-    srcs = ["language_detection_result_converter.cc"],
-    hdrs = ["language_detection_result_converter.h"],
-    deps = [
-        "//mediapipe/tasks/c/text/language_detector",
-        "//mediapipe/tasks/cc/text/language_detector",
-    ],
-)
-
-cc_test(
-    name = "language_detection_result_converter_test",
-    srcs = ["language_detection_result_converter_test.cc"],
-    linkstatic = 1,
-    deps = [
-        ":language_detection_result_converter",
-        "//mediapipe/framework/port:gtest",
-        "//mediapipe/tasks/c/text/language_detector",
-        "//mediapipe/tasks/cc/text/language_detector",
         "@com_google_googletest//:gtest_main",
     ],
 )

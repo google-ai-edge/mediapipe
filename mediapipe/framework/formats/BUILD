@@ -125,6 +125,15 @@ cc_library(
 )
 
 cc_library(
+    name = "ahwb_view",
+    hdrs = ["ahwb_view.h"],
+    deps = [
+        "//mediapipe/framework:port",
+        "//mediapipe/gpu:gpu_buffer_storage",
+    ],
+)
+
+cc_library(
     name = "affine_transform",
     srcs = ["affine_transform.cc"],
     hdrs = ["affine_transform.h"],

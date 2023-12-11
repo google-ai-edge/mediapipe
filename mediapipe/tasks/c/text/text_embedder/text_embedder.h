@@ -47,15 +47,14 @@ struct TextEmbedderOptions {
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
 MP_EXPORT void* text_embedder_create(struct TextEmbedderOptions* options,
-                                     char** error_msg = nullptr);
+                                     char** error_msg);
 
 // Performs embedding extraction on the input `text`. Returns `0` on success.
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
 MP_EXPORT int text_embedder_embed(void* embedder, const char* utf8_str,
-                                  TextEmbedderResult* result,
-                                  char** error_msg = nullptr);
+                                  TextEmbedderResult* result, char** error_msg);
 
 // Frees the memory allocated inside a TextEmbedderResult result. Does not
 // free the result pointer itself.
@@ -65,7 +64,18 @@ MP_EXPORT void text_embedder_close_result(TextEmbedderResult* result);
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT int text_embedder_close(void* embedder, char** error_msg = nullptr);
+MP_EXPORT int text_embedder_close(void* embedder, char** error_msg);
+
+// Utility function to compute cosine similarity [1] between two embeddings.
+// May return an InvalidArgumentError if e.g. the embeddings are of different
+// types (quantized vs. float), have different sizes, or have a an L2-norm of
+// 0.
+//
+// [1]: https://en.wikipedia.org/wiki/Cosine_similarity
+MP_EXPORT int text_embedder_cosine_similarity(const Embedding& u,
+                                              const Embedding& v,
+                                              double* similarity,
+                                              char** error_msg);
 
 #ifdef __cplusplus
 }  // extern C

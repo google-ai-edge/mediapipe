@@ -727,6 +727,7 @@ cc_library(
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/status",
     ],
     alwayslink = 1,
 )
@@ -742,6 +743,7 @@ cc_test(
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/tool:options_util",
+        "//mediapipe/util:packet_test_util",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],

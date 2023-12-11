@@ -43,7 +43,7 @@ static NSString *const kTaskGraphName =
     @"mediapipe.tasks.vision.image_classifier.ImageClassifierGraph";
 static NSString *const kTaskName = @"imageClassifier";
 
-static const int kMicroSecondsPerMilliSecond = 1000;
+static const int kMicrosecondsPerMillisecond = 1000;
 
 #define InputPacketMap(imagePacket, normalizedRectPacket) \
   {                                                       \
@@ -221,7 +221,7 @@ static const int kMicroSecondsPerMilliSecond = 1000;
 
   NSInteger timestampInMilliseconds =
       outputPacketMap[kImageOutStreamName.cppString].Timestamp().Value() /
-      kMicroSecondsPerMilliSecond;
+      kMicrosecondsPerMillisecond;
   dispatch_async(_callbackQueue, ^{
     [self.imageClassifierLiveStreamDelegate imageClassifier:self
                           didFinishClassificationWithResult:result

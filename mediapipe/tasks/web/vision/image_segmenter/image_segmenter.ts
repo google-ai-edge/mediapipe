@@ -424,7 +424,10 @@ export class ImageSegmenter extends VisionTaskRunner {
           CONFIDENCE_MASKS_STREAM, (masks, timestamp) => {
             this.confidenceMasks = masks.map(
                 wasmImage => this.convertToMPMask(
-                    wasmImage, /* shouldCopyData= */ !this.userCallback));
+                    wasmImage,
+                    /* interpolateValues= */ true,
+                    /* shouldCopyData= */ !this.userCallback,
+                    ));
             this.setLatestOutputTimestamp(timestamp);
           });
       this.graphRunner.attachEmptyPacketListener(
@@ -442,7 +445,10 @@ export class ImageSegmenter extends VisionTaskRunner {
       this.graphRunner.attachImageListener(
           CATEGORY_MASK_STREAM, (mask, timestamp) => {
             this.categoryMask = this.convertToMPMask(
-                mask, /* shouldCopyData= */ !this.userCallback);
+                mask,
+                /* interpolateValues= */ false,
+                /* shouldCopyData= */ !this.userCallback,
+            );
             this.setLatestOutputTimestamp(timestamp);
           });
       this.graphRunner.attachEmptyPacketListener(

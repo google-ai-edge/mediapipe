@@ -60,18 +60,18 @@ struct LanguageDetectorOptions {
 // Creates a LanguageDetector from the provided `options`.
 // Returns a pointer to the language detector on success.
 // If an error occurs, returns `nullptr` and sets the error parameter to an
-// an error message (if `error_msg` is not nullptr). You must free the memory
+// an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
 MP_EXPORT void* language_detector_create(
-    struct LanguageDetectorOptions* options, char** error_msg = nullptr);
+    struct LanguageDetectorOptions* options, char** error_msg);
 
 // Performs language detection on the input `text`. Returns `0` on success.
 // If an error occurs, returns an error code and sets the error parameter to an
-// an error message (if `error_msg` is not nullptr). You must free the memory
+// an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
 MP_EXPORT int language_detector_detect(void* detector, const char* utf8_str,
                                        LanguageDetectorResult* result,
-                                       char** error_msg = nullptr);
+                                       char** error_msg);
 
 // Frees the memory allocated inside a LanguageDetectorResult result. Does not
 // free the result pointer itself.
@@ -79,10 +79,9 @@ MP_EXPORT void language_detector_close_result(LanguageDetectorResult* result);
 
 // Shuts down the LanguageDetector when all the work is done. Frees all memory.
 // If an error occurs, returns an error code and sets the error parameter to an
-// an error message (if `error_msg` is not nullptr). You must free the memory
+// an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT int language_detector_close(void* detector,
-                                      char** error_msg = nullptr);
+MP_EXPORT int language_detector_close(void* detector, char** error_msg);
 
 #ifdef __cplusplus
 }  // extern C

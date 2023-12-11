@@ -13,14 +13,16 @@
 // limitations under the License.
 
 #import "mediapipe/tasks/ios/vision/core/sources/MPPVisionPacketCreator.h"
+#import "mediapipe/tasks/ios/components/containers/utils/sources/MPPRegionOfInterest+Helpers.h"
 #import "mediapipe/tasks/ios/vision/core/utils/sources/MPPImage+Utils.h"
 
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/timestamp.h"
 
-static const NSUInteger kMicroSecondsPerMilliSecond = 1000;
+static const NSUInteger kMicrosecondsPerMillisecond = 1000;
 
 namespace {
+using ::mediapipe::RenderData;
 using ::mediapipe::Image;
 using ::mediapipe::ImageFrame;
 using ::mediapipe::MakePacket;
@@ -51,7 +53,7 @@ using ::mediapipe::Timestamp;
   }
 
   return MakePacket<Image>(std::move(imageFrame))
-      .At(Timestamp(int64(timestampInMilliseconds * kMicroSecondsPerMilliSecond)));
+      .At(Timestamp(int64(timestampInMilliseconds * kMicrosecondsPerMillisecond)));
 }
 
 + (Packet)createPacketWithNormalizedRect:(NormalizedRect &)normalizedRect {
@@ -61,7 +63,19 @@ using ::mediapipe::Timestamp;
 + (Packet)createPacketWithNormalizedRect:(NormalizedRect &)normalizedRect
                  timestampInMilliseconds:(NSInteger)timestampInMilliseconds {
   return MakePacket<NormalizedRect>(std::move(normalizedRect))
-      .At(Timestamp(int64(timestampInMilliseconds * kMicroSecondsPerMilliSecond)));
+      .At(Timestamp(int64(timestampInMilliseconds * kMicrosecondsPerMillisecond)));
+}
+
++ (std::optional<Packet>)createRenderDataPacketWithRegionOfInterest:
+                             (MPPRegionOfInterest *)regionOfInterest
+                                                              error:(NSError **)error {
+  std::optional<RenderData> renderData = [regionOfInterest getRenderDataWithError:error];
+
+  if (!renderData.has_value()) {
+    return std::nullopt;
+  }
+
+  return MakePacket<RenderData>(std::move(renderData.value()));
 }
 
 @end

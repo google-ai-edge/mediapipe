@@ -56,6 +56,8 @@ class BertHParams(hp.BaseHParams):
       value to 0. Defaults to 2.0.
     tokenizer: Tokenizer to use for preprocessing. Must be one of the enum
       options of SupportedBertTokenizers. Defaults to FULL_TOKENIZER.
+    checkpoint_frequency: Frequency(in epochs) of saving checkpoints during
+      training. Defaults to 0 which does not save training checkpoints.
   """
 
   learning_rate: float = 3e-5
@@ -74,6 +76,8 @@ class BertHParams(hp.BaseHParams):
   tokenizer: bert_tokenizer.SupportedBertTokenizers = (
       bert_tokenizer.SupportedBertTokenizers.FULL_TOKENIZER
   )
+
+  checkpoint_frequency: int = 0
 
 
 HParams = Union[BertHParams, AverageWordEmbeddingHParams]

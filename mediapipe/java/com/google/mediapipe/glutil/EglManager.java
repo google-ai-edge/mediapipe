@@ -114,6 +114,16 @@ public class EglManager {
     }
   }
 
+  /** Returns the managed {@link EGLDisplay}. */
+  public EGLDisplay getEglDisplay() {
+    return eglDisplay;
+  }
+
+  /** Returns the {@link EGL10}. */
+  public EGL10 getEgl() {
+    return egl;
+  }
+
   /** Returns the managed {@link EGLContext} */
   public EGLContext getContext() {
     return eglContext;

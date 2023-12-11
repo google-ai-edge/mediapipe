@@ -16,7 +16,6 @@ package com.google.mediapipe.tasks.vision.facelandmarker;
 
 import com.google.auto.value.AutoValue;
 import com.google.mediapipe.formats.proto.LandmarkProto;
-import com.google.mediapipe.formats.proto.ClassificationProto.Classification;
 import com.google.mediapipe.formats.proto.ClassificationProto.ClassificationList;
 import com.google.mediapipe.tasks.components.containers.Category;
 import com.google.mediapipe.tasks.components.containers.NormalizedLandmark;
@@ -47,40 +46,21 @@ public abstract class FaceLandmarkerResult implements TaskResult {
       long timestampMs) {
     List<List<NormalizedLandmark>> multiFaceLandmarks = new ArrayList<>();
     for (LandmarkProto.NormalizedLandmarkList faceLandmarksProto : multiFaceLandmarksProto) {
-      List<NormalizedLandmark> faceLandmarks = new ArrayList<>();
-      multiFaceLandmarks.add(faceLandmarks);
-      for (LandmarkProto.NormalizedLandmark faceLandmarkProto :
-          faceLandmarksProto.getLandmarkList()) {
-        faceLandmarks.add(
-            NormalizedLandmark.create(
-                faceLandmarkProto.getX(),
-                faceLandmarkProto.getY(),
-                faceLandmarkProto.getZ(),
-                faceLandmarkProto.hasVisibility()
-                    ? Optional.of(faceLandmarkProto.getVisibility())
-                    : Optional.empty(),
-                faceLandmarkProto.hasPresence()
-                    ? Optional.of(faceLandmarkProto.getPresence())
-                    : Optional.empty()));
-      }
+      List<NormalizedLandmark> faceLandmarks =
+          NormalizedLandmark.createListFromProto(faceLandmarksProto);
+      multiFaceLandmarks.add(Collections.unmodifiableList(faceLandmarks));
     }
+
     Optional<List<List<Category>>> multiFaceBlendshapes = Optional.empty();
     if (multiFaceBendshapesProto.isPresent()) {
       List<List<Category>> blendshapes = new ArrayList<>();
       for (ClassificationList faceBendshapeProto : multiFaceBendshapesProto.get()) {
-        List<Category> blendshape = new ArrayList<>();
-        blendshapes.add(blendshape);
-        for (Classification classification : faceBendshapeProto.getClassificationList()) {
-          blendshape.add(
-              Category.create(
-                  classification.getScore(),
-                  classification.getIndex(),
-                  classification.getLabel(),
-                  classification.getDisplayName()));
-        }
+        List<Category> blendshape = Category.createListFromProto(faceBendshapeProto);
+        blendshapes.add(Collections.unmodifiableList(blendshape));
       }
       multiFaceBlendshapes = Optional.of(Collections.unmodifiableList(blendshapes));
     }
+
     Optional<List<float[]>> multiFaceTransformationMatrixes = Optional.empty();
     if (multiFaceTransformationMatrixesProto.isPresent()) {
       List<float[]> matrixes = new ArrayList<>();
@@ -99,6 +79,7 @@ public abstract class FaceLandmarkerResult implements TaskResult {
       }
       multiFaceTransformationMatrixes = Optional.of(Collections.unmodifiableList(matrixes));
     }
+
     return new AutoValue_FaceLandmarkerResult(
         timestampMs,
         Collections.unmodifiableList(multiFaceLandmarks),

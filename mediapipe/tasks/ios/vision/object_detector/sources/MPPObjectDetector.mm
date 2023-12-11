@@ -182,7 +182,7 @@ static NSString *const kTaskName = @"objectDetector";
 
   NSInteger timestampInMilliseconds =
       outputPacketMap[kImageOutStreamName.cppString].Timestamp().Value() /
-      kMicroSecondsPerMilliSecond;
+      kMicrosecondsPerMillisecond;
   dispatch_async(_callbackQueue, ^{
     [self.objectDetectorLiveStreamDelegate objectDetector:self
                              didFinishDetectionWithResult:result

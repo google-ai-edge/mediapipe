@@ -116,7 +116,7 @@ void ConvertAnchorsToRawValues(const std::vector<Anchor>& anchors,
 //               tensors can have 2 or 3 tensors. First tensor is the predicted
 //               raw boxes/keypoints. The size of the values must be (num_boxes
 //               * num_predicted_values). Second tensor is the score tensor. The
-//               size of the valuse must be (num_boxes * num_classes). It's
+//               size of the values must be (num_boxes * num_classes). It's
 //               optional to pass in a third tensor for anchors (e.g. for SSD
 //               models) depend on the outputs of the detection model. The size
 //               of anchor tensor must be (num_boxes * 4).

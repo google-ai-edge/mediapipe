@@ -97,7 +97,7 @@ class BertTokenizerTest(tf.test.TestCase):
         self._tokenizer, self._model
     )
     output = model(tf.constant(["Example input".encode("utf-8")]))
-    self.assertAllEqual(output.shape, (1, 2))
+    self.assertAllEqual(output.shape, (2,))
     self.assertEqual(tf.reduce_sum(output), 1)
 
 

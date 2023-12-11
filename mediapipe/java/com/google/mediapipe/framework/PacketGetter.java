@@ -128,6 +128,16 @@ public final class PacketGetter {
     return ProtoUtil.unpack(result, defaultInstance);
   }
 
+  public static <T extends MessageLite> T getProto(final Packet packet, Parser<T> messageParser) {
+    SerializedMessage result = new SerializedMessage();
+    nativeGetProto(packet.getNativeHandle(), result);
+    try {
+      return messageParser.parseFrom(result.value);
+    } catch (InvalidProtocolBufferException e) {
+      throw new IllegalArgumentException(e);
+    }
+  }
+
   /**
    * @deprecated {@link #getProto(Packet, MessageLite)} is safer to use in obfuscated builds.
    */

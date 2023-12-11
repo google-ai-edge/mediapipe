@@ -33,6 +33,7 @@
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/gpu/gpu_origin.pb.h"
+#include "mediapipe/gpu/gpu_service.h"
 #include "mediapipe/tasks/cc/vision/face_stylizer/calculators/tensors_to_image_calculator.pb.h"
 
 #if !MEDIAPIPE_DISABLE_GPU
@@ -145,7 +146,8 @@ absl::Status TensorsToImageCalculator::UpdateContract(CalculatorContract* cc) {
 #if MEDIAPIPE_METAL_ENABLED
   MP_RETURN_IF_ERROR([MPPMetalHelper updateContract:cc]);
 #else
-  return GlCalculatorHelper::UpdateContract(cc);
+  return GlCalculatorHelper::UpdateContract(cc,
+                                            /*requesst_gpu_as_optional=*/true);
 #endif  // MEDIAPIPE_METAL_ENABLED
 #endif  // !MEDIAPIPE_DISABLE_GPU
   return absl::OkStatus();
@@ -153,16 +155,7 @@ absl::Status TensorsToImageCalculator::UpdateContract(CalculatorContract* cc) {
 
 absl::Status TensorsToImageCalculator::Open(CalculatorContext* cc) {
   options_ = cc->Options<TensorsToImageCalculatorOptions>();
-  if (CanUseGpu()) {
-#if !MEDIAPIPE_DISABLE_GPU
-#if MEDIAPIPE_METAL_ENABLED
-    gpu_helper_ = [[MPPMetalHelper alloc] initWithCalculatorContext:cc];
-    RET_CHECK(gpu_helper_);
-#else
-    MP_RETURN_IF_ERROR(gl_helper_.Open(cc));
-#endif  // MEDIAPIPE_METAL_ENABLED
-#endif  // !MEDIAPIPE_DISABLE_GPU
-  } else {
+  if (!CanUseGpu()) {
     ABSL_CHECK(options_.has_input_tensor_float_range() ^
                options_.has_input_tensor_uint_range())
         << "Must specify either `input_tensor_float_range` or "
@@ -179,7 +172,9 @@ absl::Status TensorsToImageCalculator::Process(CalculatorContext* cc) {
 #if MEDIAPIPE_METAL_ENABLED
     return MetalProcess(cc);
 #else
-    return GlProcess(cc);
+    if (cc->Service(kGpuService).IsAvailable()) {
+      return GlProcess(cc);
+    }
 #endif  // MEDIAPIPE_METAL_ENABLED
 #endif  // !MEDIAPIPE_DISABLE_GPU
   }
@@ -188,14 +183,16 @@ absl::Status TensorsToImageCalculator::Process(CalculatorContext* cc) {
 
 absl::Status TensorsToImageCalculator::Close(CalculatorContext* cc) {
 #if !MEDIAPIPE_DISABLE_GPU && !MEDIAPIPE_METAL_ENABLED
-  gl_helper_.RunInGlContext([this] {
+  if (gl_initialized_) {
+    gl_helper_.RunInGlContext([this] {
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
-    gl_compute_program_.reset();
+      gl_compute_program_.reset();
 #else
-    if (program_) glDeleteProgram(program_);
-    program_ = 0;
+      if (program_) glDeleteProgram(program_);
+      program_ = 0;
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
-  });
+    });
+  }
 #endif  // !MEDIAPIPE_DISABLE_GPU && !MEDIAPIPE_METAL_ENABLED
   return absl::OkStatus();
 }
@@ -315,6 +312,9 @@ absl::Status TensorsToImageCalculator::MetalProcess(CalculatorContext* cc) {
 }
 
 absl::Status TensorsToImageCalculator::MetalSetup(CalculatorContext* cc) {
+  gpu_helper_ = [[MPPMetalHelper alloc] initWithCalculatorContext:cc];
+  RET_CHECK(gpu_helper_);
+
   id<MTLDevice> device = gpu_helper_.mtlDevice;
   const std::string shader_source =
       R"(
@@ -450,6 +450,10 @@ absl::Status TensorsToImageCalculator::GlSetup(CalculatorContext* cc) {
 }
 
 absl::Status TensorsToImageCalculator::GlProcess(CalculatorContext* cc) {
+  if (!gl_initialized_) {
+    MP_RETURN_IF_ERROR(gl_helper_.Open(cc));
+  }
+
   return gl_helper_.RunInGlContext([this, cc]() -> absl::Status {
     if (!gl_initialized_) {
       MP_RETURN_IF_ERROR(GlSetup(cc));

@@ -129,7 +129,9 @@ cc_library_with_tflite(
     name = "tflite_model_loader",
     srcs = ["tflite_model_loader.cc"],
     hdrs = ["tflite_model_loader.h"],
-    tflite_deps = ["@org_tensorflow//tensorflow/lite:framework_stable"],
+    tflite_deps = [
+        "@org_tensorflow//tensorflow/lite:framework_stable",
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework/api2:packet",

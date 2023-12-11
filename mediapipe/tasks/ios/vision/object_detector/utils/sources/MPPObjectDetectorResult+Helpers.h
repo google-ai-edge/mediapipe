@@ -18,7 +18,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-static const int kMicroSecondsPerMilliSecond = 1000;
+static const int kMicrosecondsPerMillisecond = 1000;
 
 @interface MPPObjectDetectorResult (Helpers)
 

@@ -14,6 +14,15 @@
 
 #import <Foundation/Foundation.h>
 
+/**
+ * The delegate to run MediaPipe. If the delegate is not set, the default
+ * delegate CPU is used.
+ */
+typedef NS_ENUM(NSUInteger, MPPDelegate) {
+  MPPDelegateCPU,
+  MPPDelegateGPU,
+} NS_SWIFT_NAME(Delegate);
+
 NS_ASSUME_NONNULL_BEGIN
 
 /**
@@ -25,6 +34,9 @@ NS_SWIFT_NAME(BaseOptions)
 
 /** The path to the model asset to open and mmap in memory. */
 @property(nonatomic, copy) NSString *modelAssetPath;
+
+/** Overrides the default backend to use for the provided model. */
+@property(nonatomic) MPPDelegate delegate;
 
 @end
 

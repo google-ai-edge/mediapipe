@@ -16,11 +16,10 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_C_VISION_IMAGE_CLASSIFIER_IMAGE_CLASSIFIER_H_
 #define MEDIAPIPE_TASKS_C_VISION_IMAGE_CLASSIFIER_IMAGE_CLASSIFIER_H_
 
-#include <cstdint>
-
 #include "mediapipe/tasks/c/components/containers/classification_result.h"
 #include "mediapipe/tasks/c/components/processors/classifier_options.h"
 #include "mediapipe/tasks/c/core/base_options.h"
+#include "mediapipe/tasks/c/vision/core/common.h"
 
 #ifndef MP_EXPORT
 #define MP_EXPORT __attribute__((visibility("default")))
@@ -32,43 +31,7 @@ extern "C" {
 
 typedef ClassificationResult ImageClassifierResult;
 
-// Supported image formats.
-enum ImageFormat {
-  UNKNOWN = 0,
-  SRGB = 1,
-  SRGBA = 2,
-  GRAY8 = 3,
-  SBGRA = 11  // compatible with Flutter `bgra8888` format.
-};
-
-// Supported processing modes.
-enum RunningMode {
-  IMAGE = 1,
-  VIDEO = 2,
-  LIVE_STREAM = 3,
-};
-
-// Structure to hold image frame.
-struct ImageFrame {
-  enum ImageFormat format;
-  const uint8_t* image_buffer;
-  int width;
-  int height;
-};
-
-// TODO: Add GPU buffer declaration and proccessing logic for it.
-struct GpuBuffer {};
-
-// The object to contain an image, realizes `OneOf` concept.
-struct MpImage {
-  enum { IMAGE_FRAME, GPU_BUFFER } type;
-  union {
-    ImageFrame image_frame;
-    GpuBuffer gpu_buffer;
-  };
-};
-
-// The options for configuring a Mediapipe image classifier task.
+// The options for configuring a MediaPipe image classifier task.
 struct ImageClassifierOptions {
   // Base options for configuring MediaPipe Tasks, such as specifying the model
   // file with metadata, accelerator options, op resolver, etc.
@@ -89,30 +52,73 @@ struct ImageClassifierOptions {
 
   // The user-defined result callback for processing live stream data.
   // The result callback should only be specified when the running mode is set
-  // to RunningMode::LIVE_STREAM.
-  typedef void (*result_callback_fn)(ImageClassifierResult*, const MpImage*,
-                                     int64_t);
+  // to RunningMode::LIVE_STREAM. Arguments of the callback function include:
+  // the pointer to classification result, the image that result was obtained
+  // on, the timestamp relevant to classification results and pointer to error
+  // message in case of any failure. The validity of the passed arguments is
+  // true for the lifetime of the callback function.
+  //
+  // A caller is responsible for closing image classifier result.
+  typedef void (*result_callback_fn)(ImageClassifierResult* result,
+                                     const MpImage& image, int64_t timestamp_ms,
+                                     char* error_msg);
   result_callback_fn result_callback;
 };
 
-// Creates an ImageClassifier from provided `options`.
+// Creates an ImageClassifier from the provided `options`.
 // Returns a pointer to the image classifier on success.
 // If an error occurs, returns `nullptr` and sets the error parameter to an
-// an error message (if `error_msg` is not nullptr). You must free the memory
+// an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
 MP_EXPORT void* image_classifier_create(struct ImageClassifierOptions* options,
-                                        char** error_msg = nullptr);
+                                        char** error_msg);
 
 // Performs image classification on the input `image`. Returns `0` on success.
 // If an error occurs, returns an error code and sets the error parameter to an
-// an error message (if `error_msg` is not nullptr). You must free the memory
+// an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-//
-// TODO: Add API for video and live stream processing.
 MP_EXPORT int image_classifier_classify_image(void* classifier,
                                               const MpImage* image,
                                               ImageClassifierResult* result,
-                                              char** error_msg = nullptr);
+                                              char** error_msg);
+
+// Performs image classification on the provided video frame.
+// Only use this method when the ImageClassifier is created with the video
+// running mode.
+// The image can be of any size with format RGB or RGBA. It's required to
+// provide the video frame's timestamp (in milliseconds). The input timestamps
+// must be monotonically increasing.
+// If an error occurs, returns an error code and sets the error parameter to an
+// an error message (if `error_msg` is not `nullptr`). You must free the memory
+// allocated for the error message.
+MP_EXPORT int image_classifier_classify_for_video(void* classifier,
+                                                  const MpImage* image,
+                                                  int64_t timestamp_ms,
+                                                  ImageClassifierResult* result,
+                                                  char** error_msg);
+
+// Sends live image data to image classification, and the results will be
+// available via the `result_callback` provided in the ImageClassifierOptions.
+// Only use this method when the ImageClassifier is created with the live
+// stream running mode.
+// The image can be of any size with format RGB or RGBA. It's required to
+// provide a timestamp (in milliseconds) to indicate when the input image is
+// sent to the object detector. The input timestamps must be monotonically
+// increasing.
+// The `result_callback` provides:
+//   - The classification results as an ImageClassifierResult object.
+//   - The const reference to the corresponding input image that the image
+//     classifier runs on. Note that the const reference to the image will no
+//     longer be valid when the callback returns. To access the image data
+//     outside of the callback, callers need to make a copy of the image.
+//   - The input timestamp in milliseconds.
+// If an error occurs, returns an error code and sets the error parameter to an
+// an error message (if `error_msg` is not `nullptr`). You must free the memory
+// allocated for the error message.
+MP_EXPORT int image_classifier_classify_async(void* classifier,
+                                              const MpImage* image,
+                                              int64_t timestamp_ms,
+                                              char** error_msg);
 
 // Frees the memory allocated inside a ImageClassifierResult result.
 // Does not free the result pointer itself.
@@ -120,10 +126,9 @@ MP_EXPORT void image_classifier_close_result(ImageClassifierResult* result);
 
 // Frees image classifier.
 // If an error occurs, returns an error code and sets the error parameter to an
-// an error message (if `error_msg` is not nullptr). You must free the memory
+// an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT int image_classifier_close(void* classifier,
-                                     char** error_msg = nullptr);
+MP_EXPORT int image_classifier_close(void* classifier, char** error_msg);
 
 #ifdef __cplusplus
 }  // extern C

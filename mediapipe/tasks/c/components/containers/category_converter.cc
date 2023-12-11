@@ -41,4 +41,14 @@ void CppCloseCategory(Category* in) {
   in->display_name = nullptr;
 }
 
+void CppCloseCategories(Categories* in) {
+  for (int i = 0; i < in->categories_count; ++i) {
+    CppCloseCategory(&in->categories[i]);
+  }
+  delete[] in->categories;
+
+  in->categories = nullptr;
+  in->categories_count = 0;
+}
+
 }  // namespace mediapipe::tasks::c::components::containers

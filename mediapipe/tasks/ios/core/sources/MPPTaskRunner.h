@@ -37,6 +37,12 @@ NS_ASSUME_NONNULL_BEGIN
 @interface MPPTaskRunner : NSObject
 
 /**
+ * The canonicalized `CalculatorGraphConfig` of the underlying graph managed by the C++ task
+ * runner.
+ */
+@property(nonatomic, readonly) const mediapipe::CalculatorGraphConfig &graphConfig;
+
+/**
  * Initializes a new `MPPTaskRunner` with the MediaPipe calculator configuration proto and an
  * optional C++ packets callback.
  *

@@ -33,15 +33,15 @@ typedef NS_ENUM(NSUInteger, MPPMaskDataType) {
  * Masks are stored as `UInt8 *` or `float *` objects.
  * Every mask has an underlying type which can be accessed using `dataType`. You can access the
  * mask as any other type using the appropriate properties. For example, if the underlying type is
- * `MPPMaskDataTypeUInt8`, in addition to accessing the mask using `uint8Data`, you can access
- * `float32Data` to get the 32 bit float data (with values ranging from 0.0 to 1.0). The first
- * time you access the data as a type different from the underlying type, an expensive type
- * conversion is performed. Subsequent accesses return a pointer to the memory location for the same
- * type converted array. As type conversions can be expensive, it is recommended to limit the
- * accesses to data of types different from the underlying type.
+ * `uInt8`, in addition to accessing the mask using `uint8Data`, you can access `float32Data` to get
+ * the 32 bit float data (with values ranging from 0.0 to 1.0). The first time you access the data
+ * as a type different from the underlying type, an expensive type conversion is performed.
+ * Subsequent accesses return a pointer to the memory location for the same type converted array. As
+ * type conversions can be expensive, it is recommended to limit the accesses to data of types
+ * different from the underlying type.
  *
  * Masks that are returned from a MediaPipe Tasks are owned by by the underlying C++ Task. If you
- * need to extend the lifetime of these objects, you can invoke the `[MPPMask copy:]` method.
+ * need to extend the lifetime of these objects, you can invoke the `copy()` method.
  */
 NS_SWIFT_NAME(Mask)
 @interface MPPMask : NSObject <NSCopying>
@@ -68,19 +68,18 @@ NS_SWIFT_NAME(Mask)
 @property(nonatomic, readonly, assign) const float *float32Data;
 
 /**
- * Initializes an `MPPMask` object of type `MPPMaskDataTypeUInt8` with the given `UInt8*` data,
- * width and height.
+ * Initializes an `Mask` object of type `uInt8` with the given `UInt8*` data, width and height.
  *
- * If `shouldCopy` is set to `YES`, the newly created `MPPMask` stores a reference to a deep copied
+ * If `shouldCopy` is set to `true`, the newly created `Mask` stores a reference to a deep copied
  * `uint8Data`. Since deep copies are expensive, it is recommended to not set `shouldCopy` unless
- * the `MPPMask` must outlive the passed in `uint8Data`.
+ * the `Mask` must outlive the passed in `uint8Data`.
  *
  * @param uint8Data A pointer to the memory location of the `UInt8` data array.
  * @param width The width of the mask.
  * @param height The height of the mask.
  * @param shouldCopy The height of the mask.
  *
- * @return A new `MPPMask` instance with the given `UInt8*` data, width and height.
+ * @return A new `Mask` instance with the given `UInt8*` data, width and height.
  */
 - (nullable instancetype)initWithUInt8Data:(const UInt8 *)uint8Data
                                      width:(NSInteger)width
@@ -88,18 +87,17 @@ NS_SWIFT_NAME(Mask)
                                 shouldCopy:(BOOL)shouldCopy NS_DESIGNATED_INITIALIZER;
 
 /**
- * Initializes an `MPPMask` object of type `MPPMaskDataTypeFloat32` with the given `float*` data,
- * width and height.
+ * Initializes an `Mask` object of type `float32` with the given `float*` data, width and height.
  *
- * If `shouldCopy` is set to `YES`, the newly created `MPPMask` stores a reference to a deep copied
+ * If `shouldCopy` is set to `true`, the newly created `Mask` stores a reference to a deep copied
  * `float32Data`. Since deep copies are expensive, it is recommended to not set `shouldCopy` unless
- * the `MPPMask` must outlive the passed in `float32Data`.
+ * the `Mask` must outlive the passed in `float32Data`.
  *
  * @param float32Data A pointer to the memory location of the `float` data array.
  * @param width The width of the mask.
  * @param height The height of the mask.
  *
- * @return A new `MPPMask` instance with the given `float*` data, width and height.
+ * @return A new `Mask` instance with the given `float*` data, width and height.
  */
 - (nullable instancetype)initWithFloat32Data:(const float *)float32Data
                                        width:(NSInteger)width

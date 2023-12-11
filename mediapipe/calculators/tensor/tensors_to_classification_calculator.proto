@@ -34,7 +34,7 @@ message TensorsToClassificationCalculatorOptions {
     repeated Entry entries = 1;
   }
 
-  // Score threshold for perserving the class.
+  // Score threshold for preserving the class.
   optional float min_score_threshold = 1;
   // Number of highest scoring labels to output.  If top_k is not positive then
   // all labels are used.

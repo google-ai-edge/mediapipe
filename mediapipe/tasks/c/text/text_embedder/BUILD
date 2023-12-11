@@ -28,6 +28,7 @@ cc_library(
         "//mediapipe/tasks/c/components/processors:embedder_options_converter",
         "//mediapipe/tasks/c/core:base_options",
         "//mediapipe/tasks/c/core:base_options_converter",
+        "//mediapipe/tasks/cc/components/containers:embedding_result",
         "//mediapipe/tasks/cc/text/text_embedder",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",

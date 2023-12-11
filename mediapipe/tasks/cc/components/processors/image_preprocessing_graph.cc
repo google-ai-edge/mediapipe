@@ -271,8 +271,9 @@ class ImagePreprocessingGraph : public Subgraph {
     };
   }
 };
+
 REGISTER_MEDIAPIPE_GRAPH(
-    ::mediapipe::tasks::components::processors::ImagePreprocessingGraph);
+    ::mediapipe::tasks::components::processors::ImagePreprocessingGraph)
 
 }  // namespace processors
 }  // namespace components

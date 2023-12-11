@@ -274,8 +274,9 @@ export abstract class VisionTaskRunner extends TaskRunner {
   }
 
   /** Converts a WasmImage to an MPMask.  */
-  protected convertToMPMask(wasmImage: WasmImage, shouldCopyData: boolean):
-      MPMask {
+  protected convertToMPMask(
+      wasmImage: WasmImage, interpolateValues: boolean,
+      shouldCopyData: boolean): MPMask {
     const {data, width, height} = wasmImage;
     const pixels = width * height;
 
@@ -291,7 +292,7 @@ export abstract class VisionTaskRunner extends TaskRunner {
     }
 
     const mask = new MPMask(
-        [container],
+        [container], interpolateValues,
         /* ownsWebGLTexture= */ false, this.graphRunner.wasmModule.canvas!,
         this.shaderContext, width, height);
     return shouldCopyData ? mask.clone() : mask;

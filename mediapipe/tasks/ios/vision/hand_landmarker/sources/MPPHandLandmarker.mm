@@ -222,7 +222,7 @@ static NSString *const kTaskName = @"handLandmarker";
 
   NSInteger timestampInMilliseconds =
       outputPacketMap[kImageOutStreamName.cppString].Timestamp().Value() /
-      kMicroSecondsPerMilliSecond;
+      kMicrosecondsPerMillisecond;
   dispatch_async(_callbackQueue, ^{
     [self.handLandmarkerLiveStreamDelegate handLandmarker:self
                              didFinishDetectionWithResult:result

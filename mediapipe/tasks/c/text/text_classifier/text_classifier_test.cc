@@ -43,6 +43,7 @@ TEST(TextClassifierTest, SmokeTest) {
   std::string model_path = GetFullPath(kTestBertModelPath);
   TextClassifierOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
+                           /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ model_path.c_str()},
       /* classifier_options= */
       {/* display_names_locale= */ nullptr,
@@ -54,11 +55,12 @@ TEST(TextClassifierTest, SmokeTest) {
        /* category_denylist_count= */ 0},
   };
 
-  void* classifier = text_classifier_create(&options);
+  void* classifier = text_classifier_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(classifier, nullptr);
 
   TextClassifierResult result;
-  text_classifier_classify(classifier, kTestString, &result);
+  text_classifier_classify(classifier, kTestString, &result,
+                           /* error_msg */ nullptr);
   EXPECT_EQ(result.classifications_count, 1);
   EXPECT_EQ(result.classifications[0].categories_count, 2);
   EXPECT_EQ(std::string{result.classifications[0].categories[0].category_name},
@@ -67,13 +69,14 @@ TEST(TextClassifierTest, SmokeTest) {
               kPrecision);
 
   text_classifier_close_result(&result);
-  text_classifier_close(classifier);
+  text_classifier_close(classifier, /* error_msg */ nullptr);
 }
 
 TEST(TextClassifierTest, ErrorHandling) {
   // It is an error to set neither the asset buffer nor the path.
   TextClassifierOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
+                           /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ nullptr},
       /* classifier_options= */ {},
   };
