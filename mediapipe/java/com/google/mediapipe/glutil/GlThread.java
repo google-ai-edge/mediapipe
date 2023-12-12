@@ -18,6 +18,7 @@ import android.opengl.GLES20;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import com.google.mediapipe.glutil.ShaderUtil.GlRuntimeException;
 import javax.annotation.Nullable;
 import javax.microedition.khronos.egl.EGLContext;
 import javax.microedition.khronos.egl.EGLSurface;
@@ -111,7 +112,7 @@ public class GlThread extends Thread {
         0);
     int status = GLES20.glCheckFramebufferStatus(GLES20.GL_FRAMEBUFFER);
     if (status != GLES20.GL_FRAMEBUFFER_COMPLETE) {
-      throw new RuntimeException("Framebuffer not complete, status=" + status);
+      throw new GlRuntimeException("Framebuffer not complete, status=" + status);
     }
     GLES20.glViewport(0, 0, width, height);
     ShaderUtil.checkGlError("glViewport");
