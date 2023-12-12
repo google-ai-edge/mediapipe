@@ -52,8 +52,7 @@ void InitFaceLandmarkerResult(
   cpp_result->face_blendshapes =
       std::vector<mediapipe::tasks::components::containers::Classifications>{
           classifications_for_blendshapes};
-  //  cpp_result->face_blendshapes->push_back(
-  //      classifications_for_blendshapes);
+  cpp_result->face_blendshapes->push_back(classifications_for_blendshapes);
 
   // Initialize facial_transformation_matrixes
   Eigen::MatrixXf cpp_matrix(2, 2);
@@ -86,49 +85,43 @@ TEST(FaceLandmarkerResultConverterTest, ConvertsCustomResult) {
   }
 
   // Verify conversion of face_blendshapes
-  if (cpp_result.face_blendshapes.has_value()) {
-    EXPECT_EQ(c_result.face_blendshapes_count,
-              cpp_result.face_blendshapes.value().size());
-    for (uint32_t i = 0; i < c_result.face_blendshapes_count; ++i) {
-      const auto& cpp_face_blendshapes = cpp_result.face_blendshapes.value();
-      EXPECT_EQ(c_result.face_blendshapes[i].categories_count,
-                cpp_face_blendshapes[i].categories.size());
-      for (uint32_t j = 0; j < c_result.face_blendshapes[i].categories_count;
-           ++j) {
-        const auto& cpp_category = cpp_face_blendshapes[i].categories[j];
-        EXPECT_EQ(c_result.face_blendshapes[i].categories[j].index,
-                  cpp_category.index);
-        EXPECT_FLOAT_EQ(c_result.face_blendshapes[i].categories[j].score,
-                        cpp_category.score);
-        EXPECT_EQ(std::string(
-                      c_result.face_blendshapes[i].categories[j].category_name),
-                  cpp_category.category_name);
-      }
+  EXPECT_EQ(c_result.face_blendshapes_count,
+            cpp_result.face_blendshapes.value().size());
+  for (uint32_t i = 0; i < c_result.face_blendshapes_count; ++i) {
+    const auto& cpp_face_blendshapes = cpp_result.face_blendshapes.value();
+    EXPECT_EQ(c_result.face_blendshapes[i].categories_count,
+              cpp_face_blendshapes[i].categories.size());
+    for (uint32_t j = 0; j < c_result.face_blendshapes[i].categories_count;
+         ++j) {
+      const auto& cpp_category = cpp_face_blendshapes[i].categories[j];
+      EXPECT_EQ(c_result.face_blendshapes[i].categories[j].index,
+                cpp_category.index);
+      EXPECT_FLOAT_EQ(c_result.face_blendshapes[i].categories[j].score,
+                      cpp_category.score);
+      EXPECT_EQ(
+          std::string(c_result.face_blendshapes[i].categories[j].category_name),
+          cpp_category.category_name);
     }
   }
 
   // Verify conversion of facial_transformation_matrixes
-  if (cpp_result.facial_transformation_matrixes.has_value()) {
-    EXPECT_EQ(c_result.facial_transformation_matrixes_count,
-              cpp_result.facial_transformation_matrixes.value().size());
-    for (uint32_t i = 0; i < c_result.facial_transformation_matrixes_count;
-         ++i) {
-      const auto& cpp_facial_transformation_matrixes =
-          cpp_result.facial_transformation_matrixes.value();
-      // Assuming Matrix struct contains data array and dimensions
-      const auto& cpp_matrix = cpp_facial_transformation_matrixes[i];
-      EXPECT_EQ(c_result.facial_transformation_matrixes[i].rows,
-                cpp_matrix.rows());
-      EXPECT_EQ(c_result.facial_transformation_matrixes[i].cols,
-                cpp_matrix.cols());
-      // Check each element of the matrix
-      for (long row = 0; row < cpp_matrix.rows(); ++row) {
-        for (long col = 0; col < cpp_matrix.cols(); ++col) {
-          size_t index = col * cpp_matrix.rows() + row;  // Column-major index
-          EXPECT_FLOAT_EQ(
-              c_result.facial_transformation_matrixes[i].data[index],
-              cpp_matrix(row, col));
-        }
+  EXPECT_EQ(c_result.facial_transformation_matrixes_count,
+            cpp_result.facial_transformation_matrixes.value().size());
+  for (uint32_t i = 0; i < c_result.facial_transformation_matrixes_count; ++i) {
+    const auto& cpp_facial_transformation_matrixes =
+        cpp_result.facial_transformation_matrixes.value();
+    // Assuming Matrix struct contains data array and dimensions
+    const auto& cpp_matrix = cpp_facial_transformation_matrixes[i];
+    EXPECT_EQ(c_result.facial_transformation_matrixes[i].rows,
+              cpp_matrix.rows());
+    EXPECT_EQ(c_result.facial_transformation_matrixes[i].cols,
+              cpp_matrix.cols());
+    // Check each element of the matrix
+    for (long row = 0; row < cpp_matrix.rows(); ++row) {
+      for (long col = 0; col < cpp_matrix.cols(); ++col) {
+        size_t index = col * cpp_matrix.rows() + row;  // Column-major index
+        EXPECT_FLOAT_EQ(c_result.facial_transformation_matrixes[i].data[index],
+                        cpp_matrix(row, col));
       }
     }
   }
