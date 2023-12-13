@@ -24,6 +24,9 @@
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
 #include "mediapipe/gpu/gl_base.h"
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
+#ifdef MEDIAPIPE_TENSOR_USE_AHWB
+#include "mediapipe/framework/formats/hardware_buffer.h"
+#endif  // MEDIAPIPE_TENSOR_USE_AHWB
 
 #if MEDIAPIPE_METAL_ENABLED
 #import <Metal/Metal.h>
@@ -536,9 +539,8 @@ Tensor::CpuReadView Tensor::GetCpuReadView() const {
     void* ptr = MapAhwbToCpuRead();
     if (ptr) {
       valid_ |= kValidCpu;
-      return {ptr, std::move(lock), [ahwb = ahwb_] {
-                auto error = AHardwareBuffer_unlock(ahwb, nullptr);
-                ABSL_CHECK(error == 0) << "AHardwareBuffer_unlock " << error;
+      return {ptr, std::move(lock), [ahwb = ahwb_.get()] {
+                ABSL_CHECK_OK(ahwb->Unlock()) << "Unlock failed.";
               }};
     }
   }
@@ -620,9 +622,11 @@ Tensor::CpuWriteView Tensor::GetCpuWriteView(
   if (__builtin_available(android 26, *)) {
     void* ptr = MapAhwbToCpuWrite();
     if (ptr) {
-      return {ptr, std::move(lock), [ahwb = ahwb_, fence_fd = &fence_fd_] {
-                auto error = AHardwareBuffer_unlock(ahwb, fence_fd);
-                ABSL_CHECK(error == 0) << "AHardwareBuffer_unlock " << error;
+      return {ptr, std::move(lock),
+              [ahwb = ahwb_.get(), fence_fd = &fence_fd_] {
+                auto fence_fd_status = ahwb->UnlockAsync();
+                ABSL_CHECK_OK(fence_fd_status) << "Unlock failed.";
+                *fence_fd = fence_fd_status.value();
               }};
     }
   }

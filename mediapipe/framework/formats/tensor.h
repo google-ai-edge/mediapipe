@@ -44,7 +44,8 @@
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
-#include <android/hardware_buffer.h>
+
+#include "mediapipe/framework/formats/hardware_buffer.h"
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
 #include "mediapipe/gpu/gl_base.h"
@@ -195,9 +196,11 @@ class Tensor {
   using FinishingFunc = std::function<bool(bool)>;
   class AHardwareBufferView : public View {
    public:
-    AHardwareBuffer* handle() const { return handle_; }
+    AHardwareBuffer* handle() const {
+      return hardware_buffer_->GetAHardwareBuffer();
+    }
     AHardwareBufferView(AHardwareBufferView&& src) : View(std::move(src)) {
-      handle_ = std::exchange(src.handle_, nullptr);
+      hardware_buffer_ = std::move(src.hardware_buffer_);
       file_descriptor_ = src.file_descriptor_;
       fence_fd_ = std::exchange(src.fence_fd_, nullptr);
       ahwb_written_ = std::exchange(src.ahwb_written_, nullptr);
@@ -222,17 +225,17 @@ class Tensor {
 
    protected:
     friend class Tensor;
-    AHardwareBufferView(AHardwareBuffer* handle, int file_descriptor,
+    AHardwareBufferView(HardwareBuffer* hardware_buffer, int file_descriptor,
                         int* fence_fd, FinishingFunc* ahwb_written,
                         std::function<void()>* release_callback,
                         std::unique_ptr<absl::MutexLock>&& lock)
         : View(std::move(lock)),
-          handle_(handle),
+          hardware_buffer_(hardware_buffer),
           file_descriptor_(file_descriptor),
           fence_fd_(fence_fd),
           ahwb_written_(ahwb_written),
           release_callback_(release_callback) {}
-    AHardwareBuffer* handle_;
+    HardwareBuffer* hardware_buffer_;
     int file_descriptor_;
     // The view sets some Tensor's fields. The view is released prior to tensor.
     int* fence_fd_;
@@ -384,7 +387,7 @@ class Tensor {
   mutable std::unique_ptr<MtlResources> mtl_resources_;
 
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
-  mutable AHardwareBuffer* ahwb_ = nullptr;
+  mutable std::unique_ptr<HardwareBuffer> ahwb_;
   // Signals when GPU finished writing into SSBO so AHWB can be used then. Or
   // signals when writing into AHWB has been finished so GPU can read from SSBO.
   // Sync and FD are bound together.

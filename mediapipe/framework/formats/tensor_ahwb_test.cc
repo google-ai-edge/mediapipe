@@ -1,3 +1,5 @@
+#include <android/hardware_buffer.h>
+
 #include "mediapipe/framework/formats/tensor.h"
 #include "testing/base/public/gmock.h"
 #include "testing/base/public/gunit.h"
