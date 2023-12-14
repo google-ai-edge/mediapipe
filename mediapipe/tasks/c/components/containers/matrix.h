@@ -27,7 +27,7 @@ struct Matrix {
   // The number of rows in the matrix.
   long rows;
 
-  // The number of rows in the matrix.
+  // The number of columns in the matrix.
   long cols;
 
   // The matrix data.
