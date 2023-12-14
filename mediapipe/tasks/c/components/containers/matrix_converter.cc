@@ -27,13 +27,13 @@ void CppConvertToMatrix(const Eigen::MatrixXf& in, ::Matrix* out) {
   out->cols = in.cols();
   out->data = new float[out->rows * out->cols];
 
-  // Copy data from Eigen matrix to C-style matrix.
-  // This operation copies the elements sequentially as they appear in the Eigen
-  // matrix's internal storage, regardless of whether it's stored in row-major
-  // or column-major order and ensures the integrity of data during the
-  // transfer.
-  for (int i = 0; i < out->rows * out->cols; ++i) {
-    out->data[i] = in.data()[i];
+  // Copies data from an Eigen matrix (default column-major) to a C-style
+  // matrix, preserving the sequence of elements as per the Eigen matrix's
+  // internal storage (column-major order by default).
+  if (!in.IsRowMajor) {
+    // Safe to use memcpy when the Eigen matrix is in its default column-major
+    // order.
+    memcpy(out->data, in.data(), sizeof(float) * out->rows * out->cols);
   }
 }
 
