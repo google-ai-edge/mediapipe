@@ -13,9 +13,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#include "mediapipe/tasks/c/vision/hand_landmarker/hand_landmarker.h"
+#include "mediapipe/tasks/c/vision/face_landmarker/face_landmarker.h"
 
 #include <cstdint>
+#include <cstdio>
 #include <cstdlib>
 #include <string>
 
@@ -27,7 +28,7 @@ limitations under the License.
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/c/components/containers/landmark.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
-#include "mediapipe/tasks/c/vision/hand_landmarker/hand_landmarker_result.h"
+#include "mediapipe/tasks/c/vision/face_landmarker/face_landmarker_result.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 
 namespace {
@@ -37,60 +38,71 @@ using ::mediapipe::tasks::vision::DecodeImageFromFile;
 using testing::HasSubstr;
 
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
-constexpr char kModelName[] = "hand_landmarker.task";
-constexpr char kImageFile[] = "fist.jpg";
-constexpr float kScorePrecision = 1e-2;
-constexpr float kLandmarkPrecision = 1e-1;
+constexpr char kModelName[] = "face_landmarker_v2_with_blendshapes.task";
+constexpr char kImageFile[] = "portrait.jpg";
+constexpr float kLandmarksPrecision = 0.03;
+constexpr float kBlendshapesPrecision = 0.12;
+constexpr float kFacialTransformationMatrixPrecision = 0.05;
 constexpr int kIterations = 100;
 
 std::string GetFullPath(absl::string_view file_name) {
   return JoinPath("./", kTestDataDirectory, file_name);
 }
 
-void AssertHandLandmarkerResult(const HandLandmarkerResult* result,
-                                const float score_precision,
-                                const float landmark_precision) {
-  // Expects to have the same number of hands detected.
-  EXPECT_EQ(result->handedness_count, 1);
+void AssertHandLandmarkerResult(const FaceLandmarkerResult* result,
+                                const float blendshapes_precision,
+                                const float landmark_precision,
+                                const float matrix_precison) {
+  // Expects to have the same number of faces detected.
+  EXPECT_EQ(result->face_blendshapes_count, 1);
 
-  // Actual handedness matches expected handedness.
-  EXPECT_EQ(std::string{result->handedness[0].categories[0].category_name},
-            "Right");
-  EXPECT_NEAR(result->handedness[0].categories[0].score, 0.9893f,
-              score_precision);
+  // Actual blendshapes matches expected blendshapes.
+  EXPECT_EQ(
+      std::string{result->face_blendshapes[0].categories[0].category_name},
+      "_neutral");
+  EXPECT_NEAR(result->face_blendshapes[0].categories[0].score, 0.0f,
+              blendshapes_precision);
 
   // Actual landmarks match expected landmarks.
-  EXPECT_NEAR(result->hand_landmarks[0].landmarks[0].x, 0.477f,
+  EXPECT_NEAR(result->face_landmarks[0].landmarks[0].x, 0.4977f,
               landmark_precision);
-  EXPECT_NEAR(result->hand_landmarks[0].landmarks[0].y, 0.661f,
+  EXPECT_NEAR(result->face_landmarks[0].landmarks[0].y, 0.2485f,
               landmark_precision);
-  EXPECT_NEAR(result->hand_landmarks[0].landmarks[0].z, 0.0f,
+  EXPECT_NEAR(result->face_landmarks[0].landmarks[0].z, -0.0305f,
               landmark_precision);
-  EXPECT_NEAR(result->hand_world_landmarks[0].landmarks[0].x, -0.009f,
-              landmark_precision);
-  EXPECT_NEAR(result->hand_world_landmarks[0].landmarks[0].y, 0.082f,
-              landmark_precision);
-  EXPECT_NEAR(result->hand_world_landmarks[0].landmarks[0].z, 0.006f,
-              landmark_precision);
+
+  // Expects to have at least one facial transformation matrix.
+  EXPECT_GE(result->facial_transformation_matrixes_count, 1);
+
+  // Actual matrix matches expected matrix.
+  // Assuming the expected matrix is 2x2 for demonstration.
+  const float expected_matrix[4] = {0.9991f, 0.0166f, -0.0374f, 0.0f};
+  for (int i = 0; i < 4; ++i) {
+    printf(">> %f <<", result->facial_transformation_matrixes[0].data[i]);
+    EXPECT_NEAR(result->facial_transformation_matrixes[0].data[i],
+                expected_matrix[i], matrix_precison);
+  }
 }
 
-TEST(HandLandmarkerTest, ImageModeTest) {
+TEST(FaceLandmarkerTest, ImageModeTest) {
   const auto image = DecodeImageFromFile(GetFullPath(kImageFile));
   ASSERT_TRUE(image.ok());
 
   const std::string model_path = GetFullPath(kModelName);
-  HandLandmarkerOptions options = {
+  FaceLandmarkerOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
                            /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ model_path.c_str()},
       /* running_mode= */ RunningMode::IMAGE,
-      /* num_hands= */ 1,
-      /* min_hand_detection_confidence= */ 0.5,
-      /* min_hand_presence_confidence= */ 0.5,
+      /* num_faces= */ 1,
+      /* min_face_detection_confidence= */ 0.5,
+      /* min_face_presence_confidence= */ 0.5,
       /* min_tracking_confidence= */ 0.5,
+      /* output_face_blendshapes = */ true,
+      /* output_facial_transformation_matrixes = */ true,
   };
 
-  void* landmarker = hand_landmarker_create(&options, /* error_msg */ nullptr);
+  void* landmarker = face_landmarker_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(landmarker, nullptr);
 
   const auto& image_frame = image->GetImageFrameSharedPtr();
@@ -101,31 +113,36 @@ TEST(HandLandmarkerTest, ImageModeTest) {
                       .width = image_frame->Width(),
                       .height = image_frame->Height()}};
 
-  HandLandmarkerResult result;
-  hand_landmarker_detect_image(landmarker, mp_image, &result,
+  FaceLandmarkerResult result;
+  face_landmarker_detect_image(landmarker, mp_image, &result,
                                /* error_msg */ nullptr);
-  AssertHandLandmarkerResult(&result, kScorePrecision, kLandmarkPrecision);
-  hand_landmarker_close_result(&result);
-  hand_landmarker_close(landmarker, /* error_msg */ nullptr);
+  AssertHandLandmarkerResult(&result, kBlendshapesPrecision,
+                             kLandmarksPrecision,
+                             kFacialTransformationMatrixPrecision);
+  face_landmarker_close_result(&result);
+  face_landmarker_close(landmarker, /* error_msg */ nullptr);
 }
 
-TEST(HandLandmarkerTest, VideoModeTest) {
+TEST(FaceLandmarkerTest, VideoModeTest) {
   const auto image = DecodeImageFromFile(GetFullPath(kImageFile));
   ASSERT_TRUE(image.ok());
 
   const std::string model_path = GetFullPath(kModelName);
-  HandLandmarkerOptions options = {
+  FaceLandmarkerOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
                            /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ model_path.c_str()},
       /* running_mode= */ RunningMode::VIDEO,
-      /* num_hands= */ 1,
-      /* min_hand_detection_confidence= */ 0.5,
-      /* min_hand_presence_confidence= */ 0.5,
+      /* num_faces= */ 1,
+      /* min_face_detection_confidence= */ 0.5,
+      /* min_face_presence_confidence= */ 0.5,
       /* min_tracking_confidence= */ 0.5,
+      /* output_face_blendshapes = */ true,
+      /* output_facial_transformation_matrixes = */ true,
   };
 
-  void* landmarker = hand_landmarker_create(&options, /* error_msg */ nullptr);
+  void* landmarker = face_landmarker_create(&options,
+                                            /* error_msg */ nullptr);
   EXPECT_NE(landmarker, nullptr);
 
   const auto& image_frame = image->GetImageFrameSharedPtr();
@@ -137,14 +154,16 @@ TEST(HandLandmarkerTest, VideoModeTest) {
                       .height = image_frame->Height()}};
 
   for (int i = 0; i < kIterations; ++i) {
-    HandLandmarkerResult result;
-    hand_landmarker_detect_for_video(landmarker, mp_image, i, &result,
+    FaceLandmarkerResult result;
+    face_landmarker_detect_for_video(landmarker, mp_image, i, &result,
                                      /* error_msg */ nullptr);
 
-    AssertHandLandmarkerResult(&result, kScorePrecision, kLandmarkPrecision);
-    hand_landmarker_close_result(&result);
+    AssertHandLandmarkerResult(&result, kBlendshapesPrecision,
+                               kLandmarksPrecision,
+                               kFacialTransformationMatrixPrecision);
+    face_landmarker_close_result(&result);
   }
-  hand_landmarker_close(landmarker, /* error_msg */ nullptr);
+  face_landmarker_close(landmarker, /* error_msg */ nullptr);
 }
 
 // A structure to support LiveStreamModeTest below. This structure holds a
@@ -154,12 +173,13 @@ TEST(HandLandmarkerTest, VideoModeTest) {
 // timestamp is greater than the previous one.
 struct LiveStreamModeCallback {
   static int64_t last_timestamp;
-  static void Fn(const HandLandmarkerResult* landmarker_result,
+  static void Fn(const FaceLandmarkerResult* landmarker_result,
                  const MpImage& image, int64_t timestamp, char* error_msg) {
     ASSERT_NE(landmarker_result, nullptr);
     ASSERT_EQ(error_msg, nullptr);
-    AssertHandLandmarkerResult(landmarker_result, kScorePrecision,
-                               kLandmarkPrecision);
+    AssertHandLandmarkerResult(landmarker_result, kBlendshapesPrecision,
+                               kLandmarksPrecision,
+                               kFacialTransformationMatrixPrecision);
     EXPECT_GT(image.image_frame.width, 0);
     EXPECT_GT(image.image_frame.height, 0);
     EXPECT_GT(timestamp, last_timestamp);
@@ -168,25 +188,28 @@ struct LiveStreamModeCallback {
 };
 int64_t LiveStreamModeCallback::last_timestamp = -1;
 
-TEST(HandLandmarkerTest, LiveStreamModeTest) {
+TEST(FaceLandmarkerTest, LiveStreamModeTest) {
   const auto image = DecodeImageFromFile(GetFullPath(kImageFile));
   ASSERT_TRUE(image.ok());
 
   const std::string model_path = GetFullPath(kModelName);
 
-  HandLandmarkerOptions options = {
+  FaceLandmarkerOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
                            /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ model_path.c_str()},
       /* running_mode= */ RunningMode::LIVE_STREAM,
-      /* num_hands= */ 1,
-      /* min_hand_detection_confidence= */ 0.5,
-      /* min_hand_presence_confidence= */ 0.5,
+      /* num_faces= */ 1,
+      /* min_face_detection_confidence= */ 0.5,
+      /* min_face_presence_confidence= */ 0.5,
       /* min_tracking_confidence= */ 0.5,
-      /* result_callback_fn= */ LiveStreamModeCallback::Fn,
+      /* output_face_blendshapes = */ true,
+      /* output_facial_transformation_matrixes = */ true,
+      /* result_callback= */ LiveStreamModeCallback::Fn,
   };
 
-  void* landmarker = hand_landmarker_create(&options, /* error_msg */ nullptr);
+  void* landmarker = face_landmarker_create(&options, /* error_msg */
+                                            nullptr);
   EXPECT_NE(landmarker, nullptr);
 
   const auto& image_frame = image->GetImageFrameSharedPtr();
@@ -198,11 +221,11 @@ TEST(HandLandmarkerTest, LiveStreamModeTest) {
                       .height = image_frame->Height()}};
 
   for (int i = 0; i < kIterations; ++i) {
-    EXPECT_GE(hand_landmarker_detect_async(landmarker, mp_image, i,
+    EXPECT_GE(face_landmarker_detect_async(landmarker, mp_image, i,
                                            /* error_msg */ nullptr),
               0);
   }
-  hand_landmarker_close(landmarker, /* error_msg */ nullptr);
+  face_landmarker_close(landmarker, /* error_msg */ nullptr);
 
   // Due to the flow limiter, the total of outputs might be smaller than the
   // number of iterations.
@@ -210,52 +233,60 @@ TEST(HandLandmarkerTest, LiveStreamModeTest) {
   EXPECT_GT(LiveStreamModeCallback::last_timestamp, 0);
 }
 
-TEST(HandLandmarkerTest, InvalidArgumentHandling) {
+TEST(FaceLandmarkerTest, InvalidArgumentHandling) {
   // It is an error to set neither the asset buffer nor the path.
-  HandLandmarkerOptions options = {
+  FaceLandmarkerOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
                            /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ nullptr},
       /* running_mode= */ RunningMode::IMAGE,
-      /* num_hands= */ 1,
-      /* min_hand_detection_confidence= */ 0.5,
-      /* min_hand_presence_confidence= */ 0.5,
+      /* num_faces= */ 1,
+      /* min_face_detection_confidence= */ 0.5,
+      /* min_face_presence_confidence= */ 0.5,
       /* min_tracking_confidence= */ 0.5,
+      /* output_face_blendshapes = */ true,
+      /* output_facial_transformation_matrixes = */ true,
   };
 
   char* error_msg;
-  void* landmarker = hand_landmarker_create(&options, &error_msg);
+  void* landmarker = face_landmarker_create(&options, &error_msg);
   EXPECT_EQ(landmarker, nullptr);
 
-  EXPECT_THAT(error_msg, HasSubstr("ExternalFile must specify"));
+  EXPECT_THAT(
+      error_msg,
+      HasSubstr("INVALID_ARGUMENT: BLENDSHAPES Tag and blendshapes model must "
+                "be both set. Get BLENDSHAPES is set: true, blendshapes model "
+                "is set: false [MediaPipeTasksStatus='601']"));
 
   free(error_msg);
 }
 
-TEST(HandLandmarkerTest, FailedRecognitionHandling) {
+TEST(FaceLandmarkerTest, FailedRecognitionHandling) {
   const std::string model_path = GetFullPath(kModelName);
-  HandLandmarkerOptions options = {
+  FaceLandmarkerOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
                            /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ model_path.c_str()},
       /* running_mode= */ RunningMode::IMAGE,
-      /* num_hands= */ 1,
-      /* min_hand_detection_confidence= */ 0.5,
-      /* min_hand_presence_confidence= */ 0.5,
+      /* num_faces= */ 1,
+      /* min_face_detection_confidence= */ 0.5,
+      /* min_face_presence_confidence= */ 0.5,
       /* min_tracking_confidence= */ 0.5,
+      /* output_face_blendshapes = */ true,
+      /* output_facial_transformation_matrixes = */ true,
   };
 
-  void* landmarker = hand_landmarker_create(&options, /* error_msg */
+  void* landmarker = face_landmarker_create(&options, /* error_msg */
                                             nullptr);
   EXPECT_NE(landmarker, nullptr);
 
   const MpImage mp_image = {.type = MpImage::GPU_BUFFER, .gpu_buffer = {}};
-  HandLandmarkerResult result;
+  FaceLandmarkerResult result;
   char* error_msg;
-  hand_landmarker_detect_image(landmarker, mp_image, &result, &error_msg);
+  face_landmarker_detect_image(landmarker, mp_image, &result, &error_msg);
   EXPECT_THAT(error_msg, HasSubstr("GPU Buffer not supported yet"));
   free(error_msg);
-  hand_landmarker_close(landmarker, /* error_msg */ nullptr);
+  face_landmarker_close(landmarker, /* error_msg */ nullptr);
 }
 
 }  // namespace

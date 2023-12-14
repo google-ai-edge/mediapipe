@@ -44,6 +44,33 @@ cc_test(
 )
 
 cc_library(
+    name = "matrix",
+    hdrs = ["matrix.h"],
+)
+
+cc_library(
+    name = "matrix_converter",
+    srcs = ["matrix_converter.cc"],
+    hdrs = ["matrix_converter.h"],
+    deps = [
+        ":matrix",
+        "@eigen_archive//:eigen3",
+    ],
+)
+
+cc_test(
+    name = "matrix_converter_test",
+    srcs = ["matrix_converter_test.cc"],
+    deps = [
+        ":matrix",
+        ":matrix_converter",
+        "//mediapipe/framework/port:gtest",
+        "@com_google_googletest//:gtest_main",
+        "@eigen_archive//:eigen3",
+    ],
+)
+
+cc_library(
     name = "landmark",
     hdrs = ["landmark.h"],
 )
