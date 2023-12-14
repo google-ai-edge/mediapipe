@@ -48,10 +48,10 @@ std::string GetFullPath(absl::string_view file_name) {
   return JoinPath("./", kTestDataDirectory, file_name);
 }
 
-void MatchesFaceLandmarkerResult(FaceLandmarkerResult* result,
-                                 const float blendshapes_precision,
-                                 const float landmark_precision,
-                                 const float matrix_precison) {
+void ExpectFaceLandmarkerResultCorrect(FaceLandmarkerResult* result,
+                                       const float blendshapes_precision,
+                                       const float landmark_precision,
+                                       const float matrix_precison) {
   // Expects to have the same number of faces detected.
   EXPECT_EQ(result->face_blendshapes_count, 1);
 
@@ -115,9 +115,9 @@ TEST(FaceLandmarkerTest, ImageModeTest) {
   FaceLandmarkerResult result;
   face_landmarker_detect_image(landmarker, mp_image, &result,
                                /* error_msg */ nullptr);
-  MatchesFaceLandmarkerResult(&result, kBlendshapesPrecision,
-                              kLandmarksPrecision,
-                              kFacialTransformationMatrixPrecision);
+  ExpectFaceLandmarkerResultCorrect(&result, kBlendshapesPrecision,
+                                    kLandmarksPrecision,
+                                    kFacialTransformationMatrixPrecision);
   face_landmarker_close_result(&result);
   face_landmarker_close(landmarker, /* error_msg */ nullptr);
 }
@@ -157,9 +157,9 @@ TEST(FaceLandmarkerTest, VideoModeTest) {
     face_landmarker_detect_for_video(landmarker, mp_image, i, &result,
                                      /* error_msg */ nullptr);
 
-    MatchesFaceLandmarkerResult(&result, kBlendshapesPrecision,
-                                kLandmarksPrecision,
-                                kFacialTransformationMatrixPrecision);
+    ExpectFaceLandmarkerResultCorrect(&result, kBlendshapesPrecision,
+                                      kLandmarksPrecision,
+                                      kFacialTransformationMatrixPrecision);
     face_landmarker_close_result(&result);
   }
   face_landmarker_close(landmarker, /* error_msg */ nullptr);
@@ -176,9 +176,9 @@ struct LiveStreamModeCallback {
                  int64_t timestamp, char* error_msg) {
     ASSERT_NE(landmarker_result, nullptr);
     ASSERT_EQ(error_msg, nullptr);
-    MatchesFaceLandmarkerResult(landmarker_result, kBlendshapesPrecision,
-                                kLandmarksPrecision,
-                                kFacialTransformationMatrixPrecision);
+    ExpectFaceLandmarkerResultCorrect(landmarker_result, kBlendshapesPrecision,
+                                      kLandmarksPrecision,
+                                      kFacialTransformationMatrixPrecision);
     EXPECT_GT(image.image_frame.width, 0);
     EXPECT_GT(image.image_frame.height, 0);
     EXPECT_GT(timestamp, last_timestamp);

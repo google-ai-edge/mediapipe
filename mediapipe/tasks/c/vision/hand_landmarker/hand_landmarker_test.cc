@@ -47,9 +47,9 @@ std::string GetFullPath(absl::string_view file_name) {
   return JoinPath("./", kTestDataDirectory, file_name);
 }
 
-void MatchesHandLandmarkerResult(HandLandmarkerResult* result,
-                                 const float score_precision,
-                                 const float landmark_precision) {
+void ExpectHandLandmarkerResultCorrect(HandLandmarkerResult* result,
+                                       const float score_precision,
+                                       const float landmark_precision) {
   // Expects to have the same number of hands detected.
   EXPECT_EQ(result->handedness_count, 1);
 
@@ -104,7 +104,8 @@ TEST(HandLandmarkerTest, ImageModeTest) {
   HandLandmarkerResult result;
   hand_landmarker_detect_image(landmarker, mp_image, &result,
                                /* error_msg */ nullptr);
-  MatchesHandLandmarkerResult(&result, kScorePrecision, kLandmarkPrecision);
+  ExpectHandLandmarkerResultCorrect(&result, kScorePrecision,
+                                    kLandmarkPrecision);
   hand_landmarker_close_result(&result);
   hand_landmarker_close(landmarker, /* error_msg */ nullptr);
 }
@@ -141,7 +142,8 @@ TEST(HandLandmarkerTest, VideoModeTest) {
     hand_landmarker_detect_for_video(landmarker, mp_image, i, &result,
                                      /* error_msg */ nullptr);
 
-    MatchesHandLandmarkerResult(&result, kScorePrecision, kLandmarkPrecision);
+    ExpectHandLandmarkerResultCorrect(&result, kScorePrecision,
+                                      kLandmarkPrecision);
     hand_landmarker_close_result(&result);
   }
   hand_landmarker_close(landmarker, /* error_msg */ nullptr);
@@ -158,8 +160,8 @@ struct LiveStreamModeCallback {
                  int64_t timestamp, char* error_msg) {
     ASSERT_NE(landmarker_result, nullptr);
     ASSERT_EQ(error_msg, nullptr);
-    MatchesHandLandmarkerResult(landmarker_result, kScorePrecision,
-                                kLandmarkPrecision);
+    ExpectHandLandmarkerResultCorrect(landmarker_result, kScorePrecision,
+                                      kLandmarkPrecision);
     EXPECT_GT(image.image_frame.width, 0);
     EXPECT_GT(image.image_frame.height, 0);
     EXPECT_GT(timestamp, last_timestamp);
