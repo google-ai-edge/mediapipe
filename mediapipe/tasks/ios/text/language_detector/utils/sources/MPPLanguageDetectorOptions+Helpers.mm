@@ -40,9 +40,12 @@ using ClassifierOptionsProto = ::mediapipe::tasks::components::processors::proto
   if (self.displayNamesLocale) {
     classifierOptionsProto->set_display_names_locale(self.displayNamesLocale.cppString);
   }
-
+  
   classifierOptionsProto->set_max_results((int)self.maxResults);
-  classifierOptionsProto->set_score_threshold(self.scoreThreshold);
+
+  if (self.scoreThreshold >= 0) {
+    classifierOptionsProto->set_score_threshold(self.scoreThreshold);
+  }
 
   for (NSString *category in self.categoryAllowlist) {
     classifierOptionsProto->add_category_allowlist(category.cppString);

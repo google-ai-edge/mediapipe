@@ -113,9 +113,15 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
   NSArray<MPPLanguagePrediction *> *expectedRuLanguagePredictions =
       @[ [[MPPLanguagePrediction alloc] initWithLanguageCode:@"ru" probability:0.9933616f] ];
 
-  [self assertResultsOfDetectLanguageOfText:ruText
+  NSString *zhText = @"分久必合合久必分";
+  NSArray<MPPLanguagePrediction *> *expectedZhLanguagePredictions = @[
+    [[MPPLanguagePrediction alloc] initWithLanguageCode:@"zh" probability:0.505424f],
+    [[MPPLanguagePrediction alloc] initWithLanguageCode:@"ja" probability:0.481617f]
+  ];
+
+  [self assertResultsOfDetectLanguageOfText:zhText
                                usingLanguageDetector:languageDetector
-      approximatelyEqualsExpectedLanguagePredictions:expectedRuLanguagePredictions];
+      approximatelyEqualsExpectedLanguagePredictions:expectedZhLanguagePredictions];
 }
 
 #pragma mark Assert Segmenter Results
@@ -125,6 +131,8 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
         (NSArray<MPPLanguagePrediction *> *)expectedLanguagePredictions {
   MPPLanguageDetectorResult *result = [languageDetector detectText:text error:nil];
   XCTAssertNotNil(result);
+
+  XCTAssertEqual(result.languagePredictions.count, expectedLanguagePredictions.count);
   XCTAssertEqualWithAccuracy(result.languagePredictions[0].probability,
                              expectedLanguagePredictions[0].probability, 1e-3);
   XCTAssertEqualObjects(result.languagePredictions[0].languageCode,
