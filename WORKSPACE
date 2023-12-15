@@ -1,7 +1,6 @@
 workspace(name = "mediapipe")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-load("@//third_party:shared_dependencies.bzl", "mediapipe_absl", "mediapipe_sentencepiece", "mediapipe_flatbuffers", "mediapipe_tensorflow")
 
 # Protobuf expects an //external:python_headers target
 bind(
@@ -22,6 +21,7 @@ bazel_skylib_workspace()
 load("@bazel_skylib//lib:versions.bzl", "versions")
 versions.check(minimum_bazel_version = "3.7.2")
 
+load("@//third_party:shared_dependencies.bzl", "mediapipe_absl", "mediapipe_sentencepiece")
 mediapipe_absl()
 mediapipe_sentencepiece()
 
@@ -208,7 +208,8 @@ http_archive(
     urls = ["https://github.com/protocolbuffers/protobuf/archive/v3.19.1.tar.gz"],
 )
 
-mediapipe_flatbuffers()
+load("@//third_party/flatbuffers:workspace.bzl", flatbuffers = "repo")
+flatbuffers()
 
 http_archive(
     name = "com_google_audio_tools",
@@ -227,6 +228,7 @@ http_archive(
     urls = ["https://bitbucket.org/jpommier/pffft/get/7c3b5a7dc510.zip"],
     build_file = "@//third_party:pffft.BUILD",
 )
+
 
 http_archive(
     name = "darts_clone",
@@ -461,7 +463,42 @@ maven_install(
     version_conflict_policy = "pinned",
 )
 
-mediapipe_tensorflow()
+# Needed by TensorFlow
+http_archive(
+    name = "io_bazel_rules_closure",
+    sha256 = "e0a111000aeed2051f29fcc7a3f83be3ad8c6c93c186e64beb1ad313f0c7f9f9",
+    strip_prefix = "rules_closure-cf1e44edb908e9616030cc83d085989b8e6cd6df",
+    urls = [
+        "http://mirror.tensorflow.org/github.com/bazelbuild/rules_closure/archive/cf1e44edb908e9616030cc83d085989b8e6cd6df.tar.gz",
+        "https://github.com/bazelbuild/rules_closure/archive/cf1e44edb908e9616030cc83d085989b8e6cd6df.tar.gz",  # 2019-04-04
+    ],
+)
+
+# TensorFlow repo should always go after the other external dependencies.
+# TF on 2023-07-26.
+_TENSORFLOW_GIT_COMMIT = "e92261fd4cec0b726692081c4d2966b75abf31dd"
+# curl -L https://github.com/tensorflow/tensorflow/archive/<TENSORFLOW_GIT_COMMIT>.tar.gz | shasum -a 256
+_TENSORFLOW_SHA256 = "478a229bd4ec70a5b568ac23b5ea013d9fca46a47d6c43e30365a0412b9febf4"
+http_archive(
+    name = "org_tensorflow",
+    urls = [
+      "https://github.com/tensorflow/tensorflow/archive/%s.tar.gz" % _TENSORFLOW_GIT_COMMIT,
+    ],
+    patches = [
+        "@//third_party:org_tensorflow_compatibility_fixes.diff",
+        "@//third_party:org_tensorflow_system_python.diff",
+        # Diff is generated with a script, don't update it manually.
+        "@//third_party:org_tensorflow_custom_ops.diff",
+        # Works around Bazel issue with objc_library.
+        # See https://github.com/bazelbuild/bazel/issues/19912
+        "@//third_party:org_tensorflow_objc_build_fixes.diff",
+    ],
+    patch_args = [
+        "-p1",
+    ],
+    strip_prefix = "tensorflow-%s" % _TENSORFLOW_GIT_COMMIT,
+    sha256 = _TENSORFLOW_SHA256,
+)
 
 load("@org_tensorflow//tensorflow:workspace3.bzl", "tf_workspace3")
 tf_workspace3()
