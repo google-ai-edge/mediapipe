@@ -190,8 +190,7 @@ class GlContext : public std::enable_shared_from_this<GlContext> {
   // Like Run, but does not wait.
   void RunWithoutWaiting(GlVoidFunction gl_func);
 
-  // Returns a synchronization token.
-  // This should not be called outside of the GlContext thread.
+  // Returns a synchronization token for this GlContext.
   std::shared_ptr<GlSyncPoint> CreateSyncToken();
 
   // If another part of the framework calls glFinish, it should call this
