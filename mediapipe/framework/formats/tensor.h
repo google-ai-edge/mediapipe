@@ -288,18 +288,22 @@ class Tensor {
   class OpenGlBufferView : public View {
    public:
     GLuint name() const { return name_; }
+
     OpenGlBufferView(OpenGlBufferView&& src) : View(std::move(src)) {
       name_ = std::exchange(src.name_, GL_INVALID_INDEX);
       ssbo_read_ = std::exchange(src.ssbo_read_, nullptr);
     }
     ~OpenGlBufferView() {
       if (ssbo_read_) {
+        // TODO: update tensor to properly handle cases when
+        // multiple views were requested multiple sync fence may be needed.
         *ssbo_read_ = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
       }
     }
 
    protected:
     friend class Tensor;
+
     OpenGlBufferView(GLuint name, std::unique_ptr<absl::MutexLock>&& lock,
                      GLsync* ssbo_read)
         : View(std::move(lock)), name_(name), ssbo_read_(ssbo_read) {}

@@ -6,6 +6,7 @@
 
 #include <cstdint>
 
+#include "absl/algorithm/container.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/formats/tensor/views/data_types.h"
 #include "mediapipe/gpu/gpu_test_base.h"
@@ -18,13 +19,23 @@
 // Then the test requests the CPU view and compares the values.
 // Float32 and Float16 tests are there.
 
-namespace {
+namespace mediapipe {
 
 using mediapipe::Float16;
 using mediapipe::Tensor;
 
 MATCHER_P(NearWithPrecision, precision, "") {
   return std::abs(std::get<0>(arg) - std::get<1>(arg)) < precision;
+}
+
+template <typename F = float>
+std::vector<F> CreateReferenceData(int num_elements) {
+  std::vector<F> reference;
+  reference.resize(num_elements);
+  for (int i = 0; i < num_elements; i++) {
+    reference[i] = static_cast<float>(i) / 10.0f;
+  }
+  return reference;
 }
 
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
@@ -110,11 +121,7 @@ TEST_F(TensorAhwbGpuTest, TestGpuToCpuFloat32) {
   });
   auto ptr = tensor.GetCpuReadView().buffer<float>();
   ASSERT_NE(ptr, nullptr);
-  std::vector<float> reference;
-  reference.resize(num_elements);
-  for (int i = 0; i < num_elements; i++) {
-    reference[i] = static_cast<float>(i) / 10.0f;
-  }
+  std::vector<float> reference = CreateReferenceData(num_elements);
   EXPECT_THAT(absl::Span<const float>(ptr, num_elements),
               testing::Pointwise(testing::FloatEq(), reference));
 }
@@ -137,11 +144,7 @@ TEST_F(TensorAhwbGpuTest, TestGpuToCpuFloat16) {
   });
   auto ptr = tensor.GetCpuReadView().buffer<Float16>();
   ASSERT_NE(ptr, nullptr);
-  std::vector<Float16> reference;
-  reference.resize(num_elements);
-  for (int i = 0; i < num_elements; i++) {
-    reference[i] = static_cast<float>(i) / 10.0f;
-  }
+  std::vector<Float16> reference = CreateReferenceData<Float16>(num_elements);
   // Precision is set to a reasonable value for Float16.
   EXPECT_THAT(absl::Span<const Float16>(ptr, num_elements),
               testing::Pointwise(NearWithPrecision(0.001), reference));
@@ -166,11 +169,7 @@ TEST_F(TensorAhwbGpuTest, TestReplacingCpuByAhwb) {
   }
   auto ptr = tensor.GetCpuReadView().buffer<float>();
   ASSERT_NE(ptr, nullptr);
-  std::vector<float> reference;
-  reference.resize(num_elements);
-  for (int i = 0; i < num_elements; i++) {
-    reference[i] = static_cast<float>(i) / 10.0f;
-  }
+  std::vector<float> reference = CreateReferenceData(num_elements);
   EXPECT_THAT(absl::Span<const float>(ptr, num_elements),
               testing::Pointwise(testing::FloatEq(), reference));
 }
@@ -194,17 +193,107 @@ TEST_F(TensorAhwbGpuTest, TestReplacingGpuByAhwb) {
   }
   auto ptr = tensor.GetCpuReadView().buffer<float>();
   ASSERT_NE(ptr, nullptr);
-  std::vector<float> reference;
-  reference.resize(num_elements);
-  for (int i = 0; i < num_elements; i++) {
-    reference[i] = static_cast<float>(i) / 10.0f;
-  }
+  std::vector<float> reference = CreateReferenceData(num_elements);
   EXPECT_THAT(absl::Span<const float>(ptr, num_elements),
               testing::Pointwise(testing::FloatEq(), reference));
 }
 
+std::vector<float> ReadGlBufferView(const Tensor::OpenGlBufferView& view,
+                                    int num_elements) {
+  glBindBuffer(GL_SHADER_STORAGE_BUFFER, view.name());
+  int bytes = num_elements * sizeof(float);
+  void* ptr =
+      glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, bytes, GL_MAP_READ_BIT);
+  ABSL_CHECK(ptr) << "glMapBufferRange failed: " << glGetError();
+
+  std::vector<float> data;
+  data.resize(num_elements);
+  std::memcpy(data.data(), ptr, bytes);
+  glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+  return data;
+}
+
+TEST_F(TensorAhwbGpuTest, TestGetOpenGlBufferReadViewNoAhwb) {
+  constexpr size_t kNumElements = 20;
+  std::vector<float> reference = CreateReferenceData(kNumElements);
+
+  Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape({kNumElements}));
+  {
+    // Populate tensor on CPU and make sure view is destroyed
+    absl::c_copy(reference, tensor.GetCpuWriteView().buffer<float>());
+  }
+
+  RunInGlContext([&] {
+    // Triggers conversion to GL buffer.
+    auto ssbo_view = tensor.GetOpenGlBufferReadView();
+    ASSERT_NE(ssbo_view.name(), 0);
+    // ssbo_read_ must NOT be populated, as there's no AHWB associated with
+    // GL buffer
+    ASSERT_EQ(ssbo_view.ssbo_read_, nullptr);
+
+    std::vector<float> output = ReadGlBufferView(ssbo_view, kNumElements);
+    EXPECT_THAT(output, testing::Pointwise(testing::FloatEq(), reference));
+  });
+}
+
+TEST_F(TensorAhwbGpuTest, TestGetOpenGlBufferReadViewAhwbFromCpu) {
+  constexpr size_t kNumElements = 20;
+  std::vector<float> reference = CreateReferenceData(kNumElements);
+
+  Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape({kNumElements}));
+  {
+    // Populate tensor on CPU and make sure view is destroyed
+    absl::c_copy(reference, tensor.GetCpuWriteView().buffer<float>());
+  }
+
+  {
+    // Make tensor to allocate ahwb and make sure view is destroyed.
+    ASSERT_NE(tensor.GetAHardwareBufferReadView().handle(), nullptr);
+  }
+
+  RunInGlContext([&] {
+    // Triggers conversion to GL buffer.
+    auto ssbo_view = tensor.GetOpenGlBufferReadView();
+    ASSERT_NE(ssbo_view.name(), 0);
+    // ssbo_read_ must be populated, so during view destruction it's set
+    // properly for further AHWB destruction
+    ASSERT_NE(ssbo_view.ssbo_read_, nullptr);
+
+    std::vector<float> output = ReadGlBufferView(ssbo_view, kNumElements);
+    EXPECT_THAT(output, testing::Pointwise(testing::FloatEq(), reference));
+  });
+}
+
+TEST_F(TensorAhwbGpuTest, TestGetOpenGlBufferReadViewAhwbFromGpu) {
+  constexpr size_t kNumElements = 20;
+  std::vector<float> reference = CreateReferenceData(kNumElements);
+
+  Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape({kNumElements}));
+  {
+    // Make tensor to allocate ahwb and make sure view is destroyed.
+    ASSERT_NE(tensor.GetAHardwareBufferWriteView().handle(), nullptr);
+  }
+
+  RunInGlContext([&] {
+    FillGpuBuffer(tensor.GetOpenGlBufferWriteView().name(),
+                  tensor.shape().num_elements(), tensor.element_type());
+  });
+
+  RunInGlContext([&] {
+    // Triggers conversion to GL buffer.
+    auto ssbo_view = tensor.GetOpenGlBufferReadView();
+    ASSERT_NE(ssbo_view.name(), 0);
+    // ssbo_read_ must be populated, so during view destruction it's set
+    // properly for further AHWB destruction
+    ASSERT_NE(ssbo_view.ssbo_read_, nullptr);
+
+    std::vector<float> output = ReadGlBufferView(ssbo_view, kNumElements);
+    EXPECT_THAT(output, testing::Pointwise(testing::FloatEq(), reference));
+  });
+}
+
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
-}  // namespace
+}  // namespace mediapipe
 
 #endif  // !defined(MEDIAPIPE_NO_JNI) && (__ANDROID_API__ >= 26 ||
         // defined(__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__))

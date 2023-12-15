@@ -359,7 +359,13 @@ Tensor::OpenGlBufferView Tensor::GetOpenGlBufferReadView() const {
   }
   return {opengl_buffer_, std::move(lock),
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
-          &ssbo_read_
+          // ssbo_read_ is passed to be populated on OpenGlBufferView
+          // destruction in order to perform delayed resources releasing (see
+          // tensor_ahwb.cc/DelayedReleaser) only when AHWB is in use.
+          //
+          // Not passing for the case when AHWB is not in use to avoid creation
+          // of unnecessary sync object and memory leak.
+          use_ahwb_ ? &ssbo_read_ : nullptr
 #else
           nullptr
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
