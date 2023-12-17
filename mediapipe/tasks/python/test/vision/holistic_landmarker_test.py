@@ -93,7 +93,7 @@ class HolisticLandmarkerTest(parameterized.TestCase):
   def _expect_landmarks_correct(
       self, actual_landmarks, expected_landmarks, margin
   ):
-    # Expects to have the same number of poses detected.
+    # Expects to have the same number of landmarks detected.
     self.assertLen(actual_landmarks, len(expected_landmarks))
 
     for i, elem in enumerate(actual_landmarks):
