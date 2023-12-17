@@ -271,7 +271,7 @@ class HolisticLandmarkerOptions:
       landmark detection to be considered successful.
     min_hand_landmarks_confidence: The minimum confidence score for the hand
       landmark detection to be considered successful.
-    output_face_blendshapes: Whether FaceLandmarker outputs face blendshapes
+    output_face_blendshapes: Whether HolisticLandmarker outputs face blendshapes
       classification. Face blendshapes are used for rendering the 3D face model.
     output_segmentation_masks: whether to output segmentation masks.
     result_callback: The user-defined result callback for processing live stream
