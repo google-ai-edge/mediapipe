@@ -21,6 +21,7 @@ from mediapipe.calculators.core import flow_limiter_calculator_pb2
 from mediapipe.framework import calculator_options_pb2
 from mediapipe.framework import calculator_pb2
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
+from google.protobuf.any_pb2 import Any
 
 
 @doc_controls.do_not_generate_docs
@@ -80,22 +81,31 @@ class TaskInfo:
       raise ValueError(
           '`task_options` doesn`t provide `to_pb2()` method to convert itself to be a protobuf object.'
       )
-    task_subgraph_options = calculator_options_pb2.CalculatorOptions()
+
     task_options_proto = self.task_options.to_pb2()
 
-    # For protobuf 2 compat.
+    node_config = calculator_pb2.CalculatorGraphConfig.Node(
+      calculator=self.task_graph,
+      input_stream=self.input_streams,
+      output_stream=self.output_streams
+    )
+
     if hasattr(task_options_proto, 'ext'):
+      # Use the extension mechanism for task_subgraph_options (proto2)
+      task_subgraph_options = calculator_options_pb2.CalculatorOptions()
       task_subgraph_options.Extensions[task_options_proto.ext].CopyFrom(
           task_options_proto)
+      node_config.options.CopyFrom(task_subgraph_options)
+    else:
+      # Use the Any type for task_subgraph_options (proto3)
+      task_subgraph_options = Any()
+      task_subgraph_options.Pack(self.task_options.to_pb2())
+      node_config.node_options.append(task_subgraph_options)
 
     if not enable_flow_limiting:
       return calculator_pb2.CalculatorGraphConfig(
           node=[
-              calculator_pb2.CalculatorGraphConfig.Node(
-                  calculator=self.task_graph,
-                  input_stream=self.input_streams,
-                  output_stream=self.output_streams,
-                  options=task_subgraph_options)
+            node_config
           ],
           input_stream=self.input_streams,
           output_stream=self.output_streams)
@@ -125,11 +135,7 @@ class TaskInfo:
         options=flow_limiter_options)
     config = calculator_pb2.CalculatorGraphConfig(
         node=[
-            calculator_pb2.CalculatorGraphConfig.Node(
-                calculator=self.task_graph,
-                input_stream=task_subgraph_inputs,
-                output_stream=self.output_streams,
-                options=task_subgraph_options), flow_limiter
+          node_config, flow_limiter
         ],
         input_stream=self.input_streams,
         output_stream=self.output_streams)

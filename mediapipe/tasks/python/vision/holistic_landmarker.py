@@ -22,6 +22,7 @@ from mediapipe.python import packet_creator
 from mediapipe.python import packet_getter
 from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.python._framework_bindings import packet as packet_module
+from mediapipe.tasks.cc.vision.holistic_landmarker.proto import holistic_result_pb2
 from mediapipe.tasks.cc.vision.holistic_landmarker.proto import holistic_landmarker_graph_options_pb2
 from mediapipe.tasks.python.components.containers import category as category_module
 from mediapipe.tasks.python.components.containers import landmark as landmark_module
@@ -33,6 +34,7 @@ from mediapipe.tasks.python.vision.core import image_processing_options as image
 from mediapipe.tasks.python.vision.core import vision_task_running_mode as running_mode_module
 
 _BaseOptions = base_options_module.BaseOptions
+_HolisticResultProto = holistic_result_pb2.HolisticResult
 _HolisticLandmarkerGraphOptionsProto = (
     holistic_landmarker_graph_options_pb2.HolisticLandmarkerGraphOptions
 )
@@ -43,9 +45,6 @@ _TaskInfo = task_info_module.TaskInfo
 _IMAGE_IN_STREAM_NAME = 'image_in'
 _IMAGE_OUT_STREAM_NAME = 'image_out'
 _IMAGE_TAG = 'IMAGE'
-_NORM_RECT_STREAM_NAME = 'norm_rect_in'
-_NORM_RECT_TAG = 'NORM_RECT'
-
 
 _POSE_LANDMARKS_STREAM_NAME = "pose_landmarks"
 _POSE_LANDMARKS_TAG_NAME = "POSE_LANDMARKS"
@@ -77,15 +76,63 @@ class HolisticLandmarkerResult:
   Attributes:
     TODO
   """
-  face_landmarks: List[List[landmark_module.NormalizedLandmark]]
-  pose_landmarks: List[List[landmark_module.NormalizedLandmark]]
-  pose_world_landmarks: List[List[landmark_module.Landmark]]
-  left_hand_landmarks: List[List[landmark_module.NormalizedLandmark]]
-  left_hand_world_landmarks: List[List[landmark_module.Landmark]]
-  right_hand_landmarks: List[List[landmark_module.NormalizedLandmark]]
-  right_hand_world_landmarks: List[List[landmark_module.Landmark]]
-  face_blendshapes: Optional[List[List[category_module.Category]]] = None
+  face_landmarks: List[landmark_module.NormalizedLandmark]
+  pose_landmarks: List[landmark_module.NormalizedLandmark]
+  pose_world_landmarks:List[landmark_module.Landmark]
+  left_hand_landmarks: List[landmark_module.NormalizedLandmark]
+  left_hand_world_landmarks: List[landmark_module.Landmark]
+  right_hand_landmarks: List[landmark_module.NormalizedLandmark]
+  right_hand_world_landmarks: List[landmark_module.Landmark]
+  face_blendshapes: Optional[List[category_module.Category]] = None
   segmentation_masks: Optional[List[image_module.Image]] = None
+
+  @classmethod
+  @doc_controls.do_not_generate_docs
+  def create_from_pb2(
+      cls,
+      pb2_obj: _HolisticResultProto
+  ) -> 'HolisticLandmarkerResult':
+    """Creates a `HolisticLandmarkerResult` object from the given protobuf
+    object."""
+    return HolisticLandmarkerResult(
+      face_landmarks=[
+        landmark_module.NormalizedLandmark.create_from_pb2(landmark)
+        for landmark in pb2_obj.face_landmarks.landmark
+      ] if hasattr(pb2_obj, 'face_landmarks') else None,
+      pose_landmarks=[
+        landmark_module.NormalizedLandmark.create_from_pb2(landmark)
+        for landmark in pb2_obj.pose_landmarks.landmark
+      ] if hasattr(pb2_obj, 'pose_landmarks') else None,
+      pose_world_landmarks=[
+        landmark_module.Landmark.create_from_pb2(landmark)
+        for landmark in pb2_obj.pose_world_landmarks.landmark
+      ] if hasattr(pb2_obj, 'pose_world_landmarks') else None,
+      left_hand_landmarks=[
+        landmark_module.NormalizedLandmark.create_from_pb2(landmark)
+        for landmark in pb2_obj.left_hand_landmarks.landmark
+      ] if hasattr(pb2_obj, 'left_hand_landmarks') else None,
+      left_hand_world_landmarks=[
+        landmark_module.Landmark.create_from_pb2(landmark)
+        for landmark in pb2_obj.left_hand_world_landmarks.landmark
+      ] if hasattr(pb2_obj, 'left_hand_world_landmarks') else None,
+      right_hand_landmarks=[
+        landmark_module.NormalizedLandmark.create_from_pb2(landmark)
+        for landmark in pb2_obj.right_hand_landmarks.landmark
+      ] if hasattr(pb2_obj, 'right_hand_landmarks') else None,
+      right_hand_world_landmarks=[
+        landmark_module.Landmark.create_from_pb2(landmark)
+        for landmark in pb2_obj.right_hand_world_landmarks.landmark
+      ] if hasattr(pb2_obj, 'right_hand_world_landmarks') else None,
+      face_blendshapes=[
+        category_module.Category(
+          score=classification.score,
+          index=classification.index,
+          category_name=classification.label,
+          display_name=classification.display_name
+        )
+        for classification in pb2_obj.face_blendshapes.classification
+      ] if hasattr(pb2_obj, 'face_blendshapes') else None,
+    )
 
 
 def _build_landmarker_result(
@@ -95,138 +142,103 @@ def _build_landmarker_result(
   holistic_landmarker_result = HolisticLandmarkerResult([], [], [], [], [], [],
                                                         [])
 
-  face_landmarks_proto_list = packet_getter.get_proto_list(
+  face_landmarks_proto_list = packet_getter.get_proto(
       output_packets[_FACE_LANDMARKS_STREAM_NAME]
     )
+
+  pose_landmarks_proto_list = packet_getter.get_proto(
+    output_packets[_POSE_LANDMARKS_STREAM_NAME]
+  )
+
+  pose_world_landmarks_proto_list = packet_getter.get_proto(
+    output_packets[_POSE_WORLD_LANDMARKS_STREAM_NAME]
+  )
+
+  left_hand_landmarks_proto_list = packet_getter.get_proto(
+    output_packets[_LEFT_HAND_LANDMARKS_STREAM_NAME]
+  )
+
+  left_hand_world_landmarks_proto_list = packet_getter.get_proto(
+    output_packets[_LEFT_HAND_WORLD_LANDMARKS_STREAM_NAME]
+  )
+
+  right_hand_landmarks_proto_list = packet_getter.get_proto(
+    output_packets[_RIGHT_HAND_LANDMARKS_STREAM_NAME]
+  )
+
+  right_hand_world_landmarks_proto_list = packet_getter.get_proto(
+    output_packets[_RIGHT_HAND_WORLD_LANDMARKS_STREAM_NAME]
+  )
+
+  face_landmarks = landmark_pb2.NormalizedLandmarkList()
+  face_landmarks.MergeFrom(face_landmarks_proto_list)
+  for face_landmark in face_landmarks.landmark:
+    holistic_landmarker_result.face_landmarks.append(
+      landmark_module.NormalizedLandmark.create_from_pb2(face_landmark)
+    )
+
+  pose_landmarks = landmark_pb2.NormalizedLandmarkList()
+  pose_landmarks.MergeFrom(pose_landmarks_proto_list)
+  for pose_landmark in pose_landmarks.landmark:
+    holistic_landmarker_result.pose_landmarks.append(
+      landmark_module.NormalizedLandmark.create_from_pb2(pose_landmark)
+    )
+
+  pose_world_landmarks = landmark_pb2.LandmarkList()
+  pose_world_landmarks.MergeFrom(pose_world_landmarks_proto_list)
+  for pose_world_landmark in pose_world_landmarks.landmark:
+    holistic_landmarker_result.pose_world_landmarks.append(
+      landmark_module.Landmark.create_from_pb2(pose_world_landmark)
+    )
+
+  left_hand_landmarks = landmark_pb2.NormalizedLandmarkList()
+  left_hand_landmarks.MergeFrom(left_hand_landmarks_proto_list)
+  for hand_landmark in left_hand_landmarks.landmark:
+    holistic_landmarker_result.left_hand_landmarks.append(
+      landmark_module.NormalizedLandmark.create_from_pb2(hand_landmark)
+    )
+
+  left_hand_world_landmarks = landmark_pb2.LandmarkList()
+  left_hand_world_landmarks.MergeFrom(left_hand_world_landmarks_proto_list)
+  for left_hand_world_landmark in left_hand_world_landmarks.landmark:
+    holistic_landmarker_result.left_hand_world_landmarks.append(
+      landmark_module.Landmark.create_from_pb2(left_hand_world_landmark)
+    )
+
+  right_hand_landmarks = landmark_pb2.NormalizedLandmarkList()
+  right_hand_landmarks.MergeFrom(right_hand_landmarks_proto_list)
+  for hand_landmark in right_hand_landmarks.landmark:
+    holistic_landmarker_result.right_hand_landmarks.append(
+      landmark_module.NormalizedLandmark.create_from_pb2(hand_landmark)
+    )
+
+  right_hand_world_landmarks = landmark_pb2.LandmarkList()
+  right_hand_world_landmarks.MergeFrom(right_hand_world_landmarks_proto_list)
+  for right_hand_world_landmark in right_hand_world_landmarks.landmark:
+    holistic_landmarker_result.right_hand_world_landmarks.append(
+      landmark_module.Landmark.create_from_pb2(right_hand_world_landmark)
+    )
+
+  if _FACE_BLENDSHAPES_STREAM_NAME in output_packets:
+    face_blendshapes_proto_list = packet_getter.get_proto(
+      output_packets[_FACE_BLENDSHAPES_STREAM_NAME]
+    )
+    face_blendshapes_classifications = classification_pb2.ClassificationList()
+    face_blendshapes_classifications.MergeFrom(face_blendshapes_proto_list)
+    holistic_landmarker_result.face_blendshapes = []
+    for face_blendshapes in face_blendshapes_classifications.classification:
+      holistic_landmarker_result.face_blendshapes.append(
+        category_module.Category(
+          index=face_blendshapes.index,
+          score=face_blendshapes.score,
+          display_name=face_blendshapes.display_name,
+          category_name=face_blendshapes.label,
+        )
+      )
 
   if _POSE_SEGMENTATION_MASK_STREAM_NAME in output_packets:
     holistic_landmarker_result.segmentation_masks = packet_getter.get_image_list(
       output_packets[_POSE_SEGMENTATION_MASK_STREAM_NAME]
-    )
-
-  pose_landmarks_proto_list = packet_getter.get_proto_list(
-    output_packets[_POSE_LANDMARKS_STREAM_NAME]
-  )
-
-  pose_world_landmarks_proto_list = packet_getter.get_proto_list(
-    output_packets[_POSE_WORLD_LANDMARKS_STREAM_NAME]
-  )
-
-  left_hand_landmarks_proto_list = packet_getter.get_proto_list(
-    output_packets[_LEFT_HAND_LANDMARKS_STREAM_NAME]
-  )
-
-  left_hand_world_landmarks_proto_list = packet_getter.get_proto_list(
-    output_packets[_LEFT_HAND_WORLD_LANDMARKS_STREAM_NAME]
-  )
-
-  right_hand_landmarks_proto_list = packet_getter.get_proto_list(
-    output_packets[_RIGHT_HAND_LANDMARKS_STREAM_NAME]
-  )
-
-  right_hand_world_landmarks_proto_list = packet_getter.get_proto_list(
-    output_packets[_RIGHT_HAND_WORLD_LANDMARKS_STREAM_NAME]
-  )
-
-  face_landmarks_results = []
-  for proto in face_landmarks_proto_list:
-    face_landmarks = landmark_pb2.NormalizedLandmarkList()
-    face_landmarks.MergeFrom(proto)
-    face_landmarks_list = []
-    for face_landmark in face_landmarks.landmark:
-      face_landmarks_list.append(
-        landmark_module.NormalizedLandmark.create_from_pb2(face_landmark)
-      )
-    face_landmarks_results.append(face_landmarks_list)
-
-  face_blendshapes_results = []
-  if _FACE_BLENDSHAPES_STREAM_NAME in output_packets:
-    face_blendshapes_proto_list = packet_getter.get_proto_list(
-      output_packets[_FACE_BLENDSHAPES_STREAM_NAME]
-    )
-    for proto in face_blendshapes_proto_list:
-      face_blendshapes_categories = []
-      face_blendshapes_classifications = classification_pb2.ClassificationList()
-      face_blendshapes_classifications.MergeFrom(proto)
-      for face_blendshapes in face_blendshapes_classifications.classification:
-        face_blendshapes_categories.append(
-          category_module.Category(
-            index=face_blendshapes.index,
-            score=face_blendshapes.score,
-            display_name=face_blendshapes.display_name,
-            category_name=face_blendshapes.label,
-          )
-        )
-      face_blendshapes_results.append(face_blendshapes_categories)
-
-  for proto in pose_landmarks_proto_list:
-    pose_landmarks = landmark_pb2.NormalizedLandmarkList()
-    pose_landmarks.MergeFrom(proto)
-    pose_landmarks_list = []
-    for pose_landmark in pose_landmarks.landmark:
-      pose_landmarks_list.append(
-        landmark_module.NormalizedLandmark.create_from_pb2(pose_landmark)
-      )
-    holistic_landmarker_result.pose_landmarks.append(pose_landmarks_list)
-
-  for proto in pose_world_landmarks_proto_list:
-    pose_world_landmarks = landmark_pb2.LandmarkList()
-    pose_world_landmarks.MergeFrom(proto)
-    pose_world_landmarks_list = []
-    for pose_world_landmark in pose_world_landmarks.landmark:
-      pose_world_landmarks_list.append(
-        landmark_module.Landmark.create_from_pb2(pose_world_landmark)
-      )
-    holistic_landmarker_result.pose_world_landmarks.append(
-      pose_world_landmarks_list
-    )
-
-  for proto in left_hand_landmarks_proto_list:
-    left_hand_landmarks = landmark_pb2.NormalizedLandmarkList()
-    left_hand_landmarks.MergeFrom(proto)
-    left_hand_landmarks_list = []
-    for hand_landmark in left_hand_landmarks.landmark:
-      left_hand_landmarks_list.append(
-        landmark_module.NormalizedLandmark.create_from_pb2(hand_landmark)
-      )
-    holistic_landmarker_result.left_hand_landmarks.append(
-      left_hand_landmarks_list
-    )
-
-  for proto in left_hand_world_landmarks_proto_list:
-    left_hand_world_landmarks = landmark_pb2.LandmarkList()
-    left_hand_world_landmarks.MergeFrom(proto)
-    left_hand_world_landmarks_list = []
-    for left_hand_world_landmark in left_hand_world_landmarks.landmark:
-      left_hand_world_landmarks_list.append(
-        landmark_module.Landmark.create_from_pb2(left_hand_world_landmark)
-      )
-    holistic_landmarker_result.left_hand_world_landmarks.append(
-      left_hand_world_landmarks_list
-    )
-
-  for proto in right_hand_landmarks_proto_list:
-    right_hand_landmarks = landmark_pb2.NormalizedLandmarkList()
-    right_hand_landmarks.MergeFrom(proto)
-    right_hand_landmarks_list = []
-    for hand_landmark in right_hand_landmarks.landmark:
-      right_hand_landmarks_list.append(
-        landmark_module.NormalizedLandmark.create_from_pb2(hand_landmark)
-      )
-    holistic_landmarker_result.right_hand_landmarks.append(
-      right_hand_landmarks_list
-    )
-
-  for proto in right_hand_world_landmarks_proto_list:
-    right_hand_world_landmarks = landmark_pb2.LandmarkList()
-    right_hand_world_landmarks.MergeFrom(proto)
-    right_hand_world_landmarks_list = []
-    for right_hand_world_landmark in right_hand_world_landmarks.landmark:
-      right_hand_world_landmarks_list.append(
-        landmark_module.Landmark.create_from_pb2(right_hand_world_landmark)
-      )
-    holistic_landmarker_result.right_hand_world_landmarks.append(
-      right_hand_world_landmarks_list
     )
 
   return holistic_landmarker_result
@@ -259,6 +271,9 @@ class HolisticLandmarkerOptions:
       landmark detection to be considered successful.
     min_hand_landmarks_confidence: The minimum confidence score for the hand
       landmark detection to be considered successful.
+    output_face_blendshapes: Whether FaceLandmarker outputs face blendshapes
+      classification. Face blendshapes are used for rendering the 3D face model.
+    output_segmentation_masks: whether to output segmentation masks.
     result_callback: The user-defined result callback for processing live stream
       data. The result callback should only be specified when the running mode
       is set to the live stream mode.
@@ -419,7 +434,6 @@ class HolisticLandmarker(base_vision_task_api.BaseVisionTaskApi):
         task_graph=_TASK_GRAPH_NAME,
         input_streams=[
             ':'.join([_IMAGE_TAG, _IMAGE_IN_STREAM_NAME]),
-            ':'.join([_NORM_RECT_TAG, _NORM_RECT_STREAM_NAME]),
         ],
         output_streams=output_streams,
         task_options=options,
@@ -436,7 +450,6 @@ class HolisticLandmarker(base_vision_task_api.BaseVisionTaskApi):
   def detect(
       self,
       image: image_module.Image,
-      image_processing_options: Optional[_ImageProcessingOptions] = None,
   ) -> HolisticLandmarkerResult:
     """Performs holistic landmarks detection on the given image.
 
@@ -449,7 +462,6 @@ class HolisticLandmarker(base_vision_task_api.BaseVisionTaskApi):
 
     Args:
       image: MediaPipe Image.
-      image_processing_options: Options for image processing.
 
     Returns:
       The holistic landmarks detection results.
@@ -458,14 +470,8 @@ class HolisticLandmarker(base_vision_task_api.BaseVisionTaskApi):
       ValueError: If any of the input arguments is invalid.
       RuntimeError: If holistic landmarker detection failed to run.
     """
-    normalized_rect = self.convert_to_normalized_rect(
-        image_processing_options, image, roi_allowed=False
-    )
     output_packets = self._process_image_data({
         _IMAGE_IN_STREAM_NAME: packet_creator.create_image(image),
-        _NORM_RECT_STREAM_NAME: packet_creator.create_proto(
-            normalized_rect.to_pb2()
-        ),
     })
 
     if output_packets[_FACE_LANDMARKS_STREAM_NAME].is_empty():
@@ -477,7 +483,6 @@ class HolisticLandmarker(base_vision_task_api.BaseVisionTaskApi):
       self,
       image: image_module.Image,
       timestamp_ms: int,
-      image_processing_options: Optional[_ImageProcessingOptions] = None,
   ) -> HolisticLandmarkerResult:
     """Performs holistic landmarks detection on the provided video frame.
 
@@ -492,7 +497,6 @@ class HolisticLandmarker(base_vision_task_api.BaseVisionTaskApi):
     Args:
       image: MediaPipe Image.
       timestamp_ms: The timestamp of the input video frame in milliseconds.
-      image_processing_options: Options for image processing.
 
     Returns:
       The holistic landmarks detection results.
@@ -501,16 +505,10 @@ class HolisticLandmarker(base_vision_task_api.BaseVisionTaskApi):
       ValueError: If any of the input arguments is invalid.
       RuntimeError: If holistic landmarker detection failed to run.
     """
-    normalized_rect = self.convert_to_normalized_rect(
-        image_processing_options, image, roi_allowed=False
-    )
     output_packets = self._process_video_data({
         _IMAGE_IN_STREAM_NAME: packet_creator.create_image(image).at(
             timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND
         ),
-        _NORM_RECT_STREAM_NAME: packet_creator.create_proto(
-            normalized_rect.to_pb2()
-        ).at(timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND),
     })
 
     if output_packets[_FACE_LANDMARKS_STREAM_NAME].is_empty():
@@ -522,7 +520,6 @@ class HolisticLandmarker(base_vision_task_api.BaseVisionTaskApi):
       self,
       image: image_module.Image,
       timestamp_ms: int,
-      image_processing_options: Optional[_ImageProcessingOptions] = None,
   ) -> None:
     """Sends live image data to perform holistic landmarks detection.
 
@@ -548,20 +545,13 @@ class HolisticLandmarker(base_vision_task_api.BaseVisionTaskApi):
     Args:
       image: MediaPipe Image.
       timestamp_ms: The timestamp of the input image in milliseconds.
-      image_processing_options: Options for image processing.
 
     Raises:
       ValueError: If the current input timestamp is smaller than what the
       holistic landmarker has already processed.
     """
-    normalized_rect = self.convert_to_normalized_rect(
-        image_processing_options, image, roi_allowed=False
-    )
     self._send_live_stream_data({
         _IMAGE_IN_STREAM_NAME: packet_creator.create_image(image).at(
             timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND
         ),
-        _NORM_RECT_STREAM_NAME: packet_creator.create_proto(
-            normalized_rect.to_pb2()
-        ).at(timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND),
     })

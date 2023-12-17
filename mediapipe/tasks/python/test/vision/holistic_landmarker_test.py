@@ -14,6 +14,7 @@
 """Tests for holistic landmarker."""
 
 import enum
+from typing import List
 from unittest import mock
 
 from absl.testing import absltest
@@ -23,6 +24,7 @@ import numpy as np
 from google.protobuf import text_format
 from mediapipe.framework.formats import classification_pb2
 from mediapipe.framework.formats import landmark_pb2
+from mediapipe.tasks.cc.vision.holistic_landmarker.proto import holistic_result_pb2
 from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.tasks.python.components.containers import category as category_module
 from mediapipe.tasks.python.components.containers import landmark as landmark_module
@@ -35,6 +37,7 @@ from mediapipe.tasks.python.vision.core import vision_task_running_mode as runni
 
 
 HolisticLandmarkerResult = holistic_landmarker.HolisticLandmarkerResult
+_HolisticResultProto = holistic_result_pb2.HolisticResult
 _BaseOptions = base_options_module.BaseOptions
 _Category = category_module.Category
 _Rect = rect_module.Rect
@@ -46,12 +49,29 @@ _HolisticLandmarkerOptions = holistic_landmarker.HolisticLandmarkerOptions
 _RUNNING_MODE = running_mode_module.VisionTaskRunningMode
 _ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
 
-_HOLISTIC_LANDMARKER_BUNDLE_ASSET_FILE = 'face_landmarker.task'
+_HOLISTIC_LANDMARKER_BUNDLE_ASSET_FILE = 'holistic_landmarker.task'
 _POSE_IMAGE = 'male_full_height_hands.jpg'
 _CAT_IMAGE = 'cat.jpg'
-_HOLISTIC_RESULT = "male_full_height_hands_result_cpu.pbtxt"
+_EXPECTED_HOLISTIC_RESULT = "male_full_height_hands_result_cpu.pbtxt"
 _LANDMARKS_MARGIN = 0.03
 _BLENDSHAPES_MARGIN = 0.13
+
+
+def _get_expected_holistic_landmarker_result(
+    file_path: str,
+) -> HolisticLandmarkerResult:
+  holistic_result_file_path = test_utils.get_test_data_path(
+    file_path
+  )
+  with open(holistic_result_file_path, 'rb') as f:
+    holistic_result_proto = _HolisticResultProto()
+    # Use this if a .pb file is available.
+    # holistic_result_proto.ParseFromString(f.read())
+    text_format.Parse(f.read(), holistic_result_proto)
+    holistic_landmarker_result = HolisticLandmarkerResult.create_from_pb2(
+      holistic_result_proto
+    )
+  return holistic_landmarker_result
 
 
 class ModelFileType(enum.Enum):
@@ -70,20 +90,77 @@ class HolisticLandmarkerTest(parameterized.TestCase):
         _HOLISTIC_LANDMARKER_BUNDLE_ASSET_FILE
     )
 
+  def _expect_landmarks_correct(
+      self, actual_landmarks, expected_landmarks, margin
+  ):
+    # Expects to have the same number of poses detected.
+    self.assertLen(actual_landmarks, len(expected_landmarks))
+
+    for i, elem in enumerate(actual_landmarks):
+      self.assertAlmostEqual(elem.x, expected_landmarks[i].x, delta=margin)
+      self.assertAlmostEqual(elem.y, expected_landmarks[i].y, delta=margin)
+
+  def _expect_blendshapes_correct(
+      self, actual_blendshapes, expected_blendshapes, margin
+  ):
+    # Expects to have the same number of blendshapes.
+    self.assertLen(actual_blendshapes, len(expected_blendshapes))
+
+    for i, elem in enumerate(actual_blendshapes):
+      self.assertEqual(elem.index, expected_blendshapes[i].index)
+      self.assertAlmostEqual(
+        elem.score,
+        expected_blendshapes[i].score,
+        delta=margin,
+      )
+
+  def _expect_holistic_landmarker_results_correct(
+      self,
+      actual_result: HolisticLandmarkerResult,
+      expected_result: HolisticLandmarkerResult,
+      output_segmentation_masks: bool,
+      landmarks_margin: float,
+      blendshapes_margin: float,
+  ):
+    self._expect_landmarks_correct(
+      actual_result.pose_landmarks, expected_result.pose_landmarks,
+      landmarks_margin
+    )
+    self._expect_landmarks_correct(
+      actual_result.face_landmarks, expected_result.face_landmarks,
+      landmarks_margin
+    )
+    self._expect_blendshapes_correct(
+      actual_result.face_blendshapes, expected_result.face_blendshapes,
+      blendshapes_margin
+    )
+    if output_segmentation_masks:
+      self.assertIsInstance(actual_result.segmentation_masks, List)
+      for _, mask in enumerate(actual_result.segmentation_masks):
+        self.assertIsInstance(mask, _Image)
+    else:
+      self.assertIsNone(actual_result.segmentation_masks)
+
   @parameterized.parameters(
       (
           ModelFileType.FILE_NAME,
-          _HOLISTIC_LANDMARKER_BUNDLE_ASSET_FILE
+          _HOLISTIC_LANDMARKER_BUNDLE_ASSET_FILE,
+          False,
+          _get_expected_holistic_landmarker_result(_EXPECTED_HOLISTIC_RESULT)
       ),
       (
           ModelFileType.FILE_CONTENT,
-          _HOLISTIC_LANDMARKER_BUNDLE_ASSET_FILE
+          _HOLISTIC_LANDMARKER_BUNDLE_ASSET_FILE,
+          False,
+          _get_expected_holistic_landmarker_result(_EXPECTED_HOLISTIC_RESULT)
       ),
   )
   def test_detect(
       self,
       model_file_type,
-      model_name
+      model_name,
+      output_segmentation_masks,
+      expected_holistic_landmarker_result: HolisticLandmarkerResult
   ):
     # Creates holistic landmarker.
     model_path = test_utils.get_test_data_path(model_name)
@@ -98,15 +175,21 @@ class HolisticLandmarkerTest(parameterized.TestCase):
       raise ValueError('model_file_type is invalid.')
 
     options = _HolisticLandmarkerOptions(
-        base_options=base_options
+        base_options=base_options,
+        output_face_blendshapes=True
+        if expected_holistic_landmarker_result.face_blendshapes else False,
+        output_segmentation_masks=output_segmentation_masks,
     )
     landmarker = _HolisticLandmarker.create_from_options(options)
 
     # Performs holistic landmarks detection on the input.
     detection_result = landmarker.detect(self.test_image)
-
-    # Closes the holistic landmarker explicitly when the holistic landmarker is not used
-    # in a context.
+    self._expect_holistic_landmarker_results_correct(
+        detection_result, expected_holistic_landmarker_result,
+        output_segmentation_masks, _LANDMARKS_MARGIN, _BLENDSHAPES_MARGIN
+    )
+    # Closes the holistic landmarker explicitly when the holistic landmarker is
+    # not used in a context.
     landmarker.close()
 
 

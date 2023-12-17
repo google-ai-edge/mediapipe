@@ -206,6 +206,7 @@ py_test(
     deps = [
         "//mediapipe/framework/formats:classification_py_pb2",
         "//mediapipe/framework/formats:landmark_py_pb2",
+        "//mediapipe/tasks/cc/vision/holistic_landmarker/proto:holistic_result_py_pb2",
         "//mediapipe/python:_framework_bindings",
         "//mediapipe/tasks/python/components/containers:category",
         "//mediapipe/tasks/python/components/containers:landmark",

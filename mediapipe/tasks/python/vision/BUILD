@@ -254,6 +254,7 @@ py_library(
         "//mediapipe/python:_framework_bindings",
         "//mediapipe/python:packet_creator",
         "//mediapipe/python:packet_getter",
+        "//mediapipe/tasks/cc/vision/holistic_landmarker/proto:holistic_result_py_pb2",
         "//mediapipe/tasks/cc/vision/holistic_landmarker/proto:holistic_landmarker_graph_options_py_pb2",
         "//mediapipe/tasks/python/components/containers:category",
         "//mediapipe/tasks/python/components/containers:landmark",
