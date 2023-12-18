@@ -21,7 +21,7 @@ from mediapipe.calculators.core import flow_limiter_calculator_pb2
 from mediapipe.framework import calculator_options_pb2
 from mediapipe.framework import calculator_pb2
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
-from google.protobuf.any_pb2 import Any
+from google.protobuf import any_pb2
 
 
 @doc_controls.do_not_generate_docs
@@ -98,7 +98,7 @@ class TaskInfo:
       node_config.options.CopyFrom(task_subgraph_options)
     else:
       # Use the Any type for task_subgraph_options (proto3)
-      task_subgraph_options = Any()
+      task_subgraph_options = any_pb2.Any()
       task_subgraph_options.Pack(self.task_options.to_pb2())
       node_config.node_options.append(task_subgraph_options)
 
