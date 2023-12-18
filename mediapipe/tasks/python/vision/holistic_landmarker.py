@@ -74,7 +74,19 @@ class HolisticLandmarkerResult:
   """The holistic landmarks result from HolisticLandmarker, where each vector element represents a single holistic detected in the image.
 
   Attributes:
-    TODO
+    face_landmarks: Detected face landmarks in normalized image coordinates.
+    pose_landmarks: Detected pose landmarks in normalized image coordinates.
+    pose_world_landmarks: Detected pose world landmarks in image coordinates.
+    left_hand_landmarks: Detected left hand landmarks in normalized image
+      coordinates.
+    left_hand_world_landmarks: Detected left hand landmarks in image
+      coordinates.
+    right_hand_landmarks: Detected right hand landmarks in normalized image
+      coordinates.
+    right_hand_world_landmarks: Detected right hand landmarks in image
+      coordinates.
+    face_blendshapes: Optional face blendshapes.
+    segmentation_mask: Optional segmentation mask for pose.
   """
   face_landmarks: List[landmark_module.NormalizedLandmark]
   pose_landmarks: List[landmark_module.NormalizedLandmark]
