@@ -206,6 +206,7 @@ export class PoseLandmarker extends VisionTaskRunner {
    * callback returns. Only use this method when the PoseLandmarker is created
    * with running mode `image`.
    *
+   * @export
    * @param image An image to process.
    * @param callback The callback that is invoked with the result. The
    *    lifetime of the returned masks is only guaranteed for the duration of
@@ -218,6 +219,7 @@ export class PoseLandmarker extends VisionTaskRunner {
    * callback returns. Only use this method when the PoseLandmarker is created
    * with running mode `image`.
    *
+   * @export
    * @param image An image to process.
    * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
    *    to process the input image before running inference.
@@ -235,6 +237,7 @@ export class PoseLandmarker extends VisionTaskRunner {
    * use this method when the PoseLandmarker is created with running mode
    * `image`.
    *
+   * @export
    * @param image An image to process.
    * @return The landmarker result. Any masks are copied to avoid lifetime
    *     limits.
@@ -248,6 +251,7 @@ export class PoseLandmarker extends VisionTaskRunner {
    * use this method when the PoseLandmarker is created with running mode
    * `image`.
    *
+   * @export
    * @param image An image to process.
    * @return The landmarker result. Any masks are copied to avoid lifetime
    *     limits.
@@ -280,6 +284,7 @@ export class PoseLandmarker extends VisionTaskRunner {
    * callback returns. Only use this method when the PoseLandmarker is created
    * with running mode `video`.
    *
+   * @export
    * @param videoFrame A video frame to process.
    * @param timestamp The timestamp of the current frame, in ms.
    * @param callback The callback that is invoked with the result. The
@@ -295,6 +300,7 @@ export class PoseLandmarker extends VisionTaskRunner {
    * callback returns. Only use this method when the PoseLandmarker is created
    * with running mode `video`.
    *
+   * @export
    * @param videoFrame A video frame to process.
    * @param timestamp The timestamp of the current frame, in ms.
    * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
@@ -313,6 +319,7 @@ export class PoseLandmarker extends VisionTaskRunner {
    * in high-throughput applications. Only use this method when the
    * PoseLandmarker is created with running mode `video`.
    *
+   * @export
    * @param videoFrame A video frame to process.
    * @param timestamp The timestamp of the current frame, in ms.
    * @return The landmarker result. Any masks are copied to extend the
@@ -327,6 +334,7 @@ export class PoseLandmarker extends VisionTaskRunner {
    * callback returns. Only use this method when the PoseLandmarker is created
    * with running mode `video`.
    *
+   * @export
    * @param videoFrame A video frame to process.
    * @param timestamp The timestamp of the current frame, in ms.
    * @param imageProcessingOptions the `ImageProcessingOptions` specifying how

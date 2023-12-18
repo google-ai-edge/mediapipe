@@ -73,15 +73,16 @@ export type FieldPathToValue = [string[] | string, unknown];
 
 type JsonObject = Record<string, unknown>;
 
-type Deserializer = (binaryProto: string | Uint8Array) => JsonObject;
+/**
+ * The function to convert a binary proto to a JsonObject.
+ * For example, the deserializer of HolisticLandmarkerOptions's binary proto is
+ * HolisticLandmarkerOptions.deserializeBinary(binaryProto).toObject().
+ */
+export type Deserializer = (binaryProto: Uint8Array) => JsonObject;
 
 /**
  * Verifies that the graph has been initialized and that it contains the
  * provided options.
- *
- * @param deserializer - the function to convert a binary proto to a JsonObject.
- * For example, the deserializer of HolisticLandmarkerOptions's binary proto is
- * HolisticLandmarkerOptions.deserializeBinary(binaryProto).toObject().
  */
 export function verifyGraph(
     tasksFake: MediapipeTasksFake,
@@ -101,7 +102,8 @@ export function verifyGraph(
   let proto;
   if (deserializer) {
     const binaryProto =
-        tasksFake.graph!.getNodeList()[0].getNodeOptionsList()[0].getValue();
+    tasksFake.graph!.getNodeList()[0].getNodeOptionsList()[0].getValue() as
+    Uint8Array;
     proto = deserializer(binaryProto);
   } else {
     proto = (node.options as {ext: unknown}).ext;

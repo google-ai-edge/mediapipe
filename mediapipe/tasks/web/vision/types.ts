@@ -22,6 +22,7 @@ export * from '../../../tasks/web/vision/face_detector/face_detector';
 export * from '../../../tasks/web/vision/face_landmarker/face_landmarker';
 export * from '../../../tasks/web/vision/face_stylizer/face_stylizer';
 export * from '../../../tasks/web/vision/gesture_recognizer/gesture_recognizer';
+export * from '../../../tasks/web/vision/holistic_landmarker/holistic_landmarker';
 export * from '../../../tasks/web/vision/hand_landmarker/hand_landmarker';
 export * from '../../../tasks/web/vision/image_classifier/image_classifier';
 export * from '../../../tasks/web/vision/image_embedder/image_embedder';
