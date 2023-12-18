@@ -76,10 +76,12 @@ def _get_proto_provider(dep):
     """
     if ProtoInfo in dep:
         return dep[ProtoInfo]
+
     elif hasattr(dep, "proto"):
         return dep.proto
     else:
-        fail("cannot happen, rule definition requires .proto or ProtoInfo")
+        fail("cannot happen, rule definition requires .proto" +
+             " or ProtoInfo")
 
 def _encode_binary_proto_impl(ctx):
     """Implementation of the encode_binary_proto rule."""
@@ -142,7 +144,10 @@ _encode_binary_proto = rule(
             cfg = "exec",
         ),
         "deps": attr.label_list(
-            providers = [[ProtoInfo], ["proto"]],
+            providers = [
+                [ProtoInfo],
+                ["proto"],
+            ],
         ),
         "input": attr.label(
             mandatory = True,
@@ -182,7 +187,10 @@ def _generate_proto_descriptor_set_impl(ctx):
     all_protos = depset(transitive = [
         _get_proto_provider(dep).transitive_sources
         for dep in ctx.attr.deps
-        if ProtoInfo in dep or hasattr(dep, "proto")
+        if (
+            ProtoInfo in dep or
+            hasattr(dep, "proto")
+        )
     ])
     descriptor = ctx.outputs.output
 
@@ -213,7 +221,10 @@ generate_proto_descriptor_set = rule(
             cfg = "exec",
         ),
         "deps": attr.label_list(
-            providers = [[ProtoInfo], ["proto"]],
+            providers = [
+                [ProtoInfo],
+                ["proto"],
+            ],
         ),
     },
     outputs = {"output": "%{name}.proto.bin"},

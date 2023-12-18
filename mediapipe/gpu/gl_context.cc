@@ -697,10 +697,13 @@ class GlFenceSyncPoint : public GlSyncPoint {
 
   void Wait() override {
     if (!sync_) return;
-    gl_context_->Run([this] {
-      // TODO: must this run on the original context??
+    if (GlContext::IsAnyContextCurrent()) {
       sync_.Wait();
-    });
+      return;
+    }
+    // In case a current GL context is not available, we fall back using the
+    // captured gl_context_.
+    gl_context_->Run([this] { sync_.Wait(); });
   }
 
   void WaitOnGpu() override {

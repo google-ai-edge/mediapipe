@@ -10,7 +10,7 @@
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/synchronization/mutex.h"
-#include "mediapipe/framework/port.h"
+#include "mediapipe/framework/formats/hardware_buffer.h"
 #include "mediapipe/gpu/gl_base.h"
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
 
@@ -97,7 +97,7 @@ class DelayedReleaser {
   DelayedReleaser(DelayedReleaser&&) = delete;
   DelayedReleaser& operator=(DelayedReleaser&&) = delete;
 
-  static void Add(AHardwareBuffer* ahwb, GLuint opengl_buffer,
+  static void Add(std::unique_ptr<HardwareBuffer> ahwb, GLuint opengl_buffer,
                   EGLSyncKHR ssbo_sync, GLsync ssbo_read,
                   Tensor::FinishingFunc&& ahwb_written,
                   std::shared_ptr<mediapipe::GlContext> gl_context,
@@ -115,8 +115,8 @@ class DelayedReleaser {
 
     // Using `new` to access a non-public constructor.
     to_release_local.emplace_back(absl::WrapUnique(new DelayedReleaser(
-        ahwb, opengl_buffer, ssbo_sync, ssbo_read, std::move(ahwb_written),
-        gl_context, std::move(callback))));
+        std::move(ahwb), opengl_buffer, ssbo_sync, ssbo_read,
+        std::move(ahwb_written), gl_context, std::move(callback))));
     for (auto it = to_release_local.begin(); it != to_release_local.end();) {
       if ((*it)->IsSignaled()) {
         it = to_release_local.erase(it);
@@ -136,9 +136,6 @@ class DelayedReleaser {
 
   ~DelayedReleaser() {
     if (release_callback_) release_callback_();
-    if (__builtin_available(android 26, *)) {
-      AHardwareBuffer_release(ahwb_);
-    }
   }
 
   bool IsSignaled() {
@@ -181,7 +178,7 @@ class DelayedReleaser {
   }
 
  protected:
-  AHardwareBuffer* ahwb_;
+  std::unique_ptr<HardwareBuffer> ahwb_;
   GLuint opengl_buffer_;
   // TODO: use wrapper instead.
   EGLSyncKHR fence_sync_;
@@ -192,12 +189,12 @@ class DelayedReleaser {
   std::function<void()> release_callback_;
   static inline std::deque<std::unique_ptr<DelayedReleaser>> to_release_;
 
-  DelayedReleaser(AHardwareBuffer* ahwb, GLuint opengl_buffer,
+  DelayedReleaser(std::unique_ptr<HardwareBuffer> ahwb, GLuint opengl_buffer,
                   EGLSyncKHR fence_sync, GLsync ssbo_read,
                   Tensor::FinishingFunc&& ahwb_written,
                   std::shared_ptr<mediapipe::GlContext> gl_context,
                   std::function<void()>&& callback)
-      : ahwb_(ahwb),
+      : ahwb_(std::move(ahwb)),
         opengl_buffer_(opengl_buffer),
         fence_sync_(fence_sync),
         ssbo_read_(ssbo_read),
@@ -214,7 +211,7 @@ Tensor::AHardwareBufferView Tensor::GetAHardwareBufferReadView() const {
   ABSL_CHECK(!(valid_ & kValidOpenGlTexture2d))
       << "Tensor conversion between OpenGL texture and AHardwareBuffer is not "
          "supported.";
-  bool transfer = !ahwb_;
+  bool transfer = ahwb_ == nullptr;
   ABSL_CHECK(AllocateAHardwareBuffer())
       << "AHardwareBuffer is not supported on the target system.";
   valid_ |= kValidAHardwareBuffer;
@@ -223,12 +220,10 @@ Tensor::AHardwareBufferView Tensor::GetAHardwareBufferReadView() const {
   } else {
     if (valid_ & kValidOpenGlBuffer) CreateEglSyncAndFd();
   }
-  return {ahwb_,
-          ssbo_written_,
+  return {ahwb_.get(),        ssbo_written_,
           &fence_fd_,  // The FD is created for SSBO -> AHWB synchronization.
           &ahwb_written_,  // Filled by SetReadingFinishedFunc.
-          &release_callback_,
-          std::move(lock)};
+          &release_callback_, std::move(lock)};
 }
 
 void Tensor::CreateEglSyncAndFd() const {
@@ -258,12 +253,11 @@ Tensor::AHardwareBufferView Tensor::GetAHardwareBufferWriteView(
   ABSL_CHECK(AllocateAHardwareBuffer(size_alignment))
       << "AHardwareBuffer is not supported on the target system.";
   valid_ = kValidAHardwareBuffer;
-  return {ahwb_,
+  return {ahwb_.get(),
           /*ssbo_written=*/-1,
-          &fence_fd_,  // For SetWritingFinishedFD.
-          &ahwb_written_,
-          &release_callback_,
-          std::move(lock)};
+          &fence_fd_,      // For SetWritingFinishedFD.
+          &ahwb_written_,  // Filled by SetReadingFinishedFunc.
+          &release_callback_,  std::move(lock)};
 }
 
 bool Tensor::AllocateAHardwareBuffer(int size_alignment) const {
@@ -276,40 +270,43 @@ bool Tensor::AllocateAHardwareBuffer(int size_alignment) const {
   }
   use_ahwb_ = true;
 
-  if (__builtin_available(android 26, *)) {
-    if (ahwb_ == nullptr) {
-      AHardwareBuffer_Desc desc = {};
-      if (size_alignment == 0) {
-        desc.width = bytes();
-      } else {
-        // We expect allocations to be page-aligned, implicitly satisfying any
-        // requirements from Edge TPU. No need to add a check for this,
-        // since Edge TPU will check for us.
-        desc.width = AlignedToPowerOf2(bytes(), size_alignment);
-      }
-      desc.height = 1;
-      desc.layers = 1;
-      desc.format = AHARDWAREBUFFER_FORMAT_BLOB;
-      desc.usage = AHARDWAREBUFFER_USAGE_CPU_WRITE_OFTEN |
-                   AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN |
-                   AHARDWAREBUFFER_USAGE_GPU_DATA_BUFFER;
-      return AHardwareBuffer_allocate(&desc, &ahwb_) == 0;
+  if (ahwb_ == nullptr) {
+    HardwareBufferSpec spec = {};
+    if (size_alignment == 0) {
+      spec.width = bytes();
+    } else {
+      // We expect allocations to be page-aligned, implicitly satisfying any
+      // requirements from Edge TPU. No need to add a check for this,
+      // since Edge TPU will check for us.
+      spec.width = AlignedToPowerOf2(bytes(), size_alignment);
     }
-    return true;
+    spec.height = 1;
+    spec.layers = 1;
+    spec.format = HardwareBufferSpec::AHARDWAREBUFFER_FORMAT_BLOB;
+    spec.usage = HardwareBufferSpec::AHARDWAREBUFFER_USAGE_CPU_WRITE_OFTEN |
+                 HardwareBufferSpec::AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN |
+                 HardwareBufferSpec::AHARDWAREBUFFER_USAGE_GPU_DATA_BUFFER;
+    auto new_ahwb = HardwareBuffer::Create(spec);
+    if (!new_ahwb.ok()) {
+      ABSL_LOG(ERROR) << "Allocation of NDK Hardware Buffer failed: "
+                      << new_ahwb.status();
+      return false;
+    }
+    ahwb_ = std::make_unique<HardwareBuffer>(std::move(*new_ahwb));
   }
-  return false;
+  return true;
 }
 
 bool Tensor::AllocateAhwbMapToSsbo() const {
   if (__builtin_available(android 26, *)) {
     if (AllocateAHardwareBuffer()) {
-      if (MapAHardwareBufferToGlBuffer(ahwb_, bytes()).ok()) {
+      if (MapAHardwareBufferToGlBuffer(ahwb_->GetAHardwareBuffer(), bytes())
+              .ok()) {
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
         return true;
       }
       // Unable to make OpenGL <-> AHWB binding. Use regular SSBO instead.
-      AHardwareBuffer_release(ahwb_);
-      ahwb_ = nullptr;
+      ahwb_.reset();
     }
   }
   return false;
@@ -317,14 +314,11 @@ bool Tensor::AllocateAhwbMapToSsbo() const {
 
 // Moves Cpu/Ssbo resource under the Ahwb backed memory.
 void Tensor::MoveCpuOrSsboToAhwb() const {
-  void* dest = nullptr;
-  if (__builtin_available(android 26, *)) {
-    auto error = AHardwareBuffer_lock(
-        ahwb_, AHARDWAREBUFFER_USAGE_CPU_WRITE_RARELY, -1, nullptr, &dest);
-    ABSL_CHECK(error == 0) << "AHardwareBuffer_lock " << error;
-  }
+  auto dest =
+      ahwb_->Lock(HardwareBufferSpec::AHARDWAREBUFFER_USAGE_CPU_WRITE_RARELY);
+  ABSL_CHECK_OK(dest) << "Lock of AHWB failed";
   if (valid_ & kValidCpu) {
-    std::memcpy(dest, cpu_buffer_, bytes());
+    std::memcpy(*dest, cpu_buffer_, bytes());
     // Free CPU memory because next time AHWB is mapped instead.
     free(cpu_buffer_);
     cpu_buffer_ = nullptr;
@@ -334,7 +328,7 @@ void Tensor::MoveCpuOrSsboToAhwb() const {
       glBindBuffer(GL_SHADER_STORAGE_BUFFER, opengl_buffer_);
       const void* src = glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, bytes(),
                                          GL_MAP_READ_BIT);
-      std::memcpy(dest, src, bytes());
+      std::memcpy(*dest, src, bytes());
       glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
       glDeleteBuffers(1, &opengl_buffer_);
     });
@@ -347,10 +341,7 @@ void Tensor::MoveCpuOrSsboToAhwb() const {
     ABSL_LOG(FATAL) << "Can't convert tensor with mask " << valid_
                     << " into AHWB.";
   }
-  if (__builtin_available(android 26, *)) {
-    auto error = AHardwareBuffer_unlock(ahwb_, nullptr);
-    ABSL_CHECK(error == 0) << "AHardwareBuffer_unlock " << error;
-  }
+  ABSL_CHECK_OK(ahwb_->Unlock()) << "Unlock of AHWB failed";
 }
 
 // SSBO is created on top of AHWB. A fence is inserted into the GPU queue before
@@ -403,59 +394,52 @@ void Tensor::ReleaseAhwbStuff() {
     if (ahwb_) {
       if (ssbo_read_ != 0 || fence_sync_ != EGL_NO_SYNC_KHR || ahwb_written_) {
         if (ssbo_written_ != -1) close(ssbo_written_);
-        DelayedReleaser::Add(ahwb_, opengl_buffer_, fence_sync_, ssbo_read_,
-                             std::move(ahwb_written_), gl_context_,
+        DelayedReleaser::Add(std::move(ahwb_), opengl_buffer_, fence_sync_,
+                             ssbo_read_, std::move(ahwb_written_), gl_context_,
                              std::move(release_callback_));
         opengl_buffer_ = GL_INVALID_INDEX;
       } else {
         if (release_callback_) release_callback_();
-        AHardwareBuffer_release(ahwb_);
+        ahwb_.reset();
       }
     }
   }
 }
 
 void* Tensor::MapAhwbToCpuRead() const {
-  if (__builtin_available(android 26, *)) {
-    if (ahwb_) {
-      if (!(valid_ & kValidCpu)) {
-        if ((valid_ & kValidOpenGlBuffer) && ssbo_written_ == -1) {
-          // EGLSync is failed. Use another synchronization method.
-          // TODO: Use tflite::gpu::GlBufferSync and GlActiveSync.
-          gl_context_->Run([]() { glFinish(); });
-        } else if (valid_ & kValidAHardwareBuffer) {
-          ABSL_CHECK(ahwb_written_)
-              << "Ahwb-to-Cpu synchronization requires the "
-                 "completion function to be set";
-          ABSL_CHECK(ahwb_written_(true))
-              << "An error oqcured while waiting for the buffer to be written";
-        }
+  if (ahwb_ != nullptr) {
+    if (!(valid_ & kValidCpu)) {
+      if ((valid_ & kValidOpenGlBuffer) && ssbo_written_ == -1) {
+        // EGLSync is failed. Use another synchronization method.
+        // TODO: Use tflite::gpu::GlBufferSync and GlActiveSync.
+        gl_context_->Run([]() { glFinish(); });
+      } else if (valid_ & kValidAHardwareBuffer) {
+        ABSL_CHECK(ahwb_written_) << "Ahwb-to-Cpu synchronization requires the "
+                                     "completion function to be set";
+        ABSL_CHECK(ahwb_written_(true))
+            << "An error oqcured while waiting for the buffer to be written";
       }
-      void* ptr;
-      auto error =
-          AHardwareBuffer_lock(ahwb_, AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN,
-                               ssbo_written_, nullptr, &ptr);
-      ABSL_CHECK(error == 0) << "AHardwareBuffer_lock " << error;
-      close(ssbo_written_);
-      ssbo_written_ = -1;
-      return ptr;
     }
+    auto ptr =
+        ahwb_->Lock(HardwareBufferSpec::AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN,
+                    ssbo_written_);
+    ABSL_CHECK_OK(ptr) << "Lock of AHWB failed";
+    close(ssbo_written_);
+    ssbo_written_ = -1;
+    return *ptr;
   }
   return nullptr;
 }
 
 void* Tensor::MapAhwbToCpuWrite() const {
-  if (__builtin_available(android 26, *)) {
-    if (ahwb_) {
-      // TODO: If previously acquired view is GPU write view then need
-      // to be sure that writing is finished. That's a warning: two consequent
-      // write views should be interleaved with read view.
-      void* ptr;
-      auto error = AHardwareBuffer_lock(
-          ahwb_, AHARDWAREBUFFER_USAGE_CPU_WRITE_OFTEN, -1, nullptr, &ptr);
-      ABSL_CHECK(error == 0) << "AHardwareBuffer_lock " << error;
-      return ptr;
-    }
+  if (ahwb_ != nullptr) {
+    // TODO: If previously acquired view is GPU write view then need
+    // to be sure that writing is finished. That's a warning: two consequent
+    // write views should be interleaved with read view.
+    auto locked_ptr =
+        ahwb_->Lock(HardwareBufferSpec::AHARDWAREBUFFER_USAGE_CPU_WRITE_OFTEN);
+    ABSL_CHECK_OK(locked_ptr) << "Lock of AHWB failed";
+    return *locked_ptr;
   }
   return nullptr;
 }

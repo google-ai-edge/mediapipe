@@ -32,6 +32,7 @@
 #include "absl/container/flat_hash_set.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_base.h"
@@ -255,7 +256,7 @@ class CalculatorGraph {
   // sizes of the queues in the graph. The input stream must have been specified
   // in the configuration as a graph level input_stream. On error, nothing is
   // added.
-  absl::Status AddPacketToInputStream(const std::string& stream_name,
+  absl::Status AddPacketToInputStream(absl::string_view stream_name,
                                       const Packet& packet);
 
   // Same as the l-value version of this function by the same name, but moves
@@ -265,7 +266,7 @@ class CalculatorGraph {
   // packet may remain valid.  In particular, when using the ADD_IF_NOT_FULL
   // mode with a full queue, this will return StatusUnavailable and the caller
   // may try adding the packet again later.
-  absl::Status AddPacketToInputStream(const std::string& stream_name,
+  absl::Status AddPacketToInputStream(absl::string_view stream_name,
                                       Packet&& packet);
 
   // Indicates that input will arrive no earlier than a certain timestamp.
@@ -509,7 +510,7 @@ class CalculatorGraph {
   // AddPacketToInputStream(Packet&& packet) or
   // AddPacketToInputStream(const Packet& packet).
   template <typename T>
-  absl::Status AddPacketToInputStreamInternal(const std::string& stream_name,
+  absl::Status AddPacketToInputStreamInternal(absl::string_view stream_name,
                                               T&& packet);
 
   // Sets the executor that will run the nodes assigned to the executor

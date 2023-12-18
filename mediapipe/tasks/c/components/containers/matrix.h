@@ -13,15 +13,29 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-syntax = "proto3";
+#ifndef MEDIAPIPE_TASKS_C_COMPONENTS_CONTAINERS_MATRIX_H_
+#define MEDIAPIPE_TASKS_C_COMPONENTS_CONTAINERS_MATRIX_H_
 
-package mediapipe.tasks.vision.hand_landmarker.proto;
+#include <stdint.h>
 
-import "mediapipe/tasks/cc/core/proto/base_options.proto";
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-option java_package = "com.google.mediapipe.tasks.vision.handlandmarker.proto";
-option java_outer_classname = "HandRoiRefinementGraphOptionsProto";
+// Data are stored in column-major order by default.
+struct Matrix {
+  // The number of rows in the matrix.
+  uint32_t rows;
 
-message HandRoiRefinementGraphOptions {
-  core.proto.BaseOptions base_options = 1;
-}
+  // The number of columns in the matrix.
+  uint32_t cols;
+
+  // The matrix data stored in a column-first layout.
+  float* data;
+};
+
+#ifdef __cplusplus
+}  // extern C
+#endif
+
+#endif  // MEDIAPIPE_TASKS_C_COMPONENTS_CONTAINERS_MATRIX_H_

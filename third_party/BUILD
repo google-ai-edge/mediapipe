@@ -20,7 +20,10 @@ licenses(["notice"])  # Apache License 2.0
 
 package(default_visibility = ["//visibility:public"])
 
-exports_files(["LICENSE"])
+exports_files([
+    "LICENSE",
+    "shared_dependencies.bzl",
+])
 
 cc_library(
     name = "glog",

@@ -32,6 +32,7 @@ enum DiffuserModelType {
   kDiffuserModelTypeDistilledGldm,
   kDiffuserModelTypeSd2Base,
   kDiffuserModelTypeTigo,
+  kDiffuserModelTypeTigoUfo,
 };
 
 enum DiffuserPriorityHint {

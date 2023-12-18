@@ -13,15 +13,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-syntax = "proto3";
+#ifndef MEDIAPIPE_TASKS_C_COMPONENTS_CONTAINERS_MATRIX_CONVERTER_H_
+#define MEDIAPIPE_TASKS_C_COMPONENTS_CONTAINERS_MATRIX_CONVERTER_H_
 
-package mediapipe.tasks.vision.hand_landmarker.proto;
+#include "Eigen/Core"
+#include "mediapipe/tasks/c/components/containers/matrix.h"
 
-import "mediapipe/tasks/cc/core/proto/base_options.proto";
+namespace mediapipe::tasks::c::components::containers {
 
-option java_package = "com.google.mediapipe.tasks.vision.handlandmarker.proto";
-option java_outer_classname = "HandRoiRefinementGraphOptionsProto";
+void CppConvertToMatrix(const Eigen::MatrixXf& in, ::Matrix* out);
 
-message HandRoiRefinementGraphOptions {
-  core.proto.BaseOptions base_options = 1;
-}
+void CppCloseMatrix(::Matrix* m);
+
+}  // namespace mediapipe::tasks::c::components::containers
+
+#endif  // MEDIAPIPE_TASKS_C_COMPONENTS_CONTAINERS_MATRIX_CONVERTER_H_

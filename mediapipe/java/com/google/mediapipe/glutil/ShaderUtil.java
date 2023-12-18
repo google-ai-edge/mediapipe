@@ -24,16 +24,15 @@ import java.nio.FloatBuffer;
 import java.util.Map;
 import javax.annotation.Nullable;
 
-/**
- * Utility class for managing GLSL shaders.
- */
+/** Utility class for managing GLSL shaders. */
 public class ShaderUtil {
   private static final FluentLogger logger = FluentLogger.forEnclosingClass();
 
   /**
    * Loads a shader from source.
-   * @param shaderType a valid GL shader type, e.g. {@link GLES20#GL_VERTEX_SHADER} or
-   *        {@link GLES20#GL_FRAGMENT_SHADER}.
+   *
+   * @param shaderType a valid GL shader type, e.g. {@link GLES20#GL_VERTEX_SHADER} or {@link
+   *     GLES20#GL_FRAGMENT_SHADER}.
    * @param source the shader's source in text form.
    * @return a handle to the created shader, or 0 in case of error.
    */
@@ -44,8 +43,8 @@ public class ShaderUtil {
     int[] compiled = new int[1];
     GLES20.glGetShaderiv(shader, GLES20.GL_COMPILE_STATUS, compiled, 0);
     if (compiled[0] == 0) {
-      logger.atSevere().log("Could not compile shader %d: %s", shaderType,
-          GLES20.glGetShaderInfoLog(shader));
+      logger.atSevere().log(
+          "Could not compile shader %d: %s", shaderType, GLES20.glGetShaderInfoLog(shader));
       GLES20.glDeleteShader(shader);
       shader = 0;
     }
@@ -99,6 +98,7 @@ public class ShaderUtil {
 
   /**
    * Creates a texture. Binds it to texture unit 0 to perform setup.
+   *
    * @return the name of the new texture.
    */
   public static int createRgbaTexture(int width, int height) {
@@ -111,7 +111,8 @@ public class ShaderUtil {
         GLES20.GL_TEXTURE_2D,
         0,
         GLES20.GL_RGBA,
-        width, height,
+        width,
+        height,
         0,
         GLES20.GL_RGBA,
         GLES20.GL_UNSIGNED_BYTE,
@@ -147,13 +148,11 @@ public class ShaderUtil {
   }
 
   /**
-   * Creates a {@link FloatBuffer} with the given arguments as contents.
-   * The buffer is created in native format for efficient use with OpenGL.
+   * Creates a {@link FloatBuffer} with the given arguments as contents. The buffer is created in
+   * native format for efficient use with OpenGL.
    */
   public static FloatBuffer floatBuffer(float... values) {
-    ByteBuffer byteBuffer =
-        ByteBuffer.allocateDirect(
-            values.length * 4 /* sizeof(float) */);
+    ByteBuffer byteBuffer = ByteBuffer.allocateDirect(values.length * 4 /* sizeof(float) */);
     // use the device hardware's native byte order
     byteBuffer.order(ByteOrder.nativeOrder());
 
@@ -166,13 +165,29 @@ public class ShaderUtil {
     return floatBuffer;
   }
 
-  /**
-   * Calls {@link GLES20#glGetError} and raises an exception if there was an error.
-   */
+  /** Calls {@link GLES20#glGetError} and raises an exception if there was an error. */
   public static void checkGlError(String msg) {
     int error = GLES20.glGetError();
     if (error != GLES20.GL_NO_ERROR) {
-      throw new RuntimeException(msg + ": GL error: 0x" + Integer.toHexString(error));
+      throw new GlRuntimeException(msg + ": GL error: 0x" + Integer.toHexString(error), error);
+    }
+  }
+
+  /** A custom {@link RuntimeException} indicating an OpenGl error. */
+  public static class GlRuntimeException extends RuntimeException {
+    private final int errorCode;
+
+    public GlRuntimeException(String message, int errorCode) {
+      super(message);
+      this.errorCode = errorCode;
+    }
+
+    public GlRuntimeException(String message) {
+      this(message, GLES20.GL_NO_ERROR);
+    }
+
+    public int getErrorCode() {
+      return errorCode;
     }
   }
 }

@@ -1,17 +1,15 @@
 #ifndef MEDIAPIPE_FRAMEWORK_API2_NODE_H_
 #define MEDIAPIPE_FRAMEWORK_API2_NODE_H_
 
-#include <functional>
-#include <string>
+#include <memory>
+#include <type_traits>
 
-#include "mediapipe/framework/api2/const_str.h"
+#include "absl/status/status.h"
 #include "mediapipe/framework/api2/contract.h"
-#include "mediapipe/framework/api2/packet.h"
-#include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/calculator_base.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_contract.h"
-#include "mediapipe/framework/deps/no_destructor.h"
+#include "mediapipe/framework/deps/registration.h"
 #include "mediapipe/framework/subgraph.h"
 
 namespace mediapipe {
@@ -178,7 +176,10 @@ class SubgraphImpl : public Subgraph,
       absl::make_unique<mediapipe::internal::CalculatorBaseFactoryFor<Impl>>)
 
 // This macro is used to register a non-split-contract calculator. Deprecated.
-#define MEDIAPIPE_REGISTER_NODE(name) REGISTER_CALCULATOR(name)
+#define MEDIAPIPE_REGISTER_NODE(name)                                    \
+  MEDIAPIPE_REGISTER_FACTORY_FUNCTION_QUALIFIED(                         \
+      mediapipe::CalculatorBaseRegistry, calculator_registration, #name, \
+      absl::make_unique<mediapipe::internal::CalculatorBaseFactoryFor<name>>)
 
 // This macro is used to define a subgraph that does not use automatic
 // registration. Deprecated.
