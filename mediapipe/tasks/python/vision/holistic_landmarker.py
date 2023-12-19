@@ -336,7 +336,7 @@ class HolisticLandmarkerOptions:
     holistic_landmarker_options_proto.pose_detector_graph_options.min_suppression_threshold = (
         self.min_pose_suppression_threshold
     )
-    holistic_landmarker_options_proto.face_landmarks_detector_graph_options.min_detection_confidence = (
+    holistic_landmarker_options_proto.pose_landmarks_detector_graph_options.min_detection_confidence = (
         self.min_pose_landmarks_confidence
     )
     # Configure hand landmarks detector options.
@@ -473,8 +473,6 @@ class HolisticLandmarker(base_vision_task_api.BaseVisionTaskApi):
     running mode.
 
     The image can be of any size with format RGB or RGBA.
-    TODO: Describes how the input image will be preprocessed after the yuv
-    support is implemented.
 
     Args:
       image: MediaPipe Image.
