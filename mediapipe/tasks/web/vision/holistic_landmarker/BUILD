@@ -15,6 +15,7 @@ mediapipe_ts_library(
     srcs = ["holistic_landmarker.ts"],
     visibility = ["//visibility:public"],
     deps = [
+        ":holistic_landmarker_connections",
         ":holistic_landmarker_types",
         "//mediapipe/framework:calculator_jspb_proto",
         "//mediapipe/framework:calculator_options_jspb_proto",
@@ -81,4 +82,13 @@ jasmine_node_test(
     name = "holistic_landmarker_test",
     tags = ["nomsan"],
     deps = [":holistic_landmarker_test_lib"],
+)
+
+mediapipe_ts_library(
+    name = "holistic_landmarker_connections",
+    deps = [
+        "//mediapipe/tasks/web/vision/face_landmarker:face_landmarks_connections",
+        "//mediapipe/tasks/web/vision/hand_landmarker:hand_landmarks_connections",
+        "//mediapipe/tasks/web/vision/pose_landmarker:pose_landmarks_connections",
+    ],
 )

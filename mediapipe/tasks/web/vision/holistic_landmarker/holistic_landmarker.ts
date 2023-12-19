@@ -34,6 +34,9 @@ import {convertToLandmarks, convertToWorldLandmarks} from '../../../../tasks/web
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {ImageProcessingOptions} from '../../../../tasks/web/vision/core/image_processing_options';
 import {VisionGraphRunner, VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
+import {FACE_LANDMARKS_CONTOURS, FACE_LANDMARKS_FACE_OVAL, FACE_LANDMARKS_LEFT_EYE, FACE_LANDMARKS_LEFT_EYEBROW, FACE_LANDMARKS_LEFT_IRIS, FACE_LANDMARKS_LIPS, FACE_LANDMARKS_RIGHT_EYE, FACE_LANDMARKS_RIGHT_EYEBROW, FACE_LANDMARKS_RIGHT_IRIS, FACE_LANDMARKS_TESSELATION} from '../../../../tasks/web/vision/face_landmarker/face_landmarks_connections';
+import {HAND_CONNECTIONS} from '../../../../tasks/web/vision/hand_landmarker/hand_landmarks_connections';
+import {POSE_CONNECTIONS} from '../../../../tasks/web/vision/pose_landmarker/pose_landmarks_connections';
 import {ImageSource, WasmModule} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
@@ -101,6 +104,93 @@ export class HolisticLandmarker extends VisionTaskRunner {
   private readonly poseDetectorGraphOptions: PoseDetectorGraphOptions;
   private readonly poseLandmarksDetectorGraphOptions:
       PoseLandmarksDetectorGraphOptions;
+
+  /**
+   * An array containing the pairs of hand landmark indices to be rendered with
+   * connections.
+   * @export
+   * @nocollapse
+   */
+  static HAND_CONNECTIONS = HAND_CONNECTIONS;
+
+  /**
+   * An array containing the pairs of pose landmark indices to be rendered with
+   * connections.
+   * @export
+   * @nocollapse
+   */
+  static POSE_CONNECTIONS = POSE_CONNECTIONS;
+
+  /**
+   * Landmark connections to draw the connection between a face's lips.
+   * @export
+   * @nocollapse
+   */
+  static FACE_LANDMARKS_LIPS = FACE_LANDMARKS_LIPS;
+
+  /**
+   * Landmark connections to draw the connection between a face's left eye.
+   * @export
+   * @nocollapse
+   */
+  static FACE_LANDMARKS_LEFT_EYE = FACE_LANDMARKS_LEFT_EYE;
+
+  /**
+   * Landmark connections to draw the connection between a face's left eyebrow.
+   * @export
+   * @nocollapse
+   */
+  static FACE_LANDMARKS_LEFT_EYEBROW = FACE_LANDMARKS_LEFT_EYEBROW;
+
+  /**
+   * Landmark connections to draw the connection between a face's left iris.
+   * @export
+   * @nocollapse
+   */
+  static FACE_LANDMARKS_LEFT_IRIS = FACE_LANDMARKS_LEFT_IRIS;
+
+  /**
+   * Landmark connections to draw the connection between a face's right eye.
+   * @export
+   * @nocollapse
+   */
+  static FACE_LANDMARKS_RIGHT_EYE = FACE_LANDMARKS_RIGHT_EYE;
+
+  /**
+   * Landmark connections to draw the connection between a face's right
+   * eyebrow.
+   * @export
+   * @nocollapse
+   */
+  static FACE_LANDMARKS_RIGHT_EYEBROW = FACE_LANDMARKS_RIGHT_EYEBROW;
+
+  /**
+   * Landmark connections to draw the connection between a face's right iris.
+   * @export
+   * @nocollapse
+   */
+  static FACE_LANDMARKS_RIGHT_IRIS = FACE_LANDMARKS_RIGHT_IRIS;
+
+  /**
+   * Landmark connections to draw the face's oval.
+   * @export
+   * @nocollapse
+   */
+  static FACE_LANDMARKS_FACE_OVAL = FACE_LANDMARKS_FACE_OVAL;
+
+  /**
+   * Landmark connections to draw the face's contour.
+   * @export
+   * @nocollapse
+   */
+  static FACE_LANDMARKS_CONTOURS = FACE_LANDMARKS_CONTOURS;
+
+  /**
+   * Landmark connections to draw the face's tesselation.
+   * @export
+   * @nocollapse
+   */
+  static FACE_LANDMARKS_TESSELATION = FACE_LANDMARKS_TESSELATION;
 
   /**
    * Initializes the Wasm runtime and creates a new `HolisticLandmarker` from

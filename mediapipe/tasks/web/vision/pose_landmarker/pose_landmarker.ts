@@ -26,13 +26,13 @@ import {convertToLandmarks, convertToWorldLandmarks} from '../../../../tasks/web
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {ImageProcessingOptions} from '../../../../tasks/web/vision/core/image_processing_options';
 import {MPMask} from '../../../../tasks/web/vision/core/mask';
-import {convertToConnections} from '../../../../tasks/web/vision/core/types';
 import {VisionGraphRunner, VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
 import {ImageSource, WasmModule} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
 import {PoseLandmarkerOptions} from './pose_landmarker_options';
 import {PoseLandmarkerResult} from './pose_landmarker_result';
+import {POSE_CONNECTIONS} from './pose_landmarks_connections';
 
 export * from './pose_landmarker_options';
 export * from './pose_landmarker_result';
@@ -79,12 +79,7 @@ export class PoseLandmarker extends VisionTaskRunner {
    * @export
    * @nocollapse
    */
-  static POSE_CONNECTIONS = convertToConnections(
-      [0, 1], [1, 2], [2, 3], [3, 7], [0, 4], [4, 5], [5, 6], [6, 8], [9, 10],
-      [11, 12], [11, 13], [13, 15], [15, 17], [15, 19], [15, 21], [17, 19],
-      [12, 14], [14, 16], [16, 18], [16, 20], [16, 22], [18, 20], [11, 23],
-      [12, 24], [23, 24], [23, 25], [24, 26], [25, 27], [26, 28], [27, 29],
-      [28, 30], [29, 31], [30, 32], [27, 31], [28, 32]);
+  static POSE_CONNECTIONS = POSE_CONNECTIONS;
 
   /**
    * Initializes the Wasm runtime and creates a new `PoseLandmarker` from the
