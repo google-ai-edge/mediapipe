@@ -53,6 +53,26 @@ declare global {
 declare function importScripts(...urls: Array<string|URL>): void;
 
 /**
+ * Detects image source size.
+ */
+export function getImageSourceSize(imageSource: ImageSource): [number, number] {
+  if ((imageSource as HTMLVideoElement).videoWidth !== undefined) {
+    const videoElement = imageSource as HTMLVideoElement;
+    return [videoElement.videoWidth, videoElement.videoHeight];
+  } else if ((imageSource as HTMLImageElement).naturalWidth !== undefined) {
+    // TODO: Ensure this works with SVG images
+    const imageElement = imageSource as HTMLImageElement;
+    return [imageElement.naturalWidth, imageElement.naturalHeight];
+  } else if ((imageSource as VideoFrame).displayWidth !== undefined) {
+    const videoFrame = imageSource as VideoFrame;
+    return [videoFrame.displayWidth, videoFrame.displayHeight];
+  } else {
+    const notVideoFrame = imageSource as Exclude<ImageSource, VideoFrame>;
+    return [notVideoFrame.width, notVideoFrame.height];
+  }
+}
+
+/**
  * Simple class to run an arbitrary image-in/image-out MediaPipe graph (i.e.
  * as created by wasm_mediapipe_demo BUILD macro), and either render results
  * into canvas, or else return the output WebGLTexture. Takes a WebAssembly
@@ -64,7 +84,7 @@ export class GraphRunner implements GraphRunnerApi {
   //   should be somewhat fixed when we create our .d.ts files.
   readonly wasmModule: WasmModule;
   readonly hasMultiStreamSupport: boolean;
-  autoResizeCanvas: boolean = true;
+  autoResizeCanvas = true;
   audioPtr: number|null;
   audioSize: number;
 
@@ -196,18 +216,7 @@ export class GraphRunner implements GraphRunnerApi {
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
     }
 
-    let width, height;
-    if ((imageSource as HTMLVideoElement).videoWidth) {
-      width = (imageSource as HTMLVideoElement).videoWidth;
-      height = (imageSource as HTMLVideoElement).videoHeight;
-    } else if ((imageSource as HTMLImageElement).naturalWidth) {
-      // TODO: Ensure this works with SVG images
-      width = (imageSource as HTMLImageElement).naturalWidth;
-      height = (imageSource as HTMLImageElement).naturalHeight;
-    } else {
-      width = imageSource.width;
-      height = imageSource.height;
-    }
+    const [width, height] = getImageSourceSize(imageSource);
 
     if (this.autoResizeCanvas &&
         (width !== this.wasmModule.canvas.width ||
@@ -295,7 +304,7 @@ export class GraphRunner implements GraphRunnerApi {
    * format).
    *
    * Consumers must deserialize the binary representation themselves as this
-   * avoids addding a direct dependency on the Protobuf JSPB target in the graph
+   * avoids adding a direct dependency on the Protobuf JSPB target in the graph
    * library.
    */
   getCalculatorGraphConfig(
