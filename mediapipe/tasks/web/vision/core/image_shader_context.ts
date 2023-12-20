@@ -32,9 +32,9 @@ const FRAGMENT_SHADER = `
   }
  `;
 
-/** Helper to assert that `value` is not null.  */
-export function assertNotNull<T>(value: T|null, msg: string): T {
-  if (value === null) {
+/** Helper to assert that `value` is not null or undefined.  */
+export function assertExists<T>(value: T, msg: string): NonNullable<T> {
+  if (!value) {
     throw new Error(`Unable to obtain required WebGL resource: ${msg}`);
   }
   return value;
@@ -105,7 +105,7 @@ export class MPImageShaderContext {
   private compileShader(source: string, type: number): WebGLShader {
     const gl = this.gl!;
     const shader =
-        assertNotNull(gl.createShader(type), 'Failed to create WebGL shader');
+        assertExists(gl.createShader(type), 'Failed to create WebGL shader');
     gl.shaderSource(shader, source);
     gl.compileShader(shader);
     if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
@@ -119,7 +119,7 @@ export class MPImageShaderContext {
   protected setupShaders(): void {
     const gl = this.gl!;
     this.program =
-        assertNotNull(gl.createProgram()!, 'Failed to create WebGL program');
+        assertExists(gl.createProgram()!, 'Failed to create WebGL program');
 
     this.vertexShader =
         this.compileShader(this.getVertexShader(), gl.VERTEX_SHADER);
@@ -144,11 +144,11 @@ export class MPImageShaderContext {
   private createBuffers(flipVertically: boolean): MPImageShaderBuffers {
     const gl = this.gl!;
     const vertexArrayObject =
-        assertNotNull(gl.createVertexArray(), 'Failed to create vertex array');
+        assertExists(gl.createVertexArray(), 'Failed to create vertex array');
     gl.bindVertexArray(vertexArrayObject);
 
     const vertexBuffer =
-        assertNotNull(gl.createBuffer(), 'Failed to create buffer');
+        assertExists(gl.createBuffer(), 'Failed to create buffer');
     gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
     gl.enableVertexAttribArray(this.aVertex!);
     gl.vertexAttribPointer(this.aVertex!, 2, gl.FLOAT, false, 0, 0);
@@ -157,7 +157,7 @@ export class MPImageShaderContext {
         gl.STATIC_DRAW);
 
     const textureBuffer =
-        assertNotNull(gl.createBuffer(), 'Failed to create buffer');
+        assertExists(gl.createBuffer(), 'Failed to create buffer');
     gl.bindBuffer(gl.ARRAY_BUFFER, textureBuffer);
     gl.enableVertexAttribArray(this.aTex!);
     gl.vertexAttribPointer(this.aTex!, 2, gl.FLOAT, false, 0, 0);
@@ -232,7 +232,7 @@ export class MPImageShaderContext {
       WebGLTexture {
     this.maybeInitGL(gl);
     const texture =
-        assertNotNull(gl.createTexture(), 'Failed to create texture');
+        assertExists(gl.createTexture(), 'Failed to create texture');
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.texParameteri(
         gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrapping ?? gl.CLAMP_TO_EDGE);
@@ -252,7 +252,7 @@ export class MPImageShaderContext {
     this.maybeInitGL(gl);
     if (!this.framebuffer) {
       this.framebuffer =
-          assertNotNull(gl.createFramebuffer(), 'Failed to create framebuffe.');
+          assertExists(gl.createFramebuffer(), 'Failed to create framebuffe.');
     }
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer);
     gl.framebufferTexture2D(

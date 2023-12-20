@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {assertNotNull, MPImageShaderContext} from '../../../../tasks/web/vision/core/image_shader_context';
+import {assertExists, MPImageShaderContext} from '../../../../tasks/web/vision/core/image_shader_context';
 import {ImageSource} from '../../../../web/graph_runner/graph_runner';
 
 /**
@@ -60,13 +60,13 @@ export class ConfidenceMaskShaderContext extends MPImageShaderContext {
   protected override setupShaders(): void {
     super.setupShaders();
     const gl = this.gl!;
-    this.defaultTextureUniform = assertNotNull(
+    this.defaultTextureUniform = assertExists(
         gl.getUniformLocation(this.program!, 'defaultTexture'),
         'Uniform location');
-    this.overlayTextureUniform = assertNotNull(
+    this.overlayTextureUniform = assertExists(
         gl.getUniformLocation(this.program!, 'overlayTexture'),
         'Uniform location');
-    this.maskTextureUniform = assertNotNull(
+    this.maskTextureUniform = assertExists(
         gl.getUniformLocation(this.program!, 'maskTexture'),
         'Uniform location');
   }
