@@ -1,9 +1,11 @@
+#include <algorithm>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "absl/container/flat_hash_set.h"
 #include "absl/flags/flag.h"
+#include "absl/log/absl_check.h"
 #include "absl/strings/substitute.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -16,10 +18,14 @@
 #include "mediapipe/framework/port/opencv_imgcodecs_inc.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
+#include "mediapipe/gpu/multi_pool.h"
 #include "testing/base/public/gmock.h"
 #include "testing/base/public/googletest.h"
+#include "testing/base/public/gunit.h"
 #include "third_party/OpenCV/core.hpp"  // IWYU pragma: keep
+#include "third_party/OpenCV/core/base.hpp"
 #include "third_party/OpenCV/core/mat.hpp"
+#include "third_party/OpenCV/core/types.hpp"
 
 namespace mediapipe {
 
@@ -76,11 +82,12 @@ TEST(ImageTransformationCalculatorTest, NearestNeighborResizing) {
           ->Tag("OUTPUT_DIMENSIONS")
           .packets.push_back(input_output_dim_packet.At(Timestamp(0)));
 
-      MP_ASSERT_OK(runner.Run());
+      ABSL_QCHECK_OK(runner.Run());
       const auto& outputs = runner.Outputs();
-      ASSERT_EQ(outputs.NumEntries(), 1);
+      ABSL_QCHECK_EQ(outputs.NumEntries(), 1);
       const std::vector<Packet>& packets = outputs.Tag("IMAGE").packets;
-      ASSERT_EQ(packets.size(), 1);
+      ABSL_QCHECK_EQ(packets.size(), 1);
+
       const auto& result = packets[0].Get<ImageFrame>();
       ASSERT_EQ(output_dim.first, result.Width());
       ASSERT_EQ(output_dim.second, result.Height());
@@ -137,11 +144,12 @@ TEST(ImageTransformationCalculatorTest,
           ->Tag("OUTPUT_DIMENSIONS")
           .packets.push_back(input_output_dim_packet.At(Timestamp(0)));
 
-      MP_ASSERT_OK(runner.Run());
+      ABSL_QCHECK_OK(runner.Run());
       const auto& outputs = runner.Outputs();
-      ASSERT_EQ(outputs.NumEntries(), 1);
+      ABSL_QCHECK_EQ(outputs.NumEntries(), 1);
       const std::vector<Packet>& packets = outputs.Tag("IMAGE").packets;
-      ASSERT_EQ(packets.size(), 1);
+      ABSL_QCHECK_EQ(packets.size(), 1);
+
       const auto& result = packets[0].Get<ImageFrame>();
       ASSERT_EQ(output_dim.first, result.Width());
       ASSERT_EQ(output_dim.second, result.Height());
@@ -207,17 +215,17 @@ TEST(ImageTransformationCalculatorTest, NearestNeighborResizingGpu) {
       tool::AddVectorSink("output_image", &graph_config, &output_image_packets);
 
       CalculatorGraph graph(graph_config);
-      MP_ASSERT_OK(graph.StartRun({}));
+      ABSL_QCHECK_OK(graph.StartRun({}));
 
-      MP_ASSERT_OK(graph.AddPacketToInputStream(
+      ABSL_QCHECK_OK(graph.AddPacketToInputStream(
           "input_image",
           MakePacket<ImageFrame>(std::move(input_image)).At(Timestamp(0))));
-      MP_ASSERT_OK(graph.AddPacketToInputStream(
+      ABSL_QCHECK_OK(graph.AddPacketToInputStream(
           "image_size",
           MakePacket<std::pair<int, int>>(output_dim).At(Timestamp(0))));
 
-      MP_ASSERT_OK(graph.WaitUntilIdle());
-      ASSERT_THAT(output_image_packets, testing::SizeIs(1));
+      ABSL_QCHECK_OK(graph.WaitUntilIdle());
+      ABSL_QCHECK_EQ(output_image_packets.size(), 1);
 
       const auto& output_image = output_image_packets[0].Get<ImageFrame>();
       ASSERT_EQ(output_dim.first, output_image.Width());
@@ -287,16 +295,16 @@ TEST(ImageTransformationCalculatorTest,
       tool::AddVectorSink("output_image", &graph_config, &output_image_packets);
 
       CalculatorGraph graph(graph_config);
-      MP_ASSERT_OK(graph.StartRun({}));
+      ABSL_QCHECK_OK(graph.StartRun({}));
 
-      MP_ASSERT_OK(graph.AddPacketToInputStream(
+      ABSL_QCHECK_OK(graph.AddPacketToInputStream(
           "input_image", input_image_packet.At(Timestamp(0))));
-      MP_ASSERT_OK(graph.AddPacketToInputStream(
+      ABSL_QCHECK_OK(graph.AddPacketToInputStream(
           "image_size",
           MakePacket<std::pair<int, int>>(output_dim).At(Timestamp(0))));
 
-      MP_ASSERT_OK(graph.WaitUntilIdle());
-      ASSERT_THAT(output_image_packets, testing::SizeIs(1));
+      ABSL_QCHECK_OK(graph.WaitUntilIdle());
+      ABSL_QCHECK_EQ(output_image_packets.size(), 1);
 
       const auto& output_image = output_image_packets[0].Get<ImageFrame>();
       ASSERT_EQ(output_dim.first, output_image.Width());
@@ -309,6 +317,113 @@ TEST(ImageTransformationCalculatorTest,
                   ::testing::ContainerEq(unique_output_values));
     }
   }
+}
+
+TEST(ImageTransformationCalculatorTest, FitScalingClearsBackground) {
+  // Regression test for not clearing the background in FIT scaling mode.
+  // First scale an all-red (=r) image from 8x4 to 8x4, so it's a plain copy:
+  //   rrrrrrrr
+  //   rrrrrrrr
+  //   rrrrrrrr
+  //   rrrrrrrr
+  // Then scale an all-blue image from 4x4 to 8x4 in FIT mode. This should
+  // introduce dark yellow (=y) letterboxes left and right due to padding_color:
+  //   yybbbbyy
+  //   yybbbbyy
+  //   yybbbbyy
+  //   yybbbbyy
+  // We make sure that the all-red buffer gets reused. Without clearing the
+  // background, the blue (=b) image will have red letterboxes:
+  //   rrbbbbrr
+  //   rrbbbbrr
+  //   rrbbbbrr
+  //   rrbbbbrr
+
+  constexpr int kSmall = 4, kLarge = 8;
+  ImageFrame input_image_red(ImageFormat::SRGBA, kLarge, kSmall);
+  cv::Mat input_image_red_mat = formats::MatView(&input_image_red);
+  input_image_red_mat = cv::Scalar(255, 0, 0, 255);
+
+  ImageFrame input_image_blue(ImageFormat::SRGBA, kSmall, kSmall);
+  cv::Mat input_image_blue_mat = formats::MatView(&input_image_blue);
+  input_image_blue_mat = cv::Scalar(0, 0, 255, 255);
+
+  Packet input_image_red_packet =
+      MakePacket<ImageFrame>(std::move(input_image_red));
+  Packet input_image_blue_packet =
+      MakePacket<ImageFrame>(std::move(input_image_blue));
+
+  CalculatorGraphConfig graph_config =
+      ParseTextProtoOrDie<CalculatorGraphConfig>(absl::Substitute(
+          R"pb(
+            input_stream: "input_image"
+            output_stream: "output_image"
+
+            node {
+              calculator: "ImageFrameToGpuBufferCalculator"
+              input_stream: "input_image"
+              output_stream: "input_image_gpu"
+            }
+
+            node {
+              calculator: "ImageTransformationCalculator"
+              input_stream: "IMAGE_GPU:input_image_gpu"
+              output_stream: "IMAGE_GPU:output_image_gpu"
+              options: {
+                [mediapipe.ImageTransformationCalculatorOptions.ext]: {
+                  scale_mode: FIT
+                  output_width: $0,
+                  output_height: $1,
+                  padding_color: { red: 128, green: 128, blue: 0 }
+                }
+              }
+            }
+
+            node {
+              calculator: "GpuBufferToImageFrameCalculator"
+              input_stream: "output_image_gpu"
+              output_stream: "output_image"
+            })pb",
+          kLarge, kSmall));
+
+  std::vector<Packet> output_image_packets;
+  tool::AddVectorSink("output_image", &graph_config, &output_image_packets);
+
+  CalculatorGraph graph(graph_config);
+  ABSL_QCHECK_OK(graph.StartRun({}));
+
+  // Send the red image multiple times to cause the GPU pool to actually use
+  // a pool.
+  int num_red_packets =
+      std::max(kDefaultMultiPoolOptions.min_requests_before_pool, 1);
+  for (int n = 0; n < num_red_packets; ++n) {
+    ABSL_QCHECK_OK(graph.AddPacketToInputStream(
+        "input_image", input_image_red_packet.At(Timestamp(n))));
+  }
+  ABSL_QCHECK_OK(graph.AddPacketToInputStream(
+      "input_image", input_image_blue_packet.At(Timestamp(num_red_packets))));
+
+  ABSL_QCHECK_OK(graph.WaitUntilIdle());
+  ABSL_QCHECK_EQ(output_image_packets.size(), num_red_packets + 1);
+
+  const auto& output_image_red = output_image_packets[0].Get<ImageFrame>();
+  const auto& output_image_blue =
+      output_image_packets[num_red_packets].Get<ImageFrame>();
+
+  ABSL_QCHECK_EQ(output_image_red.Width(), kLarge);
+  ABSL_QCHECK_EQ(output_image_red.Height(), kSmall);
+  ABSL_QCHECK_EQ(output_image_blue.Width(), kLarge);
+  ABSL_QCHECK_EQ(output_image_blue.Height(), kSmall);
+
+  cv::Mat output_image_blue_mat = formats::MatView(&output_image_blue);
+  ImageFrame expected_image_blue(ImageFormat::SRGBA, kLarge, kSmall);
+  cv::Mat expected_image_blue_mat = formats::MatView(&expected_image_blue);
+  expected_image_blue_mat = cv::Scalar(128, 128, 0, 255);
+  cv::Rect rect((kLarge - kSmall) / 2, 0, kSmall, kSmall);
+  cv::rectangle(expected_image_blue_mat, rect, cv::Scalar(0, 0, 255, 255),
+                cv::FILLED);
+  EXPECT_EQ(cv::sum(cv::sum(output_image_blue_mat != expected_image_blue_mat)),
+            cv::Scalar(0));
 }
 
 }  // namespace
