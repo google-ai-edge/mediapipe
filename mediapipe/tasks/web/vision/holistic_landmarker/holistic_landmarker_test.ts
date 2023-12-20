@@ -122,10 +122,10 @@ describe('HolisticLandmarker', () => {
   it('merges options', async () => {
     await holisticLandmarker.setOptions({minFaceDetectionConfidence: 0.5});
     await holisticLandmarker.setOptions({minFaceSuppressionThreshold: 0.5});
-    await holisticLandmarker.setOptions({minFaceLandmarksConfidence: 0.5});
+    await holisticLandmarker.setOptions({minFacePresenceConfidence: 0.5});
     await holisticLandmarker.setOptions({minPoseDetectionConfidence: 0.5});
     await holisticLandmarker.setOptions({minPoseSuppressionThreshold: 0.5});
-    await holisticLandmarker.setOptions({minPoseLandmarksConfidence: 0.5});
+    await holisticLandmarker.setOptions({minPosePresenceConfidence: 0.5});
     await holisticLandmarker.setOptions({minHandLandmarksConfidence: 0.5});
 
     verifyGraph(
@@ -202,7 +202,7 @@ describe('HolisticLandmarker', () => {
         defaultValue: 0.3
       },
       {
-        optionPath: ['minFaceLandmarksConfidence'],
+        optionPath: ['minFacePresenceConfidence'],
         fieldPath:
             ['faceLandmarksDetectorGraphOptions', 'minDetectionConfidence'],
         customValue: 0.2,
@@ -221,7 +221,7 @@ describe('HolisticLandmarker', () => {
         defaultValue: 0.3
       },
       {
-        optionPath: ['minPoseLandmarksConfidence'],
+        optionPath: ['minPosePresenceConfidence'],
         fieldPath:
             ['poseLandmarksDetectorGraphOptions', 'minDetectionConfidence'],
         customValue: 0.2,

@@ -303,9 +303,9 @@ export class HolisticLandmarker extends VisionTaskRunner {
     }
 
     // Configure face landmark detector options.
-    if ('minFaceLandmarksConfidence' in options) {
+    if ('minFacePresenceConfidence' in options) {
       this.faceLandmarksDetectorGraphOptions.setMinDetectionConfidence(
-          options.minFaceLandmarksConfidence ?? DEFAULT_SCORE_THRESHOLD);
+          options.minFacePresenceConfidence ?? DEFAULT_SCORE_THRESHOLD);
     }
     if ('outputFaceBlendshapes' in options) {
       this.outputFaceBlendshapes = !!options.outputFaceBlendshapes;
@@ -322,9 +322,9 @@ export class HolisticLandmarker extends VisionTaskRunner {
     }
 
     // Configure pose landmark detector options.
-    if ('minPoseLandmarksConfidence' in options) {
+    if ('minPosePresenceConfidence' in options) {
       this.poseLandmarksDetectorGraphOptions.setMinDetectionConfidence(
-          options.minPoseLandmarksConfidence ?? DEFAULT_SCORE_THRESHOLD);
+          options.minPosePresenceConfidence ?? DEFAULT_SCORE_THRESHOLD);
     }
     if ('outputPoseSegmentationMasks' in options) {
       this.outputPoseSegmentationMasks = !!options.outputPoseSegmentationMasks;

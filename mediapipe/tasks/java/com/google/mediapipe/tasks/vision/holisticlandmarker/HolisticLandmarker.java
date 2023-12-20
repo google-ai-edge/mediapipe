@@ -479,7 +479,7 @@ public final class HolisticLandmarker extends BaseVisionTaskApi {
        * Sets minimum confidence score for the face landmark detection to be considered successful.
        * Defaults to 0.5.
        */
-      public abstract Builder setMinFaceLandmarksConfidence(Float value);
+      public abstract Builder setMinFacePresenceConfidence(Float value);
 
       /**
        * The minimum confidence score for the pose detection to be considered successful. Defaults
@@ -497,7 +497,7 @@ public final class HolisticLandmarker extends BaseVisionTaskApi {
        * The minimum confidence score for the pose landmarks detection to be considered successful.
        * Defaults to 0.5.
        */
-      public abstract Builder setMinPoseLandmarksConfidence(Float value);
+      public abstract Builder setMinPosePresenceConfidence(Float value);
 
       /**
        * The minimum confidence score for the hand landmark detection to be considered successful.
@@ -555,13 +555,13 @@ public final class HolisticLandmarker extends BaseVisionTaskApi {
 
     abstract Optional<Float> minFaceSuppressionThreshold();
 
-    abstract Optional<Float> minFaceLandmarksConfidence();
+    abstract Optional<Float> minFacePresenceConfidence();
 
     abstract Optional<Float> minPoseDetectionConfidence();
 
     abstract Optional<Float> minPoseSuppressionThreshold();
 
-    abstract Optional<Float> minPoseLandmarksConfidence();
+    abstract Optional<Float> minPosePresenceConfidence();
 
     abstract Optional<Float> minHandLandmarksConfidence();
 
@@ -578,10 +578,10 @@ public final class HolisticLandmarker extends BaseVisionTaskApi {
           .setRunningMode(RunningMode.IMAGE)
           .setMinFaceDetectionConfidence(DEFAULT_PRESENCE_THRESHOLD)
           .setMinFaceSuppressionThreshold(DEFAULT_SUPPRESION_THRESHOLD)
-          .setMinFaceLandmarksConfidence(DEFAULT_PRESENCE_THRESHOLD)
+          .setMinFacePresenceConfidence(DEFAULT_PRESENCE_THRESHOLD)
           .setMinPoseDetectionConfidence(DEFAULT_PRESENCE_THRESHOLD)
           .setMinPoseSuppressionThreshold(DEFAULT_SUPPRESION_THRESHOLD)
-          .setMinPoseLandmarksConfidence(DEFAULT_PRESENCE_THRESHOLD)
+          .setMinPosePresenceConfidence(DEFAULT_PRESENCE_THRESHOLD)
           .setMinHandLandmarksConfidence(DEFAULT_PRESENCE_THRESHOLD)
           .setOutputFaceBlendshapes(DEFAULT_OUTPUT_FACE_BLENDSHAPES)
           .setOutputPoseSegmentationMasks(DEFAULT_OUTPUT_SEGMENTATION_MASKS);
@@ -616,12 +616,12 @@ public final class HolisticLandmarker extends BaseVisionTaskApi {
       // Configure pose detector options.
       minPoseDetectionConfidence().ifPresent(poseDetectorGraphOptions::setMinDetectionConfidence);
       minPoseSuppressionThreshold().ifPresent(poseDetectorGraphOptions::setMinSuppressionThreshold);
-      minPoseLandmarksConfidence().ifPresent(poseLandmarkerGraphOptions::setMinDetectionConfidence);
+      minPosePresenceConfidence().ifPresent(poseLandmarkerGraphOptions::setMinDetectionConfidence);
 
       // Configure face detector options.
       minFaceDetectionConfidence().ifPresent(faceDetectorGraphOptions::setMinDetectionConfidence);
       minFaceSuppressionThreshold().ifPresent(faceDetectorGraphOptions::setMinSuppressionThreshold);
-      minFaceLandmarksConfidence()
+      minFacePresenceConfidence()
           .ifPresent(faceLandmarksDetectorGraphOptions::setMinDetectionConfidence);
 
       holisticLandmarkerGraphOptions

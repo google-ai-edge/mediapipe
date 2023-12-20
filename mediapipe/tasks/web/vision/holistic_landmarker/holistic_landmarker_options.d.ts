@@ -34,7 +34,7 @@ export declare interface HolisticLandmarkerOptions extends VisionTaskOptions {
    * The minimum confidence score of face presence score in the face landmarks
    * detection. Defaults to 0.5.
    */
-  minFaceLandmarksConfidence?: number|undefined;
+  minFacePresenceConfidence?: number|undefined;
 
   /**
    * Whether FaceLandmarker outputs face blendshapes classification. Face
@@ -58,7 +58,7 @@ export declare interface HolisticLandmarkerOptions extends VisionTaskOptions {
    * The minimum confidence score of pose presence score in the pose landmarks
    * detection. Defaults to 0.5.
    */
-  minPoseLandmarksConfidence?: number|undefined;
+  minPosePresenceConfidence?: number|undefined;
 
   /** Whether to output segmentation masks. Defaults to false. */
   outputPoseSegmentationMasks?: boolean|undefined;
