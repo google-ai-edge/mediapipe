@@ -27,6 +27,7 @@
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/synchronization/mutex.h"
+#include "mediapipe/framework/port.h"  // IWYU pragma: keep
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_builder.h"
@@ -47,6 +48,17 @@
 #endif
 
 namespace mediapipe {
+
+namespace internal_gl_context {
+
+bool IsOpenGlVersionSameOrAbove(const OpenGlVersion& version,
+                                const OpenGlVersion& expected_version) {
+  return (version.major == expected_version.major &&
+          version.minor >= expected_version.minor) ||
+         version.major > expected_version.major;
+}
+
+}  // namespace internal_gl_context
 
 static void SetThreadName(const char* name) {
 #if defined(__GLIBC_PREREQ)
@@ -815,15 +827,25 @@ class GlNopSyncPoint : public GlSyncPoint {
 #endif
 
 bool GlContext::ShouldUseFenceSync() const {
-#ifdef __EMSCRIPTEN__
+  using internal_gl_context::OpenGlVersion;
+#if defined(__EMSCRIPTEN__)
   // In Emscripten the glWaitSync function is non-null depending on linkopts,
-  // but only works in a WebGL2 context, so fall back to use Finish if it is a
-  // WebGL1/ES2 context.
-  // TODO: apply this more generally once b/152794517 is fixed.
-  return gl_major_version() > 2;
+  // but only works in a WebGL2 context.
+  constexpr OpenGlVersion kMinVersionSyncAvaiable = {.major = 3, .minor = 0};
+#elif defined(MEDIAPIPE_MOBILE)
+  // OpenGL ES, glWaitSync is available since 3.0
+  constexpr OpenGlVersion kMinVersionSyncAvaiable = {.major = 3, .minor = 0};
 #else
-  return SymbolAvailable(&glWaitSync);
-#endif  // __EMSCRIPTEN__
+  // TODO: specify major/minor version per remaining platforms.
+  // By default, ignoring major/minor version requirement for backward
+  // compatibility.
+  constexpr OpenGlVersion kMinVersionSyncAvaiable = {.major = 0, .minor = 0};
+#endif
+
+  return SymbolAvailable(&glWaitSync) &&
+         internal_gl_context::IsOpenGlVersionSameOrAbove(
+             {.major = gl_major_version(), .minor = gl_minor_version()},
+             kMinVersionSyncAvaiable);
 }
 
 std::shared_ptr<GlSyncPoint> GlContext::CreateSyncToken() {

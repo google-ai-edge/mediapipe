@@ -487,6 +487,18 @@ ABSL_DEPRECATED(
 const GlTextureInfo& GlTextureInfoForGpuBufferFormat(GpuBufferFormat format,
                                                      int plane);
 
+namespace internal_gl_context {
+
+struct OpenGlVersion {
+  int major;
+  int minor;
+};
+
+bool IsOpenGlVersionSameOrAbove(const OpenGlVersion& version,
+                                const OpenGlVersion& expected_version);
+
+}  // namespace internal_gl_context
+
 }  // namespace mediapipe
 
 #endif  // MEDIAPIPE_GPU_GL_CONTEXT_H_

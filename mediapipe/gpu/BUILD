@@ -196,6 +196,7 @@ cc_library(
         ":gpu_buffer_format",
         "//mediapipe/framework:executor",
         "//mediapipe/framework:mediapipe_profiling",
+        "//mediapipe/framework:port",
         "//mediapipe/framework:timestamp",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:ret_check",
