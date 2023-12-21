@@ -26,6 +26,7 @@
 #include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
+#include "absl/strings/str_format.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/port.h"  // IWYU pragma: keep
 #include "mediapipe/framework/port/ret_check.h"
@@ -650,6 +651,11 @@ class GlSyncWrapper {
     // TODO: do something if the wait fails?
   }
 
+  // This method exists only for investigation purposes to distinguish stack
+  // traces: external vs. internal context.
+  // TODO: remove after glWaitSync crashes are resolved.
+  void WaitOnGpuExternalContext() { glWaitSync(sync_, 0, GL_TIMEOUT_IGNORED); }
+
   void WaitOnGpu() {
     if (!sync_) return;
       // WebGL2 specifies a waitSync call, but since cross-context
@@ -657,6 +663,33 @@ class GlSyncWrapper {
       // a warning when it's called, so let's just skip the call. See
       // b/184637485 for details.
 #ifndef __EMSCRIPTEN__
+
+    if (!GlContext::IsAnyContextCurrent()) {
+      // glWaitSync must be called on with some context current. Doing the
+      // opposite doesn't necessarily result in a crash or GL error. Hence,
+      // just logging an error and skipping the call.
+      ABSL_LOG_FIRST_N(ERROR, 1)
+          << "An attempt to wait for a sync without any context current.";
+      return;
+    }
+
+    auto context = GlContext::GetCurrent();
+    if (context == nullptr) {
+      // This can happen when WaitOnGpu is invoked on an external context,
+      // created by other than GlContext::Create means.
+      WaitOnGpuExternalContext();
+      return;
+    }
+
+    // GlContext::ShouldUseFenceSync guards creation of sync objects, so this
+    // CHECK should never fail if clients use MediaPipe APIs in an intended way.
+    // TODO: remove after glWaitSync crashes are resolved.
+    ABSL_CHECK(context->ShouldUseFenceSync()) << absl::StrFormat(
+        "An attempt to wait for a sync when it should not be used. (OpenGL "
+        "Version "
+        "%d.%d)",
+        context->gl_major_version(), context->gl_minor_version());
+
     glWaitSync(sync_, 0, GL_TIMEOUT_IGNORED);
 #endif
   }

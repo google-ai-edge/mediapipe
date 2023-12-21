@@ -71,6 +71,8 @@ typedef std::function<void()> GlVoidFunction;
 typedef std::function<absl::Status()> GlStatusFunction;
 
 class GlContext;
+// TODO: remove after glWaitSync crashes are resolved.
+class GlSyncWrapper;
 
 // Generic interface for synchronizing access to a shared resource from a
 // different context. This is an abstract class to keep users from
@@ -329,6 +331,9 @@ class GlContext : public std::enable_shared_from_this<GlContext> {
       SyncTokenTypeForTest type);
 
  private:
+  // TODO: remove after glWaitSync crashes are resolved.
+  friend GlSyncWrapper;
+
   GlContext();
 
   bool ShouldUseFenceSync() const;
