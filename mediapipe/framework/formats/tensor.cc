@@ -342,6 +342,14 @@ Tensor::OpenGlBufferView Tensor::GetOpenGlBufferReadView() const {
       << "Tensor conversion between different GPU backing formats is not "
          "supported yet.";
   auto lock(absl::make_unique<absl::MutexLock>(&view_mutex_));
+  if ((valid_ & kValidOpenGlBuffer) && gl_context_ != nullptr &&
+      !gl_context_->IsCurrent() && GlContext::IsAnyContextCurrent()) {
+    ABSL_LOG_FIRST_N(WARNING, 1)
+        << "Tensor::GetOpenGlBufferReadView is not executed on the same GL "
+           "context where GL buffer was created. Note that Tensor has "
+           "limited synchronization support when sharing OpenGl objects "
+           "between multiple OpenGL contexts.";
+  }
   AllocateOpenGlBuffer();
   if (!(valid_ & kValidOpenGlBuffer)) {
     // If the call succeeds then AHWB -> SSBO are synchronized so any usage of
@@ -376,6 +384,14 @@ Tensor::OpenGlBufferView Tensor::GetOpenGlBufferWriteView(
     uint64_t source_location_hash) const {
   auto lock(absl::make_unique<absl::MutexLock>(&view_mutex_));
   TrackAhwbUsage(source_location_hash);
+  if ((valid_ & kValidOpenGlBuffer) && gl_context_ != nullptr &&
+      !gl_context_->IsCurrent() && GlContext::IsAnyContextCurrent()) {
+    ABSL_LOG_FIRST_N(WARNING, 1)
+        << "Tensor::GetOpenGlBufferWriteView is not executed on the same GL "
+           "context where GL buffer was created. Note that Tensor has "
+           "limited synchronization support when sharing OpenGl objects "
+           "between multiple OpenGL contexts.";
+  }
   AllocateOpenGlBuffer();
   valid_ = kValidOpenGlBuffer;
   return {opengl_buffer_, std::move(lock), nullptr};
