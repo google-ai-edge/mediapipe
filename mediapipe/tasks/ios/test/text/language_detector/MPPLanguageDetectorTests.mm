@@ -128,6 +128,72 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
       approximatelyEqualsExpectedLanguagePredictions:expectedZhLanguagePredictions];
 }
 
+- (void)testClassifyWithMaxResultsSucceeds {
+  MPPLanguageDetectorOptions *options =
+      [self languageDetectorOptionsWithModelFileInfo:kLanguageDetectorModelFileInfo];
+  options.maxResults = 1;
+  MPPLanguageDetector *languageDetector = [self createLanguageDetectorWithOptionsSucceeds:options];
+
+  NSString *zhText = @"分久必合合久必分";
+  NSArray<MPPLanguagePrediction *> *expectedZhLanguagePredictions = @[
+    [[MPPLanguagePrediction alloc] initWithLanguageCode:@"zh" probability:0.505424f],
+  ];
+
+  [self assertResultsOfDetectLanguageOfText:zhText
+                               usingLanguageDetector:languageDetector
+      approximatelyEqualsExpectedLanguagePredictions:expectedZhLanguagePredictions];
+}
+
+- (void)testClassifyWithScoreThresholdSucceeds {
+  MPPLanguageDetectorOptions *options =
+      [self languageDetectorOptionsWithModelFileInfo:kLanguageDetectorModelFileInfo];
+  options.scoreThreshold = 0.5f;
+  MPPLanguageDetector *languageDetector = [self createLanguageDetectorWithOptionsSucceeds:options];
+
+  NSString *zhText = @"分久必合合久必分";
+  NSArray<MPPLanguagePrediction *> *expectedZhLanguagePredictions = @[
+    [[MPPLanguagePrediction alloc] initWithLanguageCode:@"zh" probability:0.505424f],
+  ];
+
+  [self assertResultsOfDetectLanguageOfText:zhText
+                               usingLanguageDetector:languageDetector
+      approximatelyEqualsExpectedLanguagePredictions:expectedZhLanguagePredictions];
+}
+
+- (void)testClassifyWithCategoryAllowListSucceeds {
+  MPPLanguageDetectorOptions *options =
+      [self languageDetectorOptionsWithModelFileInfo:kLanguageDetectorModelFileInfo];
+  options.categoryAllowlist = @[ @"zh" ];
+
+  MPPLanguageDetector *languageDetector = [self createLanguageDetectorWithOptionsSucceeds:options];
+
+  NSString *zhText = @"分久必合合久必分";
+  NSArray<MPPLanguagePrediction *> *expectedZhLanguagePredictions = @[
+    [[MPPLanguagePrediction alloc] initWithLanguageCode:@"zh" probability:0.505424f],
+  ];
+
+  [self assertResultsOfDetectLanguageOfText:zhText
+                               usingLanguageDetector:languageDetector
+      approximatelyEqualsExpectedLanguagePredictions:expectedZhLanguagePredictions];
+}
+
+- (void)testClassifyWithCategoryDenyListSucceeds {
+  MPPLanguageDetectorOptions *options =
+      [self languageDetectorOptionsWithModelFileInfo:kLanguageDetectorModelFileInfo];
+  options.categoryDenylist = @[ @"zh" ];
+
+  MPPLanguageDetector *languageDetector = [self createLanguageDetectorWithOptionsSucceeds:options];
+
+  NSString *zhText = @"分久必合合久必分";
+  NSArray<MPPLanguagePrediction *> *expectedZhLanguagePredictions = @[
+    [[MPPLanguagePrediction alloc] initWithLanguageCode:@"ja" probability:0.481617f],
+  ];
+
+  [self assertResultsOfDetectLanguageOfText:zhText
+                               usingLanguageDetector:languageDetector
+      approximatelyEqualsExpectedLanguagePredictions:expectedZhLanguagePredictions];
+}
+
 #pragma mark Assert Segmenter Results
 - (void)assertResultsOfDetectLanguageOfText:(NSString *)text
                              usingLanguageDetector:(MPPLanguageDetector *)languageDetector
