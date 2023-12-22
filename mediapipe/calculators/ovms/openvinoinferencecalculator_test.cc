@@ -17,6 +17,8 @@
 #include <algorithm>
 #include <iostream>
 #include <memory>
+#include <chrono>
+#include <thread>
 #include <sstream>
 #include <unordered_map>
 
@@ -177,3 +179,142 @@ TEST_F(OpenVINOInferenceCalculatorTest, BasicDummyInference) {
         EXPECT_EQ(data[i] + 1, *(reinterpret_cast<const float*>(outputData) + i)) << i;
     }
 }
+TEST_F(OpenVINOInferenceCalculatorTest, HandleEmptyPackets) {
+    std::string graph_proto = R"(
+      input_stream: "input"
+      input_stream: "input2"
+      output_stream: "output"
+      node {
+          calculator: "OpenVINOModelServerSessionCalculator"
+          output_side_packet: "SESSION:session"
+          node_options: {
+            [type.googleapis.com / mediapipe.OpenVINOModelServerSessionCalculatorOptions]: {
+              servable_name: "add_two_inputs"
+              server_config: "/mediapipe/mediapipe/calculators/ovms/test_data/config.json"
+            }
+          }
+      }
+      node {
+        calculator: "OpenVINOInferenceCalculator"
+        input_side_packet: "SESSION:session"
+        input_stream: "OVTENSOR:input"
+        input_stream: "OVTENSOR2:input2" # we don't expect that in a model but calculator will try to deserialize that
+        output_stream: "OVTENSOR:output"
+        node_options: {
+            [type.googleapis.com / mediapipe.OpenVINOInferenceCalculatorOptions]: {
+                tag_to_input_tensor_names {
+                    key: "OVTENSOR"
+                    value: "input1"
+                }
+                tag_to_input_tensor_names {
+                    key: "OVTENSOR2"
+                    value: "input2"
+                }
+                tag_to_output_tensor_names {
+                    key: "OVTENSOR"
+                    value: "sum"
+                }
+            }
+        }
+      }
+    )";
+    CalculatorGraphConfig graph_config =
+        ParseTextProtoOrDie<CalculatorGraphConfig>(graph_proto);
+    const std::string inputStreamName = "input";
+    const std::string input2StreamName = "input2";
+    const std::string outputStreamName = "output";
+    // avoid creating pollers, retreiving packets etc.
+    std::vector<Packet> output_packets;
+    mediapipe::tool::AddVectorSink(outputStreamName, &graph_config, &output_packets);
+    CalculatorGraph graph(graph_config);
+    MP_ASSERT_OK(graph.StartRun({}));
+    auto datatype = ov::element::Type_t::f32;
+    ov::Shape shape{1,10};
+    std::vector<float> data{0,1,2,3,4,5,6,7,8,9};
+    auto inputTensor = std::make_unique<ov::Tensor>(datatype, shape, data.data());
+    MP_ASSERT_OK(graph.AddPacketToInputStream(
+        inputStreamName, Adopt(inputTensor.release()).At(Timestamp(0))));
+    MP_ASSERT_OK(graph.WaitUntilIdle());
+    MP_ASSERT_OK(graph.CloseInputStream(inputStreamName));
+    MP_ASSERT_OK(graph.CloseInputStream(input2StreamName));
+    EXPECT_EQ(graph.WaitUntilDone().code(), absl::StatusCode::kInternal);
+    ASSERT_EQ(0, output_packets.size());
+    ASSERT_EQ(0, output_packets.size());
+}
+
+TEST_F(OpenVINOInferenceCalculatorTest, DISABLED_HandleEmptyPacketsWithSyncSet) {
+    std::string graph_proto = R"(
+      input_stream: "input"
+      input_stream: "input2"
+      output_stream: "output"
+      node {
+          calculator: "OpenVINOModelServerSessionCalculator"
+          output_side_packet: "SESSION:session"
+          node_options: {
+            [type.googleapis.com / mediapipe.OpenVINOModelServerSessionCalculatorOptions]: {
+              servable_name: "add_two_inputs"
+              server_config: "/mediapipe/mediapipe/calculators/ovms/test_data/config.json"
+            }
+          }
+      }
+      node {
+        calculator: "OpenVINOInferenceCalculator"
+        input_side_packet: "SESSION:session"
+        input_stream: "OVTENSOR:input"
+        input_stream: "OVTENSOR2:input2" # we don't expect that in a model but calculator will try to deserialize that
+        input_stream_handler {
+            input_stream_handler: "SyncSetInputStreamHandler",
+            options {
+                [mediapipe.SyncSetInputStreamHandlerOptions.ext] {
+                    sync_set {
+                        tag_index: "OVTENSOR"
+                        tag_index: "OVTENSOR2"
+                    }
+                }
+            }
+        }
+        output_stream: "OVTENSOR:output"
+        node_options: {
+            [type.googleapis.com / mediapipe.OpenVINOInferenceCalculatorOptions]: {
+                tag_to_input_tensor_names {
+                    key: "OVTENSOR"
+                    value: "input1"
+                }
+                tag_to_input_tensor_names {
+                    key: "OVTENSOR2"
+                    value: "input2"
+                }
+                tag_to_output_tensor_names {
+                    key: "OVTENSOR"
+                    value: "sum"
+                }
+            }
+        }
+      }
+    )";
+    CalculatorGraphConfig graph_config =
+        ParseTextProtoOrDie<CalculatorGraphConfig>(graph_proto);
+    const std::string inputStreamName = "input";
+    const std::string input2StreamName = "input2";
+    const std::string outputStreamName = "output";
+    // avoid creating pollers, retreiving packets etc.
+    std::vector<Packet> output_packets;
+    mediapipe::tool::AddVectorSink(outputStreamName, &graph_config, &output_packets);
+    CalculatorGraph graph(graph_config);
+    MP_ASSERT_OK(graph.StartRun({}));
+    auto datatype = ov::element::Type_t::f32;
+    ov::Shape shape{1,10};
+    std::vector<float> data{0,1,2,3,4,5,6,7,8,9};
+    auto inputTensor = std::make_unique<ov::Tensor>(datatype, shape, data.data());
+    auto inputTensor2 = std::make_unique<ov::Tensor>(datatype, shape, data.data());
+
+    MP_ASSERT_OK(graph.AddPacketToInputStream(
+        inputStreamName, Adopt(inputTensor.release()).At(Timestamp(0))));
+    MP_ASSERT_OK(graph.WaitUntilIdle());
+    MP_ASSERT_OK(graph.CloseInputStream(inputStreamName));
+    MP_ASSERT_OK(graph.CloseInputStream(input2StreamName));
+    EXPECT_EQ(graph.WaitUntilDone().code(), absl::StatusCode::kOk);
+    ASSERT_EQ(0, output_packets.size());
+    ASSERT_EQ(0, output_packets.size());
+}
+

@@ -461,6 +461,10 @@ public:
         ::InferenceInput input;
         ::InferenceOutput output;
         for (const std::string& tag : cc->Inputs().GetTags()) {
+            if (cc->Inputs().Tag(tag).IsEmpty()) {
+                LOG(INFO) << "OpenVINOInferenceCalculator expects all input packets at the same time for each call to Process().";
+                RET_CHECK(false);
+            }
             const char* realInputName{nullptr};
             auto it = inputTagInputMap.find(tag);
             if (it == inputTagInputMap.end()) {

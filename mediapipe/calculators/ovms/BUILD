@@ -125,6 +125,7 @@ cc_test(
         "@ovms//src:ovms_lib",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/stream_handler:sync_set_input_stream_handler"
     ],
     copts = ["-Iexternal/ovms/src","-Isrc"],
 )
@@ -139,6 +140,13 @@ cc_test(
         "@ovms//src:ovms_lib",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
+    ],
+    data = [
+        "test_data/config.json",
+        "test_data/dummy/1/dummy.bin",
+        "test_data/dummy/1/dummy.xml",
+        "test_data/add_two_inputs_model/1/dummy.bin",
+        "test_data/add_two_inputs_model/1/dummy.xml",
     ],
     copts = ["-Iexternal/ovms/src","-Isrc"],
 )

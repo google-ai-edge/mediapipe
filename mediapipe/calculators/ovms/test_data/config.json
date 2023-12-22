@@ -2,6 +2,12 @@
     "model_config_list" : [
         {
             "config": {
+                "name": "add_two_inputs",
+                "base_path": "./add_two_inputs_model"
+            }
+        },
+        {
+            "config": {
                 "name": "dummy",
                 "base_path": "./dummy"
             }
