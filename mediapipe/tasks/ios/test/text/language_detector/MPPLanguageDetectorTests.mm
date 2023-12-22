@@ -113,6 +113,10 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
   NSArray<MPPLanguagePrediction *> *expectedRuLanguagePredictions =
       @[ [[MPPLanguagePrediction alloc] initWithLanguageCode:@"ru" probability:0.9933616f] ];
 
+  [self assertResultsOfDetectLanguageOfText:ruText
+                                usingLanguageDetector:languageDetector
+       approximatelyEqualsExpectedLanguagePredictions:expectedRuLanguagePredictions];
+
   NSString *zhText = @"分久必合合久必分";
   NSArray<MPPLanguagePrediction *> *expectedZhLanguagePredictions = @[
     [[MPPLanguagePrediction alloc] initWithLanguageCode:@"zh" probability:0.505424f],
