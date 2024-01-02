@@ -39,7 +39,7 @@ namespace time_series_util {
 // function.
 bool LogWarningIfTimestampIsInconsistent(const Timestamp& current_timestamp,
                                          const Timestamp& initial_timestamp,
-                                         int64 cumulative_samples,
+                                         int64_t cumulative_samples,
                                          double sample_rate);
 
 // Returns absl::Status::OK if the header is valid. Otherwise, returns a
@@ -109,11 +109,11 @@ void SetExtensionInHeader(const TimeSeriesHeaderExtensionClass& extension,
 }
 
 // Converts from a time_in_seconds to an integer number of samples.
-int64 SecondsToSamples(double time_in_seconds, double sample_rate);
+int64_t SecondsToSamples(double time_in_seconds, double sample_rate);
 
 // Converts from an integer number of samples to a time duration in seconds
 // spanned by the samples.
-double SamplesToSeconds(int64 num_samples, double sample_rate);
+double SamplesToSeconds(int64_t num_samples, double sample_rate);
 
 }  // namespace time_series_util
 }  // namespace mediapipe

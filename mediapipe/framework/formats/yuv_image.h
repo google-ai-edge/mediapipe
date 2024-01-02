@@ -15,6 +15,7 @@
 #ifndef MEDIAPIPE_FRAMEWORK_FORMATS_YUV_IMAGE_H_
 #define MEDIAPIPE_FRAMEWORK_FORMATS_YUV_IMAGE_H_
 
+#include <cstdint>
 #include <functional>
 #include <memory>
 
@@ -119,13 +120,13 @@ class YUVImage {
   ~YUVImage() { Clear(); }
 
   // Convenience constructor
-  YUVImage(libyuv::FourCC fourcc,                   //
-           std::unique_ptr<uint8[]> data_location,  //
-           uint8* data0, int stride0,               //
-           uint8* data1, int stride1,               //
-           uint8* data2, int stride2,               //
+  YUVImage(libyuv::FourCC fourcc,                     //
+           std::unique_ptr<uint8_t[]> data_location,  //
+           uint8_t* data0, int stride0,               //
+           uint8_t* data1, int stride1,               //
+           uint8_t* data2, int stride2,               //
            int width, int height, int bit_depth = 8) {
-    uint8* tmp = data_location.release();
+    uint8_t* tmp = data_location.release();
     std::function<void()> deallocate = [tmp]() { delete[] tmp; };
     Initialize(fourcc,          //
                deallocate,      //
@@ -137,14 +138,14 @@ class YUVImage {
 
   // Convenience constructor to construct the YUVImage with data stored
   // in three unique_ptrs.
-  YUVImage(libyuv::FourCC fourcc,                        //
-           std::unique_ptr<uint8[]> data0, int stride0,  //
-           std::unique_ptr<uint8[]> data1, int stride1,  //
-           std::unique_ptr<uint8[]> data2, int stride2,  //
+  YUVImage(libyuv::FourCC fourcc,                          //
+           std::unique_ptr<uint8_t[]> data0, int stride0,  //
+           std::unique_ptr<uint8_t[]> data1, int stride1,  //
+           std::unique_ptr<uint8_t[]> data2, int stride2,  //
            int width, int height, int bit_depth = 8) {
-    uint8* tmp0 = data0.release();
-    uint8* tmp1 = data1.release();
-    uint8* tmp2 = data2.release();
+    uint8_t* tmp0 = data0.release();
+    uint8_t* tmp1 = data1.release();
+    uint8_t* tmp2 = data2.release();
     std::function<void()> deallocate = [tmp0, tmp1, tmp2]() {
       delete[] tmp0;
       delete[] tmp1;
@@ -177,9 +178,9 @@ class YUVImage {
   // pixel format it holds.
   void Initialize(libyuv::FourCC fourcc,                        //
                   std::function<void()> deallocation_function,  //
-                  uint8* data0, int stride0,                    //
-                  uint8* data1, int stride1,                    //
-                  uint8* data2, int stride2,                    //
+                  uint8_t* data0, int stride0,                  //
+                  uint8_t* data1, int stride1,                  //
+                  uint8_t* data2, int stride2,                  //
                   int width, int height, int bit_depth = 8) {
     Clear();
     deallocation_function_ = deallocation_function;
@@ -214,7 +215,7 @@ class YUVImage {
 
   // Getters.
   libyuv::FourCC fourcc() const { return fourcc_; }
-  const uint8* data(int index) const { return data_[index]; }
+  const uint8_t* data(int index) const { return data_[index]; }
   int stride(int index) const { return stride_[index]; }
   int width() const { return width_; }
   int height() const { return height_; }
@@ -226,7 +227,7 @@ class YUVImage {
 
   // Setters.
   void set_fourcc(libyuv::FourCC fourcc) { fourcc_ = fourcc; }
-  uint8* mutable_data(int index) { return data_[index]; }
+  uint8_t* mutable_data(int index) { return data_[index]; }
   void set_stride(int index, int stride) { stride_[index] = stride; }
   void set_width(int width) { width_ = width; }
   void set_height(int height) { height_ = height; }
@@ -241,7 +242,7 @@ class YUVImage {
   std::function<void()> deallocation_function_;
 
   libyuv::FourCC fourcc_ = libyuv::FOURCC_ANY;
-  uint8* data_[kMaxNumPlanes];
+  uint8_t* data_[kMaxNumPlanes];
   int stride_[kMaxNumPlanes];
   int width_ = 0;
   int height_ = 0;

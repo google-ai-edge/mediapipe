@@ -62,7 +62,7 @@ class SceneCropper {
   // TODO: split this function into two separate functions.
   absl::Status CropFrames(
       const SceneKeyFrameCropSummary& scene_summary,
-      const std::vector<int64>& scene_timestamps,
+      const std::vector<int64_t>& scene_timestamps,
       const std::vector<bool>& is_key_frames,
       const std::vector<cv::Mat>& scene_frames_or_empty,
       const std::vector<FocusPointFrame>& focus_point_frames,
@@ -73,7 +73,7 @@ class SceneCropper {
 
   absl::Status ProcessKinematicPathSolver(
       const SceneKeyFrameCropSummary& scene_summary,
-      const std::vector<int64>& scene_timestamps,
+      const std::vector<int64_t>& scene_timestamps,
       const std::vector<bool>& is_key_frames,
       const std::vector<FocusPointFrame>& focus_point_frames,
       const bool continue_last_scene, std::vector<cv::Mat>* all_xforms);

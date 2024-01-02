@@ -18,6 +18,7 @@
 #import <Accelerate/Accelerate.h>
 
 #include <atomic>
+#include <cstdint>
 
 #import "GTMDefines.h"
 #include "absl/memory/memory.h"
@@ -48,7 +49,7 @@
   std::atomic<int32_t> _framesInFlight;
   /// Used as a sequential timestamp for MediaPipe.
   mediapipe::Timestamp _frameTimestamp;
-  int64 _frameNumber;
+  int64_t _frameNumber;
 
   // Graph config modified to expose requested output streams.
   mediapipe::CalculatorGraphConfig _config;
@@ -90,8 +91,8 @@
                                          &callbackInputName,
                                          /*use_std_function=*/true);
   // No matter what ownership qualifiers are put on the pointer,
-  // NewPermanentCallback will still end up with a strong pointer to MPPGraph*.
-  // That is why we use void* instead.
+  // NewPermanentCallback will still end up with a strong pointer to
+  // MPPGraph*. That is why we use void* instead.
   void* wrapperVoid = (__bridge void*)self;
   _inputSidePackets[callbackInputName] =
       mediapipe::MakePacket<std::function<void(const mediapipe::Packet&)>>(

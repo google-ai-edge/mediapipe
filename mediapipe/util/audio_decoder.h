@@ -90,7 +90,7 @@ class BasePacketProcessor {
   // CorrectPtsForRollover(2^33 - 1) -> 2^33 - 1
   // CorrectPtsForRollover(0) -> 2^33  // PTS in media rolls over, corrected.
   // CorrectPtsForRollover(1) -> 2^33 + 1
-  int64 CorrectPtsForRollover(int64 media_pts);
+  int64_t CorrectPtsForRollover(int64_t media_pts);
 
   AVCodecContext* avcodec_ctx_ = nullptr;
   const AVCodec* avcodec_ = nullptr;
@@ -113,7 +113,7 @@ class BasePacketProcessor {
   AVRational source_frame_rate_;
 
   // The number of frames that were successfully processed.
-  int64 num_frames_processed_ = 0;
+  int64_t num_frames_processed_ = 0;
 
   int bytes_per_sample_ = 0;
 
@@ -121,7 +121,7 @@ class BasePacketProcessor {
   bool last_frame_time_regression_detected_ = false;
 
   // The last rollover corrected PTS returned by CorrectPtsForRollover.
-  int64 rollover_corrected_last_pts_ = AV_NOPTS_VALUE;
+  int64_t rollover_corrected_last_pts_ = AV_NOPTS_VALUE;
 
   // The buffer of current frames.
   std::deque<Packet> buffer_;
@@ -141,16 +141,16 @@ class AudioPacketProcessor : public BasePacketProcessor {
  private:
   // Appends audio in buffer(s) to the output buffer (buffer_).
   absl::Status AddAudioDataToBuffer(const Timestamp output_timestamp,
-                                    uint8* const* raw_audio,
+                                    uint8_t* const* raw_audio,
                                     int buf_size_bytes);
 
   // Converts a number of samples into an approximate stream timestamp value.
-  int64 SampleNumberToTimestamp(const int64 sample_number);
-  int64 TimestampToSampleNumber(const int64 timestamp);
+  int64_t SampleNumberToTimestamp(const int64_t sample_number);
+  int64_t TimestampToSampleNumber(const int64_t timestamp);
 
   // Converts a timestamp/sample number to microseconds.
-  int64 TimestampToMicroseconds(const int64 timestamp);
-  int64 SampleNumberToMicroseconds(const int64 sample_number);
+  int64_t TimestampToMicroseconds(const int64_t timestamp);
+  int64_t SampleNumberToMicroseconds(const int64_t sample_number);
 
   // Returns an error if the sample format in avformat_ctx_.sample_format
   // is not supported.
@@ -161,7 +161,7 @@ class AudioPacketProcessor : public BasePacketProcessor {
   absl::Status ProcessDecodedFrame(const AVPacket& packet) override;
 
   // Corrects PTS for rollover if correction is enabled.
-  int64 MaybeCorrectPtsForRollover(int64 media_pts);
+  int64_t MaybeCorrectPtsForRollover(int64_t media_pts);
 
   // Number of channels to output. This value might be different from
   // the actual number of channels for the current AVPacket, found in
@@ -171,7 +171,7 @@ class AudioPacketProcessor : public BasePacketProcessor {
   // Sample rate of the data to output. This value might be different
   // from the actual sample rate for the current AVPacket, found in
   // avcodec_ctx_->sample_rate.
-  int64 sample_rate_ = -1;
+  int64_t sample_rate_ = -1;
 
   // The time base of audio samples (i.e. the reciprocal of the sample rate).
   AVRational sample_time_base_;
@@ -180,7 +180,7 @@ class AudioPacketProcessor : public BasePacketProcessor {
   Timestamp last_timestamp_;
 
   // The expected sample number based on counting samples.
-  int64 expected_sample_number_ = 0;
+  int64_t expected_sample_number_ = 0;
 
   // Options for the processor.
   AudioStreamOptions options_;
