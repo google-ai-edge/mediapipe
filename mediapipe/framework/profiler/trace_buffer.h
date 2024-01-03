@@ -34,10 +34,10 @@ struct TraceEvent {
   bool is_finish = false;
   Timestamp input_ts = Timestamp::Unset();
   Timestamp packet_ts = Timestamp::Unset();
-  int32 node_id = -1;
+  int32_t node_id = -1;
   const std::string* stream_id = nullptr;
-  int32 thread_id = 0;
-  int64 event_data = 0;
+  int32_t thread_id = 0;
+  int64_t event_data = 0;
 
   TraceEvent(const EventType& event_type) : event_type(event_type) {}
   TraceEvent() {}

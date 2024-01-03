@@ -114,7 +114,7 @@ class FilterWeightMultiplierOne {
   void SetLevel(int mip_map_level, bool pull_down_sampling) {}
 
   float GetWeight(const float* anchor_ptr, const float* filter_ptr,
-                  const uint8* img_ptr, int x, int y) const {
+                  const uint8_t* img_ptr, int x, int y) const {
     return 1.0f;
   }
 };
@@ -244,7 +244,7 @@ class PushPullFiltering {
                         std::vector<int> tap_offsets[4],
                         std::vector<int> tap_space_offsets[4]);
 
-  inline int ColorDiffL1(const uint8* lhs_ptr, const uint8* rhs_ptr) {
+  inline int ColorDiffL1(const uint8_t* lhs_ptr, const uint8_t* rhs_ptr) {
     return abs(static_cast<int>(lhs_ptr[0]) - static_cast<int>(rhs_ptr[0])) +
            abs(static_cast<int>(lhs_ptr[1]) - static_cast<int>(rhs_ptr[1])) +
            abs(static_cast<int>(lhs_ptr[2]) - static_cast<int>(rhs_ptr[2]));
@@ -481,7 +481,7 @@ void PushPullFiltering<C, FilterWeightMultiplier>::InitializeImagePyramid(
   ABSL_CHECK_EQ(base_level.type(), input_frame.type());
 
   input_frame.copyTo(base_level);
-  CopyNecessaryBorder<uint8, 3>(&(*pyramid)[0]);
+  CopyNecessaryBorder<uint8_t, 3>(&(*pyramid)[0]);
 
   for (int l = 0; l < pyramid->size() - 1; ++l) {
     cv::Mat source((*pyramid)[l],
@@ -491,7 +491,7 @@ void PushPullFiltering<C, FilterWeightMultiplier>::InitializeImagePyramid(
                         cv::Range(border_, (*pyramid)[l + 1].rows - border_),
                         cv::Range(border_, (*pyramid)[l + 1].cols - border_));
     cv::pyrDown(source, destination, destination.size());
-    CopyNecessaryBorder<uint8, 3>(&(*pyramid)[l + 1]);
+    CopyNecessaryBorder<uint8_t, 3>(&(*pyramid)[l + 1]);
   }
 }
 
@@ -908,7 +908,7 @@ void PushPullFiltering<C, FilterWeightMultiplier>::PerformPushPullImpl(
 
 template <class T>
 inline const T* PtrOffset(const T* ptr, int offset) {
-  return reinterpret_cast<const T*>(reinterpret_cast<const uint8*>(ptr) +
+  return reinterpret_cast<const T*>(reinterpret_cast<const uint8_t*>(ptr) +
                                     offset);
 }
 
@@ -994,8 +994,8 @@ void PushPullFiltering<C, FilterWeightMultiplier>::PullDownSampling(
       float* dst_ptr = mip_map[l]->ptr<float>(i + border) + border * channels;
       const float* src_ptr =
           mip_map[l - 1]->ptr<float>(2 * i + border) + border * channels;
-      const uint8* img_ptr =
-          use_bilateral_ ? (input_frame_pyramid_[l - 1].template ptr<uint8>(
+      const uint8_t* img_ptr =
+          use_bilateral_ ? (input_frame_pyramid_[l - 1].template ptr<uint8_t>(
                                 2 * i + border) +
                             border * 3)
                          : NULL;
@@ -1017,7 +1017,7 @@ void PushPullFiltering<C, FilterWeightMultiplier>::PullDownSampling(
               continue;
             }
 
-            const uint8* match_ptr = PtrOffset(img_ptr, (*space_offsets)[k]);
+            const uint8_t* match_ptr = PtrOffset(img_ptr, (*space_offsets)[k]);
 
             float bilateral_w = bilateral_lut_[ColorDiffL1(img_ptr, match_ptr) *
                                                bilateral_scale];
@@ -1152,9 +1152,9 @@ void PushPullFiltering<C, FilterWeightMultiplier>::PushUpSampling(
       float* dst_ptr = mip_map[l]->ptr<float>(i + border) + border * channels;
       const float* src_ptr =
           mip_map[l + 1]->ptr<float>(i / 2 + border) + border * channels;
-      const uint8* img_ptr =
+      const uint8_t* img_ptr =
           use_bilateral_
-              ? (input_frame_pyramid_[l].template ptr<uint8>(i + border) +
+              ? (input_frame_pyramid_[l].template ptr<uint8_t>(i + border) +
                  border * 3)
               : NULL;
 
@@ -1189,7 +1189,7 @@ void PushPullFiltering<C, FilterWeightMultiplier>::PushUpSampling(
               continue;
             }
 
-            const uint8* match_ptr = PtrOffset(img_ptr, tap_space_offset[k]);
+            const uint8_t* match_ptr = PtrOffset(img_ptr, tap_space_offset[k]);
             float bilateral_w = bilateral_lut_[ColorDiffL1(img_ptr, match_ptr) *
                                                bilateral_scale];
 

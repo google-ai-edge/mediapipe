@@ -50,7 +50,7 @@ class GraphTracer {
   absl::Duration GetTraceLogInterval();
 
   // Returns the maximum number of trace events buffered in memory.
-  int64 GetTraceLogCapacity();
+  int64_t GetTraceLogCapacity();
 
   // Create a tracer to record up to |capacity| recent events.
   GraphTracer(const ProfilerConfig& profiler_config);

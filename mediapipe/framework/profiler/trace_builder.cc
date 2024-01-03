@@ -103,7 +103,7 @@ void BasicTraceEventTypes(TraceEventRegistry* result) {
 class StringIdMap {
  public:
   // Returns the int32 identifier for a string object pointer.
-  int32 operator[](const std::string* id) {
+  int32_t operator[](const std::string* id) {
     if (id == nullptr) {
       return 0;
     }
@@ -120,20 +120,20 @@ class StringIdMap {
     return string_id->second;
   }
   void clear() { pointer_id_map_.clear(), string_id_map_.clear(); }
-  const absl::node_hash_map<std::string, int32>& map() {
+  const absl::node_hash_map<std::string, int32_t>& map() {
     return string_id_map_;
   }
 
  private:
-  std::unordered_map<const std::string*, int32> pointer_id_map_;
-  absl::node_hash_map<std::string, int32> string_id_map_;
-  int32 next_id = 0;
+  std::unordered_map<const std::string*, int32_t> pointer_id_map_;
+  absl::node_hash_map<std::string, int32_t> string_id_map_;
+  int32_t next_id = 0;
 };
 
 // A map defining int32 identifiers for object pointers.
 class AddressIdMap {
  public:
-  int32 operator[](int64 id) {
+  int32_t operator[](int64_t id) {
     auto pointer_id = pointer_id_map_.find(id);
     if (pointer_id != pointer_id_map_.end()) {
       return pointer_id->second;
@@ -141,11 +141,11 @@ class AddressIdMap {
     return pointer_id_map_[id] = next_id++;
   }
   void clear() { pointer_id_map_.clear(); }
-  const absl::node_hash_map<int64, int32>& map() { return pointer_id_map_; }
+  const absl::node_hash_map<int64_t, int32_t>& map() { return pointer_id_map_; }
 
  private:
-  absl::node_hash_map<int64, int32> pointer_id_map_;
-  int32 next_id = 0;
+  absl::node_hash_map<int64_t, int32_t> pointer_id_map_;
+  int32_t next_id = 0;
 };
 
 // Returns a vector of id names indexed by id.
@@ -274,7 +274,7 @@ class TraceBuilder::Impl {
  private:
   // Calculate the base timestamp and time.
   void SetBaseTime(const std::vector<TraceEvent>& snapshot) {
-    if (base_time_ == std::numeric_limits<int64>::max()) {
+    if (base_time_ == std::numeric_limits<int64_t>::max()) {
       for (const TraceEvent& event : snapshot) {
         if (!event.input_ts.IsSpecialValue()) {
           base_ts_ = std::min(base_ts_, event.input_ts.Value());
@@ -284,20 +284,20 @@ class TraceBuilder::Impl {
         }
         base_time_ = std::min(base_time_, ToUnixMicros(event.event_time));
       }
-      if (base_time_ == std::numeric_limits<int64>::max()) {
+      if (base_time_ == std::numeric_limits<int64_t>::max()) {
         base_time_ = 0;
       }
-      if (base_ts_ == std::numeric_limits<int64>::max()) {
+      if (base_ts_ == std::numeric_limits<int64_t>::max()) {
         base_ts_ = 0;
       }
     }
   }
 
   // Return a timestamp in micros relative to the base timetamp.
-  int64 LogTimestamp(Timestamp ts) { return ts.Value() - base_ts_; }
+  int64_t LogTimestamp(Timestamp ts) { return ts.Value() - base_ts_; }
 
   // Return a time in micros relative to the base time.
-  int64 LogTime(absl::Time time) { return ToUnixMicros(time) - base_time_; }
+  int64_t LogTime(absl::Time time) { return ToUnixMicros(time) - base_time_; }
 
   // Returns the output event that produced an input packet.
   const TraceEvent* FindOutputEvent(const TraceEvent& event) {
@@ -394,9 +394,9 @@ class TraceBuilder::Impl {
   // Map from packet data pointers to int32 identifiers.
   AddressIdMap packet_data_id_map_;
   // The timestamp represented as 0 in the trace.
-  int64 base_ts_ = std::numeric_limits<int64>::max();
+  int64_t base_ts_ = std::numeric_limits<int64_t>::max();
   // The time represented as 0 in the trace.
-  int64 base_time_ = std::numeric_limits<int64>::max();
+  int64_t base_time_ = std::numeric_limits<int64_t>::max();
   // Indicates traits of each event type.
   TraceEventRegistry trace_event_registry_;
 };

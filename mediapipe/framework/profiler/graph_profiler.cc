@@ -89,7 +89,7 @@ bool IsTraceIntervalEnabled(const ProfilerConfig& profiler_config,
 }
 
 using PacketInfoMap =
-    ShardedMap<std::string, std::list<std::pair<int64, PacketInfo>>>;
+    ShardedMap<std::string, std::list<std::pair<int64_t, PacketInfo>>>;
 
 // Inserts a PacketInfo into a PacketInfoMap.
 void InsertPacketInfo(PacketInfoMap* map, const PacketId& packet_id,
@@ -162,9 +162,9 @@ void GraphProfiler::Initialize(
   ABSL_CHECK(!is_initialized_)
       << "Cannot initialize the profiler for the same graph multiple times.";
   profiler_config_ = validated_graph_config.Config().profiler_config();
-  int64 interval_size_usec = profiler_config_.histogram_interval_size_usec();
+  int64_t interval_size_usec = profiler_config_.histogram_interval_size_usec();
   interval_size_usec = interval_size_usec ? interval_size_usec : 1000000;
-  int64 num_intervals = profiler_config_.num_histogram_intervals();
+  int64_t num_intervals = profiler_config_.num_histogram_intervals();
   num_intervals = num_intervals ? num_intervals : 1;
   if (IsTracerEnabled(profiler_config_)) {
     packet_tracer_ = absl::make_unique<GraphTracer>(profiler_config_);
@@ -323,7 +323,7 @@ void GraphProfiler::AddPacketInfo(const TraceEvent& packet_info) {
     return;
   }
 
-  int64 production_time_usec =
+  int64_t production_time_usec =
       profiler_config_.use_packet_timestamp_for_added_packet()
           ? packet_timestamp.Value()
           : TimeNowUsec();
@@ -342,8 +342,8 @@ absl::Status GraphProfiler::GetCalculatorProfiles(
   return absl::OkStatus();
 }
 
-void GraphProfiler::InitializeTimeHistogram(int64 interval_size_usec,
-                                            int64 num_intervals,
+void GraphProfiler::InitializeTimeHistogram(int64_t interval_size_usec,
+                                            int64_t num_intervals,
                                             TimeHistogram* histogram) {
   histogram->set_interval_size_usec(interval_size_usec);
   histogram->set_num_intervals(num_intervals);
@@ -355,8 +355,8 @@ void GraphProfiler::InitializeOutputStreams(
     const CalculatorGraphConfig::Node& node_config) {}
 
 void GraphProfiler::InitializeInputStreams(
-    const CalculatorGraphConfig::Node& node_config, int64 interval_size_usec,
-    int64 num_intervals, CalculatorProfile* calculator_profile) {
+    const CalculatorGraphConfig::Node& node_config, int64_t interval_size_usec,
+    int64_t num_intervals, CalculatorProfile* calculator_profile) {
   std::shared_ptr<tool::TagMap> input_tag_map =
       TagMap::Create(node_config.input_stream()).value();
   std::set<int> back_edge_ids = GetBackEdgeIds(node_config, *input_tag_map);
@@ -405,15 +405,15 @@ void GraphProfiler::ResetTimeHistogram(TimeHistogram* histogram) {
 }
 
 void GraphProfiler::AddPacketInfoInternal(const PacketId& packet_id,
-                                          int64 production_time_usec,
-                                          int64 source_process_start_usec) {
+                                          int64_t production_time_usec,
+                                          int64_t source_process_start_usec) {
   PacketInfo packet_info = {0, production_time_usec, source_process_start_usec};
   InsertPacketInfo(&packets_info_, packet_id, packet_info);
 }
 
 void GraphProfiler::AddPacketInfoForOutputPackets(
     const OutputStreamShardSet& output_stream_shard_set,
-    int64 production_time_usec, int64 source_process_start_usec) {
+    int64_t production_time_usec, int64_t source_process_start_usec) {
   for (const OutputStreamShard& output_stream_shard : output_stream_shard_set) {
     for (const Packet& output_packet : *output_stream_shard.OutputQueue()) {
       AddPacketInfoInternal(PacketId({output_stream_shard.Name(),
@@ -423,11 +423,11 @@ void GraphProfiler::AddPacketInfoForOutputPackets(
   }
 }
 
-int64 GraphProfiler::AddStreamLatencies(
-    const CalculatorContext& calculator_context, int64 start_time_usec,
-    int64 end_time_usec, CalculatorProfile* calculator_profile) {
+int64_t GraphProfiler::AddStreamLatencies(
+    const CalculatorContext& calculator_context, int64_t start_time_usec,
+    int64_t end_time_usec, CalculatorProfile* calculator_profile) {
   // Update input streams profiles.
-  int64 min_source_process_start_usec = AddInputStreamTimeSamples(
+  int64_t min_source_process_start_usec = AddInputStreamTimeSamples(
       calculator_context, start_time_usec, calculator_profile);
 
   // Update output production times.
@@ -437,14 +437,15 @@ int64 GraphProfiler::AddStreamLatencies(
 }
 
 void GraphProfiler::SetOpenRuntime(const CalculatorContext& calculator_context,
-                                   int64 start_time_usec, int64 end_time_usec) {
+                                   int64_t start_time_usec,
+                                   int64_t end_time_usec) {
   absl::ReaderMutexLock lock(&profiler_mutex_);
   if (!is_profiling_) {
     return;
   }
 
   const std::string& node_name = calculator_context.NodeName();
-  int64 time_usec = end_time_usec - start_time_usec;
+  int64_t time_usec = end_time_usec - start_time_usec;
   auto profile_iter = calculator_profiles_.find(node_name);
   ABSL_CHECK(profile_iter != calculator_profiles_.end()) << absl::Substitute(
       "Calculator \"$0\" has not been added during initialization.",
@@ -459,14 +460,14 @@ void GraphProfiler::SetOpenRuntime(const CalculatorContext& calculator_context,
 }
 
 void GraphProfiler::SetCloseRuntime(const CalculatorContext& calculator_context,
-                                    int64 start_time_usec,
-                                    int64 end_time_usec) {
+                                    int64_t start_time_usec,
+                                    int64_t end_time_usec) {
   absl::ReaderMutexLock lock(&profiler_mutex_);
   if (!is_profiling_) {
     return;
   }
   const std::string& node_name = calculator_context.NodeName();
-  int64 time_usec = end_time_usec - start_time_usec;
+  int64_t time_usec = end_time_usec - start_time_usec;
   auto profile_iter = calculator_profiles_.find(node_name);
   ABSL_CHECK(profile_iter != calculator_profiles_.end()) << absl::Substitute(
       "Calculator \"$0\" has not been added during initialization.",
@@ -480,7 +481,8 @@ void GraphProfiler::SetCloseRuntime(const CalculatorContext& calculator_context,
   }
 }
 
-void GraphProfiler::AddTimeSample(int64 start_time_usec, int64 end_time_usec,
+void GraphProfiler::AddTimeSample(int64_t start_time_usec,
+                                  int64_t end_time_usec,
                                   TimeHistogram* histogram) {
   if (end_time_usec < start_time_usec) {
     ABSL_LOG(ERROR) << absl::Substitute(
@@ -489,21 +491,21 @@ void GraphProfiler::AddTimeSample(int64 start_time_usec, int64 end_time_usec,
     return;
   }
 
-  int64 time_usec = end_time_usec - start_time_usec;
+  int64_t time_usec = end_time_usec - start_time_usec;
   histogram->set_total(histogram->total() + time_usec);
-  int64 interval_index = time_usec / histogram->interval_size_usec();
+  int64_t interval_index = time_usec / histogram->interval_size_usec();
   if (interval_index > histogram->num_intervals() - 1) {
     interval_index = histogram->num_intervals() - 1;
   }
   histogram->set_count(interval_index, histogram->count(interval_index) + 1);
 }
 
-int64 GraphProfiler::AddInputStreamTimeSamples(
-    const CalculatorContext& calculator_context, int64 start_time_usec,
+int64_t GraphProfiler::AddInputStreamTimeSamples(
+    const CalculatorContext& calculator_context, int64_t start_time_usec,
     CalculatorProfile* calculator_profile) {
-  int64 input_timestamp_usec = calculator_context.InputTimestamp().Value();
-  int64 min_source_process_start_usec = start_time_usec;
-  int64 input_stream_counter = -1;
+  int64_t input_timestamp_usec = calculator_context.InputTimestamp().Value();
+  int64_t min_source_process_start_usec = start_time_usec;
+  int64_t input_stream_counter = -1;
   for (CollectionItemId id = calculator_context.Inputs().BeginId();
        id < calculator_context.Inputs().EndId(); ++id) {
     ++input_stream_counter;
@@ -537,8 +539,8 @@ int64 GraphProfiler::AddInputStreamTimeSamples(
 }
 
 void GraphProfiler::AddProcessSample(
-    const CalculatorContext& calculator_context, int64 start_time_usec,
-    int64 end_time_usec) {
+    const CalculatorContext& calculator_context, int64_t start_time_usec,
+    int64_t end_time_usec) {
   absl::ReaderMutexLock lock(&profiler_mutex_);
   if (!is_profiling_) {
     return;
@@ -556,7 +558,7 @@ void GraphProfiler::AddProcessSample(
                 calculator_profile->mutable_process_runtime());
 
   if (profiler_config_.enable_stream_latency()) {
-    int64 min_source_process_start_usec = AddStreamLatencies(
+    int64_t min_source_process_start_usec = AddStreamLatencies(
         calculator_context, start_time_usec, end_time_usec, calculator_profile);
     // Update input and output trace latencies.
     AddTimeSample(min_source_process_start_usec, start_time_usec,
