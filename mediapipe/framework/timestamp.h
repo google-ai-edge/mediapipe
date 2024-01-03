@@ -45,6 +45,7 @@
 #define MEDIAPIPE_FRAMEWORK_TIMESTAMP_H_
 
 #include <cmath>
+#include <cstdint>
 #include <string>
 
 #include "absl/log/absl_check.h"
@@ -57,7 +58,7 @@ namespace mediapipe {
 // A safe int checks each arithmetic operation to make sure it will not
 // have underflow/overflow etc.  This type is used internally by Timestamp
 // and TimestampDiff.
-MEDIAPIPE_DEFINE_SAFE_INT_TYPE(TimestampBaseType, int64,
+MEDIAPIPE_DEFINE_SAFE_INT_TYPE(TimestampBaseType, int64_t,
                                mediapipe::intops::LogFatalOnError)
 
 class TimestampDiff;
@@ -69,7 +70,7 @@ class Timestamp {
  public:
   Timestamp();
   // Construction of Timestamp() is explicit (TimestampDiff is not explicit).
-  explicit Timestamp(int64 timestamp);
+  explicit Timestamp(int64_t timestamp);
   explicit Timestamp(TimestampBaseType timestamp);
 
   // Timestamps are in microseconds.
@@ -77,22 +78,22 @@ class Timestamp {
 
   // Use the default copy constructor, assignment operator, and destructor.
 
-  // Get the underlying int64 value being used.  This should generally be
+  // Get the underlying int64_t value being used.  This should generally be
   // avoided, but may be necessary for things like serialization.
-  int64 Value() const { return timestamp_.value(); }
+  int64_t Value() const { return timestamp_.value(); }
   // Return the value in units of seconds (the underlying value is in
   // microseconds).
   double Seconds() const { return Value() / kTimestampUnitsPerSecond; }
   // Return the value in units of microseconds.  The underlying value is already
   // in microseconds, but this function should be preferred over Value() in case
   // the underlying representation changes.
-  int64 Microseconds() const { return Value(); }
+  int64_t Microseconds() const { return Value(); }
   // This provides a human readable string for the special values.
   std::string DebugString() const;
 
   // For use by framework. Clients or Calculator implementations should not call
   // this.
-  static Timestamp CreateNoErrorChecking(int64 timestamp);
+  static Timestamp CreateNoErrorChecking(int64_t timestamp);
 
   // Create a timestamp from a seconds value.
   static Timestamp FromSeconds(double seconds) {
@@ -205,7 +206,7 @@ class TimestampDiff {
  public:
   TimestampDiff() : timestamp_(0) {}
   // This constructor is not explicit.
-  TimestampDiff(int64 timestamp) : timestamp_(timestamp) {  // NOLINT
+  TimestampDiff(int64_t timestamp) : timestamp_(timestamp) {  // NOLINT
   }
   // This constructor is not explicit.
   TimestampDiff(TimestampBaseType timestamp)  // NOLINT
@@ -213,9 +214,9 @@ class TimestampDiff {
 
   // Use the default copy constructor, assignment operator, and destructor.
 
-  // Get the underlying int64 value being used.  This should generally be
+  // Get the underlying int64_t value being used.  This should generally be
   // avoided, but may be necessary for things like serialization.
-  int64 Value() const { return timestamp_.value(); }
+  int64_t Value() const { return timestamp_.value(); }
   // Return the value in units of seconds (the underlying value is in
   // microseconds).
   double Seconds() const {
@@ -224,7 +225,7 @@ class TimestampDiff {
   // Return the value in units of microseconds.  The underlying value is already
   // in microseconds, but this function should be preferred over Value() in case
   // the underlying representation changes.
-  int64 Microseconds() const { return Value(); }
+  int64_t Microseconds() const { return Value(); }
   std::string DebugString() const;
 
   bool operator==(const TimestampDiff other) const {
@@ -270,7 +271,7 @@ std::ostream& operator<<(std::ostream& os, TimestampDiff arg);
 
 inline Timestamp::Timestamp() : timestamp_(kint64min) {}
 
-inline Timestamp::Timestamp(int64 timestamp) : timestamp_(timestamp) {
+inline Timestamp::Timestamp(int64_t timestamp) : timestamp_(timestamp) {
   ABSL_CHECK(!IsSpecialValue())
       << "Cannot directly create a Timestamp with a special value: "
       << CreateNoErrorChecking(timestamp);
@@ -283,7 +284,7 @@ inline Timestamp::Timestamp(TimestampBaseType timestamp)
       << CreateNoErrorChecking(timestamp.value());
 }
 
-inline Timestamp Timestamp::CreateNoErrorChecking(int64 timestamp) {
+inline Timestamp Timestamp::CreateNoErrorChecking(int64_t timestamp) {
   Timestamp tmp;
   tmp.timestamp_ = TimestampBaseType(timestamp);
   return tmp;

@@ -320,7 +320,7 @@ std::ostream& operator<<(std::ostream& out, const Rectangle<T>& r) {
 template <typename T>
 class Rectangle;
 
-typedef Rectangle<uint8> Rectangle_b;
+typedef Rectangle<uint8_t> Rectangle_b;
 typedef Rectangle<int> Rectangle_i;
 typedef Rectangle<float> Rectangle_f;
 typedef Rectangle<double> Rectangle_d;

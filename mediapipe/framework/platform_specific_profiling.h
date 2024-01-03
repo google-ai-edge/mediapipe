@@ -29,18 +29,18 @@ namespace mediapipe {
 
 const char kProfilingCategory[] = "Calculators";
 
-void PlatformSpecificTraceEventBegin(const char* name, int64 id,
+void PlatformSpecificTraceEventBegin(const char* name, int64_t id,
                                      const char* category_group,
-                                     int64 packet_timestamp);
-void PlatformSpecificTraceEventEnd(const char* name, int64 id,
+                                     int64_t packet_timestamp);
+void PlatformSpecificTraceEventEnd(const char* name, int64_t id,
                                    const char* category_group,
-                                   int64 packet_timestamp);
+                                   int64_t packet_timestamp);
 
 // Temporary object to profile entry and exit of events.
 class PlatformSpecificProfilingScope {
  public:
-  PlatformSpecificProfilingScope(const char* name, int64 id,
-                                 int64 packet_timestamp)
+  PlatformSpecificProfilingScope(const char* name, int64_t id,
+                                 int64_t packet_timestamp)
       : method_name_(TraceEvent::UNKNOWN),
         name_(name),
         id_(id),
@@ -51,8 +51,8 @@ class PlatformSpecificProfilingScope {
 
   // Scope constructor that only starts profiling for Process method.
   // Useful to limit automated profiling to only Process().
-  PlatformSpecificProfilingScope(const char* name, int64 id,
-                                 int64 packet_timestamp,
+  PlatformSpecificProfilingScope(const char* name, int64_t id,
+                                 int64_t packet_timestamp,
                                  TraceEvent::EventType method_name)
       : method_name_(method_name),
         name_(name),
@@ -75,8 +75,8 @@ class PlatformSpecificProfilingScope {
  private:
   TraceEvent::EventType method_name_;
   const char* name_;
-  int64 id_;
-  int64 packet_timestamp_;
+  int64_t id_;
+  int64_t packet_timestamp_;
 };
 }  // namespace mediapipe
 

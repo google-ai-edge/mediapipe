@@ -28,7 +28,7 @@ MEDIAPIPE_REGISTER_GENERIC_TYPE(::std::vector<bool>);
 MEDIAPIPE_REGISTER_GENERIC_TYPE(::std::vector<double>);
 MEDIAPIPE_REGISTER_GENERIC_TYPE(::std::vector<float>);
 MEDIAPIPE_REGISTER_GENERIC_TYPE(::std::vector<int>);
-MEDIAPIPE_REGISTER_GENERIC_TYPE(::std::vector<int64>);
+MEDIAPIPE_REGISTER_GENERIC_TYPE(::std::vector<int64_t>);
 MEDIAPIPE_REGISTER_GENERIC_TYPE(::std::vector<std::string>);
 MEDIAPIPE_REGISTER_GENERIC_TYPE(::std::vector<::std::vector<float>>);
 MEDIAPIPE_REGISTER_GENERIC_TYPE_WITH_NAME(::std::string, "string");
