@@ -15,6 +15,8 @@
 // Converts a single int or vector<int> or vector<vector<int>> to 1D (or 2D)
 // tf::Tensor.
 
+#include <cstdint>
+
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "mediapipe/calculators/tensorflow/vector_int_to_tensor_calculator_options.pb.h"
@@ -133,7 +135,7 @@ absl::Status VectorIntToTensorCalculator::Process(CalculatorContext* cc) {
         for (int c = 0; c < cols; ++c) {
           switch (options_.tensor_data_type()) {
             case tf::DT_INT64:
-              AssignMatrixValue<tf::int64>(c, r, input[r][c], output.get());
+              AssignMatrixValue<int64_t>(c, r, input[r][c], output.get());
               break;
             case tf::DT_UINT8:
               AssignMatrixValue<uint8_t>(c, r, input[r][c], output.get());
@@ -151,7 +153,7 @@ absl::Status VectorIntToTensorCalculator::Process(CalculatorContext* cc) {
         for (int c = 0; c < cols; ++c) {
           switch (options_.tensor_data_type()) {
             case tf::DT_INT64:
-              AssignMatrixValue<tf::int64>(r, c, input[r][c], output.get());
+              AssignMatrixValue<int64_t>(r, c, input[r][c], output.get());
               break;
             case tf::DT_UINT8:
               AssignMatrixValue<uint8_t>(r, c, input[r][c], output.get());
@@ -181,7 +183,7 @@ absl::Status VectorIntToTensorCalculator::Process(CalculatorContext* cc) {
     for (int i = 0; i < length; ++i) {
       switch (options_.tensor_data_type()) {
         case tf::DT_INT64:
-          output->tensor<tf::int64, 1>()(i) = input.at(i);
+          output->tensor<int64_t, 1>()(i) = input.at(i);
           break;
         case tf::DT_UINT8:
           output->tensor<uint8_t, 1>()(i) = input.at(i);

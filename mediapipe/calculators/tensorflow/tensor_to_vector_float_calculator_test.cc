@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cstdint>
 #include <memory>
 
 #include "mediapipe/calculators/tensorflow/tensor_to_vector_float_calculator_options.pb.h"
@@ -48,7 +49,7 @@ class TensorToVectorFloatCalculatorTest : public ::testing::Test {
 
 TEST_F(TensorToVectorFloatCalculatorTest, ConvertsToVectorFloat) {
   SetUpRunner(false, false);
-  const tf::TensorShape tensor_shape(std::vector<tf::int64>{5});
+  const tf::TensorShape tensor_shape(std::vector<int64_t>{5});
   auto tensor = absl::make_unique<tf::Tensor>(tf::DT_FLOAT, tensor_shape);
   auto tensor_vec = tensor->vec<float>();
   for (int i = 0; i < 5; ++i) {
@@ -77,7 +78,7 @@ TEST_F(TensorToVectorFloatCalculatorTest, ConvertsToVectorFloat) {
 
 TEST_F(TensorToVectorFloatCalculatorTest, CheckBFloat16Type) {
   SetUpRunner(false, false);
-  const tf::TensorShape tensor_shape(std::vector<tf::int64>{5});
+  const tf::TensorShape tensor_shape(std::vector<int64_t>{5});
   auto tensor = std::make_unique<tf::Tensor>(tf::DT_BFLOAT16, tensor_shape);
   auto tensor_vec = tensor->vec<tf::bfloat16>();
   for (int i = 0; i < 5; ++i) {
@@ -105,7 +106,7 @@ TEST_F(TensorToVectorFloatCalculatorTest, CheckBFloat16Type) {
 
 TEST_F(TensorToVectorFloatCalculatorTest, CheckBFloat16TypeAllDim) {
   SetUpRunner(false, true);
-  const tf::TensorShape tensor_shape(std::vector<tf::int64>{2, 2, 2});
+  const tf::TensorShape tensor_shape(std::vector<int64_t>{2, 2, 2});
   auto tensor = std::make_unique<tf::Tensor>(tf::DT_BFLOAT16, tensor_shape);
   auto slice = tensor->flat<tf::bfloat16>();
   for (int i = 0; i < 2 * 2 * 2; ++i) {
@@ -133,7 +134,7 @@ TEST_F(TensorToVectorFloatCalculatorTest, CheckBFloat16TypeAllDim) {
 
 TEST_F(TensorToVectorFloatCalculatorTest, ConvertsBatchedToVectorVectorFloat) {
   SetUpRunner(true, false);
-  const tf::TensorShape tensor_shape(std::vector<tf::int64>{1, 5});
+  const tf::TensorShape tensor_shape(std::vector<int64_t>{1, 5});
   auto tensor = absl::make_unique<tf::Tensor>(tf::DT_FLOAT, tensor_shape);
   auto slice = tensor->Slice(0, 1).flat<float>();
   for (int i = 0; i < 5; ++i) {
@@ -163,7 +164,7 @@ TEST_F(TensorToVectorFloatCalculatorTest, ConvertsBatchedToVectorVectorFloat) {
 
 TEST_F(TensorToVectorFloatCalculatorTest, FlattenShouldTakeAllDimensions) {
   SetUpRunner(false, true);
-  const tf::TensorShape tensor_shape(std::vector<tf::int64>{2, 2, 2});
+  const tf::TensorShape tensor_shape(std::vector<int64_t>{2, 2, 2});
   auto tensor = absl::make_unique<tf::Tensor>(tf::DT_FLOAT, tensor_shape);
   auto slice = tensor->flat<float>();
   for (int i = 0; i < 2 * 2 * 2; ++i) {
@@ -192,7 +193,7 @@ TEST_F(TensorToVectorFloatCalculatorTest, FlattenShouldTakeAllDimensions) {
 TEST_F(TensorToVectorFloatCalculatorTest, AcceptsUnalignedTensors) {
   SetUpRunner(/*tensor_is_2d=*/false, /*flatten_nd=*/false);
 
-  const tf::TensorShape tensor_shape(std::vector<tf::int64>{2, 5});
+  const tf::TensorShape tensor_shape(std::vector<int64_t>{2, 5});
   tf::Tensor tensor(tf::DT_FLOAT, tensor_shape);
   auto slice = tensor.Slice(1, 1).flat<float>();
   for (int i = 0; i < 5; ++i) {

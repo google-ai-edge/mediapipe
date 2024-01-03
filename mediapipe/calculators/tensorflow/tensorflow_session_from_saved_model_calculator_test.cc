@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cstdint>
+
 #include "absl/flags/flag.h"
 #include "absl/strings/str_replace.h"
 #include "mediapipe/calculators/tensorflow/tensorflow_session.h"
@@ -48,7 +50,7 @@ std::string GetSavedModelDir() {
 // Helper function that creates Tensor INT32 matrix with size 1x3.
 tf::Tensor TensorMatrix1x3(const int v1, const int v2, const int v3) {
   tf::Tensor tensor(tf::DT_INT32,
-                    tf::TensorShape(std::vector<tf::int64>({1, 3})));
+                    tf::TensorShape(std::vector<int64_t>({1, 3})));
   auto matrix = tensor.matrix<int32_t>();
   matrix(0, 0) = v1;
   matrix(0, 1) = v2;
