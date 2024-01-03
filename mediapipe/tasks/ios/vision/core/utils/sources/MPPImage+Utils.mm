@@ -22,6 +22,7 @@
 #import <CoreImage/CoreImage.h>
 #import <CoreVideo/CoreVideo.h>
 
+#include <cstdint>
 #include <memory>
 
 #include "mediapipe/framework/formats/image_format.pb.h"
@@ -178,7 +179,7 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { f
 
   // Uses default deleter
   return std::make_unique<ImageFrame>(imageFormat, width, height, destinationBytesPerRow,
-                                      static_cast<uint8 *>(destBuffer.data));
+                                      static_cast<uint8_t *>(destBuffer.data));
 }
 
 + (UInt8 *)pixelDataFromImageFrame:(ImageFrame &)imageFrame
