@@ -15,6 +15,7 @@
 #ifndef MEDIAPIPE_CALCULATORS_TFLITE_TFLITE_INFERENCE_CALCULATOR_TEST_H_
 #define MEDIAPIPE_CALCULATORS_TFLITE_TFLITE_INFERENCE_CALCULATOR_TEST_H_
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -52,7 +53,7 @@ void DoSmokeTest(const std::string& graph_proto) {
   const int height = 8;
   const int channels = 3;
 
-  static_assert(std::is_same_v<T, float> || std::is_same_v<T, uint8>,
+  static_assert(std::is_same_v<T, float> || std::is_same_v<T, uint8_t>,
                 "Only float & uint8 currently supported.");
 
   // Prepare interpreter and input tensor.

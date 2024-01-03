@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cstdint>
 #include <memory>
 #include <unordered_map>
 #include <vector>
@@ -77,7 +78,7 @@ class TensorsToObjectsCalculator : public CalculatorBase {
   // In a single MediaPipe session, the IDs are unique.
   // Also assign timestamp for the FrameAnnotation to be the input packet
   // timestamp.
-  void AssignObjectIdAndTimestamp(int64 timestamp_us,
+  void AssignObjectIdAndTimestamp(int64_t timestamp_us,
                                   FrameAnnotation* annotation);
 
   int num_classes_ = 0;
@@ -201,7 +202,7 @@ void TensorsToObjectsCalculator::Project3DTo2D(
 }
 
 void TensorsToObjectsCalculator::AssignObjectIdAndTimestamp(
-    int64 timestamp_us, FrameAnnotation* annotation) {
+    int64_t timestamp_us, FrameAnnotation* annotation) {
   for (auto& ann : *annotation->mutable_annotations()) {
     ann.set_object_id(GetNextObjectId());
   }

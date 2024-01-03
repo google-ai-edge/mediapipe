@@ -14,6 +14,7 @@
 
 #include <stdio.h>
 
+#include <cstdint>
 #include <memory>
 #include <unordered_set>
 
@@ -43,6 +44,7 @@
 #include "mediapipe/util/android/file/base/file.h"
 #include "mediapipe/util/android/file/base/helpers.h"
 #else
+
 #include "mediapipe/framework/port/file_helpers.h"
 #endif
 
@@ -117,7 +119,7 @@ class BoxDetectorCalculator : public CalculatorBase {
   BoxDetectorCalculatorOptions options_;
   std::unique_ptr<BoxDetectorInterface> box_detector_;
   bool detector_switch_ = true;
-  uint32 frame_alignment_ = ImageFrame::kDefaultAlignmentBoundary;
+  uint32_t frame_alignment_ = ImageFrame::kDefaultAlignmentBoundary;
   bool write_index_ = false;
   int box_id_ = 0;
 };
@@ -232,7 +234,7 @@ absl::Status BoxDetectorCalculator::Open(CalculatorContext* cc) {
 
 absl::Status BoxDetectorCalculator::Process(CalculatorContext* cc) {
   const Timestamp timestamp = cc->InputTimestamp();
-  const int64 timestamp_msec = timestamp.Value() / 1000;
+  const int64_t timestamp_msec = timestamp.Value() / 1000;
 
   InputStream* cancel_object_id_stream =
       cc->Inputs().HasTag(kCancelObjectIdTag)

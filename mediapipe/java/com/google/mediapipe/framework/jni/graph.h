@@ -17,6 +17,7 @@
 
 #include <jni.h>
 
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <queue>
@@ -24,12 +25,12 @@
 #include <unordered_map>
 #include <vector>
 
-#include "mediapipe/framework/calculator_framework.h"
 #if !MEDIAPIPE_DISABLE_GPU
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gpu_shared_data_internal.h"
 #endif  // !MEDIAPIPE_DISABLE_GPU
 #include "absl/synchronization/mutex.h"
+#include "mediapipe/framework/calculator_framework.h"
 
 namespace mediapipe {
 namespace android {
@@ -131,7 +132,7 @@ class Graph {
   int64_t AddSurfaceOutput(const std::string& stream_name);
 
   // Sets a parent GL context to use for texture sharing.
-  absl::Status SetParentGlContext(int64 java_gl_context);
+  absl::Status SetParentGlContext(int64_t java_gl_context);
 
   // Sets the object for a service.
   template <typename T>

@@ -20,14 +20,13 @@
 #include <memory>
 
 #include "libyuv/video_common.h"
-#include "mediapipe/framework/port/integral_types.h"
 
 namespace mediapipe {
 
 // Generic data structure for representing various 8-bit YUV image formats with
 // pixel format specification in FourCC. The class is also capable of
 // representing higher bit depth YUV image formats (10-bit, 12-bit, or 16-bit)
-// where each format uses the lower bits of a uint16. For these high bit depth
+// where each format uses the lower bits of a uint16_t. For these high bit depth
 // configurations, only the fully planar representation (i.e., u/v are not
 // interleaved) with chroma subsampling of 420 is supported. Although there are
 // high bit depth fourcc codes, none of them are defined or supported by libyuv,
@@ -58,9 +57,9 @@ namespace mediapipe {
 //   const size_t y_size = frame.linesize[0] * height;
 //   const size_t u_size = frame.linesize[1] * ((height + 1) / 2);
 //   const size_t v_size = frame.linesize[2] * ((height + 1) / 2);
-//   auto y = absl::make_unique<uint8[]> y(y_size);
-//   auto u = absl::make_unique<uint8[]> u(u_size);
-//   auto v = absl::make_unique<uint8[]> v(v_size);
+//   auto y = absl::make_unique<uint8_t[]> y(y_size);
+//   auto u = absl::make_unique<uint8_t[]> u(u_size);
+//   auto v = absl::make_unique<uint8_t[]> v(v_size);
 //   libyuv::I420Copy(frame.data[0], frame.linesize[0],
 //                    frame.data[1], frame.linesize[1],
 //                    frame.data[2], frame.linesize[2],

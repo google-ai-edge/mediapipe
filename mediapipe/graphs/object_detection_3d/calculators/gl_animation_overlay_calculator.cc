@@ -19,6 +19,8 @@
 #include <iostream>
 #endif
 
+#include <cstdint>
+
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -391,7 +393,7 @@ bool GlAnimationOverlayCalculator::LoadAnimationAndroid(
 
   // And now, while we are able to stream in more frames, we do so.
   frame_count_ = 0;
-  int32 lengths[3];
+  int32_t lengths[3];
   while (ReadBytesFromAsset(asset, (void *)lengths, sizeof(lengths[0]) * 3)) {
     // About to start reading the next animation frame.  Stream it in here.
     // Each frame stores first the object counts of its three arrays
@@ -415,7 +417,7 @@ bool GlAnimationOverlayCalculator::LoadAnimationAndroid(
     }
     // Try to read in indices (2-byte shorts)
     triangle_mesh.index_count = lengths[2];
-    triangle_mesh.triangle_indices.reset(new int16[lengths[2]]);
+    triangle_mesh.triangle_indices.reset(new int16_t[lengths[2]]);
     if (!ReadBytesFromAsset(asset, (void *)triangle_mesh.triangle_indices.get(),
                             sizeof(int16) * lengths[2])) {
       ABSL_LOG(ERROR) << "Failed to read indices for frame " << frame_count_;

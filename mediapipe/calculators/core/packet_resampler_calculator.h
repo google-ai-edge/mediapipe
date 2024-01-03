@@ -1,6 +1,7 @@
 #ifndef MEDIAPIPE_CALCULATORS_CORE_PACKET_RESAMPLER_CALCULATOR_H_
 #define MEDIAPIPE_CALCULATORS_CORE_PACKET_RESAMPLER_CALCULATOR_H_
 
+#include <cstdint>
 #include <cstdlib>
 #include <memory>
 #include <string>
@@ -40,7 +41,7 @@ class PacketReservoir {
  private:
   RandomBase* rng_;
   bool enabled_ = true;
-  int32 count_ = 0;
+  int32_t count_ = 0;
   Packet reservoir_;
 };
 
@@ -127,13 +128,13 @@ class PacketResamplerCalculator : public CalculatorBase {
   //    3: 100000
   //
   // Can only be used if jitter_ equals zero.
-  Timestamp PeriodIndexToTimestamp(int64 index) const;
+  Timestamp PeriodIndexToTimestamp(int64_t index) const;
 
   // Given a Timestamp, finds the closest sync Timestamp based on
   // first_timestamp_ and the desired fps.
   //
   // Can only be used if jitter_ equals zero.
-  int64 TimestampToPeriodIndex(Timestamp timestamp) const;
+  int64_t TimestampToPeriodIndex(Timestamp timestamp) const;
 
   // Outputs a packet if it is in range (start_time_, end_time_).
   void OutputWithinLimits(CalculatorContext* cc, const Packet& packet) const;
@@ -155,7 +156,7 @@ class PacketResamplerCalculator : public CalculatorBase {
   double frame_rate_;
 
   // Inverse of frame_rate_.
-  int64 frame_time_usec_;
+  int64_t frame_time_usec_;
 
   VideoHeader video_header_;
   // The "DATA" input stream.
@@ -169,7 +170,7 @@ class PacketResamplerCalculator : public CalculatorBase {
 
   double jitter_ = 0.0;
 
-  int64 jitter_usec_;
+  int64_t jitter_usec_;
 
   // The last packet that was received.
   Packet last_packet_;
@@ -285,7 +286,7 @@ class ReproducibleJitterWithReflectionStrategy
   //
   // Exposed as virtual function for testing Jitter with reflection.
   // This is the only way random_ is accessed.
-  virtual uint64 GetNextRandom(uint64 n) {
+  virtual uint64_t GetNextRandom(uint64_t n) {
     return random_->UnbiasedUniform64(n);
   }
 
@@ -380,7 +381,7 @@ class NoJitterStrategy : public PacketResamplerStrategy {
 
  private:
   // Number of periods that have passed (= #packets sent to the output).
-  int64 period_count_;
+  int64_t period_count_;
 
   // If specified, output timestamps are aligned with base_timestamp.
   // Otherwise, they are aligned with the first input timestamp.

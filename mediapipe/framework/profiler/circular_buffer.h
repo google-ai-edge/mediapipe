@@ -17,10 +17,9 @@
 
 #include <atomic>
 #include <cstddef>
+#include <cstdint>
 #include <iterator>
 #include <vector>
-
-#include "mediapipe/framework/port/integral_types.h"
 
 namespace mediapipe {
 

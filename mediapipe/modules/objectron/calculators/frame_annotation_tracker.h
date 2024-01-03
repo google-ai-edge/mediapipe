@@ -15,6 +15,7 @@
 #ifndef MEDIAPIPE_MODULES_OBJECTRON_CALCULATORS_FRAME_ANNOTATION_TRACKER_H_
 #define MEDIAPIPE_MODULES_OBJECTRON_CALCULATORS_FRAME_ANNOTATION_TRACKER_H_
 
+#include <cstdint>
 #include <functional>
 
 #include "absl/container/btree_map.h"
@@ -53,7 +54,7 @@ class FrameAnnotationTracker {
   float img_height_;
   // Cached detection results over time.
   // Key is timestamp_us + object_id.
-  absl::btree_map<int64, ObjectAnnotation, std::greater<int64>>
+  absl::btree_map<int64_t, ObjectAnnotation, std::greater<int64_t>>
       detected_objects_;
 };
 
