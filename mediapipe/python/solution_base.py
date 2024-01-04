@@ -131,6 +131,8 @@ NAME_TO_TYPE: Mapping[str, 'PacketDataType'] = {
         PacketDataType.INT,
     '::std::vector<int64>':
         PacketDataType.INT_LIST,
+    '::std::vector<int64_t>':
+        PacketDataType.INT_LIST,
     'float':
         PacketDataType.FLOAT,
     '::std::vector<float>':
