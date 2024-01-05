@@ -47,7 +47,7 @@ inline uint64_t MurmurStep(uint64_t hash, uint64_t data) {
   return hash;
 }
 
-// Build a uint64 from 1-8 bytes.
+// Build a uint64_t from 1-8 bytes.
 // 8 * len least significant bits are loaded from the memory with
 // LittleEndian order. The 64 - 8 * len most significant bits are
 // set all to 0.
@@ -55,7 +55,7 @@ inline uint64_t MurmurStep(uint64_t hash, uint64_t data) {
 //     $\sum_{i=0}^{len-1} p[i] 256^{i}$, where p[i] is unsigned.
 //
 // This function is equivalent to:
-// uint64 val = 0;
+// uint64_t val = 0;
 // memcpy(&val, p, len);
 // return ToHost64(val);
 //
@@ -74,7 +74,7 @@ uint64_t Load64VariableLength(const void* const p, int len) {
 
 unsigned long long MurmurHash64WithSeed(const char* buf,  // NOLINT
                                         const size_t len, const uint64_t seed) {
-  // Let's remove the bytes not divisible by the sizeof(uint64).
+  // Let's remove the bytes not divisible by the sizeof(uint64_t).
   // This allows the inner loop to process the data as 64 bit integers.
   const size_t len_aligned = len & ~0x7;
   const char* const end = buf + len_aligned;
