@@ -1,0 +1,84 @@
+/* Copyright 2023 The MediaPipe Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+==============================================================================*/
+
+syntax = "proto3";
+
+package mediapipe.tasks.core.jni;
+
+option java_package = "com.google.mediapipe.tasks.core.jni";
+option java_outer_classname = "LlmOptionsProto";
+
+// Configurable parameters for creating an LLM graph.
+message LlmModelParameters {
+  // Supported model types.
+  enum LlmModelType {
+    UNKNOWN_MODEL_TYPE = 0;  // Unknown
+    FALCON_1B = 1;           // Falcon with 1B parameters.
+    GMINI_2B = 2;            // GMini with 2B parameters.
+  }
+
+  // Attention types.
+  enum LlmAttentionType {
+    UNKNOWN_ATTENTION_TYPE = 0;  // Unknown
+    MHA = 1;                     // Multi-head Attention.
+    MQA = 2;                     // Multi-query Attention.
+  }
+
+  // The upported model type.
+  LlmModelType model_type = 1;
+
+  // Path to the directory that contains spm.model and the weights directory.
+  string model_directory = 2;
+
+  // MHA or MQA.
+  LlmAttentionType attention_type = 3;
+
+  // The start token id to be prepended to the input prompt. This should match
+  // the settings of the model training.
+  int32 start_token_id = 4;
+
+  // A list of tokens that signal the decoding should stop, e.g. </s>. Note that
+  // this argument only takes effect when num_decode_tokens != -1.
+  repeated string stop_tokens = 5;
+}
+
+// Configurable parameters for creating an LLM session.
+message LlmSessionConfig {
+  enum LlmBackend {
+    UNKNOWN_DELEGATE = 0;
+    CPU = 1;
+    GPU = 2;
+  }
+
+  // The backend to use for processing.
+  LlmBackend backend = 1;
+
+  // The number of input tokens to process at a time for batch processing
+  uint32 sequence_batch_size = 2;
+
+  // The number of decoding steps to run for each GPU-CPU sync. 1 stands for
+  // full streaming mode (i.e. the model outputs one token at a time). -1 stands
+  // for non-streaming mode (i.e. the model decodes all the way to the end and
+  // output the result at once). Note that the more frequent to perform GPU-CPU
+  // sync (i.e. closer to 1), the more latency we expect to introduce.
+  uint32 num_decode_tokens = 3;
+
+  // The total length of the kv-cache. In other words, this is the total number
+  // of input + output tokens the model needs to handle.
+  uint32 max_sequence_length = 4;
+
+  // Use fake weights instead of loading from file.
+  bool use_fake_weights = 6;
+}
