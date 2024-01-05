@@ -89,6 +89,7 @@
 #define MEDIAPIPE_TENSORFLOW_SEQUENCE_MEDIA_SEQUENCE_UTIL_H_
 
 #include <algorithm>
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -145,7 +146,7 @@ inline void SetContextFloat(const std::string& key, float value,
   MutableContext(key, sequence)->mutable_float_list()->add_value(value);
 }
 
-inline void SetContextInt64(const std::string& key, int64 value,
+inline void SetContextInt64(const std::string& key, int64_t value,
                             tensorflow::SequenceExample* sequence) {
   MutableContext(key, sequence)->mutable_int64_list()->clear_value();
   MutableContext(key, sequence)->mutable_int64_list()->add_value(value);
@@ -228,7 +229,7 @@ inline const proto_ns::RepeatedField<float>& GetFloatsAt(
 
 // Returns a refrerence to the int64 values for the feature list indicated by
 // key at the provided sequence index.
-inline const proto_ns::RepeatedField<int64>& GetInt64sAt(
+inline const proto_ns::RepeatedField<int64_t>& GetInt64sAt(
     const tensorflow::SequenceExample& sequence, const std::string& key,
     const int index) {
   const tensorflow::FeatureList& fl = GetFeatureList(sequence, key);

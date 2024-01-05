@@ -17,7 +17,7 @@
 #ifndef MEDIAPIPE_FRAMEWORK_COUNTER_H_
 #define MEDIAPIPE_FRAMEWORK_COUNTER_H_
 
-#include "mediapipe/framework/port/integral_types.h"
+#include <cstdint>
 
 namespace mediapipe {
 
@@ -28,7 +28,7 @@ class Counter {
 
   virtual void Increment() = 0;
   virtual void IncrementBy(int amount) = 0;
-  virtual int64 Get() = 0;
+  virtual int64_t Get() = 0;
 };
 
 }  // namespace mediapipe

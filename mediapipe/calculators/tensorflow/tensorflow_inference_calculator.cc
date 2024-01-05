@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <algorithm>
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <string>
@@ -579,7 +580,7 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
 
     absl::WriterMutexLock l(&mutex_);
     // Set that we want to split on each index of the 0th dimension.
-    std::vector<tf::int64> split_vector(
+    std::vector<int64_t> split_vector(
         options_.pad_to_batch_size()
             ? options_.batch_size()
             : inference_state->batch_timestamps_.size(),

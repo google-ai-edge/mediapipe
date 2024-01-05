@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cstdint>
 #include <vector>
 
 #include "mediapipe/calculators/image/recolor_calculator.pb.h"
@@ -113,7 +114,7 @@ class RecolorCalculator : public CalculatorBase {
   void GlRender();
 
   bool initialized_ = false;
-  std::vector<uint8> color_;
+  std::vector<uint8_t> color_;
   mediapipe::RecolorCalculatorOptions::MaskChannel mask_channel_;
 
   bool use_gpu_ = false;

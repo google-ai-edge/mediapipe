@@ -1,6 +1,7 @@
 #ifndef MEDIAPIPE_UTIL_FILTERING_ONE_EURO_FILTER_H_
 #define MEDIAPIPE_UTIL_FILTERING_ONE_EURO_FILTER_H_
 
+#include <cstdint>
 #include <memory>
 
 #include "absl/time/time.h"

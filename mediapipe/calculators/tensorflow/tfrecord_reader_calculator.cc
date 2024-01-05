@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>
@@ -83,7 +84,7 @@ absl::Status TFRecordReaderCalculator::Open(CalculatorContext* cc) {
       << "Failed to open tfrecord file: " << tf_status.ToString();
   tensorflow::io::RecordReader reader(file.get(),
                                       tensorflow::io::RecordReaderOptions());
-  tensorflow::uint64 offset = 0;
+  uint64_t offset = 0;
   tensorflow::tstring example_str;
   const int target_idx =
       cc->InputSidePackets().HasTag(kRecordIndex)

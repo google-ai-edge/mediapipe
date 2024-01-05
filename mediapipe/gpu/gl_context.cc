@@ -26,7 +26,9 @@
 #include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
+#include "absl/strings/str_format.h"
 #include "absl/synchronization/mutex.h"
+#include "mediapipe/framework/port.h"  // IWYU pragma: keep
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_builder.h"
@@ -47,6 +49,17 @@
 #endif
 
 namespace mediapipe {
+
+namespace internal_gl_context {
+
+bool IsOpenGlVersionSameOrAbove(const OpenGlVersion& version,
+                                const OpenGlVersion& expected_version) {
+  return (version.major == expected_version.major &&
+          version.minor >= expected_version.minor) ||
+         version.major > expected_version.major;
+}
+
+}  // namespace internal_gl_context
 
 static void SetThreadName(const char* name) {
 #if defined(__GLIBC_PREREQ)
@@ -638,6 +651,11 @@ class GlSyncWrapper {
     // TODO: do something if the wait fails?
   }
 
+  // This method exists only for investigation purposes to distinguish stack
+  // traces: external vs. internal context.
+  // TODO: remove after glWaitSync crashes are resolved.
+  void WaitOnGpuExternalContext() { glWaitSync(sync_, 0, GL_TIMEOUT_IGNORED); }
+
   void WaitOnGpu() {
     if (!sync_) return;
       // WebGL2 specifies a waitSync call, but since cross-context
@@ -645,6 +663,33 @@ class GlSyncWrapper {
       // a warning when it's called, so let's just skip the call. See
       // b/184637485 for details.
 #ifndef __EMSCRIPTEN__
+
+    if (!GlContext::IsAnyContextCurrent()) {
+      // glWaitSync must be called on with some context current. Doing the
+      // opposite doesn't necessarily result in a crash or GL error. Hence,
+      // just logging an error and skipping the call.
+      ABSL_LOG_FIRST_N(ERROR, 1)
+          << "An attempt to wait for a sync without any context current.";
+      return;
+    }
+
+    auto context = GlContext::GetCurrent();
+    if (context == nullptr) {
+      // This can happen when WaitOnGpu is invoked on an external context,
+      // created by other than GlContext::Create means.
+      WaitOnGpuExternalContext();
+      return;
+    }
+
+    // GlContext::ShouldUseFenceSync guards creation of sync objects, so this
+    // CHECK should never fail if clients use MediaPipe APIs in an intended way.
+    // TODO: remove after glWaitSync crashes are resolved.
+    ABSL_CHECK(context->ShouldUseFenceSync()) << absl::StrFormat(
+        "An attempt to wait for a sync when it should not be used. (OpenGL "
+        "Version "
+        "%d.%d)",
+        context->gl_major_version(), context->gl_minor_version());
+
     glWaitSync(sync_, 0, GL_TIMEOUT_IGNORED);
 #endif
   }
@@ -697,10 +742,13 @@ class GlFenceSyncPoint : public GlSyncPoint {
 
   void Wait() override {
     if (!sync_) return;
-    gl_context_->Run([this] {
-      // TODO: must this run on the original context??
+    if (GlContext::IsAnyContextCurrent()) {
       sync_.Wait();
-    });
+      return;
+    }
+    // In case a current GL context is not available, we fall back using the
+    // captured gl_context_.
+    gl_context_->Run([this] { sync_.Wait(); });
   }
 
   void WaitOnGpu() override {
@@ -812,15 +860,25 @@ class GlNopSyncPoint : public GlSyncPoint {
 #endif
 
 bool GlContext::ShouldUseFenceSync() const {
-#ifdef __EMSCRIPTEN__
+  using internal_gl_context::OpenGlVersion;
+#if defined(__EMSCRIPTEN__)
   // In Emscripten the glWaitSync function is non-null depending on linkopts,
-  // but only works in a WebGL2 context, so fall back to use Finish if it is a
-  // WebGL1/ES2 context.
-  // TODO: apply this more generally once b/152794517 is fixed.
-  return gl_major_version() > 2;
+  // but only works in a WebGL2 context.
+  constexpr OpenGlVersion kMinVersionSyncAvaiable = {.major = 3, .minor = 0};
+#elif defined(MEDIAPIPE_MOBILE)
+  // OpenGL ES, glWaitSync is available since 3.0
+  constexpr OpenGlVersion kMinVersionSyncAvaiable = {.major = 3, .minor = 0};
 #else
-  return SymbolAvailable(&glWaitSync);
-#endif  // __EMSCRIPTEN__
+  // TODO: specify major/minor version per remaining platforms.
+  // By default, ignoring major/minor version requirement for backward
+  // compatibility.
+  constexpr OpenGlVersion kMinVersionSyncAvaiable = {.major = 0, .minor = 0};
+#endif
+
+  return SymbolAvailable(&glWaitSync) &&
+         internal_gl_context::IsOpenGlVersionSameOrAbove(
+             {.major = gl_major_version(), .minor = gl_minor_version()},
+             kMinVersionSyncAvaiable);
 }
 
 std::shared_ptr<GlSyncPoint> GlContext::CreateSyncToken() {

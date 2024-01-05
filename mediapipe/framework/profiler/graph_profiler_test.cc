@@ -65,17 +65,17 @@ CalculatorProfile GetProfileWithName(
   return CalculatorProfile::default_instance();
 }
 
-TimeHistogram CreateTimeHistogram(int64 total, std::vector<int64> counts) {
+TimeHistogram CreateTimeHistogram(int64_t total, std::vector<int64_t> counts) {
   TimeHistogram time_histogram;
   time_histogram.set_total(total);
-  for (int64 c : counts) {
+  for (int64_t c : counts) {
     time_histogram.add_count(c);
   }
   return time_histogram;
 }
 
 using PacketInfoMap =
-    ShardedMap<std::string, std::list<std::pair<int64, PacketInfo>>>;
+    ShardedMap<std::string, std::list<std::pair<int64_t, PacketInfo>>>;
 
 // Returns a PacketInfo from a PacketInfoMap.
 PacketInfo* GetPacketInfo(PacketInfoMap* map, const PacketId& packet_id) {
@@ -134,14 +134,14 @@ class GraphProfilerTestPeer : public testing::Test {
     return &profiler_.packets_info_;
   }
 
-  static void InitializeTimeHistogram(int64 interval_size_usec,
-                                      int64 num_intervals,
+  static void InitializeTimeHistogram(int64_t interval_size_usec,
+                                      int64_t num_intervals,
                                       TimeHistogram* histogram) {
     GraphProfiler::InitializeTimeHistogram(interval_size_usec, num_intervals,
                                            histogram);
   }
 
-  static void AddTimeSample(int64 start_time_usec, int64 end_time_usec,
+  static void AddTimeSample(int64_t start_time_usec, int64_t end_time_usec,
                             TimeHistogram* histogram) {
     GraphProfiler::AddTimeSample(start_time_usec, end_time_usec, histogram);
   }
@@ -151,7 +151,7 @@ class GraphProfilerTestPeer : public testing::Test {
   }
 
   void InitializeInputStreams(const CalculatorGraphConfig::Node& node_config,
-                              int64 interval_size_usec, int64 num_intervals,
+                              int64_t interval_size_usec, int64_t num_intervals,
                               CalculatorProfile* calculator_profile) {
     profiler_.InitializeInputStreams(node_config, interval_size_usec,
                                      num_intervals, calculator_profile);
@@ -166,13 +166,13 @@ class GraphProfilerTestPeer : public testing::Test {
   }
 
   void SetOpenRuntime(const CalculatorContext& calculator_context,
-                      int64 start_time_usec, int64 end_time_usec) {
+                      int64_t start_time_usec, int64_t end_time_usec) {
     profiler_.SetOpenRuntime(calculator_context, start_time_usec,
                              end_time_usec);
   }
 
   void SetCloseRuntime(const CalculatorContext& calculator_context,
-                       int64 start_time_usec, int64 end_time_usec) {
+                       int64_t start_time_usec, int64_t end_time_usec) {
     profiler_.SetCloseRuntime(calculator_context, start_time_usec,
                               end_time_usec);
   }
@@ -180,7 +180,7 @@ class GraphProfilerTestPeer : public testing::Test {
   // Updates the Process() data for calculator.
   // Requires ReaderLock for is_profiling_.
   void AddProcessSample(const CalculatorContext& calculator_context,
-                        int64 start_time_usec, int64 end_time_usec) {
+                        int64_t start_time_usec, int64_t end_time_usec) {
     profiler_.AddProcessSample(calculator_context, start_time_usec,
                                end_time_usec);
   }
@@ -603,7 +603,7 @@ TEST_F(GraphProfilerTestPeer, AddPacketInfoUsingProfilerClock) {
                          .set_input_ts(packet.Timestamp())
                          .set_packet_ts(packet.Timestamp())
                          .set_packet_data_id(&packet));
-  int64 profiler_now_usec = ToUnixMicros(simulation_clock->TimeNow());
+  int64_t profiler_now_usec = ToUnixMicros(simulation_clock->TimeNow());
 
   PacketInfo expected_packet_info = {
       0,
@@ -961,8 +961,8 @@ TEST_F(GraphProfilerTestPeer, InitializeOutputStreams) {
 // excluding the back edges or input side packets.
 TEST_F(GraphProfilerTestPeer, InitializeInputStreams) {
   CalculatorProfile profile;
-  int64 interval_size_usec = 100;
-  int64 num_intervals = 1;
+  int64_t interval_size_usec = 100;
+  int64_t num_intervals = 1;
   // Without any input stream.
   auto node_config = CreateNodeConfig(R"(
     calculator: "SourceCalculator"
@@ -1076,8 +1076,8 @@ TEST_F(GraphProfilerTestPeer, AddProcessSampleWithStreamLatency) {
   source_context.AddOutputs(
       {{}, {MakePacket<std::string>("15").At(Timestamp(100))}});
 
-  int64 when_source_started = 1000;
-  int64 when_source_finished = when_source_started + 150;
+  int64_t when_source_started = 1000;
+  int64_t when_source_finished = when_source_started + 150;
   simulation_clock->SleepUntil(absl::FromUnixMicros(when_source_started));
   {
     GraphProfiler::Scope profiler_scope(GraphTrace::PROCESS,
@@ -1206,7 +1206,7 @@ TEST(GraphProfilerTest, ParallelReads) {
     return absl::OkStatus();
   }));
   MP_EXPECT_OK(graph.StartRun(
-      {{"range_step", MakePacket<std::pair<uint32, uint32>>(1000, 1)}}));
+      {{"range_step", MakePacket<std::pair<uint32_t, uint32_t>>(1000, 1)}}));
 
   // Repeatedly poll for profile data while the graph runs.
   while (true) {

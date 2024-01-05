@@ -71,6 +71,15 @@ export interface MediapipeTasksFake {
 /** An map of field paths to values */
 export type FieldPathToValue = [string[] | string, unknown];
 
+type JsonObject = Record<string, unknown>;
+
+/**
+ * The function to convert a binary proto to a JsonObject.
+ * For example, the deserializer of HolisticLandmarkerOptions's binary proto is
+ * HolisticLandmarkerOptions.deserializeBinary(binaryProto).toObject().
+ */
+export type Deserializer = (binaryProto: Uint8Array) => JsonObject;
+
 /**
  * Verifies that the graph has been initialized and that it contains the
  * provided options.
@@ -79,6 +88,7 @@ export function verifyGraph(
     tasksFake: MediapipeTasksFake,
     expectedCalculatorOptions?: FieldPathToValue,
     expectedBaseOptions?: FieldPathToValue,
+    deserializer?: Deserializer,
     ): void {
   expect(tasksFake.graph).toBeDefined();
   // Our graphs should have at least one node in them for processing, and
@@ -89,22 +99,31 @@ export function verifyGraph(
   expect(node).toEqual(
       jasmine.objectContaining({calculator: tasksFake.calculatorName}));
 
+  let proto;
+  if (deserializer) {
+    const binaryProto =
+    tasksFake.graph!.getNodeList()[0].getNodeOptionsList()[0].getValue() as
+    Uint8Array;
+    proto = deserializer(binaryProto);
+  } else {
+    proto = (node.options as {ext: unknown}).ext;
+  }
+
   if (expectedBaseOptions) {
     const [fieldPath, value] = expectedBaseOptions;
-    let proto = (node.options as {ext: {baseOptions: unknown}}).ext.baseOptions;
+    let baseOptions = (proto as {baseOptions: unknown}).baseOptions;
     for (const fieldName of (
              Array.isArray(fieldPath) ? fieldPath : [fieldPath])) {
-      proto = ((proto ?? {}) as Record<string, unknown>)[fieldName];
+      baseOptions = ((baseOptions ?? {}) as JsonObject)[fieldName];
     }
-    expect(proto).toEqual(value);
+    expect(baseOptions).toEqual(value);
   }
 
   if (expectedCalculatorOptions) {
     const [fieldPath, value] = expectedCalculatorOptions;
-    let proto = (node.options as {ext: unknown}).ext;
     for (const fieldName of (
              Array.isArray(fieldPath) ? fieldPath : [fieldPath])) {
-      proto = ((proto ?? {}) as Record<string, unknown>)[fieldName];
+      proto = ((proto ?? {}) as JsonObject)[fieldName];
     }
     expect(proto).toEqual(value);
   }

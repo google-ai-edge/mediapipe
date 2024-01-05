@@ -15,6 +15,7 @@
 #ifndef MEDIAPIPE_FRAMEWORK_FORMATS_IMAGE_H_
 #define MEDIAPIPE_FRAMEWORK_FORMATS_IMAGE_H_
 
+#include <cstdint>
 #include <utility>
 
 #include "absl/synchronization/mutex.h"
@@ -207,7 +208,7 @@ inline void Image::UnlockPixels() const {}
 //   Image buf = ...
 //   {
 //     PixelLock lock(&buf);
-//     uint8* buf_ptr = lock.Pixels();
+//     uint8_t* buf_ptr = lock.Pixels();
 //     ... use buf_ptr to access pixel data ...
 //     ... lock released automatically at end of scope ...
 //   }
@@ -228,7 +229,7 @@ class PixelReadLock {
   }
   PixelReadLock(const PixelReadLock&) = delete;
 
-  const uint8* Pixels() const {
+  const uint8_t* Pixels() const {
     if (frame_) return frame_->PixelData();
     return nullptr;
   }
@@ -254,7 +255,7 @@ class PixelWriteLock {
   }
   PixelWriteLock(const PixelWriteLock&) = delete;
 
-  uint8* Pixels() {
+  uint8_t* Pixels() {
     if (frame_) return frame_->MutablePixelData();
     return nullptr;
   }

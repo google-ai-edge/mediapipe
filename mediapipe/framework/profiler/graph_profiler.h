@@ -42,7 +42,7 @@ struct PacketId {
   // Stream name, excluding TAG if available.
   std::string stream_name;
   // Timestamp of the packet.
-  int64 timestamp_usec;
+  int64_t timestamp_usec;
 
   bool operator==(const PacketId& other) const {
     return (stream_name == other.stream_name) &&
@@ -53,12 +53,12 @@ struct PacketId {
 struct PacketInfo {
   // Number of remained consumer of this packet.
   // This is used to decide if this PacketInfo should be discarded.
-  int64 remaining_consumer_count;
+  int64_t remaining_consumer_count;
   // Packet production time based on profiler's clock.
-  int64 production_time_usec;
+  int64_t production_time_usec;
   // The time when the Process(), that generated the corresponding source
   // packet, was started.
-  int64 source_process_start_usec;
+  int64_t source_process_start_usec;
 
   // For testing.
   bool operator==(const PacketInfo& other) const {
@@ -191,12 +191,12 @@ class GraphProfiler : public std::enable_shared_from_this<ProfilingContext> {
     }
 
     inline ~Scope() {
-      int64 end_time_usec;
+      int64_t end_time_usec;
       if (profiler_->is_profiling_ || profiler_->is_tracing_) {
         end_time_usec = profiler_->TimeNowUsec();
       }
       if (profiler_->is_profiling_) {
-        int64 end_time_usec = profiler_->TimeNowUsec();
+        int64_t end_time_usec = profiler_->TimeNowUsec();
         switch (calculator_method_) {
           case GraphTrace::OPEN:
             profiler_->SetOpenRuntime(calculator_context_, start_time_usec_,
@@ -227,7 +227,7 @@ class GraphProfiler : public std::enable_shared_from_this<ProfilingContext> {
     const GraphTrace::EventType calculator_method_;
     const CalculatorContext& calculator_context_;
     GraphProfiler* profiler_;
-    int64 start_time_usec_;
+    int64_t start_time_usec_;
   };
 
   const ProfilerConfig& profiler_config() { return profiler_config_; }
@@ -249,12 +249,12 @@ class GraphProfiler : public std::enable_shared_from_this<ProfilingContext> {
   // is valid for profiling.
   void AddPacketInfo(const TraceEvent& packet_info)
       ABSL_LOCKS_EXCLUDED(profiler_mutex_);
-  static void InitializeTimeHistogram(int64 interval_size_usec,
-                                      int64 num_intervals,
+  static void InitializeTimeHistogram(int64_t interval_size_usec,
+                                      int64_t num_intervals,
                                       TimeHistogram* histogram);
   static void ResetTimeHistogram(TimeHistogram* histogram);
   // Add a sample to a time histogram.
-  static void AddTimeSample(int64 start_time_usec, int64 end_time_usec,
+  static void AddTimeSample(int64_t start_time_usec, int64_t end_time_usec,
                             TimeHistogram* histogram);
 
   // Add output streams to the stream consumer count map.
@@ -266,43 +266,43 @@ class GraphProfiler : public std::enable_shared_from_this<ProfilingContext> {
   // not add them to |stream_consumer_counts_| to avoid using them for updating
   // |source_process_start_usec| and garbage collection while profiling.
   void InitializeInputStreams(const CalculatorGraphConfig::Node& node_config,
-                              int64 interval_size_usec, int64 num_intervals,
+                              int64_t interval_size_usec, int64_t num_intervals,
                               CalculatorProfile* calculator_profile);
   // Returns the input stream back edges for a calculator.
   std::set<int> GetBackEdgeIds(const CalculatorGraphConfig::Node& node_config,
                                const tool::TagMap& input_tag_map);
 
   void AddPacketInfoInternal(const PacketId& packet_id,
-                             int64 production_time_usec,
-                             int64 source_process_start_usec);
+                             int64_t production_time_usec,
+                             int64_t source_process_start_usec);
   // Adds packet info for non-empty output packets.
   void AddPacketInfoForOutputPackets(
       const OutputStreamShardSet& output_stream_shard_set,
-      int64 production_time_usec, int64 source_process_start_usec);
+      int64_t production_time_usec, int64_t source_process_start_usec);
 
   // Updates the production time for outputs and the stream profile for inputs.
-  int64 AddStreamLatencies(const CalculatorContext& calculator_context,
-                           int64 start_time_usec, int64 end_time_usec,
-                           CalculatorProfile* calculator_profile);
+  int64_t AddStreamLatencies(const CalculatorContext& calculator_context,
+                             int64_t start_time_usec, int64_t end_time_usec,
+                             CalculatorProfile* calculator_profile);
 
   void SetOpenRuntime(const CalculatorContext& calculator_context,
-                      int64 start_time_usec, int64 end_time_usec)
+                      int64_t start_time_usec, int64_t end_time_usec)
       ABSL_LOCKS_EXCLUDED(profiler_mutex_);
   void SetCloseRuntime(const CalculatorContext& calculator_context,
-                       int64 start_time_usec, int64 end_time_usec)
+                       int64_t start_time_usec, int64_t end_time_usec)
       ABSL_LOCKS_EXCLUDED(profiler_mutex_);
 
   // Updates the input streams profiles for the calculator and returns the
   // minimum |source_process_start_usec| of all input packets, excluding empty
   // packets and back-edge packets. Returns -1 if there is no input packets.
-  int64 AddInputStreamTimeSamples(const CalculatorContext& calculator_context,
-                                  int64 start_time_usec,
-                                  CalculatorProfile* calculator_profile);
+  int64_t AddInputStreamTimeSamples(const CalculatorContext& calculator_context,
+                                    int64_t start_time_usec,
+                                    CalculatorProfile* calculator_profile);
 
   // Updates the Process() data for calculator.
   // Requires ReaderLock for is_profiling_.
   void AddProcessSample(const CalculatorContext& calculator_context,
-                        int64 start_time_usec, int64 end_time_usec)
+                        int64_t start_time_usec, int64_t end_time_usec)
       ABSL_LOCKS_EXCLUDED(profiler_mutex_);
 
   // Helper method to get trace_log_path.  If the trace_log_path is empty and
@@ -311,7 +311,7 @@ class GraphProfiler : public std::enable_shared_from_this<ProfilingContext> {
   absl::StatusOr<std::string> GetTraceLogPath();
 
   // Helper method to get the clock time in microsecond.
-  int64 TimeNowUsec() { return ToUnixMicros(clock_->TimeNow()); }
+  int64_t TimeNowUsec() { return ToUnixMicros(clock_->TimeNow()); }
 
  private:
   // The settings for this tracer.
@@ -332,7 +332,7 @@ class GraphProfiler : public std::enable_shared_from_this<ProfilingContext> {
   CalculatorProfileMap calculator_profiles_;
   // Stores the production time of a packet, based on profiler's clock.
   using PacketInfoMap =
-      ShardedMap<std::string, std::list<std::pair<int64, PacketInfo>>>;
+      ShardedMap<std::string, std::list<std::pair<int64_t, PacketInfo>>>;
   PacketInfoMap packets_info_;
 
   // Global mutex for the profiler.

@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cstdint>
+
 #include "mediapipe/calculators/tensorflow/vector_int_to_tensor_calculator_options.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
@@ -169,7 +171,7 @@ TEST_F(VectorIntToTensorCalculatorTest, TestInt64) {
 
   EXPECT_EQ(1, output_tensor.dims());
   EXPECT_EQ(tf::DT_INT64, output_tensor.dtype());
-  const auto vec = output_tensor.vec<tf::int64>();
+  const auto vec = output_tensor.vec<int64_t>();
   // 1LL << 31 overflows the positive int and becomes negative.
   EXPECT_EQ(static_cast<int>(1LL << 31), vec(0));
 }

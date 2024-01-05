@@ -26,7 +26,7 @@ def replace_suffix(string, old, new):
 
 def mediapipe_ts_library(
         name,
-        srcs,
+        srcs = [],
         visibility = None,
         deps = [],
         testonly = 0,

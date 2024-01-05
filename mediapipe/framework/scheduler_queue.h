@@ -16,6 +16,7 @@
 #define MEDIAPIPE_FRAMEWORK_SCHEDULER_QUEUE_H_
 
 #include <atomic>
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <queue>
@@ -67,7 +68,7 @@ class SchedulerQueue : public TaskQueue {
     bool operator<(const Item& that) const;
 
    private:
-    int64 source_process_order_ = 0;
+    int64_t source_process_order_ = 0;
     CalculatorNode* node_;
     CalculatorContext* cc_;
     int id_ = 0;

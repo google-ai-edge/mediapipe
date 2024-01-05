@@ -68,7 +68,8 @@ struct PoseLandmarkerOptions {
   // The user-defined result callback for processing live stream data.
   // The result callback should only be specified when the running mode is set
   // to RunningMode::LIVE_STREAM.
-  std::function<void(absl::StatusOr<PoseLandmarkerResult>, const Image&, int64)>
+  std::function<void(absl::StatusOr<PoseLandmarkerResult>, const Image&,
+                     int64_t)>
       result_callback = nullptr;
 
   // Whether to output segmentation masks.
@@ -146,7 +147,7 @@ class PoseLandmarker : tasks::vision::core::BaseVisionTaskApi {
   // provide the video frame's timestamp (in milliseconds). The input timestamps
   // must be monotonically increasing.
   absl::StatusOr<PoseLandmarkerResult> DetectForVideo(
-      Image image, int64 timestamp_ms,
+      Image image, int64_t timestamp_ms,
       std::optional<core::ImageProcessingOptions> image_processing_options =
           std::nullopt);
 
@@ -174,7 +175,7 @@ class PoseLandmarker : tasks::vision::core::BaseVisionTaskApi {
   //     longer be valid when the callback returns. To access the image data
   //     outside of the callback, callers need to make a copy of the image.
   //   - The input timestamp in milliseconds.
-  absl::Status DetectAsync(Image image, int64 timestamp_ms,
+  absl::Status DetectAsync(Image image, int64_t timestamp_ms,
                            std::optional<core::ImageProcessingOptions>
                                image_processing_options = std::nullopt);
 

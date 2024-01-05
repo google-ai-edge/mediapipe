@@ -14,6 +14,8 @@
 
 #import "MPPTimestampConverter.h"
 
+#include <cstdint>
+
 @implementation MPPTimestampConverter {
   mediapipe::Timestamp _mediapipeTimestamp;
   mediapipe::Timestamp _lastTimestamp;
@@ -37,7 +39,7 @@
 - (mediapipe::Timestamp)timestampForMediaTime:(CMTime)mediaTime {
   Float64 sampleSeconds =
       CMTIME_IS_VALID(mediaTime) ? CMTimeGetSeconds(mediaTime) : 0;
-  const int64 sampleUsec =
+  const int64_t sampleUsec =
       sampleSeconds * mediapipe::Timestamp::kTimestampUnitsPerSecond;
   _mediapipeTimestamp = mediapipe::Timestamp(sampleUsec) + _timestampOffset;
   if (_mediapipeTimestamp <= _lastTimestamp) {

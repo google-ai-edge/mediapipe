@@ -46,13 +46,14 @@ message ImageTransformationCalculatorOptions {
   optional bool flip_horizontally = 5 [default = false];
   // Scale mode.
   optional ScaleMode.Mode scale_mode = 6;
-  // Padding type. This option is only used when the scale mode is FIT.
-  // Default is to use BORDER_CONSTANT. If set to false, it will use
-  // BORDER_REPLICATE instead.
+  // Padding type. This option is only used when the scale mode is FIT. If set
+  // to true (default), a constant border is added with color specified by
+  // padding_color. If set to false, a border is added by replicating edge
+  // pixels (only supported for CPU).
   optional bool constant_padding = 7 [default = true];
 
   // The color for the padding. This option is only used when the scale mode is
-  // FIT. Default is black. This is for CPU only.
+  // FIT. Default is black.
   optional Color padding_color = 8;
 
   // Interpolation method to use. Note that on CPU when LINEAR is specified,

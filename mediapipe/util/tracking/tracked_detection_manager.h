@@ -15,6 +15,8 @@
 #ifndef MEDIAPIPE_UTIL_TRACKING_DETECTION_MANAGER_H_
 #define MEDIAPIPE_UTIL_TRACKING_DETECTION_MANAGER_H_
 
+#include <cstdint>
+
 #include "absl/container/node_hash_map.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/util/tracking/tracked_detection.h"
@@ -41,11 +43,12 @@ class TrackedDetectionManager {
   // detection. Returns the IDs of the detections that are removed due to
   // duplication.
   std::vector<int> UpdateDetectionLocation(
-      int id, const ::mediapipe::NormalizedRect& bounding_box, int64 timestamp);
+      int id, const ::mediapipe::NormalizedRect& bounding_box,
+      int64_t timestamp);
 
   // Removes detections that are not updated after |timestamp|. Returns the IDs
   // of the detections that are removed.
-  std::vector<int> RemoveObsoleteDetections(int64 timestamp);
+  std::vector<int> RemoveObsoleteDetections(int64_t timestamp);
 
   // TODO: Do we really need this? Pursuit tracker doesn't do well
   // in loop closure. Boxes out of view are usually not attached to objects

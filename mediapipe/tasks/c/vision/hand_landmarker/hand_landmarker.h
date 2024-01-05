@@ -68,7 +68,7 @@ struct HandLandmarkerOptions {
   // true for the lifetime of the callback function.
   //
   // A caller is responsible for closing hand landmarker result.
-  typedef void (*result_callback_fn)(HandLandmarkerResult* result,
+  typedef void (*result_callback_fn)(const HandLandmarkerResult* result,
                                      const MpImage& image, int64_t timestamp_ms,
                                      char* error_msg);
   result_callback_fn result_callback;

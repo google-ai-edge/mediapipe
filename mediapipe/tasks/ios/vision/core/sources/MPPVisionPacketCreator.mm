@@ -16,6 +16,8 @@
 #import "mediapipe/tasks/ios/components/containers/utils/sources/MPPRegionOfInterest+Helpers.h"
 #import "mediapipe/tasks/ios/vision/core/utils/sources/MPPImage+Utils.h"
 
+#include <cstdint>
+
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/timestamp.h"
 
@@ -53,7 +55,7 @@ using ::mediapipe::Timestamp;
   }
 
   return MakePacket<Image>(std::move(imageFrame))
-      .At(Timestamp(int64(timestampInMilliseconds * kMicrosecondsPerMillisecond)));
+      .At(Timestamp(int64_t(timestampInMilliseconds * kMicrosecondsPerMillisecond)));
 }
 
 + (Packet)createPacketWithNormalizedRect:(NormalizedRect &)normalizedRect {
@@ -63,7 +65,7 @@ using ::mediapipe::Timestamp;
 + (Packet)createPacketWithNormalizedRect:(NormalizedRect &)normalizedRect
                  timestampInMilliseconds:(NSInteger)timestampInMilliseconds {
   return MakePacket<NormalizedRect>(std::move(normalizedRect))
-      .At(Timestamp(int64(timestampInMilliseconds * kMicrosecondsPerMillisecond)));
+      .At(Timestamp(int64_t(timestampInMilliseconds * kMicrosecondsPerMillisecond)));
 }
 
 + (std::optional<Packet>)createRenderDataPacketWithRegionOfInterest:

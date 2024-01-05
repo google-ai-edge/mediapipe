@@ -656,6 +656,15 @@ absl::Status ImageTransformationCalculator::RenderGpu(CalculatorContext* cc) {
                                                   input.format());
 
   gpu_helper_.BindFramebuffer(dst);
+
+  if (scale_mode_ == mediapipe::ScaleMode::FIT) {
+    // In kFit scale mode, the rendered quad does not fill the whole
+    // framebuffer, so clear it beforehand.
+    glClearColor(padding_color_[0] / 255.0f, padding_color_[1] / 255.0f,
+                 padding_color_[2] / 255.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+  }
+
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(src1.target(), src1.name());
 

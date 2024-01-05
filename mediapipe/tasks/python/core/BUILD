@@ -49,5 +49,6 @@ py_library(
         "//mediapipe/calculators/core:flow_limiter_calculator_py_pb2",
         "//mediapipe/framework:calculator_options_py_pb2",
         "//mediapipe/framework:calculator_py_pb2",
+        "@com_google_protobuf//:protobuf_python",
     ],
 )

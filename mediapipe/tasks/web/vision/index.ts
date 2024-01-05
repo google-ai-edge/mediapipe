@@ -23,6 +23,7 @@ import {FaceLandmarker as FaceLandmarkerImpl} from '../../../tasks/web/vision/fa
 import {FaceStylizer as FaceStylizerImpl} from '../../../tasks/web/vision/face_stylizer/face_stylizer';
 import {GestureRecognizer as GestureRecognizerImpl} from '../../../tasks/web/vision/gesture_recognizer/gesture_recognizer';
 import {HandLandmarker as HandLandmarkerImpl} from '../../../tasks/web/vision/hand_landmarker/hand_landmarker';
+import {HolisticLandmarker as HolisticLandmarkerImpl} from '../../../tasks/web/vision/holistic_landmarker/holistic_landmarker';
 import {ImageClassifier as ImageClassifierImpl} from '../../../tasks/web/vision/image_classifier/image_classifier';
 import {ImageEmbedder as ImageEmbedderImpl} from '../../../tasks/web/vision/image_embedder/image_embedder';
 import {ImageSegmenter as ImageSegementerImpl} from '../../../tasks/web/vision/image_segmenter/image_segmenter';
@@ -41,6 +42,7 @@ const FaceLandmarker = FaceLandmarkerImpl;
 const FaceStylizer = FaceStylizerImpl;
 const GestureRecognizer = GestureRecognizerImpl;
 const HandLandmarker = HandLandmarkerImpl;
+const HolisticLandmarker = HolisticLandmarkerImpl;
 const ImageClassifier = ImageClassifierImpl;
 const ImageEmbedder = ImageEmbedderImpl;
 const ImageSegmenter = ImageSegementerImpl;
@@ -58,6 +60,7 @@ export {
   FaceStylizer,
   GestureRecognizer,
   HandLandmarker,
+  HolisticLandmarker,
   ImageClassifier,
   ImageEmbedder,
   ImageSegmenter,

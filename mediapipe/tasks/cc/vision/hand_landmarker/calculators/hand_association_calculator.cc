@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#include <cstdint>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -161,7 +162,7 @@ class HandAssociationCalculator : public CalculatorBase {
   // Note: This rect_id_ is local to an instance of this calculator. And it is
   // expected that the hand tracking graph to have only one instance of
   // this association calculator.
-  int64 rect_id_ = 1;
+  int64_t rect_id_ = 1;
 
   inline int GetNextRectId() { return rect_id_++; }
 };

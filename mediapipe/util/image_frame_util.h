@@ -74,14 +74,14 @@ void YUVImageToImageFrameFromFormat(const YUVImage& yuv_image,
 // values used are those from ITU-R BT.601 (which are the same as ITU-R
 // BT.709).  The conversion values are taken from wikipedia and cross
 // checked with other sources.
-void SrgbToMpegYCbCr(const uint8 r, const uint8 g, const uint8 b,  //
-                     uint8* y, uint8* cb, uint8* cr);
+void SrgbToMpegYCbCr(const uint8_t r, const uint8_t g, const uint8_t b,  //
+                     uint8_t* y, uint8_t* cb, uint8_t* cr);
 // Convert MPEG YCbCr values into sRGB values.  See the SrgbToMpegYCbCr()
 // for more notes.  Many MPEG YCbCr values do not correspond directly
 // to an sRGB value.  If the value is invalid it will be clipped to the
 // closest valid value on a per channel basis.
-void MpegYCbCrToSrgb(const uint8 y, const uint8 cb, const uint8 cr,  //
-                     uint8* r, uint8* g, uint8* b);
+void MpegYCbCrToSrgb(const uint8_t y, const uint8_t cb, const uint8_t cr,  //
+                     uint8_t* r, uint8_t* g, uint8_t* b);
 
 // Conversion functions to and from srgb and linear RGB in 16 bits-per-pixel
 // channel.

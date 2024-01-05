@@ -45,7 +45,7 @@ absl::Duration GraphTracer::GetTraceLogInterval() {
              : kDefaultTraceLogInterval;
 }
 
-int64 GraphTracer::GetTraceLogCapacity() {
+int64_t GraphTracer::GetTraceLogCapacity() {
   return profiler_config_.trace_log_capacity()
              ? profiler_config_.trace_log_capacity()
              : 20000;

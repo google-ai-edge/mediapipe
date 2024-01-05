@@ -59,6 +59,7 @@ CALCULATORS_AND_GRAPHS = [
     "//mediapipe/tasks/cc/vision/image_classifier:image_classifier_graph",
     "//mediapipe/tasks/cc/vision/image_segmenter:image_segmenter_graph",
     "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
+    "//mediapipe/tasks/cc/vision/pose_landmarker:pose_landmarker_graph",
 ]
 
 strip_api_include_path_prefix(
@@ -82,6 +83,9 @@ strip_api_include_path_prefix(
         "//mediapipe/tasks/ios/text/text_embedder:sources/MPPTextEmbedder.h",
         "//mediapipe/tasks/ios/text/text_embedder:sources/MPPTextEmbedderOptions.h",
         "//mediapipe/tasks/ios/text/text_embedder:sources/MPPTextEmbedderResult.h",
+        "//mediapipe/tasks/ios/text/language_detector:sources/MPPLanguageDetector.h",
+        "//mediapipe/tasks/ios/text/language_detector:sources/MPPLanguageDetectorOptions.h",
+        "//mediapipe/tasks/ios/text/language_detector:sources/MPPLanguageDetectorResult.h",
         "//mediapipe/tasks/ios/vision/core:sources/MPPRunningMode.h",
         "//mediapipe/tasks/ios/vision/core:sources/MPPImage.h",
         "//mediapipe/tasks/ios/vision/core:sources/MPPMask.h",
@@ -106,6 +110,9 @@ strip_api_include_path_prefix(
         "//mediapipe/tasks/ios/vision/object_detector:sources/MPPObjectDetector.h",
         "//mediapipe/tasks/ios/vision/object_detector:sources/MPPObjectDetectorOptions.h",
         "//mediapipe/tasks/ios/vision/object_detector:sources/MPPObjectDetectorResult.h",
+        "//mediapipe/tasks/ios/vision/pose_landmarker:sources/MPPPoseLandmarker.h",
+        "//mediapipe/tasks/ios/vision/pose_landmarker:sources/MPPPoseLandmarkerOptions.h",
+        "//mediapipe/tasks/ios/vision/pose_landmarker:sources/MPPPoseLandmarkerResult.h",
     ],
 )
 
@@ -143,8 +150,12 @@ apple_static_xcframework(
         ":MPPTextEmbedder.h",
         ":MPPTextEmbedderOptions.h",
         ":MPPTextEmbedderResult.h",
+        ":MPPLanguageDetector.h",
+        ":MPPLanguageDetectorOptions.h",
+        ":MPPLanguageDetectorResult.h",
     ],
     deps = [
+        "//mediapipe/tasks/ios/text/language_detector:MPPLanguageDetector",
         "//mediapipe/tasks/ios/text/text_classifier:MPPTextClassifier",
         "//mediapipe/tasks/ios/text/text_embedder:MPPTextEmbedder",
     ],
@@ -206,6 +217,9 @@ apple_static_xcframework(
         ":MPPObjectDetector.h",
         ":MPPObjectDetectorOptions.h",
         ":MPPObjectDetectorResult.h",
+        ":MPPPoseLandmarker.h",
+        ":MPPPoseLandmarkerOptions.h",
+        ":MPPPoseLandmarkerResult.h",
     ],
     deps = [
         "//mediapipe/tasks/ios/vision/face_detector:MPPFaceDetector",
@@ -215,6 +229,7 @@ apple_static_xcframework(
         "//mediapipe/tasks/ios/vision/image_classifier:MPPImageClassifier",
         "//mediapipe/tasks/ios/vision/image_segmenter:MPPImageSegmenter",
         "//mediapipe/tasks/ios/vision/object_detector:MPPObjectDetector",
+        "//mediapipe/tasks/ios/vision/pose_landmarker:MPPPoseLandmarker",
     ],
 )
 

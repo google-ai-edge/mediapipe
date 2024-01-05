@@ -47,9 +47,9 @@ std::string GetFullPath(absl::string_view file_name) {
   return JoinPath("./", kTestDataDirectory, file_name);
 }
 
-void MatchesHandLandmarkerResult(HandLandmarkerResult* result,
-                                 const float score_precision,
-                                 const float landmark_precision) {
+void AssertHandLandmarkerResult(const HandLandmarkerResult* result,
+                                const float score_precision,
+                                const float landmark_precision) {
   // Expects to have the same number of hands detected.
   EXPECT_EQ(result->handedness_count, 1);
 
@@ -104,7 +104,7 @@ TEST(HandLandmarkerTest, ImageModeTest) {
   HandLandmarkerResult result;
   hand_landmarker_detect_image(landmarker, mp_image, &result,
                                /* error_msg */ nullptr);
-  MatchesHandLandmarkerResult(&result, kScorePrecision, kLandmarkPrecision);
+  AssertHandLandmarkerResult(&result, kScorePrecision, kLandmarkPrecision);
   hand_landmarker_close_result(&result);
   hand_landmarker_close(landmarker, /* error_msg */ nullptr);
 }
@@ -141,7 +141,7 @@ TEST(HandLandmarkerTest, VideoModeTest) {
     hand_landmarker_detect_for_video(landmarker, mp_image, i, &result,
                                      /* error_msg */ nullptr);
 
-    MatchesHandLandmarkerResult(&result, kScorePrecision, kLandmarkPrecision);
+    AssertHandLandmarkerResult(&result, kScorePrecision, kLandmarkPrecision);
     hand_landmarker_close_result(&result);
   }
   hand_landmarker_close(landmarker, /* error_msg */ nullptr);
@@ -154,12 +154,12 @@ TEST(HandLandmarkerTest, VideoModeTest) {
 // timestamp is greater than the previous one.
 struct LiveStreamModeCallback {
   static int64_t last_timestamp;
-  static void Fn(HandLandmarkerResult* landmarker_result, const MpImage& image,
-                 int64_t timestamp, char* error_msg) {
+  static void Fn(const HandLandmarkerResult* landmarker_result,
+                 const MpImage& image, int64_t timestamp, char* error_msg) {
     ASSERT_NE(landmarker_result, nullptr);
     ASSERT_EQ(error_msg, nullptr);
-    MatchesHandLandmarkerResult(landmarker_result, kScorePrecision,
-                                kLandmarkPrecision);
+    AssertHandLandmarkerResult(landmarker_result, kScorePrecision,
+                               kLandmarkPrecision);
     EXPECT_GT(image.image_frame.width, 0);
     EXPECT_GT(image.image_frame.height, 0);
     EXPECT_GT(timestamp, last_timestamp);
@@ -183,7 +183,7 @@ TEST(HandLandmarkerTest, LiveStreamModeTest) {
       /* min_hand_detection_confidence= */ 0.5,
       /* min_hand_presence_confidence= */ 0.5,
       /* min_tracking_confidence= */ 0.5,
-      /* result_callback= */ LiveStreamModeCallback::Fn,
+      /* result_callback_fn= */ LiveStreamModeCallback::Fn,
   };
 
   void* landmarker = hand_landmarker_create(&options, /* error_msg */ nullptr);

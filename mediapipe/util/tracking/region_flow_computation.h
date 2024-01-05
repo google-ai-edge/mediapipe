@@ -89,11 +89,11 @@ class RegionFlowComputation {
   // Pass the frame's timestamp to have it stored in the result or zero if not
   // needed.
   // Returns true on success, false otherwise.
-  virtual bool AddImage(const cv::Mat& source, int64 timestamp_usec);
+  virtual bool AddImage(const cv::Mat& source, int64_t timestamp_usec);
 
   // Same as above, but seed initial feature position in the matching frame
   // with initial_transform.
-  virtual bool AddImageWithSeed(const cv::Mat& source, int64 timestamp_usec,
+  virtual bool AddImageWithSeed(const cv::Mat& source, int64_t timestamp_usec,
                                 const Homography& initial_transform);
 
   // Same as AddImage but also accepts an optional source_mask (pass empty
@@ -102,7 +102,7 @@ class RegionFlowComputation {
   // grayscale of the same size as source, unless empty.
   virtual bool AddImageWithMask(const cv::Mat& source,
                                 const cv::Mat& source_mask,
-                                int64 timestamp_usec);
+                                int64_t timestamp_usec);
 
   // Call after AddImage* to retrieve last downscaled, grayscale image.
   cv::Mat GetGrayscaleFrameFromResults();
@@ -190,7 +190,7 @@ class RegionFlowComputation {
 
   // Adds image to the current buffer and starts tracking.
   bool AddImageAndTrack(const cv::Mat& source, const cv::Mat& source_mask,
-                        int64 timestamp_usec,
+                        int64_t timestamp_usec,
                         const Homography& initial_transform);
 
   // Computes *change* in visual difference between adjacent frames. Normalized
@@ -430,7 +430,7 @@ class RegionFlowComputation {
   std::unique_ptr<cv::Mat> feature_tmp_image_1_;
   std::unique_ptr<cv::Mat> feature_tmp_image_2_;
 
-  std::vector<uint8> feature_status_;       // Indicates if point could be
+  std::vector<uint8_t> feature_status_;     // Indicates if point could be
                                             // tracked.
   std::vector<float> feature_track_error_;  // Patch-based error.
 

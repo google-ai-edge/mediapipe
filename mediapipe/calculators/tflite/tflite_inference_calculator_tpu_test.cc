@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cstdint>
+
 #include "absl/strings/str_replace.h"
 #include "mediapipe/calculators/tflite/tflite_inference_calculator_test_common.h"
 
@@ -33,9 +35,9 @@ TEST(TfLiteInferenceCalculatorTpuTest, SmokeTest) {
       }
     }
   )";
-  DoSmokeTest<uint8>(
+  DoSmokeTest<uint8_t>(
       /*graph_proto=*/absl::StrReplaceAll(graph_proto, {{"$delegate", ""}}));
-  DoSmokeTest<uint8>(/*graph_proto=*/absl::StrReplaceAll(
+  DoSmokeTest<uint8_t>(/*graph_proto=*/absl::StrReplaceAll(
       graph_proto, {{"$delegate", "delegate { tflite {} }"}}));
 }
 

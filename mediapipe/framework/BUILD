@@ -193,6 +193,7 @@ cc_library(
     visibility = [
         ":mediapipe_internal",
         "//speech/videos/mediapipe/calculator:__pkg__",
+        "//vr/stargate/starcam:__pkg__",
     ],
     deps = [
         ":calculator_state",
@@ -236,6 +237,7 @@ cc_library(
     visibility = [
         ":mediapipe_internal",
         "//speech/videos/mediapipe/calculator:__pkg__",
+        "//vr/stargate/starcam:__pkg__",
     ],
     deps = [
         ":calculator_cc_proto",

@@ -215,7 +215,7 @@ Location CreateCvMaskLocation(const cv::Mat_<T>& mask) {
   return Location(location_data);
 }
 
-template Location CreateCvMaskLocation(const cv::Mat_<uint8>& mask);
+template Location CreateCvMaskLocation(const cv::Mat_<uint8_t>& mask);
 template Location CreateCvMaskLocation(const cv::Mat_<float>& mask);
 
 }  // namespace mediapipe

@@ -178,8 +178,8 @@ void ToneEstimation::ComputeClipMask(const ClipMaskOptions& options,
   }
 
   for (int i = 0; i < frame.rows; ++i) {
-    const uint8* img_ptr = frame.ptr<uint8>(i);
-    uint8* clip_ptr = clip_mask->mask.template ptr<uint8>(i);
+    const uint8_t* img_ptr = frame.ptr<uint8_t>(i);
+    uint8_t* clip_ptr = clip_mask->mask.template ptr<uint8_t>(i);
 
     for (int j = 0; j < frame.cols; ++j) {
       const int idx = C * j;
@@ -328,8 +328,8 @@ void ToneEstimation::ComputeToneMatches(
     // bins to the right). However, matches that are over or underexposed
     // are discarded afterwards.
     for (int i = 0; i < patch_diam; ++i) {
-      const uint8* prev_ptr = prev_patch.ptr<uint8>(i);
-      const uint8* curr_ptr = curr_patch.ptr<uint8>(i);
+      const uint8_t* prev_ptr = prev_patch.ptr<uint8_t>(i);
+      const uint8_t* curr_ptr = curr_patch.ptr<uint8_t>(i);
       for (int j = 0; j < patch_diam; ++j) {
         const int j_c = C * j;
         for (int c = 0; c < C; ++c) {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {assertNotNull, MPImageShaderContext} from '../../../../tasks/web/vision/core/image_shader_context';
+import {assertExists, MPImageShaderContext} from '../../../../tasks/web/vision/core/image_shader_context';
 import {isIOS} from '../../../../web/graph_runner/platform_utils';
 
 /** Number of instances a user can keep alive before we raise a warning. */
@@ -270,8 +270,8 @@ export class MPMask {
           'is passed when initializing the image.');
     }
     if (!this.gl) {
-      this.gl = assertNotNull(
-          this.canvas.getContext('webgl2'),
+      this.gl = assertExists(
+          this.canvas.getContext('webgl2') as WebGL2RenderingContext,
           'You cannot use a canvas that is already bound to a different ' +
               'type of rendering context.');
     }

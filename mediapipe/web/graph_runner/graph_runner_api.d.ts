@@ -26,8 +26,8 @@ export {
 /**
  * Valid types of image sources which we can run our GraphRunner over.
  */
-export type ImageSource =
-    HTMLCanvasElement|HTMLVideoElement|HTMLImageElement|ImageData|ImageBitmap;
+export type ImageSource = HTMLCanvasElement|HTMLVideoElement|HTMLImageElement|
+    ImageData|ImageBitmap|VideoFrame;
 
 /**
  * Simple interface for a class to run an arbitrary MediaPipe graph on web, and

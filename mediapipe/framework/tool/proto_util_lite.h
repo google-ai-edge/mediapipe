@@ -15,12 +15,12 @@
 #ifndef MEDIAPIPE_FRAMEWORK_TOOL_PROTO_UTIL_LITE_H_
 #define MEDIAPIPE_FRAMEWORK_TOOL_PROTO_UTIL_LITE_H_
 
+#include <cstdint>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "mediapipe/framework/port/advanced_proto_lite_inc.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/proto_ns.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/tool/field_data.pb.h"
@@ -67,7 +67,7 @@ class ProtoUtilLite {
   class FieldAccess {
    public:
     // Provides access to a certain protobuf field.
-    FieldAccess(uint32 field_id, FieldType field_type);
+    FieldAccess(uint32_t field_id, FieldType field_type);
 
     // Specifies the original serialized protobuf message.
     absl::Status SetMessage(const FieldValue& message);
@@ -78,10 +78,10 @@ class ProtoUtilLite {
     // Returns the serialized values of the protobuf field.
     std::vector<FieldValue>* mutable_field_values();
 
-    uint32 field_id() const { return field_id_; }
+    uint32_t field_id() const { return field_id_; }
 
    private:
-    uint32 field_id_;
+    uint32_t field_id_;
     FieldType field_type_;
     std::string message_;
     std::vector<FieldValue> field_values_;

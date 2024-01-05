@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {assertNotNull, MPImageShaderContext} from '../../../../tasks/web/vision/core/image_shader_context';
+import {assertExists, MPImageShaderContext} from '../../../../tasks/web/vision/core/image_shader_context';
 import {ImageSource} from '../../../../web/graph_runner/graph_runner';
 
 /**
@@ -159,13 +159,13 @@ export class CategoryMaskShaderContext extends MPImageShaderContext {
   protected override setupShaders(): void {
     super.setupShaders();
     const gl = this.gl!;
-    this.backgroundTextureUniform = assertNotNull(
+    this.backgroundTextureUniform = assertExists(
         gl.getUniformLocation(this.program!, 'backgroundTexture'),
         'Uniform location');
-    this.colorMappingTextureUniform = assertNotNull(
+    this.colorMappingTextureUniform = assertExists(
         gl.getUniformLocation(this.program!, 'colorMappingTexture'),
         'Uniform location');
-    this.maskTextureUniform = assertNotNull(
+    this.maskTextureUniform = assertExists(
         gl.getUniformLocation(this.program!, 'maskTexture'),
         'Uniform location');
   }

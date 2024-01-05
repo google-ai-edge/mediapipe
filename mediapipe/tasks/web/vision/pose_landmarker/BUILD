@@ -19,6 +19,7 @@ mediapipe_ts_library(
     visibility = ["//visibility:public"],
     deps = [
         ":pose_landmarker_types",
+        ":pose_landmarks_connections",
         "//mediapipe/framework:calculator_jspb_proto",
         "//mediapipe/framework:calculator_options_jspb_proto",
         "//mediapipe/framework/formats:landmark_jspb_proto",
@@ -32,7 +33,6 @@ mediapipe_ts_library(
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/vision/core:image_processing_options",
         "//mediapipe/tasks/web/vision/core:mask",
-        "//mediapipe/tasks/web/vision/core:types",
         "//mediapipe/tasks/web/vision/core:vision_task_runner",
         "//mediapipe/web/graph_runner:graph_runner_ts",
     ],
@@ -66,4 +66,10 @@ jasmine_node_test(
     name = "pose_landmarker_test",
     tags = ["nomsan"],
     deps = [":pose_landmarker_test_lib"],
+)
+
+mediapipe_ts_library(
+    name = "pose_landmarks_connections",
+    srcs = ["pose_landmarks_connections.ts"],
+    deps = ["//mediapipe/tasks/web/vision/core:types"],
 )

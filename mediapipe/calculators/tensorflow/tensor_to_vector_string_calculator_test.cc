@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cstdint>
+
 #include "mediapipe/calculators/tensorflow/tensor_to_vector_string_calculator_options.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
@@ -44,7 +46,7 @@ class TensorToVectorStringCalculatorTest : public ::testing::Test {
 
 TEST_F(TensorToVectorStringCalculatorTest, ConvertsToVectorFloat) {
   SetUpRunner(false, false);
-  const tf::TensorShape tensor_shape(std::vector<tf::int64>{5});
+  const tf::TensorShape tensor_shape(std::vector<int64_t>{5});
   auto tensor = absl::make_unique<tf::Tensor>(tf::DT_STRING, tensor_shape);
   auto tensor_vec = tensor->vec<tensorflow::tstring>();
   for (int i = 0; i < 5; ++i) {
@@ -72,7 +74,7 @@ TEST_F(TensorToVectorStringCalculatorTest, ConvertsToVectorFloat) {
 
 TEST_F(TensorToVectorStringCalculatorTest, ConvertsBatchedToVectorVectorFloat) {
   SetUpRunner(true, false);
-  const tf::TensorShape tensor_shape(std::vector<tf::int64>{1, 5});
+  const tf::TensorShape tensor_shape(std::vector<int64_t>{1, 5});
   auto tensor = absl::make_unique<tf::Tensor>(tf::DT_STRING, tensor_shape);
   auto slice = tensor->Slice(0, 1).flat<tensorflow::tstring>();
   for (int i = 0; i < 5; ++i) {
@@ -101,7 +103,7 @@ TEST_F(TensorToVectorStringCalculatorTest, ConvertsBatchedToVectorVectorFloat) {
 
 TEST_F(TensorToVectorStringCalculatorTest, FlattenShouldTakeAllDimensions) {
   SetUpRunner(false, true);
-  const tf::TensorShape tensor_shape(std::vector<tf::int64>{2, 2, 2});
+  const tf::TensorShape tensor_shape(std::vector<int64_t>{2, 2, 2});
   auto tensor = absl::make_unique<tf::Tensor>(tf::DT_STRING, tensor_shape);
   auto slice = tensor->flat<tensorflow::tstring>();
   for (int i = 0; i < 2 * 2 * 2; ++i) {

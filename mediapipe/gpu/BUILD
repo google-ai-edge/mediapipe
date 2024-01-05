@@ -196,6 +196,7 @@ cc_library(
         ":gpu_buffer_format",
         "//mediapipe/framework:executor",
         "//mediapipe/framework:mediapipe_profiling",
+        "//mediapipe/framework:port",
         "//mediapipe/framework:timestamp",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:ret_check",
@@ -209,6 +210,7 @@ cc_library(
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/synchronization",
     ] + select({
         "//conditions:default": [],

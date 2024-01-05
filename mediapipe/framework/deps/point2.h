@@ -129,7 +129,7 @@ class Point2 {
   Coords c_;  // coordinates
 };
 
-typedef Point2<uint8> Point2_b;
+typedef Point2<uint8_t> Point2_b;
 typedef Point2<int> Point2_i;
 typedef Point2<float> Point2_f;
 typedef Point2<double> Point2_d;

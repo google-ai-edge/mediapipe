@@ -156,6 +156,27 @@ cc_library(
 )
 
 cc_library(
+    name = "hardware_buffer",
+    srcs = ["hardware_buffer_android.cc"],
+    hdrs = ["hardware_buffer.h"],
+    linkopts = select({
+        "//conditions:default": [],
+        # Option for vendor binaries to avoid linking libandroid.so.
+        "//mediapipe/framework:android_no_jni": [],
+        "//mediapipe:android": ["-landroid"],
+        ":android_link_native_window": [
+            "-lnativewindow",  # Provides <android/hardware_buffer.h> to vendor binaries on Android API >= 26.
+        ],
+    }),
+    visibility = ["//visibility:private"],
+    deps = [
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:statusor",
+        "@com_google_absl//absl/log:absl_check",
+    ],
+)
+
+cc_library(
     name = "image_frame",
     srcs = ["image_frame.cc"],
     hdrs = ["image_frame.h"],
@@ -493,28 +514,31 @@ cc_library(
         "//conditions:default": [],
         # Option for vendor binaries to avoid linking libandroid.so.
         "//mediapipe/framework:android_no_jni": [],
-        "//mediapipe:android": ["-landroid"],
-        ":android_link_native_window": [
-            "-lnativewindow",  # Provides <android/hardware_buffer.h> to vendor binaries on Android API >= 26.
-        ],
     }),
     deps = [
-               "//mediapipe/framework:port",
-               "@com_google_absl//absl/container:flat_hash_map",
-               "@com_google_absl//absl/log:absl_check",
-               "@com_google_absl//absl/log:absl_log",
-               "@com_google_absl//absl/memory",
-               "@com_google_absl//absl/synchronization",
-           ] + select({
-               "//mediapipe/gpu:disable_gpu": [],
-               "//conditions:default": [
-                   "//mediapipe/gpu:gl_base",
-                   "//mediapipe/gpu:gl_context",
-               ],
-           }) +
-           select({
-               "//conditions:default": [],
-           }),
+        "//mediapipe/framework:port",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/synchronization",
+    ] + select({
+        "//mediapipe/gpu:disable_gpu": [],
+        "//conditions:default": [
+            "//mediapipe/gpu:gl_base",
+            "//mediapipe/gpu:gl_context",
+        ],
+        "//mediapipe:android": [
+            ":hardware_buffer",
+            "//mediapipe/gpu:gl_base",
+            "//mediapipe/gpu:gl_context",
+        ],
+        ":android_link_native_window": [
+            ":hardware_buffer",
+            "//mediapipe/gpu:gl_base",
+            "//mediapipe/gpu:gl_context",
+        ],
+    }),
 )
 
 cc_test(

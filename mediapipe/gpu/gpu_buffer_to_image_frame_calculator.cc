@@ -105,7 +105,6 @@ absl::Status GpuBufferToImageFrameCalculator::Process(CalculatorContext* cc) {
                                                         helper_.GetGlVersion());
       glReadPixels(0, 0, src.width(), src.height(), info.gl_format,
                    info.gl_type, frame->MutablePixelData());
-      glFlush();
       cc->Outputs().Index(0).Add(frame.release(), cc->InputTimestamp());
       src.Release();
     });

@@ -16,6 +16,7 @@
 #define MEDIAPIPE_FRAMEWORK_SCHEDULER_SHARED_H_
 
 #include <atomic>
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <queue>
@@ -25,7 +26,6 @@
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/deps/clock.h"
 #include "mediapipe/framework/deps/monotonic_clock.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
@@ -34,9 +34,9 @@ namespace internal {
 // This is meant for testing purposes only.
 struct SchedulerTimes {
   // Total run time measured by the scheduler, in microseconds.
-  int64 total_time;
+  int64_t total_time;
   // Total time spent running nodes, in microseconds.
-  int64 node_time;
+  int64_t node_time;
   // The fraction of total time which was not spent running nodes. Only valid
   // when the graph is run on a single thread.
   double overhead() const {
@@ -69,9 +69,9 @@ class SchedulerTimer {
   }
 
   // Called immediately before invoking ProcessNode or CloseNode.
-  int64 StartNode() { return absl::ToUnixMicros(clock_->TimeNow()); }
+  int64_t StartNode() { return absl::ToUnixMicros(clock_->TimeNow()); }
   // Called immediately after invoking ProcessNode or CloseNode.
-  void EndNode(int64 node_start_time) {
+  void EndNode(int64_t node_start_time) {
     total_node_time_.fetch_add(
         absl::ToUnixMicros(clock_->TimeNow()) - node_start_time,
         std::memory_order_relaxed);
@@ -89,12 +89,12 @@ class SchedulerTimer {
   std::unique_ptr<mediapipe::Clock> clock_;
 
   // Time spent actually running nodes, in microseconds.
-  std::atomic<int64> total_node_time_;
+  std::atomic<int64_t> total_node_time_;
 
   // The start time of the graph, in microseconds.
-  int64 start_time_;
+  int64_t start_time_;
   // Total time spent running the graph, in microseconds.
-  int64 total_run_time_;
+  int64_t total_run_time_;
 };
 
 struct SchedulerShared {

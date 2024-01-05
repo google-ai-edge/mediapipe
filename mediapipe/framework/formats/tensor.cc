@@ -24,6 +24,9 @@
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
 #include "mediapipe/gpu/gl_base.h"
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
+#ifdef MEDIAPIPE_TENSOR_USE_AHWB
+#include "mediapipe/framework/formats/hardware_buffer.h"
+#endif  // MEDIAPIPE_TENSOR_USE_AHWB
 
 #if MEDIAPIPE_METAL_ENABLED
 #import <Metal/Metal.h>
@@ -339,6 +342,14 @@ Tensor::OpenGlBufferView Tensor::GetOpenGlBufferReadView() const {
       << "Tensor conversion between different GPU backing formats is not "
          "supported yet.";
   auto lock(absl::make_unique<absl::MutexLock>(&view_mutex_));
+  if ((valid_ & kValidOpenGlBuffer) && gl_context_ != nullptr &&
+      !gl_context_->IsCurrent() && GlContext::IsAnyContextCurrent()) {
+    ABSL_LOG_FIRST_N(WARNING, 1)
+        << "Tensor::GetOpenGlBufferReadView is not executed on the same GL "
+           "context where GL buffer was created. Note that Tensor has "
+           "limited synchronization support when sharing OpenGl objects "
+           "between multiple OpenGL contexts.";
+  }
   AllocateOpenGlBuffer();
   if (!(valid_ & kValidOpenGlBuffer)) {
     // If the call succeeds then AHWB -> SSBO are synchronized so any usage of
@@ -356,7 +367,13 @@ Tensor::OpenGlBufferView Tensor::GetOpenGlBufferReadView() const {
   }
   return {opengl_buffer_, std::move(lock),
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
-          &ssbo_read_
+          // ssbo_read_ is passed to be populated on OpenGlBufferView
+          // destruction in order to perform delayed resources releasing (see
+          // tensor_ahwb.cc/DelayedReleaser) only when AHWB is in use.
+          //
+          // Not passing for the case when AHWB is not in use to avoid creation
+          // of unnecessary sync object and memory leak.
+          use_ahwb_ ? &ssbo_read_ : nullptr
 #else
           nullptr
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
@@ -367,6 +384,14 @@ Tensor::OpenGlBufferView Tensor::GetOpenGlBufferWriteView(
     uint64_t source_location_hash) const {
   auto lock(absl::make_unique<absl::MutexLock>(&view_mutex_));
   TrackAhwbUsage(source_location_hash);
+  if ((valid_ & kValidOpenGlBuffer) && gl_context_ != nullptr &&
+      !gl_context_->IsCurrent() && GlContext::IsAnyContextCurrent()) {
+    ABSL_LOG_FIRST_N(WARNING, 1)
+        << "Tensor::GetOpenGlBufferWriteView is not executed on the same GL "
+           "context where GL buffer was created. Note that Tensor has "
+           "limited synchronization support when sharing OpenGl objects "
+           "between multiple OpenGL contexts.";
+  }
   AllocateOpenGlBuffer();
   valid_ = kValidOpenGlBuffer;
   return {opengl_buffer_, std::move(lock), nullptr};
@@ -536,9 +561,8 @@ Tensor::CpuReadView Tensor::GetCpuReadView() const {
     void* ptr = MapAhwbToCpuRead();
     if (ptr) {
       valid_ |= kValidCpu;
-      return {ptr, std::move(lock), [ahwb = ahwb_] {
-                auto error = AHardwareBuffer_unlock(ahwb, nullptr);
-                ABSL_CHECK(error == 0) << "AHardwareBuffer_unlock " << error;
+      return {ptr, std::move(lock), [ahwb = ahwb_.get()] {
+                ABSL_CHECK_OK(ahwb->Unlock()) << "Unlock failed.";
               }};
     }
   }
@@ -620,9 +644,11 @@ Tensor::CpuWriteView Tensor::GetCpuWriteView(
   if (__builtin_available(android 26, *)) {
     void* ptr = MapAhwbToCpuWrite();
     if (ptr) {
-      return {ptr, std::move(lock), [ahwb = ahwb_, fence_fd = &fence_fd_] {
-                auto error = AHardwareBuffer_unlock(ahwb, fence_fd);
-                ABSL_CHECK(error == 0) << "AHardwareBuffer_unlock " << error;
+      return {ptr, std::move(lock),
+              [ahwb = ahwb_.get(), fence_fd = &fence_fd_] {
+                auto fence_fd_status = ahwb->UnlockAsync();
+                ABSL_CHECK_OK(fence_fd_status) << "Unlock failed.";
+                *fence_fd = fence_fd_status.value();
               }};
     }
   }

@@ -15,6 +15,7 @@
 #ifndef MEDIAPIPE_FRAMEWORK_INPUT_STREAM_MANAGER_H_
 #define MEDIAPIPE_FRAMEWORK_INPUT_STREAM_MANAGER_H_
 
+#include <cstdint>
 #include <deque>
 #include <functional>
 #include <list>
@@ -25,7 +26,6 @@
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/packet_type.h"
 #include "mediapipe/framework/port.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/timestamp.h"
 
@@ -199,7 +199,7 @@ class InputStreamManager {
   std::deque<Packet> queue_ ABSL_GUARDED_BY(stream_mutex_);
   // The number of packets added to queue_.  Used to verify a packet at
   // Timestamp::PostStream() is the only Packet in the stream.
-  int64 num_packets_added_ ABSL_GUARDED_BY(stream_mutex_);
+  int64_t num_packets_added_ ABSL_GUARDED_BY(stream_mutex_);
   Timestamp next_timestamp_bound_ ABSL_GUARDED_BY(stream_mutex_);
   // The |timestamp| argument passed to the last SelectAtTimestamp() call.
   // Ignored if enable_timestamps_ is false.

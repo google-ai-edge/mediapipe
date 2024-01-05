@@ -14,6 +14,8 @@
 
 #include "mediapipe/objc/util.h"
 
+#include <cstdint>
+
 #include "absl/base/macros.h"
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
@@ -639,7 +641,7 @@ std::unique_ptr<mediapipe::ImageFrame> CreateImageFrameForCVPixelBuffer(
   } else {
     frame = absl::make_unique<mediapipe::ImageFrame>(
         image_format, width, height, bytes_per_row,
-        reinterpret_cast<uint8*>(base_address), [image_buffer](uint8* x) {
+        reinterpret_cast<uint8_t*>(base_address), [image_buffer](uint8_t* x) {
           CVPixelBufferUnlockBaseAddress(image_buffer,
                                          kCVPixelBufferLock_ReadOnly);
           CVPixelBufferRelease(image_buffer);

@@ -116,6 +116,82 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
   [self assertResultsOfDetectLanguageOfText:ruText
                                usingLanguageDetector:languageDetector
       approximatelyEqualsExpectedLanguagePredictions:expectedRuLanguagePredictions];
+
+  NSString *zhText = @"分久必合合久必分";
+  NSArray<MPPLanguagePrediction *> *expectedZhLanguagePredictions = @[
+    [[MPPLanguagePrediction alloc] initWithLanguageCode:@"zh" probability:0.505424f],
+    [[MPPLanguagePrediction alloc] initWithLanguageCode:@"ja" probability:0.481617f]
+  ];
+
+  [self assertResultsOfDetectLanguageOfText:zhText
+                               usingLanguageDetector:languageDetector
+      approximatelyEqualsExpectedLanguagePredictions:expectedZhLanguagePredictions];
+}
+
+- (void)testClassifyWithMaxResultsSucceeds {
+  MPPLanguageDetectorOptions *options =
+      [self languageDetectorOptionsWithModelFileInfo:kLanguageDetectorModelFileInfo];
+  options.maxResults = 1;
+  MPPLanguageDetector *languageDetector = [self createLanguageDetectorWithOptionsSucceeds:options];
+
+  NSString *zhText = @"分久必合合久必分";
+  NSArray<MPPLanguagePrediction *> *expectedZhLanguagePredictions = @[
+    [[MPPLanguagePrediction alloc] initWithLanguageCode:@"zh" probability:0.505424f],
+  ];
+
+  [self assertResultsOfDetectLanguageOfText:zhText
+                               usingLanguageDetector:languageDetector
+      approximatelyEqualsExpectedLanguagePredictions:expectedZhLanguagePredictions];
+}
+
+- (void)testClassifyWithScoreThresholdSucceeds {
+  MPPLanguageDetectorOptions *options =
+      [self languageDetectorOptionsWithModelFileInfo:kLanguageDetectorModelFileInfo];
+  options.scoreThreshold = 0.5f;
+  MPPLanguageDetector *languageDetector = [self createLanguageDetectorWithOptionsSucceeds:options];
+
+  NSString *zhText = @"分久必合合久必分";
+  NSArray<MPPLanguagePrediction *> *expectedZhLanguagePredictions = @[
+    [[MPPLanguagePrediction alloc] initWithLanguageCode:@"zh" probability:0.505424f],
+  ];
+
+  [self assertResultsOfDetectLanguageOfText:zhText
+                               usingLanguageDetector:languageDetector
+      approximatelyEqualsExpectedLanguagePredictions:expectedZhLanguagePredictions];
+}
+
+- (void)testClassifyWithCategoryAllowListSucceeds {
+  MPPLanguageDetectorOptions *options =
+      [self languageDetectorOptionsWithModelFileInfo:kLanguageDetectorModelFileInfo];
+  options.categoryAllowlist = @[ @"zh" ];
+
+  MPPLanguageDetector *languageDetector = [self createLanguageDetectorWithOptionsSucceeds:options];
+
+  NSString *zhText = @"分久必合合久必分";
+  NSArray<MPPLanguagePrediction *> *expectedZhLanguagePredictions = @[
+    [[MPPLanguagePrediction alloc] initWithLanguageCode:@"zh" probability:0.505424f],
+  ];
+
+  [self assertResultsOfDetectLanguageOfText:zhText
+                               usingLanguageDetector:languageDetector
+      approximatelyEqualsExpectedLanguagePredictions:expectedZhLanguagePredictions];
+}
+
+- (void)testClassifyWithCategoryDenyListSucceeds {
+  MPPLanguageDetectorOptions *options =
+      [self languageDetectorOptionsWithModelFileInfo:kLanguageDetectorModelFileInfo];
+  options.categoryDenylist = @[ @"zh" ];
+
+  MPPLanguageDetector *languageDetector = [self createLanguageDetectorWithOptionsSucceeds:options];
+
+  NSString *zhText = @"分久必合合久必分";
+  NSArray<MPPLanguagePrediction *> *expectedZhLanguagePredictions = @[
+    [[MPPLanguagePrediction alloc] initWithLanguageCode:@"ja" probability:0.481617f],
+  ];
+
+  [self assertResultsOfDetectLanguageOfText:zhText
+                               usingLanguageDetector:languageDetector
+      approximatelyEqualsExpectedLanguagePredictions:expectedZhLanguagePredictions];
 }
 
 #pragma mark Assert Segmenter Results
@@ -125,6 +201,8 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
         (NSArray<MPPLanguagePrediction *> *)expectedLanguagePredictions {
   MPPLanguageDetectorResult *result = [languageDetector detectText:text error:nil];
   XCTAssertNotNil(result);
+
+  XCTAssertEqual(result.languagePredictions.count, expectedLanguagePredictions.count);
   XCTAssertEqualWithAccuracy(result.languagePredictions[0].probability,
                              expectedLanguagePredictions[0].probability, 1e-3);
   XCTAssertEqualObjects(result.languagePredictions[0].languageCode,

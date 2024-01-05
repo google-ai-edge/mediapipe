@@ -17,9 +17,24 @@
 
 #include <stdio.h>
 
+#include <utility>
+
 #include "absl/log/absl_log.h"
 
 namespace mediapipe {
+
+DeletingFile::DeletingFile(DeletingFile&& other)
+    : path_(std::move(other.path_)),
+      delete_on_destruction_(other.delete_on_destruction_) {
+  other.delete_on_destruction_ = false;
+}
+
+DeletingFile& DeletingFile::operator=(DeletingFile&& other) {
+  path_ = std::move(other.path_);
+  delete_on_destruction_ = other.delete_on_destruction_;
+  other.delete_on_destruction_ = false;
+  return *this;
+}
 
 DeletingFile::DeletingFile(const std::string& path, bool delete_on_destruction)
     : path_(path), delete_on_destruction_(delete_on_destruction) {}

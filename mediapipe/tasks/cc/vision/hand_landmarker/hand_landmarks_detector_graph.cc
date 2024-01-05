@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#include <cstdint>
 #include <utility>
 #include <vector>
 
@@ -55,7 +56,7 @@ using ::mediapipe::api2::builder::Source;
 using ::mediapipe::tasks::components::utils::AllowIf;
 using ::mediapipe::tasks::vision::hand_landmarker::proto::
     HandLandmarksDetectorGraphOptions;
-using LabelItems = mediapipe::proto_ns::Map<int64, ::mediapipe::LabelMapItem>;
+using LabelItems = mediapipe::proto_ns::Map<int64_t, ::mediapipe::LabelMapItem>;
 
 constexpr char kImageTag[] = "IMAGE";
 constexpr char kHandRectTag[] = "HAND_RECT";
