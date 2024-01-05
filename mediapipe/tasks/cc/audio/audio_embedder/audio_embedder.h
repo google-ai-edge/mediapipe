@@ -121,7 +121,7 @@ class AudioEmbedder : core::BaseAudioTaskApi {
   // into multiple chunks. For this reason, the callback may be called multiple
   // times (once per chunk) for each call to this function.
   absl::Status EmbedAsync(Matrix audio_block, double audio_sample_rate,
-                          int64 timestamp_ms);
+                          int64_t timestamp_ms);
 
   // Shuts down the AudioEmbedder when all works are done.
   absl::Status Close() { return runner_->Close(); }

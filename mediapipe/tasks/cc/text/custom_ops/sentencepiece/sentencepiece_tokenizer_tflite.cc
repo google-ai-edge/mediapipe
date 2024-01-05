@@ -15,6 +15,8 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/text/custom_ops/sentencepiece/sentencepiece_tokenizer_tflite.h"
 
+#include <cstdint>
+
 #include "flatbuffers/flexbuffers.h"
 #include "mediapipe/tasks/cc/text/custom_ops/sentencepiece/optimized_encoder.h"
 #include "tensorflow/lite/c/common.h"
@@ -85,8 +87,8 @@ TfLiteStatus Eval(TfLiteContext* context, TfLiteNode* node) {
       context->tensors[node->inputs->data[kReverseInput]];
   const bool reverse = reverse_tensor.data.b[0];
 
-  std::vector<int32> encoded;
-  std::vector<int32> splits;
+  std::vector<int32_t> encoded;
+  std::vector<int32_t> splits;
   const int num_strings = tflite::GetStringCount(&input_text);
   for (int i = 0; i < num_strings; ++i) {
     const auto strref = tflite::GetString(&input_text, i);
