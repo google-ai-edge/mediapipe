@@ -1,10 +1,11 @@
 #include "mediapipe/util/filtering/one_euro_filter.h"
 
 #include <cmath>
+#include <cstdint>
+#include <limits>
 
 #include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/util/filtering/low_pass_filter.h"
 
 namespace mediapipe {
@@ -19,7 +20,7 @@ OneEuroFilter::OneEuroFilter(double frequency, double min_cutoff, double beta,
   SetDerivateCutoff(derivate_cutoff);
   x_ = absl::make_unique<LowPassFilter>(GetAlpha(min_cutoff));
   dx_ = absl::make_unique<LowPassFilter>(GetAlpha(derivate_cutoff));
-  last_time_ = kint64min;
+  last_time_ = std::numeric_limits<int64_t>::min();
 }
 
 double OneEuroFilter::Apply(absl::Duration timestamp, double value_scale,
