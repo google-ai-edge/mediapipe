@@ -20,7 +20,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface MPPImageEmbedderResult (Helpers)
 
-+ (MPPImageEmbedderResult *)imageEmbedderResultWithOutputPacket:(const mediapipe::Packet &)packet;
++ (MPPImageEmbedderResult *)imageEmbedderResultWithEmbeddingResultPacket:
+    (const mediapipe::Packet &)packet;
 
 @end
 
