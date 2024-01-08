@@ -23,7 +23,7 @@
 
 #include "mediapipe/framework/port/gtest.h"
 
-#include <adapters/inference_adapter.h>  // TODO fix path  model_api/model_api/cpp/adapters/include/adapters/inference_adapter.h
+#include <adapters/inference_adapter.h>  // model_api/model_api/cpp/adapters/include/adapters/inference_adapter.h
 #include <openvino/core/shape.hpp>
 #include <openvino/openvino.hpp>
 

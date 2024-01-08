@@ -23,7 +23,7 @@
 #include <utility>
 #include <vector>
 
-#include <adapters/inference_adapter.h>  // TODO fix path  model_api/model_api/cpp/adapters/include/adapters/inference_adapter.h
+#include <adapters/inference_adapter.h>  // model_api/model_api/cpp/adapters/include/adapters/inference_adapter.h
 #include <openvino/openvino.hpp>
 
 // here we need to decide if we have several calculators (1 for OVMS repository, 1-N inside mediapipe)
@@ -37,8 +37,6 @@ namespace ovms {
 using InferenceOutput = std::map<std::string, ov::Tensor>;
 using InferenceInput = std::map<std::string, ov::Tensor>;
 
-// TODO
-// * why std::map
 using shape_border_t = std::vector<int64_t>;
 using shape_min_max_t = std::pair<shape_border_t, shape_border_t>;
 using shapes_min_max_t = std::unordered_map<std::string, shape_min_max_t>;

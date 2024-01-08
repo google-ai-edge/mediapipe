@@ -29,5 +29,7 @@ message OpenVINOModelServerSessionCalculatorOptions {
     optional string servable_version = 2;
     // service_url: "13.21.212.171:9718"
     optional string service_url = 3;
+    // config_path: "/models/config.json"
+    // when this field is used ensure that each calculator is using the same file
     optional string server_config = 4;
 }

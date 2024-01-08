@@ -20,7 +20,7 @@
 #include <sstream>
 #include <unordered_map>
 
-#include <adapters/inference_adapter.h>  // TODO fix path  model_api/model_api/cpp/adapters/include/adapters/inference_adapter.h
+#include <adapters/inference_adapter.h>  // model_api/model_api/cpp/adapters/include/adapters/inference_adapter.h
 #include <openvino/core/shape.hpp>
 #include <openvino/openvino.hpp>
 
@@ -317,7 +317,7 @@ static ov::Tensor convertTFLiteTensor2OVTensor(const TfLiteTensor& t) {
     ov::Shape shape;
     // for some reason TfLite tensor does not have bs dim
     shape.emplace_back(1);
-    // TODO: Support scalars and no data tensors with 0-dim
+    // No support for scalars and no data tensors with 0-dim
     for (int i = 0; i < t.dims->size; ++i) {
         shape.emplace_back(t.dims->data[i]);
     }
@@ -570,7 +570,6 @@ public:
                 cc->Outputs().Tag(tag).Add(
                     tensors.release(),
                     cc->InputTimestamp());
-                //break; // TODO FIXME order of outputs
                 // no need to break since we only have one tag
                 // create concatenator calc
             } else if (startsWith(tag, MPTENSORS_TAG)) {
@@ -599,11 +598,9 @@ public:
                 cc->Outputs().Tag(tag).Add(
                     tensors.release(),
                     cc->InputTimestamp());
-                //break; // TODO FIXME order of outputs
                 // no need to break since we only have one tag
                 // create concatenator calc
             } else if (startsWith(tag, TFLITE_TENSORS_TAG)) {
-                // TODO FIXME use output_order_list
                 LOG(INFO) << "OVMS calculator will process vector<TfLiteTensor>";
                 auto outputStreamTensors = std::vector<TfLiteTensor>();
                 if (!this->initialized) {
@@ -619,7 +616,7 @@ public:
                         }
                         interpreter_->SetTensorParametersReadWrite(
                                         tensorId,
-                                        kTfLiteFloat32, // TODO datatype
+                                        kTfLiteFloat32,
                                         name.c_str(),
                                         tfliteshape,
                                         TfLiteQuantization());

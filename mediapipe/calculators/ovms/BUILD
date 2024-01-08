@@ -47,7 +47,7 @@ cc_library(
         "modelapiovmsadapter.hpp"
     ],
     deps = [
-        "//mediapipe/framework/port:logging", # TODO remove logs but need better error handling/reporting in Model API
+        "//mediapipe/framework/port:logging",
         "@ovms//src:ovms_header",
         "@model_api//:model_api",
         "@linux_openvino//:openvino",
@@ -145,8 +145,8 @@ cc_test(
         "test_data/config.json",
         "test_data/dummy/1/dummy.bin",
         "test_data/dummy/1/dummy.xml",
-        "test_data/add_two_inputs_model/1/dummy.bin",
-        "test_data/add_two_inputs_model/1/dummy.xml",
+        "test_data/add_two_inputs_model/1/add.bin",
+        "test_data/add_two_inputs_model/1/add.xml",
     ],
     copts = ["-Iexternal/ovms/src","-Isrc"],
 )
