@@ -245,12 +245,13 @@ absl::StatusOr<HolisticFaceTrackingOutput> TrackHolisticFace(
   // Sets previous landmarks for ROI tracking.
   set_prev_landmarks_fn(landmarks_detection_result.landmarks.value());
 
-  return {{.landmarks = landmarks_detection_result.landmarks,
-           .classifications = landmarks_detection_result.classifications,
-           .debug_output = {
-               .roi_from_pose = roi_from_pose,
-               .roi_from_detection = roi_from_detection,
-               .tracking_roi = tracking_roi,
+  return {{/*landmarks=*/landmarks_detection_result.landmarks,
+           /*classifications=*/landmarks_detection_result.classifications,
+           /*debug_output=*/
+           {
+               /*roi_from_pose=*/roi_from_pose,
+               /*roi_from_detection=*/roi_from_detection,
+               /*tracking_roi=*/tracking_roi,
            }}};
 }
 

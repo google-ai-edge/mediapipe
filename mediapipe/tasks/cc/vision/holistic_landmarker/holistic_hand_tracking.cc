@@ -257,12 +257,13 @@ absl::StatusOr<HolisticHandTrackingOutput> TrackHolisticHand(
         pose_indices.wrist_idx, graph);
   }
 
-  return {{.landmarks = hand_landmarks,
-           .world_landmarks = hand_world_landmarks,
-           .debug_output = {
-               .roi_from_pose = roi_from_pose,
-               .roi_from_recrop = roi_from_recrop,
-               .tracking_roi = tracking_roi,
+  return {{/*landmarks=*/hand_landmarks,
+           /*world_landmarks=*/hand_world_landmarks,
+           /*debug_output=*/
+           {
+               /*roi_from_pose=*/roi_from_pose,
+               /*roi_from_recrop=*/roi_from_recrop,
+               /*tracking_roi=*/tracking_roi,
            }}};
 }
 
