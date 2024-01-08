@@ -16,6 +16,7 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_CC_CORE_EXTERNAL_FILE_HANDLER_H_
 #define MEDIAPIPE_TASKS_CC_CORE_EXTERNAL_FILE_HANDLER_H_
 
+#include <cstdint>
 #include <memory>
 
 #include "absl/status/status.h"

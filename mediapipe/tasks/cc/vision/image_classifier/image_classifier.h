@@ -16,6 +16,7 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_CC_VISION_IMAGE_CLASSIFIER_IMAGE_CLASSIFIER_H_
 #define MEDIAPIPE_TASKS_CC_VISION_IMAGE_CLASSIFIER_IMAGE_CLASSIFIER_H_
 
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <optional>

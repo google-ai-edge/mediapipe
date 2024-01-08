@@ -16,6 +16,7 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_CC_AUDIO_AUDIO_CLASSIFIER_AUDIO_CLASSIFIER_H_
 #define MEDIAPIPE_TASKS_CC_AUDIO_AUDIO_CLASSIFIER_AUDIO_CLASSIFIER_H_
 
+#include <cstdint>
 #include <memory>
 #include <utility>
 #include <vector>
