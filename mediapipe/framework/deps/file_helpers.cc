@@ -28,7 +28,9 @@
 #include <sys/stat.h>
 
 #include <cerrno>
+#include <string>
 
+#include "absl/status/status.h"
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/status.h"
@@ -246,6 +248,24 @@ absl::Status Exists(absl::string_view file_name) {
   switch (errno) {
     case EACCES:
       return mediapipe::PermissionDeniedError("Insufficient permissions.");
+    default:
+      return absl::NotFoundError("The path does not exist.");
+  }
+}
+
+absl::Status IsDirectory(absl::string_view file_name) {
+  struct stat buffer;
+  int status;
+  status = stat(std::string(file_name).c_str(), &buffer);
+  if (status == 0) {
+    if ((buffer.st_mode & S_IFMT) == S_IFDIR) {
+      return absl::OkStatus();
+    }
+    return absl::FailedPreconditionError("The path is not a directory.");
+  }
+  switch (errno) {
+    case EACCES:
+      return absl::PermissionDeniedError("Insufficient permissions.");
     default:
       return absl::NotFoundError("The path does not exist.");
   }

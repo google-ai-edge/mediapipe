@@ -117,6 +117,7 @@ cc_library(
     deps = [
         ":file_path",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
 )

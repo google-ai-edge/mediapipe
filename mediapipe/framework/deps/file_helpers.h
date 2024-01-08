@@ -36,6 +36,8 @@ absl::Status MatchFileTypeInDirectory(const std::string& directory,
 
 absl::Status Exists(absl::string_view file_name);
 
+absl::Status IsDirectory(absl::string_view file_name);
+
 absl::Status RecursivelyCreateDir(absl::string_view path);
 
 }  // namespace file
