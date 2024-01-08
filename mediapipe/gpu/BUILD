@@ -522,6 +522,7 @@ cc_library(
         ":image_frame_view",
         "//mediapipe/framework:port",
         "//mediapipe/framework/formats:ahwb_view",
+        "//mediapipe/framework/formats:hardware_buffer",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/port:ret_check",
         "//third_party/GL:EGL_headers",

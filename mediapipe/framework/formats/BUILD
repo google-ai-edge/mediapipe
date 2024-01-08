@@ -128,6 +128,7 @@ cc_library(
     name = "ahwb_view",
     hdrs = ["ahwb_view.h"],
     deps = [
+        ":hardware_buffer",
         "//mediapipe/framework:port",
         "//mediapipe/gpu:gpu_buffer_storage",
     ],
@@ -168,7 +169,7 @@ cc_library(
             "-lnativewindow",  # Provides <android/hardware_buffer.h> to vendor binaries on Android API >= 26.
         ],
     }),
-    visibility = ["//visibility:private"],
+    visibility = ["//mediapipe/gpu:__pkg__"],
     deps = [
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:statusor",

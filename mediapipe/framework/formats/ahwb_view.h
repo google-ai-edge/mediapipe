@@ -3,8 +3,7 @@
 
 #include "mediapipe/framework/port.h"
 #ifdef MEDIAPIPE_GPU_BUFFER_USE_AHWB
-#include <android/hardware_buffer.h>
-
+#include "mediapipe/framework/formats/hardware_buffer.h"
 #include "mediapipe/gpu/gpu_buffer_storage.h"
 
 namespace mediapipe {
@@ -19,7 +18,7 @@ namespace mediapipe {
 // other CPU/GPU uses of AHWBs.
 class AhwbView {
  public:
-  explicit AhwbView(AHardwareBuffer* handle) : handle_(handle) {}
+  explicit AhwbView(HardwareBuffer* ahwb) : ahwb_(ahwb) {}
   // Non-copyable
   AhwbView(const AhwbView&) = delete;
   AhwbView& operator=(const AhwbView&) = delete;
@@ -30,10 +29,12 @@ class AhwbView {
   // accessing the buffer before this view object is destroyed to avoid race
   // conditions.
   // TODO: Support asynchronous usage.
-  const AHardwareBuffer* GetHandle() const { return handle_; }
+  const AHardwareBuffer* GetHandle() const {
+    return ahwb_->GetAHardwareBuffer();
+  }
 
  private:
-  const AHardwareBuffer* handle_;
+  const HardwareBuffer* ahwb_;
 };
 
 namespace internal {

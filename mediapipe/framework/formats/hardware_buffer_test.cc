@@ -24,6 +24,30 @@ HardwareBufferSpec GetTestHardwareBufferSpec(uint32_t size_bytes) {
                    HardwareBufferSpec::AHARDWAREBUFFER_USAGE_GPU_DATA_BUFFER};
 }
 
+TEST(HardwareBufferTest, ShouldConstructFromExistingHardwareBuffer) {
+  AHardwareBuffer* a_hardware_buffer_test = nullptr;
+  const HardwareBufferSpec spec = GetTestHardwareBufferSpec(/*size_bytes=*/123);
+  if (__builtin_available(android 26, *)) {
+    AHardwareBuffer_Desc desc = {
+        .width = spec.width,
+        .height = spec.height,
+        .layers = spec.layers,
+        .format = spec.format,
+        .usage = spec.usage,
+    };
+    const int error = AHardwareBuffer_allocate(&desc, &a_hardware_buffer_test);
+    ABSL_CHECK(!error) << "AHardwareBuffer_allocate failed: " << error;
+  }
+
+  MP_ASSERT_OK_AND_ASSIGN(
+      HardwareBuffer hardware_buffer,
+      HardwareBuffer::WrapAndAquireAHardwareBuffer(a_hardware_buffer_test));
+  EXPECT_TRUE(hardware_buffer.IsValid());
+  EXPECT_FALSE(hardware_buffer.IsLocked());
+  EXPECT_EQ(hardware_buffer.spec(), spec);
+  EXPECT_EQ(hardware_buffer.GetAHardwareBuffer(), a_hardware_buffer_test);
+}
+
 TEST(HardwareBufferTest, ShouldConstructValidAHardwareBuffer) {
   MP_ASSERT_OK_AND_ASSIGN(
       HardwareBuffer hardware_buffer,

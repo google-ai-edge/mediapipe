@@ -87,6 +87,11 @@ class HardwareBuffer {
   // AHardwareBuffer.
   static absl::StatusOr<HardwareBuffer> Create(const HardwareBufferSpec& spec);
 
+  // Constructs a HardwareBuffer instance from an existing Android NDK
+  // AHardwareBuffer.
+  static absl::StatusOr<HardwareBuffer> WrapAndAquireAHardwareBuffer(
+      AHardwareBuffer* ahw_buffer);
+
   // Destructs the HardwareBuffer, releasing the AHardwareBuffer.
   ~HardwareBuffer();
 
@@ -130,7 +135,7 @@ class HardwareBuffer {
   void Reset();
 
   // Ahwb's are aligned to an implementation specific cacheline size.
-  uint32_t GetAlignedWidth() const;
+  absl::StatusOr<uint32_t> GetAlignedWidth() const;
 
   // Returns buffer spec.
   const HardwareBufferSpec& spec() const { return spec_; }
@@ -139,6 +144,11 @@ class HardwareBuffer {
   // Allocates an AHardwareBuffer instance;
   static absl::StatusOr<AHardwareBuffer*> AllocateAHardwareBuffer(
       const HardwareBufferSpec& spec);
+
+  // Aquires an existing AHardwareBuffer instance and returns its
+  // HardwareBufferSpec;
+  static absl::StatusOr<HardwareBufferSpec> AquireAHardwareBuffer(
+      AHardwareBuffer* ahw_buffer);
 
   // Constructs a HardwareBuffer instance from an already aquired
   // AHardwareBuffer instance and its spec.
