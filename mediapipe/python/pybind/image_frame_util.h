@@ -95,10 +95,10 @@ py::array GenerateContiguousDataArrayHelper(const ImageFrame& image_frame,
 inline py::array GenerateContiguousDataArray(const ImageFrame& image_frame,
                                              const py::object& py_object) {
   switch (image_frame.ChannelSize()) {
-    case sizeof(uint8):
+    case sizeof(uint8_t):
       return GenerateContiguousDataArrayHelper<uint8_t>(image_frame, py_object)
           .cast<py::array>();
-    case sizeof(uint16):
+    case sizeof(uint16_t):
       return GenerateContiguousDataArrayHelper<uint16_t>(image_frame, py_object)
           .cast<py::array>();
     case sizeof(float):

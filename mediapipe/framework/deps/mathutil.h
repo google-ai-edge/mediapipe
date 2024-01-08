@@ -47,7 +47,7 @@ class MathUtil {
   //   Example usage:
   //     double y, z;
   //     int x = Round<int>(y + 3.7);
-  //     int64 b = Round<int64>(0.3 * z);
+  //     int64_t b = Round<int64_t>(0.3 * z);
   //
   //   Note that the floating-point template parameter is typically inferred
   //   from the argument type, i.e. there is no need to specify it explicitly.
@@ -185,7 +185,7 @@ class MathUtil {
   //   rounded.
   //
   //   There are template specializations of Round() which call these
-  //   functions (for "int" and "int64" only), but it's safer to call them
+  //   functions (for "int" and "int64_t" only), but it's safer to call them
   //   directly.
   //   --------------------------------------------------------------------
 
