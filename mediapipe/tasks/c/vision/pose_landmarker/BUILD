@@ -42,14 +42,24 @@ cc_library(
 cc_test(
     name = "pose_landmarker_result_converter_test",
     srcs = ["pose_landmarker_result_converter_test.cc"],
+    data = [
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/port:opencv_core",
+        "//mediapipe/framework/port:opencv_imgproc",
+        "//mediapipe/tasks/testdata/vision:test_images",
+    ],
     linkstatic = 1,
     deps = [
         ":pose_landmarker_result",
         ":pose_landmarker_result_converter",
         "//mediapipe/framework/port:gtest",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/deps:file_path",
         "//mediapipe/tasks/c/components/containers:landmark",
         "//mediapipe/tasks/cc/components/containers:landmark",
         "//mediapipe/tasks/cc/vision/pose_landmarker:pose_landmarker_result",
+        "//mediapipe/tasks/cc/vision/utils:image_utils",
         "@com_google_googletest//:gtest_main",
     ],
 )

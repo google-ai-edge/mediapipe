@@ -17,13 +17,23 @@ limitations under the License.
 
 #include <cstdint>
 
+#include "mediapipe/framework/deps/file_path.h"
+#include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/port/gtest.h"
+#include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/tasks/c/components/containers/landmark.h"
 #include "mediapipe/tasks/c/vision/pose_landmarker/pose_landmarker_result.h"
 #include "mediapipe/tasks/cc/components/containers/landmark.h"
 #include "mediapipe/tasks/cc/vision/pose_landmarker/pose_landmarker_result.h"
+#include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 
 namespace mediapipe::tasks::c::components::containers {
+
+using ::mediapipe::file::JoinPath;
+using ::mediapipe::tasks::vision::DecodeImageFromFile;
+
+constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
+constexpr char kMaskImage[] = "segmentation_input_rotation0.jpg";
 
 void InitPoseLandmarkerResult(
     ::mediapipe::tasks::vision::pose_landmarker::PoseLandmarkerResult*
@@ -46,6 +56,17 @@ void InitPoseLandmarkerResult(
   mediapipe::tasks::components::containers::Landmarks cpp_landmarks;
   cpp_landmarks.landmarks.push_back(cpp_landmark);
   cpp_result->pose_world_landmarks.push_back(cpp_landmarks);
+
+  // Initialize segmentation_masks
+  MP_ASSERT_OK_AND_ASSIGN(
+      Image mask_image,
+      DecodeImageFromFile(JoinPath("./", kTestDataDirectory, kMaskImage)));
+
+  // Ensure segmentation_masks is instantiated and add the mask_image to it.
+  if (!cpp_result->segmentation_masks) {
+    cpp_result->segmentation_masks.emplace();
+  }
+  cpp_result->segmentation_masks->push_back(mask_image);
 }
 
 TEST(PoseLandmarkerResultConverterTest, ConvertsCustomResult) {
@@ -102,11 +123,13 @@ TEST(PoseLandmarkerResultConverterTest, FreesMemory) {
 
   EXPECT_NE(c_result.pose_landmarks, nullptr);
   EXPECT_NE(c_result.pose_world_landmarks, nullptr);
+  EXPECT_NE(c_result.segmentation_masks, nullptr);
 
   CppClosePoseLandmarkerResult(&c_result);
 
   EXPECT_EQ(c_result.pose_landmarks, nullptr);
   EXPECT_EQ(c_result.pose_world_landmarks, nullptr);
+  EXPECT_EQ(c_result.segmentation_masks, nullptr);
 }
 
 }  // namespace mediapipe::tasks::c::components::containers

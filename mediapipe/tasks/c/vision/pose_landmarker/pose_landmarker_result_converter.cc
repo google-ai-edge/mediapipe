@@ -78,9 +78,15 @@ void CppConvertToPoseLandmarkerResult(
 
 void CppClosePoseLandmarkerResult(PoseLandmarkerResult* result) {
   if (result->segmentation_masks) {
+    for (uint32_t i = 0; i < result->segmentation_masks_count; ++i) {
+      if (result->segmentation_masks[i].type == MpImage::IMAGE_FRAME) {
+        const uint8_t* buffer =
+            result->segmentation_masks[i].image_frame.image_buffer;
+      }
+      // TODO: Add similar cleanup for GPU_BUFFER later
+    }
     delete[] result->segmentation_masks;
     result->segmentation_masks = nullptr;
-    result->segmentation_masks_count = 0;
   }
 
   for (uint32_t i = 0; i < result->pose_landmarks_count; ++i) {
