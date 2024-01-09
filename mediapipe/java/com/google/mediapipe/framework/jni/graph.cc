@@ -439,8 +439,6 @@ absl::Status Graph::StartRunningGraph(JNIEnv* env) {
   // Running as a synchronized mode, the same Java thread is available
   // throughout the run.
   running_graph_.reset(new CalculatorGraph());
-  // Set the mode for adding packets to graph input streams.
-  running_graph_->SetGraphInputStreamAddMode(graph_input_stream_add_mode_);
   if (VLOG_IS_ON(2)) {
     ABSL_LOG(INFO) << "input packet streams:";
     for (auto& name : graph_config()->input_stream()) {
@@ -475,6 +473,9 @@ absl::Status Graph::StartRunningGraph(JNIEnv* env) {
     running_graph_.reset(nullptr);
     return status;
   }
+  // Set the mode for adding packets to graph input streams.
+  running_graph_->SetGraphInputStreamAddMode(graph_input_stream_add_mode_);
+
   ABSL_LOG(INFO) << "Start running the graph, waiting for inputs.";
   status =
       running_graph_->StartRun(CreateCombinedSidePackets(), stream_headers_);
