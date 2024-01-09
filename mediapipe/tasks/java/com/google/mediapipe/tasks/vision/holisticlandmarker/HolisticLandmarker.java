@@ -196,17 +196,8 @@ public final class HolisticLandmarker extends BaseVisionTaskApi {
         new OutputHandler.OutputPacketConverter<HolisticLandmarkerResult, MPImage>() {
           @Override
           public HolisticLandmarkerResult convertToTaskResult(List<Packet> packets) {
-            // If there are no detected landmarks, just returns empty lists.
-            if (packets.get(FACE_LANDMARKS_OUT_STREAM_INDEX).isEmpty()) {
-              return HolisticLandmarkerResult.createEmpty(
-                  BaseVisionTaskApi.generateResultTimestampMs(
-                      landmarkerOptions.runningMode(),
-                      packets.get(FACE_LANDMARKS_OUT_STREAM_INDEX)));
-            }
-
             NormalizedLandmarkList faceLandmarkProtos =
-                PacketGetter.getProto(
-                    packets.get(FACE_LANDMARKS_OUT_STREAM_INDEX), NormalizedLandmarkList.parser());
+                getNormalizedLandmarkList(packets.get(FACE_LANDMARKS_OUT_STREAM_INDEX));
             Optional<ClassificationList> faceBlendshapeProtos =
                 landmarkerOptions.outputFaceBlendshapes()
                     ? Optional.of(
@@ -215,31 +206,22 @@ public final class HolisticLandmarker extends BaseVisionTaskApi {
                             ClassificationList.parser()))
                     : Optional.empty();
             NormalizedLandmarkList poseLandmarkProtos =
-                PacketGetter.getProto(
-                    packets.get(POSE_LANDMARKS_OUT_STREAM_INDEX), NormalizedLandmarkList.parser());
+                getNormalizedLandmarkList(packets.get(POSE_LANDMARKS_OUT_STREAM_INDEX));
             LandmarkList poseWorldLandmarkProtos =
-                PacketGetter.getProto(
-                    packets.get(POSE_WORLD_LANDMARKS_OUT_STREAM_INDEX), LandmarkList.parser());
+                getLandmarkList(packets.get(POSE_WORLD_LANDMARKS_OUT_STREAM_INDEX));
             Optional<MPImage> segmentationMask =
                 landmarkerOptions.outputPoseSegmentationMasks()
                     ? Optional.of(
                         getSegmentationMask(packets, poseSegmentationMasksOutStreamIndex[0]))
                     : Optional.empty();
             NormalizedLandmarkList leftHandLandmarkProtos =
-                PacketGetter.getProto(
-                    packets.get(LEFT_HAND_LANDMARKS_OUT_STREAM_INDEX),
-                    NormalizedLandmarkList.parser());
+                getNormalizedLandmarkList(packets.get(LEFT_HAND_LANDMARKS_OUT_STREAM_INDEX));
             LandmarkList leftHandWorldLandmarkProtos =
-                PacketGetter.getProto(
-                    packets.get(LEFT_HAND_WORLD_LANDMARKS_OUT_STREAM_INDEX), LandmarkList.parser());
+                getLandmarkList(packets.get(LEFT_HAND_WORLD_LANDMARKS_OUT_STREAM_INDEX));
             NormalizedLandmarkList rightHandLandmarkProtos =
-                PacketGetter.getProto(
-                    packets.get(RIGHT_HAND_LANDMARKS_OUT_STREAM_INDEX),
-                    NormalizedLandmarkList.parser());
+                getNormalizedLandmarkList(packets.get(RIGHT_HAND_LANDMARKS_OUT_STREAM_INDEX));
             LandmarkList rightHandWorldLandmarkProtos =
-                PacketGetter.getProto(
-                    packets.get(RIGHT_HAND_WORLD_LANDMARKS_OUT_STREAM_INDEX),
-                    LandmarkList.parser());
+                getLandmarkList(packets.get(RIGHT_HAND_WORLD_LANDMARKS_OUT_STREAM_INDEX));
 
             return HolisticLandmarkerResult.create(
                 faceLandmarkProtos,
@@ -664,5 +646,17 @@ public final class HolisticLandmarker extends BaseVisionTaskApi {
     ByteBufferImageBuilder builder =
         new ByteBufferImageBuilder(buffer, width, height, MPImage.IMAGE_FORMAT_VEC32F1);
     return builder.build();
+  }
+
+  private static NormalizedLandmarkList getNormalizedLandmarkList(Packet packet) {
+    return packet.isEmpty()
+        ? NormalizedLandmarkList.getDefaultInstance()
+        : PacketGetter.getProto(packet, NormalizedLandmarkList.parser());
+  }
+
+  private static LandmarkList getLandmarkList(Packet packet) {
+    return packet.isEmpty()
+        ? LandmarkList.getDefaultInstance()
+        : PacketGetter.getProto(packet, LandmarkList.parser());
   }
 }

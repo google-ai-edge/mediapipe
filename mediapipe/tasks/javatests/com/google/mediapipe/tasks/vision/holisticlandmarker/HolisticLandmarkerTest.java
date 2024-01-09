@@ -51,6 +51,7 @@ public class HolisticLandmarkerTest {
   private static final String HOLISTIC_LANDMARKER_BUNDLE_ASSET_FILE = "holistic_landmarker.task";
   private static final String POSE_IMAGE = "male_full_height_hands.jpg";
   private static final String CAT_IMAGE = "cat.jpg";
+  private static final String FACE_IMAGE = "portrait.jpg";
   private static final String HOLISTIC_RESULT = "male_full_height_hands_result_cpu.pb";
   private static final String TAG = "Holistic Landmarker Test";
   private static final float FACE_LANDMARKS_ERROR_TOLERANCE = 0.03f;
@@ -163,6 +164,23 @@ public class HolisticLandmarkerTest {
       HolisticLandmarkerResult actualResult =
           holisticLandmarker.detect(getImageFromAsset(CAT_IMAGE));
       assertThat(actualResult.faceLandmarks()).isEmpty();
+    }
+
+    @Test
+    public void detect_successWithFace() throws Exception {
+      HolisticLandmarkerOptions options =
+          HolisticLandmarkerOptions.builder()
+              .setBaseOptions(
+                  BaseOptions.builder()
+                      .setModelAssetPath(HOLISTIC_LANDMARKER_BUNDLE_ASSET_FILE)
+                      .build())
+              .build();
+      HolisticLandmarker holisticLandmarker =
+          HolisticLandmarker.createFromOptions(
+              ApplicationProvider.getApplicationContext(), options);
+      HolisticLandmarkerResult actualResult =
+          holisticLandmarker.detect(getImageFromAsset(FACE_IMAGE));
+      assertThat(actualResult.faceLandmarks()).isNotEmpty();
     }
 
     @Test
