@@ -59,7 +59,7 @@ struct ImageClassifierOptions {
   // true for the lifetime of the callback function.
   //
   // A caller is responsible for closing image classifier result.
-  typedef void (*result_callback_fn)(ImageClassifierResult* result,
+  typedef void (*result_callback_fn)(const ImageClassifierResult* result,
                                      const MpImage& image, int64_t timestamp_ms,
                                      char* error_msg);
   result_callback_fn result_callback;

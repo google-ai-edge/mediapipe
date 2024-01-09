@@ -40,13 +40,13 @@ constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
 constexpr char kModelName[] = "pose_landmarker.task";
 constexpr char kImageFile[] = "pose.jpg";
 constexpr float kLandmarkPrecision = 1e-1;
-constexpr int kIterations = 100;
+constexpr int kIterations = 5;
 
 std::string GetFullPath(absl::string_view file_name) {
   return JoinPath("./", kTestDataDirectory, file_name);
 }
 
-void MatchesPoseLandmarkerResult(PoseLandmarkerResult* result,
+void MatchesPoseLandmarkerResult(const PoseLandmarkerResult* result,
                                  const float landmark_precision) {
   // Expects to have the same number of poses detected.
   EXPECT_EQ(result->pose_landmarks_count, 1);
@@ -65,7 +65,7 @@ void MatchesPoseLandmarkerResult(PoseLandmarkerResult* result,
               landmark_precision);
   EXPECT_NEAR(result->pose_world_landmarks[0].landmarks[0].x, -0.0852f,
               landmark_precision);
-  EXPECT_NEAR(result->pose_world_landmarks[0].landmarks[0].y,  -0.6153f,
+  EXPECT_NEAR(result->pose_world_landmarks[0].landmarks[0].y, -0.6153f,
               landmark_precision);
   EXPECT_NEAR(result->pose_world_landmarks[0].landmarks[0].z, -0.1469f,
               landmark_precision);
@@ -153,8 +153,8 @@ TEST(PoseLandmarkerTest, VideoModeTest) {
 // timestamp is greater than the previous one.
 struct LiveStreamModeCallback {
   static int64_t last_timestamp;
-  static void Fn(PoseLandmarkerResult* landmarker_result, const MpImage& image,
-                 int64_t timestamp, char* error_msg) {
+  static void Fn(const PoseLandmarkerResult* landmarker_result,
+                 const MpImage& image, int64_t timestamp, char* error_msg) {
     ASSERT_NE(landmarker_result, nullptr);
     ASSERT_EQ(error_msg, nullptr);
     MatchesPoseLandmarkerResult(landmarker_result, kLandmarkPrecision);

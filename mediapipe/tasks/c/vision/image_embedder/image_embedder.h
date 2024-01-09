@@ -61,7 +61,7 @@ struct ImageEmbedderOptions {
   // is true for the lifetime of the callback function.
   //
   // A caller is responsible for closing image embedder result.
-  typedef void (*result_callback_fn)(ImageEmbedderResult* result,
+  typedef void (*result_callback_fn)(const ImageEmbedderResult* result,
                                      const MpImage& image, int64_t timestamp_ms,
                                      char* error_msg);
   result_callback_fn result_callback;

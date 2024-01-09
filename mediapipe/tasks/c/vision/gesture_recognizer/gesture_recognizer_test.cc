@@ -47,7 +47,7 @@ std::string GetFullPath(absl::string_view file_name) {
   return JoinPath("./", kTestDataDirectory, file_name);
 }
 
-void MatchesGestureRecognizerResult(GestureRecognizerResult* result,
+void MatchesGestureRecognizerResult(const GestureRecognizerResult* result,
                                     const float score_precision,
                                     const float landmark_precision) {
   // Expects to have the same number of hands detected.
@@ -188,7 +188,7 @@ TEST(GestureRecognizerTest, VideoModeTest) {
 // timestamp is greater than the previous one.
 struct LiveStreamModeCallback {
   static int64_t last_timestamp;
-  static void Fn(GestureRecognizerResult* recognizer_result,
+  static void Fn(const GestureRecognizerResult* recognizer_result,
                  const MpImage& image, int64_t timestamp, char* error_msg) {
     ASSERT_NE(recognizer_result, nullptr);
     ASSERT_EQ(error_msg, nullptr);

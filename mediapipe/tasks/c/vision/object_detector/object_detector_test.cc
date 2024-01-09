@@ -139,8 +139,8 @@ TEST(ObjectDetectorTest, VideoModeTest) {
 // timestamp is greater than the previous one.
 struct LiveStreamModeCallback {
   static int64_t last_timestamp;
-  static void Fn(ObjectDetectorResult* detector_result, const MpImage& image,
-                 int64_t timestamp, char* error_msg) {
+  static void Fn(const ObjectDetectorResult* detector_result,
+                 const MpImage& image, int64_t timestamp, char* error_msg) {
     ASSERT_NE(detector_result, nullptr);
     ASSERT_EQ(error_msg, nullptr);
     EXPECT_EQ(detector_result->detections_count, 3);

@@ -48,8 +48,8 @@ void CppConvertToPoseLandmarkerResult(
               .height = image_frame->Height()}};
     }
   } else {
-      out->segmentation_masks_count = 0;
-      out->segmentation_masks = nullptr;
+    out->segmentation_masks_count = 0;
+    out->segmentation_masks = nullptr;
   }
 
   out->pose_landmarks_count = in.pose_landmarks.size();
@@ -77,6 +77,12 @@ void CppConvertToPoseLandmarkerResult(
 }
 
 void CppClosePoseLandmarkerResult(PoseLandmarkerResult* result) {
+  if (result->segmentation_masks) {
+    delete[] result->segmentation_masks;
+    result->segmentation_masks = nullptr;
+    result->segmentation_masks_count = 0;
+  }
+
   for (uint32_t i = 0; i < result->pose_landmarks_count; ++i) {
     CppCloseNormalizedLandmarks(&result->pose_landmarks[i]);
   }

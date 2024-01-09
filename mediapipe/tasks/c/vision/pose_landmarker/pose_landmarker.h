@@ -71,7 +71,7 @@ struct PoseLandmarkerOptions {
   // true for the lifetime of the callback function.
   //
   // A caller is responsible for closing pose landmarker result.
-  typedef void (*result_callback_fn)(PoseLandmarkerResult* result,
+  typedef void (*result_callback_fn)(const PoseLandmarkerResult* result,
                                      const MpImage& image, int64_t timestamp_ms,
                                      char* error_msg);
   result_callback_fn result_callback;
