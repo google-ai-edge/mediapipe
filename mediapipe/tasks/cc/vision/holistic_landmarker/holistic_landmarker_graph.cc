@@ -403,12 +403,12 @@ class HolisticLandmarkerGraph : public core::ModelTaskGraph {
         kPoseLandmarksDetectorModelName, create_copy));
 
     HolisticPoseTrackingRequest pose_request = {
-        .landmarks = HasOutput(holistic_node, "POSE_LANDMARKS") ||
-                     hands_requested || face_requested,
-        .world_landmarks =
-            HasOutput(holistic_node, "POSE_WORLD_LANDMARKS") || hands_requested,
-        .segmentation_mask =
-            HasOutput(holistic_node, "POSE_SEGMENTATION_MASK")};
+        /*.landmarks=*/HasOutput(holistic_node, "POSE_LANDMARKS") ||
+            hands_requested || face_requested,
+        /*.world_landmarks=*/HasOutput(holistic_node, "POSE_WORLD_LANDMARKS") ||
+            hands_requested,
+        /*.segmentation_mask=*/
+        HasOutput(holistic_node, "POSE_SEGMENTATION_MASK")};
 
     // Detect and track pose.
     MP_ASSIGN_OR_RETURN(
