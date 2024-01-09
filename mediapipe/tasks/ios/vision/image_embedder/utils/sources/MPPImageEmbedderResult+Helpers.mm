@@ -28,7 +28,13 @@ using ::mediapipe::Packet;
 
 @implementation MPPImageEmbedderResult (Helpers)
 
-+ (MPPImageEmbedderResult *)imageEmbedderResultWithOutputPacket:(const Packet &)packet {
++ (MPPImageEmbedderResult *)imageEmbedderResultWithEmbeddingResultPacket:(const Packet &)packet {
+  if (!packet.ValidateAsType<EmbeddingResultProto>().ok()) {
+    // MPPImageEmbedderResult's timestamp is populated from timestamp `EmbeddingResultProto`'s
+    // timestamp_ms(). It is 0 since the packet can't be validated as a `EmbeddingResultProto`.
+    return [[MPPImageEmbedderResult alloc] initWithEmbeddingResult:nil timestampInMilliseconds:0];
+  }
+
   MPPEmbeddingResult *embeddingResult =
       [MPPEmbeddingResult embeddingResultWithProto:packet.Get<EmbeddingResultProto>()];
 

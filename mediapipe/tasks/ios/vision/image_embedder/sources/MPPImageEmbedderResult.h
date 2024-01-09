@@ -36,7 +36,7 @@ NS_SWIFT_NAME(ImageEmbedderResult)
  * @return An instance of `ImageEmbedderResult` initialized with the given
  * `MPPEmbeddingResult` and timestamp (in milliseconds).
  */
-- (instancetype)initWithEmbeddingResult:(MPPEmbeddingResult *)embeddingResult
+- (instancetype)initWithEmbeddingResult:(nullable MPPEmbeddingResult *)embeddingResult
                 timestampInMilliseconds:(NSInteger)timestampInMilliseconds;
 
 - (instancetype)init NS_UNAVAILABLE;

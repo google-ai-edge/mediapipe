@@ -39,6 +39,7 @@ objc_library(
 
 objc_library(
     name = "MPPImageEmbedder",
+    srcs = ["sources/MPPImageEmbedder.mm"],
     hdrs = ["sources/MPPImageEmbedder.h"],
     copts = [
         "-ObjC++",
@@ -49,6 +50,15 @@ objc_library(
     deps = [
         ":MPPImageEmbedderOptions",
         ":MPPImageEmbedderResult",
+        "//mediapipe/tasks/cc/vision/image_embedder:image_embedder_graph",
+        "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
+        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
+        "//mediapipe/tasks/ios/components/utils:MPPCosineSimilarity",
+        "//mediapipe/tasks/ios/core:MPPTaskInfo",
         "//mediapipe/tasks/ios/vision/core:MPPImage",
+        "//mediapipe/tasks/ios/vision/core:MPPVisionPacketCreator",
+        "//mediapipe/tasks/ios/vision/core:MPPVisionTaskRunner",
+        "//mediapipe/tasks/ios/vision/image_embedder/utils:MPPImageEmbedderOptionsHelpers",
+        "//mediapipe/tasks/ios/vision/image_embedder/utils:MPPImageEmbedderResultHelpers",
     ],
 )
