@@ -192,6 +192,7 @@ cc_library(
     hdrs = ["calculator_context.h"],
     visibility = [
         ":mediapipe_internal",
+        "//assistant/surfaces/intelligence/distance_perception/models/mediapipe/calculators:__pkg__",
         "//speech/videos/mediapipe/calculator:__pkg__",
         "//vr/stargate/starcam:__pkg__",
     ],
