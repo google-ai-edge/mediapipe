@@ -18,10 +18,21 @@
 #include <vector>
 
 #include "absl/status/statusor.h"
+#include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port.h"
 #include "mediapipe/framework/port/ret_check.h"
+#include "mediapipe/framework/port/status_macros.h"
+#include "mediapipe/gpu/gpu_origin.pb.h"
+#if !MEDIAPIPE_DISABLE_GPU
+#include "mediapipe/gpu/gl_base.h"
+#endif  // !MEDIAPIPE_DISABLE_GPU
+
+namespace {
+enum { ATTRIB_VERTEX, ATTRIB_TEXTURE_POSITION, NUM_ATTRIBUTES };
+}  // namespace
 
 namespace mediapipe {
+namespace tensors_to_segmentation_utils {
 
 int NumGroups(int size, int group_size) {
   return (size + group_size - 1) / group_size;
@@ -49,4 +60,55 @@ absl::StatusOr<std::tuple<int, int, int>> GetHwcFromDims(
     RET_CHECK(false) << "Invalid shape for segmentation tensor " << dims.size();
   }
 }
+
+void GlRender() {
+#if !MEDIAPIPE_DISABLE_GPU
+  static const GLfloat square_vertices[] = {
+      -1.0f, -1.0f,  // bottom left
+      1.0f,  -1.0f,  // bottom right
+      -1.0f, 1.0f,   // top left
+      1.0f,  1.0f,   // top right
+  };
+  static const GLfloat texture_vertices[] = {
+      0.0f, 0.0f,  // bottom left
+      1.0f, 0.0f,  // bottom right
+      0.0f, 1.0f,  // top left
+      1.0f, 1.0f,  // top right
+  };
+
+  // vertex storage
+  GLuint vbo[2];
+  glGenBuffers(2, vbo);
+  GLuint vao;
+  glGenVertexArrays(1, &vao);
+  glBindVertexArray(vao);
+
+  // vbo 0
+  glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+  glBufferData(GL_ARRAY_BUFFER, 4 * 2 * sizeof(GLfloat), square_vertices,
+               GL_STATIC_DRAW);
+  glEnableVertexAttribArray(ATTRIB_VERTEX);
+  glVertexAttribPointer(ATTRIB_VERTEX, 2, GL_FLOAT, 0, 0, nullptr);
+
+  // vbo 1
+  glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+  glBufferData(GL_ARRAY_BUFFER, 4 * 2 * sizeof(GLfloat), texture_vertices,
+               GL_STATIC_DRAW);
+  glEnableVertexAttribArray(ATTRIB_TEXTURE_POSITION);
+  glVertexAttribPointer(ATTRIB_TEXTURE_POSITION, 2, GL_FLOAT, 0, 0, nullptr);
+
+  // draw
+  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+  // cleanup
+  glDisableVertexAttribArray(ATTRIB_VERTEX);
+  glDisableVertexAttribArray(ATTRIB_TEXTURE_POSITION);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  glBindVertexArray(0);
+  glDeleteVertexArrays(1, &vao);
+  glDeleteBuffers(2, vbo);
+#endif  // !MEDIAPIPE_DISABLE_GPU
+}
+
+}  // namespace tensors_to_segmentation_utils
 }  // namespace mediapipe

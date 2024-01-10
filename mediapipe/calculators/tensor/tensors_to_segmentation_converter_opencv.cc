@@ -36,6 +36,8 @@
 namespace mediapipe {
 namespace {
 
+using ::mediapipe::tensors_to_segmentation_utils::GetHwcFromDims;
+
 class OpenCvProcessor : public TensorsToSegmentationConverter {
  public:
   absl::Status Init(const TensorsToSegmentationCalculatorOptions& options) {
@@ -57,6 +59,9 @@ class OpenCvProcessor : public TensorsToSegmentationConverter {
 absl::StatusOr<std::unique_ptr<Image>> OpenCvProcessor::Convert(
     const std::vector<Tensor>& input_tensors, int output_width,
     int output_height) {
+  if (input_tensors.empty()) {
+    return absl::InvalidArgumentError("input_tensors vector is empty.");
+  }
   MP_ASSIGN_OR_RETURN(auto hwc, GetHwcFromDims(input_tensors[0].shape().dims));
   auto [tensor_height, tensor_width, tensor_channels] = hwc;
   // Create initial working mask.

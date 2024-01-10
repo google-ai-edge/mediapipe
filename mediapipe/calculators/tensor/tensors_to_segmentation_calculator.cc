@@ -13,13 +13,11 @@
 // limitations under the License.
 
 #include <memory>
-#include <string>
 #include <tuple>
 #include <utility>
 #include <vector>
 
 #include "absl/status/status.h"
-#include "absl/strings/str_cat.h"
 #include "mediapipe/calculators/tensor/tensors_to_segmentation_calculator.pb.h"
 #include "mediapipe/calculators/tensor/tensors_to_segmentation_converter.h"
 #include "mediapipe/calculators/tensor/tensors_to_segmentation_utils.h"
@@ -35,13 +33,13 @@
 #if !MEDIAPIPE_DISABLE_GPU
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gl_simple_shaders.h"
-#include "mediapipe/gpu/gpu_buffer_format.h"
 #include "mediapipe/gpu/shader_util.h"
-#endif  // !MEDIAPIPE_DISABLE_GPU
 
-#if !MEDIAPIPE_DISABLE_OPENCV
-#include "mediapipe/calculators/tensor/tensors_to_segmentation_converter_opencv.h"
-#endif  // !MEDIAPIPE_DISABLE_OPENCV
+#if !(MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31 || \
+      MEDIAPIPE_METAL_ENABLED)
+#include "mediapipe/calculators/tensor/tensors_to_segmentation_converter_gl_texture.h"
+#endif  // !(MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31 ||
+        // MEDIAPIPE_METAL_ENABLED)
 
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
 #include "tensorflow/lite/delegates/gpu/gl/converters/util.h"
@@ -50,6 +48,11 @@
 #include "tensorflow/lite/delegates/gpu/gl/gl_texture.h"
 #include "tensorflow/lite/delegates/gpu/gl_delegate.h"
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
+#endif  // !MEDIAPIPE_DISABLE_GPU
+
+#if !MEDIAPIPE_DISABLE_OPENCV
+#include "mediapipe/calculators/tensor/tensors_to_segmentation_converter_opencv.h"
+#endif  // !MEDIAPIPE_DISABLE_OPENCV
 
 #if MEDIAPIPE_METAL_ENABLED
 #import <CoreVideo/CoreVideo.h>
@@ -72,6 +75,10 @@ constexpr char kMaskTag[] = "MASK";
 
 namespace mediapipe {
 
+using ::mediapipe::tensors_to_segmentation_utils::CanUseGpu;
+using ::mediapipe::tensors_to_segmentation_utils::GetHwcFromDims;
+using ::mediapipe::tensors_to_segmentation_utils::GlRender;   // NOLINT
+using ::mediapipe::tensors_to_segmentation_utils::NumGroups;  // NOLINT
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
 using ::tflite::gpu::gl::GlProgram;
 using ::tflite::gpu::gl::GlShader;
@@ -135,27 +142,45 @@ class TensorsToSegmentationCalculator : public CalculatorBase {
                           const std::vector<Tensor>& input_tensors,
                           std::tuple<int, int, int> hwc, int output_width,
                           int output_height);
-  void GlRender();
 
   bool DoesGpuTextureStartAtBottom() {
-    return options_.gpu_origin() != mediapipe::GpuOrigin_Mode_TOP_LEFT;
+    return options_.gpu_origin() != mediapipe::GpuOrigin::TOP_LEFT;
   }
-  absl::Status InitConverterIfNecessary() {
-#if !MEDIAPIPE_DISABLE_OPENCV
-    if (!cpu_converter_) {
-      MP_ASSIGN_OR_RETURN(cpu_converter_, CreateOpenCvConverter(options_));
-    }
+  absl::Status InitConverterIfNecessary(bool use_gpu, CalculatorContext* cc) {
+    if (use_gpu) {
+#if !MEDIAPIPE_DISABLE_GPU
+      if (!gpu_converter_) {
+#if !(MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31 || \
+      MEDIAPIPE_METAL_ENABLED)
+        MP_ASSIGN_OR_RETURN(gpu_converter_,
+                            CreateGlTextureConverter(cc, options_));
 #else
-    RET_CHECK_FAIL() << "OpenCV processing disabled.";
+        RET_CHECK_FAIL()
+            << "No suitable converter found for current GPU processing.";
+#endif  // !(MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31 ||
+        // MEDIAPIPE_METAL_ENABLED)
+      }
+#endif  // !MEDIAPIPE_DISABLE_GPU
+    } else {
+#if !MEDIAPIPE_DISABLE_OPENCV
+      if (!cpu_converter_) {
+        MP_ASSIGN_OR_RETURN(cpu_converter_, CreateOpenCvConverter(options_));
+      }
+#else
+      RET_CHECK_FAIL() << "Cannot initialize OpenCV converter because OpenCV "
+                          "processing is disabled.";
 #endif  // !MEDIAPIPE_DISABLE_OPENCV
+    }
     return absl::OkStatus();
   }
 
   mediapipe::TensorsToSegmentationCalculatorOptions options_;
   std::unique_ptr<TensorsToSegmentationConverter> cpu_converter_;
+  std::unique_ptr<TensorsToSegmentationConverter> gpu_converter_;
 
 #if !MEDIAPIPE_DISABLE_GPU
   mediapipe::GlCalculatorHelper gpu_helper_;
+  // TODO: Refactor upsample program out of the conversion.
   GLuint upsample_program_;
   bool gpu_initialized_ = false;
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
@@ -163,8 +188,6 @@ class TensorsToSegmentationCalculator : public CalculatorBase {
   int cached_height_ = 0;
   std::unique_ptr<tflite::gpu::gl::GlTexture> small_mask_texture_;
   std::unique_ptr<GlProgram> mask_program_31_;
-#else
-  GLuint mask_program_20_;
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
 #if MEDIAPIPE_METAL_ENABLED
   MPPMetalHelper* metal_helper_ = nullptr;
@@ -272,15 +295,13 @@ absl::Status TensorsToSegmentationCalculator::Process(CalculatorContext* cc) {
 
   if (use_gpu) {
 #if !MEDIAPIPE_DISABLE_GPU
+#if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31 || \
+    MEDIAPIPE_METAL_ENABLED
     if (!gpu_initialized_) {
       MP_RETURN_IF_ERROR(InitGpu(cc));
       gpu_initialized_ = true;
     }
-#else
-    RET_CHECK_FAIL() << "GPU processing disabled.";
-#endif  // !MEDIAPIPE_DISABLE_GPU
 
-#if !MEDIAPIPE_DISABLE_GPU
     MP_RETURN_IF_ERROR(
         gpu_helper_.RunInGlContext([this, cc, &input_tensors, output_width,
                                     output_height, hwc]() -> absl::Status {
@@ -289,12 +310,23 @@ absl::Status TensorsToSegmentationCalculator::Process(CalculatorContext* cc) {
           return absl::OkStatus();
         }));
 #else
+    // Lazily initialize converter
+    MP_RETURN_IF_ERROR(InitConverterIfNecessary(use_gpu, cc));
+
+    MP_ASSIGN_OR_RETURN(
+        std::unique_ptr<Image> output_mask,
+        gpu_converter_->Convert(input_tensors, output_width, output_height));
+    cc->Outputs().Tag(kMaskTag).Add(output_mask.release(),
+                                    cc->InputTimestamp());
+#endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31 ||
+        // MEDIAPIPE_METAL_ENABLED
+#else
     RET_CHECK_FAIL() << "GPU processing disabled.";
 #endif  // !MEDIAPIPE_DISABLE_GPU
   } else {
 #if !MEDIAPIPE_DISABLE_OPENCV
     // Lazily initialize converter.
-    MP_RETURN_IF_ERROR(InitConverterIfNecessary());
+    MP_RETURN_IF_ERROR(InitConverterIfNecessary(use_gpu, cc));
     MP_ASSIGN_OR_RETURN(
         std::unique_ptr<Image> output_mask,
         cpu_converter_->Convert(input_tensors, output_width, output_height));
@@ -310,6 +342,8 @@ absl::Status TensorsToSegmentationCalculator::Process(CalculatorContext* cc) {
 
 absl::Status TensorsToSegmentationCalculator::Close(CalculatorContext* cc) {
 #if !MEDIAPIPE_DISABLE_GPU
+#if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31 || \
+    MEDIAPIPE_METAL_ENABLED
   if (!gpu_initialized_) {
     return absl::OkStatus();
   }
@@ -320,14 +354,14 @@ absl::Status TensorsToSegmentationCalculator::Close(CalculatorContext* cc) {
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
     mask_program_31_.reset();
     small_mask_texture_.reset();
-#else
-    if (mask_program_20_) glDeleteProgram(mask_program_20_);
-    mask_program_20_ = 0;
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
 #if MEDIAPIPE_METAL_ENABLED
     mask_program_ = nil;
 #endif  // MEDIAPIPE_METAL_ENABLED
   });
+#endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31 ||
+        // MEDIAPIPE_METAL_ENABLED
+
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
   return absl::OkStatus();
@@ -341,12 +375,15 @@ absl::Status TensorsToSegmentationCalculator::ProcessGpu(
     CalculatorContext* cc, const std::vector<Tensor>& input_tensors,
     std::tuple<int, int, int> hwc, int output_width, int output_height) {
 #if !MEDIAPIPE_DISABLE_GPU
-  auto [tensor_height, tensor_width, tensor_channels] = hwc;
+#if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31 || \
+    MEDIAPIPE_METAL_ENABLED
 
   // Create initial working mask texture.
 #if !(MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31)
   mediapipe::GlTexture small_mask_texture;
-#endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
+#endif  // !(MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31)
+
+  auto [tensor_height, tensor_width, tensor_channels] = hwc;
 
   // Run shader, process mask tensor.
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
@@ -412,28 +449,6 @@ absl::Status TensorsToSegmentationCalculator::ProcessGpu(
 
     small_mask_texture = gpu_helper_.CreateSourceTexture(small_mask_buffer);
   }
-#else
-  {
-    small_mask_texture = gpu_helper_.CreateDestinationTexture(
-        tensor_width, tensor_height,
-        mediapipe::GpuBufferFormat::kBGRA32);  // actually GL_RGBA8
-
-    // Go through CPU if not already texture 2D (no direct conversion yet).
-    // Tensor::GetOpenGlTexture2dReadView() doesn't automatically convert types.
-    if (!input_tensors[0].ready_as_opengl_texture_2d()) {
-      (void)input_tensors[0].GetCpuReadView();
-    }
-
-    auto read_view = input_tensors[0].GetOpenGlTexture2dReadView();
-
-    gpu_helper_.BindFramebuffer(small_mask_texture);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, read_view.name());
-    glUseProgram(mask_program_20_);
-    GlRender();
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glFlush();
-  }
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
 
   // Upsample small mask into output.
@@ -462,58 +477,13 @@ absl::Status TensorsToSegmentationCalculator::ProcessGpu(
 
   // Cleanup
   output_texture.Release();
+#else
+  RET_CHECK_FAIL() << "OpenGL 2.0 implementation should not go this path.";
+#endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31 ||
+        // MEDIAPIPE_METAL_ENABLED
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
   return absl::OkStatus();
-}
-
-void TensorsToSegmentationCalculator::GlRender() {
-#if !MEDIAPIPE_DISABLE_GPU
-  static const GLfloat square_vertices[] = {
-      -1.0f, -1.0f,  // bottom left
-      1.0f,  -1.0f,  // bottom right
-      -1.0f, 1.0f,   // top left
-      1.0f,  1.0f,   // top right
-  };
-  static const GLfloat texture_vertices[] = {
-      0.0f, 0.0f,  // bottom left
-      1.0f, 0.0f,  // bottom right
-      0.0f, 1.0f,  // top left
-      1.0f, 1.0f,  // top right
-  };
-
-  // vertex storage
-  GLuint vbo[2];
-  glGenBuffers(2, vbo);
-  GLuint vao;
-  glGenVertexArrays(1, &vao);
-  glBindVertexArray(vao);
-
-  // vbo 0
-  glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-  glBufferData(GL_ARRAY_BUFFER, 4 * 2 * sizeof(GLfloat), square_vertices,
-               GL_STATIC_DRAW);
-  glEnableVertexAttribArray(ATTRIB_VERTEX);
-  glVertexAttribPointer(ATTRIB_VERTEX, 2, GL_FLOAT, 0, 0, nullptr);
-
-  // vbo 1
-  glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-  glBufferData(GL_ARRAY_BUFFER, 4 * 2 * sizeof(GLfloat), texture_vertices,
-               GL_STATIC_DRAW);
-  glEnableVertexAttribArray(ATTRIB_TEXTURE_POSITION);
-  glVertexAttribPointer(ATTRIB_TEXTURE_POSITION, 2, GL_FLOAT, 0, 0, nullptr);
-
-  // draw
-  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
-  // cleanup
-  glDisableVertexAttribArray(ATTRIB_VERTEX);
-  glDisableVertexAttribArray(ATTRIB_TEXTURE_POSITION);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-  glBindVertexArray(0);
-  glDeleteVertexArrays(1, &vao);
-  glDeleteBuffers(2, vbo);
-#endif  // !MEDIAPIPE_DISABLE_GPU
 }
 
 absl::Status TensorsToSegmentationCalculator::LoadOptions(
@@ -526,6 +496,8 @@ absl::Status TensorsToSegmentationCalculator::LoadOptions(
 
 absl::Status TensorsToSegmentationCalculator::InitGpu(CalculatorContext* cc) {
 #if !MEDIAPIPE_DISABLE_GPU
+#if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31 || \
+    MEDIAPIPE_METAL_ENABLED
   MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
   MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext([this]() -> absl::Status {
   // A shader to process a segmentation tensor into an output mask.
@@ -658,58 +630,6 @@ kernel void segmentationKernel(
   output_texture.write(out_value, output_coordinate);
 }
 )";
-
-#else
-    // GLES 2.0
-    const std::string shader_header = absl::StrCat(
-        std::string(mediapipe::kMediaPipeFragmentShaderPreamble), R"(
-DEFAULT_PRECISION(mediump, float)
-)");
-    /* Shader defines will be inserted here. */
-
-    const std::string shader_src_main = R"(
-in vec2 sample_coordinate;
-
-uniform sampler2D input_texture;
-
-#ifdef GL_ES
-#define fragColor gl_FragColor
-#else
-out vec4 fragColor;
-#endif  // defined(GL_ES);
-
-void main() {
-#ifdef FLIP_Y_COORD
-  float y_coord = 1.0 - sample_coordinate.y;
-#else
-  float y_coord = sample_coordinate.y;
-#endif  // defined(FLIP_Y_COORD)
-  vec2 adjusted_coordinate = vec2(sample_coordinate.x, y_coord);
-  vec4 input_value = texture2D(input_texture, adjusted_coordinate);
-
-  // Run activation function.
-  // One and only one of FN_SOFTMAX,FN_SIGMOID,FN_NONE will be defined.
-
-#ifdef FN_SOFTMAX
-  // Only two channel input tensor is supported.
-  vec2 input_px = input_value.rg;
-  float shift = max(input_px.r, input_px.g);
-  float softmax_denom = exp(input_px.r - shift) + exp(input_px.g - shift);
-  float new_mask_value =
-      exp(mix(input_px.r, input_px.g, float(OUTPUT_LAYER_INDEX)) - shift) / softmax_denom;
-#endif // FN_SOFTMAX
-
-#ifdef FN_SIGMOID
-  float new_mask_value = 1.0 / (exp(-input_value.r) + 1.0);
-#endif // FN_SIGMOID
-
-#ifdef FN_NONE
-  float new_mask_value = input_value.r;
-#endif // FN_NONE
-
-  vec4 out_value = vec4(new_mask_value, 0.0, 0.0, new_mask_value);
-  fragColor = out_value;
-})";
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
 
     // Shader defines.
@@ -772,13 +692,6 @@ void main() {
         [device newComputePipelineStateWithFunction:kernel_func error:&error];
     RET_CHECK(mask_program_ != nil) << "Couldn't create pipeline state " <<
         [[error localizedDescription] UTF8String];
-#else
-    mediapipe::GlhCreateProgram(
-        mediapipe::kBasicVertexShader, shader_src_no_previous.c_str(),
-        NUM_ATTRIBUTES, &attr_name[0], attr_location, &mask_program_20_);
-    RET_CHECK(mask_program_20_) << "Problem initializing the program.";
-    glUseProgram(mask_program_20_);
-    glUniform1i(glGetUniformLocation(mask_program_20_, "input_texture"), 1);
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
 
     // Simple pass-through program, used for hardware upsampling.
@@ -793,6 +706,10 @@ void main() {
   }));
 
   gpu_initialized_ = true;
+#else
+  RET_CHECK_FAIL() << "OpenGL 2.0 implementation should not go this path.";
+#endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31 ||
+        // MEDIAPIPE_METAL_ENABLED
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
   return absl::OkStatus();

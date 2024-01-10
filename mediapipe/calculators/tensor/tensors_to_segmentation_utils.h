@@ -21,6 +21,7 @@
 #include "absl/status/statusor.h"
 
 namespace mediapipe {
+namespace tensors_to_segmentation_utils {
 
 // Commonly used to compute the number of blocks to launch in a kernel.
 int NumGroups(const int size, const int group_size);  // NOLINT
@@ -29,6 +30,10 @@ bool CanUseGpu();
 
 absl::StatusOr<std::tuple<int, int, int>> GetHwcFromDims(
     const std::vector<int>& dims);
+
+void GlRender();
+
+}  // namespace tensors_to_segmentation_utils
 }  // namespace mediapipe
 
 #endif  // MEDIAPIPE_CALCULATORS_TENSOR_TENSORS_TO_SEGMENTATION_UTILS_H_
