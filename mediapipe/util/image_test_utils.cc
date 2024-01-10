@@ -14,6 +14,8 @@
 #include "mediapipe/framework/port/opencv_imgcodecs_inc.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/framework/timestamp.h"
+#include "mediapipe/gpu/gpu_buffer.h"
+#include "mediapipe/gpu/gpu_buffer_format.h"
 
 namespace mediapipe {
 
@@ -107,6 +109,32 @@ ImageFrame CreateTestFloat32ImageFrame(int width, int height) {
 ImageFrame CreateTestGrey8ImageFrame(int width, int height) {
   return CreateTestImageFrame<ImageFormat::GRAY8, uint8_t>(width, height,
                                                            /*max_value=*/255);
+}
+
+ImageFrame CreateTestRgba8ImageFrame(int width, int height) {
+  return CreateTestImageFrame<ImageFormat::SRGBA, uint8_t>(
+      width, height, /*max_value=*/255.0f);
+}
+
+GpuBuffer CreateTestFloat32GpuBuffer(int width, int height) {
+  GpuBuffer buffer(width, height, GpuBufferFormat::kGrayFloat32);
+  std::shared_ptr<ImageFrame> view = buffer.GetWriteView<ImageFrame>();
+  *view = CreateTestFloat32ImageFrame(width, height);
+  return buffer;
+}
+
+GpuBuffer CreateTestGrey8GpuBuffer(int width, int height) {
+  GpuBuffer buffer(width, height, GpuBufferFormat::kOneComponent8);
+  std::shared_ptr<ImageFrame> view = buffer.GetWriteView<ImageFrame>();
+  *view = CreateTestGrey8ImageFrame(width, height);
+  return buffer;
+}
+
+GpuBuffer CreateTestRgba8GpuBuffer(int width, int height) {
+  GpuBuffer buffer(width, height, GpuBufferFormat::kBGRA32);
+  std::shared_ptr<ImageFrame> view = buffer.GetWriteView<ImageFrame>();
+  *view = CreateTestRgba8ImageFrame(width, height);
+  return buffer;
 }
 
 }  // namespace mediapipe
