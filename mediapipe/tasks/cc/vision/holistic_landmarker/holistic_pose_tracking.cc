@@ -174,9 +174,9 @@ TrackHolisticPoseUsingCustomPoseDetection(
       image, roi, pose_landmarks_detector_graph_options,
       {
           // Landmarks are required for tracking, hence force-requesting them.
-          .landmarks = true,
-          .world_landmarks = request.world_landmarks,
-          .segmentation_mask = request.segmentation_mask,
+          /*.landmarks = */ true,
+          /*.world_landmarks = */ request.world_landmarks,
+          /*.segmentation_mask = */ request.segmentation_mask,
       },
       graph);
   RET_CHECK(landmarks_detection_result.landmarks.has_value() &&
@@ -198,13 +198,13 @@ TrackHolisticPoseUsingCustomPoseDetection(
       auxiliary_landmarks, image_size, scale_roi,
       {// Min cutoff 0.01 results into ~0.002 alpha in landmark EMA filter when
        // landmark is static.
-       .min_cutoff = 0.01,
+       /*.min_cutoff = */ 0.01,
        // Beta 10.0 in combintation with min_cutoff 0.01 results into ~0.68
        // alpha in landmark EMA filter when landmark is moving fast.
-       .beta = 10.0,
+       /*.beta = */ 10.0,
        // Derivative cutoff 1.0 results into ~0.17 alpha in landmark velocity
        // EMA filter.
-       .derivate_cutoff = 1.0},
+       /*.derivate_cutoff = */ 1.0},
       graph);
   auto roi_from_auxiliary_landmarks = CalculateRoiFromAuxiliaryLandmarks(
       auxiliary_landmarks_smoothed, image_size, graph);
@@ -223,13 +223,13 @@ TrackHolisticPoseUsingCustomPoseDetection(
         *pose_landmarks, image_size, scale_roi,
         {// Min cutoff 0.05 results into ~0.01 alpha in landmark EMA filter when
          // landmark is static.
-         .min_cutoff = 0.05f,
+         /*.min_cutoff = */ 0.05f,
          // Beta 80.0 in combination with min_cutoff 0.05 results into ~0.94
          // alpha in landmark EMA filter when landmark is moving fast.
-         .beta = 80.0f,
+         /*.beta = */ 80.0f,
          // Derivative cutoff 1.0 results into ~0.17 alpha in landmark velocity
          // EMA filter.
-         .derivate_cutoff = 1.0f},
+         /*.derivate_cutoff = */ 1.0f},
         graph);
   }
 
@@ -245,13 +245,13 @@ TrackHolisticPoseUsingCustomPoseDetection(
         /*scale_roi=*/std::nullopt,
         {// Min cutoff 0.1 results into ~ 0.02 alpha in landmark EMA filter when
          // landmark is static.
-         .min_cutoff = 0.1f,
+         /*.min_cutoff = */ 0.1f,
          // Beta 40.0 in combination with min_cutoff 0.1 results into ~0.8
          // alpha in landmark EMA filter when landmark is moving fast.
-         .beta = 40.0f,
+         /*.beta = */ 40.0f,
          // Derivative cutoff 1.0 results into ~0.17 alpha in landmark velocity
          // EMA filter.
-         .derivate_cutoff = 1.0f},
+         /*.derivate_cutoff = */ 1.0f},
         graph);
   }
 
