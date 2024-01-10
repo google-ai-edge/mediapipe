@@ -52,7 +52,7 @@ NS_SWIFT_NAME(ImageEmbedderLiveStreamDelegate)
     didFinishEmbeddingWithResult:(nullable MPPImageEmbedderResult *)result
          timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                            error:(nullable NSError *)error
-    NS_SWIFT_NAME(imageEmbedder(_:didFinishClassification:timestampInMilliseconds:error:));
+    NS_SWIFT_NAME(imageEmbedder(_:didFinishEmbedding:timestampInMilliseconds:error:));
 @end
 
 /**
