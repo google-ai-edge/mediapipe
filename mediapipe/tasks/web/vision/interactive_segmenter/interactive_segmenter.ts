@@ -213,11 +213,10 @@ export class InteractiveSegmenter extends VisionTaskRunner {
    * callback returns. The `roi` parameter is used to represent a user's region
    * of interest for segmentation.
    *
-   * The 'image_processing_options' parameter can be used to specify the
-   * rotation to apply to the image before performing segmentation, by setting
-   * its 'rotationDegrees' field. Note that specifying a region-of-interest
-   * using the 'regionOfInterest' field is NOT supported and will result in an
-   * error.
+   * The 'imageProcessingOptions' parameter can be used to specify the rotation
+   * to apply to the image before performing segmentation, by setting its
+   * 'rotationDegrees' field. Note that specifying a region-of-interest using
+   * the 'regionOfInterest' field is NOT supported and will result in an error.
    *
    * @param image An image to process.
    * @param roi The region of interest for segmentation.
@@ -250,11 +249,10 @@ export class InteractiveSegmenter extends VisionTaskRunner {
    * and should not be used in high-throughput applications. The `roi` parameter
    * is used to represent a user's region of interest for segmentation.
    *
-   * The 'image_processing_options' parameter can be used to specify the
-   * rotation to apply to the image before performing segmentation, by setting
-   * its 'rotationDegrees' field. Note that specifying a region-of-interest
-   * using the 'regionOfInterest' field is NOT supported and will result in an
-   * error.
+   * The 'imageProcessingOptions' parameter can be used to specify the rotation
+   * to apply to the image before performing segmentation, by setting its
+   * 'rotationDegrees' field. Note that specifying a region-of-interest using
+   * the 'regionOfInterest' field is NOT supported and will result in an error.
    *
    * @param image An image to process.
    * @param roi The region of interest for segmentation.
