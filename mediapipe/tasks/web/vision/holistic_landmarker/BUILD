@@ -12,7 +12,10 @@ licenses(["notice"])
 
 mediapipe_ts_library(
     name = "holistic_landmarker",
-    srcs = ["holistic_landmarker.ts"],
+    srcs = [
+        "holistic_landmarker.ts",
+        "holistic_landmarker_result.ts",
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":holistic_landmarker_connections",
@@ -36,6 +39,7 @@ mediapipe_ts_library(
         "//mediapipe/tasks/web/components/processors:landmark_result",
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/vision/core:image_processing_options",
+        "//mediapipe/tasks/web/vision/core:mask",
         "//mediapipe/tasks/web/vision/core:vision_task_runner",
         "//mediapipe/web/graph_runner:graph_runner_ts",
     ],
@@ -43,10 +47,7 @@ mediapipe_ts_library(
 
 mediapipe_ts_declaration(
     name = "holistic_landmarker_types",
-    srcs = [
-        "holistic_landmarker_options.d.ts",
-        "holistic_landmarker_result.d.ts",
-    ],
+    srcs = ["holistic_landmarker_options.d.ts"],
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/tasks/web/components/containers:category",
@@ -54,7 +55,6 @@ mediapipe_ts_declaration(
         "//mediapipe/tasks/web/components/containers:landmark",
         "//mediapipe/tasks/web/components/containers:matrix",
         "//mediapipe/tasks/web/core",
-        "//mediapipe/tasks/web/vision/core:mask",
         "//mediapipe/tasks/web/vision/core:vision_task_options",
     ],
 )
