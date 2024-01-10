@@ -449,7 +449,7 @@ cc_test(
         "//mediapipe/framework/port:core_proto",
         "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:gtest_main",
-        "//mediapipe/framework/port:opencv_highgui",
+        "//mediapipe/framework/port:opencv_imgcodecs",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/stream_handler:fixed_size_input_stream_handler",
         "//mediapipe/framework/stream_handler:sync_set_input_stream_handler",

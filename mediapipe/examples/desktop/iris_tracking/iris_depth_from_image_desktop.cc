@@ -26,6 +26,7 @@
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/opencv_highgui_inc.h"
+#include "mediapipe/framework/port/opencv_imgcodecs_inc.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/framework/port/opencv_video_inc.h"
 #include "mediapipe/framework/port/parse_text_proto.h"

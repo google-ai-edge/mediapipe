@@ -31,7 +31,7 @@
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/opencv_highgui_inc.h"
+#include "mediapipe/framework/port/opencv_imgcodecs_inc.h"
 #include "mediapipe/framework/port/proto_ns.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_matchers.h"

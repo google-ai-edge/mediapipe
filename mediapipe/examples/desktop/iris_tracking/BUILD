@@ -26,6 +26,7 @@ cc_binary(
         "//mediapipe/framework/formats:image_frame_opencv",
         "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:opencv_highgui",
+        "//mediapipe/framework/port:opencv_imgcodecs",
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:opencv_video",
         "//mediapipe/framework/port:parse_text_proto",
