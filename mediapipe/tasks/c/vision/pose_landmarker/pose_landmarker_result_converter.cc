@@ -87,6 +87,7 @@ void CppClosePoseLandmarkerResult(PoseLandmarkerResult* result) {
     }
     delete[] result->segmentation_masks;
     result->segmentation_masks = nullptr;
+    result->segmentation_masks_count = 0;
   }
 
   for (uint32_t i = 0; i < result->pose_landmarks_count; ++i) {
