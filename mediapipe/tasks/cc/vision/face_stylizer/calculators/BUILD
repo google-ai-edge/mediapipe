@@ -102,6 +102,12 @@ cc_library(
     ] + select({
         "//mediapipe/gpu:disable_gpu": [],
         "//conditions:default": ["tensor_to_image_calculator_gpu_deps"],
+    }) + select({
+        "//mediapipe:apple": [
+            "//third_party/apple_frameworks:CoreVideo",
+            "//third_party/apple_frameworks:MetalKit",
+        ],
+        "//conditions:default": [],
     }),
     alwayslink = 1,
 )
