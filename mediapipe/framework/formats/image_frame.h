@@ -40,6 +40,7 @@
 #include <memory>
 #include <string>
 
+#include "absl/base/attributes.h"
 #include "mediapipe/framework/formats/image_format.pb.h"
 #include "mediapipe/framework/port.h"
 #include "mediapipe/framework/tool/type_util.h"
@@ -86,11 +87,11 @@ class ImageFrame {
   // and GL_UNPACK_ALIGNMENT parameters.
   static const uint32_t kGlDefaultAlignmentBoundary = 4;
 
-  // Returns number of channels for an ImageFormat.
+  // Returns number of channels for the given image format.
   static int NumberOfChannelsForFormat(ImageFormat::Format format);
-  // Returns the channel size for an ImageFormat.
+  // Returns the size of each channel in bytes for the given image format.
   static int ChannelSizeForFormat(ImageFormat::Format format);
-  // Returns depth of each channel in bytes for an ImageFormat.
+  ABSL_DEPRECATED("Use ChannelSizeForFormat() instead")
   static int ByteDepthForFormat(ImageFormat::Format format);
 
   ImageFrame(const ImageFrame&) = delete;
@@ -150,17 +151,17 @@ class ImageFrame {
   int Width() const { return width_; }
   // Returns the height of the image in pixels.
   int Height() const { return height_; }
-  // Returns the channel size.
-  int ChannelSize() const;
   // Returns the number of channels.
   int NumberOfChannels() const;
-  // Returns the depth of each image channel in bytes.
+  // Returns the size of each channel in bytes.
+  int ChannelSize() const;
+  ABSL_DEPRECATED("Use ChannelSize() instead")
   int ByteDepth() const;
 
   // Returns the byte offset between a pixel value and the same pixel
   // and channel in the next row.  Notice, that for alignment reasons,
   // there may be unused padding bytes at the end of each row
-  // (WidthStep() - Width()*NumberOfChannels*ByteDepth() will give the
+  // (WidthStep() - Width()*NumberOfChannels*ChannelSize() will give the
   // number of unused bytes).
   int WidthStep() const { return width_step_; }
 
@@ -180,7 +181,7 @@ class ImageFrame {
   // Returns the total size the pixel data would take if it was stored
   // contiguously (which may not be the case).
   int PixelDataSizeStoredContiguously() const {
-    return Width() * Height() * ByteDepth() * NumberOfChannels();
+    return Width() * Height() * ChannelSize() * NumberOfChannels();
   }
 
   // Initializes ImageFrame from pixel data without copying.

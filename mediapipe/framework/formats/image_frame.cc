@@ -101,7 +101,7 @@ void ImageFrame::Reset(ImageFormat::Format format, int width, int height,
   height_ = height;
   ABSL_CHECK_NE(ImageFormat::UNKNOWN, format_);
   ABSL_CHECK(IsValidAlignmentNumber(alignment_boundary));
-  width_step_ = width * NumberOfChannels() * ByteDepth();
+  width_step_ = width * NumberOfChannels() * ChannelSize();
   if (alignment_boundary == 1) {
     pixel_data_ = {new uint8_t[height * width_step_],
                    PixelDataDeleter::kArrayDelete};
@@ -126,7 +126,7 @@ void ImageFrame::AdoptPixelData(ImageFormat::Format format, int width,
   width_step_ = width_step;
 
   ABSL_CHECK_NE(ImageFormat::UNKNOWN, format_);
-  ABSL_CHECK_GE(width_step_, width * NumberOfChannels() * ByteDepth());
+  ABSL_CHECK_GE(width_step_, width * NumberOfChannels() * ChannelSize());
 
   pixel_data_ = {pixel_data, deleter};
 }
@@ -191,7 +191,7 @@ void ImageFrame::SetAlignmentPaddingAreas() {
   ABSL_CHECK_GE(width_, 1);
   ABSL_CHECK_GE(height_, 1);
 
-  const int pixel_size = ByteDepth() * NumberOfChannels();
+  const int pixel_size = ChannelSize() * NumberOfChannels();
   const int padding_size = width_step_ - width_ * pixel_size;
   for (int row = 0; row < height_; ++row) {
     uint8_t* row_start = pixel_data_.get() + width_step_ * row;
@@ -219,7 +219,7 @@ bool ImageFrame::IsContiguous() const {
   if (!pixel_data_) {
     return false;
   }
-  return width_step_ == width_ * NumberOfChannels() * ByteDepth();
+  return width_step_ == width_ * NumberOfChannels() * ChannelSize();
 }
 
 bool ImageFrame::IsAligned(uint32_t alignment_boundary) const {
@@ -323,35 +323,10 @@ int ImageFrame::ChannelSizeForFormat(ImageFormat::Format format) {
   }
 }
 
-int ImageFrame::ByteDepth() const { return ByteDepthForFormat(format_); }
+int ImageFrame::ByteDepth() const { return ChannelSizeForFormat(format_); }
 
 int ImageFrame::ByteDepthForFormat(ImageFormat::Format format) {
-  switch (format) {
-    case ImageFormat::GRAY8:
-      return 1;
-    case ImageFormat::GRAY16:
-      return 2;
-    case ImageFormat::SRGB:
-      return 1;
-    case ImageFormat::SRGBA:
-      return 1;
-    case ImageFormat::SRGB48:
-      return 2;
-    case ImageFormat::SRGBA64:
-      return 2;
-    case ImageFormat::VEC32F1:
-      return 4;
-    case ImageFormat::VEC32F2:
-      return 4;
-    case ImageFormat::VEC32F4:
-      return 4;
-    case ImageFormat::LAB8:
-      return 1;
-    case ImageFormat::SBGRA:
-      return 1;
-    default:
-      ABSL_LOG(FATAL) << InvalidFormatString(format);
-  }
+  return ChannelSizeForFormat(format);
 }
 
 void ImageFrame::CopyFrom(const ImageFrame& image_frame,
@@ -384,7 +359,7 @@ void ImageFrame::CopyPixelData(ImageFormat::Format format, int width,
 
 void ImageFrame::CopyToBuffer(uint8_t* buffer, int buffer_size) const {
   ABSL_CHECK(buffer);
-  ABSL_CHECK_EQ(1, ByteDepth());
+  ABSL_CHECK_EQ(1, ChannelSize());
   const int data_size = width_ * height_ * NumberOfChannels();
   ABSL_CHECK_LE(data_size, buffer_size);
   if (IsContiguous()) {
@@ -399,7 +374,7 @@ void ImageFrame::CopyToBuffer(uint8_t* buffer, int buffer_size) const {
 
 void ImageFrame::CopyToBuffer(uint16_t* buffer, int buffer_size) const {
   ABSL_CHECK(buffer);
-  ABSL_CHECK_EQ(2, ByteDepth());
+  ABSL_CHECK_EQ(2, ChannelSize());
   const int data_size = width_ * height_ * NumberOfChannels();
   ABSL_CHECK_LE(data_size, buffer_size);
   if (IsContiguous()) {
@@ -414,7 +389,7 @@ void ImageFrame::CopyToBuffer(uint16_t* buffer, int buffer_size) const {
 
 void ImageFrame::CopyToBuffer(float* buffer, int buffer_size) const {
   ABSL_CHECK(buffer);
-  ABSL_CHECK_EQ(4, ByteDepth());
+  ABSL_CHECK_EQ(4, ChannelSize());
   const int data_size = width_ * height_ * NumberOfChannels();
   ABSL_CHECK_LE(data_size, buffer_size);
   if (IsContiguous()) {
