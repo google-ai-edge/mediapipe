@@ -112,7 +112,7 @@ Image CppImageWithMPImage(MPPImage *image) {
   CFDataRelease(resultImageData);
 }
 
-- (void)testInitWithCppImageCloningMPImageWithUIImageSucceeds {
+- (void)testInitMPImageOfSourceTypeUIImageWithCppImageSucceeds {
   // Initialize the source MPPImage whose properties will be used to initialize an MPPImage from a
   // C++ `Image`.
   MPPImage *sourceImage = [MPPImage imageWithFileInfo:kBurgerImageFileInfo];
@@ -136,7 +136,7 @@ Image CppImageWithMPImage(MPPImage *image) {
                                       equalToCppImage:sourceCppImage];
 }
 
-- (void)testInitWithCppImageCloningMPImageWithUIImageNoCopySucceeds {
+- (void)testInitMPImageOfSourceTypeUIImageWithCppImageNoCopySucceeds {
   // Initialize the source MPPImage whose properties will be used to initialize an MPPImage from a
   // C++ `Image`.
   MPPImage *sourceImage = [MPPImage imageWithFileInfo:kBurgerImageFileInfo];
