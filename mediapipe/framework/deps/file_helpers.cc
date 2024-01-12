@@ -14,6 +14,8 @@
 
 #include "mediapipe/framework/deps/file_helpers.h"
 
+#include "absl/strings/str_cat.h"
+
 #ifdef _WIN32
 #include <Windows.h>
 #include <direct.h>
@@ -249,7 +251,8 @@ absl::Status Exists(absl::string_view file_name) {
     case EACCES:
       return mediapipe::PermissionDeniedError("Insufficient permissions.");
     default:
-      return absl::NotFoundError("The path does not exist.");
+      return absl::NotFoundError(
+          absl::StrCat("The path does not exist: ", file_name));
   }
 }
 

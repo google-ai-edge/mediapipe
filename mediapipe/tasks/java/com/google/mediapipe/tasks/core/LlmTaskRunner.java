@@ -14,6 +14,7 @@
 
 package com.google.mediapipe.tasks.core;
 
+import com.google.mediapipe.tasks.core.OutputHandler.ValueListener;
 import com.google.mediapipe.tasks.core.jni.LlmOptionsProto.LlmModelParameters;
 import com.google.mediapipe.tasks.core.jni.LlmOptionsProto.LlmSessionConfig;
 import com.google.mediapipe.tasks.core.jni.LlmResponseContextProto.LlmResponseContext;
@@ -21,7 +22,6 @@ import com.google.protobuf.ExtensionRegistryLite;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 
 /**
  * Internal Task Runner class for all LLM Tasks.
@@ -30,13 +30,13 @@ import java.util.function.Function;
  */
 public final class LlmTaskRunner implements AutoCloseable {
   private final long sessionHandle;
-  private final Optional<Function<List<String>, Void>> resultListener;
+  private final Optional<ValueListener<List<String>>> resultListener;
   private final long callbackHandle;
 
   public LlmTaskRunner(
       LlmModelParameters modelParameters,
       LlmSessionConfig sessionConfig,
-      Optional<Function<List<String>, Void>> resultListener) {
+      Optional<ValueListener<List<String>>> resultListener) {
     this.sessionHandle =
         nativeCreateSession(modelParameters.toByteArray(), sessionConfig.toByteArray());
 
@@ -73,7 +73,7 @@ public final class LlmTaskRunner implements AutoCloseable {
   }
 
   private void onAsyncResponse(byte[] responseBytes) {
-    resultListener.get().apply(parseResponse(responseBytes));
+    resultListener.get().run(parseResponse(responseBytes));
   }
 
   @Override

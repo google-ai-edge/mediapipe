@@ -32,18 +32,26 @@ public class OutputHandler<OutputT extends TaskResult, InputT> {
   }
 
   /**
-   * Interface for the customizable MediaPipe task result listener that can reteive both task result
-   * objects and the corresponding input data.
+   * Interface for the customizable MediaPipe task result listener that can retrieve both task
+   * result objects and the corresponding input data.
    */
   public interface ResultListener<OutputT extends TaskResult, InputT> {
     void run(OutputT result, InputT input);
   }
 
   /**
-   * Interface for the customizable MediaPipe task result listener that can only reteive task result
-   * objects.
+   * Interface for the customizable MediaPipe task result listener that can only retrieve task
+   * result objects.
    */
   public interface PureResultListener<OutputT extends TaskResult> {
+    void run(OutputT result);
+  }
+
+  /**
+   * Interface for the customizable MediaPipe task result listener that only receives a task's
+   * output value.
+   */
+  public interface ValueListener<OutputT> {
     void run(OutputT result);
   }
 

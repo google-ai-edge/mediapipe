@@ -41,15 +41,20 @@ cc_library_with_tflite(
 )
 
 cc_library(
+    name = "llm_inference_engine_hdr",
+    hdrs = ["llm_inference_engine.h"],
+)
+
+cc_library(
     name = "llm",
     srcs = ["llm.cc"],
     hdrs = ["llm.h"],
     deps = [
+        ":llm_inference_engine_hdr",
         "//mediapipe/java/com/google/mediapipe/framework/jni:jni_util",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto:llm_options_cc_proto",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto:llm_response_context_cc_proto",
         "//third_party/odml/infra/genai/inference/c:libllm_inference_engine",
-        "//third_party/odml/infra/genai/inference/c:libllm_inference_engine_deps",
         "@com_google_absl//absl/status",
     ] + select({
         "//mediapipe:android": [],

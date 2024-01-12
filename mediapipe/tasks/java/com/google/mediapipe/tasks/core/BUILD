@@ -76,6 +76,7 @@ android_library(
     ],
     manifest = "AndroidManifest.xml",
     deps = [
+        ":core_java",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto:llm_options_java_proto_lite",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto:llm_response_context_java_proto_lite",
         "//third_party/java/protobuf:protobuf_lite",
