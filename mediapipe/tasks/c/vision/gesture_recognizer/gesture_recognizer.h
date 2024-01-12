@@ -79,7 +79,7 @@ struct GestureRecognizerOptions {
   // true for the lifetime of the callback function.
   //
   // A caller is responsible for closing gesture recognizer result.
-  typedef void (*result_callback_fn)(GestureRecognizerResult* result,
+  typedef void (*result_callback_fn)(const GestureRecognizerResult* result,
                                      const MpImage& image, int64_t timestamp_ms,
                                      char* error_msg);
   result_callback_fn result_callback;

@@ -199,8 +199,8 @@ TEST(ImageEmbedderTest, VideoModeTest) {
 // timestamp is greater than the previous one.
 struct LiveStreamModeCallback {
   static int64_t last_timestamp;
-  static void Fn(ImageEmbedderResult* embedder_result, const MpImage& image,
-                 int64_t timestamp, char* error_msg) {
+  static void Fn(const ImageEmbedderResult* embedder_result,
+                 const MpImage& image, int64_t timestamp, char* error_msg) {
     ASSERT_NE(embedder_result, nullptr);
     ASSERT_EQ(error_msg, nullptr);
     CheckMobileNetV3Result(*embedder_result, false);

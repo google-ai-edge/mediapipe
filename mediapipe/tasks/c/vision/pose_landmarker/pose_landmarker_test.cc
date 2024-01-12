@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#include "mediapipe/tasks/c/vision/object_detector/object_detector.h"
+#include "mediapipe/tasks/c/vision/pose_landmarker/pose_landmarker.h"
 
 #include <cstdint>
 #include <cstdlib>
@@ -25,8 +25,9 @@ limitations under the License.
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/tasks/c/components/containers/category.h"
+#include "mediapipe/tasks/c/components/containers/landmark.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
+#include "mediapipe/tasks/c/vision/pose_landmarker/pose_landmarker_result.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 
 namespace {
@@ -36,37 +37,59 @@ using ::mediapipe::tasks::vision::DecodeImageFromFile;
 using testing::HasSubstr;
 
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
-constexpr char kImageFile[] = "cats_and_dogs.jpg";
-constexpr char kModelName[] =
-    "coco_ssd_mobilenet_v1_1.0_quant_2018_06_29.tflite";
-constexpr float kPrecision = 1e-4;
-constexpr int kIterations = 100;
+constexpr char kModelName[] = "pose_landmarker.task";
+constexpr char kImageFile[] = "pose.jpg";
+constexpr float kLandmarkPrecision = 1e-1;
+constexpr int kIterations = 5;
 
 std::string GetFullPath(absl::string_view file_name) {
   return JoinPath("./", kTestDataDirectory, file_name);
 }
 
-TEST(ObjectDetectorTest, ImageModeTest) {
+void MatchesPoseLandmarkerResult(const PoseLandmarkerResult* result,
+                                 const float landmark_precision) {
+  // Expects to have the same number of poses detected.
+  EXPECT_EQ(result->pose_landmarks_count, 1);
+
+  // Expects to have the same number of segmentation_masks detected.
+  EXPECT_EQ(result->segmentation_masks_count, 1);
+  EXPECT_EQ(result->segmentation_masks->image_frame.width, 1000);
+  EXPECT_EQ(result->segmentation_masks->image_frame.height, 667);
+
+  // Actual landmarks match expected landmarks.
+  EXPECT_NEAR(result->pose_landmarks[0].landmarks[0].x, 0.4649f,
+              landmark_precision);
+  EXPECT_NEAR(result->pose_landmarks[0].landmarks[0].y, 0.4228f,
+              landmark_precision);
+  EXPECT_NEAR(result->pose_landmarks[0].landmarks[0].z, -0.1500f,
+              landmark_precision);
+  EXPECT_NEAR(result->pose_world_landmarks[0].landmarks[0].x, -0.0852f,
+              landmark_precision);
+  EXPECT_NEAR(result->pose_world_landmarks[0].landmarks[0].y, -0.6153f,
+              landmark_precision);
+  EXPECT_NEAR(result->pose_world_landmarks[0].landmarks[0].z, -0.1469f,
+              landmark_precision);
+}
+
+TEST(PoseLandmarkerTest, ImageModeTest) {
   const auto image = DecodeImageFromFile(GetFullPath(kImageFile));
   ASSERT_TRUE(image.ok());
 
   const std::string model_path = GetFullPath(kModelName);
-  ObjectDetectorOptions options = {
+  PoseLandmarkerOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
                            /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ model_path.c_str()},
       /* running_mode= */ RunningMode::IMAGE,
-      /* display_names_locale= */ nullptr,
-      /* max_results= */ -1,
-      /* score_threshold= */ 0.0,
-      /* category_allowlist= */ nullptr,
-      /* category_allowlist_count= */ 0,
-      /* category_denylist= */ nullptr,
-      /* category_denylist_count= */ 0,
+      /* num_poses= */ 1,
+      /* min_pose_detection_confidence= */ 0.5,
+      /* min_pose_presence_confidence= */ 0.5,
+      /* min_tracking_confidence= */ 0.5,
+      /* output_segmentation_masks= */ true,
   };
 
-  void* detector = object_detector_create(&options, /* error_msg */ nullptr);
-  EXPECT_NE(detector, nullptr);
+  void* landmarker = pose_landmarker_create(&options, /* error_msg */ nullptr);
+  EXPECT_NE(landmarker, nullptr);
 
   const auto& image_frame = image->GetImageFrameSharedPtr();
   const MpImage mp_image = {
@@ -76,39 +99,33 @@ TEST(ObjectDetectorTest, ImageModeTest) {
                       .width = image_frame->Width(),
                       .height = image_frame->Height()}};
 
-  ObjectDetectorResult result;
-  object_detector_detect_image(detector, &mp_image, &result,
+  PoseLandmarkerResult result;
+  pose_landmarker_detect_image(landmarker, mp_image, &result,
                                /* error_msg */ nullptr);
-  EXPECT_EQ(result.detections_count, 10);
-  EXPECT_EQ(result.detections[0].categories_count, 1);
-  EXPECT_EQ(std::string{result.detections[0].categories[0].category_name},
-            "cat");
-  EXPECT_NEAR(result.detections[0].categories[0].score, 0.6992f, kPrecision);
-  object_detector_close_result(&result);
-  object_detector_close(detector, /* error_msg */ nullptr);
+  MatchesPoseLandmarkerResult(&result, kLandmarkPrecision);
+  pose_landmarker_close_result(&result);
+  pose_landmarker_close(landmarker, /* error_msg */ nullptr);
 }
 
-TEST(ObjectDetectorTest, VideoModeTest) {
+TEST(PoseLandmarkerTest, VideoModeTest) {
   const auto image = DecodeImageFromFile(GetFullPath(kImageFile));
   ASSERT_TRUE(image.ok());
 
   const std::string model_path = GetFullPath(kModelName);
-  ObjectDetectorOptions options = {
+  PoseLandmarkerOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
                            /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ model_path.c_str()},
       /* running_mode= */ RunningMode::VIDEO,
-      /* display_names_locale= */ nullptr,
-      /* max_results= */ 3,
-      /* score_threshold= */ 0.0,
-      /* category_allowlist= */ nullptr,
-      /* category_allowlist_count= */ 0,
-      /* category_denylist= */ nullptr,
-      /* category_denylist_count= */ 0,
+      /* num_poses= */ 1,
+      /* min_pose_detection_confidence= */ 0.5,
+      /* min_pose_presence_confidence= */ 0.5,
+      /* min_tracking_confidence= */ 0.5,
+      /* output_segmentation_masks= */ true,
   };
 
-  void* detector = object_detector_create(&options, /* error_msg */ nullptr);
-  EXPECT_NE(detector, nullptr);
+  void* landmarker = pose_landmarker_create(&options, /* error_msg */ nullptr);
+  EXPECT_NE(landmarker, nullptr);
 
   const auto& image_frame = image->GetImageFrameSharedPtr();
   const MpImage mp_image = {
@@ -119,17 +136,14 @@ TEST(ObjectDetectorTest, VideoModeTest) {
                       .height = image_frame->Height()}};
 
   for (int i = 0; i < kIterations; ++i) {
-    ObjectDetectorResult result;
-    object_detector_detect_for_video(detector, &mp_image, i, &result,
+    PoseLandmarkerResult result;
+    pose_landmarker_detect_for_video(landmarker, mp_image, i, &result,
                                      /* error_msg */ nullptr);
-    EXPECT_EQ(result.detections_count, 3);
-    EXPECT_EQ(result.detections[0].categories_count, 1);
-    EXPECT_EQ(std::string{result.detections[0].categories[0].category_name},
-              "cat");
-    EXPECT_NEAR(result.detections[0].categories[0].score, 0.6992f, kPrecision);
-    object_detector_close_result(&result);
+
+    MatchesPoseLandmarkerResult(&result, kLandmarkPrecision);
+    pose_landmarker_close_result(&result);
   }
-  object_detector_close(detector, /* error_msg */ nullptr);
+  pose_landmarker_close(landmarker, /* error_msg */ nullptr);
 }
 
 // A structure to support LiveStreamModeTest below. This structure holds a
@@ -139,49 +153,40 @@ TEST(ObjectDetectorTest, VideoModeTest) {
 // timestamp is greater than the previous one.
 struct LiveStreamModeCallback {
   static int64_t last_timestamp;
-  static void Fn(const ObjectDetectorResult* detector_result,
+  static void Fn(const PoseLandmarkerResult* landmarker_result,
                  const MpImage& image, int64_t timestamp, char* error_msg) {
-    ASSERT_NE(detector_result, nullptr);
+    ASSERT_NE(landmarker_result, nullptr);
     ASSERT_EQ(error_msg, nullptr);
-    EXPECT_EQ(detector_result->detections_count, 3);
-    EXPECT_EQ(detector_result->detections[0].categories_count, 1);
-    EXPECT_EQ(
-        std::string{detector_result->detections[0].categories[0].category_name},
-        "cat");
-    EXPECT_NEAR(detector_result->detections[0].categories[0].score, 0.6992f,
-                kPrecision);
+    MatchesPoseLandmarkerResult(landmarker_result, kLandmarkPrecision);
     EXPECT_GT(image.image_frame.width, 0);
     EXPECT_GT(image.image_frame.height, 0);
     EXPECT_GT(timestamp, last_timestamp);
-    last_timestamp++;
+    ++last_timestamp;
   }
 };
 int64_t LiveStreamModeCallback::last_timestamp = -1;
 
-TEST(ObjectDetectorTest, LiveStreamModeTest) {
+TEST(PoseLandmarkerTest, LiveStreamModeTest) {
   const auto image = DecodeImageFromFile(GetFullPath(kImageFile));
   ASSERT_TRUE(image.ok());
 
   const std::string model_path = GetFullPath(kModelName);
 
-  ObjectDetectorOptions options = {
+  PoseLandmarkerOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
                            /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ model_path.c_str()},
       /* running_mode= */ RunningMode::LIVE_STREAM,
-      /* display_names_locale= */ nullptr,
-      /* max_results= */ 3,
-      /* score_threshold= */ 0.0,
-      /* category_allowlist= */ nullptr,
-      /* category_allowlist_count= */ 0,
-      /* category_denylist= */ nullptr,
-      /* category_denylist_count= */ 0,
+      /* num_poses= */ 1,
+      /* min_pose_detection_confidence= */ 0.5,
+      /* min_pose_presence_confidence= */ 0.5,
+      /* min_tracking_confidence= */ 0.5,
+      /* output_segmentation_masks= */ true,
       /* result_callback= */ LiveStreamModeCallback::Fn,
   };
 
-  void* detector = object_detector_create(&options, /* error_msg */
-                                          nullptr);
-  EXPECT_NE(detector, nullptr);
+  void* landmarker = pose_landmarker_create(&options, /* error_msg */ nullptr);
+  EXPECT_NE(landmarker, nullptr);
 
   const auto& image_frame = image->GetImageFrameSharedPtr();
   const MpImage mp_image = {
@@ -192,11 +197,11 @@ TEST(ObjectDetectorTest, LiveStreamModeTest) {
                       .height = image_frame->Height()}};
 
   for (int i = 0; i < kIterations; ++i) {
-    EXPECT_GE(object_detector_detect_async(detector, &mp_image, i,
+    EXPECT_GE(pose_landmarker_detect_async(landmarker, mp_image, i,
                                            /* error_msg */ nullptr),
               0);
   }
-  object_detector_close(detector, /* error_msg */ nullptr);
+  pose_landmarker_close(landmarker, /* error_msg */ nullptr);
 
   // Due to the flow limiter, the total of outputs might be smaller than the
   // number of iterations.
@@ -204,50 +209,54 @@ TEST(ObjectDetectorTest, LiveStreamModeTest) {
   EXPECT_GT(LiveStreamModeCallback::last_timestamp, 0);
 }
 
-TEST(ObjectDetectorTest, InvalidArgumentHandling) {
+TEST(PoseLandmarkerTest, InvalidArgumentHandling) {
   // It is an error to set neither the asset buffer nor the path.
-  ObjectDetectorOptions options = {
+  PoseLandmarkerOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
                            /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ nullptr},
+      /* running_mode= */ RunningMode::IMAGE,
+      /* num_poses= */ 1,
+      /* min_pose_detection_confidence= */ 0.5,
+      /* min_pose_presence_confidence= */ 0.5,
+      /* min_tracking_confidence= */ 0.5,
+      /* output_segmentation_masks= */ true,
   };
 
   char* error_msg;
-  void* detector = object_detector_create(&options, &error_msg);
-  EXPECT_EQ(detector, nullptr);
+  void* landmarker = pose_landmarker_create(&options, &error_msg);
+  EXPECT_EQ(landmarker, nullptr);
 
   EXPECT_THAT(error_msg, HasSubstr("ExternalFile must specify"));
 
   free(error_msg);
 }
 
-TEST(ObjectDetectorTest, FailedDetectionHandling) {
+TEST(PoseLandmarkerTest, FailedRecognitionHandling) {
   const std::string model_path = GetFullPath(kModelName);
-  ObjectDetectorOptions options = {
+  PoseLandmarkerOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
                            /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ model_path.c_str()},
       /* running_mode= */ RunningMode::IMAGE,
-      /* display_names_locale= */ nullptr,
-      /* max_results= */ -1,
-      /* score_threshold= */ 0.0,
-      /* category_allowlist= */ nullptr,
-      /* category_allowlist_count= */ 0,
-      /* category_denylist= */ nullptr,
-      /* category_denylist_count= */ 0,
+      /* num_poses= */ 1,
+      /* min_pose_detection_confidence= */ 0.5,
+      /* min_pose_presence_confidence= */ 0.5,
+      /* min_tracking_confidence= */ 0.5,
+      /* output_segmentation_masks= */ true,
   };
 
-  void* detector = object_detector_create(&options, /* error_msg */
-                                          nullptr);
-  EXPECT_NE(detector, nullptr);
+  void* landmarker = pose_landmarker_create(&options, /* error_msg */
+                                            nullptr);
+  EXPECT_NE(landmarker, nullptr);
 
   const MpImage mp_image = {.type = MpImage::GPU_BUFFER, .gpu_buffer = {}};
-  ObjectDetectorResult result;
+  PoseLandmarkerResult result;
   char* error_msg;
-  object_detector_detect_image(detector, &mp_image, &result, &error_msg);
+  pose_landmarker_detect_image(landmarker, mp_image, &result, &error_msg);
   EXPECT_THAT(error_msg, HasSubstr("GPU Buffer not supported yet"));
   free(error_msg);
-  object_detector_close(detector, /* error_msg */ nullptr);
+  pose_landmarker_close(landmarker, /* error_msg */ nullptr);
 }
 
 }  // namespace

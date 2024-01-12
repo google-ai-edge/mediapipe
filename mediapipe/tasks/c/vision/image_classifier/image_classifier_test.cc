@@ -26,6 +26,7 @@ limitations under the License.
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/c/components/containers/category.h"
+#include "mediapipe/tasks/c/vision/core/common.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 
 namespace {
@@ -142,8 +143,8 @@ TEST(ImageClassifierTest, VideoModeTest) {
 // timestamp is greater than the previous one.
 struct LiveStreamModeCallback {
   static int64_t last_timestamp;
-  static void Fn(ImageClassifierResult* classifier_result, const MpImage& image,
-                 int64_t timestamp, char* error_msg) {
+  static void Fn(const ImageClassifierResult* classifier_result,
+                 const MpImage& image, int64_t timestamp, char* error_msg) {
     ASSERT_NE(classifier_result, nullptr);
     ASSERT_EQ(error_msg, nullptr);
     EXPECT_EQ(
