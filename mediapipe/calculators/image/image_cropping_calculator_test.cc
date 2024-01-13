@@ -191,7 +191,6 @@ TEST(ImageCroppingCalculatorTest, IdentityFunctionCropWithOriginalSizeGPU) {
 
   // Get and process results.
   const ImageFrame& output_image = output_packets[0].Get<ImageFrame>();
-  std::cout << output_image.Width();
 
   const auto expected_output = GetInputFrame(input_width, input_height, 4);
   cv::Mat output_mat = formats::MatView(&output_image);
