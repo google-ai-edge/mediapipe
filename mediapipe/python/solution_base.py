@@ -117,92 +117,51 @@ class PacketDataType(enum.Enum):
       raise e
 
 NAME_TO_TYPE: Mapping[str, 'PacketDataType'] = {
-    'string':
-        PacketDataType.STRING,
-    'bool':
-        PacketDataType.BOOL,
-    '::std::vector<bool>':
-        PacketDataType.BOOL_LIST,
-    'int':
-        PacketDataType.INT,
-    '::std::vector<int>':
-        PacketDataType.INT_LIST,
-    'int64':
-        PacketDataType.INT,
-    'int64_t':
-        PacketDataType.INT,
-    '::std::vector<int64>':
-        PacketDataType.INT_LIST,
-    '::std::vector<int64_t>':
-        PacketDataType.INT_LIST,
-    'float':
-        PacketDataType.FLOAT,
-    '::std::vector<float>':
-        PacketDataType.FLOAT_LIST,
-    '::mediapipe::Matrix':
-        PacketDataType.AUDIO,
-    '::mediapipe::ImageFrame':
-        PacketDataType.IMAGE_FRAME,
-    '::mediapipe::Classification':
-        PacketDataType.PROTO,
-    '::mediapipe::ClassificationList':
-        PacketDataType.PROTO,
-    '::mediapipe::ClassificationListCollection':
-        PacketDataType.PROTO,
-    '::mediapipe::Detection':
-        PacketDataType.PROTO,
-    '::mediapipe::DetectionList':
-        PacketDataType.PROTO,
-    '::mediapipe::Landmark':
-        PacketDataType.PROTO,
-    '::mediapipe::LandmarkList':
-        PacketDataType.PROTO,
-    '::mediapipe::LandmarkListCollection':
-        PacketDataType.PROTO,
-    '::mediapipe::NormalizedLandmark':
-        PacketDataType.PROTO,
-    '::mediapipe::FrameAnnotation':
-        PacketDataType.PROTO,
-    '::mediapipe::Trigger':
-        PacketDataType.PROTO,
-    '::mediapipe::Rect':
-        PacketDataType.PROTO,
-    '::mediapipe::NormalizedRect':
-        PacketDataType.PROTO,
-    '::mediapipe::NormalizedLandmarkList':
-        PacketDataType.PROTO,
-    '::mediapipe::NormalizedLandmarkListCollection':
-        PacketDataType.PROTO,
-    '::mediapipe::Image':
-        PacketDataType.IMAGE,
-    '::std::vector<::mediapipe::Image>':
-        PacketDataType.IMAGE_LIST,
-    '::std::vector<::mediapipe::Classification>':
-        PacketDataType.PROTO_LIST,
-    '::std::vector<::mediapipe::ClassificationList>':
-        PacketDataType.PROTO_LIST,
-    '::std::vector<::mediapipe::Detection>':
-        PacketDataType.PROTO_LIST,
-    '::std::vector<::mediapipe::DetectionList>':
-        PacketDataType.PROTO_LIST,
-    '::std::vector<::mediapipe::Landmark>':
-        PacketDataType.PROTO_LIST,
-    '::std::vector<::mediapipe::LandmarkList>':
-        PacketDataType.PROTO_LIST,
-    '::std::vector<::mediapipe::NormalizedLandmark>':
-        PacketDataType.PROTO_LIST,
-    '::std::vector<::mediapipe::NormalizedLandmarkList>':
-        PacketDataType.PROTO_LIST,
-    '::std::vector<::mediapipe::Rect>':
-        PacketDataType.PROTO_LIST,
-    '::std::vector<::mediapipe::NormalizedRect>':
-        PacketDataType.PROTO_LIST,
-    '::mediapipe::Joint':
-        PacketDataType.PROTO,
-    '::mediapipe::JointList':
-        PacketDataType.PROTO,
-    '::std::vector<::mediapipe::JointList>':
-        PacketDataType.PROTO_LIST,
+    'string': PacketDataType.STRING,
+    'bool': PacketDataType.BOOL,
+    '::std::vector<bool>': PacketDataType.BOOL_LIST,
+    'int': PacketDataType.INT,
+    '::std::vector<int>': PacketDataType.INT_LIST,
+    'int64': PacketDataType.INT,
+    'int64_t': PacketDataType.INT,
+    '::std::vector<int64>': PacketDataType.INT_LIST,
+    '::std::vector<int64_t>': PacketDataType.INT_LIST,
+    'float': PacketDataType.FLOAT,
+    '::std::vector<float>': PacketDataType.FLOAT_LIST,
+    '::mediapipe::Matrix': PacketDataType.AUDIO,
+    '::mediapipe::ImageFrame': PacketDataType.IMAGE_FRAME,
+    '::mediapipe::Classification': PacketDataType.PROTO,
+    '::mediapipe::ClassificationList': PacketDataType.PROTO,
+    '::mediapipe::ClassificationListCollection': PacketDataType.PROTO,
+    '::mediapipe::Detection': PacketDataType.PROTO,
+    '::mediapipe::DetectionList': PacketDataType.PROTO,
+    '::mediapipe::Landmark': PacketDataType.PROTO,
+    '::mediapipe::LandmarkList': PacketDataType.PROTO,
+    '::mediapipe::LandmarkListCollection': PacketDataType.PROTO,
+    '::mediapipe::NormalizedLandmark': PacketDataType.PROTO,
+    '::mediapipe::FrameAnnotation': PacketDataType.PROTO,
+    '::mediapipe::Trigger': PacketDataType.PROTO,
+    '::mediapipe::Rect': PacketDataType.PROTO,
+    '::mediapipe::NormalizedRect': PacketDataType.PROTO,
+    '::mediapipe::NormalizedLandmarkList': PacketDataType.PROTO,
+    '::mediapipe::NormalizedLandmarkListCollection': PacketDataType.PROTO,
+    '::mediapipe::Image': PacketDataType.IMAGE,
+    '::std::vector<::mediapipe::Image>': PacketDataType.IMAGE_LIST,
+    '::std::vector<::mediapipe::Classification>': PacketDataType.PROTO_LIST,
+    '::std::vector<::mediapipe::ClassificationList>': PacketDataType.PROTO_LIST,
+    '::std::vector<::mediapipe::Detection>': PacketDataType.PROTO_LIST,
+    '::std::vector<::mediapipe::DetectionList>': PacketDataType.PROTO_LIST,
+    '::std::vector<::mediapipe::Landmark>': PacketDataType.PROTO_LIST,
+    '::std::vector<::mediapipe::LandmarkList>': PacketDataType.PROTO_LIST,
+    '::std::vector<::mediapipe::NormalizedLandmark>': PacketDataType.PROTO_LIST,
+    '::std::vector<::mediapipe::NormalizedLandmarkList>': (
+        PacketDataType.PROTO_LIST
+    ),
+    '::std::vector<::mediapipe::Rect>': PacketDataType.PROTO_LIST,
+    '::std::vector<::mediapipe::NormalizedRect>': PacketDataType.PROTO_LIST,
+    '::mediapipe::Joint': PacketDataType.PROTO,
+    '::mediapipe::JointList': PacketDataType.PROTO,
+    '::std::vector<::mediapipe::JointList>': PacketDataType.PROTO_LIST,
 }
 
 
