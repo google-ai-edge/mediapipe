@@ -16,6 +16,7 @@ load(
     "//mediapipe/framework/tool:mediapipe_files.bzl",
     "mediapipe_files",
 )
+load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl", "mediapipe_tasks_vision_image_generator_aar")
 
 licenses(["notice"])
 
@@ -84,8 +85,6 @@ android_library(
         "@maven//:com_google_guava_guava",
     ],
 )
-
-load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl", "mediapipe_tasks_vision_image_generator_aar")
 
 mediapipe_tasks_vision_image_generator_aar(
     name = "tasks_vision_image_generator",

@@ -14,8 +14,8 @@
 
 """Building MediaPipe Tasks AARs."""
 
-load("//mediapipe/java/com/google/mediapipe:mediapipe_aar.bzl", "mediapipe_build_aar_with_jni", "mediapipe_java_proto_src_extractor", "mediapipe_java_proto_srcs", "mediapipe_logging_java_proto_srcs")
 load("@build_bazel_rules_android//android:rules.bzl", "android_library")
+load("//mediapipe/java/com/google/mediapipe:mediapipe_aar.bzl", "mediapipe_build_aar_with_jni", "mediapipe_java_proto_src_extractor", "mediapipe_java_proto_srcs", "mediapipe_logging_java_proto_srcs")
 
 _CORE_TASKS_JAVA_PROTO_LITE_TARGETS = [
     "//mediapipe/gpu:gpu_origin_java_proto_lite",

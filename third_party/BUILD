@@ -13,8 +13,8 @@
 # limitations under the License.
 #
 
-load("@rules_foreign_cc//foreign_cc:cmake.bzl", "cmake")
 load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
+load("@rules_foreign_cc//foreign_cc:cmake.bzl", "cmake")
 
 licenses(["notice"])  # Apache License 2.0
 

@@ -12,15 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load(
-    "//mediapipe/framework/tool:ios.bzl",
-    "MPP_TASK_MINIMUM_OS_VERSION",
-)
+load("@build_bazel_rules_apple//apple:ios.bzl", "ios_unit_test")
 load(
     "@org_tensorflow//tensorflow/lite:special_rules.bzl",
     "tflite_ios_lab_runner",
 )
-load("@build_bazel_rules_apple//apple:ios.bzl", "ios_unit_test")
+load(
+    "//mediapipe/framework/tool:ios.bzl",
+    "MPP_TASK_MINIMUM_OS_VERSION",
+)
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
