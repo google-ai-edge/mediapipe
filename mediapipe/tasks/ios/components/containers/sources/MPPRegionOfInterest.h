@@ -61,7 +61,7 @@ NS_SWIFT_NAME(RegionOfInterest)
  * @return An instance of `RegionOfInterest` initialized with the given normalized key points that
  * make up scribbles over the object that the user wants to segment.
  */
-- (instancetype)initWitScribbles:(NSArray<MPPNormalizedKeypoint *> *)scribbles
+- (instancetype)initWithScribbles:(NSArray<MPPNormalizedKeypoint *> *)scribbles
     NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)init NS_UNAVAILABLE;
