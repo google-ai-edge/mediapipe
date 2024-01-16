@@ -20,8 +20,8 @@
 #import "mediapipe/tasks/ios/core/sources/MPPTaskInfo.h"
 #import "mediapipe/tasks/ios/vision/core/sources/MPPVisionPacketCreator.h"
 #import "mediapipe/tasks/ios/vision/core/sources/MPPVisionTaskRunner.h"
-#import "mediapipe/tasks/ios/vision/image_segmenter/utils/sources/MPPImageSegmenterResult+Helpers.h"
 #import "mediapipe/tasks/ios/vision/interactive_segmenter/utils/sources/MPPInteractiveSegmenterOptions+Helpers.h"
+#import "mediapipe/tasks/ios/vision/interactive_segmenter/utils/sources/MPPInteractiveSegmenterResult+Helpers.h"
 
 #include "mediapipe/tasks/cc/vision/image_segmenter/calculators/tensors_to_segmentation_calculator.pb.h"
 #include "mediapipe/util/label_map.pb.h"
@@ -136,9 +136,9 @@ using ::mediapipe::tasks::core::PacketsCallback;
   return [self initWithOptions:options error:error];
 }
 
-- (nullable MPPImageSegmenterResult *)segmentImage:(MPPImage *)image
-                                  regionOfInterest:(MPPRegionOfInterest *)regionOfInterest
-                                             error:(NSError **)error {
+- (nullable MPPInteractiveSegmenterResult *)segmentImage:(MPPImage *)image
+                                        regionOfInterest:(MPPRegionOfInterest *)regionOfInterest
+                                                   error:(NSError **)error {
   return [self segmentImage:image
                     regionOfInterest:regionOfInterest
       shouldCopyOutputMaskPacketData:YES
@@ -147,13 +147,13 @@ using ::mediapipe::tasks::core::PacketsCallback;
 
 - (void)segmentImage:(MPPImage *)image
          regionOfInterest:(MPPRegionOfInterest *)regionOfInterest
-    withCompletionHandler:(void (^)(MPPImageSegmenterResult *_Nullable result,
+    withCompletionHandler:(void (^)(MPPInteractiveSegmenterResult *_Nullable result,
                                     NSError *_Nullable error))completionHandler {
   NSError *error = nil;
-  MPPImageSegmenterResult *result = [self segmentImage:image
-                                      regionOfInterest:regionOfInterest
-                        shouldCopyOutputMaskPacketData:NO
-                                                 error:&error];
+  MPPInteractiveSegmenterResult *result = [self segmentImage:image
+                                            regionOfInterest:regionOfInterest
+                              shouldCopyOutputMaskPacketData:NO
+                                                       error:&error];
   completionHandler(result, error);
 }
 
@@ -197,10 +197,10 @@ using ::mediapipe::tasks::core::PacketsCallback;
   return labels;
 }
 
-- (nullable MPPImageSegmenterResult *)segmentImage:(MPPImage *)image
-                                  regionOfInterest:(MPPRegionOfInterest *)regionOfInterest
-                    shouldCopyOutputMaskPacketData:(BOOL)shouldCopyMaskPacketData
-                                             error:(NSError **)error {
+- (nullable MPPInteractiveSegmenterResult *)segmentImage:(MPPImage *)image
+                                        regionOfInterest:(MPPRegionOfInterest *)regionOfInterest
+                          shouldCopyOutputMaskPacketData:(BOOL)shouldCopyMaskPacketData
+                                                   error:(NSError **)error {
   std::optional<PacketMap> inputPacketMap = [_visionTaskRunner inputPacketMapWithMPPImage:image
                                                                          regionOfInterest:CGRectZero
                                                                                     error:error];
@@ -222,32 +222,33 @@ using ::mediapipe::tasks::core::PacketsCallback;
       [_visionTaskRunner processPacketMap:inputPacketMap.value() error:error];
 
   return [MPPInteractiveSegmenter
-      imageSegmenterResultWithOptionalOutputPacketMap:outputPacketMap
-                             shouldCopyMaskPacketData:shouldCopyMaskPacketData];
+      interactiveSegmenterResultWithOptionalOutputPacketMap:outputPacketMap
+                                   shouldCopyMaskPacketData:shouldCopyMaskPacketData];
 }
 
-+ (nullable MPPImageSegmenterResult *)
-    imageSegmenterResultWithOptionalOutputPacketMap:(std::optional<PacketMap> &)outputPacketMap
-                           shouldCopyMaskPacketData:(BOOL)shouldCopyMaskPacketData {
++ (nullable MPPInteractiveSegmenterResult *)
+    interactiveSegmenterResultWithOptionalOutputPacketMap:
+        (std::optional<PacketMap> &)outputPacketMap
+                                 shouldCopyMaskPacketData:(BOOL)shouldCopyMaskPacketData {
   if (!outputPacketMap.has_value()) {
     return nil;
   }
 
   PacketMap &outputPacketMapValue = outputPacketMap.value();
 
-  return [MPPImageSegmenterResult
-      imageSegmenterResultWithConfidenceMasksPacket:outputPacketMapValue[kConfidenceMasksStreamName
-                                                                             .cppString]
-                                 categoryMaskPacket:outputPacketMapValue[kCategoryMaskStreamName
-                                                                             .cppString]
-                                qualityScoresPacket:outputPacketMapValue[kQualityScoresStreamName
-                                                                             .cppString]
-                            timestampInMilliseconds:outputPacketMapValue[kImageOutStreamName
-                                                                             .cppString]
-                                                        .Timestamp()
-                                                        .Value() /
-                                                    kMicrosecondsPerMillisecond
-                           shouldCopyMaskPacketData:shouldCopyMaskPacketData];
+  return [MPPInteractiveSegmenterResult
+      interactiveSegmenterResultWithConfidenceMasksPacket:outputPacketMapValue
+                                                              [kConfidenceMasksStreamName.cppString]
+                                       categoryMaskPacket:outputPacketMapValue
+                                                              [kCategoryMaskStreamName.cppString]
+                                      qualityScoresPacket:outputPacketMapValue
+                                                              [kQualityScoresStreamName.cppString]
+                                  timestampInMilliseconds:outputPacketMapValue[kImageOutStreamName
+                                                                                   .cppString]
+                                                              .Timestamp()
+                                                              .Value() /
+                                                          kMicrosecondsPerMillisecond
+                                 shouldCopyMaskPacketData:shouldCopyMaskPacketData];
 }
 
 @end
