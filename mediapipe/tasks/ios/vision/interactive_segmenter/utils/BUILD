@@ -29,3 +29,14 @@ objc_library(
         "//mediapipe/tasks/ios/vision/interactive_segmenter:MPPInteractiveSegmenterOptions",
     ],
 )
+
+objc_library(
+    name = "MPPInteractiveSegmenterResultHelpers",
+    srcs = ["sources/MPPInteractiveSegmenterResult+Helpers.mm"],
+    hdrs = ["sources/MPPInteractiveSegmenterResult+Helpers.h"],
+    deps = [
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/tasks/ios/vision/interactive_segmenter:MPPInteractiveSegmenterResult",
+    ],
+)
