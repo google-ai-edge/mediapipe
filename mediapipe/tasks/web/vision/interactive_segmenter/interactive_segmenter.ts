@@ -34,8 +34,8 @@ import {InteractiveSegmenterResult} from './interactive_segmenter_result';
 
 export * from './interactive_segmenter_options';
 export * from './interactive_segmenter_result';
-export {RegionOfInterest};
-export {ImageSource};
+export {type RegionOfInterest};
+export {type ImageSource};
 
 const IMAGE_IN_STREAM = 'image_in';
 const NORM_RECT_IN_STREAM = 'norm_rect_in';

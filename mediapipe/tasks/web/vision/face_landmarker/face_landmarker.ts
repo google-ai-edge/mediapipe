@@ -37,7 +37,7 @@ import {FACE_LANDMARKS_CONTOURS, FACE_LANDMARKS_FACE_OVAL, FACE_LANDMARKS_LEFT_E
 
 export * from './face_landmarker_options';
 export * from './face_landmarker_result';
-export {ImageSource};
+export {type ImageSource};
 
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern

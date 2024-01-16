@@ -40,7 +40,7 @@ import {GestureRecognizerResult} from './gesture_recognizer_result';
 
 export * from './gesture_recognizer_options';
 export * from './gesture_recognizer_result';
-export {ImageSource};
+export {type ImageSource};
 
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern

@@ -36,7 +36,7 @@ const OBJECT_DETECTOR_GRAPH = 'mediapipe.tasks.vision.ObjectDetectorGraph';
 
 export * from './object_detector_options';
 export * from './object_detector_result';
-export {ImageSource};  // Used in the public API
+export {type ImageSource};  // Used in the public API
 
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern

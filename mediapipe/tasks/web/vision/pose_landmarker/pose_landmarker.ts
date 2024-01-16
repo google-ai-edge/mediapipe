@@ -36,7 +36,7 @@ import {POSE_CONNECTIONS} from './pose_landmarks_connections';
 
 export * from './pose_landmarker_options';
 export * from './pose_landmarker_result';
-export {ImageSource};
+export {type ImageSource};
 
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern

@@ -30,7 +30,7 @@ import {ImageSource} from '../../../../web/graph_runner/graph_runner';
 export type Callback<I, O> = (input: I) => O;
 
 // Used in public API
-export {ImageSource};
+export {type ImageSource};
 
 /** Data that a user can use to specialize drawing options. */
 export declare interface LandmarkData {
@@ -111,7 +111,7 @@ function resolve<O, I>(value: O|Callback<I, O>, data: I): O {
   return value instanceof Function ? value(data) : value;
 }
 
-export {RGBAColor, CategoryToColorMap};
+export {type RGBAColor, type CategoryToColorMap};
 
 /** Helper class to visualize the result of a MediaPipe Vision task. */
 export class DrawingUtils {

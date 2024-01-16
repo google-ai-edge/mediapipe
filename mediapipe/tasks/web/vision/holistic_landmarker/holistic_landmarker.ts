@@ -45,7 +45,7 @@ import {HolisticLandmarkerResult} from './holistic_landmarker_result';
 
 export * from './holistic_landmarker_options';
 export * from './holistic_landmarker_result';
-export {ImageSource};
+export {type ImageSource};
 
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern

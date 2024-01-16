@@ -33,7 +33,7 @@ import {ImageSegmenterResult} from './image_segmenter_result';
 
 export * from './image_segmenter_options';
 export * from './image_segmenter_result';
-export {ImageSource};  // Used in the public API
+export {type ImageSource};  // Used in the public API
 
 const IMAGE_STREAM = 'image_in';
 const NORM_RECT_STREAM = 'norm_rect';

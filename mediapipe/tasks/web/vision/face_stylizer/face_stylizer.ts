@@ -28,7 +28,7 @@ import {ImageSource, WasmModule} from '../../../../web/graph_runner/graph_runner
 import {FaceStylizerOptions} from './face_stylizer_options';
 
 export * from './face_stylizer_options';
-export {ImageSource};  // Used in the public API
+export {type ImageSource};  // Used in the public API
 
 const IMAGE_STREAM = 'image_in';
 const NORM_RECT_STREAM = 'norm_rect';

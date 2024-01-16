@@ -37,7 +37,7 @@ const FACE_DETECTOR_GRAPH =
 
 export * from './face_detector_options';
 export * from './face_detector_result';
-export {ImageSource};  // Used in the public API
+export {type ImageSource};  // Used in the public API
 
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern

@@ -38,7 +38,7 @@ const CLASSIFICATIONS_STREAM = 'classifications';
 
 export * from './image_classifier_options';
 export * from './image_classifier_result';
-export {ImageSource};  // Used in the public API
+export {type ImageSource};  // Used in the public API
 
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern

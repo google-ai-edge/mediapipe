@@ -44,7 +44,7 @@ const TEXT_EMBEDDER_CALCULATOR =
 
 export * from './image_embedder_options';
 export * from './image_embedder_result';
-export {ImageSource};  // Used in the public API
+export {type ImageSource};  // Used in the public API
 
 /** Performs embedding extraction on images. */
 export class ImageEmbedder extends VisionTaskRunner {

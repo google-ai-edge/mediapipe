@@ -37,7 +37,7 @@ import {HandLandmarkerResult} from './hand_landmarker_result';
 
 export * from './hand_landmarker_options';
 export * from './hand_landmarker_result';
-export {ImageSource};
+export {type ImageSource};
 
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern
