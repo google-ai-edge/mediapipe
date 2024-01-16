@@ -56,7 +56,7 @@ objc_library(
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/test/vision/utils:MPPImageTestUtils",
         "//mediapipe/tasks/ios/test/vision/utils:MPPMaskTestUtils",
-        "//mediapipe/tasks/ios/vision/image_segmenter:MPPImageSegmenterResult",
+        "//mediapipe/tasks/ios/vision/interactive_segmenter:MPPInteractiveSegmenterResult",
         "//mediapipe/tasks/ios/vision/interactive_segmenter:MPPInteractiveSegmenter",
     ] + select({
         "//third_party:opencv_ios_sim_arm64_source_build": ["@ios_opencv_source//:opencv_xcframework"],

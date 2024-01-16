@@ -18,7 +18,7 @@
 #import "mediapipe/tasks/ios/common/sources/MPPCommon.h"
 #import "mediapipe/tasks/ios/test/vision/utils/sources/MPPImage+TestUtils.h"
 #import "mediapipe/tasks/ios/test/vision/utils/sources/MPPMask+TestUtils.h"
-#import "mediapipe/tasks/ios/vision/image_segmenter/sources/MPPImageSegmenterResult.h"
+#import "mediapipe/tasks/ios/vision/interactive_segmenter/sources/MPPInteractiveSegmenterResult.h"
 #import "mediapipe/tasks/ios/vision/interactive_segmenter/sources/MPPInteractiveSegmenter.h"
 
 #include <iostream>
@@ -188,7 +188,7 @@ double softIOU(const float *mask1, const float *mask2, size_t size) {
         (MPPFileInfo *)expectedCategoryMaskFileInfo
                                  withmaskSimilarityThreshold:(const float)maskSimilarityThreshold
                                    shouldHaveConfidenceMasks:(BOOL)shouldHaveConfidenceMasks {
-  MPPImageSegmenterResult *result = [self segmentImageWithFileInfo:imageFileInfo
+  MPPInteractiveSegmenterResult *result = [self segmentImageWithFileInfo:imageFileInfo
                                                   regionOfInterest:regionOfInterest
                                          usingInteractiveSegmenter:interactiveSegmenter];
 
@@ -217,7 +217,7 @@ double softIOU(const float *mask1, const float *mask2, size_t size) {
                                                        atIndex:(NSInteger)index
                                    withmaskSimilarityThreshold:(const float)maskSimilarityThreshold
                                         shouldHaveCategoryMask:(BOOL)shouldHaveCategoryMask {
-  MPPImageSegmenterResult *result = [self segmentImageWithFileInfo:imageFileInfo
+  MPPInteractiveSegmenterResult *result = [self segmentImageWithFileInfo:imageFileInfo
                                                   regionOfInterest:regionOfInterest
                                          usingInteractiveSegmenter:interactiveSegmenter];
 
@@ -229,7 +229,7 @@ double softIOU(const float *mask1, const float *mask2, size_t size) {
                                           shouldHaveCategoryMask:shouldHaveCategoryMask];
 }
 
-- (void)assertInteractiveSegmenterResult:(MPPImageSegmenterResult *)result
+- (void)assertInteractiveSegmenterResult:(MPPInteractiveSegmenterResult *)result
                                        hasConfidenceMasksCount:
                                            (NSUInteger)expectedConfidenceMasksCount
     approximatelyEqualsExpectedConfidenceMaskImageWithFileInfo:
@@ -254,7 +254,7 @@ double softIOU(const float *mask1, const float *mask2, size_t size) {
                                      withmaskSimilarityThreshold:maskSimilarityThreshold];
 }
 
-- (MPPImageSegmenterResult *)segmentImageWithFileInfo:(MPPFileInfo *)fileInfo
+- (MPPInteractiveSegmenterResult *)segmentImageWithFileInfo:(MPPFileInfo *)fileInfo
                                      regionOfInterest:(MPPRegionOfInterest *)regionOfInterest
                             usingInteractiveSegmenter:
                                 (MPPInteractiveSegmenter *)interactiveSegmenter {
@@ -263,7 +263,7 @@ double softIOU(const float *mask1, const float *mask2, size_t size) {
 
   NSError *error;
 
-  MPPImageSegmenterResult *result = [interactiveSegmenter segmentImage:image
+  MPPInteractiveSegmenterResult *result = [interactiveSegmenter segmentImage:image
                                                       regionOfInterest:regionOfInterest
                                                                  error:&error];
 
