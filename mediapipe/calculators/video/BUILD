@@ -147,7 +147,6 @@ cc_library(
         "//mediapipe/framework/formats:image_frame_opencv",
         "//mediapipe/framework/formats:video_stream_header",
         "//mediapipe/framework/port:file_helpers",
-        "//mediapipe/framework/port:opencv_highgui",
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:opencv_video",
         "//mediapipe/framework/port:ret_check",
@@ -367,12 +366,11 @@ cc_test(
         "//mediapipe/framework/formats:video_stream_header",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:integral_types",
-        "//mediapipe/framework/port:opencv_highgui",
+        "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:opencv_video",
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/tool:test_util",
-        "@com_google_absl//absl/log:absl_log",
     ],
 )
 
