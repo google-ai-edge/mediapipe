@@ -24,7 +24,7 @@
   return self;
 }
 
-- (instancetype)initWitScribbles:(NSArray<MPPNormalizedKeypoint *> *)scribbles {
+- (instancetype)initWithScribbles:(NSArray<MPPNormalizedKeypoint *> *)scribbles {
   self = [super init];
   if (self) {
     _scribbles = scribbles;

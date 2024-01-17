@@ -16,8 +16,8 @@
 
 #import "mediapipe/tasks/ios/components/containers/sources/MPPRegionOfInterest.h"
 #import "mediapipe/tasks/ios/vision/core/sources/MPPImage.h"
-#import "mediapipe/tasks/ios/vision/image_segmenter/sources/MPPImageSegmenterResult.h"
 #import "mediapipe/tasks/ios/vision/interactive_segmenter/sources/MPPInteractiveSegmenterOptions.h"
+#import "mediapipe/tasks/ios/vision/interactive_segmenter/sources/MPPInteractiveSegmenterResult.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -93,11 +93,11 @@ NS_SWIFT_NAME(InteractiveSegmenter)
  *
  * @param image The `MPImage` on which segmentation is to be performed.
  *
- * @return An `ImageSegmenterResult` that contains the segmented masks.
+ * @return An `InteractiveSegmenterResult` that contains the segmented masks.
  */
-- (nullable MPPImageSegmenterResult *)segmentImage:(MPPImage *)image
-                                  regionOfInterest:(MPPRegionOfInterest *)regionOfInterest
-                                             error:(NSError **)error
+- (nullable MPPInteractiveSegmenterResult *)segmentImage:(MPPImage *)image
+                                        regionOfInterest:(MPPRegionOfInterest *)regionOfInterest
+                                                   error:(NSError **)error
     NS_SWIFT_NAME(segment(image:regionOfInterest:));
 
 /**
@@ -117,13 +117,13 @@ NS_SWIFT_NAME(InteractiveSegmenter)
  *
  * @param image The `MPImage` on which segmentation is to be performed.
  * @param completionHandler A block to be invoked with the results of performing segmentation on the
- * image. The block takes two arguments, the optional `ImageSegmenterResult` that contains the
+ * image. The block takes two arguments, the optional `InteractiveSegmenterResult` that contains the
  * segmented masks if the segmentation was successful and an optional error populated upon failure.
  * The lifetime of the returned masks is only guaranteed for the duration of the block.
  */
 - (void)segmentImage:(MPPImage *)image
          regionOfInterest:(MPPRegionOfInterest *)regionOfInterest
-    withCompletionHandler:(void (^)(MPPImageSegmenterResult *_Nullable result,
+    withCompletionHandler:(void (^)(MPPInteractiveSegmenterResult *_Nullable result,
                                     NSError *_Nullable error))completionHandler
     NS_SWIFT_NAME(segment(image:regionOfInterest:completion:));
 
