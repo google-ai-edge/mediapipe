@@ -25,16 +25,24 @@ cc_library_with_tflite(
     ],
     hdrs = [
         "model_resources_cache_jni.h",
-    ],
+    ] + select({
+        "//conditions:default": [
+            ":jni.h",
+            ":jni_md.h",
+        ],
+        # The Android toolchain makes "jni.h" available in the include path.
+        # For non-Android toolchains, generate jni.h and jni_md.h.
+        "//mediapipe:android": [],
+    }),
     tflite_deps = [
         "//mediapipe/tasks/cc/core:model_resources_cache",
-        "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
     ],
     deps = [
         "//mediapipe/java/com/google/mediapipe/framework/jni:mediapipe_framework_jni",
         "//mediapipe/tasks/cc/core:mediapipe_builtin_op_resolver",
     ] + select({
-        "//conditions:default": ["//third_party/java/jdk:jni"],
+        "//conditions:default": [
+        ],
         "//mediapipe:android": [],
     }),
     alwayslink = 1,
@@ -66,4 +74,21 @@ cc_binary(
     name = "llm_jni",
     linkshared = 1,
     deps = [":llm"],
+)
+
+genrule(
+    name = "copy_jni_h",
+    srcs = ["@bazel_tools//tools/jdk:jni_header"],
+    outs = ["jni.h"],
+    cmd = "cp -f $< $@",
+)
+
+genrule(
+    name = "copy_jni_md_h",
+    srcs = select({
+        "//mediapipe:macos": ["@bazel_tools//tools/jdk:jni_md_header-darwin"],
+        "//conditions:default": ["@bazel_tools//tools/jdk:jni_md_header-linux"],
+    }),
+    outs = ["jni_md.h"],
+    cmd = "cp -f $< $@",
 )
