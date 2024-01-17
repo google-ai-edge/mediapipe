@@ -15,8 +15,8 @@
 # Description:
 #   The dependencies of mediapipe.
 
-load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
+load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
 
 licenses(["notice"])
 

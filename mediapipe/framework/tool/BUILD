@@ -13,7 +13,6 @@
 # limitations under the License.
 #
 
-load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
 load("//mediapipe/framework:mediapipe_cc_test.bzl", "mediapipe_cc_test")
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 load(
@@ -21,6 +20,7 @@ load(
     "data_as_c_string",
     "mediapipe_binary_graph",
 )
+load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
 
 licenses(["notice"])
 

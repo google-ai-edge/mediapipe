@@ -13,10 +13,16 @@
 # limitations under the License.
 #
 
+load(
+    "//mediapipe/framework/tool:mediapipe_graph.bzl",
+    "mediapipe_binary_graph",
+)
 load("@bazel_skylib//lib:selects.bzl", "selects")
-load("@org_tensorflow//tensorflow/lite/core/shims:cc_library_with_tflite.bzl", "cc_library_with_tflite")
+load("//mediapipe/framework:encode_binary_proto.bzl", "encode_binary_proto")
+load("//mediapipe/framework:mediapipe_cc_test.bzl", "mediapipe_cc_test")
 load("//mediapipe/framework:more_selects.bzl", "more_selects")
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
+load("@org_tensorflow//tensorflow/lite/core/shims:cc_library_with_tflite.bzl", "cc_library_with_tflite")
 
 licenses(["notice"])
 

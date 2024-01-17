@@ -1,7 +1,7 @@
 # The TypeScript graph runner used by all MediaPipe Web tasks.
 
-load("@npm//@bazel/jasmine:index.bzl", "jasmine_node_test")
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_declaration", "mediapipe_ts_library")
+load("@npm//@bazel/jasmine:index.bzl", "jasmine_node_test")
 
 package(default_visibility = [
     "//mediapipe/tasks:internal",
