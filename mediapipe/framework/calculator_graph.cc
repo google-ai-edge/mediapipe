@@ -495,6 +495,17 @@ absl::Status CalculatorGraph::ObserveOutputStream(
   return absl::OkStatus();
 }
 
+absl::Status CalculatorGraph::SetErrorCallback(
+    std::function<void(const absl::Status&)> error_callback) {
+  // Require setting error callback before initialization to:
+  // - impose the strictest requirement
+  // - save the future possibility of reporting initialization errors
+  RET_CHECK(!initialized_)
+      << "SetErrorCallback must be called before Initialize()";
+  error_callback_ = error_callback;
+  return absl::OkStatus();
+}
+
 absl::StatusOr<OutputStreamPoller> CalculatorGraph::AddOutputStreamPoller(
     const std::string& stream_name, bool observe_timestamp_bounds) {
   RET_CHECK(initialized_).SetNoLogging()
@@ -1076,6 +1087,9 @@ void CalculatorGraph::RecordError(const absl::Status& error) {
           << "Forcefully aborting to prevent the framework running out "
              "of memory.";
     }
+  }
+  if (error_callback_) {
+    error_callback_(error);
   }
 }
 

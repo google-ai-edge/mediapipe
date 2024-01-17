@@ -1421,6 +1421,24 @@ cc_test(
 )
 
 cc_test(
+    name = "calculator_graph_error_callback_test",
+    srcs = ["calculator_graph_error_callback_test.cc"],
+    deps = [
+        ":calculator_framework",
+        ":packet",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/synchronization",
+        "@com_google_absl//absl/time",
+    ],
+)
+
+cc_test(
     name = "calculator_runner_test",
     size = "medium",
     srcs = ["calculator_runner_test.cc"],
