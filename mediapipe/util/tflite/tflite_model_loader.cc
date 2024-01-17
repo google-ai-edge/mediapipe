@@ -14,6 +14,9 @@
 
 #include "mediapipe/util/tflite/tflite_model_loader.h"
 
+#include <string>
+#include <utility>
+
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/util/resource_util.h"
 
@@ -26,11 +29,10 @@ absl::StatusOr<api2::Packet<TfLiteModelPtr>> TfLiteModelLoader::LoadFromPath(
   std::string model_path = path;
 
   std::string model_blob;
-  auto status_or_content =
-      mediapipe::GetResourceContents(model_path, &model_blob);
+  absl::Status status = mediapipe::GetResourceContents(model_path, &model_blob);
   // TODO: get rid of manual resolving with PathToResourceAsFile
   // as soon as it's incorporated into GetResourceContents.
-  if (!status_or_content.ok()) {
+  if (!status.ok()) {
     MP_ASSIGN_OR_RETURN(auto resolved_path,
                         mediapipe::PathToResourceAsFile(model_path));
     VLOG(2) << "Loading the model from " << resolved_path;
@@ -40,6 +42,7 @@ absl::StatusOr<api2::Packet<TfLiteModelPtr>> TfLiteModelLoader::LoadFromPath(
 
   auto model = FlatBufferModel::VerifyAndBuildFromBuffer(model_blob.data(),
                                                          model_blob.size());
+
   RET_CHECK(model) << "Failed to load model from path " << model_path;
   return api2::MakePacket<TfLiteModelPtr>(
       model.release(),

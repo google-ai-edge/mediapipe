@@ -13,7 +13,11 @@
 # limitations under the License.
 #
 
-load("@org_tensorflow//tensorflow/lite/core/shims:cc_library_with_tflite.bzl", "cc_library_with_tflite")
+load(
+    "@org_tensorflow//tensorflow/lite/core/shims:cc_library_with_tflite.bzl",
+    "cc_library_with_tflite",
+    "cc_test_with_tflite",
+)
 
 licenses(["notice"])
 
@@ -139,5 +143,29 @@ cc_library_with_tflite(
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:statusor",
         "//mediapipe/util:resource_util",
+    ],
+)
+
+cc_test_with_tflite(
+    name = "tflite_model_loader_test",
+    srcs = ["tflite_model_loader_test.cc"],
+    data = [
+        ":testdata/test_model.tflite",
+    ],
+    tflite_deps = [
+        ":tflite_model_loader",
+        "@org_tensorflow//tensorflow/lite:test_util",
+    ],
+    deps = [
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_context",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_state",
+        "//mediapipe/framework:legacy_calculator_support",
+        "//mediapipe/framework/api2:packet",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/tool:tag_map_helper",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
     ],
 )
