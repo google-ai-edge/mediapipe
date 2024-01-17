@@ -154,7 +154,7 @@ int CppImageSegmenterSegment(void* segmenter, const MpImage& image,
   auto cpp_segmenter = static_cast<ImageSegmenter*>(segmenter);
   auto cpp_result = cpp_segmenter->Segment(*img);
   if (!cpp_result.ok()) {
-    ABSL_LOG(ERROR) << "Segmention failed: " << cpp_result.status();
+    ABSL_LOG(ERROR) << "Segmentation failed: " << cpp_result.status();
     return CppProcessError(cpp_result.status(), error_msg);
   }
   CppConvertToImageSegmenterResult(*cpp_result, result);
@@ -169,7 +169,7 @@ int CppImageSegmenterSegmentForVideo(void* segmenter, const MpImage& image,
     absl::Status status =
         absl::InvalidArgumentError("GPU Buffer not supported yet");
 
-    ABSL_LOG(ERROR) << "Segmention failed: " << status.message();
+    ABSL_LOG(ERROR) << "Segmentation failed: " << status.message();
     return CppProcessError(status, error_msg);
   }
 
@@ -186,7 +186,7 @@ int CppImageSegmenterSegmentForVideo(void* segmenter, const MpImage& image,
   auto cpp_segmenter = static_cast<ImageSegmenter*>(segmenter);
   auto cpp_result = cpp_segmenter->SegmentForVideo(*img, timestamp_ms);
   if (!cpp_result.ok()) {
-    ABSL_LOG(ERROR) << "Segmention failed: " << cpp_result.status();
+    ABSL_LOG(ERROR) << "Segmentation failed: " << cpp_result.status();
     return CppProcessError(cpp_result.status(), error_msg);
   }
   CppConvertToImageSegmenterResult(*cpp_result, result);
@@ -199,7 +199,7 @@ int CppImageSegmenterSegmentAsync(void* segmenter, const MpImage& image,
     absl::Status status =
         absl::InvalidArgumentError("GPU Buffer not supported yet");
 
-    ABSL_LOG(ERROR) << "Segmention failed: " << status.message();
+    ABSL_LOG(ERROR) << "Segmentation failed: " << status.message();
     return CppProcessError(status, error_msg);
   }
 

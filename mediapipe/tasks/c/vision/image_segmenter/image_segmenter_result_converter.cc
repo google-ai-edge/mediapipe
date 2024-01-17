@@ -30,21 +30,19 @@ void CppConvertToImageSegmenterResult(
   // Convert confidence_masks
   if (in.confidence_masks.has_value()) {
     out->confidence_masks_count = in.confidence_masks->size();
-    out->confidence_masks = new MpImage[out->confidence_masks_count];
+    out->confidence_masks = new MpMask[out->confidence_masks_count];
     for (size_t i = 0; i < out->confidence_masks_count; ++i) {
       const auto& image_frame =
           in.confidence_masks.value()[i].GetImageFrameSharedPtr();
-      MpImage mp_image = {
-          .type = MpImage::IMAGE_FRAME,
-          .image_frame = {
-              .format = static_cast<::ImageFormat>(image_frame->Format()),
-              .image_buffer = image_frame->PixelData(),
-              .width = image_frame->Width(),
-              .height = image_frame->Height()}};
-      out->confidence_masks[i] = mp_image;
+      MpMask mp_mask = {
+          .type = MpMask::IMAGE_FRAME,
+          .image_frame = {.mask_format = MaskFormat::MASK_FORMAT_FLOAT,
+                          .buffer_float = image_frame->PixelData(),
+                          .width = image_frame->Width(),
+                          .height = image_frame->Height()}};
+      out->confidence_masks[i] = mp_mask;
     }
     out->has_confidence_masks = 1;
-    out->confidence_masks_count = 1;
   } else {
     out->confidence_masks = nullptr;
     out->confidence_masks_count = 0;
@@ -54,14 +52,13 @@ void CppConvertToImageSegmenterResult(
   // Convert category_mask
   if (in.category_mask.has_value()) {
     const auto& image_frame = in.category_mask.value().GetImageFrameSharedPtr();
-    MpImage mp_image = {
-        .type = MpImage::IMAGE_FRAME,
-        .image_frame = {
-            .format = static_cast<::ImageFormat>(image_frame->Format()),
-            .image_buffer = image_frame->PixelData(),
-            .width = image_frame->Width(),
-            .height = image_frame->Height()}};
-    out->category_mask = mp_image;
+    MpMask mp_mask = {
+        .type = MpMask::IMAGE_FRAME,
+        .image_frame = {.mask_format = MaskFormat::MASK_FORMAT_UINT8,
+                        .buffer_uint8 = image_frame->PixelData(),
+                        .width = image_frame->Width(),
+                        .height = image_frame->Height()}};
+    out->category_mask = mp_mask;
     out->has_category_mask = 1;
   } else {
     out->has_category_mask = 0;

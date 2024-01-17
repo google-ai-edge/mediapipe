@@ -34,5 +34,4 @@ using ::mediapipe::tasks::vision::DecodeImageFromFile;
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
 constexpr char kMaskImage[] = "segmentation_input_rotation0.jpg";
 
-
 }  // namespace mediapipe::tasks::c::components::containers

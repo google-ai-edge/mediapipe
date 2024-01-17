@@ -46,10 +46,30 @@ struct ImageFrame {
   int height;
 };
 
+enum MaskFormat {
+    MASK_FORMAT_UINT8,
+    MASK_FORMAT_FLOAT
+};
+
+struct ImageFrameMask {
+    enum MaskFormat mask_format;
+    union {
+        const uint8_t* buffer_uint8;
+        const float* buffer_float;
+    };
+    int width;
+    int height;
+};
+
 // TODO: Add GPU buffer declaration and processing logic for it.
 struct GpuBuffer {
   int width;
   int height;
+};
+
+struct GpuBufferMask {
+    int width;
+    int height;
 };
 
 // The object to contain an image, realizes `OneOf` concept.
@@ -59,6 +79,14 @@ struct MpImage {
     struct ImageFrame image_frame;
     struct GpuBuffer gpu_buffer;
   };
+};
+
+struct MpMask {
+    enum { IMAGE_FRAME, GPU_BUFFER } type;
+    union {
+        struct ImageFrameMask image_frame;
+        struct GpuBufferMask gpu_buffer;
+    };
 };
 
 #ifdef __cplusplus
