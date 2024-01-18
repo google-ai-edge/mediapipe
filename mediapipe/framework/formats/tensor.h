@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <functional>
 #include <initializer_list>
+#include <memory>
 #include <numeric>
 #include <tuple>
 #include <type_traits>
@@ -100,10 +101,10 @@ class Tensor {
     // Non-copyable.
     View(const View&) = delete;
     View& operator=(const View&) = delete;
-    View(View&& src) = default;
 
    protected:
-    View(std::unique_ptr<absl::MutexLock>&& lock) : lock_(std::move(lock)) {}
+    explicit View(std::unique_ptr<absl::MutexLock>&& lock)
+        : lock_(std::move(lock)) {}
     std::unique_ptr<absl::MutexLock> lock_;
   };
 
@@ -167,7 +168,7 @@ class Tensor {
       return static_cast<typename std::tuple_element<
           std::is_const<T>::value, std::tuple<P*, const P*> >::type>(buffer_);
     }
-    CpuView(CpuView&& src) : View(std::move(src)) {
+    CpuView(CpuView&& src) : View(std::move(src.lock_)) {
       buffer_ = std::exchange(src.buffer_, nullptr);
       release_callback_ = std::exchange(src.release_callback_, nullptr);
     }
@@ -199,7 +200,8 @@ class Tensor {
     AHardwareBuffer* handle() const {
       return hardware_buffer_->GetAHardwareBuffer();
     }
-    AHardwareBufferView(AHardwareBufferView&& src) : View(std::move(src)) {
+    AHardwareBufferView(AHardwareBufferView&& src)
+        : View(std::move(src.lock_)) {
       hardware_buffer_ = std::move(src.hardware_buffer_);
       file_descriptor_ = src.file_descriptor_;
       fence_fd_ = std::exchange(src.fence_fd_, nullptr);
@@ -258,8 +260,8 @@ class Tensor {
    public:
     GLuint name() const { return name_; }
     OpenGlTexture2dView(OpenGlTexture2dView&& src)
-        : View(std::move(src)), name_(src.name_) {
-      src.name_ = GL_INVALID_INDEX;
+        : View(std::move(src.lock_)) {
+      name_ = std::exchange(src.name_, GL_INVALID_INDEX);
     }
     // To fit a tensor into a texture two layouts are used:
     // 1. Aligned. Width of the texture = tensor_width * num_slices, where slice
@@ -289,7 +291,7 @@ class Tensor {
    public:
     GLuint name() const { return name_; }
 
-    OpenGlBufferView(OpenGlBufferView&& src) : View(std::move(src)) {
+    OpenGlBufferView(OpenGlBufferView&& src) : View(std::move(src.lock_)) {
       name_ = std::exchange(src.name_, GL_INVALID_INDEX);
       ssbo_read_ = std::exchange(src.ssbo_read_, nullptr);
     }
