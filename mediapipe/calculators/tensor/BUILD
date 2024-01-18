@@ -1450,6 +1450,7 @@ cc_library(
         ],
         "//conditions:default": [],
     }),
+    features = ["-layering_check"],  # allow depending on tensors_to_segmentation_calculator_gpu_deps
     deps = [
         ":tensors_to_segmentation_calculator_cc_proto",
         ":tensors_to_segmentation_converter",
@@ -1465,28 +1466,9 @@ cc_library(
         "//mediapipe/util:resource_util",
         "@com_google_absl//absl/status",
         "@org_tensorflow//tensorflow/lite:framework",
-    ] + selects.with_or({
+    ] + select({
         "//mediapipe/gpu:disable_gpu": [],
-        "//conditions:default": [
-            ":tensors_to_segmentation_converter_gl_texture",
-            "//mediapipe/gpu:gl_calculator_helper",
-            "//mediapipe/gpu:gl_simple_shaders",
-            "//mediapipe/gpu:shader_util",
-        ],
-    }) + selects.with_or({
-        ":gpu_inference_disabled": [],
-        ":platform_apple_with_gpu": [
-            "//mediapipe/gpu:MPPMetalUtil",
-            "//mediapipe/gpu:MPPMetalHelper",
-            "//third_party/apple_frameworks:MetalKit",
-        ],
-        "//conditions:default": [
-            "@org_tensorflow//tensorflow/lite/delegates/gpu:gl_delegate",
-            "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:gl_program",
-            "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:gl_shader",
-            "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:gl_texture",
-            "@org_tensorflow//tensorflow/lite/delegates/gpu/gl/converters:util",
-        ],
+        "//conditions:default": [":tensors_to_segmentation_calculator_gpu_deps"],
     }) + select({
         "//mediapipe/framework/port:disable_opencv": [],
         "//conditions:default": [
@@ -1494,6 +1476,52 @@ cc_library(
         ],
     }),
     alwayslink = 1,
+)
+
+cc_library(
+    name = "tensors_to_segmentation_calculator_gpu_deps",
+    visibility = ["//visibility:private"],
+    deps = selects.with_or({
+        "//mediapipe:android": [
+            "@org_tensorflow//tensorflow/lite/delegates/gpu:gl_delegate",
+            "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:gl_program",
+            "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:gl_shader",
+            "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:gl_texture",
+            "@org_tensorflow//tensorflow/lite/delegates/gpu/gl/converters:util",
+            "//mediapipe/gpu:gl_base_hdr",
+            "//mediapipe/gpu:gl_calculator_helper",
+            "//mediapipe/gpu:gl_simple_shaders",
+            "//mediapipe/gpu:gpu_buffer",
+            "//mediapipe/gpu:gpu_buffer_format",
+            "//mediapipe/gpu:shader_util",
+        ],
+        ":platform_apple_with_gpu": [
+            "//mediapipe/gpu:MPPMetalUtil",
+            "//mediapipe/gpu:MPPMetalHelper",
+            "//third_party/apple_frameworks:MetalKit",
+            "//mediapipe/gpu:gl_base_hdr",
+            "//mediapipe/gpu:gl_calculator_helper",
+            "//mediapipe/gpu:gl_simple_shaders",
+            "//mediapipe/gpu:gpu_buffer",
+            "//mediapipe/gpu:gpu_buffer_format",
+            "//mediapipe/gpu:shader_util",
+        ],
+        # This setting is needed to allow bazel to build all targets on Mac with GPU disabled
+        ":platform_apple_without_gpu": [],
+        "//conditions:default": [
+            "@org_tensorflow//tensorflow/lite/delegates/gpu:gl_delegate",
+            "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:gl_program",
+            "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:gl_shader",
+            "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:gl_texture",
+            "@org_tensorflow//tensorflow/lite/delegates/gpu/gl/converters:util",
+            "//mediapipe/gpu:gl_base_hdr",
+            "//mediapipe/gpu:gl_calculator_helper",
+            "//mediapipe/gpu:gl_simple_shaders",
+            "//mediapipe/gpu:gpu_buffer",
+            "//mediapipe/gpu:gpu_buffer_format",
+            "//mediapipe/gpu:shader_util",
+        ],
+    }),
 )
 
 cc_library(
