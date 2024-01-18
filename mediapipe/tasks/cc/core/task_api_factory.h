@@ -57,8 +57,7 @@ class TaskApiFactory {
       std::unique_ptr<tflite::OpResolver> resolver,
       PacketsCallback packets_callback = nullptr,
       std::shared_ptr<Executor> default_executor = nullptr,
-      std::optional<PacketMap> input_side_packets = std::nullopt,
-      std::optional<ErrorFn> error_fn = std::nullopt) {
+      std::optional<PacketMap> input_side_packets = std::nullopt) {
     bool found_task_subgraph = false;
     // This for-loop ensures there's only one subgraph besides
     // FlowLimiterCalculator.
@@ -78,18 +77,10 @@ class TaskApiFactory {
     }
     MP_ASSIGN_OR_RETURN(
         auto runner,
-#if !MEDIAPIPE_DISABLE_GPU
         core::TaskRunner::Create(std::move(graph_config), std::move(resolver),
                                  std::move(packets_callback),
                                  std::move(default_executor),
-                                 std::move(input_side_packets),
-                                 /*resources=*/nullptr, std::move(error_fn)));
-#else
-        core::TaskRunner::Create(
-            std::move(graph_config), std::move(resolver),
-            std::move(packets_callback), std::move(default_executor),
-            std::move(input_side_packets), std::move(error_fn)));
-#endif
+                                 std::move(input_side_packets)));
     return std::make_unique<T>(std::move(runner));
   }
 
