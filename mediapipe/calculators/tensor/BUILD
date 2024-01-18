@@ -658,6 +658,7 @@ cc_library(
     deps = [
         ":tensor_converter_calculator_cc_proto",
         ":tensor_converter_cpu",
+        ":tensor_converter_gpu",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:port",
         "//mediapipe/framework/formats:image_frame",
@@ -667,7 +668,6 @@ cc_library(
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:statusor",
         "//mediapipe/gpu:gpu_buffer",
-        "//mediapipe/gpu:gpu_buffer_format",
         "//mediapipe/gpu:gpu_origin_cc_proto",
         "//mediapipe/util:resource_util",
         "@com_google_absl//absl/log",
@@ -681,11 +681,9 @@ cc_library(
     ] + select({
         "//mediapipe/gpu:disable_gpu": [],
         "//conditions:default": [
-            "tensor_converter_calculator_gpu_deps",
+            ":tensor_converter_calculator_gpu_deps",
             "//mediapipe/gpu:gl_base",
             "//mediapipe/gpu:gl_calculator_helper",
-            "//mediapipe/gpu:gl_simple_shaders",
-            "//mediapipe/gpu:shader_util",
         ],
     }) + select({
         "//mediapipe:apple": [
@@ -726,10 +724,78 @@ cc_test(
 )
 
 cc_library(
+    name = "tensor_converter_gpu",
+    hdrs = ["tensor_converter_gpu.h"],
+    deps = [
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/gpu:gpu_buffer",
+        "@com_google_absl//absl/status",
+    ],
+)
+
+cc_library(
+    name = "tensor_converter_gl30",
+    srcs = ["tensor_converter_gl30.cc"],
+    hdrs = ["tensor_converter_gl30.h"],
+    features = ["-layering_check"],  # allow depending on tensor_converter_calculator_gpu_deps
+    deps = [
+        ":tensor_converter_gpu",
+        "//mediapipe/framework:port",
+        "//mediapipe/framework/port:status",
+    ] + select({
+        "//mediapipe:apple": [],
+        "//conditions:default": [
+            "//mediapipe/framework:calculator_framework",
+            "//mediapipe/framework/formats:image_frame",
+            "//mediapipe/framework/formats:matrix",
+            "//mediapipe/framework/formats:tensor",
+            "//mediapipe/framework/port:ret_check",
+            "//mediapipe/gpu:gl_base_hdr",
+            "//mediapipe/gpu:gl_calculator_helper",
+            "//mediapipe/gpu:gl_simple_shaders",
+            "//mediapipe/gpu:gl_texture_view",
+            "//mediapipe/gpu:gpu_buffer",
+            "//mediapipe/gpu:gpu_buffer_format",
+            "//mediapipe/gpu:shader_util",
+            "@com_google_absl//absl/log:absl_log",
+            "@com_google_absl//absl/status",
+            "@com_google_absl//absl/strings",
+        ],
+    }),
+)
+
+cc_library(
+    name = "tensor_converter_gl31",
+    srcs = ["tensor_converter_gl31.cc"],
+    hdrs = ["tensor_converter_gl31.h"],
+    features = ["-layering_check"],  # allow depending on tensor_converter_calculator_gpu_deps
+    deps = [
+        ":tensor_converter_gpu",
+        "//mediapipe/framework:port",
+        "//mediapipe/framework/port:status",
+    ] + select({
+        "//mediapipe:apple": [],
+        "//conditions:default": [
+            "//mediapipe/framework:calculator_context",
+            "//mediapipe/framework/formats:tensor",
+            "//mediapipe/framework/port:ret_check",
+            "//mediapipe/gpu:gl_calculator_helper",
+            "//mediapipe/gpu:gl_simple_shaders",
+            "//mediapipe/gpu:gpu_buffer",
+            "//mediapipe/gpu:shader_util",
+            "@com_google_absl//absl/status",
+            "@com_google_absl//absl/strings",
+        ],
+    }),
+)
+
+cc_library(
     name = "tensor_converter_calculator_gpu_deps",
     visibility = ["//visibility:private"],
     deps = select({
         "//mediapipe:android": [
+            ":tensor_converter_gl30",
+            ":tensor_converter_gl31",
             "//mediapipe/gpu:gl_calculator_helper",
             "//mediapipe/gpu:gpu_buffer",
         ],
@@ -741,6 +807,8 @@ cc_library(
         # This setting is needed to allow bazel to build all targets on Mac with GPU disabled
         ":platform_apple_without_gpu": [],
         "//conditions:default": [
+            ":tensor_converter_gl30",
+            ":tensor_converter_gl31",
             "//mediapipe/gpu:gl_calculator_helper",
             "//mediapipe/gpu:gl_simple_shaders",
             "//mediapipe/gpu:gpu_buffer",
