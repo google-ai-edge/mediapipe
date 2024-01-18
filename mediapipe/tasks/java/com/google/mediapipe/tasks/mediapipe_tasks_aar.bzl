@@ -14,8 +14,8 @@
 
 """Building MediaPipe Tasks AARs."""
 
-load("//mediapipe/java/com/google/mediapipe:mediapipe_aar.bzl", "mediapipe_build_aar_with_jni", "mediapipe_java_proto_src_extractor", "mediapipe_java_proto_srcs", "mediapipe_logging_java_proto_srcs")
 load("@build_bazel_rules_android//android:rules.bzl", "android_library")
+load("//mediapipe/java/com/google/mediapipe:mediapipe_aar.bzl", "mediapipe_build_aar_with_jni", "mediapipe_java_proto_src_extractor", "mediapipe_java_proto_srcs", "mediapipe_logging_java_proto_srcs")
 
 _CORE_TASKS_JAVA_PROTO_LITE_TARGETS = [
     "//mediapipe/gpu:gpu_origin_java_proto_lite",
@@ -91,6 +91,10 @@ _VISION_TASKS_IMAGE_GENERATOR_JAVA_PROTO_LITE_TARGETS = [
 _TEXT_TASKS_JAVA_PROTO_LITE_TARGETS = [
     "//mediapipe/tasks/cc/text/text_classifier/proto:text_classifier_graph_options_java_proto_lite",
     "//mediapipe/tasks/cc/text/text_embedder/proto:text_embedder_graph_options_java_proto_lite",
+]
+
+_TEXT_TASKS_TEXT_GENERATOR_JAVA_PROTO_LITE_TARGETS = [
+    "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto:llm_options_java_proto_lite",
 ]
 
 def mediapipe_tasks_core_aar(name, srcs, manifest):
@@ -351,6 +355,39 @@ EOF
         srcs = srcs,
         manifest = "AndroidManifest.xml",
         java_proto_lite_targets = _CORE_TASKS_JAVA_PROTO_LITE_TARGETS + _TEXT_TASKS_JAVA_PROTO_LITE_TARGETS,
+        native_library = native_library,
+    )
+
+def mediapipe_tasks_text_text_generator_aar(name, srcs, native_library):
+    """Builds medaipipe tasks text text generator AAR.
+
+    Args:
+      name: The bazel target name.
+      srcs: MediaPipe Text Generator Tasks' source files.
+      native_library: The native library that contains text generator task's graph and calculators.
+    """
+
+    native.genrule(
+        name = name + "tasks_manifest_generator",
+        outs = ["AndroidManifest.xml"],
+        cmd = """
+cat > $(OUTS) <<EOF
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.google.mediapipe.tasks.text.textgenerator">
+    <uses-sdk
+        android:minSdkVersion="24"
+        android:targetSdkVersion="30" />
+</manifest>
+EOF
+""",
+    )
+
+    _mediapipe_tasks_aar(
+        name = name,
+        srcs = srcs,
+        manifest = "AndroidManifest.xml",
+        java_proto_lite_targets = _CORE_TASKS_JAVA_PROTO_LITE_TARGETS + _TEXT_TASKS_TEXT_GENERATOR_JAVA_PROTO_LITE_TARGETS,
         native_library = native_library,
     )
 

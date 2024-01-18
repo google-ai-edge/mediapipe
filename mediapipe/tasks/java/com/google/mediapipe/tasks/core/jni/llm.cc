@@ -22,7 +22,7 @@
 #include "mediapipe/java/com/google/mediapipe/framework/jni/jni_util.h"
 #include "mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto/llm_options.pb.h"
 #include "mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto/llm_response_context.pb.h"
-#include "third_party/odml/infra/genai/inference/c/llm_inference_engine.h"
+#include "odml/infra/genai/inference/c/llm_inference_engine.h"
 
 namespace {
 
