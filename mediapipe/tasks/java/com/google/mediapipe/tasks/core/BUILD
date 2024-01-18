@@ -99,7 +99,10 @@ load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl"
 
 mediapipe_tasks_core_aar(
     name = "tasks_core",
-    srcs = glob(["**/*.java"]) + [
+    srcs = glob(
+        ["**/*.java"],
+        exclude = ["LlmTaskRunner.java"],
+    ) + [
         "//mediapipe/java/com/google/mediapipe/framework/image:java_src",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:java_src",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/processors:java_src",
