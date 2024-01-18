@@ -21,9 +21,7 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 cc_library(
     name = "diffuser_gpu_header",
     hdrs = ["diffuser_gpu.h"],
-    visibility = [
-        "//mediapipe/tasks/cc/vision/image_generator/diffuser:__pkg__",
-    ],
+    visibility = ["//mediapipe/tasks/cc/vision/image_generator/diffuser:__pkg__"],
 )
 
 mediapipe_proto_library(
