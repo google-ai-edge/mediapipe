@@ -29,16 +29,12 @@ limitations under the License.
 #include <vector>
 
 #include "absl/base/thread_annotations.h"
-#include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/executor.h"
-#include "mediapipe/framework/port/status_macros.h"
-#include "mediapipe/tasks/cc/core/model_resources.h"
-#include "mediapipe/tasks/cc/core/model_resources_cache.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
 
 namespace mediapipe {
@@ -49,6 +45,8 @@ class GpuResources;
 
 namespace tasks {
 namespace core {
+
+using ErrorFn = std::function<void(absl::Status)>;
 
 // Mapping from the MediaPipe calculator graph stream/side packet names to the
 // packets.
@@ -84,14 +82,16 @@ class TaskRunner {
       PacketsCallback packets_callback = nullptr,
       std::shared_ptr<Executor> default_executor = nullptr,
       std::optional<PacketMap> input_side_packets = std::nullopt,
-      std::shared_ptr<::mediapipe::GpuResources> resources = nullptr);
+      std::shared_ptr<::mediapipe::GpuResources> resources = nullptr,
+      std::optional<ErrorFn> error_fn = std::nullopt);
 #else
   static absl::StatusOr<std::unique_ptr<TaskRunner>> Create(
       CalculatorGraphConfig config,
       std::unique_ptr<tflite::OpResolver> op_resolver = nullptr,
       PacketsCallback packets_callback = nullptr,
       std::shared_ptr<Executor> default_executor = nullptr,
-      std::optional<PacketMap> input_side_packets = std::nullopt);
+      std::optional<PacketMap> input_side_packets = std::nullopt,
+      std::optional<ErrorFn> error_fn = std::nullopt);
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
   // TaskRunner is neither copyable nor movable.
@@ -135,7 +135,7 @@ class TaskRunner {
  private:
   // Constructor.
   // Creates a TaskRunner instance with an optional PacketsCallback method.
-  TaskRunner(PacketsCallback packets_callback = nullptr)
+  explicit TaskRunner(PacketsCallback packets_callback = nullptr)
       : packets_callback_(packets_callback) {}
 
   // Initializes the task runner. Returns an ok status to indicate that the
@@ -146,7 +146,8 @@ class TaskRunner {
       CalculatorGraphConfig config,
       std::unique_ptr<tflite::OpResolver> op_resolver = nullptr,
       std::shared_ptr<Executor> default_executor = nullptr,
-      std::optional<PacketMap> input_side_packets = std::nullopt);
+      std::optional<PacketMap> input_side_packets = std::nullopt,
+      std::optional<ErrorFn> error_fn = std::nullopt);
 
   // Starts the task runner. Returns an ok status to indicate that the
   // runner is ready to accept input data. Otherwise, returns an error status to

@@ -18,7 +18,6 @@ limitations under the License.
 
 #include <memory>
 #include <optional>
-#include <string>
 #include <type_traits>
 #include <utility>
 
@@ -32,12 +31,10 @@ limitations under the License.
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/core/base_task_api.h"
-#include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
 #include "mediapipe/tasks/cc/core/proto/inference_subgraph.pb.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
-#include "mediapipe/tasks/cc/core/utils.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
 
 namespace mediapipe {
@@ -60,7 +57,8 @@ class TaskApiFactory {
       std::unique_ptr<tflite::OpResolver> resolver,
       PacketsCallback packets_callback = nullptr,
       std::shared_ptr<Executor> default_executor = nullptr,
-      std::optional<PacketMap> input_side_packets = std::nullopt) {
+      std::optional<PacketMap> input_side_packets = std::nullopt,
+      std::optional<ErrorFn> error_fn = std::nullopt) {
     bool found_task_subgraph = false;
     // This for-loop ensures there's only one subgraph besides
     // FlowLimiterCalculator.
@@ -80,10 +78,18 @@ class TaskApiFactory {
     }
     MP_ASSIGN_OR_RETURN(
         auto runner,
+#if !MEDIAPIPE_DISABLE_GPU
         core::TaskRunner::Create(std::move(graph_config), std::move(resolver),
                                  std::move(packets_callback),
                                  std::move(default_executor),
-                                 std::move(input_side_packets)));
+                                 std::move(input_side_packets),
+                                 /*resources=*/nullptr, std::move(error_fn)));
+#else
+        core::TaskRunner::Create(
+            std::move(graph_config), std::move(resolver),
+            std::move(packets_callback), std::move(default_executor),
+            std::move(input_side_packets), std::move(error_fn)));
+#endif
     return std::make_unique<T>(std::move(runner));
   }
 

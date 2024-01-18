@@ -26,18 +26,20 @@ limitations under the License.
 #include <utility>
 #include <vector>
 
-#include "absl/container/flat_hash_map.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/substitute.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/executor.h"
+#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/tool/name_util.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/core/model_resources_cache.h"
+#include "tensorflow/lite/core/api/op_resolver.h"
 
 #if !MEDIAPIPE_DISABLE_GPU
 #include "mediapipe/gpu/gpu_shared_data_internal.h"
@@ -99,19 +101,21 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> TaskRunner::Create(
     PacketsCallback packets_callback,
     std::shared_ptr<Executor> default_executor,
     std::optional<PacketMap> input_side_packets,
-    std::shared_ptr<::mediapipe::GpuResources> resources) {
+    std::shared_ptr<::mediapipe::GpuResources> resources,
+    std::optional<ErrorFn> error_fn) {
 #else
 absl::StatusOr<std::unique_ptr<TaskRunner>> TaskRunner::Create(
     CalculatorGraphConfig config,
     std::unique_ptr<tflite::OpResolver> op_resolver,
     PacketsCallback packets_callback,
     std::shared_ptr<Executor> default_executor,
-    std::optional<PacketMap> input_side_packets) {
+    std::optional<PacketMap> input_side_packets,
+    std::optional<ErrorFn> error_fn) {
 #endif  // !MEDIAPIPE_DISABLE_GPU
   auto task_runner = absl::WrapUnique(new TaskRunner(packets_callback));
   MP_RETURN_IF_ERROR(task_runner->Initialize(
       std::move(config), std::move(op_resolver), std::move(default_executor),
-      std::move(input_side_packets)));
+      std::move(input_side_packets), std::move(error_fn)));
 
 #if !MEDIAPIPE_DISABLE_GPU
   if (resources) {
@@ -128,7 +132,8 @@ absl::Status TaskRunner::Initialize(
     CalculatorGraphConfig config,
     std::unique_ptr<tflite::OpResolver> op_resolver,
     std::shared_ptr<Executor> default_executor,
-    std::optional<PacketMap> input_side_packets) {
+    std::optional<PacketMap> input_side_packets,
+    std::optional<ErrorFn> error_fn) {
   if (initialized_) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
@@ -180,6 +185,8 @@ absl::Status TaskRunner::Initialize(
   if (default_executor) {
     MP_RETURN_IF_ERROR(graph_.SetExecutor("", std::move(default_executor)));
   }
+
+  if (error_fn) MP_RETURN_IF_ERROR(graph_.SetErrorCallback(*error_fn));
 
   auto model_resources_cache =
       std::make_shared<ModelResourcesCache>(std::move(op_resolver));
