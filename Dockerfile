@@ -54,7 +54,7 @@ RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 100 --slave /u
 RUN pip3 install --upgrade setuptools
 RUN pip3 install wheel
 RUN pip3 install future
-RUN pip3 install absl-py numpy opencv-contrib-python protobuf==3.20.1
+RUN pip3 install absl-py numpy jax[cpu] opencv-contrib-python protobuf==3.20.1
 RUN pip3 install six==1.14.0
 RUN pip3 install tensorflow
 RUN pip3 install tf_slim
