@@ -134,6 +134,22 @@ class TextClassifier(classifier.Classifier):
 
     return text_classifier
 
+  @classmethod
+  def load_bert_classifier(
+      cls,
+      options: text_classifier_options.TextClassifierOptions,
+      saved_model_path: str,
+      label_names: Sequence[str],
+  ) -> "TextClassifier":
+    if not isinstance(options.supported_model.value(), ms.BertClassifierSpec):
+      raise ValueError(
+          "Only loading BertClassifier is supported, got:"
+          f" {options.supported_model}"
+      )
+    return _BertClassifier.load_bert_classifier(
+        options, saved_model_path, label_names
+    )
+
   def evaluate(
       self,
       data: ds.Dataset,
@@ -414,8 +430,43 @@ class _BertClassifier(TextClassifier):
         model_spec=options.supported_model.value(),
         model_options=options.model_options,
         hparams=options.hparams,
-        label_names=train_data.label_names)
+        label_names=train_data.label_names,
+    )
     bert_classifier._create_and_train_model(train_data, validation_data)
+    return bert_classifier
+
+  @classmethod
+  def load_bert_classifier(
+      cls,
+      options: text_classifier_options.TextClassifierOptions,
+      saved_model_path: str,
+      label_names: Sequence[str],
+  ) -> "_BertClassifier":
+    bert_classifier = _BertClassifier(
+        model_spec=options.supported_model.value(),
+        model_options=options.model_options,
+        hparams=options.hparams,
+        label_names=label_names,
+    )
+    with bert_classifier._hparams.get_strategy().scope():
+      bert_classifier._create_model()
+      # create dummy optimizer so model compiles
+      bert_classifier._optimizer = tfa_optimizers.LAMB(
+          3e-4,
+          weight_decay_rate=bert_classifier._hparams.weight_decay,
+          epsilon=1e-6,
+          exclude_from_weight_decay=["LayerNorm", "layer_norm", "bias"],
+          global_clipnorm=1.0,
+      )
+      bert_classifier._model = tf.keras.models.load_model(
+          saved_model_path, compile=False
+      )
+    bert_classifier._load_preprocessor()
+    bert_classifier._model.compile(
+        optimizer=bert_classifier._optimizer,
+        loss=bert_classifier._loss_function,
+        metrics=bert_classifier._metric_functions,
+    )
     return bert_classifier
 
   def _create_and_train_model(self, train_data: text_ds.Dataset,
@@ -426,17 +477,29 @@ class _BertClassifier(TextClassifier):
       train_data: Training data.
       validation_data: Validation data.
     """
-    (processed_train_data, processed_validation_data) = (
-        self._load_and_run_preprocessor(train_data, validation_data))
+    self._load_preprocessor()
+    (processed_train_data, processed_validation_data) = self._run_preprocessor(
+        train_data, validation_data
+    )
     with self._hparams.get_strategy().scope():
       self._create_model()
       self._create_optimizer(processed_train_data)
     self._train_model(processed_train_data, processed_validation_data)
 
-  def _load_and_run_preprocessor(
+  def _load_preprocessor(self):
+    """Loads a BertClassifierPreprocessor."""
+    self._text_preprocessor = preprocessor.BertClassifierPreprocessor(
+        seq_len=self._model_options.seq_len,
+        do_lower_case=self._model_spec.do_lower_case,
+        uri=self._model_spec.get_path(),
+        model_name=self._model_spec.name,
+        tokenizer=self._hparams.tokenizer,
+    )
+
+  def _run_preprocessor(
       self, train_data: text_ds.Dataset, validation_data: text_ds.Dataset
   ) -> Tuple[text_ds.Dataset, text_ds.Dataset]:
-    """Loads a BertClassifierPreprocessor and runs it on the data.
+    """Runs BertClassifierPreprocessor on the data.
 
     Args:
       train_data: Training data.
@@ -445,13 +508,6 @@ class _BertClassifier(TextClassifier):
     Returns:
       Preprocessed training data and preprocessed validation data.
     """
-    self._text_preprocessor = preprocessor.BertClassifierPreprocessor(
-        seq_len=self._model_options.seq_len,
-        do_lower_case=self._model_spec.do_lower_case,
-        uri=self._model_spec.get_path(),
-        model_name=self._model_spec.name,
-        tokenizer=self._hparams.tokenizer,
-    )
     return (
         self._text_preprocessor.preprocess(train_data),
         self._text_preprocessor.preprocess(validation_data),
