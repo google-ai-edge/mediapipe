@@ -4,7 +4,7 @@ Note that this is a reduced fork version of the praxis libraries to provide a
 self-contained library for packaging.
 """
 
-from typing import Any, Optional, Sequence, Union
+from typing import Any, List, Optional, Sequence, Tuple, Union
 
 import jax
 from jax import lax
@@ -175,7 +175,7 @@ def get_min_max(
     bits: int = 8,
     unsigned: bool = False,
     use_fp: bool = False,
-) -> tuple[float, float]:
+) -> Tuple[float, float]:
   """Gets the min/max range for a given number of bits.
 
   Args:
@@ -206,7 +206,7 @@ def pass_through(x: JTensor, fn: Any) -> JTensor:
 
 def reduce_precision(
     t: JTensor,
-    contract_dims: Sequence[int] | None,
+    contract_dims: Optional[Sequence[int]],
     need_gradient: bool = False,
     bits: int = 8,
     optimization_on_bound: bool = False,
@@ -217,8 +217,8 @@ def reduce_precision(
     add_scale_eps: bool = False,
     per_channel: bool = False,
     random_rounding: bool = False,
-    key: jax.Array | None = None,
-) -> tuple[JTensor, JTensor, JTensor | None]:
+    key: Optional[jax.Array] = None,
+) -> Tuple[JTensor, JTensor, Optional[JTensor]]:
   """Reduce the precision of a tensor.
 
   Generic for all tensors.
@@ -303,7 +303,7 @@ def reduce_precision(
 
 def quantize_tensor(
     var: np.ndarray,
-    axis: list[int],
+    axis: List[int],
     factor: float = 1.0,
     sym: bool = True,
     number_bits: int = 8,
@@ -314,7 +314,7 @@ def quantize_tensor(
     per_channel: bool = False,
     block_size: int = 0,
 ) -> Union[
-    tuple[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray, np.ndarray]
+    Tuple[np.ndarray, np.ndarray], Tuple[np.ndarray, np.ndarray, np.ndarray]
 ]:
   """Quantize a tensor.
 
