@@ -253,25 +253,9 @@ static void FreeRefConReleaseCallback(void* refCon, const void* baseAddress) {
 
 CVReturn CreateCVPixelBufferWithoutPool(int width, int height, OSType cv_format,
                                         CVPixelBufferRef* out_buffer) {
-#if TARGET_IPHONE_SIMULATOR
-  // On the simulator, syncing the texture with the pixelbuffer does not work,
-  // and we have to use glReadPixels. Since GL_UNPACK_ROW_LENGTH is not
-  // available in OpenGL ES 2, we should create the buffer so the pixels are
-  // contiguous.
-  //
-  // TODO: verify if we can use kIOSurfaceBytesPerRow to force
-  // CoreVideo to give us contiguous data.
-  size_t bytes_per_row = width * 4;
-  void* data = malloc(bytes_per_row * height);
-  return CVPixelBufferCreateWithBytes(
-      kCFAllocatorDefault, width, height, cv_format, data, bytes_per_row,
-      FreeRefConReleaseCallback, data,
-      GetCVPixelBufferAttributesForGlCompatibility(), out_buffer);
-#else
   return CVPixelBufferCreate(kCFAllocatorDefault, width, height, cv_format,
                              GetCVPixelBufferAttributesForGlCompatibility(),
                              out_buffer);
-#endif
 }
 
 absl::StatusOr<CFHolder<CVPixelBufferRef>> CreateCVPixelBufferWithoutPool(
@@ -657,13 +641,16 @@ CFDictionaryRef GetCVPixelBufferAttributesForGlCompatibility() {
         kCFAllocatorDefault, NULL, NULL, 0, &kCFTypeDictionaryKeyCallBacks,
         &kCFTypeDictionaryValueCallBacks);
 
-    // To ensure compatibility with CVOpenGLESTextureCache, these attributes
-    // should be present. However, on simulator this IOSurface attribute
-    // actually causes CVOpenGLESTextureCache to fail. b/144850076
+    // To ensure compatibility with CVMetalTextureCache
+    // kCVPixelBufferIOSurfacePropertiesKey must be present. To ensure
+    // compatibility with CVOpenGLESTextureCache all the listed property keys
+    // must be present. However, on simulator this IOSurface attribute actually
+    // causes CVOpenGLESTextureCache to fail. b/144850076 We will use the pixel
+    // buffer created using these attributes to create CVOpenGLESTextureCache
+    // only on the device. For simulator, a different pixel buffer will be
+    // created.
     const void* keys[] = {
-#if !TARGET_IPHONE_SIMULATOR
       kCVPixelBufferIOSurfacePropertiesKey,
-#endif  // !TARGET_IPHONE_SIMULATOR
 
 #if TARGET_OS_OSX
       kCVPixelFormatOpenGLCompatibility,
@@ -673,10 +660,8 @@ CFDictionaryRef GetCVPixelBufferAttributesForGlCompatibility() {
     };
 
     const void* values[] = {
-#if !TARGET_IPHONE_SIMULATOR
-      empty_dict,
-#endif  // !TARGET_IPHONE_SIMULATOR
-      kCFBooleanTrue
+        empty_dict,
+        kCFBooleanTrue,
     };
 
     attrs = CFDictionaryCreate(

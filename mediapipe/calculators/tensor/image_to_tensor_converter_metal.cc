@@ -185,9 +185,34 @@ class SubRectExtractorMetal {
                        id<MTLCommandBuffer> command_buffer,
                        id<MTLBuffer> destination) {
     auto output_texture = MTLTextureWithBuffer(destination_size, destination);
-    return InternalExecute(input_texture, sub_rect, flip_horizontally, alpha,
-                           beta, destination_size, command_buffer,
-                           output_texture);
+    absl::Status status =
+        InternalExecute(input_texture, sub_rect, flip_horizontally, alpha, beta,
+                        destination_size, command_buffer, output_texture);
+// On the simulator the `output_texture` cannot share it's underlying storage
+// with the tensor's CPU Buffer. Hence the contents of the `output_texture`
+// after sub rect extraction must be copied to the tensor's CPU buffer held by
+// the `destination` buffer.
+#if TARGET_IPHONE_SIMULATOR
+    NSUInteger output_bytes_per_row =
+        GetBytesPerRaw(output_format_, destination_size);
+
+    id<MTLBlitCommandEncoder> blitCommandEncoder =
+        command_buffer.blitCommandEncoder;
+    [blitCommandEncoder copyFromTexture:output_texture
+                            sourceSlice:0
+                            sourceLevel:0
+                           sourceOrigin:MTLOriginMake(0, 0, 0)
+                             sourceSize:MTLSizeMake(output_texture.width,
+                                                    output_texture.height,
+                                                    output_texture.depth)
+                               toBuffer:destination
+                      destinationOffset:0
+                 destinationBytesPerRow:output_bytes_per_row
+               destinationBytesPerImage:0];
+    [blitCommandEncoder endEncoding];
+#endif
+
+    return status;
   }
 
  private:
@@ -201,11 +226,21 @@ class SubRectExtractorMetal {
     texture_desc.usage = MTLTextureUsageRenderTarget;
 
     NSUInteger output_bytes_per_row = GetBytesPerRaw(output_format_, size);
+    // Creating a no copy `MTLTexture` from an `MTLBuffer` with
+    // MTLStorageModeShared on the simultor results in the following error:
+    // "Linear textures from shared buffers is not supported on this device."
+    // To mitigate this crash, an empty `MTLTexture` is created using the
+    // `MTLDevice`. The solution invovles an extra copy for copying the
+    // underlying buffer of the texture back to the tensor's CPU Buffer.
+    id<MTLTexture> texture;
+#if TARGET_IPHONE_SIMULATOR
+    texture = [buffer.device newTextureWithDescriptor:texture_desc];
+#else
+    texture = [buffer newTextureWithDescriptor:texture_desc
+                                        offset:0
+                                   bytesPerRow:output_bytes_per_row];
+#endif
 
-    id<MTLTexture> texture =
-        [buffer newTextureWithDescriptor:texture_desc
-                                  offset:0
-                             bytesPerRow:output_bytes_per_row];
     return texture;
   }
 
