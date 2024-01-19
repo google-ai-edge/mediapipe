@@ -178,6 +178,16 @@ cc_library(
 )
 
 cc_library(
+    name = "hardware_buffer_pool",
+    hdrs = ["hardware_buffer_pool.h"],
+    deps = [
+        ":hardware_buffer",
+        "//mediapipe/gpu:multi_pool",
+        "//mediapipe/gpu:reusable_pool",
+    ],
+)
+
+cc_library(
     name = "image_frame",
     srcs = ["image_frame.cc"],
     hdrs = ["image_frame.h"],

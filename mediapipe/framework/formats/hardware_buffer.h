@@ -140,6 +140,9 @@ class HardwareBuffer {
   // Returns buffer spec.
   const HardwareBufferSpec& spec() const { return spec_; }
 
+  // Called by ReusablePool when reusing this buffer.
+  void Reuse() {}
+
  private:
   // Allocates an AHardwareBuffer instance;
   static absl::StatusOr<AHardwareBuffer*> AllocateAHardwareBuffer(
