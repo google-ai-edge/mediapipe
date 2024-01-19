@@ -152,52 +152,40 @@ struct NullStrongIntValidator {
   }
   // Verify -value.
   template <typename T>
-  static void ValidateNegate(T value) { /* do nothing */
-  }
+  static void ValidateNegate(T value) { /* do nothing */ }
   // Verify ~value;
   template <typename T>
-  static void ValidateBitNot(T value) { /* do nothing */
-  }
+  static void ValidateBitNot(T value) { /* do nothing */ }
   // Verify lhs + rhs.
   template <typename T>
-  static void ValidateAdd(T lhs, T rhs) { /* do nothing */
-  }
+  static void ValidateAdd(T lhs, T rhs) { /* do nothing */ }
   // Verify lhs - rhs.
   template <typename T>
-  static void ValidateSubtract(T lhs, T rhs) { /* do nothing */
-  }
+  static void ValidateSubtract(T lhs, T rhs) { /* do nothing */ }
   // Verify lhs * rhs.
   template <typename T, typename U>
-  static void ValidateMultiply(T lhs, U rhs) { /* do nothing */
-  }
+  static void ValidateMultiply(T lhs, U rhs) { /* do nothing */ }
   // Verify lhs / rhs.
   template <typename T, typename U>
-  static void ValidateDivide(T lhs, U rhs) { /* do nothing */
-  }
+  static void ValidateDivide(T lhs, U rhs) { /* do nothing */ }
   // Verify lhs % rhs.
   template <typename T, typename U>
-  static void ValidateModulo(T lhs, U rhs) { /* do nothing */
-  }
+  static void ValidateModulo(T lhs, U rhs) { /* do nothing */ }
   // Verify lhs << rhs.
   template <typename T>
-  static void ValidateLeftShift(T lhs, int64_t rhs) { /* do nothing */
-  }
+  static void ValidateLeftShift(T lhs, int64_t rhs) { /* do nothing */ }
   // Verify lhs >> rhs.
   template <typename T>
-  static void ValidateRightShift(T lhs, int64_t rhs) { /* do nothing */
-  }
+  static void ValidateRightShift(T lhs, int64_t rhs) { /* do nothing */ }
   // Verify lhs & rhs.
   template <typename T>
-  static void ValidateBitAnd(T lhs, T rhs) { /* do nothing */
-  }
+  static void ValidateBitAnd(T lhs, T rhs) { /* do nothing */ }
   // Verify lhs | rhs.
   template <typename T>
-  static void ValidateBitOr(T lhs, T rhs) { /* do nothing */
-  }
+  static void ValidateBitOr(T lhs, T rhs) { /* do nothing */ }
   // Verify lhs ^ rhs.
   template <typename T>
-  static void ValidateBitXor(T lhs, T rhs) { /* do nothing */
-  }
+  static void ValidateBitXor(T lhs, T rhs) { /* do nothing */ }
 };
 
 // Holds an integer value (of type NativeType) and behaves as a NativeType by

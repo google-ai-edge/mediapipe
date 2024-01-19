@@ -111,8 +111,8 @@ bool StreamingBuffer::TruncateBuffer(bool flush) {
     const auto& buffer = item.second;
     if (buffer.size() != remaining_elems) {
       ABSL_LOG(WARNING) << "After trunctation, for tag " << item.first << "got "
-                        << buffer.size() << " elements, "
-                        << "expected " << remaining_elems;
+                        << buffer.size() << " elements, " << "expected "
+                        << remaining_elems;
       is_consistent = false;
     }
   }

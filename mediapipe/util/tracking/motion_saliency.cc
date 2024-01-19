@@ -204,7 +204,7 @@ void MotionSaliency::SelectSaliencyInliers(
         scaled_point->set_weight(scaled_point->weight() * scale);
       }
     }  // end point traversal.
-  }    // end frame traversal.
+  }  // end frame traversal.
 
   for (int k = 0; k < motion_saliency->size(); ++k) {
     (*motion_saliency)[k]->Swap(&inlier_saliency[k]);

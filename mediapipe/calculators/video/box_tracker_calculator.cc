@@ -871,8 +871,8 @@ absl::Status BoxTrackerCalculator::Process(CalculatorContext* cc) {
                                      : nullptr;
 
   if (ra_track_stream && !ra_track_stream->IsEmpty()) {
-    RET_CHECK(!box_tracker_) << "Random access only for streaming mode "
-                             << "implemented.";
+    RET_CHECK(!box_tracker_)
+        << "Random access only for streaming mode " << "implemented.";
     const TimedBoxProtoList& box_list =
         ra_track_stream->Get<TimedBoxProtoList>();
     RET_CHECK(box_list.box_size() % 2 == 0)
@@ -888,8 +888,8 @@ absl::Status BoxTrackerCalculator::Process(CalculatorContext* cc) {
   if (ra_track_stream == nullptr || ra_track_stream->IsEmpty()) {
     if (ra_track_proto_string_stream &&
         !ra_track_proto_string_stream->IsEmpty()) {
-      RET_CHECK(!box_tracker_) << "Random access only for streaming mode "
-                               << "implemented.";
+      RET_CHECK(!box_tracker_)
+          << "Random access only for streaming mode " << "implemented.";
       auto box_list_str = ra_track_proto_string_stream->Get<std::string>();
       TimedBoxProtoList box_list;
       box_list.ParseFromString(box_list_str);

@@ -662,22 +662,21 @@ CFDictionaryRef GetCVPixelBufferAttributesForGlCompatibility() {
     // actually causes CVOpenGLESTextureCache to fail. b/144850076
     const void* keys[] = {
 #if !TARGET_IPHONE_SIMULATOR
-      kCVPixelBufferIOSurfacePropertiesKey,
+        kCVPixelBufferIOSurfacePropertiesKey,
 #endif  // !TARGET_IPHONE_SIMULATOR
 
 #if TARGET_OS_OSX
-      kCVPixelFormatOpenGLCompatibility,
+        kCVPixelFormatOpenGLCompatibility,
 #else
-      kCVPixelFormatOpenGLESCompatibility,
+        kCVPixelFormatOpenGLESCompatibility,
 #endif  // TARGET_OS_OSX
     };
 
     const void* values[] = {
 #if !TARGET_IPHONE_SIMULATOR
-      empty_dict,
+        empty_dict,
 #endif  // !TARGET_IPHONE_SIMULATOR
-      kCFBooleanTrue
-    };
+        kCFBooleanTrue};
 
     attrs = CFDictionaryCreate(
         kCFAllocatorDefault, keys, values, ABSL_ARRAYSIZE(values),

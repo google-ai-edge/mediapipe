@@ -834,8 +834,7 @@ MixtureRowWeights::MixtureRowWeights(int frame_height, int margin, float sigma,
       ABSL_LOG(WARNING)
           << "No margin support when flag catmull_rom_mixture_weights "
           << "is set. Margin is reset to zero, it is recommended "
-          << "that RowWeightsBoundChecked is used to prevent "
-          << "segfaults.";
+          << "that RowWeightsBoundChecked is used to prevent " << "segfaults.";
       margin_ = 0;
     }
 

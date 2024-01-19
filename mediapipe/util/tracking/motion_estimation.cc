@@ -1742,8 +1742,8 @@ void MotionEstimation::IrlsInitialization(
     SingleTrackClipData* clip_data) const {
   if (options_.estimation_policy() ==
       MotionEstimationOptions::TEMPORAL_LONG_FEATURE_BIAS) {
-    ABSL_CHECK_NE(frame, -1) << "Only per frame processing for this policy "
-                             << "supported.";
+    ABSL_CHECK_NE(frame, -1)
+        << "Only per frame processing for this policy " << "supported.";
   }
 
   IrlsInitializationInvoker invoker(type, max_unstable_type, model_options,

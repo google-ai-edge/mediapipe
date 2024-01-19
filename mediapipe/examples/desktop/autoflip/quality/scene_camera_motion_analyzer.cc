@@ -307,9 +307,8 @@ absl::Status SceneCameraMotionAnalyzer::PopulateFocusPointFrames(
   RET_CHECK_GT(num_scene_frames, 0) << "No scene frames.";
   RET_CHECK_EQ(scene_summary.num_key_frames(),
                scene_summary.key_frame_compact_infos_size())
-      << "Key frame compact infos has wrong size:"
-      << " num_key_frames = " << scene_summary.num_key_frames()
-      << " key_frame_compact_infos size = "
+      << "Key frame compact infos has wrong size:" << " num_key_frames = "
+      << scene_summary.num_key_frames() << " key_frame_compact_infos size = "
       << scene_summary.key_frame_compact_infos_size();
   const int scene_frame_width = scene_summary.scene_frame_width();
   const int scene_frame_height = scene_summary.scene_frame_height();

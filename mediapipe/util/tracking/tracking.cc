@@ -1077,8 +1077,7 @@ bool MotionBox::TrackStep(int from_frame,
 
         if (num_track_errors >= options_.max_track_failures()) {
           ABSL_LOG_IF(INFO, print_motion_box_warnings_)
-              << "Tracking failed during max track failure "
-              << "verification.";
+              << "Tracking failed during max track failure " << "verification.";
           states_[new_pos].set_track_status(MotionBoxState::BOX_UNTRACKED);
           return false;
         }
@@ -1110,8 +1109,7 @@ bool MotionBox::TrackStep(int from_frame,
 
         if (num_track_errors >= options_.max_track_failures()) {
           ABSL_LOG_IF(INFO, print_motion_box_warnings_)
-              << "Tracking failed during max track failure "
-              << "verification.";
+              << "Tracking failed during max track failure " << "verification.";
           states_[new_pos].set_track_status(MotionBoxState::BOX_UNTRACKED);
           return false;
         }
@@ -3173,8 +3171,7 @@ void MotionVectorFrameFromTrackingData(const TrackingData& tracking_data,
   float aspect_ratio = tracking_data.frame_aspect();
   if (aspect_ratio < 0.1 || aspect_ratio > 10.0f) {
     ABSL_LOG(ERROR) << "Aspect ratio : " << aspect_ratio
-                    << " is out of bounds. "
-                    << "Resetting to 1.0.";
+                    << " is out of bounds. " << "Resetting to 1.0.";
     aspect_ratio = 1.0f;
   }
 
@@ -3252,8 +3249,7 @@ void FeatureAndDescriptorFromTrackingData(
   float aspect_ratio = tracking_data.frame_aspect();
   if (aspect_ratio < 0.1 || aspect_ratio > 10.0f) {
     ABSL_LOG(ERROR) << "Aspect ratio : " << aspect_ratio
-                    << " is out of bounds. "
-                    << "Resetting to 1.0.";
+                    << " is out of bounds. " << "Resetting to 1.0.";
     aspect_ratio = 1.0f;
   }
 

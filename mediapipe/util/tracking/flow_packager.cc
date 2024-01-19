@@ -940,8 +940,8 @@ std::string FlowPackager::SplitContainerFromString(
     absl::string_view* binary_data, TrackingContainer* container) {
   ABSL_CHECK(binary_data != nullptr);
   ABSL_CHECK(container != nullptr);
-  ABSL_CHECK_GE(binary_data->size(), 12) << "Data does not contain "
-                                         << "valid container";
+  ABSL_CHECK_GE(binary_data->size(), 12)
+      << "Data does not contain " << "valid container";
 
   container->set_header(PopSubstring(4, binary_data));
 

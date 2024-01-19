@@ -436,9 +436,9 @@ absl::Status SpectrogramCalculator::ProcessVectorToOutput(
 absl::Status SpectrogramCalculator::ProcessVector(const Matrix& input_stream,
                                                   CalculatorContext* cc) {
   switch (output_type_) {
-      // These blocks deliberately ignore clang-format to preserve the
-      // "silhouette" of the different cases.
-      // clang-format off
+    // These blocks deliberately ignore clang-format to preserve the
+    // "silhouette" of the different cases.
+    // clang-format off
     case SpectrogramCalculatorOptions::COMPLEX: {
       return ProcessVectorToOutput(
           input_stream,

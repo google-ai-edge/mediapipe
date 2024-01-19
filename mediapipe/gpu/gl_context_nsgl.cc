@@ -53,18 +53,17 @@ absl::Status GlContext::CreateContext(NSOpenGLContext* share_context) {
   // TODO: Remove the need for the OSX_ENABLE_3_2_CORE if this
   // proves to be safe in general.
 #if defined(TARGET_OS_OSX) && defined(OSX_ENABLE_3_2_CORE)
-    NSOpenGLPFAOpenGLProfile,
-    NSOpenGLProfileVersion3_2Core,
+      NSOpenGLPFAOpenGLProfile,
+      NSOpenGLProfileVersion3_2Core,
 #endif
-    NSOpenGLPFAAccelerated,
-    NSOpenGLPFAColorSize,
-    24,
-    NSOpenGLPFAAlphaSize,
-    8,
-    NSOpenGLPFADepthSize,
-    16,
-    0
-  };
+      NSOpenGLPFAAccelerated,
+      NSOpenGLPFAColorSize,
+      24,
+      NSOpenGLPFAAlphaSize,
+      8,
+      NSOpenGLPFADepthSize,
+      16,
+      0};
 
   pixel_format_ = [[NSOpenGLPixelFormat alloc] initWithAttributes:attrs];
   // If OpenGL 3.2 Core does not work, try again without it.

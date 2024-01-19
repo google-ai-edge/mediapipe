@@ -188,8 +188,7 @@ absl::Status LogStatus(const absl::Status& status,
     return status;
   }
 
-  VLOG(3) << "Failed to process packet:"
-          << " media_type:"
+  VLOG(3) << "Failed to process packet:" << " media_type:"
           << (avcodec_ctx.codec_type == AVMEDIA_TYPE_VIDEO ? "video" : "audio")
           << " codec_id:" << avcodec_ctx.codec_id
           << " frame_number:" << avcodec_ctx.frame_number

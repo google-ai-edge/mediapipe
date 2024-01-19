@@ -275,8 +275,8 @@ absl::Status ScaleImageCalculator::InitializeFrameInfo(CalculatorContext* cc) {
     output_width_ = crop_width_;
     output_height_ = crop_height_;
   }
-  VLOG(1) << "Image scaling parameters:"
-          << "\ninput_width_ " << input_width_      //
+  VLOG(1) << "Image scaling parameters:" << "\ninput_width_ "
+          << input_width_                           //
           << "\ninput_height_ " << input_height_    //
           << "\ninput_format_ " << input_format_    //
           << "\ncrop_width_ " << crop_width_        //

@@ -326,8 +326,9 @@ TEST_F(MediaSequenceUtilTest, RoundTripContextFeatureList) {
 
 TEST_F(MediaSequenceUtilTest, ContextKeyMissing) {
   tensorflow::SequenceExample sequence_example;
-  ASSERT_DEATH({ GetContext(sequence_example, "key/is/unavailable"); },
-               "Could not find context key key/is/unavailable");
+  ASSERT_DEATH(
+      { GetContext(sequence_example, "key/is/unavailable"); },
+      "Could not find context key key/is/unavailable");
 }
 
 TEST_F(MediaSequenceUtilTest, RoundTripFeatureListsFeature) {
@@ -362,8 +363,8 @@ TEST_F(MediaSequenceUtilTest, HasFeatureList) {
 TEST_F(MediaSequenceUtilTest, SetContextFloat) {
   tensorflow::SequenceExample example;
   std::string key = "test";
-  ASSERT_DEATH({ GetContext(example, key); },
-               "Could not find context key " + key);
+  ASSERT_DEATH(
+      { GetContext(example, key); }, "Could not find context key " + key);
   SetContextFloat(key, 1.0, &example);
   ASSERT_EQ(GetContext(example, key).float_list().value_size(), 1);
   ASSERT_EQ(GetContext(example, key).float_list().value(0), 1.0);
@@ -375,8 +376,8 @@ TEST_F(MediaSequenceUtilTest, SetContextFloat) {
 TEST_F(MediaSequenceUtilTest, SetContextInt64) {
   tensorflow::SequenceExample example;
   std::string key = "test";
-  ASSERT_DEATH({ GetContext(example, key); },
-               "Could not find context key " + key);
+  ASSERT_DEATH(
+      { GetContext(example, key); }, "Could not find context key " + key);
   SetContextInt64(key, 1, &example);
   ASSERT_EQ(GetContext(example, key).int64_list().value_size(), 1);
   ASSERT_EQ(GetContext(example, key).int64_list().value(0), 1);
@@ -388,8 +389,8 @@ TEST_F(MediaSequenceUtilTest, SetContextInt64) {
 TEST_F(MediaSequenceUtilTest, SetContextBytes) {
   tensorflow::SequenceExample example;
   std::string key = "test";
-  ASSERT_DEATH({ GetContext(example, key); },
-               "Could not find context key " + key);
+  ASSERT_DEATH(
+      { GetContext(example, key); }, "Could not find context key " + key);
   SetContextBytes(key, "one", &example);
   ASSERT_EQ(GetContext(example, key).bytes_list().value_size(), 1);
   ASSERT_EQ(GetContext(example, key).bytes_list().value(0), "one");

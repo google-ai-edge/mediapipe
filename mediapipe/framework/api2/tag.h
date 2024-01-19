@@ -42,8 +42,8 @@ constexpr bool is_tag(A) {
 namespace internal {
 
 template <typename S, std::size_t... I>
-constexpr auto tag_build_impl(S, std::index_sequence<I...>)
-    -> Tag<S().tag[I]...> {
+constexpr auto tag_build_impl(S,
+                              std::index_sequence<I...>) -> Tag<S().tag[I]...> {
   return {};
 }
 

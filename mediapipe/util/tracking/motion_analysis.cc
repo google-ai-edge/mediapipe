@@ -359,8 +359,8 @@ bool MotionAnalysis::AddFrameGeneric(
     RegionFlowFeatureList* output_feature_list) {
   // Don't check input sizes here, RegionFlowComputation does that based
   // on its internal options.
-  ABSL_CHECK(feature_computation_) << "Calls to AddFrame* can NOT be mixed "
-                                   << "with AddFeatures";
+  ABSL_CHECK(feature_computation_)
+      << "Calls to AddFrame* can NOT be mixed " << "with AddFeatures";
 
   // Compute RegionFlow.
   {
