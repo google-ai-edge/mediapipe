@@ -25,7 +25,8 @@ NS_ASSUME_NONNULL_BEGIN
 @interface MPPImage (TestUtils)
 
 /**
- * Loads an image from a file in an app bundle into a `MPPImage` object.
+ * Loads an image from a file in an app bundle into a `MPPImage` object of source type
+ * `MPPImageSourceTypeImage`.
  *
  * @param fileInfo The file info specifying the name and extension of the image
  * file in the bundle.
@@ -37,7 +38,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  * Loads an image from a file in an app bundle into a `MPPImage` object with the specified
- * orientation.
+ * orientation and source type `MPPImageSourceTypeImage`.
  *
  * @param fileInfo The file info specifying the name and extension of the image file in the bundle.
  *
@@ -47,6 +48,25 @@ NS_ASSUME_NONNULL_BEGIN
 + (MPPImage *)imageWithFileInfo:(MPPFileInfo *)fileInfo
                     orientation:(UIImageOrientation)orientation
     NS_SWIFT_NAME(image(withFileInfo:orientation:));
+
+/**
+ * Loads an image from a file in an app bundle into a `MPPImage` object with the specified
+ * source type.
+ *
+ * Currently supports only source types `MPPImageSourceTypeImage` and
+ * `MPPImageSourceTypePixelBuffer`. The method returns `nil` if you request an image of source type
+ * `MPPImageSourceTypeSampleBuffer`. The underlying pixel buffer of the returned image will be of
+ * type `kCVPixelFormatType32BGRA`.
+ *
+ * @param fileInfo The file info specifying the name and extension of the image file in the bundle.
+ * @param sourceType The expected `MPPImageSourceType` of the `MPPImage` created by this method.
+ *
+ * @return The `MPPImage` object contains the loaded image. This method returns nil if it cannot
+ * load the image.
+ */
++ (MPPImage *)imageWithFileInfo:(MPPFileInfo *)fileInfo
+                     sourceType:(MPPImageSourceType)sourceType
+    NS_SWIFT_NAME(image(withFileInfo:sourceType:));
 
 // TODO: Remove after all tests are migrated
 /**
