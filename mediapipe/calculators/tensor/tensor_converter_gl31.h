@@ -26,7 +26,7 @@ namespace mediapipe {
 
 // Instantiates an OpenGL 3.1-enabled TensorConverterGpu instance.
 std::unique_ptr<TensorConverterGpu> CreateTensorConverterGl31(
-    GlCalculatorHelper* gpu_helper);
+    GlCalculatorHelper& gpu_helper);
 
 }  // namespace mediapipe
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31

@@ -32,10 +32,10 @@ class TensorConverterGlTest : public GpuTestWithParamBase<GlVersion> {
         auto context, GlContext::Create(nullptr, /*create_thread=*/false));
     switch (GetParam()) {
       case GlVersion30:
-        tensor_converter_ = CreateTensorConverterGl30(&helper_);
+        tensor_converter_ = CreateTensorConverterGl30(helper_);
         break;
       case GlVersion31:
-        tensor_converter_ = CreateTensorConverterGl31(&helper_);
+        tensor_converter_ = CreateTensorConverterGl31(helper_);
         break;
       default:
         ABSL_LOG(FATAL) << "Unknown GlVersion: " << GetParam();

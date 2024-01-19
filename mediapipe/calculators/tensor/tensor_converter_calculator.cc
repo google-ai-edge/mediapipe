@@ -426,9 +426,9 @@ absl::Status TensorConverterCalculator::InitGpu(CalculatorContext* cc) {
   MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext(
       [this, &input, &include_alpha, &single_channel]() -> absl::Status {
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
-        tensor_converter_gpu_ = CreateTensorConverterGl31(&gpu_helper_);
+        tensor_converter_gpu_ = CreateTensorConverterGl31(gpu_helper_);
 #else
-        tensor_converter_gpu_ = CreateTensorConverterGl30(&gpu_helper_);
+        tensor_converter_gpu_ = CreateTensorConverterGl30(gpu_helper_);
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
         return tensor_converter_gpu_->Init(
             input.width(), input.height(), output_range_, include_alpha,

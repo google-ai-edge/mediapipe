@@ -44,7 +44,7 @@ int NumGroups(const int size, const int group_size) {  // NOLINT
 
 class TensorConverterGlImpl : public TensorConverterGpu {
  public:
-  explicit TensorConverterGlImpl(GlCalculatorHelper* gpu_helper)
+  explicit TensorConverterGlImpl(GlCalculatorHelper& gpu_helper)
       : gpu_helper_(gpu_helper) {}
 
   ~TensorConverterGlImpl() override { glDeleteProgram(to_buffer_program_); }
@@ -116,7 +116,7 @@ class TensorConverterGlImpl : public TensorConverterGpu {
   }
 
   Tensor Convert(const GpuBuffer& input) override {
-    const auto input_texture = gpu_helper_->CreateSourceTexture(input);
+    const auto input_texture = gpu_helper_.CreateSourceTexture(input);
     Tensor output(Tensor::ElementType::kFloat32,
                   Tensor::Shape{1, height_, width_, num_output_channels_});
     // Convert GL texture into SSBO.
@@ -140,13 +140,13 @@ class TensorConverterGlImpl : public TensorConverterGpu {
   int height_ = 0;
   int num_output_channels_ = 0;
 
-  GlCalculatorHelper* gpu_helper_;
+  GlCalculatorHelper& gpu_helper_;
 };
 
 }  // namespace
 
 std::unique_ptr<TensorConverterGpu> CreateTensorConverterGl31(
-    GlCalculatorHelper* gpu_helper) {
+    GlCalculatorHelper& gpu_helper) {
   return std::make_unique<TensorConverterGlImpl>(gpu_helper);
 }
 

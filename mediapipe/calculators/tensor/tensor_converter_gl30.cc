@@ -41,7 +41,7 @@ namespace {
 
 class TensorConverterGlImpl : public TensorConverterGpu {
  public:
-  explicit TensorConverterGlImpl(GlCalculatorHelper* gpu_helper)
+  explicit TensorConverterGlImpl(GlCalculatorHelper& gpu_helper)
       : gpu_helper_(gpu_helper) {}
 
   ~TensorConverterGlImpl() override {
@@ -131,7 +131,7 @@ class TensorConverterGlImpl : public TensorConverterGpu {
   }
 
   Tensor Convert(const GpuBuffer& input) override {
-    const auto input_texture = gpu_helper_->CreateSourceTexture(input);
+    const auto input_texture = gpu_helper_.CreateSourceTexture(input);
     Tensor output(Tensor::ElementType::kFloat32,
                   Tensor::Shape{1, height_, width_, num_output_channels_});
     glUseProgram(to_tex2d_program_);
@@ -174,13 +174,13 @@ class TensorConverterGlImpl : public TensorConverterGpu {
   int height_ = 0;
   int num_output_channels_ = 0;
 
-  GlCalculatorHelper* gpu_helper_ = nullptr;
+  GlCalculatorHelper& gpu_helper_;
 };
 
 }  // namespace
 
 std::unique_ptr<TensorConverterGpu> CreateTensorConverterGl30(
-    GlCalculatorHelper* gpu_helper) {
+    GlCalculatorHelper& gpu_helper) {
   return std::make_unique<TensorConverterGlImpl>(gpu_helper);
 }
 
