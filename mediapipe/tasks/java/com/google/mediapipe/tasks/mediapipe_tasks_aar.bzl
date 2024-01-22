@@ -95,6 +95,7 @@ _TEXT_TASKS_JAVA_PROTO_LITE_TARGETS = [
 
 _TEXT_TASKS_TEXT_GENERATOR_JAVA_PROTO_LITE_TARGETS = [
     "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto:llm_options_java_proto_lite",
+    "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto:llm_response_context_java_proto_lite",
 ]
 
 def mediapipe_tasks_core_aar(name, srcs, manifest):

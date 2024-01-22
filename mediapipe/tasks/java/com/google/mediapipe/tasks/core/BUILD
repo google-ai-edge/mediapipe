@@ -68,9 +68,14 @@ android_library(
     deps = ["@maven//:com_google_guava_guava"],
 )
 
+filegroup(
+    name = "llm_java_srcs",
+    srcs = ["LlmTaskRunner.java"],
+)
+
 android_library(
     name = "llm_java",
-    srcs = ["LlmTaskRunner.java"],
+    srcs = [":llm_java_srcs"],
     javacopts = [
         "-Xep:AndroidJdkLibsChecker:OFF",
     ],

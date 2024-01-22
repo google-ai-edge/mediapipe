@@ -36,6 +36,6 @@ load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl"
 
 mediapipe_tasks_text_text_generator_aar(
     name = "tasks_text_text_generator",
-    srcs = glob(["*.java"]),
+    srcs = glob(["*.java"]) + ["//mediapipe/tasks/java/com/google/mediapipe/tasks/core:llm_java_srcs"],
     native_library = ":libllm_inference_engine_jni_lib",
 )
