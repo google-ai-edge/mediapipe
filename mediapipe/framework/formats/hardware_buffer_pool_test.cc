@@ -20,7 +20,8 @@ HardwareBufferSpec GetTestHardwareBufferSpec(uint32_t size_bytes) {
 }
 
 TEST(HardwareBufferPoolTest, ShouldPoolHardwareBuffer) {
-  HardwareBufferPool hardware_buffer_pool;
+  HardwareBufferPool hardware_buffer_pool({.min_requests_before_pool = 0});
+
   const HardwareBufferSpec hardware_buffer_spec =
       GetTestHardwareBufferSpec(/*size_bytes=*/123);
 
@@ -34,6 +35,25 @@ TEST(HardwareBufferPoolTest, ShouldPoolHardwareBuffer) {
   {
     auto hardware_buffer = hardware_buffer_pool.GetBuffer(hardware_buffer_spec);
     EXPECT_EQ(hardware_buffer.get(), hardware_buffer_ptr);
+  }
+}
+
+TEST(HardwareBufferPoolTest, ShouldReturnNewHardwareBuffer) {
+  HardwareBufferPool hardware_buffer_pool({.min_requests_before_pool = 0});
+
+  HardwareBuffer* hardware_buffer_ptr = nullptr;
+  // First request instantiates new HardwareBuffer.
+  {
+    auto hardware_buffer = hardware_buffer_pool.GetBuffer(
+        GetTestHardwareBufferSpec(/*size_bytes=*/123));
+    hardware_buffer_ptr = hardware_buffer.get();
+    EXPECT_NE(hardware_buffer_ptr, nullptr);
+  }
+  // Second request with different size returns new HardwareBuffer.
+  {
+    auto hardware_buffer = hardware_buffer_pool.GetBuffer(
+        GetTestHardwareBufferSpec(/*size_bytes=*/567));
+    EXPECT_NE(hardware_buffer.get(), hardware_buffer_ptr);
   }
 }
 

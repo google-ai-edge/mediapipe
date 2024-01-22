@@ -97,7 +97,7 @@ class DelayedReleaser {
   DelayedReleaser(DelayedReleaser&&) = delete;
   DelayedReleaser& operator=(DelayedReleaser&&) = delete;
 
-  static void Add(std::unique_ptr<HardwareBuffer> ahwb, GLuint opengl_buffer,
+  static void Add(std::shared_ptr<HardwareBuffer> ahwb, GLuint opengl_buffer,
                   EGLSyncKHR ssbo_sync, GLsync ssbo_read,
                   Tensor::FinishingFunc&& ahwb_written,
                   std::shared_ptr<mediapipe::GlContext> gl_context,
@@ -178,7 +178,7 @@ class DelayedReleaser {
   }
 
  protected:
-  std::unique_ptr<HardwareBuffer> ahwb_;
+  std::shared_ptr<HardwareBuffer> ahwb_;
   GLuint opengl_buffer_;
   // TODO: use wrapper instead.
   EGLSyncKHR fence_sync_;
@@ -189,7 +189,7 @@ class DelayedReleaser {
   std::function<void()> release_callback_;
   static inline std::deque<std::unique_ptr<DelayedReleaser>> to_release_;
 
-  DelayedReleaser(std::unique_ptr<HardwareBuffer> ahwb, GLuint opengl_buffer,
+  DelayedReleaser(std::shared_ptr<HardwareBuffer> ahwb, GLuint opengl_buffer,
                   EGLSyncKHR fence_sync, GLsync ssbo_read,
                   Tensor::FinishingFunc&& ahwb_written,
                   std::shared_ptr<mediapipe::GlContext> gl_context,
@@ -286,13 +286,17 @@ bool Tensor::AllocateAHardwareBuffer(int size_alignment) const {
     spec.usage = HardwareBufferSpec::AHARDWAREBUFFER_USAGE_CPU_WRITE_OFTEN |
                  HardwareBufferSpec::AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN |
                  HardwareBufferSpec::AHARDWAREBUFFER_USAGE_GPU_DATA_BUFFER;
-    auto new_ahwb = HardwareBuffer::Create(spec);
-    if (!new_ahwb.ok()) {
-      ABSL_LOG(ERROR) << "Allocation of NDK Hardware Buffer failed: "
-                      << new_ahwb.status();
-      return false;
+    if (hardware_buffer_pool_ == nullptr) {
+      auto new_ahwb = HardwareBuffer::Create(spec);
+      if (!new_ahwb.ok()) {
+        ABSL_LOG(ERROR) << "Allocation of NDK Hardware Buffer failed: "
+                        << new_ahwb.status();
+        return false;
+      }
+      ahwb_ = std::make_shared<HardwareBuffer>(std::move(*new_ahwb));
+    } else {
+      ahwb_ = hardware_buffer_pool_->GetBuffer(spec);
     }
-    ahwb_ = std::make_unique<HardwareBuffer>(std::move(*new_ahwb));
   }
   return true;
 }
@@ -376,6 +380,7 @@ bool Tensor::InsertAhwbToSsboFence() const {
 }
 
 void Tensor::MoveAhwbStuff(Tensor* src) {
+  hardware_buffer_pool_ = std::exchange(src->hardware_buffer_pool_, nullptr);
   ahwb_ = std::exchange(src->ahwb_, nullptr);
   fence_sync_ = std::exchange(src->fence_sync_, EGL_NO_SYNC_KHR);
   ssbo_read_ = std::exchange(src->ssbo_read_, static_cast<GLsync>(0));

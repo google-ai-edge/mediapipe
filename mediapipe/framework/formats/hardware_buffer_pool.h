@@ -44,6 +44,7 @@ class HardwareBufferSpecPool : public ReusablePool<HardwareBuffer> {
       : ReusablePool<HardwareBuffer>(
             [this] { return CreateBufferWithoutPool(spec_); }, options),
         spec_(spec) {}
+
   const HardwareBufferSpec spec_;
 };
 
@@ -53,6 +54,12 @@ class HardwareBufferPool
     : public MultiPool<internal::HardwareBufferSpecPool, HardwareBufferSpec,
                        std::shared_ptr<HardwareBuffer>> {
  public:
+  HardwareBufferPool() = default;
+
+  explicit HardwareBufferPool(const MultiPoolOptions& options)
+      : MultiPool<internal::HardwareBufferSpecPool, HardwareBufferSpec,
+                  std::shared_ptr<HardwareBuffer>>(options) {}
+
   std::shared_ptr<HardwareBuffer> GetBuffer(const HardwareBufferSpec& spec) {
     return Get(spec);
   }

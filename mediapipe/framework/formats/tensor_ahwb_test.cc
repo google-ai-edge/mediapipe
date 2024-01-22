@@ -1,10 +1,19 @@
 #include <android/hardware_buffer.h>
 
+#include <memory>
+
+#include "mediapipe/framework/formats/hardware_buffer.h"
+#include "mediapipe/framework/formats/hardware_buffer_pool.h"
 #include "mediapipe/framework/formats/tensor.h"
+#include "mediapipe/framework/memory_manager.h"
 #include "testing/base/public/gmock.h"
 #include "testing/base/public/gunit.h"
 
 namespace mediapipe {
+namespace {
+
+using ::testing::Return;
+using ::testing::Truly;
 
 TEST(TensorAhwbTest, TestCpuThenAHWB) {
   Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape{1});
@@ -99,4 +108,50 @@ TEST(TensorAhwbTest, TestTrackingAhwb) {
   }
 }
 
+TEST(TensorAhwbTest, ShouldReuseHardwareBufferFromHardwareBufferPool) {
+  constexpr int kTensorSize = 123;
+  MemoryManager memory_manager({.min_requests_before_pool = 0});
+
+  AHardwareBuffer *buffer = nullptr;
+  {
+    // First call instantiates HardwareBuffer.
+    Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape{kTensorSize},
+                  &memory_manager);
+    auto view = tensor.GetAHardwareBufferWriteView();
+    buffer = view.handle();
+    EXPECT_NE(buffer, nullptr);
+  }
+  {
+    // Second request should return the same AHardwareBuffer (handle).
+    Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape{kTensorSize},
+                  &memory_manager);
+    auto view = tensor.GetAHardwareBufferWriteView();
+    EXPECT_EQ(view.handle(), buffer);
+  }
+}
+
+TEST(TensorAhwbTest, ShouldNotReuseHardwareBufferFromHardwareBufferPool) {
+  constexpr int kTensorASize = 123;
+  constexpr int kTensorBSize = 456;
+  MemoryManager memory_manager({.min_requests_before_pool = 0});
+
+  AHardwareBuffer *buffer = nullptr;
+  {
+    // First call instantiates HardwareBuffer of size kTensorASize.
+    Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape{kTensorASize},
+                  &memory_manager);
+    auto view = tensor.GetAHardwareBufferWriteView();
+    buffer = view.handle();
+    EXPECT_NE(buffer, nullptr);
+  }
+  {
+    // Second call creates a second HardwareBuffer of size kTensorBSize.
+    Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape{kTensorBSize},
+                  &memory_manager);
+    auto view = tensor.GetAHardwareBufferWriteView();
+    EXPECT_NE(view.handle(), buffer);
+  }
+}
+
+}  // namespace
 }  // namespace mediapipe

@@ -15,11 +15,13 @@
 #include "mediapipe/framework/formats/tensor.h"
 
 #include <cstdint>
+#include <memory>
 #include <utility>
 
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/synchronization/mutex.h"
+#include "mediapipe/framework/memory_manager.h"
 #include "mediapipe/framework/port.h"
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
 #include "mediapipe/gpu/gl_base.h"
@@ -450,16 +452,30 @@ void Tensor::Move(Tensor* src) {
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
 }
 
-Tensor::Tensor(ElementType element_type, const Shape& shape)
+Tensor::Tensor(ElementType element_type, const Shape& shape,
+               MemoryManager* memory_manager)
     : element_type_(element_type),
       shape_(shape),
-      mtl_resources_(std::make_unique<MtlResources>()) {}
+      mtl_resources_(std::make_unique<MtlResources>()) {
+#ifdef MEDIAPIPE_TENSOR_USE_AHWB
+  if (memory_manager) {
+    hardware_buffer_pool_ = memory_manager->GetAndroidHardwareBufferPool();
+  }
+#endif  // MEDIAPIPE_TENSOR_USE_AHWB
+}
 Tensor::Tensor(ElementType element_type, const Shape& shape,
-               const QuantizationParameters& quantization_parameters)
+               const QuantizationParameters& quantization_parameters,
+               MemoryManager* memory_manager)
     : element_type_(element_type),
       shape_(shape),
       quantization_parameters_(quantization_parameters),
-      mtl_resources_(std::make_unique<MtlResources>()) {}
+      mtl_resources_(std::make_unique<MtlResources>()) {
+#ifdef MEDIAPIPE_TENSOR_USE_AHWB
+  if (memory_manager) {
+    hardware_buffer_pool_ = memory_manager->GetAndroidHardwareBufferPool();
+  }
+#endif  // MEDIAPIPE_TENSOR_USE_AHWB
+}
 
 #if MEDIAPIPE_METAL_ENABLED
 void Tensor::Invalidate() {

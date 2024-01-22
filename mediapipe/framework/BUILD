@@ -1784,3 +1784,24 @@ cc_test(
         "@com_google_absl//absl/strings:str_format",
     ],
 )
+
+cc_library(
+    name = "memory_manager",
+    hdrs = ["memory_manager.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework/formats:hardware_buffer_pool",
+        "//mediapipe/gpu:multi_pool",
+    ],
+)
+
+cc_library(
+    name = "memory_manager_service",
+    hdrs = ["memory_manager_service.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":graph_service",
+        ":memory_manager",
+        "@com_google_absl//absl/base:core_headers",
+    ],
+)

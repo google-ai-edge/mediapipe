@@ -169,7 +169,10 @@ cc_library(
             "-lnativewindow",  # Provides <android/hardware_buffer.h> to vendor binaries on Android API >= 26.
         ],
     }),
-    visibility = ["//mediapipe/gpu:__pkg__"],
+    visibility = [
+        "//mediapipe/framework:__pkg__",
+        "//mediapipe/gpu:__pkg__",
+    ],
     deps = [
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:statusor",
@@ -180,6 +183,7 @@ cc_library(
 cc_library(
     name = "hardware_buffer_pool",
     hdrs = ["hardware_buffer_pool.h"],
+    visibility = ["//mediapipe/framework:__pkg__"],
     deps = [
         ":hardware_buffer",
         "//mediapipe/gpu:multi_pool",
@@ -527,6 +531,7 @@ cc_library(
         "//mediapipe/framework:android_no_jni": [],
     }),
     deps = [
+        "//mediapipe/framework:memory_manager",
         "//mediapipe/framework:port",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/log:absl_check",
@@ -541,11 +546,13 @@ cc_library(
         ],
         "//mediapipe:android": [
             ":hardware_buffer",
+            ":hardware_buffer_pool",
             "//mediapipe/gpu:gl_base",
             "//mediapipe/gpu:gl_context",
         ],
         ":android_link_native_window": [
             ":hardware_buffer",
+            ":hardware_buffer_pool",
             "//mediapipe/gpu:gl_base",
             "//mediapipe/gpu:gl_context",
         ],
