@@ -122,7 +122,7 @@ public final class TextGenerator implements AutoCloseable {
     String response = responses.get(0); // We only use the first response
     response = response.replace(TOKEN_SPLITTER, ' '); // Note this is NOT an underscore: ▁(U+2581)
     response = response.replace(NEW_LINE, "\n"); // Replace <0x0A> token with newline
-    response = response.stripLeading(); // Strip all leading spaces for the first output
+    response = stripLeading(response); // Strip all leading spaces for the first output
 
     return response.split(EOD, -1)[0];
   }
@@ -259,5 +259,18 @@ public final class TextGenerator implements AutoCloseable {
           .setMaxSequenceLength(512)
           .setUseFakeWeights(false);
     }
+  }
+
+  static String stripLeading(String text) {
+    // stripLeading() implementation for Android < 33
+    int left = 0;
+    while (left < text.length()) {
+      final int codepoint = text.codePointAt(left);
+      if (!Character.isWhitespace(codepoint)) {
+        break;
+      }
+      left += Character.charCount(codepoint);
+    }
+    return text.substring(left);
   }
 }

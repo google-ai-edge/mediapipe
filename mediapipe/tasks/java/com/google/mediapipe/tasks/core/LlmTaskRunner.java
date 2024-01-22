@@ -18,7 +18,6 @@ import com.google.mediapipe.tasks.core.OutputHandler.ValueListener;
 import com.google.mediapipe.tasks.core.jni.LlmOptionsProto.LlmModelParameters;
 import com.google.mediapipe.tasks.core.jni.LlmOptionsProto.LlmSessionConfig;
 import com.google.mediapipe.tasks.core.jni.LlmResponseContextProto.LlmResponseContext;
-import com.google.protobuf.ExtensionRegistryLite;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
 import java.util.Optional;
@@ -64,8 +63,7 @@ public final class LlmTaskRunner implements AutoCloseable {
 
   private List<String> parseResponse(byte[] reponse) {
     try {
-      LlmResponseContext result =
-          LlmResponseContext.parseFrom(reponse, ExtensionRegistryLite.getGeneratedRegistry());
+      LlmResponseContext result = LlmResponseContext.parseFrom(reponse);
       return result.getResponsesList();
     } catch (InvalidProtocolBufferException e) {
       throw new IllegalStateException("Failed to parse response", e);
