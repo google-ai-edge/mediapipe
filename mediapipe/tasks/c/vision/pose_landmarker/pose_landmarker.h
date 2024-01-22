@@ -16,6 +16,8 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_C_VISION_POSE_LANDMARKER_POSE_LANDMARKER_H_
 #define MEDIAPIPE_TASKS_C_VISION_POSE_LANDMARKER_POSE_LANDMARKER_H_
 
+#include <stdbool.h>
+
 #include "mediapipe/tasks/c/core/base_options.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
 #include "mediapipe/tasks/c/vision/pose_landmarker/pose_landmarker_result.h"

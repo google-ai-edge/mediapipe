@@ -16,6 +16,8 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_C_COMPONENTS_CONTAINERS_KEYPOINT_H_
 #define MEDIAPIPE_TASKS_C_COMPONENTS_CONTAINERS_KEYPOINT_H_
 
+#include <stdbool.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif

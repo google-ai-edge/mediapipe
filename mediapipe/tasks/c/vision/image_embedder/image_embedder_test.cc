@@ -15,6 +15,8 @@ limitations under the License.
 
 #include "mediapipe/tasks/c/vision/image_embedder/image_embedder.h"
 
+#include <stdbool.h>
+
 #include <cstdint>
 #include <cstdlib>
 #include <string>
