@@ -144,11 +144,6 @@ def mediapipe_tasks_core_aar(name, srcs, manifest):
             _mediapipe_tasks_java_proto_src_extractor(target = target),
         )
 
-    for target in _TEXT_TASKS_TEXT_GENERATOR_JAVA_PROTO_LITE_TARGETS:
-        mediapipe_tasks_java_proto_srcs.append(
-            _mediapipe_tasks_java_proto_src_extractor(target = target),
-        )
-
     mediapipe_tasks_java_proto_srcs.append(mediapipe_java_proto_src_extractor(
         target = "//mediapipe/calculators/core:flow_limiter_calculator_java_proto_lite",
         src_out = "com/google/mediapipe/calculator/proto/FlowLimiterCalculatorProto.java",
@@ -172,6 +167,16 @@ def mediapipe_tasks_core_aar(name, srcs, manifest):
     mediapipe_tasks_java_proto_srcs.append(mediapipe_java_proto_src_extractor(
         target = "//mediapipe/tasks/cc/vision/image_generator/diffuser:stable_diffusion_iterate_calculator_java_proto_lite",
         src_out = "com/google/mediapipe/calculator/proto/StableDiffusionIterateCalculatorOptionsProto.java",
+    ))
+
+    mediapipe_tasks_java_proto_srcs.append(mediapipe_java_proto_src_extractor(
+        target = "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto:llm_options_java_proto_lite",
+        src_out = "com/google/mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto/LlmOptionsProto.java",
+    ))
+
+    mediapipe_tasks_java_proto_srcs.append(mediapipe_java_proto_src_extractor(
+        target = "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto:llm_response_context_java_proto_lite",
+        src_out = "com/google/mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto/LlmResponseContextProto.java",
     ))
 
     android_library(
