@@ -20,7 +20,35 @@
 #ifdef _WIN32
 #define GLOG_NO_ABBREVIATED_SEVERITIES
 #endif
+
+#include <cstddef>
+#include <ostream>
+#include <type_traits>
+#include <vector>
+
+#include "absl/strings/has_ostream_operator.h"
 #include "glog/logging.h"
+
+namespace std {
+
+template <typename... Ts, typename = std::enable_if_t<absl::HasOstreamOperator<
+                              typename std::vector<Ts...>::value_type>::value>>
+std::ostream& operator<<(std::ostream& out, const std::vector<Ts...>& v) {
+  auto begin = v.begin();
+  auto end = v.end();
+  for (size_t i = 0; begin != end && i < 100; ++i, ++begin) {
+    if (i) {
+      out << " ";
+    }
+    out << *begin;
+  }
+  if (begin != end) {
+    out << " ...";
+  }
+  return out;
+}
+
+}  // namespace std
 
 namespace mediapipe {
 using LogSeverity = google::LogSeverity;

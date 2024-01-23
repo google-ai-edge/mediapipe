@@ -21,20 +21,18 @@ bazel_skylib_workspace()
 load("@bazel_skylib//lib:versions.bzl", "versions")
 versions.check(minimum_bazel_version = "3.7.2")
 
-# ABSL cpp library lts_2023_01_25.
+# ABSL on 2023-10-18
 http_archive(
     name = "com_google_absl",
-    urls = [
-        "https://github.com/abseil/abseil-cpp/archive/refs/tags/20230125.0.tar.gz",
-    ],
+    urls = ["https://github.com/abseil/abseil-cpp/archive//9687a8ea750bfcddf790372093245a1d041b21a3.tar.gz"],
     patches = [
         "@//third_party:com_google_absl_windows_patch.diff"
     ],
     patch_args = [
         "-p1",
     ],
-    strip_prefix = "abseil-cpp-20230125.0",
-    sha256 = "3ea49a7d97421b88a8c48a0de16c16048e17725c7ec0f1d3ea2683a2a75adc21"
+    strip_prefix = "abseil-cpp-9687a8ea750bfcddf790372093245a1d041b21a3",
+    sha256 = "f841f78243f179326f2a80b719f2887c38fe226d288ecdc46e2aa091e6aa43bc",
 )
 
 http_archive(
@@ -516,6 +514,7 @@ http_archive(
         # Works around Bazel issue with objc_library.
         # See https://github.com/bazelbuild/bazel/issues/19912
         "@//third_party:org_tensorflow_objc_build_fixes.diff",
+        "@//third_party:org_tensorflow_absl_import_fixes.diff",
     ],
     patch_args = [
         "-p1",
