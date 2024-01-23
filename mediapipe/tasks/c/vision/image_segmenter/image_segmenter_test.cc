@@ -37,52 +37,43 @@ using testing::HasSubstr;
 
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
 constexpr char kModelName[] = "deeplabv3.tflite";
-constexpr char kImageFile[] = "cat.jpg";
+constexpr char kImageFile[] = "segmentation_input_rotation0.jpg";
+constexpr char kMaskImageFile[] = "segmentation_golden_rotation0.png";
 constexpr int kIterations = 5;
 constexpr float kGoldenMaskSimilarity = 0.98;
+
+// Magnification factor used when creating the golden category masks to make
+// them more human-friendly. Each pixel in the golden masks has its value
+// multiplied by this factor, i.e. a value of 10 means class index 1, a value of
+// 20 means class index 2, etc.
+constexpr int kGoldenMaskMagnificationFactor = 10;
 
 std::string GetFullPath(absl::string_view file_name) {
   return JoinPath("./", kTestDataDirectory, file_name);
 }
 
-double CalculateSoftIOU(const MpMask m1, const MpMask m2) {
-  double intersectionSum = 0.0;
-  double unionSum = 0.0;
+MpMask CreateCategoryMaskFromFile(const std::string& file_path) {
+  auto cpp_expected_mask_image = DecodeImageFromFile(GetFullPath(file_path));
+  const auto& cpp_expected_mask_image_frame =
+      cpp_expected_mask_image->GetImageFrameSharedPtr();
 
-  if (m1.type == MpImage::IMAGE_FRAME &&
-      m1.image_frame.mask_format == MaskFormat::MASK_FORMAT_FLOAT &&
-      m2.type == MpImage::IMAGE_FRAME &&
-      m2.image_frame.mask_format == MaskFormat::MASK_FORMAT_FLOAT) {
-    int totalPixels = m1.image_frame.width * m1.image_frame.height;
-    for (int i = 0; i < totalPixels; ++i) {
-      float val1 = ((float*)m1.image_frame.buffer_float)[i];
-      float val2 = ((float*)m2.image_frame.buffer_float)[i];
-      intersectionSum += val1 * val2;
-      unionSum += val1 * val1 + val2 * val2 - val1 * val2;
-    }
-  }
+  MpMask mask = {.type = MpMask::IMAGE_FRAME,
+                 .image_frame = {
+                     .mask_format = MaskFormat::UINT8,
+                     .image_buffer = cpp_expected_mask_image_frame->PixelData(),
+                     .width = cpp_expected_mask_image_frame->Width(),
+                     .height = cpp_expected_mask_image_frame->Height()}};
 
-  return unionSum > 0.0 ? intersectionSum / unionSum : 0.0;
+  return mask;
 }
 
-int SimilarToFloatMask(const MpMask actual_mask, const MpMask expected_mask,
-                       float similarity_threshold) {
-  if (actual_mask.image_frame.width != expected_mask.image_frame.width ||
-      actual_mask.image_frame.height != expected_mask.image_frame.height) {
-    return 0;  // Not similar
-  }
-
-  double iou = CalculateSoftIOU(actual_mask, expected_mask);
-  return iou > similarity_threshold;
-}
-
-int SimilarToUint8Mask(const MpMask* actual_mask, const MpMask* expected_mask,
-                       float similarity_threshold, int magnification_factor) {
-  // Validate that both images are of the same size and type
+float SimilarToUint8Mask(const MpMask* actual_mask, const MpMask* expected_mask,
+                         int magnification_factor) {
+  //   Validate that both images are of the same size and type
   if (actual_mask->image_frame.width != expected_mask->image_frame.width ||
       actual_mask->image_frame.height != expected_mask->image_frame.height ||
-      actual_mask->image_frame.mask_format != MaskFormat::MASK_FORMAT_UINT8 ||
-      expected_mask->image_frame.mask_format != MaskFormat::MASK_FORMAT_UINT8) {
+      actual_mask->image_frame.mask_format != MaskFormat::UINT8 ||
+      expected_mask->image_frame.mask_format != MaskFormat::UINT8) {
     return 0;  // Not similar
   }
 
@@ -90,19 +81,21 @@ int SimilarToUint8Mask(const MpMask* actual_mask, const MpMask* expected_mask,
   int total_pixels =
       actual_mask->image_frame.width * actual_mask->image_frame.height;
 
+  const uint8_t* buffer_actual = actual_mask->image_frame.image_buffer;
+  const uint8_t* buffer_expected = expected_mask->image_frame.image_buffer;
+
   for (int i = 0; i < total_pixels; ++i) {
     // Apply magnification factor and compare
-    if (actual_mask->image_frame.buffer_uint8[i] * magnification_factor ==
-        expected_mask->image_frame.buffer_uint8[i]) {
+    if (buffer_actual[i] * magnification_factor == buffer_expected[i]) {
       consistent_pixels++;
     }
   }
 
   float similarity = (float)consistent_pixels / total_pixels;
-  return similarity >= similarity_threshold;
+  return similarity;
 }
 
-TEST(ImageSegmenterTest, ImageModeTestSucceedsWithConfidenceMask) {
+TEST(ImageSegmenterTest, ImageModeTestSucceedsWithCategoryMask) {
   const auto image = DecodeImageFromFile(GetFullPath(kImageFile));
   ASSERT_TRUE(image.ok());
 
@@ -113,8 +106,8 @@ TEST(ImageSegmenterTest, ImageModeTestSucceedsWithConfidenceMask) {
                            /* model_asset_path= */ model_path.c_str()},
       /* running_mode= */ RunningMode::IMAGE,
       /* display_names_locale= */ "en",
-      /* output_confidence_masks= */ true,
-      /* output_category_mask= */ false,
+      /* output_confidence_masks= */ false,
+      /* output_category_mask= */ true,
   };
 
   void* segmenter = image_segmenter_create(&options, /* error_msg */ nullptr);
@@ -131,24 +124,12 @@ TEST(ImageSegmenterTest, ImageModeTestSucceedsWithConfidenceMask) {
   ImageSegmenterResult result;
   image_segmenter_segment_image(segmenter, mp_image, &result,
                                 /* error_msg */ nullptr);
-  EXPECT_NE(result.confidence_masks, nullptr);
-  EXPECT_EQ(result.confidence_masks_count, 21);
 
-  const auto cpp_expected_mask_image =
-      DecodeImageFromFile(GetFullPath("cat_mask.jpg"));
-  const auto& cpp_expected_mask_image_frame =
-      cpp_expected_mask_image->GetImageFrameSharedPtr();
-  MpMask expected_mask = {
-      .type = MpMask::IMAGE_FRAME,
-      .image_frame = {.mask_format = MaskFormat::MASK_FORMAT_FLOAT,
-                      .buffer_float = cpp_expected_mask_image_frame->PixelData(),
-                      .width = cpp_expected_mask_image_frame->Width(),
-                      .height = cpp_expected_mask_image_frame->Height()}};
-
-  MpMask actual_mask = result.confidence_masks[8];
-
-  EXPECT_TRUE(
-      SimilarToFloatMask(actual_mask, expected_mask, kGoldenMaskSimilarity));
+  const MpMask expected_mask = CreateCategoryMaskFromFile(kMaskImageFile);
+  const MpMask actual_mask = result.category_mask;
+  EXPECT_GT(SimilarToUint8Mask(&actual_mask, &expected_mask,
+                               kGoldenMaskMagnificationFactor),
+            kGoldenMaskSimilarity);
   image_segmenter_close_result(&result);
   image_segmenter_close(segmenter, /* error_msg */ nullptr);
 }
@@ -164,8 +145,8 @@ TEST(ImageSegmenterTest, VideoModeTest) {
                            /* model_asset_path= */ model_path.c_str()},
       /* running_mode= */ RunningMode::VIDEO,
       /* display_names_locale= */ "en",
-      /* output_confidence_masks= */ true,
-      /* output_category_mask= */ false,
+      /* output_confidence_masks= */ false,
+      /* output_category_mask= */ true,
   };
 
   void* segmenter = image_segmenter_create(&options, /* error_msg */ nullptr);
@@ -179,10 +160,16 @@ TEST(ImageSegmenterTest, VideoModeTest) {
                       .width = image_frame->Width(),
                       .height = image_frame->Height()}};
 
+  const MpMask expected_mask = CreateCategoryMaskFromFile(kMaskImageFile);
+
   for (int i = 0; i < kIterations; ++i) {
     ImageSegmenterResult result;
     image_segmenter_segment_for_video(segmenter, mp_image, i, &result,
                                       /* error_msg */ nullptr);
+    const MpMask actual_mask = result.category_mask;
+    EXPECT_GT(SimilarToUint8Mask(&actual_mask, &expected_mask,
+                                 kGoldenMaskMagnificationFactor),
+              kGoldenMaskSimilarity);
 
     image_segmenter_close_result(&result);
   }
@@ -202,6 +189,11 @@ struct LiveStreamModeCallback {
     ASSERT_EQ(error_msg, nullptr);
     EXPECT_GT(image.image_frame.width, 0);
     EXPECT_GT(image.image_frame.height, 0);
+    const MpMask expected_mask = CreateCategoryMaskFromFile(kMaskImageFile);
+    const MpMask actual_mask = segmenter_result->category_mask;
+    EXPECT_GT(SimilarToUint8Mask(&actual_mask, &expected_mask,
+                                 kGoldenMaskMagnificationFactor),
+              kGoldenMaskSimilarity);
     EXPECT_GT(timestamp, last_timestamp);
     ++last_timestamp;
   }
@@ -220,8 +212,8 @@ TEST(ImageSegmenterTest, LiveStreamModeTest) {
                            /* model_asset_path= */ model_path.c_str()},
       /* running_mode= */ RunningMode::LIVE_STREAM,
       /* display_names_locale= */ "en",
-      /* output_confidence_masks= */ true,
-      /* output_category_mask= */ false,
+      /* output_confidence_masks= */ false,
+      /* output_category_mask= */ true,
       /* result_callback= */ LiveStreamModeCallback::Fn,
   };
 
@@ -257,8 +249,8 @@ TEST(ImageSegmenterTest, InvalidArgumentHandling) {
                            /* model_asset_path= */ nullptr},
       /* running_mode= */ RunningMode::IMAGE,
       /* display_names_locale= */ "en",
-      /* output_confidence_masks= */ true,
-      /* output_category_mask= */ false,
+      /* output_confidence_masks= */ false,
+      /* output_category_mask= */ true,
   };
 
   char* error_msg;
@@ -278,8 +270,8 @@ TEST(ImageSegmenterTest, FailedRecognitionHandling) {
                            /* model_asset_path= */ model_path.c_str()},
       /* running_mode= */ RunningMode::IMAGE,
       /* display_names_locale= */ "en",
-      /* output_confidence_masks= */ true,
-      /* output_category_mask= */ false,
+      /* output_confidence_masks= */ false,
+      /* output_category_mask= */ true,
   };
 
   void* segmenter = image_segmenter_create(&options, /* error_msg */

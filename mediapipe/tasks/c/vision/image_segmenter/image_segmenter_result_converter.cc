@@ -36,8 +36,8 @@ void CppConvertToImageSegmenterResult(
           in.confidence_masks.value()[i].GetImageFrameSharedPtr();
       MpMask mp_mask = {
           .type = MpMask::IMAGE_FRAME,
-          .image_frame = {.mask_format = MaskFormat::MASK_FORMAT_FLOAT,
-                          .buffer_float = image_frame->PixelData(),
+          .image_frame = {.mask_format = MaskFormat::FLOAT,
+                          .image_buffer = image_frame->PixelData(),
                           .width = image_frame->Width(),
                           .height = image_frame->Height()}};
       out->confidence_masks[i] = mp_mask;
@@ -52,12 +52,11 @@ void CppConvertToImageSegmenterResult(
   // Convert category_mask
   if (in.category_mask.has_value()) {
     const auto& image_frame = in.category_mask.value().GetImageFrameSharedPtr();
-    MpMask mp_mask = {
-        .type = MpMask::IMAGE_FRAME,
-        .image_frame = {.mask_format = MaskFormat::MASK_FORMAT_UINT8,
-                        .buffer_uint8 = image_frame->PixelData(),
-                        .width = image_frame->Width(),
-                        .height = image_frame->Height()}};
+    MpMask mp_mask = {.type = MpMask::IMAGE_FRAME,
+                      .image_frame = {.mask_format = MaskFormat::UINT8,
+                                      .image_buffer = image_frame->PixelData(),
+                                      .width = image_frame->Width(),
+                                      .height = image_frame->Height()}};
     out->category_mask = mp_mask;
     out->has_category_mask = 1;
   } else {
