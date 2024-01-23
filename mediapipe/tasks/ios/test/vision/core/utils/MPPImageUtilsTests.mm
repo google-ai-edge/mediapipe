@@ -70,42 +70,7 @@ Image CppImageWithMPImage(MPPImage *image) {
   [super setUp];
 }
 
-+ (void)assertUnderlyingBufferOfCGImage:( _Nonnull CGImageRef)cgImage
-                        equalToCppImage:(const Image &)cppImage {
-  // Using common method for both copy and no Copy scenario without testing equality of the base
-  // addresses of the pixel buffers of the `CGImage` and the C++ Image. `CGDataProviderCopyData` is
-  // currently the only documented way to access the underlying bytes of a `CGImage` and according
-  // to Apple's official documentation, this method should return copied bytes of the `CGImage`.
-  // Thus, in theory, testing equality of the base addresses of the copied bytes of the `CGImage`
-  // and the C++ `Image` is pointless.
-  //
-  // But debugging `CGDataProviderCopyData` output always returned the original underlying bytes of
-  // the `CGImage` without a copy. The base address of the `CGImage` buffer was found to be equal to
-  // the base address of the C++ `Image` buffer in the no copy scenario and unequal in the copy
-  // scenario. This verifies that the copy and no copy scenarios work as expected. Since this isn't
-  // the expected behaviour of `CGDataProviderCopyData` according to Apple's official documentation,
-  // the equality checks of the base addresses of the pixel buffers of the `CGImage` and C++ Image
-  // have been omitted for the time being.
-  CFDataRef resultImageData = CGDataProviderCopyData(CGImageGetDataProvider(cgImage));
-  const UInt8 *resultImagePixels = CFDataGetBytePtr(resultImageData);
-
-  ImageFrame *cppImageFrame = cppImage.GetImageFrameSharedPtr().get();
-
-  XCTAssertEqual(cppImageFrame->Width(), CGImageGetWidth(cgImage));
-  XCTAssertEqual(cppImageFrame->Height(), CGImageGetHeight(cgImage));
-  XCTAssertEqual(cppImageFrame->ByteDepth() * 8, CGImageGetBitsPerComponent(cgImage));
-
-  const UInt8 *cppImagePixels = cppImageFrame->PixelData();
-
-  NSInteger consistentPixels = 0;
-  for (int i = 0; i < cppImageFrame->Height() * cppImageFrame->WidthStep(); ++i) {
-    consistentPixels += resultImagePixels[i] == cppImagePixels[i] ? 1 : 0;
-  }
-
-  XCTAssertEqual(consistentPixels, cppImageFrame->Height() * cppImageFrame->WidthStep());
-
-  CFRelease(resultImageData);
-}
+#pragma mark - Tests for Initializig `MPPImage`s with MediaPipe C++ Images
 
 - (void)testInitMPImageOfSourceTypeUIImageWithCppImageSucceeds {
   // Initialize the source MPPImage whose properties will be used to initialize an MPPImage from a
@@ -153,6 +118,130 @@ Image CppImageWithMPImage(MPPImage *image) {
   XCTAssertTrue(image.image.CGImage != nullptr);
   [MPPImageUtilsTests assertUnderlyingBufferOfCGImage:image.image.CGImage
                                       equalToCppImage:sourceCppImage];
+}
+
+- (void)testInitMPImageOfSourceTypePixelBufferWithCPPImageSucceeds {
+  // Initialize the source MPPImage whose properties will be used to initialize an MPPImage from a
+  // C++ `Image`.
+  MPPImage *sourceImage = [MPPImage imageWithFileInfo:kBurgerImageFileInfo
+                                           sourceType:MPPImageSourceTypePixelBuffer];
+
+  // Create C++ `Image` from the source image.
+  Image sourceCppImage = CppImageWithMPImage(sourceImage);
+
+  // Create `MPPImage` from C++ `Image` with properties of the `sourceImage`.
+  MPPImage *image = [[MPPImage alloc] initWithCppImage:sourceCppImage
+                        cloningPropertiesOfSourceImage:sourceImage
+                                   shouldCopyPixelData:YES
+                                                 error:nil];
+
+  XCTAssertTrue(image.pixelBuffer != nullptr);
+  AssertEqualMPImages(image, sourceImage);
+
+  ImageFrame *cppImageFrame = sourceCppImage.GetImageFrameSharedPtr().get();
+  XCTAssertEqual(cppImageFrame->Width(), CVPixelBufferGetWidth(image.pixelBuffer));
+  XCTAssertEqual(cppImageFrame->Height(), CVPixelBufferGetHeight(image.pixelBuffer));
+  XCTAssertEqual(cppImageFrame->WidthStep(), CVPixelBufferGetBytesPerRow(image.pixelBuffer));
+
+  const UInt8 *cppImagePixels = cppImageFrame->PixelData();
+
+  CVPixelBufferLockBaseAddress(image.pixelBuffer, 0);
+  UInt8 *resultImagePixels = (UInt8 *)CVPixelBufferGetBaseAddress(image.pixelBuffer);
+
+  // Ensure that the underlying buffer of the created `MPPImage` is copied. In case of
+  // `CVPixelBuffer`s this is straightforward to test.
+  XCTAssertNotEqual(resultImagePixels, cppImagePixels);
+
+  NSInteger consistentPixels = 0;
+
+  // MediaPipe images only support inference of RGBA images. Thus `[MPPImage imageFrameWithError:]`
+  // returns RGBA image frames irrespective of the order of the channels in the `MPPImage`. The
+  // `MPPImage` being tested here has pixel ordering of BGRA since it is created using a
+  // `CVPixelBuffer` that supports only BGRA images. The pixel equality testing code below takes
+  // into account the differenc in the channel ordering.
+  const int kRIndexInRGBA = 0, kBIndexInRGBA = 2;
+  const int kRIndexInBGRA = 2, kBIndexInBGRA = 0;
+  const int kGIndex = 1, kAlphaIndex = 3;
+
+  for (int i = 0; i < image.height * image.width; ++i) {
+    consistentPixels +=
+        resultImagePixels[i * 4 + kBIndexInBGRA] == cppImagePixels[i * 4 + kBIndexInRGBA] ? 1 : 0;
+    consistentPixels +=
+        resultImagePixels[i * 4 + kGIndex] == cppImagePixels[i * 4 + kGIndex] ? 1 : 0;
+    consistentPixels +=
+        resultImagePixels[i * 4 + kRIndexInBGRA] == cppImagePixels[i * 4 + kRIndexInRGBA] ? 1 : 0;
+    consistentPixels +=
+        resultImagePixels[i * 4 + kAlphaIndex] == cppImagePixels[i * 4 + kAlphaIndex] ? 1 : 0;
+  }
+  CVPixelBufferUnlockBaseAddress(image.pixelBuffer, 0);
+
+  XCTAssertEqual(consistentPixels, cppImageFrame->Height() * cppImageFrame->WidthStep());
+}
+
+- (void)testInitMPImageOfSourceTypePixelBufferWithCPPImageNoCopyFails {
+  // Initialize the source MPPImage whose properties will be used to initialize an MPPImage from a
+  // C++ `Image`.
+  MPPImage *sourceImage = [MPPImage imageWithFileInfo:kBurgerImageFileInfo
+                                           sourceType:MPPImageSourceTypePixelBuffer];
+
+  // Create C++ `Image` from the source image.
+  Image sourceCppImage = CppImageWithMPImage(sourceImage);
+
+  NSError *error;
+  MPPImage *image = [[MPPImage alloc] initWithCppImage:sourceCppImage
+                        cloningPropertiesOfSourceImage:sourceImage
+                                   shouldCopyPixelData:NO
+                                                 error:&error];
+
+  XCTAssertNil(image);
+  AssertEqualErrors(
+      error,
+      [NSError
+          errorWithDomain:kExpectedErrorDomain
+                     code:MPPTasksErrorCodeInvalidArgumentError
+                 userInfo:@{
+                   NSLocalizedDescriptionKey :
+                       @"When the source type is pixel buffer, you cannot request uncopied data"
+                 }]);
+}
+
+#pragma mark - Helper Methods
+
++ (void)assertUnderlyingBufferOfCGImage:(_Nonnull CGImageRef)cgImage
+                        equalToCppImage:(const Image &)cppImage {
+  // Using common method for both copy and no Copy scenario without testing equality of the base
+  // addresses of the pixel buffers of the `CGImage` and the C++ Image. `CGDataProviderCopyData` is
+  // currently the only documented way to access the underlying bytes of a `CGImage` and according
+  // to Apple's official documentation, this method should return copied bytes of the `CGImage`.
+  // Thus, in theory, testing equality of the base addresses of the copied bytes of the `CGImage`
+  // and the C++ `Image` is pointless.
+  //
+  // But debugging `CGDataProviderCopyData` output always returned the original underlying bytes of
+  // the `CGImage` without a copy. The base address of the `CGImage` buffer was found to be equal to
+  // the base address of the C++ `Image` buffer in the no copy scenario and unequal in the copy
+  // scenario. This verifies that the copy and no copy scenarios work as expected. Since this isn't
+  // the expected behaviour of `CGDataProviderCopyData` according to Apple's official documentation,
+  // the equality checks of the base addresses of the pixel buffers of the `CGImage` and C++ Image
+  // have been omitted for the time being.
+  CFDataRef resultImageData = CGDataProviderCopyData(CGImageGetDataProvider(cgImage));
+  const UInt8 *resultImagePixels = CFDataGetBytePtr(resultImageData);
+
+  ImageFrame *cppImageFrame = cppImage.GetImageFrameSharedPtr().get();
+
+  XCTAssertEqual(cppImageFrame->Width(), CGImageGetWidth(cgImage));
+  XCTAssertEqual(cppImageFrame->Height(), CGImageGetHeight(cgImage));
+  XCTAssertEqual(cppImageFrame->ByteDepth() * 8, CGImageGetBitsPerComponent(cgImage));
+
+  const UInt8 *cppImagePixels = cppImageFrame->PixelData();
+
+  NSInteger consistentPixels = 0;
+  for (int i = 0; i < cppImageFrame->Height() * cppImageFrame->WidthStep(); ++i) {
+    consistentPixels += resultImagePixels[i] == cppImagePixels[i] ? 1 : 0;
+  }
+
+  XCTAssertEqual(consistentPixels, cppImageFrame->Height() * cppImageFrame->WidthStep());
+
+  CFRelease(resultImageData);
 }
 
 @end

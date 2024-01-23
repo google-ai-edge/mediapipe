@@ -18,8 +18,13 @@ licenses(["notice"])
 
 objc_library(
     name = "MPPImageTestUtils",
-    srcs = ["sources/MPPImage+TestUtils.m"],
+    srcs = ["sources/MPPImage+TestUtils.mm"],
     hdrs = ["sources/MPPImage+TestUtils.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+        "-x objective-c++",
+    ],
     module_name = "MPPImageTestUtils",
     deps = [
         "//mediapipe/tasks/ios/test/utils:MPPFileInfo",
