@@ -23,7 +23,6 @@
 #include "absl/strings/string_view.h"
 #include "mediapipe/calculators/video/flow_packager_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/util/tracking/camera_motion.pb.h"
 #include "mediapipe/util/tracking/flow_packager.h"
 #include "mediapipe/util/tracking/region_flow.pb.h"

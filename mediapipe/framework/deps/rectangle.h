@@ -24,12 +24,12 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <iosfwd>
 #include <limits>
 #include <ostream>
 
 #include "mediapipe/framework/deps/point2.h"
-#include "mediapipe/framework/port/integral_types.h"
 
 template <typename T>
 class Rectangle;

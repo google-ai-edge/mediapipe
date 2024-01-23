@@ -47,12 +47,12 @@
 #ifndef MEDIAPIPE_UTIL_TRACKING_REGION_FLOW_COMPUTATION_H_
 #define MEDIAPIPE_UTIL_TRACKING_REGION_FLOW_COMPUTATION_H_
 
+#include <cstdint>
 #include <deque>
 #include <memory>
 #include <unordered_map>
 #include <vector>
 
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/util/tracking/motion_models.pb.h"
 #include "mediapipe/util/tracking/region_flow.h"

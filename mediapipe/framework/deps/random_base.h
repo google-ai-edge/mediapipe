@@ -15,7 +15,7 @@
 #ifndef MEDIAPIPE_DEPS_RANDOM_BASE_H_
 #define MEDIAPIPE_DEPS_RANDOM_BASE_H_
 
-#include "mediapipe/framework/port/integral_types.h"
+#include <cstdint>
 
 class RandomBase {
  public:

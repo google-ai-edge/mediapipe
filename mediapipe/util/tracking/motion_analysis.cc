@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <cstring>
 #include <deque>
 #include <memory>
@@ -23,7 +24,6 @@
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/strings/str_format.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/vector.h"
 #include "mediapipe/util/tracking/camera_motion.h"
 #include "mediapipe/util/tracking/camera_motion.pb.h"

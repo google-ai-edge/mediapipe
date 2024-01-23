@@ -18,7 +18,6 @@
 #include <cstdint>
 
 #include "mediapipe/framework/calculator.pb.h"
-#include "mediapipe/framework/port/integral_types.h"
 
 namespace mediapipe {
 

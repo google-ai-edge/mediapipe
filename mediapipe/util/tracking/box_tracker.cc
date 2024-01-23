@@ -16,6 +16,7 @@
 
 #include <sys/stat.h>
 
+#include <cstdint>
 #include <fstream>
 #include <limits>
 
@@ -25,7 +26,6 @@
 #include "absl/synchronization/mutex.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/util/tracking/measure_time.h"
 #include "mediapipe/util/tracking/tracking.pb.h"

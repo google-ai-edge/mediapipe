@@ -32,12 +32,12 @@
 #define MEDIAPIPE_DEPS_POINT2_H_
 
 #include <cmath>
+#include <cstdint>
 #include <cstdlib>
 #include <iosfwd>
 
 #include "mediapipe/framework/deps/mathutil.h"
 #include "mediapipe/framework/deps/vector.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/logging.h"
 
 // Template class for 2D points

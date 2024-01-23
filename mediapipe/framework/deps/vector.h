@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <cstdlib>
 #include <iosfwd>
 #include <iostream>  // NOLINT(readability/streams)
@@ -26,7 +27,6 @@
 
 #include "absl/log/absl_check.h"
 #include "absl/utility/utility.h"
-#include "mediapipe/framework/port/integral_types.h"
 
 template <typename T>
 class Vector2;

@@ -26,7 +26,6 @@
 #include "mediapipe/framework/collection_item_id.h"
 #include "mediapipe/framework/input_stream_shard.h"
 #include "mediapipe/framework/output_stream_shard.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"

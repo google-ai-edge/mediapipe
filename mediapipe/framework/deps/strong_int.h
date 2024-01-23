@@ -105,7 +105,6 @@
 
 #include "absl/base/macros.h"
 #include "absl/log/absl_log.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/port.h"
 
 namespace mediapipe {

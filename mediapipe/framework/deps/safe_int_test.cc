@@ -18,6 +18,8 @@
 
 #include "mediapipe/framework/deps/safe_int.h"
 
+#include <limits>
+
 #include "mediapipe/framework/port/gtest.h"
 
 MEDIAPIPE_DEFINE_SAFE_INT_TYPE(SafeInt8, int8_t,
@@ -588,10 +590,10 @@ TYPED_TEST(SignedSafeIntTest, TestMultiplyFailures) {
     EXPECT_DEATH(x * -1, "overflow");
     EXPECT_DEATH(x *= -1, "overflow");
   }
-  {  // Test underflowing multiplication where rhs type is uint64.
+  {  // Test underflowing multiplication where rhs type is uint64_t.
     T x(-2);
-    EXPECT_DEATH(x * kuint64max, "underflow");
-    EXPECT_DEATH(x *= kuint64max, "underflow");
+    EXPECT_DEATH(x * std::numeric_limits<uint64_t>::max(), "underflow");
+    EXPECT_DEATH(x *= std::numeric_limits<uint64_t>::max(), "underflow");
   }
 }
 

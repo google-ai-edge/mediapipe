@@ -15,11 +15,11 @@
 #ifndef MEDIAPIPE_DEPS_NUMBERS_H_
 #define MEDIAPIPE_DEPS_NUMBERS_H_
 
+#include <cstdint>
 #include <string>
 
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
-#include "mediapipe/framework/port/integral_types.h"
 
 namespace mediapipe {
 ABSL_MUST_USE_RESULT inline std::string SimpleDtoa(double d) {

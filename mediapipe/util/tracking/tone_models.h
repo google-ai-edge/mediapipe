@@ -20,12 +20,12 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <string>
 #include <vector>
 
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/vector.h"
 #include "mediapipe/util/tracking/tone_models.pb.h"

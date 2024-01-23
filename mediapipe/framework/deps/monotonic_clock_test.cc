@@ -16,6 +16,7 @@
 
 #include <stddef.h>
 
+#include <cstdint>
 #include <memory>
 #include <random>
 #include <vector>
@@ -27,7 +28,6 @@
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/threadpool.h"
 #include "mediapipe/framework/tool/simulation_clock.h"
 
