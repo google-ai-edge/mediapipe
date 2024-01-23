@@ -85,8 +85,6 @@ double softIOU(const float *mask1, const float *mask2, size_t size) {
 
 @implementation MPPInteractiveSegmenterTests
 
-#pragma mark General Tests
-
 - (void)setUp {
   // When expected and actual mask sizes are not equal, iterating through mask data results in a
   // segmentation fault. Setting this property to `NO`, prevents each test case from executing the
@@ -102,9 +100,9 @@ double softIOU(const float *mask1, const float *mask2, size_t size) {
   return filePath;
 }
 
-#pragma mark Image Mode Tests
+#pragma mark Normalized KeyPoint Region Of Interest Tests
 
-- (void)testSegmentWithCategoryMaskSucceeds {
+- (void)testSegmentWithNormalizedKeyPointRoiAndCategoryMaskSucceeds {
   MPPInteractiveSegmenterOptions *options =
       [self interactiveSegmenterOptionsWithModelFileInfo:kDeepLabModelFileInfo];
   options.shouldOutputConfidenceMasks = NO;
@@ -113,39 +111,151 @@ double softIOU(const float *mask1, const float *mask2, size_t size) {
   MPPInteractiveSegmenter *interactiveSegmenter =
       [self createInteractiveSegmenterWithOptionsSucceeds:options];
 
-  MPPRegionOfInterest *regionOfInterest = [[MPPRegionOfInterest alloc]
+  const float kMaskSimilarityThreshold = 0.84f;
+
+  MPPRegionOfInterest *regionOfInterest1 = [[MPPRegionOfInterest alloc]
       initWithNormalizedKeyPoint:[[MPPNormalizedKeypoint alloc]
-                                     initWithLocation:CGPointMake(0.44, 0.7)
+                                     initWithLocation:CGPointMake(0.44f, 0.7f)
                                                 label:nil
                                                 score:0.0f]];
+
   [self assertResultsOfSegmentImageWithFileInfo:kCatsAndDogsImageFileInfo
-                                              regionOfInterest:regionOfInterest
+                                              regionOfInterest:regionOfInterest1
                                      usingInteractiveSegmenter:interactiveSegmenter
       approximatelyEqualsExpectedCategoryMaskImageWithFileInfo:kCatsAndDogsMaskImage1FileInfo
-                                   withmaskSimilarityThreshold:0.84f
+                                   withMaskSimilarityThreshold:kMaskSimilarityThreshold
+                                     shouldHaveConfidenceMasks:NO];
+
+  MPPRegionOfInterest *regionOfInterest2 = [[MPPRegionOfInterest alloc]
+      initWithNormalizedKeyPoint:[[MPPNormalizedKeypoint alloc]
+                                     initWithLocation:CGPointMake(0.66f, 0.66f)
+                                                label:nil
+                                                score:0.0f]];
+
+  [self assertResultsOfSegmentImageWithFileInfo:kCatsAndDogsImageFileInfo
+                                              regionOfInterest:regionOfInterest2
+                                     usingInteractiveSegmenter:interactiveSegmenter
+      approximatelyEqualsExpectedCategoryMaskImageWithFileInfo:kCatsAndDogsMaskImage2FileInfo
+                                   withMaskSimilarityThreshold:kMaskSimilarityThreshold
                                      shouldHaveConfidenceMasks:NO];
 }
 
-- (void)testSegmentWithConfidenceMaskSucceeds {
+- (void)testSegmentWithNormalizedKeyPointRoiAndConfidenceMaskSucceeds {
   MPPInteractiveSegmenterOptions *options =
       [self interactiveSegmenterOptionsWithModelFileInfo:kDeepLabModelFileInfo];
 
   MPPInteractiveSegmenter *interactiveSegmenter =
       [self createInteractiveSegmenterWithOptionsSucceeds:options];
 
-  MPPRegionOfInterest *regionOfInterest = [[MPPRegionOfInterest alloc]
+  const float kMaskSimilarityThreshold = 0.84f;
+  const NSInteger kConfidenceMasksCount = 2;
+  const NSInteger kConfidenceMaskIndex = 1;
+  const BOOL shouldHaveCategoryMask = NO;
+
+  MPPRegionOfInterest *regionOfInterest1 = [[MPPRegionOfInterest alloc]
       initWithNormalizedKeyPoint:[[MPPNormalizedKeypoint alloc]
-                                     initWithLocation:CGPointMake(0.44, 0.7)
+                                     initWithLocation:CGPointMake(0.44f, 0.7f)
                                                 label:nil
                                                 score:0.0f]];
 
   [self assertResultsOfSegmentImageWithFileInfo:kCatsAndDogsImageFileInfo
-                                                regionOfInterest:regionOfInterest
+                                                regionOfInterest:regionOfInterest1
+                                       usingInteractiveSegmenter:interactiveSegmenter
+                                         hasConfidenceMasksCount:kConfidenceMasksCount
+      approximatelyEqualsExpectedConfidenceMaskImageWithFileInfo:kCatsAndDogsMaskImage1FileInfo
+                                                         atIndex:kConfidenceMaskIndex
+                                     withMaskSimilarityThreshold:kMaskSimilarityThreshold
+                                          shouldHaveCategoryMask:shouldHaveCategoryMask];
+
+  MPPRegionOfInterest *regionOfInterest2 = [[MPPRegionOfInterest alloc]
+      initWithNormalizedKeyPoint:[[MPPNormalizedKeypoint alloc]
+                                     initWithLocation:CGPointMake(0.66f, 0.66f)
+                                                label:nil
+                                                score:0.0f]];
+
+  [self assertResultsOfSegmentImageWithFileInfo:kCatsAndDogsImageFileInfo
+                                                regionOfInterest:regionOfInterest2
+                                       usingInteractiveSegmenter:interactiveSegmenter
+                                         hasConfidenceMasksCount:kConfidenceMasksCount
+      approximatelyEqualsExpectedConfidenceMaskImageWithFileInfo:kCatsAndDogsMaskImage2FileInfo
+                                                         atIndex:kConfidenceMaskIndex
+                                     withMaskSimilarityThreshold:kMaskSimilarityThreshold
+                                          shouldHaveCategoryMask:shouldHaveCategoryMask];
+}
+
+- (void)testSegmentWithRotationAndConfidenceMaskSucceeds {
+  MPPInteractiveSegmenterOptions *options =
+      [self interactiveSegmenterOptionsWithModelFileInfo:kDeepLabModelFileInfo];
+
+  MPPInteractiveSegmenter *interactiveSegmenter =
+      [self createInteractiveSegmenterWithOptionsSucceeds:options];
+
+  MPPImage *image = [MPPImage imageWithFileInfo:kCatsAndDogsImageFileInfo
+                                    orientation:UIImageOrientationLeft];
+  XCTAssertNotNil(image);
+
+  MPPRegionOfInterest *regionOfInterest1 = [[MPPRegionOfInterest alloc]
+      initWithNormalizedKeyPoint:[[MPPNormalizedKeypoint alloc]
+                                     initWithLocation:CGPointMake(0.44f, 0.7f)
+                                                label:nil
+                                                score:0.0f]];
+
+  MPPInteractiveSegmenterResult *result = [interactiveSegmenter segmentImage:image
+                                                            regionOfInterest:regionOfInterest1
+                                                                       error:nil];
+  XCTAssertNotNil(result);
+
+  XCTAssertNotNil(result.confidenceMasks);
+  XCTAssertNil(result.categoryMask);
+  XCTAssertEqual(result.confidenceMasks.count, 2);
+}
+
+#pragma mark Scribbles Region Of Interest Tests
+
+- (void)testSegmentWithScribblesRoiAndCategoryMaskSucceeds {
+  MPPInteractiveSegmenterOptions *options =
+      [self interactiveSegmenterOptionsWithModelFileInfo:kDeepLabModelFileInfo];
+  options.shouldOutputConfidenceMasks = NO;
+  options.shouldOutputCategoryMask = YES;
+
+  MPPInteractiveSegmenter *interactiveSegmenter =
+      [self createInteractiveSegmenterWithOptionsSucceeds:options];
+
+  MPPRegionOfInterest *regionOfInterest = [[MPPRegionOfInterest alloc] initWithScribbles:@[
+    [[MPPNormalizedKeypoint alloc] initWithLocation:CGPointMake(0.44f, 0.7f) label:nil score:0.0f],
+
+    [[MPPNormalizedKeypoint alloc] initWithLocation:CGPointMake(0.44f, 0.71f) label:nil score:0.0f],
+    [[MPPNormalizedKeypoint alloc] initWithLocation:CGPointMake(0.44f, 0.72f) label:nil score:0.0f]
+  ]];
+  [self assertResultsOfSegmentImageWithFileInfo:kCatsAndDogsImageFileInfo
+                                              regionOfInterest:regionOfInterest
+                                     usingInteractiveSegmenter:interactiveSegmenter
+      approximatelyEqualsExpectedCategoryMaskImageWithFileInfo:kCatsAndDogsMaskImage1FileInfo
+                                   withMaskSimilarityThreshold:0.84f
+                                     shouldHaveConfidenceMasks:NO];
+}
+
+- (void)testSegmentWithScribblesRoiAndConfidenceMaskSucceeds {
+  MPPInteractiveSegmenterOptions *options =
+      [self interactiveSegmenterOptionsWithModelFileInfo:kDeepLabModelFileInfo];
+
+  MPPInteractiveSegmenter *interactiveSegmenter =
+      [self createInteractiveSegmenterWithOptionsSucceeds:options];
+
+  MPPRegionOfInterest *scribblesRegionOfInterest = [[MPPRegionOfInterest alloc] initWithScribbles:@[
+    [[MPPNormalizedKeypoint alloc] initWithLocation:CGPointMake(0.44f, 0.7f) label:nil score:0.0f],
+
+    [[MPPNormalizedKeypoint alloc] initWithLocation:CGPointMake(0.44f, 0.71f) label:nil score:0.0f],
+    [[MPPNormalizedKeypoint alloc] initWithLocation:CGPointMake(0.44f, 0.72f) label:nil score:0.0f]
+  ]];
+
+  [self assertResultsOfSegmentImageWithFileInfo:kCatsAndDogsImageFileInfo
+                                                regionOfInterest:scribblesRegionOfInterest
                                        usingInteractiveSegmenter:interactiveSegmenter
                                          hasConfidenceMasksCount:2
       approximatelyEqualsExpectedConfidenceMaskImageWithFileInfo:kCatsAndDogsMaskImage1FileInfo
                                                          atIndex:1
-                                     withmaskSimilarityThreshold:0.84f
+                                     withMaskSimilarityThreshold:0.84f
                                           shouldHaveCategoryMask:NO];
 }
 
@@ -186,8 +296,8 @@ double softIOU(const float *mask1, const float *mask2, size_t size) {
                                        (MPPInteractiveSegmenter *)interactiveSegmenter
     approximatelyEqualsExpectedCategoryMaskImageWithFileInfo:
         (MPPFileInfo *)expectedCategoryMaskFileInfo
-                                 withmaskSimilarityThreshold:(const float)maskSimilarityThreshold
-                                   shouldHaveConfidenceMasks:(BOOL)shouldHaveConfidenceMasks {
+                                 withMaskSimilarityThreshold:(const float)maskSimilarityThreshold
+                                   shouldHaveConfidenceMasks:(const BOOL)shouldHaveConfidenceMasks {
   MPPInteractiveSegmenterResult *result = [self segmentImageWithFileInfo:imageFileInfo
                                                         regionOfInterest:regionOfInterest
                                                usingInteractiveSegmenter:interactiveSegmenter];
@@ -202,7 +312,7 @@ double softIOU(const float *mask1, const float *mask2, size_t size) {
 
   [self assertCategoryMask:result.categoryMask
       approximatelyEqualsExpectedCategoryMaskImageWithFileInfo:expectedCategoryMaskFileInfo
-                                   withmaskSimilarityThreshold:maskSimilarityThreshold];
+                                   withMaskSimilarityThreshold:maskSimilarityThreshold];
 }
 
 - (void)assertResultsOfSegmentImageWithFileInfo:(MPPFileInfo *)imageFileInfo
@@ -211,12 +321,12 @@ double softIOU(const float *mask1, const float *mask2, size_t size) {
                                      usingInteractiveSegmenter:
                                          (MPPInteractiveSegmenter *)interactiveSegmenter
                                        hasConfidenceMasksCount:
-                                           (NSUInteger)expectedConfidenceMasksCount
+                                           (const NSUInteger)expectedConfidenceMasksCount
     approximatelyEqualsExpectedConfidenceMaskImageWithFileInfo:
         (MPPFileInfo *)expectedConfidenceMaskFileInfo
-                                                       atIndex:(NSInteger)index
-                                   withmaskSimilarityThreshold:(const float)maskSimilarityThreshold
-                                        shouldHaveCategoryMask:(BOOL)shouldHaveCategoryMask {
+                                                       atIndex:(const NSInteger)index
+                                   withMaskSimilarityThreshold:(const float)maskSimilarityThreshold
+                                        shouldHaveCategoryMask:(const BOOL)shouldHaveCategoryMask {
   MPPInteractiveSegmenterResult *result = [self segmentImageWithFileInfo:imageFileInfo
                                                         regionOfInterest:regionOfInterest
                                                usingInteractiveSegmenter:interactiveSegmenter];
@@ -225,18 +335,18 @@ double softIOU(const float *mask1, const float *mask2, size_t size) {
                                          hasConfidenceMasksCount:expectedConfidenceMasksCount
       approximatelyEqualsExpectedConfidenceMaskImageWithFileInfo:expectedConfidenceMaskFileInfo
                                                          atIndex:index
-                                     withmaskSimilarityThreshold:maskSimilarityThreshold
+                                     withMaskSimilarityThreshold:maskSimilarityThreshold
                                           shouldHaveCategoryMask:shouldHaveCategoryMask];
 }
 
 - (void)assertInteractiveSegmenterResult:(MPPInteractiveSegmenterResult *)result
                                        hasConfidenceMasksCount:
-                                           (NSUInteger)expectedConfidenceMasksCount
+                                           (const NSUInteger)expectedConfidenceMasksCount
     approximatelyEqualsExpectedConfidenceMaskImageWithFileInfo:
         (MPPFileInfo *)expectedConfidenceMaskFileInfo
-                                                       atIndex:(NSInteger)index
-                                   withmaskSimilarityThreshold:(const float)maskSimilarityThreshold
-                                        shouldHaveCategoryMask:(BOOL)shouldHaveCategoryMask {
+                                                       atIndex:(const NSInteger)index
+                                   withMaskSimilarityThreshold:(const float)maskSimilarityThreshold
+                                        shouldHaveCategoryMask:(const BOOL)shouldHaveCategoryMask {
   XCTAssertNotNil(result.confidenceMasks);
 
   XCTAssertEqual(result.confidenceMasks.count, expectedConfidenceMasksCount);
@@ -251,7 +361,7 @@ double softIOU(const float *mask1, const float *mask2, size_t size) {
 
   [self assertConfidenceMask:result.confidenceMasks[index]
       approximatelyEqualsExpectedConfidenceMaskImageWithFileInfo:expectedConfidenceMaskFileInfo
-                                     withmaskSimilarityThreshold:maskSimilarityThreshold];
+                                     withMaskSimilarityThreshold:maskSimilarityThreshold];
 }
 
 - (MPPInteractiveSegmenterResult *)segmentImageWithFileInfo:(MPPFileInfo *)fileInfo
@@ -276,7 +386,7 @@ double softIOU(const float *mask1, const float *mask2, size_t size) {
 - (void)assertCategoryMask:(MPPMask *)categoryMask
     approximatelyEqualsExpectedCategoryMaskImageWithFileInfo:
         (MPPFileInfo *)expectedCategoryMaskImageFileInfo
-                                 withmaskSimilarityThreshold:(const float)maskSimilarityThreshold {
+                                 withMaskSimilarityThreshold:(const float)maskSimilarityThreshold {
   MPPMask *expectedCategoryMask =
       [[MPPMask alloc] initWithImageFileInfo:expectedCategoryMaskImageFileInfo];
 
@@ -301,7 +411,7 @@ double softIOU(const float *mask1, const float *mask2, size_t size) {
 - (void)assertConfidenceMask:(MPPMask *)confidenceMask
     approximatelyEqualsExpectedConfidenceMaskImageWithFileInfo:
         (MPPFileInfo *)expectedConfidenceMaskImageFileInfo
-                                   withmaskSimilarityThreshold:
+                                   withMaskSimilarityThreshold:
                                        (const float)maskSimilarityThreshold {
   MPPMask *expectedConfidenceMask =
       [[MPPMask alloc] initWithImageFileInfo:expectedConfidenceMaskImageFileInfo];
