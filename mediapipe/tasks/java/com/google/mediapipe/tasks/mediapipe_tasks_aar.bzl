@@ -317,10 +317,16 @@ cat > $(OUTS) <<EOF
 EOF
 """,
     )
+    mediapipe_text_generator_java_proto_srcs = []
+
+    for target in _TEXT_TASKS_TEXT_GENERATOR_JAVA_PROTO_LITE_TARGETS:
+        mediapipe_text_generator_java_proto_srcs.append(
+            _mediapipe_tasks_java_proto_src_extractor(target = target),
+        )
 
     _mediapipe_tasks_aar(
         name = name,
-        srcs = srcs,
+        srcs = srcs + mediapipe_text_generator_java_proto_srcs,
         manifest = "AndroidManifest.xml",
         java_proto_lite_targets = _CORE_TASKS_JAVA_PROTO_LITE_TARGETS + _VISION_TASKS_IMAGE_GENERATOR_JAVA_PROTO_LITE_TARGETS,
         native_library = native_library,
