@@ -3,24 +3,34 @@
 #include <cstdint>
 
 #include "mediapipe/framework/formats/hardware_buffer.h"
+#include "mediapipe/gpu/multi_pool.h"
 #include "testing/base/public/gunit.h"
 
 namespace mediapipe {
 namespace {
 
 HardwareBufferSpec GetTestHardwareBufferSpec(uint32_t size_bytes) {
-  return {.width = size_bytes,
-          .height = 1,
-          .layers = 1,
-          .format = HardwareBufferSpec::AHARDWAREBUFFER_FORMAT_BLOB,
-          .usage = HardwareBufferSpec::AHARDWAREBUFFER_USAGE_CPU_WRITE_RARELY |
-                   HardwareBufferSpec::AHARDWAREBUFFER_USAGE_CPU_WRITE_OFTEN |
-                   HardwareBufferSpec::AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN |
-                   HardwareBufferSpec::AHARDWAREBUFFER_USAGE_GPU_DATA_BUFFER};
+  HardwareBufferSpec hardware_buffer_spec;
+  hardware_buffer_spec.width = size_bytes;
+  hardware_buffer_spec.height = 1;
+  hardware_buffer_spec.layers = 1;
+  hardware_buffer_spec.format = HardwareBufferSpec::AHARDWAREBUFFER_FORMAT_BLOB;
+  hardware_buffer_spec.usage =
+      HardwareBufferSpec::AHARDWAREBUFFER_USAGE_CPU_WRITE_RARELY |
+      HardwareBufferSpec::AHARDWAREBUFFER_USAGE_CPU_WRITE_OFTEN |
+      HardwareBufferSpec::AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN |
+      HardwareBufferSpec::AHARDWAREBUFFER_USAGE_GPU_DATA_BUFFER;
+  return hardware_buffer_spec;
+}
+
+MultiPoolOptions GetTestMultiPoolOptions() {
+  MultiPoolOptions options;
+  options.min_requests_before_pool = 0;
+  return options;
 }
 
 TEST(HardwareBufferPoolTest, ShouldPoolHardwareBuffer) {
-  HardwareBufferPool hardware_buffer_pool({.min_requests_before_pool = 0});
+  HardwareBufferPool hardware_buffer_pool(GetTestMultiPoolOptions());
 
   const HardwareBufferSpec hardware_buffer_spec =
       GetTestHardwareBufferSpec(/*size_bytes=*/123);
@@ -39,7 +49,7 @@ TEST(HardwareBufferPoolTest, ShouldPoolHardwareBuffer) {
 }
 
 TEST(HardwareBufferPoolTest, ShouldReturnNewHardwareBuffer) {
-  HardwareBufferPool hardware_buffer_pool({.min_requests_before_pool = 0});
+  HardwareBufferPool hardware_buffer_pool(GetTestMultiPoolOptions());
 
   HardwareBuffer* hardware_buffer_ptr = nullptr;
   // First request instantiates new HardwareBuffer.

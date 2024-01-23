@@ -3,9 +3,9 @@
 #include <memory>
 
 #include "mediapipe/framework/formats/hardware_buffer.h"
-#include "mediapipe/framework/formats/hardware_buffer_pool.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/memory_manager.h"
+#include "mediapipe/gpu/multi_pool.h"
 #include "testing/base/public/gmock.h"
 #include "testing/base/public/gunit.h"
 
@@ -14,6 +14,12 @@ namespace {
 
 using ::testing::Return;
 using ::testing::Truly;
+
+MultiPoolOptions GetTestMultiPoolOptions() {
+  MultiPoolOptions options;
+  options.min_requests_before_pool = 0;
+  return options;
+}
 
 TEST(TensorAhwbTest, TestCpuThenAHWB) {
   Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape{1});
@@ -110,7 +116,7 @@ TEST(TensorAhwbTest, TestTrackingAhwb) {
 
 TEST(TensorAhwbTest, ShouldReuseHardwareBufferFromHardwareBufferPool) {
   constexpr int kTensorSize = 123;
-  MemoryManager memory_manager({.min_requests_before_pool = 0});
+  MemoryManager memory_manager(GetTestMultiPoolOptions());
 
   AHardwareBuffer *buffer = nullptr;
   {
@@ -133,7 +139,7 @@ TEST(TensorAhwbTest, ShouldReuseHardwareBufferFromHardwareBufferPool) {
 TEST(TensorAhwbTest, ShouldNotReuseHardwareBufferFromHardwareBufferPool) {
   constexpr int kTensorASize = 123;
   constexpr int kTensorBSize = 456;
-  MemoryManager memory_manager({.min_requests_before_pool = 0});
+  MemoryManager memory_manager(GetTestMultiPoolOptions());
 
   AHardwareBuffer *buffer = nullptr;
   {

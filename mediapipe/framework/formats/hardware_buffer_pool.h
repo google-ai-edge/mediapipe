@@ -22,7 +22,9 @@ class HardwareBufferSpecPool : public ReusablePool<HardwareBuffer> {
   // the buffers' deleters.
   static std::shared_ptr<HardwareBufferSpecPool> Create(
       HardwareBufferSpec& spec, int keep_count) {
-    return Create(spec, {.keep_count = keep_count});
+    MultiPoolOptions options;
+    options.keep_count = keep_count;
+    return Create(spec, options);
   }
   static std::shared_ptr<HardwareBufferSpecPool> Create(
       const HardwareBufferSpec& spec, const MultiPoolOptions& options) {
