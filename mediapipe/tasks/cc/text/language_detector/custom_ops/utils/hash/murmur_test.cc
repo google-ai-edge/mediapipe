@@ -29,7 +29,6 @@ limitations under the License.
 
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/integral_types.h"
 
 namespace mediapipe::tasks::text::language_detector::custom_ops::hash {
 

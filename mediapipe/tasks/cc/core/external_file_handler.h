@@ -22,7 +22,6 @@ limitations under the License.
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
 
 namespace mediapipe {

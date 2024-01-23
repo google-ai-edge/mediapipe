@@ -17,6 +17,7 @@ limitations under the License.
 
 #include <stddef.h>
 
+#include <cstdint>
 #include <string>
 #include <type_traits>
 
@@ -27,7 +28,6 @@ limitations under the License.
 #include "absl/strings/str_cat.h"
 #include "absl/types/optional.h"
 #include "flatbuffers/flatbuffers.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/metadata/metadata_extractor.h"

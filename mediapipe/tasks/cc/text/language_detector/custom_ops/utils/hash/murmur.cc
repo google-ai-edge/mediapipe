@@ -24,7 +24,6 @@ limitations under the License.
 
 #include "absl/base/internal/endian.h"
 #include "absl/base/optimization.h"
-#include "mediapipe/framework/port/integral_types.h"
 
 namespace mediapipe::tasks::text::language_detector::custom_ops::hash {
 
