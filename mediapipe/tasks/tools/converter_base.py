@@ -14,7 +14,8 @@
 
 """Defines a couple base classes for the conversion/quantization process."""
 
-from typing import List, Optional, Dict, Tuple
+import os
+from typing import Dict, List, Optional, Tuple
 import numpy as np
 
 
@@ -159,6 +160,8 @@ class ModelWriterBase:
         file(s).
     """
     self._output_dir = output_dir
+    if not os.path.exists(self._output_dir):
+      os.mkdir(self._output_dir)
     self._backend = backend
 
   def write_variables(self, variables: Dict[str, Tuple[np.ndarray, bool]]):
