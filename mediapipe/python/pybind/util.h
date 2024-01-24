@@ -16,10 +16,12 @@
 #define MEDIAPIPE_PYTHON_PYBIND_UTIL_H_
 
 #include <cstdint>
+#include <string>
 
+#include "absl/status/status.h"
+#include "absl/strings/str_cat.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/port/file_helpers.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/timestamp.h"
 #include "pybind11/gil.h"
 #include "pybind11/pybind11.h"

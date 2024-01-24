@@ -156,7 +156,8 @@ pybind_library(
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:timestamp",
         "//mediapipe/framework/port:file_helpers",
-        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
     ],
 )
 
