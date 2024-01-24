@@ -64,6 +64,7 @@ cc_library(
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto:llm_response_context_cc_proto",
         "@com_google_absl//absl/status",
         "@odml//odml/infra/genai/inference/c:libllm_inference_engine",
+        "@odml//odml/infra/genai/inference/c:libllm_inference_engine_deps",
     ] + select({
         "//mediapipe:android": [],
     }),
