@@ -45,6 +45,9 @@ LlmModelParameters ParseModelParameters(void* bytes, int size) {
     case kGMini2B:
       output.model_type = kGMini2B;
       break;
+    case kStableLM4E1T3B:
+      output.model_type = kStableLM4E1T3B;
+      break;
     default:
       output.model_type = kUNKNOWN_MODEL_TYPE;
   }

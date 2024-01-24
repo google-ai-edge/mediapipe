@@ -27,6 +27,7 @@ message LlmModelParameters {
     UNKNOWN_MODEL_TYPE = 0;  // Unknown
     FALCON_1B = 1;           // Falcon with 1B parameters.
     GMINI_2B = 2;            // GMini with 2B parameters.
+    STABLE_LM_4E1T3B = 3;    // StableLM with 3B parameters.
   }
 
   // Attention types.
