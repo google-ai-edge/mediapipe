@@ -409,17 +409,15 @@ GlContext::~GlContext() {
     if (thread_->IsCurrentThread()) {
       thread_.release()->SelfDestruct();
     }
-  } else {
-    if (IsCurrent()) {
+  } else if (IsCurrent()) {
+    clear_attachments();
+  } else if (HasContext()) {
+    ContextBinding saved_context;
+    auto status = SwitchContextAndRun([&clear_attachments] {
       clear_attachments();
-    } else {
-      ContextBinding saved_context;
-      auto status = SwitchContextAndRun([&clear_attachments] {
-        clear_attachments();
-        return absl::OkStatus();
-      });
-      ABSL_LOG_IF(ERROR, !status.ok()) << status;
-    }
+      return absl::OkStatus();
+    });
+    ABSL_LOG_IF(ERROR, !status.ok()) << status;
   }
   DestroyContext();
 }
