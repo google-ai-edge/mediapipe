@@ -169,16 +169,6 @@ def mediapipe_tasks_core_aar(name, srcs, manifest):
         src_out = "com/google/mediapipe/calculator/proto/StableDiffusionIterateCalculatorOptionsProto.java",
     ))
 
-    mediapipe_tasks_java_proto_srcs.append(mediapipe_java_proto_src_extractor(
-        target = "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto:llm_options_java_proto_lite",
-        src_out = "com/google/mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto/LlmOptionsProto.java",
-    ))
-
-    mediapipe_tasks_java_proto_srcs.append(mediapipe_java_proto_src_extractor(
-        target = "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto:llm_response_context_java_proto_lite",
-        src_out = "com/google/mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto/LlmResponseContextProto.java",
-    ))
-
     android_library(
         name = name,
         srcs = srcs + [
@@ -393,9 +383,20 @@ EOF
 """,
     )
 
+    mediapipe_text_generator_java_proto_srcs = []
+    mediapipe_text_generator_java_proto_srcs.append(mediapipe_java_proto_src_extractor(
+        target = "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto:llm_options_java_proto_lite",
+        src_out = "com/google/mediapipe/tasks/core/jni/proto/LlmOptionsProto.java",
+    ))
+
+    mediapipe_text_generator_java_proto_srcs.append(mediapipe_java_proto_src_extractor(
+        target = "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto:llm_response_context_java_proto_lite",
+        src_out = "com/google/mediapipe/tasks/core/jni/proto/LlmResponseContextProto.java",
+    ))
+
     _mediapipe_tasks_aar(
         name = name,
-        srcs = srcs,
+        srcs = srcs + mediapipe_text_generator_java_proto_srcs,
         manifest = "AndroidManifest.xml",
         java_proto_lite_targets = _CORE_TASKS_JAVA_PROTO_LITE_TARGETS + _TEXT_TASKS_TEXT_GENERATOR_JAVA_PROTO_LITE_TARGETS,
         native_library = native_library,

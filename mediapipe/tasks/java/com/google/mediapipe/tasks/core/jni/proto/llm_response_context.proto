@@ -17,7 +17,7 @@ syntax = "proto3";
 
 package mediapipe.tasks.core.jni;
 
-option java_package = "com.google.mediapipe.tasks.core.jni";
+option java_package = "com.google.mediapipe.tasks.core.jni.proto";
 option java_outer_classname = "LlmResponseContextProto";
 
 // A response from an LLM.

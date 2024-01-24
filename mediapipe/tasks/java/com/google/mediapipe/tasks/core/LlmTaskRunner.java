@@ -15,9 +15,9 @@
 package com.google.mediapipe.tasks.core;
 
 import com.google.mediapipe.tasks.core.OutputHandler.ValueListener;
-import com.google.mediapipe.tasks.core.jni.LlmOptionsProto.LlmModelParameters;
-import com.google.mediapipe.tasks.core.jni.LlmOptionsProto.LlmSessionConfig;
-import com.google.mediapipe.tasks.core.jni.LlmResponseContextProto.LlmResponseContext;
+import com.google.mediapipe.tasks.core.jni.proto.LlmOptionsProto.LlmModelParameters;
+import com.google.mediapipe.tasks.core.jni.proto.LlmOptionsProto.LlmSessionConfig;
+import com.google.mediapipe.tasks.core.jni.proto.LlmResponseContextProto.LlmResponseContext;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
 import java.util.Optional;
