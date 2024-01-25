@@ -456,6 +456,13 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { f
            cloningPropertiesOfSourceImage:(MPPImage *)sourceImage
                       shouldCopyPixelData:(BOOL)shouldCopyPixelData
                                     error:(NSError **)error {
+  if (!sourceImage) {
+    [MPPCommonUtils createCustomError:error
+                             withCode:MPPTasksErrorCodeInvalidArgumentError
+                          description:@"Source image cannot be nil."];
+    return nil;
+  }
+
   switch (sourceImage.imageSourceType) {
     case MPPImageSourceTypeImage: {
       CGImageRef cgImageRef = [MPPCGImageUtils cgImageFromImageFrame:image.GetImageFrameSharedPtr()
@@ -475,7 +482,7 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { f
             createCustomError:error
                      withCode:MPPTasksErrorCodeInvalidArgumentError
                   description:
-                      @"When the source type is pixel buffer, you cannot request uncopied data"];
+                      @"When the source type is pixel buffer, you cannot request uncopied data."];
         return nil;
       }
 
@@ -488,9 +495,46 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { f
       CVPixelBufferRelease(pixelBuffer);
       return image;
     }
-    default:
-      // TODO Implement CMSampleBuffer.
-      return nil;
+    case MPPImageSourceTypeSampleBuffer: {
+      if (!shouldCopyPixelData) {
+        // TODO: Investigate possibility of permuting channels of `mediapipe::Image` returned by
+        // vision tasks in place to ensure that we can support creating `CVPixelBuffer`s without
+        // copying the pixel data.
+        [MPPCommonUtils
+            createCustomError:error
+                     withCode:MPPTasksErrorCodeInvalidArgumentError
+                  description:
+                      @"When the source type is sample buffer, you cannot request uncopied data."];
+        return nil;
+      }
+
+      CVPixelBufferRef pixelBuffer =
+          [MPPCVPixelBufferUtils cvPixelBufferFromImageFrame:*(image.GetImageFrameSharedPtr())
+                                                       error:error];
+
+      CMSampleTimingInfo timingInfo;
+      if (CMSampleBufferGetSampleTimingInfo(sourceImage.sampleBuffer, 0, &timingInfo) != 0) {
+        [MPPCommonUtils createCustomError:error
+                                 withCode:MPPTasksErrorCodeInvalidArgumentError
+                              description:@"Some error occured while fetching the sample timing "
+                                          @"info of the CMSampleBuffer."];
+        return nil;
+      }
+      CMFormatDescriptionRef formatDescription;
+      CMVideoFormatDescriptionCreateForImageBuffer(kCFAllocatorDefault, pixelBuffer,
+                                                   &formatDescription);
+
+      CMSampleBufferRef sampleBuffer;
+      CMSampleBufferCreateReadyWithImageBuffer(kCFAllocatorDefault, pixelBuffer, formatDescription,
+                                               &timingInfo, &sampleBuffer);
+      CFRelease(formatDescription);
+
+      MPPImage *image = [self initWithSampleBuffer:sampleBuffer
+                                       orientation:sourceImage.orientation
+                                             error:nil];
+      CFRelease(sampleBuffer);
+      return image;
+    }
   }
 }
 
