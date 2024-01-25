@@ -10,7 +10,7 @@ from mediapipe.tasks.tools import safetensors_converter
 
 _TEST_DATA_DIR = 'mediapipe/tasks/testdata/text'
 _SAFETENSORS_FILE = test_utils.get_test_data_path(
-    os.path.join(_TEST_DATA_DIR, 'loader_testdata.safetensors')
+    os.path.join(_TEST_DATA_DIR, 'stablelm_3b_4e1t_test_weight.safetensors')
 )
 
 
