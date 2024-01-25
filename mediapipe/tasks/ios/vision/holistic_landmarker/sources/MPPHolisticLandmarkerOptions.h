@@ -24,7 +24,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  * This protocol defines an interface for the delegates of `HolisticLandmarker` to receive
- * results of performing asynchronous holistic landmarks detection on images (i.e, when `runningMode` = `.liveStream`).
+ * results of performing asynchronous holistic landmarks detection on images (i.e, when
+ * `runningMode` = `.liveStream`).
  *
  * The delegate of `FaceLandmarker` must adopt `FaceLandmarkerLiveStreamDelegate` protocol.
  * The methods in this protocol are optional.
@@ -33,16 +34,20 @@ NS_SWIFT_NAME(HolisticLandmarkerLiveStreamDelegate)
 @protocol MPPHolisticLandmarkerLiveStreamDelegate <NSObject>
 
 /**
- * This method notifies a delegate that the results of asynchronous holistic landmarks detection of an image submitted to the `HolisticsLandmarker` is available.
+ * This method notifies a delegate that the results of asynchronous holistic landmarks detection of
+ * an image submitted to the `HolisticsLandmarker` is available.
  *
- * This method is called on a private serial dispatch queue created by the `HolisticLandmarker` for performing the asynchronous delegates calls.
+ * This method is called on a private serial dispatch queue created by the `HolisticLandmarker` for
+ * performing the asynchronous delegates calls.
  *
- * @param holisticLandmarker The holistic landmarker which performed the holistic landmarks detection.
- * This is useful to test equality when there are multiple instances of `HolisticLandmarker`.
+ * @param holisticLandmarker The holistic landmarker which performed the holistic landmarks
+ * detection. This is useful to test equality when there are multiple instances of
+ * `HolisticLandmarker`.
  * @param result The `HolisticLandmarkerResult` object that contains a list of landmarks.
  * @param timestampInMilliseconds The timestamp (in milliseconds) which indicates when the input
  * image was sent to the holistic landmarker.
- * @param error An optional error parameter populated when there is an error in performing holistic landmarks detection on the input live stream image data.
+ * @param error An optional error parameter populated when there is an error in performing holistic
+ * landmarks detection on the input live stream image data.
  */
 - (void)holisticLandmarker:(MPPHolisticLandmarker *)holisticLandmarker
     didFinishDetectionWithResult:(nullable MPPHolisticLandmarkerResult *)result
@@ -56,15 +61,21 @@ NS_SWIFT_NAME(HolisticLandmarkerOptions)
 @interface MPPHolisticLandmarkerOptions : MPPTaskOptions <NSCopying>
 
 /**
- * Running mode of the holistic landmarks dection task. Defaults to `.image`. `HolisticLandmarker` can be created with one of the following running modes:
+ * Running mode of the holistic landmarks dection task. Defaults to `.image`. `HolisticLandmarker`
+ * can be created with one of the following running modes:
  *  1. `.image`: The mode for performing holistic landmarks detection on single image inputs.
- *  2. `.video`: The mode for performing holistic landmarks detection on the decoded frames of a video.
- *  3. `.liveStream`: The mode for performing holistic landmarks detection on a live stream of input data, such as from the camera.
+ *  2. `.video`: The mode for performing holistic landmarks detection on the decoded frames of a
+ * video.
+ *  3. `.liveStream`: The mode for performing holistic landmarks detection on a live stream of input
+ * data, such as from the camera.
  */
 @property(nonatomic) MPPRunningMode runningMode;
 
 /**
- * An object that confirms to `HolisticLandmarkerLiveStreamDelegate` protocol. This object must implement `holisticLandmarker(_:didFinishDetectionWithResult:timestampInMilliseconds:error:)` to receive the results of performing asynchronous holistic landmarks detection on images (i.e, when `runningMode` = `.liveStream`).
+ * An object that confirms to `HolisticLandmarkerLiveStreamDelegate` protocol. This object must
+ * implement `holisticLandmarker(_:didFinishDetectionWithResult:timestampInMilliseconds:error:)` to
+ * receive the results of performing asynchronous holistic landmarks detection on images (i.e, when
+ * `runningMode` = `.liveStream`).
  */
 @property(nonatomic, weak, nullable) id<MPPHolisticLandmarkerLiveStreamDelegate>
     holisticLandmarkerLiveStreamDelegate;
@@ -74,12 +85,10 @@ NS_SWIFT_NAME(HolisticLandmarkerOptions)
  */
 @property(nonatomic) float minFaceDetectionConfidence;
 
-
 /**
  * The minimum threshold for the face suppression score in the face detection. Defaults to 0.3.
  */
 @property(nonatomic) float minFaceSuppressionThreshold;
-
 
 /**
  * The minimum confidence score of face presence score in the face landmark detection. Defaults to
@@ -92,8 +101,9 @@ NS_SWIFT_NAME(HolisticLandmarkerOptions)
  */
 @property(nonatomic) float minPoseDetectionConfidence;
 
-/** 
- * The minimum non-maximum-suppression threshold for pose detection to be considered overlapped. Defaults to 0.3.
+/**
+ * The minimum non-maximum-suppression threshold for pose detection to be considered overlapped.
+ * Defaults to 0.3.
  */
 @property(nonatomic) float minPoseSuppressionThreshold;
 
@@ -112,7 +122,8 @@ NS_SWIFT_NAME(HolisticLandmarkerOptions)
 /** Whether to output segmentation masks. Defaults to false. */
 @property(nonatomic) BOOL outputPoseSegmentationMasks;
 
-/** The minimum confidence score of hand presence score in the hand landmarks detection. Defaults to 0.5. */
+/** The minimum confidence score of hand presence score in the hand landmarks detection. Defaults to
+ * 0.5. */
 @property(nonatomic) float minHandLandmarksConfidence;
 
 @end

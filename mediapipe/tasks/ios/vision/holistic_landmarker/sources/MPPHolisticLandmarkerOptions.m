@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "mediapipe/tasks/ios/vision/face_landmarker/sources/MPPFaceLandmarkerOptions.h"
+#import "mediapipe/tasks/ios/vision/holistic_landmarker/sources/MPPHolisticLandmarkerOptions.h"
 
-@implementation MPPFaceLandmarkerOptions
+@implementation MPPHolisticLandmarkerOptions
 
 - (instancetype)init {
   self = [super init];
   if (self) {
     _minFaceDetectionConfidence = 0.5f;
-    _minFaceSuppressionThreshold = 0.3f
+    _minFaceSuppressionThreshold = 0.3f;
     _minFacePresenceConfidence = 0.5f;
     _minPoseDetectionConfidence = 0.5f;
     _minPoseSuppressionThreshold = 0.5f;

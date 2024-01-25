@@ -14,22 +14,21 @@
 
 #import <Foundation/Foundation.h>
 
-#include <vector>
-
 #import "mediapipe/tasks/ios/vision/holistic_landmarker/sources/MPPHolisticLandmarkerResult.h"
 
 @implementation MPPHolisticLandmarkerResult
 
-- (instancetype)initWithFaceLandmarks:(NSArray<NSArray<MPPNormalizedLandmark *> *> *)faceLandmarks
-                      faceBlendshapes:(nullable NSArray<MPPClassifications *> *)faceBlendshapes
-                      poseLandmarks:(NSArray<NSArray<MPPNormalizedLandmark *> *> *)poseLandmarks
-                      poseWorldLandmarks:(NSArray<NSArray<MPPLandmark *> *> *)poseWorldLandmarks
-                      poseSegmentationMasks:(NSArray<MPPMask *> *)poseSegmentationMasks
-                      leftHandLandmarks:(NSArray<NSArray<MPPNormalizedLandmark *> *> *)leftHandLandmarks
-                      leftHandWorldLandmarks:(NSArray<NSArray<MPPLandmark *> *> *)leftHandWorldLandmarks
-                      rightHandLandmarks:(NSArray<NSArray<MPPNormalizedLandmark *> *> *)rightHandLandmarks
-                      rightHandWorldLandmarks:(NSArray<NSArray<MPPLandmark *> *> *)rightHandWorldLandmarks
-              timestampInMilliseconds:(NSInteger)timestampInMilliseconds {
+- (instancetype)
+      initWithFaceLandmarks:(NSArray<NSArray<MPPNormalizedLandmark *> *> *)faceLandmarks
+            faceBlendshapes:(nullable NSArray<MPPClassifications *> *)faceBlendshapes
+              poseLandmarks:(NSArray<NSArray<MPPNormalizedLandmark *> *> *)poseLandmarks
+         poseWorldLandmarks:(NSArray<NSArray<MPPLandmark *> *> *)poseWorldLandmarks
+      poseSegmentationMasks:(NSArray<MPPMask *> *)poseSegmentationMasks
+          leftHandLandmarks:(NSArray<NSArray<MPPNormalizedLandmark *> *> *)leftHandLandmarks
+     leftHandWorldLandmarks:(NSArray<NSArray<MPPLandmark *> *> *)leftHandWorldLandmarks
+         rightHandLandmarks:(NSArray<NSArray<MPPNormalizedLandmark *> *> *)rightHandLandmarks
+    rightHandWorldLandmarks:(NSArray<NSArray<MPPLandmark *> *> *)rightHandWorldLandmarks
+    timestampInMilliseconds:(NSInteger)timestampInMilliseconds {
   self = [super initWithTimestampInMilliseconds:timestampInMilliseconds];
   if (self) {
     _faceLandmarks = faceLandmarks;
