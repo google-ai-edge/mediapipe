@@ -14,12 +14,12 @@
 
 #include <sys/types.h>
 
+#include <cstdint>
 #include <memory>
 #include <string>
 
 #include "absl/strings/numbers.h"
 #include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
