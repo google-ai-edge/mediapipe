@@ -64,10 +64,9 @@ NS_SWIFT_NAME(ImageSegmenter)
  * Rotation will be applied according to the `orientation` property of the provided `MPImage`. Only
  * use this method when the `ImageSegmenter` is created with running mode, `image`.
  *
- * This method supports RGBA images. If your `MPImage` has a source type of `pixelBuffer` or
- * `sampleBuffer`, the underlying pixel buffer must have one of the following pixel format types:
- * 1. kCVPixelFormatType_32BGRA
- * 2. kCVPixelFormatType_32RGBA
+ * This method supports segmentation of RGBA images. If your `MPImage` has a source type of
+ * `.pixelBuffer` or `.sampleBuffer`, the underlying pixel buffer must use
+ * `kCVPixelFormatType_32BGRA` as its pixel format.
  *
  * If your `MPImage` has a source type of `.image` ensure that the color space is RGB with an Alpha
  * channel.
@@ -87,10 +86,9 @@ NS_SWIFT_NAME(ImageSegmenter)
  * Rotation will be applied according to the `orientation` property of the provided `MPImage`. Only
  * use this method when the `ImageSegmenter` is created with running mode, `image`.
  *
- * This method supports RGBA images. If your `MPImage` has a source type of `pixelBuffer` or
- * `sampleBuffer`, the underlying pixel buffer must have one of the following pixel format types:
- * 1. kCVPixelFormatType_32BGRA
- * 2. kCVPixelFormatType_32RGBA
+ * This method supports segmentation of RGBA images. If your `MPImage` has a source type of
+ * `.pixelBuffer` or `.sampleBuffer`, the underlying pixel buffer must use
+ * `kCVPixelFormatType_32BGRA` as its pixel format.
  *
  * If your `MPImage` has a source type of `image` ensure that the color space is RGB with an Alpha
  * channel.
@@ -113,10 +111,9 @@ NS_SWIFT_NAME(ImageSegmenter)
  * Rotation will be applied according to the `orientation` property of the provided `MPImage`. Only
  * use this method when the `ImageSegmenter` is created with `video`.
  *
- * This method supports RGBA images. If your `MPImage` has a source type of `pixelBuffer` or
- * `sampleBuffer`, the underlying pixel buffer must have one of the following pixel format types:
- * 1. kCVPixelFormatType_32BGRA
- * 2. kCVPixelFormatType_32RGBA
+ * This method supports segmentation of RGBA images. If your `MPImage` has a source type of
+ * `.pixelBuffer` or `.sampleBuffer`, the underlying pixel buffer must use
+ * `kCVPixelFormatType_32BGRA` as its pixel format.
  *
  * If your `MPImage` has a source type of `image` ensure that the color space is RGB with an Alpha
  * channel.
@@ -140,10 +137,9 @@ NS_SWIFT_NAME(ImageSegmenter)
  * Rotation will be applied according to the `orientation` property of the provided `MPImage`. Only
  * use this method when the `ImageSegmenter` is created with running mode, `video`.
  *
- * This method supports RGBA images. If your `MPImage` has a source type of `pixelBuffer` or
- * `sampleBuffer`, the underlying pixel buffer must have one of the following pixel format types:
- * 1. kCVPixelFormatType_32BGRA
- * 2. kCVPixelFormatType_32RGBA
+ * This method supports segmentation of RGBA images. If your `MPImage` has a source type of
+ * `.pixelBuffer` or `.sampleBuffer`, the underlying pixel buffer must use
+ * `kCVPixelFormatType_32BGRA` as its pixel format.
  *
  * If your `MPImage` has a source type of `image` ensure that the color space is RGB with an Alpha
  * channel.
@@ -177,16 +173,15 @@ NS_SWIFT_NAME(ImageSegmenter)
  * It's required to provide a timestamp (in milliseconds) to indicate when the input image is sent
  * to the segmenter. The input timestamps must be monotonically increasing.
  *
- * This method supports RGBA images. If your `MPImage` has a source type of `pixelBuffer` or
- *`sampleBuffer`, the underlying pixel buffer must have one of the following pixel format types:
- * 1. kCVPixelFormatType_32BGRA
- * 2. kCVPixelFormatType_32RGBA
+ * This method supports segmentation of RGBA images. If your `MPImage` has a source type of
+ *`.pixelBuffer` or `.sampleBuffer`, the underlying pixel buffer must use
+ *`kCVPixelFormatType_32BGRA` as its pixel format.
  *
  * If the input `MPImage` has a source type of `image` ensure that the color space is RGB with an
  * Alpha channel.
  *
  * If this method is used for classifying live camera frames using `AVFoundation`, ensure that you
- * request `AVCaptureVideoDataOutput` to output frames in `kCMPixelFormat_32RGBA` using its
+ * request `AVCaptureVideoDataOutput` to output frames in `kCMPixelFormat_32BGRA` using its
  * `videoSettings` property.
  *
  * @param image A live stream image data of type `MPImage` on which segmentation is to be
