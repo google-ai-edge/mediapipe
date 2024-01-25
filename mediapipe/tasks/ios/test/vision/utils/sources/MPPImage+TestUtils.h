@@ -53,10 +53,9 @@ NS_ASSUME_NONNULL_BEGIN
  * Loads an image from a file in an app bundle into a `MPPImage` object with the specified
  * source type.
  *
- * Currently supports only source types `MPPImageSourceTypeImage` and
- * `MPPImageSourceTypePixelBuffer`. The method returns `nil` if you request an image of source type
- * `MPPImageSourceTypeSampleBuffer`. The underlying pixel buffer of the returned image will be of
- * type `kCVPixelFormatType32BGRA`.
+ * For source type `MPPImageSourceTypeSampleBuffer`, the method returns an `MPImage` whose sample
+ * buffer has timing info, `kCMTimingInfoInvalid`. The underlying pixel buffer of the returned image
+ * will be of type `kCVPixelFormatType32BGRA`.
  *
  * @param fileInfo The file info specifying the name and extension of the image file in the bundle.
  * @param sourceType The expected `MPPImageSourceType` of the `MPPImage` created by this method.

@@ -15,6 +15,8 @@
 #include <iostream>
 #import "mediapipe/tasks/ios/test/vision/utils/sources/MPPImage+TestUtils.h"
 
+#import <CoreMedia/CoreMedia.h>
+
 namespace {
 static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { free(refCon); }
 }  // namespace
@@ -137,19 +139,59 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { f
     case MPPImageSourceTypePixelBuffer:
       return [MPPImage imageOfPixelBufferSourceTypeWithFileInfo:fileInfo];
     case MPPImageSourceTypeSampleBuffer:
-      // TODO: Add support when API development is complete.
-      return nil;
+      return [MPPImage imageOfSampleBufferSourceTypeWithFileInfo:fileInfo
+                                                      timingInfo:&kCMTimingInfoInvalid];
   }
   return nil;
 }
 
 + (MPPImage *)imageOfPixelBufferSourceTypeWithFileInfo:(MPPFileInfo *)fileInfo {
+  CVPixelBufferRef pixelBuffer = [MPPImage pixelBufferWithFileInfo:fileInfo];
+
+  if (!pixelBuffer) {
+    return nil;
+  }
+
+  MPPImage *image = [[MPPImage alloc] initWithPixelBuffer:pixelBuffer error:nil];
+
+  CVPixelBufferRelease(pixelBuffer);
+
+  return image;
+}
+
++ (MPPImage *)imageOfSampleBufferSourceTypeWithFileInfo:(MPPFileInfo *)fileInfo
+                                             timingInfo:(const CMSampleTimingInfo *)timingInfo {
+  CVPixelBufferRef pixelBuffer = [MPPImage pixelBufferWithFileInfo:fileInfo];
+
+  if (!pixelBuffer) {
+    return nil;
+  }
+
+  CMFormatDescriptionRef formatDescription;
+  CMVideoFormatDescriptionCreateForImageBuffer(kCFAllocatorDefault, pixelBuffer,
+                                               &formatDescription);
+
+  CMSampleBufferRef sampleBuffer;
+  CMSampleBufferCreateReadyWithImageBuffer(kCFAllocatorDefault, pixelBuffer, formatDescription,
+                                           timingInfo, &sampleBuffer);
+  CFRelease(formatDescription);
+
+  MPPImage *image = [[MPPImage alloc] initWithSampleBuffer:sampleBuffer error:nil];
+
+  CVPixelBufferRelease(pixelBuffer);
+  CFRelease(sampleBuffer);
+
+  return image;
+}
+
++ (CVPixelBufferRef)pixelBufferWithFileInfo:(MPPFileInfo *)fileInfo {
   if (!fileInfo.path) return nil;
 
-  // To create an `MPPImage` of source type `MPPImageSourceTypePixelBuffer`, a `UIImage` is first
-  // created from the provided file path. A `CVPixelBuffer` can then be easily extracted from the
-  // `UIImage` which in turn will be used to create the `MPPImage`. In real world use cases,
-  // `MPPImage`s from files are intended to be initialized using `UIImage`s with a source type of
+  // To create an `MPPImage` of source type
+  // `MPPImageSourceTypePixelBuffer`/`MPPImageSourceTypeSampleBuffer`, a `UIImage` is first created
+  // from the provided file path. A `CVPixelBuffer` can then be easily extracted from the `UIImage`
+  // which in turn will be used to create the `MPPImage`. In real world use cases, `MPPImage`s from
+  // files are intended to be initialized using `UIImage`s with a source type of
   // `MPPImageSourceTypeImage`. `MPPImageSourceTypePixelBuffer` is expected to be used when the
   // application receives a `CVPixelBuffer` after some processing or from the camera.
   //
@@ -159,12 +201,7 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { f
 
   if (!image) return nil;
 
-  CVPixelBufferRef pixelBuffer = image.pixelBuffer;
-
-  MPPImage *mpImage = [[MPPImage alloc] initWithPixelBuffer:pixelBuffer error:nil];
-  CVPixelBufferRelease(pixelBuffer);
-
-  return mpImage;
+  return image.pixelBuffer;
 }
 
 // TODO: Remove after all tests are migrated
