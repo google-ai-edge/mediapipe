@@ -66,6 +66,14 @@ http_archive(
     ],
 )
 
+# TODO: This is an are indirect depedency. We should factor it out.
+http_archive(
+    name = "pthreadpool",
+    sha256 = "a4cf06de57bfdf8d7b537c61f1c3071bce74e57524fe053e0bbd2332feca7f95",
+    strip_prefix = "pthreadpool-4fe0e1e183925bf8cfa6aae24237e724a96479b8",
+    urls = ["https://github.com/Maratyszcza/pthreadpool/archive/4fe0e1e183925bf8cfa6aae24237e724a96479b8.zip"],
+)
+
 # Load Zlib before initializing TensorFlow and the iOS build rules to guarantee
 # that the target @zlib//:mini_zlib is available
 http_archive(
