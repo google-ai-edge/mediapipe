@@ -38,3 +38,14 @@ objc_library(
         "//mediapipe/tasks/ios/vision/core:MPPRunningMode",
     ],
 )
+
+objc_library(
+    name = "MPPHolisticLandmarker",
+    hdrs = ["sources/MPPHolisticLandmarker.h"],
+    module_name = "MPPHolisticLandmarker",
+    deps = [
+        ":MPPHolisticLandmarkerOptions",
+        ":MPPHolisticLandmarkerResult",
+        "//mediapipe/tasks/ios/vision/core:MPPImage",
+    ],
+)
