@@ -505,14 +505,14 @@ http_archive(
 )
 
 # TensorFlow repo should always go after the other external dependencies.
-# TF on 2023-07-26.
-_TENSORFLOW_GIT_COMMIT = "e92261fd4cec0b726692081c4d2966b75abf31dd"
-# curl -L https://github.com/tensorflow/tensorflow/archive/<TENSORFLOW_GIT_COMMIT>.tar.gz | shasum -a 256
-_TENSORFLOW_SHA256 = "478a229bd4ec70a5b568ac23b5ea013d9fca46a47d6c43e30365a0412b9febf4"
+# TF on 2023-10-23.
+_TENSORFLOW_VERSION= "2.15.0"
+# curl -L https://github.com/tensorflow/tensorflow/archive/refs/tags/v<_TENSORFLOW_VERSION>.tar.gz | shasum -a 256
+_TENSORFLOW_SHA256 = "9cec5acb0ecf2d47b16891f8bc5bc6fbfdffe1700bdadc0d9ebe27ea34f0c220"
 http_archive(
     name = "org_tensorflow",
     urls = [
-      "https://github.com/tensorflow/tensorflow/archive/%s.tar.gz" % _TENSORFLOW_GIT_COMMIT,
+      "https://github.com/tensorflow/tensorflow/archive/refs/tags/v%s.tar.gz" % _TENSORFLOW_VERSION,
     ],
     patches = [
         "@//third_party:org_tensorflow_compatibility_fixes.diff",
@@ -527,7 +527,7 @@ http_archive(
     patch_args = [
         "-p1",
     ],
-    strip_prefix = "tensorflow-%s" % _TENSORFLOW_GIT_COMMIT,
+    strip_prefix = "tensorflow-%s" % _TENSORFLOW_VERSION,
     sha256 = _TENSORFLOW_SHA256,
 )
 
