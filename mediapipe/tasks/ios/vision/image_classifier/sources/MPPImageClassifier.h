@@ -199,7 +199,7 @@ NS_SWIFT_NAME(ImageClassifier)
  * Alpha channel.
  *
  * If this method is used for classifying live camera frames using `AVFoundation`, ensure that you
- * request `AVCaptureVideoDataOutput` to output frames in `kCMPixelFormat_32RGBA` using its
+ * request `AVCaptureVideoDataOutput` to output frames in `kCMPixelFormat_32BGRA` using its
  * `videoSettings` property.
  *
  * @param image A live stream image data of type `MPImage` on which image classification is to be

@@ -57,11 +57,9 @@ NS_SWIFT_NAME(FaceLandmarker)
  * interest. Rotation will be applied according to the `orientation` property of the provided
  * `MPImage`. Only use this method when the `FaceLandmarker` is created with `.image`.
  *
- * This method supports RGBA images. If your `MPImage` has a source type of `.pixelBuffer` or
- * `.sampleBuffer`, the underlying pixel buffer must have one of the following pixel format
- * types:
- * 1. kCVPixelFormatType_32BGRA
- * 2. kCVPixelFormatType_32RGBA
+ * This method supports performing face landmark detection on RGBA images. If your `MPImage` has a
+ * source type of `.pixelBuffer` or `.sampleBuffer`, the underlying pixel buffer must use
+ * `kCVPixelFormatType_32BGRA` as its pixel format.
  *
  * If your `MPImage` has a source type of `.image` ensure that the color space is RGB with an
  * Alpha channel.
@@ -80,10 +78,9 @@ NS_SWIFT_NAME(FaceLandmarker)
  * the provided `MPImage`. Only use this method when the `FaceLandmarker` is created with running
  * mode `.video`.
  *
- * This method supports RGBA images. If your `MPImage` has a source type of `.pixelBuffer` or
- * `.sampleBuffer`, the underlying pixel buffer must have one of the following pixel format types:
- * 1. kCVPixelFormatType_32BGRA
- * 2. kCVPixelFormatType_32RGBA
+ * This method supports performing face landmark detection on RGBA images. If your `MPImage` has a
+ * source type of `.pixelBuffer` or `.sampleBuffer`, the underlying pixel buffer must use
+ * `kCVPixelFormatType_32BGRA` as its pixel format.
  *
  * If your `MPImage` has a source type of `.image` ensure that the color space is RGB with an Alpha
  * channel.
@@ -113,16 +110,15 @@ NS_SWIFT_NAME(FaceLandmarker)
  * It's required to provide a timestamp (in milliseconds) to indicate when the input image is sent
  * to the face detector. The input timestamps must be monotonically increasing.
  *
- * This method supports RGBA images. If your `MPImage` has a source type of `.pixelBuffer` or
- * `.sampleBuffer`, the underlying pixel buffer must have one of the following pixel format types:
- * 1. kCVPixelFormatType_32BGRA
- * 2. kCVPixelFormatType_32RGBA
+ * This method supports performing face landmark detection on RGBA images. If your `MPImage` has a
+ * source type of `.pixelBuffer` or `.sampleBuffer`, the underlying pixel buffer must use
+ * `kCVPixelFormatType_32BGRA` as its pixel format.
  *
  * If the input `MPImage` has a source type of `.image` ensure that the color space is RGB with an
  * Alpha channel.
  *
  * If this method is used for classifying live camera frames using `AVFoundation`, ensure that you
- * request `AVCaptureVideoDataOutput` to output frames in `kCMPixelFormat_32RGBA` using its
+ * request `AVCaptureVideoDataOutput` to output frames in `kCMPixelFormat_32BGRA` using its
  * `videoSettings` property.
  *
  * @param image A live stream image data of type `MPImage` on which face landmark detection is to be
