@@ -39,6 +39,7 @@ class LayerType(enum.Enum):
     layer_norms = [
         "input_layernorm",
         "post_attention_layernorm",
+        "final_layernorm",
     ]
     if any(sub_name in layer_name for sub_name in attn_layers):
       return LayerType.ATTENTION
@@ -68,10 +69,9 @@ class StablelmMapper(converter_base.LayerActionMapperBase):
     """Map the given layer name to actions."""
     quantize_axis = None
     quantize_bits = None
-    if all(name not in layer_name for name in self.NON_QUANTIZED_LAYERS) and (
-        layer_name.endswith(".weight")
-    ):
-      layer_type = LayerType.get_layer_type(layer_name)
+    layer_type = LayerType.get_layer_type(layer_name)
+
+    if layer_type != LayerType.LAYER_NORM and layer_name.endswith(".weight"):
       quantize_axis = [0]
       if layer_type == LayerType.FEEDFORWARD:
         quantize_bits = self._feedforward_quant_bits
@@ -124,7 +124,83 @@ class StablelmMapper(converter_base.LayerActionMapperBase):
     return target_name
 
 
+class PhiMapper(converter_base.LayerActionMapperBase):
+  """LayerActionMapper for handling the Phi model."""
+
+  def map_to_actions(
+      self, layer_name: str
+  ) -> Optional[converter_base.QuantizationAction]:
+    """Map the given layer name to actions."""
+    quantize_axis = None
+    quantize_bits = None
+    layer_type = LayerType.get_layer_type(layer_name)
+
+    if layer_type != LayerType.LAYER_NORM and layer_name.endswith(".weight"):
+      quantize_axis = [0]
+      if layer_type == LayerType.FEEDFORWARD:
+        quantize_bits = self._feedforward_quant_bits
+      elif layer_type == LayerType.ATTENTION:
+        quantize_bits = self._attention_quant_bits
+      elif layer_type == LayerType.EMBEDDING:
+        quantize_bits = self._embedding_quant_bits
+    target_name = self.update_target_name(layer_name)
+
+    return converter_base.QuantizationAction(
+        tensor_name=layer_name,
+        target_name=target_name,
+        quantize_axis=quantize_axis,
+        quantize_bits=quantize_bits,
+        pack_dim=0,
+    )
+
+  def update_target_name(self, target_name: str) -> str:
+    """Updates the target name to match the tensor name convention."""
+    target_name = target_name.replace(
+        "model.layers.", "params.lm.transformer.x_layers_"
+    )
+
+    layer_type = LayerType.get_layer_type(target_name)
+    if layer_type == LayerType.FEEDFORWARD:
+      target_name = target_name.replace(".weight", ".linear.w")
+      target_name = target_name.replace(".bias", ".bias.b")
+      target_name = target_name.replace("mlp.fc1", "ff_layer.ffn_layer1")
+      target_name = target_name.replace("mlp.fc2", "ff_layer.ffn_layer2")
+
+    elif layer_type == LayerType.ATTENTION:
+      target_name = target_name.replace(".weight", ".linear.w")
+      target_name = target_name.replace(".bias", ".bias.b")
+      target_name = target_name.replace("self_attn.q_proj", "self_attention.q")
+      target_name = target_name.replace("self_attn.k_proj", "self_attention.k")
+      target_name = target_name.replace("self_attn.v_proj", "self_attention.v")
+      target_name = target_name.replace(
+          "self_attn.dense", "self_attention.post"
+      )
+    elif layer_type == LayerType.EMBEDDING:
+      target_name = target_name.replace(
+          "model.embed_tokens", "params.lm.token_embedding"
+      )
+      target_name = target_name.replace(
+          "lm_head", "params.lm.softmax.logits_ffn"
+      )
+      target_name = target_name.replace(
+          "logits_ffn.weight", "logits_ffn.linear.w"
+      )
+      target_name = target_name.replace("logits_ffn.bias", "logits_ffn.bias.b")
+    elif layer_type == LayerType.LAYER_NORM:
+      target_name = target_name.replace("input_layernorm", "pre_layer_norm")
+      target_name = target_name.replace(
+          "pre_layer_norm.weight", "pre_layer_norm.scale"
+      )
+      target_name = target_name.replace(
+          "model.final_layernorm", "params.lm.final_ln"
+      )
+      target_name = target_name.replace("final_ln.weight", "final_ln.scale")
+    target_name = target_name.replace(".weight", ".w")
+    return target_name
+
+
 DTYPE_MAP = {
+    "F16": torch.float16,
     "BF16": torch.bfloat16,
     "F32": torch.float32,
 }
@@ -170,6 +246,13 @@ class SafetensorsCkptLoader(converter_base.CkptLoaderBase):
     self._special_model = special_model
     if special_model in ["STABLELM_4E1T_3B"]:
       self.mapper = StablelmMapper(
+          is_symmetric,
+          attention_quant_bits,
+          feedforward_quant_bits,
+          embedding_quant_bits,
+      )
+    elif special_model in ["PHI_2"]:
+      self.mapper = PhiMapper(
           is_symmetric,
           attention_quant_bits,
           feedforward_quant_bits,
