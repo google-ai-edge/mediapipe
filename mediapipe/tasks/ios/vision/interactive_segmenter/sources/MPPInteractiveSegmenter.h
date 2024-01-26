@@ -83,10 +83,9 @@ NS_SWIFT_NAME(InteractiveSegmenter)
  * Performs segmentation on the provided MPPImage using the specified user's region of interest.
  * Rotation will be applied according to the `orientation` property of the provided `MPImage`.
  *
- * This method supports RGBA images. If your `MPImage` has a source type of `pixelBuffer` or
- * `sampleBuffer`, the underlying pixel buffer must have one of the following pixel format types:
- * 1. kCVPixelFormatType_32BGRA
- * 2. kCVPixelFormatType_32RGBA
+ * This method supports interactive segmentation of RGBA images. If your `MPImage` has a source type
+ * of `.pixelBuffer` or `.sampleBuffer`, the underlying pixel buffer must use
+ * `kCVPixelFormatType_32BGRA` as its pixel format.
  *
  * If your `MPImage` has a source type of `.image` ensure that the color space is RGB with an Alpha
  * channel.
@@ -107,10 +106,9 @@ NS_SWIFT_NAME(InteractiveSegmenter)
  *
  * Rotation will be applied according to the `orientation` property of the provided `MPImage`.
  *
- * This method supports RGBA images. If your `MPImage` has a source type of `pixelBuffer` or
- * `sampleBuffer`, the underlying pixel buffer must have one of the following pixel format types:
- * 1. kCVPixelFormatType_32BGRA
- * 2. kCVPixelFormatType_32RGBA
+ * This method supports interactive segmentation of RGBA images. If your `MPImage` has a source type
+ * of `.pixelBuffer` or `.sampleBuffer`, the underlying pixel buffer must use
+ * `kCVPixelFormatType_32BGRA` as its pixel format.
  *
  * If your `MPImage` has a source type of `image` ensure that the color space is RGB with an Alpha
  * channel.

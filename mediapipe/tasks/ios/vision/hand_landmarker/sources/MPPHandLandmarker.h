@@ -131,10 +131,8 @@ NS_SWIFT_NAME(HandLandmarker)
  * `MPImage`. Only use this method when the `HandLandmarker` is created with running mode, `.image`.
  *
  * This method supports performing hand landmarks detection on RGBA images. If your `MPImage` has a
- * source type of `.pixelBuffer` or `.sampleBuffer`, the underlying pixel buffer must have one of
- * the following pixel format types:
- * 1. kCVPixelFormatType_32BGRA
- * 2. kCVPixelFormatType_32RGBA
+ * source type of `.pixelBuffer` or `.sampleBuffer`, the underlying pixel buffer must use
+ * `kCVPixelFormatType_32BGRA` as its pixel format.
  *
  * If your `MPImage` has a source type of `.image` ensure that the color space is RGB with an Alpha
  * channel.
@@ -159,10 +157,8 @@ NS_SWIFT_NAME(HandLandmarker)
  * be monotonically increasing.
  *
  * This method supports performing hand landmarks detection on RGBA images. If your `MPImage` has a
- * source type of `.pixelBuffer` or `.sampleBuffer`, the underlying pixel buffer must have one of
- * the following pixel format types:
- * 1. kCVPixelFormatType_32BGRA
- * 2. kCVPixelFormatType_32RGBA
+ * source type of `.pixelBuffer` or `.sampleBuffer`, the underlying pixel buffer must use
+ * `kCVPixelFormatType_32BGRA` as its pixel format.
  *
  * If your `MPImage` has a source type of `.image` ensure that the color space is RGB with an Alpha
  * channel.
@@ -195,17 +191,15 @@ NS_SWIFT_NAME(HandLandmarker)
  * to the hand landmarker. The input timestamps must be monotonically increasing.
  *
  * This method supports performing hand landmarks detection on RGBA images. If your `MPImage` has a
- * source type of `.pixelBuffer` or `.sampleBuffer`, the underlying pixel buffer must have one of
- * the following pixel format types:
- * 1. kCVPixelFormatType_32BGRA
- * 2. kCVPixelFormatType_32RGBA
+ * source type of `.pixelBuffer` or `.sampleBuffer`, the underlying pixel buffer must use
+ * `kCVPixelFormatType_32BGRA` as its pixel format.
  *
  * If the input `MPImage` has a source type of `.image` ensure that the color space is RGB with an
  * Alpha channel.
  *
  * If this method is used for performing hand landmarks detection on live camera frames using
  * `AVFoundation`, ensure that you request `AVCaptureVideoDataOutput` to output frames in
- * `kCMPixelFormat_32RGBA` using its `videoSettings` property.
+ * `kCMPixelFormat_32BGRA` using its `videoSettings` property.
  *
  * @param image A live stream image data of type `MPImage` on which hand landmarks detection is to
  * be performed.
