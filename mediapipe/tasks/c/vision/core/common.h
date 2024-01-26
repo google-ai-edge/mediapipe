@@ -61,6 +61,29 @@ struct MpImage {
   };
 };
 
+enum MaskFormat { UINT8, FLOAT };
+
+struct ImageFrameMask {
+  enum MaskFormat mask_format;
+  const uint8_t* image_buffer;
+  int width;
+  int height;
+};
+
+// TODO: Add GPU buffer declaration and processing logic for it.
+struct GpuBufferMask {
+  int width;
+  int height;
+};
+
+struct MpMask {
+  enum { IMAGE_FRAME, GPU_BUFFER } type;
+  union {
+    struct ImageFrameMask image_frame;
+    struct GpuBufferMask gpu_buffer;
+  };
+};
+
 #ifdef __cplusplus
 }  // extern C
 #endif
