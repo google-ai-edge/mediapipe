@@ -14,6 +14,7 @@
 
 #include "mediapipe/framework/profiler/sharded_map.h"
 
+#include <cstdint>
 #include <functional>
 
 #include "absl/container/node_hash_map.h"
@@ -23,7 +24,6 @@
 #include "absl/time/time.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/threadpool.h"
 
 namespace {

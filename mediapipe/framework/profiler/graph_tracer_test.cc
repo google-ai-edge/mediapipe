@@ -14,6 +14,7 @@
 
 #include "mediapipe/framework/profiler/graph_tracer.h"
 
+#include <cstdint>
 #include <fstream>
 #include <functional>
 #include <map>
@@ -32,7 +33,6 @@
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status.h"

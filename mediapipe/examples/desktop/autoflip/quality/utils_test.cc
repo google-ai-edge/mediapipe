@@ -14,6 +14,7 @@
 
 #include "mediapipe/examples/desktop/autoflip/quality/utils.h"
 
+#include <cstdint>
 #include <random>
 #include <vector>
 
@@ -21,7 +22,6 @@
 #include "mediapipe/examples/desktop/autoflip/quality/cropping.pb.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/status_matchers.h"
 

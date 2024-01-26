@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <type_traits>
@@ -27,7 +28,6 @@
 #include "absl/container/node_hash_map.h"
 #include "mediapipe/framework/calculator_profile.pb.h"
 #include "mediapipe/framework/packet.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/timestamp.h"
 
 namespace mediapipe {

@@ -16,6 +16,7 @@
 
 #include <cmath>
 #include <complex>
+#include <cstdint>
 #include <memory>
 #include <numeric>
 #include <string>
@@ -32,7 +33,6 @@
 #include "mediapipe/framework/port/benchmark.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/util/time_series_test_util.h"
 

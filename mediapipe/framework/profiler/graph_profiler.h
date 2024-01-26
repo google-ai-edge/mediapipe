@@ -17,6 +17,7 @@
 
 #include <atomic>
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <set>
 #include <string>
@@ -29,7 +30,6 @@
 #include "mediapipe/framework/deps/clock.h"
 #include "mediapipe/framework/deps/monotonic_clock.h"
 #include "mediapipe/framework/executor.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/profiler/graph_tracer.h"
 #include "mediapipe/framework/profiler/sharded_map.h"
 #include "mediapipe/framework/validated_graph_config.h"
