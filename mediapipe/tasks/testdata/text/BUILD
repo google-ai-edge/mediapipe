@@ -20,6 +20,7 @@ load(
 package(
     default_visibility = [
         "//mediapipe/calculators/tensor:__subpackages__",
+        "//mediapipe/model_maker:__subpackages__",
         "//mediapipe/tasks:__subpackages__",
     ],
     licenses = ["notice"],  # Apache 2.0

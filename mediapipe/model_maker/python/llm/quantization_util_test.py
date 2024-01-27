@@ -19,7 +19,7 @@ import jax
 from jax import numpy as jnp
 import numpy as np
 
-from mediapipe.tasks.tools import quantization_util
+from mediapipe.model_maker.python.llm import quantization_util
 
 
 _dtype = lambda x: getattr(x, 'dtype', None) or np.asarray(x).dtype
