@@ -25,14 +25,27 @@ export {type Category, type Landmark, type NormalizedLandmark};
  * Each vector element represents a single pose detected in the image.
  */
 export class PoseLandmarkerResult {
-  constructor(/** Pose landmarks of detected poses. */
-              readonly landmarks: NormalizedLandmark[][],
-              /** Pose landmarks in world coordinates of detected poses. */
-              readonly worldLandmarks: Landmark[][],
-              /** Segmentation mask for the detected pose. */
-              readonly segmentationMasks?: MPMask[]) {}
+  constructor(
+      /**
+       * Pose landmarks of detected poses.
+       * @export
+       */
+      readonly landmarks: NormalizedLandmark[][],
+      /**
+       * Pose landmarks in world coordinates of detected poses.
+       * @export
+       */
+      readonly worldLandmarks: Landmark[][],
+      /**
+       * Segmentation mask for the detected pose.
+       * @export
+       */
+      readonly segmentationMasks?: MPMask[]) {}
 
-  /** Frees the resources held by the segmentation masks. */
+  /**
+   * Frees the resources held by the segmentation masks.
+   * @export
+   */
   close(): void {
     this.segmentationMasks?.forEach(m => {
       m.close();
