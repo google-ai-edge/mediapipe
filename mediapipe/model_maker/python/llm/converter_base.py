@@ -131,7 +131,7 @@ class LayerActionMapperBase:
     self._embedding_quant_bits = embedding_quant_bits
 
   def map_to_actions(self, layer_name: str) -> Optional[QuantizationAction]:
-    """""Maps the layer weights to quantization actions.
+    """Maps the layer weights to quantization actions.
 
     Args:
       layer_name: A string representing the name of the layer weight. Note that

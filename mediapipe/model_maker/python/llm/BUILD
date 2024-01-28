@@ -23,6 +23,33 @@ py_library(
 )
 
 py_library(
+    name = "converter_factory",
+    srcs = ["converter_factory.py"],
+    deps = [
+        ":converter_base",
+        ":pytorch_converter",
+        ":safetensors_converter",
+        ":weight_bins_writer",
+    ],
+)
+
+py_library(
+    name = "pytorch_converter",
+    srcs = ["pytorch_converter.py"],
+    deps = [
+        ":converter_base",
+    ],
+)
+
+py_library(
+    name = "safetensors_converter",
+    srcs = ["safetensors_converter.py"],
+    deps = [
+        ":converter_base",
+    ],
+)
+
+py_library(
     name = "quantization_util",
     srcs = ["quantization_util.py"],
 )
@@ -33,5 +60,23 @@ py_test(
     srcs_version = "PY3",
     deps = [
         ":quantization_util",
+    ],
+)
+
+py_library(
+    name = "weight_bins_writer",
+    srcs = ["weight_bins_writer.py"],
+    deps = [
+        ":converter_base",
+        ":quantization_util",
+    ],
+)
+
+py_test(
+    name = "weight_bins_writer_test",
+    srcs = ["weight_bins_writer_test.py"],
+    srcs_version = "PY3",
+    deps = [
+        ":weight_bins_writer",
     ],
 )
