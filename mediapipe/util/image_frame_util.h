@@ -16,11 +16,11 @@
 #ifndef MEDIAPIPE_UTIL_IMAGE_FRAME_UTIL_H_
 #define MEDIAPIPE_UTIL_IMAGE_FRAME_UTIL_H_
 
+#include <cstdint>
 #include <string>
 
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/formats/image_format.pb.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/framework/tool/status_util.h"
 

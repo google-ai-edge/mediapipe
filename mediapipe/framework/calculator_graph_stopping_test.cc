@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cstdint>
 #include <map>
 #include <string>
 #include <vector>
@@ -25,7 +26,6 @@
 #include "mediapipe/framework/port/core_proto_inc.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/framework/tool/sink.h"

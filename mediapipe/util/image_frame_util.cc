@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <functional>
 #include <string>
 #include <vector>
@@ -35,7 +36,6 @@
 #include "mediapipe/framework/formats/image_frame_opencv.h"
 #include "mediapipe/framework/formats/yuv_image.h"
 #include "mediapipe/framework/port/aligned_malloc_and_free.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/port.h"
 #include "mediapipe/framework/port/status_macros.h"
 

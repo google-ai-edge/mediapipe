@@ -50,7 +50,6 @@
 
 #include "absl/log/absl_check.h"
 #include "mediapipe/framework/deps/safe_int.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/logging.h"
 
 namespace mediapipe {
@@ -269,7 +268,8 @@ std::ostream& operator<<(std::ostream& os, TimestampDiff arg);
 
 // Implementation details.
 
-inline Timestamp::Timestamp() : timestamp_(kint64min) {}
+inline Timestamp::Timestamp()
+    : timestamp_(std::numeric_limits<int64_t>::min()) {}
 
 inline Timestamp::Timestamp(int64_t timestamp) : timestamp_(timestamp) {
   ABSL_CHECK(!IsSpecialValue())
@@ -293,30 +293,32 @@ inline Timestamp Timestamp::CreateNoErrorChecking(int64_t timestamp) {
 inline Timestamp Timestamp::Unset() { return Timestamp(); }
 
 inline Timestamp Timestamp::Unstarted() {
-  return CreateNoErrorChecking(kint64min + 1);
+  return CreateNoErrorChecking(std::numeric_limits<int64_t>::min() + 1);
 }
 
 inline Timestamp Timestamp::PreStream() {
-  return CreateNoErrorChecking(kint64min + 2);
+  return CreateNoErrorChecking(std::numeric_limits<int64_t>::min() + 2);
 }
 
 inline Timestamp Timestamp::Min() {
-  return CreateNoErrorChecking(kint64min + 3);
+  return CreateNoErrorChecking(std::numeric_limits<int64_t>::min() + 3);
 }
 
 inline Timestamp Timestamp::Max() {
-  return CreateNoErrorChecking(kint64max - 3);
+  return CreateNoErrorChecking(std::numeric_limits<int64_t>::max() - 3);
 }
 
 inline Timestamp Timestamp::PostStream() {
-  return CreateNoErrorChecking(kint64max - 2);
+  return CreateNoErrorChecking(std::numeric_limits<int64_t>::max() - 2);
 }
 
 inline Timestamp Timestamp::OneOverPostStream() {
-  return CreateNoErrorChecking(kint64max - 1);
+  return CreateNoErrorChecking(std::numeric_limits<int64_t>::max() - 1);
 }
 
-inline Timestamp Timestamp::Done() { return CreateNoErrorChecking(kint64max); }
+inline Timestamp Timestamp::Done() {
+  return CreateNoErrorChecking(std::numeric_limits<int64_t>::max());
+}
 
 }  // namespace mediapipe
 

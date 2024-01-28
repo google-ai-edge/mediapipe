@@ -14,6 +14,8 @@
 
 #include "mediapipe/framework/timestamp.h"
 
+#include <cstdint>
+#include <limits>
 #include <memory>
 #include <vector>
 
@@ -34,9 +36,10 @@ TEST(TimestampDeathTest, ConstructorDieOnSpecialValue) {
 }
 
 TEST(TimestampDeathTest, Overflow) {
-  Timestamp large = Timestamp(kint64max / 2 + 100);
-  TimestampDiff large_diff = TimestampDiff(kint64max / 2 + 100);
-  Timestamp small = Timestamp(kint64min / 2 - 100);
+  Timestamp large = Timestamp(std::numeric_limits<int64_t>::max() / 2 + 100);
+  TimestampDiff large_diff =
+      TimestampDiff(std::numeric_limits<int64_t>::max() / 2 + 100);
+  Timestamp small = Timestamp(std::numeric_limits<int64_t>::min() / 2 - 100);
   EXPECT_FALSE(large.IsSpecialValue());
   EXPECT_FALSE(small.IsSpecialValue());
   EXPECT_DEATH(large_diff + large_diff, "");

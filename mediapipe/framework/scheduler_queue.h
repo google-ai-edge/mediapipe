@@ -26,7 +26,6 @@
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/executor.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/scheduler_shared.h"
 
 namespace mediapipe {

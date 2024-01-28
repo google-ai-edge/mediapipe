@@ -15,8 +15,9 @@
 #ifndef MEDIAPIPE_UTIL_LABEL_MAP_UTIL_H_
 #define MEDIAPIPE_UTIL_LABEL_MAP_UTIL_H_
 
+#include <cstdint>
+
 #include "absl/strings/string_view.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/proto_ns.h"
 #include "mediapipe/framework/port/statusor.h"
 #include "mediapipe/util/label_map.pb.h"

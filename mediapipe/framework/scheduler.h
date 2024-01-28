@@ -27,7 +27,6 @@
 #include "absl/base/macros.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/calculator_node.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/scheduler_queue.h"
 #include "mediapipe/framework/scheduler_shared.h"

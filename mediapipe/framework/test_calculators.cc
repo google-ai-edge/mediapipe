@@ -14,6 +14,7 @@
 //
 // Simple calculators that are useful for test cases.
 
+#include <cstdint>
 #include <memory>
 #include <random>
 #include <string>
@@ -26,7 +27,6 @@
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/deps/mathutil.h"
 #include "mediapipe/framework/formats/matrix.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"

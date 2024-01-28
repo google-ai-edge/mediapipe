@@ -24,7 +24,6 @@
 #include "absl/time/time.h"
 #include "mediapipe/framework/formats/time_series_header.pb.h"
 #include "mediapipe/framework/packet.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/timestamp.h"
 #include "mediapipe/util/audio_decoder.pb.h"

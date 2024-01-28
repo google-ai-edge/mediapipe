@@ -34,7 +34,6 @@
 #include "mediapipe/framework/packet_type.h"
 #include "mediapipe/framework/port.h"
 #include "mediapipe/framework/port/core_proto_inc.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/proto_ns.h"
 #include "mediapipe/framework/port/ret_check.h"

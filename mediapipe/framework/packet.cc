@@ -18,7 +18,6 @@
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/port.h"
 #include "mediapipe/framework/port/canonical_errors.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_builder.h"

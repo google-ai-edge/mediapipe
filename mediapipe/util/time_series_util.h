@@ -17,6 +17,7 @@
 #ifndef MEDIAPIPE_UTIL_TIME_SERIES_UTIL_H_
 #define MEDIAPIPE_UTIL_TIME_SERIES_UTIL_H_
 
+#include <cstdint>
 #include <string>
 #include <typeinfo>
 
@@ -24,7 +25,6 @@
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/formats/time_series_header.pb.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {

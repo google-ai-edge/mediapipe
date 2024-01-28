@@ -15,6 +15,7 @@
 #ifndef MEDIAPIPE_UTIL_TIME_SERIES_TEST_UTIL_H_
 #define MEDIAPIPE_UTIL_TIME_SERIES_TEST_UTIL_H_
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -31,7 +32,6 @@
 #include "mediapipe/framework/formats/time_series_header.pb.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_matchers.h"
