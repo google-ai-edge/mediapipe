@@ -15,6 +15,7 @@
 #include "mediapipe/framework/formats/motion/optical_flow_field.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <memory>
 #include <string>
 
@@ -25,7 +26,6 @@
 #include "mediapipe/framework/formats/location_opencv.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "tensorflow/core/framework/tensor.h"
 
 namespace mediapipe {

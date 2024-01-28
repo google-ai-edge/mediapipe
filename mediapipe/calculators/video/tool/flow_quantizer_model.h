@@ -21,7 +21,6 @@
 
 #include "mediapipe/calculators/video/tool/flow_quantizer_model.pb.h"
 #include "mediapipe/framework/formats/motion/optical_flow_field.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/tool/status_util.h"
 
 namespace mediapipe {

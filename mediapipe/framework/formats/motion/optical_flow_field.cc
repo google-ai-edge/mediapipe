@@ -17,6 +17,7 @@
 #include <math.h>
 
 #include <cmath>
+#include <cstdint>
 
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
@@ -26,7 +27,6 @@
 #include "mediapipe/framework/formats/location.h"
 #include "mediapipe/framework/formats/location_opencv.h"
 #include "mediapipe/framework/port/file_helpers.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/point2.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/type_map.h"

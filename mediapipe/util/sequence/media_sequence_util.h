@@ -94,7 +94,6 @@
 #include <vector>
 
 #include "absl/log/absl_check.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/proto_ns.h"
 #include "tensorflow/core/example/example.pb.h"

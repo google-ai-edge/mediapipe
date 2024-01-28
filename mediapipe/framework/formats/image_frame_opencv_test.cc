@@ -14,10 +14,11 @@
 
 #include "mediapipe/framework/formats/image_frame_opencv.h"
 
+#include <cstdint>
+
 #include "mediapipe/framework/formats/image_format.pb.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/logging.h"
 
 namespace mediapipe {

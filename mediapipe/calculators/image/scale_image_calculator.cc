@@ -15,6 +15,7 @@
 // This Calculator takes an ImageFrame and scales it appropriately.
 
 #include <algorithm>
+#include <cstdint>
 #include <memory>
 #include <string>
 
@@ -32,7 +33,6 @@
 #include "mediapipe/framework/formats/video_stream_header.h"
 #include "mediapipe/framework/formats/yuv_image.h"
 #include "mediapipe/framework/port/image_resizer.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/proto_ns.h"

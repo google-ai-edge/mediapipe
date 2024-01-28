@@ -20,7 +20,6 @@
 
 #include "absl/container/btree_map.h"
 #include "absl/container/flat_hash_set.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/modules/objectron/calculators/annotation_data.pb.h"
 #include "mediapipe/util/tracking/box_tracker.pb.h"
 
