@@ -109,6 +109,8 @@ absl::StatusOr<std::vector<Tensor>> InferenceInterpreterDelegateRunner::Run(
   // Reallocation is needed for memory sanity.
   if (resized_tensor_shapes) interpreter_->AllocateTensors();
 
+  // TODO: Replace this using the util function in
+  // inference_calculator_utils.
   for (int i = 0; i < input_tensors.size(); ++i) {
     const TfLiteType input_tensor_type =
         interpreter_->tensor(interpreter_->inputs()[i])->type;

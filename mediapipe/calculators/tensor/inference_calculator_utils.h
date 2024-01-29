@@ -15,7 +15,10 @@
 #ifndef MEDIAPIPE_CALCULATORS_TENSOR_INFERENCE_CALCULATOR_UTILS_H_
 #define MEDIAPIPE_CALCULATORS_TENSOR_INFERENCE_CALCULATOR_UTILS_H_
 
+#include "absl/status/status.h"
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
+#include "mediapipe/framework/formats/tensor.h"
+#include "tensorflow/lite/interpreter.h"
 
 namespace mediapipe {
 
@@ -25,6 +28,10 @@ namespace mediapipe {
 int GetXnnpackNumThreads(
     const bool opts_has_delegate,
     const mediapipe::InferenceCalculatorOptions::Delegate& opts_delegate);
+
+absl::Status CopyCpuInputIntoInterpreterTensor(const Tensor& input_tensor,
+                                               tflite::Interpreter& interpreter,
+                                               int input_tensor_index);
 
 }  // namespace mediapipe
 

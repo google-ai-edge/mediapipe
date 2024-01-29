@@ -574,12 +574,32 @@ cc_library(
     deps = [
         ":inference_calculator_cc_proto",
         "//mediapipe/framework:port",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+        "@org_tensorflow//tensorflow/lite:framework_stable",
+        "@org_tensorflow//tensorflow/lite/c:common",
     ] + select({
         "//conditions:default": [
             "//mediapipe/util:cpu_util",
         ],
     }),
     alwayslink = 1,
+)
+
+cc_test(
+    name = "inference_calculator_utils_test",
+    srcs = ["inference_calculator_utils_test.cc"],
+    deps = [
+        ":inference_calculator_utils",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:gtest_main",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/status",
+        "@org_tensorflow//tensorflow/lite:framework_stable",
+        "@org_tensorflow//tensorflow/lite/c:common",
+    ],
 )
 
 cc_library(
