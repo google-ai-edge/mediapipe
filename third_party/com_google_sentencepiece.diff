@@ -354,6 +354,26 @@ index 8c2e4b7..e8b4979 100644
  #include "util.h"
  
  namespace sentencepiece {
+diff --git a/src/common.h b/src/common.h
+index 7595634..339f831 100644
+--- a/src/common.h
++++ b/src/common.h
+@@ -146,6 +146,7 @@ inline const char *BaseName(const char *path) {
+ }  // namespace logging
+ }  // namespace sentencepiece
+ 
++#ifndef LOG
+ #define LOG(severity)                                                        \
+   (::sentencepiece::logging::GetMinLogLevel() >                              \
+    ::sentencepiece::logging::LOG_##severity)                                 \
+@@ -156,6 +157,7 @@ inline const char *BaseName(const char *path) {
+             std::cerr << ::sentencepiece::logging::BaseName(__FILE__) << "(" \
+                       << __LINE__ << ") "                                    \
+                       << "LOG(" << #severity << ") "
++#endif  // LOG
+ 
+ #define CHECK(condition)                                                      \
+   (condition) ? 0                                                             \
 diff --git a/src/compile_charsmap_main.cc b/src/compile_charsmap_main.cc
 index c5a5188..e5db1d7 100644
 --- a/src/compile_charsmap_main.cc
