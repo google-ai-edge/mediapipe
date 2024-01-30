@@ -21,6 +21,7 @@ limitations under the License.
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/status/status.h"
+#include "mediapipe/calculators/tensor/vector_to_tensor_calculator.pb.h"
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/api2/packet.h"
 #include "mediapipe/framework/api2/port.h"
@@ -60,11 +61,12 @@ class VectorToTensorCalculator : public Node {
 
  private:
   static absl::StatusOr<Tensor> ConvertVectorToTensor(
-      const api2::Packet<SupportedInputVectors>& input);
+      const api2::Packet<SupportedInputVectors>& input,
+      bool output_dynamic_tensor_shape);
 
   template <typename VectorT, Tensor::ElementType TensorT>
   static absl::StatusOr<Tensor> CopyVectorToNewTensor(
-      const std::vector<VectorT>& input);
+      const std::vector<VectorT>& input, bool output_dynamic_tensor_shape);
 };
 
 absl::Status VectorToTensorCalculator::Open(CalculatorContext* cc) {
@@ -73,47 +75,52 @@ absl::Status VectorToTensorCalculator::Open(CalculatorContext* cc) {
 
 template <typename VectorT, Tensor::ElementType TensorT>
 absl::StatusOr<Tensor> VectorToTensorCalculator::CopyVectorToNewTensor(
-    const std::vector<VectorT>& input) {
+    const std::vector<VectorT>& input, bool output_dynamic_tensor_shape) {
   RET_CHECK_GT(input.size(), 0) << "Input vector is empty";
   std::vector<int> dimensions = {1, static_cast<int>(input.size())};
-  // TODO jkammerl - add an optional `is_dynamic` parameter.
-  Tensor tensor(TensorT, Tensor::Shape(dimensions));
+  Tensor tensor(TensorT,
+                Tensor::Shape(dimensions, output_dynamic_tensor_shape));
   const auto cpu_write_view = tensor.GetCpuWriteView();
   std::copy(input.begin(), input.end(), cpu_write_view.buffer<VectorT>());
   return tensor;
 }
 
 absl::StatusOr<Tensor> VectorToTensorCalculator::ConvertVectorToTensor(
-    const api2::Packet<SupportedInputVectors>& input) {
+    const api2::Packet<SupportedInputVectors>& input,
+    bool output_dynamic_tensor_shape) {
   if (input.Has<std::vector<float>>()) {
     return CopyVectorToNewTensor<float, Tensor::ElementType::kFloat32>(
-        input.Get<std::vector<float>>());
+        input.Get<std::vector<float>>(), output_dynamic_tensor_shape);
   }
   if (input.Has<std::vector<uint8_t>>()) {
     return CopyVectorToNewTensor<uint8_t, Tensor::ElementType::kUInt8>(
-        input.Get<std::vector<uint8_t>>());
+        input.Get<std::vector<uint8_t>>(), output_dynamic_tensor_shape);
   }
   if (input.Has<std::vector<int8_t>>()) {
     return CopyVectorToNewTensor<int8_t, Tensor::ElementType::kInt8>(
-        input.Get<std::vector<int8_t>>());
+        input.Get<std::vector<int8_t>>(), output_dynamic_tensor_shape);
   }
   if (input.Has<std::vector<int32_t>>()) {
     return CopyVectorToNewTensor<int32_t, Tensor::ElementType::kInt32>(
-        input.Get<std::vector<int32_t>>());
+        input.Get<std::vector<int32_t>>(), output_dynamic_tensor_shape);
   }
   if (input.Has<std::vector<char>>()) {
     return CopyVectorToNewTensor<char, Tensor::ElementType::kChar>(
-        input.Get<std::vector<char>>());
+        input.Get<std::vector<char>>(), output_dynamic_tensor_shape);
   }
   if (input.Has<std::vector<bool>>()) {
     return CopyVectorToNewTensor<bool, Tensor::ElementType::kBool>(
-        input.Get<std::vector<bool>>());
+        input.Get<std::vector<bool>>(), output_dynamic_tensor_shape);
   }
   return absl::InvalidArgumentError("Unsupported type");
 }
 
 absl::Status VectorToTensorCalculator::Process(CalculatorContext* cc) {
-  MP_ASSIGN_OR_RETURN(Tensor tensor, ConvertVectorToTensor(kVectorIn(cc)));
+  const VectorToTensorCalculatorOptions& options =
+      cc->Options<VectorToTensorCalculatorOptions>();
+  MP_ASSIGN_OR_RETURN(
+      Tensor tensor, ConvertVectorToTensor(
+                         kVectorIn(cc), options.output_dynamic_tensor_shape()));
   kOutTensor(cc).Send(std::move(tensor));
   return absl::OkStatus();
 }

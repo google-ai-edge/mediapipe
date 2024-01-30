@@ -19,6 +19,7 @@ limitations under the License.
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/substitute.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
 #include "mediapipe/framework/formats/tensor.h"
@@ -48,7 +49,8 @@ Matcher<const absl::Status&> IsRCheckError(const char* expected) {
 template <typename T>
 class VectorToTensorCalculatorTest : public Test {
  public:
-  absl::Status RunE2ETest(const std::vector<T>& input);
+  absl::Status RunE2ETest(const std::vector<T>& input,
+                          bool output_dynamic_tensor_shape);
 
   static std::vector<T> MakeTestVector(int size);
 
@@ -56,16 +58,18 @@ class VectorToTensorCalculatorTest : public Test {
   static std::vector<T> ConvertTensorToVector(const Tensor& tensor);
 
   static absl::StatusOr<std::vector<Packet>> RunsVectorToTensorCalculator(
-      const std::vector<T>& input);
+      const std::vector<T>& input, bool output_dynamic_tensor_shape);
 };
 
 template <typename T>
 absl::Status VectorToTensorCalculatorTest<T>::RunE2ETest(
-    const std::vector<T>& input) {
-  MP_ASSIGN_OR_RETURN(const auto packet_dump,
-                      RunsVectorToTensorCalculator(input));
+    const std::vector<T>& input, bool output_dynamic_tensor_shape) {
+  MP_ASSIGN_OR_RETURN(
+      const auto packet_dump,
+      RunsVectorToTensorCalculator(input, output_dynamic_tensor_shape));
 
   auto& result_tensor = packet_dump.at(0).template Get<Tensor>();
+  EXPECT_EQ(result_tensor.shape().is_dynamic, output_dynamic_tensor_shape);
   const auto result_vector = ConvertTensorToVector(result_tensor);
   EXPECT_EQ(result_vector, input);
   return absl::OkStatus();
@@ -95,16 +99,22 @@ std::vector<T> VectorToTensorCalculatorTest<T>::ConvertTensorToVector(
 template <typename T>
 absl::StatusOr<std::vector<Packet>>
 VectorToTensorCalculatorTest<T>::RunsVectorToTensorCalculator(
-    const std::vector<T>& input) {
-  const std::string graph_config =
+    const std::vector<T>& input, bool output_dynamic_tensor_shape) {
+  const std::string graph_config = absl::Substitute(
       R"(
             input_stream: "input"
             output_stream: "output"
             node: { calculator: "VectorToTensorCalculator"
                     input_stream: "VECTOR:input"
                     output_stream: "TENSOR:output"
+                    node_options: {
+                      [type.googleapis.com/mediapipe.VectorToTensorCalculatorOptions] {
+                        output_dynamic_tensor_shape: $0
+                      }
+                    }
             }
-          )";
+          )",
+      output_dynamic_tensor_shape ? "true" : "false");
   CalculatorGraphConfig config =
       ParseTextProtoOrDie<CalculatorGraphConfig>(graph_config);
   std::vector<Packet> packet_dump;
@@ -129,12 +139,25 @@ TYPED_TEST_SUITE(VectorToTensorCalculatorTest, TestTypes);
 TYPED_TEST(VectorToTensorCalculatorTest, ShouldConvertVectorToTensor) {
   const auto input = this->MakeTestVector(123);
   if (std::is_same_v<TypeParam, int64_t>) {
-    EXPECT_THAT(this->RunE2ETest(input),
+    EXPECT_THAT(this->RunE2ETest(input, /*output_dynamic_tensor_shape=*/false),
                 StatusIs(absl::StatusCode::kInvalidArgument));
   } else {
-    MP_EXPECT_OK(this->RunE2ETest(input));
-    // Should fail on empty input.
-    EXPECT_THAT(this->RunE2ETest({}), IsRCheckError("Input vector is empty"));
+    MP_EXPECT_OK(
+        this->RunE2ETest(input, /*output_dynamic_tensor_shape=*/false));
+  }
+}
+
+TYPED_TEST(VectorToTensorCalculatorTest, ShouldFailOnEmptyInputVector) {
+  if (!std::is_same_v<TypeParam, int64_t>) {
+    EXPECT_THAT(this->RunE2ETest({}, /*output_dynamic_tensor_shape=*/false),
+                IsRCheckError("Input vector is empty"));
+  }
+}
+
+TYPED_TEST(VectorToTensorCalculatorTest, ShouldCreateDynamicTensor) {
+  const auto input = this->MakeTestVector(123);
+  if (!std::is_same_v<TypeParam, int64_t>) {
+    MP_EXPECT_OK(this->RunE2ETest(input, /*output_dynamic_tensor_shape=*/true));
   }
 }
 

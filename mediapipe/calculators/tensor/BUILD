@@ -1808,6 +1808,7 @@ cc_library(
     name = "vector_to_tensor_calculator",
     srcs = ["vector_to_tensor_calculator.cc"],
     deps = [
+        ":vector_to_tensor_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/api2:packet",
@@ -1822,6 +1823,11 @@ cc_library(
     alwayslink = 1,
 )
 
+mediapipe_proto_library(
+    name = "vector_to_tensor_calculator_proto",
+    srcs = ["vector_to_tensor_calculator.proto"],
+)
+
 cc_test(
     name = "vector_to_tensor_calculator_test",
     srcs = ["vector_to_tensor_calculator_test.cc"],
@@ -1829,12 +1835,12 @@ cc_test(
         ":vector_to_tensor_calculator",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_runner",
-        "//mediapipe/framework:status_handler",
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
     ],
 )
