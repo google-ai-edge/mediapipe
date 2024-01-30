@@ -644,7 +644,7 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 git_repository(
     name = "ovms",
     remote = "https://github.com/openvinotoolkit/model_server",
-    commit = "7f372bc9b0a94cf546ef5f1a43e4a9bf768d6f85", # Fix building without MediaPipe (#2129)
+    commit = "aebe267094fe7ba150b75bbb6e38f1278de74c61", # Improve bazel build (#2245)
 )
 
 # DEV ovms - adjust local repository path for build
@@ -671,7 +671,7 @@ load("@rules_python//python:pip.bzl", "pip_parse")
 
 pip_parse(
     name = "pip_deps",
-    requirements_lock = "@ovms//src:bindings/python/tests/requirements.txt",
+    requirements_lock = "@ovms//src/python/binding:tests/requirements.txt",
 )
 
 ########################################################### Python support end
@@ -766,9 +766,9 @@ grpc_extra_deps()
 # cxxopts
 http_archive(
     name = "com_github_jarro2783_cxxopts",
-    url = "https://github.com/jarro2783/cxxopts/archive/v2.2.0.zip",
-    sha256 = "f9640c00d9938bedb291a21f9287902a3a8cee38db6910b905f8eba4a6416204",
-    strip_prefix = "cxxopts-2.2.0",
+    url = "https://github.com/jarro2783/cxxopts/archive/v3.1.1.zip",
+    sha256 = "25b644a2bfa9c6704d723be51b026bc02420dfdee1277a49bfe5df3f19b0eaa4",
+    strip_prefix = "cxxopts-3.1.1",
     build_file = "@ovms//third_party/cxxopts:BUILD",
 )
 

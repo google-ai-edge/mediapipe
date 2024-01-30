@@ -128,6 +128,8 @@ cc_test(
         "//mediapipe/framework/stream_handler:sync_set_input_stream_handler"
     ],
     copts = ["-Iexternal/ovms/src","-Isrc"],
+    linkstatic = True,
+    linkshared = False,
 )
 
 cc_test(
@@ -149,4 +151,6 @@ cc_test(
         "test_data/add_two_inputs_model/1/add.xml",
     ],
     copts = ["-Iexternal/ovms/src","-Isrc"],
+    linkstatic = True,
+    linkshared = False,
 )
