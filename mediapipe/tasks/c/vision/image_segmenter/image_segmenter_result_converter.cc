@@ -35,16 +35,13 @@ void CppConvertToImageSegmenterResult(
     for (size_t i = 0; i < out->confidence_masks_count; ++i) {
       const auto& image_frame =
           in.confidence_masks.value()[i].GetImageFrameSharedPtr();
-      const int pixel_data_size =
-          image_frame->PixelDataSizeStoredContiguously();
-      uint8_t* pixel_data = new uint8_t[pixel_data_size];
-      image_frame->CopyToBuffer(pixel_data, pixel_data_size);
 
-      MpMask mp_mask = {.type = MpMask::IMAGE_FRAME,
-                        .image_frame = {.mask_format = MaskFormat::FLOAT,
-                                        .image_buffer = pixel_data,
-                                        .width = image_frame->Width(),
-                                        .height = image_frame->Height()}};
+      MpMask mp_mask = {
+          .type = MpMask::IMAGE_FRAME,
+          .image_frame = {.mask_format = MaskFormat::FLOAT,
+                          .image_buffer = image_frame->PixelData(),
+                          .width = image_frame->Width(),
+                          .height = image_frame->Height()}};
       out->confidence_masks[i] = mp_mask;
     }
     out->has_confidence_masks = 1;
