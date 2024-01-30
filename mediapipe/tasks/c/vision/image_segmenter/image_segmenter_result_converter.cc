@@ -35,7 +35,6 @@ void CppConvertToImageSegmenterResult(
     for (size_t i = 0; i < out->confidence_masks_count; ++i) {
       const auto& image_frame =
           in.confidence_masks.value()[i].GetImageFrameSharedPtr();
-
       MpMask mp_mask = {
           .type = MpMask::IMAGE_FRAME,
           .image_frame = {.mask_format = MaskFormat::FLOAT,
