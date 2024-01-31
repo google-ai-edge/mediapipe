@@ -26,76 +26,19 @@
 
 namespace {
 
-using LlmModelParametersProto = mediapipe::tasks::core::jni::LlmModelParameters;
 using LlmSessionConfigProto = mediapipe::tasks::core::jni::LlmSessionConfig;
 using LlmResponseContextProto = mediapipe::tasks::core::jni::LlmResponseContext;
 using mediapipe::android::JStringToStdString;
 using mediapipe::android::ThrowIfError;
 using mediapipe::java::GetJNIEnv;
 
-LlmModelParameters ParseModelParameters(void* bytes, int size) {
-  LlmModelParametersProto input;
-  input.ParseFromArray(bytes, size);
-
-  LlmModelParameters output;
-
-  switch (input.model_type()) {
-    case kFalcon1B:
-      output.model_type = kFalcon1B;
-      break;
-    case kGMini2B:
-      output.model_type = kGMini2B;
-      break;
-    case kStableLM4E1T3B:
-      output.model_type = kStableLM4E1T3B;
-      break;
-    default:
-      output.model_type = kUNKNOWN_MODEL_TYPE;
-  }
-
-  output.model_path = strdup(input.model_directory().c_str());
-
-  switch (input.attention_type()) {
-    case kMHA:
-      output.attention_type = kMHA;
-      break;
-    case kMQA:
-      output.attention_type = kMQA;
-      break;
-    default:
-      output.attention_type = kMHA;
-  }
-
-  output.start_token_id = input.start_token_id();
-
-  const char** stop_tokens = new const char*[input.stop_tokens_size()];
-  for (int i = 0; i < input.stop_tokens_size(); ++i) {
-    stop_tokens[i] = strdup(input.stop_tokens(i).c_str());
-  }
-  output.stop_tokens = stop_tokens;
-  output.stop_tokens_size = input.stop_tokens_size();
-
-  return output;
-}
-
-void CloseModelParameters(LlmModelParameters* model_parameters) {
-  delete model_parameters->model_path;
-  model_parameters->model_path = nullptr;
-
-  for (int i = 0; i < model_parameters->stop_tokens_size; ++i) {
-    delete model_parameters->stop_tokens[i];
-  }
-
-  delete[] model_parameters->stop_tokens;
-  model_parameters->stop_tokens = nullptr;
-  model_parameters->stop_tokens_size = 0;
-}
-
 LlmSessionConfig ParseSessionConfig(void* bytes, int size) {
   LlmSessionConfigProto input;
   input.ParseFromArray(bytes, size);
 
   LlmSessionConfig output;
+
+  output.model_path = input.model_path().c_str();
 
   switch (input.backend()) {
     case LlmSessionConfigProto::CPU:
@@ -109,9 +52,8 @@ LlmSessionConfig ParseSessionConfig(void* bytes, int size) {
   }
 
   output.sequence_batch_size = input.sequence_batch_size();
-  output.num_decode_tokens = input.num_decode_tokens();
+  output.num_decode_steps_per_sync = input.num_decode_steps_per_sync();
   output.max_sequence_length = input.max_sequence_length();
-  output.use_fake_weights = input.use_fake_weights();
 
   return output;
 }
@@ -154,15 +96,6 @@ void ProcessAsyncResponse(void* callback_context_handle,
 JNIEXPORT jlong JNICALL JNI_METHOD(nativeCreateSession)(
     JNIEnv* env, jclass thiz, jbyteArray model_parameters_bytes,
     jbyteArray session_config_bytes) {
-  // Retrieve the LLM model parameters.
-  jbyte* model_parameters_ref =
-      env->GetByteArrayElements(model_parameters_bytes, nullptr);
-  int model_parameters_size = env->GetArrayLength(model_parameters_bytes);
-  LlmModelParameters model_parameters = ParseModelParameters(
-      reinterpret_cast<void*>(model_parameters_ref), model_parameters_size);
-  env->ReleaseByteArrayElements(model_parameters_bytes, model_parameters_ref,
-                                JNI_ABORT);
-
   // Retrieve the LLM session configuration.
   jbyte* session_config_ref =
       env->GetByteArrayElements(session_config_bytes, nullptr);
@@ -172,9 +105,7 @@ JNIEXPORT jlong JNICALL JNI_METHOD(nativeCreateSession)(
   env->ReleaseByteArrayElements(session_config_bytes, session_config_ref,
                                 JNI_ABORT);
 
-  void* session =
-      LlmInferenceEngine_CreateSession(&model_parameters, &session_config);
-  CloseModelParameters(&model_parameters);
+  void* session = LlmInferenceEngine_CreateSession(&session_config);
 
   return reinterpret_cast<jlong>(session);
 }

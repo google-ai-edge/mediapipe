@@ -15,7 +15,6 @@
 package com.google.mediapipe.tasks.core;
 
 import com.google.mediapipe.tasks.core.OutputHandler.ValueListener;
-import com.google.mediapipe.tasks.core.jni.proto.LlmOptionsProto.LlmModelParameters;
 import com.google.mediapipe.tasks.core.jni.proto.LlmOptionsProto.LlmSessionConfig;
 import com.google.mediapipe.tasks.core.jni.proto.LlmResponseContextProto.LlmResponseContext;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -33,11 +32,8 @@ public final class LlmTaskRunner implements AutoCloseable {
   private final long callbackHandle;
 
   public LlmTaskRunner(
-      LlmModelParameters modelParameters,
-      LlmSessionConfig sessionConfig,
-      Optional<ValueListener<List<String>>> resultListener) {
-    this.sessionHandle =
-        nativeCreateSession(modelParameters.toByteArray(), sessionConfig.toByteArray());
+      LlmSessionConfig sessionConfig, Optional<ValueListener<List<String>>> resultListener) {
+    this.sessionHandle = nativeCreateSession(sessionConfig.toByteArray());
 
     this.resultListener = resultListener;
     if (resultListener.isPresent()) {
@@ -82,7 +78,7 @@ public final class LlmTaskRunner implements AutoCloseable {
     nativeDeleteSession(sessionHandle);
   }
 
-  private static native long nativeCreateSession(byte[] modelParameters, byte[] sessionConfig);
+  private static native long nativeCreateSession(byte[] sessionConfig);
 
   private static native void nativeDeleteSession(long sessionPointer);
 

@@ -14,27 +14,6 @@ extern "C" {
 
 typedef void LlmInferenceEngine_Session;
 
-// Supported model types.
-enum LlmModelType {
-  // Unknown
-  kUNKNOWN_MODEL_TYPE,
-
-  // Falcon with 1B parameters.
-  kFalcon1B,
-
-  // GMini with 2B parameters.
-  kGMini2B,
-};
-
-// Attention types.
-enum LlmAttentionType {
-  // Multi-head Attention.
-  kMHA,
-
-  // Multi-query Attention.
-  kMQA,
-};
-
 // Backend to execute the large language model.
 enum LlmBackend {
   // CPU
@@ -44,44 +23,23 @@ enum LlmBackend {
   kGPU,
 };
 
-// LlmModelParameters should accurately describe the model used.
-typedef struct {
-  // Set a supported model types.
-  enum LlmModelType model_type;
-
-  // Path to the directory that contains spm.model and the weight directory.
-  const char* model_path;
-
-  // MHA or MQA.
-  enum LlmAttentionType attention_type;
-
-  // Start token id will be appended to the query before feeding into the model.
-  int start_token_id;
-
-  // Stop token/word that indicates the response is completed.
-  const char** stop_tokens;
-
-  // Number of stop tokens.
-  size_t stop_tokens_size;
-} LlmModelParameters;
-
 // LlmSessionConfig configures how to execute the model.
 typedef struct {
+  // Path to the tflite model file.
+  const char* model_path;
+
   // Select a supported backend.
   enum LlmBackend backend;
 
-  // Sequence batch size for encoding.
+  // Sequence batch size for encoding. Used by GPU only.
   size_t sequence_batch_size;
 
-  // Output batch size for decoding.(for gpu)
-  size_t num_decode_tokens;
+  // Number of decode steps per sync. Used by GPU only.
+  size_t num_decode_steps_per_sync;
 
   // Maximum sequence length stands for the total number of tokens from input
   // and output.
   size_t max_sequence_length;
-
-  // Use fake weights instead of loading from file.
-  bool use_fake_weights;
 } LlmSessionConfig;
 
 // LlmResponseContext is the return type for
@@ -95,13 +53,12 @@ typedef struct {
   int response_count;
 } LlmResponseContext;
 
-// Frees all context within the LlmResponseContext including itself.
+// Frees all context within the LlmResponseContext.
 ODML_EXPORT void LlmInferenceEngine_CloseResponseContext(
-    LlmResponseContext response_context);
+    LlmResponseContext* response_context);
 
 // Create a LlmInferenceEngine session for executing a query.
 ODML_EXPORT LlmInferenceEngine_Session* LlmInferenceEngine_CreateSession(
-    const LlmModelParameters* model_parameters,
     const LlmSessionConfig* session_config);
 
 // Free the session, will wait until graph is done executing.
