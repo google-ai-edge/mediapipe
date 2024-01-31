@@ -31,6 +31,7 @@ using LlmSessionConfigProto = mediapipe::tasks::core::jni::LlmSessionConfig;
 using LlmResponseContextProto = mediapipe::tasks::core::jni::LlmResponseContext;
 using mediapipe::android::JStringToStdString;
 using mediapipe::android::ThrowIfError;
+using mediapipe::java::GetJNIEnv;
 
 LlmModelParameters ParseModelParameters(void* bytes, int size) {
   LlmModelParametersProto input;
@@ -131,7 +132,6 @@ jbyteArray ToByteArray(JNIEnv* env, const LlmResponseContext& context) {
 // A context object that is passed to the callback so that global state can be
 // recovered.
 typedef struct {
-  JNIEnv* env;
   jobject global_callback_ref;
   jmethodID callback_method_id;
 } CallbackContext;
@@ -140,7 +140,7 @@ void ProcessAsyncResponse(void* callback_context_handle,
                           const LlmResponseContext respone_context) {
   CallbackContext* callback_context =
       reinterpret_cast<CallbackContext*>(callback_context_handle);
-  JNIEnv* env = callback_context->env;
+  JNIEnv* env = GetJNIEnv();
 
   const jbyteArray response_context_bytes = ToByteArray(env, respone_context);
 
@@ -209,7 +209,7 @@ JNIEXPORT jlong JNICALL JNI_METHOD(nativeRegisterCallback)(JNIEnv* env,
       env->GetMethodID(callback_class, "onAsyncResponse", "([B)V");
 
   CallbackContext* callback_context =
-      new CallbackContext{env, global_callback_ref, callback_method_id};
+      new CallbackContext{global_callback_ref, callback_method_id};
   return reinterpret_cast<jlong>(callback_context);
 }
 
