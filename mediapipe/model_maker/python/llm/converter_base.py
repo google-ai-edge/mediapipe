@@ -121,16 +121,20 @@ class LayerActionMapperBase:
   def __init__(
       self,
       is_symmetric: bool,
-      attention_quant_bits=int,
-      feedforward_quant_bits=int,
-      embedding_quant_bits=int,
+      attention_quant_bits: int,
+      feedforward_quant_bits: int,
+      embedding_quant_bits: int,
+      backend: str,
   ):
     self._is_symmetric = is_symmetric
     self._attention_quant_bits = attention_quant_bits
     self._feedforward_quant_bits = feedforward_quant_bits
     self._embedding_quant_bits = embedding_quant_bits
+    self._backend = backend
 
-  def map_to_actions(self, layer_name: str) -> Optional[QuantizationAction]:
+  def map_to_actions(
+      self, layer_name: str
+  ) -> Optional[List[QuantizationAction]]:
     """Maps the layer weights to quantization actions.
 
     Args:

@@ -42,6 +42,7 @@ def create_ckpt_loader(
         feedforward_quant_bits=kwargs["feedforward_quant_bits"],
         embedding_quant_bits=kwargs["embedding_quant_bits"],
         special_model=kwargs["special_model"],
+        backend=kwargs["backend"],
     )
   elif ckpt_format == "safetensors":
     return safetensors_converter.SafetensorsCkptLoader(
@@ -51,6 +52,7 @@ def create_ckpt_loader(
         feedforward_quant_bits=kwargs["feedforward_quant_bits"],
         embedding_quant_bits=kwargs["embedding_quant_bits"],
         special_model=kwargs["special_model"],
+        backend=kwargs["backend"],
     )
   else:
     raise ValueError(f"Unknown checkpoint format: {ckpt_format}")

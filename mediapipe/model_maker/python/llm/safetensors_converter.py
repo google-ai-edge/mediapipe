@@ -16,6 +16,7 @@
 
 import array
 import enum
+import glob
 import json
 import os
 from typing import List, Optional
@@ -24,6 +25,80 @@ import numpy as np
 import torch
 
 from mediapipe.model_maker.python.llm import converter_base
+
+
+DTYPE_MAP = {
+    "F16": torch.float16,
+    "BF16": torch.bfloat16,
+    "F32": torch.float32,
+}
+
+
+class _SafetensorsShardReader:
+  """Reads a single safetensors shard."""
+
+  _HEAD_BYTES = 8
+
+  def __init__(self, shard_path: str):
+    self._shard_path = shard_path
+    if not os.path.exists(self._shard_path):
+      raise ValueError(f"{self._shard_path} does not exists.")
+    with open(self._shard_path, "rb") as f:
+      head_bytes = f.read(self._HEAD_BYTES)
+      metadata_bytes_num = np.frombuffer(head_bytes, dtype=np.uint64)[0]
+      metadata_bytes = f.read(metadata_bytes_num)
+      self.layers_info = json.loads(metadata_bytes)
+      self.metadata_bytes_num = metadata_bytes_num
+
+  def read_tensor_as_numpy(self, tensor_name) -> np.ndarray:
+    """Reads a tensor from the model file as a numpy array with np.float32 type."""
+    tensor_info = self.layers_info[tensor_name]
+    with open(self._shard_path, "rb") as f:
+      shape = tensor_info["shape"]
+      dtype = tensor_info["dtype"]
+      if dtype not in DTYPE_MAP:
+        raise ValueError(f"{dtype} is not supported.")
+      data_offsets = tensor_info["data_offsets"]
+      f.seek(int(self._HEAD_BYTES + self.metadata_bytes_num + data_offsets[0]))
+      tensor_bytes = f.read(data_offsets[1] - data_offsets[0])
+      raw_tensor = torch.frombuffer(
+          array.array("b", tensor_bytes), dtype=DTYPE_MAP[dtype]
+      ).reshape(shape)
+      return raw_tensor.float().t().contiguous().numpy()
+
+  def get_tensor_names(self) -> List[str]:
+    names = list(self.layers_info.keys())
+    if "__metadata__" in names:
+      names.remove("__metadata__")
+    return names
+
+
+class _SafetensorsReader:
+  """Reads all the safetensors shards."""
+
+  def __init__(self, ckpt_path: str):
+    shards = []
+    # Read all safetensors files within checkpoint
+    if os.path.isdir(ckpt_path):
+      for shard_path in glob.glob(os.path.join(ckpt_path, "*.safetensors")):
+        shards.append(_SafetensorsShardReader(shard_path))
+    else:
+      shards.append(_SafetensorsShardReader(ckpt_path))
+
+    self._ckpt_path = ckpt_path
+    self._tensors_map = {}
+    for shard in shards:
+      tensor_names = shard.get_tensor_names()
+      for tensor_name in tensor_names:
+        if tensor_name in self._tensors_map:
+          raise ValueError(f"Duplicate tensor name: {tensor_name}")
+        self._tensors_map[tensor_name] = shard
+
+  def get_tensor_names(self) -> List[str]:
+    return list(self._tensors_map.keys())
+
+  def read_tensor_as_numpy(self, tensor_name: str) -> np.ndarray:
+    return self._tensors_map[tensor_name].read_tensor_as_numpy(tensor_name)
 
 
 class LayerType(enum.Enum):
@@ -54,6 +129,7 @@ class LayerType(enum.Enum):
         "input_layernorm",
         "post_attention_layernorm",
         "final_layernorm",
+        "model.norm.weight",
     ]
     if any(sub_name in layer_name for sub_name in attn_layers):
       return LayerType.ATTENTION
@@ -70,17 +146,29 @@ class LayerType(enum.Enum):
 class StablelmMapper(converter_base.LayerActionMapperBase):
   """LayerActionMapper for handling the StableLM model."""
 
-  # we don't quantize layer norm for stablelm model.
-  NON_QUANTIZED_LAYERS = [
-      "model.norm.weight",
-      "input_layernorm",
-      "post_attention_layernorm",
-  ]
+  def __init__(
+      self,
+      is_symmetric: bool,
+      attention_quant_bits: int,
+      feedforward_quant_bits: int,
+      embedding_quant_bits: int,
+      backend: str,
+      reader: _SafetensorsReader,
+  ):
+    super().__init__(
+        is_symmetric=is_symmetric,
+        attention_quant_bits=attention_quant_bits,
+        feedforward_quant_bits=feedforward_quant_bits,
+        embedding_quant_bits=embedding_quant_bits,
+        backend=backend,
+    )
+    self._reader = reader
 
   def map_to_actions(
       self, layer_name: str
-  ) -> Optional[converter_base.QuantizationAction]:
+  ) -> Optional[List[converter_base.QuantizationAction]]:
     """Map the given layer name to actions."""
+    tensor_value = self._reader.read_tensor_as_numpy(layer_name)
     quantize_axis = None
     quantize_bits = None
     layer_type = LayerType.get_layer_type(layer_name)
@@ -91,17 +179,27 @@ class StablelmMapper(converter_base.LayerActionMapperBase):
         quantize_bits = self._feedforward_quant_bits
       elif layer_type == LayerType.ATTENTION:
         quantize_bits = self._attention_quant_bits
+        if self._backend == "xnnpack" and ".o_proj." in layer_name:
+          tensor_value = np.transpose(tensor_value)
+          quantize_axis = [1]
       elif layer_type == LayerType.EMBEDDING:
         quantize_bits = self._embedding_quant_bits
+        if self._backend == "xnnpack" and ".embed_tokens." in layer_name:
+          tensor_value = np.transpose(tensor_value)
+          quantize_axis = [1]
     target_name = self.update_target_name(layer_name)
 
-    return converter_base.QuantizationAction(
-        tensor_name=layer_name,
-        target_name=target_name,
-        quantize_axis=quantize_axis,
-        quantize_bits=quantize_bits,
-        pack_dim=0,
-    )
+    actions = [
+        converter_base.QuantizationAction(
+            tensor_name=layer_name,
+            tensor_value=tensor_value,
+            target_name=target_name,
+            quantize_axis=quantize_axis,
+            quantize_bits=quantize_bits,
+            pack_dim=0,
+        )
+    ]
+    return actions
 
   def update_target_name(self, target_name: str) -> str:
     """Updates the target name to match the tensor name convention."""
@@ -117,12 +215,20 @@ class StablelmMapper(converter_base.LayerActionMapperBase):
     target_name = target_name.replace(
         "pre_layer_norm.weight", "pre_layer_norm.scale"
     )
-    target_name = target_name.replace(
-        "post_attention_layernorm", "post_layer_norm"
-    )
-    target_name = target_name.replace(
-        "post_layer_norm.weight", "post_layer_norm.scale"
-    )
+    if self._backend == "xnnpack":
+      target_name = target_name.replace(
+          "post_attention_layernorm", "ff_layer.pre_layer_norm"
+      )
+      target_name = target_name.replace(
+          "ff_layer.pre_layer_norm.weight", "ff_layer.pre_layer_norm.scale"
+      )
+    else:
+      target_name = target_name.replace(
+          "post_attention_layernorm", "post_layer_norm"
+      )
+      target_name = target_name.replace(
+          "post_layer_norm.weight", "post_layer_norm.scale"
+      )
     target_name = target_name.replace("self_attn.q_proj", "self_attention.q")
     target_name = target_name.replace("self_attn.k_proj", "self_attention.k")
     target_name = target_name.replace("self_attn.v_proj", "self_attention.v")
@@ -141,10 +247,29 @@ class StablelmMapper(converter_base.LayerActionMapperBase):
 class PhiMapper(converter_base.LayerActionMapperBase):
   """LayerActionMapper for handling the Phi model."""
 
+  def __init__(
+      self,
+      is_symmetric: bool,
+      attention_quant_bits: int,
+      feedforward_quant_bits: int,
+      embedding_quant_bits: int,
+      backend: str,
+      reader: _SafetensorsReader,
+  ):
+    super().__init__(
+        is_symmetric=is_symmetric,
+        attention_quant_bits=attention_quant_bits,
+        feedforward_quant_bits=feedforward_quant_bits,
+        embedding_quant_bits=embedding_quant_bits,
+        backend=backend,
+    )
+    self._reader = reader
+
   def map_to_actions(
       self, layer_name: str
-  ) -> Optional[converter_base.QuantizationAction]:
+  ) -> Optional[List[converter_base.QuantizationAction]]:
     """Map the given layer name to actions."""
+    tensor_value = self._reader.read_tensor_as_numpy(layer_name)
     quantize_axis = None
     quantize_bits = None
     layer_type = LayerType.get_layer_type(layer_name)
@@ -155,17 +280,27 @@ class PhiMapper(converter_base.LayerActionMapperBase):
         quantize_bits = self._feedforward_quant_bits
       elif layer_type == LayerType.ATTENTION:
         quantize_bits = self._attention_quant_bits
+        if self._backend == "xnnpack" and ".dense." in layer_name:
+          tensor_value = np.transpose(tensor_value)
+          quantize_axis = [1]
       elif layer_type == LayerType.EMBEDDING:
         quantize_bits = self._embedding_quant_bits
+        if self._backend == "xnnpack" and ".embed_tokens." in layer_name:
+          tensor_value = np.transpose(tensor_value)
+          quantize_axis = [1]
     target_name = self.update_target_name(layer_name)
 
-    return converter_base.QuantizationAction(
-        tensor_name=layer_name,
-        target_name=target_name,
-        quantize_axis=quantize_axis,
-        quantize_bits=quantize_bits,
-        pack_dim=0,
-    )
+    actions = [
+        converter_base.QuantizationAction(
+            tensor_name=layer_name,
+            tensor_value=tensor_value,
+            target_name=target_name,
+            quantize_axis=quantize_axis,
+            quantize_bits=quantize_bits,
+            pack_dim=0,
+        )
+    ]
+    return actions
 
   def update_target_name(self, target_name: str) -> str:
     """Updates the target name to match the tensor name convention."""
@@ -213,17 +348,8 @@ class PhiMapper(converter_base.LayerActionMapperBase):
     return target_name
 
 
-DTYPE_MAP = {
-    "F16": torch.float16,
-    "BF16": torch.bfloat16,
-    "F32": torch.float32,
-}
-
-
 class SafetensorsCkptLoader(converter_base.CkptLoaderBase):
   """CkptLoader implementation for loading the Safetensors."""
-
-  _HEAD_BYTES = 8
 
   def __init__(
       self,
@@ -233,6 +359,7 @@ class SafetensorsCkptLoader(converter_base.CkptLoaderBase):
       feedforward_quant_bits: int,
       embedding_quant_bits: int,
       special_model: str,
+      backend: str,
   ):
     """Initializes the loader.
 
@@ -248,6 +375,8 @@ class SafetensorsCkptLoader(converter_base.CkptLoaderBase):
         (support 8 or 4) for the embedding (and the final projection) layers.
       special_model: A string that indicates which input model is and whether
         any special treatment is needed.
+      backend: A string indicating the backend used when converting this model.
+        Valid options are `xnnpack` (CPU) and `ml_drift` (GPU).
     """
     super().__init__(
         ckpt_path,
@@ -258,12 +387,15 @@ class SafetensorsCkptLoader(converter_base.CkptLoaderBase):
     )
 
     self._special_model = special_model
+    self._reader = _SafetensorsReader(ckpt_path)
     if special_model in ["STABLELM_4E1T_3B"]:
       self.mapper = StablelmMapper(
           is_symmetric,
           attention_quant_bits,
           feedforward_quant_bits,
           embedding_quant_bits,
+          backend,
+          self._reader,
       )
     elif special_model in ["PHI_2"]:
       self.mapper = PhiMapper(
@@ -271,45 +403,18 @@ class SafetensorsCkptLoader(converter_base.CkptLoaderBase):
           attention_quant_bits,
           feedforward_quant_bits,
           embedding_quant_bits,
+          backend,
+          self._reader,
       )
     else:
       raise ValueError(f"Unknown special model: {special_model}")
 
-    self._ckpt_path = ckpt_path
-    if not os.path.exists(self._ckpt_path):
-      raise ValueError(f"{self._ckpt_path} does not exists.")
-    with open(self._ckpt_path, "rb") as f:
-      head_bytes = f.read(self._HEAD_BYTES)
-      metadata_bytes_num = np.frombuffer(head_bytes, dtype=np.uint64)[0]
-      metadata_bytes = f.read(metadata_bytes_num)
-      self.layers_info = json.loads(metadata_bytes)
-      self.metadata_bytes_num = metadata_bytes_num
-
   def load_to_actions(self) -> List[converter_base.QuantizationAction]:
-    tensor_names = self.layers_info.keys()
+    tensor_names = self._reader.get_tensor_names()
     actions = []
     for tensor_name in tensor_names:
-      if tensor_name == "__metadata__":
+      tensor_actions = self.mapper.map_to_actions(tensor_name)
+      if tensor_actions is None:
         continue
-      action = self.mapper.map_to_actions(tensor_name)
-      if action is None:
-        continue
-      action.tensor_value = self._read_tensor_as_numpy(tensor_name)
-      actions.append(action)
+      actions.extend(tensor_actions)
     return actions
-
-  def _read_tensor_as_numpy(self, tensor_name) -> np.ndarray:
-    """Reads a tensor from the model file as a numpy array with np.float32 type."""
-    tensor_info = self.layers_info[tensor_name]
-    with open(self._ckpt_path, "rb") as f:
-      shape = tensor_info["shape"]
-      dtype = tensor_info["dtype"]
-      if dtype not in DTYPE_MAP:
-        raise ValueError(f"{dtype} is not supported.")
-      data_offsets = tensor_info["data_offsets"]
-      f.seek(int(self._HEAD_BYTES + self.metadata_bytes_num + data_offsets[0]))
-      tensor_bytes = f.read(data_offsets[1] - data_offsets[0])
-      raw_tensor = torch.frombuffer(
-          array.array("b", tensor_bytes), dtype=DTYPE_MAP[dtype]
-      ).reshape(shape)
-      return raw_tensor.float().t().contiguous().numpy()
