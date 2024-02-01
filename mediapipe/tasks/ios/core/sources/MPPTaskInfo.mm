@@ -70,9 +70,8 @@ using ::mediapipe::InputStreamInfo;
 
 - (std::optional<::mediapipe::CalculatorGraphConfig>)generateGraphConfigWithError:
     (NSError **)error {
-  if (self.taskOptions respondsToSelector
-      : @selector(copyToProto:) && self.taskOptions respondsToSelector
-      : @selector(copyToAnyProto:)) {
+  if ([self.taskOptions respondsToSelector:@selector(copyToProto:)] &&
+      [self.taskOptions respondsToSelector:@selector(copyToAnyProto:)]) {
     [MPPCommonUtils createCustomError:error
                              withCode:MPPTasksErrorCodeInternalError
                           description:@"Only one of copyTo*Proto: methods should be implemented by "
@@ -85,9 +84,9 @@ using ::mediapipe::InputStreamInfo;
   Node *taskSubgraphNode = graphConfig.add_node();
   taskSubgraphNode->set_calculator(self.taskGraphName.cppString);
 
-  if (self.taskOptions respondsToSelector : @selector(copyToProto:)) {
+  if ([self.taskOptions respondsToSelector:@selector(copyToProto:)]) {
     [self.taskOptions copyToProto:taskSubgraphNode->mutable_options()];
-  } else if (self.taskOptions respondsToSelector : @selector(copyToAnyProto:)) {
+  } else if ([self.taskOptions respondsToSelector:@selector(copyToAnyProto:)]) {
     [self.taskOptions copyToAnyProto:taskSubgraphNode->mutable_node_options()->Add()];
   } else {
     [MPPCommonUtils createCustomError:error
@@ -97,9 +96,7 @@ using ::mediapipe::InputStreamInfo;
     return std::nullopt;
   }
 
-  optionsProto->PackFrom
-
-      for (NSString *outputStream in self.outputStreams) {
+  for (NSString *outputStream in self.outputStreams) {
     auto cppOutputStream = std::string(outputStream.cppString);
     taskSubgraphNode->add_output_stream(cppOutputStream);
     graphConfig.add_output_stream(cppOutputStream);
