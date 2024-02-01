@@ -468,6 +468,21 @@ cc_library(
     alwayslink = 1,
 )
 
+cc_test(
+    name = "scale_image_calculator_test",
+    srcs = ["scale_image_calculator_test.cc"],
+    deps = [
+        ":scale_image_calculator",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "@com_google_absl//absl/status",
+    ],
+)
+
 mediapipe_proto_library(
     name = "image_clone_calculator_proto",
     srcs = ["image_clone_calculator.proto"],

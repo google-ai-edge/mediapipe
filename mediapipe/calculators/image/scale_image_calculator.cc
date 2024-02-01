@@ -691,6 +691,14 @@ absl::Status ScaleImageCalculator::Process(CalculatorContext* cc) {
     return absl::OkStatus();
   }
 
+  // Before rescaling the frame in image_frame_util::RescaleImageFrame, check
+  // the frame's dimension. If width * height = 0,
+  // image_frame_util::RescaleImageFrame will crash in OpenCV resize().
+  // See b/317149725.
+  if (image_frame->PixelDataSize() == 0) {
+    return absl::InvalidArgumentError("Image frame is empty before rescaling.");
+  }
+
   // Rescale the image frame.
   std::unique_ptr<ImageFrame> output_frame(new ImageFrame());
   if (image_frame->Width() >= output_width_ &&
