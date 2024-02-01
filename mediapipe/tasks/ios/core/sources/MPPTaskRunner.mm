@@ -15,6 +15,7 @@
 #import "mediapipe/tasks/ios/core/sources/MPPTaskRunner.h"
 #import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
 
+#include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/tasks/cc/core/mediapipe_builtin_op_resolver.h"
 
 namespace {
@@ -35,6 +36,31 @@ using TaskRunnerCpp = ::mediapipe::tasks::core::TaskRunner;
 
 - (const CalculatorGraphConfig &)graphConfig {
   return _cppTaskRunner->GetGraphConfig();
+}
+
+- (instancetype)initWithTaskInfo:(MPPTaskInfo *)taskInfo
+                 packetsCallback:(mediapipe::tasks::core::PacketsCallback)packetsCallback
+                           error:(NSError **)error NS_DESIGNATED_INITIALIZER {
+  std::optional<CalculatorGraphConfig> graphConfig = [taskInfo generateGraphConfigWithError:error];
+
+  if (!graphConfig.has_value()) {
+    return nil;
+  }
+
+  auto taskRunnerResult =
+      TaskRunnerCpp::Create(std::move(graphConfig), absl::make_unique<MediaPipeBuiltinOpResolver>(),
+                            std::move(packetsCallback));
+
+  if (![MPPCommonUtils checkCppError:taskRunnerResult.status() toError:error]) {
+    return nil;
+  }
+
+  self = [super init];
+  if (self) {
+    _cppTaskRunner = std::move(taskRunnerResult.value());
+  }
+
+  return self;
 }
 
 - (instancetype)initWithCalculatorGraphConfig:(CalculatorGraphConfig)graphConfig
