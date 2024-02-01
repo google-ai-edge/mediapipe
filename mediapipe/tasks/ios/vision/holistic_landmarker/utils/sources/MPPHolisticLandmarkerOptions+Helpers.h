@@ -1,4 +1,4 @@
-// Copyright 2022 The MediaPipe Authors.
+// Copyright 2024 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,24 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import <Foundation/Foundation.h>
+#ifndef __cplusplus
+#error "This file requires Objective-C++."
+#endif  // __cplusplus
 
 #include "google/protobuf/any.pb.h"
-#include "mediapipe/framework/calculator_options.pb.h"
+
+#import "mediapipe/tasks/ios/core/sources/MPPTaskOptionsProtocol.h"
+#import "mediapipe/tasks/ios/vision/holistic_landmarker/sources/MPPHolisticLandmarkerOptions.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-/**
- * Any MediaPipe task options should confirm to this protocol.
- */
-@protocol MPPTaskOptionsProtocol
+@interface MPPHolisticLandmarkerOptions (Helpers) <MPPTaskOptionsProtocol>
 
-@optional
 /**
- * Copies the iOS MediaPipe task options to an object of mediapipe::CalculatorOptions proto.
+ * Populates the provided `google::protobuf::Any` proto  with the current settings.
+ *
+ * @param optionsProto The `::google::protobuf::Any` proto object to copy the settings to.
  */
-- (void)copyToProto:(::mediapipe::CalculatorOptions *)optionsProto;
-
 - (void)copyToAnyProto:(::google::protobuf::Any *)optionsProto;
 
 @end
