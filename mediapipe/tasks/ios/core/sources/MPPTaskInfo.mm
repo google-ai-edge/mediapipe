@@ -68,14 +68,38 @@ using ::mediapipe::InputStreamInfo;
   return taskInfo;
 }
 
-- (CalculatorGraphConfig)generateGraphConfig {
+- (std::optional<::mediapipe::CalculatorGraphConfig>)generateGraphConfigWithError:
+    (NSError **)error {
+  if (self.taskOptions respondsToSelector
+      : @selector(copyToProto:) && self.taskOptions respondsToSelector
+      : @selector(copyToAnyProto:)) {
+    [MPPCommonUtils createCustomError:error
+                             withCode:MPPTasksErrorCodeInternalError
+                          description:@"Only one of copyTo*Proto: methods should be implemented by "
+                                      @"the subclass of `MPPTaskOptions`."];
+    return std::nullopt;
+  }
+
   CalculatorGraphConfig graphConfig;
 
   Node *taskSubgraphNode = graphConfig.add_node();
   taskSubgraphNode->set_calculator(self.taskGraphName.cppString);
-  [self.taskOptions copyToProto:taskSubgraphNode->mutable_options()];
 
-  for (NSString *outputStream in self.outputStreams) {
+  if (self.taskOptions respondsToSelector : @selector(copyToProto:)) {
+    [self.taskOptions copyToProto:taskSubgraphNode->mutable_options()];
+  } else if (self.taskOptions respondsToSelector : @selector(copyToAnyProto:)) {
+    [self.taskOptions copyToAnyProto:taskSubgraphNode->mutable_node_options()->Add()];
+  } else {
+    [MPPCommonUtils createCustomError:error
+                             withCode:MPPTasksErrorCodeInternalError
+                          description:@"One of copyTo*Proto: methods must be implemented by the "
+                                      @"subclass of `MPPTaskOptions`."];
+    return std::nullopt;
+  }
+
+  optionsProto->PackFrom
+
+      for (NSString *outputStream in self.outputStreams) {
     auto cppOutputStream = std::string(outputStream.cppString);
     taskSubgraphNode->add_output_stream(cppOutputStream);
     graphConfig.add_output_stream(cppOutputStream);
