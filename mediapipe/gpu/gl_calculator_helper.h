@@ -174,6 +174,10 @@ class GlCalculatorHelper {
   // ImageFrame.
   GlTexture CreateDestinationTexture(const ImageFrame& image_frame);
 
+  // Creates the framebuffer for rendering. Use this when the calculator
+  // needs a managed framebuffer but manages its own textures.
+  void CreateFramebuffer();
+
   // The OpenGL name of the output framebuffer.
   GLuint framebuffer() const;
 
@@ -196,9 +200,6 @@ class GlCalculatorHelper {
 
   // Makes a GpuBuffer accessible as a texture in the GL context.
   GlTexture MapGpuBuffer(const GpuBuffer& gpu_buffer, GlTextureView view);
-
-  // Create the framebuffer for rendering.
-  void CreateFramebuffer();
 
   std::shared_ptr<GlContext> gl_context_;
 
