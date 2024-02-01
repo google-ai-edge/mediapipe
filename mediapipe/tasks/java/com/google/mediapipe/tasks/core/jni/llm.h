@@ -27,10 +27,10 @@ extern "C" {
 /*
  * Class:     com_google_mediapipe_tasks_core_LlmTaskRunner
  * Method:    nativeCreateSession
- * Signature: ([B[B)J
+ * Signature: ([B)J
  */
 JNIEXPORT jlong JNICALL JNI_METHOD(nativeCreateSession)(JNIEnv *, jclass,
-                                                        jbyteArray, jbyteArray);
+                                                        jbyteArray);
 
 /*
  * Class:     com_google_mediapipe_tasks_core_LlmTaskRunner
@@ -50,26 +50,26 @@ JNIEXPORT jbyteArray JNICALL JNI_METHOD(nativePredictSync)(JNIEnv *, jclass,
 /*
  * Class:     com_google_mediapipe_tasks_core_LlmTaskRunner
  * Method:    nativeRegisterCallback
- * Signature: (Ljava/lang/Object;)J
+ * Signature: (Ljava/lang/Object;)Ljava/lang/Object
  */
-JNIEXPORT jlong JNICALL JNI_METHOD(nativeRegisterCallback)(JNIEnv *, jclass,
-                                                           jobject);
+JNIEXPORT jobject JNICALL JNI_METHOD(nativeRegisterCallback)(JNIEnv *, jclass,
+                                                             jobject);
 
 /*
  * Class:     com_google_mediapipe_tasks_core_LlmTaskRunner
  * Method:    nativeRemoveCallback
- * Signature: (J;)V
+ * Signature: (Ljava/lang/Object;)V
  */
 JNIEXPORT void JNICALL JNI_METHOD(nativeRemoveCallback)(JNIEnv *, jclass,
-                                                        jlong);
+                                                        jobject);
 
 /*
  * Class:     com_google_mediapipe_tasks_core_LlmTaskRunner
  * Method:    nativePredictAsync
- * Signature: (JJLjava/lang/String;)V
+ * Signature: (JLjava/lang/Object;Ljava/lang/String;)V
  */
 JNIEXPORT void JNICALL JNI_METHOD(nativePredictAsync)(JNIEnv *, jclass, jlong,
-                                                      jlong, jstring);
+                                                      jobject, jstring);
 
 #ifdef __cplusplus
 }  // extern "C"

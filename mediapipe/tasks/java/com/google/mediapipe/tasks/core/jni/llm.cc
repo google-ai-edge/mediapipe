@@ -18,7 +18,9 @@
 
 #include <string>
 
+#include "absl/log/absl_log.h"
 #include "absl/status/status.h"
+#include "mediapipe/java/com/google/mediapipe/framework/jni/class_registry.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/jni_util.h"
 #include "mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto/llm_options.pb.h"
 #include "mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto/llm_response_context.pb.h"
@@ -71,31 +73,31 @@ jbyteArray ToByteArray(JNIEnv* env, const LlmResponseContext& context) {
   return data;
 }
 
-// A context object that is passed to the callback so that global state can be
-// recovered.
-typedef struct {
-  jobject global_callback_ref;
-  jmethodID callback_method_id;
-} CallbackContext;
-
-void ProcessAsyncResponse(void* callback_context_handle,
-                          const LlmResponseContext respone_context) {
-  CallbackContext* callback_context =
-      reinterpret_cast<CallbackContext*>(callback_context_handle);
+void ProcessAsyncResponse(void* callback_ref,
+                          const LlmResponseContext response_context) {
+  jobject object_ref = reinterpret_cast<jobject>(callback_ref);
   JNIEnv* env = GetJNIEnv();
+  if (env == nullptr) {
+    ABSL_LOG(ERROR)
+        << "Failed to retrieve JNI environment. Cannot invoke callback.";
+    return;
+  }
 
-  const jbyteArray response_context_bytes = ToByteArray(env, respone_context);
+  jclass class_ref = env->GetObjectClass(object_ref);
+  auto& class_registry = mediapipe::android::ClassRegistry::GetInstance();
+  std::string method_name = class_registry.GetMethodName(
+      "com/google/mediapipe/tasks/core/LlmTaskRunner", "onAsyncResponse");
+  jmethodID method_id =
+      env->GetMethodID(class_ref, method_name.c_str(), "([B)V");
 
-  env->CallVoidMethod(callback_context->global_callback_ref,
-                      callback_context->callback_method_id,
-                      response_context_bytes);
+  const jbyteArray response_context_bytes = ToByteArray(env, response_context);
+  env->CallVoidMethod(object_ref, method_id, response_context_bytes);
 }
 
 }  // namespace
 
 JNIEXPORT jlong JNICALL JNI_METHOD(nativeCreateSession)(
-    JNIEnv* env, jclass thiz, jbyteArray model_parameters_bytes,
-    jbyteArray session_config_bytes) {
+    JNIEnv* env, jclass thiz, jbyteArray session_config_bytes) {
   // Retrieve the LLM session configuration.
   jbyte* session_config_ref =
       env->GetByteArrayElements(session_config_bytes, nullptr);
@@ -106,7 +108,6 @@ JNIEXPORT jlong JNICALL JNI_METHOD(nativeCreateSession)(
                                 JNI_ABORT);
 
   void* session = LlmInferenceEngine_CreateSession(&session_config);
-
   return reinterpret_cast<jlong>(session);
 }
 
@@ -127,37 +128,30 @@ JNIEXPORT jbyteArray JNICALL JNI_METHOD(nativePredictSync)(JNIEnv* env,
   return response_bytes;
 }
 
-JNIEXPORT jlong JNICALL JNI_METHOD(nativeRegisterCallback)(JNIEnv* env,
-                                                           jclass thiz,
-                                                           jobject callback) {
-  auto callback_class = env->GetObjectClass(callback);
-  auto global_callback_ref = env->NewGlobalRef(callback);
-  if (!global_callback_ref) {
-    ThrowIfError(env, absl::InternalError("Failed to allocate callback"));
-    return 0;
+JNIEXPORT jobject JNICALL JNI_METHOD(nativeRegisterCallback)(JNIEnv* env,
+                                                             jclass thiz,
+                                                             jobject callback) {
+  if (mediapipe::java::SetJavaVM(env)) {
+    auto callback_ref = env->NewGlobalRef(callback);
+    if (callback_ref) return callback_ref;
   }
-  auto callback_method_id =
-      env->GetMethodID(callback_class, "onAsyncResponse", "([B)V");
-
-  CallbackContext* callback_context =
-      new CallbackContext{global_callback_ref, callback_method_id};
-  return reinterpret_cast<jlong>(callback_context);
+  ThrowIfError(env, absl::InternalError("Failed to allocate callback"));
+  return nullptr;
 }
 
-JNIEXPORT void JNICALL JNI_METHOD(nativeRemoveCallback)(
-    JNIEnv* env, jclass thiz, jlong callback_context_handle) {
-  CallbackContext* callback_context =
-      reinterpret_cast<CallbackContext*>(callback_context_handle);
-  env->DeleteGlobalRef(callback_context->global_callback_ref);
-  delete reinterpret_cast<CallbackContext*>(callback_context);
+JNIEXPORT void JNICALL JNI_METHOD(nativeRemoveCallback)(JNIEnv* env,
+                                                        jclass thiz,
+                                                        jobject callback_ref) {
+  env->DeleteGlobalRef(callback_ref);
 }
 
-JNIEXPORT void JNICALL
-JNI_METHOD(nativePredictAsync)(JNIEnv* env, jclass thiz, jlong session_handle,
-                               jlong callback_context_handle, jstring input) {
+JNIEXPORT void JNICALL JNI_METHOD(nativePredictAsync)(JNIEnv* env, jclass thiz,
+                                                      jlong session_handle,
+                                                      jobject callback_ref,
+                                                      jstring input) {
   std::string input_str = JStringToStdString(env, input);
   LlmInferenceEngine_Session_PredictAsync(
-      reinterpret_cast<void*>(session_handle),
-      reinterpret_cast<void*>(callback_context_handle), input_str.c_str(),
+      reinterpret_cast<LlmInferenceEngine_Session*>(session_handle),
+      reinterpret_cast<void*>(callback_ref), input_str.c_str(),
       &ProcessAsyncResponse);
 }
