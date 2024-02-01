@@ -115,7 +115,7 @@ absl::Status CopyCpuInputIntoInterpreterTensor(const Tensor& input_tensor,
                                                tflite::Interpreter& interpreter,
                                                int input_tensor_index) {
   const TfLiteType interpreter_tensor_type =
-      interpreter.tensor(interpreter.inputs()[input_tensor_index])->type;
+      interpreter.input_tensor(input_tensor_index)->type;
   const Tensor::ElementType input_tensor_type = input_tensor.element_type();
   if (!DoTypesMatch(input_tensor_type, interpreter_tensor_type)) {
     return absl::InvalidArgumentError(absl::StrCat(
