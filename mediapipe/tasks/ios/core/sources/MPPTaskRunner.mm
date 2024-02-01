@@ -47,16 +47,16 @@ using TaskRunnerCpp = ::mediapipe::tasks::core::TaskRunner;
     return nil;
   }
 
-  auto taskRunnerResult = TaskRunnerCpp::Create(std::move(graphConfig.value()),
+  self = [super init];
+  if (self) {
+    auto taskRunnerResult = TaskRunnerCpp::Create(std::move(graphConfig.value()),
                                                 absl::make_unique<MediaPipeBuiltinOpResolver>(),
                                                 std::move(packetsCallback));
 
-  if (![MPPCommonUtils checkCppError:taskRunnerResult.status() toError:error]) {
-    return nil;
-  }
+    if (![MPPCommonUtils checkCppError:taskRunnerResult.status() toError:error]) {
+      return nil;
+    }
 
-  self = [super init];
-  if (self) {
     _cppTaskRunner = std::move(taskRunnerResult.value());
   }
 
