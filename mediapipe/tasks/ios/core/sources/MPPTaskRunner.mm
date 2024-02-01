@@ -40,16 +40,16 @@ using TaskRunnerCpp = ::mediapipe::tasks::core::TaskRunner;
 
 - (instancetype)initWithTaskInfo:(MPPTaskInfo *)taskInfo
                  packetsCallback:(mediapipe::tasks::core::PacketsCallback)packetsCallback
-                           error:(NSError **)error NS_DESIGNATED_INITIALIZER {
+                           error:(NSError **)error  {
   std::optional<CalculatorGraphConfig> graphConfig = [taskInfo generateGraphConfigWithError:error];
 
   if (!graphConfig.has_value()) {
     return nil;
   }
 
-  auto taskRunnerResult =
-      TaskRunnerCpp::Create(std::move(graphConfig), absl::make_unique<MediaPipeBuiltinOpResolver>(),
-                            std::move(packetsCallback));
+  auto taskRunnerResult = TaskRunnerCpp::Create(std::move(graphConfig.value()),
+                                                absl::make_unique<MediaPipeBuiltinOpResolver>(),
+                                                std::move(packetsCallback));
 
   if (![MPPCommonUtils checkCppError:taskRunnerResult.status() toError:error]) {
     return nil;
@@ -60,23 +60,6 @@ using TaskRunnerCpp = ::mediapipe::tasks::core::TaskRunner;
     _cppTaskRunner = std::move(taskRunnerResult.value());
   }
 
-  return self;
-}
-
-- (instancetype)initWithCalculatorGraphConfig:(CalculatorGraphConfig)graphConfig
-                              packetsCallback:(PacketsCallback)packetsCallback
-                                        error:(NSError **)error {
-  self = [super init];
-  if (self) {
-    auto taskRunnerResult = TaskRunnerCpp::Create(std::move(graphConfig),
-                                                  absl::make_unique<MediaPipeBuiltinOpResolver>(),
-                                                  std::move(packetsCallback));
-
-    if (![MPPCommonUtils checkCppError:taskRunnerResult.status() toError:error]) {
-      return nil;
-    }
-    _cppTaskRunner = std::move(taskRunnerResult.value());
-  }
   return self;
 }
 
