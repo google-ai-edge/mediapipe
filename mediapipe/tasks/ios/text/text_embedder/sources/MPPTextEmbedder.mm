@@ -59,7 +59,7 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.text.text_embedder.Tex
     }
 
     _textTaskRunner =
-        [[MPPTextTaskRunner alloc] initWithCalculatorGraphConfig:[taskInfo generateGraphConfig]
+        [[MPPTextTaskRunner alloc] initWithTaskInfo:taskInfo
                                                            error:error];
 
     if (!_textTaskRunner) {

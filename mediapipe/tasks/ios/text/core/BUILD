@@ -24,5 +24,8 @@ objc_library(
         "-ObjC++",
         "-std=c++17",
     ],
-    deps = ["//mediapipe/tasks/ios/core:MPPTaskRunner"],
+    deps = [
+        "//mediapipe/tasks/ios/core:MPPTaskInfo",
+        "//mediapipe/tasks/ios/core:MPPTaskRunner",
+    ],
 )
