@@ -40,7 +40,7 @@ using TaskRunnerCpp = ::mediapipe::tasks::core::TaskRunner;
 
 - (instancetype)initWithTaskInfo:(MPPTaskInfo *)taskInfo
                  packetsCallback:(mediapipe::tasks::core::PacketsCallback)packetsCallback
-                           error:(NSError **)error  {
+                           error:(NSError **)error {
   std::optional<CalculatorGraphConfig> graphConfig = [taskInfo generateGraphConfigWithError:error];
 
   if (!graphConfig.has_value()) {
@@ -50,8 +50,8 @@ using TaskRunnerCpp = ::mediapipe::tasks::core::TaskRunner;
   self = [super init];
   if (self) {
     auto taskRunnerResult = TaskRunnerCpp::Create(std::move(graphConfig.value()),
-                                                absl::make_unique<MediaPipeBuiltinOpResolver>(),
-                                                std::move(packetsCallback));
+                                                  absl::make_unique<MediaPipeBuiltinOpResolver>(),
+                                                  std::move(packetsCallback));
 
     if (![MPPCommonUtils checkCppError:taskRunnerResult.status() toError:error]) {
       return nil;
