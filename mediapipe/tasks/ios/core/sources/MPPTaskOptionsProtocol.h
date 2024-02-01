@@ -25,11 +25,15 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol MPPTaskOptionsProtocol <NSObject>
 
 @optional
+
 /**
- * Copies the iOS MediaPipe task options to an object of mediapipe::CalculatorOptions proto.
+ * Copies the iOS MediaPipe task options to an object of `mediapipe::CalculatorOptions` proto.
  */
 - (void)copyToProto:(::mediapipe::CalculatorOptions *)optionsProto;
 
+/**
+ * Copies the iOS MediaPipe task options to an object of `google::protobuf::Any` proto.
+ */
 - (void)copyToAnyProto:(::google::protobuf::Any *)optionsProto;
 
 @end
