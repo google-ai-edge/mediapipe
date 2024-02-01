@@ -22,7 +22,7 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  * Any MediaPipe task options should confirm to this protocol.
  */
-@protocol MPPTaskOptionsProtocol
+@protocol MPPTaskOptionsProtocol <NSObject>
 
 @optional
 /**
