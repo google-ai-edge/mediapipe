@@ -10,7 +10,6 @@
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/gpu/gl_context.h"
 #include "mediapipe/gpu/gpu_buffer.h"
 #include "mediapipe/gpu/gpu_test_base.h"
 #include "mediapipe/util/image_test_utils.h"
@@ -28,8 +27,6 @@ enum GlVersion { GlVersion30, GlVersion31 };
 class TensorConverterGlTest : public GpuTestWithParamBase<GlVersion> {
   void SetUp() override {
     GpuTestWithParamBase::SetUp();
-    MP_ASSERT_OK_AND_ASSIGN(
-        auto context, GlContext::Create(nullptr, /*create_thread=*/false));
     switch (GetParam()) {
       case GlVersion30:
         tensor_converter_ = CreateTensorConverterGl30(helper_);
