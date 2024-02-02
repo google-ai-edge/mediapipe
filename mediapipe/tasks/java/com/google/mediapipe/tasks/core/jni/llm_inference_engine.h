@@ -40,6 +40,15 @@ typedef struct {
   // Maximum sequence length stands for the total number of tokens from input
   // and output.
   size_t max_sequence_length;
+
+  // Top K number of tokens to be sampled from for each decoding step.
+  size_t topk;
+
+  // Randomness when decoding the next token, 0.0f means greedy decoding.
+  float temperature;
+
+  // Random seed for sampling tokens.
+  size_t random_seed;
 } LlmSessionConfig;
 
 // LlmResponseContext is the return type for

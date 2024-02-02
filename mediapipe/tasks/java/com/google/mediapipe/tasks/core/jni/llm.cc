@@ -56,6 +56,9 @@ LlmSessionConfig ParseSessionConfig(void* bytes, int size) {
   output.sequence_batch_size = input.sequence_batch_size();
   output.num_decode_steps_per_sync = input.num_decode_steps_per_sync();
   output.max_sequence_length = input.max_sequence_length();
+  output.temperature = input.temperature();
+  output.topk = input.topk();
+  output.random_seed = input.random_seed();
 
   return output;
 }

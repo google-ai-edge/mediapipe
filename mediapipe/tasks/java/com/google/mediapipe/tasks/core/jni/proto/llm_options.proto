@@ -48,4 +48,13 @@ message LlmSessionConfig {
   uint32 max_sequence_length = 4;
 
   reserved 6;
+
+  // Top K number of tokens to be sampled from for each decoding step.
+  uint32 topk = 7;
+
+  // Randomness when decoding the next token, 0.0f means greedy decoding.
+  float temperature = 8;
+
+  // Random seed for sampling tokens.
+  optional uint32 random_seed = 9;
 }
