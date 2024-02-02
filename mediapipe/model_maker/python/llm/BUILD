@@ -12,10 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Placeholder for internal Python strict binary and library compatibility macro.
+# Placeholder for internal Python strict library and test compatibility macro.
 # Placeholder for internal Python strict test compatibility macro.
 
-package(default_visibility = ["//visibility:private"])
+package(default_visibility = [
+    "//third_party/odml:__subpackages__",
+])
 
 py_library(
     name = "converter_base",

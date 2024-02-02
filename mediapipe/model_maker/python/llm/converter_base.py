@@ -105,7 +105,7 @@ class CkptLoaderBase:
     self._feedforward_quant_bits = feedforward_quant_bits
     self._embedding_quant_bits = embedding_quant_bits
 
-  def load_to_actions(self) -> List[QuantizationAction]:
+  def load_to_actions(self) -> List[Optional[QuantizationAction]]:
     """Loads the checkpoint and returns the quantization actions."""
     raise NotImplementedError("The load_to_actions method is not implemented.")
 
