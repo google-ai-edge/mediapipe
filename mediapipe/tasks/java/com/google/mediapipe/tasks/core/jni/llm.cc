@@ -40,7 +40,7 @@ LlmSessionConfig ParseSessionConfig(void* bytes, int size) {
 
   LlmSessionConfig output;
 
-  output.model_path = input.model_path().c_str();
+  output.model_path = strdup(input.model_path().c_str());
 
   switch (input.backend()) {
     case LlmSessionConfigProto::CPU:
@@ -111,6 +111,7 @@ JNIEXPORT jlong JNICALL JNI_METHOD(nativeCreateSession)(
                                 JNI_ABORT);
 
   void* session = LlmInferenceEngine_CreateSession(&session_config);
+  delete session_config.model_path;
   return reinterpret_cast<jlong>(session);
 }
 
