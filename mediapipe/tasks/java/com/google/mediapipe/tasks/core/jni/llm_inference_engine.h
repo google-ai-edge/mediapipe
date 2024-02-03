@@ -25,16 +25,25 @@ enum LlmBackend {
 
 // LlmSessionConfig configures how to execute the model.
 typedef struct {
-  // Path to the tflite model file.
+  // Path to the tflite flatbuffer file.
   const char* model_path;
+
+  // Directory path for storing model related tokenizer and cache weights. the
+  // user is responsible for providing the directory that can be writable by the
+  // program.
+  const char* cache_dir;
 
   // Select a supported backend.
   enum LlmBackend backend;
 
-  // Sequence batch size for encoding. Used by GPU only.
+  // Sequence batch size for encoding. Used by GPU only. Number of input tokens
+  // to process at a time for batch processing. Setting this value to 1 means
+  // both the encoding and decoding share the same graph of sequence length
+  // of 1. Setting this value to 0 means the batch size will be optimized by
+  // ml_drift.
   size_t sequence_batch_size;
 
-  // Number of decode steps per sync. Used by GPU only.
+  // Number of decode steps per sync. Used by GPU only. The default value is 3.
   size_t num_decode_steps_per_sync;
 
   // Maximum sequence length stands for the total number of tokens from input
