@@ -41,6 +41,7 @@ LlmSessionConfig ParseSessionConfig(void* bytes, int size) {
   LlmSessionConfig output;
 
   output.model_path = strdup(input.model_path().c_str());
+  output.cache_dir = strdup(input.cache_dir().c_str());
 
   switch (input.backend()) {
     case LlmSessionConfigProto::CPU:
@@ -61,6 +62,13 @@ LlmSessionConfig ParseSessionConfig(void* bytes, int size) {
   output.random_seed = input.random_seed();
 
   return output;
+}
+
+void FreeSessionConfig(LlmSessionConfig* session_config) {
+  delete session_config->model_path;
+  delete session_config->cache_dir;
+  session_config->model_path = nullptr;
+  session_config->cache_dir = nullptr;
 }
 
 jbyteArray ToByteArray(JNIEnv* env, const LlmResponseContext& context) {
@@ -111,7 +119,7 @@ JNIEXPORT jlong JNICALL JNI_METHOD(nativeCreateSession)(
                                 JNI_ABORT);
 
   void* session = LlmInferenceEngine_CreateSession(&session_config);
-  delete session_config.model_path;
+  FreeSessionConfig(&session_config);
   return reinterpret_cast<jlong>(session);
 }
 

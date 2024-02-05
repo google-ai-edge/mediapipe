@@ -28,26 +28,28 @@ message LlmSessionConfig {
     GPU = 2;
   }
   // Path to the tflite model file.
-  string model_path = 5;
+  string model_path = 1;
+
+  // Directory for saving the weight cache file. If this is not set, the
+  // directory provided through model_path will be used for caching purposes.
+  string cache_dir = 2;
 
   // The backend to use for processing.
-  LlmBackend backend = 1;
+  LlmBackend backend = 3;
 
   // The number of input tokens to process at a time for batch processing
-  uint32 sequence_batch_size = 2;
+  uint32 sequence_batch_size = 4;
 
   // The number of decoding steps to run for each GPU-CPU sync. 1 stands for
   // full streaming mode (i.e. the model outputs one token at a time). -1 stands
   // for non-streaming mode (i.e. the model decodes all the way to the end and
   // output the result at once). Note that the more frequent to perform GPU-CPU
   // sync (i.e. closer to 1), the more latency we expect to introduce.
-  uint32 num_decode_steps_per_sync = 3;
+  uint32 num_decode_steps_per_sync = 5;
 
   // The total length of the kv-cache. In other words, this is the total number
   // of input + output tokens the model needs to handle.
-  uint32 max_sequence_length = 4;
-
-  reserved 6;
+  uint32 max_sequence_length = 6;
 
   // Top K number of tokens to be sampled from for each decoding step.
   uint32 topk = 7;
