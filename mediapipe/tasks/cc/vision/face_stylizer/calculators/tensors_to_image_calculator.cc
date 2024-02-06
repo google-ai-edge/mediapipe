@@ -476,11 +476,13 @@ absl::Status TensorsToImageCalculator::GlProcess(CalculatorContext* cc) {
 
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
 
-    auto out_texture = gl_helper_.CreateDestinationTexture(
-        tensor_width, tensor_height, GpuBufferFormat::kImmutableRGBA32);
+    auto out_texture = std::make_unique<tflite::gpu::gl::GlTexture>();
+    MP_RETURN_IF_ERROR(CreateReadWriteRgbaImageTexture(
+        tflite::gpu::DataType::UINT8,  // GL_RGBA8
+        {tensor_width, tensor_height}, out_texture.get()));
 
     const int output_index = 0;
-    glBindImageTexture(output_index, out_texture.name(), 0, GL_FALSE, 0,
+    glBindImageTexture(output_index, out_texture->id(), 0, GL_FALSE, 0,
                        GL_WRITE_ONLY, GL_RGBA8);
 
     auto read_view = input_tensor.GetOpenGlBufferReadView();
@@ -496,7 +498,16 @@ absl::Status TensorsToImageCalculator::GlProcess(CalculatorContext* cc) {
 
     MP_RETURN_IF_ERROR(gl_compute_program_->Dispatch(workgroups));
 
-    auto output = out_texture.GetFrame<GpuBuffer>();
+    auto texture_buffer = mediapipe::GlTextureBuffer::Wrap(
+        out_texture->target(), out_texture->id(), tensor_width, tensor_height,
+        mediapipe::GpuBufferFormat::kBGRA32,
+        [ptr = out_texture.release()](
+            std::shared_ptr<mediapipe::GlSyncPoint> sync_token) mutable {
+          delete ptr;
+        });
+
+    auto output =
+        std::make_unique<mediapipe::GpuBuffer>(std::move(texture_buffer));
     kOutputImage(cc).Send(Image(*output));
 
 #else
