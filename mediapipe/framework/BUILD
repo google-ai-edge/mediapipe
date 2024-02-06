@@ -1814,6 +1814,5 @@ cc_library(
     deps = [
         ":graph_service",
         ":memory_manager",
-        "@com_google_absl//absl/base:core_headers",
     ],
 )

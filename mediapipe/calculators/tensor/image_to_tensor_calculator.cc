@@ -26,6 +26,8 @@
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/formats/tensor.h"
+#include "mediapipe/framework/memory_manager.h"
+#include "mediapipe/framework/memory_manager_service.h"
 #include "mediapipe/framework/port.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/ret_check.h"
@@ -156,10 +158,14 @@ class ImageToTensorCalculator : public Node {
 #endif  // MEDIAPIPE_METAL_ENABLED
 #endif  // MEDIAPIPE_DISABLE_GPU
 
+    cc->UseService(kMemoryManagerService).Optional();
     return absl::OkStatus();
   }
 
   absl::Status Open(CalculatorContext* cc) {
+    if (cc->Service(kMemoryManagerService).IsAvailable()) {
+      memory_manager_ = &cc->Service(kMemoryManagerService).GetObject();
+    }
     options_ = cc->Options<mediapipe::ImageToTensorCalculatorOptions>();
     params_ = GetOutputTensorParams(options_);
     return absl::OkStatus();
@@ -221,8 +227,10 @@ class ImageToTensorCalculator : public Node {
 
     Tensor::ElementType output_tensor_type =
         GetOutputTensorType(image->UsesGpu(), params_);
-    Tensor tensor(output_tensor_type, {1, tensor_height, tensor_width,
-                                       GetNumOutputChannels(*image)});
+    Tensor tensor(
+        output_tensor_type,
+        {1, tensor_height, tensor_width, GetNumOutputChannels(*image)},
+        memory_manager_);
     MP_RETURN_IF_ERROR((image->UsesGpu() ? gpu_converter_ : cpu_converter_)
                            ->Convert(*image, roi, params_.range_min,
                                      params_.range_max,
@@ -301,6 +309,7 @@ class ImageToTensorCalculator : public Node {
   std::unique_ptr<ImageToTensorConverter> cpu_converter_;
   mediapipe::ImageToTensorCalculatorOptions options_;
   OutputTensorParams params_;
+  MemoryManager* memory_manager_ = nullptr;
 };
 
 MEDIAPIPE_REGISTER_NODE(ImageToTensorCalculator);
