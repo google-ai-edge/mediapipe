@@ -487,7 +487,7 @@ config_setting(
         "MEDIAPIPE_NO_JNI": "1",
     },
     values = {"crosstool_top": "//external:android/crosstool"},
-    visibility = ["//visibility:private"],
+    visibility = ["//mediapipe/framework:__pkg__"],
 )
 
 cc_library(
@@ -508,16 +508,6 @@ cc_library(
         "//mediapipe:apple": [
             "-x objective-c++",
             "-fobjc-arc",  # enable reference-counting
-        ],
-        "//conditions:default": [],
-    }),
-    defines = select({
-        # Excludes AHardwareBuffer features from vendor processes
-        "//mediapipe/framework:android_no_jni": ["MEDIAPIPE_NO_JNI"],
-        # unless they're linked against nativewindow.
-        ":android_link_native_window": [
-            "MEDIAPIPE_ANDROID_LINK_NATIVE_WINDOW",
-            "MEDIAPIPE_NO_JNI",
         ],
         "//conditions:default": [],
     }),

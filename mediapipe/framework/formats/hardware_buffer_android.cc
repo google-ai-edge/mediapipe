@@ -18,7 +18,9 @@
 
 #include <android/hardware_buffer.h>
 
+#include <cstdint>
 #include <memory>
+#include <optional>
 
 #include "absl/log/absl_check.h"
 #include "absl/status/status.h"
