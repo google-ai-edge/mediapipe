@@ -24,4 +24,7 @@ option java_outer_classname = "LlmResponseContextProto";
 message LlmResponseContext {
   // The list of response tokens.
   repeated string responses = 1;
+
+  // Done all outputs for this session.
+  bool done = 2;
 }

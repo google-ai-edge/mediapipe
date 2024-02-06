@@ -55,6 +55,14 @@ public class OutputHandler<OutputT extends TaskResult, InputT> {
     void run(OutputT result);
   }
 
+  /**
+   * Interface for the customizable MediaPipe task result listener that receives partial task
+   * updates until it is invoked with `done` set to {@code true}.
+   */
+  public interface ProgressListener<OutputT> {
+    void run(OutputT partialResult, boolean done);
+  }
+
   private static final String TAG = "OutputHandler";
   // A task-specific graph output packet converter that should be implemented per task.
   private OutputPacketConverter<OutputT, InputT> outputPacketConverter;

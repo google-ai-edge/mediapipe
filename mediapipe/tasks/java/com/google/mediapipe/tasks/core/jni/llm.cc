@@ -76,11 +76,13 @@ jbyteArray ToByteArray(JNIEnv* env, const LlmResponseContext& context) {
   for (int i = 0; i < context.response_count; ++i) {
     output.add_responses(context.response_array[i]);
   }
-  std::string output_str = output.SerializeAsString();
+  output.set_done(context.done);
 
-  jbyteArray data = env->NewByteArray(output_str.size());
-  env->SetByteArrayRegion(data, 0, output_str.size(),
-                          reinterpret_cast<const jbyte*>(output_str.data()));
+  std::string serialized_str = output.SerializeAsString();
+  jbyteArray data = env->NewByteArray(serialized_str.size());
+  env->SetByteArrayRegion(
+      data, 0, serialized_str.size(),
+      reinterpret_cast<const jbyte*>(serialized_str.data()));
   return data;
 }
 
