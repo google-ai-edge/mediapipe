@@ -69,6 +69,9 @@ typedef struct {
 
   // Number of responses.
   int response_count;
+
+  // Done all outputs for this session.
+  bool done;
 } LlmResponseContext;
 
 // Frees all context within the LlmResponseContext.
