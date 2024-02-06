@@ -206,6 +206,24 @@ absl::Status SetContents(absl::string_view file_name,
   return absl::OkStatus();
 }
 
+absl::Status AppendStringToFile(absl::string_view file_name,
+                                absl::string_view contents) {
+  FILE* fp = fopen(file_name.data(), "ab");
+  if (!fp) {
+    return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
+           << "Can't open file: " << file_name;
+  }
+
+  fwrite(contents.data(), sizeof(char), contents.size(), fp);
+  size_t write_error = ferror(fp);
+  if (fclose(fp) != 0 || write_error) {
+    return mediapipe::InternalErrorBuilder(MEDIAPIPE_LOC)
+           << "Error while writing file: " << file_name
+           << ". Error message: " << strerror(write_error);
+  }
+  return absl::OkStatus();
+}
+
 absl::Status MatchInTopSubdirectories(const std::string& parent_directory,
                                       const std::string& file_name,
                                       std::vector<std::string>* results) {

@@ -26,6 +26,9 @@ absl::Status GetContents(absl::string_view file_name, std::string* output,
 absl::Status SetContents(absl::string_view file_name,
                          absl::string_view content);
 
+absl::Status AppendStringToFile(absl::string_view file_name,
+                                absl::string_view contents);
+
 absl::Status MatchInTopSubdirectories(const std::string& parent_directory,
                                       const std::string& file_name,
                                       std::vector<std::string>* results);
