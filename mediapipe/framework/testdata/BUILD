@@ -60,4 +60,5 @@ mediapipe_proto_library(
 exports_files([
     "perfetto_detailed.pbtxt",
     "perfetto_minimal.pbtxt",
+    "perfeoot_memory.pbtxt",
 ])

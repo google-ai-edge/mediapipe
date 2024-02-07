@@ -1,0 +1,82 @@
+# Perfetto Config with minimal information needed for tracing MediaPipe functions.
+# Use when benchmarking to reduce latency overhead from Perfetto trace.
+# proto-file: third_party/perfetto/protos/perfetto/config/perfetto_config.proto
+# proto-message: TraceConfig
+
+buffers: {
+    size_kb: 522240
+    fill_policy: RING_BUFFER
+}
+buffers: {
+    size_kb: 2048
+    fill_policy: RING_BUFFER
+}
+data_sources: {
+    config {
+        name: "android.packages_list"
+        target_buffer: 1
+    }
+}
+data_sources: {
+    config {
+        name: "android.gpu.memory"
+    }
+}
+data_sources: {
+    config {
+        name: "linux.process_stats"
+        target_buffer: 1
+        process_stats_config {
+            scan_all_processes_on_start: true
+            proc_stats_poll_ms: 250
+        }
+    }
+}
+data_sources: {
+    config {
+        name: "android.log"
+        android_log_config {
+            log_ids: LID_DEFAULT
+        }
+    }
+}
+data_sources: {
+    config {
+        name: "linux.sys_stats"
+        sys_stats_config {
+            meminfo_period_ms: 250
+            vmstat_period_ms: 250
+            stat_period_ms: 1000
+            stat_counters: STAT_CPU_TIMES
+            stat_counters: STAT_FORK_COUNT
+        }
+    }
+}
+data_sources: {
+    config {
+        name: "linux.ftrace"
+        ftrace_config {
+            ftrace_events: "sched/sched_switch"
+            ftrace_events: "power/suspend_resume"
+            ftrace_events: "sched/sched_wakeup"
+            ftrace_events: "sched/sched_wakeup_new"
+            ftrace_events: "sched/sched_waking"
+            ftrace_events: "gpu_mem/gpu_mem_total"
+            ftrace_events: "sched/sched_process_exit"
+            ftrace_events: "sched/sched_process_free"
+            ftrace_events: "task/task_newtask"
+            ftrace_events: "task/task_rename"
+            ftrace_events: "ftrace/print"
+            atrace_apps: "*"
+        }
+    }
+}
+# b/243571696 Added to remove Perfetto timeouts when running benchmarks remotely.
+duration_ms: 60000
+write_into_file: true
+file_write_period_ms: 2500
+max_file_size_bytes: 5000000000
+flush_period_ms: 30000
+incremental_state_config {
+    clear_period_ms: 5000
+}
