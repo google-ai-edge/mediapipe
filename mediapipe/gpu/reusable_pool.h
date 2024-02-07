@@ -18,11 +18,16 @@
 #ifndef MEDIAPIPE_GPU_REUSABLE_POOL_H_
 #define MEDIAPIPE_GPU_REUSABLE_POOL_H_
 
+#include <memory>
 #include <utility>
 #include <vector>
 
+#include "absl/base/thread_annotations.h"
 #include "absl/functional/any_invocable.h"
+#include "absl/status/statusor.h"
 #include "absl/synchronization/mutex.h"
+#include "mediapipe/framework/port/ret_check.h"
+#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/gpu/multi_pool.h"
 
 namespace mediapipe {
@@ -30,7 +35,8 @@ namespace mediapipe {
 template <class Item>
 class ReusablePool : public std::enable_shared_from_this<ReusablePool<Item>> {
  public:
-  using ItemFactory = absl::AnyInvocable<std::unique_ptr<Item>() const>;
+  using ItemFactory =
+      absl::AnyInvocable<absl::StatusOr<std::unique_ptr<Item>>() const>;
 
   // Creates a pool. This pool will manage buffers of the specified dimensions,
   // and will keep keep_count buffers around for reuse.
@@ -44,7 +50,7 @@ class ReusablePool : public std::enable_shared_from_this<ReusablePool<Item>> {
 
   // Obtains a buffer. May either be reused or created anew.
   // A GlContext must be current when this is called.
-  std::shared_ptr<Item> GetBuffer();
+  absl::StatusOr<std::shared_ptr<Item>> GetBuffer();
 
   // This method is meant for testing.
   std::pair<int, int> GetInUseAndAvailableCounts();
@@ -72,15 +78,19 @@ class ReusablePool : public std::enable_shared_from_this<ReusablePool<Item>> {
 };
 
 template <class Item>
-inline std::shared_ptr<Item> ReusablePool<Item>::GetBuffer() {
+inline absl::StatusOr<std::shared_ptr<Item>> ReusablePool<Item>::GetBuffer() {
   std::unique_ptr<Item> buffer;
   bool reuse = false;
 
   {
     absl::MutexLock lock(&mutex_);
     if (available_.empty()) {
-      buffer = item_factory_();
-      if (!buffer) return nullptr;
+      // TODO - propagate absl::Status to GetBuffer caller.
+      auto buffer_from_factory = item_factory_();
+      if (!buffer_from_factory.ok() || *buffer_from_factory == nullptr) {
+        return nullptr;
+      }
+      buffer = *std::move(buffer_from_factory);
     } else {
       buffer = std::move(available_.back());
       available_.pop_back();

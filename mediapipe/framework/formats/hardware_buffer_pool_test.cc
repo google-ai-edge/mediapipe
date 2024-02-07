@@ -3,6 +3,7 @@
 #include <cstdint>
 
 #include "mediapipe/framework/formats/hardware_buffer.h"
+#include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/gpu/multi_pool.h"
 #include "testing/base/public/gunit.h"
 
@@ -38,12 +39,16 @@ TEST(HardwareBufferPoolTest, ShouldPoolHardwareBuffer) {
   HardwareBuffer* hardware_buffer_ptr = nullptr;
   // First request instantiates new HardwareBuffer.
   {
-    auto hardware_buffer = hardware_buffer_pool.GetBuffer(hardware_buffer_spec);
+    MP_ASSERT_OK_AND_ASSIGN(
+        auto hardware_buffer,
+        hardware_buffer_pool.GetBuffer(hardware_buffer_spec));
     hardware_buffer_ptr = hardware_buffer.get();
   }
   // Second request returns same HardwareBuffer.
   {
-    auto hardware_buffer = hardware_buffer_pool.GetBuffer(hardware_buffer_spec);
+    MP_ASSERT_OK_AND_ASSIGN(
+        auto hardware_buffer,
+        hardware_buffer_pool.GetBuffer(hardware_buffer_spec));
     EXPECT_EQ(hardware_buffer.get(), hardware_buffer_ptr);
   }
 }
@@ -54,15 +59,17 @@ TEST(HardwareBufferPoolTest, ShouldReturnNewHardwareBuffer) {
   HardwareBuffer* hardware_buffer_ptr = nullptr;
   // First request instantiates new HardwareBuffer.
   {
-    auto hardware_buffer = hardware_buffer_pool.GetBuffer(
-        GetTestHardwareBufferSpec(/*size_bytes=*/123));
+    MP_ASSERT_OK_AND_ASSIGN(auto hardware_buffer,
+                            hardware_buffer_pool.GetBuffer(
+                                GetTestHardwareBufferSpec(/*size_bytes=*/123)));
     hardware_buffer_ptr = hardware_buffer.get();
     EXPECT_NE(hardware_buffer_ptr, nullptr);
   }
   // Second request with different size returns new HardwareBuffer.
   {
-    auto hardware_buffer = hardware_buffer_pool.GetBuffer(
-        GetTestHardwareBufferSpec(/*size_bytes=*/567));
+    MP_ASSERT_OK_AND_ASSIGN(auto hardware_buffer,
+                            hardware_buffer_pool.GetBuffer(
+                                GetTestHardwareBufferSpec(/*size_bytes=*/567)));
     EXPECT_NE(hardware_buffer.get(), hardware_buffer_ptr);
   }
 }

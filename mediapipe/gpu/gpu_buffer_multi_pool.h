@@ -22,6 +22,7 @@
 #ifndef MEDIAPIPE_GPU_GPU_BUFFER_MULTI_POOL_H_
 #define MEDIAPIPE_GPU_GPU_BUFFER_MULTI_POOL_H_
 
+#include "absl/status/statusor.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/gpu/gpu_buffer.h"
 #include "mediapipe/gpu/multi_pool.h"
@@ -46,8 +47,9 @@ class GpuBufferMultiPool : public MultiPool<
  public:
   using MultiPool::MultiPool;
 
-  GpuBuffer GetBuffer(int width, int height,
-                      GpuBufferFormat format = GpuBufferFormat::kBGRA32) {
+  absl::StatusOr<GpuBuffer> GetBuffer(
+      int width, int height,
+      GpuBufferFormat format = GpuBufferFormat::kBGRA32) {
     return Get(internal::GpuBufferSpec(width, height, format));
   }
 };

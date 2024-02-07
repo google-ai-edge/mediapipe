@@ -21,6 +21,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/status/statusor.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/gpu/gl_texture_buffer.h"
 #include "mediapipe/gpu/multi_pool.h"
@@ -50,7 +51,7 @@ class GlTextureBufferPool : public ReusablePool<GlTextureBuffer> {
   int height() const { return spec_.height; }
   GpuBufferFormat format() const { return spec_.format; }
 
-  static GlTextureBufferSharedPtr CreateBufferWithoutPool(
+  static absl::StatusOr<GlTextureBufferSharedPtr> CreateBufferWithoutPool(
       const internal::GpuBufferSpec& spec) {
     return GlTextureBuffer::Create(spec);
   }

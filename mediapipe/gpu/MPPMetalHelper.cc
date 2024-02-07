@@ -211,14 +211,19 @@ class MetalHelperLegacySupport {
 
 - (mediapipe::GpuBuffer)mediapipeGpuBufferWithWidth:(int)width
                                              height:(int)height {
-  return _gpuResources->gpu_buffer_pool().GetBuffer(width, height);
+  auto gpu_buffer = _gpuResources->gpu_buffer_pool().GetBuffer(width, height);
+  ABSL_CHECK_OK(gpu_buffer);
+  return *gpu_buffer;
 }
 
 - (mediapipe::GpuBuffer)mediapipeGpuBufferWithWidth:(int)width
                                              height:(int)height
                                              format:(mediapipe::GpuBufferFormat)
                                                         format {
-  return _gpuResources->gpu_buffer_pool().GetBuffer(width, height, format);
+  auto gpu_buffer =
+      _gpuResources->gpu_buffer_pool().GetBuffer(width, height, format);
+  ABSL_CHECK_OK(gpu_buffer);
+  return *gpu_buffer;
 }
 
 - (id<MTLLibrary>)newLibraryWithResourceName:(NSString*)name

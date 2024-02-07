@@ -441,6 +441,7 @@ cc_library(
         "//mediapipe/objc:CFHolder",
         "//mediapipe/objc:util",
         "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/synchronization",
     ],
 )
@@ -674,6 +675,7 @@ cc_library(
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
     ] + select({
         "//conditions:default": [],
         "//mediapipe:apple": [
@@ -689,16 +691,10 @@ cc_library(
     hdrs = ["gl_texture_buffer_pool.h"],
     visibility = ["//visibility:public"],
     deps = [
-        ":gl_base",
         ":gl_texture_buffer",
-        ":gpu_buffer",
-        ":gpu_shared_data_header",
         ":multi_pool",
         ":reusable_pool",
-        "//mediapipe/framework:calculator_context",
-        "//mediapipe/framework:calculator_node",
-        "//mediapipe/framework/port:logging",
-        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/synchronization",
     ],
 )
@@ -708,7 +704,11 @@ cc_library(
     hdrs = ["reusable_pool.h"],
     deps = [
         ":multi_pool",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/functional:any_invocable",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/synchronization",
     ],
 )
@@ -716,7 +716,11 @@ cc_library(
 cc_library(
     name = "multi_pool",
     hdrs = ["multi_pool.h"],
-    deps = ["//mediapipe/util:resource_cache"],
+    deps = [
+        "//mediapipe/framework/port:status",
+        "//mediapipe/util:resource_cache",
+        "@com_google_absl//absl/status:statusor",
+    ],
 )
 
 cc_library(
@@ -753,6 +757,7 @@ cc_library(
         "//mediapipe/util:resource_cache",
         "@com_google_absl//absl/hash",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/synchronization",
     ] + select({
         "//conditions:default": [
@@ -868,6 +873,7 @@ cc_library(
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/synchronization",
     ] + select({
         "//conditions:default": [

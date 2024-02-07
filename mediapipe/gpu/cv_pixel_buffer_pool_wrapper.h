@@ -23,6 +23,7 @@
 #define MEDIAPIPE_GPU_CV_PIXEL_BUFFER_POOL_WRAPPER_H_
 
 #include "CoreFoundation/CFBase.h"
+#include "absl/status/statusor.h"
 #include "mediapipe/gpu/cv_texture_cache_manager.h"
 #include "mediapipe/gpu/gpu_buffer_format.h"
 #include "mediapipe/gpu/multi_pool.h"
@@ -45,14 +46,14 @@ class CvPixelBufferPoolWrapper {
         texture_caches);
   }
 
-  CFHolder<CVPixelBufferRef> GetBuffer();
+  absl::StatusOr<CFHolder<CVPixelBufferRef>> GetBuffer();
 
   int GetBufferCount() const { return count_; }
   std::string GetDebugString() const;
 
   void Flush();
 
-  static CFHolder<CVPixelBufferRef> CreateBufferWithoutPool(
+  static absl::StatusOr<CFHolder<CVPixelBufferRef>> CreateBufferWithoutPool(
       const internal::GpuBufferSpec& spec);
 
  private:

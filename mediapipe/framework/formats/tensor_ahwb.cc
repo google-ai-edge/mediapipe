@@ -212,7 +212,7 @@ Tensor::AHardwareBufferView Tensor::GetAHardwareBufferReadView() const {
       << "Tensor conversion between OpenGL texture and AHardwareBuffer is not "
          "supported.";
   bool transfer = ahwb_ == nullptr;
-  ABSL_CHECK(AllocateAHardwareBuffer())
+  ABSL_CHECK_OK(AllocateAHardwareBuffer())
       << "AHardwareBuffer is not supported on the target system.";
   valid_ |= kValidAHardwareBuffer;
   if (transfer) {
@@ -250,7 +250,7 @@ void Tensor::CreateEglSyncAndFd() const {
 Tensor::AHardwareBufferView Tensor::GetAHardwareBufferWriteView(
     int size_alignment) const {
   auto lock(absl::make_unique<absl::MutexLock>(&view_mutex_));
-  ABSL_CHECK(AllocateAHardwareBuffer(size_alignment))
+  ABSL_CHECK_OK(AllocateAHardwareBuffer(size_alignment))
       << "AHardwareBuffer is not supported on the target system.";
   valid_ = kValidAHardwareBuffer;
   return {ahwb_.get(),
@@ -260,7 +260,7 @@ Tensor::AHardwareBufferView Tensor::GetAHardwareBufferWriteView(
           &release_callback_,  std::move(lock)};
 }
 
-bool Tensor::AllocateAHardwareBuffer(int size_alignment) const {
+absl::Status Tensor::AllocateAHardwareBuffer(int size_alignment) const {
   // Mark current tracking key as Ahwb-use.
   if (auto it = ahwb_usage_track_.find(ahwb_tracking_key_);
       it != ahwb_usage_track_.end()) {
@@ -287,23 +287,18 @@ bool Tensor::AllocateAHardwareBuffer(int size_alignment) const {
                  HardwareBufferSpec::AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN |
                  HardwareBufferSpec::AHARDWAREBUFFER_USAGE_GPU_DATA_BUFFER;
     if (hardware_buffer_pool_ == nullptr) {
-      auto new_ahwb = HardwareBuffer::Create(spec);
-      if (!new_ahwb.ok()) {
-        ABSL_LOG(ERROR) << "Allocation of NDK Hardware Buffer failed: "
-                        << new_ahwb.status();
-        return false;
-      }
-      ahwb_ = std::make_shared<HardwareBuffer>(std::move(*new_ahwb));
+      MP_ASSIGN_OR_RETURN(auto new_ahwb, HardwareBuffer::Create(spec));
+      ahwb_ = std::make_shared<HardwareBuffer>(std::move(new_ahwb));
     } else {
-      ahwb_ = hardware_buffer_pool_->GetBuffer(spec);
+      MP_ASSIGN_OR_RETURN(ahwb_, hardware_buffer_pool_->GetBuffer(spec));
     }
   }
-  return true;
+  return absl::OkStatus();
 }
 
 bool Tensor::AllocateAhwbMapToSsbo() const {
   if (__builtin_available(android 26, *)) {
-    if (AllocateAHardwareBuffer()) {
+    if (AllocateAHardwareBuffer().ok()) {
       if (MapAHardwareBufferToGlBuffer(ahwb_->GetAHardwareBuffer(), bytes())
               .ok()) {
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);

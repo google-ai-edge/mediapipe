@@ -16,6 +16,7 @@
 
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
+#include "absl/status/statusor.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/legacy_calculator_support.h"
@@ -192,7 +193,7 @@ GpuBuffer GlCalculatorHelper::GpuBufferCopyingImageFrame(
   auto maybe_buffer = CreateCVPixelBufferCopyingImageFrame(image_frame);
   // Converts absl::StatusOr to absl::Status since ABSL_CHECK_OK() currently
   // only deals with absl::Status in MediaPipe OSS.
-  ABSL_CHECK_OK(maybe_buffer.status());
+  ABSL_CHECK_OK(maybe_buffer);
   return GpuBuffer(std::move(maybe_buffer).value());
 #else
   return GpuBuffer(GlTextureBuffer::Create(image_frame));
@@ -213,9 +214,10 @@ GlTexture GlCalculatorHelper::CreateDestinationTexture(int width, int height,
     CreateFramebuffer();
   }
 
-  GpuBuffer gpu_buffer =
+  auto gpu_buffer =
       gpu_resources_->gpu_buffer_pool().GetBuffer(width, height, format);
-  return MapGpuBuffer(gpu_buffer, gpu_buffer.GetWriteView<GlTextureView>(0));
+  ABSL_CHECK_OK(gpu_buffer);
+  return MapGpuBuffer(*gpu_buffer, gpu_buffer->GetWriteView<GlTextureView>(0));
 }
 
 GlTexture GlCalculatorHelper::CreateDestinationTexture(

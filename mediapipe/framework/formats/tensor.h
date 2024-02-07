@@ -27,6 +27,7 @@
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/log/absl_check.h"
+#include "absl/status/status.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/formats/tensor/internal.h"
 #include "mediapipe/framework/memory_manager.h"
@@ -406,7 +407,7 @@ class Tensor {
   // If the input parameter is 'true' then wait for the writing to be finished.
   mutable FinishingFunc ahwb_written_;
   mutable std::function<void()> release_callback_;
-  bool AllocateAHardwareBuffer(int size_alignment = 0) const;
+  absl::Status AllocateAHardwareBuffer(int size_alignment = 0) const;
   void CreateEglSyncAndFd() const;
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
   // Use Ahwb for other views: OpenGL / CPU buffer.

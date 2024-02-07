@@ -498,7 +498,7 @@ void Tensor::Invalidate() {
       mtl_resources_->device = nil;
     }
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
-    // Don't need to wait for the resource to be deleted bacause if will be
+    // Don't need to wait for the resource to be deleted because if will be
     // released on last reference deletion inside the OpenGL driver.
     std::swap(cleanup_gl_tex, opengl_texture2d_);
     std::swap(cleanup_gl_fb, frame_buffer_);
@@ -530,7 +530,7 @@ void Tensor::Invalidate() {
     absl::MutexLock lock(&view_mutex_);
     ReleaseAhwbStuff();
 
-    // Don't need to wait for the resource to be deleted bacause if will be
+    // Don't need to wait for the resource to be deleted because if will be
     // released on last reference deletion inside the OpenGL driver.
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
     std::swap(cleanup_gl_tex, opengl_texture2d_);
@@ -675,7 +675,7 @@ Tensor::CpuWriteView Tensor::GetCpuWriteView(
 void Tensor::AllocateCpuBuffer() const {
   if (!cpu_buffer_) {
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
-    if (use_ahwb_ && AllocateAHardwareBuffer()) return;
+    if (use_ahwb_ && AllocateAHardwareBuffer().ok()) return;
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
 #if MEDIAPIPE_METAL_ENABLED
     cpu_buffer_ = AllocateVirtualMemory(bytes());

@@ -21,6 +21,7 @@
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "mediapipe/framework/deps/no_destructor.h"
 #include "mediapipe/gpu/gl_context.h"
 #include "mediapipe/gpu/gl_context_options.pb.h"
@@ -241,8 +242,10 @@ static std::shared_ptr<GlTextureBuffer> GetGlTextureBufferFromPool(
         &cc->Service(kGpuService).GetObject().gpu_buffer_pool();
     // Note that the "gpu_buffer_pool" serves GlTextureBuffers on non-Apple
     // platforms. TODO: refactor into storage pools.
-    texture_buffer = pool->GetBuffer(width, height, format)
-                         .internal_storage<GlTextureBuffer>();
+    auto texture_buffer_from_pool = pool->GetBuffer(width, height, format);
+    ABSL_CHECK_OK(texture_buffer_from_pool);
+    texture_buffer =
+        texture_buffer_from_pool->internal_storage<GlTextureBuffer>();
   } else {
     texture_buffer = GlTextureBuffer::Create(width, height, format);
   }

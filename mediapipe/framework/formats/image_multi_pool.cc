@@ -104,7 +104,9 @@ ImageMultiPool::SimplePoolGpu ImageMultiPool::MakeSimplePoolGpu(
 
 Image ImageMultiPool::GetBufferFromSimplePool(
     IBufferSpec spec, const ImageMultiPool::SimplePoolGpu& pool) {
-  return Image(pool->GetBuffer());
+  auto buffer = pool->GetBuffer();
+  ABSL_CHECK_OK(buffer);
+  return Image(*std::move(buffer));
 }
 
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER

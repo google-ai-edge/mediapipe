@@ -5,7 +5,9 @@
 #include <utility>
 
 #include "absl/log/absl_check.h"
+#include "absl/status/statusor.h"
 #include "mediapipe/framework/formats/hardware_buffer.h"
+#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/gpu/multi_pool.h"
 #include "mediapipe/gpu/reusable_pool.h"
 
@@ -31,12 +33,10 @@ class HardwareBufferSpecPool : public ReusablePool<HardwareBuffer> {
     return std::shared_ptr<HardwareBufferSpecPool>(
         new HardwareBufferSpecPool(spec, options));
   }
-  static std::unique_ptr<HardwareBuffer> CreateBufferWithoutPool(
-      const HardwareBufferSpec& spec) {
-    auto hardware_buffer = HardwareBuffer::Create(spec);
-    // TODO Don't crash - return absl::Status to caller.
-    ABSL_CHECK_OK(hardware_buffer);
-    return std::make_unique<HardwareBuffer>(std::move(*hardware_buffer));
+  static absl::StatusOr<std::unique_ptr<HardwareBuffer>>
+  CreateBufferWithoutPool(const HardwareBufferSpec& spec) {
+    MP_ASSIGN_OR_RETURN(auto hardware_buffer, HardwareBuffer::Create(spec));
+    return std::make_unique<HardwareBuffer>(std::move(hardware_buffer));
   }
   const HardwareBufferSpec& spec() const { return spec_; }
 
@@ -62,7 +62,8 @@ class HardwareBufferPool
       : MultiPool<internal::HardwareBufferSpecPool, HardwareBufferSpec,
                   std::shared_ptr<HardwareBuffer>>(options) {}
 
-  std::shared_ptr<HardwareBuffer> GetBuffer(const HardwareBufferSpec& spec) {
+  absl::StatusOr<std::shared_ptr<HardwareBuffer>> GetBuffer(
+      const HardwareBufferSpec& spec) {
     return Get(spec);
   }
 };
