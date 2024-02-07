@@ -1175,7 +1175,6 @@ cc_library(
         ":image_to_tensor_utils",
         ":loose_headers",
         "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework:memory_manager",
         "//mediapipe/framework:memory_manager_service",
         "//mediapipe/framework:port",
         "//mediapipe/framework/api2:node",
