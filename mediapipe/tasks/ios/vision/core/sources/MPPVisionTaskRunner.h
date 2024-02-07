@@ -15,7 +15,6 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 
-#import "mediapipe/tasks/ios/core/sources/MPPTaskInfo.h"
 #import "mediapipe/tasks/ios/core/sources/MPPTaskRunner.h"
 #import "mediapipe/tasks/ios/vision/core/sources/MPPImage.h"
 #import "mediapipe/tasks/ios/vision/core/sources/MPPRunningMode.h"
@@ -31,11 +30,11 @@ NS_ASSUME_NONNULL_BEGIN
 @interface MPPVisionTaskRunner : MPPTaskRunner
 
 /**
- * Initializes a new `MPPVisionTaskRunner` with the taskInfo, running mode, whether task supports
- * region of interest, packets callback, image and norm rect input stream names. Make sure that the
- * packets callback is set properly based on the vision task's running mode. In case of live stream
- * running mode, a C++ packets callback that is intended to deliver inference results must be
- * provided. In case of image or video running mode, packets callback must be set to nil.
+ * Initializes a new `MPPVisionTaskRunner` with the given task info, running mode, whether task
+ * supports region of interest, packets callback, image and norm rect input stream names. Make sure
+ * that the packets callback is set properly based on the vision task's running mode. In case of
+ * live stream running mode, a C++ packets callback that is intended to deliver inference results
+ * must be provided. In case of image or video running mode, packets callback must be set to nil.
  *
  * @param taskInfo A `MPPTaskInfo` initialized by the task.
  * @param runningMode MediaPipe vision task running mode.
@@ -52,9 +51,9 @@ NS_ASSUME_NONNULL_BEGIN
  * @param error Pointer to the memory location where errors if any should be saved. If @c NULL, no
  * error will be saved.
  *
- * @return An instance of `MPPVisionTaskRunner` initialized with the given the taskInfo, running
- * mode, whether task supports region of interest, packets callback, image and norm rect input
- * stream names.
+ * @return An instance of `MPPVisionTaskRunner` initialized with the given task info, running mode,
+ * whether task supports region of interest, packets callback, image and norm rect input stream
+ * names.
  */
 
 - (nullable instancetype)initWithTaskInfo:(MPPTaskInfo *)taskInfo
@@ -226,10 +225,9 @@ NS_ASSUME_NONNULL_BEGIN
  */
 + (const char *)uniqueDispatchQueueNameWithSuffix:(NSString *)suffix;
 
-- (instancetype)initWithCalculatorGraphConfig:(mediapipe::CalculatorGraphConfig)graphConfig
-                              packetsCallback:
-                                  (mediapipe::tasks::core::PacketsCallback)packetsCallback
-                                        error:(NSError **)error NS_UNAVAILABLE;
+- (instancetype)initWithTaskInfo:(MPPTaskInfo *)taskInfo
+                 packetsCallback:(mediapipe::tasks::core::PacketsCallback)packetsCallback
+                           error:(NSError **)error NS_UNAVAILABLE;
 
 - (instancetype)init NS_UNAVAILABLE;
 

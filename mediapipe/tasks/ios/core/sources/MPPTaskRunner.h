@@ -14,6 +14,8 @@
 
 #import <Foundation/Foundation.h>
 
+#import "mediapipe/tasks/ios/core/sources/MPPTaskInfo.h"
+
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
 
@@ -43,8 +45,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, readonly) const mediapipe::CalculatorGraphConfig &graphConfig;
 
 /**
- * Initializes a new `MPPTaskRunner` with the MediaPipe calculator configuration proto and an
- * optional C++ packets callback.
+ * Initializes a new `MPPTaskRunner` with the given task info and an optional C++ packets callback.
  *
  * You can pass `nullptr` for `packetsCallback` in case the mode of operation requested by the user
  * is synchronous.
@@ -56,18 +57,17 @@ NS_ASSUME_NONNULL_BEGIN
  * task. Please see the documentation of the C++ Task Runner for more information on the synchronous
  * and asynchronous modes of operation.
  *
- * @param graphConfig A mediapipe task graph config proto.
+ * @param taskInfo A `MPPTaskInfo` initialized by the task.
  * @param packetsCallback An optional C++ callback function that takes a list of output packets as
  * the input argument. If provided, the callback must in turn call the block provided by the user in
  * the appropriate task options.
  *
- * @return An instance of `MPPTaskRunner` initialized to the given graph config proto and optional
- * packetsCallback.
+ * @return An instance of `MPPTaskRunner` initialized with the given task info and the optional C++
+ * packets callback.
  */
-- (instancetype)initWithCalculatorGraphConfig:(mediapipe::CalculatorGraphConfig)graphConfig
-                              packetsCallback:
-                                  (mediapipe::tasks::core::PacketsCallback)packetsCallback
-                                        error:(NSError **)error NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithTaskInfo:(MPPTaskInfo *)taskInfo
+                 packetsCallback:(mediapipe::tasks::core::PacketsCallback)packetsCallback
+                           error:(NSError **)error NS_DESIGNATED_INITIALIZER;
 
 /**
  * A synchronous method for invoking the C++ task runner for processing batch data or offline

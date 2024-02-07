@@ -20,19 +20,15 @@ using ::mediapipe::CalculatorGraphConfig;
 
 @implementation MPPTextTaskRunner
 
-- (instancetype)initWithCalculatorGraphConfig:(mediapipe::CalculatorGraphConfig)graphConfig
-                              packetsCallback:
-                                  (mediapipe::tasks::core::PacketsCallback)packetsCallback
-                                        error:(NSError **)error {
-  self = [super initWithCalculatorGraphConfig:graphConfig
-                              packetsCallback:packetsCallback
-                                        error:error];
+- (instancetype)initWithTaskInfo:(MPPTaskInfo *)taskInfo
+                 packetsCallback:(mediapipe::tasks::core::PacketsCallback)packetsCallback
+                           error:(NSError **)error {
+  self = [super initWithTaskInfo:taskInfo packetsCallback:packetsCallback error:error];
   return self;
 }
 
-- (instancetype)initWithCalculatorGraphConfig:(CalculatorGraphConfig)graphConfig
-                                        error:(NSError **)error {
-  return [self initWithCalculatorGraphConfig:graphConfig packetsCallback:nullptr error:error];
+- (instancetype)initWithTaskInfo:(MPPTaskInfo *)taskInfo error:(NSError **)error {
+  return [self initWithTaskInfo:taskInfo packetsCallback:nullptr error:error];
 }
 
 @end

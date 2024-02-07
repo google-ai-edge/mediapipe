@@ -103,9 +103,8 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
   }
 
   _runningMode = runningMode;
-  self = [super initWithCalculatorGraphConfig:[taskInfo generateGraphConfig]
-                              packetsCallback:packetsCallback
-                                        error:error];
+
+  self = [super initWithTaskInfo:taskInfo packetsCallback:packetsCallback error:error];
   return self;
 }
 
