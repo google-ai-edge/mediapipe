@@ -78,12 +78,15 @@ class _SafetensorsReader:
 
   def __init__(self, ckpt_path: str):
     shards = []
-    # Read all safetensors files within checkpoint
     if os.path.isdir(ckpt_path):
+      # Read all safetensors files within checkpoint
       for shard_path in glob.glob(os.path.join(ckpt_path, "*.safetensors")):
         shards.append(_SafetensorsShardReader(shard_path))
     else:
-      shards.append(_SafetensorsShardReader(ckpt_path))
+      # Assume the ckpt_path is a file or a file pattern to match.
+      for shard_path in glob.glob(ckpt_path):
+        shards.append(_SafetensorsShardReader(shard_path))
+    assert shards is not None
 
     self._ckpt_path = ckpt_path
     self._tensors_map = {}
@@ -348,6 +351,103 @@ class PhiMapper(converter_base.LayerActionMapperBase):
     return target_name
 
 
+class GminiMapper(converter_base.LayerActionMapperBase):
+  """LayerActionMapper for handling the StableLM model."""
+
+  def __init__(
+      self,
+      is_symmetric: bool,
+      attention_quant_bits: int,
+      feedforward_quant_bits: int,
+      embedding_quant_bits: int,
+      backend: str,
+      reader: _SafetensorsReader,
+  ):
+    super().__init__(
+        is_symmetric=is_symmetric,
+        attention_quant_bits=attention_quant_bits,
+        feedforward_quant_bits=feedforward_quant_bits,
+        embedding_quant_bits=embedding_quant_bits,
+        backend=backend,
+    )
+    self._reader = reader
+
+  def map_to_actions(
+      self, layer_name: str
+  ) -> Optional[List[converter_base.QuantizationAction]]:
+    """Map the given layer name to actions."""
+    tensor_value = self._reader.read_tensor_as_numpy(layer_name)
+    quantize_axis = None
+    quantize_bits = None
+    layer_type = LayerType.get_layer_type(layer_name)
+
+    if layer_type != LayerType.LAYER_NORM and layer_name.endswith(".weight"):
+      quantize_axis = [0]
+      if layer_type == LayerType.FEEDFORWARD:
+        quantize_bits = self._feedforward_quant_bits
+      elif layer_type == LayerType.ATTENTION:
+        quantize_bits = self._attention_quant_bits
+        if "o_proj" in layer_name:
+          tensor_value = np.transpose(tensor_value)
+          quantize_axis = [1]
+      elif layer_type == LayerType.EMBEDDING:
+        quantize_bits = self._embedding_quant_bits
+    target_name = self.update_target_name(layer_name)
+
+    actions = [
+        converter_base.QuantizationAction(
+            tensor_name=layer_name,
+            tensor_value=tensor_value,
+            target_name=target_name,
+            quantize_axis=quantize_axis,
+            quantize_bits=quantize_bits,
+            pack_dim=0,
+        )
+    ]
+    return actions
+
+  def update_target_name(self, target_name: str) -> str:
+    """Updates the target name to match the tensor name convention."""
+    target_name = target_name.replace(
+        "model.layers.", "params.lm.transformer.x_layers_"
+    )
+    target_name = target_name.replace("mlp.up_proj", "ff_layer.ffn_layer1")
+    target_name = target_name.replace("mlp.down_proj", "ff_layer.ffn_layer2")
+    target_name = target_name.replace(
+        "mlp.gate_proj", "ff_layer.ffn_layer1_gate"
+    )
+    target_name = target_name.replace("input_layernorm", "pre_layer_norm")
+    target_name = target_name.replace(
+        "pre_layer_norm.weight", "pre_layer_norm.scale"
+    )
+    if self._backend == "xnnpack":
+      target_name = target_name.replace(
+          "post_attention_layernorm", "ff_layer.pre_layer_norm"
+      )
+      target_name = target_name.replace(
+          "ff_layer.pre_layer_norm.weight", "ff_layer.pre_layer_norm.scale"
+      )
+    else:
+      target_name = target_name.replace(
+          "post_attention_layernorm", "post_layer_norm"
+      )
+      target_name = target_name.replace(
+          "post_layer_norm.weight", "post_layer_norm.scale"
+      )
+    target_name = target_name.replace("self_attn.q_proj", "self_attention.q")
+    target_name = target_name.replace("self_attn.k_proj", "self_attention.k")
+    target_name = target_name.replace("self_attn.v_proj", "self_attention.v")
+    target_name = target_name.replace("self_attn.o_proj", "self_attention.post")
+    target_name = target_name.replace(
+        "model.embed_tokens", "params.lm.softmax.logits_ffn"
+    )
+    target_name = target_name.replace("model.norm", "params.lm.final_ln")
+    target_name = target_name.replace("final_ln.weight", "final_ln.scale")
+    target_name = target_name.replace(".weight", ".w")
+
+    return target_name
+
+
 class SafetensorsCkptLoader(converter_base.CkptLoaderBase):
   """CkptLoader implementation for loading the Safetensors."""
 
@@ -399,6 +499,15 @@ class SafetensorsCkptLoader(converter_base.CkptLoaderBase):
       )
     elif special_model in ["PHI_2"]:
       self.mapper = PhiMapper(
+          is_symmetric,
+          attention_quant_bits,
+          feedforward_quant_bits,
+          embedding_quant_bits,
+          backend,
+          self._reader,
+      )
+    elif special_model in ["G_MINI_2B"]:
+      self.mapper = GminiMapper(
           is_symmetric,
           attention_quant_bits,
           feedforward_quant_bits,
