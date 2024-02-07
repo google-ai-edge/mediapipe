@@ -67,15 +67,44 @@ Image CppImageWithMPImage(MPPImage *image) {
 #pragma mark - Tests
 
 - (void)setUp {
-  [super setUp];
+  // Prevent illegal memory access when trying to compare pixel buffers when image files are not found.
+  self.continueAfterFailure = NO;
 }
 
 #pragma mark - Tests for Initializig `MPPImage`s with MediaPipe C++ Images
+
+- (void)testInitMPImageWithCppImageAndNilSourceImageFails {
+  // Initialize the source MPPImage whose properties will be used to initialize an MPPImage from a
+  // C++ `Image`.
+  MPPImage *sourceImage = [MPPImage imageWithFileInfo:kBurgerImageFileInfo];
+  XCTAssertNotNil(sourceImage);
+
+  // Create C++ `Image` from the source image.
+  Image sourceCppImage = CppImageWithMPImage(sourceImage);
+
+  // Create `MPPImage` from C++ `Image` with properties of the `sourceImage`.
+  NSError *error = nil;
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wnonnull"
+  MPPImage *image = [[MPPImage alloc] initWithCppImage:sourceCppImage
+                        cloningPropertiesOfSourceImage:nil
+                                   shouldCopyPixelData:YES
+                                                 error:&error];
+#pragma clang diagnostic pop
+  XCTAssertNil(image);
+
+  AssertEqualErrors(
+      error,
+      [NSError errorWithDomain:kExpectedErrorDomain
+                          code:MPPTasksErrorCodeInvalidArgumentError
+                      userInfo:@{NSLocalizedDescriptionKey : @"Source image cannot be nil."}]);
+}
 
 - (void)testInitMPImageOfSourceTypeUIImageWithCppImageSucceeds {
   // Initialize the source MPPImage whose properties will be used to initialize an MPPImage from a
   // C++ `Image`.
   MPPImage *sourceImage = [MPPImage imageWithFileInfo:kBurgerImageFileInfo];
+  XCTAssertNotNil(sourceImage);
 
   // Create C++ `Image` from the source image.
   Image sourceCppImage = CppImageWithMPImage(sourceImage);
@@ -100,6 +129,7 @@ Image CppImageWithMPImage(MPPImage *image) {
   // Initialize the source MPPImage whose properties will be used to initialize an MPPImage from a
   // C++ `Image`.
   MPPImage *sourceImage = [MPPImage imageWithFileInfo:kBurgerImageFileInfo];
+  XCTAssertNotNil(sourceImage);
 
   // Create C++ `Image` from the source image.
   Image sourceCppImage = CppImageWithMPImage(sourceImage);
@@ -125,6 +155,7 @@ Image CppImageWithMPImage(MPPImage *image) {
   // C++ `Image`.
   MPPImage *sourceImage = [MPPImage imageWithFileInfo:kBurgerImageFileInfo
                                            sourceType:MPPImageSourceTypePixelBuffer];
+  XCTAssertNotNil(sourceImage);
 
   // Create C++ `Image` from the source image.
   Image sourceCppImage = CppImageWithMPImage(sourceImage);
@@ -138,44 +169,10 @@ Image CppImageWithMPImage(MPPImage *image) {
   XCTAssertTrue(image.pixelBuffer != nullptr);
   AssertEqualMPImages(image, sourceImage);
 
-  ImageFrame *cppImageFrame = sourceCppImage.GetImageFrameSharedPtr().get();
-  XCTAssertEqual(cppImageFrame->Width(), CVPixelBufferGetWidth(image.pixelBuffer));
-  XCTAssertEqual(cppImageFrame->Height(), CVPixelBufferGetHeight(image.pixelBuffer));
-  XCTAssertEqual(cppImageFrame->WidthStep(), CVPixelBufferGetBytesPerRow(image.pixelBuffer));
+  CVPixelBufferRef pixelBuffer = image.pixelBuffer;
 
-  const UInt8 *cppImagePixels = cppImageFrame->PixelData();
-
-  CVPixelBufferLockBaseAddress(image.pixelBuffer, 0);
-  UInt8 *resultImagePixels = (UInt8 *)CVPixelBufferGetBaseAddress(image.pixelBuffer);
-
-  // Ensure that the underlying buffer of the created `MPPImage` is copied. In case of
-  // `CVPixelBuffer`s this is straightforward to test.
-  XCTAssertNotEqual(resultImagePixels, cppImagePixels);
-
-  NSInteger consistentPixels = 0;
-
-  // MediaPipe images only support inference of RGBA images. Thus `[MPPImage imageFrameWithError:]`
-  // returns RGBA image frames irrespective of the order of the channels in the `MPPImage`. The
-  // `MPPImage` being tested here has pixel ordering of BGRA since it is created using a
-  // `CVPixelBuffer` that supports only BGRA images. The pixel equality testing code below takes
-  // into account the differenc in the channel ordering.
-  const int kRIndexInRGBA = 0, kBIndexInRGBA = 2;
-  const int kRIndexInBGRA = 2, kBIndexInBGRA = 0;
-  const int kGIndex = 1, kAlphaIndex = 3;
-
-  for (int i = 0; i < image.height * image.width; ++i) {
-    consistentPixels +=
-        resultImagePixels[i * 4 + kBIndexInBGRA] == cppImagePixels[i * 4 + kBIndexInRGBA] ? 1 : 0;
-    consistentPixels +=
-        resultImagePixels[i * 4 + kGIndex] == cppImagePixels[i * 4 + kGIndex] ? 1 : 0;
-    consistentPixels +=
-        resultImagePixels[i * 4 + kRIndexInBGRA] == cppImagePixels[i * 4 + kRIndexInRGBA] ? 1 : 0;
-    consistentPixels +=
-        resultImagePixels[i * 4 + kAlphaIndex] == cppImagePixels[i * 4 + kAlphaIndex] ? 1 : 0;
-  }
-  CVPixelBufferUnlockBaseAddress(image.pixelBuffer, 0);
-
-  XCTAssertEqual(consistentPixels, cppImageFrame->Height() * cppImageFrame->WidthStep());
+  [MPPImageUtilsTests assertUnderlyingBufferOfCVPixelBuffer:pixelBuffer
+                                            equalToCPPImage:sourceCppImage];
 }
 
 - (void)testInitMPImageOfSourceTypePixelBufferWithCPPImageNoCopyFails {
@@ -183,6 +180,7 @@ Image CppImageWithMPImage(MPPImage *image) {
   // C++ `Image`.
   MPPImage *sourceImage = [MPPImage imageWithFileInfo:kBurgerImageFileInfo
                                            sourceType:MPPImageSourceTypePixelBuffer];
+  XCTAssertNotNil(sourceImage);
 
   // Create C++ `Image` from the source image.
   Image sourceCppImage = CppImageWithMPImage(sourceImage);
@@ -201,7 +199,60 @@ Image CppImageWithMPImage(MPPImage *image) {
                      code:MPPTasksErrorCodeInvalidArgumentError
                  userInfo:@{
                    NSLocalizedDescriptionKey :
-                       @"When the source type is pixel buffer, you cannot request uncopied data"
+                       @"When the source type is pixel buffer, you cannot request uncopied data."
+                 }]);
+}
+
+- (void)testInitMPImageOfSourceTypeSampleBufferWithCPPImageSuceeds {
+  // Initialize the source MPPImage whose properties will be used to initialize an MPPImage from a
+  // C++ `Image`.
+  MPPImage *sourceImage = [MPPImage imageWithFileInfo:kBurgerImageFileInfo
+                                           sourceType:MPPImageSourceTypeSampleBuffer];
+  XCTAssertNotNil(sourceImage);
+
+  // Create C++ `Image` from the source image.
+  Image sourceCppImage = CppImageWithMPImage(sourceImage);
+
+  NSError *error;
+  MPPImage *image = [[MPPImage alloc] initWithCppImage:sourceCppImage
+                        cloningPropertiesOfSourceImage:sourceImage
+                                   shouldCopyPixelData:YES
+                                                 error:&error];
+
+  XCTAssertTrue(image.sampleBuffer != nullptr);
+  AssertEqualMPImages(image, sourceImage);
+
+  CVPixelBufferRef pixelBuffer = (CVPixelBufferRef)CMSampleBufferGetImageBuffer(image.sampleBuffer);
+  [MPPImageUtilsTests assertUnderlyingBufferOfCVPixelBuffer:pixelBuffer
+                                            equalToCPPImage:sourceCppImage];
+}
+
+- (void)testInitMPImageOfSourceTypeSampleBufferWithCPPImageNoCopyFails {
+  // Initialize the source MPPImage whose properties will be used to initialize an MPPImage from a
+  // C++ `Image`.
+
+  MPPImage *sourceImage = [MPPImage imageWithFileInfo:kBurgerImageFileInfo
+                                           sourceType:MPPImageSourceTypeSampleBuffer];
+  XCTAssertNotNil(sourceImage);
+
+  // Create C++ `Image` from the source image.
+  Image sourceCppImage = CppImageWithMPImage(sourceImage);
+
+  NSError *error;
+  MPPImage *image = [[MPPImage alloc] initWithCppImage:sourceCppImage
+                        cloningPropertiesOfSourceImage:sourceImage
+                                   shouldCopyPixelData:NO
+                                                 error:&error];
+
+  XCTAssertNil(image);
+  AssertEqualErrors(
+      error,
+      [NSError
+          errorWithDomain:kExpectedErrorDomain
+                     code:MPPTasksErrorCodeInvalidArgumentError
+                 userInfo:@{
+                   NSLocalizedDescriptionKey :
+                       @"When the source type is sample buffer, you cannot request uncopied data."
                  }]);
 }
 
@@ -242,6 +293,48 @@ Image CppImageWithMPImage(MPPImage *image) {
   XCTAssertEqual(consistentPixels, cppImageFrame->Height() * cppImageFrame->WidthStep());
 
   CFRelease(resultImageData);
+}
+
++ (void)assertUnderlyingBufferOfCVPixelBuffer:(_Nonnull CVPixelBufferRef &)pixelBuffer
+                              equalToCPPImage:(const Image &)cppImage {
+  ImageFrame *cppImageFrame = cppImage.GetImageFrameSharedPtr().get();
+  XCTAssertEqual(cppImageFrame->Width(), CVPixelBufferGetWidth(pixelBuffer));
+  XCTAssertEqual(cppImageFrame->Height(), CVPixelBufferGetHeight(pixelBuffer));
+  XCTAssertEqual(cppImageFrame->WidthStep(), CVPixelBufferGetBytesPerRow(pixelBuffer));
+
+  const UInt8 *cppImagePixels = cppImageFrame->PixelData();
+
+  CVPixelBufferLockBaseAddress(pixelBuffer, 0);
+  UInt8 *resultImagePixels = (UInt8 *)CVPixelBufferGetBaseAddress(pixelBuffer);
+
+  // Ensure that the underlying buffer of the created `MPPImage` is copied. In case of
+  // `CVPixelBuffer`s this is straightforward to test.
+  XCTAssertNotEqual(resultImagePixels, cppImagePixels);
+
+  NSInteger consistentPixels = 0;
+
+  // MediaPipe images only support inference of RGBA images. Thus `[MPPImage imageFrameWithError:]`
+  // returns RGBA image frames irrespective of the order of the channels in the `MPPImage`. The
+  // `MPPImage` being tested here has pixel ordering of BGRA since it is created using a
+  // `CVPixelBuffer` that supports only BGRA images. The pixel equality testing code below takes
+  // into account the differenc in the channel ordering.
+  const int kRIndexInRGBA = 0, kBIndexInRGBA = 2;
+  const int kRIndexInBGRA = 2, kBIndexInBGRA = 0;
+  const int kGIndex = 1, kAlphaIndex = 3;
+
+  for (int i = 0; i < cppImageFrame->Width() * cppImageFrame->Height(); ++i) {
+    consistentPixels +=
+        resultImagePixels[i * 4 + kBIndexInBGRA] == cppImagePixels[i * 4 + kBIndexInRGBA] ? 1 : 0;
+    consistentPixels +=
+        resultImagePixels[i * 4 + kGIndex] == cppImagePixels[i * 4 + kGIndex] ? 1 : 0;
+    consistentPixels +=
+        resultImagePixels[i * 4 + kRIndexInBGRA] == cppImagePixels[i * 4 + kRIndexInRGBA] ? 1 : 0;
+    consistentPixels +=
+        resultImagePixels[i * 4 + kAlphaIndex] == cppImagePixels[i * 4 + kAlphaIndex] ? 1 : 0;
+  }
+  CVPixelBufferUnlockBaseAddress(pixelBuffer, 0);
+
+  XCTAssertEqual(consistentPixels, cppImageFrame->Height() * cppImageFrame->WidthStep());
 }
 
 @end
