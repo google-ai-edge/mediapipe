@@ -120,6 +120,8 @@ class InferenceCalculatorMetalImpl
 
 absl::Status InferenceCalculatorMetalImpl::UpdateContract(
     CalculatorContract* cc) {
+  MP_RETURN_IF_ERROR(EnforceVectorTensors(cc));
+
   RET_CHECK(!kDelegate(cc).IsConnected())
       << "Delegate configuration through side packet is not supported.";
   const auto& options = cc->Options<mediapipe::InferenceCalculatorOptions>();

@@ -236,6 +236,8 @@ absl::Status InferenceCalculatorGlImpl::GpuInferenceRunner::Process(
 }
 
 absl::Status InferenceCalculatorGlImpl::UpdateContract(CalculatorContract* cc) {
+  MP_RETURN_IF_ERROR(EnforceVectorTensors(cc));
+
   const auto& options = cc->Options<mediapipe::InferenceCalculatorOptions>();
   RET_CHECK(!options.model_path().empty() ^ kSideInModel(cc).IsConnected())
       << "Either model as side packet or model path in options is required.";

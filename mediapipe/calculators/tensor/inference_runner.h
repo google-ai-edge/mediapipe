@@ -1,6 +1,8 @@
 #ifndef MEDIAPIPE_CALCULATORS_TENSOR_INFERENCE_RUNNER_H_
 #define MEDIAPIPE_CALCULATORS_TENSOR_INFERENCE_RUNNER_H_
 
+#include <vector>
+
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/formats/tensor.h"
@@ -13,6 +15,8 @@ class InferenceRunner {
   virtual ~InferenceRunner() = default;
   virtual absl::StatusOr<std::vector<Tensor>> Run(
       CalculatorContext* cc, const std::vector<Tensor>& inputs) = 0;
+  virtual absl::StatusOr<std::vector<Tensor>> RunFromPointers(
+      CalculatorContext* cc, const std::vector<const Tensor*>& inputs) = 0;
 };
 
 }  // namespace mediapipe

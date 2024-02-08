@@ -135,7 +135,17 @@ void RunGraphThenClose(CalculatorGraph& graph, std::vector<Tensor> input_vec) {
   MP_ASSERT_OK(graph.WaitUntilDone());
 }
 
-void DoSmokeTest(const std::string& graph_proto) {
+void RunGraphOnUnwrappedTensorThenClose(CalculatorGraph& graph,
+                                        Tensor&& input_vec) {
+  MP_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
+      "tensor_in", MakePacket<Tensor>(std::move(input_vec)).At(Timestamp(0))));
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.CloseInputStream("tensor_in"));
+  MP_ASSERT_OK(graph.WaitUntilDone());
+}
+
+void DoSmokeTest(const std::string& graph_proto, bool use_vectors) {
   auto input_vec = CreateInputs();
 
   // Prepare single calculator graph to and wait for packets.
@@ -145,38 +155,78 @@ void DoSmokeTest(const std::string& graph_proto) {
   tool::AddVectorSink("tensor_out", &graph_config, &output_packets);
   CalculatorGraph graph(graph_config);
 
-  RunGraphThenClose(graph, std::move(input_vec));
+  if (use_vectors) {
+    RunGraphThenClose(graph, std::move(input_vec));
+  } else {
+    // Just run on first Tensor from input_vec
+    RunGraphOnUnwrappedTensorThenClose(graph, std::move(input_vec[0]));
+  }
 
   ASSERT_EQ(1, output_packets.size());
 
   // Get and process results.
-  const std::vector<Tensor>& result_vec =
-      output_packets[0].Get<std::vector<Tensor>>();
-  ASSERT_EQ(1, result_vec.size());
+  const Tensor* result;
+  if (use_vectors) {
+    const std::vector<Tensor>& result_vec =
+        output_packets[0].Get<std::vector<Tensor>>();
+    ASSERT_EQ(1, result_vec.size());
+    result = &(result_vec[0]);
+  } else {
+    result = &(output_packets[0].Get<Tensor>());
+  }
 
-  const Tensor& result = result_vec[0];
-  auto view = result.GetCpuReadView();
+  auto view = result->GetCpuReadView();
   auto result_buffer = view.buffer<float>();
   ASSERT_NE(result_buffer, nullptr);
-  for (int i = 0; i < result.shape().num_elements(); i++) {
+  for (int i = 0; i < result->shape().num_elements(); i++) {
     ASSERT_EQ(3, result_buffer[i]);
   }
 }
 
-// Tests a simple add model that adds an input tensor to itself.
-TEST(InferenceCalculatorTest, SmokeTest) {
-  // Test CPU inference only.
+// Tests a simple add model that adds an input tensor to itself. We test CPU
+// inference only.
+TEST(InferenceCalculatorTest, SmokeTestTflite) {
   DoSmokeTest(/*graph_proto=*/absl::StrReplaceAll(
-      kGraphWithModelPathInOption, {{"$delegate", "delegate { tflite {} }"}}));
+                  kGraphWithModelPathInOption,
+                  {{"$delegate", "delegate { tflite {} }"}}),
+              /*use_vectors=*/true);
+}
+TEST(InferenceCalculatorTest, SmokeTestXnnpack) {
   DoSmokeTest(absl::StrReplaceAll(kGraphWithModelPathInOption,
-                                  {{"$delegate", "delegate { xnnpack {} }"}}));
+                                  {{"$delegate", "delegate { xnnpack {} }"}}),
+              true);
+}
+TEST(InferenceCalculatorTest, SmokeTestXnnpackMultithread) {
   DoSmokeTest(absl::StrReplaceAll(
+                  kGraphWithModelPathInOption,
+                  {{"$delegate", "delegate { xnnpack { num_threads: 10 } }"}}),
+              true);
+}
+
+// Run our above CPU inference SmokeTests, but with graphs altered to use the
+// new `TENSOR` inputs and outputs.
+void DoUnwrappedTensorSmokeTest(const std::string& graph_proto) {
+  const auto& unwrapped_tensor_graph =
+      absl::StrReplaceAll(graph_proto, {{"TENSORS:", "TENSOR:"}});
+  DoSmokeTest(/*graph_proto=*/unwrapped_tensor_graph, /*use_vectors=*/false);
+}
+
+TEST(InferenceCalculatorTest, SmokeTestTfliteUnwrapped) {
+  DoUnwrappedTensorSmokeTest(/*graph_proto=*/absl::StrReplaceAll(
+      kGraphWithModelPathInOption, {{"$delegate", "delegate { tflite {} }"}}));
+}
+TEST(InferenceCalculatorTest, SmokeTestXnnpackUnwrapped) {
+  DoUnwrappedTensorSmokeTest(absl::StrReplaceAll(
+      kGraphWithModelPathInOption, {{"$delegate", "delegate { xnnpack {} }"}}));
+}
+TEST(InferenceCalculatorTest, SmokeTestXnnpackMultithreadUnwrapped) {
+  DoUnwrappedTensorSmokeTest(absl::StrReplaceAll(
       kGraphWithModelPathInOption,
       {{"$delegate", "delegate { xnnpack { num_threads: 10 } }"}}));
 }
 
 TEST(InferenceCalculatorTest, ModelAsInputSidePacketSmokeTest) {
-  DoSmokeTest(kGraphWithModelAsInputSidePacket);
+  DoSmokeTest(kGraphWithModelAsInputSidePacket, /*use_vectors=*/true);
 }
 
 void BM_InitializeCalculator(benchmark::State& state) {

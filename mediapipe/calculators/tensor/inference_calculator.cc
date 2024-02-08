@@ -23,6 +23,9 @@
 #include "absl/strings/string_view.h"
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
 #include "mediapipe/framework/api2/packet.h"
+#include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/port/ret_check.h"
+#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/tool/subgraph_expansion.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
 
@@ -74,6 +77,14 @@ class InferenceCalculatorSelectorImpl
     return absl::UnimplementedError("no implementation available");
   }
 };
+
+absl::Status InferenceCalculator::EnforceVectorTensors(CalculatorContract* cc) {
+  RET_CHECK(kInTensors(cc).IsConnected() && kOutTensors(cc).IsConnected())
+      << "This delegate requires TENSORS to be used.";
+  RET_CHECK(kInTensor(cc).Count() == 0 && kOutTensor(cc).Count() == 0)
+      << "This delegate does not support TENSOR; only TENSORS";
+  return absl::OkStatus();
+}
 
 absl::StatusOr<Packet<TfLiteModelPtr>> InferenceCalculator::GetModelAsPacket(
     CalculatorContext* cc) {

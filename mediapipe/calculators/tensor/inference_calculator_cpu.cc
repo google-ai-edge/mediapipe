@@ -23,6 +23,8 @@
 #include "mediapipe/calculators/tensor/inference_calculator_utils.h"
 #include "mediapipe/calculators/tensor/inference_interpreter_delegate_runner.h"
 #include "mediapipe/calculators/tensor/inference_runner.h"
+#include "mediapipe/framework/formats/tensor.h"
+#include "mediapipe/framework/port/status_macros.h"
 #include "tensorflow/lite/interpreter.h"
 #if defined(MEDIAPIPE_ANDROID)
 #include "tensorflow/lite/delegates/nnapi/nnapi_delegate.h"
@@ -45,7 +47,8 @@ class InferenceCalculatorCpuImpl
   absl::StatusOr<std::unique_ptr<InferenceRunner>> CreateInferenceRunner(
       CalculatorContext* cc);
   absl::StatusOr<TfLiteDelegatePtr> MaybeCreateDelegate(CalculatorContext* cc);
-
+  absl::Status ProcessTensors(CalculatorContext* cc);
+  absl::Status ProcessTensorVectors(CalculatorContext* cc);
   std::unique_ptr<InferenceRunner> inference_runner_;
 };
 
@@ -55,6 +58,15 @@ absl::Status InferenceCalculatorCpuImpl::UpdateContract(
   RET_CHECK(!options.model_path().empty() ^ kSideInModel(cc).IsConnected())
       << "Either model as side packet or model path in options is required.";
 
+  // TODO: When this becomes integrated into additional
+  // InferenceCalculator variants, refactor into a common helper.
+  RET_CHECK(kInTensors(cc).IsConnected() ^ (kInTensor(cc).Count() > 0))
+      << "Exactly one of TENSORS and TENSOR must be used for input.";
+  RET_CHECK(kOutTensors(cc).IsConnected() ^ (kOutTensor(cc).Count() > 0))
+      << "Exactly one of TENSORS and TENSOR must be used for output.";
+  RET_CHECK(kInTensors(cc).IsConnected() ^ (kOutTensor(cc).Count() > 0))
+      << "TENSORS and TENSOR cannot be used together.";
+
   return absl::OkStatus();
 }
 
@@ -63,7 +75,9 @@ absl::Status InferenceCalculatorCpuImpl::Open(CalculatorContext* cc) {
   return absl::OkStatus();
 }
 
-absl::Status InferenceCalculatorCpuImpl::Process(CalculatorContext* cc) {
+absl::Status InferenceCalculatorCpuImpl::ProcessTensorVectors(
+    CalculatorContext* cc) {
+  // Skip if empty input stream, but error if input vector is empty.
   if (kInTensors(cc).IsEmpty()) {
     return absl::OkStatus();
   }
@@ -74,6 +88,36 @@ absl::Status InferenceCalculatorCpuImpl::Process(CalculatorContext* cc) {
                       inference_runner_->Run(cc, input_tensors));
   kOutTensors(cc).Send(std::move(output_tensors));
   return absl::OkStatus();
+}
+
+absl::Status InferenceCalculatorCpuImpl::ProcessTensors(CalculatorContext* cc) {
+  // First, wrap inputs into a vector of pointers, returning early if any empty
+  // streams.
+  std::vector<const Tensor*> input_tensor_pointers;
+  for (int i = 0; i < kInTensor(cc).Count(); ++i) {
+    if (kInTensor(cc)[i].IsEmpty()) {
+      return absl::OkStatus();
+    }
+    input_tensor_pointers.push_back(&(*kInTensor(cc)[i]));
+  }
+
+  // Then perform inference
+  MP_ASSIGN_OR_RETURN(
+      std::vector<Tensor> output_tensors,
+      inference_runner_->RunFromPointers(cc, input_tensor_pointers));
+
+  // And pipe each one into the appropriate output stream
+  for (int i = 0; i < output_tensors.size(); ++i) {
+    kOutTensor(cc)[i].Send(std::move(output_tensors[i]));
+  }
+  return absl::OkStatus();
+}
+
+absl::Status InferenceCalculatorCpuImpl::Process(CalculatorContext* cc) {
+  if (kInTensors(cc).IsConnected()) {
+    return ProcessTensorVectors(cc);
+  }
+  return ProcessTensors(cc);
 }
 
 absl::Status InferenceCalculatorCpuImpl::Close(CalculatorContext* cc) {

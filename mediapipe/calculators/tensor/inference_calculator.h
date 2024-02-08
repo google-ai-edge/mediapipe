@@ -93,7 +93,16 @@ namespace api2 {
 
 class InferenceCalculator : public NodeIntf {
  public:
-  static constexpr Input<std::vector<Tensor>> kInTensors{"TENSORS"};
+  // Default API: inputs and outputs will be passed as a single vector.
+  static constexpr Input<std::vector<Tensor>>::Optional kInTensors{"TENSORS"};
+  static constexpr Output<std::vector<Tensor>>::Optional kOutTensors{"TENSORS"};
+
+  // New API (not yet supported by all subclasses): inputs and outputs will be
+  // passed as multiple (ordered) Tensor streams. Only one of the two APIs can
+  // be used, so TENSORS and TENSOR are mutually exclusive.
+  static constexpr Input<Tensor>::Multiple kInTensor{"TENSOR"};
+  static constexpr Output<Tensor>::Multiple kOutTensor{"TENSOR"};
+
   // Deprecated. Prefers to use "OP_RESOLVER" input side packet instead.
   // TODO: Removes the "CUSTOM_OP_RESOLVER" side input after the
   // migration.
@@ -102,18 +111,21 @@ class InferenceCalculator : public NodeIntf {
   static constexpr SideInput<tflite::OpResolver>::Optional kSideInOpResolver{
       "OP_RESOLVER"};
   static constexpr SideInput<TfLiteModelPtr>::Optional kSideInModel{"MODEL"};
-  static constexpr Output<std::vector<Tensor>> kOutTensors{"TENSORS"};
   static constexpr SideInput<
       mediapipe::InferenceCalculatorOptions::Delegate>::Optional kDelegate{
       "DELEGATE"};
-  MEDIAPIPE_NODE_CONTRACT(kInTensors, kSideInCustomOpResolver,
+  MEDIAPIPE_NODE_CONTRACT(kInTensors, kInTensor, kSideInCustomOpResolver,
                           kSideInOpResolver, kSideInModel, kOutTensors,
-                          kDelegate);
+                          kOutTensor, kDelegate);
 
  protected:
   using TfLiteDelegatePtr =
       std::unique_ptr<TfLiteOpaqueDelegate,
                       std::function<void(TfLiteOpaqueDelegate*)>>;
+
+  // Helper to be used in subclass UpdateContract calls to enforce common I/O
+  // constraints until TENSOR is supported everywhere.
+  static absl::Status EnforceVectorTensors(CalculatorContract* cc);
 
   static absl::StatusOr<Packet<TfLiteModelPtr>> GetModelAsPacket(
       CalculatorContext* cc);

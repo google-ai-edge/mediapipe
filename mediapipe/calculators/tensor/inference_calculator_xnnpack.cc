@@ -24,6 +24,7 @@
 #include "mediapipe/calculators/tensor/inference_calculator_utils.h"
 #include "mediapipe/calculators/tensor/inference_interpreter_delegate_runner.h"
 #include "mediapipe/calculators/tensor/inference_runner.h"
+#include "mediapipe/framework/port/status_macros.h"
 #include "tensorflow/lite/delegates/xnnpack/xnnpack_delegate.h"
 #include "tensorflow/lite/interpreter.h"
 
@@ -50,6 +51,8 @@ class InferenceCalculatorXnnpackImpl
 
 absl::Status InferenceCalculatorXnnpackImpl::UpdateContract(
     CalculatorContract* cc) {
+  MP_RETURN_IF_ERROR(EnforceVectorTensors(cc));
+
   const auto& options = cc->Options<mediapipe::InferenceCalculatorOptions>();
   RET_CHECK(!options.model_path().empty() ^ kSideInModel(cc).IsConnected())
       << "Either model as side packet or model path in options is required.";

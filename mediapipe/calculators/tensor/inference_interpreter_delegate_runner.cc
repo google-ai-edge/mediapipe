@@ -14,6 +14,7 @@
 
 #include "mediapipe/calculators/tensor/inference_interpreter_delegate_runner.h"
 
+#include <cstdint>
 #include <memory>
 #include <vector>
 
@@ -85,6 +86,9 @@ class InferenceInterpreterDelegateRunner : public InferenceRunner {
 
   absl::StatusOr<std::vector<Tensor>> Run(
       CalculatorContext* cc, const std::vector<Tensor>& input_tensors) override;
+  absl::StatusOr<std::vector<Tensor>> RunFromPointers(
+      CalculatorContext* cc,
+      const std::vector<const Tensor*>& input_tensors) override;
 
  private:
   api2::Packet<TfLiteModelPtr> model_;
@@ -94,6 +98,19 @@ class InferenceInterpreterDelegateRunner : public InferenceRunner {
 
 absl::StatusOr<std::vector<Tensor>> InferenceInterpreterDelegateRunner::Run(
     CalculatorContext* cc, const std::vector<Tensor>& input_tensors) {
+  // We wrap our input tensors into a vector of non-owning pointers, so we can
+  // use the same code for both our Run functions.
+  std::vector<const Tensor*> input_tensors_wrapped;
+  input_tensors_wrapped.reserve(input_tensors.size());
+  for (const auto& input_tensor : input_tensors) {
+    input_tensors_wrapped.push_back(&input_tensor);
+  }
+  return RunFromPointers(cc, input_tensors_wrapped);
+}
+
+absl::StatusOr<std::vector<Tensor>>
+InferenceInterpreterDelegateRunner::RunFromPointers(
+    CalculatorContext* cc, const std::vector<const Tensor*>& input_tensors) {
   // Read CPU input into tensors.
   RET_CHECK_EQ(interpreter_->inputs().size(), input_tensors.size());
 
@@ -101,8 +118,9 @@ absl::StatusOr<std::vector<Tensor>> InferenceInterpreterDelegateRunner::Run(
   // resized and reallocated before we can copy the tensor values.
   bool resized_tensor_shapes = false;
   for (int i = 0; i < input_tensors.size(); ++i) {
-    if (input_tensors[i].shape().is_dynamic) {
-      interpreter_->ResizeInputTensorStrict(i, input_tensors[i].shape().dims);
+    const Tensor& input_tensor = *(input_tensors[i]);
+    if (input_tensor.shape().is_dynamic) {
+      interpreter_->ResizeInputTensorStrict(i, input_tensor.shape().dims);
       resized_tensor_shapes = true;
     }
   }
@@ -114,31 +132,32 @@ absl::StatusOr<std::vector<Tensor>> InferenceInterpreterDelegateRunner::Run(
   for (int i = 0; i < input_tensors.size(); ++i) {
     const TfLiteType input_tensor_type =
         interpreter_->tensor(interpreter_->inputs()[i])->type;
+    const Tensor& input_tensor = *(input_tensors[i]);
     switch (input_tensor_type) {
       case TfLiteType::kTfLiteFloat16:
       case TfLiteType::kTfLiteFloat32: {
-        CopyTensorBufferToInterpreter<float>(input_tensors[i],
-                                             interpreter_.get(), i);
+        CopyTensorBufferToInterpreter<float>(input_tensor, interpreter_.get(),
+                                             i);
         break;
       }
       case TfLiteType::kTfLiteUInt8: {
-        CopyTensorBufferToInterpreter<uint8_t>(input_tensors[i],
-                                               interpreter_.get(), i);
+        CopyTensorBufferToInterpreter<uint8_t>(input_tensor, interpreter_.get(),
+                                               i);
         break;
       }
       case TfLiteType::kTfLiteInt8: {
-        CopyTensorBufferToInterpreter<int8_t>(input_tensors[i],
-                                              interpreter_.get(), i);
+        CopyTensorBufferToInterpreter<int8_t>(input_tensor, interpreter_.get(),
+                                              i);
         break;
       }
       case TfLiteType::kTfLiteInt32: {
-        CopyTensorBufferToInterpreter<int32_t>(input_tensors[i],
-                                               interpreter_.get(), i);
+        CopyTensorBufferToInterpreter<int32_t>(input_tensor, interpreter_.get(),
+                                               i);
         break;
       }
       case TfLiteType::kTfLiteString: {
-        CopyTensorBufferToInterpreter<char>(input_tensors[i],
-                                            interpreter_.get(), i);
+        CopyTensorBufferToInterpreter<char>(input_tensor, interpreter_.get(),
+                                            i);
         break;
       }
       case TfLiteType::kTfLiteBool:
