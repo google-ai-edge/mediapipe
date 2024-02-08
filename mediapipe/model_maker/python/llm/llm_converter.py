@@ -17,7 +17,7 @@ class ConversionConfig(object):
   Attributes:
     input_ckpt: Directory or path for the input checkpoint.
     ckpt_format: Checkpoint format, e.g. 'safetensors', 'pytorch'.
-    model_type: Name of the model, e.g. G_MINI_2B.
+    model_type: Name of the model, e.g. GEMMA_2B.
     backend: Target backend to run the model. Can be either xnnpack (CPU) or
       ml_drift (GPU).
     output_dir: Where the output file(s) to be stored.
