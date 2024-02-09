@@ -1,28 +1,3 @@
-diff --git a/tensorflow/tsl/lib/monitoring/percentile_sampler.cc b/tensorflow/tsl/lib/monitoring/percentile_sampler.cc
-index b7c22ae77ba..d0ba7b48b4b 100644
---- a/tensorflow/tsl/lib/monitoring/percentile_sampler.cc
-+++ b/tensorflow/tsl/lib/monitoring/percentile_sampler.cc
-@@ -29,7 +29,8 @@ namespace monitoring {
- void PercentileSamplerCell::Add(double sample) {
-   uint64 nstime = EnvTime::NowNanos();
-   mutex_lock l(mu_);
--  samples_[next_position_] = {nstime, sample};
-+  samples_[next_position_].nstime = nstime;
-+  samples_[next_position_].value = sample;
-   ++next_position_;
-   if (TF_PREDICT_FALSE(next_position_ >= samples_.size())) {
-     next_position_ = 0;
-@@ -73,7 +74,9 @@ Percentiles PercentileSamplerCell::value() const {
-       size_t index = std::min<size_t>(
-           static_cast<size_t>(percentile * pct_samples.num_samples / 100.0),
-           pct_samples.num_samples - 1);
--      PercentilePoint pct = {percentile, samples[index].value};
-+      PercentilePoint pct;
-+      pct.percentile = percentile;
-+      pct.value = samples[index].value;
-       pct_samples.points.push_back(pct);
-     }
-   }
 diff --git a/third_party/eigen3/eigen_archive.BUILD b/third_party/eigen3/eigen_archive.BUILD
 index 5514f774c35..1a38f76f4e9 100644
 --- a/third_party/eigen3/eigen_archive.BUILD
@@ -54,17 +29,4 @@ index 462ec7c2218..f2b583a4cbd 100644
      # copybara:comment_end
  
  def gpu_delegate_linkopts():
-diff --git a/tensorflow/tsl/platform/windows/error_windows.cc b/tensorflow/tsl/platform/windows/error_windows.cc
-index fea37ddb2ea..4070ea55425 100644
---- a/tensorflow/tsl/platform/windows/error_windows.cc
-+++ b/tensorflow/tsl/platform/windows/error_windows.cc
-@@ -15,8 +15,8 @@ limitations under the License.
- 
- #include "tensorflow/tsl/platform/windows/error_windows.h"
- 
--#include <Windows.h>
- #include <Winsock2.h>
-+#include <Windows.h>
- 
- #include <string>
  
