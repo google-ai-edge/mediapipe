@@ -50,6 +50,8 @@ build:android --linkopt=-ldl
 build:android --linkopt=-llog
 build:android --linkopt=-lm
 build:android --linkopt=-Wl,--gc-sections
+# TODO: Remove this flag once we updated to NDK 25
+build:android --define=xnn_enable_arm_i8mm=false
 
 build:android_arm --config=android
 build:android_arm --cpu=armeabi-v7a
