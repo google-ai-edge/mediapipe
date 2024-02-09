@@ -91,7 +91,6 @@ http_archive(
 )
 
 load("@rules_android_ndk//:rules.bzl", "android_ndk_repository")
-register_toolchains("@androidndk//:all")
 
 # TODO: This is an are indirect depedency. We should factor it out.
 http_archive(
