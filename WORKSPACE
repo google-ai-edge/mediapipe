@@ -66,6 +66,23 @@ http_archive(
     ],
 )
 
+http_archive(
+    name = "cpuinfo",
+    sha256 = "a615cac78fad03952cc3e1fd231ce789a8df6e81a5957b64350cb8200364b385",
+    strip_prefix = "cpuinfo-d6860c477c99f1fce9e28eb206891af3c0e1a1d7",
+    urls = [
+        "https://github.com/pytorch/cpuinfo/archive/d6860c477c99f1fce9e28eb206891af3c0e1a1d7.zip"
+    ],
+)
+
+# XNNPACK on 2024-02-09
+http_archive(
+    name = "XNNPACK",
+    sha256 = "891c1169c13958f570d8b17c8f468039f333b6ca6614d8746643e8d08a2f1999",
+    strip_prefix = "XNNPACK-6db74a6d4635b2890523fc445ce5f5dad1a56908",
+    url = "https://github.com/google/XNNPACK/archive/6db74a6d4635b2890523fc445ce5f5dad1a56908.zip",
+)
+
 # TODO: This is an are indirect depedency. We should factor it out.
 http_archive(
     name = "pthreadpool",
