@@ -27,8 +27,11 @@ class ConversionConfig(object):
     embedding_quant_bits: Target quantization bits for the embedding layers.
     combine_file_only: Whether to combine the weight files only (assuming the
       weight files are already existed).
-    vocab_model_file: The file path to the SentencePiece vocab model. If
-      provided, the model will be packed into the resulting TfLite file.
+    vocab_model_file: The file path to the 1) SentencePiece vocab model; 2)
+      Hugging Face BPE tokenizer files; 1) is applicable for the Gemma model and
+      2) is applicable for other models. When 2) is used, the provided path is
+      expected to point to a directory that contains both tokenizer.json and
+      tokenizer_config.json files.
     output_tflite_file: (optional) the output tflite filename. If not provided,
       the output will be `model.tflite` stored in the output_dir.
   """
@@ -154,9 +157,27 @@ def combined_weight_bins_to_tflite(
     raise ValueError('Unsupported backend: %s' % backend)
 
 
+def convert_bpe_vocab(vocab_model_file: str, output_dir: str) -> str:
+  if not os.path.isdir(vocab_model_file):
+    raise ValueError(
+        'The input BPE vocab model file path is expected to be a directory that'
+        ' conatins both tokenizer.json and tokenizer_config.json files.'
+    )
+  output_vocab_file = os.path.join(output_dir, 'spm.model')
+  model_ckpt_util.ConvertHfTokenizer(vocab_model_file, output_vocab_file)
+  return output_vocab_file
+
+
 def convert_checkpoint(config: ConversionConfig) -> None:
   """Converts the checkpoint to tflite file."""
   logging.info('input folder: %s', config.input_ckpt)
+
+  if config.model_type == 'GEMMA_2B':
+    vocab_model_path = config.vocab_model_file
+  else:
+    vocab_model_path = convert_bpe_vocab(
+        config.vocab_model_file, config.output_dir
+    )
 
   if not config.combine_file_only:
     # Load the layer weights and prepare the quantization configurations.
@@ -190,5 +211,5 @@ def convert_checkpoint(config: ConversionConfig) -> None:
       config.backend,
       weight_path=config.output_dir,
       output_tflite_file=config.output_tflite_file,
-      vocab_model_file=config.vocab_model_file,
+      vocab_model_file=vocab_model_path,
   )

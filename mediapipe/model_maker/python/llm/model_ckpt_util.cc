@@ -17,6 +17,7 @@
 
 #include "odml/infra/genai/inference/utils/xnn_utils/model_ckpt_util.h"
 
+#include "mediapipe/tasks/cc/text/utils/vocab_convert_utils.h"
 #include "odml/infra/genai/inference/ml_drift/llm/tensor_loaders/model_ckpt_util.h"
 #include "pybind11/pybind11.h"
 #include "third_party/pybind11_abseil/status_casters.h"
@@ -31,6 +32,9 @@ PYBIND11_MODULE(model_ckpt_util, m) {
   m.def("GenerateMlDriftTfLite", &odml::infra::gpu::GenerateTfLite,
         "Generates the TfLite flatbuffer file from the serialized weight files "
         "for ML Drift.");
+  m.def("ConvertHfTokenizer", &mediapipe::tasks::text::ConvertHfTokenizer,
+        "Converts the HuggingeFace BPE tokenizer to internal SentencePiece "
+        "vocab model.");
 }
 
 #endif  // MEDIAPIPE_TASKS_TOOLS_MODEL_CKPT_UTIL_H_
