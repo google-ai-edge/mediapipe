@@ -22,11 +22,6 @@ option java_outer_classname = "LlmOptionsProto";
 
 // Configurable parameters for creating an LLM session.
 message LlmSessionConfig {
-  enum LlmBackend {
-    UNKNOWN_DELEGATE = 0;
-    CPU = 1;
-    GPU = 2;
-  }
   // Path to the tflite model file.
   string model_path = 1;
 
@@ -34,8 +29,7 @@ message LlmSessionConfig {
   // directory provided through model_path will be used for caching purposes.
   string cache_dir = 2;
 
-  // The backend to use for processing.
-  LlmBackend backend = 3;
+  reserved 3;
 
   // The number of input tokens to process at a time for batch processing
   uint32 sequence_batch_size = 4;
