@@ -16,7 +16,6 @@
 
 from mediapipe.model_maker.python.llm import converter_base
 from mediapipe.model_maker.python.llm import pytorch_converter
-from mediapipe.model_maker.python.llm import roc_converter
 from mediapipe.model_maker.python.llm import safetensors_converter
 from mediapipe.model_maker.python.llm import weight_bins_writer
 
