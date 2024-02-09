@@ -18,6 +18,9 @@
 #include "absl/log/absl_check.h"
 #include "mediapipe/framework/deps/no_destructor.h"
 #include "mediapipe/framework/port/logging.h"
+#if !MEDIAPIPE_DISABLE_GPU
+#include "mediapipe/gpu/gl_base.h"
+#endif
 
 namespace mediapipe {
 
@@ -79,6 +82,10 @@ const GlTextureInfo& GlTextureInfoForGpuBufferFormat(GpuBufferFormat format,
   static const mediapipe::NoDestructor<
       absl::flat_hash_map<GpuBufferFormat, std::vector<GlTextureInfo>>>
       gles3_format_info{{
+          {GpuBufferFormat::kRGBA32,
+           {
+               {GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, 1},
+           }},
           {GpuBufferFormat::kBGRA32,
            {
   // internal_format, format, type, downscale

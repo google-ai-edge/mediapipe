@@ -356,6 +356,16 @@ cc_library(
     }),
 )
 
+cc_test(
+    name = "gpu_buffer_format_test",
+    srcs = ["gpu_buffer_format_test.cc"],
+    deps = [
+        ":gl_base_hdr",
+        ":gpu_buffer_format",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "gpu_buffer_storage",
     srcs = ["gpu_buffer_storage.cc"],
