@@ -14,15 +14,6 @@ extern "C" {
 
 typedef void LlmInferenceEngine_Session;
 
-// Backend to execute the large language model.
-enum LlmBackend {
-  // CPU
-  kCPU,
-
-  // GPU
-  kGPU,
-};
-
 // LlmSessionConfig configures how to execute the model.
 typedef struct {
   // Path to the tflite flatbuffer file.
@@ -32,9 +23,6 @@ typedef struct {
   // user is responsible for providing the directory that can be writable by the
   // program.
   const char* cache_dir;
-
-  // Select a supported backend.
-  enum LlmBackend backend;
 
   // Sequence batch size for encoding. Used by GPU only. Number of input tokens
   // to process at a time for batch processing. Setting this value to 1 means

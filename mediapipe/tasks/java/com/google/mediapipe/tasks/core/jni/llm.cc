@@ -43,17 +43,6 @@ LlmSessionConfig ParseSessionConfig(void* bytes, int size) {
   output.model_path = strdup(input.model_path().c_str());
   output.cache_dir = strdup(input.cache_dir().c_str());
 
-  switch (input.backend()) {
-    case LlmSessionConfigProto::CPU:
-      output.backend = kCPU;
-      break;
-    case LlmSessionConfigProto::GPU:
-      output.backend = kGPU;
-      break;
-    default:
-      output.backend = kCPU;
-  }
-
   output.sequence_batch_size = input.sequence_batch_size();
   output.num_decode_steps_per_sync = input.num_decode_steps_per_sync();
   output.max_sequence_length = input.max_sequence_length();
