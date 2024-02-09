@@ -57,6 +57,7 @@ cc_test(
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/port:gtest",
         "//mediapipe/tasks/c/vision/core:common",
+        "//mediapipe/tasks/c/test:test_utils",
         "//mediapipe/tasks/cc/vision/utils:image_utils",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",

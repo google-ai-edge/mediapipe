@@ -25,6 +25,7 @@ limitations under the License.
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
+#include "mediapipe/tasks/c/test/test_utils.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
 #include "mediapipe/tasks/c/vision/image_segmenter/image_segmenter_result.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
@@ -32,7 +33,9 @@ limitations under the License.
 namespace {
 
 using ::mediapipe::file::JoinPath;
+using ::mediapipe::tasks::c::test::CreateCategoryMaskFromImage;
 using ::mediapipe::tasks::vision::DecodeImageFromFile;
+using ::mediapipe::tasks::c::test::SimilarToUint8Mask;
 using testing::HasSubstr;
 
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
@@ -50,54 +53,6 @@ constexpr int kGoldenMaskMagnificationFactor = 10;
 
 std::string GetFullPath(absl::string_view file_name) {
   return JoinPath("./", kTestDataDirectory, file_name);
-}
-
-MpMask CreateCategoryMaskFromFile(const std::string& file_path) {
-  auto cpp_expected_mask_image = DecodeImageFromFile(GetFullPath(file_path));
-  const auto& cpp_expected_mask_image_frame =
-      cpp_expected_mask_image->GetImageFrameSharedPtr();
-
-  const int pixel_data_size =
-      cpp_expected_mask_image_frame->PixelDataSizeStoredContiguously();
-  uint8_t* pixel_data = new uint8_t[pixel_data_size];
-  cpp_expected_mask_image_frame->CopyToBuffer(pixel_data, pixel_data_size);
-
-  MpMask mask = {
-      .type = MpMask::IMAGE_FRAME,
-      .image_frame = {.mask_format = MaskFormat::UINT8,
-                      .image_buffer = pixel_data,
-                      .width = cpp_expected_mask_image_frame->Width(),
-                      .height = cpp_expected_mask_image_frame->Height()}};
-
-  return mask;
-}
-
-float SimilarToUint8Mask(const MpMask* actual_mask, const MpMask* expected_mask,
-                         int magnification_factor) {
-  //   Validate that both images are of the same size and type
-  if (actual_mask->image_frame.width != expected_mask->image_frame.width ||
-      actual_mask->image_frame.height != expected_mask->image_frame.height ||
-      actual_mask->image_frame.mask_format != MaskFormat::UINT8 ||
-      expected_mask->image_frame.mask_format != MaskFormat::UINT8) {
-    return 0;  // Not similar
-  }
-
-  int consistent_pixels = 0;
-  int total_pixels =
-      actual_mask->image_frame.width * actual_mask->image_frame.height;
-
-  const uint8_t* buffer_actual = actual_mask->image_frame.image_buffer;
-  const uint8_t* buffer_expected = expected_mask->image_frame.image_buffer;
-
-  for (int i = 0; i < total_pixels; ++i) {
-    // Apply magnification factor and compare
-    if (buffer_actual[i] * magnification_factor == buffer_expected[i]) {
-      consistent_pixels++;
-    }
-  }
-
-  float similarity = (float)consistent_pixels / total_pixels;
-  return similarity;
 }
 
 TEST(ImageSegmenterTest, ImageModeTestSucceedsWithCategoryMask) {
@@ -131,7 +86,8 @@ TEST(ImageSegmenterTest, ImageModeTestSucceedsWithCategoryMask) {
                                                   /* error_msg */ nullptr);
   EXPECT_EQ(error, 0);
 
-  const MpMask expected_mask = CreateCategoryMaskFromFile(kMaskImageFile);
+  auto expected_mask_image = DecodeImageFromFile(GetFullPath(kMaskImageFile));
+  const MpMask expected_mask = CreateCategoryMaskFromImage(expected_mask_image);
   const MpMask actual_mask = result.category_mask;
   EXPECT_GT(SimilarToUint8Mask(&actual_mask, &expected_mask,
                                kGoldenMaskMagnificationFactor),
@@ -168,7 +124,8 @@ TEST(ImageSegmenterTest, VideoModeTest) {
                       .width = image_frame->Width(),
                       .height = image_frame->Height()}};
 
-  const MpMask expected_mask = CreateCategoryMaskFromFile(kMaskImageFile);
+  auto expected_mask_image = DecodeImageFromFile(GetFullPath(kMaskImageFile));
+  const MpMask expected_mask = CreateCategoryMaskFromImage(expected_mask_image);
 
   for (int i = 0; i < kIterations; ++i) {
     ImageSegmenterResult result;
@@ -199,7 +156,9 @@ struct LiveStreamModeCallback {
     ASSERT_EQ(error_msg, nullptr);
     EXPECT_GT(image.image_frame.width, 0);
     EXPECT_GT(image.image_frame.height, 0);
-    const MpMask expected_mask = CreateCategoryMaskFromFile(kMaskImageFile);
+    auto expected_mask_image = DecodeImageFromFile(GetFullPath(kMaskImageFile));
+    const MpMask expected_mask =
+        CreateCategoryMaskFromImage(expected_mask_image);
     const MpMask actual_mask = segmenter_result->category_mask;
     EXPECT_GT(SimilarToUint8Mask(&actual_mask, &expected_mask,
                                  kGoldenMaskMagnificationFactor),
