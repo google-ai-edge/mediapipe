@@ -21,6 +21,7 @@
 #include "mediapipe/gpu/gl_quad_renderer.h"
 #include "mediapipe/gpu/gl_scaler_calculator.pb.h"
 #include "mediapipe/gpu/gl_simple_shaders.h"
+#include "mediapipe/gpu/gpu_buffer_format.h"
 #include "mediapipe/gpu/shader_util.h"
 
 #ifdef __ANDROID__
@@ -88,7 +89,10 @@ class GlScalerCalculator : public CalculatorBase {
   void GetOutputPadding(int src_width, int src_height, int dst_width,
                         int dst_height, float* top_bottom_padding,
                         float* left_right_padding);
-  GpuBufferFormat GetOutputFormat() { return GpuBufferFormat::kBGRA32; }
+  GpuBufferFormat GetOutputFormat(GpuBufferFormat input_format) {
+    return use_input_format_for_output_ ? input_format
+                                        : GpuBufferFormat::kBGRA32;
+  }
 
  private:
   GlCalculatorHelper helper_;
@@ -105,6 +109,7 @@ class GlScalerCalculator : public CalculatorBase {
   bool horizontal_flip_output_;
   FrameScaleMode scale_mode_ = FrameScaleMode::kStretch;
   bool use_nearest_neighbor_interpolation_ = false;
+  bool use_input_format_for_output_ = false;
 };
 REGISTER_CALCULATOR(GlScalerCalculator);
 
@@ -189,6 +194,7 @@ absl::Status GlScalerCalculator::Open(CalculatorContext* cc) {
   }
   use_nearest_neighbor_interpolation_ =
       options.use_nearest_neighbor_interpolation();
+  use_input_format_for_output_ = options.use_input_format_for_output();
   if (HasTagOrIndex(cc->InputSidePackets(), "OUTPUT_DIMENSIONS", 1)) {
     const auto& dimensions =
         TagOrIndex(cc->InputSidePackets(), "OUTPUT_DIMENSIONS", 1)
@@ -288,8 +294,8 @@ absl::Status GlScalerCalculator::Process(CalculatorContext* cc) {
               MakePacket<float>(left_right_padding).At(cc->InputTimestamp()));
     }
 
-    auto dst = helper_.CreateDestinationTexture(dst_width, dst_height,
-                                                GetOutputFormat());
+    auto dst = helper_.CreateDestinationTexture(
+        dst_width, dst_height, GetOutputFormat(input.format()));
 
     helper_.BindFramebuffer(dst);
 

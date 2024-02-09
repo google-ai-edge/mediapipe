@@ -1019,6 +1019,7 @@ cc_library(
         ":gl_quad_renderer",
         ":gl_scaler_calculator_cc_proto",
         ":gl_simple_shaders",
+        ":gpu_buffer_format",
         ":shader_util",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:image",
