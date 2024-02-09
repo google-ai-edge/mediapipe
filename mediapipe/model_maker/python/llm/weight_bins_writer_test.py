@@ -29,7 +29,7 @@ class WeightBinsWriterTest(parameterized.TestCase):
   def test_get_weight_info(self):
     output_dir = os.path.join(flags.FLAGS.test_tmpdir, 'output_dir')
     writer = weight_bins_writer.WeightBinsWriter(
-        output_dir=output_dir, backend='xnnpack'
+        output_dir=output_dir, backend='cpu'
     )
     var_name = 'params.lm.softmax.logits_ffn.linear.w'
     weight_info = writer.get_weight_info(
@@ -43,7 +43,7 @@ class WeightBinsWriterTest(parameterized.TestCase):
   def test_load_to_actions(self):
     output_dir = os.path.join(flags.FLAGS.test_tmpdir, 'output_dir')
     writer = weight_bins_writer.WeightBinsWriter(
-        output_dir=output_dir, backend='xnnpack'
+        output_dir=output_dir, backend='cpu'
     )
     variables = {
         'mdl_vars.params.lm.softmax.logits_ffn.linear.w': (

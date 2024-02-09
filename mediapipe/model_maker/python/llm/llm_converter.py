@@ -18,8 +18,7 @@ class ConversionConfig(object):
     input_ckpt: Directory or path for the input checkpoint.
     ckpt_format: Checkpoint format, e.g. 'safetensors', 'pytorch'.
     model_type: Name of the model, e.g. GEMMA_2B.
-    backend: Target backend to run the model. Can be either xnnpack (CPU) or
-      ml_drift (GPU).
+    backend: Target backend to run the model. Can be either "cpu" or "gpu".
     output_dir: Where the output file(s) to be stored.
     is_symmetric: Whether to quantize symmetrically.
     attention_quant_bits: Target quantization bits for the attention layers.
@@ -87,8 +86,7 @@ def quantize_by_actions(
   Args:
     actions: A list of QuantizationAction that contains the information and
       tensor values to be quantized.
-    backend: Target backend to run the model. Can be either xnnpack (CPU) or
-      ml_drift (GPU).
+    backend: Target backend to run the model. Can be either "cpu" or "gpu".
     is_symmetric: Whether to quantize symmetrically.
 
   Returns:
@@ -116,7 +114,7 @@ def quantize_by_actions(
             sym=is_symmetric,
             number_bits=action.quantize_bits,
         )
-        if backend == 'xnnpack' and (action.quantize_bits == 4):
+        if backend == 'cpu' and (action.quantize_bits == 4):
           target_var, scale, zp = quantization_util.update_to_uint4(
               target_var, scale, zp
           )
@@ -137,16 +135,16 @@ def combined_weight_bins_to_tflite(
 ):
   """Combines weight files to tflite file."""
   # TODO: Figure out whether to clean up the weight files after this.
-  if backend == 'xnnpack':
-    model_ckpt_util.GenerateXnnpackTfLite(
+  if backend == 'cpu':
+    model_ckpt_util.GenerateCpuTfLite(
         model_type,
         weight_path,
         vocab_model_file,
         True,
         output_tflite_file,
     )
-  elif backend == 'ml_drift':
-    model_ckpt_util.GenerateMlDriftTfLite(
+  elif backend == 'gpu':
+    model_ckpt_util.GenerateGpuTfLite(
         model_type,
         weight_path,
         vocab_model_file,

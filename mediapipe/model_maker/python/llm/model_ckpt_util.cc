@@ -26,12 +26,12 @@ PYBIND11_MODULE(model_ckpt_util, m) {
   pybind11::google::ImportStatusModule();
   m.doc() = "Pybind model checkpoint utility functions.";
 
-  m.def("GenerateXnnpackTfLite", &odml::infra::xnn_utils::GenerateTfLite,
+  m.def("GenerateCpuTfLite", &odml::infra::xnn_utils::GenerateTfLite,
         "Generates the TfLite flatbuffer file from the serialized weight files "
-        "for XNNPACK.");
-  m.def("GenerateMlDriftTfLite", &odml::infra::gpu::GenerateTfLite,
+        "for the CPU backend.");
+  m.def("GenerateGpuTfLite", &odml::infra::gpu::GenerateTfLite,
         "Generates the TfLite flatbuffer file from the serialized weight files "
-        "for ML Drift.");
+        "for the GPU backend.");
   m.def("ConvertHfTokenizer", &mediapipe::tasks::text::ConvertHfTokenizer,
         "Converts the HuggingeFace BPE tokenizer to internal SentencePiece "
         "vocab model.");

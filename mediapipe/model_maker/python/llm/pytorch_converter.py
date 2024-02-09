@@ -141,12 +141,12 @@ class FalconMapper(converter_base.LayerActionMapperBase):
         quantize_bits = self._feedforward_quant_bits
       elif layer_type == LayerType.ATTENTION:
         quantize_bits = self._attention_quant_bits
-        if self._backend == "xnnpack" and ".dense." in layer_name:
+        if self._backend == "cpu" and ".dense." in layer_name:
           tensor_value = np.transpose(tensor_value)
           quantize_axis = [1]
       elif layer_type == LayerType.EMBEDDING:
         quantize_bits = self._embedding_quant_bits
-        if self._backend == "xnnpack" and "word_embeddings" in layer_name:
+        if self._backend == "cpu" and "word_embeddings" in layer_name:
           tensor_value = np.transpose(tensor_value)
           quantize_axis = [1]
     target_name = self.update_target_name(layer_name)
@@ -230,7 +230,7 @@ class FalconMapper(converter_base.LayerActionMapperBase):
       target_name = target_name.replace(
           "pre_layer_norm.weight", "pre_layer_norm.scale"
       )
-      if self._backend == "xnnpack":
+      if self._backend == "cpu":
         target_name = target_name.replace(
             "post_attention_layernorm", "ff_layer.pre_layer_norm"
         )
@@ -282,7 +282,7 @@ class PytorchCkptLoader(converter_base.CkptLoaderBase):
       special_model: A string that indicates which input model is and whether
         any special treatment is needed.
       backend: A string indicating the backend used when converting this model.
-        Valid options are `xnnpack` (CPU) and `ml_drift` (GPU).
+        Valid options are "cpu" and "gpu".
     """
     super().__init__(
         ckpt_path,

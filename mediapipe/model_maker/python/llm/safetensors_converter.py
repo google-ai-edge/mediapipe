@@ -182,12 +182,12 @@ class StablelmMapper(converter_base.LayerActionMapperBase):
         quantize_bits = self._feedforward_quant_bits
       elif layer_type == LayerType.ATTENTION:
         quantize_bits = self._attention_quant_bits
-        if self._backend == "xnnpack" and ".o_proj." in layer_name:
+        if self._backend == "cpu" and ".o_proj." in layer_name:
           tensor_value = np.transpose(tensor_value)
           quantize_axis = [1]
       elif layer_type == LayerType.EMBEDDING:
         quantize_bits = self._embedding_quant_bits
-        if self._backend == "xnnpack" and ".embed_tokens." in layer_name:
+        if self._backend == "cpu" and ".embed_tokens." in layer_name:
           tensor_value = np.transpose(tensor_value)
           quantize_axis = [1]
     target_name = self.update_target_name(layer_name)
@@ -218,7 +218,7 @@ class StablelmMapper(converter_base.LayerActionMapperBase):
     target_name = target_name.replace(
         "pre_layer_norm.weight", "pre_layer_norm.scale"
     )
-    if self._backend == "xnnpack":
+    if self._backend == "cpu":
       target_name = target_name.replace(
           "post_attention_layernorm", "ff_layer.pre_layer_norm"
       )
@@ -283,12 +283,12 @@ class PhiMapper(converter_base.LayerActionMapperBase):
         quantize_bits = self._feedforward_quant_bits
       elif layer_type == LayerType.ATTENTION:
         quantize_bits = self._attention_quant_bits
-        if self._backend == "xnnpack" and ".dense." in layer_name:
+        if self._backend == "cpu" and ".dense." in layer_name:
           tensor_value = np.transpose(tensor_value)
           quantize_axis = [1]
       elif layer_type == LayerType.EMBEDDING:
         quantize_bits = self._embedding_quant_bits
-        if self._backend == "xnnpack" and ".embed_tokens." in layer_name:
+        if self._backend == "cpu" and ".embed_tokens." in layer_name:
           tensor_value = np.transpose(tensor_value)
           quantize_axis = [1]
     target_name = self.update_target_name(layer_name)
@@ -351,7 +351,7 @@ class PhiMapper(converter_base.LayerActionMapperBase):
     return target_name
 
 
-class GminiMapper(converter_base.LayerActionMapperBase):
+class GemmaMapper(converter_base.LayerActionMapperBase):
   """LayerActionMapper for handling the StableLM model."""
 
   def __init__(
@@ -420,20 +420,12 @@ class GminiMapper(converter_base.LayerActionMapperBase):
     target_name = target_name.replace(
         "pre_layer_norm.weight", "pre_layer_norm.scale"
     )
-    if self._backend == "xnnpack":
-      target_name = target_name.replace(
-          "post_attention_layernorm", "ff_layer.pre_layer_norm"
-      )
-      target_name = target_name.replace(
-          "ff_layer.pre_layer_norm.weight", "ff_layer.pre_layer_norm.scale"
-      )
-    else:
-      target_name = target_name.replace(
-          "post_attention_layernorm", "post_layer_norm"
-      )
-      target_name = target_name.replace(
-          "post_layer_norm.weight", "post_layer_norm.scale"
-      )
+    target_name = target_name.replace(
+        "post_attention_layernorm", "ff_layer.pre_layer_norm"
+    )
+    target_name = target_name.replace(
+        "ff_layer.pre_layer_norm.weight", "ff_layer.pre_layer_norm.scale"
+    )
     target_name = target_name.replace("self_attn.q_proj", "self_attention.q")
     target_name = target_name.replace("self_attn.k_proj", "self_attention.k")
     target_name = target_name.replace("self_attn.v_proj", "self_attention.v")
@@ -476,7 +468,7 @@ class SafetensorsCkptLoader(converter_base.CkptLoaderBase):
       special_model: A string that indicates which input model is and whether
         any special treatment is needed.
       backend: A string indicating the backend used when converting this model.
-        Valid options are `xnnpack` (CPU) and `ml_drift` (GPU).
+        Valid options are "cpu" and "gpu".
     """
     super().__init__(
         ckpt_path,
@@ -506,8 +498,8 @@ class SafetensorsCkptLoader(converter_base.CkptLoaderBase):
           backend,
           self._reader,
       )
-    elif special_model in ["G_MINI_2B"]:
-      self.mapper = GminiMapper(
+    elif special_model in ["GEMMA_2B"]:
+      self.mapper = GemmaMapper(
           is_symmetric,
           attention_quant_bits,
           feedforward_quant_bits,
