@@ -51,7 +51,7 @@ class BaseOptions:
       is currently limited to Ubuntu platforms.
   """
 
-  class Delegate(enum.Enum):
+  class Delegate(enum.IntEnum):
     CPU = 0
     GPU = 1
 
