@@ -12,21 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cstring>
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
-#include "absl/time/time.h"
 #include "mediapipe/calculators/tensor/inference_calculator.h"
 #include "mediapipe/calculators/tensor/inference_calculator_utils.h"
 #include "mediapipe/calculators/tensor/inference_interpreter_delegate_runner.h"
 #include "mediapipe/calculators/tensor/inference_runner.h"
-#include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/tensor.h"
-#include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "tensorflow/lite/interpreter.h"
 #if defined(MEDIAPIPE_ANDROID)
