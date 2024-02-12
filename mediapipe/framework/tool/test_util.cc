@@ -80,6 +80,7 @@ absl::Status CompareDiff(const ImageFrame& image1, const ImageFrame& image2,
       image2.WidthStep() / image2.ByteDepth() - width * channels2;
 
   diff_image = std::make_unique<ImageFrame>(image1.Format(), width, height);
+  diff_image->SetToZero();
   T* pixel_diff = reinterpret_cast<T*>(diff_image->MutablePixelData());
   const int width_padding_diff =
       diff_image->WidthStep() / diff_image->ByteDepth() - width * channels1;
