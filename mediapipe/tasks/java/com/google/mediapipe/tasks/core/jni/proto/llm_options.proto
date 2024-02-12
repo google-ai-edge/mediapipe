@@ -29,28 +29,26 @@ message LlmSessionConfig {
   // directory provided through model_path will be used for caching purposes.
   string cache_dir = 2;
 
-  reserved 3;
-
   // The number of input tokens to process at a time for batch processing
-  uint32 sequence_batch_size = 4;
+  uint32 sequence_batch_size = 3;
 
   // The number of decoding steps to run for each GPU-CPU sync. 1 stands for
   // full streaming mode (i.e. the model outputs one token at a time). -1 stands
   // for non-streaming mode (i.e. the model decodes all the way to the end and
   // output the result at once). Note that the more frequent to perform GPU-CPU
   // sync (i.e. closer to 1), the more latency we expect to introduce.
-  uint32 num_decode_steps_per_sync = 5;
+  uint32 num_decode_steps_per_sync = 4;
 
   // The total length of the kv-cache. In other words, this is the total number
   // of input + output tokens the model needs to handle.
-  uint32 max_sequence_length = 6;
+  uint32 max_sequence_length = 5;
 
   // Top K number of tokens to be sampled from for each decoding step.
-  uint32 topk = 7;
+  uint32 topk = 6;
 
   // Randomness when decoding the next token, 0.0f means greedy decoding.
-  float temperature = 8;
+  float temperature = 7;
 
   // Random seed for sampling tokens.
-  optional uint32 random_seed = 9;
+  optional uint32 random_seed = 8;
 }
