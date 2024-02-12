@@ -37,7 +37,6 @@
 #include "tensorflow/lite/core/interpreter_builder.h"
 #include "tensorflow/lite/delegates/gpu/gl_delegate.h"
 #include "tensorflow/lite/interpreter.h"
-#include "tensorflow/lite/kernels/register.h"
 
 #define PERFETTO_TRACK_EVENT_NAMESPACE mediapipe
 
