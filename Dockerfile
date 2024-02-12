@@ -24,7 +24,6 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential \
         gcc-8 g++-8 \
-        clang-16 \
         ca-certificates \
         curl \
         ffmpeg \
@@ -49,6 +48,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     apt-get install -y mesa-utils && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+# Install Clang 16
+RUN wget https://apt.llvm.org/llvm.sh
+RUN chmod +x llvm.sh
+RUN ./llvm.sh 16
 
 RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 100 --slave /usr/bin/g++ g++ /usr/bin/g++-8
 RUN pip3 install --upgrade setuptools
