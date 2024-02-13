@@ -27,8 +27,8 @@ typedef struct {
   // Sequence batch size for encoding. Used by GPU only. Number of input tokens
   // to process at a time for batch processing. Setting this value to 1 means
   // both the encoding and decoding share the same graph of sequence length
-  // of 1. Setting this value to 0 means the batch size will be optimized by
-  // ml_drift.
+  // of 1. Setting this value to 0 means the batch size will be optimized
+  // programmatically.
   size_t sequence_batch_size;
 
   // Number of decode steps per sync. Used by GPU only. The default value is 3.
