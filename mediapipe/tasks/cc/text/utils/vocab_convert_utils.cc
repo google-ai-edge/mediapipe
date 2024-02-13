@@ -122,10 +122,6 @@ absl::Status ConvertHfTokenizer(const std::string& hf_tokenizer,
 
   ModelProto model_proto;
 
-  auto* trainer_spec = model_proto.mutable_trainer_spec();
-  trainer_spec->set_model_type(TrainerSpec::BPE);
-  trainer_spec->set_vocab_size(configs.second["model"]["vocab"].size());
-
   MP_RETURN_IF_ERROR(
       ConfigureNormalizerSpecs(model_proto.mutable_normalizer_spec()));
   MP_RETURN_IF_ERROR(
@@ -133,20 +129,35 @@ absl::Status ConvertHfTokenizer(const std::string& hf_tokenizer,
 
   // The scores assigned here are heuristic based and only captures the ordering
   // of elements within HF configs. This may not be optimal.
-  std::vector<std::string> vocabs(configs.second["model"]["vocab"].size());
+  std::vector<std::string> normal_vocabs(
+      configs.second["model"]["vocab"].size());
   for (const auto& [vocab, id] : configs.second["model"]["vocab"].items()) {
-    vocabs[id] = vocab;
+    normal_vocabs[id] = vocab;
   }
-
   std::string unk_token = configs.first.at("unk_token").get<std::string>();
-  for (int i = 0; i < vocabs.size(); ++i) {
+  for (int i = 0; i < normal_vocabs.size(); ++i) {
     auto* sp = model_proto.add_pieces();
-    auto vocab = vocabs[i];
+    auto vocab = normal_vocabs[i];
     sp->set_type(unk_token == vocab ? ModelProto::SentencePiece::UNKNOWN
                                     : ModelProto::SentencePiece::NORMAL);
     sp->set_piece(vocab);
     sp->set_score(-i);
   }
+  const auto& added_tokens = configs.second["added_tokens"];
+  for (int i = 0; i < added_tokens.size(); ++i) {
+    if (added_tokens[i]["normalized"]) {
+      auto vocab = added_tokens[i]["content"];
+      auto* sp = model_proto.add_pieces();
+      sp->set_type(ModelProto::SentencePiece::USER_DEFINED);
+      sp->set_piece(vocab);
+      sp->set_score(-(normal_vocabs.size() + i));
+    }
+  }
+
+  auto* trainer_spec = model_proto.mutable_trainer_spec();
+  trainer_spec->set_model_type(TrainerSpec::BPE);
+  trainer_spec->set_vocab_size(model_proto.pieces_size());
+
   absl::string_view output_dir = ::mediapipe::file::Dirname(output_vocab_path);
   if (!::mediapipe::file::IsDirectory(output_dir).ok()) {
     MP_RETURN_IF_ERROR(::mediapipe::file::RecursivelyCreateDir(output_dir));
