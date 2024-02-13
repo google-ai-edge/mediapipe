@@ -20,8 +20,8 @@ from typing import Dict, Tuple
 
 import numpy as np
 
-from mediapipe.model_maker.python.llm import converter_base
-from mediapipe.model_maker.python.llm import quantization_util
+from mediapipe.tasks.python.genai.converter import converter_base
+from mediapipe.tasks.python.genai.converter import quantization_util
 
 
 @contextlib.contextmanager

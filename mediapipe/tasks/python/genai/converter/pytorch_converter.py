@@ -21,7 +21,7 @@ from typing import List, Optional
 import numpy as np
 import torch
 
-from mediapipe.model_maker.python.llm import converter_base
+from mediapipe.tasks.python.genai.converter import converter_base
 
 
 class _PytorchReader:

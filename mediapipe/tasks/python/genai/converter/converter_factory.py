@@ -13,11 +13,10 @@
 # limitations under the License.
 
 """Utility library that helps create the converter instances."""
-
-from mediapipe.model_maker.python.llm import converter_base
-from mediapipe.model_maker.python.llm import pytorch_converter
-from mediapipe.model_maker.python.llm import safetensors_converter
-from mediapipe.model_maker.python.llm import weight_bins_writer
+from mediapipe.tasks.python.genai.converter import converter_base
+from mediapipe.tasks.python.genai.converter import pytorch_converter
+from mediapipe.tasks.python.genai.converter import safetensors_converter
+from mediapipe.tasks.python.genai.converter import weight_bins_writer
 
 
 def create_ckpt_loader(

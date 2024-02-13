@@ -21,7 +21,7 @@ from absl.testing import absltest
 from absl.testing import parameterized
 import numpy as np
 
-from mediapipe.model_maker.python.llm import weight_bins_writer
+from mediapipe.tasks.python.genai.converter import weight_bins_writer
 
 
 class WeightBinsWriterTest(parameterized.TestCase):

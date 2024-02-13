@@ -5,10 +5,10 @@ from typing import List, Optional
 
 from absl import logging
 
-from mediapipe.model_maker.python.llm import converter_base
-from mediapipe.model_maker.python.llm import converter_factory
-from mediapipe.model_maker.python.llm import model_ckpt_util
-from mediapipe.model_maker.python.llm import quantization_util
+from mediapipe.tasks.python.genai.converter import converter_base
+from mediapipe.tasks.python.genai.converter import converter_factory
+from mediapipe.tasks.python.genai.converter import model_ckpt_util
+from mediapipe.tasks.python.genai.converter import quantization_util
 
 
 class ConversionConfig(object):
