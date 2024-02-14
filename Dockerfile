@@ -53,6 +53,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN wget https://apt.llvm.org/llvm.sh
 RUN chmod +x llvm.sh
 RUN ./llvm.sh 16
+RUN ln -sf /usr/bin/clang-16 /usr/bin/clang
+RUN ln -sf /usr/bin/clang++-16 /usr/bin/clang++
+RUN ln -sf /usr/bin/clang-format-16 /usr/bin/clang-format
 
 RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 100 --slave /usr/bin/g++ g++ /usr/bin/g++-8
 RUN pip3 install --upgrade setuptools
