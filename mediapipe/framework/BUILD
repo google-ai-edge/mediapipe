@@ -19,6 +19,17 @@ licenses(["notice"])
 
 package(default_visibility = ["//visibility:private"])
 
+# For direct MediaPipe internal proto usage. Please only add your package
+# here if necessary and using
+# "//mediapipe/framework:calculator_framework" is not sufficient
+# (e.g. auto generated code for serialization etc.)
+package_group(
+    name = "mediapipe_internal_proto_users",
+    packages = [
+        "//mediapipe/...",
+    ],
+)
+
 # The MediaPipe internal package group. No mediapipe users should be added to this group.
 package_group(
     name = "mediapipe_internal",
@@ -101,7 +112,7 @@ mediapipe_proto_library(
     name = "mediapipe_options_proto",
     srcs = ["mediapipe_options.proto"],
     visibility = [
-        ":mediapipe_internal",
+        ":mediapipe_internal_proto_users",
     ],
 )
 
@@ -122,7 +133,7 @@ mediapipe_proto_library(
     testonly = 1,
     srcs = ["packet_test.proto"],
     visibility = [
-        ":mediapipe_internal",
+        ":mediapipe_internal_proto_users",
         "//mediapipe/framework:__subpackages__",
     ],
 )
@@ -130,14 +141,14 @@ mediapipe_proto_library(
 mediapipe_proto_library(
     name = "status_handler_proto",
     srcs = ["status_handler.proto"],
-    visibility = [":mediapipe_internal"],
+    visibility = [":mediapipe_internal_proto_users"],
     deps = [":mediapipe_options_proto"],
 )
 
 mediapipe_proto_library(
     name = "stream_handler_proto",
     srcs = ["stream_handler.proto"],
-    visibility = [":mediapipe_internal"],
+    visibility = [":mediapipe_internal_proto_users"],
     deps = [":mediapipe_options_proto"],
 )
 
@@ -145,7 +156,7 @@ mediapipe_proto_library(
     name = "test_calculators_proto",
     testonly = 1,
     srcs = ["test_calculators.proto"],
-    visibility = [":mediapipe_internal"],
+    visibility = [":mediapipe_internal_proto_users"],
     deps = [
         ":calculator_options_proto",
         ":calculator_proto",
@@ -155,7 +166,7 @@ mediapipe_proto_library(
 mediapipe_proto_library(
     name = "thread_pool_executor_proto",
     srcs = ["thread_pool_executor.proto"],
-    visibility = [":mediapipe_internal"],
+    visibility = [":mediapipe_internal_proto_users"],
     deps = [":mediapipe_options_proto"],
 )
 
