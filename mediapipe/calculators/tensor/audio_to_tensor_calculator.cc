@@ -236,7 +236,7 @@ absl::Status AudioToTensorCalculator::UpdateContract(CalculatorContract* cc) {
   if (!options.has_num_channels() || !options.has_num_samples() ||
       !options.has_target_sample_rate()) {
     return absl::InvalidArgumentError(
-        "AudioToTensorCalculatorOptions must specifiy "
+        "AudioToTensorCalculatorOptions must specify "
         "`num_channels`, `num_samples`, and `target_sample_rate`.");
   }
   if (options.stream_mode()) {
