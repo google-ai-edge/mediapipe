@@ -114,6 +114,7 @@ cc_library(
     name = "file_helpers",
     srcs = ["file_helpers.cc"],
     hdrs = ["file_helpers.h"],
+    visibility = ["//visibility:public"],
     deps = [
         ":file_path",
         "//mediapipe/framework/port:status",

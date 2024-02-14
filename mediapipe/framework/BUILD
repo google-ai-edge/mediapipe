@@ -166,7 +166,7 @@ mediapipe_proto_library(
 mediapipe_proto_library(
     name = "thread_pool_executor_proto",
     srcs = ["thread_pool_executor.proto"],
-    visibility = [":mediapipe_internal_proto_users"],
+    visibility = ["//visibility:public"],
     deps = [":mediapipe_options_proto"],
 )
 
@@ -201,12 +201,7 @@ cc_library(
     name = "calculator_context",
     srcs = ["calculator_context.cc"],
     hdrs = ["calculator_context.h"],
-    visibility = [
-        ":mediapipe_internal",
-        "//assistant/surfaces/intelligence/distance_perception/models/mediapipe/calculators:__pkg__",
-        "//speech/videos/mediapipe/calculator:__pkg__",
-        "//vr/stargate/starcam:__pkg__",
-    ],
+    visibility = ["//visibility:public"],
     deps = [
         ":calculator_state",
         ":counter",
@@ -246,11 +241,7 @@ cc_library(
     name = "calculator_contract",
     srcs = ["calculator_contract.cc"],
     hdrs = ["calculator_contract.h"],
-    visibility = [
-        ":mediapipe_internal",
-        "//speech/videos/mediapipe/calculator:__pkg__",
-        "//vr/stargate/starcam:__pkg__",
-    ],
+    visibility = ["//visibility:public"],
     deps = [
         ":calculator_cc_proto",
         ":graph_service",
@@ -326,9 +317,7 @@ cc_library(
         "calculator_graph.h",
         "scheduler.h",
     ],
-    visibility = [
-        ":mediapipe_internal",
-    ],
+    visibility = ["//visibility:public"],
     deps = [
         ":calculator_base",
         ":calculator_cc_proto",

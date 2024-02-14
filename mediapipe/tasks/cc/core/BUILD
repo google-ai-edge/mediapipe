@@ -99,6 +99,7 @@ cc_library_with_tflite(
         ":model_resources",
         ":model_resources_cache",
     ],
+    visibility = ["//visibility:public"],
     deps = [
         ":model_asset_bundle_resources",
         ":model_resources_calculator",
@@ -256,6 +257,7 @@ cc_library_with_tflite(
         ":model_resources_cache",
         ":model_resources_calculator",
     ],
+    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
@@ -307,6 +309,7 @@ cc_library_with_tflite(
     tflite_deps = [
         ":task_runner",
     ],
+    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/calculators/core:flow_limiter_calculator",
     ],
@@ -320,6 +323,7 @@ cc_library_with_tflite(
         ":model_resources",
         ":task_runner",
     ],
+    visibility = ["//visibility:public"],
     deps = [
         ":utils",
         "//mediapipe/framework:calculator_cc_proto",
