@@ -42,6 +42,8 @@ genrule(
         --without objdetect \
         --without gapi \
         --without flann \
+        --without highgui \
+        --without videoio \
         --disable PROTOBUF \
         --disable-bitcode \
         --disable-swift \
