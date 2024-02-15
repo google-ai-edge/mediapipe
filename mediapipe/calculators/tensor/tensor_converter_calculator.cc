@@ -306,6 +306,11 @@ absl::Status TensorConverterCalculator::ProcessGPU(CalculatorContext* cc) {
       cc->Inputs().Tag(kGpuBufferTag).Get<mediapipe::GpuBuffer>();
   auto output_tensors = std::make_unique<std::vector<Tensor>>();
 #if MEDIAPIPE_METAL_ENABLED
+  const int width = input.width();
+  const int height = input.height();
+  const int channels = max_num_channels_;
+  output_tensors->emplace_back(Tensor::ElementType::kFloat32,
+                               Tensor::Shape{1, height, width, channels});
   id<MTLCommandBuffer> command_buffer = [gpu_helper_ commandBuffer];
   command_buffer.label = @"TensorConverterCalculatorConvert";
   id<MTLComputeCommandEncoder> compute_encoder =
