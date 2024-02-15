@@ -83,6 +83,9 @@ OPENCV_DEPS = {
     "//conditions:default": ["@ios_opencv//:OpencvFramework"],
 }
 
+MEDIAPIPE_TASKS_COMMON_DEPS = OBJC_TASK_COMMON_DEPS + TENSORFLOW_LITE_C_DEPS + 
+    ["//mediapipe/gpu:metal_shared_resources"]
+
 strip_api_include_path_prefix(
     name = "strip_api_include_path",
     hdr_labels = [
@@ -149,9 +152,7 @@ apple_static_xcframework(
     # Avoid dependencies of ":MediaPipeTasksCommon_framework" and
     # ":MediaPipeTaskGraphs_library in order to prevent duplicate symbols error
     # when the frameworks are imported in iOS projects.
-    avoid_deps = OBJC_TASK_COMMON_DEPS + CALCULATORS_AND_GRAPHS + TENSORFLOW_LITE_C_DEPS + [
-        "//mediapipe/gpu:metal_shared_resources",
-    ],
+    avoid_deps = MEDIAPIPE_TASKS_COMMON_DEPS + CALCULATORS_AND_GRAPHS,
     bundle_name = "MediaPipeTasksText",
     ios = {
         "simulator": [
@@ -196,9 +197,7 @@ apple_static_xcframework(
     # when the frameworks are imported in iOS projects.
     # Also avoids opencv since it will be built with
     # ":MediaPipeTaskGraphs_library".
-    avoid_deps = OBJC_TASK_COMMON_DEPS + CALCULATORS_AND_GRAPHS + TENSORFLOW_LITE_C_DEPS + [
-        "//mediapipe/gpu:metal_shared_resources",
-    ],
+    avoid_deps = MEDIAPIPE_TASKS_COMMON_DEPS + CALCULATORS_AND_GRAPHS,
     bundle_name = "MediaPipeTasksVision",
     ios = {
         "simulator": [
@@ -318,5 +317,5 @@ apple_static_xcframework(
     # `xcframeworks`. Including them with task graphs causes duplicate symbols 
     # when installed alongside the respective frameworks since task graphs are 
     # built as static libraries and force loaded.
-    deps = OBJC_TASK_COMMON_DEPS + TENSORFLOW_LITE_C_DEPS + select(OPENCV_DEPS),
+    deps = MEDIAPIPE_TASKS_COMMON_DEPS + select(OPENCV_DEPS),
 )
