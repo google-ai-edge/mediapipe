@@ -45,6 +45,9 @@ OBJC_TASK_COMMON_DEPS = [
     "//mediapipe/tasks/ios/core:MPPTaskRunner",
     "//mediapipe/tasks/ios/components/containers/utils:MPPClassificationResultHelpers",
     "//mediapipe/tasks/ios/components/containers/utils:MPPCategoryHelpers",
+    "//mediapipe/tasks/ios/components/containers/utils:MPPEmbeddingHelpers",
+    "//mediapipe/tasks/ios/components/containers/utils:MPPEmbeddingResultHelpers",
+    "//mediapipe/tasks/ios/components/utils:MPPCosineSimilarity",
     "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
 ]
 
@@ -83,8 +86,7 @@ OPENCV_DEPS = {
     "//conditions:default": ["@ios_opencv//:OpencvFramework"],
 }
 
-MEDIAPIPE_TASKS_COMMON_DEPS = OBJC_TASK_COMMON_DEPS + TENSORFLOW_LITE_C_DEPS + 
-    ["//mediapipe/gpu:metal_shared_resources"]
+MEDIAPIPE_TASKS_COMMON_DEPS = OBJC_TASK_COMMON_DEPS + TENSORFLOW_LITE_C_DEPS + ["//mediapipe/gpu:metal_shared_resources"]
 
 strip_api_include_path_prefix(
     name = "strip_api_include_path",
