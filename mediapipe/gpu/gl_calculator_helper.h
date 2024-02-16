@@ -187,6 +187,8 @@ class GlCalculatorHelper {
 
   GlContext& GetGlContext() const { return *gl_context_; }
 
+  std::shared_ptr<GlContext> GetSharedGlContext() const { return gl_context_; }
+
   GlVersion GetGlVersion() const { return gl_context_->GetGlVersion(); }
 
   // Check if the calculator helper has been previously initialized.
