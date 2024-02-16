@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#if !defined(MEDIAPIPE_NO_JNI) && \
-    (__ANDROID_API__ >= 26 ||     \
+#if (!defined(MEDIAPIPE_NO_JNI) ||                     \
+     defined(MEDIAPIPE_ANDROID_LINK_NATIVE_WINDOW)) && \
+    (__ANDROID_API__ >= 26 ||                          \
      defined(__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__))
 
 #include <android/hardware_buffer.h>
@@ -191,5 +192,6 @@ void HardwareBuffer::Reset() {
 
 }  // namespace mediapipe
 
-#endif  // !defined(MEDIAPIPE_NO_JNI) && (__ANDROID_API__>= 26 ||
-        // defined(__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__))
+#endif  // (!defined(MEDIAPIPE_NO_JNI) ||
+        // defined(MEDIAPIPE_ANDROID_LINK_NATIVE_WINDOW)) && (__ANDROID_API__>=
+        // 26 || defined(__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__))
