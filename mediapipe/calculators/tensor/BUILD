@@ -453,6 +453,7 @@ cc_library(
         ":inference_calculator_interface",
         "//mediapipe/framework:calculator_context",
         "//mediapipe/gpu:gl_calculator_helper",
+        "//mediapipe/gpu:gl_context",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings:str_format",
@@ -467,8 +468,10 @@ cc_library(
     tags = ["nomac"],
     deps = [
         ":inference_calculator_interface",
+        "//mediapipe/framework:calculator_context",
         "//mediapipe/framework/deps:file_path",
         "//mediapipe/gpu:gl_calculator_helper",
+        "//mediapipe/gpu:gl_context",
         "//mediapipe/util/tflite:tflite_gpu_runner",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
