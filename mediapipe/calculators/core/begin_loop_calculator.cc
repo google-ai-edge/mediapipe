@@ -14,8 +14,11 @@
 
 #include "mediapipe/calculators/core/begin_loop_calculator.h"
 
+#include <cstdint>
+#include <string>
 #include <vector>
 
+#include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame.h"
@@ -80,5 +83,9 @@ REGISTER_CALCULATOR(BeginLoopImageCalculator);
 // A calculator to process std::vector<float>.
 typedef BeginLoopCalculator<std::vector<float>> BeginLoopFloatCalculator;
 REGISTER_CALCULATOR(BeginLoopFloatCalculator);
+
+// A calculator to process std::string.
+typedef BeginLoopCalculator<std::vector<std::string>> BeginLoopStringCalculator;
+REGISTER_CALCULATOR(BeginLoopStringCalculator);
 
 }  // namespace mediapipe
