@@ -23,6 +23,7 @@
 #include "mediapipe/calculators/tensor/inference_calculator_utils.h"
 #include "mediapipe/calculators/tensor/inference_interpreter_delegate_runner.h"
 #include "mediapipe/calculators/tensor/inference_runner.h"
+#include "mediapipe/calculators/tensor/tensor_span.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "tensorflow/lite/interpreter.h"
@@ -84,27 +85,25 @@ absl::Status InferenceCalculatorCpuImpl::ProcessTensorVectors(
   const auto& input_tensors = *kInTensors(cc);
   RET_CHECK(!input_tensors.empty());
 
-  MP_ASSIGN_OR_RETURN(std::vector<Tensor> output_tensors,
-                      inference_runner_->Run(cc, input_tensors));
+  MP_ASSIGN_OR_RETURN(
+      std::vector<Tensor> output_tensors,
+      inference_runner_->Run(cc, MakeTensorSpan(input_tensors)));
   kOutTensors(cc).Send(std::move(output_tensors));
   return absl::OkStatus();
 }
 
 absl::Status InferenceCalculatorCpuImpl::ProcessTensors(CalculatorContext* cc) {
-  // First, wrap inputs into a vector of pointers, returning early if any empty
-  // streams.
-  std::vector<const Tensor*> input_tensor_pointers;
+  // First, return early if any empty streams.
   for (int i = 0; i < kInTensor(cc).Count(); ++i) {
     if (kInTensor(cc)[i].IsEmpty()) {
       return absl::OkStatus();
     }
-    input_tensor_pointers.push_back(&(*kInTensor(cc)[i]));
   }
 
   // Then perform inference
   MP_ASSIGN_OR_RETURN(
       std::vector<Tensor> output_tensors,
-      inference_runner_->RunFromPointers(cc, input_tensor_pointers));
+      inference_runner_->Run(cc, MakeTensorSpan(kInTensor(cc))));
 
   // And pipe each one into the appropriate output stream
   for (int i = 0; i < output_tensors.size(); ++i) {

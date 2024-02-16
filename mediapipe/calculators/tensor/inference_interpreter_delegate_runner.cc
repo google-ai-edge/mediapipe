@@ -20,6 +20,8 @@
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "mediapipe/calculators/tensor/tensor_span.h"
+#include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/mediapipe_profiling.h"
 #include "mediapipe/framework/port/ret_check.h"
@@ -85,10 +87,7 @@ class InferenceInterpreterDelegateRunner : public InferenceRunner {
         delegate_(std::move(delegate)) {}
 
   absl::StatusOr<std::vector<Tensor>> Run(
-      CalculatorContext* cc, const std::vector<Tensor>& input_tensors) override;
-  absl::StatusOr<std::vector<Tensor>> RunFromPointers(
-      CalculatorContext* cc,
-      const std::vector<const Tensor*>& input_tensors) override;
+      CalculatorContext* cc, const TensorSpan& tensor_span) override;
 
  private:
   api2::Packet<TfLiteModelPtr> model_;
@@ -97,28 +96,15 @@ class InferenceInterpreterDelegateRunner : public InferenceRunner {
 };
 
 absl::StatusOr<std::vector<Tensor>> InferenceInterpreterDelegateRunner::Run(
-    CalculatorContext* cc, const std::vector<Tensor>& input_tensors) {
-  // We wrap our input tensors into a vector of non-owning pointers, so we can
-  // use the same code for both our Run functions.
-  std::vector<const Tensor*> input_tensors_wrapped;
-  input_tensors_wrapped.reserve(input_tensors.size());
-  for (const auto& input_tensor : input_tensors) {
-    input_tensors_wrapped.push_back(&input_tensor);
-  }
-  return RunFromPointers(cc, input_tensors_wrapped);
-}
-
-absl::StatusOr<std::vector<Tensor>>
-InferenceInterpreterDelegateRunner::RunFromPointers(
-    CalculatorContext* cc, const std::vector<const Tensor*>& input_tensors) {
+    CalculatorContext* cc, const TensorSpan& tensor_span) {
   // Read CPU input into tensors.
-  RET_CHECK_EQ(interpreter_->inputs().size(), input_tensors.size());
+  RET_CHECK_EQ(interpreter_->inputs().size(), tensor_span.size());
 
   // If the input tensors have dynamic shape, then the tensors need to be
   // resized and reallocated before we can copy the tensor values.
   bool resized_tensor_shapes = false;
-  for (int i = 0; i < input_tensors.size(); ++i) {
-    const Tensor& input_tensor = *(input_tensors[i]);
+  for (int i = 0; i < tensor_span.size(); ++i) {
+    const Tensor& input_tensor = tensor_span[i];
     if (input_tensor.shape().is_dynamic) {
       interpreter_->ResizeInputTensorStrict(i, input_tensor.shape().dims);
       resized_tensor_shapes = true;
@@ -129,10 +115,10 @@ InferenceInterpreterDelegateRunner::RunFromPointers(
 
   // TODO: Replace this using the util function in
   // inference_calculator_utils.
-  for (int i = 0; i < input_tensors.size(); ++i) {
+  for (int i = 0; i < tensor_span.size(); ++i) {
     const TfLiteType input_tensor_type =
         interpreter_->tensor(interpreter_->inputs()[i])->type;
-    const Tensor& input_tensor = *(input_tensors[i]);
+    const Tensor& input_tensor = tensor_span[i];
     switch (input_tensor_type) {
       case TfLiteType::kTfLiteFloat16:
       case TfLiteType::kTfLiteFloat32: {

@@ -24,6 +24,7 @@
 #include "mediapipe/calculators/tensor/inference_calculator_utils.h"
 #include "mediapipe/calculators/tensor/inference_interpreter_delegate_runner.h"
 #include "mediapipe/calculators/tensor/inference_runner.h"
+#include "mediapipe/calculators/tensor/tensor_span.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "tensorflow/lite/delegates/xnnpack/xnnpack_delegate.h"
 #include "tensorflow/lite/interpreter.h"
@@ -72,8 +73,9 @@ absl::Status InferenceCalculatorXnnpackImpl::Process(CalculatorContext* cc) {
   const auto& input_tensors = *kInTensors(cc);
   RET_CHECK(!input_tensors.empty());
 
-  MP_ASSIGN_OR_RETURN(std::vector<Tensor> output_tensors,
-                      inference_runner_->Run(cc, input_tensors));
+  MP_ASSIGN_OR_RETURN(
+      std::vector<Tensor> output_tensors,
+      inference_runner_->Run(cc, MakeTensorSpan(input_tensors)));
   kOutTensors(cc).Send(std::move(output_tensors));
   return absl::OkStatus();
 }

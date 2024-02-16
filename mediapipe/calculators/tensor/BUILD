@@ -431,6 +431,19 @@ cc_library_with_tflite(
     alwayslink = 1,
 )
 
+# Helper utility to more easily iterate over a collection of Tensor references
+cc_library(
+    name = "tensor_span",
+    srcs = ["tensor_span.cc"],
+    hdrs = ["tensor_span.h"],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:input_stream_shard",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/formats:tensor",
+    ],
+)
+
 cc_library(
     name = "inference_calculator_gl",
     srcs = ["inference_calculator_gl.cc"],
@@ -508,6 +521,7 @@ cc_library(
     name = "inference_runner",
     hdrs = ["inference_runner.h"],
     deps = [
+        ":tensor_span",
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework/formats:tensor",
         "@com_google_absl//absl/status:statusor",
@@ -534,6 +548,8 @@ cc_library_with_tflite(
     ],
     deps = [
         ":inference_runner",
+        ":tensor_span",
+        "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:mediapipe_profiling",
         "//mediapipe/framework/api2:packet",
         "//mediapipe/framework/formats:tensor",
@@ -555,6 +571,7 @@ cc_library(
         ":inference_calculator_utils",
         ":inference_interpreter_delegate_runner",
         ":inference_runner",
+        ":tensor_span",
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/memory",
@@ -615,6 +632,7 @@ cc_library(
         ":inference_calculator_utils",
         ":inference_interpreter_delegate_runner",
         ":inference_runner",
+        ":tensor_span",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
