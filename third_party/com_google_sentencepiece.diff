@@ -355,9 +355,18 @@ index 8c2e4b7..e8b4979 100644
  
  namespace sentencepiece {
 diff --git a/src/common.h b/src/common.h
-index 7595634..339f831 100644
+index 7595634..3a2f4e1 100644
 --- a/src/common.h
 +++ b/src/common.h
+@@ -46,7 +46,7 @@ typedef int32_t int32;
+ typedef int64_t int64;
+ typedef uint8_t uint8;
+ typedef uint16_t uint16;
+-typedef uint32_t char32;
++typedef int32_t char32;
+ typedef uint32_t uint32;
+ typedef uint64_t uint64;
+ 
 @@ -146,6 +146,7 @@ inline const char *BaseName(const char *path) {
  }  // namespace logging
  }  // namespace sentencepiece
@@ -1805,7 +1814,7 @@ index d1d2541..ff594d0 100644
  #include "unigram_model_trainer.h"
  #include "word_model_trainer.h"
 diff --git a/src/trainer_interface.cc b/src/trainer_interface.cc
-index a3a4b74..e6a2587 100644
+index a3a4b74..3e441ec 100644
 --- a/src/trainer_interface.cc
 +++ b/src/trainer_interface.cc
 @@ -26,13 +26,14 @@
@@ -1848,6 +1857,15 @@ index a3a4b74..e6a2587 100644
    CHECK_OR_RETURN(fp_);
    return fp_->status();
  }
+@@ -212,7 +213,7 @@ bool TrainerInterface::IsValidSentencePiece(
+   }
+ 
+   constexpr unicode_script::ScriptType kAnyType =
+-      static_cast<unicode_script::ScriptType>(-1);
++      static_cast<unicode_script::ScriptType>(0);
+ 
+   unicode_script::ScriptType prev_script = kAnyType;
+   bool all_whitespace_piece =
 @@ -296,7 +297,7 @@ bool TrainerInterface::IsValidSentencePiece(
    return true;
  }

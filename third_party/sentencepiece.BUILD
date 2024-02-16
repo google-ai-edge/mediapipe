@@ -95,3 +95,71 @@ cc_library(
             "@darts_clone",
         ],
 )
+
+cc_library(
+    name = "sentencepiece_trainer",
+    srcs = [
+        "src/bpe_model_trainer.cc",
+        "src/builder.cc",
+        "src/char_model_trainer.cc",
+        "src/sentencepiece_trainer.cc",
+        "src/trainer_factory.cc",
+        "src/trainer_interface.cc",
+        "src/unicode_script.cc",
+        "src/unigram_model_trainer.cc",
+        "src/word_model_trainer.cc",
+    ],
+    hdrs = [
+        "src/bpe_model_trainer.h",
+        "src/builder.h",
+        "src/char_model_trainer.h",
+        "src/normalization_rule.h",
+        "src/sentencepiece_trainer.h",
+        "src/spec_parser.h",
+        "src/trainer_factory.h",
+        "src/trainer_interface.h",
+        "src/unicode_script.h",
+        "src/unicode_script_map.h",
+        "src/unigram_model_trainer.h",
+        "src/word_model_trainer.h",
+        "third_party/esaxx/esa.hxx",
+        "third_party/esaxx/sais.hxx",
+    ],
+    includes = [
+        ".",
+        "src",
+        "third_party/esaxx",
+    ],
+    deps = [
+        ":common",
+        ":pretokenizer_for_training",
+        ":sentencepiece_cc_proto",
+        ":sentencepiece_model_cc_proto",
+        ":sentencepiece_processor",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
+        "@darts_clone",
+    ],
+)
+
+cc_library(
+    name = "pretokenizer_for_training",
+    srcs = ["src/pretokenizer_for_training.cc"],
+    hdrs = ["src/pretokenizer_for_training.h"],
+    includes = [
+        ".",
+        "src",
+    ],
+    deps = [
+        ":common",
+        ":sentencepiece_cc_proto",
+        ":sentencepiece_processor",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+    ],
+)

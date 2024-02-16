@@ -14,6 +14,7 @@
 
 # Placeholder for internal Python strict library and test compatibility macro.
 # Placeholder for internal Python strict test compatibility macro.
+load("@org_tensorflow//tensorflow:tensorflow.bzl", "pybind_extension")
 
 package(default_visibility = [
     "//mediapipe:__subpackages__",
@@ -33,6 +34,37 @@ py_library(
         ":pytorch_converter",
         ":safetensors_converter",
         ":weight_bins_writer",
+    ],
+)
+
+py_library(
+    name = "llm_converter",
+    srcs = ["llm_converter.py"],
+    deps = [
+        ":converter_base",
+        ":converter_factory",
+        ":model_ckpt_util",
+        ":quantization_util",
+    ],
+)
+
+pybind_extension(
+    name = "model_ckpt_util",
+    srcs = ["model_ckpt_util.cc"],
+    deps = [
+        "//mediapipe/tasks/cc/text/utils:vocab_convert_utils",
+        "@odml//odml/infra/genai/inference/ml_drift/llm/tensor_loaders:model_ckpt_util",
+        "@odml//odml/infra/genai/inference/utils/xnn_utils:model_ckpt_util",
+        "@pybind11",
+        "@pybind11_abseil//pybind11_abseil:status_casters",
+    ],
+)
+
+py_library(
+    name = "pytorch_converter",
+    srcs = ["pytorch_converter.py"],
+    deps = [
+        ":converter_base",
     ],
 )
 

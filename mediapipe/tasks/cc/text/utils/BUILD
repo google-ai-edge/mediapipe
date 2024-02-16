@@ -88,3 +88,27 @@ cc_test(
         "@org_tensorflow//tensorflow/lite:test_util",
     ],
 )
+
+cc_library(
+    name = "vocab_convert_utils",
+    srcs = [
+        "vocab_convert_utils.cc",
+    ],
+    hdrs = [
+        "vocab_convert_utils.h",
+    ],
+    deps = [
+        "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/port:file_helpers",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/util:resource_util",
+        "@com_github_nlohmann_json//:json",
+        "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/container:node_hash_map",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_sentencepiece//:sentencepiece_model_cc_proto",
+        "@com_google_sentencepiece//:sentencepiece_trainer",
+    ],
+)

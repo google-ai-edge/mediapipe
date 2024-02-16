@@ -18,10 +18,10 @@
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/util/resource_util.h"
+#include "nlohmann/json.hpp"  // from @com_github_nlohmann_json
+#include "nlohmann/json_fwd.hpp"
 #include "src/builder.h"
 #include "src/sentencepiece_model.pb.h"
-#include "third_party/json/include/nlohmann/json_fwd.hpp"
-#include "third_party/json/src/json.hpp"
 
 namespace mediapipe {
 namespace tasks {
