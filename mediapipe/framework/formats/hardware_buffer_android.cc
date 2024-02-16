@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "mediapipe/framework/port.h"  // IWYU pragma: keep
-
-#if MEDIAPIPE_AHWB_AVAILABLE
+#if !defined(MEDIAPIPE_NO_JNI) && \
+    (__ANDROID_API__ >= 26 ||     \
+     defined(__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__))
 
 #include <android/hardware_buffer.h>
 
@@ -191,4 +191,5 @@ void HardwareBuffer::Reset() {
 
 }  // namespace mediapipe
 
-#endif  // MEDIAPIPE_AHWB_AVAILABLE
+#endif  // !defined(MEDIAPIPE_NO_JNI) && (__ANDROID_API__>= 26 ||
+        // defined(__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__))

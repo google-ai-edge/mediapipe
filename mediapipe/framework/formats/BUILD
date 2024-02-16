@@ -174,7 +174,6 @@ cc_library(
         "//mediapipe/gpu:__pkg__",
     ],
     deps = [
-        "//mediapipe/framework:port",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:statusor",
         "@com_google_absl//absl/log:absl_check",
