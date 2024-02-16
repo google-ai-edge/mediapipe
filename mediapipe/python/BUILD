@@ -20,9 +20,7 @@ package(default_visibility = ["//visibility:public"])
 
 config_setting(
     name = "enable_odml_converter",
-    define_values = {
-        "ENABLE_ODML_CONVERTER": "1",
-    },
+    define_values = {"ENABLE_ODML_CONVERTER": "1"},
     visibility = ["//visibility:public"],
 )
 

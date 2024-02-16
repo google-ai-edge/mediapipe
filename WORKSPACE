@@ -75,12 +75,12 @@ http_archive(
     ],
 )
 
-# XNNPACK on 2024-02-09
+# XNNPACK on 2024-02-16
 http_archive(
     name = "XNNPACK",
-    sha256 = "891c1169c13958f570d8b17c8f468039f333b6ca6614d8746643e8d08a2f1999",
-    strip_prefix = "XNNPACK-6db74a6d4635b2890523fc445ce5f5dad1a56908",
-    url = "https://github.com/google/XNNPACK/archive/6db74a6d4635b2890523fc445ce5f5dad1a56908.zip",
+    sha256 = "2288691e067240cbd7a4c3232f7976068eca891c3d8290f4f8f3fbdb750c2edb",
+    strip_prefix = "XNNPACK-7fa9e749b4083c7ba40486b0f381c615a9782ac3",
+    url = "https://github.com/google/XNNPACK/archive/7fa9e749b4083c7ba40486b0f381c615a9782ac3.zip",
 )
 
 # TODO: This is an are indirect depedency. We should factor it out.
