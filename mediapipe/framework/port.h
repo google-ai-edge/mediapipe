@@ -104,20 +104,32 @@
 #endif
 #endif  // MEDIAPIPE_HAS_RTTI
 
-// AHardware buffers are only available since Android API 26.
-#if (__ANDROID_API__ >= 26)
-#define MEDIAPIPE_GPU_BUFFER_USE_AHWB 1
-#endif
-
-// Supported use cases for tensor_ahwb:
-// 1. Native code running in Android apps.
-// 2. Android vendor processes linked against nativewindow.
+// Scenarios where Android hardware buffers are available:
+// The API level is 26 or higher and the program is:
+// Native code running in an Android app, or an Android vendor process linked
+// against nativewindow.
 #if !defined(MEDIAPIPE_NO_JNI) || defined(MEDIAPIPE_ANDROID_LINK_NATIVE_WINDOW)
 #if __ANDROID_API__ >= 26 || defined(__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__)
-#define MEDIAPIPE_TENSOR_USE_AHWB 1
+#define MEDIAPIPE_AHWB_AVAILABLE 1
 #endif  // __ANDROID_API__ >= 26 ||
         // defined(__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__)
 #endif  // !defined(MEDIAPIPE_NO_JNI) ||
         // defined(MEDIAPIPE_ANDROID_LINK_NATIVE_WINDOW)
+
+// Flags to control the usage of ahwb in various data containers.
+// GpuBuffer
+#if MEDIAPIPE_AHWB_AVAILABLE
+// This is a compile time check that must be paired with runtime checks
+// (__builtin_available(android 26, *)). The runtime checks are not implemented
+// for GpuBuffer related code, so disable this path out of caution.
+#if !defined(__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__)
+#define MEDIAPIPE_GPU_BUFFER_USE_AHWB 1
+#endif
+#endif  // MEDIAPIPE_AHWB_AVAILABLE
+
+// Tensor
+#if MEDIAPIPE_AHWB_AVAILABLE
+#define MEDIAPIPE_TENSOR_USE_AHWB 1
+#endif  // MEDIAPIPE_AHWB_AVAILABLE
 
 #endif  // MEDIAPIPE_FRAMEWORK_PORT_H_

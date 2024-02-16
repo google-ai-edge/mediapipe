@@ -1258,6 +1258,7 @@ mediapipe_cc_test(
         ":gpu_buffer_format",
         ":gpu_buffer_storage_ahwb",
         ":gpu_test_base",
+        "//mediapipe/framework:port",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/tool:test_util",
     ],
