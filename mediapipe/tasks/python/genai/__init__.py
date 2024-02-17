@@ -12,16 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""MediaPipe Tasks API."""
+"""MediaPipe Tasks GenAI API."""
 
-from . import audio
-from . import components
-from . import core
-from . import genai
-from . import text
-from . import vision
+import mediapipe.tasks.python.genai.converter
 
-BaseOptions = core.base_options.BaseOptions
+ConversionConfig = converter.ConversionConfig
+convert_checkpoint = converter.convert_checkpoint
 
 # Remove unnecessary modules to avoid duplication in API docs.
-del core
+del mediapipe
+del converter
