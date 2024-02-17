@@ -35,8 +35,9 @@ namespace {
 
 class OpenCvProcessor : public ImageToTensorConverter {
  public:
-  OpenCvProcessor(BorderMode border_mode, Tensor::ElementType tensor_type)
-      : tensor_type_(tensor_type) {
+  OpenCvProcessor(BorderMode border_mode, Tensor::ElementType tensor_type,
+                  cv::InterpolationFlags flags)
+      : tensor_type_(tensor_type), flags_(flags) {
     switch (border_mode) {
       case BorderMode::kReplicate:
         border_mode_ = cv::BORDER_REPLICATE;
@@ -148,7 +149,7 @@ class OpenCvProcessor : public ImageToTensorConverter {
     cv::Mat transformed;
     cv::warpPerspective(*src, transformed, projection_matrix,
                         cv::Size(dst_width, dst_height),
-                        /*flags=*/cv::INTER_LINEAR,
+                        /*flags=*/flags_,
                         /*borderMode=*/border_mode_);
 
     if (transformed.channels() > output_channels) {
@@ -181,6 +182,7 @@ class OpenCvProcessor : public ImageToTensorConverter {
 
   enum cv::BorderTypes border_mode_;
   Tensor::ElementType tensor_type_;
+  cv::InterpolationFlags flags_;
   int mat_type_;
   int mat_gray_type_;
 };
@@ -189,7 +191,7 @@ class OpenCvProcessor : public ImageToTensorConverter {
 
 absl::StatusOr<std::unique_ptr<ImageToTensorConverter>> CreateOpenCvConverter(
     CalculatorContext* cc, BorderMode border_mode,
-    Tensor::ElementType tensor_type) {
+    Tensor::ElementType tensor_type, cv::InterpolationFlags flags) {
   if (tensor_type != Tensor::ElementType::kInt8 &&
       tensor_type != Tensor::ElementType::kFloat32 &&
       tensor_type != Tensor::ElementType::kUInt8) {
@@ -197,7 +199,7 @@ absl::StatusOr<std::unique_ptr<ImageToTensorConverter>> CreateOpenCvConverter(
         "Tensor type is currently not supported by OpenCvProcessor, type: ",
         tensor_type));
   }
-  return absl::make_unique<OpenCvProcessor>(border_mode, tensor_type);
+  return std::make_unique<OpenCvProcessor>(border_mode, tensor_type, flags);
 }
 
 }  // namespace mediapipe
