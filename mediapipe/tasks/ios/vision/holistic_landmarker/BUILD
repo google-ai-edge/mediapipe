@@ -41,6 +41,7 @@ objc_library(
 
 objc_library(
     name = "MPPHolisticLandmarker",
+    srcs = ["sources/MPPHolisticLandmarker.mm"],
     hdrs = ["sources/MPPHolisticLandmarker.h"],
     copts = [
         "-ObjC++",

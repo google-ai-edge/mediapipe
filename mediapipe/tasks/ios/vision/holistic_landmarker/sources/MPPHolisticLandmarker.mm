@@ -1,4 +1,4 @@
-// Copyright 2023 The MediaPipe Authors.
+// Copyright 2024 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -53,25 +53,34 @@ static NSString *const kTaskGraphName =
     @"mediapipe.tasks.vision.holistic_landmarker.HolisticLandmarkerGraph";
 static NSString *const kTaskName = @"holisticLandmarker";
 
-#define HolisticLandmarkerResultWithOutputPacketMap(outputPacketMap)                                \
-    [MPPHolisticLandmarkerResult                                                              \
-      holisticLandmarkerResultWithFaceLandmarksPacket:outputPacketMap[kFaceLandmarksOutStreamName      \
-                                                                  .cppString]                   \
-                                                                  faceBlendshapesPacket:outputPacketMap[kFaceBlendshapesOutStreamName.cppString] \
-                                                                  poseLandmarksPacket:outputPacketMap[kPoseLandmarksOutStreamName.cppString] \
-                                                                  poseWorldLandmarksPacket:outputPacketMap[kPoseWorldLandmarksOutStreamName.cppString] \
-                                                                  poseSegmentationMasks:&(outputPacketMap[kPoseSegmentationMaskOutStreamName.cppString]) \
-                                                                  leftHandLandmarksPacket:outputPacketMap[kLeftHandLandmarksOutStreamName.cppString] \
-                                                                  leftHandWorldLandmarksPacket:outputPacketMap[kLeftHandWorldLandmarksOutStreamName.cppString] \
-                                                                  rightHandLandmarksPacket:outputPacketMap[kRightHandLandmarksOutStreamName.cppString] \
-                                                                  rightHandWorldLandmarksPacket:outputPacketMap[kRightHandWorldLandmarksOutStreamName.cppString]]
+#define HolisticLandmarkerResultWithOutputPacketMap(outputPacketMap)                              \
+  [MPPHolisticLandmarkerResult                                                                    \
+      holisticLandmarkerResultWithFaceLandmarksPacket:outputPacketMap[kFaceLandmarksOutStreamName \
+                                                                          .cppString]             \
+                                faceBlendshapesPacket:                                            \
+                                    outputPacketMap[kFaceBlendshapesOutStreamName.cppString]      \
+                                  poseLandmarksPacket:outputPacketMap[kPoseLandmarksOutStreamName \
+                                                                          .cppString]             \
+                             poseWorldLandmarksPacket:                                            \
+                                 outputPacketMap[kPoseWorldLandmarksOutStreamName.cppString]      \
+                          poseSegmentationMasksPacket:                                            \
+                              &(outputPacketMap[kPoseSegmentationMaskOutStreamName.cppString])    \
+                              leftHandLandmarksPacket:                                            \
+                                  outputPacketMap[kLeftHandLandmarksOutStreamName.cppString]      \
+                         leftHandWorldLandmarksPacket:                                            \
+                             outputPacketMap[kLeftHandWorldLandmarksOutStreamName.cppString]      \
+                             rightHandLandmarksPacket:                                            \
+                                 outputPacketMap[kRightHandLandmarksOutStreamName.cppString]      \
+                        rightHandWorldLandmarksPacket:                                            \
+                            outputPacketMap[kRightHandWorldLandmarksOutStreamName.cppString]]
 
 @interface MPPHolisticLandmarker () {
   /** iOS Vision Task Runner */
   MPPVisionTaskRunner *_visionTaskRunner;
   dispatch_queue_t _callbackQueue;
 }
-@property(nonatomic, weak) id<MPPHolisticLandmarkerLiveStreamDelegate> holisticLandmarkerLiveStreamDelegate;
+@property(nonatomic, weak) id<MPPHolisticLandmarkerLiveStreamDelegate>
+    holisticLandmarkerLiveStreamDelegate;
 @end
 
 @implementation MPPHolisticLandmarker
@@ -82,20 +91,27 @@ static NSString *const kTaskName = @"holisticLandmarker";
   self = [super init];
   if (self) {
     NSMutableArray<NSString *> *outputStreams = [NSMutableArray
-        arrayWithObjects:[NSString stringWithFormat:@"%@:%@", kFaceLandmarksTag, kFaceLandmarksOutStreamName],
-                         [NSString stringWithFormat:@"%@:%@", kPoseLandmarksTag, kPoseLandmarksOutStreamName],
-                         [NSString stringWithFormat:@"%@:%@", kPoseWorldLandmarksTag, kPoseWorldLandmarksOutStreamName],
-                         [NSString stringWithFormat:@"%@:%@", kLeftHandLandmarksTag, kLeftHandLandmarksOutStreamName],
-                         [NSString stringWithFormat:@"%@:%@", kLeftHandWorldLandmarksTag, kLeftHandWorldLandmarksOutStreamName],
-                         [NSString stringWithFormat:@"%@:%@", kRightHandLandmarksTag, kRightHandLandmarksOutStreamName],
-                         [NSString stringWithFormat:@"%@:%@", kRightHandWorldLandmarksTag, kRightHandWorldLandmarksOutStreamName],
+        arrayWithObjects:[NSString stringWithFormat:@"%@:%@", kFaceLandmarksTag,
+                                                    kFaceLandmarksOutStreamName],
+                         [NSString stringWithFormat:@"%@:%@", kPoseLandmarksTag,
+                                                    kPoseLandmarksOutStreamName],
+                         [NSString stringWithFormat:@"%@:%@", kPoseWorldLandmarksTag,
+                                                    kPoseWorldLandmarksOutStreamName],
+                         [NSString stringWithFormat:@"%@:%@", kLeftHandLandmarksTag,
+                                                    kLeftHandLandmarksOutStreamName],
+                         [NSString stringWithFormat:@"%@:%@", kLeftHandWorldLandmarksTag,
+                                                    kLeftHandWorldLandmarksOutStreamName],
+                         [NSString stringWithFormat:@"%@:%@", kRightHandLandmarksTag,
+                                                    kRightHandLandmarksOutStreamName],
+                         [NSString stringWithFormat:@"%@:%@", kRightHandWorldLandmarksTag,
+                                                    kRightHandWorldLandmarksOutStreamName],
                          [NSString stringWithFormat:@"%@:%@", kImageTag, kImageOutStreamName], nil];
 
     if (options.outputPoseSegmentationMasks) {
       [outputStreams addObject:[NSString stringWithFormat:@"%@:%@", kPoseSegmentationMaskTag,
                                                           kPoseSegmentationMaskOutStreamName]];
     }
-    if (options.outputFaceBlendShapes) {
+    if (options.outputFaceBlendshapes) {
       [outputStreams addObject:[NSString stringWithFormat:@"%@:%@", kFaceBlendshapesTag,
                                                           kFaceBlendshapesOutStreamName]];
     }
@@ -139,7 +155,7 @@ static NSString *const kTaskName = @"holisticLandmarker";
                                                            roiAllowed:NO
                                                       packetsCallback:std::move(packetsCallback)
                                                  imageInputStreamName:kImageInStreamName
-                                              normRectInputStreamName:kNormRectInStreamName
+                                              normRectInputStreamName:nil
                                                                 error:error];
 
     if (!_visionTaskRunner) {
@@ -160,18 +176,20 @@ static NSString *const kTaskName = @"holisticLandmarker";
 - (nullable MPPHolisticLandmarkerResult *)detectImage:(MPPImage *)image error:(NSError **)error {
   std::optional<PacketMap> outputPacketMap = [_visionTaskRunner processImage:image error:error];
 
-  return [MPPHolisticLandmarker holisticLandmarkerResultWithOptionalOutputPacketMap:outputPacketMap];
+  return
+      [MPPHolisticLandmarker holisticLandmarkerResultWithOptionalOutputPacketMap:outputPacketMap];
 }
 
 - (nullable MPPHolisticLandmarkerResult *)detectVideoFrame:(MPPImage *)image
-                               timestampInMilliseconds:(NSInteger)timestampInMilliseconds
-                                                 error:(NSError **)error {
+                                   timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                                                     error:(NSError **)error {
   std::optional<PacketMap> outputPacketMap =
       [_visionTaskRunner processVideoFrame:image
                    timestampInMilliseconds:timestampInMilliseconds
                                      error:error];
 
-  return [MPPHolisticLandmarker holisticLandmarkerResultWithOptionalOutputPacketMap:outputPacketMap];
+  return
+      [MPPHolisticLandmarker holisticLandmarkerResultWithOptionalOutputPacketMap:outputPacketMap];
 }
 
 - (BOOL)detectAsyncImage:(MPPImage *)image
@@ -194,10 +212,10 @@ static NSString *const kTaskName = @"holisticLandmarker";
   NSError *callbackError = nil;
   if (![MPPCommonUtils checkCppError:liveStreamResult.status() toError:&callbackError]) {
     dispatch_async(_callbackQueue, ^{
-      [self.holisticLandmarkerLiveStreamDelegate poseLandmarker:self
-                               didFinishDetectionWithResult:nil
-                                    timestampInMilliseconds:Timestamp::Unset().Value()
-                                                      error:callbackError];
+      [self.holisticLandmarkerLiveStreamDelegate holisticLandmarker:self
+                                       didFinishDetectionWithResult:nil
+                                            timestampInMilliseconds:Timestamp::Unset().Value()
+                                                              error:callbackError];
     });
     return;
   }
@@ -207,16 +225,17 @@ static NSString *const kTaskName = @"holisticLandmarker";
     return;
   }
 
-  MPPHolisticLandmarkerResult *result = HolisticLandmarkerResultWithOutputPacketMap(outputPacketMap);
+  MPPHolisticLandmarkerResult *result =
+      HolisticLandmarkerResultWithOutputPacketMap(outputPacketMap);
 
   NSInteger timestampInMilliseconds =
       outputPacketMap[kImageOutStreamName.cppString].Timestamp().Value() /
       kMicrosecondsPerMillisecond;
   dispatch_async(_callbackQueue, ^{
     [self.holisticLandmarkerLiveStreamDelegate holisticLandmarker:self
-                             didFinishDetectionWithResult:result
-                                  timestampInMilliseconds:timestampInMilliseconds
-                                                    error:callbackError];
+                                     didFinishDetectionWithResult:result
+                                          timestampInMilliseconds:timestampInMilliseconds
+                                                            error:callbackError];
   });
 }
 
@@ -230,4 +249,3 @@ static NSString *const kTaskName = @"holisticLandmarker";
 }
 
 @end
-

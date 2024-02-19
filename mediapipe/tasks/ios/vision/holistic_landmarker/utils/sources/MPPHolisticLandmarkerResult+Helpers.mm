@@ -20,8 +20,6 @@
 #import "mediapipe/tasks/ios/components/containers/utils/sources/MPPClassificationResult+Helpers.h"
 #import "mediapipe/tasks/ios/components/containers/utils/sources/MPPLandmark+Helpers.h"
 
-static constexpr int kMicrosecondsPerMillisecond = 1000;
-
 namespace {
 using ::mediapipe::Image;
 using ::mediapipe::Packet;
@@ -66,6 +64,8 @@ using ClassificationListProto = ::mediapipe::ClassificationList;
   NSMutableArray<NSArray<MPPLandmark *> *> *rightHandWorldLandmarks =
       [MPPHolisticLandmarkerResult landmarksArrayFromPacket:rightHandWorldLandmarksPacket];
 
+  // Since the presence of faceBlendshapes and poseConfidenceMasks are optional, if they are not
+  // present pass nil arrays to the result.
   NSMutableArray<MPPClassifications *> *faceBlendshapes;
   if (faceBlendShapesPacket.ValidateAsType<std::vector<ClassificationListProto>>().ok()) {
     const std::vector<ClassificationListProto> &classificationListProtos =

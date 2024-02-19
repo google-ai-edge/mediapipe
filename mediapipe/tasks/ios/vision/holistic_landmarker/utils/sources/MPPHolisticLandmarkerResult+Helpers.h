@@ -21,6 +21,8 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+static const int kMicrosecondsPerMillisecond = 1000;
+
 @interface MPPHolisticLandmarkerResult (Helpers)
 
 /**

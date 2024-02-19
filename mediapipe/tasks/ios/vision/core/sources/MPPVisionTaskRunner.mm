@@ -43,16 +43,11 @@ static const NSInteger kMPPOrientationDegreesLeft = -90;
 
 static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
 
-#define InputPacketMap(imagePacket, normalizedRectPacket)                              \
-  {                                                                                    \
-    {_imageInStreamName, imagePacket}, { _normRectInStreamName, normalizedRectPacket } \
-  }
-
 @interface MPPVisionTaskRunner () {
   MPPRunningMode _runningMode;
   BOOL _roiAllowed;
-  NSString *_imageInStreamName;
-  NSString *_normRectInStreamName;
+  NSString *_imageInputStreamName;
+  NSString *_normRectInputStreamName;
 }
 @end
 
@@ -65,7 +60,7 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
                      imageInputStreamName:(NSString *)imageInputStreamName
                   normRectInputStreamName:(NSString *)normRectInputStreamName
                                     error:(NSError **)error {
-if (!taskInfo) {
+  if (!taskInfo) {
     [MPPCommonUtils createCustomError:error
                              withCode:MPPTasksErrorCodeInvalidArgumentError
                           description:@"`taskInfo` cannot be `nil`."];
@@ -79,10 +74,9 @@ if (!taskInfo) {
     return nil;
   }
 
-
   _roiAllowed = roiAllowed;
-  _imageInStreamName = imageInputStreamName;
-  _normRectInStreamName = normRectInputStreamName;
+  _imageInputStreamName = imageInputStreamName;
+  _normRectInputStreamName = normRectInputStreamName;
 
   switch (runningMode) {
     case MPPRunningModeImage:
@@ -128,7 +122,6 @@ if (!taskInfo) {
                                                    imageOrientation:
                                                        (UIImageOrientation)imageOrientation
                                                               error:(NSError **)error {
-
   // Redundant `roiAllowed` check is not needed here since it is already accounted for
   // before this method is called.
   CGRect calculatedRoi = CGRectEqualToRect(roi, CGRectZero) ? CGRectMake(0.0, 0.0, 1.0, 1.0) : roi;
@@ -186,17 +179,16 @@ if (!taskInfo) {
   return normalizedRect;
 }
 
-
 // This method checks if an error must be returned by the task based on the values of `roiAllowed`,
-// `normRectInStreamName`, imagOrientation and `roi`. With roi = `CGRectZero` and  no
-// `_normRectInputStreamName` task is allowed to continue. The caller of this method is responsible to
-// check if `_normRectInputStreamName` is present before adding the norm rect packet to the input
+// `normRectInputStreamName`, imagOrientation and `roi`. With roi = `CGRectZero` and  no
+// `_normRectInputStreamName` task is allowed to continue. The caller of this method is responsible
+// to check if `_normRectInputStreamName` is present before adding the norm rect packet to the input
 // packet map. This is enable the `[MPPVisionTaskRunner process*:regionOfInterest:error]` methods
 // can still pass `CGRectZero` to reduce the lines of code. Note: Mirrored orientations are not
 // checked here to avoid redundant switch cases with `[MPPVisionTaskRunner
 // normalizedRectWithRegionOfInterest:imageSize:imageOrientation:error:]`.
 - (BOOL)shouldTaskContinueWithRegionOfInterest:(CGRect)roi
-                           imageOrientation:(UIImageOrientation)imageOrientation
+                              imageOrientation:(UIImageOrientation)imageOrientation
                                          error:(NSError **)error {
   if (!_normRectInputStreamName && imageOrientation != UIImageOrientationUp) {
     [MPPCommonUtils createCustomError:error
@@ -218,7 +210,9 @@ if (!taskInfo) {
 - (std::optional<PacketMap>)inputPacketMapWithMPPImage:(MPPImage *)image
                                       regionOfInterest:(CGRect)roi
                                                  error:(NSError **)error {
-  if (![self shouldTaskContinueWithRegionOfInterest:roi imageOrientation:image.orientation error:error]) {
+  if (![self shouldTaskContinueWithRegionOfInterest:roi
+                                   imageOrientation:image.orientation
+                                              error:error]) {
     return std::nullopt;
   }
 
@@ -254,7 +248,9 @@ if (!taskInfo) {
                                       regionOfInterest:(CGRect)roi
                                timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                                                  error:(NSError **)error {
-  if (![self shouldTaskContinueWithRegionOfInterest:roi imageOrientation:image.orientation error:error]) {
+  if (![self shouldTaskContinueWithRegionOfInterest:roi
+                                   imageOrientation:image.orientation
+                                              error:error]) {
     return std::nullopt;
   }
 
