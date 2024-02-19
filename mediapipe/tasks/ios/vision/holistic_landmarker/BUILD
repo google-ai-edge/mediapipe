@@ -42,10 +42,24 @@ objc_library(
 objc_library(
     name = "MPPHolisticLandmarker",
     hdrs = ["sources/MPPHolisticLandmarker.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+        "-x objective-c++",
+    ],
     module_name = "MPPHolisticLandmarker",
     deps = [
         ":MPPHolisticLandmarkerOptions",
         ":MPPHolisticLandmarkerResult",
+        "//mediapipe/tasks/cc/vision/holistic_landmarker:holistic_landmarker_graph",
+        "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
+        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
+        "//mediapipe/tasks/ios/components/containers:MPPConnection",
+        "//mediapipe/tasks/ios/core:MPPTaskInfo",
         "//mediapipe/tasks/ios/vision/core:MPPImage",
+        "//mediapipe/tasks/ios/vision/core:MPPVisionPacketCreator",
+        "//mediapipe/tasks/ios/vision/core:MPPVisionTaskRunner",
+        "//mediapipe/tasks/ios/vision/holistic_landmarker/utils:MPPHolisticLandmarkerOptionsHelpers",
+        "//mediapipe/tasks/ios/vision/holistic_landmarker/utils:MPPHolisticLandmarkerResultHelpers",
     ],
 )
