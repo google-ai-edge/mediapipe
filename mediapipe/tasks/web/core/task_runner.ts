@@ -263,9 +263,9 @@ export abstract class TaskRunner {
   }
 
   /** Configures the `externalFile` option */
-  private setExternalFile(modelAssetPath?: string): void;
-  private setExternalFile(modelAssetBuffer?: Uint8Array): void;
-  private setExternalFile(modelAssetPathOrBuffer?: Uint8Array|string): void {
+  protected setExternalFile(modelAssetPath?: string): void;
+  protected setExternalFile(modelAssetBuffer?: Uint8Array): void;
+  protected setExternalFile(modelAssetPathOrBuffer?: Uint8Array|string): void {
     const externalFile = this.baseOptions.getModelAsset() || new ExternalFile();
     if (typeof modelAssetPathOrBuffer === 'string') {
       externalFile.setFileName(modelAssetPathOrBuffer);
