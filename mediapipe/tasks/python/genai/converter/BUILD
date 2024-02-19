@@ -14,7 +14,7 @@
 
 # Placeholder for internal Python strict library and test compatibility macro.
 # Placeholder for internal Python strict test compatibility macro.
-load("@pybind11_bazel//:build_defs.bzl", "pybind_library")
+load("@pybind11_bazel//:build_defs.bzl", "pybind_extension")
 
 package(default_visibility = [
     "//mediapipe:__subpackages__",
@@ -48,7 +48,7 @@ py_library(
     ],
 )
 
-pybind_library(
+pybind_extension(
     name = "model_ckpt_util",
     srcs = ["model_ckpt_util.cc"],
     deps = [
