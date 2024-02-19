@@ -20,13 +20,24 @@
 
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
+#include "absl/time/time.h"
 #include "mediapipe/calculators/tensor/inference_calculator.h"
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
-#include "mediapipe/framework/calculator_context.h"
+#include "mediapipe/framework/api2/node.h"
+#include "mediapipe/framework/api2/packet.h"
+#include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/formats/tensor.h"
+#include "mediapipe/framework/port/ret_check.h"
+#include "mediapipe/framework/port/status_macros.h"
+#include "mediapipe/gpu/gl_base.h"
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gl_context.h"
+#include "mediapipe/util/tflite/tflite_model_loader.h"
+#include "tensorflow/lite/core/interpreter_builder.h"
 #include "tensorflow/lite/delegates/gpu/gl_delegate.h"
+#include "tensorflow/lite/interpreter.h"
 
 #define PERFETTO_TRACK_EVENT_NAMESPACE mediapipe
 
@@ -49,9 +60,7 @@ class InferenceCalculatorGlImpl
     ~GpuInferenceRunner();
 
     absl::Status Init(CalculatorContext* cc,
-                      std::shared_ptr<GlContext> gl_context,
-                      const mediapipe::InferenceCalculatorOptions::Delegate&
-                          delegate_options);
+                      std::shared_ptr<GlContext> gl_context);
     absl::Status LoadModel(CalculatorContext* cc);
     absl::Status LoadDelegate(
         CalculatorContext* cc,
@@ -76,6 +85,9 @@ class InferenceCalculatorGlImpl
     size_t output_size_ = 0;
   };
 
+  absl::StatusOr<std::unique_ptr<GpuInferenceRunner>> CreateInferenceRunner(
+      CalculatorContext* cc);
+
   mediapipe::GlCalculatorHelper gpu_helper_;
   std::unique_ptr<GpuInferenceRunner> gpu_inference_runner_;
 };
@@ -91,10 +103,24 @@ InferenceCalculatorGlImpl::GpuInferenceRunner::~GpuInferenceRunner() {
 }
 
 absl::Status InferenceCalculatorGlImpl::GpuInferenceRunner::Init(
-    CalculatorContext* cc, std::shared_ptr<GlContext> gl_context,
-    const mediapipe::InferenceCalculatorOptions::Delegate& delegate_options) {
+    CalculatorContext* cc, std::shared_ptr<GlContext> gl_context) {
   gl_context_ = gl_context;
   MP_RETURN_IF_ERROR(LoadModel(cc));
+  const auto& options = cc->Options<mediapipe::InferenceCalculatorOptions>();
+  mediapipe::InferenceCalculatorOptions::Delegate delegate_options =
+      options.delegate();
+  if (!kDelegate(cc).IsEmpty()) {
+    const mediapipe::InferenceCalculatorOptions::Delegate&
+        input_side_packet_delegate = kDelegate(cc).Get();
+    RET_CHECK(
+        (input_side_packet_delegate.has_gpu() &&
+         !input_side_packet_delegate.gpu().use_advanced_gpu_api()) ||
+        input_side_packet_delegate.delegate_case() ==
+            mediapipe::InferenceCalculatorOptions::Delegate::DELEGATE_NOT_SET)
+        << "inference_calculator_gl only supports delegate input side packet "
+        << "for Gpu (non advanced)";
+    delegate_options.MergeFrom(input_side_packet_delegate);
+  }
   return gl_context_->Run([this, &cc, &delegate_options]() -> absl::Status {
     return LoadDelegateAndAllocateTensors(cc, delegate_options);
   });
@@ -250,24 +276,8 @@ absl::Status InferenceCalculatorGlImpl::UpdateContract(CalculatorContract* cc) {
 absl::Status InferenceCalculatorGlImpl::Open(CalculatorContext* cc) {
   MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
 
-  const auto& options = cc->Options<mediapipe::InferenceCalculatorOptions>();
-  mediapipe::InferenceCalculatorOptions::Delegate delegate = options.delegate();
-  if (!kDelegate(cc).IsEmpty()) {
-    const mediapipe::InferenceCalculatorOptions::Delegate&
-        input_side_packet_delegate = kDelegate(cc).Get();
-    RET_CHECK(
-        (input_side_packet_delegate.has_gpu() &&
-         !input_side_packet_delegate.gpu().use_advanced_gpu_api()) ||
-        input_side_packet_delegate.delegate_case() ==
-            mediapipe::InferenceCalculatorOptions::Delegate::DELEGATE_NOT_SET)
-        << "inference_calculator_gl only supports delegate input side packet "
-        << "for Gpu (non advanced)";
-    delegate.MergeFrom(input_side_packet_delegate);
-  }
-
-  gpu_inference_runner_ = std::make_unique<GpuInferenceRunner>();
-  return gpu_inference_runner_->Init(cc, gpu_helper_.GetSharedGlContext(),
-                                     delegate);
+  MP_ASSIGN_OR_RETURN(gpu_inference_runner_, CreateInferenceRunner(cc));
+  return absl::OkStatus();
 }
 
 absl::Status InferenceCalculatorGlImpl::Process(CalculatorContext* cc) {
@@ -289,6 +299,14 @@ absl::Status InferenceCalculatorGlImpl::Process(CalculatorContext* cc) {
 absl::Status InferenceCalculatorGlImpl::Close(CalculatorContext* cc) {
   gpu_inference_runner_ = nullptr;
   return absl::OkStatus();
+}
+
+absl::StatusOr<std::unique_ptr<InferenceCalculatorGlImpl::GpuInferenceRunner>>
+InferenceCalculatorGlImpl::CreateInferenceRunner(CalculatorContext* cc) {
+  auto gpu_inference_runner = std::make_unique<GpuInferenceRunner>();
+  MP_RETURN_IF_ERROR(
+      gpu_inference_runner->Init(cc, gpu_helper_.GetSharedGlContext()));
+  return gpu_inference_runner;
 }
 
 }  // namespace api2
