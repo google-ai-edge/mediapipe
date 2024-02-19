@@ -97,7 +97,8 @@ absl::StatusOr<HardwareBufferSpec> HardwareBuffer::AquireAHardwareBuffer(
             .height = desc.height,
             .layers = desc.layers,
             .format = desc.format,
-            .usage = desc.usage};
+            .usage = desc.usage,
+            .stride = desc.stride};
     AHardwareBuffer_acquire(ahw_buffer);
   } else {
     return absl::UnavailableError(

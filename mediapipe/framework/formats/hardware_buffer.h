@@ -30,7 +30,7 @@ namespace mediapipe {
 
 struct HardwareBufferSpec {
   // Buffer pixel formats. See NDK's hardware_buffer.h for descriptions.
-  enum {
+  enum AhwbFormat {
     // This must be kept in sync with NDK's hardware_buffer.h
     AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM = 0x01,
     AHARDWAREBUFFER_FORMAT_R8G8B8_UNORM = 0x03,
@@ -40,7 +40,7 @@ struct HardwareBufferSpec {
   };
 
   // Buffer usage descriptions. See NDK's hardware_buffer.h for descriptions.
-  enum {
+  enum AhwbUsage {
     // This must be kept in sync with NDK's hardware_buffer.h
     AHARDWAREBUFFER_USAGE_CPU_READ_NEVER = 0x0UL,
     AHARDWAREBUFFER_USAGE_CPU_READ_RARELY = 0x2UL,
@@ -66,6 +66,7 @@ struct HardwareBufferSpec {
   uint32_t layers = 0;
   uint32_t format = 0;
   uint64_t usage = 0;
+  uint32_t stride = 0;
 };
 
 // Equality operators
