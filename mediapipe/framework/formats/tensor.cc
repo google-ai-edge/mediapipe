@@ -20,6 +20,8 @@
 
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
+#include "absl/status/status.h"
+#include "absl/strings/str_cat.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/memory_manager.h"
 #include "mediapipe/framework/port.h"
@@ -568,6 +570,71 @@ void Tensor::Invalidate() {
 }
 #endif  // MEDIAPIPE_METAL_ENABLED
 
+absl::Status Tensor::ReadBackGpuToCpu() const {
+  // GPU-to-CPU synchronization and read-back.
+#if MEDIAPIPE_METAL_ENABLED
+  if (valid_ & kValidMetalBuffer) {
+    ABSL_LOG_IF(FATAL, !mtl_resources_->command_buffer)
+        << "Metal -> CPU synchronization "
+           "requires MTLCommandBuffer to be set.";
+    if (mtl_resources_->command_buffer) {
+      [mtl_resources_->command_buffer waitUntilCompleted];
+    }
+    return absl::OkStatus();
+  }
+#endif  // MEDIAPIPE_METAL_ENABLED
+
+#if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
+#if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
+  // TODO: we cannot just grab the GL context's lock while holding
+  // the view mutex here.
+  if (valid_ & kValidOpenGlBuffer) {
+    gl_context_->Run([this]() {
+      glBindBuffer(GL_SHADER_STORAGE_BUFFER, opengl_buffer_);
+      const void* ptr = glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, bytes(),
+                                         GL_MAP_READ_BIT);
+      std::memcpy(cpu_buffer_, ptr, bytes());
+      glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+    });
+    return absl::OkStatus();
+  }
+#endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
+  // Transfer data from texture if not transferred from SSBO/MTLBuffer
+  // yet.
+  if (valid_ & kValidOpenGlTexture2d) {
+    gl_context_->Run([this]() {
+      const int padded_size =
+          texture_height_ * texture_width_ * 4 * element_size();
+      auto temp_buffer = std::make_unique<uint8_t[]>(padded_size);
+      uint8_t* buffer = temp_buffer.get();
+
+      glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer_);
+      glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                             GL_TEXTURE_2D, opengl_texture2d_, 0);
+      glPixelStorei(GL_PACK_ALIGNMENT, 4);
+      glReadPixels(0, 0, texture_width_, texture_height_, GL_RGBA, GL_FLOAT,
+                   buffer);
+      uint8_t* dest_buffer = reinterpret_cast<uint8_t*>(cpu_buffer_);
+      const int actual_depth_size = BhwcDepthFromShape(shape_) * element_size();
+      const int num_slices = (BhwcDepthFromShape(shape_) + 3) / 4;
+      const int padded_depth_size = num_slices * 4 * element_size();
+      const int num_elements = BhwcWidthFromShape(shape_) *
+                               BhwcHeightFromShape(shape_) *
+                               BhwcBatchFromShape(shape_);
+      for (int e = 0; e < num_elements; e++) {
+        std::memcpy(dest_buffer, buffer, actual_depth_size);
+        dest_buffer += actual_depth_size;
+        buffer += padded_depth_size;
+      }
+    });
+    return absl::OkStatus();
+  }
+#endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
+
+  return absl::FailedPreconditionError(absl::StrCat(
+      "Failed to read back data from GPU to CPU. Valid formats: ", valid_));
+}
+
 Tensor::CpuReadView Tensor::GetCpuReadView() const {
   auto lock = absl::make_unique<absl::MutexLock>(&view_mutex_);
   ABSL_LOG_IF(FATAL, valid_ == kValidNone)
@@ -586,65 +653,7 @@ Tensor::CpuReadView Tensor::GetCpuReadView() const {
 
   AllocateCpuBuffer();
   if (!(valid_ & kValidCpu)) {
-    // GPU-to-CPU synchronization and read-back.
-#if MEDIAPIPE_METAL_ENABLED
-    if (valid_ & kValidMetalBuffer) {
-      ABSL_LOG_IF(FATAL, !mtl_resources_->command_buffer)
-          << "Metal -> CPU synchronization "
-             "requires MTLCommandBuffer to be set.";
-      if (mtl_resources_->command_buffer) {
-        [mtl_resources_->command_buffer waitUntilCompleted];
-      }
-    }
-#endif  // MEDIAPIPE_METAL_ENABLED
-
-#if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
-#if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
-    // TODO: we cannot just grab the GL context's lock while holding
-    // the view mutex here.
-    if (valid_ & kValidOpenGlBuffer) {
-      gl_context_->Run([this]() {
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, opengl_buffer_);
-        const void* ptr = glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, bytes(),
-                                           GL_MAP_READ_BIT);
-        std::memcpy(cpu_buffer_, ptr, bytes());
-        glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-      });
-    } else
-#endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
-    {
-      // Transfer data from texture if not transferred from SSBO/MTLBuffer
-      // yet.
-      if (valid_ & kValidOpenGlTexture2d) {
-        gl_context_->Run([this]() {
-          const int padded_size =
-              texture_height_ * texture_width_ * 4 * element_size();
-          auto temp_buffer = absl::make_unique<uint8_t[]>(padded_size);
-          uint8_t* buffer = temp_buffer.get();
-
-          glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer_);
-          glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-                                 GL_TEXTURE_2D, opengl_texture2d_, 0);
-          glPixelStorei(GL_PACK_ALIGNMENT, 4);
-          glReadPixels(0, 0, texture_width_, texture_height_, GL_RGBA, GL_FLOAT,
-                       buffer);
-          uint8_t* dest_buffer = reinterpret_cast<uint8_t*>(cpu_buffer_);
-          const int actual_depth_size =
-              BhwcDepthFromShape(shape_) * element_size();
-          const int num_slices = (BhwcDepthFromShape(shape_) + 3) / 4;
-          const int padded_depth_size = num_slices * 4 * element_size();
-          const int num_elements = BhwcWidthFromShape(shape_) *
-                                   BhwcHeightFromShape(shape_) *
-                                   BhwcBatchFromShape(shape_);
-          for (int e = 0; e < num_elements; e++) {
-            std::memcpy(dest_buffer, buffer, actual_depth_size);
-            dest_buffer += actual_depth_size;
-            buffer += padded_depth_size;
-          }
-        });
-      }
-    }
-#endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
+    ABSL_CHECK_OK(ReadBackGpuToCpu()) << "ReadBackGpuToCpu failed.";
     valid_ |= kValidCpu;
   }
   return {cpu_buffer_, std::move(lock)};

@@ -361,6 +361,7 @@ class Tensor {
   friend class MtlBufferView;
   void Move(Tensor*);
   void Invalidate();
+  absl::Status ReadBackGpuToCpu() const;
 
   ElementType element_type_;
   Shape shape_;
