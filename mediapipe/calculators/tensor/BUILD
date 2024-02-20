@@ -484,6 +484,7 @@ cc_library(
         ":inference_calculator_interface",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "//mediapipe/gpu:gl_calculator_helper",
