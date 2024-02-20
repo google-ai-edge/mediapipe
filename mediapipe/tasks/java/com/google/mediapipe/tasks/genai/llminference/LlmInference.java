@@ -12,7 +12,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /** LlmInference Task Java API */
-public final class LlmInference implements AutoCloseable {
+public class LlmInference implements AutoCloseable {
   private static final char TOKEN_SPLITTER = '▁'; // Note this is NOT an underscore: ▁(U+2581)
   private static final String NEW_LINE = "<0x0A>";
   private static final String EOD = "\\[eod\\]";
@@ -176,13 +176,13 @@ public final class LlmInference implements AutoCloseable {
     }
 
     /** The path that points to the tflite model file. */
-    abstract String modelPath();
+    public abstract String modelPath();
 
     /**
      * The total length of the kv-cache. In other words, this is the total number of input + output
      * tokens the model needs to handle.
      */
-    abstract int maxSequenceLength();
+    public abstract int maxSequenceLength();
 
     /**
      * Top K number of tokens to be sampled from for each decoding step. A value of 1 means greedy

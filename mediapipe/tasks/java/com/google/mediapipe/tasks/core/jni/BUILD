@@ -14,7 +14,10 @@
 
 load("@org_tensorflow//tensorflow/lite/core/shims:cc_library_with_tflite.bzl", "cc_library_with_tflite")
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
+package(default_visibility = [
+    "//mediapipe/tasks:internal",
+    "//third_party/generative_computing:__subpackages__",
+])
 
 licenses(["notice"])
 
