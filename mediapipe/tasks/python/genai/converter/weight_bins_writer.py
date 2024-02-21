@@ -18,6 +18,7 @@ import contextlib
 import os
 from typing import Dict, Tuple
 
+from jax import numpy as jnp
 import numpy as np
 
 from mediapipe.tasks.python.genai.converter import converter_base
@@ -65,7 +66,7 @@ class WeightBinsWriter(converter_base.ModelWriterBase):
         output = np.expand_dims(np.ravel(output), axis=-1)
         # Extra pack needed for 4 bit. We always pack the weights along the
         # first dimension since the tensor has already been squeezed.
-        output = quantization_util.pack_4bit(output, 0)
+        output = quantization_util.pack_4bit(output, 0, jnp.int8)
       if 'combined_qkv' in var_name:
         var_name = removeprefix(var_name, 'mld_vars.')
         var_name_q = var_name.replace('combined_qkv', 'q')

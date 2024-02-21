@@ -107,6 +107,7 @@ def quantize_by_actions(
         )
         output_tensors[action.target_name] = (target_var, pack)
         output_tensors[action.target_name + '_quantized_scale'] = (scale, False)
+        zp = None
       else:
         target_var, scale, zp = quantization_util.quantize_tensor(
             var=action.tensor_value,
@@ -114,12 +115,13 @@ def quantize_by_actions(
             sym=is_symmetric,
             number_bits=action.quantize_bits,
         )
-        if backend == 'cpu' and (action.quantize_bits == 4):
-          target_var, scale, zp = quantization_util.update_to_uint4(
-              target_var, scale, zp
-          )
-        output_tensors[action.target_name] = (target_var, pack)
-        output_tensors[action.target_name + '_quantized_scale'] = (scale, False)
+      if backend == 'cpu' and pack:
+        target_var, scale, zp = quantization_util.update_to_uint4(
+            target_var, scale, zp
+        )
+      output_tensors[action.target_name] = (target_var, pack)
+      output_tensors[action.target_name + '_quantized_scale'] = (scale, False)
+      if zp is not None:
         output_tensors[action.target_name + '_quantized_zp'] = (zp, False)
     else:
       output_tensors[action.target_name] = (action.tensor_value, False)
@@ -170,7 +172,7 @@ def convert_checkpoint(config: ConversionConfig) -> None:
   """Converts the checkpoint to tflite file."""
   logging.info('input folder: %s', config.input_ckpt)
 
-  if config.model_type == 'GEMMA_2B':
+  if config.model_type == 'GEMMA_2B' or config.model_type == 'GEMINI_XXS':
     vocab_model_path = config.vocab_model_file
   else:
     vocab_model_path = convert_bpe_vocab(
