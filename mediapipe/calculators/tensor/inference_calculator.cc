@@ -89,6 +89,16 @@ absl::Status InferenceCalculator::EnforceVectorTensors(CalculatorContract* cc) {
   return absl::OkStatus();
 }
 
+absl::Status InferenceCalculator::TensorContractCheck(CalculatorContract* cc) {
+  RET_CHECK(kInTensors(cc).IsConnected() ^ (kInTensor(cc).Count() > 0))
+      << "Exactly one of TENSORS and TENSOR must be used for input.";
+  RET_CHECK(kOutTensors(cc).IsConnected() ^ (kOutTensor(cc).Count() > 0))
+      << "Exactly one of TENSORS and TENSOR must be used for output.";
+  RET_CHECK(kInTensors(cc).IsConnected() ^ (kOutTensor(cc).Count() > 0))
+      << "TENSORS and TENSOR cannot be used together.";
+  return absl::OkStatus();
+}
+
 absl::StatusOr<Packet<TfLiteModelPtr>> InferenceCalculator::GetModelAsPacket(
     CalculatorContext* cc) {
   const auto& options = cc->Options<mediapipe::InferenceCalculatorOptions>();

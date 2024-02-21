@@ -129,6 +129,9 @@ class InferenceCalculator : public NodeIntf {
   // Helper to be used in subclass UpdateContract calls to enforce common I/O
   // constraints until TENSOR is supported everywhere.
   static absl::Status EnforceVectorTensors(CalculatorContract* cc);
+  // Helper to be used in subclass UpdateContract calls to enforce constraints
+  // when TENSORS and TENSOR are both available.
+  static absl::Status TensorContractCheck(CalculatorContract* cc);
 
   static absl::StatusOr<Packet<TfLiteModelPtr>> GetModelAsPacket(
       CalculatorContext* cc);

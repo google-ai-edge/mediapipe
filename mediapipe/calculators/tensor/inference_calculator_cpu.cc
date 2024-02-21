@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <utility>
@@ -62,14 +63,7 @@ absl::Status InferenceCalculatorCpuImpl::UpdateContract(
   RET_CHECK(!options.model_path().empty() ^ kSideInModel(cc).IsConnected())
       << "Either model as side packet or model path in options is required.";
 
-  // TODO: When this becomes integrated into additional
-  // InferenceCalculator variants, refactor into a common helper.
-  RET_CHECK(kInTensors(cc).IsConnected() ^ (kInTensor(cc).Count() > 0))
-      << "Exactly one of TENSORS and TENSOR must be used for input.";
-  RET_CHECK(kOutTensors(cc).IsConnected() ^ (kOutTensor(cc).Count() > 0))
-      << "Exactly one of TENSORS and TENSOR must be used for output.";
-  RET_CHECK(kInTensors(cc).IsConnected() ^ (kOutTensor(cc).Count() > 0))
-      << "TENSORS and TENSOR cannot be used together.";
+  MP_RETURN_IF_ERROR(TensorContractCheck(cc));
 
   return absl::OkStatus();
 }
@@ -109,7 +103,9 @@ absl::Status InferenceCalculatorCpuImpl::ProcessTensors(CalculatorContext* cc) {
       inference_runner_->Run(cc, MakeTensorSpan(kInTensor(cc))));
 
   // And pipe each one into the appropriate output stream
-  for (int i = 0; i < output_tensors.size(); ++i) {
+  const int output_count =
+      std::min(kOutTensor(cc).Count(), static_cast<int>(output_tensors.size()));
+  for (int i = 0; i < output_count; ++i) {
     kOutTensor(cc)[i].Send(std::move(output_tensors[i]));
   }
   return absl::OkStatus();
