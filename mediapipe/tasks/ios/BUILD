@@ -45,7 +45,21 @@ OBJC_TASK_COMMON_DEPS = [
     "//mediapipe/tasks/ios/core:MPPTaskRunner",
     "//mediapipe/tasks/ios/components/containers/utils:MPPClassificationResultHelpers",
     "//mediapipe/tasks/ios/components/containers/utils:MPPCategoryHelpers",
+    "//mediapipe/tasks/ios/components/containers/utils:MPPEmbeddingHelpers",
+    "//mediapipe/tasks/ios/components/containers/utils:MPPEmbeddingResultHelpers",
+    "//mediapipe/tasks/ios/components/utils:MPPCosineSimilarity",
     "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
+]
+
+TENSORFLOW_LITE_C_DEPS = [
+    "@org_tensorflow//tensorflow/lite:builtin_ops",
+    "@org_tensorflow//tensorflow/lite/c:c_api",
+    "@org_tensorflow//tensorflow/lite/c:c_api_experimental",
+    "@org_tensorflow//tensorflow/lite/c:c_api_types",
+    "@org_tensorflow//tensorflow/lite/c:common",
+    "@org_tensorflow//tensorflow/lite/delegates/xnnpack:xnnpack_delegate",
+    "@org_tensorflow//tensorflow/lite/delegates/gpu:metal_delegate",
+    "@org_tensorflow//tensorflow/lite/delegates/gpu:metal_delegate_internal",
 ]
 
 CALCULATORS_AND_GRAPHS = [
@@ -63,6 +77,16 @@ CALCULATORS_AND_GRAPHS = [
     "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
     "//mediapipe/tasks/cc/vision/pose_landmarker:pose_landmarker_graph",
 ]
+
+OPENCV_DEPS = {
+    "//third_party:opencv_ios_sim_arm64_source_build": ["@ios_opencv_source//:opencv_xcframework"],
+    "//third_party:opencv_ios_arm64_source_build": ["@ios_opencv_source//:opencv_xcframework"],
+    "//third_party:opencv_ios_x86_64_source_build": ["@ios_opencv_source//:opencv_xcframework"],
+    "//third_party:opencv_ios_sim_fat_source_build": ["@ios_opencv_source//:opencv_xcframework"],
+    "//conditions:default": ["@ios_opencv//:OpencvFramework"],
+}
+
+MEDIAPIPE_TASKS_COMMON_DEPS = OBJC_TASK_COMMON_DEPS + TENSORFLOW_LITE_C_DEPS + ["//mediapipe/gpu:metal_shared_resources"]
 
 strip_api_include_path_prefix(
     name = "strip_api_include_path",
@@ -130,9 +154,7 @@ apple_static_xcframework(
     # Avoid dependencies of ":MediaPipeTasksCommon_framework" and
     # ":MediaPipeTaskGraphs_library in order to prevent duplicate symbols error
     # when the frameworks are imported in iOS projects.
-    avoid_deps = OBJC_TASK_COMMON_DEPS + CALCULATORS_AND_GRAPHS + [
-        "//mediapipe/gpu:metal_shared_resources",
-    ],
+    avoid_deps = MEDIAPIPE_TASKS_COMMON_DEPS + CALCULATORS_AND_GRAPHS,
     bundle_name = "MediaPipeTasksText",
     ios = {
         "simulator": [
@@ -177,9 +199,7 @@ apple_static_xcframework(
     # when the frameworks are imported in iOS projects.
     # Also avoids opencv since it will be built with
     # ":MediaPipeTaskGraphs_library".
-    avoid_deps = OBJC_TASK_COMMON_DEPS + CALCULATORS_AND_GRAPHS + [
-        "//mediapipe/gpu:metal_shared_resources",
-    ],
+    avoid_deps = MEDIAPIPE_TASKS_COMMON_DEPS + CALCULATORS_AND_GRAPHS,
     bundle_name = "MediaPipeTasksVision",
     ios = {
         "simulator": [
@@ -258,20 +278,20 @@ apple_static_library(
     # There is no way to turn off zlib dependency in custom opencv builds.
     # Hence zlib is avoided to prevent duplicate symbols because of conflicts
     # between opencv's zlib and "@zlib//:zlib"
-    avoid_deps = [
+    #
+    # Avoiding `OpenCV` and `TensorFlowLiteC` deps of the graphs here to prevent
+    # conflicts with `TensorFlowLiteSwift` and `OpenCV` frameworks since
+    # this static library is force loaded. They are include with
+    # `MediaPipeTasksCommon` xcframework instead.
+    avoid_deps = TENSORFLOW_LITE_C_DEPS + [
         "@zlib//:zlib",
-    ],
+        "//mediapipe/gpu:metal_shared_resources",
+    ] + select(OPENCV_DEPS),
     minimum_os_version = MPP_TASK_MINIMUM_OS_VERSION,
     platform_type = "ios",
     deps = CALCULATORS_AND_GRAPHS + [
         "@org_tensorflow//third_party/icu/data:conversion_data",
-    ] + select({
-        "//third_party:opencv_ios_sim_arm64_source_build": ["@ios_opencv_source//:opencv_xcframework"],
-        "//third_party:opencv_ios_arm64_source_build": ["@ios_opencv_source//:opencv_xcframework"],
-        "//third_party:opencv_ios_x86_64_source_build": ["@ios_opencv_source//:opencv_xcframework"],
-        "//third_party:opencv_ios_sim_fat_source_build": ["@ios_opencv_source//:opencv_xcframework"],
-        "//conditions:default": ["@ios_opencv//:OpencvFramework"],
-    }),
+    ] + select(OPENCV_DEPS),
 )
 
 apple_static_xcframework(
@@ -280,7 +300,7 @@ apple_static_xcframework(
     # ":MediaPipeTaskGraphs_library". Otherwise it will result in
     # duplicate symbols error when the frameworks are imported in iOS.
     avoid_deps = [
-        "//mediapipe/gpu:metal_shared_resources",
+        "@zlib//:zlib",
     ],
     bundle_name = "MediaPipeTasksCommon",
     ios = {
@@ -293,5 +313,11 @@ apple_static_xcframework(
     minimum_os_versions = {
         "ios": MPP_TASK_MINIMUM_OS_VERSION,
     },
-    deps = OBJC_TASK_COMMON_DEPS,
+    # Including `OpenCV` and `TensorFlowLiteC` deps of the graphs here to avoid
+    # conflicts with `TensorFlowLiteSwift` and `OpenCV` frameworks as iOS
+    # `xcframeworks` handle duplicate dependencies with other iOS
+    # `xcframeworks`. Including them with task graphs causes duplicate symbols
+    # when installed alongside the respective frameworks since task graphs are
+    # built as static libraries and force loaded.
+    deps = MEDIAPIPE_TASKS_COMMON_DEPS + select(OPENCV_DEPS),
 )
