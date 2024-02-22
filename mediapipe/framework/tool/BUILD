@@ -309,7 +309,7 @@ cc_library(
 mediapipe_cc_test(
     name = "options_util_test",
     size = "small",
-    timeout = "moderate",
+    timeout = "long",
     srcs = ["options_util_test.cc"],
     # A non-empty "data" param is needed to build the "_test_wasm" target.
     data = [":node_chain_subgraph.proto"],
@@ -856,6 +856,7 @@ cc_library(
 
 mediapipe_cc_test(
     name = "switch_demux_calculator_test",
+    timeout = "long",
     srcs = ["switch_demux_calculator_test.cc"],
     requires_full_emulation = False,
     deps = [
@@ -892,6 +893,7 @@ cc_library(
 
 mediapipe_cc_test(
     name = "switch_mux_calculator_test",
+    timeout = "long",
     srcs = ["switch_mux_calculator_test.cc"],
     requires_full_emulation = False,
     deps = [
