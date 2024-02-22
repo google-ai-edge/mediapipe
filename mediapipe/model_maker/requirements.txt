@@ -1,5 +1,4 @@
 absl-py
-jax[cpu]
 mediapipe>=0.10.0
 numpy
 opencv-python
@@ -9,4 +8,3 @@ tensorflow-datasets
 tensorflow-hub
 tensorflow-text
 tf-models-official>=2.13.2
-torch
