@@ -12,6 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/numbers.h"
@@ -695,6 +701,30 @@ TEST_F(UnpackMediaSequenceCalculatorTest, GetFrameRateFromExample) {
                    .ValidateAsType<double>());
   EXPECT_EQ(runner_->OutputSidePackets().Tag(kImageFrameRateTag).Get<double>(),
             image_frame_rate_);
+}
+
+TEST_F(UnpackMediaSequenceCalculatorTest, DoesNotCrashOnMissingFrames) {
+  SetUpCalculator({"IMAGE:images"}, {});
+  auto input_sequence = std::make_unique<tf::SequenceExample>();
+  std::string test_video_id = "test_video_id";
+  mpms::SetClipMediaId(test_video_id, input_sequence.get());
+
+  std::string test_image_string = "test_image_string";
+
+  int num_images = 1;
+  for (int i = 0; i < num_images; ++i) {
+    // Add Timestamps but not Images.
+    mpms::AddImageTimestamp(i, input_sequence.get());
+  }
+
+  runner_->MutableSidePackets()->Tag(kSequenceExampleTag) =
+      Adopt(input_sequence.release());
+
+  MP_ASSERT_OK(runner_->Run());
+
+  const std::vector<Packet>& output_packets =
+      runner_->Outputs().Tag(kImageTag).packets;
+  ASSERT_EQ(0, output_packets.size());
 }
 
 }  // namespace
