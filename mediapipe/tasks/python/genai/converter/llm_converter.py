@@ -172,7 +172,7 @@ def convert_checkpoint(config: ConversionConfig) -> None:
   """Converts the checkpoint to tflite file."""
   logging.info('input folder: %s', config.input_ckpt)
 
-  if config.model_type == 'GEMMA_2B' or config.model_type == 'GEMINI_XXS':
+  if config.model_type == 'GEMMA_2B':
     vocab_model_path = config.vocab_model_file
   else:
     vocab_model_path = convert_bpe_vocab(

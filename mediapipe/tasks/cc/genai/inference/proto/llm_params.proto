@@ -1,0 +1,62 @@
+/* Copyright 2023 The ODML Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+==============================================================================*/
+
+syntax = "proto3";
+
+package mediapipe.tasks.genai.proto;
+
+import "mediapipe/tasks/cc/genai/inference/proto/transformer_params.proto";
+
+option java_package = "com.google.mediapipe.tasks.genai.proto";
+option java_outer_classname = "LLMParametersProto";
+
+// Naming convention is as following: LLM_MODEL_TYPE_<model_name>_<model_size>.
+enum LlmModelType {
+  // Unknown LLM model type
+  LLM_MODEL_TYPE_UNKNOWN = 0;
+
+  reserved 1, 2, 3, 4, 7, 9, 10;
+
+  // FALCON RefinedWeb with 1B parameters.
+  // https://huggingface.co/tiiuae/falcon-rw-1b
+  LLM_MODEL_TYPE_FALCON_RW_1B = 5;
+
+  // GEMMA with 2B parameters
+  LLM_MODEL_TYPE_GEMMA_2B = 6;
+
+  // StableLM 4E1T with 3B parameters
+  LLM_MODEL_TYPE_STABLELM_4E1T_3B = 8;
+
+  // Phi-2
+  // https://huggingface.co/microsoft/phi-2
+  LLM_MODEL_TYPE_PHI_2 = 11;
+}
+
+// Parameters for Large Language Models (LLM).
+message LlmParameters {
+  TransformerParameters transformer_parameters = 1;
+
+  // Size of vocabulary.
+  int32 vocab_size = 2;
+
+  // Was used for disable_kv_cache.
+  reserved 3;
+
+  // Id of the start token.
+  int32 start_token_id = 4;
+
+  // Stop tokens to determine the end of output stream.
+  repeated string stop_tokens = 5;
+}

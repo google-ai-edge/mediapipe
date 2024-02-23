@@ -1,0 +1,36 @@
+// This is merely a list of buffers with name, to host the CPU-specific cache
+// on disk.
+
+namespace mediapipe.tasks.genai.xnn_utils;
+
+// This corresponds to the version.
+file_identifier "V0.1";
+// File extension of any written files.
+file_extension "named_buffer";
+
+table Buffer {
+  // A human readable string to uniquely identify a buffer.
+  name: string;
+
+  // The real buffer is appended after flatbuffers, to bypass 2GB file size
+  // limitation. The offset is calculated relative to the end of the flatbuffers
+  // (i.e. beginning of the file + flatbuffer_size).
+  offset: ulong;
+
+  // Size of the buffer in bytes.
+  size: ulong;
+
+  // Additional seed that is unique for each packing algorithm.
+  seed: ulong;
+}
+
+table NamedBuffers {
+  // A list of buffers.
+  buffers: [Buffer];
+
+  // The serialized file is `flatbuffer_size` of bytes representing
+  // `NamedBuffers` appended with a blob representing the buffer content.
+  flatbuffer_size: uint;
+}
+
+root_type NamedBuffers;
