@@ -50,6 +50,7 @@ cc_library_with_tflite(
         "//mediapipe/util/tflite/operations:landmarks_to_transform_matrix",
         "//mediapipe/util/tflite/operations:max_pool_argmax",
         "//mediapipe/util/tflite/operations:max_unpooling",
+        "//mediapipe/util/tflite/operations:resampler",
         "//mediapipe/util/tflite/operations:transform_landmarks",
         "//mediapipe/util/tflite/operations:transform_tensor_bilinear",
         "//mediapipe/util/tflite/operations:transpose_conv_bias",

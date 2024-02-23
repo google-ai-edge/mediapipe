@@ -554,3 +554,17 @@ cc_test(
         "@org_tensorflow//tensorflow/lite:framework",
     ],
 )
+
+cc_test(
+    name = "tflite_custom_op_resolver_calculator_test",
+    srcs = ["tflite_custom_op_resolver_calculator_test.cc"],
+    data = ["testdata/add.bin"],
+    deps = [
+        ":tflite_custom_op_resolver_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
+    ],
+)
