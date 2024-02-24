@@ -6,5 +6,6 @@ tensorflow>=2.10
 tensorflow-addons
 tensorflow-datasets
 tensorflow-hub
+tensorflow-model-optimization<0.8.0
 tensorflow-text
 tf-models-official>=2.13.2
