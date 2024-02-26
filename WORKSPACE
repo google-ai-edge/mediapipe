@@ -522,24 +522,22 @@ http_archive(
 )
 
 # TensorFlow repo should always go after the other external dependencies.
-# TF on 2023-07-26.
-_TENSORFLOW_GIT_COMMIT = "e92261fd4cec0b726692081c4d2966b75abf31dd"
+# TF on 2024-01-24.
+_TENSORFLOW_GIT_COMMIT = "a733cb11912d455b8eef3437e526064642444390"
 # curl -L https://github.com/tensorflow/tensorflow/archive/<TENSORFLOW_GIT_COMMIT>.tar.gz | shasum -a 256
-_TENSORFLOW_SHA256 = "478a229bd4ec70a5b568ac23b5ea013d9fca46a47d6c43e30365a0412b9febf4"
+_TENSORFLOW_SHA256 = "e2a08b36156bc5c9a0565ddf04d37ded7664ecbf320e180aa83d8ad8e4e162f3"
 http_archive(
     name = "org_tensorflow",
     urls = [
       "https://github.com/tensorflow/tensorflow/archive/%s.tar.gz" % _TENSORFLOW_GIT_COMMIT,
     ],
     patches = [
-        "@//third_party:org_tensorflow_compatibility_fixes.diff",
         "@//third_party:org_tensorflow_system_python.diff",
         # Diff is generated with a script, don't update it manually.
         "@//third_party:org_tensorflow_custom_ops.diff",
         # Works around Bazel issue with objc_library.
         # See https://github.com/bazelbuild/bazel/issues/19912
         "@//third_party:org_tensorflow_objc_build_fixes.diff",
-        "@//third_party:org_tensorflow_absl_import_fixes.diff",
     ],
     patch_args = [
         "-p1",

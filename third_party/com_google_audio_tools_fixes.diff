@@ -22,3 +22,27 @@ index e906d2d..753c286 100644
  #include <cfloat>
  #include <cstdarg>
  
+diff --git a/audio/dsp/porting.h b/audio/dsp/porting.h
+index 56e45d2..37ab6e9 100644
+--- a/audio/dsp/porting.h
++++ b/audio/dsp/porting.h
+@@ -17,6 +17,7 @@
+ #ifndef AUDIO_DSP_OPEN_SOURCE_PORTING_H_
+ #define AUDIO_DSP_OPEN_SOURCE_PORTING_H_
+ 
++#include <cstdint>
+ #include <iostream>
+ #include <cmath>
+ #include <string>
+diff --git a/third_party/eigen3/BUILD b/third_party/eigen3/BUILD
+index 497c1f0..de1c7f4 100644
+--- a/third_party/eigen3/BUILD
++++ b/third_party/eigen3/BUILD
+@@ -23,6 +23,6 @@ cc_library(
+     ],
+     visibility = ["//visibility:public"],
+     deps = [
+-        "@eigen_archive//:eigen",
++        "@eigen_archive//:eigen3",
+     ],
+ )

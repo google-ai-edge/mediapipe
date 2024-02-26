@@ -8,7 +8,7 @@ index ce170b2..bb5aa82 100644
          deps = [
 -            "@com_gitlab_libeigen_eigen//:eigen",
 -            "@com_github_google_glog//:glog",
-+            "@eigen_archive//:eigen",  # from TensorFlow
++            "@eigen_archive//:eigen3",  # from TensorFlow
 +            "@com_github_glog_glog//:glog",
          ],
      )
