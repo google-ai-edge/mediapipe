@@ -41,7 +41,7 @@ function convertToBytes(data: Uint8Array): number[] {
   return Array.from(data, v => v > 127 ? v - 256 : v);
 }
 
-function compute(u: number[], v: number[]) {
+function compute(u: readonly number[], v: readonly number[]) {
   if (u.length !== v.length) {
     throw new Error(
         `Cannot compute cosine similarity between embeddings of different sizes (${
