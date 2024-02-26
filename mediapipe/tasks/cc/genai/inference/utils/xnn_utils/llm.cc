@@ -738,8 +738,9 @@ absl::StatusOr<std::shared_ptr<Tensor>> LlmBuilder::DotAttention(
     std::shared_ptr<Tensor> query_proj, std::shared_ptr<Tensor> key_proj,
     std::shared_ptr<Tensor> value_proj, std::shared_ptr<Tensor> atten_mask,
     std::shared_ptr<Tensor> per_dim_scale) {
-  if (llm_params_.num_kv_heads != 0 && llm_params_.num_kv_heads != 1) {
-    return absl::InvalidArgumentError("GQA currently not supported.");
+  if (llm_params_.num_kv_heads != llm_params_.n_heads_N &&
+      llm_params_.num_kv_heads != 1) {
+    return absl::UnimplementedError("GQA currently not supported.");
   }
 
   // BTNH
