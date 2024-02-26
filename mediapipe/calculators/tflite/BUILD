@@ -323,6 +323,7 @@ cc_library_with_tflite(
         "//mediapipe/framework/port:ret_check",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings:string_view",
+        "@com_google_absl//absl/types:span",
     ],
     alwayslink = 1,
 )
@@ -551,7 +552,9 @@ cc_test(
         "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
+        "@com_google_absl//absl/types:span",
         "@org_tensorflow//tensorflow/lite:framework",
+        "@org_tensorflow//tensorflow/lite/schema:schema_fbs",
     ],
 )
 

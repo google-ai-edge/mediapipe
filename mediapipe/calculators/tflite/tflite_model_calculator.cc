@@ -12,12 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <string>
+#include <utility>
 
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/ret_check.h"
@@ -37,14 +40,16 @@ namespace mediapipe {
 //                blob and use it as input here.
 //   MODEL_FD   - Tflite model file descriptor std::tuple<int, size_t, size_t>
 //                containing (fd, offset, size).
-//   MODEL_VIEW - TfLite model file contents in absl::string_view, whose
+//   MODEL_SPAN - TfLite model file contents in absl::Span<const uint8_t>, whose
 //                underline buffer is owned outside of this calculator. User can
-//                get the model view from a managed environment and pass it to
+//                get the model span from a managed environment and pass it to
 //                the graph as input side packet.
 //
 // Output side packets:
 //   MODEL - TfLite model. (std::unique_ptr<tflite::FlatBufferModel,
 //           std::function<void(tflite::FlatBufferModel*)>>)
+//   SHARED_MODEL - TfLite model (std::shared_ptr<tflite::FlatBufferModel>) to
+//           be shared by multiple downstream calculators.
 //
 // Example use:
 //
@@ -59,10 +64,13 @@ class TfLiteModelCalculator : public CalculatorBase {
   using TfLiteModelPtr =
       std::unique_ptr<tflite::FlatBufferModel,
                       std::function<void(tflite::FlatBufferModel*)>>;
+  using SharedTfLiteModelPtr = std::shared_ptr<tflite::FlatBufferModel>;
 
-  static constexpr absl::string_view kModelViewTag = "MODEL_VIEW";
+  static constexpr absl::string_view kModelSpanTag = "MODEL_SPAN";
   static constexpr absl::string_view kModelBlobTag = "MODEL_BLOB";
   static constexpr absl::string_view kModelFDTag = "MODEL_FD";
+  static constexpr absl::string_view kModelTag = "MODEL";
+  static constexpr absl::string_view kSharedModelTag = "SHARED_MODEL";
 
   static absl::Status GetContract(CalculatorContract* cc) {
     if (cc->InputSidePackets().HasTag(kModelBlobTag)) {
@@ -75,11 +83,21 @@ class TfLiteModelCalculator : public CalculatorBase {
           .Set<std::tuple<int, size_t, size_t>>();
     }
 
-    if (cc->InputSidePackets().HasTag(kModelViewTag)) {
-      cc->InputSidePackets().Tag(kModelViewTag).Set<absl::string_view>();
+    if (cc->InputSidePackets().HasTag(kModelSpanTag)) {
+      cc->InputSidePackets()
+          .Tag(kModelSpanTag)
+          .Set<absl::Span<const uint8_t>>();
     }
 
-    cc->OutputSidePackets().Tag("MODEL").Set<TfLiteModelPtr>();
+    RET_CHECK(cc->OutputSidePackets().HasTag(kModelTag) ^
+              cc->OutputSidePackets().HasTag(kSharedModelTag));
+
+    if (cc->OutputSidePackets().HasTag(kModelTag)) {
+      cc->OutputSidePackets().Tag(kModelTag).Set<TfLiteModelPtr>();
+    } else if (cc->OutputSidePackets().HasTag(kSharedModelTag)) {
+      cc->OutputSidePackets().Tag(kSharedModelTag).Set<SharedTfLiteModelPtr>();
+    }
+
     return absl::OkStatus();
   }
 
@@ -94,12 +112,12 @@ class TfLiteModelCalculator : public CalculatorBase {
                                                        model_blob.size());
     }
 
-    if (cc->InputSidePackets().HasTag(kModelViewTag)) {
-      model_packet = cc->InputSidePackets().Tag(kModelViewTag);
-      const absl::string_view& model_view =
-          model_packet.Get<absl::string_view>();
-      model = tflite::FlatBufferModel::BuildFromBuffer(model_view.data(),
-                                                       model_view.size());
+    if (cc->InputSidePackets().HasTag(kModelSpanTag)) {
+      model_packet = cc->InputSidePackets().Tag(kModelSpanTag);
+      const absl::Span<const uint8_t>& model_view =
+          model_packet.Get<absl::Span<const uint8_t>>();
+      model = tflite::FlatBufferModel::BuildFromBuffer(
+          reinterpret_cast<const char*>(model_view.data()), model_view.size());
     }
 
     if (cc->InputSidePackets().HasTag(kModelFDTag)) {
@@ -120,14 +138,21 @@ class TfLiteModelCalculator : public CalculatorBase {
 
     RET_CHECK(model) << "Failed to load TfLite model.";
 
-    cc->OutputSidePackets().Tag("MODEL").Set(
-        MakePacket<TfLiteModelPtr>(TfLiteModelPtr(
-            model.release(), [model_packet](tflite::FlatBufferModel* model) {
-              // Keeping model_packet in order to keep underlying model blob
-              // which can be released only after TfLite model is not needed
-              // anymore (deleted).
-              delete model;
-            })));
+    TfLiteModelPtr output_model = TfLiteModelPtr(
+        model.release(), [model_packet](tflite::FlatBufferModel* model) {
+          // Keeping model_packet in order to keep underlying model blob
+          // which can be released only after TfLite model is not needed
+          // anymore (deleted).
+          delete model;
+        });
+    if (cc->OutputSidePackets().HasTag(kModelTag)) {
+      cc->OutputSidePackets().Tag(kModelTag).Set(
+          MakePacket<TfLiteModelPtr>(std::move(output_model)));
+    } else {
+      cc->OutputSidePackets()
+          .Tag(kSharedModelTag)
+          .Set(MakePacket<SharedTfLiteModelPtr>(std::move(output_model)));
+    }
 
     return absl::OkStatus();
   }
