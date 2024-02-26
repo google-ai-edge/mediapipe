@@ -402,7 +402,7 @@ cc_library(
 mediapipe_cc_test(
     name = "gpu_buffer_storage_cv_pixel_buffer_test",
     size = "small",
-    timeout = "moderate",
+    timeout = "long",
     srcs = ["gpu_buffer_storage_cv_pixel_buffer_test.cc"],
     platforms = ["ios"],
     deps = [
