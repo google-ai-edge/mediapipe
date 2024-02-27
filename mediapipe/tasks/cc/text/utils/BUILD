@@ -13,7 +13,7 @@
 # limitations under the License.
 
 package(default_visibility = [
-    "//mediapipe/model_maker:__subpackages__",
+    "//mediapipe:__subpackages__",
     "//mediapipe/tasks:internal",
 ])
 

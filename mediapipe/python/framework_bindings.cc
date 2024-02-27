@@ -24,6 +24,10 @@
 #include "mediapipe/python/pybind/validated_graph_config.h"
 #include "mediapipe/tasks/python/core/pybind/task_runner.h"
 
+#ifdef ENABLE_ODML_CONVERTER
+#include "mediapipe/python/pybind/model_ckpt_util.h"
+#endif
+
 namespace mediapipe {
 namespace python {
 
@@ -38,6 +42,9 @@ PYBIND11_MODULE(_framework_bindings, m) {
   PacketGetterSubmodule(&m);
   CalculatorGraphSubmodule(&m);
   ValidatedGraphConfigSubmodule(&m);
+#ifdef ENABLE_ODML_CONVERTER
+  ModelCkptUtilModule(&m);
+#endif
   // As all MediaPipe calculators and Python bindings need to go into a single
   // .so file, having MediaPipe Tasks' task runner module in _framework_bindings
   // as well.

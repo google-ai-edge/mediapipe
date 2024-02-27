@@ -171,3 +171,15 @@ pybind_library(
         "//mediapipe/framework/port:parse_text_proto",
     ],
 )
+
+pybind_library(
+    name = "model_ckpt_util",
+    srcs = ["model_ckpt_util.cc"],
+    hdrs = ["model_ckpt_util.h"],
+    deps = [
+        "//mediapipe/tasks/cc/genai/inference/ml_drift/llm/tensor_loaders:model_ckpt_util",
+        "//mediapipe/tasks/cc/genai/inference/utils/xnn_utils:model_ckpt_util",
+        "//mediapipe/tasks/cc/text/utils:vocab_convert_utils",
+        "@pybind11_abseil//pybind11_abseil:status_casters",
+    ],
+)

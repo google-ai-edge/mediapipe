@@ -67,7 +67,7 @@ pybind_extension(
         "//mediapipe/tasks/cc/vision/face_geometry/proto:face_geometry_registration",
     ] + select({
         "//conditions:default": [],
-        ":enable_odml_converter": ["//mediapipe/tasks/python/genai/converter:model_ckpt_util"],
+        ":enable_odml_converter": ["//mediapipe/python/pybind:model_ckpt_util"],
     }),
 )
 

@@ -5,9 +5,9 @@ from typing import List, Optional
 
 from absl import logging
 
+from mediapipe.python._framework_bindings import model_ckpt_util
 from mediapipe.tasks.python.genai.converter import converter_base
 from mediapipe.tasks.python.genai.converter import converter_factory
-from mediapipe.tasks.python.genai.converter import model_ckpt_util
 from mediapipe.tasks.python.genai.converter import quantization_util
 
 

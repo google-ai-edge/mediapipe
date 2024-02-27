@@ -14,7 +14,6 @@
 
 # Placeholder for internal Python strict library and test compatibility macro.
 # Placeholder for internal Python strict test compatibility macro.
-load("@pybind11_bazel//:build_defs.bzl", "pybind_library")
 
 package(default_visibility = [
     "//mediapipe:__subpackages__",
@@ -43,19 +42,8 @@ py_library(
     deps = [
         ":converter_base",
         ":converter_factory",
-        ":model_ckpt_util",
         ":quantization_util",
-    ],
-)
-
-pybind_library(
-    name = "model_ckpt_util",
-    srcs = ["model_ckpt_util.cc"],
-    deps = [
-        "//mediapipe/tasks/cc/genai/inference/ml_drift/llm/tensor_loaders:model_ckpt_util",
-        "//mediapipe/tasks/cc/genai/inference/utils/xnn_utils:model_ckpt_util",
-        "//mediapipe/tasks/cc/text/utils:vocab_convert_utils",
-        "@pybind11_abseil//pybind11_abseil:status_casters",
+        "//mediapipe/python:_framework_bindings",
     ],
 )
 

@@ -1,4 +1,4 @@
-// Copyright 2024 The MediaPipe Authors.
+// Copyright 2020-2021 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,18 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MEDIAPIPE_TASKS_TOOLS_MODEL_CKPT_UTIL_H_
-#define MEDIAPIPE_TASKS_TOOLS_MODEL_CKPT_UTIL_H_
-
-#include "odml/infra/genai/inference/utils/xnn_utils/model_ckpt_util.h"
+#include "mediapipe/python/pybind/model_ckpt_util.h"
 
 #include "mediapipe/tasks/cc/text/utils/vocab_convert_utils.h"
 #include "odml/infra/genai/inference/ml_drift/llm/tensor_loaders/model_ckpt_util.h"
+#include "odml/infra/genai/inference/utils/xnn_utils/model_ckpt_util.h"
 #include "pybind11/pybind11.h"
+#include "pybind11/stl.h"
 #include "pybind11_abseil/status_casters.h"  // from @pybind11_abseil
 
-PYBIND11_MODULE(model_ckpt_util, m) {
-  pybind11::google::ImportStatusModule();
+namespace mediapipe {
+namespace python {
+
+namespace py = pybind11;
+
+void ModelCkptUtilModule(pybind11::module* module) {
+  // pybind11::google::ImportStatusModule();
+
+  py::module m =
+      module->def_submodule("model_ckpt_util", "Mediapipe GenAI Utility.");
+
   m.doc() = "Pybind model checkpoint utility functions.";
 
   m.def("GenerateCpuTfLite", &odml::infra::xnn_utils::GenerateTfLite,
@@ -37,4 +45,5 @@ PYBIND11_MODULE(model_ckpt_util, m) {
         "vocab model.");
 }
 
-#endif  // MEDIAPIPE_TASKS_TOOLS_MODEL_CKPT_UTIL_H_
+}  // namespace python
+}  // namespace mediapipe
