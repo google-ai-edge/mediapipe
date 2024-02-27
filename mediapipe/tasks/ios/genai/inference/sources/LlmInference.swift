@@ -17,6 +17,8 @@ import LlmInferenceEngineC
 import LlmTaskRunner
 
 /// A MediaPipe task that performs inference using a given Large Language Model.
+///
+/// Note: Inherits from `NSObject` for Objective C interoperability.
 @objc(MPPLlmInference) public final class LlmInference: NSObject {
   private static let numberOfDecodeStepsPerSync = 3
   private static let sequenceBatchSize = 0
@@ -90,24 +92,26 @@ import LlmTaskRunner
 // Extension to `LlmInference` for defining `LlmInference.Options`
 extension LlmInference {
   /// Options for setting up a `LlmInference`.
+  ///
+  /// Note: Inherits from `NSObject` for Objective C interoperability.
   @objc(MPPLlmInferenceOptions) public final class Options: NSObject {
     /// The absolute path to the model asset bundle stored locally on the device.
     @objc public var modelPath: String
 
     /// The total length of the kv-cache. In other words, this is the total number of input + output
     /// tokens the model needs to handle.
-    @objc public var maxSequenceLength: Int
+    @objc public var maxSequenceLength: Int = 512
 
     /// The top K number of tokens to be sampled from for each decoding step. A value of 1 means
     /// greedy decoding. Defaults to 40.
-    @objc public var topk: Int
+    @objc public var topk: Int = 40
 
     /// The randomness when decoding the next token. A value of 0.0f means greedy decoding. Defaults
     /// to 0.8.
-    @objc public var temperature: Float
+    @objc public var temperature: Float = 0.8
 
     /// The random seed for sampling tokens.
-    @objc public var randomSeed: Int
+    @objc public var randomSeed: Int = 0
 
     /// Creates a new instance of `Options` with the modelPath and default values of
     /// `maxSequenceLength`, `topK``, `temperature` and `randomSeed`.
@@ -115,33 +119,8 @@ extension LlmInference {
     ///
     /// - Parameters:
     ///   - modelPath: The absolute path to a model asset bundle stored locally on the device.
-    @available(swift, obsoleted: 1.0)
-    @objc public convenience init(modelPath: String) {
-      self.init(modelPath: modelPath)
-    }
-
-    /// Creates a new instance of `Options` with the given values.
-    ///
-    /// - Parameters:
-    ///   - modelPath: The absolute path to a model asset bundle stored locally on the device.
-    ///   - maxSequenceLength: The total number of input + output tokens the model needs to handle
-    ///     (total length of the kv-cache).
-    ///   - topk: The top K number of tokens to be sampled from for each decoding step.
-    ///   - temperature: The randomness when decoding the next token.
-    ///   - randomSeed: The random seed for sampling tokens.
-    public init(
-      modelPath: String,
-      maxSequenceLength: Int = 512,
-      topk: Int = 40,
-      temperature:
-        Float = 0.8,
-      randomSeed: Int = 0
-    ) {
+    @objc public init(modelPath: String) {
       self.modelPath = modelPath
-      self.maxSequenceLength = maxSequenceLength
-      self.topk = topk
-      self.temperature = temperature
-      self.randomSeed = randomSeed
       super.init()
     }
   }
