@@ -69,4 +69,9 @@ public final class LlmTaskRunner {
 
     return responseStrings
   }
+
+  deinit {
+    LlmInferenceEngine_Session_Delete(llmSession)
+  }
+  
 }
