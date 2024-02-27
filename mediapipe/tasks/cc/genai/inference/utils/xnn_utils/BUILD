@@ -99,24 +99,6 @@ cc_library(
 )
 
 cc_library(
-    name = "discrete_weight_accessor",
-    srcs = ["discrete_weight_accessor.cc"],
-    hdrs = ["discrete_weight_accessor.h"],
-    deps = [
-        ":tensor",
-        "//mediapipe/framework/deps:file_path",
-        "//mediapipe/framework/port:file_helpers",
-        "//mediapipe/framework/port:logging",
-        "//mediapipe/framework/port:ret_check",
-        "//mediapipe/framework/port:status",
-        "@XNNPACK",
-        "@com_google_absl//absl/log:absl_log",
-        "@com_google_absl//absl/status:statusor",
-        "@com_google_absl//absl/strings",
-    ],
-)
-
-cc_library(
     name = "tflite_weight_accessor",
     srcs = ["tflite_weight_accessor.cc"],
     hdrs = ["tflite_weight_accessor.h"],
@@ -265,15 +247,6 @@ cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
-    ],
-)
-
-cc_library(
-    name = "opt_weights",
-    hdrs = ["opt_weights.h"],
-    deps = [
-        ":tensor",
-        "//mediapipe/tasks/cc/genai/inference/proto:llm_params_cc_proto",
     ],
 )
 
