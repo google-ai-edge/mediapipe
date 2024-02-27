@@ -25,7 +25,7 @@ import LlmTaskRunner
 
   private let llmTaskRunner: LlmTaskRunner
 
-  /// Creates a new instance of `LlmInference` with the option.
+  /// Creates a new instance of `LlmInference` with the given options.
   ///
   /// - Parameters:
   ///   - options: The options of type `LlmInference.Options` to use for configuring the
