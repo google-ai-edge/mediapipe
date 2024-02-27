@@ -20,7 +20,7 @@ import LlmInferenceEngineC
 public final class LlmTaskRunner {
   private typealias CLlmSession = UnsafeMutableRawPointer
 
-  private let llmSession: CLlmSession
+  private let cLlmSession: CLlmSession
 
   /// Creates a new instance of `LlmTaskRunner` with the given session config.
   ///
@@ -28,9 +28,9 @@ public final class LlmTaskRunner {
   ///   - sessionConfig: C session config of type `LlmSessionConfig`.
   public init(sessionConfig: LlmSessionConfig) {
     /// No safe guards for session creation since the C APIs only throw fatal errors.
-    /// `LlmInferenceEngine_CreateSession()` will always return an llm session if the call
+    /// `LlmInferenceEngine_CreateSession()` will always return a llm session if the call
     /// completes.
-    self.llmSession = withUnsafePointer(to: sessionConfig) { LlmInferenceEngine_CreateSession($0) }
+    self.cLlmSession = withUnsafePointer(to: sessionConfig) { LlmInferenceEngine_CreateSession($0) }
   }
 
   /// Invokes the C inference engine with the given input text to generate an array of `String`
@@ -44,7 +44,7 @@ public final class LlmTaskRunner {
     /// `LlmInferenceEngine_Session_PredictSync()` will always return a `LlmResponseContext` if the
     /// call completes.
     var responseContext = inputText.withCString { cinputText in
-      LlmInferenceEngine_Session_PredictSync(llmSession, cinputText)
+      LlmInferenceEngine_Session_PredictSync(cLlmSession, cinputText)
     }
 
     defer {
@@ -71,7 +71,7 @@ public final class LlmTaskRunner {
   }
 
   deinit {
-    LlmInferenceEngine_Session_Delete(llmSession)
+    LlmInferenceEngine_Session_Delete(cLlmSession)
   }
-  
+
 }
