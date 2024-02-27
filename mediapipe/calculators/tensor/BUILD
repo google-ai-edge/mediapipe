@@ -429,6 +429,7 @@ cc_library_with_tflite(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/time",
         "@org_tensorflow//tensorflow/lite/core/api:op_resolver",
     ],
     alwayslink = 1,
