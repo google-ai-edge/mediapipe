@@ -1,0 +1,59 @@
+# Copyright 2024 The MediaPipe Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
+
+package(default_visibility = ["//mediapipe/tasks/ios:__subpackages__"])
+
+licenses(["notice"])
+
+cc_library(
+    name = "llm_inference_engine_c",
+    hdrs = [
+        "//mediapipe/tasks/cc/genai/inference/c:llm_inference_engine.h",
+    ],
+    tags = [
+        "swift_module=LlmInferenceEngineCpuC",
+    ],
+    deps = [
+        "//mediapipe/framework/port:file_helpers",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/tasks/cc/genai/inference/proto:llm_params_cc_proto",
+        "//mediapipe/tasks/cc/genai/inference/proto:transformer_params_cc_proto",
+        "//mediapipe/tasks/cc/genai/inference/utils/llm_utils:memory_mapped_file",
+        "//mediapipe/tasks/cc/genai/inference/utils/llm_utils:metadata_utils",
+        "//mediapipe/tasks/cc/genai/inference/utils/xnn_utils:graph_builder",
+        "//mediapipe/tasks/cc/genai/inference/utils/xnn_utils:llm",
+        "//mediapipe/tasks/cc/genai/inference/utils/xnn_utils:llm_builder_factory",
+        "//mediapipe/tasks/cc/genai/inference/utils/xnn_utils:llm_weights",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings:string_view",
+        "@com_google_sentencepiece//:sentencepiece_processor",
+        "@org_tensorflow//tensorflow/lite:framework_stable",
+    ],
+)
+
+swift_library(
+    name = "LlmInference",
+    module_name = "LlmInference",
+    generates_header = 1,
+    generated_header_name = "generated_header/LlmInference-Swift.h",
+    srcs = [
+        "sources/LlmInference.swift",
+    ],
+    deps = ["//mediapipe/tasks/ios/genai/core:LlmTaskRunner"],
+)
