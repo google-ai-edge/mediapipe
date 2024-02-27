@@ -27,7 +27,7 @@
 namespace mediapipe::tasks::genai {
 namespace xnn_utils {
 
-// Generate weights with some random value, according to given UlmParams.
+// Generate weights with some random value, according to given LlmParams.
 class BenchmarkWeightAccessor : public WeightAccessor {
  public:
   // data_type is type of the weights, e.g. fp32, qc8 etc. data_type only
