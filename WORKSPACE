@@ -669,3 +669,9 @@ http_archive(
     build_file = "@//third_party:nlohmann.BUILD",
 )
 
+http_archive(
+    name = "com_google_cpu_features",
+    sha256 = "bdb3484de8297c49b59955c3b22dba834401bc2df984ef5cfc17acbe69c5018e",
+    strip_prefix = "cpu_features-0.9.0",
+    urls = ["https://github.com/google/cpu_features/archive/refs/tags/v0.9.0.tar.gz"],
+)
