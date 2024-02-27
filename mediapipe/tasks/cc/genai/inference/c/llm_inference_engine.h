@@ -15,8 +15,15 @@
 #ifndef MEDIAPIPE_TASKS_GENAI_INFERENCE_C_LLM_INFERENCE_ENGINE_H_
 #define MEDIAPIPE_TASKS_GENAI_INFERENCE_C_LLM_INFERENCE_ENGINE_H_
 
+#ifdef __cplusplus
 #include <cstddef>
 #include <cstdint>
+
+#else
+#include <stddef.h>
+#include <stdint.h>
+#include <stdbool.h>
+#endif
 
 #ifndef ODML_EXPORT
 #define ODML_EXPORT __attribute__((visibility("default")))
