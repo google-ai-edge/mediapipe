@@ -31,6 +31,7 @@ namespace mediapipe {
 using mediapipe::file::GetContents;
 using mediapipe::file::JoinPath;
 
+namespace internal {
 namespace {
 
 class RunfilesHolder {
@@ -54,13 +55,11 @@ class RunfilesHolder {
   std::unique_ptr<::bazel::tools::cpp::runfiles::Runfiles> runfiles_;
 };
 
-}  // namespace
-
-namespace internal {
-
 std::string PathToResourceAsFileInternal(const std::string& path) {
   return Singleton<RunfilesHolder>::get()->Rlocation(path);
 }
+
+}  // namespace
 
 absl::Status DefaultGetResourceContents(const std::string& path,
                                         std::string* output,
