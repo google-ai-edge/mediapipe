@@ -56,45 +56,7 @@ absl::StatusOr<std::pair<json, json>> LoadHFTokenizerConfigs(
   return std::make_pair(config_json, tokenizer_json);
 }
 
-// Normalizations needed for GPT2 style tokenizer. We are following the logic
-// from the code below to ensure consistent tokenization.
-// https://github.com/openai/gpt-2/blob/master/src/encoder.py#L9
-std::vector<std::pair<int, int>> GetUTF8Map() {
-  absl::flat_hash_set<int> good_chars;
-  // range(ord("!"), ord("~")+1)
-  for (int i = 33; i <= 126; ++i) {
-    good_chars.insert(i);
-  }
-  // range(ord("¡"), ord("¬")+1
-  for (int i = 161; i <= 172; ++i) {
-    good_chars.insert(i);
-  }
-  // range(ord("®"), ord("ÿ")+1
-  for (int i = 174; i <= 255; ++i) {
-    good_chars.insert(i);
-  }
-
-  std::vector<std::pair<int, int>> mapping;
-  // We are supposed to start from 0, but SP does not like empty keys.
-  int n = 1;
-  for (int i = 1; i < 256; ++i) {
-    if (!good_chars.contains(i)) {
-      mapping.push_back(std::make_pair(i, 256 + n));
-      ++n;
-    }
-  }
-  return mapping;
-}
-
 absl::Status ConfigureNormalizerSpecs(NormalizerSpec* spec) {
-  std::vector<std::pair<int, int>> utf8_map = GetUTF8Map();
-  Builder::CharsMap chars_map;
-  for (const auto& [c, mapped_c] : utf8_map) {
-    chars_map[{c}] = {mapped_c};
-  }
-  MP_RETURN_IF_ERROR(Builder::CompileCharsMap(
-      chars_map, spec->mutable_precompiled_charsmap()));
-
   spec->set_add_dummy_prefix(false);
   spec->set_remove_extra_whitespaces(false);
   spec->set_escape_whitespaces(false);
@@ -102,14 +64,6 @@ absl::Status ConfigureNormalizerSpecs(NormalizerSpec* spec) {
 }
 
 absl::Status ConfigureDenormalizerSpecs(NormalizerSpec* spec) {
-  std::vector<std::pair<int, int>> utf8_map = GetUTF8Map();
-  Builder::CharsMap chars_map;
-  for (const auto& [c, mapped_c] : utf8_map) {
-    chars_map[{mapped_c}] = {c};
-  }
-  MP_RETURN_IF_ERROR(Builder::CompileCharsMap(
-      chars_map, spec->mutable_precompiled_charsmap()));
-
   spec->set_add_dummy_prefix(false);
   spec->set_remove_extra_whitespaces(false);
   spec->set_escape_whitespaces(false);
