@@ -92,7 +92,7 @@ cc_library(
     ] + select({
         "//conditions:default": [],
         "//mediapipe:android": [
-            "@com_google_cpu_features//:ndk_compat",
+            "@androidndk//:cpufeatures",
         ],
     }),
 )

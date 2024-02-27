@@ -18,7 +18,7 @@
 #include <cstdint>
 
 #ifdef __ANDROID__
-#include "ndk_compat/cpu-features.h"
+#include "ndk/sources/android/cpufeatures/cpu-features.h"
 #elif _WIN32
 #include <windows.h>
 #else
