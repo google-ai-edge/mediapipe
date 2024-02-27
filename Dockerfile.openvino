@@ -152,13 +152,6 @@ WORKDIR /azure/azure-storage-cpp/Microsoft.WindowsAzure.Storage/build.release
 RUN CASABLANCA_DIR=/azure/cpprestsdk cmake .. -DCMAKE_CXX_FLAGS="-fPIC" -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON -DBoost_USE_STATIC_RUNTIME=ON -DBoost_USE_STATIC_LIBS=ON -DCMAKE_VERBOSE_MAKEFILE=ON && make --jobs=$JOBS && make --jobs=$JOBS install
 ####### End of Azure SDK
 
-# Build AWS S3 SDK
-RUN git clone https://github.com/aws/aws-sdk-cpp.git --branch 1.7.129 --single-branch --depth 1 /awssdk
-WORKDIR /awssdk/build
-RUN cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_ONLY=s3 -DENABLE_TESTING=OFF -DBUILD_SHARED_LIBS=OFF -DMINIMIZE_SIZE=ON -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DFORCE_SHARED_CRT=OFF -DSIMPLE_INSTALL=OFF -DCMAKE_CXX_FLAGS=" -D_GLIBCXX_USE_CXX11_ABI=1 " .. && make --jobs=$JOBS
-
-####### End of AWS S3 SDK
-
 ####### Build OpenCV
 COPY setup_opencv.sh /mediapipe/setup_opencv.sh
 COPY third_party/opencv_linux.BUILD /mediapipe/third_party/opencv_linux.BUILD

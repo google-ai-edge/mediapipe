@@ -644,7 +644,7 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 git_repository(
     name = "ovms",
     remote = "https://github.com/openvinotoolkit/model_server",
-    commit = "aebe267094fe7ba150b75bbb6e38f1278de74c61", # Improve bazel build (#2245)
+    commit = "7bf5d7fc217a81ce4b0a089c7679ecb77e6c544c", # Use bazel to build aws-sdk-cpp (#2334)
 )
 
 # DEV ovms - adjust local repository path for build
@@ -706,12 +706,8 @@ git_repository(
     #        allow all http methods
 )
 
-# AWS S3 SDK
-new_local_repository(
-    name = "awssdk",
-    build_file = "@ovms//third_party/aws:BUILD",
-    path = "/awssdk",
-)
+load("@ovms//third_party/aws-sdk-cpp:aws-sdk-cpp.bzl", "aws_sdk_cpp")
+aws_sdk_cpp()
 
 # Azure Storage SDK
 new_local_repository(
