@@ -14,9 +14,12 @@
 
 package com.google.mediapipe.tasks.core;
 
+import android.content.Context;
 import com.google.mediapipe.tasks.core.OutputHandler.ProgressListener;
 import com.google.mediapipe.tasks.core.jni.proto.LlmOptionsProto.LlmSessionConfig;
 import com.google.mediapipe.tasks.core.jni.proto.LlmResponseContextProto.LlmResponseContext;
+import com.google.mediapipe.tasks.core.logging.TasksStatsDummyLogger;
+import com.google.mediapipe.tasks.core.logging.TasksStatsLogger;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
 import java.util.Optional;
@@ -30,9 +33,14 @@ public final class LlmTaskRunner implements AutoCloseable {
   private final long sessionHandle;
   private final Optional<ProgressListener<List<String>>> resultListener;
   private final long callbackHandle;
+  private final TasksStatsLogger statsLogger;
 
   public LlmTaskRunner(
-      LlmSessionConfig sessionConfig, Optional<ProgressListener<List<String>>> resultListener) {
+      Context context,
+      String taskName,
+      LlmSessionConfig sessionConfig,
+      Optional<ProgressListener<List<String>>> resultListener) {
+    statsLogger = TasksStatsDummyLogger.create(context, taskName, /* taskRunningModeStr= */ "");
     this.sessionHandle = nativeCreateSession(sessionConfig.toByteArray());
 
     this.resultListener = resultListener;
@@ -41,6 +49,7 @@ public final class LlmTaskRunner implements AutoCloseable {
     } else {
       this.callbackHandle = 0;
     }
+    statsLogger.logSessionStart();
   }
 
   /** Invokes the LLM with the provided input and waits for the result. */
@@ -76,6 +85,7 @@ public final class LlmTaskRunner implements AutoCloseable {
       nativeRemoveCallback(callbackHandle);
     }
     nativeDeleteSession(sessionHandle);
+    statsLogger.logSessionEnd();
   }
 
   private static native long nativeCreateSession(byte[] sessionConfig);

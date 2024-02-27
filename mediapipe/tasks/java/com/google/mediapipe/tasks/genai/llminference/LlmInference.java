@@ -16,6 +16,7 @@ public class LlmInference implements AutoCloseable {
   private static final char TOKEN_SPLITTER = '▁'; // Note this is NOT an underscore: ▁(U+2581)
   private static final String NEW_LINE = "<0x0A>";
   private static final String EOD = "\\[eod\\]";
+  private static final String STATS_TAG = LlmInference.class.getSimpleName();
 
   private static final int NUM_DECODE_STEPS_PER_SYNC = 3;
 
@@ -39,13 +40,15 @@ public class LlmInference implements AutoCloseable {
     sessionConfig.setTemperature(options.temperature());
     sessionConfig.setRandomSeed(options.randomSeed());
 
-    return new LlmInference(sessionConfig.build(), options.resultListener());
+    return new LlmInference(context, STATS_TAG, sessionConfig.build(), options.resultListener());
   }
 
   /** Constructor to initialize an {@link LlmInference}. */
   private LlmInference(
-      LlmSessionConfig sessionConfig, Optional<ProgressListener<String>> resultListener) {
-
+      Context context,
+      String taskName,
+      LlmSessionConfig sessionConfig,
+      Optional<ProgressListener<String>> resultListener) {
     Optional<ProgressListener<List<String>>> llmResultListener;
     if (resultListener.isPresent()) {
       llmResultListener =
@@ -72,7 +75,7 @@ public class LlmInference implements AutoCloseable {
       llmResultListener = Optional.empty();
     }
 
-    this.taskRunner = new LlmTaskRunner(sessionConfig, llmResultListener);
+    this.taskRunner = new LlmTaskRunner(context, taskName, sessionConfig, llmResultListener);
     this.isProcessing = new AtomicBoolean(false);
   }
 
