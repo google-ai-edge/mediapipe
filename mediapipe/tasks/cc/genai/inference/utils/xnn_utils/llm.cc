@@ -494,10 +494,9 @@ absl::StatusOr<std::shared_ptr<Tensor>> LlmBuilder::SelfAttentionExcludeNorm(
   MP_RETURN_IF_ERROR(BuildKVCache(key_proj_after_rope, v_proj, resource));
 
   // encoded, [B, 1|T, N, H]
-  MP_ASSIGN_OR_RETURN(
-      auto kqv_merged,
-      DotAttention(query_proj_after_rope, key_proj_after_rope, v_proj,
-                   resource.atten_mask, sa_weights.per_dim_scale));
+  MP_ASSIGN_OR_RETURN(auto kqv_merged,
+                      DotAttention(query_proj_after_rope, key_proj_after_rope,
+                                   v_proj, resource.atten_mask, sa_weights));
 
   const size_t B = kqv_merged->dims[0];
   const size_t NH = kqv_merged->dims[2] * kqv_merged->dims[3];
@@ -737,7 +736,7 @@ absl::StatusOr<std::vector<int>> LlmBuilder::Sample(Tensor& logits) {
 absl::StatusOr<std::shared_ptr<Tensor>> LlmBuilder::DotAttention(
     std::shared_ptr<Tensor> query_proj, std::shared_ptr<Tensor> key_proj,
     std::shared_ptr<Tensor> value_proj, std::shared_ptr<Tensor> atten_mask,
-    std::shared_ptr<Tensor> per_dim_scale) {
+    const SelfAttentionWeights& sa_weights) {
   if (llm_params_.num_kv_heads != llm_params_.n_heads_N &&
       llm_params_.num_kv_heads != 1) {
     return absl::UnimplementedError("GQA currently not supported.");
@@ -748,7 +747,7 @@ absl::StatusOr<std::shared_ptr<Tensor>> LlmBuilder::DotAttention(
   switch (llm_params_.sa_params.attention_scale_type) {
     case LlmParams::AttentionScaleType::PER_DIM_SCALE: {
       MP_ASSIGN_OR_RETURN(query_after_scale,
-                          PerDimScale(query_proj, per_dim_scale));
+                          PerDimScale(query_proj, sa_weights.per_dim_scale));
       break;
     }
     case LlmParams::AttentionScaleType::INV_SQRT_HEAD_DIM: {

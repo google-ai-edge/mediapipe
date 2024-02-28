@@ -275,7 +275,7 @@ class LlmBuilder : protected XnnGraphBuilder {
   absl::StatusOr<std::shared_ptr<Tensor>> DotAttention(
       std::shared_ptr<Tensor> query_proj, std::shared_ptr<Tensor> key_proj,
       std::shared_ptr<Tensor> value_proj, std::shared_ptr<Tensor> atten_mask,
-      std::shared_ptr<Tensor> per_dim_scale);
+      const LlmWeights::SelfAttentionWeights& sa_weights);
 
   // Apply normalization according to `norm_type`, generally the output tensor
   // should have the same shape as `input`.
