@@ -457,6 +457,7 @@ def _mediapipe_tasks_aar(name, srcs, manifest, java_proto_lite_targets, native_l
             "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:normalized_landmark",
             "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/processors:classifieroptions",
             "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/utils:cosinesimilarity",
+            "//mediapipe/tasks/java/com/google/mediapipe/tasks/core:logging",
             "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
             "//mediapipe/util:color_java_proto_lite",
             "//mediapipe/util:label_map_java_proto_lite",
