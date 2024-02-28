@@ -63,6 +63,9 @@ export declare interface WasmModule {
   _addFlatHashMapToInputStream:
       (keysPtr: number, valuesPtr: number, count: number, streamNamePtr: number,
        timestamp: number) => void;
+  _addRawDataSpanToInputStream:
+      (dataPtr: number, dataSize: number, streamNamePtr: number,
+       timestamp: number) => void;
   _addProtoToInputStream:
       (dataPtr: number, dataSize: number, protoNamePtr: number,
        streamNamePtr: number, timestamp: number) => void;
@@ -75,6 +78,8 @@ export declare interface WasmModule {
   _addFloatToInputSidePacket: (data: number, streamNamePtr: number) => void;
   _addIntToInputSidePacket: (data: number, streamNamePtr: number) => void;
   _addStringToInputSidePacket: (dataPtr: number, streamNamePtr: number) => void;
+  _addRawDataSpanToInputSidePacket:
+      (dataPtr: number, dataSize: number, streamNamePtr: number) => void;
   _addProtoToInputSidePacket:
       (dataPtr: number, dataSize: number, protoNamePtr: number,
        streamNamePtr: number) => void;
