@@ -208,12 +208,13 @@ LlmParams LlmParams::FromLLMParametersProto(
                                 .attention_scale_type();
     }
   } else {
-    // if MHA, PER_DIM_SCALE is used.
-    if (transformer_params.num_kv_heads() == 0) {
+    if (transformer_params.num_kv_heads() == 0 ||
+        transformer_params.num_heads() == transformer_params.num_kv_heads()) {
+      // If MHA, PER_DIM_SCALE is used.
       params.sa_params.attention_scale_type =
           LlmParams::AttentionScaleType::PER_DIM_SCALE;
-      // if MQA or GQA, INV_SQRT_HEAD_DIM is used.
     } else {
+      // If MQA or GQA, INV_SQRT_HEAD_DIM is used.
       params.sa_params.attention_scale_type =
           LlmParams::AttentionScaleType::INV_SQRT_HEAD_DIM;
     }
