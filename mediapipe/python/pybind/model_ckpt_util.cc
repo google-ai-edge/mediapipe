@@ -27,8 +27,6 @@ namespace python {
 namespace py = pybind11;
 
 void ModelCkptUtilModule(pybind11::module* module) {
-  // pybind11::google::ImportStatusModule();
-
   py::module m =
       module->def_submodule("model_ckpt_util", "Mediapipe GenAI Utility.");
 

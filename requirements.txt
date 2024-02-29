@@ -2,6 +2,7 @@ absl-py
 attrs>=19.1.0
 flatbuffers>=2.0
 jax
+jaxlib
 matplotlib
 numpy
 torch
