@@ -18,6 +18,12 @@ licenses(["notice"])
 
 package(default_visibility = ["//mediapipe:__subpackages__"])
 
+config_setting(
+    name = "enable_odml_converter",
+    define_values = {"ENABLE_ODML_CONVERTER": "1"},
+    visibility = ["//visibility:public"],
+)
+
 pybind_library(
     name = "calculator_graph",
     srcs = ["calculator_graph.cc"],
@@ -176,10 +182,18 @@ pybind_library(
     name = "model_ckpt_util",
     srcs = ["model_ckpt_util.cc"],
     hdrs = ["model_ckpt_util.h"],
+    copts = select({
+        "//conditions:default": [],
+        ":enable_odml_converter": ["-DENABLE_ODML_CONVERTER"],
+    }),
     deps = [
-        "//mediapipe/tasks/cc/text/utils:vocab_convert_utils",
-        "@odml//odml/infra/genai/inference/ml_drift/llm/tensor_loaders:model_ckpt_util",
-        "@odml//odml/infra/genai/inference/utils/xnn_utils:model_ckpt_util",
         "@pybind11_abseil//pybind11_abseil:status_casters",
-    ],
+    ] + select({
+        "//conditions:default": [],
+        ":enable_odml_converter": [
+            "//mediapipe/tasks/cc/text/utils:vocab_convert_utils",
+            "@odml//odml/infra/genai/inference/ml_drift/llm/tensor_loaders:model_ckpt_util",
+            "@odml//odml/infra/genai/inference/utils/xnn_utils:model_ckpt_util",
+        ],
+    }),
 )

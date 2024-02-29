@@ -14,12 +14,15 @@
 
 #include "mediapipe/python/pybind/model_ckpt_util.h"
 
-#include "mediapipe/tasks/cc/text/utils/vocab_convert_utils.h"
-#include "odml/infra/genai/inference/ml_drift/llm/tensor_loaders/model_ckpt_util.h"
-#include "odml/infra/genai/inference/utils/xnn_utils/model_ckpt_util.h"
 #include "pybind11/pybind11.h"
 #include "pybind11/stl.h"
 #include "pybind11_abseil/status_casters.h"  // from @pybind11_abseil
+
+#ifdef ENABLE_ODML_CONVERTER
+#include "mediapipe/tasks/cc/text/utils/vocab_convert_utils.h"
+#include "odml/infra/genai/inference/ml_drift/llm/tensor_loaders/model_ckpt_util.h"
+#include "odml/infra/genai/inference/utils/xnn_utils/model_ckpt_util.h"
+#endif  // ENABLE_ODML_CONVERTER
 
 namespace mediapipe {
 namespace python {
@@ -32,6 +35,7 @@ void ModelCkptUtilModule(pybind11::module* module) {
 
   m.doc() = "Pybind model checkpoint utility functions.";
 
+#ifdef ENABLE_ODML_CONVERTER
   m.def("GenerateCpuTfLite", &odml::infra::xnn_utils::GenerateTfLite,
         "Generates the TfLite flatbuffer file from the serialized weight files "
         "for the CPU backend.");
@@ -41,6 +45,7 @@ void ModelCkptUtilModule(pybind11::module* module) {
   m.def("ConvertHfTokenizer", &mediapipe::tasks::text::ConvertHfTokenizer,
         "Converts the HuggingeFace BPE tokenizer to internal SentencePiece "
         "vocab model.");
+#endif  // ENABLE_ODML_CONVERTER
 }
 
 }  // namespace python

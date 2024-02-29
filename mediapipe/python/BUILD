@@ -18,12 +18,6 @@ licenses(["notice"])  # Apache 2.0
 
 package(default_visibility = ["//visibility:public"])
 
-config_setting(
-    name = "enable_odml_converter",
-    define_values = {"ENABLE_ODML_CONVERTER": "1"},
-    visibility = ["//visibility:public"],
-)
-
 pybind_extension(
     name = "_framework_bindings",
     srcs = ["framework_bindings.cc"],
@@ -47,6 +41,7 @@ pybind_extension(
         "//mediapipe/python/pybind:image",
         "//mediapipe/python/pybind:image_frame",
         "//mediapipe/python/pybind:matrix",
+        "//mediapipe/python/pybind:model_ckpt_util",
         "//mediapipe/python/pybind:packet",
         "//mediapipe/python/pybind:packet_creator",
         "//mediapipe/python/pybind:packet_getter",
@@ -65,10 +60,7 @@ pybind_extension(
         "//mediapipe/framework/formats:rect_registration",
         "//mediapipe/modules/objectron/calculators:annotation_registration",
         "//mediapipe/tasks/cc/vision/face_geometry/proto:face_geometry_registration",
-    ] + select({
-        "//conditions:default": [],
-        ":enable_odml_converter": ["//mediapipe/python/pybind:model_ckpt_util"],
-    }),
+    ],
 )
 
 cc_library(
