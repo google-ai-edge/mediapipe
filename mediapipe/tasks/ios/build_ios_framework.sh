@@ -111,11 +111,6 @@ function build_ios_frameworks_and_libraries {
     ;;
   esac
 
-  # if $FRAMEWORK_NAME == "MediaPipeTasksGenAI"
-  # then
-  #   FRAMEWORK_CQUERY_COMMAND="c opt --config=ios_sim_device_fat --apple_generate_dsym=false ${FULL_FRAMEWORK_TARGET}"
-  # fi
-  
   ${BAZEL} build ${FRAMEWORK_CQUERY_COMMAND}
   IOS_FRAMEWORK_PATH="$(get_output_file_path "${FRAMEWORK_CQUERY_COMMAND}")"
 
