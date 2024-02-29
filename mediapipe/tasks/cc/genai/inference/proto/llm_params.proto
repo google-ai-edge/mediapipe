@@ -15,11 +15,11 @@ limitations under the License.
 
 syntax = "proto3";
 
-package mediapipe.tasks.genai.proto;
+package odml.infra.proto;
 
 import "mediapipe/tasks/cc/genai/inference/proto/transformer_params.proto";
 
-option java_package = "com.google.mediapipe.tasks.genai.proto";
+option java_package = "com.google.odml.infra.proto";
 option java_outer_classname = "LLMParametersProto";
 
 // Naming convention is as following: LLM_MODEL_TYPE_<model_name>_<model_size>.

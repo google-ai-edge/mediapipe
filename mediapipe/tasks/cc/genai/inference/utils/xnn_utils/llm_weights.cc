@@ -44,7 +44,7 @@ namespace {
 
 using FeedForwardWeights = LlmWeights::FeedForwardWeights;
 using SelfAttentionWeights = LlmWeights::SelfAttentionWeights;
-using TransformerParameters = proto::TransformerParameters;
+using TransformerParameters = odml::infra::proto::TransformerParameters;
 
 LlmParams::Norm TransformerParametersProtoNormTypeToLlmParamsNormType(
     TransformerParameters::Norm norm_type) {
@@ -102,7 +102,7 @@ absl::StatusOr<std::optional<LlmWeights::NormWeights>> LoadNormWeights(
 }  // namespace
 
 LlmParams LlmParams::FromLLMParametersProto(
-    const proto::LlmParameters& llm_params) {
+    const odml::infra::proto::LlmParameters& llm_params) {
   const auto& transformer_params = llm_params.transformer_parameters();
   LlmParams params = {
       .num_transformer_M = static_cast<size_t>(transformer_params.num_stacks()),

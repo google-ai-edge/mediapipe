@@ -38,22 +38,22 @@ absl::StatusOr<std::unique_ptr<LlmBuilder>> CreateLlmBuilder(
     const LlmParams& llm_params,
     std::unique_ptr<RuntimeConfigs> runtime_configs,
     std::unique_ptr<Sampler> sampler,
-    mediapipe::tasks::genai::proto::LlmModelType model_type) {
+    odml::infra::proto::LlmModelType model_type) {
   std::unique_ptr<LlmBuilder> builder;
   switch (model_type) {
-    case mediapipe::tasks::genai::proto::LLM_MODEL_TYPE_FALCON_RW_1B:
+    case odml::infra::proto::LLM_MODEL_TYPE_FALCON_RW_1B:
       builder = std::make_unique<FalconRW1BBuilder>(
           llm_params, std::move(sampler), std::move(runtime_configs));
       break;
-    case mediapipe::tasks::genai::proto::LLM_MODEL_TYPE_STABLELM_4E1T_3B:
+    case odml::infra::proto::LLM_MODEL_TYPE_STABLELM_4E1T_3B:
       builder = std::make_unique<Stablelm4E1T3BBuilder>(
           llm_params, std::move(sampler), std::move(runtime_configs));
       break;
-    case mediapipe::tasks::genai::proto::LLM_MODEL_TYPE_PHI_2:
+    case odml::infra::proto::LLM_MODEL_TYPE_PHI_2:
       builder = std::make_unique<Phi2Builder>(llm_params, std::move(sampler),
                                               std::move(runtime_configs));
       break;
-    case mediapipe::tasks::genai::proto::LLM_MODEL_TYPE_GEMMA_2B:
+    case odml::infra::proto::LLM_MODEL_TYPE_GEMMA_2B:
       builder = std::make_unique<LlmBuilder>(llm_params, std::move(sampler),
                                              std::move(runtime_configs));
       break;

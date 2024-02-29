@@ -29,7 +29,7 @@ absl::StatusOr<std::unique_ptr<LlmBuilder>> CreateLlmBuilder(
     const LlmParams& llm_params,
     std::unique_ptr<RuntimeConfigs> runtime_configs,
     std::unique_ptr<Sampler> sampler,
-    mediapipe::tasks::genai::proto::LlmModelType model_type);
+    odml::infra::proto::LlmModelType model_type);
 
 }  // namespace mediapipe::tasks::genai::xnn_utils
 

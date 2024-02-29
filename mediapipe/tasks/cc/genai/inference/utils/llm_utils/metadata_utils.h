@@ -32,21 +32,21 @@ constexpr absl::string_view kLlmBackendName = "backend";
 constexpr absl::string_view kSpmVocabName = "spm_vocab_model";
 
 // Retrieve LlmParameters proto from tflite flatbuffer metadata.
-absl::StatusOr<mediapipe::tasks::genai::proto::LlmParameters> GetLlmParams(
+absl::StatusOr<odml::infra::proto::LlmParameters> GetLlmParams(
     std::shared_ptr<mediapipe::tasks::genai::llm_utils::MemoryMappedFile>
         mmap_file);
 
 // Retrieve LlmParameters proto from tflite flatbuffer metadata.
-absl::StatusOr<mediapipe::tasks::genai::proto::LlmParameters> GetLlmParams(
+absl::StatusOr<odml::infra::proto::LlmParameters> GetLlmParams(
     const ::tflite::FlatBufferModel& fb_model);
 
 // Retrieve LlmModelType from tflite flatbuffer metadata.
-absl::StatusOr<mediapipe::tasks::genai::proto::LlmModelType> GetLlmModelType(
+absl::StatusOr<odml::infra::proto::LlmModelType> GetLlmModelType(
     std::shared_ptr<mediapipe::tasks::genai::llm_utils::MemoryMappedFile>
         mmap_file);
 
 // Retrieve LlmModelType from tflite flatbuffer metadata.
-absl::StatusOr<mediapipe::tasks::genai::proto::LlmModelType> GetLlmModelType(
+absl::StatusOr<odml::infra::proto::LlmModelType> GetLlmModelType(
     const ::tflite::FlatBufferModel& fb_model);
 
 // Retrieve backend string from tflite flatbuffer metadata.

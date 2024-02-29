@@ -48,7 +48,7 @@ absl::StatusOr<std::shared_ptr<const ::tflite::Model>> GetTfliteModel(
 
 }  // namespace
 
-absl::StatusOr<mediapipe::tasks::genai::proto::LlmParameters> GetLlmParams(
+absl::StatusOr<odml::infra::proto::LlmParameters> GetLlmParams(
     std::shared_ptr<mediapipe::tasks::genai::llm_utils::MemoryMappedFile>
         mmap_file) {
   auto tflite_model = GetTfliteModel(mmap_file);
@@ -58,52 +58,52 @@ absl::StatusOr<mediapipe::tasks::genai::proto::LlmParameters> GetLlmParams(
 
   for (const auto& metadata : *(*tflite_model)->metadata()) {
     if (metadata->name()->c_str() ==
-        mediapipe::tasks::genai::proto::LlmParameters().GetTypeName()) {
+        odml::infra::proto::LlmParameters().GetTypeName()) {
       int llm_params_index = metadata->buffer();
       auto llm_params_buffer =
           (*tflite_model)->buffers()->Get(llm_params_index);
       std::string llm_params_str(
           (char*)mmap_file->data() + llm_params_buffer->offset(),
           llm_params_buffer->size());
-      mediapipe::tasks::genai::proto::LlmParameters llm_params;
+      odml::infra::proto::LlmParameters llm_params;
       llm_params.ParseFromString(llm_params_str);
 
       return llm_params;
     }
   }
-  return absl::NotFoundError(absl::StrCat(
-      "Failed to get LLM params, missing ",
-      mediapipe::tasks::genai::proto::LlmParameters().GetTypeName(),
-      " in tflite metadata"));
+  return absl::NotFoundError(
+      absl::StrCat("Failed to get LLM params, missing ",
+                   odml::infra::proto::LlmParameters().GetTypeName(),
+                   " in tflite metadata"));
 }
 
-absl::StatusOr<mediapipe::tasks::genai::proto::LlmParameters> GetLlmParams(
+absl::StatusOr<odml::infra::proto::LlmParameters> GetLlmParams(
     const ::tflite::FlatBufferModel& fb_model) {
   const ::tflite::Model* tflite_model = fb_model.GetModel();
 
   if (tflite_model->metadata() != nullptr) {
     for (const auto& metadata : *tflite_model->metadata()) {
       if (metadata->name()->c_str() ==
-          mediapipe::tasks::genai::proto::LlmParameters().GetTypeName()) {
+          odml::infra::proto::LlmParameters().GetTypeName()) {
         int llm_params_index = metadata->buffer();
         auto llm_params_buffer = tflite_model->buffers()->Get(llm_params_index);
         std::string llm_params_str(
             (char*)fb_model.allocation()->base() + llm_params_buffer->offset(),
             llm_params_buffer->size());
-        mediapipe::tasks::genai::proto::LlmParameters llm_params;
+        odml::infra::proto::LlmParameters llm_params;
         llm_params.ParseFromString(llm_params_str);
 
         return llm_params;
       }
     }
   }
-  return absl::NotFoundError(absl::StrCat(
-      "Failed to get LLM params, missing ",
-      mediapipe::tasks::genai::proto::LlmParameters().GetTypeName(),
-      " in tflite metadata"));
+  return absl::NotFoundError(
+      absl::StrCat("Failed to get LLM params, missing ",
+                   odml::infra::proto::LlmParameters().GetTypeName(),
+                   " in tflite metadata"));
 }
 
-absl::StatusOr<mediapipe::tasks::genai::proto::LlmModelType> GetLlmModelType(
+absl::StatusOr<odml::infra::proto::LlmModelType> GetLlmModelType(
     std::shared_ptr<mediapipe::tasks::genai::llm_utils::MemoryMappedFile>
         mmap_file) {
   auto tflite_model = GetTfliteModel(mmap_file);
@@ -114,9 +114,8 @@ absl::StatusOr<mediapipe::tasks::genai::proto::LlmModelType> GetLlmModelType(
   for (const auto& metadata : *(*tflite_model)->metadata()) {
     if (kLlmModelTypeName == metadata->name()->c_str()) {
       int llm_model_type_index = metadata->buffer();
-      mediapipe::tasks::genai::proto::LlmModelType llm_model_type =
-          static_cast<mediapipe::tasks::genai::proto::LlmModelType>(
-              llm_model_type_index);
+      odml::infra::proto::LlmModelType llm_model_type =
+          static_cast<odml::infra::proto::LlmModelType>(llm_model_type_index);
 
       return llm_model_type;
     }
@@ -126,7 +125,7 @@ absl::StatusOr<mediapipe::tasks::genai::proto::LlmModelType> GetLlmModelType(
                    " in tflite metadata"));
 }
 
-absl::StatusOr<mediapipe::tasks::genai::proto::LlmModelType> GetLlmModelType(
+absl::StatusOr<odml::infra::proto::LlmModelType> GetLlmModelType(
     const ::tflite::FlatBufferModel& fb_model) {
   const ::tflite::Model* tflite_model = fb_model.GetModel();
 
@@ -134,9 +133,8 @@ absl::StatusOr<mediapipe::tasks::genai::proto::LlmModelType> GetLlmModelType(
     for (const auto& metadata : *tflite_model->metadata()) {
       if (kLlmModelTypeName == metadata->name()->c_str()) {
         int llm_model_type_index = metadata->buffer();
-        mediapipe::tasks::genai::proto::LlmModelType llm_model_type =
-            static_cast<mediapipe::tasks::genai::proto::LlmModelType>(
-                llm_model_type_index);
+        odml::infra::proto::LlmModelType llm_model_type =
+            static_cast<odml::infra::proto::LlmModelType>(llm_model_type_index);
 
         return llm_model_type;
       }

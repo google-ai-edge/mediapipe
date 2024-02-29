@@ -36,7 +36,7 @@ namespace mediapipe::tasks::genai::xnn_utils {
 struct LlmParams {
   // Construct LlmParams from proto.
   static LlmParams FromLLMParametersProto(
-      const proto::LlmParameters& llm_params);
+      const odml::infra::proto::LlmParameters& llm_params);
 
   size_t num_transformer_M = 0;
   size_t batch_size_B = 0;
