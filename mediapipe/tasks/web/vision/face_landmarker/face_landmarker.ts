@@ -354,7 +354,7 @@ export class FaceLandmarker extends VisionTaskRunner {
         this.result.facialTransformationMatrixes.push({
           rows: poseTransformMatrix.getRows() ?? 0,
           columns: poseTransformMatrix.getCols() ?? 0,
-          data: poseTransformMatrix.getPackedDataList() ?? [],
+          data: poseTransformMatrix.getPackedDataList().slice() ?? [],
         });
       }
     }
