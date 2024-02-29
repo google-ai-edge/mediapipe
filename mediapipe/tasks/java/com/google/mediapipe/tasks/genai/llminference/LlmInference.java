@@ -35,7 +35,7 @@ public class LlmInference implements AutoCloseable {
     sessionConfig.setModelPath(options.modelPath());
     sessionConfig.setCacheDir(context.getCacheDir().getAbsolutePath());
     sessionConfig.setNumDecodeStepsPerSync(NUM_DECODE_STEPS_PER_SYNC);
-    sessionConfig.setMaxSequenceLength(options.maxSequenceLength());
+    sessionConfig.setMaxTokens(options.maxTokens());
     sessionConfig.setTopk(options.topK());
     sessionConfig.setTemperature(options.temperature());
     sessionConfig.setRandomSeed(options.randomSeed());
@@ -149,11 +149,8 @@ public class LlmInference implements AutoCloseable {
       /** Sets the error listener to invoke with the async API. */
       public abstract Builder setErrorListener(ErrorListener listener);
 
-      /**
-       * Configures the sequence length stands (i.e. the total number of tokens from input and
-       * output).
-       */
-      public abstract Builder setMaxSequenceLength(int maxSequenceLength);
+      /** Configures the total number of tokens for input and output). */
+      public abstract Builder setMaxTokens(int maxTokens);
 
       /**
        * Configures the top K number of tokens to be sampled from for each decoding step. A value of
@@ -185,7 +182,7 @@ public class LlmInference implements AutoCloseable {
      * The total length of the kv-cache. In other words, this is the total number of input + output
      * tokens the model needs to handle.
      */
-    public abstract int maxSequenceLength();
+    public abstract int maxTokens();
 
     /**
      * Top K number of tokens to be sampled from for each decoding step. A value of 1 means greedy
@@ -208,7 +205,7 @@ public class LlmInference implements AutoCloseable {
     /** Instantiates a new LlmInferenceOptions builder. */
     public static Builder builder() {
       return new AutoValue_LlmInference_LlmInferenceOptions.Builder()
-          .setMaxSequenceLength(512)
+          .setMaxTokens(512)
           .setTopK(40)
           .setTemperature(0.8f)
           .setRandomSeed(0);
