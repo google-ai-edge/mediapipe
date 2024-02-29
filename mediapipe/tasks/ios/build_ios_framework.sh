@@ -56,8 +56,12 @@ case $FRAMEWORK_NAME in
     ;;
   "MediaPipeTasksText")
     ;;
+  "MediaPipeTasksGenAIC")
+    ;;
+  "MediaPipeTasksGenAI")
+    ;;
   *)
-    echo "Wrong framework name. The following framework names are allowed: MediaPipeTasksText, MediaPipeTasksVision, MediaPipeTasksCommon"
+    echo "Wrong framework name. The following framework names are allowed: MediaPipeTasksText, MediaPipeTasksVision, MediaPipeTasksCommon, MediaPipeTasksGenAI, MediaPipeTasksGenAIC"
     exit 1
   ;;
 esac
@@ -90,7 +94,6 @@ EOF
 function build_ios_frameworks_and_libraries {
   local TARGET_PREFIX="//mediapipe/tasks/ios"
   FULL_FRAMEWORK_TARGET="${TARGET_PREFIX}:${FRAMEWORK_NAME}_framework"
-  FULL_GRAPH_LIBRARY_TARGET="${TARGET_PREFIX}:${FRAMEWORK_NAME}_GraphLibrary"
 
   # .bazelrc sets --apple_generate_dsym=true by default which bloats the libraries to sizes of
   # the order of GBs. All iOS framework and library build commands for distribution via
@@ -99,6 +102,20 @@ function build_ios_frameworks_and_libraries {
 
   # Build Task Library xcframework.
   local FRAMEWORK_CQUERY_COMMAND="-c opt --config=ios_sim_device_fat --apple_generate_dsym=false --define OPENCV=source ${FULL_FRAMEWORK_TARGET}"
+  
+  case $FRAMEWORK_NAME in
+    "MediaPipeTasksGenAI|MediaPipeTasksGenAIC")
+      FRAMEWORK_CQUERY_COMMAND="c opt --config=ios_sim_device_fat --apple_generate_dsym=false ${FULL_FRAMEWORK_TARGET}"
+      ;;
+    *)
+    ;;
+  esac
+
+  # if $FRAMEWORK_NAME == "MediaPipeTasksGenAI"
+  # then
+  #   FRAMEWORK_CQUERY_COMMAND="c opt --config=ios_sim_device_fat --apple_generate_dsym=false ${FULL_FRAMEWORK_TARGET}"
+  # fi
+  
   ${BAZEL} build ${FRAMEWORK_CQUERY_COMMAND}
   IOS_FRAMEWORK_PATH="$(get_output_file_path "${FRAMEWORK_CQUERY_COMMAND}")"
 
