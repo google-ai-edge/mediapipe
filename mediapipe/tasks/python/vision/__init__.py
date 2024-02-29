@@ -21,6 +21,7 @@ import mediapipe.tasks.python.vision.face_landmarker
 import mediapipe.tasks.python.vision.face_stylizer
 import mediapipe.tasks.python.vision.gesture_recognizer
 import mediapipe.tasks.python.vision.hand_landmarker
+import mediapipe.tasks.python.vision.holistic_landmarker
 import mediapipe.tasks.python.vision.image_classifier
 import mediapipe.tasks.python.vision.image_embedder
 import mediapipe.tasks.python.vision.image_segmenter
@@ -64,6 +65,10 @@ PoseLandmarker = pose_landmarker.PoseLandmarker
 PoseLandmarkerOptions = pose_landmarker.PoseLandmarkerOptions
 PoseLandmarkerResult = pose_landmarker.PoseLandmarkerResult
 PoseLandmarksConnections = pose_landmarker.PoseLandmarksConnections
+HolisticLandmarker = holistic_landmarker.HolisticLandmarker
+HolisticLandmarkerOptions = holistic_landmarker.HolisticLandmarkerOptions
+HolisticLandmarkerResult = holistic_landmarker.HolisticLandmarkerResult
+
 RunningMode = core.vision_task_running_mode.VisionTaskRunningMode
 
 # Remove unnecessary modules to avoid duplication in API docs.
