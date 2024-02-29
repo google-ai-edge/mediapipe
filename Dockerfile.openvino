@@ -175,6 +175,9 @@ FROM base as build
 RUN wget -O video.mp4 "https://www.pexels.com/download/video/3044127/?fps=24.0&h=1080&w=1920"
 COPY . /mediapipe/
 
+# BUILD Geti calculators
+RUN bazel build //mediapipe:geti_targets
+
 # BUILD examples
 ENV GLOG_logtostderr=1
 ENV LD_LIBRARY_PATH="/opt/intel/openvino/runtime/lib/intel64/:${LD_LIBRARY_PATH}"

@@ -1,0 +1,25 @@
+input_stream : "input_image"
+input_side_packet : "model_path"
+input_side_packet : "device"
+output_stream : "output_image"
+
+node {
+ calculator : "OpenVINOInferenceAdapterCalculator"
+ input_side_packet : "MODEL_PATH:model_path"
+ input_side_packet : "DEVICE:device"
+ output_side_packet : "INFERENCE_ADAPTER:adapter"
+}
+
+node {
+ calculator : "AnomalyCalculator"
+ input_side_packet : "INFERENCE_ADAPTER:adapter"
+ input_stream : "IMAGE:input_image"
+ output_stream: "INFERENCE_RESULT:result"
+}
+
+node {
+ calculator : "OverlayCalculator"
+ input_stream : "IMAGE:input_image"
+ input_stream : "INFERENCE_RESULT:result"
+ output_stream : "IMAGE:output_image"
+}

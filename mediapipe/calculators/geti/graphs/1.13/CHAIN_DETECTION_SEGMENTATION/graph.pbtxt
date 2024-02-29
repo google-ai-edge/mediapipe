@@ -1,0 +1,118 @@
+# INTEL CONFIDENTIAL
+#
+# Copyright (C) 2023 Intel Corporation
+#
+# This software and the related documents are Intel copyrighted materials, and
+# your use of them is governed by the express license under which they were provided to
+# you ("License"). Unless the License provides otherwise, you may not use, modify, copy,
+# publish, distribute, disclose or transmit this software or the related documents
+# without Intel's prior written permission.
+#
+# This software and the related documents are provided as is,
+# with no express or implied warranties, other than those that are expressly stated
+# in the License.
+input_stream: "REQUEST:input"
+output_stream: "RESPONSE:output"
+node {
+  calculator: "OpenVINOModelServerSessionCalculator"
+  output_side_packet: "SESSION:session_det"
+  node_options: {
+    [type.googleapis.com/mediapipe.OpenVINOModelServerSessionCalculatorOptions]: {
+      servable_name: "MODEL_NAME_0"
+      servable_version: "1"
+    }
+  }
+}
+node {
+  calculator: "OpenVINOModelServerSessionCalculator"
+  output_side_packet: "SESSION:session_segm"
+  node_options: {
+    [type.googleapis.com/mediapipe.OpenVINOModelServerSessionCalculatorOptions]: {
+      servable_name: "MODEL_NAME_1"
+      servable_version: "1"
+    }
+  }
+}
+node {
+     calculator: "ModelInferRequestImageCalculator"
+     input_stream: "REQUEST:input"
+     output_stream: "IMAGE:input_image"
+}
+node {
+     calculator: "DetectionCalculator"
+     input_side_packet: "INFERENCE_ADAPTER:session_det"
+     input_stream: "IMAGE:input_image"
+     output_stream: "DETECTIONS:detections"
+}
+node {
+     calculator: "DetectionExtractionCalculator"
+     input_stream: "DETECTIONS:detections"
+     output_stream: "DETECTED_OBJECTS:detected_objects"
+}
+node {
+     calculator: "CropCalculator"
+     input_stream: "IMAGE:gated_input_image"
+     input_stream: "DETECTION:input_detection_element"
+     output_stream: "IMAGE:cropped_image"
+}
+node {
+     calculator: "SegmentationCalculator"
+     input_side_packet: "INFERENCE_ADAPTER:session_segm"
+     input_stream: "IMAGE:cropped_image"
+     output_stream: "RESULT:segmentationresult"
+}
+node {
+  calculator: "EmptyLabelSegmentationCalculator"
+  input_stream: "PREDICTION:segmentationresult"
+  output_stream: "PREDICTION:segmentation"
+  node_options: {
+    [type.googleapis.com / mediapipe.EmptyLabelOptions] {
+      id: "EMPTY_LABEL_ID_1"
+      label: "EMPTY_LABEL_NAME_1"
+    }
+  }
+}
+node {
+     calculator: "DetectionSegmentationCombinerCalculator"
+     input_stream: "DETECTION:input_detection_element"
+     input_stream: "SEGMENTATION:segmentation"
+     output_stream: "DETECTION_SEGMENTATIONS:output_of_loop_body"
+}
+
+node {
+     calculator: "BeginLoopModelApiDetectionCalculator"
+     input_stream: "ITERABLE:detected_objects"
+     input_stream: "CLONE:input_image"
+     output_stream: "ITEM:input_detection_element"
+     output_stream: "CLONE:gated_input_image"
+     output_stream: "BATCH_END:ext_ts"
+}
+node {
+     calculator: "EndLoopModelApiDetectionSegmentationCalculator"
+     input_stream: "ITEM:output_of_loop_body"
+     input_stream: "BATCH_END:ext_ts"
+     output_stream: "ITERABLE:output_segmentations"
+}
+node {
+  calculator: "EmptyLabelDetectionCalculator"
+  input_stream: "PREDICTION:detections"
+  output_stream: "PREDICTION:detectionswithempty"
+  node_options: {
+    [type.googleapis.com / mediapipe.EmptyLabelOptions] {
+      id: "EMPTY_LABEL_ID_0"
+      label: "EMPTY_LABEL_NAME_0"
+    }
+  }
+}
+node {
+     calculator: "DetectionSegmentationResultCalculator"
+     input_stream: "DETECTION:detectionswithempty"
+     input_stream: "DETECTION_SEGMENTATIONS:output_segmentations"
+     output_stream: "DETECTION_SEGMENTATION_RESULT:result"
+}
+node {
+     calculator: "DetectionSegmentationSerializationCalculator"
+     input_stream: "REQUEST:input"
+     input_stream: "RESULT:result"
+     output_stream: "RESPONSE:output"
+}

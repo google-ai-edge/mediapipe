@@ -1,0 +1,87 @@
+input_stream: "input"
+input_side_packet: "detection_model_path"
+input_side_packet: "classification_model_path"
+output_stream: "output"
+
+node {
+  calculator: "ModelInferRequestImageCalculator"
+  input_stream: "REQUEST:input"
+  output_stream: "IMAGE:input_image"
+}
+
+node {
+   calculator : "OpenVINOInferenceAdapterCalculator"
+   input_side_packet : "MODEL_PATH:detection_model_path"
+   output_side_packet : "INFERENCE_ADAPTER:detection_adapter"
+}
+
+node {
+   calculator : "OpenVINOInferenceAdapterCalculator"
+   input_side_packet : "MODEL_PATH:classification_model_path"
+   output_side_packet : "INFERENCE_ADAPTER:classification_adapter"
+}
+
+node {
+     calculator : "DetectionCalculator"
+     input_side_packet : "INFERENCE_ADAPTER:detection_adapter"
+     input_stream : "IMAGE:input_image"
+     output_stream: "INFERENCE_RESULT:detections"
+}
+
+node {
+     calculator : "DetectionExtractionCalculator"
+     input_stream : "INFERENCE_RESULT:detections"
+     output_stream: "RECTANGLE_PREDICTION:detected_objects"
+}
+
+node {
+     calculator : "CropCalculator"
+     input_stream : "IMAGE:gated_input_image"
+     input_stream : "DETECTION:input_detection_element"
+     output_stream: "IMAGE:cropped_image"
+}
+
+node {
+     calculator: "ClassificationCalculator"
+     input_side_packet : "INFERENCE_ADAPTER:classification_adapter"
+     input_stream : "IMAGE:cropped_image"
+     output_stream : "INFERENCE_RESULT:classification"
+}
+
+node {
+     calculator: "DetectionClassificationCombinerCalculator"
+     input_stream : "DETECTION:input_detection_element"
+     input_stream : "INFERENCE_RESULT:classification"
+     output_stream : "DETECTION_CLASSIFICATIONS:output_of_loop_body"
+}
+
+node {
+     calculator:    "BeginLoopRectanglePredictionCalculator"
+     input_stream:  "ITERABLE:detected_objects"      # IterableT @ext_ts
+     input_stream : "CLONE:input_image"
+     output_stream: "ITEM:input_detection_element"           # ItemT     @loop_internal_ts
+     output_stream : "CLONE:gated_input_image"
+     output_stream: "BATCH_END:ext_ts"             # Timestamp @loop_internal_ts
+}
+
+node {
+     calculator:    "EndLoopRectanglePredictionsCalculator"
+     input_stream:  "ITEM:output_of_loop_body"     # ItemU     @loop_internal_ts
+     input_stream:  "BATCH_END:ext_ts"             # Timestamp @loop_internal_ts
+     output_stream: "ITERABLE:output_classifications"   # IterableU @ext_ts
+}
+
+node {
+     calculator:    "DetectionClassificationResultCalculator"
+     input_stream : "DETECTION:detections"
+     input_stream:  "DETECTION_CLASSIFICATIONS:output_classifications"
+     output_stream: "DETECTION_CLASSIFICATION_RESULT:result"
+}
+
+
+node {
+ calculator : "OverlayCalculator"
+ input_stream : "IMAGE:input_image"
+ input_stream : "INFERENCE_RESULT:result"
+ output_stream : "IMAGE:output"
+}

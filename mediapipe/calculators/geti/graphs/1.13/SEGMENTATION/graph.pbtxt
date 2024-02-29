@@ -1,0 +1,53 @@
+# INTEL CONFIDENTIAL
+#
+# Copyright (C) 2023 Intel Corporation
+#
+# This software and the related documents are Intel copyrighted materials, and
+# your use of them is governed by the express license under which they were provided to
+# you ("License"). Unless the License provides otherwise, you may not use, modify, copy,
+# publish, distribute, disclose or transmit this software or the related documents
+# without Intel's prior written permission.
+#
+# This software and the related documents are provided as is,
+# with no express or implied warranties, other than those that are expressly stated
+# in the License.
+input_stream: "REQUEST:input"
+output_stream: "RESPONSE:output"
+node {
+  calculator: "OpenVINOModelServerSessionCalculator"
+  output_side_packet: "SESSION:session"
+  node_options: {
+    [type.googleapis.com / mediapipe.OpenVINOModelServerSessionCalculatorOptions]: {
+      servable_name: "MODEL_NAME_0"
+      servable_version: "1"
+    }
+  }
+}
+node {
+  calculator: "ModelInferRequestImageCalculator"
+  input_stream: "REQUEST:input"
+  output_stream: "IMAGE:input_image"
+}
+node {
+  calculator: "SegmentationCalculator"
+  input_side_packet: "INFERENCE_ADAPTER:session"
+  input_stream: "IMAGE:input_image"
+  output_stream: "RESULT:segmentation"
+}
+node {
+  calculator: "EmptyLabelSegmentationCalculator"
+  input_stream: "PREDICTION:segmentation"
+  output_stream: "PREDICTION:result"
+  node_options: {
+    [type.googleapis.com/mediapipe.EmptyLabelOptions] {
+      id: "EMPTY_LABEL_ID_0"
+      label: "EMPTY_LABEL_NAME_0"
+    }
+  }
+}
+node {
+  calculator: "SegmentationSerializationCalculator"
+  input_stream: "RESULT:result"
+  input_stream: "REQUEST:input"
+  output_stream: "RESPONSE:output"
+}

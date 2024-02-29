@@ -41,6 +41,7 @@ MEDIAPIPE_UNSTABLE_TESTS_REGEX="MuxInputStreamHandlerTest.RemovesUnusedDataStrea
 run_unit_tests:
 	docker run -e http_proxy=$(HTTP_PROXY) -e https_proxy=$(HTTPS_PROXY) $(OVMS_MEDIA_DOCKER_IMAGE):$(OVMS_MEDIA_IMAGE_TAG) bazel test --define=MEDIAPIPE_DISABLE_GPU=1 --test_output=streamed --test_filter="-${MEDIAPIPE_UNSTABLE_TESTS_REGEX}" //mediapipe/framework/...
 	docker run -e http_proxy=$(HTTP_PROXY) -e https_proxy=$(HTTPS_PROXY) $(OVMS_MEDIA_DOCKER_IMAGE):$(OVMS_MEDIA_IMAGE_TAG) bazel test --define=MEDIAPIPE_DISABLE_GPU=1 --test_output=streamed //mediapipe/calculators/ovms:all
+	docker run -e http_proxy=$(HTTP_PROXY) -e https_proxy=$(HTTPS_PROXY) $(OVMS_MEDIA_DOCKER_IMAGE):$(OVMS_MEDIA_IMAGE_TAG) bazel test --define=MEDIAPIPE_DISABLE_GPU=1 --test_output=streamed //mediapipe/calculators/geti/serialization:all
 
 run_hello_world:
 	docker run $(OVMS_MEDIA_DOCKER_IMAGE):$(OVMS_MEDIA_IMAGE_TAG) bazel-bin/mediapipe/examples/desktop/hello_world/hello_world
