@@ -14,6 +14,8 @@
 
 // TODO: Add unit test.
 
+#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/metadata_utils.h"
+
 #include <memory>
 #include <string>
 #include <utility>
@@ -31,10 +33,6 @@
 
 namespace mediapipe::tasks::genai::llm_utils {
 namespace {
-
-constexpr absl::string_view kLlmModelTypeName = "odml.infra.LlmModelType";
-constexpr absl::string_view kLlmBackendName = "backend";
-constexpr absl::string_view kSpmVocabName = "spm_vocab_model";
 
 absl::StatusOr<std::shared_ptr<const ::tflite::Model>> GetTfliteModel(
     std::shared_ptr<mediapipe::tasks::genai::llm_utils::MemoryMappedFile>
@@ -73,7 +71,36 @@ absl::StatusOr<mediapipe::tasks::genai::proto::LlmParameters> GetLlmParams(
       return llm_params;
     }
   }
-  return absl::NotFoundError("Failed to get LLM params");
+  return absl::NotFoundError(absl::StrCat(
+      "Failed to get LLM params, missing ",
+      mediapipe::tasks::genai::proto::LlmParameters().GetTypeName(),
+      " in tflite metadata"));
+}
+
+absl::StatusOr<mediapipe::tasks::genai::proto::LlmParameters> GetLlmParams(
+    const ::tflite::FlatBufferModel& fb_model) {
+  const ::tflite::Model* tflite_model = fb_model.GetModel();
+
+  if (tflite_model->metadata() != nullptr) {
+    for (const auto& metadata : *tflite_model->metadata()) {
+      if (metadata->name()->c_str() ==
+          mediapipe::tasks::genai::proto::LlmParameters().GetTypeName()) {
+        int llm_params_index = metadata->buffer();
+        auto llm_params_buffer = tflite_model->buffers()->Get(llm_params_index);
+        std::string llm_params_str(
+            (char*)fb_model.allocation()->base() + llm_params_buffer->offset(),
+            llm_params_buffer->size());
+        mediapipe::tasks::genai::proto::LlmParameters llm_params;
+        llm_params.ParseFromString(llm_params_str);
+
+        return llm_params;
+      }
+    }
+  }
+  return absl::NotFoundError(absl::StrCat(
+      "Failed to get LLM params, missing ",
+      mediapipe::tasks::genai::proto::LlmParameters().GetTypeName(),
+      " in tflite metadata"));
 }
 
 absl::StatusOr<mediapipe::tasks::genai::proto::LlmModelType> GetLlmModelType(
@@ -94,7 +121,30 @@ absl::StatusOr<mediapipe::tasks::genai::proto::LlmModelType> GetLlmModelType(
       return llm_model_type;
     }
   }
-  return absl::NotFoundError("Failed to get LLM model type");
+  return absl::NotFoundError(
+      absl::StrCat("Failed to get LLM model type, missing ", kLlmModelTypeName,
+                   " in tflite metadata"));
+}
+
+absl::StatusOr<mediapipe::tasks::genai::proto::LlmModelType> GetLlmModelType(
+    const ::tflite::FlatBufferModel& fb_model) {
+  const ::tflite::Model* tflite_model = fb_model.GetModel();
+
+  if (tflite_model->metadata() != nullptr) {
+    for (const auto& metadata : *tflite_model->metadata()) {
+      if (kLlmModelTypeName == metadata->name()->c_str()) {
+        int llm_model_type_index = metadata->buffer();
+        mediapipe::tasks::genai::proto::LlmModelType llm_model_type =
+            static_cast<mediapipe::tasks::genai::proto::LlmModelType>(
+                llm_model_type_index);
+
+        return llm_model_type;
+      }
+    }
+  }
+  return absl::NotFoundError(
+      absl::StrCat("Failed to get LLM model type, missing ", kLlmModelTypeName,
+                   " in tflite metadata"));
 }
 
 absl::StatusOr<std::string> GetLlmBackend(
@@ -116,7 +166,9 @@ absl::StatusOr<std::string> GetLlmBackend(
       return backend_str;
     }
   }
-  return absl::NotFoundError("Failed to get backend");
+  return absl::NotFoundError(
+      absl::StrCat("Failed to get backend for LLM inference, missing ",
+                   kLlmBackendName, " in tflite metadata"));
 }
 
 absl::StatusOr<absl::string_view> ExtractSentencePieceToStringView(
