@@ -63,9 +63,11 @@ FalconRW1BBuilder::SelfAttentionExcludeNorm(
 
   MP_RETURN_IF_ERROR(BuildKVCache(k_proj, v_proj, resource));
 
+  MP_ASSIGN_OR_RETURN(auto permuted_mask,
+                      Permute(resource.atten_mask, {1, 0, 2}));
   // [B, 1|T, N, H]
   MP_ASSIGN_OR_RETURN(auto kqv_merged, DotAttention(q_proj, k_proj, v_proj,
-                                                    resource.atten_mask));
+                                                    permuted_mask, sa_weights));
 
   const size_t B = kqv_merged->dims[0];
   const size_t NH = kqv_merged->dims[2] * kqv_merged->dims[3];
@@ -82,33 +84,6 @@ FalconRW1BBuilder::FeedForwardExcludeNorm(
                                              ff_weights.layer_1_bias));
   MP_ASSIGN_OR_RETURN(auto gelu1, Gelu(linear1));
   return FullConn(gelu1, ff_weights.layer_2_weight, ff_weights.layer_2_bias);
-}
-
-absl::StatusOr<std::shared_ptr<Tensor>> FalconRW1BBuilder::DotAttention(
-    std::shared_ptr<Tensor> query_proj, std::shared_ptr<Tensor> key_proj,
-    std::shared_ptr<Tensor> value_proj, std::shared_ptr<Tensor> atten_mask) {
-  // BTNH -> BNTH
-  MP_ASSIGN_OR_RETURN(auto query_permuted, Permute(query_proj, {0, 2, 1, 3}));
-  // BSNH -> BNSH
-  MP_ASSIGN_OR_RETURN(auto key_permuted, Permute(key_proj, {0, 2, 1, 3}));
-  // BNTH.BNSH -> BNTS
-  MP_ASSIGN_OR_RETURN(auto logits, QKVAttention(query_permuted, key_permuted,
-                                                {0, llm_params_.head_dim_H}));
-  const float scale = 1.0f / sqrt(query_proj->dims[3]);
-  MP_ASSIGN_OR_RETURN(auto scaled_logits, ElementMul(logits, scale));
-  // mask
-  MP_ASSIGN_OR_RETURN(auto mask_permuted, Permute(atten_mask, {1, 0, 2}));
-  MP_ASSIGN_OR_RETURN(auto padded_logits,
-                      ElementAdd(mask_permuted, scaled_logits));
-  MP_ASSIGN_OR_RETURN(auto probs, Softmax(padded_logits));
-  MP_ASSIGN_OR_RETURN(auto value_permuted, Permute(value_proj, {0, 2, 3, 1}));
-  // Outcome
-  // BNTS.BNHS -> BNTH
-  MP_ASSIGN_OR_RETURN(
-      auto outcome_before_permute,
-      QKVAttention(probs, value_permuted, {llm_params_.head_dim_H, 0}));
-  // BNTH -> BTNH
-  return Permute(outcome_before_permute, {0, 2, 1, 3});
 }
 
 absl::Status FalconRW1BBuilder::InitAttentionMask(size_t current_seq_len,

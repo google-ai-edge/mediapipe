@@ -41,19 +41,9 @@ class Stablelm4E1T3BBuilder : public LlmBuilder {
   // Defines an alternative to `SelfAttentionExcludeNorm` defined in the base
   // class with the following changes:
   // * Replaces `Rope` with `PartialRope`.
-  // * Uses customized `DotAttention`.
   absl::StatusOr<std::shared_ptr<Tensor>> SelfAttentionExcludeNorm(
       std::shared_ptr<Tensor> input, InputResource resource,
       const LlmWeights::SelfAttentionWeights& sa_weights) override;
-
-  // Defines an alternative to `DotAttention` defined in XnnGraphBuilder with
-  // the following changes:
-  // * Vanilla sqrt scaling for MHA in place of `PerDimScale`.
-  // * Skips `CapTanh`.
-  absl::StatusOr<std::shared_ptr<Tensor>> DotAttention(
-      std::shared_ptr<Tensor> query_proj, std::shared_ptr<Tensor> key_proj,
-      std::shared_ptr<Tensor> value_proj, std::shared_ptr<Tensor> atten_mask,
-      std::shared_ptr<Tensor> per_dim_scale);
 };
 
 }  // namespace mediapipe::tasks::genai::xnn_utils

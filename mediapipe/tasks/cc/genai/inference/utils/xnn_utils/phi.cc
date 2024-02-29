@@ -79,7 +79,7 @@ absl::StatusOr<std::shared_ptr<Tensor>> Phi2Builder::SelfAttentionExcludeNorm(
   // [B, 1|T, N, H]
   MP_ASSIGN_OR_RETURN(auto kqv_merged,
                       DotAttention(query_proj_after_rope, key_proj_after_rope,
-                                   v_proj, resource.atten_mask));
+                                   v_proj, resource.atten_mask, sa_weights));
 
   const size_t B = kqv_merged->dims[0];
   const size_t NH = kqv_merged->dims[2] * kqv_merged->dims[3];
@@ -95,32 +95,6 @@ absl::StatusOr<std::shared_ptr<Tensor>> Phi2Builder::FeedForwardExcludeNorm(
                                              ff_weights.layer_1_bias));
   MP_ASSIGN_OR_RETURN(auto gelu1, Gelu(linear1));
   return FullConn(gelu1, ff_weights.layer_2_weight, ff_weights.layer_2_bias);
-}
-
-absl::StatusOr<std::shared_ptr<Tensor>> Phi2Builder::DotAttention(
-    std::shared_ptr<Tensor> query_proj, std::shared_ptr<Tensor> key_proj,
-    std::shared_ptr<Tensor> value_proj, std::shared_ptr<Tensor> atten_mask) {
-  // BTNH -> BNTH
-  MP_ASSIGN_OR_RETURN(auto query_permuted, Permute(query_proj, {0, 2, 1, 3}));
-  // BSNH -> BNSH
-  MP_ASSIGN_OR_RETURN(auto key_permuted, Permute(key_proj, {0, 2, 1, 3}));
-  // BNTH.BNSH -> BNTS
-  MP_ASSIGN_OR_RETURN(auto logits, QKVAttention(query_permuted, key_permuted,
-                                                {0, llm_params_.head_dim_H}));
-  float scale = 1.0f / sqrt(llm_params_.head_dim_H);
-  MP_ASSIGN_OR_RETURN(auto scaled_logits, ElementMul(logits, scale));
-  // mask
-  MP_ASSIGN_OR_RETURN(auto padded_logits,
-                      ElementAdd(atten_mask, scaled_logits));
-  MP_ASSIGN_OR_RETURN(auto probs, Softmax(padded_logits));
-  MP_ASSIGN_OR_RETURN(auto value_permuted, Permute(value_proj, {0, 2, 3, 1}));
-  // Outcome
-  // BNTS.BNHS -> BNTH
-  MP_ASSIGN_OR_RETURN(
-      auto outcome_before_permute,
-      QKVAttention(probs, value_permuted, {llm_params_.head_dim_H, 0}));
-  // BNTH -> BTNH
-  return Permute(outcome_before_permute, {0, 2, 1, 3});
 }
 
 }  // namespace mediapipe::tasks::genai::xnn_utils

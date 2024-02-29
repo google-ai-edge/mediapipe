@@ -43,7 +43,8 @@ class FalconRW1BBuilder : public LlmBuilder {
   // Defines an alternative to `SelfAttentionExcludeNorm` defined in the base
   // class with the following changes:
   // * Does not use RoPE.
-  // * Uses customized `DotAttention`.
+  // * 3D Alibi fused attention mask is transposed before being added to the
+  //   logits. This is necessary to allow slicing mask during decoding.
   absl::StatusOr<std::shared_ptr<Tensor>> SelfAttentionExcludeNorm(
       std::shared_ptr<Tensor> input, InputResource resource,
       const LlmWeights::SelfAttentionWeights& sa_weights) override;
@@ -55,16 +56,6 @@ class FalconRW1BBuilder : public LlmBuilder {
   absl::StatusOr<std::shared_ptr<Tensor>> FeedForwardExcludeNorm(
       std::shared_ptr<Tensor> input,
       const LlmWeights::FeedForwardWeights& ff_weights) override;
-
-  // Defines an alternative to `DotAttention` defined in XnnGraphBuilder with
-  // the following changes:
-  // * Vanilla sqrt scaling for MHA in place of `PerDimScale`.
-  // * Skips `CapTanh`.
-  // * 3D Alibi fused attention mask is transposed before being added to the
-  //   logits. This is necessary to allow slicing mask during decoding.
-  absl::StatusOr<std::shared_ptr<Tensor>> DotAttention(
-      std::shared_ptr<Tensor> query_proj, std::shared_ptr<Tensor> key_proj,
-      std::shared_ptr<Tensor> value_proj, std::shared_ptr<Tensor> atten_mask);
 
   // Creates an Alibi fused attention mask.
   absl::Status InitAttentionMask(size_t current_seq_len, size_t process_seq_len,
