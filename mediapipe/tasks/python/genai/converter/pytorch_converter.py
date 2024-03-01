@@ -14,6 +14,7 @@
 
 """CkptLoader implementation for loading the Pytorch file."""
 
+from typing import Iterator
 import enum
 import os
 from typing import List, Optional
@@ -306,10 +307,12 @@ class PytorchCkptLoader(converter_base.CkptLoaderBase):
     else:
       raise ValueError(f"Unknown special model: {special_model}")
 
-  def load_to_actions(self):
+  def load_to_actions(
+      self,
+  ) -> Iterator[List[converter_base.QuantizationAction]]:
     tensor_names = self._reader.get_tensor_names()
-    actions = []
     for tensor_name in tensor_names:
       tensor_actions = self.mapper.map_to_actions(tensor_name)
-      actions.extend(tensor_actions)
-    return actions
+      if tensor_actions is None:
+        continue
+      yield tensor_actions

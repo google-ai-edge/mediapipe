@@ -193,18 +193,21 @@ def convert_checkpoint(config: ConversionConfig) -> None:
     )
     actions = loader.load_to_actions()
 
-    # Quantize the weights.
-    quantized_tensors = quantize_by_actions(
-        actions, config.backend, config.is_symmetric
-    )
-
-    # Write the quantized tensors into file(s).
-    writer = converter_factory.create_writer(
-        writer_type='weight_bins',
-        output_dir=config.output_dir,
-        backend=config.backend,
-    )
-    writer.write_variables(quantized_tensors)
+    for action in actions:
+      # Quantize the weight.
+      quantized_tensors = quantize_by_actions(
+          action, config.backend, config.is_symmetric
+      )
+      del action
+      # Write the quantized tensors into file(s).
+      writer = converter_factory.create_writer(
+          writer_type='weight_bins',
+          output_dir=config.output_dir,
+          backend=config.backend,
+      )
+      writer.write_variables(quantized_tensors)
+      del quantized_tensors
+      del writer
 
   combined_weight_bins_to_tflite(
       config.model_type,

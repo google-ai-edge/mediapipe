@@ -76,7 +76,7 @@ class SafetensorsConverterTest(parameterized.TestCase):
         backend='gpu',
     )
     actions = loader.load_to_actions()
-    self.assertLen(actions, 15)
+    self.assertLen(list(actions), 15)
 
 
 if __name__ == '__main__':

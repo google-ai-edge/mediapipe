@@ -14,6 +14,7 @@
 
 """Defines a couple base classes for the conversion/quantization process."""
 
+from typing import Iterator
 import os
 from typing import Dict, List, Optional, Tuple
 import numpy as np
@@ -105,7 +106,9 @@ class CkptLoaderBase:
     self._feedforward_quant_bits = feedforward_quant_bits
     self._embedding_quant_bits = embedding_quant_bits
 
-  def load_to_actions(self) -> List[Optional[QuantizationAction]]:
+  def load_to_actions(
+      self,
+  ) -> Iterator[Optional[List[QuantizationAction]]]:
     """Loads the checkpoint and returns the quantization actions."""
     raise NotImplementedError("The load_to_actions method is not implemented.")
 

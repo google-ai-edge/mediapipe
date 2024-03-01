@@ -79,7 +79,7 @@ class PytorchConverterTest(parameterized.TestCase):
     actions = loader.load_to_actions()
     # There are 16 layers in the model, but qkv weight and bias would be
     # decomposed to q, k, v tensors, so there would be 20 quantization actions.
-    self.assertLen(actions, 20)
+    self.assertEqual(sum(len(action) for action in actions), 20)
 
 
 if __name__ == '__main__':

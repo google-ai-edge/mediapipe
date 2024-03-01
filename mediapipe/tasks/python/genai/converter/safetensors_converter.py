@@ -15,6 +15,7 @@
 """CkptLoader implementation for loading the Safetensors."""
 
 import array
+from typing import Iterator
 import enum
 import glob
 import json
@@ -510,12 +511,12 @@ class SafetensorsCkptLoader(converter_base.CkptLoaderBase):
     else:
       raise ValueError(f"Unknown special model: {special_model}")
 
-  def load_to_actions(self) -> List[converter_base.QuantizationAction]:
+  def load_to_actions(
+      self,
+  ) -> Iterator[List[converter_base.QuantizationAction]]:
     tensor_names = self._reader.get_tensor_names()
-    actions = []
     for tensor_name in tensor_names:
       tensor_actions = self.mapper.map_to_actions(tensor_name)
       if tensor_actions is None:
         continue
-      actions.extend(tensor_actions)
-    return actions
+      yield tensor_actions
