@@ -21,8 +21,30 @@ import MediaPipeTasksGenAIC
 @objc(MPPLlmInference) public final class LlmInference: NSObject {
   private static let numberOfDecodeStepsPerSync = 3
   private static let sequenceBatchSize = 0
+  private static let responseGenerationInProgressQueueName =
+    "com.google.mediapipe.genai.isResponseGenerationInProgressQueue"
+
+  private let responseGenerationInProgressQueue = DispatchQueue(
+    label: LlmInference.responseGenerationInProgressQueueName,
+    attributes: .concurrent)
 
   private let llmTaskRunner: LlmTaskRunner
+
+  /// Readers writers lock to prevent race condition as this variable can be accessed from multiple 
+  /// threads.
+  private var responseGenerationInProgressInternal = false
+  private var responseGenerationInProgress: Bool {
+    get {
+      responseGenerationInProgressQueue.sync {
+        return self.responseGenerationInProgressInternal
+      }
+    }
+    set {
+      responseGenerationInProgressQueue.async(flags: .barrier) {
+        self.responseGenerationInProgressInternal = newValue
+      }
+    }
+  }
 
   /// Creates a new instance of `LlmInference` with the given options.
   ///
@@ -68,6 +90,10 @@ import MediaPipeTasksGenAIC
   ///   - inputText: A `String` that is used to query the LLM.
   /// - Throws: An error if the LLM's response is invalid.
   @objc public func generateResponse(inputText: String) throws -> String {
+    if responseGenerationInProgress {
+      throw LlmInferenceError.invalidResponseError
+    }
+
     let tokens = try llmTaskRunner.predict(inputText: inputText)
     guard let humanReadableLlmResponse = LlmInference.humanReadableString(llmResponses: tokens)
     else {
@@ -75,6 +101,47 @@ import MediaPipeTasksGenAIC
     }
 
     return humanReadableLlmResponse
+  }
+
+  /// Generates a response based on the input text asynchronously. The `progess` callback returns 
+  /// the partial responses from the LLM or any errors. `completion` callback is invoked once the
+  /// LLM is done generating responses.
+  ///
+  /// - Parameters:
+  ///   - progess: A callback invoked when a partial response is available from the LLM.
+  ///   - completion: A callback invoked when the LLM finishes response generation.
+  /// - Throws: An error if the LLM's response is invalid.
+  @objc public func generateResponse(
+    inputText: String, 
+    progress: @escaping (_ partialResponse: String?, _ error: Error?) -> Void,
+    completion: @escaping (() -> Void)
+  ) throws {
+    if responseGenerationInProgress {
+      throw LlmInferenceError.invalidResponseError
+    }
+
+    responseGenerationInProgress = true
+
+    let receivedFirstToken = false
+
+    llmTaskRunner.predict(
+      inputText: inputText,
+      progress: { partialResponseStrings, error in
+        receivedFirstToken = true
+        guard let responseStrings = partialResponseStrings else {
+          progress(nil, LlmInferenceError.invalidResponseError)
+          return
+        }
+
+        let humanReadableLlmResponse = LlmInference.humanReadableString(
+          llmResponses: responseStrings, stripLeadingWhitespaces: receivedFirstToken)
+        let error = (humanReadableLlmResponse != nil) ? nil : LlmInferenceError.invalidResponseError
+        progress(humanReadableLlmResponse, error)
+      },
+      completion: {
+        responseGenerationInProgress = false
+        completion()
+      })
   }
 
   private static func humanReadableString(
@@ -127,7 +194,8 @@ extension LlmInference {
 
 /// An extension to `String` to add some utility functions.
 extension String {
-  fileprivate static let tokenSplitter = "▁"  /// Note this is NOT an underscore: ▁(U+2581)
+  fileprivate static let tokenSplitter = "▁"
+  /// Note this is NOT an underscore: ▁(U+2581)
   fileprivate static let newLine = "<0x0A>"
   fileprivate static let eod = "\\[eod\\]"
 
