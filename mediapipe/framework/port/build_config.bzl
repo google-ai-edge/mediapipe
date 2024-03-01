@@ -52,6 +52,7 @@ def mediapipe_ts_library(
             "@npm//@types/node",
             "@npm//@types/offscreencanvas",
             "@npm//@types/google-protobuf",
+            "@npm//@webgpu/types",
         ],
         testonly = testonly,
         declaration = True,

@@ -1,4 +1,4 @@
-# Copyright 2023 The MediaPipe Authors.
+# Copyright 2024 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,25 +15,15 @@
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 
 package(default_visibility = [
-    "//mediapipe/tasks/cc:__subpackages__",
-    "//mediapipe/tasks/web/genai/llm_inference:__subpackages__",
+    "//mediapipe/tasks:internal",
 ])
 
 licenses(["notice"])
 
 mediapipe_proto_library(
-    name = "transformer_params_proto",
-    srcs = ["transformer_params.proto"],
-)
-
-mediapipe_proto_library(
-    name = "llm_params_proto",
-    srcs = ["llm_params.proto"],
-    deps = [":transformer_params_proto"],
-)
-
-mediapipe_proto_library(
-    name = "llm_file_metadata_proto",
-    srcs = ["llm_file_metadata.proto"],
-    deps = [":llm_params_proto"],
+    name = "llm_inference_graph_options_proto",
+    srcs = ["llm_inference_graph_options.proto"],
+    deps = [
+        "//mediapipe/tasks/cc/core/proto:base_options_proto",
+    ],
 )
