@@ -18,11 +18,10 @@
 #ifdef __cplusplus
 #include <cstddef>
 #include <cstdint>
-
 #else
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdbool.h>
 #endif
 
 #ifndef ODML_EXPORT

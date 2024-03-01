@@ -57,7 +57,7 @@ public final class LlmTaskRunner {
     guard let decodedResponse = LlmTaskRunner.decodedResponse(from: responseContext),
       let responseStrings = decodedResponse.strings
     else {
-      throw LlmInferenceError.invalidResponseError
+      throw GenAiInferenceError.invalidResponseError
     }
 
     return responseStrings
@@ -77,10 +77,9 @@ public final class LlmTaskRunner {
         return
       }
       let cCallbackInfo = Unmanaged<CallbackInfo>.fromOpaque(cContext).takeRetainedValue()
-      cCallbackInfo.completion()
 
       guard let decodedResponse = LlmTaskRunner.decodedResponse(from: responseContext) else {
-        cCallbackInfo.progress(nil, LlmInferenceError.invalidResponseError)
+        cCallbackInfo.progress(nil, GenAiInferenceError.invalidResponseError)
         return
       }
 
@@ -98,13 +97,13 @@ public final class LlmTaskRunner {
 }
 
 extension LlmTaskRunner {
-  fileprivate class CallbackInfo {
+  class CallbackInfo {
     typealias ProgressCallback = (_ partialResult: [String]?, _ error: Error?) -> Void
     typealias CompletionCallback = () -> Void
 
     let inputText: UnsafeMutablePointer<CChar>?
-    let progress: (_ partialResult: [String]?, _ error: Error?) -> Void
-    let completion: () -> Void
+    let progress: ProgressCallback
+    let completion: CompletionCallback
 
     init(
       inputText: UnsafeMutablePointer<CChar>?, progress: @escaping (ProgressCallback),

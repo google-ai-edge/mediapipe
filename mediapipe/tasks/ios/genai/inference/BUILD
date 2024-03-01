@@ -14,21 +14,20 @@
 
 load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
 
-package(default_visibility = ["//mediapipe/tasks/ios:__subpackages__"])
-
 licenses(["notice"])
+
+package(default_visibility = ["//mediapipe/tasks:internal"])
 
 swift_library(
     name = "LlmInference",
-    module_name = "MediaPipeTasksGenAI",
-    generates_header = 1,
-    generated_header_name = "generated_header/LlmInference-Swift.h",
-    copts = ["-no-verify-emitted-module-interface"],
     srcs = [
         "sources/LlmInference.swift",
         "//mediapipe/tasks/ios/genai/core:sources/LlmTaskRunner.swift",
-        "//mediapipe/tasks/ios/genai/core:sources/LlmInferenceError.swift",
+        "//mediapipe/tasks/ios/genai/core:sources/GenAiInferenceError.swift",
     ],
-    deps = [
-    "//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu",],
+    copts = ["-no-verify-emitted-module-interface"],
+    module_name = "MediaPipeTasksGenAI",
+    generated_header_name = "LlmInference-Swift.h",
+    generates_header = 1,
+    deps = ["//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu",],
 )

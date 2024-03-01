@@ -15,25 +15,26 @@
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 
 package(default_visibility = [
-    "//mediapipe/tasks/cc:__subpackages__",
-    "//mediapipe/tasks/web/genai/llm_inference:__subpackages__",
+    "//mediapipe/tasks:__subpackages__",
 ])
 
 licenses(["notice"])
 
 mediapipe_proto_library(
-    name = "transformer_params_proto",
-    srcs = ["transformer_params.proto"],
+    name = "detokenizer_calculator_proto",
+    srcs = ["detokenizer_calculator.proto"],
 )
 
 mediapipe_proto_library(
-    name = "llm_params_proto",
-    srcs = ["llm_params.proto"],
-    deps = [":transformer_params_proto"],
+    name = "tokenizer_calculator_proto",
+    srcs = ["tokenizer_calculator.proto"],
 )
 
 mediapipe_proto_library(
-    name = "llm_file_metadata_proto",
-    srcs = ["llm_file_metadata.proto"],
-    deps = [":llm_params_proto"],
+    name = "llm_gpu_calculator_proto",
+    srcs = ["llm_gpu_calculator.proto"],
+    deps = [
+        "//mediapipe/tasks/cc/genai/inference/proto:llm_file_metadata_proto",
+        "//mediapipe/tasks/cc/genai/inference/proto:llm_params_proto",
+    ],
 )

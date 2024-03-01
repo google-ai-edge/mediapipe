@@ -24,11 +24,11 @@ import MediaPipeTasksGenAIC
   private static let responseGenerationInProgressQueueName =
     "com.google.mediapipe.genai.isResponseGenerationInProgressQueue"
 
+  private let llmTaskRunner: LlmTaskRunner
+
   private let responseGenerationInProgressQueue = DispatchQueue(
     label: LlmInference.responseGenerationInProgressQueueName,
     attributes: .concurrent)
-
-  private let llmTaskRunner: LlmTaskRunner
 
   /// Readers writers lock to prevent race condition as this variable can be accessed from multiple 
   /// threads.
@@ -65,7 +65,7 @@ import MediaPipeTasksGenAIC
       cache_dir: cacheDirectory,
       sequence_batch_size: LlmInference.sequenceBatchSize,
       num_decode_steps_per_sync: LlmInference.numberOfDecodeStepsPerSync,
-      max_tokens: options.maxSequenceLength,
+      max_tokens: options.maxTokens,
       topk: options.topk,
       temperature: options.temperature,
       random_seed: options.randomSeed)
@@ -91,13 +91,13 @@ import MediaPipeTasksGenAIC
   /// - Throws: An error if the LLM's response is invalid.
   @objc public func generateResponse(inputText: String) throws -> String {
     if responseGenerationInProgress {
-      throw LlmInferenceError.invalidResponseError
+      throw GenAiInferenceError.invalidResponseError
     }
 
     let tokens = try llmTaskRunner.predict(inputText: inputText)
     guard let humanReadableLlmResponse = LlmInference.humanReadableString(llmResponses: tokens)
     else {
-      throw LlmInferenceError.invalidResponseError
+      throw GenAiInferenceError.invalidResponseError
     }
 
     return humanReadableLlmResponse
@@ -117,29 +117,29 @@ import MediaPipeTasksGenAIC
     completion: @escaping (() -> Void)
   ) throws {
     if responseGenerationInProgress {
-      throw LlmInferenceError.invalidResponseError
+      throw GenAiInferenceError.invalidResponseError
     }
 
     responseGenerationInProgress = true
 
-    let receivedFirstToken = false
+    var receivedFirstToken = false
 
     llmTaskRunner.predict(
       inputText: inputText,
       progress: { partialResponseStrings, error in
         receivedFirstToken = true
         guard let responseStrings = partialResponseStrings else {
-          progress(nil, LlmInferenceError.invalidResponseError)
+          progress(nil, GenAiInferenceError.invalidResponseError)
           return
         }
 
         let humanReadableLlmResponse = LlmInference.humanReadableString(
           llmResponses: responseStrings, stripLeadingWhitespaces: receivedFirstToken)
-        let error = (humanReadableLlmResponse != nil) ? nil : LlmInferenceError.invalidResponseError
+        let error = (humanReadableLlmResponse != nil) ? nil : GenAiInferenceError.invalidResponseError
         progress(humanReadableLlmResponse, error)
       },
-      completion: {
-        responseGenerationInProgress = false
+      completion: { [weak self] in
+        self?.responseGenerationInProgress = false
         completion()
       })
   }
@@ -152,7 +152,6 @@ import MediaPipeTasksGenAIC
     }
     return llmResponse.humanReadableString(stripLeadingWhitespaces: stripLeadingWhitespaces)
   }
-
 }
 
 // Extension to `LlmInference` for defining `LlmInference.Options`
@@ -166,7 +165,7 @@ extension LlmInference {
 
     /// The total length of the kv-cache. In other words, this is the total number of input + output
     /// tokens the model needs to handle.
-    @objc public var maxSequenceLength: Int = 512
+    @objc public var maxTokens: Int = 512
 
     /// The top K number of tokens to be sampled from for each decoding step. A value of 1 means
     /// greedy decoding. Defaults to 40.
@@ -180,7 +179,7 @@ extension LlmInference {
     @objc public var randomSeed: Int = 0
 
     /// Creates a new instance of `Options` with the modelPath and default values of
-    /// `maxSequenceLength`, `topK``, `temperature` and `randomSeed`.
+    /// `maxTokens`, `topK``, `temperature` and `randomSeed`.
     /// This function is only intended to be used from Objective C.
     ///
     /// - Parameters:
@@ -194,8 +193,7 @@ extension LlmInference {
 
 /// An extension to `String` to add some utility functions.
 extension String {
-  fileprivate static let tokenSplitter = "▁"
-  /// Note this is NOT an underscore: ▁(U+2581)
+  fileprivate static let tokenSplitter = "▁"  /// Note this is NOT an underscore: ▁(U+2581)
   fileprivate static let newLine = "<0x0A>"
   fileprivate static let eod = "\\[eod\\]"
 

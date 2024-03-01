@@ -13,6 +13,7 @@
 # limitations under the License.
 
 package(default_visibility = [
+    "//mediapipe/tasks/ios:__subpackages__",
     "//mediapipe/tasks/java/com/google/mediapipe/tasks:__subpackages__",
     "//mediapipe/tasks/ios:__subpackages__",
 ])

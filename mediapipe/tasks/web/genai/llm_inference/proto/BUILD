@@ -1,4 +1,4 @@
-# Copyright 2024 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2024 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,8 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package(default_visibility = ["//visibility:public"])
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
+
+package(default_visibility = [
+    "//mediapipe/tasks:internal",
+])
 
 licenses(["notice"])
 
-exports_files(["sources/LlmTaskRunner.swift", "sources/GenAiInferenceError.swift"])
+mediapipe_proto_library(
+    name = "llm_inference_graph_options_proto",
+    srcs = ["llm_inference_graph_options.proto"],
+    deps = [
+        "//mediapipe/tasks/cc/core/proto:base_options_proto",
+    ],
+)
