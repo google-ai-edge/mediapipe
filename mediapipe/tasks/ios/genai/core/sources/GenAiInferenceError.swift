@@ -16,14 +16,17 @@ import Foundation
 
 /// Errors thrown by MediaPipe GenAI Tasks.
 public enum GenAiInferenceError: Error {
-  case invalidResponseError
+  case invalidResponse
+  case illegalMethodCall
 }
 
 extension GenAiInferenceError: LocalizedError {
   /// A localized description of the `GenAiInferenceError`.
   public var errorDescription: String? {
     switch self {
-    case .invalidResponseError:
+    case .invalidResponse:
+      return "The response returned by the model is invalid."
+    case .illegalMethodCall:
       return "The response returned by the model is invalid."
     }
   }
@@ -37,8 +40,10 @@ extension GenAiInferenceError: CustomNSError {
 
   public var errorCode: Int {
     switch self {
-    case .invalidResponseError:
+    case .invalidResponse:
       return 0
+    case .illegalMethodCall:
+      return 1
     }
   }
 }

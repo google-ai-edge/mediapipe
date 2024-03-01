@@ -30,7 +30,7 @@ import MediaPipeTasksGenAIC
     label: LlmInference.responseGenerationInProgressQueueName,
     attributes: .concurrent)
 
-  /// Readers writers lock to prevent race condition as this variable can be accessed from multiple 
+  /// Readers writers lock to prevent race condition as this variable can be accessed from multiple
   /// threads.
   private var responseGenerationInProgressInternal = false
   private var responseGenerationInProgress: Bool {
@@ -90,20 +90,18 @@ import MediaPipeTasksGenAIC
   ///   - inputText: A `String` that is used to query the LLM.
   /// - Throws: An error if the LLM's response is invalid.
   @objc public func generateResponse(inputText: String) throws -> String {
-    if responseGenerationInProgress {
-      throw GenAiInferenceError.invalidResponseError
-    }
+    try updateResponseGenerationState()
 
     let tokens = try llmTaskRunner.predict(inputText: inputText)
     guard let humanReadableLlmResponse = LlmInference.humanReadableString(llmResponses: tokens)
     else {
-      throw GenAiInferenceError.invalidResponseError
+      throw GenAiInferenceError.illegalMethodCall
     }
 
     return humanReadableLlmResponse
   }
 
-  /// Generates a response based on the input text asynchronously. The `progess` callback returns 
+  /// Generates a response based on the input text asynchronously. The `progess` callback returns
   /// the partial responses from the LLM or any errors. `completion` callback is invoked once the
   /// LLM is done generating responses.
   ///
@@ -112,36 +110,45 @@ import MediaPipeTasksGenAIC
   ///   - completion: A callback invoked when the LLM finishes response generation.
   /// - Throws: An error if the LLM's response is invalid.
   @objc public func generateResponse(
-    inputText: String, 
+    inputText: String,
     progress: @escaping (_ partialResponse: String?, _ error: Error?) -> Void,
     completion: @escaping (() -> Void)
   ) throws {
-    if responseGenerationInProgress {
-      throw GenAiInferenceError.invalidResponseError
-    }
+    try updateResponseGenerationState()
 
-    responseGenerationInProgress = true
-
-    var receivedFirstToken = false
+    /// Used to make a decision about whitespace stripping.
+    var receivedFirstToken = true
 
     llmTaskRunner.predict(
       inputText: inputText,
       progress: { partialResponseStrings, error in
-        receivedFirstToken = true
-        guard let responseStrings = partialResponseStrings else {
-          progress(nil, GenAiInferenceError.invalidResponseError)
+
+        guard let responseStrings = partialResponseStrings,
+          let humanReadableLlmResponse = LlmInference.humanReadableString(
+            llmResponses: responseStrings, stripLeadingWhitespaces: receivedFirstToken)
+        else {
+          progress(nil, GenAiInferenceError.invalidResponse)
           return
         }
 
-        let humanReadableLlmResponse = LlmInference.humanReadableString(
-          llmResponses: responseStrings, stripLeadingWhitespaces: receivedFirstToken)
-        let error = (humanReadableLlmResponse != nil) ? nil : GenAiInferenceError.invalidResponseError
-        progress(humanReadableLlmResponse, error)
+        /// Reset state after first response is processed.
+        receivedFirstToken = false
+
+        progress(humanReadableLlmResponse, nil)
       },
       completion: { [weak self] in
         self?.responseGenerationInProgress = false
         completion()
       })
+  }
+
+  /// Throw error if response generation is in progress or update response generation state
+  private func updateResponseGenerationState() throws {
+    if responseGenerationInProgress {
+      throw GenAiInferenceError.illegalMethodCall
+    }
+
+    responseGenerationInProgress = true
   }
 
   private static func humanReadableString(
@@ -152,6 +159,7 @@ import MediaPipeTasksGenAIC
     }
     return llmResponse.humanReadableString(stripLeadingWhitespaces: stripLeadingWhitespaces)
   }
+
 }
 
 // Extension to `LlmInference` for defining `LlmInference.Options`
@@ -193,7 +201,8 @@ extension LlmInference {
 
 /// An extension to `String` to add some utility functions.
 extension String {
-  fileprivate static let tokenSplitter = "▁"  /// Note this is NOT an underscore: ▁(U+2581)
+  fileprivate static let tokenSplitter = "▁"
+  /// Note this is NOT an underscore: ▁(U+2581)
   fileprivate static let newLine = "<0x0A>"
   fileprivate static let eod = "\\[eod\\]"
 
