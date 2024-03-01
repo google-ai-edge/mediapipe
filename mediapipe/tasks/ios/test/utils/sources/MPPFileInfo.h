@@ -16,6 +16,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+NS_SWIFT_NAME(FileInfo)
 @interface MPPFileInfo : NSObject
 
 /** The name of the file. */
