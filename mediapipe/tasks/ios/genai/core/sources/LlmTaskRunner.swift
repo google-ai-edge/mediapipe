@@ -19,7 +19,6 @@ import MediaPipeTasksGenAIC
 /// to initialize, execute and terminate any MediaPipe `LlmInference` task.
 public final class LlmTaskRunner {
   fileprivate typealias CLlmSession = UnsafeMutableRawPointer
-  private typealias DecodedResponse = (strings: [String]?, done: Bool)
 
   private let cLlmSession: CLlmSession
   /// Creates a new instance of `LlmTaskRunner` with the given session config.
@@ -54,10 +53,8 @@ public final class LlmTaskRunner {
     }
 
     /// Throw an error if response is invalid `NULL`.
-    guard let decodedResponse = LlmTaskRunner.decodedResponse(from: responseContext),
-      let responseStrings = decodedResponse.strings
-    else {
-      throw GenAiInferenceError.invalidResponseError
+    guard let responseStrings = LlmTaskRunner.responseStrings(from: responseContext) else {
+      throw GenAiInferenceError.invalidResponse
     }
 
     return responseStrings
@@ -67,6 +64,10 @@ public final class LlmTaskRunner {
     inputText: String, progress: @escaping (_ partialResult: [String]?, _ error: Error?) -> Void,
     completion: @escaping (() -> Void)
   ) {
+
+    /// `strdup(inputText)` prevents input text from being deallocated as long as callbacks are
+    /// being invoked. `CallbackInfo` takes care of freeing the memory of `inputText` when it is
+    /// deallocated.
     let callbackInfo = CallbackInfo(
       inputText: strdup(inputText), progress: progress, completion: completion)
     let callbackContext = UnsafeMutableRawPointer(Unmanaged.passRetained(callbackInfo).toOpaque())
@@ -76,16 +77,23 @@ public final class LlmTaskRunner {
       guard let cContext = context else {
         return
       }
-      let cCallbackInfo = Unmanaged<CallbackInfo>.fromOpaque(cContext).takeRetainedValue()
 
-      guard let decodedResponse = LlmTaskRunner.decodedResponse(from: responseContext) else {
-        cCallbackInfo.progress(nil, GenAiInferenceError.invalidResponseError)
-        return
+      /// `takeRetainedValue()` decrements the reference count incremented by `passRetained()`. Only
+      /// take a retained value if the LLM has finished generating responses to prevent the context
+      /// from being deallocated in between response generation.
+      let cCallbackInfo =
+        responseContext.done
+        ? Unmanaged<CallbackInfo>.fromOpaque(cContext).takeRetainedValue()
+        : Unmanaged<CallbackInfo>.fromOpaque(cContext).takeUnretainedValue()
+
+      if let responseStrings = LlmTaskRunner.responseStrings(from: responseContext) {
+        cCallbackInfo.progress(responseStrings, nil)
+      } else {
+        cCallbackInfo.progress(nil, GenAiInferenceError.invalidResponse)
       }
 
-      cCallbackInfo.progress(decodedResponse.strings, nil)
-
-      if decodedResponse.done {
+      /// Call completion callback if LLM has generated its last response.
+      if responseContext.done {
         cCallbackInfo.completion()
       }
     }
@@ -97,6 +105,8 @@ public final class LlmTaskRunner {
 }
 
 extension LlmTaskRunner {
+  /// A wrapper class for whose object will be used as the C++ callback context.
+  /// The progress and completion callbacks cannot be invoked without a context.
   class CallbackInfo {
     typealias ProgressCallback = (_ partialResult: [String]?, _ error: Error?) -> Void
     typealias CompletionCallback = () -> Void
@@ -121,7 +131,7 @@ extension LlmTaskRunner {
 }
 
 extension LlmTaskRunner {
-  private class func decodedResponse(from responseContext: LlmResponseContext) -> DecodedResponse? {
+  private class func responseStrings(from responseContext: LlmResponseContext) -> [String]? {
     guard let cResponseArray = responseContext.response_array else {
       return nil
     }
@@ -130,10 +140,11 @@ extension LlmTaskRunner {
     for responseIndex in 0..<Int(responseContext.response_count) {
       /// Throw an error if the response string is `NULL`.
       guard let cResponseString = cResponseArray[responseIndex] else {
-        return DecodedResponse(strings: nil, done: responseContext.done)
+        return nil
       }
       responseStrings?.append(String(cString: cResponseString))
     }
-    return DecodedResponse(strings: responseStrings, done: responseContext.done)
+
+    return responseStrings
   }
 }
