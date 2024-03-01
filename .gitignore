@@ -5,3 +5,4 @@ mediapipe/provisioning_profile.mobileprovision
 node_modules/
 .configure.bazelrc
 .user.bazelrc
+mediapipe/tasks/testdata/genai/*.tflite
