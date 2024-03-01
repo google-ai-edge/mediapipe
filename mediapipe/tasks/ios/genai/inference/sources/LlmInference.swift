@@ -43,7 +43,7 @@ import MediaPipeTasksGenAIC
       cache_dir: cacheDirectory,
       sequence_batch_size: LlmInference.sequenceBatchSize,
       num_decode_steps_per_sync: LlmInference.numberOfDecodeStepsPerSync,
-      max_sequence_length: options.maxSequenceLength,
+      max_tokens: options.maxSequenceLength,
       topk: options.topk,
       temperature: options.temperature,
       random_seed: options.randomSeed)
