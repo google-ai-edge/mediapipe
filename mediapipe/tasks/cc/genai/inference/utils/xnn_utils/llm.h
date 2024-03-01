@@ -115,6 +115,8 @@ class Llm : protected xnn_utils::XnnGraph {
   static absl::StatusOr<std::unique_ptr<Llm>> CreatePrefixOnlyLlm(
       LlmWeights weights, std::shared_ptr<LlmBuilder> builder);
 
+  absl::Status Reset();
+
   // Enable if enable_kv_cache
   struct KVCache {
     std::shared_ptr<Tensor> k_cache;
@@ -262,6 +264,7 @@ class LlmBuilder : protected XnnGraphBuilder {
   absl::StatusOr<std::vector<int>> Sample(Tensor& logits);
 
  protected:
+  friend class Llm;
   friend class LlmBuilderTest;
   friend absl::StatusOr<std::unique_ptr<Llm>> Llm::CreatePrefixDecodeLlm(
       std::unique_ptr<LlmWeightsLoader>, std::shared_ptr<LlmBuilder>);

@@ -56,8 +56,8 @@ class PrefixDecodeLlm : public Llm {
   ~PrefixDecodeLlm() override = default;
 
   absl::Status InitInputTokens(const std::vector<int>& input_ids) override {
-    // TODO - b/325325100: avoid clear().
-    prev_ids_.clear();
+    MP_RETURN_IF_ERROR(Reset());
+
     MP_RETURN_IF_ERROR(prefix_llm_->InitInputTokens(input_ids));
     prev_ids_.insert(prev_ids_.end(), input_ids.begin(), input_ids.end());
     // prev_id.size - 1 is the output.
@@ -333,9 +333,19 @@ absl::Status Llm::ReshapeInputResource() {
   return absl::OkStatus();
 }
 
-absl::Status Llm::InitInputTokens(const std::vector<int>& input_ids) {
+absl::Status Llm::Reset() {
   // TODO - b/325325100: avoid clear().
   prev_ids_.clear();
+  builder_->attention_mask_values_.reset();
+  builder_->position_embedding_values_.reset();
+  builder_->segment_pos_values_.reset();
+
+  return absl::OkStatus();
+}
+
+absl::Status Llm::InitInputTokens(const std::vector<int>& input_ids) {
+  MP_RETURN_IF_ERROR(Reset());
+
   // Initialize the attention mask.
   MP_RETURN_IF_ERROR(builder_->InitAttentionMask(
       prev_ids_.size(), input_ids.size(), /*is_prefix=*/true, *atten_masks_));
