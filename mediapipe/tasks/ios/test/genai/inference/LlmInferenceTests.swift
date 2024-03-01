@@ -26,8 +26,9 @@ class LlmInferenceTests: XCTestCase {
   func testSyncGenerateResponseWithDefaultOptions() throws {
     let options = try defaultLlmInferenceOptions(fileInfo: LlmInferenceTests.gemmaCpuModelPath)
     let llmInference = LlmInference(options: options)
-
-    let response = try llmInference.generateResponse(inputText: "What is the chemical name of water?")
+    
+    /// TODO: Add a valid question.
+    let response = try llmInference.generateResponse(inputText: "")
   }
 
   func defaultLlmInferenceOptions(fileInfo: FileInfo) throws -> LlmInference.Options {
