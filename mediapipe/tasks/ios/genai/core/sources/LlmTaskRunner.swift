@@ -19,9 +19,9 @@ import MediaPipeTasksGenAIC
 /// to initialize, execute and terminate any MediaPipe `LlmInference` task.
 public final class LlmTaskRunner {
   fileprivate typealias CLlmSession = UnsafeMutableRawPointer
+  private typealias DecodedResponse = (strings: [String]?, done: Bool)
 
   private let cLlmSession: CLlmSession
-
   /// Creates a new instance of `LlmTaskRunner` with the given session config.
   ///
   /// - Parameters:
@@ -53,25 +53,88 @@ public final class LlmTaskRunner {
       }
     }
 
-    /// Throw an error if the response array is `NULL`.
-    guard let cResponseArray = responseContext.response_array else {
+    /// Throw an error if response is invalid `NULL`.
+    guard let decodedResponse = LlmTaskRunner.decodedResponse(from: responseContext),
+      let responseStrings = decodedResponse.strings
+    else {
       throw LlmInferenceError.invalidResponseError
-    }
-
-    var responseStrings: [String] = []
-
-    for responseIndex in 0..<Int(responseContext.response_count) {
-      guard let cResponseString = cResponseArray[responseIndex] else {
-        throw LlmInferenceError.invalidResponseError
-      }
-      responseStrings.append(String(cString: cResponseString))
     }
 
     return responseStrings
   }
 
+  public func predict(
+    inputText: String, progress: @escaping (_ partialResult: [String]?, _ error: Error?) -> Void,
+    completion: @escaping (() -> Void)
+  ) {
+    let callbackInfo = CallbackInfo(
+      inputText: strdup(inputText), progress: progress, completion: completion)
+    let callbackContext = UnsafeMutableRawPointer(Unmanaged.passRetained(callbackInfo).toOpaque())
+
+    LlmInferenceEngine_Session_PredictAsync(cLlmSession, callbackContext, callbackInfo.inputText) {
+      context, responseContext in
+      guard let cContext = context else {
+        return
+      }
+      let cCallbackInfo = Unmanaged<CallbackInfo>.fromOpaque(cContext).takeRetainedValue()
+      cCallbackInfo.completion()
+
+      guard let decodedResponse = LlmTaskRunner.decodedResponse(from: responseContext) else {
+        cCallbackInfo.progress(nil, LlmInferenceError.invalidResponseError)
+        return
+      }
+
+      cCallbackInfo.progress(decodedResponse.strings, nil)
+
+      if decodedResponse.done {
+        cCallbackInfo.completion()
+      }
+    }
+  }
+
   deinit {
     LlmInferenceEngine_Session_Delete(cLlmSession)
   }
+}
 
+extension LlmTaskRunner {
+  fileprivate class CallbackInfo {
+    typealias ProgressCallback = (_ partialResult: [String]?, _ error: Error?) -> Void
+    typealias CompletionCallback = () -> Void
+
+    let inputText: UnsafeMutablePointer<CChar>?
+    let progress: (_ partialResult: [String]?, _ error: Error?) -> Void
+    let completion: () -> Void
+
+    init(
+      inputText: UnsafeMutablePointer<CChar>?, progress: @escaping (ProgressCallback),
+      completion: @escaping (CompletionCallback)
+    ) {
+      self.inputText = inputText
+      self.progress = progress
+      self.completion = completion
+    }
+
+    deinit {
+      free(inputText)
+    }
+  }
+}
+
+extension LlmTaskRunner {
+  private class func decodedResponse(from responseContext: LlmResponseContext) -> DecodedResponse? {
+    guard let cResponseArray = responseContext.response_array else {
+      return nil
+    }
+
+    var responseStrings: [String]?
+    for responseIndex in 0..<Int(responseContext.response_count) {
+      /// Throw an error if the response string is `NULL`.
+      guard let cResponseString = cResponseArray[responseIndex] else {
+        return DecodedResponse(strings: nil, done: responseContext.done)
+      }
+      responseStrings?.append(String(cString: cResponseString))
+    }
+    return DecodedResponse(strings: responseStrings, done: responseContext.done)
+  }
 }
