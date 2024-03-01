@@ -52,7 +52,7 @@ struct LlmInferenceEngineCpu_Session {
   mediapipe::tasks::genai::xnn_utils::Llm* llm;
   int start_token_id;
   std::vector<std::string> stop_tokens;
-  size_t max_sequence_length;
+  size_t max_tokens;
   std::string prompt;
   int max_num_output_tokens;
   int response_count;
@@ -147,7 +147,7 @@ void* start_llm_function(void* args) {
   };
 
   cpu_session->max_num_output_tokens =
-      cpu_session->max_sequence_length - prompt_ids.size();
+      cpu_session->max_tokens - prompt_ids.size();
 
   next_token_function(args);
 
@@ -196,7 +196,7 @@ LlmInferenceEngine_CreateSession_Helper(
 
   mmap_file.reset();
 
-  llm_params.seq_size_T = session_config->max_sequence_length;
+  llm_params.seq_size_T = session_config->max_tokens;
   llm_params.cache_dir = session_config->cache_dir;
 
   auto weight_loader = std::make_unique<
@@ -238,7 +238,7 @@ LlmInferenceEngine_CreateSession_Helper(
           .stop_tokens =
               std::vector<std::string>(llm_params_proto.stop_tokens().begin(),
                                        llm_params_proto.stop_tokens().end()),
-          .max_sequence_length = session_config->max_sequence_length,
+          .max_tokens = session_config->max_tokens,
       });
 
   return session.release();
@@ -285,8 +285,7 @@ LlmResponseContext LlmInferenceEngine_Session_PredictSync(
     ABSL_LOG(FATAL) << "Failed to process input tokens: " << status;
   }
 
-  int max_num_output_tokens =
-      cpu_session->max_sequence_length - prompt_ids.size();
+  int max_num_output_tokens = cpu_session->max_tokens - prompt_ids.size();
   std::string final_output = "";
   std::vector<int> token_ids_per_step;
   // No stop words should have a length of > 10.

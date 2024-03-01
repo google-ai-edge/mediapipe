@@ -39,9 +39,9 @@ message LlmSessionConfig {
   // sync (i.e. closer to 1), the more latency we expect to introduce.
   uint32 num_decode_steps_per_sync = 4;
 
-  // The total length of the kv-cache. In other words, this is the total number
-  // of input + output tokens the model needs to handle.
-  uint32 max_sequence_length = 5;
+  // The total number of tokens for kv-cache. In other words, this is the total
+  // number of input + output tokens the model needs to handle.
+  uint32 max_tokens = 5;
 
   // Top K number of tokens to be sampled from for each decoding step.
   uint32 topk = 6;

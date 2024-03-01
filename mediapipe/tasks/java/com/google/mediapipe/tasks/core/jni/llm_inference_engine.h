@@ -34,9 +34,8 @@ typedef struct {
   // Number of decode steps per sync. Used by GPU only. The default value is 3.
   size_t num_decode_steps_per_sync;
 
-  // Maximum sequence length stands for the total number of tokens from input
-  // and output.
-  size_t max_sequence_length;
+  // Maximum number of tokens for input and output.
+  size_t max_tokens;
 
   // Top K number of tokens to be sampled from for each decoding step.
   size_t topk;
