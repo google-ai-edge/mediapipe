@@ -27,7 +27,7 @@ extension GenAiInferenceError: LocalizedError {
     case .invalidResponse:
       return "The response returned by the model is invalid."
     case .illegalMethodCall:
-      return "The response returned by the model is invalid."
+      return "You cannot invoke of `generateResponse` while another response generation invocation is in progress."
     }
   }
 }

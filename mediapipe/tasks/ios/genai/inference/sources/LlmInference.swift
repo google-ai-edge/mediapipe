@@ -101,7 +101,7 @@ import MediaPipeTasksGenAIC
 
     guard let humanReadableLlmResponse = LlmInference.humanReadableString(llmResponses: tokens)
     else {
-      throw GenAiInferenceError.illegalMethodCall
+      throw GenAiInferenceError.invalidResponse
     }
 
     return humanReadableLlmResponse
