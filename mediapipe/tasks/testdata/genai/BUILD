@@ -19,11 +19,12 @@ package(
     licenses = ["notice"],  # Apache 2.0
 )
 
-exports_files(["gemma_cpu.tflite"])
+# Add model files
+exports_files([""])
 
 filegroup(
     name = "test_models",
     srcs = [
-        "gemma_cpu.tflite",
+        "",
     ],
 )

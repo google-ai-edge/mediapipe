@@ -21,7 +21,9 @@ import MPPFileInfo
 class LlmInferenceTests: XCTestCase {
 
   private static let bundle = Bundle(for: LlmInferenceTests.self)
-  private static let gemmaCpuModelPath = FileInfo(name:"gemma_cpu", type:"tflite")
+
+  /// Model name goes here.
+  private static let gemmaCpuModelPath = FileInfo(name:"", type:"tflite")
 
   func testSyncGenerateResponseWithDefaultOptions() throws {
     let options = try defaultLlmInferenceOptions(fileInfo: LlmInferenceTests.gemmaCpuModelPath)
