@@ -33,12 +33,12 @@ namespace mediapipe::tasks::genai::llm_utils {
 namespace {
 
 void WriteFile(absl::string_view path, absl::string_view contents) {
-  std::ofstream ofstr(path, std::ios::out);
+  std::ofstream ofstr(std::string(path), std::ios::out);
   ofstr << contents;
 }
 
 std::string ReadFile(absl::string_view path) {
-  std::ifstream ifstr(path);
+  auto ifstr = std::ifstream(std::string(path));
   std::stringstream contents;
   contents << ifstr.rdbuf();
   return contents.str();
