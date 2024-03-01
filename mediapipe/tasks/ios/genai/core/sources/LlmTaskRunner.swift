@@ -18,7 +18,7 @@ import MediaPipeTasksGenAIC
 /// This class is used to create and call appropriate methods on the C `LlmInferenceEngine_Session`
 /// to initialize, execute and terminate any MediaPipe `LlmInference` task.
 public final class LlmTaskRunner {
-  fileprivate typealias CLlmSession = UnsafeMutableRawPointer
+  typealias CLlmSession = UnsafeMutableRawPointer
 
   private let cLlmSession: CLlmSession
   /// Creates a new instance of `LlmTaskRunner` with the given session config.
