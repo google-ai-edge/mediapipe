@@ -393,6 +393,14 @@ class GemmaMapper(converter_base.LayerActionMapperBase):
           quantize_axis = [1]
       elif layer_type == LayerType.EMBEDDING:
         quantize_bits = self._embedding_quant_bits
+        if tensor_value.shape[1] < 256128:
+          # Padd the embedding shape if the vocab size was smaller than the
+          # original setting: 256128.
+          pad_count = 256128 - tensor_value.shape[1]
+          tensor_value = np.pad(
+              tensor_value, ((0, 0), (0, pad_count)), mode="constant"
+          )
+
     target_name = self.update_target_name(layer_name)
 
     actions = [

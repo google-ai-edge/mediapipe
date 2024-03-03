@@ -1,5 +1,6 @@
 """Functions to perform the checkpoint conversion."""
 
+import contextlib
 import os
 from typing import List, Optional
 
@@ -168,16 +169,41 @@ def convert_bpe_vocab(vocab_model_file: str, output_dir: str) -> str:
   return output_vocab_file
 
 
+@contextlib.contextmanager
+def filemanager(filename: str, mode: str):
+  try:
+    with open(filename, mode) as f:
+      yield f
+  finally:
+    pass
+
+
+def sort_layer_info(layer_info_file: str) -> None:
+  """Loads and sorts the layer info file."""
+  layer_info = []
+  with filemanager(layer_info_file, 'r') as finfo:
+    for line in finfo:
+      line = line.strip()
+      if line:
+        layer_info.append(line)
+  layer_info = list(set(layer_info))
+  layer_info.sort()
+  with filemanager(layer_info_file, 'w') as finfo:
+    for line in layer_info:
+      finfo.write(line + '\n')
+      finfo.write('\n')
+
+
 def convert_checkpoint(config: ConversionConfig) -> None:
   """Converts the checkpoint to tflite file."""
   logging.info('input folder: %s', config.input_ckpt)
 
-  if config.model_type == 'GEMMA_2B':
-    vocab_model_path = config.vocab_model_file
-  else:
+  if os.path.isdir(config.vocab_model_file):
     vocab_model_path = convert_bpe_vocab(
         config.vocab_model_file, config.output_dir
     )
+  else:
+    vocab_model_path = config.vocab_model_file
 
   if not config.combine_file_only:
     # Load the layer weights and prepare the quantization configurations.
@@ -208,6 +234,8 @@ def convert_checkpoint(config: ConversionConfig) -> None:
       writer.write_variables(quantized_tensors)
       del quantized_tensors
       del writer
+
+    sort_layer_info(os.path.join(config.output_dir, 'layer_info.txt'))
 
   combined_weight_bins_to_tflite(
       config.model_type,

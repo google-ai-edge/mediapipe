@@ -106,7 +106,7 @@ class WeightBinsWriter(converter_base.ModelWriterBase):
       # Sort weights_info
       weights_info.sort()
       with filemanager(
-          os.path.join(self._output_dir, 'layer_info.txt'), 'w'
+          os.path.join(self._output_dir, 'layer_info.txt'), 'a'
       ) as finfo:
         for line in weights_info:
           finfo.write(line + '\n')
