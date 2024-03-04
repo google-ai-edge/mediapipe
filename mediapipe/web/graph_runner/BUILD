@@ -117,3 +117,25 @@ jasmine_node_test(
         ":platform_utils_test_lib",
     ],
 )
+
+mediapipe_ts_library(
+    name = "graph_runner_webgpu_ts",
+    srcs = [
+        "graph_runner_webgpu.ts",
+    ],
+    allow_unoptimized_namespaces = True,
+    deps = [
+        ":graph_runner_ts",
+    ],
+)
+
+mediapipe_ts_library(
+    name = "graph_runner_wasm_file_reference_ts",
+    srcs = [
+        "graph_runner_wasm_file_reference.ts",
+    ],
+    allow_unoptimized_namespaces = True,
+    deps = [
+        ":graph_runner_ts",
+    ],
+)

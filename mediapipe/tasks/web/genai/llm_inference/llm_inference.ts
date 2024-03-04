@@ -21,8 +21,8 @@ import {CachedGraphRunner, TaskRunner,} from '../../../../tasks/web/core/task_ru
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {LlmInferenceGraphOptions as LlmInferenceGraphOptionsProto} from '../../../../tasks/web/genai/llm_inference/proto/llm_inference_graph_options_pb';
 import {WasmModule} from '../../../../web/graph_runner/graph_runner';
-import {SupportWasmFileReference, WasmFileReference} from '../../../../web/graph_runner/internal/graph_runner_wasm_file_reference';
-import {SupportWebGpu} from '../../../../web/graph_runner/internal/graph_runner_webgpu';
+import {SupportWasmFileReference, WasmFileReference} from '../../../../web/graph_runner/graph_runner_wasm_file_reference';
+import {SupportWebGpu} from '../../../../web/graph_runner/graph_runner_webgpu';
 import {DetokenizerCalculatorOptions} from '../../../../tasks/cc/genai/inference/calculators/detokenizer_calculator_pb';
 import {LlmGpuCalculatorOptions} from '../../../../tasks/cc/genai/inference/calculators/llm_gpu_calculator_pb';
 import {TokenizerCalculatorOptions} from '../../../../tasks/cc/genai/inference/calculators/tokenizer_calculator_pb';
