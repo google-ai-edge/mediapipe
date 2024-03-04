@@ -13,42 +13,55 @@
 // limitations under the License.
 
 import Foundation
-import LlmInferenceEngineC
-import LlmTaskRunner
 
 /// A MediaPipe task that performs inference using a given Large Language Model.
 ///
 /// Note: Inherits from `NSObject` for Objective C interoperability.
-@objc(MPPLLMInference) public final class LlmInference: NSObject {
-  private static let numberOfDecodeStepsPerSync = 3
-  private static let sequenceBatchSize = 0
+@objc(MPPLlmInference) public final class LlmInference: NSObject {
+  private static let numberOfDecodeStepsPerSync: UInt = 3
+  private static let sequenceBatchSize: UInt = 0
+  private static let responseGenerationInProgressQueueName =
+    "com.google.mediapipe.genai.isResponseGenerationInProgressQueue"
 
   private let llmTaskRunner: LlmTaskRunner
+
+  private let responseGenerationInProgressQueue = DispatchQueue(
+    label: LlmInference.responseGenerationInProgressQueueName,
+    attributes: .concurrent)
+
+  /// Tracks whether a response generation is in progress.
+  /// Readers writers lock to prevent race condition as this variable can be accessed from multiple
+  /// threads.
+  private var responseGenerationInProgressInternal = false
+  private var responseGenerationInProgress: Bool {
+    get {
+      responseGenerationInProgressQueue.sync {
+        return self.responseGenerationInProgressInternal
+      }
+    }
+    set {
+      responseGenerationInProgressQueue.async(flags: .barrier) {
+        self.responseGenerationInProgressInternal = newValue
+      }
+    }
+  }
 
   /// Creates a new instance of `LlmInference` with the given options.
   ///
   /// - Parameters:
   ///   - options: The options of type `LlmInference.Options` to use for configuring the
   /// `LlmInference`.
-  @objc public init(options: Options) {
-    let modelPath = strdup(options.modelPath)
-    let cacheDirectory = strdup(FileManager.default.temporaryDirectory.path)
-
-    defer {
-      free(modelPath)
-      free(cacheDirectory)
-    }
-
-    let sessionConfig = LlmSessionConfig(
-      model_path: modelPath,
-      cache_dir: cacheDirectory,
-      sequence_batch_size: LlmInference.sequenceBatchSize,
-      num_decode_steps_per_sync: LlmInference.numberOfDecodeStepsPerSync,
-      max_tokens: options.maxTokens,
+  @objc public init(options: Options) throws {
+    let taskRunnerConfig = LlmTaskRunner.Config(
+      modelPath: options.modelPath,
+      sequenceBatchSize: LlmInference.sequenceBatchSize,
+      numberOfDecodeStepsPerSync: LlmInference.numberOfDecodeStepsPerSync,
+      maxTokens: options.maxTokens,
       topk: options.topk,
       temperature: options.temperature,
-      random_seed: options.randomSeed)
-    llmTaskRunner = LlmTaskRunner(sessionConfig: sessionConfig)
+      randomSeed: options.randomSeed)
+
+    llmTaskRunner = try LlmTaskRunner(config: taskRunnerConfig)
 
     super.init()
   }
@@ -58,9 +71,9 @@ import LlmTaskRunner
   ///
   /// - Parameters:
   ///   - modelPath: The absolute path to a model asset bundle stored locally on the device.
-  @objc public convenience init(modelPath: String) {
+  @objc public convenience init(modelPath: String) throws {
     let options = Options(modelPath: modelPath)
-    self.init(options: options)
+    try self.init(options: options)
   }
 
   /// Generates a response based on the input text.
@@ -69,16 +82,85 @@ import LlmTaskRunner
   ///   - inputText: A `String` that is used to query the LLM.
   /// - Throws: An error if the LLM's response is invalid.
   @objc public func generateResponse(inputText: String) throws -> String {
+
+    /// Disallow response generation if another response generation call is already in progress.
+    try shouldContinueWithResponseGeneration()
+
     let tokens = try llmTaskRunner.predict(inputText: inputText)
+
+    responseGenerationInProgress = false
+
     guard let humanReadableLlmResponse = LlmInference.humanReadableString(llmResponses: tokens)
     else {
-      throw GenAiInferenceError.invalidResponseError
+      throw GenAiInferenceError.invalidResponse
     }
 
     return humanReadableLlmResponse
   }
 
-  private static func humanReadableString(
+  /// Generates a response based on the input text asynchronously. The `progess` callback returns
+  /// the partial responses from the LLM or any errors. `completion` callback is invoked once the
+  /// LLM is done generating responses.
+  ///
+  /// - Parameters:
+  ///   - progess: A callback invoked when a partial response is available from the LLM.
+  ///   - completion: A callback invoked when the LLM finishes response generation.
+  /// - Throws: An error if the LLM's response is invalid.
+  @objc public func generateResponse(
+    inputText: String,
+    progress: @escaping (_ partialResponse: String?, _ error: Error?) -> Void,
+    completion: @escaping (() -> Void)
+  ) throws {
+    /// Disallow response generation if another response generation call is already in progress.
+    try shouldContinueWithResponseGeneration()
+
+    /// Used to make a decision about whitespace stripping.
+    var receivedFirstToken = true
+
+    llmTaskRunner.predict(
+      inputText: inputText,
+      progress: { partialResponseStrings, error in
+
+        guard let responseStrings = partialResponseStrings,
+          let humanReadableLlmResponse = LlmInference.humanReadableString(
+            llmResponses: responseStrings, stripLeadingWhitespaces: receivedFirstToken)
+        else {
+          progress(nil, GenAiInferenceError.invalidResponse)
+          return
+        }
+
+        /// Reset state after first response is processed.
+        receivedFirstToken = false
+
+        progress(humanReadableLlmResponse, nil)
+      },
+      completion: { [weak self] in
+        self?.responseGenerationInProgress = false
+        completion()
+      })
+  }
+
+  /// Clears all cached files created by `LlmInference` to prevent exponential growth of your app
+  /// size. Please ensure that this method is not called during the lifetime of any instances of
+  /// `LlmInference`. If the cache is deleted while an instance of `LlmInference` is in scope,
+  /// calling one of its methods will result in undefined behaviour and may lead to a crash.
+  ///
+  /// This method blocks the thread on which it runs. Invoke this function from a background thread
+  /// to avoid blocking the thread.x
+  public class func clearAllCachedFiles() throws {
+    try LlmTaskRunner.clearAllCachedFiles()
+  }
+
+  /// Throw error if response generation is in progress or update response generation state.
+  private func shouldContinueWithResponseGeneration() throws {
+    if responseGenerationInProgress {
+      throw GenAiInferenceError.illegalMethodCall
+    }
+
+    responseGenerationInProgress = true
+  }
+
+  private class func humanReadableString(
     llmResponses: [String], stripLeadingWhitespaces: Bool = true
   ) -> String? {
     guard let llmResponse = llmResponses.first else {
@@ -100,11 +182,11 @@ extension LlmInference {
 
     /// The total length of the kv-cache. In other words, this is the total number of input + output
     /// tokens the model needs to handle.
-    @objc public var maxTokens: Int = 512
+    @objc public var maxTokens: UInt = 512
 
     /// The top K number of tokens to be sampled from for each decoding step. A value of 1 means
     /// greedy decoding. Defaults to 40.
-    @objc public var topk: Int = 40
+    @objc public var topk: UInt = 40
 
     /// The randomness when decoding the next token. A value of 0.0f means greedy decoding. Defaults
     /// to 0.8.
@@ -123,16 +205,18 @@ extension LlmInference {
       self.modelPath = modelPath
       super.init()
     }
+
   }
 }
 
 /// An extension to `String` to add some utility functions.
-extension String {
-  fileprivate static let tokenSplitter = "▁"  /// Note this is NOT an underscore: ▁(U+2581)
-  fileprivate static let newLine = "<0x0A>"
-  fileprivate static let eod = "\\[eod\\]"
+fileprivate extension String {
+  private static let tokenSplitter = "▁"
+  /// Note this is NOT an underscore: ▁(U+2581)
+  private static let newLine = "<0x0A>"
+  private static let eod = "\\[eod\\]"
 
-  fileprivate func humanReadableString(stripLeadingWhitespaces: Bool = true) -> String? {
+  func humanReadableString(stripLeadingWhitespaces: Bool = true) -> String? {
     var humanReadableString = self.replacingOccurrences(of: String.tokenSplitter, with: " ")
       .replacingOccurrences(of: String.newLine, with: "\n")
     humanReadableString =
