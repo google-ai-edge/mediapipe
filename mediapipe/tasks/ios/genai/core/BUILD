@@ -12,20 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
-
 licenses(["notice"])
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
-swift_library(
-    name = "LlmTaskRunner",
-    srcs = [
-        "sources/GenAiInferenceError.swift",
-        "sources/LlmTaskRunner.swift",
-    ],
-    module_name = "LlmTaskRunner",
-    deps = [
-        "//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu",
-    ],
-)
+exports_files(["sources/LlmTaskRunner.swift", "sources/GenAiInferenceError.swift"])
