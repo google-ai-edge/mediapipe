@@ -22,9 +22,12 @@ swift_library(
     name = "LlmInference",
     srcs = [
         "sources/LlmInference.swift",
+        "//mediapipe/tasks/ios/genai/core:sources/LlmTaskRunner.swift",
+        "//mediapipe/tasks/ios/genai/core:sources/GenAiInferenceError.swift",
     ],
+    copts = ["-no-verify-emitted-module-interface"],
+    module_name = "MediaPipeTasksGenAI",
     generated_header_name = "LlmInference-Swift.h",
     generates_header = 1,
-    module_name = "LlmInference",
-    deps = ["//mediapipe/tasks/ios/genai/core:LlmTaskRunner"],
+    deps = ["//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu",],
 )
