@@ -88,16 +88,7 @@ export class LlmInference extends TaskRunner {
     // Inference.
     const optionsWithGpuDevice = llmInferenceOptions;
     if (!optionsWithGpuDevice.baseOptions?.gpuOptions?.device) {
-      const deviceDescriptor: GPUDeviceDescriptor = {
-        requiredFeatures: ['shader-f16'],
-        requiredLimits: {
-          'maxStorageBufferBindingSize': 524550144,
-          'maxBufferSize': 524550144,
-        },
-      };
-      const webgpuDevice =
-          await WasmFileReferenceWebGpuGraphRunner.requestWebGpuDevice(
-              deviceDescriptor);
+      const webgpuDevice = await LlmInference.createWebGpuDevice();
       optionsWithGpuDevice.baseOptions = llmInferenceOptions.baseOptions ?? {};
       optionsWithGpuDevice.baseOptions.gpuOptions =
           llmInferenceOptions?.baseOptions?.gpuOptions ?? {};
@@ -114,6 +105,21 @@ export class LlmInference extends TaskRunner {
       glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
     super(new WasmFileReferenceWebGpuGraphRunner(wasmModule, glCanvas));
     this.options.setBaseOptions(new BaseOptionsProto());
+  }
+
+  /**
+   * Create WebGPU device with high performance configurations.
+   */
+  static createWebGpuDevice(): Promise<GPUDevice> {
+    const deviceDescriptor: GPUDeviceDescriptor = {
+      requiredFeatures: ['shader-f16'],
+      requiredLimits: {
+        'maxStorageBufferBindingSize': 524550144,
+        'maxBufferSize': 524550144,
+      },
+    };
+    return WasmFileReferenceWebGpuGraphRunner.requestWebGpuDevice(
+        deviceDescriptor);
   }
 
   // TODO: b/325936012 - Move setChunkGeneration to LLM Inference Task option.
