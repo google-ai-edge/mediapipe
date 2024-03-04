@@ -27,6 +27,7 @@ import {DetokenizerCalculatorOptions} from '../../../../tasks/cc/genai/inference
 import {LlmGpuCalculatorOptions} from '../../../../tasks/cc/genai/inference/calculators/llm_gpu_calculator_pb';
 import {TokenizerCalculatorOptions} from '../../../../tasks/cc/genai/inference/calculators/tokenizer_calculator_pb';
 import {LlmParameters} from '../../../../tasks/cc/genai/inference/proto/llm_params_pb';
+import {SamplerParameters} from '../../../../tasks/cc/genai/inference/proto/sampler_params_pb';
 import {TransformerParameters} from '../../../../tasks/cc/genai/inference/proto/transformer_params_pb';
 
 import {LlmInferenceOptions} from './llm_inference_options';
@@ -358,10 +359,13 @@ export class LlmInference extends TaskRunner {
 
     llmGpuOptions.setNumDecodeTokens(3);
     llmGpuOptions.setWeightPath(LlmInference.LLM_MODEL_NAME);
+    // Set seq batch size to 0 to use automated sequence batch search.
     llmGpuOptions.setSequenceBatchSize(0);
     llmGpuOptions.setNumOutputHeads(1);
-    llmGpuOptions.setTopk(1);
-    llmGpuOptions.setTemperature(1.0);
+    const samplerParams = new SamplerParameters();
+    samplerParams.setK(1);
+    samplerParams.setTemperature(1.0);
+    llmGpuOptions.setSamplerParams(samplerParams);
     const gpuModelInfo = new LlmGpuCalculatorOptions.GpuModelInfo();
     gpuModelInfo.setAllowPrecisionLoss(true);
     gpuModelInfo.setEnableFastTuning(true);

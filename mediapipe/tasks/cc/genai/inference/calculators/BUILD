@@ -36,5 +36,6 @@ mediapipe_proto_library(
     deps = [
         "//mediapipe/tasks/cc/genai/inference/proto:llm_file_metadata_proto",
         "//mediapipe/tasks/cc/genai/inference/proto:llm_params_proto",
+        "//mediapipe/tasks/cc/genai/inference/proto:sampler_params_proto",
     ],
 )
