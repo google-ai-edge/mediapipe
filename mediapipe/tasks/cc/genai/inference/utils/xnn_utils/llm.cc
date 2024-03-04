@@ -173,7 +173,8 @@ absl::StatusOr<std::unique_ptr<Llm>> Llm::CreatePrefixDecodeLlm(
 
   MP_ASSIGN_OR_RETURN(auto input,
                       builder->NewInput({decoding_llm_params.batch_size_B, 1,
-                                         decoding_llm_params.model_dim_D}));
+                                         decoding_llm_params.model_dim_D},
+                                        "decoder_input"));
 
   std::vector<KVCache>& kv_cache = prefix_llm->kv_cache_;
   RET_CHECK_EQ(kv_cache.size(), decoding_llm_params.num_transformer_M);
@@ -190,6 +191,12 @@ absl::StatusOr<std::unique_ptr<Llm>> Llm::CreatePrefixDecodeLlm(
     MP_ASSIGN_OR_RETURN(inter_layer, builder->OneStackTransformer(
                                          i, inter_layer, resource, sa, ff,
                                          /*is_prefix=*/false));
+    {
+      resource.cache->k_cache->source += absl::StrCat("#", i);
+      resource.cache->v_cache->source += absl::StrCat("#", i);
+      resource.cache->k_slice->source += absl::StrCat("#", i);
+      resource.cache->v_slice->source += absl::StrCat("#", i);
+    }
   }
 
   MP_ASSIGN_OR_RETURN(auto logits_output,
@@ -257,7 +264,8 @@ absl::StatusOr<std::unique_ptr<Llm>> Llm::CreatePrefixOnlyLlm(
 
   MP_ASSIGN_OR_RETURN(auto input, builder->NewInput({llm_params.batch_size_B,
                                                      llm_params.seq_size_T,
-                                                     llm_params.model_dim_D}));
+                                                     llm_params.model_dim_D},
+                                                    "prefix_input"));
 
   MP_ASSIGN_OR_RETURN(auto preprocess_out,
                       builder->PreProcess(input, /*is_prefix=*/true));
@@ -437,22 +445,26 @@ absl::StatusOr<std::pair<std::shared_ptr<Tensor>, LlmBuilder::InputResource>>
 LlmBuilder::PreProcess(std::shared_ptr<Tensor> token_embedding,
                        bool is_prefix) {
   InputResource resource;
+  constexpr absl::string_view kAttnMaskSource = "atten_mask";
+  constexpr absl::string_view kPosEmbeddingSource = "pos_embedding";
   if (is_prefix) {
-    MP_ASSIGN_OR_RETURN(
-        resource.atten_mask,
-        NewInput({llm_params_.seq_size_T, llm_params_.seq_size_T}));
+    MP_ASSIGN_OR_RETURN(resource.atten_mask, NewInput({llm_params_.seq_size_T,
+                                                       llm_params_.seq_size_T},
+                                                      kAttnMaskSource));
     resource.segment_pos = std::make_shared<Tensor>(
         Tensor::DimsType({llm_params_.seq_size_T, llm_params_.head_dim_H}));
     MP_RETURN_IF_ERROR(
         InitSegmentPos(0, llm_params_.seq_size_T, *resource.segment_pos));
     MP_ASSIGN_OR_RETURN(
         resource.pos_embedding,
-        NewInput({llm_params_.seq_size_T, llm_params_.model_dim_D}));
+        NewInput({llm_params_.seq_size_T, llm_params_.model_dim_D},
+                 kPosEmbeddingSource));
   } else {
-    MP_ASSIGN_OR_RETURN(resource.pos_embedding,
-                        NewInput({1, llm_params_.model_dim_D}));
+    MP_ASSIGN_OR_RETURN(
+        resource.pos_embedding,
+        NewInput({1, llm_params_.model_dim_D}, kPosEmbeddingSource));
     MP_ASSIGN_OR_RETURN(resource.atten_mask,
-                        NewInput({1, llm_params_.seq_size_T}));
+                        NewInput({1, llm_params_.seq_size_T}, kAttnMaskSource));
     resource.segment_pos =
         std::make_shared<Tensor>(Tensor::DimsType{1, llm_params_.head_dim_H});
     MP_RETURN_IF_ERROR(InitSegmentPos(0, 1, *resource.segment_pos));
@@ -836,17 +848,21 @@ absl::Status LlmBuilder::BuildKVCache(std::shared_ptr<Tensor>& key,
     // When cache is provided, there are 2 cases:
     if (key->dims[1] != 1) {
       // Building a normal graph, which is used to initialize cache.
+      key->source = "prefix_k_cache";
       (resource.cache->k_cache = key)->MarkOutput();
+      value->source = "prefix_v_cache";
       (resource.cache->v_cache = value)->MarkOutput();
     } else {
       RET_CHECK(resource.cache->k_cache);
       RET_CHECK(resource.cache->v_cache);
       // Building a one-token graph, which consumes initialized cache.
+      key->source = "decode_k_slice";
       (resource.cache->k_slice = key)->MarkOutput();
+      value->source = "decode_v_slice";
       (resource.cache->v_slice = value)->MarkOutput();
 
-      input_tensors_.insert(key = resource.cache->k_cache);
-      input_tensors_.insert(value = resource.cache->v_cache);
+      MP_RETURN_IF_ERROR(MarkInput(key = resource.cache->k_cache));
+      MP_RETURN_IF_ERROR(MarkInput(value = resource.cache->v_cache));
     }
   }
 

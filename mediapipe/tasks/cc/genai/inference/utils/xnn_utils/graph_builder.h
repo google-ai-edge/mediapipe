@@ -31,6 +31,7 @@
 #include "absl/log/absl_check.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/string_view.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/xnn_tensor.h"
 #include "xnnpack.h"  // from @XNNPACK
 
@@ -107,7 +108,9 @@ class XnnGraphBuilder {
   absl::StatusOr<std::unique_ptr<XnnGraph>> Build();
 
   // New input or output tensor.
-  absl::StatusOr<std::shared_ptr<Tensor>> NewInput(Tensor::DimsType dims);
+  absl::StatusOr<std::shared_ptr<Tensor>> NewInput(
+      Tensor::DimsType dims, absl::string_view source = "");
+  absl::Status MarkInput(std::shared_ptr<Tensor> t);
 
   // New static weight, populate value before Build()
   void NewWeight(std::shared_ptr<Tensor> t);
@@ -282,16 +285,23 @@ class XnnGraphBuilder {
 
  protected:
   absl::StatusOr<std::shared_ptr<Tensor>> IntermediateTensor(
-      Tensor::DimsType dims);
+      Tensor::DimsType dims, absl::string_view source = "");
   absl::StatusOr<std::shared_ptr<Tensor>> IntermediateTensor(
-      Tensor::DimsType dims, xnn_datatype data_type);
+      Tensor::DimsType dims, xnn_datatype data_type,
+      absl::string_view source = "");
 
   std::unique_ptr<RuntimeConfigs> runtime_configs_;
   const xnn_datatype data_type_;
 
   std::vector<std::function<absl::Status(xnn_subgraph_t)>> build_steps_;
 
+  // Input tensors keeping the same order as how they were added.
+  std::vector<std::shared_ptr<Tensor>> input_tensors_added_order_;
+  // Input tensors in hash_set, for easy existence check.
   absl::flat_hash_set<std::shared_ptr<Tensor>> input_tensors_;
+  // Intermediate tensors keeping the same order as how they were added.
+  std::vector<std::shared_ptr<Tensor>> interm_tensors_added_order_;
+  // Intermediate tensors in hash_set, for easy existence check.
   absl::flat_hash_set<std::shared_ptr<Tensor>> interm_tensors_;
   absl::flat_hash_set<std::shared_ptr<Tensor>> static_weights_;
 
@@ -339,8 +349,8 @@ class XnnGraph {
 
   XnnThreadpoolPtr threadpool_{nullptr, pthreadpool_destroy};
 
-  absl::flat_hash_set<std::shared_ptr<Tensor>> input_tensors_;
-  absl::flat_hash_set<std::shared_ptr<Tensor>> output_tensors_;
+  std::vector<std::shared_ptr<Tensor>> input_tensors_;
+  std::vector<std::shared_ptr<Tensor>> output_tensors_;
 
   absl::flat_hash_set<std::shared_ptr<Tensor>> rope_weights_;
 
