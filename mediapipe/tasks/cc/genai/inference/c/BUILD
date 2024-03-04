@@ -21,7 +21,7 @@ cc_library(
     name = "libllm_inference_engine_cpu",
     srcs = ["llm_inference_engine_cpu.cc"],
     hdrs = ["llm_inference_engine.h"],
-    tags = ["swift_module=LlmInferenceEngineC"],
+    tags = ["swift_module=MediaPipeTasksGenAIC"],
     deps = [
         "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:ret_check",
