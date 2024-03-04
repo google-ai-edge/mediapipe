@@ -91,6 +91,7 @@ MEDIAPIPE_TASKS_COMMON_DEPS = OBJC_TASK_COMMON_DEPS + TENSORFLOW_LITE_C_DEPS + [
 strip_api_include_path_prefix(
     name = "strip_api_include_path",
     hdr_labels = [
+        "//mediapipe/tasks/cc/genai/inference/c:llm_inference_engine.h",
         "//mediapipe/tasks/ios/common:sources/MPPCommon.h",
         "//mediapipe/tasks/ios/components/containers:sources/MPPCategory.h",
         "//mediapipe/tasks/ios/components/containers:sources/MPPClassificationResult.h",
@@ -320,4 +321,45 @@ apple_static_xcframework(
     # when installed alongside the respective frameworks since task graphs are
     # built as static libraries and force loaded.
     deps = MEDIAPIPE_TASKS_COMMON_DEPS + select(OPENCV_DEPS),
+)
+
+apple_static_xcframework(
+    name = "MediaPipeTasksGenAI_framework",
+    avoid_deps = ["//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu",],
+    bundle_name = "MediaPipeTasksGenAI",
+    ios = {
+        "simulator": [
+            "arm64",
+            "x86_64",
+        ],
+        "device": ["arm64"],
+    },
+    minimum_os_versions = {
+        "ios": MPP_TASK_MINIMUM_OS_VERSION,
+    },
+    deps = [
+        "//mediapipe/tasks/ios/genai/inference:LlmInference",
+        "//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu",
+    ],
+)
+
+apple_static_xcframework(
+    name = "MediaPipeTasksGenAIC_framework",
+    bundle_name = "MediaPipeTasksGenAIC",
+    ios = {
+        "simulator": [
+            "arm64",
+            "x86_64",
+        ],
+        "device": ["arm64"],
+    },
+    minimum_os_versions = {
+        "ios": MPP_TASK_MINIMUM_OS_VERSION,
+    },
+    public_hdrs = [
+        ":llm_inference_engine.h",
+    ],
+    deps = [
+        "//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu",
+    ],
 )
