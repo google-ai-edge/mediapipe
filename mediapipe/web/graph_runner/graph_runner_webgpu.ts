@@ -39,9 +39,10 @@ export function SupportWebGpu<TBase extends LibConstructor>(Base: TBase) {
      * @param {GPUDeviceDescriptor} optional deviceDescriptor to request
      *     GPUDevice.
      */
-    static async requestWebGpuDevice(deviceDescriptor?: GPUDeviceDescriptor):
-        Promise<GPUDevice> {
-      const adapter = await navigator.gpu.requestAdapter();
+    static async requestWebGpuDevice(
+        deviceDescriptor?: GPUDeviceDescriptor,
+        adapterDescriptor?: GPURequestAdapterOptions): Promise<GPUDevice> {
+      const adapter = await navigator.gpu.requestAdapter(adapterDescriptor);
       if (!adapter) {
         throw new Error(
             'Unable to request adapter from navigator.gpu; ensure WebGPU is enabled.');

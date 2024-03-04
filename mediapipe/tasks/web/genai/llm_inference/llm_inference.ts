@@ -111,6 +111,8 @@ export class LlmInference extends TaskRunner {
    * Create WebGPU device with high performance configurations.
    */
   static createWebGpuDevice(): Promise<GPUDevice> {
+    const adapterDescriptor:
+        GPURequestAdapterOptions = {powerPreference: 'high-performance'};
     const deviceDescriptor: GPUDeviceDescriptor = {
       requiredFeatures: ['shader-f16'],
       requiredLimits: {
@@ -119,7 +121,7 @@ export class LlmInference extends TaskRunner {
       },
     };
     return WasmFileReferenceWebGpuGraphRunner.requestWebGpuDevice(
-        deviceDescriptor);
+        deviceDescriptor, adapterDescriptor);
   }
 
   // TODO: b/325936012 - Move setChunkGeneration to LLM Inference Task option.
