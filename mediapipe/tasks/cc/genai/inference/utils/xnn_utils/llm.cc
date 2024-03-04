@@ -79,7 +79,7 @@ class PrefixDecodeLlm : public Llm {
     // Let builder re-populate the values of these tensors.
     MP_RETURN_IF_ERROR(builder_->InitAttentionMask(
         decode_step, 1, /*is_prefix=*/false, *atten_masks_));
-    if (pos_embedding_) {
+    if (!llm_params_.skip_absolute_positional_embeddings) {
       MP_RETURN_IF_ERROR(
           builder_->InitPosEmbedding(decode_step, 1, *pos_embedding_));
     }
@@ -315,7 +315,7 @@ absl::Status Llm::ReshapeInputResource() {
         xnn_reshape_external_value(
             runtime_.get(), atten_masks_->tensor_id(owned_subgraph_.get()),
             atten_masks_->dims.size(), atten_masks_->dims.data()));
-    if (pos_embedding_) {
+    if (!llm_params_.skip_absolute_positional_embeddings) {
       RET_CHECK_EQ(
           xnn_status_success,
           xnn_reshape_external_value(
@@ -349,7 +349,7 @@ absl::Status Llm::InitInputTokens(const std::vector<int>& input_ids) {
   // Initialize the attention mask.
   MP_RETURN_IF_ERROR(builder_->InitAttentionMask(
       prev_ids_.size(), input_ids.size(), /*is_prefix=*/true, *atten_masks_));
-  if (pos_embedding_) {
+  if (!llm_params_.skip_absolute_positional_embeddings) {
     // Initialize the positional embedding data.
     MP_RETURN_IF_ERROR(builder_->InitPosEmbedding(
         prev_ids_.size(), input_ids.size(), *pos_embedding_));
