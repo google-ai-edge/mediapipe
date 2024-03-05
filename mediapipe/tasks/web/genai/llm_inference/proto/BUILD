@@ -25,5 +25,6 @@ mediapipe_proto_library(
     srcs = ["llm_inference_graph_options.proto"],
     deps = [
         "//mediapipe/tasks/cc/core/proto:base_options_proto",
+        "//mediapipe/tasks/cc/genai/inference/proto:sampler_params_proto",
     ],
 )

@@ -18,6 +18,7 @@ syntax = "proto3";
 package mediapipe.tasks.genai.llm_inference.proto;
 
 import "mediapipe/tasks/cc/core/proto/base_options.proto";
+import "mediapipe/tasks/cc/genai/inference/proto/sampler_params.proto";
 
 option java_package = "com.google.mediapipe.tasks.genai.llminference.proto";
 option java_outer_classname = "LlmInferenceGraphOptionsProto";
@@ -27,6 +28,9 @@ message LlmInferenceGraphOptions {
   // asset bundle file with metadata, accelerator options, etc.
   core.proto.BaseOptions base_options = 1;
 
-  // TODO: b/324482487 - Support customizing config for Web task of LLM
-  // Inference.
+  // Maximum number of the combined input and output tokens.
+  optional uint32 max_tokens = 2;
+
+  // Parameters for the sampler, which is used to pick the winning token.
+  odml.infra.proto.SamplerParameters sampler_params = 3;
 }

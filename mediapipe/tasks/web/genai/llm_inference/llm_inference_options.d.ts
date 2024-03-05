@@ -20,8 +20,18 @@ import {BaseOptions, TaskRunnerOptions} from '../../../../tasks/web/core/task_ru
  * Options to configure the WebGPU device for LLM Inference task.
  */
 export declare interface WebGpuOptions {
+  /**
+   * The WebGPU device to perform the LLM Inference task.
+   * `LlmInference.createWebGpuDevice()` provides the device with
+   * performance-prioritized configurations.
+   */
   device?: GPUDevice;
+
   // TODO: b/327685206 - Fill Adapter infor for LLM Web task
+  /**
+   * The information of WebGPU adapater, which will be used to optimize the
+   * performance for LLM Inference task.
+   */
   adapterInfo?: GPUAdapterInfo;
 }
 
@@ -32,9 +42,29 @@ export declare interface LlmBaseOptions extends BaseOptions {
   gpuOptions?: WebGpuOptions;
 }
 
-// TODO: b/324482487 - Support customizing config for Web task of LLM Inference.
 /** Options to configure the MediaPipe LLM Inference Task */
 export declare interface LlmInferenceOptions extends TaskRunnerOptions {
-  /** Options to configure the loading of the model assets. */
+  /** Options to configure the LLM model loading and processing. */
   baseOptions?: LlmBaseOptions;
+
+  /**
+   * Maximum number of the combined input and output tokens.
+   */
+  maxTokens?: number;
+
+  /**
+   * The number of candidate tokens to sample from the softmax output in top-k
+   * sampling.
+   */
+  topK?: number;
+
+  /**
+   * The temperature used to scale the logits before computing softmax.
+   */
+  temperature?: number;
+
+  /**
+   * Random seed for sampling tokens.
+   */
+  randomSeed?: number;
 }
