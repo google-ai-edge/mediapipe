@@ -231,6 +231,9 @@ export class LlmInference extends TaskRunner {
       } else if (options.baseOptions.modelAssetBuffer) {
         this.wasmFileReference = WasmFileReference.loadFromArray(
             this.graphRunner.wasmModule, options.baseOptions.modelAssetBuffer);
+        // Remove the reference on the asset buffer since it is now owned by
+        // `wasmFileReference`.
+        options.baseOptions.modelAssetBuffer = undefined;
       }
     }
     this.refreshGraph();
@@ -368,6 +371,12 @@ export class LlmInference extends TaskRunner {
 
     const binaryGraph = graphConfig.serializeBinary();
     this.setGraph(new Uint8Array(binaryGraph), /* isBinary= */ true);
+
+    // Wait for initialization to finish and free the model file data.
+    this.finishProcessing();
+    if (this.wasmFileReference) {
+      this.wasmFileReference.free();
+    }
   }
 
   private buildLlmInferenceGraph(): CalculatorGraphConfig {
@@ -516,8 +525,6 @@ export class LlmInference extends TaskRunner {
   }
 
   override close() {
-    // TODO: b/327307061 - Release tflite file in Wasm heap at the earliest
-    // point
     if (this.wasmFileReference) {
       this.wasmFileReference.free();
     }
