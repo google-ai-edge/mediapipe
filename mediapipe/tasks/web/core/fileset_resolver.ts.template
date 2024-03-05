@@ -100,6 +100,7 @@ export class FilesetResolver {
   /**
    * Creates a fileset for the MediaPipe GenAI tasks.
    *
+   * @export
    * @param basePath An optional base path to specify the directory the Wasm
    *    files should be loaded from. If not specified, the Wasm files are
    *    loaded from the host's root directory.
