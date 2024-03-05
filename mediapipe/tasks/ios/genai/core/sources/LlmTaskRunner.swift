@@ -149,10 +149,8 @@ final class LlmTaskRunner {
     // Delete directory
     do { 
       try FileManager.default.removeItem(at: LlmTaskRunner.globalCacheDirectory)
-      print("Success on deleting")
     }
     catch {
-      print("Error in deleting")
       /// Errors thrown are not relevant to the user. They are usual not found errors.
     }
   }
