@@ -20,7 +20,7 @@ package odml.infra.proto;
 option java_package = "com.google.odml.infra.proto";
 option java_outer_classname = "SamplerParametersProto";
 
-// TODO: b/324304329 - Use this on the GPU path.
+// TODO: b/324304329 - Use this in `SessionConfig`.
 message SamplerParameters {
   enum Type {
     // Pick the token with maximum logit (i.e., argmax).
