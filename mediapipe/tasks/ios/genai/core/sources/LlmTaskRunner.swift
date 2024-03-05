@@ -35,6 +35,7 @@ final class LlmTaskRunner {
   private let cLlmSession: CLlmSession
 
   private let modelCacheFile: URL
+
   /// Creates a new instance of `LlmTaskRunner` with the given session config.
   ///
   /// - Parameters:
@@ -144,14 +145,21 @@ final class LlmTaskRunner {
   /// Clears all cached files created by `LlmInference` to prevent exponential growth of your app
   /// size. Please ensure that this method is not called during the lifetime of any instances of
   /// `LlmTaskRunner`.
-  static func clearAllCachedFiles() throws {
+  class func clearAllCachedFiles() {
     // Delete directory
-    try FileManager.default.removeItem(at: LlmTaskRunner.globalCacheDirectory)
+    do { 
+      try FileManager.default.removeItem(at: LlmTaskRunner.globalCacheDirectory)
+      print("Success on deleting")
+    }
+    catch {
+      print("Error in deleting")
+      /// Errors thrown are not relevant to the user. They are usual not found errors.
+    }
   }
 
   deinit {
     LlmInferenceEngine_Session_Delete(cLlmSession)
-
+    
     /// Responsibly deleting the model cache.
     /// Performing on current thread since only one file needs to be deleted.
     ///

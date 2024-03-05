@@ -20,11 +20,16 @@ import Foundation
 @objc(MPPLlmInference) public final class LlmInference: NSObject {
   private static let numberOfDecodeStepsPerSync: UInt = 3
   private static let sequenceBatchSize: UInt = 0
+  private static let cacheCleanupQueueName = "com.google.mediapipe.genai.cacheCleanupQueue.\(UUID().uuidString)"
   private static let responseGenerationInProgressQueueName =
-    "com.google.mediapipe.genai.isResponseGenerationInProgressQueue"
+    "com.google.mediapipe.genai.isResponseGenerationInProgressQueue.\(UUID().uuidString)"
+  /// Serial queue for cache cleanup.
+  private static let cacheCleanupQueue = DispatchQueue(
+    label: cacheCleanupQueueName)
 
   private let llmTaskRunner: LlmTaskRunner
 
+  /// Concurrent queue to implement readers-writers lock on `responseGenerationInProgress`.
   private let responseGenerationInProgressQueue = DispatchQueue(
     label: LlmInference.responseGenerationInProgressQueueName,
     attributes: .concurrent)
@@ -144,11 +149,14 @@ import Foundation
   /// size. Please ensure that this method is not called during the lifetime of any instances of
   /// `LlmInference`. If the cache is deleted while an instance of `LlmInference` is in scope,
   /// calling one of its methods will result in undefined behaviour and may lead to a crash.
-  ///
-  /// This method blocks the thread on which it runs. Invoke this function from a background thread
-  /// to avoid blocking the thread.x
-  public class func clearAllCachedFiles() throws {
-    try LlmTaskRunner.clearAllCachedFiles()
+  public class func clearAllCachedFiles(completion: @escaping(() -> Void)) {
+    /// Asynchronously deleting the files to prevent blocking the current thread as there may be 
+    /// multiple undeleted weight caches. Choosing a serial queue to let callers wait until the
+    // previous call for deletion is completed.
+    cacheCleanupQueue.async {
+        LlmTaskRunner.clearAllCachedFiles()
+        completion()
+      }
   }
 
   /// Throw error if response generation is in progress or update response generation state.
