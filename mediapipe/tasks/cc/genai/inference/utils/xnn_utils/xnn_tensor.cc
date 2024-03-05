@@ -119,8 +119,9 @@ int Tensor::GetMetadata(absl::string_view key, int default_value) const {
 
 void Tensor::AllocateBufferIfNeeded() {
   if (!flat_data) {
-    auto real_buffer = std::make_shared<std::vector<char>>();
-    real_buffer->resize(ElementSize(num_elements));
+    auto real_buffer = std::make_shared<std::vector<char>>(
+        ElementSize(num_elements) + XNN_EXTRA_BYTES, 0x00);
+    elements_capacity = num_elements;
     flat_data = std::shared_ptr<char>(real_buffer, real_buffer->data());
   }
 }
@@ -169,6 +170,7 @@ std::shared_ptr<Tensor> Tensor::Slice(size_t index, size_t offset) {
       std::make_shared<Tensor>(std::move(new_dim), datatype, is_sparse());
   result->flat_data = std::shared_ptr<char>(
       flat_data, flat_data.get() + ElementSize(num_elements_offset));
+  result->elements_capacity = result->num_elements;
   return result;
 }
 
@@ -177,6 +179,7 @@ Tensor& Tensor::Borrow(std::shared_ptr<Tensor> other, size_t element_offset) {
   ABSL_DCHECK_EQ(dims.size(), other->dims.size());
   flat_data = std::shared_ptr<char>(
       other->flat_data, other->flat_data.get() + ElementSize(element_offset));
+  elements_capacity = other->elements_capacity - element_offset;
   return *this;
 }
 
@@ -187,7 +190,7 @@ Tensor& Tensor::Resize(DimsType new_dims) {
   internal_num_elements = std::accumulate(dims.begin(), dims.end(), size_t(1),
                                           std::multiplies<size_t>());
   ABSL_DCHECK_NE(internal_num_elements, 0);
-  if (num_elements > old_num_elements) {
+  if (num_elements > elements_capacity) {
     auto old_flat_data = std::move(flat_data);
     AllocateBufferIfNeeded();
     memcpy(Data(), old_flat_data.get(), ElementSize(old_num_elements));
@@ -326,6 +329,7 @@ absl::Status Tensor::LoadFromFile(absl::string_view file_path, bool use_mmap,
                                          expected_size_in_bytes));
   if (!flat_data) {
     flat_data = tmp_flat_data;
+    elements_capacity = num_elements;
   } else {
     memcpy(flat_data.get(), tmp_flat_data.get(), buffer_size);
   }
@@ -411,6 +415,7 @@ absl::Status QCTensor::LoadFromFile(absl::string_view quantized_weight_filename,
   if (!flat_data) {
     flat_data = tmp_flat_data;
     scale_data = tmp_scale_data;
+    elements_capacity = num_elements;
   } else {
     memcpy(flat_data.get(), tmp_flat_data.get(), buffer_size);
     memcpy(scale_data.get(), tmp_scale_data.get(), scale_buffer_size);
@@ -569,6 +574,7 @@ std::shared_ptr<Tensor> QCTensor::Slice(size_t index, size_t offset) {
         flat_data, flat_data.get() + ElementSize(dims[1] * offset));
     result->scale_data = std::make_shared<float>(*(scale_data.get() + offset));
   }
+  result->elements_capacity = result->num_elements;
   return result;
 }
 

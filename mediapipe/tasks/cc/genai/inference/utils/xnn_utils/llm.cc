@@ -381,7 +381,8 @@ absl::Status Llm::InitInputTokens(const std::vector<int>& input_ids) {
   if (llm_params_.enable_dynamic_shape) {
     MP_RETURN_IF_ERROR(ReshapeInputResource());
 
-    transformer_input_->Borrow(input_pivot_->Slice(1, prev_ids_.size()));
+    transformer_input_->Borrow(input_pivot_,
+                               prev_ids_.size() * llm_params_.model_dim_D);
     transformer_input_->Resize(Tensor::DimsType{
         llm_params_.batch_size_B, input_ids.size(), llm_params_.model_dim_D});
     RET_CHECK_EQ(
@@ -738,6 +739,7 @@ absl::Status LlmBuilder::InitSegmentPos(size_t current_seq_len,
   if (!segment_pos_values_) {
     MP_RETURN_IF_ERROR(InitSegmentPosValues(rope_size));
   }
+  MP_RETURN_IF_ERROR(out_segment_pos.LoadFromVec({}, /*exact_match=*/false));
 
   out_segment_pos.Resize(Tensor::DimsType{process_seq_len, rope_size});
   MP_RETURN_IF_ERROR(out_segment_pos.LoadFromBuffer(
