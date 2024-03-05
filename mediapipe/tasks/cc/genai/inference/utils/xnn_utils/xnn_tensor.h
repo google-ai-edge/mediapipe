@@ -79,7 +79,6 @@ struct Tensor {
   absl::Status DefineAsIntermediateTensor(xnn_subgraph& subgraph);
   virtual absl::Status DefineWeight(xnn_subgraph& subgraph, uint32_t flags);
   absl::Status DefineWeight(xnn_subgraph& subgraph);
-  absl::Status DefineRope(xnn_subgraph& subgraph);
 
   // Load the tensor from buffer, assuming the buffer is long enough.
   absl::Status LoadFromBuffer(const void* buffer);

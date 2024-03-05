@@ -275,11 +275,6 @@ void Tensor::set_tensor_id(xnn_subgraph_t subgraph, uint32_t id) {
   map_subgraph_to_tensor_id[subgraph] = id;
 }
 
-absl::Status Tensor::DefineRope(xnn_subgraph& subgraph) {
-  RET_CHECK_NE(tensor_id(&subgraph), XNN_INVALID_VALUE_ID);
-  return DefineWeight(subgraph, XNN_VALUE_FLAG_EXTERNAL_INPUT);
-}
-
 absl::Status Tensor::LoadFromBuffer(const void* buffer) {
   AllocateBufferIfNeeded();
   memcpy(Data(), buffer, ElementSize(num_elements));

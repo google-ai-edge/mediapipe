@@ -38,15 +38,14 @@ Stablelm4E1T3BBuilder::PreProcess(std::shared_ptr<Tensor> token_embedding,
     MP_ASSIGN_OR_RETURN(
         resource.atten_mask,
         NewInput({llm_params_.seq_size_T, llm_params_.seq_size_T}));
-    resource.segment_pos = std::make_shared<Tensor>(
-        Tensor::DimsType({llm_params_.seq_size_T, rope_size}));
+    MP_ASSIGN_OR_RETURN(resource.segment_pos,
+                        NewInput({llm_params_.seq_size_T, rope_size}));
     MP_RETURN_IF_ERROR(
         InitSegmentPos(0, llm_params_.seq_size_T, *resource.segment_pos));
   } else {
     MP_ASSIGN_OR_RETURN(resource.atten_mask,
                         NewInput({1, llm_params_.seq_size_T}));
-    resource.segment_pos =
-        std::make_shared<Tensor>(Tensor::DimsType{1, rope_size});
+    MP_ASSIGN_OR_RETURN(resource.segment_pos, NewInput({1, rope_size}));
     MP_RETURN_IF_ERROR(InitSegmentPos(0, 1, *resource.segment_pos));
   }
   return std::make_pair(token_embedding, resource);

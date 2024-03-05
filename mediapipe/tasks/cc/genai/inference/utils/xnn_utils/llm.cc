@@ -448,12 +448,14 @@ LlmBuilder::PreProcess(std::shared_ptr<Tensor> token_embedding,
   InputResource resource;
   constexpr absl::string_view kAttnMaskSource = "atten_mask";
   constexpr absl::string_view kPosEmbeddingSource = "pos_embedding";
+  constexpr absl::string_view kSegmentPosSource = "segment_pos";
   if (is_prefix) {
     MP_ASSIGN_OR_RETURN(resource.atten_mask, NewInput({llm_params_.seq_size_T,
                                                        llm_params_.seq_size_T},
                                                       kAttnMaskSource));
-    resource.segment_pos = std::make_shared<Tensor>(
-        Tensor::DimsType({llm_params_.seq_size_T, llm_params_.head_dim_H}));
+    MP_ASSIGN_OR_RETURN(resource.segment_pos, NewInput({llm_params_.seq_size_T,
+                                                        llm_params_.head_dim_H},
+                                                       kSegmentPosSource));
     MP_RETURN_IF_ERROR(
         InitSegmentPos(0, llm_params_.seq_size_T, *resource.segment_pos));
     MP_ASSIGN_OR_RETURN(
@@ -466,8 +468,9 @@ LlmBuilder::PreProcess(std::shared_ptr<Tensor> token_embedding,
         NewInput({1, llm_params_.model_dim_D}, kPosEmbeddingSource));
     MP_ASSIGN_OR_RETURN(resource.atten_mask,
                         NewInput({1, llm_params_.seq_size_T}, kAttnMaskSource));
-    resource.segment_pos =
-        std::make_shared<Tensor>(Tensor::DimsType{1, llm_params_.head_dim_H});
+    MP_ASSIGN_OR_RETURN(
+        resource.segment_pos,
+        NewInput({1, llm_params_.head_dim_H}, kSegmentPosSource));
     MP_RETURN_IF_ERROR(InitSegmentPos(0, 1, *resource.segment_pos));
   }
   const float dim_scale = std::sqrt(llm_params_.model_dim_D);
@@ -739,7 +742,6 @@ absl::Status LlmBuilder::InitSegmentPos(size_t current_seq_len,
   if (!segment_pos_values_) {
     MP_RETURN_IF_ERROR(InitSegmentPosValues(rope_size));
   }
-  MP_RETURN_IF_ERROR(out_segment_pos.LoadFromVec({}, /*exact_match=*/false));
 
   out_segment_pos.Resize(Tensor::DimsType{process_seq_len, rope_size});
   MP_RETURN_IF_ERROR(out_segment_pos.LoadFromBuffer(
