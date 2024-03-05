@@ -443,6 +443,8 @@ export class LlmInference extends TaskRunner {
     llmGpuOptions.setSamplerParams(this.options.getSamplerParams());
 
     const gpuModelInfo = new LlmGpuCalculatorOptions.GpuModelInfo();
+    // Use fp16 inference by default but still allow fp32 inference if it's
+    // required by the internal inference engine.
     gpuModelInfo.setAllowPrecisionLoss(true);
     gpuModelInfo.setEnableFastTuning(true);
     gpuModelInfo.setPreferTextureWeights(true);
