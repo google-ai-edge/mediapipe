@@ -76,7 +76,7 @@ export class LlmInference extends TaskRunner {
   private readonly options: LlmInferenceGraphOptions;
   private readonly samplerParams: SamplerParameters;
   private isProcessing = false;
-  private resolveGeneration?: (result: string[]) => void;
+  private resolveGeneration?: (result: string) => void;
   private userProgressListener?: ProgressListener;
   private wasmFileReference?: WasmFileReference;
 
@@ -256,9 +256,9 @@ export class LlmInference extends TaskRunner {
    *
    * @export
    * @param text The text to process.
-   * @return The generated text resuls.
+   * @return The generated text result.
    */
-  generateResponse(text: string): Promise<string[]>;
+  generateResponse(text: string): Promise<string>;
   /**
    * Performs LLM Inference on the provided text and waits
    * asynchronously for the response. Only one call to `generateResponse()` can
@@ -268,13 +268,13 @@ export class LlmInference extends TaskRunner {
    * @param text The text to process.
    * @param progressListener A listener that will be triggered when the task has
    *     new partial response generated.
-   * @return The generated text resuls.
+   * @return The generated text result.
    */
   generateResponse(text: string, progressListener: ProgressListener):
-      Promise<string[]>;
+      Promise<string>;
   /** @export */
   generateResponse(text: string, progressListener?: ProgressListener):
-      Promise<string[]> {
+      Promise<string> {
     if (this.isProcessing) {
       throw new Error('Previous invocation is still processing.');
     }
@@ -286,7 +286,7 @@ export class LlmInference extends TaskRunner {
     this.graphRunner.addStringToStream(
         text, INPUT_STREAM, this.getSynctheticTimestamp());
     this.finishProcessing();
-    return new Promise<string[]>((resolve, reject) => {
+    return new Promise<string>((resolve, reject) => {
       this.resolveGeneration = resolve;
     });
   }
@@ -349,7 +349,7 @@ export class LlmInference extends TaskRunner {
         OUTPUT_END_STREAM, (bool, timestamp) => {
           this.isProcessing = false;
           if (this.resolveGeneration) {
-            this.resolveGeneration(this.generationResult);
+            this.resolveGeneration(this.generationResult.join(''));
           }
           if (this.userProgressListener) {
             this.userProgressListener(
