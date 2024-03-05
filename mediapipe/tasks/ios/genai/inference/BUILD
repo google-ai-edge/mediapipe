@@ -22,9 +22,15 @@ swift_library(
     name = "LlmInference",
     srcs = [
         "sources/LlmInference.swift",
+        "//mediapipe/tasks/ios/genai/core:sources/GenAiInferenceError.swift",
+        "//mediapipe/tasks/ios/genai/core:sources/LlmTaskRunner.swift",
     ],
+    # This ensures the compiler does not complain about MediaPipeTasksGenAIC being built separately.
+    copts = ["-no-verify-emitted-module-interface"],
     generated_header_name = "LlmInference-Swift.h",
     generates_header = 1,
-    module_name = "LlmInference",
-    deps = ["//mediapipe/tasks/ios/genai/core:LlmTaskRunner"],
+    module_name = "MediaPipeTasksGenAI",
+    deps = [
+        "//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu",
+    ],
 )

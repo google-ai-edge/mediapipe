@@ -13,8 +13,7 @@
 // limitations under the License.
 
 import Foundation
-import LlmInferenceEngineC
-import LlmTaskRunner
+import MediaPipeTasksGenAIC
 
 /// A MediaPipe task that performs inference using a given Large Language Model.
 ///
@@ -22,8 +21,31 @@ import LlmTaskRunner
 @objc(MPPLLMInference) public final class LlmInference: NSObject {
   private static let numberOfDecodeStepsPerSync = 3
   private static let sequenceBatchSize = 0
+  private static let responseGenerationInProgressQueueName =
+    "com.google.mediapipe.genai.isResponseGenerationInProgressQueue"
 
   private let llmTaskRunner: LlmTaskRunner
+
+  private let responseGenerationInProgressQueue = DispatchQueue(
+    label: LlmInference.responseGenerationInProgressQueueName,
+    attributes: .concurrent)
+
+  /// Tracks whether a response generation is in progress.
+  /// Readers writers lock to prevent race condition as this variable can be accessed from multiple
+  /// threads.
+  private var responseGenerationInProgressInternal = false
+  private var responseGenerationInProgress: Bool {
+    get {
+      responseGenerationInProgressQueue.sync {
+        return self.responseGenerationInProgressInternal
+      }
+    }
+    set {
+      responseGenerationInProgressQueue.async(flags: .barrier) {
+        self.responseGenerationInProgressInternal = newValue
+      }
+    }
+  }
 
   /// Creates a new instance of `LlmInference` with the given options.
   ///
@@ -69,13 +91,71 @@ import LlmTaskRunner
   ///   - inputText: A `String` that is used to query the LLM.
   /// - Throws: An error if the LLM's response is invalid.
   @objc public func generateResponse(inputText: String) throws -> String {
+
+    /// Disallow response generation if another response generation call is already in progress.
+    try shouldContinueWithResponseGeneration()
+
     let tokens = try llmTaskRunner.predict(inputText: inputText)
+
+    responseGenerationInProgress = false
+
     guard let humanReadableLlmResponse = LlmInference.humanReadableString(llmResponses: tokens)
     else {
-      throw GenAiInferenceError.invalidResponseError
+      throw GenAiInferenceError.invalidResponse
     }
 
     return humanReadableLlmResponse
+  }
+
+  /// Generates a response based on the input text asynchronously. The `progress` callback returns
+  /// the partial responses from the LLM or any errors. `completion` callback is invoked once the
+  /// LLM is done generating responses.
+  ///
+  /// - Parameters:
+  ///   - progress: A callback invoked when a partial response is available from the LLM.
+  ///   - completion: A callback invoked when the LLM finishes response generation.
+  /// - Throws: An error if the LLM's response is invalid.
+  @objc public func generateResponseAsync(
+    inputText: String,
+    progress: @escaping (_ partialResponse: String?, _ error: Error?) -> Void,
+    completion: @escaping (() -> Void)
+  ) throws {
+    /// Disallow response generation if another response generation call is already in progress.
+    try shouldContinueWithResponseGeneration()
+
+    /// Used to make a decision about whitespace stripping.
+    var receivedFirstToken = true
+
+    llmTaskRunner.predict(
+      inputText: inputText,
+      progress: { partialResponseStrings, error in
+
+        guard let responseStrings = partialResponseStrings,
+          let humanReadableLlmResponse = LlmInference.humanReadableString(
+            llmResponses: responseStrings, stripLeadingWhitespaces: receivedFirstToken)
+        else {
+          progress(nil, GenAiInferenceError.invalidResponse)
+          return
+        }
+
+        /// Reset state after first response is processed.
+        receivedFirstToken = false
+
+        progress(humanReadableLlmResponse, nil)
+      },
+      completion: { [weak self] in
+        self?.responseGenerationInProgress = false
+        completion()
+      })
+  }
+
+  /// Throw error if response generation is in progress or update response generation state.
+  private func shouldContinueWithResponseGeneration() throws {
+    if responseGenerationInProgress {
+      throw GenAiInferenceError.illegalMethodCall
+    }
+
+    responseGenerationInProgress = true
   }
 
   private static func humanReadableString(
@@ -94,7 +174,7 @@ extension LlmInference {
   /// Options for setting up a `LlmInference`.
   ///
   /// Note: Inherits from `NSObject` for Objective C interoperability.
-  @objc(MPPLlmInferenceOptions) public final class Options: NSObject {
+  @objc(MPPLLMInferenceOptions) public final class Options: NSObject {
     /// The absolute path to the model asset bundle stored locally on the device.
     @objc public var modelPath: String
 
@@ -128,9 +208,10 @@ extension LlmInference {
 
 /// An extension to `String` to add some utility functions.
 extension String {
-  fileprivate static let tokenSplitter = "▁"  /// Note this is NOT an underscore: ▁(U+2581)
-  fileprivate static let newLine = "<0x0A>"
-  fileprivate static let eod = "\\[eod\\]"
+  private static let tokenSplitter = "▁"
+  /// Note this is NOT an underscore: ▁(U+2581)
+  private static let newLine = "<0x0A>"
+  private static let eod = "\\[eod\\]"
 
   fileprivate func humanReadableString(stripLeadingWhitespaces: Bool = true) -> String? {
     var humanReadableString = self.replacingOccurrences(of: String.tokenSplitter, with: " ")
