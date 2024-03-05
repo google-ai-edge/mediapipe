@@ -23,6 +23,9 @@ import MediaPipeTasksGenAIC
   private static let sequenceBatchSize = 0
   private static let responseGenerationInProgressQueueName =
     "com.google.mediapipe.genai.isResponseGenerationInProgressQueue"
+  private static let cacheDirectoryPrefix = "mediapipe.genai.inference.cache"
+  private static let cacheDirectoryPath = FileManager.default.temporaryDirectory
+    .versionIndependentAppending(component: LlmInference.cacheDirectoryPrefix).versionIndependentAppending(component:"\(UUID().uuidString)").versionIndependentPath()
 
   private let llmTaskRunner: LlmTaskRunner
 
@@ -54,7 +57,7 @@ import MediaPipeTasksGenAIC
   /// `LlmInference`.
   @objc public init(options: Options) {
     let modelPath = strdup(options.modelPath)
-    let cacheDirectory = strdup(FileManager.default.temporaryDirectory.path)
+    let cacheDirectory = strdup(LlmInference.cacheDirectoryPath)
 
     defer {
       free(modelPath)
@@ -222,3 +225,24 @@ extension String {
     return humanReadableString.components(separatedBy: String.eod).first
   }
 }
+
+fileprivate extension URL {
+   /// .appendingPathComponent() is deprecated iOS 16 upwards. Conditionally checking the 
+   /// availability of the API.
+   func versionIndependentAppending(component: String) -> URL {
+     if #available(iOS 16, *) {
+       return self.appending(component: component)
+     } else {
+       return self.appendingPathComponent(component)
+     }
+   }
+
+   /// .path is deprecated iOS 16 upwards. Conditionally checking the availability of the API.
+   func versionIndependentPath() -> String {
+     if #available(iOS 16, *) {
+       return self.path()
+     } else {
+       return self.path
+     }
+   }
+ }
