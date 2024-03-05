@@ -98,15 +98,15 @@ import Foundation
     return humanReadableLlmResponse
   }
 
-  /// Generates a response based on the input text asynchronously. The `progess` callback returns
+  /// Generates a response based on the input text asynchronously. The `progress` callback returns
   /// the partial responses from the LLM or any errors. `completion` callback is invoked once the
   /// LLM is done generating responses.
   ///
   /// - Parameters:
-  ///   - progess: A callback invoked when a partial response is available from the LLM.
+  ///   - progress: A callback invoked when a partial response is available from the LLM.
   ///   - completion: A callback invoked when the LLM finishes response generation.
   /// - Throws: An error if the LLM's response is invalid.
-  @objc public func generateResponse(
+  @objc public func generateResponseAsync(
     inputText: String,
     progress: @escaping (_ partialResponse: String?, _ error: Error?) -> Void,
     completion: @escaping (() -> Void)
@@ -176,7 +176,7 @@ extension LlmInference {
   /// Options for setting up a `LlmInference`.
   ///
   /// Note: Inherits from `NSObject` for Objective C interoperability.
-  @objc(MPPLlmInferenceOptions) public final class Options: NSObject {
+  @objc(MPPLLMInferenceOptions) public final class Options: NSObject {
     /// The absolute path to the model asset bundle stored locally on the device.
     @objc public var modelPath: String
 
@@ -210,7 +210,7 @@ extension LlmInference {
 }
 
 /// An extension to `String` to add some utility functions.
-fileprivate extension String {
+extension String {
   private static let tokenSplitter = "▁"
   /// Note this is NOT an underscore: ▁(U+2581)
   private static let newLine = "<0x0A>"

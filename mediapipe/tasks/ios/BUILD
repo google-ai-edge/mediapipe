@@ -147,6 +147,7 @@ strip_api_include_path_prefix(
         "//mediapipe/tasks/ios/vision/pose_landmarker:sources/MPPPoseLandmarker.h",
         "//mediapipe/tasks/ios/vision/pose_landmarker:sources/MPPPoseLandmarkerOptions.h",
         "//mediapipe/tasks/ios/vision/pose_landmarker:sources/MPPPoseLandmarkerResult.h",
+        "//mediapipe/tasks/cc/genai/inference/c:llm_inference_engine.h",
     ],
 )
 
@@ -325,7 +326,9 @@ apple_static_xcframework(
 
 apple_static_xcframework(
     name = "MediaPipeTasksGenAI_framework",
-    avoid_deps = ["//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu",],
+    avoid_deps = [
+        "//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu",
+    ],
     bundle_name = "MediaPipeTasksGenAI",
     ios = {
         "simulator": [
@@ -338,8 +341,8 @@ apple_static_xcframework(
         "ios": MPP_TASK_MINIMUM_OS_VERSION,
     },
     deps = [
-        "//mediapipe/tasks/ios/genai/inference:LlmInference",
         "//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu",
+        "//mediapipe/tasks/ios/genai/inference:LlmInference",
     ],
 )
 

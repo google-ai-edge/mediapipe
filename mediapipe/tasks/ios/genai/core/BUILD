@@ -16,4 +16,7 @@ licenses(["notice"])
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
-exports_files(["sources/LlmTaskRunner.swift", "sources/GenAiInferenceError.swift"])
+exports_files([
+    "sources/LlmTaskRunner.swift",
+    "sources/GenAiInferenceError.swift",
+])

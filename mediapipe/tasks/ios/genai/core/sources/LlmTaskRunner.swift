@@ -84,8 +84,8 @@ final class LlmTaskRunner {
     /// No safe guards for the call since the C++ APIs only throw fatal errors.
     /// `LlmInferenceEngine_Session_PredictSync()` will always return a `LlmResponseContext` if the
     /// call completes.
-    var responseContext = inputText.withCString { cinputText in
-      LlmInferenceEngine_Session_PredictSync(cLlmSession, cinputText)
+    var responseContext = inputText.withCString { cInputText in
+      LlmInferenceEngine_Session_PredictSync(cLlmSession, cInputText)
     }
 
     defer {
@@ -94,6 +94,7 @@ final class LlmTaskRunner {
       }
     }
 
+    /// Throw an error if response is invalid.
     guard let responseStrings = LlmTaskRunner.responseStrings(from: responseContext) else {
       throw GenAiInferenceError.invalidResponse
     }
@@ -233,7 +234,7 @@ extension LlmTaskRunner {
 }
 
 private extension LlmTaskRunner {
-  /// A wrapper class for whose object will be used as the C++ callback context.
+  /// A wrapper class whose object will be used as the C++ callback context.
   /// The progress and completion callbacks cannot be invoked without a context.
   class CallbackInfo {
     typealias ProgressCallback = (_ partialResult: [String]?, _ error: Error?) -> Void

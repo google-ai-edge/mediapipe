@@ -102,10 +102,10 @@ function build_ios_frameworks_and_libraries {
 
   # Build Task Library xcframework.
   local FRAMEWORK_CQUERY_COMMAND="-c opt --config=ios_sim_device_fat --apple_generate_dsym=false --define OPENCV=source ${FULL_FRAMEWORK_TARGET}"
-  
+
   case $FRAMEWORK_NAME in
     "MediaPipeTasksGenAI|MediaPipeTasksGenAIC")
-      FRAMEWORK_CQUERY_COMMAND="c opt --config=ios_sim_device_fat --apple_generate_dsym=false ${FULL_FRAMEWORK_TARGET}"
+      FRAMEWORK_CQUERY_COMMAND="-c opt --config=ios_sim_device_fat --apple_generate_dsym=false ${FULL_FRAMEWORK_TARGET}"
       ;;
     *)
     ;;
