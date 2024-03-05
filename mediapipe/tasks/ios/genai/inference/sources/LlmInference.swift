@@ -218,7 +218,7 @@ extension LlmInference {
 }
 
 /// An extension to `String` to add some utility functions.
-extension String {
+fileprivate extension String {
   private static let tokenSplitter = "▁"
   /// Note this is NOT an underscore: ▁(U+2581)
   private static let newLine = "<0x0A>"
