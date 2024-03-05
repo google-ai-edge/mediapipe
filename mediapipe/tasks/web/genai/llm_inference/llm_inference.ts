@@ -19,7 +19,7 @@ import {CalculatorGraphConfig, InputStreamInfo,} from '../../../../framework/cal
 import {BaseOptions as BaseOptionsProto} from '../../../../tasks/cc/core/proto/base_options_pb';
 import {CachedGraphRunner, TaskRunner,} from '../../../../tasks/web/core/task_runner';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
-import {LlmInferenceGraphOptions as LlmInferenceGraphOptionsProto} from '../../../../tasks/web/genai/llm_inference/proto/llm_inference_graph_options_pb';
+import {LlmInferenceGraphOptions} from '../../../../tasks/web/genai/llm_inference/proto/llm_inference_graph_options_pb';
 import {WasmModule} from '../../../../web/graph_runner/graph_runner';
 import {SupportWasmFileReference, WasmFileReference} from '../../../../web/graph_runner/graph_runner_wasm_file_reference';
 import {SupportWebGpu} from '../../../../web/graph_runner/graph_runner_webgpu';
@@ -27,7 +27,9 @@ import {DetokenizerCalculatorOptions} from '../../../../tasks/cc/genai/inference
 import {LlmGpuCalculatorOptions} from '../../../../tasks/cc/genai/inference/calculators/llm_gpu_calculator_pb';
 import {TokenizerCalculatorOptions} from '../../../../tasks/cc/genai/inference/calculators/tokenizer_calculator_pb';
 import {LlmParameters} from '../../../../tasks/cc/genai/inference/proto/llm_params_pb';
+import {SamplerParameters} from '../../../../tasks/cc/genai/inference/proto/sampler_params_pb';
 import {TransformerParameters} from '../../../../tasks/cc/genai/inference/proto/transformer_params_pb';
+// Placeholder for internal dependency on trusted resource url
 
 import {LlmInferenceOptions} from './llm_inference_options';
 
@@ -44,13 +46,20 @@ class WasmFileReferenceWebGpuGraphRunner extends
     WasmFileReferenceWebGpuGraphRunnerType {}
 
 /**
- * A callback that receives the result from the LLM Inference.
+ * A listener that receives the newly generated partial result and an indication
+ * whether the generation is complete.
  */
-export type LlmInferenceCallback = (result: string[]) => void;
+export type ProgressListener = (partialResult: string, done: boolean) =>
+    unknown;
 
 const INPUT_STREAM = 'text_in';
 const OUTPUT_STREAM = 'text_out';
 const OUTPUT_END_STREAM = 'text_end';
+
+const DEFAULT_MAX_TOKENS = 512;
+const DEFAULT_TOP_K = 1;
+const DEFAULT_TEMPERATURE = 1.0;
+const DEFAULT_SAMPLER_TYPE = SamplerParameters.Type.TOP_K;
 
 /**
  * Performs LLM Inference on text.
@@ -64,29 +73,29 @@ export class LlmInference extends TaskRunner {
   private static readonly TOKENIZER_MODE_IN_TFLITE_KEY = 'spm_vocab_model';
 
   private readonly generationResult: string[] = [];
-  private readonly options = new LlmInferenceGraphOptionsProto();
+  private readonly options: LlmInferenceGraphOptions;
+  private readonly samplerParams: SamplerParameters;
   private isProcessing = false;
   private resolveGeneration?: (result: string[]) => void;
-  private userCallback: LlmInferenceCallback = (result: string[]) => {};
-  private chunkGenerationCallback = (result: string) => {};
+  private userProgressListener?: ProgressListener;
   private wasmFileReference?: WasmFileReference;
 
   /**
-   * Initializes the Wasm runtime and creates a new llm inference from the
-   * provided options.
+   * Initializes the Wasm runtime and creates a new `LlmInference` based
+   * on the provided options.
    * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
-   * @param llmInferenceOptions The options for the LLM Inference. Note that
+   * @param llmInferenceOptions The options for LLM Inference. Note that
    *     either a path to the TFLite model or the model itself needs to be
    *     provided (via `baseOptions`).
    */
   static async createFromOptions(
       wasmFileset: WasmFileset,
       llmInferenceOptions: LlmInferenceOptions): Promise<LlmInference> {
-    // TODO: b/324482487 - Support customizing config for Web task of LLM
-    // Inference.
     const optionsWithGpuDevice = llmInferenceOptions;
+    // if the user provided options object does not have WebGPU device, clone a
+    // new options object and add WebGPU device to the options.
     if (!optionsWithGpuDevice.baseOptions?.gpuOptions?.device) {
       const webgpuDevice = await LlmInference.createWebGpuDevice();
       optionsWithGpuDevice.baseOptions = llmInferenceOptions.baseOptions ?? {};
@@ -99,18 +108,65 @@ export class LlmInference extends TaskRunner {
         LlmInference, /* canvas= */ null, wasmFileset, optionsWithGpuDevice);
   }
 
+  /**
+   * Initializes the Wasm runtime and creates a new `LlmInference` based
+   * on the provided model asset buffer.
+   * @export
+   * @param wasmFileset A configuration object that provides the location of the
+   *     Wasm binary and its loader.
+   * @param modelAssetBuffer A binary representation of the model.
+   */
+  static async createFromModelBuffer(
+      wasmFileset: WasmFileset,
+      modelAssetBuffer: Uint8Array): Promise<LlmInference> {
+    const webgpuDevice = await LlmInference.createWebGpuDevice();
+    const llmInferenceOptions = {
+      baseOptions: {gpuOptions: {device: webgpuDevice}, modelAssetBuffer}
+    };
+
+    return TaskRunner.createInstance(
+        LlmInference, /* canvas= */ null, wasmFileset, llmInferenceOptions);
+  }
+
+  /**
+   * Initializes the Wasm runtime and creates a new `LlmInference` based
+   * on the path to the model asset.
+   * @export
+   * @param wasmFileset A configuration object that provides the location of the
+   *     Wasm binary and its loader.
+   * @param modelAssetPath The path to the model asset.
+   */
+  static async createFromModelPath(
+      wasmFileset: WasmFileset,
+      modelAssetPath: string): Promise<LlmInference> {
+    const webgpuDevice = await LlmInference.createWebGpuDevice();
+    const llmInferenceOptions = {
+      baseOptions: {gpuOptions: {device: webgpuDevice}, modelAssetPath}
+    };
+
+    return TaskRunner.createInstance(
+        LlmInference, /* canvas= */ null, wasmFileset, llmInferenceOptions);
+  }
+
   /** @hideconstructor */
   constructor(
       wasmModule: WasmModule,
       glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
     super(new WasmFileReferenceWebGpuGraphRunner(wasmModule, glCanvas));
+    this.options = new LlmInferenceGraphOptions();
     this.options.setBaseOptions(new BaseOptionsProto());
+    this.samplerParams = new SamplerParameters();
+    this.options.setSamplerParams(this.samplerParams);
+    this.initDefaults();
   }
 
   /**
    * Create WebGPU device with high performance configurations.
+   * @export
    */
   static createWebGpuDevice(): Promise<GPUDevice> {
+    const adapterDescriptor:
+        GPURequestAdapterOptions = {powerPreference: 'high-performance'};
     const deviceDescriptor: GPUDeviceDescriptor = {
       requiredFeatures: ['shader-f16'],
       requiredLimits: {
@@ -119,56 +175,66 @@ export class LlmInference extends TaskRunner {
       },
     };
     return WasmFileReferenceWebGpuGraphRunner.requestWebGpuDevice(
-        deviceDescriptor);
-  }
-
-  // TODO: b/325936012 - Move setChunkGeneration to LLM Inference Task option.
-  /**
-   * When LLM Inference have new tokens generated, the callback will be called
-   * with a string of these new tokens.
-   *
-   * @param callback The callback that is invoked with the newly generated
-   *     tokens.
-   */
-  setChunkGenerationCallback(callback: (result: string) => void) {
-    this.chunkGenerationCallback = callback;
+        deviceDescriptor, adapterDescriptor);
   }
 
   /**
-   * Sets new options for the llm inference.
+   * Sets new options for the LLM inference task.
    *
    * Calling `setOptions()` with a subset of options only affects those options.
    * You can reset an option back to its default value by explicitly setting it
    * to `undefined`.
    *
    * @export
-   * @param options The options for the llm inference.
+   * @param options The options for the LLM Inference task.
    */
   override setOptions(options: LlmInferenceOptions): Promise<void> {
     // TODO: b/324482487 - Support customizing config for Web task of LLM
     // Inference.
-    if (this.wasmFileReference) {
-      this.wasmFileReference.free();
-    }
     if (options.baseOptions?.gpuOptions?.device) {
       (this.graphRunner as unknown as WasmFileReferenceWebGpuGraphRunner)
           .initializeForWebGpu(options.baseOptions.gpuOptions.device);
     }
-    if (options?.baseOptions?.modelAssetPath) {
-      return WasmFileReference
-          .loadFromUrl(
-              this.graphRunner.wasmModule, options.baseOptions.modelAssetPath)
-          .then((wasmFileReference: WasmFileReference) => {
-            this.wasmFileReference = wasmFileReference;
-            this.refreshGraph();
-            this.onGraphRefreshed();
-          });
-    } else if (options?.baseOptions?.modelAssetBuffer) {
-      this.wasmFileReference = WasmFileReference.loadFromArray(
-          this.graphRunner.wasmModule, options.baseOptions.modelAssetBuffer);
-      this.refreshGraph();
-      this.onGraphRefreshed();
+    if ('maxTokens' in options) {
+      this.options.setMaxTokens(options.maxTokens ?? DEFAULT_MAX_TOKENS);
     }
+    if ('topK' in options) {
+      this.samplerParams.setK(options.topK ?? DEFAULT_TOP_K);
+    }
+    if ('temperature' in options) {
+      this.samplerParams.setTemperature(
+          options.temperature ?? DEFAULT_TEMPERATURE);
+    }
+    if (options.randomSeed) {
+      this.samplerParams.setSeed(options.randomSeed);
+    }
+
+    if (options.baseOptions?.modelAssetPath ||
+        options.baseOptions?.modelAssetBuffer) {
+      if (options.baseOptions.modelAssetPath &&
+          options.baseOptions.modelAssetBuffer) {
+        throw new Error(
+            'Cannot set both baseOptions.modelAssetPath and baseOptions.modelAssetBuffer');
+      }
+      if (this.wasmFileReference) {
+        this.wasmFileReference.free();
+      }
+      if (options.baseOptions.modelAssetPath) {
+        return WasmFileReference
+            .loadFromUrl(
+                this.graphRunner.wasmModule, options.baseOptions.modelAssetPath)
+            .then((wasmFileReference: WasmFileReference) => {
+              this.wasmFileReference = wasmFileReference;
+              this.refreshGraph();
+              this.onGraphRefreshed();
+            });
+      } else if (options.baseOptions.modelAssetBuffer) {
+        this.wasmFileReference = WasmFileReference.loadFromArray(
+            this.graphRunner.wasmModule, options.baseOptions.modelAssetBuffer);
+      }
+    }
+    this.refreshGraph();
+    this.onGraphRefreshed();
     return Promise.resolve();
   }
 
@@ -181,11 +247,53 @@ export class LlmInference extends TaskRunner {
   }
 
   /**
+   * Performs LLM Inference on the provided text and waits
+   * asynchronously for the response. Only one call to `generateResponse()` can
+   * run at a time.
+   *
+   * @export
+   * @param text The text to process.
+   * @return The generated text resuls.
+   */
+  generateResponse(text: string): Promise<string[]>;
+  /**
+   * Performs LLM Inference on the provided text and waits
+   * asynchronously for the response. Only one call to `generateResponse()` can
+   * run at a time.
+   *
+   * @export
+   * @param text The text to process.
+   * @param progressListener A listener that will be triggered when the task has
+   *     new partial response generated.
+   * @return The generated text resuls.
+   */
+  generateResponse(text: string, progressListener: ProgressListener):
+      Promise<string[]>;
+  /** @export */
+  generateResponse(text: string, progressListener?: ProgressListener):
+      Promise<string[]> {
+    if (this.isProcessing) {
+      throw new Error('Previous invocation is still processing.');
+    }
+    if (progressListener) {
+      this.userProgressListener = progressListener;
+    }
+    this.generationResult.length = 0;
+    this.isProcessing = true;
+    this.graphRunner.addStringToStream(
+        text, INPUT_STREAM, this.getSynctheticTimestamp());
+    this.finishProcessing();
+    return new Promise<string[]>((resolve, reject) => {
+      this.resolveGeneration = resolve;
+    });
+  }
+
+  /**
    * Decodes the response from the LLM engine and returns a human-readable
    * string.
    */
-  static decodeResponse(responses: string[], stripLeadingWhitespace: boolean):
-      string {
+  private static decodeResponse(
+      responses: string[], stripLeadingWhitespace: boolean): string {
     if (responses == null || responses.length === 0) {
       // Technically, this is an error. We should always get at least one
       // response.
@@ -204,47 +312,12 @@ export class LlmInference extends TaskRunner {
     return response.split(LlmInference.EOD, 1)[0];
   }
 
-  /**
-   * Performs llm inference on the provided text and waits synchronously
-   * for the response.
-   *
-   * @export
-   * @param text The text to process.
-   * @param callback The callback that is invoked with the result.
-   * @return The generated text resuls.
-   */
-  generateResponse(text: string, callback: LlmInferenceCallback): void {
-    if (this.isProcessing) {
-      throw new Error('Previous invocation is still processing.');
-    }
-    this.generationResult.length = 0;
-    this.userCallback = callback;
-    this.isProcessing = true;
-    this.graphRunner.addStringToStream(
-        text, INPUT_STREAM, this.getSynctheticTimestamp());
-    this.finishProcessing();
-  }
-
-  /**
-   * Performs llm inference on the provided text and waits synchronously
-   * for the response.
-   *
-   * @export
-   * @param text The text to process.
-   * @return The generated text resuls.
-   */
-  generateResponseAsync(text: string): Promise<string[]> {
-    if (this.isProcessing) {
-      throw new Error('Previous invocation is still processing.');
-    }
-    this.generationResult.length = 0;
-    this.isProcessing = true;
-    this.graphRunner.addStringToStream(
-        text, INPUT_STREAM, this.getSynctheticTimestamp());
-    this.finishProcessing();
-    return new Promise<string[]>((resolve, reject) => {
-      this.resolveGeneration = resolve;
-    });
+  /** Sets the default values for the graph. */
+  private initDefaults(): void {
+    this.options.setMaxTokens(DEFAULT_MAX_TOKENS);
+    this.samplerParams.setType(DEFAULT_SAMPLER_TYPE);
+    this.samplerParams.setK(DEFAULT_TOP_K);
+    this.samplerParams.setTemperature(DEFAULT_TEMPERATURE);
   }
 
   // TODO: b/324919242 - Add sync API for BYOM Web API when Chrome JSPI is
@@ -260,7 +333,9 @@ export class LlmInference extends TaskRunner {
           const decodedText =
               LlmInference.decodeResponse(stringVector, stripLeadingWhitespace);
           this.generationResult.push(decodedText);
-          this.chunkGenerationCallback(decodedText);
+          if (this.userProgressListener) {
+            this.userProgressListener(decodedText, /* done= */ false);
+          }
           this.setLatestOutputTimestamp(timestamp);
         });
     this.graphRunner.attachEmptyPacketListener(OUTPUT_STREAM, timestamp => {
@@ -273,7 +348,10 @@ export class LlmInference extends TaskRunner {
           if (this.resolveGeneration) {
             this.resolveGeneration(this.generationResult);
           }
-          this.userCallback(this.generationResult);
+          if (this.userProgressListener) {
+            this.userProgressListener(
+                /* partialResult= */ '', /* done= */ true);
+          }
           this.setLatestOutputTimestamp(timestamp);
         });
     this.graphRunner.attachEmptyPacketListener(OUTPUT_END_STREAM, timestamp => {
@@ -322,7 +400,7 @@ export class LlmInference extends TaskRunner {
     tokenizerOptionsProto.setTypeUrl(
         'type.googleapis.com/odml.infra.proto.TokenizerCalculatorOptions');
     const tokenizerOptions = new TokenizerCalculatorOptions();
-    tokenizerOptions.setMaxTokens(512);
+    tokenizerOptions.setMaxTokens(this.options.getMaxTokens());
 
     const modelFile = new TokenizerCalculatorOptions.TfLiteModelFile();
     modelFile.setSpmModelKeyInMetadata(
@@ -334,15 +412,18 @@ export class LlmInference extends TaskRunner {
     const tokenizerNode = new CalculatorGraphConfig.Node();
     tokenizerNode.setCalculator('TokenizerCalculator');
     tokenizerNode.addNodeOptions(tokenizerOptionsProto);
+    tokenizerNode.addInputSidePacket(
+        'TFLITE_MODEL:' +
+        '__side_packet_0');
     tokenizerNode.addInputStream(
         'PROMPT:' +
         'prompt');
     tokenizerNode.addOutputSidePacket(
         'PROCESSOR:' +
         '__input_side_1');
-    tokenizerNode.addInputSidePacket(
-        'TFLITE_MODEL:' +
-        '__side_packet_0');
+    tokenizerNode.addOutputSidePacket(
+        'BYTES_TO_UNICODE_MAPPING:' +
+        '__input_side_2');
     tokenizerNode.addOutputStream(
         'IDS:' +
         '__stream_0');
@@ -356,10 +437,11 @@ export class LlmInference extends TaskRunner {
 
     llmGpuOptions.setNumDecodeTokens(3);
     llmGpuOptions.setWeightPath(LlmInference.LLM_MODEL_NAME);
+    // Set seq batch size to 0 to use automated sequence batch search.
     llmGpuOptions.setSequenceBatchSize(0);
     llmGpuOptions.setNumOutputHeads(1);
-    llmGpuOptions.setTopk(1);
-    llmGpuOptions.setTemperature(1.0);
+    llmGpuOptions.setSamplerParams(this.options.getSamplerParams());
+
     const gpuModelInfo = new LlmGpuCalculatorOptions.GpuModelInfo();
     gpuModelInfo.setAllowPrecisionLoss(true);
     gpuModelInfo.setEnableFastTuning(true);
@@ -369,7 +451,7 @@ export class LlmInference extends TaskRunner {
     const llmParams = new LlmParameters();
     const transformerParams = new TransformerParameters();
     transformerParams.setBatchSize(1);
-    transformerParams.setMaxSeqLength(512);
+    transformerParams.setMaxSeqLength(this.options.getMaxTokens());
     llmParams.setTransformerParameters(transformerParams);
     llmGpuOptions.setLlmParameters(llmParams);
 
@@ -422,6 +504,9 @@ export class LlmInference extends TaskRunner {
     detokenizerNode.addInputSidePacket(
         'PROCESSOR:' +
         '__input_side_1');
+    detokenizerNode.addInputSidePacket(
+        'BYTES_TO_UNICODE_MAPPING:' +
+        '__input_side_2');
     detokenizerNode.addOutputStream('FINISH:finish');
     detokenizerNode.addOutputStream('WORDS:' + OUTPUT_STREAM);
     graphConfig.addNode(detokenizerNode);

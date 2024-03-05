@@ -54,14 +54,24 @@ namespace api2 {
 //  TENSORS - Vector of Tensors
 //
 // Input side packet:
-//  DEPRECATED: Prefer to use the "OP_RESOLVER" input side packet instead.
-//  CUSTOM_OP_RESOLVER (optional) - Use a custom op resolver,
-//                                  instead of the builtin one.
-//  OP_RESOLVER (optional) - Use to provide tflite op resolver
-//                           (tflite::OpResolver)
-//  MODEL (optional) - Use to specify TfLite model
-//                     (std::unique_ptr<tflite::FlatBufferModel,
-//                       std::function<void(tflite::FlatBufferModel*)>>)
+//  CUSTOM_OP_RESOLVER (optional)
+//    DEPRECATED: prefer to use the "OP_RESOLVER" input side packet instead.
+//    Use a custom op resolver, instead of the builtin one.
+//  OP_RESOLVER (optional)
+//    Use to provide tflite op resolver (tflite::OpResolver)
+//  MODEL (optional)
+//    Use to specify TfLite model.
+//    (std::unique_ptr<tflite::FlatBufferModel,
+//       std::function<void(tflite::FlatBufferModel*)>>)
+//  DELEGATE (optional)
+//    Use to specify special values per a particular delegate.
+//    (InferenceCalculatorOptions::Delegate)
+//
+//    NOTE: InferenceCalculator, being a subgraph which is replaced by concrete
+//      implementations/calculators during the graph expansion, cannot access
+//      side packets, and DELEGATE side packet rarely (only if concrete
+//      implementations/calculators allow that) can be used to switch between
+//      delegates.
 //
 // Example use:
 // node {

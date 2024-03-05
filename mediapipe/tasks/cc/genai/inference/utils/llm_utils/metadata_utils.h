@@ -66,6 +66,13 @@ absl::Status ExtractSentencePiece(
         mmap_file,
     absl::string_view spm_vocab_path);
 
+inline bool RequireBytesToUnicodeMapping(
+    odml::infra::proto::LlmModelType model_type) {
+  return model_type == odml::infra::proto::LLM_MODEL_TYPE_STABLELM_4E1T_3B ||
+         model_type == odml::infra::proto::LLM_MODEL_TYPE_FALCON_RW_1B ||
+         model_type == odml::infra::proto::LLM_MODEL_TYPE_PHI_2;
+}
+
 }  // namespace mediapipe::tasks::genai::llm_utils
 
 #endif  // MEDIAPIPE_TASKS_GENAI_INFERENCE_UTILS_LLM_UTILS_METADATA_UTILS_H_

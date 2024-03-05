@@ -21,6 +21,7 @@ mediapipe_ts_library(
         "//mediapipe/tasks/cc/genai/inference/calculators:llm_gpu_calculator_jspb_proto",
         "//mediapipe/tasks/cc/genai/inference/calculators:tokenizer_calculator_jspb_proto",
         "//mediapipe/tasks/cc/genai/inference/proto:llm_params_jspb_proto",
+        "//mediapipe/tasks/cc/genai/inference/proto:sampler_params_jspb_proto",
         "//mediapipe/tasks/cc/genai/inference/proto:transformer_params_jspb_proto",
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/core:task_runner",

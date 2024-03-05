@@ -37,3 +37,8 @@ mediapipe_proto_library(
     srcs = ["llm_file_metadata.proto"],
     deps = [":llm_params_proto"],
 )
+
+mediapipe_proto_library(
+    name = "sampler_params_proto",
+    srcs = ["sampler_params.proto"],
+)
