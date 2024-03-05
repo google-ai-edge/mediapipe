@@ -26,6 +26,7 @@ export function convertToLandmarks(proto: NormalizedLandmarkListProto):
       x: landmark.getX() ?? 0,
       y: landmark.getY() ?? 0,
       z: landmark.getZ() ?? 0,
+      visibility: landmark.getVisibility() ?? 0,
     });
   }
   return landmarks;
@@ -39,6 +40,7 @@ export function convertToWorldLandmarks(proto: LandmarkListProto): Landmark[] {
       x: worldLandmark.getX() ?? 0,
       y: worldLandmark.getY() ?? 0,
       z: worldLandmark.getZ() ?? 0,
+      visibility: worldLandmark.getVisibility() ?? 0,
     });
   }
   return worldLandmarks;

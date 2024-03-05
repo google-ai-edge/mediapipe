@@ -23,7 +23,7 @@ node {
 }
 
 # TODO: Use other than pose wrist palm landmarks.
-# Gets pose wrist visiblity.
+# Gets pose wrist visibility.
 node {
   calculator: "LandmarkVisibilityCalculator"
   input_stream: "NORM_LANDMARKS:pose_wrist_landmark"

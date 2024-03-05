@@ -331,7 +331,8 @@ export class GestureRecognizer extends VisionTaskRunner {
         landmarks.push({
           x: handLandmarkProto.getX() ?? 0,
           y: handLandmarkProto.getY() ?? 0,
-          z: handLandmarkProto.getZ() ?? 0
+          z: handLandmarkProto.getZ() ?? 0,
+          visibility: handLandmarkProto.getVisibility() ?? 0,
         });
       }
       this.landmarks.push(landmarks);
@@ -352,7 +353,8 @@ export class GestureRecognizer extends VisionTaskRunner {
         worldLandmarks.push({
           x: handWorldLandmarkProto.getX() ?? 0,
           y: handWorldLandmarkProto.getY() ?? 0,
-          z: handWorldLandmarkProto.getZ() ?? 0
+          z: handWorldLandmarkProto.getZ() ?? 0,
+          visibility: handWorldLandmarkProto.getVisibility() ?? 0,
         });
       }
       this.worldLandmarks.push(worldLandmarks);
