@@ -24,6 +24,12 @@ package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
+config_setting(
+    name = "enable_odml_cocoapods_build",
+    define_values = {"ENABLE_ODML_COCOAPODS_BUILD": "1"},
+    visibility = ["//visibility:public"],
+)
+
 # List of targets to be added in avoid_deps of ":MediaPipeTasksVision_framework"
 # and ":MediaPipeTasksText_framework".
 # The transitive closure of the following targets are used for building the
@@ -340,9 +346,14 @@ apple_static_xcframework(
         "ios": MPP_TASK_MINIMUM_OS_VERSION,
     },
     deps = [
-        "//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu",
         "//mediapipe/tasks/ios/genai/inference:LlmInference",
-    ],
+    ] + select({
+        "//conditions:default": ["//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu"],
+        ":enable_odml_cocoapods_build": [
+            "//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine",
+            "//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_deps",
+        ],
+    }),
 )
 
 apple_static_xcframework(
@@ -361,7 +372,11 @@ apple_static_xcframework(
     public_hdrs = [
         ":llm_inference_engine.h",
     ],
-    deps = [
-        "//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu",
-    ],
+    deps = select({
+        "//conditions:default": ["//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu"],
+        ":enable_odml_cocoapods_build": [
+            "//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine",
+            "//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_deps",
+        ],
+    }),
 )
