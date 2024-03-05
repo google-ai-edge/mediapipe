@@ -337,15 +337,18 @@ export class LlmInference extends TaskRunner {
     const tokenizerNode = new CalculatorGraphConfig.Node();
     tokenizerNode.setCalculator('TokenizerCalculator');
     tokenizerNode.addNodeOptions(tokenizerOptionsProto);
+    tokenizerNode.addInputSidePacket(
+        'TFLITE_MODEL:' +
+        '__side_packet_0');
     tokenizerNode.addInputStream(
         'PROMPT:' +
         'prompt');
     tokenizerNode.addOutputSidePacket(
         'PROCESSOR:' +
         '__input_side_1');
-    tokenizerNode.addInputSidePacket(
-        'TFLITE_MODEL:' +
-        '__side_packet_0');
+    tokenizerNode.addOutputSidePacket(
+        'BYTES_TO_UNICODE_MAPPING:' +
+        '__input_side_2');
     tokenizerNode.addOutputStream(
         'IDS:' +
         '__stream_0');
@@ -428,6 +431,9 @@ export class LlmInference extends TaskRunner {
     detokenizerNode.addInputSidePacket(
         'PROCESSOR:' +
         '__input_side_1');
+    detokenizerNode.addInputSidePacket(
+        'BYTES_TO_UNICODE_MAPPING:' +
+        '__input_side_2');
     detokenizerNode.addOutputStream('FINISH:finish');
     detokenizerNode.addOutputStream('WORDS:' + OUTPUT_STREAM);
     graphConfig.addNode(detokenizerNode);
