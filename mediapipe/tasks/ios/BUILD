@@ -91,7 +91,6 @@ MEDIAPIPE_TASKS_COMMON_DEPS = OBJC_TASK_COMMON_DEPS + TENSORFLOW_LITE_C_DEPS + [
 strip_api_include_path_prefix(
     name = "strip_api_include_path",
     hdr_labels = [
-        "//mediapipe/tasks/cc/genai/inference/c:llm_inference_engine.h",
         "//mediapipe/tasks/ios/common:sources/MPPCommon.h",
         "//mediapipe/tasks/ios/components/containers:sources/MPPCategory.h",
         "//mediapipe/tasks/ios/components/containers:sources/MPPClassificationResult.h",
