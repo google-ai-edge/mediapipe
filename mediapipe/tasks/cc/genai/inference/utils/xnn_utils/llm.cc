@@ -68,7 +68,7 @@ class PrefixDecodeLlm : public Llm {
     const size_t decode_step = prev_ids_.size() - 1;
     VLOG(2) << "Decode step " << decode_step;
 
-    if (decode_step == llm_params_.seq_size_T - 1) {
+    if (decode_step >= llm_params_.seq_size_T - 1) {
       return absl::OutOfRangeError(
           absl::StrCat("Hit max sequence length ", llm_params_.seq_size_T));
     }
@@ -401,6 +401,11 @@ absl::Status Llm::InitInputTokens(const std::vector<int>& input_ids) {
 
 absl::Status Llm::GetNextToken(std::vector<int>* output_ids) {
   VLOG(2) << "Decode step " << prev_ids_.size() - 1;
+
+  if (prev_ids_.size() >= llm_params_.seq_size_T) {
+    return absl::OutOfRangeError(
+        absl::StrCat("Hit max sequence length ", llm_params_.seq_size_T));
+  }
 
   MP_RETURN_IF_ERROR(Run());
 
