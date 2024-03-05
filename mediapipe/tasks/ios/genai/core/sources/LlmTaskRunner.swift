@@ -273,7 +273,6 @@ private extension LlmTaskRunner {
 
     var responseStrings: [String] = []
     for responseIndex in 0..<Int(responseContext.response_count) {
-      /// Throw an error if the response string is `NULL`.
       guard let cResponseString = cResponseArray[responseIndex] else {
         return nil
       }
