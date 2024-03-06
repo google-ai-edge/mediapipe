@@ -82,7 +82,10 @@ CALCULATORS_AND_GRAPHS = [
     "//mediapipe/tasks/cc/vision/interactive_segmenter:interactive_segmenter_graph",
     "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
     "//mediapipe/tasks/cc/vision/pose_landmarker:pose_landmarker_graph",
-]
+] + select({
+    "//conditions:default": [],
+    ":enable_odml_cocoapods_build": ["@odml//odml/infra/genai/inference/c:libllm_inference_engine_deps"],
+})
 
 OPENCV_DEPS = {
     "//third_party:opencv_ios_sim_arm64_source_build": ["@ios_opencv_source//:opencv_xcframework"],
@@ -335,6 +338,7 @@ apple_static_xcframework(
         "//conditions:default": ["//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu"],
         ":enable_odml_cocoapods_build": [
             "@odml//odml/infra/genai/inference/c:libllm_inference_engine",
+            "@odml//odml/infra/genai/inference/c:libllm_inference_engine_deps",
         ],
     }),
     bundle_name = "MediaPipeTasksGenAI",
@@ -348,15 +352,7 @@ apple_static_xcframework(
     minimum_os_versions = {
         "ios": MPP_TASK_MINIMUM_OS_VERSION,
     },
-    deps = [
-        "//mediapipe/tasks/ios/genai/inference:LlmInference",
-    ] + select({
-        "//conditions:default": ["//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu"],
-        ":enable_odml_cocoapods_build": [
-            "@odml//odml/infra/genai/inference/c:libllm_inference_engine",
-            "@odml//odml/infra/genai/inference/c:libllm_inference_engine_deps",
-        ],
-    }),
+    deps = ["//mediapipe/tasks/ios/genai/inference:LlmInference"],
 )
 
 apple_static_xcframework(
@@ -377,9 +373,6 @@ apple_static_xcframework(
     ],
     deps = select({
         "//conditions:default": ["//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu"],
-        ":enable_odml_cocoapods_build": [
-            "@odml//odml/infra/genai/inference/c:libllm_inference_engine",
-            "@odml//odml/infra/genai/inference/c:libllm_inference_engine_deps",
-        ],
+        ":enable_odml_cocoapods_build": ["@odml//odml/infra/genai/inference/c:libllm_inference_engine"],
     }),
 )
