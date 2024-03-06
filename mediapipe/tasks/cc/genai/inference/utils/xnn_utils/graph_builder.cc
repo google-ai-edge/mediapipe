@@ -153,7 +153,7 @@ absl::StatusOr<std::unique_ptr<XnnGraph>> XnnGraphBuilder::Build() {
   RET_CHECK_EQ(xnn_status_success,
                xnn_create_subgraph(
                    /*external_value_ids=*/input_tensors_added_order_.size() +
-                       output_tensors.size() + rope_weights_.size(),
+                       output_tensors.size(),
                    /*flags=*/0, &subgraph_ptr));
   RET_CHECK_NE(subgraph_ptr, nullptr);
 
@@ -164,10 +164,6 @@ absl::StatusOr<std::unique_ptr<XnnGraph>> XnnGraphBuilder::Build() {
     }
     for (auto& t : output_tensors) {
       RET_CHECK_EQ(t->tensor_id(subgraph_ptr), XNN_INVALID_VALUE_ID);
-      t->set_tensor_id(subgraph_ptr, cnt++);
-    }
-    for (auto& t : rope_weights_) {
-      interm_tensors_.erase(t);
       t->set_tensor_id(subgraph_ptr, cnt++);
     }
   }
@@ -183,9 +179,6 @@ absl::StatusOr<std::unique_ptr<XnnGraph>> XnnGraphBuilder::Build() {
   for (auto& output : output_tensors) {
     MP_RETURN_IF_ERROR(output->DefineAsOutput(*subgraph));
   }
-  for (auto& t : rope_weights_) {
-    MP_RETURN_IF_ERROR(t->DefineRope(*subgraph));
-  }
 
   for (auto& step : build_steps_) {
     if (auto s = step(subgraph.get()); !s.ok()) {
@@ -194,7 +187,6 @@ absl::StatusOr<std::unique_ptr<XnnGraph>> XnnGraphBuilder::Build() {
   }
 
   build_steps_.clear();
-  rope_weights_.clear();
   XnnGraph result(std::move(subgraph),
                   std::make_unique<RuntimeConfigs>(*runtime_configs_));
   result.input_tensors_ = std::move(input_tensors_added_order_);
@@ -765,8 +757,6 @@ absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::PerDimScale(
 
 absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::Rope(
     std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> segment_pos) {
-  rope_weights_.insert(segment_pos);
-
   const auto& input_dim = input->dims;
   const auto& segment_pos_dim = segment_pos->dims;
   // B T N H
@@ -998,7 +988,6 @@ absl::Status XnnGraph::SetupRuntime() {
   {
     VLOG(3) << "input size " << input_tensors_.size();
     VLOG(3) << "output size " << output_tensors_.size();
-    VLOG(3) << "rope size " << rope_weights_.size();
     externals_.clear();
     // Init external
     for (const auto& input : input_tensors_) {
@@ -1010,9 +999,6 @@ absl::Status XnnGraph::SetupRuntime() {
       VLOG(3) << "output id " << output->tensor_id(owned_subgraph_.get());
       externals_.push_back(xnn_external_value{
           output->tensor_id(owned_subgraph_.get()), output->Data()});
-    }
-    for (const auto& t : rope_weights_) {
-      VLOG(3) << "rope id " << t->tensor_id(owned_subgraph_.get());
     }
   }
   RET_CHECK_EQ(

@@ -342,7 +342,7 @@ describe('HolisticLandmarker', () => {
     expect(holisticLandmarker.fakeWasmModule._waitUntilIdle).toHaveBeenCalled();
 
     expect(landmarks).toEqual({
-      faceLandmarks: [[{x: 0, y: 0, z: 0}]],
+      faceLandmarks: [[{x: 0, y: 0, z: 0, visibility: 0}]],
       faceBlendshapes: [{
         categories: [{
           index: 1,
@@ -353,13 +353,13 @@ describe('HolisticLandmarker', () => {
         headIndex: -1,
         headName: ''
       }],
-      poseLandmarks: [[{x: 0, y: 0, z: 0}]],
-      poseWorldLandmarks: [[{x: 0, y: 0, z: 0}]],
+      poseLandmarks: [[{x: 0, y: 0, z: 0, visibility: 0}]],
+      poseWorldLandmarks: [[{x: 0, y: 0, z: 0, visibility: 0}]],
       poseSegmentationMasks: [],
-      leftHandLandmarks: [[{x: 0, y: 0, z: 0}]],
-      leftHandWorldLandmarks: [[{x: 0, y: 0, z: 0}]],
-      rightHandLandmarks: [[{x: 0, y: 0, z: 0}]],
-      rightHandWorldLandmarks: [[{x: 0, y: 0, z: 0}]]
+      leftHandLandmarks: [[{x: 0, y: 0, z: 0, visibility: 0}]],
+      leftHandWorldLandmarks: [[{x: 0, y: 0, z: 0, visibility: 0}]],
+      rightHandLandmarks: [[{x: 0, y: 0, z: 0, visibility: 0}]],
+      rightHandWorldLandmarks: [[{x: 0, y: 0, z: 0, visibility: 0}]]
     });
   });
 

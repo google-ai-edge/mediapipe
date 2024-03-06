@@ -68,7 +68,7 @@ class PrefixDecodeLlm : public Llm {
     const size_t decode_step = prev_ids_.size() - 1;
     VLOG(2) << "Decode step " << decode_step;
 
-    if (decode_step == llm_params_.seq_size_T - 1) {
+    if (decode_step >= llm_params_.seq_size_T - 1) {
       return absl::OutOfRangeError(
           absl::StrCat("Hit max sequence length ", llm_params_.seq_size_T));
     }
@@ -381,7 +381,8 @@ absl::Status Llm::InitInputTokens(const std::vector<int>& input_ids) {
   if (llm_params_.enable_dynamic_shape) {
     MP_RETURN_IF_ERROR(ReshapeInputResource());
 
-    transformer_input_->Borrow(input_pivot_->Slice(1, prev_ids_.size()));
+    transformer_input_->Borrow(input_pivot_,
+                               prev_ids_.size() * llm_params_.model_dim_D);
     transformer_input_->Resize(Tensor::DimsType{
         llm_params_.batch_size_B, input_ids.size(), llm_params_.model_dim_D});
     RET_CHECK_EQ(
@@ -400,6 +401,11 @@ absl::Status Llm::InitInputTokens(const std::vector<int>& input_ids) {
 
 absl::Status Llm::GetNextToken(std::vector<int>* output_ids) {
   VLOG(2) << "Decode step " << prev_ids_.size() - 1;
+
+  if (prev_ids_.size() >= llm_params_.seq_size_T) {
+    return absl::OutOfRangeError(
+        absl::StrCat("Hit max sequence length ", llm_params_.seq_size_T));
+  }
 
   MP_RETURN_IF_ERROR(Run());
 
@@ -447,12 +453,14 @@ LlmBuilder::PreProcess(std::shared_ptr<Tensor> token_embedding,
   InputResource resource;
   constexpr absl::string_view kAttnMaskSource = "atten_mask";
   constexpr absl::string_view kPosEmbeddingSource = "pos_embedding";
+  constexpr absl::string_view kSegmentPosSource = "segment_pos";
   if (is_prefix) {
     MP_ASSIGN_OR_RETURN(resource.atten_mask, NewInput({llm_params_.seq_size_T,
                                                        llm_params_.seq_size_T},
                                                       kAttnMaskSource));
-    resource.segment_pos = std::make_shared<Tensor>(
-        Tensor::DimsType({llm_params_.seq_size_T, llm_params_.head_dim_H}));
+    MP_ASSIGN_OR_RETURN(resource.segment_pos, NewInput({llm_params_.seq_size_T,
+                                                        llm_params_.head_dim_H},
+                                                       kSegmentPosSource));
     MP_RETURN_IF_ERROR(
         InitSegmentPos(0, llm_params_.seq_size_T, *resource.segment_pos));
     MP_ASSIGN_OR_RETURN(
@@ -465,8 +473,9 @@ LlmBuilder::PreProcess(std::shared_ptr<Tensor> token_embedding,
         NewInput({1, llm_params_.model_dim_D}, kPosEmbeddingSource));
     MP_ASSIGN_OR_RETURN(resource.atten_mask,
                         NewInput({1, llm_params_.seq_size_T}, kAttnMaskSource));
-    resource.segment_pos =
-        std::make_shared<Tensor>(Tensor::DimsType{1, llm_params_.head_dim_H});
+    MP_ASSIGN_OR_RETURN(
+        resource.segment_pos,
+        NewInput({1, llm_params_.head_dim_H}, kSegmentPosSource));
     MP_RETURN_IF_ERROR(InitSegmentPos(0, 1, *resource.segment_pos));
   }
   const float dim_scale = std::sqrt(llm_params_.model_dim_D);

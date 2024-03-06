@@ -331,9 +331,12 @@ apple_static_xcframework(
 
 apple_static_xcframework(
     name = "MediaPipeTasksGenAI_framework",
-    avoid_deps = [
-        "//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu",
-    ],
+    avoid_deps = select({
+        "//conditions:default": ["//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu"],
+        ":enable_odml_cocoapods_build": [
+            "@odml//odml/infra/genai/inference/c:libllm_inference_engine",
+        ],
+    }),
     bundle_name = "MediaPipeTasksGenAI",
     ios = {
         "simulator": [
@@ -350,8 +353,8 @@ apple_static_xcframework(
     ] + select({
         "//conditions:default": ["//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu"],
         ":enable_odml_cocoapods_build": [
-            "//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine",
-            "//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_deps",
+            "@odml//odml/infra/genai/inference/c:libllm_inference_engine",
+            "@odml//odml/infra/genai/inference/c:libllm_inference_engine_deps",
         ],
     }),
 )
@@ -375,8 +378,8 @@ apple_static_xcframework(
     deps = select({
         "//conditions:default": ["//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu"],
         ":enable_odml_cocoapods_build": [
-            "//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine",
-            "//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_deps",
+            "@odml//odml/infra/genai/inference/c:libllm_inference_engine",
+            "@odml//odml/infra/genai/inference/c:libllm_inference_engine_deps",
         ],
     }),
 )

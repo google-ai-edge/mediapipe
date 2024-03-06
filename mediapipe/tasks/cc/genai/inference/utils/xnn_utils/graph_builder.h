@@ -305,10 +305,6 @@ class XnnGraphBuilder {
   absl::flat_hash_set<std::shared_ptr<Tensor>> interm_tensors_;
   absl::flat_hash_set<std::shared_ptr<Tensor>> static_weights_;
 
-  // This is sort of bug that the weights used for rope has to be defined with
-  // EXTERNAL flag, but with id out of the external range.
-  absl::flat_hash_set<std::shared_ptr<Tensor>> rope_weights_;
-
   // Caches
   absl::flat_hash_map<
       size_t /*dim*/,
@@ -351,8 +347,6 @@ class XnnGraph {
 
   std::vector<std::shared_ptr<Tensor>> input_tensors_;
   std::vector<std::shared_ptr<Tensor>> output_tensors_;
-
-  absl::flat_hash_set<std::shared_ptr<Tensor>> rope_weights_;
 
   absl::flat_hash_set<std::shared_ptr<Tensor>> static_weights_;
 };

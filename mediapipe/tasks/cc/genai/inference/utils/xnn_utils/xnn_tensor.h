@@ -56,7 +56,9 @@ struct Tensor {
                                   : std::accumulate(std::begin(dims),
                                                     std::end(dims), size_t(1),
                                                     std::multiplies<size_t>())),
-        is_sparse_tensor(is_sparse_) {}
+        is_sparse_tensor(is_sparse_) {
+    elements_capacity = internal_num_elements;
+  }
   Tensor(Tensor&& other) = default;
 
   Tensor& operator=(const Tensor& other) = delete;
@@ -77,7 +79,6 @@ struct Tensor {
   absl::Status DefineAsIntermediateTensor(xnn_subgraph& subgraph);
   virtual absl::Status DefineWeight(xnn_subgraph& subgraph, uint32_t flags);
   absl::Status DefineWeight(xnn_subgraph& subgraph);
-  absl::Status DefineRope(xnn_subgraph& subgraph);
 
   // Load the tensor from buffer, assuming the buffer is long enough.
   absl::Status LoadFromBuffer(const void* buffer);
@@ -161,6 +162,7 @@ struct Tensor {
 
   // shared_ptr to make TensorMetadata copyable.
   std::shared_ptr<char> flat_data;
+  size_t elements_capacity = 0;
 
   // Optional, annotates where the tensor comes from. E.g. the filename where
   // the tensor is loaded from.
