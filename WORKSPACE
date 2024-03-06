@@ -644,7 +644,7 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 git_repository(
     name = "ovms",
     remote = "https://github.com/openvinotoolkit/model_server",
-    commit = "7bf5d7fc217a81ce4b0a089c7679ecb77e6c544c", # Use bazel to build aws-sdk-cpp (#2334)
+    commit = "c5a2a67826585e7ff6efb1daa012c75e5e754e00", # Update links [main] (#2358)
 )
 
 # DEV ovms - adjust local repository path for build
