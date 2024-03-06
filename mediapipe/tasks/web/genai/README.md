@@ -11,7 +11,5 @@ const genai = await FilesetResolver.forGenAiTasks(
     "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai/wasm"
 );
 const llmInference = await LlmInference.createFromModelPath(genai, MODEL_URL);
-const response = llmInference.generateResponse(inputText);
+const response = await llmInference.generateResponse(inputText);
 ```
-
-<!-- TODO: Complete README for MediaPipe GenAI Task. -->
