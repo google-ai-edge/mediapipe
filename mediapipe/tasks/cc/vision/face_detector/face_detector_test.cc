@@ -17,7 +17,6 @@ limitations under the License.
 
 #include <vector>
 
-#include "absl/flags/flag.h"
 #include "absl/log/absl_check.h"
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/formats/image.h"
@@ -29,6 +28,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/components/containers/keypoint.h"
 #include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
+#include "testing/base/public/gunit.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -58,9 +58,9 @@ constexpr float kKeypointErrorThreshold = 1e-2;
 
 FaceDetectorResult GetExpectedFaceDetectorResult(absl::string_view file_name) {
   mediapipe::Detection detection;
-  ABSL_CHECK_OK(
-      GetTextProto(file::JoinPath("./", kTestDataDirectory, file_name),
-                   &detection, Defaults()))
+  ABSL_CHECK_OK(GetTextProto(
+      file::JoinPath(::testing::SrcDir(), kTestDataDirectory, file_name),
+      &detection, Defaults()))
       << "Expected face detection result does not exist.";
   return components::containers::ConvertToDetectionResult({detection});
 }
@@ -110,11 +110,13 @@ class ImageModeTest : public testing::TestWithParam<TestParams> {};
 
 TEST_P(ImageModeTest, Succeeds) {
   MP_ASSERT_OK_AND_ASSIGN(
-      Image image, DecodeImageFromFile(JoinPath("./", kTestDataDirectory,
-                                                GetParam().test_image_name)));
+      Image image,
+      DecodeImageFromFile(JoinPath(::testing::SrcDir(), kTestDataDirectory,
+                                   GetParam().test_image_name)));
   auto options = std::make_unique<FaceDetectorOptions>();
   options->base_options.model_asset_path =
-      JoinPath("./", kTestDataDirectory, GetParam().face_detection_model_name);
+      JoinPath(::testing::SrcDir(), kTestDataDirectory,
+               GetParam().face_detection_model_name);
   options->running_mode = core::RunningMode::IMAGE;
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<FaceDetector> face_detector,
                           FaceDetector::Create(std::move(options)));
@@ -164,11 +166,13 @@ class VideoModeTest : public testing::TestWithParam<TestParams> {};
 TEST_P(VideoModeTest, Succeeds) {
   const int iterations = 100;
   MP_ASSERT_OK_AND_ASSIGN(
-      Image image, DecodeImageFromFile(JoinPath("./", kTestDataDirectory,
-                                                GetParam().test_image_name)));
+      Image image,
+      DecodeImageFromFile(JoinPath(::testing::SrcDir(), kTestDataDirectory,
+                                   GetParam().test_image_name)));
   auto options = std::make_unique<FaceDetectorOptions>();
   options->base_options.model_asset_path =
-      JoinPath("./", kTestDataDirectory, GetParam().face_detection_model_name);
+      JoinPath(::testing::SrcDir(), kTestDataDirectory,
+               GetParam().face_detection_model_name);
   options->running_mode = core::RunningMode::VIDEO;
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<FaceDetector> face_detector,
                           FaceDetector::Create(std::move(options)));
@@ -222,11 +226,13 @@ class LiveStreamModeTest : public testing::TestWithParam<TestParams> {};
 TEST_P(LiveStreamModeTest, Succeeds) {
   const int iterations = 100;
   MP_ASSERT_OK_AND_ASSIGN(
-      Image image, DecodeImageFromFile(JoinPath("./", kTestDataDirectory,
-                                                GetParam().test_image_name)));
+      Image image,
+      DecodeImageFromFile(JoinPath(::testing::SrcDir(), kTestDataDirectory,
+                                   GetParam().test_image_name)));
   auto options = std::make_unique<FaceDetectorOptions>();
   options->base_options.model_asset_path =
-      JoinPath("./", kTestDataDirectory, GetParam().face_detection_model_name);
+      JoinPath(::testing::SrcDir(), kTestDataDirectory,
+               GetParam().face_detection_model_name);
   options->running_mode = core::RunningMode::LIVE_STREAM;
   std::vector<FaceDetectorResult> face_detector_results;
   std::vector<std::pair<int, int>> image_sizes;
