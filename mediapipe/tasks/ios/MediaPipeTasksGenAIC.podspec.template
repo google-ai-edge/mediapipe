@@ -13,6 +13,5 @@ Pod::Spec.new do |s|
   s.module_name = 'MediaPipeTasksGenAIC'
   s.static_framework = true
   s.library = 'c++'
-  s.dependency 'MediaPipeTasksCommon', '${MPP_TASKS_COMMON_VERSION}'
   s.vendored_frameworks = 'frameworks/MediaPipeTasksGenAIC.xcframework'
 end
