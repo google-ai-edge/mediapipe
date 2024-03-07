@@ -334,7 +334,7 @@ apple_static_xcframework(
 
 apple_static_xcframework(
     name = "MediaPipeTasksGenAI_framework",
-    avoid_deps = select({
+    avoid_deps = MEDIAPIPE_TASKS_COMMON_DEPS + CALCULATORS_AND_GRAPHS + select({
         "//conditions:default": ["//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu"],
         ":enable_odml_cocoapods_build": [
             "@odml//odml/infra/genai/inference/c:libllm_inference_engine",
@@ -357,6 +357,7 @@ apple_static_xcframework(
 
 apple_static_xcframework(
     name = "MediaPipeTasksGenAIC_framework",
+    avoid_deps = MEDIAPIPE_TASKS_COMMON_DEPS + CALCULATORS_AND_GRAPHS,
     bundle_name = "MediaPipeTasksGenAIC",
     ios = {
         "simulator": [
