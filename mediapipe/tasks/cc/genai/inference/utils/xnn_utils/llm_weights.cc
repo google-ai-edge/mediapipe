@@ -120,7 +120,7 @@ LlmParams LlmParams::FromLLMParametersProto(
                                   ? transformer_params.num_heads()
                                   : transformer_params.num_kv_heads()),
       .enable_kv_cache = true,
-      .enable_dynamic_shape = false};
+      .enable_dynamic_shape = true};
   switch (
       transformer_params.self_attention_parameters().attention_mask_type()) {
     case TransformerParameters::UNSPECIFIED:
