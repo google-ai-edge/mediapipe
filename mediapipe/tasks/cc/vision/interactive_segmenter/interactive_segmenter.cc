@@ -169,7 +169,9 @@ InteractiveSegmenter::Create(
                             options->output_category_mask),
           std::move(options->base_options.op_resolver),
           core::RunningMode::IMAGE,
-          /*packets_callback=*/nullptr)));
+          /*packets_callback=*/nullptr,
+          /*disable_default_service=*/
+          options->base_options.disable_default_service)));
   segmenter->output_category_mask_ = options->output_category_mask;
   segmenter->output_confidence_masks_ = options->output_confidence_masks;
   return segmenter;

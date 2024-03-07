@@ -15,6 +15,8 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/vision/face_detector/face_detector.h"
 
+#include <utility>
+
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/tasks/cc/components/containers/detection_result.h"
@@ -130,7 +132,9 @@ absl::StatusOr<std::unique_ptr<FaceDetector>> FaceDetector::Create(
           std::move(options_proto),
           options->running_mode == core::RunningMode::LIVE_STREAM),
       std::move(options->base_options.op_resolver), options->running_mode,
-      std::move(packets_callback));
+      std::move(packets_callback),
+      /*disable_default_service=*/
+      options->base_options.disable_default_service);
 }
 
 absl::StatusOr<FaceDetectorResult> FaceDetector::Detect(

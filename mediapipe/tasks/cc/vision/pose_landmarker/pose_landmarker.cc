@@ -16,6 +16,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/pose_landmarker/pose_landmarker.h"
 
 #include <memory>
+#include <utility>
 #include <vector>
 
 #include "mediapipe/framework/api2/builder.h"
@@ -183,7 +184,9 @@ absl::StatusOr<std::unique_ptr<PoseLandmarker>> PoseLandmarker::Create(
               options->running_mode == core::RunningMode::LIVE_STREAM,
               options->output_segmentation_masks),
           std::move(options->base_options.op_resolver), options->running_mode,
-          std::move(packets_callback))));
+          std::move(packets_callback),
+          /*disable_default_service=*/
+          options->base_options.disable_default_service)));
 
   pose_landmarker->output_segmentation_masks_ =
       options->output_segmentation_masks;
