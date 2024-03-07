@@ -200,10 +200,18 @@ export class LlmInference extends TaskRunner {
     }
     if ('topK' in options) {
       this.samplerParams.setK(options.topK ?? DEFAULT_TOP_K);
+      if (options.topK && !options.randomSeed) {
+        console.warn(
+            `'topK' option ignored; it requires randomSeed to be set.`);
+      }
     }
     if ('temperature' in options) {
       this.samplerParams.setTemperature(
           options.temperature ?? DEFAULT_TEMPERATURE);
+      if (options.temperature && !options.randomSeed) {
+        console.warn(
+            `'temperature' option ignored; it requires randomSeed to be set.`);
+      }
     }
     if (options.randomSeed) {
       this.samplerParams.setSeed(options.randomSeed);
@@ -505,6 +513,7 @@ export class LlmInference extends TaskRunner {
     detokenizerOptions.setNumOutputHeads(1);
     // No need to set spm model, instead reuse TokenizerCalculator's side input.
     detokenizerOptions.addStopTokens('<eos>');
+    detokenizerOptions.addStopTokens('<|endoftext|>');
     detokenizerOptionsProto.setValue(detokenizerOptions.serializeBinary());
     const detokenizerNode = new CalculatorGraphConfig.Node();
     detokenizerNode.setCalculator('DetokenizerCalculator');
