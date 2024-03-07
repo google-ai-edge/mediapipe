@@ -364,8 +364,23 @@ apple_static_xcframework(
     public_hdrs = [
         ":llm_inference_engine.h",
     ],
-    deps = select({
+    # Including here the deps that were in avoid_deps in MediaPipeTasksGenAI_library.
+    deps = TENSORFLOW_LITE_C_DEPS + select({
         "//conditions:default": ["//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu"],
-        ":enable_odml_cocoapods_build": ["@odml//odml/infra/genai/inference/c:libllm_inference_engine_gpu"],
+        ":enable_odml_cocoapods_build": ["@odml//odml/infra/genai/inference/c:libllm_inference_engine"],
+    }),
+)
+
+apple_static_library(
+    name = "MediaPipeTasksGenAI_library",
+    # Excluding these to avoid duplicate symbols.
+    avoid_deps = TENSORFLOW_LITE_C_DEPS + [
+        "//mediapipe/gpu:metal_shared_resources",
+    ],
+    minimum_os_version = MPP_TASK_MINIMUM_OS_VERSION,
+    platform_type = "ios",
+    deps = select({
+        "//conditions:default": [],
+        ":enable_odml_cocoapods_build": ["@odml//odml/infra/genai/inference/c:libllm_inference_engine_deps"],
     }),
 )
