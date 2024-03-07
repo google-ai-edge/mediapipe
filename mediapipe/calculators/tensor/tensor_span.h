@@ -46,8 +46,8 @@ TensorSpan MakeTensorSpan(api2::internal::MultiplePortAccess<
 // TODO: Extend to have both const and mutable variants.
 class TensorSpan {
  public:
+  TensorSpan() = default;
   explicit TensorSpan(std::vector<const Tensor*>&& tensor_refs);
-  TensorSpan() = delete;
 
   // Accessors
   // We pattern this after std::vector so that the syntax is familiar to users.
