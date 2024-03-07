@@ -30,5 +30,7 @@ swift_library(
     generated_header_name = "LlmInference-Swift.h",
     generates_header = 1,
     module_name = "MediaPipeTasksGenAI",
-    deps = ["//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu"],
+    deps = [
+        "//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu",
+    ],
 )
