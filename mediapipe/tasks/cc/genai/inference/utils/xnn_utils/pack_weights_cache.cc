@@ -177,6 +177,7 @@ absl::Status PackWeightsCache::InitializeFromCache(
     name_to_offset_size_[name] =
         std::make_pair(buffer->offset(), buffer->size());
   }
+  is_finalized_ = true;
   return absl::OkStatus();
 }
 
