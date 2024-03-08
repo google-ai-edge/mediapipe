@@ -42,7 +42,6 @@ absl::StatusOr<std::shared_ptr<const ::tflite::Model>> GetTfliteModel(
   }
   auto tflite_model = std::shared_ptr<const ::tflite::Model>(
       mmap_file, ::tflite::GetModel(mmap_file->data()));
-
   return tflite_model;
 }
 
@@ -62,12 +61,11 @@ absl::StatusOr<odml::infra::proto::LlmParameters> GetLlmParams(
       int llm_params_index = metadata->buffer();
       auto llm_params_buffer =
           (*tflite_model)->buffers()->Get(llm_params_index);
-      std::string llm_params_str(
-          (char*)mmap_file->data() + llm_params_buffer->offset(),
-          llm_params_buffer->size());
+      std::string llm_params_str(static_cast<const char*>(mmap_file->data()) +
+                                     llm_params_buffer->offset(),
+                                 llm_params_buffer->size());
       odml::infra::proto::LlmParameters llm_params;
       llm_params.ParseFromString(llm_params_str);
-
       return llm_params;
     }
   }
@@ -80,7 +78,6 @@ absl::StatusOr<odml::infra::proto::LlmParameters> GetLlmParams(
 absl::StatusOr<odml::infra::proto::LlmParameters> GetLlmParams(
     const ::tflite::FlatBufferModel& fb_model) {
   const ::tflite::Model* tflite_model = fb_model.GetModel();
-
   if (tflite_model->metadata() != nullptr) {
     for (const auto& metadata : *tflite_model->metadata()) {
       if (metadata->name()->c_str() ==
@@ -88,11 +85,11 @@ absl::StatusOr<odml::infra::proto::LlmParameters> GetLlmParams(
         int llm_params_index = metadata->buffer();
         auto llm_params_buffer = tflite_model->buffers()->Get(llm_params_index);
         std::string llm_params_str(
-            (char*)fb_model.allocation()->base() + llm_params_buffer->offset(),
+            static_cast<const char*>(fb_model.allocation()->base()) +
+                llm_params_buffer->offset(),
             llm_params_buffer->size());
         odml::infra::proto::LlmParameters llm_params;
         llm_params.ParseFromString(llm_params_str);
-
         return llm_params;
       }
     }
@@ -116,7 +113,6 @@ absl::StatusOr<odml::infra::proto::LlmModelType> GetLlmModelType(
       int llm_model_type_index = metadata->buffer();
       odml::infra::proto::LlmModelType llm_model_type =
           static_cast<odml::infra::proto::LlmModelType>(llm_model_type_index);
-
       return llm_model_type;
     }
   }
@@ -128,7 +124,6 @@ absl::StatusOr<odml::infra::proto::LlmModelType> GetLlmModelType(
 absl::StatusOr<odml::infra::proto::LlmModelType> GetLlmModelType(
     const ::tflite::FlatBufferModel& fb_model) {
   const ::tflite::Model* tflite_model = fb_model.GetModel();
-
   if (tflite_model->metadata() != nullptr) {
     for (const auto& metadata : *tflite_model->metadata()) {
       if (kLlmModelTypeName == metadata->name()->c_str()) {
@@ -154,14 +149,34 @@ absl::StatusOr<std::string> GetLlmBackend(
   }
 
   for (const auto& metadata : *(*tflite_model)->metadata()) {
-    if (kLlmBackendName == metadata->name()->c_str()) {
+    if (metadata->name()->c_str() == kLlmBackendName) {
       int backend_index = metadata->buffer();
       auto backend_buffer = (*tflite_model)->buffers()->Get(backend_index);
-      std::string backend_str(
-          (char*)mmap_file->data() + backend_buffer->offset(),
-          backend_buffer->size());
-
+      std::string backend_str(static_cast<const char*>(mmap_file->data()) +
+                                  backend_buffer->offset(),
+                              backend_buffer->size());
       return backend_str;
+    }
+  }
+  return absl::NotFoundError(
+      absl::StrCat("Failed to get backend for LLM inference, missing ",
+                   kLlmBackendName, " in tflite metadata"));
+}
+
+absl::StatusOr<std::string> GetLlmBackend(
+    const ::tflite::FlatBufferModel& fb_model) {
+  const ::tflite::Model* tflite_model = fb_model.GetModel();
+  if (tflite_model->metadata() != nullptr) {
+    for (const auto& metadata : *tflite_model->metadata()) {
+      if (metadata->name()->c_str() == kLlmBackendName) {
+        int backend_index = metadata->buffer();
+        auto backend_buffer = tflite_model->buffers()->Get(backend_index);
+        std::string backend_str(
+            static_cast<const char*>(fb_model.allocation()->base()) +
+                backend_buffer->offset(),
+            backend_buffer->size());
+        return backend_str;
+      }
     }
   }
   return absl::NotFoundError(

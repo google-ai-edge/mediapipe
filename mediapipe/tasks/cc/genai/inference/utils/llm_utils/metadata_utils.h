@@ -54,6 +54,10 @@ absl::StatusOr<std::string> GetLlmBackend(
     std::shared_ptr<mediapipe::tasks::genai::llm_utils::MemoryMappedFile>
         mmap_file);
 
+// Retrieve backend string from tflite flatbuffer metadata.
+absl::StatusOr<std::string> GetLlmBackend(
+    const ::tflite::FlatBufferModel& fb_model);
+
 // Retrieves SentencePiece from tflite's metadata and returns a string_view of
 // the model content.
 absl::StatusOr<absl::string_view> ExtractSentencePieceToStringView(
