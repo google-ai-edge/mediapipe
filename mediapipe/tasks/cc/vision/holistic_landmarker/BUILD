@@ -116,6 +116,7 @@ cc_library(
 cc_library(
     name = "holistic_landmarker_graph",
     srcs = ["holistic_landmarker_graph.cc"],
+    visibility = ["//visibility:public"],  # Visibility is public until we have a C++ API.
     deps = [
         ":holistic_face_tracking",
         ":holistic_hand_tracking",
