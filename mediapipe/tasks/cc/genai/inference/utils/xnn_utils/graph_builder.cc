@@ -959,6 +959,10 @@ absl::Status XnnGraph::CreateRuntime() {
   RET_CHECK_EQ(runtime_.get(), nullptr);
   xnn_runtime_t runtime_ptr = nullptr;
   uint32_t flags = 0;
+  if (runtime_configs_->activation_precision ==
+      RuntimeConfigs::ActivationPrecision::kFP16) {
+    flags |= XNN_FLAG_FORCE_FP16_INFERENCE;
+  }
   if (runtime_configs_->xnn_profile) {
     flags |= XNN_FLAG_BASIC_PROFILING;
 

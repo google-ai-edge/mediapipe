@@ -84,6 +84,11 @@ struct RuntimeConfigs {
   // Whether or not to use dynamic quantization to speed up. If not provided,
   // we will try best to enable it, given tensor/weight data type.
   std::optional<bool> use_dynamic_quantization;
+
+  enum class ActivationPrecision : int {
+    kFP32,
+    kFP16
+  } activation_precision = ActivationPrecision::kFP32;
 };
 
 absl::StatusOr<std::shared_ptr<XnnWeightsCache>> CreateWeightsCache(
