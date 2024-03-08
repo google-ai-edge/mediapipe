@@ -14,7 +14,6 @@
 
 #include <cstdint>
 
-#include "absl/flags/flag.h"
 #include "absl/strings/substitute.h"
 #include "mediapipe/calculators/tensorflow/tensorflow_session.h"
 #include "mediapipe/calculators/tensorflow/tensorflow_session_from_frozen_graph_calculator.pb.h"
@@ -32,6 +31,7 @@
 #include "mediapipe/framework/tool/validate_type.h"
 #include "tensorflow/core/framework/tensor.h"
 #include "tensorflow/core/protobuf/config.pb.h"
+#include "testing/base/public/gunit.h"
 
 namespace mediapipe {
 
@@ -44,7 +44,7 @@ constexpr char kStringModelTag[] = "STRING_MODEL";
 constexpr char kSessionTag[] = "SESSION";
 
 std::string GetGraphDefPath() {
-  return mediapipe::file::JoinPath("./",
+  return mediapipe::file::JoinPath(::testing::SrcDir(),
                                    "mediapipe/calculators/tensorflow/"
                                    "testdata/frozen_graph_def.pb");
 }
