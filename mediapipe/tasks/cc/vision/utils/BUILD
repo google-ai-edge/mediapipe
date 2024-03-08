@@ -75,6 +75,7 @@ cc_library(
     name = "image_utils",
     srcs = ["image_utils.cc"],
     hdrs = ["image_utils.h"],
+    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:image_frame",
