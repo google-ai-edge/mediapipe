@@ -28,21 +28,6 @@ class TensorConverterGpu {
  public:
   virtual ~TensorConverterGpu() = default;
 
-  // Initializes the converter.
-  // @input_width width of input image.
-  // @input_height height of input image.
-  // @output_range defines output floating point scale.
-  // @include_alpha enables the inclusion of the alpha channel.
-  // @single_channel limites the conversion to the first channel in input image.
-  // @flip_vertically enables to v-flip the image during the conversion process.
-  // @num_output_channels defines the number of channels in output tensor. Note
-  // that the selected number of converted channels must match
-  // num_output_channels.
-  virtual absl::Status Init(int input_width, int input_height,
-                            std::optional<std::pair<float, float>> output_range,
-                            bool include_alpha, bool single_channel,
-                            bool flip_vertically, int num_output_channels) = 0;
-
   // Converts input GpuBuffer to Tensor.
   virtual Tensor Convert(const GpuBuffer& input) = 0;
 };

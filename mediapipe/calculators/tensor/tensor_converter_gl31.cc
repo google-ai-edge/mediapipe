@@ -107,7 +107,7 @@ class TensorConverterGlImpl : public TensorConverterGpu {
   absl::Status Init(int input_width, int input_height,
                     std::optional<std::pair<float, float>> output_range,
                     bool include_alpha, bool single_channel,
-                    bool flip_vertically, int num_output_channels) override {
+                    bool flip_vertically, int num_output_channels) {
     width_ = input_width;
     height_ = input_height;
     num_output_channels_ = num_output_channels;
@@ -145,9 +145,15 @@ class TensorConverterGlImpl : public TensorConverterGpu {
 
 }  // namespace
 
-std::unique_ptr<TensorConverterGpu> CreateTensorConverterGl31(
-    GlCalculatorHelper& gpu_helper) {
-  return std::make_unique<TensorConverterGlImpl>(gpu_helper);
+absl::StatusOr<std::unique_ptr<TensorConverterGpu>> CreateTensorConverterGl31(
+    GlCalculatorHelper& gpu_helper, int input_width, int input_height,
+    std::optional<std::pair<float, float>> output_range, bool include_alpha,
+    bool single_channel, bool flip_vertically, int num_output_channels) {
+  auto converter = std::make_unique<TensorConverterGlImpl>(gpu_helper);
+  MP_RETURN_IF_ERROR(converter->Init(input_width, input_height, output_range,
+                                     include_alpha, single_channel,
+                                     flip_vertically, num_output_channels));
+  return converter;
 }
 
 }  // namespace mediapipe

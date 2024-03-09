@@ -15,7 +15,10 @@
 #define MEDIAPIPE_CALCULATORS_TENSOR_TENSOR_CONVERTER_GL31_H_
 
 #include <memory>
+#include <optional>
+#include <utility>
 
+#include "absl/status/statusor.h"
 #include "mediapipe/calculators/tensor/tensor_converter_gpu.h"
 #include "mediapipe/framework/port.h"
 
@@ -24,9 +27,22 @@
 
 namespace mediapipe {
 
-// Instantiates an OpenGL 3.1-enabled TensorConverterGpu instance.
-std::unique_ptr<TensorConverterGpu> CreateTensorConverterGl31(
-    GlCalculatorHelper& gpu_helper);
+// Instantiates and initializes an OpenGL 3.1-enabled TensorConverterGpu
+// instance.
+// @gpu_helper helper to manage the OpenGL context.
+// @input_width width of input image.
+// @input_height height of input image.
+// @output_range defines output floating point scale.
+// @include_alpha enables the inclusion of the alpha channel.
+// @single_channel limites the conversion to the first channel in input image.
+// @flip_vertically enables to v-flip the image during the conversion process.
+// @num_output_channels defines the number of channels in output tensor. Note
+// that the selected number of converted channels must match
+// num_output_channels.
+absl::StatusOr<std::unique_ptr<TensorConverterGpu>> CreateTensorConverterGl31(
+    GlCalculatorHelper& gpu_helper, int input_width, int input_height,
+    std::optional<std::pair<float, float>> output_range, bool include_alpha,
+    bool single_channel, bool flip_vertically, int num_output_channels);
 
 }  // namespace mediapipe
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
