@@ -13,19 +13,23 @@
 // limitations under the License.
 
 import Foundation
-import MediaPipeTasksGenAIC
 
 /// A MediaPipe task that performs inference using a given Large Language Model.
 ///
 /// Note: Inherits from `NSObject` for Objective C interoperability.
-@objc(MPPLLMInference) public final class LlmInference: NSObject {
-  private static let numberOfDecodeStepsPerSync = 3
-  private static let sequenceBatchSize = 0
+@objc(MPPLlmInference) public final class LlmInference: NSObject {
+  private static let numberOfDecodeStepsPerSync: UInt = 3
+  private static let sequenceBatchSize: UInt = 0
+  private static let cacheCleanupQueueName = "com.google.mediapipe.genai.cacheCleanupQueue.\(UUID().uuidString)"
   private static let responseGenerationInProgressQueueName =
-    "com.google.mediapipe.genai.isResponseGenerationInProgressQueue"
+    "com.google.mediapipe.genai.isResponseGenerationInProgressQueue.\(UUID().uuidString)"
+  /// Serial queue for cache cleanup.
+  private static let cacheCleanupQueue = DispatchQueue(
+    label: cacheCleanupQueueName)
 
   private let llmTaskRunner: LlmTaskRunner
 
+  /// Concurrent queue to implement readers-writers lock on `responseGenerationInProgress`.
   private let responseGenerationInProgressQueue = DispatchQueue(
     label: LlmInference.responseGenerationInProgressQueueName,
     attributes: .concurrent)
@@ -52,25 +56,17 @@ import MediaPipeTasksGenAIC
   /// - Parameters:
   ///   - options: The options of type `LlmInference.Options` to use for configuring the
   /// `LlmInference`.
-  @objc public init(options: Options) {
-    let modelPath = strdup(options.modelPath)
-    let cacheDirectory = strdup(FileManager.default.temporaryDirectory.path)
-
-    defer {
-      free(modelPath)
-      free(cacheDirectory)
-    }
-
-    let sessionConfig = LlmSessionConfig(
-      model_path: modelPath,
-      cache_dir: cacheDirectory,
-      sequence_batch_size: LlmInference.sequenceBatchSize,
-      num_decode_steps_per_sync: LlmInference.numberOfDecodeStepsPerSync,
-      max_tokens: options.maxTokens,
+  @objc public init(options: Options) throws {
+    let taskRunnerConfig = LlmTaskRunner.Config(
+      modelPath: options.modelPath,
+      sequenceBatchSize: LlmInference.sequenceBatchSize,
+      numberOfDecodeStepsPerSync: LlmInference.numberOfDecodeStepsPerSync,
+      maxTokens: options.maxTokens,
       topk: options.topk,
       temperature: options.temperature,
-      random_seed: options.randomSeed)
-    llmTaskRunner = LlmTaskRunner(sessionConfig: sessionConfig)
+      randomSeed: options.randomSeed)
+
+    llmTaskRunner = try LlmTaskRunner(config: taskRunnerConfig)
 
     super.init()
   }
@@ -80,9 +76,9 @@ import MediaPipeTasksGenAIC
   ///
   /// - Parameters:
   ///   - modelPath: The absolute path to a model asset bundle stored locally on the device.
-  @objc public convenience init(modelPath: String) {
+  @objc public convenience init(modelPath: String) throws {
     let options = Options(modelPath: modelPath)
-    self.init(options: options)
+    try self.init(options: options)
   }
 
   /// Generates a response based on the input text.
@@ -149,6 +145,20 @@ import MediaPipeTasksGenAIC
       })
   }
 
+  /// Clears all cached files created by `LlmInference` to prevent exponential growth of your app
+  /// size. Please ensure that this method is not called during the lifetime of any instances of
+  /// `LlmInference`. If the cache is deleted while an instance of `LlmInference` is in scope,
+  /// calling one of its methods will result in undefined behaviour and may lead to a crash.
+  public class func clearAllCachedFiles(completion: @escaping(() -> Void)) {
+    /// Asynchronously deleting the files to prevent blocking the current thread as there may be 
+    /// multiple undeleted weight caches. Choosing a serial queue to let callers wait until the
+    // previous call for deletion is completed.
+    cacheCleanupQueue.async {
+        LlmTaskRunner.clearAllCachedFiles()
+        completion()
+      }
+  }
+
   /// Throw error if response generation is in progress or update response generation state.
   private func shouldContinueWithResponseGeneration() throws {
     if responseGenerationInProgress {
@@ -158,7 +168,7 @@ import MediaPipeTasksGenAIC
     responseGenerationInProgress = true
   }
 
-  private static func humanReadableString(
+  private class func humanReadableString(
     llmResponses: [String], stripLeadingWhitespaces: Bool = true
   ) -> String? {
     guard let llmResponse = llmResponses.first else {
@@ -180,11 +190,11 @@ extension LlmInference {
 
     /// The total length of the kv-cache. In other words, this is the total number of input + output
     /// tokens the model needs to handle.
-    @objc public var maxTokens: Int = 512
+    @objc public var maxTokens: UInt = 512
 
     /// The top K number of tokens to be sampled from for each decoding step. A value of 1 means
     /// greedy decoding. Defaults to 40.
-    @objc public var topk: Int = 40
+    @objc public var topk: UInt = 40
 
     /// The randomness when decoding the next token. A value of 0.0f means greedy decoding. Defaults
     /// to 0.8.
@@ -203,17 +213,18 @@ extension LlmInference {
       self.modelPath = modelPath
       super.init()
     }
+
   }
 }
 
 /// An extension to `String` to add some utility functions.
-extension String {
+fileprivate extension String {
   private static let tokenSplitter = "▁"
   /// Note this is NOT an underscore: ▁(U+2581)
   private static let newLine = "<0x0A>"
   private static let eod = "\\[eod\\]"
 
-  fileprivate func humanReadableString(stripLeadingWhitespaces: Bool = true) -> String? {
+  func humanReadableString(stripLeadingWhitespaces: Bool = true) -> String? {
     var humanReadableString = self.replacingOccurrences(of: String.tokenSplitter, with: " ")
       .replacingOccurrences(of: String.newLine, with: "\n")
     humanReadableString =

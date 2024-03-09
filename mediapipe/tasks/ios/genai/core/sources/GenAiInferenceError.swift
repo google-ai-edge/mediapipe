@@ -18,6 +18,7 @@ import Foundation
 public enum GenAiInferenceError: Error {
   case invalidResponse
   case illegalMethodCall
+  case modelNotFound
 }
 
 extension GenAiInferenceError: LocalizedError {
@@ -28,6 +29,8 @@ extension GenAiInferenceError: LocalizedError {
       return "The response returned by the model is invalid."
     case .illegalMethodCall:
       return "Response generation is already in progress."
+    case .modelNotFound:
+      return "No file found at the `modelPath` you provided."
     }
   }
 }
@@ -44,6 +47,8 @@ extension GenAiInferenceError: CustomNSError {
       return 0
     case .illegalMethodCall:
       return 1
+    case .modelNotFound:
+      return 2
     }
   }
 }
