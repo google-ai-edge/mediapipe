@@ -56,6 +56,9 @@ const INPUT_STREAM = 'text_in';
 const OUTPUT_STREAM = 'text_out';
 const OUTPUT_END_STREAM = 'text_end';
 
+const TOKEN_COST_INPUT_STREAM = 'token_cost_in';
+const TOKEN_COST_OUTPUT_STREAM = 'token_cost_out';
+
 const DEFAULT_MAX_TOKENS = 512;
 const DEFAULT_TOP_K = 1;
 const DEFAULT_TEMPERATURE = 1.0;
@@ -76,6 +79,7 @@ export class LlmInference extends TaskRunner {
   private readonly options: LlmInferenceGraphOptions;
   private readonly samplerParams: SamplerParameters;
   private isProcessing = false;
+  private latestTokenCostQueryResult?: number;
   private resolveGeneration?: (result: string) => void;
   private userProgressListener?: ProgressListener;
   private wasmFileReference?: WasmFileReference;
@@ -300,6 +304,32 @@ export class LlmInference extends TaskRunner {
   }
 
   /**
+   * Runs an invocation of *only* the tokenization for the LLM, and returns
+   * the size (in tokens) of the result. Cannot be called while
+   * a `generateResponse()` query is active. Runs synchronously.
+   *
+   * @export
+   * @param text The text to tokenize.
+   * @return The number of tokens in the resulting tokenization of the text.
+   *         May return undefined if an error occurred.
+   */
+  sizeInTokens(text: string): number | undefined {
+    if (this.isProcessing) {
+      throw new Error('Previous invocation is still processing.');
+    }
+    this.isProcessing = true;
+    this.latestTokenCostQueryResult = undefined;
+    this.graphRunner.addStringToStream(
+      text,
+      TOKEN_COST_INPUT_STREAM,
+      this.getSynctheticTimestamp(),
+    );
+    this.finishProcessing();
+    this.isProcessing = false;
+    return this.latestTokenCostQueryResult;
+  }
+
+  /**
    * Decodes the response from the LLM engine and returns a human-readable
    * string.
    */
@@ -366,6 +396,13 @@ export class LlmInference extends TaskRunner {
           this.setLatestOutputTimestamp(timestamp);
         });
     this.graphRunner.attachEmptyPacketListener(OUTPUT_END_STREAM, timestamp => {
+      this.isProcessing = false;
+      this.setLatestOutputTimestamp(timestamp);
+    });
+
+    this.graphRunner.attachIntListener(TOKEN_COST_OUTPUT_STREAM,
+        (cost, timestamp) => {
+      this.latestTokenCostQueryResult = cost;
       this.setLatestOutputTimestamp(timestamp);
     });
 
@@ -390,9 +427,11 @@ export class LlmInference extends TaskRunner {
   private buildLlmInferenceGraph(): CalculatorGraphConfig {
     const graphConfig = new CalculatorGraphConfig();
     graphConfig.addInputStream(INPUT_STREAM);
+    graphConfig.addInputStream(TOKEN_COST_INPUT_STREAM);
     graphConfig.addInputSidePacket('model_file_reference');
     graphConfig.addOutputStream(OUTPUT_STREAM);
     graphConfig.addOutputStream(OUTPUT_END_STREAM);
+    graphConfig.addOutputStream(TOKEN_COST_OUTPUT_STREAM);
 
     // TokenizerInputBuilder Node
     const tokenizerInputBuildNode = new CalculatorGraphConfig.Node();
@@ -530,6 +569,15 @@ export class LlmInference extends TaskRunner {
     detokenizerNode.addOutputStream('FINISH:finish');
     detokenizerNode.addOutputStream('WORDS:' + OUTPUT_STREAM);
     graphConfig.addNode(detokenizerNode);
+
+    // TokenCost Node
+    const tokenCostNode = new CalculatorGraphConfig.Node();
+    tokenCostNode.setCalculator('TokenCostCalculator');
+    tokenCostNode.addInputStream('PROMPT:' + TOKEN_COST_INPUT_STREAM);
+    tokenCostNode.addInputSidePacket('PROCESSOR:__input_side_1');
+    tokenCostNode.addInputSidePacket('BYTES_TO_UNICODE_MAPPING:__input_side_2');
+    tokenCostNode.addOutputStream('NUM_TOKENS:' + TOKEN_COST_OUTPUT_STREAM);
+    graphConfig.addNode(tokenCostNode);
     return graphConfig;
   }
 
