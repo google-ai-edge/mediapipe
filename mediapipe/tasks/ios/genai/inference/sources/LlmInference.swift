@@ -149,6 +149,33 @@ import MediaPipeTasksGenAIC
       })
   }
 
+  /// Generates a response based on the input text asynchronously.
+  ///
+  /// - Parameters:
+  ///   - inputText: The prompt used to query the LLM.
+  /// - Returns: An async throwing stream that contains the partial responses from the LLM.
+  @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
+  public func generateResponseAsync(inputText: String) -> AsyncThrowingStream<String, Error> {
+    AsyncThrowingStream { continuation in
+      do {
+        try generateResponseAsync(
+          inputText: inputText,
+          progress: { partialResponse, error in
+            if let error {
+              continuation.finish(throwing: error)
+            } else if let partialResponse {
+              continuation.yield(partialResponse)
+            }
+          },
+          completion: {
+            continuation.finish()
+          })
+      } catch {
+        continuation.finish(throwing: error)
+      }
+    }
+  }
+
   /// Throw error if response generation is in progress or update response generation state.
   private func shouldContinueWithResponseGeneration() throws {
     if responseGenerationInProgress {
