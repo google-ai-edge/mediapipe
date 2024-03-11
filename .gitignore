@@ -1,5 +1,6 @@
 bazel-*
 build
+flatbuffers/
 mediapipe.egg-info
 mediapipe/__pycache__/
 mediapipe/MediaPipe.xcodeproj
@@ -17,6 +18,7 @@ mediapipe/models/ssdlite_object_detection_labelmap.txt
 mediapipe/provisioning_profile.mobileprovision
 mediapipe/python/__pycache__/
 node_modules/
+schema.fbs
 .configure.bazelrc
 .user.bazelrc
 .vscode/

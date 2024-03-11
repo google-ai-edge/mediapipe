@@ -56,14 +56,42 @@ cc_library(
 )
 
 cc_library(
-    name = "openvinoinferencecalculator",
+    name = "openvinoinferenceutils",
     srcs = [
-        "openvinoinferencecalculator.cc"
+        "openvinoinferenceutils.cc"
     ],
     hdrs = [
-        "openvinoinferencecalculator.h"
+        "openvinoinferenceutils.h"
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "openvinoinferencecalculatoroptions",
+    srcs = [
+        "openvinoinferencecalculatoroptions.cc"
+    ],
+    hdrs = [
+        "openvinoinferencecalculatoroptions.h"
     ],
     deps = [
+        ":openvinoinferencecalculator_cc_proto",
+        ":openvinoinferenceutils",
+        "//mediapipe/framework:calculator_framework",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "openvinoinferencecalculator",
+    srcs = [
+        "openvinoinferencecalculator.cc",
+    ],
+    hdrs = [
+        "openvinoinferencecalculator.h",
+    ],
+    deps = [
+        "openvinoinferencecalculatoroptions",
         ":modelapiovmsadapter",
         ":openvinoinferencecalculator_cc_proto",
         "//mediapipe/framework:calculator_framework",

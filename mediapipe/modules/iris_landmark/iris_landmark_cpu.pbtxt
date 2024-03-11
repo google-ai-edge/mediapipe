@@ -106,18 +106,7 @@ node {
   node_options: {
     [type.googleapis.com / mediapipe.OpenVINOInferenceCalculatorOptions]: {
           output_order_list: ["output_eyes_contours_and_brows", "output_iris"]
-          tag_to_input_tensor_names {
-            key: "TFLITE_TENSORS"
-            value: "input_1"
-          }
-          tag_to_output_tensor_names {
-            key: "TFLITE_TENSORS"
-            value: "output_eyes_contours_and_brows"
-          }
-          tag_to_output_tensor_names {
-            key: "TFLITE_TENSORS"
-            value: "output_iris"
-          }
+          input_order_list: ["input_1"]
         }
   }
 }

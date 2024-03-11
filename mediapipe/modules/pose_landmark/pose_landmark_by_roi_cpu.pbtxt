@@ -164,14 +164,7 @@ node {
   node_options: {
     [type.googleapis.com / mediapipe.OpenVINOInferenceCalculatorOptions]: {
           output_order_list: ["Identity","Identity_1","Identity_2","Identity_3","Identity_4"]
-          tag_to_input_tensor_names {
-            key: "TENSORS"
-            value: "input_1"
-          }
-          tag_to_output_tensor_names {
-            key: "TENSORS"
-            value: "Identity"
-          }
+          input_order_list: ["input_1"]
         }
   }
 }

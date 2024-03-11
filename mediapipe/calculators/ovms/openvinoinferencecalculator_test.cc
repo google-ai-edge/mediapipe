@@ -78,6 +78,11 @@ TEST_F(OpenVINOInferenceCalculatorTest, VerifySupportedTags) {
                 output_stream: "MPTENSORS:output"
                 output_stream: "TFTENSORS:output"
                 output_stream: "TFLITE_TENSORS:output"
+                node_options: {
+                    [type.googleapis.com / mediapipe.OpenVINOInferenceCalculatorOptions]: {
+                        output_order_list :["raw_outputs/box_encodings","raw_outputs/class_predictions","3","4"]
+                    }
+                }
             )pb");
     auto cc = absl::make_unique<CalculatorContract>();
     cc->Initialize(calculator);
@@ -117,40 +122,8 @@ TEST_F(OpenVINOInferenceCalculatorTest, VerifyNotAllowedSideOutputPacket) {
     auto abslStatus = mediapipe::OpenVINOInferenceCalculator::GetContract(cc.get());
     EXPECT_EQ(abslStatus.code(), absl::StatusCode::kInternal) << abslStatus.message();
 }
-TEST_F(OpenVINOInferenceCalculatorTest, BasicDummyInference) {
-    std::string graph_proto = R"(
-      input_stream: "input"
-      output_stream: "output"
-      node {
-          calculator: "OpenVINOModelServerSessionCalculator"
-          output_side_packet: "SESSION:session"
-          node_options: {
-            [type.googleapis.com / mediapipe.OpenVINOModelServerSessionCalculatorOptions]: {
-              servable_name: "dummy"
-              server_config: "/mediapipe/mediapipe/calculators/ovms/test_data/config.json"
-            }
-          }
-      }
-      node {
-        calculator: "OpenVINOInferenceCalculator"
-        input_side_packet: "SESSION:session"
-        input_stream: "OVTENSOR:input"
-        output_stream: "OVTENSOR:output"
-        node_options: {
-            [type.googleapis.com / mediapipe.OpenVINOInferenceCalculatorOptions]: {
-                output_order_list: ["Identity:0", "Identity_1:0"]
-                tag_to_input_tensor_names {
-                    key: "OVTENSOR"
-                    value: "b"
-                }
-                tag_to_output_tensor_names {
-                    key: "OVTENSOR"
-                    value: "a"
-                }
-            }
-        }
-      }
-    )";
+
+void runDummyInference(std::string& graph_proto) {
     CalculatorGraphConfig graph_config =
         ParseTextProtoOrDie<CalculatorGraphConfig>(graph_proto);
     const std::string inputStreamName = "input";
@@ -178,6 +151,77 @@ TEST_F(OpenVINOInferenceCalculatorTest, BasicDummyInference) {
     for (size_t i = 0; i < data.size(); ++i) {
         EXPECT_EQ(data[i] + 1, *(reinterpret_cast<const float*>(outputData) + i)) << i;
     }
+}
+
+TEST_F(OpenVINOInferenceCalculatorTest, BasicDummyInference) {
+    std::string graph_proto = R"(
+      input_stream: "input"
+      output_stream: "output"
+      node {
+          calculator: "OpenVINOModelServerSessionCalculator"
+          output_side_packet: "SESSION:session"
+          node_options: {
+            [type.googleapis.com / mediapipe.OpenVINOModelServerSessionCalculatorOptions]: {
+              servable_name: "dummy"
+              server_config: "/mediapipe/mediapipe/calculators/ovms/test_data/config.json"
+            }
+          }
+      }
+      node {
+        calculator: "OpenVINOInferenceCalculator"
+        input_side_packet: "SESSION:session"
+        input_stream: "OVTENSOR:input"
+        output_stream: "OVTENSOR:output"
+        node_options: {
+            [type.googleapis.com / mediapipe.OpenVINOInferenceCalculatorOptions]: {
+                tag_to_input_tensor_names {
+                    key: "OVTENSOR"
+                    value: "b"
+                }
+                tag_to_output_tensor_names {
+                    key: "OVTENSOR"
+                    value: "a"
+                }
+            }
+        }
+      }
+    )";
+    runDummyInference(graph_proto);
+}
+TEST_F(OpenVINOInferenceCalculatorTest, BasicDummyInferenceEmptyKey) {
+    std::string graph_proto = R"(
+      input_stream: "input"
+      output_stream: "output"
+      node {
+          calculator: "OpenVINOModelServerSessionCalculator"
+          output_side_packet: "SESSION:session"
+          node_options: {
+            [type.googleapis.com / mediapipe.OpenVINOModelServerSessionCalculatorOptions]: {
+              servable_name: "dummy"
+              server_config: "/mediapipe/mediapipe/calculators/ovms/test_data/config.json"
+            }
+          }
+      }
+      node {
+        calculator: "OpenVINOInferenceCalculator"
+        input_side_packet: "SESSION:session"
+        input_stream: "input"
+        output_stream: "output"
+        node_options: {
+            [type.googleapis.com / mediapipe.OpenVINOInferenceCalculatorOptions]: {
+                tag_to_input_tensor_names {
+                    key: ""
+                    value: "b"
+                }
+                tag_to_output_tensor_names {
+                    key: ""
+                    value: "a"
+                }
+            }
+        }
+      }
+    )";
+    runDummyInference(graph_proto);
 }
 TEST_F(OpenVINOInferenceCalculatorTest, HandleEmptyPackets) {
     std::string graph_proto = R"(
@@ -318,3 +362,414 @@ TEST_F(OpenVINOInferenceCalculatorTest, DISABLED_HandleEmptyPacketsWithSyncSet) 
     ASSERT_EQ(0, output_packets.size());
 }
 
+void verifyGetContract(const std::string& pbtxtContent, absl::StatusCode expectedStatusCode) {
+    auto calculator = mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig::Node>(pbtxtContent);
+    auto cc = absl::make_unique<CalculatorContract>();
+    cc->Initialize(calculator);
+    auto abslStatus = mediapipe::OpenVINOInferenceCalculator::GetContract(cc.get());
+    EXPECT_EQ(abslStatus.code(), expectedStatusCode) << abslStatus.message();
+}
+
+TEST_F(OpenVINOInferenceCalculatorTest, VerifyTagToInputNames) {
+    // Test passes with OVTENSORS1 in tag_to_output_tensor_names because we support and check the basic type match - OVTENSORS in this case
+    std::string calculator_proto =
+            R"pb(
+                calculator: "OpenVINOInferenceCalculator"
+                input_side_packet: "SESSION:session"
+                input_stream: "OVTENSOR:image_tensor"
+                output_stream: "OVTENSOR:detection_tensors"
+                node_options: {
+                    [type.googleapis.com / mediapipe.OpenVINOInferenceCalculatorOptions]: {
+                        tag_to_input_tensor_names {
+                            key: "OVTENSOR"
+                            value: "normalized_input_image_tensor"
+                        }
+                        tag_to_output_tensor_names {
+                            key: "OVTENSOR1"
+                            value: "raw_outputs/box_encodings"
+                        }
+                        tag_to_output_tensor_names {
+                            key: "OVTENSOR2"
+                            value: "raw_outputs/class_predictions"
+                        }
+                        }
+                }
+            )pb";
+
+    verifyGetContract(calculator_proto, absl::StatusCode::kOk);
+}
+
+TEST_F(OpenVINOInferenceCalculatorTest, VerifyOptionsInputFail) {
+    std::string calculator_proto =
+            R"pb(
+                calculator: "OpenVINOInferenceCalculator"
+                input_side_packet: "SESSION:session"
+                input_stream: "OVTENSOR:image_tensor"
+                output_stream: "OVTENSORS:detection_tensors"
+                node_options: {
+                    [type.googleapis.com / mediapipe.OpenVINOInferenceCalculatorOptions]: {
+                        input_order_list :["normalized_input_image_tensor"]
+                        output_order_list :["raw_outputs/box_encodings","raw_outputs/class_predictions"]
+                        tag_to_input_tensor_names {
+                            key: "OVTENSOR"
+                            value: "normalized_input_image_tensor"
+                        }
+                        }
+                }
+            )pb";
+    verifyGetContract(calculator_proto, absl::StatusCode::kInternal);
+}
+
+TEST_F(OpenVINOInferenceCalculatorTest, VerifyOptionsOutputFail) {
+    std::string calculator_proto =
+            R"pb(
+                calculator: "OpenVINOInferenceCalculator"
+                input_side_packet: "SESSION:session"
+                input_stream: "OVTENSOR:image_tensor"
+                output_stream: "OVTENSORS:detection_tensors"
+                node_options: {
+                    [type.googleapis.com / mediapipe.OpenVINOInferenceCalculatorOptions]: {
+                        input_order_list :["normalized_input_image_tensor"]
+                        output_order_list :["raw_outputs/box_encodings","raw_outputs/class_predictions"]
+                        tag_to_output_tensor_names {
+                            key: "OVTENSOR1"
+                            value: "raw_outputs/box_encodings"
+                        }
+                        tag_to_output_tensor_names {
+                            key: "OVTENSOR2"
+                            value: "raw_outputs/class_predictions"
+                        }
+                        }
+                }
+            )pb";
+    verifyGetContract(calculator_proto, absl::StatusCode::kInternal);
+}
+
+TEST_F(OpenVINOInferenceCalculatorTest, VerifyOptionsInputFailSingleType) {
+    std::string calculator_proto =
+            R"pb(
+                calculator: "OpenVINOInferenceCalculator"
+                input_side_packet: "SESSION:session"
+                input_stream: "OVTENSOR:image_tensor"
+                output_stream: "OVTENSORS:detection_tensors"
+                node_options: {
+                    [type.googleapis.com / mediapipe.OpenVINOInferenceCalculatorOptions]: {
+                        input_order_list :["normalized_input_image_tensor"]
+                        output_order_list :["raw_outputs/box_encodings","raw_outputs/class_predictions"]
+                        }
+                }
+            )pb";
+    verifyGetContract(calculator_proto, absl::StatusCode::kInternal);
+}
+
+TEST_F(OpenVINOInferenceCalculatorTest, VerifyOptionsOutputFailSingleType) {
+    std::string calculator_proto =
+            R"pb(
+                calculator: "OpenVINOInferenceCalculator"
+                input_side_packet: "SESSION:session"
+                input_stream: "OVTENSORS:image_tensor"
+                output_stream: "OVTENSOR:detection_tensors"
+                node_options: {
+                    [type.googleapis.com / mediapipe.OpenVINOInferenceCalculatorOptions]: {
+                        input_order_list :["normalized_input_image_tensor"]
+                        output_order_list :["raw_outputs/box_encodings","raw_outputs/class_predictions"]
+                        }
+                }
+            )pb";
+    verifyGetContract(calculator_proto, absl::StatusCode::kInternal);
+}
+
+TEST_F(OpenVINOInferenceCalculatorTest, VerifyOptionsInput) {
+    std::string calculator_proto =
+            R"pb(
+                calculator: "OpenVINOInferenceCalculator"
+                input_side_packet: "SESSION:session"
+                input_stream: "OVTENSORS:image_tensor"
+                output_stream: "OVTENSOR2:detection_tensors"
+                node_options: {
+                    [type.googleapis.com / mediapipe.OpenVINOInferenceCalculatorOptions]: {
+                        input_order_list :["normalized_input_image_tensor"]
+                        tag_to_output_tensor_names {
+                            key: "OVTENSOR1"
+                            value: "raw_outputs/box_encodings"
+                        }
+                        tag_to_output_tensor_names {
+                            key: "OVTENSOR2"
+                            value: "raw_outputs/class_predictions"
+                        }
+                        }
+                }
+            )pb";
+    verifyGetContract(calculator_proto, absl::StatusCode::kOk);
+}
+
+TEST_F(OpenVINOInferenceCalculatorTest, VerifyOptionsOutput) {
+    std::string calculator_proto =
+            R"pb(
+                calculator: "OpenVINOInferenceCalculator"
+                input_side_packet: "SESSION:session"
+                input_stream: "OVTENSOR:image_tensor"
+                output_stream: "OVTENSORS2:detection_tensors"
+                node_options: {
+                    [type.googleapis.com / mediapipe.OpenVINOInferenceCalculatorOptions]: {
+                        output_order_list :["raw_outputs/box_encodings","raw_outputs/class_predictions"]
+                        tag_to_input_tensor_names {
+                            key: "OVTENSOR"
+                            value: "normalized_input_image_tensor"
+                        }
+                        }
+                }
+            )pb";
+    verifyGetContract(calculator_proto, absl::StatusCode::kOk);
+}
+
+TEST_F(OpenVINOInferenceCalculatorTest, WrongTagToOutputNames) {
+    std::string calculator_proto =
+            R"pb(
+                calculator: "OpenVINOInferenceCalculator"
+                input_side_packet: "SESSION:session"
+                input_stream: "OVTENSOR:image_tensor"
+                output_stream: "OVTENSOR2:detection_tensors"
+                node_options: {
+                    [type.googleapis.com / mediapipe.OpenVINOInferenceCalculatorOptions]: {
+                        tag_to_input_tensor_names {
+                            key: "OVTENSOR"
+                            value: "normalized_input_image_tensor"
+                        }
+                        tag_to_output_tensor_names {
+                            key: "RROVTENSOR2"
+                            value: "raw_outputs/class_predictions"
+                        }
+                        }
+                }
+            )pb";
+    verifyGetContract(calculator_proto, absl::StatusCode::kInternal);
+}
+
+TEST_F(OpenVINOInferenceCalculatorTest, WrongTagToInputNames) {
+    std::string calculator_proto =
+            R"pb(
+                calculator: "OpenVINOInferenceCalculator"
+                input_side_packet: "SESSION:session"
+                input_stream: "OVTENSOR:image_tensor"
+                output_stream: "OVTENSOR2:detection_tensors"
+                node_options: {
+                    [type.googleapis.com / mediapipe.OpenVINOInferenceCalculatorOptions]: {
+                        tag_to_input_tensor_names {
+                            key: "OVTENSORS"
+                            value: "normalized_input_image_tensor"
+                        }
+                        tag_to_output_tensor_names {
+                            key: "OVTENSOR2"
+                            value: "raw_outputs/class_predictions"
+                        }
+                        }
+                }
+            )pb";
+    verifyGetContract(calculator_proto, absl::StatusCode::kInternal);
+}
+
+TEST_F(OpenVINOInferenceCalculatorTest, WrongTagToInputNamesNoVector) {
+    std::string calculator_proto =
+            R"pb(
+                calculator: "OpenVINOInferenceCalculator"
+                input_side_packet: "SESSION:session"
+                input_stream: "OVTENSOR:image_tensor"
+                output_stream: "OVTENSOR2:detection_tensors"
+                node_options: {
+                    [type.googleapis.com / mediapipe.OpenVINOInferenceCalculatorOptions]: {
+                        tag_to_input_tensor_names {
+                            key: "OVTENSORS"
+                            value: "normalized_input_image_tensor"
+                        }
+                        tag_to_output_tensor_names {
+                            key: "OVTENSOR1"
+                            value: "raw_outputs/box_encodings"
+                        }
+                        tag_to_output_tensor_names {
+                            key: "OVTENSOR2"
+                            value: "raw_outputs/class_predictions"
+                        }
+                        }
+                }
+            )pb";
+    verifyGetContract(calculator_proto, absl::StatusCode::kInternal);
+}
+
+TEST_F(OpenVINOInferenceCalculatorTest, WrongTagToInputNamesNoTypeSpecifiedWithMatch) {
+    std::string calculator_proto =
+            R"pb(
+                calculator: "OpenVINOInferenceCalculator"
+                input_side_packet: "SESSION:session"
+                input_stream: "image_tensor"
+                output_stream: "detection_tensors"
+                node_options: {
+                    [type.googleapis.com / mediapipe.OpenVINOInferenceCalculatorOptions]: {
+                        tag_to_input_tensor_names {
+                            key: ""
+                            value: "normalized_input_image_tensor"
+                        }
+                        tag_to_output_tensor_names {
+                            key: ""
+                            value: "raw_outputs/box_encodings"
+                        }
+                        }
+                }
+            )pb";
+    verifyGetContract(calculator_proto, absl::StatusCode::kOk);
+}
+
+TEST_F(OpenVINOInferenceCalculatorTest, WrongTagToOutputNamesNoTypeSpecifiedWithoutMatch) {
+    std::string calculator_proto =
+            R"pb(
+                calculator: "OpenVINOInferenceCalculator"
+                input_side_packet: "SESSION:session"
+                input_stream: "image_tensor"
+                output_stream: "detection_tensors"
+                node_options: {
+                    [type.googleapis.com / mediapipe.OpenVINOInferenceCalculatorOptions]: {
+                        tag_to_input_tensor_names {
+                            key: "image_tensor"
+                            value: "normalized_input_image_tensor"
+                        }
+                        tag_to_output_tensor_names {
+                            key: "BAD_detection_tensors1"
+                            value: "raw_outputs/box_encodings"
+                        }
+                        tag_to_output_tensor_names {
+                            key: "detection_tensors2"
+                            value: "raw_outputs/class_predictions"
+                        }
+                        }
+                }
+            )pb";
+    verifyGetContract(calculator_proto, absl::StatusCode::kInternal);
+}
+
+TEST_F(OpenVINOInferenceCalculatorTest, WrongTagToInputNamesNoTypeSpecifiedWithoutMatch) {
+    std::string calculator_proto =
+            R"pb(
+                calculator: "OpenVINOInferenceCalculator"
+                input_side_packet: "SESSION:session"
+                input_stream: "image_tensor"
+                output_stream: "detection_tensors"
+                node_options: {
+                    [type.googleapis.com / mediapipe.OpenVINOInferenceCalculatorOptions]: {
+                        tag_to_input_tensor_names {
+                            key: "image_tensor"
+                            value: "BAD_normalized_input_image_tensor"
+                        }
+                        tag_to_output_tensor_names {
+                            key: "detection_tensors1"
+                            value: "raw_outputs/box_encodings"
+                        }
+                        tag_to_output_tensor_names {
+                            key: "detection_tensors2"
+                            value: "raw_outputs/class_predictions"
+                        }
+                        }
+                }
+            )pb";
+    verifyGetContract(calculator_proto, absl::StatusCode::kInternal);
+}
+
+TEST_F(OpenVINOInferenceCalculatorTest, NoTagToInputNames) {
+    std::string calculator_proto =
+            R"pb(
+                calculator: "OpenVINOInferenceCalculator"
+                input_side_packet: "SESSION:session"
+                input_stream: "OVTENSORS:image_tensor"
+                output_stream: "OVTENSORS2:detection_tensors"
+                node_options: {
+                    [type.googleapis.com / mediapipe.OpenVINOInferenceCalculatorOptions]: {
+                        input_order_list :["normalized_input_image_tensor"]
+                        output_order_list :["raw_outputs/box_encodings","raw_outputs/class_predictions"]
+                        }
+                }
+            )pb";
+    verifyGetContract(calculator_proto, absl::StatusCode::kOk);
+}
+
+TEST_F(OpenVINOInferenceCalculatorTest, UnsupportedTypeTagToInputNamesMatch) {
+    std::string calculator_proto =
+            R"pb(
+                calculator: "OpenVINOInferenceCalculator"
+                input_side_packet: "SESSION:session"
+                input_stream: "INPUT1:in1"
+                input_stream: "INPUT2:in2"
+                output_stream: "SUM:out"
+                node_options: {
+                    [type.googleapis.com / mediapipe.OpenVINOInferenceCalculatorOptions]: {
+                    tag_to_input_tensor_names {
+                        key: "INPUT1"
+                        value: "input1"
+                    }
+                    tag_to_input_tensor_names {
+                        key: "INPUT2"
+                        value: "input2"
+                    }
+                    tag_to_output_tensor_names {
+                        key: "SUM"
+                        value: "sum"
+                    }
+                    }
+                }
+            )pb";
+    verifyGetContract(calculator_proto, absl::StatusCode::kOk);
+}
+
+TEST_F(OpenVINOInferenceCalculatorTest, UnsupportedTypeTagToInputNamesOutputMismatch) {
+    std::string calculator_proto =
+            R"pb(
+                calculator: "OpenVINOInferenceCalculator"
+                input_side_packet: "SESSION:session"
+                input_stream: "INPUT1:in1"
+                input_stream: "INPUT2:in2"
+                output_stream: "SUM:out"
+                node_options: {
+                    [type.googleapis.com / mediapipe.OpenVINOInferenceCalculatorOptions]: {
+                    tag_to_input_tensor_names {
+                        key: "INPUT1"
+                        value: "input1"
+                    }
+                    tag_to_input_tensor_names {
+                        key: "INPUT2"
+                        value: "input2"
+                    }
+                    tag_to_output_tensor_names {
+                        key: "SUM1"
+                        value: "sum"
+                    }
+                    }
+                }
+            )pb";
+    verifyGetContract(calculator_proto, absl::StatusCode::kInternal);
+}
+
+TEST_F(OpenVINOInferenceCalculatorTest, UnsupportedTypeTagToInputNamesInputMismatch) {
+    std::string calculator_proto =
+            R"pb(
+                calculator: "OpenVINOInferenceCalculator"
+                input_side_packet: "SESSION:session"
+                input_stream: "INPUT1:in1"
+                input_stream: "INPUT2:in2"
+                output_stream: "SUM:out"
+                node_options: {
+                    [type.googleapis.com / mediapipe.OpenVINOInferenceCalculatorOptions]: {
+                    tag_to_input_tensor_names {
+                        key: "INPUT3"
+                        value: "input1"
+                    }
+                    tag_to_input_tensor_names {
+                        key: "INPUT2"
+                        value: "input2"
+                    }
+                    tag_to_output_tensor_names {
+                        key: "SUM"
+                        value: "sum"
+                    }
+                    }
+                }
+            )pb";
+    verifyGetContract(calculator_proto, absl::StatusCode::kInternal);
+}

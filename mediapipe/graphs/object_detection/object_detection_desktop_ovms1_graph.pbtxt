@@ -71,18 +71,6 @@ node {
     [type.googleapis.com / mediapipe.OpenVINOInferenceCalculatorOptions]: {
           input_order_list :["normalized_input_image_tensor"]
           output_order_list :["raw_outputs/box_encodings","raw_outputs/class_predictions"]
-          tag_to_input_tensor_names {
-            key: "OVTENSORS"
-            value: "normalized_input_image_tensor"
-          }
-          tag_to_output_tensor_names {
-            key: "OVTENSORS1"
-            value: "raw_outputs/box_encodings"
-          }
-          tag_to_output_tensor_names {
-            key: "OVTENSORS2"
-            value: "raw_outputs/class_predictions"
-          }
         }
   }
 }

@@ -91,18 +91,7 @@ node {
   node_options: {
     [type.googleapis.com / mediapipe.OpenVINOInferenceCalculatorOptions]: {
           output_order_list: ["regressors", "classificators"]
-          tag_to_input_tensor_names {
-            key: "TENSORS"
-            value: "input"
-          }
-          tag_to_output_tensor_names {
-            key: "TENSORS"
-            value: "regressors"
-          }
-          tag_to_output_tensor_names {
-            key: "TENSORS"
-            value: "classificators"
-          }
+          input_order_list: ["input"]
         }
   }
 }

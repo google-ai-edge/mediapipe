@@ -32,6 +32,8 @@
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/calculators/ovms/openvinoinferencecalculator.pb.h"
+#include "mediapipe/calculators/ovms/openvinoinferencecalculatoroptions.h"
+#include "mediapipe/calculators/ovms/openvinoinferenceutils.h"
 #include "tensorflow/lite/c/common.h"
 #pragma GCC diagnostic pop
 #pragma GCC diagnostic push
@@ -69,32 +71,7 @@ namespace {
 
 }  // namespace
 
-const std::string SESSION_TAG{"SESSION"};
-const std::string OVTENSOR_TAG{"OVTENSOR"};
-const std::string OVTENSORS_TAG{"OVTENSORS"};
-const std::string TFTENSOR_TAG{"TFTENSOR"};
-const std::string TFTENSORS_TAG{"TFTENSORS"};
-const std::string MPTENSOR_TAG{"TENSOR"};
-const std::string MPTENSORS_TAG{"TENSORS"};
-const std::string TFLITE_TENSOR_TAG{"TFLITE_TENSOR"};
-const std::string TFLITE_TENSORS_TAG{"TFLITE_TENSORS"};
-
 using TFSDataType = tensorflow::DataType;
-
-// Function from ovms/src/string_utils.h
-bool startsWith(const std::string& str, const std::string& prefix) {
-    auto it = prefix.begin();
-    bool sizeCheck = (str.size() >= prefix.size());
-    if (!sizeCheck) {
-        return false;
-    }
-    bool allOf = std::all_of(str.begin(),
-        std::next(str.begin(), prefix.size()),
-        [&it](const char& c) {
-            return c == *(it++);
-        });
-    return allOf;
-}
 
 TFSDataType getPrecisionAsDataType(ov::element::Type_t precision) {
     static std::unordered_map<ov::element::Type_t, TFSDataType> precisionMap{
@@ -339,6 +316,8 @@ public:
         RET_CHECK(!cc->Inputs().GetTags().empty());
         RET_CHECK(!cc->Outputs().GetTags().empty());
         RET_CHECK(cc->InputSidePackets().HasTag(SESSION_TAG));
+        RET_CHECK(ValidateCalculatorSettings(cc));
+
         for (const std::string& tag : cc->Inputs().GetTags()) {
             // could be replaced with absl::StartsWith when migrated to MP
             if (startsWith(tag, OVTENSORS_TAG)) {
@@ -409,6 +388,7 @@ public:
         LOG(INFO) << "OpenVINOInferenceCalculator Close";
         return absl::OkStatus();
     }
+
     absl::Status Open(CalculatorContext* cc) final {
         LOG(INFO) << "OpenVINOInferenceCalculator Open start";
         session = cc->InputSidePackets()
@@ -472,20 +452,17 @@ public:
             } else {
                 realInputName = it->second.c_str();
             } 
-#define DESERIALIZE_TENSORS(TYPE, DESERIALIZE_FUN) \
-                auto& packet = cc->Inputs().Tag(tag).Get<std::vector<TYPE>>();                \
-                if ( packet.size() > 1 && input_order_list.size() != packet.size()) {                 \
-                    LOG(INFO) << "input_order_list not set properly in options for multiple inputs."; \
-                    RET_CHECK(false);                                                                 \
-                }                                                                                     \
-                if (this->input_order_list.size() > 0){                                               \
-                    for (size_t i = 0; i < this->input_order_list.size(); i++) {                         \
-                        auto& tensor = packet[i];                                                     \
-                        input[this->input_order_list[i]] = DESERIALIZE_FUN(tensor);                   \
-                    }                                                                                 \
-                } else if (packet.size() == 1) {                                                      \
-                    input[realInputName] = DESERIALIZE_FUN(packet[0]);                                \
-                }
+#define DESERIALIZE_TENSORS(TYPE, DESERIALIZE_FUN)                                                  \
+                auto& packet = cc->Inputs().Tag(tag).Get<std::vector<TYPE>>();                      \
+                if (packet.size() != this->input_order_list.size()) {                               \
+                    LOG(INFO) << "input_order_list size does not match the input vector size.";     \
+                    RET_CHECK(false);                                                               \
+                }                                                                                   \
+                for (size_t i = 0; i < this->input_order_list.size(); i++) {                        \
+                    auto& tensor = packet[i];                                                       \
+                    input[this->input_order_list[i]] = DESERIALIZE_FUN(tensor);                     \
+                }                                                                                   \
+
             try {
             if (startsWith(tag, OVTENSORS_TAG)) {
                 DESERIALIZE_TENSORS(ov::Tensor,);
@@ -532,72 +509,57 @@ public:
         for (const auto& tag : cc->Outputs().GetTags()) {
             LOG(INFO) << "Processing tag: " << tag;
             std::string tensorName;
-            auto it = options.tag_to_output_tensor_names().find(tag);
-            if (it == options.tag_to_output_tensor_names().end()) {
-                tensorName = tag;
-            } else {
-                tensorName = it->second;
-            }
-            auto tensorIt = output.find(tensorName);
-            if (tensorIt == output.end()) {
-                LOG(INFO) << "Could not find: " << tensorName << " in inference output";
-                RET_CHECK(false);
-            }
-            try {
-            if (startsWith(tag, OVTENSORS_TAG)) {
-                LOG(INFO) << "OVMS calculator will process vector<ov::Tensor>";
-                auto tensors = std::make_unique<std::vector<ov::Tensor>>();
-                if ( output.size() > 1 && this->output_order_list.size() != this->output_order_list.size())
-                {
-                    LOG(INFO) << "output_order_list not set properly in options for multiple outputs.";
+            auto tensorIt = output.begin();
+            
+            // Check if supported vector tag was not used
+            if (!IsVectorTag(tag)) {
+                auto it = options.tag_to_output_tensor_names().find(tag);
+                if (it == options.tag_to_output_tensor_names().end()) {
+                    tensorName = tag;
+                } else {
+                    tensorName = it->second;
+                }
+                tensorIt = output.find(tensorName);
+                if (tensorIt == output.end()) {
+                    LOG(INFO) << "Could not find: " << tensorName << " in inference output";
                     RET_CHECK(false);
                 }
-                if (this->output_order_list.size() > 0) {
-                    for (size_t i = 0; i < this->output_order_list.size(); i++) {
-                        tensorName = this->output_order_list[i];
-                        tensorIt = output.find(tensorName);
-                        if (tensorIt == output.end()) {
-                            LOG(INFO) << "Could not find: " << tensorName << " in inference output";
-                            RET_CHECK(false);
-                        }
-                        tensors->emplace_back(tensorIt->second);
-                    }
-                } else {
-                    for (auto& [name,tensor] : output) {
-                        tensors->emplace_back(tensor);
-                    }
-                }
-                cc->Outputs().Tag(tag).Add(
-                    tensors.release(),
-                    cc->InputTimestamp());
+            }
+
+            try {
+#define SERIALIZE_TENSORS(TYPE, SESERIALIZE_FUN) \
+                auto tensors = std::make_unique<std::vector<TYPE>>();                                           \
+                if ( output.size() > 1 && this->output_order_list.size() != this->output_order_list.size())     \
+                {                                                                                               \
+                    LOG(INFO) << "output_order_list not set properly in options for multiple outputs.";         \
+                    RET_CHECK(false);                                                                           \
+                }                                                                                               \
+                if (this->output_order_list.size() > 0) {                                                       \
+                    for (const auto& tensorName : this->output_order_list) {                               \
+                        tensorIt = output.find(tensorName);                                                     \
+                        if (tensorIt == output.end()) {                                                         \
+                            LOG(INFO) << "Could not find: " << tensorName << " in inference output";            \
+                            RET_CHECK(false);                                                                   \
+                        }                                                                                       \
+                        tensors->emplace_back(SESERIALIZE_FUN(tensorIt->second));                               \
+                    }                                                                                           \
+                } else {                                                                                        \
+                    for (auto& [name,tensor] : output) {                                                        \
+                        tensors->emplace_back(SESERIALIZE_FUN(tensor));                                         \
+                    }                                                                                           \
+                }                                                                                               \
+                cc->Outputs().Tag(tag).Add(                                                                     \
+                    tensors.release(),                                                                          \
+                    cc->InputTimestamp());                                                                      \
+
+            if (startsWith(tag, OVTENSORS_TAG)) {
+                LOG(INFO) << "OVMS calculator will process vector<ov::Tensor>";
+                SERIALIZE_TENSORS(ov::Tensor, )
                 // no need to break since we only have one tag
                 // create concatenator calc
             } else if (startsWith(tag, MPTENSORS_TAG)) {
                 LOG(INFO) << "OVMS calculator will process vector<Tensor>";
-                auto tensors = std::make_unique<std::vector<Tensor>>();
-                if ( output.size() > 1 && this->output_order_list.size() != this->output_order_list.size())
-                {
-                    LOG(INFO) << "output_order_list not set properly in options for multiple outputs.";
-                    RET_CHECK(false);
-                }
-                if (this->output_order_list.size() > 0) {
-                    for (size_t i = 0; i < this->output_order_list.size(); i++) {
-                        tensorName = this->output_order_list[i];
-                        tensorIt = output.find(tensorName);
-                        if (tensorIt == output.end()) {
-                            LOG(INFO) << "Could not find: " << tensorName << " in inference output";
-                            RET_CHECK(false);
-                        }
-                        tensors->emplace_back(convertOVTensor2MPTensor(tensorIt->second));
-                    }
-                } else {
-                    for (auto& [name,tensor] : output) {
-                        tensors->emplace_back(convertOVTensor2MPTensor(tensor));
-                    }
-                }
-                cc->Outputs().Tag(tag).Add(
-                    tensors.release(),
-                    cc->InputTimestamp());
+                SERIALIZE_TENSORS(Tensor, convertOVTensor2MPTensor)
                 // no need to break since we only have one tag
                 // create concatenator calc
             } else if (startsWith(tag, TFLITE_TENSORS_TAG)) {

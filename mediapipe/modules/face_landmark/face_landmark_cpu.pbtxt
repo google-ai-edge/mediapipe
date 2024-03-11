@@ -109,18 +109,7 @@ node {
   node_options: {
     [type.googleapis.com / mediapipe.OpenVINOInferenceCalculatorOptions]: {
           output_order_list: ["conv2d_21", "conv2d_31"]
-          tag_to_input_tensor_names {
-            key: "TENSORS"
-            value: "input_1"
-          }
-          tag_to_output_tensor_names {
-            key: "TENSORS"
-            value: "conv2d_21"
-          }
-          tag_to_output_tensor_names {
-            key: "TENSORS"
-            value: "conv2d_31"
-          }
+          input_order_list: ["input_1"]
         }
   }
 }
