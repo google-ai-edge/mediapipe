@@ -77,6 +77,11 @@ inline bool RequireBytesToUnicodeMapping(
          model_type == odml::infra::proto::LLM_MODEL_TYPE_PHI_2;
 }
 
+inline bool RequireFp32Model(odml::infra::proto::LlmModelType model_type) {
+  return model_type == odml::infra::proto::LLM_MODEL_TYPE_PHI_2 ||
+         model_type == odml::infra::proto::LLM_MODEL_TYPE_FALCON_RW_1B;
+}
+
 }  // namespace mediapipe::tasks::genai::llm_utils
 
 #endif  // MEDIAPIPE_TASKS_GENAI_INFERENCE_UTILS_LLM_UTILS_METADATA_UTILS_H_
