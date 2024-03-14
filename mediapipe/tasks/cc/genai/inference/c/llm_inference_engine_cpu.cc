@@ -386,3 +386,16 @@ void LlmInferenceEngine_Session_PredictAsync(
   pthread_create(&cpu_session->work_id, nullptr, start_llm_function,
                  cpu_session);
 }
+
+int LlmInferenceEngine_Session_SizeInTokens(LlmInferenceEngine_Session* session,
+                                            const char* input,
+                                            char** error_msg) {
+  auto cpu_session = reinterpret_cast<LlmInferenceEngineCpu_Session*>(session);
+  std::vector<int> output_ids;
+  auto status = cpu_session->tokenizer->Encode(input, &output_ids);
+  if (!status.ok()) {
+    *error_msg = strdup(status.ToString().c_str());
+    return -1;
+  }
+  return output_ids.size();
+}
