@@ -170,3 +170,40 @@ cc_test_with_tflite(
         "@com_google_absl//absl/strings",
     ],
 )
+
+cc_library(
+    name = "tflite_signature_reader",
+    srcs = ["tflite_signature_reader.cc"],
+    hdrs = ["tflite_signature_reader.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@org_tensorflow//tensorflow/lite:framework_stable",
+    ],
+)
+
+cc_test(
+    name = "tflite_signature_reader_test",
+    srcs = ["tflite_signature_reader_test.cc"],
+    data = [
+        ":testdata/test_single_signature_key_model.tflite",
+        ":testdata/test_two_signature_keys_model.tflite",
+    ],
+    deps = [
+        ":tflite_model_loader",
+        ":tflite_signature_reader",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/port:status_matchers",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@org_tensorflow//tensorflow/lite:framework_stable",
+        "@org_tensorflow//tensorflow/lite:test_util",
+        "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
+    ],
+)
