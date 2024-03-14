@@ -14,8 +14,10 @@
 
 #include "mediapipe/calculators/tensor/inference_calculator.h"
 
+#include <algorithm>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/status/status.h"
@@ -25,6 +27,7 @@
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/api2/packet.h"
 #include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/tool/subgraph_expansion.h"
@@ -81,21 +84,11 @@ class InferenceCalculatorSelectorImpl
   }
 };
 
-absl::Status InferenceCalculator::EnforceVectorTensors(CalculatorContract* cc) {
-  RET_CHECK(kInTensors(cc).IsConnected() && kOutTensors(cc).IsConnected())
-      << "This delegate requires TENSORS to be used.";
-  RET_CHECK(kInTensor(cc).Count() == 0 && kOutTensor(cc).Count() == 0)
-      << "This delegate does not support TENSOR; only TENSORS";
-  return absl::OkStatus();
-}
-
 absl::Status InferenceCalculator::TensorContractCheck(CalculatorContract* cc) {
   RET_CHECK(kInTensors(cc).IsConnected() ^ (kInTensor(cc).Count() > 0))
       << "Exactly one of TENSORS and TENSOR must be used for input.";
   RET_CHECK(kOutTensors(cc).IsConnected() ^ (kOutTensor(cc).Count() > 0))
       << "Exactly one of TENSORS and TENSOR must be used for output.";
-  RET_CHECK(kInTensors(cc).IsConnected() ^ (kOutTensor(cc).Count() > 0))
-      << "TENSORS and TENSOR cannot be used together.";
   return absl::OkStatus();
 }
 
@@ -120,6 +113,20 @@ InferenceCalculator::GetOpResolverAsPacket(CalculatorContext* cc) {
   return PacketAdopting<tflite::OpResolver>(
       std::make_unique<
           tflite::ops::builtin::BuiltinOpResolverWithoutDefaultDelegates>());
+}
+
+absl::Status InferenceCalculator::SendOutputTensors(
+    CalculatorContext* cc, std::vector<Tensor>&& output_tensors) {
+  if (kOutTensors(cc).IsConnected()) {
+    kOutTensors(cc).Send(std::move(output_tensors));
+  } else {
+    const int output_count = std::min(kOutTensor(cc).Count(),
+                                      static_cast<int>(output_tensors.size()));
+    for (int i = 0; i < output_count; ++i) {
+      kOutTensor(cc)[i].Send(std::move(output_tensors[i]));
+    }
+  }
+  return absl::OkStatus();
 }
 
 }  // namespace api2

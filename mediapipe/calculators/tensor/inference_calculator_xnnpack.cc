@@ -35,16 +35,17 @@ namespace mediapipe {
 namespace api2 {
 
 class InferenceCalculatorXnnpackImpl
-    : public NodeImpl<InferenceCalculatorXnnpack,
-                      InferenceCalculatorXnnpackImpl> {
+    : public InferenceCalculatorNodeImpl<InferenceCalculatorXnnpack,
+                                         InferenceCalculatorXnnpackImpl> {
  public:
   static absl::Status UpdateContract(CalculatorContract* cc);
 
   absl::Status Open(CalculatorContext* cc) override;
-  absl::Status Process(CalculatorContext* cc) override;
   absl::Status Close(CalculatorContext* cc) override;
 
  private:
+  absl::Status ProcessTensorSpan(CalculatorContext* cc,
+                                 const TensorSpan& tensor_span) override;
   absl::StatusOr<std::unique_ptr<InferenceRunner>> CreateInferenceRunner(
       CalculatorContext* cc);
   absl::StatusOr<TfLiteDelegatePtr> CreateDelegate(CalculatorContext* cc);
@@ -54,7 +55,7 @@ class InferenceCalculatorXnnpackImpl
 
 absl::Status InferenceCalculatorXnnpackImpl::UpdateContract(
     CalculatorContract* cc) {
-  MP_RETURN_IF_ERROR(EnforceVectorTensors(cc));
+  MP_RETURN_IF_ERROR(TensorContractCheck(cc));
 
   const auto& options = cc->Options<mediapipe::InferenceCalculatorOptions>();
   RET_CHECK(!options.model_path().empty() ^ kSideInModel(cc).IsConnected())
@@ -68,18 +69,11 @@ absl::Status InferenceCalculatorXnnpackImpl::Open(CalculatorContext* cc) {
   return absl::OkStatus();
 }
 
-absl::Status InferenceCalculatorXnnpackImpl::Process(CalculatorContext* cc) {
-  if (kInTensors(cc).IsEmpty()) {
-    return absl::OkStatus();
-  }
-  const auto& input_tensors = *kInTensors(cc);
-  RET_CHECK(!input_tensors.empty());
-
-  MP_ASSIGN_OR_RETURN(
-      std::vector<Tensor> output_tensors,
-      inference_runner_->Run(cc, MakeTensorSpan(input_tensors)));
-  kOutTensors(cc).Send(std::move(output_tensors));
-  return absl::OkStatus();
+absl::Status InferenceCalculatorXnnpackImpl::ProcessTensorSpan(
+    CalculatorContext* cc, const TensorSpan& tensor_span) {
+  MP_ASSIGN_OR_RETURN(std::vector<Tensor> output_tensors,
+                      inference_runner_->Run(cc, tensor_span));
+  return SendOutputTensors(cc, std::move(output_tensors));
 }
 
 absl::Status InferenceCalculatorXnnpackImpl::Close(CalculatorContext* cc) {

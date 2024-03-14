@@ -21,6 +21,7 @@
 #include "absl/status/statusor.h"
 #include "absl/time/time.h"
 #include "mediapipe/calculators/tensor/inference_calculator.h"
+#include "mediapipe/calculators/tensor/tensor_span.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/ret_check.h"
@@ -55,13 +56,12 @@ namespace api2 {
 //     }
 //   }
 class InferenceCalculatorGlAdvancedImpl
-    : public NodeImpl<InferenceCalculatorGlAdvanced,
-                      InferenceCalculatorGlAdvancedImpl> {
+    : public InferenceCalculatorNodeImpl<InferenceCalculatorGlAdvanced,
+                                         InferenceCalculatorGlAdvancedImpl> {
  public:
   static absl::Status UpdateContract(CalculatorContract* cc);
 
   absl::Status Open(CalculatorContext* cc) override;
-  absl::Status Process(CalculatorContext* cc) override;
   absl::Status Close(CalculatorContext* cc) override;
 
  private:
@@ -99,7 +99,7 @@ class InferenceCalculatorGlAdvancedImpl
                       std::shared_ptr<GlContext> gl_context);
 
     absl::StatusOr<std::vector<Tensor>> Process(
-        CalculatorContext* cc, const std::vector<Tensor>& input_tensors);
+        CalculatorContext* cc, const TensorSpan& input_tensors);
 
    private:
     absl::Status InitTFLiteGPURunner(
@@ -117,6 +117,8 @@ class InferenceCalculatorGlAdvancedImpl
     OnDiskCacheHelper on_disk_cache_helper_;
   };
 
+  absl::Status ProcessTensorSpan(CalculatorContext* cc,
+                                 const TensorSpan& tensor_span) override;
   absl::StatusOr<std::unique_ptr<GpuInferenceRunner>> CreateInferenceRunner(
       CalculatorContext* cc);
 
@@ -161,7 +163,7 @@ absl::Status InferenceCalculatorGlAdvancedImpl::GpuInferenceRunner::Init(
 
 absl::StatusOr<std::vector<Tensor>>
 InferenceCalculatorGlAdvancedImpl::GpuInferenceRunner::Process(
-    CalculatorContext* cc, const std::vector<Tensor>& input_tensors) {
+    CalculatorContext* cc, const TensorSpan& input_tensors) {
   std::vector<Tensor> output_tensors;
 
   MP_RETURN_IF_ERROR(gl_context_->Run(
@@ -397,7 +399,7 @@ InferenceCalculatorGlAdvancedImpl::OnDiskCacheHelper::SaveGpuCaches(
 
 absl::Status InferenceCalculatorGlAdvancedImpl::UpdateContract(
     CalculatorContract* cc) {
-  MP_RETURN_IF_ERROR(EnforceVectorTensors(cc));
+  MP_RETURN_IF_ERROR(TensorContractCheck(cc));
 
   const auto& options = cc->Options<mediapipe::InferenceCalculatorOptions>();
   RET_CHECK(!options.model_path().empty() ^ kSideInModel(cc).IsConnected())
@@ -414,20 +416,11 @@ absl::Status InferenceCalculatorGlAdvancedImpl::Open(CalculatorContext* cc) {
   return gpu_inference_runner_->Init(cc, gpu_helper_.GetSharedGlContext());
 }
 
-absl::Status InferenceCalculatorGlAdvancedImpl::Process(CalculatorContext* cc) {
-  if (kInTensors(cc).IsEmpty()) {
-    return absl::OkStatus();
-  }
-
-  const auto& input_tensors = *kInTensors(cc);
-  RET_CHECK(!input_tensors.empty());
-  auto output_tensors = std::make_unique<std::vector<Tensor>>();
-
-  MP_ASSIGN_OR_RETURN(*output_tensors,
-                      gpu_inference_runner_->Process(cc, input_tensors));
-
-  kOutTensors(cc).Send(std::move(output_tensors));
-  return absl::OkStatus();
+absl::Status InferenceCalculatorGlAdvancedImpl::ProcessTensorSpan(
+    CalculatorContext* cc, const TensorSpan& tensor_span) {
+  MP_ASSIGN_OR_RETURN(std::vector<Tensor> output_tensors,
+                      gpu_inference_runner_->Process(cc, tensor_span));
+  return SendOutputTensors(cc, std::move(output_tensors));
 }
 
 absl::Status InferenceCalculatorGlAdvancedImpl::Close(CalculatorContext* cc) {

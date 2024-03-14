@@ -40,20 +40,20 @@ namespace mediapipe {
 namespace api2 {
 
 class InferenceCalculatorCpuImpl
-    : public NodeImpl<InferenceCalculatorCpu, InferenceCalculatorCpuImpl> {
+    : public InferenceCalculatorNodeImpl<InferenceCalculatorCpu,
+                                         InferenceCalculatorCpuImpl> {
  public:
   static absl::Status UpdateContract(CalculatorContract* cc);
 
   absl::Status Open(CalculatorContext* cc) override;
-  absl::Status Process(CalculatorContext* cc) override;
   absl::Status Close(CalculatorContext* cc) override;
 
  private:
   absl::StatusOr<std::unique_ptr<InferenceRunner>> CreateInferenceRunner(
       CalculatorContext* cc);
   absl::StatusOr<TfLiteDelegatePtr> MaybeCreateDelegate(CalculatorContext* cc);
-  absl::Status ProcessTensors(CalculatorContext* cc);
-  absl::Status ProcessTensorVectors(CalculatorContext* cc);
+  absl::Status ProcessTensorSpan(CalculatorContext* cc,
+                                 const TensorSpan& tensor_span) override;
   std::unique_ptr<InferenceRunner> inference_runner_;
 };
 
@@ -73,49 +73,11 @@ absl::Status InferenceCalculatorCpuImpl::Open(CalculatorContext* cc) {
   return absl::OkStatus();
 }
 
-absl::Status InferenceCalculatorCpuImpl::ProcessTensorVectors(
-    CalculatorContext* cc) {
-  // Skip if empty input stream, but error if input vector is empty.
-  if (kInTensors(cc).IsEmpty()) {
-    return absl::OkStatus();
-  }
-  const auto& input_tensors = *kInTensors(cc);
-  RET_CHECK(!input_tensors.empty());
-
-  MP_ASSIGN_OR_RETURN(
-      std::vector<Tensor> output_tensors,
-      inference_runner_->Run(cc, MakeTensorSpan(input_tensors)));
-  kOutTensors(cc).Send(std::move(output_tensors));
-  return absl::OkStatus();
-}
-
-absl::Status InferenceCalculatorCpuImpl::ProcessTensors(CalculatorContext* cc) {
-  // First, return early if any empty streams.
-  for (int i = 0; i < kInTensor(cc).Count(); ++i) {
-    if (kInTensor(cc)[i].IsEmpty()) {
-      return absl::OkStatus();
-    }
-  }
-
-  // Then perform inference
-  MP_ASSIGN_OR_RETURN(
-      std::vector<Tensor> output_tensors,
-      inference_runner_->Run(cc, MakeTensorSpan(kInTensor(cc))));
-
-  // And pipe each one into the appropriate output stream
-  const int output_count =
-      std::min(kOutTensor(cc).Count(), static_cast<int>(output_tensors.size()));
-  for (int i = 0; i < output_count; ++i) {
-    kOutTensor(cc)[i].Send(std::move(output_tensors[i]));
-  }
-  return absl::OkStatus();
-}
-
-absl::Status InferenceCalculatorCpuImpl::Process(CalculatorContext* cc) {
-  if (kInTensors(cc).IsConnected()) {
-    return ProcessTensorVectors(cc);
-  }
-  return ProcessTensors(cc);
+absl::Status InferenceCalculatorCpuImpl::ProcessTensorSpan(
+    CalculatorContext* cc, const TensorSpan& tensor_span) {
+  MP_ASSIGN_OR_RETURN(std::vector<Tensor> output_tensors,
+                      inference_runner_->Run(cc, tensor_span));
+  return SendOutputTensors(cc, std::move(output_tensors));
 }
 
 absl::Status InferenceCalculatorCpuImpl::Close(CalculatorContext* cc) {

@@ -416,6 +416,7 @@ cc_library_with_tflite(
     deps = [
         ":inference_calculator_cc_proto",
         ":inference_calculator_options_lib",
+        ":tensor_span",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/api2:packet",
@@ -455,6 +456,7 @@ cc_library(
     deps = [
         ":inference_calculator_cc_proto",
         ":inference_calculator_interface",
+        ":tensor_span",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/api2:packet",
@@ -483,6 +485,7 @@ cc_library(
     tags = ["nomac"],
     deps = [
         ":inference_calculator_interface",
+        ":tensor_span",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/deps:file_path",
         "//mediapipe/framework/formats:tensor",
@@ -516,6 +519,7 @@ cc_library(
     tags = ["ios"],
     deps = [
         "inference_calculator_interface",
+        ":tensor_span",
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/gpu:MPPMetalHelper",
         "//mediapipe/gpu:MPPMetalUtil",
