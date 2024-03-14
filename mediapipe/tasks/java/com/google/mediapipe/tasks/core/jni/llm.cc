@@ -22,9 +22,9 @@
 #include "absl/status/status.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/class_registry.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/jni_util.h"
+#include "mediapipe/tasks/cc/genai/inference/c/llm_inference_engine.h"
 #include "mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto/llm_options.pb.h"
 #include "mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto/llm_response_context.pb.h"
-#include "odml/infra/genai/inference/c/llm_inference_engine.h"
 
 namespace {
 
