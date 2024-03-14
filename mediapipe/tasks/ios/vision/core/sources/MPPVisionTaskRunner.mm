@@ -289,6 +289,29 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
   return [self processImage:image regionOfInterest:CGRectZero error:error];
 }
 
+- (std::optional<PacketMap>)processImage:(MPPImage *)image
+                        regionOfInterest:(CGRect)regionOfInterest
+                                   error:(NSError **)error {
+  if (_runningMode != MPPRunningModeImage) {
+    [MPPCommonUtils
+        createCustomError:error
+                 withCode:MPPTasksErrorCodeInvalidArgumentError
+              description:[NSString stringWithFormat:@"The vision task is not initialized with "
+                                                     @"image mode. Current Running Mode: %@",
+                                                     MPPRunningModeDisplayName(_runningMode)]];
+    return std::nullopt;
+  }
+
+  std::optional<PacketMap> inputPacketMap = [self inputPacketMapWithMPPImage:image
+                                                            regionOfInterest:regionOfInterest
+                                                                       error:error];
+  if (!inputPacketMap.has_value()) {
+    return std::nullopt;
+  }
+
+  return [self processPacketMap:inputPacketMap.value() error:error];
+}
+
 - (std::optional<PacketMap>)processVideoFrame:(MPPImage *)videoFrame
                              regionOfInterest:(CGRect)regionOfInterest
                       timestampInMilliseconds:(NSInteger)timestampInMilliseconds
