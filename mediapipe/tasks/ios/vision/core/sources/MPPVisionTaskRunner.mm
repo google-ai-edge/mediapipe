@@ -197,7 +197,8 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
                                       @"images with `imageOrientation = UIImageOrientationUp`"];
     return NO;
   }
-  if (!_normRectInputStreamName || !_roiAllowed && !CGRectEqualToRect(roi, CGRectZero)) {
+  
+  if ((!_normRectInputStreamName || !_roiAllowed) && !CGRectEqualToRect(roi, CGRectZero)) {
     [MPPCommonUtils createCustomError:error
                              withCode:MPPTasksErrorCodeInternalError
                           description:@"This task doesn't support region-of-interest."];
