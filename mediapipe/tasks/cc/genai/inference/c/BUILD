@@ -18,6 +18,11 @@ package(default_visibility = [
 ])
 
 cc_library(
+    name = "libllm_inference_engine_hdr",
+    hdrs = ["llm_inference_engine.h"],
+)
+
+cc_library(
     name = "libllm_inference_engine_cpu",
     srcs = ["llm_inference_engine_cpu.cc"],
     hdrs = ["llm_inference_engine.h"],

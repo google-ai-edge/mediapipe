@@ -64,6 +64,7 @@ cc_library(
     deps = [
         "//mediapipe/java/com/google/mediapipe/framework/jni:class_registry",
         "//mediapipe/java/com/google/mediapipe/framework/jni:jni_util",
+        "//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_hdr",  # needed with ENABLE_ODML_MAVEN_BUILD
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto:llm_options_cc_proto",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto:llm_response_context_cc_proto",
         "@com_google_absl//absl/log:absl_log",
@@ -73,7 +74,6 @@ cc_library(
             "//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu",
         ],
         ":enable_odml_maven_build": [
-            "//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine.h",
             "@odml//odml/infra/genai/inference/c:libllm_inference_engine",
             "@odml//odml/infra/genai/inference/c:libllm_inference_engine_deps",
         ],
