@@ -19,15 +19,15 @@
 @implementation MPPHolisticLandmarkerResult
 
 - (instancetype)
-      initWithFaceLandmarks:(NSArray<NSArray<MPPNormalizedLandmark *> *> *)faceLandmarks
-            faceBlendshapes:(nullable NSArray<MPPClassifications *> *)faceBlendshapes
-              poseLandmarks:(NSArray<NSArray<MPPNormalizedLandmark *> *> *)poseLandmarks
-         poseWorldLandmarks:(NSArray<NSArray<MPPLandmark *> *> *)poseWorldLandmarks
+      initWithFaceLandmarks:(NSArray<MPPNormalizedLandmark *> *)faceLandmarks
+            faceBlendshapes:(nullable MPPClassifications *)faceBlendshapes
+              poseLandmarks:(NSArray<MPPNormalizedLandmark *> *)poseLandmarks
+         poseWorldLandmarks:(NSArray<MPPLandmark *> *)poseWorldLandmarks
       poseSegmentationMasks:(NSArray<MPPMask *> *)poseSegmentationMasks
-          leftHandLandmarks:(NSArray<NSArray<MPPNormalizedLandmark *> *> *)leftHandLandmarks
-     leftHandWorldLandmarks:(NSArray<NSArray<MPPLandmark *> *> *)leftHandWorldLandmarks
-         rightHandLandmarks:(NSArray<NSArray<MPPNormalizedLandmark *> *> *)rightHandLandmarks
-    rightHandWorldLandmarks:(NSArray<NSArray<MPPLandmark *> *> *)rightHandWorldLandmarks
+          leftHandLandmarks:(NSArray<MPPNormalizedLandmark *> *)leftHandLandmarks
+     leftHandWorldLandmarks:(NSArray<MPPLandmark *> *)leftHandWorldLandmarks
+         rightHandLandmarks:(NSArray<MPPNormalizedLandmark *> *)rightHandLandmarks
+    rightHandWorldLandmarks:(NSArray<MPPLandmark *> *)rightHandWorldLandmarks
     timestampInMilliseconds:(NSInteger)timestampInMilliseconds {
   self = [super initWithTimestampInMilliseconds:timestampInMilliseconds];
   if (self) {
