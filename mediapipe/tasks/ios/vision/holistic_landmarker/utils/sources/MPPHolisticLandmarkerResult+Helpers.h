@@ -16,7 +16,11 @@
 #error "This file requires Objective-C++."
 #endif  // __cplusplus
 
+#include "mediapipe/framework/formats/classification.pb.h"
+#include "mediapipe/framework/formats/image.h"
+#include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/packet.h"
+
 #import "mediapipe/tasks/ios/vision/holistic_landmarker/sources/MPPHolisticLandmarkerResult.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -24,7 +28,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface MPPHolisticLandmarkerResult (Helpers)
 
 /**
- * Creates an `MPPHolisticLandmarkerResult` from face landmarks, face blend shapes, pose landmarks,
+ * Creates a `MPPHolisticLandmarkerResult` from face landmarks, face blend shapes, pose landmarks,
  * pose world landmarks, pose segmentation masks, left hand landmarks, left hand world landmarks,
  * right hand landmarks and right hand world landmarks packets.
  *
@@ -66,5 +70,46 @@ NS_ASSUME_NONNULL_BEGIN
                       rightHandWorldLandmarksPacket:
                           (const mediapipe::Packet &)rightHandWorldLandmarksPacket;
 
+/**
+ * Creates a `MPPHolisticLandmarkerResult` from face landmarks, face blend shapes, pose landmarks,
+ * pose world landmarks, pose segmentation masks, left hand landmarks, left hand world landmarks,
+ * right hand landmarks, right hand world landmarks and timestamp in milliseconds.
+ *
+ * @param faceLandmarksProto A proto of type `mediapipe::NormalizedlandmarkList`.
+ * @param faceBlendshapesProto A proto of type `mediapipe::ClassificationList`.
+ * @param poseLandmarksProto A proto of type `mediapipe::NormalizedlandmarkList`.
+ * @param poseWorldLandmarksProto A proto of type `mediapipe::LandmarkList`.
+ * @param poseSegmentationMaskProtos A list of protos of type `std::vector<mediapipe::Image>`.
+ * @param leftHandLandmarksProto A proto of type `mediapipe::NormalizedlandmarkList`.
+ * @param leftHandWorldLandmarksProto A proto of type `mediapipe::LandmarkList`.
+ * @param rightHandLandmarksProto A proto of type `mediapipe::NormalizedlandmarkList`.
+ * @param rightHandWorldLandmarksProto A proto of type `mediapipe::LandmarkList`.
+ * @param timestampInMilliseconds The timestamp of the result.
+ *
+ * @return  A `MPPHolisticLandmarkerResult` object created from the given protos and timestamp in
+ * milliseconds.
+ */
++ (MPPHolisticLandmarkerResult *)
+    holisticLandmarkerResultWithFaceLandmarksProto:
+        (const mediapipe::NormalizedLandmarkList &)faceLandmarksProto
+                              faceBlendshapesProto:
+                                  (const mediapipe::ClassificationList *)faceBlendshapesProto
+                                poseLandmarksProto:
+                                    (const mediapipe::NormalizedLandmarkList &)poseLandmarksProto
+                           poseWorldLandmarksProto:
+                               (const mediapipe::LandmarkList &)poseWorldLandmarksProto
+                        poseSegmentationMaskProtos:
+                            (const std::vector<::mediapipe::Image> *)poseSegmentationMaskProtos
+                            leftHandLandmarksProto:
+                                (const mediapipe::NormalizedLandmarkList &)leftHandLandmarksProto
+                       leftHandWorldLandmarksProto:
+                           (const mediapipe::LandmarkList &)leftHandWorldLandmarksProto
+                           rightHandLandmarksProto:
+                               (const mediapipe::NormalizedLandmarkList &)rightHandLandmarksProto
+                      rightHandWorldLandmarksProto:
+                          (const mediapipe::LandmarkList &)rightHandWorldLandmarksProto
+                           timestampInMilliseconds:(NSInteger)timestampInMilliseconds;
+
 @end
+
 NS_ASSUME_NONNULL_END

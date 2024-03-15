@@ -29,6 +29,15 @@ using NormalizedLandmarkListProto = mediapipe::NormalizedLandmarkList;
 using ClassificationListProto = mediapipe::ClassificationList;
 };  // namespace
 
+#define NormalizedLandmarkListFromPacket(packet)            \
+  packet.ValidateAsType<NormalizedLandmarkListProto>().ok() \
+      ? packet.Get<NormalizedLandmarkListProto>()           \
+      : NormalizedLandmarkListProto()
+
+#define LandmarkListFromPacket(packet)                                              \
+  packet.ValidateAsType<LandmarkListProto>().ok() ? packet.Get<LandmarkListProto>() \
+                                                  : LandmarkListProto()
+
 @implementation MPPHolisticLandmarkerResult (Helpers)
 
 + (MPPHolisticLandmarkerResult *)
@@ -47,47 +56,90 @@ using ClassificationListProto = mediapipe::ClassificationList;
                                (const mediapipe::Packet &)rightHandLandmarksPacket
                       rightHandWorldLandmarksPacket:
                           (const mediapipe::Packet &)rightHandWorldLandmarksPacket {
-  NSMutableArray<NSArray<MPPNormalizedLandmark *> *> *faceLandmarks =
-      [MPPHolisticLandmarkerResult normalizedLandmarksArrayFromPacket:faceLandmarksPacket];
+  NSInteger timestampInMilliseconds =
+      (NSInteger)(faceLandmarksPacket.Timestamp().Value() / kMicrosecondsPerMillisecond);
 
-  NSMutableArray<NSArray<MPPNormalizedLandmark *> *> *poseLandmarks =
-      [MPPHolisticLandmarkerResult normalizedLandmarksArrayFromPacket:poseLandmarksPacket];
-  NSMutableArray<NSArray<MPPLandmark *> *> *poseWorldLandmarks =
-      [MPPHolisticLandmarkerResult landmarksArrayFromPacket:poseWorldLandmarksPacket];
+  const ClassificationListProto *faceBlendshapesProto =
+      faceBlendShapesPacket.ValidateAsType<ClassificationListProto>().ok()
+          ? &(faceBlendShapesPacket.Get<ClassificationListProto>())
+          : nullptr;
+  const std::vector<Image> *poseSegmentationMasksProto =
+      poseSegmentationMasksPacket->ValidateAsType<std::vector<Image>>().ok()
+          ? &(poseSegmentationMasksPacket->Get<std::vector<Image>>())
+          : nullptr;
 
-  NSMutableArray<NSArray<MPPNormalizedLandmark *> *> *leftHandLandmarks =
-      [MPPHolisticLandmarkerResult normalizedLandmarksArrayFromPacket:leftHandLandmarksPacket];
-  NSMutableArray<NSArray<MPPLandmark *> *> *leftHandWorldLandmarks =
-      [MPPHolisticLandmarkerResult landmarksArrayFromPacket:leftHandWorldLandmarksPacket];
+  return [MPPHolisticLandmarkerResult
+      holisticLandmarkerResultWithFaceLandmarksProto:NormalizedLandmarkListFromPacket(
+                                                         faceLandmarksPacket)
+                                faceBlendshapesProto:faceBlendshapesProto
+                                  poseLandmarksProto:NormalizedLandmarkListFromPacket(
+                                                         poseLandmarksPacket)
+                             poseWorldLandmarksProto:LandmarkListFromPacket(poseLandmarksPacket)
+                          poseSegmentationMaskProtos:poseSegmentationMasksProto
+                              leftHandLandmarksProto:NormalizedLandmarkListFromPacket(
+                                                         leftHandLandmarksPacket)
+                         leftHandWorldLandmarksProto:LandmarkListFromPacket(
+                                                         leftHandWorldLandmarksPacket)
+                             rightHandLandmarksProto:NormalizedLandmarkListFromPacket(
+                                                         rightHandLandmarksPacket)
+                        rightHandWorldLandmarksProto:LandmarkListFromPacket(
+                                                         rightHandWorldLandmarksPacket)
+                             timestampInMilliseconds:timestampInMilliseconds];
+}
 
-  NSMutableArray<NSArray<MPPNormalizedLandmark *> *> *rightHandLandmarks =
-      [MPPHolisticLandmarkerResult normalizedLandmarksArrayFromPacket:rightHandLandmarksPacket];
-  NSMutableArray<NSArray<MPPLandmark *> *> *rightHandWorldLandmarks =
-      [MPPHolisticLandmarkerResult landmarksArrayFromPacket:rightHandWorldLandmarksPacket];
++ (MPPHolisticLandmarkerResult *)
+    holisticLandmarkerResultWithFaceLandmarksProto:
+        (const mediapipe::NormalizedLandmarkList &)faceLandmarksProto
+                              faceBlendshapesProto:
+                                  (const mediapipe::ClassificationList *)faceBlendshapesProto
+                                poseLandmarksProto:
+                                    (const mediapipe::NormalizedLandmarkList &)poseLandmarksProto
+                           poseWorldLandmarksProto:
+                               (const mediapipe::LandmarkList &)poseWorldLandmarksProto
+                        poseSegmentationMaskProtos:
+                            (const std::vector<::mediapipe::Image> *)poseSegmentationMaskProtos
+                            leftHandLandmarksProto:
+                                (const mediapipe::NormalizedLandmarkList &)leftHandLandmarksProto
+                       leftHandWorldLandmarksProto:
+                           (const mediapipe::LandmarkList &)leftHandWorldLandmarksProto
+                           rightHandLandmarksProto:
+                               (const mediapipe::NormalizedLandmarkList &)rightHandLandmarksProto
+                      rightHandWorldLandmarksProto:
+                          (const mediapipe::LandmarkList &)rightHandWorldLandmarksProto
+                           timestampInMilliseconds:(NSInteger)timestampInMilliseconds {
+  NSArray<MPPNormalizedLandmark *> *faceLandmarks = [MPPHolisticLandmarkerResult
+      normalizedLandmarksArrayFromNormalizedLandmarkListProto:faceLandmarksProto];
+
+  NSArray<MPPNormalizedLandmark *> *poseLandmarks = [MPPHolisticLandmarkerResult
+      normalizedLandmarksArrayFromNormalizedLandmarkListProto:poseLandmarksProto];
+  NSArray<MPPLandmark *> *poseWorldLandmarks =
+      [MPPHolisticLandmarkerResult landmarksArrayFromLandmarkListProto:poseWorldLandmarksProto];
+
+  NSArray<MPPNormalizedLandmark *> *leftHandLandmarks = [MPPHolisticLandmarkerResult
+      normalizedLandmarksArrayFromNormalizedLandmarkListProto:leftHandLandmarksProto];
+  NSArray<MPPLandmark *> *leftHandWorldLandmarks =
+      [MPPHolisticLandmarkerResult landmarksArrayFromLandmarkListProto:leftHandWorldLandmarksProto];
+
+  NSArray<MPPNormalizedLandmark *> *rightHandLandmarks = [MPPHolisticLandmarkerResult
+      normalizedLandmarksArrayFromNormalizedLandmarkListProto:rightHandLandmarksProto];
+  NSArray<MPPLandmark *> *rightHandWorldLandmarks = [MPPHolisticLandmarkerResult
+      landmarksArrayFromLandmarkListProto:rightHandWorldLandmarksProto];
 
   // Since the presence of faceBlendshapes and poseConfidenceMasks are optional, if they are not
   // present pass nil arrays to the result.
-  NSMutableArray<MPPClassifications *> *faceBlendshapes;
-  if (faceBlendShapesPacket.ValidateAsType<std::vector<ClassificationListProto>>().ok()) {
-    const std::vector<ClassificationListProto> &classificationListProtos =
-        faceBlendShapesPacket.Get<std::vector<ClassificationListProto>>();
-    faceBlendshapes =
-        [NSMutableArray arrayWithCapacity:(NSUInteger)classificationListProtos.size()];
-    for (const auto &classificationListProto : classificationListProtos) {
-      [faceBlendshapes
-          addObject:[MPPClassifications
-                        classificationsWithClassificationListProto:classificationListProto
+  MPPClassifications *faceBlendshapes;
+  if (faceBlendshapesProto) {
+    [MPPClassifications classificationsWithClassificationListProto:*faceBlendshapesProto
                                                          headIndex:0
-                                                          headName:@""]];
-    }
+                                                          headName:@""];
   }
 
   NSMutableArray<MPPMask *> *poseConfidenceMasks;
-  if (poseSegmentationMasksPacket->ValidateAsType<std::vector<Image>>().ok()) {
-    std::vector<Image> cppConfidenceMasks = poseSegmentationMasksPacket->Get<std::vector<Image>>();
-    poseConfidenceMasks = [NSMutableArray arrayWithCapacity:(NSUInteger)cppConfidenceMasks.size()];
+  if (poseSegmentationMaskProtos) {
+    poseConfidenceMasks =
+        [NSMutableArray arrayWithCapacity:(NSUInteger)poseSegmentationMaskProtos->size()];
 
-    for (const auto &confidenceMask : cppConfidenceMasks) {
+    for (const auto &confidenceMask : *poseSegmentationMaskProtos) {
       [poseConfidenceMasks
           addObject:[[MPPMask alloc]
                         initWithFloat32Data:(float *)confidenceMask.GetImageFrameSharedPtr()
@@ -99,84 +151,41 @@ using ClassificationListProto = mediapipe::ClassificationList;
     }
   }
 
-  return [[MPPHolisticLandmarkerResult alloc]
-        initWithFaceLandmarks:faceLandmarks
-              faceBlendshapes:faceBlendshapes
-                poseLandmarks:poseLandmarks
-           poseWorldLandmarks:poseWorldLandmarks
-        poseSegmentationMasks:poseConfidenceMasks
-            leftHandLandmarks:leftHandLandmarks
-       leftHandWorldLandmarks:leftHandWorldLandmarks
-           rightHandLandmarks:rightHandLandmarks
-      rightHandWorldLandmarks:rightHandWorldLandmarks
-      timestampInMilliseconds:(NSInteger)(faceLandmarksPacket.Timestamp().Value() /
-                                          kMicrosecondsPerMillisecond)];
+  return [[MPPHolisticLandmarkerResult alloc] initWithFaceLandmarks:faceLandmarks
+                                                    faceBlendshapes:faceBlendshapes
+                                                      poseLandmarks:poseLandmarks
+                                                 poseWorldLandmarks:poseWorldLandmarks
+                                              poseSegmentationMasks:poseConfidenceMasks
+                                                  leftHandLandmarks:leftHandLandmarks
+                                             leftHandWorldLandmarks:leftHandWorldLandmarks
+                                                 rightHandLandmarks:rightHandLandmarks
+                                            rightHandWorldLandmarks:rightHandWorldLandmarks
+                                            timestampInMilliseconds:timestampInMilliseconds];
 }
 
-+ (NSMutableArray<NSArray<MPPNormalizedLandmark *> *> *)normalizedLandmarksArrayFromPacket:
-    (const mediapipe::Packet &)normalizedLandmarksPacket {
-  NSMutableArray<NSArray<MPPNormalizedLandmark *> *> *normalizedLandmarks =
-      [MPPHolisticLandmarkerResult
-          nullableNormalizedLandmarksArrayFromPacket:normalizedLandmarksPacket];
++ (NSArray<MPPNormalizedLandmark *> *)normalizedLandmarksArrayFromNormalizedLandmarkListProto:
+    (const NormalizedLandmarkListProto &)normalizedLandmarkListProto {
+  NSMutableArray<MPPNormalizedLandmark *> *normalizedLandmarks =
+      [NSMutableArray arrayWithCapacity:(NSUInteger)normalizedLandmarkListProto.landmark().size()];
+  for (const auto &normalizedLandmark : normalizedLandmarkListProto.landmark()) {
+    [normalizedLandmarks
+        addObject:[MPPNormalizedLandmark normalizedLandmarkWithProto:normalizedLandmark]];
+  }
 
-  return normalizedLandmarks ? normalizedLandmarks : [NSMutableArray arrayWithCapacity:0];
+  return normalizedLandmarks;
 }
 
-+ (NSMutableArray<NSArray<MPPLandmark *> *> *)landmarksArrayFromPacket:
-    (const mediapipe::Packet &)landmarksPacket {
-  NSMutableArray<NSArray<MPPLandmark *> *> *landmarks =
-      [MPPHolisticLandmarkerResult nullableLandmarksArrayFromPacket:landmarksPacket];
++ (NSArray<MPPLandmark *> *)landmarksArrayFromLandmarkListProto:
+    (const LandmarkListProto &)landmarkListProto {
+  NSMutableArray<MPPLandmark *> *landmarks =
+      [NSMutableArray arrayWithCapacity:(NSUInteger)landmarkListProto.landmark().size()];
 
-  return landmarks ? landmarks : [NSMutableArray arrayWithCapacity:0];
-}
-
-+ (NSMutableArray<NSArray<MPPNormalizedLandmark *> *> *)nullableNormalizedLandmarksArrayFromPacket:
-    (const mediapipe::Packet &)normalizedLandmarksPacket {
-  if (!normalizedLandmarksPacket.ValidateAsType<std::vector<NormalizedLandmarkListProto>>().ok()) {
-    return nil;
+  for (const auto &landmarkProto : landmarkListProto.landmark()) {
+    MPPLandmark *landmark = [MPPLandmark landmarkWithProto:landmarkProto];
+    [landmarks addObject:landmark];
   }
 
-  const std::vector<NormalizedLandmarkListProto> &normalizedLandmarkListProtos =
-      normalizedLandmarksPacket.Get<std::vector<NormalizedLandmarkListProto>>();
-
-  NSMutableArray<NSArray<MPPNormalizedLandmark *> *> *multipleNormalizedLandmarks =
-      [NSMutableArray arrayWithCapacity:(NSUInteger)normalizedLandmarkListProtos.size()];
-  for (const auto &normalizedLandmarkListProto : normalizedLandmarkListProtos) {
-    NSMutableArray<MPPNormalizedLandmark *> *normalizedLandmarks =
-        [NSMutableArray arrayWithCapacity:(NSUInteger)normalizedLandmarkListProto.landmark_size()];
-    for (const auto &normalizedLandmark : normalizedLandmarkListProto.landmark()) {
-      [normalizedLandmarks
-          addObject:[MPPNormalizedLandmark normalizedLandmarkWithProto:normalizedLandmark]];
-    }
-    [multipleNormalizedLandmarks addObject:normalizedLandmarks];
-  }
-
-  return multipleNormalizedLandmarks;
-}
-
-+ (NSMutableArray<NSArray<MPPLandmark *> *> *)nullableLandmarksArrayFromPacket:
-    (const mediapipe::Packet &)landmarksPacket {
-  if (!landmarksPacket.ValidateAsType<std::vector<LandmarkListProto>>().ok()) {
-    return nil;
-  }
-
-  const std::vector<LandmarkListProto> &landmarkListProtos =
-      landmarksPacket.Get<std::vector<LandmarkListProto>>();
-
-  NSMutableArray<NSArray<MPPLandmark *> *> *multipleLandmarks =
-      [NSMutableArray arrayWithCapacity:(NSUInteger)landmarkListProtos.size()];
-
-  for (const auto &landmarkListProto : landmarkListProtos) {
-    NSMutableArray<MPPLandmark *> *landmarks =
-        [NSMutableArray arrayWithCapacity:(NSUInteger)landmarkListProto.landmark().size()];
-    for (const auto &landmarkProto : landmarkListProto.landmark()) {
-      MPPLandmark *landmark = [MPPLandmark landmarkWithProto:landmarkProto];
-      [landmarks addObject:landmark];
-    }
-    [multipleLandmarks addObject:landmarks];
-  }
-
-  return multipleLandmarks;
+  return landmarks;
 }
 
 @end
