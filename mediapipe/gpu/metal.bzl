@@ -157,7 +157,11 @@ def _metal_library_impl(ctx):
         objc_provider,
         cc_common.merge_cc_infos(cc_infos = cc_infos),
         # Return the provider for the new bundling logic of rules_apple.
-        resources.bucketize_typed([output_lib], "unprocessed"),
+        resources.bucketize_typed(
+            bucket_type = "unprocessed",
+            expect_files = True,
+            resources = [output_lib],
+        ),
     ]
 
 METAL_LIBRARY_ATTRS = dicts.add(apple_support.action_required_attrs(), {
