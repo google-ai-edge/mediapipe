@@ -69,6 +69,7 @@ cc_library(
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto:llm_response_context_cc_proto",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
     ] + select({
         "//conditions:default": [
             "//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu",

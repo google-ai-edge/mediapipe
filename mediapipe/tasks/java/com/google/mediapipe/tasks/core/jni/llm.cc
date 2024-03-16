@@ -16,10 +16,12 @@
 
 #include <jni.h>
 
+#include <cstdlib>
 #include <string>
 
 #include "absl/log/absl_log.h"
 #include "absl/status/status.h"
+#include "absl/strings/str_cat.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/class_registry.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/jni_util.h"
 #include "mediapipe/tasks/cc/genai/inference/c/llm_inference_engine.h"
@@ -154,4 +156,19 @@ JNIEXPORT void JNICALL JNI_METHOD(nativePredictAsync)(JNIEnv* env, jclass thiz,
       reinterpret_cast<LlmInferenceEngine_Session*>(session_handle),
       reinterpret_cast<void*>(callback_ref), input_str.c_str(),
       &ProcessAsyncResponse);
+}
+
+JNIEXPORT jint JNICALL JNI_METHOD(nativeSizeInTokens)(JNIEnv* env, jclass thiz,
+                                                      jlong session_handle,
+                                                      jstring input) {
+  std::string input_str = JStringToStdString(env, input);
+  char* error_msg = nullptr;
+  int size = LlmInferenceEngine_Session_SizeInTokens(
+      reinterpret_cast<void*>(session_handle), input_str.c_str(), &error_msg);
+  if (size == -1) {
+    ThrowIfError(env, absl::InternalError(absl::StrCat(
+                          "Failed to compute size: %s", error_msg)));
+    free(error_msg);
+  }
+  return size;
 }

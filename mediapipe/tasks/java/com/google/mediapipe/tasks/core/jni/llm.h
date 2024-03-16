@@ -71,6 +71,14 @@ JNIEXPORT void JNICALL JNI_METHOD(nativeRemoveCallback)(JNIEnv *, jclass,
 JNIEXPORT void JNICALL JNI_METHOD(nativePredictAsync)(JNIEnv *, jclass, jlong,
                                                       jobject, jstring);
 
+/*
+ * Class:     com_google_mediapipe_tasks_core_LlmTaskRunner
+ * Method:    nativeSizeInTokens
+ * Signature: (JLjava/lang/String;)I
+ */
+JNIEXPORT jint JNICALL JNI_METHOD(nativeSizeInTokens)(JNIEnv *, jclass, jlong,
+                                                      jstring);
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif  // __cplusplus
