@@ -1,5 +1,9 @@
 load("@build_bazel_rules_apple//apple:ios.bzl", "ios_unit_test")
 load(
+    "@build_bazel_rules_swift//swift:swift.bzl",
+    "swift_library",
+)
+load(
     "//mediapipe/framework/tool:ios.bzl",
     "MPP_TASK_MINIMUM_OS_VERSION",
 )
@@ -24,6 +28,13 @@ TFL_DISABLED_SANITIZER_TAGS = [
     "notsan",
 ]
 
+OPENCV_CONDITIONAL_DEPS = {
+    "//third_party:opencv_ios_sim_arm64_source_build": ["@ios_opencv_source//:opencv_xcframework"],
+    "//third_party:opencv_ios_arm64_source_build": ["@ios_opencv_source//:opencv_xcframework"],
+    "//third_party:opencv_ios_x86_64_source_build": ["@ios_opencv_source//:opencv_xcframework"],
+    "//conditions:default": ["@ios_opencv//:OpencvFramework"],
+}
+
 objc_library(
     name = "MPPImageClassifierObjcTestLibrary",
     testonly = 1,
@@ -41,12 +52,7 @@ objc_library(
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/test/vision/utils:MPPImageTestUtils",
         "//mediapipe/tasks/ios/vision/image_classifier:MPPImageClassifier",
-    ] + select({
-        "//third_party:opencv_ios_sim_arm64_source_build": ["@ios_opencv_source//:opencv_xcframework"],
-        "//third_party:opencv_ios_arm64_source_build": ["@ios_opencv_source//:opencv_xcframework"],
-        "//third_party:opencv_ios_x86_64_source_build": ["@ios_opencv_source//:opencv_xcframework"],
-        "//conditions:default": ["@ios_opencv//:OpencvFramework"],
-    }),
+    ] + select(OPENCV_CONDITIONAL_DEPS),
 )
 
 ios_unit_test(
@@ -56,5 +62,31 @@ ios_unit_test(
     tags = TFL_DEFAULT_TAGS + TFL_DISABLED_SANITIZER_TAGS,
     deps = [
         ":MPPImageClassifierObjcTestLibrary",
+    ],
+)
+
+swift_library(
+    name = "ImageClassifierSwiftTestLibrary",
+    testonly = 1,
+    srcs = ["ImageClassifierTests.swift"],
+    data = [
+        "//mediapipe/tasks/testdata/vision:test_images",
+        "//mediapipe/tasks/testdata/vision:test_models",
+    ],
+    tags = TFL_DEFAULT_TAGS,
+    deps = [
+        "//mediapipe/tasks/ios/common:MPPCommon",
+        "//mediapipe/tasks/ios/test/vision/utils:MPPImageTestUtils",
+        "//mediapipe/tasks/ios/vision/image_classifier:MPPImageClassifier",
+    ] + select(OPENCV_CONDITIONAL_DEPS),
+)
+
+ios_unit_test(
+    name = "ImageClassifierSwiftTest",
+    minimum_os_version = MPP_TASK_MINIMUM_OS_VERSION,
+    runner = tflite_ios_lab_runner("IOS_LATEST"),
+    tags = TFL_DEFAULT_TAGS + TFL_DISABLED_SANITIZER_TAGS,
+    deps = [
+        ":ImageClassifierSwiftTestLibrary",
     ],
 )
