@@ -22,11 +22,11 @@ Accepted packet types and tags are listed below:
 |:---|:---|:---|:---|:---|
 |input_stream: "a"|input|none|ov::Tensor|a|
 |output_stream: "OVTENSOR:b"|output|OVTENSOR|ov::Tensor|b|
-|output_stream: "OVTENSORS:b"|output|OVTENSORS|std::vector<ov::Tensor>|b|
+|output_stream: "OVTENSORS:b"|output|OVTENSORS|std::vector\<ov::Tensor\>|b|
 |output_stream: "TENSOR:b"|output|TENSOR|mediapipe::Tensor|b|
-|input_stream: "TENSORS:b"|input|TENSORS|std::vector<mediapipe::Tensor>|b|
+|input_stream: "TENSORS:b"|input|TENSORS|std::vector\<mediapipe::Tensor\>|b|
 
 In case of missing tag calculator assumes that the packet type is `ov::Tensor'.
 
 ## How to adjust existing graphs to perform inference with OpenVINO Model Server
-Please check following [link](https://github.com/openvinotoolkit/mediapipe/compare/master...openvinotoolkit:mediapipe:main) and look up differences in existing MediaPipe pbtxt files.
+Please check following [link](https://github.com/openvinotoolkit/model_server/blob/main/docs/mediapipe_conversion.md#how-to-adjust-existing-graphs-to-perform-inference-with-openvino-model-server) and look up required steps to adjust existing graphs.
