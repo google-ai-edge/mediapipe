@@ -17,7 +17,7 @@ import MediaPipeTasksGenAIC
 
 /// This class is used to create and call appropriate methods on the C `LlmInferenceEngine_Session`
 /// to initialize, execute and terminate any MediaPipe `LlmInference` task.
-public final class LlmTaskRunner {
+final class LlmTaskRunner {
   typealias CLlmSession = UnsafeMutableRawPointer
 
   private let cLlmSession: CLlmSession
@@ -25,7 +25,7 @@ public final class LlmTaskRunner {
   ///
   /// - Parameters:
   ///   - sessionConfig: C session config of type `LlmSessionConfig`.
-  public init(sessionConfig: LlmSessionConfig) {
+  init(sessionConfig: LlmSessionConfig) {
     /// No safe guards for session creation since the C APIs only throw fatal errors.
     /// `LlmInferenceEngine_CreateSession()` will always return an llm session if the call
     /// completes.
@@ -38,7 +38,7 @@ public final class LlmTaskRunner {
   /// - Parameters:
   ///   - inputText: A `String` that is used to query the LLM.
   /// - Throws: An error if the LLM's response is invalid.
-  public func predict(inputText: String) throws -> [String] {
+  func predict(inputText: String) throws -> [String] {
     /// No safe guards for the call since the C++ APIs only throw fatal errors.
     /// `LlmInferenceEngine_Session_PredictSync()` will always return a `LlmResponseContext` if the
     /// call completes.
@@ -60,7 +60,7 @@ public final class LlmTaskRunner {
     return responseStrings
   }
 
-  public func predict(
+  func predict(
     inputText: String, progress: @escaping (_ partialResult: [String]?, _ error: Error?) -> Void,
     completion: @escaping (() -> Void)
   ) {
@@ -97,6 +97,26 @@ public final class LlmTaskRunner {
         cCallbackInfo.completion()
       }
     }
+  }
+
+  func sizeInTokens(text: String) throws -> Int {
+    var cErrorMessage: UnsafeMutablePointer<CChar>?
+  
+    let sizeInTokens = text.withCString { cText in
+      LlmInferenceEngine_Session_SizeInTokens(cLlmSession, cText, &cErrorMessage)
+    }
+
+    guard sizeInTokens > -1 else {
+      var errorMessage: String?
+      if let cErrorMessage {
+        errorMessage = String(cString: cErrorMessage)
+        free(cErrorMessage)
+      }
+
+      throw GenAiInferenceError.failedToComputeSizeInTokens(errorMessage)
+    }
+    
+    return Int(sizeInTokens)
   }
 
   deinit {

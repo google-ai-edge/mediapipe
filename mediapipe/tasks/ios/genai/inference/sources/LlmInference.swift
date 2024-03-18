@@ -176,6 +176,10 @@ import MediaPipeTasksGenAIC
     }
   }
 
+  public func sizeInTokens(text: String) throws -> Int {
+    return try llmTaskRunner.sizeInTokens(text: text)
+  }
+
   /// Throw error if response generation is in progress or update response generation state.
   private func shouldContinueWithResponseGeneration() throws {
     if responseGenerationInProgress {
