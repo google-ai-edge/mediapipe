@@ -176,7 +176,6 @@ metal_library = rule(
     implementation = _metal_library_impl,
     attrs = METAL_LIBRARY_ATTRS,
     fragments = ["apple", "objc"],
-    output_to_genfiles = True,
 )
 """
 Builds a Metal library.

@@ -26,6 +26,5 @@ copy_header = rule(
         "source": attr.string(),
         "deps": attr.label_list(providers = [CcInfo]),
     },
-    output_to_genfiles = True,
     outputs = {"out": "%{filename}"},
 )
