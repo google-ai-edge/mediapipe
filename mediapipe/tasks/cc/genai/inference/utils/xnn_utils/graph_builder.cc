@@ -578,7 +578,7 @@ absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::AvgLastDim(
                      xnn_define_static_mean(subgraph, 1, &reduction_axis,
                                             input->tensor_id(subgraph),
                                             output->tensor_id(subgraph),
-                                            /*flags=*/0));
+                                            /*flags=*/XNN_FLAG_KEEP_DIMS));
         return absl::OkStatus();
       });
 
