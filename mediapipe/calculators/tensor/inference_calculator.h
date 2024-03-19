@@ -23,6 +23,7 @@
 #include "absl/status/statusor.h"
 #include "absl/time/time.h"
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
+#include "mediapipe/calculators/tensor/inference_runner.h"
 #include "mediapipe/calculators/tensor/tensor_span.h"
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/api2/port.h"
@@ -146,12 +147,6 @@ class InferenceCalculator : public NodeIntf {
 
   static absl::StatusOr<Packet<tflite::OpResolver>> GetOpResolverAsPacket(
       CalculatorContext* cc);
-
-  // Subclasses can call this to send their output tensors into the proper
-  // output streams, regardless of how those Tensors are expected to be sent.
-  // We take an rvalue-reference to ensure we can destroy/move the tensors.
-  static absl::Status SendOutputTensors(CalculatorContext* cc,
-                                        std::vector<Tensor>&& output_tensors);
 };
 
 struct InferenceCalculatorSelector : public InferenceCalculator {
@@ -179,8 +174,13 @@ struct InferenceCalculatorXnnpack : public InferenceCalculator {
 };
 
 // For Process overriding, we subclass Impl rather than Intf
+// Also, subclasses must implement InferenceRunner interface's `Run` instead of
+// CalculatorBase's `Process`.
 template <class Intf, class Impl = void>
-class InferenceCalculatorNodeImpl : public NodeImpl<Intf, Impl> {
+class InferenceCalculatorNodeImpl : public NodeImpl<Intf, Impl>,
+                                    protected InferenceRunner {
+ public:
+  // Override Process to handle common Tensor I/O functionality.
   absl::Status Process(CalculatorContext* cc) final {
     if (InferenceCalculator::kInTensors(cc).IsConnected()) {
       // Using old vector<Tensor> inputs; skip if empty input stream, but error
@@ -190,7 +190,9 @@ class InferenceCalculatorNodeImpl : public NodeImpl<Intf, Impl> {
       }
       const auto& input_tensors = *InferenceCalculator::kInTensors(cc);
       RET_CHECK(!input_tensors.empty());
-      return ProcessTensorSpan(cc, MakeTensorSpan(input_tensors));
+      MP_ASSIGN_OR_RETURN(auto output_tensors,
+                          Run(cc, MakeTensorSpan(input_tensors)));
+      return SendOutputTensors(cc, std::move(output_tensors));
     }
 
     // Using new direct Tensor inputs; return early if any empty streams.
@@ -200,14 +202,31 @@ class InferenceCalculatorNodeImpl : public NodeImpl<Intf, Impl> {
       }
     }
 
-    return ProcessTensorSpan(
-        cc, MakeTensorSpan(InferenceCalculator::kInTensor(cc)));
+    MP_ASSIGN_OR_RETURN(
+        auto output_tensors,
+        Run(cc, MakeTensorSpan(InferenceCalculator::kInTensor(cc))));
+    return SendOutputTensors(cc, std::move(output_tensors));
   }
 
-  // Subclasses can override this to process Tensors from a TensorSpan,
-  // regardless of how those Tensors were received by the calculator.
-  virtual absl::Status ProcessTensorSpan(CalculatorContext* cc,
-                                         const TensorSpan& tensor_span) = 0;
+ private:
+  // Send output tensors into the proper output streams, regardless of how those
+  // Tensors are expected to be sent. We take an rvalue-reference to ensure we
+  // can destroy/move the tensors.
+  static absl::Status SendOutputTensors(CalculatorContext* cc,
+                                        std::vector<Tensor>&& output_tensors) {
+    if (InferenceCalculator::kOutTensors(cc).IsConnected()) {
+      InferenceCalculator::kOutTensors(cc).Send(std::move(output_tensors));
+    } else {
+      const int output_count =
+          std::min(InferenceCalculator::kOutTensor(cc).Count(),
+                   static_cast<int>(output_tensors.size()));
+      for (int i = 0; i < output_count; ++i) {
+        InferenceCalculator::kOutTensor(cc)[i].Send(
+            std::move(output_tensors[i]));
+      }
+    }
+    return absl::OkStatus();
+  }
 };
 
 }  // namespace api2

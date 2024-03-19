@@ -416,6 +416,7 @@ cc_library_with_tflite(
     deps = [
         ":inference_calculator_cc_proto",
         ":inference_calculator_options_lib",
+        ":inference_runner",
         ":tensor_span",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/api2:node",

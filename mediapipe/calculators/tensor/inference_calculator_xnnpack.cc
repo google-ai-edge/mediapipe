@@ -44,8 +44,8 @@ class InferenceCalculatorXnnpackImpl
   absl::Status Close(CalculatorContext* cc) override;
 
  private:
-  absl::Status ProcessTensorSpan(CalculatorContext* cc,
-                                 const TensorSpan& tensor_span) override;
+  absl::StatusOr<std::vector<Tensor>> Run(
+      CalculatorContext* cc, const TensorSpan& tensor_span) override;
   absl::StatusOr<std::unique_ptr<InferenceRunner>> CreateInferenceRunner(
       CalculatorContext* cc);
   absl::StatusOr<TfLiteDelegatePtr> CreateDelegate(CalculatorContext* cc);
@@ -69,11 +69,11 @@ absl::Status InferenceCalculatorXnnpackImpl::Open(CalculatorContext* cc) {
   return absl::OkStatus();
 }
 
-absl::Status InferenceCalculatorXnnpackImpl::ProcessTensorSpan(
+absl::StatusOr<std::vector<Tensor>> InferenceCalculatorXnnpackImpl::Run(
     CalculatorContext* cc, const TensorSpan& tensor_span) {
   MP_ASSIGN_OR_RETURN(std::vector<Tensor> output_tensors,
                       inference_runner_->Run(cc, tensor_span));
-  return SendOutputTensors(cc, std::move(output_tensors));
+  return output_tensors;
 }
 
 absl::Status InferenceCalculatorXnnpackImpl::Close(CalculatorContext* cc) {

@@ -95,8 +95,8 @@ class InferenceCalculatorMetalImpl
   absl::Status Close(CalculatorContext* cc) override;
 
  private:
-  absl::Status ProcessTensorSpan(CalculatorContext* cc,
-                                 const TensorSpan& tensor_span) override;
+  absl::StatusOr<std::vector<Tensor>> Run(
+      CalculatorContext* cc, const TensorSpan& tensor_span) override;
   absl::Status InitInterpreter(CalculatorContext* cc);
   void AddDelegate(CalculatorContext* cc,
                    tflite::InterpreterBuilder* interpreter_builder);
@@ -144,7 +144,7 @@ absl::Status InferenceCalculatorMetalImpl::Open(CalculatorContext* cc) {
   return InitInterpreter(cc);
 }
 
-absl::Status InferenceCalculatorMetalImpl::ProcessTensorSpan(
+absl::StatusOr<std::vector<Tensor>> InferenceCalculatorMetalImpl::Run(
     CalculatorContext* cc, const TensorSpan& tensor_span) {
   std::vector<Tensor> output_tensors;
 
@@ -198,7 +198,7 @@ absl::Status InferenceCalculatorMetalImpl::ProcessTensorSpan(
   // (e.g. fences/barriers/events).
   [command_buffer waitUntilScheduled];
 
-  return SendOutputTensors(cc, std::move(output_tensors));
+  return output_tensors;
 }
 
 absl::Status InferenceCalculatorMetalImpl::Close(CalculatorContext* cc) {

@@ -115,19 +115,5 @@ InferenceCalculator::GetOpResolverAsPacket(CalculatorContext* cc) {
           tflite::ops::builtin::BuiltinOpResolverWithoutDefaultDelegates>());
 }
 
-absl::Status InferenceCalculator::SendOutputTensors(
-    CalculatorContext* cc, std::vector<Tensor>&& output_tensors) {
-  if (kOutTensors(cc).IsConnected()) {
-    kOutTensors(cc).Send(std::move(output_tensors));
-  } else {
-    const int output_count = std::min(kOutTensor(cc).Count(),
-                                      static_cast<int>(output_tensors.size()));
-    for (int i = 0; i < output_count; ++i) {
-      kOutTensor(cc)[i].Send(std::move(output_tensors[i]));
-    }
-  }
-  return absl::OkStatus();
-}
-
 }  // namespace api2
 }  // namespace mediapipe
