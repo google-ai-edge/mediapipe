@@ -1016,6 +1016,21 @@ TEST(ContentZoomingCalculatorTest, ProvidesConstantFirstRect) {
   }
 }
 
+TEST(ContentZoomingCalculatorTest, AllowsCroppingOutsideFrame) {
+  auto config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigD);
+  auto* options = config.mutable_options()->MutableExtension(
+      ContentZoomingCalculatorOptions::ext);
+  options->set_allow_cropping_outside_frame(true);
+  auto runner = ::std::make_unique<CalculatorRunner>(config);
+
+  AddDetection(cv::Rect_<float>(-0.5, -0.5, 1.0, 1.0), 0, runner.get());
+  MP_ASSERT_OK(runner->Run());
+
+  CheckCropRect(/* x_center= */ 0, /* y_center= */ 0, /* width= */ 1000,
+                /* height= */ 1000, /* frame_number= */ 0,
+                runner->Outputs().Tag(kCropRectTag).packets);
+}
+
 }  // namespace
 }  // namespace autoflip
 
