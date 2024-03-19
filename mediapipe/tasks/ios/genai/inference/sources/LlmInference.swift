@@ -176,6 +176,14 @@ import MediaPipeTasksGenAIC
     }
   }
 
+  /// Returns the size in tokens of the provided text.
+  ///
+  /// You may use this function to verify this size before submitting the prompt to ensure it
+  /// doesn't exceed the configured maximum token size.
+  public func sizeInTokens(text: String) throws -> Int {
+    return try llmTaskRunner.sizeInTokens(text: text)
+  }
+
   /// Throw error if response generation is in progress or update response generation state.
   private func shouldContinueWithResponseGeneration() throws {
     if responseGenerationInProgress {

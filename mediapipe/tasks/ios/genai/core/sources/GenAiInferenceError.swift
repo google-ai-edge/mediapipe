@@ -18,6 +18,7 @@ import Foundation
 public enum GenAiInferenceError: Error {
   case invalidResponse
   case illegalMethodCall
+  case failedToComputeSizeInTokens(String?)
 }
 
 extension GenAiInferenceError: LocalizedError {
@@ -28,6 +29,9 @@ extension GenAiInferenceError: LocalizedError {
       return "The response returned by the model is invalid."
     case .illegalMethodCall:
       return "Response generation is already in progress."
+    case .failedToComputeSizeInTokens(let message):
+      let explanation = message ?? "An internal error occured."
+      return "Failed to compute size of text in tokens: \(explanation)"
     }
   }
 }
@@ -44,6 +48,8 @@ extension GenAiInferenceError: CustomNSError {
       return 0
     case .illegalMethodCall:
       return 1
+    case .failedToComputeSizeInTokens:
+      return 2
     }
   }
 }
