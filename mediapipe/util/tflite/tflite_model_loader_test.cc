@@ -64,5 +64,15 @@ TEST_F(TfLiteModelLoaderTest, LoadFromPathRelativeToRootDir) {
   EXPECT_NE(model.Get(), nullptr);
 }
 
+TEST_F(TfLiteModelLoaderTest, LoadFromPathWithMmap) {
+  // TODO: remove LegacyCalculatorSupport usage.
+  LegacyCalculatorSupport::Scoped<CalculatorContext> scope(
+      calculator_context_.get());
+  MP_ASSERT_OK_AND_ASSIGN(
+      api2::Packet<TfLiteModelPtr> model,
+      TfLiteModelLoader::LoadFromPath(model_path_, /* try_mmap=*/true));
+  EXPECT_NE(model.Get(), nullptr);
+}
+
 }  // namespace
 }  // namespace mediapipe
