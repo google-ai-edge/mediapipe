@@ -484,7 +484,11 @@ class _BertClassifier(TextClassifier):
     with self._hparams.get_strategy().scope():
       self._create_model()
       self._create_optimizer(processed_train_data)
-    self._train_model(processed_train_data, processed_validation_data)
+    self._train_model(
+        processed_train_data,
+        processed_validation_data,
+        checkpoint_path=os.path.join(self._hparams.export_dir, "checkpoint"),
+    )
 
   def _load_preprocessor(self):
     """Loads a BertClassifierPreprocessor."""
