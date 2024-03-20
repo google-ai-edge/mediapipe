@@ -37,6 +37,9 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 static const float kLandmarksErrorTolerance = 0.03f;
 static const float kFaceBlendshapesErrorTolerance = 0.13f;
 
+static NSString *const kLiveStreamTestsDictHolisticLandmarkerKey = @"holistic_landmarker";
+static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
+
 #define AssertEqualErrors(error, expectedError)              \
   XCTAssertNotNil(error);                                    \
   XCTAssertEqualObjects(error.domain, expectedError.domain); \
@@ -61,7 +64,10 @@ static const float kFaceBlendshapesErrorTolerance = 0.13f;
   XCTAssertEqualObjects(category.displayName, expectedCategory.displayName, @"index i = %d",   \
                         categoryIndex);
 
-@interface MPPHolisticLandmarkerTests : XCTestCase
+@interface MPPHolisticLandmarkerTests : XCTestCase <MPPHolisticLandmarkerLiveStreamDelegate> {
+  NSDictionary<NSString *, id> *_liveStreamSucceedsTestDict;
+  NSDictionary<NSString *, id> *_outOfOrderTimestampTestDict;
+}
 @end
 
 @implementation MPPHolisticLandmarkerTests
@@ -79,7 +85,8 @@ static const float kFaceBlendshapesErrorTolerance = 0.13f;
                           usingHolisticLandmarker:holisticLandmarker
       approximatelyEqualsHolisticLandmarkerResult:
           [MPPHolisticLandmarkerTests
-              expectedHolisticLandmarkerResultWithFileInfo:kExpectedHolisticLandmarksFileInfo]];
+              expectedHolisticLandmarkerResultWithFileInfo:kExpectedHolisticLandmarksFileInfo
+                                        hasFaceBlendshapes:NO]];
 }
 
 - (void)testDetectWithOptionsSucceeds {
@@ -92,10 +99,235 @@ static const float kFaceBlendshapesErrorTolerance = 0.13f;
                           usingHolisticLandmarker:holisticLandmarker
       approximatelyEqualsHolisticLandmarkerResult:
           [MPPHolisticLandmarkerTests
-              expectedHolisticLandmarkerResultWithFileInfo:kExpectedHolisticLandmarksFileInfo]];
+              expectedHolisticLandmarkerResultWithFileInfo:kExpectedHolisticLandmarksFileInfo
+                                        hasFaceBlendshapes:NO]];
 }
 
-#pragma mark Pose Landmarker Initializers
+- (void)testDetectWithEmptyResultSucceeds {
+  MPPHolisticLandmarkerOptions *options =
+      [self holisticLandmarkerOptionsWithModelFileInfo:kHolisticLandmarkerBundleAssetFileInfo];
+  MPPHolisticLandmarker *holisticLandmarker =
+      [self createHolisticLandmarkerWithOptionsSucceeds:options];
+
+  MPPHolisticLandmarkerResult *result = [self detectImageWithFileInfo:kCatImageFileInfo
+                                              usingHolisticLandmarker:holisticLandmarker];
+
+  XCTAssertEqual(result.faceLandmarks.count, 0);
+  XCTAssertEqual(result.faceBlendshapes, nil);
+  XCTAssertEqual(result.poseSegmentationMask, nil);
+}
+
+- (void)testDetectWithFaceBlendshapesSucceeds {
+  MPPHolisticLandmarkerOptions *options =
+      [self holisticLandmarkerOptionsWithModelFileInfo:kHolisticLandmarkerBundleAssetFileInfo];
+  options.outputFaceBlendshapes = YES;
+
+  MPPHolisticLandmarker *holisticLandmarker =
+      [self createHolisticLandmarkerWithOptionsSucceeds:options];
+
+  [self assertResultsOfDetectInImageWithFileInfo:kHolisticImageFileInfo
+                          usingHolisticLandmarker:holisticLandmarker
+      approximatelyEqualsHolisticLandmarkerResult:
+          [MPPHolisticLandmarkerTests
+              expectedHolisticLandmarkerResultWithFileInfo:kExpectedHolisticLandmarksFileInfo
+                                        hasFaceBlendshapes:YES]];
+}
+
+- (void)testDetectWithSegmentationMasksSucceeds {
+  MPPHolisticLandmarkerOptions *options =
+      [self holisticLandmarkerOptionsWithModelFileInfo:kHolisticLandmarkerBundleAssetFileInfo];
+  options.outputPoseSegmentationMasks = YES;
+
+  MPPHolisticLandmarker *holisticLandmarker =
+      [self createHolisticLandmarkerWithOptionsSucceeds:options];
+
+  [self assertResultsOfDetectInImageWithFileInfo:kHolisticImageFileInfo
+                          usingHolisticLandmarker:holisticLandmarker
+      approximatelyEqualsHolisticLandmarkerResult:
+          [MPPHolisticLandmarkerTests
+              expectedHolisticLandmarkerResultWithFileInfo:kExpectedHolisticLandmarksFileInfo
+                                        hasFaceBlendshapes:NO]
+                        isSegmentationMaskPresent:YES];
+}
+
+#pragma mark Running Mode Tests
+
+- (void)testCreateHolisticLandmarkerFailsWithMissingDelegateInLiveStreamMode {
+  MPPHolisticLandmarkerOptions *options =
+      [self holisticLandmarkerOptionsWithModelFileInfo:kHolisticLandmarkerBundleAssetFileInfo];
+
+  options.runningMode = MPPRunningModeLiveStream;
+
+  [self assertCreateHolisticLandmarkerWithOptions:options
+                           failsWithExpectedError:
+                               [NSError
+                                   errorWithDomain:kExpectedErrorDomain
+                                              code:MPPTasksErrorCodeInvalidArgumentError
+                                          userInfo:@{
+                                            NSLocalizedDescriptionKey :
+                                                @"The vision task is in live stream mode. An "
+                                                @"object must be set as the delegate of the task "
+                                                @"in its options to ensure asynchronous delivery "
+                                                @"of results."
+                                          }]];
+}
+
+- (void)testDetectFailsWithCallingWrongApiInImageMode {
+  MPPHolisticLandmarkerOptions *options =
+      [self holisticLandmarkerOptionsWithModelFileInfo:kHolisticLandmarkerBundleAssetFileInfo];
+
+  MPPHolisticLandmarker *holisticLandmarker =
+      [self createHolisticLandmarkerWithOptionsSucceeds:options];
+
+  MPPImage *image = [MPPHolisticLandmarkerTests createImageWithFileInfo:kHolisticImageFileInfo];
+
+  NSError *liveStreamApiCallError;
+  XCTAssertFalse([holisticLandmarker detectAsyncImage:image
+                              timestampInMilliseconds:0
+                                                error:&liveStreamApiCallError]);
+
+  NSError *expectedLiveStreamApiCallError =
+      [NSError errorWithDomain:kExpectedErrorDomain
+                          code:MPPTasksErrorCodeInvalidArgumentError
+                      userInfo:@{
+                        NSLocalizedDescriptionKey : @"The vision task is not initialized with live "
+                                                    @"stream mode. Current Running Mode: Image"
+                      }];
+
+  AssertEqualErrors(liveStreamApiCallError, expectedLiveStreamApiCallError);
+
+  NSError *videoApiCallError;
+  XCTAssertFalse([holisticLandmarker detectVideoFrame:image
+                              timestampInMilliseconds:0
+                                                error:&videoApiCallError]);
+
+  NSError *expectedVideoApiCallError =
+      [NSError errorWithDomain:kExpectedErrorDomain
+                          code:MPPTasksErrorCodeInvalidArgumentError
+                      userInfo:@{
+                        NSLocalizedDescriptionKey : @"The vision task is not initialized with "
+                                                    @"video mode. Current Running Mode: Image"
+                      }];
+  AssertEqualErrors(videoApiCallError, expectedVideoApiCallError);
+}
+
+- (void)testDetectFailsWithCallingWrongApiInVideoMode {
+  MPPHolisticLandmarkerOptions *options =
+      [self holisticLandmarkerOptionsWithModelFileInfo:kHolisticLandmarkerBundleAssetFileInfo];
+  options.runningMode = MPPRunningModeVideo;
+
+  MPPHolisticLandmarker *holisticLandmarker =
+      [self createHolisticLandmarkerWithOptionsSucceeds:options];
+
+  MPPImage *image = [MPPHolisticLandmarkerTests createImageWithFileInfo:kHolisticImageFileInfo];
+
+  NSError *liveStreamApiCallError;
+  XCTAssertFalse([holisticLandmarker detectAsyncImage:image
+                              timestampInMilliseconds:0
+                                                error:&liveStreamApiCallError]);
+
+  NSError *expectedLiveStreamApiCallError =
+      [NSError errorWithDomain:kExpectedErrorDomain
+                          code:MPPTasksErrorCodeInvalidArgumentError
+                      userInfo:@{
+                        NSLocalizedDescriptionKey : @"The vision task is not initialized with live "
+                                                    @"stream mode. Current Running Mode: Video"
+                      }];
+
+  AssertEqualErrors(liveStreamApiCallError, expectedLiveStreamApiCallError);
+
+  NSError *imageApiCallError;
+  XCTAssertFalse([holisticLandmarker detectImage:image error:&imageApiCallError]);
+
+  NSError *expectedImageApiCallError =
+      [NSError errorWithDomain:kExpectedErrorDomain
+                          code:MPPTasksErrorCodeInvalidArgumentError
+                      userInfo:@{
+                        NSLocalizedDescriptionKey : @"The vision task is not initialized with "
+                                                    @"image mode. Current Running Mode: Video"
+                      }];
+  AssertEqualErrors(imageApiCallError, expectedImageApiCallError);
+}
+
+- (void)testDetectFailsWithCallingWrongApiInLiveStreamMode {
+  MPPHolisticLandmarkerOptions *options =
+      [self holisticLandmarkerOptionsWithModelFileInfo:kHolisticLandmarkerBundleAssetFileInfo];
+  options.runningMode = MPPRunningModeLiveStream;
+  options.holisticLandmarkerLiveStreamDelegate = self;
+
+  MPPHolisticLandmarker *holisticLandmarker =
+      [self createHolisticLandmarkerWithOptionsSucceeds:options];
+
+  MPPImage *image = [MPPHolisticLandmarkerTests createImageWithFileInfo:kHolisticImageFileInfo];
+
+  NSError *imageApiCallError;
+  XCTAssertFalse([holisticLandmarker detectImage:image error:&imageApiCallError]);
+
+  NSError *expectedImageApiCallError =
+      [NSError errorWithDomain:kExpectedErrorDomain
+                          code:MPPTasksErrorCodeInvalidArgumentError
+                      userInfo:@{
+                        NSLocalizedDescriptionKey : @"The vision task is not initialized with "
+                                                    @"image mode. Current Running Mode: Live Stream"
+                      }];
+  AssertEqualErrors(imageApiCallError, expectedImageApiCallError);
+
+  NSError *videoApiCallError;
+  XCTAssertFalse([holisticLandmarker detectVideoFrame:image
+                              timestampInMilliseconds:0
+                                                error:&videoApiCallError]);
+
+  NSError *expectedVideoApiCallError =
+      [NSError errorWithDomain:kExpectedErrorDomain
+                          code:MPPTasksErrorCodeInvalidArgumentError
+                      userInfo:@{
+                        NSLocalizedDescriptionKey : @"The vision task is not initialized with "
+                                                    @"video mode. Current Running Mode: Live Stream"
+                      }];
+  AssertEqualErrors(videoApiCallError, expectedVideoApiCallError);
+}
+
+- (void)testDetectWithVideoModeSucceeds {
+  MPPHolisticLandmarkerOptions *options =
+      [self holisticLandmarkerOptionsWithModelFileInfo:kHolisticLandmarkerBundleAssetFileInfo];
+  options.runningMode = MPPRunningModeVideo;
+
+  MPPHolisticLandmarker *holisticLandmarker =
+      [self createHolisticLandmarkerWithOptionsSucceeds:options];
+
+  MPPImage *image = [MPPHolisticLandmarkerTests createImageWithFileInfo:kHolisticImageFileInfo];
+
+  for (int i = 0; i < 3; i++) {
+    MPPHolisticLandmarkerResult *holisticLandmarkerResult =
+        [holisticLandmarker detectVideoFrame:image timestampInMilliseconds:i error:nil];
+    [self assertHolisticLandmarkerResult:holisticLandmarkerResult
+        isApproximatelyEqualToExpectedResult:
+            [MPPHolisticLandmarkerTests
+                expectedHolisticLandmarkerResultWithFileInfo:kExpectedHolisticLandmarksFileInfo
+                                          hasFaceBlendshapes:NO]];
+  }
+}
+
+- (void)holisticLandmarker:(MPPHolisticLandmarker *)holisticLandmarker
+    didFinishDetectionWithResult:(MPPHolisticLandmarkerResult *)holisticLandmarkerResult
+         timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                           error:(NSError *)error {
+  [self assertHolisticLandmarkerResult:holisticLandmarkerResult
+      isApproximatelyEqualToExpectedResult:
+          [MPPHolisticLandmarkerTests
+              expectedHolisticLandmarkerResultWithFileInfo:kExpectedHolisticLandmarksFileInfo
+                                        hasFaceBlendshapes:NO]];
+
+  if (holisticLandmarker ==
+      _outOfOrderTimestampTestDict[kLiveStreamTestsDictHolisticLandmarkerKey]) {
+    [_outOfOrderTimestampTestDict[kLiveStreamTestsDictExpectationKey] fulfill];
+  } else if (holisticLandmarker ==
+             _liveStreamSucceedsTestDict[kLiveStreamTestsDictHolisticLandmarkerKey]) {
+    [_liveStreamSucceedsTestDict[kLiveStreamTestsDictExpectationKey] fulfill];
+  }
+}
+
+#pragma mark Holistic Landmarker Initializers
 
 - (MPPHolisticLandmarkerOptions *)holisticLandmarkerOptionsWithModelFileInfo:
     (MPPFileInfo *)modelFileInfo {
@@ -130,10 +362,28 @@ static const float kFaceBlendshapesErrorTolerance = 0.13f;
 
 #pragma mark Results
 
-+ (MPPHolisticLandmarkerResult *)expectedHolisticLandmarkerResultWithFileInfo:
-    (MPPFileInfo *)fileInfo {
++ (MPPHolisticLandmarkerResult *)emptyHolisticLandmarkerResult {
   MPPHolisticLandmarkerResult *result =
-      [MPPHolisticLandmarkerResult holisticLandmarkerResultFromProtobufFileWithName:fileInfo.path];
+      [[MPPHolisticLandmarkerResult alloc] initWithFaceLandmarks:@[]
+                                                 faceBlendshapes:nil
+                                                   poseLandmarks:@[]
+                                              poseWorldLandmarks:@[]
+                                            poseSegmentationMask:nil
+                                               leftHandLandmarks:@[]
+                                          leftHandWorldLandmarks:@[]
+                                              rightHandLandmarks:@[]
+                                         rightHandWorldLandmarks:@[]
+                                         timestampInMilliseconds:0];
+
+  return result;
+}
+
++ (MPPHolisticLandmarkerResult *)
+    expectedHolisticLandmarkerResultWithFileInfo:(MPPFileInfo *)fileInfo
+                              hasFaceBlendshapes:(BOOL)hasFaceBlendshapes {
+  MPPHolisticLandmarkerResult *result = [MPPHolisticLandmarkerResult
+      holisticLandmarkerResultFromProtobufFileWithName:fileInfo.path
+                                    hasFaceBlendshapes:hasFaceBlendshapes];
 
   return result;
 }
@@ -142,22 +392,47 @@ static const float kFaceBlendshapesErrorTolerance = 0.13f;
                          usingHolisticLandmarker:(MPPHolisticLandmarker *)holisticLandmarker
      approximatelyEqualsHolisticLandmarkerResult:
          (MPPHolisticLandmarkerResult *)expectedHolisticLandmarkerResult {
-  MPPHolisticLandmarkerResult *holisticLandmarkerResult =
-      [self detectImageWithFileInfo:fileInfo usingHolisticLandmarker:holisticLandmarker];
+  [self assertResultsOfDetectInImageWithFileInfo:fileInfo
+                          usingHolisticLandmarker:holisticLandmarker
+      approximatelyEqualsHolisticLandmarkerResult:expectedHolisticLandmarkerResult
+                        isSegmentationMaskPresent:NO];
+}
+- (void)assertResultsOfDetectInImageWithFileInfo:(MPPFileInfo *)fileInfo
+                         usingHolisticLandmarker:(MPPHolisticLandmarker *)holisticLandmarker
+     approximatelyEqualsHolisticLandmarkerResult:
+         (MPPHolisticLandmarkerResult *)expectedHolisticLandmarkerResult
+                       isSegmentationMaskPresent:(BOOL)isSegmentationMaskPresent {
+  MPPImage *image = [MPPHolisticLandmarkerTests createImageWithFileInfo:fileInfo];
+
+  MPPHolisticLandmarkerResult *holisticLandmarkerResult = [self detectImage:image
+                                                    usingHolisticLandmarker:holisticLandmarker];
   [self assertHolisticLandmarkerResult:holisticLandmarkerResult
       isApproximatelyEqualToExpectedResult:expectedHolisticLandmarkerResult];
+
+  if (isSegmentationMaskPresent) {
+    XCTAssertNotNil(holisticLandmarkerResult.poseSegmentationMask);
+    XCTAssertEqual(holisticLandmarkerResult.poseSegmentationMask.width, image.width);
+    XCTAssertEqual(holisticLandmarkerResult.poseSegmentationMask.height, image.height);
+  }
 }
 
 - (MPPHolisticLandmarkerResult *)detectImageWithFileInfo:(MPPFileInfo *)imageFileInfo
                                  usingHolisticLandmarker:
                                      (MPPHolisticLandmarker *)holisticLandmarker {
-  MPPImage *image = [MPPImage imageWithFileInfo:imageFileInfo];
+  MPPImage *image = [MPPHolisticLandmarkerTests createImageWithFileInfo:imageFileInfo];
+  MPPHolisticLandmarkerResult *holisticLandmarkerResult = [self detectImage:image
+                                                    usingHolisticLandmarker:holisticLandmarker];
 
+  return holisticLandmarkerResult;
+}
+
+- (MPPHolisticLandmarkerResult *)detectImage:(MPPImage *)image
+                     usingHolisticLandmarker:(MPPHolisticLandmarker *)holisticLandmarker {
   NSError *error;
-
   MPPHolisticLandmarkerResult *holisticLandmarkerResult = [holisticLandmarker detectImage:image
                                                                                     error:&error];
   XCTAssertNotNil(holisticLandmarkerResult);
+  XCTAssertNil(error);
 
   return holisticLandmarkerResult;
 }
@@ -198,6 +473,7 @@ static const float kFaceBlendshapesErrorTolerance = 0.13f;
 
   for (int i = 0; i < expectedNormalizedLandmarks.count; i++) {
     MPPNormalizedLandmark *landmark = normalizedLandmarks[i];
+
     XCTAssertNotNil(landmark);
     AssertApproximatelyEqualLandmarks(landmark, expectedNormalizedLandmarks[i], landmarkTypeName,
                                       i);
@@ -216,4 +492,12 @@ static const float kFaceBlendshapesErrorTolerance = 0.13f;
   }
 }
 
+#pragma mark Image
+
++ (MPPImage *)createImageWithFileInfo:(MPPFileInfo *)fileInfo {
+  MPPImage *image = [MPPImage imageWithFileInfo:fileInfo];
+  XCTAssertNotNil(image);
+
+  return image;
+}
 @end
