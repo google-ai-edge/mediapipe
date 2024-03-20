@@ -29,7 +29,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  * Creates a `MPPHolisticLandmarkerResult` from face landmarks, face blend shapes, pose landmarks,
- * pose world landmarks, pose segmentation masks, left hand landmarks, left hand world landmarks,
+ * pose world landmarks, pose segmentation mask, left hand landmarks, left hand world landmarks,
  * right hand landmarks and right hand world landmarks packets.
  *
  * @param faceLandmarksPacket A MediaPipe packet wrapping a
@@ -40,7 +40,7 @@ NS_ASSUME_NONNULL_BEGIN
  * `std::vector<mediapipe::NormalizedlandmarkList>`.
  * @param poseWorldLandmarksPacket a MediaPipe packet wrapping a
  * `std::vector<mediapipe::LandmarkList>`.
- * @param poseSegmentationMasksPacket a MediaPipe packet wrapping a `std::vector<mediapipe::Image>`.
+ * @param poseSegmentationMaskPacket a MediaPipe packet wrapping a `mediapipe::Image`.
  * @param leftHandLandmarksPacket a MediaPipe packet wrapping a
  * `std::vector<mediapipe::NormalizedlandmarkList>`.
  * @param leftHandWorldLandmarksPacket a MediaPipe packet wrapping a
@@ -72,14 +72,14 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  * Creates a `MPPHolisticLandmarkerResult` from face landmarks, face blend shapes, pose landmarks,
- * pose world landmarks, pose segmentation masks, left hand landmarks, left hand world landmarks,
+ * pose world landmarks, pose segmentation mask, left hand landmarks, left hand world landmarks,
  * right hand landmarks, right hand world landmarks and timestamp in milliseconds.
  *
  * @param faceLandmarksProto A proto of type `mediapipe::NormalizedlandmarkList`.
  * @param faceBlendshapesProto A proto of type `mediapipe::ClassificationList`.
  * @param poseLandmarksProto A proto of type `mediapipe::NormalizedlandmarkList`.
  * @param poseWorldLandmarksProto A proto of type `mediapipe::LandmarkList`.
- * @param poseSegmentationMaskProto A list of protos of type `std::vector<mediapipe::Image>`.
+ * @param poseSegmentationMaskProto A proto of type `mediapipe::Image`.
  * @param leftHandLandmarksProto A proto of type `mediapipe::NormalizedlandmarkList`.
  * @param leftHandWorldLandmarksProto A proto of type `mediapipe::LandmarkList`.
  * @param rightHandLandmarksProto A proto of type `mediapipe::NormalizedlandmarkList`.
