@@ -56,6 +56,7 @@ constexpr char kGraphWithModelPathInOption[] = R"(
       options {
         [mediapipe.InferenceCalculatorOptions.ext] {
           model_path: "mediapipe/calculators/tensor/testdata/add.bin"
+          try_mmap_model: $mmap
           $delegate
         }
       }
@@ -186,20 +187,30 @@ void DoSmokeTest(const std::string& graph_proto, bool use_vectors) {
 // Tests a simple add model that adds an input tensor to itself. We test CPU
 // inference only.
 TEST(InferenceCalculatorTest, SmokeTestTflite) {
-  DoSmokeTest(/*graph_proto=*/absl::StrReplaceAll(
-                  kGraphWithModelPathInOption,
-                  {{"$delegate", "delegate { tflite {} }"}}),
-              /*use_vectors=*/true);
+  DoSmokeTest(
+      /*graph_proto=*/absl::StrReplaceAll(
+          kGraphWithModelPathInOption,
+          {{"$delegate", "delegate { tflite {} }"}, {"$mmap", "false"}}),
+      /*use_vectors=*/true);
+}
+TEST(InferenceCalculatorTest, SmokeTestTfliteMmap) {
+  DoSmokeTest(
+      /*graph_proto=*/absl::StrReplaceAll(
+          kGraphWithModelPathInOption,
+          {{"$delegate", "delegate { tflite {} }"}, {"$mmap", "true"}}),
+      /*use_vectors=*/true);
 }
 TEST(InferenceCalculatorTest, SmokeTestXnnpack) {
   DoSmokeTest(absl::StrReplaceAll(kGraphWithModelPathInOption,
-                                  {{"$delegate", "delegate { xnnpack {} }"}}),
+                                  {{"$delegate", "delegate { xnnpack {} }"},
+                                   {"$mmap", "false"}}),
               true);
 }
 TEST(InferenceCalculatorTest, SmokeTestXnnpackMultithread) {
   DoSmokeTest(absl::StrReplaceAll(
                   kGraphWithModelPathInOption,
-                  {{"$delegate", "delegate { xnnpack { num_threads: 10 } }"}}),
+                  {{"$delegate", "delegate { xnnpack { num_threads: 10 } }"},
+                   {"$mmap", "false"}}),
               true);
 }
 
@@ -213,16 +224,19 @@ void DoUnwrappedTensorSmokeTest(const std::string& graph_proto) {
 
 TEST(InferenceCalculatorTest, SmokeTestTfliteUnwrapped) {
   DoUnwrappedTensorSmokeTest(/*graph_proto=*/absl::StrReplaceAll(
-      kGraphWithModelPathInOption, {{"$delegate", "delegate { tflite {} }"}}));
+      kGraphWithModelPathInOption,
+      {{"$delegate", "delegate { tflite {} }"}, {"$mmap", "false"}}));
 }
 TEST(InferenceCalculatorTest, SmokeTestXnnpackUnwrapped) {
   DoUnwrappedTensorSmokeTest(absl::StrReplaceAll(
-      kGraphWithModelPathInOption, {{"$delegate", "delegate { xnnpack {} }"}}));
+      kGraphWithModelPathInOption,
+      {{"$delegate", "delegate { xnnpack {} }"}, {"$mmap", "false"}}));
 }
 TEST(InferenceCalculatorTest, SmokeTestXnnpackMultithreadUnwrapped) {
   DoUnwrappedTensorSmokeTest(absl::StrReplaceAll(
       kGraphWithModelPathInOption,
-      {{"$delegate", "delegate { xnnpack { num_threads: 10 } }"}}));
+      {{"$delegate", "delegate { xnnpack { num_threads: 10 } }"},
+       {"$mmap", "false"}}));
 }
 
 TEST(InferenceCalculatorTest, ModelAsInputSidePacketSmokeTest) {
