@@ -35,6 +35,9 @@
 #include "mediapipe/calculators/ovms/openvinoinferencecalculatoroptions.h"
 #include "mediapipe/calculators/ovms/openvinoinferenceutils.h"
 #include "tensorflow/lite/c/common.h"
+#if (OVMS_DUMP_TO_FILE == 1)
+#include "openvinoinferencedumputils.h"
+#endif
 #pragma GCC diagnostic pop
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wall"
@@ -494,8 +497,14 @@ public:
         //////////////////
         //  INFERENCE
         //////////////////
+        #if (OVMS_DUMP_TO_FILE == 1)
+            dumpOvTensorInput(input,"input");
+        #endif
         try {
             output = session->infer(input);
+            #if (OVMS_DUMP_TO_FILE == 1)
+            dumpOvTensorInput(output,"output");
+            #endif
         } catch (const std::exception& e) {
             LOG(INFO) << "Caught exception from session infer():" << e.what();
             RET_CHECK(false);

@@ -120,3 +120,7 @@ test --define=PYTHON_DISABLE=1
 build --cxxopt=-DPYTHON_DISABLE=1
 coverage --cxxopt=-DPYTHON_DISABLE=1
 test --cxxopt=-DPYTHON_DISABLE=1
+
+build --cxxopt=-DOVMS_DUMP_TO_FILE=0
+coverage --cxxopt=-DOVMS_DUMP_TO_FILE=0
+test --cxxopt=-DOVMS_DUMP_TO_FILE=0

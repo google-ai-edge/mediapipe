@@ -47,6 +47,7 @@ cc_library(
         "modelapiovmsadapter.hpp"
     ],
     deps = [
+        "openvinoinferencedumputils",
         "//mediapipe/framework/port:logging",
         "@ovms//src:ovms_header",
         "@model_api//:model_api",
@@ -62,6 +63,20 @@ cc_library(
     ],
     hdrs = [
         "openvinoinferenceutils.h"
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "openvinoinferencedumputils",
+    srcs = [
+        "openvinoinferencedumputils.cc"
+    ],
+    hdrs = [
+        "openvinoinferencedumputils.h"
+    ],
+    deps = [ 
+        "@linux_openvino//:openvino",
     ],
     alwayslink = 1,
 )
