@@ -209,6 +209,7 @@ absl::Status StableDiffusionIterateCalculator::Open(CalculatorContext* cc) {
 
   DiffuserConfig config;
   config.model_type = ToDiffuserModelType(options.model_type());
+  config.run_unet_with_masked_image = 0;
   if (options.file_folder().empty()) {
     std::strcpy(config.model_dir, "bins/");  // NOLINT
   } else {
