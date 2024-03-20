@@ -64,6 +64,10 @@ cc_library(
     hdrs = [
         "openvinoinferenceutils.h"
     ],
+    deps = [
+        "@ovms//src:ovms_header",
+    ],
+    copts = ["-Iexternal/ovms/src","-Isrc"],
     alwayslink = 1,
 )
 
@@ -94,6 +98,7 @@ cc_library(
         ":openvinoinferenceutils",
         "//mediapipe/framework:calculator_framework",
     ],
+    copts = ["-Iexternal/ovms/src","-Isrc"],
     alwayslink = 1,
 )
 
@@ -114,6 +119,7 @@ cc_library(
         "@linux_openvino//:openvino",
         "@org_tensorflow//tensorflow/core:framework",
         "@org_tensorflow//tensorflow/lite/c:c_api",
+        "@ovms//src:ovms_header",
     ],
     copts = ["-Iexternal/ovms/src","-Isrc"],
     alwayslink = 1,
@@ -129,9 +135,11 @@ cc_library(
     ],
     deps = [
         ":modelapiovmsadapter",
+        ":openvinoinferenceutils",
         ":openvinomodelserversessioncalculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "@linux_openvino//:openvino",
+        "@ovms//src:ovms_header",
     ],
     copts = ["-Iexternal/ovms/src","-Isrc"],
     alwayslink = 1,
@@ -180,6 +188,7 @@ cc_test(
     srcs = ["openvinomodelserversessioncalculator_test.cc",
     ],
     deps = [
+        "openvinomodelserversessioncalculator",
         ":ovms_calculator",
         "@ovms//src:ovms_header",
         "@ovms//src:ovms_lib",

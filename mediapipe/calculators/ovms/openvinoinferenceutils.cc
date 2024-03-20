@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 
+#include "ovms.h"           // NOLINT
 namespace mediapipe {
 
 // Function from ovms/src/string_utils.h
@@ -55,6 +56,37 @@ bool endsWith(const std::string& str, const std::string& match) {
            std::all_of(std::next(str.begin(), str.size() - match.size()), str.end(), [&it](const char& c) {
                return ::tolower(c) == ::tolower(*(it++));
            });
+}
+
+OVMS_LogLevel StringToLogLevel(const std::string& logLevel){
+    if (logLevel == "3")
+        return OVMS_LOG_ERROR;
+    if (logLevel == "1")
+        return OVMS_LOG_DEBUG;
+    if (logLevel == "0")
+        return OVMS_LOG_TRACE;
+    if (logLevel == "2")
+        return OVMS_LOG_INFO;
+
+    return OVMS_LOG_INFO;
+}
+
+std::string LogLevelToString(OVMS_LogLevel log_level) {
+    switch (log_level) {
+    case OVMS_LOG_INFO:
+        return "INFO";
+    case OVMS_LOG_ERROR:
+        return "ERROR";
+    case OVMS_LOG_DEBUG:
+        return "DEBUG";
+    case OVMS_LOG_TRACE:
+        return "TRACE";
+    case OVMS_LOG_WARNING:
+        return "WARNING";
+        
+    }
+
+    return "unsupported";
 }
 
 }  // namespace mediapipe

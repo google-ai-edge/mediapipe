@@ -28,6 +28,7 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #include "mediapipe/calculators/ovms/openvinomodelserversessioncalculator.pb.h"
+#include "mediapipe/calculators/ovms/openvinoinferenceutils.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "modelapiovmsadapter.hpp"
@@ -121,6 +122,9 @@ absl::Status OpenVINOModelServerSessionCalculator::GetContract(CalculatorContrac
     cc->OutputSidePackets().Tag(SESSION_TAG.c_str()).Set<std::shared_ptr<::InferenceAdapter>>();
     const auto& options = cc->Options<OpenVINOModelServerSessionCalculatorOptions>();
     RET_CHECK(!options.servable_name().empty());
+    
+    OvmsLogLevel = StringToLogLevel(std::string(std::getenv(OvmsLogLevelEnv) == nullptr ? "" : std::getenv(OvmsLogLevelEnv)));
+    LOG(INFO) << "OpenVINOModelServerSessionCalculator ovms log level setting: " << LogLevelToString(OvmsLogLevel);
     LOG(INFO) << "OpenVINOModelServerSessionCalculator GetContract end";
     return absl::OkStatus();
 }
@@ -167,7 +171,7 @@ absl::Status OpenVINOModelServerSessionCalculator::Open(CalculatorContext* cc) {
             OVMS_ModelsSettingsNew(&guard.modelsSettings);
             OVMS_ModelsSettingsSetConfigPath(guard.modelsSettings, options.server_config().c_str());
             LOG(INFO) << "state config file:" << options.server_config();
-            OVMS_ServerSettingsSetLogLevel(guard.serverSettings, OVMS_LOG_DEBUG);
+            OVMS_ServerSettingsSetLogLevel(guard.serverSettings, OvmsLogLevel);
 
             ASSERT_CAPI_STATUS_NULL(OVMS_ServerStartFromConfigurationFile(cserver, guard.serverSettings, guard.modelsSettings));
 
@@ -205,6 +209,8 @@ absl::Status OpenVINOModelServerSessionCalculator::Process(CalculatorContext* cc
 
 bool OpenVINOModelServerSessionCalculator::triedToStartOVMS = false;
 std::mutex OpenVINOModelServerSessionCalculator::loadingMtx;
+const char* OpenVINOModelServerSessionCalculator::OvmsLogLevelEnv = "GLOG_minloglevel";
+OVMS_LogLevel OpenVINOModelServerSessionCalculator::OvmsLogLevel = OVMS_LOG_INFO;
 
 REGISTER_CALCULATOR(OpenVINOModelServerSessionCalculator);
 }  // namespace mediapipe

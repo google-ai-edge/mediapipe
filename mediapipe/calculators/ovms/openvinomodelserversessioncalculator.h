@@ -47,5 +47,8 @@ public:
     absl::Status Open(CalculatorContext* cc) override final;
 
     absl::Status Process(CalculatorContext* cc) override final;
+    static OVMS_LogLevel OvmsLogLevel;
+    static const char* OvmsLogLevelEnv;
 };
+
 }  // namespace mediapipe

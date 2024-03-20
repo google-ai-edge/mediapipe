@@ -88,3 +88,25 @@ and adding dump function in your specific calculator
         dumpOvTensorInput(input,"input");
     #endif
 ```      
+# Setting log level
+
+The log level in mediapipe application can be set using GLOG_minloglevel env variable. 0 is the most verbose for debuging purposes and 3 is the least verbose with the major errors only.
+That setting is applicable both for mediapipe framework logs and also for OpenVINO inference calculator.
+OpenVINO inference calculator log level is mapped to the defined GLOG_minloglevel value.
+
+Recommended development GLOG_minloglevel setting is `0` as it will print most detailed information and perform additional graph and OpenVINOInferenceCalculator calculator validation.
+If you want to set the flag in the desktop examples applications you can do it by setting the GLOG_minloglevel environment variable.
+
+| GLOG_minloglevel |      MediaPipe log level      | Model Server log_level |
+:------------------|------------------| :--------------------: |
+|      0        |        INFO         |          TRACE         |
+|      1     |        WARNING         |          DEBUG         |
+|      2       |        ERROR         |          INFO          |
+|                  |      ERROR       |          INFO          |
+|      3       |        FATAL         |          ERROR         |
+
+
+Example usage:
+```bash
+GLOG_minloglevel=0 make run_object_detection
+```

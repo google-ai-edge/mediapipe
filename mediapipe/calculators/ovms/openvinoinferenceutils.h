@@ -15,6 +15,9 @@
 //*****************************************************************************
 #include <string>
 #include <vector>
+
+#include "ovms.h"           // NOLINT
+
 namespace mediapipe {
 
 // Function from ovms/src/string_utils.h
@@ -25,5 +28,9 @@ std::vector<std::string> tokenize(const std::string& str, const char delimiter);
 
 // Function from ovms/src/string_utils.h
 bool endsWith(const std::string& str, const std::string& match);
+
+OVMS_LogLevel StringToLogLevel(const std::string& logLevel);
+
+std::string LogLevelToString(OVMS_LogLevel log_level);
 
 }  // namespace mediapipe

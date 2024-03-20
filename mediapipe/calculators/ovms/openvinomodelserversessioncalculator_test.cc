@@ -31,6 +31,7 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #include "mediapipe/calculators/ovms/openvinomodelserversessioncalculator.pb.h"
+#include "mediapipe/calculators/ovms/openvinoinferenceutils.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/deps/status_matchers.h"
@@ -150,4 +151,74 @@ TEST_F(OpenVINOModelServerSessionCalculatorTest, MissingAllOptions) {
     cc->Initialize(node);
     auto abslStatus = mediapipe::OpenVINOModelServerSessionCalculator::GetContract(cc.get());
     ASSERT_EQ(abslStatus.code(), absl::StatusCode::kInternal) << abslStatus.message();
+}
+
+class OpenVINOModelServerSessionCalculatorTestLogLevel : public ::testing::TestWithParam<std::string> {};
+
+static const std::vector<std::string> TEST_OVMS_LOG_LEVEL_VALUES{
+    "0",
+    "1",
+    "2",
+    "3",
+    "",
+    "-99",
+    "35",
+};
+
+INSTANTIATE_TEST_SUITE_P(
+    Test,
+    OpenVINOModelServerSessionCalculatorTestLogLevel,
+    ::testing::ValuesIn(TEST_OVMS_LOG_LEVEL_VALUES)
+  );
+
+TEST_P(OpenVINOModelServerSessionCalculatorTestLogLevel, VerifyLogLevel) {
+    std::string testLogLevelVelue = GetParam();
+    const std::string ovmsLogLevelEnv = "GLOG_minloglevel";
+    setenv(ovmsLogLevelEnv.c_str(), testLogLevelVelue.c_str(), true);
+    OVMS_LogLevel level = mediapipe::StringToLogLevel(testLogLevelVelue);
+    std::string proto_text = R"pb(
+                calculator: "OpenVINOModelServerSessionCalculator"
+                output_side_packet: "SESSION:session"
+                node_options: {
+                  [type.googleapis.com / mediapipe.OpenVINOModelServerSessionCalculatorOptions]: {
+                    servable_name: "MODEL_NAME_0"
+                    servable_version: "1"
+                  }
+                }
+            )pb";
+
+    auto node =
+        mediapipe::ParseTextProtoOrDie<mediapipe::CalculatorGraphConfig::Node>(proto_text);
+    auto cc = absl::make_unique<CalculatorContract>();
+    cc->Initialize(node);
+    auto abslStatus = mediapipe::OpenVINOModelServerSessionCalculator::GetContract(cc.get());
+    EXPECT_EQ(abslStatus.code(), absl::StatusCode::kOk) << abslStatus.message();
+    // Check default value is set
+    int ovmsDefaultInfoLevel = 2;
+    if (testLogLevelVelue == "-99" || testLogLevelVelue == "35" || testLogLevelVelue == "")
+      EXPECT_TRUE(OpenVINOModelServerSessionCalculator::OvmsLogLevel == ovmsDefaultInfoLevel);
+    else
+      EXPECT_TRUE(OpenVINOModelServerSessionCalculator::OvmsLogLevel == level);
+}
+TEST(OpenVINOModelServerSessionCalculatorTestLogLevel, VerifyLogLevelDefault) {
+    std::string proto_text = R"pb(
+                calculator: "OpenVINOModelServerSessionCalculator"
+                output_side_packet: "SESSION:session"
+                node_options: {
+                  [type.googleapis.com / mediapipe.OpenVINOModelServerSessionCalculatorOptions]: {
+                    servable_name: "MODEL_NAME_0"
+                    servable_version: "1"
+                  }
+                }
+            )pb";
+
+    auto node =
+        mediapipe::ParseTextProtoOrDie<mediapipe::CalculatorGraphConfig::Node>(proto_text);
+    auto cc = absl::make_unique<CalculatorContract>();
+    cc->Initialize(node);
+    auto abslStatus = mediapipe::OpenVINOModelServerSessionCalculator::GetContract(cc.get());
+    EXPECT_EQ(abslStatus.code(), absl::StatusCode::kOk) << abslStatus.message();
+    // Check default value is set
+    int ovmsDefaultInfoLevel = 2;
+    EXPECT_TRUE(OpenVINOModelServerSessionCalculator::OvmsLogLevel == ovmsDefaultInfoLevel);
 }
