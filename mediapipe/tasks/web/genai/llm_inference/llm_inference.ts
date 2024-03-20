@@ -451,6 +451,17 @@ export class LlmInference extends TaskRunner {
         '__side_packet_0');
     graphConfig.addNode(tfliteModelNode);
 
+    // Model data Node
+    const modelDataNode = new CalculatorGraphConfig.Node();
+    modelDataNode.setCalculator('ModelDataCalculator');
+    modelDataNode.addInputSidePacket(
+        'SHARED_MODEL:' +
+        '__side_packet_0');
+    modelDataNode.addOutputSidePacket(
+        'MODEL_DATA:' +
+        '__side_packet_1');
+    graphConfig.addNode(modelDataNode);
+
     // Tokenizer Node
     const tokenizerOptionsProto = new Any();
     tokenizerOptionsProto.setTypeUrl(
@@ -469,8 +480,8 @@ export class LlmInference extends TaskRunner {
     tokenizerNode.setCalculator('TokenizerCalculator');
     tokenizerNode.addNodeOptions(tokenizerOptionsProto);
     tokenizerNode.addInputSidePacket(
-        'TFLITE_MODEL:' +
-        '__side_packet_0');
+        'MODEL_DATA:' +
+        '__side_packet_1');
     tokenizerNode.addInputStream(
         'PROMPT:' +
         'prompt');
@@ -524,8 +535,8 @@ export class LlmInference extends TaskRunner {
         'FINISH:' +
         'finish');
     llmGpuNode.addInputSidePacket(
-        'SHARED_MODEL:' +
-        '__side_packet_0');
+        'MODEL_DATA:' +
+        '__side_packet_1');
     llmGpuNode.addOutputStream(
         'DECODED_IDS:' +
         '__stream_3');
@@ -566,6 +577,9 @@ export class LlmInference extends TaskRunner {
     detokenizerNode.addInputSidePacket(
         'BYTES_TO_UNICODE_MAPPING:' +
         '__input_side_2');
+    detokenizerNode.addInputSidePacket(
+        'MODEL_DATA:' +
+        '__side_packet_1');
     detokenizerNode.addOutputStream('FINISH:finish');
     detokenizerNode.addOutputStream('WORDS:' + OUTPUT_STREAM);
     graphConfig.addNode(detokenizerNode);

@@ -35,6 +35,8 @@ cc_library(
         "//mediapipe/tasks/cc/genai/inference/proto:transformer_params_cc_proto",
         "//mediapipe/tasks/cc/genai/inference/utils/llm_utils:memory_mapped_file",
         "//mediapipe/tasks/cc/genai/inference/utils/llm_utils:metadata_utils",
+        "//mediapipe/tasks/cc/genai/inference/utils/llm_utils:model_data",
+        "//mediapipe/tasks/cc/genai/inference/utils/llm_utils:scoped_file",
         "//mediapipe/tasks/cc/genai/inference/utils/xnn_utils:graph_builder",
         "//mediapipe/tasks/cc/genai/inference/utils/xnn_utils:llm",
         "//mediapipe/tasks/cc/genai/inference/utils/xnn_utils:llm_builder_factory",

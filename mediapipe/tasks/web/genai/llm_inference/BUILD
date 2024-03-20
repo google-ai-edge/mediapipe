@@ -19,6 +19,7 @@ mediapipe_ts_library(
         "//mediapipe/tasks/cc/core/proto:base_options_jspb_proto",
         "//mediapipe/tasks/cc/genai/inference/calculators:detokenizer_calculator_jspb_proto",
         "//mediapipe/tasks/cc/genai/inference/calculators:llm_gpu_calculator_jspb_proto",
+        "//mediapipe/tasks/cc/genai/inference/calculators:model_data_calculator_jspb_proto",
         "//mediapipe/tasks/cc/genai/inference/calculators:tokenizer_calculator_jspb_proto",
         "//mediapipe/tasks/cc/genai/inference/proto:llm_params_jspb_proto",
         "//mediapipe/tasks/cc/genai/inference/proto:sampler_params_jspb_proto",

@@ -31,45 +31,6 @@ constexpr absl::string_view kLlmModelTypeName = "odml.infra.LlmModelType";
 constexpr absl::string_view kLlmBackendName = "backend";
 constexpr absl::string_view kSpmVocabName = "spm_vocab_model";
 
-// Retrieve LlmParameters proto from tflite flatbuffer metadata.
-absl::StatusOr<odml::infra::proto::LlmParameters> GetLlmParams(
-    std::shared_ptr<mediapipe::tasks::genai::llm_utils::MemoryMappedFile>
-        mmap_file);
-
-// Retrieve LlmParameters proto from tflite flatbuffer metadata.
-absl::StatusOr<odml::infra::proto::LlmParameters> GetLlmParams(
-    const ::tflite::FlatBufferModel& fb_model);
-
-// Retrieve LlmModelType from tflite flatbuffer metadata.
-absl::StatusOr<odml::infra::proto::LlmModelType> GetLlmModelType(
-    std::shared_ptr<mediapipe::tasks::genai::llm_utils::MemoryMappedFile>
-        mmap_file);
-
-// Retrieve LlmModelType from tflite flatbuffer metadata.
-absl::StatusOr<odml::infra::proto::LlmModelType> GetLlmModelType(
-    const ::tflite::FlatBufferModel& fb_model);
-
-// Retrieve backend string from tflite flatbuffer metadata.
-absl::StatusOr<std::string> GetLlmBackend(
-    std::shared_ptr<mediapipe::tasks::genai::llm_utils::MemoryMappedFile>
-        mmap_file);
-
-// Retrieve backend string from tflite flatbuffer metadata.
-absl::StatusOr<std::string> GetLlmBackend(
-    const ::tflite::FlatBufferModel& fb_model);
-
-// Retrieves SentencePiece from tflite's metadata and returns a string_view of
-// the model content.
-absl::StatusOr<absl::string_view> ExtractSentencePieceToStringView(
-    const tflite::FlatBufferModel& model, absl::string_view metadata_key);
-
-// Retrieve SentencePiece from tflite flatbuffer metadata and write it to
-// the provided path.
-absl::Status ExtractSentencePiece(
-    std::shared_ptr<mediapipe::tasks::genai::llm_utils::MemoryMappedFile>
-        mmap_file,
-    absl::string_view spm_vocab_path);
-
 inline bool RequireBytesToUnicodeMapping(
     odml::infra::proto::LlmModelType model_type) {
   return model_type == odml::infra::proto::LLM_MODEL_TYPE_STABLELM_4E1T_3B ||

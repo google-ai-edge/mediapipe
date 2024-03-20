@@ -25,10 +25,7 @@ message TokenizerCalculatorOptions {
   int32 max_tokens = 1;
 
   message TfLiteModelFile {
-    // (Optional) The path to the tflite model file, whose metadata (look up by
-    // the key below) contains the buffer to initialize tokenizer. If empty,
-    // the model should be provided through e.g. side input.
-    string model_file = 1;
+    reserved 1;
 
     // The key in the tflite model metadata field, whose corresponding data is
     // a sentence piece model. If not provided, "spm_vocab_model" will be used.

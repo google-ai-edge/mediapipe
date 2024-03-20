@@ -39,3 +39,8 @@ mediapipe_proto_library(
         "//mediapipe/tasks/cc/genai/inference/proto:sampler_params_proto",
     ],
 )
+
+mediapipe_proto_library(
+    name = "model_data_calculator_proto",
+    srcs = ["model_data_calculator.proto"],
+)
