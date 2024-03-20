@@ -37,7 +37,7 @@ NS_SWIFT_NAME(HolisticLandmarkerResult)
 @property(nonatomic, readonly) NSArray<MPPLandmark *> *poseWorldLandmarks;
 
 /** Optional segmentation mask for the detected pose. Defaults to `nil` if not enabled.*/
-@property(nonatomic, readonly, nullable) NSArray<MPPMask *> *poseSegmentationMasks;
+@property(nonatomic, readonly, nullable) MPPMask *poseSegmentationMask;
 
 /** Left hand landmarks in normalized image coordinates of detected left hands. */
 @property(nonatomic, readonly) NSArray<MPPNormalizedLandmark *> *leftHandLandmarks;
@@ -53,7 +53,7 @@ NS_SWIFT_NAME(HolisticLandmarkerResult)
 
 /**
  * Initializes a new `HolisticLandmarkerResult` with the given array of face landmarks, face
- * blendshapes, pose landmarks, pose world landmarks, pose segmentation masks, left hand landmarks,
+ * blendshapes, pose landmarks, pose world landmarks, pose segmentation mask, left hand landmarks,
  * left hand world landmarks, right hand landmarks, right hand world landmarks and timestamp (in
  * milliseconds).
  *
@@ -61,7 +61,7 @@ NS_SWIFT_NAME(HolisticLandmarkerResult)
  * @param faceBlendshapes An array of `Classifications` objects.
  * @param poseLandmarks An array of `NormalizedLandmark` objects.
  * @param poseWorldLandmarks An array of `Landmark` objects.
- * @param poseSegmentationMasks An array of `Mask` objects.
+ * @param poseSegmentationMask A `Mask` object.
  * @param leftHandLandmarks An array of `NormalizedLandmark` objects.
  * @param leftHandWorldLandmarks An array of `Landmark` objects.
  * @param rightHandLandmarks An array of `NormalizedLandmark` objects.
@@ -69,7 +69,7 @@ NS_SWIFT_NAME(HolisticLandmarkerResult)
  * @param timestampInMilliseconds The timestamp (in milliseconds) for this result.
  *
  * @return An instance of `HolisticLandmarkerResult` initialized with the given array of face
- * landmarks, face blendshapes, pose landmarks, pose world landmarks, pose segmentation masks, left
+ * landmarks, face blendshapes, pose landmarks, pose world landmarks, pose segmentation mask, left
  * hand landmarks, left hand world landmarks, right hand landmarks, right hand world landmarks and
  * timestamp (in milliseconds).
  */
@@ -77,7 +77,7 @@ NS_SWIFT_NAME(HolisticLandmarkerResult)
                       faceBlendshapes:(nullable MPPClassifications *)faceBlendshapes
                         poseLandmarks:(NSArray<MPPNormalizedLandmark *> *)poseLandmarks
                    poseWorldLandmarks:(NSArray<MPPLandmark *> *)poseWorldLandmarks
-                poseSegmentationMasks:(NSArray<MPPMask *> *)poseSegmentationMasks
+                 poseSegmentationMask:(MPPMask *)poseSegmentationMask
                     leftHandLandmarks:(NSArray<MPPNormalizedLandmark *> *)leftHandLandmarks
                leftHandWorldLandmarks:(NSArray<MPPLandmark *> *)leftHandWorldLandmarks
                    rightHandLandmarks:(NSArray<MPPNormalizedLandmark *> *)rightHandLandmarks

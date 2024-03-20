@@ -59,8 +59,8 @@ NS_ASSUME_NONNULL_BEGIN
                                 poseLandmarksPacket:(const mediapipe::Packet &)poseLandmarksPacket
                            poseWorldLandmarksPacket:
                                (const mediapipe::Packet &)poseWorldLandmarksPacket
-                        poseSegmentationMasksPacket:
-                            (const mediapipe::Packet *)poseSegmentationMasksPacket
+                         poseSegmentationMaskPacket:
+                             (const mediapipe::Packet *)poseSegmentationMaskPacket
                             leftHandLandmarksPacket:
                                 (const mediapipe::Packet &)leftHandLandmarksPacket
                        leftHandWorldLandmarksPacket:
@@ -79,7 +79,7 @@ NS_ASSUME_NONNULL_BEGIN
  * @param faceBlendshapesProto A proto of type `mediapipe::ClassificationList`.
  * @param poseLandmarksProto A proto of type `mediapipe::NormalizedlandmarkList`.
  * @param poseWorldLandmarksProto A proto of type `mediapipe::LandmarkList`.
- * @param poseSegmentationMaskProtos A list of protos of type `std::vector<mediapipe::Image>`.
+ * @param poseSegmentationMaskProto A list of protos of type `std::vector<mediapipe::Image>`.
  * @param leftHandLandmarksProto A proto of type `mediapipe::NormalizedlandmarkList`.
  * @param leftHandWorldLandmarksProto A proto of type `mediapipe::LandmarkList`.
  * @param rightHandLandmarksProto A proto of type `mediapipe::NormalizedlandmarkList`.
@@ -98,8 +98,8 @@ NS_ASSUME_NONNULL_BEGIN
                                     (const mediapipe::NormalizedLandmarkList &)poseLandmarksProto
                            poseWorldLandmarksProto:
                                (const mediapipe::LandmarkList &)poseWorldLandmarksProto
-                        poseSegmentationMaskProtos:
-                            (const std::vector<::mediapipe::Image> *)poseSegmentationMaskProtos
+                         poseSegmentationMaskProto:
+                             (const ::mediapipe::Image *)poseSegmentationMaskProto
                             leftHandLandmarksProto:
                                 (const mediapipe::NormalizedLandmarkList &)leftHandLandmarksProto
                        leftHandWorldLandmarksProto:
