@@ -75,16 +75,15 @@ TEST_F(TfLiteSignatureReader, ShouldFailIfMultipleSignaturesExist) {
 }
 
 TEST_F(TfLiteSignatureReader, ShouldReadTensorNamesForSignature) {
+  MP_ASSERT_OK_AND_ASSIGN(
+      std::unique_ptr<tflite::Interpreter> interpreter,
+      ReadModelAndBuildInterpreter("test_two_signature_keys_model.tflite"));
   // The test model contains two signatures "model_one" and "model_two" with
   // identical input and output tensors.
-  for (const auto& signature_key : {"model_one", "model_two"}) {
-    MP_ASSERT_OK_AND_ASSIGN(
-        std::unique_ptr<tflite::Interpreter> interpreter,
-        ReadModelAndBuildInterpreter("test_two_signature_keys_model.tflite"));
-
+  for (const std::string signature_key : {"model_one", "model_two"}) {
     MP_ASSERT_OK_AND_ASSIGN(auto signatures,
                             GetInputOutputTensorNamesFromTfliteSignature(
-                                *interpreter, signature_key));
+                                *interpreter, &signature_key));
 
     // The order of the input and output tensors is not guaranteed during TfLite
     // conversion. Executing tf.lite.TFLiteConverter.convert flipped the order
