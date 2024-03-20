@@ -149,12 +149,12 @@ class HardwareBuffer {
   static absl::StatusOr<AHardwareBuffer*> AllocateAHardwareBuffer(
       const HardwareBufferSpec& spec);
 
-  // Aquires an existing AHardwareBuffer instance and returns its
+  // Acquires an existing AHardwareBuffer instance and returns its
   // HardwareBufferSpec;
   static absl::StatusOr<HardwareBufferSpec> AquireAHardwareBuffer(
       AHardwareBuffer* ahw_buffer);
 
-  // Constructs a HardwareBuffer instance from an already aquired
+  // Constructs a HardwareBuffer instance from an already acquired
   // AHardwareBuffer instance and its spec.
   HardwareBuffer(const HardwareBufferSpec& spec, AHardwareBuffer* ahwb);
 
