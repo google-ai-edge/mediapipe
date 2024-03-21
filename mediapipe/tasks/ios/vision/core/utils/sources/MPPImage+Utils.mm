@@ -422,11 +422,13 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { d
 
   CGDataProviderReleaseDataCallback callback = nullptr;
 
-  size_t channelCount = 4;
+  const int channelCount = 4;
+  const size_t bytesPerRow = size_t(internalImageFrame->Width() * channelCount);
+  
 
   CGDataProviderRef provider = CGDataProviderCreateWithData(
       pixelData, pixelData,
-      internalImageFrame->Width() * internalImageFrame->Height() * channelCount, callback);
+      bytesPerRow * internalImageFrame->Height(), callback);
 
   CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
 
@@ -436,7 +438,7 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { d
     size_t bitsPerComponent = 8;
     cgImageRef =
         CGImageCreate(internalImageFrame->Width(), internalImageFrame->Height(), bitsPerComponent,
-                      bitsPerComponent * channelCount, internalImageFrame->Width() * channelCount,
+                      bitsPerComponent * channelCount, bytesPerRow,
                       colorSpace, bitmapInfo, provider, nullptr, YES, kCGRenderingIntentDefault);
   }
 
