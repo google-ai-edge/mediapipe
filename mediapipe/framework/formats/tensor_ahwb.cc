@@ -10,6 +10,7 @@
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/synchronization/mutex.h"
+#include "mediapipe/framework/deps/no_destructor.h"
 #include "mediapipe/framework/formats/hardware_buffer.h"
 #include "mediapipe/gpu/gl_base.h"
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
@@ -110,7 +111,7 @@ class DelayedReleaser {
     // holding the deque mutex.
     {
       absl::MutexLock lock(&mutex);
-      swap(to_release_local, to_release_);
+      swap(to_release_local, *to_release_);
     }
 
     // Using `new` to access a non-public constructor.
@@ -127,9 +128,9 @@ class DelayedReleaser {
 
     {
       absl::MutexLock lock(&mutex);
-      to_release_.insert(to_release_.end(),
-                         std::make_move_iterator(to_release_local.begin()),
-                         std::make_move_iterator(to_release_local.end()));
+      to_release_->insert(to_release_->end(),
+                          std::make_move_iterator(to_release_local.begin()),
+                          std::make_move_iterator(to_release_local.end()));
       to_release_local.clear();
     }
   }
@@ -187,7 +188,8 @@ class DelayedReleaser {
   Tensor::FinishingFunc ahwb_written_;
   std::shared_ptr<mediapipe::GlContext> gl_context_;
   std::function<void()> release_callback_;
-  static inline std::deque<std::unique_ptr<DelayedReleaser>> to_release_;
+  static inline NoDestructor<std::deque<std::unique_ptr<DelayedReleaser>>>
+      to_release_;
 
   DelayedReleaser(std::shared_ptr<HardwareBuffer> ahwb, GLuint opengl_buffer,
                   EGLSyncKHR fence_sync, GLsync ssbo_read,
