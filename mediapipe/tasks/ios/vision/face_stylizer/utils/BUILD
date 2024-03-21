@@ -29,3 +29,14 @@ objc_library(
     ],
 )
 
+objc_library(
+    name = "MPPFaceStylizerResultHelpers",
+    srcs = ["sources/MPPFaceStylizerResult+Helpers.mm"],
+    hdrs = ["sources/MPPFaceStylizerResult+Helpers.h"],
+    deps = [
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/tasks/ios/vision/core/utils:MPPImageUtils",
+        "//mediapipe/tasks/ios/vision/face_stylizer:MPPFaceStylizerResult",
+    ],
+)
