@@ -51,7 +51,7 @@ vImage_Buffer allocatedVImageBuffer(vImagePixelCount width, vImagePixelCount hei
   return {.data = data, .height = height, .width = width, .rowBytes = rowBytes};
 }
 
-static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { free(refCon); }
+static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { delete[] refCon; }
 
 }  // namespace
 
@@ -64,9 +64,9 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { f
                                      pixelBufferFormat:(OSType)pixelBufferFormatType
                                                  error:(NSError **)error;
 
-+ (UInt8 *)pixelDataFromImageFrame:(ImageFrame &)imageFrame
-                        shouldCopy:(BOOL)shouldCopy
-                             error:(NSError **)error;
++ (UInt8 *)rgbaPixelDataFromImageFrame:(ImageFrame &)imageFrame
+                            shouldCopy:(BOOL)shouldCopy
+                                 error:(NSError **)error;
 
 @end
 
@@ -178,22 +178,46 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { f
                                       static_cast<uint8_t *>(destBuffer.data));
 }
 
-+ (UInt8 *)pixelDataFromImageFrame:(ImageFrame &)imageFrame
-                        shouldCopy:(BOOL)shouldCopy
-                             error:(NSError **)error {
++ (UInt8 *)rgbaPixelDataFromImageFrame:(ImageFrame &)imageFrame
+                            shouldCopy:(BOOL)shouldCopy
+                                 error:(NSError **)error {
   vImage_Buffer sourceBuffer = CreateVImageBufferFromImageFrame(imageFrame);
 
   // Pre-multiply the raw pixels from a `mediapipe::Image` before creating a `CGImage` to ensure
   // that pixels are displayed correctly irrespective of their alpha values.
-  vImage_Error premultiplyError;
   vImage_Buffer destinationBuffer;
+  vImage_Error vImageOperationError;
 
   switch (imageFrame.Format()) {
     case ImageFormat::SRGBA: {
       destinationBuffer =
           shouldCopy ? CreateEmptyVImageBufferFromImageFrame(imageFrame, true) : sourceBuffer;
-      premultiplyError =
+      vImageOperationError =
           vImagePremultiplyData_RGBA8888(&sourceBuffer, &destinationBuffer, kvImageNoFlags);
+      break;
+    }
+    case ImageFormat::SRGB: {
+      // Some tasks like the Face Stylizer output RGB images inspite of the input being restricted
+      // to RGBA format. iOS does not allow creation of 24 bit images (RGB). All native image 
+      // formats supported by `MPPImage` only allow creation of 32 bit images (RGBA). Hence, 
+      // uncopied pixel buffer APIs cannot be supported. RGB pixel buffers must be copied to
+      // RGBA buffers with an alpha of 1.0.
+      if (!shouldCopy) {
+        [MPPCommonUtils createCustomError:error
+                                 withCode:MPPTasksErrorCodeInternalError
+                              description:@"An error occured while processing the output image "
+                                          @"pixels of the vision task."];
+        return nullptr;
+      }
+
+      const vImagePixelCount channelCount = 4;
+      destinationBuffer = allocatedVImageBuffer(imageFrame.Width(), imageFrame.Height(),
+                                                imageFrame.Width() * channelCount);
+
+      const Pixel_8 alpha = 255;
+
+      vImageOperationError = vImageConvert_RGB888toRGBA8888(&sourceBuffer, nil, alpha,
+                                                            &destinationBuffer, NO, kvImageNoFlags);
       break;
     }
     default: {
@@ -205,7 +229,15 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { f
     }
   }
 
-  if (premultiplyError != kvImageNoError) {
+  if (vImageOperationError != kvImageNoError) {
+    // Freeing allocated memory if one of the vImage operations fail. In practice, the operations
+    // performed by this method never fail since image parameters are evaluated before invoking 
+    // them. 
+    // Placed here for an extra layer of safety and correctness.
+    if (shouldCopy) {
+      delete[] destinationBuffer.data;
+    }
+
     [MPPCommonUtils
         createCustomError:error
                  withCode:MPPTasksErrorCodeInternalError
@@ -254,25 +286,35 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { f
 }
 
 + (CVPixelBufferRef)cvPixelBufferFromImageFrame:(ImageFrame &)imageFrame error:(NSError **)error {
-  if (imageFrame.Format() != ImageFormat::SRGBA) {
-    [MPPCommonUtils createCustomError:error
-                             withCode:MPPTasksErrorCodeInternalError
-                          description:@"An error occured while creating a CVPixelBuffer from the "
-                                      @"output image of the vision task."];
-    return nullptr;
+  switch (imageFrame.Format()) {
+    case ImageFormat::SRGBA:
+    case ImageFormat::SRGB:
+      break;
+    default: {
+      [MPPCommonUtils createCustomError:error
+                               withCode:MPPTasksErrorCodeInternalError
+                            description:@"An error occured while creating a CVPixelBuffer from the "
+                                        @"output image of the vision task."];
+      return nullptr;
+    }
   }
 
-  UInt8 *pixelData = [MPPPixelDataUtils pixelDataFromImageFrame:imageFrame
-                                                     shouldCopy:YES
-                                                          error:error];
+  UInt8 *pixelData = [MPPPixelDataUtils rgbaPixelDataFromImageFrame:imageFrame
+                                                         shouldCopy:YES
+                                                              error:error];
 
   if (!pixelData) {
     return nullptr;
   }
 
   const uint8_t permute_map[4] = {2, 1, 0, 3};
-  vImage_Buffer sourceBuffer = CreateEmptyVImageBufferFromImageFrame(imageFrame, NO);
-  sourceBuffer.data = pixelData;
+  const int channelCount = 4;
+  const int bytesPerRow = imageFrame.Width() * channelCount;
+
+  vImage_Buffer sourceBuffer = {.data = pixelData,
+                                .height = static_cast<vImagePixelCount>(imageFrame.Height()),
+                                .width = static_cast<vImagePixelCount>(imageFrame.Width()),
+                                .rowBytes = static_cast<size_t>(bytesPerRow)};
 
   if (vImagePermuteChannels_ARGB8888(&sourceBuffer, &sourceBuffer, permute_map, kvImageNoFlags) ==
       kvImageNoError) {
@@ -283,7 +325,7 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { f
     // Since data is copied, pass in a release callback that will be invoked when the pixel buffer
     // is destroyed.
     if (CVPixelBufferCreateWithBytes(kCFAllocatorDefault, imageFrame.Width(), imageFrame.Height(),
-                                     pixelBufferFormatType, pixelData, imageFrame.WidthStep(),
+                                     pixelBufferFormatType, pixelData, bytesPerRow,
                                      FreeRefConReleaseCallback, pixelData, nullptr,
                                      &outputBuffer) == kCVReturnSuccess) {
       return outputBuffer;
@@ -356,16 +398,17 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { f
 
   ImageFrame *internalImageFrame = imageFrame.get();
 
-  UInt8 *pixelData = [MPPPixelDataUtils pixelDataFromImageFrame:*internalImageFrame
-                                                     shouldCopy:shouldCopyPixelData
-                                                          error:error];
+  UInt8 *pixelData = [MPPPixelDataUtils rgbaPixelDataFromImageFrame:*internalImageFrame
+                                                         shouldCopy:shouldCopyPixelData
+                                                              error:error];
 
   if (!pixelData) {
     return nullptr;
   }
 
   switch (internalImageFrame->Format()) {
-    case ImageFormat::SRGBA: {
+    case ImageFormat::SRGBA:
+    case ImageFormat::SRGB: {
       bitmapInfo = kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big;
       break;
     }
@@ -379,9 +422,11 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { f
 
   CGDataProviderReleaseDataCallback callback = nullptr;
 
+  size_t channelCount = 4;
+
   CGDataProviderRef provider = CGDataProviderCreateWithData(
-      pixelData, pixelData, internalImageFrame->WidthStep() * internalImageFrame->Height(),
-      callback);
+      pixelData, pixelData,
+      internalImageFrame->Width() * internalImageFrame->Height() * channelCount, callback);
 
   CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
 
@@ -389,11 +434,10 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { f
 
   if (provider && colorSpace) {
     size_t bitsPerComponent = 8;
-    size_t channelCount = 4;
     cgImageRef =
         CGImageCreate(internalImageFrame->Width(), internalImageFrame->Height(), bitsPerComponent,
-                      bitsPerComponent * channelCount, internalImageFrame->WidthStep(), colorSpace,
-                      bitmapInfo, provider, nullptr, YES, kCGRenderingIntentDefault);
+                      bitsPerComponent * channelCount, internalImageFrame->Width() * channelCount,
+                      colorSpace, bitmapInfo, provider, nullptr, YES, kCGRenderingIntentDefault);
   }
 
   // Can safely pass `NULL` to these functions according to iOS docs.
@@ -452,6 +496,13 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { f
            cloningPropertiesOfSourceImage:(MPPImage *)sourceImage
                       shouldCopyPixelData:(BOOL)shouldCopyPixelData
                                     error:(NSError **)error {
+  if (!sourceImage) {
+    [MPPCommonUtils createCustomError:error
+                             withCode:MPPTasksErrorCodeInvalidArgumentError
+                          description:@"Source image cannot be nil."];
+    return nil;
+  }
+
   if (!sourceImage) {
     [MPPCommonUtils createCustomError:error
                              withCode:MPPTasksErrorCodeInvalidArgumentError
@@ -533,7 +584,6 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { f
     }
     default:
       return nil;
-
   }
 }
 
