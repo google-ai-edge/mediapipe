@@ -49,3 +49,18 @@ cc_library(
         "@org_tensorflow//tensorflow/lite:framework_stable",
     ],
 )
+
+cc_binary(
+    name = "llm_inference_engine_cpu_main",
+    srcs = ["llm_inference_engine_cpu_main.cc"],
+    deps = [
+        ":libllm_inference_engine_cpu",
+        "//mediapipe/framework/deps:file_path",
+        "//third_party:glog",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/flags:parse",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/strings:string_view",
+    ],
+)
