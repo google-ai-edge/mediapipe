@@ -40,8 +40,6 @@
 #include "tensorflow/lite/delegates/gpu/gl_delegate.h"
 #include "tensorflow/lite/interpreter.h"
 
-#define PERFETTO_TRACK_EVENT_NAMESPACE mediapipe
-
 namespace mediapipe {
 namespace api2 {
 

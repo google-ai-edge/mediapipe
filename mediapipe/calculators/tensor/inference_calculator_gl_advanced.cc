@@ -38,8 +38,6 @@
 #include "mediapipe/util/android/file/base/helpers.h"
 #endif  // defined(MEDIAPIPE_ANDROID) || defined(MEDIAPIPE_CHROMIUMOS)
 
-#define PERFETTO_TRACK_EVENT_NAMESPACE mediapipe
-
 namespace mediapipe {
 namespace api2 {
 

@@ -30,8 +30,6 @@
 #include "tensorflow/lite/interpreter_builder.h"
 #include "tensorflow/lite/string_util.h"
 
-#define PERFETTO_TRACK_EVENT_NAMESPACE mediapipe
-
 namespace mediapipe {
 
 namespace {
