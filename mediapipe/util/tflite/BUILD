@@ -73,6 +73,15 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "error_reporter_test",
+    srcs = ["error_reporter_test.cc"],
+    deps = [
+        ":error_reporter",
+        "//mediapipe/framework/port:gtest_main",
+    ],
+)
+
 # This target has an implementation dependency on TFLite/TFLite-in-GMSCore,
 # but it does not have any API dependency on TFLite-in-GMSCore.
 cc_library_with_tflite(

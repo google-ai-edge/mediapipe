@@ -56,8 +56,7 @@ absl::StatusOr<api2::Packet<TfLiteModelPtr>> TfLiteModelLoader::LoadFromPath(
     std::unique_ptr<Allocation> allocation =
         std::make_unique<MMAPAllocation>(model_path.c_str(), &error_reporter);
 
-    bool mmap_allocation_succeeded = error_reporter.message().empty();
-    if (mmap_allocation_succeeded) {
+    if (!error_reporter.HasError()) {
       auto model = FlatBufferModel::BuildFromAllocation(std::move(allocation),
                                                         &error_reporter);
       if (model) {
