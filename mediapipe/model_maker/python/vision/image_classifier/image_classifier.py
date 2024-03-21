@@ -56,7 +56,9 @@ class ImageClassifier(classifier.Classifier):
         mean_rgb=self._model_spec.mean_rgb,
         stddev_rgb=self._model_spec.stddev_rgb,
         use_augmentation=hparams.do_data_augmentation)
-    self._callbacks = model_util.get_default_callbacks(self._hparams.export_dir)
+    self._callbacks = model_util.get_default_callbacks(
+        self._hparams.export_dir, self._hparams.checkpoint_frequency
+    )
     self._loss_function = tf.keras.losses.CategoricalCrossentropy(
         label_smoothing=self._hparams.label_smoothing)
     self._metric_functions = ['accuracy']
