@@ -87,6 +87,8 @@ cc_library(
     deps = [
         ":audio_to_tensor_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:memory_manager",
+        "//mediapipe/framework:memory_manager_service",
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/api2:packet",
         "//mediapipe/framework/api2:port",
@@ -188,9 +190,10 @@ cc_library(
     deps = [
         ":feedback_tensors_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:memory_manager",
+        "//mediapipe/framework:memory_manager_service",
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/formats:tensor",
-        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/status",
     ],
     alwayslink = 1,
@@ -228,6 +231,8 @@ cc_library(
     deps = [
         ":bert_preprocessor_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:memory_manager",
+        "//mediapipe/framework:memory_manager_service",
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/api2:port",
         "//mediapipe/framework/formats:tensor",
@@ -281,6 +286,8 @@ cc_library(
     deps = [
         ":regex_preprocessor_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:memory_manager",
+        "//mediapipe/framework:memory_manager_service",
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/api2:port",
         "//mediapipe/framework/formats:tensor",
@@ -321,6 +328,8 @@ cc_library(
     deps = [
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:memory_manager",
+        "//mediapipe/framework:memory_manager_service",
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/api2:port",
         "//mediapipe/framework/formats:tensor",
@@ -354,6 +363,8 @@ cc_library(
     deps = [
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:memory_manager",
+        "//mediapipe/framework:memory_manager_service",
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/api2:port",
         "//mediapipe/framework/formats:tensor",
@@ -1033,6 +1044,8 @@ cc_library(
     deps = [
         ":landmarks_to_tensor_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:memory_manager",
+        "//mediapipe/framework:memory_manager_service",
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/formats:tensor",
@@ -1843,6 +1856,8 @@ cc_library(
     deps = [
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:memory_manager",
+        "//mediapipe/framework:memory_manager_service",
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/api2:port",
         "//mediapipe/framework/formats:tensor",
@@ -1890,6 +1905,8 @@ cc_library(
     deps = [
         ":vector_to_tensor_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:memory_manager",
+        "//mediapipe/framework:memory_manager_service",
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/api2:packet",
         "//mediapipe/framework/api2:port",

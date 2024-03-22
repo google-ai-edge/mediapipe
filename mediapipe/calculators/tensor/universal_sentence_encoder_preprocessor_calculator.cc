@@ -26,6 +26,8 @@
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/tensor.h"
+#include "mediapipe/framework/memory_manager.h"
+#include "mediapipe/framework/memory_manager_service.h"
 #include "mediapipe/tasks/cc/core/utils.h"
 #include "mediapipe/tasks/cc/metadata/metadata_extractor.h"
 
@@ -107,10 +109,16 @@ class UniversalSentenceEncoderPreprocessorCalculator : public Node {
   // text tensor will store the embedding text and have shape
   // [embedding_text_len].
   std::array<int, kNumInputTensorsForUniversalSentenceEncoder> tensor_shapes_;
+
+  // Enable pooling of AHWBs in Tensor instances.
+  MemoryManager* memory_manager_ = nullptr;
 };
 
 absl::Status UniversalSentenceEncoderPreprocessorCalculator::Open(
     CalculatorContext* cc) {
+  if (cc->Service(kMemoryManagerService).IsAvailable()) {
+    memory_manager_ = &cc->Service(kMemoryManagerService).GetObject();
+  }
   const ModelMetadataExtractor* metadata_extractor =
       &kMetadataExtractorSideIn(cc).Get();
   auto* input_tensors_metadata = metadata_extractor->GetInputTensorMetadata();
@@ -143,7 +151,8 @@ absl::Status UniversalSentenceEncoderPreprocessorCalculator::Process(
   input_tensors.reserve(kNumInputTensorsForUniversalSentenceEncoder);
   for (int i = 0; i < kNumInputTensorsForUniversalSentenceEncoder; ++i) {
     input_tensors.push_back(
-        {Tensor::ElementType::kChar, Tensor::Shape({tensor_shapes_[i]})});
+        {Tensor::ElementType::kChar,
+         Tensor::Shape({tensor_shapes_[i]}, memory_manager_)});
   }
 
   std::memcpy(

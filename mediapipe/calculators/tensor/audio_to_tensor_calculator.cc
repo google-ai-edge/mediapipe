@@ -35,6 +35,8 @@
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/formats/time_series_header.pb.h"
+#include "mediapipe/framework/memory_manager.h"
+#include "mediapipe/framework/memory_manager_service.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/util/time_series_util.h"
 #include "pffft.h"
@@ -206,6 +208,9 @@ class AudioToTensorCalculator : public Node {
   int processed_buffer_cols_ = 0;
   double gain_ = 1.0;
 
+  // Enable pooling of AHWBs in Tensor instances.
+  MemoryManager* memory_manager_ = nullptr;
+
   // The internal state of the FFT library.
   PFFFT_Setup* fft_state_ = nullptr;
   int fft_size_ = 0;
@@ -259,6 +264,9 @@ absl::Status AudioToTensorCalculator::UpdateContract(CalculatorContract* cc) {
 }
 
 absl::Status AudioToTensorCalculator::Open(CalculatorContext* cc) {
+  if (cc->Service(kMemoryManagerService).IsAvailable()) {
+    memory_manager_ = &cc->Service(kMemoryManagerService).GetObject();
+  }
   const auto& options =
       cc->Options<mediapipe::AudioToTensorCalculatorOptions>();
   num_channels_ = options.num_channels();
@@ -475,7 +483,8 @@ void AudioToTensorCalculator::AppendToSampleBuffer(Matrix buffer_to_append) {
 
 absl::StatusOr<std::vector<Tensor>> AudioToTensorCalculator::ConvertToTensor(
     const Matrix& block, std::vector<int> tensor_dims) {
-  Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape(tensor_dims));
+  Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape(tensor_dims),
+                memory_manager_);
   auto buffer_view = tensor.GetCpuWriteView();
   int total_size = 1;
   for (int dim : tensor_dims) {
