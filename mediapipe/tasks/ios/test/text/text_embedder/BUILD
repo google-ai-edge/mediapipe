@@ -1,14 +1,14 @@
 load(
+    "//mediapipe/framework/tool:ios.bzl",
+    "MPP_TASK_MINIMUM_OS_VERSION",
+)
+load(
     "@build_bazel_rules_apple//apple:ios.bzl",
     "ios_unit_test",
 )
 load(
     "@build_bazel_rules_swift//swift:swift.bzl",
     "swift_library",
-)
-load(
-    "//mediapipe/framework/tool:ios.bzl",
-    "MPP_TASK_MINIMUM_OS_VERSION",
 )
 load(
     "@org_tensorflow//tensorflow/lite:special_rules.bzl",
