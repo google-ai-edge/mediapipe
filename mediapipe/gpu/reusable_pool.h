@@ -18,12 +18,14 @@
 #ifndef MEDIAPIPE_GPU_REUSABLE_POOL_H_
 #define MEDIAPIPE_GPU_REUSABLE_POOL_H_
 
+#include <algorithm>
 #include <memory>
 #include <utility>
 #include <vector>
 
 #include "absl/base/thread_annotations.h"
 #include "absl/functional/any_invocable.h"
+#include "absl/log/absl_log.h"
 #include "absl/status/statusor.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/port/ret_check.h"
@@ -138,6 +140,9 @@ void ReusablePool<Item>::TrimAvailable(
     std::vector<std::unique_ptr<Item>>* trimmed) {
   int keep = std::max(keep_count_ - in_use_count_, 0);
   if (available_.size() > keep) {
+    ABSL_LOG_FIRST_N(WARNING, 1)
+        << "Maximum number of pooled buffers reached. Consider increasing "
+           "MultiPoolOptions.keep_count";
     auto trim_it = std::next(available_.begin(), keep);
     if (trimmed) {
       std::move(trim_it, available_.end(), std::back_inserter(*trimmed));
