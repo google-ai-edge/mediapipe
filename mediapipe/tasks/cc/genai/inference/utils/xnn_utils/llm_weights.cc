@@ -396,11 +396,14 @@ absl::StatusOr<SelfAttentionWeights> LlmWeightsLoader::LoadSelfAttention(
                                      {params.n_heads_N * params.head_dim_H}));
   }
 
-  MP_ASSIGN_OR_RETURN(
-      self_attention.per_dim_scale,
-      weight_accessor_->LoadWeight(
-          absl::StrCat(sa_file_prefix, "per_dim_scale.per_dim_scale"),
-          {params.head_dim_H}));
+  if (params.sa_params.attention_scale_type ==
+      LlmParams::AttentionScaleType::PER_DIM_SCALE) {
+    MP_ASSIGN_OR_RETURN(
+        self_attention.per_dim_scale,
+        weight_accessor_->LoadWeight(
+            absl::StrCat(sa_file_prefix, "per_dim_scale.per_dim_scale"),
+            {params.head_dim_H}));
+  }
   MP_ASSIGN_OR_RETURN(
       self_attention.post_proj_weight,
       weight_accessor_->LoadWeight(
