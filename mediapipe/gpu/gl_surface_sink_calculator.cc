@@ -12,19 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <memory>
+
 #include "absl/log/absl_log.h"
+#include "absl/status/status.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/api2/node.h"
+#include "mediapipe/framework/api2/packet.h"
+#include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/gpu/egl_surface_holder.h"
+#include "mediapipe/gpu/gl_base.h"
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gl_quad_renderer.h"
 #include "mediapipe/gpu/gl_surface_sink_calculator.pb.h"
 #include "mediapipe/gpu/gpu_buffer.h"
-#include "mediapipe/gpu/shader_util.h"
+
+#if HAS_EGL
 
 namespace mediapipe {
 namespace api2 {
@@ -117,7 +124,7 @@ absl::Status GlSurfaceSinkCalculator::Process(CalculatorContext* cc) {
       input = packet.Get<mediapipe::Image>().GetGpuBuffer();
 
     if (!initialized_) {
-      renderer_ = absl::make_unique<mediapipe::QuadRenderer>();
+      renderer_ = std::make_unique<mediapipe::QuadRenderer>();
       MP_RETURN_IF_ERROR(renderer_->GlSetup());
       initialized_ = true;
     }
@@ -180,3 +187,5 @@ GlSurfaceSinkCalculator::~GlSurfaceSinkCalculator() {
 
 }  // namespace api2
 }  // namespace mediapipe
+
+#endif  // HAS_EGL
