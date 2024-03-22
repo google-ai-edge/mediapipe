@@ -50,6 +50,7 @@ class FeedbackTensorsCalculator : public Node {
 
   static absl::Status GetContract(CalculatorContract* cc) {
     cc->SetProcessTimestampBounds(true);
+    cc->UseService(kMemoryManagerService).Optional();
     return absl::OkStatus();
   }
 

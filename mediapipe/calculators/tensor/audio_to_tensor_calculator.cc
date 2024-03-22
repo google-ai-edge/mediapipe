@@ -260,6 +260,7 @@ absl::Status AudioToTensorCalculator::UpdateContract(CalculatorContract* cc) {
       options.flush_mode() != Options::PROCEED_AS_USUAL) {
     return absl::InvalidArgumentError("Unsupported flush mode");
   }
+  cc->UseService(kMemoryManagerService).Optional();
   return absl::OkStatus();
 }
 

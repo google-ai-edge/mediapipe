@@ -61,6 +61,8 @@ class VectorToTensorCalculator : public Node {
   absl::Status Open(CalculatorContext* cc) override;
   absl::Status Process(CalculatorContext* cc) override;
 
+  static absl::Status UpdateContract(CalculatorContract* cc);
+
  private:
   absl::StatusOr<Tensor> ConvertVectorToTensor(
       const api2::Packet<SupportedInputVectors>& input,
@@ -130,6 +132,11 @@ absl::Status VectorToTensorCalculator::Process(CalculatorContext* cc) {
       Tensor tensor, ConvertVectorToTensor(
                          kVectorIn(cc), options.output_dynamic_tensor_shape()));
   kOutTensor(cc).Send(std::move(tensor));
+  return absl::OkStatus();
+}
+
+absl::Status VectorToTensorCalculator::UpdateContract(CalculatorContract* cc) {
+  cc->UseService(kMemoryManagerService).Optional();
   return absl::OkStatus();
 }
 

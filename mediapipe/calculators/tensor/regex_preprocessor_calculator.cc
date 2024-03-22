@@ -98,6 +98,7 @@ absl::Status RegexPreprocessorCalculator::UpdateContract(
       cc->Options<mediapipe::RegexPreprocessorCalculatorOptions>();
   RET_CHECK(options.has_max_seq_len()) << "max_seq_len is required";
   RET_CHECK_GT(options.max_seq_len(), 0) << "max_seq_len must be positive";
+  cc->UseService(kMemoryManagerService).Optional();
   return absl::OkStatus();
 }
 

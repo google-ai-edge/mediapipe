@@ -72,6 +72,8 @@ class TensorsDequantizationCalculator : public Node {
   absl::Status Open(CalculatorContext* cc) override;
   absl::Status Process(CalculatorContext* cc) override;
 
+  static absl::Status UpdateContract(CalculatorContract* cc);
+
  private:
   // Enable pooling of AHWBs in Tensor instances.
   MemoryManager* memory_manager_ = nullptr;
@@ -111,6 +113,13 @@ absl::Status TensorsDequantizationCalculator::Process(CalculatorContext* cc) {
     }
   }
   kOutTensors(cc).Send(std::move(output_tensors));
+  return absl::OkStatus();
+}
+
+// static
+absl::Status TensorsDequantizationCalculator::UpdateContract(
+    CalculatorContract* cc) {
+  cc->UseService(kMemoryManagerService).Optional();
   return absl::OkStatus();
 }
 

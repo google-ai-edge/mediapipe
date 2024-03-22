@@ -157,6 +157,7 @@ absl::Status BertPreprocessorCalculator::UpdateContract(
     RET_CHECK_GE(options.bert_max_seq_len(), 2)
         << "bert_max_seq_len must be at least 2";
   }
+  cc->UseService(kMemoryManagerService).Optional();
   return absl::OkStatus();
 }
 

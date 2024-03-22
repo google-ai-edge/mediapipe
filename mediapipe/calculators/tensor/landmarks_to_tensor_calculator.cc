@@ -160,6 +160,11 @@ class LandmarksToTensorCalculatorImpl
     return absl::OkStatus();
   }
 
+  static absl::Status UpdateContract(CalculatorContract* cc) {
+    cc->UseService(kMemoryManagerService).Optional();
+    return absl::OkStatus();
+  }
+
  private:
   LandmarksToTensorCalculatorOptions options_;
   // Enable pooling of AHWBs in Tensor instances.

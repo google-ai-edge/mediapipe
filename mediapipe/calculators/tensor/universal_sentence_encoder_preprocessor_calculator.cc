@@ -95,6 +95,8 @@ class UniversalSentenceEncoderPreprocessorCalculator : public Node {
   absl::Status Open(CalculatorContext* cc) override;
   absl::Status Process(CalculatorContext* cc) override;
 
+  static absl::Status UpdateContract(CalculatorContract* cc);
+
  private:
   // Indices of the three input tensors for the USE model. They should form the
   // set {0, 1, 2}.
@@ -167,6 +169,13 @@ absl::Status UniversalSentenceEncoderPreprocessorCalculator::Process(
                   .buffer<char>(),
               text.data(), text_len * sizeof(char));
   kTensorsOut(cc).Send(std::move(input_tensors));
+  return absl::OkStatus();
+}
+
+// static
+absl::Status UniversalSentenceEncoderPreprocessorCalculator::UpdateContract(
+    CalculatorContract* cc) {
+  cc->UseService(kMemoryManagerService).Optional();
   return absl::OkStatus();
 }
 

@@ -59,6 +59,8 @@ class TextToTensorCalculator : public Node {
   absl::Status Open(CalculatorContext* cc) final;
   absl::Status Process(CalculatorContext* cc) override;
 
+  static absl::Status UpdateContract(CalculatorContract* cc);
+
  private:
   // Enable pooling of AHWBs in Tensor instances.
   MemoryManager* memory_manager_ = nullptr;
@@ -81,6 +83,12 @@ absl::Status TextToTensorCalculator::Process(CalculatorContext* cc) {
   std::memcpy(result[0].GetCpuWriteView().buffer<char>(), text.data(),
               input_len * sizeof(char));
   kTensorsOut(cc).Send(std::move(result));
+  return absl::OkStatus();
+}
+
+// static
+absl::Status TextToTensorCalculator::UpdateContract(CalculatorContract* cc) {
+  cc->UseService(kMemoryManagerService).Optional();
   return absl::OkStatus();
 }
 
