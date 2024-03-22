@@ -68,13 +68,13 @@ absl::Status PackWeightsCache::Initialize() {
   }
 
   cache_provider_.context = this;
-  cache_provider_.look_up = (size_t(*)(
+  cache_provider_.look_up = (size_t (*)(
       void*, const xnn_weights_cache_look_up_key*))PackWeightsCache::look_up;
   cache_provider_.reserve_space =
       (void* (*)(void*, size_t))PackWeightsCache::reserve_space;
   cache_provider_.look_up_or_insert =
-      (size_t(*)(void*, const xnn_weights_cache_look_up_key*, void*,
-                 size_t))PackWeightsCache::look_up_or_insert;
+      (size_t (*)(void*, const xnn_weights_cache_look_up_key*, void*,
+                  size_t))PackWeightsCache::look_up_or_insert;
   cache_provider_.is_finalized =
       (bool (*)(void*))PackWeightsCache::is_finalized;
   cache_provider_.offset_to_addr =
