@@ -56,6 +56,10 @@ alias(
     actual = select({
         "//conditions:default": ":graph_profiler_default_on",
     }),
+    visibility = [
+        "//mediapipe/framework:__subpackages__",
+        "//mediapipe/java:__subpackages__",
+    ],
 )
 
 alias(
