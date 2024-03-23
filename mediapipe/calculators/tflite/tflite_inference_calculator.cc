@@ -894,7 +894,8 @@ absl::StatusOr<Packet> TfLiteInferenceCalculator::GetModelAsPacket(
   const auto& options =
       cc.Options<mediapipe::TfLiteInferenceCalculatorOptions>();
   if (!options.model_path().empty()) {
-    return TfLiteModelLoader::LoadFromPath(options.model_path());
+    return TfLiteModelLoader::LoadFromPath(options.model_path(),
+                                           options.try_mmap_model());
   }
   if (cc.InputSidePackets().HasTag(kModelTag)) {
     return cc.InputSidePackets().Tag(kModelTag);

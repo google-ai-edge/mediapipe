@@ -28,6 +28,7 @@ TEST(TfLiteInferenceCalculatorTest, SmokeTest) {
       options {
         [mediapipe.TfLiteInferenceCalculatorOptions.ext] {
           model_path: "mediapipe/calculators/tflite/testdata/add.bin"
+          try_mmap_model: $mmap
           $delegate
         }
       }
@@ -35,12 +36,17 @@ TEST(TfLiteInferenceCalculatorTest, SmokeTest) {
   )";
   // Test CPU inference only.
   DoSmokeTest<float>(/*graph_proto=*/absl::StrReplaceAll(
-      graph_proto, {{"$delegate", "delegate { tflite {} }"}}));
-  DoSmokeTest<float>(absl::StrReplaceAll(
-      graph_proto, {{"$delegate", "delegate { xnnpack {} }"}}));
+      graph_proto,
+      {{"$delegate", "delegate { tflite {} }"}, {"$mmap", "false"}}));
+  DoSmokeTest<float>(/*graph_proto=*/absl::StrReplaceAll(
+      graph_proto,
+      {{"$delegate", "delegate { tflite {} }"}, {"$mmap", "true"}}));
   DoSmokeTest<float>(absl::StrReplaceAll(
       graph_proto,
-      {{"$delegate", "delegate { xnnpack { num_threads: 10 } }"}}));
+      {{"$delegate", "delegate { xnnpack {} }"}, {"$mmap", "false"}}));
+  DoSmokeTest<float>(absl::StrReplaceAll(
+      graph_proto, {{"$delegate", "delegate { xnnpack { num_threads: 10 } }"},
+                    {"$mmap", "false"}}));
 }
 
 TEST(TfLiteInferenceCalculatorTest, SmokeTest_ModelAsInputSidePacket) {
