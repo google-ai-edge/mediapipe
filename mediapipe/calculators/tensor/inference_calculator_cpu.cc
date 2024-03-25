@@ -52,7 +52,7 @@ class InferenceCalculatorCpuImpl
   absl::StatusOr<std::unique_ptr<InferenceRunner>> CreateInferenceRunner(
       CalculatorContext* cc);
   absl::StatusOr<TfLiteDelegatePtr> MaybeCreateDelegate(CalculatorContext* cc);
-  absl::StatusOr<std::vector<Tensor>> Run(
+  absl::StatusOr<std::vector<Tensor>> Process(
       CalculatorContext* cc, const TensorSpan& tensor_span) override;
   std::unique_ptr<InferenceRunner> inference_runner_;
 };
@@ -73,7 +73,7 @@ absl::Status InferenceCalculatorCpuImpl::Open(CalculatorContext* cc) {
   return absl::OkStatus();
 }
 
-absl::StatusOr<std::vector<Tensor>> InferenceCalculatorCpuImpl::Run(
+absl::StatusOr<std::vector<Tensor>> InferenceCalculatorCpuImpl::Process(
     CalculatorContext* cc, const TensorSpan& tensor_span) {
   MP_ASSIGN_OR_RETURN(std::vector<Tensor> output_tensors,
                       inference_runner_->Run(cc, tensor_span));

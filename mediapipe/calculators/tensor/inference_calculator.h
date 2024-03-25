@@ -15,9 +15,12 @@
 #ifndef MEDIAPIPE_CALCULATORS_TENSOR_INFERENCE_CALCULATOR_H_
 #define MEDIAPIPE_CALCULATORS_TENSOR_INFERENCE_CALCULATOR_H_
 
+#include <algorithm>
 #include <functional>
 #include <memory>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
@@ -174,12 +177,12 @@ struct InferenceCalculatorXnnpack : public InferenceCalculator {
 };
 
 // For Process overriding, we subclass Impl rather than Intf
-// Also, subclasses must implement InferenceRunner interface's `Run` instead of
-// CalculatorBase's `Process`.
+// Subclasses must implement InferenceCalculatorNodeImpl's `Process` method.
 template <class Intf, class Impl = void>
-class InferenceCalculatorNodeImpl : public NodeImpl<Intf, Impl>,
-                                    protected InferenceRunner {
+class InferenceCalculatorNodeImpl : public NodeImpl<Intf, Impl> {
  public:
+  virtual ~InferenceCalculatorNodeImpl() = default;
+
   // Override Process to handle common Tensor I/O functionality.
   absl::Status Process(CalculatorContext* cc) final {
     if (InferenceCalculator::kInTensors(cc).IsConnected()) {
@@ -191,7 +194,7 @@ class InferenceCalculatorNodeImpl : public NodeImpl<Intf, Impl>,
       const auto& input_tensors = *InferenceCalculator::kInTensors(cc);
       RET_CHECK(!input_tensors.empty());
       MP_ASSIGN_OR_RETURN(auto output_tensors,
-                          Run(cc, MakeTensorSpan(input_tensors)));
+                          Process(cc, MakeTensorSpan(input_tensors)));
       return SendOutputTensors(cc, std::move(output_tensors));
     }
 
@@ -204,9 +207,13 @@ class InferenceCalculatorNodeImpl : public NodeImpl<Intf, Impl>,
 
     MP_ASSIGN_OR_RETURN(
         auto output_tensors,
-        Run(cc, MakeTensorSpan(InferenceCalculator::kInTensor(cc))));
+        Process(cc, MakeTensorSpan(InferenceCalculator::kInTensor(cc))));
     return SendOutputTensors(cc, std::move(output_tensors));
   }
+
+  // Process call providing TensorSpan input.
+  virtual absl::StatusOr<std::vector<Tensor>> Process(
+      CalculatorContext* cc, const TensorSpan& tensor_span) = 0;
 
  private:
   // Send output tensors into the proper output streams, regardless of how those

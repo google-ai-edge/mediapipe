@@ -115,7 +115,7 @@ class InferenceCalculatorGlAdvancedImpl
     OnDiskCacheHelper on_disk_cache_helper_;
   };
 
-  absl::StatusOr<std::vector<Tensor>> Run(
+  absl::StatusOr<std::vector<Tensor>> Process(
       CalculatorContext* cc, const TensorSpan& tensor_span) override;
   absl::StatusOr<std::unique_ptr<GpuInferenceRunner>> CreateInferenceRunner(
       CalculatorContext* cc);
@@ -414,7 +414,7 @@ absl::Status InferenceCalculatorGlAdvancedImpl::Open(CalculatorContext* cc) {
   return gpu_inference_runner_->Init(cc, gpu_helper_.GetSharedGlContext());
 }
 
-absl::StatusOr<std::vector<Tensor>> InferenceCalculatorGlAdvancedImpl::Run(
+absl::StatusOr<std::vector<Tensor>> InferenceCalculatorGlAdvancedImpl::Process(
     CalculatorContext* cc, const TensorSpan& tensor_span) {
   MP_ASSIGN_OR_RETURN(std::vector<Tensor> output_tensors,
                       gpu_inference_runner_->Process(cc, tensor_span));

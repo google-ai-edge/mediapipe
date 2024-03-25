@@ -95,7 +95,7 @@ class InferenceCalculatorMetalImpl
   absl::Status Close(CalculatorContext* cc) override;
 
  private:
-  absl::StatusOr<std::vector<Tensor>> Run(
+  absl::StatusOr<std::vector<Tensor>> Process(
       CalculatorContext* cc, const TensorSpan& tensor_span) override;
   absl::Status InitInterpreter(CalculatorContext* cc);
   void AddDelegate(CalculatorContext* cc,
@@ -144,7 +144,7 @@ absl::Status InferenceCalculatorMetalImpl::Open(CalculatorContext* cc) {
   return InitInterpreter(cc);
 }
 
-absl::StatusOr<std::vector<Tensor>> InferenceCalculatorMetalImpl::Run(
+absl::StatusOr<std::vector<Tensor>> InferenceCalculatorMetalImpl::Process(
     CalculatorContext* cc, const TensorSpan& tensor_span) {
   std::vector<Tensor> output_tensors;
 

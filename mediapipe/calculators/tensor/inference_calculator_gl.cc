@@ -83,7 +83,7 @@ class InferenceCalculatorGlImpl
     size_t output_size_ = 0;
   };
 
-  absl::StatusOr<std::vector<Tensor>> Run(
+  absl::StatusOr<std::vector<Tensor>> Process(
       CalculatorContext* cc, const TensorSpan& tensor_span) override;
   absl::StatusOr<std::unique_ptr<GpuInferenceRunner>> CreateInferenceRunner(
       CalculatorContext* cc);
@@ -280,7 +280,7 @@ absl::Status InferenceCalculatorGlImpl::Open(CalculatorContext* cc) {
   return absl::OkStatus();
 }
 
-absl::StatusOr<std::vector<Tensor>> InferenceCalculatorGlImpl::Run(
+absl::StatusOr<std::vector<Tensor>> InferenceCalculatorGlImpl::Process(
     CalculatorContext* cc, const TensorSpan& tensor_span) {
   std::vector<Tensor> output_tensors;
   MP_RETURN_IF_ERROR(
