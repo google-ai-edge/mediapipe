@@ -134,8 +134,13 @@ cc_library(
                "//conditions:default": [],
            }) + [
         "//mediapipe/framework:port",
+        "//mediapipe/gpu:gl_base",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@org_tensorflow//tensorflow/lite/core:framework",
         "@org_tensorflow//tensorflow/lite/core/api",
+        "@org_tensorflow//tensorflow/lite/delegates/gpu/common:data_type",
+        "@org_tensorflow//tensorflow/lite/delegates/gpu/common:shape",
     ],
 )
 

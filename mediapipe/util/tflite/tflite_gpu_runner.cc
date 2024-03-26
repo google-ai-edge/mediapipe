@@ -17,21 +17,26 @@
 #include <cstdint>
 #include <memory>
 #include <utility>
+#include <vector>
 
+#include "absl/log/absl_log.h"
 #include "absl/status/status.h"
-#include "absl/strings/substitute.h"
+#include "absl/status/statusor.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_macros.h"
-#include "mediapipe/framework/port/statusor.h"
+#include "mediapipe/gpu/gl_base.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
+#include "tensorflow/lite/core/interpreter_builder.h"
 #include "tensorflow/lite/delegates/gpu/api.h"
+#include "tensorflow/lite/delegates/gpu/common/data_type.h"
 #include "tensorflow/lite/delegates/gpu/common/model.h"
 #include "tensorflow/lite/delegates/gpu/common/model_builder.h"
 #include "tensorflow/lite/delegates/gpu/gl/api2.h"
+#include "tensorflow/lite/interpreter.h"
 #include "tensorflow/lite/model.h"
+#include "tensorflow/lite/model_builder.h"
 
 // This code should be enabled as soon as TensorFlow version, which mediapipe
 // uses, will include this module.
@@ -161,6 +166,8 @@ absl::Status TFLiteGPURunner::Build() {
   // By default, we try CL first & fall back to GL if that fails.
   if (opencl_is_forced_) {
     MP_RETURN_IF_ERROR(InitializeOpenCL(&builder));
+    // Only OpenCL delegate supports serializations currently.
+    is_cl_used_ = true;
   } else if (opengl_is_forced_) {
     MP_RETURN_IF_ERROR(InitializeOpenGL(&builder));
   } else {
@@ -168,6 +175,7 @@ absl::Status TFLiteGPURunner::Build() {
     absl::Status status = InitializeOpenCL(&builder);
     if (status.ok()) {
       VLOG(2) << "OpenCL backend is used.";
+      is_cl_used_ = true;
     } else {
       VLOG(2) << "Falling back to OpenGL: " << status.message();
       MP_RETURN_IF_ERROR(InitializeOpenGL(&builder));
@@ -260,26 +268,50 @@ absl::Status TFLiteGPURunner::InitializeOpenCL(
 
   return absl::OkStatus();
 #else
-  return mediapipe::UnimplementedError(
-      "Currently only Android & ChromeOS are supported");
+  return absl::UnimplementedError("OpenCL is not supported.");
 #endif  // defined(__ANDROID__) || defined(MEDIAPIPE_CHROMIUMOS)
 }
 
-#if defined(__ANDROID__) || defined(MEDIAPIPE_CHROMIUMOS)
-
 absl::Status TFLiteGPURunner::InitializeOpenCLFromSerializedModel(
     std::unique_ptr<InferenceBuilder>* builder) {
+#if defined(__ANDROID__) || defined(MEDIAPIPE_CHROMIUMOS)
+  RET_CHECK(cl_environment_) << "CL environment is not initialized.";
   MP_RETURN_IF_ERROR(
       cl_environment_->NewInferenceBuilder(serialized_model_, builder));
   MP_RETURN_IF_ERROR(VerifyShapes(builder->get()->inputs(), input_shapes_));
   return VerifyShapes(builder->get()->outputs(), output_shapes_);
+#else
+  return absl::UnimplementedError(
+      "OpenCL and serialized model are not supported.");
+#endif  // defined(__ANDROID__) || defined(MEDIAPIPE_CHROMIUMOS)
+}
+
+absl::StatusOr<std::vector<uint8_t>>
+TFLiteGPURunner::GetSerializedBinaryCache() {
+#if defined(__ANDROID__) || defined(MEDIAPIPE_CHROMIUMOS)
+  RET_CHECK(cl_environment_) << "CL environment is not initialized.";
+  return cl_environment_->GetSerializedBinaryCache();
+#else
+  return absl::UnimplementedError("Serialized binary cache is not supported.");
+#endif  // defined(__ANDROID__) || defined(MEDIAPIPE_CHROMIUMOS)
+}
+
+void TFLiteGPURunner::SetSerializedBinaryCache(std::vector<uint8_t>&& cache) {
+#if defined(__ANDROID__) || defined(MEDIAPIPE_CHROMIUMOS)
+  serialized_binary_cache_ = std::move(cache);
+#else
+  ABSL_LOG(ERROR) << "Serialized binary cache is not supported.";
+#endif  // defined(__ANDROID__) || defined(MEDIAPIPE_CHROMIUMOS)
 }
 
 absl::StatusOr<std::vector<uint8_t>> TFLiteGPURunner::GetSerializedModel() {
+#if defined(__ANDROID__) || defined(MEDIAPIPE_CHROMIUMOS)
   if (serialized_model_used_) {
     return serialized_model_;
   }
   RET_CHECK(graph_cl_) << "CL graph is not initialized.";
+  RET_CHECK(cl_environment_) << "CL environment is not initialized.";
+
   GraphFloat32 graph_cl;
   MP_RETURN_IF_ERROR(graph_cl_->MakeExactCopy(&graph_cl));
   cl::InferenceOptions cl_options = GetClInferenceOptions(options_);
@@ -287,9 +319,20 @@ absl::StatusOr<std::vector<uint8_t>> TFLiteGPURunner::GetSerializedModel() {
   MP_RETURN_IF_ERROR(cl_environment_->BuildSerializedModel(
       cl_options, std::move(graph_cl), &serialized_model));
   return serialized_model;
+#else
+  return absl::UnimplementedError("Serialized model is not supported.");
+#endif  // defined(__ANDROID__) || defined(MEDIAPIPE_CHROMIUMOS)
 }
 
+void TFLiteGPURunner::SetSerializedModel(
+    std::vector<uint8_t>&& serialized_model) {
+#if defined(__ANDROID__) || defined(MEDIAPIPE_CHROMIUMOS)
+  serialized_model_ = std::move(serialized_model);
+  serialized_model_used_ = false;
+#else
+  ABSL_LOG(ERROR) << "Serialized model is not supported.";
 #endif  // defined(__ANDROID__) || defined(MEDIAPIPE_CHROMIUMOS)
+}
 
 }  // namespace gpu
 }  // namespace tflite
