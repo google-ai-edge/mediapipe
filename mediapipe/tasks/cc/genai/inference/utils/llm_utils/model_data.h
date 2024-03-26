@@ -117,6 +117,16 @@ class ModelData {
   // method since the data can be read into memory as needed.
   static absl::StatusOr<std::shared_ptr<ModelData>> Create(ScopedFile file);
 
+  enum ReadMode {
+    KEEP = 0,
+    DISCARD = 1,
+    DISCARD_ALL = 2,
+  };
+  using ReadDataFn =
+      std::function<void*(uint64_t offset, uint64_t size, int mode)>;
+  // Loads a tflite model using the passed `fn`, and reads buffers as needed.
+  static absl::StatusOr<std::shared_ptr<ModelData>> Create(ReadDataFn fn);
+
   virtual ~ModelData() = default;
 
   // Get the type for the model. If a type is not specified by the model files,
@@ -142,6 +152,9 @@ class ModelData {
   // Returns the tensor data of the tensor with `name`.
   virtual absl::StatusOr<std::unique_ptr<DataHolder<uint8_t>>> ReadTensor(
       absl::string_view name) = 0;
+
+  // Frees the underlying data.
+  virtual void Clear() = 0;
 };
 
 // Holds data referring to a set of LoRA weights.

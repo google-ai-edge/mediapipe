@@ -139,3 +139,14 @@ mediapipe_ts_library(
         ":graph_runner_ts",
     ],
 )
+
+mediapipe_ts_library(
+    name = "graph_runner_streaming_reader_ts",
+    srcs = [
+        "graph_runner_streaming_reader.ts",
+    ],
+    allow_unoptimized_namespaces = True,
+    deps = [
+        ":graph_runner_ts",
+    ],
+)

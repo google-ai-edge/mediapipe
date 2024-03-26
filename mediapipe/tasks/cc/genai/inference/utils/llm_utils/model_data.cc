@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 #include <memory>
 #include <optional>
 #include <string>
@@ -49,6 +50,17 @@ constexpr uint64_t kTfliteBaseSize = 1024 * 1024;
 class SpanHolder : public DataHolder<uint8_t> {
  public:
   explicit SpanHolder(absl::Span<uint8_t> data) : data_(data) {}
+
+  absl::Span<uint8_t> GetData() const override { return data_; }
+
+ private:
+  absl::Span<uint8_t> data_;
+};
+
+class FreeingSpanHolder : public DataHolder<uint8_t> {
+ public:
+  explicit FreeingSpanHolder(absl::Span<uint8_t> data) : data_(data) {}
+  ~FreeingSpanHolder() override { free(data_.data()); }
 
   absl::Span<uint8_t> GetData() const override { return data_; }
 
@@ -182,6 +194,8 @@ class InMemoryTfliteModelData : public TfliteModelData {
       : TfliteModelData(std::move(model)) {}
   ~InMemoryTfliteModelData() override = default;
 
+  void Clear() override {}
+
  protected:
   absl::StatusOr<std::unique_ptr<DataHolder<uint8_t>>> ReadData(
       uint64_t offset, uint64_t size) override {
@@ -204,6 +218,11 @@ class FileTfliteModelData : public TfliteModelData {
         model_data_(std::move(model_data)) {}
   ~FileTfliteModelData() override = default;
 
+  void Clear() override {
+    file_ = ScopedFile();
+    model_data_.reset();
+  }
+
  protected:
   absl::StatusOr<std::unique_ptr<DataHolder<uint8_t>>> ReadData(
       uint64_t offset, uint64_t size) override {
@@ -219,6 +238,33 @@ class FileTfliteModelData : public TfliteModelData {
 };
 
 uint32_t FileTfliteModelData::next_key_ = 0;
+
+// Loads tflite data from the provided function. This owns any data returned
+// from the read data function.
+class FunctionTfliteModelData : public TfliteModelData {
+ public:
+  FunctionTfliteModelData(std::shared_ptr<tflite::FlatBufferModel> model,
+                          ModelData::ReadDataFn fn)
+      : TfliteModelData(std::move(model)), fn_(std::move(fn)) {}
+  ~FunctionTfliteModelData() override { Clear(); }
+
+  void Clear() override {
+    free(const_cast<void*>(model_->allocation()->base()));
+    fn_(0, 0, ReadMode::DISCARD_ALL);
+  }
+
+ protected:
+  absl::StatusOr<std::unique_ptr<DataHolder<uint8_t>>> ReadData(
+      uint64_t offset, uint64_t size) override {
+    void* data = fn_(offset, size, ReadMode::DISCARD);
+    RET_CHECK(data) << "Error fetching data.";
+    return std::make_unique<FreeingSpanHolder>(
+        absl::MakeSpan(static_cast<uint8_t*>(data), size));
+  }
+
+ private:
+  ModelData::ReadDataFn fn_;
+};
 
 // Loads the model using the passed metadata to point to offsets in the file.
 class CustomModelData : public ModelData {
@@ -289,6 +335,11 @@ class CustomModelData : public ModelData {
         file_.file(), it->second.offset(), it->second.size(), key_);
   }
 
+  void Clear() override {
+    file_ = ScopedFile();
+    spm_data_.reset();
+  }
+
  private:
   odml::infra::proto::LlmFileMetadata metadata_;
   ScopedFile file_;
@@ -350,6 +401,21 @@ absl::StatusOr<std::shared_ptr<ModelData>> ModelData::Create(ScopedFile file) {
   RET_CHECK(model) << "Error building tflite model.";
   auto model_data = std::make_shared<FileTfliteModelData>(
       std::move(model), std::move(data), std::move(file));
+  MP_RETURN_IF_ERROR(model_data->InitLlmParameters());
+  return model_data;
+}
+
+// static
+absl::StatusOr<std::shared_ptr<ModelData>> ModelData::Create(ReadDataFn fn) {
+  // Load the first chunk of the file as a tflite model, and load the rest
+  // on-demand when needed.
+  void* data = fn(0, kTfliteBaseSize, ReadMode::KEEP);
+  RET_CHECK(data) << "Error fetching data.";
+  auto model = tflite::FlatBufferModel::BuildFromBuffer(
+      reinterpret_cast<const char*>(data), kTfliteBaseSize);
+  RET_CHECK(model) << "Error building tflite model.";
+  auto model_data = std::make_shared<FunctionTfliteModelData>(std::move(model),
+                                                              std::move(fn));
   MP_RETURN_IF_ERROR(model_data->InitLlmParameters());
   return model_data;
 }
