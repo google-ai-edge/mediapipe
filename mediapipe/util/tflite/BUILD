@@ -135,6 +135,7 @@ cc_library(
            }) + [
         "//mediapipe/framework:port",
         "//mediapipe/gpu:gl_base",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@org_tensorflow//tensorflow/lite/core:framework",
