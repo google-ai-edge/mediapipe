@@ -3,8 +3,8 @@
 # This task takes text input performs Natural Language classification (including
 # BERT-based text classification).
 
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_declaration", "mediapipe_ts_library")
 load("@npm//@bazel/jasmine:index.bzl", "jasmine_node_test")
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_declaration", "mediapipe_ts_library")
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 

@@ -25,8 +25,8 @@ simple data file, but in that case any declared headers are not visible to
 dependent objc_library rules.
 """
 
-load("@build_bazel_apple_support//lib:apple_support.bzl", "apple_support")
 load("@bazel_skylib//lib:dicts.bzl", "dicts")
+load("@build_bazel_apple_support//lib:apple_support.bzl", "apple_support")
 
 # This load statement is overriding the visibility of the internal implementation of rules_apple.
 # This rule will be migrated to rules_apple in the future, hence the override. Please do not use

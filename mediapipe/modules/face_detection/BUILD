@@ -12,16 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load(
-    "//mediapipe/framework/tool:mediapipe_graph.bzl",
-    "mediapipe_simple_subgraph",
-)
+load("//mediapipe/framework:mediapipe_cc_test.bzl", "mediapipe_cc_test")
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 load(
     "//mediapipe/framework/tool:mediapipe_files.bzl",
     "mediapipe_files",
 )
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
-load("//mediapipe/framework:mediapipe_cc_test.bzl", "mediapipe_cc_test")
+load(
+    "//mediapipe/framework/tool:mediapipe_graph.bzl",
+    "mediapipe_simple_subgraph",
+)
 
 licenses(["notice"])
 

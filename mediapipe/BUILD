@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-licenses(["notice"])  # Apache 2.0
-
 load("@mediapipe//mediapipe:platforms.bzl", "config_setting_and_platform")
+
+licenses(["notice"])  # Apache 2.0
 
 # Generic Android
 config_setting(
