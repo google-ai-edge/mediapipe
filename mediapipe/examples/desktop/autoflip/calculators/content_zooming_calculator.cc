@@ -459,8 +459,8 @@ absl::Status ContentZoomingCalculator::InitializeState(
   first_rect_timestamp_ = Timestamp::Unset();
   last_only_required_detection_ = 0;
   last_measured_height_ = max_frame_value_ * frame_height_;
-  last_measured_x_offset_ = target_aspect_ * frame_width_;
-  last_measured_y_offset_ = frame_width_ / 2;
+  last_measured_x_offset_ = frame_width_ / 2;
+  last_measured_y_offset_ = frame_height_ / 2;
   return absl::OkStatus();
 }
 

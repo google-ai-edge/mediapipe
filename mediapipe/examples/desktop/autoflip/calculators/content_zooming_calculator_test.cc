@@ -1031,6 +1031,31 @@ TEST(ContentZoomingCalculatorTest, AllowsCroppingOutsideFrame) {
                 runner->Outputs().Tag(kCropRectTag).packets);
 }
 
+TEST(ContentZoomingCalculatorTest, InitialEmptyDetectionDefaultsToNoCrop) {
+  auto config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigD);
+  auto* options = config.mutable_options()->MutableExtension(
+      ContentZoomingCalculatorOptions::ext);
+  options->set_allow_cropping_outside_frame(true);
+  auto runner = ::std::make_unique<CalculatorRunner>(config);
+  int64_t time = 0;
+  int width = 1000;
+  int height = 1000;
+
+  auto empty_detections = std::make_unique<std::vector<mediapipe::Detection>>();
+  runner->MutableInputs()
+      ->Tag("DETECTIONS")
+      .packets.push_back(Adopt(empty_detections.release()).At(Timestamp(time)));
+  auto input_size = ::std::make_unique<std::pair<int, int>>(width, height);
+  runner->MutableInputs()
+      ->Tag("VIDEO_SIZE")
+      .packets.push_back(Adopt(input_size.release()).At(Timestamp(time)));
+  MP_ASSERT_OK(runner->Run());
+
+  CheckCropRect(/* x_center= */ 500, /* y_center= */ 500, width, height,
+                /* frame_number= */ 0,
+                runner->Outputs().Tag(kCropRectTag).packets);
+}
+
 }  // namespace
 }  // namespace autoflip
 
