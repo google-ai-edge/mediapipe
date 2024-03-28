@@ -1,5 +1,5 @@
-# Placeholder: load py_library
 # Placeholder for internal Python strict library and test compatibility macro.
+# Placeholder: load py_library
 
 package(
     default_visibility = [

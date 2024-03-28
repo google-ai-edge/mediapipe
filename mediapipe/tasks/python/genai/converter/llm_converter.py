@@ -34,6 +34,10 @@ class ConversionConfig(object):
       tokenizer_config.json files.
     output_tflite_file: (optional) the output tflite filename. If not provided,
       the output will be `model.tflite` stored in the output_dir.
+    fp16_scale: A scalar value between [0, 1]. Some models can run into
+      activation overflow issue when running in 16-bit floating point mode. To
+      solve this, we need to scale down the weights of certain layers. See
+      go/llm-on-device-fp16 for more detailed explanation.
   """
 
   def __init__(
@@ -50,6 +54,7 @@ class ConversionConfig(object):
       combine_file_only: bool = False,
       vocab_model_file: str = '',
       output_tflite_file: Optional[str] = None,
+      fp16_scale: Optional[float] = None,
   ):
     self.input_ckpt = input_ckpt
     self.ckpt_format = ckpt_format
@@ -75,6 +80,8 @@ class ConversionConfig(object):
       self.output_tflite_file = output_tflite_file
     else:
       self.output_tflite_file = os.path.join(output_dir, 'model.tflite')
+
+    self.fp16_scale = None
 
 
 def quantize_by_actions(
@@ -216,6 +223,7 @@ def convert_checkpoint(config: ConversionConfig) -> None:
         feedforward_quant_bits=config.feedforward_quant_bits,
         embedding_quant_bits=config.embedding_quant_bits,
         special_model=config.model_type,
+        fp16_scale=config.fp16_scale,
     )
     actions = loader.load_to_actions()
 

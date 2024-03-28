@@ -21,9 +21,11 @@
 #include <utility>
 #include <vector>
 
+#include "absl/base/attributes.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/graph_builder.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/llm_weights.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/sampling.h"
@@ -83,9 +85,14 @@ class Llm : protected xnn_utils::XnnGraph {
       std::unique_ptr<LlmBuilder> builder);
 
   // (Re)Initialize with input token ids. This will reset the cache, mask etc.
-  virtual absl::Status InitInputTokens(const std::vector<int>& input_ids);
+  virtual absl::Status InitInputTokens(
+      absl::Span<const std::vector<int>> batch_input_ids);
+  // Exist for backward compatibility, constructs a span of size 1, and calls
+  // the above batched version.
+  ABSL_DEPRECATED("Use batched version instead")
+  absl::Status InitInputTokens(const std::vector<int>& input_ids);
 
-  // Get the next token id.
+  // Get the next token id for each batch.
   virtual absl::Status GetNextToken(std::vector<int>* output_ids);
 
   // The size of all tokens, including prompt and generated tokens.
@@ -144,7 +151,7 @@ class Llm : protected xnn_utils::XnnGraph {
   std::shared_ptr<Tensor> logits_output_;
 
   // Previous ids, including prompt.
-  std::vector<int> prev_ids_;
+  std::vector<std::vector<int>> prev_ids_;
   std::vector<KVCache> kv_cache_;
 
   // Hold a shared_ptr to the LlmBuilder for initializing the input resources
