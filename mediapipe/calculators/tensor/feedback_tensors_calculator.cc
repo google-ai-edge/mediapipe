@@ -18,6 +18,7 @@
 
 #include "absl/status/status.h"
 #include "mediapipe/calculators/tensor/feedback_tensors_calculator.pb.h"
+#include "mediapipe/framework/api2/contract.h"
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/tensor.h"
@@ -46,9 +47,10 @@ class FeedbackTensorsCalculator : public Node {
   static constexpr Input<Tensors> kInputTensorsIn{kInputTensorsTag};
   static constexpr Output<Tensors> kTensorsOut{kOutputTensorsTag};
 
-  MEDIAPIPE_NODE_CONTRACT(kFeedbackTensorsIn, kInputTensorsIn, kTensorsOut);
+  MEDIAPIPE_NODE_CONTRACT(kFeedbackTensorsIn, kInputTensorsIn, kTensorsOut,
+                          TimestampChange::Arbitrary());
 
-  static absl::Status GetContract(CalculatorContract* cc) {
+  static absl::Status UpdateContract(CalculatorContract* cc) {
     cc->SetProcessTimestampBounds(true);
     cc->UseService(kMemoryManagerService).Optional();
     return absl::OkStatus();

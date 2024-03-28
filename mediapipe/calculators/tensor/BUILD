@@ -192,6 +192,7 @@ cc_library(
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:memory_manager",
         "//mediapipe/framework:memory_manager_service",
+        "//mediapipe/framework/api2:contract",
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/formats:tensor",
         "@com_google_absl//absl/status",
