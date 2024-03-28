@@ -15,6 +15,7 @@
 #include <cstdint>
 
 #include "absl/strings/str_replace.h"
+#include "google/protobuf/text_format.h"
 #include "mediapipe/calculators/tensorflow/tensorflow_session.h"
 #include "mediapipe/calculators/tensorflow/tensorflow_session_from_saved_model_generator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -57,6 +58,13 @@ tf::Tensor TensorMatrix1x3(const int v1, const int v2, const int v3) {
   matrix(0, 1) = v2;
   matrix(0, 2) = v3;
   return tensor;
+}
+
+std::string PrintOptionsAsTextProto(
+    const TensorFlowSessionFromSavedModelGeneratorOptions& options) {
+  std::string text_proto;
+  google::protobuf::TextFormat::PrintToString(options, &text_proto);
+  return text_proto;
 }
 
 class TensorFlowSessionFromSavedModelGeneratorTest : public ::testing::Test {
@@ -201,7 +209,7 @@ TEST_F(TensorFlowSessionFromSavedModelGeneratorTest,
       }
       input_stream: "a_tensor"
   )",
-                           generator_options_->DebugString()));
+                           PrintOptionsAsTextProto(*generator_options_)));
 
   CalculatorGraph graph;
   MP_ASSERT_OK(graph.Initialize(graph_config));
