@@ -37,6 +37,8 @@ Args:
   output: The desired name of the output file. Optional.
 """
 
+# buildifier: disable=out-of-order-load
+
 load("@bazel_skylib//lib:paths.bzl", "paths")
 
 PROTOC = "@com_google_protobuf//:protoc"

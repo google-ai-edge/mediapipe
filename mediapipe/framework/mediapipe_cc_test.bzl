@@ -1,5 +1,7 @@
 """Macro for multi-platform C++ tests."""
 
+# buildifier: disable=out-of-order-load
+
 DEFAULT_ADDITIONAL_TEST_DEPS = []
 
 def mediapipe_cc_test(
