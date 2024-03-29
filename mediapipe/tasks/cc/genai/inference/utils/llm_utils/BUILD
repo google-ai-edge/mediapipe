@@ -54,14 +54,16 @@ cc_library(
 
 cc_library(
     name = "metadata_utils",
+    srcs = ["metadata_utils.cc"],
     hdrs = ["metadata_utils.h"],
     deps = [
-        ":memory_mapped_file",
         "//mediapipe/tasks/cc/genai/inference/proto:llm_params_cc_proto",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
         "@org_tensorflow//tensorflow/lite:framework_stable",
+        "@org_tensorflow//tensorflow/lite/schema:schema_fbs",
     ],
 )
 

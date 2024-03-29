@@ -15,14 +15,9 @@
 #ifndef MEDIAPIPE_TASKS_GENAI_INFERENCE_UTILS_LLM_UTILS_METADATA_UTILS_H_
 #define MEDIAPIPE_TASKS_GENAI_INFERENCE_UTILS_LLM_UTILS_METADATA_UTILS_H_
 
-#include <memory>
-#include <string>
-
-#include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/tasks/cc/genai/inference/proto/llm_params.pb.h"
-#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/memory_mapped_file.h"
 #include "tensorflow/lite/model_builder.h"
 
 namespace mediapipe::tasks::genai::llm_utils {
@@ -30,6 +25,15 @@ namespace mediapipe::tasks::genai::llm_utils {
 constexpr absl::string_view kLlmModelTypeName = "odml.infra.LlmModelType";
 constexpr absl::string_view kLlmBackendName = "backend";
 constexpr absl::string_view kSpmVocabName = "spm_vocab_model";
+
+// Retrieve LlmModelType from tflite flatbuffer metadata.
+absl::StatusOr<odml::infra::proto::LlmModelType> GetLlmModelType(
+    const ::tflite::FlatBufferModel& fb_model);
+
+// Retrieves SentencePiece from tflite's metadata and returns a string_view of
+// the model content.
+absl::StatusOr<absl::string_view> ExtractSentencePieceToStringView(
+    const tflite::FlatBufferModel& model, absl::string_view metadata_key);
 
 inline bool RequireBytesToUnicodeMapping(
     odml::infra::proto::LlmModelType model_type) {
