@@ -49,8 +49,8 @@ class DataHolder {
 };
 
 struct OffsetAndSize {
-  uint64_t offset;
-  uint64_t size;
+  uint64_t offset = 0;
+  uint64_t size = 0;
 };
 // Gets an offset and size which will be valid to pass to MemoryMappedFile.
 OffsetAndSize GetAlignedOffsetAndSize(uint64_t base_offset, uint64_t base_size);
