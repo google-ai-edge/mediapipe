@@ -32,6 +32,8 @@
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/formats/tensor.h"
+#include "mediapipe/framework/memory_manager.h"
+#include "mediapipe/framework/memory_manager_service.h"
 #include "mediapipe/framework/port.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
@@ -182,6 +184,9 @@ class TensorConverterCalculator : public CalculatorBase {
   int max_num_channels_ = 3;
 
   std::unique_ptr<TensorConverterGpu> tensor_converter_gpu_;
+
+  // Enable pooling of AHWBs in Tensor instances.
+  MemoryManager* memory_manager_ = nullptr;
 };
 REGISTER_CALCULATOR(TensorConverterCalculator);
 
@@ -199,7 +204,7 @@ absl::Status TensorConverterCalculator::GetContract(CalculatorContract* cc) {
   if (cc->Inputs().HasTag(kMatrixTag)) {
     cc->Inputs().Tag(kMatrixTag).Set<Matrix>();
   }
-
+  cc->UseService(kMemoryManagerService).Optional();
 #if !MEDIAPIPE_DISABLE_GPU
   if (cc->Inputs().HasTag(kGpuBufferTag)) {
     cc->Inputs().Tag(kGpuBufferTag).Set<mediapipe::GpuBuffer>();
@@ -217,6 +222,9 @@ absl::Status TensorConverterCalculator::GetContract(CalculatorContract* cc) {
 }
 
 absl::Status TensorConverterCalculator::Open(CalculatorContext* cc) {
+  if (cc->Service(kMemoryManagerService).IsAvailable()) {
+    memory_manager_ = &cc->Service(kMemoryManagerService).GetObject();
+  }
   cc->SetOffset(TimestampDiff(0));
 
 #if !MEDIAPIPE_DISABLE_GPU
@@ -271,20 +279,22 @@ absl::Status TensorConverterCalculator::ProcessCPU(CalculatorContext* cc) {
     }
     const auto& image_frame =
         cc->Inputs().Tag(kImageFrameTag).Get<ImageFrame>();
-    MP_ASSIGN_OR_RETURN(Tensor output,
-                        ConvertImageFrameToTensorOnCpu(
-                            image_frame,
-                            output_range_.has_value() ? output_range_.value()
-                                                      : kDefaultOutputRange,
-                            flip_vertically_, max_num_channels_));
+    MP_ASSIGN_OR_RETURN(
+        Tensor output,
+        ConvertImageFrameToTensorOnCpu(
+            image_frame,
+            output_range_.has_value() ? output_range_.value()
+                                      : kDefaultOutputRange,
+            flip_vertically_, max_num_channels_, memory_manager_));
     output_tensors->emplace_back(std::move(output));
   } else if (cc->Inputs().HasTag(kMatrixTag)) {
     if (cc->Inputs().Tag(kMatrixTag).IsEmpty()) {
       return absl::OkStatus();
     }
     const auto& matrix = cc->Inputs().Tag(kMatrixTag).Get<Matrix>();
-    MP_ASSIGN_OR_RETURN(Tensor output,
-                        ConvertMatrixToTensorOnCpu(matrix, row_major_matrix_));
+    MP_ASSIGN_OR_RETURN(
+        Tensor output,
+        ConvertMatrixToTensorOnCpu(matrix, row_major_matrix_, memory_manager_));
     output_tensors->emplace_back(std::move(output));
   } else {
     return absl::OkStatus();
@@ -431,17 +441,19 @@ absl::Status TensorConverterCalculator::InitGpu(CalculatorContext* cc) {
   MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext(
       [this, &input, &include_alpha, &single_channel]() -> absl::Status {
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
-        MP_ASSIGN_OR_RETURN(tensor_converter_gpu_,
-                            CreateTensorConverterGl31(
-                                gpu_helper_, input.width(), input.height(),
-                                output_range_, include_alpha, single_channel,
-                                flip_vertically_, max_num_channels_));
+        MP_ASSIGN_OR_RETURN(
+            tensor_converter_gpu_,
+            CreateTensorConverterGl31(
+                gpu_helper_, memory_manager_, input.width(), input.height(),
+                output_range_, include_alpha, single_channel, flip_vertically_,
+                max_num_channels_));
 #else
-        MP_ASSIGN_OR_RETURN(tensor_converter_gpu_,
-                            CreateTensorConverterGl30(
-                                gpu_helper_, input.width(), input.height(),
-                                output_range_, include_alpha, single_channel,
-                                flip_vertically_, max_num_channels_));
+        MP_ASSIGN_OR_RETURN(
+            tensor_converter_gpu_,
+            CreateTensorConverterGl30(
+                gpu_helper_, memory_manager_, input.width(), input.height(),
+                output_range_, include_alpha, single_channel, flip_vertically_,
+                max_num_channels_));
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
         return absl::OkStatus();
       }));

@@ -10,6 +10,7 @@
 #include "mediapipe/calculators/tensor/tensor_converter_gpu.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/tensor.h"
+#include "mediapipe/framework/memory_manager.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/status_matchers.h"
@@ -38,19 +39,23 @@ class TensorConverterGlTest : public GpuTestWithParamBase<GlVersion> {
     std::unique_ptr<TensorConverterGpu> tensor_converter;
     switch (GetParam()) {
       case GlVersion30:
-        return CreateTensorConverterGl30(helper_, width, height, output_range,
-                                         include_alpha, single_channel,
-                                         flip_vertically, num_output_channels);
+        return CreateTensorConverterGl30(helper_, &memory_manager_, width,
+                                         height, output_range, include_alpha,
+                                         single_channel, flip_vertically,
+                                         num_output_channels);
         break;
       case GlVersion31:
-        return CreateTensorConverterGl31(helper_, width, height, output_range,
-                                         include_alpha, single_channel,
-                                         flip_vertically, num_output_channels);
+        return CreateTensorConverterGl31(helper_, &memory_manager_, width,
+                                         height, output_range, include_alpha,
+                                         single_channel, flip_vertically,
+                                         num_output_channels);
         break;
     }
     return absl::InternalError("Unknown GlVersion: " +
                                std::to_string(GetParam()));
   }
+
+  MemoryManager memory_manager_;
 };
 
 INSTANTIATE_TEST_SUITE_P(ConfigValues, TensorConverterGlTest,

@@ -29,6 +29,8 @@
 #include "mediapipe/framework/formats/image_frame_opencv.h"
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/formats/tensor.h"
+#include "mediapipe/framework/memory_manager.h"
+#include "mediapipe/framework/memory_manager_service.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
@@ -231,6 +233,8 @@ TEST_F(TensorConverterCalculatorTest, CustomDivAndSub) {
   tool::AddVectorSink("tensor", &graph_config, &output_packets);
 
   // Run the graph.
+  MP_ASSERT_OK(graph.SetServiceObject(kMemoryManagerService,
+                                      std::make_shared<MemoryManager>()));
   MP_ASSERT_OK(graph.Initialize(graph_config));
   MP_ASSERT_OK(graph.StartRun({}));
   auto input_image = std::make_unique<ImageFrame>(ImageFormat::GRAY8, 1, 1);

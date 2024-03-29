@@ -18,11 +18,12 @@
 #include <optional>
 #include <utility>
 
-#include "absl/status/statusor.h"
-#include "mediapipe/calculators/tensor/tensor_converter_gpu.h"
 #include "mediapipe/framework/port.h"
 
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
+#include "absl/status/statusor.h"
+#include "mediapipe/calculators/tensor/tensor_converter_gpu.h"
+#include "mediapipe/framework/memory_manager.h"
 #include "mediapipe/gpu/gl_calculator_helper.h"
 
 namespace mediapipe {
@@ -30,6 +31,7 @@ namespace mediapipe {
 // Instantiates and initializes an OpenGL 3.0-enabled TensorConverterGpu
 // instance.
 // @gpu_helper helper to manage the OpenGL context.
+// @memory_manager Enables buffer pooling.
 // @input_width width of input image.
 // @input_height height of input image.
 // @output_range defines output floating point scale.
@@ -40,7 +42,8 @@ namespace mediapipe {
 // that the selected number of converted channels must match
 // num_output_channels.
 absl::StatusOr<std::unique_ptr<TensorConverterGpu>> CreateTensorConverterGl30(
-    GlCalculatorHelper& gpu_helper, int input_width, int input_height,
+    GlCalculatorHelper& gpu_helper, MemoryManager* memory_manager,
+    int input_width, int input_height,
     std::optional<std::pair<float, float>> output_range, bool include_alpha,
     bool single_channel, bool flip_vertically, int num_output_channels);
 
