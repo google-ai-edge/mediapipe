@@ -14,10 +14,22 @@ def mediapipe_files(srcs):
 
     for src in srcs:
         archive_name = "com_google_mediapipe_%s" % src.replace("/", "_").replace(".", "_")
-        native.genrule(
-            name = "%s_ln" % archive_name,
-            srcs = ["@%s//file" % archive_name],
-            outs = [src],
-            output_to_bindir = 1,
-            cmd = "ln $< $@",
-        )
+        if src.endswith("_internal.js"):
+          native.genrule(
+              name = "%s_ln" % archive_name,
+              srcs = ["@%s//file" % archive_name],
+              outs = [src],
+              output_to_bindir = 1,
+              cmd = """
+              cp $< $@
+              echo 'else {\n  (globalThis || self || window).ModuleFactory = ModuleFactory;\n  (globalThis || self || window).custom_dbg = function(text) {\n    console.warn.apply(console, arguments);\n  }\n}\n' >> $@
+              """
+          )
+        else: 
+          native.genrule(
+              name = "%s_ln" % archive_name,
+              srcs = ["@%s//file" % archive_name],
+              outs = [src],
+              output_to_bindir = 1,
+              cmd = "ln $< $@",
+          )
