@@ -1,6 +1,6 @@
-# Placeholder: load py_library
-# Placeholder: load py_binary
 load("//mediapipe/tasks/metadata:build_defs.bzl", "stamp_metadata_parser_version")
+# Placeholder: load py_binary
+# Placeholder: load py_library
 
 package(
     licenses = ["notice"],  # Apache 2.0

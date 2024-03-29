@@ -571,6 +571,9 @@ absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::AvgLastDim(
   output_dims.back() = 1;
   MP_ASSIGN_OR_RETURN(auto output, IntermediateTensor(std::move(output_dims),
                                                       "avg_last_dim_output"));
+  // TODO: b/149120844 - Remove the following messy code once we have settled
+  // which flag to use.
+#if defined(XNN_FLAG_KEEP_DIMS)
   build_steps_.push_back(
       [input, output](xnn_subgraph_t subgraph) -> absl::Status {
         size_t reduction_axis = input->dims.size() - 1;
@@ -581,6 +584,20 @@ absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::AvgLastDim(
                                             /*flags=*/XNN_FLAG_KEEP_DIMS));
         return absl::OkStatus();
       });
+#elif defined(XNN_FLAG_REDUCE_DIMS)
+  build_steps_.push_back(
+      [input, output](xnn_subgraph_t subgraph) -> absl::Status {
+        size_t reduction_axis = input->dims.size() - 1;
+        RET_CHECK_EQ(xnn_status_success,
+                     xnn_define_static_mean(subgraph, 1, &reduction_axis,
+                                            input->tensor_id(subgraph),
+                                            output->tensor_id(subgraph),
+                                            /*flags=*/0));
+        return absl::OkStatus();
+      });
+#else
+#error one of the above flag should be defined.
+#endif  // XNN_FLAG_KEEP_DIMS
 
   return output;
 }
@@ -812,8 +829,7 @@ absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::BatchMatMul(
   RET_CHECK_EQ(lhs_dim.size(), 4);
   RET_CHECK_EQ(rhs_dim.size(), 4);
   RET_CHECK_EQ(lhs_dim.back(), rhs_dim.back());
-  RET_CHECK_EQ(lhs_dim[1], rhs_dim[1]);
-  const size_t N = lhs_dim[1];
+  const size_t N = std::max(lhs_dim[1], rhs_dim[1]);
   const size_t H = rhs_dim[2];
   const size_t T = lhs_dim[2];
 
@@ -944,15 +960,7 @@ absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::QKVAttention(
     Tensor::DimsType reshape_hint) {
   RET_CHECK_EQ(query->dims.size(), 4);
   RET_CHECK_EQ(key_or_value->dims.size(), 4);
-  const bool use_mqa = (key_or_value->dims[1] == 1);
-  if (use_mqa) {
-    MP_ASSIGN_OR_RETURN(auto kv_squeezed,
-                        Reshape(key_or_value, std::move(reshape_hint)));
-    // Output shape: [B, N, T, S].
-    return MatMul(query, kv_squeezed);
-  } else {
-    return BatchMatMul(query, key_or_value);
-  }
+  return BatchMatMul(query, key_or_value);
 }
 
 absl::Status XnnGraph::CreateRuntime() {

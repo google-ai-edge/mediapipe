@@ -31,6 +31,7 @@ option java_outer_classname = "InferenceCalculatorProto";
 //   options {
 //     [mediapipe.InferenceCalculatorOptions.ext] {
 //       model_path: "model.tflite"
+//       try_mmap_model: true
 //       delegate { gpu {} }
 //     }
 //   }
@@ -67,13 +68,21 @@ message InferenceCalculatorOptions {
       optional bool allow_precision_loss = 3 [default = true];
 
       // Load pre-compiled serialized binary cache to accelerate init process.
-      // Only available for OpenCL delegate on Android.
+      //
       // Kernel caching will only be enabled if this path is set.
+      //
+      // NOTE: available for OpenCL delegate on Android only when
+      // "use_advanced_gpu_api" is set  to true and either "model_path" or
+      // "model_token" is specified saving to:
+      // $cached_kernel_path/basename($model_path).ker
+      // or
+      // $cached_kernel_path/$model_token.ker if model_path is not specified.
+      // TODO b/330806422 - update to prefer model_token
       //
       // NOTE: binary cache usage may be skipped if valid serialized model,
       // specified by "serialized_model_dir", exists.
       //
-      // TODO: update to cached_kernel_dir
+      // TODO b/202767296 - update to cached_kernel_dir
       optional string cached_kernel_path = 2;
 
       // A dir to load from and save to a pre-compiled serialized model used to
@@ -152,6 +161,12 @@ message InferenceCalculatorOptions {
   // Path to the TF Lite model (ex: /path/to/modelname.tflite).
   // On mobile, this is generally just modelname.tflite.
   optional string model_path = 1;
+
+  // If true, and model_path is specified, tries to load the model as memory
+  // mapped file if available. This can be significantly faster that loading the
+  // model into a buffer first. If memory mapping is not available or fails,
+  // falls back to loading from buffer.
+  optional bool try_mmap_model = 7;
 
   // Whether the TF Lite GPU or CPU backend should be used. Effective only when
   // input tensors are on CPU. For input tensors on GPU, GPU backend is always

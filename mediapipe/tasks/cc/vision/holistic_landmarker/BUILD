@@ -13,7 +13,6 @@
 # limitations under the License.
 
 package(
-    default_visibility = ["//mediapipe/tasks:internal"],
     licenses = ["notice"],  # Apache 2.0
 )
 

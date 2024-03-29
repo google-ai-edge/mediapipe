@@ -14,23 +14,30 @@
 
 #include "mediapipe/java/com/google/mediapipe/framework/jni/graph.h"
 
+#include <jni.h>
 #include <pthread.h>
 
+#include <cstdint>
+#include <functional>
+#include <map>
+#include <memory>
+#include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/log/absl_log.h"
+#include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/port/canonical_errors.h"
+#include "mediapipe/framework/graph_service.h"
 #include "mediapipe/framework/port/logging.h"
-#include "mediapipe/framework/port/proto_ns.h"
-#include "mediapipe/framework/port/status.h"
+#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/port/threadpool.h"
 #include "mediapipe/framework/tool/executor_util.h"
 #include "mediapipe/framework/tool/name_util.h"
-#include "mediapipe/gpu/graph_support.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/class_registry.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/jni_util.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/packet_context_jni.h"
@@ -39,6 +46,9 @@
 #else
 #include "mediapipe/framework/port/file_helpers.h"
 #endif  // __ANDROID__
+#ifdef MEDIAPIPE_PROFILER_AVAILABLE
+#include "mediapipe/framework/profiler/graph_profiler.h"
+#endif  // MEDIAPIPE_PROFILER_AVAILABLE
 #if !MEDIAPIPE_DISABLE_GPU
 #include "mediapipe/gpu/egl_surface_holder.h"
 #include "mediapipe/gpu/gpu_shared_data_internal.h"
@@ -615,12 +625,14 @@ std::map<std::string, Packet> Graph::CreateCombinedSidePackets() {
   return combined_side_packets;
 }
 
+#ifdef MEDIAPIPE_PROFILER_AVAILABLE
 ProfilingContext* Graph::GetProfilingContext() {
   if (running_graph_) {
     return running_graph_->profiler();
   }
   return nullptr;
 }
+#endif  // MEDIAPIPE_PROFILER_AVAILABLE
 
 CalculatorGraphConfig* Graph::graph_config() {
   // Return the last specified graph config with the required graph_type.

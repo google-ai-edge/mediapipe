@@ -20,15 +20,17 @@
 #include <vector>
 
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "mediapipe/framework/port.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
-#include "mediapipe/framework/port/statusor.h"
+#include "mediapipe/gpu/gl_base.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
 #include "tensorflow/lite/delegates/gpu/api.h"
 #include "tensorflow/lite/delegates/gpu/common/model.h"
+#include "tensorflow/lite/delegates/gpu/common/shape.h"
 #include "tensorflow/lite/delegates/gpu/gl/api2.h"
 #include "tensorflow/lite/model.h"
+#include "tensorflow/lite/model_builder.h"
 
 #if defined(__ANDROID__) || defined(MEDIAPIPE_CHROMIUMOS)
 #include "tensorflow/lite/delegates/gpu/cl/api.h"
@@ -88,31 +90,24 @@ class TFLiteGPURunner {
     return output_shape_from_model_;
   }
 
-#if defined(__ANDROID__) || defined(MEDIAPIPE_CHROMIUMOS)
-  void SetSerializedBinaryCache(std::vector<uint8_t>&& cache) {
-    serialized_binary_cache_ = std::move(cache);
-  }
+  // Must be invoked after `Build` invocation.
+  bool CanGenerateSerializedBinaryCache() { return is_cl_used_; }
+  absl::StatusOr<std::vector<uint8_t>> GetSerializedBinaryCache();
+  // Must be invoked before `Build` invocation.
+  void SetSerializedBinaryCache(std::vector<uint8_t>&& cache);
 
-  absl::StatusOr<std::vector<uint8_t>> GetSerializedBinaryCache() {
-    RET_CHECK(cl_environment_) << "CL environment is not initialized.";
-    return cl_environment_->GetSerializedBinaryCache();
-  }
-
-  void SetSerializedModel(std::vector<uint8_t>&& serialized_model) {
-    serialized_model_ = std::move(serialized_model);
-    serialized_model_used_ = false;
-  }
-
+  // Must be invoked after `Build` invocation.
+  bool CanGenerateSerializedModel() { return is_cl_used_; }
   absl::StatusOr<std::vector<uint8_t>> GetSerializedModel();
-#endif  // defined(__ANDROID__) || defined(MEDIAPIPE_CHROMIUMOS)
+  // Must be invoked before `Build` invocation.
+  void SetSerializedModel(std::vector<uint8_t>&& serialized_model);
 
  private:
   absl::Status InitializeOpenGL(std::unique_ptr<InferenceBuilder>* builder);
   absl::Status InitializeOpenCL(std::unique_ptr<InferenceBuilder>* builder);
-#if defined(__ANDROID__) || defined(MEDIAPIPE_CHROMIUMOS)
+
   absl::Status InitializeOpenCLFromSerializedModel(
       std::unique_ptr<InferenceBuilder>* builder);
-#endif  // defined(__ANDROID__) || defined(MEDIAPIPE_CHROMIUMOS)
 
   InferenceOptions options_;
   std::unique_ptr<gl::InferenceEnvironment> gl_environment_;
@@ -130,6 +125,7 @@ class TFLiteGPURunner {
   std::unique_ptr<GraphFloat32> graph_gl_;
   std::unique_ptr<GraphFloat32> graph_cl_;
   std::unique_ptr<InferenceRunner> runner_;
+  bool is_cl_used_ = false;
 
   // We keep information about input/output shapes, because they are needed
   // after graph_ becomes "converted" into runner_.

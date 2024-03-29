@@ -19,6 +19,7 @@ mediapipe_ts_library(
         "//mediapipe/tasks/cc/core/proto:base_options_jspb_proto",
         "//mediapipe/tasks/cc/genai/inference/calculators:detokenizer_calculator_jspb_proto",
         "//mediapipe/tasks/cc/genai/inference/calculators:llm_gpu_calculator_jspb_proto",
+        "//mediapipe/tasks/cc/genai/inference/calculators:model_data_calculator_jspb_proto",
         "//mediapipe/tasks/cc/genai/inference/calculators:tokenizer_calculator_jspb_proto",
         "//mediapipe/tasks/cc/genai/inference/proto:llm_params_jspb_proto",
         "//mediapipe/tasks/cc/genai/inference/proto:sampler_params_jspb_proto",
@@ -26,8 +27,8 @@ mediapipe_ts_library(
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/core:task_runner",
         "//mediapipe/tasks/web/genai/llm_inference/proto:llm_inference_graph_options_jspb_proto",
+        "//mediapipe/web/graph_runner:graph_runner_streaming_reader_ts",
         "//mediapipe/web/graph_runner:graph_runner_ts",
-        "//mediapipe/web/graph_runner:graph_runner_wasm_file_reference_ts",
         "//mediapipe/web/graph_runner:graph_runner_webgpu_ts",
     ],
 )

@@ -39,6 +39,7 @@ class HParams(hp.BaseHParams):
       and create the training optimizer.
     warmup_steps: Number of warmup steps for a linear increasing warmup schedule
       on learning rate. Used to set up warmup schedule by model_util.WarmUp.
+    checkpoint_frequency: Frequency to save checkpoint.
   """
   # Parameters from BaseHParams class.
   learning_rate: float = 0.001
@@ -53,3 +54,4 @@ class HParams(hp.BaseHParams):
   # TODO: Use lr_decay in hp.baseHParams to infer decay_samples.
   decay_samples: int = 10000 * 256
   warmup_epochs: int = 2
+  checkpoint_frequency: int = 1

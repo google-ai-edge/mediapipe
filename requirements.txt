@@ -5,7 +5,6 @@ jax
 jaxlib
 matplotlib
 numpy
-torch
 opencv-contrib-python
 protobuf>=3.11,<4
 sounddevice>=0.4.4

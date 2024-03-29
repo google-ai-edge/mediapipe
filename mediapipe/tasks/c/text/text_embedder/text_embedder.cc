@@ -95,12 +95,12 @@ int CppTextEmbedderClose(void* embedder, char** error_msg) {
   return 0;
 }
 
-int CppTextEmbedderCosineSimilarity(const Embedding& u, const Embedding& v,
+int CppTextEmbedderCosineSimilarity(const Embedding* u, const Embedding* v,
                                     double* similarity, char** error_msg) {
   CppEmbedding cpp_u;
-  CppConvertToCppEmbedding(u, &cpp_u);
+  CppConvertToCppEmbedding(*u, &cpp_u);
   CppEmbedding cpp_v;
-  CppConvertToCppEmbedding(v, &cpp_v);
+  CppConvertToCppEmbedding(*v, &cpp_v);
   auto status_or_similarity =
       mediapipe::tasks::text::text_embedder::TextEmbedder::CosineSimilarity(
           cpp_u, cpp_v);
@@ -138,7 +138,7 @@ int text_embedder_close(void* embedder, char** error_ms) {
       embedder, error_ms);
 }
 
-int text_embedder_cosine_similarity(const Embedding& u, const Embedding& v,
+int text_embedder_cosine_similarity(const Embedding* u, const Embedding* v,
                                     double* similarity, char** error_msg) {
   return mediapipe::tasks::c::text::text_embedder::
       CppTextEmbedderCosineSimilarity(u, v, similarity, error_msg);

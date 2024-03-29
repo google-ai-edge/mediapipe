@@ -269,7 +269,7 @@ class BertClassifierPreprocessor:
     """Returns the vocab file of the BertClassifierPreprocessor."""
     return self._vocab_file
 
-  def _get_tfrecord_cache_files(
+  def get_tfrecord_cache_files(
       self, ds_cache_files
   ) -> cache_files_lib.TFRecordCacheFiles:
     """Helper to regenerate cache prefix filename using preprocessor info.
@@ -320,7 +320,7 @@ class BertClassifierPreprocessor:
     """
     ds_cache_files = dataset.tfrecord_cache_files
     # Get new tfrecord_cache_files by including preprocessor information.
-    tfrecord_cache_files = self._get_tfrecord_cache_files(ds_cache_files)
+    tfrecord_cache_files = self.get_tfrecord_cache_files(ds_cache_files)
     if not tfrecord_cache_files.is_cached():
       print(f"Writing new cache files to {tfrecord_cache_files.cache_prefix}")
       writers = tfrecord_cache_files.get_writers()

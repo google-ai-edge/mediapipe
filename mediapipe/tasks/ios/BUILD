@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@build_bazel_rules_apple//apple:apple.bzl", "apple_static_xcframework")
+load("@build_bazel_rules_apple//apple:apple_static_library.bzl", "apple_static_library")
 load(
     "//mediapipe/framework/tool:ios.bzl",
     "MPP_TASK_MINIMUM_OS_VERSION",
     "strip_api_include_path_prefix",
 )
-load("@build_bazel_rules_apple//apple:apple.bzl", "apple_static_xcframework")
-load("@build_bazel_rules_apple//apple:apple_static_library.bzl", "apple_static_library")
 
 package(default_visibility = ["//visibility:public"])
 

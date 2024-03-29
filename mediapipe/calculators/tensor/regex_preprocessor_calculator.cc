@@ -25,6 +25,8 @@
 #include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/tensor.h"
+#include "mediapipe/framework/memory_manager.h"
+#include "mediapipe/framework/memory_manager_service.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/tasks/cc/metadata/metadata_extractor.h"
 #include "mediapipe/tasks/cc/text/tokenizers/regex_tokenizer.h"
@@ -86,6 +88,8 @@ class RegexPreprocessorCalculator : public Node {
   std::unique_ptr<tasks::text::tokenizers::RegexTokenizer> tokenizer_;
   // The max sequence length accepted by the text model.
   int max_seq_len_ = 0;
+  // Enable pooling of AHWBs in Tensor instances.
+  MemoryManager* memory_manager_ = nullptr;
 };
 
 absl::Status RegexPreprocessorCalculator::UpdateContract(
@@ -94,10 +98,14 @@ absl::Status RegexPreprocessorCalculator::UpdateContract(
       cc->Options<mediapipe::RegexPreprocessorCalculatorOptions>();
   RET_CHECK(options.has_max_seq_len()) << "max_seq_len is required";
   RET_CHECK_GT(options.max_seq_len(), 0) << "max_seq_len must be positive";
+  cc->UseService(kMemoryManagerService).Optional();
   return absl::OkStatus();
 }
 
 absl::Status RegexPreprocessorCalculator::Open(CalculatorContext* cc) {
+  if (cc->Service(kMemoryManagerService).IsAvailable()) {
+    memory_manager_ = &cc->Service(kMemoryManagerService).GetObject();
+  }
   const ModelMetadataExtractor* metadata_extractor =
       &kMetadataExtractorSideIn(cc).Get();
   const tflite::TensorMetadata* tensor_metadata =
@@ -159,8 +167,8 @@ absl::Status RegexPreprocessorCalculator::Process(CalculatorContext* cc) {
   // <START> is optional, t1, t2... will be replaced by <UNKNOWN> if it's
   // not found in the tokenizer vocab.
   std::vector<Tensor> result;
-  result.push_back(
-      {Tensor::ElementType::kInt32, Tensor::Shape({1, max_seq_len_})});
+  result.push_back({Tensor::ElementType::kInt32,
+                    Tensor::Shape({1, max_seq_len_}), memory_manager_});
   std::memcpy(result[0].GetCpuWriteView().buffer<int32_t>(),
               input_tokens.data(), input_tokens.size() * sizeof(int32_t));
   kTensorsOut(cc).Send(std::move(result));

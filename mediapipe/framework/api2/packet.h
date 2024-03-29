@@ -12,6 +12,7 @@
 
 #include <functional>
 #include <type_traits>
+#include <utility>
 
 #include "absl/log/absl_check.h"
 #include "absl/meta/type_traits.h"
@@ -222,7 +223,7 @@ class Packet : public Packet<internal::Generic> {
 
   template <typename U, typename TT = T>
   std::enable_if_t<!std::is_abstract_v<TT>, TT> GetOr(U&& v) const {
-    return IsEmpty() ? static_cast<T>(absl::forward<U>(v)) : **this;
+    return IsEmpty() ? static_cast<T>(std::forward<U>(v)) : **this;
   }
 
   // Note: Consume is included for compatibility with the old Packet; however,

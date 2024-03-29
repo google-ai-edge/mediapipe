@@ -24,6 +24,7 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 #include "flatbuffers/buffer.h"
 #include "flatbuffers/vector.h"
@@ -113,7 +114,10 @@ absl::StatusOr<std::shared_ptr<Tensor>> TfLiteWeightAccessor::LoadWeight(
       correct_dimension &= (qtensor->dims[i] == expected_dims[i]);
     }
     if (!correct_dimension) {
-      return absl::InvalidArgumentError("Dimension mismatch");
+      return absl::InvalidArgumentError(absl::StrCat(
+          "Dimension mismatch at ", tensor_name, " with expected dimensions [",
+          absl::StrJoin(expected_dims, ", "), "] actual dimensions [",
+          absl::StrJoin(qtensor->dims, ", "), "]"));
     }
   }
   if (qtensor->datatype == xnn_datatype_fp32) {

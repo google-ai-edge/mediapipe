@@ -14,8 +14,8 @@
 #
 
 load("@bazel_skylib//lib:selects.bzl", "selects")
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 load("//mediapipe/framework:mediapipe_register_type.bzl", "mediapipe_register_type")
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 
 package(
     default_visibility = ["//visibility:public"],
@@ -523,6 +523,7 @@ cc_library(
     deps = [
         "//mediapipe/framework:memory_manager",
         "//mediapipe/framework:port",
+        "//mediapipe/framework/deps:no_destructor",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",

@@ -146,7 +146,7 @@ class PreprocessorTest(tf.test.TestCase, parameterized.TestCase):
         tokenizer=tokenizer,
     )
     ds_cache_files = dataset.tfrecord_cache_files
-    preprocessed_cache_files = bert_preprocessor._get_tfrecord_cache_files(
+    preprocessed_cache_files = bert_preprocessor.get_tfrecord_cache_files(
         ds_cache_files
     )
     self.assertFalse(preprocessed_cache_files.is_cached())
@@ -174,7 +174,7 @@ class PreprocessorTest(tf.test.TestCase, parameterized.TestCase):
         model_name=bert_spec.name,
         tokenizer=tokenizer,
     )
-    new_cf = bert_preprocessor._get_tfrecord_cache_files(cf)
+    new_cf = bert_preprocessor.get_tfrecord_cache_files(cf)
     return new_cf.cache_prefix_filename
 
   def test_bert_get_tfrecord_cache_files(self):

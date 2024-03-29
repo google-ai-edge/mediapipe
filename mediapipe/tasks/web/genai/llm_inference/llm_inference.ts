@@ -21,7 +21,7 @@ import {CachedGraphRunner, TaskRunner,} from '../../../../tasks/web/core/task_ru
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {LlmInferenceGraphOptions} from '../../../../tasks/web/genai/llm_inference/proto/llm_inference_graph_options_pb';
 import {WasmModule} from '../../../../web/graph_runner/graph_runner';
-import {SupportWasmFileReference, WasmFileReference} from '../../../../web/graph_runner/graph_runner_wasm_file_reference';
+import {SupportStreamingReader, StreamingReader} from '../../../../web/graph_runner/graph_runner_streaming_reader';
 import {SupportWebGpu} from '../../../../web/graph_runner/graph_runner_webgpu';
 import {DetokenizerCalculatorOptions} from '../../../../tasks/cc/genai/inference/calculators/detokenizer_calculator_pb';
 import {LlmGpuCalculatorOptions} from '../../../../tasks/cc/genai/inference/calculators/llm_gpu_calculator_pb';
@@ -40,10 +40,10 @@ export * from './llm_inference_options';
 
 // TODO: b/327515383 - Use ReturnType patter to apply extensions to LLM Web API.
 // tslint:disable-next-line:enforce-name-casing
-const WasmFileReferenceWebGpuGraphRunnerType =
-    SupportWebGpu(SupportWasmFileReference(CachedGraphRunner));
-class WasmFileReferenceWebGpuGraphRunner extends
-    WasmFileReferenceWebGpuGraphRunnerType {}
+const StreamingReaderWebGpuGraphRunnerType =
+    SupportWebGpu(SupportStreamingReader(CachedGraphRunner));
+class StreamingReaderWebGpuGraphRunner extends
+    StreamingReaderWebGpuGraphRunnerType {}
 
 /**
  * A listener that receives the newly generated partial result and an indication
@@ -55,6 +55,9 @@ export type ProgressListener = (partialResult: string, done: boolean) =>
 const INPUT_STREAM = 'text_in';
 const OUTPUT_STREAM = 'text_out';
 const OUTPUT_END_STREAM = 'text_end';
+
+const TOKEN_COST_INPUT_STREAM = 'token_cost_in';
+const TOKEN_COST_OUTPUT_STREAM = 'token_cost_out';
 
 const DEFAULT_MAX_TOKENS = 512;
 const DEFAULT_TOP_K = 1;
@@ -76,9 +79,10 @@ export class LlmInference extends TaskRunner {
   private readonly options: LlmInferenceGraphOptions;
   private readonly samplerParams: SamplerParameters;
   private isProcessing = false;
+  private latestTokenCostQueryResult?: number;
   private resolveGeneration?: (result: string) => void;
   private userProgressListener?: ProgressListener;
-  private wasmFileReference?: WasmFileReference;
+  private streamingReader?: StreamingReader;
 
   /**
    * Initializes the Wasm runtime and creates a new `LlmInference` based
@@ -152,7 +156,7 @@ export class LlmInference extends TaskRunner {
   constructor(
       wasmModule: WasmModule,
       glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
-    super(new WasmFileReferenceWebGpuGraphRunner(wasmModule, glCanvas));
+    super(new StreamingReaderWebGpuGraphRunner(wasmModule, glCanvas));
     this.options = new LlmInferenceGraphOptions();
     this.options.setBaseOptions(new BaseOptionsProto());
     this.samplerParams = new SamplerParameters();
@@ -174,7 +178,7 @@ export class LlmInference extends TaskRunner {
         'maxBufferSize': 524550144,
       },
     };
-    return WasmFileReferenceWebGpuGraphRunner.requestWebGpuDevice(
+    return StreamingReaderWebGpuGraphRunner.requestWebGpuDevice(
         deviceDescriptor, adapterDescriptor);
   }
 
@@ -192,7 +196,7 @@ export class LlmInference extends TaskRunner {
     // TODO: b/324482487 - Support customizing config for Web task of LLM
     // Inference.
     if (options.baseOptions?.gpuOptions?.device) {
-      (this.graphRunner as unknown as WasmFileReferenceWebGpuGraphRunner)
+      (this.graphRunner as unknown as StreamingReaderWebGpuGraphRunner)
           .initializeForWebGpu(options.baseOptions.gpuOptions.device);
     }
     if ('maxTokens' in options) {
@@ -224,23 +228,14 @@ export class LlmInference extends TaskRunner {
         throw new Error(
             'Cannot set both baseOptions.modelAssetPath and baseOptions.modelAssetBuffer');
       }
-      if (this.wasmFileReference) {
-        this.wasmFileReference.free();
-      }
       if (options.baseOptions.modelAssetPath) {
-        return WasmFileReference
-            .loadFromUrl(
-                this.graphRunner.wasmModule, options.baseOptions.modelAssetPath)
-            .then((wasmFileReference: WasmFileReference) => {
-              this.wasmFileReference = wasmFileReference;
-              this.refreshGraph();
-              this.onGraphRefreshed();
-            });
+        this.streamingReader = StreamingReader.loadFromUrl(
+            options.baseOptions.modelAssetPath);
       } else if (options.baseOptions.modelAssetBuffer) {
-        this.wasmFileReference = WasmFileReference.loadFromArray(
-            this.graphRunner.wasmModule, options.baseOptions.modelAssetBuffer);
+        this.streamingReader = StreamingReader.loadFromArray(
+            options.baseOptions.modelAssetBuffer);
         // Remove the reference on the asset buffer since it is now owned by
-        // `wasmFileReference`.
+        // `streamingReader`.
         options.baseOptions.modelAssetBuffer = undefined;
       }
     }
@@ -297,6 +292,32 @@ export class LlmInference extends TaskRunner {
     return new Promise<string>((resolve, reject) => {
       this.resolveGeneration = resolve;
     });
+  }
+
+  /**
+   * Runs an invocation of *only* the tokenization for the LLM, and returns
+   * the size (in tokens) of the result. Cannot be called while
+   * a `generateResponse()` query is active. Runs synchronously.
+   *
+   * @export
+   * @param text The text to tokenize.
+   * @return The number of tokens in the resulting tokenization of the text.
+   *         May return undefined if an error occurred.
+   */
+  sizeInTokens(text: string): number | undefined {
+    if (this.isProcessing) {
+      throw new Error('Previous invocation is still processing.');
+    }
+    this.isProcessing = true;
+    this.latestTokenCostQueryResult = undefined;
+    this.graphRunner.addStringToStream(
+      text,
+      TOKEN_COST_INPUT_STREAM,
+      this.getSynctheticTimestamp(),
+    );
+    this.finishProcessing();
+    this.isProcessing = false;
+    return this.latestTokenCostQueryResult;
   }
 
   /**
@@ -366,14 +387,21 @@ export class LlmInference extends TaskRunner {
           this.setLatestOutputTimestamp(timestamp);
         });
     this.graphRunner.attachEmptyPacketListener(OUTPUT_END_STREAM, timestamp => {
+      this.isProcessing = false;
       this.setLatestOutputTimestamp(timestamp);
     });
 
-    if (this.wasmFileReference) {
-      (this.graphRunner as unknown as WasmFileReferenceWebGpuGraphRunner)
-          .addWasmFileReferenceToInputSidePacket(
-              this.wasmFileReference,
-              'model_file_reference',
+    this.graphRunner.attachIntListener(TOKEN_COST_OUTPUT_STREAM,
+        (cost, timestamp) => {
+      this.latestTokenCostQueryResult = cost;
+      this.setLatestOutputTimestamp(timestamp);
+    });
+
+    if (this.streamingReader) {
+      (this.graphRunner as unknown as StreamingReaderWebGpuGraphRunner)
+          .addStreamingReaderToInputSidePacket(
+              this.streamingReader,
+              'streaming_reader',
           );
     }
 
@@ -382,17 +410,16 @@ export class LlmInference extends TaskRunner {
 
     // Wait for initialization to finish and free the model file data.
     this.finishProcessing();
-    if (this.wasmFileReference) {
-      this.wasmFileReference.free();
-    }
   }
 
   private buildLlmInferenceGraph(): CalculatorGraphConfig {
     const graphConfig = new CalculatorGraphConfig();
     graphConfig.addInputStream(INPUT_STREAM);
-    graphConfig.addInputSidePacket('model_file_reference');
+    graphConfig.addInputStream(TOKEN_COST_INPUT_STREAM);
+    graphConfig.addInputSidePacket('streaming_reader');
     graphConfig.addOutputStream(OUTPUT_STREAM);
     graphConfig.addOutputStream(OUTPUT_END_STREAM);
+    graphConfig.addOutputStream(TOKEN_COST_OUTPUT_STREAM);
 
     // TokenizerInputBuilder Node
     const tokenizerInputBuildNode = new CalculatorGraphConfig.Node();
@@ -401,16 +428,16 @@ export class LlmInference extends TaskRunner {
     tokenizerInputBuildNode.addOutputStream('prompt');
     graphConfig.addNode(tokenizerInputBuildNode);
 
-    // TFLite model Node
-    const tfliteModelNode = new CalculatorGraphConfig.Node();
-    tfliteModelNode.setCalculator('TfLiteModelCalculator');
-    tfliteModelNode.addInputSidePacket(
-        'MODEL_SPAN:' +
-        'model_file_reference');
-    tfliteModelNode.addOutputSidePacket(
-        'SHARED_MODEL:' +
-        '__side_packet_0');
-    graphConfig.addNode(tfliteModelNode);
+    // Model data Node
+    const modelDataNode = new CalculatorGraphConfig.Node();
+    modelDataNode.setCalculator('ModelDataCalculator');
+    modelDataNode.addOutputSidePacket(
+        'MODEL_DATA:' +
+        '__side_packet_1');
+    modelDataNode.addInputSidePacket(
+        'READ_DATA_FN:' +
+        'streaming_reader');
+    graphConfig.addNode(modelDataNode);
 
     // Tokenizer Node
     const tokenizerOptionsProto = new Any();
@@ -430,8 +457,8 @@ export class LlmInference extends TaskRunner {
     tokenizerNode.setCalculator('TokenizerCalculator');
     tokenizerNode.addNodeOptions(tokenizerOptionsProto);
     tokenizerNode.addInputSidePacket(
-        'TFLITE_MODEL:' +
-        '__side_packet_0');
+        'MODEL_DATA:' +
+        '__side_packet_1');
     tokenizerNode.addInputStream(
         'PROMPT:' +
         'prompt');
@@ -485,8 +512,8 @@ export class LlmInference extends TaskRunner {
         'FINISH:' +
         'finish');
     llmGpuNode.addInputSidePacket(
-        'SHARED_MODEL:' +
-        '__side_packet_0');
+        'MODEL_DATA:' +
+        '__side_packet_1');
     llmGpuNode.addOutputStream(
         'DECODED_IDS:' +
         '__stream_3');
@@ -527,16 +554,25 @@ export class LlmInference extends TaskRunner {
     detokenizerNode.addInputSidePacket(
         'BYTES_TO_UNICODE_MAPPING:' +
         '__input_side_2');
+    detokenizerNode.addInputSidePacket(
+        'MODEL_DATA:' +
+        '__side_packet_1');
     detokenizerNode.addOutputStream('FINISH:finish');
     detokenizerNode.addOutputStream('WORDS:' + OUTPUT_STREAM);
     graphConfig.addNode(detokenizerNode);
+
+    // TokenCost Node
+    const tokenCostNode = new CalculatorGraphConfig.Node();
+    tokenCostNode.setCalculator('TokenCostCalculator');
+    tokenCostNode.addInputStream('PROMPT:' + TOKEN_COST_INPUT_STREAM);
+    tokenCostNode.addInputSidePacket('PROCESSOR:__input_side_1');
+    tokenCostNode.addInputSidePacket('BYTES_TO_UNICODE_MAPPING:__input_side_2');
+    tokenCostNode.addOutputStream('NUM_TOKENS:' + TOKEN_COST_OUTPUT_STREAM);
+    graphConfig.addNode(tokenCostNode);
     return graphConfig;
   }
 
   override close() {
-    if (this.wasmFileReference) {
-      this.wasmFileReference.free();
-    }
     super.close();
   }
 }

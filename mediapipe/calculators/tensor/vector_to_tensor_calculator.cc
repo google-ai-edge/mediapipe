@@ -27,6 +27,8 @@ limitations under the License.
 #include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/tensor.h"
+#include "mediapipe/framework/memory_manager.h"
+#include "mediapipe/framework/memory_manager_service.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
 
@@ -59,17 +61,25 @@ class VectorToTensorCalculator : public Node {
   absl::Status Open(CalculatorContext* cc) override;
   absl::Status Process(CalculatorContext* cc) override;
 
+  static absl::Status UpdateContract(CalculatorContract* cc);
+
  private:
-  static absl::StatusOr<Tensor> ConvertVectorToTensor(
+  absl::StatusOr<Tensor> ConvertVectorToTensor(
       const api2::Packet<SupportedInputVectors>& input,
       bool output_dynamic_tensor_shape);
 
   template <typename VectorT, Tensor::ElementType TensorT>
-  static absl::StatusOr<Tensor> CopyVectorToNewTensor(
+  absl::StatusOr<Tensor> CopyVectorToNewTensor(
       const std::vector<VectorT>& input, bool output_dynamic_tensor_shape);
+
+  // Enable pooling of AHWBs in Tensor instances.
+  MemoryManager* memory_manager_ = nullptr;
 };
 
 absl::Status VectorToTensorCalculator::Open(CalculatorContext* cc) {
+  if (cc->Service(kMemoryManagerService).IsAvailable()) {
+    memory_manager_ = &cc->Service(kMemoryManagerService).GetObject();
+  }
   return absl::OkStatus();
 }
 
@@ -78,8 +88,8 @@ absl::StatusOr<Tensor> VectorToTensorCalculator::CopyVectorToNewTensor(
     const std::vector<VectorT>& input, bool output_dynamic_tensor_shape) {
   RET_CHECK_GT(input.size(), 0) << "Input vector is empty";
   std::vector<int> dimensions = {1, static_cast<int>(input.size())};
-  Tensor tensor(TensorT,
-                Tensor::Shape(dimensions, output_dynamic_tensor_shape));
+  Tensor tensor(TensorT, Tensor::Shape(dimensions, output_dynamic_tensor_shape),
+                memory_manager_);
   const auto cpu_write_view = tensor.GetCpuWriteView();
   std::copy(input.begin(), input.end(), cpu_write_view.buffer<VectorT>());
   return tensor;
@@ -122,6 +132,11 @@ absl::Status VectorToTensorCalculator::Process(CalculatorContext* cc) {
       Tensor tensor, ConvertVectorToTensor(
                          kVectorIn(cc), options.output_dynamic_tensor_shape()));
   kOutTensor(cc).Send(std::move(tensor));
+  return absl::OkStatus();
+}
+
+absl::Status VectorToTensorCalculator::UpdateContract(CalculatorContract* cc) {
+  cc->UseService(kMemoryManagerService).Optional();
   return absl::OkStatus();
 }
 

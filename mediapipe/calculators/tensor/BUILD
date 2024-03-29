@@ -13,16 +13,16 @@
 # limitations under the License.
 #
 
-load(
-    "//mediapipe/framework/tool:mediapipe_graph.bzl",
-    "mediapipe_binary_graph",
-)
 load("@bazel_skylib//lib:selects.bzl", "selects")
+load("@org_tensorflow//tensorflow/lite/core/shims:cc_library_with_tflite.bzl", "cc_library_with_tflite")
 load("//mediapipe/framework:encode_binary_proto.bzl", "encode_binary_proto")
 load("//mediapipe/framework:mediapipe_cc_test.bzl", "mediapipe_cc_test")
 load("//mediapipe/framework:more_selects.bzl", "more_selects")
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
-load("@org_tensorflow//tensorflow/lite/core/shims:cc_library_with_tflite.bzl", "cc_library_with_tflite")
+load(
+    "//mediapipe/framework/tool:mediapipe_graph.bzl",
+    "mediapipe_binary_graph",
+)
 
 licenses(["notice"])
 
@@ -87,6 +87,8 @@ cc_library(
     deps = [
         ":audio_to_tensor_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:memory_manager",
+        "//mediapipe/framework:memory_manager_service",
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/api2:packet",
         "//mediapipe/framework/api2:port",
@@ -188,9 +190,11 @@ cc_library(
     deps = [
         ":feedback_tensors_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:memory_manager",
+        "//mediapipe/framework:memory_manager_service",
+        "//mediapipe/framework/api2:contract",
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/formats:tensor",
-        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/status",
     ],
     alwayslink = 1,
@@ -228,6 +232,8 @@ cc_library(
     deps = [
         ":bert_preprocessor_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:memory_manager",
+        "//mediapipe/framework:memory_manager_service",
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/api2:port",
         "//mediapipe/framework/formats:tensor",
@@ -281,6 +287,8 @@ cc_library(
     deps = [
         ":regex_preprocessor_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:memory_manager",
+        "//mediapipe/framework:memory_manager_service",
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/api2:port",
         "//mediapipe/framework/formats:tensor",
@@ -321,6 +329,8 @@ cc_library(
     deps = [
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:memory_manager",
+        "//mediapipe/framework:memory_manager_service",
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/api2:port",
         "//mediapipe/framework/formats:tensor",
@@ -354,6 +364,8 @@ cc_library(
     deps = [
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:memory_manager",
+        "//mediapipe/framework:memory_manager_service",
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/api2:port",
         "//mediapipe/framework/formats:tensor",
@@ -416,6 +428,8 @@ cc_library_with_tflite(
     deps = [
         ":inference_calculator_cc_proto",
         ":inference_calculator_options_lib",
+        ":inference_runner",
+        ":tensor_span",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/api2:packet",
@@ -455,6 +469,7 @@ cc_library(
     deps = [
         ":inference_calculator_cc_proto",
         ":inference_calculator_interface",
+        ":tensor_span",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/api2:packet",
@@ -483,26 +498,26 @@ cc_library(
     tags = ["nomac"],
     deps = [
         ":inference_calculator_interface",
+        ":tensor_span",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:packet",
         "//mediapipe/framework/deps:file_path",
         "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "//mediapipe/gpu:gl_calculator_helper",
         "//mediapipe/gpu:gl_context",
         "//mediapipe/util/tflite:tflite_gpu_runner",
+        "//mediapipe/util/tflite:tflite_model_loader",
         "@com_google_absl//absl/log:absl_log",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_absl//absl/time",
         "@org_tensorflow//tensorflow/lite:framework_stable",
-    ] + select({
-        "//conditions:default": [],
-        "//mediapipe:android": [
-            "//mediapipe/util/android/file/base",
-        ],
-    }),
+    ],
     alwayslink = 1,
 )
 
@@ -516,6 +531,7 @@ cc_library(
     tags = ["ios"],
     deps = [
         "inference_calculator_interface",
+        ":tensor_span",
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/gpu:MPPMetalHelper",
         "//mediapipe/gpu:MPPMetalUtil",
@@ -1028,6 +1044,8 @@ cc_library(
     deps = [
         ":landmarks_to_tensor_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:memory_manager",
+        "//mediapipe/framework:memory_manager_service",
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/formats:tensor",
@@ -1838,6 +1856,8 @@ cc_library(
     deps = [
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:memory_manager",
+        "//mediapipe/framework:memory_manager_service",
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/api2:port",
         "//mediapipe/framework/formats:tensor",
@@ -1885,6 +1905,8 @@ cc_library(
     deps = [
         ":vector_to_tensor_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:memory_manager",
+        "//mediapipe/framework:memory_manager_service",
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/api2:packet",
         "//mediapipe/framework/api2:port",

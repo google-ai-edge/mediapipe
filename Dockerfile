@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 MAINTAINER <mediapipe@google.com>
 
@@ -23,7 +23,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential \
-        gcc-8 g++-8 \
+        gcc g++ \
         ca-certificates \
         curl \
         ffmpeg \
@@ -42,7 +42,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libopencv-calib3d-dev \
         libopencv-features2d-dev \
         software-properties-common && \
-    add-apt-repository -y ppa:openjdk-r/ppa && \
     apt-get update && apt-get install -y openjdk-8-jdk && \
     apt-get install -y mesa-common-dev libegl1-mesa-dev libgles2-mesa-dev && \
     apt-get install -y mesa-utils && \
@@ -57,7 +56,6 @@ RUN ln -sf /usr/bin/clang-16 /usr/bin/clang
 RUN ln -sf /usr/bin/clang++-16 /usr/bin/clang++
 RUN ln -sf /usr/bin/clang-format-16 /usr/bin/clang-format
 
-RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 100 --slave /usr/bin/g++ g++ /usr/bin/g++-8
 RUN pip3 install --upgrade setuptools
 RUN pip3 install wheel
 RUN pip3 install future

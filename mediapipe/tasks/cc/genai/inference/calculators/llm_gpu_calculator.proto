@@ -59,5 +59,7 @@ message LlmGpuCalculatorOptions {
 
   reserved 23 to 27;
 
+  reserved 30;
+
   proto.SamplerParameters sampler_params = 31;
 }

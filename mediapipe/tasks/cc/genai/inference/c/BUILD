@@ -18,6 +18,11 @@ package(default_visibility = [
 ])
 
 cc_library(
+    name = "llm_inference_engine_hdr",
+    hdrs = ["llm_inference_engine.h"],
+)
+
+cc_library(
     name = "libllm_inference_engine_cpu",
     srcs = ["llm_inference_engine_cpu.cc"],
     hdrs = ["llm_inference_engine.h"],
@@ -30,6 +35,8 @@ cc_library(
         "//mediapipe/tasks/cc/genai/inference/proto:transformer_params_cc_proto",
         "//mediapipe/tasks/cc/genai/inference/utils/llm_utils:memory_mapped_file",
         "//mediapipe/tasks/cc/genai/inference/utils/llm_utils:metadata_utils",
+        "//mediapipe/tasks/cc/genai/inference/utils/llm_utils:model_data",
+        "//mediapipe/tasks/cc/genai/inference/utils/llm_utils:scoped_file",
         "//mediapipe/tasks/cc/genai/inference/utils/xnn_utils:graph_builder",
         "//mediapipe/tasks/cc/genai/inference/utils/xnn_utils:llm",
         "//mediapipe/tasks/cc/genai/inference/utils/xnn_utils:llm_builder_factory",
@@ -40,5 +47,20 @@ cc_library(
         "@com_google_absl//absl/strings:string_view",
         "@com_google_sentencepiece//:sentencepiece_processor",
         "@org_tensorflow//tensorflow/lite:framework_stable",
+    ],
+)
+
+cc_binary(
+    name = "llm_inference_engine_cpu_main",
+    srcs = ["llm_inference_engine_cpu_main.cc"],
+    deps = [
+        ":libllm_inference_engine_cpu",
+        "//mediapipe/framework/deps:file_path",
+        "//third_party:glog",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/flags:parse",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )

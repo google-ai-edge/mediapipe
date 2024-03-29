@@ -2,6 +2,7 @@ package com.google.mediapipe.tasks.genai.llminference;
 
 import android.content.Context;
 import com.google.auto.value.AutoValue;
+import com.google.mediapipe.framework.MediaPipeException;
 import com.google.mediapipe.tasks.core.ErrorListener;
 import com.google.mediapipe.tasks.core.LlmTaskRunner;
 import com.google.mediapipe.tasks.core.OutputHandler.ProgressListener;
@@ -83,24 +84,55 @@ public class LlmInference implements AutoCloseable {
    * Generates a response based on the input text.
    *
    * @param inputText a {@link String} for processing.
+   * @throws MediaPipeException if the inference fails.
    */
   public String generateResponse(String inputText) {
     validateState();
     isProcessing.set(true);
-    List<String> tokens = taskRunner.predictSync(inputText);
-    isProcessing.set(false);
-    return decodeResponse(tokens, /* stripLeadingWhitespace= */ true);
+    try {
+      List<String> tokens = taskRunner.predictSync(inputText);
+      return decodeResponse(tokens, /* stripLeadingWhitespace= */ true);
+    } finally {
+      isProcessing.set(false);
+    }
   }
 
   /**
    * Generates a response based on the input text.
    *
    * @param inputText a {@link String} for processing.
+   * @throws MediaPipeException if the inference fails.
    */
   public void generateResponseAsync(String inputText) {
     validateState();
     isProcessing.set(true);
-    taskRunner.predictAsync(inputText);
+    try {
+      taskRunner.predictAsync(inputText);
+    } catch (MediaPipeException e) {
+      // Only reset `isProcessing` if we fail to start the async task. For successful starts, we
+      // will reset `isProcessing` in the result listener.
+      isProcessing.set(false);
+      throw e;
+    }
+  }
+
+  /**
+   * Runs an invocation of <b>only</b> the tokenization for the LLM, and returns the size (in
+   * tokens) of the result. Cannot be called while a {@link #generateResponse(String)} query is
+   * active. generateResponse
+   *
+   * @param text The text to tokenize.
+   * @return The number of tokens in the resulting tokenization of the text.
+   * @throws MediaPipeException if the tokenization fails.
+   */
+  public int sizeInTokens(String text) {
+    validateState();
+    isProcessing.set(true);
+    try {
+      return taskRunner.sizeInTokens(text);
+    } finally {
+      isProcessing.set(false);
+    }
   }
 
   /** Decodes the response from the LLM engine and returns a human-readable string. */

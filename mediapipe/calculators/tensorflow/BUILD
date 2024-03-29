@@ -14,6 +14,7 @@
 #
 
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library", "mediapipe_proto_library")
+# Placeholder: load py_proto_library
 
 licenses(["notice"])
 
@@ -983,10 +984,10 @@ cc_test(
         "//mediapipe/framework/tool:validate_type",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest",
+        "@com_google_protobuf//:protobuf",
         "@org_tensorflow//tensorflow/core:direct_session",
         "@org_tensorflow//tensorflow/core:framework",
         "@org_tensorflow//tensorflow/core:protos_all_cc",
-        "@org_tensorflow//tensorflow/core:testlib",
         "@org_tensorflow//tensorflow/core/kernels:conv_ops",
         "@org_tensorflow//tensorflow/core/kernels:math",
     ],
@@ -1014,10 +1015,10 @@ cc_test(
         "//mediapipe/framework/tool:validate_type",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest",
+        "@com_google_protobuf//:protobuf",
         "@org_tensorflow//tensorflow/core:direct_session",
         "@org_tensorflow//tensorflow/core:framework",
         "@org_tensorflow//tensorflow/core:protos_all_cc",
-        "@org_tensorflow//tensorflow/core:testlib",
         "@org_tensorflow//tensorflow/core/kernels:conv_ops",
         "@org_tensorflow//tensorflow/core/kernels:math",
     ],
@@ -1043,6 +1044,7 @@ cc_test(
         "//mediapipe/framework/tool:validate_type",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest",
+        "@com_google_protobuf//:protobuf",
         "@org_tensorflow//tensorflow/core:all_kernels",
         "@org_tensorflow//tensorflow/core:direct_session",
         "@org_tensorflow//tensorflow/core:protos_all_cc",
@@ -1070,6 +1072,7 @@ cc_test(
         "//mediapipe/framework/tool:validate_type",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest",
+        "@com_google_protobuf//:protobuf",
         "@org_tensorflow//tensorflow/core:all_kernels",
         "@org_tensorflow//tensorflow/core:direct_session",
         "@org_tensorflow//tensorflow/core:protos_all_cc",

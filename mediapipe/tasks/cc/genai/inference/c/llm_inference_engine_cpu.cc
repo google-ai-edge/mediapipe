@@ -34,6 +34,8 @@
 #include "mediapipe/tasks/cc/genai/inference/proto/transformer_params.pb.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/memory_mapped_file.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/metadata_utils.h"
+#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/model_data.h"
+#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/scoped_file.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/graph_builder.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/llm.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/llm_builder_factory.h"
@@ -157,26 +159,24 @@ void* start_llm_function(void* args) {
 absl::StatusOr<LlmInferenceEngine_Session*>
 LlmInferenceEngine_CreateSession_Helper(
     const LlmSessionConfig* session_config) {
-  MP_ASSIGN_OR_RETURN(
-      std::shared_ptr<mediapipe::tasks::genai::llm_utils::MemoryMappedFile>
-          mmap_file,
-      mediapipe::tasks::genai::llm_utils::MemoryMappedFile::Create(
-          session_config->model_path));
+  MP_ASSIGN_OR_RETURN(auto model_file,
+                      mediapipe::tasks::genai::llm_utils::ScopedFile::Open(
+                          session_config->model_path));
+  MP_ASSIGN_OR_RETURN(auto model_data,
+                      mediapipe::tasks::genai::llm_utils::ModelData::Create(
+                          std::move(model_file)));
 
-  MP_ASSIGN_OR_RETURN(
-      auto llm_params_proto,
-      mediapipe::tasks::genai::llm_utils::GetLlmParams(mmap_file));
+  auto llm_params_proto = model_data->GetLlmParameters();
   auto llm_params =
       mediapipe::tasks::genai::xnn_utils::LlmParams::FromLLMParametersProto(
           llm_params_proto);
 
-  MP_ASSIGN_OR_RETURN(
-      auto model_type,
-      mediapipe::tasks::genai::llm_utils::GetLlmModelType(mmap_file));
+  auto model_type = model_data->GetModelType();
+  RET_CHECK(model_type) << "Failed to get model type.";
 
-  MP_ASSIGN_OR_RETURN(
-      auto backend,
-      mediapipe::tasks::genai::llm_utils::GetLlmBackend(mmap_file));
+  MP_ASSIGN_OR_RETURN(auto backend,
+                      model_data->ReadMetadata(
+                          mediapipe::tasks::genai::llm_utils::kLlmBackendName));
   RET_CHECK_EQ(backend, "cpu");
 
   // Create directory for tokenizer and model cache file.
@@ -187,14 +187,10 @@ LlmInferenceEngine_CreateSession_Helper(
     }
   }
 
-  auto tflite_model = tflite::FlatBufferModel::BuildFromBuffer(
-      static_cast<const char*>(mmap_file->data()), mmap_file->length());
-  MP_ASSIGN_OR_RETURN(
-      auto spm_model_content,
-      mediapipe::tasks::genai::llm_utils::ExtractSentencePieceToStringView(
-          *tflite_model, "spm_vocab_model"));
+  MP_ASSIGN_OR_RETURN(auto spm_model_content,
+                      model_data->ReadMetadata("spm_vocab_model"));
 
-  mmap_file.reset();
+  model_data.reset();
 
   llm_params.seq_size_T = session_config->max_tokens;
   llm_params.cache_dir = session_config->cache_dir;
@@ -209,7 +205,7 @@ LlmInferenceEngine_CreateSession_Helper(
   MP_ASSIGN_OR_RETURN(
       auto builder,
       mediapipe::tasks::genai::xnn_utils::CreateLlmBuilder(
-          llm_params, std::move(runtime_configs), nullptr, model_type));
+          llm_params, std::move(runtime_configs), nullptr, *model_type));
 
   MP_ASSIGN_OR_RETURN(auto llm,
                       mediapipe::tasks::genai::xnn_utils::Llm::CreateLlm(
@@ -385,4 +381,17 @@ void LlmInferenceEngine_Session_PredictAsync(
   cpu_session->work_id = work_id;
   pthread_create(&cpu_session->work_id, nullptr, start_llm_function,
                  cpu_session);
+}
+
+int LlmInferenceEngine_Session_SizeInTokens(LlmInferenceEngine_Session* session,
+                                            const char* input,
+                                            char** error_msg) {
+  auto cpu_session = reinterpret_cast<LlmInferenceEngineCpu_Session*>(session);
+  std::vector<int> output_ids;
+  auto status = cpu_session->tokenizer->Encode(input, &output_ids);
+  if (!status.ok()) {
+    *error_msg = strdup(status.ToString().c_str());
+    return -1;
+  }
+  return output_ids.size();
 }

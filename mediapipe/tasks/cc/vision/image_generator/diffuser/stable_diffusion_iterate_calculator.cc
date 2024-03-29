@@ -209,6 +209,11 @@ absl::Status StableDiffusionIterateCalculator::Open(CalculatorContext* cc) {
 
   DiffuserConfig config;
   config.model_type = ToDiffuserModelType(options.model_type());
+  if (config.model_type == kDiffuserModelTypeTigo) {
+    config.run_unet_with_masked_image = 1;
+  } else {
+    config.run_unet_with_masked_image = 0;
+  }
   if (options.file_folder().empty()) {
     std::strcpy(config.model_dir, "bins/");  // NOLINT
   } else {

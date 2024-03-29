@@ -639,7 +639,7 @@ inline absl::StatusOr<std::unique_ptr<T>> Packet::Consume() {
   MP_RETURN_IF_ERROR(ValidateAsType<T>());
   // Clients who use this function are responsible for ensuring that no
   // other thread is doing anything with this Packet.
-  if (!holder_->HasForeignOwner() && holder_.unique()) {
+  if (!holder_->HasForeignOwner() && holder_.use_count() == 1) {
     VLOG(2) << "Consuming the data of " << DebugString();
     absl::StatusOr<std::unique_ptr<T>> release_result =
         holder_->As<T>()->Release();
@@ -661,7 +661,7 @@ inline absl::StatusOr<std::unique_ptr<T>> Packet::ConsumeOrCopy(
     typename std::enable_if<!std::is_array<T>::value>::type*) {
   MP_RETURN_IF_ERROR(ValidateAsType<T>());
   // If holder is the sole owner of the underlying data, consumes this packet.
-  if (!holder_->HasForeignOwner() && holder_.unique()) {
+  if (!holder_->HasForeignOwner() && holder_.use_count() == 1) {
     VLOG(2) << "Consuming the data of " << DebugString();
     absl::StatusOr<std::unique_ptr<T>> release_result =
         holder_->As<T>()->Release();
@@ -691,7 +691,7 @@ inline absl::StatusOr<std::unique_ptr<T>> Packet::ConsumeOrCopy(
                             std::extent<T>::value != 0>::type*) {
   MP_RETURN_IF_ERROR(ValidateAsType<T>());
   // If holder is the sole owner of the underlying data, consumes this packet.
-  if (!holder_->HasForeignOwner() && holder_.unique()) {
+  if (!holder_->HasForeignOwner() && holder_.use_count() == 1) {
     VLOG(2) << "Consuming the data of " << DebugString();
     absl::StatusOr<std::unique_ptr<T>> release_result =
         holder_->As<T>()->Release();

@@ -106,6 +106,11 @@ ODML_EXPORT void LlmInferenceEngine_Session_PredictAsync(
     void (*callback)(void* callback_context,
                      const LlmResponseContext response_context));
 
+// Tokenizes an input prompt using a pre-existing processor and returns its
+// length in tokens. Returns -1 if tokenization fails.
+ODML_EXPORT int LlmInferenceEngine_Session_SizeInTokens(
+    LlmInferenceEngine_Session* session, const char* input, char** error_msg);
+
 #ifdef __cplusplus
 }  // extern C
 #endif

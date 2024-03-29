@@ -20,10 +20,16 @@
 #include <cstdint>
 #include <map>
 #include <memory>
-#include <queue>
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+#include "absl/status/status.h"
+#include "mediapipe/framework/graph_service.h"
+
+#ifdef MEDIAPIPE_PROFILER_AVAILABLE
+#include "mediapipe/framework/profiler/graph_profiler.h"
+#endif  // MEDIAPIPE_PROFILER_AVAILABLE
 
 #if !MEDIAPIPE_DISABLE_GPU
 #include "mediapipe/gpu/gl_calculator_helper.h"
@@ -167,7 +173,9 @@ class Graph {
   void CallbackToJava(JNIEnv* env, jobject java_callback_obj,
                       const std::vector<Packet>& packets);
 
+#ifdef MEDIAPIPE_PROFILER_AVAILABLE
   ProfilingContext* GetProfilingContext();
+#endif
 
  private:
   // Increase the graph's default executor's worker thread stack size to run

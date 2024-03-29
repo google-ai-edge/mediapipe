@@ -30,6 +30,7 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
@@ -55,17 +56,23 @@ class PrefixDecodeLlm : public Llm {
       : Llm(std::move(other)), prefix_llm_(std::move(prefix_llm)) {}
   ~PrefixDecodeLlm() override = default;
 
-  absl::Status InitInputTokens(const std::vector<int>& input_ids) override {
+  absl::Status InitInputTokens(
+      absl::Span<const std::vector<int>> batch_input_ids) override {
     MP_RETURN_IF_ERROR(Reset());
 
-    MP_RETURN_IF_ERROR(prefix_llm_->InitInputTokens(input_ids));
-    prev_ids_.insert(prev_ids_.end(), input_ids.begin(), input_ids.end());
+    MP_RETURN_IF_ERROR(prefix_llm_->InitInputTokens(batch_input_ids));
+    for (size_t batch_size = 0; batch_size < llm_params_.batch_size_B;
+         ++batch_size) {
+      auto& prev_ids = prev_ids_[batch_size];
+      const auto& input_ids = batch_input_ids[batch_size];
+      prev_ids.insert(prev_ids.end(), input_ids.begin(), input_ids.end());
+    }
     // prev_id.size - 1 is the output.
     return prefix_llm_->Run();
   }
 
   absl::Status GetNextToken(std::vector<int>* output_ids) override {
-    const size_t decode_step = prev_ids_.size() - 1;
+    const size_t decode_step = prev_ids_[0].size() - 1;
     VLOG(2) << "Decode step " << decode_step;
 
     if (decode_step >= llm_params_.seq_size_T - 1) {
@@ -73,8 +80,14 @@ class PrefixDecodeLlm : public Llm {
           absl::StrCat("Hit max sequence length ", llm_params_.seq_size_T));
     }
 
-    transformer_input_->Borrow(
-        prefix_llm_->input_pivot_->Slice(1, decode_step));
+    // TODO - b/329445989: This copy could be performance bottleneck. Consider
+    // [T, B, D] shape.
+    for (size_t batch = 0; batch < llm_params_.batch_size_B; ++batch) {
+      MP_RETURN_IF_ERROR(transformer_input_->Slice(0, batch)->LoadFromBuffer(
+          prefix_llm_->input_pivot_->Slice(0, batch)
+              ->Slice(1, decode_step)
+              ->Data()));
+    }
 
     // Let builder re-populate the values of these tensors.
     MP_RETURN_IF_ERROR(builder_->InitAttentionMask(
@@ -121,20 +134,21 @@ class PrefixDecodeLlm : public Llm {
     MP_RETURN_IF_ERROR(Run());
 
     RET_CHECK(logits_output_);
-    ABSL_DCHECK_EQ(logits_output_->num_elements, llm_params_.voc_size_V);
+    ABSL_DCHECK_EQ(logits_output_->num_elements,
+                   llm_params_.batch_size_B * llm_params_.voc_size_V);
 
     MP_ASSIGN_OR_RETURN(*output_ids, builder_->Sample(*logits_output_));
 
-    RET_CHECK_EQ(output_ids->size(), 1);
+    RET_CHECK_EQ(output_ids->size(), llm_params_.batch_size_B);
 
     for (size_t batch_size = 0; batch_size < llm_params_.batch_size_B;
          ++batch_size) {
       auto slice = prefix_llm_->input_pivot_->Slice(0, batch_size)
-                       ->Slice(1, prev_ids_.size());
+                       ->Slice(1, decode_step + 1);
       MP_RETURN_IF_ERROR(
           GetTokenEmbedding(*output_ids, slice->DataAs<float>()));
+      prev_ids_[batch_size].push_back(output_ids->at(batch_size));
     }
-    prev_ids_.push_back(output_ids->at(0));
     return absl::OkStatus();
   }
 
@@ -342,8 +356,11 @@ absl::Status Llm::ReshapeInputResource() {
 }
 
 absl::Status Llm::Reset() {
-  // TODO - b/325325100: avoid clear().
-  prev_ids_.clear();
+  prev_ids_.resize(llm_params_.batch_size_B);
+  for (auto& prev_id : prev_ids_) {
+    // TODO - b/325325100: avoid clear().
+    prev_id.clear();
+  }
   builder_->attention_mask_values_.reset();
   builder_->position_embedding_values_.reset();
   builder_->segment_pos_values_.reset();
@@ -352,20 +369,37 @@ absl::Status Llm::Reset() {
 }
 
 absl::Status Llm::InitInputTokens(const std::vector<int>& input_ids) {
+  RET_CHECK_EQ(llm_params_.batch_size_B, 1)
+      << "For batch inference, use the batch version API";
+  auto span = absl::Span<const std::vector<int>>(&input_ids, 1);
+  return InitInputTokens(span);
+}
+
+absl::Status Llm::InitInputTokens(
+    absl::Span<const std::vector<int>> batch_input_ids) {
+  RET_CHECK(!batch_input_ids.empty());
+  const size_t input_seq_len = batch_input_ids.at(0).size();
+  for (auto it = batch_input_ids.begin() + 1; it != batch_input_ids.end();
+       ++it) {
+    RET_CHECK_EQ(it->size(), input_seq_len);
+  }
+
   MP_RETURN_IF_ERROR(Reset());
+  RET_CHECK(!prev_ids_.empty());
+  const size_t current_seq_len = prev_ids_[0].size();
 
   // Initialize the attention mask.
   MP_RETURN_IF_ERROR(builder_->InitAttentionMask(
-      prev_ids_.size(), input_ids.size(), /*is_prefix=*/true, *atten_masks_));
+      current_seq_len, input_seq_len, /*is_prefix=*/true, *atten_masks_));
   if (!llm_params_.skip_absolute_positional_embeddings) {
     // Initialize the positional embedding data.
     MP_RETURN_IF_ERROR(builder_->InitPosEmbedding(
-        prev_ids_.size(), input_ids.size(), *pos_embedding_));
+        current_seq_len, input_seq_len, *pos_embedding_));
   }
   if (segment_pos_) {
     // Initialize the segment pos.
-    MP_RETURN_IF_ERROR(builder_->InitSegmentPos(
-        prev_ids_.size(), input_ids.size(), *segment_pos_));
+    MP_RETURN_IF_ERROR(builder_->InitSegmentPos(current_seq_len, input_seq_len,
+                                                *segment_pos_));
   }
 
   if (!input_pivot_) {
@@ -374,17 +408,18 @@ absl::Status Llm::InitInputTokens(const std::vector<int>& input_ids) {
     input_pivot_->flat_data = transformer_input_->flat_data;
   }
   for (size_t batch = 0; batch < llm_params_.batch_size_B; ++batch) {
-    auto slice = input_pivot_->Slice(0, batch)->Slice(1, prev_ids_.size());
-    MP_RETURN_IF_ERROR(GetTokenEmbedding(input_ids, slice->DataAs<float>()));
+    auto slice = input_pivot_->Slice(0, batch)->Slice(1, current_seq_len);
+    MP_RETURN_IF_ERROR(
+        GetTokenEmbedding(batch_input_ids[batch], slice->DataAs<float>()));
   }
 
   if (llm_params_.enable_dynamic_shape) {
     MP_RETURN_IF_ERROR(ReshapeInputResource());
 
     transformer_input_->Borrow(input_pivot_,
-                               prev_ids_.size() * llm_params_.model_dim_D);
+                               current_seq_len * llm_params_.model_dim_D);
     transformer_input_->Resize(Tensor::DimsType{
-        llm_params_.batch_size_B, input_ids.size(), llm_params_.model_dim_D});
+        llm_params_.batch_size_B, input_seq_len, llm_params_.model_dim_D});
     RET_CHECK_EQ(
         xnn_status_success,
         xnn_reshape_external_value(
@@ -395,14 +430,19 @@ absl::Status Llm::InitInputTokens(const std::vector<int>& input_ids) {
     RET_CHECK_EQ(xnn_status_success, xnn_reshape_runtime(runtime_.get()));
   }
 
-  prev_ids_.insert(prev_ids_.end(), input_ids.begin(), input_ids.end());
+  for (size_t batch = 0; batch < llm_params_.batch_size_B; ++batch) {
+    auto& prev_ids = prev_ids_[batch];
+    const auto& input_ids = batch_input_ids[batch];
+    prev_ids.insert(prev_ids.end(), input_ids.begin(), input_ids.end());
+  }
   return SetupRuntime();
 }
 
 absl::Status Llm::GetNextToken(std::vector<int>* output_ids) {
-  VLOG(2) << "Decode step " << prev_ids_.size() - 1;
+  const size_t decode_step = prev_ids_[0].size() - 1;
+  VLOG(2) << "Decode step " << decode_step;
 
-  if (prev_ids_.size() >= llm_params_.seq_size_T) {
+  if (decode_step + 1 >= llm_params_.seq_size_T) {
     return absl::OutOfRangeError(
         absl::StrCat("Hit max sequence length ", llm_params_.seq_size_T));
   }
@@ -410,21 +450,20 @@ absl::Status Llm::GetNextToken(std::vector<int>* output_ids) {
   MP_RETURN_IF_ERROR(Run());
 
   RET_CHECK(logits_output_);
-  std::shared_ptr<Tensor> logits =
-      logits_output_->Slice({0, prev_ids_.size() - 1, 0});
-  ABSL_DCHECK_EQ(logits->num_elements, llm_params_.voc_size_V);
+  std::shared_ptr<Tensor> logits = logits_output_->Slice({0, decode_step, 0});
+  ABSL_DCHECK_EQ(logits->num_elements,
+                 llm_params_.batch_size_B * llm_params_.voc_size_V);
 
   MP_ASSIGN_OR_RETURN(*output_ids, builder_->Sample(*logits));
-  RET_CHECK_EQ(output_ids->size(), 1);
+  RET_CHECK_EQ(output_ids->size(), llm_params_.batch_size_B);
   VLOG(2) << output_ids->at(0);
 
   for (size_t batch = 0; batch < llm_params_.batch_size_B; ++batch) {
-    auto slice =
-        transformer_input_->Slice(0, batch)->Slice(1, prev_ids_.size());
+    auto slice = transformer_input_->Slice(0, batch)->Slice(1, decode_step + 1);
     MP_RETURN_IF_ERROR(GetTokenEmbedding(*output_ids, slice->DataAs<float>()));
+    prev_ids_[batch].push_back(output_ids->at(batch));
   }
 
-  prev_ids_.push_back(output_ids->at(0));
   return absl::OkStatus();
 }
 
@@ -768,11 +807,6 @@ absl::StatusOr<std::shared_ptr<Tensor>> LlmBuilder::DotAttention(
     std::shared_ptr<Tensor> query_proj, std::shared_ptr<Tensor> key_proj,
     std::shared_ptr<Tensor> value_proj, std::shared_ptr<Tensor> atten_mask,
     const SelfAttentionWeights& sa_weights) {
-  if (llm_params_.num_kv_heads != llm_params_.n_heads_N &&
-      llm_params_.num_kv_heads != 1) {
-    return absl::UnimplementedError("GQA currently not supported.");
-  }
-
   // BTNH
   std::shared_ptr<Tensor> query_after_scale;
   switch (llm_params_.sa_params.attention_scale_type) {
@@ -854,6 +888,7 @@ absl::Status LlmBuilder::BuildKVCache(std::shared_ptr<Tensor>& key,
                                       InputResource& resource) {
   if (resource.cache) {
     RET_CHECK_EQ(key->dims.size(), 4);
+    RET_CHECK_EQ(key->dims[0], llm_params_.batch_size_B);
     // When cache is provided, there are 2 cases:
     if (key->dims[1] != 1) {
       // Building a normal graph, which is used to initialize cache.

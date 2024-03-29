@@ -66,6 +66,11 @@ public final class LlmTaskRunner implements AutoCloseable {
     nativePredictAsync(sessionHandle, callbackHandle, input);
   }
 
+  /** Invokes the native token cost calculator and returns the size of the string in tokens. */
+  public int sizeInTokens(String text) {
+    return nativeSizeInTokens(sessionHandle, text);
+  }
+
   private LlmResponseContext parseResponse(byte[] reponse) {
     try {
       return LlmResponseContext.parseFrom(reponse);
@@ -100,4 +105,6 @@ public final class LlmTaskRunner implements AutoCloseable {
 
   private static native void nativePredictAsync(
       long sessionPointer, long callbackContextHandle, String input);
+
+  private static native int nativeSizeInTokens(long sessionPointer, String input);
 }

@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <memory>
+#include <utility>
 #include <vector>
 
 #include "absl/status/status.h"
@@ -22,6 +23,8 @@
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/tensor.h"
+#include "mediapipe/framework/memory_manager.h"
+#include "mediapipe/framework/memory_manager_service.h"
 #include "mediapipe/framework/port/ret_check.h"
 
 namespace mediapipe {
@@ -66,8 +69,22 @@ class TensorsDequantizationCalculator : public Node {
   static constexpr Output<std::vector<Tensor>> kOutTensors{"TENSORS"};
   MEDIAPIPE_NODE_CONTRACT(kInTensors, kOutTensors);
 
+  absl::Status Open(CalculatorContext* cc) override;
   absl::Status Process(CalculatorContext* cc) override;
+
+  static absl::Status UpdateContract(CalculatorContract* cc);
+
+ private:
+  // Enable pooling of AHWBs in Tensor instances.
+  MemoryManager* memory_manager_ = nullptr;
 };
+
+absl::Status TensorsDequantizationCalculator::Open(CalculatorContext* cc) {
+  if (cc->Service(kMemoryManagerService).IsAvailable()) {
+    memory_manager_ = &cc->Service(kMemoryManagerService).GetObject();
+  }
+  return absl::OkStatus();
+}
 
 absl::Status TensorsDequantizationCalculator::Process(CalculatorContext* cc) {
   if (kInTensors(cc).IsEmpty()) {
@@ -79,7 +96,7 @@ absl::Status TensorsDequantizationCalculator::Process(CalculatorContext* cc) {
   output_tensors->reserve(input_tensors.size());
   for (const auto& input_tensor : input_tensors) {
     output_tensors->emplace_back(Tensor::ElementType::kFloat32,
-                                 input_tensor.shape());
+                                 input_tensor.shape(), memory_manager_);
     switch (input_tensor.element_type()) {
       case Tensor::ElementType::kUInt8:
         Dequantize<uint8_t>(input_tensor, &output_tensors->back());
@@ -96,6 +113,13 @@ absl::Status TensorsDequantizationCalculator::Process(CalculatorContext* cc) {
     }
   }
   kOutTensors(cc).Send(std::move(output_tensors));
+  return absl::OkStatus();
+}
+
+// static
+absl::Status TensorsDequantizationCalculator::UpdateContract(
+    CalculatorContract* cc) {
+  cc->UseService(kMemoryManagerService).Optional();
   return absl::OkStatus();
 }
 

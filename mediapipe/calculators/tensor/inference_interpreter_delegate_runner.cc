@@ -30,8 +30,6 @@
 #include "tensorflow/lite/interpreter_builder.h"
 #include "tensorflow/lite/string_util.h"
 
-#define PERFETTO_TRACK_EVENT_NAMESPACE mediapipe
-
 namespace mediapipe {
 
 namespace {
@@ -146,9 +144,11 @@ absl::StatusOr<std::vector<Tensor>> InferenceInterpreterDelegateRunner::Run(
                                             i);
         break;
       }
-      case TfLiteType::kTfLiteBool:
-        // No current use-case for copying MediaPipe Tensors with bool type to
-        // TfLiteTensors.
+      case TfLiteType::kTfLiteBool: {
+        CopyTensorBufferToInterpreter<bool>(input_tensor, interpreter_.get(),
+                                            i);
+        break;
+      }
       default:
         return absl::InvalidArgumentError(
             absl::StrCat("Unsupported input tensor type:", input_tensor_type));
