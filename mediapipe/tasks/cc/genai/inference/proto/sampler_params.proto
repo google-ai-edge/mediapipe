@@ -23,15 +23,17 @@ option java_outer_classname = "SamplerParametersProto";
 // Sampling parameters used to configure the decoding strategy.
 message SamplerParameters {
   enum Type {
-    // Pick the token with maximum logit (i.e., argmax).
-    DEFAULT_GREEDY = 0;
+    TYPE_UNSPECIFIED = 0;
     // Probabilistically pick among the top k tokens.
     TOP_K = 1;
     // Probabilistically pick among the tokens such that the sum is greater
-    // than or equal to p tokens.
+    // than or equal to p tokens after first performing top-k sampling.
     TOP_P = 2;
+    // Pick the token with maximum logit (i.e., argmax).
+    GREEDY = 3;
   }
-  // The type of sampling used to pick the winning token.
+  // The type of sampling used to pick the winning token. Ignored on the GPU
+  // path, which defaults to top-k sampling.
   Type type = 1;
   // The value of k determines how many of the top-k logits are used during
   // sampling. This field is relevant for TOP_K and TOP_P sampling.
