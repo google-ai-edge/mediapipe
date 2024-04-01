@@ -17,7 +17,6 @@
 
 #ifdef __cplusplus
 #include <cstddef>
-#include <cstdint>
 #else
 #include <stdbool.h>
 #include <stddef.h>
@@ -59,6 +58,10 @@ typedef struct {
 
   // Top K number of tokens to be sampled from for each decoding step.
   size_t topk;
+
+  // Maximum cumulative probability over the tokens to sample from in each
+  // decoding step for top-p / nucleus sampling.
+  float topp;
 
   // Randomness when decoding the next token, 0.0f means greedy decoding.
   float temperature;

@@ -122,6 +122,7 @@ int main(int argc, char** argv) {
       .num_decode_steps_per_sync = num_decode_steps_per_sync,
       .max_tokens = max_tokens,
       .topk = topk,
+      .topp = 1.0f,
       .temperature = temperature,
       .random_seed = random_seed,
   };
