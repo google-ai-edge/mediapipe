@@ -23,5 +23,8 @@ class ImageClassifierModelOptions:
   Attributes:
     dropout_rate: The fraction of the input units to drop, used in dropout
       layer.
+    alpha: Float, larger than zero, controls the width of the network, Only used
+      in `mobilenet_v2_keras_spec` model spec.
   """
   dropout_rate: float = 0.2
+  alpha: float = 0.75

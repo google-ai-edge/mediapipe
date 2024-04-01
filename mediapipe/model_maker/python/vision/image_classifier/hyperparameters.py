@@ -40,6 +40,8 @@ class HParams(hp.BaseHParams):
     warmup_steps: Number of warmup steps for a linear increasing warmup schedule
       on learning rate. Used to set up warmup schedule by model_util.WarmUp.
     checkpoint_frequency: Frequency to save checkpoint.
+    one_hot: Whether the label data is score input or one-hot.
+    multi_labels: Whether the model predict multi labels.
   """
   # Parameters from BaseHParams class.
   learning_rate: float = 0.001
@@ -55,3 +57,5 @@ class HParams(hp.BaseHParams):
   decay_samples: int = 10000 * 256
   warmup_epochs: int = 2
   checkpoint_frequency: int = 1
+  one_hot: bool = True
+  multi_labels: bool = False
