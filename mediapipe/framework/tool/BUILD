@@ -537,7 +537,6 @@ cc_library(
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework/deps:proto_descriptor_cc_proto",
         "//mediapipe/framework/port:advanced_proto",
-        "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:map_util",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
@@ -546,7 +545,9 @@ cc_library(
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_protobuf//:protobuf",
     ],
 )
 
