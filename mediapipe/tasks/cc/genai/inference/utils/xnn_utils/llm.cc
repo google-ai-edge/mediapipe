@@ -330,6 +330,14 @@ absl::StatusOr<std::unique_ptr<Llm>> Llm::CreatePrefixOnlyLlm(
   return llm;
 }
 
+size_t Llm::TotalTokenSize() const {
+  ABSL_CHECK(!prev_ids_.empty());
+  // prev_ids_ is of length llm_params.batch_size_B, and we assume each batch
+  // decode simultaneously, thus prev_ids[i] have the same size, which is total
+  // token size.
+  return prev_ids_[0].size();
+}
+
 absl::Status Llm::ReshapeInputResource() {
   if (llm_params_.enable_dynamic_shape) {
     RET_CHECK_EQ(
