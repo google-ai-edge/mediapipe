@@ -33,14 +33,13 @@ message SamplerParameters {
     GREEDY = 3;
   }
   // The type of sampling used to pick the winning token. Ignored on the GPU
-  // path, which defaults to top-k sampling.
+  // path, which defaults to combining top-k and top-p sampling.
   Type type = 1;
   // The value of k determines how many of the top-k logits are used during
   // sampling. This field is relevant for TOP_K and TOP_P sampling.
   int32 k = 2;
   // The value of p determines the probability threshold used in TOP_P
   // sampling.
-  // TODO: b/318375044 - Currently not supported on the GPU path.
   float p = 3;
   // The temperature used to scale the logits before computing softmax.
   float temperature = 4;
