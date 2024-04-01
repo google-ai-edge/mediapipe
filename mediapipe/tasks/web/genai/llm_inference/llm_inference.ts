@@ -61,8 +61,9 @@ const TOKEN_COST_OUTPUT_STREAM = 'token_cost_out';
 
 const DEFAULT_MAX_TOKENS = 512;
 const DEFAULT_TOP_K = 1;
+const DEFAULT_TOP_P = 1.0;
 const DEFAULT_TEMPERATURE = 1.0;
-const DEFAULT_SAMPLER_TYPE = SamplerParameters.Type.TOP_K;
+const DEFAULT_SAMPLER_TYPE = SamplerParameters.Type.TOP_P;
 
 /**
  * Performs LLM Inference on text.
@@ -349,6 +350,7 @@ export class LlmInference extends TaskRunner {
     this.options.setMaxTokens(DEFAULT_MAX_TOKENS);
     this.samplerParams.setType(DEFAULT_SAMPLER_TYPE);
     this.samplerParams.setK(DEFAULT_TOP_K);
+    this.samplerParams.setP(DEFAULT_TOP_P);
     this.samplerParams.setTemperature(DEFAULT_TEMPERATURE);
   }
 
