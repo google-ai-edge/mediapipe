@@ -22,3 +22,17 @@ objc_library(
     hdrs = ["sources/MPPFloatBuffer.h"],
 )
 
+objc_library(
+    name = "MPPFloatRingBuffer",
+    srcs = ["sources/MPPFloatRingBuffer.m"],
+    hdrs = ["sources/MPPFloatRingBuffer.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+    ],
+    deps = [
+        ":MPPFloatBuffer",
+        "//mediapipe/tasks/ios/common:MPPCommon",
+        "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
+    ],
+)
