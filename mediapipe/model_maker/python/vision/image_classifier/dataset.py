@@ -13,8 +13,12 @@
 # limitations under the License.
 """Image classifier dataset library."""
 
+import dataclasses
+import functools
 import os
 import random
+from typing import List, Optional
+
 import tensorflow as tf
 
 from mediapipe.model_maker.python.core.data import classification_dataset
