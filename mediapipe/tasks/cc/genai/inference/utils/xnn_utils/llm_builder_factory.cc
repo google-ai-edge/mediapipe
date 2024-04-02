@@ -54,6 +54,8 @@ absl::StatusOr<std::unique_ptr<LlmBuilder>> CreateLlmBuilder(
                                               std::move(runtime_configs));
       break;
     case odml::infra::proto::LLM_MODEL_TYPE_GEMMA_2B:
+      ABSL_FALLTHROUGH_INTENDED;
+    case odml::infra::proto::LLM_MODEL_TYPE_GEMMA_7B:
       builder = std::make_unique<LlmBuilder>(llm_params, std::move(sampler),
                                              std::move(runtime_configs));
       break;
