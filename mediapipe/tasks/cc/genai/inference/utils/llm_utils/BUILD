@@ -90,3 +90,13 @@ cc_library(
         "@org_tensorflow//tensorflow/lite/schema:schema_fbs",
     ],
 )
+
+cc_library(
+    name = "well_known_models",
+    srcs = ["well_known_models.cc"],
+    hdrs = ["well_known_models.h"],
+    deps = [
+        "//mediapipe/tasks/cc/genai/inference/proto:llm_params_cc_proto",
+        "//mediapipe/tasks/cc/genai/inference/proto:transformer_params_cc_proto",
+    ],
+)
