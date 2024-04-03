@@ -756,6 +756,10 @@ absl::Status ContentZoomingCalculator::Process(
 absl::Status ContentZoomingCalculator::SmoothAndClampPath(
     int target_width, int target_height, float path_width, float path_height,
     float* path_offset_x, float* path_offset_y) {
+  if (options_.allow_cropping_outside_frame()) {
+    return absl::OkStatus();
+  }
+
   float delta_height;
   MP_RETURN_IF_ERROR(path_solver_zoom_->GetDeltaState(&delta_height));
   const int delta_width = delta_height * target_aspect_;
@@ -790,15 +794,13 @@ absl::Status ContentZoomingCalculator::SmoothAndClampPath(
   }
 
   // Prevent box from extending beyond the image after camera smoothing.
-  if (!options_.allow_cropping_outside_frame()) {
-    float half_path_height = ceil(path_height / 2.0);
-    *path_offset_y = std::clamp(*path_offset_y, half_path_height,
-                                frame_height_ - half_path_height);
+  float half_path_height = ceil(path_height / 2.0);
+  *path_offset_y = std::clamp(*path_offset_y, half_path_height,
+                              frame_height_ - half_path_height);
 
-    float half_path_width = ceil(path_width / 2.0);
-    *path_offset_x = std::clamp(*path_offset_x, half_path_width,
-                                frame_width_ - half_path_width);
-  }
+  float half_path_width = ceil(path_width / 2.0);
+  *path_offset_x = std::clamp(*path_offset_x, half_path_width,
+                              frame_width_ - half_path_width);
 
   MP_RETURN_IF_ERROR(path_solver_pan_->SetState(*path_offset_x));
   MP_RETURN_IF_ERROR(path_solver_tilt_->SetState(*path_offset_y));
