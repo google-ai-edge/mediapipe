@@ -31,6 +31,8 @@
 #include "absl/types/span.h"
 #include "flatbuffers/buffer.h"
 #include "flatbuffers/vector.h"
+#include "mediapipe/framework/deps/file_path.h"
+#include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/tasks/cc/genai/inference/proto/llm_file_metadata.pb.h"
@@ -418,6 +420,53 @@ absl::StatusOr<std::shared_ptr<ModelData>> ModelData::Create(ReadDataFn fn) {
                                                               std::move(fn));
   MP_RETURN_IF_ERROR(model_data->InitLlmParameters());
   return model_data;
+}
+
+// static
+absl::StatusOr<std::shared_ptr<ModelData>> ModelData::Create(
+    absl::string_view weight_path, absl::string_view spm_path) {
+  // If the path is not a directory, it should be a tflite file.
+  if (!mediapipe::file::IsDirectory(weight_path).ok()) {
+    MP_ASSIGN_OR_RETURN(auto tflite_file, ScopedFile::Open(weight_path));
+    return ModelData::Create(std::move(tflite_file));
+  }
+
+  // If model proto exists, it should be a gpu combined model format.
+  auto model_proto_path =
+      mediapipe::file::JoinPath(weight_path, kBasePbFileName);
+  MP_RETURN_IF_ERROR(mediapipe::file::Exists(model_proto_path));
+
+  MP_ASSIGN_OR_RETURN(auto model_proto_file,
+                      ScopedFile::Open(model_proto_path));
+  MP_ASSIGN_OR_RETURN(auto weights_file,
+                      ScopedFile::Open(mediapipe::file::JoinPath(
+                          weight_path, kBaseWeightsFileName)));
+  MP_ASSIGN_OR_RETURN(auto spm_model_file, ScopedFile::Open(spm_path));
+
+  MP_ASSIGN_OR_RETURN(
+      auto model_proto_data,
+      CreateMemoryMappedDataHolder<const uint8_t>(model_proto_file.file()));
+  MP_ASSIGN_OR_RETURN(
+      auto spm_data,
+      CreateMemoryMappedDataHolder<const uint8_t>(spm_model_file.file()));
+  return ModelData::Create(std::move(spm_data), std::move(model_proto_data),
+                           std::move(weights_file));
+}
+
+// static
+absl::StatusOr<std::shared_ptr<ModelData>> ModelData::CreateLoRAFromPath(
+    absl::string_view lora_path) {
+  MP_ASSIGN_OR_RETURN(
+      auto model_proto_file,
+      ScopedFile::Open(mediapipe::file::JoinPath(lora_path, kLoraPbFileName)));
+  MP_ASSIGN_OR_RETURN(auto weights_file,
+                      ScopedFile::Open(mediapipe::file::JoinPath(
+                          lora_path, kLoraWeightsFileName)));
+  MP_ASSIGN_OR_RETURN(
+      auto model_proto_data,
+      CreateMemoryMappedDataHolder<const uint8_t>(model_proto_file.file()));
+  return ModelData::Create(nullptr, std::move(model_proto_data),
+                           std::move(weights_file));
 }
 
 }  // namespace mediapipe::tasks::genai::llm_utils

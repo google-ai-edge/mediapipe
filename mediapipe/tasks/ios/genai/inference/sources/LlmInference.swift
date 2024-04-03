@@ -68,6 +68,7 @@ import MediaPipeTasksGenAIC
       num_decode_steps_per_sync: LlmInference.numberOfDecodeStepsPerSync,
       max_tokens: options.maxTokens,
       topk: options.topk,
+      topp: 1.0,
       temperature: options.temperature,
       random_seed: options.randomSeed)
     llmTaskRunner = LlmTaskRunner(sessionConfig: sessionConfig)
