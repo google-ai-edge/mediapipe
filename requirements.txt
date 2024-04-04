@@ -6,5 +6,5 @@ jaxlib
 matplotlib
 numpy
 opencv-contrib-python
-protobuf>=3.11,<4
+protobuf>=4.25.3,<5
 sounddevice>=0.4.4
