@@ -395,7 +395,9 @@ class _BertClassifier(TextClassifier):
     ) + [
         tf.keras.callbacks.ModelCheckpoint(
             os.path.join(self._hparams.export_dir, "best_model"),
-            monitor="val_auc",
+            monitor="val_auc"
+            if self._num_classes == 2
+            else "val_accuracy",  # auc is a binary only metric
             mode="max",
             save_best_only=True,
             save_weights_only=False,
@@ -533,11 +535,13 @@ class _BertClassifier(TextClassifier):
         tf.keras.metrics.SparseCategoricalAccuracy(
             "accuracy", dtype=tf.float32
         ),
-        metrics.SparsePrecision(name="precision", dtype=tf.float32),
-        metrics.SparseRecall(name="recall", dtype=tf.float32),
-        metrics.BinaryAUC(name="auc", num_thresholds=1000),
     ]
     if self._num_classes == 2:
+      metric_functions.extend([
+          metrics.BinaryAUC(name="auc", num_thresholds=1000),
+          metrics.SparsePrecision(name="precision", dtype=tf.float32),
+          metrics.SparseRecall(name="recall", dtype=tf.float32),
+      ])
       if self._hparams.desired_precisions:
         for desired_precision in self._hparams.desired_precisions:
           metric_functions.append(
