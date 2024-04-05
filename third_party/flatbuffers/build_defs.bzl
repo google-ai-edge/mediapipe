@@ -1,6 +1,7 @@
 """BUILD rules for generating flatbuffer files."""
 
 load("@build_bazel_rules_android//android:rules.bzl", "android_library")
+load("@rules_java//java:defs.bzl", "java_library")
 
 flatc_path = "@flatbuffers//:flatc"
 zip_files = "@org_tensorflow//tensorflow_lite_support/tools:zip_files"
@@ -499,8 +500,7 @@ def flatbuffer_java_library(
         name = "%s.srcjar" % name,
         srcs = [out_srcjar],
     )
-
-    native.java_library(
+    java_library(
         name = name,
         srcs = [out_srcjar],
         javacopts = ["-source 7 -target 7"],
