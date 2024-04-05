@@ -34,11 +34,15 @@ absl::StatusOr<std::unique_ptr<Sampler>> Sampler::Create(Type type, int top_k,
                                                          float top_p,
                                                          float temperature,
                                                          int seed) {
-  if (type == Type::kTopK && top_k <= 0) {
-    return absl::InvalidArgumentError("top_k must be positive");
-  }
-  if (type == Type::kTopP && (top_p <= 0 || top_p > 1.0)) {
-    return absl::InvalidArgumentError("top_p must be positive and <= 1.0");
+  if (type == Type::kTopK || type == Type::kTopP) {
+    if (top_k <= 1) {
+      return absl::InvalidArgumentError("top_k must be > 1");
+    } else if (temperature < 0.0f) {
+      return absl::InvalidArgumentError("temperature must be >= 0");
+    }
+    if (type == Type::kTopP && (top_p <= 0 || top_p > 1.0)) {
+      return absl::InvalidArgumentError("top_p must be between 0 and 1");
+    }
   }
   return absl::WrapUnique(new Sampler(type, top_k, top_p, temperature, seed));
 }
