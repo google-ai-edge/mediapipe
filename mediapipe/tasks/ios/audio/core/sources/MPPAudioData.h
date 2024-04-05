@@ -21,7 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
  * Wraps properties describing the format of the incoming audio samples, namely number of channels
  * and the sample rate.
  */
-NS_SWIFT_NAME(AudioData)
+NS_SWIFT_NAME(AudioDataFormat)
 
 @interface MPPAudioDataFormat : NSObject
 
