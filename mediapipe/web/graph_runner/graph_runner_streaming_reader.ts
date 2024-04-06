@@ -94,13 +94,15 @@ export class StreamingReader {
   constructor(
     private dataArray: DiscardableDataChunk[],
     private fetchMoreData: () => Promise<Uint8Array | undefined>,
+    private readonly onFinished: () => void,
   ) {}
 
   /*
    * Creates a StreamingReader from a URL.
    * @param url The URL to request the file.
    */
-  static loadFromUrl(url: string): StreamingReader {
+  static loadFromUrl(
+      url: string, onFinished: () => void): StreamingReader {
     const readerPromise = fetch(url.toString()).then(
       (response) => response?.body?.getReader() as ReadableStreamDefaultReader,
     );
@@ -117,7 +119,7 @@ export class StreamingReader {
       }
       return value;
     };
-    return new StreamingReader([], fetchMore);
+    return new StreamingReader([], fetchMore, onFinished);
   }
 
   /*
@@ -146,6 +148,7 @@ export class StreamingReader {
     if (mode === ReadMode.DISCARD_ALL) {
       this.dataArray = [];
       this.fetchMoreData = () => Promise.resolve(undefined);
+      this.onFinished();  // Signal that we're done with data
       return Promise.resolve(0);
     }
 
@@ -206,9 +209,11 @@ export class StreamingReader {
    * Creates a StreamingReader from an array.
    * @param array The file data.
    */
-  static loadFromArray(array: Uint8Array): StreamingReader {
+  static loadFromArray(
+      array: Uint8Array, onFinished: () => void): StreamingReader {
     return new StreamingReader([new DiscardableDataChunk(array)], () =>
       Promise.resolve(undefined),
+      onFinished,
     );
   }
 }

@@ -196,6 +196,11 @@ export class LlmInference extends TaskRunner {
   override setOptions(options: LlmInferenceOptions): Promise<void> {
     // TODO: b/324482487 - Support customizing config for Web task of LLM
     // Inference.
+    if (this.isProcessing) {
+      throw new Error("Cannot set options while loading or processing.");
+    }
+    this.isProcessing = true;
+
     if (options.baseOptions?.gpuOptions?.device) {
       (this.graphRunner as unknown as StreamingReaderWebGpuGraphRunner)
           .initializeForWebGpu(options.baseOptions.gpuOptions.device);
@@ -222,6 +227,10 @@ export class LlmInference extends TaskRunner {
       this.samplerParams.setSeed(options.randomSeed);
     }
 
+    let onFinishedLoadingData!: () => void;
+    const finishedLoadingDataPromise = new Promise<void>((resolve, reject) => {
+      onFinishedLoadingData = resolve;
+    });
     if (options.baseOptions?.modelAssetPath ||
         options.baseOptions?.modelAssetBuffer) {
       if (options.baseOptions.modelAssetPath &&
@@ -231,18 +240,27 @@ export class LlmInference extends TaskRunner {
       }
       if (options.baseOptions.modelAssetPath) {
         this.streamingReader = StreamingReader.loadFromUrl(
-            options.baseOptions.modelAssetPath);
+            options.baseOptions.modelAssetPath, onFinishedLoadingData);
       } else if (options.baseOptions.modelAssetBuffer) {
         this.streamingReader = StreamingReader.loadFromArray(
-            options.baseOptions.modelAssetBuffer);
+            options.baseOptions.modelAssetBuffer, onFinishedLoadingData);
         // Remove the reference on the asset buffer since it is now owned by
         // `streamingReader`.
         options.baseOptions.modelAssetBuffer = undefined;
+      } else {
+        onFinishedLoadingData();
       }
     }
     this.refreshGraph();
     this.onGraphRefreshed();
-    return Promise.resolve();
+    // Note: this is triggered from within the final loading call, so the wasm
+    // code hasn't quite finished running by this point in time. However, that
+    // microtask seems to complete before any code await-ing this function, so
+    // this should be fine. This seems to be similarly true for our
+    // resolveGeneration usage as well.
+    return finishedLoadingDataPromise.then(() => {
+      this.isProcessing = false;
+    });
   }
 
   protected override get baseOptions(): BaseOptionsProto {
@@ -280,7 +298,7 @@ export class LlmInference extends TaskRunner {
   generateResponse(text: string, progressListener?: ProgressListener):
       Promise<string> {
     if (this.isProcessing) {
-      throw new Error('Previous invocation is still processing.');
+      throw new Error('Previous invocation or loading is still ongoing.');
     }
     if (progressListener) {
       this.userProgressListener = progressListener;
@@ -307,7 +325,7 @@ export class LlmInference extends TaskRunner {
    */
   sizeInTokens(text: string): number | undefined {
     if (this.isProcessing) {
-      throw new Error('Previous invocation is still processing.');
+      throw new Error('Previous invocation or loading is still ongoing.');
     }
     this.isProcessing = true;
     this.latestTokenCostQueryResult = undefined;
@@ -410,7 +428,7 @@ export class LlmInference extends TaskRunner {
     const binaryGraph = graphConfig.serializeBinary();
     this.setGraph(new Uint8Array(binaryGraph), /* isBinary= */ true);
 
-    // Wait for initialization to finish and free the model file data.
+    // Start initialization; this is async when StreamingReader is used.
     this.finishProcessing();
   }
 
