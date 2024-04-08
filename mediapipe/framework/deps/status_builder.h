@@ -71,6 +71,9 @@ class ABSL_MUST_USE_RESULT StatusBuilder {
   StatusBuilder& SetNoLogging() &;
   StatusBuilder&& SetNoLogging() &&;
 
+  StatusBuilder& SetCode(absl::StatusCode code) &;
+  StatusBuilder&& SetCode(absl::StatusCode code) &&;
+
   template <typename T>
   StatusBuilder& operator<<(const T& msg) & {
     if (!impl_) return *this;

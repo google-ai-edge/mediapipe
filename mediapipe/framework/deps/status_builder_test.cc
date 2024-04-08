@@ -117,4 +117,26 @@ TEST(StatusBuilder, NoLoggingModeRvalue) {
   EXPECT_EQ(status.message(), "original message");
 }
 
+TEST(StatusBuilder, SetCodeLvalue) {
+  StatusBuilder builder(
+      absl::Status(absl::StatusCode::kUnavailable, "original message"),
+      MEDIAPIPE_LOC);
+  builder.SetCode(absl::StatusCode::kInternal);
+  absl::Status status = builder;
+  ASSERT_FALSE(status.ok());
+  EXPECT_EQ(status.code(), absl::StatusCode::kInternal);
+  EXPECT_EQ(status.message(), "original message");
+}
+
+TEST(StatusBuilder, SetCodeRvalue) {
+  absl::Status status =
+      StatusBuilder(
+          absl::Status(absl::StatusCode::kUnavailable, "original message"),
+          MEDIAPIPE_LOC)
+          .SetCode(absl::StatusCode::kInternal);
+  ASSERT_FALSE(status.ok());
+  EXPECT_EQ(status.code(), absl::StatusCode::kInternal);
+  EXPECT_EQ(status.message(), "original message");
+}
+
 }  // namespace mediapipe
