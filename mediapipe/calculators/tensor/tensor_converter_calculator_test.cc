@@ -458,20 +458,14 @@ TEST_F(TensorConverterCalculatorTest,
   // Run the graph.
   MP_ASSERT_OK(graph.Initialize(graph_config));
   MP_ASSERT_OK(graph.StartRun({}));
-  auto input_image = std::make_unique<ImageFrame>(ImageFormat::GRAY8, 1, 1);
-  MP_ASSERT_OK(graph.AddPacketToInputStream(
-      "input_image", Adopt(input_image.release()).At(Timestamp(0))));
 
   // Processing should fail as we specified both flip_vertically and gpu_origin.
-  absl::Status status = graph.WaitUntilIdle();
-  EXPECT_FALSE(status.ok());
-  EXPECT_THAT(status.message(), HasSubstr("flip_vertically and gpu_origin"));
-  EXPECT_EQ(output_packets.size(), 0);
-
-  // Fully close graph at end, otherwise calculator+tensors are destroyed
-  // after calling WaitUntilDone().
-  MP_ASSERT_OK(graph.CloseInputStream("input_image"));
-  EXPECT_FALSE(graph.WaitUntilDone().ok());
+  EXPECT_THAT(
+      graph.WaitUntilIdle(),
+      StatusIs(
+          absl::StatusCode::kFailedPrecondition,
+          HasSubstr(
+              "Cannot specify both flip_vertically and gpu_origin options")));
 }
 
 TEST_F(TensorConverterCalculatorTest, GpuOriginIsIgnoredWithCpuImage) {
