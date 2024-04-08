@@ -583,6 +583,7 @@ cc_library_with_tflite(
         "//mediapipe/util/tflite:tflite_model_loader",
         "@org_tensorflow//tensorflow/lite:framework_stable",
         "@org_tensorflow//tensorflow/lite/c:c_api_types",
+        "@org_tensorflow//tensorflow/lite/c:common",
     ],
     deps = [
         ":inference_runner",

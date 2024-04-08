@@ -26,6 +26,7 @@
 #include "mediapipe/framework/mediapipe_profiling.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "tensorflow/lite/c/c_api_types.h"
+#include "tensorflow/lite/c/common.h"
 #include "tensorflow/lite/interpreter.h"
 #include "tensorflow/lite/interpreter_builder.h"
 #include "tensorflow/lite/string_util.h"
@@ -104,8 +105,16 @@ absl::StatusOr<std::vector<Tensor>> InferenceInterpreterDelegateRunner::Run(
   for (int i = 0; i < tensor_span.size(); ++i) {
     const Tensor& input_tensor = tensor_span[i];
     if (input_tensor.shape().is_dynamic) {
-      interpreter_->ResizeInputTensorStrict(i, input_tensor.shape().dims);
-      resized_tensor_shapes = true;
+      const TfLiteTensor* interpreter_tensor =
+          interpreter_->tensor(interpreter_->inputs()[i]);
+      // TODO: Can avoid copying even these <= 4 values in the future.
+      std::vector<int> interpreter_dims{
+          interpreter_tensor->dims->data,
+          interpreter_tensor->dims->data + interpreter_tensor->dims->size};
+      if (interpreter_dims != input_tensor.shape().dims) {
+        interpreter_->ResizeInputTensorStrict(i, input_tensor.shape().dims);
+        resized_tensor_shapes = true;
+      }
     }
   }
   // Reallocation is needed for memory sanity.
