@@ -193,4 +193,69 @@ message InferenceCalculatorOptions {
   // NOTE: use_gpu/use_nnapi are ignored if specified. (Delegate takes
   // precedence over use_* deprecated options.)
   optional Delegate delegate = 5;
+
+  // InputOutputConfig enables us to reorder the tensors in the input and output
+  // of the InferenceCalculator. This is useful when the order of the tensors in
+  // the input and output of the InferenceCalculator does not match the order of
+  // the tensors in the input and output of the underlying TFLite model. In this
+  // example, Tensor_1 and Tensor_2 are swapped.
+  //
+  //                 Inference Calculator Inputs
+  //    ┌─────▼─────────▼─────────▼────────▼──────────▼──────────┐
+  //    │  Tensor_0, Tensor_1, Tensor_2, Tensor_3, Tensor_4      │
+  //    └────────────────────────────────────────────────────────┘
+  //                      [input_tensor_map]
+  //    ┌────────────────────────────────────────────────────────┐
+  //    │  Tensor_0, Tensor_2, Tensor_1, Tensor_3, Tensor_4      │
+  //    └─────┬─────────┬─────────┬────────┬──────────┬──────────┘
+  //          │         │         │        │          │
+  //    ┌─────▼─────────▼─────────▼────────▼──────────▼──────────┐
+  //    │                       Inference                        │
+  //    └─────┬─────────┬─────────┬────────┬──────────┬──────────┘
+  //          │         │         │        │          │
+  //    ┌─────▼─────────▼─────────▼────────▼──────────▼──────────┐
+  //    │  Tensor_0, Tensor_2, Tensor_1, Tensor_3, Tensor_4      │
+  //    └────────────────────────────────────────────────────────┘
+  //                     [output_tensor_map]
+  //    ┌────────────────────────────────────────────────────────┐
+  //    │  Tensor_0, Tensor_1, Tensor_2, Tensor_3, Tensor_4      │
+  //    └──────┬─────────┬─────────┬────────┬──────────┬─────────┘
+  //           ▼         ▼         ▼        ▼          ▼
+  //                 Inference Calculator Outputs
+  //
+  message InputOutputConfig {
+    // Defines tensor order described by the indices.
+    message TensorIndicesMap {
+      // Ordered list of tensor indices describing a bijective mapping between
+      // the InferenceCalculator tensor index and the TFLite model I/O index.
+      // The nth entry in the list maps the nth InferenceCalculator tensor to
+      // *[nth] model I/O index. The size of the list must match the number of
+      // tensors in the input or output of the InferenceCalculator.
+      //
+      // Example configurations:
+      // Input (Input<std::vector<Tensor>> or Input<Tensor>::Multiple) config:
+      // - Desired inference calculator input order: tensor0, tensor1, tensor2
+      // - Given model tensor input order: [Tensor2, Tensor1, Tensor0]
+      // - model_tensor_indices: [2, 1, 0]
+      // Output (Output<std::vector<Tensor>> or Output<Tensor>::Multiple)
+      // config:
+      // - Given model tensor output order: [Tensor2, Tensor1, Tensor0]
+      // - Desired InferenceCalculator output order: tensor0, tensor1, tensor2
+      // - model_tensor_indices: [2, 1, 0]
+      //
+      repeated int32 model_tensor_indices = 1 [packed = true];
+    }
+
+    // Maps the input tensors of the InferenceCalculator to the input tensors of
+    // the TFLite model. Values are model I/O tensor indices.
+    optional TensorIndicesMap input_tensor_indices_map = 1;
+
+    // Maps the output tensors of the TfLite model to the the output tensors of
+    // the InferenceCalculator. Values are model I/O tensor indices.
+    optional TensorIndicesMap output_tensor_indices_map = 2;
+  }
+
+  // Optionally remaps input and output tensors to align with TfLite model and
+  // InferenceCalculator input/output stream order.
+  optional InputOutputConfig input_output_config = 8;
 }

@@ -427,6 +427,7 @@ cc_library_with_tflite(
     ],
     deps = [
         ":inference_calculator_cc_proto",
+        ":inference_calculator_io_map",
         ":inference_calculator_options_lib",
         ":inference_runner",
         ":tensor_span",
@@ -459,6 +460,45 @@ cc_library(
         "//mediapipe/framework:input_stream_shard",
         "//mediapipe/framework/api2:port",
         "//mediapipe/framework/formats:tensor",
+    ],
+)
+
+cc_library(
+    name = "inference_calculator_io_map",
+    srcs = ["inference_calculator_io_map.cc"],
+    hdrs = ["inference_calculator_io_map.h"],
+    deps = [
+        ":inference_calculator_cc_proto",
+        ":tensor_span",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+    ],
+)
+
+cc_test(
+    name = "inference_calculator_io_map_test",
+    srcs = ["inference_calculator_io_map_test.cc"],
+    data = [
+        ":testdata/3in3out_model_swaps_input_2_and_0.tflite",
+    ],
+    deps = [
+        ":inference_calculator",
+        ":inference_calculator_cc_proto",
+        ":inference_calculator_cpu",
+        ":inference_calculator_io_map",
+        ":tensor_span",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:packet",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/tool:sink",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
     ],
 )
 
