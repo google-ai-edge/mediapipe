@@ -31,7 +31,8 @@ namespace mediapipe {
 // Instantiates and initializes an OpenGL 3.0-enabled TensorConverterGpu
 // instance.
 // @gpu_helper helper to manage the OpenGL context.
-// @memory_manager Enables buffer pooling.
+// @memory_manager Enables buffer pooling. Must outlive the TensorConverterGpu
+// instance.
 // @input_width width of input image.
 // @input_height height of input image.
 // @output_range defines output floating point scale.

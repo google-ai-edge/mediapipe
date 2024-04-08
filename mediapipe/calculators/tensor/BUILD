@@ -734,13 +734,6 @@ cc_library(
         "//conditions:default": [],
     }),
     features = ["-layering_check"],  # allow depending on tensor_converter_calculator_gpu_deps
-    linkopts = select({
-        "//mediapipe:apple": [
-            "-framework CoreVideo",
-            "-framework MetalKit",
-        ],
-        "//conditions:default": [],
-    }),
     deps = [
         ":tensor_converter_calculator_cc_proto",
         ":tensor_converter_cpu",
@@ -775,6 +768,7 @@ cc_library(
         ],
     }) + select({
         "//mediapipe:apple": [
+            ":tensor_converter_metal",
             "//third_party/apple_frameworks:MetalKit",
         ],
         "//conditions:default": [],
@@ -853,6 +847,40 @@ cc_library(
             "@com_google_absl//absl/status",
             "@com_google_absl//absl/strings",
         ],
+    }),
+)
+
+cc_library(
+    name = "tensor_converter_metal",
+    srcs = ["tensor_converter_metal.cc"],
+    hdrs = ["tensor_converter_metal.h"],
+    copts = select({
+        "//mediapipe:apple": [
+            "-x objective-c++",
+            "-fobjc-arc",  # enable reference-counting
+        ],
+        "//conditions:default": [],
+    }),
+    features = ["-layering_check"],  # allow depending on tensor_converter_calculator_gpu_deps
+    linkopts = select({
+        "//mediapipe:apple": [
+            "-framework CoreVideo",
+            "-framework MetalKit",
+        ],
+        "//conditions:default": [],
+    }),
+    deps = [
+        "//mediapipe/framework:port",
+    ] + select({
+        "//mediapipe:apple": [
+            ":tensor_converter_calculator_gpu_deps",
+            ":tensor_converter_gpu",
+            "//mediapipe/framework/formats:tensor",
+            "//mediapipe/framework/port:ret_check",
+            "//mediapipe/framework/port:status",
+            "//third_party/apple_frameworks:MetalKit",
+        ],
+        "//conditions:default": [],
     }),
 )
 
