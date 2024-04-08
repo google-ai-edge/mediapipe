@@ -90,7 +90,7 @@ class HardwareBuffer {
 
   // Constructs a HardwareBuffer instance from an existing Android NDK
   // AHardwareBuffer.
-  static absl::StatusOr<HardwareBuffer> WrapAndAquireAHardwareBuffer(
+  static absl::StatusOr<HardwareBuffer> WrapAndAcquireAHardwareBuffer(
       AHardwareBuffer* ahw_buffer);
 
   // Destructs the HardwareBuffer, releasing the AHardwareBuffer.
@@ -151,7 +151,7 @@ class HardwareBuffer {
 
   // Acquires an existing AHardwareBuffer instance and returns its
   // HardwareBufferSpec;
-  static absl::StatusOr<HardwareBufferSpec> AquireAHardwareBuffer(
+  static absl::StatusOr<HardwareBufferSpec> AcquireAHardwareBuffer(
       AHardwareBuffer* ahw_buffer);
 
   // Constructs a HardwareBuffer instance from an already acquired

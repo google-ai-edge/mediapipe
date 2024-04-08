@@ -41,7 +41,7 @@ TEST(HardwareBufferTest, ShouldConstructFromExistingHardwareBuffer) {
 
   MP_ASSERT_OK_AND_ASSIGN(
       HardwareBuffer hardware_buffer,
-      HardwareBuffer::WrapAndAquireAHardwareBuffer(a_hardware_buffer_test));
+      HardwareBuffer::WrapAndAcquireAHardwareBuffer(a_hardware_buffer_test));
   EXPECT_TRUE(hardware_buffer.IsValid());
   EXPECT_FALSE(hardware_buffer.IsLocked());
   EXPECT_EQ(hardware_buffer.spec(), spec);

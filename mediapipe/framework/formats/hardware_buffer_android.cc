@@ -49,10 +49,10 @@ absl::StatusOr<HardwareBuffer> HardwareBuffer::Create(
   return HardwareBuffer(spec, ahwb);
 }
 
-absl::StatusOr<HardwareBuffer> HardwareBuffer::WrapAndAquireAHardwareBuffer(
+absl::StatusOr<HardwareBuffer> HardwareBuffer::WrapAndAcquireAHardwareBuffer(
     AHardwareBuffer* ahw_buffer) {
   MP_ASSIGN_OR_RETURN(HardwareBufferSpec spec,
-                      AquireAHardwareBuffer(ahw_buffer));
+                      AcquireAHardwareBuffer(ahw_buffer));
   return HardwareBuffer(spec, ahw_buffer);
 }
 
@@ -86,7 +86,7 @@ absl::StatusOr<AHardwareBuffer*> HardwareBuffer::AllocateAHardwareBuffer(
   return output;
 }
 
-absl::StatusOr<HardwareBufferSpec> HardwareBuffer::AquireAHardwareBuffer(
+absl::StatusOr<HardwareBufferSpec> HardwareBuffer::AcquireAHardwareBuffer(
     AHardwareBuffer* ahw_buffer) {
   HardwareBufferSpec spec;
   if (__builtin_available(android 26, *)) {
