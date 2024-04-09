@@ -130,7 +130,7 @@ TEST(InferenceCalculatorUtilsTest,
   EXPECT_FALSE(status.ok());
   EXPECT_THAT(status.message(),
               HasSubstr("Interpreter's input size do not match the input "
-                        "tensor's size for index"));
+                        "tensor's size"));
 }
 
 TEST(InferenceCalculatorUtilsTest,

@@ -677,10 +677,12 @@ cc_library(
         ":inference_calculator_cc_proto",
         "//mediapipe/framework:port",
         "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@org_tensorflow//tensorflow/lite:framework_stable",
+        "@org_tensorflow//tensorflow/lite:type_to_tflitetype",
         "@org_tensorflow//tensorflow/lite/c:common",
     ] + select({
         "//conditions:default": [

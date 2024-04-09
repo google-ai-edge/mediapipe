@@ -22,9 +22,11 @@
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port.h"  // NOLINT: provides MEDIAPIPE_ANDROID/IOS
+#include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "tensorflow/lite/c/common.h"
 #include "tensorflow/lite/interpreter.h"
+#include "tensorflow/lite/portable_type_to_tflitetype.h"
 
 #if !defined(__EMSCRIPTEN__) || defined(__EMSCRIPTEN_PTHREADS__)
 #include "mediapipe/util/cpu_util.h"
@@ -72,28 +74,20 @@ bool DoTypesMatch(Tensor::ElementType tensor_type, TfLiteType tflite_type) {
 
 template <typename T>
 absl::Status CopyTensorBufferToInterpreter(const Tensor& input_tensor,
-                                           tflite::Interpreter& interpreter,
-                                           int input_tensor_index) {
+                                           TfLiteTensor& tflite_tensor) {
   auto input_tensor_view = input_tensor.GetCpuReadView();
   const T* input_tensor_buffer = input_tensor_view.buffer<T>();
-  if (input_tensor_buffer == nullptr) {
-    return absl::InternalError("Input tensor buffer is null.");
-  }
-  T* local_tensor_buffer =
-      interpreter.typed_input_tensor<T>(input_tensor_index);
-  if (local_tensor_buffer == nullptr) {
-    return absl::InvalidArgumentError(
-        "Interpreter's input tensor buffer is null, may because it does not "
-        "support the input type specified.");
-  }
-  const TfLiteTensor* local_tensor =
-      interpreter.input_tensor(input_tensor_index);
-  if (local_tensor->bytes != input_tensor.bytes()) {
-    return absl::InvalidArgumentError(
-        absl::StrCat("Interpreter's input size do not match the input tensor's "
-                     "size for index ",
-                     input_tensor_index, "."));
-  }
+  RET_CHECK(input_tensor_buffer) << "Input tensor buffer is null.";
+  RET_CHECK_EQ(tflite_tensor.type, tflite::typeToTfLiteType<T>())
+          .SetCode(absl::StatusCode::kInvalidArgument)
+      << "Interpreter's input tensor buffer is null, may because it does not "
+         "support the input type specified.";
+  void* local_tensor_buffer = tflite_tensor.data.raw;
+  RET_CHECK(local_tensor_buffer)
+      << "Interpreter's input tensor buffer is null.";
+  RET_CHECK_EQ(tflite_tensor.bytes, input_tensor.bytes())
+          .SetCode(absl::StatusCode::kInvalidArgument)
+      << "Interpreter's input size do not match the input tensor's size.";
   std::memcpy(local_tensor_buffer, input_tensor_buffer, input_tensor.bytes());
   return absl::OkStatus();
 }
@@ -114,8 +108,16 @@ int GetXnnpackNumThreads(
 absl::Status CopyCpuInputIntoInterpreterTensor(const Tensor& input_tensor,
                                                tflite::Interpreter& interpreter,
                                                int input_tensor_index) {
-  const TfLiteType interpreter_tensor_type =
-      interpreter.input_tensor(input_tensor_index)->type;
+  auto* tflite_tensor = interpreter.input_tensor(input_tensor_index);
+  RET_CHECK(tflite_tensor);
+  MP_RETURN_IF_ERROR(CopyCpuInputIntoTfLiteTensor(input_tensor, *tflite_tensor))
+      << " at index " << input_tensor_index;
+  return absl::OkStatus();
+}
+
+absl::Status CopyCpuInputIntoTfLiteTensor(const Tensor& input_tensor,
+                                          TfLiteTensor& tflite_tensor) {
+  const TfLiteType interpreter_tensor_type = tflite_tensor.type;
   const Tensor::ElementType input_tensor_type = input_tensor.element_type();
   if (!DoTypesMatch(input_tensor_type, interpreter_tensor_type)) {
     return absl::InvalidArgumentError(absl::StrCat(
@@ -125,13 +127,13 @@ absl::Status CopyCpuInputIntoInterpreterTensor(const Tensor& input_tensor,
   switch (interpreter_tensor_type) {
     case TfLiteType::kTfLiteFloat16:
     case TfLiteType::kTfLiteFloat32: {
-      MP_RETURN_IF_ERROR(CopyTensorBufferToInterpreter<float>(
-          input_tensor, interpreter, input_tensor_index));
+      MP_RETURN_IF_ERROR(
+          CopyTensorBufferToInterpreter<float>(input_tensor, tflite_tensor));
       break;
     }
     case TfLiteType::kTfLiteInt32: {
-      MP_RETURN_IF_ERROR(CopyTensorBufferToInterpreter<int>(
-          input_tensor, interpreter, input_tensor_index));
+      MP_RETURN_IF_ERROR(
+          CopyTensorBufferToInterpreter<int>(input_tensor, tflite_tensor));
       break;
     }
     default:
