@@ -14,6 +14,7 @@
 
 #include "mediapipe/calculators/tensor/inference_calculator_utils.h"
 
+#include <cstdint>
 #include <cstring>
 #include <ostream>
 #include <vector>
@@ -68,6 +69,8 @@ bool operator==(Tensor::ElementType tensor_type, TfLiteType tflite_type) {
       return tflite_type == TfLiteType::kTfLiteInt8;
     case Tensor::ElementType::kInt32:
       return tflite_type == TfLiteType::kTfLiteInt32;
+    case Tensor::ElementType::kInt64:
+      return tflite_type == TfLiteType::kTfLiteInt64;
     case Tensor::ElementType::kBool:
       return tflite_type == TfLiteType::kTfLiteBool;
     // Seems like TfLite does not have a char type support?
@@ -174,6 +177,11 @@ absl::Status CopyCpuInputIntoTfLiteTensor(const Tensor& input_tensor,
     case TfLiteType::kTfLiteInt32: {
       MP_RETURN_IF_ERROR(
           CopyTensorBufferToInterpreter<int>(input_tensor, tflite_tensor));
+      break;
+    }
+    case TfLiteType::kTfLiteInt64: {
+      MP_RETURN_IF_ERROR(
+          CopyTensorBufferToInterpreter<int64_t>(input_tensor, tflite_tensor));
       break;
     }
     default:

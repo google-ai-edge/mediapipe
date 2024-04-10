@@ -1,5 +1,6 @@
 #include "mediapipe/framework/formats/tensor.h"
 
+#include <cstdint>
 #include <cstring>
 #include <string>
 #include <vector>
@@ -33,6 +34,9 @@ TEST(General, TestDataTypes) {
 
   Tensor t_bool(Tensor::ElementType::kBool, Tensor::Shape{2, 3});
   EXPECT_EQ(t_bool.bytes(), t_bool.shape().num_elements() * sizeof(bool));
+
+  Tensor t_int64(Tensor::ElementType::kInt64, Tensor::Shape{2, 3});
+  EXPECT_EQ(t_int64.bytes(), t_int64.shape().num_elements() * sizeof(int64_t));
 }
 
 TEST(General, TestDynamic) {

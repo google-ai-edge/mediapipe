@@ -100,6 +100,23 @@ TEST(InferenceCalculatorUtilsTest,
 }
 
 TEST(InferenceCalculatorUtilsTest,
+     CopyCpuInputIntoInterpreterTensorWorksCorrectlyForInt64) {
+  tflite::Interpreter interpreter;
+  int tensor_index, tensor_len = 4;
+  AddInterpreterInput(kTfLiteInt64, tensor_len, tensor_index,
+                      /*allocate_tensor=*/true, interpreter);
+  std::vector<int64_t> values{1, 2, 3, 4};
+  int values_len = values.size();
+  Tensor tensor(ElementType::kInt64, Tensor::Shape({values_len}));
+  std::memcpy(tensor.GetCpuWriteView().buffer<int64_t>(), values.data(),
+              values_len * sizeof(int64_t));
+  MP_EXPECT_OK(
+      CopyCpuInputIntoInterpreterTensor(tensor, interpreter, tensor_index));
+  EXPECT_THAT(TfLiteInputTensorData<int64_t>(interpreter, tensor_index),
+              ElementsAreArray(values));
+}
+
+TEST(InferenceCalculatorUtilsTest,
      CopyCpuInputIntoInterpreterTensorWorksCorrectlyForFloat32) {
   tflite::Interpreter interpreter;
   int tensor_index, tensor_len = 4;

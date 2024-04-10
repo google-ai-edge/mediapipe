@@ -16,6 +16,7 @@
 #define MEDIAPIPE_FRAMEWORK_FORMATS_TENSOR_H_
 
 #include <algorithm>
+#include <cstdint>
 #include <functional>
 #include <initializer_list>
 #include <memory>
@@ -110,6 +111,7 @@ class Tensor {
     kUInt8,
     kInt8,
     kInt32,
+    kInt64,
     kChar,
     kBool
   };
@@ -334,6 +336,8 @@ class Tensor {
         return 1;
       case ElementType::kInt32:
         return sizeof(int32_t);
+      case ElementType::kInt64:
+        return sizeof(int64_t);
       case ElementType::kChar:
         return sizeof(char);
       case ElementType::kBool:
