@@ -45,8 +45,13 @@ public final class AndroidAssetUtil {
   /**
    * Initializes the native asset manager, which is used by native code to access assets directly.
    *
-   * <p>Note: When possible, using {@link AssetCache} is preferred for portability, since it does
-   * not require any special handling for Android assets on the native code side.
+   * <p>Note: native AssetManager is a singleton, so this initialization should happen once.
+   *
+   * <p>Note: native AssetManager, if initialized, is used by MediaPipe to load assets automatically
+   * (e.g. calculator calling GetResourceContents will also try loading from the assets).
+   *
+   * <p>Note: alternatively, you can use {@link AssetCache} to extract assets to app cache folder to
+   * access them by regular file paths (beware that cached resources may require versioning).
    */
   public static synchronized boolean initializeNativeAssetManager(Context androidContext) {
     return nativeInitializeAssetManager(
