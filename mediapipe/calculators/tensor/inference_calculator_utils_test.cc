@@ -278,5 +278,23 @@ TEST(InferenceCalculatorUtilsTest,
   EXPECT_THAT(status.message(), HasSubstr("Unsupported output data type:"));
 }
 
+TEST(InferenceCalculatorUtilsTest, ConvertTfLiteTensorToFloat32) {
+  const std::vector<float> expected_values{100.f, 200.f, 300.f,
+                                           400.f, 500.f, 600.f};
+
+  tflite::CastOpModel m({TensorType_INT32, {2, 3}},
+                        {TensorType_FLOAT32, {2, 3}});
+  m.PopulateTensor<int32_t>(m.input(), {100, 200, 300, 400, 500, 600});
+  ASSERT_EQ(m.Invoke(), kTfLiteOk);
+  EXPECT_THAT(m.ExtractVector<float>(m.output()),
+              ElementsAreArray(expected_values));
+
+  MP_ASSERT_OK_AND_ASSIGN(auto tensor,
+                          ConvertTfLiteTensorToTensor(*m.GetOutputTensor(0)));
+  EXPECT_THAT(absl::MakeConstSpan(tensor.GetCpuReadView().buffer<float>(),
+                                  tensor.shape().num_elements()),
+              ElementsAreArray(expected_values));
+}
+
 }  // namespace
 }  // namespace mediapipe

@@ -16,6 +16,7 @@
 #define MEDIAPIPE_CALCULATORS_TENSOR_INFERENCE_CALCULATOR_UTILS_H_
 
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "tensorflow/lite/interpreter.h"
@@ -42,6 +43,11 @@ absl::Status CopyInterpreterTensorIntoCpuOutput(
 
 absl::Status CopyTfLiteTensorIntoCpuOutput(const TfLiteTensor& tflite_tensor,
                                            Tensor& output_tensor);
+
+// Converts TfLiteTensor to mediapipe::Tensor, returns InvalidArgumentError if
+// the type is not supported.
+absl::StatusOr<Tensor> ConvertTfLiteTensorToTensor(
+    const TfLiteTensor& tflite_tensor);
 
 }  // namespace mediapipe
 

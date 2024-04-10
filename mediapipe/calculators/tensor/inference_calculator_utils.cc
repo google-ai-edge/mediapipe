@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/types/span.h"
@@ -213,6 +214,31 @@ absl::Status CopyTfLiteTensorIntoCpuOutput(const TfLiteTensor& tflite_tensor,
           absl::StrCat("Unsupported output data type: ", tflite_tensor_type));
   }
   return absl::OkStatus();
+}
+
+absl::StatusOr<Tensor> ConvertTfLiteTensorToTensor(
+    const TfLiteTensor& tflite_tensor) {
+  Tensor::Shape shape{
+      std::vector<int>{tflite_tensor.dims->data,
+                       tflite_tensor.dims->data + tflite_tensor.dims->size}};
+  switch (tflite_tensor.type) {
+    case TfLiteType::kTfLiteFloat16:
+    case TfLiteType::kTfLiteFloat32: {
+      Tensor output_tensor(Tensor::ElementType::kFloat32, shape);
+      MP_RETURN_IF_ERROR(
+          CopyTfLiteTensorToTensor<float>(tflite_tensor, output_tensor));
+      return output_tensor;
+    }
+    case TfLiteType::kTfLiteInt32: {
+      Tensor output_tensor(Tensor::ElementType::kInt32, shape);
+      MP_RETURN_IF_ERROR(
+          CopyTfLiteTensorToTensor<int>(tflite_tensor, output_tensor));
+      return output_tensor;
+    }
+    default:
+      return absl::InvalidArgumentError(
+          absl::StrCat("Unsupported output data type: ", tflite_tensor.type));
+  }
 }
 
 }  // namespace mediapipe
