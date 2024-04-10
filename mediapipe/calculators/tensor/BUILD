@@ -681,6 +681,7 @@ cc_library(
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
         "@org_tensorflow//tensorflow/lite:framework_stable",
         "@org_tensorflow//tensorflow/lite:type_to_tflitetype",
         "@org_tensorflow//tensorflow/lite/c:common",
@@ -701,8 +702,11 @@ cc_test(
         "//mediapipe/framework/port:gtest_main",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/types:span",
         "@org_tensorflow//tensorflow/lite:framework_stable",
         "@org_tensorflow//tensorflow/lite/c:common",
+        "@org_tensorflow//tensorflow/lite/kernels:cast_test_common",
+        "@org_tensorflow//tensorflow/lite/schema:schema_fbs",
     ],
 )
 

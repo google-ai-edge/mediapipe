@@ -36,6 +36,13 @@ absl::Status CopyCpuInputIntoInterpreterTensor(const Tensor& input_tensor,
 absl::Status CopyCpuInputIntoTfLiteTensor(const Tensor& input_tensor,
                                           TfLiteTensor& tflite_tensor);
 
+absl::Status CopyInterpreterTensorIntoCpuOutput(
+    const tflite::Interpreter& interpreter, int output_tensor_index,
+    Tensor& output_tensor);
+
+absl::Status CopyTfLiteTensorIntoCpuOutput(const TfLiteTensor& tflite_tensor,
+                                           Tensor& output_tensor);
+
 }  // namespace mediapipe
 
 #endif  // MEDIAPIPE_CALCULATORS_TENSOR_INFERENCE_CALCULATOR_UTILS_H_
