@@ -55,7 +55,8 @@ declare function importScripts(...urls: Array<string|URL>): void;
 /**
  * Detects image source size.
  */
-export function getImageSourceSize(imageSource: ImageSource): [number, number] {
+export function getImageSourceSize(imageSource: TexImageSource):
+    [number, number] {
   if ((imageSource as HTMLVideoElement).videoWidth !== undefined) {
     const videoElement = imageSource as HTMLVideoElement;
     return [videoElement.videoWidth, videoElement.videoHeight];
@@ -67,7 +68,7 @@ export function getImageSourceSize(imageSource: ImageSource): [number, number] {
     const videoFrame = imageSource as VideoFrame;
     return [videoFrame.displayWidth, videoFrame.displayHeight];
   } else {
-    const notVideoFrame = imageSource as Exclude<ImageSource, VideoFrame>;
+    const notVideoFrame = imageSource as Exclude<TexImageSource, VideoFrame>;
     return [notVideoFrame.width, notVideoFrame.height];
   }
 }
@@ -186,7 +187,7 @@ export class GraphRunner implements GraphRunnerApi {
    * Bind texture to our internal canvas, and upload image source to GPU.
    * Returns tuple [width, height] of texture.  Intended for internal usage.
    */
-  bindTextureToStream(imageSource: ImageSource, streamNamePtr?: number):
+  bindTextureToStream(imageSource: TexImageSource, streamNamePtr?: number):
       [number, number] {
     if (!this.wasmModule.canvas) {
       throw new Error('No OpenGL canvas configured.');
@@ -238,7 +239,7 @@ export class GraphRunner implements GraphRunnerApi {
    * @param timestamp The timestamp of the current frame, in ms.
    * @return texture? The WebGL texture reference, if one was produced.
    */
-  processGl(imageSource: ImageSource, timestamp: number): WebGLTexture
+  processGl(imageSource: TexImageSource, timestamp: number): WebGLTexture
       |undefined {
     // Bind to default input stream
     const [width, height] = this.bindTextureToStream(imageSource);
@@ -395,7 +396,8 @@ export class GraphRunner implements GraphRunnerApi {
 
   /** {@override GraphRunnerApi} */
   addGpuBufferToStream(
-      imageSource: ImageSource, streamName: string, timestamp: number): void {
+      imageSource: TexImageSource, streamName: string,
+      timestamp: number): void {
     this.wrapStringPtr(streamName, (streamNamePtr: number) => {
       const [width, height] =
           this.bindTextureToStream(imageSource, streamNamePtr);

@@ -1,5 +1,4 @@
 import {EmptyPacketListener, ErrorListener, SimpleListener, VectorListener} from './listener_types';
-import {WasmModule} from './wasm_module';
 
 /**
  * This file can serve as a common interface for most MediaPipe-based TypeScript
@@ -25,9 +24,10 @@ export {
 
 /**
  * Valid types of image sources which we can run our GraphRunner over.
+ *
+ * @deprecated Use TexImageSource instead.
  */
-export type ImageSource = HTMLCanvasElement|HTMLVideoElement|HTMLImageElement|
-    ImageData|ImageBitmap|VideoFrame;
+export type ImageSource = TexImageSource;
 
 /**
  * Simple interface for a class to run an arbitrary MediaPipe graph on web, and
@@ -242,7 +242,7 @@ export interface GraphRunnerApi {
    * @param timestamp The timestamp of the input frame, in ms.
    */
   addGpuBufferToStream(
-      imageSource: ImageSource, streamName: string, timestamp: number): void;
+      imageSource: TexImageSource, streamName: string, timestamp: number): void;
 
   /**
    * Sends a boolean packet into the specified stream at the given timestamp.
