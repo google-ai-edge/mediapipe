@@ -21,7 +21,7 @@ import {CachedGraphRunner, TaskRunner,} from '../../../../tasks/web/core/task_ru
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {LlmInferenceGraphOptions} from '../../../../tasks/web/genai/llm_inference/proto/llm_inference_graph_options_pb';
 import {WasmModule} from '../../../../web/graph_runner/graph_runner';
-import {SupportStreamingReader, StreamingReader} from '../../../../web/graph_runner/graph_runner_streaming_reader';
+import {StreamingReader, SupportStreamingReader} from '../../../../web/graph_runner/graph_runner_streaming_reader';
 import {SupportWebGpu} from '../../../../web/graph_runner/graph_runner_webgpu';
 import {DetokenizerCalculatorOptions} from '../../../../tasks/cc/genai/inference/calculators/detokenizer_calculator_pb';
 import {LlmGpuCalculatorOptions} from '../../../../tasks/cc/genai/inference/calculators/llm_gpu_calculator_pb';
@@ -197,7 +197,7 @@ export class LlmInference extends TaskRunner {
     // TODO: b/324482487 - Support customizing config for Web task of LLM
     // Inference.
     if (this.isProcessing) {
-      throw new Error("Cannot set options while loading or processing.");
+      throw new Error('Cannot set options while loading or processing.');
     }
     this.isProcessing = true;
 
@@ -323,16 +323,16 @@ export class LlmInference extends TaskRunner {
    * @return The number of tokens in the resulting tokenization of the text.
    *         May return undefined if an error occurred.
    */
-  sizeInTokens(text: string): number | undefined {
+  sizeInTokens(text: string): number|undefined {
     if (this.isProcessing) {
       throw new Error('Previous invocation or loading is still ongoing.');
     }
     this.isProcessing = true;
     this.latestTokenCostQueryResult = undefined;
     this.graphRunner.addStringToStream(
-      text,
-      TOKEN_COST_INPUT_STREAM,
-      this.getSynctheticTimestamp(),
+        text,
+        TOKEN_COST_INPUT_STREAM,
+        this.getSynctheticTimestamp(),
     );
     this.finishProcessing();
     this.isProcessing = false;
@@ -411,11 +411,11 @@ export class LlmInference extends TaskRunner {
       this.setLatestOutputTimestamp(timestamp);
     });
 
-    this.graphRunner.attachIntListener(TOKEN_COST_OUTPUT_STREAM,
-        (cost, timestamp) => {
-      this.latestTokenCostQueryResult = cost;
-      this.setLatestOutputTimestamp(timestamp);
-    });
+    this.graphRunner.attachIntListener(
+        TOKEN_COST_OUTPUT_STREAM, (cost, timestamp) => {
+          this.latestTokenCostQueryResult = cost;
+          this.setLatestOutputTimestamp(timestamp);
+        });
 
     if (this.streamingReader) {
       (this.graphRunner as unknown as StreamingReaderWebGpuGraphRunner)
@@ -483,7 +483,7 @@ export class LlmInference extends TaskRunner {
         'PROMPT:' +
         'prompt');
     tokenizerNode.addOutputSidePacket(
-        'PROCESSOR:' +
+        'PROCESSOR_GETTER:' +
         '__input_side_1');
     tokenizerNode.addOutputSidePacket(
         'BYTES_TO_UNICODE_MAPPING:' +
@@ -569,7 +569,7 @@ export class LlmInference extends TaskRunner {
         'IDS:' +
         '__stream_3');
     detokenizerNode.addInputSidePacket(
-        'PROCESSOR:' +
+        'PROCESSOR_GETTER:' +
         '__input_side_1');
     detokenizerNode.addInputSidePacket(
         'BYTES_TO_UNICODE_MAPPING:' +
@@ -585,7 +585,7 @@ export class LlmInference extends TaskRunner {
     const tokenCostNode = new CalculatorGraphConfig.Node();
     tokenCostNode.setCalculator('TokenCostCalculator');
     tokenCostNode.addInputStream('PROMPT:' + TOKEN_COST_INPUT_STREAM);
-    tokenCostNode.addInputSidePacket('PROCESSOR:__input_side_1');
+    tokenCostNode.addInputSidePacket('PROCESSOR_GETTER:__input_side_1');
     tokenCostNode.addInputSidePacket('BYTES_TO_UNICODE_MAPPING:__input_side_2');
     tokenCostNode.addOutputStream('NUM_TOKENS:' + TOKEN_COST_OUTPUT_STREAM);
     graphConfig.addNode(tokenCostNode);
