@@ -85,8 +85,11 @@ class TfliteModelData : public ModelData {
     return static_cast<odml::infra::proto::LlmModelType>(metadata->buffer());
   }
 
-  // TODO: b/327440108 - Support LoRA with tflite.
-  std::optional<int> LoRARank() override { return std::nullopt; }
+  std::optional<int> LoRARank() override {
+    const tflite::Metadata* metadata = GetMetadata(kLoRARank);
+    if (metadata == nullptr) return std::nullopt;
+    return static_cast<int>(metadata->buffer());
+  }
 
   const odml::infra::proto::LlmParameters& GetLlmParameters() override {
     return llm_parameters_;
@@ -456,6 +459,13 @@ absl::StatusOr<std::shared_ptr<ModelData>> ModelData::Create(
 // static
 absl::StatusOr<std::shared_ptr<ModelData>> ModelData::CreateLoRAFromPath(
     absl::string_view lora_path) {
+  // If the path is not a directory, it should be a tflite file.
+  if (!mediapipe::file::IsDirectory(lora_path).ok()) {
+    MP_ASSIGN_OR_RETURN(auto tflite_file, ScopedFile::Open(lora_path));
+    return ModelData::Create(std::move(tflite_file));
+  }
+
+  // Otherwise, we expect the combined GPU model format.
   MP_ASSIGN_OR_RETURN(
       auto model_proto_file,
       ScopedFile::Open(mediapipe::file::JoinPath(lora_path, kLoraPbFileName)));

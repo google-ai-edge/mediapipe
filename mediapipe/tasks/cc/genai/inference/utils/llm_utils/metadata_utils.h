@@ -25,6 +25,7 @@ namespace mediapipe::tasks::genai::llm_utils {
 constexpr absl::string_view kLlmModelTypeName = "odml.infra.LlmModelType";
 constexpr absl::string_view kLlmBackendName = "backend";
 constexpr absl::string_view kSpmVocabName = "spm_vocab_model";
+constexpr absl::string_view kLoRARank = "lora_rank";
 
 // Retrieve LlmModelType from tflite flatbuffer metadata.
 absl::StatusOr<odml::infra::proto::LlmModelType> GetLlmModelType(

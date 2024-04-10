@@ -16,6 +16,7 @@
 #define MEDIAPIPE_TASKS_GENAI_INFERENCE_UTILS_LLM_UTILS_MODEL_DATA_H_
 
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
@@ -130,8 +131,7 @@ class ModelData {
       absl::string_view weight_path, absl::string_view spm_path);
 
   // Loads `ModelData` for LoRA weights located at `lora_path`. This loader
-  // currently only supports the combined GPU model format.
-  // TODO: b/327440108 - Support LoRA with tflite.
+  // expects either the combined GPU model format or a single tflite file.
   static absl::StatusOr<std::shared_ptr<ModelData>> CreateLoRAFromPath(
       absl::string_view lora_path);
 
