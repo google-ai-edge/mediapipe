@@ -208,5 +208,5 @@ cc_library(
         "android_asset_util_jni.h",
         "android_packet_creator_jni.h",
     ],
-    visibility = [":__pkg__"],
+    visibility = ["//visibility:private"],
 )
