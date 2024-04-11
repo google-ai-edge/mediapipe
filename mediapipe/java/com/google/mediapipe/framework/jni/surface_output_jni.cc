@@ -56,13 +56,6 @@ JNIEXPORT void JNICALL MEDIAPIPE_SURFACE_OUTPUT_METHOD(nativeSetFlipY)(
   surface_holder->flip_y = flip;
 }
 
-JNIEXPORT void JNICALL MEDIAPIPE_SURFACE_OUTPUT_METHOD(
-    nativeSetUpdatePresentationTime)(JNIEnv* env, jobject thiz, jlong packet,
-                                     jboolean update_presentation_time) {
-  mediapipe::EglSurfaceHolder* surface_holder = GetSurfaceHolder(packet);
-  surface_holder->update_presentation_time = update_presentation_time;
-}
-
 JNIEXPORT void JNICALL MEDIAPIPE_SURFACE_OUTPUT_METHOD(nativeSetSurface)(
     JNIEnv* env, jobject thiz, jlong context, jlong packet, jobject surface) {
 #ifdef __ANDROID__

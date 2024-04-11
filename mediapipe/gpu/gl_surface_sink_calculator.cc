@@ -33,15 +33,6 @@
 
 #if HAS_EGL
 
-#ifdef __ANDROID__
-#include "EGL/eglext.h"
-#ifdef EGL_ANDROID_presentation_time
-auto eglPresentationTimeANDROID =
-    reinterpret_cast<PFNEGLPRESENTATIONTIMEANDROIDPROC>(
-        eglGetProcAddress("eglPresentationTimeANDROID"));
-#endif  // EGL_ANDROID_presentation_time
-#endif  // __ANDROID__
-
 namespace mediapipe {
 namespace api2 {
 
@@ -171,16 +162,6 @@ absl::Status GlSurfaceSinkCalculator::Process(CalculatorContext* cc) {
                             /*flip_texture=*/surface_holder_->flip_y));
 
     glBindTexture(src.target(), 0);
-
-#ifdef EGL_ANDROID_presentation_time
-    // Propagate the packet timestamp as a presentation timestamp on Android.
-    // This enables consumers like ImageReader or SurfaceTexture to recover it.
-    if (surface_holder_->update_presentation_time) {
-      success = eglPresentationTimeANDROID(
-          display, surface, packet.Timestamp().Microseconds() * 1000);
-      RET_CHECK(success) << "failed to set timestamp";
-    }
-#endif
 
     success = eglSwapBuffers(display, surface);
     RET_CHECK(success) << "failed to swap buffers";
