@@ -17,69 +17,25 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 licenses(["notice"])
 
 cc_library(
-    name = "image_segmenter_result",
-    hdrs = ["image_segmenter_result.h"],
+    name = "interactive_segmenter_lib",
+    srcs = ["interactive_segmenter.cc"],
+    hdrs = ["interactive_segmenter.h"],
     visibility = ["//visibility:public"],
     deps = [
-        "//mediapipe/tasks/c/vision/core:common",
-    ],
-)
-
-cc_library(
-    name = "image_segmenter_result_converter",
-    srcs = ["image_segmenter_result_converter.cc"],
-    hdrs = ["image_segmenter_result_converter.h"],
-    deps = [
-        ":image_segmenter_result",
-        "//mediapipe/tasks/c/vision/core:common",
-        "//mediapipe/tasks/cc/vision/image_segmenter:image_segmenter_result",
-    ],
-)
-
-cc_test(
-    name = "image_segmenter_result_converter_test",
-    srcs = ["image_segmenter_result_converter_test.cc"],
-    data = [
-        "//mediapipe/framework/formats:image_frame_opencv",
-        "//mediapipe/framework/port:opencv_core",
-        "//mediapipe/framework/port:opencv_imgproc",
-        "//mediapipe/tasks/testdata/vision:test_images",
-    ],
-    linkstatic = 1,
-    deps = [
-        ":image_segmenter_result",
-        ":image_segmenter_result_converter",
-        "//mediapipe/framework/deps:file_path",
-        "//mediapipe/framework/formats:image",
-        "//mediapipe/framework/port:gtest",
-        "//mediapipe/framework/port:gtest_main",
-        "//mediapipe/tasks/c/vision/core:common",
-        "//mediapipe/tasks/cc/vision/image_segmenter:image_segmenter_result",
-        "//mediapipe/tasks/cc/vision/utils:image_utils",
-        "@com_google_absl//absl/flags:flag",
-        "@com_google_googletest//:gtest_main",
-    ],
-)
-
-cc_library(
-    name = "image_segmenter_lib",
-    srcs = ["image_segmenter.cc"],
-    hdrs = ["image_segmenter.h"],
-    visibility = ["//visibility:public"],
-    deps = [
-        ":image_segmenter_result",
-        ":image_segmenter_result_converter",
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/tasks/c/components/containers:keypoint",
         "//mediapipe/tasks/c/core:base_options",
         "//mediapipe/tasks/c/core:base_options_converter",
-        "//mediapipe/tasks/c/test:test_utils",
         "//mediapipe/tasks/c/vision/core:common",
+        "//mediapipe/tasks/c/vision/image_segmenter:image_segmenter_result",
+        "//mediapipe/tasks/c/vision/image_segmenter:image_segmenter_result_converter",
+        "//mediapipe/tasks/cc/components/containers:keypoint",
         "//mediapipe/tasks/cc/vision/core:running_mode",
-        "//mediapipe/tasks/cc/vision/image_segmenter",
-        "//mediapipe/tasks/cc/vision/image_segmenter:image_segmenter_result",
+        "//mediapipe/tasks/cc/vision/interactive_segmenter",
         "//mediapipe/tasks/cc/vision/utils:image_utils",
         "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
     ],
@@ -87,8 +43,8 @@ cc_library(
 )
 
 cc_test(
-    name = "image_segmenter_test",
-    srcs = ["image_segmenter_test.cc"],
+    name = "interactive_segmenter_test",
+    srcs = ["interactive_segmenter_test.cc"],
     data = [
         "//mediapipe/framework/formats:image_frame_opencv",
         "//mediapipe/framework/port:opencv_core",
@@ -98,13 +54,14 @@ cc_test(
     ],
     linkstatic = 1,
     deps = [
-        ":image_segmenter_lib",
-        ":image_segmenter_result",
+        ":interactive_segmenter_lib",
         "//mediapipe/framework/deps:file_path",
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/port:gtest",
+        "//mediapipe/tasks/c/components/containers:keypoint",
         "//mediapipe/tasks/c/test:test_utils",
         "//mediapipe/tasks/c/vision/core:common",
+        "//mediapipe/tasks/c/vision/image_segmenter:image_segmenter_result",
         "//mediapipe/tasks/cc/vision/utils:image_utils",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
@@ -113,11 +70,11 @@ cc_test(
 )
 
 # bazel build -c opt --linkopt -s --strip always --define MEDIAPIPE_DISABLE_GPU=1 \
-# //mediapipe/tasks/c/vision/image_segmenter:libimage_segmenter.so
+# //mediapipe/tasks/c/vision/interactive_segmenter:libinteractive_segmenter.so
 cc_binary(
-    name = "libimage_segmenter.so",
+    name = "libinteractive_segmenter.so",
     linkopts = [
-        "-Wl,-soname=libimage_segmenter.so",
+        "-Wl,-soname=libinteractive_segmenter.so",
         "-fvisibility=hidden",
     ],
     linkshared = True,
@@ -126,15 +83,15 @@ cc_binary(
         "nobuilder",
         "notap",
     ],
-    deps = [":image_segmenter_lib"],
+    deps = [":interactive_segmenter_lib"],
 )
 
 # bazel build --config darwin_arm64 -c opt --strip always --define MEDIAPIPE_DISABLE_GPU=1 \
-# //mediapipe/tasks/c/vision/image_segmenter:libimage_segmenter.dylib
+# //mediapipe/tasks/c/vision/interactive_segmenter:libinteractive_segmenter.dylib
 cc_binary(
-    name = "libimage_segmenter.dylib",
+    name = "libinteractive_segmenter.dylib",
     linkopts = [
-        "-Wl,-install_name,libimage_segmenter.dylib",
+        "-Wl,-install_name,libinteractive_segmenter.dylib",
         "-fvisibility=hidden",
     ],
     linkshared = True,
@@ -143,5 +100,5 @@ cc_binary(
         "nobuilder",
         "notap",
     ],
-    deps = [":image_segmenter_lib"],
+    deps = [":interactive_segmenter_lib"],
 )

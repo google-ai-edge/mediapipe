@@ -33,7 +33,7 @@ extern "C" {
 // element represents a single hand detected in the image.
 struct PoseLandmarkerResult {
   // Segmentation masks for pose.
-  struct MpImage* segmentation_masks;
+  struct MpMask* segmentation_masks;
 
   // The number of elements in the segmentation_masks array.
   uint32_t segmentation_masks_count;
