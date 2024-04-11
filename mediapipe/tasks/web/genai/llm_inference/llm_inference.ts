@@ -74,7 +74,7 @@ export class LlmInference extends TaskRunner {
   private static readonly NEW_LINE = '<0x0A>';
   private static readonly EOD = '\\[eod\\]';
   private static readonly LLM_MODEL_NAME = 'llm.tflite';
-  private static readonly TOKENIZER_MODE_IN_TFLITE_KEY = 'spm_vocab_model';
+  private static readonly TOKENIZER_MODEL_IN_TFLITE_KEY = 'spm_vocab_model';
 
   private readonly generationResult: string[] = [];
   private readonly options: LlmInferenceGraphOptions;
@@ -472,12 +472,24 @@ export class LlmInference extends TaskRunner {
     modelDataNode.addOutputSidePacket(
         'MODEL_DATA:' +
         '__side_packet_1');
+    modelDataNode.addOutputSidePacket(
+        'MODEL_TYPE:' +
+        'model_type');
     modelDataNode.addInputSidePacket(
         'READ_DATA_FN:' +
         'streaming_reader');
     graphConfig.addNode(modelDataNode);
 
     // Tokenizer Node
+    const gpt2NormalizationNode = new CalculatorGraphConfig.Node();
+    gpt2NormalizationNode.setCalculator('Gpt2UnicodeMappingCalculator');
+    gpt2NormalizationNode.addInputSidePacket(
+        'MODEL_DATA:' +
+        'model_type');
+    gpt2NormalizationNode.addOutputSidePacket(
+        'BYTES_TO_UNICODE_MAPPING:' +
+        'tokenizer_mapping');
+
     const tokenizerOptionsProto = new Any();
     tokenizerOptionsProto.setTypeUrl(
         'type.googleapis.com/odml.infra.proto.TokenizerCalculatorOptions');
@@ -486,7 +498,7 @@ export class LlmInference extends TaskRunner {
 
     const modelFile = new TokenizerCalculatorOptions.TfLiteModelFile();
     modelFile.setSpmModelKeyInMetadata(
-        LlmInference.TOKENIZER_MODE_IN_TFLITE_KEY);
+        LlmInference.TOKENIZER_MODEL_IN_TFLITE_KEY);
     tokenizerOptions.setTfliteModelFile(modelFile);
 
     tokenizerOptions.setStartTokenId(2);
@@ -500,12 +512,12 @@ export class LlmInference extends TaskRunner {
     tokenizerNode.addInputStream(
         'PROMPT:' +
         'prompt');
+    tokenizerNode.addInputSidePacket(
+        'BYTES_TO_UNICODE_MAPPING:' +
+        'tokenizer_mapping');
     tokenizerNode.addOutputSidePacket(
         'PROCESSOR_GETTER:' +
         '__input_side_1');
-    tokenizerNode.addOutputSidePacket(
-        'BYTES_TO_UNICODE_MAPPING:' +
-        '__input_side_2');
     tokenizerNode.addOutputStream(
         'IDS:' +
         '__stream_0');
@@ -591,7 +603,7 @@ export class LlmInference extends TaskRunner {
         '__input_side_1');
     detokenizerNode.addInputSidePacket(
         'BYTES_TO_UNICODE_MAPPING:' +
-        '__input_side_2');
+        'tokenizer_mapping');
     detokenizerNode.addInputSidePacket(
         'MODEL_DATA:' +
         '__side_packet_1');
