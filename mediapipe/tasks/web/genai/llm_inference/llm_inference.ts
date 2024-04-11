@@ -510,7 +510,7 @@ export class LlmInference extends TaskRunner {
         'MODEL_DATA:' +
         '__side_packet_1');
     tokenizerNode.addInputStream(
-        'PROMPT:' +
+        'PROMPT_AND_INPUT_OPTIONS:' +
         'prompt');
     tokenizerNode.addInputSidePacket(
         'BYTES_TO_UNICODE_MAPPING:' +
@@ -519,7 +519,7 @@ export class LlmInference extends TaskRunner {
         'PROCESSOR_GETTER:' +
         '__input_side_1');
     tokenizerNode.addOutputStream(
-        'IDS:' +
+        'IDS_AND_INPUT_OPTIONS:' +
         '__stream_0');
     graphConfig.addNode(tokenizerNode);
 
@@ -596,7 +596,7 @@ export class LlmInference extends TaskRunner {
     detokenizerNode.setCalculator('DetokenizerCalculator');
     detokenizerNode.addNodeOptions(detokenizerOptionsProto);
     detokenizerNode.addInputStream(
-        'IDS:' +
+        'IDS_AND_INPUT_OPTIONS:' +
         '__stream_3');
     detokenizerNode.addInputSidePacket(
         'PROCESSOR_GETTER:' +
@@ -607,7 +607,7 @@ export class LlmInference extends TaskRunner {
     detokenizerNode.addInputSidePacket(
         'MODEL_DATA:' +
         '__side_packet_1');
-    detokenizerNode.addOutputStream('FINISH:finish');
+    detokenizerNode.addOutputStream('FINISH_AND_INPUT_OPTIONS:finish');
     detokenizerNode.addOutputStream('WORDS:' + OUTPUT_STREAM);
     graphConfig.addNode(detokenizerNode);
 
