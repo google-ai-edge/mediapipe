@@ -17,6 +17,16 @@ package(default_visibility = ["//visibility:public"])
 licenses(["notice"])
 
 objc_library(
+    name = "MPPAudioData",
+    srcs = ["sources/MPPAudioData.m"],
+    hdrs = ["sources/MPPAudioData.h"],
+    deps = [
+        ":MPPFloatBuffer",
+        ":MPPFloatRingBuffer",
+    ],
+)
+
+objc_library(
     name = "MPPFloatBuffer",
     srcs = ["sources/MPPFloatBuffer.m"],
     hdrs = ["sources/MPPFloatBuffer.h"],
