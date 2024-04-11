@@ -16,15 +16,17 @@
 // tf::Tensor.
 
 #include <cstdint>
+#include <memory>
+#include <vector>
 
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
+#include "absl/status/status.h"
 #include "mediapipe/calculators/tensorflow/vector_int_to_tensor_calculator_options.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
 #include "tensorflow/core/framework/tensor.h"
-#include "tensorflow/core/framework/types.h"
+#include "tensorflow/core/framework/tensor_shape.h"
 
 namespace mediapipe {
 
@@ -35,7 +37,10 @@ const char kTensorOut[] = "TENSOR_OUT";
 namespace {
 auto& INPUT_1D = VectorIntToTensorCalculatorOptions::INPUT_1D;
 auto& INPUT_2D = VectorIntToTensorCalculatorOptions::INPUT_2D;
-}  // namespace
+
+bool RequiresUnsignedType(tensorflow::DataType data_type) {
+  return data_type == tensorflow::DT_UINT32;
+}
 
 namespace tf = ::tensorflow;
 
@@ -44,11 +49,75 @@ void AssignMatrixValue(int r, int c, int value, tf::Tensor* output_tensor) {
   output_tensor->tensor<TensorType, 2>()(r, c) = value;
 }
 
+template <typename InputType, typename DataType>
+absl::Status ProcessVectorIntToTensor(
+    const VectorIntToTensorCalculatorOptions& options, CalculatorContext* cc) {
+  tf::TensorShape tensor_shape;
+  if (options.input_size() == INPUT_2D) {
+    const std::vector<std::vector<InputType>>& input =
+        cc->Inputs()
+            .Tag(kVectorInt)
+            .Value()
+            .Get<std::vector<std::vector<InputType>>>();
+
+    const int32_t rows = input.size();
+    ABSL_CHECK_GE(rows, 1);
+    const int32_t cols = input[0].size();
+    ABSL_CHECK_GE(cols, 1);
+    for (int i = 1; i < rows; ++i) {
+      ABSL_CHECK_EQ(input[i].size(), cols);
+    }
+    if (options.transpose()) {
+      tensor_shape = tf::TensorShape({cols, rows});
+    } else {
+      tensor_shape = tf::TensorShape({rows, cols});
+    }
+    auto output =
+        std::make_unique<tf::Tensor>(options.tensor_data_type(), tensor_shape);
+    if (options.transpose()) {
+      for (int r = 0; r < rows; ++r) {
+        for (int c = 0; c < cols; ++c) {
+          AssignMatrixValue<DataType>(c, r, input[r][c], output.get());
+        }
+      }
+    } else {
+      for (int r = 0; r < rows; ++r) {
+        for (int c = 0; c < cols; ++c) {
+          AssignMatrixValue<DataType>(r, c, input[r][c], output.get());
+        }
+      }
+    }
+    cc->Outputs().Tag(kTensorOut).Add(output.release(), cc->InputTimestamp());
+  } else if (options.input_size() == INPUT_1D) {
+    std::vector<InputType> input;
+    if (cc->Inputs().HasTag(kSingleInt)) {
+      input.push_back(cc->Inputs().Tag(kSingleInt).Get<InputType>());
+    } else {
+      input =
+          cc->Inputs().Tag(kVectorInt).Value().Get<std::vector<InputType>>();
+    }
+    ABSL_CHECK_GE(input.size(), 1);
+    const int32_t length = input.size();
+    tensor_shape = tf::TensorShape({length});
+    auto output =
+        std::make_unique<tf::Tensor>(options.tensor_data_type(), tensor_shape);
+    for (int i = 0; i < length; ++i) {
+      output->tensor<DataType, 1>()(i) = input.at(i);
+    }
+    cc->Outputs().Tag(kTensorOut).Add(output.release(), cc->InputTimestamp());
+  } else {
+    ABSL_LOG(FATAL) << "input size not supported";
+  }
+  return absl::OkStatus();
+}
+
+}  // namespace
+
 // The calculator expects one input (a packet containing a single int or
 // vector<int> or vector<vector<int>>) and generates one output (a packet
 // containing a tf::Tensor containing the same data). The output tensor will be
 // either 1D or 2D with dimensions corresponding to the input vector int. It
-// will hold DT_INT32 or DT_UINT8 or DT_INT64 values.
+// will hold DT_INT32 or DT_UINT32 or DT_UINT8 or DT_INT64 values.
 //
 // Example config:
 // node {
@@ -85,9 +154,17 @@ absl::Status VectorIntToTensorCalculator::GetContract(CalculatorContract* cc) {
     cc->Inputs().Tag(kVectorInt).Set<std::vector<std::vector<int>>>();
   } else if (options.input_size() == INPUT_1D) {
     if (cc->Inputs().HasTag(kSingleInt)) {
-      cc->Inputs().Tag(kSingleInt).Set<int>();
+      if (RequiresUnsignedType(options.tensor_data_type())) {
+        cc->Inputs().Tag(kSingleInt).Set<uint32_t>();
+      } else {
+        cc->Inputs().Tag(kSingleInt).Set<int>();
+      }
     } else {
-      cc->Inputs().Tag(kVectorInt).Set<std::vector<int>>();
+      if (RequiresUnsignedType(options.tensor_data_type())) {
+        cc->Inputs().Tag(kVectorInt).Set<std::vector<uint32_t>>();
+      } else {
+        cc->Inputs().Tag(kVectorInt).Set<std::vector<int>>();
+      }
     }
   } else {
     ABSL_LOG(FATAL) << "input size not supported";
@@ -102,104 +179,25 @@ absl::Status VectorIntToTensorCalculator::Open(CalculatorContext* cc) {
   options_ = cc->Options<VectorIntToTensorCalculatorOptions>();
   RET_CHECK(options_.tensor_data_type() == tf::DT_UINT8 ||
             options_.tensor_data_type() == tf::DT_INT32 ||
+            options_.tensor_data_type() == tf::DT_UINT32 ||
             options_.tensor_data_type() == tf::DT_INT64)
       << "Output tensor data type is not supported.";
   return absl::OkStatus();
 }
 
 absl::Status VectorIntToTensorCalculator::Process(CalculatorContext* cc) {
-  tf::TensorShape tensor_shape;
-  if (options_.input_size() == INPUT_2D) {
-    const std::vector<std::vector<int>>& input =
-        cc->Inputs()
-            .Tag(kVectorInt)
-            .Value()
-            .Get<std::vector<std::vector<int>>>();
-
-    const int32_t rows = input.size();
-    ABSL_CHECK_GE(rows, 1);
-    const int32_t cols = input[0].size();
-    ABSL_CHECK_GE(cols, 1);
-    for (int i = 1; i < rows; ++i) {
-      ABSL_CHECK_EQ(input[i].size(), cols);
-    }
-    if (options_.transpose()) {
-      tensor_shape = tf::TensorShape({cols, rows});
-    } else {
-      tensor_shape = tf::TensorShape({rows, cols});
-    }
-    auto output = ::absl::make_unique<tf::Tensor>(options_.tensor_data_type(),
-                                                  tensor_shape);
-    if (options_.transpose()) {
-      for (int r = 0; r < rows; ++r) {
-        for (int c = 0; c < cols; ++c) {
-          switch (options_.tensor_data_type()) {
-            case tf::DT_INT64:
-              AssignMatrixValue<int64_t>(c, r, input[r][c], output.get());
-              break;
-            case tf::DT_UINT8:
-              AssignMatrixValue<uint8_t>(c, r, input[r][c], output.get());
-              break;
-            case tf::DT_INT32:
-              AssignMatrixValue<int>(c, r, input[r][c], output.get());
-              break;
-            default:
-              ABSL_LOG(FATAL) << "tensor data type is not supported.";
-          }
-        }
-      }
-    } else {
-      for (int r = 0; r < rows; ++r) {
-        for (int c = 0; c < cols; ++c) {
-          switch (options_.tensor_data_type()) {
-            case tf::DT_INT64:
-              AssignMatrixValue<int64_t>(r, c, input[r][c], output.get());
-              break;
-            case tf::DT_UINT8:
-              AssignMatrixValue<uint8_t>(r, c, input[r][c], output.get());
-              break;
-            case tf::DT_INT32:
-              AssignMatrixValue<int>(r, c, input[r][c], output.get());
-              break;
-            default:
-              ABSL_LOG(FATAL) << "tensor data type is not supported.";
-          }
-        }
-      }
-    }
-    cc->Outputs().Tag(kTensorOut).Add(output.release(), cc->InputTimestamp());
-  } else if (options_.input_size() == INPUT_1D) {
-    std::vector<int> input;
-    if (cc->Inputs().HasTag(kSingleInt)) {
-      input.push_back(cc->Inputs().Tag(kSingleInt).Get<int>());
-    } else {
-      input = cc->Inputs().Tag(kVectorInt).Value().Get<std::vector<int>>();
-    }
-    ABSL_CHECK_GE(input.size(), 1);
-    const int32_t length = input.size();
-    tensor_shape = tf::TensorShape({length});
-    auto output = ::absl::make_unique<tf::Tensor>(options_.tensor_data_type(),
-                                                  tensor_shape);
-    for (int i = 0; i < length; ++i) {
-      switch (options_.tensor_data_type()) {
-        case tf::DT_INT64:
-          output->tensor<int64_t, 1>()(i) = input.at(i);
-          break;
-        case tf::DT_UINT8:
-          output->tensor<uint8_t, 1>()(i) = input.at(i);
-          break;
-        case tf::DT_INT32:
-          output->tensor<int, 1>()(i) = input.at(i);
-          break;
-        default:
-          ABSL_LOG(FATAL) << "tensor data type is not supported.";
-      }
-    }
-    cc->Outputs().Tag(kTensorOut).Add(output.release(), cc->InputTimestamp());
-  } else {
-    ABSL_LOG(FATAL) << "input size not supported";
+  switch (options_.tensor_data_type()) {
+    case tf::DT_INT64:
+      return ProcessVectorIntToTensor<int, int64_t>(options_, cc);
+    case tf::DT_UINT8:
+      return ProcessVectorIntToTensor<int, uint8_t>(options_, cc);
+    case tf::DT_INT32:
+      return ProcessVectorIntToTensor<int, int>(options_, cc);
+    case tf::DT_UINT32:
+      return ProcessVectorIntToTensor<uint32_t, uint32_t>(options_, cc);
+    default:
+      ABSL_LOG(FATAL) << "tensor data type is not supported.";
   }
-  return absl::OkStatus();
 }
 
 }  // namespace mediapipe

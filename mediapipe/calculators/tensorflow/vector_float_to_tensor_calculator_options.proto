@@ -17,6 +17,7 @@ syntax = "proto2";
 package mediapipe;
 
 import "mediapipe/framework/calculator.proto";
+import "tensorflow/core/framework/types.proto";
 
 message VectorFloatToTensorCalculatorOptions {
   extend mediapipe.CalculatorOptions {
@@ -37,4 +38,6 @@ message VectorFloatToTensorCalculatorOptions {
   // Otherwise, the output tensor is not transposed.
   // It will be ignored if tensor_is_2d is INPUT_1D.
   optional bool transpose = 2 [default = false];
+
+  optional tensorflow.DataType tensor_data_type = 3 [default = DT_FLOAT];
 }

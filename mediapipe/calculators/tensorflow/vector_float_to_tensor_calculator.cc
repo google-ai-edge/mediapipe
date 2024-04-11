@@ -14,13 +14,18 @@
 //
 // Converts vector<float> (or vector<vector<float>>) to 1D (or 2D) tf::Tensor.
 
+#include <cstdint>
+#include <memory>
+#include <vector>
+
 #include "absl/log/absl_log.h"
+#include "absl/status/status.h"
 #include "mediapipe/calculators/tensorflow/vector_float_to_tensor_calculator_options.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
 #include "tensorflow/core/framework/tensor.h"
-#include "tensorflow/core/framework/types.h"
+#include "tensorflow/core/framework/tensor_shape.h"
+#include "tensorflow/core/framework/types.pb.h"
 
 namespace mediapipe {
 
@@ -31,11 +36,66 @@ auto& INPUT_2D = VectorFloatToTensorCalculatorOptions::INPUT_2D;
 
 namespace tf = ::tensorflow;
 
+namespace {
+
+template <typename DataType>
+absl::Status ConvertVectorFloatToTensor(
+    const VectorFloatToTensorCalculatorOptions& options,
+    CalculatorContext* cc) {
+  tf::TensorShape tensor_shape;
+  if (options.input_size() == INPUT_2D) {
+    const std::vector<std::vector<float>>& input =
+        cc->Inputs().Index(0).Value().Get<std::vector<std::vector<float>>>();
+
+    const int32_t rows = input.size();
+    RET_CHECK_GE(rows, 1);
+    const int32_t cols = input[0].size();
+    RET_CHECK_GE(cols, 1);
+    for (int i = 1; i < rows; ++i) {
+      RET_CHECK_EQ(input[i].size(), cols);
+    }
+    if (options.transpose()) {
+      tensor_shape = tf::TensorShape({cols, rows});
+    } else {
+      tensor_shape = tf::TensorShape({rows, cols});
+    }
+    auto output =
+        std::make_unique<tf::Tensor>(options.tensor_data_type(), tensor_shape);
+    for (int r = 0; r < rows; ++r) {
+      for (int c = 0; c < cols; ++c) {
+        if (options.transpose()) {
+          output->tensor<DataType, 2>()(c, r) = input[r][c];
+        } else {
+          output->tensor<DataType, 2>()(r, c) = input[r][c];
+        }
+      }
+    }
+    cc->Outputs().Index(0).Add(output.release(), cc->InputTimestamp());
+  } else if (options.input_size() == INPUT_1D) {
+    const std::vector<float>& input =
+        cc->Inputs().Index(0).Value().Get<std::vector<float>>();
+    RET_CHECK_GE(input.size(), 1);
+    const int32_t length = input.size();
+    tensor_shape = tf::TensorShape({length});
+    auto output =
+        std::make_unique<tf::Tensor>(options.tensor_data_type(), tensor_shape);
+    for (int i = 0; i < length; ++i) {
+      output->tensor<DataType, 1>()(i) = input.at(i);
+    }
+    cc->Outputs().Index(0).Add(output.release(), cc->InputTimestamp());
+  } else {
+    ABSL_LOG(FATAL) << "input size not supported";
+  }
+  return absl::OkStatus();
+}
+
+}  // namespace
+
 // The calculator expects one input (a packet containing a vector<float> or
 // vector<vector<float>>) and generates one output (a packet containing a
 // tf::Tensor containing the same data). The output tensor will be either
 // 1D or 2D with dimensions corresponding to the input vector float.
-// It will hold DT_FLOAT values.
+// It will hold DT_FLOAT or DT_DOUBLE values.
 //
 // Example config:
 // node {
@@ -76,6 +136,11 @@ absl::Status VectorFloatToTensorCalculator::GetContract(
   cc->Outputs().Index(0).Set<tf::Tensor>(
       // Output stream with data as tf::Tensor and the same TimeSeriesHeader.
   );
+  if (!(options.tensor_data_type() == tf::DT_FLOAT ||
+        options.tensor_data_type() == tf::DT_DOUBLE)) {
+    return absl::InvalidArgumentError(
+        "Output tensor data type is not supported.");
+  }
   return absl::OkStatus();
 }
 
@@ -86,49 +151,15 @@ absl::Status VectorFloatToTensorCalculator::Open(CalculatorContext* cc) {
 }
 
 absl::Status VectorFloatToTensorCalculator::Process(CalculatorContext* cc) {
-  tf::TensorShape tensor_shape;
-  if (options_.input_size() == INPUT_2D) {
-    const std::vector<std::vector<float>>& input =
-        cc->Inputs().Index(0).Value().Get<std::vector<std::vector<float>>>();
-
-    const int32_t rows = input.size();
-    RET_CHECK_GE(rows, 1);
-    const int32_t cols = input[0].size();
-    RET_CHECK_GE(cols, 1);
-    for (int i = 1; i < rows; ++i) {
-      RET_CHECK_EQ(input[i].size(), cols);
-    }
-    if (options_.transpose()) {
-      tensor_shape = tf::TensorShape({cols, rows});
-    } else {
-      tensor_shape = tf::TensorShape({rows, cols});
-    }
-    auto output = ::absl::make_unique<tf::Tensor>(tf::DT_FLOAT, tensor_shape);
-    for (int r = 0; r < rows; ++r) {
-      for (int c = 0; c < cols; ++c) {
-        if (options_.transpose()) {
-          output->tensor<float, 2>()(c, r) = input[r][c];
-        } else {
-          output->tensor<float, 2>()(r, c) = input[r][c];
-        }
-      }
-    }
-    cc->Outputs().Index(0).Add(output.release(), cc->InputTimestamp());
-  } else if (options_.input_size() == INPUT_1D) {
-    const std::vector<float>& input =
-        cc->Inputs().Index(0).Value().Get<std::vector<float>>();
-    RET_CHECK_GE(input.size(), 1);
-    const int32_t length = input.size();
-    tensor_shape = tf::TensorShape({length});
-    auto output = ::absl::make_unique<tf::Tensor>(tf::DT_FLOAT, tensor_shape);
-    for (int i = 0; i < length; ++i) {
-      output->tensor<float, 1>()(i) = input.at(i);
-    }
-    cc->Outputs().Index(0).Add(output.release(), cc->InputTimestamp());
-  } else {
-    ABSL_LOG(FATAL) << "input size not supported";
+  switch (options_.tensor_data_type()) {
+    case tf::DT_FLOAT:
+      return ConvertVectorFloatToTensor<float>(options_, cc);
+    case tf::DT_DOUBLE:
+      return ConvertVectorFloatToTensor<double>(options_, cc);
+    default:
+      return absl::InvalidArgumentError(
+          "Output tensor data type is not supported.");
   }
-  return absl::OkStatus();
 }
 
 }  // namespace mediapipe

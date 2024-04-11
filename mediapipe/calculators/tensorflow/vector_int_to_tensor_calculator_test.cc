@@ -13,11 +13,12 @@
 // limitations under the License.
 
 #include <cstdint>
+#include <memory>
+#include <vector>
 
 #include "mediapipe/calculators/tensorflow/vector_int_to_tensor_calculator_options.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
-#include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "tensorflow/core/framework/tensor.h"
 #include "tensorflow/core/framework/types.pb.h"
@@ -51,14 +52,14 @@ class VectorIntToTensorCalculatorTest : public ::testing::Test {
     options->set_input_size(input_size);
     options->set_transpose(transpose);
     options->set_tensor_data_type(tensor_data_type);
-    runner_ = ::absl::make_unique<CalculatorRunner>(config);
+    runner_ = std::make_unique<CalculatorRunner>(config);
   }
 
   void TestConvertFromVectoVectorInt(const bool transpose) {
     SetUpRunner(VectorIntToTensorCalculatorOptions::INPUT_2D,
                 tensorflow::DT_INT32, transpose, false);
-    auto input = ::absl::make_unique<std::vector<std::vector<int>>>(
-        2, std::vector<int>(2));
+    auto input =
+        std::make_unique<std::vector<std::vector<int>>>(2, std::vector<int>(2));
     for (int i = 0; i < 2; ++i) {
       for (int j = 0; j < 2; ++j) {
         input->at(i).at(j) = i * 2 + j;
@@ -121,7 +122,7 @@ TEST_F(VectorIntToTensorCalculatorTest, TestSingleValue) {
 TEST_F(VectorIntToTensorCalculatorTest, TesOneDim) {
   SetUpRunner(VectorIntToTensorCalculatorOptions::INPUT_1D,
               tensorflow::DT_INT32, false, false);
-  auto input = ::absl::make_unique<std::vector<int>>(5);
+  auto input = std::make_unique<std::vector<int>>(5);
   for (int i = 0; i < 5; ++i) {
     input->at(i) = i;
   }
@@ -179,7 +180,7 @@ TEST_F(VectorIntToTensorCalculatorTest, TestInt64) {
 TEST_F(VectorIntToTensorCalculatorTest, TestUint8) {
   SetUpRunner(VectorIntToTensorCalculatorOptions::INPUT_1D,
               tensorflow::DT_UINT8, false, false);
-  auto input = ::absl::make_unique<std::vector<int>>(5);
+  auto input = std::make_unique<std::vector<int>>(5);
   for (int i = 0; i < 5; ++i) {
     input->at(i) = i;
   }
@@ -203,6 +204,28 @@ TEST_F(VectorIntToTensorCalculatorTest, TestUint8) {
   for (int i = 0; i < 5; ++i) {
     EXPECT_EQ(i, vec(i));
   }
+}
+
+TEST_F(VectorIntToTensorCalculatorTest, TestSingleUnsignedValue) {
+  SetUpRunner(VectorIntToTensorCalculatorOptions::INPUT_1D,
+              tensorflow::DT_UINT32, false, true);
+  const int64_t time = 1234;
+  runner_->MutableInputs()
+      ->Tag(kSingleIntTag)
+      .packets.push_back(MakePacket<uint32_t>(1).At(Timestamp(time)));
+
+  ASSERT_TRUE(runner_->Run().ok());
+
+  const std::vector<Packet>& output_packets =
+      runner_->Outputs().Tag(kTensorOutTag).packets;
+  EXPECT_EQ(output_packets.size(), 1);
+  EXPECT_EQ(output_packets[0].Timestamp().Value(), time);
+  const tf::Tensor& output_tensor = output_packets[0].Get<tf::Tensor>();
+
+  EXPECT_EQ(output_tensor.dims(), 1);
+  EXPECT_EQ(output_tensor.dtype(), tf::DT_UINT32);
+  const auto vec = output_tensor.vec<uint32_t>();
+  EXPECT_EQ(vec(0), 1);
 }
 
 }  // namespace
