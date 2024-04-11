@@ -59,9 +59,10 @@ using ::tflite::gpu::gl::GlShader;
 constexpr int kWorkgroupSize = 8;  // Block size for GPU shader.
 enum { ATTRIB_VERTEX, ATTRIB_TEXTURE_POSITION, NUM_ATTRIBUTES };
 
-class GlProcessor : public TensorsToSegmentationConverter {
+class TensorsToSegmentationGlBufferConverter
+    : public TensorsToSegmentationConverter {
  public:
-  ~GlProcessor() override;
+  ~TensorsToSegmentationGlBufferConverter() override;
   absl::Status Init(CalculatorContext* cc,
                     const TensorsToSegmentationCalculatorOptions& options);
   absl::StatusOr<std::unique_ptr<Image>> Convert(
@@ -79,7 +80,8 @@ class GlProcessor : public TensorsToSegmentationConverter {
   std::unique_ptr<GlProgram> mask_program_31_;
 };
 
-GlProcessor::~GlProcessor() {
+TensorsToSegmentationGlBufferConverter::
+    ~TensorsToSegmentationGlBufferConverter() {
   if (gpu_initialized_) {
     gpu_helper_.RunInGlContext([this] {
       if (upsample_program_) glDeleteProgram(upsample_program_);
@@ -90,7 +92,7 @@ GlProcessor::~GlProcessor() {
   }
 }
 
-absl::Status GlProcessor::Init(
+absl::Status TensorsToSegmentationGlBufferConverter::Init(
     CalculatorContext* cc,
     const TensorsToSegmentationCalculatorOptions& options) {
   MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
@@ -229,7 +231,8 @@ void main() {
 // 1. receive tensor
 // 2. process segmentation tensor into small mask
 // 3. upsample small mask into output mask to be same size as input image
-absl::StatusOr<std::unique_ptr<Image>> GlProcessor::Convert(
+absl::StatusOr<std::unique_ptr<Image>>
+TensorsToSegmentationGlBufferConverter::Convert(
     const std::vector<Tensor>& input_tensors, int output_width,
     int output_height) {
   if (input_tensors.empty()) {
@@ -306,7 +309,7 @@ absl::StatusOr<std::unique_ptr<TensorsToSegmentationConverter>>
 CreateGlBufferConverter(
     CalculatorContext* cc,
     const mediapipe::TensorsToSegmentationCalculatorOptions& options) {
-  auto converter = std::make_unique<GlProcessor>();
+  auto converter = std::make_unique<TensorsToSegmentationGlBufferConverter>();
   MP_RETURN_IF_ERROR(converter->Init(cc, options));
   return converter;
 }

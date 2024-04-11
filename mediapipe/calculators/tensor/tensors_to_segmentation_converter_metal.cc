@@ -53,9 +53,10 @@ using ::mediapipe::tensors_to_segmentation_utils::NumGroups;
 constexpr int kWorkgroupSize = 8;  // Block size for GPU shader.
 enum { ATTRIB_VERTEX, ATTRIB_TEXTURE_POSITION, NUM_ATTRIBUTES };
 
-class MetalProcessor : public TensorsToSegmentationConverter {
+class TensorsToSegmentationMetalConverter
+    : public TensorsToSegmentationConverter {
  public:
-  ~MetalProcessor() override;
+  ~TensorsToSegmentationMetalConverter() override;
   absl::Status Init(CalculatorContext* cc,
                     const TensorsToSegmentationCalculatorOptions& options);
   absl::StatusOr<std::unique_ptr<Image>> Convert(
@@ -71,7 +72,7 @@ class MetalProcessor : public TensorsToSegmentationConverter {
   id<MTLComputePipelineState> mask_program_;
 };
 
-MetalProcessor::~MetalProcessor() {
+TensorsToSegmentationMetalConverter::~TensorsToSegmentationMetalConverter() {
   if (gpu_initialized_) {
     gpu_helper_.RunInGlContext([this] {
       if (upsample_program_) glDeleteProgram(upsample_program_);
@@ -81,7 +82,7 @@ MetalProcessor::~MetalProcessor() {
   }
 }
 
-absl::Status MetalProcessor::Init(
+absl::Status TensorsToSegmentationMetalConverter::Init(
     CalculatorContext* cc,
     const TensorsToSegmentationCalculatorOptions& options) {
   // Initialize metal helper, originally done inside calculator's Open() method.
@@ -227,7 +228,8 @@ kernel void segmentationKernel(
 // 1. receive tensor
 // 2. process segmentation tensor into small mask
 // 3. upsample small mask into output mask to be same size as input image
-absl::StatusOr<std::unique_ptr<Image>> MetalProcessor::Convert(
+absl::StatusOr<std::unique_ptr<Image>>
+TensorsToSegmentationMetalConverter::Convert(
     const std::vector<Tensor>& input_tensors, int output_width,
     int output_height) {
   if (input_tensors.empty()) {
@@ -318,7 +320,7 @@ absl::StatusOr<std::unique_ptr<TensorsToSegmentationConverter>>
 CreateMetalConverter(
     CalculatorContext* cc,
     const mediapipe::TensorsToSegmentationCalculatorOptions& options) {
-  auto converter = std::make_unique<MetalProcessor>();
+  auto converter = std::make_unique<TensorsToSegmentationMetalConverter>();
   MP_RETURN_IF_ERROR(converter->Init(cc, options));
   return converter;
 }

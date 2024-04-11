@@ -340,7 +340,7 @@ class SubRectExtractorMetal {
   OutputFormat output_format_;
 };
 
-class MetalProcessor : public ImageToTensorConverter {
+class ImageToTensorMetalConverter : public ImageToTensorConverter {
  public:
   absl::Status Init(CalculatorContext* cc, BorderMode border_mode) {
     metal_helper_ = [[MPPMetalHelper alloc] initWithCalculatorContext:cc];
@@ -411,7 +411,7 @@ class MetalProcessor : public ImageToTensorConverter {
 
 absl::StatusOr<std::unique_ptr<ImageToTensorConverter>> CreateMetalConverter(
     CalculatorContext* cc, BorderMode border_mode) {
-  auto result = absl::make_unique<MetalProcessor>();
+  auto result = absl::make_unique<ImageToTensorMetalConverter>();
   MP_RETURN_IF_ERROR(result->Init(cc, border_mode));
 
   return result;

@@ -38,7 +38,8 @@ namespace {
 
 using ::mediapipe::tensors_to_segmentation_utils::GetHwcFromDims;
 
-class OpenCvProcessor : public TensorsToSegmentationConverter {
+class TensorsToSegmentationOpenCvConverter
+    : public TensorsToSegmentationConverter {
  public:
   absl::Status Init(const TensorsToSegmentationCalculatorOptions& options) {
     options_ = options;
@@ -56,7 +57,8 @@ class OpenCvProcessor : public TensorsToSegmentationConverter {
   TensorsToSegmentationCalculatorOptions options_;
 };
 
-absl::StatusOr<std::unique_ptr<Image>> OpenCvProcessor::Convert(
+absl::StatusOr<std::unique_ptr<Image>>
+TensorsToSegmentationOpenCvConverter::Convert(
     const std::vector<Tensor>& input_tensors, int output_width,
     int output_height) {
   if (input_tensors.empty()) {
@@ -103,8 +105,8 @@ absl::StatusOr<std::unique_ptr<Image>> OpenCvProcessor::Convert(
 }
 
 template <class T>
-absl::Status OpenCvProcessor::ApplyActivation(cv::Mat& tensor_mat,
-                                              cv::Mat* small_mask_mat) {
+absl::Status TensorsToSegmentationOpenCvConverter::ApplyActivation(
+    cv::Mat& tensor_mat, cv::Mat* small_mask_mat) {
   // Configure activation function.
   const int output_layer_index = options_.output_layer_index();
   using Options = ::mediapipe::TensorsToSegmentationCalculatorOptions;
@@ -154,7 +156,7 @@ absl::Status OpenCvProcessor::ApplyActivation(cv::Mat& tensor_mat,
 
 absl::StatusOr<std::unique_ptr<TensorsToSegmentationConverter>>
 CreateOpenCvConverter(const TensorsToSegmentationCalculatorOptions& options) {
-  auto converter = std::make_unique<OpenCvProcessor>();
+  auto converter = std::make_unique<TensorsToSegmentationOpenCvConverter>();
   MP_RETURN_IF_ERROR(converter->Init(options));
   return converter;
 }
