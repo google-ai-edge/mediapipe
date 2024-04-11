@@ -36,7 +36,7 @@ static NSString *const kImageOutStreamName = @"image_out";
 static NSString *const kFaceLandmarksTag = @"FACE_LANDMARKS";
 static NSString *const kFaceLandmarksOutStreamName = @"face_landmarks";
 static NSString *const kFaceBlendshapesTag = @"FACE_BLENDSHAPES";
-static NSString *const kFaceBlendshapesOutStreamName = @"face_landmarks";
+static NSString *const kFaceBlendshapesOutStreamName = @"face_blendshapes";
 static NSString *const kPoseLandmarksTag = @"POSE_LANDMARKS";
 static NSString *const kPoseLandmarksOutStreamName = @"pose_landmarks";
 static NSString *const kPoseWorldLandmarksTag = @"POSE_WORLD_LANDMARKS";
@@ -65,10 +65,10 @@ static NSString *const kTaskName = @"holisticLandmarker";
                                                                           .cppString]             \
                              poseWorldLandmarksPacket:                                            \
                                  outputPacketMap[kPoseWorldLandmarksOutStreamName.cppString]      \
-                          poseSegmentationMasksPacket:                                            \
-                              &(outputPacketMap[kPoseSegmentationMaskOutStreamName.cppString])    \
-                              leftHandLandmarksPacket:                                            \
-                                  outputPacketMap[kLeftHandLandmarksOutStreamName.cppString]      \
+                           poseSegmentationMaskPacket:                                            \
+                               &(outputPacketMap[kPoseSegmentationMaskOutStreamName.cppString])   \
+                               leftHandLandmarksPacket:                                           \
+                                   outputPacketMap[kLeftHandLandmarksOutStreamName.cppString]     \
                          leftHandWorldLandmarksPacket:                                            \
                              outputPacketMap[kLeftHandWorldLandmarksOutStreamName.cppString]      \
                              rightHandLandmarksPacket:                                            \

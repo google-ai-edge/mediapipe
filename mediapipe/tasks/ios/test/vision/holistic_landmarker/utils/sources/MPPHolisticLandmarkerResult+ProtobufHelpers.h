@@ -18,8 +18,9 @@
 NS_ASSUME_NONNULL_BEGIN
 @interface MPPHolisticLandmarkerResult (ProtobufHelpers)
 
-+ (MPPHolisticLandmarkerResult *)holisticLandmarkerResultFromProtobufFileWithName:
-    (NSString *)fileName;
++ (MPPHolisticLandmarkerResult *)
+    holisticLandmarkerResultFromProtobufFileWithName:(NSString *)fileName
+                                  hasFaceBlendshapes:(BOOL)hasFaceBlendshapes;
 
 @end
 

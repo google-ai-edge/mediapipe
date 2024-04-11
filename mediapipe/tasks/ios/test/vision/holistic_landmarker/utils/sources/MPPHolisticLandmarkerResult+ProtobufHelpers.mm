@@ -29,22 +29,24 @@ using ::mediapipe::tasks::vision::holistic_landmarker::proto::HolisticResult;
 
 @implementation MPPHolisticLandmarkerResult (ProtobufHelpers)
 
-+ (MPPHolisticLandmarkerResult *)holisticLandmarkerResultFromProtobufFileWithName:
-    (NSString *)fileName {
++ (MPPHolisticLandmarkerResult *)
+    holisticLandmarkerResultFromProtobufFileWithName:(NSString *)fileName
+                                  hasFaceBlendshapes:(BOOL)hasFaceBlenshapes {
   HolisticResult holisticResultProto;
 
   if (!get_proto_from_pbtxt(fileName.cppString, holisticResultProto).ok()) {
     return nil;
   }
 
-  const ClassificationList faceBlendshapesProto = holisticResultProto.face_blendshapes();
+  const ClassificationList *faceBlendshapesProto =
+      hasFaceBlenshapes ? &(holisticResultProto.face_blendshapes()) : nullptr;
 
   return [MPPHolisticLandmarkerResult
       holisticLandmarkerResultWithFaceLandmarksProto:holisticResultProto.face_landmarks()
-                                faceBlendshapesProto:&faceBlendshapesProto
+                                faceBlendshapesProto:faceBlendshapesProto
                                   poseLandmarksProto:holisticResultProto.pose_landmarks()
                              poseWorldLandmarksProto:LandmarkList()
-                          poseSegmentationMaskProtos:{}
+                           poseSegmentationMaskProto:{}
                               leftHandLandmarksProto:holisticResultProto.left_hand_landmarks()
                          leftHandWorldLandmarksProto:LandmarkList()
                              rightHandLandmarksProto:holisticResultProto.right_hand_landmarks()

@@ -22,7 +22,7 @@
                       faceBlendshapes:(nullable MPPClassifications *)faceBlendshapes
                         poseLandmarks:(NSArray<MPPNormalizedLandmark *> *)poseLandmarks
                    poseWorldLandmarks:(NSArray<MPPLandmark *> *)poseWorldLandmarks
-                poseSegmentationMasks:(NSArray<MPPMask *> *)poseSegmentationMasks
+                 poseSegmentationMask:(nullable MPPMask *)poseSegmentationMask
                     leftHandLandmarks:(NSArray<MPPNormalizedLandmark *> *)leftHandLandmarks
                leftHandWorldLandmarks:(NSArray<MPPLandmark *> *)leftHandWorldLandmarks
                    rightHandLandmarks:(NSArray<MPPNormalizedLandmark *> *)rightHandLandmarks
@@ -34,7 +34,7 @@
     _faceBlendshapes = faceBlendshapes;
     _poseLandmarks = poseLandmarks;
     _poseWorldLandmarks = poseWorldLandmarks;
-    _poseSegmentationMasks = poseSegmentationMasks;
+    _poseSegmentationMask = poseSegmentationMask;
     _leftHandLandmarks = leftHandLandmarks;
     _leftHandWorldLandmarks = leftHandWorldLandmarks;
     _rightHandLandmarks = rightHandLandmarks;

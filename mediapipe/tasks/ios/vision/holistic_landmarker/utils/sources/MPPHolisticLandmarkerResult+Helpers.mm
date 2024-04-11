@@ -46,8 +46,8 @@ using ClassificationListProto = mediapipe::ClassificationList;
                                 poseLandmarksPacket:(const mediapipe::Packet &)poseLandmarksPacket
                            poseWorldLandmarksPacket:
                                (const mediapipe::Packet &)poseWorldLandmarksPacket
-                        poseSegmentationMasksPacket:
-                            (const mediapipe::Packet *)poseSegmentationMasksPacket
+                         poseSegmentationMaskPacket:
+                             (const mediapipe::Packet *)poseSegmentationMaskPacket
                             leftHandLandmarksPacket:
                                 (const mediapipe::Packet &)leftHandLandmarksPacket
                        leftHandWorldLandmarksPacket:
@@ -63,10 +63,9 @@ using ClassificationListProto = mediapipe::ClassificationList;
       faceBlendShapesPacket.ValidateAsType<ClassificationListProto>().ok()
           ? &(faceBlendShapesPacket.Get<ClassificationListProto>())
           : nullptr;
-  const std::vector<Image> *poseSegmentationMasksProto =
-      poseSegmentationMasksPacket->ValidateAsType<std::vector<Image>>().ok()
-          ? &(poseSegmentationMasksPacket->Get<std::vector<Image>>())
-          : nullptr;
+  const Image *poseSegmentationMaskProto = poseSegmentationMaskPacket->ValidateAsType<Image>().ok()
+                                               ? &(poseSegmentationMaskPacket->Get<Image>())
+                                               : nullptr;
 
   return [MPPHolisticLandmarkerResult
       holisticLandmarkerResultWithFaceLandmarksProto:NormalizedLandmarkListFromPacket(
@@ -75,7 +74,7 @@ using ClassificationListProto = mediapipe::ClassificationList;
                                   poseLandmarksProto:NormalizedLandmarkListFromPacket(
                                                          poseLandmarksPacket)
                              poseWorldLandmarksProto:LandmarkListFromPacket(poseLandmarksPacket)
-                          poseSegmentationMaskProtos:poseSegmentationMasksProto
+                           poseSegmentationMaskProto:poseSegmentationMaskProto
                               leftHandLandmarksProto:NormalizedLandmarkListFromPacket(
                                                          leftHandLandmarksPacket)
                          leftHandWorldLandmarksProto:LandmarkListFromPacket(
@@ -96,8 +95,8 @@ using ClassificationListProto = mediapipe::ClassificationList;
                                     (const mediapipe::NormalizedLandmarkList &)poseLandmarksProto
                            poseWorldLandmarksProto:
                                (const mediapipe::LandmarkList &)poseWorldLandmarksProto
-                        poseSegmentationMaskProtos:
-                            (const std::vector<::mediapipe::Image> *)poseSegmentationMaskProtos
+                         poseSegmentationMaskProto:
+                             (const mediapipe::Image *)poseSegmentationMaskProto
                             leftHandLandmarksProto:
                                 (const mediapipe::NormalizedLandmarkList &)leftHandLandmarksProto
                        leftHandWorldLandmarksProto:
@@ -129,33 +128,28 @@ using ClassificationListProto = mediapipe::ClassificationList;
   // present pass nil arrays to the result.
   MPPClassifications *faceBlendshapes;
   if (faceBlendshapesProto) {
-    [MPPClassifications classificationsWithClassificationListProto:*faceBlendshapesProto
-                                                         headIndex:0
-                                                          headName:@""];
+    faceBlendshapes =
+        [MPPClassifications classificationsWithClassificationListProto:*faceBlendshapesProto
+                                                             headIndex:0
+                                                              headName:@""];
   }
 
-  NSMutableArray<MPPMask *> *poseConfidenceMasks;
-  if (poseSegmentationMaskProtos) {
-    poseConfidenceMasks =
-        [NSMutableArray arrayWithCapacity:(NSUInteger)poseSegmentationMaskProtos->size()];
-
-    for (const auto &confidenceMask : *poseSegmentationMaskProtos) {
-      [poseConfidenceMasks
-          addObject:[[MPPMask alloc]
-                        initWithFloat32Data:(float *)confidenceMask.GetImageFrameSharedPtr()
-                                                .get()
-                                                ->PixelData()
-                                      width:confidenceMask.width()
-                                     height:confidenceMask.height()
-                                 shouldCopy:YES]];
-    }
-  }
+  MPPMask *poseConfidenceMask =
+      poseSegmentationMaskProto
+          ? [[MPPMask alloc]
+                initWithFloat32Data:(float *)poseSegmentationMaskProto->GetImageFrameSharedPtr()
+                                        .get()
+                                        ->PixelData()
+                              width:poseSegmentationMaskProto->width()
+                             height:poseSegmentationMaskProto->height()
+                         shouldCopy:YES]
+          : nil;
 
   return [[MPPHolisticLandmarkerResult alloc] initWithFaceLandmarks:faceLandmarks
                                                     faceBlendshapes:faceBlendshapes
                                                       poseLandmarks:poseLandmarks
                                                  poseWorldLandmarks:poseWorldLandmarks
-                                              poseSegmentationMasks:poseConfidenceMasks
+                                               poseSegmentationMask:poseConfidenceMask
                                                   leftHandLandmarks:leftHandLandmarks
                                              leftHandWorldLandmarks:leftHandWorldLandmarks
                                                  rightHandLandmarks:rightHandLandmarks
