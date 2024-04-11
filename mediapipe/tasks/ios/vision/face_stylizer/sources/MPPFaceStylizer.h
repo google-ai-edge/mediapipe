@@ -50,15 +50,14 @@ NS_SWIFT_NAME(FaceStylizer)
                                    error:(NSError **)error NS_DESIGNATED_INITIALIZER;
 
 /**
- * Performs face stylization on the provided `MPImage` and returns a `MPPFaceStylizerResult`
+ * Performs face stylization on the provided `MPImage` and returns a `FaceStylizerResult`
  * containing a copy of the stylized image. This method should not be used in high-throughput
  * applications since the returned image is copied. Rotation will be applied according to the
  * `orientation` property of the provided `MPImage`.
  *
- * This method supports RGBA images. If your `MPPImage` has a source type of `.pixelBuffer` or
- * `.sampleBuffer`, the underlying pixel buffer must have one of the following pixel format types:
- * 1. kCVPixelFormatType_32BGRA
- * 2. kCVPixelFormatType_32RGBA
+ * This method supports face stylization RGBA images. If your `MPImage` has a source type of
+ * `.pixelBuffer` or `.sampleBuffer`, the underlying pixel buffer must use
+ * `kCVPixelFormatType_32BGRA` as its pixel format.
  *
  * If your `MPImage` has a source type of `.image` ensure that the color space is RGB with an
  * Alpha channel.
@@ -75,32 +74,30 @@ NS_SWIFT_NAME(FaceStylizer)
                                            error:(NSError **)error NS_SWIFT_NAME(stylize(image:));
 
 /**
- * Performs face stylization on the provided `MPImage` using the whole image as region of interest
- * and provides zero-copied results via the given completion handler block. The lifetime of the
- * stylized image is only guaranteed for the duration of the block. The method returns synchronously
- * once the completion handler returns.
+ * Performs face stylization on the provided `MPImage` and returns a `FaceStylizerResult`
+ * containing a copy of the stylized image. This method should not be used in high-throughput
+ * applications since the returned image is copied. Rotation will be applied according to the
+ * `orientation` property of the provided `MPImage`.
  *
- * Rotation will be applied according to the `orientation` property of the provided `MPImage`.
+ * This method supports face stylization RGBA images. If your `MPImage` has a source type of
+ * `.pixelBuffer` or `.sampleBuffer`, the underlying pixel buffer must use
+ * `kCVPixelFormatType_32BGRA` as its pixel format.
  *
- * This method supports RGBA images. If your `MPImage` has a source type of `.pixelBuffer` or
- * `.sampleBuffer`, the underlying pixel buffer must have one of the following pixel format types:
- * 1. kCVPixelFormatType_32BGRA
- * 2. kCVPixelFormatType_32RGBA
- *
- * If your `MPImage` has a source type of `.image` ensure that the color space is RGB with an Alpha
- * channel.
+ * If your `MPImage` has a source type of `.image` ensure that the color space is RGB with an
+ * Alpha channel.
  *
  * @param image The `MPImage` on which face stylization is to be performed.
- * @param completionHandler A block to be invoked with the results of performing face stylization on
- * the input image. The block takes two arguments, the optional `FaceStylizerResult` that contains
- * the zero-copied stylized image if face stylization was successful and an optional error populated
- * upon failure. The lifetime of the stylized image is only guaranteed for the duration of the
- * block.
+ *
+ * @return A `FaceStylizerResult` that contains the stylized image of the most visible face. The
+ * returned image is copied. The stylized output image size is the same as the model output
+ * size. The `stylizedImage` of the `FaceStylizerResult` is `nil` if there is no face detected in
+ * the input image. `FaceStylizerResult` is `nil` if there is an error in initializing the face
+ * stylizer.
  */
-- (void)stylizeImage:(MPPImage *)image
-    withCompletionHandler:(void (^)(MPPFaceStylizerResult *_Nullable result,
-                                    NSError *_Nullable error))completionHandler
-    NS_SWIFT_NAME(stylize(image:completion:));
+- (nullable MPPFaceStylizerResult *)stylizeImage:(MPPImage *)image
+                                regionOfInterest:(CGRect)regionOfInterest
+                                           error:(NSError **)error
+    NS_SWIFT_NAME(stylize(image:regionOfInterest:));
 
 - (instancetype)init NS_UNAVAILABLE;
 
