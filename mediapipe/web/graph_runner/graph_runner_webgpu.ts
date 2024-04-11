@@ -27,6 +27,15 @@ export declare interface GPUDeviceWithAdapterInfo extends GPUDevice {
 }
 
 /**
+ * Internal-only interface for calling `closeGraph` in an ASYNCIFY-friendly
+ * manner.
+ */
+export declare interface WasmAsyncCloseModule {
+  ccall: (name: string, type: string, inParams: unknown, outParams: unknown,
+      options: unknown) => Promise<void>;
+}
+
+/**
  * An implementation of GraphRunner that integrates WebGpu functionality.
  * Example usage:
  * `const MediaPipeLib = SupportWebGpu(GraphRunner);`
@@ -106,6 +115,16 @@ export function SupportWebGpu<TBase extends LibConstructor>(Base: TBase) {
       });
       const wasmModule = this.wasmModule as unknown as WasmWebGpuModule;
       wasmModule.preinitializedWebGPUDevice = device;
+    }
+
+    /**
+     * Special variant of `closeGraph` for use with WebGPU demos built with
+     * ASYNCIFY=1, to allow us to ensure proper synchronization.
+     * TODO: Remove when we have a better solution for async calls.
+     */
+    closeGraphAsync(): Promise<void> {
+      return (this.wasmModule as unknown as WasmAsyncCloseModule).ccall(
+          "closeGraph", "void", [], [], {async: true});
     }
   };
 }

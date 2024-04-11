@@ -251,15 +251,23 @@ export class LlmInference extends TaskRunner {
         onFinishedLoadingData();
       }
     }
-    this.refreshGraph();
-    this.onGraphRefreshed();
+    // To allow graph closure across ASYNCIFY, where we cannot get a callback,
+    // we instead invoke it with a special mechanism and then wrap it into a
+    // promise. We then chain the graph-refresh promise with our data-loading
+    // promise so that a user can simply await the whole thing, and we block
+    // isProcessing for the entire duration.
+    const refreshGraphPromise = this.refreshGraph().then(() => {
+      this.onGraphRefreshed();
+    });
     // Note: this is triggered from within the final loading call, so the wasm
     // code hasn't quite finished running by this point in time. However, that
     // microtask seems to complete before any code await-ing this function, so
     // this should be fine. This seems to be similarly true for our
     // resolveGeneration usage as well.
     return finishedLoadingDataPromise.then(() => {
-      this.isProcessing = false;
+      refreshGraphPromise.then(() => {
+        this.isProcessing = false;
+      });
     });
   }
 
@@ -376,7 +384,7 @@ export class LlmInference extends TaskRunner {
   // available
 
   /** Updates the MediaPipe graph configuration. */
-  protected override refreshGraph(): void {
+  protected override refreshGraph(): Promise<void> {
     const graphConfig = this.buildLlmInferenceGraph();
 
     this.graphRunner.attachStringVectorListener(
@@ -426,10 +434,20 @@ export class LlmInference extends TaskRunner {
     }
 
     const binaryGraph = graphConfig.serializeBinary();
-    this.setGraph(new Uint8Array(binaryGraph), /* isBinary= */ true);
 
-    // Start initialization; this is async when StreamingReader is used.
-    this.finishProcessing();
+    // Due to ASYNCIFY usage, the normal closeGraph(), which is automatically
+    // called by setGraph when changing a running graph, is not guaranteed to
+    // have finished by the time the function returns. There is no easy way to
+    // pipe through a completion callback like with other ASYNCIFY'ed calls. So
+    // instead, we use a special async-only variant of closeGraph which we can
+    // chain into our promises to ensure proper ordering, calling that first so
+    // the built-in closeGraph becomes a no-op.
+    return (this.graphRunner as unknown as StreamingReaderWebGpuGraphRunner)
+        .closeGraphAsync().then(() => {
+      this.setGraph(new Uint8Array(binaryGraph), /* isBinary= */ true);
+      // Start initialization; this is async when StreamingReader is used.
+      this.finishProcessing();
+    });
   }
 
   private buildLlmInferenceGraph(): CalculatorGraphConfig {
