@@ -44,8 +44,5 @@ message TokenizerCalculatorOptions {
   // this should match the setting used while training the model.
   int32 start_token_id = 3;
 
-  // DEPRECATED, connect with Gpt2UnicodeMappingCalculator instead.
-  // Whether to convert string bytes to unicode before tokenization. This
-  // mapping is used in GPT2 like tokenizer.
-  bool bytes_to_unicode_mapping = 5 [deprecated = true];
+  reserved 5;
 }
