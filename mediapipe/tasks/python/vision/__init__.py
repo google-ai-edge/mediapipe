@@ -55,6 +55,7 @@ ImageEmbedderOptions = image_embedder.ImageEmbedderOptions
 ImageEmbedderResult = image_embedder.ImageEmbedderResult
 ImageSegmenter = image_segmenter.ImageSegmenter
 ImageSegmenterOptions = image_segmenter.ImageSegmenterOptions
+ImageProcessingOptions = core.image_processing_options.ImageProcessingOptions
 InteractiveSegmenter = interactive_segmenter.InteractiveSegmenter
 InteractiveSegmenterOptions = interactive_segmenter.InteractiveSegmenterOptions
 InteractiveSegmenterRegionOfInterest = interactive_segmenter.RegionOfInterest
@@ -79,6 +80,7 @@ del face_landmarker
 del face_stylizer
 del gesture_recognizer
 del hand_landmarker
+del holistic_landmarker
 del image_classifier
 del image_embedder
 del image_segmenter
