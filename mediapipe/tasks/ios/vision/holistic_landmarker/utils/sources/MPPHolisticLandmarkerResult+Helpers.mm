@@ -47,7 +47,7 @@ using ClassificationListProto = mediapipe::ClassificationList;
                            poseWorldLandmarksPacket:
                                (const mediapipe::Packet &)poseWorldLandmarksPacket
                          poseSegmentationMaskPacket:
-                             (const mediapipe::Packet *)poseSegmentationMaskPacket
+                             (const mediapipe::Packet &)poseSegmentationMaskPacket
                             leftHandLandmarksPacket:
                                 (const mediapipe::Packet &)leftHandLandmarksPacket
                        leftHandWorldLandmarksPacket:
@@ -63,8 +63,8 @@ using ClassificationListProto = mediapipe::ClassificationList;
       faceBlendShapesPacket.ValidateAsType<ClassificationListProto>().ok()
           ? &(faceBlendShapesPacket.Get<ClassificationListProto>())
           : nullptr;
-  const Image *poseSegmentationMaskProto = poseSegmentationMaskPacket->ValidateAsType<Image>().ok()
-                                               ? &(poseSegmentationMaskPacket->Get<Image>())
+  const Image *poseSegmentationMaskProto = poseSegmentationMaskPacket.ValidateAsType<Image>().ok()
+                                               ? &(poseSegmentationMaskPacket.Get<Image>())
                                                : nullptr;
 
   return [MPPHolisticLandmarkerResult
