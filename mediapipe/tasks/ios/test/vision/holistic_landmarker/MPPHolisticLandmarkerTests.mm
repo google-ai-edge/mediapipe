@@ -308,7 +308,6 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   }
 }
 
-
 - (void)testDetectWithOutOfOrderTimestampsAndLiveStreamModeFails {
   MPPHolisticLandmarkerOptions *options =
       [self holisticLandmarkerOptionsWithModelFileInfo:kHolisticLandmarkerBundleAssetFileInfo];
@@ -320,7 +319,8 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
 
   expectation.expectedFulfillmentCount = 1;
 
-  MPPHolisticLandmarker *holisticLandmarker = [self createHolisticLandmarkerWithOptionsSucceeds:options];
+  MPPHolisticLandmarker *holisticLandmarker =
+      [self createHolisticLandmarkerWithOptionsSucceeds:options];
 
   _outOfOrderTimestampTestDict = @{
     kLiveStreamTestsDictHolisticLandmarkerKey : holisticLandmarker,
@@ -332,7 +332,9 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   XCTAssertTrue([holisticLandmarker detectAsyncImage:image timestampInMilliseconds:1 error:nil]);
 
   NSError *error;
-  XCTAssertFalse([holisticLandmarker detectAsyncImage:image timestampInMilliseconds:0 error:&error]);
+  XCTAssertFalse([holisticLandmarker detectAsyncImage:image
+                              timestampInMilliseconds:0
+                                                error:&error]);
 
   NSError *expectedError =
       [NSError errorWithDomain:kExpectedErrorDomain
@@ -369,7 +371,8 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   expectation.expectedFulfillmentCount = iterationCount + 1;
   expectation.inverted = YES;
 
-  MPPHolisticLandmarker *holisticLandmarker = [self createHolisticLandmarkerWithOptionsSucceeds:options];
+  MPPHolisticLandmarker *holisticLandmarker =
+      [self createHolisticLandmarkerWithOptionsSucceeds:options];
 
   _liveStreamSucceedsTestDict = @{
     kLiveStreamTestsDictHolisticLandmarkerKey : holisticLandmarker,
