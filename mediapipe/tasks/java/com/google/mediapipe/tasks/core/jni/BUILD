@@ -77,8 +77,8 @@ cc_library(
             "//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu",
         ],
         ":enable_odml_maven_build": [
+            "//third_party/odml/infra/genai/inference:all_possible_calculators",
             "@odml//odml/infra/genai/inference/c:libllm_inference_engine",
-            "@odml//odml/infra/genai/inference/c:libllm_inference_engine_deps",
         ],
     }) + select({
         "//mediapipe:android": [],
