@@ -81,6 +81,7 @@ class Classifier(custom_model.CustomModel):
         is_training=True,
         shuffle=self._shuffle,
         preprocess=preprocessor,
+        drop_remainder=True,
     )
     if self._hparams.repeat and self._hparams.steps_per_epoch is None:
       raise ValueError(
@@ -96,7 +97,9 @@ class Classifier(custom_model.CustomModel):
     validation_dataset = validation_data.gen_tf_dataset(
         batch_size=self._hparams.batch_size,
         is_training=False,
-        preprocess=preprocessor)
+        preprocess=preprocessor,
+        drop_remainder=True,
+    )
     self._model.compile(
         optimizer=self._optimizer,
         loss=self._loss_function,
