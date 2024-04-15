@@ -26,7 +26,7 @@
 #include <utility>
 #include <vector>
 
-#include "absl/container/flat_hash_map.h"
+#include "absl/container/flat_hash_set.h"
 #include "absl/log/absl_check.h"
 #include "absl/status/status.h"
 #include "absl/synchronization/mutex.h"
@@ -142,11 +142,16 @@ class Tensor {
     int zero_point = 0;
   };
 
+  // memory_alignment is an optional argument to tell the API to allocate
+  // a buffer that is padded to multiples of memory_alignment bytes.
+  // memory_alignment must be power of 2, i.e. 2, 4, 8, 16, 64, etc.
+  // If memory_alignment is 0, then the buffer will not be padded.
+  // Note that memory_alignment is currently only supported for AHWB storage.
   Tensor(ElementType element_type, const Shape& shape,
-         MemoryManager* memory_manager = nullptr);
+         MemoryManager* memory_manager = nullptr, int memory_alignment = 0);
   Tensor(ElementType element_type, const Shape& shape,
          const QuantizationParameters& quantization_parameters,
-         MemoryManager* memory_manager = nullptr);
+         MemoryManager* memory_manager = nullptr, int memory_alignment = 0);
 
   // Non-copyable.
   Tensor(const Tensor&) = delete;
@@ -242,11 +247,7 @@ class Tensor {
     std::function<void()>* release_callback_;
   };
   AHardwareBufferView GetAHardwareBufferReadView() const;
-  // size_alignment is an optional argument to tell the API to allocate
-  // a buffer that is padded to multiples of size_alignment bytes.
-  // size_alignment must be power of 2, i.e. 2, 4, 8, 16, 64, etc.
-  // If size_alignment is 0, then the buffer will not be padded.
-  AHardwareBufferView GetAHardwareBufferWriteView(int size_alignment = 0) const;
+  AHardwareBufferView GetAHardwareBufferWriteView() const;
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
 
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
@@ -360,6 +361,7 @@ class Tensor {
   bool ready_as_opengl_texture_2d() const {
     return valid_ & kValidOpenGlTexture2d;
   }
+  bool ready_as_ahwb() const { return use_ahwb_; }
 
  private:
   friend class MtlBufferView;
@@ -370,6 +372,7 @@ class Tensor {
   ElementType element_type_;
   Shape shape_;
   QuantizationParameters quantization_parameters_;
+  int memory_alignment_ = 0;
 
   // The flags describe the current source of truth resource type.
   enum {
@@ -412,7 +415,7 @@ class Tensor {
   // If the input parameter is 'true' then wait for the writing to be finished.
   mutable FinishingFunc ahwb_written_;
   mutable std::function<void()> release_callback_;
-  absl::Status AllocateAHardwareBuffer(int size_alignment = 0) const;
+  absl::Status AllocateAHardwareBuffer() const;
   void CreateEglSyncAndFd() const;
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
   // Use Ahwb for other views: OpenGL / CPU buffer.
@@ -420,8 +423,7 @@ class Tensor {
   mutable uint64_t ahwb_tracking_key_ = 0;
   // TODO: Tracks all unique tensors. Can grow to a large number. LRU
   // (Least Recently Used) can be more predicted.
-  // The value contains the size alignment parameter.
-  static inline absl::flat_hash_map<uint64_t, int> ahwb_usage_track_;
+  static inline absl::flat_hash_set<uint64_t> ahwb_usage_track_;
   // Expects the target SSBO to be already bound.
   bool AllocateAhwbMapToSsbo() const;
   bool InsertAhwbToSsboFence() const;

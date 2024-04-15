@@ -249,10 +249,9 @@ void Tensor::CreateEglSyncAndFd() const {
   });
 }
 
-Tensor::AHardwareBufferView Tensor::GetAHardwareBufferWriteView(
-    int size_alignment) const {
+Tensor::AHardwareBufferView Tensor::GetAHardwareBufferWriteView() const {
   auto lock(absl::make_unique<absl::MutexLock>(&view_mutex_));
-  ABSL_CHECK_OK(AllocateAHardwareBuffer(size_alignment))
+  ABSL_CHECK_OK(AllocateAHardwareBuffer())
       << "AHardwareBuffer is not supported on the target system.";
   valid_ = kValidAHardwareBuffer;
   return {ahwb_.get(),
@@ -262,25 +261,20 @@ Tensor::AHardwareBufferView Tensor::GetAHardwareBufferWriteView(
           &release_callback_,  std::move(lock)};
 }
 
-absl::Status Tensor::AllocateAHardwareBuffer(int size_alignment) const {
+absl::Status Tensor::AllocateAHardwareBuffer() const {
   // Mark current tracking key as Ahwb-use.
-  if (auto it = ahwb_usage_track_.find(ahwb_tracking_key_);
-      it != ahwb_usage_track_.end()) {
-    size_alignment = it->second;
-  } else if (ahwb_tracking_key_ != 0) {
-    ahwb_usage_track_.insert({ahwb_tracking_key_, size_alignment});
-  }
+  ahwb_usage_track_.insert(ahwb_tracking_key_);
   use_ahwb_ = true;
 
   if (ahwb_ == nullptr) {
     HardwareBufferSpec spec = {};
-    if (size_alignment == 0) {
+    if (memory_alignment_ == 0) {
       spec.width = bytes();
     } else {
       // We expect allocations to be page-aligned, implicitly satisfying any
       // requirements from Edge TPU. No need to add a check for this,
       // since Edge TPU will check for us.
-      spec.width = AlignedToPowerOf2(bytes(), size_alignment);
+      spec.width = AlignedToPowerOf2(bytes(), memory_alignment_);
     }
     spec.height = 1;
     spec.layers = 1;
@@ -452,6 +446,8 @@ void Tensor::TrackAhwbUsage(uint64_t source_location_hash) const {
     for (int dim : shape_.dims) {
       ahwb_tracking_key_ = tensor_internal::FnvHash64(ahwb_tracking_key_, dim);
     }
+    ahwb_tracking_key_ =
+        tensor_internal::FnvHash64(ahwb_tracking_key_, memory_alignment_);
   }
   // Keep flag value if it was set previously.
   use_ahwb_ = use_ahwb_ || ahwb_usage_track_.contains(ahwb_tracking_key_);

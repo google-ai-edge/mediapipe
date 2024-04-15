@@ -431,6 +431,7 @@ void Tensor::Move(Tensor* src) {
   src->valid_ = kValidNone;
   shape_ = src->shape();
   quantization_parameters_ = src->quantization_parameters();
+  memory_alignment_ = src->memory_alignment_;
   element_type_ = src->element_type();
   src->element_type_ = ElementType::kNone;  // Mark as invalidated.
   cpu_buffer_ = src->cpu_buffer_;
@@ -455,9 +456,10 @@ void Tensor::Move(Tensor* src) {
 }
 
 Tensor::Tensor(ElementType element_type, const Shape& shape,
-               MemoryManager* memory_manager)
+               MemoryManager* memory_manager, int memory_alignment)
     : element_type_(element_type),
       shape_(shape),
+      memory_alignment_(memory_alignment),
       mtl_resources_(std::make_unique<MtlResources>()) {
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
   if (memory_manager) {
@@ -467,10 +469,11 @@ Tensor::Tensor(ElementType element_type, const Shape& shape,
 }
 Tensor::Tensor(ElementType element_type, const Shape& shape,
                const QuantizationParameters& quantization_parameters,
-               MemoryManager* memory_manager)
+               MemoryManager* memory_manager, int memory_alignment)
     : element_type_(element_type),
       shape_(shape),
       quantization_parameters_(quantization_parameters),
+      memory_alignment_(memory_alignment),
       mtl_resources_(std::make_unique<MtlResources>()) {
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
   if (memory_manager) {
