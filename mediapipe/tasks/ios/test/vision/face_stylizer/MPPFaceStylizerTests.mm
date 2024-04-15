@@ -104,6 +104,7 @@ static const NSInteger kModelImageSize = 256;
 
   MPPFaceStylizerResult *result = [faceStylizer stylizeImage:image regionOfInterest:rect error:nil];
   AssertFaceStylizerResultProperties(result, kModelImageSize);
+}
 
 - (void)testCreateImageClassifierWithMissingModelPathFails {
   MPPFileInfo *missingFileInfo = [[MPPFileInfo alloc] initWithName:@""
