@@ -32,7 +32,9 @@ using ::mediapipe::ImageFormat;
 using ::mediapipe::ImageFrame;
 
 vImage_Buffer CreateEmptyVImageBufferFromImageFrame(ImageFrame &imageFrame, bool shouldAllocate) {
-  UInt8 *data = shouldAllocate ? new UInt8[imageFrame.Height() * imageFrame.WidthStep()] : nullptr;
+  UInt8 *data = shouldAllocate
+                    ? (UInt8 *)malloc(imageFrame.Height() * imageFrame.WidthStep() * sizeof(UInt8))
+                    : nullptr;
   return {.data = data,
           .height = static_cast<vImagePixelCount>(imageFrame.Height()),
           .width = static_cast<vImagePixelCount>(imageFrame.Width()),
@@ -47,12 +49,16 @@ vImage_Buffer CreateVImageBufferFromImageFrame(ImageFrame &imageFrame) {
 
 vImage_Buffer allocatedVImageBuffer(vImagePixelCount width, vImagePixelCount height,
                                     size_t rowBytes) {
-  UInt8 *data = new UInt8[height * rowBytes];
+  UInt8 *data = (UInt8 *)malloc(height * rowBytes * sizeof(UInt8));
   return {.data = data, .height = height, .width = width, .rowBytes = rowBytes};
 }
+static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) {
+  free((void *)baseAddress);
+}
 
-static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { free(refCon); }
-
+static void FreeCGDataProviderReleaseCallback(void *info, const void *data, size_t size) {
+  free((void *)data);
+}
 }  // namespace
 
 @interface MPPPixelDataUtils : NSObject
@@ -420,13 +426,14 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { f
       return nullptr;
   }
 
-  CGDataProviderReleaseDataCallback callback = nullptr;
-
   const int channelCount = 4;
   const size_t bytesPerRow = size_t(internalImageFrame->Width() * channelCount);
 
+  CGDataProviderReleaseDataCallback imagePixelsReleaseCallback =
+      shouldCopyPixelData ? FreeCGDataProviderReleaseCallback : nullptr;
+
   CGDataProviderRef provider = CGDataProviderCreateWithData(
-      pixelData, pixelData, bytesPerRow * internalImageFrame->Height(), callback);
+      pixelData, pixelData, bytesPerRow * internalImageFrame->Height(), imagePixelsReleaseCallback);
 
   CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
 
@@ -515,10 +522,28 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { f
       CGImageRef cgImageRef = [MPPCGImageUtils cgImageFromImageFrame:image.GetImageFrameSharedPtr()
                                                  shouldCopyPixelData:shouldCopyPixelData
                                                                error:error];
-      UIImage *image = [UIImage imageWithCGImage:cgImageRef];
-      CGImageRelease(cgImageRef);
 
-      return [self initWithUIImage:image orientation:sourceImage.orientation error:nil];
+      // `[UIImage imageWithCGImage]` seems to be returning an autoreleased object. Thus ARC only
+      // deallocates it when the autoreleasepool to which the image was added is drained. This may
+      // happen only much later during the life cycle of the app. For a standalone inference this
+      // isn't a concern. If this method is invoked in a loop, the unreleased UIImage's accumulate
+      // in memory. They get destroyed all at once when all iterations of the loop are completed.
+      // For infinite loops like the camera callback, this results in an increase in memory
+      // footprint over time. To avoid this, the`UIImage` is being created in an @autoreleasepool
+      // block which results in the image being released as soon as the block completes. The MPImage
+      // retains the UIImage, to keep the image alive during its lifetime.
+      // (Until caller keeps a reference to the result retured by the task)
+      //
+      // Reference: `Use Local Autorelease Pool Blocks to Reduce Peak Memory Footprint`
+      // https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/MemoryMgmt/Articles/mmAutoreleasePools.html.
+      MPPImage *mpImage;
+      @autoreleasepool {
+        UIImage *uiImage = [UIImage imageWithCGImage:cgImageRef];
+        mpImage = [self initWithUIImage:uiImage orientation:sourceImage.orientation error:nil];
+        CGImageRelease(cgImageRef);
+      }
+
+      return mpImage;
     }
     case MPPImageSourceTypePixelBuffer: {
       if (!shouldCopyPixelData) {
@@ -536,11 +561,11 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { f
       CVPixelBufferRef pixelBuffer =
           [MPPCVPixelBufferUtils cvPixelBufferFromImageFrame:*(image.GetImageFrameSharedPtr())
                                                        error:error];
-      MPPImage *image = [self initWithPixelBuffer:pixelBuffer
-                                      orientation:sourceImage.orientation
-                                            error:nil];
+      MPPImage *mpImage = [self initWithPixelBuffer:pixelBuffer
+                                        orientation:sourceImage.orientation
+                                              error:nil];
       CVPixelBufferRelease(pixelBuffer);
-      return image;
+      return mpImage;
     }
     case MPPImageSourceTypeSampleBuffer: {
       if (!shouldCopyPixelData) {
@@ -554,11 +579,6 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { f
                       @"When the source type is sample buffer, you cannot request uncopied data."];
         return nil;
       }
-
-      CVPixelBufferRef pixelBuffer =
-          [MPPCVPixelBufferUtils cvPixelBufferFromImageFrame:*(image.GetImageFrameSharedPtr())
-                                                       error:error];
-
       CMSampleTimingInfo timingInfo;
       if (CMSampleBufferGetSampleTimingInfo(sourceImage.sampleBuffer, 0, &timingInfo) != 0) {
         [MPPCommonUtils createCustomError:error
@@ -567,20 +587,29 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { f
                                           @"info of the CMSampleBuffer."];
         return nil;
       }
+
+      CVPixelBufferRef pixelBuffer =
+          [MPPCVPixelBufferUtils cvPixelBufferFromImageFrame:*(image.GetImageFrameSharedPtr())
+                                                       error:error];
       CMFormatDescriptionRef formatDescription;
       CMVideoFormatDescriptionCreateForImageBuffer(kCFAllocatorDefault, pixelBuffer,
                                                    &formatDescription);
 
       CMSampleBufferRef sampleBuffer;
+
+      // This call takes ownership of the pixelBuffer. Docs are not very clear about this.
       CMSampleBufferCreateReadyWithImageBuffer(kCFAllocatorDefault, pixelBuffer, formatDescription,
                                                &timingInfo, &sampleBuffer);
       CFRelease(formatDescription);
 
-      MPPImage *image = [self initWithSampleBuffer:sampleBuffer
-                                       orientation:sourceImage.orientation
-                                             error:nil];
+      MPPImage *mpImage = [self initWithSampleBuffer:sampleBuffer
+                                         orientation:sourceImage.orientation
+                                               error:nil];
+
+      // Can safely release here since CMSampleBuffer takes ownership of the pixelBuffer.
+      CVPixelBufferRelease(pixelBuffer);
       CFRelease(sampleBuffer);
-      return image;
+      return mpImage;
     }
     default:
       return nil;
