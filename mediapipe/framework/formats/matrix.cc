@@ -53,7 +53,9 @@ void MatrixFromMatrixDataProto(const MatrixData& matrix_data, Matrix* matrix) {
 std::string MatrixAsTextProto(const Matrix& matrix) {
   MatrixData matrix_data;
   MatrixDataProtoFromMatrix(matrix, &matrix_data);
-  return matrix_data.DebugString();
+  std::string text_proto;
+  proto_ns::TextFormat::PrintToString(matrix_data, &text_proto);
+  return text_proto;
 }
 
 void MatrixFromTextProto(const std::string& text_proto, Matrix* matrix) {
