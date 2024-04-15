@@ -34,3 +34,22 @@ export function isIOS() {
       // iPad on iOS 13 detection
       || (navigator.userAgent.includes('Mac') && 'ontouchend' in self.document);
 }
+
+/**
+ * Returns whether the underlying rendering engine supports obtaining a WebGL2
+ * context from an OffscreenCanvas.
+ */
+export function supportsOffscreenCanvas(browser = navigator) {
+  if (typeof OffscreenCanvas === 'undefined') return false;
+  if (isWebKit(browser)) {
+    const userAgent = browser.userAgent;
+    const match = userAgent.match(/Version\/([\d]+).*Safari/);
+    if (match && match.length >= 1 && Number(match[1]) >= 17) {
+      // Starting with version 17, Safari supports OffscreenCanvas with WebGL2
+      // contexts.
+      return true;
+    }
+    return false;
+  }
+  return true;
+}

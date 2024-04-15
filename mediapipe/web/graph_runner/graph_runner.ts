@@ -1,5 +1,5 @@
 // Placeholder for internal dependency on assertTruthy
-import {isWebKit} from '../../web/graph_runner/platform_utils';
+import {supportsOffscreenCanvas} from '../../web/graph_runner/platform_utils';
 import {runScript} from '../../web/graph_runner/run_script_helper';
 // Placeholder for internal dependency on trusted resource url
 
@@ -109,10 +109,10 @@ export class GraphRunner implements GraphRunnerApi {
 
     if (glCanvas !== undefined) {
       this.wasmModule.canvas = glCanvas;
-    } else if (typeof OffscreenCanvas !== 'undefined' && !isWebKit()) {
+    } else if (supportsOffscreenCanvas()) {
       // If no canvas is provided, assume Chrome/Firefox and just make an
-      // OffscreenCanvas for GPU processing. Note that we exclude Safari
-      // since it does not (yet) support WebGL for OffscreenCanvas.
+      // OffscreenCanvas for GPU processing. Note that we exclude older Safari
+      // versions that not support WebGL for OffscreenCanvas.
       this.wasmModule.canvas = new OffscreenCanvas(1, 1);
     } else {
       console.warn(
