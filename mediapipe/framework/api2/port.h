@@ -577,6 +577,8 @@ class OutputSidePacketAccess {
   void Set(const T& payload) { Set(api2::MakePacket<T>(payload)); }
   void Set(T&& payload) { Set(api2::MakePacket<T>(std::move(payload))); }
 
+  bool IsConnected() const { return output_ != nullptr; }
+
  private:
   OutputSidePacketAccess(OutputSidePacket* output) : output_(output) {}
   OutputSidePacket* output_;
@@ -661,7 +663,7 @@ class InputSidePacketAccess : public Packet<T> {
       : Packet<T>(packet ? FromOldPacket(*packet).template As<T>()
                          : Packet<T>()),
         connected_(packet != nullptr) {}
-  bool connected_;
+  const bool connected_;
 
   friend InputSidePacketAccess<T> internal::SinglePortAccess<T>(
       mediapipe::CalculatorContext*, const mediapipe::Packet*);
