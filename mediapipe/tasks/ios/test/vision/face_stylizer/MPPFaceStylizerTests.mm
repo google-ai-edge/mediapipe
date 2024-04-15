@@ -95,7 +95,7 @@ static const NSInteger kModelImageSize = 256;
   XCTAssertNil(result.stylizedImage);
 }
 
-- (void)testStylizeWithRegionOfInterestInImageSucceeds {
+- (void)testStylizeWithRegionOfInterestSucceeds {
   MPPFaceStylizer *faceStylizer =
       [self createFaceStylizerFromOptionsWithModelFileInfo:kFaceStylizerBundleAssetFileInfo];
   MPPImage *image = [self createImageWithFileInfo:kLargeFaceImageFileInfo];
@@ -104,6 +104,25 @@ static const NSInteger kModelImageSize = 256;
 
   MPPFaceStylizerResult *result = [faceStylizer stylizeImage:image regionOfInterest:rect error:nil];
   AssertFaceStylizerResultProperties(result, kModelImageSize);
+
+- (void)testCreateImageClassifierWithMissingModelPathFails {
+  MPPFileInfo *missingFileInfo = [[MPPFileInfo alloc] initWithName:@""
+                                                                        type:@""];
+
+  NSError *error = nil;
+  MPPFaceStylizer *faceStylizer = [[MPPFaceStylizer alloc] initWithModelPath:missingFileInfo.path
+                                                                                error:&error];
+  XCTAssertNil(faceStylizer);
+
+  NSError *expectedError = [NSError
+      errorWithDomain:kExpectedErrorDomain
+                 code:MPPTasksErrorCodeInvalidArgumentError
+             userInfo:@{
+               NSLocalizedDescriptionKey :
+                   @"INVALID_ARGUMENT: ExternalFile must specify at least one of 'file_content', "
+                   @"'file_name', 'file_pointer_meta' or 'file_descriptor_meta'."
+             }];
+  AssertEqualErrors(error, expectedError);
 }
 
 #pragma mark Face Stylizer Initializers
