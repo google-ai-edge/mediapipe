@@ -46,3 +46,23 @@ objc_library(
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
     ],
 )
+
+objc_library(
+    name = "MPPAudioRecord",
+    srcs = ["sources/MPPAudioRecord.m"],
+    hdrs = ["sources/MPPAudioRecord.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+    ],
+    sdk_frameworks = [
+        "AVFoundation",
+    ],
+    deps = [
+        ":MPPAudioData",
+        ":MPPFloatBuffer",
+        ":MPPFloatRingBuffer",
+        "//mediapipe/tasks/ios/common:MPPCommon",
+        "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
+    ],
+)
