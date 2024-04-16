@@ -484,11 +484,12 @@ export class LlmInference extends TaskRunner {
     const gpt2NormalizationNode = new CalculatorGraphConfig.Node();
     gpt2NormalizationNode.setCalculator('Gpt2UnicodeMappingCalculator');
     gpt2NormalizationNode.addInputSidePacket(
-        'MODEL_DATA:' +
+        'MODEL_TYPE:' +
         'model_type');
     gpt2NormalizationNode.addOutputSidePacket(
         'BYTES_TO_UNICODE_MAPPING:' +
         'tokenizer_mapping');
+    graphConfig.addNode(gpt2NormalizationNode);
 
     const tokenizerOptionsProto = new Any();
     tokenizerOptionsProto.setTypeUrl(
