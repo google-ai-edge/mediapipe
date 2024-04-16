@@ -1,11 +1,12 @@
-#include <cstdint>
-#include <utility>
-
 #include "mediapipe/framework/formats/tensor.h"
 
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
+
+#include <cstdint>
+#include <utility>
+#include <vector>
 
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
@@ -102,7 +103,7 @@ class DelayedReleaser {
                   EGLSyncKHR ssbo_sync, GLsync ssbo_read,
                   Tensor::FinishingFunc&& ahwb_written,
                   std::shared_ptr<mediapipe::GlContext> gl_context,
-                  std::function<void()>&& callback) {
+                  std::vector<std::function<void()>>&& callbacks) {
     static absl::Mutex mutex;
     std::deque<std::unique_ptr<DelayedReleaser>> to_release_local;
     using std::swap;
@@ -117,7 +118,7 @@ class DelayedReleaser {
     // Using `new` to access a non-public constructor.
     to_release_local.emplace_back(absl::WrapUnique(new DelayedReleaser(
         std::move(ahwb), opengl_buffer, ssbo_sync, ssbo_read,
-        std::move(ahwb_written), gl_context, std::move(callback))));
+        std::move(ahwb_written), gl_context, std::move(callbacks))));
     for (auto it = to_release_local.begin(); it != to_release_local.end();) {
       if ((*it)->IsSignaled()) {
         it = to_release_local.erase(it);
@@ -136,7 +137,9 @@ class DelayedReleaser {
   }
 
   ~DelayedReleaser() {
-    if (release_callback_) release_callback_();
+    for (auto& callback : release_callbacks_) {
+      callback();
+    }
   }
 
   bool IsSignaled() {
@@ -187,7 +190,7 @@ class DelayedReleaser {
   GLsync ssbo_read_;
   Tensor::FinishingFunc ahwb_written_;
   std::shared_ptr<mediapipe::GlContext> gl_context_;
-  std::function<void()> release_callback_;
+  std::vector<std::function<void()>> release_callbacks_;
   static inline NoDestructor<std::deque<std::unique_ptr<DelayedReleaser>>>
       to_release_;
 
@@ -195,14 +198,14 @@ class DelayedReleaser {
                   EGLSyncKHR fence_sync, GLsync ssbo_read,
                   Tensor::FinishingFunc&& ahwb_written,
                   std::shared_ptr<mediapipe::GlContext> gl_context,
-                  std::function<void()>&& callback)
+                  std::vector<std::function<void()>>&& callback)
       : ahwb_(std::move(ahwb)),
         opengl_buffer_(opengl_buffer),
         fence_sync_(fence_sync),
         ssbo_read_(ssbo_read),
         ahwb_written_(std::move(ahwb_written)),
         gl_context_(gl_context),
-        release_callback_(std::move(callback)) {}
+        release_callbacks_(std::move(callback)) {}
 };
 }  // namespace
 
@@ -226,7 +229,7 @@ Tensor::AHardwareBufferView Tensor::GetAHardwareBufferReadView() const {
           ssbo_written_,
           &fence_fd_,  // The FD is created for SSBO -> AHWB synchronization.
           &ahwb_written_,  // Filled by SetReadingFinishedFunc.
-          &ahwb_release_callback_,
+          &ahwb_release_callbacks_,
           std::move(lock)};
 }
 
@@ -260,7 +263,7 @@ Tensor::AHardwareBufferView Tensor::GetAHardwareBufferWriteView() const {
           /*ssbo_written=*/-1,
           &fence_fd_,      // For SetWritingFinishedFD.
           &ahwb_written_,  // Filled by SetReadingFinishedFunc.
-          &ahwb_release_callback_,
+          &ahwb_release_callbacks_,
           std::move(lock)};
 }
 
@@ -374,6 +377,7 @@ bool Tensor::InsertAhwbToSsboFence() const {
 }
 
 void Tensor::MoveAhwbStuff(Tensor* src) {
+  // TODO: verify move/cleanup is done correctly.
   hardware_buffer_pool_ = std::exchange(src->hardware_buffer_pool_, nullptr);
   ahwb_ = std::exchange(src->ahwb_, nullptr);
   fence_sync_ = std::exchange(src->fence_sync_, EGL_NO_SYNC_KHR);
@@ -381,7 +385,7 @@ void Tensor::MoveAhwbStuff(Tensor* src) {
   ssbo_written_ = std::exchange(src->ssbo_written_, -1);
   fence_fd_ = std::exchange(src->fence_fd_, -1);
   ahwb_written_ = std::move(src->ahwb_written_);
-  ahwb_release_callback_ = std::move(src->ahwb_release_callback_);
+  ahwb_release_callbacks_ = std::move(src->ahwb_release_callbacks_);
 }
 
 void Tensor::ReleaseAhwbStuff() {
@@ -395,10 +399,13 @@ void Tensor::ReleaseAhwbStuff() {
         if (ssbo_written_ != -1) close(ssbo_written_);
         DelayedReleaser::Add(std::move(ahwb_), opengl_buffer_, fence_sync_,
                              ssbo_read_, std::move(ahwb_written_), gl_context_,
-                             std::move(ahwb_release_callback_));
+                             std::move(ahwb_release_callbacks_));
         opengl_buffer_ = GL_INVALID_INDEX;
       } else {
-        if (ahwb_release_callback_) ahwb_release_callback_();
+        for (auto& callback : ahwb_release_callbacks_) {
+          callback();
+        }
+        ahwb_release_callbacks_.clear();
         ahwb_.reset();
       }
     }

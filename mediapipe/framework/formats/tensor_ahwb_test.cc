@@ -1,5 +1,6 @@
 #include <android/hardware_buffer.h>
 
+#include <array>
 #include <memory>
 
 #include "mediapipe/framework/formats/hardware_buffer.h"
@@ -12,6 +13,7 @@
 namespace mediapipe {
 namespace {
 
+using ::testing::Each;
 using ::testing::Return;
 using ::testing::Truly;
 
@@ -32,6 +34,56 @@ TEST(TensorAhwbTest, TestCpuThenAHWB) {
     EXPECT_NE(view.handle(), nullptr);
     view.SetReadingFinishedFunc([](bool) { return true; });
   }
+}
+
+TEST(TensorAhwbTest, EveryAhwbReadViewReleaseCallbackIsInvoked) {
+  constexpr int kNumReleaseCallbacks = 10;
+  std::array<bool, kNumReleaseCallbacks> callbacks_invoked;
+  callbacks_invoked.fill(false);
+
+  {
+    // Create tensor.
+    Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape{1});
+    {
+      auto ptr = tensor.GetCpuWriteView().buffer<float>();
+      EXPECT_NE(ptr, nullptr);
+    }
+
+    // Get AHWB read view multiple times (e.g. simulating how multiple inference
+    // calculators could read from the same tensor)
+    for (int i = 0; i < kNumReleaseCallbacks; ++i) {
+      auto view = tensor.GetAHardwareBufferReadView();
+      EXPECT_NE(view.handle(), nullptr);
+      view.SetReleaseCallback(
+          [&callbacks_invoked, i] { callbacks_invoked[i] = true; });
+    }
+
+    // Destroy tensor on scope exit triggering release callbacks.
+  }
+
+  EXPECT_THAT(callbacks_invoked, Each(true));
+}
+
+TEST(TensorAhwbTest, EveryAhwbWriteViewReleaseCallbackIsInvoked) {
+  constexpr int kNumReleaseCallbacks = 10;
+  std::array<bool, kNumReleaseCallbacks> callbacks_invoked;
+  callbacks_invoked.fill(false);
+
+  {
+    // Create tensor.
+    Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape{1});
+    // Get AHWB write view multiple times and set release callback.
+    for (int i = 0; i < kNumReleaseCallbacks; ++i) {
+      auto view = tensor.GetAHardwareBufferWriteView();
+      EXPECT_NE(view.handle(), nullptr);
+      view.SetReleaseCallback(
+          [&callbacks_invoked, i] { callbacks_invoked[i] = true; });
+    }
+
+    // Destroy tensor on scope exit triggering release callbacks.
+  }
+
+  EXPECT_THAT(callbacks_invoked, Each(true));
 }
 
 TEST(TensorAhwbTest, TestAHWBThenCpu) {
