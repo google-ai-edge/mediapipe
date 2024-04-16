@@ -67,7 +67,9 @@ NS_ASSUME_NONNULL_BEGIN
  * @return A new `FloatBuffer` if `offset + length` is within the bounds of the ring buffer,
  * otherwise nil.
  */
-- (nullable MPPFloatBuffer *)floatBufferWithOffset:(NSUInteger)offset length:(NSUInteger)length;
+- (nullable MPPFloatBuffer *)floatBufferWithOffset:(NSUInteger)offset
+                                            length:(NSUInteger)length
+                                             error:(NSError **)error;
 
 /**
  * Clears the `FloatRingBuffer` by setting all the elements to zero .
