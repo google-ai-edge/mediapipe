@@ -17,6 +17,7 @@
 #include <chrono>
 #include <filesystem>
 #include <fstream>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <openvino/openvino.hpp>
@@ -106,10 +107,9 @@ static void writeToFile(std::stringstream& stream, std::string name)
 }
 
 static std::string getTimestampString() {
-    time_t *rawtime = new time_t;
-    struct tm * timeinfo;
-    time(rawtime);
-    timeinfo = localtime(rawtime);
+    auto rawtime = std::make_unique<time_t>();
+    time(rawtime.get());
+    struct tm* timeinfo = localtime(rawtime.get());
     auto start = std::chrono::system_clock::now();
     std::stringstream timestampStream;
     timestampStream << timeinfo->tm_year << "_" << timeinfo->tm_mon << "_" << timeinfo->tm_mday << "_" ;
