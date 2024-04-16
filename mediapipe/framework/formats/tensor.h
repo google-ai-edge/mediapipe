@@ -208,7 +208,8 @@ class Tensor {
       file_descriptor_ = src.file_descriptor_;
       fence_fd_ = std::exchange(src.fence_fd_, nullptr);
       ahwb_written_ = std::exchange(src.ahwb_written_, nullptr);
-      release_callback_ = std::exchange(src.release_callback_, nullptr);
+      ahwb_release_callback_ =
+          std::exchange(src.ahwb_release_callback_, nullptr);
     }
     int file_descriptor() const { return file_descriptor_; }
     void SetReadingFinishedFunc(FinishingFunc&& func) {
@@ -224,27 +225,27 @@ class Tensor {
     }
     // The function is called when the tensor is released.
     void SetReleaseCallback(std::function<void()> callback) {
-      *release_callback_ = std::move(callback);
+      *ahwb_release_callback_ = std::move(callback);
     }
 
    protected:
     friend class Tensor;
     AHardwareBufferView(HardwareBuffer* hardware_buffer, int file_descriptor,
                         int* fence_fd, FinishingFunc* ahwb_written,
-                        std::function<void()>* release_callback,
+                        std::function<void()>* ahwb_release_callback,
                         std::unique_ptr<absl::MutexLock>&& lock)
         : View(std::move(lock)),
           hardware_buffer_(hardware_buffer),
           file_descriptor_(file_descriptor),
           fence_fd_(fence_fd),
           ahwb_written_(ahwb_written),
-          release_callback_(release_callback) {}
+          ahwb_release_callback_(ahwb_release_callback) {}
     HardwareBuffer* hardware_buffer_;
     int file_descriptor_;
     // The view sets some Tensor's fields. The view is released prior to tensor.
     int* fence_fd_;
     FinishingFunc* ahwb_written_;
-    std::function<void()>* release_callback_;
+    std::function<void()>* ahwb_release_callback_;
   };
   AHardwareBufferView GetAHardwareBufferReadView() const;
   AHardwareBufferView GetAHardwareBufferWriteView() const;
@@ -414,7 +415,7 @@ class Tensor {
   // An externally set function that signals when it is safe to release AHWB.
   // If the input parameter is 'true' then wait for the writing to be finished.
   mutable FinishingFunc ahwb_written_;
-  mutable std::function<void()> release_callback_;
+  mutable std::function<void()> ahwb_release_callback_;
   absl::Status AllocateAHardwareBuffer() const;
   void CreateEglSyncAndFd() const;
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB

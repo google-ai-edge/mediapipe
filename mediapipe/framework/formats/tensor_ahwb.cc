@@ -222,10 +222,12 @@ Tensor::AHardwareBufferView Tensor::GetAHardwareBufferReadView() const {
   } else {
     if (valid_ & kValidOpenGlBuffer) CreateEglSyncAndFd();
   }
-  return {ahwb_.get(),        ssbo_written_,
+  return {ahwb_.get(),
+          ssbo_written_,
           &fence_fd_,  // The FD is created for SSBO -> AHWB synchronization.
           &ahwb_written_,  // Filled by SetReadingFinishedFunc.
-          &release_callback_, std::move(lock)};
+          &ahwb_release_callback_,
+          std::move(lock)};
 }
 
 void Tensor::CreateEglSyncAndFd() const {
@@ -258,7 +260,8 @@ Tensor::AHardwareBufferView Tensor::GetAHardwareBufferWriteView() const {
           /*ssbo_written=*/-1,
           &fence_fd_,      // For SetWritingFinishedFD.
           &ahwb_written_,  // Filled by SetReadingFinishedFunc.
-          &release_callback_,  std::move(lock)};
+          &ahwb_release_callback_,
+          std::move(lock)};
 }
 
 absl::Status Tensor::AllocateAHardwareBuffer() const {
@@ -378,7 +381,7 @@ void Tensor::MoveAhwbStuff(Tensor* src) {
   ssbo_written_ = std::exchange(src->ssbo_written_, -1);
   fence_fd_ = std::exchange(src->fence_fd_, -1);
   ahwb_written_ = std::move(src->ahwb_written_);
-  release_callback_ = std::move(src->release_callback_);
+  ahwb_release_callback_ = std::move(src->ahwb_release_callback_);
 }
 
 void Tensor::ReleaseAhwbStuff() {
@@ -392,10 +395,10 @@ void Tensor::ReleaseAhwbStuff() {
         if (ssbo_written_ != -1) close(ssbo_written_);
         DelayedReleaser::Add(std::move(ahwb_), opengl_buffer_, fence_sync_,
                              ssbo_read_, std::move(ahwb_written_), gl_context_,
-                             std::move(release_callback_));
+                             std::move(ahwb_release_callback_));
         opengl_buffer_ = GL_INVALID_INDEX;
       } else {
-        if (release_callback_) release_callback_();
+        if (ahwb_release_callback_) ahwb_release_callback_();
         ahwb_.reset();
       }
     }
