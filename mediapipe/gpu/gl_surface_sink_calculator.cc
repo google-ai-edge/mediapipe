@@ -33,8 +33,26 @@
 
 #if HAS_EGL
 
+#ifdef __ANDROID__
+#include "EGL/eglext.h"
+#endif  // __ANDROID__
+
 namespace mediapipe {
 namespace api2 {
+namespace {
+#ifdef EGL_ANDROID_presentation_time
+// Helper function to safely initialize the eglPresentationTimeANDROID
+// function pointer.
+EGLBoolean SetPresentationTime(EGLDisplay dpy, EGLSurface surface,
+                               EGLnsecsANDROID time) {
+  static PFNEGLPRESENTATIONTIMEANDROIDPROC eglPresentationTimeANDROID =
+      reinterpret_cast<PFNEGLPRESENTATIONTIMEANDROIDPROC>(
+          eglGetProcAddress("eglPresentationTimeANDROID"));
+  if (!eglPresentationTimeANDROID) return EGL_FALSE;
+  return eglPresentationTimeANDROID(dpy, surface, time);
+}
+#endif  // EGL_ANDROID_presentation_time
+}  // namespace
 
 enum { kAttribVertex, kAttribTexturePosition, kNumberOfAttributes };
 
@@ -162,6 +180,16 @@ absl::Status GlSurfaceSinkCalculator::Process(CalculatorContext* cc) {
                             /*flip_texture=*/surface_holder_->flip_y));
 
     glBindTexture(src.target(), 0);
+
+#ifdef EGL_ANDROID_presentation_time
+    // Propagate the packet timestamp as a presentation timestamp on Android.
+    // This enables consumers like ImageReader or SurfaceTexture to recover it.
+    if (surface_holder_->update_presentation_time) {
+      success = SetPresentationTime(display, surface,
+                                    packet.Timestamp().Microseconds() * 1000);
+      RET_CHECK(success) << "failed to update presentation time";
+    }
+#endif
 
     success = eglSwapBuffers(display, surface);
     RET_CHECK(success) << "failed to swap buffers";

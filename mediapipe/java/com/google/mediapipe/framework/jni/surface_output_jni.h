@@ -27,6 +27,10 @@ extern "C" {
 JNIEXPORT void JNICALL MEDIAPIPE_SURFACE_OUTPUT_METHOD(nativeSetFlipY)(
     JNIEnv* env, jobject thiz, jlong packet, jboolean flip);
 
+JNIEXPORT void JNICALL MEDIAPIPE_SURFACE_OUTPUT_METHOD(
+    nativeSetUpdatePresentationTime)(JNIEnv* env, jobject thiz, jlong packet,
+                                     jboolean update_presentation_time);
+
 #ifdef __ANDROID__
 JNIEXPORT void JNICALL MEDIAPIPE_SURFACE_OUTPUT_METHOD(nativeSetSurface)(
     JNIEnv* env, jobject thiz, jlong context, jlong packet, jobject surface);
