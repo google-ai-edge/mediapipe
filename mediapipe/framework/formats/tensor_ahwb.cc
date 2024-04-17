@@ -8,6 +8,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/functional/any_invocable.h"
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/synchronization/mutex.h"
@@ -103,7 +104,7 @@ class DelayedReleaser {
                   EGLSyncKHR ssbo_sync, GLsync ssbo_read,
                   Tensor::FinishingFunc&& ahwb_written,
                   std::shared_ptr<mediapipe::GlContext> gl_context,
-                  std::vector<std::function<void()>>&& callbacks) {
+                  std::vector<absl::AnyInvocable<void()>>&& callbacks) {
     static absl::Mutex mutex;
     std::deque<std::unique_ptr<DelayedReleaser>> to_release_local;
     using std::swap;
@@ -190,7 +191,7 @@ class DelayedReleaser {
   GLsync ssbo_read_;
   Tensor::FinishingFunc ahwb_written_;
   std::shared_ptr<mediapipe::GlContext> gl_context_;
-  std::vector<std::function<void()>> release_callbacks_;
+  std::vector<absl::AnyInvocable<void()>> release_callbacks_;
   static inline NoDestructor<std::deque<std::unique_ptr<DelayedReleaser>>>
       to_release_;
 
@@ -198,7 +199,7 @@ class DelayedReleaser {
                   EGLSyncKHR fence_sync, GLsync ssbo_read,
                   Tensor::FinishingFunc&& ahwb_written,
                   std::shared_ptr<mediapipe::GlContext> gl_context,
-                  std::vector<std::function<void()>>&& callback)
+                  std::vector<absl::AnyInvocable<void()>>&& callback)
       : ahwb_(std::move(ahwb)),
         opengl_buffer_(opengl_buffer),
         fence_sync_(fence_sync),

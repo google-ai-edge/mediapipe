@@ -17,7 +17,6 @@
 
 #include <algorithm>
 #include <cstdint>
-#include <functional>
 #include <initializer_list>
 #include <memory>
 #include <numeric>
@@ -27,6 +26,7 @@
 #include <vector>
 
 #include "absl/container/flat_hash_set.h"
+#include "absl/functional/any_invocable.h"
 #include "absl/log/absl_check.h"
 #include "absl/status/status.h"
 #include "absl/synchronization/mutex.h"
@@ -181,12 +181,12 @@ class Tensor {
    protected:
     friend class Tensor;
     CpuView(T* buffer, std::unique_ptr<absl::MutexLock>&& lock,
-            std::function<void()> release_callback = nullptr)
+            absl::AnyInvocable<void()> release_callback = nullptr)
         : View(std::move(lock)),
           buffer_(buffer),
-          release_callback_(release_callback) {}
+          release_callback_(std::move(release_callback)) {}
     T* buffer_;
-    std::function<void()> release_callback_;
+    absl::AnyInvocable<void()> release_callback_;
   };
   using CpuReadView = CpuView<const void>;
   CpuReadView GetCpuReadView() const;
@@ -230,7 +230,7 @@ class Tensor {
 
     // Passed `callback` is invoked when the tensor is being released.
     // TODO: rename to Add* or set a single callback only.
-    void SetReleaseCallback(std::function<void()> callback) {
+    void SetReleaseCallback(absl::AnyInvocable<void()> callback) {
       ahwb_release_callbacks_->push_back(std::move(callback));
     }
 
@@ -239,7 +239,7 @@ class Tensor {
     AHardwareBufferView(
         HardwareBuffer* hardware_buffer, int file_descriptor, int* fence_fd,
         FinishingFunc* ahwb_written,
-        std::vector<std::function<void()>>* ahwb_release_callbacks,
+        std::vector<absl::AnyInvocable<void()>>* ahwb_release_callbacks,
         std::unique_ptr<absl::MutexLock>&& lock)
         : View(std::move(lock)),
           hardware_buffer_(hardware_buffer),
@@ -252,7 +252,7 @@ class Tensor {
     // The view sets some Tensor's fields. The view is released prior to tensor.
     int* fence_fd_;
     FinishingFunc* ahwb_written_;
-    std::vector<std::function<void()>>* ahwb_release_callbacks_;
+    std::vector<absl::AnyInvocable<void()>>* ahwb_release_callbacks_;
   };
   AHardwareBufferView GetAHardwareBufferReadView() const;
   AHardwareBufferView GetAHardwareBufferWriteView() const;
@@ -432,7 +432,7 @@ class Tensor {
   // Multiple cleanups maybe needed. (E.g. two inference calculators use the
   // same input tensor and import buffer by FD which results in two buffer
   // handles that must be released.)
-  mutable std::vector<std::function<void()>> ahwb_release_callbacks_;
+  mutable std::vector<absl::AnyInvocable<void()>> ahwb_release_callbacks_;
 
   absl::Status AllocateAHardwareBuffer() const;
 
