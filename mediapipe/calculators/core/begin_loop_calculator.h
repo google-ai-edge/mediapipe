@@ -66,6 +66,19 @@ namespace mediapipe {
 // sub-graph can run multiple times, once per element in the "ITERABLE" for each
 // packet clone of the packets in the "CLONE" input streams. Think of CLONEd
 // inputs as loop-wide constants.
+//
+// An alternative to this calculator is Begin/EndItemLoopCalculator. Prefer this
+// calculator only if inputs and outputs are already vectorized. Otherwise,
+// prefer Begin/EndItemLoopCalculator. It allows you to specify inputs and
+// outputs as loose items, e.g. ITEM:0:item0, ITEM:1:item1 etc., which solves
+// several issues with this calculator:
+//   - Iterating over SomeItemT requires the instantiation of a
+//     Begin/EndLoopSomeItemTCalculator.
+//   - Items may have to be vectorized (see ConcatenateVectorCalculator) and
+//     unvectorized (see SplitVectorCalculator).
+//   - Iterable packets have to be consumable (have a unique owner) or items
+//     items have to be copyable, which is not the case e.g. for Tensors.
+
 template <typename IterableT>
 class BeginLoopCalculator : public CalculatorBase {
   using ItemT = typename IterableT::value_type;
