@@ -617,7 +617,7 @@ export class LlmInference extends TaskRunner {
     tokenCostNode.setCalculator('TokenCostCalculator');
     tokenCostNode.addInputStream('PROMPT:' + TOKEN_COST_INPUT_STREAM);
     tokenCostNode.addInputSidePacket('PROCESSOR_GETTER:__input_side_1');
-    tokenCostNode.addInputSidePacket('BYTES_TO_UNICODE_MAPPING:__input_side_2');
+    tokenCostNode.addInputSidePacket('BYTES_TO_UNICODE_MAPPING:tokenizer_mapping');
     tokenCostNode.addOutputStream('NUM_TOKENS:' + TOKEN_COST_OUTPUT_STREAM);
     graphConfig.addNode(tokenCostNode);
     return graphConfig;
