@@ -381,6 +381,6 @@ apple_static_library(
     platform_type = "ios",
     deps = select({
         "//conditions:default": [],
-        ":enable_odml_cocoapods_build": ["//third_party/odml/infra/genai/inference:all_possible_calculators"],
+        ":enable_odml_cocoapods_build": ["@odml//odml/infra/genai/inference:all_possible_calculators"],
     }),
 )
