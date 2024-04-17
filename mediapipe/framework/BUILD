@@ -590,12 +590,6 @@ cc_library(
 cc_library(
     name = "demangle",
     hdrs = ["demangle.h"],
-    defines = select({
-        "//mediapipe/framework/profiler:android_release": [
-            "MEDIAPIPE_HAS_CXA_DEMANGLE=0",
-        ],
-        "//conditions:default": [],
-    }),
     visibility = ["//visibility:public"],
 )
 

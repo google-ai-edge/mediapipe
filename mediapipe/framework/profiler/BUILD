@@ -34,16 +34,6 @@ config_setting(
     visibility = ["//visibility:public"],
 )
 
-config_setting(
-    name = "android_release",
-    values = {
-        "crosstool_top": "//tools/android:ndk",
-        "compilation_mode": "opt",
-        "define": "prod=1",
-    },
-    visibility = ["//visibility:public"],
-)
-
 # Maps either to graph_profiler_real or to graph_profiler_stub
 # depending on the platform, compilation mode, and MEDIAPIPE_PROFILING value.
 # This requires three levels of aliases because of limitations with select.
