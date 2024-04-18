@@ -57,8 +57,12 @@ message LlmParameters {
   // Was used for disable_kv_cache.
   reserved 3;
 
-  // Id of the start token.
-  int32 start_token_id = 4;
+  // Start token prepended to the beginning of input sequence.
+  oneof start_token_union {
+    int32 start_token_id = 4;
+
+    string start_token = 6;
+  }
 
   // Stop tokens to determine the end of output stream.
   repeated string stop_tokens = 5;
