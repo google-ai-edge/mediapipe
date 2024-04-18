@@ -71,9 +71,9 @@ public final class LlmTaskRunner implements AutoCloseable {
     return nativeSizeInTokens(sessionHandle, text);
   }
 
-  private LlmResponseContext parseResponse(byte[] reponse) {
+  private LlmResponseContext parseResponse(byte[] response) {
     try {
-      return LlmResponseContext.parseFrom(reponse);
+      return LlmResponseContext.parseFrom(response);
     } catch (InvalidProtocolBufferException e) {
       throw new IllegalStateException("Failed to parse response", e);
     }
