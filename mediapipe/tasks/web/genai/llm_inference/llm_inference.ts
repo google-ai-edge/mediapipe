@@ -15,13 +15,22 @@
  */
 
 import {Any} from 'google-protobuf/google/protobuf/any_pb';
-import {CalculatorGraphConfig, InputStreamInfo,} from '../../../../framework/calculator_pb';
+import {
+  CalculatorGraphConfig,
+  InputStreamInfo,
+} from '../../../../framework/calculator_pb';
 import {BaseOptions as BaseOptionsProto} from '../../../../tasks/cc/core/proto/base_options_pb';
-import {CachedGraphRunner, TaskRunner,} from '../../../../tasks/web/core/task_runner';
+import {
+  CachedGraphRunner,
+  TaskRunner,
+} from '../../../../tasks/web/core/task_runner';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {LlmInferenceGraphOptions} from '../../../../tasks/web/genai/llm_inference/proto/llm_inference_graph_options_pb';
 import {WasmModule} from '../../../../web/graph_runner/graph_runner';
-import {StreamingReader, SupportStreamingReader} from '../../../../web/graph_runner/graph_runner_streaming_reader';
+import {
+  StreamingReader,
+  SupportStreamingReader,
+} from '../../../../web/graph_runner/graph_runner_streaming_reader';
 import {SupportWebGpu} from '../../../../web/graph_runner/graph_runner_webgpu';
 import {DetokenizerCalculatorOptions} from '../../../../tasks/cc/genai/inference/calculators/detokenizer_calculator_pb';
 import {LlmGpuCalculatorOptions} from '../../../../tasks/cc/genai/inference/calculators/llm_gpu_calculator_pb';
@@ -40,17 +49,19 @@ export * from './llm_inference_options';
 
 // TODO: b/327515383 - Use ReturnType patter to apply extensions to LLM Web API.
 // tslint:disable-next-line:enforce-name-casing
-const StreamingReaderWebGpuGraphRunnerType =
-    SupportWebGpu(SupportStreamingReader(CachedGraphRunner));
-class StreamingReaderWebGpuGraphRunner extends
-    StreamingReaderWebGpuGraphRunnerType {}
+const StreamingReaderWebGpuGraphRunnerType = SupportWebGpu(
+  SupportStreamingReader(CachedGraphRunner),
+);
+class StreamingReaderWebGpuGraphRunner extends StreamingReaderWebGpuGraphRunnerType {}
 
 /**
  * A listener that receives the newly generated partial result and an indication
  * whether the generation is complete.
  */
-export type ProgressListener = (partialResult: string, done: boolean) =>
-    unknown;
+export type ProgressListener = (
+  partialResult: string,
+  done: boolean,
+) => unknown;
 
 const INPUT_STREAM = 'text_in';
 const OUTPUT_STREAM = 'text_out';
@@ -69,8 +80,7 @@ const DEFAULT_SAMPLER_TYPE = SamplerParameters.Type.TOP_P;
  * Performs LLM Inference on text.
  */
 export class LlmInference extends TaskRunner {
-  private static readonly TOKEN_SPLITTER =
-      '▁';  // Note this is NOT an underscore: ▁(U+2581)
+  private static readonly TOKEN_SPLITTER = '▁'; // Note this is NOT an underscore: ▁(U+2581)
   private static readonly NEW_LINE = '<0x0A>';
   private static readonly EOD = '\\[eod\\]';
   private static readonly LLM_MODEL_NAME = 'llm.tflite';
@@ -96,8 +106,9 @@ export class LlmInference extends TaskRunner {
    *     provided (via `baseOptions`).
    */
   static async createFromOptions(
-      wasmFileset: WasmFileset,
-      llmInferenceOptions: LlmInferenceOptions): Promise<LlmInference> {
+    wasmFileset: WasmFileset,
+    llmInferenceOptions: LlmInferenceOptions,
+  ): Promise<LlmInference> {
     const optionsWithGpuDevice = llmInferenceOptions;
     // if the user provided options object does not have WebGPU device, clone a
     // new options object and add WebGPU device to the options.
@@ -105,12 +116,16 @@ export class LlmInference extends TaskRunner {
       const webgpuDevice = await LlmInference.createWebGpuDevice();
       optionsWithGpuDevice.baseOptions = llmInferenceOptions.baseOptions ?? {};
       optionsWithGpuDevice.baseOptions.gpuOptions =
-          llmInferenceOptions?.baseOptions?.gpuOptions ?? {};
+        llmInferenceOptions?.baseOptions?.gpuOptions ?? {};
       optionsWithGpuDevice.baseOptions.gpuOptions.device = webgpuDevice;
     }
 
     return TaskRunner.createInstance(
-        LlmInference, /* canvas= */ null, wasmFileset, optionsWithGpuDevice);
+      LlmInference,
+      /* canvas= */ null,
+      wasmFileset,
+      optionsWithGpuDevice,
+    );
   }
 
   /**
@@ -122,15 +137,20 @@ export class LlmInference extends TaskRunner {
    * @param modelAssetBuffer A binary representation of the model.
    */
   static async createFromModelBuffer(
-      wasmFileset: WasmFileset,
-      modelAssetBuffer: Uint8Array): Promise<LlmInference> {
+    wasmFileset: WasmFileset,
+    modelAssetBuffer: Uint8Array,
+  ): Promise<LlmInference> {
     const webgpuDevice = await LlmInference.createWebGpuDevice();
     const llmInferenceOptions = {
-      baseOptions: {gpuOptions: {device: webgpuDevice}, modelAssetBuffer}
+      baseOptions: {gpuOptions: {device: webgpuDevice}, modelAssetBuffer},
     };
 
     return TaskRunner.createInstance(
-        LlmInference, /* canvas= */ null, wasmFileset, llmInferenceOptions);
+      LlmInference,
+      /* canvas= */ null,
+      wasmFileset,
+      llmInferenceOptions,
+    );
   }
 
   /**
@@ -142,21 +162,27 @@ export class LlmInference extends TaskRunner {
    * @param modelAssetPath The path to the model asset.
    */
   static async createFromModelPath(
-      wasmFileset: WasmFileset,
-      modelAssetPath: string): Promise<LlmInference> {
+    wasmFileset: WasmFileset,
+    modelAssetPath: string,
+  ): Promise<LlmInference> {
     const webgpuDevice = await LlmInference.createWebGpuDevice();
     const llmInferenceOptions = {
-      baseOptions: {gpuOptions: {device: webgpuDevice}, modelAssetPath}
+      baseOptions: {gpuOptions: {device: webgpuDevice}, modelAssetPath},
     };
 
     return TaskRunner.createInstance(
-        LlmInference, /* canvas= */ null, wasmFileset, llmInferenceOptions);
+      LlmInference,
+      /* canvas= */ null,
+      wasmFileset,
+      llmInferenceOptions,
+    );
   }
 
   /** @hideconstructor */
   constructor(
-      wasmModule: WasmModule,
-      glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
+    wasmModule: WasmModule,
+    glCanvas?: HTMLCanvasElement | OffscreenCanvas | null,
+  ) {
     super(new StreamingReaderWebGpuGraphRunner(wasmModule, glCanvas));
     this.options = new LlmInferenceGraphOptions();
     this.options.setBaseOptions(new BaseOptionsProto());
@@ -170,8 +196,9 @@ export class LlmInference extends TaskRunner {
    * @export
    */
   static createWebGpuDevice(): Promise<GPUDevice> {
-    const adapterDescriptor:
-        GPURequestAdapterOptions = {powerPreference: 'high-performance'};
+    const adapterDescriptor: GPURequestAdapterOptions = {
+      powerPreference: 'high-performance',
+    };
     const deviceDescriptor: GPUDeviceDescriptor = {
       requiredFeatures: ['shader-f16'],
       requiredLimits: {
@@ -180,7 +207,9 @@ export class LlmInference extends TaskRunner {
       },
     };
     return StreamingReaderWebGpuGraphRunner.requestWebGpuDevice(
-        deviceDescriptor, adapterDescriptor);
+      deviceDescriptor,
+      adapterDescriptor,
+    );
   }
 
   /**
@@ -202,8 +231,9 @@ export class LlmInference extends TaskRunner {
     this.isProcessing = true;
 
     if (options.baseOptions?.gpuOptions?.device) {
-      (this.graphRunner as unknown as StreamingReaderWebGpuGraphRunner)
-          .initializeForWebGpu(options.baseOptions.gpuOptions.device);
+      (
+        this.graphRunner as unknown as StreamingReaderWebGpuGraphRunner
+      ).initializeForWebGpu(options.baseOptions.gpuOptions.device);
     }
     if ('maxTokens' in options) {
       this.options.setMaxTokens(options.maxTokens ?? DEFAULT_MAX_TOKENS);
@@ -212,15 +242,18 @@ export class LlmInference extends TaskRunner {
       this.samplerParams.setK(options.topK ?? DEFAULT_TOP_K);
       if (options.topK && !options.randomSeed) {
         console.warn(
-            `'topK' option ignored; it requires randomSeed to be set.`);
+          `'topK' option ignored; it requires randomSeed to be set.`,
+        );
       }
     }
     if ('temperature' in options) {
       this.samplerParams.setTemperature(
-          options.temperature ?? DEFAULT_TEMPERATURE);
+        options.temperature ?? DEFAULT_TEMPERATURE,
+      );
       if (options.temperature && !options.randomSeed) {
         console.warn(
-            `'temperature' option ignored; it requires randomSeed to be set.`);
+          `'temperature' option ignored; it requires randomSeed to be set.`,
+        );
       }
     }
     if (options.randomSeed) {
@@ -231,19 +264,28 @@ export class LlmInference extends TaskRunner {
     const finishedLoadingDataPromise = new Promise<void>((resolve, reject) => {
       onFinishedLoadingData = resolve;
     });
-    if (options.baseOptions?.modelAssetPath ||
-        options.baseOptions?.modelAssetBuffer) {
-      if (options.baseOptions.modelAssetPath &&
-          options.baseOptions.modelAssetBuffer) {
+    if (
+      options.baseOptions?.modelAssetPath ||
+      options.baseOptions?.modelAssetBuffer
+    ) {
+      if (
+        options.baseOptions.modelAssetPath &&
+        options.baseOptions.modelAssetBuffer
+      ) {
         throw new Error(
-            'Cannot set both baseOptions.modelAssetPath and baseOptions.modelAssetBuffer');
+          'Cannot set both baseOptions.modelAssetPath and baseOptions.modelAssetBuffer',
+        );
       }
       if (options.baseOptions.modelAssetPath) {
         this.streamingReader = StreamingReader.loadFromUrl(
-            options.baseOptions.modelAssetPath, onFinishedLoadingData);
+          options.baseOptions.modelAssetPath,
+          onFinishedLoadingData,
+        );
       } else if (options.baseOptions.modelAssetBuffer) {
         this.streamingReader = StreamingReader.loadFromArray(
-            options.baseOptions.modelAssetBuffer, onFinishedLoadingData);
+          options.baseOptions.modelAssetBuffer,
+          onFinishedLoadingData,
+        );
         // Remove the reference on the asset buffer since it is now owned by
         // `streamingReader`.
         options.baseOptions.modelAssetBuffer = undefined;
@@ -300,11 +342,15 @@ export class LlmInference extends TaskRunner {
    *     new partial response generated.
    * @return The generated text result.
    */
-  generateResponse(text: string, progressListener: ProgressListener):
-      Promise<string>;
+  generateResponse(
+    text: string,
+    progressListener: ProgressListener,
+  ): Promise<string>;
   /** @export */
-  generateResponse(text: string, progressListener?: ProgressListener):
-      Promise<string> {
+  generateResponse(
+    text: string,
+    progressListener?: ProgressListener,
+  ): Promise<string> {
     if (this.isProcessing) {
       throw new Error('Previous invocation or loading is still ongoing.');
     }
@@ -314,7 +360,10 @@ export class LlmInference extends TaskRunner {
     this.generationResult.length = 0;
     this.isProcessing = true;
     this.graphRunner.addStringToStream(
-        text, INPUT_STREAM, this.getSynctheticTimestamp());
+      text,
+      INPUT_STREAM,
+      this.getSynctheticTimestamp(),
+    );
     this.finishProcessing();
     return new Promise<string>((resolve, reject) => {
       this.resolveGeneration = resolve;
@@ -331,16 +380,16 @@ export class LlmInference extends TaskRunner {
    * @return The number of tokens in the resulting tokenization of the text.
    *         May return undefined if an error occurred.
    */
-  sizeInTokens(text: string): number|undefined {
+  sizeInTokens(text: string): number | undefined {
     if (this.isProcessing) {
       throw new Error('Previous invocation or loading is still ongoing.');
     }
     this.isProcessing = true;
     this.latestTokenCostQueryResult = undefined;
     this.graphRunner.addStringToStream(
-        text,
-        TOKEN_COST_INPUT_STREAM,
-        this.getSynctheticTimestamp(),
+      text,
+      TOKEN_COST_INPUT_STREAM,
+      this.getSynctheticTimestamp(),
     );
     this.finishProcessing();
     this.isProcessing = false;
@@ -352,17 +401,18 @@ export class LlmInference extends TaskRunner {
    * string.
    */
   private static decodeResponse(
-      responses: string[], stripLeadingWhitespace: boolean): string {
+    responses: string[],
+    stripLeadingWhitespace: boolean,
+  ): string {
     if (responses == null || responses.length === 0) {
       // Technically, this is an error. We should always get at least one
       // response.
       return '';
     }
 
-    let response = responses[0];  // We only use the first response
+    let response = responses[0]; // We only use the first response
     response = response.replaceAll(LlmInference.TOKEN_SPLITTER, ' ');
-    response = response.replaceAll(
-        LlmInference.NEW_LINE, '\n');  // Replace <0x0A> token with newline
+    response = response.replaceAll(LlmInference.NEW_LINE, '\n'); // Replace <0x0A> token with newline
 
     if (stripLeadingWhitespace) {
       response = response.trimStart();
@@ -388,49 +438,60 @@ export class LlmInference extends TaskRunner {
     const graphConfig = this.buildLlmInferenceGraph();
 
     this.graphRunner.attachStringVectorListener(
-        OUTPUT_STREAM, (stringVector, timestamp) => {
-          const stripLeadingWhitespace = this.generationResult.length === 0;
-          const decodedText =
-              LlmInference.decodeResponse(stringVector, stripLeadingWhitespace);
-          this.generationResult.push(decodedText);
-          if (this.userProgressListener) {
-            this.userProgressListener(decodedText, /* done= */ false);
-          }
-          this.setLatestOutputTimestamp(timestamp);
-        });
-    this.graphRunner.attachEmptyPacketListener(OUTPUT_STREAM, timestamp => {
+      OUTPUT_STREAM,
+      (stringVector, timestamp) => {
+        const stripLeadingWhitespace = this.generationResult.length === 0;
+        const decodedText = LlmInference.decodeResponse(
+          stringVector,
+          stripLeadingWhitespace,
+        );
+        this.generationResult.push(decodedText);
+        if (this.userProgressListener) {
+          this.userProgressListener(decodedText, /* done= */ false);
+        }
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
+    this.graphRunner.attachEmptyPacketListener(OUTPUT_STREAM, (timestamp) => {
       this.setLatestOutputTimestamp(timestamp);
     });
 
     this.graphRunner.attachBoolListener(
-        OUTPUT_END_STREAM, (bool, timestamp) => {
-          this.isProcessing = false;
-          if (this.resolveGeneration) {
-            this.resolveGeneration(this.generationResult.join(''));
-          }
-          if (this.userProgressListener) {
-            this.userProgressListener(
-                /* partialResult= */ '', /* done= */ true);
-          }
-          this.setLatestOutputTimestamp(timestamp);
-        });
-    this.graphRunner.attachEmptyPacketListener(OUTPUT_END_STREAM, timestamp => {
-      this.isProcessing = false;
-      this.setLatestOutputTimestamp(timestamp);
-    });
+      OUTPUT_END_STREAM,
+      (bool, timestamp) => {
+        this.isProcessing = false;
+        if (this.resolveGeneration) {
+          this.resolveGeneration(this.generationResult.join(''));
+        }
+        if (this.userProgressListener) {
+          this.userProgressListener(/* partialResult= */ '', /* done= */ true);
+        }
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
+    this.graphRunner.attachEmptyPacketListener(
+      OUTPUT_END_STREAM,
+      (timestamp) => {
+        this.isProcessing = false;
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
 
     this.graphRunner.attachIntListener(
-        TOKEN_COST_OUTPUT_STREAM, (cost, timestamp) => {
-          this.latestTokenCostQueryResult = cost;
-          this.setLatestOutputTimestamp(timestamp);
-        });
+      TOKEN_COST_OUTPUT_STREAM,
+      (cost, timestamp) => {
+        this.latestTokenCostQueryResult = cost;
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
 
     if (this.streamingReader) {
-      (this.graphRunner as unknown as StreamingReaderWebGpuGraphRunner)
-          .addStreamingReaderToInputSidePacket(
-              this.streamingReader,
-              'streaming_reader',
-          );
+      (
+        this.graphRunner as unknown as StreamingReaderWebGpuGraphRunner
+      ).addStreamingReaderToInputSidePacket(
+        this.streamingReader,
+        'streaming_reader',
+      );
     }
 
     const binaryGraph = graphConfig.serializeBinary();
@@ -443,11 +504,12 @@ export class LlmInference extends TaskRunner {
     // chain into our promises to ensure proper ordering, calling that first so
     // the built-in closeGraph becomes a no-op.
     return (this.graphRunner as unknown as StreamingReaderWebGpuGraphRunner)
-        .closeGraphAsync().then(() => {
-      this.setGraph(new Uint8Array(binaryGraph), /* isBinary= */ true);
-      // Start initialization; this is async when StreamingReader is used.
-      this.finishProcessing();
-    });
+      .closeGraphAsync()
+      .then(() => {
+        this.setGraph(new Uint8Array(binaryGraph), /* isBinary= */ true);
+        // Start initialization; this is async when StreamingReader is used.
+        this.finishProcessing();
+      });
   }
 
   private buildLlmInferenceGraph(): CalculatorGraphConfig {
@@ -469,37 +531,31 @@ export class LlmInference extends TaskRunner {
     // Model data Node
     const modelDataNode = new CalculatorGraphConfig.Node();
     modelDataNode.setCalculator('ModelDataCalculator');
-    modelDataNode.addOutputSidePacket(
-        'MODEL_DATA:' +
-        '__side_packet_1');
-    modelDataNode.addOutputSidePacket(
-        'MODEL_TYPE:' +
-        'model_type');
-    modelDataNode.addInputSidePacket(
-        'READ_DATA_FN:' +
-        'streaming_reader');
+    modelDataNode.addOutputSidePacket('MODEL_DATA:' + '__side_packet_1');
+    modelDataNode.addOutputSidePacket('MODEL_TYPE:' + 'model_type');
+    modelDataNode.addInputSidePacket('READ_DATA_FN:' + 'streaming_reader');
     graphConfig.addNode(modelDataNode);
 
     // Tokenizer Node
     const gpt2NormalizationNode = new CalculatorGraphConfig.Node();
     gpt2NormalizationNode.setCalculator('Gpt2UnicodeMappingCalculator');
-    gpt2NormalizationNode.addInputSidePacket(
-        'MODEL_TYPE:' +
-        'model_type');
+    gpt2NormalizationNode.addInputSidePacket('MODEL_TYPE:' + 'model_type');
     gpt2NormalizationNode.addOutputSidePacket(
-        'BYTES_TO_UNICODE_MAPPING:' +
-        'tokenizer_mapping');
+      'BYTES_TO_UNICODE_MAPPING:' + 'tokenizer_mapping',
+    );
     graphConfig.addNode(gpt2NormalizationNode);
 
     const tokenizerOptionsProto = new Any();
     tokenizerOptionsProto.setTypeUrl(
-        'type.googleapis.com/odml.infra.proto.TokenizerCalculatorOptions');
+      'type.googleapis.com/odml.infra.proto.TokenizerCalculatorOptions',
+    );
     const tokenizerOptions = new TokenizerCalculatorOptions();
     tokenizerOptions.setMaxTokens(this.options.getMaxTokens());
 
     const modelFile = new TokenizerCalculatorOptions.TfLiteModelFile();
     modelFile.setSpmModelKeyInMetadata(
-        LlmInference.TOKENIZER_MODEL_IN_TFLITE_KEY);
+      LlmInference.TOKENIZER_MODEL_IN_TFLITE_KEY,
+    );
     tokenizerOptions.setTfliteModelFile(modelFile);
 
     tokenizerOptions.setStartTokenId(2);
@@ -507,27 +563,20 @@ export class LlmInference extends TaskRunner {
     const tokenizerNode = new CalculatorGraphConfig.Node();
     tokenizerNode.setCalculator('TokenizerCalculator');
     tokenizerNode.addNodeOptions(tokenizerOptionsProto);
+    tokenizerNode.addInputSidePacket('MODEL_DATA:' + '__side_packet_1');
+    tokenizerNode.addInputStream('PROMPT_AND_INPUT_OPTIONS:' + 'prompt');
     tokenizerNode.addInputSidePacket(
-        'MODEL_DATA:' +
-        '__side_packet_1');
-    tokenizerNode.addInputStream(
-        'PROMPT_AND_INPUT_OPTIONS:' +
-        'prompt');
-    tokenizerNode.addInputSidePacket(
-        'BYTES_TO_UNICODE_MAPPING:' +
-        'tokenizer_mapping');
-    tokenizerNode.addOutputSidePacket(
-        'PROCESSOR_GETTER:' +
-        '__input_side_1');
-    tokenizerNode.addOutputStream(
-        'IDS_AND_INPUT_OPTIONS:' +
-        '__stream_0');
+      'BYTES_TO_UNICODE_MAPPING:' + 'tokenizer_mapping',
+    );
+    tokenizerNode.addOutputSidePacket('PROCESSOR_GETTER:' + '__input_side_1');
+    tokenizerNode.addOutputStream('IDS_AND_INPUT_OPTIONS:' + '__stream_0');
     graphConfig.addNode(tokenizerNode);
 
     // LlmGpu Node
     const llmGpuOptionsProto = new Any();
     llmGpuOptionsProto.setTypeUrl(
-        'type.googleapis.com/odml.infra.proto.LlmGpuCalculatorOptions');
+      'type.googleapis.com/odml.infra.proto.LlmGpuCalculatorOptions',
+    );
     const llmGpuOptions = new LlmGpuCalculatorOptions();
 
     llmGpuOptions.setNumDecodeTokens(3);
@@ -556,21 +605,11 @@ export class LlmInference extends TaskRunner {
     const llmGpuNode = new CalculatorGraphConfig.Node();
     llmGpuNode.setCalculator('LlmGpuCalculator');
     llmGpuNode.addNodeOptions(llmGpuOptionsProto);
-    llmGpuNode.addInputStream(
-        'INPUT_PROMPT_IDS:' +
-        '__stream_0');
-    llmGpuNode.addInputStream(
-        'FINISH:' +
-        'finish');
-    llmGpuNode.addInputSidePacket(
-        'MODEL_DATA:' +
-        '__side_packet_1');
-    llmGpuNode.addOutputStream(
-        'DECODED_IDS:' +
-        '__stream_3');
-    llmGpuNode.addOutputStream(
-        'OUTPUT_END:' +
-        '__stream_4');
+    llmGpuNode.addInputStream('IDS_AND_INPUT_OPTIONS:' + '__stream_0');
+    llmGpuNode.addInputStream('FINISH:' + 'finish');
+    llmGpuNode.addInputSidePacket('MODEL_DATA:' + '__side_packet_1');
+    llmGpuNode.addOutputStream('DECODED_IDS:' + '__stream_3');
+    llmGpuNode.addOutputStream('OUTPUT_END:' + '__stream_4');
     const backEdgeInputStreamInfo = new InputStreamInfo();
     backEdgeInputStreamInfo.setTagIndex('FINISH');
     backEdgeInputStreamInfo.setBackEdge(true);
@@ -586,7 +625,8 @@ export class LlmInference extends TaskRunner {
     // Detokenizer Node
     const detokenizerOptionsProto = new Any();
     detokenizerOptionsProto.setTypeUrl(
-        'type.googleapis.com/odml.infra.proto.DetokenizerCalculatorOptions');
+      'type.googleapis.com/odml.infra.proto.DetokenizerCalculatorOptions',
+    );
     const detokenizerOptions = new DetokenizerCalculatorOptions();
     detokenizerOptions.setNumOutputHeads(1);
     // No need to set spm model, instead reuse TokenizerCalculator's side input.
@@ -596,18 +636,12 @@ export class LlmInference extends TaskRunner {
     const detokenizerNode = new CalculatorGraphConfig.Node();
     detokenizerNode.setCalculator('DetokenizerCalculator');
     detokenizerNode.addNodeOptions(detokenizerOptionsProto);
-    detokenizerNode.addInputStream(
-        'IDS_AND_INPUT_OPTIONS:' +
-        '__stream_3');
+    detokenizerNode.addInputStream('IDS_AND_INPUT_OPTIONS:' + '__stream_3');
+    detokenizerNode.addInputSidePacket('PROCESSOR_GETTER:' + '__input_side_1');
     detokenizerNode.addInputSidePacket(
-        'PROCESSOR_GETTER:' +
-        '__input_side_1');
-    detokenizerNode.addInputSidePacket(
-        'BYTES_TO_UNICODE_MAPPING:' +
-        'tokenizer_mapping');
-    detokenizerNode.addInputSidePacket(
-        'MODEL_DATA:' +
-        '__side_packet_1');
+      'BYTES_TO_UNICODE_MAPPING:' + 'tokenizer_mapping',
+    );
+    detokenizerNode.addInputSidePacket('MODEL_DATA:' + '__side_packet_1');
     detokenizerNode.addOutputStream('FINISH_AND_INPUT_OPTIONS:finish');
     detokenizerNode.addOutputStream('WORDS:' + OUTPUT_STREAM);
     graphConfig.addNode(detokenizerNode);
@@ -617,7 +651,9 @@ export class LlmInference extends TaskRunner {
     tokenCostNode.setCalculator('TokenCostCalculator');
     tokenCostNode.addInputStream('PROMPT:' + TOKEN_COST_INPUT_STREAM);
     tokenCostNode.addInputSidePacket('PROCESSOR_GETTER:__input_side_1');
-    tokenCostNode.addInputSidePacket('BYTES_TO_UNICODE_MAPPING:tokenizer_mapping');
+    tokenCostNode.addInputSidePacket(
+      'BYTES_TO_UNICODE_MAPPING:tokenizer_mapping',
+    );
     tokenCostNode.addOutputStream('NUM_TOKENS:' + TOKEN_COST_OUTPUT_STREAM);
     graphConfig.addNode(tokenCostNode);
     return graphConfig;
