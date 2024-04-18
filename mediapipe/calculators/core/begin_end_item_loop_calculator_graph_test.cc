@@ -150,6 +150,19 @@ TEST(BeginEndLoopCalculatorGraphItemTest, AllEmptyItemPackets) {
   // in collection to output.
   EXPECT_THAT(runner.output_packets(),
               ElementsAre(SizeIs(0), SizeIs(0), SizeIs(0)));
+
+  MP_EXPECT_OK(runner.Close());
+}
+
+TEST(BeginEndLoopCalculatorGraphItemTest, MultipleAllEmptyItemPackets) {
+  GraphRunner runner(/*num_inputs=*/3, /*num_outputs=*/3);
+
+  MP_EXPECT_OK(runner.SendPacketsOfInts(Timestamp(0), {{}, {}, {}}));
+  MP_EXPECT_OK(runner.SendPacketsOfInts(Timestamp(1), {{}, {}, {}}));
+
+  EXPECT_THAT(runner.output_packets(),
+              ElementsAre(SizeIs(0), SizeIs(0), SizeIs(0)));
+
   MP_EXPECT_OK(runner.Close());
 }
 

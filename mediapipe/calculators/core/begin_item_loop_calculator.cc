@@ -129,7 +129,13 @@ class BeginItemLoopCalculator : public Node {
       RET_CHECK(std::all_of(kItemsIn(cc).begin(), kItemsIn(cc).end(),
                             [](const auto& item) { return item.IsEmpty(); }))
           << kMixEmptyError;
-      ;
+
+      // Increment loop_internal_timestamp_ because we send BATCH_END below.
+      // Otherwise, it could keep using the same timestamp.
+      ++loop_internal_timestamp_;
+      for (auto it = cc->Outputs().begin(); it < cc->Outputs().end(); ++it) {
+        it->SetNextTimestampBound(loop_internal_timestamp_);
+      }
     }
 
     // Send BATCH_END packet along with the last input item.
