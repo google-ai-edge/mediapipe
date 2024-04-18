@@ -308,6 +308,90 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   }
 }
 
+- (void)testDetectWithOutOfOrderTimestampsAndLiveStreamModeFails {
+  MPPHolisticLandmarkerOptions *options =
+      [self holisticLandmarkerOptionsWithModelFileInfo:kHolisticLandmarkerBundleAssetFileInfo];
+  options.runningMode = MPPRunningModeLiveStream;
+  options.holisticLandmarkerLiveStreamDelegate = self;
+
+  XCTestExpectation *expectation = [[XCTestExpectation alloc]
+      initWithDescription:@"detectWiththOutOfOrderTimestampsAndLiveStream"];
+
+  expectation.expectedFulfillmentCount = 1;
+
+  MPPHolisticLandmarker *holisticLandmarker =
+      [self createHolisticLandmarkerWithOptionsSucceeds:options];
+
+  _outOfOrderTimestampTestDict = @{
+    kLiveStreamTestsDictHolisticLandmarkerKey : holisticLandmarker,
+    kLiveStreamTestsDictExpectationKey : expectation
+  };
+
+  MPPImage *image = [MPPHolisticLandmarkerTests createImageWithFileInfo:kHolisticImageFileInfo];
+
+  XCTAssertTrue([holisticLandmarker detectAsyncImage:image timestampInMilliseconds:1 error:nil]);
+
+  NSError *error;
+  XCTAssertFalse([holisticLandmarker detectAsyncImage:image
+                              timestampInMilliseconds:0
+                                                error:&error]);
+
+  NSError *expectedError =
+      [NSError errorWithDomain:kExpectedErrorDomain
+                          code:MPPTasksErrorCodeInvalidArgumentError
+                      userInfo:@{
+                        NSLocalizedDescriptionKey :
+                            @"INVALID_ARGUMENT: Input timestamp must be monotonically increasing."
+                      }];
+  AssertEqualErrors(error, expectedError);
+
+  NSTimeInterval timeout = 0.5f;
+  [self waitForExpectations:@[ expectation ] timeout:timeout];
+}
+
+- (void)testDetectWithLiveStreamModeSucceeds {
+  MPPHolisticLandmarkerOptions *options =
+      [self holisticLandmarkerOptionsWithModelFileInfo:kHolisticLandmarkerBundleAssetFileInfo];
+  options.runningMode = MPPRunningModeLiveStream;
+  options.holisticLandmarkerLiveStreamDelegate = self;
+
+  NSInteger iterationCount = 100;
+
+  // Because of flow limiting, we cannot ensure that the callback will be invoked `iterationCount`
+  // times. An normal expectation will fail if expectation.fulfill() is not called
+  // `expectation.expectedFulfillmentCount` times. If `expectation.isInverted = true`, the test will
+  // only succeed if expectation is not fulfilled for the specified `expectedFulfillmentCount`.
+  // Since in our case we cannot predict how many times the expectation is supposed to be fulfilled
+  // setting, `expectation.expectedFulfillmentCount` = `iterationCount` + 1 and
+  // `expectation.isInverted = true` ensures that test succeeds if the expectation is fulfilled <=
+  // `iterationCount` times.
+  XCTestExpectation *expectation =
+      [[XCTestExpectation alloc] initWithDescription:@"detectWithLiveStream"];
+
+  expectation.expectedFulfillmentCount = iterationCount + 1;
+  expectation.inverted = YES;
+
+  MPPHolisticLandmarker *holisticLandmarker =
+      [self createHolisticLandmarkerWithOptionsSucceeds:options];
+
+  _liveStreamSucceedsTestDict = @{
+    kLiveStreamTestsDictHolisticLandmarkerKey : holisticLandmarker,
+    kLiveStreamTestsDictExpectationKey : expectation
+  };
+
+  // TODO: Mimic initialization from CMSampleBuffer as live stream mode is most likely to be used
+  // with the iOS camera. AVCaptureVideoDataOutput sample buffer delegates provide frames of type
+  // `CMSampleBuffer`.
+  MPPImage *image = [MPPHolisticLandmarkerTests createImageWithFileInfo:kHolisticImageFileInfo];
+
+  for (int i = 0; i < iterationCount; i++) {
+    XCTAssertTrue([holisticLandmarker detectAsyncImage:image timestampInMilliseconds:i error:nil]);
+  }
+
+  NSTimeInterval timeout = 0.5f;
+  [self waitForExpectations:@[ expectation ] timeout:timeout];
+}
+
 - (void)holisticLandmarker:(MPPHolisticLandmarker *)holisticLandmarker
     didFinishDetectionWithResult:(MPPHolisticLandmarkerResult *)holisticLandmarkerResult
          timestampInMilliseconds:(NSInteger)timestampInMilliseconds

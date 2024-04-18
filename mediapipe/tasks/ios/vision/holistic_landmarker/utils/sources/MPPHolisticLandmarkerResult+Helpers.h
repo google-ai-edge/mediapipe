@@ -60,7 +60,7 @@ NS_ASSUME_NONNULL_BEGIN
                            poseWorldLandmarksPacket:
                                (const mediapipe::Packet &)poseWorldLandmarksPacket
                          poseSegmentationMaskPacket:
-                             (const mediapipe::Packet *)poseSegmentationMaskPacket
+                             (const mediapipe::Packet &)poseSegmentationMaskPacket
                             leftHandLandmarksPacket:
                                 (const mediapipe::Packet &)leftHandLandmarksPacket
                        leftHandWorldLandmarksPacket:

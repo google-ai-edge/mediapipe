@@ -66,9 +66,9 @@ static NSString *const kTaskName = @"holisticLandmarker";
                              poseWorldLandmarksPacket:                                            \
                                  outputPacketMap[kPoseWorldLandmarksOutStreamName.cppString]      \
                            poseSegmentationMaskPacket:                                            \
-                               &(outputPacketMap[kPoseSegmentationMaskOutStreamName.cppString])   \
-                               leftHandLandmarksPacket:                                           \
-                                   outputPacketMap[kLeftHandLandmarksOutStreamName.cppString]     \
+                               outputPacketMap[kPoseSegmentationMaskOutStreamName.cppString]      \
+                              leftHandLandmarksPacket:                                            \
+                                  outputPacketMap[kLeftHandLandmarksOutStreamName.cppString]      \
                          leftHandWorldLandmarksPacket:                                            \
                              outputPacketMap[kLeftHandWorldLandmarksOutStreamName.cppString]      \
                              rightHandLandmarksPacket:                                            \
