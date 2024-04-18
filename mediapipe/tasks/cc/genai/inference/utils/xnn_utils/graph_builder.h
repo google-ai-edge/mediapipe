@@ -322,9 +322,7 @@ class XnnGraph {
   XnnGraph(XnnSubgraphPtr subgraph,
            std::unique_ptr<RuntimeConfigs> runtime_configs)
       : owned_subgraph_(std::move(subgraph)),
-        runtime_configs_(std::move(runtime_configs)) {
-    ABSL_DCHECK(runtime_configs_);
-  }
+        runtime_configs_(std::move(runtime_configs)) {}
   XnnGraph(XnnGraph&& other) = default;
   virtual ~XnnGraph() = default;
 

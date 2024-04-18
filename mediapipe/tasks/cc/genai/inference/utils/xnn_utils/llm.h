@@ -105,6 +105,8 @@ class Llm : protected xnn_utils::XnnGraph {
   friend class LlmTest;
   friend class LlmBuilder;
 
+  Llm() : XnnGraph(XnnSubgraphPtr{nullptr, nullptr}, nullptr) {}
+
   // Internal parameters to control prefix model.
   struct InternalLlmParams {
     // Stops at last KV cache, so we don't waste computation.

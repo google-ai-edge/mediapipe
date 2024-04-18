@@ -965,6 +965,7 @@ absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::QKVAttention(
 
 absl::Status XnnGraph::CreateRuntime() {
   RET_CHECK_EQ(runtime_.get(), nullptr);
+  RET_CHECK(owned_subgraph_);
   xnn_runtime_t runtime_ptr = nullptr;
   uint32_t flags = 0;
   if (runtime_configs_->activation_precision ==
