@@ -166,6 +166,11 @@ LlmInferenceEngine_CreateSession_Helper(
                       mediapipe::tasks::genai::llm_utils::ModelData::Create(
                           std::move(model_file)));
 
+  if (session_config->lora_path != nullptr &&
+      session_config->lora_path[0] != '\0') {
+    ABSL_LOG(FATAL) << "LoRA on CPU is not supported yet.";
+  }
+
   auto llm_params_proto = model_data->GetLlmParameters();
   auto llm_params =
       mediapipe::tasks::genai::xnn_utils::LlmParams::FromLLMParametersProto(
