@@ -61,3 +61,33 @@ ios_unit_test(
         ":MPPFloatRingBufferObjcTestLibrary",
     ],
 )
+
+objc_library(
+    name = "MPPAudioRecordObjcTestLibrary",
+    testonly = 1,
+    srcs = ["MPPAudioRecordTests.mm"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+        "-x objective-c++",
+    ],
+    tags = TFL_DEFAULT_TAGS,
+    data = [
+        "//mediapipe/tasks/testdata/audio:test_audio_clips",
+    ],
+    deps = [
+        "//mediapipe/tasks/ios/audio/core:MPPAudioRecord",
+        "//mediapipe/tasks/ios/common:MPPCommon",
+        "//mediapipe/tasks/ios/test/utils:MPPFileInfo",
+    ],
+)
+
+ios_unit_test(
+    name = "MPPAudioRecordObjcTest",
+    minimum_os_version = MPP_TASK_MINIMUM_OS_VERSION,
+    runner = tflite_ios_lab_runner("IOS_LATEST"),
+    tags = TFL_DEFAULT_TAGS + TFL_DISABLED_SANITIZER_TAGS,
+    deps = [
+        ":MPPAudioRecordObjcTestLibrary",
+    ],
+)
