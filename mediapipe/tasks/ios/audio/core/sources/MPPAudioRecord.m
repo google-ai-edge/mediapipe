@@ -138,7 +138,6 @@ static const NSUInteger kMaximumChannelCount = 2;
   });
 }
 
-
 - (nullable MPPFloatBuffer *)readAtOffset:(NSUInteger)offset
                                withLength:(NSUInteger)length
                                     error:(NSError **)error {
@@ -242,15 +241,17 @@ static const NSUInteger kMaximumChannelCount = 2;
                 error:error];
 }
 
-- (void)convertAndLoadBuffer:(AVAudioPCMBuffer *)buffer
+- (BOOL)convertAndLoadBuffer:(AVAudioPCMBuffer *)buffer
          usingAudioConverter:(AVAudioConverter *)audioConverter
                        error:(NSError **)error {
   AVAudioPCMBuffer *convertedPCMBuffer = [MPPAudioRecord bufferFromInputBuffer:buffer
                                                            usingAudioConverter:audioConverter
                                                                          error:error];
   if (convertedPCMBuffer) {
-    [self loadAudioPCMBuffer:convertedPCMBuffer error:error];
+    return [self loadAudioPCMBuffer:convertedPCMBuffer error:error];
   }
+
+  return NO;
 }
 
 + (AVAudioPCMBuffer *)bufferFromInputBuffer:(AVAudioPCMBuffer *)pcmBuffer
