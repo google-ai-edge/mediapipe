@@ -13,49 +13,10 @@
 // limitations under the License.
 
 #import <Foundation/Foundation.h>
+#import "mediapipe/tasks/ios/audio/core/sources/MPPAudioDataFormat.h"
 #import "mediapipe/tasks/ios/audio/core/sources/MPPFloatBuffer.h"
 
 NS_ASSUME_NONNULL_BEGIN
-
-/**
- * Wraps properties describing the format of the incoming audio samples, namely number of channels
- * and the sample rate.
- */
-NS_SWIFT_NAME(AudioDataFormat)
-
-@interface MPPAudioDataFormat : NSObject
-
-/** Number of channels */
-@property(nonatomic, readonly) NSUInteger channelCount;
-
-/** Sample rate */
-@property(nonatomic, readonly) NSUInteger sampleRate;
-
-/**
- * Initializes a new `AudioDataFormat` with the given channel count and sample rate.
- *
- * @param channelCount Number of channels.
- * @param sampleRate Sample rate.
- *
- * @return A new instance of `AudioDataFormat` with the given channel count and sample rate.
- */
-- (instancetype)initWithChannelCount:(NSUInteger)channelCount sampleRate:(NSUInteger)sampleRate;
-
-/**
- * Initializes a new `AudioDataFormat` with the default channel count of 1 and the given sample
- * rate.
- *
- * @param sampleRate Sample rate.
- * @return A new instance of `AudioDataFormat` with the default channel count of 1 and the given
- * sample rate.
- */
-- (instancetype)initWithSampleRate:(NSUInteger)sampleRate;
-
-- (instancetype)init NS_UNAVAILABLE;
-
-+ (instancetype)new NS_UNAVAILABLE;
-
-@end
 
 /**
  * A wrapper class for input audio samples used in on-device machine learning using MediaPipe Task

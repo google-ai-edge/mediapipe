@@ -21,9 +21,16 @@ objc_library(
     srcs = ["sources/MPPAudioData.m"],
     hdrs = ["sources/MPPAudioData.h"],
     deps = [
+        ":MPPAudioDataFormat",
         ":MPPFloatBuffer",
         ":MPPFloatRingBuffer",
     ],
+)
+
+objc_library(
+    name = "MPPAudioDataFormat",
+    srcs = ["sources/MPPAudioDataFormat.m"],
+    hdrs = ["sources/MPPAudioDataFormat.h"],
 )
 
 objc_library(
@@ -56,10 +63,11 @@ objc_library(
         "-std=c++17",
     ],
     deps = [
-        ":MPPAudioData",
+        ":MPPAudioDataFormat",
         ":MPPFloatBuffer",
         ":MPPFloatRingBuffer",
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
+        "//third_party/apple_frameworks:AVFoundation",
     ],
 )

@@ -14,7 +14,7 @@
 
 #import <Foundation/Foundation.h>
 
-#import "mediapipe/tasks/ios/audio/core/sources/MPPAudioData.h"
+#import "mediapipe/tasks/ios/audio/core/sources/MPPAudioDataFormat.h"
 #import "mediapipe/tasks/ios/audio/core/sources/MPPFloatBuffer.h"
 
 NS_ASSUME_NONNULL_BEGIN

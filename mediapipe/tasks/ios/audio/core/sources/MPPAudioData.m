@@ -15,8 +15,6 @@
 #import "mediapipe/tasks/ios/audio/core/sources/MPPAudioData.h"
 #import "mediapipe/tasks/ios/audio/core/sources/MPPFloatRingBuffer.h"
 
-static const NSInteger kDefaultChannelCount = 1;
-
 @implementation MPPAudioData {
   MPPFloatRingBuffer *_ringBuffer;
 }
@@ -45,29 +43,6 @@ static const NSInteger kDefaultChannelCount = 1;
 
 - (NSUInteger)bufferLength {
   return _ringBuffer.length;
-}
-
-@end
-
-@implementation MPPAudioDataFormat
-
-- (instancetype)initWithChannelCount:(NSUInteger)channelCount sampleRate:(NSUInteger)sampleRate {
-  self = [super init];
-  if (self) {
-    _channelCount = channelCount;
-    _sampleRate = sampleRate;
-  }
-  return self;
-}
-
-- (instancetype)initWithSampleRate:(NSUInteger)sampleRate {
-  return [self initWithChannelCount:kDefaultChannelCount sampleRate:sampleRate];
-}
-
-- (BOOL)isEqual:(id)object {
-  return [object isKindOfClass:[self class]] &&
-         self.channelCount == [(MPPAudioDataFormat *)object channelCount] &&
-         self.sampleRate == [(MPPAudioDataFormat *)object sampleRate];
 }
 
 @end
