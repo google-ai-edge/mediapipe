@@ -19,10 +19,10 @@
 #import "mediapipe/tasks/ios/common/sources/MPPCommon.h"
 #import "mediapipe/tasks/ios/test/utils/sources/MPPFileInfo.h"
 
-static MPPFileInfo *const kSpeech16KHzMonoFileInfo = [[MPPFileInfo alloc] initWithName:@"speech_16000_hz_mono"
-                                                                            type:@"wav"];
-                                                                          
-static AVAudioFormat * kAudioEngineFormat =
+static MPPFileInfo *const kSpeech16KHzMonoFileInfo =
+    [[MPPFileInfo alloc] initWithName:@"speech_16000_hz_mono" type:@"wav"];
+
+static AVAudioFormat *kAudioEngineFormat =
     [[AVAudioFormat alloc] initWithCommonFormat:AVAudioPCMFormatFloat32
                                      sampleRate:48000
                                        channels:1
@@ -94,7 +94,9 @@ NS_ASSUME_NONNULL_BEGIN
   AssertEqualErrors(error, expectedError);
 }
 
-+ (MPPAudioRecord *)createAudioRecordWithChannelCount:(const NSInteger)channelCount sampleRate:(const NSInteger)sampleRate bufferLength:(const NSInteger)bufferLength {
++ (MPPAudioRecord *)createAudioRecordWithChannelCount:(const NSInteger)channelCount
+                                           sampleRate:(const NSInteger)sampleRate
+                                         bufferLength:(const NSInteger)bufferLength {
   MPPAudioDataFormat *audioDataFormat =
       [[MPPAudioDataFormat alloc] initWithChannelCount:channelCount sampleRate:sampleRate];
 
@@ -102,9 +104,9 @@ NS_ASSUME_NONNULL_BEGIN
                                                                    bufferLength:bufferLength
                                                                           error:nil];
 
-   XCTAssertNotNil(audioRecord);
+  XCTAssertNotNil(audioRecord);
 
-   return audioRecord;                                                                      
+  return audioRecord;
 }
 
 @end
