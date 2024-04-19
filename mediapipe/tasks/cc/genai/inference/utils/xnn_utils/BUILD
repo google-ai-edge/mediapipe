@@ -170,19 +170,6 @@ cc_library(
 )
 
 cc_library(
-    name = "llm_runner_manager",
-    srcs = ["llm_runner_manager.cc"],
-    hdrs = ["llm_runner_manager.h"],
-    deps = [
-        ":llm",
-        "@com_google_absl//absl/base:core_headers",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/synchronization",
-        "@com_google_absl//absl/types:span",
-    ],
-)
-
-cc_library(
     name = "llm_builder_factory",
     srcs = ["llm_builder_factory.cc"],
     hdrs = ["llm_builder_factory.h"],
