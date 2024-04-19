@@ -68,6 +68,9 @@ typedef struct {
 
   // Random seed for sampling tokens.
   size_t random_seed;
+
+  // Path to the LoRA tflite flatbuffer file.
+  const char* lora_path;
 } LlmSessionConfig;
 
 // LlmResponseContext is the return type for
