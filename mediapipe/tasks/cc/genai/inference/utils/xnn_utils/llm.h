@@ -96,7 +96,7 @@ class Llm : protected xnn_utils::XnnGraph {
   virtual absl::Status GetNextToken(std::vector<int>* output_ids);
 
   // The size of all tokens, including prompt and generated tokens.
-  size_t TotalTokenSize() const;
+  virtual size_t TotalTokenSize() const;
 
   const LlmParams& GetLlmParams() { return llm_params_; }
 
