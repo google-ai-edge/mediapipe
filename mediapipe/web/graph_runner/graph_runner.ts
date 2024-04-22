@@ -438,6 +438,14 @@ export class GraphRunner implements GraphRunnerApi {
   }
 
   /** {@override GraphRunnerApi} */
+  addUintToStream(data: number, streamName: string, timestamp: number): void {
+    this.wrapStringPtr(streamName, (streamNamePtr: number) => {
+      this.wasmModule._addUintToInputStream(
+          data, streamNamePtr, timestamp);
+    });
+  }
+
+  /** {@override GraphRunnerApi} */
   addStringToStream(data: string, streamName: string, timestamp: number): void {
     this.wrapStringPtr(streamName, (streamNamePtr: number) => {
       this.wrapStringPtr(data, (dataPtr: number) => {
@@ -551,6 +559,22 @@ export class GraphRunner implements GraphRunnerApi {
   }
 
   /** {@override GraphRunnerApi} */
+  addUintVectorToStream(data: number[], streamName: string, timestamp: number):
+      void {
+    this.wrapStringPtr(streamName, (streamNamePtr: number) => {
+      const vecPtr = this.wasmModule._allocateUintVector(data.length);
+      if (!vecPtr) {
+        throw new Error('Unable to allocate new unsigned int vector on heap.');
+      }
+      for (const entry of data) {
+        this.wasmModule._addUintVectorEntry(vecPtr, entry);
+      }
+      this.wasmModule._addUintVectorToInputStream(
+          vecPtr, streamNamePtr, timestamp);
+    });
+  }
+
+  /** {@override GraphRunnerApi} */
   addStringVectorToStream(
       data: string[], streamName: string, timestamp: number): void {
     this.wrapStringPtr(streamName, (streamNamePtr: number) => {
@@ -593,6 +617,13 @@ export class GraphRunner implements GraphRunnerApi {
   addIntToInputSidePacket(data: number, sidePacketName: string): void {
     this.wrapStringPtr(sidePacketName, (sidePacketNamePtr: number) => {
       this.wasmModule._addIntToInputSidePacket(data, sidePacketNamePtr);
+    });
+  }
+
+  /** {@override GraphRunnerApi} */
+  addUintToInputSidePacket(data: number, sidePacketName: string): void {
+    this.wrapStringPtr(sidePacketName, (sidePacketNamePtr: number) => {
+      this.wasmModule._addUintToInputSidePacket(data, sidePacketNamePtr);
     });
   }
 
@@ -684,6 +715,21 @@ export class GraphRunner implements GraphRunnerApi {
   }
 
   /** {@override GraphRunnerApi} */
+  addUintVectorToInputSidePacket(data: number[], sidePacketName: string): void {
+    this.wrapStringPtr(sidePacketName, (sidePacketNamePtr: number) => {
+      const vecPtr = this.wasmModule._allocateUintVector(data.length);
+      if (!vecPtr) {
+        throw new Error('Unable to allocate new unsigned int vector on heap.');
+      }
+      for (const entry of data) {
+        this.wasmModule._addUintVectorEntry(vecPtr, entry);
+      }
+      this.wasmModule._addUintVectorToInputSidePacket(
+          vecPtr, sidePacketNamePtr);
+    });
+  }
+
+  /** {@override GraphRunnerApi} */
   addStringVectorToInputSidePacket(data: string[], sidePacketName: string):
       void {
     this.wrapStringPtr(sidePacketName, (sidePacketNamePtr: number) => {
@@ -746,6 +792,31 @@ export class GraphRunner implements GraphRunnerApi {
     // Tell our graph to listen for std::vector<int> packets on this stream.
     this.wrapStringPtr(outputStreamName, (outputStreamNamePtr: number) => {
       this.wasmModule._attachIntVectorListener(outputStreamNamePtr);
+    });
+  }
+
+  /** {@override GraphRunnerApi} */
+  attachUintListener(
+      outputStreamName: string, callbackFcn: SimpleListener<number>): void {
+    // Set up our TS listener to receive any packets for this stream.
+    this.setListener(outputStreamName, callbackFcn);
+
+    // Tell our graph to listen for uint32_t packets on this stream.
+    this.wrapStringPtr(outputStreamName, (outputStreamNamePtr: number) => {
+      this.wasmModule._attachUintListener(outputStreamNamePtr);
+    });
+  }
+
+  /** {@override GraphRunnerApi} */
+  attachUintVectorListener(
+      outputStreamName: string, callbackFcn: SimpleListener<number[]>): void {
+    // Set up our TS listener to receive any packets for this stream.
+    this.setVectorListener(outputStreamName, callbackFcn);
+
+    // Tell our graph to listen for std::vector<uint32_t> packets on this
+    // stream.
+    this.wrapStringPtr(outputStreamName, (outputStreamNamePtr: number) => {
+      this.wasmModule._attachUintVectorListener(outputStreamNamePtr);
     });
   }
 
