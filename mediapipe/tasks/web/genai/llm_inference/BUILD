@@ -29,6 +29,7 @@ mediapipe_ts_library(
         "//mediapipe/tasks/web/genai/llm_inference/proto:llm_inference_graph_options_jspb_proto",
         "//mediapipe/web/graph_runner:graph_runner_streaming_reader_ts",
         "//mediapipe/web/graph_runner:graph_runner_ts",
+        "//mediapipe/web/graph_runner:graph_runner_wasm_file_reference_ts",
         "//mediapipe/web/graph_runner:graph_runner_webgpu_ts",
     ],
 )

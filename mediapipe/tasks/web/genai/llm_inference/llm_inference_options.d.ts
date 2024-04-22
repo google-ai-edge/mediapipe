@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
-import {BaseOptions, TaskRunnerOptions} from '../../../../tasks/web/core/task_runner_options';
+import {
+  BaseOptions,
+  TaskRunnerOptions,
+} from '../../../../tasks/web/core/task_runner_options';
 
 /**
  * Options to configure the WebGPU device for LLM Inference task.
