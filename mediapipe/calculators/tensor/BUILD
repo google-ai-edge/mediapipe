@@ -521,6 +521,7 @@ cc_library(
     deps = [
         ":inference_calculator_cc_proto",
         ":inference_calculator_interface",
+        ":inference_io_mapper",
         ":tensor_span",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/api2:node",
