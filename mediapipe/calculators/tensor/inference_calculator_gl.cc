@@ -25,6 +25,7 @@
 #include "absl/time/time.h"
 #include "mediapipe/calculators/tensor/inference_calculator.h"
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
+#include "mediapipe/calculators/tensor/inference_io_mapper.h"
 #include "mediapipe/calculators/tensor/tensor_span.h"
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/api2/packet.h"
@@ -71,9 +72,11 @@ class InferenceCalculatorGlImpl
             delegate_options);
     absl::Status Process(CalculatorContext* cc, const TensorSpan& input_tensors,
                          std::vector<Tensor>& output_tensors);
+    const InputOutputTensorNames& GetInputOutputTensorNames() const;
 
    private:
-    // TfLite requires us to keep the model alive as long as the interpreter is.
+    // TfLite requires us to keep the model alive as long as the interpreter
+    // is.
     Packet<TfLiteModelPtr> model_packet_;
     std::shared_ptr<GlContext> gl_context_;
     TfLiteDelegatePtr delegate_;
@@ -81,6 +84,7 @@ class InferenceCalculatorGlImpl
     std::vector<std::unique_ptr<Tensor>> gpu_buffers_in_;
     std::vector<std::unique_ptr<Tensor>> gpu_buffers_out_;
     size_t output_size_ = 0;
+    InputOutputTensorNames input_output_tensor_names_;
   };
 
   absl::StatusOr<std::vector<Tensor>> Process(
@@ -140,7 +144,10 @@ absl::Status InferenceCalculatorGlImpl::GpuInferenceRunner::LoadModel(
     tflite::InterpreterBuilder(model, op_resolver)(&interpreter_);
   }
   RET_CHECK(interpreter_);
-
+  MP_ASSIGN_OR_RETURN(
+      input_output_tensor_names_,
+      InferenceIoMapper::GetInputOutputTensorNamesFromInterpreter(
+          *interpreter_));
   interpreter_->SetNumThreads(
       cc->Options<mediapipe::InferenceCalculatorOptions>().cpu_num_thread());
 
@@ -263,6 +270,12 @@ absl::Status InferenceCalculatorGlImpl::GpuInferenceRunner::Process(
       });
 }
 
+const InputOutputTensorNames&
+InferenceCalculatorGlImpl::GpuInferenceRunner::GetInputOutputTensorNames()
+    const {
+  return input_output_tensor_names_;
+}
+
 absl::Status InferenceCalculatorGlImpl::UpdateContract(CalculatorContract* cc) {
   MP_RETURN_IF_ERROR(TensorContractCheck(cc));
 
@@ -277,7 +290,8 @@ absl::Status InferenceCalculatorGlImpl::Open(CalculatorContext* cc) {
   MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
 
   MP_ASSIGN_OR_RETURN(gpu_inference_runner_, CreateInferenceRunner(cc));
-  return absl::OkStatus();
+  return InferenceCalculatorNodeImpl::UpdateIoMapping(
+      cc, gpu_inference_runner_->GetInputOutputTensorNames());
 }
 
 absl::StatusOr<std::vector<Tensor>> InferenceCalculatorGlImpl::Process(

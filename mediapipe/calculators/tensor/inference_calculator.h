@@ -18,17 +18,14 @@
 #include <algorithm>
 #include <functional>
 #include <memory>
-#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
-#include "absl/time/time.h"
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
-#include "mediapipe/calculators/tensor/inference_calculator_io_map.h"
-#include "mediapipe/calculators/tensor/inference_runner.h"
+#include "mediapipe/calculators/tensor/inference_io_mapper.h"
 #include "mediapipe/calculators/tensor/tensor_span.h"
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/api2/packet.h"
@@ -195,13 +192,6 @@ class InferenceCalculatorNodeImpl : public NodeImpl<Intf, Impl> {
 
   // Override Process to handle common Tensor I/O functionality.
   absl::Status Process(CalculatorContext* cc) final {
-    if (io_config_ == nullptr) {
-      io_config_ = std::make_unique<
-          mediapipe::InferenceCalculatorOptions::InputOutputConfig>(
-          GetInputOutputConfig(cc));
-      MP_RETURN_IF_ERROR(VerifyInputOutputConfig(*io_config_));
-    }
-
     if (InferenceCalculator::kInTensors(cc).IsConnected()) {
       // Using old vector<Tensor> inputs; skip if empty input stream, but error
       // if the input vector is empty.
@@ -215,7 +205,6 @@ class InferenceCalculatorNodeImpl : public NodeImpl<Intf, Impl> {
           RemapAndProcessTensors(cc, MakeTensorSpan(input_tensors)));
       return SendOutputTensors(cc, std::move(output_tensors));
     }
-
     // Using new direct Tensor inputs; return early if any empty streams.
     for (int i = 0; i < InferenceCalculator::kInTensor(cc).Count(); ++i) {
       if (InferenceCalculator::kInTensor(cc)[i].IsEmpty()) {
@@ -230,6 +219,16 @@ class InferenceCalculatorNodeImpl : public NodeImpl<Intf, Impl> {
     return SendOutputTensors(cc, std::move(output_tensors));
   }
 
+ protected:
+  // Updates IoMapper with input/output tensor names from the TfLite model.
+  absl::Status UpdateIoMapping(CalculatorContext* cc,
+                               const InputOutputTensorNames& tensor_names) {
+    if (io_mapper_ == nullptr) {
+      io_mapper_ = std::make_unique<InferenceIoMapper>();
+    }
+    return io_mapper_->UpdateIoMap(GetInputOutputConfig(cc), tensor_names);
+  }
+
   // Process call providing TensorSpan input.
   virtual absl::StatusOr<std::vector<Tensor>> Process(
       CalculatorContext* cc, const TensorSpan& tensor_span) = 0;
@@ -239,11 +238,14 @@ class InferenceCalculatorNodeImpl : public NodeImpl<Intf, Impl> {
   // output tensors.
   absl::StatusOr<std::vector<Tensor>> RemapAndProcessTensors(
       CalculatorContext* cc, const TensorSpan& input_tensors) {
-    MP_ASSIGN_OR_RETURN(auto input_tensors_remapped,
-                        RemapInputTensors(input_tensors, *io_config_));
-    MP_ASSIGN_OR_RETURN(auto output_tensors,
+    RET_CHECK(io_mapper_ != nullptr)
+        << "IO mapper is not initialized. MaybeUpdateIoMapping must be called "
+           "prior to Process.";
+    MP_ASSIGN_OR_RETURN(const TensorSpan input_tensors_remapped,
+                        io_mapper_->RemapInputTensors(input_tensors));
+    MP_ASSIGN_OR_RETURN(std::vector<Tensor> output_tensors,
                         Process(cc, input_tensors_remapped));
-    return RemapOutputTensors(std::move(output_tensors), *io_config_);
+    return io_mapper_->RemapOutputTensors(std::move(output_tensors));
   }
 
   // Send output tensors into the proper output streams, regardless of how
@@ -282,8 +284,7 @@ class InferenceCalculatorNodeImpl : public NodeImpl<Intf, Impl> {
     return mediapipe::InferenceCalculatorOptions::InputOutputConfig();
   }
 
-  std::unique_ptr<mediapipe::InferenceCalculatorOptions::InputOutputConfig>
-      io_config_;
+  std::unique_ptr<InferenceIoMapper> io_mapper_;
 };
 
 }  // namespace api2

@@ -16,18 +16,23 @@
 
 #include <cstdint>
 #include <memory>
+#include <utility>
 #include <vector>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "mediapipe/calculators/tensor/inference_io_mapper.h"
 #include "mediapipe/calculators/tensor/tensor_span.h"
+#include "mediapipe/calculators/tensor/tflite_delegate_ptr.h"
+#include "mediapipe/framework/api2/packet.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/mediapipe_profiling.h"
 #include "mediapipe/framework/port/ret_check.h"
+#include "mediapipe/framework/port/status_macros.h"
+#include "mediapipe/util/tflite/tflite_model_loader.h"
 #include "tensorflow/lite/c/c_api_types.h"
 #include "tensorflow/lite/c/common.h"
-#include "tensorflow/lite/interpreter.h"
 #include "tensorflow/lite/interpreter_builder.h"
 #include "tensorflow/lite/string_util.h"
 
@@ -78,20 +83,27 @@ void CopyTensorBufferFromInterpreter(Interpreter* interpreter,
 
 class InferenceInterpreterDelegateRunner : public InferenceRunner {
  public:
-  InferenceInterpreterDelegateRunner(api2::Packet<TfLiteModelPtr> model,
-                                     std::unique_ptr<Interpreter> interpreter,
-                                     TfLiteDelegatePtr delegate)
+  InferenceInterpreterDelegateRunner(
+      api2::Packet<TfLiteModelPtr> model,
+      std::unique_ptr<Interpreter> interpreter, TfLiteDelegatePtr delegate,
+      InputOutputTensorNames&& input_output_tensor_names)
       : model_(std::move(model)),
         interpreter_(std::move(interpreter)),
-        delegate_(std::move(delegate)) {}
+        delegate_(std::move(delegate)),
+        input_output_tensor_names_(std::move(input_output_tensor_names)) {}
 
   absl::StatusOr<std::vector<Tensor>> Run(
       CalculatorContext* cc, const TensorSpan& tensor_span) override;
+
+  const InputOutputTensorNames& GetInputOutputTensorNames() const override {
+    return input_output_tensor_names_;
+  }
 
  private:
   api2::Packet<TfLiteModelPtr> model_;
   std::unique_ptr<Interpreter> interpreter_;
   TfLiteDelegatePtr delegate_;
+  InputOutputTensorNames input_output_tensor_names_;
 };
 
 absl::StatusOr<std::vector<Tensor>> InferenceInterpreterDelegateRunner::Run(
@@ -241,8 +253,13 @@ CreateInferenceInterpreterDelegateRunner(
   RET_CHECK_EQ(interpreter_builder(&interpreter), kTfLiteOk);
   RET_CHECK(interpreter);
   RET_CHECK_EQ(interpreter->AllocateTensors(), kTfLiteOk);
+  MP_ASSIGN_OR_RETURN(
+      auto input_output_tensor_names,
+      InferenceIoMapper::GetInputOutputTensorNamesFromInterpreter(
+          *interpreter));
   return std::make_unique<InferenceInterpreterDelegateRunner>(
-      std::move(model), std::move(interpreter), std::move(delegate));
+      std::move(model), std::move(interpreter), std::move(delegate),
+      std::move(input_output_tensor_names));
 }
 
 }  // namespace mediapipe
