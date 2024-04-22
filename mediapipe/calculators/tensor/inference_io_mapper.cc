@@ -111,7 +111,16 @@ static absl::StatusOr<std::vector<int>> MapTensorNamesToIndices(
 absl::StatusOr<InputOutputTensorNames>
 InferenceIoMapper::GetInputOutputTensorNamesFromInterpreter(
     const tflite::Interpreter& interpreter) {
-  return GetInputOutputTensorNamesFromAllTfliteSignatures(interpreter);
+  auto input_output_tensor_names =
+      GetInputOutputTensorNamesFromAllTfliteSignatures(interpreter);
+  if (!input_output_tensor_names.ok()) {
+    // TODO b/336260063 - remove this warning once the bug is fixed.
+    ABSL_LOG_FIRST_N(WARNING, 1)
+        << "Unable to extract TfLite model's tensor names from "
+           "TfliteSignature. Disabling tensor name-based I/O mapping.";
+    return InputOutputTensorNames();
+  }
+  return *input_output_tensor_names;
 }
 
 // static
