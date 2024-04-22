@@ -231,6 +231,20 @@ TEST(BeginEndLoopCalculatorGraphItemTest, MultipleInputSets) {
   MP_EXPECT_OK(runner.Close());
 }
 
+TEST(BeginEndLoopCalculatorGraphItemTest, AllowsArbitraryTimestampChange) {
+  GraphRunner runner(/*num_inputs=*/1, /*num_outputs=*/1);
+
+  Timestamp input_timestamp1 = Timestamp(1000);
+  MP_EXPECT_OK(runner.SendPacketsOfInts(input_timestamp1, {{}}));
+
+  Timestamp input_timestamp2 = Timestamp(1001);
+  MP_EXPECT_OK(runner.SendPacketsOfInts(input_timestamp2, {{1}}));
+
+  EXPECT_THAT(runner.output_packets(),
+              ElementsAre(ElementsAre(PacketOfIntEq(input_timestamp2, 2))));
+  MP_EXPECT_OK(runner.Close());
+}
+
 class MultiplyCalculator : public Node {
  public:
   static constexpr Input<int> kInA{"A"};

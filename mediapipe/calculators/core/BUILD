@@ -258,6 +258,7 @@ cc_library(
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:calculator_contract",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:contract",
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/api2:packet",
         "//mediapipe/framework/api2:port",
@@ -274,6 +275,7 @@ cc_library(
     deps = [
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:contract",
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/api2:packet",
         "//mediapipe/framework/api2:port",
