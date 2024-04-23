@@ -242,45 +242,17 @@ message InferenceCalculatorOptions {
       // - Given model tensor output order: [Tensor2, Tensor1, Tensor0]
       // - Desired InferenceCalculator output order: tensor0, tensor1, tensor2
       // - model_tensor_indices: [2, 1, 0]
+      //
       repeated int32 model_tensor_indices = 1 [packed = true];
     }
 
-    // Defines tensor order described by the TfLite signature names.
-    message TensorNamesMap {
-      // Ordered list of tensor names describing a bijective mapping between
-      // the InferenceCalculator tensor I/O index and the TFLite model I/O
-      // tensor names (only models with a single signature are supported). The
-      // nth entry in the list maps the nth InferenceCalculator I/O tensor. The
-      // size of the list must match the number of tensors in the input or
-      // output of the InferenceCalculator.
-      //
-      // Example configurations:
-      // Input (Input<std::vector<Tensor>> or Input<Tensor>::Multiple) config:
-      // - Desired inference calculator input order: tensor0, tensor1, tensor2
-      // - Given model tensor input order: [Tensor2, Tensor1, Tensor0]
-      // - tensor_names_map: ["Tensor0", "Tensor1", "Tensor2"]
-      // Output (Output<std::vector<Tensor>> or Output<Tensor>::Multiple)
-      // config:
-      // - Given model tensor output order: [Tensor2, Tensor1, Tensor0]
-      // - Desired InferenceCalculator output order: tensor0, tensor1, tensor2
-      // - tensor_names_map: ["Tensor0", "Tensor1", "Tensor2"]
-      repeated string tensor_names = 1;
-    }
-
     // Maps the input tensors of the InferenceCalculator to the input tensors of
-    // the TFLite model. Values are model I/O tensor indices or tensor names.
-    oneof InputTensorMap {
-      TensorIndicesMap input_tensor_indices_map = 1;
-      TensorNamesMap input_tensor_names_map = 3;
-    }
+    // the TFLite model. Values are model I/O tensor indices.
+    optional TensorIndicesMap input_tensor_indices_map = 1;
 
     // Maps the output tensors of the TfLite model to the the output tensors of
-    // the InferenceCalculator. Values are model I/O tensor indices or tensor
-    // names.
-    oneof OutputTensorMap {
-      TensorIndicesMap output_tensor_indices_map = 2;
-      TensorNamesMap output_tensor_names_map = 4;
-    }
+    // the InferenceCalculator. Values are model I/O tensor indices.
+    optional TensorIndicesMap output_tensor_indices_map = 2;
   }
 
   // Optionally remaps input and output tensors to align with TfLite model and

@@ -49,7 +49,7 @@ TEST_F(TfLiteSignatureReader, ShouldReadInputOutputTensorNames) {
       ReadModelAndBuildInterpreter("test_single_signature_key_model.tflite"));
 
   MP_ASSERT_OK_AND_ASSIGN(
-      auto input_output_tensor_names,
+      auto signatures,
       GetInputOutputTensorNamesFromTfliteSignature(*interpreter));
 
   // The order of the input and output tensors is not guaranteed during TfLite
@@ -57,13 +57,11 @@ TEST_F(TfLiteSignatureReader, ShouldReadInputOutputTensorNames) {
   // the input tensors as shown below.
   const std::vector<std::string> expected_input_tensor_names = {
       "third_input", "first_input", "second_input"};
-  EXPECT_EQ(input_output_tensor_names.input_tensor_names,
-            expected_input_tensor_names);
+  EXPECT_EQ(signatures.first, expected_input_tensor_names);
 
   const std::vector<std::string> expected_output_tensor_names = {
       "output_1", "output_0", "output_2"};
-  EXPECT_EQ(input_output_tensor_names.output_tensor_names,
-            expected_output_tensor_names);
+  EXPECT_EQ(signatures.second, expected_output_tensor_names);
 }
 
 TEST_F(TfLiteSignatureReader, ShouldFailIfMultipleSignaturesExist) {
@@ -83,7 +81,7 @@ TEST_F(TfLiteSignatureReader, ShouldReadTensorNamesForSignature) {
   // The test model contains two signatures "model_one" and "model_two" with
   // identical input and output tensors.
   for (const std::string signature_key : {"model_one", "model_two"}) {
-    MP_ASSERT_OK_AND_ASSIGN(auto input_output_tensor_names,
+    MP_ASSERT_OK_AND_ASSIGN(auto signatures,
                             GetInputOutputTensorNamesFromTfliteSignature(
                                 *interpreter, &signature_key));
 
@@ -92,43 +90,11 @@ TEST_F(TfLiteSignatureReader, ShouldReadTensorNamesForSignature) {
     // of the input tensors as shown below.
     const std::vector<std::string> expected_input_tensor_names = {
         "third_input", "first_input", "second_input"};
-    EXPECT_EQ(input_output_tensor_names.input_tensor_names,
-              expected_input_tensor_names);
+    EXPECT_EQ(signatures.first, expected_input_tensor_names);
 
     const std::vector<std::string> expected_output_tensor_names = {
         "output_1", "output_0", "output_2"};
-    EXPECT_EQ(input_output_tensor_names.output_tensor_names,
-              expected_output_tensor_names);
-  }
-}
-
-TEST_F(TfLiteSignatureReader, ShouldReadTensorNamesForAllSignature) {
-  MP_ASSERT_OK_AND_ASSIGN(
-      std::unique_ptr<tflite::Interpreter> interpreter,
-      ReadModelAndBuildInterpreter("test_two_signature_keys_model.tflite"));
-  // The test model contains two signatures "model_one" and "model_two" with
-  // identical input and output tensors.
-  MP_ASSERT_OK_AND_ASSIGN(
-      auto input_output_tensor_names_map,
-      GetInputOutputTensorNamesFromAllTfliteSignatures(*interpreter));
-
-  for (const std::string signature_key : {"model_one", "model_two"}) {
-    auto it = input_output_tensor_names_map.find(signature_key);
-    EXPECT_NE(it, input_output_tensor_names_map.end());
-    const auto input_output_tensor_names = it->second;
-
-    // The order of the input and output tensors is not guaranteed during TfLite
-    // conversion. Executing tf.lite.TFLiteConverter.convert flipped the order
-    // of the input tensors as shown below.
-    const std::vector<std::string> expected_input_tensor_names = {
-        "third_input", "first_input", "second_input"};
-    EXPECT_EQ(input_output_tensor_names.input_tensor_names,
-              expected_input_tensor_names);
-
-    const std::vector<std::string> expected_output_tensor_names = {
-        "output_1", "output_0", "output_2"};
-    EXPECT_EQ(input_output_tensor_names.output_tensor_names,
-              expected_output_tensor_names);
+    EXPECT_EQ(signatures.second, expected_output_tensor_names);
   }
 }
 

@@ -25,7 +25,6 @@
 #include "absl/memory/memory.h"
 #include "absl/strings/str_format.h"
 #include "mediapipe/calculators/tensor/inference_calculator.h"
-#include "mediapipe/calculators/tensor/inference_io_mapper.h"
 #include "mediapipe/calculators/tensor/tensor_span.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/formats/tensor_mtl_buffer_view.h"
@@ -224,12 +223,6 @@ absl::Status InferenceCalculatorMetalImpl::InitInterpreter(
       cc->Options<mediapipe::InferenceCalculatorOptions>().cpu_num_thread());
   RET_CHECK_EQ(interpreter_builder(&interpreter_), kTfLiteOk);
   RET_CHECK(interpreter_);
-  MP_ASSIGN_OR_RETURN(
-      const auto& io_mapping,
-      InferenceIoMapper::GetInputOutputTensorNamesFromInterpreter(
-          *interpreter_));
-  MP_RETURN_IF_ERROR(
-      InferenceCalculatorNodeImpl::UpdateIoMapping(cc, io_mapping));
 
   MP_RETURN_IF_ERROR(CreateConverters(cc));
   RET_CHECK_EQ(interpreter_->AllocateTensors(), kTfLiteOk);

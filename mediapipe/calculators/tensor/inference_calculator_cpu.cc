@@ -30,6 +30,7 @@
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
+#include "tensorflow/lite/interpreter.h"
 #if defined(MEDIAPIPE_ANDROID)
 #include "tensorflow/lite/delegates/nnapi/nnapi_delegate.h"
 #endif  // ANDROID
@@ -69,8 +70,7 @@ absl::Status InferenceCalculatorCpuImpl::UpdateContract(
 
 absl::Status InferenceCalculatorCpuImpl::Open(CalculatorContext* cc) {
   MP_ASSIGN_OR_RETURN(inference_runner_, CreateInferenceRunner(cc));
-  return InferenceCalculatorNodeImpl::UpdateIoMapping(
-      cc, inference_runner_->GetInputOutputTensorNames());
+  return absl::OkStatus();
 }
 
 absl::StatusOr<std::vector<Tensor>> InferenceCalculatorCpuImpl::Process(
