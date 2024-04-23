@@ -30,6 +30,25 @@ mediapipe_proto_library(
     srcs = ["tokenizer_calculator.proto"],
 )
 
+cc_library(
+    name = "gpt2_unicode_mapping_calculator",
+    srcs = ["gpt2_unicode_mapping_calculator.cc"],
+    deps = [
+        ":detokenizer_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/tasks/cc/genai/inference/proto:llm_params_cc_proto",
+        "//mediapipe/tasks/cc/genai/inference/utils/llm_utils:metadata_utils",
+        "//mediapipe/util/tflite:tflite_model_loader",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/status",
+        "@org_tensorflow//tensorflow/lite:framework_stable",
+    ],
+    alwayslink = 1,
+)
+
 mediapipe_proto_library(
     name = "llm_gpu_calculator_proto",
     srcs = ["llm_gpu_calculator.proto"],
