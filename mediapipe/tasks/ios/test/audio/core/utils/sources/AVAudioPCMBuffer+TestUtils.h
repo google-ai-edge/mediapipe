@@ -31,15 +31,15 @@ NS_ASSUME_NONNULL_BEGIN
  * Creates an `AVAudioPCMBuffer` from the file specified by `fileInfo`. If the format of the audio
  * file is equal to the processing format, the samples loaded from the file are directly returned.
  * If not, the pcm buffer is converted to the processing format.
- * 
+ *
  * @param fileInfo `FileInfo` with name and type of the audio file stored in the bundle.
  * @param fileInfo The `AVAudioFormat` to which the audio samples are to be converted.
- * 
+ *
  * @return Newly created audio pcm buffer satisfying the processing format. `nil` if there was an
  * error during conversion.
  */
-- (nullable AVAudioPCMBuffer *)initFromAudioFileWithInfo:(MPPFileInfo *)fileInfo
-                                        processingFormat:(AVAudioFormat *)processingFormat;
++ (nullable AVAudioPCMBuffer *)bufferFromAudioFileWithInfo:(MPPFileInfo *)fileInfo
+                                          processingFormat:(AVAudioFormat *)processingFormat;
 
 /**
  * Converts the current pcm buffer to a pcm buffer using the specified audio converter

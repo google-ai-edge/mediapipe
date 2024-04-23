@@ -16,8 +16,8 @@
 
 @implementation AVAudioPCMBuffer (TestUtils)
 
-- (nullable AVAudioPCMBuffer *)initFromAudioFileWithInfo:(MPPFileInfo *)fileInfo
-                                        processingFormat:(AVAudioFormat *)processingFormat {
++ (nullable AVAudioPCMBuffer *)bufferFromAudioFileWithInfo:(MPPFileInfo *)fileInfo
+                                          processingFormat:(AVAudioFormat *)processingFormat {
   AVAudioFile *audioFile = [[AVAudioFile alloc] initForReading:[NSURL fileURLWithPath:fileInfo.path]
                                                          error:nil];
   AVAudioPCMBuffer *buffer =
