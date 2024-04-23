@@ -217,7 +217,11 @@ class ObjectDetector(base_vision_task_api.BaseVisionTaskApi):
           ]
       )
       timestamp = output_packets[_IMAGE_OUT_STREAM_NAME].timestamp
-      options.result_callback(detection_result, image, timestamp)
+      options.result_callback(
+          detection_result,
+          image,
+          timestamp.value // _MICRO_SECONDS_PER_MILLISECOND,
+      )
 
     task_info = _TaskInfo(
         task_graph=_TASK_GRAPH_NAME,
