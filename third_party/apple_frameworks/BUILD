@@ -48,6 +48,11 @@ cc_library(
 )
 
 cc_library(
+    name = "AVFAudio",
+    linkopts = ["-framework AVFAudio"],
+)
+
+cc_library(
     name = "Foundation",
     linkopts = ["-framework Foundation"],
 )
