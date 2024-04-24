@@ -218,7 +218,7 @@ absl::StatusOr<std::unique_ptr<Llm>> Llm::CreatePrefixDecodeLlm(
   logits_output->MarkOutput();
 
   MP_ASSIGN_OR_RETURN(auto graph, builder->Build());
-  RET_CHECK_OK(weights_cache->Finalize());
+  MP_RETURN_IF_ERROR(weights_cache->Finalize());
   VLOG(2) << "Xnn weights cache finalized.";
   auto result = std::make_unique<PrefixDecodeLlm>(std::move(prefix_llm),
                                                   std::move(*graph));
@@ -234,6 +234,7 @@ absl::StatusOr<std::unique_ptr<Llm>> Llm::CreatePrefixDecodeLlm(
   result->weights_ = std::move(weights);
   result->llm_params_ = decoding_llm_params;
   result->builder_ = std::move(builder);
+  MP_RETURN_IF_ERROR(result->Reset());
 
   return result;
 }
@@ -326,6 +327,7 @@ absl::StatusOr<std::unique_ptr<Llm>> Llm::CreatePrefixOnlyLlm(
   llm->weights_ = std::move(weights);
   llm->llm_params_ = llm_params;
   llm->builder_ = builder;
+  MP_RETURN_IF_ERROR(llm->Reset());
 
   return llm;
 }
@@ -383,16 +385,32 @@ absl::Status Llm::InitInputTokens(const std::vector<int>& input_ids) {
   return InitInputTokens(span);
 }
 
+absl::Status Llm::AddInputTokens(
+    absl::Span<const std::vector<int>> batch_input_ids) {
+  RET_CHECK_EQ(batch_input_ids.size(), llm_params_.batch_size_B);
+
+  // TODO: b/335908202 - refactor to efficient implementation.
+  auto prev_ids_copy = prev_ids_;
+  for (size_t batch = 0; batch < llm_params_.batch_size_B; ++batch) {
+    auto& prev_ids = prev_ids_copy[batch];
+    const auto& input_ids = batch_input_ids[batch];
+    prev_ids.insert(prev_ids.end(), input_ids.begin(), input_ids.end());
+  }
+
+  return InitInputTokens(prev_ids_copy);
+}
+
 absl::Status Llm::InitInputTokens(
     absl::Span<const std::vector<int>> batch_input_ids) {
-  RET_CHECK(!batch_input_ids.empty());
+  MP_RETURN_IF_ERROR(Reset());
+
+  RET_CHECK_EQ(batch_input_ids.size(), llm_params_.batch_size_B);
   const size_t input_seq_len = batch_input_ids.at(0).size();
   for (auto it = batch_input_ids.begin() + 1; it != batch_input_ids.end();
        ++it) {
     RET_CHECK_EQ(it->size(), input_seq_len);
   }
 
-  MP_RETURN_IF_ERROR(Reset());
   RET_CHECK(!prev_ids_.empty());
   const size_t current_seq_len = prev_ids_[0].size();
 

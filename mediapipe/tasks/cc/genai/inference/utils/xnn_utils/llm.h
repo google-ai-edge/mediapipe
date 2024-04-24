@@ -84,6 +84,10 @@ class Llm : protected xnn_utils::XnnGraph {
       std::unique_ptr<LlmWeightsLoader> weight_loader,
       std::unique_ptr<LlmBuilder> builder);
 
+  // Add input token ids at the end of all previously added tokens.
+  virtual absl::Status AddInputTokens(
+      absl::Span<const std::vector<int>> batch_input_ids);
+
   // (Re)Initialize with input token ids. This will reset the cache, mask etc.
   virtual absl::Status InitInputTokens(
       absl::Span<const std::vector<int>> batch_input_ids);

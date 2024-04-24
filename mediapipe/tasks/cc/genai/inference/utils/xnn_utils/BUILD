@@ -158,6 +158,7 @@ cc_library(
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "//mediapipe/tasks/cc/genai/inference/calculators:top_p_sampler_impl",
         "@XNNPACK",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/log:absl_check",
