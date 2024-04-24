@@ -80,6 +80,17 @@ const DEFAULT_TOP_P = 1.0;
 const DEFAULT_TEMPERATURE = 1.0;
 const DEFAULT_SAMPLER_TYPE = SamplerParameters.Type.TOP_P;
 
+// Amount of the max WebGPU buffer size required for the 7B LLM with int8
+// quantization model. If the requested maxBufferSize is smaller than the
+// number, WebGPU will warn in console and the computation results will be
+// wrong.
+const MAX_BUFFER_SIZE_FOR_LLM_7B = 786825216;
+// Amount of the max WebGPU buffer size required for the smaller LLM models
+// (such as the Gemma2B, Falcon) with int8 quantization.
+const MAX_BUFFER_SIZE_FOR_LLM = 524550144;
+// Amount of the max WebGPU buffer binding size required for LLM models.
+const MAX_STORAGE_BUFFER_BINDING_SIZE_FOR_LLM = 524550144;
+
 /**
  * Performs LLM Inference on text.
  */
@@ -199,21 +210,46 @@ export class LlmInference extends TaskRunner {
    * Create WebGPU device with high performance configurations.
    * @export
    */
-  static createWebGpuDevice(): Promise<GPUDevice> {
+  static async createWebGpuDevice(): Promise<GPUDevice> {
     const adapterDescriptor: GPURequestAdapterOptions = {
       powerPreference: 'high-performance',
     };
+    const adapter =
+      await LlmGraphRunner.requestWebGpuAdapter(adapterDescriptor);
+    const systemBufferSizeLimit = adapter.limits.maxBufferSize;
+    const systemStorageBufferBindingSizeLimit =
+      adapter.limits.maxStorageBufferBindingSize;
+    if (
+      systemStorageBufferBindingSizeLimit <
+      MAX_STORAGE_BUFFER_BINDING_SIZE_FOR_LLM
+    ) {
+      throw new Error(
+        `The WebGPU device is unable to execute LLM tasks, because the ` +
+          `required maxStorageBufferBindingSize is at least ` +
+          `${MAX_STORAGE_BUFFER_BINDING_SIZE_FOR_LLM} but your device only ` +
+          `supports maxStorageBufferBindingSize of ${systemBufferSizeLimit}`,
+      );
+    }
+    let maxBufferSize;
+    if (systemBufferSizeLimit >= MAX_BUFFER_SIZE_FOR_LLM_7B) {
+      maxBufferSize = MAX_BUFFER_SIZE_FOR_LLM_7B;
+    } else if (systemBufferSizeLimit >= MAX_BUFFER_SIZE_FOR_LLM) {
+      maxBufferSize = MAX_BUFFER_SIZE_FOR_LLM;
+    } else {
+      throw new Error(
+        `The WebGPU device is unable to execute LLM tasks, because the ` +
+          `required maxBufferSize is at least ${MAX_BUFFER_SIZE_FOR_LLM} but ` +
+          `your device only supports maxBufferSize of ${systemBufferSizeLimit}`,
+      );
+    }
     const deviceDescriptor: GPUDeviceDescriptor = {
       requiredFeatures: ['shader-f16'],
       requiredLimits: {
-        'maxStorageBufferBindingSize': 524550144,
-        'maxBufferSize': 524550144,
+        'maxStorageBufferBindingSize': MAX_STORAGE_BUFFER_BINDING_SIZE_FOR_LLM,
+        'maxBufferSize': maxBufferSize,
       },
     };
-    return LlmGraphRunner.requestWebGpuDevice(
-      deviceDescriptor,
-      adapterDescriptor,
-    );
+    return LlmGraphRunner.requestWebGpuDevice(deviceDescriptor, adapter);
   }
 
   /**
@@ -236,7 +272,7 @@ export class LlmInference extends TaskRunner {
 
     if (options.baseOptions?.gpuOptions?.device) {
       (this.graphRunner as unknown as LlmGraphRunner).initializeForWebGpu(
-        options.baseOptions.gpuOptions.device
+        options.baseOptions.gpuOptions.device,
       );
     }
     if ('maxTokens' in options) {
