@@ -108,7 +108,15 @@ JNIEXPORT jlong JNICALL JNI_METHOD(nativeCreateSession)(
   env->ReleaseByteArrayElements(session_config_bytes, session_config_ref,
                                 JNI_ABORT);
 
-  void* session = LlmInferenceEngine_CreateSession(&session_config);
+  void* session = nullptr;
+  char* error_msg = nullptr;
+  int error_code =
+      LlmInferenceEngine_CreateSession(&session_config, &session, &error_msg);
+  if (error_code) {
+    ThrowIfError(env, absl::InternalError(absl::StrCat(
+                          "Failed to initialize session: %s", error_msg)));
+    free(error_msg);
+  }
   FreeSessionConfig(&session_config);
   return reinterpret_cast<jlong>(session);
 }
