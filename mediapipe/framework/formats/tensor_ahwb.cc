@@ -385,8 +385,8 @@ void Tensor::MoveAhwbStuff(Tensor* src) {
   ssbo_read_ = std::exchange(src->ssbo_read_, static_cast<GLsync>(0));
   ssbo_written_ = std::exchange(src->ssbo_written_, -1);
   fence_fd_ = std::exchange(src->fence_fd_, -1);
-  ahwb_written_ = std::move(src->ahwb_written_);
   ahwb_release_callbacks_ = std::move(src->ahwb_release_callbacks_);
+  ahwb_written_ = std::move(src->ahwb_written_);
 }
 
 void Tensor::ReleaseAhwbStuff() {
