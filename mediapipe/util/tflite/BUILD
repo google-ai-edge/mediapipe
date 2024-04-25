@@ -190,21 +190,25 @@ cc_test_with_tflite(
     ],
 )
 
-cc_library(
+cc_library_with_tflite(
     name = "tflite_signature_reader",
     srcs = ["tflite_signature_reader.cc"],
     hdrs = ["tflite_signature_reader.h"],
+    tflite_deps = [
+        "@org_tensorflow//tensorflow/lite:framework_stable",
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
-        "@org_tensorflow//tensorflow/lite:framework_stable",
     ],
 )
 
+# TODO b/336756170 - convert test to use cc_test_with_tflite
 cc_test(
     name = "tflite_signature_reader_test",
     srcs = ["tflite_signature_reader_test.cc"],
