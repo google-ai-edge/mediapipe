@@ -28,6 +28,8 @@
 
 namespace mediapipe::tasks::genai::xnn_utils {
 
+// TODO: b/331677973 - de-duplicate from
+// third_party/odml/infra/genai/inference/calculators/top_p_sampler_impl.h
 class Sampler {
  public:
   enum class Type { kGreedy, kTopK, kTopP };
@@ -51,13 +53,13 @@ class Sampler {
   // the configured sampling alogorithm to find a winning class. The results are
   // reported as a vector of integer indicies where each entry corresponds to a
   // batch.
-  absl::StatusOr<std::vector<int>> Sample(Tensor& logits);
+  absl::StatusOr<std::vector<int>> Sample(const Tensor& logits);
 
  private:
   Sampler(Type type, int top_k, float top_p, float temperature, int seed);
-  absl::StatusOr<std::vector<int>> SampleGreedy(Tensor& logits);
-  absl::StatusOr<std::vector<int>> SampleTopK(Tensor& logits);
-  absl::StatusOr<std::vector<int>> SampleTopP(Tensor& logits);
+  absl::StatusOr<std::vector<int>> SampleGreedy(const Tensor& logits);
+  absl::StatusOr<std::vector<int>> SampleTopK(const Tensor& logits);
+  absl::StatusOr<std::vector<int>> SampleTopP(const Tensor& logits);
   absl::Status SelectTopK(std::vector<std::pair<float, int>>& logits_ids,
                           int k);
   // `logits_ids` must be sorted and normalized.

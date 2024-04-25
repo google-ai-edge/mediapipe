@@ -72,13 +72,30 @@ class PrefixDecodeLlm : public Llm {
   }
 
   absl::Status GetNextToken(std::vector<int>* output_ids) override {
+    MP_ASSIGN_OR_RETURN(auto logits_output, ComputeLogits());
+    const size_t decode_step = prev_ids_[0].size() - 1;
+
+    MP_ASSIGN_OR_RETURN(*output_ids, builder_->Sample(*logits_output));
+
+    RET_CHECK_EQ(output_ids->size(), llm_params_.batch_size_B);
+
+    for (size_t batch_size = 0; batch_size < llm_params_.batch_size_B;
+         ++batch_size) {
+      auto slice = prefix_llm_->input_pivot_->Slice(0, batch_size)
+                       ->Slice(1, decode_step + 1);
+      MP_RETURN_IF_ERROR(
+          GetTokenEmbedding(*output_ids, slice->DataAs<float>()));
+      prev_ids_[batch_size].push_back(output_ids->at(batch_size));
+    }
+    return absl::OkStatus();
+  }
+
+  absl::StatusOr<std::shared_ptr<Tensor>> ComputeLogits() override {
     const size_t decode_step = prev_ids_[0].size() - 1;
     VLOG(2) << "Decode step " << decode_step;
 
-    if (decode_step >= llm_params_.seq_size_T - 1) {
-      return absl::OutOfRangeError(
-          absl::StrCat("Hit max sequence length ", llm_params_.seq_size_T));
-    }
+    RET_CHECK(decode_step < llm_params_.seq_size_T - 1)
+        .SetCode(absl::StatusCode::kOutOfRange);
 
     // TODO - b/329445989: This copy could be performance bottleneck. Consider
     // [T, B, D] shape.
@@ -88,7 +105,6 @@ class PrefixDecodeLlm : public Llm {
               ->Slice(1, decode_step)
               ->Data()));
     }
-
     // Let builder re-populate the values of these tensors.
     MP_RETURN_IF_ERROR(builder_->InitAttentionMask(
         decode_step, 1, /*is_prefix=*/false, *atten_masks_));
@@ -137,19 +153,7 @@ class PrefixDecodeLlm : public Llm {
     ABSL_DCHECK_EQ(logits_output_->num_elements,
                    llm_params_.batch_size_B * llm_params_.voc_size_V);
 
-    MP_ASSIGN_OR_RETURN(*output_ids, builder_->Sample(*logits_output_));
-
-    RET_CHECK_EQ(output_ids->size(), llm_params_.batch_size_B);
-
-    for (size_t batch_size = 0; batch_size < llm_params_.batch_size_B;
-         ++batch_size) {
-      auto slice = prefix_llm_->input_pivot_->Slice(0, batch_size)
-                       ->Slice(1, decode_step + 1);
-      MP_RETURN_IF_ERROR(
-          GetTokenEmbedding(*output_ids, slice->DataAs<float>()));
-      prev_ids_[batch_size].push_back(output_ids->at(batch_size));
-    }
-    return absl::OkStatus();
+    return logits_output_;
   }
 
  private:
@@ -465,6 +469,22 @@ absl::Status Llm::InitInputTokens(
 }
 
 absl::Status Llm::GetNextToken(std::vector<int>* output_ids) {
+  MP_ASSIGN_OR_RETURN(auto logits, ComputeLogits());
+  const size_t decode_step = prev_ids_[0].size() - 1;
+
+  MP_ASSIGN_OR_RETURN(*output_ids, builder_->Sample(*logits));
+  RET_CHECK_EQ(output_ids->size(), llm_params_.batch_size_B);
+
+  for (size_t batch = 0; batch < llm_params_.batch_size_B; ++batch) {
+    auto slice = transformer_input_->Slice(0, batch)->Slice(1, decode_step + 1);
+    MP_RETURN_IF_ERROR(GetTokenEmbedding(*output_ids, slice->DataAs<float>()));
+    prev_ids_[batch].push_back(output_ids->at(batch));
+  }
+
+  return absl::OkStatus();
+}
+
+absl::StatusOr<std::shared_ptr<Tensor>> Llm::ComputeLogits() {
   const size_t decode_step = prev_ids_[0].size() - 1;
   VLOG(2) << "Decode step " << decode_step;
 
@@ -479,18 +499,9 @@ absl::Status Llm::GetNextToken(std::vector<int>* output_ids) {
   std::shared_ptr<Tensor> logits = logits_output_->Slice({0, decode_step, 0});
   ABSL_DCHECK_EQ(logits->num_elements,
                  llm_params_.batch_size_B * llm_params_.voc_size_V);
+  MP_ASSIGN_OR_RETURN(auto logits_tensor, logits->ConvertToMediapipeTensor());
 
-  MP_ASSIGN_OR_RETURN(*output_ids, builder_->Sample(*logits));
-  RET_CHECK_EQ(output_ids->size(), llm_params_.batch_size_B);
-  VLOG(2) << output_ids->at(0);
-
-  for (size_t batch = 0; batch < llm_params_.batch_size_B; ++batch) {
-    auto slice = transformer_input_->Slice(0, batch)->Slice(1, decode_step + 1);
-    MP_RETURN_IF_ERROR(GetTokenEmbedding(*output_ids, slice->DataAs<float>()));
-    prev_ids_[batch].push_back(output_ids->at(batch));
-  }
-
-  return absl::OkStatus();
+  return logits;
 }
 
 absl::Status Llm::GetTokenEmbedding(const std::vector<int>& ids,
@@ -819,7 +830,7 @@ absl::Status LlmBuilder::InitSegmentPos(size_t current_seq_len,
   return absl::OkStatus();
 }
 
-absl::StatusOr<std::vector<int>> LlmBuilder::Sample(Tensor& logits) {
+absl::StatusOr<std::vector<int>> LlmBuilder::Sample(const Tensor& logits) {
   if (sampler_ == nullptr) {
     MP_ASSIGN_OR_RETURN(
         sampler_,

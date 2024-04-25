@@ -26,6 +26,7 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/graph_builder.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/llm_weights.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/sampling.h"
@@ -96,8 +97,13 @@ class Llm : protected xnn_utils::XnnGraph {
   ABSL_DEPRECATED("Use batched version instead")
   absl::Status InitInputTokens(const std::vector<int>& input_ids);
 
-  // Get the next token id for each batch.
+  // Samples the logits from ComputeLogits() and returns the sampled ids. This
+  // also AddInputTokens() with the sampled ids.
   virtual absl::Status GetNextToken(std::vector<int>* output_ids);
+
+  // Computes logits with all previously added tokens. Output is in shape of
+  // [batch_B, 1, vacab_size_V].
+  virtual absl::StatusOr<std::shared_ptr<Tensor>> ComputeLogits();
 
   // The size of all tokens, including prompt and generated tokens.
   virtual size_t TotalTokenSize() const;
@@ -274,7 +280,7 @@ class LlmBuilder : protected XnnGraphBuilder {
                                       Tensor& out_segment_pos);
 
   // Run sampling on model's output logits.
-  absl::StatusOr<std::vector<int>> Sample(Tensor& logits);
+  absl::StatusOr<std::vector<int>> Sample(const Tensor& logits);
 
  protected:
   friend class Llm;

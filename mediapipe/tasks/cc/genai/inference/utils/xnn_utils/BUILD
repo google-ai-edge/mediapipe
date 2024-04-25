@@ -29,6 +29,7 @@ cc_library(
     deps = [
         ":utils",
         "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:ret_check",
@@ -155,6 +156,7 @@ cc_library(
         ":sampling",
         ":tensor",
         ":utils",
+        "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",

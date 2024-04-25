@@ -40,6 +40,7 @@
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "mediapipe/framework/deps/file_path.h"
+#include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
@@ -356,6 +357,16 @@ absl::StatusOr<std::shared_ptr<Tensor>> Tensor::ConvertToF32() {
   auto result = std::make_shared<Tensor>(dims, xnn_datatype_fp32, is_sparse());
   MP_RETURN_IF_ERROR(result->LoadFromBuffer(Data()));
   return result;
+}
+
+absl::StatusOr<::mediapipe::Tensor> Tensor::ConvertToMediapipeTensor() {
+  RET_CHECK_EQ(datatype, xnn_datatype_fp32) << "Try ConvertToF32 then convert";
+  ::mediapipe::Tensor mp_tensor(
+      ::mediapipe::Tensor::ElementType::kFloat32,
+      ::mediapipe::Tensor::Shape(std::vector<int>(dims.begin(), dims.end())));
+  void* mp_tensor_buffer = mp_tensor.GetCpuWriteView().buffer<float>();
+  std::memcpy(mp_tensor_buffer, Data(), ElementSize(num_elements));
+  return mp_tensor;
 }
 
 absl::Status Tensor::IsCloseTo(const Tensor& expected_tensor, float atol,

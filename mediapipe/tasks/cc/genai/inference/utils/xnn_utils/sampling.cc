@@ -47,7 +47,7 @@ absl::StatusOr<std::unique_ptr<Sampler>> Sampler::Create(Type type, int top_k,
   return absl::WrapUnique(new Sampler(type, top_k, top_p, temperature, seed));
 }
 
-absl::StatusOr<std::vector<int>> Sampler::Sample(Tensor& logits) {
+absl::StatusOr<std::vector<int>> Sampler::Sample(const Tensor& logits) {
   if (logits.dims.size() != 3 || logits.dims[1] != 1) {
     return absl::InvalidArgumentError(
         "Tensor must be (Batch, 1 [seq_len], vocab_size)");
@@ -72,7 +72,7 @@ Sampler::Sampler(Type type, int top_k, float top_p, float temperature, int seed)
       temperature_(temperature),
       generator_(std::make_unique<std::mt19937>(seed)) {}
 
-absl::StatusOr<std::vector<int>> Sampler::SampleGreedy(Tensor& logits) {
+absl::StatusOr<std::vector<int>> Sampler::SampleGreedy(const Tensor& logits) {
   size_t batch_size = logits.dims[0];
   size_t vocab_size = logits.dims[2];
 
@@ -95,7 +95,7 @@ absl::StatusOr<std::vector<int>> Sampler::SampleGreedy(Tensor& logits) {
   return outputs;
 };
 
-absl::StatusOr<std::vector<int>> Sampler::SampleTopK(Tensor& logits) {
+absl::StatusOr<std::vector<int>> Sampler::SampleTopK(const Tensor& logits) {
   const size_t batch_size = logits.dims[0];
   const size_t vocab_size = logits.dims[2];
   const float* flat_data = logits.DataAs<float>();
@@ -118,7 +118,7 @@ absl::StatusOr<std::vector<int>> Sampler::SampleTopK(Tensor& logits) {
   return outputs;
 }
 
-absl::StatusOr<std::vector<int>> Sampler::SampleTopP(Tensor& logits) {
+absl::StatusOr<std::vector<int>> Sampler::SampleTopP(const Tensor& logits) {
   const size_t batch_size = logits.dims[0];
   const size_t vocab_size = logits.dims[2];
   const int k = top_k_ > 0 ? top_k_ : vocab_size;
