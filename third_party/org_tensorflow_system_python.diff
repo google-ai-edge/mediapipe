@@ -96,30 +96,32 @@ index 1b0bccb9e48..cd391a21b0b 100644
          ":c_api_without_op_resolver_without_alwayslink",
          ":common",
 diff --git a/tensorflow/tools/toolchains/cpus/aarch64/aarch64_compiler_configure.bzl b/tensorflow/tools/toolchains/cpus/aarch64/aarch64_compiler_configure.bzl
-index 9261a652f9c..0557e345ab1 100644
+index 00cd6983ca3..d9c5ef16f9b 100644
 --- a/tensorflow/tools/toolchains/cpus/aarch64/aarch64_compiler_configure.bzl
 +++ b/tensorflow/tools/toolchains/cpus/aarch64/aarch64_compiler_configure.bzl
-@@ -2,7 +2,7 @@
+@@ -1,7 +1,7 @@
+ """Configurations of AARCH64 builds used with Docker container."""
  
  load("//tensorflow/tools/toolchains:cpus/aarch64/aarch64.bzl", "remote_aarch64_configure")
- load("//third_party/remote_config:remote_platform_configure.bzl", "remote_platform_configure")
 -load("//third_party/py:python_configure.bzl", "remote_python_configure")
 +load("//third_party/py/non_hermetic:python_configure.bzl", "remote_python_configure")
+ load("//third_party/remote_config:remote_platform_configure.bzl", "remote_platform_configure")
  
  def ml2014_tf_aarch64_configs(name_container_map, env):
-     for name, container in name_container_map.items():
+
 diff --git a/tensorflow/tools/toolchains/remote_config/rbe_config.bzl b/tensorflow/tools/toolchains/remote_config/rbe_config.bzl
-index 9f71a414bf7..57f70752323 100644
+index ae776c2a2fd..108e79edbd7 100644
 --- a/tensorflow/tools/toolchains/remote_config/rbe_config.bzl
 +++ b/tensorflow/tools/toolchains/remote_config/rbe_config.bzl
-@@ -1,6 +1,6 @@
- """Macro that creates external repositories for remote config."""
- 
+@@ -4,7 +4,7 @@ load("//tensorflow/tools/toolchains/remote_config:containers.bzl", "containers")
+ load("//third_party/gpus:cuda_configure.bzl", "remote_cuda_configure")
+ load("//third_party/gpus:rocm_configure.bzl", "remote_rocm_configure")
+ load("//third_party/nccl:nccl_configure.bzl", "remote_nccl_configure")
 -load("//third_party/py:python_configure.bzl", "local_python_configure", "remote_python_configure")
 +load("//third_party/py/non_hermetic:python_configure.bzl", "local_python_configure", "remote_python_configure")
- load("//third_party/gpus:cuda_configure.bzl", "remote_cuda_configure")
- load("//third_party/nccl:nccl_configure.bzl", "remote_nccl_configure")
- load("//third_party/gpus:rocm_configure.bzl", "remote_rocm_configure")
+ load("//third_party/remote_config:remote_platform_configure.bzl", "remote_platform_configure")
+ load("//third_party/tensorrt:tensorrt_configure.bzl", "remote_tensorrt_configure")
+ 
 diff --git a/tensorflow/workspace2.bzl b/tensorflow/workspace2.bzl
 index 056df85ffdb..7422baf8c59 100644
 --- a/tensorflow/workspace2.bzl

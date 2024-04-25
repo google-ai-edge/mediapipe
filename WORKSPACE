@@ -54,6 +54,12 @@ load("@rules_foreign_cc//foreign_cc:repositories.bzl", "rules_foreign_cc_depende
 rules_foreign_cc_dependencies()
 
 http_archive(
+    name = "rules_java",
+    sha256 = "c73336802d0b4882e40770666ad055212df4ea62cfa6edf9cb0f9d29828a0934",
+    url = "https://github.com/bazelbuild/rules_java/releases/download/5.3.5/rules_java-5.3.5.tar.gz",
+)
+
+http_archive(
     name = "com_google_protobuf",
     sha256 = "87407cd28e7a9c95d9f61a098a53cf031109d451a7763e7dd1253abf8b4df422",
     strip_prefix = "protobuf-3.19.1",
@@ -75,13 +81,13 @@ http_archive(
     ],
 )
 
-# XNNPACK on 2024-03-20.
+# XNNPACK on 2024-03-27.
 http_archive(
     name = "XNNPACK",
     # `curl -L <url> | shasum -a 256`
-    sha256 = "70cb1852aa33ddeff2f3cdcb6d7ac009850917a6778fdc7769a19660b97c0c40",
-    strip_prefix = "XNNPACK-5ecf0769c54cd224bd0026fe2c8d2ad6f3c4368a",
-    url = "https://github.com/google/XNNPACK/archive/5ecf0769c54cd224bd0026fe2c8d2ad6f3c4368a.zip",
+    sha256 = "179a680ef85deb5380b850f2551b214e00835c232f5b197dedf7c011a6adf5a6",
+    strip_prefix = "XNNPACK-2fe25b859581a34e77b48b06c640ac1a5a58612e",
+    url = "https://github.com/google/XNNPACK/archive/2fe25b859581a34e77b48b06c640ac1a5a58612e.zip",
 )
 
 # TODO: This is an are indirect depedency. We should factor it out.
