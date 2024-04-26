@@ -68,4 +68,15 @@ message LlmParameters {
 
   // Stop tokens to determine the end of output stream.
   repeated string stop_tokens = 5;
+
+  enum InputOutputNormalization {
+    INPUT_OUTPUT_NORMALIZATION_UNKNOWN = 0;
+
+    // Enables GPT2 stype bytes to unicode mapping normalization. For more
+    // details, see:
+    // https://github.com/openai/gpt-2/blob/master/src/encoder.py#L9
+    INPUT_OUTPUT_NORMALIZATION_BYTES_TO_UNICODE = 1;
+  }
+
+  repeated InputOutputNormalization input_output_normalizations = 7;
 }

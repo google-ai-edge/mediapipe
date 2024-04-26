@@ -35,6 +35,9 @@ class BundleConfig:
     start_token: Token that will be used to signify the beginning of a sequence.
     stop_tokens: Tokens that will be used to signify the end of a sequence.
     output_filename: Name of the generated `.task` file containg the Bundle.
+    enable_bytes_to_unicode_mapping: Enables GPT-2 style bytes to unicode
+      mapping. For more details see:
+      https://github.com/openai/gpt-2/blob/master/src/encoder.py#L9
   """
 
   tflite_model: str
@@ -42,6 +45,7 @@ class BundleConfig:
   start_token: str
   stop_tokens: List[str]
   output_filename: str
+  enable_bytes_to_unicode_mapping: bool = False
 
 
 class _BundleTags(enum.Enum):
@@ -64,6 +68,10 @@ def create_bundle(config: BundleConfig):
   params = llm_params_pb2.LlmParameters()
   params.start_token = config.start_token
   params.stop_tokens.extend(config.stop_tokens)
+  if config.enable_bytes_to_unicode_mapping:
+    params.input_output_normalizations.append(
+        llm_params_pb2.LlmParameters.INPUT_OUTPUT_NORMALIZATION_BYTES_TO_UNICODE
+    )
   artifacts[_BundleTags.METADATA.name] = params.SerializeToString()
 
   output_filename = config.output_filename
