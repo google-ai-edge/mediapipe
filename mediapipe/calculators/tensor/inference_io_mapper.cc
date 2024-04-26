@@ -246,5 +246,4 @@ absl::StatusOr<std::vector<Tensor>> InferenceIoMapper::RemapOutputTensors(
   }
   return mapped_tensors;
 }
-
 }  // namespace mediapipe

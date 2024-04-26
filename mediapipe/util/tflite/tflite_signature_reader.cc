@@ -125,5 +125,4 @@ TfLiteSignatureReader::GetInputOutputTensorNamesFromAllTfliteSignatures(
   }
   return result;
 }
-
 }  // namespace mediapipe
