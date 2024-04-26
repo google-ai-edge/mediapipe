@@ -382,7 +382,11 @@ class GemmaMapper(converter_base.LayerActionMapperBase):
     quantize_bits = None
     layer_type = LayerType.get_layer_type(layer_name)
 
-    if layer_type != LayerType.LAYER_NORM and layer_name.endswith(".weight"):
+    if (
+        layer_type != LayerType.LAYER_NORM
+        and layer_name.endswith(".weight")
+        and "lora" not in layer_name
+    ):
       quantize_axis = [0]
       if layer_type == LayerType.FEEDFORWARD:
         quantize_bits = self._feedforward_quant_bits
@@ -410,6 +414,7 @@ class GemmaMapper(converter_base.LayerActionMapperBase):
 
   def update_target_name(self, target_name: str) -> str:
     """Updates the target name to match the tensor name convention."""
+    target_name = target_name.replace("base_model.model.", "")
     target_name = target_name.replace(
         "model.layers.", "params.lm.transformer.x_layers_"
     )
@@ -438,6 +443,14 @@ class GemmaMapper(converter_base.LayerActionMapperBase):
     target_name = target_name.replace("model.norm", "params.lm.final_ln")
     target_name = target_name.replace("final_ln.weight", "final_ln.scale")
     target_name = target_name.replace(".weight", ".w")
+
+    # For LoRA weights
+    if "post" in target_name:
+      target_name = target_name.replace("lora_A.w", "w_prime_right")
+      target_name = target_name.replace("lora_B.w", "w_prime_left")
+    else:
+      target_name = target_name.replace("lora_A.w", "w_prime_left")
+      target_name = target_name.replace("lora_B.w", "w_prime_right")
 
     return target_name
 

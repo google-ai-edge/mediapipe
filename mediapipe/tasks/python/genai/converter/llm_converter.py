@@ -38,9 +38,11 @@ class ConversionConfig(object):
       activation overflow issue when running in 16-bit floating point mode. To
       solve this, we need to scale down the weights of certain layers. See
       go/llm-on-device-fp16 for more detailed explanation.
-    lora_rank: An integer representing the rank of LoRA. If not provided, then
-      the converter assumes there is no LoRA weights. Note that only the GPU
-      backend supports LoRA.
+    lora_ckpt: The directory or path for the lora checkpoint. Required in order
+      to convert the lora weights.
+    lora_rank: An integer representing the rank of LoRA. Required in order to
+      convert the lora weights.If not provided, then the converter assumes there
+      is no LoRA weights. Note that only the GPU backend supports LoRA.
     lora_output_tflite_file: A string indicating the name of the generated
       tflite file for the LoRA weight. Only applicable when the lora_rank is not
       zero.
@@ -61,6 +63,7 @@ class ConversionConfig(object):
       vocab_model_file: str = '',
       output_tflite_file: Optional[str] = None,
       fp16_scale: Optional[float] = None,
+      lora_ckpt: Optional[str] = None,
       lora_rank: Optional[int] = None,
       lora_output_tflite_file: Optional[str] = None,
   ):
@@ -216,6 +219,30 @@ def sort_layer_info(layer_info_file: str) -> None:
       finfo.write('\n')
 
 
+def maybe_quantize_and_write_tensors_to_bins(
+    ckpt_loader: converter_base.CkptLoaderBase,
+    config: ConversionConfig,
+) -> None:
+  """Quantizes the weight tensors according to the loader and writes them to bins."""
+  actions = ckpt_loader.load_to_actions()
+
+  for action in actions:
+    # Quantize the weight
+    quantized_tensors = quantize_by_actions(
+        action, config.backend, config.is_symmetric
+    )
+    del action
+    # Write the tensors into file(s).
+    writer = converter_factory.create_writer(
+        writer_type='weight_bins',
+        output_dir=config.output_dir,
+        backend=config.backend,
+    )
+    writer.write_variables(quantized_tensors)
+    del quantized_tensors
+    del writer
+
+
 def convert_checkpoint(config: ConversionConfig) -> None:
   """Converts the checkpoint to tflite file."""
   logging.info('input folder: %s', config.input_ckpt)
@@ -240,23 +267,22 @@ def convert_checkpoint(config: ConversionConfig) -> None:
         special_model=config.model_type,
         fp16_scale=config.fp16_scale,
     )
-    actions = loader.load_to_actions()
+    maybe_quantize_and_write_tensors_to_bins(loader, config)
 
-    for action in actions:
-      # Quantize the weight.
-      quantized_tensors = quantize_by_actions(
-          action, config.backend, config.is_symmetric
-      )
-      del action
-      # Write the quantized tensors into file(s).
-      writer = converter_factory.create_writer(
-          writer_type='weight_bins',
-          output_dir=config.output_dir,
+    if config.lora_ckpt is not None and config.lora_ckpt != config.input_ckpt:
+      # If lora ckpt and the input ckpt is the same. The lora conversion is
+      # handled in the previous loader.
+      lora_loader = converter_factory.create_ckpt_loader(
+          config.ckpt_format,
+          ckpt_path=config.lora_ckpt,
+          is_symmetric=config.is_symmetric,
           backend=config.backend,
+          attention_quant_bits=None,
+          feedforward_quant_bits=None,
+          embedding_quant_bits=None,
+          special_model=config.model_type,
       )
-      writer.write_variables(quantized_tensors)
-      del quantized_tensors
-      del writer
+      maybe_quantize_and_write_tensors_to_bins(lora_loader, config)
 
     sort_layer_info(os.path.join(config.output_dir, 'layer_info.txt'))
 
