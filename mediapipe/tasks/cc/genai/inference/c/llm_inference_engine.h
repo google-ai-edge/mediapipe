@@ -35,7 +35,7 @@ typedef void LlmInferenceEngine_Session;
 
 // LlmSessionConfig configures how to execute the model.
 typedef struct {
-  // Path to the tflite flatbuffer file.
+  // Path to the model artifact.
   const char* model_path;
 
   // Directory path for storing model related tokenizer and cache weights. the
