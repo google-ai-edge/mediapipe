@@ -67,27 +67,54 @@ class PrefixDecodeLlm : public Llm {
       const auto& input_ids = batch_input_ids[batch_size];
       prev_ids.insert(prev_ids.end(), input_ids.begin(), input_ids.end());
     }
+    computed_tokens_count_ = batch_input_ids[0].size();
     // prev_id.size - 1 is the output.
     return prefix_llm_->Run();
   }
 
-  absl::Status GetNextToken(std::vector<int>* output_ids) override {
-    MP_ASSIGN_OR_RETURN(auto logits_output, ComputeLogits());
+  absl::Status AddInputTokens(
+      absl::Span<const std::vector<int>> batch_input_ids) override {
+    RET_CHECK_EQ(batch_input_ids.size(), llm_params_.batch_size_B);
+    RET_CHECK_EQ(prev_ids_.size(), llm_params_.batch_size_B);
+
+    // This check is required because we hardcode transformer_input_'s sequence
+    // size to be 1.
+    // TODO - b/325325100: make transformer_input_ dynamic shape.
+    RET_CHECK_EQ(computed_tokens_count_, prev_ids_[0].size())
+        << "Call ComputeLogits() or GetNextToken() before continuous "
+           "AddInputTokens()";
+    if (prev_ids_[0].empty()) {
+      return PrefixDecodeLlm::InitInputTokens(batch_input_ids);
+    }
+
     const size_t decode_step = prev_ids_[0].size() - 1;
-
-    MP_ASSIGN_OR_RETURN(*output_ids, builder_->Sample(*logits_output));
-
-    RET_CHECK_EQ(output_ids->size(), llm_params_.batch_size_B);
 
     for (size_t batch_size = 0; batch_size < llm_params_.batch_size_B;
          ++batch_size) {
+      auto& prev_ids = prev_ids_[batch_size];
+      const auto& input_ids = batch_input_ids[batch_size];
       auto slice = prefix_llm_->input_pivot_->Slice(0, batch_size)
                        ->Slice(1, decode_step + 1);
-      MP_RETURN_IF_ERROR(
-          GetTokenEmbedding(*output_ids, slice->DataAs<float>()));
-      prev_ids_[batch_size].push_back(output_ids->at(batch_size));
+      MP_RETURN_IF_ERROR(GetTokenEmbedding(input_ids, slice->DataAs<float>()));
+      prev_ids.insert(prev_ids.end(), input_ids.begin(), input_ids.end());
     }
     return absl::OkStatus();
+  }
+
+  absl::Status GetNextToken(std::vector<int>* output_ids) override {
+    MP_ASSIGN_OR_RETURN(auto logits_output, ComputeLogits());
+
+    MP_ASSIGN_OR_RETURN(*output_ids, builder_->Sample(*logits_output));
+
+    // output_ids->size() is batch_size, while AddInputTokens() expects [batch,
+    // seq=1], thus transform.
+    std::vector<std::vector<int>> batch_input_ids(llm_params_.batch_size_B,
+                                                  std::vector<int>(1));
+    for (size_t batch_size = 0; batch_size < llm_params_.batch_size_B;
+         ++batch_size) {
+      batch_input_ids[batch_size][0] = (output_ids->at(batch_size));
+    }
+    return PrefixDecodeLlm::AddInputTokens(batch_input_ids);
   }
 
   absl::StatusOr<std::shared_ptr<Tensor>> ComputeLogits() override {
@@ -153,10 +180,14 @@ class PrefixDecodeLlm : public Llm {
     ABSL_DCHECK_EQ(logits_output_->num_elements,
                    llm_params_.batch_size_B * llm_params_.voc_size_V);
 
+    computed_tokens_count_ = decode_step + 1;
     return logits_output_;
   }
 
  private:
+  // Tracks the offset of computed tokens, such that we can remind user to call
+  // ComputeLogits() after each AddInputTokens();
+  size_t computed_tokens_count_ = 0;
   std::unique_ptr<Llm> prefix_llm_;
 };
 
@@ -226,6 +257,7 @@ absl::StatusOr<std::unique_ptr<Llm>> Llm::CreatePrefixDecodeLlm(
   VLOG(2) << "Xnn weights cache finalized.";
   auto result = std::make_unique<PrefixDecodeLlm>(std::move(prefix_llm),
                                                   std::move(*graph));
+  result->prev_ids_.resize(decoding_llm_params.batch_size_B);
 
   result->transformer_input_ = input;
   result->logits_output_ = logits_output;
@@ -238,7 +270,6 @@ absl::StatusOr<std::unique_ptr<Llm>> Llm::CreatePrefixDecodeLlm(
   result->weights_ = std::move(weights);
   result->llm_params_ = decoding_llm_params;
   result->builder_ = std::move(builder);
-  MP_RETURN_IF_ERROR(result->Reset());
 
   return result;
 }
@@ -319,6 +350,7 @@ absl::StatusOr<std::unique_ptr<Llm>> Llm::CreatePrefixOnlyLlm(
 
   MP_ASSIGN_OR_RETURN(auto graph, builder->Build());
   auto llm = std::make_unique<Llm>(std::move(*graph));
+  llm->prev_ids_.resize(llm_params.batch_size_B);
 
   llm->transformer_input_ = input;
   llm->logits_output_ = logits_output;
@@ -331,7 +363,6 @@ absl::StatusOr<std::unique_ptr<Llm>> Llm::CreatePrefixOnlyLlm(
   llm->weights_ = std::move(weights);
   llm->llm_params_ = llm_params;
   llm->builder_ = builder;
-  MP_RETURN_IF_ERROR(llm->Reset());
 
   return llm;
 }
@@ -370,7 +401,7 @@ absl::Status Llm::ReshapeInputResource() {
 }
 
 absl::Status Llm::Reset() {
-  prev_ids_.resize(llm_params_.batch_size_B);
+  RET_CHECK_EQ(prev_ids_.size(), llm_params_.batch_size_B);
   for (auto& prev_id : prev_ids_) {
     // TODO - b/325325100: avoid clear().
     prev_id.clear();
@@ -391,17 +422,7 @@ absl::Status Llm::InitInputTokens(const std::vector<int>& input_ids) {
 
 absl::Status Llm::AddInputTokens(
     absl::Span<const std::vector<int>> batch_input_ids) {
-  RET_CHECK_EQ(batch_input_ids.size(), llm_params_.batch_size_B);
-
-  // TODO: b/335908202 - refactor to efficient implementation.
-  auto prev_ids_copy = prev_ids_;
-  for (size_t batch = 0; batch < llm_params_.batch_size_B; ++batch) {
-    auto& prev_ids = prev_ids_copy[batch];
-    const auto& input_ids = batch_input_ids[batch];
-    prev_ids.insert(prev_ids.end(), input_ids.begin(), input_ids.end());
-  }
-
-  return InitInputTokens(prev_ids_copy);
+  return absl::UnimplementedError("Need to turn on kv cache");
 }
 
 absl::Status Llm::InitInputTokens(
