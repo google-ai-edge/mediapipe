@@ -20,9 +20,9 @@ OVMS_MEDIA_DOCKER_IMAGE ?= mediapipe_ovms
 OVMS_MEDIA_IMAGE_TAG ?= latest
 INPUT_VIDEO_LINK ?= "https://www.pexels.com/download/video/3044127/?fps=24.0&h=1080&w=1920"
 # Main at Fix building without MediaPipe (#2129)
-OVMS_COMMIT ?="7bf5d7fc217a81ce4b0a089c7679ecb77e6c544c"
+OVMS_COMMIT ?="9bb7942622d30a3272128db03f5e8b158ee81dcc"
 JOBS ?= $(shell python3 -c 'import multiprocessing as mp; print(mp.cpu_count())')
-DLDT_PACKAGE_URL ?= https://storage.openvinotoolkit.org/repositories/openvino/packages/2024.0/linux/l_openvino_toolkit_ubuntu20_2024.0.0.14509.34caeefd078_x86_64.tgz
+DLDT_PACKAGE_URL ?= https://storage.openvinotoolkit.org/repositories/openvino/packages/2024.1/linux/l_openvino_toolkit_ubuntu20_2024.1.0.15008.f4afc983258_x86_64.tgz
 
 # Targets to use outside running mediapipe_ovms container
 docker_build:
