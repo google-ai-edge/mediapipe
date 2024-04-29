@@ -25,6 +25,7 @@
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/xnn_tensor.h"
 
@@ -35,14 +36,18 @@ absl::StatusOr<std::unique_ptr<Sampler>> Sampler::Create(Type type, int top_k,
                                                          float temperature,
                                                          int seed) {
   if (type == Type::kTopK || type == Type::kTopP) {
-    if (top_k <= 1) {
-      return absl::InvalidArgumentError("top_k must be > 1");
-    } else if (temperature < 0.0f) {
-      return absl::InvalidArgumentError("temperature must be >= 0");
-    }
-    if (type == Type::kTopP && (top_p <= 0 || top_p > 1.0)) {
-      return absl::InvalidArgumentError("top_p must be between 0 and 1");
-    }
+    RET_CHECK_GT(top_k, 1).SetCode(absl::StatusCode::kInvalidArgument)
+        << "top_k must be > 1";
+    RET_CHECK_GE(temperature, 0.0f).SetCode(absl::StatusCode::kInvalidArgument)
+        << "temperature must be >= 0";
+    RET_CHECK_LE(temperature, 1.0f).SetCode(absl::StatusCode::kInvalidArgument)
+        << "temperature must be <= 1";
+  }
+  if (type == Type::kTopP) {
+    RET_CHECK_GT(top_p, 0).SetCode(absl::StatusCode::kInvalidArgument)
+        << "top_p must be between 0 and 1";
+    RET_CHECK_LE(top_p, 1.0).SetCode(absl::StatusCode::kInvalidArgument)
+        << "top_p must be between 0 and 1";
   }
   return absl::WrapUnique(new Sampler(type, top_k, top_p, temperature, seed));
 }
