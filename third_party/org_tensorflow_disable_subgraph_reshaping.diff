@@ -1,0 +1,19 @@
+diff --git a/tensorflow/lite/delegates/xnnpack/BUILD b/tensorflow/lite/delegates/xnnpack/BUILD
+index c4f748280d7..e58d9b18c8c 100644
+--- a/tensorflow/lite/delegates/xnnpack/BUILD
++++ b/tensorflow/lite/delegates/xnnpack/BUILD
+@@ -233,12 +233,10 @@ cc_library(
+         "//conditions:default": [],
+     }) + select({
+         ":xnnpack_enable_subgraph_reshaping_explicit": ["-DXNNPACK_DELEGATE_ENABLE_SUBGRAPH_RESHAPING=1"],
+-        # copybara:uncomment "//conditions:default": [],
+-        "//conditions:default": ["-DXNNPACK_DELEGATE_ENABLE_SUBGRAPH_RESHAPING=1"],  # copybara:comment
++        "//conditions:default": [],
+     }) + select({
+         ":xnnpack_use_latest_ops_explicit": ["-DXNNPACK_DELEGATE_USE_LATEST_OPS=1"],
+-        # copybara:uncomment "//conditions:default": [],
+-        "//conditions:default": ["-DXNNPACK_DELEGATE_USE_LATEST_OPS=1"],  # copybara:comment
++        "//conditions:default": [],
+     }) + select({
+         ":xnnpack_use_transient_indirection_buffers_explicit": ["-DXNNPACK_DELEGATE_USE_TRANSIENT_INDIRECTION_BUFFERS=1"],
+         "//conditions:default": [],

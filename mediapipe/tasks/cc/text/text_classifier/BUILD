@@ -68,6 +68,31 @@ cc_library(
     alwayslink = 1,
 )
 
+cc_test(
+    name = "text_classifier_test",
+    srcs = ["text_classifier_test.cc"],
+    data = [
+        "//mediapipe/tasks/testdata/text:bert_text_classifier_models",
+        "//mediapipe/tasks/testdata/text:text_classifier_models",
+    ],
+    tags = ["not_run:arm"],
+    deps = [
+        ":text_classifier",
+        ":text_classifier_test_utils",
+        "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/tasks/cc:common",
+        "//mediapipe/tasks/cc/components/containers:category",
+        "//mediapipe/tasks/cc/components/containers:classification_result",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:cord",
+        "@com_google_sentencepiece//:sentencepiece_processor",  # fixdeps: keep
+        "@org_tensorflow//tensorflow/lite:test_util",
+    ],
+)
+
 cc_library(
     name = "text_classifier_test_utils",
     srcs = ["text_classifier_test_utils.cc"],

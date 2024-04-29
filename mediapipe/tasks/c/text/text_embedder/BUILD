@@ -69,3 +69,18 @@ cc_binary(
     ],
     deps = [":text_embedder_lib"],
 )
+
+cc_test(
+    name = "text_embedder_test",
+    srcs = ["text_embedder_test.cc"],
+    data = ["//mediapipe/tasks/testdata/text:mobilebert_embedding_model"],
+    linkstatic = 1,
+    deps = [
+        ":text_embedder_lib",
+        "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/port:gtest",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
