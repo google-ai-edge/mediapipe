@@ -79,6 +79,7 @@ objc_library(
         "//mediapipe/tasks/ios/audio/core:MPPAudioRecord",
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/test/utils:MPPFileInfo",
+        "//mediapipe/tasks/ios/test/audio/core/utils:AVAudioPCMBufferTestUtils",
     ],
 )
 

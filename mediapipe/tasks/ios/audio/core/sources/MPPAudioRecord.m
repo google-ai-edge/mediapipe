@@ -247,11 +247,8 @@ static const NSUInteger kMaximumChannelCount = 2;
   AVAudioPCMBuffer *convertedPCMBuffer = [MPPAudioRecord bufferFromInputBuffer:buffer
                                                            usingAudioConverter:audioConverter
                                                                          error:error];
-  if (convertedPCMBuffer) {
-    return [self loadAudioPCMBuffer:convertedPCMBuffer error:error];
-  }
 
-  return NO;
+  return convertedPCMBuffer ? [self loadAudioPCMBuffer:convertedPCMBuffer error:error] : NO;
 }
 
 + (AVAudioPCMBuffer *)bufferFromInputBuffer:(AVAudioPCMBuffer *)pcmBuffer
