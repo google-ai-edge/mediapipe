@@ -40,6 +40,9 @@ public class LlmInference implements AutoCloseable {
     sessionConfig.setTopk(options.topK());
     sessionConfig.setTemperature(options.temperature());
     sessionConfig.setRandomSeed(options.randomSeed());
+    if (options.loraPath().isPresent()) {
+      sessionConfig.setLoraPath(options.loraPath().get());
+    }
 
     return new LlmInference(context, STATS_TAG, sessionConfig.build(), options.resultListener());
   }
@@ -199,6 +202,12 @@ public class LlmInference implements AutoCloseable {
       /** Configures random seed for sampling tokens. */
       public abstract Builder setRandomSeed(int randomSeed);
 
+      /**
+       * The absolute path to the LoRA model asset bundle stored locally on the device. This is only
+       * compatible with GPU models.
+       */
+      public abstract Builder setLoraPath(String loraPath);
+
       abstract LlmInferenceOptions autoBuild();
 
       /** Validates and builds the {@link ImageGeneratorOptions} instance. */
@@ -228,11 +237,17 @@ public class LlmInference implements AutoCloseable {
     /** Random seed for sampling tokens. */
     public abstract int randomSeed();
 
+    /**
+     * The absolute path to the LoRA model asset bundle stored locally on the device. This is only
+     * compatible with GPU models.
+     */
+    public abstract Optional<String> loraPath();
+
     /** The result listener to use for the {@link LlmInference#generateAsync} API. */
-    abstract Optional<ProgressListener<String>> resultListener();
+    public abstract Optional<ProgressListener<String>> resultListener();
 
     /** The error listener to use for the {@link LlmInference#generateAsync} API. */
-    abstract Optional<ErrorListener> errorListener();
+    public abstract Optional<ErrorListener> errorListener();
 
     /** Instantiates a new LlmInferenceOptions builder. */
     public static Builder builder() {

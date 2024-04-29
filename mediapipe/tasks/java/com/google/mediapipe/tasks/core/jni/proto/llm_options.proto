@@ -51,4 +51,8 @@ message LlmSessionConfig {
 
   // Random seed for sampling tokens.
   optional uint32 random_seed = 8;
+
+  // The absolute path to the LoRA model asset bundle stored locally on the
+  // device. This is only compatible with GPU models.
+  optional string lora_path = 9;
 }
