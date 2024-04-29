@@ -25,9 +25,6 @@
 static MPPFileInfo *const kSpeech16KHzMonoFileInfo =
     [[MPPFileInfo alloc] initWithName:@"speech_16000_hz_mono" type:@"wav"];
 
-static MPPFileInfo *const kStereoFileInfo = [[MPPFileInfo alloc] initWithName:@"Untitled"
-                                                                         type:@"m4a"];
-
 static AVAudioFormat *kAudioEngineFormat =
     [[AVAudioFormat alloc] initWithCommonFormat:AVAudioPCMFormatFloat32
                                      sampleRate:48000
@@ -75,7 +72,7 @@ NS_ASSUME_NONNULL_BEGIN
   NSError *error = nil;
   const NSInteger bufferLength = 100;
   MPPAudioRecord *audioRecord = [[MPPAudioRecord alloc] initWithAudioDataFormat:audioDataFormat
-                                                                   bufferLength:100
+                                                                   bufferLength:bufferLength
                                                                           error:&error];
   XCTAssertNil(audioRecord);
 

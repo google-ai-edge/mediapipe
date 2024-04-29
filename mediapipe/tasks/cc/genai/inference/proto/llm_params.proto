@@ -1,17 +1,16 @@
-/* Copyright 2023 The ODML Authors.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-==============================================================================*/
+// Copyright 2023 The ODML Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 syntax = "proto3";
 
@@ -45,6 +44,9 @@ enum LlmModelType {
   // Phi-2
   // https://huggingface.co/microsoft/phi-2
   LLM_MODEL_TYPE_PHI_2 = 11;
+
+  // Arbitraty TfLite model via ODML stack.
+  LLM_MODEL_TYPE_TF_LITE = 100;
 }
 
 // Parameters for Large Language Models (LLM).
@@ -66,4 +68,15 @@ message LlmParameters {
 
   // Stop tokens to determine the end of output stream.
   repeated string stop_tokens = 5;
+
+  enum InputOutputNormalization {
+    INPUT_OUTPUT_NORMALIZATION_UNKNOWN = 0;
+
+    // Enables GPT2 stype bytes to unicode mapping normalization. For more
+    // details, see:
+    // https://github.com/openai/gpt-2/blob/master/src/encoder.py#L9
+    INPUT_OUTPUT_NORMALIZATION_BYTES_TO_UNICODE = 1;
+  }
+
+  repeated InputOutputNormalization input_output_normalizations = 7;
 }

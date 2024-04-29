@@ -425,14 +425,14 @@ class Tensor {
   // Reading from SSBO has been finished so SSBO can be released.
   mutable GLsync ssbo_read_ = 0;
 
-  // An externally set function that signals when it is safe to release AHWB.
-  // If the input parameter is 'true' then wait for the writing to be finished.
-  mutable FinishingFunc ahwb_written_;
-
   // Multiple cleanups maybe needed. (E.g. two inference calculators use the
   // same input tensor and import buffer by FD which results in two buffer
   // handles that must be released.)
   mutable std::vector<absl::AnyInvocable<void()>> ahwb_release_callbacks_;
+
+  // An externally set function that signals when it is safe to release AHWB.
+  // If the input parameter is 'true' then wait for the writing to be finished.
+  mutable FinishingFunc ahwb_written_;
 
   absl::Status AllocateAHardwareBuffer() const;
 

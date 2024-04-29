@@ -25,6 +25,7 @@
 #include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/ret_check.h"
@@ -166,6 +167,11 @@ LlmInferenceEngine_CreateSession_Helper(
                       mediapipe::tasks::genai::llm_utils::ModelData::Create(
                           std::move(model_file)));
 
+  if (session_config->lora_path != nullptr &&
+      session_config->lora_path[0] != '\0') {
+    ABSL_LOG(FATAL) << "LoRA on CPU is not supported yet.";
+  }
+
   auto llm_params_proto = model_data->GetLlmParameters();
   auto llm_params =
       mediapipe::tasks::genai::xnn_utils::LlmParams::FromLLMParametersProto(
@@ -252,13 +258,20 @@ void LlmInferenceEngine_CloseResponseContext(
   response_context->response_count = 0;
 }
 
-LlmInferenceEngine_Session* LlmInferenceEngine_CreateSession(
-    const LlmSessionConfig* session_config) {
+int LlmInferenceEngine_CreateSession(const LlmSessionConfig* session_config,
+                                     LlmInferenceEngine_Session** session_out,
+                                     char** error_msg) {
   auto session = LlmInferenceEngine_CreateSession_Helper(session_config);
   if (!session.ok()) {
-    ABSL_LOG(FATAL) << "Failed to create session: " << session.status();
+    if (error_msg) {
+      *error_msg = strdup(absl::StrCat("Failed to create session: ",
+                                       session.status().ToString())
+                              .c_str());
+    }
+    return static_cast<int>(session.status().code());
   }
-  return session.value();
+  *session_out = session.value();
+  return 0;
 }
 
 void LlmInferenceEngine_Session_Delete(LlmInferenceEngine_Session* session) {

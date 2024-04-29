@@ -86,5 +86,4 @@ absl::StatusOr<api2::Packet<TfLiteModelPtr>> TfLiteModelLoader::LoadFromPath(
         delete model;
       });
 }
-
 }  // namespace mediapipe

@@ -28,6 +28,8 @@ data_sources: {
       }
       # GPU
       ftrace_events: "power/gpu_frequency"
+      # Uncomment to see Mali events.
+      # atrace_categories: "gfx"
     }
   }
 }

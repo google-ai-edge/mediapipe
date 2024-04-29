@@ -31,6 +31,10 @@ import {
   StreamingReader,
   SupportStreamingReader,
 } from '../../../../web/graph_runner/graph_runner_streaming_reader';
+import {
+  SupportWasmFileReference,
+  WasmFileReference,
+} from '../../../../web/graph_runner/graph_runner_wasm_file_reference';
 import {SupportWebGpu} from '../../../../web/graph_runner/graph_runner_webgpu';
 import {DetokenizerCalculatorOptions} from '../../../../tasks/cc/genai/inference/calculators/detokenizer_calculator_pb';
 import {LlmGpuCalculatorOptions} from '../../../../tasks/cc/genai/inference/calculators/llm_gpu_calculator_pb';
@@ -49,10 +53,10 @@ export * from './llm_inference_options';
 
 // TODO: b/327515383 - Use ReturnType patter to apply extensions to LLM Web API.
 // tslint:disable-next-line:enforce-name-casing
-const StreamingReaderWebGpuGraphRunnerType = SupportWebGpu(
-  SupportStreamingReader(CachedGraphRunner),
+const LlmGraphRunnerType = SupportWebGpu(
+  SupportStreamingReader(SupportWasmFileReference(CachedGraphRunner)),
 );
-class StreamingReaderWebGpuGraphRunner extends StreamingReaderWebGpuGraphRunnerType {}
+class LlmGraphRunner extends LlmGraphRunnerType {}
 
 /**
  * A listener that receives the newly generated partial result and an indication
@@ -75,6 +79,17 @@ const DEFAULT_TOP_K = 1;
 const DEFAULT_TOP_P = 1.0;
 const DEFAULT_TEMPERATURE = 1.0;
 const DEFAULT_SAMPLER_TYPE = SamplerParameters.Type.TOP_P;
+
+// Amount of the max WebGPU buffer size required for the 7B LLM with int8
+// quantization model. If the requested maxBufferSize is smaller than the
+// number, WebGPU will warn in console and the computation results will be
+// wrong.
+const MAX_BUFFER_SIZE_FOR_LLM_7B = 786825216;
+// Amount of the max WebGPU buffer size required for the smaller LLM models
+// (such as the Gemma2B, Falcon) with int8 quantization.
+const MAX_BUFFER_SIZE_FOR_LLM = 524550144;
+// Amount of the max WebGPU buffer binding size required for LLM models.
+const MAX_STORAGE_BUFFER_BINDING_SIZE_FOR_LLM = 524550144;
 
 /**
  * Performs LLM Inference on text.
@@ -183,7 +198,7 @@ export class LlmInference extends TaskRunner {
     wasmModule: WasmModule,
     glCanvas?: HTMLCanvasElement | OffscreenCanvas | null,
   ) {
-    super(new StreamingReaderWebGpuGraphRunner(wasmModule, glCanvas));
+    super(new LlmGraphRunner(wasmModule, glCanvas));
     this.options = new LlmInferenceGraphOptions();
     this.options.setBaseOptions(new BaseOptionsProto());
     this.samplerParams = new SamplerParameters();
@@ -195,21 +210,46 @@ export class LlmInference extends TaskRunner {
    * Create WebGPU device with high performance configurations.
    * @export
    */
-  static createWebGpuDevice(): Promise<GPUDevice> {
+  static async createWebGpuDevice(): Promise<GPUDevice> {
     const adapterDescriptor: GPURequestAdapterOptions = {
       powerPreference: 'high-performance',
     };
+    const adapter =
+      await LlmGraphRunner.requestWebGpuAdapter(adapterDescriptor);
+    const systemBufferSizeLimit = adapter.limits.maxBufferSize;
+    const systemStorageBufferBindingSizeLimit =
+      adapter.limits.maxStorageBufferBindingSize;
+    if (
+      systemStorageBufferBindingSizeLimit <
+      MAX_STORAGE_BUFFER_BINDING_SIZE_FOR_LLM
+    ) {
+      throw new Error(
+        `The WebGPU device is unable to execute LLM tasks, because the ` +
+          `required maxStorageBufferBindingSize is at least ` +
+          `${MAX_STORAGE_BUFFER_BINDING_SIZE_FOR_LLM} but your device only ` +
+          `supports maxStorageBufferBindingSize of ${systemBufferSizeLimit}`,
+      );
+    }
+    let maxBufferSize;
+    if (systemBufferSizeLimit >= MAX_BUFFER_SIZE_FOR_LLM_7B) {
+      maxBufferSize = MAX_BUFFER_SIZE_FOR_LLM_7B;
+    } else if (systemBufferSizeLimit >= MAX_BUFFER_SIZE_FOR_LLM) {
+      maxBufferSize = MAX_BUFFER_SIZE_FOR_LLM;
+    } else {
+      throw new Error(
+        `The WebGPU device is unable to execute LLM tasks, because the ` +
+          `required maxBufferSize is at least ${MAX_BUFFER_SIZE_FOR_LLM} but ` +
+          `your device only supports maxBufferSize of ${systemBufferSizeLimit}`,
+      );
+    }
     const deviceDescriptor: GPUDeviceDescriptor = {
       requiredFeatures: ['shader-f16'],
       requiredLimits: {
-        'maxStorageBufferBindingSize': 524550144,
-        'maxBufferSize': 524550144,
+        'maxStorageBufferBindingSize': MAX_STORAGE_BUFFER_BINDING_SIZE_FOR_LLM,
+        'maxBufferSize': maxBufferSize,
       },
     };
-    return StreamingReaderWebGpuGraphRunner.requestWebGpuDevice(
-      deviceDescriptor,
-      adapterDescriptor,
-    );
+    return LlmGraphRunner.requestWebGpuDevice(deviceDescriptor, adapter);
   }
 
   /**
@@ -231,9 +271,9 @@ export class LlmInference extends TaskRunner {
     this.isProcessing = true;
 
     if (options.baseOptions?.gpuOptions?.device) {
-      (
-        this.graphRunner as unknown as StreamingReaderWebGpuGraphRunner
-      ).initializeForWebGpu(options.baseOptions.gpuOptions.device);
+      (this.graphRunner as unknown as LlmGraphRunner).initializeForWebGpu(
+        options.baseOptions.gpuOptions.device,
+      );
     }
     if ('maxTokens' in options) {
       this.options.setMaxTokens(options.maxTokens ?? DEFAULT_MAX_TOKENS);
@@ -487,7 +527,7 @@ export class LlmInference extends TaskRunner {
 
     if (this.streamingReader) {
       (
-        this.graphRunner as unknown as StreamingReaderWebGpuGraphRunner
+        this.graphRunner as unknown as LlmGraphRunner
       ).addStreamingReaderToInputSidePacket(
         this.streamingReader,
         'streaming_reader',
@@ -503,7 +543,7 @@ export class LlmInference extends TaskRunner {
     // instead, we use a special async-only variant of closeGraph which we can
     // chain into our promises to ensure proper ordering, calling that first so
     // the built-in closeGraph becomes a no-op.
-    return (this.graphRunner as unknown as StreamingReaderWebGpuGraphRunner)
+    return (this.graphRunner as unknown as LlmGraphRunner)
       .closeGraphAsync()
       .then(() => {
         this.setGraph(new Uint8Array(binaryGraph), /* isBinary= */ true);
@@ -524,7 +564,7 @@ export class LlmInference extends TaskRunner {
     // TokenizerInputBuilder Node
     const tokenizerInputBuildNode = new CalculatorGraphConfig.Node();
     tokenizerInputBuildNode.setCalculator('TokenizerInputBuildCalculator');
-    tokenizerInputBuildNode.addInputStream(INPUT_STREAM);
+    tokenizerInputBuildNode.addInputStream('PROMPT:' + INPUT_STREAM);
     tokenizerInputBuildNode.addOutputStream('prompt');
     graphConfig.addNode(tokenizerInputBuildNode);
 

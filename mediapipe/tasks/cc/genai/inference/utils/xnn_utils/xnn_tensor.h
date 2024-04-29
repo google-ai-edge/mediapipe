@@ -35,6 +35,7 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/logging.h"
 #include "xnnpack.h"  // from @XNNPACK
 
@@ -144,6 +145,9 @@ struct Tensor {
 
   // Convert the tensor to f32 format.
   virtual absl::StatusOr<std::shared_ptr<Tensor>> ConvertToF32();
+
+  // Convert the tensor to ::mediapipe::Tensor.
+  virtual absl::StatusOr<::mediapipe::Tensor> ConvertToMediapipeTensor();
 
   // Indicates whether the tensor data is sparse i.e. contains a lot of zeros.
   bool is_sparse() const { return is_sparse_tensor; }

@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "absl/status/status.h"
+#include "mediapipe/framework/api2/contract.h"
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/api2/packet.h"
 #include "mediapipe/framework/api2/port.h"
@@ -31,6 +32,7 @@ using ::mediapipe::api2::Node;
 using ::mediapipe::api2::Output;
 using ::mediapipe::api2::PacketBase;
 using ::mediapipe::api2::SameType;
+using ::mediapipe::api2::TimestampChange;
 
 // Calculator for completing the processing of items loops inside a MediaPipe
 // graph. The EndLoopCalculator collects all input packets from ITEM
@@ -47,12 +49,8 @@ class EndItemLoopCalculator : public Node {
 
   static constexpr Output<SameType<kItemIn>>::Multiple kItemsOut{"ITEM"};
 
-  MEDIAPIPE_NODE_CONTRACT(kItemIn, kBatchEndIn, kItemsOut);
-
-  static absl::Status UpdateContract(CalculatorContract* cc) {
-    cc->SetTimestampOffset(TimestampDiff::Unset());
-    return absl::OkStatus();
-  }
+  MEDIAPIPE_NODE_CONTRACT(kItemIn, kBatchEndIn, kItemsOut,
+                          TimestampChange::Arbitrary());
 
   absl::Status Process(CalculatorContext* cc) override {
     if (!kItemIn(cc).IsEmpty()) {

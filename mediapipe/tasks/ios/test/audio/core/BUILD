@@ -71,15 +71,16 @@ objc_library(
         "-std=c++17",
         "-x objective-c++",
     ],
-    tags = TFL_DEFAULT_TAGS,
     data = [
         "//mediapipe/tasks/testdata/audio:test_audio_clips",
     ],
+    tags = TFL_DEFAULT_TAGS,
     deps = [
         "//mediapipe/tasks/ios/audio/core:MPPAudioRecord",
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/test/utils:MPPFileInfo",
         "//mediapipe/tasks/ios/test/audio/core/utils:AVAudioPCMBufferTestUtils",
+        "//third_party/apple_frameworks:AVFAudio",
     ],
 )
 

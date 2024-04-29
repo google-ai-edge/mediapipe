@@ -42,19 +42,17 @@ export declare interface WasmAsyncCloseModule {
  */
 // tslint:disable-next-line:enforce-name-casing
 export function SupportWebGpu<TBase extends LibConstructor>(Base: TBase) {
-  return class extends Base {
+  return class WebGpuSupportedGraphRunner extends Base {
     /*
      * Requests and returns a GPUDevice.
-     * @param {GPUDeviceDescriptor} optional deviceDescriptor to request
-     *     GPUDevice.
+     * @param deviceDescriptor The deviceDescriptor to request GPUDevice.
+     * @param adapter The adapter to request GPUDevice.
      */
     static async requestWebGpuDevice(
         deviceDescriptor?: GPUDeviceDescriptor,
-        adapterDescriptor?: GPURequestAdapterOptions): Promise<GPUDevice> {
-      const adapter = await navigator.gpu.requestAdapter(adapterDescriptor);
+        adapter?: GPUAdapter): Promise<GPUDevice> {
       if (!adapter) {
-        throw new Error(
-            'Unable to request adapter from navigator.gpu; ensure WebGPU is enabled.');
+        adapter = await WebGpuSupportedGraphRunner.requestWebGpuAdapter();
       }
       let device: GPUDevice;
       const supportedFeatures: GPUFeatureName[] = [];
@@ -90,13 +88,27 @@ export function SupportWebGpu<TBase extends LibConstructor>(Base: TBase) {
     }
 
     /*
+     * Requests and returns a GPUAdapter.
+     * @param adapterDescriptor The adapterDescriptor to request GPUAdapter.
+     */
+    static async requestWebGpuAdapter(
+        adapterDescriptor?: GPURequestAdapterOptions): Promise<GPUAdapter> {
+      const adapter = await navigator.gpu.requestAdapter(adapterDescriptor);
+      if (!adapter) {
+        throw new Error(
+            'Unable to request adapter from navigator.gpu; Ensure WebGPU is enabled.');
+      }
+      return adapter;
+    }
+
+    /*
      * Initializes the GraphRunner for WebGPU support, given the target canvas
      * and GPUDevice which it should use for internal WebGPU commands. Note that
      * currently when an OffscreenCanvas is used, render-to-display
      * functionality will not be available.
-     * @param {GPUDevice} device to be used.
-     * @param {HTMLCanvasElement|OffscreenCanvas} Optional on- or offscreen
-     *     canvas. If not provided, an offscreen canvas will be created.
+     * @param device The device to be used.
+     * @param canvas The on- or offscreen canvas. If not provided, an offscreen
+     * canvas will be created.
      */
     initializeForWebGpu(
         device: GPUDevice, canvas?: HTMLCanvasElement|OffscreenCanvas) {

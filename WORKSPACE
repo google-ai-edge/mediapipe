@@ -54,6 +54,12 @@ load("@rules_foreign_cc//foreign_cc:repositories.bzl", "rules_foreign_cc_depende
 rules_foreign_cc_dependencies()
 
 http_archive(
+    name = "rules_java",
+    sha256 = "c73336802d0b4882e40770666ad055212df4ea62cfa6edf9cb0f9d29828a0934",
+    url = "https://github.com/bazelbuild/rules_java/releases/download/5.3.5/rules_java-5.3.5.tar.gz",
+)
+
+http_archive(
     name = "com_google_protobuf",
     sha256 = "87407cd28e7a9c95d9f61a098a53cf031109d451a7763e7dd1253abf8b4df422",
     strip_prefix = "protobuf-3.19.1",
@@ -75,13 +81,13 @@ http_archive(
     ],
 )
 
-# XNNPACK on 2024-03-20.
+# XNNPACK on 2024-03-27.
 http_archive(
     name = "XNNPACK",
     # `curl -L <url> | shasum -a 256`
-    sha256 = "70cb1852aa33ddeff2f3cdcb6d7ac009850917a6778fdc7769a19660b97c0c40",
-    strip_prefix = "XNNPACK-5ecf0769c54cd224bd0026fe2c8d2ad6f3c4368a",
-    url = "https://github.com/google/XNNPACK/archive/5ecf0769c54cd224bd0026fe2c8d2ad6f3c4368a.zip",
+    sha256 = "179a680ef85deb5380b850f2551b214e00835c232f5b197dedf7c011a6adf5a6",
+    strip_prefix = "XNNPACK-2fe25b859581a34e77b48b06c640ac1a5a58612e",
+    url = "https://github.com/google/XNNPACK/archive/2fe25b859581a34e77b48b06c640ac1a5a58612e.zip",
 )
 
 # TODO: This is an are indirect depedency. We should factor it out.
@@ -523,10 +529,10 @@ http_archive(
 )
 
 # TensorFlow repo should always go after the other external dependencies.
-# TF on 2024-03-21.
-_TENSORFLOW_GIT_COMMIT = "75bb98bd9d3998431aca05afd4be03e233b14425"
+# TF on 2024-04-24.
+_TENSORFLOW_GIT_COMMIT = "12c1aa6332415c4727fb5b8e9a398c9509dd8cec"
 # curl -L https://github.com/tensorflow/tensorflow/archive/<TENSORFLOW_GIT_COMMIT>.tar.gz | shasum -a 256
-_TENSORFLOW_SHA256 = "1f44df2b487ba0a2cea20f1ca6980c25746618340cc098d1a987037c8069d4e6"
+_TENSORFLOW_SHA256 = "623e709e509587535651413801959868d88868e479bffc92f27387b02c13c5e0"
 http_archive(
     name = "org_tensorflow",
     urls = [

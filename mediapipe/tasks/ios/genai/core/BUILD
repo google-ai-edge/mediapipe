@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
 
 licenses(["notice"])
 
@@ -20,3 +21,16 @@ exports_files([
     "sources/LlmTaskRunner.swift",
     "sources/GenAiInferenceError.swift",
 ])
+
+swift_library(
+    name = "LlmTaskRunner",
+    srcs = [
+        "sources/GenAiInferenceError.swift",
+        "sources/LlmTaskRunner.swift",
+    ],
+    # This ensures the compiler does not complain about MediaPipeTasksGenAIC being built separately.
+    copts = ["-no-verify-emitted-module-interface"],
+    # This target is only here for compilation checks.
+    visibility = ["//visibility:private"],
+    deps = ["//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu"],
+)

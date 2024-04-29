@@ -112,6 +112,13 @@ public class Graph {
     nativeLoadBinaryGraphTemplate(nativeGraphHandle, template.toByteArray());
   }
 
+  /** Specifies a CalculatorGraphTemplate for a mediapipe graph or subgraph from a byte array. */
+  public synchronized void loadBinaryGraphTemplate(byte[] data) {
+    Preconditions.checkState(
+        nativeGraphHandle != 0, "Invalid context, tearDown() might have been called already.");
+    nativeLoadBinaryGraphTemplate(nativeGraphHandle, data);
+  }
+
   /** Specifies the CalculatorGraphConfig::type of the top level graph. */
   public synchronized void setGraphType(String graphType) {
     nativeSetGraphType(nativeGraphHandle, graphType);

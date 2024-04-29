@@ -99,7 +99,8 @@ absl::StatusOr<Shape> GetImageLikeTensorShape(const mediapipe::Tensor& tensor) {
   int width = 0;
   int height = 0;
   int channels = 1;
-  switch (tensor.shape().dims.size()) {
+  const int dims_size = tensor.shape().dims.size();
+  switch (dims_size) {
     case 2: {
       height = tensor.shape().dims[0];
       width = tensor.shape().dims[1];
@@ -118,7 +119,8 @@ absl::StatusOr<Shape> GetImageLikeTensorShape(const mediapipe::Tensor& tensor) {
       break;
     }
     default:
-      return absl::InvalidArgumentError("Tensor should have 2, 3, or 4 dims");
+      return absl::InvalidArgumentError(absl::StrFormat(
+          "Tensor should have 2, 3, or 4 dims, received: %d", dims_size));
   }
   return {{height, width, channels}};
 }

@@ -128,8 +128,17 @@ int main(int argc, char** argv) {
   };
 
   ABSL_LOG(INFO) << "Prompt: " << prompt.value();
+
   // Create Llm inference engine session.
-  auto llm_engine_session = LlmInferenceEngine_CreateSession(&session_config);
+  void* llm_engine_session = nullptr;
+  char* error_msg = nullptr;
+  int error_code = LlmInferenceEngine_CreateSession(
+      &session_config, &llm_engine_session, &error_msg);
+  if (error_code) {
+    ABSL_LOG(ERROR) << "Failed to create session: " << std::string(error_msg);
+    free(error_msg);
+    return EXIT_FAILURE;
+  }
 
   // Create a mutable character array to hold the string
 

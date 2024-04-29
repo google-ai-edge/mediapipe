@@ -40,6 +40,7 @@ class LlmBundlerTest(absltest.TestCase):
         start_token="BOS",
         stop_tokens=["EOS1", "EOS2"],
         output_filename=output_file,
+        enable_bytes_to_unicode_mapping=True,
     )
     llm_bundler.create_bundle(config)
     return output_file

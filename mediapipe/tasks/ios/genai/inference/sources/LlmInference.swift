@@ -55,10 +55,12 @@ import MediaPipeTasksGenAIC
   @objc public init(options: Options) {
     let modelPath = strdup(options.modelPath)
     let cacheDirectory = strdup(FileManager.default.temporaryDirectory.path)
+    let loraPath = strdup(options.loraPath == nil ? "" : options.loraPath!)
 
     defer {
       free(modelPath)
       free(cacheDirectory)
+      free(loraPath)
     }
 
     let sessionConfig = LlmSessionConfig(
@@ -70,7 +72,8 @@ import MediaPipeTasksGenAIC
       topk: options.topk,
       topp: 1.0,
       temperature: options.temperature,
-      random_seed: options.randomSeed)
+      random_seed: options.randomSeed,
+      lora_path: loraPath)
     llmTaskRunner = LlmTaskRunner(sessionConfig: sessionConfig)
 
     super.init()
@@ -228,6 +231,10 @@ extension LlmInference {
 
     /// The random seed for sampling tokens.
     @objc public var randomSeed: Int = 0
+
+    /// The absolute path to the LoRA model asset bundle stored locally on the device. Optional.
+    /// This is only compatible with GPU models.
+    @objc public var loraPath: String?
 
     /// Creates a new instance of `Options` with the modelPath and default values of
     /// `maxTokens`, `topK``, `temperature` and `randomSeed`.

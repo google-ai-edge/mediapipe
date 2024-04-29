@@ -20,7 +20,7 @@ import MediaPipeTasksGenAIC
 final class LlmTaskRunner {
   typealias CLlmSession = UnsafeMutableRawPointer
 
-  private let cLlmSession: CLlmSession
+  private var cLlmSession: CLlmSession?
   /// Creates a new instance of `LlmTaskRunner` with the given session config.
   ///
   /// - Parameters:
@@ -29,7 +29,8 @@ final class LlmTaskRunner {
     /// No safe guards for session creation since the C APIs only throw fatal errors.
     /// `LlmInferenceEngine_CreateSession()` will always return an llm session if the call
     /// completes.
-    self.cLlmSession = withUnsafePointer(to: sessionConfig) { LlmInferenceEngine_CreateSession($0) }
+    // TODO: Expose errors encountered during session creation.
+    withUnsafePointer(to: sessionConfig) { _ = LlmInferenceEngine_CreateSession($0, &self.cLlmSession, nil) }
   }
 
   /// Invokes the C inference engine with the given input text to generate an array of `String`

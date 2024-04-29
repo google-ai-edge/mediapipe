@@ -14,6 +14,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "mediapipe/framework/port/ret_check.h"
+#include "mediapipe/framework/port/status_macros.h"
 #include "tensorflow/lite/interpreter.h"
 
 namespace mediapipe {
@@ -32,8 +33,8 @@ absl::flat_hash_map<uint32_t, std::string> FlipKVInMap(
 
 }  // namespace
 
-absl::StatusOr<std::pair<TensorNames, TensorNames>>
-GetInputOutputTensorNamesFromTfliteSignature(
+absl::StatusOr<SignatureInputOutputTensorNames>
+TfLiteSignatureReader::GetInputOutputTensorNamesFromTfliteSignature(
     const tflite::Interpreter& interpreter, const std::string* signature_key) {
   std::vector<const std::string*> model_signature_keys =
       interpreter.signature_keys();
@@ -74,7 +75,10 @@ GetInputOutputTensorNamesFromTfliteSignature(
   const std::vector<int>& model_input_tensor_ids = interpreter.inputs();
   const std::vector<int>& model_output_tensor_ids = interpreter.outputs();
 
-  std::vector<std::string> input_names;
+  SignatureInputOutputTensorNames input_output_tensor_names;
+  auto& input_names = input_output_tensor_names.input_tensor_names;
+  auto& output_names = input_output_tensor_names.output_tensor_names;
+
   input_names.reserve(model_input_tensor_ids.size());
   for (int i = 0; i < model_input_tensor_ids.size(); ++i) {
     const auto it =
@@ -87,7 +91,6 @@ GetInputOutputTensorNamesFromTfliteSignature(
     input_names.push_back(it->second);
   }
 
-  std::vector<std::string> output_names;
   output_names.reserve(model_output_tensor_ids.size());
   for (int i = 0; i < model_output_tensor_ids.size(); ++i) {
     const auto it =
@@ -99,7 +102,27 @@ GetInputOutputTensorNamesFromTfliteSignature(
     }
     output_names.push_back(it->second);
   }
-  return std::make_pair(input_names, output_names);
+  return input_output_tensor_names;
 }
 
+absl::StatusOr<
+    absl::flat_hash_map<SignatureName, SignatureInputOutputTensorNames>>
+TfLiteSignatureReader::GetInputOutputTensorNamesFromAllTfliteSignatures(
+    const tflite::Interpreter& interpreter) {
+  absl::flat_hash_map<SignatureName, SignatureInputOutputTensorNames> result;
+  std::vector<const std::string*> model_signature_keys =
+      interpreter.signature_keys();
+  for (const std::string* signature_key : model_signature_keys) {
+    MP_ASSIGN_OR_RETURN(
+        SignatureInputOutputTensorNames input_output_tensor_names,
+        GetInputOutputTensorNamesFromTfliteSignature(interpreter,
+                                                     signature_key));
+    auto [unused_iter, was_inserted] =
+        result.insert({*signature_key, std::move(input_output_tensor_names)});
+    RET_CHECK(was_inserted) << "Duplicate signature key: " << *signature_key
+                            << ". Available signature keys: "
+                            << absl::StrJoin(model_signature_keys, ", ");
+  }
+  return result;
+}
 }  // namespace mediapipe

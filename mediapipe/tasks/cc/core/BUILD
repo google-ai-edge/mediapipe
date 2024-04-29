@@ -365,6 +365,7 @@ cc_library(
     name = "model_asset_bundle_resources",
     srcs = ["model_asset_bundle_resources.cc"],
     hdrs = ["model_asset_bundle_resources.h"],
+    visibility = ["//visibility:public"],
     deps = [
         ":external_file_handler",
         "//mediapipe/framework/port:status",

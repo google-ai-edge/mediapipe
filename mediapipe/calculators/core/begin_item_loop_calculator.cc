@@ -16,6 +16,7 @@
 
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
+#include "mediapipe/framework/api2/contract.h"
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/api2/packet.h"
 #include "mediapipe/framework/api2/port.h"
@@ -91,8 +92,8 @@ class BeginItemLoopCalculator : public Node {
   static constexpr Output<SameType<kItemsIn>> kItemOut{"ITEM"};
   static constexpr Output<AnyType>::Multiple kCloneOut{"CLONE"};
 
-  MEDIAPIPE_NODE_CONTRACT(kItemsIn, kCloneIn, kBatchEndOut, kItemOut,
-                          kCloneOut);
+  MEDIAPIPE_NODE_CONTRACT(kItemsIn, kCloneIn, kBatchEndOut, kItemOut, kCloneOut,
+                          mediapipe::api2::TimestampChange::Arbitrary());
 
   static absl::Status UpdateContract(CalculatorContract* cc) {
     // The below enables processing of timestamp bound updates, and that enables
