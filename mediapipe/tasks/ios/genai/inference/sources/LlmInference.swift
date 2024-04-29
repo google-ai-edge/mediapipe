@@ -55,7 +55,7 @@ import MediaPipeTasksGenAIC
   @objc public init(options: Options) {
     let modelPath = strdup(options.modelPath)
     let cacheDirectory = strdup(FileManager.default.temporaryDirectory.path)
-    let loraPath = strdup(options.loraPath)
+    let loraPath = strdup(options.loraPath == nil ? "" : options.loraPath!)
 
     defer {
       free(modelPath)
