@@ -126,6 +126,10 @@ message TransformerParameters {
 
     // Query is scaled by 1/sqrt(head_dim).
     SCALE_TYPE_INV_SQRT_HEAD_DIM = 2;
+
+    // Query is scaled by 1/sqrt(model_dim/num_heads)
+    // model_dim/num_heads is not always equal to head_dim
+    SCALE_TYPE_INV_SQRT_D_MODEL_DIV_NUM_HEADS = 3;
   }
 
   message SelfAttentionParameters {
