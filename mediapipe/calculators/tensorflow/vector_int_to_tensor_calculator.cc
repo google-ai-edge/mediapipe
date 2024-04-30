@@ -96,15 +96,25 @@ absl::Status ProcessVectorIntToTensor(
       input =
           cc->Inputs().Tag(kVectorInt).Value().Get<std::vector<InputType>>();
     }
-    ABSL_CHECK_GE(input.size(), 1);
-    const int32_t length = input.size();
-    tensor_shape = tf::TensorShape({length});
-    auto output =
-        std::make_unique<tf::Tensor>(options.tensor_data_type(), tensor_shape);
-    for (int i = 0; i < length; ++i) {
-      output->tensor<DataType, 1>()(i) = input.at(i);
+
+    if (options.scalar_output()) {
+      ABSL_CHECK_EQ(input.size(), 1);
+      tensor_shape = tf::TensorShape({});
+      auto output = std::make_unique<tf::Tensor>(options.tensor_data_type(),
+                                                 tensor_shape);
+      output->scalar<DataType>()() = input.at(0);
+      cc->Outputs().Tag(kTensorOut).Add(output.release(), cc->InputTimestamp());
+    } else {
+      ABSL_CHECK_GE(input.size(), 1);
+      const int32_t length = input.size();
+      tensor_shape = tf::TensorShape({length});
+      auto output = std::make_unique<tf::Tensor>(options.tensor_data_type(),
+                                                 tensor_shape);
+      for (int i = 0; i < length; ++i) {
+        output->tensor<DataType, 1>()(i) = input.at(i);
+      }
+      cc->Outputs().Tag(kTensorOut).Add(output.release(), cc->InputTimestamp());
     }
-    cc->Outputs().Tag(kTensorOut).Add(output.release(), cc->InputTimestamp());
   } else {
     ABSL_LOG(FATAL) << "input size not supported";
   }
@@ -168,6 +178,10 @@ absl::Status VectorIntToTensorCalculator::GetContract(CalculatorContract* cc) {
     }
   } else {
     ABSL_LOG(FATAL) << "input size not supported";
+  }
+  if (options.scalar_output() && options.input_size() != INPUT_1D) {
+    return absl::InvalidArgumentError(
+        "scalar_output is only supported for input_size = INPUT_1D.");
   }
   RET_CHECK_EQ(cc->Outputs().NumEntries(), 1)
       << "Only one output stream is supported.";

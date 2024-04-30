@@ -40,4 +40,8 @@ message VectorIntToTensorCalculatorOptions {
   optional bool transpose = 2 [default = false];
 
   optional tensorflow.DataType tensor_data_type = 3 [default = DT_INT32];
+
+  // If true, the calculator will output the value as a scalar tensor.
+  // This is only available for single values.
+  optional bool scalar_output = 4;
 }
