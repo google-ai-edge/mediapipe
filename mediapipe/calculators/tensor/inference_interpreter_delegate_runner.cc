@@ -232,7 +232,7 @@ absl::StatusOr<std::vector<Tensor>> InferenceInterpreterDelegateRunner::Run(
                          TfLiteTypeGetName(tensor->type)));
     }
   }
-  return output_tensors;
+  return std::move(output_tensors);
 }
 
 absl::StatusOr<std::unique_ptr<InferenceRunner>>
