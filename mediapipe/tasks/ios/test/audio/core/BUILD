@@ -78,8 +78,8 @@ objc_library(
     deps = [
         "//mediapipe/tasks/ios/audio/core:MPPAudioRecord",
         "//mediapipe/tasks/ios/common:MPPCommon",
+        "//mediapipe/tasks/ios/test/audio/core/utils:AVAudioPCMBufferTestUtils",
         "//mediapipe/tasks/ios/test/utils:MPPFileInfo",
-        "//third_party/apple_frameworks:AVFAudio",
     ],
 )
 

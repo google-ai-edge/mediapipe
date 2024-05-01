@@ -14,6 +14,8 @@
 
 #import "mediapipe/tasks/ios/audio/core/sources/MPPAudioData.h"
 #import "mediapipe/tasks/ios/audio/core/sources/MPPFloatRingBuffer.h"
+#import "mediapipe/tasks/ios/common/sources/MPPCommon.h"
+#import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
 
 @implementation MPPAudioData {
   MPPFloatRingBuffer *_ringBuffer;
@@ -35,6 +37,23 @@
             length:(NSUInteger)length
              error:(NSError **)error {
   return [_ringBuffer loadFloatBuffer:buffer offset:offset length:length error:error];
+}
+
+- (BOOL)loadAudioRecord:(MPPAudioRecord *)audioRecord error:(NSError **)error {
+  if (![audioRecord.audioDataFormat isEqual:self.audioFormat]) {
+    [MPPCommonUtils createCustomError:error
+                             withCode:MPPTasksErrorCodeInvalidArgumentError
+                          description:@"The provided audio record has incompatible audio format"];
+    return NO;
+  }
+
+  MPPFloatBuffer *audioRecordBuffer = [audioRecord readAtOffset:0
+                                                     withLength:audioRecord.bufferLength
+                                                          error:error];
+  return [_ringBuffer loadFloatBuffer:audioRecordBuffer
+                               offset:0
+                               length:audioRecordBuffer.length
+                                error:error];
 }
 
 - (MPPFloatBuffer *)buffer {

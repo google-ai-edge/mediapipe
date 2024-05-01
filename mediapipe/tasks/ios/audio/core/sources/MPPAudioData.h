@@ -14,6 +14,7 @@
 
 #import <Foundation/Foundation.h>
 #import "mediapipe/tasks/ios/audio/core/sources/MPPAudioDataFormat.h"
+#import "mediapipe/tasks/ios/audio/core/sources/MPPAudioRecord.h"
 #import "mediapipe/tasks/ios/audio/core/sources/MPPFloatBuffer.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -80,6 +81,23 @@ NS_SWIFT_NAME(AudioData)
             offset:(NSUInteger)offset
             length:(NSUInteger)length
              error:(NSError **)error NS_SWIFT_NAME(load(buffer:offset:length:));
+
+/**
+ * Loads the internal buffer of `AudioData` with the audio samples currently held by the audio
+ * record.
+ *
+ * New data from the audio record is appended to the end of the buffer by shifting out any old data
+ * from the beginning of the buffer if needed to make space. If the length of the new data to be
+ * copied is more than the capacity of the buffer, only the most recent data of the `AudioData`'s
+ * buffer will be copied from the input buffer.
+ *
+ * @param audioRecord `MPPAudioRecord` whose values are to be loaded into `AudioData`. For
+ * multi-channel input, the audio record must hold interleaved data.
+ *
+ * @return A boolean indicating if the load operation succeded.
+ */
+- (BOOL)loadAudioRecord:(MPPAudioRecord *)audioRecord
+                  error:(NSError **)error NS_SWIFT_NAME(load(audioRecord:));
 
 - (instancetype)init NS_UNAVAILABLE;
 
