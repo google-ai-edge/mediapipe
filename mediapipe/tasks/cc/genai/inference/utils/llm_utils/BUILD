@@ -102,13 +102,3 @@ cc_library(
         "//mediapipe/tasks/cc/genai/inference/proto:transformer_params_cc_proto",
     ],
 )
-
-cc_library(
-    name = "tokenizer_utils",
-    srcs = ["tokenizer_utils.cc"],
-    hdrs = ["tokenizer_utils.h"],
-    deps = [
-        "@com_google_absl//absl/strings",
-        "@com_google_sentencepiece//:sentencepiece_model_cc_proto",
-    ],
-)
