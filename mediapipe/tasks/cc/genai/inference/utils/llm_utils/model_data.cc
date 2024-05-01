@@ -444,11 +444,15 @@ absl::StatusOr<std::shared_ptr<ModelData>> ModelData::Create(
   MP_ASSIGN_OR_RETURN(auto weights_file,
                       ScopedFile::Open(mediapipe::file::JoinPath(
                           weight_path, kBaseWeightsFileName)));
-  MP_ASSIGN_OR_RETURN(auto spm_model_file, ScopedFile::Open(spm_path));
-
   MP_ASSIGN_OR_RETURN(
       auto model_proto_data,
       CreateMemoryMappedDataHolder<const uint8_t>(model_proto_file.file()));
+  // If spm_path is empty, we don't need to load SPM data separately.
+  if (spm_path.empty()) {
+    return ModelData::Create(nullptr, std::move(model_proto_data),
+                             std::move(weights_file));
+  }
+  MP_ASSIGN_OR_RETURN(auto spm_model_file, ScopedFile::Open(spm_path));
   MP_ASSIGN_OR_RETURN(
       auto spm_data,
       CreateMemoryMappedDataHolder<const uint8_t>(spm_model_file.file()));
