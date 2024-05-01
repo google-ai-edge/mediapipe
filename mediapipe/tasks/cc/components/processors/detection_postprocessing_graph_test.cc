@@ -244,6 +244,7 @@ TEST_F(ConfigureTest, SucceedsWithAllowlist) {
                    num_detections_tensor_index: 3
                  }
                  box_boundaries_indices { ymin: 0 xmin: 1 ymax: 2 xmax: 3 }
+                 max_classes_per_detection: 1
                }
                has_quantized_outputs: false
           )pb")));
@@ -274,6 +275,7 @@ TEST_F(ConfigureTest, SucceedsWithDenylist) {
                    num_detections_tensor_index: 3
                  }
                  box_boundaries_indices { ymin: 0 xmin: 1 ymax: 2 xmax: 3 }
+                 max_classes_per_detection: 1
                }
                has_quantized_outputs: false
           )pb")));
@@ -309,6 +311,7 @@ TEST_F(ConfigureTest, SucceedsWithScoreCalibration) {
                    num_detections_tensor_index: 3
                  }
                  box_boundaries_indices { ymin: 0 xmin: 1 ymax: 2 xmax: 3 }
+                 max_classes_per_detection: 1
                }
                score_calibration_options {
                  score_transformation: IDENTITY

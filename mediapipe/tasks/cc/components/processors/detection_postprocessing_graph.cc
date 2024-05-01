@@ -15,6 +15,7 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/components/processors/detection_postprocessing_graph.h"
 
+#include <algorithm>
 #include <optional>
 #include <string>
 #include <vector>
@@ -25,6 +26,7 @@ limitations under the License.
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "flatbuffers/flexbuffers.h"
 #include "mediapipe/calculators/core/split_vector_calculator.pb.h"
 #include "mediapipe/calculators/tensor/tensors_to_detections_calculator.pb.h"
 #include "mediapipe/calculators/tflite/ssd_anchors_calculator.pb.h"
@@ -98,6 +100,8 @@ constexpr absl::string_view kIndicesTag = "INDICES";
 constexpr absl::string_view kScoresTag = "SCORES";
 constexpr absl::string_view kTensorsTag = "TENSORS";
 constexpr absl::string_view kAnchorsTag = "ANCHORS";
+constexpr absl::string_view kDetectionPostProcessOpName =
+    "TFLite_Detection_PostProcess";
 
 // Struct holding the different output streams produced by the graph.
 struct DetectionPostprocessingOutputStreams {
@@ -385,6 +389,37 @@ absl::StatusOr<std::vector<int>> GetOutputTensorIndices(
   return output_indices;
 }
 
+// Get the MaxClassesPerDetection from TFLite_Detection_PostProcess op, if the
+// op is found in the tflite model.
+int GetMaxClassesPerDetection(const tflite::Model& model) {
+  int max_classes_per_detection = 1;
+  auto op_code_it = std::find_if(
+      model.operator_codes()->begin(), model.operator_codes()->end(),
+      [](const auto& op_code) {
+        return op_code->builtin_code() == tflite::BuiltinOperator_CUSTOM &&
+               op_code->custom_code()->str() == kDetectionPostProcessOpName;
+      });
+  if (op_code_it == model.operator_codes()->end()) {
+    return max_classes_per_detection;
+  }
+  const int detection_opcode_index =
+      op_code_it - model.operator_codes()->begin();
+  const auto& operators = *model.subgraphs()->Get(0)->operators();
+  auto detection_op_it =
+      std::find_if(operators.begin(), operators.end(),
+                   [detection_opcode_index](const auto& op) {
+                     return op->opcode_index() == detection_opcode_index;
+                   });
+  if (detection_op_it != operators.end()) {
+    auto op_config =
+        flexbuffers::GetRoot(detection_op_it->custom_options()->Data(),
+                             detection_op_it->custom_options()->size())
+            .AsMap();
+    return op_config["max_classes_per_detection"].AsInt32();
+  }
+  return max_classes_per_detection;
+}
+
 // Builds PostProcessingSpecs from DetectorOptions and model metadata for
 // configuring the post-processing calculators.
 absl::StatusOr<PostProcessingSpecs> BuildPostProcessingSpecs(
@@ -481,7 +516,7 @@ absl::StatusOr<PostProcessingSpecs> BuildInModelNmsPostProcessingSpecs(
 // Fills in the TensorsToDetectionsCalculatorOptions based on
 // PostProcessingSpecs.
 void ConfigureInModelNmsTensorsToDetectionsCalculator(
-    const PostProcessingSpecs& specs,
+    const PostProcessingSpecs& specs, const tflite::Model& model,
     mediapipe::TensorsToDetectionsCalculatorOptions* options) {
   options->set_num_classes(specs.label_items.size());
   options->set_num_coords(4);
@@ -513,6 +548,8 @@ void ConfigureInModelNmsTensorsToDetectionsCalculator(
   box_boundaries_indices->set_ymin(specs.bounding_box_corners_order[1]);
   box_boundaries_indices->set_xmax(specs.bounding_box_corners_order[2]);
   box_boundaries_indices->set_ymax(specs.bounding_box_corners_order[3]);
+
+  options->set_max_classes_per_detection(GetMaxClassesPerDetection(model));
 }
 
 // Builds PostProcessingSpecs from DetectorOptions and model metadata for
@@ -799,7 +836,8 @@ absl::Status ConfigureDetectionPostprocessingGraph(
                         BuildInModelNmsPostProcessingSpecs(detector_options,
                                                            metadata_extractor));
     ConfigureInModelNmsTensorsToDetectionsCalculator(
-        post_processing_specs, options.mutable_tensors_to_detections_options());
+        post_processing_specs, model,
+        options.mutable_tensors_to_detections_options());
     ConfigureDetectionLabelIdToTextCalculator(
         post_processing_specs,
         options.mutable_detection_label_ids_to_text_options());

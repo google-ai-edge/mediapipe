@@ -493,8 +493,7 @@ absl::Status TensorsToDetectionsCalculator::ProcessCPU(
     //   detection_boxes_tensor = [box_1, box1, ... ]
     // Each box repeats classes_per_detection_ times.
     // Note Detection_PostProcess op is only supported in CPU.
-    RET_CHECK_EQ(max_detections % num_boxes_, 0);
-    classes_per_detection_ = max_detections / num_boxes_;
+    classes_per_detection_ = options_.max_classes_per_detection();
 
     auto detection_boxes_view = detection_boxes_tensor->GetCpuReadView();
     auto detection_boxes = detection_boxes_view.buffer<float>();

@@ -86,6 +86,9 @@ message TensorsToDetectionsCalculatorOptions {
   // `min_score_thresh`.
   optional int32 max_results = 20 [default = -1];
 
+  // The maximum number of classes per detection.
+  optional int32 max_classes_per_detection = 25 [default = 1];
+
   // The custom model output tensor mapping.
   // The indices of the "detections" tensor and the "scores" tensor are always
   // required. If the model outputs an "anchors" tensor, `anchors_tensor_index`
