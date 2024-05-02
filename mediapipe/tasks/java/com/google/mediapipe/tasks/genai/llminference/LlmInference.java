@@ -42,6 +42,8 @@ public class LlmInference implements AutoCloseable {
     sessionConfig.setRandomSeed(options.randomSeed());
     if (options.loraPath().isPresent()) {
       sessionConfig.setLoraPath(options.loraPath().get());
+    } else {
+      sessionConfig.setLoraPath("");
     }
 
     return new LlmInference(context, STATS_TAG, sessionConfig.build(), options.resultListener());
