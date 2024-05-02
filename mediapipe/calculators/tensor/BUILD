@@ -2023,7 +2023,7 @@ cc_library(
         "image_to_tensor_converter_gl_buffer.h",
         "image_to_tensor_converter_gl_texture.h",
     ],
-    visibility = [":__pkg__"],
+    visibility = ["//visibility:private"],
 )
 
 cc_test(
