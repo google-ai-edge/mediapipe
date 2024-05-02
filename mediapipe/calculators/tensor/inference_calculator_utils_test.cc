@@ -16,6 +16,7 @@
 
 #include <cstdint>
 #include <cstring>
+#include <string>
 #include <vector>
 
 #include "absl/log/absl_check.h"
@@ -29,6 +30,7 @@
 #include "tensorflow/lite/interpreter.h"
 #include "tensorflow/lite/kernels/cast_test_common.h"
 #include "tensorflow/lite/schema/schema_generated.h"
+#include "tensorflow/lite/string_util.h"
 
 namespace mediapipe {
 namespace {
@@ -74,12 +76,26 @@ void AddInterpreterOutput(TfLiteType type, int size, int& tensor_index,
 template <typename T>
 std::vector<T> TfLiteInputTensorData(const Interpreter& interpreter,
                                      int tensor_index) {
+  ABSL_CHECK_LT(tensor_index, interpreter.inputs().size());
   const TfLiteTensor* tensor =
       interpreter.tensor(interpreter.inputs()[tensor_index]);
   const T* tensor_ptr = reinterpret_cast<T*>(tensor->data.data);
   ABSL_CHECK_NE(tensor_ptr, nullptr);
   size_t tensor_size = tensor->bytes / sizeof(T);
   return std::vector<T>(tensor_ptr, tensor_ptr + tensor_size);
+}
+
+template <>
+std::vector<char> TfLiteInputTensorData<char>(const Interpreter& interpreter,
+                                              int tensor_index) {
+  ABSL_CHECK_LT(tensor_index, interpreter.inputs().size());
+  const TfLiteTensor* tensor =
+      interpreter.tensor(interpreter.inputs()[tensor_index]);
+  int num_strings = tflite::GetStringCount(tensor);
+  ABSL_CHECK_EQ(num_strings, 1) << "Only one string expected inside tensor";
+  const tflite::StringRef string_ref = tflite::GetString(tensor, 0);
+  std::string str(string_ref.str, string_ref.len);
+  return std::vector<char>(str.begin(), str.end());
 }
 
 TEST(InferenceCalculatorUtilsTest,
@@ -117,6 +133,40 @@ TEST(InferenceCalculatorUtilsTest,
 }
 
 TEST(InferenceCalculatorUtilsTest,
+     CopyCpuInputIntoInterpreterTensorWorksCorrectlyForUInt8) {
+  tflite::Interpreter interpreter;
+  int tensor_index, tensor_len = 4;
+  AddInterpreterInput(kTfLiteUInt8, tensor_len, tensor_index,
+                      /*allocate_tensor=*/true, interpreter);
+  std::vector<uint8_t> values{1, 2, 3, 4};
+  int values_len = values.size();
+  Tensor tensor(ElementType::kUInt8, Tensor::Shape({values_len}));
+  std::memcpy(tensor.GetCpuWriteView().buffer<uint8_t>(), values.data(),
+              values_len * sizeof(uint8_t));
+  MP_EXPECT_OK(
+      CopyCpuInputIntoInterpreterTensor(tensor, interpreter, tensor_index));
+  EXPECT_THAT(TfLiteInputTensorData<uint8_t>(interpreter, tensor_index),
+              ElementsAreArray(values));
+}
+
+TEST(InferenceCalculatorUtilsTest,
+     CopyCpuInputIntoInterpreterTensorWorksCorrectlyForInt8) {
+  tflite::Interpreter interpreter;
+  int tensor_index, tensor_len = 4;
+  AddInterpreterInput(kTfLiteInt8, tensor_len, tensor_index,
+                      /*allocate_tensor=*/true, interpreter);
+  std::vector<int8_t> values{-1, -2, 3, 4};
+  int values_len = values.size();
+  Tensor tensor(ElementType::kInt8, Tensor::Shape({values_len}));
+  std::memcpy(tensor.GetCpuWriteView().buffer<int8_t>(), values.data(),
+              values_len * sizeof(int8_t));
+  MP_EXPECT_OK(
+      CopyCpuInputIntoInterpreterTensor(tensor, interpreter, tensor_index));
+  EXPECT_THAT(TfLiteInputTensorData<int8_t>(interpreter, tensor_index),
+              ElementsAreArray(values));
+}
+
+TEST(InferenceCalculatorUtilsTest,
      CopyCpuInputIntoInterpreterTensorWorksCorrectlyForFloat32) {
   tflite::Interpreter interpreter;
   int tensor_index, tensor_len = 4;
@@ -130,6 +180,23 @@ TEST(InferenceCalculatorUtilsTest,
   MP_EXPECT_OK(
       CopyCpuInputIntoInterpreterTensor(tensor, interpreter, tensor_index));
   EXPECT_THAT(TfLiteInputTensorData<float>(interpreter, tensor_index),
+              ElementsAreArray(values));
+}
+
+TEST(InferenceCalculatorUtilsTest,
+     CopyCpuInputIntoInterpreterTensorWorksCorrectlyForString) {
+  tflite::Interpreter interpreter;
+  int tensor_index, tensor_len = 4;
+  AddInterpreterInput(kTfLiteString, tensor_len, tensor_index,
+                      /*allocate_tensor=*/true, interpreter);
+  std::vector<char> values{'a', 'b', 'c', 'd'};
+  int values_len = values.size();
+  Tensor tensor(ElementType::kChar, Tensor::Shape({values_len}));
+  std::memcpy(tensor.GetCpuWriteView().buffer<char>(), values.data(),
+              values_len * sizeof(char));
+  MP_EXPECT_OK(
+      CopyCpuInputIntoInterpreterTensor(tensor, interpreter, tensor_index));
+  EXPECT_THAT(TfLiteInputTensorData<char>(interpreter, tensor_index),
               ElementsAreArray(values));
 }
 
@@ -166,8 +233,7 @@ TEST(InferenceCalculatorUtilsTest,
       CopyCpuInputIntoInterpreterTensor(tensor, interpreter, tensor_index);
   EXPECT_FALSE(status.ok());
   EXPECT_THAT(status.message(),
-              HasSubstr("Interpreter's input size do not match the input "
-                        "tensor's size"));
+              HasSubstr("TfLiteTensor and Tensor sizes do not match"));
 }
 
 TEST(InferenceCalculatorUtilsTest,
@@ -185,21 +251,29 @@ TEST(InferenceCalculatorUtilsTest,
   absl::Status status =
       CopyCpuInputIntoInterpreterTensor(tensor, interpreter, tensor_index);
   EXPECT_FALSE(status.ok());
-  EXPECT_THAT(status.message(),
-              HasSubstr("Interpreter's input tensor buffer is null"));
+  EXPECT_THAT(status.message(), HasSubstr("TfLiteTensor data is null"));
 }
 
 TEST(InferenceCalculatorUtilsTest,
      CopyCpuInputIntoInterpreterTensorUnsupportedType) {
   tflite::Interpreter interpreter;
   int tensor_index, tensor_len = 4;
-  AddInterpreterInput(kTfLiteUInt8, tensor_len, tensor_index,
-                      /*allocate_tensor=*/true, interpreter);
-  std::vector<uint8_t> values{1, 2, 3, 4};
+
+  // Add TFLite interpreter's input tensor.
+  ABSL_CHECK_EQ(interpreter.AddTensors(1, &tensor_index), kTfLiteOk);
+  TfLiteQuantizationParams quant;
+  interpreter.SetTensorParametersReadWrite(tensor_index, kTfLiteFloat32, "",
+                                           {tensor_len}, quant);
+  interpreter.SetInputs({tensor_index});
+  // Manually set the input type as NoType, to not trigger type mismatch but
+  // trigger unsupported types.
+  interpreter.tensor(interpreter.inputs()[tensor_index])->type = kTfLiteNoType;
+
+  std::vector<float> values{1.0f, 2.0f, 3.0f, 4.0f};
   int values_len = values.size();
-  Tensor tensor(ElementType::kUInt8, Tensor::Shape({values_len}));
-  std::memcpy(tensor.GetCpuWriteView().buffer<uint8_t>(), values.data(),
-              values_len * sizeof(uint8_t));
+  Tensor tensor(ElementType::kNone, Tensor::Shape({values_len}));
+  std::memcpy(tensor.GetCpuWriteView().buffer<float>(), values.data(),
+              values_len * sizeof(float));
   absl::Status status =
       CopyCpuInputIntoInterpreterTensor(tensor, interpreter, tensor_index);
   EXPECT_FALSE(status.ok());
@@ -224,6 +298,28 @@ TEST(InferenceCalculatorUtilsTest,
 }
 
 TEST(InferenceCalculatorUtilsTest,
+     CopyInterpreterTensorIntoCpuOutputWorksCorrectlyForString) {
+  std::vector<char> values{'a', 'b', 'c', 'd'};
+  int values_len = values.size();
+  Tensor tensor(ElementType::kChar, Tensor::Shape({values_len}));
+
+  Interpreter interpreter;
+  int tensor_index, tensor_len = 4;
+  AddInterpreterOutput(kTfLiteString, tensor_len, tensor_index,
+                       /*allocate_tensor=*/true, interpreter);
+  // Copy the chars as a string into interpreter's output tensor.
+  tflite::DynamicBuffer dynamic_buffer;
+  dynamic_buffer.AddString(values.data(), values.size());
+  dynamic_buffer.WriteToTensorAsVector(
+      interpreter.tensor(interpreter.outputs()[tensor_index]));
+  MP_EXPECT_OK(
+      CopyInterpreterTensorIntoCpuOutput(interpreter, tensor_index, tensor));
+  EXPECT_THAT(absl::MakeConstSpan(tensor.GetCpuReadView().buffer<char>(),
+                                  tensor.shape().num_elements()),
+              ElementsAreArray(values));
+}
+
+TEST(InferenceCalculatorUtilsTest,
      CopyInterpreterTensorIntoCpuOutputTypeMismatch) {
   std::vector<float> values{100.f, 200.f, 300.f, 400.f, 500.f, 600.f};
 
@@ -238,7 +334,7 @@ TEST(InferenceCalculatorUtilsTest,
       CopyTfLiteTensorIntoCpuOutput(*m.GetOutputTensor(0), tensor);
   EXPECT_FALSE(status.ok());
   EXPECT_THAT(status.message(),
-              HasSubstr("Output and TfLite tensor type do not match"));
+              HasSubstr("Output and TfLiteTensor types do not match"));
 }
 
 TEST(InferenceCalculatorUtilsTest,
@@ -282,11 +378,20 @@ TEST(InferenceCalculatorUtilsTest,
      CopyInterpreterTensorIntoCpuOutputUnsupportedType) {
   tflite::Interpreter interpreter;
   int tensor_index, tensor_len = 4;
-  AddInterpreterOutput(kTfLiteUInt8, tensor_len, tensor_index,
-                       /*allocate_tensor=*/true, interpreter);
+
+  // Add TFLite interpreter's output tensor.
+  ABSL_CHECK_EQ(interpreter.AddTensors(1, &tensor_index), kTfLiteOk);
+  TfLiteQuantizationParams quant;
+  interpreter.SetTensorParametersReadWrite(tensor_index, kTfLiteUInt8, "",
+                                           {tensor_len}, quant);
+  interpreter.SetOutputs({tensor_index});
+  // Manually set the output type as NoType, to not trigger type mismatch but
+  // trigger unsupported types.
+  interpreter.tensor(interpreter.outputs()[tensor_index])->type = kTfLiteNoType;
+
   std::vector<uint8_t> values{1, 2, 3, 4};
   int values_len = values.size();
-  Tensor tensor(ElementType::kUInt8, Tensor::Shape({values_len}));
+  Tensor tensor(ElementType::kNone, Tensor::Shape({values_len}));
   std::memcpy(tensor.GetCpuWriteView().buffer<uint8_t>(), values.data(),
               values_len * sizeof(uint8_t));
   absl::Status status =

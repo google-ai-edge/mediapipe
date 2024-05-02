@@ -17,11 +17,13 @@
 #include <cstdint>
 #include <cstring>
 #include <ostream>
+#include <string>
 #include <vector>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
 #include "absl/types/span.h"
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
@@ -32,6 +34,7 @@
 #include "tensorflow/lite/c/common.h"
 #include "tensorflow/lite/interpreter.h"
 #include "tensorflow/lite/portable_type_to_tflitetype.h"
+#include "tensorflow/lite/string_util.h"
 
 #if !defined(__EMSCRIPTEN__) || defined(__EMSCRIPTEN_PTHREADS__)
 #include "mediapipe/util/cpu_util.h"
@@ -73,29 +76,44 @@ bool operator==(Tensor::ElementType tensor_type, TfLiteType tflite_type) {
       return tflite_type == TfLiteType::kTfLiteInt64;
     case Tensor::ElementType::kBool:
       return tflite_type == TfLiteType::kTfLiteBool;
-    // Seems like TfLite does not have a char type support?
+    case Tensor::ElementType::kChar:
+      return tflite_type == TfLiteType::kTfLiteString;
     default:
       return false;
   }
 }
 
 template <typename T>
-absl::Status CopyTensorBufferToInterpreter(const Tensor& input_tensor,
-                                           TfLiteTensor& tflite_tensor) {
+absl::Status CopyTensorToTfLiteTensor(const Tensor& input_tensor,
+                                      TfLiteTensor& tflite_tensor) {
   auto input_tensor_view = input_tensor.GetCpuReadView();
   const T* input_tensor_buffer = input_tensor_view.buffer<T>();
   RET_CHECK(input_tensor_buffer) << "Input tensor buffer is null.";
   RET_CHECK_EQ(tflite_tensor.type, tflite::typeToTfLiteType<T>())
           .SetCode(absl::StatusCode::kInvalidArgument)
-      << "Interpreter's input tensor buffer is null, may because it does not "
-         "support the input type specified.";
+      << "Tensor and TfLiteTensor types do not match.";
   void* local_tensor_buffer = tflite_tensor.data.raw;
-  RET_CHECK(local_tensor_buffer)
-      << "Interpreter's input tensor buffer is null.";
+  RET_CHECK(local_tensor_buffer) << "TfLiteTensor data is null.";
   RET_CHECK_EQ(tflite_tensor.bytes, input_tensor.bytes())
           .SetCode(absl::StatusCode::kInvalidArgument)
-      << "Interpreter's input size do not match the input tensor's size.";
+      << "TfLiteTensor and Tensor sizes do not match.";
   std::memcpy(local_tensor_buffer, input_tensor_buffer, input_tensor.bytes());
+  return absl::OkStatus();
+}
+
+template <>
+absl::Status CopyTensorToTfLiteTensor<char>(const Tensor& input_tensor,
+                                            TfLiteTensor& tflite_tensor) {
+  const char* input_tensor_buffer =
+      input_tensor.GetCpuReadView().buffer<char>();
+  RET_CHECK(input_tensor_buffer) << "Char-typed input tensor buffer is null.";
+  RET_CHECK_EQ(tflite_tensor.type, TfLiteType::kTfLiteString)
+          .SetCode(absl::StatusCode::kInvalidArgument)
+      << "TfLiteTensor type is not kTfLiteString while Tensor type is kChar.";
+  tflite::DynamicBuffer dynamic_buffer;
+  dynamic_buffer.AddString(input_tensor_buffer,
+                           input_tensor.shape().num_elements());
+  dynamic_buffer.WriteToTensorAsVector(&tflite_tensor);
   return absl::OkStatus();
 }
 
@@ -124,7 +142,7 @@ absl::Status CopyTfLiteTensorToTensor(const TfLiteTensor& tflite_tensor,
   const Tensor::ElementType output_tensor_type = output_tensor.element_type();
   RET_CHECK(output_tensor_type == tflite_tensor.type)
           .SetCode(absl::StatusCode::kInvalidArgument)
-      << "Output and TfLite tensor type do not match";
+      << "Output and TfLiteTensor types do not match";
   const void* local_tensor_buffer = tflite_tensor.data.raw;
   RET_CHECK(local_tensor_buffer) << "TfLiteTensor tensor buffer is null.";
   // Not using RET_CHECK_EQ because the macros triggers array copy. Explicitly
@@ -134,6 +152,33 @@ absl::Status CopyTfLiteTensorToTensor(const TfLiteTensor& tflite_tensor,
       << "TfLiteTensor and Tensor shape do not match: " << tflite_tensor.dims
       << " vs [" << absl::StrJoin(output_tensor.shape().dims, ",") << ']';
   std::memcpy(output_tensor_buffer, local_tensor_buffer, output_tensor.bytes());
+  return absl::OkStatus();
+}
+
+template <>
+absl::Status CopyTfLiteTensorToTensor<char>(const TfLiteTensor& tflite_tensor,
+                                            Tensor& output_tensor) {
+  auto output_tensor_view = output_tensor.GetCpuWriteView();
+  char* output_tensor_buffer = output_tensor_view.buffer<char>();
+  RET_CHECK(output_tensor_buffer) << "Output tensor buffer is null.";
+  RET_CHECK_EQ(tflite_tensor.type, kTfLiteString)
+          .SetCode(absl::StatusCode::kInvalidArgument)
+      << "TfLiteTensor type and requested output type do not match.";
+  const Tensor::ElementType output_tensor_type = output_tensor.element_type();
+  RET_CHECK(output_tensor_type == Tensor::ElementType::kChar)
+          .SetCode(absl::StatusCode::kInvalidArgument)
+      << "Output and TfLiteTensor types do not match";
+
+  // Only one string expected.
+  RET_CHECK_EQ(tflite::GetStringCount(&tflite_tensor), 1);
+  const tflite::StringRef string_ref = tflite::GetString(&tflite_tensor, 0);
+  std::string str(string_ref.str, string_ref.len);
+  RET_CHECK(str.size() == output_tensor.shape().num_elements())
+          .SetCode(absl::StatusCode::kInvalidArgument)
+      << absl::StrFormat(
+             "TfLiteTensor and Tensor shape do not match: %d vs [%s]",
+             str.size(), absl::StrJoin(output_tensor.shape().dims, ","));
+  std::memcpy(output_tensor_buffer, str.data(), str.size());
   return absl::OkStatus();
 }
 
@@ -171,17 +216,37 @@ absl::Status CopyCpuInputIntoTfLiteTensor(const Tensor& input_tensor,
     case TfLiteType::kTfLiteFloat16:
     case TfLiteType::kTfLiteFloat32: {
       MP_RETURN_IF_ERROR(
-          CopyTensorBufferToInterpreter<float>(input_tensor, tflite_tensor));
+          CopyTensorToTfLiteTensor<float>(input_tensor, tflite_tensor));
+      break;
+    }
+    case TfLiteType::kTfLiteUInt8: {
+      MP_RETURN_IF_ERROR(
+          CopyTensorToTfLiteTensor<uint8_t>(input_tensor, tflite_tensor));
+      break;
+    }
+    case TfLiteType::kTfLiteInt8: {
+      MP_RETURN_IF_ERROR(
+          CopyTensorToTfLiteTensor<int8_t>(input_tensor, tflite_tensor));
       break;
     }
     case TfLiteType::kTfLiteInt32: {
       MP_RETURN_IF_ERROR(
-          CopyTensorBufferToInterpreter<int>(input_tensor, tflite_tensor));
+          CopyTensorToTfLiteTensor<int32_t>(input_tensor, tflite_tensor));
       break;
     }
     case TfLiteType::kTfLiteInt64: {
       MP_RETURN_IF_ERROR(
-          CopyTensorBufferToInterpreter<int64_t>(input_tensor, tflite_tensor));
+          CopyTensorToTfLiteTensor<int64_t>(input_tensor, tflite_tensor));
+      break;
+    }
+    case TfLiteType::kTfLiteString: {
+      MP_RETURN_IF_ERROR(
+          CopyTensorToTfLiteTensor<char>(input_tensor, tflite_tensor));
+      break;
+    }
+    case TfLiteType::kTfLiteBool: {
+      MP_RETURN_IF_ERROR(
+          CopyTensorToTfLiteTensor<bool>(input_tensor, tflite_tensor));
       break;
     }
     default:
@@ -212,9 +277,34 @@ absl::Status CopyTfLiteTensorIntoCpuOutput(const TfLiteTensor& tflite_tensor,
           CopyTfLiteTensorToTensor<float>(tflite_tensor, output_tensor));
       break;
     }
+    case TfLiteType::kTfLiteUInt8: {
+      MP_RETURN_IF_ERROR(
+          CopyTfLiteTensorToTensor<uint8_t>(tflite_tensor, output_tensor));
+      break;
+    }
+    case TfLiteType::kTfLiteInt8: {
+      MP_RETURN_IF_ERROR(
+          CopyTfLiteTensorToTensor<int8_t>(tflite_tensor, output_tensor));
+      break;
+    }
     case TfLiteType::kTfLiteInt32: {
       MP_RETURN_IF_ERROR(
           CopyTfLiteTensorToTensor<int>(tflite_tensor, output_tensor));
+      break;
+    }
+    case TfLiteType::kTfLiteInt64: {
+      MP_RETURN_IF_ERROR(
+          CopyTfLiteTensorToTensor<int64_t>(tflite_tensor, output_tensor));
+      break;
+    }
+    case TfLiteType::kTfLiteString: {
+      MP_RETURN_IF_ERROR(
+          CopyTfLiteTensorToTensor<char>(tflite_tensor, output_tensor));
+      break;
+    }
+    case TfLiteType::kTfLiteBool: {
+      MP_RETURN_IF_ERROR(
+          CopyTfLiteTensorToTensor<bool>(tflite_tensor, output_tensor));
       break;
     }
     default:
@@ -240,7 +330,7 @@ absl::StatusOr<Tensor> ConvertTfLiteTensorToTensor(
     case TfLiteType::kTfLiteInt32: {
       Tensor output_tensor(Tensor::ElementType::kInt32, shape);
       MP_RETURN_IF_ERROR(
-          CopyTfLiteTensorToTensor<int>(tflite_tensor, output_tensor));
+          CopyTfLiteTensorToTensor<int32_t>(tflite_tensor, output_tensor));
       return output_tensor;
     }
     default:
