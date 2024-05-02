@@ -82,7 +82,8 @@ absl::StatusOr<AHardwareBuffer*> HardwareBuffer::AllocateAHardwareBuffer(
     return absl::UnavailableError(
         "NDK's hardware buffer support requires Android API level >= 26");
   }
-  RET_CHECK(!error && output != nullptr) << "AHardwareBuffer_allocate failed";
+  RET_CHECK(!error && output != nullptr)
+      << "AHardwareBuffer_allocate failed: " << error;
   return output;
 }
 
