@@ -48,6 +48,7 @@ LlmSessionConfig ParseSessionConfig(void* bytes, int size) {
   output.max_tokens = input.max_tokens();
   output.temperature = input.temperature();
   output.topk = input.topk();
+  output.topp = 1.0f;
   output.random_seed = input.random_seed();
   if (input.has_lora_path()) {
     output.lora_path = strdup(input.lora_path().c_str());
