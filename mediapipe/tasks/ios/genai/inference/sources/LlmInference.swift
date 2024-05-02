@@ -50,9 +50,9 @@ import MediaPipeTasksGenAIC
   /// Creates a new instance of `LlmInference` with the given options.
   ///
   /// - Parameters:
-  ///   - options: The options of type `LlmInference.Options` to use for configuring the
-  /// `LlmInference`.
-  @objc public init(options: Options) {
+  ///   - options: The options of type `LlmInference.Options` to use for configuring the `LlmInference`.
+  /// - Throws: An error if `LlmInference` instance could not be initialized.
+  @objc public init(options: Options) throws {
     let modelPath = strdup(options.modelPath)
     let cacheDirectory = strdup(FileManager.default.temporaryDirectory.path)
     let loraPath = strdup(options.loraPath == nil ? "" : options.loraPath!)
@@ -74,7 +74,7 @@ import MediaPipeTasksGenAIC
       temperature: options.temperature,
       random_seed: options.randomSeed,
       lora_path: loraPath)
-    llmTaskRunner = LlmTaskRunner(sessionConfig: sessionConfig)
+    try llmTaskRunner = LlmTaskRunner(sessionConfig: sessionConfig)
 
     super.init()
   }
@@ -84,9 +84,10 @@ import MediaPipeTasksGenAIC
   ///
   /// - Parameters:
   ///   - modelPath: The absolute path to a model asset bundle stored locally on the device.
-  @objc public convenience init(modelPath: String) {
+  /// - Throws: An error if `LlmInference` instance could not be initialized.
+  @objc public convenience init(modelPath: String) throws {
     let options = Options(modelPath: modelPath)
-    self.init(options: options)
+    try self.init(options: options)
   }
 
   /// Generates a response based on the input text.

@@ -25,12 +25,16 @@ final class LlmTaskRunner {
   ///
   /// - Parameters:
   ///   - sessionConfig: C session config of type `LlmSessionConfig`.
-  init(sessionConfig: LlmSessionConfig) {
-    /// No safe guards for session creation since the C APIs only throw fatal errors.
-    /// `LlmInferenceEngine_CreateSession()` will always return an llm session if the call
-    /// completes.
-    // TODO: Expose errors encountered during session creation.
-    withUnsafePointer(to: sessionConfig) { _ = LlmInferenceEngine_CreateSession($0, &self.cLlmSession, nil) }
+  /// - Throws: An error if the session could not be initialized.
+  init(sessionConfig: LlmSessionConfig) throws {
+    var cErrorMessage: UnsafeMutablePointer<CChar>? = nil
+    let returnCode = withUnsafePointer(to: sessionConfig) {
+      LlmInferenceEngine_CreateSession($0, &self.cLlmSession, &cErrorMessage)
+    }
+    if (returnCode != 0) {
+      let errorMessage: String? = cErrorMessage == nil ? nil : String(cString: cErrorMessage!)
+      throw GenAiInferenceError.failedToInitializeSession(errorMessage)
+    }
   }
 
   /// Invokes the C inference engine with the given input text to generate an array of `String`
