@@ -581,6 +581,8 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "@google_toolbox_for_mac//:GTM_Defines",
     ] + [
+        "//third_party/apple_frameworks:CoreVideo",
+        "//third_party/apple_frameworks:Metal",
     ],
     alwayslink = 1,
 )
