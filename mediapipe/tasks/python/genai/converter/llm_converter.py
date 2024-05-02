@@ -93,6 +93,24 @@ class ConversionConfig(object):
       self.output_tflite_file = os.path.join(output_dir, 'model.tflite')
 
     self.fp16_scale = None
+    self.lora_ckpt = lora_ckpt
+    self.lora_rank = lora_rank
+    self.lora_output_tflite_file = lora_output_tflite_file
+    if (self.lora_ckpt is None) ^ (self.lora_rank is None):
+      raise ValueError(
+          'lora_ckpt and lora_rank must be either both provided or both not'
+          ' provided.'
+      )
+    if self.lora_rank is not None:
+      if backend == 'cpu':
+        raise ValueError('LoRA is not supported for CPU backend.')
+      lora_applicable_models = ['GEMMA_2B', 'PHI_2']
+      if model_type not in lora_applicable_models:
+        raise ValueError(
+            'LoRA is only applicable for the model_type:'
+            f' {", ".join(lora_applicable_models)}, but get model_type:'
+            f' {model_type}.'
+        )
 
 
 def quantize_by_actions(
