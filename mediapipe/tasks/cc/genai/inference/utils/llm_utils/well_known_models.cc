@@ -77,7 +77,7 @@ LlmParameters GetGemma7BParams() {
   LlmParameters llm_params;
   llm_params.set_start_token_id(2);
   llm_params.add_stop_tokens("<eos>");
-  llm_params.set_vocab_size(256128);
+  llm_params.set_vocab_size(256000);
 
   TransformerParameters& transformer_params =
       *llm_params.mutable_transformer_parameters();

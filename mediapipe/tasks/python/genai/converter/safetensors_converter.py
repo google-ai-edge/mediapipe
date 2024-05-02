@@ -531,7 +531,7 @@ class SafetensorsCkptLoader(converter_base.CkptLoaderBase):
           backend,
           self._reader,
       )
-    elif special_model in ["GEMMA_2B"]:
+    elif special_model in ["GEMMA_2B", "GEMMA_7B"]:
       self.mapper = GemmaMapper(
           is_symmetric,
           attention_quant_bits,
