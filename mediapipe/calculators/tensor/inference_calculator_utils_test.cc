@@ -272,8 +272,6 @@ TEST(InferenceCalculatorUtilsTest,
   std::vector<float> values{1.0f, 2.0f, 3.0f, 4.0f};
   int values_len = values.size();
   Tensor tensor(ElementType::kNone, Tensor::Shape({values_len}));
-  std::memcpy(tensor.GetCpuWriteView().buffer<float>(), values.data(),
-              values_len * sizeof(float));
   absl::Status status =
       CopyCpuInputIntoInterpreterTensor(tensor, interpreter, tensor_index);
   EXPECT_FALSE(status.ok());
@@ -392,8 +390,6 @@ TEST(InferenceCalculatorUtilsTest,
   std::vector<uint8_t> values{1, 2, 3, 4};
   int values_len = values.size();
   Tensor tensor(ElementType::kNone, Tensor::Shape({values_len}));
-  std::memcpy(tensor.GetCpuWriteView().buffer<uint8_t>(), values.data(),
-              values_len * sizeof(uint8_t));
   absl::Status status =
       CopyInterpreterTensorIntoCpuOutput(interpreter, tensor_index, tensor);
   EXPECT_FALSE(status.ok());
