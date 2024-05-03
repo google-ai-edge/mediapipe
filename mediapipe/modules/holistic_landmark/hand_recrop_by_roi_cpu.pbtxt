@@ -30,7 +30,7 @@ node {
         max: 1.0
       }
       # For OpenGL origin should be at the top left corner.
-      gpu_origin: TOP_LEFT,
+      gpu_origin: TOP_LEFT
     }
   }
 }
