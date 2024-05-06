@@ -18,12 +18,6 @@
 
 + (nullable AVAudioPCMBuffer *)bufferFromAudioFileWithInfo:(MPPFileInfo *)fileInfo
                                           processingFormat:(AVAudioFormat *)processingFormat {
-  AVAudioPCMBuffer *buffer = [AVAudioPCMBuffer bufferFromAudioFileWithInfo:fileInfo];
-
-  return [buffer bufferWithProcessingFormat:processingFormat];
-}
-
-+ (nullable AVAudioPCMBuffer *)bufferFromAudioFileWithInfo:(MPPFileInfo *)fileInfo {
   AVAudioFile *audioFile = [[AVAudioFile alloc] initForReading:[NSURL fileURLWithPath:fileInfo.path]
                                                          error:nil];
   AVAudioPCMBuffer *buffer =
@@ -32,7 +26,7 @@
 
   [audioFile readIntoBuffer:buffer error:nil];
 
-  return buffer;
+  return [buffer bufferWithProcessingFormat:processingFormat];
 }
 
 - (nullable MPPFloatBuffer *)floatBuffer {
