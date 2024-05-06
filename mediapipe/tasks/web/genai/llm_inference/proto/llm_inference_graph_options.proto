@@ -33,4 +33,7 @@ message LlmInferenceGraphOptions {
 
   // Parameters for the sampler, which is used to pick the winning token.
   odml.infra.proto.SamplerParameters sampler_params = 3;
+
+  // The LoRA ranks that will be used during inference.
+  repeated int32 lora_ranks = 4;
 }

@@ -15,11 +15,15 @@
  */
 
 import {FilesetResolver as FilesetResolverImpl} from '../../../tasks/web/core/fileset_resolver';
-import {LlmInference as LlmInferenceImpl} from '../../../tasks/web/genai/llm_inference/llm_inference';
+import {
+  LlmInference as LlmInferenceImpl,
+  LoraModel as LoraModelImpl,
+} from '../../../tasks/web/genai/llm_inference/llm_inference';
 
 // Declare the variables locally so that Rollup in OSS includes them explicitly
 // as exports.
 const FilesetResolver = FilesetResolverImpl;
 const LlmInference = LlmInferenceImpl;
+const LoraModel = LoraModelImpl;
 
-export {FilesetResolver, LlmInference};
+export {FilesetResolver, LlmInference, LoraModel};

@@ -70,4 +70,9 @@ export declare interface LlmInferenceOptions extends TaskRunnerOptions {
    * Random seed for sampling tokens.
    */
   randomSeed?: number;
+
+  /**
+   * The LoRA ranks that will be used during inference.
+   */
+  loraRanks?: number[];
 }
