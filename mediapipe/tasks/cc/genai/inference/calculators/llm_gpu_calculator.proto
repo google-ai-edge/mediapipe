@@ -59,6 +59,8 @@ message LlmGpuCalculatorOptions {
 
   reserved 23 to 27;
 
+  repeated int32 lora_ranks = 29;
+
   reserved 30;
 
   proto.SamplerParameters sampler_params = 31;
