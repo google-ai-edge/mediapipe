@@ -33,7 +33,7 @@ NS_ASSUME_NONNULL_BEGIN
  * If not, the pcm buffer is converted to the processing format.
  *
  * @param fileInfo `FileInfo` with name and type of the audio file stored in the bundle.
- * @param fileInfo The `AVAudioFormat` to which the audio samples are to be converted.
+ * @param processingFormat The `AVAudioFormat` to which the audio samples are to be converted.
  *
  * @return Newly created audio pcm buffer satisfying the processing format. `nil` if there was an
  * error during conversion.
