@@ -153,7 +153,7 @@ export class LlmInference extends TaskRunner {
    */
   static async createFromModelBuffer(
     wasmFileset: WasmFileset,
-    modelAssetBuffer: Uint8Array,
+    modelAssetBuffer: Uint8Array | ReadableStreamDefaultReader,
   ): Promise<LlmInference> {
     const webgpuDevice = await LlmInference.createWebGpuDevice();
     const llmInferenceOptions = {
@@ -316,21 +316,32 @@ export class LlmInference extends TaskRunner {
           'Cannot set both baseOptions.modelAssetPath and baseOptions.modelAssetBuffer',
         );
       }
+      let consumedBuffer = false;
       if (options.baseOptions.modelAssetPath) {
         this.streamingReader = StreamingReader.loadFromUrl(
           options.baseOptions.modelAssetPath,
           onFinishedLoadingData,
         );
-      } else if (options.baseOptions.modelAssetBuffer) {
+      } else if (options.baseOptions.modelAssetBuffer instanceof Uint8Array) {
         this.streamingReader = StreamingReader.loadFromArray(
           options.baseOptions.modelAssetBuffer,
           onFinishedLoadingData,
         );
+        consumedBuffer = true;
+      } else if (options.baseOptions.modelAssetBuffer) {
+        this.streamingReader = StreamingReader.loadFromReader(
+          options.baseOptions.modelAssetBuffer,
+          onFinishedLoadingData,
+        );
+        consumedBuffer = true;
+      } else {
+        onFinishedLoadingData();
+      }
+
+      if (consumedBuffer) {
         // Remove the reference on the asset buffer since it is now owned by
         // `streamingReader`.
         options.baseOptions.modelAssetBuffer = undefined;
-      } else {
-        onFinishedLoadingData();
       }
     }
     // To allow graph closure across ASYNCIFY, where we cannot get a callback,
