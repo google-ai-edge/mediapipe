@@ -92,3 +92,35 @@ ios_unit_test(
         ":MPPAudioRecordObjcTestLibrary",
     ],
 )
+
+objc_library(
+    name = "MPPAudioDataObjcTestLibrary",
+    testonly = 1,
+    srcs = ["MPPAudioDataTests.mm"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+        "-x objective-c++",
+    ],
+    data = [
+        "//mediapipe/tasks/testdata/audio:test_audio_clips",
+    ],
+    tags = TFL_DEFAULT_TAGS,
+    deps = [
+        "//mediapipe/tasks/ios/audio/core:MPPAudioData",
+        "//mediapipe/tasks/ios/audio/core:MPPAudioRecord",
+        "//mediapipe/tasks/ios/common:MPPCommon",
+        "//mediapipe/tasks/ios/test/audio/core/utils:AVAudioPCMBufferTestUtils",
+        "//mediapipe/tasks/ios/test/utils:MPPFileInfo",
+    ],
+)
+
+ios_unit_test(
+    name = "MPPAudioDataObjcTest",
+    minimum_os_version = MPP_TASK_MINIMUM_OS_VERSION,
+    runner = tflite_ios_lab_runner("IOS_LATEST"),
+    tags = TFL_DEFAULT_TAGS + TFL_DISABLED_SANITIZER_TAGS,
+    deps = [
+        ":MPPAudioDataObjcTestLibrary",
+    ],
+)
