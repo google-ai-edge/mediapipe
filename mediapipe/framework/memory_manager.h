@@ -67,7 +67,6 @@ class MemoryManager {
 #endif
 
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
-  // For testing only:
   explicit MemoryManager(const MultiPoolOptions& options)
       : hardware_buffer_pool_(std::make_shared<HardwareBufferPool>(options)) {}
 #endif
