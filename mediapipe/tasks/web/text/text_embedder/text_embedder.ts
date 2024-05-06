@@ -23,7 +23,10 @@ import {Embedding} from '../../../../tasks/web/components/containers/embedding_r
 import {convertEmbedderOptionsToProto} from '../../../../tasks/web/components/processors/embedder_options';
 import {convertFromEmbeddingResultProto} from '../../../../tasks/web/components/processors/embedder_result';
 import {computeCosineSimilarity} from '../../../../tasks/web/components/utils/cosine_similarity';
-import {CachedGraphRunner, TaskRunner} from '../../../../tasks/web/core/task_runner';
+import {
+  CachedGraphRunner,
+  TaskRunner,
+} from '../../../../tasks/web/core/task_runner';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {WasmModule} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
@@ -40,7 +43,7 @@ export * from './text_embedder_result';
 const INPUT_STREAM = 'text_in';
 const EMBEDDINGS_STREAM = 'embeddings_out';
 const TEXT_EMBEDDER_CALCULATOR =
-    'mediapipe.tasks.text.text_embedder.TextEmbedderGraph';
+  'mediapipe.tasks.text.text_embedder.TextEmbedderGraph';
 
 /**
  * Performs embedding extraction on text.
@@ -60,10 +63,15 @@ export class TextEmbedder extends TaskRunner {
    *     provided (via `baseOptions`).
    */
   static createFromOptions(
-      wasmFileset: WasmFileset,
-      textEmbedderOptions: TextEmbedderOptions): Promise<TextEmbedder> {
+    wasmFileset: WasmFileset,
+    textEmbedderOptions: TextEmbedderOptions,
+  ): Promise<TextEmbedder> {
     return TaskRunner.createInstance(
-        TextEmbedder, /* canvas= */ null, wasmFileset, textEmbedderOptions);
+      TextEmbedder,
+      /* canvas= */ null,
+      wasmFileset,
+      textEmbedderOptions,
+    );
   }
 
   /**
@@ -72,14 +80,19 @@ export class TextEmbedder extends TaskRunner {
    * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
-   * @param modelAssetBuffer A binary representation of the TFLite model.
+   * @param modelAssetBuffer An array or a stream containing a binary
+   *    representation of the model.
    */
   static createFromModelBuffer(
-      wasmFileset: WasmFileset,
-      modelAssetBuffer: Uint8Array): Promise<TextEmbedder> {
+    wasmFileset: WasmFileset,
+    modelAssetBuffer: Uint8Array | ReadableStreamDefaultReader,
+  ): Promise<TextEmbedder> {
     return TaskRunner.createInstance(
-        TextEmbedder, /* canvas= */ null, wasmFileset,
-        {baseOptions: {modelAssetBuffer}});
+      TextEmbedder,
+      /* canvas= */ null,
+      wasmFileset,
+      {baseOptions: {modelAssetBuffer}},
+    );
   }
 
   /**
@@ -91,17 +104,22 @@ export class TextEmbedder extends TaskRunner {
    * @param modelAssetPath The path to the TFLite model.
    */
   static createFromModelPath(
-      wasmFileset: WasmFileset,
-      modelAssetPath: string): Promise<TextEmbedder> {
+    wasmFileset: WasmFileset,
+    modelAssetPath: string,
+  ): Promise<TextEmbedder> {
     return TaskRunner.createInstance(
-        TextEmbedder, /* canvas= */ null, wasmFileset,
-        {baseOptions: {modelAssetPath}});
+      TextEmbedder,
+      /* canvas= */ null,
+      wasmFileset,
+      {baseOptions: {modelAssetPath}},
+    );
   }
 
   /** @hideconstructor */
   constructor(
-      wasmModule: WasmModule,
-      glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
+    wasmModule: WasmModule,
+    glCanvas?: HTMLCanvasElement | OffscreenCanvas | null,
+  ) {
     super(new CachedGraphRunner(wasmModule, glCanvas));
     this.options.setBaseOptions(new BaseOptionsProto());
   }
@@ -117,8 +135,9 @@ export class TextEmbedder extends TaskRunner {
    * @param options The options for the text embedder.
    */
   override setOptions(options: TextEmbedderOptions): Promise<void> {
-    this.options.setEmbedderOptions(convertEmbedderOptionsToProto(
-        options, this.options.getEmbedderOptions()));
+    this.options.setEmbedderOptions(
+      convertEmbedderOptionsToProto(options, this.options.getEmbedderOptions()),
+    );
     return this.applyOptions(options);
   }
 
@@ -140,7 +159,10 @@ export class TextEmbedder extends TaskRunner {
    */
   embed(text: string): TextEmbedderResult {
     this.graphRunner.addStringToStream(
-        text, INPUT_STREAM, this.getSynctheticTimestamp());
+      text,
+      INPUT_STREAM,
+      this.getSynctheticTimestamp(),
+    );
     this.finishProcessing();
     return this.embeddingResult;
   }
@@ -167,7 +189,9 @@ export class TextEmbedder extends TaskRunner {
 
     const calculatorOptions = new CalculatorOptions();
     calculatorOptions.setExtension(
-        TextEmbedderGraphOptionsProto.ext, this.options);
+      TextEmbedderGraphOptionsProto.ext,
+      this.options,
+    );
 
     const embedderNode = new CalculatorGraphConfig.Node();
     embedderNode.setCalculator(TEXT_EMBEDDER_CALCULATOR);
@@ -178,21 +202,23 @@ export class TextEmbedder extends TaskRunner {
     graphConfig.addNode(embedderNode);
 
     this.graphRunner.attachProtoListener(
-        EMBEDDINGS_STREAM, (binaryProto, timestamp) => {
-          const embeddingResult =
-              EmbeddingResult.deserializeBinary(binaryProto);
-          this.embeddingResult =
-              convertFromEmbeddingResultProto(embeddingResult);
-          this.setLatestOutputTimestamp(timestamp);
-        });
-    this.graphRunner.attachEmptyPacketListener(EMBEDDINGS_STREAM, timestamp => {
-      this.setLatestOutputTimestamp(timestamp);
-    });
+      EMBEDDINGS_STREAM,
+      (binaryProto, timestamp) => {
+        const embeddingResult = EmbeddingResult.deserializeBinary(binaryProto);
+        this.embeddingResult = convertFromEmbeddingResultProto(embeddingResult);
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
+    this.graphRunner.attachEmptyPacketListener(
+      EMBEDDINGS_STREAM,
+      (timestamp) => {
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
 
     const binaryGraph = graphConfig.serializeBinary();
     this.setGraph(new Uint8Array(binaryGraph), /* isBinary= */ true);
   }
 }
-
 
 

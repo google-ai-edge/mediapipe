@@ -21,7 +21,10 @@ import {BaseOptions as BaseOptionsProto} from '../../../../tasks/cc/core/proto/b
 import {TextClassifierGraphOptions} from '../../../../tasks/cc/text/text_classifier/proto/text_classifier_graph_options_pb';
 import {convertClassifierOptionsToProto} from '../../../../tasks/web/components/processors/classifier_options';
 import {convertFromClassificationResultProto} from '../../../../tasks/web/components/processors/classifier_result';
-import {CachedGraphRunner, TaskRunner} from '../../../../tasks/web/core/task_runner';
+import {
+  CachedGraphRunner,
+  TaskRunner,
+} from '../../../../tasks/web/core/task_runner';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {WasmModule} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
@@ -35,7 +38,7 @@ export * from './text_classifier_result';
 const INPUT_STREAM = 'text_in';
 const CLASSIFICATIONS_STREAM = 'classifications_out';
 const TEXT_CLASSIFIER_GRAPH =
-    'mediapipe.tasks.text.text_classifier.TextClassifierGraph';
+  'mediapipe.tasks.text.text_classifier.TextClassifierGraph';
 
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern
@@ -56,11 +59,15 @@ export class TextClassifier extends TaskRunner {
    *     provided (via `baseOptions`).
    */
   static createFromOptions(
-      wasmFileset: WasmFileset,
-      textClassifierOptions: TextClassifierOptions): Promise<TextClassifier> {
+    wasmFileset: WasmFileset,
+    textClassifierOptions: TextClassifierOptions,
+  ): Promise<TextClassifier> {
     return TaskRunner.createInstance(
-        TextClassifier, /* canvas= */ null, wasmFileset,
-        textClassifierOptions);
+      TextClassifier,
+      /* canvas= */ null,
+      wasmFileset,
+      textClassifierOptions,
+    );
   }
 
   /**
@@ -69,14 +76,19 @@ export class TextClassifier extends TaskRunner {
    * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
-   * @param modelAssetBuffer A binary representation of the model.
+   * @param modelAssetBuffer An array or a stream containing a binary
+   *    representation of the model.
    */
   static createFromModelBuffer(
-      wasmFileset: WasmFileset,
-      modelAssetBuffer: Uint8Array): Promise<TextClassifier> {
+    wasmFileset: WasmFileset,
+    modelAssetBuffer: Uint8Array | ReadableStreamDefaultReader,
+  ): Promise<TextClassifier> {
     return TaskRunner.createInstance(
-        TextClassifier, /* canvas= */ null, wasmFileset,
-        {baseOptions: {modelAssetBuffer}});
+      TextClassifier,
+      /* canvas= */ null,
+      wasmFileset,
+      {baseOptions: {modelAssetBuffer}},
+    );
   }
 
   /**
@@ -88,17 +100,22 @@ export class TextClassifier extends TaskRunner {
    * @param modelAssetPath The path to the model asset.
    */
   static createFromModelPath(
-      wasmFileset: WasmFileset,
-      modelAssetPath: string): Promise<TextClassifier> {
+    wasmFileset: WasmFileset,
+    modelAssetPath: string,
+  ): Promise<TextClassifier> {
     return TaskRunner.createInstance(
-        TextClassifier, /* canvas= */ null, wasmFileset,
-        {baseOptions: {modelAssetPath}});
+      TextClassifier,
+      /* canvas= */ null,
+      wasmFileset,
+      {baseOptions: {modelAssetPath}},
+    );
   }
 
   /** @hideconstructor */
   constructor(
-      wasmModule: WasmModule,
-      glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
+    wasmModule: WasmModule,
+    glCanvas?: HTMLCanvasElement | OffscreenCanvas | null,
+  ) {
     super(new CachedGraphRunner(wasmModule, glCanvas));
     this.options.setBaseOptions(new BaseOptionsProto());
   }
@@ -114,8 +131,12 @@ export class TextClassifier extends TaskRunner {
    * @param options The options for the text classifier.
    */
   override setOptions(options: TextClassifierOptions): Promise<void> {
-    this.options.setClassifierOptions(convertClassifierOptionsToProto(
-        options, this.options.getClassifierOptions()));
+    this.options.setClassifierOptions(
+      convertClassifierOptionsToProto(
+        options,
+        this.options.getClassifierOptions(),
+      ),
+    );
     return this.applyOptions(options);
   }
 
@@ -138,7 +159,10 @@ export class TextClassifier extends TaskRunner {
   classify(text: string): TextClassifierResult {
     this.classificationResult = {classifications: []};
     this.graphRunner.addStringToStream(
-        text, INPUT_STREAM, this.getSynctheticTimestamp());
+      text,
+      INPUT_STREAM,
+      this.getSynctheticTimestamp(),
+    );
     this.finishProcessing();
     return this.classificationResult;
   }
@@ -151,7 +175,9 @@ export class TextClassifier extends TaskRunner {
 
     const calculatorOptions = new CalculatorOptions();
     calculatorOptions.setExtension(
-        TextClassifierGraphOptions.ext, this.options);
+      TextClassifierGraphOptions.ext,
+      this.options,
+    );
 
     const classifierNode = new CalculatorGraphConfig.Node();
     classifierNode.setCalculator(TEXT_CLASSIFIER_GRAPH);
@@ -162,20 +188,24 @@ export class TextClassifier extends TaskRunner {
     graphConfig.addNode(classifierNode);
 
     this.graphRunner.attachProtoListener(
-        CLASSIFICATIONS_STREAM, (binaryProto, timestamp) => {
-          this.classificationResult = convertFromClassificationResultProto(
-              ClassificationResult.deserializeBinary(binaryProto));
-          this.setLatestOutputTimestamp(timestamp);
-        });
+      CLASSIFICATIONS_STREAM,
+      (binaryProto, timestamp) => {
+        this.classificationResult = convertFromClassificationResultProto(
+          ClassificationResult.deserializeBinary(binaryProto),
+        );
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
     this.graphRunner.attachEmptyPacketListener(
-        CLASSIFICATIONS_STREAM, timestamp => {
-          this.setLatestOutputTimestamp(timestamp);
-        });
+      CLASSIFICATIONS_STREAM,
+      (timestamp) => {
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
 
     const binaryGraph = graphConfig.serializeBinary();
     this.setGraph(new Uint8Array(binaryGraph), /* isBinary= */ true);
   }
 }
-
 
 

@@ -22,8 +22,14 @@ import {ObjectDetectorOptions as ObjectDetectorOptionsProto} from '../../../../t
 import {convertFromDetectionProto} from '../../../../tasks/web/components/processors/detection_result';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {ImageProcessingOptions} from '../../../../tasks/web/vision/core/image_processing_options';
-import {VisionGraphRunner, VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
-import {ImageSource, WasmModule} from '../../../../web/graph_runner/graph_runner';
+import {
+  VisionGraphRunner,
+  VisionTaskRunner,
+} from '../../../../tasks/web/vision/core/vision_task_runner';
+import {
+  ImageSource,
+  WasmModule,
+} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
 import {ObjectDetectorOptions} from './object_detector_options';
@@ -36,7 +42,7 @@ const OBJECT_DETECTOR_GRAPH = 'mediapipe.tasks.vision.ObjectDetectorGraph';
 
 export * from './object_detector_options';
 export * from './object_detector_result';
-export {type ImageSource};  // Used in the public API
+export {type ImageSource}; // Used in the public API
 
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern
@@ -59,10 +65,14 @@ export class ObjectDetector extends VisionTaskRunner {
    *     provided (via `baseOptions`).
    */
   static createFromOptions(
-      wasmFileset: WasmFileset,
-      objectDetectorOptions: ObjectDetectorOptions): Promise<ObjectDetector> {
+    wasmFileset: WasmFileset,
+    objectDetectorOptions: ObjectDetectorOptions,
+  ): Promise<ObjectDetector> {
     return VisionTaskRunner.createVisionInstance(
-        ObjectDetector, wasmFileset, objectDetectorOptions);
+      ObjectDetector,
+      wasmFileset,
+      objectDetectorOptions,
+    );
   }
 
   /**
@@ -71,13 +81,16 @@ export class ObjectDetector extends VisionTaskRunner {
    * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
-   * @param modelAssetBuffer A binary representation of the model.
+   * @param modelAssetBuffer An array or a stream containing a binary
+   *    representation of the model.
    */
   static createFromModelBuffer(
-      wasmFileset: WasmFileset,
-      modelAssetBuffer: Uint8Array): Promise<ObjectDetector> {
-    return VisionTaskRunner.createVisionInstance(
-        ObjectDetector, wasmFileset, {baseOptions: {modelAssetBuffer}});
+    wasmFileset: WasmFileset,
+    modelAssetBuffer: Uint8Array | ReadableStreamDefaultReader,
+  ): Promise<ObjectDetector> {
+    return VisionTaskRunner.createVisionInstance(ObjectDetector, wasmFileset, {
+      baseOptions: {modelAssetBuffer},
+    });
   }
 
   /**
@@ -89,19 +102,25 @@ export class ObjectDetector extends VisionTaskRunner {
    * @param modelAssetPath The path to the model asset.
    */
   static async createFromModelPath(
-      wasmFileset: WasmFileset,
-      modelAssetPath: string): Promise<ObjectDetector> {
-    return VisionTaskRunner.createVisionInstance(
-        ObjectDetector, wasmFileset, {baseOptions: {modelAssetPath}});
+    wasmFileset: WasmFileset,
+    modelAssetPath: string,
+  ): Promise<ObjectDetector> {
+    return VisionTaskRunner.createVisionInstance(ObjectDetector, wasmFileset, {
+      baseOptions: {modelAssetPath},
+    });
   }
 
   /** @hideconstructor */
   constructor(
-      wasmModule: WasmModule,
-      glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
+    wasmModule: WasmModule,
+    glCanvas?: HTMLCanvasElement | OffscreenCanvas | null,
+  ) {
     super(
-        new VisionGraphRunner(wasmModule, glCanvas), IMAGE_STREAM,
-        NORM_RECT_STREAM, /* roiAllowed= */ false);
+      new VisionGraphRunner(wasmModule, glCanvas),
+      IMAGE_STREAM,
+      NORM_RECT_STREAM,
+      /* roiAllowed= */ false,
+    );
     this.options.setBaseOptions(new BaseOptionsProto());
   }
 
@@ -129,31 +148,36 @@ export class ObjectDetector extends VisionTaskRunner {
     // `undefined`.
     if (options.displayNamesLocale !== undefined) {
       this.options.setDisplayNamesLocale(options.displayNamesLocale);
-    } else if ('displayNamesLocale' in options) {  // Check for undefined
+    } else if ('displayNamesLocale' in options) {
+      // Check for undefined
       this.options.clearDisplayNamesLocale();
     }
 
     if (options.maxResults !== undefined) {
       this.options.setMaxResults(options.maxResults);
-    } else if ('maxResults' in options) {  // Check for undefined
+    } else if ('maxResults' in options) {
+      // Check for undefined
       this.options.clearMaxResults();
     }
 
     if (options.scoreThreshold !== undefined) {
       this.options.setScoreThreshold(options.scoreThreshold);
-    } else if ('scoreThreshold' in options) {  // Check for undefined
+    } else if ('scoreThreshold' in options) {
+      // Check for undefined
       this.options.clearScoreThreshold();
     }
 
     if (options.categoryAllowlist !== undefined) {
       this.options.setCategoryAllowlistList(options.categoryAllowlist);
-    } else if ('categoryAllowlist' in options) {  // Check for undefined
+    } else if ('categoryAllowlist' in options) {
+      // Check for undefined
       this.options.clearCategoryAllowlistList();
     }
 
     if (options.categoryDenylist !== undefined) {
       this.options.setCategoryDenylistList(options.categoryDenylist);
-    } else if ('categoryDenylist' in options) {  // Check for undefined
+    } else if ('categoryDenylist' in options) {
+      // Check for undefined
       this.options.clearCategoryDenylistList();
     }
 
@@ -171,8 +195,10 @@ export class ObjectDetector extends VisionTaskRunner {
    *    to process the input image before running inference.
    * @return A result containing a list of detected objects.
    */
-  detect(image: ImageSource, imageProcessingOptions?: ImageProcessingOptions):
-      ObjectDetectorResult {
+  detect(
+    image: ImageSource,
+    imageProcessingOptions?: ImageProcessingOptions,
+  ): ObjectDetectorResult {
     this.result = {detections: []};
     this.processImageData(image, imageProcessingOptions);
     return this.result;
@@ -191,8 +217,10 @@ export class ObjectDetector extends VisionTaskRunner {
    * @return A result containing a list of detected objects.
    */
   detectForVideo(
-      videoFrame: ImageSource, timestamp: number,
-      imageProcessingOptions?: ImageProcessingOptions): ObjectDetectorResult {
+    videoFrame: ImageSource,
+    timestamp: number,
+    imageProcessingOptions?: ImageProcessingOptions,
+  ): ObjectDetectorResult {
     this.result = {detections: []};
     this.processVideoData(videoFrame, imageProcessingOptions, timestamp);
     return this.result;
@@ -215,7 +243,9 @@ export class ObjectDetector extends VisionTaskRunner {
 
     const calculatorOptions = new CalculatorOptions();
     calculatorOptions.setExtension(
-        ObjectDetectorOptionsProto.ext, this.options);
+      ObjectDetectorOptionsProto.ext,
+      this.options,
+    );
 
     const detectorNode = new CalculatorGraphConfig.Node();
     detectorNode.setCalculator(OBJECT_DETECTOR_GRAPH);
@@ -227,14 +257,18 @@ export class ObjectDetector extends VisionTaskRunner {
     graphConfig.addNode(detectorNode);
 
     this.graphRunner.attachProtoVectorListener(
-        DETECTIONS_STREAM, (binaryProto, timestamp) => {
-          this.addJsObjectDetections(binaryProto);
-          this.setLatestOutputTimestamp(timestamp);
-        });
+      DETECTIONS_STREAM,
+      (binaryProto, timestamp) => {
+        this.addJsObjectDetections(binaryProto);
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
     this.graphRunner.attachEmptyPacketListener(
-        DETECTIONS_STREAM, timestamp => {
-          this.setLatestOutputTimestamp(timestamp);
-        });
+      DETECTIONS_STREAM,
+      (timestamp) => {
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
 
     const binaryGraph = graphConfig.serializeBinary();
     this.setGraph(new Uint8Array(binaryGraph), /* isBinary= */ true);

@@ -22,8 +22,14 @@ import {FaceDetectorGraphOptions as FaceDetectorGraphOptionsProto} from '../../.
 import {convertFromDetectionProto} from '../../../../tasks/web/components/processors/detection_result';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {ImageProcessingOptions} from '../../../../tasks/web/vision/core/image_processing_options';
-import {VisionGraphRunner, VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
-import {ImageSource, WasmModule} from '../../../../web/graph_runner/graph_runner';
+import {
+  VisionGraphRunner,
+  VisionTaskRunner,
+} from '../../../../tasks/web/vision/core/vision_task_runner';
+import {
+  ImageSource,
+  WasmModule,
+} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
 import {FaceDetectorOptions} from './face_detector_options';
@@ -33,11 +39,11 @@ const IMAGE_STREAM = 'image_in';
 const NORM_RECT_STREAM = 'norm_rect_in';
 const DETECTIONS_STREAM = 'detections';
 const FACE_DETECTOR_GRAPH =
-    'mediapipe.tasks.vision.face_detector.FaceDetectorGraph';
+  'mediapipe.tasks.vision.face_detector.FaceDetectorGraph';
 
 export * from './face_detector_options';
 export * from './face_detector_result';
-export {type ImageSource};  // Used in the public API
+export {type ImageSource}; // Used in the public API
 
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern
@@ -59,10 +65,14 @@ export class FaceDetector extends VisionTaskRunner {
    *     provided (via `baseOptions`).
    */
   static createFromOptions(
-      wasmFileset: WasmFileset,
-      faceDetectorOptions: FaceDetectorOptions): Promise<FaceDetector> {
+    wasmFileset: WasmFileset,
+    faceDetectorOptions: FaceDetectorOptions,
+  ): Promise<FaceDetector> {
     return VisionTaskRunner.createVisionInstance(
-        FaceDetector, wasmFileset, faceDetectorOptions);
+      FaceDetector,
+      wasmFileset,
+      faceDetectorOptions,
+    );
   }
 
   /**
@@ -72,13 +82,16 @@ export class FaceDetector extends VisionTaskRunner {
    * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
-   * @param modelAssetBuffer A binary representation of the model.
+   * @param modelAssetBuffer An array or a stream containing a binary
+   *    representation of the model.
    */
   static createFromModelBuffer(
-      wasmFileset: WasmFileset,
-      modelAssetBuffer: Uint8Array): Promise<FaceDetector> {
-    return VisionTaskRunner.createVisionInstance(
-        FaceDetector, wasmFileset, {baseOptions: {modelAssetBuffer}});
+    wasmFileset: WasmFileset,
+    modelAssetBuffer: Uint8Array | ReadableStreamDefaultReader,
+  ): Promise<FaceDetector> {
+    return VisionTaskRunner.createVisionInstance(FaceDetector, wasmFileset, {
+      baseOptions: {modelAssetBuffer},
+    });
   }
 
   /**
@@ -91,19 +104,25 @@ export class FaceDetector extends VisionTaskRunner {
    * @param modelAssetPath The path to the model asset.
    */
   static async createFromModelPath(
-      wasmFileset: WasmFileset,
-      modelAssetPath: string): Promise<FaceDetector> {
-    return VisionTaskRunner.createVisionInstance(
-        FaceDetector, wasmFileset, {baseOptions: {modelAssetPath}});
+    wasmFileset: WasmFileset,
+    modelAssetPath: string,
+  ): Promise<FaceDetector> {
+    return VisionTaskRunner.createVisionInstance(FaceDetector, wasmFileset, {
+      baseOptions: {modelAssetPath},
+    });
   }
 
   /** @hideconstructor */
   constructor(
-      wasmModule: WasmModule,
-      glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
+    wasmModule: WasmModule,
+    glCanvas?: HTMLCanvasElement | OffscreenCanvas | null,
+  ) {
     super(
-        new VisionGraphRunner(wasmModule, glCanvas), IMAGE_STREAM,
-        NORM_RECT_STREAM, /* roiAllowed= */ false);
+      new VisionGraphRunner(wasmModule, glCanvas),
+      IMAGE_STREAM,
+      NORM_RECT_STREAM,
+      /* roiAllowed= */ false,
+    );
     this.options.setBaseOptions(new BaseOptionsProto());
     this.options.setMinDetectionConfidence(0.5);
     this.options.setMinSuppressionThreshold(0.3);
@@ -130,11 +149,13 @@ export class FaceDetector extends VisionTaskRunner {
   override setOptions(options: FaceDetectorOptions): Promise<void> {
     if ('minDetectionConfidence' in options) {
       this.options.setMinDetectionConfidence(
-          options.minDetectionConfidence ?? 0.5);
+        options.minDetectionConfidence ?? 0.5,
+      );
     }
     if ('minSuppressionThreshold' in options) {
       this.options.setMinSuppressionThreshold(
-          options.minSuppressionThreshold ?? 0.3);
+        options.minSuppressionThreshold ?? 0.3,
+      );
     }
     return this.applyOptions(options);
   }
@@ -150,8 +171,10 @@ export class FaceDetector extends VisionTaskRunner {
    *    to process the input image before running inference.
    * @return A result containing the list of detected faces.
    */
-  detect(image: ImageSource, imageProcessingOptions?: ImageProcessingOptions):
-      FaceDetectorResult {
+  detect(
+    image: ImageSource,
+    imageProcessingOptions?: ImageProcessingOptions,
+  ): FaceDetectorResult {
     this.result = {detections: []};
     this.processImageData(image, imageProcessingOptions);
     return this.result;
@@ -170,8 +193,10 @@ export class FaceDetector extends VisionTaskRunner {
    * @return A result containing the list of detected faces.
    */
   detectForVideo(
-      videoFrame: ImageSource, timestamp: number,
-      imageProcessingOptions?: ImageProcessingOptions): FaceDetectorResult {
+    videoFrame: ImageSource,
+    timestamp: number,
+    imageProcessingOptions?: ImageProcessingOptions,
+  ): FaceDetectorResult {
     this.result = {detections: []};
     this.processVideoData(videoFrame, imageProcessingOptions, timestamp);
     return this.result;
@@ -194,7 +219,9 @@ export class FaceDetector extends VisionTaskRunner {
 
     const calculatorOptions = new CalculatorOptions();
     calculatorOptions.setExtension(
-        FaceDetectorGraphOptionsProto.ext, this.options);
+      FaceDetectorGraphOptionsProto.ext,
+      this.options,
+    );
 
     const detectorNode = new CalculatorGraphConfig.Node();
     detectorNode.setCalculator(FACE_DETECTOR_GRAPH);
@@ -206,13 +233,18 @@ export class FaceDetector extends VisionTaskRunner {
     graphConfig.addNode(detectorNode);
 
     this.graphRunner.attachProtoVectorListener(
-        DETECTIONS_STREAM, (binaryProto, timestamp) => {
-          this.addJsFaceDetections(binaryProto);
-          this.setLatestOutputTimestamp(timestamp);
-        });
-    this.graphRunner.attachEmptyPacketListener(DETECTIONS_STREAM, timestamp => {
-      this.setLatestOutputTimestamp(timestamp);
-    });
+      DETECTIONS_STREAM,
+      (binaryProto, timestamp) => {
+        this.addJsFaceDetections(binaryProto);
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
+    this.graphRunner.attachEmptyPacketListener(
+      DETECTIONS_STREAM,
+      (timestamp) => {
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
 
     const binaryGraph = graphConfig.serializeBinary();
     this.setGraph(new Uint8Array(binaryGraph), /* isBinary= */ true);

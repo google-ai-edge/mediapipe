@@ -149,7 +149,8 @@ export class LlmInference extends TaskRunner {
    * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
-   * @param modelAssetBuffer A binary representation of the model.
+   * @param modelAssetBuffer An array or a stream containing a binary
+   *    representation of the model.
    */
   static async createFromModelBuffer(
     wasmFileset: WasmFileset,

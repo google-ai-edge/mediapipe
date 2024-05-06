@@ -34,7 +34,7 @@ export * from './audio_classifier_options';
 export * from './audio_classifier_result';
 
 const MEDIAPIPE_GRAPH =
-    'mediapipe.tasks.audio.audio_classifier.AudioClassifierGraph';
+  'mediapipe.tasks.audio.audio_classifier.AudioClassifierGraph';
 
 const AUDIO_STREAM = 'audio_in';
 const SAMPLE_RATE_STREAM = 'sample_rate';
@@ -59,10 +59,14 @@ export class AudioClassifier extends AudioTaskRunner<AudioClassifierResult[]> {
    *     provided (via `baseOptions`).
    */
   static createFromOptions(
-      wasmFileset: WasmFileset, audioClassifierOptions: AudioClassifierOptions):
-      Promise<AudioClassifier> {
+    wasmFileset: WasmFileset,
+    audioClassifierOptions: AudioClassifierOptions,
+  ): Promise<AudioClassifier> {
     return AudioTaskRunner.createAudioInstance(
-        AudioClassifier, wasmFileset, audioClassifierOptions);
+      AudioClassifier,
+      wasmFileset,
+      audioClassifierOptions,
+    );
   }
 
   /**
@@ -71,13 +75,16 @@ export class AudioClassifier extends AudioTaskRunner<AudioClassifierResult[]> {
    * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
-   * @param modelAssetBuffer A binary representation of the model.
+   * @param modelAssetBuffer An array or a stream containing a binary
+   *    representation of the model.
    */
   static createFromModelBuffer(
-      wasmFileset: WasmFileset,
-      modelAssetBuffer: Uint8Array): Promise<AudioClassifier> {
-    return AudioTaskRunner.createAudioInstance(
-        AudioClassifier, wasmFileset, {baseOptions: {modelAssetBuffer}});
+    wasmFileset: WasmFileset,
+    modelAssetBuffer: Uint8Array | ReadableStreamDefaultReader,
+  ): Promise<AudioClassifier> {
+    return AudioTaskRunner.createAudioInstance(AudioClassifier, wasmFileset, {
+      baseOptions: {modelAssetBuffer},
+    });
   }
 
   /**
@@ -89,17 +96,22 @@ export class AudioClassifier extends AudioTaskRunner<AudioClassifierResult[]> {
    * @param modelAssetPath The path to the model asset.
    */
   static createFromModelPath(
-      wasmFileset: WasmFileset,
-      modelAssetPath: string): Promise<AudioClassifier> {
+    wasmFileset: WasmFileset,
+    modelAssetPath: string,
+  ): Promise<AudioClassifier> {
     return AudioTaskRunner.createInstance(
-        AudioClassifier, /* canvas= */ null, wasmFileset,
-        {baseOptions: {modelAssetPath}});
+      AudioClassifier,
+      /* canvas= */ null,
+      wasmFileset,
+      {baseOptions: {modelAssetPath}},
+    );
   }
 
   /** @hideconstructor */
   constructor(
-      wasmModule: WasmModule,
-      glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
+    wasmModule: WasmModule,
+    glCanvas?: HTMLCanvasElement | OffscreenCanvas | null,
+  ) {
     super(new CachedGraphRunner(wasmModule, glCanvas));
     this.options.setBaseOptions(new BaseOptionsProto());
   }
@@ -123,8 +135,12 @@ export class AudioClassifier extends AudioTaskRunner<AudioClassifierResult[]> {
    * @param options The options for the audio classifier.
    */
   override setOptions(options: AudioClassifierOptions): Promise<void> {
-    this.options.setClassifierOptions(convertClassifierOptionsToProto(
-        options, this.options.getClassifierOptions()));
+    this.options.setClassifierOptions(
+      convertClassifierOptionsToProto(
+        options,
+        this.options.getClassifierOptions(),
+      ),
+    );
     return this.applyOptions(options);
   }
 
@@ -142,20 +158,31 @@ export class AudioClassifier extends AudioTaskRunner<AudioClassifierResult[]> {
    *     `48000` if no custom default was set.
    * @return The classification result of the audio data
    */
-  classify(audioData: Float32Array, sampleRate?: number):
-      AudioClassifierResult[] {
+  classify(
+    audioData: Float32Array,
+    sampleRate?: number,
+  ): AudioClassifierResult[] {
     return this.processAudioClip(audioData, sampleRate);
   }
 
   /** Sends an audio package to the graph and returns the classifications. */
   protected override process(
-      audioData: Float32Array, sampleRate: number,
-      timestampMs: number): AudioClassifierResult[] {
+    audioData: Float32Array,
+    sampleRate: number,
+    timestampMs: number,
+  ): AudioClassifierResult[] {
     this.graphRunner.addDoubleToStream(
-        sampleRate, SAMPLE_RATE_STREAM, timestampMs);
+      sampleRate,
+      SAMPLE_RATE_STREAM,
+      timestampMs,
+    );
     this.graphRunner.addAudioToStreamWithShape(
-        audioData, /* numChannels= */ 1, /* numSamples= */ audioData.length,
-        AUDIO_STREAM, timestampMs);
+      audioData,
+      /* numChannels= */ 1,
+      /* numSamples= */ audioData.length,
+      AUDIO_STREAM,
+      timestampMs,
+    );
 
     this.classificationResults = [];
     this.finishProcessing();
@@ -167,11 +194,12 @@ export class AudioClassifier extends AudioTaskRunner<AudioClassifierResult[]> {
    * adding them to our classfication results list.
    **/
   private addJsAudioClassificationResults(binaryProtos: Uint8Array[]): void {
-    binaryProtos.forEach(binaryProto => {
+    binaryProtos.forEach((binaryProto) => {
       const classificationResult =
-          ClassificationResult.deserializeBinary(binaryProto);
+        ClassificationResult.deserializeBinary(binaryProto);
       this.classificationResults.push(
-          convertFromClassificationResultProto(classificationResult));
+        convertFromClassificationResultProto(classificationResult),
+      );
     });
   }
 
@@ -184,7 +212,9 @@ export class AudioClassifier extends AudioTaskRunner<AudioClassifierResult[]> {
 
     const calculatorOptions = new CalculatorOptions();
     calculatorOptions.setExtension(
-        AudioClassifierGraphOptions.ext, this.options);
+      AudioClassifierGraphOptions.ext,
+      this.options,
+    );
 
     // Perform audio classification. Pre-processing and results post-processing
     // are built-in.
@@ -193,20 +223,25 @@ export class AudioClassifier extends AudioTaskRunner<AudioClassifierResult[]> {
     classifierNode.addInputStream('AUDIO:' + AUDIO_STREAM);
     classifierNode.addInputStream('SAMPLE_RATE:' + SAMPLE_RATE_STREAM);
     classifierNode.addOutputStream(
-        'TIMESTAMPED_CLASSIFICATIONS:' + TIMESTAMPED_CLASSIFICATIONS_STREAM);
+      'TIMESTAMPED_CLASSIFICATIONS:' + TIMESTAMPED_CLASSIFICATIONS_STREAM,
+    );
     classifierNode.setOptions(calculatorOptions);
 
     graphConfig.addNode(classifierNode);
 
     this.graphRunner.attachProtoVectorListener(
-        TIMESTAMPED_CLASSIFICATIONS_STREAM, (binaryProtos, timestamp) => {
-          this.addJsAudioClassificationResults(binaryProtos);
-          this.setLatestOutputTimestamp(timestamp);
-        });
+      TIMESTAMPED_CLASSIFICATIONS_STREAM,
+      (binaryProtos, timestamp) => {
+        this.addJsAudioClassificationResults(binaryProtos);
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
     this.graphRunner.attachEmptyPacketListener(
-        TIMESTAMPED_CLASSIFICATIONS_STREAM, timestamp => {
-          this.setLatestOutputTimestamp(timestamp);
-        });
+      TIMESTAMPED_CLASSIFICATIONS_STREAM,
+      (timestamp) => {
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
 
     const binaryGraph = graphConfig.serializeBinary();
     this.setGraph(new Uint8Array(binaryGraph), /* isBinary= */ true);

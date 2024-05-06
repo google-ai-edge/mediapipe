@@ -21,20 +21,26 @@ import {FaceStylizerGraphOptions as FaceStylizerGraphOptionsProto} from '../../.
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {MPImage} from '../../../../tasks/web/vision/core/image';
 import {ImageProcessingOptions} from '../../../../tasks/web/vision/core/image_processing_options';
-import {VisionGraphRunner, VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
-import {ImageSource, WasmModule} from '../../../../web/graph_runner/graph_runner';
+import {
+  VisionGraphRunner,
+  VisionTaskRunner,
+} from '../../../../tasks/web/vision/core/vision_task_runner';
+import {
+  ImageSource,
+  WasmModule,
+} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
 import {FaceStylizerOptions} from './face_stylizer_options';
 
 export * from './face_stylizer_options';
-export {type ImageSource};  // Used in the public API
+export {type ImageSource}; // Used in the public API
 
 const IMAGE_STREAM = 'image_in';
 const NORM_RECT_STREAM = 'norm_rect';
 const STYLIZED_IMAGE_STREAM = 'stylized_image';
 const FACE_STYLIZER_GRAPH =
-    'mediapipe.tasks.vision.face_stylizer.FaceStylizerGraph';
+  'mediapipe.tasks.vision.face_stylizer.FaceStylizerGraph';
 
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern
@@ -46,12 +52,12 @@ const FACE_STYLIZER_GRAPH =
  * needed, all data needs to be copied before the callback returns (via
  * `image.clone()`).
  */
-export type FaceStylizerCallback = (image: MPImage|null) => void;
+export type FaceStylizerCallback = (image: MPImage | null) => void;
 
 /** Performs face stylization on images. */
 export class FaceStylizer extends VisionTaskRunner {
   private userCallback?: FaceStylizerCallback;
-  private result?: MPImage|null;
+  private result?: MPImage | null;
   private readonly options: FaceStylizerGraphOptionsProto;
 
   /**
@@ -65,10 +71,14 @@ export class FaceStylizer extends VisionTaskRunner {
    *     provided (via `baseOptions`).
    */
   static createFromOptions(
-      wasmFileset: WasmFileset,
-      faceStylizerOptions: FaceStylizerOptions): Promise<FaceStylizer> {
+    wasmFileset: WasmFileset,
+    faceStylizerOptions: FaceStylizerOptions,
+  ): Promise<FaceStylizer> {
     return VisionTaskRunner.createVisionInstance(
-        FaceStylizer, wasmFileset, faceStylizerOptions);
+      FaceStylizer,
+      wasmFileset,
+      faceStylizerOptions,
+    );
   }
 
   /**
@@ -77,13 +87,16 @@ export class FaceStylizer extends VisionTaskRunner {
    * @export
    * @param wasmFileset A configuration object that provides the location of
    *     the Wasm binary and its loader.
-   * @param modelAssetBuffer A binary representation of the model.
+   * @param modelAssetBuffer An array or a stream containing a binary
+   *    representation of the model.
    */
   static createFromModelBuffer(
-      wasmFileset: WasmFileset,
-      modelAssetBuffer: Uint8Array): Promise<FaceStylizer> {
-    return VisionTaskRunner.createVisionInstance(
-        FaceStylizer, wasmFileset, {baseOptions: {modelAssetBuffer}});
+    wasmFileset: WasmFileset,
+    modelAssetBuffer: Uint8Array | ReadableStreamDefaultReader,
+  ): Promise<FaceStylizer> {
+    return VisionTaskRunner.createVisionInstance(FaceStylizer, wasmFileset, {
+      baseOptions: {modelAssetBuffer},
+    });
   }
 
   /**
@@ -95,23 +108,28 @@ export class FaceStylizer extends VisionTaskRunner {
    * @param modelAssetPath The path to the model asset.
    */
   static createFromModelPath(
-      wasmFileset: WasmFileset,
-      modelAssetPath: string): Promise<FaceStylizer> {
-    return VisionTaskRunner.createVisionInstance(
-        FaceStylizer, wasmFileset, {baseOptions: {modelAssetPath}});
+    wasmFileset: WasmFileset,
+    modelAssetPath: string,
+  ): Promise<FaceStylizer> {
+    return VisionTaskRunner.createVisionInstance(FaceStylizer, wasmFileset, {
+      baseOptions: {modelAssetPath},
+    });
   }
 
   /** @hideconstructor */
   constructor(
-      wasmModule: WasmModule,
-      glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
+    wasmModule: WasmModule,
+    glCanvas?: HTMLCanvasElement | OffscreenCanvas | null,
+  ) {
     super(
-        new VisionGraphRunner(wasmModule, glCanvas), IMAGE_STREAM,
-        NORM_RECT_STREAM, /* roiAllowed= */ true);
+      new VisionGraphRunner(wasmModule, glCanvas),
+      IMAGE_STREAM,
+      NORM_RECT_STREAM,
+      /* roiAllowed= */ true,
+    );
     this.options = new FaceStylizerGraphOptionsProto();
     this.options.setBaseOptions(new BaseOptionsProto());
   }
-
 
   protected override get baseOptions(): BaseOptionsProto {
     return this.options.getBaseOptions()!;
@@ -170,8 +188,10 @@ export class FaceStylizer extends VisionTaskRunner {
    *    only guaranteed for the duration of the callback.
    */
   stylize(
-      image: ImageSource, imageProcessingOptions: ImageProcessingOptions,
-      callback: FaceStylizerCallback): void;
+    image: ImageSource,
+    imageProcessingOptions: ImageProcessingOptions,
+    callback: FaceStylizerCallback,
+  ): void;
   /**
    * Performs face stylization on the provided single image and returns the
    * result. This method creates a copy of the resulting image and should not be
@@ -182,7 +202,7 @@ export class FaceStylizer extends VisionTaskRunner {
    * @return A stylized face or `null` if no face was detected. The result is
    *     copied to avoid lifetime issues.
    */
-  stylize(image: ImageSource): MPImage|null;
+  stylize(image: ImageSource): MPImage | null;
   /**
    * Performs face stylization on the provided single image and returns the
    * result. This method creates a copy of the resulting image and should not be
@@ -204,22 +224,27 @@ export class FaceStylizer extends VisionTaskRunner {
    * @return A stylized face or `null` if no face was detected. The result is
    *     copied to avoid lifetime issues.
    */
-  stylize(image: ImageSource, imageProcessingOptions: ImageProcessingOptions):
-      MPImage|null;
+  stylize(
+    image: ImageSource,
+    imageProcessingOptions: ImageProcessingOptions,
+  ): MPImage | null;
   /** @export */
   stylize(
-      image: ImageSource,
-      imageProcessingOptionsOrCallback?: ImageProcessingOptions|
-      FaceStylizerCallback,
-      callback?: FaceStylizerCallback): MPImage|null|void {
+    image: ImageSource,
+    imageProcessingOptionsOrCallback?:
+      | ImageProcessingOptions
+      | FaceStylizerCallback,
+    callback?: FaceStylizerCallback,
+  ): MPImage | null | void {
     const imageProcessingOptions =
-        typeof imageProcessingOptionsOrCallback !== 'function' ?
-        imageProcessingOptionsOrCallback :
-        {};
+      typeof imageProcessingOptionsOrCallback !== 'function'
+        ? imageProcessingOptionsOrCallback
+        : {};
 
-    this.userCallback = typeof imageProcessingOptionsOrCallback === 'function' ?
-        imageProcessingOptionsOrCallback :
-        callback;
+    this.userCallback =
+      typeof imageProcessingOptionsOrCallback === 'function'
+        ? imageProcessingOptionsOrCallback
+        : callback;
     this.processImageData(image, imageProcessingOptions ?? {});
 
     if (!this.userCallback) {
@@ -236,7 +261,9 @@ export class FaceStylizer extends VisionTaskRunner {
 
     const calculatorOptions = new CalculatorOptions();
     calculatorOptions.setExtension(
-        FaceStylizerGraphOptionsProto.ext, this.options);
+      FaceStylizerGraphOptionsProto.ext,
+      this.options,
+    );
 
     const segmenterNode = new CalculatorGraphConfig.Node();
     segmenterNode.setCalculator(FACE_STYLIZER_GRAPH);
@@ -248,23 +275,29 @@ export class FaceStylizer extends VisionTaskRunner {
     graphConfig.addNode(segmenterNode);
 
     this.graphRunner.attachImageListener(
-        STYLIZED_IMAGE_STREAM, (wasmImage, timestamp) => {
-          const mpImage = this.convertToMPImage(
-              wasmImage, /* shouldCopyData= */ !this.userCallback);
-          this.result = mpImage;
-          if (this.userCallback) {
-            this.userCallback(mpImage);
-          }
-          this.setLatestOutputTimestamp(timestamp);
-        });
+      STYLIZED_IMAGE_STREAM,
+      (wasmImage, timestamp) => {
+        const mpImage = this.convertToMPImage(
+          wasmImage,
+          /* shouldCopyData= */ !this.userCallback,
+        );
+        this.result = mpImage;
+        if (this.userCallback) {
+          this.userCallback(mpImage);
+        }
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
     this.graphRunner.attachEmptyPacketListener(
-        STYLIZED_IMAGE_STREAM, timestamp => {
-          this.result = null;
-          if (this.userCallback) {
-            this.userCallback(null);
-          }
-          this.setLatestOutputTimestamp(timestamp);
-        });
+      STYLIZED_IMAGE_STREAM,
+      (timestamp) => {
+        this.result = null;
+        if (this.userCallback) {
+          this.userCallback(null);
+        }
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
 
     const binaryGraph = graphConfig.serializeBinary();
     this.setGraph(new Uint8Array(binaryGraph), /* isBinary= */ true);

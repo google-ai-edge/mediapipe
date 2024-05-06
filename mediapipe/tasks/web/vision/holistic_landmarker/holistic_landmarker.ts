@@ -18,7 +18,10 @@ import {Any} from 'google-protobuf/google/protobuf/any_pb';
 import {CalculatorGraphConfig} from '../../../../framework/calculator_pb';
 import {CalculatorOptions} from '../../../../framework/calculator_options_pb';
 import {ClassificationList as ClassificationListProto} from '../../../../framework/formats/classification_pb';
-import {LandmarkList, NormalizedLandmarkList} from '../../../../framework/formats/landmark_pb';
+import {
+  LandmarkList,
+  NormalizedLandmarkList,
+} from '../../../../framework/formats/landmark_pb';
 import {BaseOptions as BaseOptionsProto} from '../../../../tasks/cc/core/proto/base_options_pb';
 import {FaceDetectorGraphOptions} from '../../../../tasks/cc/vision/face_detector/proto/face_detector_graph_options_pb';
 import {FaceLandmarksDetectorGraphOptions} from '../../../../tasks/cc/vision/face_landmarker/proto/face_landmarks_detector_graph_options_pb';
@@ -28,16 +31,39 @@ import {HolisticLandmarkerGraphOptions} from '../../../../tasks/cc/vision/holist
 import {PoseDetectorGraphOptions} from '../../../../tasks/cc/vision/pose_detector/proto/pose_detector_graph_options_pb';
 import {PoseLandmarksDetectorGraphOptions} from '../../../../tasks/cc/vision/pose_landmarker/proto/pose_landmarks_detector_graph_options_pb';
 import {Classifications} from '../../../../tasks/web/components/containers/classification_result';
-import {Landmark, NormalizedLandmark} from '../../../../tasks/web/components/containers/landmark';
+import {
+  Landmark,
+  NormalizedLandmark,
+} from '../../../../tasks/web/components/containers/landmark';
 import {convertFromClassifications} from '../../../../tasks/web/components/processors/classifier_result';
-import {convertToLandmarks, convertToWorldLandmarks} from '../../../../tasks/web/components/processors/landmark_result';
+import {
+  convertToLandmarks,
+  convertToWorldLandmarks,
+} from '../../../../tasks/web/components/processors/landmark_result';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {ImageProcessingOptions} from '../../../../tasks/web/vision/core/image_processing_options';
-import {VisionGraphRunner, VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
-import {FACE_LANDMARKS_CONTOURS, FACE_LANDMARKS_FACE_OVAL, FACE_LANDMARKS_LEFT_EYE, FACE_LANDMARKS_LEFT_EYEBROW, FACE_LANDMARKS_LEFT_IRIS, FACE_LANDMARKS_LIPS, FACE_LANDMARKS_RIGHT_EYE, FACE_LANDMARKS_RIGHT_EYEBROW, FACE_LANDMARKS_RIGHT_IRIS, FACE_LANDMARKS_TESSELATION} from '../../../../tasks/web/vision/face_landmarker/face_landmarks_connections';
+import {
+  VisionGraphRunner,
+  VisionTaskRunner,
+} from '../../../../tasks/web/vision/core/vision_task_runner';
+import {
+  FACE_LANDMARKS_CONTOURS,
+  FACE_LANDMARKS_FACE_OVAL,
+  FACE_LANDMARKS_LEFT_EYE,
+  FACE_LANDMARKS_LEFT_EYEBROW,
+  FACE_LANDMARKS_LEFT_IRIS,
+  FACE_LANDMARKS_LIPS,
+  FACE_LANDMARKS_RIGHT_EYE,
+  FACE_LANDMARKS_RIGHT_EYEBROW,
+  FACE_LANDMARKS_RIGHT_IRIS,
+  FACE_LANDMARKS_TESSELATION,
+} from '../../../../tasks/web/vision/face_landmarker/face_landmarks_connections';
 import {HAND_CONNECTIONS} from '../../../../tasks/web/vision/hand_landmarker/hand_landmarks_connections';
 import {POSE_CONNECTIONS} from '../../../../tasks/web/vision/pose_landmarker/pose_landmarks_connections';
-import {ImageSource, WasmModule} from '../../../../web/graph_runner/graph_runner';
+import {
+  ImageSource,
+  WasmModule,
+} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
 import {HolisticLandmarkerOptions} from './holistic_landmarker_options';
@@ -63,7 +89,7 @@ const RIGHT_HAND_LANDMARKS_STREAM = 'right_hand_landmarks';
 const RIGHT_HAND_WORLD_LANDMARKS_STREAM = 'right_hand_world_landmarks';
 
 const HOLISTIC_LANDMARKER_GRAPH =
-    'mediapipe.tasks.vision.holistic_landmarker.HolisticLandmarkerGraph';
+  'mediapipe.tasks.vision.holistic_landmarker.HolisticLandmarkerGraph';
 
 const DEFAULT_SUPRESSION_THRESHOLD = 0.3;
 const DEFAULT_SCORE_THRESHOLD = 0.5;
@@ -74,8 +100,9 @@ const DEFAULT_SCORE_THRESHOLD = 0.5;
  * asynchronous processing is needed, the masks need to be copied before the
  * callback returns.
  */
-export type HolisticLandmarkerCallback = (result: HolisticLandmarkerResult) =>
-    void;
+export type HolisticLandmarkerCallback = (
+  result: HolisticLandmarkerResult,
+) => void;
 
 /** Performs holistic landmarks detection on images. */
 export class HolisticLandmarker extends VisionTaskRunner {
@@ -88,22 +115,19 @@ export class HolisticLandmarker extends VisionTaskRunner {
     leftHandLandmarks: [],
     leftHandWorldLandmarks: [],
     rightHandLandmarks: [],
-    rightHandWorldLandmarks: []
+    rightHandWorldLandmarks: [],
   };
   private outputFaceBlendshapes = false;
   private outputPoseSegmentationMasks = false;
   private userCallback?: HolisticLandmarkerCallback;
 
   private readonly options: HolisticLandmarkerGraphOptions;
-  private readonly handLandmarksDetectorGraphOptions:
-      HandLandmarksDetectorGraphOptions;
+  private readonly handLandmarksDetectorGraphOptions: HandLandmarksDetectorGraphOptions;
   private readonly handRoiRefinementGraphOptions: HandRoiRefinementGraphOptions;
   private readonly faceDetectorGraphOptions: FaceDetectorGraphOptions;
-  private readonly faceLandmarksDetectorGraphOptions:
-      FaceLandmarksDetectorGraphOptions;
+  private readonly faceLandmarksDetectorGraphOptions: FaceLandmarksDetectorGraphOptions;
   private readonly poseDetectorGraphOptions: PoseDetectorGraphOptions;
-  private readonly poseLandmarksDetectorGraphOptions:
-      PoseLandmarksDetectorGraphOptions;
+  private readonly poseLandmarksDetectorGraphOptions: PoseLandmarksDetectorGraphOptions;
 
   /**
    * An array containing the pairs of hand landmark indices to be rendered with
@@ -203,11 +227,14 @@ export class HolisticLandmarker extends VisionTaskRunner {
    *     be provided (via `baseOptions`).
    */
   static createFromOptions(
-      wasmFileset: WasmFileset,
-      holisticLandmarkerOptions: HolisticLandmarkerOptions):
-      Promise<HolisticLandmarker> {
+    wasmFileset: WasmFileset,
+    holisticLandmarkerOptions: HolisticLandmarkerOptions,
+  ): Promise<HolisticLandmarker> {
     return VisionTaskRunner.createVisionInstance(
-        HolisticLandmarker, wasmFileset, holisticLandmarkerOptions);
+      HolisticLandmarker,
+      wasmFileset,
+      holisticLandmarkerOptions,
+    );
   }
 
   /**
@@ -216,13 +243,18 @@ export class HolisticLandmarker extends VisionTaskRunner {
    * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
-   * @param modelAssetBuffer A binary representation of the model.
+   * @param modelAssetBuffer An array or a stream containing a binary
+   *    representation of the model.
    */
   static createFromModelBuffer(
-      wasmFileset: WasmFileset,
-      modelAssetBuffer: Uint8Array): Promise<HolisticLandmarker> {
+    wasmFileset: WasmFileset,
+    modelAssetBuffer: Uint8Array | ReadableStreamDefaultReader,
+  ): Promise<HolisticLandmarker> {
     return VisionTaskRunner.createVisionInstance(
-        HolisticLandmarker, wasmFileset, {baseOptions: {modelAssetBuffer}});
+      HolisticLandmarker,
+      wasmFileset,
+      {baseOptions: {modelAssetBuffer}},
+    );
   }
 
   /**
@@ -234,41 +266,53 @@ export class HolisticLandmarker extends VisionTaskRunner {
    * @param modelAssetPath The path to the model asset.
    */
   static createFromModelPath(
-      wasmFileset: WasmFileset,
-      modelAssetPath: string): Promise<HolisticLandmarker> {
+    wasmFileset: WasmFileset,
+    modelAssetPath: string,
+  ): Promise<HolisticLandmarker> {
     return VisionTaskRunner.createVisionInstance(
-        HolisticLandmarker, wasmFileset, {baseOptions: {modelAssetPath}});
+      HolisticLandmarker,
+      wasmFileset,
+      {baseOptions: {modelAssetPath}},
+    );
   }
 
   /** @hideconstructor */
   constructor(
-      wasmModule: WasmModule,
-      glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
+    wasmModule: WasmModule,
+    glCanvas?: HTMLCanvasElement | OffscreenCanvas | null,
+  ) {
     super(
-        new VisionGraphRunner(wasmModule, glCanvas), IMAGE_STREAM,
-        /* normRectStream= */ null, /* roiAllowed= */ false);
+      new VisionGraphRunner(wasmModule, glCanvas),
+      IMAGE_STREAM,
+      /* normRectStream= */ null,
+      /* roiAllowed= */ false,
+    );
 
     this.options = new HolisticLandmarkerGraphOptions();
     this.options.setBaseOptions(new BaseOptionsProto());
     this.handLandmarksDetectorGraphOptions =
-        new HandLandmarksDetectorGraphOptions();
+      new HandLandmarksDetectorGraphOptions();
     this.options.setHandLandmarksDetectorGraphOptions(
-        this.handLandmarksDetectorGraphOptions);
+      this.handLandmarksDetectorGraphOptions,
+    );
     this.handRoiRefinementGraphOptions = new HandRoiRefinementGraphOptions();
     this.options.setHandRoiRefinementGraphOptions(
-        this.handRoiRefinementGraphOptions);
+      this.handRoiRefinementGraphOptions,
+    );
     this.faceDetectorGraphOptions = new FaceDetectorGraphOptions();
     this.options.setFaceDetectorGraphOptions(this.faceDetectorGraphOptions);
     this.faceLandmarksDetectorGraphOptions =
-        new FaceLandmarksDetectorGraphOptions();
+      new FaceLandmarksDetectorGraphOptions();
     this.options.setFaceLandmarksDetectorGraphOptions(
-        this.faceLandmarksDetectorGraphOptions);
+      this.faceLandmarksDetectorGraphOptions,
+    );
     this.poseDetectorGraphOptions = new PoseDetectorGraphOptions();
     this.options.setPoseDetectorGraphOptions(this.poseDetectorGraphOptions);
     this.poseLandmarksDetectorGraphOptions =
-        new PoseLandmarksDetectorGraphOptions();
+      new PoseLandmarksDetectorGraphOptions();
     this.options.setPoseLandmarksDetectorGraphOptions(
-        this.poseLandmarksDetectorGraphOptions);
+      this.poseLandmarksDetectorGraphOptions,
+    );
 
     this.initDefaults();
   }
@@ -295,17 +339,20 @@ export class HolisticLandmarker extends VisionTaskRunner {
     // Configure face detector options.
     if ('minFaceDetectionConfidence' in options) {
       this.faceDetectorGraphOptions.setMinDetectionConfidence(
-          options.minFaceDetectionConfidence ?? DEFAULT_SCORE_THRESHOLD);
+        options.minFaceDetectionConfidence ?? DEFAULT_SCORE_THRESHOLD,
+      );
     }
     if ('minFaceSuppressionThreshold' in options) {
       this.faceDetectorGraphOptions.setMinSuppressionThreshold(
-          options.minFaceSuppressionThreshold ?? DEFAULT_SUPRESSION_THRESHOLD);
+        options.minFaceSuppressionThreshold ?? DEFAULT_SUPRESSION_THRESHOLD,
+      );
     }
 
     // Configure face landmark detector options.
     if ('minFacePresenceConfidence' in options) {
       this.faceLandmarksDetectorGraphOptions.setMinDetectionConfidence(
-          options.minFacePresenceConfidence ?? DEFAULT_SCORE_THRESHOLD);
+        options.minFacePresenceConfidence ?? DEFAULT_SCORE_THRESHOLD,
+      );
     }
     if ('outputFaceBlendshapes' in options) {
       this.outputFaceBlendshapes = !!options.outputFaceBlendshapes;
@@ -314,17 +361,20 @@ export class HolisticLandmarker extends VisionTaskRunner {
     // Configure pose detector options.
     if ('minPoseDetectionConfidence' in options) {
       this.poseDetectorGraphOptions.setMinDetectionConfidence(
-          options.minPoseDetectionConfidence ?? DEFAULT_SCORE_THRESHOLD);
+        options.minPoseDetectionConfidence ?? DEFAULT_SCORE_THRESHOLD,
+      );
     }
     if ('minPoseSuppressionThreshold' in options) {
       this.poseDetectorGraphOptions.setMinSuppressionThreshold(
-          options.minPoseSuppressionThreshold ?? DEFAULT_SUPRESSION_THRESHOLD);
+        options.minPoseSuppressionThreshold ?? DEFAULT_SUPRESSION_THRESHOLD,
+      );
     }
 
     // Configure pose landmark detector options.
     if ('minPosePresenceConfidence' in options) {
       this.poseLandmarksDetectorGraphOptions.setMinDetectionConfidence(
-          options.minPosePresenceConfidence ?? DEFAULT_SCORE_THRESHOLD);
+        options.minPosePresenceConfidence ?? DEFAULT_SCORE_THRESHOLD,
+      );
     }
     if ('outputPoseSegmentationMasks' in options) {
       this.outputPoseSegmentationMasks = !!options.outputPoseSegmentationMasks;
@@ -333,7 +383,8 @@ export class HolisticLandmarker extends VisionTaskRunner {
     // Configure hand detector options.
     if ('minHandLandmarksConfidence' in options) {
       this.handLandmarksDetectorGraphOptions.setMinDetectionConfidence(
-          options.minHandLandmarksConfidence ?? DEFAULT_SCORE_THRESHOLD);
+        options.minHandLandmarksConfidence ?? DEFAULT_SCORE_THRESHOLD,
+      );
     }
     return this.applyOptions(options);
   }
@@ -366,8 +417,10 @@ export class HolisticLandmarker extends VisionTaskRunner {
    *    the callback.
    */
   detect(
-      image: ImageSource, imageProcessingOptions: ImageProcessingOptions,
-      callback: HolisticLandmarkerCallback): void;
+    image: ImageSource,
+    imageProcessingOptions: ImageProcessingOptions,
+    callback: HolisticLandmarkerCallback,
+  ): void;
   /**
    * Performs holistic landmarks detection on the provided single image and
    * waits synchronously for the response. This method creates a copy of the
@@ -395,21 +448,26 @@ export class HolisticLandmarker extends VisionTaskRunner {
    *     limits.
    * @return The detected pose landmarks.
    */
-  detect(image: ImageSource, imageProcessingOptions: ImageProcessingOptions):
-      HolisticLandmarkerResult;
+  detect(
+    image: ImageSource,
+    imageProcessingOptions: ImageProcessingOptions,
+  ): HolisticLandmarkerResult;
   /** @export */
   detect(
-      image: ImageSource,
-      imageProcessingOptionsOrCallback?: ImageProcessingOptions|
-      HolisticLandmarkerCallback,
-      callback?: HolisticLandmarkerCallback): HolisticLandmarkerResult|void {
+    image: ImageSource,
+    imageProcessingOptionsOrCallback?:
+      | ImageProcessingOptions
+      | HolisticLandmarkerCallback,
+    callback?: HolisticLandmarkerCallback,
+  ): HolisticLandmarkerResult | void {
     const imageProcessingOptions =
-        typeof imageProcessingOptionsOrCallback !== 'function' ?
-        imageProcessingOptionsOrCallback :
-        {};
-    this.userCallback = typeof imageProcessingOptionsOrCallback === 'function' ?
-        imageProcessingOptionsOrCallback :
-        callback!;
+      typeof imageProcessingOptionsOrCallback !== 'function'
+        ? imageProcessingOptionsOrCallback
+        : {};
+    this.userCallback =
+      typeof imageProcessingOptionsOrCallback === 'function'
+        ? imageProcessingOptionsOrCallback
+        : callback!;
 
     this.resetResults();
     this.processImageData(image, imageProcessingOptions);
@@ -430,8 +488,10 @@ export class HolisticLandmarker extends VisionTaskRunner {
    *    the callback.
    */
   detectForVideo(
-      videoFrame: ImageSource, timestamp: number,
-      callback: HolisticLandmarkerCallback): void;
+    videoFrame: ImageSource,
+    timestamp: number,
+    callback: HolisticLandmarkerCallback,
+  ): void;
   /**
    * Performs holistic landmarks detection on the provided video frame and
    * invokes the callback with the response. The method returns synchronously
@@ -448,9 +508,11 @@ export class HolisticLandmarker extends VisionTaskRunner {
    *    the callback.
    */
   detectForVideo(
-      videoFrame: ImageSource, timestamp: number,
-      imageProcessingOptions: ImageProcessingOptions,
-      callback: HolisticLandmarkerCallback): void;
+    videoFrame: ImageSource,
+    timestamp: number,
+    imageProcessingOptions: ImageProcessingOptions,
+    callback: HolisticLandmarkerCallback,
+  ): void;
   /**
    * Performs holistic landmarks detection on the provided video frame and
    * returns the result. This method creates a copy of the resulting masks and
@@ -463,8 +525,10 @@ export class HolisticLandmarker extends VisionTaskRunner {
    * @return The landmarker result. Any masks are copied to extend the
    *     lifetime of the returned data.
    */
-  detectForVideo(videoFrame: ImageSource, timestamp: number):
-      HolisticLandmarkerResult;
+  detectForVideo(
+    videoFrame: ImageSource,
+    timestamp: number,
+  ): HolisticLandmarkerResult;
   /**
    * Performs holistic landmarks detection on the provided video frame and waits
    * synchronously for the response. Only use this method when the
@@ -478,21 +542,27 @@ export class HolisticLandmarker extends VisionTaskRunner {
    * @return The detected holistic landmarks.
    */
   detectForVideo(
-      videoFrame: ImageSource, timestamp: number,
-      imageProcessingOptions: ImageProcessingOptions): HolisticLandmarkerResult;
+    videoFrame: ImageSource,
+    timestamp: number,
+    imageProcessingOptions: ImageProcessingOptions,
+  ): HolisticLandmarkerResult;
   /** @export */
   detectForVideo(
-      videoFrame: ImageSource, timestamp: number,
-      imageProcessingOptionsOrCallback?: ImageProcessingOptions|
-      HolisticLandmarkerCallback,
-      callback?: HolisticLandmarkerCallback): HolisticLandmarkerResult|void {
+    videoFrame: ImageSource,
+    timestamp: number,
+    imageProcessingOptionsOrCallback?:
+      | ImageProcessingOptions
+      | HolisticLandmarkerCallback,
+    callback?: HolisticLandmarkerCallback,
+  ): HolisticLandmarkerResult | void {
     const imageProcessingOptions =
-        typeof imageProcessingOptionsOrCallback !== 'function' ?
-        imageProcessingOptionsOrCallback :
-        {};
-    this.userCallback = typeof imageProcessingOptionsOrCallback === 'function' ?
-        imageProcessingOptionsOrCallback :
-        callback;
+      typeof imageProcessingOptionsOrCallback !== 'function'
+        ? imageProcessingOptionsOrCallback
+        : {};
+    this.userCallback =
+      typeof imageProcessingOptionsOrCallback === 'function'
+        ? imageProcessingOptionsOrCallback
+        : callback;
 
     this.resetResults();
     this.processVideoData(videoFrame, imageProcessingOptions, timestamp);
@@ -509,11 +579,11 @@ export class HolisticLandmarker extends VisionTaskRunner {
       leftHandLandmarks: [],
       leftHandWorldLandmarks: [],
       rightHandLandmarks: [],
-      rightHandWorldLandmarks: []
+      rightHandWorldLandmarks: [],
     };
   }
 
-  private processResults(): HolisticLandmarkerResult|void {
+  private processResults(): HolisticLandmarkerResult | void {
     try {
       if (this.userCallback) {
         this.userCallback(this.result);
@@ -529,28 +599,37 @@ export class HolisticLandmarker extends VisionTaskRunner {
   /** Sets the default values for the graph. */
   private initDefaults(): void {
     this.faceDetectorGraphOptions.setMinDetectionConfidence(
-        DEFAULT_SCORE_THRESHOLD);
+      DEFAULT_SCORE_THRESHOLD,
+    );
     this.faceDetectorGraphOptions.setMinSuppressionThreshold(
-        DEFAULT_SUPRESSION_THRESHOLD);
+      DEFAULT_SUPRESSION_THRESHOLD,
+    );
 
     this.faceLandmarksDetectorGraphOptions.setMinDetectionConfidence(
-        DEFAULT_SCORE_THRESHOLD);
+      DEFAULT_SCORE_THRESHOLD,
+    );
 
     this.poseDetectorGraphOptions.setMinDetectionConfidence(
-        DEFAULT_SCORE_THRESHOLD);
+      DEFAULT_SCORE_THRESHOLD,
+    );
     this.poseDetectorGraphOptions.setMinSuppressionThreshold(
-        DEFAULT_SUPRESSION_THRESHOLD);
+      DEFAULT_SUPRESSION_THRESHOLD,
+    );
 
     this.poseLandmarksDetectorGraphOptions.setMinDetectionConfidence(
-        DEFAULT_SCORE_THRESHOLD);
+      DEFAULT_SCORE_THRESHOLD,
+    );
 
     this.handLandmarksDetectorGraphOptions.setMinDetectionConfidence(
-        DEFAULT_SCORE_THRESHOLD);
+      DEFAULT_SCORE_THRESHOLD,
+    );
   }
 
   /** Converts raw data into a landmark, and adds it to our landmarks list. */
-  private addJsLandmarks(data: Uint8Array, outputList: NormalizedLandmark[][]):
-      void {
+  private addJsLandmarks(
+    data: Uint8Array,
+    outputList: NormalizedLandmark[][],
+  ): void {
     const landmarksProto = NormalizedLandmarkList.deserializeBinary(data);
     outputList.push(convertToLandmarks(landmarksProto));
   }
@@ -559,8 +638,10 @@ export class HolisticLandmarker extends VisionTaskRunner {
    * Converts raw data into a world landmark, and adds it to our worldLandmarks
    * list.
    */
-  private addJsWorldLandmarks(data: Uint8Array, outputList: Landmark[][]):
-      void {
+  private addJsWorldLandmarks(
+    data: Uint8Array,
+    outputList: Landmark[][],
+  ): void {
     const worldLandmarksProto = LandmarkList.deserializeBinary(data);
     outputList.push(convertToWorldLandmarks(worldLandmarksProto));
   }
@@ -571,8 +652,11 @@ export class HolisticLandmarker extends VisionTaskRunner {
       return;
     }
     const classificationList = ClassificationListProto.deserializeBinary(data);
-    outputList.push(convertFromClassifications(
-        classificationList.getClassificationList() ?? []));
+    outputList.push(
+      convertFromClassifications(
+        classificationList.getClassificationList() ?? [],
+      ),
+    );
   }
 
   /** Updates the MediaPipe graph configuration. */
@@ -591,7 +675,8 @@ export class HolisticLandmarker extends VisionTaskRunner {
     const calculatorOptions = new CalculatorOptions();
     const optionsProto = new Any();
     optionsProto.setTypeUrl(
-        'type.googleapis.com/mediapipe.tasks.vision.holistic_landmarker.proto.HolisticLandmarkerGraphOptions');
+      'type.googleapis.com/mediapipe.tasks.vision.holistic_landmarker.proto.HolisticLandmarkerGraphOptions',
+    );
     optionsProto.setValue(this.options.serializeBinary());
 
     const landmarkerNode = new CalculatorGraphConfig.Node();
@@ -601,16 +686,21 @@ export class HolisticLandmarker extends VisionTaskRunner {
     landmarkerNode.addInputStream('IMAGE:' + IMAGE_STREAM);
     landmarkerNode.addOutputStream('POSE_LANDMARKS:' + POSE_LANDMARKS_STREAM);
     landmarkerNode.addOutputStream(
-        'POSE_WORLD_LANDMARKS:' + POSE_WORLD_LANDMARKS_STREAM);
+      'POSE_WORLD_LANDMARKS:' + POSE_WORLD_LANDMARKS_STREAM,
+    );
     landmarkerNode.addOutputStream('FACE_LANDMARKS:' + FACE_LANDMARKS_STREAM);
     landmarkerNode.addOutputStream(
-        'LEFT_HAND_LANDMARKS:' + LEFT_HAND_LANDMARKS_STREAM);
+      'LEFT_HAND_LANDMARKS:' + LEFT_HAND_LANDMARKS_STREAM,
+    );
     landmarkerNode.addOutputStream(
-        'LEFT_HAND_WORLD_LANDMARKS:' + LEFT_HAND_WORLD_LANDMARKS_STREAM);
+      'LEFT_HAND_WORLD_LANDMARKS:' + LEFT_HAND_WORLD_LANDMARKS_STREAM,
+    );
     landmarkerNode.addOutputStream(
-        'RIGHT_HAND_LANDMARKS:' + RIGHT_HAND_LANDMARKS_STREAM);
+      'RIGHT_HAND_LANDMARKS:' + RIGHT_HAND_LANDMARKS_STREAM,
+    );
     landmarkerNode.addOutputStream(
-        'RIGHT_HAND_WORLD_LANDMARKS:' + RIGHT_HAND_WORLD_LANDMARKS_STREAM);
+      'RIGHT_HAND_WORLD_LANDMARKS:' + RIGHT_HAND_WORLD_LANDMARKS_STREAM,
+    );
     landmarkerNode.setOptions(calculatorOptions);
 
     graphConfig.addNode(landmarkerNode);
@@ -619,110 +709,156 @@ export class HolisticLandmarker extends VisionTaskRunner {
     this.addKeepaliveNode(graphConfig);
 
     this.graphRunner.attachProtoListener(
-        POSE_LANDMARKS_STREAM, (binaryProto, timestamp) => {
-          this.addJsLandmarks(binaryProto, this.result.poseLandmarks);
-          this.setLatestOutputTimestamp(timestamp);
-        });
+      POSE_LANDMARKS_STREAM,
+      (binaryProto, timestamp) => {
+        this.addJsLandmarks(binaryProto, this.result.poseLandmarks);
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
     this.graphRunner.attachEmptyPacketListener(
-        POSE_LANDMARKS_STREAM, timestamp => {
-          this.setLatestOutputTimestamp(timestamp);
-        });
+      POSE_LANDMARKS_STREAM,
+      (timestamp) => {
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
 
     this.graphRunner.attachProtoListener(
-        POSE_WORLD_LANDMARKS_STREAM, (binaryProto, timestamp) => {
-          this.addJsWorldLandmarks(binaryProto, this.result.poseWorldLandmarks);
-          this.setLatestOutputTimestamp(timestamp);
-        });
+      POSE_WORLD_LANDMARKS_STREAM,
+      (binaryProto, timestamp) => {
+        this.addJsWorldLandmarks(binaryProto, this.result.poseWorldLandmarks);
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
     this.graphRunner.attachEmptyPacketListener(
-        POSE_WORLD_LANDMARKS_STREAM, timestamp => {
-          this.setLatestOutputTimestamp(timestamp);
-        });
+      POSE_WORLD_LANDMARKS_STREAM,
+      (timestamp) => {
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
 
     if (this.outputPoseSegmentationMasks) {
       landmarkerNode.addOutputStream(
-          'POSE_SEGMENTATION_MASK:' + POSE_SEGMENTATION_MASK_STREAM);
+        'POSE_SEGMENTATION_MASK:' + POSE_SEGMENTATION_MASK_STREAM,
+      );
       this.keepStreamAlive(POSE_SEGMENTATION_MASK_STREAM);
 
       this.graphRunner.attachImageListener(
-          POSE_SEGMENTATION_MASK_STREAM, (mask, timestamp) => {
-            this.result.poseSegmentationMasks = [this.convertToMPMask(
-                mask, /* interpolateValues= */ true,
-                /* shouldCopyData= */ !this.userCallback)];
-            this.setLatestOutputTimestamp(timestamp);
-          });
+        POSE_SEGMENTATION_MASK_STREAM,
+        (mask, timestamp) => {
+          this.result.poseSegmentationMasks = [
+            this.convertToMPMask(
+              mask,
+              /* interpolateValues= */ true,
+              /* shouldCopyData= */ !this.userCallback,
+            ),
+          ];
+          this.setLatestOutputTimestamp(timestamp);
+        },
+      );
       this.graphRunner.attachEmptyPacketListener(
-          POSE_SEGMENTATION_MASK_STREAM, timestamp => {
-            this.result.poseSegmentationMasks = [];
-            this.setLatestOutputTimestamp(timestamp);
-          });
+        POSE_SEGMENTATION_MASK_STREAM,
+        (timestamp) => {
+          this.result.poseSegmentationMasks = [];
+          this.setLatestOutputTimestamp(timestamp);
+        },
+      );
     }
 
     this.graphRunner.attachProtoListener(
-        FACE_LANDMARKS_STREAM, (binaryProto, timestamp) => {
-          this.addJsLandmarks(binaryProto, this.result.faceLandmarks);
-          this.setLatestOutputTimestamp(timestamp);
-        });
+      FACE_LANDMARKS_STREAM,
+      (binaryProto, timestamp) => {
+        this.addJsLandmarks(binaryProto, this.result.faceLandmarks);
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
     this.graphRunner.attachEmptyPacketListener(
-        FACE_LANDMARKS_STREAM, timestamp => {
-          this.setLatestOutputTimestamp(timestamp);
-        });
+      FACE_LANDMARKS_STREAM,
+      (timestamp) => {
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
 
     if (this.outputFaceBlendshapes) {
       graphConfig.addOutputStream(FACE_BLENDSHAPES_STREAM);
       landmarkerNode.addOutputStream(
-          'FACE_BLENDSHAPES:' + FACE_BLENDSHAPES_STREAM);
+        'FACE_BLENDSHAPES:' + FACE_BLENDSHAPES_STREAM,
+      );
       this.graphRunner.attachProtoListener(
-          FACE_BLENDSHAPES_STREAM, (binaryProto, timestamp) => {
-            this.addBlenshape(binaryProto, this.result.faceBlendshapes);
-            this.setLatestOutputTimestamp(timestamp);
-          });
+        FACE_BLENDSHAPES_STREAM,
+        (binaryProto, timestamp) => {
+          this.addBlenshape(binaryProto, this.result.faceBlendshapes);
+          this.setLatestOutputTimestamp(timestamp);
+        },
+      );
       this.graphRunner.attachEmptyPacketListener(
-          FACE_BLENDSHAPES_STREAM, timestamp => {
-            this.setLatestOutputTimestamp(timestamp);
-          });
+        FACE_BLENDSHAPES_STREAM,
+        (timestamp) => {
+          this.setLatestOutputTimestamp(timestamp);
+        },
+      );
     }
 
     this.graphRunner.attachProtoListener(
-        LEFT_HAND_LANDMARKS_STREAM, (binaryProto, timestamp) => {
-          this.addJsLandmarks(binaryProto, this.result.leftHandLandmarks);
-          this.setLatestOutputTimestamp(timestamp);
-        });
+      LEFT_HAND_LANDMARKS_STREAM,
+      (binaryProto, timestamp) => {
+        this.addJsLandmarks(binaryProto, this.result.leftHandLandmarks);
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
     this.graphRunner.attachEmptyPacketListener(
-        LEFT_HAND_LANDMARKS_STREAM, timestamp => {
-          this.setLatestOutputTimestamp(timestamp);
-        });
+      LEFT_HAND_LANDMARKS_STREAM,
+      (timestamp) => {
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
 
     this.graphRunner.attachProtoListener(
-        LEFT_HAND_WORLD_LANDMARKS_STREAM, (binaryProto, timestamp) => {
-          this.addJsWorldLandmarks(
-              binaryProto, this.result.leftHandWorldLandmarks);
-          this.setLatestOutputTimestamp(timestamp);
-        });
+      LEFT_HAND_WORLD_LANDMARKS_STREAM,
+      (binaryProto, timestamp) => {
+        this.addJsWorldLandmarks(
+          binaryProto,
+          this.result.leftHandWorldLandmarks,
+        );
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
     this.graphRunner.attachEmptyPacketListener(
-        LEFT_HAND_WORLD_LANDMARKS_STREAM, timestamp => {
-          this.setLatestOutputTimestamp(timestamp);
-        });
+      LEFT_HAND_WORLD_LANDMARKS_STREAM,
+      (timestamp) => {
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
 
     this.graphRunner.attachProtoListener(
-        RIGHT_HAND_LANDMARKS_STREAM, (binaryProto, timestamp) => {
-          this.addJsLandmarks(binaryProto, this.result.rightHandLandmarks);
-          this.setLatestOutputTimestamp(timestamp);
-        });
+      RIGHT_HAND_LANDMARKS_STREAM,
+      (binaryProto, timestamp) => {
+        this.addJsLandmarks(binaryProto, this.result.rightHandLandmarks);
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
     this.graphRunner.attachEmptyPacketListener(
-        RIGHT_HAND_LANDMARKS_STREAM, timestamp => {
-          this.setLatestOutputTimestamp(timestamp);
-        });
+      RIGHT_HAND_LANDMARKS_STREAM,
+      (timestamp) => {
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
 
     this.graphRunner.attachProtoListener(
-        RIGHT_HAND_WORLD_LANDMARKS_STREAM, (binaryProto, timestamp) => {
-          this.addJsWorldLandmarks(
-              binaryProto, this.result.rightHandWorldLandmarks);
-          this.setLatestOutputTimestamp(timestamp);
-        });
+      RIGHT_HAND_WORLD_LANDMARKS_STREAM,
+      (binaryProto, timestamp) => {
+        this.addJsWorldLandmarks(
+          binaryProto,
+          this.result.rightHandWorldLandmarks,
+        );
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
     this.graphRunner.attachEmptyPacketListener(
-        RIGHT_HAND_WORLD_LANDMARKS_STREAM, timestamp => {
-          this.setLatestOutputTimestamp(timestamp);
-        });
+      RIGHT_HAND_WORLD_LANDMARKS_STREAM,
+      (timestamp) => {
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
 
     const binaryGraph = graphConfig.serializeBinary();
     this.setGraph(new Uint8Array(binaryGraph), /* isBinary= */ true);
