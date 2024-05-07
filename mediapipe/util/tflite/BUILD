@@ -231,3 +231,14 @@ cc_test(
         "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
     ],
 )
+
+cc_library_with_tflite(
+    name = "utils",
+    srcs = ["utils.cc"],
+    hdrs = ["utils.h"],
+    tflite_deps = [
+        "@org_tensorflow//tensorflow/lite:framework_stable",
+        "@org_tensorflow//tensorflow/lite/c:common",
+    ],
+    visibility = ["//visibility:public"],
+)

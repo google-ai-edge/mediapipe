@@ -157,6 +157,9 @@ class InferenceCalculator : public NodeIntf {
 
   static absl::StatusOr<Packet<tflite::OpResolver>> GetOpResolverAsPacket(
       CalculatorContext* cc);
+
+  // Checks if feedback tensor support is available and warns otherwise.
+  static void WarnFeedbackTensorsUnsupported(CalculatorContract* cc);
 };
 
 struct InferenceCalculatorSelector : public InferenceCalculator {

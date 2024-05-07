@@ -453,11 +453,9 @@ TEST_F(InferenceIoMapperTest, ShouldReportTooFewInputMappingIndices) {
       InferenceIoMapper::GetInputOutputTensorNamesFromInterpreter(
           *interpreter_));
   MP_EXPECT_OK(mapper.UpdateIoMap(map, input_output_tensor_names));
-  EXPECT_THAT(
-      mapper.RemapInputTensors(MakeTensorSpan(input_tensors_unmapped)),
-      StatusIs(
-          absl::StatusCode::kInternal,
-          HasSubstr("Number of input tensors does not match number indices")));
+  EXPECT_THAT(mapper.RemapInputTensors(MakeTensorSpan(input_tensors_unmapped)),
+              StatusIs(absl::StatusCode::kInternal,
+                       HasSubstr("Unexpected number of input tensors")));
 }
 
 TEST_F(InferenceIoMapperTest, ShouldReportTooFewOutputMappingIndices) {
@@ -480,11 +478,9 @@ TEST_F(InferenceIoMapperTest, ShouldReportTooFewOutputMappingIndices) {
       InferenceIoMapper::GetInputOutputTensorNamesFromInterpreter(
           *interpreter_));
   MP_EXPECT_OK(mapper.UpdateIoMap(map, input_output_tensor_names));
-  EXPECT_THAT(
-      mapper.RemapOutputTensors(std::move(output_tensors_unmapped)),
-      StatusIs(
-          absl::StatusCode::kInternal,
-          HasSubstr("Number of output tensors does not match number indices")));
+  EXPECT_THAT(mapper.RemapOutputTensors(std::move(output_tensors_unmapped)),
+              StatusIs(absl::StatusCode::kInternal,
+                       HasSubstr("Unexpected number of output tensors")));
 }
 
 TEST_F(InferenceIoMapperTest, ShouldReportTooManyMappingInputIndices) {
@@ -509,11 +505,9 @@ TEST_F(InferenceIoMapperTest, ShouldReportTooManyMappingInputIndices) {
       InferenceIoMapper::GetInputOutputTensorNamesFromInterpreter(
           *interpreter_));
   MP_EXPECT_OK(mapper.UpdateIoMap(map, input_output_tensor_names));
-  EXPECT_THAT(
-      mapper.RemapInputTensors(MakeTensorSpan(input_tensors_unmapped)),
-      StatusIs(
-          absl::StatusCode::kInternal,
-          HasSubstr("Number of input tensors does not match number indices")));
+  EXPECT_THAT(mapper.RemapInputTensors(MakeTensorSpan(input_tensors_unmapped)),
+              StatusIs(absl::StatusCode::kInternal,
+                       HasSubstr("Unexpected number of input tensors")));
 }
 
 TEST_F(InferenceIoMapperTest, ShouldReportTooManyMappingOutputIndices) {
@@ -538,11 +532,9 @@ TEST_F(InferenceIoMapperTest, ShouldReportTooManyMappingOutputIndices) {
       InferenceIoMapper::GetInputOutputTensorNamesFromInterpreter(
           *interpreter_));
   MP_EXPECT_OK(mapper.UpdateIoMap(map, input_output_tensor_names));
-  EXPECT_THAT(
-      mapper.RemapOutputTensors(std::move(output_tensors_unmapped)),
-      StatusIs(
-          absl::StatusCode::kInternal,
-          HasSubstr("Number of output tensors does not match number indices")));
+  EXPECT_THAT(mapper.RemapOutputTensors(std::move(output_tensors_unmapped)),
+              StatusIs(absl::StatusCode::kInternal,
+                       HasSubstr("Unexpected number of output tensors")));
 }
 
 TEST_F(InferenceIoMapperTest, ShouldReportDuplicatedMappingIndices) {
@@ -681,8 +673,10 @@ class InferenceIoMapperSmokeTest
           absl::StrCat("input", n),
           MakePacket<Tensor>(std::move(input_tensor)).At(Timestamp(0))));
     }
-    MP_EXPECT_OK(graph.WaitUntilIdle());
+    MP_EXPECT_OK(graph.CloseAllInputStreams());
+    MP_EXPECT_OK(graph.WaitUntilDone());
 
+    EXPECT_EQ(output_packets.size(), expected_order.size());
     for (int i = 0; i < output_packets.size(); ++i) {
       EXPECT_EQ(output_packets[i].size(), 1);
       const auto read_view =

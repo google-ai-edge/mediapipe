@@ -119,5 +119,17 @@ InferenceCalculator::GetOpResolverAsPacket(CalculatorContext* cc) {
           tflite::ops::builtin::BuiltinOpResolverWithoutDefaultDelegates>());
 }
 
+void InferenceCalculator::WarnFeedbackTensorsUnsupported(
+    CalculatorContract* cc) {
+  const auto& options = cc->Options<mediapipe::InferenceCalculatorOptions>();
+  if (options.has_input_output_config() &&
+      !options.input_output_config().feedback_tensor_links().empty()) {
+    ABSL_LOG(WARNING)
+        << "Feedback tensor support is only available for CPU and "
+        << "XNNPACK inference. Ignoring "
+           "input_output_config.feedback_tensor_links option.";
+  }
+}
+
 }  // namespace api2
 }  // namespace mediapipe

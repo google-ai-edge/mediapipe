@@ -18,8 +18,8 @@ class InferenceRunner {
   virtual absl::StatusOr<std::vector<Tensor>> Run(
       CalculatorContext* cc, const TensorSpan& tensor_span) = 0;
 
-  // Returns the input/output tensor names from the TfLite model signature. This
-  // enables tensor name-based I/O mapping.
+  // Returns the TfLite model's input/output tensor names. This enables tensor
+  // name based I/O mapping in the InferenceCalculator base class.
   virtual const InputOutputTensorNames& GetInputOutputTensorNames() const = 0;
 };
 

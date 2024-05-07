@@ -106,6 +106,46 @@ static absl::StatusOr<std::vector<int>> MapTensorNamesToIndices(
   return result;
 };
 
+// Feedback tensors are excluded from the InferenceRunner input and output
+// accordingly (since they are class-internally handled by the
+// InferenceFeedbackManager). This means that the input and output Tensor orders
+// of the InferenceRunner don't match the model I/O tensors anymore and
+// therefore tensor I/O indices need to be adjusted accordingly.
+absl::Status ExcludeFeedbackTensorsFromRemappingIndicesVector(
+    const InferenceCalculatorOptions::InputOutputConfig& io_config,
+    const std::vector<std::string>& model_tensor_names,
+    std::vector<int>& remapping_tensor_indices) {
+  // Create set of all feedback tensor names.
+  absl::flat_hash_set<std::string> feedback_tensor_names;
+  for (const auto& link : io_config.feedback_tensor_links()) {
+    {
+      // No need to check for name collisions. Inference feedback manager
+      // confirms validity of feedback tensor names.
+      feedback_tensor_names.insert(link.from_output_tensor_name());
+      feedback_tensor_names.insert(link.to_input_tensor_name());
+    }
+  }
+  // Built model index translation vector which maps InferenceRunner I/O tensor
+  // indices to InferenceRunner I/O indices with excluded feedback tensors.
+  std::vector<int> indices_translation(model_tensor_names.size(), -1);
+  int model_output_idx = 0;
+  for (int i = 0; i < model_tensor_names.size(); ++i) {
+    if (!feedback_tensor_names.contains(model_tensor_names[i])) {
+      indices_translation[i] = model_output_idx;
+      ++model_output_idx;
+    }
+  }
+  // Adjust remapping_tensor_indices.
+  for (int i = 0; i < remapping_tensor_indices.size(); ++i) {
+    const int model_index = remapping_tensor_indices[i];
+    RET_CHECK(model_index >= 0 && model_index < indices_translation.size())
+        << "Index " << model_index << " out of range.";
+    remapping_tensor_indices[i] =
+        indices_translation[remapping_tensor_indices[i]];
+  }
+  return absl::OkStatus();
+}
+
 }  // namespace
 
 // static
@@ -145,6 +185,18 @@ InferenceIoMapper::GetInputOutputTensorNamesFromModel(
 absl::Status InferenceIoMapper::UpdateIoMap(
     const InferenceCalculatorOptions::InputOutputConfig& io_config,
     const InputOutputTensorNames& input_output_tensor_names) {
+  num_feedback_tensors_ = io_config.feedback_tensor_links().size();
+
+  if ((io_config.has_input_tensor_indices_map() ||
+       io_config.has_output_tensor_indices_map()) &&
+      num_feedback_tensors_ > 0) {
+    // TODO b/336767692 - remove this check once indices-based feedback
+    // tensors are supported.
+    return absl::FailedPreconditionError(
+        "Feedback tensors are not supported with tensor index-based I/O "
+        "mapping.");
+  }
+
   input_tensor_indices_.clear();
   output_tensor_indices_.clear();
 
@@ -186,6 +238,9 @@ absl::Status InferenceIoMapper::UpdateIoMap(
       input_output_tensor_names.begin()->second;
 
   if (io_config.has_input_tensor_names_map()) {
+    // Read number of model inputs directly from the signature.
+    const int num_model_input_tensors =
+        input_output_tensor_names_default_signature.input_tensor_names.size();
     input_tensor_indices_.reserve(
         io_config.input_tensor_names_map().tensor_names().size());
     MP_ASSIGN_OR_RETURN(
@@ -193,18 +248,38 @@ absl::Status InferenceIoMapper::UpdateIoMap(
         MapTensorNamesToIndices(
             input_output_tensor_names_default_signature.input_tensor_names,
             io_config.input_tensor_names_map()));
+    if (num_feedback_tensors_ > 0) {
+      MP_RETURN_IF_ERROR(ExcludeFeedbackTensorsFromRemappingIndicesVector(
+          io_config,
+          input_output_tensor_names_default_signature.input_tensor_names,
+          input_tensor_indices_));
+    }
+    // Feedback tensors are excluded from the input_tensor_indices_.
+    RET_CHECK_EQ(input_tensor_indices_.size() + num_feedback_tensors_,
+                 num_model_input_tensors)
+        << "Unexpected number of input tensors.";
   }
 
   if (io_config.has_output_tensor_names_map()) {
-    output_tensor_indices_.reserve(
-        io_config.output_tensor_names_map().tensor_names().size());
+    const int num_model_output_tensors =
+        input_output_tensor_names_default_signature.output_tensor_names.size();
+    output_tensor_indices_.reserve(num_model_output_tensors);
     MP_ASSIGN_OR_RETURN(
         output_tensor_indices_,
         MapTensorNamesToIndices(
             input_output_tensor_names_default_signature.output_tensor_names,
             io_config.output_tensor_names_map()));
+    if (num_feedback_tensors_ > 0) {
+      MP_RETURN_IF_ERROR(ExcludeFeedbackTensorsFromRemappingIndicesVector(
+          io_config,
+          input_output_tensor_names_default_signature.output_tensor_names,
+          output_tensor_indices_));
+    }
+    // Feedback tensors are excluded from the output_tensor_indices_.
+    RET_CHECK_EQ(output_tensor_indices_.size() + num_feedback_tensors_,
+                 num_model_output_tensors)
+        << "Unexpected number of output tensors.";
   }
-
   return absl::OkStatus();
 }
 
@@ -214,8 +289,7 @@ absl::StatusOr<TensorSpan> InferenceIoMapper::RemapInputTensors(
     return unmapped_tensors;
   }
   RET_CHECK_EQ(unmapped_tensors.size(), input_tensor_indices_.size())
-      << "Number of input tensors does not match number indices in the "
-         "provided mapping.";
+      << "Unexpected number of input tensors.";
   std::vector<const Tensor*> mapped_tensors(unmapped_tensors.size());
   for (int i = 0; i < unmapped_tensors.size(); ++i) {
     const int index = input_tensor_indices_[i];
@@ -233,8 +307,7 @@ absl::StatusOr<std::vector<Tensor>> InferenceIoMapper::RemapOutputTensors(
     return std::move(unmapped_tensors);
   }
   RET_CHECK_EQ(unmapped_tensors.size(), output_tensor_indices_.size())
-      << "Number of output tensors does not match number indices in the "
-         "provided mapping.";
+      << "Unexpected number of output tensors.";
   std::vector<Tensor> mapped_tensors;
   mapped_tensors.reserve(unmapped_tensors.size());
   for (int i = 0; i < unmapped_tensors.size(); ++i) {
@@ -242,6 +315,7 @@ absl::StatusOr<std::vector<Tensor>> InferenceIoMapper::RemapOutputTensors(
     RET_CHECK(index < unmapped_tensors.size())
         << "Index " << index << " out of range"
         << ". Size of TensorIndicesMap: " << unmapped_tensors.size() << ".";
+
     mapped_tensors.emplace_back(std::move(unmapped_tensors[index]));
   }
   return mapped_tensors;

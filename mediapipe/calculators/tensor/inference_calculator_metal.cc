@@ -132,6 +132,7 @@ absl::Status InferenceCalculatorMetalImpl::UpdateContract(
   RET_CHECK(!options.model_path().empty() ^ kSideInModel(cc).IsConnected())
       << "Either model as side packet or model path in options is required.";
 
+  WarnFeedbackTensorsUnsupported(cc);
   MP_RETURN_IF_ERROR([MPPMetalHelper updateContract:cc]);
   return absl::OkStatus();
 }

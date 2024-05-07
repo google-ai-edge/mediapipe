@@ -68,6 +68,7 @@ class InferenceIoMapper {
       std::vector<Tensor>&& unmapped_tensors);
 
  private:
+  int num_feedback_tensors_ = 0;
   std::vector<int> input_tensor_indices_;
   std::vector<int> output_tensor_indices_;
 };

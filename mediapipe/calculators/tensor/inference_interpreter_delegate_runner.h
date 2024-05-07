@@ -33,11 +33,14 @@ namespace mediapipe {
 //
 // `delegate` can be nullptr, in that case newly initialized interpreter will
 // use what is available by default.
+// `input_output_config` optional config to enable feedback tensors.
 absl::StatusOr<std::unique_ptr<InferenceRunner>>
 CreateInferenceInterpreterDelegateRunner(
     api2::Packet<TfLiteModelPtr> model,
     api2::Packet<tflite::OpResolver> op_resolver, TfLiteDelegatePtr delegate,
-    int interpreter_num_threads);
+    int interpreter_num_threads,
+    const mediapipe::InferenceCalculatorOptions::InputOutputConfig*
+        input_output_config = nullptr);
 
 }  // namespace mediapipe
 

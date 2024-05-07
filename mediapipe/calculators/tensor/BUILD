@@ -518,6 +518,66 @@ cc_test(
     ],
 )
 
+cc_library_with_tflite(
+    name = "inference_feedback_manager",
+    srcs = ["inference_feedback_manager.cc"],
+    hdrs = ["inference_feedback_manager.h"],
+    tflite_deps = [
+        ":inference_io_mapper",
+        "//mediapipe/util/tflite:utils",
+        "//mediapipe/util/tflite:tflite_signature_reader",
+        "@org_tensorflow//tensorflow/lite:framework_stable",
+        "@org_tensorflow//tensorflow/lite:namespace",
+        "@org_tensorflow//tensorflow/lite/c:common",
+        "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
+    ],
+    deps = [
+        ":inference_calculator_cc_proto",
+        ":inference_calculator_utils",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
+    ],
+)
+
+cc_test(
+    name = "inference_feedback_manager_test",
+    srcs = ["inference_feedback_manager_test.cc"],
+    data = [
+        ":testdata/feedback_tensor_test_model.tflite",
+        ":testdata/feedback_tensor_with_state_copy_model.tflite",
+    ],
+    deps = [
+        ":inference_calculator",
+        ":inference_calculator_cc_proto",
+        ":inference_calculator_cpu",
+        ":inference_calculator_interface",
+        ":inference_feedback_manager",
+        ":inference_io_mapper",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:packet",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status_matchers",
+        "//mediapipe/framework/tool:sink",
+        "//mediapipe/util/tflite:tflite_model_loader",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+        "@org_tensorflow//tensorflow/lite:framework_stable",
+        "@org_tensorflow//tensorflow/lite/core:framework",
+        "@org_tensorflow//tensorflow/lite/core/api:op_resolver",
+        "@org_tensorflow//tensorflow/lite/delegates/xnnpack:xnnpack_delegate_hdrs_only",
+        "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
+    ],
+)
+
 cc_library(
     name = "inference_calculator_gl",
     srcs = ["inference_calculator_gl.cc"],
@@ -645,6 +705,7 @@ cc_library_with_tflite(
         ":inference_runner",
         ":tflite_delegate_ptr",
         ":inference_io_mapper",
+        ":inference_feedback_manager",
         "//mediapipe/util/tflite:tflite_model_loader",
         "@org_tensorflow//tensorflow/lite:framework_stable",
         "@org_tensorflow//tensorflow/lite/c:c_api_types",
@@ -658,6 +719,7 @@ cc_library_with_tflite(
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/base:nullability",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@org_tensorflow//tensorflow/lite:string_util",

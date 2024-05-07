@@ -283,6 +283,7 @@ absl::Status InferenceCalculatorGlImpl::UpdateContract(CalculatorContract* cc) {
   RET_CHECK(!options.model_path().empty() ^ kSideInModel(cc).IsConnected())
       << "Either model as side packet or model path in options is required.";
 
+  WarnFeedbackTensorsUnsupported(cc);
   return mediapipe::GlCalculatorHelper::UpdateContract(cc);
 }
 
