@@ -106,6 +106,8 @@ ODML_EXPORT LlmResponseContext LlmInferenceEngine_Session_PredictSync(
     LlmInferenceEngine_Session* session, const char* input);
 
 // Run callback function in async mode.
+// The callback will be invoked multiple times until `response_context.done`
+// is `true`.
 // The callback context can be a pointer to any user defined data structure as
 // it is passed to the callback unmodified.
 ODML_EXPORT void LlmInferenceEngine_Session_PredictAsync(
