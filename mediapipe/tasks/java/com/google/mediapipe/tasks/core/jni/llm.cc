@@ -79,7 +79,7 @@ jbyteArray ToByteArray(JNIEnv* env, const LlmResponseContext& context) {
 }
 
 void ProcessAsyncResponse(void* callback_ref,
-                          const LlmResponseContext response_context) {
+                          LlmResponseContext* response_context) {
   jobject object_ref = reinterpret_cast<jobject>(callback_ref);
   JNIEnv* env = GetJNIEnv();
   if (env == nullptr) {
@@ -95,7 +95,9 @@ void ProcessAsyncResponse(void* callback_ref,
   jmethodID method_id =
       env->GetMethodID(class_ref, method_name.c_str(), "([B)V");
 
-  const jbyteArray response_context_bytes = ToByteArray(env, response_context);
+  const jbyteArray response_context_bytes = ToByteArray(env, *response_context);
+  LlmInferenceEngine_CloseResponseContext(response_context);
+
   env->CallVoidMethod(object_ref, method_id, response_context_bytes);
 }
 

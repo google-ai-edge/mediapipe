@@ -361,7 +361,7 @@ void LlmInferenceEngine_Session_PredictAsync(
     LlmInferenceEngine_Session* session, void* callback_context,
     const char* input,
     void (*callback)(void* callback_context,
-                     const LlmResponseContext response_context)) {
+                     LlmResponseContext* response_context)) {
   auto cpu_session = reinterpret_cast<LlmInferenceEngineCpu_Session*>(session);
 
   cpu_session->cpu_callback = [=](std::string responses) -> void {
@@ -376,13 +376,11 @@ void LlmInferenceEngine_Session_PredictAsync(
     }
 
     snprintf(result[0], responses.size() + 1, "%s", responses.c_str());
-    LlmResponseContext response_context = {
-        .response_array = result,
-        .response_count = 1,
-        .done = cpu_session->early_stop,
-    };
-    callback(callback_context, response_context);
-    LlmInferenceEngine_CloseResponseContext(&response_context);
+    auto response_context = std::make_unique<LlmResponseContext>();
+    response_context->response_array = result,
+    response_context->response_count = 1,
+    response_context->done = cpu_session->early_stop;
+    callback(callback_context, response_context.release());
   };
 
   cpu_session->prompt = input;

@@ -80,8 +80,9 @@ ABSL_FLAG(
 namespace {
 
 // Only cout the first response
-void async_callback_print(void*, const LlmResponseContext response_context) {
-  std::cout << response_context.response_array[0] << std::flush;
+void async_callback_print(void*, LlmResponseContext* response_context) {
+  std::cout << response_context->response_array[0] << std::flush;
+  LlmInferenceEngine_CloseResponseContext(response_context);
 }
 
 }  // namespace

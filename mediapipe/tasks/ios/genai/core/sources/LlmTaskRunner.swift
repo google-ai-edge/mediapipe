@@ -31,7 +31,7 @@ final class LlmTaskRunner {
     let returnCode = withUnsafePointer(to: sessionConfig) {
       LlmInferenceEngine_CreateSession($0, &self.cLlmSession, &cErrorMessage)
     }
-    if (returnCode != 0) {
+    if returnCode != 0 {
       let errorMessage: String? = cErrorMessage == nil ? nil : String(cString: cErrorMessage!)
       throw GenAiInferenceError.failedToInitializeSession(errorMessage)
     }
@@ -82,23 +82,28 @@ final class LlmTaskRunner {
       guard let cContext = context else {
         return
       }
+      guard let cResponse = responseContext?.pointee else {
+        return
+      }
 
       /// `takeRetainedValue()` decrements the reference count incremented by `passRetained()`. Only
       /// take a retained value if the LLM has finished generating responses to prevent the context
       /// from being deallocated in between response generation.
       let cCallbackInfo =
-        responseContext.done
+        cResponse.done
         ? Unmanaged<CallbackInfo>.fromOpaque(cContext).takeRetainedValue()
         : Unmanaged<CallbackInfo>.fromOpaque(cContext).takeUnretainedValue()
 
-      if let responseStrings = LlmTaskRunner.responseStrings(from: responseContext) {
+      if let responseStrings = LlmTaskRunner.responseStrings(from: cResponse) {
         cCallbackInfo.progress(responseStrings, nil)
       } else {
         cCallbackInfo.progress(nil, GenAiInferenceError.invalidResponse)
       }
 
+      LlmInferenceEngine_CloseResponseContext(responseContext)
+
       /// Call completion callback if LLM has generated its last response.
-      if responseContext.done {
+      if cResponse.done {
         cCallbackInfo.completion()
       }
     }
