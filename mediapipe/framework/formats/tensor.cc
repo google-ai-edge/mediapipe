@@ -14,6 +14,7 @@
 
 #include "mediapipe/framework/formats/tensor.h"
 
+#include <algorithm>
 #include <cstdint>
 #include <memory>
 #include <utility>
@@ -25,6 +26,9 @@
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/memory_manager.h"
 #include "mediapipe/framework/port.h"
+#include "mediapipe/framework/port/aligned_malloc_and_free.h"  // IWYU pragma: keep
+#include "mediapipe/framework/port/ret_check.h"
+#include "mediapipe/framework/port/status_macros.h"
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
 #include "mediapipe/gpu/gl_base.h"
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
@@ -67,7 +71,7 @@ int BhwcDepthFromShape(const Tensor::Shape& shape) {
 }
 
 // TODO: Match channels count and padding for Texture2D:
-// 1) support 1/2/4 channesl texture for 1/2/3-4 depth.
+// 1) support 1/2/4 channels texture for 1/2/3-4 depth.
 // 2) Allocate cpu_buffer_ with padded amount of memory
 // 3) pad/"unpad" the bitmap after transfer CPU <-> GPU
 
@@ -434,8 +438,7 @@ void Tensor::Move(Tensor* src) {
   memory_alignment_ = src->memory_alignment_;
   element_type_ = src->element_type();
   src->element_type_ = ElementType::kNone;  // Mark as invalidated.
-  cpu_buffer_ = src->cpu_buffer_;
-  src->cpu_buffer_ = nullptr;
+  cpu_buffer_ = std::exchange(src->cpu_buffer_, nullptr);
   ahwb_tracking_key_ = src->ahwb_tracking_key_;
   mtl_resources_ = std::move(src->mtl_resources_);
   MoveAhwbStuff(src);
@@ -566,10 +569,7 @@ void Tensor::Invalidate() {
   }
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
 
-  if (cpu_buffer_) {
-    free(cpu_buffer_);
-  }
-  cpu_buffer_ = nullptr;
+  FreeCpuBuffer();
 }
 #endif  // MEDIAPIPE_METAL_ENABLED
 
@@ -654,7 +654,7 @@ Tensor::CpuReadView Tensor::GetCpuReadView() const {
   }
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
 
-  AllocateCpuBuffer();
+  ABSL_CHECK_OK(AllocateCpuBuffer()) << "AllocateCpuBuffer failed.";
   if (!(valid_ & kValidCpu)) {
     ABSL_CHECK_OK(ReadBackGpuToCpu()) << "ReadBackGpuToCpu failed.";
     valid_ |= kValidCpu;
@@ -666,7 +666,7 @@ Tensor::CpuWriteView Tensor::GetCpuWriteView(
     uint64_t source_location_hash) const {
   auto lock = absl::make_unique<absl::MutexLock>(&view_mutex_);
   TrackAhwbUsage(source_location_hash);
-  AllocateCpuBuffer();
+  ABSL_CHECK_OK(AllocateCpuBuffer()) << "AllocateCpuBuffer failed.";
   valid_ = kValidCpu;
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
   if (__builtin_available(android 26, *)) {
@@ -684,17 +684,45 @@ Tensor::CpuWriteView Tensor::GetCpuWriteView(
   return {cpu_buffer_, std::move(lock)};
 }
 
-void Tensor::AllocateCpuBuffer() const {
+absl::Status Tensor::AllocateCpuBuffer() const {
   if (!cpu_buffer_) {
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
-    if (use_ahwb_ && AllocateAHardwareBuffer().ok()) return;
+    if (use_ahwb_ && AllocateAHardwareBuffer().ok()) return absl::OkStatus();
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
 #if MEDIAPIPE_METAL_ENABLED
+    // AllocateVirtualMemory allocates memory aligned to the size of a virtual
+    // memory page which should match common alignment requirements.
     cpu_buffer_ = AllocateVirtualMemory(bytes());
 #else
-    cpu_buffer_ = malloc(bytes());
+    if (memory_alignment_ > 0) {
+      // TODO b/339271330 - Investigate how aligned memory performs in
+      // MP WebAssembly targets.
+      // TfLite custom allocation requires at least memory_alignment_ bytes.
+      cpu_buffer_ = aligned_malloc(std::max(memory_alignment_, bytes()),
+                                   memory_alignment_);
+    } else {
+      cpu_buffer_ = malloc(bytes());
+    }
+    RET_CHECK(cpu_buffer_) << "Failed to allocate CPU buffer.";
 #endif  // MEDIAPIPE_METAL_ENABLED
   }
+  return absl::OkStatus();
+}
+
+void Tensor::FreeCpuBuffer() const {
+  if (cpu_buffer_ == nullptr) {
+    return;
+  }
+#if MEDIAPIPE_METAL_ENABLED
+  free(cpu_buffer_);
+#else
+  if (memory_alignment_ > 0) {
+    aligned_free(cpu_buffer_);
+  } else {
+    free(cpu_buffer_);
+  }
+#endif  // MEDIAPIPE_METAL_ENABLED
+  cpu_buffer_ = nullptr;
 }
 
 }  // namespace mediapipe

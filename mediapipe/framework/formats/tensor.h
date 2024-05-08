@@ -146,7 +146,7 @@ class Tensor {
   // a buffer that is padded to multiples of memory_alignment bytes.
   // memory_alignment must be power of 2, i.e. 2, 4, 8, 16, 64, etc.
   // If memory_alignment is 0, then the buffer will not be padded.
-  // Note that memory_alignment is currently only supported for AHWB storage.
+  // Note that memory_alignment is only applied to CPU storage (includes AHWBs).
   Tensor(ElementType element_type, const Shape& shape,
          MemoryManager* memory_manager = nullptr, int memory_alignment = 0);
   Tensor(ElementType element_type, const Shape& shape,
@@ -398,7 +398,8 @@ class Tensor {
   mutable absl::Mutex view_mutex_;
 
   mutable void* cpu_buffer_ = nullptr;
-  void AllocateCpuBuffer() const;
+  absl::Status AllocateCpuBuffer() const;
+  void FreeCpuBuffer() const;
   // Forward declaration of the MtlResources provides compile-time verification
   // of ODR if this header includes any actual code that uses MtlResources.
   mutable std::unique_ptr<MtlResources> mtl_resources_;

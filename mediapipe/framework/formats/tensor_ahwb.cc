@@ -322,8 +322,7 @@ void Tensor::MoveCpuOrSsboToAhwb() const {
   if (valid_ & kValidCpu) {
     std::memcpy(*dest, cpu_buffer_, bytes());
     // Free CPU memory because next time AHWB is mapped instead.
-    free(cpu_buffer_);
-    cpu_buffer_ = nullptr;
+    FreeCpuBuffer();
     valid_ &= ~kValidCpu;
   } else if (valid_ & kValidOpenGlBuffer) {
     gl_context_->Run([this, dest]() {

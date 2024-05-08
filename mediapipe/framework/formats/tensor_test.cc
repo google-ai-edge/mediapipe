@@ -6,7 +6,6 @@
 #include <vector>
 
 #include "mediapipe/framework/port/gmock.h"
-#include "mediapipe/framework/port/gtest.h"
 #if !MEDIAPIPE_DISABLE_GPU
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gpu_buffer_format.h"
@@ -55,6 +54,18 @@ TEST(Cpu, TestMemoryAllocation) {
   auto v1 = t1.GetCpuWriteView();
   float* f1 = v1.buffer<float>();
   EXPECT_NE(f1, nullptr);
+}
+
+TEST(Cpu, TestAlignedMemoryAllocation) {
+  for (int i = 0; i < 8; ++i) {
+    const int alignment_bytes = sizeof(void*) << i;
+    Tensor t1(Tensor::ElementType::kFloat32, Tensor::Shape{4, 3, 2, 3},
+              /*memory_manager=*/nullptr, alignment_bytes);
+    auto v1 = t1.GetCpuWriteView();
+    void* data_ptr = v1.buffer<void>();
+    EXPECT_EQ(reinterpret_cast<uintptr_t>(data_ptr) % alignment_bytes, 0);
+    memset(data_ptr, 0, t1.bytes());
+  }
 }
 
 TEST(Cpu, TestTensorMove) {
