@@ -93,7 +93,7 @@ genrule(
 
 pkg_npm(
     name = "genai_experimental_pkg",
-    package_name = "@mediapipe/tasks-__NAME__",
+    package_name = "@mediapipe/tasks-genai-experimental",
     srcs = [
         "README.md",
         "package.json",
