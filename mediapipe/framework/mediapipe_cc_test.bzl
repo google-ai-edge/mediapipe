@@ -25,6 +25,7 @@ def mediapipe_cc_test(
         android_devices = {},
         # wasm_web_test arguments
         browsers = None,
+        jspi = False,
         **kwargs):
     native.cc_library(
         name = name + "_lib",
