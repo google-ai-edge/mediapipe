@@ -1,4 +1,4 @@
-# MediaPipe Tasks GenAI Package
+# MediaPipe Tasks GenAI Experimental Package
 
 This package contains experimental GenAI tasks for MediaPipe.
 
@@ -19,7 +19,7 @@ const ragPipeline = await RagPipeline.createWithEmbeddingModel(
 );
 await ragPipeline.recordBatchedMemory([
   'Paris is the capital of France.',
-  'Berlin is the capital of Germany',
+  'Berlin is the capital of Germany.',
 ]);
 const result = await ragPipeline.generateResponse(
   'What is the capital of France?',
