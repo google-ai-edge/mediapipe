@@ -97,3 +97,8 @@ objc_library(
     ],
 )
 
+objc_library(
+    name = "MPPAudioRunningMode",
+    hdrs = ["sources/MPPAudioRunningMode.h"],
+)
+
