@@ -138,6 +138,7 @@ cc_library(
     hdrs = ["benchmark.h"],
     deps = [
         "@com_google_benchmark//:benchmark",
+        "@com_google_googletest//:gtest",
     ],
 )
 
