@@ -95,3 +95,14 @@ objc_library(
         "@com_google_protobuf//:protobuf",
     ],
 )
+
+objc_library(
+    name = "MPPPacketCreator",
+    srcs = ["sources/MPPPacketCreator.mm"],
+    hdrs = ["sources/MPPPacketCreator.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+    ],
+    deps = ["//mediapipe/framework:packet"],
+)

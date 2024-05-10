@@ -34,7 +34,7 @@ NS_SWIFT_NAME(AudioData)
 @interface MPPAudioData : NSObject
 
 /** Audio format specifying the number of channels and sample rate supported. */
-@property(nonatomic, readonly) MPPAudioDataFormat *audioFormat;
+@property(nonatomic, readonly) MPPAudioDataFormat *format;
 
 /**
  * A copy of all the internal buffer elements in order with the most recent elements appearing at

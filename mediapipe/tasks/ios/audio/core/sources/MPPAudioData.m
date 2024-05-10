@@ -24,7 +24,7 @@
 - (instancetype)initWithFormat:(MPPAudioDataFormat *)format sampleCount:(NSUInteger)sampleCount {
   self = [super init];
   if (self) {
-    _audioFormat = format;
+    _format = format;
 
     const NSInteger length = sampleCount * format.channelCount;
     _ringBuffer = [[MPPFloatRingBuffer alloc] initWithLength:length];
@@ -40,7 +40,7 @@
 }
 
 - (BOOL)loadAudioRecord:(MPPAudioRecord *)audioRecord error:(NSError **)error {
-  if (![audioRecord.audioDataFormat isEqual:self.audioFormat]) {
+  if (![audioRecord.audioDataFormat isEqual:self.format]) {
     [MPPCommonUtils createCustomError:error
                              withCode:MPPTasksErrorCodeInvalidArgumentError
                           description:@"The provided audio record has incompatible audio format"];
