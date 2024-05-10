@@ -271,17 +271,18 @@ http_archive(
     build_file = "@//third_party:pffft.BUILD",
 )
 
-# sentencepiece
+# Sentencepiece
 http_archive(
     name = "com_google_sentencepiece",
     strip_prefix = "sentencepiece-0.1.96",
+    add_prefix = "sentencepiece",
     sha256 = "8409b0126ebd62b256c685d5757150cf7fcb2b92a2f2b98efb3f38fc36719754",
     urls = [
         "https://github.com/google/sentencepiece/archive/refs/tags/v0.1.96.zip"
     ],
     build_file = "@//third_party:sentencepiece.BUILD",
     patches = ["@//third_party:com_google_sentencepiece.diff"],
-    patch_args = ["-p1"],
+    patch_args = ["-d", "sentencepiece", "-p1"],
 )
 
 http_archive(

@@ -10,7 +10,7 @@ licenses(["notice"])  # Apache 2, BSD, MIT
 
 proto_library(
     name = "sentencepiece_proto",
-    srcs = ["src/sentencepiece.proto"],
+    srcs = ["sentencepiece/src/sentencepiece.proto"],
 )
 
 cc_proto_library(
@@ -20,7 +20,7 @@ cc_proto_library(
 
 proto_library(
     name = "sentencepiece_model_proto",
-    srcs = ["src/sentencepiece_model.proto"],
+    srcs = ["sentencepiece/src/sentencepiece_model.proto"],
 )
 
 cc_proto_library(
@@ -30,16 +30,16 @@ cc_proto_library(
 
 genrule(
     name = "config_h",
-    srcs = ["config.h.in"],
-    outs = ["config.h"],
+    srcs = ["sentencepiece/config.h.in"],
+    outs = ["sentencepiece/config.h"],
     cmd = "cp $< $@",
 )
 
 cc_library(
     name = "common",
     hdrs = [
-        "config.h",
-        "src/common.h",
+        "sentencepiece/config.h",
+        "sentencepiece/src/common.h",
     ],
     deps = [
         "@com_google_absl//absl/base",
@@ -49,36 +49,36 @@ cc_library(
 cc_library(
     name = "sentencepiece_processor",
     srcs = [
-        "src/bpe_model.cc",
-        "src/char_model.cc",
-        "src/error.cc",
-        "src/filesystem.cc",
-        "src/model_factory.cc",
-        "src/model_interface.cc",
-        "src/normalizer.cc",
-        "src/sentencepiece_processor.cc",
-        "src/unigram_model.cc",
-        "src/util.cc",
-        "src/word_model.cc",
+        "sentencepiece/src/bpe_model.cc",
+        "sentencepiece/src/char_model.cc",
+        "sentencepiece/src/error.cc",
+        "sentencepiece/src/filesystem.cc",
+        "sentencepiece/src/model_factory.cc",
+        "sentencepiece/src/model_interface.cc",
+        "sentencepiece/src/normalizer.cc",
+        "sentencepiece/src/sentencepiece_processor.cc",
+        "sentencepiece/src/unigram_model.cc",
+        "sentencepiece/src/util.cc",
+        "sentencepiece/src/word_model.cc",
     ],
     hdrs = [
-        "src/bpe_model.h",
-        "src/char_model.h",
-        "src/filesystem.h",
-        "src/freelist.h",
-        "src/model_factory.h",
-        "src/model_interface.h",
-        "src/normalizer.h",
-        "src/sentencepiece_processor.h",
-        "src/trainer_interface.h",
-        "src/unigram_model.h",
-        "src/util.h",
-        "src/word_model.h",
+        "sentencepiece/src/bpe_model.h",
+        "sentencepiece/src/char_model.h",
+        "sentencepiece/src/filesystem.h",
+        "sentencepiece/src/freelist.h",
+        "sentencepiece/src/model_factory.h",
+        "sentencepiece/src/model_interface.h",
+        "sentencepiece/src/normalizer.h",
+        "sentencepiece/src/sentencepiece_processor.h",
+        "sentencepiece/src/trainer_interface.h",
+        "sentencepiece/src/unigram_model.h",
+        "sentencepiece/src/util.h",
+        "sentencepiece/src/word_model.h",
     ],
     defines = ["_USE_TF_STRING_VIEW"],
     includes = [
-        ".",
-        "src",
+        "sentencepiece/",
+        "sentencepiece/src",
     ],
     linkstatic = 1,
     deps =
@@ -99,36 +99,36 @@ cc_library(
 cc_library(
     name = "sentencepiece_trainer",
     srcs = [
-        "src/bpe_model_trainer.cc",
-        "src/builder.cc",
-        "src/char_model_trainer.cc",
-        "src/sentencepiece_trainer.cc",
-        "src/trainer_factory.cc",
-        "src/trainer_interface.cc",
-        "src/unicode_script.cc",
-        "src/unigram_model_trainer.cc",
-        "src/word_model_trainer.cc",
+        "sentencepiece/src/bpe_model_trainer.cc",
+        "sentencepiece/src/builder.cc",
+        "sentencepiece/src/char_model_trainer.cc",
+        "sentencepiece/src/sentencepiece_trainer.cc",
+        "sentencepiece/src/trainer_factory.cc",
+        "sentencepiece/src/trainer_interface.cc",
+        "sentencepiece/src/unicode_script.cc",
+        "sentencepiece/src/unigram_model_trainer.cc",
+        "sentencepiece/src/word_model_trainer.cc",
     ],
     hdrs = [
-        "src/bpe_model_trainer.h",
-        "src/builder.h",
-        "src/char_model_trainer.h",
-        "src/normalization_rule.h",
-        "src/sentencepiece_trainer.h",
-        "src/spec_parser.h",
-        "src/trainer_factory.h",
-        "src/trainer_interface.h",
-        "src/unicode_script.h",
-        "src/unicode_script_map.h",
-        "src/unigram_model_trainer.h",
-        "src/word_model_trainer.h",
-        "third_party/esaxx/esa.hxx",
-        "third_party/esaxx/sais.hxx",
+        "sentencepiece/src/bpe_model_trainer.h",
+        "sentencepiece/src/builder.h",
+        "sentencepiece/src/char_model_trainer.h",
+        "sentencepiece/src/normalization_rule.h",
+        "sentencepiece/src/sentencepiece_trainer.h",
+        "sentencepiece/src/spec_parser.h",
+        "sentencepiece/src/trainer_factory.h",
+        "sentencepiece/src/trainer_interface.h",
+        "sentencepiece/src/unicode_script.h",
+        "sentencepiece/src/unicode_script_map.h",
+        "sentencepiece/src/unigram_model_trainer.h",
+        "sentencepiece/src/word_model_trainer.h",
+        "sentencepiece/third_party/esaxx/esa.hxx",
+        "sentencepiece/third_party/esaxx/sais.hxx",
     ],
     includes = [
-        ".",
-        "src",
-        "third_party/esaxx",
+        "sentencepiece/",
+        "sentencepiece/src",
+        "sentencepiece/third_party/esaxx",
     ],
     deps = [
         ":common",
@@ -149,11 +149,11 @@ cc_library(
 
 cc_library(
     name = "pretokenizer_for_training",
-    srcs = ["src/pretokenizer_for_training.cc"],
-    hdrs = ["src/pretokenizer_for_training.h"],
+    srcs = ["sentencepiece/src/pretokenizer_for_training.cc"],
+    hdrs = ["sentencepiece/src/pretokenizer_for_training.h"],
     includes = [
-        ".",
-        "src",
+        "sentencepiece/",
+        "sentencepiece/src",
     ],
     deps = [
         ":common",

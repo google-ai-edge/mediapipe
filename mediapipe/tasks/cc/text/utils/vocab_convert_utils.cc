@@ -20,8 +20,8 @@
 #include "mediapipe/util/resource_util.h"
 #include "nlohmann/json.hpp"  // from @com_github_nlohmann_json
 #include "nlohmann/json_fwd.hpp"
-#include "src/builder.h"
-#include "src/sentencepiece_model.pb.h"
+#include "sentencepiece/src/builder.h"  // from @com_google_sentencepiece
+#include "sentencepiece/src/sentencepiece_model.pb.h"  // from @com_google_sentencepiece
 
 namespace mediapipe {
 namespace tasks {

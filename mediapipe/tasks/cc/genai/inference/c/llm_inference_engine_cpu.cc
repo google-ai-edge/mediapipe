@@ -41,8 +41,8 @@
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/llm.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/llm_builder_factory.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/llm_weights.h"
-#include "src/normalizer.h"
-#include "src/sentencepiece_processor.h"
+#include "sentencepiece/src/normalizer.h"  // from @com_google_sentencepiece
+#include "sentencepiece/src/sentencepiece_processor.h"  // from @com_google_sentencepiece
 #include "tensorflow/lite/model_builder.h"
 
 namespace {
