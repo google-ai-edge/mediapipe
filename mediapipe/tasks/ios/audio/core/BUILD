@@ -78,3 +78,22 @@ objc_library(
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
     ],
 )
+
+objc_library(
+    name = "MPPAudioPacketCreator",
+    srcs = ["sources/MPPAudioPacketCreator.mm"],
+    hdrs = ["sources/MPPAudioPacketCreator.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+    ],
+    deps = [
+        ":MPPAudioData",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/formats:matrix",
+        "//mediapipe/tasks/ios/common:MPPCommon",
+        "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
+    ],
+)
+
