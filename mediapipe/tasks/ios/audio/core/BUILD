@@ -102,3 +102,24 @@ objc_library(
     hdrs = ["sources/MPPAudioRunningMode.h"],
 )
 
+objc_library(
+    name = "MPPAudioTaskRunner",
+    srcs = ["sources/MPPAudioTaskRunner.mm"],
+    hdrs = ["sources/MPPAudioTaskRunner.h"],
+     copts = [
+        "-ObjC++",
+        "-std=c++17",
+    ],
+    deps = [
+        ":MPPAudioData",
+        ":MPPAudioRunningMode",
+        ":MPPAudioPacketCreator",
+        "//mediapipe/framework:packet",
+        "//mediapipe/tasks/ios/common:MPPCommon",
+        "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
+        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
+        "//mediapipe/tasks/ios/core:MPPPacketCreator",
+        "//mediapipe/tasks/ios/core:MPPTaskInfo",
+        "//mediapipe/tasks/ios/core:MPPTaskRunner",
+    ],
+)
