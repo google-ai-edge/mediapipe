@@ -67,7 +67,8 @@ using ::mediapipe::Timestamp;
   NSUInteger colCount = audioData.bufferLength;
 
   std::unique_ptr<mediapipe::Matrix> matrix(new mediapipe::Matrix(rowCount, colCount));
-  memcpy(matrix->data(), audioDataBuffer.data, rowCount * colCount);
+  // iOS is always little-endian. Hence, data can be copied directly.
+  memcpy(matrix->data(), audioDataBuffer.data, rowCount * colCount * sizeof(float));
 
   return std::move(matrix);
 }
