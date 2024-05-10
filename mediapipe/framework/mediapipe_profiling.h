@@ -24,8 +24,8 @@
 
 #ifdef MEDIAPIPE_PROFILER_AVAILABLE
 #define MEDIAPIPE_PROFILER_SCOPE_INTERNAL(event_type, calculator_context) \
-  GraphProfiler::Scope graph_profiler_scope(                              \
-      TraceEvent::event_type, calculator_context,                         \
+  mediapipe::GraphProfiler::Scope graph_profiler_scope(                   \
+      mediapipe::TraceEvent::event_type, calculator_context,              \
       calculator_context->GetProfilingContext())
 #else
 #define MEDIAPIPE_PROFILER_SCOPE_INTERNAL(method_name, calculator_context)
