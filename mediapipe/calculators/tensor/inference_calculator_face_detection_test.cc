@@ -12,23 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "absl/memory/memory.h"
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_calculator.pb.h"
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
 #include "mediapipe/calculators/tensor/tensors_to_detections_calculator.pb.h"
-#include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/api2/packet.h"
 #include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/graph_test_base.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/status_matchers.h"  // NOLINT
+#include "mediapipe/framework/tool/options_map.h"
 #include "mediapipe/framework/tool/subgraph_expansion.h"
 #include "mediapipe/framework/tool/test_util.h"
 
@@ -43,29 +48,42 @@ using testing::EqualsProto;
 using testing::proto::Approximately;
 
 struct Param {
-  std::string name;         // Appended to the test name.
-  std::string impl_suffix;  // Expected InferenceCalculator backend.
+  std::string name;          // Appended to the test name.
+  std::string impl_suffix;   // Expected InferenceCalculator backend.
+  std::string golden_image;  // Expected golden image
   InferenceCalculatorOptions_Delegate delegate;
 };
 
 const std::vector<Param>& GetParams() {
   static auto all_params = [] {
     static std::vector<Param> p;
-    p.push_back({"TfLite", "Cpu"});
+    p.push_back({"TfLite", "Cpu", "face_detection_expected.png"});
     p.back().delegate.mutable_tflite();
 #if TARGET_OS_IPHONE && !TARGET_IPHONE_SIMULATOR
     // Metal is not available on the iOS simulator.
-    p.push_back({"Metal", "Metal"});
+    p.push_back({"Metal", "Metal", "face_detection_expected.png"});
     p.back().delegate.mutable_gpu();
 #endif                // TARGET_IPHONE_SIMULATOR
 #if __ANDROID__ && 0  // Disabled for now since emulator can't go GLESv3
-    p.push_back({"Gl", "Gl"});
+    p.push_back({"Gl", "Gl", "face_detection_expected.png"});
     p.back().delegate.mutable_gpu();
     // This requires API level 27
-    p.push_back({"NnApi", "Cpu"});
+    p.push_back({"NnApi", "Cpu", "face_detection_expected.png"});
     p.back().delegate.mutable_nnapi();
 #endif  // __ANDROID__
-    p.push_back({"XnnPack", "Cpu"});
+#if !defined(__ANDROID__) && !defined(__EMSCRIPTEN__) && \
+    !defined(TARGET_OS_IPHONE)  // Linux tests
+#if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
+    p.push_back({"GlAdvanced", "GlAdvanced", "face_detection_expected_gl.png"});
+#else
+    p.push_back({"GlAdvanced", "Cpu", "face_detection_expected.png"});
+#endif
+    p.back().delegate.mutable_gpu()->set_use_advanced_gpu_api(true);
+    p.back().delegate.mutable_gpu()->set_api(
+        InferenceCalculatorOptions_Delegate::Gpu::OPENGL);
+#endif  // !defined(__ANDROID__) && !defined(__EMSCRIPTEN__) &&
+        // !defined(TARGET_OS_IPHONE)
+    p.push_back({"XnnPack", "Cpu", "face_detection_expected.png"});
     p.back().delegate.mutable_xnnpack();
     return p;
   }();
@@ -127,7 +145,8 @@ TEST_P(InferenceCalculatorTest, TestFaceDetection) {
   std::unique_ptr<ImageFrame> expected_image =
       LoadTestPng(file::JoinPath(GetTestRootDir(),
                                  "mediapipe/calculators/tensor/"
-                                 "testdata/face_detection_expected.png"));
+                                 "testdata",
+                                 GetParam().golden_image));
   ASSERT_THAT(expected_image, testing::NotNull());
 
   std::string binary;
