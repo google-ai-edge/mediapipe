@@ -123,6 +123,7 @@ cc_library(
         "//mediapipe/tasks/cc/vision/face_landmarker",
         "//mediapipe/tasks/cc/vision/face_landmarker/proto:face_landmarker_graph_options_cc_proto",
         "//mediapipe/tasks/cc/vision/face_landmarker/proto:face_landmarks_detector_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/vision/image_generator/diffuser:stable_diffusion_iterate_calculator_cc_proto",
         "//mediapipe/tasks/cc/vision/image_generator/proto:conditioned_image_graph_options_cc_proto",
         "//mediapipe/tasks/cc/vision/image_generator/proto:control_plugin_graph_options_cc_proto",
         "//mediapipe/tasks/cc/vision/image_generator/proto:image_generator_graph_options_cc_proto",
@@ -131,6 +132,7 @@ cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/time",
     ],
 )

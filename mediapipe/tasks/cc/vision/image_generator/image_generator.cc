@@ -19,6 +19,7 @@ limitations under the License.
 #include <string>
 
 #include "absl/status/status.h"
+#include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "mediapipe/framework/api2/builder.h"
@@ -31,6 +32,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/face_detector/proto/face_detector_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/face_landmarker/proto/face_landmarker_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/face_landmarker/proto/face_landmarks_detector_graph_options.pb.h"
+#include "mediapipe/tasks/cc/vision/image_generator/diffuser/stable_diffusion_iterate_calculator.pb.h"
 #include "mediapipe/tasks/cc/vision/image_generator/image_generator_result.h"
 #include "mediapipe/tasks/cc/vision/image_generator/proto/conditioned_image_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/image_generator/proto/control_plugin_graph_options.pb.h"
@@ -226,6 +228,18 @@ ConvertImageGeneratorGraphOptionsProto(
   auto& options_proto = *options_proto_and_condition_index.options_proto;
   options_proto.set_text2image_model_directory(
       image_generator_options->text2image_model_directory);
+  options_proto.mutable_stable_diffusion_iterate_options()->set_file_folder(
+      image_generator_options->text2image_model_directory);
+  switch (image_generator_options->model_type) {
+    case ImageGeneratorOptions::ModelType::SD_1:
+      options_proto.mutable_stable_diffusion_iterate_options()->set_model_type(
+          mediapipe::StableDiffusionIterateCalculatorOptions::SD_1);
+      break;
+    default:
+      return absl::InvalidArgumentError(
+          absl::StrFormat("Unsupported ImageGenerator model type: %d",
+                          image_generator_options->model_type));
+  }
   if (image_generator_options->lora_weights_file_path.has_value()) {
     options_proto.mutable_lora_weights_file()->set_file_name(
         *image_generator_options->lora_weights_file_path);

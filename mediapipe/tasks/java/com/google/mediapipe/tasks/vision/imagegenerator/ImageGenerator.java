@@ -534,6 +534,11 @@ public final class ImageGenerator extends BaseVisionTaskApi {
   @AutoValue
   public abstract static class ImageGeneratorOptions extends TaskOptions {
 
+    /** The supported model types. */
+    public enum ModelType {
+      SD_1, // Stable Diffusion v1 models, including SD 1.4 and 1.5.
+    }
+
     /** Builder for {@link ImageGeneratorOptions}. */
     @AutoValue.Builder
     public abstract static class Builder {
@@ -543,6 +548,9 @@ public final class ImageGenerator extends BaseVisionTaskApi {
 
       /** Sets the path to LoRA weights file. */
       public abstract Builder setLoraWeightsFilePath(String loraWeightsFilePath);
+
+      /** Sets the model type. */
+      public abstract Builder setModelType(ModelType modelType);
 
       /** Sets an optional {@link ErrorListener}}. */
       public abstract Builder setErrorListener(ErrorListener value);
@@ -559,13 +567,27 @@ public final class ImageGenerator extends BaseVisionTaskApi {
 
     abstract Optional<String> loraWeightsFilePath();
 
+    abstract ModelType modelType();
+
     abstract Optional<ErrorListener> errorListener();
 
     private Optional<ConditionOptions> conditionOptions;
 
+    private StableDiffusionIterateCalculatorOptionsProto.StableDiffusionIterateCalculatorOptions
+            .ModelType
+        convertModelTypeToProto(ModelType modelType) {
+      switch (modelType) {
+        case SD_1:
+          return StableDiffusionIterateCalculatorOptionsProto
+              .StableDiffusionIterateCalculatorOptions.ModelType.SD_1;
+      }
+      throw new IllegalArgumentException("Unsupported model type: " + modelType.name());
+    }
+
     public static Builder builder() {
       return new AutoValue_ImageGenerator_ImageGeneratorOptions.Builder()
-          .setImageGeneratorModelDirectory("");
+          .setImageGeneratorModelDirectory("")
+          .setModelType(ModelType.SD_1);
     }
 
     /** Converts an {@link ImageGeneratorOptions} to a {@link Any} protobuf message. */
@@ -594,6 +616,7 @@ public final class ImageGenerator extends BaseVisionTaskApi {
               .newBuilder()
               .setBaseSeed(0)
               .setFileFolder(imageGeneratorModelDirectory())
+              .setModelType(convertModelTypeToProto(modelType()))
               .setOutputImageWidth(GENERATED_IMAGE_WIDTH)
               .setOutputImageHeight(GENERATED_IMAGE_HEIGHT)
               .setEmitEmptyPacket(true)
@@ -685,17 +708,17 @@ public final class ImageGenerator extends BaseVisionTaskApi {
                 .build());
       }
       if (depthConditionOptions().isPresent()) {
-          taskOptionsBuilder.addControlPluginGraphsOptions(
-              ControlPluginGraphOptionsProto.ControlPluginGraphOptions.newBuilder()
-                  .setBaseOptions(
-                      convertBaseOptionsToProto(
-                          depthConditionOptions().get().pluginModelBaseOptions()))
-                  .setConditionedImageGraphOptions(
-                      ConditionedImageGraphOptions.newBuilder()
-                          .setDepthConditionTypeOptions(
-                              depthConditionOptions().get().convertToProto())
-                          .build())
-                  .build());
+        taskOptionsBuilder.addControlPluginGraphsOptions(
+            ControlPluginGraphOptionsProto.ControlPluginGraphOptions.newBuilder()
+                .setBaseOptions(
+                    convertBaseOptionsToProto(
+                        depthConditionOptions().get().pluginModelBaseOptions()))
+                .setConditionedImageGraphOptions(
+                    ConditionedImageGraphOptions.newBuilder()
+                        .setDepthConditionTypeOptions(
+                            depthConditionOptions().get().convertToProto())
+                        .build())
+                .build());
       }
       return Any.newBuilder()
           .setTypeUrl(
