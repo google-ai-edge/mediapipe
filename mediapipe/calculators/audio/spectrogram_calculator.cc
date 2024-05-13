@@ -18,6 +18,7 @@
 #include <complex>
 #include <deque>
 #include <memory>
+#include <optional>
 #include <string>
 
 #include "absl/strings/string_view.h"
@@ -293,11 +294,17 @@ absl::Status SpectrogramCalculator::Open(CalculatorContext* cc) {
   window_fun->GetPeriodicSamples(frame_duration_samples_, &window);
 
   // Propagate settings down to the actual Spectrogram object.
+  std::optional<int> fft_size;
+  if (spectrogram_options.fft_size() > 0) {
+    fft_size = spectrogram_options.fft_size();
+  }
+
   spectrogram_generators_.clear();
   for (int i = 0; i < num_input_channels_; i++) {
     spectrogram_generators_.push_back(
         std::unique_ptr<audio_dsp::Spectrogram>(new audio_dsp::Spectrogram()));
-    spectrogram_generators_[i]->Initialize(window, frame_step_samples());
+    spectrogram_generators_[i]->Initialize(window, frame_step_samples(),
+                                           fft_size);
   }
 
   num_output_channels_ =

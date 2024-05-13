@@ -83,4 +83,8 @@ message SpectrogramCalculatorOptions {
   // the cumulative timestamping, which is inferred from the initial input
   // timestamp and the cumulative number of samples.
   optional bool use_local_timestamp = 8 [default = false];
+
+  // Defines a fixed FFT size. If set to 0, the FFT size will be determined
+  // based on the frame duration and sample rate.
+  optional int32 fft_size = 9 [default = 0];
 }
