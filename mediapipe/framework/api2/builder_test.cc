@@ -743,5 +743,15 @@ TEST(GetOptionsTest, AddBothProto23Options) {
   EXPECT_THAT(graph.GetConfig(), EqualsProto(expected));
 }
 
+// Checks casting logic.
+TEST(CastTest, FromAnyToAny) {
+  Graph graph;
+  Stream<int> int_inp = graph.In("A").SetName("a").Cast<int>();
+  Stream<AnyType> any_inp = graph.In("B").SetName("b");
+
+  [[maybe_unused]] Stream<AnyType> any_dest = int_inp.Cast<AnyType>();
+  [[maybe_unused]] Stream<int> int_dest = any_inp.Cast<int>();
+}
+
 }  // namespace
 }  // namespace mediapipe::api2::builder

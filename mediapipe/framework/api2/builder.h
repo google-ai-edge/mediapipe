@@ -14,6 +14,7 @@
 #include "absl/log/absl_check.h"
 #include "absl/strings/string_view.h"
 #include "google/protobuf/message_lite.h"
+#include "mediapipe/framework/api2/packet.h"
 #include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/calculator_base.h"
 #include "mediapipe/framework/calculator_contract.h"
@@ -128,7 +129,8 @@ class MultiPort : public Single {
 namespace internal_builder {
 
 template <typename T, typename U>
-using AllowCast = std::integral_constant<bool, std::is_same_v<T, AnyType> &&
+using AllowCast = std::integral_constant<bool, (std::is_same_v<T, AnyType> ||
+                                                std::is_same_v<U, AnyType>) &&
                                                    !std::is_same_v<T, U>>;
 
 }  // namespace internal_builder

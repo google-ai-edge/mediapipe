@@ -16,6 +16,7 @@ cc_library(
     name = "builder",
     hdrs = ["builder.h"],
     deps = [
+        ":packet",
         ":port",
         "//mediapipe/framework:calculator_base",
         "//mediapipe/framework:calculator_contract",
