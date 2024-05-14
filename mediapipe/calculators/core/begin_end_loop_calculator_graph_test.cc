@@ -12,11 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>
+#include <cstring>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
+#include "absl/types/span.h"
 #include "mediapipe/calculators/core/begin_loop_calculator.h"
 #include "mediapipe/calculators/core/end_loop_calculator.h"
 #include "mediapipe/framework/calculator_contract.h"
@@ -514,6 +518,37 @@ TEST_F(BeginEndLoopCalculatorGraphWithClonedInputsTest, MultipleVectors) {
                   PacketOfIntsEq(input_timestamp2, std::vector<int>{6, 9})));
 }
 
+class TestTensorCpuCopyCalculator : public CalculatorBase {
+ public:
+  static absl::Status GetContract(CalculatorContract* cc) {
+    cc->Inputs().Index(0).Set<Tensor>();
+    cc->Outputs().Index(0).Set<Tensor>();
+    return absl::OkStatus();
+  }
+
+  absl::Status Open(CalculatorContext* cc) override {
+    cc->SetOffset(TimestampDiff(0));
+    return absl::OkStatus();
+  }
+
+  absl::Status Process(CalculatorContext* cc) override {
+    const Tensor& in_tensor = cc->Inputs().Index(0).Get<Tensor>();
+    const Tensor::CpuReadView in_view = in_tensor.GetCpuReadView();
+    const void* in_data = in_view.buffer<void>();
+
+    Tensor out_tensor(in_tensor.element_type(), in_tensor.shape());
+    auto out_view = out_tensor.GetCpuWriteView();
+    void* out_data = out_view.buffer<void>();
+
+    std::memcpy(out_data, in_data, in_tensor.bytes());
+
+    cc->Outputs().Index(0).AddPacket(
+        MakePacket<Tensor>(std::move(out_tensor)).At(cc->InputTimestamp()));
+    return absl::OkStatus();
+  }
+};
+REGISTER_CALCULATOR(TestTensorCpuCopyCalculator);
+
 absl::Status InitBeginEndTensorLoopTestGraph(
     CalculatorGraph& graph, std::vector<Packet>& output_packets) {
   auto graph_config = ParseTextProtoOrDie<CalculatorGraphConfig>(
@@ -527,13 +562,13 @@ absl::Status InitBeginEndTensorLoopTestGraph(
           output_stream: "BATCH_END:timestamp"
         }
         node {
-          calculator: "PassThroughCalculator"
+          calculator: "TestTensorCpuCopyCalculator"
           input_stream: "tensor"
-          output_stream: "passed_tensor"
+          output_stream: "copied_tensor"
         }
         node {
           calculator: "EndLoopTensorCalculator"
-          input_stream: "ITEM:passed_tensor"
+          input_stream: "ITEM:copied_tensor"
           input_stream: "BATCH_END:timestamp"
           output_stream: "ITERABLE:output_tensors"
         }
@@ -555,6 +590,11 @@ TEST(BeginEndTensorLoopCalculatorGraphTest, SingleNonEmptyVector) {
   for (int i = 0; i < 4; i++) {
     tensors.emplace_back(Tensor::ElementType::kFloat32,
                          Tensor::Shape{4, 3, 2, 1});
+    auto write_view = tensors.back().GetCpuWriteView();
+    float* data = write_view.buffer<float>();
+
+    // Populate with tensor index in the vector.
+    std::fill(data, data + tensors.back().element_size(), i);
   }
   Packet vector_packet =
       MakePacket<std::vector<mediapipe::Tensor>>(std::move(tensors));
@@ -570,6 +610,11 @@ TEST(BeginEndTensorLoopCalculatorGraphTest, SingleNonEmptyVector) {
   for (int i = 0; i < output_tensors.size(); i++) {
     EXPECT_THAT(output_tensors[i].shape().dims,
                 testing::ElementsAre(4, 3, 2, 1));
+    const float* data = output_tensors[i].GetCpuReadView().buffer<float>();
+
+    // Expect every element is equal to tensor index.
+    EXPECT_THAT(absl::MakeSpan(data, output_tensors[i].element_size()),
+                testing::Each(i));
   }
 
   MP_ASSERT_OK(graph.CloseAllPacketSources());
