@@ -368,6 +368,24 @@ TEST(PacketTest, TestPacketConsumeOrCopy) {
   EXPECT_TRUE(packet3.IsEmpty());
 }
 
+TEST(PacketTest, TestForeignCleanupIsInvokedOnceWhenAllPacketCopiesDestroyed) {
+  int num_cleanup = 0;
+  const float unused_data = 0;
+  Packet packet =
+      PointToForeign(&unused_data, [&num_cleanup]() { ++num_cleanup; });
+
+  std::vector<Packet> packet_copies(10, packet);
+  packet_copies.clear();
+  EXPECT_EQ(num_cleanup, 0);
+
+  packet_copies = std::vector<Packet>(10, packet);
+  packet = Packet();
+  EXPECT_EQ(num_cleanup, 0);
+
+  packet_copies.clear();
+  EXPECT_EQ(num_cleanup, 1);
+}
+
 TEST(PacketTest, TestConsumeForeignHolder) {
   std::unique_ptr<int> data(new int(33));
   Packet packet = PointToForeign(data.get());

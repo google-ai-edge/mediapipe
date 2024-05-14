@@ -23,8 +23,10 @@
 #include <ostream>
 #include <string>
 #include <type_traits>
+#include <utility>
 
 #include "absl/base/macros.h"
+#include "absl/functional/any_invocable.h"
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
@@ -264,11 +266,17 @@ Packet Adopt(const T* ptr);
 
 // Returns a Packet that does not own its data. The data pointed to by *ptr
 // remains owned by the caller, who must ensure that it outlives not only the
-// returned Packet but also all of its copies. The timestamp of the returned
-// Packet is Timestamp::Unset(). To set the timestamp, the caller should do
-// PointToForeign(...).At(...).
+// returned Packet but also all of its copies.
+//
+// Optionally, `cleanup` object can be specified to invoke when all copies of
+// the packet are destroyed (can be used to capture the foreign owner if
+// possible and ensure the lifetime).
+//
+// The timestamp of the returned Packet is Timestamp::Unset(). To set the
+// timestamp, the caller should do PointToForeign(...).At(...).
 template <typename T>
-Packet PointToForeign(const T* ptr);
+Packet PointToForeign(const T* ptr,
+                      absl::AnyInvocable<void()> cleanup = nullptr);
 
 // Adopts the data but places it in a std::unique_ptr inside the
 // resulting Packet, leaving the timestamp unset. This allows the
@@ -589,14 +597,24 @@ class Holder : public HolderBase, private HolderPayloadRegistrator<T> {
 template <typename T>
 class ForeignHolder : public Holder<T> {
  public:
-  using Holder<T>::Holder;
+  explicit ForeignHolder(const T* ptr,
+                         absl::AnyInvocable<void()> cleanup = nullptr)
+      : Holder<T>::Holder(ptr), cleanup_(std::move(cleanup)) {}
+
   ~ForeignHolder() override {
     // Null out ptr_ so it doesn't get deleted by ~Holder.
     // Note that ~Holder cannot call HasForeignOwner because the subclass's
     // destructor runs first.
     this->ptr_ = nullptr;
+    if (cleanup_) {
+      cleanup_();
+    }
   }
+
   bool HasForeignOwner() const final { return true; }
+
+ private:
+  absl::AnyInvocable<void()> cleanup_;
 };
 
 template <typename T>
@@ -772,9 +790,10 @@ Packet Adopt(const T* ptr) {
 }
 
 template <typename T>
-Packet PointToForeign(const T* ptr) {
+Packet PointToForeign(const T* ptr, absl::AnyInvocable<void()> cleanup) {
   ABSL_CHECK(ptr != nullptr);
-  return packet_internal::Create(new packet_internal::ForeignHolder<T>(ptr));
+  return packet_internal::Create(
+      new packet_internal::ForeignHolder<T>(ptr, std::move(cleanup)));
 }
 
 // Equal Packets refer to the same memory contents, like equal pointers.
