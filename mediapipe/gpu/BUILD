@@ -678,6 +678,7 @@ cc_library(
         ":gpu_buffer_multi_pool",
         ":gpu_shared_data_header",
         ":graph_support",
+        ":multi_pool",
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:calculator_node",
         "//mediapipe/framework:executor",

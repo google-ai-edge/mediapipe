@@ -26,6 +26,7 @@
 #include "mediapipe/gpu/gl_context.h"
 #include "mediapipe/gpu/gl_context_options.pb.h"
 #include "mediapipe/gpu/graph_support.h"
+#include "mediapipe/gpu/multi_pool.h"
 
 #if __APPLE__
 #include "mediapipe/gpu/metal_shared_resources.h"
@@ -59,7 +60,7 @@ static constexpr bool kGlCalculatorShareContext = true;
 class GlContextExecutor : public Executor {
  public:
   explicit GlContextExecutor(GlContext* gl_context) : gl_context_(gl_context) {}
-  ~GlContextExecutor() override {}
+  ~GlContextExecutor() override = default;
   void Schedule(std::function<void()> task) override {
     gl_context_->RunWithoutWaiting(std::move(task));
   }
@@ -78,16 +79,18 @@ GpuResources::StatusOrGpuResources GpuResources::Create() {
 }
 
 GpuResources::StatusOrGpuResources GpuResources::Create(
-    PlatformGlContext external_context) {
+    PlatformGlContext external_context,
+    const MultiPoolOptions* gpu_buffer_pool_options) {
   MP_ASSIGN_OR_RETURN(
       std::shared_ptr<GlContext> context,
       GlContext::Create(external_context, kGlContextUseDedicatedThread));
   std::shared_ptr<GpuResources> gpu_resources(
-      new GpuResources(std::move(context)));
+      new GpuResources(std::move(context), gpu_buffer_pool_options));
   return gpu_resources;
 }
 
-GpuResources::GpuResources(std::shared_ptr<GlContext> gl_context)
+GpuResources::GpuResources(std::shared_ptr<GlContext> gl_context,
+                           const MultiPoolOptions* gpu_buffer_pool_options)
     : gl_key_context_(new GlContextMapType(),
                       [](auto* map) {
                         // This flushes all pending jobs in all GL contexts,
@@ -103,15 +106,19 @@ GpuResources::GpuResources(std::shared_ptr<GlContext> gl_context)
                               << "Failed to flush GlContext jobs: " << status;
                         }
                         delete map;
-                      })
+                      }),
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
-      ,
       texture_caches_(std::make_shared<CvTextureCacheManager>()),
       gpu_buffer_pool_(
           [tc = texture_caches_](const internal::GpuBufferSpec& spec,
                                  const MultiPoolOptions& options) {
             return CvPixelBufferPoolWrapper::Create(spec, options, tc.get());
-          })
+          },
+          gpu_buffer_pool_options ? *gpu_buffer_pool_options
+                                  : kDefaultMultiPoolOptions)
+#else   // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+          gpu_buffer_pool_(gpu_buffer_pool_options ? *gpu_buffer_pool_options
+                                            : kDefaultMultiPoolOptions)
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 {
   gl_key_context_->insert({SharedContextKey(), gl_context});
