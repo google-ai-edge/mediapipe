@@ -14,6 +14,7 @@
 
 #include "mediapipe/calculators/tensor/inference_calculator_utils.h"
 
+#include <algorithm>
 #include <cstdint>
 #include <cstring>
 #include <string>
@@ -31,6 +32,7 @@
 #include "tensorflow/lite/kernels/cast_test_common.h"
 #include "tensorflow/lite/schema/schema_generated.h"
 #include "tensorflow/lite/string_util.h"
+#include "tensorflow/lite/util.h"
 
 namespace mediapipe {
 namespace {
@@ -412,6 +414,79 @@ TEST(InferenceCalculatorUtilsTest, ConvertTfLiteTensorToFloat32) {
   EXPECT_THAT(absl::MakeConstSpan(tensor.GetCpuReadView().buffer<float>(),
                                   tensor.shape().num_elements()),
               ElementsAreArray(expected_values));
+}
+
+TEST(InferenceCalculatorUtilsTest, ShouldSetCustomAllocatorForCpuWriteView) {
+  tflite::Interpreter interpreter;
+  int tensor_index, tensor_size = 4;
+  AddInterpreterInput(kTfLiteInt32, tensor_size, tensor_index,
+                      /*allocate_tensor=*/true, interpreter);
+  std::vector<int32_t> values{1, 2, 3, 4};
+  int values_len = values.size();
+  Tensor tensor(ElementType::kInt32, Tensor::Shape({values_len}),
+                /*memory_manager=*/nullptr, tflite::kDefaultTensorAlignment);
+  {
+    auto write_view = tensor.GetCpuWriteView();
+    MP_EXPECT_OK(SetTfLiteCustomAllocation<void>(
+        interpreter, write_view.buffer<void>(), tensor.bytes(), tensor_index));
+    interpreter.AllocateTensors();
+    const TfLiteTensor* tf_lite_tensor =
+        interpreter.tensor(interpreter.inputs()[tensor_index]);
+    int32_t* tensor_ptr = reinterpret_cast<int32_t*>(tf_lite_tensor->data.data);
+    std::copy(values.begin(), values.end(), tensor_ptr);
+
+    EXPECT_THAT(TfLiteInputTensorData<int32_t>(interpreter, tensor_index),
+                ElementsAreArray(values));
+  }
+  auto read_view = tensor.GetCpuReadView();
+  const int32_t* tensor_ptr = read_view.buffer<int32_t>();
+  for (int i = 0; i < values.size(); ++i) {
+    EXPECT_EQ(tensor_ptr[i], values[i]);
+  }
+}
+
+TEST(InferenceCalculatorUtilsTest, ShouldSetCustomAllocatorForCpuReadView) {
+  tflite::Interpreter interpreter;
+  int tensor_index, tensor_size = 4;
+  AddInterpreterInput(kTfLiteInt32, tensor_size, tensor_index,
+                      /*allocate_tensor=*/true, interpreter);
+  std::vector<int32_t> values{1, 2, 3, 4};
+  int values_len = values.size();
+  Tensor tensor(ElementType::kInt32, Tensor::Shape({values_len}),
+                /*memory_manager=*/nullptr, tflite::kDefaultTensorAlignment);
+  std::memcpy(tensor.GetCpuWriteView().buffer<int32_t>(), values.data(),
+              values_len * sizeof(int32_t));
+
+  auto read_view = tensor.GetCpuReadView();
+  MP_EXPECT_OK(SetTfLiteCustomAllocation<const void>(
+      interpreter, read_view.buffer<void>(), tensor.bytes(), tensor_index));
+  interpreter.AllocateTensors();
+
+  EXPECT_THAT(TfLiteInputTensorData<int32_t>(interpreter, tensor_index),
+              ElementsAreArray(values));
+}
+
+TEST(InferenceCalculatorUtilsTest, ShouldConfirmTfLiteMemoryAlignment) {
+  std::vector<int32_t> values{1, 2, 3, 4};
+  int values_len = values.size();
+  Tensor tensor(ElementType::kInt32, Tensor::Shape({values_len}),
+                /*memory_manager=*/nullptr, tflite::kDefaultTensorAlignment);
+  std::memcpy(tensor.GetCpuWriteView().buffer<int32_t>(), values.data(),
+              values_len * sizeof(int32_t));
+  const auto read_view = tensor.GetCpuReadView();
+  EXPECT_TRUE(IsAlignedWithTFLiteDefaultAlignment(read_view.buffer<int32_t>()));
+}
+
+TEST(InferenceCalculatorUtilsTest, ShouldNotConfirmTfLiteMemoryAlignment) {
+  std::vector<int32_t> values{1, 2, 3, 4};
+  int values_len = values.size();
+  Tensor tensor(ElementType::kInt32, Tensor::Shape({values_len}),
+                /*memory_manager=*/nullptr, tflite::kDefaultTensorAlignment);
+  std::memcpy(tensor.GetCpuWriteView().buffer<int32_t>(), values.data(),
+              values_len * sizeof(int32_t));
+  const auto read_view = tensor.GetCpuReadView();
+  EXPECT_FALSE(IsAlignedWithTFLiteDefaultAlignment(read_view.buffer<int32_t>() +
+                                                   sizeof(int32_t)));
 }
 
 }  // namespace

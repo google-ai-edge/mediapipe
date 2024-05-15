@@ -15,11 +15,16 @@
 #ifndef MEDIAPIPE_CALCULATORS_TENSOR_INFERENCE_CALCULATOR_UTILS_H_
 #define MEDIAPIPE_CALCULATORS_TENSOR_INFERENCE_CALCULATOR_UTILS_H_
 
+#include <cstddef>
+#include <cstdint>
+
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
 #include "mediapipe/framework/formats/tensor.h"
+#include "mediapipe/framework/port/ret_check.h"
 #include "tensorflow/lite/interpreter.h"
+#include "tensorflow/lite/util.h"
 
 namespace mediapipe {
 
@@ -48,6 +53,31 @@ absl::Status CopyTfLiteTensorIntoCpuOutput(const TfLiteTensor& tflite_tensor,
 // the type is not supported.
 absl::StatusOr<Tensor> ConvertTfLiteTensorToTensor(
     const TfLiteTensor& tflite_tensor);
+
+// Returns true if the input tensor is aligned with the default alignment
+// used by TFLite.
+template <typename T>
+bool IsAlignedWithTFLiteDefaultAlignment(T* data_ptr) {
+  return (reinterpret_cast<const uintptr_t>(data_ptr) %
+          tflite::kDefaultTensorAlignment) == 0;
+}
+
+// Uses TfLite's CustomAllocation to directly set the input tensor's data.
+template <typename T>
+absl::Status SetTfLiteCustomAllocation(tflite::Interpreter& interpreter,
+                                       T* data_ptr, size_t size_bytes,
+                                       int tensor_index) {
+  RET_CHECK(IsAlignedWithTFLiteDefaultAlignment(data_ptr))
+      << "data_ptr must be aligned to " << tflite::kDefaultTensorAlignment
+      << " bytes.";
+  TfLiteCustomAllocation allocation = {
+      .data = const_cast<void*>(reinterpret_cast<const void*>(data_ptr)),
+      .bytes = size_bytes};
+  RET_CHECK_EQ(
+      interpreter.SetCustomAllocationForTensor(tensor_index, allocation),
+      kTfLiteOk);
+  return absl::OkStatus();
+}
 
 }  // namespace mediapipe
 

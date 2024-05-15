@@ -86,13 +86,15 @@ absl::StatusOr<std::unique_ptr<InferenceRunner>>
 InferenceCalculatorXnnpackImpl::CreateInferenceRunner(CalculatorContext* cc) {
   MP_ASSIGN_OR_RETURN(auto model_packet, GetModelAsPacket(cc));
   MP_ASSIGN_OR_RETURN(auto op_resolver_packet, GetOpResolverAsPacket(cc));
-  const auto& options = cc->Options<mediapipe::InferenceCalculatorOptions>();
-  const int interpreter_num_threads = options.cpu_num_thread();
+  const auto& calculator_opts =
+      cc->Options<mediapipe::InferenceCalculatorOptions>();
+  const int interpreter_num_threads = calculator_opts.cpu_num_thread();
   MP_ASSIGN_OR_RETURN(TfLiteDelegatePtr delegate, CreateDelegate(cc));
   return CreateInferenceInterpreterDelegateRunner(
       std::move(model_packet), std::move(op_resolver_packet),
       std::move(delegate), interpreter_num_threads,
-      &options.input_output_config());
+      &calculator_opts.input_output_config(),
+      calculator_opts.delegate().xnnpack().enable_zero_copy_tensor_io());
 }
 
 absl::StatusOr<TfLiteDelegatePtr>
