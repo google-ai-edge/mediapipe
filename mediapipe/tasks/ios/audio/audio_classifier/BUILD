@@ -26,3 +26,13 @@ objc_library(
     ],
 )
 
+objc_library(
+    name = "MPPAudioClassifierOptions",
+    srcs = ["sources/MPPAudioClassifierOptions.m"],
+    hdrs = ["sources/MPPAudioClassifierOptions.h"],
+    deps = [
+        ":MPPAudioClassifierResult",
+        "//mediapipe/tasks/ios/core:MPPTaskOptions",
+        "//mediapipe/tasks/ios/audio/core:MPPAudioRunningMode",
+    ],
+)
