@@ -75,6 +75,27 @@ NS_ASSUME_NONNULL_BEGIN
 - (std::optional<mediapipe::tasks::core::PacketMap>)processAudioClip:(MPPAudioData *)audioClip
                                                                error:(NSError **)error;
 
+/**
+ * An asynchronous method to send audio stream data to the C++ task runner. The call returns
+ * immediately indicating if the audio clip was sent successfully to the C++ task runner. The
+ * results will be available in the user-defined `packetsCallback` that was provided during
+ * initialization of the `MPPAudioTaskRunner`.
+ *
+ * @param audioClip An audio clip input of type `MPPAudioData` to the task.
+ * @param timestampInMilliseconds The audio clip's timestamp (in milliseconds). The input timestamps
+ * must be monotonically increasing.
+ * @param error Pointer to the memory location where errors if any should be saved. If @c NULL, no
+ * error will be saved.
+ *
+ * @return A `BOOL` indicating if the audio stream data was sent to the C++ task runner
+ * successfully. Please note that any errors during processing of the audio stream packet map will
+ * only be available in the user-defined `packetsCallback` that was provided during initialization
+ * of the `MPPAudioTaskRunner`.
+ */
+- (BOOL)processStreamAudioClip:(MPPAudioData *)audioClip
+       timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                         error:(NSError **)error;
+
 - (instancetype)initWithTaskInfo:(MPPTaskInfo *)taskInfo
                  packetsCallback:(mediapipe::tasks::core::PacketsCallback)packetsCallback
                            error:(NSError **)error NS_UNAVAILABLE;
