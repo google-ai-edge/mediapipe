@@ -1,3 +1,4 @@
+
 #include "mediapipe/framework/formats/tensor.h"
 
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
@@ -5,6 +6,7 @@
 #include <EGL/eglext.h>
 
 #include <cstdint>
+#include <list>
 #include <utility>
 #include <vector>
 
@@ -83,6 +85,54 @@ static inline int AlignedToPowerOf2(int value, int alignment) {
   return ((value - 1) | (alignment - 1)) + 1;
 }
 
+void EraseCompletedUsages(std::list<Tensor::AhwbUsage>& ahwb_usages) {
+  for (auto it = ahwb_usages.begin(); it != ahwb_usages.end();) {
+    bool is_ready = true;
+    if (it->is_complete_fn) {
+      if (!it->is_complete_fn(/*force_completion=*/false)) {
+        is_ready = false;
+      }
+    } else {
+      LOG(ERROR) << "Usage is missing completion function.";
+    }
+
+    if (is_ready) {
+      for (auto& release_callback : it->release_callbacks) {
+        release_callback();
+      }
+      it = ahwb_usages.erase(it);
+    } else {
+      ++it;
+    }
+  }
+}
+
+void CompleteAndEraseUsages(std::list<Tensor::AhwbUsage>& ahwb_usages) {
+  for (auto& ahwb_usage : ahwb_usages) {
+    if (ahwb_usage.is_complete_fn &&
+        !ahwb_usage.is_complete_fn(/*force_completion=*/false)) {
+      if (ahwb_usage.is_complete_fn(/*force_completion=*/true)) {
+        ABSL_LOG(DFATAL) << "Failed to force-complete AHWB usage.";
+      }
+    }
+
+    for (auto& release_callback : ahwb_usage.release_callbacks) {
+      release_callback();
+    }
+  }
+  ahwb_usages.clear();
+}
+
+bool HasIncompleteUsages(const std::list<Tensor::AhwbUsage>& ahwb_usages) {
+  for (auto& ahwb_usage : ahwb_usages) {
+    if (ahwb_usage.is_complete_fn &&
+        !ahwb_usage.is_complete_fn(/*force_completion=*/false)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 // This class keeps tensor's resources while the tensor is in use on GPU or TPU
 // but is already released on CPU. When a regular OpenGL buffer is bound to the
 // GPU queue for execution and released on client side then the buffer is still
@@ -102,9 +152,8 @@ class DelayedReleaser {
 
   static void Add(std::shared_ptr<HardwareBuffer> ahwb, GLuint opengl_buffer,
                   EGLSyncKHR ssbo_sync, GLsync ssbo_read,
-                  Tensor::FinishingFunc&& ahwb_written,
-                  std::shared_ptr<mediapipe::GlContext> gl_context,
-                  std::vector<absl::AnyInvocable<void()>>&& callbacks) {
+                  std::list<Tensor::AhwbUsage>&& ahwb_usages,
+                  std::shared_ptr<mediapipe::GlContext> gl_context) {
     static absl::Mutex mutex;
     std::deque<std::unique_ptr<DelayedReleaser>> to_release_local;
     using std::swap;
@@ -117,9 +166,9 @@ class DelayedReleaser {
     }
 
     // Using `new` to access a non-public constructor.
-    to_release_local.emplace_back(absl::WrapUnique(new DelayedReleaser(
-        std::move(ahwb), opengl_buffer, ssbo_sync, ssbo_read,
-        std::move(ahwb_written), gl_context, std::move(callbacks))));
+    to_release_local.emplace_back(absl::WrapUnique(
+        new DelayedReleaser(std::move(ahwb), opengl_buffer, ssbo_sync,
+                            ssbo_read, std::move(ahwb_usages), gl_context)));
     for (auto it = to_release_local.begin(); it != to_release_local.end();) {
       if ((*it)->IsSignaled()) {
         it = to_release_local.erase(it);
@@ -137,20 +186,10 @@ class DelayedReleaser {
     }
   }
 
-  ~DelayedReleaser() {
-    for (auto& callback : release_callbacks_) {
-      callback();
-    }
-  }
+  ~DelayedReleaser() { CompleteAndEraseUsages(ahwb_usages_); }
 
   bool IsSignaled() {
-    bool ready = true;
-
-    if (ahwb_written_) {
-      if (!ahwb_written_(false)) {
-        ready = false;
-      }
-    }
+    bool ready = !HasIncompleteUsages(ahwb_usages_);
 
     if (ssbo_read_ != 0) {
       gl_context_->Run([this, &ready]() {
@@ -189,25 +228,24 @@ class DelayedReleaser {
   EGLSyncKHR fence_sync_;
   // TODO: use wrapper instead.
   GLsync ssbo_read_;
-  Tensor::FinishingFunc ahwb_written_;
+  std::list<Tensor::AhwbUsage> ahwb_usages_;
   std::shared_ptr<mediapipe::GlContext> gl_context_;
-  std::vector<absl::AnyInvocable<void()>> release_callbacks_;
+
   static inline NoDestructor<std::deque<std::unique_ptr<DelayedReleaser>>>
       to_release_;
 
   DelayedReleaser(std::shared_ptr<HardwareBuffer> ahwb, GLuint opengl_buffer,
                   EGLSyncKHR fence_sync, GLsync ssbo_read,
-                  Tensor::FinishingFunc&& ahwb_written,
-                  std::shared_ptr<mediapipe::GlContext> gl_context,
-                  std::vector<absl::AnyInvocable<void()>>&& callback)
+                  std::list<Tensor::AhwbUsage>&& ahwb_usages,
+                  std::shared_ptr<mediapipe::GlContext> gl_context)
       : ahwb_(std::move(ahwb)),
         opengl_buffer_(opengl_buffer),
         fence_sync_(fence_sync),
         ssbo_read_(ssbo_read),
-        ahwb_written_(std::move(ahwb_written)),
-        gl_context_(gl_context),
-        release_callbacks_(std::move(callback)) {}
+        ahwb_usages_(std::move(ahwb_usages)),
+        gl_context_(gl_context) {}
 };
+
 }  // namespace
 
 Tensor::AHardwareBufferView Tensor::GetAHardwareBufferReadView() const {
@@ -226,11 +264,15 @@ Tensor::AHardwareBufferView Tensor::GetAHardwareBufferReadView() const {
   } else {
     if (valid_ & kValidOpenGlBuffer) CreateEglSyncAndFd();
   }
+
+  EraseCompletedUsages(ahwb_usages_);
+  ahwb_usages_.push_back(AhwbUsage());
+  auto& ahwb_usage = ahwb_usages_.back();
   return {ahwb_.get(),
           ssbo_written_,
           &fence_fd_,  // The FD is created for SSBO -> AHWB synchronization.
-          &ahwb_written_,  // Filled by SetReadingFinishedFunc.
-          &ahwb_release_callbacks_,
+          &ahwb_usage.is_complete_fn,  // Filled by SetReadingFinishedFunc.
+          &ahwb_usage.release_callbacks,
           std::move(lock)};
 }
 
@@ -260,11 +302,20 @@ Tensor::AHardwareBufferView Tensor::GetAHardwareBufferWriteView() const {
   ABSL_CHECK_OK(AllocateAHardwareBuffer())
       << "AHardwareBuffer is not supported on the target system.";
   valid_ = kValidAHardwareBuffer;
+
+  EraseCompletedUsages(ahwb_usages_);
+  if (!ahwb_usages_.empty()) {
+    ABSL_LOG(DFATAL) << absl::StrFormat(
+        "Write attempt while reading or writing AHWB (num usages: %d).",
+        ahwb_usages_.size());
+  }
+  ahwb_usages_.push_back(AhwbUsage());
+  auto& ahwb_usage = ahwb_usages_.back();
   return {ahwb_.get(),
           /*ssbo_written=*/-1,
-          &fence_fd_,      // For SetWritingFinishedFD.
-          &ahwb_written_,  // Filled by SetReadingFinishedFunc.
-          &ahwb_release_callbacks_,
+          &fence_fd_,                  // For SetWritingFinishedFD.
+          &ahwb_usage.is_complete_fn,  // Filled by SetWritingFinishedFunc.
+          &ahwb_usage.release_callbacks,
           std::move(lock)};
 }
 
@@ -384,8 +435,7 @@ void Tensor::MoveAhwbStuff(Tensor* src) {
   ssbo_read_ = std::exchange(src->ssbo_read_, static_cast<GLsync>(0));
   ssbo_written_ = std::exchange(src->ssbo_written_, -1);
   fence_fd_ = std::exchange(src->fence_fd_, -1);
-  ahwb_release_callbacks_ = std::move(src->ahwb_release_callbacks_);
-  ahwb_written_ = std::move(src->ahwb_written_);
+  ahwb_usages_ = std::move(src->ahwb_usages_);
 }
 
 void Tensor::ReleaseAhwbStuff() {
@@ -395,17 +445,14 @@ void Tensor::ReleaseAhwbStuff() {
   }
   if (__builtin_available(android 26, *)) {
     if (ahwb_) {
-      if (ssbo_read_ != 0 || fence_sync_ != EGL_NO_SYNC_KHR || ahwb_written_) {
+      if (ssbo_read_ != 0 || fence_sync_ != EGL_NO_SYNC_KHR ||
+          HasIncompleteUsages(ahwb_usages_)) {
         if (ssbo_written_ != -1) close(ssbo_written_);
         DelayedReleaser::Add(std::move(ahwb_), opengl_buffer_, fence_sync_,
-                             ssbo_read_, std::move(ahwb_written_), gl_context_,
-                             std::move(ahwb_release_callbacks_));
+                             ssbo_read_, std::move(ahwb_usages_), gl_context_);
         opengl_buffer_ = GL_INVALID_INDEX;
       } else {
-        for (auto& callback : ahwb_release_callbacks_) {
-          callback();
-        }
-        ahwb_release_callbacks_.clear();
+        CompleteAndEraseUsages(ahwb_usages_);
         ahwb_.reset();
       }
     }
@@ -420,10 +467,22 @@ void* Tensor::MapAhwbToCpuRead() const {
         // TODO: Use tflite::gpu::GlBufferSync and GlActiveSync.
         gl_context_->Run([]() { glFinish(); });
       } else if (valid_ & kValidAHardwareBuffer) {
-        ABSL_CHECK(ahwb_written_) << "Ahwb-to-Cpu synchronization requires the "
-                                     "completion function to be set";
-        ABSL_CHECK(ahwb_written_(true))
-            << "An error oqcured while waiting for the buffer to be written";
+        ABSL_CHECK_GT(ahwb_usages_.size(), 0);
+        if (ahwb_usages_.size() != 1) {
+          // Theoretically that could be the case with previous implementation,
+          // and we don't want to crash in such cases.
+          ABSL_LOG(DFATAL)
+              << "Multiple writes into the same AHWB tensor detected.";
+        }
+
+        auto& ahwb_usage = ahwb_usages_.back();
+        ABSL_CHECK(ahwb_usage.is_complete_fn)
+            << "Ahwb-to-Cpu synchronization requires the "
+               "completion function to be set";
+        ABSL_CHECK(ahwb_usage.is_complete_fn(/*force_completion=*/true))
+            << "An error occurred while waiting for the buffer to be written.";
+
+        CompleteAndEraseUsages(ahwb_usages_);
       }
     }
     auto ptr =

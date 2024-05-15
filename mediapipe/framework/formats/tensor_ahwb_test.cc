@@ -64,6 +64,85 @@ TEST(TensorAhwbTest, EveryAhwbReadViewReleaseCallbackIsInvoked) {
   EXPECT_THAT(callbacks_invoked, Each(true));
 }
 
+TEST(TensorAhwbTest,
+     GetAHardwareBufferReadViewTriggersReleaseForFinishedReads) {
+  constexpr int kNumReleaseCallbacks = 10;
+  std::array<bool, kNumReleaseCallbacks> release_callbacks_invoked;
+  release_callbacks_invoked.fill(false);
+
+  {
+    // Create tensor.
+    Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape{1});
+    {
+      auto ptr = tensor.GetCpuWriteView().buffer<float>();
+      ASSERT_NE(ptr, nullptr);
+    }
+
+    // Get AHWB read view multiple times (e.g. simulating how multiple inference
+    // calculators could read from the same tensor)
+    for (int i = 0; i < kNumReleaseCallbacks; ++i) {
+      if (i > 0) {
+        ASSERT_FALSE(release_callbacks_invoked[i - 1]);
+      }
+      // Triggers cleanup for a previous ready read.
+      auto view = tensor.GetAHardwareBufferReadView();
+      ASSERT_NE(view.handle(), nullptr);
+      if (i > 0) {
+        // Triggered cleanup for a previous read as it's ready.
+        ASSERT_TRUE(release_callbacks_invoked[i - 1]);
+      }
+
+      // Marking as a finished read.
+      view.SetReadingFinishedFunc([](bool) { return true; });
+      view.SetReleaseCallback([&release_callbacks_invoked, i] {
+        release_callbacks_invoked[i] = true;
+      });
+    }
+    ASSERT_FALSE(release_callbacks_invoked[kNumReleaseCallbacks - 1]);
+
+    // Destroy tensor on scope exit triggering last release callback.
+  }
+
+  EXPECT_THAT(release_callbacks_invoked, Each(true));
+}
+
+TEST(TensorAhwbTest, GetAhwbReadViewDoesNotTriggerReleaseForUnfinishedReads) {
+  constexpr int kNumReleaseCallbacks = 10;
+  std::array<bool, kNumReleaseCallbacks> release_callbacks_invoked;
+  release_callbacks_invoked.fill(false);
+
+  {
+    // Create tensor.
+    Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape{1});
+    {
+      auto ptr = tensor.GetCpuWriteView().buffer<float>();
+      ASSERT_NE(ptr, nullptr);
+    }
+
+    // Get AHWB read view multiple times (e.g. simulating how multiple inference
+    // calculators could read from the same tensor)
+    bool is_reading_finished = false;
+    for (int i = 0; i < kNumReleaseCallbacks; ++i) {
+      auto view = tensor.GetAHardwareBufferReadView();
+      ASSERT_NE(view.handle(), nullptr);
+
+      // Marking as an unfinished read.
+      view.SetReadingFinishedFunc(
+          [&is_reading_finished](bool) { return is_reading_finished; });
+      view.SetReleaseCallback([&release_callbacks_invoked, i] {
+        release_callbacks_invoked[i] = true;
+      });
+    }
+    ASSERT_THAT(release_callbacks_invoked, Each(false));
+
+    // Destroy tensor on scope exit triggering release callbacks considering
+    // reads are finished.
+    is_reading_finished = true;
+  }
+
+  EXPECT_THAT(release_callbacks_invoked, Each(true));
+}
+
 TEST(TensorAhwbTest, EveryAhwbWriteViewReleaseCallbackIsInvoked) {
   constexpr int kNumReleaseCallbacks = 10;
   std::array<bool, kNumReleaseCallbacks> callbacks_invoked;
@@ -84,6 +163,39 @@ TEST(TensorAhwbTest, EveryAhwbWriteViewReleaseCallbackIsInvoked) {
   }
 
   EXPECT_THAT(callbacks_invoked, Each(true));
+}
+
+TEST(TensorAhwbTest,
+     EveryAhwbWriteViewReleaseCallbackIsInvokedWritingFininshedSpecified) {
+  constexpr int kNumReleaseCallbacks = 10;
+  std::array<bool, kNumReleaseCallbacks> release_callbacks_invoked;
+  release_callbacks_invoked.fill(false);
+
+  {
+    // Create tensor.
+    Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape{1});
+    // Get AHWB write view multiple times and set release callback.
+    for (int i = 0; i < kNumReleaseCallbacks; ++i) {
+      if (i > 0) {
+        ASSERT_FALSE(release_callbacks_invoked[i - 1]);
+      }
+      auto view = tensor.GetAHardwareBufferWriteView();
+      if (i > 0) {
+        ASSERT_TRUE(release_callbacks_invoked[i - 1]);
+      }
+      ASSERT_NE(view.handle(), nullptr);
+      view.SetWritingFinishedFD(/*dummy fd=*/-1, [](bool) { return true; });
+      view.SetReleaseCallback([&release_callbacks_invoked, i] {
+        release_callbacks_invoked[i] = true;
+      });
+    }
+
+    ASSERT_FALSE(release_callbacks_invoked[kNumReleaseCallbacks - 1]);
+
+    // Destroy tensor on scope exit triggering last release callback.
+  }
+
+  EXPECT_THAT(release_callbacks_invoked, Each(true));
 }
 
 TEST(TensorAhwbTest, TestAHWBThenCpu) {

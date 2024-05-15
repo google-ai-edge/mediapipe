@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <initializer_list>
+#include <list>
 #include <memory>
 #include <numeric>
 #include <tuple>
@@ -197,6 +198,18 @@ class Tensor {
 
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
   using FinishingFunc = std::function<bool(bool)>;
+
+  struct AhwbUsage {
+    // Function that signals when it is safe to release AHWB.
+    // If the input parameter is 'true' then wait for the writing to be
+    // finished.
+    FinishingFunc is_complete_fn;
+
+    // Callbacks to release any associated resources. (E.g. imported interpreter
+    // buffer handles.)
+    std::vector<absl::AnyInvocable<void()>> release_callbacks;
+  };
+
   class AHardwareBufferView : public View {
    public:
     AHardwareBuffer* handle() const {
@@ -207,17 +220,16 @@ class Tensor {
       hardware_buffer_ = std::move(src.hardware_buffer_);
       file_descriptor_ = src.file_descriptor_;
       fence_fd_ = std::exchange(src.fence_fd_, nullptr);
-      ahwb_written_ = std::exchange(src.ahwb_written_, nullptr);
-      ahwb_release_callbacks_ =
-          std::exchange(src.ahwb_release_callbacks_, nullptr);
+      is_complete_fn_ = std::exchange(src.is_complete_fn_, nullptr);
+      release_callbacks_ = std::exchange(src.release_callbacks_, nullptr);
     }
     int file_descriptor() const { return file_descriptor_; }
 
     // TODO: verify if multiple functions can be specified.
     void SetReadingFinishedFunc(FinishingFunc&& func) {
-      ABSL_CHECK(ahwb_written_)
+      ABSL_CHECK(is_complete_fn_)
           << "AHWB write view can't accept 'reading finished callback'";
-      *ahwb_written_ = std::move(func);
+      *is_complete_fn_ = std::move(func);
     }
 
     // TODO: verify if multiple functions can be specified.
@@ -225,34 +237,34 @@ class Tensor {
       ABSL_CHECK(fence_fd_)
           << "AHWB read view can't accept 'writing finished file descriptor'";
       *fence_fd_ = fd;
-      *ahwb_written_ = std::move(func);
+      *is_complete_fn_ = std::move(func);
     }
 
     // Passed `callback` is invoked when the tensor is being released.
     // TODO: rename to Add* or set a single callback only.
     void SetReleaseCallback(absl::AnyInvocable<void()> callback) {
-      ahwb_release_callbacks_->push_back(std::move(callback));
+      release_callbacks_->push_back(std::move(callback));
     }
 
    protected:
     friend class Tensor;
     AHardwareBufferView(
         HardwareBuffer* hardware_buffer, int file_descriptor, int* fence_fd,
-        FinishingFunc* ahwb_written,
-        std::vector<absl::AnyInvocable<void()>>* ahwb_release_callbacks,
+        FinishingFunc* is_complete_fn,
+        std::vector<absl::AnyInvocable<void()>>* release_callbacks,
         std::unique_ptr<absl::MutexLock>&& lock)
         : View(std::move(lock)),
           hardware_buffer_(hardware_buffer),
           file_descriptor_(file_descriptor),
           fence_fd_(fence_fd),
-          ahwb_written_(ahwb_written),
-          ahwb_release_callbacks_(ahwb_release_callbacks) {}
+          is_complete_fn_(is_complete_fn),
+          release_callbacks_(release_callbacks) {}
     HardwareBuffer* hardware_buffer_;
     int file_descriptor_;
     // The view sets some Tensor's fields. The view is released prior to tensor.
     int* fence_fd_;
-    FinishingFunc* ahwb_written_;
-    std::vector<absl::AnyInvocable<void()>>* ahwb_release_callbacks_;
+    FinishingFunc* is_complete_fn_;
+    std::vector<absl::AnyInvocable<void()>>* release_callbacks_;
   };
   AHardwareBufferView GetAHardwareBufferReadView() const;
   AHardwareBufferView GetAHardwareBufferWriteView() const;
@@ -426,14 +438,10 @@ class Tensor {
   // Reading from SSBO has been finished so SSBO can be released.
   mutable GLsync ssbo_read_ = 0;
 
-  // Multiple cleanups maybe needed. (E.g. two inference calculators use the
-  // same input tensor and import buffer by FD which results in two buffer
-  // handles that must be released.)
-  mutable std::vector<absl::AnyInvocable<void()>> ahwb_release_callbacks_;
-
-  // An externally set function that signals when it is safe to release AHWB.
-  // If the input parameter is 'true' then wait for the writing to be finished.
-  mutable FinishingFunc ahwb_written_;
+  // Keeps track of current AHWB usages (e.g. multiple reads - two inference
+  // calculators use the same input tensor and import buffer by FD which results
+  // in two buffer handles that must be released.)
+  mutable std::list<AhwbUsage> ahwb_usages_;
 
   absl::Status AllocateAHardwareBuffer() const;
 
