@@ -14,6 +14,7 @@
 #include <type_traits>
 #include <utility>
 
+#include "absl/base/attributes.h"
 #include "absl/log/absl_check.h"
 #include "absl/meta/type_traits.h"
 #include "mediapipe/framework/api2/tuple.h"
@@ -68,10 +69,17 @@ class PacketBase {
   operator mediapipe::Packet() const& { return ToOldPacket(*this); }
   operator mediapipe::Packet() && { return ToOldPacket(std::move(*this)); }
 
+  // DEPRECATED
+  //
   // Note: Consume is included for compatibility with the old Packet; however,
-  // it relies on shared_ptr.unique(), which is deprecated and is not guaranteed
-  // to give exact results.
+  // it relies on shared_ptr.use_count(), which is deprecated and is not
+  // guaranteed to give exact results.
   template <typename T>
+  ABSL_DEPRECATED(
+      "Avoid Consume* functions usage as in most cases it's hard to ensure "
+      "the proper usage (taken the nature of calculators not knowing where "
+      "packets are received from and sent to) and leads to races. Consider "
+      "SharedPtrWithPacket instead to get a shared_ptr<T> if applicable.")
   absl::StatusOr<std::unique_ptr<T>> Consume() {
     // Using the implementation in the old Packet for now.
     mediapipe::Packet old =
@@ -226,9 +234,16 @@ class Packet : public Packet<internal::Generic> {
     return IsEmpty() ? static_cast<T>(std::forward<U>(v)) : **this;
   }
 
+  // DEPRECATED
+  //
   // Note: Consume is included for compatibility with the old Packet; however,
   // it relies on shared_ptr.unique(), which is deprecated and is not guaranteed
   // to give exact results.
+  ABSL_DEPRECATED(
+      "Avoid Consume* functions usage as in most cases it's hard to ensure "
+      "the proper usage (taken the nature of calculators not knowing where "
+      "packets are received from and sent to) and leads to races. Consider "
+      "SharedPtrWithPacket instead to get a shared_ptr<T> if applicable.")
   absl::StatusOr<std::unique_ptr<T>> Consume() {
     return PacketBase::Consume<T>();
   }
@@ -356,15 +371,27 @@ class Packet<OneOf<T...>> : public PacketBase {
     return Invoke<decltype(f), T...>(f);
   }
 
+  // DEPRECATED
+  //
   // Note: Consume is included for compatibility with the old Packet; however,
   // it relies on shared_ptr.unique(), which is deprecated and is not guaranteed
   // to give exact results.
   template <class U, class = AllowedType<U>>
+  ABSL_DEPRECATED(
+      "Avoid Consume* functions usage as in most cases it's hard to ensure "
+      "the proper usage (taken the nature of calculators not knowing where "
+      "packets are received from and sent to) and leads to races. Consider "
+      "SharedPtrWithPacket instead to get a shared_ptr<T> if applicable.")
   absl::StatusOr<std::unique_ptr<U>> Consume() {
     return PacketBase::Consume<U>();
   }
 
   template <class... F>
+  ABSL_DEPRECATED(
+      "Avoid Consume* functions usage as in most cases it's hard to ensure "
+      "the proper usage (taken the nature of calculators not knowing where "
+      "packets are received from and sent to) and leads to races. Consider "
+      "SharedPtrWithPacket instead to get a shared_ptr<T> if applicable.")
   auto ConsumeAndVisit(const F&... args) {
     ABSL_CHECK(payload_);
     auto f = internal::Overload{args...};

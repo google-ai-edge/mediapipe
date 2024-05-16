@@ -25,6 +25,7 @@
 #include <type_traits>
 #include <utility>
 
+#include "absl/base/attributes.h"
 #include "absl/base/macros.h"
 #include "absl/functional/any_invocable.h"
 #include "absl/log/absl_check.h"
@@ -113,6 +114,8 @@ class Packet {
   template <typename T>
   const T& Get() const;
 
+  // DEPRECATED
+  //
   // Transfers the ownership of holder's data to a unique pointer
   // of the object if the packet is the sole owner of a non-foreign
   // holder. Otherwise, returns error when the packet can't be consumed.
@@ -129,8 +132,15 @@ class Packet {
   // must be written in a special way to account for that. It's error-prone and
   // general recommendation is to avoid calling this function.
   template <typename T>
+  ABSL_DEPRECATED(
+      "Avoid Consume* functions usage as in most cases it's hard to ensure "
+      "the proper usage (taken the nature of calculators not knowing where "
+      "packets are received from and sent to) and leads to races. Consider "
+      "SharedPtrWithPacket instead to get a shared_ptr<T> if applicable.")
   absl::StatusOr<std::unique_ptr<T>> Consume();
 
+  // DEPRECATED
+  //
   // Consumes the packet and transfers the ownership of the data to a
   // unique pointer if the packet is the sole owner of a non-foreign
   // holder. Otherwise, the unique pointer holds a copy of the original
@@ -172,21 +182,38 @@ class Packet {
   //
   // Version for non-arrays.
   template <typename T>
+  ABSL_DEPRECATED(
+      "Avoid Consume* functions usage as in most cases it's hard to ensure "
+      "the proper usage (taken the nature of calculators not knowing where "
+      "packets are received from and sent to) and leads to races. Consider "
+      "SharedPtrWithPacket instead to get a shared_ptr<T> if applicable.")
   absl::StatusOr<std::unique_ptr<T>> ConsumeOrCopy(
       bool* was_copied = nullptr,
       typename std::enable_if<!std::is_array<T>::value>::type* = nullptr);
 
   // Version for bounded array.
   template <typename T>
+  ABSL_DEPRECATED(
+      "Avoid Consume* functions usage as in most cases it's hard to ensure "
+      "the proper usage (taken the nature of calculators not knowing where "
+      "packets are received from and sent to) and leads to races. Consider "
+      "SharedPtrWithPacket instead to get a shared_ptr<T> if applicable.")
   absl::StatusOr<std::unique_ptr<T>> ConsumeOrCopy(
       bool* was_copied = nullptr,
       typename std::enable_if<std::is_array<T>::value &&
                               std::extent<T>::value != 0>::type* = nullptr);
 
+  // DEPRECATED
+  //
   // TODO: Support unbounded array after fixing the bug in holder's
   // delete helper.
   // Version for unbounded array.
   template <typename T>
+  ABSL_DEPRECATED(
+      "Avoid Consume* functions usage as in most cases it's hard to ensure "
+      "the proper usage (taken the nature of calculators not knowing where "
+      "packets are received from and sent to) and leads to races. Consider "
+      "SharedPtrWithPacket instead to get a shared_ptr<T> if applicable.")
   absl::StatusOr<std::unique_ptr<T>> ConsumeOrCopy(
       bool* was_copied = nullptr,
       typename std::enable_if<std::is_array<T>::value &&
@@ -369,8 +396,7 @@ T* GetFromUniquePtr(const Packet& packet) {
 // Returns a shared_ptr to the payload of the packet which retains its object
 // through a copy of the packet.
 // Use std::const_pointer_cast if you need a shared_ptr<T>, but remember that
-// you must not change the payload if the packet has other owners. Use Consume
-// if you want to try and modify the payload directly.
+// you must not change the payload if the packet has other owners.
 template <typename T>
 std::shared_ptr<const T> SharedPtrWithPacket(Packet packet) {
   // This needs to be a separate statement because the evaluation order of
