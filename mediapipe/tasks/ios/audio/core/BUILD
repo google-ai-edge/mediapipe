@@ -121,5 +121,6 @@ objc_library(
         "//mediapipe/tasks/ios/core:MPPPacketCreator",
         "//mediapipe/tasks/ios/core:MPPTaskInfo",
         "//mediapipe/tasks/ios/core:MPPTaskRunner",
+        "//third_party/apple_frameworks:UIKit",
     ],
 )

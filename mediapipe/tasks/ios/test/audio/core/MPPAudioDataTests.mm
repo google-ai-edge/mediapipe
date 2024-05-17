@@ -27,7 +27,7 @@ static MPPFileInfo *const kSpeech16KHzMonoFileInfo =
 
 static AVAudioFormat *const kAudioEngineFormat =
     [[AVAudioFormat alloc] initWithCommonFormat:AVAudioPCMFormatFloat32
-                                     sampleRate:48000
+                                     sampleRate:48000.0f
                                        channels:1
                                     interleaved:YES];
 
@@ -77,7 +77,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)testInitWithFormatAndSampleCountSucceeds {
   const NSInteger monoChannelCount = 1;
-  const NSInteger sampleRate = 16000;
+  const double sampleRate = 16000.0f;
   const NSInteger sampleCount = 1200;
 
   [MPPAudioDataTests asssertCreateAudioDataWithChannelCount:monoChannelCount
@@ -93,7 +93,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)testLoadWithFloatBufferSucceeds {
   const NSInteger monoChannelCount = 1;
-  const NSInteger sampleRate = 16000;
+  const double sampleRate = 16000.0f;
   const NSInteger sampleCount = 7;
 
   MPPAudioData *audioData =
@@ -133,7 +133,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)testLoadWithFloatBufferAndOffsetSucceeds {
   const NSInteger monoChannelCount = 1;
-  const NSInteger sampleRate = 16000;
+  const double sampleRate = 16000.0f;
   const NSInteger sampleCount = 7;
 
   MPPAudioData *audioData =
@@ -155,7 +155,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)testLoadWithLengthOutOfBoundsFails {
   const NSInteger monoChannelCount = 1;
-  const NSInteger sampleRate = 16000;
+  const double sampleRate = 16000.0f;
   const NSInteger sampleCount = 7;
 
   MPPAudioData *audioData =
@@ -178,7 +178,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)testLoadWithOffsetOutOfBoundsFails {
   const NSInteger monoChannelCount = 1;
-  const NSInteger sampleRate = 16000;
+  const double sampleRate = 16000.0f;
   const NSInteger sampleCount = 7;
 
   MPPAudioData *audioData =
@@ -201,7 +201,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)testLoadFromShorterAudioRecordSucceeds {
   const NSInteger monoChannelCount = 1;
-  const NSInteger sampleRate = 16000;
+  const double sampleRate = 16000.0f;
   const NSInteger sampleCount = 1000;
 
   const NSInteger bufferLength = 400;
@@ -229,7 +229,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)testLoadFromLongerAudioRecordSucceeds {
   const NSInteger monoChannelCount = 1;
-  const NSInteger sampleRate = 16000;
+  const double sampleRate = 16000.0f;
   const NSInteger sampleCount = 400;
 
   const NSInteger bufferLength = 1000;
