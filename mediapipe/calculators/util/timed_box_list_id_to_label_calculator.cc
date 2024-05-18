@@ -20,7 +20,7 @@
 #include "mediapipe/util/resource_util.h"
 #include "mediapipe/util/tracking/box_tracker.pb.h"
 
-#if defined(MEDIAPIPE_MOBILE)
+#if defined(MEDIAPIPE_ANDROID)
 #include "mediapipe/util/android/file/base/file.h"
 #include "mediapipe/util/android/file/base/helpers.h"
 #else
