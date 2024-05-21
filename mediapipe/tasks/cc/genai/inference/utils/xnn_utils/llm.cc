@@ -149,9 +149,9 @@ class PrefixDecodeLlm : public Llm {
       for (auto& kv_cache : kv_cache_) {
         auto key = kv_cache.k_cache;
         auto value = kv_cache.v_cache;
-        key->Resize({llm_params_.batch_size_B, decode_step + 1,
+        key->Resize({decode_step + 1, llm_params_.batch_size_B,
                      llm_params_.num_kv_heads, llm_params_.head_dim_H});
-        value->Resize({llm_params_.batch_size_B, decode_step + 1,
+        value->Resize({decode_step + 1, llm_params_.batch_size_B,
                        llm_params_.num_kv_heads, llm_params_.head_dim_H});
         RET_CHECK_EQ(xnn_status_success,
                      xnn_reshape_external_value(
@@ -169,8 +169,8 @@ class PrefixDecodeLlm : public Llm {
     for (auto& kv_cache : kv_cache_) {
       ABSL_DCHECK(kv_cache.k_slice);
       ABSL_DCHECK(kv_cache.v_slice);
-      kv_cache.k_slice->Borrow(kv_cache.k_cache->Slice(1, decode_step));
-      kv_cache.v_slice->Borrow(kv_cache.v_cache->Slice(1, decode_step));
+      kv_cache.k_slice->Borrow(kv_cache.k_cache->Slice(0, decode_step));
+      kv_cache.v_slice->Borrow(kv_cache.v_cache->Slice(0, decode_step));
     }
 
     MP_RETURN_IF_ERROR(SetupRuntime());
@@ -949,22 +949,57 @@ absl::Status LlmBuilder::BuildKVCache(std::shared_ptr<Tensor>& key,
     RET_CHECK_EQ(key->dims[0], llm_params_.batch_size_B);
     // When cache is provided, there are 2 cases:
     if (key->dims[1] != 1) {
-      // Building a normal graph, which is used to initialize cache.
-      key->source = "prefix_k_cache";
-      (resource.cache->k_cache = key)->MarkOutput();
-      value->source = "prefix_v_cache";
-      (resource.cache->v_cache = value)->MarkOutput();
+      // Building a prefill graph, which is used to initialize cache.
+      // BTNH -> TBNH
+      if (llm_params_.batch_size_B == 1) {
+        MP_ASSIGN_OR_RETURN(
+            resource.cache->k_cache,
+            Reshape(key, {0, llm_params_.batch_size_B, llm_params_.num_kv_heads,
+                          llm_params_.head_dim_H}));
+        MP_ASSIGN_OR_RETURN(
+            resource.cache->v_cache,
+            Reshape(value, {0, llm_params_.batch_size_B,
+                            llm_params_.num_kv_heads, llm_params_.head_dim_H}));
+      } else {
+        MP_ASSIGN_OR_RETURN(resource.cache->k_cache,
+                            Permute(key, {1, 0, 2, 3}));
+        MP_ASSIGN_OR_RETURN(resource.cache->v_cache,
+                            Permute(value, {1, 0, 2, 3}));
+      }
+      (resource.cache->k_cache)->MarkOutput().source = "prefix_k_cache";
+      (resource.cache->v_cache)->MarkOutput().source = "prefix_v_cache";
     } else {
       RET_CHECK(resource.cache->k_cache);
       RET_CHECK(resource.cache->v_cache);
-      // Building a one-token graph, which consumes initialized cache.
-      key->source = "decode_k_slice";
-      (resource.cache->k_slice = key)->MarkOutput();
-      value->source = "decode_v_slice";
-      (resource.cache->v_slice = value)->MarkOutput();
+      // Building a decoding graph, which consumes initialized cache.
+      // B1NH -> 1BNH
+      MP_ASSIGN_OR_RETURN(
+          resource.cache->k_slice,
+          Reshape(key, {1, llm_params_.batch_size_B, llm_params_.num_kv_heads,
+                        llm_params_.head_dim_H}));
+      MP_ASSIGN_OR_RETURN(
+          resource.cache->v_slice,
+          Reshape(value, {1, llm_params_.batch_size_B, llm_params_.num_kv_heads,
+                          llm_params_.head_dim_H}));
+      (resource.cache->k_slice = key)->MarkOutput().source = "prefix_k_slice";
+      (resource.cache->v_slice = value)->MarkOutput().source = "prefix_v_slice";
 
       MP_RETURN_IF_ERROR(MarkInput(key = resource.cache->k_cache));
       MP_RETURN_IF_ERROR(MarkInput(value = resource.cache->v_cache));
+
+      // TBNH -> BTNH
+      if (llm_params_.batch_size_B == 1) {
+        MP_ASSIGN_OR_RETURN(key, Reshape(key, {llm_params_.batch_size_B, 0,
+                                               llm_params_.num_kv_heads,
+                                               llm_params_.head_dim_H}));
+        MP_ASSIGN_OR_RETURN(value, Reshape(value, {llm_params_.batch_size_B, 0,
+                                                   llm_params_.num_kv_heads,
+                                                   llm_params_.head_dim_H}));
+      } else {
+        // TODO - b/329445989: Consolidate this permute with DotAttention.
+        MP_ASSIGN_OR_RETURN(key, Permute(key, {1, 0, 2, 3}));
+        MP_ASSIGN_OR_RETURN(value, Permute(value, {1, 0, 2, 3}));
+      }
     }
   }
 

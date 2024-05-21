@@ -77,7 +77,11 @@ std::ostream& operator<<(std::ostream& os,
 std::ostream& operator<<(std::ostream& os, const Tensor& tensor) {
   os << "Tensor{dims=[" << tensor.dims << "], datatype=" << tensor.datatype
      << ", num_elements=" << tensor.num_elements
-     << ", metadata=" << tensor.metadata << "}";
+     << ", metadata=" << tensor.metadata;
+  if (!tensor.source.empty()) {
+    os << ", source=" << tensor.source;
+  }
+  os << "}";
   return os;
 }
 
