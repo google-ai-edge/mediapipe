@@ -59,10 +59,10 @@ int CppProcessError(absl::Status status, char** error_msg) {
 }  // namespace
 
 void CppConvertToRegionOfInterest(
-    const RegionOfInterest& in,
+    const RegionOfInterest* in,
     mediapipe::tasks::vision::interactive_segmenter::RegionOfInterest* out) {
   // Convert format
-  switch (in.format) {
+  switch (in->format) {
     case RegionOfInterest::kKeypoint:
       out->format = CppRegionOfInterestFormat::kKeyPoint;
       break;
@@ -74,16 +74,16 @@ void CppConvertToRegionOfInterest(
   }
 
   // Convert keypoint
-  if (in.format == RegionOfInterest::kKeypoint) {
-    out->keypoint = CppNormalizedKeypoint{in.keypoint->x, in.keypoint->y};
+  if (in->format == RegionOfInterest::kKeypoint) {
+    out->keypoint = CppNormalizedKeypoint{in->keypoint->x, in->keypoint->y};
   }
 
   // Convert scribble
-  if (in.format == RegionOfInterest::kScribble) {
+  if (in->format == RegionOfInterest::kScribble) {
     out->scribble = std::vector<CppNormalizedKeypoint>();
-    for (int i = 0; i < in.scribble_count; ++i) {
+    for (int i = 0; i < in->scribble_count; ++i) {
       out->scribble->emplace_back(
-          CppNormalizedKeypoint{in.scribble[i].x, in.scribble[i].y});
+          CppNormalizedKeypoint{in->scribble[i].x, in->scribble[i].y});
     }
   }
 }
@@ -115,11 +115,11 @@ InteractiveSegmenter* CppInteractiveSegmenterCreate(
   return segmenter->release();
 }
 
-int CppInteractiveSegmenterSegment(void* segmenter, const MpImage& image,
-                                   const RegionOfInterest& region_of_interest,
+int CppInteractiveSegmenterSegment(void* segmenter, const MpImage* image,
+                                   const RegionOfInterest* region_of_interest,
                                    ImageSegmenterResult* result,
                                    char** error_msg) {
-  if (image.type == MpImage::GPU_BUFFER) {
+  if (image->type == MpImage::GPU_BUFFER) {
     const absl::Status status =
         absl::InvalidArgumentError("GPU Buffer not supported yet.");
 
@@ -128,9 +128,9 @@ int CppInteractiveSegmenterSegment(void* segmenter, const MpImage& image,
   }
 
   const auto img = CreateImageFromBuffer(
-      static_cast<ImageFormat::Format>(image.image_frame.format),
-      image.image_frame.image_buffer, image.image_frame.width,
-      image.image_frame.height);
+      static_cast<ImageFormat::Format>(image->image_frame.format),
+      image->image_frame.image_buffer, image->image_frame.width,
+      image->image_frame.height);
 
   mediapipe::tasks::vision::interactive_segmenter::RegionOfInterest roi;
   CppConvertToRegionOfInterest(region_of_interest, &roi);
@@ -175,8 +175,8 @@ void* interactive_segmenter_create(struct InteractiveSegmenterOptions* options,
       CppInteractiveSegmenterCreate(*options, error_msg);
 }
 
-int interactive_segmenter_segment_image(void* segmenter, const MpImage& image,
-                                        const RegionOfInterest& roi,
+int interactive_segmenter_segment_image(void* segmenter, const MpImage* image,
+                                        const RegionOfInterest* roi,
                                         ImageSegmenterResult* result,
                                         char** error_msg) {
   return mediapipe::tasks::c::vision::interactive_segmenter::

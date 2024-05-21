@@ -89,14 +89,14 @@ ImageClassifier* CppImageClassifierCreate(const ImageClassifierOptions& options,
           if (!cpp_result.ok()) {
             ABSL_LOG(ERROR) << "Classification failed: " << cpp_result.status();
             CppProcessError(cpp_result.status(), &error_msg);
-            result_callback(nullptr, MpImage(), timestamp, error_msg);
+            result_callback(nullptr, nullptr, timestamp, error_msg);
             free(error_msg);
             return;
           }
 
           // Result is valid for the lifetime of the callback function.
-          ImageClassifierResult result;
-          CppConvertToClassificationResult(*cpp_result, &result);
+          auto result = std::make_unique<ImageClassifierResult>();
+          CppConvertToClassificationResult(*cpp_result, result.get());
 
           const auto& image_frame = image.GetImageFrameSharedPtr();
           const MpImage mp_image = {
@@ -107,10 +107,8 @@ ImageClassifier* CppImageClassifierCreate(const ImageClassifierOptions& options,
                   .width = image_frame->Width(),
                   .height = image_frame->Height()}};
 
-          result_callback(&result, mp_image, timestamp,
+          result_callback(result.release(), &mp_image, timestamp,
                           /* error_msg= */ nullptr);
-
-          CppCloseClassificationResult(&result);
         };
   }
 
