@@ -102,6 +102,7 @@ py_library(
         ":model_spec",
         "//mediapipe/model_maker/python/core/data:classification_dataset",
         "//mediapipe/model_maker/python/core/tasks:classifier",
+        "//mediapipe/model_maker/python/core/utils:metrics",
         "//mediapipe/model_maker/python/core/utils:model_util",
         "//mediapipe/model_maker/python/core/utils:quantization",
         "//mediapipe/model_maker/python/vision/core:image_preprocessing",

@@ -161,7 +161,8 @@ class ImageClassifierTest(tf.test.TestCase, parameterized.TestCase):
     self.assertRegex(mock_stdout.getvalue(), 'Resuming from')
 
   def _test_accuracy(self, model, threshold=0.0):
-    _, accuracy = model.evaluate(self._test_data)
+    metrics = model.evaluate(self._test_data)
+    accuracy = metrics[1]
     self.assertGreaterEqual(accuracy, threshold)
 
   @unittest_mock.patch.object(

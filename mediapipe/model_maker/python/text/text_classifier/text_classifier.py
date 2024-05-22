@@ -545,7 +545,7 @@ class _BertClassifier(TextClassifier):
     ]
     if self._num_classes == 2:
       metric_functions.extend([
-          metrics.BinaryAUC(name="auc", num_thresholds=1000),
+          metrics.BinarySparseAUC(name="auc", num_thresholds=1000),
           metrics.SparsePrecision(name="precision", dtype=tf.float32),
           metrics.SparseRecall(name="recall", dtype=tf.float32),
       ])

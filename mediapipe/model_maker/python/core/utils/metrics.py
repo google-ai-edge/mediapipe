@@ -95,7 +95,30 @@ def _get_sparse_metric(metric: tf.metrics.Metric):
 
 
 class BinaryAUC(tf.keras.metrics.AUC):
-  """A Binary AUC metric for binary classification tasks.
+  """A Binary AUC metric for multi-label tasks.
+
+  class_id is the index of the class/label that we want to compute Binary AUC
+  for.
+
+  For update state, the shapes of y_true and y_pred are expected to be:
+    - y_true: [batch_size x num_classes] array of one-hot encoded labels (note,
+    these could be in a multi-label setting where the sum of y_true can be > 1)
+    - y_pred: [batch_size x num_classes] array of probabilities where
+    y_pred[:,i] is the probability of the i-th class.
+  """
+
+  def __init__(self, *args, class_id: int = 1, **kwargs):
+    super().__init__(*args, **kwargs)
+    self._class_id = class_id
+
+  def update_state(self, y_true, y_pred, sample_weight=None):
+    super().update_state(
+        y_true[:, self._class_id], y_pred[:, self._class_id], sample_weight
+    )
+
+
+class BinarySparseAUC(tf.keras.metrics.AUC):
+  """A Binary Sparse AUC metric for binary classification tasks.
 
   For update state, the shapes of y_true and y_pred are expected to be:
     - y_true: [batch_size x 1] array of 0 for negatives and 1 for positives

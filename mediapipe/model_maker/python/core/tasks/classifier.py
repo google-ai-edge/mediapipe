@@ -129,19 +129,25 @@ class Classifier(custom_model.CustomModel):
         class_weight=self._hparams.class_weights,
     )
 
-  def evaluate(self, data: dataset.Dataset, batch_size: int = 32) -> Any:
+  def evaluate(
+      self,
+      data: dataset.Dataset,
+      batch_size: int = 32,
+      **kwargs: dict[str, Any],
+  ) -> Any:
     """Evaluates the classifier with the provided evaluation dataset.
 
     Args:
         data: Evaluation dataset
         batch_size: Number of samples per evaluation step.
+        **kwargs: Additional arguments to pass to `model.evaluate`.
 
     Returns:
       The loss value and accuracy.
     """
     ds = data.gen_tf_dataset(
         batch_size, is_training=False, preprocess=self._preprocess)
-    return self._model.evaluate(ds)
+    return self._model.evaluate(ds, **kwargs)
 
   def export_labels(self, export_dir: str, label_filename: str = 'labels.txt'):
     """Exports classification labels into a label file.
