@@ -14,7 +14,7 @@
 """Custom classifier."""
 
 import os
-from typing import Any, Callable, Optional, Sequence, Union
+from typing import Any, Callable, Dict, Optional, Sequence, Union
 
 import tensorflow as tf
 
@@ -133,7 +133,7 @@ class Classifier(custom_model.CustomModel):
       self,
       data: dataset.Dataset,
       batch_size: int = 32,
-      **kwargs: dict[str, Any],
+      **kwargs: Dict[str, Any],
   ) -> Any:
     """Evaluates the classifier with the provided evaluation dataset.
 
