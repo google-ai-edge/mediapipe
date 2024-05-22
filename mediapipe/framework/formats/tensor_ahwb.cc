@@ -321,7 +321,7 @@ Tensor::AHardwareBufferView Tensor::GetAHardwareBufferWriteView() const {
 
 absl::Status Tensor::AllocateAHardwareBuffer() const {
   // Mark current tracking key as Ahwb-use.
-  ahwb_usage_track_.insert(ahwb_tracking_key_);
+  ahwb_usage_track_->insert(ahwb_tracking_key_);
   use_ahwb_ = true;
 
   if (ahwb_ == nullptr) {
@@ -519,7 +519,7 @@ void Tensor::TrackAhwbUsage(uint64_t source_location_hash) const {
         tensor_internal::FnvHash64(ahwb_tracking_key_, memory_alignment_);
   }
   // Keep flag value if it was set previously.
-  use_ahwb_ = use_ahwb_ || ahwb_usage_track_.contains(ahwb_tracking_key_);
+  use_ahwb_ = use_ahwb_ || ahwb_usage_track_->contains(ahwb_tracking_key_);
 }
 
 #else  // MEDIAPIPE_TENSOR_USE_AHWB
