@@ -21,14 +21,16 @@
 #ifndef MEDIAPIPE_GPU_GPU_SHARED_DATA_INTERNAL_H_
 #define MEDIAPIPE_GPU_GPU_SHARED_DATA_INTERNAL_H_
 
+#include <map>
 #include <memory>
+#include <string>
+#include <utility>
 
+#include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_node.h"
 #include "mediapipe/framework/executor.h"
-#include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/gpu/gl_base.h"
 #include "mediapipe/gpu/gl_context.h"
 #include "mediapipe/gpu/gpu_buffer_multi_pool.h"
 #include "mediapipe/gpu/multi_pool.h"
@@ -75,6 +77,8 @@ class GpuResources {
 #endif  // defined(__APPLE__)§
 
   absl::Status PrepareGpuNode(CalculatorNode* node);
+
+  absl::StatusOr<std::shared_ptr<Executor>> GetDefaultGpuExecutor() const;
 
   // If the node requires custom GPU executors in the current configuration,
   // returns the executor's names and the executors themselves.

@@ -14,7 +14,9 @@
 
 #include "mediapipe/gpu/gpu_shared_data_internal.h"
 
+#include <functional>
 #include <memory>
+#include <string>
 #include <utility>
 
 #include "absl/base/attributes.h"
@@ -22,7 +24,13 @@
 #include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/str_cat.h"
 #include "mediapipe/framework/deps/no_destructor.h"
+#include "mediapipe/framework/executor.h"
+#include "mediapipe/framework/graph_service.h"
+#include "mediapipe/framework/port/map_util.h"
+#include "mediapipe/framework/port/ret_check.h"
+#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/gpu/gl_context.h"
 #include "mediapipe/gpu/gl_context_options.pb.h"
 #include "mediapipe/gpu/graph_support.h"
@@ -132,6 +140,13 @@ GpuResources::GpuResources(std::shared_ptr<GlContext> gl_context,
 #endif  // __APPLE__
 }
 
+absl::StatusOr<std::shared_ptr<Executor>> GpuResources::GetDefaultGpuExecutor()
+    const {
+  const auto it = named_executors_.find(kGpuExecutorName);
+  RET_CHECK(it != named_executors_.end()) << "Can't find default gpu executor.";
+  return it->second;
+}
+
 GpuResources::~GpuResources() {
   // This flushes all pending jobs in all GL contexts,
   // ensuring that all existing jobs, which may refer GpuResource and kept their
@@ -203,7 +218,7 @@ absl::Status GpuResources::PrepareGpuNode(CalculatorNode* node) {
   context->SetProfilingContext(
       node->GetCalculatorState().GetSharedProfilingContext());
 
-  return OkStatus();
+  return absl::OkStatus();
 }
 
 // TODO: expose and use an actual ID instead of using the

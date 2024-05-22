@@ -682,13 +682,17 @@ cc_library(
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:calculator_node",
         "//mediapipe/framework:executor",
+        "//mediapipe/framework:graph_service",
         "//mediapipe/framework/deps:no_destructor",
+        "//mediapipe/framework/port:map_util",
         "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
     ] + select({
         "//conditions:default": [],
         "//mediapipe:apple": [
