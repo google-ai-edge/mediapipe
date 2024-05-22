@@ -460,6 +460,34 @@ TEST(KinematicPathSolverTest, PassUpdateUpdateMinMaxLocationIfInitialized) {
   MP_EXPECT_OK(solver.UpdateMinMaxLocation(0, 500));
 }
 
+TEST(KinematicPathSolverTest, DoesNotOvershoot) {
+  KinematicOptions options;
+  options.set_min_motion_to_reframe(0.0);
+  options.set_max_velocity(1000000);
+  KinematicPathSolver solver(options, /* min_location= */ 0,
+                             /* max_location= */ 1000,
+                             /* pixels_per_degree= */ 1.0);
+
+  // Initialize at zero.
+  MP_ASSERT_OK(solver.AddObservation(/* position= */ 0, /* time_us= */ 0));
+
+  // Attempt to shoot past the target. Add observations at 20Hz until
+  // stationary or target surpassed.
+  uint64_t time_us = 0;
+  float state;
+  bool is_moving;
+  do {
+    time_us += kMicroSecInSec / 20;
+    MP_ASSERT_OK(solver.AddObservation(/* position= */ 100, time_us));
+    MP_ASSERT_OK(solver.GetState(&state));
+    MP_ASSERT_OK(
+        solver.PredictMotionState(/* position= */ 100, time_us, &is_moving));
+  } while (is_moving && state < 100);
+
+  // Verify we stopped at the target position.
+  EXPECT_FLOAT_EQ(state, 100);
+}
+
 }  // namespace
 }  // namespace autoflip
 }  // namespace mediapipe
