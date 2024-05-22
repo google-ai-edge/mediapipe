@@ -82,6 +82,7 @@ class Classifier(custom_model.CustomModel):
         shuffle=self._shuffle,
         preprocess=preprocessor,
         drop_remainder=True,
+        num_parallel_preprocess_calls=self._hparams.num_parallel_calls,
     )
     if self._hparams.repeat and self._hparams.steps_per_epoch is None:
       raise ValueError(
@@ -99,6 +100,7 @@ class Classifier(custom_model.CustomModel):
         is_training=False,
         preprocess=preprocessor,
         drop_remainder=True,
+        num_parallel_preprocess_calls=self._hparams.num_parallel_calls,
     )
     self._model.compile(
         optimizer=self._optimizer,
@@ -146,7 +148,11 @@ class Classifier(custom_model.CustomModel):
       The loss value and accuracy.
     """
     ds = data.gen_tf_dataset(
-        batch_size, is_training=False, preprocess=self._preprocess)
+        batch_size,
+        is_training=False,
+        preprocess=self._preprocess,
+        num_parallel_preprocess_calls=self._hparams.num_parallel_calls,
+    )
     return self._model.evaluate(ds, **kwargs)
 
   def export_labels(self, export_dir: str, label_filename: str = 'labels.txt'):
