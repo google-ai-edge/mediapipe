@@ -35,3 +35,18 @@ objc_library(
     ],
 )
 
+objc_library(
+    name = "MPPAudioClassifierResultHelpers",
+    srcs = ["sources/MPPAudioClassifierResult+Helpers.mm"],
+    hdrs = ["sources/MPPAudioClassifierResult+Helpers.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+    ],
+    deps = [
+        "//mediapipe/framework:packet",
+        "//mediapipe/tasks/cc/components/containers/proto:classifications_cc_proto",
+        "//mediapipe/tasks/ios/components/containers/utils:MPPClassificationResultHelpers",
+        "//mediapipe/tasks/ios/audio/audio_classifier:MPPAudioClassifierResult",
+    ],
+)
