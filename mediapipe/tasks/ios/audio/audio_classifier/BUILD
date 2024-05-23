@@ -36,3 +36,14 @@ objc_library(
         "//mediapipe/tasks/ios/core:MPPTaskOptions",
     ],
 )
+
+objc_library(
+    name = "MPPAudioClassifier",
+    hdrs = ["sources/MPPAudioClassifier.h"],
+    deps = [
+        ":MPPAudioClassifierResult",
+        ":MPPAudioClassifierOptions",
+        "//mediapipe/tasks/ios/audio/core:MPPAudioData",
+        "//mediapipe/tasks/ios/audio/core:MPPAudioRecord",
+    ],
+)
