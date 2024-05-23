@@ -113,6 +113,7 @@ objc_library(
     deps = [
         ":MPPAudioData",
         ":MPPAudioPacketCreator",
+        ":MPPAudioRecord",
         ":MPPAudioRunningMode",
         "//mediapipe/framework:packet",
         "//mediapipe/tasks/ios/common:MPPCommon",
