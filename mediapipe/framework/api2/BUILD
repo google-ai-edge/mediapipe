@@ -1,3 +1,4 @@
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 # Placeholder: load py_test
 
 package(
@@ -105,17 +106,27 @@ cc_test(
     name = "node_test",
     srcs = ["node_test.cc"],
     deps = [
+        ":builder",
+        ":contract",
         ":node",
+        ":node_test_cc_proto",
         ":packet",
         ":port",
         ":test_contracts",
-        ":tuple",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
     ],
+)
+
+mediapipe_proto_library(
+    name = "node_test_proto",
+    srcs = ["node_test.proto"],
 )
 
 cc_library(
