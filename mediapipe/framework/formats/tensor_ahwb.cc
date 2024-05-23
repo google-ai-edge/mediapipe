@@ -10,6 +10,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/base/const_init.h"
 #include "absl/functional/any_invocable.h"
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
@@ -246,13 +247,30 @@ class DelayedReleaser {
         gl_context_(gl_context) {}
 };
 
-// TODO b/340929319 synchronize access to global mutable ahwb_usage_track_.
-absl::flat_hash_set<uint64_t>& GetAhwbUsageTrack() {
+class AhwbUsageTrack {
+ public:
+  static void Insert(uint64_t id) {
+    absl::MutexLock lock(&mutex_);
+    ahwb_usage_track_->insert(id);
+  }
+  static bool Contains(uint64_t id) {
+    absl::MutexLock lock(&mutex_);
+    return ahwb_usage_track_->contains(id);
+  }
+
+ private:
+  AhwbUsageTrack() = default;
+
+  ABSL_CONST_INIT static absl::Mutex mutex_;
+
   // TODO: Tracks all unique tensors. Can grow to a large number. LRU
   // (Least Recently Used) can be more predicted.
-  static NoDestructor<absl::flat_hash_set<uint64_t>> ahwb_usage_track_;
-  return *ahwb_usage_track_;
-}
+  static NoDestructor<absl::flat_hash_set<uint64_t>> ahwb_usage_track_
+      ABSL_GUARDED_BY(mutex_);
+};
+
+ABSL_CONST_INIT absl::Mutex AhwbUsageTrack::mutex_(absl::kConstInit);
+NoDestructor<absl::flat_hash_set<uint64_t>> AhwbUsageTrack::ahwb_usage_track_;
 
 }  // namespace
 
@@ -329,7 +347,7 @@ Tensor::AHardwareBufferView Tensor::GetAHardwareBufferWriteView() const {
 
 absl::Status Tensor::AllocateAHardwareBuffer() const {
   // Mark current tracking key as Ahwb-use.
-  GetAhwbUsageTrack().insert(ahwb_tracking_key_);
+  AhwbUsageTrack::Insert(ahwb_tracking_key_);
   use_ahwb_ = true;
 
   if (ahwb_ == nullptr) {
@@ -527,7 +545,7 @@ void Tensor::TrackAhwbUsage(uint64_t source_location_hash) const {
         tensor_internal::FnvHash64(ahwb_tracking_key_, memory_alignment_);
   }
   // Keep flag value if it was set previously.
-  use_ahwb_ = use_ahwb_ || GetAhwbUsageTrack().contains(ahwb_tracking_key_);
+  use_ahwb_ = use_ahwb_ || AhwbUsageTrack::Contains(ahwb_tracking_key_);
 }
 
 #else  // MEDIAPIPE_TENSOR_USE_AHWB
