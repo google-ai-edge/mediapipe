@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #import <Foundation/Foundation.h>
-#import <UIKit/UIKit.h>
 
 #import "mediapipe/tasks/ios/audio/core/sources/MPPAudioData.h"
 #import "mediapipe/tasks/ios/audio/core/sources/MPPAudioRecord.h"
