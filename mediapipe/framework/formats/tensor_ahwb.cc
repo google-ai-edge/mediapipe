@@ -246,6 +246,14 @@ class DelayedReleaser {
         gl_context_(gl_context) {}
 };
 
+// TODO b/340929319 synchronize access to global mutable ahwb_usage_track_.
+absl::flat_hash_set<uint64_t>& GetAhwbUsageTrack() {
+  // TODO: Tracks all unique tensors. Can grow to a large number. LRU
+  // (Least Recently Used) can be more predicted.
+  static NoDestructor<absl::flat_hash_set<uint64_t>> ahwb_usage_track_;
+  return *ahwb_usage_track_;
+}
+
 }  // namespace
 
 Tensor::AHardwareBufferView Tensor::GetAHardwareBufferReadView() const {
@@ -321,7 +329,7 @@ Tensor::AHardwareBufferView Tensor::GetAHardwareBufferWriteView() const {
 
 absl::Status Tensor::AllocateAHardwareBuffer() const {
   // Mark current tracking key as Ahwb-use.
-  ahwb_usage_track_->insert(ahwb_tracking_key_);
+  GetAhwbUsageTrack().insert(ahwb_tracking_key_);
   use_ahwb_ = true;
 
   if (ahwb_ == nullptr) {
@@ -519,7 +527,7 @@ void Tensor::TrackAhwbUsage(uint64_t source_location_hash) const {
         tensor_internal::FnvHash64(ahwb_tracking_key_, memory_alignment_);
   }
   // Keep flag value if it was set previously.
-  use_ahwb_ = use_ahwb_ || ahwb_usage_track_->contains(ahwb_tracking_key_);
+  use_ahwb_ = use_ahwb_ || GetAhwbUsageTrack().contains(ahwb_tracking_key_);
 }
 
 #else  // MEDIAPIPE_TENSOR_USE_AHWB
