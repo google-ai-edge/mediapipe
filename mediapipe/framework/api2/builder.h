@@ -499,17 +499,17 @@ class NodeBase {
 
   void SetExecutor(Executor& executor) { executor_ = &executor; }
 
-  InputStreamHandler& InputStreamHandler(absl::string_view type) {
+  InputStreamHandler& SetInputStreamHandler(absl::string_view type) {
     if (!input_stream_handler_) {
-      input_stream_handler_ = mediapipe::api2::builder::InputStreamHandler();
+      input_stream_handler_ = InputStreamHandler();
     }
     input_stream_handler_->type_ = std::string(type.data(), type.size());
     return *input_stream_handler_;
   }
 
-  OutputStreamHandler& OutputStreamHandler(absl::string_view type) {
+  OutputStreamHandler& SetOutputStreamHandler(absl::string_view type) {
     if (!output_stream_handler_) {
-      output_stream_handler_ = mediapipe::api2::builder::OutputStreamHandler();
+      output_stream_handler_ = OutputStreamHandler();
     }
     output_stream_handler_->type_ = std::string(type.data(), type.size());
     return *output_stream_handler_;
@@ -555,10 +555,8 @@ class NodeBase {
 
   Executor* executor_ = nullptr;
 
-  std::optional<mediapipe::api2::builder::InputStreamHandler>
-      input_stream_handler_;
-  std::optional<mediapipe::api2::builder::OutputStreamHandler>
-      output_stream_handler_;
+  std::optional<InputStreamHandler> input_stream_handler_;
+  std::optional<OutputStreamHandler> output_stream_handler_;
 
   friend class Graph;
 };

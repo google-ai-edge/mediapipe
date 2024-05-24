@@ -160,7 +160,7 @@ TEST(BuilderTest, BuildGraphSettingInputAndOutputStreamHandlers) {
 
   auto& foo = graph.AddNode("Foo");
   auto& foo_ish_opts =
-      foo.InputStreamHandler("FixedSizeInputStreamHandler")
+      foo.SetInputStreamHandler("FixedSizeInputStreamHandler")
           .GetOptions<mediapipe::FixedSizeInputStreamHandlerOptions>();
   foo_ish_opts.set_target_queue_size(2);
   foo_ish_opts.set_trigger_queue_size(3);
@@ -170,8 +170,8 @@ TEST(BuilderTest, BuildGraphSettingInputAndOutputStreamHandlers) {
   Stream<AnyType> foo_out = foo.Out("OUT");
 
   auto& bar = graph.AddNode("Bar");
-  bar.InputStreamHandler("ImmediateInputStreamHandler");
-  bar.OutputStreamHandler("InOrderOutputStreamHandler");
+  bar.SetInputStreamHandler("ImmediateInputStreamHandler");
+  bar.SetOutputStreamHandler("InOrderOutputStreamHandler");
   foo_out >> bar.In("IN");
   Stream<AnyType> bar_out = bar.Out("OUT");
 
