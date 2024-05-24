@@ -64,6 +64,93 @@ TEST(BuilderTest, BuildGraph) {
   EXPECT_THAT(graph.GetConfig(), EqualsProto(expected));
 }
 
+TEST(BuilderTest, BuildGraphDefiningAndSettingExecutors) {
+  Graph graph;
+
+  // Graph inputs.
+  Stream<AnyType> base = graph.In("IN").SetName("base");
+  SidePacket<AnyType> side = graph.SideIn("SIDE").SetName("side");
+
+  // Executors
+  auto& executor0 = graph.AddExecutor("ThreadPoolExecutor");
+
+  auto& executor1 = graph.AddExecutor("ThreadPoolExecutor");
+  auto& executor1_opts = executor1.GetOptions<ThreadPoolExecutorOptions>();
+  executor1_opts.set_num_threads(42);
+
+  // Nodes
+  auto& foo1 = graph.AddNode("Foo");
+  foo1.SetExecutor(executor0);
+  base >> foo1.In("BASE");
+  side >> foo1.SideIn("SIDE");
+  Stream<AnyType> foo1_out = foo1.Out("OUT");
+
+  auto& foo2 = graph.AddNode("Foo");
+  foo2.SetExecutor(executor1);
+  base >> foo2.In("BASE");
+  side >> foo2.SideIn("SIDE");
+  Stream<AnyType> foo2_out = foo2.Out("OUT");
+
+  auto& bar1 = graph.AddNode("Bar");
+  bar1.SetExecutor(executor0);
+  foo1_out >> bar1.In("IN");
+  Stream<AnyType> bar1_out = bar1.Out("OUT");
+
+  auto& bar2 = graph.AddNode("Bar");
+  bar2.SetExecutor(executor1);
+  foo2_out >> bar2.In("IN");
+  Stream<AnyType> bar2_out = bar2.Out("OUT");
+
+  // Graph outputs.
+  bar1_out.SetName("out1") >> graph.Out("OUT")[0];
+  bar2_out.SetName("out2") >> graph.Out("OUT")[1];
+
+  CalculatorGraphConfig expected =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        input_side_packet: "SIDE:side"
+        input_stream: "IN:base"
+        output_stream: "OUT:0:out1"
+        output_stream: "OUT:1:out2"
+
+        executor { name: "_b_executor_0" type: "ThreadPoolExecutor" }
+        executor {
+          name: "_b_executor_1"
+          type: "ThreadPoolExecutor"
+          options {
+            [mediapipe.ThreadPoolExecutorOptions.ext] { num_threads: 42 }
+          }
+        }
+
+        node {
+          calculator: "Foo"
+          input_stream: "BASE:base"
+          output_stream: "OUT:__stream_0"
+          input_side_packet: "SIDE:side"
+          executor: "_b_executor_0"
+        }
+        node {
+          calculator: "Foo"
+          input_stream: "BASE:base"
+          output_stream: "OUT:__stream_1"
+          input_side_packet: "SIDE:side"
+          executor: "_b_executor_1"
+        }
+        node {
+          calculator: "Bar"
+          input_stream: "IN:__stream_0"
+          output_stream: "OUT:out1"
+          executor: "_b_executor_0"
+        }
+        node {
+          calculator: "Bar"
+          input_stream: "IN:__stream_1"
+          output_stream: "OUT:out2"
+          executor: "_b_executor_1"
+        }
+      )pb");
+  EXPECT_THAT(graph.GetConfig(), EqualsProto(expected));
+}
+
 TEST(BuilderTest, CopyableStream) {
   Graph graph;
   Stream<int> a = graph.In("A").SetName("a").Cast<int>();

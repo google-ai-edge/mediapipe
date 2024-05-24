@@ -12,12 +12,15 @@
 
 #include "absl/container/btree_map.h"
 #include "absl/log/absl_check.h"
+#include "absl/memory/memory.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "google/protobuf/message_lite.h"
 #include "mediapipe/framework/api2/packet.h"
 #include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/calculator_base.h"
 #include "mediapipe/framework/calculator_contract.h"
+#include "mediapipe/framework/mediapipe_options.pb.h"
 #include "mediapipe/framework/port/any_proto.h"
 #include "mediapipe/framework/port/ret_check.h"
 
@@ -330,6 +333,27 @@ using MultiDestination = MultiPort<Destination<T>>;
 template <typename T = internal::Generic>
 using MultiSideDestination = MultiPort<SideDestination<T>>;
 
+class Executor {
+ public:
+  template <typename OptionsT>
+  auto& GetOptions() {
+    if (!options_.has_value()) {
+      options_ = mediapipe::MediaPipeOptions();
+    }
+    return *options_->MutableExtension(OptionsT::ext);
+  }
+
+ private:
+  explicit Executor(std::string type) : type_(std::move(type)) {}
+
+  std::string type_;
+  std::string name_;
+
+  std::optional<mediapipe::MediaPipeOptions> options_;
+
+  friend class Graph;
+};
+
 class NodeBase {
  public:
   NodeBase() = default;
@@ -427,6 +451,8 @@ class NodeBase {
     return *calculator_option_->MutableExtension(ext);
   }
 
+  void SetExecutor(Executor& executor) { executor_ = &executor; }
+
  protected:
   // GetOptionsInternal resolutes the overload greedily, which finds the first
   // match then succeed (template specialization tries all matches, thus could
@@ -464,6 +490,9 @@ class NodeBase {
     std::function<bool(protobuf::Any&)> packer;
   };
   std::map<TypeId, MessageAndPacker> node_options_;
+
+  Executor* executor_ = nullptr;
+
   friend class Graph;
 };
 
@@ -647,6 +676,14 @@ class Graph {
     return *node_p;
   }
 
+  Executor& AddExecutor(absl::string_view type) {
+    auto executor =
+        absl::WrapUnique(new Executor(std::string(type.data(), type.size())));
+    auto* executor_p = executor.get();
+    executors_.emplace_back(std::move(executor));
+    return *executor_p;
+  }
+
   // Graph ports, non-typed.
   MultiSource<> In(absl::string_view graph_input) {
     return graph_boundary_.Out(graph_input);
@@ -739,6 +776,22 @@ class Graph {
     if (!type_.empty()) {
       config.set_type(type_);
     }
+
+    // Name and add executors.
+    int executor_index = 0;
+    for (std::unique_ptr<Executor>& executor : executors_) {
+      // Names starting from "__" are historically reserved for internal
+      // executors.
+      executor->name_ = absl::StrCat("_b_executor_", executor_index++);
+
+      auto* out_executor = config.add_executor();
+      out_executor->set_name(executor->name_);
+      out_executor->set_type(executor->type_);
+      if (executor->options_) {
+        *out_executor->mutable_options() = *executor->options_;
+      }
+    }
+
     FixUnnamedConnections();
     ABSL_CHECK_OK(UpdateBoundaryConfig(&config));
     for (const std::unique_ptr<NodeBase>& node : nodes_) {
@@ -823,6 +876,9 @@ class Graph {
     for (auto& [type_id, message_and_packer] : node.node_options_) {
       RET_CHECK(message_and_packer.packer(*config->add_node_options()));
     }
+    if (node.executor_ != nullptr) {
+      config->set_executor(node.executor_->name_);
+    }
     return {};
   }
 
@@ -868,6 +924,7 @@ class Graph {
   }
 
   std::string type_;
+  std::vector<std::unique_ptr<Executor>> executors_;
   std::vector<std::unique_ptr<NodeBase>> nodes_;
   std::vector<std::unique_ptr<PacketGenerator>> packet_gens_;
   // Special node representing graph inputs and outputs.
