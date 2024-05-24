@@ -78,6 +78,17 @@ TEST(PacketTest, GetOr) {
   EXPECT_EQ(p_empty.GetOr(1), 1);
 }
 
+TEST(PacketTest, Has) {
+  Packet<int> p = MakePacket<int>(5);
+  EXPECT_TRUE(p.Has<int>());
+  EXPECT_FALSE(p.Has<bool>());
+
+  struct Test {};
+  Packet<Test> p2 = MakePacket<Test>();
+  EXPECT_TRUE(p2.Has<Test>());
+  EXPECT_FALSE(p2.Has<int>());
+}
+
 // This show how GetOr can be used with a lambda that is only called if the "or"
 // case is needed. Can be useful when generating the fallback value is
 // expensive.

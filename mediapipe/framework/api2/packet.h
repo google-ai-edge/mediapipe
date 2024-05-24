@@ -60,6 +60,11 @@ class PacketBase {
   template <typename T>
   Packet<T> As() const;
 
+  template <typename T>
+  bool Has() const {
+    return payload_->As<T>() != nullptr;
+  }
+
   // Returns the reference to the object of type T if it contains
   // one, crashes otherwise.
   template <typename T>
