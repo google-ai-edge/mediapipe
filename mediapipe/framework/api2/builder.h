@@ -23,6 +23,7 @@
 #include "mediapipe/framework/mediapipe_options.pb.h"
 #include "mediapipe/framework/port/any_proto.h"
 #include "mediapipe/framework/port/ret_check.h"
+#include "mediapipe/framework/stream_handler.pb.h"
 
 namespace mediapipe {
 namespace api2 {
@@ -333,14 +334,23 @@ using MultiDestination = MultiPort<Destination<T>>;
 template <typename T = internal::Generic>
 using MultiSideDestination = MultiPort<SideDestination<T>>;
 
+namespace internal_builder {
+
+template <typename OptionsT>
+OptionsT& GetOptions(std::optional<mediapipe::MediaPipeOptions>& options) {
+  if (!options.has_value()) {
+    options = mediapipe::MediaPipeOptions();
+  }
+  return *options->MutableExtension(OptionsT::ext);
+}
+
+}  // namespace internal_builder
+
 class Executor {
  public:
   template <typename OptionsT>
-  auto& GetOptions() {
-    if (!options_.has_value()) {
-      options_ = mediapipe::MediaPipeOptions();
-    }
-    return *options_->MutableExtension(OptionsT::ext);
+  OptionsT& GetOptions() {
+    return internal_builder::GetOptions<OptionsT>(options_);
   }
 
  private:
@@ -351,6 +361,42 @@ class Executor {
 
   std::optional<mediapipe::MediaPipeOptions> options_;
 
+  friend class Graph;
+};
+
+class NodeBase;
+
+class InputStreamHandler {
+ public:
+  template <typename OptionsT>
+  OptionsT& GetOptions() {
+    return internal_builder::GetOptions<OptionsT>(options_);
+  }
+
+ protected:
+  explicit InputStreamHandler() = default;
+
+  std::string type_;
+  std::optional<mediapipe::MediaPipeOptions> options_;
+
+  friend class NodeBase;
+  friend class Graph;
+};
+
+class OutputStreamHandler {
+ public:
+  template <typename OptionsT>
+  OptionsT& GetOptions() {
+    return internal_builder::GetOptions<OptionsT>(options_);
+  }
+
+ protected:
+  explicit OutputStreamHandler() = default;
+
+  std::string type_;
+  std::optional<mediapipe::MediaPipeOptions> options_;
+
+  friend class NodeBase;
   friend class Graph;
 };
 
@@ -453,6 +499,22 @@ class NodeBase {
 
   void SetExecutor(Executor& executor) { executor_ = &executor; }
 
+  InputStreamHandler& InputStreamHandler(absl::string_view type) {
+    if (!input_stream_handler_) {
+      input_stream_handler_ = mediapipe::api2::builder::InputStreamHandler();
+    }
+    input_stream_handler_->type_ = std::string(type.data(), type.size());
+    return *input_stream_handler_;
+  }
+
+  OutputStreamHandler& OutputStreamHandler(absl::string_view type) {
+    if (!output_stream_handler_) {
+      output_stream_handler_ = mediapipe::api2::builder::OutputStreamHandler();
+    }
+    output_stream_handler_->type_ = std::string(type.data(), type.size());
+    return *output_stream_handler_;
+  }
+
  protected:
   // GetOptionsInternal resolutes the overload greedily, which finds the first
   // match then succeed (template specialization tries all matches, thus could
@@ -492,6 +554,11 @@ class NodeBase {
   std::map<TypeId, MessageAndPacker> node_options_;
 
   Executor* executor_ = nullptr;
+
+  std::optional<mediapipe::api2::builder::InputStreamHandler>
+      input_stream_handler_;
+  std::optional<mediapipe::api2::builder::OutputStreamHandler>
+      output_stream_handler_;
 
   friend class Graph;
 };
@@ -878,6 +945,22 @@ class Graph {
     }
     if (node.executor_ != nullptr) {
       config->set_executor(node.executor_->name_);
+    }
+    if (node.input_stream_handler_) {
+      config->mutable_input_stream_handler()->set_input_stream_handler(
+          node.input_stream_handler_->type_);
+      if (node.input_stream_handler_->options_) {
+        *config->mutable_input_stream_handler()->mutable_options() =
+            *node.input_stream_handler_->options_;
+      }
+    }
+    if (node.output_stream_handler_) {
+      config->mutable_output_stream_handler()->set_output_stream_handler(
+          node.output_stream_handler_->type_);
+      if (node.output_stream_handler_->options_) {
+        *config->mutable_output_stream_handler()->mutable_options() =
+            *node.output_stream_handler_->options_;
+      }
     }
     return {};
   }

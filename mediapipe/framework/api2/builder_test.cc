@@ -14,6 +14,7 @@
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"
+#include "mediapipe/framework/stream_handler/fixed_size_input_stream_handler.pb.h"
 #include "mediapipe/framework/testdata/night_light_calculator.pb.h"
 #include "mediapipe/framework/testdata/sky_light_calculator.pb.h"
 
@@ -146,6 +147,68 @@ TEST(BuilderTest, BuildGraphDefiningAndSettingExecutors) {
           input_stream: "IN:__stream_1"
           output_stream: "OUT:out2"
           executor: "_b_executor_1"
+        }
+      )pb");
+  EXPECT_THAT(graph.GetConfig(), EqualsProto(expected));
+}
+
+TEST(BuilderTest, BuildGraphSettingInputAndOutputStreamHandlers) {
+  Graph graph;
+  // Graph inputs.
+  Stream<AnyType> base = graph.In("IN").SetName("base");
+  SidePacket<AnyType> side = graph.SideIn("SIDE").SetName("side");
+
+  auto& foo = graph.AddNode("Foo");
+  auto& foo_ish_opts =
+      foo.InputStreamHandler("FixedSizeInputStreamHandler")
+          .GetOptions<mediapipe::FixedSizeInputStreamHandlerOptions>();
+  foo_ish_opts.set_target_queue_size(2);
+  foo_ish_opts.set_trigger_queue_size(3);
+  foo_ish_opts.set_fixed_min_size(true);
+  base >> foo.In("BASE");
+  side >> foo.SideIn("SIDE");
+  Stream<AnyType> foo_out = foo.Out("OUT");
+
+  auto& bar = graph.AddNode("Bar");
+  bar.InputStreamHandler("ImmediateInputStreamHandler");
+  bar.OutputStreamHandler("InOrderOutputStreamHandler");
+  foo_out >> bar.In("IN");
+  Stream<AnyType> bar_out = bar.Out("OUT");
+
+  // Graph outputs.
+  bar_out.SetName("out") >> graph.Out("OUT");
+
+  CalculatorGraphConfig expected =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        input_stream: "IN:base"
+        input_side_packet: "SIDE:side"
+        output_stream: "OUT:out"
+        node {
+          calculator: "Foo"
+          input_stream: "BASE:base"
+          input_side_packet: "SIDE:side"
+          output_stream: "OUT:__stream_0"
+          input_stream_handler {
+            input_stream_handler: "FixedSizeInputStreamHandler"
+            options {
+              [mediapipe.FixedSizeInputStreamHandlerOptions.ext] {
+                trigger_queue_size: 3
+                target_queue_size: 2
+                fixed_min_size: true
+              }
+            }
+          }
+        }
+        node {
+          calculator: "Bar"
+          input_stream: "IN:__stream_0"
+          output_stream: "OUT:out"
+          input_stream_handler {
+            input_stream_handler: "ImmediateInputStreamHandler"
+          }
+          output_stream_handler {
+            output_stream_handler: "InOrderOutputStreamHandler"
+          }
         }
       )pb");
   EXPECT_THAT(graph.GetConfig(), EqualsProto(expected));
