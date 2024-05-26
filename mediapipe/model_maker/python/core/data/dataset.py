@@ -157,8 +157,9 @@ class Dataset(object):
     """
     return self._split(fraction)
 
-  def _split(self: _DatasetT, fraction: float,
-             *args) -> Tuple[_DatasetT, _DatasetT]:
+  def _split(
+      self: _DatasetT, fraction: float, *args
+  ) -> Tuple[_DatasetT, _DatasetT]:
     """Implementation for `split` method and returns sub-class instances.
 
     Child DataLoader classes, if requires additional constructor arguments,
