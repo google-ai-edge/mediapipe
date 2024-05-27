@@ -79,6 +79,12 @@ absl::Status SetTfLiteCustomAllocation(tflite::Interpreter& interpreter,
   return absl::OkStatus();
 }
 
+// Creates a new MP Tensor instance that matches the size and type of the
+// specified TfLite tensor. If optional 'alignment' is specified, the returned
+// tensor will be byte aligned to that value.
+absl::StatusOr<Tensor> CreateTensorWithTfLiteTensorSpecs(
+    const TfLiteTensor& reference_tflite_tensor, int alignment = 0);
+
 }  // namespace mediapipe
 
 #endif  // MEDIAPIPE_CALCULATORS_TENSOR_INFERENCE_CALCULATOR_UTILS_H_

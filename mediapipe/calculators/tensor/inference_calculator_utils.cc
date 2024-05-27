@@ -339,4 +339,54 @@ absl::StatusOr<Tensor> ConvertTfLiteTensorToTensor(
   }
 }
 
+absl::StatusOr<Tensor> CreateTensorWithTfLiteTensorSpecs(
+    const TfLiteTensor& reference_tflite_tensor, int alignment) {
+  Tensor::Shape shape{std::vector<int>{
+      reference_tflite_tensor.dims->data,
+      reference_tflite_tensor.dims->data + reference_tflite_tensor.dims->size}};
+  switch (reference_tflite_tensor.type) {
+    case TfLiteType::kTfLiteFloat16:
+    case TfLiteType::kTfLiteFloat32:
+      return Tensor(Tensor::ElementType::kFloat32, shape,
+                    Tensor::QuantizationParameters{
+                        reference_tflite_tensor.params.scale,
+                        reference_tflite_tensor.params.zero_point},
+                    /*memory_manager=*/nullptr, alignment);
+      break;
+    case TfLiteType::kTfLiteUInt8:
+      return Tensor(Tensor::ElementType::kUInt8, shape,
+                    Tensor::QuantizationParameters{
+                        reference_tflite_tensor.params.scale,
+                        reference_tflite_tensor.params.zero_point},
+                    /*memory_manager=*/nullptr, alignment);
+      break;
+    case TfLiteType::kTfLiteInt8:
+      return Tensor(Tensor::ElementType::kInt8, shape,
+                    Tensor::QuantizationParameters{
+                        reference_tflite_tensor.params.scale,
+                        reference_tflite_tensor.params.zero_point},
+                    /*memory_manager=*/nullptr, alignment);
+      break;
+    case TfLiteType::kTfLiteInt32:
+      return Tensor(Tensor::ElementType::kInt32, shape,
+                    Tensor::QuantizationParameters{
+                        reference_tflite_tensor.params.scale,
+                        reference_tflite_tensor.params.zero_point},
+                    /*memory_manager=*/nullptr, alignment);
+      break;
+    case TfLiteType::kTfLiteBool:
+      return Tensor(Tensor::ElementType::kBool, shape,
+                    Tensor::QuantizationParameters{1.0f, 0},
+                    /*memory_manager=*/nullptr, alignment);
+      break;
+    case TfLiteType::kTfLiteString:
+      // No current use-case for allocating TfLiteTensors with string type.
+    default:
+      break;
+  }
+  return absl::InvalidArgumentError(
+      absl::StrCat("Unsupported output tensor type:",
+                   TfLiteTypeGetName(reference_tflite_tensor.type)));
+}
+
 }  // namespace mediapipe
