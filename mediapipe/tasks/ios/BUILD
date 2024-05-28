@@ -83,6 +83,7 @@ CALCULATORS_AND_GRAPHS = [
     "//mediapipe/tasks/cc/vision/interactive_segmenter:interactive_segmenter_graph",
     "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
     "//mediapipe/tasks/cc/vision/pose_landmarker:pose_landmarker_graph",
+    "//mediapipe/tasks/cc/vision/holistic_landmarker:holistic_landmarker_graph",
 ]
 
 OPENCV_DEPS = {
@@ -135,6 +136,9 @@ strip_api_include_path_prefix(
         "//mediapipe/tasks/ios/vision/hand_landmarker:sources/MPPHandLandmarker.h",
         "//mediapipe/tasks/ios/vision/hand_landmarker:sources/MPPHandLandmarkerOptions.h",
         "//mediapipe/tasks/ios/vision/hand_landmarker:sources/MPPHandLandmarkerResult.h",
+        "//mediapipe/tasks/ios/vision/holistic_landmarker:sources/MPPHolisticLandmarker.h",
+        "//mediapipe/tasks/ios/vision/holistic_landmarker:sources/MPPHolisticLandmarkerOptions.h",
+        "//mediapipe/tasks/ios/vision/holistic_landmarker:sources/MPPHolisticLandmarkerResult.h",
         "//mediapipe/tasks/ios/vision/gesture_recognizer:sources/MPPGestureRecognizer.h",
         "//mediapipe/tasks/ios/vision/gesture_recognizer:sources/MPPGestureRecognizerOptions.h",
         "//mediapipe/tasks/ios/vision/gesture_recognizer:sources/MPPGestureRecognizerResult.h",
@@ -263,6 +267,9 @@ apple_static_xcframework(
         ":MPPHandLandmarker.h",
         ":MPPHandLandmarkerOptions.h",
         ":MPPHandLandmarkerResult.h",
+        ":MPPHolisticLandmarker.h",
+        ":MPPHolisticLandmarkerOptions.h",
+        ":MPPHolisticLandmarkerResult.h",
         ":MPPGestureRecognizer.h",
         ":MPPGestureRecognizerOptions.h",
         ":MPPGestureRecognizerResult.h",
@@ -279,6 +286,7 @@ apple_static_xcframework(
         "//mediapipe/tasks/ios/vision/face_stylizer:MPPFaceStylizer",
         "//mediapipe/tasks/ios/vision/gesture_recognizer:MPPGestureRecognizer",
         "//mediapipe/tasks/ios/vision/hand_landmarker:MPPHandLandmarker",
+        "//mediapipe/tasks/ios/vision/holistic_landmarker:MPPHolisticLandmarker",
         "//mediapipe/tasks/ios/vision/image_classifier:MPPImageClassifier",
         "//mediapipe/tasks/ios/vision/image_embedder:MPPImageEmbedder",
         "//mediapipe/tasks/ios/vision/image_segmenter:MPPImageSegmenter",
