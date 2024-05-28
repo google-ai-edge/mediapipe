@@ -24,22 +24,28 @@
 #include <string>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 #include "absl/base/attributes.h"
 #include "absl/base/macros.h"
+#include "absl/base/optimization.h"
 #include "absl/functional/any_invocable.h"
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/synchronization/mutex.h"
+#include "google/protobuf/message.h"
+#include "google/protobuf/message_lite.h"
 #include "mediapipe/framework/deps/no_destructor.h"
 #include "mediapipe/framework/deps/registration.h"
 #include "mediapipe/framework/port.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/proto_ns.h"
+#include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_builder.h"
 #include "mediapipe/framework/port/status_macros.h"
@@ -113,6 +119,12 @@ class Packet {
   // on the same packet from multiple threads.
   template <typename T>
   const T& Get() const;
+
+  // Returns a shared pointer to the object of typename T if it contains
+  // one, an error otherwise (if the packet is empty or of another type). It is
+  // safe to concurrently call Share() on the same packet from multiple threads.
+  template <typename T>
+  absl::StatusOr<std::shared_ptr<const T>> Share() const;
 
   // DEPRECATED
   //
@@ -398,13 +410,11 @@ T* GetFromUniquePtr(const Packet& packet) {
 // Use std::const_pointer_cast if you need a shared_ptr<T>, but remember that
 // you must not change the payload if the packet has other owners.
 template <typename T>
-std::shared_ptr<const T> SharedPtrWithPacket(Packet packet) {
-  // This needs to be a separate statement because the evaluation order of
-  // function arguments is unspecified, and if the lambda is created first it
-  // moves the packet.
-  const T* ptr = &packet.Get<T>();
-  return std::shared_ptr<const T>(
-      ptr, [packet = std::move(packet)](const T* ptr) mutable { packet = {}; });
+ABSL_DEPRECATED("Use Packet::Share<T>() instead.")
+std::shared_ptr<const T> SharedPtrWithPacket(const Packet& packet) {
+  absl::StatusOr<std::shared_ptr<const T>> shared_ptr = packet.Share<T>();
+  ABSL_CHECK_OK(shared_ptr.status());
+  return *std::move(shared_ptr);
 }
 
 //// Implementation details.
@@ -805,6 +815,17 @@ inline const T& Packet::Get() const {
     ABSL_LOG(FATAL) << "Packet::Get() failed: " << status.message();
   }
   return holder->data();
+}
+
+// Returns a shared pointer to the object of typename T if it contains
+// one, an error otherwise (if the packet is empty or of another type). It is
+// safe to concurrently call Share() on the same packet from multiple threads.
+template <typename T>
+inline absl::StatusOr<std::shared_ptr<const T>> Packet::Share() const {
+  MP_RETURN_IF_ERROR(ValidateAsType<T>());
+  const T* ptr = &Get<T>();
+  return std::shared_ptr<const T>(
+      ptr, [packet = *this](const T* ptr) mutable { packet = {}; });
 }
 
 inline Timestamp Packet::Timestamp() const { return timestamp_; }

@@ -10,16 +10,21 @@
 #ifndef MEDIAPIPE_FRAMEWORK_API2_PACKET_H_
 #define MEDIAPIPE_FRAMEWORK_API2_PACKET_H_
 
-#include <functional>
+#include <memory>
 #include <type_traits>
 #include <utility>
 
 #include "absl/base/attributes.h"
+#include "absl/base/optimization.h"
 #include "absl/log/absl_check.h"
 #include "absl/meta/type_traits.h"
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "mediapipe/framework/api2/tuple.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/logging.h"
+#include "mediapipe/framework/port/status_macros.h"
+#include "mediapipe/framework/timestamp.h"
 
 namespace mediapipe {
 namespace api2 {
@@ -69,6 +74,16 @@ class PacketBase {
   // one, crashes otherwise.
   template <typename T>
   const T& Get() const;
+
+  // Return OK if the packet is not empty and holds and object of the given
+  // type.
+  template <typename T>
+  absl::Status ValidateAsType() const;
+
+  // Returns the shared pointer to the object of type T if it contains
+  // one, an error otherwise.
+  template <typename T>
+  absl::StatusOr<std::shared_ptr<const T>> Share() const;
 
   // Conversion to old Packet type.
   operator mediapipe::Packet() const& { return ToOldPacket(*this); }
@@ -123,6 +138,28 @@ inline const T& PacketBase::Get() const {
       "The Packet stores \"", payload_->DebugTypeName(), "\", but \"",
       MediaPipeTypeStringOrDemangled<T>(), "\" was requested.");
   return typed_payload->data();
+}
+
+template <class T>
+absl::Status PacketBase::ValidateAsType() const {
+  if (ABSL_PREDICT_FALSE(payload_ == nullptr)) {
+    return absl::FailedPreconditionError("Empty Packet");
+  }
+  packet_internal::Holder<T>* const typed_payload = payload_->As<T>();
+  if (ABSL_PREDICT_FALSE(typed_payload == nullptr)) {
+    return absl::InvalidArgumentError(absl::StrCat(
+        "The Packet stores \"", payload_->DebugTypeName(), "\", but \"",
+        MediaPipeTypeStringOrDemangled<T>(), "\" was requested"));
+  }
+  return absl::OkStatus();
+}
+
+template <class T>
+absl::StatusOr<std::shared_ptr<const T>> PacketBase::Share() const {
+  MP_RETURN_IF_ERROR(ValidateAsType<T>());
+  const T* ptr = &Get<T>();
+  return std::shared_ptr<const T>(
+      ptr, [packet = *this](const T* ptr) mutable { packet = {}; });
 }
 
 // This is used to indicate that the packet could be holding one of a set of
@@ -253,6 +290,10 @@ class Packet : public Packet<internal::Generic> {
     return PacketBase::Consume<T>();
   }
 
+  absl::StatusOr<std::shared_ptr<const T>> Share() const {
+    return PacketBase::Share<T>();
+  }
+
  private:
   explicit Packet(std::shared_ptr<HolderBase> payload)
       : Packet<internal::Generic>(std::move(payload)) {}
@@ -356,6 +397,11 @@ class Packet<OneOf<T...>> : public PacketBase {
     packet_internal::Holder<U>* typed_payload = payload_->As<U>();
     ABSL_CHECK(typed_payload);
     return typed_payload->data();
+  }
+
+  template <class U, class = AllowedType<U>>
+  absl::StatusOr<std::shared_ptr<const U>> Share() const {
+    return PacketBase::Share<U>();
   }
 
   template <class U, class = AllowedType<U>>
