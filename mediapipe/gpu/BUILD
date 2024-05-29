@@ -188,7 +188,9 @@ cc_library(
             "-framework AppKit",
         ],
     }),
-    visibility = ["//visibility:public"],
+    visibility = [
+        "//visibility:public",
+    ],
     deps = [
         ":attachments",
         ":gl_base",
