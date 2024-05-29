@@ -28,8 +28,9 @@
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/port/vector.h"
+#if !MEDIAPIPE_DISABLE_GPU
 #include "mediapipe/gpu/gpu_buffer.h"
-
+#endif  // !MEDIAPIPE_DISABLE_GPU
 namespace mediapipe {
 namespace api2 {
 

@@ -925,7 +925,6 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:statusor",
-        "//mediapipe/gpu:gpu_buffer",
         "//mediapipe/gpu:gpu_origin_cc_proto",
         "//mediapipe/util:resource_util",
         "@com_google_absl//absl/log",
@@ -942,6 +941,7 @@ cc_library(
             ":tensor_converter_calculator_gpu_deps",
             "//mediapipe/gpu:gl_base",
             "//mediapipe/gpu:gl_calculator_helper",
+            "//mediapipe/gpu:gpu_buffer",
         ],
     }) + select({
         "//mediapipe:apple": [
