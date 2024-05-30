@@ -180,6 +180,7 @@ struct LlmWeights {
 
   std::vector<FeedForwardWeights> ffs;
   std::vector<SelfAttentionWeights> sas;
+  std::vector<SelfAttentionWeights> cas;
   std::optional<NormWeights> final_norm_weight;
   std::shared_ptr<Tensor> softmax_linear;
   std::shared_ptr<Tensor> softmax_bias;
