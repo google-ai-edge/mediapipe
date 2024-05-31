@@ -78,8 +78,8 @@ std::ostream& operator<<(std::ostream& os, const Tensor& tensor) {
   os << "Tensor{dims=[" << tensor.dims << "], datatype=" << tensor.datatype
      << ", num_elements=" << tensor.num_elements
      << ", metadata=" << tensor.metadata;
-  if (!tensor.source.empty()) {
-    os << ", source=" << tensor.source;
+  if (!tensor.tag.empty()) {
+    os << ", tag=" << tensor.tag;
   }
   os << "}";
   return os;
@@ -333,7 +333,7 @@ absl::Status Tensor::LoadFromFile(absl::string_view file_path, bool use_mmap,
   } else {
     memcpy(flat_data.get(), tmp_flat_data.get(), buffer_size);
   }
-  source = mediapipe::file::Basename(file_path);
+  tag = mediapipe::file::Basename(file_path);
 
   return absl::OkStatus();
 }
@@ -430,7 +430,7 @@ absl::Status QCTensor::LoadFromFile(absl::string_view quantized_weight_filename,
     memcpy(flat_data.get(), tmp_flat_data.get(), buffer_size);
     memcpy(scale_data.get(), tmp_scale_data.get(), scale_buffer_size);
   }
-  source = mediapipe::file::Basename(quantized_weight_filename);
+  tag = mediapipe::file::Basename(quantized_weight_filename);
 
   return absl::OkStatus();
 }

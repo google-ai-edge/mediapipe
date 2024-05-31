@@ -22,11 +22,11 @@
 #include <vector>
 
 #include "absl/base/attributes.h"
+#include "absl/base/nullability.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
-#include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/graph_builder.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/llm_weights.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/sampling.h"
@@ -55,6 +55,33 @@ class Llm : protected xnn_utils::XnnGraph {
   explicit Llm(XnnGraph&& other) : XnnGraph(std::move(other)) {}
   Llm(Llm&&) = default;
   ~Llm() override = default;
+
+  // Enable if enable_kv_cache
+  struct KVCache {
+    std::shared_ptr<Tensor> k_cache;
+    std::shared_ptr<Tensor> v_cache;
+    std::shared_ptr<Tensor> k_slice;
+    std::shared_ptr<Tensor> v_slice;
+  };
+
+  // An aggregation of all the data that can represent the context of the
+  // model.
+  struct Context {
+    // Embedding input to the model.
+    std::shared_ptr<Tensor> transformer_input;
+    // A tensor holding a large enough buffer. Prefill model will work on
+    // [0:prompt_size] and decode model will work on [prompt_size:].
+    std::shared_ptr<Tensor> input_pivot;
+    // Logits output from the model.
+    std::shared_ptr<Tensor> logits_output;
+
+    // Previous ids, including prompt.
+    std::vector<std::vector<int>> batch_prev_ids;
+    std::vector<KVCache> kv_cache;
+
+    // If provided, this context will be used to run prefill model.
+    absl::Nullable<std::shared_ptr<Context>> prefill_context;
+  };
 
   // Create LLM graph using the `DefaultLlmWeightsLoader` to load model from
   // `weights_folder`.
@@ -136,13 +163,17 @@ class Llm : protected xnn_utils::XnnGraph {
 
   absl::Status Reset();
 
-  // Enable if enable_kv_cache
-  struct KVCache {
-    std::shared_ptr<Tensor> k_cache;
-    std::shared_ptr<Tensor> v_cache;
-    std::shared_ptr<Tensor> k_slice;
-    std::shared_ptr<Tensor> v_slice;
-  };
+  std::shared_ptr<Tensor>& transformer_input();
+  const std::shared_ptr<Tensor>& transformer_input() const;
+  std::shared_ptr<Tensor>& input_pivot();
+  const std::shared_ptr<Tensor>& input_pivot() const;
+  std::shared_ptr<Tensor>& logits_output();
+  const std::shared_ptr<Tensor>& logits_output() const;
+  // Previous ids, including prompt.
+  std::vector<std::vector<int>>& batch_prev_ids();
+  const std::vector<std::vector<int>>& batch_prev_ids() const;
+  std::vector<KVCache>& kv_cache();
+  const std::vector<KVCache>& kv_cache() const;
 
   // Fill `embedding` according to given `ids`, by table lookup the token
   // embedding provided through weights. The first ids.size() * model_dim_D
@@ -158,13 +189,7 @@ class Llm : protected xnn_utils::XnnGraph {
   std::shared_ptr<Tensor> atten_masks_;
   std::shared_ptr<Tensor> segment_pos_;
 
-  std::shared_ptr<Tensor> transformer_input_;
-  std::shared_ptr<Tensor> input_pivot_;
-  std::shared_ptr<Tensor> logits_output_;
-
-  // Previous ids, including prompt.
-  std::vector<std::vector<int>> prev_ids_;
-  std::vector<KVCache> kv_cache_;
+  std::shared_ptr<Context> context_;
 
   // Hold a shared_ptr to the LlmBuilder for initializing the input resources
   // as well as performing necessary wiring customizations at decoding time.

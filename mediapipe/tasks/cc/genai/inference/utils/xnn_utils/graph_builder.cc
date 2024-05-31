@@ -204,10 +204,10 @@ absl::StatusOr<std::unique_ptr<XnnGraph>> XnnGraphBuilder::Build() {
 }
 
 absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::NewInput(
-    Tensor::DimsType dims, absl::string_view source) {
+    Tensor::DimsType dims, absl::string_view tag) {
   auto t = std::make_shared<Tensor>(std::move(dims), data_type_);
   t->AllocateBufferIfNeeded();
-  t->source = source;
+  t->tag = tag;
   MP_RETURN_IF_ERROR(MarkInput(t));
   return t;
 }
@@ -227,14 +227,14 @@ void XnnGraphBuilder::NewWeight(std::shared_ptr<Tensor> t) {
 }
 
 absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::IntermediateTensor(
-    Tensor::DimsType dims, absl::string_view source) {
-  return IntermediateTensor(dims, data_type_, source);
+    Tensor::DimsType dims, absl::string_view tag) {
+  return IntermediateTensor(dims, data_type_, tag);
 }
 
 absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::IntermediateTensor(
-    Tensor::DimsType dims, xnn_datatype data_type, absl::string_view source) {
+    Tensor::DimsType dims, xnn_datatype data_type, absl::string_view tag) {
   auto t = std::make_shared<Tensor>(std::move(dims), data_type);
-  t->source = source;
+  t->tag = tag;
 
   build_steps_.push_back([this, t](xnn_subgraph_t subgraph) -> absl::Status {
     // Could be moved to output tensors, thus need check.

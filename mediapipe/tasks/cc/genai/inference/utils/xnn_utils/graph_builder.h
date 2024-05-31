@@ -113,8 +113,8 @@ class XnnGraphBuilder {
   absl::StatusOr<std::unique_ptr<XnnGraph>> Build();
 
   // New input or output tensor.
-  absl::StatusOr<std::shared_ptr<Tensor>> NewInput(
-      Tensor::DimsType dims, absl::string_view source = "");
+  absl::StatusOr<std::shared_ptr<Tensor>> NewInput(Tensor::DimsType dims,
+                                                   absl::string_view tag = "");
   absl::Status MarkInput(std::shared_ptr<Tensor> t);
 
   // New static weight, populate value before Build()
@@ -290,10 +290,10 @@ class XnnGraphBuilder {
 
  protected:
   absl::StatusOr<std::shared_ptr<Tensor>> IntermediateTensor(
-      Tensor::DimsType dims, absl::string_view source = "");
+      Tensor::DimsType dims, absl::string_view tag = "");
   absl::StatusOr<std::shared_ptr<Tensor>> IntermediateTensor(
       Tensor::DimsType dims, xnn_datatype data_type,
-      absl::string_view source = "");
+      absl::string_view tag = "");
 
   std::unique_ptr<RuntimeConfigs> runtime_configs_;
   const xnn_datatype data_type_;
