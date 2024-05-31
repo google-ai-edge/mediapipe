@@ -5,6 +5,7 @@ import os
 from typing import List, Optional
 
 from absl import logging
+import numpy as np
 
 from mediapipe.python._framework_bindings import model_ckpt_util
 from mediapipe.tasks.python.genai.converter import converter_base
@@ -133,6 +134,24 @@ def quantize_by_actions(
   """
   output_tensors = {}
   for action in actions:
+    if action.tensor_value is None:
+      continue
+    # The dtype needs to be compared in string as it is a custom numpy dtype.
+    # Explicitly cast the bfloat16 and float16 dtype to float32 to make sure its
+    # value is converted and serialized correctly.
+    if (
+        str(action.tensor_value.dtype) == 'bfloat16'
+        or action.tensor_value.dtype == np.float16
+    ):
+      action.tensor_value = action.tensor_value.astype(np.float32)
+    if (
+        action.tensor_value.dtype != np.float32
+        and action.tensor_value.dtype != np.int8
+    ):
+      raise ValueError(
+          'All tensors should be casted to either float32 or int8, but got: %s'
+          % action.tensor_value.dtype
+      )
     if action.quantize_axis:
       pack = action.quantize_bits == 4
       if is_symmetric:
