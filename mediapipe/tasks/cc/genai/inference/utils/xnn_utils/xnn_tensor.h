@@ -86,7 +86,7 @@ struct Tensor {
   // Load the tensor from vector of data. If not exact_match, data can hold less
   // than num_elements.
   absl::Status LoadFromVec(const std::vector<float>& data,
-                           bool exact_match = true);
+                           bool exact_match = false);
   // Load the tensor from file.
   //   file_path: a string representing the path to the file to load from.
   //   use_mmap: whether or not to use mmap to access the file.

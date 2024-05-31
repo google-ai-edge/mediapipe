@@ -137,6 +137,15 @@ class Llm : protected xnn_utils::XnnGraph {
 
   const LlmParams& GetLlmParams() { return llm_params_; }
 
+  // Create a new context with internal model parameters. The variables in the
+  // context will have proper batch size, sequence length, etc.
+  virtual absl::StatusOr<Context> NewContext() const;
+
+  // If `context` is non-null, and different from existing context_, load the
+  // context into the model.
+  virtual absl::Status LoadContext(
+      absl::Nullable<std::shared_ptr<Context>> context);
+
  protected:
   friend class PrefixDecodeLlm;
   friend class LlmTest;

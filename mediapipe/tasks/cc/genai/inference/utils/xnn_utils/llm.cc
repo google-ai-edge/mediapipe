@@ -24,6 +24,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/base/nullability.h"
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/status/status.h"
@@ -184,6 +185,22 @@ class PrefixDecodeLlm : public Llm {
 
     computed_tokens_count_ = decode_step + 1;
     return logits_output();
+  }
+
+  absl::StatusOr<Context> NewContext() const final {
+    MP_ASSIGN_OR_RETURN(auto context, Llm::NewContext());
+    MP_ASSIGN_OR_RETURN(auto prefill_context, prefix_llm_->NewContext());
+    context.prefill_context =
+        std::make_shared<Context>(std::move(prefill_context));
+    return context;
+  }
+
+  absl::Status LoadContext(
+      absl::Nullable<std::shared_ptr<Context>> context) final {
+    if (!context) return absl::OkStatus();
+    MP_RETURN_IF_ERROR(Llm::LoadContext(context));
+    computed_tokens_count_ = TotalTokenSize();
+    return prefix_llm_->LoadContext(context->prefill_context);
   }
 
  private:
@@ -472,6 +489,91 @@ const std::vector<Llm::KVCache>& Llm::kv_cache() const {
   return context_->kv_cache;
 }
 
+absl::StatusOr<Llm::Context> Llm::NewContext() const {
+  RET_CHECK(runtime_configs_);
+  std::shared_ptr<Tensor> new_pivot;
+  if (input_pivot()) {
+    new_pivot =
+        std::make_shared<Tensor>(input_pivot()->dims, input_pivot()->datatype);
+    MP_RETURN_IF_ERROR(new_pivot->LoadFromVec({}));
+  }
+  return Llm::Context{
+      .transformer_input =
+          [this, new_pivot]() {
+            auto t = std::make_shared<Tensor>(transformer_input()->dims,
+                                              transformer_input()->datatype);
+            if (new_pivot) {
+              t->Borrow(new_pivot);
+            } else {
+              t->LoadFromVec({}).IgnoreError();
+            }
+            return t;
+          }(),
+      .input_pivot = new_pivot,
+      .logits_output =
+          [this]() {
+            auto t = std::make_shared<Tensor>(logits_output()->dims,
+                                              logits_output()->datatype);
+            t->LoadFromVec({}).IgnoreError();
+            return t;
+          }(),
+      .batch_prev_ids = std::vector<std::vector<int>>(batch_prev_ids().size()),
+      .kv_cache =
+          [this]() {
+            std::vector<KVCache> kvs;
+            if (!llm_params_.enable_kv_cache) return kvs;
+            kvs.resize(kv_cache().size());
+            for (size_t i = 0; i < kvs.size(); ++i) {
+              auto& kv = kvs[i];
+              const auto& current_kv = kv_cache()[i];
+              kv.k_cache = std::make_shared<Tensor>(
+                  current_kv.k_cache->dims, current_kv.k_cache->datatype);
+              kv.k_cache->LoadFromVec({}).IgnoreError();
+              kv.v_cache = std::make_shared<Tensor>(
+                  current_kv.v_cache->dims, current_kv.v_cache->datatype);
+              kv.v_cache->LoadFromVec({}).IgnoreError();
+              kv.k_slice = std::make_shared<Tensor>(
+                  current_kv.k_slice->dims, current_kv.k_slice->datatype);
+              kv.k_slice->Borrow(kv.k_cache->Slice(0, 0));
+              kv.v_slice = std::make_shared<Tensor>(
+                  current_kv.v_slice->dims, current_kv.v_slice->datatype);
+              kv.v_slice->Borrow(kv.v_cache->Slice(0, 0));
+            }
+            return kvs;
+          }(),
+  };
+}
+
+absl::Status Llm::LoadContext(
+    absl::Nullable<std::shared_ptr<Context>> context) {
+  if (!context || (context_ == context)) return absl::OkStatus();
+  // There are some metadata we'd like to keep with existing context, also we'd
+  // like to use pointer address to distinguish context. So the following logic
+  // is: 1) let existing context point to the buffer from new context; 2) move
+  // tensors from existing context to new context; 3) store new context.
+  {
+    transformer_input()->Borrow(context->transformer_input);
+    if (context->input_pivot) {
+      input_pivot()->Borrow(context->input_pivot);
+    }
+    logits_output()->Borrow(context->logits_output);
+    for (size_t i = 0; i < kv_cache().size(); ++i) {
+      kv_cache()[i].k_cache->Borrow(context->kv_cache[i].k_cache);
+      kv_cache()[i].v_cache->Borrow(context->kv_cache[i].v_cache);
+      kv_cache()[i].k_slice->Borrow(context->kv_cache[i].k_slice);
+      kv_cache()[i].v_slice->Borrow(context->kv_cache[i].v_slice);
+    }
+  }
+  {
+    context->transformer_input = transformer_input();
+    context->input_pivot = input_pivot();
+    context->logits_output = logits_output();
+    context->kv_cache = std::move(kv_cache());
+  }
+  context_ = std::move(context);
+  return absl::OkStatus();
+}
+
 absl::Status Llm::InitInputTokens(const std::vector<int>& input_ids) {
   RET_CHECK_EQ(llm_params_.batch_size_B, 1)
       << "For batch inference, use the batch version API";
@@ -512,11 +614,6 @@ absl::Status Llm::InitInputTokens(
                                                 *segment_pos_));
   }
 
-  if (!input_pivot()) {
-    input_pivot() = std::make_shared<Tensor>(transformer_input()->dims,
-                                             transformer_input()->datatype);
-    input_pivot()->flat_data = transformer_input()->flat_data;
-  }
   for (size_t batch = 0; batch < llm_params_.batch_size_B; ++batch) {
     auto slice = input_pivot()->Slice(0, batch)->Slice(1, current_seq_len);
     MP_RETURN_IF_ERROR(
