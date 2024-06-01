@@ -34,21 +34,29 @@ class LlmConverterTest(googletest.TestCase, parameterized.TestCase):
       {'input_dtype': 'float32'},
       {'input_dtype': 'float16'},
       {'input_dtype': 'bfloat16'},
+      {'input_dtype': 'int8'},
   )
   def test_quantize_by_actions(self, input_dtype):
     out = llm_converter.quantize_by_actions(
         [self.get_fake_action(input_dtype)], backend='gpu', is_symmetric=True
     )
 
-    np.testing.assert_allclose(
-        out['params.lm.softmax.logits_ffn.w'][0],
-        np.array([64, -64, 127, -127], dtype=np.int8),
-    )
-    np.testing.assert_allclose(
-        out['params.lm.softmax.logits_ffn.w_quantized_scale'][0],
-        np.array(0.015748, dtype=np.float32),
-        rtol=1e-03,
-    )
+    if input_dtype == 'int8':
+      # The values are pre-quantized and should be the same.
+      np.testing.assert_allclose(
+          out['params.lm.softmax.logits_ffn.w'][0],
+          np.array([1, -1, 2, -2], dtype=np.int8),
+      )
+    else:
+      np.testing.assert_allclose(
+          out['params.lm.softmax.logits_ffn.w'][0],
+          np.array([64, -64, 127, -127], dtype=np.int8),
+      )
+      np.testing.assert_allclose(
+          out['params.lm.softmax.logits_ffn.w_quantized_scale'][0],
+          np.array(0.015748, dtype=np.float32),
+          rtol=1e-03,
+      )
 
 
 if __name__ == '__main__':

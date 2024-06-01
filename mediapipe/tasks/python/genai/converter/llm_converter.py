@@ -154,31 +154,42 @@ def quantize_by_actions(
       )
     if action.quantize_axis:
       pack = action.quantize_bits == 4
-      if is_symmetric:
-        target_var, scale = quantization_util.quantize_tensor(
-            var=action.tensor_value,
-            axis=action.quantize_axis,
-            sym=is_symmetric,
-            number_bits=action.quantize_bits,
-        )
+      if action.tensor_value.dtype == np.int8:
+        if backend == 'cpu' and pack:
+          raise ValueError(
+              'Converting pre-quantized checkpoint into 4-bit is not supported'
+              ' for CPU backend.'
+          )
+        output_tensors[action.target_name] = (action.tensor_value, pack)
+      else:
+        if is_symmetric:
+          target_var, scale = quantization_util.quantize_tensor(
+              var=action.tensor_value,
+              axis=action.quantize_axis,
+              sym=is_symmetric,
+              number_bits=action.quantize_bits,
+          )
+          output_tensors[action.target_name] = (target_var, pack)
+          output_tensors[action.target_name + '_quantized_scale'] = (
+              scale,
+              False,
+          )
+          zp = None
+        else:
+          target_var, scale, zp = quantization_util.quantize_tensor(
+              var=action.tensor_value,
+              axis=action.quantize_axis,
+              sym=is_symmetric,
+              number_bits=action.quantize_bits,
+          )
+        if backend == 'cpu' and pack:
+          target_var, scale, zp = quantization_util.update_to_uint4(
+              target_var, scale, zp
+          )
         output_tensors[action.target_name] = (target_var, pack)
         output_tensors[action.target_name + '_quantized_scale'] = (scale, False)
-        zp = None
-      else:
-        target_var, scale, zp = quantization_util.quantize_tensor(
-            var=action.tensor_value,
-            axis=action.quantize_axis,
-            sym=is_symmetric,
-            number_bits=action.quantize_bits,
-        )
-      if backend == 'cpu' and pack:
-        target_var, scale, zp = quantization_util.update_to_uint4(
-            target_var, scale, zp
-        )
-      output_tensors[action.target_name] = (target_var, pack)
-      output_tensors[action.target_name + '_quantized_scale'] = (scale, False)
-      if zp is not None:
-        output_tensors[action.target_name + '_quantized_zp'] = (zp, False)
+        if zp is not None:
+          output_tensors[action.target_name + '_quantized_zp'] = (zp, False)
     else:
       output_tensors[action.target_name] = (action.tensor_value, False)
   return output_tensors
