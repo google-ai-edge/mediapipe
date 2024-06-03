@@ -199,6 +199,8 @@ class SpectrogramCalculator : public CalculatorBase {
   bool allow_multichannel_input_;
   // Vector of Spectrogram objects, one for each channel.
   std::vector<std::unique_ptr<audio_dsp::Spectrogram>> spectrogram_generators_;
+  // Fixed scale factor applied to input values.
+  float input_scale_;
   // Fixed scale factor applied to output values (regardless of type).
   double output_scale_;
 
@@ -282,6 +284,7 @@ absl::Status SpectrogramCalculator::Open(CalculatorContext* cc) {
   output_type_ = spectrogram_options.output_type();
   allow_multichannel_input_ = spectrogram_options.allow_multichannel_input();
 
+  input_scale_ = spectrogram_options.input_scale();
   output_scale_ = spectrogram_options.output_scale();
 
   auto window_fun = MakeWindowFun(spectrogram_options.window_type());
@@ -382,7 +385,7 @@ absl::Status SpectrogramCalculator::ProcessVectorToOutput(
     // Copy one row (channel) of the input matrix into the std::vector.
     std::vector<float> input_vector(input_stream.cols());
     Eigen::Map<Matrix>(&input_vector[0], 1, input_vector.size()) =
-        input_stream.row(channel);
+        input_stream.row(channel) * input_scale_;
 
     if (!spectrogram_generators_[channel]->ComputeSpectrogram(
             input_vector, &output_vectors)) {

@@ -87,4 +87,7 @@ message SpectrogramCalculatorOptions {
   // Defines a fixed FFT size. If set to 0, the FFT size will be determined
   // based on the frame duration and sample rate.
   optional int32 fft_size = 9 [default = 0];
+
+  // Support a fixed multiplicative scaling of the input.
+  optional float input_scale = 10 [default = 1.0];
 }

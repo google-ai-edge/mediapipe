@@ -73,7 +73,8 @@ class SpectrogramCalculatorTest
   // a constant-frequency sinusoid that maintains phase between adjacent
   // packets.
   void SetupCosineInputPackets(const std::vector<int>& packet_sizes_samples,
-                               float cosine_frequency_hz) {
+                               float cosine_frequency_hz,
+                               float input_scale = 1.0f) {
     int total_num_input_samples = 0;
     for (int packet_size_samples : packet_sizes_samples) {
       double packet_start_time_seconds =
@@ -92,7 +93,8 @@ class SpectrogramCalculatorTest
                                       packet_start_time_seconds * angular_freq,
                                       packet_end_time_seconds * angular_freq)
                 .cos()
-                .transpose();
+                .transpose() *
+            input_scale;
       }
       int64_t input_timestamp = round(packet_start_time_seconds *
                                       Timestamp::kTimestampUnitsPerSecond);
@@ -103,9 +105,10 @@ class SpectrogramCalculatorTest
 
   // Setup a sequence of input packets of specified sizes, each filled
   // with samples of 1.0.
-  void SetupConstantInputPackets(const std::vector<int>& packet_sizes_samples) {
+  void SetupConstantInputPackets(const std::vector<int>& packet_sizes_samples,
+                                 float input_scale = 1.0f) {
     // A 0 Hz cosine is identically 1.0 for all samples.
-    SetupCosineInputPackets(packet_sizes_samples, 0.0);
+    SetupCosineInputPackets(packet_sizes_samples, 0.0, input_scale);
   }
 
   // Setup a sequence of input packets of specified sizes, each containing a
@@ -590,6 +593,27 @@ TEST_F(SpectrogramCalculatorTest, DbMagnitudeOutputLooksRight) {
   CheckOutputHeadersAndTimestamps();
   EXPECT_FLOAT_EQ(output().packets[0].Get<Matrix>()(0, 0),
                   10.0 * std::log10(expected_dc_squared_magnitude_));
+}
+
+TEST_F(SpectrogramCalculatorTest, InputScalingLooksRight) {
+  options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
+  options_.set_frame_overlap_seconds(60.0 / input_sample_rate_);
+  options_.set_output_type(SpectrogramCalculatorOptions::DECIBELS);
+  float input_scale = 32768.0;
+  float expected_output_value = 214.5974;
+  options_.set_input_scale(input_scale);
+  const std::vector<int> input_packet_sizes = {140};
+
+  InitializeGraph();
+  FillInputHeader();
+  // Setup packets with DC input (non-zero constant value).
+  SetupConstantInputPackets(input_packet_sizes, input_scale);
+
+  MP_ASSERT_OK(Run());
+
+  CheckOutputHeadersAndTimestamps();
+  EXPECT_FLOAT_EQ(output().packets[0].Get<Matrix>()(0, 0),
+                  expected_output_value);
 }
 
 TEST_F(SpectrogramCalculatorTest, OutputScalingLooksRight) {
