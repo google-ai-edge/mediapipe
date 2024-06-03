@@ -388,7 +388,7 @@ class ImageClassifier(classifier.Classifier):
         labels=metadata_writer.Labels().add(list(self._label_names)))
     tflite_model_with_metadata, metadata_json = writer.populate()
     model_util.save_tflite(tflite_model_with_metadata, tflite_file)
-    with open(metadata_file, 'w') as f:
+    with tf.io.gfile.GFile(metadata_file, 'w') as f:
       f.write(metadata_json)
 
   def _create_optimizer(self) -> tf.keras.optimizers.Optimizer:
