@@ -21,6 +21,7 @@
 #include <optional>
 #include <string>
 
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "audio/dsp/spectrogram/spectrogram.h"
 #include "audio/dsp/window_functions.h"
@@ -199,6 +200,8 @@ class SpectrogramCalculator : public CalculatorBase {
   bool allow_multichannel_input_;
   // Vector of Spectrogram objects, one for each channel.
   std::vector<std::unique_ptr<audio_dsp::Spectrogram>> spectrogram_generators_;
+  // Whether to reset the Spectrogram sample buffer on every call to Process.
+  bool reset_sample_buffer_;
   // Fixed scale factor applied to input values.
   float input_scale_;
   // Fixed scale factor applied to output values (regardless of type).
@@ -310,6 +313,18 @@ absl::Status SpectrogramCalculator::Open(CalculatorContext* cc) {
                                            fft_size);
   }
 
+  switch (spectrogram_options.sample_buffer_mode()) {
+    case SpectrogramCalculatorOptions::NONE:
+      reset_sample_buffer_ = false;
+      break;
+    case SpectrogramCalculatorOptions::RESET:
+      reset_sample_buffer_ = true;
+      break;
+    default:
+      return absl::Status(absl::StatusCode::kInvalidArgument,
+                          "Unrecognized spectrogram sample buffer mode.");
+  }
+
   num_output_channels_ =
       spectrogram_generators_[0]->output_frequency_channels();
   std::unique_ptr<TimeSeriesHeader> output_header(
@@ -387,6 +402,9 @@ absl::Status SpectrogramCalculator::ProcessVectorToOutput(
     Eigen::Map<Matrix>(&input_vector[0], 1, input_vector.size()) =
         input_stream.row(channel) * input_scale_;
 
+    if (reset_sample_buffer_) {
+      spectrogram_generators_[channel]->ResetSampleBuffer();
+    }
     if (!spectrogram_generators_[channel]->ComputeSpectrogram(
             input_vector, &output_vectors)) {
       return absl::Status(absl::StatusCode::kInternal,

@@ -204,6 +204,7 @@ cc_library(
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:status",
         "//mediapipe/util:time_series_util",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_audio_tools//audio/dsp:window_functions",
         "@com_google_audio_tools//audio/dsp/spectrogram",
