@@ -48,7 +48,8 @@ class CalculatorState {
   CalculatorState(const std::string& node_name, int node_id,
                   const std::string& calculator_type,
                   const CalculatorGraphConfig::Node& node_config,
-                  std::shared_ptr<ProfilingContext> profiling_context);
+                  std::shared_ptr<ProfilingContext> profiling_context,
+                  std::shared_ptr<GraphServiceManager> graph_service_manager);
   CalculatorState(const CalculatorState&) = delete;
   CalculatorState& operator=(const CalculatorState&) = delete;
   ~CalculatorState();
@@ -92,6 +93,13 @@ class CalculatorState {
     return profiling_context_;
   }
 
+  // Returns the graph-level service manager for sharing its services with
+  // calculator-nested MP graphs.
+  const std::shared_ptr<GraphServiceManager>& GetSharedGraphServiceManager()
+      const {
+    return graph_service_manager_;
+  }
+
   ////////////////////////////////////////
   // Interface for CalculatorNode.
   ////////////////////////////////////////
@@ -106,12 +114,12 @@ class CalculatorState {
 
   absl::Status SetServicePacket(const GraphServiceBase& service,
                                 Packet packet) {
-    return graph_service_manager_.SetServicePacket(service, packet);
+    return calculator_service_manager_.SetServicePacket(service, packet);
   }
 
   template <typename T>
   std::shared_ptr<T> GetServiceObject(const GraphService<T>& service) {
-    return graph_service_manager_.GetServiceObject(service);
+    return calculator_service_manager_.GetServiceObject(service);
   }
 
  private:
@@ -131,7 +139,12 @@ class CalculatorState {
   // The graph tracing and profiling interface.
   std::shared_ptr<ProfilingContext> profiling_context_;
 
-  GraphServiceManager graph_service_manager_;
+  // Shared pointer to the graph-level service manager.
+  std::shared_ptr<GraphServiceManager> graph_service_manager_;
+
+  // calculator_service_manager_ contains only the services that are requested
+  // by the calculator in UpdateContract() via cc->UseService(...).
+  GraphServiceManager calculator_service_manager_;
 
   ////////////////////////////////////////
   // Variables which ARE cleared by ResetBetweenRuns().

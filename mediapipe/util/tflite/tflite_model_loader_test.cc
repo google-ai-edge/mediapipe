@@ -30,7 +30,8 @@ class TfLiteModelLoaderTest : public tflite::testing::Test {
     // Create a stub calculator state.
     CalculatorGraphConfig::Node config;
     calculator_state_ = std::make_unique<CalculatorState>(
-        "fake_node", 0, "fake_type", config, nullptr);
+        "fake_node", 0, "fake_type", config, /*profiling_context=*/nullptr,
+        /*graph_service_manager=*/nullptr);
 
     // Create a stub calculator context.
     calculator_context_ = std::make_unique<CalculatorContext>(

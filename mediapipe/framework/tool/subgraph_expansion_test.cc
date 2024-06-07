@@ -557,12 +557,12 @@ TEST(SubgraphExpansionTest, GraphServicesUsage) {
           calculator: "ExpectedNode"
         }
       )pb");
-  GraphServiceManager service_manager;
-  MP_ASSERT_OK(service_manager.SetServiceObject(
+  auto service_manager = std::make_shared<GraphServiceManager>();
+  MP_ASSERT_OK(service_manager->SetServiceObject(
       kStringTestService, std::make_shared<std::string>("ExpectedNode")));
   MP_EXPECT_OK(tool::ExpandSubgraphs(&supergraph, /*graph_registry=*/nullptr,
                                      /*graph_options=*/nullptr,
-                                     &service_manager));
+                                     service_manager));
   EXPECT_THAT(supergraph, mediapipe::EqualsProto(expected_graph));
 }
 

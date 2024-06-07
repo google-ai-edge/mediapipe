@@ -24,6 +24,7 @@
 #include "mediapipe/framework/calculator_state.h"
 #include "mediapipe/framework/counter.h"
 #include "mediapipe/framework/graph_service.h"
+#include "mediapipe/framework/graph_service_manager.h"
 #include "mediapipe/framework/input_stream_shard.h"
 #include "mediapipe/framework/output_stream_shard.h"
 #include "mediapipe/framework/packet_set.h"
@@ -133,6 +134,12 @@ class CalculatorContext {
   template <typename T>
   ServiceBinding<T> Service(const GraphService<T>& service) {
     return ServiceBinding<T>(calculator_state_->GetServiceObject(service));
+  }
+
+  // Returns the graph-level service manager for sharing its services with
+  // calculator-nested MP graphs.
+  std::shared_ptr<GraphServiceManager> GetSharedGraphServiceManager() const {
+    return calculator_state_->GetSharedGraphServiceManager();
   }
 
  private:

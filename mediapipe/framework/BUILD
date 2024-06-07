@@ -211,9 +211,9 @@ cc_library(
         ":calculator_state",
         ":counter",
         ":graph_service",
+        ":graph_service_manager",
         ":input_stream_shard",
         ":output_stream_shard",
-        ":packet",
         ":packet_set",
         ":port",
         ":timestamp",
@@ -399,7 +399,9 @@ cc_library(
     deps = [
         ":graph_service",
         ":packet",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/synchronization",
     ],
 )
 
@@ -425,6 +427,7 @@ cc_library(
         ":calculator_context_manager",
         ":calculator_state",
         ":counter_factory",
+        ":graph_service_manager",
         ":input_side_packet_handler",
         ":input_stream_handler",
         ":input_stream_manager",
@@ -766,6 +769,32 @@ cc_library(
     deps = [
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/synchronization",
+    ],
+)
+
+cc_test(
+    name = "nested_calculator_graph_test",
+    srcs = ["nested_calculator_graph_test.cc"],
+    data = [
+        "//mediapipe/calculators/tensor:testdata/1x3_square_int32.tflite",
+    ],
+    deps = [
+        ":calculator_framework",
+        ":calculator_state",
+        ":graph_service",
+        "//mediapipe/calculators/tensor:inference_calculator_xnnpack",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/tool:sink",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -1347,6 +1376,7 @@ cc_test(
     deps = [
         ":calculator_framework",
         ":calculator_node",
+        ":output_side_packet_impl",
         "//mediapipe/calculators/core:pass_through_calculator",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",

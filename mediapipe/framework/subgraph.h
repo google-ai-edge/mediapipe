@@ -17,6 +17,8 @@
 #ifndef MEDIAPIPE_FRAMEWORK_SUBGRAPH_H_
 #define MEDIAPIPE_FRAMEWORK_SUBGRAPH_H_
 
+#include <memory>
+
 #include "absl/base/macros.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
@@ -38,17 +40,14 @@ class SubgraphContext {
   SubgraphContext() : SubgraphContext(nullptr, nullptr) {}
   // @node and/or @service_manager can be nullptr.
   SubgraphContext(CalculatorGraphConfig::Node* node,
-                  const GraphServiceManager* service_manager)
+                  std::shared_ptr<GraphServiceManager> service_manager)
       : default_node_(node ? absl::nullopt
-                           : absl::optional<CalculatorGraphConfig::Node>(
+                           : std::optional<CalculatorGraphConfig::Node>(
                                  CalculatorGraphConfig::Node())),
         original_node_(node ? *node : default_node_.value()),
-        default_service_manager_(
-            service_manager
-                ? absl::nullopt
-                : absl::optional<GraphServiceManager>(GraphServiceManager())),
-        service_manager_(service_manager ? *service_manager
-                                         : default_service_manager_.value()),
+        service_manager_(service_manager
+                             ? service_manager
+                             : std::make_shared<GraphServiceManager>()),
         options_map_(
             std::move(tool::MutableOptionsMap().Initialize(original_node_))) {}
 
@@ -73,19 +72,16 @@ class SubgraphContext {
 
   template <typename T>
   ServiceBinding<T> Service(const GraphService<T>& service) const {
-    return ServiceBinding<T>(service_manager_.GetServiceObject(service));
+    return ServiceBinding<T>(service_manager_->GetServiceObject(service));
   }
 
  private:
   // Populated if node is not provided during construction.
-  absl::optional<CalculatorGraphConfig::Node> default_node_;
+  std::optional<CalculatorGraphConfig::Node> default_node_;
 
   CalculatorGraphConfig::Node& original_node_;
 
-  // Populated if service manager is not provided during construction.
-  const absl::optional<GraphServiceManager> default_service_manager_;
-
-  const GraphServiceManager& service_manager_;
+  std::shared_ptr<GraphServiceManager> service_manager_;
 
   tool::MutableOptionsMap options_map_;
 };
