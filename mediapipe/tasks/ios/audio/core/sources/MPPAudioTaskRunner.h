@@ -1,4 +1,4 @@
-// Copyright 2023 The MediaPipe Authors.
+// Copyright 2024 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,9 +13,9 @@
 // limitations under the License.
 
 #import <Foundation/Foundation.h>
-#import <UIKit/UIKit.h>
 
 #import "mediapipe/tasks/ios/audio/core/sources/MPPAudioData.h"
+#import "mediapipe/tasks/ios/audio/core/sources/MPPAudioRecord.h"
 #import "mediapipe/tasks/ios/audio/core/sources/MPPAudioRunningMode.h"
 #import "mediapipe/tasks/ios/core/sources/MPPTaskRunner.h"
 
@@ -95,6 +95,31 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)processStreamAudioClip:(MPPAudioData *)audioClip
        timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                          error:(NSError **)error;
+
+/**
+ * Creates an `MPPAudioRecord` instance to get samples from the audio stream produced by the
+ * microphone.
+ *
+ * The client must call appropriate methods from the audio record to start receiving samples from
+ * the microphone.
+ *
+ * Note that MediaPipe Audio tasks will up/down sample automatically to fit the sample rate required
+ * by the model. The default sample rate of the MediaPipe pretrained audio model, Yamnet is 16kHz.
+ *
+ * @param channelCount Number of channels expected by the client.
+ * @param sampleRate Sample rate of the audio expected by the client.
+ * @param bufferLength Maximum number of elements the internal buffer of `AudioRecord` can hold at
+ * any given point of time. The buffer length must be a multiple of `format.channelCount`.
+ * @param error Pointer to the memory location where errors if any should be saved. If @c NULL, no
+ * error will be saved.
+ *
+ * @return An new instance of `MPPAudioRecord` with the given audio format and buffer length. `nil`
+ * if there is an error in initializing `MPPAudioRecord`.
+ */
+- (MPPAudioRecord *)createAudioRecordWithChannelCount:(NSUInteger)channelCount
+                                           sampleRate:(double)sampleRate
+                                         bufferLength:(NSUInteger)bufferLength
+                                                error:(NSError **)error;
 
 - (instancetype)initWithTaskInfo:(MPPTaskInfo *)taskInfo
                  packetsCallback:(mediapipe::tasks::core::PacketsCallback)packetsCallback

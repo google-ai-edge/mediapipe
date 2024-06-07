@@ -38,7 +38,6 @@ objc_library(
     name = "MPPAudioDataFormat",
     srcs = ["sources/MPPAudioDataFormat.m"],
     hdrs = ["sources/MPPAudioDataFormat.h"],
-    deps = ["//third_party/apple_frameworks:AVFAudio"],
 )
 
 objc_library(
@@ -113,6 +112,7 @@ objc_library(
     deps = [
         ":MPPAudioData",
         ":MPPAudioPacketCreator",
+        ":MPPAudioRecord",
         ":MPPAudioRunningMode",
         "//mediapipe/framework:packet",
         "//mediapipe/tasks/ios/common:MPPCommon",
@@ -121,6 +121,5 @@ objc_library(
         "//mediapipe/tasks/ios/core:MPPPacketCreator",
         "//mediapipe/tasks/ios/core:MPPTaskInfo",
         "//mediapipe/tasks/ios/core:MPPTaskRunner",
-        "//third_party/apple_frameworks:UIKit",
     ],
 )

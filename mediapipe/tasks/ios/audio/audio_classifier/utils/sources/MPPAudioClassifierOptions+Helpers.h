@@ -12,18 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "mediapipe/tasks/ios/audio/audio_classifier/sources/MPPAudioClassifierResult.h"
+#include "mediapipe/framework/calculator_options.pb.h"
+#import "mediapipe/tasks/ios/audio/audio_classifier/sources/MPPAudioClassifierOptions.h"
+#import "mediapipe/tasks/ios/core/sources/MPPTaskOptionsProtocol.h"
 
-@implementation MPPAudioClassifierResult
+NS_ASSUME_NONNULL_BEGIN
 
-- (instancetype)initWithClassificationResults:
-                    (NSArray<MPPClassificationResult *> *)classificationResults
-                      timestampInMilliseconds:(NSInteger)timestampInMilliseconds {
-  self = [super initWithTimestampInMilliseconds:timestampInMilliseconds];
-  if (self) {
-    _classificationResults = classificationResults;
-  }
-  return self;
-}
+@interface MPPAudioClassifierOptions (Helpers) <MPPTaskOptionsProtocol>
+
+/**
+ * Populates the provided `CalculatorOptions` proto container with the current settings.
+ *
+ * @param optionsProto The `CalculatorOptions` proto object to copy the settings to.
+ */
+- (void)copyToProto:(::mediapipe::CalculatorOptions *)optionsProto;
 
 @end
+
+NS_ASSUME_NONNULL_END

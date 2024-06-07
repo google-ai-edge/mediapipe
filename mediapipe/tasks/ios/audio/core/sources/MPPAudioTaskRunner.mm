@@ -196,6 +196,17 @@ static const double kInitialDefaultSampleRate = -1.0f;
   return YES;
 }
 
+- (MPPAudioRecord *)createAudioRecordWithChannelCount:(NSUInteger)channelCount
+                                           sampleRate:(double)sampleRate
+                                         bufferLength:(NSUInteger)bufferLength
+                                                error:(NSError **)error {
+  MPPAudioDataFormat *format = [[MPPAudioDataFormat alloc] initWithChannelCount:channelCount
+                                                                     sampleRate:sampleRate];
+  return [[MPPAudioRecord alloc] initWithAudioDataFormat:format
+                                            bufferLength:bufferLength
+                                                   error:error];
+}
+
 - (std::optional<PacketMap>)inputPacketMapWithMPPAudioData:(MPPAudioData *)audioData
                                                      error:(NSError **)error {
   PacketMap inputPacketMap;

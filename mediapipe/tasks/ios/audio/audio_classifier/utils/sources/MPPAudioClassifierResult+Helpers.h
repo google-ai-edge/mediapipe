@@ -14,16 +14,23 @@
 
 #import "mediapipe/tasks/ios/audio/audio_classifier/sources/MPPAudioClassifierResult.h"
 
-@implementation MPPAudioClassifierResult
+#include "mediapipe/framework/packet.h"
 
-- (instancetype)initWithClassificationResults:
-                    (NSArray<MPPClassificationResult *> *)classificationResults
-                      timestampInMilliseconds:(NSInteger)timestampInMilliseconds {
-  self = [super initWithTimestampInMilliseconds:timestampInMilliseconds];
-  if (self) {
-    _classificationResults = classificationResults;
-  }
-  return self;
-}
+NS_ASSUME_NONNULL_BEGIN
+
+@interface MPPAudioClassifierResult (Helpers)
+
+/**
+ * Creates an `MPPAudioClassifierResult` from a MediaPipe packet containing a
+ * std::vector<ClassificationResult>.
+ *
+ * @param packet a MediaPipe packet wrapping a ClassificationResultProto.
+ *
+ * @return  An `MPPAudioClassifierResult` object that contains a list of audio classifications.
+ */
++ (nullable MPPAudioClassifierResult *)audioClassifierResultWithClassificationsPacket:
+    (const mediapipe::Packet &)packet;
 
 @end
+
+NS_ASSUME_NONNULL_END

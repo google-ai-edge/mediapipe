@@ -43,9 +43,9 @@ NS_SWIFT_NAME(AudioClassifierResult)
  * @return An instance of `AudioClassifierResult` initialized with the given
  * `ClassificationResult` and timestamp (in milliseconds).
  */
-- (instancetype)initWithClassificationResult:
+- (instancetype)initWithClassificationResults:
                     (NSArray<MPPClassificationResult *> *)classificationResults
-                     timestampInMilliseconds:(NSInteger)timestampInMilliseconds;
+                      timestampInMilliseconds:(NSInteger)timestampInMilliseconds;
 
 @end
 
