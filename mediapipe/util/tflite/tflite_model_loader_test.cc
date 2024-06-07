@@ -71,7 +71,10 @@ TEST_F(TfLiteModelLoaderTest, LoadFromPathWithMmap) {
   MP_ASSERT_OK_AND_ASSIGN(
       api2::Packet<TfLiteModelPtr> model,
       TfLiteModelLoader::LoadFromPath(model_path_, /* try_mmap=*/true));
-  EXPECT_NE(model.Get(), nullptr);
+  ASSERT_NE(model.Get(), nullptr);
+
+  // Tiny regression test for b/345663816.
+  model.Get()->error_reporter()->Report("Test%i", 1);
 }
 
 }  // namespace
