@@ -16,8 +16,6 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_C_TEXT_LANGUAGE_DETECTOR_LANGUAGE_DETECTOR_H_
 #define MEDIAPIPE_TASKS_C_TEXT_LANGUAGE_DETECTOR_LANGUAGE_DETECTOR_H_
 
-#include <cstdint>
-
 #include "mediapipe/tasks/c/components/processors/classifier_options.h"
 #include "mediapipe/tasks/c/core/base_options.h"
 
@@ -70,12 +68,13 @@ MP_EXPORT void* language_detector_create(
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
 MP_EXPORT int language_detector_detect(void* detector, const char* utf8_str,
-                                       LanguageDetectorResult* result,
+                                       struct LanguageDetectorResult* result,
                                        char** error_msg);
 
 // Frees the memory allocated inside a LanguageDetectorResult result. Does not
 // free the result pointer itself.
-MP_EXPORT void language_detector_close_result(LanguageDetectorResult* result);
+MP_EXPORT void language_detector_close_result(
+    struct LanguageDetectorResult* result);
 
 // Shuts down the LanguageDetector when all the work is done. Frees all memory.
 // If an error occurs, returns an error code and sets the error parameter to an
