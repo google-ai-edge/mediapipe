@@ -1,7 +1,5 @@
 #include "mediapipe/examples/desktop/autoflip/quality/kinematic_path_solver.h"
 
-#include <cmath>
-
 constexpr float kMinVelocity = 0.5;
 
 namespace mediapipe {
@@ -231,16 +229,11 @@ absl::Status KinematicPathSolver::UpdatePrediction(const int64_t time_us) {
   prior_position_px_ = current_position_px_;
 
   // Position update limited by min/max.
-  double delta_update =
+  double update_position_px =
+      current_position_px_ +
       current_velocity_deg_per_s_ * mean_delta_t_ * pixels_per_degree_;
-  double update_position_px = current_position_px_ + delta_update;
 
-  if (fabs(delta_update) > fabs(target_position_px_ - current_position_px_)) {
-    // Overshooting - stop at target.
-    current_position_px_ = target_position_px_;
-    current_velocity_deg_per_s_ = 0;
-    motion_state_ = false;
-  } else if (update_position_px < min_location_) {
+  if (update_position_px < min_location_) {
     current_position_px_ = min_location_;
     current_velocity_deg_per_s_ = 0;
     motion_state_ = false;
