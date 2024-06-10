@@ -30,7 +30,7 @@ class SparseMetricTest(tf.test.TestCase, parameterized.TestCase):
         [0.8, 0.2],  # 0, 0 y
         [0.7, 0.3],  # 0, 1 n
         [0.6, 0.4],  # 0, 1 n
-        [0.3, 0.7],  # 1, 0 y
+        [0.3, 0.7],  # 1, 0 n
         [0.3, 0.7],  # 1, 1 y
     ])
 
@@ -43,11 +43,11 @@ class SparseMetricTest(tf.test.TestCase, parameterized.TestCase):
     self.assertEqual(metric.result(), value)
 
   def test_sparse_recall(self):
-    metric = metrics.SparseRecall()
+    metric = metrics.BinarySparseRecall()
     self._assert_metric_equals(metric, 1 / 3)
 
   def test_sparse_precision(self):
-    metric = metrics.SparsePrecision()
+    metric = metrics.BinarySparsePrecision()
     self._assert_metric_equals(metric, 1 / 2)
 
   def test_binary_sparse_recall_at_precision(self):

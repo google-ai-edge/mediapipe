@@ -27,6 +27,8 @@ def _get_binary_sparse_metric(metric: tf.metrics.Metric):
   Currently supported tf.metric.Metric classes
     1. BinarySparseRecallAtPrecision
     2. BinarySparsePrecisionAtRecall
+    3. BinarySparsePrecision
+    4. BinarySparseRecall
 
   Args:
     metric: A tf.metric.Metric class for which we want to generate a
@@ -59,39 +61,9 @@ def _get_binary_sparse_metric(metric: tf.metrics.Metric):
     def update_state(self, y_true, y_pred, sample_weight=None):
       y_true = tf.cast(tf.reshape(y_true, [-1]), tf.int32)
       y_true_one_hot = tf.one_hot(y_true, 2)
-      return super().update_state(
-          y_true_one_hot, y_pred, sample_weight=sample_weight
-      )
+      super().update_state(y_true_one_hot, y_pred, sample_weight=sample_weight)
 
   return BinarySparseMetric
-
-
-def _get_sparse_metric(metric: tf.metrics.Metric):
-  """Helper method to create a Sparse version of a tf.keras.Metric.
-
-  Sparse is an implementation where the update_state(y_true, y_pred) takes in
-  shapes y_true=(batch_size, 1) and y_pred=(batch_size, num_classes).
-
-  Currently supported tf.metrics.Metric classes:
-    1. tf.metrics.Recall
-    2. tf.metrics.Precision
-
-  Args:
-    metric: A tf.metric.Metric class for which we want to generate a Sparse
-      version of this metric.
-
-  Returns:
-    A class for the Sparse version of the specified tf.keras.Metric.
-  """
-
-  class SparseMetric(metric):
-    """A Sparse wrapper class for a tf.keras.Metric."""
-
-    def update_state(self, y_true, y_pred, sample_weight=None):
-      y_pred = tf.math.argmax(y_pred, axis=-1)
-      return super().update_state(y_true, y_pred, sample_weight=sample_weight)
-
-  return SparseMetric
 
 
 class BinaryAUC(tf.keras.metrics.AUC):
@@ -134,8 +106,8 @@ class BinarySparseAUC(tf.keras.metrics.AUC):
     super().update_state(y_true, y_pred[:, 1], sample_weight)
 
 
-SparseRecall = _get_sparse_metric(tf.metrics.Recall)
-SparsePrecision = _get_sparse_metric(tf.metrics.Precision)
+BinarySparseRecall = _get_binary_sparse_metric(tf.metrics.Recall)
+BinarySparsePrecision = _get_binary_sparse_metric(tf.metrics.Precision)
 BinarySparseRecallAtPrecision = _get_binary_sparse_metric(
     tf.metrics.RecallAtPrecision
 )

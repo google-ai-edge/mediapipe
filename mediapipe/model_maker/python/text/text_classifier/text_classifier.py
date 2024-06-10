@@ -268,8 +268,6 @@ class _AverageWordEmbeddingClassifier(TextClassifier):
     self._loss_function = "sparse_categorical_crossentropy"
     self._metric_functions = [
         "accuracy",
-        metrics.SparsePrecision(name="precision", dtype=tf.float32),
-        metrics.SparseRecall(name="recall", dtype=tf.float32),
     ]
     self._text_preprocessor: (
         preprocessor.AverageWordEmbeddingClassifierPreprocessor) = None
@@ -533,7 +531,9 @@ class _BertClassifier(TextClassifier):
 
     For binary classification tasks only (num_classes=2):
       Users can configure PrecisionAtRecall and RecallAtPrecision metrics using
-      the desired_presisions and desired_recalls fields in BertHParams.
+      the desired_precisions and desired_recalls fields in BertHParams.
+      Users can also configure the desired_thresholds field to specify
+      thresholds for the BinarySparsePrecision and BinarySparseRecall metrics.
 
     Returns:
       A list of tf.keras.Metric subclasses which can be used with model.compile
@@ -546,9 +546,21 @@ class _BertClassifier(TextClassifier):
     if self._num_classes == 2:
       metric_functions.extend([
           metrics.BinarySparseAUC(name="auc", num_thresholds=1000),
-          metrics.SparsePrecision(name="precision", dtype=tf.float32),
-          metrics.SparseRecall(name="recall", dtype=tf.float32),
       ])
+      if self._hparams.desired_thresholds:
+        for desired_threshold in self._hparams.desired_thresholds:
+          metric_functions.append(
+              metrics.BinarySparsePrecision(
+                  name=f"precision_{desired_threshold}",
+                  thresholds=desired_threshold,
+              )
+          )
+          metric_functions.append(
+              metrics.BinarySparseRecall(
+                  name=f"recall_{desired_threshold}",
+                  thresholds=desired_threshold,
+              )
+          )
       if self._hparams.desired_precisions:
         for desired_precision in self._hparams.desired_precisions:
           metric_functions.append(

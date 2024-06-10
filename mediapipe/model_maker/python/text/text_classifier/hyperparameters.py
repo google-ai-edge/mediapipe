@@ -52,6 +52,9 @@ class BertHParams(hp.BaseHParams):
     desired_recalls: If specified, adds a PrecisionAtRecall metric per
       desired_recalls[i] entry which tracks the precision given the constraint
       on recall. Only supported for binary classification.
+    desired_thresholds: If specified, adds a Precision and Recall metric per
+      desired_thresholds[i] entry which tracks the P/R given the constraint on
+      threshold. Only supported for binary classification.
     gamma: Gamma parameter for focal loss. To use cross entropy loss, set this
       value to 0. Defaults to 2.0.
     tokenizer: Tokenizer to use for preprocessing. Must be one of the enum
@@ -70,6 +73,7 @@ class BertHParams(hp.BaseHParams):
 
   desired_precisions: Sequence[float] = dataclasses.field(default_factory=list)
   desired_recalls: Sequence[float] = dataclasses.field(default_factory=list)
+  desired_thresholds: Sequence[float] = dataclasses.field(default_factory=list)
 
   gamma: float = 2.0
 
