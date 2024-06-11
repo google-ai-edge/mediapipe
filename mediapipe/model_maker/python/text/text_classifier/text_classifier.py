@@ -151,23 +151,16 @@ class TextClassifier(classifier.Classifier):
     )
 
   def evaluate(
-      self,
-      data: ds.Dataset,
-      batch_size: int = 32,
-      desired_precisions: Optional[Sequence[float]] = None,
-      desired_recalls: Optional[Sequence[float]] = None,
+      self, data: ds.Dataset, batch_size: int = 32, **kwargs: Any
   ) -> Any:
     """Overrides Classifier.evaluate().
 
     Args:
       data: Evaluation dataset. Must be a TextClassifier Dataset.
       batch_size: Number of samples per evaluation step.
-      desired_precisions: If specified, adds a RecallAtPrecision metric per
-        desired_precisions[i] entry which tracks the recall given the constraint
-        on precision. Only supported for binary classification.
-      desired_recalls: If specified, adds a PrecisionAtRecall metric per
-        desired_recalls[i] entry which tracks the precision given the constraint
-        on recall. Only supported for binary classification.
+      **kwargs: Additional keyword arguments to pass to `model.evaluate()` such
+        as return_dict=True. More info can be found at
+        https://www.tensorflow.org/api_docs/python/tf/keras/Model#evaluate.
 
     Returns:
       The loss value and accuracy.
@@ -185,7 +178,7 @@ class TextClassifier(classifier.Classifier):
     dataset = processed_data.gen_tf_dataset(batch_size, is_training=False)
 
     with self._hparams.get_strategy().scope():
-      return self._model.evaluate(dataset)
+      return self._model.evaluate(dataset, **kwargs)
 
   def save_model(
       self,
