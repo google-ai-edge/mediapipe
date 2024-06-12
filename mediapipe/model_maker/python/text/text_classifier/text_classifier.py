@@ -387,8 +387,8 @@ class _BertClassifier(TextClassifier):
         tf.keras.callbacks.ModelCheckpoint(
             os.path.join(self._hparams.export_dir, "best_model"),
             monitor="val_auc"
-            if self._num_classes == 2
-            else "val_accuracy",  # auc is a binary only metric
+            if (self._num_classes == 2 or self._hparams.is_multilabel)
+            else "val_accuracy",  # auc is a binary or multilabel only metric
             mode="max",
             save_best_only=True,
             save_weights_only=False,
@@ -397,9 +397,14 @@ class _BertClassifier(TextClassifier):
     self._model_options = model_options
     self._text_preprocessor: preprocessor.BertClassifierPreprocessor = None
     with self._hparams.get_strategy().scope():
-      self._loss_function = loss_functions.SparseFocalLoss(
-          self._hparams.gamma, self._num_classes
-      )
+      if self._hparams.is_multilabel:
+        self._loss_function = loss_functions.MaskedBinaryCrossentropy(
+            class_weights=self._hparams.multilabel_class_weights
+        )
+      else:
+        self._loss_function = loss_functions.SparseFocalLoss(
+            self._hparams.gamma, self._num_classes
+        )
       self._metric_functions = self._create_metrics()
 
   @classmethod
@@ -465,7 +470,7 @@ class _BertClassifier(TextClassifier):
     bert_classifier._model.compile(
         optimizer=bert_classifier._optimizer,
         loss=bert_classifier._loss_function,
-        metrics=bert_classifier._metric_functions,
+        weighted_metrics=bert_classifier._metric_functions,
     )
     return bert_classifier
 
@@ -531,54 +536,103 @@ class _BertClassifier(TextClassifier):
     Returns:
       A list of tf.keras.Metric subclasses which can be used with model.compile
     """
-    metric_functions = [
-        tf.keras.metrics.SparseCategoricalAccuracy(
-            "accuracy", dtype=tf.float32
-        ),
-    ]
-    if self._num_classes == 2:
-      metric_functions.extend([
-          metrics.BinarySparseAUC(name="auc", num_thresholds=1000),
-      ])
-      if self._hparams.desired_thresholds:
-        for desired_threshold in self._hparams.desired_thresholds:
-          metric_functions.append(
-              metrics.BinarySparsePrecision(
-                  name=f"precision_{desired_threshold}",
-                  thresholds=desired_threshold,
-              )
+    metric_functions = []
+    if self._hparams.is_multilabel:
+      metric_functions.append(tf.keras.metrics.BinaryAccuracy())
+      metric_functions.append(
+          tf.keras.metrics.AUC(
+              name="auc", multi_label=True, num_thresholds=1000
           )
-          metric_functions.append(
-              metrics.BinarySparseRecall(
-                  name=f"recall_{desired_threshold}",
-                  thresholds=desired_threshold,
-              )
-          )
-      if self._hparams.desired_precisions:
-        for desired_precision in self._hparams.desired_precisions:
-          metric_functions.append(
-              metrics.BinarySparseRecallAtPrecision(
-                  desired_precision,
-                  name=f"recall_at_precision_{desired_precision}",
-                  num_thresholds=1000,
-              )
-          )
-      if self._hparams.desired_recalls:
-        for desired_recall in self._hparams.desired_recalls:
-          metric_functions.append(
-              metrics.BinarySparseRecallAtPrecision(
-                  desired_recall,
-                  name=f"precision_at_recall_{desired_recall}",
-                  num_thresholds=1000,
-              )
-          )
-    else:
-      if self._hparams.desired_precisions or self._hparams.desired_recalls:
-        raise ValueError(
-            "desired_recalls and desired_precisions parameters are binary"
-            " metrics and not supported for num_classes > 2. Found"
-            f" num_classes: {self._num_classes}"
+      )
+      for i in range(self._num_classes):
+        metric_functions.append(
+            metrics.BinaryAUC(name=f"auc_{i}", num_thresholds=1000, class_id=i)
         )
+        if self._hparams.desired_precisions:
+          for desired_precision in self._hparams.desired_precisions:
+            metric_functions.append(
+                metrics.MaskedBinaryRecallAtPrecision(
+                    desired_precision,
+                    name=f"recall_at_precision_{desired_precision}_{i}",
+                    num_thresholds=1000,
+                    class_id=i,
+                )
+            )
+        if self._hparams.desired_recalls:
+          for desired_recall in self._hparams.desired_recalls:
+            metric_functions.append(
+                metrics.MaskedBinaryPrecisionAtRecall(
+                    desired_recall,
+                    name=f"precision_at_recall_{desired_recall}_{i}",
+                    num_thresholds=1000,
+                    class_id=i,
+                )
+            )
+        if self._hparams.desired_thresholds:
+          for desired_threshold in self._hparams.desired_thresholds:
+            metric_functions.append(
+                metrics.MaskedBinaryPrecision(
+                    desired_threshold,
+                    name=f"precision_at_{desired_threshold}_class{i}",
+                    class_id=i,
+                )
+            )
+            metric_functions.append(
+                metrics.MaskedBinaryRecall(
+                    desired_threshold,
+                    name=f"recall_at_{desired_threshold}_class{i}",
+                    class_id=i,
+                )
+            )
+    else:
+      metric_functions.append(
+          tf.keras.metrics.SparseCategoricalAccuracy(
+              "accuracy", dtype=tf.float32
+          ),
+      )
+      if self._num_classes == 2:
+        metric_functions.extend([
+            metrics.BinarySparseAUC(name="auc", num_thresholds=1000),
+        ])
+        if self._hparams.desired_thresholds:
+          for desired_threshold in self._hparams.desired_thresholds:
+            metric_functions.append(
+                metrics.BinarySparsePrecision(
+                    name=f"precision_{desired_threshold}",
+                    thresholds=desired_threshold,
+                )
+            )
+            metric_functions.append(
+                metrics.BinarySparseRecall(
+                    name=f"recall_{desired_threshold}",
+                    thresholds=desired_threshold,
+                )
+            )
+        if self._hparams.desired_precisions:
+          for desired_precision in self._hparams.desired_precisions:
+            metric_functions.append(
+                metrics.BinarySparseRecallAtPrecision(
+                    desired_precision,
+                    name=f"recall_at_precision_{desired_precision}",
+                    num_thresholds=1000,
+                )
+            )
+        if self._hparams.desired_recalls:
+          for desired_recall in self._hparams.desired_recalls:
+            metric_functions.append(
+                metrics.BinarySparseRecallAtPrecision(
+                    desired_recall,
+                    name=f"precision_at_recall_{desired_recall}",
+                    num_thresholds=1000,
+                )
+            )
+      else:
+        if self._hparams.desired_precisions or self._hparams.desired_recalls:
+          raise ValueError(
+              "desired_recalls and desired_precisions parameters are binary"
+              " metrics and not supported for num_classes > 2. Found"
+              f" num_classes: {self._num_classes}"
+          )
     return metric_functions
 
   def _create_model(self):
@@ -638,7 +692,7 @@ class _BertClassifier(TextClassifier):
         self._num_classes,
         kernel_initializer=initializer,
         name="output",
-        activation="softmax",
+        activation="sigmoid" if self._hparams.is_multilabel else "softmax",
         dtype=tf.float32,
     )(output)
     self._model = tf.keras.Model(inputs=encoder_inputs, outputs=output)

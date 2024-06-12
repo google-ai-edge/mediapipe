@@ -72,11 +72,13 @@ class BinaryAUC(tf.keras.metrics.AUC):
   class_id is the index of the class/label that we want to compute Binary AUC
   for.
 
-  For update state, the shapes of y_true and y_pred are expected to be:
+  For update state, the shapes of y_true, y_pred, and sample_weight are expected
+  to be:
     - y_true: [batch_size x num_classes] array of one-hot encoded labels (note,
     these could be in a multi-label setting where the sum of y_true can be > 1)
     - y_pred: [batch_size x num_classes] array of probabilities where
     y_pred[:,i] is the probability of the i-th class.
+    - sample_weight: [batch_size x num_classes] array of sample weights.
   """
 
   def __init__(self, *args, class_id: int = 1, **kwargs):
@@ -85,7 +87,9 @@ class BinaryAUC(tf.keras.metrics.AUC):
 
   def update_state(self, y_true, y_pred, sample_weight=None):
     super().update_state(
-        y_true[:, self._class_id], y_pred[:, self._class_id], sample_weight
+        y_true[:, self._class_id],
+        y_pred[:, self._class_id],
+        sample_weight[:, self._class_id] if sample_weight is not None else None,
     )
 
 
@@ -106,11 +110,55 @@ class BinarySparseAUC(tf.keras.metrics.AUC):
     super().update_state(y_true, y_pred[:, 1], sample_weight)
 
 
+def _get_masked_binary_metric(metric: tf.metrics.Metric):
+  """Helper method to create a Masked version of a tf.keras.Metric."""
+
+  class MaskedBinaryMetric(metric):
+    """A Masked Binary metric wrapper class for a tf.keras.Metric.
+
+    This class assumes that the underlying metric is used in a binary fashion
+    with `class_id` specified in **kwargs.
+
+    The sample_weight in `update_state` is used as a mask over the metric
+    calculations. sample_weight should have shape [batch_size x num_classes]
+    when specified, and we only care about sample_weight[:, class_id].
+    """
+
+    def __init__(self, *args, **kwargs):
+      assert 'class_id' in kwargs
+      if 'class_id' not in kwargs:
+        raise ValueError(
+            f'Custom MaskedBinaryMetric for class:{metric.__name__} must have '
+            'class_id specified upon initialization.'
+        )
+      self._class_id = kwargs['class_id']
+      super().__init__(*args, **kwargs)
+
+    def update_state(self, y_true, y_pred, sample_weight=None):
+      return super().update_state(
+          y_true,
+          y_pred,
+          sample_weight[:, self._class_id]
+          if sample_weight is not None
+          else None,
+      )
+
+  return MaskedBinaryMetric
+
+
 BinarySparseRecall = _get_binary_sparse_metric(tf.metrics.Recall)
 BinarySparsePrecision = _get_binary_sparse_metric(tf.metrics.Precision)
 BinarySparseRecallAtPrecision = _get_binary_sparse_metric(
     tf.metrics.RecallAtPrecision
 )
 BinarySparsePrecisionAtRecall = _get_binary_sparse_metric(
+    tf.metrics.PrecisionAtRecall
+)
+MaskedBinaryPrecision = _get_masked_binary_metric(tf.metrics.Precision)
+MaskedBinaryRecall = _get_masked_binary_metric(tf.metrics.Recall)
+MaskedBinaryRecallAtPrecision = _get_masked_binary_metric(
+    tf.metrics.RecallAtPrecision
+)
+MaskedBinaryPrecisionAtRecall = _get_masked_binary_metric(
     tf.metrics.PrecisionAtRecall
 )

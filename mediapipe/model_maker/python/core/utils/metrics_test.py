@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import functools
 
 from absl.testing import parameterized
 import numpy as np
@@ -80,6 +81,85 @@ class SparseMetricTest(tf.test.TestCase, parameterized.TestCase):
   def test_binary_sparse_auc(self):
     metric = metrics.BinarySparseAUC(num_thresholds=1000)
     self._assert_metric_equals(metric, 0.7222222)
+
+
+class MaskedMetricTest(tf.test.TestCase, parameterized.TestCase):
+
+  def setUp(self):
+    super().setUp()
+    self.y_true = np.array([
+        [0, 1],
+        [0, 0],
+        [0, 0],
+        [1, 1],
+    ])
+    self.y_pred = np.array([
+        [0.8, 0.8],  # 1, 1
+        [0.1, 0.3],  # 0, 0
+        [0.1, 0.8],  # 0, 1
+        [0.3, 0.7],  # 0, 1
+    ])
+    self.mask = np.array([
+        [1, 1],
+        [1, 0],
+        [0, 1],
+        [1, 0],
+    ])
+    self.mask_all_ones = np.array([
+        [1, 1],
+        [1, 1],
+        [1, 1],
+        [1, 1],
+    ])
+
+  def _assert_masked_metric_equals(self, metric, value):
+    # Sanity check that the metric without mask is the same as all ones mask.
+    metric.update_state(self.y_true, self.y_pred)
+    result1 = metric.result()
+    metric.reset_state()
+    metric.update_state(self.y_true, self.y_pred, self.mask_all_ones)
+    result2 = metric.result()
+    self.assertEqual(result1, result2)
+    metric.reset_state()
+    # Check that the metric with mask matches value.
+    metric.update_state(self.y_true, self.y_pred, self.mask)
+    self.assertEqual(metric.result(), value)
+
+  @parameterized.named_parameters(
+      dict(
+          testcase_name='masked_binary_precision',
+          metric_cls=metrics.MaskedBinaryPrecision,
+          class0_value=0.0,
+          class1_value=1 / 2,
+      ),
+      dict(
+          testcase_name='masked_binary_recall',
+          metric_cls=metrics.MaskedBinaryRecall,
+          class0_value=0.0,
+          class1_value=1.0,
+      ),
+      dict(
+          testcase_name='masked_binary_recall_at_precision',
+          metric_cls=functools.partial(
+              metrics.MaskedBinaryRecallAtPrecision, 1 / 2
+          ),
+          class0_value=1.0,
+          class1_value=1.0,
+      ),
+      dict(
+          testcase_name='masked_binary_precision_at_recall',
+          metric_cls=functools.partial(
+              metrics.MaskedBinaryPrecisionAtRecall, 1 / 2
+          ),
+          class0_value=1 / 2,
+          class1_value=1 / 2,
+      ),
+  )
+  def test_metric(self, metric_cls, class0_value, class1_value):
+    metric = metric_cls(class_id=0)
+    self._assert_masked_metric_equals(metric, class0_value)
+    metric = metric_cls(class_id=1)
+    self._assert_masked_metric_equals(metric, class1_value)
 
 
 if __name__ == '__main__':

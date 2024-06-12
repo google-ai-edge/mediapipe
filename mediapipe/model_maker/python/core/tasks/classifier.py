@@ -105,7 +105,7 @@ class Classifier(custom_model.CustomModel):
     self._model.compile(
         optimizer=self._optimizer,
         loss=self._loss_function,
-        metrics=self._metric_functions,
+        weighted_metrics=self._metric_functions,
     )
 
     latest_checkpoint = (

@@ -113,7 +113,7 @@ class PreprocessorTest(tf.test.TestCase, parameterized.TestCase):
     labels = []
     input_masks = []
     for features, label in preprocessed_dataset.gen_tf_dataset():
-      self.assertEqual(label.shape, [1])
+      self.assertEqual(label.shape, [1, 1])
       labels.append(label.numpy()[0])
       self.assertSameElements(
           features.keys(), ['input_word_ids', 'input_mask', 'input_type_ids']
