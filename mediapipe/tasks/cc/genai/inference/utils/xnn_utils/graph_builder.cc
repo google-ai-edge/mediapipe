@@ -1161,5 +1161,12 @@ absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::Relu(
   return Clamp(input, {.out_min = 0});
 }
 
+absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::Relu1p5(
+    std::shared_ptr<Tensor> input) {
+  MP_ASSIGN_OR_RETURN(auto relu_output, Relu(input));
+  MP_ASSIGN_OR_RETURN(auto sqrt_output, SquareRoot(relu_output));
+  return ElementMul(relu_output, sqrt_output);
+}
+
 }  // namespace xnn_utils
 }  // namespace mediapipe::tasks::genai
