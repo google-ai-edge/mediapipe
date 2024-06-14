@@ -217,28 +217,29 @@ class FileTfliteModelData : public TfliteModelData {
  public:
   FileTfliteModelData(std::shared_ptr<tflite::FlatBufferModel> model,
                       std::unique_ptr<DataHolder<const uint8_t>> model_data,
-                      ScopedFile file)
+                      std::shared_ptr<const ScopedFile> file)
       : TfliteModelData(std::move(model)),
         file_(std::move(file)),
         model_data_(std::move(model_data)) {}
   ~FileTfliteModelData() override = default;
 
   void Clear() override {
-    file_ = ScopedFile();
+    file_.reset();
     model_data_.reset();
   }
 
  protected:
   absl::StatusOr<std::unique_ptr<DataHolder<uint8_t>>> ReadData(
       uint64_t offset, uint64_t size) override {
-    return CreateMemoryMappedDataHolder<uint8_t>(file_.file(), offset, size,
+    RET_CHECK(file_);
+    return CreateMemoryMappedDataHolder<uint8_t>(file_->file(), offset, size,
                                                  key_);
   }
 
  private:
   static uint32_t next_key_;
-  std::string key_{absl::StrCat("FileTfliteModelData_", next_key_++)};
-  ScopedFile file_;
+  const std::string key_{absl::StrCat("FileTfliteModelData_", next_key_++)};
+  std::shared_ptr<const ScopedFile> file_;
   std::unique_ptr<DataHolder<const uint8_t>> model_data_;
 };
 
@@ -395,11 +396,16 @@ absl::StatusOr<std::shared_ptr<ModelData>> ModelData::Create(
 
 // static
 absl::StatusOr<std::shared_ptr<ModelData>> ModelData::Create(ScopedFile file) {
+  return Create(std::make_shared<ScopedFile>(std::move(file)));
+}
+
+absl::StatusOr<std::shared_ptr<ModelData>> ModelData::Create(
+    std::shared_ptr<const ScopedFile> file) {
   // Load the first chunk of the file as a tflite model, and load the rest
   // on-demand when needed.
-  MP_ASSIGN_OR_RETURN(auto data,
-                      CreateMemoryMappedDataHolder<const uint8_t>(
-                          file.file(), /*offset=*/0, /*size=*/kTfliteBaseSize));
+  MP_ASSIGN_OR_RETURN(
+      auto data, CreateMemoryMappedDataHolder<const uint8_t>(
+                     file->file(), /*offset=*/0, /*size=*/kTfliteBaseSize));
   auto model = tflite::FlatBufferModel::BuildFromBuffer(
       reinterpret_cast<const char*>(data->GetData().data()),
       data->GetData().size());
