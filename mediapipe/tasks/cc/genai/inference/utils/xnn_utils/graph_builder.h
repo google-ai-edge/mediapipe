@@ -251,6 +251,10 @@ class XnnGraphBuilder {
       std::shared_ptr<Tensor> lhs, float rhs,
       ClampParams params = ClampParams());
 
+  absl::StatusOr<std::shared_ptr<Tensor>> ElementSub(
+      float lhs, std::shared_ptr<Tensor> rhs,
+      ClampParams params = ClampParams());
+
   absl::StatusOr<std::shared_ptr<Tensor>> ElementMul(
       std::shared_ptr<Tensor> lhs, std::shared_ptr<Tensor> rhs,
       ClampParams params = ClampParams());

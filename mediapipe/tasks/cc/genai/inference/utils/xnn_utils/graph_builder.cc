@@ -657,6 +657,15 @@ absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::ElementAdd(
 }
 
 absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::ElementSub(
+    float lhs, std::shared_ptr<Tensor> rhs, ClampParams params) {
+  auto lhs_tensor =
+      std::make_shared<Tensor>(Tensor::DimsType{1}, xnn_datatype_fp32);
+  MP_RETURN_IF_ERROR(lhs_tensor->LoadFromVec(std::vector<float>({lhs})));
+
+  return ElementSub(lhs_tensor, rhs, params);
+}
+
+absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::ElementSub(
     std::shared_ptr<Tensor> lhs, float rhs, ClampParams params) {
   auto rhs_tensor =
       std::make_shared<Tensor>(Tensor::DimsType{1}, xnn_datatype_fp32);
@@ -671,6 +680,7 @@ absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::ElementSub(
   MP_ASSIGN_OR_RETURN(auto output,
                       IntermediateTensor(OutDimsForElementwiseOp(*lhs, *rhs),
                                          "element_sub_output"));
+  NewWeight(lhs);
   NewWeight(rhs);
 
   build_steps_.push_back([lhs, rhs, output,
