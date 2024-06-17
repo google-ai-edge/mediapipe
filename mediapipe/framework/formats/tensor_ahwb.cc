@@ -462,6 +462,7 @@ void Tensor::MoveAhwbStuff(Tensor* src) {
   ssbo_written_ = std::exchange(src->ssbo_written_, -1);
   fence_fd_ = std::exchange(src->fence_fd_, -1);
   ahwb_usages_ = std::move(src->ahwb_usages_);
+  use_ahwb_ = std::exchange(src->use_ahwb_, false);
 }
 
 void Tensor::ReleaseAhwbStuff() {
