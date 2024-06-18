@@ -138,6 +138,8 @@ class XnnGraphBuilder {
   absl::StatusOr<std::shared_ptr<Tensor>> Relu1p5(
       std::shared_ptr<Tensor> input);
 
+  absl::StatusOr<std::shared_ptr<Tensor>> Abs(std::shared_ptr<Tensor> input);
+
   absl::StatusOr<std::shared_ptr<Tensor>> Clamp(std::shared_ptr<Tensor> input,
                                                 ClampParams params);
 
