@@ -60,23 +60,6 @@ http_archive(
 )
 
 http_archive(
-    name = "rules_python",
-    sha256 = "9d04041ac92a0985e344235f5d946f71ac543f1b1565f2cdbc9a2aaee8adf55b",
-    strip_prefix = "rules_python-0.26.0",
-    url = "https://github.com/bazelbuild/rules_python/releases/download/0.26.0/rules_python-0.26.0.tar.gz",
-)
-
-load("@rules_python//python:repositories.bzl", "py_repositories", "python_register_toolchains")
-
-py_repositories()
-
-python_register_toolchains(
-    name = "python",
-    ignore_root_user_error = True,
-    python_version = "3.10",
-)
-
-http_archive(
     name = "com_google_protobuf",
     sha256 = "87407cd28e7a9c95d9f61a098a53cf031109d451a7763e7dd1253abf8b4df422",
     strip_prefix = "protobuf-3.19.1",
@@ -98,13 +81,13 @@ http_archive(
     ],
 )
 
-# XNNPACK on 2024-06-04.
+# XNNPACK on 2024-03-27.
 http_archive(
     name = "XNNPACK",
     # `curl -L <url> | shasum -a 256`
-    sha256 = "dac478307dd076e3fa7b9e66348df9365606b4fd52208ca1abdfbf2974ef8501",
-    strip_prefix = "XNNPACK-b66e1d7bf428c61e8d454e3f90c50b88d688c3f5",
-    url = "https://github.com/google/XNNPACK/archive/b66e1d7bf428c61e8d454e3f90c50b88d688c3f5.zip",
+    sha256 = "179a680ef85deb5380b850f2551b214e00835c232f5b197dedf7c011a6adf5a6",
+    strip_prefix = "XNNPACK-2fe25b859581a34e77b48b06c640ac1a5a58612e",
+    url = "https://github.com/google/XNNPACK/archive/2fe25b859581a34e77b48b06c640ac1a5a58612e.zip",
 )
 
 # TODO: This is an are indirect depedency. We should factor it out.
@@ -547,10 +530,10 @@ http_archive(
 )
 
 # TensorFlow repo should always go after the other external dependencies.
-# TF on 2024-06-13.
-_TENSORFLOW_GIT_COMMIT = "366fc67018c3f0e6020ed58a73bf45d6a37f9b83"
-# curl -L https://github.com/tensorflow/tensorflow/archive/366fc67018c3f0e6020ed58a73bf45d6a37f9b83.tar.gz | shasum -a 256
-_TENSORFLOW_SHA256 = "590e89a687f08ef06c4bf2c270dc32e08e41e183df7a00c9e3a8a4cc35d3ccb9"
+# TF on 2024-05-09.
+_TENSORFLOW_GIT_COMMIT = "8038e44ea38bb889095afaaf6ad05e94adaed8d2"
+# curl -L https://github.com/tensorflow/tensorflow/archive/8038e44ea38bb889095afaaf6ad05e94adaed8d2.tar.gz | shasum -a 256
+_TENSORFLOW_SHA256 = "a00c1503a879eb21c349941bbee54aef8d557d7d2ab770e76fb26668d75aa6e0"
 http_archive(
     name = "org_tensorflow",
     urls = [
@@ -696,3 +679,4 @@ http_archive(
     urls = ["https://github.com/nlohmann/json/releases/download/v3.9.1/include.zip"],
     build_file = "@//third_party:nlohmann.BUILD",
 )
+
