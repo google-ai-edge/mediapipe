@@ -148,11 +148,16 @@ export class DrawingUtils {
       cpuOrGpuGontext: CanvasRenderingContext2D|
       OffscreenCanvasRenderingContext2D|WebGL2RenderingContext,
       gpuContext?: WebGL2RenderingContext) {
-    if (cpuOrGpuGontext instanceof CanvasRenderingContext2D ||
+    if ((typeof CanvasRenderingContext2D !== 'undefined' && cpuOrGpuGontext instanceof CanvasRenderingContext2D) ||
         cpuOrGpuGontext instanceof OffscreenCanvasRenderingContext2D) {
       this.context2d = cpuOrGpuGontext;
       this.contextWebGL = gpuContext;
     } else {
+      // If the first `if` statement is false, then the first argument must be a
+      // WebGL2RenderingContext, since CanvasRenderingContext2D can't
+      // be passed as the first argument. However, typescript isn't
+      // smart enough to infer this, so we need to use @ts-ignore.
+      // @ts-ignore
       this.contextWebGL = cpuOrGpuGontext;
     }
   }
@@ -511,5 +516,3 @@ export class DrawingUtils {
     this.convertToWebGLTextureShaderContext = undefined;
   }
 }
-
-
