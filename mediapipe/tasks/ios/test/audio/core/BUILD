@@ -49,6 +49,7 @@ objc_library(
     deps = [
         "//mediapipe/tasks/ios/audio/core:MPPFloatRingBuffer",
         "//mediapipe/tasks/ios/common:MPPCommon",
+        "//third_party/apple_frameworks:XCTest",
     ],
 )
 
@@ -80,6 +81,8 @@ objc_library(
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/test/audio/core/utils:AVAudioPCMBufferTestUtils",
         "//mediapipe/tasks/ios/test/utils:MPPFileInfo",
+        "//third_party/apple_frameworks:AVFoundation",
+        "//third_party/apple_frameworks:XCTest",
     ],
 )
 
@@ -111,6 +114,8 @@ objc_library(
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/test/audio/core/utils:AVAudioPCMBufferTestUtils",
         "//mediapipe/tasks/ios/test/utils:MPPFileInfo",
+        "//third_party/apple_frameworks:AVFoundation",
+        "//third_party/apple_frameworks:XCTest",
     ],
 )
 

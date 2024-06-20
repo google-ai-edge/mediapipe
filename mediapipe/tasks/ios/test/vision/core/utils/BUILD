@@ -51,6 +51,7 @@ objc_library(
         "//third_party/apple_frameworks:CoreMedia",
         "//third_party/apple_frameworks:CoreVideo",
         "//third_party/apple_frameworks:UIKit",
+        "//third_party/apple_frameworks:XCTest",
     ],
 )
 

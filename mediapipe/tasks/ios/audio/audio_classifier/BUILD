@@ -23,6 +23,7 @@ objc_library(
     deps = [
         "//mediapipe/tasks/ios/components/containers:MPPClassificationResult",
         "//mediapipe/tasks/ios/core:MPPTaskResult",
+        "//third_party/apple_frameworks:Foundation",
     ],
 )
 
@@ -34,5 +35,6 @@ objc_library(
         ":MPPAudioClassifierResult",
         "//mediapipe/tasks/ios/audio/core:MPPAudioRunningMode",
         "//mediapipe/tasks/ios/core:MPPTaskOptions",
+        "//third_party/apple_frameworks:Foundation",
     ],
 )

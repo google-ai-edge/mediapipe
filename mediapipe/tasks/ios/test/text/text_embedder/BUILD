@@ -42,6 +42,7 @@ objc_library(
     deps = [
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/text/text_embedder:MPPTextEmbedder",
+        "//third_party/apple_frameworks:XCTest",
     ],
 )
 
@@ -66,6 +67,7 @@ swift_library(
     deps = [
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/text/text_embedder:MPPTextEmbedder",
+        "//third_party/apple_frameworks:XCTest",
     ],
 )
 
