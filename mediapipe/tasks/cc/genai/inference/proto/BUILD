@@ -29,7 +29,10 @@ mediapipe_proto_library(
 mediapipe_proto_library(
     name = "llm_params_proto",
     srcs = ["llm_params.proto"],
-    deps = [":transformer_params_proto"],
+    deps = [
+        ":prompt_template_proto",
+        ":transformer_params_proto",
+    ],
 )
 
 mediapipe_proto_library(
@@ -41,4 +44,9 @@ mediapipe_proto_library(
 mediapipe_proto_library(
     name = "sampler_params_proto",
     srcs = ["sampler_params.proto"],
+)
+
+mediapipe_proto_library(
+    name = "prompt_template_proto",
+    srcs = ["prompt_template.proto"],
 )
