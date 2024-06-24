@@ -86,7 +86,15 @@
 #define MEDIAPIPE_OPENGL_ES_VERSION MEDIAPIPE_OPENGL_ES_30
 #define MEDIAPIPE_METAL_ENABLED 0
 #else
+#if MEDIAPIPE_USE_WEBGPU
+// TODO: `MEDIAPIPE_USE_WEBGPU` does not necessarily imply
+// anything about the GLES versions. But despite that, as a temporary
+// measure, setting GLES version to 0 would save a lot of work for the
+// current OSS efforts.
+#define MEDIAPIPE_OPENGL_ES_VERSION 0
+#else
 #define MEDIAPIPE_OPENGL_ES_VERSION MEDIAPIPE_OPENGL_ES_31
+#endif
 #define MEDIAPIPE_METAL_ENABLED 0
 #endif
 #endif

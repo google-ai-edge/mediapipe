@@ -274,12 +274,14 @@ class ImageToTensorCalculator : public Node {
                                 cc, DoesGpuInputStartAtBottom(options_),
                                 GetBorderMode(options_.border_mode())));
 #else
+#if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
         if (!gpu_converter_) {
           MP_ASSIGN_OR_RETURN(gpu_converter_,
                               CreateImageToGlTextureTensorConverter(
                                   cc, DoesGpuInputStartAtBottom(options_),
                                   GetBorderMode(options_.border_mode())));
         }
+#endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
         if (!gpu_converter_) {
           return absl::UnimplementedError(
               "ImageToTensorConverter for the input GPU image is unavailable.");
