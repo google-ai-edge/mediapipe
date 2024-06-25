@@ -211,8 +211,8 @@ class GlCalculatorHelper {
 };
 
 // Represents an OpenGL texture, and is a 'view' into the memory pool.
-// It's more like a GlTextureLock, because it's main purpose (in conjunction
-// with the helper): to manage GL sync points in the gl command queue.
+// It's more like a GlTextureLock, because its main purpose (in conjunction
+// with the helper) is: to manage GL sync points in the gl command queue.
 //
 // This class should be the main way to interface with GL memory within a single
 // calculator. This is the preferred way to utilize the memory pool inside of
