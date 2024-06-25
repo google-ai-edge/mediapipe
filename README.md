@@ -11,6 +11,7 @@ Check the included demos with pipeline examples or create your own graphs and ex
 - modified [build_desktop_examples.sh](build_desktop_examples.sh) script to build new demos.
 - added [calculators](mediapipe/calculators/ovms) and [calculators](mediapipe/calculators/openvino) for OpenVINO&trade; inference in mediapipe graphs
   detailed [description](mediapipe/calculators/ovms/calculators.md).
+- added [calculators](mediapipe/calculators/geti) for serialization and inference tasks.
 - modified bazel [targets](mediapipe/examples/desktop) to use OpenVINO&trade; inference calculators (the list of available demos is in the table below).
 - modified [WORKSPACE](WORKSPACE) file to add OpenVINO&trade; Model Server dependencies.
   Specifically target @ovms//src:ovms_lib as dependency from [OpenVINO Model Server](https://github.com/openvinotoolkit/model_server)
