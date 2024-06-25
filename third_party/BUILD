@@ -224,7 +224,6 @@ cmake(
         "-lavformat",
         "-lavutil",
         "-lswscale",
-        "-lavresample",
         "-ldl",
         "-lm",
         "-lpthread",

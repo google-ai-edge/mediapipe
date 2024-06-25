@@ -14,8 +14,8 @@ http_archive(
 http_archive(
   name = "pybind11",
   build_file = "@pybind11_bazel//:pybind11.BUILD",
-  strip_prefix = "pybind11-2.10.4",
-  urls = ["https://github.com/pybind/pybind11/archive/v2.10.4.tar.gz"],
+  strip_prefix = "pybind11-2.11.1",
+  urls = ["https://github.com/pybind/pybind11/archive/v2.11.1.tar.gz"],
 )
 load("@pybind11_bazel//:python_configure.bzl", "python_configure")
 python_configure(name = "local_config_python")
@@ -644,7 +644,7 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 git_repository(
     name = "ovms",
     remote = "https://github.com/openvinotoolkit/model_server",
-    commit = "9bb7942622d30a3272128db03f5e8b158ee81dcc", # ov 2024.1RC2 (#2418)
+    commit = "e2267e6b1b5715dc77aec6d89e299968287364fa", # ov 2024.2RC2 (#2484)
 )
 
 # DEV ovms - adjust local repository path for build
@@ -699,7 +699,7 @@ git_repository(
     remote = "https://github.com/tensorflow/serving.git",
     tag = "2.13.0",
     patch_args = ["-p1"],
-    patches = ["@ovms//external:net_http.patch", "@ovms//external:listen.patch"]
+    patches = ["@ovms//external:net_http.patch", "@ovms//external:listen.patch", "@ovms//external:partial.patch"]
     #                             ^^^^^^^^^^^^
     #                       make bind address configurable
     #          ^^^^^^^^^^^^
