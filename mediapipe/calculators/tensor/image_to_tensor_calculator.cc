@@ -197,7 +197,7 @@ class ImageToTensorCalculator : public Node {
         // gracefully by updating timestamp bound instead of returning failure.
         // Timestamp bound update happens automatically. (See Open().)
         // NOTE: usage of sentinel rects should be avoided.
-        DLOG(WARNING)
+        ABSL_DLOG(WARNING)
             << "Updating timestamp bound in response to a sentinel rect";
         return absl::OkStatus();
       }
