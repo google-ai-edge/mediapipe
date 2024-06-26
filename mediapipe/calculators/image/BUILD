@@ -285,6 +285,7 @@ cc_test(
     data = ["//mediapipe/calculators/image/testdata:test_images"],
     tags = [
         "desktop_only_test",
+        "noasan",  # TODO: Remove noasan tag when SwiftShader supports sanitizers],
     ],
     deps = [
         ":image_transformation_calculator",
@@ -355,7 +356,10 @@ cc_library(
 cc_test(
     name = "image_cropping_calculator_test",
     srcs = ["image_cropping_calculator_test.cc"],
-    tags = ["not_run:arm"],
+    tags = [
+        "noasan",  # TODO: Remove noasan tag when SwiftShader supports sanitizers
+        "not_run:arm",
+    ],
     deps = [
         ":image_cropping_calculator",
         ":image_cropping_calculator_cc_proto",
@@ -707,7 +711,10 @@ cc_library(
 cc_test(
     name = "segmentation_smoothing_calculator_test",
     srcs = ["segmentation_smoothing_calculator_test.cc"],
-    tags = ["not_run:arm"],
+    tags = [
+        "noasan",  # TODO: Remove noasan tag when SwiftShader supports sanitizers
+        "not_run:arm",
+    ],
     deps = [
         ":image_clone_calculator",
         ":image_clone_calculator_cc_proto",
@@ -834,7 +841,8 @@ cc_test(
     ],
     tags = [
         "desktop_only_test",
-        "not_run:arm",
+        "noasan",
+        "not_run:arm",  # TODO: Remove noasan tag when SwiftShader supports sanitizers
     ],
     deps = [
         ":affine_transformation",

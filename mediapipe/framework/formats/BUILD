@@ -560,7 +560,10 @@ cc_library(
 cc_test(
     name = "tensor_test",
     srcs = ["tensor_test.cc"],
-    tags = ["not_run:arm"],
+    tags = [
+        "noasan",
+        "not_run:arm",  # TODO: Remove noasan tag when SwiftShader supports sanitizers
+    ],
     deps = [
         ":tensor",
         "//mediapipe/framework/port:gtest_main",
