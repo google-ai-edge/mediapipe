@@ -643,17 +643,17 @@ class _BertClassifier(TextClassifier):
     """
     encoder_inputs = dict(
         input_word_ids=tf.keras.layers.Input(
-            shape=(self._model_options.seq_len,),
+            shape=(None,),
             dtype=tf.int32,
             name="input_word_ids",
         ),
         input_mask=tf.keras.layers.Input(
-            shape=(self._model_options.seq_len,),
+            shape=(None,),
             dtype=tf.int32,
             name="input_mask",
         ),
         input_type_ids=tf.keras.layers.Input(
-            shape=(self._model_options.seq_len,),
+            shape=(None,),
             dtype=tf.int32,
             name="input_type_ids",
         ),

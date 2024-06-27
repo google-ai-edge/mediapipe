@@ -29,7 +29,7 @@ class ModelWithTokenizer(tf.keras.Model):
       ]
   )
   def call(self, input_tensor):
-    x = self._tokenizer.process_fn(input_tensor)
-    x = {k: tf.expand_dims(v, axis=0) for k, v in x.items()}
-    x = self._model(x)
-    return x[0]  # TODO: Add back the batch dimension
+    out = self._tokenizer.process_fn(input_tensor, skip_padding=True)
+    out = {k: tf.expand_dims(v, axis=0) for k, v in out.items()}
+    out = self._model(out)
+    return out[0]  # TODO: Add back the batch dimension
