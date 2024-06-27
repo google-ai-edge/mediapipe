@@ -1262,6 +1262,10 @@ mediapipe_cc_test(
     name = "gpu_buffer_storage_ahwb_test",
     size = "small",
     srcs = ["gpu_buffer_storage_ahwb_test.cc"],
+    # Ensures that virtual device chosen is Android 26+.
+    android_devices = {
+        "//tools/target_cpu:x86": "//tools/mobile/devices/android/generic_phone:android_26_x86",
+    },
     exclude_platforms = [
         "ios",
         "wasm",

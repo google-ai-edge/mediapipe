@@ -113,9 +113,13 @@
 #endif  // MEDIAPIPE_HAS_RTTI
 
 // AHardware buffers are only available since Android API 26.
-#if (__ANDROID_API__ >= 26)
+#if !defined(MEDIAPIPE_NO_JNI) || defined(MEDIAPIPE_ANDROID_LINK_NATIVE_WINDOW)
+#if (__ANDROID_API__ >= 26) || defined(__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__)
 #define MEDIAPIPE_GPU_BUFFER_USE_AHWB 1
-#endif
+#endif  // __ANDROID_API__ >= 26 ||
+        // defined(__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__)
+#endif  // !defined(MEDIAPIPE_NO_JNI) ||
+        // defined(MEDIAPIPE_ANDROID_LINK_NATIVE_WINDOW)
 
 // Supported use cases for tensor_ahwb:
 // 1. Native code running in Android apps.
