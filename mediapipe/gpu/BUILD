@@ -1040,6 +1040,7 @@ cc_library(
         ":gl_quad_renderer",
         ":gl_scaler_calculator_cc_proto",
         ":gl_simple_shaders",
+        ":gpu_buffer",
         ":gpu_buffer_format",
         ":shader_util",
         "//mediapipe/framework:calculator_framework",
@@ -1047,6 +1048,7 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/tool:options_util",
+        "@com_google_absl//absl/status:statusor",
     ],
     alwayslink = 1,
 )
