@@ -1122,6 +1122,9 @@ cc_library(
 cc_test(
     name = "tensor_converter_calculator_test",
     srcs = ["tensor_converter_calculator_test.cc"],
+    tags = [
+        "noasan",  # TODO: Remove noasan tag when SwiftShader supports sanitizers
+    ],
     deps = [
         ":tensor_converter_calculator",
         "//mediapipe/framework:calculator_framework",
