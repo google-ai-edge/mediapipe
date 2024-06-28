@@ -495,19 +495,8 @@ void* Tensor::MapAhwbToCpuRead() const {
         gl_context_->Run([]() { glFinish(); });
       } else if (valid_ & kValidAHardwareBuffer) {
         ABSL_CHECK_GT(ahwb_usages_.size(), 0);
-        if (ahwb_usages_.size() != 1) {
-          // Theoretically that could be the case with previous implementation,
-          // and we don't want to crash in such cases.
-          ABSL_LOG(DFATAL)
-              << "Multiple writes into the same AHWB tensor detected.";
-        }
-
-        auto& ahwb_usage = ahwb_usages_.back();
-        ABSL_CHECK(ahwb_usage.is_complete_fn)
-            << "Ahwb-to-Cpu synchronization requires the "
-               "completion function to be set";
-        ABSL_CHECK(ahwb_usage.is_complete_fn(/*force_completion=*/true))
-            << "An error occurred while waiting for the buffer to be written.";
+        // ahwb_usages_.size() can be greater than one and can contain reader
+        // and writer usages, see b/349348621.
 
         CompleteAndEraseUsages(ahwb_usages_);
       }

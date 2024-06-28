@@ -166,6 +166,42 @@ TEST(TensorAhwbTest, EveryAhwbWriteViewReleaseCallbackIsInvoked) {
 }
 
 TEST(TensorAhwbTest,
+     ShouldSupportMultipleDelayedAhwbReadersFollowedByACpuReader) {
+  Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape{1});
+  {
+    auto write_view = tensor.GetAHardwareBufferWriteView();
+    EXPECT_NE(write_view.handle(), nullptr);
+  }
+  bool reading_finished = false;
+  {
+    auto ahwb_read_view = tensor.GetAHardwareBufferReadView();
+    EXPECT_NE(ahwb_read_view.handle(), nullptr);
+    ahwb_read_view.SetReadingFinishedFunc(
+        [&reading_finished](bool) { return reading_finished; });
+    ahwb_read_view.SetReleaseCallback([]() {});
+    // Since SetReadingFinishedFunc is blocked, the AhwbUsage instance on
+    // ahwb_usages_ is not cleared.
+  }
+  {
+    auto ahwb_read_view = tensor.GetAHardwareBufferReadView();
+    EXPECT_NE(ahwb_read_view.handle(), nullptr);
+    ahwb_read_view.SetReadingFinishedFunc(
+        [&reading_finished](bool) { return reading_finished; });
+    ahwb_read_view.SetReleaseCallback([]() {});
+    // Since SetReadingFinishedFunc is blocked, the AhwbUsage instance on
+    // ahwb_usages_ is not cleared.
+  }
+
+  // Now we release the AHWB readers.
+  reading_finished = true;
+  {
+    // We can now read from CPU.
+    auto view = tensor.GetCpuReadView();
+    EXPECT_NE(view.buffer<float>(), nullptr);
+  }
+}
+
+TEST(TensorAhwbTest,
      EveryAhwbWriteViewReleaseCallbackIsInvokedWritingFininshedSpecified) {
   constexpr int kNumReleaseCallbacks = 10;
   std::array<bool, kNumReleaseCallbacks> release_callbacks_invoked;
@@ -227,18 +263,18 @@ TEST(TensorAhwbTest, TestAhwbAlignment) {
   }
 }
 
-// Tensor::GetCpuView uses source location mechanism that gives source file name
-// and line from where the method is called. The function is intended just to
-// have two calls providing the same source file name and line.
+// Tensor::GetCpuView uses source location mechanism that gives source file
+// name and line from where the method is called. The function is intended
+// just to have two calls providing the same source file name and line.
 auto GetCpuView(const Tensor &tensor) { return tensor.GetCpuWriteView(); }
 
-// The test checks the tracking mechanism: when a tensor's Cpu view is retrieved
-// for the first time then the source location is attached to the tensor. If the
-// Ahwb view is requested then from the tensor then the previously recorded Cpu
-// view request source location is marked for using Ahwb storage.
-// When a Cpu view with the same source location (but for the newly allocated
-// tensor) is requested and the location is marked to use Ahwb storage then the
-// Ahwb storage is allocated for the CpuView.
+// The test checks the tracking mechanism: when a tensor's Cpu view is
+// retrieved for the first time then the source location is attached to the
+// tensor. If the Ahwb view is requested then from the tensor then the
+// previously recorded Cpu view request source location is marked for using
+// Ahwb storage. When a Cpu view with the same source location (but for the
+// newly allocated tensor) is requested and the location is marked to use Ahwb
+// storage then the Ahwb storage is allocated for the CpuView.
 TEST(TensorAhwbTest, TestTrackingAhwb) {
   // Create first tensor and request Cpu and then Ahwb view to mark the source
   // location for Ahwb storage.
