@@ -151,6 +151,11 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":gl_base",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/base:log_severity",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/time",
     ],
 )
 
