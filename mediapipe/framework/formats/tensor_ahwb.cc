@@ -112,7 +112,7 @@ void CompleteAndEraseUsages(std::list<Tensor::AhwbUsage>& ahwb_usages) {
   for (auto& ahwb_usage : ahwb_usages) {
     if (ahwb_usage.is_complete_fn &&
         !ahwb_usage.is_complete_fn(/*force_completion=*/false)) {
-      if (ahwb_usage.is_complete_fn(/*force_completion=*/true)) {
+      if (!ahwb_usage.is_complete_fn(/*force_completion=*/true)) {
         ABSL_LOG(DFATAL) << "Failed to force-complete AHWB usage.";
       }
     }
