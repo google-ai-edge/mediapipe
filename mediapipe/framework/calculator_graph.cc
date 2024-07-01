@@ -131,17 +131,19 @@ void CalculatorGraph::GraphInputStream::Close() {
   manager_->Close();
 }
 
-CalculatorGraph::CalculatorGraph()
-    : service_manager_(std::make_shared<GraphServiceManager>()),
+CalculatorGraph::CalculatorGraph(
+    std::shared_ptr<GraphServiceManager> service_manager)
+    : counter_factory_(std::make_unique<BasicCounterFactory>()),
+      service_manager_(std::move(service_manager)),
       profiler_(std::make_shared<ProfilingContext>()),
-      scheduler_(this) {
-  counter_factory_ = std::make_unique<BasicCounterFactory>();
-}
+      scheduler_(this) {}
 
-CalculatorGraph::CalculatorGraph(CalculatorContext* cc) : CalculatorGraph() {
-  // Adopt all services from the CalculatorContext / parent graph.
-  service_manager_ = cc->GetSharedGraphServiceManager();
-}
+CalculatorGraph::CalculatorGraph()
+    : CalculatorGraph(std::make_shared<GraphServiceManager>()) {}
+
+// Adopt all services from the CalculatorContext / parent graph.
+CalculatorGraph::CalculatorGraph(CalculatorContext* cc)
+    : CalculatorGraph(cc->GetSharedGraphServiceManager()) {}
 
 CalculatorGraph::CalculatorGraph(CalculatorGraphConfig config)
     : CalculatorGraph() {

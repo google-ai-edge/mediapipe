@@ -478,6 +478,9 @@ class CalculatorGraph {
   }
 
  private:
+  explicit CalculatorGraph(
+      std::shared_ptr<GraphServiceManager> service_manager);
+
   // GraphRunState is used as a parameter in the function CallStatusHandlers.
   enum class GraphRunState {
     // State of the graph before the run; see status_handler.h for details.
