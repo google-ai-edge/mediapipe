@@ -60,6 +60,17 @@ http_archive(
 )
 
 http_archive(
+    name = "rules_python",
+    sha256 = "9d04041ac92a0985e344235f5d946f71ac543f1b1565f2cdbc9a2aaee8adf55b",
+    strip_prefix = "rules_python-0.26.0",
+    url = "https://github.com/bazelbuild/rules_python/releases/download/0.26.0/rules_python-0.26.0.tar.gz",
+)
+
+load("@rules_python//python:repositories.bzl", "py_repositories")
+
+py_repositories()
+
+http_archive(
     name = "com_google_protobuf",
     sha256 = "87407cd28e7a9c95d9f61a098a53cf031109d451a7763e7dd1253abf8b4df422",
     strip_prefix = "protobuf-3.19.1",
@@ -81,13 +92,13 @@ http_archive(
     ],
 )
 
-# XNNPACK on 2024-03-27.
+# XNNPACK on 2024-06-28
 http_archive(
     name = "XNNPACK",
     # `curl -L <url> | shasum -a 256`
-    sha256 = "179a680ef85deb5380b850f2551b214e00835c232f5b197dedf7c011a6adf5a6",
-    strip_prefix = "XNNPACK-2fe25b859581a34e77b48b06c640ac1a5a58612e",
-    url = "https://github.com/google/XNNPACK/archive/2fe25b859581a34e77b48b06c640ac1a5a58612e.zip",
+    sha256 = "3c28cb74c2c1ea67e0295587aa788b49071385fab38be1f1fc2064378ff156b5",
+    strip_prefix = "XNNPACK-3cef165957437753597e5483d43d6e8fb7837591",
+    url = "https://github.com/google/XNNPACK/archive/3cef165957437753597e5483d43d6e8fb7837591.zip",
 )
 
 # TODO: This is an are indirect depedency. We should factor it out.
@@ -530,10 +541,10 @@ http_archive(
 )
 
 # TensorFlow repo should always go after the other external dependencies.
-# TF on 2024-05-09.
-_TENSORFLOW_GIT_COMMIT = "8038e44ea38bb889095afaaf6ad05e94adaed8d2"
-# curl -L https://github.com/tensorflow/tensorflow/archive/8038e44ea38bb889095afaaf6ad05e94adaed8d2.tar.gz | shasum -a 256
-_TENSORFLOW_SHA256 = "a00c1503a879eb21c349941bbee54aef8d557d7d2ab770e76fb26668d75aa6e0"
+# TF on 2024-06-28.
+_TENSORFLOW_GIT_COMMIT = "7f70113fb821691afbd3efc8b7e04e482523caab"
+# curl -L https://github.com/tensorflow/tensorflow/archive/7f70113fb821691afbd3efc8b7e04e482523caab.tar.gz | shasum -a 256
+_TENSORFLOW_SHA256 = "f4e02ae66fcbba12f7b4d542c7cd5e961dbf499fc9476b5482b2b5ee2bd2063f"
 http_archive(
     name = "org_tensorflow",
     urls = [
@@ -679,4 +690,3 @@ http_archive(
     urls = ["https://github.com/nlohmann/json/releases/download/v3.9.1/include.zip"],
     build_file = "@//third_party:nlohmann.BUILD",
 )
-
