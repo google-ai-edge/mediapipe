@@ -48,7 +48,7 @@ MP_EXPORT void* face_stylizer_create(struct FaceStylizerOptions* options,
 // success. If an error occurs, returns an error code and sets the error
 // parameter to an an error message (if `error_msg` is not `nullptr`). You must
 // free the memory allocated for the error message.
-MP_EXPORT int face_stylizer_stylize_image(void* stylizer, const MpImage& image,
+MP_EXPORT int face_stylizer_stylize_image(void* stylizer, const MpImage* image,
                                           MpImage* result, char** error_msg);
 
 // Frees the memory allocated inside a FaceStylizerResult result.

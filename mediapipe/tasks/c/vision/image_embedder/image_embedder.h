@@ -60,9 +60,10 @@ struct ImageEmbedderOptions {
   // error message in case of any failure. The validity of the passed arguments
   // is true for the lifetime of the callback function.
   //
-  // A caller is responsible for closing image embedder result.
-  typedef void (*result_callback_fn)(const ImageEmbedderResult* result,
-                                     const MpImage& image, int64_t timestamp_ms,
+  // The passed `image` is only valid for the lifetime of the call. A caller is
+  // responsible for closing the image embedder result.
+  typedef void (*result_callback_fn)(ImageEmbedderResult* result,
+                                     const MpImage* image, int64_t timestamp_ms,
                                      char* error_msg);
   result_callback_fn result_callback;
 };
@@ -116,6 +117,8 @@ MP_EXPORT int image_embedder_embed_for_video(void* embedder,
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
+// You need to invoke `image_embedder_close_result` after each invocation to
+// free memory.
 MP_EXPORT int image_embedder_embed_async(void* embedder, const MpImage* image,
                                          int64_t timestamp_ms,
                                          char** error_msg);

@@ -30,7 +30,7 @@ static MPPFileInfo *const kSpeech48KHzMonoFileInfo =
 
 static AVAudioFormat *const kAudioEngineFormat =
     [[AVAudioFormat alloc] initWithCommonFormat:AVAudioPCMFormatFloat32
-                                     sampleRate:48000
+                                     sampleRate:48000.0f
                                        channels:1
                                     interleaved:YES];
 
@@ -70,7 +70,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)testInitAudioRecordFailsWithInvalidChannelCount {
   const NSInteger channelCount = 3;
-  const NSInteger sampleRate = 8000;
+  const double sampleRate = 8000.0f;
   MPPAudioDataFormat *audioDataFormat =
       [[MPPAudioDataFormat alloc] initWithChannelCount:channelCount sampleRate:sampleRate];
 
@@ -95,7 +95,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)testInitAudioRecordFailsWithInvalidBufferLength {
   const NSInteger channelCount = 2;
-  const NSInteger sampleRate = 8000;
+  const double sampleRate = 8000.0f;
   MPPAudioDataFormat *audioDataFormat =
       [[MPPAudioDataFormat alloc] initWithChannelCount:channelCount sampleRate:sampleRate];
 
@@ -121,7 +121,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)testConvertAndLoadAudioRecordWithMonoFormatSucceeds {
   const NSInteger channelCount = 1;
-  const NSInteger sampleRate = 16000;
+  const double sampleRate = 16000.0f;
   const NSInteger bufferLength = 100;
 
   [MPPAudioRecordTests
@@ -133,7 +133,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)testConvertAndLoadAudioRecordWithStereoFormatSucceeds {
   const NSInteger channelCount = 2;
-  const NSInteger sampleRate = 8000;
+  const double sampleRate = 8000.0f;
   const NSInteger bufferLength = 200;
   [MPPAudioRecordTests
       assertCreateAndLoadAudioRecordSucceedsWithAudioFileInfo:kSpeech16KHzMonoFileInfo
@@ -227,7 +227,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)testReadAudioRecordAtOffsetFailsWithIndexOutOfBounds {
   const NSInteger channelCount = 1;
-  const NSInteger sampleRate = 16000;
+  const double sampleRate = 16000.0f;
   const NSInteger bufferLength = 100;
 
   MPPAudioRecord *audioRecord = [MPPAudioRecordTests

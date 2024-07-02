@@ -57,8 +57,7 @@ absl::StatusOr<api2::Packet<TfLiteModelPtr>> TfLiteModelLoader::LoadFromPath(
         std::make_unique<MMAPAllocation>(model_path.c_str(), &error_reporter);
 
     if (!error_reporter.HasError()) {
-      auto model = FlatBufferModel::BuildFromAllocation(std::move(allocation),
-                                                        &error_reporter);
+      auto model = FlatBufferModel::BuildFromAllocation(std::move(allocation));
       if (model) {
         return api2::MakePacket<TfLiteModelPtr>(
             model.release(), [](FlatBufferModel* model) { delete model; });

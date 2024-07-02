@@ -550,7 +550,7 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
     tf::Status tf_status;
     {
 #if !defined(MEDIAPIPE_MOBILE) && !defined(__APPLE__)
-      tensorflow::profiler::TraceMe trace(absl::string_view(cc->NodeName()));
+      tsl::profiler::TraceMe trace(absl::string_view(cc->NodeName()));
 #endif
       tf_status = session_->Run(input_tensors, output_tensor_names,
                                 {} /* target_node_names */, &outputs);

@@ -31,7 +31,6 @@ cc_library(
         "//mediapipe/tasks/c/vision/image_segmenter:image_segmenter_result",
         "//mediapipe/tasks/c/vision/image_segmenter:image_segmenter_result_converter",
         "//mediapipe/tasks/cc/components/containers:keypoint",
-        "//mediapipe/tasks/cc/vision/core:running_mode",
         "//mediapipe/tasks/cc/vision/interactive_segmenter",
         "//mediapipe/tasks/cc/vision/utils:image_utils",
         "@com_google_absl//absl/log",

@@ -204,10 +204,10 @@ absl::StatusOr<std::unique_ptr<XnnGraph>> XnnGraphBuilder::Build() {
 }
 
 absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::NewInput(
-    Tensor::DimsType dims, absl::string_view source) {
+    Tensor::DimsType dims, absl::string_view tag) {
   auto t = std::make_shared<Tensor>(std::move(dims), data_type_);
   t->AllocateBufferIfNeeded();
-  t->source = source;
+  t->tag = tag;
   MP_RETURN_IF_ERROR(MarkInput(t));
   return t;
 }
@@ -227,14 +227,14 @@ void XnnGraphBuilder::NewWeight(std::shared_ptr<Tensor> t) {
 }
 
 absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::IntermediateTensor(
-    Tensor::DimsType dims, absl::string_view source) {
-  return IntermediateTensor(dims, data_type_, source);
+    Tensor::DimsType dims, absl::string_view tag) {
+  return IntermediateTensor(dims, data_type_, tag);
 }
 
 absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::IntermediateTensor(
-    Tensor::DimsType dims, xnn_datatype data_type, absl::string_view source) {
+    Tensor::DimsType dims, xnn_datatype data_type, absl::string_view tag) {
   auto t = std::make_shared<Tensor>(std::move(dims), data_type);
-  t->source = source;
+  t->tag = tag;
 
   build_steps_.push_back([this, t](xnn_subgraph_t subgraph) -> absl::Status {
     // Could be moved to output tensors, thus need check.
@@ -657,6 +657,15 @@ absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::ElementAdd(
 }
 
 absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::ElementSub(
+    float lhs, std::shared_ptr<Tensor> rhs, ClampParams params) {
+  auto lhs_tensor =
+      std::make_shared<Tensor>(Tensor::DimsType{1}, xnn_datatype_fp32);
+  MP_RETURN_IF_ERROR(lhs_tensor->LoadFromVec(std::vector<float>({lhs})));
+
+  return ElementSub(lhs_tensor, rhs, params);
+}
+
+absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::ElementSub(
     std::shared_ptr<Tensor> lhs, float rhs, ClampParams params) {
   auto rhs_tensor =
       std::make_shared<Tensor>(Tensor::DimsType{1}, xnn_datatype_fp32);
@@ -671,6 +680,7 @@ absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::ElementSub(
   MP_ASSIGN_OR_RETURN(auto output,
                       IntermediateTensor(OutDimsForElementwiseOp(*lhs, *rhs),
                                          "element_sub_output"));
+  NewWeight(lhs);
   NewWeight(rhs);
 
   build_steps_.push_back([lhs, rhs, output,
@@ -1159,6 +1169,46 @@ absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::Silu(
 absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::Relu(
     std::shared_ptr<Tensor> input) {
   return Clamp(input, {.out_min = 0});
+}
+
+absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::Relu1p5(
+    std::shared_ptr<Tensor> input) {
+  MP_ASSIGN_OR_RETURN(auto relu_output, Relu(input));
+  MP_ASSIGN_OR_RETURN(auto sqrt_output, SquareRoot(relu_output));
+  return ElementMul(relu_output, sqrt_output);
+}
+
+absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::Abs(
+    std::shared_ptr<Tensor> input) {
+  MP_ASSIGN_OR_RETURN(auto output,
+                      IntermediateTensor(input->dims, "abs_output"));
+
+  build_steps_.push_back(
+      [input, output](xnn_subgraph_t subgraph) -> absl::Status {
+        RET_CHECK_EQ(xnn_status_success,
+                     xnn_define_abs(subgraph, input->tensor_id(subgraph),
+                                    output->tensor_id(subgraph),
+                                    /*flags=*/0));
+        return absl::OkStatus();
+      });
+  return output;
+}
+
+absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::Log(
+    std::shared_ptr<Tensor> input) {
+  MP_ASSIGN_OR_RETURN(auto output,
+                      IntermediateTensor(input->dims, "log_output"));
+
+  build_steps_.push_back(
+      [input, output](xnn_subgraph_t subgraph) -> absl::Status {
+        RET_CHECK_EQ(xnn_status_success,
+                     xnn_define_log(subgraph, input->tensor_id(subgraph),
+                                    output->tensor_id(subgraph),
+                                    /*flags=*/0));
+        return absl::OkStatus();
+      });
+
+  return output;
 }
 
 }  // namespace xnn_utils

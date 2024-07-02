@@ -105,7 +105,9 @@ class BertFastTokenizer(BertTokenizer):
     self._sep_id = vocab.index("[SEP]")
     self._pad_id = vocab.index("[PAD]")
 
-  def process_fn(self, input_tensor: tf.Tensor) -> Mapping[str, tf.Tensor]:
+  def process_fn(
+      self, input_tensor: tf.Tensor, skip_padding: bool = False
+  ) -> Mapping[str, tf.Tensor]:
     """Tensor implementation of the process function.
 
     This implementation can be used within a model graph directly since it
@@ -113,23 +115,27 @@ class BertFastTokenizer(BertTokenizer):
 
     Args:
       input_tensor: Input string tensor
+      skip_padding: Whether to skip padding the outputs up to self._seq_len.
+        Should be set to False when preprocessing data for batched training.
+        This flag can be set to True for exporting to TFLite in order to use
+        dynamic tensors.
 
     Returns:
       Dictionary of tf.Tensors.
     """
     input_ids = self._tokenizer.tokenize(input_tensor).flat_values
     input_ids = input_ids[: (self._seq_len - 2)]
-    input_ids = tf.concat(
-        [
-            tf.constant([self._cls_id]),
-            input_ids,
-            tf.constant([self._sep_id]),
-            tf.fill((self._seq_len,), self._pad_id),
-        ],
-        axis=0,
-    )
+    concat_tensors = [
+        tf.constant([self._cls_id]),
+        input_ids,
+        tf.constant([self._sep_id]),
+    ]
+    if not skip_padding:
+      concat_tensors.append(tf.fill((self._seq_len,), self._pad_id))
+
+    input_ids = tf.concat(concat_tensors, axis=0)
     input_ids = input_ids[: self._seq_len]
-    input_type_ids = tf.zeros(self._seq_len, dtype=tf.int32)
+    input_type_ids = tf.zeros_like(input_ids, dtype=tf.int32)
     input_mask = tf.cast(input_ids != self._pad_id, dtype=tf.int32)
     return {
         "input_word_ids": input_ids,

@@ -15,6 +15,7 @@
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/llm.h"
 
 #include <cstddef>
+#include <cstdint>
 #include <initializer_list>
 #include <limits>
 #include <memory>
@@ -120,14 +121,17 @@ GetLlmBuilderAndParamsForBenchmark(size_t seq_size) {
 
 // Benchmark for the decoding latency.
 void RunBenchmarkDecode(Llm& llm, benchmark::State& state) {
+  const size_t batch_size = llm.GetLlmParams().batch_size_B;
+  std::vector<std::vector<int>> input_tokens(batch_size, std::vector<int>{0});
   std::vector<int> token_ids;
-  int num_token_processed = 0;
+  int64_t num_token_processed = 0;
   for (auto s : state) {
     MP_ASSERT_OK(llm.GetNextToken(&token_ids));
-    num_token_processed++;
+    // Expect token_ids.size() == batch_size.
+    num_token_processed += token_ids.size();
     if (llm.TotalTokenSize() >= llm.GetLlmParams().seq_size_T) {
       state.PauseTiming();
-      ABSL_CHECK_OK(llm.InitInputTokens({0}));
+      ABSL_CHECK_OK(llm.InitInputTokens(input_tokens));
       state.ResumeTiming();
     }
   }
@@ -136,11 +140,14 @@ void RunBenchmarkDecode(Llm& llm, benchmark::State& state) {
 
 // Benchmark for the encoding latency.
 void RunBenchmarkEncode(Llm& llm, benchmark::State& state) {
-  std::vector<int> input_tokens(state.range(0), 0);
-  int num_token_processed = 0;
+  const size_t batch_size = llm.GetLlmParams().batch_size_B;
+  const size_t prompt_size = llm.GetLlmParams().seq_size_T;
+  std::vector<std::vector<int>> input_tokens(batch_size,
+                                             std::vector<int>(prompt_size, 0));
+  int64_t num_token_processed = 0;
   for (auto s : state) {
     MP_ASSERT_OK(llm.InitInputTokens(input_tokens));
-    num_token_processed += state.range(0);
+    num_token_processed += prompt_size * batch_size;
   }
   state.SetItemsProcessed(num_token_processed);
 }
@@ -211,7 +218,7 @@ void BM_Llm_Mixed_INT48(benchmark::State& state) {
 }
 
 // Run benchmark for three different cache sizes: 64, 512, 1024.
-BENCHMARK(BM_Llm_QCINT8)->Arg(64)->Arg(512)->Arg(1024);
-BENCHMARK(BM_Llm_Mixed_INT48)->Arg(64)->Arg(512)->Arg(1024);
+BENCHMARK(BM_Llm_QCINT8)->UseRealTime()->Arg(64)->Arg(512)->Arg(1024);
+BENCHMARK(BM_Llm_Mixed_INT48)->UseRealTime()->Arg(64)->Arg(512)->Arg(1024);
 
 }  // namespace mediapipe::tasks::genai::xnn_utils

@@ -5,6 +5,7 @@ import os
 from typing import List, Optional
 
 from absl import logging
+import numpy as np
 
 from mediapipe.python._framework_bindings import model_ckpt_util
 from mediapipe.tasks.python.genai.converter import converter_base
@@ -133,33 +134,62 @@ def quantize_by_actions(
   """
   output_tensors = {}
   for action in actions:
+    if action.tensor_value is None:
+      continue
+    # The dtype needs to be compared in string as it is a custom numpy dtype.
+    # Explicitly cast the bfloat16 and float16 dtype to float32 to make sure its
+    # value is converted and serialized correctly.
+    if (
+        str(action.tensor_value.dtype) == 'bfloat16'
+        or action.tensor_value.dtype == np.float16
+    ):
+      action.tensor_value = action.tensor_value.astype(np.float32)
+    if (
+        action.tensor_value.dtype != np.float32
+        and action.tensor_value.dtype != np.int8
+    ):
+      raise ValueError(
+          'All tensors should be casted to either float32 or int8, but got: %s'
+          % action.tensor_value.dtype
+      )
     if action.quantize_axis:
       pack = action.quantize_bits == 4
-      if is_symmetric:
-        target_var, scale = quantization_util.quantize_tensor(
-            var=action.tensor_value,
-            axis=action.quantize_axis,
-            sym=is_symmetric,
-            number_bits=action.quantize_bits,
-        )
+      if action.tensor_value.dtype == np.int8:
+        if backend == 'cpu' and pack:
+          raise ValueError(
+              'Converting pre-quantized checkpoint into 4-bit is not supported'
+              ' for CPU backend.'
+          )
+        output_tensors[action.target_name] = (action.tensor_value, pack)
+      else:
+        if is_symmetric:
+          target_var, scale = quantization_util.quantize_tensor(
+              var=action.tensor_value,
+              axis=action.quantize_axis,
+              sym=is_symmetric,
+              number_bits=action.quantize_bits,
+          )
+          output_tensors[action.target_name] = (target_var, pack)
+          output_tensors[action.target_name + '_quantized_scale'] = (
+              scale,
+              False,
+          )
+          zp = None
+        else:
+          target_var, scale, zp = quantization_util.quantize_tensor(
+              var=action.tensor_value,
+              axis=action.quantize_axis,
+              sym=is_symmetric,
+              number_bits=action.quantize_bits,
+          )
+        if backend == 'cpu' and pack:
+          target_var, scale, zp = quantization_util.update_to_uint4(
+              target_var, scale, zp
+          )
         output_tensors[action.target_name] = (target_var, pack)
         output_tensors[action.target_name + '_quantized_scale'] = (scale, False)
-        zp = None
-      else:
-        target_var, scale, zp = quantization_util.quantize_tensor(
-            var=action.tensor_value,
-            axis=action.quantize_axis,
-            sym=is_symmetric,
-            number_bits=action.quantize_bits,
-        )
-      if backend == 'cpu' and pack:
-        target_var, scale, zp = quantization_util.update_to_uint4(
-            target_var, scale, zp
-        )
-      output_tensors[action.target_name] = (target_var, pack)
-      output_tensors[action.target_name + '_quantized_scale'] = (scale, False)
-      if zp is not None:
-        output_tensors[action.target_name + '_quantized_zp'] = (zp, False)
+        if zp is not None:
+          output_tensors[action.target_name + '_quantized_zp'] = (zp, False)
     else:
       output_tensors[action.target_name] = (action.tensor_value, False)
   return output_tensors

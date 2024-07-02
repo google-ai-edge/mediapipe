@@ -25,6 +25,7 @@ objc_library(
         "//mediapipe/tasks/ios/components/containers:MPPLandmark",
         "//mediapipe/tasks/ios/core:MPPTaskResult",
         "//mediapipe/tasks/ios/vision/core:MPPMask",
+        "//third_party/apple_frameworks:Foundation",
     ],
 )
 
@@ -61,5 +62,6 @@ objc_library(
         "//mediapipe/tasks/ios/vision/core:MPPVisionTaskRunner",
         "//mediapipe/tasks/ios/vision/holistic_landmarker/utils:MPPHolisticLandmarkerOptionsHelpers",
         "//mediapipe/tasks/ios/vision/holistic_landmarker/utils:MPPHolisticLandmarkerResultHelpers",
+        "//third_party/apple_frameworks:Foundation",
     ],
 )

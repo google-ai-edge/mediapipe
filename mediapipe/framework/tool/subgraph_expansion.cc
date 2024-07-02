@@ -273,10 +273,10 @@ absl::Status ConnectSubgraphStreams(
   return absl::OkStatus();
 }
 
-absl::Status ExpandSubgraphs(CalculatorGraphConfig* config,
-                             const GraphRegistry* graph_registry,
-                             const Subgraph::SubgraphOptions* graph_options,
-                             const GraphServiceManager* service_manager) {
+absl::Status ExpandSubgraphs(
+    CalculatorGraphConfig* config, const GraphRegistry* graph_registry,
+    const Subgraph::SubgraphOptions* graph_options,
+    std::shared_ptr<GraphServiceManager> service_manager) {
   graph_registry =
       graph_registry ? graph_registry : &GraphRegistry::global_graph_registry;
   RET_CHECK(config);

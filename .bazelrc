@@ -6,6 +6,7 @@ common --experimental_repo_remote_exec
 # Basic build settings
 build --jobs 128
 build --define='absl=1'  # for gtest
+build --define=xnn_enable_avx512fp16=false
 build --enable_platform_specific_config
 
 # Enable stack traces

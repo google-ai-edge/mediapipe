@@ -38,6 +38,7 @@
 #include "tensorflow/lite/delegates/xnnpack/xnnpack_delegate.h"
 #include "tensorflow/lite/interpreter.h"
 #include "tensorflow/lite/kernels/register.h"
+#include "tensorflow/lite/util.h"
 
 namespace mediapipe {
 namespace api2 {
@@ -99,7 +100,8 @@ using TfLiteDelegatePtr =
 
 static Tensor CreateSingleIntTensor(int value) {
   std::vector<int> dims = {1, 1};
-  Tensor tensor(Tensor::ElementType::kInt32, Tensor::Shape(dims));
+  Tensor tensor(Tensor::ElementType::kInt32, Tensor::Shape(dims),
+                /*memory_manager=*/nullptr, tflite::kDefaultTensorAlignment);
   auto write_view = tensor.GetCpuWriteView();
   *write_view.buffer<int>() = value;
   return tensor;
@@ -600,6 +602,89 @@ TEST_F(InferenceFeedbackManagerTest, ShouldRunE2ESmokeTest) {
 
   EXPECT_EQ(regular_int_output.size(), 3);
   EXPECT_EQ(feedback_incremented_int_copy.size(), 3);
+  for (int i = 0; i < regular_int_output.size(); ++i) {
+    const auto regular_read_view =
+        regular_int_output[i].Get<Tensor>().GetCpuReadView();
+    EXPECT_EQ(regular_read_view.buffer<int>()[0], kRegularInputTensorValues[i]);
+
+    // Stateful tensor are initialized with zero and incremented by one in
+    // every iteration.
+    const auto feedback_read_view =
+        feedback_incremented_int_copy[i].Get<Tensor>().GetCpuReadView();
+    EXPECT_EQ(feedback_read_view.buffer<int>()[0], i);
+  }
+}
+
+TEST_F(InferenceFeedbackManagerTest, ShouldRunE2EWithZeroIoCopiesSmokeTest) {
+  CalculatorGraph graph;
+  CalculatorGraphConfig graph_config =
+      ParseTextProtoOrDie<CalculatorGraphConfig>(absl::StrReplaceAll(
+          R"pb(
+            input_stream: "regular_int_input"
+            input_stream: "feedback_int_input"
+            output_stream: "regular_int_output"
+            output_stream: "feedback_incremented_int_copy"
+            node {
+              calculator: "InferenceCalculator"
+              # ~~~~~~~~~~ INPUTS ~~~~~~~~~~
+              # 0 :  feedback_int_input :  [1 1] :  I32
+              # 1 :  regular_int_input :  [1 1] :  I32
+              # ~~~~~~~~~~ OUTPUTS ~~~~~~~~~
+              # 0 :  feedback_incremented_int_copy :  [1 1] :  I32
+              # 1 :  regular_int_output :  [1 1] :  I32
+              # 2 :  feedback_incremented_int_output :  [1 1] :  I32
+              #      (copy of feedback_incremented_int_output)
+              input_stream: "TENSOR:0:regular_int_input"
+              output_stream: "TENSOR:0:feedback_incremented_int_copy"
+              output_stream: "TENSOR:1:regular_int_output"
+              options {
+                [mediapipe.InferenceCalculatorOptions.ext] {
+                  model_path: "$model"
+                  delegate {
+                    xnnpack {
+                      enable_zero_copy_tensor_io: true,
+                    }
+                  }
+                  input_output_config {
+                    input_tensor_names_map { tensor_names: "regular_int_input" }
+                    output_tensor_names_map {
+                      tensor_names: "feedback_incremented_int_copy"
+                      tensor_names: "regular_int_output"
+                    }
+                    feedback_tensor_links {
+                      from_output_tensor_name: "feedback_incremented_int_output"
+                      to_input_tensor_name: "feedback_int_input"
+                    }
+                  }
+                }
+              }
+            }
+          )pb",
+          {{"$model", kFeedbackTestWithStateCopyModelPath}}));
+
+  std::vector<Packet> regular_int_output;
+  AddVectorSink("regular_int_output", &graph_config, &regular_int_output);
+  std::vector<Packet> feedback_incremented_int_copy;
+  AddVectorSink("feedback_incremented_int_copy", &graph_config,
+                &feedback_incremented_int_copy);
+
+  MP_ASSERT_OK(graph.Initialize(graph_config));
+  MP_ASSERT_OK(graph.StartRun({}));
+
+  const std::vector<int> kRegularInputTensorValues = {100, 200, 300};
+  // Simulate 3 inference steps.
+  for (int n = 0; n < 3; ++n) {
+    Tensor input_tensor = CreateSingleIntTensor(kRegularInputTensorValues[n]);
+    MP_ASSERT_OK(graph.AddPacketToInputStream(
+        "regular_int_input",
+        mediapipe::MakePacket<Tensor>(std::move(input_tensor))
+            .At(Timestamp(n))));
+  }
+  MP_ASSERT_OK(graph.CloseAllInputStreams());
+  MP_ASSERT_OK(graph.WaitUntilDone());
+
+  ASSERT_EQ(regular_int_output.size(), 3);
+  ASSERT_EQ(regular_int_output.size(), feedback_incremented_int_copy.size());
   for (int i = 0; i < regular_int_output.size(); ++i) {
     const auto regular_read_view =
         regular_int_output[i].Get<Tensor>().GetCpuReadView();

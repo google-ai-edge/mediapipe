@@ -22,7 +22,10 @@ objc_library(
     name = "MPPTextEmbedderOptions",
     srcs = ["sources/MPPTextEmbedderOptions.m"],
     hdrs = ["sources/MPPTextEmbedderOptions.h"],
-    deps = ["//mediapipe/tasks/ios/core:MPPTaskOptions"],
+    deps = [
+        "//mediapipe/tasks/ios/core:MPPTaskOptions",
+        "//third_party/apple_frameworks:Foundation",
+    ],
 )
 
 objc_library(
@@ -32,6 +35,7 @@ objc_library(
     deps = [
         "//mediapipe/tasks/ios/components/containers:MPPEmbeddingResult",
         "//mediapipe/tasks/ios/core:MPPTaskResult",
+        "//third_party/apple_frameworks:Foundation",
     ],
 )
 
@@ -58,5 +62,6 @@ objc_library(
         "//mediapipe/tasks/ios/text/core:MPPTextTaskRunner",
         "//mediapipe/tasks/ios/text/text_embedder/utils:MPPTextEmbedderOptionsHelpers",
         "//mediapipe/tasks/ios/text/text_embedder/utils:MPPTextEmbedderResultHelpers",
+        "//third_party/apple_frameworks:Foundation",
     ],
 )

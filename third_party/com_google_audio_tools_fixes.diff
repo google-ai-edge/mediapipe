@@ -34,6 +34,82 @@ index 56e45d2..37ab6e9 100644
  #include <iostream>
  #include <cmath>
  #include <string>
+diff --git a/audio/dsp/spectrogram/spectrogram.cc b/audio/dsp/spectrogram/spectrogram.cc
+index e52280d..13c45d0 100644
+--- a/audio/dsp/spectrogram/spectrogram.cc
++++ b/audio/dsp/spectrogram/spectrogram.cc
+@@ -18,6 +18,7 @@
+ #include "audio/dsp/spectrogram/spectrogram.h"
+ 
+ #include <math.h>
++#include <optional>
+ 
+ #include "audio/dsp/number_util.h"
+ #include "audio/dsp/window_functions.h"
+@@ -38,14 +39,15 @@ bool Spectrogram::ResetSampleBuffer() {
+   return true;
+ }
+ 
+-bool Spectrogram::Initialize(int window_length, int step_length) {
++bool Spectrogram::Initialize(int window_length, int step_length,
++                             std::optional<int> fft_length) {
+   std::vector<double> window;
+   HannWindow().GetPeriodicSamples(window_length, &window);
+-  return Initialize(window, step_length);
++  return Initialize(window, step_length, fft_length);
+ }
+ 
+-bool Spectrogram::Initialize(const std::vector<double>& window,
+-                             int step_length) {
++bool Spectrogram::Initialize(const std::vector<double>& window, int step_length,
++                             std::optional<int> fft_length) {
+   window_length_ = window.size();
+   window_ = window;  // Copy window.
+   if (window_length_ < 2) {
+@@ -61,7 +63,12 @@ bool Spectrogram::Initialize(const std::vector<double>& window,
+     return false;
+   }
+ 
+-  fft_length_ = NextPowerOfTwo(window_length_);
++  if (fft_length.has_value() && !IsPowerOfTwoOrZero(fft_length.value())) {
++    LOG(ERROR) << "FFT length must be a power of two.";
++    initialized_ = false;
++    return false;
++  }
++  fft_length_ = fft_length.value_or(NextPowerOfTwo(window_length_));
+   CHECK(fft_length_ >= window_length_);
+   output_frequency_channels_ = 1 + fft_length_ / 2;
+ 
+diff --git a/audio/dsp/spectrogram/spectrogram.h b/audio/dsp/spectrogram/spectrogram.h
+index 1214422..0f6ada6 100644
+--- a/audio/dsp/spectrogram/spectrogram.h
++++ b/audio/dsp/spectrogram/spectrogram.h
+@@ -36,6 +36,7 @@
+ #define AUDIO_DSP_SPECTROGRAM_SPECTROGRAM_H_
+ 
+ #include <complex>
++#include <optional>
+ #include <deque>
+ #include <vector>
+ 
+@@ -57,11 +58,14 @@ class Spectrogram {
+   // (both in samples). Internally a Hann window is used as the window
+   // function. Returns true on success, after which calls to Process()
+   // are possible. window_length must be greater than 1 and step
+-  // length must be greater than 0.
+-  bool Initialize(int window_length, int step_length);
++  // length must be greater than 0. fft_length defines the fft length which must
++  // be greater than window_length and a power of 2.
++  bool Initialize(int window_length, int step_length,
++                  std::optional<int> fft_length = std::nullopt);
+ 
+   // Initialize with an explicit window instead of a length.
+-  bool Initialize(const vector<double>& window, int step_length);
++  bool Initialize(const std::vector<double>& window, int step_length,
++                  std::optional<int> fft_length = std::nullopt);
+ 
+   // Re-initializes/resets the internal sample buffer to the state before any
+   // samples have been passed to the Compute methods.
 diff --git a/third_party/eigen3/BUILD b/third_party/eigen3/BUILD
 index 497c1f0..de1c7f4 100644
 --- a/third_party/eigen3/BUILD

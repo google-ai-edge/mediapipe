@@ -22,11 +22,13 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/api2/packet.h"
 #include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/port.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/tool/subgraph_expansion.h"
@@ -54,7 +56,10 @@ class InferenceCalculatorSelectorImpl
     if (should_use_gpu) {
       const auto& api = options.delegate().gpu().api();
       using Gpu = ::mediapipe::InferenceCalculatorOptions::Delegate::Gpu;
+#if MEDIAPIPE_METAL_ENABLED
       impls.emplace_back("Metal");
+#endif
+
       const bool prefer_gl_advanced =
           options.delegate().gpu().use_advanced_gpu_api() &&
           (api == Gpu::ANY || api == Gpu::OPENGL || api == Gpu::OPENCL);
@@ -70,7 +75,13 @@ class InferenceCalculatorSelectorImpl
     impls.emplace_back("Xnnpack");
     for (const auto& suffix : impls) {
       const auto impl = absl::StrCat("InferenceCalculator", suffix);
-      if (!mediapipe::CalculatorBaseRegistry::IsRegistered(impl)) continue;
+      if (!CalculatorBaseRegistry::IsRegistered(impl)) {
+        ABSL_LOG(WARNING) << absl::StrFormat(
+            "Missing InferenceCalculator registration for %s. Check if the "
+            "build dependency is present.",
+            impl);
+        continue;
+      };
 
       VLOG(1) << "Using " << suffix << " for InferenceCalculator with "
               << (options.has_model_path()

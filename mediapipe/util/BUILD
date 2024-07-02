@@ -179,6 +179,36 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "sync_wait",
+    srcs = ["sync_wait.cc"],
+    hdrs = ["sync_wait.h"],
+    visibility = ["//mediapipe:__subpackages__"],
+    deps = [
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/cleanup",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/time",
+    ],
+)
+
+cc_test(
+    name = "sync_wait_test",
+    srcs = ["sync_wait_test.cc"],
+    deps = [
+        ":sync_wait",
+        "//mediapipe/framework:port",
+        "//mediapipe/framework/port:benchmark",
+        "//mediapipe/framework/port:gtest_main",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/time",
+    ],
+)
+
 # Prefer to use ":resource_util", Customization of the resource util is being restricted
 # while we explore how it should best be implemented.
 cc_library(

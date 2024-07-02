@@ -45,13 +45,13 @@ namespace {
 
 // Signature of 3in3out_model_swaps_input_2_and_0.tflite model:
 // ~~~~~~~~~~ INPUTS ~~~~~~~~~~
-// 0 :  third_input :  [1 3] :  F32
+// 0 :  third_input :  [1 1] :  F32
 // 1 :  first_input :  [1 1] :  F32
-// 2 :  second_input :  [1 2] :  F32
+// 2 :  second_input :  [1 1] :  F32
 // ~~~~~~~~~~ OUTPUTS ~~~~~~~~~
-// 0 :  output_1 :  [1 2] :  F32
+// 0 :  output_1 :  [1 1] :  F32
 // 1 :  output_0 :  [1 1] :  F32
-// 2 :  output_2 :  [1 3] :  F32
+// 2 :  output_2 :  [1 1] :  F32
 constexpr char k3In3OutSwaps2And0ModelPath[] =
     "mediapipe/calculators/tensor/testdata/"
     "3in3out_model_swaps_input_2_and_0.tflite";
@@ -359,8 +359,7 @@ TEST_P(InferenceCalculatorIoMapTestWithParams,
 
 INSTANTIATE_TEST_SUITE_P(
     InferenceCalculatorIoMapTestSuiteInitialization,
-    InferenceCalculatorIoMapTestWithParams,  // This is the name of your
-                                             // parameterized test
+    InferenceCalculatorIoMapTestWithParams,
     testing::ValuesIn(GetInputOutputExpectedOrderTestConfigs()),
     [](const testing::TestParamInfo<
         InferenceCalculatorIoMapTestWithParams::ParamType>& info) {

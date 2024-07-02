@@ -67,9 +67,10 @@ struct HandLandmarkerOptions {
   // message in case of any failure. The validity of the passed arguments is
   // true for the lifetime of the callback function.
   //
-  // A caller is responsible for closing hand landmarker result.
-  typedef void (*result_callback_fn)(const HandLandmarkerResult* result,
-                                     const MpImage& image, int64_t timestamp_ms,
+  // The passed `image` is only valid for the lifetime of the call. A caller is
+  // responsible for closing hand landmarker result.
+  typedef void (*result_callback_fn)(HandLandmarkerResult* result,
+                                     const MpImage* image, int64_t timestamp_ms,
                                      char* error_msg);
   result_callback_fn result_callback;
 };
@@ -87,7 +88,7 @@ MP_EXPORT void* hand_landmarker_create(struct HandLandmarkerOptions* options,
 // parameter to an an error message (if `error_msg` is not `nullptr`). You must
 // free the memory allocated for the error message.
 MP_EXPORT int hand_landmarker_detect_image(void* landmarker,
-                                           const MpImage& image,
+                                           const MpImage* image,
                                            HandLandmarkerResult* result,
                                            char** error_msg);
 
@@ -101,7 +102,7 @@ MP_EXPORT int hand_landmarker_detect_image(void* landmarker,
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
 MP_EXPORT int hand_landmarker_detect_for_video(void* landmarker,
-                                               const MpImage& image,
+                                               const MpImage* image,
                                                int64_t timestamp_ms,
                                                HandLandmarkerResult* result,
                                                char** error_msg);
@@ -124,8 +125,10 @@ MP_EXPORT int hand_landmarker_detect_for_video(void* landmarker,
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
+// You need to invoke `hand_landmarker_detect_async` after each invocation to
+// free memory.
 MP_EXPORT int hand_landmarker_detect_async(void* landmarker,
-                                           const MpImage& image,
+                                           const MpImage* image,
                                            int64_t timestamp_ms,
                                            char** error_msg);
 

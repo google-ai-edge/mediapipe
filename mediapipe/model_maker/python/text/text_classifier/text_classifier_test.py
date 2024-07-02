@@ -209,6 +209,7 @@ class TextClassifierTest(tf.test.TestCase, parameterized.TestCase):
     hparams = text_classifier.BertHParams(
         desired_recalls=[0.2],
         desired_precisions=[0.9],
+        desired_thresholds=[0.3],
         epochs=1,
         batch_size=1,
         learning_rate=3e-5,
@@ -228,11 +229,11 @@ class TextClassifierTest(tf.test.TestCase, parameterized.TestCase):
     metric_names = [m.name for m in bert_classifier._metric_functions]
     expected_metric_names = [
         'accuracy',
-        'recall',
-        'precision',
         'auc',
         'precision_at_recall_0.2',
         'recall_at_precision_0.9',
+        'precision_0.3',
+        'recall_0.3',
     ]
     self.assertCountEqual(metric_names, expected_metric_names)
 

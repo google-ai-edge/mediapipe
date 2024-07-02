@@ -124,6 +124,11 @@ class ModelData {
   // method since the data can be read into memory as needed.
   static absl::StatusOr<std::shared_ptr<ModelData>> Create(ScopedFile file);
 
+  // Similar to the above, but accept shared_ptr. The smart pointer is pointing
+  // to a constant object, indicating there's only read access.
+  static absl::StatusOr<std::shared_ptr<ModelData>> Create(
+      std::shared_ptr<const ScopedFile> file);
+
   // Loads `ModelData` from the provided `weight_path`, which contains either
   // a tflite file or the weights and metadata files for the combined GPU model
   // format, and the sentencepiece model at `spm_path`.

@@ -86,7 +86,7 @@ struct Tensor {
   // Load the tensor from vector of data. If not exact_match, data can hold less
   // than num_elements.
   absl::Status LoadFromVec(const std::vector<float>& data,
-                           bool exact_match = true);
+                           bool exact_match = false);
   // Load the tensor from file.
   //   file_path: a string representing the path to the file to load from.
   //   use_mmap: whether or not to use mmap to access the file.
@@ -170,7 +170,7 @@ struct Tensor {
 
   // Optional, annotates where the tensor comes from. E.g. the filename where
   // the tensor is loaded from.
-  std::string source;
+  std::string tag;
 
  protected:
   friend class XnnGraphBuilder;
@@ -195,6 +195,8 @@ struct Tensor {
 
   absl::flat_hash_map<std::string, int> metadata;
 
+  // The same tensor can be used in multiple subgraphs, this is mapping from
+  // subgraph to a per-subgraph id.
   absl::flat_hash_map<xnn_subgraph_t, uint32_t> map_subgraph_to_tensor_id;
 };
 

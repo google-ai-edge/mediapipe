@@ -20,6 +20,7 @@
 #include "mediapipe/calculators/image/image_cropping_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
+#include "mediapipe/framework/calculator_state.h"
 #include "mediapipe/framework/formats/image_frame_opencv.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/port/gtest.h"
@@ -219,11 +220,12 @@ TEST(ImageCroppingCalculatorTest, GetCroppingDimensionsNormal) {
             }
           )pb");
 
-  auto calculator_state = absl::make_unique<CalculatorState>(
-      "Node", 0, "Calculator", calculator_node, nullptr);
-  auto cc = absl::make_unique<CalculatorContext>(
-      calculator_state.get(), tool::CreateTagMap({}).value(),
-      tool::CreateTagMap({}).value());
+  auto calculator_state = std::make_unique<CalculatorState>(
+      "Node", 0, "Calculator", calculator_node, /*profiling_context=*/nullptr,
+      /*graph_service_manager=*/nullptr);
+  auto cc = std::make_unique<CalculatorContext>(calculator_state.get(),
+                                                tool::CreateTagMap({}).value(),
+                                                tool::CreateTagMap({}).value());
 
   RectSpec expectRect = {
       .width = 60,
@@ -259,11 +261,12 @@ TEST(ImageCroppingCalculatorTest, RedundantSpecInOptions) {
             }
           )pb");
 
-  auto calculator_state = absl::make_unique<CalculatorState>(
-      "Node", 0, "Calculator", calculator_node, nullptr);
-  auto cc = absl::make_unique<CalculatorContext>(
-      calculator_state.get(), tool::CreateTagMap({}).value(),
-      tool::CreateTagMap({}).value());
+  auto calculator_state = std::make_unique<CalculatorState>(
+      "Node", 0, "Calculator", calculator_node, /*profiling_context=*/nullptr,
+      /*graph_service_manager=*/nullptr);
+  auto cc = std::make_unique<CalculatorContext>(calculator_state.get(),
+                                                tool::CreateTagMap({}).value(),
+                                                tool::CreateTagMap({}).value());
   RectSpec expectRect = {
       .width = 50,
       .height = 50,
@@ -301,14 +304,15 @@ TEST(ImageCroppingCalculatorTest, RedundantSpectWithInputStream) {
             }
           )pb");
 
-  auto calculator_state = absl::make_unique<CalculatorState>(
-      "Node", 0, "Calculator", calculator_node, nullptr);
+  auto calculator_state = std::make_unique<CalculatorState>(
+      "Node", 0, "Calculator", calculator_node, /*profiling_context=*/nullptr,
+      /*graph_service_manager=*/nullptr);
   auto inputTags = tool::CreateTagMap({
                                           "HEIGHT:0:crop_height",
                                           "WIDTH:0:crop_width",
                                       })
                        .value();
-  auto cc = absl::make_unique<CalculatorContext>(
+  auto cc = std::make_unique<CalculatorContext>(
       calculator_state.get(), inputTags, tool::CreateTagMap({}).value());
   auto& inputs = cc->Inputs();
   inputs.Tag(kHeightTag).Value() = MakePacket<int>(1);
@@ -349,13 +353,14 @@ TEST(ImageCroppingCalculatorTest, RedundantSpecWithInputStream) {
             }
           )pb");
 
-  auto calculator_state = absl::make_unique<CalculatorState>(
-      "Node", 0, "Calculator", calculator_node, nullptr);
+  auto calculator_state = std::make_unique<CalculatorState>(
+      "Node", 0, "Calculator", calculator_node, /*profiling_context=*/nullptr,
+      /*graph_service_manager=*/nullptr);
   auto inputTags = tool::CreateTagMap({
                                           "RECT:0:rect",
                                       })
                        .value();
-  auto cc = absl::make_unique<CalculatorContext>(
+  auto cc = std::make_unique<CalculatorContext>(
       calculator_state.get(), inputTags, tool::CreateTagMap({}).value());
   auto& inputs = cc->Inputs();
   Rect rect = ParseTextProtoOrDie<Rect>(

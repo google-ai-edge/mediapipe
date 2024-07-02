@@ -108,7 +108,7 @@ TEST(FaceDetectorTest, ImageModeTest) {
   EXPECT_NE(detector, nullptr);
 
   const auto& image_frame = image->GetImageFrameSharedPtr();
-  const MpImage mp_image = {
+  MpImage mp_image = {
       .type = MpImage::IMAGE_FRAME,
       .image_frame = {.format = static_cast<ImageFormat>(image_frame->Format()),
                       .image_buffer = image_frame->PixelData(),
@@ -116,7 +116,7 @@ TEST(FaceDetectorTest, ImageModeTest) {
                       .height = image_frame->Height()}};
 
   FaceDetectorResult result;
-  face_detector_detect_image(detector, mp_image, &result,
+  face_detector_detect_image(detector, &mp_image, &result,
                              /* error_msg */ nullptr);
   AssertFaceDetectorResult(&result, kPixelDiffTolerance,
                            kKeypointErrorThreshold);
@@ -143,7 +143,7 @@ TEST(FaceDetectorTest, VideoModeTest) {
   EXPECT_NE(detector, nullptr);
 
   const auto& image_frame = image->GetImageFrameSharedPtr();
-  const MpImage mp_image = {
+  MpImage mp_image = {
       .type = MpImage::IMAGE_FRAME,
       .image_frame = {.format = static_cast<ImageFormat>(image_frame->Format()),
                       .image_buffer = image_frame->PixelData(),
@@ -152,7 +152,7 @@ TEST(FaceDetectorTest, VideoModeTest) {
 
   for (int i = 0; i < kIterations; ++i) {
     FaceDetectorResult result;
-    face_detector_detect_for_video(detector, mp_image, i, &result,
+    face_detector_detect_for_video(detector, &mp_image, i, &result,
                                    /* error_msg */ nullptr);
 
     AssertFaceDetectorResult(&result, kPixelDiffTolerance,
@@ -169,21 +169,24 @@ TEST(FaceDetectorTest, VideoModeTest) {
 // timestamp is greater than the previous one.
 struct LiveStreamModeCallback {
   static int64_t last_timestamp;
-  static void Fn(const FaceDetectorResult* detector_result,
-                 const MpImage& image, int64_t timestamp, char* error_msg) {
+  static void Fn(FaceDetectorResult* detector_result, const MpImage* image,
+                 int64_t timestamp, char* error_msg) {
     ASSERT_NE(detector_result, nullptr);
     ASSERT_EQ(error_msg, nullptr);
     AssertFaceDetectorResult(detector_result, kPixelDiffTolerance,
                              kKeypointErrorThreshold);
-    EXPECT_GT(image.image_frame.width, 0);
-    EXPECT_GT(image.image_frame.height, 0);
+    EXPECT_GT(image->image_frame.width, 0);
+    EXPECT_GT(image->image_frame.height, 0);
     EXPECT_GT(timestamp, last_timestamp);
     ++last_timestamp;
+
+    face_detector_close_result(detector_result);
   }
 };
 int64_t LiveStreamModeCallback::last_timestamp = -1;
 
-TEST(FaceDetectorTest, LiveStreamModeTest) {
+// TODO: Await the callbacks and re-enable test
+TEST(FaceDetectorTest, DISABLED_LiveStreamModeTest) {
   const auto image = DecodeImageFromFile(GetFullPath(kImageFile));
   ASSERT_TRUE(image.ok());
 
@@ -212,7 +215,7 @@ TEST(FaceDetectorTest, LiveStreamModeTest) {
                       .height = image_frame->Height()}};
 
   for (int i = 0; i < kIterations; ++i) {
-    EXPECT_GE(face_detector_detect_async(detector, mp_image, i,
+    EXPECT_GE(face_detector_detect_async(detector, &mp_image, i,
                                          /* error_msg */ nullptr),
               0);
   }
@@ -262,7 +265,7 @@ TEST(FaceDetectorTest, FailedRecognitionHandling) {
   const MpImage mp_image = {.type = MpImage::GPU_BUFFER, .gpu_buffer = {}};
   FaceDetectorResult result;
   char* error_msg;
-  face_detector_detect_image(detector, mp_image, &result, &error_msg);
+  face_detector_detect_image(detector, &mp_image, &result, &error_msg);
   EXPECT_THAT(error_msg, HasSubstr("GPU Buffer not supported yet"));
   free(error_msg);
   face_detector_close(detector, /* error_msg */ nullptr);

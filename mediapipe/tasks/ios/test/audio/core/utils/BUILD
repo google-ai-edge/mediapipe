@@ -24,5 +24,7 @@ objc_library(
         "//mediapipe/tasks/ios/audio/core:MPPAudioDataFormat",
         "//mediapipe/tasks/ios/audio/core:MPPFloatBuffer",
         "//mediapipe/tasks/ios/test/utils:MPPFileInfo",
+        "//third_party/apple_frameworks:AVFoundation",
+        "//third_party/apple_frameworks:Foundation",
     ],
 )

@@ -41,7 +41,7 @@ NS_INLINE NSString *MPPAudioRunningModeDisplayName(MPPAudioRunningMode runningMo
     case MPPAudioRunningModeAudioStream:
       return @"Audio Stream";
     default:
-      return nil;
+      return @"";
   }
 }
 

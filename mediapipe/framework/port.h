@@ -86,7 +86,15 @@
 #define MEDIAPIPE_OPENGL_ES_VERSION MEDIAPIPE_OPENGL_ES_30
 #define MEDIAPIPE_METAL_ENABLED 0
 #else
+#if MEDIAPIPE_USE_WEBGPU
+// TODO: `MEDIAPIPE_USE_WEBGPU` does not necessarily imply
+// anything about the GLES versions. But despite that, as a temporary
+// measure, setting GLES version to 0 would save a lot of work for the
+// current OSS efforts.
+#define MEDIAPIPE_OPENGL_ES_VERSION 0
+#else
 #define MEDIAPIPE_OPENGL_ES_VERSION MEDIAPIPE_OPENGL_ES_31
+#endif
 #define MEDIAPIPE_METAL_ENABLED 0
 #endif
 #endif
@@ -105,9 +113,13 @@
 #endif  // MEDIAPIPE_HAS_RTTI
 
 // AHardware buffers are only available since Android API 26.
-#if (__ANDROID_API__ >= 26)
+#if !defined(MEDIAPIPE_NO_JNI) || defined(MEDIAPIPE_ANDROID_LINK_NATIVE_WINDOW)
+#if (__ANDROID_API__ >= 26) || defined(__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__)
 #define MEDIAPIPE_GPU_BUFFER_USE_AHWB 1
-#endif
+#endif  // __ANDROID_API__ >= 26 ||
+        // defined(__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__)
+#endif  // !defined(MEDIAPIPE_NO_JNI) ||
+        // defined(MEDIAPIPE_ANDROID_LINK_NATIVE_WINDOW)
 
 // Supported use cases for tensor_ahwb:
 // 1. Native code running in Android apps.
