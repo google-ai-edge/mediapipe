@@ -38,3 +38,15 @@ objc_library(
         "//third_party/apple_frameworks:Foundation",
     ],
 )
+
+objc_library(
+    name = "MPPAudioClassifier",
+    hdrs = ["sources/MPPAudioClassifier.h"],
+    deps = [
+        ":MPPAudioClassifierOptions",
+        ":MPPAudioClassifierResult",
+        "//mediapipe/tasks/ios/audio/core:MPPAudioData",
+        "//mediapipe/tasks/ios/audio/core:MPPAudioRecord",
+        "//third_party/apple_frameworks:Foundation",
+    ],
+)
