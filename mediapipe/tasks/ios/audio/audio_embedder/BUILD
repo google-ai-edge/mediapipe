@@ -26,3 +26,13 @@ objc_library(
     ],
 )
 
+objc_library(
+    name = "MPPAudioEmbedderOptions",
+    srcs = ["sources/MPPAudioEmbedderOptions.m"],
+    hdrs = ["sources/MPPAudioEmbedderOptions.h"],
+    deps = [
+        ":MPPAudioEmbedderResult",
+        "//mediapipe/tasks/ios/core:MPPTaskOptions",
+        "//mediapipe/tasks/ios/audio/core:MPPAudioRunningMode",
+    ],
+)
