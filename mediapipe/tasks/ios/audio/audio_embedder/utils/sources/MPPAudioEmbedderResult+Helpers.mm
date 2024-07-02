@@ -34,7 +34,7 @@ using ::mediapipe::Packet;
   if (!packet.ValidateAsType<EmbeddingResultProto>().ok()) {
     // MPPAudioEmbedderResult's timestamp is populated from timestamp `EmbeddingResultProto`'s
     // timestamp_ms(). It is 0 since the packet can't be validated as a `EmbeddingResultProto`.
-    return [[MPPAudioEmbedderResult alloc] initWithEmbeddingResult:nil
+    return [[MPPAudioEmbedderResult alloc] initWithEmbeddingResults:nil
                                            timestampInMilliseconds:timestampInMilliseconds];
   }
 

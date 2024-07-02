@@ -20,7 +20,7 @@
   MPPAudioEmbedderOptions *audioEmbedderOptions = [super copyWithZone:zone];
 
   audioEmbedderOptions.runningMode = self.runningMode;
-  audioeEmbedderOptions.l2Normalize = self.l2Normalize;
+  audioEmbedderOptions.l2Normalize = self.l2Normalize;
   audioEmbedderOptions.quantize = self.quantize;
 
   return audioEmbedderOptions;
