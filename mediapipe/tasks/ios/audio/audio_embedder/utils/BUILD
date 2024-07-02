@@ -31,3 +31,14 @@ objc_library(
     ],
 )
 
+objc_library(
+    name = "MPPAudioEmbedderResultHelpers",
+    srcs = ["sources/MPPAudioEmbedderResult+Helpers.mm"],
+    hdrs = ["sources/MPPAudioEmbedderResult+Helpers.h"],
+    deps = [
+        "//mediapipe/framework:packet",
+        "//mediapipe/tasks/cc/components/containers/proto:embeddings_cc_proto",
+        "//mediapipe/tasks/ios/components/containers/utils:MPPEmbeddingResultHelpers",
+        "//mediapipe/tasks/ios/audio/audio_embedder:MPPAudioEmbedderResult",
+    ],
+)
