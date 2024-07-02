@@ -54,7 +54,13 @@ public:
     virtual ~OVMSInferenceAdapter();
     InferenceOutput infer(const InferenceInput& input) override;
     void loadModel(const std::shared_ptr<const ov::Model>& model, ov::Core& core,
-        const std::string& device, const ov::AnyMap& compilationConfig) override;
+        const std::string& device, const ov::AnyMap& compilationConfig, size_t max_num_requests = 1) override;
+    void inferAsync(const InferenceInput& input, const CallbackData callback_args) override;
+    void setCallback(std::function<void(ov::InferRequest, const CallbackData)> callback);
+    bool isReady();
+    void awaitAll();
+    void awaitAny();
+    size_t getNumAsyncExecutors() const;
     ov::PartialShape getInputShape(const std::string& inputName) const override;
     std::vector<std::string> getInputNames() const override;
     std::vector<std::string> getOutputNames() const override;

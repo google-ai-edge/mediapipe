@@ -163,7 +163,7 @@ InferenceOutput OVMSInferenceAdapter::infer(const InferenceInput& input) {
 }
 
 void OVMSInferenceAdapter::loadModel(const std::shared_ptr<const ov::Model>& model, ov::Core& core,
-    const std::string& device, const ov::AnyMap& compilationConfig) {
+    const std::string& device, const ov::AnyMap& compilationConfig, size_t max_num_requests) {
     // no need to load but we need to extract metadata
     OVMS_ServableMetadata* servableMetadata = nullptr;
     ASSERT_CAPI_STATUS_NULL(OVMS_GetServableMetadata(cserver, servableName.c_str(), servableVersion, &servableMetadata));
@@ -220,6 +220,32 @@ std::vector<std::string> OVMSInferenceAdapter::getOutputNames() const { return o
 
 const ov::AnyMap& OVMSInferenceAdapter::getModelConfig() const {
     return modelConfig;
+}
+
+void OVMSInferenceAdapter::inferAsync(const InferenceInput& input, CallbackData callback_args) {
+    throw std::runtime_error("Model_api async calls not implemented exception.");
+}
+
+void OVMSInferenceAdapter::setCallback(std::function<void(ov::InferRequest, CallbackData)> callback) {
+    throw std::runtime_error("Model_api async calls not implemented exception.");
+}
+
+bool OVMSInferenceAdapter::isReady() {
+    throw std::runtime_error("Model_api async calls not implemented exception.");
+    return false;
+}
+
+void OVMSInferenceAdapter::awaitAll() {
+    throw std::runtime_error("Model_api async calls not implemented exception.");
+}
+
+void OVMSInferenceAdapter::awaitAny() {
+    throw std::runtime_error("Model_api async calls not implemented exception.");
+}
+
+size_t OVMSInferenceAdapter::getNumAsyncExecutors() const {
+    throw std::runtime_error("Model_api async calls not implemented exception.");
+    return 0;
 }
 
 static OVMS_DataType OVPrecision2CAPI(ov::element::Type_t datatype) {
