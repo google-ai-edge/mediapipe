@@ -57,7 +57,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable instancetype)initWithTaskInfo:(MPPTaskInfo *)taskInfo
                               runningMode:(MPPAudioRunningMode)runningMode
                           packetsCallback:(mediapipe::tasks::core::PacketsCallback)packetsCallback
-                     audioInputStreamName:(NSString *)imageInputStreamName
+                     audioInputStreamName:(NSString *)audioInputStreamName
                 sampleRateInputStreamName:(nullable NSString *)normRectInputStreamName
                                     error:(NSError **)error NS_DESIGNATED_INITIALIZER;
 
