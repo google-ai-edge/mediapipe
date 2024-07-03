@@ -34,7 +34,7 @@
   audioClassifierOptions.categoryDenylist = self.categoryDenylist;
   audioClassifierOptions.categoryAllowlist = self.categoryAllowlist;
   audioClassifierOptions.displayNamesLocale = self.displayNamesLocale;
-  audioClassifierOptions.audioClassifierLiveStreamDelegate = self.audioClassifierLiveStreamDelegate;
+  audioClassifierOptions.audioClassifierStreamDelegate = self.audioClassifierStreamDelegate;
 
   return audioClassifierOptions;
 }
