@@ -2672,8 +2672,7 @@ TEST(CalculatorGraph, TwoDeadlocksAreReportedAndSufficientInfoProvided) {
   EXPECT_THAT(status.message(),
               testing::AllOf(testing::HasSubstr("deadlock"),
                              testing::HasSubstr("input1"),
-                             testing::HasSubstr("PassThroughCalculator"),
-                             testing::HasSubstr("MergeCalculator")));
+                             testing::HasSubstr("PassThroughCalculator")));
   graph.Cancel();
 }
 

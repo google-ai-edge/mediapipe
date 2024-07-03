@@ -72,6 +72,7 @@ Packet InputStreamManager::QueueHead() const {
 }
 
 absl::Status InputStreamManager::SetHeader(const Packet& header) {
+  absl::MutexLock stream_lock(&stream_mutex_);
   if (header.Timestamp() != Timestamp::Unset()) {
     return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
            << "Headers must not have a timestamp.  Stream: \"" << name_
