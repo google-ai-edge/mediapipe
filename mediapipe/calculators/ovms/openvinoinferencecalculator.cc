@@ -578,7 +578,7 @@ public:
                     interpreter_->AddTensors(output.size());
                     std::vector<int> indexes(output.size());
                     std::iota(indexes.begin(), indexes.end(), 0);
-                    interpreter_->SetInputs(indexes);
+                    interpreter_->SetInputs(std::move(indexes));
                     size_t tensorId = 0;
                     for (auto& [name,tensor] : output) {
                         std::vector<int> tfliteshape;
