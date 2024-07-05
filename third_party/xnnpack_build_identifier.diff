@@ -1,0 +1,110 @@
+diff --git a/BUILD.bazel b/BUILD.bazel
+index d1973eac2..4f3bc0862 100644
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -1665,30 +1665,6 @@ cc_library(
+     }),
+ )
+ 
+-py_binary(
+-    name = "generate_build_identifier_py",
+-    srcs = ["scripts/generate-build-identifier.py"],
+-    main = "scripts/generate-build-identifier.py",
+-    # This should only be built as part of the related genrule.
+-    tags = ["notap"],
+-)
+-
+-xnnpack_transitive_source_list(
+-    name = "build_identifier_ukernel_srcs",
+-    deps = [":prod_microkernels"],
+-)
+-
+-genrule(
+-    name = "generate_build_identifier",
+-    srcs = [
+-        "src/packing.c",
+-        ":build_identifier_ukernel_srcs",
+-    ],
+-    outs = ["src/build_identifier.c"],
+-    cmd = "$(location generate_build_identifier_py) --output $@ $(SRCS)",
+-    tools = [":generate_build_identifier_py"],
+-)
+-
+ xnnpack_cc_library(
+     name = "build_identifier",
+     srcs = ["src/build_identifier.c"],
+diff --git a/src/build_identifier.c b/src/build_identifier.c
+new file mode 100755
+index 000000000..b3ee5e82e
+--- /dev/null
++++ b/src/build_identifier.c
+@@ -0,0 +1,69 @@
++// Copyright 2024 Google LLC
++//
++// This source code is licensed under the BSD-style license found in the
++// LICENSE file in the root directory of this source tree.
++
++// Auto-generated file. Do not edit!
++//   Generator: scripts/generate-build-identifier.py
++//
++// The following inputs were used to generate this file.
++// - src/packing.c
++// - src/tables/exp2-k-over-64.c
++// - src/tables/exp2-k-over-2048.c
++// - src/tables/exp2minus-k-over-4.c
++// - src/tables/exp2minus-k-over-8.c
++// - src/tables/exp2minus-k-over-16.c
++// - src/tables/exp2minus-k-over-32.c
++// - src/tables/exp2minus-k-over-64.c
++// - src/tables/exp2minus-k-over-2048.c
++// - src/tables/vlog.c
++// - src/enums/allocation-type.c
++// - src/enums/datatype-strings.c
++// - src/enums/microkernel-type.c
++// - src/enums/node-type.c
++// - src/enums/operator-type.c
++// - src/log.c
++// - src/amalgam/gen/scalar.c
++// - src/amalgam/gen/avxvnni.c
++// - src/amalgam/gen/avx512amx.c
++// - src/amalgam/gen/avx512fp16.c
++// - src/amalgam/gen/sse.c
++// - src/amalgam/gen/sse2.c
++// - src/amalgam/gen/ssse3.c
++// - src/amalgam/gen/sse41.c
++// - src/amalgam/gen/avx.c
++// - src/amalgam/gen/f16c.c
++// - src/amalgam/gen/fma3.c
++// - src/amalgam/gen/avx2.c
++// - src/amalgam/gen/avx512f.c
++// - src/amalgam/gen/avx512skx.c
++// - src/amalgam/gen/avx512vbmi.c
++// - src/amalgam/gen/avx512vnni.c
++// - src/amalgam/gen/avx512vnnigfni.c
++
++#include <stdbool.h>
++#include <stdint.h>
++#include <stddef.h>
++#include <string.h>
++
++static const uint8_t xnn_build_identifier[] = {
++  202, 113, 125, 158, 151, 187,   2,  33,
++  178, 111, 224, 105, 174,  66, 250,  70,
++  243, 110,  11,  54, 151,  19, 138,  28,
++  165, 108, 161, 195, 106, 127, 104, 248
++};
++
++size_t xnn_experimental_get_build_identifier_size() {
++  return sizeof(xnn_build_identifier);
++}
++
++const void* xnn_experimental_get_build_identifier_data() {
++  return xnn_build_identifier;
++}
++
++bool xnn_experimental_check_build_identifier(const void* data, const size_t size) {
++  if(size != xnn_experimental_get_build_identifier_size()) {
++    return false;
++  }
++  return !memcmp(data, xnn_build_identifier, size);
++}

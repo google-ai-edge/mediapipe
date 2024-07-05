@@ -93,12 +93,22 @@ http_archive(
 )
 
 # XNNPACK on 2024-06-28
+# The `:generate_build_identifier` causes errors on several platforms. As a
+# workaround, we patch the BUILD file to remove the target and we patch the
+# `src/build_identifier.c` file it's supposed to generate. Ideally the patch
+# should be updated whenever XNNPACK commit is updated.
 http_archive(
     name = "XNNPACK",
     # `curl -L <url> | shasum -a 256`
-    sha256 = "3c28cb74c2c1ea67e0295587aa788b49071385fab38be1f1fc2064378ff156b5",
-    strip_prefix = "XNNPACK-3cef165957437753597e5483d43d6e8fb7837591",
-    url = "https://github.com/google/XNNPACK/archive/3cef165957437753597e5483d43d6e8fb7837591.zip",
+    sha256 = "bdd80688631851c6d3e5be31ce302c7f6a200301867494bcde62549b74fddf16",
+    strip_prefix = "XNNPACK-6346dbfe3f9ce02d750619b340680a1cc209dd07",
+    url = "https://github.com/google/XNNPACK/archive/6346dbfe3f9ce02d750619b340680a1cc209dd07.zip",
+    patches = [
+      "@//third_party:xnnpack_build_identifier.diff"
+    ],
+    patch_args = [
+        "-p1",
+    ],
 )
 
 # TODO: This is an are indirect depedency. We should factor it out.
