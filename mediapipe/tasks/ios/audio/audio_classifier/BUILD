@@ -42,6 +42,7 @@ objc_library(
 objc_library(
     name = "MPPAudioClassifier",
     hdrs = ["sources/MPPAudioClassifier.h"],
+    srcs = ["sources/MPPAudioClassifier.mm"],
     copts = [
         "-ObjC++",
         "-std=c++17",
