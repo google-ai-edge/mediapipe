@@ -651,7 +651,7 @@ cc_library(
 cc_library(
     name = "graph_service",
     hdrs = ["graph_service.h"],
-    visibility = [":mediapipe_internal"],
+    visibility = ["//visibility:public"],
     deps = [
         ":packet",
         "//mediapipe/framework/port:status",
