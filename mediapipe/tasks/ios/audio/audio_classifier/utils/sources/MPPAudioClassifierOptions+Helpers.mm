@@ -34,7 +34,7 @@ using ClassifierOptionsProto = ::mediapipe::tasks::components::processors::proto
       optionsProto->MutableExtension(AudioClassifierGraphOptionsProto::ext);
 
   [self.baseOptions copyToProto:graphOptions->mutable_base_options()
-              withUseStreamMode:self.runningMode != MPPAudioRunningModeAudioStream];
+              withUseStreamMode:self.runningMode != MPPAudioRunningModeAudioClips];
 
   ClassifierOptionsProto *classifierOptionsProto = graphOptions->mutable_classifier_options();
   classifierOptionsProto->Clear();
