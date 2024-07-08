@@ -22,7 +22,6 @@
 #import "mediapipe/tasks/ios/core/sources/MPPTaskInfo.h"
 
 namespace {
-using ::mediapipe::NormalizedRect;
 using ::mediapipe::Packet;
 using ::mediapipe::Timestamp;
 using ::mediapipe::tasks::core::PacketMap;
@@ -45,16 +44,9 @@ static NSString *const kTaskName = @"audioClassifier";
 
 static const int kMicrosecondsPerMillisecond = 1000;
 
-#define InputPacketMap(imagePacket, normalizedRectPacket) \
-  {                                                       \
-    {kImageInStreamName.cppString, imagePacket}, {        \
-      kNormRectStreamName.cppString, normalizedRectPacket \
-    }                                                     \
-  }
-
 #define AudioClassifierResultWithOutputPacketMap(outputPacketMap, outputStreamName) \
-  ([MPPAudioClassifierResult                                                        \
-      audioClassifierResultWithClassificationsPacket:outputPacketMap[outputStreamName]])
+  [MPPAudioClassifierResult                                                        \
+      audioClassifierResultWithClassificationsPacket:outputPacketMap[outputStreamName]]
 
 @interface MPPAudioClassifier () {
   /** iOS Vision Task Runner */
@@ -106,8 +98,8 @@ static const int kMicrosecondsPerMillisecond = 1000;
       // Capturing `self` as weak in order to avoid `self` being kept in memory
       // and cause a retain cycle, after self is set to `nil`.
       MPPAudioClassifier *__weak weakSelf = self;
-      packetsCallback = [=](absl::StatusOr<PacketMap> liveStreamResult) {
-        [weakSelf processLiveStreamResult:liveStreamResult];
+      packetsCallback = [=](absl::StatusOr<PacketMap> audioStreamResult) {
+        [weakSelf processAudioStreamResult:audioStreamResult];
       };
     }
 
@@ -141,15 +133,20 @@ static const int kMicrosecondsPerMillisecond = 1000;
   if (!outputPacketMap.has_value()) {
     return nil;
   }
+  
+  PacketMap &outputPacketMapValue = outputPacketMap.value();
+  NSLog(@"Error map ..... %d", outputPacketMapValue.count(kClassificationsOutStreamName.cppString));
 
-  return AudioClassifierResultWithOutputPacketMap(outputPacketMap.value(),
-                                                  kTimestampedClassificationsOutStreamName);
+  
+
+  return AudioClassifierResultWithOutputPacketMap(outputPacketMapValue,
+                                                  kTimestampedClassificationsOutStreamName.cppString);
 }
 
 - (BOOL)classifyAsyncAudioBlock:(MPPAudioData *)audioBlock
         timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                           error:(NSError **)error {
-  return [_audioTaskRunner processStreamAudioClip:image
+  return [_audioTaskRunner processStreamAudioClip:audioBlock
                           timestampInMilliseconds:timestampInMilliseconds
                                             error:error];
 }
@@ -158,7 +155,7 @@ static const int kMicrosecondsPerMillisecond = 1000;
                                            sampleRate:(double)sampleRate
                                          bufferLength:(NSUInteger)bufferLength
                                                 error:(NSError **)error {
-  return [_audioTaskRunner createAudioRecordWithChannelCount:channelCount
+  return [MPPAudioTaskRunner createAudioRecordWithChannelCount:channelCount
                                                   sampleRate:sampleRate
                                                 bufferLength:bufferLength
                                                        error:error];
@@ -185,7 +182,7 @@ static const int kMicrosecondsPerMillisecond = 1000;
   }
 
   PacketMap &outputPacketMap = audioStreamResult.value();
-  std::string &cppClassificationsOutStreamName = kClassificationsOutStreamName.cppString;
+  std::string cppClassificationsOutStreamName = kClassificationsOutStreamName.cppString;
 
   MPPAudioClassifierResult *result =
       AudioClassifierResultWithOutputPacketMap(outputPacketMap, cppClassificationsOutStreamName);
