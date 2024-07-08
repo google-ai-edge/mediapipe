@@ -196,7 +196,7 @@ static const double kInitialDefaultSampleRate = -1.0f;
   return YES;
 }
 
-- (MPPAudioRecord *)createAudioRecordWithChannelCount:(NSUInteger)channelCount
++ (MPPAudioRecord *)createAudioRecordWithChannelCount:(NSUInteger)channelCount
                                            sampleRate:(double)sampleRate
                                          bufferLength:(NSUInteger)bufferLength
                                                 error:(NSError **)error {
@@ -205,6 +205,11 @@ static const double kInitialDefaultSampleRate = -1.0f;
   return [[MPPAudioRecord alloc] initWithAudioDataFormat:format
                                             bufferLength:bufferLength
                                                    error:error];
+}
+
++ (const char *)uniqueDispatchQueueNameWithSuffix:(NSString *)suffix {
+  return [NSString stringWithFormat:@"%@.%@_%@", kTaskPrefix, suffix, [NSString uuidString]]
+      .UTF8String;
 }
 
 - (std::optional<PacketMap>)inputPacketMapWithMPPAudioData:(MPPAudioData *)audioData
