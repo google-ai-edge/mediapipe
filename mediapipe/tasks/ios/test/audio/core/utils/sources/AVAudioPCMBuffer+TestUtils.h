@@ -28,6 +28,16 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, readonly, nullable) MPPFloatBuffer *floatBuffer;
 
 /**
+ * Creates an interleaved Float32 `AVAudioPCMBuffer` from the file specified by `fileInfo`.
+ *
+ * @param fileInfo `FileInfo` with name and type of the audio file stored in the bundle.
+ *
+ * @return `AVAudioPCMBuffer` containing samples from audio file.
+ */
++ (nullable AVAudioPCMBuffer *)interleavedFloat32BufferFromAudioFileWithInfo:
+    (MPPFileInfo *)fileInfo;
+
+/**
  * Creates an `AVAudioPCMBuffer` from the file specified by `fileInfo`. If the format of the audio
  * file is equal to the processing format, the samples loaded from the file are directly returned.
  * If not, the pcm buffer is converted to the processing format.

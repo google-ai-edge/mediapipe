@@ -18,15 +18,40 @@
 
 + (nullable AVAudioPCMBuffer *)bufferFromAudioFileWithInfo:(MPPFileInfo *)fileInfo
                                           processingFormat:(AVAudioFormat *)processingFormat {
+  // Get buffer from audio file.                                          
+  AVAudioPCMBuffer *buffer = [AVAudioPCMBuffer bufferFromAudioFileWithInfo:fileInfo];
+
+  // Convert to requested format.                                    
+  return [buffer bufferWithProcessingFormat:processingFormat];
+}
+
++ (nullable AVAudioPCMBuffer *)interleavedFloat32BufferFromAudioFileWithInfo:
+    (MPPFileInfo *)fileInfo {
+  // Get buffer from audio file.
+  AVAudioPCMBuffer *buffer = [AVAudioPCMBuffer bufferFromAudioFileWithInfo:fileInfo];
+
+  // Convert to float32 interleaved format.                                    
+  AVAudioFormat *outputFormat =
+      [[AVAudioFormat alloc] initWithCommonFormat:AVAudioPCMFormatFloat32
+                                       sampleRate:buffer.format.sampleRate
+                                         channels:buffer.format.channelCount
+                                      interleaved:YES];
+  return [buffer bufferWithProcessingFormat:outputFormat];
+}
+
++ (nullable AVAudioPCMBuffer *)bufferFromAudioFileWithInfo:(MPPFileInfo *)fileInfo {
   AVAudioFile *audioFile = [[AVAudioFile alloc] initForReading:[NSURL fileURLWithPath:fileInfo.path]
                                                          error:nil];
-  AVAudioPCMBuffer *buffer =
-      [[AVAudioPCMBuffer alloc] initWithPCMFormat:audioFile.processingFormat
-                                    frameCapacity:(AVAudioFrameCount)audioFile.length];
 
+  AVAudioFrameCount frameCapacity = audioFile.processingFormat.interleaved
+                                        ? audioFile.processingFormat.channelCount * audioFile.length
+                                        : audioFile.length;
+
+  AVAudioPCMBuffer *buffer = [[AVAudioPCMBuffer alloc] initWithPCMFormat:audioFile.processingFormat
+                                                           frameCapacity:frameCapacity];
   [audioFile readIntoBuffer:buffer error:nil];
 
-  return [buffer bufferWithProcessingFormat:processingFormat];
+  return buffer;
 }
 
 - (nullable MPPFloatBuffer *)floatBuffer {
