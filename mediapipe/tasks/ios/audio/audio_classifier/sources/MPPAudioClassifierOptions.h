@@ -49,11 +49,11 @@ NS_SWIFT_NAME(AudioClassifierStreamDelegate)
  * @param error An optional error parameter populated when there is an error in performing audio
  * classification on the input audio stream data.
  */
-- (void)AudioClassifier:(MPPAudioClassifier *)AudioClassifier
+- (void)audioClassifier:(MPPAudioClassifier *)AudioClassifier
     didFinishClassificationWithResult:(nullable MPPAudioClassifierResult *)result
               timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                                 error:(nullable NSError *)error
-    NS_SWIFT_NAME(AudioClassifier(_:didFinishClassification:timestampInMilliseconds:error:));
+    NS_SWIFT_NAME(audioClassifier(_:didFinishClassification:timestampInMilliseconds:error:));
 @end
 
 /**
