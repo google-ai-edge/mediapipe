@@ -38,6 +38,7 @@
 #include "mediapipe/tasks/cc/genai/inference/proto/llm_params.pb.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/well_known_models.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/benchmark_weight_accessor.h"
+#include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/context_utils.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/falcon.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/graph_builder.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/llm_weights.h"
