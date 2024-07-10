@@ -84,7 +84,7 @@ then
 else
   rm -rf /tmp/android_ndk/
   mkdir /tmp/android_ndk/
-  curl https://dl.google.com/android/repository/android-ndk-${ndk_version}-${platform}-x86_64.zip -o /tmp/android_ndk/android_ndk.zip
+  curl https://dl.google.com/android/repository/android-ndk-${ndk_version}-${platform}.zip -o /tmp/android_ndk/android_ndk.zip
   mkdir -p ${android_ndk_path}/android-ndk-${ndk_version}
   unzip /tmp/android_ndk/android_ndk.zip -d ${android_ndk_path}
   rm -rf /tmp/android_ndk/
