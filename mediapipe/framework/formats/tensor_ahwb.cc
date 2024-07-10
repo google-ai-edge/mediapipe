@@ -275,7 +275,7 @@ NoDestructor<absl::flat_hash_set<uint64_t>> AhwbUsageTrack::ahwb_usage_track_;
 }  // namespace
 
 Tensor::AHardwareBufferView Tensor::GetAHardwareBufferReadView() const {
-  auto lock(absl::make_unique<absl::MutexLock>(&view_mutex_));
+  auto lock(std::make_unique<absl::MutexLock>(&view_mutex_));
   ABSL_CHECK(valid_ != kValidNone)
       << "Tensor must be written prior to read from.";
   ABSL_CHECK(!(valid_ & kValidOpenGlTexture2d))
@@ -324,7 +324,7 @@ void Tensor::CreateEglSyncAndFd() const {
 }
 
 Tensor::AHardwareBufferView Tensor::GetAHardwareBufferWriteView() const {
-  auto lock(absl::make_unique<absl::MutexLock>(&view_mutex_));
+  auto lock(std::make_unique<absl::MutexLock>(&view_mutex_));
   ABSL_CHECK_OK(AllocateAHardwareBuffer())
       << "AHardwareBuffer is not supported on the target system.";
   valid_ = kValidAHardwareBuffer;
