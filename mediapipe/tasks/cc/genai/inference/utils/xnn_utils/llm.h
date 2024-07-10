@@ -314,7 +314,7 @@ class LlmBuilder : protected XnnGraphBuilder {
                                       Tensor& out_segment_pos);
 
   // Run sampling on model's output logits.
-  absl::StatusOr<std::vector<int>> Sample(const Tensor& logits);
+  absl::StatusOr<std::vector<std::vector<int>>> Sample(const Tensor& logits);
 
  protected:
   friend class Llm;

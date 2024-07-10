@@ -38,28 +38,31 @@ class Sampler {
   // * If kGreedy sampler is used, Argmax will be returned ignoring all other
   //   arguments provided.
   // * If kTopK sampler is used, the top k logit values are selected. That is
-  //   followed by temperature scaling and applying softmax. Finally, a sampled
+  //   followed by temperature scaling and applying softmax. Finally, a sample
   //   is drawn from the resulting distribution.
-  // * If kTopP sampler is selcted, the top k logits are first selcted if k > 0.
-  //   Otherwise, k = vocab size. This is followed by temperature scaling and
-  //   applying softmax. Finally, the top p are selcted from the probabilities
+  // * If kTopP sampler is selected, the top k logits are first selcted if k >
+  //   0. Otherwise, k = vocab size. This is followed by temperature scaling and
+  //   applying softmax. Finally, the top p are selected from the probabilities
   //   such that sum of p_i is greater than or equal to top_p. Lastly, a sample
   //   is drawn from the resulting distribution.
   static absl::StatusOr<std::unique_ptr<Sampler>> Create(Type type, int top_k,
                                                          float top_p,
                                                          float temperature,
                                                          int seed);
-  // Given an input tensor of shape `(Batch, 1 [seq_len], vocab_size)`, runs
-  // the configured sampling alogorithm to find a winning class. The results are
-  // reported as a vector of integer indicies where each entry corresponds to a
-  // batch.
-  absl::StatusOr<std::vector<int>> Sample(const Tensor& logits);
+  // Given an input tensor of shape `(Batch, seq_len, vocab_size)`, runs
+  // the configured sampling algorithm to find a winning class. The results are
+  // reported as a 2D vector of integer indices where the first axis corresponds
+  // to the batch size, and the second axis corresponds to the sequence length.
+  absl::StatusOr<std::vector<std::vector<int>>> Sample(const Tensor& logits);
 
  private:
   Sampler(Type type, int top_k, float top_p, float temperature, int seed);
-  absl::StatusOr<std::vector<int>> SampleGreedy(const Tensor& logits);
-  absl::StatusOr<std::vector<int>> SampleTopK(const Tensor& logits);
-  absl::StatusOr<std::vector<int>> SampleTopP(const Tensor& logits);
+  absl::StatusOr<std::vector<std::vector<int>>> SampleGreedy(
+      const Tensor& logits);
+  absl::StatusOr<std::vector<std::vector<int>>> SampleTopK(
+      const Tensor& logits);
+  absl::StatusOr<std::vector<std::vector<int>>> SampleTopP(
+      const Tensor& logits);
   absl::Status SelectTopK(std::vector<std::pair<float, int>>& logits_ids,
                           int k);
   // `logits_ids` must be sorted and normalized.

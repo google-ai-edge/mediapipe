@@ -106,7 +106,16 @@ class PrefixDecodeLlm : public Llm {
   absl::Status GetNextToken(std::vector<int>* output_ids) final {
     MP_ASSIGN_OR_RETURN(auto logits_output, ComputeLogits());
 
-    MP_ASSIGN_OR_RETURN(*output_ids, builder_->Sample(*logits_output));
+    MP_ASSIGN_OR_RETURN(std::vector<std::vector<int>> tokens,
+                        builder_->Sample(*logits_output));
+    // Return only the first token for each draft.
+    std::vector<int> output;
+    output.reserve(tokens.size());
+    for (int i = 0; i < tokens.size(); ++i) {
+      output.push_back(tokens[i][0]);
+    }
+
+    *output_ids = output;
 
     // output_ids->size() is batch_size, while AddInputTokens() expects [batch,
     // seq=1], thus transform.
@@ -649,7 +658,16 @@ absl::Status Llm::GetNextToken(std::vector<int>* output_ids) {
   MP_ASSIGN_OR_RETURN(auto logits, ComputeLogits());
   const size_t decode_step = TotalTokenSize() - 1;
 
-  MP_ASSIGN_OR_RETURN(*output_ids, builder_->Sample(*logits));
+  MP_ASSIGN_OR_RETURN(std::vector<std::vector<int>> tokens,
+                      builder_->Sample(*logits));
+  // Return only the first token for each draft.
+  std::vector<int> output;
+  output.reserve(tokens.size());
+  for (int i = 0; i < tokens.size(); ++i) {
+    output.push_back(tokens[i][0]);
+  }
+
+  *output_ids = output;
   RET_CHECK_EQ(output_ids->size(), llm_params_.batch_size_B);
 
   for (size_t batch = 0; batch < llm_params_.batch_size_B; ++batch) {
@@ -1008,7 +1026,8 @@ absl::Status LlmBuilder::InitSegmentPos(size_t current_seq_len,
   return absl::OkStatus();
 }
 
-absl::StatusOr<std::vector<int>> LlmBuilder::Sample(const Tensor& logits) {
+absl::StatusOr<std::vector<std::vector<int>>> LlmBuilder::Sample(
+    const Tensor& logits) {
   if (sampler_ == nullptr) {
     MP_ASSIGN_OR_RETURN(
         sampler_,
