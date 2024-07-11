@@ -46,7 +46,7 @@ enum LlmModelType {
   // https://huggingface.co/microsoft/phi-2
   LLM_MODEL_TYPE_PHI_2 = 11;
 
-  // Arbitraty TfLite model via ODML stack.
+  // Arbitrary TfLite model via ODML stack.
   LLM_MODEL_TYPE_TF_LITE = 100;
 }
 

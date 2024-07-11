@@ -49,7 +49,7 @@ class LlmBuilder;
 //   1) to implement Llama, one should make the changes in the LlmGraphBuilder.
 //   2) to implement an "encoder-only" model (i.e. only run the prefix graph
 //      with no decode graphs and kv-cache), one should inherit from this and
-//      udpate the logics. See llm_encoder_only.h for more details.
+//      update the logics. See llm_encoder_only.h for more details.
 class Llm : protected xnn_utils::XnnGraph {
  public:
   explicit Llm(XnnGraph&& other) : XnnGraph(std::move(other)) {}

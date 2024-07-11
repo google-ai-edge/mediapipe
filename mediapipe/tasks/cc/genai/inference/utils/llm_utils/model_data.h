@@ -62,7 +62,7 @@ struct OffsetAndSize {
 // Gets an offset and size which will be valid to pass to MemoryMappedFile.
 OffsetAndSize GetAlignedOffsetAndSize(uint64_t base_offset, uint64_t base_size);
 
-// Creats a DataHolder by memory mapping `file`. `key` can be passed as an
+// Creates a DataHolder by memory mapping `file`. `key` can be passed as an
 // optimization when the same file is being mapped multiple times. It should be
 // unique to `file`.
 template <typename T>

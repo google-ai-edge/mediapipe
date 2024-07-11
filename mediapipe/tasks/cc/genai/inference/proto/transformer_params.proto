@@ -66,10 +66,10 @@ message TransformerParameters {
   enum Activation {
     ACTIVATION_UNSPECIFIED = 0;
     // GELU stands for Gaussian Error Linear Unit, see
-    // https://arxiv.org/pdf/1606.08415.pdf for deatils.
+    // https://arxiv.org/pdf/1606.08415.pdf for details.
     GELU = 1;
     // SILU stands for Sigmoid-Weighted Linear Unit, see
-    // https://arxiv.org/pdf/1702.03118v3.pdf for deatils.
+    // https://arxiv.org/pdf/1702.03118v3.pdf for details.
     SILU = 2;
     // RELU stands for Rectified Linear Unit, see
     // https://dl.acm.org/doi/10.5555/3104322.3104425 for details.
@@ -81,10 +81,10 @@ message TransformerParameters {
     // No normalization operation will be perform.
     NO_NORM = 1;
     // RMSNORM stands for Root Mean Square Layer Normalization, see
-    // https://arxiv.org/pdf/1910.07467.pdf for deatils.
+    // https://arxiv.org/pdf/1910.07467.pdf for details.
     RMS_NORM = 2;
     // LAYERNORM stands for Layer Normalization, see
-    // https://arxiv.org/pdf/1607.06450v1.pdf for deatils.
+    // https://arxiv.org/pdf/1607.06450v1.pdf for details.
     LAYER_NORM = 3;
   }
 

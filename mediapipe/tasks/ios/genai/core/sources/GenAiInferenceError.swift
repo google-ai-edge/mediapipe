@@ -40,7 +40,7 @@ extension GenAiInferenceError: LocalizedError {
   }
 }
 
-/// Protocol conformance for compatibilty with `NSError`.
+/// Protocol conformance for compatibility with `NSError`.
 extension GenAiInferenceError: CustomNSError {
   static public var errorDomain: String {
     return "com.google.mediapipe.tasks.genai.inference"

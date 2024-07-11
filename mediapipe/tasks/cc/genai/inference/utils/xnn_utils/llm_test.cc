@@ -162,7 +162,7 @@ void RunBenchmark(Llm& llm, benchmark::State& state) {
   } else if (benchmark_method == "encode") {
     RunBenchmarkEncode(llm, state);
   } else {
-    ABSL_LOG(FATAL) << "The value of flag benchamrk_method should be either "
+    ABSL_LOG(FATAL) << "The value of flag benchmark_method should be either "
                        "'decode' or 'encode', but got: "
                     << benchmark_method;
   }
