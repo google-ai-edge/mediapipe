@@ -17,7 +17,7 @@
 # Script to setup Android SDK and NDK.
 # usage:
 # $ cd <mediapipe root dir>
-# $ bash ./setup_android_sdk_and_ndk.sh ~/Android/Sdk ~/Android/Ndk r26d [--accept-licenses]
+# $ bash ./setup_android_sdk_and_ndk.sh ~/Android/Sdk ~/Android/Ndk r21 [--accept-licenses]
 
 set -e
 
@@ -55,8 +55,8 @@ fi
 
 if [ -z $3 ]
 then
-  echo "Warning: ndk_version (argument 3) is not specified. Fallback to r26d."
-  ndk_version="r26d"
+  echo "Warning: ndk_version (argument 3) is not specified. Fallback to r21."
+  ndk_version="r21"
 fi
 
 if [ -d "$android_sdk_path" ]
