@@ -689,7 +689,7 @@ to load both dependencies:
 static {
   // Load all native libraries needed by the app.
   System.loadLibrary("mediapipe_jni");
-  System.loadLibrary("opencv_java3");
+  System.loadLibrary("opencv_java4");
 }
 ```
 

@@ -57,12 +57,7 @@ public class MainActivity extends AppCompatActivity {
   static {
     // Load all native libraries needed by the app.
     System.loadLibrary("mediapipe_jni");
-    try {
-      System.loadLibrary("opencv_java3");
-    } catch (java.lang.UnsatisfiedLinkError e) {
-      // Some example apps (e.g. template matching) require OpenCV 4.
-      System.loadLibrary("opencv_java4");
-    }
+    System.loadLibrary("opencv_java4");
   }
 
   // Sends camera-preview frames into a MediaPipe graph for processing, and displays the processed
