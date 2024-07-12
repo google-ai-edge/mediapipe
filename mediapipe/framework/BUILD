@@ -112,7 +112,7 @@ mediapipe_proto_library(
     name = "mediapipe_options_proto",
     srcs = ["mediapipe_options.proto"],
     visibility = [
-        ":mediapipe_internal_proto_users",
+        "//visibility:public",
     ],
 )
 
