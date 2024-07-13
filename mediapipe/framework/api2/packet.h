@@ -111,10 +111,10 @@ class PacketBase {
   }
 
  protected:
-  explicit PacketBase(std::shared_ptr<HolderBase> payload)
+  explicit PacketBase(std::shared_ptr<const HolderBase> payload)
       : payload_(std::move(payload)) {}
 
-  std::shared_ptr<HolderBase> payload_;
+  std::shared_ptr<const HolderBase> payload_;
   Timestamp timestamp_;
 
   template <typename T>
@@ -133,7 +133,7 @@ mediapipe::Packet ToOldPacket(PacketBase&& p);
 template <typename T>
 inline const T& PacketBase::Get() const {
   ABSL_CHECK(payload_);
-  packet_internal::Holder<T>* typed_payload = payload_->As<T>();
+  const packet_internal::Holder<T>* typed_payload = payload_->As<T>();
   ABSL_CHECK(typed_payload) << absl::StrCat(
       "The Packet stores \"", payload_->DebugTypeName(), "\", but \"",
       MediaPipeTypeStringOrDemangled<T>(), "\" was requested.");
@@ -145,7 +145,7 @@ absl::Status PacketBase::ValidateAsType() const {
   if (ABSL_PREDICT_FALSE(payload_ == nullptr)) {
     return absl::FailedPreconditionError("Empty Packet");
   }
-  packet_internal::Holder<T>* const typed_payload = payload_->As<T>();
+  const packet_internal::Holder<T>* const typed_payload = payload_->As<T>();
   if (ABSL_PREDICT_FALSE(typed_payload == nullptr)) {
     return absl::InvalidArgumentError(absl::StrCat(
         "The Packet stores \"", payload_->DebugTypeName(), "\", but \"",
@@ -245,7 +245,7 @@ class Packet<internal::Generic> : public PacketBase {
   Packet<internal::Generic> At(Timestamp timestamp) &&;
 
  protected:
-  explicit Packet(std::shared_ptr<HolderBase> payload)
+  explicit Packet(std::shared_ptr<const HolderBase> payload)
       : PacketBase(std::move(payload)) {}
 
   friend PacketBase;
@@ -264,7 +264,7 @@ class Packet : public Packet<internal::Generic> {
 
   const T& Get() const {
     ABSL_CHECK(payload_);
-    packet_internal::Holder<T>* typed_payload = payload_->As<T>();
+    const packet_internal::Holder<T>* typed_payload = payload_->As<T>();
     ABSL_CHECK(typed_payload);
     return typed_payload->data();
   }
@@ -295,7 +295,7 @@ class Packet : public Packet<internal::Generic> {
   }
 
  private:
-  explicit Packet(std::shared_ptr<HolderBase> payload)
+  explicit Packet(std::shared_ptr<const HolderBase> payload)
       : Packet<internal::Generic>(std::move(payload)) {}
 
   friend PacketBase;
@@ -394,7 +394,7 @@ class Packet<OneOf<T...>> : public PacketBase {
   template <class U, class = AllowedType<U>>
   const U& Get() const {
     ABSL_CHECK(payload_);
-    packet_internal::Holder<U>* typed_payload = payload_->As<U>();
+    const packet_internal::Holder<U>* typed_payload = payload_->As<U>();
     ABSL_CHECK(typed_payload);
     return typed_payload->data();
   }
@@ -459,7 +459,7 @@ class Packet<OneOf<T...>> : public PacketBase {
   }
 
  protected:
-  explicit Packet(std::shared_ptr<HolderBase> payload)
+  explicit Packet(std::shared_ptr<const HolderBase> payload)
       : PacketBase(std::move(payload)) {}
 
   friend PacketBase;

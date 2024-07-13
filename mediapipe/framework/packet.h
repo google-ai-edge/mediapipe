@@ -63,10 +63,10 @@ class HolderBase;
 
 Packet Create(HolderBase* holder);
 Packet Create(HolderBase* holder, Timestamp timestamp);
-Packet Create(std::shared_ptr<HolderBase> holder, Timestamp timestamp);
+Packet Create(std::shared_ptr<const HolderBase> holder, Timestamp timestamp);
 const HolderBase* GetHolder(const Packet& packet);
-const std::shared_ptr<HolderBase>& GetHolderShared(const Packet& packet);
-std::shared_ptr<HolderBase> GetHolderShared(Packet&& packet);
+const std::shared_ptr<const HolderBase>& GetHolderShared(const Packet& packet);
+std::shared_ptr<const HolderBase> GetHolderShared(Packet&& packet);
 absl::StatusOr<Packet> PacketFromDynamicProto(const std::string& type_name,
                                               const std::string& serialized);
 }  // namespace packet_internal
@@ -276,19 +276,19 @@ class Packet {
   friend Packet packet_internal::Create(packet_internal::HolderBase* holder,
                                         class Timestamp timestamp);
   friend Packet packet_internal::Create(
-      std::shared_ptr<packet_internal::HolderBase> holder,
+      std::shared_ptr<const packet_internal::HolderBase> holder,
       class Timestamp timestamp);
   friend const packet_internal::HolderBase* packet_internal::GetHolder(
       const Packet& packet);
-  friend const std::shared_ptr<packet_internal::HolderBase>&
+  friend const std::shared_ptr<const packet_internal::HolderBase>&
   packet_internal::GetHolderShared(const Packet& packet);
-  friend std::shared_ptr<packet_internal::HolderBase>
+  friend std::shared_ptr<const packet_internal::HolderBase>
   packet_internal::GetHolderShared(Packet&& packet);
 
   friend class PacketType;
   absl::Status ValidateAsType(TypeId type_id) const;
 
-  std::shared_ptr<packet_internal::HolderBase> holder_;
+  std::shared_ptr<const packet_internal::HolderBase> holder_;
   class Timestamp timestamp_;
 };
 
@@ -448,15 +448,17 @@ class HolderBase {
   // Downcasts this to Holder<T>.  Returns nullptr if deserialization
   // failed or if the requested type is not what is stored.
   template <typename T>
-  Holder<T>* As();
-
-  // Same as non-const As() function.
-  template <typename T>
   const Holder<T>* As() const;
+
+  // Same as As() but returns this as a mutable Holder<T>.
+  // Dangerous! Only use in contexts when we are guaranteed the holder is not
+  // shared.
+  template <typename T>
+  Holder<T>* AsMutable() const;
 
   // Returns the pointer to MessageLite type for the data in holder, if
   // underlying object is protocol buffer type, otherwise, nullptr is returned.
-  virtual const proto_ns::MessageLite* GetProtoMessageLite() = 0;
+  virtual const proto_ns::MessageLite* GetProtoMessageLite() const = 0;
 
   // Returns a vector<MessageLite*> for the data in the holder, if the
   // underlying object is a vector of protocol buffer objects, otherwise,
@@ -599,7 +601,7 @@ class Holder : public HolderBase, private HolderPayloadRegistrator<T> {
 
   // Returns the MessageLite pointer to the data, if the underlying object type
   // is protocol buffer, otherwise, nullptr is returned.
-  const proto_ns::MessageLite* GetProtoMessageLite() override {
+  const proto_ns::MessageLite* GetProtoMessageLite() const override {
     return ConvertToProtoMessageLite(
         ptr_, std::is_base_of<proto_ns::MessageLite, T>());
   }
@@ -654,9 +656,9 @@ class ForeignHolder : public Holder<T> {
 };
 
 template <typename T>
-Holder<T>* HolderBase::As() {
+Holder<T>* HolderBase::AsMutable() const {
   if (PayloadIsOfType<T>()) {
-    return static_cast<Holder<T>*>(this);
+    return static_cast<Holder<T>*>(const_cast<HolderBase*>(this));
   }
   // Does not hold a T.
   return nullptr;
@@ -696,7 +698,7 @@ inline absl::StatusOr<std::unique_ptr<T>> Packet::Consume() {
   if (!holder_->HasForeignOwner() && holder_.use_count() == 1) {
     VLOG(2) << "Consuming the data of " << DebugString();
     absl::StatusOr<std::unique_ptr<T>> release_result =
-        holder_->As<T>()->Release();
+        holder_->AsMutable<T>()->Release();
     if (release_result.ok()) {
       VLOG(2) << "Setting " << DebugString() << " to empty.";
       holder_.reset();
@@ -718,7 +720,7 @@ inline absl::StatusOr<std::unique_ptr<T>> Packet::ConsumeOrCopy(
   if (!holder_->HasForeignOwner() && holder_.use_count() == 1) {
     VLOG(2) << "Consuming the data of " << DebugString();
     absl::StatusOr<std::unique_ptr<T>> release_result =
-        holder_->As<T>()->Release();
+        holder_->AsMutable<T>()->Release();
     if (release_result.ok()) {
       VLOG(2) << "Setting " << DebugString() << " to empty.";
       holder_.reset();
@@ -748,7 +750,7 @@ inline absl::StatusOr<std::unique_ptr<T>> Packet::ConsumeOrCopy(
   if (!holder_->HasForeignOwner() && holder_.use_count() == 1) {
     VLOG(2) << "Consuming the data of " << DebugString();
     absl::StatusOr<std::unique_ptr<T>> release_result =
-        holder_->As<T>()->Release();
+        holder_->AsMutable<T>()->Release();
     if (release_result.ok()) {
       VLOG(2) << "Setting " << DebugString() << " to empty.";
       holder_.reset();
@@ -808,7 +810,8 @@ inline TypeId Packet::GetTypeId() const {
 
 template <typename T>
 inline const T& Packet::Get() const {
-  packet_internal::Holder<T>* holder = IsEmpty() ? nullptr : holder_->As<T>();
+  const packet_internal::Holder<T>* holder =
+      IsEmpty() ? nullptr : holder_->As<T>();
   if (holder == nullptr) {
     // Produce a good error message.
     absl::Status status = ValidateAsType<T>();
@@ -853,12 +856,12 @@ inline bool operator!=(const Packet& p1, const Packet& p2) {
 
 namespace packet_internal {
 
-inline const std::shared_ptr<HolderBase>& GetHolderShared(
+inline const std::shared_ptr<const HolderBase>& GetHolderShared(
     const Packet& packet) {
   return packet.holder_;
 }
 
-inline std::shared_ptr<HolderBase> GetHolderShared(Packet&& packet) {
+inline std::shared_ptr<const HolderBase> GetHolderShared(Packet&& packet) {
   return std::move(packet.holder_);
 }
 
