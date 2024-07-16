@@ -583,6 +583,19 @@ absl::Status Llm::LoadContext(
   return absl::OkStatus();
 }
 
+absl::Status Llm::ReduceContextPrevIds(std::shared_ptr<Context> context,
+                                       std::vector<int> batch_num_tokens) {
+  ABSL_CHECK_EQ(batch_num_tokens.size(), context->batch_prev_ids.size());
+  for (size_t batch_size = 0; batch_size < context->batch_prev_ids.size();
+       ++batch_size) {
+    auto& prev_ids = context->batch_prev_ids[batch_size];
+    const auto& num_tokens = batch_num_tokens[batch_size];
+    if (num_tokens == 0) continue;
+    prev_ids.erase(prev_ids.end() - num_tokens, prev_ids.end());
+  }
+  return absl::OkStatus();
+}
+
 absl::Status Llm::InitInputTokens(const std::vector<int>& input_ids) {
   RET_CHECK_EQ(llm_params_.batch_size_B, 1)
       << "For batch inference, use the batch version API";

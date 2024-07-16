@@ -83,6 +83,12 @@ class Llm : protected xnn_utils::XnnGraph {
     absl::Nullable<std::shared_ptr<Context>> prefill_context;
   };
 
+  // Reduce the number of previous ids to effectively undo the last
+  // `batch_num_tokens` tokens. Used for reverting incorrect draft tokens in
+  // speculative decoding.
+  static absl::Status ReduceContextPrevIds(std::shared_ptr<Context> context,
+                                           std::vector<int> batch_num_tokens);
+
   // Create LLM graph using the `DefaultLlmWeightsLoader` to load model from
   // `weights_folder`.
   static absl::StatusOr<std::unique_ptr<Llm>> CreateLlm(
