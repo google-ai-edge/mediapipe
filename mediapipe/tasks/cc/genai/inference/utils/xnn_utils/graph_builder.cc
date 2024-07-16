@@ -380,10 +380,11 @@ absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::FullConn(
   build_steps_.push_back([input, weight, bias, params, output,
                           qd_input](xnn_subgraph_t subgraph) -> absl::Status {
     if (qd_input) {
-      RET_CHECK_EQ(
-          xnn_status_success,
-          xnn_define_convert(subgraph, input->tensor_id(subgraph),
-                             qd_input->tensor_id(subgraph), /*flags=*/0));
+      // Set XNN_FLAG_MAYBE_PACK_FOR_GEMM if the weights are 4 bit.
+      uint32_t flags = weight->datatype == xnn_datatype_qcint4 ? 0x00000080 : 0;
+      RET_CHECK_EQ(xnn_status_success,
+                   xnn_define_convert(subgraph, input->tensor_id(subgraph),
+                                      qd_input->tensor_id(subgraph), flags));
       RET_CHECK_EQ(
           xnn_status_success,
           xnn_define_fully_connected(
