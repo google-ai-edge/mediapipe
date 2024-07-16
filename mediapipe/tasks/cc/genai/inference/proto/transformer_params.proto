@@ -149,6 +149,8 @@ message TransformerParameters {
     // default, and SCALE_TYPE_INV_SQRT_HEAD_DIM is used for
     // Multi-Head-Attention by default.
     optional AttentionScaleType attention_scale_type = 5;
+
+    reserved 6;
   }
 
   SelfAttentionParameters self_attention_parameters = 16;
@@ -158,4 +160,6 @@ message TransformerParameters {
   // the absolute positional embeddings will be applied to the token embeddings
   // before the attention.
   bool skip_absolute_positional_embeddings = 18;
+
+  reserved 19, 20, 21;
 }
