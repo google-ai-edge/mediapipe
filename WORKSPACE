@@ -85,10 +85,10 @@ http_archive(
 
 http_archive(
     name = "cpuinfo",
-    sha256 = "a615cac78fad03952cc3e1fd231ce789a8df6e81a5957b64350cb8200364b385",
-    strip_prefix = "cpuinfo-d6860c477c99f1fce9e28eb206891af3c0e1a1d7",
+    sha256 = "ea028ced757dbc3309518ae7038ed625b02d58190078a5801d30e7b28f8b9e9c",
+    strip_prefix = "cpuinfo-ca678952a9a8eaa6de112d154e8e104b22f9ab3f",
     urls = [
-        "https://github.com/pytorch/cpuinfo/archive/d6860c477c99f1fce9e28eb206891af3c0e1a1d7.zip"
+        "https://github.com/pytorch/cpuinfo/archive/ca678952a9a8eaa6de112d154e8e104b22f9ab3f.zip"
     ],
 )
 
@@ -106,9 +106,9 @@ http_archive(
 http_archive(
     name = "XNNPACK",
     # `curl -L <url> | shasum -a 256`
-    sha256 = "46276b596e8c2a0cd71a2fcd7b133569317b9025d8537220ccc098fee7fee753",
-    strip_prefix = "XNNPACK-3267691fdb37df7990b8c7c449af4c92d2b34b7b",
-    url = "https://github.com/google/XNNPACK/archive/3267691fdb37df7990b8c7c449af4c92d2b34b7b.zip",
+    sha256 = "b5a9406dac47e63980db281c52788f15a881519e95ed5140d927750c06828a2b",
+    strip_prefix = "XNNPACK-203651a9d4bc6b9c33e943c842d8bada139bb71d",
+    url = "https://github.com/google/XNNPACK/archive/203651a9d4bc6b9c33e943c842d8bada139bb71d.zip",
 )
 
 # TODO: This is an are indirect depedency. We should factor it out.
