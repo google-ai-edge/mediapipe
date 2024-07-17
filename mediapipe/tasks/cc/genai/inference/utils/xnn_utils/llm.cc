@@ -78,12 +78,6 @@ class PrefixDecodeLlm : public Llm {
     RET_CHECK_EQ(batch_input_ids.size(), llm_params_.batch_size_B);
     RET_CHECK_EQ(batch_prev_ids().size(), llm_params_.batch_size_B);
 
-    // This check is required because we hardcode transformer_input()'s sequence
-    // size to be 1.
-    // TODO - b/325325100: make transformer_input() dynamic shape.
-    RET_CHECK_EQ(computed_tokens_count_, TotalTokenSize())
-        << "Call ComputeLogits() or GetNextToken() before continuous "
-           "AddInputTokens()";
     if (batch_prev_ids()[0].empty()) {
       return PrefixDecodeLlm::InitInputTokens(batch_input_ids);
     }
@@ -129,7 +123,9 @@ class PrefixDecodeLlm : public Llm {
   }
 
   absl::StatusOr<std::shared_ptr<Tensor>> ComputeLogits() final {
-    const size_t decode_step = TotalTokenSize() - 1;
+    const size_t decode_step =
+        TotalTokenSize() -
+        (llm_params_.draft_size_G > 1 ? llm_params_.draft_size_G + 1 : 1);
     VLOG(2) << "Decode step " << decode_step;
 
     RET_CHECK(decode_step < llm_params_.seq_size_T - 1)
@@ -141,19 +137,22 @@ class PrefixDecodeLlm : public Llm {
       MP_RETURN_IF_ERROR(transformer_input()->Slice(0, batch)->LoadFromBuffer(
           prefix_llm_->input_pivot()
               ->Slice(0, batch)
-              ->Slice(1, decode_step)
+              ->Slice(1, decode_step, decode_step + llm_params_.draft_size_G)
               ->Data()));
     }
     // Let builder re-populate the values of these tensors.
-    MP_RETURN_IF_ERROR(builder_->InitAttentionMask(
-        decode_step, 1, /*is_prefix=*/false, *atten_masks_));
+    MP_RETURN_IF_ERROR(
+        builder_->InitAttentionMask(decode_step, llm_params_.draft_size_G,
+                                    /*is_prefix=*/false, *atten_masks_));
+
     if (!llm_params_.skip_absolute_positional_embeddings) {
-      MP_RETURN_IF_ERROR(
-          builder_->InitPosEmbedding(decode_step, 1, *pos_embedding_));
+      MP_RETURN_IF_ERROR(builder_->InitPosEmbedding(
+          decode_step, llm_params_.draft_size_G, *pos_embedding_));
     }
+
     if (segment_pos_) {
-      MP_RETURN_IF_ERROR(
-          builder_->InitSegmentPos(decode_step, 1, *segment_pos_));
+      MP_RETURN_IF_ERROR(builder_->InitSegmentPos(
+          decode_step, llm_params_.draft_size_G, *segment_pos_));
     }
 
     if (llm_params_.enable_dynamic_shape) {
@@ -161,10 +160,12 @@ class PrefixDecodeLlm : public Llm {
       for (auto& kv_cache : kv_cache()) {
         auto key = kv_cache.k_cache;
         auto value = kv_cache.v_cache;
-        key->Resize({decode_step + 1, llm_params_.batch_size_B,
-                     llm_params_.num_kv_heads, llm_params_.head_dim_H});
-        value->Resize({decode_step + 1, llm_params_.batch_size_B,
-                       llm_params_.num_kv_heads, llm_params_.head_dim_H});
+        key->Resize({decode_step + llm_params_.draft_size_G,
+                     llm_params_.batch_size_B, llm_params_.num_kv_heads,
+                     llm_params_.head_dim_H});
+        value->Resize({decode_step + llm_params_.draft_size_G,
+                       llm_params_.batch_size_B, llm_params_.num_kv_heads,
+                       llm_params_.head_dim_H});
         RET_CHECK_EQ(xnn_status_success,
                      xnn_reshape_external_value(
                          runtime_.get(), key->tensor_id(owned_subgraph_.get()),
@@ -181,18 +182,21 @@ class PrefixDecodeLlm : public Llm {
     for (auto& kv_cache : kv_cache()) {
       ABSL_DCHECK(kv_cache.k_slice);
       ABSL_DCHECK(kv_cache.v_slice);
-      kv_cache.k_slice->Borrow(kv_cache.k_cache->Slice(0, decode_step));
-      kv_cache.v_slice->Borrow(kv_cache.v_cache->Slice(0, decode_step));
+      kv_cache.k_slice->Borrow(kv_cache.k_cache->Slice(
+          0, decode_step, decode_step + llm_params_.draft_size_G));
+      kv_cache.v_slice->Borrow(kv_cache.v_cache->Slice(
+          0, decode_step, decode_step + llm_params_.draft_size_G));
     }
 
     MP_RETURN_IF_ERROR(SetupRuntime());
     MP_RETURN_IF_ERROR(Run());
 
     RET_CHECK(logits_output());
-    ABSL_DCHECK_EQ(logits_output()->num_elements,
-                   llm_params_.batch_size_B * llm_params_.voc_size_V);
+    ABSL_DCHECK_EQ(logits_output()->num_elements, llm_params_.batch_size_B *
+                                                      llm_params_.draft_size_G *
+                                                      llm_params_.voc_size_V);
 
-    computed_tokens_count_ = decode_step + 1;
+    computed_tokens_count_ = decode_step + llm_params_.draft_size_G;
     return logits_output();
   }
 
@@ -249,7 +253,8 @@ absl::StatusOr<std::unique_ptr<Llm>> Llm::CreatePrefixDecodeLlm(
   builder->llm_params_ = decoding_llm_params;
 
   MP_ASSIGN_OR_RETURN(auto input,
-                      builder->NewInput({decoding_llm_params.batch_size_B, 1,
+                      builder->NewInput({decoding_llm_params.batch_size_B,
+                                         decoding_llm_params.draft_size_G,
                                          decoding_llm_params.model_dim_D},
                                         "decoder_input"));
 
@@ -755,13 +760,17 @@ LlmBuilder::PreProcess(std::shared_ptr<Tensor> token_embedding,
   } else {
     MP_ASSIGN_OR_RETURN(
         resource.pos_embedding,
-        NewInput({1, llm_params_.model_dim_D}, kPosEmbeddingSource));
-    MP_ASSIGN_OR_RETURN(resource.atten_mask,
-                        NewInput({1, llm_params_.seq_size_T}, kAttnMaskSource));
+        NewInput({llm_params_.draft_size_G, llm_params_.model_dim_D},
+                 kPosEmbeddingSource));
+    MP_ASSIGN_OR_RETURN(resource.atten_mask, NewInput({llm_params_.draft_size_G,
+                                                       llm_params_.seq_size_T},
+                                                      kAttnMaskSource));
     MP_ASSIGN_OR_RETURN(
         resource.segment_pos,
-        NewInput({1, llm_params_.head_dim_H}, kSegmentPosSource));
-    MP_RETURN_IF_ERROR(InitSegmentPos(0, 1, *resource.segment_pos));
+        NewInput({llm_params_.draft_size_G, llm_params_.head_dim_H},
+                 kSegmentPosSource));
+    MP_RETURN_IF_ERROR(
+        InitSegmentPos(0, llm_params_.draft_size_G, *resource.segment_pos));
   }
   const float dim_scale = std::sqrt(llm_params_.model_dim_D);
   MP_ASSIGN_OR_RETURN(auto scaled_embedding,
@@ -1137,7 +1146,7 @@ absl::Status LlmBuilder::BuildKVCache(std::shared_ptr<Tensor>& key,
     RET_CHECK_EQ(key->dims.size(), 4);
     RET_CHECK_EQ(key->dims[0], llm_params_.batch_size_B);
     // When cache is provided, there are 2 cases:
-    if (key->dims[1] != 1) {
+    if (key->dims[1] != 1 && key->dims[1] != llm_params_.draft_size_G) {
       // Building a prefill graph, which is used to initialize cache.
       // BTNH -> TBNH
       if (llm_params_.batch_size_B == 1) {
@@ -1161,15 +1170,15 @@ absl::Status LlmBuilder::BuildKVCache(std::shared_ptr<Tensor>& key,
       RET_CHECK(resource.cache->k_cache);
       RET_CHECK(resource.cache->v_cache);
       // Building a decoding graph, which consumes initialized cache.
-      // B1NH -> 1BNH
+      // BGNH -> GBNH
       MP_ASSIGN_OR_RETURN(
           resource.cache->k_slice,
-          Reshape(key, {1, llm_params_.batch_size_B, llm_params_.num_kv_heads,
-                        llm_params_.head_dim_H}));
+          Reshape(key, {key->dims[1], llm_params_.batch_size_B,
+                        llm_params_.num_kv_heads, llm_params_.head_dim_H}));
       MP_ASSIGN_OR_RETURN(
           resource.cache->v_slice,
-          Reshape(value, {1, llm_params_.batch_size_B, llm_params_.num_kv_heads,
-                          llm_params_.head_dim_H}));
+          Reshape(value, {key->dims[1], llm_params_.batch_size_B,
+                          llm_params_.num_kv_heads, llm_params_.head_dim_H}));
       (resource.cache->k_slice = key)->MarkOutput().tag = "prefix_k_slice";
       (resource.cache->v_slice = value)->MarkOutput().tag = "prefix_v_slice";
 

@@ -44,6 +44,7 @@
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/graph_builder.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/llm_weights.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/phi.h"
+#include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/sampling.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/stablelm.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/xnn_tensor.h"
 #include "xnnpack.h"  // from @XNNPACK

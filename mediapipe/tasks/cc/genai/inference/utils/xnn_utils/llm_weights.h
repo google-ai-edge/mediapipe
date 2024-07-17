@@ -46,6 +46,7 @@ struct LlmParams {
   size_t head_dim_H = 0;
   size_t n_heads_N = 0;
   size_t voc_size_V = 0;
+  size_t draft_size_G = 1;
 
   // Number of kv heads. In case of Multi-Head-Attention (MHA), num_kv_heads is
   // the same as n_heads_N, which is number of query heads; In case of

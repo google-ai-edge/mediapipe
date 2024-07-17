@@ -220,6 +220,7 @@ cc_test(
         ":llm",
         ":llm_weights",
         ":phi",
+        ":sampling",
         ":stablelm",
         ":tensor",
         "//mediapipe/framework/port:benchmark",
