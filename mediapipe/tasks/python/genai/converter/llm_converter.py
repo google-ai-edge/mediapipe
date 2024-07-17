@@ -325,9 +325,9 @@ def convert_checkpoint(config: ConversionConfig) -> None:
           ckpt_path=config.lora_ckpt,
           is_symmetric=config.is_symmetric,
           backend=config.backend,
-          attention_quant_bits=None,
-          feedforward_quant_bits=None,
-          embedding_quant_bits=None,
+          attention_quant_bits=config.attention_quant_bits,
+          feedforward_quant_bits=config.feedforward_quant_bits,
+          embedding_quant_bits=config.embedding_quant_bits,
           special_model=config.model_type,
       )
       maybe_quantize_and_write_tensors_to_bins(lora_loader, config)
