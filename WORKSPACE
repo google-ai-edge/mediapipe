@@ -92,23 +92,23 @@ http_archive(
     ],
 )
 
-# XNNPACK on 2024-06-28
-# The `:generate_build_identifier` causes errors on several platforms. As a
-# workaround, we patch the BUILD file to remove the target and we patch the
-# `src/build_identifier.c` file it's supposed to generate. Ideally the patch
-# should be updated whenever XNNPACK commit is updated.
+# KleidiAI is needed to get the best possible performance out of XNNPack
+http_archive(
+    name = "KleidiAI",
+    sha256 = "e1a3a6a27dcae459e61c33f5eb235a7c809c3208b3b8a649f361a641269ebdc8",
+    strip_prefix = "kleidiai-8fda0bd9224cad4360c011a09bbb582c5ab7496a",
+    urls = [
+        "https://gitlab.arm.com/kleidi/kleidiai/-/archive/8fda0bd9224cad4360c011a09bbb582c5ab7496a/kleidiai-1976f8661e8d5aa7d4cdca0f3d2a915e5ecb4c53.zip",
+    ],
+)
+
+# XNNPACK on 2024-07-16
 http_archive(
     name = "XNNPACK",
     # `curl -L <url> | shasum -a 256`
-    sha256 = "bdd80688631851c6d3e5be31ce302c7f6a200301867494bcde62549b74fddf16",
-    strip_prefix = "XNNPACK-6346dbfe3f9ce02d750619b340680a1cc209dd07",
-    url = "https://github.com/google/XNNPACK/archive/6346dbfe3f9ce02d750619b340680a1cc209dd07.zip",
-    patches = [
-      "@//third_party:xnnpack_build_identifier.diff"
-    ],
-    patch_args = [
-        "-p1",
-    ],
+    sha256 = "46276b596e8c2a0cd71a2fcd7b133569317b9025d8537220ccc098fee7fee753",
+    strip_prefix = "XNNPACK-3267691fdb37df7990b8c7c449af4c92d2b34b7b",
+    url = "https://github.com/google/XNNPACK/archive/3267691fdb37df7990b8c7c449af4c92d2b34b7b.zip",
 )
 
 # TODO: This is an are indirect depedency. We should factor it out.
