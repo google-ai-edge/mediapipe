@@ -112,6 +112,9 @@ struct Tensor {
   std::shared_ptr<Tensor> Slice(DimsType offset);
   // Slice along the `index`th dimension, offset at this dimension.
   virtual std::shared_ptr<Tensor> Slice(size_t index, size_t offset);
+  // Slice along the `index`th dimension from index start to index end. e.g.
+  // Tensor[A,B,C,D].Slice(1, 0, 5) returns a tensor of shape [A,5,C,D].
+  virtual std::shared_ptr<Tensor> Slice(size_t index, size_t start, size_t end);
 
   // Point the underline data to the borrowed tensor's data.
   Tensor& Borrow(std::shared_ptr<Tensor>, size_t element_offset = 0);

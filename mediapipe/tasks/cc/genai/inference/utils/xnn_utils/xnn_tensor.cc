@@ -179,6 +179,30 @@ std::shared_ptr<Tensor> Tensor::Slice(size_t index, size_t offset) {
   return result;
 }
 
+std::shared_ptr<Tensor> Tensor::Slice(size_t index, size_t start, size_t end) {
+  size_t num_elements_offset = 1;
+  DimsType new_dim = dims;
+  for (int i = 0; i < dims.size(); ++i) {
+    if (i < index) {
+      ABSL_DCHECK_EQ(dims[i], 1);
+    } else if (i == index) {
+      ABSL_DCHECK_LT(start, end);
+      ABSL_DCHECK_LE(end, dims[i]);
+      num_elements_offset *= start;
+      new_dim[i] = end - start;
+    } else {
+      num_elements_offset *= dims[i];
+    }
+  }
+
+  auto result =
+      std::make_shared<Tensor>(std::move(new_dim), datatype, is_sparse());
+  result->flat_data = std::shared_ptr<char>(
+      flat_data, flat_data.get() + ElementSize(num_elements_offset));
+  result->elements_capacity = result->num_elements;
+  return result;
+}
+
 Tensor& Tensor::Borrow(std::shared_ptr<Tensor> other, size_t element_offset) {
   ABSL_DCHECK_EQ(datatype, other->datatype);
   ABSL_DCHECK_EQ(dims.size(), other->dims.size());
