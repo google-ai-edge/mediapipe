@@ -218,25 +218,33 @@ class Tensor {
     AHardwareBufferView(AHardwareBufferView&& src)
         : View(std::move(src.lock_)) {
       hardware_buffer_ = std::move(src.hardware_buffer_);
-      file_descriptor_ = src.file_descriptor_;
-      fence_fd_ = std::exchange(src.fence_fd_, nullptr);
+      write_complete_fence_fd_ =
+          std::exchange(src.write_complete_fence_fd_, nullptr);
       is_complete_fn_ = std::exchange(src.is_complete_fn_, nullptr);
       release_callbacks_ = std::exchange(src.release_callbacks_, nullptr);
+      is_write_view_ = src.is_write_view_;
     }
-    int file_descriptor() const { return file_descriptor_; }
+
+    int GetWriteCompleteFenceFd() const {
+      ABSL_CHECK(!is_write_view_)
+          << "AHWB write view can't return write complete fence FD'";
+      return *write_complete_fence_fd_;
+    }
 
     // TODO: verify if multiple functions can be specified.
     void SetReadingFinishedFunc(FinishingFunc&& func) {
-      ABSL_CHECK(is_complete_fn_)
+      ABSL_CHECK(!is_write_view_)
           << "AHWB write view can't accept 'reading finished callback'";
       *is_complete_fn_ = std::move(func);
     }
 
     // TODO: verify if multiple functions can be specified.
     void SetWritingFinishedFD(int fd, FinishingFunc func = nullptr) {
-      ABSL_CHECK(fence_fd_)
+      ABSL_CHECK(is_write_view_)
           << "AHWB read view can't accept 'writing finished file descriptor'";
-      *fence_fd_ = fd;
+      ABSL_CHECK_EQ(*write_complete_fence_fd_, -1)
+          << "AHWB write complete fence FD is already set.";
+      *write_complete_fence_fd_ = fd;
       *is_complete_fn_ = std::move(func);
     }
 
@@ -249,22 +257,21 @@ class Tensor {
    protected:
     friend class Tensor;
     AHardwareBufferView(
-        HardwareBuffer* hardware_buffer, int file_descriptor, int* fence_fd,
+        HardwareBuffer* hardware_buffer, int* write_complete_fence_fd,
         FinishingFunc* is_complete_fn,
         std::vector<absl::AnyInvocable<void()>>* release_callbacks,
-        std::unique_ptr<absl::MutexLock>&& lock)
+        std::unique_ptr<absl::MutexLock>&& lock, bool is_write_view)
         : View(std::move(lock)),
           hardware_buffer_(hardware_buffer),
-          file_descriptor_(file_descriptor),
-          fence_fd_(fence_fd),
+          write_complete_fence_fd_(write_complete_fence_fd),
           is_complete_fn_(is_complete_fn),
-          release_callbacks_(release_callbacks) {}
-    HardwareBuffer* hardware_buffer_;
-    int file_descriptor_;
-    // The view sets some Tensor's fields. The view is released prior to tensor.
-    int* fence_fd_;
-    FinishingFunc* is_complete_fn_;
-    std::vector<absl::AnyInvocable<void()>>* release_callbacks_;
+          release_callbacks_(release_callbacks),
+          is_write_view_(is_write_view) {}
+    HardwareBuffer* hardware_buffer_ = nullptr;
+    int* write_complete_fence_fd_ = nullptr;
+    FinishingFunc* is_complete_fn_ = nullptr;
+    std::vector<absl::AnyInvocable<void()>>* release_callbacks_ = nullptr;
+    bool is_write_view_ = false;
   };
   AHardwareBufferView GetAHardwareBufferReadView() const;
   AHardwareBufferView GetAHardwareBufferWriteView() const;
@@ -428,12 +435,8 @@ class Tensor {
   // Sync and FD are bound together.
   mutable EGLSyncKHR fence_sync_ = EGL_NO_SYNC_KHR;
 
-  // This FD signals when the writing into the SSBO has been finished.
-  mutable int ssbo_written_ = -1;
-
-  // An externally set FD that is wrapped with the EGL sync then to synchronize
-  // AHWB -> OpenGL SSBO.
-  mutable int fence_fd_ = -1;
+  // Filehandle to signal when the writing into the AHWB has been finished.
+  mutable int write_complete_fence_fd_ = -1;
 
   // Reading from SSBO has been finished so SSBO can be released.
   mutable GLsync ssbo_read_ = 0;

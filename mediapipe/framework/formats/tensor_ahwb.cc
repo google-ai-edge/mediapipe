@@ -295,11 +295,11 @@ Tensor::AHardwareBufferView Tensor::GetAHardwareBufferReadView() const {
   ahwb_usages_.push_back(AhwbUsage());
   auto& ahwb_usage = ahwb_usages_.back();
   return {ahwb_.get(),
-          ssbo_written_,
-          &fence_fd_,  // The FD is created for SSBO -> AHWB synchronization.
+          &write_complete_fence_fd_,   // Returned by GetWriteCompleteFenceFd.
           &ahwb_usage.is_complete_fn,  // Filled by SetReadingFinishedFunc.
           &ahwb_usage.release_callbacks,
-          std::move(lock)};
+          std::move(lock),
+          /*is_write_view=*/false};
 }
 
 void Tensor::CreateEglSyncAndFd() const {
@@ -310,8 +310,12 @@ void Tensor::CreateEglSyncAndFd() const {
         fence_sync_ = eglCreateSyncKHR(egl_display,
                                        EGL_SYNC_NATIVE_FENCE_ANDROID, nullptr);
         if (fence_sync_ != EGL_NO_SYNC_KHR) {
-          ssbo_written_ = eglDupNativeFenceFDANDROID(egl_display, fence_sync_);
-          if (ssbo_written_ == -1) {
+          if (write_complete_fence_fd_ != -1) {
+            ABSL_LOG(DFATAL) << "write_complete_fence_fd_ is already set.";
+          }
+          write_complete_fence_fd_ =
+              eglDupNativeFenceFDANDROID(egl_display, fence_sync_);
+          if (write_complete_fence_fd_ == -1) {
             eglDestroySyncKHR(egl_display, fence_sync_);
             fence_sync_ = EGL_NO_SYNC_KHR;
           }
@@ -338,11 +342,11 @@ Tensor::AHardwareBufferView Tensor::GetAHardwareBufferWriteView() const {
   ahwb_usages_.push_back(AhwbUsage());
   auto& ahwb_usage = ahwb_usages_.back();
   return {ahwb_.get(),
-          /*ssbo_written=*/-1,
-          &fence_fd_,                  // For SetWritingFinishedFD.
+          &write_complete_fence_fd_,   // For SetWritingFinishedFD.
           &ahwb_usage.is_complete_fn,  // Filled by SetWritingFinishedFunc.
           &ahwb_usage.release_callbacks,
-          std::move(lock)};
+          std::move(lock),
+          /*is_write_view=*/true};
 }
 
 absl::Status Tensor::AllocateAHardwareBuffer() const {
@@ -427,7 +431,7 @@ void Tensor::MoveCpuOrSsboToAhwb() const {
 // is finished then the GPU reads from the SSBO.
 bool Tensor::InsertAhwbToSsboFence() const {
   if (!ahwb_) return false;
-  if (fence_fd_ != -1) {
+  if (write_complete_fence_fd_ != -1) {
     // Can't wait for FD to be signaled on GPU.
     // TODO: wait on CPU instead.
     if (!IsGlSupported()) return true;
@@ -438,7 +442,7 @@ bool Tensor::InsertAhwbToSsboFence() const {
 
     // EGL will take ownership of the passed fd if eglCreateSyncKHR is
     // successful.
-    int fd_for_egl = dup(fence_fd_);
+    int fd_for_egl = dup(write_complete_fence_fd_);
 
     EGLint sync_attribs[] = {EGL_SYNC_NATIVE_FENCE_FD_ANDROID,
                              (EGLint)fd_for_egl, EGL_NONE};
@@ -459,22 +463,20 @@ void Tensor::MoveAhwbStuff(Tensor* src) {
   ahwb_ = std::exchange(src->ahwb_, nullptr);
   fence_sync_ = std::exchange(src->fence_sync_, EGL_NO_SYNC_KHR);
   ssbo_read_ = std::exchange(src->ssbo_read_, static_cast<GLsync>(0));
-  ssbo_written_ = std::exchange(src->ssbo_written_, -1);
-  fence_fd_ = std::exchange(src->fence_fd_, -1);
+  write_complete_fence_fd_ = std::exchange(src->write_complete_fence_fd_, -1);
   ahwb_usages_ = std::move(src->ahwb_usages_);
   use_ahwb_ = std::exchange(src->use_ahwb_, false);
 }
 
 void Tensor::ReleaseAhwbStuff() {
-  if (fence_fd_ != -1) {
-    close(fence_fd_);
-    fence_fd_ = -1;
+  if (write_complete_fence_fd_ != -1) {
+    close(write_complete_fence_fd_);
+    write_complete_fence_fd_ = -1;
   }
   if (__builtin_available(android 26, *)) {
     if (ahwb_) {
       if (ssbo_read_ != 0 || fence_sync_ != EGL_NO_SYNC_KHR ||
           HasIncompleteUsages(ahwb_usages_)) {
-        if (ssbo_written_ != -1) close(ssbo_written_);
         DelayedReleaser::Add(std::move(ahwb_), opengl_buffer_, fence_sync_,
                              ssbo_read_, std::move(ahwb_usages_), gl_context_);
         opengl_buffer_ = GL_INVALID_INDEX;
@@ -489,7 +491,7 @@ void Tensor::ReleaseAhwbStuff() {
 void* Tensor::MapAhwbToCpuRead() const {
   if (ahwb_ != nullptr) {
     if (!(valid_ & kValidCpu)) {
-      if ((valid_ & kValidOpenGlBuffer) && ssbo_written_ == -1) {
+      if ((valid_ & kValidOpenGlBuffer) && write_complete_fence_fd_ == -1) {
         // EGLSync is failed. Use another synchronization method.
         // TODO: Use tflite::gpu::GlBufferSync and GlActiveSync.
         gl_context_->Run([]() { glFinish(); });
@@ -503,10 +505,10 @@ void* Tensor::MapAhwbToCpuRead() const {
     }
     auto ptr =
         ahwb_->Lock(HardwareBufferSpec::AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN,
-                    ssbo_written_);
+                    write_complete_fence_fd_);
     ABSL_CHECK_OK(ptr) << "Lock of AHWB failed";
-    close(ssbo_written_);
-    ssbo_written_ = -1;
+    close(write_complete_fence_fd_);
+    write_complete_fence_fd_ = -1;
     return *ptr;
   }
   return nullptr;
