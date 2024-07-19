@@ -71,6 +71,15 @@ load("@rules_python//python:repositories.bzl", "py_repositories")
 py_repositories()
 
 http_archive(
+    name = "rules_android_ndk",
+    sha256 = "d230a980e0d3a42b85d5fce2cb17ec3ac52b88d2cff5aaf86bae0f05b48adc55",
+    strip_prefix = "rules_android_ndk-d5c9d46a471e8fcd80e7ec5521b78bb2df48f4e0",
+    url = "https://github.com/bazelbuild/rules_android_ndk/archive/d5c9d46a471e8fcd80e7ec5521b78bb2df48f4e0.zip",
+)
+
+load("@rules_android_ndk//:rules.bzl", "android_ndk_repository")
+
+http_archive(
     name = "com_google_protobuf",
     sha256 = "87407cd28e7a9c95d9f61a098a53cf031109d451a7763e7dd1253abf8b4df422",
     strip_prefix = "protobuf-3.19.1",
