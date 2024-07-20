@@ -99,9 +99,7 @@ Nvidia Jetson and Raspberry Pi, please read
     Debian or Ubuntu:
 
     ```bash
-    $ sudo apt install python3-dev
-    $ sudo apt install python3-venv
-    $ sudo apt install -y protobuf-compiler
+    $ sudo apt install -y python3-dev python3-venv protobuf-compiler libprotobuf-dev
 
     # If you need to build opencv from source.
     $ sudo apt install cmake
