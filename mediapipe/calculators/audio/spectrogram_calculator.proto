@@ -72,12 +72,6 @@ message SpectrogramCalculatorOptions {
   }
   optional WindowType window_type = 6 [default = HANN];
 
-  // If true, use a shifted window instead of a periodic window.
-  // This is useful for computing the window with a non-zero endpoints.
-  // For example for HANN window, the shifted version is:
-  // samples[n] = 0.5 * (1 - cos(2 * M_PI * (n + 0.5) / num_samples))
-  optional bool use_shifted_window = 12 [default = false];
-
   // Support a fixed multiplicative scaling of the output.  This is applied
   // uniformly regardless of output type (i.e., even dBs are multiplied, not
   // offset).

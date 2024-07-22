@@ -955,35 +955,6 @@ TEST_F(SpectrogramCalculatorTest,
   }
 }
 
-TEST_F(SpectrogramCalculatorTest, ShiftedWindowWorks) {
-  options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
-  options_.set_frame_overlap_seconds(0.0);
-  options_.set_use_shifted_window(true);
-  options_.set_output_type(SpectrogramCalculatorOptions::SQUARED_MAGNITUDE);
-
-  const std::vector<int> input_packet_sizes = {100};
-
-  InitializeGraph();
-  FillInputHeader();
-  // Setup packets with DC input (non-zero constant value).
-  SetupConstantInputPackets(input_packet_sizes);
-
-  MP_ASSERT_OK(Run());
-  // Shifted HANN window will be starting with non zero front, the exact window
-  // value match is tested in in audio/dsp/window_functions_test.cc, here just
-  // testing the first value..
-  CheckOutputHeadersAndTimestamps();
-  Matrix output_matrix = output().packets[0].Get<Matrix>();
-  // The magnitude of the 0th FFT bin (DC) should be sum(input.*window);
-  //  for an input identically 1.0, this is just sum(window).  The average
-  //  value of our Hann window is 0.5， and with a half-sample shift, it's still
-  //  sum to the same, which is sum(shifted_window) = sum(window), hence this is
-  //  the expected squared- magnitude output value in the DC bin for constant
-  //  input of 1.0.
-  EXPECT_FLOAT_EQ(output().packets[0].Get<Matrix>()(0, 0),
-                  expected_dc_squared_magnitude_);
-}
-
 void BM_ProcessDC(benchmark::State& state) {
   CalculatorGraphConfig::Node node_config;
   node_config.set_calculator("SpectrogramCalculator");

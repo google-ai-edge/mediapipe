@@ -30,10 +30,9 @@
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/port/logging.h"
+#include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_builder.h"
 #include "mediapipe/util/time_series_util.h"
-#include "util/task/contrib/status_macros/ret_check.h"
-#include "util/task/status_macros.h"
 
 namespace mediapipe {
 
@@ -300,11 +299,8 @@ absl::Status SpectrogramCalculator::Open(CalculatorContext* cc) {
                                      spectrogram_options.window_type()));
   }
   std::vector<double> window;
-  if (spectrogram_options.use_shifted_window()) {
-    window_fun->GetPeriodicShiftedSamples(frame_duration_samples_, &window);
-  } else {
-    window_fun->GetPeriodicSamples(frame_duration_samples_, &window);
-  }
+
+  window_fun->GetPeriodicSamples(frame_duration_samples_, &window);
 
   // Propagate settings down to the actual Spectrogram object.
   std::optional<int> fft_size;
