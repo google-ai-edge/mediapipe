@@ -162,4 +162,24 @@ message TransformerParameters {
   bool skip_absolute_positional_embeddings = 18;
 
   reserved 19, 20, 21;
+
+  // Audio parameters
+  // Describes where to interleave residual adapters with transformer layers.
+  enum WhereToInterleave {
+    // Add a residual adapter after every transformer layer.
+    INTERLEAVE_UNSPECIFIED = 0;
+    ALL = 1;
+    // Add a residual adapter after every 4th transformer layer, starting with
+    // index 0 (i.e. after 0, 4, 8, ...).
+    EVERY_OTHER_4 = 2;
+  }
+
+  // Holds information on audio residual adapters
+  message ResidualAdapterParameters {
+    WhereToInterleave where_to_interleave = 1;
+    // bottleneck_dim is akin to hidden_dim in the FF layer
+    int32 bottleneck_dimension = 2;
+  }
+
+  optional ResidualAdapterParameters residual_adapter_parameters = 22;
 }
