@@ -44,8 +44,8 @@ public final class PacketGetter {
       this.second = second;
     }
 
-    final Packet first;
-    final Packet second;
+    public final Packet first;
+    public final Packet second;
   }
 
   /**
