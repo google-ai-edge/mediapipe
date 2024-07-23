@@ -190,7 +190,8 @@ absl::Status OpenVINOModelServerSessionCalculator::Open(CalculatorContext* cc) {
         session->loadModel(nullptr, UNUSED_OV_CORE, "UNUSED", {});
     } catch (const std::exception& e) {
         LOG(INFO) << "Caught exception with message: " << e.what();
-        RET_CHECK(false);
+        return mediapipe::FailedPreconditionErrorBuilder(MEDIAPIPE_LOC)
+             << "OpenVINOModelServerSessionCalculator failed to load the model";
     } catch (...) {
         LOG(INFO) << "Caught unknown exception";
         RET_CHECK(false);
