@@ -106,7 +106,7 @@ def _build_recognition_result(
     for gesture in gesture_classifications.classification:
       gesture_categories.append(
           category_module.Category(
-              index=_GESTURE_DEFAULT_INDEX,
+              index=gesture.index,
               score=gesture.score,
               display_name=gesture.display_name,
               category_name=gesture.label,
