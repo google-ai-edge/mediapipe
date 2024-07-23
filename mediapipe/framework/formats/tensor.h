@@ -42,6 +42,7 @@
 
 #include "mediapipe/framework/formats/hardware_buffer.h"
 #include "mediapipe/framework/formats/hardware_buffer_pool.h"
+#include "mediapipe/framework/formats/tensor_ahwb_usage.h"
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
 #include "mediapipe/gpu/gl_base.h"
@@ -197,19 +198,6 @@ class Tensor {
           tensor_internal::FnvHash64(builtin_FILE(), builtin_LINE())) const;
 
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
-  using FinishingFunc = std::function<bool(bool)>;
-
-  struct AhwbUsage {
-    // Function that signals when it is safe to release AHWB.
-    // If the input parameter is 'true' then wait for the writing to be
-    // finished.
-    FinishingFunc is_complete_fn;
-
-    // Callbacks to release any associated resources. (E.g. imported interpreter
-    // buffer handles.)
-    std::vector<absl::AnyInvocable<void()>> release_callbacks;
-  };
-
   class AHardwareBufferView : public View {
    public:
     AHardwareBuffer* handle() const {
@@ -235,6 +223,8 @@ class Tensor {
     void SetReadingFinishedFunc(FinishingFunc&& func) {
       ABSL_CHECK(!is_write_view_)
           << "AHWB write view can't accept 'reading finished callback'";
+      ABSL_CHECK(*is_complete_fn_ == nullptr)
+          << "AHWB reading finished callback is already set.";
       *is_complete_fn_ = std::move(func);
     }
 
@@ -244,6 +234,8 @@ class Tensor {
           << "AHWB read view can't accept 'writing finished file descriptor'";
       ABSL_CHECK_EQ(*write_complete_fence_fd_, -1)
           << "AHWB write complete fence FD is already set.";
+      ABSL_CHECK(*is_complete_fn_ == nullptr)
+          << "AHWB write finished callback is already set.";
       *write_complete_fence_fd_ = fd;
       *is_complete_fn_ = std::move(func);
     }
@@ -444,7 +436,7 @@ class Tensor {
   // Keeps track of current AHWB usages (e.g. multiple reads - two inference
   // calculators use the same input tensor and import buffer by FD which results
   // in two buffer handles that must be released.)
-  mutable std::list<AhwbUsage> ahwb_usages_;
+  mutable std::list<TensorAhwbUsage> ahwb_usages_;
 
   absl::Status AllocateAHardwareBuffer() const;
 
