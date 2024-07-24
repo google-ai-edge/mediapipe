@@ -129,7 +129,10 @@ py_test(
     size = "large",
     srcs = ["image_classifier_test.py"],
     shard_count = 2,
-    tags = ["requires-net:external"],
+    tags = [
+        "notsan",  # TODO b/352507058 - TSAN run takes 18 minutes. Disabled for now.
+        "requires-net:external",
+    ],
     deps = [
         ":image_classifier_test_lib",
     ],
