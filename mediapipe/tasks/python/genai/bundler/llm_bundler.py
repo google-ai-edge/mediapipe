@@ -16,7 +16,7 @@
 
 import dataclasses
 import enum
-from typing import List
+from typing import List, Optional
 
 from mediapipe.tasks.python.metadata.metadata_writers import model_asset_bundle_utils
 from mediapipe.tasks.cc.genai.inference.proto import llm_params_pb2
@@ -38,6 +38,13 @@ class BundleConfig:
     enable_bytes_to_unicode_mapping: Enables GPT-2 style bytes to unicode
       mapping. For more details see:
       https://github.com/openai/gpt-2/blob/master/src/encoder.py#L9
+    system_prompt: The starting text would be feed to the model on the start of
+      each session, commonly called the System prompt. This is useful for
+      instruction tuned models and pre-conditioning the model behavior.
+    prompt_prefix: The prefix that will be added to each prompt passed to the
+      model.
+    prompt_suffix: The suffix that will be added to at the end of user prompt
+      just before generating the response.
   """
 
   tflite_model: str
@@ -46,6 +53,9 @@ class BundleConfig:
   stop_tokens: List[str]
   output_filename: str
   enable_bytes_to_unicode_mapping: bool = False
+  system_prompt: Optional[str] = None
+  prompt_prefix: Optional[str] = None
+  prompt_suffix: Optional[str] = None
 
 
 class _BundleTags(enum.Enum):
@@ -72,6 +82,12 @@ def create_bundle(config: BundleConfig):
     params.input_output_normalizations.append(
         llm_params_pb2.LlmParameters.INPUT_OUTPUT_NORMALIZATION_BYTES_TO_UNICODE
     )
+  if config.system_prompt:
+    params.prompt_template.session_prefix = config.system_prompt
+  if config.prompt_prefix:
+    params.prompt_template.prompt_prefix = config.prompt_prefix
+  if config.prompt_suffix:
+    params.prompt_template.prompt_suffix = config.prompt_suffix
   artifacts[_BundleTags.METADATA.name] = params.SerializeToString()
 
   output_filename = config.output_filename
