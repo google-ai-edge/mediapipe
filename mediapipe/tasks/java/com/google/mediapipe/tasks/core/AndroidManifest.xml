@@ -3,6 +3,6 @@
     package="com.google.mediapipe.tasks.core">
 
     <uses-sdk android:minSdkVersion="24"
-        android:targetSdkVersion="30" />
+        android:targetSdkVersion="34" />
 
 </manifest>

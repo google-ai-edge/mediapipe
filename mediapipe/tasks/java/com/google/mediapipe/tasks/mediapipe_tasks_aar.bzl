@@ -244,7 +244,7 @@ cat > $(OUTS) <<EOF
     package="com.google.mediapipe.tasks.audio">
     <uses-sdk
         android:minSdkVersion="24"
-        android:targetSdkVersion="30" />
+        android:targetSdkVersion="34" />
 </manifest>
 EOF
 """,
@@ -277,7 +277,7 @@ cat > $(OUTS) <<EOF
     package="com.google.mediapipe.tasks.vision">
     <uses-sdk
         android:minSdkVersion="24"
-        android:targetSdkVersion="30" />
+        android:targetSdkVersion="34" />
 </manifest>
 EOF
 """,
@@ -312,7 +312,7 @@ cat > $(OUTS) <<EOF
     package="com.google.mediapipe.tasks.vision.imagegenerator">
     <uses-sdk
         android:minSdkVersion="24"
-        android:targetSdkVersion="30" />
+        android:targetSdkVersion="34" />
 </manifest>
 EOF
 """,
@@ -344,7 +344,7 @@ cat > $(OUTS) <<EOF
     package="com.google.mediapipe.tasks.text">
     <uses-sdk
         android:minSdkVersion="24"
-        android:targetSdkVersion="30" />
+        android:targetSdkVersion="34" />
 </manifest>
 EOF
 """,
@@ -377,7 +377,7 @@ cat > $(OUTS) <<EOF
     package="com.google.mediapipe.tasks.genai">
     <uses-sdk
         android:minSdkVersion="24"
-        android:targetSdkVersion="30" />
+        android:targetSdkVersion="34" />
 </manifest>
 EOF
 """,

@@ -9,7 +9,7 @@ android {
     defaultConfig {
         applicationId "com.google.mediapipe.apps.hands"
         minSdkVersion 21
-        targetSdkVersion 30
+        targetSdkVersion 34
         versionCode 1
         versionName "1.0"
     }

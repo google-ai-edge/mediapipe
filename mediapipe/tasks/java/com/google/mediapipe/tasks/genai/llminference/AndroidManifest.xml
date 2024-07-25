@@ -3,6 +3,6 @@
     package="com.google.mediapipe.tasks.genai.llminference">
 
     <uses-sdk android:minSdkVersion="21"
-        android:targetSdkVersion="30" />
+        android:targetSdkVersion="34" />
 
 </manifest>

@@ -99,7 +99,7 @@ cat > $(OUTS) <<EOF
     package="com.google.mediapipe">
     <uses-sdk
         android:minSdkVersion="21"
-        android:targetSdkVersion="27" />
+        android:targetSdkVersion="34" />
 </manifest>
 EOF
 """,
