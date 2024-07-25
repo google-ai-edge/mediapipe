@@ -59,6 +59,7 @@ message TransformerParameters {
     UNSPECIFIED = 0;
     CAUSAL = 1;
     PREFIX = 2;
+    BIDIRECTIONAL = 3;
   }
   // Deprecated, use SelfAttentionParameters.
   reserved 10;
