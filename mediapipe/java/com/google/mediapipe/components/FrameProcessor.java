@@ -20,7 +20,10 @@ import android.media.AudioFormat;
 import android.os.Handler;
 import android.util.Log;
 import com.google.common.base.Preconditions;
+import com.google.mediapipe.proto.CalculatorOptionsProto.CalculatorOptions;
 import com.google.mediapipe.proto.CalculatorProto.CalculatorGraphConfig;
+import com.google.mediapipe.proto.GraphTemplateProto.TemplateDict;
+import com.google.mediapipe.proto.GraphTemplateProto.TemplateSubgraphOptions;
 import com.google.mediapipe.framework.AndroidAssetUtil;
 import com.google.mediapipe.framework.AndroidPacketCreator;
 import com.google.mediapipe.framework.Graph;
@@ -121,6 +124,16 @@ public class FrameProcessor implements TextureFrameProcessor, AudioDataProcessor
   }
 
   /**
+   * Constructor.
+   *
+   * @param data the byte representation of the graph template.
+   * @param templateDict the template dictionary to expand the graph template.
+   */
+  public FrameProcessor(byte[] data, TemplateDict templateDict) {
+    initializeGraphAndPacketCreator(data, templateDict);
+  }
+
+  /**
    * Use Image container (if true), or existing GpuBuffer (if false, default).
    *
    * <p>Note: should be called before calling {@link onNewFrame(TextureFrame frame)}.
@@ -144,6 +157,26 @@ public class FrameProcessor implements TextureFrameProcessor, AudioDataProcessor
           AndroidAssetUtil.getAssetBytes(context.getAssets(), graphName));
     }
     packetCreator = new AndroidPacketCreator(mediapipeGraph);
+  }
+
+  /**
+   * Initializes a graph for processing data in real time.
+   *
+   * @param data the byte representation of the graph.
+   * @param templateDict the template dictionary to expand the graph template.
+   */
+  private void initializeGraphAndPacketCreator(byte[] data, TemplateDict templateDict) {
+    mediapipeGraph = new Graph();
+    mediapipeGraph.loadBinaryGraphTemplate(data);
+    packetCreator = new AndroidPacketCreator(mediapipeGraph);
+    mediapipeGraph.setGraphOptions(
+        CalculatorGraphConfig.Node.newBuilder()
+            .setOptions(
+                CalculatorOptions.newBuilder()
+                    .setExtension(
+                        TemplateSubgraphOptions.ext,
+                        TemplateSubgraphOptions.newBuilder().setDict(templateDict).build()))
+            .build());
   }
 
   /**
