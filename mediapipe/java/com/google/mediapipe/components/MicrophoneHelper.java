@@ -91,6 +91,8 @@ public class MicrophoneHelper implements AudioDataProducer {
   // sent to the listener of this class.
   private boolean recording = false;
 
+  // If true, the class will drop non-increasing timestamps.
+  private boolean dropNonIncreasingTimestamps;
   // Keeps track of the timestamp to guarantee that timestamps produced are always monotonically
   // increasing.
   private long lastTimestampMicros = UNINITIALIZED_TIMESTAMP;
@@ -123,6 +125,11 @@ public class MicrophoneHelper implements AudioDataProducer {
             sampleRateInHz, channelConfig, /*audioFormat=*/ AUDIO_ENCODING);
 
     updateBufferSizes(readIntervalMicros);
+  }
+
+  /** Sets whether to drop non-increasing timestamps. */
+  public void setDropNonIncreasingTimestamps(boolean dropNonIncreasingTimestamps) {
+    this.dropNonIncreasingTimestamps = dropNonIncreasingTimestamps;
   }
 
   /**
@@ -208,7 +215,7 @@ public class MicrophoneHelper implements AudioDataProducer {
                   timestampOffsetNanos = timestampNanos - initialTimestampNanos;
                 }
                 long timestampMicros = (timestampNanos - timestampOffsetNanos) / NANOS_PER_MICROS;
-                if (timestampMicros <= lastTimestampMicros) {
+                if (dropNonIncreasingTimestamps && timestampMicros <= lastTimestampMicros) {
                   Log.i(
                       TAG, "Dropping mic audio with non-increasing timestamp: " + timestampMicros);
                   continue;
