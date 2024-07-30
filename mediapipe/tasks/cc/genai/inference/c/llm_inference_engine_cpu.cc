@@ -116,13 +116,15 @@ void* next_token_function(void* args) {
     }
 
     std::string ready_char = "";
-    if (cpu_session->last_10_char.size() > kCheckLastKChars) {
+    if (cpu_session->early_stop) {
+      ready_char = cpu_session->last_10_char;
+    } else if (cpu_session->last_10_char.size() > kCheckLastKChars) {
       ready_char = cpu_session->last_10_char.substr(
           0, cpu_session->last_10_char.size() - kCheckLastKChars);
-      cpu_session->final_output.append(ready_char);
       cpu_session->last_10_char = cpu_session->last_10_char.substr(
           cpu_session->last_10_char.size() - kCheckLastKChars);
     }
+    cpu_session->final_output.append(ready_char);
 
     cpu_session->cpu_callback(ready_char);
 
