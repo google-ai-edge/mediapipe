@@ -162,12 +162,14 @@ int main(int argc, char** argv) {
                                           prompt_str, async_callback_print);
 
   // Optional to use the following for the sync version.
+  // ABSL_LOG(INFO) << "PredictSync";
   // auto output =
   //     LlmInferenceEngine_Session_PredictSync(llm_engine_session,
   // prompt_str);
   // for (int i = 0; output.response_array[0][i] != '\0'; ++i) {
   //   std::cout << output.response_array[0][i] << std::flush;
   // }
+  // std::cout << std::endl;
   //
   // LlmInferenceEngine_CloseResponseContext(&output);
 
