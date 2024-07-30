@@ -251,6 +251,8 @@ BENCHMARK(BM_Llm_QCINT8)
     ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
             /*batch_size=*/7})
     ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
+            /*batch_size=*/8})
+    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
             /*batch_size=*/14})
     ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
             /*batch_size=*/16})
@@ -270,6 +272,8 @@ BENCHMARK(BM_Llm_Mixed_INT48)
             /*batch_size=*/4})
     ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
             /*batch_size=*/7})
+    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
+            /*batch_size=*/8})
     ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
             /*batch_size=*/14})
     ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
