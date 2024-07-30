@@ -282,64 +282,17 @@ void LlmInferenceEngine_Session_Delete(LlmInferenceEngine_Session* session) {
 
 LlmResponseContext LlmInferenceEngine_Session_PredictSync(
     LlmInferenceEngine_Session* session, const char* input) {
+  LlmInferenceEngine_Session_PredictAsync(
+      session, nullptr, input,
+      [](void* callback_context, LlmResponseContext* response_context) {});
+
   auto cpu_session = reinterpret_cast<LlmInferenceEngineCpu_Session*>(session);
-
-  std::vector<int> prompt_ids;
-  auto status = cpu_session->tokenizer->Encode(input, &prompt_ids);
-  if (!status.ok()) {
-    ABSL_LOG(FATAL) << "Failed to encode input: " << status;
-  }
-  prompt_ids.insert(prompt_ids.begin(), cpu_session->start_token_id);
-
-  status = cpu_session->llm->InitInputTokens(prompt_ids);
-  if (!status.ok()) {
-    ABSL_LOG(FATAL) << "Failed to process input tokens: " << status;
-  }
-
-  int max_num_output_tokens = cpu_session->max_tokens - prompt_ids.size();
-  std::string final_output = "";
-  std::vector<int> token_ids_per_step;
-  // No stop words should have a length of > 10.
-  std::string last_10_char = "";
-  cpu_session->early_stop = false;
-  for (int i = 0; i < max_num_output_tokens; i++) {
-    status = cpu_session->llm->GetNextToken(&token_ids_per_step);
-    if (!status.ok()) {
-      ABSL_LOG(FATAL) << "Failed to generate output: " << status;
-    }
-
-    // Currently only output size = 1 is supported.
-    last_10_char.append(
-        cpu_session->tokenizer->IdToPiece(token_ids_per_step[0]));
-
-    int stop_index;
-    for (const auto& stop_token : cpu_session->stop_tokens) {
-      stop_index = last_10_char.find(stop_token);
-      if (stop_index != std::string::npos) {
-        cpu_session->early_stop = true;
-        last_10_char = last_10_char.substr(0, stop_index);
-        break;
-      }
-    }
-
-    if (cpu_session->early_stop) {
-      final_output.append(last_10_char);
-      break;
-    }
-
-    if (last_10_char.size() > kCheckLastKChars) {
-      final_output.append(
-          last_10_char.substr(0, last_10_char.size() - kCheckLastKChars));
-      last_10_char =
-          last_10_char.substr(last_10_char.size() - kCheckLastKChars);
-    }
-  }
-  if (cpu_session->normalizer != nullptr) {
-    final_output = cpu_session->normalizer->Normalize(final_output);
-  }
+  pthread_join(cpu_session->work_id, nullptr);
+  cpu_session->work_id = 0;
+  auto final_output = cpu_session->final_output;
 
   char** result = (char**)malloc(sizeof(char*) * 1);
-  if (result[0] == nullptr) {
+  if (result == nullptr) {
     ABSL_LOG(FATAL) << "Failed to allocate result for cpu session.";
   }
 
