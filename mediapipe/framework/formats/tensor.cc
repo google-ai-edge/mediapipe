@@ -674,12 +674,9 @@ Tensor::CpuWriteView Tensor::GetCpuWriteView(
     void* ptr = MapAhwbToCpuWrite();
     if (ptr) {
       return {ptr, std::move(lock),
-              [ahwb = ahwb_.get(), fence_fd = &write_complete_fence_fd_] {
+              [ahwb = ahwb_.get(), fence_fd = &fence_fd_] {
                 auto fence_fd_status = ahwb->UnlockAsync();
                 ABSL_CHECK_OK(fence_fd_status) << "Unlock failed.";
-                if (*fence_fd != -1) {
-                  ABSL_LOG(DFATAL) << "Write complete fence FD is already set.";
-                }
                 *fence_fd = fence_fd_status.value();
               }};
     }

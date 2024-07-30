@@ -545,14 +545,12 @@ cc_library(
         "//mediapipe:android": [
             ":hardware_buffer",
             ":hardware_buffer_pool",
-            ":tensor_ahwb_usage",
             "//mediapipe/gpu:gl_base",
             "//mediapipe/gpu:gl_context",
         ],
         ":android_link_native_window": [
             ":hardware_buffer",
             ":hardware_buffer_pool",
-            ":tensor_ahwb_usage",
             "//mediapipe/gpu:gl_base",
             "//mediapipe/gpu:gl_context",
         ],
@@ -604,25 +602,4 @@ mediapipe_register_type(
         "::std::vector<::mediapipe::JointList>",
     ],
     deps = [":body_rig_cc_proto"],
-)
-
-cc_library(
-    name = "tensor_ahwb_usage",
-    srcs = ["tensor_ahwb_usage.cc"],
-    hdrs = ["tensor_ahwb_usage.h"],
-    deps = [
-        "//mediapipe/framework/port",
-        "@com_google_absl//absl/functional:any_invocable",
-        "@com_google_absl//absl/log:absl_log",
-    ],
-)
-
-cc_test(
-    name = "tensor_ahwb_usage_test",
-    srcs = ["tensor_ahwb_usage_test.cc"],
-    deps = [
-        ":tensor_ahwb_usage",
-        "//mediapipe/framework/port:gtest_main",
-        "//mediapipe/framework/port:status",
-    ],
 )
