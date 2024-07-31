@@ -31,6 +31,12 @@ public class MainActivity extends com.google.mediapipe.apps.basic.MainActivity {
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
+    // Register NormalizedLandmarkList type
+    ProtoUtil.registerTypeName(
+      NormalizedLandmarkList.class,
+      "mediapipe.NormalizedLandmarkList"
+    );
+    
     // To show verbose logging, run:
     // adb shell setprop log.tag.MainActivity VERBOSE
     if (Log.isLoggable(TAG, Log.VERBOSE)) {
