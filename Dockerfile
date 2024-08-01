@@ -14,8 +14,6 @@
 
 FROM ubuntu:20.04
 
-MAINTAINER <mediapipe@google.com>
-
 WORKDIR /io
 WORKDIR /mediapipe
 

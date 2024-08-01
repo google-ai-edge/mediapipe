@@ -53,7 +53,7 @@ def mediapipe_proto_library_impl(
         def_kt_lite_proto = True,
         def_objc_proto = True,
         def_java_proto = True,
-        def_jspb_proto = True,
+        #def_jspb_proto = True,
         def_go_proto = True,
         def_dart_proto = True,
         def_options_lib = True):
@@ -76,7 +76,7 @@ def mediapipe_proto_library_impl(
       def_kt_lite_proto: define the kt_lite_proto_library target
       def_objc_proto: define the objc_proto_library target
       def_java_proto: define the java_proto_library target
-      def_jspb_proto: define the jspb_proto_library target
+      #def_jspb_proto: define the jspb_proto_library target
       def_go_proto: define the go_proto_library target
       def_dart_proto: define the dart_proto_library target
       def_options_lib: define the mediapipe_options_library target
@@ -134,17 +134,6 @@ def mediapipe_proto_library_impl(
         native.java_proto_library(**provided_args(
             name = replace_suffix(name, "_proto", "_java_proto"),
             deps = proto_deps,
-            visibility = visibility,
-            testonly = testonly,
-            compatible_with = compatible_with,
-        ))
-
-    if def_jspb_proto:
-        mediapipe_js_proto_library(**provided_args(
-            name = replace_suffix(name, "_proto", "_jspb_proto"),
-            srcs = srcs,
-            deps = proto_deps,
-            lib_proto_deps = deps,
             visibility = visibility,
             testonly = testonly,
             compatible_with = compatible_with,
@@ -261,7 +250,7 @@ def mediapipe_proto_library(
         def_portable_proto = True,  # @unused
         def_objc_proto = True,
         def_java_proto = True,
-        def_jspb_proto = True,
+        #def_jspb_proto = True,
         def_go_proto = True,
         def_dart_proto = True,
         def_options_lib = True,
@@ -288,7 +277,7 @@ def mediapipe_proto_library(
       def_portable_proto: ignored since portable protos are gone
       def_objc_proto: define the objc_proto_library target
       def_java_proto: define the java_proto_library target
-      def_jspb_proto: define the jspb_proto_library target
+      #def_jspb_proto: define the jspb_proto_library target
       def_go_proto: define the go_proto_library target
       def_dart_proto: define the dart_proto_library target
       def_options_lib: define the mediapipe_options_library target
@@ -311,7 +300,7 @@ def mediapipe_proto_library(
         def_kt_lite_proto = def_kt_lite_proto,
         def_objc_proto = def_objc_proto,
         def_java_proto = def_java_proto,
-        def_jspb_proto = def_jspb_proto,
+       # def_jspb_proto = def_jspb_proto,
         def_go_proto = def_go_proto,
         def_dart_proto = def_dart_proto,
         def_options_lib = def_options_lib,
@@ -342,7 +331,7 @@ def mediapipe_proto_library(
             def_kt_lite_proto = def_kt_lite_proto,
             def_objc_proto = def_objc_proto,
             def_java_proto = def_java_proto,
-            def_jspb_proto = def_jspb_proto,
+            #def_jspb_proto = def_jspb_proto,
             def_go_proto = def_go_proto,
             def_dart_proto = def_dart_proto,
             # A clone of mediapipe_options_library() will redefine some classes.
