@@ -146,6 +146,15 @@ int main(int argc, char** argv) {
   // Get a pointer to the underlying character array
   char* prompt_str = char_vec.data();
 
+  ABSL_LOG(INFO) << "AddQueryChunk";
+  error_code = LlmInferenceEngine_Session_AddQueryChunk(llm_engine_session,
+                                                        prompt_str, &error_msg);
+  if (error_code) {
+    ABSL_LOG(ERROR) << "Failed to add query chunk: " << std::string(error_msg);
+    free(error_msg);
+    return EXIT_FAILURE;
+  }
+
   // Optional to receive the number of tokens of the input.
   // ABSL_LOG(INFO) << "SizeInToken";
   // int num_tokens = LlmInferenceEngine_Session_SizeInTokens(
@@ -155,13 +164,12 @@ int main(int argc, char** argv) {
   ABSL_LOG(INFO) << "PredictAsync";
   LlmInferenceEngine_Session_PredictAsync(llm_engine_session,
                                           /*callback_context=*/nullptr,
-                                          prompt_str, async_callback_print);
+                                          async_callback_print);
 
   // Optional to use the following for the sync version.
   // ABSL_LOG(INFO) << "PredictSync";
   // auto output =
-  //     LlmInferenceEngine_Session_PredictSync(llm_engine_session,
-  // prompt_str);
+  //     LlmInferenceEngine_Session_PredictSync(llm_engine_session);
   // for (int i = 0; output.response_array[0][i] != '\0'; ++i) {
   //   std::cout << output.response_array[0][i] << std::flush;
   // }

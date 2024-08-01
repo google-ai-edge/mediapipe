@@ -129,9 +129,17 @@ ODML_EXPORT int LlmInferenceEngine_CreateSession(
 ODML_EXPORT void LlmInferenceEngine_Session_Delete(
     LlmInferenceEngine_Session* session);
 
-// Return the generated output in sync mode.
-ODML_EXPORT LlmResponseContext LlmInferenceEngine_Session_PredictSync(
-    LlmInferenceEngine_Session* session, const char* input);
+// Add query chunk to the session. This can be called multiple times to add
+// multiple query chunks before calling `PredictSync` or `PredictAsync`. The
+// query chunks will be processed in the order they are added, similar to a
+// concatenated prompt, but able to be processed in chunks.
+ODML_EXPORT int LlmInferenceEngine_Session_AddQueryChunk(
+    LlmInferenceEngine_Session* session, const char* input, char** error_msg);
+
+// Return the generated output based on the previously added query chunks in
+// sync mode.
+ODML_EXPORT LlmResponseContext
+LlmInferenceEngine_Session_PredictSync(LlmInferenceEngine_Session* session);
 
 // Run callback function in async mode.
 // The callback will be invoked multiple times until `response_context.done`
@@ -141,7 +149,6 @@ ODML_EXPORT LlmResponseContext LlmInferenceEngine_Session_PredictSync(
 // it is passed to the callback unmodified.
 ODML_EXPORT void LlmInferenceEngine_Session_PredictAsync(
     LlmInferenceEngine_Session* session, void* callback_context,
-    const char* input,
     void (*callback)(void* callback_context,
                      LlmResponseContext* response_context));
 

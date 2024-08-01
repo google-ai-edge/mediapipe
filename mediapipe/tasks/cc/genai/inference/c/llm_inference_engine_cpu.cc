@@ -319,10 +319,17 @@ void LlmInferenceEngine_Session_Delete(LlmInferenceEngine_Session* session) {
   delete reinterpret_cast<LlmInferenceEngineCpu_Session*>(session);
 }
 
+int LlmInferenceEngine_Session_AddQueryChunk(
+    LlmInferenceEngine_Session* session, const char* input, char** error_msg) {
+  auto cpu_session = reinterpret_cast<LlmInferenceEngineCpu_Session*>(session);
+  cpu_session->prompt = input;
+  return 0;
+}
+
 LlmResponseContext LlmInferenceEngine_Session_PredictSync(
-    LlmInferenceEngine_Session* session, const char* input) {
+    LlmInferenceEngine_Session* session) {
   LlmInferenceEngine_Session_PredictAsync(
-      session, nullptr, input,
+      session, nullptr,
       [](void* callback_context, LlmResponseContext* response_context) {});
 
   auto cpu_session = reinterpret_cast<LlmInferenceEngineCpu_Session*>(session);
@@ -353,7 +360,6 @@ LlmResponseContext LlmInferenceEngine_Session_PredictSync(
 
 void LlmInferenceEngine_Session_PredictAsync(
     LlmInferenceEngine_Session* session, void* callback_context,
-    const char* input,
     void (*callback)(void* callback_context,
                      LlmResponseContext* response_context)) {
   auto cpu_session = reinterpret_cast<LlmInferenceEngineCpu_Session*>(session);
@@ -377,7 +383,6 @@ void LlmInferenceEngine_Session_PredictAsync(
     callback(callback_context, response_context.release());
   };
 
-  cpu_session->prompt = input;
   cpu_session->final_output = "";
   cpu_session->last_10_char = "";
   cpu_session->early_stop = false;
