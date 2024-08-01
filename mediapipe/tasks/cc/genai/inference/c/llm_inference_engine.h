@@ -152,6 +152,11 @@ ODML_EXPORT void LlmInferenceEngine_Session_PredictAsync(
     void (*callback)(void* callback_context,
                      LlmResponseContext* response_context));
 
+// Clone the provided session.
+ODML_EXPORT int LlmInferenceEngine_Session_Clone(
+    LlmInferenceEngine_Session* session,
+    LlmInferenceEngine_Session** cloned_session, char** error_msg);
+
 // Tokenizes an input prompt using a pre-existing processor and returns its
 // length in tokens. Returns -1 if tokenization fails.
 ODML_EXPORT int LlmInferenceEngine_Session_SizeInTokens(

@@ -393,6 +393,13 @@ void LlmInferenceEngine_Session_PredictAsync(
                  cpu_session);
 }
 
+int LlmInferenceEngine_Session_Clone(
+    LlmInferenceEngine_Session* session,
+    LlmInferenceEngine_Session** cloned_session, char** error_msg) {
+  *error_msg = strdup("Not implemented");
+  return 12;
+}
+
 int LlmInferenceEngine_Session_SizeInTokens(LlmInferenceEngine_Session* session,
                                             const char* input,
                                             char** error_msg) {
