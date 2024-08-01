@@ -20,6 +20,8 @@ public enum GenAiInferenceError: Error {
   case illegalMethodCall
   case failedToComputeSizeInTokens(String?)
   case failedToInitializeSession(String?)
+  case failedToInitializeEngine(String?)
+  case failedToAddQueryToSession(String, String?)
 }
 
 extension GenAiInferenceError: LocalizedError {
@@ -31,11 +33,17 @@ extension GenAiInferenceError: LocalizedError {
     case .illegalMethodCall:
       return "Response generation is already in progress."
     case .failedToComputeSizeInTokens(let message):
-      let explanation = message == nil ? "An internal error occured." : message!
+      let explanation = message.flatMap { $0 } ?? "An internal error occured."
       return "Failed to compute size of text in tokens: \(explanation)"
     case .failedToInitializeSession(let message):
-      let explanation = message == nil ? "An internal error occured." : message!
+      let explanation = message.flatMap { $0 } ?? "An internal error occured."
       return "Failed to initialize LlmInference session: \(explanation)"
+    case .failedToInitializeEngine(let message):
+      let explanation = message.flatMap { $0 } ?? "An internal error occured."
+      return "Failed to initialize LlmInference engine: \(explanation)"
+    case .failedToAddQueryToSession(let query, let message):
+      let explanation = message.flatMap { $0 } ?? "An internal error occured."
+      return "Failed to add query: \(query) to LlmInference session: \(explanation)"
     }
   }
 }
@@ -56,6 +64,10 @@ extension GenAiInferenceError: CustomNSError {
       return 2
     case .failedToInitializeSession:
       return 3
+    case .failedToInitializeEngine:
+      return 4
+    case .failedToAddQueryToSession:
+      return 5
     }
   }
 }
