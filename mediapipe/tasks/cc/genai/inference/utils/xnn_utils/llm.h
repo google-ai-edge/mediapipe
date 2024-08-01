@@ -132,6 +132,7 @@ class Llm : protected xnn_utils::XnnGraph {
 
   // Samples the logits from ComputeLogits() and returns the sampled ids. This
   // also AddInputTokens() with the sampled ids.
+  ABSL_DEPRECATED("Use ComputeLogits() and do your own sampling.")
   virtual absl::Status GetNextToken(std::vector<int>* output_ids);
 
   // Computes logits with all previously added tokens. Output is in shape of
