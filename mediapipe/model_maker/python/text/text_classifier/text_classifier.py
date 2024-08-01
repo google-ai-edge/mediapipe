@@ -411,13 +411,16 @@ class _BertClassifier(TextClassifier):
     self._model_options = model_options
     self._text_preprocessor: preprocessor.BertClassifierPreprocessor = None
     with self._hparams.get_strategy().scope():
+      class_weights = (
+          self._hparams.multiclass_weights if self._num_classes > 2 else None
+      )
       if self._hparams.is_multilabel:
         self._loss_function = loss_functions.MaskedBinaryCrossentropy(
-            class_weights=self._hparams.multilabel_class_weights
+            class_weights=class_weights
         )
       else:
         self._loss_function = loss_functions.SparseFocalLoss(
-            self._hparams.gamma, self._num_classes
+            self._hparams.gamma, self._num_classes, class_weight=class_weights
         )
       self._metric_functions = self._create_metrics()
 

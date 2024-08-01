@@ -62,9 +62,9 @@ class BertHParams(hp.BaseHParams):
     checkpoint_frequency: Frequency(in epochs) of saving checkpoints during
       training. Defaults to 0 which does not save training checkpoints.
     is_multilabel: Whether the model is multilabel. Defaults to False.
-    multilabel_class_weights: Weights for each class in the multilabel
-      classification task. If specified, must be the same length as the number
-      of classes. Defaults to None.
+    multiclass_weights: Weights for each class in the multiclass classification
+      task. If specified, must be the same length as the number of classes.
+      Defaults to None.
   """
 
   learning_rate: float = 3e-5
@@ -88,7 +88,7 @@ class BertHParams(hp.BaseHParams):
   checkpoint_frequency: int = 0
 
   is_multilabel: bool = False
-  multilabel_class_weights: Optional[Sequence[float]] = None
+  multiclass_weights: Optional[Sequence[float]] = None
 
 
 HParams = Union[BertHParams, AverageWordEmbeddingHParams]
