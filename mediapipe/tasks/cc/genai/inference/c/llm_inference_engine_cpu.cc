@@ -164,6 +164,106 @@ void* start_llm_function(void* args) {
   return nullptr;
 }
 
+absl::StatusOr<LlmInferenceEngine_Engine*>
+LlmInferenceEngine_CreateEngine_Helper(const LlmModelSettings* model_settings) {
+  MP_ASSIGN_OR_RETURN(auto model_file,
+                      mediapipe::tasks::genai::llm_utils::ScopedFile::Open(
+                          model_settings->model_path));
+  MP_ASSIGN_OR_RETURN(auto model_data,
+                      mediapipe::tasks::genai::llm_utils::ModelData::Create(
+                          std::move(model_file)));
+
+  if (model_settings->number_of_supported_lora_ranks != 0) {
+    ABSL_LOG(FATAL) << "LoRA on CPU is not supported yet.";
+  }
+
+  auto llm_params_proto = model_data->GetLlmParameters();
+  auto llm_params =
+      mediapipe::tasks::genai::xnn_utils::LlmParams::FromLLMParametersProto(
+          llm_params_proto);
+
+  auto model_type = model_data->GetModelType();
+  RET_CHECK(model_type) << "Failed to get model type.";
+
+  MP_ASSIGN_OR_RETURN(auto backend,
+                      model_data->ReadMetadata(
+                          mediapipe::tasks::genai::llm_utils::kLlmBackendName));
+  RET_CHECK_EQ(backend, "cpu");
+
+  // Create directory for tokenizer and model cache file.
+  if (model_settings->cache_dir != nullptr) {
+    auto s = mediapipe::file::RecursivelyCreateDir(model_settings->cache_dir);
+    if (!s.ok()) {
+      ABSL_LOG(WARNING) << s;
+    }
+  }
+
+  MP_ASSIGN_OR_RETURN(auto spm_model_content,
+                      model_data->ReadMetadata("spm_vocab_model"));
+
+  model_data.reset();
+
+  llm_params.seq_size_T = model_settings->max_num_tokens;
+  llm_params.cache_dir = model_settings->cache_dir;
+
+  auto weight_loader = std::make_unique<
+      mediapipe::tasks::genai::xnn_utils::DefaultLlmWeightsLoader>(
+      model_settings->model_path, llm_params);
+
+  auto runtime_configs =
+      std::make_unique<mediapipe::tasks::genai::xnn_utils::RuntimeConfigs>();
+
+  MP_ASSIGN_OR_RETURN(
+      auto builder,
+      mediapipe::tasks::genai::xnn_utils::CreateLlmBuilder(
+          llm_params, std::move(runtime_configs), nullptr, *model_type));
+
+  MP_ASSIGN_OR_RETURN(auto llm,
+                      mediapipe::tasks::genai::xnn_utils::Llm::CreateLlm(
+                          std::move(weight_loader), std::move(builder)));
+
+  auto tokenizer = std::make_unique<sentencepiece::SentencePieceProcessor>();
+  MP_RETURN_IF_ERROR(tokenizer->LoadFromSerializedProto(spm_model_content));
+
+  std::vector<int> prompt_ids;
+  auto status = tokenizer->Encode("hello", &prompt_ids);
+
+  std::unique_ptr<sentencepiece::normalizer::Normalizer> normalizer;
+  if (tokenizer->model_proto().has_denormalizer_spec() &&
+      tokenizer->model_proto().denormalizer_spec().has_precompiled_charsmap() &&
+      !tokenizer->model_proto()
+           .denormalizer_spec()
+           .precompiled_charsmap()
+           .empty()) {
+    normalizer = std::make_unique<sentencepiece::normalizer::Normalizer>(
+        tokenizer->model_proto().denormalizer_spec());
+  }
+
+  std::unique_ptr<LlmInferenceEngineCpu_Engine> engine(
+      new LlmInferenceEngineCpu_Engine{
+          .tokenizer = tokenizer.release(),
+          .normalizer = normalizer.release(),
+          .llm = llm.release(),
+          .start_token_id = llm_params_proto.start_token_id(),
+          .stop_tokens =
+              std::vector<std::string>(llm_params_proto.stop_tokens().begin(),
+                                       llm_params_proto.stop_tokens().end()),
+          .max_num_tokens = model_settings->max_num_tokens,
+      });
+
+  return engine.release();
+}
+
+absl::StatusOr<LlmInferenceEngine_Session*>
+LlmInferenceEngine_CreateSession_Helper(
+    const LlmInferenceEngineCpu_Engine* engine,
+    const LlmSessionConfig* session_config) {
+  std::unique_ptr<LlmInferenceEngineCpu_Session> session(
+      new LlmInferenceEngineCpu_Session{.engine = engine});
+
+  return session.release();
+}
+
 }  // namespace
 
 void LlmInferenceEngine_CloseResponseContext(
@@ -179,8 +279,17 @@ void LlmInferenceEngine_CloseResponseContext(
 int LlmInferenceEngine_CreateEngine(const LlmModelSettings* model_settings,
                                     LlmInferenceEngine_Session** engine_out,
                                     char** error_msg) {
-  *error_msg = strdup("Not implemented");
-  return 12;
+  auto engine = LlmInferenceEngine_CreateEngine_Helper(model_settings);
+  if (!engine.ok()) {
+    if (error_msg) {
+      *error_msg = strdup(
+          absl::StrCat("Failed to create engine: ", engine.status().ToString())
+              .c_str());
+    }
+    return static_cast<int>(engine.status().code());
+  }
+  *engine_out = engine.value();
+  return 0;
 }
 
 void LlmInferenceEngine_Engine_Delete(LlmInferenceEngine_Engine* engine) {
@@ -191,8 +300,19 @@ int LlmInferenceEngine_CreateSession(LlmInferenceEngine_Engine* engine,
                                      const LlmSessionConfig* session_config,
                                      LlmInferenceEngine_Session** session_out,
                                      char** error_msg) {
-  *error_msg = strdup("Not implemented");
-  return 12;
+  auto cpu_engine = reinterpret_cast<LlmInferenceEngineCpu_Engine*>(engine);
+  auto session =
+      LlmInferenceEngine_CreateSession_Helper(cpu_engine, session_config);
+  if (!session.ok()) {
+    if (error_msg) {
+      *error_msg = strdup(absl::StrCat("Failed to create session: ",
+                                       session.status().ToString())
+                              .c_str());
+    }
+    return static_cast<int>(session.status().code());
+  }
+  *session_out = session.value();
+  return 0;
 }
 
 void LlmInferenceEngine_Session_Delete(LlmInferenceEngine_Session* session) {
