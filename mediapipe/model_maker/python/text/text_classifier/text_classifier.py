@@ -87,8 +87,10 @@ class TextClassifier(classifier.Classifier):
 
   @classmethod
   def create(
-      cls, train_data: text_ds.Dataset, validation_data: text_ds.Dataset,
-      options: text_classifier_options.TextClassifierOptions
+      cls,
+      train_data: text_ds.Dataset,
+      validation_data: text_ds.Dataset,
+      options: text_classifier_options.TextClassifierOptions,
   ) -> "TextClassifier":
     """Factory function that creates and trains a text classifier.
 
@@ -110,7 +112,8 @@ class TextClassifier(classifier.Classifier):
     if train_data.label_names != validation_data.label_names:
       raise ValueError(
           f"Training data label names {train_data.label_names} not equal to "
-          f"validation data label names {validation_data.label_names}")
+          f"validation data label names {validation_data.label_names}"
+      )
 
     _validate(options)
     if options.model_options is None:
@@ -202,7 +205,8 @@ class TextClassifier(classifier.Classifier):
   def export_model(
       self,
       model_name: str = "model.tflite",
-      quantization_config: Optional[quantization.QuantizationConfig] = None):
+      quantization_config: Optional[quantization.QuantizationConfig] = None,
+  ):
     """Converts and saves the model to a TFLite file with metadata included.
 
     Note that only the TFLite file is needed for deployment. This function also
@@ -263,7 +267,8 @@ class _AverageWordEmbeddingClassifier(TextClassifier):
         "accuracy",
     ]
     self._text_preprocessor: (
-        preprocessor.AverageWordEmbeddingClassifierPreprocessor) = None
+        preprocessor.AverageWordEmbeddingClassifierPreprocessor
+    ) = None
 
   @classmethod
   def create_average_word_embedding_classifier(
@@ -286,13 +291,16 @@ class _AverageWordEmbeddingClassifier(TextClassifier):
         model_spec=options.supported_model.value(),
         model_options=options.model_options,
         hparams=options.hparams,
-        label_names=train_data.label_names)
+        label_names=train_data.label_names,
+    )
     average_word_embedding_classifier._create_and_train_model(
-        train_data, validation_data)
+        train_data, validation_data
+    )
     return average_word_embedding_classifier
 
-  def _create_and_train_model(self, train_data: text_ds.Dataset,
-                              validation_data: text_ds.Dataset):
+  def _create_and_train_model(
+      self, train_data: text_ds.Dataset, validation_data: text_ds.Dataset
+  ):
     """Creates the Average Word Embedding classifier keras model and trains it.
 
     Args:
@@ -300,7 +308,8 @@ class _AverageWordEmbeddingClassifier(TextClassifier):
       validation_data: Validation data.
     """
     (processed_train_data, processed_validation_data) = (
-        self._load_and_run_preprocessor(train_data, validation_data))
+        self._load_and_run_preprocessor(train_data, validation_data)
+    )
     self._create_model()
     self._optimizer = "rmsprop"
     self._train_model(processed_train_data, processed_validation_data)
@@ -326,9 +335,12 @@ class _AverageWordEmbeddingClassifier(TextClassifier):
             seq_len=self._model_options.seq_len,
             do_lower_case=self._model_options.do_lower_case,
             texts=train_texts + validation_texts,
-            vocab_size=self._model_options.vocab_size))
+            vocab_size=self._model_options.vocab_size,
+        )
+    )
     return self._text_preprocessor.preprocess(
-        train_data), self._text_preprocessor.preprocess(validation_data)
+        train_data
+    ), self._text_preprocessor.preprocess(validation_data)
 
   def _create_model(self):
     """Creates an Average Word Embedding model."""
@@ -361,8 +373,10 @@ class _AverageWordEmbeddingClassifier(TextClassifier):
         model_buffer=tflite_model,
         regex_tokenizer=metadata_writer.RegexTokenizer(
             delim_regex_pattern=self._DELIM_REGEX_PATTERN,
-            vocab_file_path=vocab_filepath),
-        labels=metadata_writer.Labels().add(list(self._label_names)))
+            vocab_file_path=vocab_filepath,
+        ),
+        labels=metadata_writer.Labels().add(list(self._label_names)),
+    )
 
 
 class _BertClassifier(TextClassifier):
@@ -474,8 +488,9 @@ class _BertClassifier(TextClassifier):
     )
     return bert_classifier
 
-  def _create_and_train_model(self, train_data: text_ds.Dataset,
-                              validation_data: text_ds.Dataset):
+  def _create_and_train_model(
+      self, train_data: text_ds.Dataset, validation_data: text_ds.Dataset
+  ):
     """Creates the BERT-based classifier keras model and trains it.
 
     Args:
@@ -627,6 +642,17 @@ class _BertClassifier(TextClassifier):
                 )
             )
       else:
+        for i in range(self._num_classes):
+          metric_functions.append(
+              metrics.MultiClassSparsePrecision(
+                  name=f"class_{i}_precision", class_id=i
+              )
+          )
+          metric_functions.append(
+              metrics.MultiClassSparseRecall(
+                  name=f"class_{i}_recall", class_id=i
+              )
+          )
         if self._hparams.desired_precisions or self._hparams.desired_recalls:
           raise ValueError(
               "desired_recalls and desired_precisions parameters are binary"
@@ -709,7 +735,8 @@ class _BertClassifier(TextClassifier):
     self._hparams.steps_per_epoch = model_util.get_steps_per_epoch(
         steps_per_epoch=self._hparams.steps_per_epoch,
         batch_size=self._hparams.batch_size,
-        train_data=train_data)
+        train_data=train_data,
+    )
     total_steps = self._hparams.steps_per_epoch * self._hparams.epochs
     warmup_steps = int(total_steps * 0.1)
     initial_lr = self._hparams.learning_rate
@@ -752,9 +779,8 @@ class _BertClassifier(TextClassifier):
 
   def _save_vocab(self, vocab_filepath: str):
     tf.io.gfile.copy(
-        self._text_preprocessor.get_vocab_file(),
-        vocab_filepath,
-        overwrite=True)
+        self._text_preprocessor.get_vocab_file(), vocab_filepath, overwrite=True
+    )
 
   def _get_metadata_writer(self, tflite_model: bytearray, vocab_filepath: str):
     return text_classifier_writer.MetadataWriter.create_for_bert_model(
@@ -763,7 +789,8 @@ class _BertClassifier(TextClassifier):
         labels=metadata_writer.Labels().add(list(self._label_names)),
         ids_name=self._model_spec.tflite_input_name["ids"],
         mask_name=self._model_spec.tflite_input_name["mask"],
-        segment_name=self._model_spec.tflite_input_name["segment_ids"])
+        segment_name=self._model_spec.tflite_input_name["segment_ids"],
+    )
 
   def export_model_with_tokenizer(
       self,

@@ -66,6 +66,66 @@ def _get_binary_sparse_metric(metric: tf.metrics.Metric):
   return BinarySparseMetric
 
 
+def _get_multiclass_sparse_metric(metric: tf.metrics.Metric):
+  """Creates a sparse version of a tf.keras.Metric for multi-class tasks.
+
+  This class evaluates metrics for a specified class_id in a one-vs-all binary
+  fashion where all other classes are treated as a combined negative class, and
+  class_id is the positive class. The model's predicted class is always the
+  argmax of the scores.
+
+  Currently supported tf.metrics.Metric classes:
+    1. tf.metrics.Recall
+    2. tf.metrics.Precision
+
+  For update state, the shapes of y_true, y_pred, and sample_weight are expected
+  to be:
+    - y_true: [batch_size x 1] array of indices, indicating the true labels.
+    - y_pred: [batch_size x num_classes] array of probabilities where
+    y_pred[:,i] is the probability of the i-th class.
+    - sample_weight: [batch_size x 1] array of sample weights.
+
+  Args:
+    metric: A tf.metric.Metric class for which we want to generate a multiclass
+      sparse version of this metric.
+
+  Returns:
+    A class for the multiclass sparse version of the specified tf.keras.Metric.
+  """
+
+  class MultiClassSparseMetric(metric):
+    """A multiclass sparse wrapper class for a tf.keras.Metric."""
+
+    def __init__(self, *args, **kwargs):
+      if 'class_id' not in kwargs:
+        raise ValueError(
+            f'Custom MultiClassSparseMetric for class:{metric.__name__} must'
+            ' have class_id specified upon initialization.'
+        )
+      super().__init__(*args, **kwargs)
+      self._class_id = kwargs['class_id']
+
+    def update_state(self, y_true, y_pred, sample_weight=None):
+      num_classes = y_pred.shape[-1]
+      y_true = tf.reshape(y_true, [-1])
+      y_true = tf.where(y_true != self._class_id, -1, y_true)
+      y_true = tf.one_hot(y_true, depth=num_classes)
+
+      y_pred = tf.argmax(y_pred, axis=-1)
+      y_pred = tf.cast(y_pred, tf.int32)
+      y_pred = tf.where(y_pred != self._class_id, -1, y_pred)
+      y_pred = tf.one_hot(y_pred, depth=num_classes)
+      super().update_state(
+          y_true,
+          y_pred,
+          tf.reshape(sample_weight, [-1])
+          if sample_weight is not None
+          else None,
+      )
+
+  return MultiClassSparseMetric
+
+
 class BinaryAUC(tf.keras.metrics.AUC):
   """A Binary AUC metric for multi-label tasks.
 
@@ -154,6 +214,8 @@ BinarySparseRecallAtPrecision = _get_binary_sparse_metric(
 BinarySparsePrecisionAtRecall = _get_binary_sparse_metric(
     tf.metrics.PrecisionAtRecall
 )
+MultiClassSparseRecall = _get_multiclass_sparse_metric(tf.metrics.Recall)
+MultiClassSparsePrecision = _get_multiclass_sparse_metric(tf.metrics.Precision)
 MaskedBinaryPrecision = _get_masked_binary_metric(tf.metrics.Precision)
 MaskedBinaryRecall = _get_masked_binary_metric(tf.metrics.Recall)
 MaskedBinaryRecallAtPrecision = _get_masked_binary_metric(
