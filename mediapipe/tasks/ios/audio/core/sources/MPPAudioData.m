@@ -61,7 +61,7 @@
 }
 
 - (NSUInteger)bufferLength {
-  return _ringBuffer.length;
+  return _ringBuffer.length / _format.channelCount;
 }
 
 @end
