@@ -162,7 +162,7 @@ message TransformerParameters {
   // before the attention.
   bool skip_absolute_positional_embeddings = 18;
 
-  reserved 19, 20, 21;
+  reserved 19, 20, 21, 23;
 
   // Audio parameters
   // Describes where to interleave residual adapters with transformer layers.
