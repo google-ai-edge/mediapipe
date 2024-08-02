@@ -58,7 +58,7 @@ class PrefixDecodeLlm : public Llm {
   ~PrefixDecodeLlm() final = default;
 
   absl::Status InitInputTokens(
-      absl::Span<const std::vector<int>> batch_input_ids) final {
+      absl::Span<const std::vector<int>> batch_input_ids) {
     MP_RETURN_IF_ERROR(Reset());
 
     MP_RETURN_IF_ERROR(prefix_llm_->InitInputTokens(batch_input_ids));
@@ -128,7 +128,7 @@ class PrefixDecodeLlm : public Llm {
         (llm_params_.draft_size_G > 1 ? llm_params_.draft_size_G + 1 : 1);
     VLOG(2) << "Decode step " << decode_step;
 
-    RET_CHECK(decode_step < llm_params_.seq_size_T - 1)
+    RET_CHECK_LT(decode_step, llm_params_.seq_size_T - 1)
         .SetCode(absl::StatusCode::kOutOfRange);
 
     // TODO - b/329445989: This copy could be performance bottleneck. Consider
@@ -601,16 +601,13 @@ absl::Status Llm::ReduceContextPrevIds(std::shared_ptr<Context> context,
   return absl::OkStatus();
 }
 
-absl::Status Llm::InitInputTokens(const std::vector<int>& input_ids) {
-  RET_CHECK_EQ(llm_params_.batch_size_B, 1)
-      << "For batch inference, use the batch version API";
-  auto span = absl::Span<const std::vector<int>>(&input_ids, 1);
-  return InitInputTokens(span);
-}
-
 absl::Status Llm::AddInputTokens(
     absl::Span<const std::vector<int>> batch_input_ids) {
-  return absl::UnimplementedError("Need to turn on kv cache");
+  for (const auto& prev_ids : batch_prev_ids()) {
+    RET_CHECK_EQ(prev_ids.size(), 0)
+        << "Need to SeekTimeStep(0) before adding input tokens.";
+  }
+  return InitInputTokens(batch_input_ids);
 }
 
 absl::Status Llm::InitInputTokens(
@@ -670,6 +667,13 @@ absl::Status Llm::InitInputTokens(
     prev_ids.insert(prev_ids.end(), input_ids.begin(), input_ids.end());
   }
   return SetupRuntime();
+}
+
+absl::Status Llm::SeekTimeStep(size_t time_step) {
+  for (auto& prev_ids : batch_prev_ids()) {
+    prev_ids.resize(time_step);
+  }
+  return absl::OkStatus();
 }
 
 absl::Status Llm::GetNextToken(std::vector<int>* output_ids) {

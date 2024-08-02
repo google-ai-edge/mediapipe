@@ -22,6 +22,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
@@ -151,10 +152,8 @@ void* start_llm_function(void* args) {
   }
   prompt_ids.insert(prompt_ids.begin(), cpu_session->engine->start_token_id);
 
-  status = cpu_session->engine->llm->InitInputTokens(prompt_ids);
-  if (!status.ok()) {
-    ABSL_LOG(FATAL) << "Failed to process input tokens: " << status;
-  };
+  ABSL_CHECK_OK(cpu_session->engine->llm->SeekTimeStep(0));
+  ABSL_CHECK_OK(cpu_session->engine->llm->AddInputTokens({prompt_ids}));
 
   cpu_session->max_num_output_tokens =
       cpu_session->engine->max_num_tokens - prompt_ids.size();

@@ -122,13 +122,10 @@ class Llm : protected xnn_utils::XnnGraph {
   virtual absl::Status AddInputTokens(
       absl::Span<const std::vector<int>> batch_input_ids);
 
-  // (Re)Initialize with input token ids. This will reset the cache, mask etc.
-  virtual absl::Status InitInputTokens(
-      absl::Span<const std::vector<int>> batch_input_ids);
-  // Exist for backward compatibility, constructs a span of size 1, and calls
-  // the above batched version.
-  ABSL_DEPRECATED("Use batched version instead")
-  absl::Status InitInputTokens(const std::vector<int>& input_ids);
+  // Seeks to the given time step. This is typically used to go back to certain
+  // status for speculative decoding. SeekTimeStep(0) is effectively resetting
+  // the internal state.
+  absl::Status SeekTimeStep(size_t time_step);
 
   // Samples the logits from ComputeLogits() and returns the sampled ids. This
   // also AddInputTokens() with the sampled ids.
@@ -176,6 +173,10 @@ class Llm : protected xnn_utils::XnnGraph {
   // true, the returned Llm will have `kv_cache_` prepared.
   static absl::StatusOr<std::unique_ptr<Llm>> CreatePrefixOnlyLlm(
       LlmWeights weights, std::shared_ptr<LlmBuilder> builder);
+
+  // (Re)Initializes with input token ids. This will reset the cache, mask etc.
+  absl::Status InitInputTokens(
+      absl::Span<const std::vector<int>> batch_input_ids);
 
   absl::Status Reset();
 

@@ -143,7 +143,8 @@ void RunBenchmarkDecode(Llm& llm, benchmark::State& state) {
   int64_t num_token_processed = 0;
   for (auto s : state) {
     state.PauseTiming();
-    MP_ASSERT_OK(llm.InitInputTokens(input_tokens));
+    MP_ASSERT_OK(llm.SeekTimeStep(0));
+    MP_ASSERT_OK(llm.AddInputTokens(input_tokens));
     state.ResumeTiming();
     while (llm.TotalTokenSize() < sequence_length) {
       MP_ASSERT_OK(llm.GetNextToken(&token_ids));
@@ -170,7 +171,10 @@ void RunBenchmarkEncode(Llm& llm, benchmark::State& state) {
   }
   int64_t num_token_processed = 0;
   for (auto s : state) {
-    MP_ASSERT_OK(llm.InitInputTokens(input_tokens));
+    state.PauseTiming();
+    MP_ASSERT_OK(llm.SeekTimeStep(0));
+    state.ResumeTiming();
+    MP_ASSERT_OK(llm.AddInputTokens(input_tokens));
     num_token_processed += prompt_size * batch_size;
   }
   state.SetItemsProcessed(num_token_processed);
@@ -222,7 +226,7 @@ void BM_Llm_QCINT8(benchmark::State& state) {
 
   MP_ASSERT_OK_AND_ASSIGN(
       auto llm, Llm::CreateLlm(std::move(weights_loader), std::move(builder)));
-  MP_ASSERT_OK(llm->InitInputTokens({0}));
+  MP_ASSERT_OK(llm->AddInputTokens({{0}}));
 
   RunBenchmark(*llm, state);
 }
@@ -236,7 +240,7 @@ void BM_Llm_Mixed_INT48(benchmark::State& state) {
 
   MP_ASSERT_OK_AND_ASSIGN(
       auto llm, Llm::CreateLlm(std::move(weights_loader), std::move(builder)));
-  MP_ASSERT_OK(llm->InitInputTokens({0}));
+  MP_ASSERT_OK(llm->AddInputTokens({{0}}));
 
   RunBenchmark(*llm, state);
 }
