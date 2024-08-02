@@ -37,6 +37,7 @@ message LlmGpuCalculatorOptions {
     bool use_low_power = 4;
     bool prefer_texture_weights = 5;
     bool enable_host_mapped_pointer = 6;
+    bool disallow_8bit_convs = 7;
   }
   GpuModelInfo gpu_model_info = 10;
 
