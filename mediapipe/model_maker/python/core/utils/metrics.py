@@ -13,6 +13,9 @@
 # limitations under the License.
 """Metrics utility library."""
 
+from typing import Sequence
+import math
+from typing import Optional
 import tensorflow as tf
 
 
@@ -204,6 +207,52 @@ def _get_masked_binary_metric(metric: tf.metrics.Metric):
       )
 
   return MaskedBinaryMetric
+
+
+class WeightedSumMetric(tf.keras.metrics.Metric):
+  """A weighted sum metric for combining multiclass sparse metrics.
+
+  addend_metrics: A list of metrics to be combined.
+  weights: A list of weights for each metric. If None, then the weights of the
+  metrics will be equal.
+  name: The name of the weighted sum metric.
+  """
+
+  def __init__(
+      self,
+      addend_metrics: Sequence[tf.keras.metrics.Metric],
+      weights: Optional[Sequence[float]] = None,
+      name: str = 'weighted_sum',
+      **kwargs,
+  ):
+    super().__init__(name=name, **kwargs)
+    self._metrics = addend_metrics
+    self._weights = weights
+
+    if self._weights is None:
+      self._weights = [1.0 / len(self._metrics)] * len(self._metrics)
+    else:
+      if len(self._weights) != len(self._metrics):
+        raise ValueError('Number of weights must match the number of metrics.')
+
+    if any(w < 0 for w in self._weights) or not math.isclose(
+        sum(self._weights), 1.0
+    ):
+      raise ValueError('Weights must be non-negative and sum to 1.')
+
+  def update_state(self, y_true, y_pred, sample_weight=None):
+    for metric in self._metrics:
+      metric.update_state(y_true, y_pred, sample_weight)
+
+  def result(self):
+    weighted_sum = 0.0
+    for metric, weight in zip(self._metrics, self._weights):
+      weighted_sum += weight * metric.result()
+    return weighted_sum
+
+  def reset_states(self):
+    for metric in self._metrics:
+      metric.reset_states()
 
 
 BinarySparseRecall = _get_binary_sparse_metric(tf.metrics.Recall)

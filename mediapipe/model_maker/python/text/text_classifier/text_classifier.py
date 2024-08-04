@@ -393,6 +393,12 @@ class _BertClassifier(TextClassifier):
   ):
     super().__init__(model_spec, label_names, hparams.shuffle)
     self._hparams = hparams
+    if self._hparams.monitor:
+      monitor = f"val_{self._hparams.monitor}"
+    elif self._num_classes == 2 or self._hparams.is_multilabel:
+      monitor = "val_auc"  # auc is a binary or multilabel only metric
+    else:
+      monitor = "val_accuracy"
     self._callbacks = list(
         model_util.get_default_callbacks(
             self._hparams.export_dir, self._hparams.checkpoint_frequency
@@ -400,9 +406,7 @@ class _BertClassifier(TextClassifier):
     ) + [
         tf.keras.callbacks.ModelCheckpoint(
             os.path.join(self._hparams.export_dir, "best_model"),
-            monitor="val_auc"
-            if (self._num_classes == 2 or self._hparams.is_multilabel)
-            else "val_accuracy",  # auc is a binary or multilabel only metric
+            monitor=monitor,
             mode="max",
             save_best_only=True,
             save_weights_only=False,
@@ -412,7 +416,9 @@ class _BertClassifier(TextClassifier):
     self._text_preprocessor: preprocessor.BertClassifierPreprocessor = None
     with self._hparams.get_strategy().scope():
       class_weights = (
-          self._hparams.multiclass_weights if self._num_classes > 2 else None
+          self._hparams.multiclass_loss_weights
+          if self._num_classes > 2
+          else None
       )
       if self._hparams.is_multilabel:
         self._loss_function = loss_functions.MaskedBinaryCrossentropy(
@@ -540,6 +546,36 @@ class _BertClassifier(TextClassifier):
         self._text_preprocessor.preprocess(validation_data),
     )
 
+  def _get_eligle_monitor_metric_variables(
+      self,
+  ) -> Tuple[Optional[str], Optional[Sequence[float]]]:
+    """Returns the monitor metric name and class weights if eligible."""
+    class_weights = self._hparams.best_checkpoint_monitor_weights
+    monitor_name = self._hparams.monitor
+
+    if (
+        class_weights
+        and monitor_name == "multiclass_recalls_accuracy_weighted_sum"
+    ):
+      return monitor_name, class_weights
+    elif (
+        not class_weights
+        and monitor_name == "multiclass_recalls_accuracy_weighted_sum"
+    ):
+      raise ValueError(
+          "best_checkpoint_monitor_weights must be specified for"
+          " multiclass_recalls_accuracy_weighted_sum monitor metric."
+      )
+    elif (
+        class_weights
+        and monitor_name != "multiclass_recalls_accuracy_weighted_sum"
+    ):
+      raise ValueError(
+          "best_checkpoint_monitor_weights can only be specified for"
+          " multiclass_recalls_accuracy_weighted_sum monitor metric."
+      )
+    return None, None
+
   def _create_metrics(self):
     """Creates metrics for training and evaluation.
 
@@ -654,6 +690,30 @@ class _BertClassifier(TextClassifier):
           metric_functions.append(
               metrics.MultiClassSparseRecall(
                   name=f"class_{i}_recall", class_id=i
+              )
+          )
+        monitor_name, class_weights = (
+            self._get_eligle_monitor_metric_variables()
+        )
+        if monitor_name and class_weights:
+          monitor_metrics = [
+              tf.keras.metrics.SparseCategoricalAccuracy(
+                  "accuracy", dtype=tf.float32
+              )
+          ]
+          for i in range(self._num_classes):
+            monitor_metrics.append(
+                metrics.MultiClassSparseRecall(
+                    name=f"class_{i}_recall", class_id=i
+                ),
+            )
+          weights = [1.0 - sum(class_weights)]
+          weights.extend(class_weights)
+          metric_functions.append(
+              metrics.WeightedSumMetric(
+                  addend_metrics=monitor_metrics,
+                  weights=weights,
+                  name=monitor_name,
               )
           )
         if self._hparams.desired_precisions or self._hparams.desired_recalls:
