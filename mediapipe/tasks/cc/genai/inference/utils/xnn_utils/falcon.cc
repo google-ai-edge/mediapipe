@@ -89,46 +89,28 @@ FalconRW1BBuilder::FeedForwardExcludeNorm(
 
 absl::Status FalconRW1BBuilder::InitAttentionMask(size_t current_seq_len,
                                                   size_t process_seq_len,
-                                                  bool is_prefix,
                                                   Tensor& out_attn_mask) {
   if (!attention_mask_values_.data()) {
     MP_RETURN_IF_ERROR(InitAlibiAttentionMaskValues());
   }
 
   if (llm_params_.enable_dynamic_shape) {
-    if (!is_prefix) {
-      out_attn_mask.Resize(Tensor::DimsType{1, llm_params_.n_heads_N,
-                                            current_seq_len + process_seq_len});
+    out_attn_mask.Resize(Tensor::DimsType{process_seq_len,
+                                          llm_params_.n_heads_N,
+                                          current_seq_len + process_seq_len});
+    for (size_t r = 0; r < out_attn_mask.dims[0]; ++r) {
       for (size_t n = 0; n < llm_params_.n_heads_N; ++n) {
-        auto slice = out_attn_mask.Slice(1, n);
+        auto slice = out_attn_mask.Slice(0, r)->Slice(1, n);
         MP_RETURN_IF_ERROR(slice->LoadFromBuffer(
-            attention_mask_values_[current_seq_len][n].data()));
-      }
-    } else {
-      out_attn_mask.Resize(Tensor::DimsType{process_seq_len,
-                                            llm_params_.n_heads_N,
-                                            current_seq_len + process_seq_len});
-      for (size_t r = 0; r < out_attn_mask.dims[0]; ++r) {
-        for (size_t n = 0; n < llm_params_.n_heads_N; ++n) {
-          auto slice = out_attn_mask.Slice(0, r)->Slice(1, n);
-          MP_RETURN_IF_ERROR(slice->LoadFromBuffer(
-              attention_mask_values_[r + current_seq_len][n].data()));
-        }
+            attention_mask_values_[r + current_seq_len][n].data()));
       }
     }
   } else {
-    if (!is_prefix) {
-      RET_CHECK_EQ(out_attn_mask.num_elements,
-                   llm_params_.n_heads_N * llm_params_.seq_size_T);
-      MP_RETURN_IF_ERROR(out_attn_mask.LoadFromBuffer(
-          attention_mask_values_[current_seq_len].data()));
-    } else {
-      RET_CHECK_EQ(out_attn_mask.num_elements, llm_params_.seq_size_T *
-                                                   llm_params_.n_heads_N *
-                                                   llm_params_.seq_size_T);
-      MP_RETURN_IF_ERROR(
-          out_attn_mask.LoadFromBuffer(attention_mask_values_.data()));
-    }
+    RET_CHECK_EQ(out_attn_mask.num_elements, llm_params_.seq_size_T *
+                                                 llm_params_.n_heads_N *
+                                                 llm_params_.seq_size_T);
+    MP_RETURN_IF_ERROR(
+        out_attn_mask.LoadFromBuffer(attention_mask_values_.data()));
   }
 
   return absl::OkStatus();

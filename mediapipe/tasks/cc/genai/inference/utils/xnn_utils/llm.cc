@@ -143,9 +143,8 @@ class PrefixDecodeLlm : public Llm {
               ->Data()));
     }
     // Let builder re-populate the values of these tensors.
-    MP_RETURN_IF_ERROR(
-        builder_->InitAttentionMask(decode_step, llm_params_.draft_size_G + 1,
-                                    /*is_prefix=*/false, *atten_masks_));
+    MP_RETURN_IF_ERROR(builder_->InitAttentionMask(
+        decode_step, llm_params_.draft_size_G + 1, *atten_masks_));
 
     if (!llm_params_.skip_absolute_positional_embeddings) {
       MP_RETURN_IF_ERROR(builder_->InitPosEmbedding(
@@ -332,6 +331,8 @@ absl::StatusOr<std::unique_ptr<Llm>> Llm::CreateLlm(
     std::unique_ptr<LlmBuilder> builder) {
   const auto& llm_params = weight_loader->llm_params();
   if (llm_params.enable_kv_cache) {
+    RET_CHECK(llm_params.enable_dynamic_shape)
+        << "Dynamic shape should be enabled together with KV cache.";
     return CreatePrefixDecodeLlm(std::move(weight_loader), std::move(builder));
   }
   if (llm_params.enable_dynamic_shape) {
@@ -627,8 +628,8 @@ absl::Status Llm::InitInputTokens(
   const size_t current_seq_len = TotalTokenSize();
 
   // Initialize the attention mask.
-  MP_RETURN_IF_ERROR(builder_->InitAttentionMask(
-      current_seq_len, input_seq_len, /*is_prefix=*/true, *atten_masks_));
+  MP_RETURN_IF_ERROR(builder_->InitAttentionMask(current_seq_len, input_seq_len,
+                                                 *atten_masks_));
   if (!llm_params_.skip_absolute_positional_embeddings) {
     // Initialize the positional embedding data.
     MP_RETURN_IF_ERROR(builder_->InitPosEmbedding(
@@ -923,7 +924,6 @@ absl::StatusOr<std::shared_ptr<Tensor>> LlmBuilder::PostProcess(
 
 absl::Status LlmBuilder::InitAttentionMask(size_t current_seq_len,
                                            size_t process_seq_len,
-                                           bool is_prefix,
                                            Tensor& out_attn_mask) {
   if (!attention_mask_values_.data()) {
     MP_RETURN_IF_ERROR(InitAttentionMaskValues(process_seq_len));
@@ -938,16 +938,10 @@ absl::Status LlmBuilder::InitAttentionMask(size_t current_seq_len,
           attention_mask_values_[r + current_seq_len].data()));
     }
   } else {
-    if (!is_prefix) {
-      RET_CHECK_EQ(out_attn_mask.num_elements, llm_params_.seq_size_T);
-      MP_RETURN_IF_ERROR(out_attn_mask.LoadFromBuffer(
-          attention_mask_values_[current_seq_len].data()));
-    } else {
-      RET_CHECK_EQ(out_attn_mask.num_elements,
-                   llm_params_.seq_size_T * llm_params_.seq_size_T);
-      MP_RETURN_IF_ERROR(
-          out_attn_mask.LoadFromBuffer(attention_mask_values_.data()));
-    }
+    RET_CHECK_EQ(out_attn_mask.num_elements,
+                 llm_params_.seq_size_T * llm_params_.seq_size_T);
+    MP_RETURN_IF_ERROR(
+        out_attn_mask.LoadFromBuffer(attention_mask_values_.data()));
   }
 
   return absl::OkStatus();

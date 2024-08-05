@@ -60,7 +60,6 @@ class FalconRW1BBuilder : public LlmBuilder {
 
   // Creates an Alibi fused attention mask.
   absl::Status InitAttentionMask(size_t current_seq_len, size_t process_seq_len,
-                                 bool is_prefix,
                                  Tensor& out_attn_mask) override;
 
   absl::Status InitAlibiAttentionMaskValues();

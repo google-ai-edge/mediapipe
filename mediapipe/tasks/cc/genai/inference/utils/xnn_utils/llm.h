@@ -302,7 +302,7 @@ class LlmBuilder : protected XnnGraphBuilder {
   // number of tokens has been processed, and it's about to process
   // `process_seq_len` number of tokens.
   virtual absl::Status InitAttentionMask(size_t current_seq_len,
-                                         size_t process_seq_len, bool is_prefix,
+                                         size_t process_seq_len,
                                          Tensor& out_attn_mask);
 
   // Initialize the `out_pos_embedding` values given the condition that

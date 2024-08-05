@@ -23,6 +23,7 @@
 #include <variant>
 #include <vector>
 
+#include "absl/base/attributes.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
@@ -132,7 +133,8 @@ struct LlmParams {
   bool enable_kv_cache = false;
   // If true, inference engine will optimize tensor shape according to current
   // sequence length to avoid computation waste.
-  bool enable_dynamic_shape = false;
+  bool enable_dynamic_shape
+      ABSL_DEPRECATED("Always follow the value of enable_kv_cache.") = false;
 
   // If provided, the runtime will prepare cache at the provided directory.
   // Otherwise, cache will be prepared besides the original model.

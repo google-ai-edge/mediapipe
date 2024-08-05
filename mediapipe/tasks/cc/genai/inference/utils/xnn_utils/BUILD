@@ -138,6 +138,7 @@ cc_library(
         "//mediapipe/framework/port:status",
         "//mediapipe/tasks/cc/genai/inference/proto:llm_params_cc_proto",
         "//mediapipe/tasks/cc/genai/inference/proto:transformer_params_cc_proto",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
