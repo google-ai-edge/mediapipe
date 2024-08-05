@@ -35,6 +35,7 @@
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
+#include "mediapipe/tasks/cc/genai/inference/common/mdspan.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/graph_builder.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/llm_weights.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/sampling.h"
@@ -446,7 +447,7 @@ absl::Status Llm::Reset() {
     // TODO - b/325325100: avoid clear().
     prev_id.clear();
   }
-  builder_->attention_mask_values_.reset();
+  builder_->attention_mask_values_ = MdSpan<float, 2>();
   builder_->position_embedding_values_.reset();
   builder_->segment_pos_values_.reset();
 
@@ -922,41 +923,28 @@ absl::Status LlmBuilder::InitAttentionMask(size_t current_seq_len,
                                            size_t process_seq_len,
                                            bool is_prefix,
                                            Tensor& out_attn_mask) {
-  if (!attention_mask_values_) {
+  if (!attention_mask_values_.data()) {
     MP_RETURN_IF_ERROR(InitAttentionMaskValues(process_seq_len));
   }
 
   if (llm_params_.enable_dynamic_shape) {
-    if (!is_prefix) {
-      out_attn_mask.Resize(
-          Tensor::DimsType{1, current_seq_len + process_seq_len});
-      out_attn_mask.flat_data = std::shared_ptr<char>(
-          attention_mask_values_,
-          reinterpret_cast<char*>(attention_mask_values_->data() +
-                                  llm_params_.seq_size_T * current_seq_len));
-    } else {
-      out_attn_mask.Resize(
-          Tensor::DimsType{process_seq_len, current_seq_len + process_seq_len});
-      for (size_t r = 0; r < out_attn_mask.dims[0]; ++r) {
-        auto slice = out_attn_mask.Slice(0, r);
-        MP_RETURN_IF_ERROR(slice->LoadFromBuffer(
-            attention_mask_values_->data() +
-            (r + current_seq_len) * llm_params_.seq_size_T));
-      }
+    out_attn_mask.Resize(
+        Tensor::DimsType{process_seq_len, current_seq_len + process_seq_len});
+    for (size_t r = 0; r < out_attn_mask.dims[0]; ++r) {
+      auto slice = out_attn_mask.Slice(0, r);
+      MP_RETURN_IF_ERROR(slice->LoadFromBuffer(
+          attention_mask_values_[r + current_seq_len].data()));
     }
   } else {
     if (!is_prefix) {
       RET_CHECK_EQ(out_attn_mask.num_elements, llm_params_.seq_size_T);
-      out_attn_mask.flat_data = std::shared_ptr<char>(
-          attention_mask_values_,
-          reinterpret_cast<char*>(attention_mask_values_->data() +
-                                  llm_params_.seq_size_T * current_seq_len));
+      MP_RETURN_IF_ERROR(out_attn_mask.LoadFromBuffer(
+          attention_mask_values_[current_seq_len].data()));
     } else {
       RET_CHECK_EQ(out_attn_mask.num_elements,
                    llm_params_.seq_size_T * llm_params_.seq_size_T);
-      out_attn_mask.flat_data = std::shared_ptr<char>(
-          attention_mask_values_,
-          reinterpret_cast<char*>(attention_mask_values_->data()));
+      MP_RETURN_IF_ERROR(
+          out_attn_mask.LoadFromBuffer(attention_mask_values_.data()));
     }
   }
 
@@ -964,10 +952,14 @@ absl::Status LlmBuilder::InitAttentionMask(size_t current_seq_len,
 }
 
 absl::Status LlmBuilder::InitAttentionMaskValues(size_t process_seq_len) {
-  const auto& seq_size = llm_params_.seq_size_T;
+  const size_t seq_size = llm_params_.seq_size_T;
   constexpr float neg_value = 0.8 * std::numeric_limits<float>::lowest();
-  attention_mask_values_ =
-      std::make_shared<std::vector<float>>(seq_size * seq_size, neg_value);
+  {
+    std::vector<float> values(seq_size * seq_size, neg_value);
+    float* values_ptr = values.data();
+    attention_mask_values_ = MakeMdSpan(values_ptr, seq_size, seq_size,
+                                        [values = std::move(values)]() {});
+  }
   switch (llm_params_.model_type) {
     case LlmParams::ModelType::PREFIX: {
       RET_CHECK_LE(process_seq_len, seq_size);
@@ -976,7 +968,7 @@ absl::Status LlmBuilder::InitAttentionMaskValues(size_t process_seq_len) {
       for (int i = 0; i < seq_size; ++i) {
         for (int j = 0; j < seq_size; ++j) {
           if (j <= i || std::max(j, i) < process_seq_len) {
-            (*attention_mask_values_)[seq_size * i + j] = 0;
+            attention_mask_values_.at(i, j) = 0;
           } else {
             break;
           }
@@ -988,7 +980,7 @@ absl::Status LlmBuilder::InitAttentionMaskValues(size_t process_seq_len) {
       for (int i = 0; i < seq_size; ++i) {
         for (int j = 0; j < seq_size; ++j) {
           if (j <= i) {
-            (*attention_mask_values_)[seq_size * i + j] = 0;
+            attention_mask_values_.at(i, j) = 0;
           } else {
             break;
           }

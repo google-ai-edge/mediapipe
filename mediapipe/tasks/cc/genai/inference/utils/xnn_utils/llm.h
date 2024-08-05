@@ -27,6 +27,7 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "mediapipe/tasks/cc/genai/inference/common/mdspan.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/graph_builder.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/llm_weights.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/sampling.h"
@@ -364,7 +365,7 @@ class LlmBuilder : protected XnnGraphBuilder {
   Llm::InternalLlmParams internal_llm_params_;
 
   // Storing values of attention mask with shape [max_seq_len, max_seq_len]
-  std::shared_ptr<std::vector<float>> attention_mask_values_;
+  MdSpan<float, 2> attention_mask_values_;
   // Storing values of positional embedding with shape [max_seq_len,
   // model_dimension]
   std::shared_ptr<std::vector<float>> position_embedding_values_;
