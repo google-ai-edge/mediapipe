@@ -289,7 +289,7 @@ TEST(TensorAhwbTest, TestTrackingAhwb) {
       // Align size of the Ahwb by multiple of 16.
       auto view = tensor.GetAHardwareBufferWriteView();
       EXPECT_NE(view.handle(), nullptr);
-      view.SetReadingFinishedFunc([](bool) { return true; });
+      view.SetWritingFinishedFD(/*fd=*/-1, [](bool) { return true; });
     }
   }
   {

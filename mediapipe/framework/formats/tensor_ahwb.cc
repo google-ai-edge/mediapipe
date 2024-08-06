@@ -293,13 +293,12 @@ Tensor::AHardwareBufferView Tensor::GetAHardwareBufferReadView() const {
 
   EraseCompletedUsages(ahwb_usages_);
   ahwb_usages_.push_back(AhwbUsage());
-  auto& ahwb_usage = ahwb_usages_.back();
   return {ahwb_.get(),
           ssbo_written_,
           &fence_fd_,  // The FD is created for SSBO -> AHWB synchronization.
-          &ahwb_usage.is_complete_fn,  // Filled by SetReadingFinishedFunc.
-          &ahwb_usage.release_callbacks,
-          std::move(lock)};
+          &ahwb_usages_.back(),
+          std::move(lock),
+          /*is_write_view=*/false};
 }
 
 void Tensor::CreateEglSyncAndFd() const {
@@ -336,13 +335,12 @@ Tensor::AHardwareBufferView Tensor::GetAHardwareBufferWriteView() const {
         ahwb_usages_.size());
   }
   ahwb_usages_.push_back(AhwbUsage());
-  auto& ahwb_usage = ahwb_usages_.back();
   return {ahwb_.get(),
           /*ssbo_written=*/-1,
-          &fence_fd_,                  // For SetWritingFinishedFD.
-          &ahwb_usage.is_complete_fn,  // Filled by SetWritingFinishedFunc.
-          &ahwb_usage.release_callbacks,
-          std::move(lock)};
+          &fence_fd_,  // For SetWritingFinishedFD.
+          &ahwb_usages_.back(),
+          std::move(lock),
+          /*is_write_view=*/true};
 }
 
 absl::Status Tensor::AllocateAHardwareBuffer() const {

@@ -220,52 +220,57 @@ class Tensor {
       hardware_buffer_ = std::move(src.hardware_buffer_);
       file_descriptor_ = src.file_descriptor_;
       fence_fd_ = std::exchange(src.fence_fd_, nullptr);
-      is_complete_fn_ = std::exchange(src.is_complete_fn_, nullptr);
-      release_callbacks_ = std::exchange(src.release_callbacks_, nullptr);
+      ahwb_usage_ = std::exchange(src.ahwb_usage_, nullptr);
+      is_write_view_ = src.is_write_view_;
     }
     int file_descriptor() const { return file_descriptor_; }
 
     // TODO: verify if multiple functions can be specified.
     void SetReadingFinishedFunc(FinishingFunc&& func) {
-      ABSL_CHECK(is_complete_fn_)
+      ABSL_CHECK(!is_write_view_)
           << "AHWB write view can't accept 'reading finished callback'";
-      *is_complete_fn_ = std::move(func);
+      ABSL_CHECK(ahwb_usage_->is_complete_fn == nullptr)
+          << "AHWB reading finished callback is already set.";
+      ahwb_usage_->is_complete_fn = std::move(func);
     }
 
     // TODO: verify if multiple functions can be specified.
     void SetWritingFinishedFD(int fd, FinishingFunc func = nullptr) {
-      ABSL_CHECK(fence_fd_)
+      ABSL_CHECK(is_write_view_)
           << "AHWB read view can't accept 'writing finished file descriptor'";
+      ABSL_CHECK(ahwb_usage_->is_complete_fn == nullptr)
+          << "AHWB write finished callback is already set.";
       *fence_fd_ = fd;
-      *is_complete_fn_ = std::move(func);
+      ahwb_usage_->is_complete_fn = std::move(func);
     }
 
     // Passed `callback` is invoked when the tensor is being released.
     // TODO: rename to Add* or set a single callback only.
     void SetReleaseCallback(absl::AnyInvocable<void()> callback) {
-      release_callbacks_->push_back(std::move(callback));
+      ahwb_usage_->release_callbacks.push_back(std::move(callback));
     }
 
    protected:
     friend class Tensor;
-    AHardwareBufferView(
-        HardwareBuffer* hardware_buffer, int file_descriptor, int* fence_fd,
-        FinishingFunc* is_complete_fn,
-        std::vector<absl::AnyInvocable<void()>>* release_callbacks,
-        std::unique_ptr<absl::MutexLock>&& lock)
+    AHardwareBufferView(HardwareBuffer* hardware_buffer, int file_descriptor,
+                        int* fence_fd, AhwbUsage* ahwb_usage,
+                        std::unique_ptr<absl::MutexLock>&& lock,
+                        bool is_write_view)
         : View(std::move(lock)),
           hardware_buffer_(hardware_buffer),
           file_descriptor_(file_descriptor),
           fence_fd_(fence_fd),
-          is_complete_fn_(is_complete_fn),
-          release_callbacks_(release_callbacks) {}
-    HardwareBuffer* hardware_buffer_;
+          ahwb_usage_(ahwb_usage),
+          is_write_view_(is_write_view) {}
+
+    HardwareBuffer* hardware_buffer_ = nullptr;
     int file_descriptor_;
     // The view sets some Tensor's fields. The view is released prior to tensor.
     int* fence_fd_;
-    FinishingFunc* is_complete_fn_;
-    std::vector<absl::AnyInvocable<void()>>* release_callbacks_;
+    AhwbUsage* ahwb_usage_ = nullptr;
+    bool is_write_view_ = false;
   };
+
   AHardwareBufferView GetAHardwareBufferReadView() const;
   AHardwareBufferView GetAHardwareBufferWriteView() const;
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
