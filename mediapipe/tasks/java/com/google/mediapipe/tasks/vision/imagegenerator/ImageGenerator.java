@@ -855,20 +855,20 @@ public final class ImageGenerator extends BaseVisionTaskApi {
         public abstract Builder setPluginModelBaseOptions(BaseOptions baseOptions);
 
         /** First threshold for the hysteresis procedure. */
-        public abstract Builder setThreshold1(Float threshold1);
+        public abstract Builder setThreshold1(float threshold1);
 
         /** Second threshold for the hysteresis procedure. */
-        public abstract Builder setThreshold2(Float threshold2);
+        public abstract Builder setThreshold2(float threshold2);
 
         /** Aperture size for the Sobel operator. Typical range is 3~7. */
-        public abstract Builder setApertureSize(Integer apertureSize);
+        public abstract Builder setApertureSize(int apertureSize);
 
         /**
          * flag, indicating whether a more accurate L2 norm should be used to calculate the image
          * gradient magnitude ( L2gradient=true ), or whether the default L1 norm is enough (
          * L2gradient=false ).
          */
-        public abstract Builder setL2Gradient(Boolean l2Gradient);
+        public abstract Builder setL2Gradient(boolean l2Gradient);
 
         abstract EdgeConditionOptions autoBuild();
 
@@ -880,13 +880,13 @@ public final class ImageGenerator extends BaseVisionTaskApi {
 
       abstract BaseOptions pluginModelBaseOptions();
 
-      abstract Float threshold1();
+      abstract float threshold1();
 
-      abstract Float threshold2();
+      abstract float threshold2();
 
-      abstract Integer apertureSize();
+      abstract int apertureSize();
 
-      abstract Boolean l2Gradient();
+      abstract boolean l2Gradient();
 
       public static Builder builder() {
         return new AutoValue_ImageGenerator_ConditionOptions_EdgeConditionOptions.Builder()
