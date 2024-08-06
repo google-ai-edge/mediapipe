@@ -22,6 +22,7 @@
 #include "absl/status/statusor.h"
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
 #include "mediapipe/framework/formats/tensor.h"
+#include "mediapipe/framework/memory_manager.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "tensorflow/lite/interpreter.h"
 #include "tensorflow/lite/util.h"
@@ -78,6 +79,13 @@ absl::Status SetTfLiteCustomAllocation(tflite::Interpreter& interpreter,
       kTfLiteOk);
   return absl::OkStatus();
 }
+
+// Creates a new MP Tensor instance that matches the size and type of the
+// specified TfLite tensor. If optional 'alignment' is specified, the returned
+// tensor will be byte aligned to that value.
+absl::StatusOr<Tensor> CreateTensorWithTfLiteTensorSpecs(
+    const TfLiteTensor& reference_tflite_tensor,
+    MemoryManager* memory_manager = nullptr, int alignment = 0);
 
 }  // namespace mediapipe
 
