@@ -163,7 +163,7 @@ std::shared_ptr<Tensor> Tensor::Slice(size_t index, size_t offset) {
     if (i < index) {
       ABSL_DCHECK_EQ(dims[i], 1);
     } else if (i == index) {
-      ABSL_DCHECK_LT(offset, dims[i]);
+      ABSL_DCHECK_LT(offset, dims[i]) << "i = " << i;
       num_elements_offset *= offset;
       new_dim[i] = 1;
     } else {

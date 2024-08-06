@@ -68,20 +68,9 @@ class Llm : protected xnn_utils::XnnGraph {
   // An aggregation of all the data that can represent the context of the
   // model.
   struct Context {
-    // Embedding input to the model.
-    std::shared_ptr<Tensor> transformer_input;
-    // A tensor holding a large enough buffer. Prefill model will work on
-    // [0:prompt_size] and decode model will work on [prompt_size:].
-    std::shared_ptr<Tensor> input_pivot;
-    // Logits output from the model.
-    std::shared_ptr<Tensor> logits_output;
-
     // Previous ids, including prompt.
     std::vector<std::vector<int>> batch_prev_ids;
     std::vector<KVCache> kv_cache;
-
-    // If provided, this context will be used to run prefill model.
-    absl::Nullable<std::shared_ptr<Context>> prefill_context;
   };
 
   // Reduce the number of previous ids to effectively undo the last
@@ -164,27 +153,12 @@ class Llm : protected xnn_utils::XnnGraph {
     bool stop_at_last_kv_cache = false;
   };
 
-  // Creates a `Llm` instance that under-the-hood contains a prefix model and
-  // a decode model that is responsible for decoding one token at a time. The
-  // two models share the KVCache.
+  // Creates a `Llm` instance with prefix-decoder architecture.
   static absl::StatusOr<std::unique_ptr<Llm>> CreatePrefixDecodeLlm(
-      std::unique_ptr<LlmWeightsLoader> weight_loader,
-      std::shared_ptr<LlmBuilder> builder);
-  // Creates a `Llm` instance for prefix processing. If `enable_kv_cache` is
-  // true, the returned Llm will have `kv_cache_` prepared.
-  static absl::StatusOr<std::unique_ptr<Llm>> CreatePrefixOnlyLlm(
-      LlmWeights weights, std::shared_ptr<LlmBuilder> builder);
-
-  // (Re)Initializes with input token ids. This will reset the cache, mask etc.
-  absl::Status InitInputTokens(
-      absl::Span<const std::vector<int>> batch_input_ids);
-
-  absl::Status Reset();
+      LlmWeights, std::shared_ptr<LlmBuilder> builder);
 
   std::shared_ptr<Tensor>& transformer_input();
   const std::shared_ptr<Tensor>& transformer_input() const;
-  std::shared_ptr<Tensor>& input_pivot();
-  const std::shared_ptr<Tensor>& input_pivot() const;
   std::shared_ptr<Tensor>& logits_output();
   const std::shared_ptr<Tensor>& logits_output() const;
   // Previous ids, including prompt.
@@ -207,6 +181,10 @@ class Llm : protected xnn_utils::XnnGraph {
   std::shared_ptr<Tensor> atten_masks_;
   std::shared_ptr<Tensor> segment_pos_;
 
+  // Embedding input to the model.
+  std::shared_ptr<Tensor> transformer_input_;
+  // Logits output from the model.
+  std::shared_ptr<Tensor> logits_output_;
   std::shared_ptr<Context> context_;
 
   // Hold a shared_ptr to the LlmBuilder for initializing the input resources
@@ -329,8 +307,6 @@ class LlmBuilder : protected XnnGraphBuilder {
   friend class Llm;
   friend class LlmBuilderTest;
   friend absl::StatusOr<std::unique_ptr<Llm>> Llm::CreatePrefixDecodeLlm(
-      std::unique_ptr<LlmWeightsLoader>, std::shared_ptr<LlmBuilder>);
-  friend absl::StatusOr<std::unique_ptr<Llm>> Llm::CreatePrefixOnlyLlm(
       LlmWeights, std::shared_ptr<LlmBuilder>);
 
   absl::Status InitAttentionMaskValues(size_t process_seq_len);
