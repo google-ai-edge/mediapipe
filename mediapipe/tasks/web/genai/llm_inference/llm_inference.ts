@@ -316,6 +316,7 @@ export class LlmInference extends TaskRunner {
           `your device only supports maxBufferSize of ${systemBufferSizeLimit}`,
       );
     }
+
     const deviceDescriptor: GPUDeviceDescriptor = {
       requiredFeatures: ['shader-f16'],
       requiredLimits: {
@@ -323,6 +324,34 @@ export class LlmInference extends TaskRunner {
         'maxBufferSize': maxBufferSize,
       },
     };
+
+    // These are only available through an origin trial or experimental flags on
+    // Linux, so we attempt to enable it whenever that feature is detected, for
+    // experimentation purposes, but log a warning when doing so.
+    const hasOldSubgroupsFeature = adapter.features.has(
+      'chromium-experimental-subgroups',
+    );
+    const hasNewSubgroupsFeature = adapter.features.has('subgroups');
+    if (hasOldSubgroupsFeature || hasNewSubgroupsFeature) {
+      console.warn(
+        'Experimental Chromium WGSL subgroup support detected. ' +
+          'Enabling this feature in the inference engine.',
+      );
+      const featuresList: GPUFeatureName[] = ['shader-f16'];
+      if (hasNewSubgroupsFeature) {
+        featuresList.push('subgroups' as unknown as GPUFeatureName);
+        if (adapter.features.has('subgroups-f16')) {
+          featuresList.push('subgroups-f16' as unknown as GPUFeatureName);
+        }
+      }
+      if (hasOldSubgroupsFeature) {
+        featuresList.push(
+          'chromium-experimental-subgroups' as unknown as GPUFeatureName,
+        );
+      }
+      deviceDescriptor.requiredFeatures = featuresList;
+    }
+
     return LlmGraphRunner.requestWebGpuDevice(deviceDescriptor, adapter);
   }
 
