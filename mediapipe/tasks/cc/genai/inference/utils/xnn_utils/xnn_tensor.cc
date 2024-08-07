@@ -44,6 +44,7 @@
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
+#include "mediapipe/tasks/cc/genai/inference/common/mdspan.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/utils.h"
 #include "xnnpack.h"  // from @XNNPACK
 
@@ -154,6 +155,21 @@ std::shared_ptr<Tensor> Tensor::Slice(DimsType offset) {
   ABSL_DCHECK(found_non_zero_offset) << offset;
 
   return Slice(index_k, offset[index_k]);
+}
+
+void Tensor::PrintSpan() {
+  if (dims.size() == 1) {
+    ABSL_LOG(INFO) << MakeMdSpan(DataAs<float>(), dims[0]);
+  } else if (dims.size() == 2) {
+    ABSL_LOG(INFO) << MakeMdSpan(DataAs<float>(), dims[0], dims[1]);
+  } else if (dims.size() == 3) {
+    ABSL_LOG(INFO) << MakeMdSpan(DataAs<float>(), dims[0], dims[1], dims[2]);
+  } else if (dims.size() == 4) {
+    ABSL_LOG(INFO) << MakeMdSpan(DataAs<float>(), dims[0], dims[1], dims[2],
+                                 dims[3]);
+  } else {
+    ABSL_LOG(FATAL) << "Unsupported dims size: " << dims.size();
+  }
 }
 
 std::shared_ptr<Tensor> Tensor::Slice(size_t index, size_t offset) {

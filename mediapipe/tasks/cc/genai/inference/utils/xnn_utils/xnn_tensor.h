@@ -146,6 +146,9 @@ struct Tensor {
   // Transpose the tensor.
   virtual std::shared_ptr<Tensor> Transpose();
 
+  // Print the tensor values. Tensors with dims > 4 unsupported.
+  void PrintSpan();
+
   // Convert the tensor to f32 format.
   virtual absl::StatusOr<std::shared_ptr<Tensor>> ConvertToF32();
 
