@@ -394,8 +394,8 @@ absl::Status Llm::GetNextToken(std::vector<int>* output_ids) {
   return AddInputTokens(next_token_ids);
 }
 
-absl::StatusOr<std::shared_ptr<Tensor>> Llm::ComputeLogits() {
-  RET_CHECK_GT(TotalTokenSize(), 0);
+absl::StatusOr<std::shared_ptr<Tensor>> Llm::ComputeLogits(
+    size_t expected_seq_len) {
   const size_t decode_step = TotalTokenSize();
   VLOG(2) << "Decode step " << decode_step;
 
@@ -405,11 +405,15 @@ absl::StatusOr<std::shared_ptr<Tensor>> Llm::ComputeLogits() {
   }
 
   RET_CHECK(logits_output());
-  // Always return the last 1 slice along sequence dimension.
-  // TODO - b/329445989: Return configurable length of logits.
-  if (logits_output()->dims[1] > 1) {
+  const size_t logits_total_seq_len = logits_output()->dims[1];
+  RET_CHECK_GE(logits_total_seq_len, expected_seq_len);
+  if (logits_total_seq_len == expected_seq_len) {
+    return logits_output();
+  } else {
     if (logits_output()->dims[0] == 1) {
-      return logits_output()->Slice(1, logits_output()->dims[1] - 1);
+      return logits_output()->Slice(
+          /*index=*/1, /*start=*/logits_total_seq_len - expected_seq_len,
+          /*end=*/logits_total_seq_len);
     } else {
       Tensor::DimsType new_dims = logits_output()->dims;
       new_dims[1] = 1;
@@ -419,13 +423,11 @@ absl::StatusOr<std::shared_ptr<Tensor>> Llm::ComputeLogits() {
         MP_RETURN_IF_ERROR(last_slice->Slice(0, batch)->LoadFromBuffer(
             logits_output()
                 ->Slice(0, batch)
-                ->Slice(1, logits_output()->dims[1] - 1)
+                ->Slice(1, logits_total_seq_len - expected_seq_len)
                 ->Data()));
       }
       return last_slice;
     }
-  } else {
-    return logits_output();
   }
 }
 

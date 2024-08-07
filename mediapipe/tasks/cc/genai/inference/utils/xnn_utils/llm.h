@@ -123,8 +123,13 @@ class Llm : protected xnn_utils::XnnGraph {
   virtual absl::Status GetNextToken(std::vector<int>* output_ids);
 
   // Computes logits with all previously added tokens. Output is in shape of
-  // [batch_B, 1, vacab_size_V].
-  virtual absl::StatusOr<std::shared_ptr<Tensor>> ComputeLogits();
+  // [batch_B, expected_seq_len, vacab_size_V] representing the last
+  // `expected_seq_len` along the sequence dimension.
+  virtual absl::StatusOr<std::shared_ptr<Tensor>> ComputeLogits(
+      size_t expected_seq_len);
+  absl::StatusOr<std::shared_ptr<Tensor>> ComputeLogits() {
+    return this->ComputeLogits(1);
+  }
 
   // The size of all tokens, including prompt and generated tokens.
   virtual size_t TotalTokenSize() const;

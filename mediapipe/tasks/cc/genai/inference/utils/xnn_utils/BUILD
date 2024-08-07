@@ -228,6 +228,7 @@ cc_test(
         ":tensor",
         "//mediapipe/framework/port:benchmark",
         "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/tasks/cc/genai/inference/common:mdspan",
         "//mediapipe/tasks/cc/genai/inference/proto:llm_params_cc_proto",
         "//mediapipe/tasks/cc/genai/inference/utils/llm_utils:well_known_models",
         "@XNNPACK",
@@ -237,6 +238,7 @@ cc_test(
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
+        "@com_google_absl//absl/types:span",
     ],
 )
 
