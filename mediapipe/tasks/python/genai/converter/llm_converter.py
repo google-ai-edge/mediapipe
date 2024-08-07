@@ -33,6 +33,7 @@ class ConversionConfig(object):
       2) is applicable for other models. When 2) is used, the provided path is
       expected to point to a directory that contains both tokenizer.json and
       tokenizer_config.json files.
+    obfuscate: Whether to obfuscate the model.
     output_tflite_file: (optional) the output tflite filename. If not provided,
       the output will be `model.tflite` stored in the output_dir.
     fp16_scale: A scalar value between [0, 1]. Some models can run into
@@ -62,6 +63,7 @@ class ConversionConfig(object):
       embedding_quant_bits: int = 8,
       combine_file_only: bool = False,
       vocab_model_file: str = '',
+      obfuscate: bool = False,
       output_tflite_file: Optional[str] = None,
       fp16_scale: Optional[float] = None,
       lora_ckpt: Optional[str] = None,
@@ -84,6 +86,7 @@ class ConversionConfig(object):
     self.embedding_quant_bits = embedding_quant_bits
     self.combine_file_only = combine_file_only
     self.vocab_model_file = vocab_model_file
+    self.obfuscate = obfuscate
     if output_tflite_file:
       parent_dir = os.path.dirname(output_tflite_file)
       if not os.path.isdir(parent_dir):
@@ -200,6 +203,7 @@ def combined_weight_bins_to_tflite(
     backend: str,
     weight_path: str,
     output_tflite_file: str,
+    obfuscate: bool,
     vocab_model_file: str,
     lora_rank: Optional[int] = None,
     lora_weight_path: Optional[str] = None,
@@ -222,6 +226,7 @@ def combined_weight_bins_to_tflite(
         weight_path,
         vocab_model_file,
         True,
+        obfuscate,
         output_tflite_file,
         0 if lora_rank is None else lora_rank,
         '' if lora_weight_path is None else lora_weight_path,
@@ -339,6 +344,7 @@ def convert_checkpoint(config: ConversionConfig) -> None:
       config.backend,
       weight_path=config.output_dir,
       output_tflite_file=config.output_tflite_file,
+      obfuscate=config.obfuscate,
       vocab_model_file=vocab_model_path,
       lora_rank=config.lora_rank,
       lora_weight_path=config.output_dir,
