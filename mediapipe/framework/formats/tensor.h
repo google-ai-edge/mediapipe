@@ -42,6 +42,7 @@
 
 #include "mediapipe/framework/formats/hardware_buffer.h"
 #include "mediapipe/framework/formats/hardware_buffer_pool.h"
+#include "mediapipe/framework/formats/tensor_ahwb_usage.h"
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
 #include "mediapipe/gpu/gl_base.h"
@@ -199,17 +200,6 @@ class Tensor {
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
   using FinishingFunc = std::function<bool(bool)>;
 
-  struct AhwbUsage {
-    // Function that signals when it is safe to release AHWB.
-    // If the input parameter is 'true' then wait for the writing to be
-    // finished.
-    FinishingFunc is_complete_fn;
-
-    // Callbacks to release any associated resources. (E.g. imported interpreter
-    // buffer handles.)
-    std::vector<absl::AnyInvocable<void()>> release_callbacks;
-  };
-
   class AHardwareBufferView : public View {
    public:
     AHardwareBuffer* handle() const {
@@ -253,7 +243,7 @@ class Tensor {
    protected:
     friend class Tensor;
     AHardwareBufferView(HardwareBuffer* hardware_buffer, int file_descriptor,
-                        int* fence_fd, AhwbUsage* ahwb_usage,
+                        int* fence_fd, TensorAhwbUsage* ahwb_usage,
                         std::unique_ptr<absl::MutexLock>&& lock,
                         bool is_write_view)
         : View(std::move(lock)),
@@ -267,7 +257,7 @@ class Tensor {
     int file_descriptor_;
     // The view sets some Tensor's fields. The view is released prior to tensor.
     int* fence_fd_;
-    AhwbUsage* ahwb_usage_ = nullptr;
+    TensorAhwbUsage* ahwb_usage_ = nullptr;
     bool is_write_view_ = false;
   };
 
@@ -446,7 +436,7 @@ class Tensor {
   // Keeps track of current AHWB usages (e.g. multiple reads - two inference
   // calculators use the same input tensor and import buffer by FD which results
   // in two buffer handles that must be released.)
-  mutable std::list<AhwbUsage> ahwb_usages_;
+  mutable std::list<TensorAhwbUsage> ahwb_usages_;
 
   absl::Status AllocateAHardwareBuffer() const;
 
