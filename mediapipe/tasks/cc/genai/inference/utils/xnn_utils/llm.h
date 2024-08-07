@@ -346,7 +346,7 @@ class LlmBuilder : protected XnnGraphBuilder {
   // model_dimension]
   std::shared_ptr<std::vector<float>> position_embedding_values_;
   // Storing values of segment pos with shape [max_seq_len, head_dimension]
-  std::shared_ptr<std::vector<float>> segment_pos_values_;
+  MdSpan<float, 2> segment_pos_values_;
 
   std::unique_ptr<Sampler> sampler_;
 };

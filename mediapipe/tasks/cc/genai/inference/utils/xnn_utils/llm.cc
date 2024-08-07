@@ -724,8 +724,12 @@ absl::Status LlmBuilder::InitPosEmbedding(size_t current_seq_len,
 }
 
 absl::Status LlmBuilder::InitSegmentPosValues(size_t rope_size) {
-  segment_pos_values_ = std::make_shared<std::vector<float>>();
-  *segment_pos_values_ = FillXnnRoPEWeights(llm_params_.seq_size_T, rope_size);
+  std::vector<float> values =
+      FillXnnRoPEWeights(llm_params_.seq_size_T, rope_size);
+  float* values_ptr = values.data();
+  segment_pos_values_ =
+      MakeMdSpan(values_ptr, llm_params_.seq_size_T, rope_size,
+                 [values = std::move(values)]() {});
   return absl::OkStatus();
 }
 
@@ -734,13 +738,13 @@ absl::Status LlmBuilder::InitSegmentPos(size_t current_seq_len,
                                         Tensor& out_segment_pos) {
   RET_CHECK_EQ(out_segment_pos.dims.size(), 2);
   const size_t rope_size = out_segment_pos.dims[1];
-  if (!segment_pos_values_) {
+  if (!segment_pos_values_.data()) {
     MP_RETURN_IF_ERROR(InitSegmentPosValues(rope_size));
   }
 
   out_segment_pos.Resize(Tensor::DimsType{process_seq_len, rope_size});
   MP_RETURN_IF_ERROR(out_segment_pos.LoadFromBuffer(
-      segment_pos_values_->data() + rope_size * current_seq_len));
+      segment_pos_values_[current_seq_len].data()));
   return absl::OkStatus();
 }
 
