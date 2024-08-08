@@ -269,7 +269,7 @@ def mediapipe_proto_library(
         def_go_proto = True,
         def_dart_proto = True,
         def_options_lib = True,
-        def_rewrite = True,
+        def_rewrite = False,
         portable_deps = None):  # @unused
     """Defines the proto_library targets needed for all mediapipe platforms.
 
