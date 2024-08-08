@@ -617,3 +617,13 @@ cc_library(
         "@com_google_absl//absl/log:absl_log",
     ],
 )
+
+cc_test(
+    name = "tensor_ahwb_usage_test",
+    srcs = ["tensor_ahwb_usage_test.cc"],
+    deps = [
+        ":tensor_ahwb_usage",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:status",
+    ],
+)

@@ -7,18 +7,39 @@
 
 namespace mediapipe {
 
+bool TensorAhwbUsage::IsComplete() const {
+  if (is_complete_fn != nullptr &&
+      !is_complete_fn(/*force_completion=*/false)) {
+    return false;
+  }
+  return true;
+}
+
+void TensorAhwbUsage::Reset() {
+  if (is_complete_fn != nullptr &&
+      !is_complete_fn(/*force_completion=*/false) &&
+      !is_complete_fn(/*force_completion=*/true)) {
+    ABSL_LOG(DFATAL) << "Failed to force-complete AHWB usage.";
+  }
+  for (auto& release_callback : release_callbacks) {
+    release_callback();
+  }
+  is_complete_fn = nullptr;
+  release_callbacks.clear();
+}
+
+bool HasIncompleteUsages(const std::list<TensorAhwbUsage>& ahwb_usages) {
+  for (auto& ahwb_usage : ahwb_usages) {
+    if (!ahwb_usage.IsComplete()) {
+      return true;
+    }
+  }
+  return false;
+}
+
 void EraseCompletedUsages(std::list<TensorAhwbUsage>& ahwb_usages) {
   for (auto it = ahwb_usages.begin(); it != ahwb_usages.end();) {
-    bool is_ready = true;
-    if (it->is_complete_fn) {
-      if (!it->is_complete_fn(/*force_completion=*/false)) {
-        is_ready = false;
-      }
-    } else {
-      ABSL_LOG(ERROR) << "Usage is missing completion function.";
-    }
-
-    if (is_ready) {
+    if (it->IsComplete()) {
       for (auto& release_callback : it->release_callbacks) {
         release_callback();
       }
@@ -31,28 +52,9 @@ void EraseCompletedUsages(std::list<TensorAhwbUsage>& ahwb_usages) {
 
 void CompleteAndEraseUsages(std::list<TensorAhwbUsage>& ahwb_usages) {
   for (auto& ahwb_usage : ahwb_usages) {
-    if (ahwb_usage.is_complete_fn &&
-        !ahwb_usage.is_complete_fn(/*force_completion=*/false)) {
-      if (!ahwb_usage.is_complete_fn(/*force_completion=*/true)) {
-        ABSL_LOG(DFATAL) << "Failed to force-complete AHWB usage.";
-      }
-    }
-
-    for (auto& release_callback : ahwb_usage.release_callbacks) {
-      release_callback();
-    }
+    ahwb_usage.Reset();
   }
   ahwb_usages.clear();
-}
-
-bool HasIncompleteUsages(const std::list<TensorAhwbUsage>& ahwb_usages) {
-  for (auto& ahwb_usage : ahwb_usages) {
-    if (ahwb_usage.is_complete_fn &&
-        !ahwb_usage.is_complete_fn(/*force_completion=*/false)) {
-      return true;
-    }
-  }
-  return false;
 }
 
 }  // namespace mediapipe
