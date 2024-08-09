@@ -33,13 +33,6 @@
 
 namespace mediapipe::tasks::genai::llm_utils {
 
-// Expected file names for the custom format with metadata pointing to offsets
-// in the model file.
-constexpr absl::string_view kBaseWeightsFileName = "weights.bin";
-constexpr absl::string_view kLoraWeightsFileName = "lora_weights.bin";
-constexpr absl::string_view kBasePbFileName = "model.pb";
-constexpr absl::string_view kLoraPbFileName = "lora_model.pb";
-
 // Provides access to data tied to an underlying resource. The resource may be
 // released when this object is destroyed and spans previously returned from
 // GetData() will no longer be valid.
@@ -109,12 +102,6 @@ absl::StatusOr<std::unique_ptr<DataHolder<T>>> CreateMemoryMappedDataHolder(
 // abstracting out any differences in file formats.
 class ModelData {
  public:
-  // Loads the model from separate files.
-  static absl::StatusOr<std::shared_ptr<ModelData>> Create(
-      std::unique_ptr<DataHolder<const uint8_t>> sp_model_proto,
-      std::unique_ptr<DataHolder<const uint8_t>> llm_model_proto,
-      ScopedFile file);
-
   // Loads from a single tflite flatbuffer. The allocation should contain the
   // whole model including buffers.
   static absl::StatusOr<std::shared_ptr<ModelData>> Create(
@@ -129,16 +116,10 @@ class ModelData {
   static absl::StatusOr<std::shared_ptr<ModelData>> Create(
       std::shared_ptr<const ScopedFile> file);
 
-  // Loads `ModelData` from the provided `weight_path`, which contains either
-  // a tflite file or the weights and metadata files for the combined GPU model
-  // format, and the sentencepiece model at `spm_path`.
+  // Loads `ModelData` from the provided `weight_path`, which contains a tflite
+  // file.
   static absl::StatusOr<std::shared_ptr<ModelData>> Create(
-      absl::string_view weight_path, absl::string_view spm_path);
-
-  // Loads `ModelData` for LoRA weights located at `lora_path`. This loader
-  // expects either the combined GPU model format or a single tflite file.
-  static absl::StatusOr<std::shared_ptr<ModelData>> CreateLoRAFromPath(
-      absl::string_view lora_path);
+      absl::string_view weight_path);
 
   enum ReadMode {
     KEEP = 0,
