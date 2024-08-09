@@ -299,6 +299,24 @@ cc_test(
 )
 
 cc_library(
+    name = "unique_fd",
+    hdrs = ["unique_fd.h"],
+    deps = [
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/log:absl_log",
+    ],
+)
+
+cc_test(
+    name = "unique_fd_test",
+    srcs = ["unique_fd_test.cc"],
+    deps = [
+        ":unique_fd",
+        "//mediapipe/framework/port:gtest_main",
+    ],
+)
+
+cc_library(
     name = "video_stream_header",
     hdrs = ["video_stream_header.h"],
     deps = [
@@ -547,6 +565,7 @@ cc_library(
             ":hardware_buffer",
             ":hardware_buffer_pool",
             ":tensor_ahwb_usage",
+            ":unique_fd",
             "//mediapipe/gpu:gl_base",
             "//mediapipe/gpu:gl_context",
         ],
@@ -554,6 +573,7 @@ cc_library(
             ":hardware_buffer",
             ":hardware_buffer_pool",
             ":tensor_ahwb_usage",
+            ":unique_fd",
             "//mediapipe/gpu:gl_base",
             "//mediapipe/gpu:gl_context",
         ],

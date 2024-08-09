@@ -677,7 +677,7 @@ Tensor::CpuWriteView Tensor::GetCpuWriteView(
               [ahwb = ahwb_.get(), fence_fd = &fence_fd_] {
                 auto fence_fd_status = ahwb->UnlockAsync();
                 ABSL_CHECK_OK(fence_fd_status) << "Unlock failed.";
-                *fence_fd = fence_fd_status.value();
+                *fence_fd = UniqueFd(fence_fd_status.value());
               }};
     }
   }
