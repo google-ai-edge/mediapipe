@@ -131,14 +131,23 @@ void CalculatorGraph::GraphInputStream::Close() {
   manager_->Close();
 }
 
+CalculatorGraph::CalculatorGraph(
+    std::shared_ptr<GraphServiceManager> service_manager)
+    : counter_factory_(std::make_unique<BasicCounterFactory>()),
+      service_manager_(std::move(service_manager)),
+      profiler_(std::make_shared<ProfilingContext>()),
+      scheduler_(this) {}
+
 CalculatorGraph::CalculatorGraph()
-    : profiler_(std::make_shared<ProfilingContext>()), scheduler_(this) {
-  counter_factory_ = absl::make_unique<BasicCounterFactory>();
-}
+    : CalculatorGraph(std::make_shared<GraphServiceManager>()) {}
+
+// Adopt all services from the CalculatorContext / parent graph.
+CalculatorGraph::CalculatorGraph(CalculatorContext* cc)
+    : CalculatorGraph(cc->GetSharedGraphServiceManager()) {}
 
 CalculatorGraph::CalculatorGraph(CalculatorGraphConfig config)
     : CalculatorGraph() {
-  counter_factory_ = absl::make_unique<BasicCounterFactory>();
+  counter_factory_ = std::make_unique<BasicCounterFactory>();
   MEDIAPIPE_CHECK_OK(Initialize(std::move(config)));
 }
 
@@ -157,7 +166,7 @@ absl::Status CalculatorGraph::InitializePacketGeneratorGraph(
     const std::map<std::string, Packet>& side_packets) {
   // Create and initialize the output side packets.
   if (!validated_graph_->OutputSidePacketInfos().empty()) {
-    output_side_packets_ = absl::make_unique<OutputSidePacketImpl[]>(
+    output_side_packets_ = std::make_unique<OutputSidePacketImpl[]>(
         validated_graph_->OutputSidePacketInfos().size());
   }
   for (int index = 0; index < validated_graph_->OutputSidePacketInfos().size();
@@ -186,7 +195,7 @@ absl::Status CalculatorGraph::InitializeStreams() {
   any_packet_type_.SetAny();
 
   // Create and initialize the input streams.
-  input_stream_managers_ = absl::make_unique<InputStreamManager[]>(
+  input_stream_managers_ = std::make_unique<InputStreamManager[]>(
       validated_graph_->InputStreamInfos().size());
   for (int index = 0; index < validated_graph_->InputStreamInfos().size();
        ++index) {
@@ -197,7 +206,7 @@ absl::Status CalculatorGraph::InitializeStreams() {
   }
 
   // Create and initialize the output streams.
-  output_stream_managers_ = absl::make_unique<OutputStreamManager[]>(
+  output_stream_managers_ = std::make_unique<OutputStreamManager[]>(
       validated_graph_->OutputStreamInfos().size());
   for (int index = 0; index < validated_graph_->OutputStreamInfos().size();
        ++index) {
@@ -223,7 +232,7 @@ absl::Status CalculatorGraph::InitializeStreams() {
               edge_info.parent_node.type)
         .SetNoLogging();
 
-    graph_input_streams_[stream_name] = absl::make_unique<GraphInputStream>(
+    graph_input_streams_[stream_name] = std::make_unique<GraphInputStream>(
         &output_stream_managers_[output_stream_index]);
 
     // Assign a virtual node ID to each graph input stream so we can treat
@@ -267,11 +276,11 @@ absl::Status CalculatorGraph::InitializeCalculatorNodes() {
     // the graph proto.
     int buffer_size_hint = 0;
     NodeTypeInfo::NodeRef node_ref(NodeTypeInfo::NodeType::CALCULATOR, node_id);
-    nodes_.push_back(absl::make_unique<CalculatorNode>());
+    nodes_.push_back(std::make_unique<CalculatorNode>());
     const absl::Status result = nodes_.back()->Initialize(
         validated_graph_.get(), node_ref, input_stream_managers_.get(),
         output_stream_managers_.get(), output_side_packets_.get(),
-        &buffer_size_hint, profiler_);
+        &buffer_size_hint, profiler_, service_manager_);
     MaybeFixupLegacyGpuNodeContract(*nodes_.back());
     if (buffer_size_hint > 0) {
       max_queue_size_ = std::max(max_queue_size_, buffer_size_hint);
@@ -305,11 +314,11 @@ absl::Status CalculatorGraph::InitializePacketGeneratorNodes(
     int buffer_size_hint = 0;
     NodeTypeInfo::NodeRef node_ref(NodeTypeInfo::NodeType::PACKET_GENERATOR,
                                    index);
-    nodes_.push_back(absl::make_unique<CalculatorNode>());
+    nodes_.push_back(std::make_unique<CalculatorNode>());
     const absl::Status result = nodes_.back()->Initialize(
         validated_graph_.get(), node_ref, input_stream_managers_.get(),
         output_stream_managers_.get(), output_side_packets_.get(),
-        &buffer_size_hint, profiler_);
+        &buffer_size_hint, profiler_, service_manager_);
     MaybeFixupLegacyGpuNodeContract(*nodes_.back());
     if (!result.ok()) {
       // Collect as many errors as we can before failing.
@@ -455,10 +464,10 @@ absl::Status CalculatorGraph::Initialize(CalculatorGraphConfig input_config) {
 absl::Status CalculatorGraph::Initialize(
     CalculatorGraphConfig input_config,
     const std::map<std::string, Packet>& side_packets) {
-  auto validated_graph = absl::make_unique<ValidatedGraphConfig>();
+  auto validated_graph = std::make_unique<ValidatedGraphConfig>();
   MP_RETURN_IF_ERROR(validated_graph->Initialize(
       std::move(input_config), /*graph_registry=*/nullptr,
-      /*graph_options=*/nullptr, &service_manager_));
+      /*graph_options=*/nullptr, service_manager_));
   return Initialize(std::move(validated_graph), side_packets);
 }
 
@@ -467,9 +476,9 @@ absl::Status CalculatorGraph::Initialize(
     const std::vector<CalculatorGraphTemplate>& input_templates,
     const std::map<std::string, Packet>& side_packets,
     const std::string& graph_type, const Subgraph::SubgraphOptions* options) {
-  auto validated_graph = absl::make_unique<ValidatedGraphConfig>();
+  auto validated_graph = std::make_unique<ValidatedGraphConfig>();
   MP_RETURN_IF_ERROR(validated_graph->Initialize(
-      input_configs, input_templates, graph_type, options, &service_manager_));
+      input_configs, input_templates, graph_type, options, service_manager_));
   return Initialize(std::move(validated_graph), side_packets);
 }
 
@@ -487,7 +496,7 @@ absl::Status CalculatorGraph::ObserveOutputStream(
            << "Unable to attach observer to output stream \"" << stream_name
            << "\" because it doesn't exist.";
   }
-  auto observer = absl::make_unique<internal::OutputStreamObserver>();
+  auto observer = std::make_unique<internal::OutputStreamObserver>();
   MP_RETURN_IF_ERROR(observer->Initialize(
       stream_name, &any_packet_type_, std::move(packet_callback),
       &output_stream_managers_[output_stream_index], observe_timestamp_bounds));
@@ -587,15 +596,15 @@ absl::Status CalculatorGraph::StartRun(
 absl::Status CalculatorGraph::SetGpuResources(
     std::shared_ptr<::mediapipe::GpuResources> resources) {
   RET_CHECK_NE(resources, nullptr);
-  auto gpu_service = service_manager_.GetServiceObject(kGpuService);
+  auto gpu_service = service_manager_->GetServiceObject(kGpuService);
   RET_CHECK_EQ(gpu_service, nullptr)
       << "The GPU resources have already been configured.";
-  return service_manager_.SetServiceObject(kGpuService, std::move(resources));
+  return service_manager_->SetServiceObject(kGpuService, std::move(resources));
 }
 
 std::shared_ptr<::mediapipe::GpuResources> CalculatorGraph::GetGpuResources()
     const {
-  return service_manager_.GetServiceObject(kGpuService);
+  return service_manager_->GetServiceObject(kGpuService);
 }
 
 static Packet GetLegacyGpuSharedSidePacket(
@@ -611,7 +620,7 @@ static Packet GetLegacyGpuSharedSidePacket(
 absl::Status CalculatorGraph::MaybeSetUpGpuServiceFromLegacySidePacket(
     Packet legacy_sp) {
   if (legacy_sp.IsEmpty()) return absl::OkStatus();
-  auto gpu_resources = service_manager_.GetServiceObject(kGpuService);
+  auto gpu_resources = service_manager_->GetServiceObject(kGpuService);
   if (gpu_resources) {
     ABSL_LOG(WARNING)
         << "::mediapipe::GpuSharedData provided as a side packet while the "
@@ -619,19 +628,19 @@ absl::Status CalculatorGraph::MaybeSetUpGpuServiceFromLegacySidePacket(
     return absl::OkStatus();
   }
   gpu_resources = legacy_sp.Get<::mediapipe::GpuSharedData*>()->gpu_resources;
-  return service_manager_.SetServiceObject(kGpuService, gpu_resources);
+  return service_manager_->SetServiceObject(kGpuService, gpu_resources);
 }
 
 std::map<std::string, Packet> CalculatorGraph::MaybeCreateLegacyGpuSidePacket(
     Packet legacy_sp) {
   std::map<std::string, Packet> additional_side_packets;
-  auto gpu_resources = service_manager_.GetServiceObject(kGpuService);
+  auto gpu_resources = service_manager_->GetServiceObject(kGpuService);
   if (gpu_resources &&
       (legacy_sp.IsEmpty() ||
        legacy_sp.Get<::mediapipe::GpuSharedData*>()->gpu_resources !=
            gpu_resources)) {
     legacy_gpu_shared_ =
-        absl::make_unique<mediapipe::GpuSharedData>(gpu_resources);
+        std::make_unique<mediapipe::GpuSharedData>(gpu_resources);
     additional_side_packets[kGpuSharedSidePacketName] =
         MakePacket<::mediapipe::GpuSharedData*>(legacy_gpu_shared_.get());
   }
@@ -643,7 +652,7 @@ static bool UsesGpu(const CalculatorNode& node) {
 }
 
 absl::Status CalculatorGraph::PrepareGpu() {
-  auto gpu_resources = service_manager_.GetServiceObject(kGpuService);
+  auto gpu_resources = service_manager_->GetServiceObject(kGpuService);
   if (!gpu_resources) return absl::OkStatus();
   // Set up executors.
   for (auto& node : nodes_) {
@@ -662,7 +671,7 @@ absl::Status CalculatorGraph::PrepareGpu() {
 absl::Status CalculatorGraph::PrepareServices() {
   for (const auto& node : nodes_) {
     for (const auto& [key, request] : node->Contract().ServiceRequests()) {
-      auto packet = service_manager_.GetServicePacket(request.Service());
+      auto packet = service_manager_->GetServicePacket(request.Service());
       if (!packet.IsEmpty()) continue;
       absl::StatusOr<Packet> packet_or;
       if (allow_service_default_initialization_) {
@@ -672,7 +681,7 @@ absl::Status CalculatorGraph::PrepareServices() {
             "Service default initialization is disallowed.");
       }
       if (packet_or.ok()) {
-        MP_RETURN_IF_ERROR(service_manager_.SetServicePacket(
+        MP_RETURN_IF_ERROR(service_manager_->SetServicePacket(
             request.Service(), std::move(packet_or).value()));
       } else if (request.IsOptional()) {
         continue;
@@ -793,7 +802,7 @@ absl::Status CalculatorGraph::PrepareForRun(
     // TODO: update calculator node to use GraphServiceManager
     // instead of service packets?
     const absl::Status result = node->PrepareForRun(
-        current_run_side_packets_, service_manager_.ServicePackets(),
+        current_run_side_packets_, service_manager_->ServicePackets(),
         std::bind(&internal::Scheduler::ScheduleNodeForOpen, &scheduler_,
                   node.get()),
         std::bind(&internal::Scheduler::AddNodeToSourcesQueue, &scheduler_,

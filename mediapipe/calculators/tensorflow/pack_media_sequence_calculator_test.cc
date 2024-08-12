@@ -84,6 +84,7 @@ class PackMediaSequenceCalculatorTest : public ::testing::Test {
                        const bool output_only_if_all_present,
                        const bool replace_instead_of_append,
                        const bool output_as_zero_timestamp = false,
+                       const bool add_empty_labels = false,
                        const std::vector<std::string>& input_side_packets = {
                            "SEQUENCE_EXAMPLE:input_sequence"}) {
     CalculatorGraphConfig::Node config;
@@ -101,6 +102,7 @@ class PackMediaSequenceCalculatorTest : public ::testing::Test {
     options->set_output_only_if_all_present(output_only_if_all_present);
     options->set_replace_data_instead_of_append(replace_instead_of_append);
     options->set_output_as_zero_timestamp(output_as_zero_timestamp);
+    options->set_add_empty_labels(add_empty_labels);
     runner_ = ::absl::make_unique<CalculatorRunner>(config);
   }
 
@@ -1308,6 +1310,36 @@ TEST_F(PackMediaSequenceCalculatorTest, PackTwoClipLabels_NoLabelOrLabelIndex) {
               "detection.label and detection.label_id can't be both empty")));
 }
 
+TEST_F(PackMediaSequenceCalculatorTest, PackTwoClipLabels_AddEmptyLabels) {
+  SetUpCalculator(
+      /*input_streams=*/{"CLIP_LABEL_TEST:test"},
+      /*features=*/{}, /*output_only_if_all_present=*/false,
+      /*replace_instead_of_append=*/true, /*output_as_zero_timestamp=*/false,
+      /*add_empty_labels=*/true);
+  auto input_sequence = std::make_unique<tf::SequenceExample>();
+
+  // No label or label_index in detection_1.
+  Detection detection;
+  runner_->MutableInputs()
+      ->Tag(kClipLabelTestTag)
+      .packets.push_back(MakePacket<Detection>(detection).At(Timestamp(1)));
+  runner_->MutableSidePackets()->Tag(kSequenceExampleTag) =
+      Adopt(input_sequence.release());
+
+  MP_ASSERT_OK(runner_->Run());
+
+  const std::vector<Packet>& output_packets =
+      runner_->Outputs().Tag(kSequenceExampleTag).packets;
+  ASSERT_EQ(1, output_packets.size());
+  const tf::SequenceExample& output_sequence =
+      output_packets[0].Get<tf::SequenceExample>();
+
+  ASSERT_THAT(mpms::GetClipLabelString("TEST", output_sequence),
+              testing::ElementsAre());
+  ASSERT_THAT(mpms::GetClipLabelConfidence("TEST", output_sequence),
+              testing::ElementsAre());
+}
+
 TEST_F(PackMediaSequenceCalculatorTest,
        PackTwoClipLabels_DifferentLabelScoreSize) {
   SetUpCalculator(
@@ -1542,7 +1574,8 @@ TEST_F(PackMediaSequenceCalculatorTest, AddClipMediaId) {
       /*features=*/{},
       /*output_only_if_all_present=*/false,
       /*replace_instead_of_append=*/true,
-      /*output_as_zero_timestamp=*/false, /*input_side_packets=*/
+      /*output_as_zero_timestamp=*/false, /*add_empty_labels=*/false,
+      /*input_side_packets=*/
       {"SEQUENCE_EXAMPLE:input_sequence", "CLIP_MEDIA_ID:video_id"});
   auto input_sequence = absl::make_unique<tf::SequenceExample>();
   const std::string test_video_id = "test_video_id";
@@ -1582,7 +1615,8 @@ TEST_F(PackMediaSequenceCalculatorTest, ReplaceClipMediaId) {
       /*features=*/{},
       /*output_only_if_all_present=*/false,
       /*replace_instead_of_append=*/true,
-      /*output_as_zero_timestamp=*/false, /*input_side_packets=*/
+      /*output_as_zero_timestamp=*/false, /*add_empty_labels=*/false,
+      /*input_side_packets=*/
       {"SEQUENCE_EXAMPLE:input_sequence", "CLIP_MEDIA_ID:video_id"});
   auto input_sequence = absl::make_unique<tf::SequenceExample>();
   const std::string existing_video_id = "existing_video_id";

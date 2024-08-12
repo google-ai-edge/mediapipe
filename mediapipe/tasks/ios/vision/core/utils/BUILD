@@ -22,5 +22,6 @@ objc_library(
         "//third_party/apple_frameworks:CoreGraphics",
         "//third_party/apple_frameworks:CoreImage",
         "//third_party/apple_frameworks:CoreVideo",
+        "//third_party/apple_frameworks:Foundation",
     ],
 )

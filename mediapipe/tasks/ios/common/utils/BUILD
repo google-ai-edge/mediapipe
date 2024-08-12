@@ -23,6 +23,7 @@ objc_library(
     deps = [
         "//mediapipe/tasks/cc:common",
         "//mediapipe/tasks/ios/common:MPPCommon",
+        "//third_party/apple_frameworks:Foundation",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings:cord",
     ],
@@ -36,4 +37,5 @@ objc_library(
         "-ObjC++",
         "-std=c++17",
     ],
+    deps = ["//third_party/apple_frameworks:Foundation"],
 )

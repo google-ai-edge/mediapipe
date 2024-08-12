@@ -43,6 +43,7 @@ objc_library(
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/test/utils:MPPFileInfo",
         "//mediapipe/tasks/ios/text/language_detector:MPPLanguageDetector",
+        "//third_party/apple_frameworks:XCTest",
     ],
 )
 

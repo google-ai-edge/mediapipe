@@ -259,9 +259,14 @@ absl::Status MatchFileTypeInDirectory(const std::string& directory,
 }
 
 absl::Status Exists(absl::string_view file_name) {
+#ifdef _WIN32
+  // Windows needs to use stat64 for >2GB files.
+  struct _stat64 buffer;
+  int status = _stat64(std::string(file_name).c_str(), &buffer);
+#else
   struct stat buffer;
-  int status;
-  status = stat(std::string(file_name).c_str(), &buffer);
+  int status = stat(std::string(file_name).c_str(), &buffer);
+#endif
   if (status == 0) {
     return absl::OkStatus();
   }

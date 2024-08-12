@@ -14,9 +14,13 @@
 
 #include "mediapipe/calculators/tensor/inference_calculator_utils.h"
 
+#include <algorithm>
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
+#include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/log/absl_check.h"
@@ -31,6 +35,7 @@
 #include "tensorflow/lite/kernels/cast_test_common.h"
 #include "tensorflow/lite/schema/schema_generated.h"
 #include "tensorflow/lite/string_util.h"
+#include "tensorflow/lite/util.h"
 
 namespace mediapipe {
 namespace {
@@ -413,6 +418,133 @@ TEST(InferenceCalculatorUtilsTest, ConvertTfLiteTensorToFloat32) {
                                   tensor.shape().num_elements()),
               ElementsAreArray(expected_values));
 }
+
+TEST(InferenceCalculatorUtilsTest, ShouldSetCustomAllocatorForCpuWriteView) {
+  tflite::Interpreter interpreter;
+  int tensor_index, tensor_size = 4;
+  AddInterpreterInput(kTfLiteInt32, tensor_size, tensor_index,
+                      /*allocate_tensor=*/true, interpreter);
+  std::vector<int32_t> values{1, 2, 3, 4};
+  int values_len = values.size();
+  Tensor tensor(ElementType::kInt32, Tensor::Shape({values_len}),
+                /*memory_manager=*/nullptr, tflite::kDefaultTensorAlignment);
+  {
+    auto write_view = tensor.GetCpuWriteView();
+    MP_EXPECT_OK(SetTfLiteCustomAllocation<void>(
+        interpreter, write_view.buffer<void>(), tensor.bytes(), tensor_index));
+    interpreter.AllocateTensors();
+    const TfLiteTensor* tf_lite_tensor =
+        interpreter.tensor(interpreter.inputs()[tensor_index]);
+    int32_t* tensor_ptr = reinterpret_cast<int32_t*>(tf_lite_tensor->data.data);
+    std::copy(values.begin(), values.end(), tensor_ptr);
+
+    EXPECT_THAT(TfLiteInputTensorData<int32_t>(interpreter, tensor_index),
+                ElementsAreArray(values));
+  }
+  auto read_view = tensor.GetCpuReadView();
+  const int32_t* tensor_ptr = read_view.buffer<int32_t>();
+  for (int i = 0; i < values.size(); ++i) {
+    EXPECT_EQ(tensor_ptr[i], values[i]);
+  }
+}
+
+TEST(InferenceCalculatorUtilsTest, ShouldSetCustomAllocatorForCpuReadView) {
+  tflite::Interpreter interpreter;
+  int tensor_index, tensor_size = 4;
+  AddInterpreterInput(kTfLiteInt32, tensor_size, tensor_index,
+                      /*allocate_tensor=*/true, interpreter);
+  std::vector<int32_t> values{1, 2, 3, 4};
+  int values_len = values.size();
+  Tensor tensor(ElementType::kInt32, Tensor::Shape({values_len}),
+                /*memory_manager=*/nullptr, tflite::kDefaultTensorAlignment);
+  std::memcpy(tensor.GetCpuWriteView().buffer<int32_t>(), values.data(),
+              values_len * sizeof(int32_t));
+
+  auto read_view = tensor.GetCpuReadView();
+  MP_EXPECT_OK(SetTfLiteCustomAllocation<const void>(
+      interpreter, read_view.buffer<void>(), tensor.bytes(), tensor_index));
+  interpreter.AllocateTensors();
+
+  EXPECT_THAT(TfLiteInputTensorData<int32_t>(interpreter, tensor_index),
+              ElementsAreArray(values));
+}
+
+TEST(InferenceCalculatorUtilsTest, ShouldConfirmTfLiteMemoryAlignment) {
+  std::vector<int32_t> values{1, 2, 3, 4};
+  int values_len = values.size();
+  Tensor tensor(ElementType::kInt32, Tensor::Shape({values_len}),
+                /*memory_manager=*/nullptr, tflite::kDefaultTensorAlignment);
+  std::memcpy(tensor.GetCpuWriteView().buffer<int32_t>(), values.data(),
+              values_len * sizeof(int32_t));
+  const auto read_view = tensor.GetCpuReadView();
+  EXPECT_TRUE(IsAlignedWithTFLiteDefaultAlignment(read_view.buffer<int32_t>()));
+}
+
+TEST(InferenceCalculatorUtilsTest, ShouldNotConfirmTfLiteMemoryAlignment) {
+  std::vector<int32_t> values{1, 2, 3, 4};
+  int values_len = values.size();
+  Tensor tensor(ElementType::kInt32, Tensor::Shape({values_len}),
+                /*memory_manager=*/nullptr, tflite::kDefaultTensorAlignment);
+  std::memcpy(tensor.GetCpuWriteView().buffer<int32_t>(), values.data(),
+              values_len * sizeof(int32_t));
+  const auto read_view = tensor.GetCpuReadView();
+  EXPECT_FALSE(IsAlignedWithTFLiteDefaultAlignment(read_view.buffer<int32_t>() +
+                                                   sizeof(int32_t)));
+}
+
+static std::vector<std::pair<TfLiteType, Tensor::ElementType>>
+GetTensorTypePairs() {
+  return {{TfLiteType::kTfLiteFloat16, Tensor::ElementType::kFloat32},
+          {TfLiteType::kTfLiteFloat32, Tensor::ElementType::kFloat32},
+          {TfLiteType::kTfLiteUInt8, Tensor::ElementType::kUInt8},
+          {TfLiteType::kTfLiteInt8, Tensor::ElementType::kInt8},
+          {TfLiteType::kTfLiteInt32, Tensor::ElementType::kInt32},
+          {TfLiteType::kTfLiteBool, Tensor::ElementType::kBool}};
+}
+
+static auto CreateTfLiteTensor(TfLiteType type, int num_elements, float scale,
+                               float zero_point) {
+  auto dealloc = [](TfLiteTensor* tensor) {
+    TfLiteIntArrayFree(tensor->dims);
+    delete (tensor);
+  };
+  std::unique_ptr<TfLiteTensor, decltype(dealloc)> tflite_tensor(
+      new TfLiteTensor, dealloc);
+  tflite_tensor->type = type;
+  tflite_tensor->allocation_type = kTfLiteDynamic;
+  tflite_tensor->quantization.type = kTfLiteNoQuantization;
+  TfLiteIntArray* dims = tflite::ConvertVectorToTfLiteIntArray({num_elements});
+  tflite_tensor->dims = dims;
+  tflite_tensor->params.scale = scale;
+  tflite_tensor->params.zero_point = zero_point;
+  return tflite_tensor;
+}
+
+class AllocateTensorWithTfLiteTensorSpecsTest
+    : public ::testing::TestWithParam<
+          std::pair<TfLiteType, Tensor::ElementType>> {};
+
+TEST_P(AllocateTensorWithTfLiteTensorSpecsTest,
+       ShouldAllocateTensorWithTfLiteTensorSpecs) {
+  const auto& config = GetParam();
+  const auto tflite_tensor =
+      CreateTfLiteTensor(config.first, /*num_elements=*/4,
+                         /*scale=*/2.0f, /*zero_point=*/3.0f);
+  MP_ASSERT_OK_AND_ASSIGN(Tensor mp_tensor,
+                          CreateTensorWithTfLiteTensorSpecs(
+                              *tflite_tensor, /*memory_manager=*/nullptr,
+                              tflite::kDefaultTensorAlignment));
+  EXPECT_EQ(mp_tensor.element_type(), config.second);
+  EXPECT_EQ(mp_tensor.shape().num_elements(), 4);
+  if (config.first != TfLiteType::kTfLiteBool) {
+    EXPECT_FLOAT_EQ(mp_tensor.quantization_parameters().scale, 2.0f);
+    EXPECT_FLOAT_EQ(mp_tensor.quantization_parameters().zero_point, 3.0f);
+  }
+}
+
+INSTANTIATE_TEST_SUITE_P(AllocateTensorWithTfLiteTensorSpecsParamTest,
+                         AllocateTensorWithTfLiteTensorSpecsTest,
+                         ::testing::ValuesIn(GetTensorTypePairs()));
 
 }  // namespace
 }  // namespace mediapipe

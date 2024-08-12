@@ -15,6 +15,7 @@ test --test_env="GTEST_INSTALL_FAILURE_SIGNAL_HANDLER=1"
 build:linux --cxxopt=-std=c++17
 build:linux --host_cxxopt=-std=c++17
 build:linux --copt=-w
+build:linux --define=xnn_enable_avx512amx=false
 
 # windows
 build:windows --cxxopt=/std:c++17
@@ -28,6 +29,7 @@ build:windows --host_copt=/D_USE_MATH_DEFINES
 build:macos --cxxopt=-std=c++17
 build:macos --host_cxxopt=-std=c++17
 build:macos --copt=-w
+build:macos --define=xnn_enable_avx512amx=false
 
 # Sets the default Apple platform to macOS.
 build --apple_platform_type=macos

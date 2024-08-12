@@ -16,10 +16,14 @@
 import 'jasmine';
 
 import {CalculatorGraphConfig} from '../../../framework/calculator_pb';
-import {CALCULATOR_GRAPH_CONFIG_LISTENER_NAME, SimpleListener, WasmModule} from '../../../web/graph_runner/graph_runner';
+import {
+  CALCULATOR_GRAPH_CONFIG_LISTENER_NAME,
+  SimpleListener,
+  WasmModule,
+} from '../../../web/graph_runner/graph_runner';
 import {WasmModuleRegisterModelResources} from '../../../web/graph_runner/register_model_resources_graph_service';
 
-type SpyWasmModuleInternal = WasmModule&WasmModuleRegisterModelResources;
+type SpyWasmModuleInternal = WasmModule & WasmModuleRegisterModelResources;
 
 /**
  * Convenience type for our fake WasmModule for Jasmine testing.
@@ -33,16 +37,29 @@ export declare type SpyWasmModule = jasmine.SpyObj<SpyWasmModuleInternal>;
  */
 export function createSpyWasmModule(): SpyWasmModule {
   const spyWasmModule = jasmine.createSpyObj<SpyWasmModuleInternal>([
-    'FS_createDataFile', 'FS_unlink', '_addBoolToInputStream',
-    '_addProtoToInputStream', '_addStringToInputStream', '_attachProtoListener',
-    '_attachProtoVectorListener', '_closeGraph', '_configureAudio', '_free',
-    '_getGraphConfig', '_malloc', '_registerModelResourcesGraphService',
-    '_setAutoRenderToScreen', '_waitUntilIdle', 'stringToNewUTF8'
+    'FS_createDataFile',
+    'FS_unlink',
+    '_addBoolToInputStream',
+    '_addProtoToInputStream',
+    '_addStringToInputStream',
+    '_attachProtoListener',
+    '_attachProtoVectorListener',
+    '_closeGraph',
+    '_configureAudio',
+    '_free',
+    '_getGraphConfig',
+    '_malloc',
+    '_registerModelResourcesGraphService',
+    '_setAutoRenderToScreen',
+    '_waitUntilIdle',
+    'stringToNewUTF8',
   ]);
   spyWasmModule._getGraphConfig.and.callFake(() => {
-    (spyWasmModule.simpleListeners![CALCULATOR_GRAPH_CONFIG_LISTENER_NAME] as
-     SimpleListener<Uint8Array>)(
-        new CalculatorGraphConfig().serializeBinary(), 0);
+    (
+      spyWasmModule.simpleListeners![
+        CALCULATOR_GRAPH_CONFIG_LISTENER_NAME
+      ] as SimpleListener<Uint8Array>
+    )(new CalculatorGraphConfig().serializeBinary(), 0);
   });
   spyWasmModule.HEAPU8 = jasmine.createSpyObj<Uint8Array>(['set']);
   return spyWasmModule;
@@ -53,7 +70,8 @@ export function createSpyWasmModule(): SpyWasmModule {
  * to avoid incorrect test results due to minor floating point inaccuracies.
  */
 export function addJasmineCustomFloatEqualityTester(tolerance = 5e-8) {
-  jasmine.addCustomEqualityTester((a, b) => {  // Custom float equality
+  jasmine.addCustomEqualityTester((a, b) => {
+    // Custom float equality
     if (a === +a && b === +b && (a !== (a | 0) || b !== (b | 0))) {
       return Math.abs(a - b) < tolerance;
     }
@@ -63,7 +81,7 @@ export function addJasmineCustomFloatEqualityTester(tolerance = 5e-8) {
 
 /** The minimum interface provided by a test fake. */
 export interface MediapipeTasksFake {
-  graph: CalculatorGraphConfig|undefined;
+  graph: CalculatorGraphConfig | undefined;
   calculatorName: string;
   attachListenerSpies: jasmine.Spy[];
 }
@@ -85,11 +103,11 @@ export type Deserializer = (binaryProto: Uint8Array) => JsonObject;
  * provided options.
  */
 export function verifyGraph(
-    tasksFake: MediapipeTasksFake,
-    expectedCalculatorOptions?: FieldPathToValue,
-    expectedBaseOptions?: FieldPathToValue,
-    deserializer?: Deserializer,
-    ): void {
+  tasksFake: MediapipeTasksFake,
+  expectedCalculatorOptions?: FieldPathToValue,
+  expectedBaseOptions?: FieldPathToValue,
+  deserializer?: Deserializer,
+): void {
   expect(tasksFake.graph).toBeDefined();
   // Our graphs should have at least one node in them for processing, and
   // sometimes one additional one for keeping alive certain streams in memory.
@@ -97,7 +115,8 @@ export function verifyGraph(
   expect(tasksFake.graph!.getNodeList().length).toBeLessThanOrEqual(2);
   const node = tasksFake.graph!.getNodeList()[0].toObject();
   expect(node).toEqual(
-      jasmine.objectContaining({calculator: tasksFake.calculatorName}));
+    jasmine.objectContaining({calculator: tasksFake.calculatorName}),
+  );
 
   let proto;
   if (deserializer) {
@@ -112,8 +131,9 @@ export function verifyGraph(
   if (expectedBaseOptions) {
     const [fieldPath, value] = expectedBaseOptions;
     let baseOptions = (proto as {baseOptions: unknown}).baseOptions;
-    for (const fieldName of (
-             Array.isArray(fieldPath) ? fieldPath : [fieldPath])) {
+    for (const fieldName of Array.isArray(fieldPath)
+      ? fieldPath
+      : [fieldPath]) {
       baseOptions = ((baseOptions ?? {}) as JsonObject)[fieldName];
     }
     expect(baseOptions).toEqual(value);
@@ -121,8 +141,9 @@ export function verifyGraph(
 
   if (expectedCalculatorOptions) {
     const [fieldPath, value] = expectedCalculatorOptions;
-    for (const fieldName of (
-             Array.isArray(fieldPath) ? fieldPath : [fieldPath])) {
+    for (const fieldName of Array.isArray(fieldPath)
+      ? fieldPath
+      : [fieldPath]) {
       proto = ((proto ?? {}) as JsonObject)[fieldName];
     }
     expect(proto).toEqual(value);

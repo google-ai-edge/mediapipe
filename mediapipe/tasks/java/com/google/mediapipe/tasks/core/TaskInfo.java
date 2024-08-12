@@ -50,7 +50,7 @@ public abstract class TaskInfo<T extends TaskOptions> {
     public abstract Builder<T> setOutputStreams(List<String> value);
 
     /** Sets to true if the task requires a flow limiter. */
-    public abstract Builder<T> setEnableFlowLimiting(Boolean value);
+    public abstract Builder<T> setEnableFlowLimiting(boolean value);
 
     /**
      * Sets a task-specific options instance.
@@ -91,7 +91,7 @@ public abstract class TaskInfo<T extends TaskOptions> {
 
   abstract List<String> outputStreams();
 
-  abstract Boolean enableFlowLimiting();
+  abstract boolean enableFlowLimiting();
 
   public static <T extends TaskOptions> Builder<T> builder() {
     return new AutoValue_TaskInfo.Builder<T>().setTaskName("").setTaskRunningModeName("");

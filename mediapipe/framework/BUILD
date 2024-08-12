@@ -112,7 +112,7 @@ mediapipe_proto_library(
     name = "mediapipe_options_proto",
     srcs = ["mediapipe_options.proto"],
     visibility = [
-        ":mediapipe_internal_proto_users",
+        "//visibility:public",
     ],
 )
 
@@ -211,9 +211,9 @@ cc_library(
         ":calculator_state",
         ":counter",
         ":graph_service",
+        ":graph_service_manager",
         ":input_stream_shard",
         ":output_stream_shard",
-        ":packet",
         ":packet_set",
         ":port",
         ":timestamp",
@@ -399,7 +399,9 @@ cc_library(
     deps = [
         ":graph_service",
         ":packet",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/synchronization",
     ],
 )
 
@@ -425,6 +427,7 @@ cc_library(
         ":calculator_context_manager",
         ":calculator_state",
         ":counter_factory",
+        ":graph_service_manager",
         ":input_side_packet_handler",
         ":input_stream_handler",
         ":input_stream_manager",
@@ -648,7 +651,7 @@ cc_library(
 cc_library(
     name = "graph_service",
     hdrs = ["graph_service.h"],
-    visibility = [":mediapipe_internal"],
+    visibility = ["//visibility:public"],
     deps = [
         ":packet",
         "//mediapipe/framework/port:status",
@@ -727,14 +730,16 @@ cc_library(
         ":packet_type",
         ":port",
         ":timestamp",
-        "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:source_location",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/tool:status_util",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/synchronization",
     ],
 )
@@ -766,6 +771,32 @@ cc_library(
     deps = [
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/synchronization",
+    ],
+)
+
+cc_test(
+    name = "nested_calculator_graph_test",
+    srcs = ["nested_calculator_graph_test.cc"],
+    data = [
+        "//mediapipe/calculators/tensor:testdata/1x3_square_int32.tflite",
+    ],
+    deps = [
+        ":calculator_framework",
+        ":calculator_state",
+        ":graph_service",
+        "//mediapipe/calculators/tensor:inference_calculator_xnnpack",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/tool:sink",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -897,19 +928,21 @@ cc_library(
         "//mediapipe/framework/deps:no_destructor",
         "//mediapipe/framework/deps:registration",
         "//mediapipe/framework/port:core_proto",
-        "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:statusor",
         "//mediapipe/framework/tool:type_util",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/functional:any_invocable",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
+        "@com_google_protobuf//:protobuf",
     ],
 )
 
@@ -1345,6 +1378,7 @@ cc_test(
     deps = [
         ":calculator_framework",
         ":calculator_node",
+        ":output_side_packet_impl",
         "//mediapipe/calculators/core:pass_through_calculator",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
@@ -1711,11 +1745,16 @@ cc_test(
     srcs = ["packet_test.cc"],
     linkstatic = 1,
     deps = [
+        ":calculator_framework",
         ":packet",
         ":packet_test_cc_proto",
         ":type_map",
         "//mediapipe/framework/port:core_proto",
         "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:statusor",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
     ],
 )

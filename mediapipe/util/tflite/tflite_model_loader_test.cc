@@ -30,7 +30,8 @@ class TfLiteModelLoaderTest : public tflite::testing::Test {
     // Create a stub calculator state.
     CalculatorGraphConfig::Node config;
     calculator_state_ = std::make_unique<CalculatorState>(
-        "fake_node", 0, "fake_type", config, nullptr);
+        "fake_node", 0, "fake_type", config, /*profiling_context=*/nullptr,
+        /*graph_service_manager=*/nullptr);
 
     // Create a stub calculator context.
     calculator_context_ = std::make_unique<CalculatorContext>(
@@ -71,7 +72,10 @@ TEST_F(TfLiteModelLoaderTest, LoadFromPathWithMmap) {
   MP_ASSERT_OK_AND_ASSIGN(
       api2::Packet<TfLiteModelPtr> model,
       TfLiteModelLoader::LoadFromPath(model_path_, /* try_mmap=*/true));
-  EXPECT_NE(model.Get(), nullptr);
+  ASSERT_NE(model.Get(), nullptr);
+
+  // Tiny regression test for b/345663816.
+  model.Get()->error_reporter()->Report("Test%i", 1);
 }
 
 }  // namespace

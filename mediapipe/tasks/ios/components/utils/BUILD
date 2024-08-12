@@ -29,5 +29,6 @@ objc_library(
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
         "//mediapipe/tasks/ios/components/containers:MPPEmbedding",
+        "//third_party/apple_frameworks:Foundation",
     ],
 )

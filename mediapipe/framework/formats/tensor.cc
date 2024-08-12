@@ -15,6 +15,7 @@
 #include "mediapipe/framework/formats/tensor.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <memory>
 #include <utility>
@@ -131,7 +132,7 @@ MtlBufferView MtlBufferView::GetReadView(const Tensor& tensor,
       FATAL, !(tensor.valid_ & (Tensor::kValidCpu | Tensor::kValidMetalBuffer)))
       << "Tensor conversion between different GPU backing formats is not "
          "supported yet.";
-  auto lock(absl::make_unique<absl::MutexLock>(&tensor.view_mutex_));
+  auto lock(std::make_unique<absl::MutexLock>(&tensor.view_mutex_));
   tensor.valid_ |= Tensor::kValidMetalBuffer;
   AllocateMtlBuffer(tensor, [command_buffer device]);
   return {tensor.mtl_resources_->metal_buffer, std::move(lock)};
@@ -147,7 +148,7 @@ MtlBufferView MtlBufferView::GetWriteView(const Tensor& tensor,
 
 MtlBufferView MtlBufferView::GetWriteView(const Tensor& tensor,
                                           id<MTLDevice> device) {
-  auto lock(absl::make_unique<absl::MutexLock>(&tensor.view_mutex_));
+  auto lock(std::make_unique<absl::MutexLock>(&tensor.view_mutex_));
   tensor.valid_ = Tensor::kValidMetalBuffer;
   AllocateMtlBuffer(tensor, device);
   return {tensor.mtl_resources_->metal_buffer, std::move(lock)};
@@ -178,12 +179,12 @@ Tensor::OpenGlTexture2dView Tensor::GetOpenGlTexture2dReadView() const {
   ABSL_LOG_IF(FATAL, !(valid_ & (kValidCpu | kValidOpenGlTexture2d)))
       << "Tensor conversion between different GPU backing formats is not "
          "supported yet.";
-  auto lock = absl::make_unique<absl::MutexLock>(&view_mutex_);
+  auto lock = std::make_unique<absl::MutexLock>(&view_mutex_);
   AllocateOpenGlTexture2d();
   if (!(valid_ & kValidOpenGlTexture2d)) {
     const int padded_size =
         texture_height_ * texture_width_ * 4 * element_size();
-    auto temp_buffer = absl::make_unique<uint8_t[]>(padded_size);
+    auto temp_buffer = std::make_unique<uint8_t[]>(padded_size);
     uint8_t* dest_buffer = temp_buffer.get();
     uint8_t* src_buffer = reinterpret_cast<uint8_t*>(cpu_buffer_);
     const int num_elements = BhwcWidthFromShape(shape_) *
@@ -227,7 +228,7 @@ Tensor::OpenGlTexture2dView Tensor::GetOpenGlTexture2dReadView() const {
 }
 
 Tensor::OpenGlTexture2dView Tensor::GetOpenGlTexture2dWriteView() const {
-  auto lock = absl::make_unique<absl::MutexLock>(&view_mutex_);
+  auto lock = std::make_unique<absl::MutexLock>(&view_mutex_);
   AllocateOpenGlTexture2d();
 #ifdef __EMSCRIPTEN__
   // On web, we may have to change type from float to half-float
@@ -349,7 +350,7 @@ Tensor::OpenGlBufferView Tensor::GetOpenGlBufferReadView() const {
                                  kValidOpenGlBuffer)))
       << "Tensor conversion between different GPU backing formats is not "
          "supported yet.";
-  auto lock(absl::make_unique<absl::MutexLock>(&view_mutex_));
+  auto lock(std::make_unique<absl::MutexLock>(&view_mutex_));
   if ((valid_ & kValidOpenGlBuffer) && gl_context_ != nullptr &&
       !gl_context_->IsCurrent() && GlContext::IsAnyContextCurrent()) {
     ABSL_LOG_FIRST_N(WARNING, 1)
@@ -390,7 +391,7 @@ Tensor::OpenGlBufferView Tensor::GetOpenGlBufferReadView() const {
 
 Tensor::OpenGlBufferView Tensor::GetOpenGlBufferWriteView(
     uint64_t source_location_hash) const {
-  auto lock(absl::make_unique<absl::MutexLock>(&view_mutex_));
+  auto lock(std::make_unique<absl::MutexLock>(&view_mutex_));
   TrackAhwbUsage(source_location_hash);
   if ((valid_ & kValidOpenGlBuffer) && gl_context_ != nullptr &&
       !gl_context_->IsCurrent() && GlContext::IsAnyContextCurrent()) {
@@ -639,7 +640,7 @@ absl::Status Tensor::ReadBackGpuToCpu() const {
 }
 
 Tensor::CpuReadView Tensor::GetCpuReadView() const {
-  auto lock = absl::make_unique<absl::MutexLock>(&view_mutex_);
+  auto lock = std::make_unique<absl::MutexLock>(&view_mutex_);
   ABSL_LOG_IF(FATAL, valid_ == kValidNone)
       << "Tensor must be written prior to read from.";
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
@@ -664,7 +665,7 @@ Tensor::CpuReadView Tensor::GetCpuReadView() const {
 
 Tensor::CpuWriteView Tensor::GetCpuWriteView(
     uint64_t source_location_hash) const {
-  auto lock = absl::make_unique<absl::MutexLock>(&view_mutex_);
+  auto lock = std::make_unique<absl::MutexLock>(&view_mutex_);
   TrackAhwbUsage(source_location_hash);
   ABSL_CHECK_OK(AllocateCpuBuffer()) << "AllocateCpuBuffer failed.";
   valid_ = kValidCpu;
@@ -676,7 +677,7 @@ Tensor::CpuWriteView Tensor::GetCpuWriteView(
               [ahwb = ahwb_.get(), fence_fd = &fence_fd_] {
                 auto fence_fd_status = ahwb->UnlockAsync();
                 ABSL_CHECK_OK(fence_fd_status) << "Unlock failed.";
-                *fence_fd = fence_fd_status.value();
+                *fence_fd = UniqueFd(fence_fd_status.value());
               }};
     }
   }

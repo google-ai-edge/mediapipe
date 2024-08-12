@@ -10,15 +10,21 @@
 #ifndef MEDIAPIPE_FRAMEWORK_API2_PACKET_H_
 #define MEDIAPIPE_FRAMEWORK_API2_PACKET_H_
 
-#include <functional>
+#include <memory>
 #include <type_traits>
 #include <utility>
 
+#include "absl/base/attributes.h"
+#include "absl/base/optimization.h"
 #include "absl/log/absl_check.h"
 #include "absl/meta/type_traits.h"
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "mediapipe/framework/api2/tuple.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/logging.h"
+#include "mediapipe/framework/port/status_macros.h"
+#include "mediapipe/framework/timestamp.h"
 
 namespace mediapipe {
 namespace api2 {
@@ -59,19 +65,41 @@ class PacketBase {
   template <typename T>
   Packet<T> As() const;
 
+  template <typename T>
+  bool Has() const {
+    return payload_->As<T>() != nullptr;
+  }
+
   // Returns the reference to the object of type T if it contains
   // one, crashes otherwise.
   template <typename T>
   const T& Get() const;
 
+  // Return OK if the packet is not empty and holds and object of the given
+  // type.
+  template <typename T>
+  absl::Status ValidateAsType() const;
+
+  // Returns the shared pointer to the object of type T if it contains
+  // one, an error otherwise.
+  template <typename T>
+  absl::StatusOr<std::shared_ptr<const T>> Share() const;
+
   // Conversion to old Packet type.
   operator mediapipe::Packet() const& { return ToOldPacket(*this); }
   operator mediapipe::Packet() && { return ToOldPacket(std::move(*this)); }
 
+  // DEPRECATED
+  //
   // Note: Consume is included for compatibility with the old Packet; however,
-  // it relies on shared_ptr.unique(), which is deprecated and is not guaranteed
-  // to give exact results.
+  // it relies on shared_ptr.use_count(), which is deprecated and is not
+  // guaranteed to give exact results.
   template <typename T>
+  ABSL_DEPRECATED(
+      "Avoid Consume* functions usage as in most cases it's hard to ensure "
+      "the proper usage (taken the nature of calculators not knowing where "
+      "packets are received from and sent to) and leads to races. Consider "
+      "SharedPtrWithPacket instead to get a shared_ptr<T> if applicable.")
   absl::StatusOr<std::unique_ptr<T>> Consume() {
     // Using the implementation in the old Packet for now.
     mediapipe::Packet old =
@@ -83,10 +111,10 @@ class PacketBase {
   }
 
  protected:
-  explicit PacketBase(std::shared_ptr<HolderBase> payload)
+  explicit PacketBase(std::shared_ptr<const HolderBase> payload)
       : payload_(std::move(payload)) {}
 
-  std::shared_ptr<HolderBase> payload_;
+  std::shared_ptr<const HolderBase> payload_;
   Timestamp timestamp_;
 
   template <typename T>
@@ -105,11 +133,33 @@ mediapipe::Packet ToOldPacket(PacketBase&& p);
 template <typename T>
 inline const T& PacketBase::Get() const {
   ABSL_CHECK(payload_);
-  packet_internal::Holder<T>* typed_payload = payload_->As<T>();
+  const packet_internal::Holder<T>* typed_payload = payload_->As<T>();
   ABSL_CHECK(typed_payload) << absl::StrCat(
       "The Packet stores \"", payload_->DebugTypeName(), "\", but \"",
       MediaPipeTypeStringOrDemangled<T>(), "\" was requested.");
   return typed_payload->data();
+}
+
+template <class T>
+absl::Status PacketBase::ValidateAsType() const {
+  if (ABSL_PREDICT_FALSE(payload_ == nullptr)) {
+    return absl::FailedPreconditionError("Empty Packet");
+  }
+  const packet_internal::Holder<T>* const typed_payload = payload_->As<T>();
+  if (ABSL_PREDICT_FALSE(typed_payload == nullptr)) {
+    return absl::InvalidArgumentError(absl::StrCat(
+        "The Packet stores \"", payload_->DebugTypeName(), "\", but \"",
+        MediaPipeTypeStringOrDemangled<T>(), "\" was requested"));
+  }
+  return absl::OkStatus();
+}
+
+template <class T>
+absl::StatusOr<std::shared_ptr<const T>> PacketBase::Share() const {
+  MP_RETURN_IF_ERROR(ValidateAsType<T>());
+  const T* ptr = &Get<T>();
+  return std::shared_ptr<const T>(
+      ptr, [packet = *this](const T* ptr) mutable { packet = {}; });
 }
 
 // This is used to indicate that the packet could be holding one of a set of
@@ -195,7 +245,7 @@ class Packet<internal::Generic> : public PacketBase {
   Packet<internal::Generic> At(Timestamp timestamp) &&;
 
  protected:
-  explicit Packet(std::shared_ptr<HolderBase> payload)
+  explicit Packet(std::shared_ptr<const HolderBase> payload)
       : PacketBase(std::move(payload)) {}
 
   friend PacketBase;
@@ -214,7 +264,7 @@ class Packet : public Packet<internal::Generic> {
 
   const T& Get() const {
     ABSL_CHECK(payload_);
-    packet_internal::Holder<T>* typed_payload = payload_->As<T>();
+    const packet_internal::Holder<T>* typed_payload = payload_->As<T>();
     ABSL_CHECK(typed_payload);
     return typed_payload->data();
   }
@@ -226,15 +276,26 @@ class Packet : public Packet<internal::Generic> {
     return IsEmpty() ? static_cast<T>(std::forward<U>(v)) : **this;
   }
 
+  // DEPRECATED
+  //
   // Note: Consume is included for compatibility with the old Packet; however,
   // it relies on shared_ptr.unique(), which is deprecated and is not guaranteed
   // to give exact results.
+  ABSL_DEPRECATED(
+      "Avoid Consume* functions usage as in most cases it's hard to ensure "
+      "the proper usage (taken the nature of calculators not knowing where "
+      "packets are received from and sent to) and leads to races. Consider "
+      "SharedPtrWithPacket instead to get a shared_ptr<T> if applicable.")
   absl::StatusOr<std::unique_ptr<T>> Consume() {
     return PacketBase::Consume<T>();
   }
 
+  absl::StatusOr<std::shared_ptr<const T>> Share() const {
+    return PacketBase::Share<T>();
+  }
+
  private:
-  explicit Packet(std::shared_ptr<HolderBase> payload)
+  explicit Packet(std::shared_ptr<const HolderBase> payload)
       : Packet<internal::Generic>(std::move(payload)) {}
 
   friend PacketBase;
@@ -333,9 +394,14 @@ class Packet<OneOf<T...>> : public PacketBase {
   template <class U, class = AllowedType<U>>
   const U& Get() const {
     ABSL_CHECK(payload_);
-    packet_internal::Holder<U>* typed_payload = payload_->As<U>();
+    const packet_internal::Holder<U>* typed_payload = payload_->As<U>();
     ABSL_CHECK(typed_payload);
     return typed_payload->data();
+  }
+
+  template <class U, class = AllowedType<U>>
+  absl::StatusOr<std::shared_ptr<const U>> Share() const {
+    return PacketBase::Share<U>();
   }
 
   template <class U, class = AllowedType<U>>
@@ -356,15 +422,27 @@ class Packet<OneOf<T...>> : public PacketBase {
     return Invoke<decltype(f), T...>(f);
   }
 
+  // DEPRECATED
+  //
   // Note: Consume is included for compatibility with the old Packet; however,
   // it relies on shared_ptr.unique(), which is deprecated and is not guaranteed
   // to give exact results.
   template <class U, class = AllowedType<U>>
+  ABSL_DEPRECATED(
+      "Avoid Consume* functions usage as in most cases it's hard to ensure "
+      "the proper usage (taken the nature of calculators not knowing where "
+      "packets are received from and sent to) and leads to races. Consider "
+      "SharedPtrWithPacket instead to get a shared_ptr<T> if applicable.")
   absl::StatusOr<std::unique_ptr<U>> Consume() {
     return PacketBase::Consume<U>();
   }
 
   template <class... F>
+  ABSL_DEPRECATED(
+      "Avoid Consume* functions usage as in most cases it's hard to ensure "
+      "the proper usage (taken the nature of calculators not knowing where "
+      "packets are received from and sent to) and leads to races. Consider "
+      "SharedPtrWithPacket instead to get a shared_ptr<T> if applicable.")
   auto ConsumeAndVisit(const F&... args) {
     ABSL_CHECK(payload_);
     auto f = internal::Overload{args...};
@@ -381,7 +459,7 @@ class Packet<OneOf<T...>> : public PacketBase {
   }
 
  protected:
-  explicit Packet(std::shared_ptr<HolderBase> payload)
+  explicit Packet(std::shared_ptr<const HolderBase> payload)
       : PacketBase(std::move(payload)) {}
 
   friend PacketBase;

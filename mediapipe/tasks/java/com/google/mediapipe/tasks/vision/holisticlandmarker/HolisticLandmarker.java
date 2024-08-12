@@ -488,10 +488,10 @@ public final class HolisticLandmarker extends BaseVisionTaskApi {
       public abstract Builder setMinHandLandmarksConfidence(Float value);
 
       /** Whether to output segmentation masks. Defaults to false. */
-      public abstract Builder setOutputPoseSegmentationMasks(Boolean value);
+      public abstract Builder setOutputPoseSegmentationMasks(boolean value);
 
       /** Whether to output face blendshapes. Defaults to false. */
-      public abstract Builder setOutputFaceBlendshapes(Boolean value);
+      public abstract Builder setOutputFaceBlendshapes(boolean value);
 
       /**
        * Sets the result listener to receive the detection results asynchronously when the holistic
@@ -547,9 +547,9 @@ public final class HolisticLandmarker extends BaseVisionTaskApi {
 
     abstract Optional<Float> minHandLandmarksConfidence();
 
-    abstract Boolean outputFaceBlendshapes();
+    abstract boolean outputFaceBlendshapes();
 
-    abstract Boolean outputPoseSegmentationMasks();
+    abstract boolean outputPoseSegmentationMasks();
 
     abstract Optional<ResultListener<HolisticLandmarkerResult, MPImage>> resultListener();
 

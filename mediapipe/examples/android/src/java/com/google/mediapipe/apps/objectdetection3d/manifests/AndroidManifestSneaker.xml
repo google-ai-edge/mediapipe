@@ -4,7 +4,7 @@
 
   <uses-sdk
       android:minSdkVersion="21"
-      android:targetSdkVersion="27" />
+      android:targetSdkVersion="34" />
 
   <application>
       <meta-data android:name="categoryName" android:value="Footwear"/>

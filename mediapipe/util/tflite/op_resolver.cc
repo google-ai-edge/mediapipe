@@ -35,9 +35,9 @@ constexpr int kConvolution2DTransposeBiasOpVersion = 1;
 TfLiteRegistration* RegisterMaxPoolingWithArgmax2D() {
   static TfLiteOperator* reg_external = []() {
     // Intentionally allocated and never destroyed.
-    auto* r = TfLiteOperatorCreate(kTfLiteBuiltinCustom,
-                                   kMaxPoolingWithArgmax2DOpName,
-                                   kMaxPoolingWithArgmax2DOpVersion);
+    auto* r = TfLiteOperatorCreate(
+        kTfLiteBuiltinCustom, kMaxPoolingWithArgmax2DOpName,
+        kMaxPoolingWithArgmax2DOpVersion, /*user_data=*/nullptr);
     TfLiteOperatorSetInit(
         r, [](TfLiteOpaqueContext*, const char*, size_t) -> void* {
           return new TfLitePaddingValues();
@@ -66,7 +66,8 @@ TfLiteRegistration* RegisterMaxUnpooling2D() {
   static TfLiteOperator* reg_external =
       // Intentionally allocated and never destroyed.
       TfLiteOperatorCreate(kTfLiteBuiltinCustom, kMaxUnpooling2DOpName,
-                           kMaxUnpooling2DOpVersion);
+                           kMaxUnpooling2DOpVersion,
+                           /*user_data=*/nullptr);
   static TfLiteRegistration reg{};
   reg.registration_external = reg_external;
   return &reg;
@@ -75,9 +76,9 @@ TfLiteRegistration* RegisterMaxUnpooling2D() {
 TfLiteRegistration* RegisterConvolution2DTransposeBias() {
   static TfLiteOperator* reg_external =
       // Intentionally allocated and never destroyed.
-      TfLiteOperatorCreate(kTfLiteBuiltinCustom,
-                           kConvolution2DTransposeBiasOpName,
-                           kConvolution2DTransposeBiasOpVersion);
+      TfLiteOperatorCreate(
+          kTfLiteBuiltinCustom, kConvolution2DTransposeBiasOpName,
+          kConvolution2DTransposeBiasOpVersion, /*user_data=*/nullptr);
   static TfLiteRegistration reg{};
   reg.registration_external = reg_external;
   return &reg;

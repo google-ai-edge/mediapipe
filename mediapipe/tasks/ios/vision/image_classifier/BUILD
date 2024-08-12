@@ -23,6 +23,7 @@ objc_library(
     deps = [
         "//mediapipe/tasks/ios/components/containers:MPPClassificationResult",
         "//mediapipe/tasks/ios/core:MPPTaskResult",
+        "//third_party/apple_frameworks:Foundation",
     ],
 )
 
@@ -34,6 +35,7 @@ objc_library(
         ":MPPImageClassifierResult",
         "//mediapipe/tasks/ios/core:MPPTaskOptions",
         "//mediapipe/tasks/ios/vision/core:MPPRunningMode",
+        "//third_party/apple_frameworks:Foundation",
     ],
 )
 
@@ -60,5 +62,6 @@ objc_library(
         "//mediapipe/tasks/ios/vision/core:MPPVisionTaskRunner",
         "//mediapipe/tasks/ios/vision/image_classifier/utils:MPPImageClassifierOptionsHelpers",
         "//mediapipe/tasks/ios/vision/image_classifier/utils:MPPImageClassifierResultHelpers",
+        "//third_party/apple_frameworks:Foundation",
     ],
 )

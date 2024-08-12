@@ -64,6 +64,85 @@ TEST(TensorAhwbTest, EveryAhwbReadViewReleaseCallbackIsInvoked) {
   EXPECT_THAT(callbacks_invoked, Each(true));
 }
 
+TEST(TensorAhwbTest,
+     GetAHardwareBufferReadViewTriggersReleaseForFinishedReads) {
+  constexpr int kNumReleaseCallbacks = 10;
+  std::array<bool, kNumReleaseCallbacks> release_callbacks_invoked;
+  release_callbacks_invoked.fill(false);
+
+  {
+    // Create tensor.
+    Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape{1});
+    {
+      auto ptr = tensor.GetCpuWriteView().buffer<float>();
+      ASSERT_NE(ptr, nullptr);
+    }
+
+    // Get AHWB read view multiple times (e.g. simulating how multiple inference
+    // calculators could read from the same tensor)
+    for (int i = 0; i < kNumReleaseCallbacks; ++i) {
+      if (i > 0) {
+        ASSERT_FALSE(release_callbacks_invoked[i - 1]);
+      }
+      // Triggers cleanup for a previous ready read.
+      auto view = tensor.GetAHardwareBufferReadView();
+      ASSERT_NE(view.handle(), nullptr);
+      if (i > 0) {
+        // Triggered cleanup for a previous read as it's ready.
+        ASSERT_TRUE(release_callbacks_invoked[i - 1]);
+      }
+
+      // Marking as a finished read.
+      view.SetReadingFinishedFunc([](bool) { return true; });
+      view.SetReleaseCallback([&release_callbacks_invoked, i] {
+        release_callbacks_invoked[i] = true;
+      });
+    }
+    ASSERT_FALSE(release_callbacks_invoked[kNumReleaseCallbacks - 1]);
+
+    // Destroy tensor on scope exit triggering last release callback.
+  }
+
+  EXPECT_THAT(release_callbacks_invoked, Each(true));
+}
+
+TEST(TensorAhwbTest, GetAhwbReadViewDoesNotTriggerReleaseForUnfinishedReads) {
+  constexpr int kNumReleaseCallbacks = 10;
+  std::array<bool, kNumReleaseCallbacks> release_callbacks_invoked;
+  release_callbacks_invoked.fill(false);
+
+  {
+    // Create tensor.
+    Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape{1});
+    {
+      auto ptr = tensor.GetCpuWriteView().buffer<float>();
+      ASSERT_NE(ptr, nullptr);
+    }
+
+    // Get AHWB read view multiple times (e.g. simulating how multiple inference
+    // calculators could read from the same tensor)
+    bool is_reading_finished = false;
+    for (int i = 0; i < kNumReleaseCallbacks; ++i) {
+      auto view = tensor.GetAHardwareBufferReadView();
+      ASSERT_NE(view.handle(), nullptr);
+
+      // Marking as an unfinished read.
+      view.SetReadingFinishedFunc(
+          [&is_reading_finished](bool) { return is_reading_finished; });
+      view.SetReleaseCallback([&release_callbacks_invoked, i] {
+        release_callbacks_invoked[i] = true;
+      });
+    }
+    ASSERT_THAT(release_callbacks_invoked, Each(false));
+
+    // Destroy tensor on scope exit triggering release callbacks considering
+    // reads are finished.
+    is_reading_finished = true;
+  }
+
+  EXPECT_THAT(release_callbacks_invoked, Each(true));
+}
+
 TEST(TensorAhwbTest, EveryAhwbWriteViewReleaseCallbackIsInvoked) {
   constexpr int kNumReleaseCallbacks = 10;
   std::array<bool, kNumReleaseCallbacks> callbacks_invoked;
@@ -84,6 +163,75 @@ TEST(TensorAhwbTest, EveryAhwbWriteViewReleaseCallbackIsInvoked) {
   }
 
   EXPECT_THAT(callbacks_invoked, Each(true));
+}
+
+TEST(TensorAhwbTest,
+     ShouldSupportMultipleDelayedAhwbReadersFollowedByACpuReader) {
+  Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape{1});
+  {
+    auto write_view = tensor.GetAHardwareBufferWriteView();
+    EXPECT_NE(write_view.handle(), nullptr);
+  }
+  bool reading_finished = false;
+  {
+    auto ahwb_read_view = tensor.GetAHardwareBufferReadView();
+    EXPECT_NE(ahwb_read_view.handle(), nullptr);
+    ahwb_read_view.SetReadingFinishedFunc(
+        [&reading_finished](bool) { return reading_finished; });
+    ahwb_read_view.SetReleaseCallback([]() {});
+    // Since SetReadingFinishedFunc is blocked, the AhwbUsage instance on
+    // ahwb_usages_ is not cleared.
+  }
+  {
+    auto ahwb_read_view = tensor.GetAHardwareBufferReadView();
+    EXPECT_NE(ahwb_read_view.handle(), nullptr);
+    ahwb_read_view.SetReadingFinishedFunc(
+        [&reading_finished](bool) { return reading_finished; });
+    ahwb_read_view.SetReleaseCallback([]() {});
+    // Since SetReadingFinishedFunc is blocked, the AhwbUsage instance on
+    // ahwb_usages_ is not cleared.
+  }
+
+  // Now we release the AHWB readers.
+  reading_finished = true;
+  {
+    // We can now read from CPU.
+    auto view = tensor.GetCpuReadView();
+    EXPECT_NE(view.buffer<float>(), nullptr);
+  }
+}
+
+TEST(TensorAhwbTest,
+     EveryAhwbWriteViewReleaseCallbackIsInvokedWritingFininshedSpecified) {
+  constexpr int kNumReleaseCallbacks = 10;
+  std::array<bool, kNumReleaseCallbacks> release_callbacks_invoked;
+  release_callbacks_invoked.fill(false);
+
+  {
+    // Create tensor.
+    Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape{1});
+    // Get AHWB write view multiple times and set release callback.
+    for (int i = 0; i < kNumReleaseCallbacks; ++i) {
+      if (i > 0) {
+        ASSERT_FALSE(release_callbacks_invoked[i - 1]);
+      }
+      auto view = tensor.GetAHardwareBufferWriteView();
+      if (i > 0) {
+        ASSERT_TRUE(release_callbacks_invoked[i - 1]);
+      }
+      ASSERT_NE(view.handle(), nullptr);
+      view.SetWritingFinishedFD(/*dummy fd=*/-1, [](bool) { return true; });
+      view.SetReleaseCallback([&release_callbacks_invoked, i] {
+        release_callbacks_invoked[i] = true;
+      });
+    }
+
+    ASSERT_FALSE(release_callbacks_invoked[kNumReleaseCallbacks - 1]);
+
+    // Destroy tensor on scope exit triggering last release callback.
+  }
+
+  EXPECT_THAT(release_callbacks_invoked, Each(true));
 }
 
 TEST(TensorAhwbTest, TestAHWBThenCpu) {
@@ -115,18 +263,18 @@ TEST(TensorAhwbTest, TestAhwbAlignment) {
   }
 }
 
-// Tensor::GetCpuView uses source location mechanism that gives source file name
-// and line from where the method is called. The function is intended just to
-// have two calls providing the same source file name and line.
+// Tensor::GetCpuView uses source location mechanism that gives source file
+// name and line from where the method is called. The function is intended
+// just to have two calls providing the same source file name and line.
 auto GetCpuView(const Tensor &tensor) { return tensor.GetCpuWriteView(); }
 
-// The test checks the tracking mechanism: when a tensor's Cpu view is retrieved
-// for the first time then the source location is attached to the tensor. If the
-// Ahwb view is requested then from the tensor then the previously recorded Cpu
-// view request source location is marked for using Ahwb storage.
-// When a Cpu view with the same source location (but for the newly allocated
-// tensor) is requested and the location is marked to use Ahwb storage then the
-// Ahwb storage is allocated for the CpuView.
+// The test checks the tracking mechanism: when a tensor's Cpu view is
+// retrieved for the first time then the source location is attached to the
+// tensor. If the Ahwb view is requested then from the tensor then the
+// previously recorded Cpu view request source location is marked for using
+// Ahwb storage. When a Cpu view with the same source location (but for the
+// newly allocated tensor) is requested and the location is marked to use Ahwb
+// storage then the Ahwb storage is allocated for the CpuView.
 TEST(TensorAhwbTest, TestTrackingAhwb) {
   // Create first tensor and request Cpu and then Ahwb view to mark the source
   // location for Ahwb storage.
@@ -141,7 +289,7 @@ TEST(TensorAhwbTest, TestTrackingAhwb) {
       // Align size of the Ahwb by multiple of 16.
       auto view = tensor.GetAHardwareBufferWriteView();
       EXPECT_NE(view.handle(), nullptr);
-      view.SetReadingFinishedFunc([](bool) { return true; });
+      view.SetWritingFinishedFD(/*fd=*/-1, [](bool) { return true; });
     }
   }
   {

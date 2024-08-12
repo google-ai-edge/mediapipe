@@ -20,7 +20,10 @@ objc_library(
     name = "MPPLanguageDetectorOptions",
     srcs = ["sources/MPPLanguageDetectorOptions.m"],
     hdrs = ["sources/MPPLanguageDetectorOptions.h"],
-    deps = ["//mediapipe/tasks/ios/core:MPPTaskOptions"],
+    deps = [
+        "//mediapipe/tasks/ios/core:MPPTaskOptions",
+        "//third_party/apple_frameworks:Foundation",
+    ],
 )
 
 objc_library(
@@ -54,5 +57,6 @@ objc_library(
         "//mediapipe/tasks/ios/text/core:MPPTextTaskRunner",
         "//mediapipe/tasks/ios/text/language_detector/utils:MPPLanguageDetectorOptionsHelpers",
         "//mediapipe/tasks/ios/text/language_detector/utils:MPPLanguageDetectorResultHelpers",
+        "//third_party/apple_frameworks:Foundation",
     ],
 )

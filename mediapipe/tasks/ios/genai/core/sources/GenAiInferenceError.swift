@@ -73,7 +73,7 @@ extension GenAiInferenceError: CustomNSError {
     case .failedToAddQueryToSession:
       return 5
     case .failedToCloneSession:
-      return 6
+      return 6s
     }
   }
 }

@@ -5,7 +5,7 @@ Pod::Spec.new do |s|
   s.license          = { :type => 'Apache',:file => "LICENSE" }
   s.homepage         = 'https://github.com/google/mediapipe'
   s.source           = { :http => '${MPP_COMMON_DOWNLOAD_URL}' }
-  s.summary          = 'MediaPipe Task Library - Text'
+  s.summary          = 'MediaPipe Task Library - Common'
   s.description      = 'The common libraries of the MediaPipe Task Library'
 
   s.ios.deployment_target = '12.0'

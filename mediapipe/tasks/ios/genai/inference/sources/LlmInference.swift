@@ -46,6 +46,7 @@ import MediaPipeTasksGenAIC
       }
     }
   }
+  private var supportedLoraRanks: UnsafeMutableBufferPointer<Int>?
 
   /// Creates a new instance of `LlmInference` with the given options.
   ///
@@ -62,19 +63,28 @@ import MediaPipeTasksGenAIC
       free(cacheDirectory)
       free(loraPath)
     }
+    var loraRanks: UnsafeMutableBufferPointer<Int>?
+    options.supportedLoraRanks.withUnsafeMutableBufferPointer { pointer in
+      loraRanks = pointer
+    }
+    supportedLoraRanks = loraRanks
 
-    let sessionConfig = LlmSessionConfig(
+    let modelSetting = LlmModelSettings(
       model_path: modelPath,
       cache_dir: cacheDirectory,
-      sequence_batch_size: LlmInference.sequenceBatchSize,
+      max_num_tokens: options.maxTokens,
       num_decode_steps_per_sync: LlmInference.numberOfDecodeStepsPerSync,
-      max_tokens: options.maxTokens,
+      sequence_batch_size: LlmInference.sequenceBatchSize,
+      number_of_supported_lora_ranks: options.numOfSupportedLoraRanks,
+      supported_lora_ranks: supportedLoraRanks?.baseAddress,
+      max_top_k: options.topk)
+    let sessionConfig = LlmSessionConfig(
       topk: options.topk,
       topp: 1.0,
       temperature: options.temperature,
       random_seed: options.randomSeed,
       lora_path: loraPath)
-    try llmTaskRunner = LlmTaskRunner(sessionConfig: sessionConfig)
+    try llmTaskRunner = LlmTaskRunner(modelSettings: modelSetting, sessionConfig: sessionConfig)
 
     super.init()
   }
@@ -131,7 +141,7 @@ import MediaPipeTasksGenAIC
     /// Used to make a decision about whitespace stripping.
     var receivedFirstToken = true
 
-    llmTaskRunner.predict(
+    try llmTaskRunner.predict(
       inputText: inputText,
       progress: { partialResponseStrings, error in
 
@@ -232,6 +242,12 @@ extension LlmInference {
 
     /// The random seed for sampling tokens.
     @objc public var randomSeed: Int = 0
+
+    /// Number of supported lora ranks for the base model. Used by GPU only.
+    @objc public var numOfSupportedLoraRanks: Int = 0
+
+    /// The supported lora ranks for the base model. Used by GPU only.
+    @objc public var supportedLoraRanks: [Int] = []
 
     /// The absolute path to the LoRA model asset bundle stored locally on the device. Optional.
     /// This is only compatible with GPU models.

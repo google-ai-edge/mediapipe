@@ -151,6 +151,11 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":gl_base",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/base:log_severity",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/time",
     ],
 )
 
@@ -188,7 +193,9 @@ cc_library(
             "-framework AppKit",
         ],
     }),
-    visibility = ["//visibility:public"],
+    visibility = [
+        "//visibility:public",
+    ],
     deps = [
         ":attachments",
         ":gl_base",
@@ -678,16 +685,21 @@ cc_library(
         ":gpu_buffer_multi_pool",
         ":gpu_shared_data_header",
         ":graph_support",
+        ":multi_pool",
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:calculator_node",
         "//mediapipe/framework:executor",
+        "//mediapipe/framework:graph_service",
         "//mediapipe/framework/deps:no_destructor",
+        "//mediapipe/framework/port:map_util",
         "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
     ] + select({
         "//conditions:default": [],
         "//mediapipe:apple": [
@@ -1033,6 +1045,7 @@ cc_library(
         ":gl_quad_renderer",
         ":gl_scaler_calculator_cc_proto",
         ":gl_simple_shaders",
+        ":gpu_buffer",
         ":gpu_buffer_format",
         ":shader_util",
         "//mediapipe/framework:calculator_framework",
@@ -1040,6 +1053,7 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/tool:options_util",
+        "@com_google_absl//absl/status:statusor",
     ],
     alwayslink = 1,
 )
@@ -1255,6 +1269,10 @@ mediapipe_cc_test(
     name = "gpu_buffer_storage_ahwb_test",
     size = "small",
     srcs = ["gpu_buffer_storage_ahwb_test.cc"],
+    # Ensures that virtual device chosen is Android 26+.
+    android_devices = {
+        "//tools/target_cpu:x86": "//tools/mobile/devices/android/generic_phone:android_26_x86",
+    },
     exclude_platforms = [
         "ios",
         "wasm",

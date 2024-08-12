@@ -3,6 +3,6 @@
     package="com.google.mediapipe.solutions.hands">
 
     <uses-sdk android:minSdkVersion="21"
-        android:targetSdkVersion="27" />
+        android:targetSdkVersion="34" />
 
 </manifest>

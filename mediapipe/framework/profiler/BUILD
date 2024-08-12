@@ -212,6 +212,7 @@ cc_library(
     deps = [
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_options_cc_proto",
+        "//mediapipe/framework:calculator_state",
         "//mediapipe/framework:mediapipe_options_cc_proto",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:statusor",

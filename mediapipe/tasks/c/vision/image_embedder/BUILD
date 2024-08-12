@@ -58,6 +58,7 @@ cc_test(
         "//mediapipe/framework/deps:file_path",
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/port:gtest",
+        "//mediapipe/tasks/c/components/containers:embedding_result",
         "//mediapipe/tasks/c/vision/core:common",
         "//mediapipe/tasks/cc/vision/utils:image_utils",
         "@com_google_absl//absl/flags:flag",

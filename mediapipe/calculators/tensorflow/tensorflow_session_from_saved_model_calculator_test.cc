@@ -241,7 +241,7 @@ TEST_F(TensorFlowSessionFromSavedModelCalculatorTest,
   // Session must be set.
   ASSERT_NE(session.session, nullptr);
   std::vector<tensorflow::DeviceAttributes> devices;
-  ASSERT_EQ(session.session->ListDevices(&devices), tensorflow::OkStatus());
+  ASSERT_EQ(session.session->ListDevices(&devices), absl::OkStatus());
   EXPECT_THAT(devices.size(), 10);
 }
 

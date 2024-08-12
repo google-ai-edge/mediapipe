@@ -30,5 +30,9 @@ message DetokenizerCalculatorOptions {
   // How many sets of input IDs need to be detokenized.
   int32 num_output_heads = 5;
 
+  // Whether the detokenizer is used along with a fake weight model. If so,
+  // negative tokens will not be considered as illegal tokens.
+  bool fake_weight_mode = 6;
+
   reserved 2, 3;
 }

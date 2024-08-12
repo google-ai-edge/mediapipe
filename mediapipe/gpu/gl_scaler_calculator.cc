@@ -12,15 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "absl/status/statusor.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
+#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/tool/options_util.h"
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gl_quad_renderer.h"
 #include "mediapipe/gpu/gl_scaler_calculator.pb.h"
 #include "mediapipe/gpu/gl_simple_shaders.h"
+#include "mediapipe/gpu/gpu_buffer.h"
 #include "mediapipe/gpu/gpu_buffer_format.h"
 #include "mediapipe/gpu/shader_util.h"
 
@@ -95,6 +98,9 @@ class GlScalerCalculator : public CalculatorBase {
   }
 
  private:
+  // Returns the input GpuBuffer, or fails if it's empty.
+  absl::StatusOr<GpuBuffer> GetInputGpuBuffer(CalculatorContext* cc);
+
   GlCalculatorHelper helper_;
   int dst_width_ = 0;
   int dst_height_ = 0;
@@ -211,6 +217,18 @@ absl::Status GlScalerCalculator::Open(CalculatorContext* cc) {
   return absl::OkStatus();
 }
 
+absl::StatusOr<GpuBuffer> GlScalerCalculator::GetInputGpuBuffer(
+    CalculatorContext* cc) {
+  if (cc->Inputs().HasTag(kImageTag)) {
+    auto& input = cc->Inputs().Tag(kImageTag);
+    RET_CHECK(!input.IsEmpty());
+    return input.Get<Image>().GetGpuBuffer();
+  }
+  auto& input = TagOrIndex(cc->Inputs(), "VIDEO", 0);
+  RET_CHECK(!input.IsEmpty());
+  return input.Get<GpuBuffer>();
+}
+
 absl::Status GlScalerCalculator::Process(CalculatorContext* cc) {
   if (cc->Inputs().HasTag(kOutputDimensionsTag)) {
     if (cc->Inputs().Tag(kOutputDimensionsTag).IsEmpty()) {
@@ -225,10 +243,7 @@ absl::Status GlScalerCalculator::Process(CalculatorContext* cc) {
   }
 
   return helper_.RunInGlContext([this, cc]() -> absl::Status {
-    const auto& input =
-        cc->Inputs().HasTag(kImageTag)
-            ? cc->Inputs().Tag(kImageTag).Get<Image>().GetGpuBuffer()
-            : TagOrIndex(cc->Inputs(), "VIDEO", 0).Get<GpuBuffer>();
+    MP_ASSIGN_OR_RETURN(GpuBuffer input, GetInputGpuBuffer(cc));
     QuadRenderer* renderer = nullptr;
     GlTexture src1;
     GlTexture src2;

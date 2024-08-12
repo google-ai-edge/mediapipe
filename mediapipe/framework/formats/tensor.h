@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <initializer_list>
+#include <list>
 #include <memory>
 #include <numeric>
 #include <tuple>
@@ -41,6 +42,8 @@
 
 #include "mediapipe/framework/formats/hardware_buffer.h"
 #include "mediapipe/framework/formats/hardware_buffer_pool.h"
+#include "mediapipe/framework/formats/tensor_ahwb_usage.h"
+#include "mediapipe/framework/formats/unique_fd.h"
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
 #include "mediapipe/gpu/gl_base.h"
@@ -197,6 +200,7 @@ class Tensor {
 
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
   using FinishingFunc = std::function<bool(bool)>;
+
   class AHardwareBufferView : public View {
    public:
     AHardwareBuffer* handle() const {
@@ -205,55 +209,61 @@ class Tensor {
     AHardwareBufferView(AHardwareBufferView&& src)
         : View(std::move(src.lock_)) {
       hardware_buffer_ = std::move(src.hardware_buffer_);
-      file_descriptor_ = src.file_descriptor_;
+      file_descriptor_ = std::exchange(src.file_descriptor_, nullptr);
       fence_fd_ = std::exchange(src.fence_fd_, nullptr);
-      ahwb_written_ = std::exchange(src.ahwb_written_, nullptr);
-      ahwb_release_callbacks_ =
-          std::exchange(src.ahwb_release_callbacks_, nullptr);
+      ahwb_usage_ = std::exchange(src.ahwb_usage_, nullptr);
+      is_write_view_ = src.is_write_view_;
     }
-    int file_descriptor() const { return file_descriptor_; }
+
+    int file_descriptor() const { return file_descriptor_->Get(); }
 
     // TODO: verify if multiple functions can be specified.
     void SetReadingFinishedFunc(FinishingFunc&& func) {
-      ABSL_CHECK(ahwb_written_)
+      ABSL_CHECK(!is_write_view_)
           << "AHWB write view can't accept 'reading finished callback'";
-      *ahwb_written_ = std::move(func);
+      ABSL_CHECK(ahwb_usage_->is_complete_fn == nullptr)
+          << "AHWB reading finished callback is already set.";
+      ahwb_usage_->is_complete_fn = std::move(func);
     }
 
     // TODO: verify if multiple functions can be specified.
     void SetWritingFinishedFD(int fd, FinishingFunc func = nullptr) {
-      ABSL_CHECK(fence_fd_)
+      ABSL_CHECK(is_write_view_)
           << "AHWB read view can't accept 'writing finished file descriptor'";
-      *fence_fd_ = fd;
-      *ahwb_written_ = std::move(func);
+      ABSL_CHECK(ahwb_usage_->is_complete_fn == nullptr)
+          << "AHWB write finished callback is already set.";
+      *fence_fd_ = UniqueFd(fd);
+      ahwb_usage_->is_complete_fn = std::move(func);
     }
 
     // Passed `callback` is invoked when the tensor is being released.
     // TODO: rename to Add* or set a single callback only.
     void SetReleaseCallback(absl::AnyInvocable<void()> callback) {
-      ahwb_release_callbacks_->push_back(std::move(callback));
+      ahwb_usage_->release_callbacks.push_back(std::move(callback));
     }
 
    protected:
     friend class Tensor;
-    AHardwareBufferView(
-        HardwareBuffer* hardware_buffer, int file_descriptor, int* fence_fd,
-        FinishingFunc* ahwb_written,
-        std::vector<absl::AnyInvocable<void()>>* ahwb_release_callbacks,
-        std::unique_ptr<absl::MutexLock>&& lock)
+    AHardwareBufferView(HardwareBuffer* hardware_buffer,
+                        UniqueFd* file_descriptor, UniqueFd* fence_fd,
+                        TensorAhwbUsage* ahwb_usage,
+                        std::unique_ptr<absl::MutexLock>&& lock,
+                        bool is_write_view)
         : View(std::move(lock)),
           hardware_buffer_(hardware_buffer),
           file_descriptor_(file_descriptor),
           fence_fd_(fence_fd),
-          ahwb_written_(ahwb_written),
-          ahwb_release_callbacks_(ahwb_release_callbacks) {}
-    HardwareBuffer* hardware_buffer_;
-    int file_descriptor_;
+          ahwb_usage_(ahwb_usage),
+          is_write_view_(is_write_view) {}
+
+    HardwareBuffer* hardware_buffer_ = nullptr;
+    UniqueFd* file_descriptor_ = nullptr;
     // The view sets some Tensor's fields. The view is released prior to tensor.
-    int* fence_fd_;
-    FinishingFunc* ahwb_written_;
-    std::vector<absl::AnyInvocable<void()>>* ahwb_release_callbacks_;
+    UniqueFd* fence_fd_ = nullptr;
+    TensorAhwbUsage* ahwb_usage_ = nullptr;
+    bool is_write_view_ = false;
   };
+
   AHardwareBufferView GetAHardwareBufferReadView() const;
   AHardwareBufferView GetAHardwareBufferWriteView() const;
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
@@ -417,23 +427,19 @@ class Tensor {
   mutable EGLSyncKHR fence_sync_ = EGL_NO_SYNC_KHR;
 
   // This FD signals when the writing into the SSBO has been finished.
-  mutable int ssbo_written_ = -1;
+  mutable UniqueFd ssbo_written_;
 
   // An externally set FD that is wrapped with the EGL sync then to synchronize
   // AHWB -> OpenGL SSBO.
-  mutable int fence_fd_ = -1;
+  mutable UniqueFd fence_fd_;
 
   // Reading from SSBO has been finished so SSBO can be released.
   mutable GLsync ssbo_read_ = 0;
 
-  // Multiple cleanups maybe needed. (E.g. two inference calculators use the
-  // same input tensor and import buffer by FD which results in two buffer
-  // handles that must be released.)
-  mutable std::vector<absl::AnyInvocable<void()>> ahwb_release_callbacks_;
-
-  // An externally set function that signals when it is safe to release AHWB.
-  // If the input parameter is 'true' then wait for the writing to be finished.
-  mutable FinishingFunc ahwb_written_;
+  // Keeps track of current AHWB usages (e.g. multiple reads - two inference
+  // calculators use the same input tensor and import buffer by FD which results
+  // in two buffer handles that must be released.)
+  mutable std::list<TensorAhwbUsage> ahwb_usages_;
 
   absl::Status AllocateAHardwareBuffer() const;
 
@@ -443,9 +449,6 @@ class Tensor {
   // Use Ahwb for other views: OpenGL / CPU buffer.
   mutable bool use_ahwb_ = false;
   mutable uint64_t ahwb_tracking_key_ = 0;
-  // TODO: Tracks all unique tensors. Can grow to a large number. LRU
-  // (Least Recently Used) can be more predicted.
-  static inline absl::flat_hash_set<uint64_t> ahwb_usage_track_;
   // Expects the target SSBO to be already bound.
   bool AllocateAhwbMapToSsbo() const;
   bool InsertAhwbToSsboFence() const;

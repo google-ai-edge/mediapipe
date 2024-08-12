@@ -4,7 +4,7 @@ flatbuffers>=2.0
 jax
 jaxlib
 matplotlib
-numpy
+numpy<2
 opencv-contrib-python
 protobuf>=4.25.3,<5
 sounddevice>=0.4.4

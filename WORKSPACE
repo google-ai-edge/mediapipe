@@ -60,6 +60,26 @@ http_archive(
 )
 
 http_archive(
+    name = "rules_python",
+    sha256 = "9d04041ac92a0985e344235f5d946f71ac543f1b1565f2cdbc9a2aaee8adf55b",
+    strip_prefix = "rules_python-0.26.0",
+    url = "https://github.com/bazelbuild/rules_python/releases/download/0.26.0/rules_python-0.26.0.tar.gz",
+)
+
+load("@rules_python//python:repositories.bzl", "py_repositories")
+
+py_repositories()
+
+http_archive(
+    name = "rules_android_ndk",
+    sha256 = "d230a980e0d3a42b85d5fce2cb17ec3ac52b88d2cff5aaf86bae0f05b48adc55",
+    strip_prefix = "rules_android_ndk-d5c9d46a471e8fcd80e7ec5521b78bb2df48f4e0",
+    url = "https://github.com/bazelbuild/rules_android_ndk/archive/d5c9d46a471e8fcd80e7ec5521b78bb2df48f4e0.zip",
+)
+
+load("@rules_android_ndk//:rules.bzl", "android_ndk_repository")
+
+http_archive(
     name = "com_google_protobuf",
     sha256 = "87407cd28e7a9c95d9f61a098a53cf031109d451a7763e7dd1253abf8b4df422",
     strip_prefix = "protobuf-3.19.1",
@@ -74,20 +94,30 @@ http_archive(
 
 http_archive(
     name = "cpuinfo",
-    sha256 = "a615cac78fad03952cc3e1fd231ce789a8df6e81a5957b64350cb8200364b385",
-    strip_prefix = "cpuinfo-d6860c477c99f1fce9e28eb206891af3c0e1a1d7",
+    sha256 = "ea028ced757dbc3309518ae7038ed625b02d58190078a5801d30e7b28f8b9e9c",
+    strip_prefix = "cpuinfo-ca678952a9a8eaa6de112d154e8e104b22f9ab3f",
     urls = [
-        "https://github.com/pytorch/cpuinfo/archive/d6860c477c99f1fce9e28eb206891af3c0e1a1d7.zip"
+        "https://github.com/pytorch/cpuinfo/archive/ca678952a9a8eaa6de112d154e8e104b22f9ab3f.zip"
     ],
 )
 
-# XNNPACK on 2024-03-27.
+# KleidiAI is needed to get the best possible performance out of XNNPack
+http_archive(
+    name = "KleidiAI",
+    sha256 = "e1a3a6a27dcae459e61c33f5eb235a7c809c3208b3b8a649f361a641269ebdc8",
+    strip_prefix = "kleidiai-8fda0bd9224cad4360c011a09bbb582c5ab7496a",
+    urls = [
+        "https://gitlab.arm.com/kleidi/kleidiai/-/archive/8fda0bd9224cad4360c011a09bbb582c5ab7496a/kleidiai-1976f8661e8d5aa7d4cdca0f3d2a915e5ecb4c53.zip",
+    ],
+)
+
+# XNNPACK on 2024-07-16
 http_archive(
     name = "XNNPACK",
     # `curl -L <url> | shasum -a 256`
-    sha256 = "179a680ef85deb5380b850f2551b214e00835c232f5b197dedf7c011a6adf5a6",
-    strip_prefix = "XNNPACK-2fe25b859581a34e77b48b06c640ac1a5a58612e",
-    url = "https://github.com/google/XNNPACK/archive/2fe25b859581a34e77b48b06c640ac1a5a58612e.zip",
+    sha256 = "b5a9406dac47e63980db281c52788f15a881519e95ed5140d927750c06828a2b",
+    strip_prefix = "XNNPACK-203651a9d4bc6b9c33e943c842d8bada139bb71d",
+    url = "https://github.com/google/XNNPACK/archive/203651a9d4bc6b9c33e943c842d8bada139bb71d.zip",
 )
 
 # TODO: This is an are indirect depedency. We should factor it out.
@@ -406,7 +436,7 @@ http_archive(
     build_file = "@//third_party:opencv_android.BUILD",
     strip_prefix = "OpenCV-android-sdk",
     type = "zip",
-    url = "https://github.com/opencv/opencv/releases/download/3.4.3/opencv-3.4.3-android-sdk.zip",
+    url = "https://github.com/opencv/opencv/releases/download/4.10.0/opencv-4.10.0-android-sdk.zip",
 )
 
 # After OpenCV 3.2.0, the pre-compiled opencv2.framework has google protobuf symbols, which will
@@ -530,10 +560,10 @@ http_archive(
 )
 
 # TensorFlow repo should always go after the other external dependencies.
-# TF on 2024-05-09.
-_TENSORFLOW_GIT_COMMIT = "8038e44ea38bb889095afaaf6ad05e94adaed8d2"
-# curl -L https://github.com/tensorflow/tensorflow/archive/8038e44ea38bb889095afaaf6ad05e94adaed8d2.tar.gz | shasum -a 256
-_TENSORFLOW_SHA256 = "a00c1503a879eb21c349941bbee54aef8d557d7d2ab770e76fb26668d75aa6e0"
+# TF on 2024-07-18.
+_TENSORFLOW_GIT_COMMIT = "117a62ac439ed87eb26f67208be60e01c21960de"
+# curl -L https://github.com/tensorflow/tensorflow/archive/117a62ac439ed87eb26f67208be60e01c21960de.tar.gz | shasum -a 256
+_TENSORFLOW_SHA256 = "2a1e56f9f83f99e2b9d01a184bc6f409209b36c98fb94b6d5db3f0ab20ec33f2"
 http_archive(
     name = "org_tensorflow",
     urls = [
@@ -679,4 +709,3 @@ http_archive(
     urls = ["https://github.com/nlohmann/json/releases/download/v3.9.1/include.zip"],
     build_file = "@//third_party:nlohmann.BUILD",
 )
-

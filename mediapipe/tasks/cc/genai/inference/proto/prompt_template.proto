@@ -1,0 +1,43 @@
+// Copyright 2024 The ODML Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package odml.infra.proto;
+
+option java_package = "com.google.odml.infra.proto";
+option java_outer_classname = "PromptTemplateProto";
+
+// Prompt template to be used for prefill and decode calls.
+// Here is an example of the template based on Gemma's specifications here:
+// https://ai.google.dev/gemma/docs/formatting
+//
+//  message prepended {
+//    .prompt_prefix = "<start_of_turn>user\n ";
+//    .prompt_suffix = "<end_of_turn>\n<start_of_turn>model\n";
+//  }
+//
+message PromptTemplate {
+  // Text prepended to session's context on the first prefill invocation. This
+  // is useful for system prompts.
+  string session_prefix = 1;
+
+  // Text prepended to the input prompt on the first chunck of the prefill call.
+  // This is useful for adding start of user's turn markers.
+  string prompt_prefix = 2;
+
+  // Text appended to the input prompt upon transition to decode. This is useful
+  // for adding start of model of model's turn markers.
+  string prompt_suffix = 3;
+}

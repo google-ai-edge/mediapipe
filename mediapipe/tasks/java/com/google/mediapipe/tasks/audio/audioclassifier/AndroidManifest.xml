@@ -3,6 +3,6 @@
     package="com.google.mediapipe.tasks.audio.audioclassifier">
 
     <uses-sdk android:minSdkVersion="24"
-        android:targetSdkVersion="30" />
+        android:targetSdkVersion="34" />
 
 </manifest>

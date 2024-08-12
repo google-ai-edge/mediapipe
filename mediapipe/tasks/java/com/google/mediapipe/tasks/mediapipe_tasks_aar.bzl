@@ -244,7 +244,7 @@ cat > $(OUTS) <<EOF
     package="com.google.mediapipe.tasks.audio">
     <uses-sdk
         android:minSdkVersion="24"
-        android:targetSdkVersion="30" />
+        android:targetSdkVersion="34" />
 </manifest>
 EOF
 """,
@@ -277,7 +277,7 @@ cat > $(OUTS) <<EOF
     package="com.google.mediapipe.tasks.vision">
     <uses-sdk
         android:minSdkVersion="24"
-        android:targetSdkVersion="30" />
+        android:targetSdkVersion="34" />
 </manifest>
 EOF
 """,
@@ -312,7 +312,7 @@ cat > $(OUTS) <<EOF
     package="com.google.mediapipe.tasks.vision.imagegenerator">
     <uses-sdk
         android:minSdkVersion="24"
-        android:targetSdkVersion="30" />
+        android:targetSdkVersion="34" />
 </manifest>
 EOF
 """,
@@ -344,7 +344,7 @@ cat > $(OUTS) <<EOF
     package="com.google.mediapipe.tasks.text">
     <uses-sdk
         android:minSdkVersion="24"
-        android:targetSdkVersion="30" />
+        android:targetSdkVersion="34" />
 </manifest>
 EOF
 """,
@@ -377,7 +377,7 @@ cat > $(OUTS) <<EOF
     package="com.google.mediapipe.tasks.genai">
     <uses-sdk
         android:minSdkVersion="24"
-        android:targetSdkVersion="30" />
+        android:targetSdkVersion="34" />
 </manifest>
 EOF
 """,
@@ -419,10 +419,10 @@ def _mediapipe_tasks_aar(name, srcs, manifest, java_proto_lite_targets, native_l
     native.cc_library(
         name = name + "_jni_opencv_cc_lib",
         srcs = select({
-            "//mediapipe:android_arm64": ["@android_opencv//:libopencv_java3_so_arm64-v8a"],
-            "//mediapipe:android_arm": ["@android_opencv//:libopencv_java3_so_armeabi-v7a"],
-            "//mediapipe:android_x86": ["@android_opencv//:libopencv_java3_so_x86"],
-            "//mediapipe:android_x86_64": ["@android_opencv//:libopencv_java3_so_x86_64"],
+            "//mediapipe:android_arm64": ["@android_opencv//:libopencv_java4_so_arm64-v8a"],
+            "//mediapipe:android_arm": ["@android_opencv//:libopencv_java4_so_armeabi-v7a"],
+            "//mediapipe:android_x86": ["@android_opencv//:libopencv_java4_so_x86"],
+            "//mediapipe:android_x86_64": ["@android_opencv//:libopencv_java4_so_x86_64"],
             "//conditions:default": [],
         }),
         alwayslink = 1,

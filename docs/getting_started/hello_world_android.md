@@ -165,7 +165,7 @@ launches `MainActivity` on application start:
 
   <uses-sdk
       android:minSdkVersion="19"
-      android:targetSdkVersion="19" />
+      android:targetSdkVersion="34" />
 
   <application
       android:allowBackup="true"
@@ -289,7 +289,7 @@ same file:
 ```
 <uses-sdk
     android:minSdkVersion="21"
-    android:targetSdkVersion="27" />
+    android:targetSdkVersion="34" />
 ```
 
 This ensures that the user is prompted to request camera permission and enables
@@ -689,7 +689,7 @@ to load both dependencies:
 static {
   // Load all native libraries needed by the app.
   System.loadLibrary("mediapipe_jni");
-  System.loadLibrary("opencv_java3");
+  System.loadLibrary("opencv_java4");
 }
 ```
 

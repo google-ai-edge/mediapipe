@@ -515,7 +515,14 @@ class PackMediaSequenceCalculator : public CalculatorBase {
         const std::string& key = tag.substr(
             sizeof(kClipLabelPrefixTag) / sizeof(*kClipLabelPrefixTag) - 1);
         const Detection& detection = cc->Inputs().Tag(tag).Get<Detection>();
+        bool add_empty_labels =
+            cc->Options<PackMediaSequenceCalculatorOptions>()
+                .add_empty_labels();
         if (detection.score().empty()) {
+          if (add_empty_labels) {
+            mpms::SetClipLabelString(key, {}, sequence_.get());
+            mpms::SetClipLabelConfidence(key, {}, sequence_.get());
+          }
           continue;
         }
         if (detection.label().empty() && detection.label_id().empty()) {

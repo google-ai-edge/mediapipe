@@ -17,7 +17,7 @@
 # Script to setup Android SDK and NDK.
 # usage:
 # $ cd <mediapipe root dir>
-# $ bash ./setup_android_sdk_and_ndk.sh ~/Android/Sdk ~/Android/Ndk r21 [--accept-licenses]
+# $ bash ./setup_android_sdk_and_ndk.sh ~/Android/Sdk ~/Android/Ndk r26d [--accept-licenses]
 
 set -e
 
@@ -55,8 +55,8 @@ fi
 
 if [ -z $3 ]
 then
-  echo "Warning: ndk_version (argument 3) is not specified. Fallback to r21."
-  ndk_version="r21"
+  echo "Warning: ndk_version (argument 3) is not specified. Fallback to r26d."
+  ndk_version="r26d"
 fi
 
 if [ -d "$android_sdk_path" ]
@@ -84,7 +84,7 @@ then
 else
   rm -rf /tmp/android_ndk/
   mkdir /tmp/android_ndk/
-  curl https://dl.google.com/android/repository/android-ndk-${ndk_version}-${platform}-x86_64.zip -o /tmp/android_ndk/android_ndk.zip
+  curl https://dl.google.com/android/repository/android-ndk-${ndk_version}-${platform}.zip -o /tmp/android_ndk/android_ndk.zip
   mkdir -p ${android_ndk_path}/android-ndk-${ndk_version}
   unzip /tmp/android_ndk/android_ndk.zip -d ${android_ndk_path}
   rm -rf /tmp/android_ndk/
@@ -95,4 +95,6 @@ echo "Set android_ndk_repository and android_sdk_repository in WORKSPACE"
 workspace_file="$( cd "$(dirname "$0")" ; pwd -P )"/WORKSPACE
 echo "android_sdk_repository(name = \"androidsdk\", path = \"${android_sdk_path}\")" >> $workspace_file
 echo "android_ndk_repository(name = \"androidndk\", api_level=21, path = \"${android_ndk_path}/android-ndk-${ndk_version}\")" >> $workspace_file
+# See https://github.com/bazelbuild/rules_android_ndk/issues/31#issuecomment-1396182185
+echo "bind(name = \"android/crosstool\", actual = \"@androidndk//:toolchain\")" >> $workspace_file
 echo "Done"

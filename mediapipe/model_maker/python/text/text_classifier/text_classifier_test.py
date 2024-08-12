@@ -28,8 +28,9 @@ from mediapipe.tasks.python.test import test_utils
 
 class TextClassifierTest(tf.test.TestCase, parameterized.TestCase):
 
-  _AVERAGE_WORD_EMBEDDING_JSON_FILE = (
-      test_utils.get_test_data_path('average_word_embedding_metadata.json'))
+  _AVERAGE_WORD_EMBEDDING_JSON_FILE = test_utils.get_test_data_path(
+      'average_word_embedding_metadata.json'
+  )
   _BERT_CLASSIFIER_JSON_FILE = test_utils.get_test_data_path(
       'bert_metadata.json'
   )
@@ -47,9 +48,9 @@ class TextClassifierTest(tf.test.TestCase, parameterized.TestCase):
     self.mock_gettempdir = mock_gettempdir.start()
     self.addCleanup(mock_gettempdir.stop)
 
-  def _get_data(self):
+  def _get_binary_data(self):
     labels_and_text = (('pos', 'super good'), (('neg', 'really bad')))
-    csv_file = os.path.join(self.create_tempdir(), 'data.csv')
+    csv_file = os.path.join(self.create_tempdir(), 'binary_data.csv')
     if os.path.exists(csv_file):
       return csv_file
     fieldnames = ['text', 'label']
@@ -59,13 +60,38 @@ class TextClassifierTest(tf.test.TestCase, parameterized.TestCase):
       for label, text in labels_and_text:
         writer.writerow({'text': text, 'label': label})
     csv_params = text_classifier.CSVParams(
-        text_column='text', label_column='label')
+        text_column='text', label_column='label'
+    )
     all_data = text_classifier.Dataset.from_csv(
-        filename=csv_file, csv_params=csv_params)
+        filename=csv_file, csv_params=csv_params
+    )
+    return all_data.split(0.5)
+
+  def _get_multiclass_data(self):
+    labels_and_text = (
+        ('pos', 'super good'),
+        ('neg', 'really bad'),
+        ('neutral', 'meh'),
+    )
+    csv_file = os.path.join(self.create_tempdir(), 'multiclass_data.csv')
+    if os.path.exists(csv_file):
+      return csv_file
+    fieldnames = ['text', 'label']
+    with open(csv_file, 'w') as f:
+      writer = csv.DictWriter(f, fieldnames=fieldnames)
+      writer.writeheader()
+      for label, text in labels_and_text:
+        writer.writerow({'text': text, 'label': label})
+    csv_params = text_classifier.CSVParams(
+        text_column='text', label_column='label'
+    )
+    all_data = text_classifier.Dataset.from_csv(
+        filename=csv_file, csv_params=csv_params
+    )
     return all_data.split(0.5)
 
   def test_create_and_train_average_word_embedding_model(self):
-    train_data, validation_data = self._get_data()
+    train_data, validation_data = self._get_binary_data()
     options = text_classifier.TextClassifierOptions(
         supported_model=(
             text_classifier.SupportedModels.AVERAGE_WORD_EMBEDDING_CLASSIFIER
@@ -74,19 +100,21 @@ class TextClassifierTest(tf.test.TestCase, parameterized.TestCase):
             epochs=1, batch_size=1, learning_rate=0
         ),
     )
-    average_word_embedding_classifier = (
-        text_classifier.TextClassifier.create(train_data, validation_data,
-                                              options))
+    average_word_embedding_classifier = text_classifier.TextClassifier.create(
+        train_data, validation_data, options
+    )
 
     metrics = average_word_embedding_classifier.evaluate(validation_data)
     self.assertGreaterEqual(metrics[1], 0.0)  # metrics[1] is accuracy
 
     # Test export_model
     average_word_embedding_classifier.export_model()
-    output_metadata_file = os.path.join(options.hparams.export_dir,
-                                        'metadata.json')
-    output_tflite_file = os.path.join(options.hparams.export_dir,
-                                      'model.tflite')
+    output_metadata_file = os.path.join(
+        options.hparams.export_dir, 'metadata.json'
+    )
+    output_tflite_file = os.path.join(
+        options.hparams.export_dir, 'model.tflite'
+    )
 
     self.assertTrue(os.path.exists(output_tflite_file))
     self.assertGreater(os.path.getsize(output_tflite_file), 0)
@@ -110,7 +138,7 @@ class TextClassifierTest(tf.test.TestCase, parameterized.TestCase):
       ),
   )
   def test_create_and_train_bert(self, supported_model):
-    train_data, validation_data = self._get_data()
+    train_data, validation_data = self._get_binary_data()
     options = text_classifier.TextClassifierOptions(
         supported_model=supported_model,
         model_options=text_classifier.BertModelOptions(
@@ -124,7 +152,8 @@ class TextClassifierTest(tf.test.TestCase, parameterized.TestCase):
         ),
     )
     bert_classifier = text_classifier.TextClassifier.create(
-        train_data, validation_data, options)
+        train_data, validation_data, options
+    )
 
     metrics = bert_classifier.evaluate(validation_data)
     self.assertGreaterEqual(metrics[1], 0.0)  # metrics[1] is accuracy
@@ -173,7 +202,7 @@ class TextClassifierTest(tf.test.TestCase, parameterized.TestCase):
       )
 
   def test_options_mismatch(self):
-    train_data, validation_data = self._get_data()
+    train_data, validation_data = self._get_binary_data()
 
     avg_options = text_classifier.TextClassifierOptions(
         supported_model=(text_classifier.SupportedModels.MOBILEBERT_CLASSIFIER),
@@ -203,12 +232,13 @@ class TextClassifierTest(tf.test.TestCase, parameterized.TestCase):
           train_data, validation_data, bert_options
       )
 
-  def test_bert_loss_and_metrics_creation(self):
-    train_data, validation_data = self._get_data()
+  def test_bert_loss_and_binary_metrics_creation(self):
+    train_data, validation_data = self._get_binary_data()
     supported_model = text_classifier.SupportedModels.MOBILEBERT_CLASSIFIER
     hparams = text_classifier.BertHParams(
         desired_recalls=[0.2],
         desired_precisions=[0.9],
+        desired_thresholds=[0.3],
         epochs=1,
         batch_size=1,
         learning_rate=3e-5,
@@ -228,11 +258,11 @@ class TextClassifierTest(tf.test.TestCase, parameterized.TestCase):
     metric_names = [m.name for m in bert_classifier._metric_functions]
     expected_metric_names = [
         'accuracy',
-        'recall',
-        'precision',
         'auc',
         'precision_at_recall_0.2',
         'recall_at_precision_0.9',
+        'precision_0.3',
+        'recall_0.3',
     ]
     self.assertCountEqual(metric_names, expected_metric_names)
 
@@ -245,6 +275,32 @@ class TextClassifierTest(tf.test.TestCase, parameterized.TestCase):
         ' and not supported for num_classes > 2. Found num_classes: 3',
     ):
       text_classifier.TextClassifier.create(data, data, options)
+
+  def test_multiclass_metrics_creation(self):
+    train_data, validation_data = self._get_multiclass_data()
+    supported_model = text_classifier.SupportedModels.MOBILEBERT_CLASSIFIER
+    hparams = text_classifier.BertHParams(
+        epochs=1,
+        batch_size=1,
+        learning_rate=3e-5,
+    )
+    options = text_classifier.TextClassifierOptions(
+        supported_model=supported_model, hparams=hparams
+    )
+    bert_classifier = text_classifier.TextClassifier.create(
+        train_data, validation_data, options
+    )
+    metric_names = [m.name for m in bert_classifier._metric_functions]
+    expected_metric_names = [
+        'accuracy',
+        'class_0_precision',
+        'class_1_precision',
+        'class_2_precision',
+        'class_0_recall',
+        'class_1_recall',
+        'class_2_recall',
+    ]
+    self.assertCountEqual(metric_names, expected_metric_names)
 
 
 if __name__ == '__main__':

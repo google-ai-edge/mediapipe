@@ -72,6 +72,7 @@ class Dataset(object):
       shuffle: bool = False,
       preprocess: Optional[Callable[..., Any]] = None,
       drop_remainder: bool = False,
+      num_parallel_preprocess_calls: int = tf.data.experimental.AUTOTUNE,
   ) -> tf.data.Dataset:
     """Generates a batched tf.data.Dataset for training/evaluation.
 
@@ -84,6 +85,8 @@ class Dataset(object):
       preprocess: A function taking three arguments in order, feature, label and
         boolean is_training.
       drop_remainder: boolean, whether the finally batch drops remainder.
+      num_parallel_preprocess_calls: The number of parallel calls for dataset
+        map of preprocess function.
 
     Returns:
       A TF dataset ready to be consumed by Keras model.
@@ -92,7 +95,11 @@ class Dataset(object):
 
     if preprocess:
       preprocess = functools.partial(preprocess, is_training=is_training)
-      dataset = dataset.map(preprocess, num_parallel_calls=tf.data.AUTOTUNE)
+      dataset = dataset.map(
+          preprocess,
+          num_parallel_calls=num_parallel_preprocess_calls,
+          deterministic=False,
+      )
 
     if is_training:
       if shuffle:
@@ -150,8 +157,9 @@ class Dataset(object):
     """
     return self._split(fraction)
 
-  def _split(self: _DatasetT, fraction: float,
-             *args) -> Tuple[_DatasetT, _DatasetT]:
+  def _split(
+      self: _DatasetT, fraction: float, *args
+  ) -> Tuple[_DatasetT, _DatasetT]:
     """Implementation for `split` method and returns sub-class instances.
 
     Child DataLoader classes, if requires additional constructor arguments,

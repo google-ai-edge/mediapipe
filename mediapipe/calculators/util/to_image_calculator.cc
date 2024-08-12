@@ -13,8 +13,12 @@
 // limitations under the License.
 
 #include <memory>
+#include <utility>
 
+#include "absl/status/status.h"
 #include "mediapipe/framework/api2/node.h"
+#include "mediapipe/framework/api2/packet.h"
+#include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_options.pb.h"
 #include "mediapipe/framework/formats/image.h"
@@ -22,8 +26,11 @@
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/status.h"
+#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/port/vector.h"
-
+#if !MEDIAPIPE_DISABLE_GPU
+#include "mediapipe/gpu/gpu_buffer.h"
+#endif  // !MEDIAPIPE_DISABLE_GPU
 namespace mediapipe {
 namespace api2 {
 
@@ -97,9 +104,9 @@ absl::Status ToImageCalculator::Close(CalculatorContext* cc) {
 
 // Wrap ImageFrameSharedPtr; shallow copy.
 absl::StatusOr<Packet<Image>> FromImageFrame(Packet<ImageFrame> packet) {
+  MP_ASSIGN_OR_RETURN(auto shared_ptr, packet.Share());
   return MakePacket<Image, std::shared_ptr<mediapipe::ImageFrame>>(
-      std::const_pointer_cast<mediapipe::ImageFrame>(
-          SharedPtrWithPacket<mediapipe::ImageFrame>(packet)));
+      std::const_pointer_cast<mediapipe::ImageFrame>(std::move(shared_ptr)));
 }
 
 // Wrap texture pointer; shallow copy.

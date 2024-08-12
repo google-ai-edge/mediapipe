@@ -19,7 +19,7 @@ flatbuffer_cc_library(
 
 flatbuffer_py_library(
     name = "schema_py",
-    srcs = ["@org_tensorflow//tensorflow/lite/schema:schema.fbs"],
+    srcs = ["@org_tensorflow//tensorflow/compiler/mlir/lite/schema:schema.fbs"],
 )
 
 flatbuffer_py_library(

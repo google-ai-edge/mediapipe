@@ -79,9 +79,10 @@ struct FaceLandmarkerOptions {
   // message in case of any failure. The validity of the passed arguments is
   // true for the lifetime of the callback function.
   //
-  // A caller is responsible for closing face landmarker result.
-  typedef void (*result_callback_fn)(const FaceLandmarkerResult* result,
-                                     const MpImage& image, int64_t timestamp_ms,
+  // The passed `image` is only valid for the lifetime of the call. A caller is
+  // responsible for closing the face landmarker result.
+  typedef void (*result_callback_fn)(FaceLandmarkerResult* result,
+                                     const MpImage* image, int64_t timestamp_ms,
                                      char* error_msg);
   result_callback_fn result_callback;
 };
@@ -99,7 +100,7 @@ MP_EXPORT void* face_landmarker_create(struct FaceLandmarkerOptions* options,
 // parameter to an an error message (if `error_msg` is not `nullptr`). You must
 // free the memory allocated for the error message.
 MP_EXPORT int face_landmarker_detect_image(void* landmarker,
-                                           const MpImage& image,
+                                           const MpImage* image,
                                            FaceLandmarkerResult* result,
                                            char** error_msg);
 
@@ -112,8 +113,10 @@ MP_EXPORT int face_landmarker_detect_image(void* landmarker,
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
+// You need to invoke `face_landmarker_detect_for_video` after each invocation
+// to free memory.
 MP_EXPORT int face_landmarker_detect_for_video(void* landmarker,
-                                               const MpImage& image,
+                                               const MpImage* image,
                                                int64_t timestamp_ms,
                                                FaceLandmarkerResult* result,
                                                char** error_msg);
@@ -137,7 +140,7 @@ MP_EXPORT int face_landmarker_detect_for_video(void* landmarker,
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
 MP_EXPORT int face_landmarker_detect_async(void* landmarker,
-                                           const MpImage& image,
+                                           const MpImage* image,
                                            int64_t timestamp_ms,
                                            char** error_msg);
 

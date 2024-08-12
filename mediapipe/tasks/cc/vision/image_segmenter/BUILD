@@ -71,6 +71,7 @@ cc_library(
         "//mediapipe/calculators/tensor:inference_calculator",
         "//mediapipe/calculators/tensor:tensor_converter_calculator",
         "//mediapipe/calculators/tensor:tensor_converter_calculator_cc_proto",
+        "//mediapipe/calculators/tensor:tensors_dequantization_calculator",
         "//mediapipe/calculators/util:from_image_calculator",
         "//mediapipe/framework/api2:builder",
         "//mediapipe/framework/api2:port",

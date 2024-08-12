@@ -42,6 +42,7 @@ objc_library(
         "//third_party/apple_frameworks:CoreMedia",
         "//third_party/apple_frameworks:CoreVideo",
         "//third_party/apple_frameworks:UIKit",
+        "//third_party/apple_frameworks:XCTest",
     ],
 )
 
@@ -59,7 +60,10 @@ objc_library(
     name = "MPPMaskObjcTestLibrary",
     testonly = 1,
     srcs = ["MPPMaskTests.m"],
-    deps = ["//mediapipe/tasks/ios/vision/core:MPPMask"],
+    deps = [
+        "//mediapipe/tasks/ios/vision/core:MPPMask",
+        "//third_party/apple_frameworks:XCTest",
+    ],
 )
 
 ios_unit_test(

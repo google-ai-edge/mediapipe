@@ -40,6 +40,7 @@ bzl_library(
     deps = [
         ":build_defs_bzl",
         "//mediapipe/framework:encode_binary_proto",
+        "//mediapipe/framework:encode_binary_proto_bzl",
         "//mediapipe/framework:transitive_protos_bzl",
         "//mediapipe/framework/deps:descriptor_set_bzl",
         "//mediapipe/framework/deps:expand_template_bzl",
@@ -181,6 +182,8 @@ cc_library(
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework/port:any_proto",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/synchronization",
     ],
 )
 

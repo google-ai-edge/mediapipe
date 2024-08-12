@@ -2,15 +2,15 @@
 
 #include <cmath>
 #include <cstdint>
-#include <limits>
+#include <memory>
 
 #include "absl/log/absl_log.h"
-#include "absl/memory/memory.h"
 #include "mediapipe/util/filtering/low_pass_filter.h"
 
 namespace mediapipe {
 
 static const double kEpsilon = 0.000001;
+static constexpr int kUninitializedTimestamp = -1;
 
 OneEuroFilter::OneEuroFilter(double frequency, double min_cutoff, double beta,
                              double derivate_cutoff) {
@@ -18,9 +18,9 @@ OneEuroFilter::OneEuroFilter(double frequency, double min_cutoff, double beta,
   SetMinCutoff(min_cutoff);
   SetBeta(beta);
   SetDerivateCutoff(derivate_cutoff);
-  x_ = absl::make_unique<LowPassFilter>(GetAlpha(min_cutoff));
-  dx_ = absl::make_unique<LowPassFilter>(GetAlpha(derivate_cutoff));
-  last_time_ = std::numeric_limits<int64_t>::min();
+  x_ = std::make_unique<LowPassFilter>(GetAlpha(min_cutoff));
+  dx_ = std::make_unique<LowPassFilter>(GetAlpha(derivate_cutoff));
+  last_time_ = kUninitializedTimestamp;
 }
 
 double OneEuroFilter::Apply(absl::Duration timestamp, double value_scale,

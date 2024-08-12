@@ -19,7 +19,6 @@
 #include <utility>
 #include <vector>
 
-#include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/strings/substitute.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -33,20 +32,12 @@
 #include "mediapipe/framework/memory_manager_service.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/opencv_core_inc.h"
+#include "mediapipe/framework/port/opencv_core_inc.h"  // NOLINT
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"  // NOLINT
 #include "mediapipe/framework/tool/validate_type.h"
 
 namespace mediapipe {
-namespace {
-
-constexpr char kTransposeOptionsString[] =
-    "[mediapipe.TensorConverterCalculatorOptions.ext]: {"
-    "row_major_matrix: True}";
-
-}  // namespace
-
 using RandomEngine = std::mt19937_64;
 using ::testing::HasSubstr;
 const uint32_t kSeed = 1234;

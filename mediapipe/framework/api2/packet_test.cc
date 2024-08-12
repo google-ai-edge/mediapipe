@@ -1,7 +1,14 @@
 #include "mediapipe/framework/api2/packet.h"
 
+#include <memory>
+#include <string>
+#include <utility>
+
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
+#include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/status_matchers.h"
@@ -51,6 +58,21 @@ TEST(PacketTest, PacketBaseRefCount) {
   EXPECT_FALSE(alive);
 }
 
+TEST(PacketTest, PacketBaseShare) {
+  bool alive = false;
+  PacketBase p = PacketAdopting(new LiveCheck(&alive));
+  EXPECT_TRUE(alive);
+  ASSERT_THAT(p.Share<int>(), StatusIs(absl::StatusCode::kInvalidArgument));
+  MP_ASSERT_OK_AND_ASSIGN(std::shared_ptr<const LiveCheck> ptr,
+                          p.Share<LiveCheck>());
+  p = {};
+  EXPECT_TRUE(alive);
+  ptr = {};
+  EXPECT_FALSE(alive);
+  ASSERT_THAT(p.Share<LiveCheck>(),
+              StatusIs(absl::StatusCode::kFailedPrecondition, "Empty Packet"));
+}
+
 TEST(PacketTest, PacketBaseSame) {
   int* ip = new int(5);
   PacketBase p = PacketAdopting(ip);
@@ -76,6 +98,17 @@ TEST(PacketTest, GetOr) {
   EXPECT_EQ(p_0.GetOr(1), 0);
   EXPECT_EQ(p_5.GetOr(1), 5);
   EXPECT_EQ(p_empty.GetOr(1), 1);
+}
+
+TEST(PacketTest, Has) {
+  Packet<int> p = MakePacket<int>(5);
+  EXPECT_TRUE(p.Has<int>());
+  EXPECT_FALSE(p.Has<bool>());
+
+  struct Test {};
+  Packet<Test> p2 = MakePacket<Test>();
+  EXPECT_TRUE(p2.Has<Test>());
+  EXPECT_FALSE(p2.Has<int>());
 }
 
 // This show how GetOr can be used with a lambda that is only called if the "or"
@@ -139,6 +172,34 @@ TEST(PacketTest, PacketRefCount) {
   EXPECT_TRUE(alive);
   p2 = {};
   EXPECT_FALSE(alive);
+}
+
+TEST(PacketTest, PacketShare) {
+  bool alive = false;
+  auto p = MakePacket<LiveCheck>(&alive);
+  EXPECT_TRUE(alive);
+  MP_ASSERT_OK_AND_ASSIGN(std::shared_ptr<const LiveCheck> ptr, p.Share());
+  p = {};
+  EXPECT_TRUE(alive);
+  ptr = {};
+  EXPECT_FALSE(alive);
+  ASSERT_THAT(p.Share(),
+              StatusIs(absl::StatusCode::kFailedPrecondition, "Empty Packet"));
+}
+
+TEST(PacketTest, PacketOneOfShare) {
+  bool alive = false;
+  Packet<OneOf<LiveCheck, int>> p = MakePacket<LiveCheck>(&alive);
+  EXPECT_TRUE(alive);
+  ASSERT_THAT(p.Share<int>(), StatusIs(absl::StatusCode::kInvalidArgument));
+  MP_ASSERT_OK_AND_ASSIGN(std::shared_ptr<const LiveCheck> ptr,
+                          p.Share<LiveCheck>());
+  p = {};
+  EXPECT_TRUE(alive);
+  ptr = {};
+  EXPECT_FALSE(alive);
+  ASSERT_THAT(p.Share<LiveCheck>(),
+              StatusIs(absl::StatusCode::kFailedPrecondition, "Empty Packet"));
 }
 
 TEST(PacketTest, PacketTimestamp) {

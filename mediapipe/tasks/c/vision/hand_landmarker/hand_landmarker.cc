@@ -97,14 +97,14 @@ HandLandmarker* CppHandLandmarkerCreate(const HandLandmarkerOptions& options,
           if (!cpp_result.ok()) {
             ABSL_LOG(ERROR) << "Recognition failed: " << cpp_result.status();
             CppProcessError(cpp_result.status(), &error_msg);
-            result_callback(nullptr, MpImage(), timestamp, error_msg);
+            result_callback(nullptr, nullptr, timestamp, error_msg);
             free(error_msg);
             return;
           }
 
           // Result is valid for the lifetime of the callback function.
-          HandLandmarkerResult result;
-          CppConvertToHandLandmarkerResult(*cpp_result, &result);
+          auto result = std::make_unique<HandLandmarkerResult>();
+          CppConvertToHandLandmarkerResult(*cpp_result, result.get());
 
           const auto& image_frame = image.GetImageFrameSharedPtr();
           const MpImage mp_image = {
@@ -115,10 +115,8 @@ HandLandmarker* CppHandLandmarkerCreate(const HandLandmarkerOptions& options,
                   .width = image_frame->Width(),
                   .height = image_frame->Height()}};
 
-          result_callback(&result, mp_image, timestamp,
+          result_callback(result.release(), &mp_image, timestamp,
                           /* error_msg= */ nullptr);
-
-          CppCloseHandLandmarkerResult(&result);
         };
   }
 
@@ -132,9 +130,9 @@ HandLandmarker* CppHandLandmarkerCreate(const HandLandmarkerOptions& options,
   return landmarker->release();
 }
 
-int CppHandLandmarkerDetect(void* landmarker, const MpImage& image,
+int CppHandLandmarkerDetect(void* landmarker, const MpImage* image,
                             HandLandmarkerResult* result, char** error_msg) {
-  if (image.type == MpImage::GPU_BUFFER) {
+  if (image->type == MpImage::GPU_BUFFER) {
     const absl::Status status =
         absl::InvalidArgumentError("GPU Buffer not supported yet.");
 
@@ -143,9 +141,9 @@ int CppHandLandmarkerDetect(void* landmarker, const MpImage& image,
   }
 
   const auto img = CreateImageFromBuffer(
-      static_cast<ImageFormat::Format>(image.image_frame.format),
-      image.image_frame.image_buffer, image.image_frame.width,
-      image.image_frame.height);
+      static_cast<ImageFormat::Format>(image->image_frame.format),
+      image->image_frame.image_buffer, image->image_frame.width,
+      image->image_frame.height);
 
   if (!img.ok()) {
     ABSL_LOG(ERROR) << "Failed to create Image: " << img.status();
@@ -162,11 +160,11 @@ int CppHandLandmarkerDetect(void* landmarker, const MpImage& image,
   return 0;
 }
 
-int CppHandLandmarkerDetectForVideo(void* landmarker, const MpImage& image,
+int CppHandLandmarkerDetectForVideo(void* landmarker, const MpImage* image,
                                     int64_t timestamp_ms,
                                     HandLandmarkerResult* result,
                                     char** error_msg) {
-  if (image.type == MpImage::GPU_BUFFER) {
+  if (image->type == MpImage::GPU_BUFFER) {
     absl::Status status =
         absl::InvalidArgumentError("GPU Buffer not supported yet");
 
@@ -175,9 +173,9 @@ int CppHandLandmarkerDetectForVideo(void* landmarker, const MpImage& image,
   }
 
   const auto img = CreateImageFromBuffer(
-      static_cast<ImageFormat::Format>(image.image_frame.format),
-      image.image_frame.image_buffer, image.image_frame.width,
-      image.image_frame.height);
+      static_cast<ImageFormat::Format>(image->image_frame.format),
+      image->image_frame.image_buffer, image->image_frame.width,
+      image->image_frame.height);
 
   if (!img.ok()) {
     ABSL_LOG(ERROR) << "Failed to create Image: " << img.status();
@@ -194,9 +192,9 @@ int CppHandLandmarkerDetectForVideo(void* landmarker, const MpImage& image,
   return 0;
 }
 
-int CppHandLandmarkerDetectAsync(void* landmarker, const MpImage& image,
+int CppHandLandmarkerDetectAsync(void* landmarker, const MpImage* image,
                                  int64_t timestamp_ms, char** error_msg) {
-  if (image.type == MpImage::GPU_BUFFER) {
+  if (image->type == MpImage::GPU_BUFFER) {
     absl::Status status =
         absl::InvalidArgumentError("GPU Buffer not supported yet");
 
@@ -205,9 +203,9 @@ int CppHandLandmarkerDetectAsync(void* landmarker, const MpImage& image,
   }
 
   const auto img = CreateImageFromBuffer(
-      static_cast<ImageFormat::Format>(image.image_frame.format),
-      image.image_frame.image_buffer, image.image_frame.width,
-      image.image_frame.height);
+      static_cast<ImageFormat::Format>(image->image_frame.format),
+      image->image_frame.image_buffer, image->image_frame.width,
+      image->image_frame.height);
 
   if (!img.ok()) {
     ABSL_LOG(ERROR) << "Failed to create Image: " << img.status();
@@ -249,14 +247,14 @@ void* hand_landmarker_create(struct HandLandmarkerOptions* options,
       *options, error_msg);
 }
 
-int hand_landmarker_detect_image(void* landmarker, const MpImage& image,
+int hand_landmarker_detect_image(void* landmarker, const MpImage* image,
                                  HandLandmarkerResult* result,
                                  char** error_msg) {
   return mediapipe::tasks::c::vision::hand_landmarker::CppHandLandmarkerDetect(
       landmarker, image, result, error_msg);
 }
 
-int hand_landmarker_detect_for_video(void* landmarker, const MpImage& image,
+int hand_landmarker_detect_for_video(void* landmarker, const MpImage* image,
                                      int64_t timestamp_ms,
                                      HandLandmarkerResult* result,
                                      char** error_msg) {
@@ -265,7 +263,7 @@ int hand_landmarker_detect_for_video(void* landmarker, const MpImage& image,
                                       error_msg);
 }
 
-int hand_landmarker_detect_async(void* landmarker, const MpImage& image,
+int hand_landmarker_detect_async(void* landmarker, const MpImage* image,
                                  int64_t timestamp_ms, char** error_msg) {
   return mediapipe::tasks::c::vision::hand_landmarker::
       CppHandLandmarkerDetectAsync(landmarker, image, timestamp_ms, error_msg);

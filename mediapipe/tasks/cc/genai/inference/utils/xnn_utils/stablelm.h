@@ -32,7 +32,7 @@ class Stablelm4E1T3BBuilder : public LlmBuilder {
 
  protected:
   // Overrides the default PreProcess with the following changes:
-  // * Initialized `resource.segment_pos` with partial rope dimmensions.
+  // * Initialized `resource.segment_pos` with partial rope dimensions.
   // * Creates dummy `resource.segment_pos` that is not used.
   // * Skips token embedding scaling.
   absl::StatusOr<std::pair<std::shared_ptr<Tensor>, InputResource>> PreProcess(

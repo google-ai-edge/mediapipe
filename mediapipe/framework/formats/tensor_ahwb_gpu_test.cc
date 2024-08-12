@@ -133,7 +133,7 @@ TEST_F(TensorAhwbGpuTest, TestGpuToCpuFloat16) {
     // Request Ahwb first to get Ahwb storage allocated internally.
     auto view = tensor.GetAHardwareBufferWriteView();
     ASSERT_NE(view.handle(), nullptr);
-    view.SetReadingFinishedFunc([](bool) { return true; });
+    view.SetWritingFinishedFD(/*fd=*/-1, [](bool) { return true; });
   }
   RunInGlContext([&tensor] {
     auto ssbo_view = tensor.GetOpenGlBufferWriteView();

@@ -14,6 +14,8 @@
 
 #include "mediapipe/framework/calculator_context.h"
 
+#include <memory>
+
 // TODO: Move protos in another CL after the C++ code migration.
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_context_manager.h"
@@ -92,16 +94,17 @@ std::string Proto3GraphStr() {
 
 std::unique_ptr<CalculatorState> MakeCalculatorState(
     const CalculatorGraphConfig::Node& node_config, int node_id) {
-  auto result = absl::make_unique<CalculatorState>(
-      "Node", node_id, "Calculator", node_config, nullptr);
+  auto result = std::make_unique<CalculatorState>(
+      "Node", node_id, "Calculator", node_config, /*profiling_context=*/nullptr,
+      /*graph_service_manager=*/nullptr);
   return result;
 }
 
 std::unique_ptr<CalculatorContext> MakeCalculatorContext(
     CalculatorState* calculator_state) {
-  return absl::make_unique<CalculatorContext>(calculator_state,
-                                              tool::CreateTagMap({}).value(),
-                                              tool::CreateTagMap({}).value());
+  return std::make_unique<CalculatorContext>(calculator_state,
+                                             tool::CreateTagMap({}).value(),
+                                             tool::CreateTagMap({}).value());
 }
 
 TEST(CalculatorTest, NodeId) {

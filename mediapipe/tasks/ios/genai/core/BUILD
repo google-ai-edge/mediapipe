@@ -32,5 +32,8 @@ swift_library(
     copts = ["-no-verify-emitted-module-interface"],
     # This target is only here for compilation checks.
     visibility = ["//visibility:private"],
-    deps = ["//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu"],
+    deps = [
+        "//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu",
+        "//third_party/apple_frameworks:Foundation",
+    ],
 )

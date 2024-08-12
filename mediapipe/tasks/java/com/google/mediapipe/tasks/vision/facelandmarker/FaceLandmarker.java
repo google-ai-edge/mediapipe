@@ -468,14 +468,14 @@ public final class FaceLandmarker extends BaseVisionTaskApi {
        * Whether FaceLandmarker outputs face blendshapes classification. Face blendshapes are used
        * for rendering the 3D face model.
        */
-      public abstract Builder setOutputFaceBlendshapes(Boolean value);
+      public abstract Builder setOutputFaceBlendshapes(boolean value);
 
       /**
        * Whether FaceLandmarker outptus facial transformation_matrix. Facial transformation matrix
        * is used to transform the face landmarks in canonical face to the detected face, so that
        * users can apply face effects on the detected landmarks.
        */
-      public abstract Builder setOutputFacialTransformationMatrixes(Boolean value);
+      public abstract Builder setOutputFacialTransformationMatrixes(boolean value);
 
       /**
        * Sets the result listener to receive the detection results asynchronously when the face
@@ -525,9 +525,9 @@ public final class FaceLandmarker extends BaseVisionTaskApi {
 
     abstract Optional<Float> minTrackingConfidence();
 
-    abstract Boolean outputFaceBlendshapes();
+    abstract boolean outputFaceBlendshapes();
 
-    abstract Boolean outputFacialTransformationMatrixes();
+    abstract boolean outputFacialTransformationMatrixes();
 
     abstract Optional<ResultListener<FaceLandmarkerResult, MPImage>> resultListener();
 

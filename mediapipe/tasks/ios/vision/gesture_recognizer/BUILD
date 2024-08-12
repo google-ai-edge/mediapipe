@@ -24,6 +24,7 @@ objc_library(
         "//mediapipe/tasks/ios/components/containers:MPPCategory",
         "//mediapipe/tasks/ios/components/containers:MPPLandmark",
         "//mediapipe/tasks/ios/core:MPPTaskResult",
+        "//third_party/apple_frameworks:Foundation",
     ],
 )
 
@@ -36,6 +37,7 @@ objc_library(
         "//mediapipe/tasks/ios/components/processors:MPPClassifierOptions",
         "//mediapipe/tasks/ios/core:MPPTaskOptions",
         "//mediapipe/tasks/ios/vision/core:MPPRunningMode",
+        "//third_party/apple_frameworks:Foundation",
     ],
 )
 
@@ -61,5 +63,6 @@ objc_library(
         "//mediapipe/tasks/ios/vision/core:MPPVisionTaskRunner",
         "//mediapipe/tasks/ios/vision/gesture_recognizer/utils:MPPGestureRecognizerOptionsHelpers",
         "//mediapipe/tasks/ios/vision/gesture_recognizer/utils:MPPGestureRecognizerResultHelpers",
+        "//third_party/apple_frameworks:Foundation",
     ],
 )
