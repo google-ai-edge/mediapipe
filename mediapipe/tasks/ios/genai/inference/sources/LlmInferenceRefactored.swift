@@ -25,7 +25,6 @@ import MediaPipeTasksGenAIC
   private let llmTaskRunner: LlmTaskRunner
 
   private var supportedLoraRanks: UnsafeMutablePointer<Int>?
-  // private var supportedLoraRanks: [Int]
 
   /// Creates a new instance of `LlmInference` with the given options.
   ///
@@ -86,7 +85,8 @@ import MediaPipeTasksGenAIC
   /// LLM engine.
   ///
   /// - Parameters:
-  ///   - sessionConfig: The C config for the new session.
+  ///   - sessionConfig: The C config of type `LlmSessionConfig` that configures how to execute the 
+  /// model.
   /// - Returns:
   ///   - An `LlmSessionRunner` that wraps around a new session.
   /// - Throws: An error if the underlying engine could not create a session.
@@ -123,8 +123,8 @@ extension LlmInference {
     /// The supported lora ranks for the base model. Used by GPU only.
     @objc public var supportedLoraRanks: [Int] = []
 
-    /// Creates a new instance of `Options` with the modelPath and default values of
-    /// `maxTokens`, `topK``, `temperature` and `randomSeed`.
+    /// Creates a new instance of `Options` with the given `modelPath` and default values of
+    /// `maxTokens`, `maxTopk` and `supportedLoraRanks`.
     /// This function is only intended to be used from Objective C.
     ///
     /// - Parameters:

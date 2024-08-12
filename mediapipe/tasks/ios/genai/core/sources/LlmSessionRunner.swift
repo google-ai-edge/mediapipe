@@ -51,7 +51,7 @@ final class LlmSessionRunner {
     }
   }
 
-  /// Invokes the C LLM session with the previously added query chunks in sync mode to generate an
+  /// Invokes the C LLM session with the previously added query chunks synchronously to generate an
   /// array of `String` responses from the LLM.
   ///
   /// - Returns: Array of `String` responses from the LLM.
@@ -76,8 +76,10 @@ final class LlmSessionRunner {
     return responseStrings
   }
 
-  /// Invokes the C LLM session with the previously added query chunks in sync mode to generate an
-  /// array of `String` responses from the LLM.
+  /// Invokes the C LLM session with the previously added query chunks asynchronously to generate an
+  /// array of `String` responses from the LLM. The `progress` callback returns the partial 
+  /// responses from the LLM or any errors. `completion` callback is invoked once the LLM is done 
+  /// generating responses.
   ///
   /// - Parameters:
   ///   - progress: A callback invoked when a partial response is available from the C LLM Session.

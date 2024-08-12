@@ -20,7 +20,7 @@ import MediaPipeTasksGenAIC
 final class LlmTaskRunner {
   typealias CLlmEngine = UnsafeMutableRawPointer
 
-  /// The underlying C LLM engine created and managed by thus `LlmTaskRunner`.
+  /// The underlying C LLM engine created and managed by this `LlmTaskRunner`.
   private var cLlmEngine: CLlmEngine?
 
   /// Creates a new instance of `LlmTaskRunner` with the given model settings.
@@ -40,12 +40,13 @@ final class LlmTaskRunner {
     }
   }
 
-  /// Creates a new C LLM session from the current C engine and  returns an `LlmSessionRunner` that
-  // wraps around the newly created C session. The session runner is responsible for managing its
-  /// underlying C session.
+  /// Creates a new C LLM session from the current C engine and returns an `LlmSessionRunner` 
+  /// that wraps around the newly created C session. The session runner is responsible for managing 
+  /// its underlying C session.
   ///
   /// - Parameters:
-  ///   - modelSettings: C model settings of type `LlmModelSettings`.
+  ///   - sessionConfig: C session config of type `LlmSessionConfig` that configures how to execute 
+  /// the model.
   /// - Returns: A new instance of `LlmSessionRunner`.
   /// - Throws: An error if the engine could not be initialized.
   func createSessionRunner(sessionConfig: LlmSessionConfig) throws -> LlmSessionRunner {
