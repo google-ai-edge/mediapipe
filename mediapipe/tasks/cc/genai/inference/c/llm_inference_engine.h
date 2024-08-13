@@ -15,6 +15,7 @@
 #ifndef MEDIAPIPE_TASKS_GENAI_INFERENCE_C_LLM_INFERENCE_ENGINE_H_
 #define MEDIAPIPE_TASKS_GENAI_INFERENCE_C_LLM_INFERENCE_ENGINE_H_
 
+#include <optional>
 #ifdef __cplusplus
 #include <cstddef>
 #else
@@ -71,6 +72,10 @@ typedef struct {
   // means only greedy decoding is supported for any sessions created with this
   // engine.
   size_t max_top_k;
+
+  // Optional setting for the number of draft tokens to generate when using
+  // speculative decoding.
+  std::optional<int> num_draft_tokens;
 } LlmModelSettings;
 
 // LlmSessionConfig configures how to execute the model.
