@@ -15,7 +15,6 @@
 #ifndef MEDIAPIPE_TASKS_GENAI_INFERENCE_C_LLM_INFERENCE_ENGINE_H_
 #define MEDIAPIPE_TASKS_GENAI_INFERENCE_C_LLM_INFERENCE_ENGINE_H_
 
-#include <optional>
 #ifdef __cplusplus
 #include <cstddef>
 #else
@@ -74,8 +73,8 @@ typedef struct {
   size_t max_top_k;
 
   // Optional setting for the number of draft tokens to generate when using
-  // speculative decoding.
-  std::optional<int> num_draft_tokens;
+  // speculative decoding. Setting to 0 will disable speculative decoding.
+  size_t num_draft_tokens;
 } LlmModelSettings;
 
 // LlmSessionConfig configures how to execute the model.
