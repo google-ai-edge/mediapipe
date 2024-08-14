@@ -24,6 +24,7 @@ swift_library(
         "sources/LlmInference.swift",
         "//mediapipe/tasks/ios/genai/core:sources/GenAiInferenceError.swift",
         "//mediapipe/tasks/ios/genai/core:sources/LlmTaskRunner.swift",
+        "//mediapipe/tasks/ios/genai/core:sources/LlmSessionRunner.swift",
     ],
     # This ensures the compiler does not complain about MediaPipeTasksGenAIC being built separately.
     copts = ["-no-verify-emitted-module-interface"],
