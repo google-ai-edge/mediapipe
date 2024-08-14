@@ -17,8 +17,8 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <functional>
 #include <initializer_list>
-#include <list>
 #include <memory>
 #include <numeric>
 #include <tuple>
@@ -26,9 +26,7 @@
 #include <utility>
 #include <vector>
 
-#include "absl/container/flat_hash_set.h"
 #include "absl/functional/any_invocable.h"
-#include "absl/log/absl_check.h"
 #include "absl/status/status.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/formats/tensor/internal.h"
@@ -40,6 +38,9 @@
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 
+#include <list>
+
+#include "absl/log/absl_check.h"
 #include "mediapipe/framework/formats/hardware_buffer.h"
 #include "mediapipe/framework/formats/hardware_buffer_pool.h"
 #include "mediapipe/framework/formats/tensor_ahwb_usage.h"
