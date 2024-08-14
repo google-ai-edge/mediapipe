@@ -19,7 +19,7 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 
 exports_files([
     "sources/GenAiInferenceError.swift",
-    "sources/LlmSessionRunner.swift"
+    "sources/LlmSessionRunner.swift",
     "sources/LlmTaskRunner.swift",
 ])
 

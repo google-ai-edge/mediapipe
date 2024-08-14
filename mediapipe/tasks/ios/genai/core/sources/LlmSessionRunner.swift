@@ -97,8 +97,21 @@ final class LlmSessionRunner {
       guard let cContext = context else {
         return
       }
+
       guard let cResponse = responseContext?.pointee else {
-        return
+        /// This failure is unlikely to happen. But throwing an error for the sake of completeness.
+        ///
+        /// If `responseContext` is nil, we have no way of knowing whether this was the last 
+        /// response. The code assumes that this was not the last response and lets the context 
+        /// continue in memory by taking an unretained value for it. This is to ensure that the 
+        /// context pointer returned by C in the subsequent callbacks is not dangling, thereby 
+        /// avoiding a seg fault. This has the downside that the context would continue indefinitely 
+        /// in memory if it was indeed the last response. The context would never get cleaned up. 
+        /// This will only be a problem if the failure happens on too many calls to `predictAsync` 
+        /// and leads to an out of memory error.
+        let cCallbackInfo = Unmanaged<CallbackInfo>.fromOpaque(cContext).takeUnretainedValue()
+        cCallbackInfo.progress(nil, GenAiInferenceError.invalidResponse)
+        return 
       }
 
       /// `takeRetainedValue()` decrements the reference count incremented by `passRetained()`. Only
