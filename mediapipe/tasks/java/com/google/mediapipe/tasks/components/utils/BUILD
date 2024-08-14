@@ -29,5 +29,5 @@ android_library(
 filegroup(
     name = "java_src",
     srcs = glob(["*.java"]),
-    visibility = ["//mediapipe/tasks/java/com/google/mediapipe/tasks/core:__subpackages__"],
+    visibility = ["//visibility:private"],
 )
