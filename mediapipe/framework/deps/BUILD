@@ -232,6 +232,7 @@ cc_library(
     hdrs = ["registration.h"],
     visibility = [
         "mediapipe_internal",
+        "//buzz/diffractor/mediapipe:__pkg__",
     ],
     deps = [
         ":registration_token",
