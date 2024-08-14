@@ -399,7 +399,7 @@ absl::StatusOr<std::shared_ptr<Tensor>> Llm::ComputeLogits(
   const size_t decode_step = TotalTokenSize();
   VLOG(2) << "Decode step " << decode_step;
 
-  if (decode_step >= llm_params_.seq_size_T) {
+  if (decode_step + llm_params_.draft_size_G >= llm_params_.seq_size_T) {
     return absl::OutOfRangeError(
         absl::StrCat("Hit max sequence length ", llm_params_.seq_size_T));
   }
