@@ -44,6 +44,12 @@ final class LlmTaskRunner {
   /// that wraps around the newly created C session. The session runner is responsible for managing 
   /// its underlying C session.
   ///
+  /// Note: On each invocation, this method returns a new instance of the session runner configured 
+  /// to the values provided in the session config. Thus, if you provide the session config of a 
+  /// currently active LLM session, this method will create and return a duplicate session runner 
+  /// configured to the same values. The task runner does not keep track of the currently active
+  /// session runners.
+  ///
   /// - Parameters:
   ///   - sessionConfig: C session config of type `LlmSessionConfig` that configures how to execute 
   /// the model.
