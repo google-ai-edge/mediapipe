@@ -312,24 +312,19 @@ cc_library(
     visibility = ["//visibility:private"],
     deps = [
         "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
-        "//mediapipe/framework/port:statusor",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/status:statusor",
     ] + select({
         "//conditions:default": [
-            "//mediapipe/framework/port:file_helpers",
         ],
         "//mediapipe/framework:android_no_jni": [
-            "//mediapipe/framework/port:file_helpers",
         ],
-        "//mediapipe:android": [
-            "//mediapipe/framework/port:file_helpers",
-            "//mediapipe/java/com/google/mediapipe/framework/jni:jni_util",
-        ],
+        "//mediapipe:android": ["//mediapipe/java/com/google/mediapipe/framework/jni:jni_util"],
         "//mediapipe:apple": [
-            "//mediapipe/framework/port:file_helpers",
         ],
     }),
 )

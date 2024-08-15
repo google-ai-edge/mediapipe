@@ -153,7 +153,7 @@ const proto_ns::MessageLite& Packet::GetProtoMessageLite() const {
   return *proto;
 }
 
-StatusOr<std::vector<const proto_ns::MessageLite*>>
+absl::StatusOr<std::vector<const proto_ns::MessageLite*>>
 Packet::GetVectorOfProtoMessageLitePtrs() const {
   if (holder_ == nullptr) {
     return absl::InternalError("Packet is empty.");

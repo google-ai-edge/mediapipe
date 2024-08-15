@@ -86,6 +86,7 @@ cc_test(
         "//mediapipe/tasks/cc/components/containers:classification_result",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:cord",
         "@com_google_sentencepiece//:sentencepiece_processor",  # fixdeps: keep

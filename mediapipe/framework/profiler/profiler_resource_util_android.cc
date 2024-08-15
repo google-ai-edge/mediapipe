@@ -14,17 +14,16 @@
 
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/logging.h"
-#include "mediapipe/framework/port/statusor.h"
 #include "mediapipe/framework/profiler/profiler_resource_util.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/jni_util.h"
 
 namespace mediapipe {
 
-StatusOr<std::string> GetDefaultTraceLogDirectory() {
+absl::StatusOr<std::string> GetDefaultTraceLogDirectory() {
   // The path to external storage directory on a device doesn't change when an
   // application is running, hence can be stored as global state.
-  static const StatusOr<std::string>* kExternalStorageDirectory = [] {
-    StatusOr<std::string>* result = new StatusOr<std::string>();
+  static const absl::StatusOr<std::string>* kExternalStorageDirectory = [] {
+    absl::StatusOr<std::string>* result = new absl::StatusOr<std::string>();
     bool has_jvm = java::HasJavaVM();
     if (!has_jvm) {
       *result = absl::InternalError("JavaVM not available.");
