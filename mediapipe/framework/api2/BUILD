@@ -99,7 +99,7 @@ cc_library(
 
 cc_library(
     name = "test_contracts",
-    testonly = 1,
+    testonly = True,
     hdrs = ["test_contracts.h"],
     deps = [
         ":node",

@@ -2083,7 +2083,7 @@ cc_test(
 
 cc_library(
     name = "tensors_to_segmentation_calculator_test_utils",
-    testonly = 1,
+    testonly = True,
     srcs = ["tensors_to_segmentation_calculator_test_utils.cc"],
     hdrs = ["tensors_to_segmentation_calculator_test_utils.h"],
     deps = [
