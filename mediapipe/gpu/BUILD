@@ -1223,7 +1223,7 @@ test_suite(
 
 objc_library(
     name = "gl_ios_test_lib",
-    testonly = 1,
+    testonly = True,
     srcs = [
         "gl_ios_test.mm",
         "metal_shared_resources_test.mm",

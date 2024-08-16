@@ -345,7 +345,7 @@ cc_library(
 
 cc_library(
     name = "time_series_test_util",
-    testonly = 1,
+    testonly = True,
     hdrs = ["time_series_test_util.h"],
     visibility = ["//visibility:public"],
     deps = [
@@ -381,7 +381,7 @@ cc_test(
 
 cc_library(
     name = "packet_test_util",
-    testonly = 1,
+    testonly = True,
     hdrs = ["packet_test_util.h"],
     visibility = ["//visibility:public"],
     deps = [
@@ -431,7 +431,7 @@ cc_test(
 
 cc_library(
     name = "image_test_utils",
-    testonly = 1,
+    testonly = True,
     srcs = ["image_test_utils.cc"],
     hdrs = ["image_test_utils.h"],
     visibility = ["//visibility:public"],

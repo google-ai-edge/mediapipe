@@ -736,7 +736,7 @@ mediapipe_binary_graph(
 
 data_as_c_string(
     name = "test_binarypb_inc",
-    testonly = 1,
+    testonly = True,
     srcs = [":test_binarypb"],
     outs = ["test_binarypb.inc"],
 )
@@ -792,7 +792,7 @@ cc_test(
 
 cc_library(
     name = "test_util",
-    testonly = 1,
+    testonly = True,
     srcs = ["test_util.cc"],
     hdrs = ["test_util.h"],
     visibility = ["//visibility:public"],

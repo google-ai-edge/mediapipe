@@ -89,7 +89,7 @@ mediapipe_proto_library(
 
 mediapipe_proto_library(
     name = "calculator_contract_test_proto",
-    testonly = 1,
+    testonly = True,
     srcs = ["calculator_contract_test.proto"],
     visibility = ["//mediapipe/framework:__subpackages__"],
     deps = [
@@ -130,7 +130,7 @@ mediapipe_proto_library(
 
 mediapipe_proto_library(
     name = "packet_test_proto",
-    testonly = 1,
+    testonly = True,
     srcs = ["packet_test.proto"],
     visibility = [
         ":mediapipe_internal_proto_users",
@@ -154,7 +154,7 @@ mediapipe_proto_library(
 
 mediapipe_proto_library(
     name = "test_calculators_proto",
-    testonly = 1,
+    testonly = True,
     srcs = ["test_calculators.proto"],
     visibility = [":mediapipe_internal_proto_users"],
     deps = [
@@ -478,7 +478,7 @@ cc_library(
 
 cc_library(
     name = "calculator_runner",
-    testonly = 1,
+    testonly = True,
     srcs = ["calculator_runner.cc"],
     hdrs = ["calculator_runner.h"],
     visibility = ["//visibility:public"],
@@ -765,7 +765,7 @@ cc_library(
 
 cc_library(
     name = "lifetime_tracker",
-    testonly = 1,
+    testonly = True,
     hdrs = ["lifetime_tracker.h"],
     visibility = ["//visibility:public"],
     deps = [
@@ -1153,7 +1153,7 @@ cc_library(
 
 cc_library(
     name = "test_calculators",
-    testonly = 1,
+    testonly = True,
     srcs = ["test_calculators.cc"],
     visibility = ["//visibility:public"],
     deps = [
@@ -1175,7 +1175,7 @@ cc_library(
 
 cc_library(
     name = "test_service",
-    testonly = 1,
+    testonly = True,
     srcs = ["test_service.cc"],
     hdrs = ["test_service.h"],
     visibility = ["//visibility:public"],
