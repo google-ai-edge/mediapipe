@@ -28,7 +28,7 @@ filegroup(
 
 py_library(
     name = "test_util",
-    testonly = 1,
+    testonly = True,
     srcs = ["test_util.py"],
     deps = [
         ":model_util",
