@@ -17,18 +17,19 @@
 
 #include <string>
 
-#include "absl/status/statusor.h"
+#include "mediapipe/framework/port/status.h"
+#include "mediapipe/framework/port/statusor.h"
 
 namespace mediapipe {
 
 // Returns the path to the directory where trace logs will be stored by default.
 // If the function is unable to find an appropriate directory, it returns an
 // error.
-absl::StatusOr<std::string> GetDefaultTraceLogDirectory();
+StatusOr<std::string> GetDefaultTraceLogDirectory();
 
 // Given a log file path, this function provides an absolute path with which
 // it can be accessed as a file.  Enclosing directories are created as needed.
-absl::StatusOr<std::string> PathToLogFile(const std::string& path);
+StatusOr<std::string> PathToLogFile(const std::string& path);
 
 }  // namespace mediapipe
 

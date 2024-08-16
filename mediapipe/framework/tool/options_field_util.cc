@@ -16,6 +16,7 @@
 #include "mediapipe/framework/port/any_proto.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/ret_check.h"
+#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/tool/name_util.h"
 #include "mediapipe/framework/tool/proto_util_lite.h"
 #include "mediapipe/framework/tool/type_util.h"
@@ -167,8 +168,8 @@ FieldData SerializeProtobufAny(const FieldData& data) {
 }
 
 // Returns the field index of an extension type in a repeated field.
-absl::StatusOr<int> FindExtensionIndex(const FieldData& message_data,
-                                       FieldPathEntry* entry) {
+StatusOr<int> FindExtensionIndex(const FieldData& message_data,
+                                 FieldPathEntry* entry) {
   if (entry->field == nullptr || !IsProtobufAny(entry->field)) {
     return -1;
   }

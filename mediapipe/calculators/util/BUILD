@@ -1629,7 +1629,7 @@ cc_library(
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/port:ret_check",
-        "@com_google_absl//absl/status:statusor",
+        "//mediapipe/framework/port:statusor",
     ],
     alwayslink = 1,
 )
