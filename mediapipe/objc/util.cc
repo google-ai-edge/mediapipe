@@ -14,6 +14,8 @@
 
 #include "mediapipe/objc/util.h"
 
+#import <CoreGraphics/CGImage.h>
+
 #include <cstdint>
 
 #include "absl/base/macros.h"
@@ -39,7 +41,8 @@ vImage_CGImageFormat vImageFormatForCVPixelFormat(OSType pixel_format) {
           .bitsPerComponent = 8,
           .bitsPerPixel = 8,
           .colorSpace = CGColorSpaceCreateDeviceGray(),
-          .bitmapInfo = kCGImageAlphaNone | kCGBitmapByteOrderDefault,
+          .bitmapInfo = kCGImageAlphaNone |
+                        static_cast<CGBitmapInfo>(kCGBitmapByteOrderDefault),
       };
 
     case kCVPixelFormatType_32BGRA:
@@ -47,7 +50,8 @@ vImage_CGImageFormat vImageFormatForCVPixelFormat(OSType pixel_format) {
           .bitsPerComponent = 8,
           .bitsPerPixel = 32,
           .colorSpace = NULL,
-          .bitmapInfo = kCGImageAlphaFirst | kCGBitmapByteOrder32Little,
+          .bitmapInfo = kCGImageAlphaFirst |
+                        static_cast<CGBitmapInfo>(kCGBitmapByteOrder32Little),
       };
 
     case kCVPixelFormatType_32RGBA:
@@ -55,7 +59,8 @@ vImage_CGImageFormat vImageFormatForCVPixelFormat(OSType pixel_format) {
           .bitsPerComponent = 8,
           .bitsPerPixel = 32,
           .colorSpace = NULL,
-          .bitmapInfo = kCGImageAlphaLast | kCGBitmapByteOrderDefault,
+          .bitmapInfo = kCGImageAlphaLast |
+                        static_cast<CGBitmapInfo>(kCGBitmapByteOrderDefault),
       };
 
     default:
@@ -498,8 +503,8 @@ absl::Status CreateCGImageFromCVPixelBuffer(CVPixelBufferRef image_buffer,
   switch (pixel_format) {
     case kCVPixelFormatType_32BGRA:
       color_space = CGColorSpaceCreateDeviceRGB();
-      bitmap_info =
-          kCGBitmapByteOrder32Little | kCGImageAlphaPremultipliedFirst;
+      bitmap_info = static_cast<CGBitmapInfo>(kCGBitmapByteOrder32Little) |
+                    kCGImageAlphaPremultipliedFirst;
       break;
 
     case kCVPixelFormatType_OneComponent8:
@@ -551,7 +556,8 @@ absl::Status CreateCVPixelBufferFromCGImage(
   size_t bytes_per_row = CVPixelBufferGetBytesPerRow(*pixel_buffer);
   CGContextRef context = CGBitmapContextCreate(
       base_address, width, height, 8, bytes_per_row, color_space,
-      kCGBitmapByteOrder32Little | kCGImageAlphaPremultipliedFirst);
+      static_cast<CGBitmapInfo>(kCGBitmapByteOrder32Little) |
+          kCGImageAlphaPremultipliedFirst);
   CGRect rect = CGRectMake(0, 0, width, height);
   CGContextClearRect(context, rect);
   CGContextDrawImage(context, rect, image);

@@ -32,17 +32,18 @@
 /// call, and it must stay locked as long as the vImage_Buffer is in use.
 inline vImage_Buffer vImageForCVPixelBuffer(CVPixelBufferRef pixel_buffer) {
   return {.data = CVPixelBufferGetBaseAddress(pixel_buffer),
-          .width = CVPixelBufferGetWidth(pixel_buffer),
           .height = CVPixelBufferGetHeight(pixel_buffer),
+          .width = CVPixelBufferGetWidth(pixel_buffer),
           .rowBytes = CVPixelBufferGetBytesPerRow(pixel_buffer)};
 }
 
 /// Returns a vImage_Buffer describing the data inside the ImageFrame.
 inline vImage_Buffer vImageForImageFrame(const mediapipe::ImageFrame& frame) {
-  return {.data = (void*)frame.PixelData(),
-          .width = static_cast<vImagePixelCount>(frame.Width()),
-          .height = static_cast<vImagePixelCount>(frame.Height()),
-          .rowBytes = static_cast<size_t>(frame.WidthStep())};
+  return {
+      .data = reinterpret_cast<void*>(const_cast<uint8_t*>(frame.PixelData())),
+      .height = static_cast<vImagePixelCount>(frame.Height()),
+      .width = static_cast<vImagePixelCount>(frame.Width()),
+      .rowBytes = static_cast<size_t>(frame.WidthStep())};
 }
 
 /// Converts a grayscale image without alpha to BGRA format.
