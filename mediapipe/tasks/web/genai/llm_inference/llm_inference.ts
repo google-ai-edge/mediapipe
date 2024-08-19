@@ -67,6 +67,15 @@ export type ProgressListener = (
   done: boolean,
 ) => unknown;
 
+/**
+ * A listener that receives the newly generated partial results for multiple
+ * responses and an indication whether the generation is complete.
+ */
+export type MultiResponseProgressListener = (
+  partialResult: string[],
+  done: boolean,
+) => unknown;
+
 const INPUT_STREAM = 'text_in';
 const OUTPUT_STREAM = 'text_out';
 const OUTPUT_END_STREAM = 'text_end';
@@ -83,6 +92,7 @@ const DEFAULT_TOP_K = 1;
 const DEFAULT_TOP_P = 1.0;
 const DEFAULT_TEMPERATURE = 1.0;
 const DEFAULT_SAMPLER_TYPE = SamplerParameters.Type.TOP_P;
+const DEFAULT_NUM_RESPONSES = 1;
 
 // Amount of the max WebGPU buffer size required for the 7B LLM with int8
 // quantization model. If the requested maxBufferSize is smaller than the
@@ -142,13 +152,16 @@ export class LlmInference extends TaskRunner {
   private static readonly LLM_MODEL_NAME = 'llm.tflite';
   private static readonly TOKENIZER_MODEL_IN_TFLITE_KEY = 'spm_vocab_model';
 
-  private readonly generationResult: string[] = [];
+  private readonly generationResults: string[][] = [];
   private readonly options: LlmInferenceGraphOptions;
   private readonly samplerParams: SamplerParameters;
   private isProcessing = false;
+  private isMultiResponseGeneration?: boolean;
   private latestTokenCostQueryResult?: number;
-  private resultDeferred?: Deferred<string>;
-  private userProgressListener?: ProgressListener;
+  private resultDeferred?: Deferred<string[]>;
+  private userProgressListener?:
+    | ProgressListener
+    | MultiResponseProgressListener;
   private streamingReader?: StreamingReader;
 
   // The WebGPU device used for LLM inference.
@@ -416,6 +429,25 @@ export class LlmInference extends TaskRunner {
     if ('loraRanks' in options) {
       this.options.setLoraRanksList(options.loraRanks ?? []);
     }
+    if ('numResponses' in options) {
+      const numResponsesToSet = options.numResponses ?? DEFAULT_NUM_RESPONSES;
+      if (numResponsesToSet < 1) {
+        throw new Error(`'numResponses' must be at least 1.`);
+      }
+      this.options.setNumResponses(numResponsesToSet);
+      const samplerParams = this.options.getSamplerParams();
+      if (
+        numResponsesToSet > 1 &&
+        samplerParams &&
+        (samplerParams.getK() <= 1 || samplerParams.getTemperature() <= 0)
+      ) {
+        console.warn(
+          'To generate multiple responses, it is expected topK > 1 and ' +
+            'temperature > 0; otherwise, all the generated responses may be ' +
+            'the same.',
+        );
+      }
+    }
 
     let onFinishedLoadingData!: () => void;
     const finishedLoadingDataPromise = new Promise<void>((resolve, reject) => {
@@ -549,6 +581,89 @@ export class LlmInference extends TaskRunner {
     loraModelOrProgressListener?: ProgressListener | LoraModel,
     progressListener?: ProgressListener,
   ): Promise<string> {
+    if (this.options.getNumResponses() > 1) {
+      console.warn(
+        `'numResponses' is set larger than 1 and this function only returns ` +
+          `the first response, so we recommend either using ` +
+          `'generateResponses()' to obtain multiple responses, or else ` +
+          `setting 'numResponses' to 1 for better performance.`,
+      );
+    }
+    this.isMultiResponseGeneration = false;
+    return this.generateResponsesInternal(
+      text,
+      loraModelOrProgressListener,
+      progressListener,
+    ).then((responses) => responses[0]);
+  }
+
+  /**
+   * Similar with generateResponse() but returns multiple responses.
+   *
+   * @export
+   * @param text The text to process.
+   * @return The generated text result.
+   */
+  generateResponses(text: string): Promise<string[]>;
+  /**
+   * Similar with generateResponse() but returns multiple responses.
+   *
+   * @export
+   * @param text The text to process.
+   * @param progressListener A listener that will be triggered when the task has
+   *     new partial response generated.
+   * @return The generated text result.
+   */
+  generateResponses(
+    text: string,
+    progressListener: MultiResponseProgressListener,
+  ): Promise<string[]>;
+  /**
+   * Similar with generateResponse() but returns multiple responses.
+   *
+   * @export
+   * @param text The text to process.
+   * @param loraModel The LoRA model to apply on the text generation.
+   * @return The generated text result.
+   */
+  generateResponses(text: string, loraModel: LoraModel): Promise<string[]>;
+  /**
+   * Similar with generateResponse() but returns multiple responses.
+   *
+   * @export
+   * @param text The text to process.
+   * @param loraModel The LoRA model to apply on the text generation.
+   * @param progressListener A listener that will be triggered when the task has
+   *     new partial response generated.
+   * @return The generated text result.
+   */
+  generateResponses(
+    text: string,
+    loraModel: LoraModel,
+    progressListener: MultiResponseProgressListener,
+  ): Promise<string[]>;
+  /** @export */
+  generateResponses(
+    text: string,
+    loraModelOrProgressListener?: MultiResponseProgressListener | LoraModel,
+    progressListener?: MultiResponseProgressListener,
+  ): Promise<string[]> {
+    this.isMultiResponseGeneration = true;
+    return this.generateResponsesInternal(
+      text,
+      loraModelOrProgressListener,
+      progressListener,
+    );
+  }
+
+  private generateResponsesInternal(
+    text: string,
+    loraModelOrProgressListener?:
+      | MultiResponseProgressListener
+      | ProgressListener
+      | LoraModel,
+    progressListener?: MultiResponseProgressListener | ProgressListener,
+  ): Promise<string[]> {
     if (this.isProcessing) {
       throw new Error('Previous invocation or loading is still ongoing.');
     }
@@ -556,13 +671,17 @@ export class LlmInference extends TaskRunner {
       typeof loraModelOrProgressListener === 'function'
         ? loraModelOrProgressListener
         : progressListener;
-    this.generationResult.length = 0;
     this.isProcessing = true;
+    this.generationResults.length = 0;
+    for (let i = 0; i < this.options.getNumResponses(); i++) {
+      this.generationResults[i] = [];
+    }
     const timeStamp = this.getSynctheticTimestamp();
     this.graphRunner.addStringToStream(text, INPUT_STREAM, timeStamp);
     if (loraModelOrProgressListener instanceof LoraModel) {
       if (loraModelOrProgressListener.owner !== this) {
         this.isProcessing = false;
+        this.isMultiResponseGeneration = undefined;
         throw new Error(
           'The LoRA model was not loaded by this LLM Inference task.',
         );
@@ -579,7 +698,7 @@ export class LlmInference extends TaskRunner {
       );
     }
     this.finishProcessing();
-    this.resultDeferred = new Deferred<string>();
+    this.resultDeferred = new Deferred<string[]>();
     return this.resultDeferred.promise;
   }
 
@@ -656,28 +775,27 @@ export class LlmInference extends TaskRunner {
   }
 
   /**
-   * Decodes the response from the LLM engine and returns a human-readable
-   * string.
+   * Decodes the responses from the LLM engine and returns an array of
+   * human-readable strings.
    */
-  private static decodeResponse(
+  private static decodeResponses(
     responses: string[],
     stripLeadingWhitespace: boolean,
-  ): string {
+  ): string[] {
     if (responses == null || responses.length === 0) {
       // Technically, this is an error. We should always get at least one
       // response.
-      return '';
+      return [];
     }
+    return responses.map((response) => {
+      response = response.replaceAll(LlmInference.TOKEN_SPLITTER, ' ');
+      response = response.replaceAll(LlmInference.NEW_LINE, '\n'); // Replace <0x0A> token with newline
 
-    let response = responses[0]; // We only use the first response
-    response = response.replaceAll(LlmInference.TOKEN_SPLITTER, ' ');
-    response = response.replaceAll(LlmInference.NEW_LINE, '\n'); // Replace <0x0A> token with newline
-
-    if (stripLeadingWhitespace) {
-      response = response.trimStart();
-    }
-
-    return response.split(LlmInference.EOD, 1)[0];
+      if (stripLeadingWhitespace) {
+        response = response.trimStart();
+      }
+      return response.split(LlmInference.EOD, 1)[0];
+    });
   }
 
   /** Sets the default values for the graph. */
@@ -687,6 +805,7 @@ export class LlmInference extends TaskRunner {
     this.samplerParams.setK(DEFAULT_TOP_K);
     this.samplerParams.setP(DEFAULT_TOP_P);
     this.samplerParams.setTemperature(DEFAULT_TEMPERATURE);
+    this.options.setNumResponses(DEFAULT_NUM_RESPONSES);
   }
 
   /** Checks if there are any WebGPU errors and throws them if so. */
@@ -715,15 +834,27 @@ export class LlmInference extends TaskRunner {
     this.graphRunner.attachStringVectorListener(
       OUTPUT_STREAM,
       (stringVector, timestamp) => {
-        const stripLeadingWhitespace = this.generationResult.length === 0;
-        const decodedText = LlmInference.decodeResponse(
+        const stripLeadingWhitespace = this.generationResults.length === 0;
+        const decodedText = LlmInference.decodeResponses(
           stringVector,
           stripLeadingWhitespace,
         );
-        this.generationResult.push(decodedText);
+        decodedText.forEach((text, index) => {
+          this.generationResults[index].push(text);
+        });
         // Don't trigger the user progress listener if there are WebGPU errors.
         if (this.userProgressListener && this.wgpuErrors.length === 0) {
-          this.userProgressListener(decodedText, /* done= */ false);
+          if (this.isMultiResponseGeneration) {
+            (this.userProgressListener as MultiResponseProgressListener)(
+              decodedText,
+              /* done= */ false,
+            );
+          } else {
+            (this.userProgressListener as ProgressListener)(
+              decodedText[0],
+              /* done= */ false,
+            );
+          }
         }
         this.setLatestOutputTimestamp(timestamp);
       },
@@ -739,22 +870,42 @@ export class LlmInference extends TaskRunner {
         this.setLatestOutputTimestamp(timestamp);
         this.checkWgpuErrors();
         if (this.resultDeferred) {
-          this.resultDeferred.resolve(this.generationResult.join(''));
+          this.resultDeferred.resolve(
+            this.generationResults.map((result) => result.join('')),
+          );
           this.resultDeferred = undefined;
         }
         if (this.userProgressListener) {
-          this.userProgressListener(/* partialResult= */ '', /* done= */ true);
+          if (this.isMultiResponseGeneration) {
+            const emptyArray = [];
+            for (let i = 0; i < this.options.getNumResponses(); i++) {
+              emptyArray.push('');
+            }
+            (this.userProgressListener as MultiResponseProgressListener)(
+              /* partialResult= */ emptyArray,
+              /* done= */ true,
+            );
+          } else {
+            (this.userProgressListener as ProgressListener)(
+              /* partialResult= */ '',
+              /* done= */ true,
+            );
+          }
         }
+        this.isMultiResponseGeneration = undefined;
       },
     );
     this.graphRunner.attachEmptyPacketListener(
       OUTPUT_END_STREAM,
       (timestamp) => {
         this.isProcessing = false;
+        this.isMultiResponseGeneration = undefined;
         this.setLatestOutputTimestamp(timestamp);
         this.checkWgpuErrors();
         if (this.resultDeferred) {
-          this.resultDeferred.resolve(this.generationResult.join(''));
+          this.resultDeferred.resolve(
+            this.generationResults.map((result) => result.join('')),
+          );
           this.resultDeferred = undefined;
         }
       },
@@ -888,7 +1039,7 @@ export class LlmInference extends TaskRunner {
     llmGpuOptions.setWeightPath(LlmInference.LLM_MODEL_NAME);
     // Set seq batch size to 0 to use automated sequence batch search.
     llmGpuOptions.setSequenceBatchSize(0);
-    llmGpuOptions.setNumOutputHeads(1);
+    llmGpuOptions.setNumOutputHeads(this.options.getNumResponses());
     llmGpuOptions.setSamplerParams(this.options.getSamplerParams());
 
     const gpuModelInfo = new LlmGpuCalculatorOptions.GpuModelInfo();
@@ -935,7 +1086,7 @@ export class LlmInference extends TaskRunner {
       'type.googleapis.com/odml.infra.proto.DetokenizerCalculatorOptions',
     );
     const detokenizerOptions = new DetokenizerCalculatorOptions();
-    detokenizerOptions.setNumOutputHeads(1);
+    detokenizerOptions.setNumOutputHeads(this.options.getNumResponses());
     // No need to set spm model, instead reuse TokenizerCalculator's side input.
     detokenizerOptions.addStopTokens('<eos>');
     detokenizerOptions.addStopTokens('<|endoftext|>');
