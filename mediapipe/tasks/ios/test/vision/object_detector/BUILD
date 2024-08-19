@@ -26,7 +26,7 @@ TFL_DISABLED_SANITIZER_TAGS = [
 
 objc_library(
     name = "MPPObjectDetectorObjcTestLibrary",
-    testonly = 1,
+    testonly = True,
     srcs = ["MPPObjectDetectorTests.m"],
     copts = [
         "-ObjC++",
