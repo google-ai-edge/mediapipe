@@ -24,8 +24,6 @@ import MediaPipeTasksGenAIC
 
   private let llmTaskRunner: LlmTaskRunner
 
-  private var supportedLoraRanks: UnsafeMutablePointer<Int>?
-
   /// Creates a new instance of `LlmInference` with the given options.
   ///
   /// - Parameters:
@@ -33,39 +31,24 @@ import MediaPipeTasksGenAIC
   /// `LlmInference`.
   /// - Throws: An error if `LlmInference` instance could not be initialized.
   @objc public init(options: Options) throws {
-    let modelPath = strdup(options.modelPath)
-    let cacheDirectory = strdup(FileManager.default.temporaryDirectory.path)
+    let cacheDirectory = FileManager.default.temporaryDirectory.path
 
-    defer {
-      free(modelPath)
-      free(cacheDirectory)
+    llmTaskRunner = try options.modelPath.withCString { modelPath in
+      try cacheDirectory.withCString { cacheDirectory in
+        try options.supportedLoraRanks.withUnsafeMutableBufferPointer { supportedLoraRanks in
+          let modelSetting = LlmModelSettings(
+            model_path: modelPath,
+            cache_dir: cacheDirectory,
+            max_num_tokens: options.maxTokens,
+            num_decode_steps_per_sync: LlmInference.numberOfDecodeStepsPerSync,
+            sequence_batch_size: LlmInference.sequenceBatchSize,
+            number_of_supported_lora_ranks: options.supportedLoraRanks.count,
+            supported_lora_ranks: supportedLoraRanks.baseAddress,
+            max_top_k: options.maxTopk)
+          return try LlmTaskRunner(modelSettings: modelSetting)
+        }
+      }
     }
-
-    /// Copying to dynamically allocated property on heap ensures that the `supportedLoraRanks` will
-    /// be in memory until this `LLmInference` is deallocated. `supportedLoraRanks` is deallocated
-    /// in `deinit`.
-    ///
-    /// Assigning the pointer from `withUnsafeMutablePointer()` to a property does not guarantee the
-    /// array being in memory as long as the engine isn't deallocated since
-    /// `options.supportedLoraRanks` only has function scope.
-    ///
-    /// TODO: If C++ API mem copies the array the following code can be updated to
-    /// use `withUnsafeMutablePointer()`.
-    supportedLoraRanks = UnsafeMutablePointer<Int>.allocate(
-      capacity: options.supportedLoraRanks.count)
-    supportedLoraRanks?.initialize(
-      from: &(options.supportedLoraRanks), count: options.supportedLoraRanks.count)
-
-    let modelSetting = LlmModelSettings(
-      model_path: modelPath,
-      cache_dir: cacheDirectory,
-      max_num_tokens: options.maxTokens,
-      num_decode_steps_per_sync: LlmInference.numberOfDecodeStepsPerSync,
-      sequence_batch_size: LlmInference.sequenceBatchSize,
-      number_of_supported_lora_ranks: options.supportedLoraRanks.count,
-      supported_lora_ranks: supportedLoraRanks,
-      max_top_k: options.maxTopk)
-    try llmTaskRunner = LlmTaskRunner(modelSettings: modelSetting)
 
     super.init()
   }
@@ -85,7 +68,7 @@ import MediaPipeTasksGenAIC
   /// LLM engine.
   ///
   /// - Parameters:
-  ///   - sessionConfig: The C config of type `LlmSessionConfig` that configures how to execute the 
+  ///   - sessionConfig: The C config of type `LlmSessionConfig` that configures how to execute the
   /// model.
   /// - Returns:
   ///   - An `LlmSessionRunner` that wraps around a new session.
@@ -93,10 +76,6 @@ import MediaPipeTasksGenAIC
   func createSessionRunner(sessionConfig: LlmSessionConfig) throws -> LlmSessionRunner {
     let llmSessionRunner = try llmTaskRunner.createSessionRunner(sessionConfig: sessionConfig)
     return llmSessionRunner
-  }
-
-  deinit {
-    supportedLoraRanks?.deallocate()
   }
 }
 
