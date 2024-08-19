@@ -62,7 +62,7 @@ typedef struct {
   size_t number_of_supported_lora_ranks;
 
   // The supported lora ranks for the base model. Used by GPU only.
-  const size_t* supported_lora_ranks;
+  size_t* supported_lora_ranks;
 
   // Maximum top k, which is the max Top-K value supported for all
   // sessions created with the engine, used by GPU only. If a session with Top-K
