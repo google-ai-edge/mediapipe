@@ -29,7 +29,7 @@ TFL_DISABLED_SANITIZER_TAGS = [
 
 objc_library(
     name = "MPPLanguageDetectorObjcTestLibrary",
-    testonly = 1,
+    testonly = True,
     srcs = ["MPPLanguageDetectorTests.mm"],
     copts = [
         "-ObjC++",
