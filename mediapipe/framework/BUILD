@@ -203,9 +203,6 @@ cc_library(
     hdrs = ["calculator_context.h"],
     visibility = [
         ":mediapipe_internal",
-        "//assistant/surfaces/intelligence/distance_perception/models/mediapipe/calculators:__pkg__",
-        "//speech/videos/mediapipe/calculator:__pkg__",
-        "//vr/stargate/starcam:__pkg__",
     ],
     deps = [
         ":calculator_state",
@@ -248,8 +245,6 @@ cc_library(
     hdrs = ["calculator_contract.h"],
     visibility = [
         ":mediapipe_internal",
-        "//speech/videos/mediapipe/calculator:__pkg__",
-        "//vr/stargate/starcam:__pkg__",
     ],
     deps = [
         ":calculator_cc_proto",
@@ -697,7 +692,6 @@ cc_library(
     hdrs = ["input_stream_handler.h"],
     visibility = [
         ":mediapipe_internal",
-        "//research/interaction/mediapipe/calculators:__pkg__",
     ],
     deps = [
         ":calculator_context",
@@ -1073,7 +1067,6 @@ cc_library(
         ],
     }),
     visibility = [
-        "//fitbit/research/sensing/mobisense:__subpackages__",
         "//mediapipe/calculators:__subpackages__",
         "//mediapipe/framework:__subpackages__",
         "//mediapipe/framework/port:__pkg__",
