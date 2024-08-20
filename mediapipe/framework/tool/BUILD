@@ -175,6 +175,7 @@ cc_test(
 
 cc_library(
     name = "options_map",
+    srcs = ["options_map.cc"],
     hdrs = ["options_map.h"],
     visibility = ["//mediapipe:__subpackages__"],
     deps = [

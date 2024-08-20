@@ -19,6 +19,7 @@
 #define MEDIAPIPE_GPU_REUSABLE_POOL_H_
 
 #include <algorithm>
+#include <cstddef>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -138,7 +139,7 @@ void ReusablePool<Item>::Return(std::unique_ptr<Item> buf) {
 template <class Item>
 void ReusablePool<Item>::TrimAvailable(
     std::vector<std::unique_ptr<Item>>* trimmed) {
-  int keep = std::max(keep_count_ - in_use_count_, 0);
+  size_t keep = std::max(keep_count_ - in_use_count_, 0);
   if (available_.size() > keep) {
     ABSL_LOG_FIRST_N(WARNING, 1)
         << "Maximum number of pooled buffers reached. Consider increasing "
