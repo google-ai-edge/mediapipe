@@ -22,6 +22,7 @@ swift_library(
     name = "LlmInference",
     srcs = [
         "sources/LlmInference.swift",
+        "sources/LlmInference+Session.swift",
         "//mediapipe/tasks/ios/genai/core:sources/GenAiInferenceError.swift",
         "//mediapipe/tasks/ios/genai/core:sources/LlmTaskRunner.swift",
         "//mediapipe/tasks/ios/genai/core:sources/LlmSessionRunner.swift",
