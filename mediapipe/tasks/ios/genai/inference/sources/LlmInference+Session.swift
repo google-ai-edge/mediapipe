@@ -53,7 +53,10 @@ extension LlmInference {
       }
     }
 
-    /// Creates a new instance of `LlmInference` with the given options.
+    /// Creates a new instance of `LlmInference` with the given options. 
+    /// Ensure that the instance of `LlmInference` passed to this function must be alive through 
+    /// the lifetime of the current session. Using a session beyond the life time of the 
+    /// `LlmInference` used to create it will lead to undefined behaviour.
     ///
     /// - Parameters:
     ///   - options: The options of type `LlmInference.Options` to use for configuring the
@@ -82,6 +85,9 @@ extension LlmInference {
 
     /// A convenience initializer that creates a new instance of `LlmInference.Session` from an
     /// the given `llmInference` and default options.
+    /// Ensure that the instance of `LlmInference` passed to this function must be alive through 
+    /// the lifetime of the current session. Using a session beyond the life time of the 
+    /// `LlmInference` used to create it will lead to undefined behaviour.
     ///
     /// - Parameters:
     ///   - llmInference: An instance of `LlmInference` from which the session must be created.
