@@ -576,9 +576,6 @@ http_archive(
         # Works around Bazel issue with objc_library.
         # See https://github.com/bazelbuild/bazel/issues/19912
         "@//third_party:org_tensorflow_objc_build_fixes.diff",
-        # Restores scores for text pipelines, which return different results
-        # with subgraph reshaping
-        "@//third_party:org_tensorflow_disable_subgraph_reshaping.diff"
     ],
     patch_args = [
         "-p1",
