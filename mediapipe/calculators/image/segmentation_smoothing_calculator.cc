@@ -201,7 +201,7 @@ absl::Status SegmentationSmoothingCalculator::RenderCpu(CalculatorContext* cc) {
   auto previous_mat = mediapipe::formats::MatView(&previous_frame);
   RET_CHECK_EQ(previous_mat->type(), current_mat->type())
       << "Warning: mixing input format types: " << previous_mat->type()
-      << " != " << previous_mat->type();
+      << " != " << current_mat->type();
 
   RET_CHECK_EQ(current_mat->rows, previous_mat->rows);
   RET_CHECK_EQ(current_mat->cols, previous_mat->cols);
