@@ -25,43 +25,19 @@ extension LlmInference {
   ///
   /// Note: Inherits from `NSObject` for Objective C interoperability.
   @objc(MPPLLMInferenceSession) public final class Session: NSObject {
-    private static let responseGenerationInProgressQueueName =
-      "com.google.mediapipe.genai.isResponseGenerationInProgressQueue"
-
     // Session runner that manages the creation, deletion and execution of the underlying C session.
     private let llmSessionRunner: LlmSessionRunner
 
-    // Queue that restricts access to the response generation functions simultaneously.
-    private let responseGenerationInProgressQueue = DispatchQueue(
-      label: Session.responseGenerationInProgressQueueName,
-      attributes: .concurrent)
+    // LLM Inference used to create this session.
+    private let llmInference: LlmInference
 
-    /// Tracks whether a response generation is in progress.
-    /// Readers writers lock to prevent race condition as this variable can be accessed from multiple
-    /// threads.
-    private var responseGenerationInProgressInternal = false
-    private var responseGenerationInProgress: Bool {
-      get {
-        responseGenerationInProgressQueue.sync {
-          return self.responseGenerationInProgressInternal
-        }
-      }
-      set {
-        responseGenerationInProgressQueue.async(flags: .barrier) {
-          self.responseGenerationInProgressInternal = newValue
-        }
-      }
-    }
-
-    /// Creates a new instance of `LlmInference` with the given options. 
-    /// Ensure that the instance of `LlmInference` passed to this function must be alive through 
-    /// the lifetime of the current session. Using a session beyond the life time of the 
-    /// `LlmInference` used to create it will lead to undefined behaviour.
-    ///
+    /// Creates a new instance of `LlmInference.Session` with the given options and `llmInference`.
+    /// Note: This class maintains a strong reference to `llmInference`. `llmInference` will
+    /// only get deallocated after all sessions created using the `llmInference` get destroyed.
     /// - Parameters:
-    ///   - options: The options of type `LlmInference.Options` to use for configuring the
-    /// `LlmInference`.
-    /// - Throws: An error if `LlmInference` instance could not be initialized.
+    ///   - options: The options of type `LlmInference.Session.Options` to use for configuring the
+    /// session.
+    /// - Throws: An error if the session instance could not be initialized.
     @objc public init(llmInference: LlmInference, options: Options) throws {
       var sessionConfig = LlmSessionConfig(
         topk: options.topk,
@@ -80,14 +56,14 @@ extension LlmInference {
           return try llmInference.createSessionRunner(sessionConfig: sessionConfig)
         } ?? llmInference.createSessionRunner(sessionConfig: sessionConfig)
 
+      self.llmInference = llmInference
       super.init()
     }
 
-    /// A convenience initializer that creates a new instance of `LlmInference.Session` from an
-    /// the given `llmInference` and default options.
-    /// Ensure that the instance of `LlmInference` passed to this function must be alive through 
-    /// the lifetime of the current session. Using a session beyond the life time of the 
-    /// `LlmInference` used to create it will lead to undefined behaviour.
+    /// A convenience initializer that creates a new instance of `LlmInference.Session` from the
+    /// given `llmInference` and default options.
+    /// Note: This class maintains a strong reference to `llmInference`. `llmInference` will
+    /// only get deallocated after all sessions created using the `llmInference` get destroyed.
     ///
     /// - Parameters:
     ///   - llmInference: An instance of `LlmInference` from which the session must be created.
@@ -97,14 +73,19 @@ extension LlmInference {
       try self.init(llmInference: llmInference, options: options)
     }
 
-    /// Creates a new instance of `LlmInference.Session` with the given session runner.
+    /// Creates a new instance of `LlmInference.Session` with the given session runner and
+    /// `llmInference`.
     /// This initializer is used by `clone()` to create a new `LlmInference.Session` using a
     /// cloned session runner.
+    /// Note: This class maintains a strong reference to `llmInference`. The `llmInference` will
+    /// only get deallocated after all sessions created using the `llmInference` get destroyed.
+    ///
     /// - Parameters:
     ///   - llmSessionRunner: An instance of `LlmSessionRunner` using which the session must be
     /// created.
-    init(llmSessionRunner: LlmSessionRunner) {
+    init(llmSessionRunner: LlmSessionRunner, llmInference: LlmInference) {
       self.llmSessionRunner = llmSessionRunner
+      self.llmInference = llmInference
       super.init()
     }
 
@@ -122,12 +103,16 @@ extension LlmInference {
     /// - Throws: An error if the LLM's response is invalid.
     @objc public func generateResponse() throws -> String {
 
-      /// Disallow response generation if another response generation call is already in progress.
-      try shouldContinueWithResponseGeneration()
+      /// Disallow response generation if another response generation call initiated by any session
+      /// used to create the current session is already in progress.
+      ///
+      /// TODO: If response generations on multiple sessions or same sessions are allowed to happen
+      /// simultaneously it leads to a crash. Investigate of this can be handled from C++.
+      try llmInference.shouldContinueWithResponseGeneration()
 
       let tokens = try llmSessionRunner.predict()
 
-      responseGenerationInProgress = false
+      llmInference.markResponseGenerationCompleted()
 
       guard let humanReadableLlmResponse = Session.humanReadableString(llmResponses: tokens)
       else {
@@ -150,8 +135,12 @@ extension LlmInference {
       progress: @escaping (_ partialResponse: String?, _ error: Error?) -> Void,
       completion: @escaping (() -> Void)
     ) throws {
-      /// Disallow response generation if another response generation call is already in progress.
-      try shouldContinueWithResponseGeneration()
+      /// Disallow response generation if another response generation call initiated by any session
+      /// used to create the current session is already in progress.
+      ///
+      /// TODO: If response generations on multiple sessions or same sessions are allowed to happen
+      /// simultaneously it leads to a crash. Investigate of this can be handled from C++.
+      try llmInference.shouldContinueWithResponseGeneration()
 
       /// Used to make a decision about whitespace stripping.
       var receivedFirstToken = true
@@ -172,7 +161,7 @@ extension LlmInference {
           progress(humanReadableLlmResponse, nil)
         },
         completion: { [weak self] in
-          self?.responseGenerationInProgress = false
+          self?.llmInference.markResponseGenerationCompleted()
           completion()
         })
     }
@@ -220,16 +209,7 @@ extension LlmInference {
     /// - Throws: An error if cloning the current session fails.
     public func clone() throws -> Session {
       let clonedSessionRunner = try llmSessionRunner.clone()
-      return Session(llmSessionRunner: clonedSessionRunner)
-    }
-
-    /// Throw error if response generation is in progress or update response generation state.
-    private func shouldContinueWithResponseGeneration() throws {
-      if responseGenerationInProgress {
-        throw GenAiInferenceError.illegalMethodCall
-      }
-
-      responseGenerationInProgress = true
+      return Session(llmSessionRunner: clonedSessionRunner, llmInference: self.llmInference)
     }
 
     private static func humanReadableString(

@@ -32,7 +32,12 @@ extension GenAiInferenceError: LocalizedError {
     case .invalidResponse:
       return "The response returned by the model is invalid."
     case .illegalMethodCall:
-      return "Response generation is already in progress."
+      return
+        """
+        Response generation is already in progress. The request in progress may have been \
+        initated on the current session or on one of the sessions created from the `LlmInference` \
+        that was used to create the current session.
+        """
     case .failedToComputeSizeInTokens(let message):
       let explanation = message.flatMap { $0 } ?? "An internal error occured."
       return "Failed to compute size of text in tokens: \(explanation)"

@@ -17,12 +17,28 @@ import MediaPipeTasksGenAIC
 
 /// A MediaPipe task that performs inference using a given Large Language Model.
 ///
+/// An instance of LLM Inferece will only be deallocated after all sessions created from it are 
+/// destroyed. This means that an LLM inference can stay in memory even if a reference to it goes 
+/// out of scope if atleast one of its sessions outlive its scope.
+///
 /// Note: Inherits from `NSObject` for Objective C interoperability.
 @objc(MPPLLMInference) public final class LlmInference: NSObject {
   private static let numberOfDecodeStepsPerSync = 3
   private static let sequenceBatchSize = 0
+  private static let responseGenerationInProgressQueueName =
+    "com.google.mediapipe.genai.isResponseGenerationInProgressQueue"
 
   private let llmTaskRunner: LlmTaskRunner
+
+  // Queue that restricts access to the response generation functions simultaneously.
+  private let responseGenerationInProgressQueue = DispatchQueue(
+    label: LlmInference.responseGenerationInProgressQueueName,
+    attributes: .concurrent)
+
+  /// Tracks whether a response generation is in progress.
+  /// Readers writers lock to prevent race condition as this variable can be accessed from multiple
+  /// threads.
+  private var responseGenerationInProgress = false
 
   /// Creates a new instance of `LlmInference` with the given options.
   ///
@@ -76,6 +92,36 @@ import MediaPipeTasksGenAIC
   func createSessionRunner(sessionConfig: LlmSessionConfig) throws -> LlmSessionRunner {
     let llmSessionRunner = try llmTaskRunner.createSessionRunner(sessionConfig: sessionConfig)
     return llmSessionRunner
+  }
+
+  /// If no response generation using this `llmInference` is currently in progress, this function
+  /// updates the response generation state and returns successfully granting access to its caller
+  /// to execute response generation. If response generation is already in progress, throws an
+  /// error.
+  /// Any
+  func shouldContinueWithResponseGeneration() throws {
+    /// `responseGenerationInProgressQueue` is a serial queue. executing a sync block on a serial
+    /// queue ensures that at any time only one call to this function tests and writes the current
+    /// state of response generation. All other calls are blocked until the state is
+    /// updated. If the state indicates that response generation is currently in progress, the
+    /// block throws an error. Since it is a synchronous block that blocks execution until it is
+    /// complete, the error is in turn propogated as an error thrown by the function.
+    try responseGenerationInProgressQueue.sync {
+      if !responseGenerationInProgress {
+        responseGenerationInProgress = true
+      } else {
+        throw GenAiInferenceError.illegalMethodCall
+      }
+    }
+  }
+
+  /// Marks response generation as complete by updating the state. Any session created using this
+  /// `llmInference` must use this function to indicate that the call to the underlying C session
+  /// for response generation is completed.
+  func markResponseGenerationCompleted() {
+    responseGenerationInProgressQueue.sync {
+      responseGenerationInProgress = false
+    }
   }
 }
 
