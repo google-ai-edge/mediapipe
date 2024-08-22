@@ -32,8 +32,7 @@ import MediaPipeTasksGenAIC
 
   // Queue that restricts access to the response generation functions simultaneously.
   private let responseGenerationInProgressQueue = DispatchQueue(
-    label: LlmInference.responseGenerationInProgressQueueName,
-    attributes: .concurrent)
+    label: LlmInference.responseGenerationInProgressQueueName)
 
   /// Tracks whether a response generation is in progress.
   /// Readers writers lock to prevent race condition as this variable can be accessed from multiple
