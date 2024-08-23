@@ -17,9 +17,9 @@ import MediaPipeTasksGenAIC
 
 /// A MediaPipe task that performs inference using a given Large Language Model.
 ///
-/// An instance of LLM Inferece will only be deallocated after all sessions created from it are 
-/// destroyed. This means that an LLM inference can stay in memory even if a reference to it goes 
-/// out of scope if atleast one of its sessions outlive its scope.
+/// An instance of `LlmInference` will only be deallocated after all sessions created from it are
+/// destroyed. This means that an LLM inference can stay in memory even if a reference to it goes
+/// out of scope if atleast one of its session's outlives its scope.
 ///
 /// Note: Inherits from `NSObject` for Objective C interoperability.
 @objc(MPPLLMInference) public final class LlmInference: NSObject {
@@ -30,16 +30,19 @@ import MediaPipeTasksGenAIC
 
   private let llmTaskRunner: LlmTaskRunner
 
-  // Queue that restricts access to the response generation functions simultaneously.
+  /// Serial queue that reads and updates `responseGenerationInProgress` to restrict simultaneous
+  /// execution of response generation functions across sessions created from this
+  /// `LlmInference`.
   private let responseGenerationInProgressQueue = DispatchQueue(
     label: LlmInference.responseGenerationInProgressQueueName)
 
   /// Tracks whether a response generation is in progress.
-  /// Readers writers lock to prevent race condition as this variable can be accessed from multiple
-  /// threads.
   private var responseGenerationInProgress = false
 
   /// Creates a new instance of `LlmInference` with the given options.
+  /// An instance of `LlmInference` will only be deallocated after all sessions created from it are
+  /// destroyed. This means that an LLM inference can stay in memory even if the reference to it
+  /// goes out of scope if atleast one of its session's outlives its scope.
   ///
   /// - Parameters:
   ///   - options: The options of type `LlmInference.Options` to use for configuring the
@@ -70,6 +73,9 @@ import MediaPipeTasksGenAIC
 
   /// A convenience initializer that creates a new instance of `LlmInference` from an absolute path
   /// to a model asset bundle stored locally on the device and the default `LlmInference.Options`.
+  /// An instance of `LlmInference` will only be deallocated after all sessions created from it are
+  /// destroyed. This means that an LLM inference can stay in memory even if the reference to it
+  /// goes out of scope if atleast one of its session's outlives its scope.
   ///
   /// - Parameters:
   ///   - modelPath: The absolute path to a model asset bundle stored locally on the device.
@@ -93,13 +99,16 @@ import MediaPipeTasksGenAIC
     return llmSessionRunner
   }
 
-  /// If no response generation using this `llmInference` is currently in progress, this function
-  /// updates the response generation state and returns successfully granting access to its caller
-  /// to execute response generation. If response generation is already in progress, throws an
-  /// error.
-  /// Any
+  /// If no response generation using any session created from this `LlmInference` is currently in
+  /// progress, this function updates the response generation state to `true` and returns
+  /// successfully thereby granting access to its caller to execute response generation.
+  /// If this function throws an error, the invoking session must abort the response generation
+  /// call. This function must be called before invoking the response generation function on the
+  /// underlying `LlmSessionRunner`.
+  ///
+  /// - Throws: An error if response generation is already in progress.
   func shouldContinueWithResponseGeneration() throws {
-    /// `responseGenerationInProgressQueue` is a serial queue. executing a sync block on a serial
+    /// `responseGenerationInProgressQueue` is a serial queue. Executing a sync block on a serial
     /// queue ensures that at any time only one call to this function tests and writes the current
     /// state of response generation. All other calls are blocked until the state is
     /// updated. If the state indicates that response generation is currently in progress, the
@@ -114,9 +123,9 @@ import MediaPipeTasksGenAIC
     }
   }
 
-  /// Marks response generation as complete by updating the state. Any session created using this
-  /// `llmInference` must use this function to indicate that the call to the underlying C session
-  /// for response generation is completed.
+  /// Marks response generation as complete by updating the state to `false`. Any session created
+  /// using this `LlmInference` must use this function to indicate the completion of response
+  /// generation using the underlying `LlmSessionRunner`.
   func markResponseGenerationCompleted() {
     responseGenerationInProgressQueue.sync {
       responseGenerationInProgress = false
@@ -138,9 +147,9 @@ extension LlmInference {
     @objc public var maxTokens: Int = 512
 
     /// Maximum top k, which is the max Top-K value supported for all sessions created with the
-    /// engine, used by GPU only. If a session with Top-K value larger than this is being asked to
-    /// be created, it will be rejected(throw error). If not provided, the max top k will be 1,
-    /// which means only greedy decoding is supported for any sessions created with this
+    /// `LlmInference`, used by GPU only. If a session with Top-K value larger than this is being
+    /// asked to be created, it will be rejected(throw error). If not provided, the max top k will
+    /// be 1, which means only greedy decoding is supported for any sessions created with this
     /// `LlmInference``.
     @objc public var maxTopk: Int = 40
 
