@@ -65,7 +65,7 @@ TEST(TextClassifierTest, SmokeTest) {
   EXPECT_EQ(result.classifications[0].categories_count, 2);
   EXPECT_EQ(std::string{result.classifications[0].categories[0].category_name},
             "positive");
-  EXPECT_NEAR(result.classifications[0].categories[0].score, 0.999371,
+  EXPECT_NEAR(result.classifications[0].categories[0].score, 0.999465,
               kPrecision);
 
   text_classifier_close_result(&result);
