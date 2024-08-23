@@ -18,9 +18,11 @@ import MediaPipeTasksGenAIC
 extension LlmInference {
 
   /// An `LlmInference` Session that can be used to execute queries using the LLM that was used to
-  /// initialize the `LlmInference`task.
-  /// You can create multiple query sessions using the same `LlmInference` which can be active at
-  /// the same time.
+  /// initialize the `LlmInference` task.
+  /// You can create multiple query sessions using the same `LlmInference`. Multiple sessions can
+  /// be active at the same time. However, you cannot perform simultaneous response generation calls
+  /// on active sessions created using the same `LlmInference`. You have to wait for the
+  /// currently running response generation call to complete before initiating another one.
   /// You can also clone an existing session and continue querying the LLM from where you left off.
   ///
   /// Note: Inherits from `NSObject` for Objective C interoperability.
@@ -34,6 +36,7 @@ extension LlmInference {
     /// Creates a new instance of `LlmInference.Session` with the given options and `llmInference`.
     /// Note: This class maintains a strong reference to `llmInference`. `llmInference` will
     /// only get deallocated after all sessions created using the `llmInference` get destroyed.
+    ///
     /// - Parameters:
     ///   - options: The options of type `LlmInference.Session.Options` to use for configuring the
     /// session.
@@ -93,21 +96,27 @@ extension LlmInference {
     /// query chunks before calling `generateResponse()` or `generateResponseAsync()`. The query
     /// chunks will be processed in the order they are added, similar to a concatenated prompt,
     /// but able to be processed in chunks.
+    ///
+    /// - Throws: An error if adding a query chunk to the session fails.
     @objc public func addQueryChunk(inputText: String) throws {
       try llmSessionRunner.addQueryChunk(inputText: inputText)
     }
 
     /// Generates a response based on the previously added query chunks synchronously. Use
     /// `addQueryChunk(inputText:)` to add atleast one query chunk before calling this function.
+    /// Note: You cannot invoke simultaneous response generation calls on active sessions created
+    /// using the same `LlmInference`. You have to wait for the currently running response
+    /// generation call to complete before initiating another one.
     ///
-    /// - Throws: An error if the LLM's response is invalid.
+    /// - Throws: An error if the LLM's response is invalid or if a response generation is
+    /// currently in progress on any session initialized from the `LlmInference` used to create
+    /// this session.
     @objc public func generateResponse() throws -> String {
-
-      /// Disallow response generation if another response generation call initiated by any session
-      /// used to create the current session is already in progress.
+      /// Disallow response generation if another response generation call initiated by any
+      /// `LlmInference` used to create the current session is already in progress.
       ///
-      /// TODO: If response generations on multiple sessions or same sessions are allowed to happen
-      /// simultaneously it leads to a crash. Investigate of this can be handled from C++.
+      /// TODO: If simultaneous response generations on multiple sessions or the same session
+      /// are allowed to happen it leads to a crash. Investigate if this can be handled by C++.
       try llmInference.shouldContinueWithResponseGeneration()
 
       let tokens = try llmSessionRunner.predict()
@@ -126,20 +135,25 @@ extension LlmInference {
     /// `progress` callback returns the partial responses from the LLM or any errors.
     /// `completion` callback is invoked once the LLM is done generating responses.
     /// Use `addQueryChunk(inputText:)` to add atleast one query chunk before calling this function.
+    /// Note: You cannot invoke simultaneous response generation calls on active sessions created
+    /// using the same `LlmInference`. You have to wait for the currently running response
+    /// generation call to complete before initiating another one.
     ///
     /// - Parameters:
     ///   - progress: A callback invoked when a partial response is available from the LLM.
     ///   - completion: A callback invoked when the LLM finishes response generation.
-    /// - Throws: An error if the LLM's response is invalid.
+    /// - Throws: An error if the LLM's response is invalid or if a response generation is
+    /// currently in progress on any session initialized from the `LlmInference` used to create
+    /// this session.
     @objc public func generateResponseAsync(
       progress: @escaping (_ partialResponse: String?, _ error: Error?) -> Void,
       completion: @escaping (() -> Void)
     ) throws {
-      /// Disallow response generation if another response generation call initiated by any session
-      /// used to create the current session is already in progress.
+      /// Disallow response generation if another response generation call initiated by any
+      /// `LlmInference` used to create the current session is already in progress.
       ///
-      /// TODO: If response generations on multiple sessions or same sessions are allowed to happen
-      /// simultaneously it leads to a crash. Investigate of this can be handled from C++.
+      /// TODO: If simultaneous response generations on multiple sessions or the same session
+      /// are allowed to happen it leads to a crash. Investigate if this can be handled by C++.
       try llmInference.shouldContinueWithResponseGeneration()
 
       /// Used to make a decision about whitespace stripping.
@@ -168,8 +182,15 @@ extension LlmInference {
 
     /// Generates a response based on the previously added query chunks asynchronously.
     /// Use `addQueryChunk(inputText:)` to add atleast one query chunk before calling this function.
+    /// Note: You cannot invoke simultaneous response generation calls on active sessions created
+    /// using the same `LlmInference`. You have to wait for the currently running response
+    /// generation call to complete before initiating another one.
+    ///
     ///
     /// - Returns: An async throwing stream that contains the partial responses from the LLM.
+    /// If a response generation is currently in progress on any session initialized from the
+    /// `LlmInference` used to create this session, the async throwing stream finishes by
+    /// throwing an error.
     @available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *)
     public func generateResponseAsync() -> AsyncThrowingStream<String, Error> {
       AsyncThrowingStream { continuation in
@@ -192,7 +213,7 @@ extension LlmInference {
     }
 
     /// Returns the size in tokens of the provided text.
-    /// You may use this function to verify this size before submitting the prompt to ensure it
+    /// You may use this function to verify the size before submitting the prompt to ensure it
     /// doesn't exceed the configured maximum token size.
     ///
     /// - Parameters:
@@ -204,6 +225,7 @@ extension LlmInference {
     }
 
     /// Clones the current session.
+    /// You can continue prompting the LLM from where you left off using the cloned session.
     ///
     /// - Returns: A new instance of `Session` which is cloned from the current session.
     /// - Throws: An error if cloning the current session fails.
@@ -245,7 +267,7 @@ extension LlmInference.Session {
     /// The random seed for sampling tokens.
     @objc public var randomSeed: Int = 0
 
-    /// The absolute path to the LoRA model asset bundle stored locally on the device. Optional.
+    /// The optional absolute path to the LoRA model asset bundle stored locally on the device.
     /// This is only compatible with GPU models.
     @objc public var loraPath: String?
   }
