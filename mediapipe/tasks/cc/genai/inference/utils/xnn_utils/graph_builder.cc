@@ -1212,5 +1212,24 @@ absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::Log(
   return output;
 }
 
+absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::CopySign(
+    std::shared_ptr<Tensor> lhs, std::shared_ptr<Tensor> rhs) {
+  MP_ASSIGN_OR_RETURN(auto output,
+                      IntermediateTensor(OutDimsForElementwiseOp(*lhs, *rhs),
+                                         "copysign_output"));
+
+  build_steps_.push_back(
+      [lhs, rhs, output](xnn_subgraph_t subgraph) -> absl::Status {
+        RET_CHECK_EQ(xnn_status_success,
+                     xnn_define_copysign(subgraph, lhs->tensor_id(subgraph),
+                                         rhs->tensor_id(subgraph),
+                                         output->tensor_id(subgraph),
+                                         /*flags=*/0));
+        return absl::OkStatus();
+      });
+
+  return output;
+}
+
 }  // namespace xnn_utils
 }  // namespace mediapipe::tasks::genai
