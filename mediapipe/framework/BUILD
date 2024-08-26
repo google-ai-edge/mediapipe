@@ -903,7 +903,6 @@ cc_library(
         ":output_stream_manager",
         ":output_stream_shard",
         ":packet_set",
-        ":packet_type",
         ":timestamp",
         "//mediapipe/framework/deps:registration",
         "//mediapipe/framework/port:logging",
@@ -998,16 +997,13 @@ cc_library(
     hdrs = ["packet_generator.h"],
     visibility = ["//visibility:public"],
     deps = [
-        ":packet",
         ":packet_generator_cc_proto",
         ":packet_set",
         ":packet_type",
         ":port",
         "//mediapipe/framework/deps:registration",
-        "//mediapipe/framework/port:core_proto",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/base:core_headers",
-        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -1168,7 +1164,6 @@ cc_library(
         ":port",
         "//mediapipe/framework/deps:registration",
         "//mediapipe/framework/port:status",
-        "@com_google_absl//absl/memory",
     ],
 )
 

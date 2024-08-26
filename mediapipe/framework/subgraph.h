@@ -163,7 +163,7 @@ using SubgraphRegistry = GlobalFactoryRegistry<std::unique_ptr<Subgraph>>;
 #define REGISTER_MEDIAPIPE_GRAPH(name)                             \
   REGISTER_FACTORY_FUNCTION_QUALIFIED(mediapipe::SubgraphRegistry, \
                                       subgraph_registration, name, \
-                                      absl::make_unique<name>)
+                                      std::make_unique<name>)
 
 // A graph factory holding a literal CalculatorGraphConfig.
 class ProtoSubgraph : public Subgraph {
