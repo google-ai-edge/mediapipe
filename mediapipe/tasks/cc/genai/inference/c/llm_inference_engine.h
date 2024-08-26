@@ -35,6 +35,24 @@ typedef void LlmInferenceEngine_Engine;
 
 typedef void LlmInferenceEngine_Session;
 
+// LlmActivationDataType defines the activation data type for the model.
+typedef enum {
+  // Use Default activation data type mentioned in the model metadata file.
+  kLlmActivationDataTypeDefault = 0,
+
+  // Use Float32 activation data type.
+  kLlmActivationDataTypeFloat32 = 1,
+
+  // Use Float16 activation data type.
+  kLlmActivationDataTypeFloat16 = 2,
+
+  // Use Int16 activation data type.
+  kLlmActivationDataTypeInt16 = 3,
+
+  // Use Int8 activation data type.
+  kLlmActivationDataTypeInt8 = 4,
+} LlmActivationDataType;
+
 // LlmSessionConfig configures how to execute the model.
 typedef struct {
   // Path to the model artifact.
@@ -71,6 +89,9 @@ typedef struct {
   // means only greedy decoding is supported for any sessions created with this
   // engine.
   size_t max_top_k;
+
+  // Optional setting for specific activation data type.
+  LlmActivationDataType llm_activation_data_type;
 
   // Optional setting for the number of draft tokens to generate when using
   // speculative decoding. Setting to 0 will disable speculative decoding.
