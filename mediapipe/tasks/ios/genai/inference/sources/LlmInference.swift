@@ -19,7 +19,7 @@ import MediaPipeTasksGenAIC
 ///
 /// An instance of `LlmInference` will only be deallocated after all sessions created from it are
 /// destroyed. This means that an LLM inference can stay in memory even if a reference to it goes
-/// out of scope if atleast one of its session's outlives its scope.
+/// out of scope if at least one of its sessions outlives its scope.
 ///
 /// Note: Inherits from `NSObject` for Objective C interoperability.
 @objc(MPPLLMInference) public final class LlmInference: NSObject {
@@ -42,7 +42,7 @@ import MediaPipeTasksGenAIC
   /// Creates a new instance of `LlmInference` with the given options.
   /// An instance of `LlmInference` will only be deallocated after all sessions created from it are
   /// destroyed. This means that an LLM inference can stay in memory even if the reference to it
-  /// goes out of scope if atleast one of its session's outlives its scope.
+  /// goes out of scope if at least one of its sessions outlives its scope.
   ///
   /// - Parameters:
   ///   - options: The options of type `LlmInference.Options` to use for configuring the
@@ -75,7 +75,7 @@ import MediaPipeTasksGenAIC
   /// to a model asset bundle stored locally on the device and the default `LlmInference.Options`.
   /// An instance of `LlmInference` will only be deallocated after all sessions created from it are
   /// destroyed. This means that an LLM inference can stay in memory even if the reference to it
-  /// goes out of scope if atleast one of its session's outlives its scope.
+  /// goes out of scope if at least one of its sessions outlives its scope.
   ///
   /// - Parameters:
   ///   - modelPath: The absolute path to a model asset bundle stored locally on the device.
