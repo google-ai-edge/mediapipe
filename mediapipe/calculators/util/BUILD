@@ -1171,7 +1171,6 @@ cc_library(
     deps = [
         ":local_file_contents_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "//mediapipe/util:resource_util",
     ],

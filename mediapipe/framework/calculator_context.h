@@ -21,6 +21,7 @@
 #include <utility>
 
 #include "absl/log/absl_check.h"
+#include "absl/status/status.h"
 #include "mediapipe/framework/calculator_state.h"
 #include "mediapipe/framework/counter.h"
 #include "mediapipe/framework/graph_service.h"
@@ -31,6 +32,7 @@
 #include "mediapipe/framework/port.h"
 #include "mediapipe/framework/port/any_proto.h"
 #include "mediapipe/framework/port/status.h"
+#include "mediapipe/framework/resources.h"
 #include "mediapipe/framework/timestamp.h"
 
 namespace mediapipe {
@@ -142,6 +144,19 @@ class CalculatorContext {
     return calculator_state_->GetSharedGraphServiceManager();
   }
 
+  // Gets interface to access resources (file system, assets, etc.) from
+  // calculators.
+  //
+  // NOTE: this is the preferred way to access resources from subgraphs and
+  // calculators as it allows for fine grained per graph configuration.
+  //
+  // Resources can be configured by setting a custom `kResourcesService` graph
+  // service on `CalculatorGraph`. The default resources service can be created
+  // and reused through `CreateDefaultResources`.
+  const Resources& GetResources() const {
+    return calculator_state_->GetResources();
+  }
+
  private:
   int NumberOfTimestamps() const {
     return static_cast<int>(input_timestamps_.size());
@@ -170,6 +185,7 @@ class CalculatorContext {
   // TODO: Removes unnecessary fields from CalculatorState after
   // migrating all clients to CalculatorContext.
   CalculatorState* calculator_state_;
+
   InputStreamShardSet inputs_;
   OutputStreamShardSet outputs_;
   // Created on-demand when needed by legacy APIs. No synchronization needed

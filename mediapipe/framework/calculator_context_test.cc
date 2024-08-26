@@ -15,14 +15,13 @@
 #include "mediapipe/framework/calculator_context.h"
 
 #include <memory>
+#include <string>
 
 // TODO: Move protos in another CL after the C++ code migration.
+#include "absl/strings/ascii.h"
+#include "absl/strings/string_view.h"
 #include "mediapipe/framework/calculator.pb.h"
-#include "mediapipe/framework/calculator_context_manager.h"
 #include "mediapipe/framework/calculator_state.h"
-#include "mediapipe/framework/output_stream_manager.h"
-#include "mediapipe/framework/output_stream_shard.h"
-#include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
@@ -150,6 +149,32 @@ TEST(CalculatorTest, GetOptions) {
   // Get a proto3 options protobuf::Any from Node::node_options.
   EXPECT_EQ(cc_3->Options<SkyLightCalculatorOptions>().sky_color(),
             "light_blue");
+}
+
+TEST(CalculatorContextTest, CanLoadResourcesThroughCalculatorContext) {
+  mediapipe::CalculatorGraphConfig config =
+      ParseTextProtoOrDie<mediapipe::CalculatorGraphConfig>(R"pb(
+        node {
+          calculator: "NightLightCalculator"
+          input_side_packet: "input_value"
+          output_stream: "values"
+          options {
+            [mediapipe.NightLightCalculatorOptions.ext] {
+              base_timestamp: 123
+              output_header: PASS_HEADER
+              jitter: 0.123
+            }
+          }
+        })pb");
+
+  auto calculator_state = MakeCalculatorState(config.node(0), 0);
+  auto cc = MakeCalculatorContext(calculator_state.get());
+
+  std::string data;
+  MP_ASSERT_OK(cc->GetResources().ReadContents(
+      "mediapipe/framework/testdata/resource_calculator.data", data));
+  absl::StripTrailingAsciiWhitespace(&data);
+  EXPECT_EQ(data, "File system calculator contents");
 }
 
 }  // namespace test_ns

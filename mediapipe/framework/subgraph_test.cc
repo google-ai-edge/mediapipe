@@ -14,14 +14,20 @@
 
 #include "mediapipe/framework/subgraph.h"
 
+#include <memory>
 #include <string>
+#include <vector>
 
+#include "absl/status/statusor.h"
+#include "absl/strings/ascii.h"
 #include "absl/strings/str_format.h"
 #include "mediapipe/calculators/core/constant_side_packet_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/graph_service_manager.h"
+#include "mediapipe/framework/graph_service.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
+#include "mediapipe/framework/port/ret_check.h"
+#include "mediapipe/framework/port/status_macros.h"
 
 // Because of portability issues, we include this directly.
 #include "mediapipe/framework/port/parse_text_proto.h"
@@ -109,7 +115,7 @@ class EmitSideServiceStringTestSubgraph : public Subgraph {
 };
 REGISTER_MEDIAPIPE_GRAPH(EmitSideServiceStringTestSubgraph);
 
-TEST(SubgraphServicesTest, EmitStringFromTestService) {
+TEST(SubgraphServicesTest, CanUseGraphServiceToReceiveString) {
   CalculatorGraphConfig config =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         output_side_packet: "str"
@@ -119,19 +125,65 @@ TEST(SubgraphServicesTest, EmitStringFromTestService) {
         }
       )pb");
 
-  Packet side_string;
-  tool::AddSidePacketSink("str", &config, &side_string);
-
   CalculatorGraph graph;
   // It's important that service object is set before Initialize()
   MP_ASSERT_OK(graph.SetServiceObject(
       kStringTestService, std::make_shared<std::string>("Expected STRING")));
   MP_ASSERT_OK(graph.Initialize(config));
   MP_ASSERT_OK(graph.StartRun({}));
-  MP_ASSERT_OK(graph.WaitUntilIdle());
   MP_ASSERT_OK(graph.WaitUntilDone());
 
-  EXPECT_EQ(side_string.Get<std::string>(), "Expected STRING");
+  MP_ASSERT_OK_AND_ASSIGN(Packet str_packet, graph.GetOutputSidePacket("str"));
+  ASSERT_FALSE(str_packet.IsEmpty());
+  EXPECT_EQ(str_packet.Get<std::string>(), "Expected STRING");
+}
+
+class EmitFileStringTestSubgraph : public Subgraph {
+ public:
+  absl::StatusOr<CalculatorGraphConfig> GetConfig(
+      mediapipe::SubgraphContext* sc) override {
+    std::string data;
+    MP_RETURN_IF_ERROR(sc->GetResources().ReadContents(
+        "mediapipe/framework/testdata/resource_subgraph.data", data));
+    absl::RemoveExtraAsciiWhitespace(&data);
+    CalculatorGraphConfig config =
+        mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
+            absl::StrFormat(R"(
+          output_side_packet: "string"
+          node {
+            calculator: "ConstantSidePacketCalculator"
+            output_side_packet: "PACKET:string"
+            options: {
+              [mediapipe.ConstantSidePacketCalculatorOptions.ext]: {
+                packet { string_value: "%s" }
+              }
+            }
+          }
+        )",
+                            data));
+    return config;
+  }
+};
+REGISTER_MEDIAPIPE_GRAPH(EmitFileStringTestSubgraph);
+
+TEST(SubgraphServicesTest, CanLoadResourcesThroughSubgraphContext) {
+  CalculatorGraphConfig config =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        output_side_packet: "str"
+        node {
+          calculator: "EmitFileStringTestSubgraph"
+          output_side_packet: "str"
+        }
+      )pb");
+
+  CalculatorGraph graph;
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.WaitUntilDone());
+
+  MP_ASSERT_OK_AND_ASSIGN(Packet str_packet, graph.GetOutputSidePacket("str"));
+  ASSERT_FALSE(str_packet.IsEmpty());
+  EXPECT_EQ(str_packet.Get<std::string>(), "File system subgraph contents");
 }
 
 class OptionsCheckingSubgraph : public Subgraph {

@@ -94,7 +94,7 @@ class GeometryPipelineCalculator : public CalculatorBase {
 
     MP_ASSIGN_OR_RETURN(
         face_geometry::GeometryPipelineMetadata metadata,
-        ReadMetadataFromFile(options.metadata_path()),
+        ReadMetadataFromFile(cc, options.metadata_path()),
         _ << "Failed to read the geometry pipeline metadata from file!");
 
     MP_RETURN_IF_ERROR(
@@ -159,9 +159,10 @@ class GeometryPipelineCalculator : public CalculatorBase {
 
  private:
   static absl::StatusOr<face_geometry::GeometryPipelineMetadata>
-  ReadMetadataFromFile(const std::string& metadata_path) {
+  ReadMetadataFromFile(CalculatorContext* cc,
+                       const std::string& metadata_path) {
     MP_ASSIGN_OR_RETURN(std::string metadata_blob,
-                        ReadContentBlobFromFile(metadata_path),
+                        ReadContentBlobFromFile(cc, metadata_path),
                         _ << "Failed to read a metadata blob from file!");
 
     face_geometry::GeometryPipelineMetadata metadata;
@@ -172,7 +173,7 @@ class GeometryPipelineCalculator : public CalculatorBase {
   }
 
   static absl::StatusOr<std::string> ReadContentBlobFromFile(
-      const std::string& unresolved_path) {
+      CalculatorContext* cc, const std::string& unresolved_path) {
     MP_ASSIGN_OR_RETURN(
         std::string resolved_path,
         mediapipe::PathToResourceAsFile(unresolved_path),
@@ -180,7 +181,7 @@ class GeometryPipelineCalculator : public CalculatorBase {
 
     std::string content_blob;
     MP_RETURN_IF_ERROR(
-        mediapipe::GetResourceContents(resolved_path, &content_blob))
+        cc->GetResources().ReadContents(resolved_path, content_blob))
         << "Failed to read content blob! Resolved path = " << resolved_path;
 
     return content_blob;
