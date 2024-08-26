@@ -88,7 +88,7 @@ final class LlmSessionRunner {
   func predictAsync(
     progress: @escaping (_ partialResult: [String]?, _ error: Error?) -> Void,
     completion: @escaping (() -> Void)
-  ) throws {
+  ) {
     let callbackInfo = CallbackInfo(progress: progress, completion: completion)
     let callbackContext = UnsafeMutableRawPointer(Unmanaged.passRetained(callbackInfo).toOpaque())
 

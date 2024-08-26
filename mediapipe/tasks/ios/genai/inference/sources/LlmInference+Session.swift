@@ -118,10 +118,12 @@ extension LlmInference {
       /// TODO: If simultaneous response generations on multiple sessions or the same session
       /// are allowed to happen it leads to a crash. Investigate if this can be handled by C++.
       try llmInference.shouldContinueWithResponseGeneration()
-
+      
+      defer {
+        llmInference.markResponseGenerationCompleted()
+      }
+      
       let tokens = try llmSessionRunner.predict()
-
-      llmInference.markResponseGenerationCompleted()
 
       guard let humanReadableLlmResponse = Session.humanReadableString(llmResponses: tokens)
       else {
@@ -159,7 +161,7 @@ extension LlmInference {
       /// Used to make a decision about whitespace stripping.
       var receivedFirstToken = true
 
-      try llmSessionRunner.predictAsync(
+      llmSessionRunner.predictAsync(
         progress: { partialResponseStrings, error in
           guard let responseStrings = partialResponseStrings,
             let humanReadableLlmResponse = Session.humanReadableString(
