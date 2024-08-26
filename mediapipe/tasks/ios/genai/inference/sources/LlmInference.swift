@@ -77,7 +77,10 @@ import MediaPipeTasksGenAIC
       sequence_batch_size: LlmInference.sequenceBatchSize,
       number_of_supported_lora_ranks: options.numOfSupportedLoraRanks,
       supported_lora_ranks: supportedLoraRanks?.baseAddress,
-      max_top_k: options.topk, num_draft_tokens: 0)
+      max_top_k: options.topk,
+      llm_activation_data_type: LlmActivationDataType(
+        rawValue: kLlmActivationDataTypeDefault.rawValue),
+      num_draft_tokens: 0)
     let sessionConfig = LlmSessionConfig(
       topk: options.topk,
       topp: 1.0,
