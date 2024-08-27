@@ -35,7 +35,7 @@ namespace mediapipe::api2 {
 // Inference runner implementation that uses the ML Drift OpenCL Delegate.
 class InferenceRunnerMlDriftOpenClDelegate : public InferenceRunner {
  public:
-  InferenceRunnerMlDriftOpenClDelegate() = default;
+  ~InferenceRunnerMlDriftOpenClDelegate() override = default;
 
   absl::Status Init(
       CalculatorContext* cc, Packet<TfLiteModelPtr> model_packet,
