@@ -246,9 +246,12 @@ cc_library(
         ":gpu_buffer_format",
         ":gpu_buffer_storage",
         ":gpu_buffer_storage_image_frame",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/synchronization",
         # TODO: remove this dependency. Some other teams' tests
         # depend on having an indirect image_frame dependency, need to be
         # fixed first.
@@ -455,10 +458,12 @@ cc_library(
         ":multi_pool",
         ":pixel_buffer_pool_util",
         "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:ret_check",
         "//mediapipe/objc:CFHolder",
         "//mediapipe/objc:util",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/synchronization",
     ],
 )
@@ -716,9 +721,12 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":gl_texture_buffer",
+        ":gpu_buffer_format",
         ":multi_pool",
         ":reusable_pool",
+        "//mediapipe/framework/port:ret_check",
         "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/synchronization",
     ],
 )
@@ -744,7 +752,9 @@ cc_library(
     deps = [
         "//mediapipe/framework/port:status",
         "//mediapipe/util:resource_cache",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/synchronization",
     ],
 )
 
@@ -774,6 +784,7 @@ cc_library(
     deps = [
         ":gl_base",
         ":gpu_buffer",
+        ":gpu_buffer_format",
         ":gpu_shared_data_header",
         ":multi_pool",
         "//mediapipe/framework:calculator_context",

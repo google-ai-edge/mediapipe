@@ -23,8 +23,8 @@
 #define MEDIAPIPE_GPU_GPU_BUFFER_MULTI_POOL_H_
 
 #include "absl/status/statusor.h"
-#include "absl/synchronization/mutex.h"
 #include "mediapipe/gpu/gpu_buffer.h"
+#include "mediapipe/gpu/gpu_buffer_format.h"
 #include "mediapipe/gpu/multi_pool.h"
 
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
