@@ -620,13 +620,12 @@ cc_library(
     deps = [
         ":inference_calculator_interface",
         ":inference_io_mapper",
+        ":inference_on_disk_cache_helper",
         ":tensor_span",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:mediapipe_profiling",
         "//mediapipe/framework/api2:packet",
-        "//mediapipe/framework/deps:file_path",
         "//mediapipe/framework/formats:tensor",
-        "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "//mediapipe/gpu:gl_calculator_helper",
@@ -842,6 +841,27 @@ cc_test(
         "@org_tensorflow//tensorflow/lite/c:common",
         "@org_tensorflow//tensorflow/lite/kernels:cast_test_common",
         "@org_tensorflow//tensorflow/lite/schema:schema_fbs",
+    ],
+)
+
+cc_library(
+    name = "inference_on_disk_cache_helper",
+    srcs = ["inference_on_disk_cache_helper.cc"],
+    hdrs = ["inference_on_disk_cache_helper.h"],
+    tags = ["nomac"],
+    deps = [
+        ":inference_calculator_cc_proto",
+        ":inference_calculator_interface",
+        ":inference_io_mapper",
+        "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/port:file_helpers",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/util/tflite:tflite_gpu_runner",
+        "//mediapipe/util/tflite:tflite_model_loader",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
