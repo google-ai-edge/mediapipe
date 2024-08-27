@@ -240,6 +240,7 @@ cc_library(
             "@org_tensorflow//tensorflow/lite/delegates/nnapi:nnapi_delegate",
         ],
     }) + select({
+        "//mediapipe:emscripten": [],
         "//conditions:default": [
             "//mediapipe/util:cpu_util",
         ],
@@ -447,6 +448,9 @@ cc_library(
             "//mediapipe/util/android/file/base",
         ],
         "//mediapipe:ios": [
+            "//mediapipe/util/android/file/base",
+        ],
+        "//mediapipe:emscripten": [
             "//mediapipe/util/android/file/base",
         ],
         "//mediapipe:macos": [

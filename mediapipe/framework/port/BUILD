@@ -124,6 +124,7 @@ cc_library(
             "//mediapipe/framework/deps:image_resizer",
             "//mediapipe/framework/port:opencv_core",
         ],
+        "//mediapipe:emscripten": ["//mediapipe/framework/deps:image_resizer"],
     }),
 )
 
@@ -441,6 +442,7 @@ cc_library(
         "//conditions:default": [":threadpool_impl_default_to_google"],
         "//mediapipe:android": [":threadpool_impl_default_to_mediapipe"],
         "//mediapipe:apple": [":threadpool_impl_default_to_mediapipe"],
+        "//mediapipe:emscripten": [":threadpool_impl_default_to_mediapipe"],
     }),
 )
 

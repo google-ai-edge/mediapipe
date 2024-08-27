@@ -83,6 +83,10 @@ GL_BASE_LINK_OPTS = select({
         "-framework OpenGL",
         "-framework CoreVideo",
     ],
+    "//mediapipe:emscripten": [
+        # Needed for symbols such as glFenceSync.
+        "-s MAX_WEBGL_VERSION=2",
+    ],
 })
 
 # This is @unused internally.
@@ -115,6 +119,7 @@ cc_library(
     deps = [":gl_base_hdr"] + select({
         "//mediapipe:android": [],
         "//mediapipe:apple": [],
+        "//mediapipe:emscripten": [],
         "//conditions:default": [
         ],
     }),
@@ -140,6 +145,7 @@ cc_library(
     deps = select({
         "//mediapipe:android": [],
         "//mediapipe:apple": [],
+        "//mediapipe:emscripten": [],
         "//conditions:default": [
         ],
     }),
@@ -170,6 +176,9 @@ cc_library(
         ],
         "//mediapipe:ios": [
             "gl_context_eagl.cc",
+        ],
+        "//mediapipe:emscripten": [
+            "gl_context_webgl.cc",
         ],
         "//mediapipe:macos": [
             "gl_context_nsgl.cc",
@@ -229,6 +238,7 @@ cc_library(
         ],
         "//mediapipe:ios": [
         ],
+        "//mediapipe:emscripten": [],
         "//mediapipe:macos": [
         ],
     }),

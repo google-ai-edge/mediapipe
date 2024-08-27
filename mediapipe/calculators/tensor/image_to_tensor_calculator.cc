@@ -37,6 +37,7 @@
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/statusor.h"
 #include "mediapipe/gpu/gpu_origin.pb.h"
+#include "mediapipe/gpu/webgpu/webgpu_check.h"
 
 #if !MEDIAPIPE_DISABLE_OPENCV
 #include "mediapipe/calculators/tensor/image_to_tensor_converter_opencv.h"
@@ -58,6 +59,11 @@
 #include "mediapipe/calculators/tensor/image_to_tensor_converter_gl_texture.h"
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gpu_service.h"
+#if MEDIAPIPE_USE_WEBGPU
+#include "mediapipe/gpu/webgpu/image_to_tensor_converter_webgpu_texture.h"
+#include "mediapipe/gpu/webgpu/webgpu_service.h"
+#include "mediapipe/gpu/webgpu/webgpu_texture_buffer.h"
+#endif  // MEDIAPIPE_USE_WEBGPU
 #endif  // MEDIAPIPE_METAL_ENABLED
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
@@ -161,6 +167,9 @@ class ImageToTensorCalculator : public Node {
     MP_RETURN_IF_ERROR([MPPMetalHelper updateContract:cc]);
 #else
     cc->UseService(kGpuService).Optional();
+#if MEDIAPIPE_USE_WEBGPU
+    cc->UseService(kWebGpuService).Optional();
+#endif  // MEDIAPIPE_USE_WEBGPU
 #endif  // MEDIAPIPE_METAL_ENABLED
 #endif  // MEDIAPIPE_DISABLE_GPU
 
@@ -274,6 +283,12 @@ class ImageToTensorCalculator : public Node {
                                 cc, DoesGpuInputStartAtBottom(options_),
                                 GetBorderMode(options_.border_mode())));
 #else
+        if (IsWebGpuAvailable()) {
+#if MEDIAPIPE_USE_WEBGPU
+          MP_ASSIGN_OR_RETURN(gpu_converter_,
+                              CreateImageToWebGpuTextureTensorConverter(cc));
+#endif  // MEDIAPIPE_USE_WEBGPU
+        }
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
         if (!gpu_converter_) {
           MP_ASSIGN_OR_RETURN(gpu_converter_,

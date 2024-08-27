@@ -511,7 +511,12 @@ config_setting(
 cc_library(
     name = "tensor",
     srcs =
-        [
+        select({
+            "//mediapipe/gpu/webgpu:use_webgpu": [
+                "//mediapipe/gpu/webgpu:tensor_webgpu_texture_view.cc",
+            ],
+            "//conditions:default": [],
+        }) + [
             "tensor.cc",
             "tensor_ahwb.cc",
         ],
@@ -545,6 +550,7 @@ cc_library(
         "//mediapipe/framework/port:aligned_malloc_and_free",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "//mediapipe/gpu/webgpu:webgpu_check",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/container:flat_hash_set",
@@ -557,6 +563,12 @@ cc_library(
         "@com_google_absl//absl/synchronization",
     ] + select({
         "//mediapipe/gpu:disable_gpu": [],
+        "//mediapipe/gpu/webgpu:use_webgpu": [
+            "//mediapipe/gpu:gl_base",
+            "//mediapipe/gpu:gl_context",
+            "//mediapipe/gpu/webgpu:webgpu_service",
+            "//mediapipe/gpu/webgpu:webgpu_utils",
+        ],
         "//conditions:default": [
             "//mediapipe/gpu:gl_base",
             "//mediapipe/gpu:gl_context",

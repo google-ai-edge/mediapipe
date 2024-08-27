@@ -818,6 +818,7 @@ cc_library(
         "@org_tensorflow//tensorflow/lite/c:common",
         "@org_tensorflow//tensorflow/lite/core:framework",
     ] + select({
+        "//mediapipe:emscripten": [],
         "//conditions:default": [
             "//mediapipe/util:cpu_util",
         ],
@@ -1389,6 +1390,9 @@ cc_library(
         "//mediapipe:ios": [
             "//mediapipe/util/android/file/base",
         ],
+        "//mediapipe:emscripten": [
+            "//mediapipe/util/android/file/base",
+        ],
         "//conditions:default": [
             "//mediapipe/framework/port:file_helpers",
         ],
@@ -1495,6 +1499,7 @@ cc_library(
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:statusor",
         "//mediapipe/gpu:gpu_origin_cc_proto",
+        "//mediapipe/gpu/webgpu:webgpu_check",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
     ] + select({
@@ -1522,6 +1527,12 @@ cc_library(
             "//mediapipe/gpu:gpu_buffer",
             "//mediapipe/gpu:gpu_service",
         ],
+        "//mediapipe:emscripten": [
+            ":image_to_tensor_converter_gl_texture",
+            "//mediapipe/gpu:gl_calculator_helper",
+            "//mediapipe/gpu:gpu_buffer",
+            "//mediapipe/gpu:gpu_service",
+        ],
         "//mediapipe:apple": [
             ":image_to_tensor_converter_metal",
             "//mediapipe/gpu:gl_calculator_helper",
@@ -1535,6 +1546,12 @@ cc_library(
             "//mediapipe/gpu:gpu_buffer",
             "//mediapipe/gpu:gpu_service",
         ],
+    }) + select({
+        "//mediapipe/gpu/webgpu:use_webgpu": [
+            "//mediapipe/gpu/webgpu:image_to_tensor_converter_webgpu_texture",
+            "//mediapipe/gpu/webgpu:webgpu_texture_buffer",
+        ],
+        "//conditions:default": [],
     }),
 )
 
@@ -1673,6 +1690,7 @@ cc_library(
     hdrs = ["image_to_tensor_converter_gl_buffer.h"],
     visibility = ["//visibility:private"],
     deps = ["//mediapipe/framework:port"] + selects.with_or({
+        "//mediapipe:emscripten": [],
         "//mediapipe:apple": [],
         "//conditions:default": [
             ":image_to_tensor_converter",
@@ -1894,6 +1912,10 @@ cc_library(
             ":tensors_to_segmentation_converter_gl_buffer",
             "//mediapipe/gpu:gl_calculator_helper",
         ],
+        "//mediapipe:emscripten": [
+            ":tensors_to_segmentation_converter_gl_texture",
+            "//mediapipe/gpu:gl_calculator_helper",
+        ],
         ":platform_apple_with_gpu": [
             ":tensors_to_segmentation_converter_metal",
             "//mediapipe/gpu:MPPMetalHelper",
@@ -2007,6 +2029,7 @@ cc_library(
     srcs = ["tensors_to_segmentation_converter_gl_buffer.cc"],
     hdrs = ["tensors_to_segmentation_converter_gl_buffer.h"],
     deps = ["//mediapipe/framework:port"] + selects.with_or({
+        "//mediapipe:emscripten": [],
         "//mediapipe:apple": [],
         "//conditions:default": [
             ":tensors_to_segmentation_calculator_cc_proto",
