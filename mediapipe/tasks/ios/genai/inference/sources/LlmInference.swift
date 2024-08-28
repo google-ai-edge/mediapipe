@@ -78,8 +78,7 @@ import MediaPipeTasksGenAIC
       number_of_supported_lora_ranks: options.supportedLoraRanks.count,
       supported_lora_ranks: supportedLoraRanks?.baseAddress,
       max_top_k: options.topk,
-      llm_activation_data_type: LlmActivationDataType(
-        rawValue: kLlmActivationDataTypeDefault.rawValue),
+      llm_activation_data_type: options.activationDataType.activationDataTypeC,
       num_draft_tokens: 0)
     let sessionConfig = LlmSessionConfig(
       topk: options.topk,
@@ -253,6 +252,9 @@ extension LlmInference {
     /// This is only compatible with GPU models.
     @objc public var loraPath: String?
 
+    /// The activation data type for the model.
+    @objc public var activationDataType: ActivationDataType = .default
+
     /// Creates a new instance of `Options` with the modelPath and default values of
     /// `maxTokens`, `topK``, `temperature` and `randomSeed`.
     /// This function is only intended to be used from Objective C.
@@ -262,6 +264,34 @@ extension LlmInference {
     @objc public init(modelPath: String) {
       self.modelPath = modelPath
       super.init()
+    }
+  }
+
+  /// The activation data type for the model.
+  @objc(MPPLLMInferenceActivationDataType)
+  public enum ActivationDataType: Int {
+    case `default` = 0
+    case float32 = 1
+    case float16 = 2
+    case int16 = 3
+    case int8 = 4
+  }
+}
+
+extension LlmInference.ActivationDataType {
+  /// Mapping to the engine C API.
+  fileprivate var activationDataTypeC: LlmActivationDataType {
+    switch self {
+    case .default:
+      return kLlmActivationDataTypeDefault
+    case .float32:
+      return kLlmActivationDataTypeFloat32
+    case .float16:
+      return kLlmActivationDataTypeFloat16
+    case .int16:
+      return kLlmActivationDataTypeInt16
+    case .int8:
+      return kLlmActivationDataTypeInt8
     }
   }
 }
