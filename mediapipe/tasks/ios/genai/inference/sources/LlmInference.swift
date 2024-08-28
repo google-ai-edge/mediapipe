@@ -75,7 +75,7 @@ import MediaPipeTasksGenAIC
       max_num_tokens: options.maxTokens,
       num_decode_steps_per_sync: LlmInference.numberOfDecodeStepsPerSync,
       sequence_batch_size: LlmInference.sequenceBatchSize,
-      number_of_supported_lora_ranks: options.numOfSupportedLoraRanks,
+      number_of_supported_lora_ranks: options.supportedLoraRanks.count,
       supported_lora_ranks: supportedLoraRanks?.baseAddress,
       max_top_k: options.topk,
       llm_activation_data_type: LlmActivationDataType(
@@ -245,9 +245,6 @@ extension LlmInference {
 
     /// The random seed for sampling tokens.
     @objc public var randomSeed: Int = 0
-
-    /// Number of supported lora ranks for the base model. Used by GPU only.
-    @objc public var numOfSupportedLoraRanks: Int = 0
 
     /// The supported lora ranks for the base model. Used by GPU only.
     @objc public var supportedLoraRanks: [Int] = []
