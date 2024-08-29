@@ -24,16 +24,38 @@ exports_files([
 ])
 
 cc_library(
-    name = "image_to_tensor_converter_webgpu_texture",
-    srcs = ["image_to_tensor_converter_webgpu_texture.cc"],
-    hdrs = ["image_to_tensor_converter_webgpu_texture.h"],
-    deps = [
-        ":webgpu_service",
-        ":webgpu_texture_view",
-        "//mediapipe/calculators/tensor:image_to_tensor_converter",
-        "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework/formats:tensor",
-    ],
+    name = "webgpu_device_registration",
+    srcs = select({
+        "//mediapipe:emscripten": [],
+        "//conditions:default": ["webgpu_device_registration.cc"],
+    }),
+    hdrs = select({
+        "//mediapipe:emscripten": [],
+        "//conditions:default": ["webgpu_device_registration.h"],
+    }),
+    deps = select({
+        "//mediapipe:emscripten": [],
+        "//conditions:default": [
+            "//mediapipe/framework/deps:no_destructor",
+            "//third_party/dawn:dawncpp_headers",
+        ],
+    }),
+)
+
+cc_library(
+    name = "webgpu_check",
+    srcs = ["webgpu_check.cc"],
+    hdrs = ["webgpu_check.h"],
+    deps = select({
+        # `:webgpu_device_registration` should only be included if we are on a non-web platform, and
+        # `MEDIAPIPE_USE_WEBGPU` is set to true. That is why we added both `:use_webgpu` and
+        # `:use_webgpu_define`. Because in `select`, if multiple conditions match and one is a
+        # specialization of the others, the specialization takes precedence. So, `:use_webgpu` will
+        # filter out `emscripten`.
+        ":use_webgpu_define": [":webgpu_device_registration"],
+        ":use_webgpu": [],
+        "//conditions:default": [],
+    }),
 )
 
 cc_library(
@@ -57,6 +79,12 @@ cc_library(
             "//third_party/dawn:dawncpp_headers",
         ],
     }),
+)
+
+cc_library(
+    name = "webgpu_texture_view",
+    hdrs = ["webgpu_texture_view.h"],
+    visibility = ["//visibility:public"],
 )
 
 cc_library(
@@ -84,28 +112,28 @@ cc_library(
 )
 
 cc_library(
-    name = "webgpu_texture_view",
-    hdrs = ["webgpu_texture_view.h"],
+    name = "webgpu_utils",
+    srcs = ["webgpu_utils.cc"],
+    hdrs = ["webgpu_utils.h"],
     visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework/port:status",
+        "//mediapipe/web:jspi_check",
+        "@com_google_absl//absl/status:statusor",
+    ],
 )
 
 cc_library(
-    name = "webgpu_device_registration",
-    srcs = select({
-        "//mediapipe:emscripten": [],
-        "//conditions:default": ["webgpu_device_registration.cc"],
-    }),
-    hdrs = select({
-        "//mediapipe:emscripten": [],
-        "//conditions:default": ["webgpu_device_registration.h"],
-    }),
-    deps = select({
-        "//mediapipe:emscripten": [],
-        "//conditions:default": [
-            "//mediapipe/framework/deps:no_destructor",
-            "//third_party/dawn:dawncpp_headers",
-        ],
-    }),
+    name = "image_to_tensor_converter_webgpu_texture",
+    srcs = ["image_to_tensor_converter_webgpu_texture.cc"],
+    hdrs = ["image_to_tensor_converter_webgpu_texture.h"],
+    deps = [
+        ":webgpu_service",
+        ":webgpu_texture_view",
+        "//mediapipe/calculators/tensor:image_to_tensor_converter",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:tensor",
+    ],
 )
 
 cc_test(
@@ -130,32 +158,4 @@ cc_test(
             "@com_google_googletest//:gtest_main",
         ],
     }),
-)
-
-cc_library(
-    name = "webgpu_check",
-    srcs = ["webgpu_check.cc"],
-    hdrs = ["webgpu_check.h"],
-    deps = select({
-        # `:webgpu_device_registration` should only be included if we are on a non-web platform, and
-        # `MEDIAPIPE_USE_WEBGPU` is set to true. That is why we added both `:use_webgpu` and
-        # `:use_webgpu_define`. Because in `select`, if multiple conditions match and one is a
-        # specialization of the others, the specialization takes precedence. So, `:use_webgpu` will
-        # filter out `emscripten`.
-        ":use_webgpu_define": [":webgpu_device_registration"],
-        ":use_webgpu": [],
-        "//conditions:default": [],
-    }),
-)
-
-cc_library(
-    name = "webgpu_utils",
-    srcs = ["webgpu_utils.cc"],
-    hdrs = ["webgpu_utils.h"],
-    visibility = ["//visibility:public"],
-    deps = [
-        "//mediapipe/framework/port:status",
-        "//mediapipe/web:jspi_check",
-        "@com_google_absl//absl/status:statusor",
-    ],
 )
