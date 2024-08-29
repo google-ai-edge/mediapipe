@@ -6,12 +6,12 @@
 #include "absl/log/absl_check.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
-#include "absl/strings/ascii.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/calculators/core/constant_side_packet_calculator.pb.h"
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/api2/node.h"
+#include "mediapipe/framework/api2/packet.h"
 #include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -41,25 +41,21 @@ constexpr absl::string_view kCalculatorResource =
 
 class TestResourcesCalculator : public Node {
  public:
-  static constexpr SideOutput<std::string> kSideOut{"SIDE_OUT"};
-  static constexpr Output<std::string> kOut{"OUT"};
+  static constexpr SideOutput<Resource> kSideOut{"SIDE_OUT"};
+  static constexpr Output<Resource> kOut{"OUT"};
   MEDIAPIPE_NODE_CONTRACT(kSideOut, kOut);
 
   absl::Status Open(CalculatorContext* cc) override {
-    std::string data;
-    MP_RETURN_IF_ERROR(
-        cc->GetResources().ReadContents(kCalculatorResource, data));
-    absl::StripAsciiWhitespace(&data);
-    kSideOut(cc).Set(std::move(data));
+    MP_ASSIGN_OR_RETURN(std::unique_ptr<Resource> resource,
+                        cc->GetResources().Get(kCalculatorResource));
+    kSideOut(cc).Set(api2::PacketAdopting(std::move(resource)));
     return absl::OkStatus();
   }
 
   absl::Status Process(CalculatorContext* cc) override {
-    std::string data;
-    MP_RETURN_IF_ERROR(
-        cc->GetResources().ReadContents(kCalculatorResource, data));
-    absl::StripAsciiWhitespace(&data);
-    kOut(cc).Send(std::move(data));
+    MP_ASSIGN_OR_RETURN(std::unique_ptr<Resource> resource,
+                        cc->GetResources().Get(kCalculatorResource));
+    kOut(cc).Send(std::move(resource));
     return tool::StatusStop();
   }
 };
@@ -69,17 +65,15 @@ class TestResourcesSubgraph : public Subgraph {
  public:
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       SubgraphContext* sc) override {
-    std::string data;
-    MP_RETURN_IF_ERROR(
-        sc->GetResources().ReadContents(kSubgraphResource, data));
-    absl::StripAsciiWhitespace(&data);
-
+    MP_ASSIGN_OR_RETURN(std::unique_ptr<Resource> resource,
+                        sc->GetResources().Get(kSubgraphResource));
     Graph graph;
     auto& constants_node = graph.AddNode("ConstantSidePacketCalculator");
     auto& constants_options =
         constants_node
             .GetOptions<mediapipe::ConstantSidePacketCalculatorOptions>();
-    constants_options.add_packet()->set_string_value(data);
+    constants_options.add_packet()->mutable_string_value()->append(
+        resource->ToStringView());
     SidePacket<std::string> side_out =
         constants_node.SideOut("PACKET").Cast<std::string>();
 
@@ -142,26 +136,51 @@ TEST(CalculatorGraphResourcesTest, GraphAndContextsHaveDefaultResources) {
       RunGraphAndCollectResourceContentsPackets(calculator_graph));
 
   EXPECT_EQ(packets.subgraph_side_out.Get<std::string>(),
-            "File system subgraph contents");
-  EXPECT_EQ(packets.calculator_out.Get<std::string>(),
-            "File system calculator contents");
-  EXPECT_EQ(packets.calculator_side_out.Get<std::string>(),
-            "File system calculator contents");
+            "File system subgraph contents\n");
+  EXPECT_EQ(packets.calculator_out.Get<Resource>().ToStringView(),
+            "File system calculator contents\n");
+  EXPECT_EQ(packets.calculator_side_out.Get<Resource>().ToStringView(),
+            "File system calculator contents\n");
 }
+
+constexpr absl::string_view kCustomSubgraphContents =
+    "Custom subgraph contents";
+constexpr absl::string_view kCustomCalculatorContents =
+    "Custom calculator contents";
 
 class CustomResources : public Resources {
  public:
   absl::Status ReadContents(absl::string_view resource_id, std::string& output,
                             const Resources::Options& options) const final {
     if (resource_id == kSubgraphResource) {
-      output = "Custom subgraph contents";
+      output = kCustomSubgraphContents;
     } else if (resource_id == kCalculatorResource) {
-      output = "Custom calculator contents";
+      output = kCustomCalculatorContents;
     } else {
       return absl::NotFoundError(
           absl::StrCat("Resource [", resource_id, "] not found."));
     }
     return absl::OkStatus();
+  }
+
+  // Avoids copy of kCustomSubtraph/CalculatorContents - while it's not that
+  // beneficial for these specific strings, but it showcases one can avoid
+  // copying whole ML models.
+  absl::StatusOr<std::unique_ptr<Resource>> Get(
+      absl::string_view resource_id,
+      const Resources::Options& options) const final {
+    std::unique_ptr<Resource> resource;
+    if (resource_id == kSubgraphResource) {
+      resource = MakeNoCleanupResource(kCustomSubgraphContents.data(),
+                                       kCustomSubgraphContents.size());
+    } else if (resource_id == kCalculatorResource) {
+      resource = MakeNoCleanupResource(kCustomCalculatorContents.data(),
+                                       kCustomCalculatorContents.size());
+    } else {
+      return absl::NotFoundError(
+          absl::StrCat("Resource [", resource_id, "] not found."));
+    }
+    return resource;
   }
 };
 
@@ -178,9 +197,9 @@ TEST(CalculatorGraphResourcesTest, CustomResourcesCanBeSetOnGraph) {
 
   EXPECT_EQ(packets.subgraph_side_out.Get<std::string>(),
             "Custom subgraph contents");
-  EXPECT_EQ(packets.calculator_out.Get<std::string>(),
+  EXPECT_EQ(packets.calculator_out.Get<Resource>().ToStringView(),
             "Custom calculator contents");
-  EXPECT_EQ(packets.calculator_side_out.Get<std::string>(),
+  EXPECT_EQ(packets.calculator_side_out.Get<Resource>().ToStringView(),
             "Custom calculator contents");
 }
 
@@ -192,6 +211,16 @@ class CustomizedDefaultResources : public Resources {
         default_resources_->ReadContents(resource_id, output, options));
     output.insert(0, "Customized: ");
     return absl::OkStatus();
+  }
+
+  absl::StatusOr<std::unique_ptr<Resource>> Get(
+      absl::string_view resource_id,
+      const Resources::Options& options) const final {
+    std::string output;
+    MP_RETURN_IF_ERROR(
+        default_resources_->ReadContents(resource_id, output, options));
+    output.insert(0, "Customized: ");
+    return MakeStringResource(std::move(output));
   }
 
  private:
@@ -212,11 +241,11 @@ TEST(CalculatorGraphResourcesTest,
       RunGraphAndCollectResourceContentsPackets(calculator_graph));
 
   EXPECT_EQ(packets.subgraph_side_out.Get<std::string>(),
-            "Customized: File system subgraph contents");
-  EXPECT_EQ(packets.calculator_out.Get<std::string>(),
-            "Customized: File system calculator contents");
-  EXPECT_EQ(packets.calculator_side_out.Get<std::string>(),
-            "Customized: File system calculator contents");
+            "Customized: File system subgraph contents\n");
+  EXPECT_EQ(packets.calculator_out.Get<Resource>().ToStringView(),
+            "Customized: File system calculator contents\n");
+  EXPECT_EQ(packets.calculator_side_out.Get<Resource>().ToStringView(),
+            "Customized: File system calculator contents\n");
 }
 
 }  // namespace
