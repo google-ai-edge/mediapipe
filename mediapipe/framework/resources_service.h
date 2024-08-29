@@ -12,7 +12,7 @@ namespace mediapipe {
 //
 // NOTE: calculators don't need to call `UseService` for this particular
 // service.
-constexpr GraphService<Resources> kResourcesService(
+inline constexpr GraphService<Resources> kResourcesService(
     "kResourcesService", GraphServiceBase::kDisallowDefaultInitialization);
 
 }  // namespace mediapipe
