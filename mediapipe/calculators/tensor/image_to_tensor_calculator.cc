@@ -37,6 +37,7 @@
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/statusor.h"
 #include "mediapipe/gpu/gpu_origin.pb.h"
+#include "mediapipe/gpu/gpu_origin_utils.h"
 #include "mediapipe/gpu/webgpu/webgpu_check.h"
 
 #if !MEDIAPIPE_DISABLE_OPENCV
@@ -278,9 +279,11 @@ class ImageToTensorCalculator : public Node {
             gpu_converter_,
             CreateMetalConverter(cc, GetBorderMode(options_.border_mode())));
 #elif MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
+        MP_ASSIGN_OR_RETURN(bool input_starts_at_bottom,
+                            IsGpuOriginAtBottom(options_.gpu_origin()));
         MP_ASSIGN_OR_RETURN(gpu_converter_,
                             CreateImageToGlBufferTensorConverter(
-                                cc, DoesGpuInputStartAtBottom(options_),
+                                cc, input_starts_at_bottom,
                                 GetBorderMode(options_.border_mode())));
 #else
         if (IsWebGpuAvailable()) {
@@ -291,9 +294,11 @@ class ImageToTensorCalculator : public Node {
         }
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
         if (!gpu_converter_) {
+          MP_ASSIGN_OR_RETURN(bool input_starts_at_bottom,
+                              IsGpuOriginAtBottom(options_.gpu_origin()));
           MP_ASSIGN_OR_RETURN(gpu_converter_,
                               CreateImageToGlTextureTensorConverter(
-                                  cc, DoesGpuInputStartAtBottom(options_),
+                                  cc, input_starts_at_bottom,
                                   GetBorderMode(options_.border_mode())));
         }
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30

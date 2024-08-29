@@ -36,6 +36,7 @@
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/gpu/gpu_origin.pb.h"
+#include "mediapipe/gpu/gpu_origin_utils.h"
 
 #if !MEDIAPIPE_DISABLE_GPU
 #include "mediapipe/gpu/gpu_buffer.h"
@@ -84,21 +85,7 @@ absl::StatusOr<bool> ShouldFlipVertically(
     return false;
   }
 
-  switch (options.gpu_origin()) {
-    case mediapipe::GpuOrigin::TOP_LEFT:
-      return false;
-    case mediapipe::GpuOrigin::DEFAULT:
-    case mediapipe::GpuOrigin::CONVENTIONAL:
-      // TOP_LEFT on Metal, BOTTOM_LEFT on OpenGL.
-#ifdef __APPLE__
-      return false;
-#else
-      return true;
-#endif
-    default:
-      return absl::InvalidArgumentError(
-          absl::StrFormat("Unhandled GPU origin %i", options.gpu_origin()));
-  }
+  return mediapipe::IsGpuOriginAtBottom(options.gpu_origin());
 }
 
 constexpr char kImageFrameTag[] = "IMAGE";

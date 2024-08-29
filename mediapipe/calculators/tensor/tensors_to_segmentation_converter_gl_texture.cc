@@ -38,6 +38,7 @@
 #include "mediapipe/gpu/gl_simple_shaders.h"
 #include "mediapipe/gpu/gpu_buffer_format.h"
 #include "mediapipe/gpu/gpu_origin.pb.h"
+#include "mediapipe/gpu/gpu_origin_utils.h"
 #include "mediapipe/gpu/shader_util.h"
 
 namespace mediapipe {
@@ -142,8 +143,8 @@ void main() {
     const std::string output_layer_index =
         "\n#define OUTPUT_LAYER_INDEX int(" +
         std::to_string(options.output_layer_index()) + ")";
-    bool gpu_texture_starts_at_bottom =
-        (options.gpu_origin() != mediapipe::GpuOrigin::TOP_LEFT);
+    MP_ASSIGN_OR_RETURN(bool gpu_texture_starts_at_bottom,
+                        IsGpuOriginAtBottom(options.gpu_origin()));
     const std::string flip_y_coord =
         gpu_texture_starts_at_bottom ? "\n#define FLIP_Y_COORD" : "";
     const std::string fn_none =

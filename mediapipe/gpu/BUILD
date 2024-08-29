@@ -571,6 +571,19 @@ mediapipe_proto_library(
 )
 
 cc_library(
+    name = "gpu_origin_utils",
+    srcs = ["gpu_origin_utils.cc"],
+    hdrs = ["gpu_origin_utils.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gpu_origin_cc_proto",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings:str_format",
+    ],
+)
+
+cc_library(
     name = "pixel_buffer_pool_util",
     srcs = ["pixel_buffer_pool_util.cc"],
     hdrs = ["pixel_buffer_pool_util.h"],
