@@ -36,6 +36,7 @@
 #include "tensorflow/lite/util.h"
 #include "third_party/ml_drift/contrib/tflite_op_resolver.h"
 #include "third_party/odml/infra/ml_drift_delegate/ml_drift_cl.h"
+#include "third_party/odml/infra/ml_drift_delegate/ml_drift_delegate.h"
 
 namespace mediapipe::api2 {
 
@@ -60,6 +61,11 @@ absl::Status InferenceRunnerMlDriftOpenClDelegate::Init(
   // Initialize ML Drift CL.
   auto delegate_options = MlDriftClDelegateDefaultOptionsPtr();
   delegate_options->enable_fast_tuning = true;
+  if (options.delegate().gpu().allow_precision_loss()) {
+    delegate_options->precision = MlDriftDelegatePrecision::kDefault;
+  } else {
+    delegate_options->precision = MlDriftDelegatePrecision::kFp32;
+  }
   tflite::Interpreter::TfLiteDelegatePtr delegate =
       TfLiteCreateMlDriftClDelegate(std::move(delegate_options));
   ABSL_CHECK_EQ(interpreter_->ModifyGraphWithDelegate(std::move(delegate)),
