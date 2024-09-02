@@ -38,7 +38,8 @@ class InferenceRunnerMlDriftOpenClDelegate : public InferenceRunner {
   ~InferenceRunnerMlDriftOpenClDelegate() override = default;
 
   absl::Status Init(
-      CalculatorContext* cc, Packet<TfLiteModelPtr> model_packet,
+      const mediapipe::InferenceCalculatorOptions& options,
+      Packet<TfLiteModelPtr> model_packet,
       Packet<ml_drift::contrib::TfLiteOpResolver> op_resolver_packet);
 
   absl::StatusOr<std::vector<Tensor>> Run(

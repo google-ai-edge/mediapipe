@@ -44,9 +44,9 @@ using ::tflite::ml_drift::MlDriftClDelegateDefaultOptionsPtr;
 using ::tflite::ml_drift::TfLiteCreateMlDriftClDelegate;
 
 absl::Status InferenceRunnerMlDriftOpenClDelegate::Init(
-    CalculatorContext* cc, Packet<TfLiteModelPtr> model_packet,
+    const mediapipe::InferenceCalculatorOptions& options,
+    Packet<TfLiteModelPtr> model_packet,
     Packet<ml_drift::contrib::TfLiteOpResolver> op_resolver_packet) {
-  const auto& options = cc->Options<InferenceCalculatorOptions>();
   RET_CHECK_EQ(options.delegate().gpu().api(),
                InferenceCalculatorOptions::Delegate::Gpu::ML_DRIFT_OPENCL);
   model_packet_ = model_packet;
