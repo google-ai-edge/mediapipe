@@ -133,12 +133,12 @@ LIB_DEPS = [
     "//mediapipe/tasks/cc/vision/hand_landmarker",
     "//mediapipe/tasks/cc/vision/pose_landmarker",
     "//mediapipe/graphs/tracking:desktop_calculators", 
-    "//mediapipe/calculators/tensor:bert_preprocessor_calculator",    
+#     "//mediapipe/calculators/tensor:bert_preprocessor_calculator",    
     "//mediapipe/calculators/core:pass_through_calculator",
     "//mediapipe/calculators/tensor:tensors_to_floats_calculator",
     "//mediapipe/tasks/cc/metadata:metadata_extractor",
     "//mediapipe/framework:packet",
-    "//mediapipe/tasks/cc/text/tokenizers:bert_tokenizer",
+#     "//mediapipe/tasks/cc/text/tokenizers:bert_tokenizer",
     "//mediapipe/calculators/tensorflow:tensorflow_session",
 
 ]
