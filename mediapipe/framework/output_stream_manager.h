@@ -100,6 +100,7 @@ class OutputStreamManager {
   void ResetShard(OutputStreamShard* output_stream_shard);
 
   OutputStreamSpec* Spec() { return &output_stream_spec_; }
+  const OutputStreamSpec* Spec() const { return &output_stream_spec_; }
 
  private:
   // The necessary information to locate an InputStreamImpl.
