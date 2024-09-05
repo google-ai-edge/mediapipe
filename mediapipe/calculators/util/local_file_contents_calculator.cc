@@ -91,7 +91,7 @@ class LocalFileContentsCalculator : public CalculatorBase {
 
       std::string contents;
       MP_RETURN_IF_ERROR(cc->GetResources().ReadContents(
-          file_path, contents, {.read_as_binary = !options.text_mode()}));
+          file_path, contents, {/* read_as_binary= */ !options.text_mode()}));
       cc->OutputSidePackets().Get(output_id).Set(
           MakePacket<std::string>(std::move(contents)));
     }
