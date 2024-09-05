@@ -135,6 +135,8 @@ class LayerType(enum.Enum):
         "post_attention_layernorm",
         "final_layernorm",
         "model.norm.weight",
+        "pre_feedforward_layernorm",
+        "post_feedforward_layernorm",
     ]
     lora_layers = ["lora"]
     if any(sub_name in layer_name for sub_name in lora_layers):
@@ -371,7 +373,7 @@ class PhiMapper(converter_base.LayerActionMapperBase):
 
 
 class GemmaMapper(converter_base.LayerActionMapperBase):
-  """LayerActionMapper for handling the StableLM model."""
+  """LayerActionMapper for handling the Gemma model."""
 
   def __init__(
       self,
@@ -381,6 +383,7 @@ class GemmaMapper(converter_base.LayerActionMapperBase):
       embedding_quant_bits: int,
       backend: str,
       reader: _SafetensorsReader,
+      is_v2: bool,
   ):
     super().__init__(
         is_symmetric=is_symmetric,
@@ -390,6 +393,7 @@ class GemmaMapper(converter_base.LayerActionMapperBase):
         backend=backend,
     )
     self._reader = reader
+    self._is_v2 = is_v2
 
   def map_to_actions(
       self, layer_name: str
@@ -445,11 +449,32 @@ class GemmaMapper(converter_base.LayerActionMapperBase):
     target_name = target_name.replace(
         "pre_layer_norm.weight", "pre_layer_norm.scale"
     )
+
+    # Gemma and Gemma2 differ slightly in their use of the
+    # "post_attention_layernorm" tensor name.
+    if self._is_v2:
+      target_name = target_name.replace(
+          "post_attention_layernorm", "post_layer_norm"
+      )
+    else:
+      target_name = target_name.replace(
+          "post_attention_layernorm", "ff_layer.pre_layer_norm"
+      )
+
     target_name = target_name.replace(
-        "post_attention_layernorm", "ff_layer.pre_layer_norm"
+        "pre_feedforward_layernorm", "ff_layer.pre_layer_norm"
+    )
+    target_name = target_name.replace(
+        "post_feedforward_layernorm", "ff_layer.post_layer_norm"
     )
     target_name = target_name.replace(
         "ff_layer.pre_layer_norm.weight", "ff_layer.pre_layer_norm.scale"
+    )
+    target_name = target_name.replace(
+        "ff_layer.post_layer_norm.weight", "ff_layer.post_layer_norm.scale"
+    )
+    target_name = target_name.replace(
+        "post_layer_norm.weight", "post_layer_norm.scale"
     )
     target_name = target_name.replace("self_attn.q_proj", "self_attention.q")
     target_name = target_name.replace("self_attn.k_proj", "self_attention.k")
@@ -531,7 +556,7 @@ class SafetensorsCkptLoader(converter_base.CkptLoaderBase):
           backend,
           self._reader,
       )
-    elif special_model in ["GEMMA_2B", "GEMMA_7B"]:
+    elif special_model in ["GEMMA_2B", "GEMMA_7B", "GEMMA2_2B"]:
       self.mapper = GemmaMapper(
           is_symmetric,
           attention_quant_bits,
@@ -539,6 +564,7 @@ class SafetensorsCkptLoader(converter_base.CkptLoaderBase):
           embedding_quant_bits,
           backend,
           self._reader,
+          True if special_model in ["GEMMA2_2B"] else False,
       )
     else:
       raise ValueError(f"Unknown special model: {special_model}")
