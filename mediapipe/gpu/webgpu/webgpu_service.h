@@ -67,9 +67,8 @@ class WebGpuService {
   wgpu::Device device() const { return device_; }
 
 #ifdef __EMSCRIPTEN__
-  const wgpu::AdapterProperties& adapter_properties() const {
-    return *reinterpret_cast<const wgpu::AdapterProperties*>(
-        &adapter_properties_);
+  const wgpu::AdapterInfo& adapter_info() const {
+    return *reinterpret_cast<const wgpu::AdapterInfo*>(&adapter_info_);
   }
 #endif  // __EMSCRIPTEN__
 
@@ -86,9 +85,7 @@ class WebGpuService {
   // separate object (or more precisely pointer to object in JsValStore), but
   // MediaPipe services don't support parameterized constructors.
   //
-  // For now only `vendorName` is populated in AdapterProperties.
-  //
-  WGPUAdapterProperties adapter_properties_;
+  WGPUAdapterInfo adapter_info_;
 #endif  // __EMSCRIPTEN__
 };
 

@@ -65,10 +65,10 @@ EM_JS(char*, GetAdapterVendor, (), {
 WebGpuService::WebGpuService()
     : canvas_selector_("canvas_webgpu"),
       device_(wgpu::Device::Acquire(emscripten_webgpu_get_device())) {
-  adapter_properties_.architecture = GetAdapterArchitecture();
-  adapter_properties_.driverDescription = GetAdapterDescription();
-  adapter_properties_.name = GetAdapterDeviceName();
-  adapter_properties_.vendorName = GetAdapterVendor();
+  adapter_info_.architecture = GetAdapterArchitecture();
+  adapter_info_.description = GetAdapterDescription();
+  adapter_info_.device = GetAdapterDeviceName();
+  adapter_info_.vendor = GetAdapterVendor();
 }
 #else
 WebGpuService::WebGpuService()
