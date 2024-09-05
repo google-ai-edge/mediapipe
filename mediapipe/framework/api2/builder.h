@@ -44,7 +44,7 @@ T& GetWithAutoGrow(std::vector<std::unique_ptr<T>>* vecp, size_t index) {
     vec.resize(index + 1);
   }
   if (vec[index] == nullptr) {
-    vec[index] = absl::make_unique<T>();
+    vec[index] = std::make_unique<T>();
   }
   return *vec[index];
 }

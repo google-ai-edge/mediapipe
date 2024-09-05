@@ -161,7 +161,6 @@ cc_test(
         ":packet",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/port:gtest_main",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
