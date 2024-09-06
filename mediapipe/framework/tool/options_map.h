@@ -5,8 +5,6 @@
 #include <memory>
 #include <type_traits>
 
-#include "absl/base/attributes.h"
-#include "absl/base/const_init.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/port/any_proto.h"
@@ -16,7 +14,7 @@ namespace mediapipe {
 
 namespace tool {
 
-ABSL_CONST_INIT static absl::Mutex option_extension_lock(absl::kConstInit);
+extern absl::Mutex option_extension_lock;
 
 // A compile-time detector for the constant |T::ext|.
 template <typename T>

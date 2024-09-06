@@ -15,10 +15,10 @@
 #ifndef MEDIAPIPE_FRAMEWORK_STATUS_HANDLER_H_
 #define MEDIAPIPE_FRAMEWORK_STATUS_HANDLER_H_
 
+#include <memory>
 #include <string>
 #include <type_traits>
 
-#include "absl/memory/memory.h"
 #include "mediapipe/framework/deps/registration.h"
 #include "mediapipe/framework/mediapipe_options.pb.h"
 #include "mediapipe/framework/packet_set.h"
@@ -193,7 +193,7 @@ class StaticAccessToStatusHandlerTyped : public StaticAccessToStatusHandler {
   REGISTER_FACTORY_FUNCTION_QUALIFIED(                          \
       mediapipe::internal::StaticAccessToStatusHandlerRegistry, \
       status_handler_registration, name,                        \
-      absl::make_unique<                                        \
+      std::make_unique<                                         \
           mediapipe::internal::StaticAccessToStatusHandlerTyped<name>>)
 
 }  // namespace mediapipe

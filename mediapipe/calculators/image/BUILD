@@ -751,6 +751,7 @@ cc_library(
         "//mediapipe/gpu:gl_simple_shaders",
         "//mediapipe/gpu:gpu_buffer",
         "//mediapipe/gpu:gpu_origin_cc_proto",
+        "//mediapipe/gpu:gpu_origin_utils",
         "//mediapipe/gpu:shader_util",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",

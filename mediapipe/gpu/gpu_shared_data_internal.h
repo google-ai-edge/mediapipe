@@ -41,9 +41,9 @@
 
 namespace mediapipe {
 
-#ifdef __APPLE__
+#if MEDIAPIPE_METAL_ENABLED
 class MetalSharedResources;
-#endif  // defined(__APPLE__)
+#endif  // MEDIAPIPE_METAL_ENABLED
 
 // TODO: rename to GpuService or GpuManager or something.
 class GpuResources {
@@ -72,9 +72,9 @@ class GpuResources {
   // Shared buffer pool.
   GpuBufferMultiPool& gpu_buffer_pool() { return gpu_buffer_pool_; }
 
-#ifdef __APPLE__
+#if MEDIAPIPE_METAL_ENABLED
   MetalSharedResources& metal_shared() { return *metal_shared_; }
-#endif  // defined(__APPLE__)§
+#endif  // MEDIAPIPE_METAL_ENABLED
 
   absl::Status PrepareGpuNode(CalculatorNode* node);
 
@@ -108,9 +108,9 @@ class GpuResources {
   // ios_gpu_data, so the declaration order is important.
   GpuBufferMultiPool gpu_buffer_pool_;
 
-#ifdef __APPLE__
+#if MEDIAPIPE_METAL_ENABLED
   std::unique_ptr<MetalSharedResources> metal_shared_;
-#endif  // defined(__APPLE__)
+#endif  // MEDIAPIPE_METAL_ENABLED
 
   std::map<std::string, std::shared_ptr<Executor>> named_executors_;
 };

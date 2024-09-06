@@ -218,7 +218,7 @@ objc_library(
 
 objc_library(
     name = "MPPGraphTestBase",
-    testonly = 1,
+    testonly = True,
     srcs = [
         "MPPGraphTestBase.mm",
     ],
@@ -248,7 +248,7 @@ objc_library(
 
 objc_library(
     name = "mediapipe_framework_ios_testLib",
-    testonly = 1,
+    testonly = True,
     srcs = [
         "CFHolderTests.mm",
         "MPPDisplayLinkWeakTargetTests.mm",

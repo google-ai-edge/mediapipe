@@ -855,6 +855,71 @@ class _BertClassifier(TextClassifier):
         segment_name=self._model_spec.tflite_input_name["segment_ids"],
     )
 
+  def export_model(
+      self,
+      model_name: str = "model.tflite",
+      quantization_config: Optional[quantization.QuantizationConfig] = None,
+  ):
+    """Converts and saves the model to a TFLite file with metadata included.
+
+    Note that only the TFLite file is needed for deployment. This function also
+    saves a metadata.json file to the same directory as the TFLite file which
+    can be used to interpret the metadata content in the TFLite file.
+
+    This override method is needed to disable dynamic sequence length in the
+    MediaPipe-wrapped model. See b/361090759 for more info.
+
+    Args:
+      model_name: File name to save TFLite model with metadata. The full export
+        path is {self._hparams.export_dir}/{model_name}.
+      quantization_config: The configuration for model quantization.
+    """
+    tf.io.gfile.makedirs(self._hparams.export_dir)
+    tflite_file = os.path.join(self._hparams.export_dir, model_name)
+    metadata_file = os.path.join(self._hparams.export_dir, "metadata.json")
+
+    constant_len_inputs = dict(
+        input_word_ids=tf.keras.layers.Input(
+            shape=(self._model_options.seq_len,),
+            dtype=tf.int32,
+            name="input_word_ids",
+        ),
+        input_mask=tf.keras.layers.Input(
+            shape=(self._model_options.seq_len,),
+            dtype=tf.int32,
+            name="input_mask",
+        ),
+        input_type_ids=tf.keras.layers.Input(
+            shape=(self._model_options.seq_len,),
+            dtype=tf.int32,
+            name="input_type_ids",
+        ),
+    )
+    output = self._model(constant_len_inputs)
+    constant_len_model = tf.keras.Model(
+        inputs=constant_len_inputs, outputs=output
+    )
+    saved_model_file = os.path.join(
+        self._hparams.export_dir, "saved_model_constant_len"
+    )
+    constant_len_model.save(
+        saved_model_file,
+        include_optimizer=False,
+        save_format="tf",
+    )
+
+    tflite_model = model_util.convert_to_tflite_from_file(
+        saved_model_file, quantization_config=quantization_config
+    )
+    vocab_filepath = os.path.join(tempfile.mkdtemp(), "vocab.txt")
+    self._save_vocab(vocab_filepath)
+
+    writer = self._get_metadata_writer(tflite_model, vocab_filepath)
+    tflite_model_with_metadata, metadata_json = writer.populate()
+    model_util.save_tflite(tflite_model_with_metadata, tflite_file)
+    with tf.io.gfile.GFile(metadata_file, "w") as f:
+      f.write(metadata_json)
+
   def export_model_with_tokenizer(
       self,
       model_name: str = "model_with_tokenizer.tflite",

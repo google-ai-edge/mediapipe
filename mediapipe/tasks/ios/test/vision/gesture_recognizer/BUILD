@@ -26,7 +26,7 @@ TFL_DISABLED_SANITIZER_TAGS = [
 
 objc_library(
     name = "MPPGestureRecognizerObjcTestLibrary",
-    testonly = 1,
+    testonly = True,
     srcs = ["MPPGestureRecognizerTests.m"],
     copts = [
         "-ObjC++",

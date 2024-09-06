@@ -203,12 +203,12 @@ using OutputStreamHandlerRegistry = GlobalFactoryRegistry<
 }  // namespace mediapipe
 
 // Macro for registering the output stream handler.
-#define REGISTER_OUTPUT_STREAM_HANDLER(name)                                \
-  REGISTER_FACTORY_FUNCTION_QUALIFIED(                                      \
-      mediapipe::OutputStreamHandlerRegistry, output_handler_registration,  \
-      name,                                                                 \
-      absl::make_unique<name, std::shared_ptr<tool::TagMap>,                \
-                        CalculatorContextManager*, const MediaPipeOptions&, \
-                        bool>)
+#define REGISTER_OUTPUT_STREAM_HANDLER(name)                               \
+  REGISTER_FACTORY_FUNCTION_QUALIFIED(                                     \
+      mediapipe::OutputStreamHandlerRegistry, output_handler_registration, \
+      name,                                                                \
+      std::make_unique<name, std::shared_ptr<tool::TagMap>,                \
+                       CalculatorContextManager*, const MediaPipeOptions&, \
+                       bool>)
 
 #endif  // MEDIAPIPE_FRAMEWORK_OUTPUT_STREAM_HANDLER_H_

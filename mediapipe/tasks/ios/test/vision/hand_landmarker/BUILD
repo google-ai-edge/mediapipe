@@ -26,7 +26,7 @@ TFL_DISABLED_SANITIZER_TAGS = [
 
 objc_library(
     name = "MPPHandLandmarkerObjcTestLibrary",
-    testonly = 1,
+    testonly = True,
     srcs = ["MPPHandLandmarkerTests.m"],
     copts = [
         "-ObjC++",

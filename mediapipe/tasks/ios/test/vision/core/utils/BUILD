@@ -29,7 +29,7 @@ TFL_DISABLED_SANITIZER_TAGS = [
 
 objc_library(
     name = "MPPImageUtilsObjcTestLibrary",
-    testonly = 1,
+    testonly = True,
     srcs = ["MPPImageUtilsTests.mm"],
     copts = [
         "-ObjC++",

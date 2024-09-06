@@ -108,9 +108,9 @@ class HardwareBuffer {
   static bool IsSupported();
 
   // Lock the hardware buffer for the given usage flags. fence_file_descriptor
-  // specifies a fence file descriptor on which to wait before locking the
-  // buffer. Returns raw memory address if lock is successful, nullptr
-  // otherwise.
+  // specifies a fence file descriptor on which to wait and close (takes
+  // ownership) before locking the buffer. Returns raw memory address if lock is
+  // successful, nullptr otherwise.
   ABSL_MUST_USE_RESULT absl::StatusOr<void*> Lock(
       uint64_t usage, std::optional<int> fence_file_descriptor = std::nullopt);
 

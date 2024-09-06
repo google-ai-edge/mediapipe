@@ -113,7 +113,7 @@ py_library(
 
 py_library(
     name = "image_classifier_test_lib",
-    testonly = 1,
+    testonly = True,
     srcs = ["image_classifier_test.py"],
     data = ["//mediapipe/model_maker/python/vision/image_classifier/testdata"],
     deps = [

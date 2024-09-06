@@ -23,7 +23,7 @@ namespace tasks {
 namespace vision {
 namespace pose_landmarker {
 
-static constexpr std::array<std::array<int, 2>, 35> kPoseLandmarksConnections{{
+inline constexpr std::array<std::array<int, 2>, 35> kPoseLandmarksConnections{{
     {0, 4},    // (nose, right_eye_inner)
     {4, 5},    // (right_eye_inner, right_eye)
     {5, 6},    // (right_eye, right_eye_outer)

@@ -23,6 +23,7 @@
 
 // TODO: Move protos in another CL after the C++ code migration.
 #include "absl/base/macros.h"
+#include "absl/status/status.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/counter.h"
 #include "mediapipe/framework/counter_factory.h"
@@ -32,6 +33,7 @@
 #include "mediapipe/framework/packet_set.h"
 #include "mediapipe/framework/port.h"
 #include "mediapipe/framework/port/any_proto.h"
+#include "mediapipe/framework/resources.h"
 #include "mediapipe/framework/tool/options_map.h"
 
 namespace mediapipe {
@@ -100,6 +102,9 @@ class CalculatorState {
     return graph_service_manager_;
   }
 
+  // Returns calculator interface for loading resources.
+  const Resources& GetResources() { return *resources_; }
+
   ////////////////////////////////////////
   // Interface for CalculatorNode.
   ////////////////////////////////////////
@@ -145,6 +150,9 @@ class CalculatorState {
   // calculator_service_manager_ contains only the services that are requested
   // by the calculator in UpdateContract() via cc->UseService(...).
   GraphServiceManager calculator_service_manager_;
+
+  // Graph/calculator resource loading interface.
+  std::shared_ptr<Resources> resources_;
 
   ////////////////////////////////////////
   // Variables which ARE cleared by ResetBetweenRuns().

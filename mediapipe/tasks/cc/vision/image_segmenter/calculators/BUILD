@@ -52,6 +52,9 @@ cc_library(
         "@com_google_absl//absl/types:span",
     ] + select({
         "//conditions:default": [],
+        "//mediapipe:emscripten": [
+            ":segmentation_postprocessor_gl",
+        ],
         "//mediapipe:android": [
             ":segmentation_postprocessor_gl",
         ],

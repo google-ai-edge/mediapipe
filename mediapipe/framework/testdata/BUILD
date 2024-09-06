@@ -67,4 +67,6 @@ exports_files([
     "perfetto_detailed.pbtxt",
     "perfetto_minimal.pbtxt",
     "perfeoot_memory.pbtxt",
+    "resource_calculator.data",
+    "resource_subgraph.data",
 ])

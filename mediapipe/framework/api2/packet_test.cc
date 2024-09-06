@@ -4,7 +4,6 @@
 #include <string>
 #include <utility>
 
-#include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -316,12 +315,12 @@ TEST(PacketTest, OneOfConsume) {
 }
 
 TEST(PacketTest, Polymorphism) {
-  Packet<Base> base = PacketAdopting<Base>(absl::make_unique<Derived>());
+  Packet<Base> base = PacketAdopting<Base>(std::make_unique<Derived>());
   EXPECT_EQ(base->name(), "Derived");
   // Since packet contents are implicitly immutable, if you need mutability the
   // current recommendation is still to wrap the contents in a unique_ptr.
   Packet<std::unique_ptr<Base>> mutable_base =
-      MakePacket<std::unique_ptr<Base>>(absl::make_unique<Derived>());
+      MakePacket<std::unique_ptr<Base>>(std::make_unique<Derived>());
   EXPECT_EQ((**mutable_base).name(), "Derived");
 }
 
@@ -338,7 +337,7 @@ class ConcreteDerived : public AbstractBase {
 
 TEST(PacketTest, PolymorphismAbstract) {
   Packet<AbstractBase> base =
-      PacketAdopting<AbstractBase>(absl::make_unique<ConcreteDerived>());
+      PacketAdopting<AbstractBase>(std::make_unique<ConcreteDerived>());
   EXPECT_EQ(base->name(), "ConcreteDerived");
 }
 

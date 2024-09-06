@@ -31,6 +31,7 @@
 #include "mediapipe/gpu/gl_simple_shaders.h"
 #include "mediapipe/gpu/gpu_buffer.h"
 #include "mediapipe/gpu/gpu_origin.pb.h"
+#include "mediapipe/gpu/gpu_origin_utils.h"
 #include "mediapipe/gpu/shader_util.h"
 
 namespace mediapipe {
@@ -42,24 +43,6 @@ using mediapipe::GlhCreateProgram;
 using mediapipe::GlTexture;
 using mediapipe::GpuBuffer;
 using mediapipe::GpuOrigin;
-
-bool IsMatrixVerticalFlipNeeded(GpuOrigin::Mode gpu_origin) {
-  switch (gpu_origin) {
-    case GpuOrigin::DEFAULT:
-    case GpuOrigin::CONVENTIONAL:
-#ifdef __APPLE__
-      return false;
-#else
-      return true;
-#endif  //  __APPLE__
-    case GpuOrigin::TOP_LEFT:
-      return false;
-    default:
-      ABSL_LOG(ERROR) << "Incorrect GpuOrigin: "
-                      << static_cast<int>(gpu_origin);
-      return true;
-  }
-}
 
 #ifdef __APPLE__
 #define GL_CLAMP_TO_BORDER_MAY_BE_SUPPORTED 0
@@ -335,7 +318,9 @@ class GlTextureWarpAffineRunner
 
     // uniforms
     Eigen::Matrix<float, 4, 4, Eigen::RowMajor> eigen_mat(matrix.data());
-    if (IsMatrixVerticalFlipNeeded(gpu_origin_)) {
+    MP_ASSIGN_OR_RETURN(bool is_matrix_vertical_flip_needed,
+                        mediapipe::IsGpuOriginAtBottom(gpu_origin_));
+    if (is_matrix_vertical_flip_needed) {
       // @matrix describes affine transformation in terms of TOP LEFT origin, so
       // in some cases/on some platforms an extra flipping should be done before
       // and after.

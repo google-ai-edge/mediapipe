@@ -104,10 +104,10 @@ http_archive(
 # KleidiAI is needed to get the best possible performance out of XNNPack
 http_archive(
     name = "KleidiAI",
-    sha256 = "e1a3a6a27dcae459e61c33f5eb235a7c809c3208b3b8a649f361a641269ebdc8",
-    strip_prefix = "kleidiai-8fda0bd9224cad4360c011a09bbb582c5ab7496a",
+    sha256 = "88233e427be6579560073267575f00f3b5fc370a31a43bbdd87a1810bd4bf1b6",
+    strip_prefix = "kleidiai-cddf991af5de49fd34949fa39690e4e906e04074",
     urls = [
-        "https://gitlab.arm.com/kleidi/kleidiai/-/archive/8fda0bd9224cad4360c011a09bbb582c5ab7496a/kleidiai-1976f8661e8d5aa7d4cdca0f3d2a915e5ecb4c53.zip",
+        "https://gitlab.arm.com/kleidi/kleidiai/-/archive/cddf991af5de49fd34949fa39690e4e906e04074/kleidiai-cddf991af5de49fd34949fa39690e4e906e04074.zip",
     ],
 )
 
@@ -115,9 +115,9 @@ http_archive(
 http_archive(
     name = "XNNPACK",
     # `curl -L <url> | shasum -a 256`
-    sha256 = "b5a9406dac47e63980db281c52788f15a881519e95ed5140d927750c06828a2b",
-    strip_prefix = "XNNPACK-203651a9d4bc6b9c33e943c842d8bada139bb71d",
-    url = "https://github.com/google/XNNPACK/archive/203651a9d4bc6b9c33e943c842d8bada139bb71d.zip",
+    sha256 = "0e5d5c16686beff813e3946b26ca412f28acaf611228d20728ffb6479264fe19",
+    strip_prefix = "XNNPACK-9ddeb74f9f6866174d61888947e4aa9ffe963b1b",
+    url = "https://github.com/google/XNNPACK/archive/9ddeb74f9f6866174d61888947e4aa9ffe963b1b.zip",
 )
 
 # TODO: This is an are indirect depedency. We should factor it out.
@@ -576,9 +576,6 @@ http_archive(
         # Works around Bazel issue with objc_library.
         # See https://github.com/bazelbuild/bazel/issues/19912
         "@//third_party:org_tensorflow_objc_build_fixes.diff",
-        # Restores scores for text pipelines, which return different results
-        # with subgraph reshaping
-        "@//third_party:org_tensorflow_disable_subgraph_reshaping.diff"
     ],
     patch_args = [
         "-p1",

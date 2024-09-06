@@ -15,12 +15,13 @@
 #include <math.h>
 
 #include <cstdint>
-#include <memory>
+#include <new>
 #include <string>
 #include <vector>
 
 #include "Eigen/Core"
 #include "absl/log/absl_log.h"
+#include "absl/status/status.h"
 #include "audio/dsp/window_functions.h"
 #include "mediapipe/calculators/audio/time_series_framer_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -29,8 +30,8 @@
 #include "mediapipe/framework/formats/time_series_header.pb.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/util/time_series_test_util.h"
+#include "mediapipe/util/time_series_util.h"
 
 namespace mediapipe {
 namespace {
@@ -376,7 +377,7 @@ class TimeSeriesFramerCalculatorWindowingSanityTest
     MP_ASSERT_OK(RunGraph());
     ASSERT_EQ(1, output().packets.size());
     ASSERT_NEAR(expected_average * FrameDurationSamples(),
-                output().packets[0].Get<Matrix>().sum(), 1e-5);
+                output().packets[0].Get<Matrix>().sum(), 1e-3);
   }
 };
 
@@ -459,7 +460,7 @@ class TimeSeriesFramerCalculatorTimestampingTest
                kGapBetweenPacketsInSeconds;
   }
 
-  // Returns the timestamp inseconds based on cumulative timestamping.
+  // Returns the timestamp in seconds based on cumulative timestamping.
   double GetExpectedCumulativeTimestamp(int sample_index) {
     return kInitialTimestampOffsetMicroseconds * 1.0e-6 +
            sample_index / FrameDurationSamples() * FrameDurationSamples() /

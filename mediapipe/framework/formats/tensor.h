@@ -17,8 +17,8 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <functional>
 #include <initializer_list>
-#include <list>
 #include <memory>
 #include <numeric>
 #include <tuple>
@@ -26,9 +26,7 @@
 #include <utility>
 #include <vector>
 
-#include "absl/container/flat_hash_set.h"
 #include "absl/functional/any_invocable.h"
-#include "absl/log/absl_check.h"
 #include "absl/status/status.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/formats/tensor/internal.h"
@@ -40,6 +38,9 @@
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 
+#include <list>
+
+#include "absl/log/absl_check.h"
 #include "mediapipe/framework/formats/hardware_buffer.h"
 #include "mediapipe/framework/formats/hardware_buffer_pool.h"
 #include "mediapipe/framework/formats/tensor_ahwb_usage.h"
@@ -65,6 +66,13 @@
 #ifndef builtin_FILE
 #define builtin_FILE() ""
 #endif
+
+#include "mediapipe/gpu/webgpu/webgpu_check.h"
+#if MEDIAPIPE_USE_WEBGPU
+#include <webgpu/webgpu_cpp.h>
+
+#include "mediapipe/gpu/webgpu/webgpu_service.h"
+#endif  // MEDIAPIPE_USE_WEBGPU
 
 namespace mediapipe {
 // Tensor is a container of multi-dimensional data that supports sharing the
@@ -209,13 +217,17 @@ class Tensor {
     AHardwareBufferView(AHardwareBufferView&& src)
         : View(std::move(src.lock_)) {
       hardware_buffer_ = std::move(src.hardware_buffer_);
-      file_descriptor_ = std::exchange(src.file_descriptor_, nullptr);
-      fence_fd_ = std::exchange(src.fence_fd_, nullptr);
+      write_complete_fence_fd_ =
+          std::exchange(src.write_complete_fence_fd_, nullptr);
       ahwb_usage_ = std::exchange(src.ahwb_usage_, nullptr);
       is_write_view_ = src.is_write_view_;
     }
 
-    int file_descriptor() const { return file_descriptor_->Get(); }
+    int GetWriteCompleteFenceFd() const {
+      ABSL_CHECK(!is_write_view_)
+          << "AHWB write view can't return write complete fence FD'";
+      return write_complete_fence_fd_->Get();
+    }
 
     // TODO: verify if multiple functions can be specified.
     void SetReadingFinishedFunc(FinishingFunc&& func) {
@@ -230,9 +242,11 @@ class Tensor {
     void SetWritingFinishedFD(int fd, FinishingFunc func = nullptr) {
       ABSL_CHECK(is_write_view_)
           << "AHWB read view can't accept 'writing finished file descriptor'";
+      ABSL_CHECK(!write_complete_fence_fd_->IsValid())
+          << "AHWB write complete fence FD is already set.";
       ABSL_CHECK(ahwb_usage_->is_complete_fn == nullptr)
           << "AHWB write finished callback is already set.";
-      *fence_fd_ = UniqueFd(fd);
+      *write_complete_fence_fd_ = UniqueFd(fd);
       ahwb_usage_->is_complete_fn = std::move(func);
     }
 
@@ -245,21 +259,18 @@ class Tensor {
    protected:
     friend class Tensor;
     AHardwareBufferView(HardwareBuffer* hardware_buffer,
-                        UniqueFd* file_descriptor, UniqueFd* fence_fd,
+                        UniqueFd* write_complete_fence_fd,
                         TensorAhwbUsage* ahwb_usage,
                         std::unique_ptr<absl::MutexLock>&& lock,
                         bool is_write_view)
         : View(std::move(lock)),
           hardware_buffer_(hardware_buffer),
-          file_descriptor_(file_descriptor),
-          fence_fd_(fence_fd),
+          write_complete_fence_fd_(write_complete_fence_fd),
           ahwb_usage_(ahwb_usage),
           is_write_view_(is_write_view) {}
 
     HardwareBuffer* hardware_buffer_ = nullptr;
-    UniqueFd* file_descriptor_ = nullptr;
-    // The view sets some Tensor's fields. The view is released prior to tensor.
-    UniqueFd* fence_fd_ = nullptr;
+    UniqueFd* write_complete_fence_fd_ = nullptr;
     TensorAhwbUsage* ahwb_usage_ = nullptr;
     bool is_write_view_ = false;
   };
@@ -301,6 +312,32 @@ class Tensor {
   OpenGlTexture2dView GetOpenGlTexture2dReadView() const;
   OpenGlTexture2dView GetOpenGlTexture2dWriteView() const;
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
+
+#if MEDIAPIPE_USE_WEBGPU
+  class WebGpuTexture2dView : public View {
+   public:
+    WebGpuTexture2dView(WebGpuTexture2dView&& src)
+        : View(std::move(src.lock_)) {  // Only moves the View portion of src.
+      name_ = std::exchange(src.name_, nullptr);
+    }
+
+    wgpu::Texture name() const { return name_; }
+
+   protected:
+    friend class Tensor;
+
+    WebGpuTexture2dView(wgpu::Texture name,
+                        std::unique_ptr<absl::MutexLock>&& lock)
+        : View(std::move(lock)), name_(name) {}
+
+    wgpu::Texture name_;
+  };
+
+  WebGpuTexture2dView GetWebGpuTexture2dReadView(
+      const WebGpuService& service) const;
+  WebGpuTexture2dView GetWebGpuTexture2dWriteView(
+      const WebGpuService& service) const;
+#endif  // MEDIAPIPE_USE_WEBGPU
 
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
   class OpenGlBufferView : public View {
@@ -369,8 +406,9 @@ class Tensor {
     return valid_ & (kValidAHardwareBuffer | kValidCpu);
   }
   bool ready_on_gpu() const {
-    return valid_ & (kValidMetalBuffer | kValidOpenGlBuffer |
-                     kValidAHardwareBuffer | kValidOpenGlTexture2d);
+    return valid_ &
+           (kValidMetalBuffer | kValidOpenGlBuffer | kValidWebGpuTexture2d |
+            kValidAHardwareBuffer | kValidOpenGlTexture2d);
   }
   bool ready_as_metal_buffer() const { return valid_ & kValidMetalBuffer; }
   bool ready_as_opengl_buffer() const {
@@ -380,6 +418,9 @@ class Tensor {
     return valid_ & kValidOpenGlTexture2d;
   }
   bool ready_as_ahwb() const { return use_ahwb_; }
+  bool ready_as_webgpu_texture_2d() const {
+    return valid_ & kValidWebGpuTexture2d;
+  }
 
  private:
   friend class MtlBufferView;
@@ -399,6 +440,7 @@ class Tensor {
     kValidMetalBuffer = 1 << 1,
     kValidOpenGlBuffer = 1 << 2,
     kValidOpenGlTexture2d = 1 << 3,
+    kValidWebGpuTexture2d = 1 << 4,
     kValidAHardwareBuffer = 1 << 5,
   };
   // A list of resource which are currently allocated and synchronized between
@@ -414,6 +456,10 @@ class Tensor {
   // of ODR if this header includes any actual code that uses MtlResources.
   mutable std::unique_ptr<MtlResources> mtl_resources_;
 
+#if MEDIAPIPE_USE_WEBGPU
+  mutable wgpu::Device webgpu_device_;
+  mutable wgpu::Texture webgpu_texture2d_;
+#endif  // MEDIAPIPE_USE_WEBGPU
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
   mutable std::shared_ptr<HardwareBuffer> ahwb_;
 
@@ -426,12 +472,8 @@ class Tensor {
   // Sync and FD are bound together.
   mutable EGLSyncKHR fence_sync_ = EGL_NO_SYNC_KHR;
 
-  // This FD signals when the writing into the SSBO has been finished.
-  mutable UniqueFd ssbo_written_;
-
-  // An externally set FD that is wrapped with the EGL sync then to synchronize
-  // AHWB -> OpenGL SSBO.
-  mutable UniqueFd fence_fd_;
+  // Filehandle to signal when the writing into the AHWB has been finished.
+  mutable UniqueFd write_complete_fence_fd_;
 
   // Reading from SSBO has been finished so SSBO can be released.
   mutable GLsync ssbo_read_ = 0;
