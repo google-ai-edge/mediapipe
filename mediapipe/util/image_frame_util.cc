@@ -101,12 +101,34 @@ void ImageFrameToYUVImage(const ImageFrame& image_frame, YUVImage* yuv_image) {
                         u, uv_stride,                     //
                         v, uv_stride,                     //
                         width, height);
-  int rv =
-      libyuv::RAWToI420(image_frame.PixelData(), image_frame.WidthStep(),  //
-                        y, y_stride,                                       //
-                        u, uv_stride,                                      //
-                        v, uv_stride,                                      //
-                        width, height);
+  int rv = 0;
+  switch (image_frame.Format()) {
+    case ImageFormat::SRGBA:
+      // ABGR little endian (RGBA in memory).
+      rv = libyuv::ABGRToI420(image_frame.PixelData(), image_frame.WidthStep(),
+                              y, y_stride,   //
+                              u, uv_stride,  //
+                              v, uv_stride,  //
+                              width, height);
+      break;
+    case ImageFormat::SRGB:
+      // RAW in libyuv is byte order R, G, B, see libyuv/convert.h.
+      rv = libyuv::RAWToI420(image_frame.PixelData(), image_frame.WidthStep(),
+                             y, y_stride,   //
+                             u, uv_stride,  //
+                             v, uv_stride,  //
+                             width, height);
+      break;
+    default:
+      ABSL_LOG(ERROR)
+          << "Using RGB conversion for unexpected image frame format";
+      // RAW in libyuv is byte order R, G, B, see libyuv/convert.h.
+      rv = libyuv::RAWToI420(image_frame.PixelData(), image_frame.WidthStep(),
+                             y, y_stride,   //
+                             u, uv_stride,  //
+                             v, uv_stride,  //
+                             width, height);
+  }
   ABSL_CHECK_EQ(0, rv);
 }
 
