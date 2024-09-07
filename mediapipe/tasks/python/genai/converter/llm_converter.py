@@ -48,6 +48,8 @@ class ConversionConfig(object):
     lora_output_tflite_file: A string indicating the name of the generated
       tflite file for the LoRA weight. Only applicable when the lora_rank is not
       zero.
+    use_fake_weights: Whether to use fake weights. If set to True, the weights
+      will be filled with zeros.
   """
 
   def __init__(
@@ -69,6 +71,7 @@ class ConversionConfig(object):
       lora_ckpt: Optional[str] = None,
       lora_rank: Optional[int] = None,
       lora_output_tflite_file: Optional[str] = None,
+      use_fake_weights: bool = False,
   ):
     self.input_ckpt = input_ckpt
     self.ckpt_format = ckpt_format
@@ -87,6 +90,7 @@ class ConversionConfig(object):
     self.combine_file_only = combine_file_only
     self.vocab_model_file = vocab_model_file
     self.obfuscate = obfuscate
+    self.use_fake_weights = use_fake_weights
     if output_tflite_file:
       parent_dir = os.path.dirname(output_tflite_file)
       if not os.path.isdir(parent_dir):
@@ -291,7 +295,7 @@ def maybe_quantize_and_write_tensors_to_bins(
         output_dir=config.output_dir,
         backend=config.backend,
     )
-    writer.write_variables(quantized_tensors)
+    writer.write_variables(quantized_tensors, config.use_fake_weights)
     del quantized_tensors
     del writer
 

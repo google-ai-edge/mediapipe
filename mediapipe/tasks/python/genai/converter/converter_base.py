@@ -171,5 +171,9 @@ class ModelWriterBase:
       os.mkdir(self._output_dir)
     self._backend = backend
 
-  def write_variables(self, variables: Dict[str, Tuple[np.ndarray, bool]]):
+  def write_variables(
+      self,
+      variables: Dict[str, Tuple[np.ndarray, bool]],
+      use_fake_values: bool = False,
+  ):
     raise NotImplementedError("The write_variables method is not implemented.")
