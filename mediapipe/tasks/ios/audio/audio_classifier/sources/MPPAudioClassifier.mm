@@ -45,11 +45,11 @@ static NSString *const kTaskName = @"audioClassifier";
 static const int kMicrosecondsPerMillisecond = 1000;
 
 #define AudioClassifierResultWithOutputPacketMap(outputPacketMap, outputStreamName) \
-  [MPPAudioClassifierResult                                                        \
+  [MPPAudioClassifierResult                                                         \
       audioClassifierResultWithClassificationsPacket:outputPacketMap[outputStreamName]]
 
 @interface MPPAudioClassifier () {
-  /** iOS Vision Task Runner */
+  /** iOS Audio Task Runner */
   MPPAudioTaskRunner *_audioTaskRunner;
   dispatch_queue_t _callbackQueue;
 }
@@ -133,14 +133,11 @@ static const int kMicrosecondsPerMillisecond = 1000;
   if (!outputPacketMap.has_value()) {
     return nil;
   }
-  
+
   PacketMap &outputPacketMapValue = outputPacketMap.value();
-  NSLog(@"Error map ..... %d", outputPacketMapValue.count(kClassificationsOutStreamName.cppString));
 
-  
-
-  return AudioClassifierResultWithOutputPacketMap(outputPacketMapValue,
-                                                  kTimestampedClassificationsOutStreamName.cppString);
+  return AudioClassifierResultWithOutputPacketMap(
+      outputPacketMapValue, kTimestampedClassificationsOutStreamName.cppString);
 }
 
 - (BOOL)classifyAsyncAudioBlock:(MPPAudioData *)audioBlock
@@ -156,9 +153,9 @@ static const int kMicrosecondsPerMillisecond = 1000;
                                          bufferLength:(NSUInteger)bufferLength
                                                 error:(NSError **)error {
   return [MPPAudioTaskRunner createAudioRecordWithChannelCount:channelCount
-                                                  sampleRate:sampleRate
-                                                bufferLength:bufferLength
-                                                       error:error];
+                                                    sampleRate:sampleRate
+                                                  bufferLength:bufferLength
+                                                         error:error];
 }
 
 #pragma mark - Private
