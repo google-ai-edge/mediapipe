@@ -56,6 +56,8 @@ LlmModelSettings ParseModelSettings(void* bytes, int size) {
       output.supported_lora_ranks[i] = input.supported_lora_ranks(i);
     }
   }
+  output.llm_activation_data_type = kLlmActivationDataTypeDefault;
+  output.num_draft_tokens = 0;
   return output;
 }
 
