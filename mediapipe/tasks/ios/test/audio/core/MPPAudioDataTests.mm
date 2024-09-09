@@ -41,7 +41,9 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 
 #define AssertAudioDataIsValid(audioData, channelCount, sampleRate, sampleCount) \
   XCTAssertNotNil(audioData);                                                    \
-  XCTAssertEqual(audioData.bufferLength, channelCount *sampleCount);
+  XCTAssertEqual(audioData.format.channelCount, channelCount);                   \
+  XCTAssertEqual(audioData.format.sampleRate, sampleRate);                       \
+  XCTAssertEqual(audioData.bufferLength, sampleCount);
 
 #define AssertEqualFloatBuffers(buffer, expectedBuffer)     \
   XCTAssertNotNil(buffer);                                  \

@@ -27,11 +27,11 @@ NS_ASSUME_NONNULL_BEGIN
  * results of asynchronous classification of audio stream (i.e, when `runningMode` =
  * `.audioStream`).
  *
- * The delegate of `AudioClassifier` must adopt `AudioClassifierLiveStreamDelegate` protocol.
+ * The delegate of `AudioClassifier` must adopt `AudioClassifierStreamDelegate` protocol.
  * The methods in this protocol are optional.
  */
-NS_SWIFT_NAME(AudioClassifierLiveStreamDelegate)
-@protocol MPPAudioClassifierLiveStreamDelegate <NSObject>
+NS_SWIFT_NAME(AudioClassifierStreamDelegate)
+@protocol MPPAudioClassifierStreamDelegate <NSObject>
 
 @optional
 /**
@@ -49,11 +49,11 @@ NS_SWIFT_NAME(AudioClassifierLiveStreamDelegate)
  * @param error An optional error parameter populated when there is an error in performing audio
  * classification on the input audio stream data.
  */
-- (void)AudioClassifier:(MPPAudioClassifier *)AudioClassifier
+- (void)audioClassifier:(MPPAudioClassifier *)AudioClassifier
     didFinishClassificationWithResult:(nullable MPPAudioClassifierResult *)result
               timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                                 error:(nullable NSError *)error
-    NS_SWIFT_NAME(AudioClassifier(_:didFinishClassification:timestampInMilliseconds:error:));
+    NS_SWIFT_NAME(audioClassifier(_:didFinishClassification:timestampInMilliseconds:error:));
 @end
 
 /**
@@ -72,13 +72,13 @@ NS_SWIFT_NAME(AudioClassifierOptions)
 @property(nonatomic) MPPAudioRunningMode runningMode;
 
 /**
- * An object that confirms to `AudioClassifierLiveStreamDelegate` protocol. This object must
+ * An object that confirms to `AudioClassifierStreamDelegate` protocol. This object must
  * implement `objectDetector(_:didFinishDetectionWithResult:timestampInMilliseconds:error:)` to
  * receive the results of asynchronous classification on audio stream (i.e, when `runningMode =
  * .audioStream`).
  */
-@property(nonatomic, weak, nullable) id<MPPAudioClassifierLiveStreamDelegate>
-    audioClassifierLiveStreamDelegate;
+@property(nonatomic, weak, nullable) id<MPPAudioClassifierStreamDelegate>
+    audioClassifierStreamDelegate;
 
 /**
  * The locale to use for display names specified through the TFLite Model Metadata, if any. Defaults

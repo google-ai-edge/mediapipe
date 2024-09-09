@@ -41,12 +41,25 @@ objc_library(
 
 objc_library(
     name = "MPPAudioClassifier",
+    srcs = ["sources/MPPAudioClassifier.mm"],
     hdrs = ["sources/MPPAudioClassifier.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+        "-x objective-c++",
+    ],
     deps = [
         ":MPPAudioClassifierOptions",
         ":MPPAudioClassifierResult",
+        "//mediapipe/tasks/cc/audio/audio_classifier:audio_classifier_graph",
+        "//mediapipe/tasks/ios/audio/audio_classifier/utils:MPPAudioClassifierOptionsHelpers",
+        "//mediapipe/tasks/ios/audio/audio_classifier/utils:MPPAudioClassifierResultHelpers",
         "//mediapipe/tasks/ios/audio/core:MPPAudioData",
         "//mediapipe/tasks/ios/audio/core:MPPAudioRecord",
+        "//mediapipe/tasks/ios/audio/core:MPPAudioTaskRunner",
+        "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
+        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
+        "//mediapipe/tasks/ios/core:MPPTaskInfo",
         "//third_party/apple_frameworks:Foundation",
     ],
 )

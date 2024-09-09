@@ -57,7 +57,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable instancetype)initWithTaskInfo:(MPPTaskInfo *)taskInfo
                               runningMode:(MPPAudioRunningMode)runningMode
                           packetsCallback:(mediapipe::tasks::core::PacketsCallback)packetsCallback
-                     audioInputStreamName:(NSString *)imageInputStreamName
+                     audioInputStreamName:(NSString *)audioInputStreamName
                 sampleRateInputStreamName:(nullable NSString *)normRectInputStreamName
                                     error:(NSError **)error NS_DESIGNATED_INITIALIZER;
 
@@ -116,7 +116,7 @@ NS_ASSUME_NONNULL_BEGIN
  * @return An new instance of `MPPAudioRecord` with the given audio format and buffer length. `nil`
  * if there is an error in initializing `MPPAudioRecord`.
  */
-- (MPPAudioRecord *)createAudioRecordWithChannelCount:(NSUInteger)channelCount
++ (MPPAudioRecord *)createAudioRecordWithChannelCount:(NSUInteger)channelCount
                                            sampleRate:(double)sampleRate
                                          bufferLength:(NSUInteger)bufferLength
                                                 error:(NSError **)error;
@@ -126,6 +126,20 @@ NS_ASSUME_NONNULL_BEGIN
                            error:(NSError **)error NS_UNAVAILABLE;
 
 - (instancetype)init NS_UNAVAILABLE;
+
+/**
+ * This method returns a unique dispatch queue name by adding the given suffix and a `UUID` to the
+ * pre-defined queue name prefix for audio tasks. The audio tasks can use this method to get
+ * unique dispatch queue names which are consistent with other audio tasks.
+ * Dispatch queue names need not be unique, but for easy debugging we ensure that the queue names
+ * are unique.
+ *
+ * @param suffix A suffix that identifies a dispatch queue's functionality.
+ *
+ * @return A unique dispatch queue name by adding the given suffix and a `UUID` to the pre-defined
+ * queue name prefix for audio tasks.
+ */
++ (const char *)uniqueDispatchQueueNameWithSuffix:(NSString *)suffix;
 
 + (instancetype)new NS_UNAVAILABLE;
 
