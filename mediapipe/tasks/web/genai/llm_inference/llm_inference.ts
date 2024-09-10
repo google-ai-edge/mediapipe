@@ -583,44 +583,52 @@ export class LlmInference extends TaskRunner {
   }
 
   /**
-   * Similar with generateResponse() but returns multiple responses.
+   * Similar to `generateResponse()` but can return multiple responses for the
+   * given prompt if the task is initialized with a value for `numResponses`
+   * greater than 1.
    *
    * @export
    * @param text The text to process.
-   * @return The generated text result.
+   * @return The generated results.
    */
   generateResponses(text: string): Promise<string[]>;
   /**
-   * Similar with generateResponse() but returns multiple responses.
+   * Similar to `generateResponse()` but can return multiple responses for the
+   * given prompt if the task is initialized with a value for `numResponses`
+   * greater than 1.
    *
    * @export
    * @param text The text to process.
    * @param progressListener A listener that will be triggered when the task has
    *     new partial response generated.
-   * @return The generated text result.
+   * @return The generated results.
    */
   generateResponses(
     text: string,
     progressListener: MultiResponseProgressListener,
   ): Promise<string[]>;
   /**
-   * Similar with generateResponse() but returns multiple responses.
+   * Similar to `generateResponse()` but can return multiple responses for the
+   * given prompt if the task is initialized with a value for `numResponses`
+   * greater than 1.
    *
    * @export
    * @param text The text to process.
    * @param loraModel The LoRA model to apply on the text generation.
-   * @return The generated text result.
+   * @return The generated results.
    */
   generateResponses(text: string, loraModel: LoraModel): Promise<string[]>;
   /**
-   * Similar with generateResponse() but returns multiple responses.
+   * Similar to `generateResponse()` but can return multiple responses for the
+   * given prompt if the task is initialized with a value for `numResponses`
+   * greater than 1.
    *
    * @export
    * @param text The text to process.
    * @param loraModel The LoRA model to apply on the text generation.
    * @param progressListener A listener that will be triggered when the task has
    *     new partial response generated.
-   * @return The generated text result.
+   * @return The generated results.
    */
   generateResponses(
     text: string,
