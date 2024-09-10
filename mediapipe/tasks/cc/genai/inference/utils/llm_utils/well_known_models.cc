@@ -120,6 +120,61 @@ LlmParameters GetGemma7BParams() {
   return llm_params;
 }
 
+LlmParameters GetGemma2_2BParams() {
+  LlmParameters llm_params;
+  llm_params.set_start_token_id(2);
+  llm_params.add_stop_tokens("<eos>");
+  llm_params.add_stop_tokens("<end_of_turn>");
+  llm_params.set_vocab_size(256000);
+
+  TransformerParameters& transformer_params =
+      *llm_params.mutable_transformer_parameters();
+  transformer_params.set_batch_size(kBatchSize);
+  transformer_params.set_embedding_dim(2304);
+  transformer_params.set_hidden_dimension(9216);
+  transformer_params.set_head_dimension(256);
+  transformer_params.set_num_heads(8);
+  transformer_params.set_num_stacks(26);
+  // GQA, num_groups=2
+  transformer_params.set_num_kv_heads(4);
+  transformer_params.set_pre_norm(TransformerParameters::RMS_NORM);
+  transformer_params.set_post_norm(TransformerParameters::RMS_NORM);
+  transformer_params.set_final_norm(TransformerParameters::RMS_NORM);
+  transformer_params.set_skip_absolute_positional_embeddings(true);
+  // Alternating L-G-L-G-...
+  // Commenting out for now, since without hybrid cache or runtime sliding
+  // window size, this wouldn't have any effect. TODO: Fix.
+  // transformer_params.set_num_local_layers_per_global(1);
+
+  TransformerParameters::SelfAttentionParameters& sa_params =
+      *transformer_params.mutable_self_attention_parameters();
+  sa_params.set_attention_mask_type(TransformerParameters::CAUSAL);
+  sa_params.set_qkv_no_bias(true);
+  sa_params.set_post_proj_no_bias(true);
+  sa_params.set_attention_scale_type(
+      TransformerParameters::SCALE_TYPE_INV_SQRT_HEAD_DIM);
+  sa_params.set_soft_cap_value(50.0f);
+
+  // This should be a runtime parameter, since it doesn't make sense to have a
+  // sliding window size of 4096 when our global context size is often smaller
+  // than that. TODO: Fix.
+  // sa_params.set_sliding_window_size(4096);
+
+  TransformerParameters::FeedForwardParameters& ff_params =
+      *transformer_params.mutable_feed_forward_parameters();
+  ff_params.set_no_bias(true);
+  ff_params.set_activation(TransformerParameters::GELU);
+  ff_params.set_pre_norm(TransformerParameters::RMS_NORM);
+  ff_params.set_post_norm(TransformerParameters::RMS_NORM);
+
+  TransformerParameters::FinalProjectParameters& fp_params =
+      *transformer_params.mutable_final_project_parameters();
+  fp_params.set_no_bias(true);
+  fp_params.set_soft_cap_value(30.0f);
+
+  return llm_params;
+}
+
 LlmParameters GetFalconRW1BParams() {
   LlmParameters llm_params;
   llm_params.set_start_token_id(1);

@@ -27,7 +27,7 @@ enum LlmModelType {
   // Unknown LLM model type
   LLM_MODEL_TYPE_UNKNOWN = 0;
 
-  reserved 1, 2, 3, 4, 7, 9, 10, 13, 14, 15, 16, 17, 18;
+  reserved 1, 2, 3, 4, 7, 9, 10, 13, 14, 15, 16, 17;
 
   // FALCON RefinedWeb with 1B parameters.
   // https://huggingface.co/tiiuae/falcon-rw-1b
@@ -38,6 +38,9 @@ enum LlmModelType {
 
   // GEMMA with 7B parameters
   LLM_MODEL_TYPE_GEMMA_7B = 12;
+
+  // GEMMA v2 with 2B parameters.
+  LLM_MODEL_TYPE_GEMMA2_2B = 18;
 
   // StableLM 4E1T with 3B parameters
   LLM_MODEL_TYPE_STABLELM_4E1T_3B = 8;
