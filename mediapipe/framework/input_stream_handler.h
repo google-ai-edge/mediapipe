@@ -320,8 +320,8 @@ using InputStreamHandlerRegistry = GlobalFactoryRegistry<
 #define REGISTER_INPUT_STREAM_HANDLER(name)                                    \
   REGISTER_FACTORY_FUNCTION_QUALIFIED(                                         \
       mediapipe::InputStreamHandlerRegistry, input_handler_registration, name, \
-      absl::make_unique<name, std::shared_ptr<tool::TagMap>,                   \
-                        CalculatorContextManager*, const MediaPipeOptions&,    \
-                        bool>)
+      std::make_unique<name, std::shared_ptr<tool::TagMap>,                    \
+                       CalculatorContextManager*, const MediaPipeOptions&,     \
+                       bool>)
 
 #endif  // MEDIAPIPE_FRAMEWORK_INPUT_STREAM_HANDLER_H_

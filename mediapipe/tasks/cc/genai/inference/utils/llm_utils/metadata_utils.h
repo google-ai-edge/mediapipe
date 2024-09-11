@@ -31,11 +31,6 @@ constexpr absl::string_view kLoRARank = "lora_rank";
 absl::StatusOr<odml::infra::proto::LlmModelType> GetLlmModelType(
     const ::tflite::FlatBufferModel& fb_model);
 
-// Retrieves SentencePiece from tflite's metadata and returns a string_view of
-// the model content.
-absl::StatusOr<absl::string_view> ExtractSentencePieceToStringView(
-    const tflite::FlatBufferModel& model, absl::string_view metadata_key);
-
 inline bool RequireBytesToUnicodeMapping(
     odml::infra::proto::LlmModelType model_type) {
   return model_type == odml::infra::proto::LLM_MODEL_TYPE_STABLELM_4E1T_3B ||

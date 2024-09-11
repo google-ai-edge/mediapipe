@@ -1,14 +1,13 @@
 #include <android/hardware_buffer.h>
 
 #include <array>
-#include <memory>
 
 #include "mediapipe/framework/formats/hardware_buffer.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/memory_manager.h"
+#include "mediapipe/framework/port/gmock.h"
+#include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/gpu/multi_pool.h"
-#include "testing/base/public/gmock.h"
-#include "testing/base/public/gunit.h"
 
 namespace mediapipe {
 namespace {
@@ -289,7 +288,7 @@ TEST(TensorAhwbTest, TestTrackingAhwb) {
       // Align size of the Ahwb by multiple of 16.
       auto view = tensor.GetAHardwareBufferWriteView();
       EXPECT_NE(view.handle(), nullptr);
-      view.SetReadingFinishedFunc([](bool) { return true; });
+      view.SetWritingFinishedFD(/*fd=*/-1, [](bool) { return true; });
     }
   }
   {
@@ -347,6 +346,32 @@ TEST(TensorAhwbTest, ShouldNotReuseHardwareBufferFromHardwareBufferPool) {
                   &memory_manager);
     auto view = tensor.GetAHardwareBufferWriteView();
     EXPECT_NE(view.handle(), buffer);
+  }
+}
+
+// Forwarding file-handle fences is critical in async DarwiNN inference where
+// the inference completion fence FD is assigned to all output tensors via
+// SetWritingFinishedFD. When executing a subsequent async DarwiNN inference,
+// previous output tensors become input tensors and need to forward the
+// corresponding fence FD to DarwiNN.
+TEST(TensorAhwbTest, ShouldForwardFinishFdToAHardwareBufferReadView) {
+  // Create tensor.
+  Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape{1});
+  constexpr int kTestFd = 123;
+  {
+    auto view = tensor.GetAHardwareBufferWriteView();
+    ASSERT_NE(view.handle(), nullptr);
+    view.SetWritingFinishedFD(kTestFd, [](bool) { return true; });
+  }
+  {
+    auto view = tensor.GetAHardwareBufferReadView();
+    ASSERT_NE(view.handle(), nullptr);
+    EXPECT_EQ(view.GetWriteCompleteFenceFd(), kTestFd);
+  }
+  {
+    auto view = tensor.GetAHardwareBufferReadView();
+    ASSERT_NE(view.handle(), nullptr);
+    EXPECT_EQ(view.GetWriteCompleteFenceFd(), kTestFd);
   }
 }
 

@@ -18,10 +18,12 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
+#include <limits>
 #include <memory>
 #include <optional>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
@@ -272,93 +274,6 @@ class FunctionTfliteModelData : public TfliteModelData {
   ModelData::ReadDataFn fn_;
 };
 
-// Loads the model using the passed metadata to point to offsets in the file.
-class CustomModelData : public ModelData {
- public:
-  CustomModelData(const odml::infra::proto::LlmFileMetadata& metadata,
-                  ScopedFile file,
-                  std::unique_ptr<DataHolder<const uint8_t>> spm_data)
-      : metadata_(metadata),
-        file_(std::move(file)),
-        spm_data_(std::move(spm_data)) {
-    for (const auto& tensor : metadata_.tensors()) {
-      tensors_[tensor.name()] = tensor;
-    }
-  }
-  ~CustomModelData() override = default;
-
-  std::optional<odml::infra::proto::LlmModelType> GetModelType() override {
-    return std::nullopt;
-  }
-
-  std::optional<int> LoRARank() override {
-    if (metadata_.lora_rank() > 0) {
-      return metadata_.lora_rank();
-    }
-    return std::nullopt;
-  }
-
-  const odml::infra::proto::LlmParameters& GetLlmParameters() override {
-    return metadata_.model_params();
-  }
-
-  absl::StatusOr<std::string> ReadMetadata(absl::string_view name) override {
-    if (name == kSpmVocabName && spm_data_) {
-      auto spm_data = std::move(spm_data_);
-      return std::string(
-          reinterpret_cast<const char*>(spm_data->GetData().data()),
-          spm_data->GetData().size());
-    } else if (name == kLlmBackendName) {
-      return "gpu";
-    }
-    return absl::NotFoundError(absl::StrCat("Failed to get metadata: ", name));
-  }
-
-  uint64_t GetMaxTensorSize() const override {
-    uint64_t max_size = 0;
-    for (const auto& kv : tensors_) {
-      max_size = std::max(
-          max_size,
-          GetAlignedOffsetAndSize(kv.second.offset(), kv.second.size()).size);
-    }
-    return max_size;
-  }
-
-  uint64_t GetTensorSize(absl::string_view name) const override {
-    if (auto it = tensors_.find(name); it != tensors_.end()) {
-      return it->second.size();
-    }
-    return 0;
-  }
-
-  absl::StatusOr<std::unique_ptr<DataHolder<uint8_t>>> ReadTensor(
-      absl::string_view name) override {
-    auto it = tensors_.find(name);
-    if (it == tensors_.end()) {
-      return nullptr;
-    }
-    return CreateMemoryMappedDataHolder<uint8_t>(
-        file_.file(), it->second.offset(), it->second.size(), key_);
-  }
-
-  void Clear() override {
-    file_ = ScopedFile();
-    spm_data_.reset();
-  }
-
- private:
-  odml::infra::proto::LlmFileMetadata metadata_;
-  ScopedFile file_;
-  std::unique_ptr<DataHolder<const uint8_t>> spm_data_;
-  absl::flat_hash_map<std::string,
-                      odml::infra::proto::LlmFileMetadata::TensorInfo>
-      tensors_;
-
-  static uint32_t next_key_;
-  std::string key_{absl::StrCat("CustomModelData_", next_key_++)};
-};
-uint32_t CustomModelData::next_key_ = 0;
-
 uint64_t AlignByN(uint64_t number, uint64_t n) {
   const uint64_t q = number / n;
   return (number % n == 0 ? q : q + 1) * n;
@@ -372,18 +287,6 @@ OffsetAndSize GetAlignedOffsetAndSize(uint64_t base_offset,
   uint64_t offset = (base_offset / kAlignment) * kAlignment;
   uint64_t size = AlignByN(base_offset - offset + base_size, kAlignment);
   return {.offset = offset, .size = size};
-}
-
-// static
-absl::StatusOr<std::shared_ptr<ModelData>> ModelData::Create(
-    std::unique_ptr<DataHolder<const uint8_t>> sp_model_proto,
-    std::unique_ptr<DataHolder<const uint8_t>> llm_model_proto,
-    ScopedFile file) {
-  odml::infra::proto::LlmFileMetadata file_metadata;
-  RET_CHECK(file_metadata.ParseFromArray(llm_model_proto->GetData().data(),
-                                         llm_model_proto->GetData().size()));
-  return std::make_shared<CustomModelData>(file_metadata, std::move(file),
-                                           std::move(sp_model_proto));
 }
 
 // static
@@ -433,60 +336,9 @@ absl::StatusOr<std::shared_ptr<ModelData>> ModelData::Create(ReadDataFn fn) {
 
 // static
 absl::StatusOr<std::shared_ptr<ModelData>> ModelData::Create(
-    absl::string_view weight_path, absl::string_view spm_path) {
-  // If the path is not a directory, it should be a tflite file.
-  if (!mediapipe::file::IsDirectory(weight_path).ok()) {
-    MP_ASSIGN_OR_RETURN(auto tflite_file, ScopedFile::Open(weight_path));
-    return ModelData::Create(std::move(tflite_file));
-  }
-
-  // If model proto exists, it should be a gpu combined model format.
-  auto model_proto_path =
-      mediapipe::file::JoinPath(weight_path, kBasePbFileName);
-  MP_RETURN_IF_ERROR(mediapipe::file::Exists(model_proto_path));
-
-  MP_ASSIGN_OR_RETURN(auto model_proto_file,
-                      ScopedFile::Open(model_proto_path));
-  MP_ASSIGN_OR_RETURN(auto weights_file,
-                      ScopedFile::Open(mediapipe::file::JoinPath(
-                          weight_path, kBaseWeightsFileName)));
-  MP_ASSIGN_OR_RETURN(
-      auto model_proto_data,
-      CreateMemoryMappedDataHolder<const uint8_t>(model_proto_file.file()));
-  // If spm_path is empty, we don't need to load SPM data separately.
-  if (spm_path.empty()) {
-    return ModelData::Create(nullptr, std::move(model_proto_data),
-                             std::move(weights_file));
-  }
-  MP_ASSIGN_OR_RETURN(auto spm_model_file, ScopedFile::Open(spm_path));
-  MP_ASSIGN_OR_RETURN(
-      auto spm_data,
-      CreateMemoryMappedDataHolder<const uint8_t>(spm_model_file.file()));
-  return ModelData::Create(std::move(spm_data), std::move(model_proto_data),
-                           std::move(weights_file));
-}
-
-// static
-absl::StatusOr<std::shared_ptr<ModelData>> ModelData::CreateLoRAFromPath(
-    absl::string_view lora_path) {
-  // If the path is not a directory, it should be a tflite file.
-  if (!mediapipe::file::IsDirectory(lora_path).ok()) {
-    MP_ASSIGN_OR_RETURN(auto tflite_file, ScopedFile::Open(lora_path));
-    return ModelData::Create(std::move(tflite_file));
-  }
-
-  // Otherwise, we expect the combined GPU model format.
-  MP_ASSIGN_OR_RETURN(
-      auto model_proto_file,
-      ScopedFile::Open(mediapipe::file::JoinPath(lora_path, kLoraPbFileName)));
-  MP_ASSIGN_OR_RETURN(auto weights_file,
-                      ScopedFile::Open(mediapipe::file::JoinPath(
-                          lora_path, kLoraWeightsFileName)));
-  MP_ASSIGN_OR_RETURN(
-      auto model_proto_data,
-      CreateMemoryMappedDataHolder<const uint8_t>(model_proto_file.file()));
-  return ModelData::Create(nullptr, std::move(model_proto_data),
-                           std::move(weights_file));
+    absl::string_view weight_path) {
+  MP_ASSIGN_OR_RETURN(auto tflite_file, ScopedFile::Open(weight_path));
+  return ModelData::Create(std::move(tflite_file));
 }
 
 }  // namespace mediapipe::tasks::genai::llm_utils

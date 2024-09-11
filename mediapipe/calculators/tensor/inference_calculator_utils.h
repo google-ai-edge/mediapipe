@@ -22,6 +22,7 @@
 #include "absl/status/statusor.h"
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
 #include "mediapipe/framework/formats/tensor.h"
+#include "mediapipe/framework/memory_manager.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "tensorflow/lite/interpreter.h"
 #include "tensorflow/lite/util.h"
@@ -71,13 +72,20 @@ absl::Status SetTfLiteCustomAllocation(tflite::Interpreter& interpreter,
       << "data_ptr must be aligned to " << tflite::kDefaultTensorAlignment
       << " bytes.";
   TfLiteCustomAllocation allocation = {
-      .data = const_cast<void*>(reinterpret_cast<const void*>(data_ptr)),
-      .bytes = size_bytes};
+      /*data=*/const_cast<void*>(reinterpret_cast<const void*>(data_ptr)),
+      /*bytes=*/size_bytes};
   RET_CHECK_EQ(
       interpreter.SetCustomAllocationForTensor(tensor_index, allocation),
       kTfLiteOk);
   return absl::OkStatus();
 }
+
+// Creates a new MP Tensor instance that matches the size and type of the
+// specified TfLite tensor. If optional 'alignment' is specified, the returned
+// tensor will be byte aligned to that value.
+absl::StatusOr<Tensor> CreateTensorWithTfLiteTensorSpecs(
+    const TfLiteTensor& reference_tflite_tensor,
+    MemoryManager* memory_manager = nullptr, int alignment = 0);
 
 }  // namespace mediapipe
 

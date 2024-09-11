@@ -44,6 +44,7 @@
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
+#include "mediapipe/tasks/cc/genai/inference/common/mdspan.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/utils.h"
 #include "xnnpack.h"  // from @XNNPACK
 
@@ -156,6 +157,21 @@ std::shared_ptr<Tensor> Tensor::Slice(DimsType offset) {
   return Slice(index_k, offset[index_k]);
 }
 
+void Tensor::PrintSpan() {
+  if (dims.size() == 1) {
+    ABSL_LOG(INFO) << MakeMdSpan(DataAs<float>(), dims[0]);
+  } else if (dims.size() == 2) {
+    ABSL_LOG(INFO) << MakeMdSpan(DataAs<float>(), dims[0], dims[1]);
+  } else if (dims.size() == 3) {
+    ABSL_LOG(INFO) << MakeMdSpan(DataAs<float>(), dims[0], dims[1], dims[2]);
+  } else if (dims.size() == 4) {
+    ABSL_LOG(INFO) << MakeMdSpan(DataAs<float>(), dims[0], dims[1], dims[2],
+                                 dims[3]);
+  } else {
+    ABSL_LOG(FATAL) << "Unsupported dims size: " << dims.size();
+  }
+}
+
 std::shared_ptr<Tensor> Tensor::Slice(size_t index, size_t offset) {
   size_t num_elements_offset = 1;
   DimsType new_dim = dims;
@@ -163,9 +179,33 @@ std::shared_ptr<Tensor> Tensor::Slice(size_t index, size_t offset) {
     if (i < index) {
       ABSL_DCHECK_EQ(dims[i], 1);
     } else if (i == index) {
-      ABSL_DCHECK_LT(offset, dims[i]);
+      ABSL_DCHECK_LT(offset, dims[i]) << "i = " << i;
       num_elements_offset *= offset;
       new_dim[i] = 1;
+    } else {
+      num_elements_offset *= dims[i];
+    }
+  }
+
+  auto result =
+      std::make_shared<Tensor>(std::move(new_dim), datatype, is_sparse());
+  result->flat_data = std::shared_ptr<char>(
+      flat_data, flat_data.get() + ElementSize(num_elements_offset));
+  result->elements_capacity = result->num_elements;
+  return result;
+}
+
+std::shared_ptr<Tensor> Tensor::Slice(size_t index, size_t start, size_t end) {
+  size_t num_elements_offset = 1;
+  DimsType new_dim = dims;
+  for (int i = 0; i < dims.size(); ++i) {
+    if (i < index) {
+      ABSL_DCHECK_EQ(dims[i], 1);
+    } else if (i == index) {
+      ABSL_DCHECK_LT(start, end);
+      ABSL_DCHECK_LE(end, dims[i]);
+      num_elements_offset *= start;
+      new_dim[i] = end - start;
     } else {
       num_elements_offset *= dims[i];
     }

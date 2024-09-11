@@ -121,6 +121,9 @@ LlmParams LlmParams::FromLLMParametersProto(
                                   : transformer_params.num_kv_heads()),
       .enable_kv_cache = true,
       .enable_dynamic_shape = true};
+  if (llm_params.has_num_draft_tokens()) {
+    params.draft_size_G = llm_params.num_draft_tokens();
+  }
   switch (
       transformer_params.self_attention_parameters().attention_mask_type()) {
     case TransformerParameters::UNSPECIFIED:

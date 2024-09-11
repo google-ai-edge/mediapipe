@@ -75,4 +75,17 @@ export declare interface LlmInferenceOptions extends TaskRunnerOptions {
    * The LoRA ranks that will be used during inference.
    */
   loraRanks?: number[];
+
+  /**
+   * The number of responses to generate for 'generateResponses' calls,
+   * defaulting to 1.
+   * In order to ensure variation of responses, you should set topK > 1 and
+   * temperature > 0 in the task options; otherwise sampling will collapse to
+   * greedy sampling, resulting in all generated responses having the same
+   * results.
+   * Also, note that increasing this will slow down `generateResponse` calls,
+   * because it will still generate many responses, even though it only returns
+   * the top result.
+   */
+  numResponses?: number;
 }

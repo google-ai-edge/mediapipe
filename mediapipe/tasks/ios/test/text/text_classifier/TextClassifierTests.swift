@@ -32,12 +32,12 @@ class TextClassifierTests: XCTestCase {
   static let bertNegativeTextResults = [
     ResultCategory(
       index: 0,
-      score: 0.956187,
+      score: 0.9633251,
       categoryName: "negative",
       displayName: nil),
     ResultCategory(
       index: 1,
-      score: 0.043812,
+      score: 0.036674,
       categoryName: "positive",
       displayName: nil),
   ]
@@ -45,7 +45,7 @@ class TextClassifierTests: XCTestCase {
   static let bertNegativeTextResultsForEdgeTestCases = [
     ResultCategory(
       index: 0,
-      score: 0.956187,
+      score: 0.963325,
       categoryName: "negative",
       displayName: nil)
   ]

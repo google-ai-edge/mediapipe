@@ -34,6 +34,7 @@ cc_library(
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "//mediapipe/tasks/cc/genai/inference/common:mdspan",
         "@XNNPACK",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/log:absl_check",
@@ -138,6 +139,7 @@ cc_library(
         "//mediapipe/framework/port:status",
         "//mediapipe/tasks/cc/genai/inference/proto:llm_params_cc_proto",
         "//mediapipe/tasks/cc/genai/inference/proto:transformer_params_cc_proto",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
@@ -159,6 +161,7 @@ cc_library(
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "//mediapipe/tasks/cc/genai/inference/common:mdspan",
         "@XNNPACK",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/base:nullability",
@@ -208,6 +211,8 @@ cc_library(
 
 cc_test(
     name = "llm_test",
+    size = "medium",
+    timeout = "eternal",
     srcs = [
         "llm_test.cc",
     ],
@@ -218,10 +223,12 @@ cc_test(
         ":llm",
         ":llm_weights",
         ":phi",
+        ":sampling",
         ":stablelm",
         ":tensor",
         "//mediapipe/framework/port:benchmark",
         "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/tasks/cc/genai/inference/common:mdspan",
         "//mediapipe/tasks/cc/genai/inference/proto:llm_params_cc_proto",
         "//mediapipe/tasks/cc/genai/inference/utils/llm_utils:well_known_models",
         "@XNNPACK",
@@ -231,6 +238,7 @@ cc_test(
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
+        "@com_google_absl//absl/types:span",
     ],
 )
 
@@ -276,9 +284,9 @@ cc_library(
         ":tensor",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "//mediapipe/tasks/cc/genai/inference/common:mdspan",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
-        "@com_google_absl//absl/strings",
     ],
 )
 

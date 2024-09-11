@@ -46,7 +46,6 @@ cc_library(
         ":low_pass_filter",
         "//mediapipe/framework/port:integral_types",
         "@com_google_absl//absl/log:absl_log",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/time",
     ],
 )

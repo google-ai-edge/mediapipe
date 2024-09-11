@@ -175,6 +175,7 @@ cc_test(
 
 cc_library(
     name = "options_map",
+    srcs = ["options_map.cc"],
     hdrs = ["options_map.h"],
     visibility = ["//mediapipe:__subpackages__"],
     deps = [
@@ -182,6 +183,8 @@ cc_library(
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework/port:any_proto",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/synchronization",
     ],
 )
 
@@ -734,7 +737,7 @@ mediapipe_binary_graph(
 
 data_as_c_string(
     name = "test_binarypb_inc",
-    testonly = 1,
+    testonly = True,
     srcs = [":test_binarypb"],
     outs = ["test_binarypb.inc"],
 )
@@ -790,7 +793,7 @@ cc_test(
 
 cc_library(
     name = "test_util",
-    testonly = 1,
+    testonly = True,
     srcs = ["test_util.cc"],
     hdrs = ["test_util.h"],
     visibility = ["//visibility:public"],

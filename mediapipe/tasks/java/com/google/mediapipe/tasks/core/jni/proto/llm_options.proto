@@ -22,6 +22,22 @@ option java_outer_classname = "LlmOptionsProto";
 
 // Configurable parameters for creating an LLM session.
 message LlmSessionConfig {
+  // Top K number of tokens to be sampled from for each decoding step.
+  uint32 topk = 1;
+
+  // Randomness when decoding the next token, 0.0f means greedy decoding.
+  float temperature = 2;
+
+  // Random seed for sampling tokens.
+  optional uint32 random_seed = 3;
+
+  // The absolute path to the LoRA model asset bundle stored locally on the
+  // device. This is only compatible with GPU models.
+  optional string lora_path = 4;
+}
+
+// Configurable model parameters for creating an LLM inference engine.
+message LlmModelSettings {
   // Path to the tflite model file.
   string model_path = 1;
 
@@ -43,16 +59,17 @@ message LlmSessionConfig {
   // number of input + output tokens the model needs to handle.
   uint32 max_tokens = 5;
 
-  // Top K number of tokens to be sampled from for each decoding step.
-  uint32 topk = 6;
+  // Number of supported lora ranks for the base model. Used by GPU only.
+  uint32 number_of_supported_lora_ranks = 6;
 
-  // Randomness when decoding the next token, 0.0f means greedy decoding.
-  float temperature = 7;
+  // The supported lora ranks for the base model. Used by GPU only.
+  repeated uint32 supported_lora_ranks = 7;
 
-  // Random seed for sampling tokens.
-  optional uint32 random_seed = 8;
-
-  // The absolute path to the LoRA model asset bundle stored locally on the
-  // device. This is only compatible with GPU models.
-  optional string lora_path = 9;
+  // Maximum top k, which is the max Top-K value supported for all
+  // sessions created with the engine, used by GPU only. If a session with Top-K
+  // value larger than this is being asked to be created, it will be
+  // rejected(throw error). If not provided, the max top k will be 1, which
+  // means only greedy decoding is supported for any sessions created with this
+  // engine.
+  uint32 max_top_k = 8;
 }

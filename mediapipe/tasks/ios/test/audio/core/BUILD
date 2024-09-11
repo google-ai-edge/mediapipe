@@ -43,7 +43,7 @@ TFL_DISABLED_SANITIZER_TAGS = [
 
 objc_library(
     name = "MPPFloatRingBufferObjcTestLibrary",
-    testonly = 1,
+    testonly = True,
     srcs = ["MPPFloatRingBufferTests.m"],
     tags = TFL_DEFAULT_TAGS,
     deps = [
@@ -65,7 +65,7 @@ ios_unit_test(
 
 objc_library(
     name = "MPPAudioRecordObjcTestLibrary",
-    testonly = 1,
+    testonly = True,
     srcs = ["MPPAudioRecordTests.mm"],
     copts = [
         "-ObjC++",
@@ -98,7 +98,7 @@ ios_unit_test(
 
 objc_library(
     name = "MPPAudioDataObjcTestLibrary",
-    testonly = 1,
+    testonly = True,
     srcs = ["MPPAudioDataTests.mm"],
     copts = [
         "-ObjC++",

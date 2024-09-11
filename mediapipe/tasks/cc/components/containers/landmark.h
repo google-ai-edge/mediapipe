@@ -24,7 +24,7 @@ limitations under the License.
 #include "mediapipe/framework/formats/landmark.pb.h"
 
 namespace mediapipe::tasks::components::containers {
-constexpr float kLandmarkTolerance = 1e-6;
+inline constexpr float kLandmarkTolerance = 1e-6;
 
 // Landmark represents a point in 3D space with x, y, z coordinates. The
 // landmark coordinates are in meters. z represents the landmark depth, and the

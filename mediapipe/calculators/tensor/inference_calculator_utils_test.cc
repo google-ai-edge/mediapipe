@@ -16,8 +16,11 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
+#include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/log/absl_check.h"
@@ -488,6 +491,60 @@ TEST(InferenceCalculatorUtilsTest, ShouldNotConfirmTfLiteMemoryAlignment) {
   EXPECT_FALSE(IsAlignedWithTFLiteDefaultAlignment(read_view.buffer<int32_t>() +
                                                    sizeof(int32_t)));
 }
+
+static std::vector<std::pair<TfLiteType, Tensor::ElementType>>
+GetTensorTypePairs() {
+  return {{TfLiteType::kTfLiteFloat16, Tensor::ElementType::kFloat32},
+          {TfLiteType::kTfLiteFloat32, Tensor::ElementType::kFloat32},
+          {TfLiteType::kTfLiteUInt8, Tensor::ElementType::kUInt8},
+          {TfLiteType::kTfLiteInt8, Tensor::ElementType::kInt8},
+          {TfLiteType::kTfLiteInt32, Tensor::ElementType::kInt32},
+          {TfLiteType::kTfLiteBool, Tensor::ElementType::kBool}};
+}
+
+static auto CreateTfLiteTensor(TfLiteType type, int num_elements, float scale,
+                               float zero_point) {
+  auto dealloc = [](TfLiteTensor* tensor) {
+    TfLiteIntArrayFree(tensor->dims);
+    delete (tensor);
+  };
+  std::unique_ptr<TfLiteTensor, decltype(dealloc)> tflite_tensor(
+      new TfLiteTensor, dealloc);
+  tflite_tensor->type = type;
+  tflite_tensor->allocation_type = kTfLiteDynamic;
+  tflite_tensor->quantization.type = kTfLiteNoQuantization;
+  TfLiteIntArray* dims = tflite::ConvertVectorToTfLiteIntArray({num_elements});
+  tflite_tensor->dims = dims;
+  tflite_tensor->params.scale = scale;
+  tflite_tensor->params.zero_point = zero_point;
+  return tflite_tensor;
+}
+
+class AllocateTensorWithTfLiteTensorSpecsTest
+    : public ::testing::TestWithParam<
+          std::pair<TfLiteType, Tensor::ElementType>> {};
+
+TEST_P(AllocateTensorWithTfLiteTensorSpecsTest,
+       ShouldAllocateTensorWithTfLiteTensorSpecs) {
+  const auto& config = GetParam();
+  const auto tflite_tensor =
+      CreateTfLiteTensor(config.first, /*num_elements=*/4,
+                         /*scale=*/2.0f, /*zero_point=*/3.0f);
+  MP_ASSERT_OK_AND_ASSIGN(Tensor mp_tensor,
+                          CreateTensorWithTfLiteTensorSpecs(
+                              *tflite_tensor, /*memory_manager=*/nullptr,
+                              tflite::kDefaultTensorAlignment));
+  EXPECT_EQ(mp_tensor.element_type(), config.second);
+  EXPECT_EQ(mp_tensor.shape().num_elements(), 4);
+  if (config.first != TfLiteType::kTfLiteBool) {
+    EXPECT_FLOAT_EQ(mp_tensor.quantization_parameters().scale, 2.0f);
+    EXPECT_FLOAT_EQ(mp_tensor.quantization_parameters().zero_point, 3.0f);
+  }
+}
+
+INSTANTIATE_TEST_SUITE_P(AllocateTensorWithTfLiteTensorSpecsParamTest,
+                         AllocateTensorWithTfLiteTensorSpecsTest,
+                         ::testing::ValuesIn(GetTensorTypePairs()));
 
 }  // namespace
 }  // namespace mediapipe

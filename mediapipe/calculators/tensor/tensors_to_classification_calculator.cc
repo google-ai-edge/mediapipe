@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <algorithm>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -114,7 +115,7 @@ absl::Status TensorsToClassificationCalculator::Open(CalculatorContext* cc) {
                         PathToResourceAsFile(options.label_map_path()));
     std::string label_map_string;
     MP_RETURN_IF_ERROR(
-        mediapipe::GetResourceContents(string_path, &label_map_string));
+        cc->GetResources().ReadContents(string_path, label_map_string));
 
     std::istringstream stream(label_map_string);
     std::string line;

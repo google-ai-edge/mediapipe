@@ -52,10 +52,11 @@ absl::StatusOr<std::unique_ptr<Sampler>> Sampler::Create(Type type, int top_k,
   return absl::WrapUnique(new Sampler(type, top_k, top_p, temperature, seed));
 }
 
-absl::StatusOr<std::vector<int>> Sampler::Sample(const Tensor& logits) {
-  if (logits.dims.size() != 3 || logits.dims[1] != 1) {
+absl::StatusOr<std::vector<std::vector<int>>> Sampler::Sample(
+    const Tensor& logits) {
+  if (logits.dims.size() != 3) {
     return absl::InvalidArgumentError(
-        "Tensor must be (Batch, 1 [seq_len], vocab_size)");
+        "Tensor must be (Batch, seq_len, vocab_size)");
   }
 
   switch (type_) {
@@ -77,72 +78,99 @@ Sampler::Sampler(Type type, int top_k, float top_p, float temperature, int seed)
       temperature_(temperature),
       generator_(std::make_unique<std::mt19937>(seed)) {}
 
-absl::StatusOr<std::vector<int>> Sampler::SampleGreedy(const Tensor& logits) {
+absl::StatusOr<std::vector<std::vector<int>>> Sampler::SampleGreedy(
+    const Tensor& logits) {
   size_t batch_size = logits.dims[0];
+  size_t draft_size = logits.dims[1];
   size_t vocab_size = logits.dims[2];
 
   const float* float_logits = logits.DataAs<float>();
-  std::vector<int> outputs;
+  std::vector<std::vector<int>> outputs;
   outputs.reserve(batch_size);
   // select the token with the highest logit directly.
-  for (int c = 0; c < batch_size; ++c) {
-    float max_logit = float_logits[c * vocab_size];
-    int max_id = 0;
-    for (int v = 0; v < vocab_size; ++v) {
-      float prob = float_logits[c * vocab_size + v];
-      if (prob > max_logit) {
-        max_logit = prob;
-        max_id = v;
+  for (int batch = 0; batch < batch_size; ++batch) {
+    outputs.push_back(std::vector<int>());
+    outputs[batch].reserve(draft_size);
+    for (int draft = 0; draft < draft_size; ++draft) {
+      // the index of the first logit for a single token
+      int token_index =
+          (batch * draft_size * vocab_size) + (draft * vocab_size);
+      float max_logit = float_logits[token_index];
+      int max_id = 0;
+      for (int v = 0; v < vocab_size; ++v) {
+        float prob = float_logits[token_index + v];
+        if (prob > max_logit) {
+          max_logit = prob;
+          max_id = v;
+        }
       }
+      outputs[batch].push_back(max_id);
     }
-    outputs.push_back(max_id);
   }
   return outputs;
 };
 
-absl::StatusOr<std::vector<int>> Sampler::SampleTopK(const Tensor& logits) {
+absl::StatusOr<std::vector<std::vector<int>>> Sampler::SampleTopK(
+    const Tensor& logits) {
   const size_t batch_size = logits.dims[0];
+  const size_t draft_size = logits.dims[1];
   const size_t vocab_size = logits.dims[2];
   const float* flat_data = logits.DataAs<float>();
 
-  std::vector<int> outputs;
+  std::vector<std::vector<int>> outputs;
   outputs.reserve(batch_size);
   for (int batch = 0; batch < batch_size; ++batch) {
-    std::vector<std::pair<float, int>> logits_ids;
-    logits_ids.reserve(vocab_size);
-    for (int v = 0; v < vocab_size; ++v) {
-      float logit = flat_data[batch * vocab_size + v];
-      logits_ids.push_back(std::make_pair(logit, v));
+    outputs.push_back(std::vector<int>());
+    outputs[batch].reserve(draft_size);
+    for (int draft = 0; draft < draft_size; ++draft) {
+      // the index of the first logit for a single token
+      int token_index =
+          (batch * draft_size * vocab_size) + (draft * vocab_size);
+      std::vector<std::pair<float, int>> logits_ids;
+      logits_ids.reserve(vocab_size);
+      for (int v = 0; v < vocab_size; ++v) {
+        float logit = flat_data[token_index + v];
+        logits_ids.push_back(std::make_pair(logit, v));
+      }
+      MP_RETURN_IF_ERROR(SelectTopK(logits_ids, top_k_));
+      // No need to normalize logits here, sampler takes care of that.
+      MP_RETURN_IF_ERROR(ScaledSoftmax(logits_ids, /*normalize=*/false));
+      MP_ASSIGN_OR_RETURN(int sample_idx, DoSampling(logits_ids));
+      outputs[batch].push_back(sample_idx);
     }
-    MP_RETURN_IF_ERROR(SelectTopK(logits_ids, top_k_));
-    // No need to normalize logits here, sampler takes care of that.
-    MP_RETURN_IF_ERROR(ScaledSoftmax(logits_ids, /*normalize=*/false));
-    MP_ASSIGN_OR_RETURN(int sample_idx, DoSampling(logits_ids));
-    outputs.push_back(sample_idx);
   }
   return outputs;
 }
 
-absl::StatusOr<std::vector<int>> Sampler::SampleTopP(const Tensor& logits) {
+absl::StatusOr<std::vector<std::vector<int>>> Sampler::SampleTopP(
+    const Tensor& logits) {
   const size_t batch_size = logits.dims[0];
+  const size_t draft_size = logits.dims[1];
   const size_t vocab_size = logits.dims[2];
   const int k = top_k_ > 0 ? top_k_ : vocab_size;
   const float* flat_data = logits.DataAs<float>();
 
-  std::vector<int> outputs;
+  std::vector<std::vector<int>> outputs;
   outputs.reserve(batch_size);
   for (int batch = 0; batch < batch_size; ++batch) {
-    std::vector<std::pair<float, int>> logits_ids;
-    logits_ids.reserve(vocab_size);
-    for (int v = 0; v < vocab_size; ++v) {
-      float logit = flat_data[batch * vocab_size + v];
-      logits_ids.push_back(std::make_pair(logit, v));
+    outputs.push_back(std::vector<int>());
+    outputs[batch].reserve(draft_size);
+    for (int draft = 0; draft < draft_size; ++draft) {
+      // the index of the first logit for a single token
+      int token_index =
+          (batch * draft_size * vocab_size) + (draft * vocab_size);
+      std::vector<std::pair<float, int>> logits_ids;
+      logits_ids.reserve(vocab_size);
+      for (int v = 0; v < vocab_size; ++v) {
+        float logit = flat_data[token_index + v];
+        logits_ids.push_back(std::make_pair(logit, v));
+      }
+      MP_RETURN_IF_ERROR(SelectTopK(logits_ids, k));
+      MP_RETURN_IF_ERROR(ScaledSoftmax(logits_ids, /*normalize=*/true));
+      MP_RETURN_IF_ERROR(SelectTopP(logits_ids, top_p_));
+      MP_ASSIGN_OR_RETURN(int sample_idx, DoSampling(logits_ids));
+      outputs[batch].push_back(sample_idx);
     }
-    MP_RETURN_IF_ERROR(SelectTopK(logits_ids, k));
-    MP_RETURN_IF_ERROR(ScaledSoftmax(logits_ids, /*normalize=*/true));
-    MP_RETURN_IF_ERROR(SelectTopP(logits_ids, top_p_));
-    MP_ASSIGN_OR_RETURN(int sample_idx, DoSampling(logits_ids));
-    outputs.push_back(sample_idx);
   }
   return outputs;
 }

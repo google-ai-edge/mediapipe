@@ -36,4 +36,7 @@ message LlmInferenceGraphOptions {
 
   // The LoRA ranks that will be used during inference.
   repeated int32 lora_ranks = 4;
+
+  // The number of responses to generate for 'generateResponses' call.
+  optional uint32 num_responses = 5;
 }

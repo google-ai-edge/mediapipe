@@ -33,6 +33,7 @@ class ConversionConfig(object):
       2) is applicable for other models. When 2) is used, the provided path is
       expected to point to a directory that contains both tokenizer.json and
       tokenizer_config.json files.
+    obfuscate: Whether to obfuscate the model.
     output_tflite_file: (optional) the output tflite filename. If not provided,
       the output will be `model.tflite` stored in the output_dir.
     fp16_scale: A scalar value between [0, 1]. Some models can run into
@@ -47,6 +48,8 @@ class ConversionConfig(object):
     lora_output_tflite_file: A string indicating the name of the generated
       tflite file for the LoRA weight. Only applicable when the lora_rank is not
       zero.
+    use_fake_weights: Whether to use fake weights. If set to True, the weights
+      will be filled with zeros.
   """
 
   def __init__(
@@ -62,11 +65,13 @@ class ConversionConfig(object):
       embedding_quant_bits: int = 8,
       combine_file_only: bool = False,
       vocab_model_file: str = '',
+      obfuscate: bool = False,
       output_tflite_file: Optional[str] = None,
       fp16_scale: Optional[float] = None,
       lora_ckpt: Optional[str] = None,
       lora_rank: Optional[int] = None,
       lora_output_tflite_file: Optional[str] = None,
+      use_fake_weights: bool = False,
   ):
     self.input_ckpt = input_ckpt
     self.ckpt_format = ckpt_format
@@ -84,6 +89,8 @@ class ConversionConfig(object):
     self.embedding_quant_bits = embedding_quant_bits
     self.combine_file_only = combine_file_only
     self.vocab_model_file = vocab_model_file
+    self.obfuscate = obfuscate
+    self.use_fake_weights = use_fake_weights
     if output_tflite_file:
       parent_dir = os.path.dirname(output_tflite_file)
       if not os.path.isdir(parent_dir):
@@ -200,6 +207,7 @@ def combined_weight_bins_to_tflite(
     backend: str,
     weight_path: str,
     output_tflite_file: str,
+    obfuscate: bool,
     vocab_model_file: str,
     lora_rank: Optional[int] = None,
     lora_weight_path: Optional[str] = None,
@@ -222,6 +230,7 @@ def combined_weight_bins_to_tflite(
         weight_path,
         vocab_model_file,
         True,
+        obfuscate,
         output_tflite_file,
         0 if lora_rank is None else lora_rank,
         '' if lora_weight_path is None else lora_weight_path,
@@ -286,7 +295,7 @@ def maybe_quantize_and_write_tensors_to_bins(
         output_dir=config.output_dir,
         backend=config.backend,
     )
-    writer.write_variables(quantized_tensors)
+    writer.write_variables(quantized_tensors, config.use_fake_weights)
     del quantized_tensors
     del writer
 
@@ -325,9 +334,9 @@ def convert_checkpoint(config: ConversionConfig) -> None:
           ckpt_path=config.lora_ckpt,
           is_symmetric=config.is_symmetric,
           backend=config.backend,
-          attention_quant_bits=None,
-          feedforward_quant_bits=None,
-          embedding_quant_bits=None,
+          attention_quant_bits=config.attention_quant_bits,
+          feedforward_quant_bits=config.feedforward_quant_bits,
+          embedding_quant_bits=config.embedding_quant_bits,
           special_model=config.model_type,
       )
       maybe_quantize_and_write_tensors_to_bins(lora_loader, config)
@@ -339,6 +348,7 @@ def convert_checkpoint(config: ConversionConfig) -> None:
       config.backend,
       weight_path=config.output_dir,
       output_tflite_file=config.output_tflite_file,
+      obfuscate=config.obfuscate,
       vocab_model_file=vocab_model_path,
       lora_rank=config.lora_rank,
       lora_weight_path=config.output_dir,

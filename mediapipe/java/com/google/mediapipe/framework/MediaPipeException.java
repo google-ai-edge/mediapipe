@@ -15,7 +15,7 @@
 package com.google.mediapipe.framework;
 
 // Package java.nio.charset is not yet available in all Android apps.
-import static com.google.common.base.Charsets.UTF_8;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /** This class represents an error reported by the MediaPipe framework. */
 public class MediaPipeException extends RuntimeException {

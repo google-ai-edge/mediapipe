@@ -15,13 +15,14 @@
 // Defines SpectrogramCalculator.
 #include <math.h>
 
-#include <complex>
-#include <deque>
+#include <cstdint>
 #include <memory>
 #include <optional>
-#include <string>
+#include <vector>
 
+#include "Eigen/Core"
 #include "absl/status/status.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "audio/dsp/spectrogram/spectrogram.h"
 #include "audio/dsp/window_functions.h"
@@ -29,6 +30,7 @@
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/port/logging.h"
+#include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_builder.h"
 #include "mediapipe/util/time_series_util.h"
 
@@ -64,7 +66,7 @@ constexpr char kFrameOverlapTag[] = "FRAME_OVERLAP";
 // Timestamps regardless of a packet's signal length.
 //
 // Both frame_duration_seconds and frame_overlap_seconds will be
-// rounded to the nearest integer number of samples.  Conseqently, all output
+// rounded to the nearest integer number of samples. Consequently, all output
 // frames will be based on the same number of input samples, and each
 // analysis frame will advance from its predecessor by the same time step.
 class SpectrogramCalculator : public CalculatorBase {
@@ -297,6 +299,7 @@ absl::Status SpectrogramCalculator::Open(CalculatorContext* cc) {
                                      spectrogram_options.window_type()));
   }
   std::vector<double> window;
+
   window_fun->GetPeriodicSamples(frame_duration_samples_, &window);
 
   // Propagate settings down to the actual Spectrogram object.
@@ -308,7 +311,7 @@ absl::Status SpectrogramCalculator::Open(CalculatorContext* cc) {
   spectrogram_generators_.clear();
   for (int i = 0; i < num_input_channels_; i++) {
     spectrogram_generators_.push_back(
-        std::unique_ptr<audio_dsp::Spectrogram>(new audio_dsp::Spectrogram()));
+        std::make_unique<audio_dsp::Spectrogram>());
     spectrogram_generators_[i]->Initialize(window, frame_step_samples(),
                                            fft_size);
   }

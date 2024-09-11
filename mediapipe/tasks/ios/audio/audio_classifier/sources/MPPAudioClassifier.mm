@@ -22,7 +22,6 @@
 #import "mediapipe/tasks/ios/core/sources/MPPTaskInfo.h"
 
 namespace {
-using ::mediapipe::Packet;
 using ::mediapipe::Timestamp;
 using ::mediapipe::tasks::core::PacketMap;
 using ::mediapipe::tasks::core::PacketsCallback;
@@ -93,7 +92,7 @@ static const int kMicrosecondsPerMillisecond = 1000;
       // the delegate method, the queue on which the C++ callbacks is invoked is not blocked and is
       // freed up to continue with its operations.
       _callbackQueue = dispatch_queue_create(
-          [MPPAudioTaskRunner uniqueDispatchQueueNameWithSuffix:kTaskName], NULL);
+          [MPPAudioTaskRunner uniqueDispatchQueueNameWithSuffix:kTaskName], nullptr);
 
       // Capturing `self` as weak in order to avoid `self` being kept in memory
       // and cause a retain cycle, after self is set to `nil`.

@@ -43,7 +43,7 @@ class GraphServiceBase {
     kDisallowDefaultInitialization
   };
 
-  constexpr GraphServiceBase(const char* key) : key(key) {}
+  explicit constexpr GraphServiceBase(const char* key) : key(key) {}
 
   inline virtual absl::StatusOr<Packet> CreateDefaultObject() const {
     return DefaultInitializationUnsupported();

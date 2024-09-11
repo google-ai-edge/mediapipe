@@ -33,16 +33,16 @@ namespace tasks {
 namespace text {
 namespace tokenizers {
 
-constexpr char kDefaultDelimRe[] =
+inline constexpr char kDefaultDelimRe[] =
     R"((\s+|[!-/]|[:-@]|[\[-`]|[{-~]|[\p{P}]|[\x{4E00}-\x{9FFF}]|[\x{3400}-\x{4DBF}]|[\x{20000}-\x{2A6DF}]|[\x{2A700}-\x{2B73F}]|[\x{2B740}-\x{2B81F}]|[\x{2B820}-\x{2CEAF}]|[\x{F900}-\x{FAFF}]|[\x{2F800}-\x{2FA1F}]))";
-constexpr char kDefaultIncludeDelimRe[] =
+inline constexpr char kDefaultIncludeDelimRe[] =
     R"(([!-/]|[:-@]|[\[-`]|[{-~]|[\p{P}]|[\x{4E00}-\x{9FFF}]|[\x{3400}-\x{4DBF}]|[\x{20000}-\x{2A6DF}]|[\x{2A700}-\x{2B73F}]|[\x{2B740}-\x{2B81F}]|[\x{2B820}-\x{2CEAF}]|[\x{F900}-\x{FAFF}]|[\x{2F800}-\x{2FA1F}]))";
-constexpr int kDefaultMaxBytesPerToken = 100;
-constexpr int kDefaultMaxCharsPerSubToken = 100;
-constexpr char kDefaultSuffixIndicator[] = "##";
-constexpr bool kDefaultUseUnknownToken = true;
-constexpr char kDefaultUnknownToken[] = "[UNK]";
-constexpr bool kDefaultSplitUnknownChars = false;
+inline constexpr int kDefaultMaxBytesPerToken = 100;
+inline constexpr int kDefaultMaxCharsPerSubToken = 100;
+inline constexpr char kDefaultSuffixIndicator[] = "##";
+inline constexpr bool kDefaultUseUnknownToken = true;
+inline constexpr char kDefaultUnknownToken[] = "[UNK]";
+inline constexpr bool kDefaultSplitUnknownChars = false;
 
 // Result of wordpiece tokenization including subwords and offsets.
 // Example:

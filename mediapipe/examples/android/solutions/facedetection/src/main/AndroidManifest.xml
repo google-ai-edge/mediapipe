@@ -4,7 +4,7 @@
 
   <uses-sdk
       android:minSdkVersion="21"
-      android:targetSdkVersion="30" />
+      android:targetSdkVersion="34" />
 
   <!-- For loading images from gallery -->
   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />

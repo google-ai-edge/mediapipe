@@ -2,11 +2,13 @@ package com.google.mediapipe.tasks.genai.llminference;
 
 import android.content.Context;
 import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableList;
 import com.google.mediapipe.framework.MediaPipeException;
 import com.google.mediapipe.tasks.core.ErrorListener;
 import com.google.mediapipe.tasks.core.LlmTaskRunner;
 import com.google.mediapipe.tasks.core.OutputHandler.ProgressListener;
 import com.google.mediapipe.tasks.core.TaskOptions;
+import com.google.mediapipe.tasks.core.jni.proto.LlmOptionsProto.LlmModelSettings;
 import com.google.mediapipe.tasks.core.jni.proto.LlmOptionsProto.LlmSessionConfig;
 import java.util.List;
 import java.util.Optional;
@@ -30,13 +32,21 @@ public class LlmInference implements AutoCloseable {
 
   /** Creates an LlmInference Task. */
   public static LlmInference createFromOptions(Context context, LlmInferenceOptions options) {
+    // Configure LLM model settings.
+    LlmModelSettings modelSettings =
+        LlmModelSettings.newBuilder()
+            .setModelPath(options.modelPath())
+            .setCacheDir(context.getCacheDir().getAbsolutePath())
+            .setNumDecodeStepsPerSync(NUM_DECODE_STEPS_PER_SYNC)
+            .setMaxTokens(options.maxTokens())
+            .setMaxTopK(options.topK())
+            .setNumberOfSupportedLoraRanks(options.numOfSupportedLoraRanks())
+            .addAllSupportedLoraRanks(options.supportedLoraRanks())
+            .build();
+
     // Configure LLM session config.
     LlmSessionConfig.Builder sessionConfig = LlmSessionConfig.newBuilder();
 
-    sessionConfig.setModelPath(options.modelPath());
-    sessionConfig.setCacheDir(context.getCacheDir().getAbsolutePath());
-    sessionConfig.setNumDecodeStepsPerSync(NUM_DECODE_STEPS_PER_SYNC);
-    sessionConfig.setMaxTokens(options.maxTokens());
     sessionConfig.setTopk(options.topK());
     sessionConfig.setTemperature(options.temperature());
     sessionConfig.setRandomSeed(options.randomSeed());
@@ -46,13 +56,15 @@ public class LlmInference implements AutoCloseable {
       sessionConfig.setLoraPath("");
     }
 
-    return new LlmInference(context, STATS_TAG, sessionConfig.build(), options.resultListener());
+    return new LlmInference(
+        context, STATS_TAG, modelSettings, sessionConfig.build(), options.resultListener());
   }
 
   /** Constructor to initialize an {@link LlmInference}. */
   private LlmInference(
       Context context,
       String taskName,
+      LlmModelSettings modelSettings,
       LlmSessionConfig sessionConfig,
       Optional<ProgressListener<String>> resultListener) {
     Optional<ProgressListener<List<String>>> llmResultListener;
@@ -81,7 +93,8 @@ public class LlmInference implements AutoCloseable {
       llmResultListener = Optional.empty();
     }
 
-    this.taskRunner = new LlmTaskRunner(context, taskName, sessionConfig, llmResultListener);
+    this.taskRunner =
+        new LlmTaskRunner(context, taskName, modelSettings, sessionConfig, llmResultListener);
     this.isProcessing = new AtomicBoolean(false);
   }
 
@@ -204,6 +217,12 @@ public class LlmInference implements AutoCloseable {
       /** Configures random seed for sampling tokens. */
       public abstract Builder setRandomSeed(int randomSeed);
 
+      /** Number of supported lora ranks for the base model. Used by GPU only. */
+      public abstract Builder setNumOfSupportedLoraRanks(int numOfSupportedLoraRanks);
+
+      /** The supported lora ranks for the base model. Used by GPU only. */
+      public abstract Builder setSupportedLoraRanks(List<Integer> supportedLoraRanks);
+
       /**
        * The absolute path to the LoRA model asset bundle stored locally on the device. This is only
        * compatible with GPU models.
@@ -239,6 +258,12 @@ public class LlmInference implements AutoCloseable {
     /** Random seed for sampling tokens. */
     public abstract int randomSeed();
 
+    /** Number of supported lora ranks for the base model. Used by GPU only. */
+    public abstract int numOfSupportedLoraRanks();
+
+    /** The supported lora ranks for the base model. Used by GPU only. */
+    public abstract ImmutableList<Integer> supportedLoraRanks();
+
     /**
      * The absolute path to the LoRA model asset bundle stored locally on the device. This is only
      * compatible with GPU models.
@@ -257,7 +282,9 @@ public class LlmInference implements AutoCloseable {
           .setMaxTokens(512)
           .setTopK(40)
           .setTemperature(0.8f)
-          .setRandomSeed(0);
+          .setRandomSeed(0)
+          .setNumOfSupportedLoraRanks(0)
+          .setSupportedLoraRanks(ImmutableList.of());
     }
   }
 

@@ -26,7 +26,7 @@ static const NSUInteger kMaximumChannelCount = 2;
 
   /**
    * Specifying a custom buffer size on `AVAudioEngine` while tapping audio does not take effect.
-   * Hence we store the returned samples in a ring buffer to acheive the desired buffer length. If
+   * Hence we store the returned samples in a ring buffer to achieve the desired buffer length. If
    * the specified buffer length is shorter than the buffer length supported by `AVAudioEngine` only
    * the most recent data of the buffer of length `bufferLength` will be stored by the ring buffer.
    */
@@ -279,7 +279,7 @@ static const NSUInteger kMaximumChannelCount = 2;
     case AVAudioConverterOutputStatus_Error: {
       NSString *errorDescription = conversionError.localizedDescription
                                        ? conversionError.localizedDescription
-                                       : @"Some error occured while processing incoming audio "
+                                       : @"Some error occurred while processing incoming audio "
                                          @"frames.";
       [MPPCommonUtils createCustomError:error
                                withCode:MPPTasksErrorCodeInternalError

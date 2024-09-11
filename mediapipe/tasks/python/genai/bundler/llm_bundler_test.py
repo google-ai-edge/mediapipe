@@ -41,6 +41,8 @@ class LlmBundlerTest(absltest.TestCase):
         stop_tokens=["EOS1", "EOS2"],
         output_filename=output_file,
         enable_bytes_to_unicode_mapping=True,
+        prompt_prefix="<start_of_turn>user\n ",
+        prompt_suffix="<end_of_turn>\n<start_of_turn>model\n"
     )
     llm_bundler.create_bundle(config)
     return output_file

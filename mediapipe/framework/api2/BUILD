@@ -99,7 +99,7 @@ cc_library(
 
 cc_library(
     name = "test_contracts",
-    testonly = 1,
+    testonly = True,
     hdrs = ["test_contracts.h"],
     deps = [
         ":node",
@@ -161,7 +161,6 @@ cc_test(
         ":packet",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/port:gtest_main",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],

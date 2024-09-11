@@ -15,9 +15,13 @@
 #ifndef MEDIAPIPE_GPU_MULTI_POOL_H_
 #define MEDIAPIPE_GPU_MULTI_POOL_H_
 
+#include <functional>
 #include <memory>
+#include <vector>
 
+#include "absl/base/thread_annotations.h"
 #include "absl/status/statusor.h"
+#include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/util/resource_cache.h"
 
@@ -60,8 +64,8 @@ class MultiPool {
   using SimplePoolFactory = std::function<std::shared_ptr<SimplePool>(
       const Spec& spec, const MultiPoolOptions& options)>;
 
-  MultiPool(SimplePoolFactory factory = DefaultMakeSimplePool,
-            MultiPoolOptions options = kDefaultMultiPoolOptions)
+  explicit MultiPool(SimplePoolFactory factory = DefaultMakeSimplePool,
+                     MultiPoolOptions options = kDefaultMultiPoolOptions)
       : create_simple_pool_(factory), options_(options) {}
   explicit MultiPool(MultiPoolOptions options)
       : MultiPool(DefaultMakeSimplePool, options) {}

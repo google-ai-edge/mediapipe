@@ -142,6 +142,9 @@ class XnnGraphBuilder {
 
   absl::StatusOr<std::shared_ptr<Tensor>> Log(std::shared_ptr<Tensor> input);
 
+  absl::StatusOr<std::shared_ptr<Tensor>> CopySign(std::shared_ptr<Tensor> lhs,
+                                                   std::shared_ptr<Tensor> rhs);
+
   absl::StatusOr<std::shared_ptr<Tensor>> Clamp(std::shared_ptr<Tensor> input,
                                                 ClampParams params);
 
@@ -167,7 +170,7 @@ class XnnGraphBuilder {
                                                   Tensor::DimsType permute);
 
   // Create a slice of the input tensor. Both `starts` and `ends` must have
-  // the same sizes as the number of dimmensions in the input tensor. The
+  // the same sizes as the number of dimensions in the input tensor. The
   // resulting slice includes data from `[start[i], end[i])` for each dimension.
   // For instance, for input A = [1, 2, 3, 4] and starts = [1] and ends = [3],
   // the resulting slice would be [2, 3].

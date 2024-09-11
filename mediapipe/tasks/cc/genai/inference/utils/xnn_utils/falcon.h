@@ -21,6 +21,7 @@
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "mediapipe/tasks/cc/genai/inference/common/mdspan.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/llm.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/llm_weights.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/xnn_tensor.h"
@@ -59,10 +60,13 @@ class FalconRW1BBuilder : public LlmBuilder {
 
   // Creates an Alibi fused attention mask.
   absl::Status InitAttentionMask(size_t current_seq_len, size_t process_seq_len,
-                                 bool is_prefix,
                                  Tensor& out_attn_mask) override;
 
   absl::Status InitAlibiAttentionMaskValues();
+
+  // Storing values of Alibi attention mask with shape [max_seq_len, num_heads,
+  // max_seq_len]
+  MdSpan<float, 3> attention_mask_values_;
 };
 
 }  // namespace mediapipe::tasks::genai::xnn_utils

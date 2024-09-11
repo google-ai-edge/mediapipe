@@ -42,9 +42,6 @@ message SamplerParameters {
   float p = 3;
   // The temperature used to scale the logits before computing softmax.
   float temperature = 4;
-  // The seed used to initialize the random number generator. If using the GPU
-  // path, this field is ignored, please use the random_seed field in
-  // model_settings instead.
-  // TODO: b/350534447 - Move to model_settings for CPU path as well.
+  // The seed used to initialize the random number generator.
   optional int32 seed = 5;
 }

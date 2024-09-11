@@ -191,8 +191,6 @@ class OpenCvVideoDecoderCalculator : public CalculatorBase {
   absl::Status Process(CalculatorContext* cc) override {
     auto image_frame = absl::make_unique<ImageFrame>(format_, width_, height_,
                                                      /*alignment_boundary=*/1);
-    // Use microsecond as the unit of time.
-    Timestamp timestamp(cap_->get(cv::CAP_PROP_POS_MSEC) * 1000);
     if (format_ == ImageFormat::GRAY8) {
       cv::Mat frame = formats::MatView(image_frame.get());
       ReadFrame(frame);
@@ -213,6 +211,8 @@ class OpenCvVideoDecoderCalculator : public CalculatorBase {
                      cv::COLOR_BGRA2RGBA);
       }
     }
+    // Use microsecond as the unit of time.
+    Timestamp timestamp(cap_->get(cv::CAP_PROP_POS_MSEC) * 1000);
     // If the timestamp of the current frame is not greater than the one of the
     // previous frame, the new frame will be discarded.
     if (prev_timestamp_ < timestamp) {

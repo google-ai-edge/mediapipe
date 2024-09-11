@@ -34,7 +34,7 @@ def mediapipe_cc_test(
         **kwargs):
     native.cc_library(
         name = name + "_lib",
-        testonly = 1,
+        testonly = True,
         srcs = srcs,
         data = data,
         deps = deps + additional_deps,

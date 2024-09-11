@@ -40,7 +40,7 @@ exports_files([
 
 mediapipe_simple_subgraph(
     name = "dub_quad_test_subgraph",
-    testonly = 1,
+    testonly = True,
     graph = "dub_quad_test_subgraph.pbtxt",
     register_as = "DubQuadTestSubgraph",
     deps = [
@@ -50,7 +50,7 @@ mediapipe_simple_subgraph(
 
 mediapipe_simple_subgraph(
     name = "nested_test_subgraph",
-    testonly = 1,
+    testonly = True,
     graph = "nested_test_subgraph.pbtxt",
     register_as = "NestedTestSubgraph",
     visibility = ["//mediapipe/framework:__subpackages__"],

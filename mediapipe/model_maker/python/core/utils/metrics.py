@@ -13,6 +13,9 @@
 # limitations under the License.
 """Metrics utility library."""
 
+from typing import Sequence
+import math
+from typing import Optional
 import tensorflow as tf
 
 
@@ -64,6 +67,66 @@ def _get_binary_sparse_metric(metric: tf.metrics.Metric):
       super().update_state(y_true_one_hot, y_pred, sample_weight=sample_weight)
 
   return BinarySparseMetric
+
+
+def _get_multiclass_sparse_metric(metric: tf.metrics.Metric):
+  """Creates a sparse version of a tf.keras.Metric for multi-class tasks.
+
+  This class evaluates metrics for a specified class_id in a one-vs-all binary
+  fashion where all other classes are treated as a combined negative class, and
+  class_id is the positive class. The model's predicted class is always the
+  argmax of the scores.
+
+  Currently supported tf.metrics.Metric classes:
+    1. tf.metrics.Recall
+    2. tf.metrics.Precision
+
+  For update state, the shapes of y_true, y_pred, and sample_weight are expected
+  to be:
+    - y_true: [batch_size x 1] array of indices, indicating the true labels.
+    - y_pred: [batch_size x num_classes] array of probabilities where
+    y_pred[:,i] is the probability of the i-th class.
+    - sample_weight: [batch_size x 1] array of sample weights.
+
+  Args:
+    metric: A tf.metric.Metric class for which we want to generate a multiclass
+      sparse version of this metric.
+
+  Returns:
+    A class for the multiclass sparse version of the specified tf.keras.Metric.
+  """
+
+  class MultiClassSparseMetric(metric):
+    """A multiclass sparse wrapper class for a tf.keras.Metric."""
+
+    def __init__(self, *args, **kwargs):
+      if 'class_id' not in kwargs:
+        raise ValueError(
+            f'Custom MultiClassSparseMetric for class:{metric.__name__} must'
+            ' have class_id specified upon initialization.'
+        )
+      super().__init__(*args, **kwargs)
+      self._class_id = kwargs['class_id']
+
+    def update_state(self, y_true, y_pred, sample_weight=None):
+      num_classes = y_pred.shape[-1]
+      y_true = tf.reshape(y_true, [-1])
+      y_true = tf.where(y_true != self._class_id, -1, y_true)
+      y_true = tf.one_hot(y_true, depth=num_classes)
+
+      y_pred = tf.argmax(y_pred, axis=-1)
+      y_pred = tf.cast(y_pred, tf.int32)
+      y_pred = tf.where(y_pred != self._class_id, -1, y_pred)
+      y_pred = tf.one_hot(y_pred, depth=num_classes)
+      super().update_state(
+          y_true,
+          y_pred,
+          tf.reshape(sample_weight, [-1])
+          if sample_weight is not None
+          else None,
+      )
+
+  return MultiClassSparseMetric
 
 
 class BinaryAUC(tf.keras.metrics.AUC):
@@ -146,6 +209,52 @@ def _get_masked_binary_metric(metric: tf.metrics.Metric):
   return MaskedBinaryMetric
 
 
+class WeightedSumMetric(tf.keras.metrics.Metric):
+  """A weighted sum metric for combining multiclass sparse metrics.
+
+  addend_metrics: A list of metrics to be combined.
+  weights: A list of weights for each metric. If None, then the weights of the
+  metrics will be equal.
+  name: The name of the weighted sum metric.
+  """
+
+  def __init__(
+      self,
+      addend_metrics: Sequence[tf.keras.metrics.Metric],
+      weights: Optional[Sequence[float]] = None,
+      name: str = 'weighted_sum',
+      **kwargs,
+  ):
+    super().__init__(name=name, **kwargs)
+    self._metrics = addend_metrics
+    self._weights = weights
+
+    if self._weights is None:
+      self._weights = [1.0 / len(self._metrics)] * len(self._metrics)
+    else:
+      if len(self._weights) != len(self._metrics):
+        raise ValueError('Number of weights must match the number of metrics.')
+
+    if any(w < 0 for w in self._weights) or not math.isclose(
+        sum(self._weights), 1.0
+    ):
+      raise ValueError('Weights must be non-negative and sum to 1.')
+
+  def update_state(self, y_true, y_pred, sample_weight=None):
+    for metric in self._metrics:
+      metric.update_state(y_true, y_pred, sample_weight)
+
+  def result(self):
+    weighted_sum = 0.0
+    for metric, weight in zip(self._metrics, self._weights):
+      weighted_sum += weight * metric.result()
+    return weighted_sum
+
+  def reset_states(self):
+    for metric in self._metrics:
+      metric.reset_states()
+
+
 BinarySparseRecall = _get_binary_sparse_metric(tf.metrics.Recall)
 BinarySparsePrecision = _get_binary_sparse_metric(tf.metrics.Precision)
 BinarySparseRecallAtPrecision = _get_binary_sparse_metric(
@@ -154,6 +263,8 @@ BinarySparseRecallAtPrecision = _get_binary_sparse_metric(
 BinarySparsePrecisionAtRecall = _get_binary_sparse_metric(
     tf.metrics.PrecisionAtRecall
 )
+MultiClassSparseRecall = _get_multiclass_sparse_metric(tf.metrics.Recall)
+MultiClassSparsePrecision = _get_multiclass_sparse_metric(tf.metrics.Precision)
 MaskedBinaryPrecision = _get_masked_binary_metric(tf.metrics.Precision)
 MaskedBinaryRecall = _get_masked_binary_metric(tf.metrics.Recall)
 MaskedBinaryRecallAtPrecision = _get_masked_binary_metric(

@@ -299,6 +299,24 @@ cc_test(
 )
 
 cc_library(
+    name = "unique_fd",
+    hdrs = ["unique_fd.h"],
+    deps = [
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/log:absl_log",
+    ],
+)
+
+cc_test(
+    name = "unique_fd_test",
+    srcs = ["unique_fd_test.cc"],
+    deps = [
+        ":unique_fd",
+        "//mediapipe/framework/port:gtest_main",
+    ],
+)
+
+cc_library(
     name = "video_stream_header",
     hdrs = ["video_stream_header.h"],
     deps = [
@@ -493,7 +511,12 @@ config_setting(
 cc_library(
     name = "tensor",
     srcs =
-        [
+        select({
+            "//mediapipe/gpu/webgpu:use_webgpu": [
+                "//mediapipe/gpu/webgpu:tensor_webgpu_texture_view.cc",
+            ],
+            "//conditions:default": [],
+        }) + [
             "tensor.cc",
             "tensor_ahwb.cc",
         ],
@@ -527,6 +550,8 @@ cc_library(
         "//mediapipe/framework/port:aligned_malloc_and_free",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "//mediapipe/gpu/webgpu:webgpu_check",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/functional:any_invocable",
@@ -538,6 +563,12 @@ cc_library(
         "@com_google_absl//absl/synchronization",
     ] + select({
         "//mediapipe/gpu:disable_gpu": [],
+        "//mediapipe/gpu/webgpu:use_webgpu": [
+            "//mediapipe/gpu:gl_base",
+            "//mediapipe/gpu:gl_context",
+            "//mediapipe/gpu/webgpu:webgpu_service",
+            "//mediapipe/gpu/webgpu:webgpu_utils",
+        ],
         "//conditions:default": [
             "//mediapipe/gpu:gl_base",
             "//mediapipe/gpu:gl_context",
@@ -545,12 +576,16 @@ cc_library(
         "//mediapipe:android": [
             ":hardware_buffer",
             ":hardware_buffer_pool",
+            ":tensor_ahwb_usage",
+            ":unique_fd",
             "//mediapipe/gpu:gl_base",
             "//mediapipe/gpu:gl_context",
         ],
         ":android_link_native_window": [
             ":hardware_buffer",
             ":hardware_buffer_pool",
+            ":tensor_ahwb_usage",
+            ":unique_fd",
             "//mediapipe/gpu:gl_base",
             "//mediapipe/gpu:gl_context",
         ],
@@ -602,4 +637,25 @@ mediapipe_register_type(
         "::std::vector<::mediapipe::JointList>",
     ],
     deps = [":body_rig_cc_proto"],
+)
+
+cc_library(
+    name = "tensor_ahwb_usage",
+    srcs = ["tensor_ahwb_usage.cc"],
+    hdrs = ["tensor_ahwb_usage.h"],
+    deps = [
+        "//mediapipe/framework/port",
+        "@com_google_absl//absl/functional:any_invocable",
+        "@com_google_absl//absl/log:absl_log",
+    ],
+)
+
+cc_test(
+    name = "tensor_ahwb_usage_test",
+    srcs = ["tensor_ahwb_usage_test.cc"],
+    deps = [
+        ":tensor_ahwb_usage",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:status",
+    ],
 )

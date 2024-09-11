@@ -36,9 +36,9 @@
 #include "mediapipe/gpu/graph_support.h"
 #include "mediapipe/gpu/multi_pool.h"
 
-#if __APPLE__
+#if MEDIAPIPE_METAL_ENABLED
 #include "mediapipe/gpu/metal_shared_resources.h"
-#endif  // __APPLE__
+#endif  // MEDIAPIPE_METAL_ENABLED
 
 namespace mediapipe {
 
@@ -136,7 +136,9 @@ GpuResources::GpuResources(std::shared_ptr<GlContext> gl_context,
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
   texture_caches_->RegisterTextureCache(gl_context->cv_texture_cache());
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+#if MEDIAPIPE_METAL_ENABLED
   metal_shared_ = std::make_unique<MetalSharedResources>();
+#endif  // MEDIAPIPE_METAL_ENABLED
 #endif  // __APPLE__
 }
 

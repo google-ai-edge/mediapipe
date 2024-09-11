@@ -62,9 +62,19 @@ class BertHParams(hp.BaseHParams):
     checkpoint_frequency: Frequency(in epochs) of saving checkpoints during
       training. Defaults to 0 which does not save training checkpoints.
     is_multilabel: Whether the model is multilabel. Defaults to False.
-    multilabel_class_weights: Weights for each class in the multilabel
+    multiclass_loss_weights: Loss weights for each class in the multiclass
       classification task. If specified, must be the same length as the number
       of classes. Defaults to None.
+    monitor: Metric name for monitoring the best checkpoint. Currently supported
+      only for multiclass classification with
+      multiclass_recalls_accuracy_weighted_sum. Defaults to None.
+    best_checkpoint_monitor_weights: class Weights for the monitor metric.
+      Should be assigned only if a weighted sum metric is used for monitoring.
+      For multiclass_recalls_accuracy_weighted_sum, the weights sum should be
+      between [0, 1]. The accuracy weight complements the weights sum to 1. For
+      example, if there are three class with weights [0.1, 0.1, 0.0] then the
+      montior metric would be 0.1*class_0_recall + 0.1*class_1_recall +
+      0.0*class_2_recall + 0.8*accuracy.
   """
 
   learning_rate: float = 3e-5
@@ -88,7 +98,10 @@ class BertHParams(hp.BaseHParams):
   checkpoint_frequency: int = 0
 
   is_multilabel: bool = False
-  multilabel_class_weights: Optional[Sequence[float]] = None
+  multiclass_loss_weights: Optional[Sequence[float]] = None
+
+  monitor: Optional[str] = None
+  best_checkpoint_monitor_weights: Optional[Sequence[float]] = None
 
 
 HParams = Union[BertHParams, AverageWordEmbeddingHParams]

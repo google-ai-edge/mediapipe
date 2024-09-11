@@ -20,18 +20,18 @@ namespace mediapipe::tflite_operations::sentencepiece {
 
 // The constant is copied from
 // https://github.com/google/sentencepiece/blob/master/src/unigram_model.cc
-constexpr float kUnkPenalty = 10.0;
+inline constexpr float kUnkPenalty = 10.0;
 
 // These constants are copied from
 // https://github.com/google/sentencepiece/blob/master/src/sentencepiece_processor.cc
 //
 // Replaces white space with U+2581 (LOWER ONE EIGHT BLOCK).
-constexpr char kSpaceSymbol[] = "\xe2\x96\x81";
+inline constexpr char kSpaceSymbol[] = "\xe2\x96\x81";
 
 // Encodes <unk> into U+2047 (DOUBLE QUESTION MARK),
 // since this character can be useful both for user and
 // developer. We can easily figure out that <unk> is emitted.
-constexpr char kDefaultUnknownSymbol[] = " \xE2\x81\x87 ";
+inline constexpr char kDefaultUnknownSymbol[] = " \xE2\x81\x87 ";
 
 }  // namespace mediapipe::tflite_operations::sentencepiece
 

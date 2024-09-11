@@ -139,7 +139,12 @@ py_test(
     srcs = ["model_test.py"],
     data = [":testdata"],
     shard_count = 4,
-    tags = ["requires-net:external"],
+    tags = [
+        "noasan",  # TODO b/352507058 - ASAN, TSAN and MSAN tests take 15-25 minutes.
+        "nomsan",
+        "notsan",
+        "requires-net:external",
+    ],
     deps = [
         ":dataset",
         ":model",

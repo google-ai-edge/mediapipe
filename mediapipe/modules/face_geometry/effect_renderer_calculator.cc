@@ -13,9 +13,13 @@
 // limitations under the License.
 
 #include <memory>
+#include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/types/optional.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_frame.h"
@@ -27,6 +31,7 @@
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/port/statusor.h"
+#include "mediapipe/framework/resources.h"
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gpu_buffer.h"
 #include "mediapipe/modules/face_geometry/effect_renderer_calculator.pb.h"
@@ -117,19 +122,21 @@ class EffectRendererCalculator : public CalculatorBase {
       MP_RETURN_IF_ERROR(face_geometry::ValidateEnvironment(environment))
           << "Invalid environment!";
 
-      absl::optional<face_geometry::Mesh3d> effect_mesh_3d;
+      std::optional<face_geometry::Mesh3d> effect_mesh_3d;
       if (options.has_effect_mesh_3d_path()) {
         MP_ASSIGN_OR_RETURN(
-            effect_mesh_3d, ReadMesh3dFromFile(options.effect_mesh_3d_path()),
+            effect_mesh_3d,
+            ReadMesh3dFromFile(cc, options.effect_mesh_3d_path()),
             _ << "Failed to read the effect 3D mesh from file!");
 
         MP_RETURN_IF_ERROR(face_geometry::ValidateMesh3d(*effect_mesh_3d))
             << "Invalid effect 3D mesh!";
       }
 
-      MP_ASSIGN_OR_RETURN(ImageFrame effect_texture,
-                          ReadTextureFromFile(options.effect_texture_path()),
-                          _ << "Failed to read the effect texture from file!");
+      MP_ASSIGN_OR_RETURN(
+          ImageFrame effect_texture,
+          ReadTextureFromFile(cc, options.effect_texture_path()),
+          _ << "Failed to read the effect texture from file!");
 
       MP_ASSIGN_OR_RETURN(effect_renderer_,
                           CreateEffectRenderer(environment, effect_mesh_3d,
@@ -201,14 +208,14 @@ class EffectRendererCalculator : public CalculatorBase {
 
  private:
   static absl::StatusOr<ImageFrame> ReadTextureFromFile(
-      const std::string& texture_path) {
-    MP_ASSIGN_OR_RETURN(std::string texture_blob,
-                        ReadContentBlobFromFile(texture_path),
+      CalculatorContext* cc, const std::string& texture_path) {
+    MP_ASSIGN_OR_RETURN(std::unique_ptr<mediapipe::Resource> texture_blob,
+                        ReadContentBlobFromFile(cc, texture_path),
                         _ << "Failed to read texture blob from file!");
 
     // Use OpenCV image decoding functionality to finish reading the texture.
-    std::vector<char> texture_blob_vector(texture_blob.begin(),
-                                          texture_blob.end());
+    std::vector<char> texture_blob_vector(texture_blob->ToStringView().begin(),
+                                          texture_blob->ToStringView().end());
     cv::Mat decoded_mat =
         cv::imdecode(texture_blob_vector, cv::IMREAD_UNCHANGED);
 
@@ -245,31 +252,27 @@ class EffectRendererCalculator : public CalculatorBase {
   }
 
   static absl::StatusOr<face_geometry::Mesh3d> ReadMesh3dFromFile(
-      const std::string& mesh_3d_path) {
-    MP_ASSIGN_OR_RETURN(std::string mesh_3d_blob,
-                        ReadContentBlobFromFile(mesh_3d_path),
+      CalculatorContext* cc, const std::string& mesh_3d_path) {
+    MP_ASSIGN_OR_RETURN(std::unique_ptr<mediapipe::Resource> mesh_3d_blob,
+                        ReadContentBlobFromFile(cc, mesh_3d_path),
                         _ << "Failed to read mesh 3D blob from file!");
 
     face_geometry::Mesh3d mesh_3d;
-    RET_CHECK(mesh_3d.ParseFromString(mesh_3d_blob))
+    RET_CHECK(mesh_3d.ParseFromString(mesh_3d_blob->ToStringView()))
         << "Failed to parse a mesh 3D proto from a binary blob!";
 
     return mesh_3d;
   }
 
-  static absl::StatusOr<std::string> ReadContentBlobFromFile(
-      const std::string& unresolved_path) {
+  static absl::StatusOr<std::unique_ptr<mediapipe::Resource>>
+  ReadContentBlobFromFile(CalculatorContext* cc,
+                          const std::string& unresolved_path) {
     MP_ASSIGN_OR_RETURN(
         std::string resolved_path,
         mediapipe::PathToResourceAsFile(unresolved_path),
         _ << "Failed to resolve path! Path = " << unresolved_path);
 
-    std::string content_blob;
-    MP_RETURN_IF_ERROR(
-        mediapipe::GetResourceContents(resolved_path, &content_blob))
-        << "Failed to read content blob! Resolved path = " << resolved_path;
-
-    return content_blob;
+    return cc->GetResources().Get(resolved_path);
   }
 
   mediapipe::GlCalculatorHelper gpu_helper_;

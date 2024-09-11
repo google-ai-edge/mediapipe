@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// TODO: Add unit test.
+// TODO: b/324316496 - Add unit test.
 
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/llm_builder_factory.h"
 

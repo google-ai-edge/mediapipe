@@ -22,6 +22,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
@@ -49,13 +50,24 @@ namespace {
 
 constexpr int kCheckLastKChars = 10;
 
-struct LlmInferenceEngineCpu_Session {
+struct LlmInferenceEngineCpu_Engine {
   sentencepiece::SentencePieceProcessor* tokenizer;
   sentencepiece::normalizer::Normalizer* normalizer;
   mediapipe::tasks::genai::xnn_utils::Llm* llm;
   int start_token_id;
   std::vector<std::string> stop_tokens;
-  size_t max_tokens;
+  size_t max_num_tokens;
+  ~LlmInferenceEngineCpu_Engine() {
+    delete tokenizer;
+    if (normalizer != nullptr) {
+      delete normalizer;
+    }
+    delete llm;
+  };
+};
+
+struct LlmInferenceEngineCpu_Session {
+  const LlmInferenceEngineCpu_Engine* engine;
   std::string prompt;
   int max_num_output_tokens;
   int response_count;
@@ -64,14 +76,7 @@ struct LlmInferenceEngineCpu_Session {
   std::function<void(std::string)> cpu_callback;
   bool early_stop;
   pthread_t work_id;
-  ~LlmInferenceEngineCpu_Session() {
-    pthread_join(work_id, nullptr);
-    delete tokenizer;
-    if (normalizer != nullptr) {
-      delete normalizer;
-    }
-    delete llm;
-  };
+  ~LlmInferenceEngineCpu_Session() { pthread_join(work_id, nullptr); };
 };
 
 void* next_token_function(void* args) {
@@ -83,7 +88,7 @@ void* next_token_function(void* args) {
     }
 
     auto token_ids_per_step = std::vector<int>();
-    auto status = cpu_session->llm->GetNextToken(&token_ids_per_step);
+    auto status = cpu_session->engine->llm->GetNextToken(&token_ids_per_step);
     if (!status.ok()) {
       ABSL_LOG(FATAL) << "Failed to generate output: " << status;
     }
@@ -98,14 +103,14 @@ void* next_token_function(void* args) {
     }
 
     std::string token =
-        cpu_session->tokenizer->IdToPiece(token_ids_per_step[0]);
-    if (cpu_session->normalizer != nullptr) {
-      token = cpu_session->normalizer->Normalize(token);
+        cpu_session->engine->tokenizer->IdToPiece(token_ids_per_step[0]);
+    if (cpu_session->engine->normalizer != nullptr) {
+      token = cpu_session->engine->normalizer->Normalize(token);
     }
     cpu_session->last_10_char.append(token);
 
     int stop_index;
-    for (const auto& stop_token : cpu_session->stop_tokens) {
+    for (const auto& stop_token : cpu_session->engine->stop_tokens) {
       stop_index = cpu_session->last_10_char.find(stop_token);
       if (stop_index != std::string::npos) {
         cpu_session->early_stop = true;
@@ -116,13 +121,15 @@ void* next_token_function(void* args) {
     }
 
     std::string ready_char = "";
-    if (cpu_session->last_10_char.size() > kCheckLastKChars) {
+    if (cpu_session->early_stop) {
+      ready_char = cpu_session->last_10_char;
+    } else if (cpu_session->last_10_char.size() > kCheckLastKChars) {
       ready_char = cpu_session->last_10_char.substr(
           0, cpu_session->last_10_char.size() - kCheckLastKChars);
-      cpu_session->final_output.append(ready_char);
       cpu_session->last_10_char = cpu_session->last_10_char.substr(
           cpu_session->last_10_char.size() - kCheckLastKChars);
     }
+    cpu_session->final_output.append(ready_char);
 
     cpu_session->cpu_callback(ready_char);
 
@@ -138,37 +145,34 @@ void* start_llm_function(void* args) {
   std::vector<int> prompt_ids = {};
 
   auto status =
-      cpu_session->tokenizer->Encode(cpu_session->prompt, &prompt_ids);
+      cpu_session->engine->tokenizer->Encode(cpu_session->prompt, &prompt_ids);
+
   if (!status.ok()) {
     ABSL_LOG(FATAL) << "Failed to encode input: " << status;
   }
-  prompt_ids.insert(prompt_ids.begin(), cpu_session->start_token_id);
+  prompt_ids.insert(prompt_ids.begin(), cpu_session->engine->start_token_id);
 
-  status = cpu_session->llm->InitInputTokens(prompt_ids);
-  if (!status.ok()) {
-    ABSL_LOG(FATAL) << "Failed to process input tokens: " << status;
-  };
+  ABSL_CHECK_OK(cpu_session->engine->llm->SeekTimeStep(0));
+  ABSL_CHECK_OK(cpu_session->engine->llm->AddInputTokens({prompt_ids}));
 
   cpu_session->max_num_output_tokens =
-      cpu_session->max_tokens - prompt_ids.size();
+      cpu_session->engine->max_num_tokens - prompt_ids.size();
 
   next_token_function(args);
 
   return nullptr;
 }
 
-absl::StatusOr<LlmInferenceEngine_Session*>
-LlmInferenceEngine_CreateSession_Helper(
-    const LlmSessionConfig* session_config) {
+absl::StatusOr<LlmInferenceEngine_Engine*>
+LlmInferenceEngine_CreateEngine_Helper(const LlmModelSettings* model_settings) {
   MP_ASSIGN_OR_RETURN(auto model_file,
                       mediapipe::tasks::genai::llm_utils::ScopedFile::Open(
-                          session_config->model_path));
+                          model_settings->model_path));
   MP_ASSIGN_OR_RETURN(auto model_data,
                       mediapipe::tasks::genai::llm_utils::ModelData::Create(
                           std::move(model_file)));
 
-  if (session_config->lora_path != nullptr &&
-      session_config->lora_path[0] != '\0') {
+  if (model_settings->number_of_supported_lora_ranks != 0) {
     ABSL_LOG(FATAL) << "LoRA on CPU is not supported yet.";
   }
 
@@ -186,8 +190,8 @@ LlmInferenceEngine_CreateSession_Helper(
   RET_CHECK_EQ(backend, "cpu");
 
   // Create directory for tokenizer and model cache file.
-  if (session_config->cache_dir != nullptr) {
-    auto s = mediapipe::file::RecursivelyCreateDir(session_config->cache_dir);
+  if (model_settings->cache_dir != nullptr) {
+    auto s = mediapipe::file::RecursivelyCreateDir(model_settings->cache_dir);
     if (!s.ok()) {
       ABSL_LOG(WARNING) << s;
     }
@@ -198,12 +202,12 @@ LlmInferenceEngine_CreateSession_Helper(
 
   model_data.reset();
 
-  llm_params.seq_size_T = session_config->max_tokens;
-  llm_params.cache_dir = session_config->cache_dir;
+  llm_params.seq_size_T = model_settings->max_num_tokens;
+  llm_params.cache_dir = model_settings->cache_dir;
 
   auto weight_loader = std::make_unique<
       mediapipe::tasks::genai::xnn_utils::DefaultLlmWeightsLoader>(
-      session_config->model_path, llm_params);
+      model_settings->model_path, llm_params);
 
   auto runtime_configs =
       std::make_unique<mediapipe::tasks::genai::xnn_utils::RuntimeConfigs>();
@@ -220,6 +224,9 @@ LlmInferenceEngine_CreateSession_Helper(
   auto tokenizer = std::make_unique<sentencepiece::SentencePieceProcessor>();
   MP_RETURN_IF_ERROR(tokenizer->LoadFromSerializedProto(spm_model_content));
 
+  std::vector<int> prompt_ids;
+  auto status = tokenizer->Encode("hello", &prompt_ids);
+
   std::unique_ptr<sentencepiece::normalizer::Normalizer> normalizer;
   if (tokenizer->model_proto().has_denormalizer_spec() &&
       tokenizer->model_proto().denormalizer_spec().has_precompiled_charsmap() &&
@@ -231,8 +238,8 @@ LlmInferenceEngine_CreateSession_Helper(
         tokenizer->model_proto().denormalizer_spec());
   }
 
-  std::unique_ptr<LlmInferenceEngineCpu_Session> session(
-      new LlmInferenceEngineCpu_Session{
+  std::unique_ptr<LlmInferenceEngineCpu_Engine> engine(
+      new LlmInferenceEngineCpu_Engine{
           .tokenizer = tokenizer.release(),
           .normalizer = normalizer.release(),
           .llm = llm.release(),
@@ -240,8 +247,18 @@ LlmInferenceEngine_CreateSession_Helper(
           .stop_tokens =
               std::vector<std::string>(llm_params_proto.stop_tokens().begin(),
                                        llm_params_proto.stop_tokens().end()),
-          .max_tokens = session_config->max_tokens,
+          .max_num_tokens = model_settings->max_num_tokens,
       });
+
+  return engine.release();
+}
+
+absl::StatusOr<LlmInferenceEngine_Session*>
+LlmInferenceEngine_CreateSession_Helper(
+    const LlmInferenceEngineCpu_Engine* engine,
+    const LlmSessionConfig* session_config) {
+  std::unique_ptr<LlmInferenceEngineCpu_Session> session(
+      new LlmInferenceEngineCpu_Session{.engine = engine});
 
   return session.release();
 }
@@ -258,10 +275,33 @@ void LlmInferenceEngine_CloseResponseContext(
   response_context->response_count = 0;
 }
 
-int LlmInferenceEngine_CreateSession(const LlmSessionConfig* session_config,
+int LlmInferenceEngine_CreateEngine(const LlmModelSettings* model_settings,
+                                    LlmInferenceEngine_Session** engine_out,
+                                    char** error_msg) {
+  auto engine = LlmInferenceEngine_CreateEngine_Helper(model_settings);
+  if (!engine.ok()) {
+    if (error_msg) {
+      *error_msg = strdup(
+          absl::StrCat("Failed to create engine: ", engine.status().ToString())
+              .c_str());
+    }
+    return static_cast<int>(engine.status().code());
+  }
+  *engine_out = engine.value();
+  return 0;
+}
+
+void LlmInferenceEngine_Engine_Delete(LlmInferenceEngine_Engine* engine) {
+  delete reinterpret_cast<LlmInferenceEngineCpu_Engine*>(engine);
+}
+
+int LlmInferenceEngine_CreateSession(LlmInferenceEngine_Engine* engine,
+                                     const LlmSessionConfig* session_config,
                                      LlmInferenceEngine_Session** session_out,
                                      char** error_msg) {
-  auto session = LlmInferenceEngine_CreateSession_Helper(session_config);
+  auto cpu_engine = reinterpret_cast<LlmInferenceEngineCpu_Engine*>(engine);
+  auto session =
+      LlmInferenceEngine_CreateSession_Helper(cpu_engine, session_config);
   if (!session.ok()) {
     if (error_msg) {
       *error_msg = strdup(absl::StrCat("Failed to create session: ",
@@ -278,66 +318,26 @@ void LlmInferenceEngine_Session_Delete(LlmInferenceEngine_Session* session) {
   delete reinterpret_cast<LlmInferenceEngineCpu_Session*>(session);
 }
 
-LlmResponseContext LlmInferenceEngine_Session_PredictSync(
-    LlmInferenceEngine_Session* session, const char* input) {
+int LlmInferenceEngine_Session_AddQueryChunk(
+    LlmInferenceEngine_Session* session, const char* input, char** error_msg) {
   auto cpu_session = reinterpret_cast<LlmInferenceEngineCpu_Session*>(session);
+  cpu_session->prompt = input;
+  return 0;
+}
 
-  std::vector<int> prompt_ids;
-  auto status = cpu_session->tokenizer->Encode(input, &prompt_ids);
-  if (!status.ok()) {
-    ABSL_LOG(FATAL) << "Failed to encode input: " << status;
-  }
-  prompt_ids.insert(prompt_ids.begin(), cpu_session->start_token_id);
+LlmResponseContext LlmInferenceEngine_Session_PredictSync(
+    LlmInferenceEngine_Session* session) {
+  LlmInferenceEngine_Session_PredictAsync(
+      session, nullptr,
+      [](void* callback_context, LlmResponseContext* response_context) {});
 
-  status = cpu_session->llm->InitInputTokens(prompt_ids);
-  if (!status.ok()) {
-    ABSL_LOG(FATAL) << "Failed to process input tokens: " << status;
-  }
-
-  int max_num_output_tokens = cpu_session->max_tokens - prompt_ids.size();
-  std::string final_output = "";
-  std::vector<int> token_ids_per_step;
-  // No stop words should have a length of > 10.
-  std::string last_10_char = "";
-  cpu_session->early_stop = false;
-  for (int i = 0; i < max_num_output_tokens; i++) {
-    status = cpu_session->llm->GetNextToken(&token_ids_per_step);
-    if (!status.ok()) {
-      ABSL_LOG(FATAL) << "Failed to generate output: " << status;
-    }
-
-    // Currently only output size = 1 is supported.
-    last_10_char.append(
-        cpu_session->tokenizer->IdToPiece(token_ids_per_step[0]));
-
-    int stop_index;
-    for (const auto& stop_token : cpu_session->stop_tokens) {
-      stop_index = last_10_char.find(stop_token);
-      if (stop_index != std::string::npos) {
-        cpu_session->early_stop = true;
-        last_10_char = last_10_char.substr(0, stop_index);
-        break;
-      }
-    }
-
-    if (cpu_session->early_stop) {
-      final_output.append(last_10_char);
-      break;
-    }
-
-    if (last_10_char.size() > kCheckLastKChars) {
-      final_output.append(
-          last_10_char.substr(0, last_10_char.size() - kCheckLastKChars));
-      last_10_char =
-          last_10_char.substr(last_10_char.size() - kCheckLastKChars);
-    }
-  }
-  if (cpu_session->normalizer != nullptr) {
-    final_output = cpu_session->normalizer->Normalize(final_output);
-  }
+  auto cpu_session = reinterpret_cast<LlmInferenceEngineCpu_Session*>(session);
+  pthread_join(cpu_session->work_id, nullptr);
+  cpu_session->work_id = 0;
+  auto final_output = cpu_session->final_output;
 
   char** result = (char**)malloc(sizeof(char*) * 1);
-  if (result[0] == nullptr) {
+  if (result == nullptr) {
     ABSL_LOG(FATAL) << "Failed to allocate result for cpu session.";
   }
 
@@ -359,7 +359,6 @@ LlmResponseContext LlmInferenceEngine_Session_PredictSync(
 
 void LlmInferenceEngine_Session_PredictAsync(
     LlmInferenceEngine_Session* session, void* callback_context,
-    const char* input,
     void (*callback)(void* callback_context,
                      LlmResponseContext* response_context)) {
   auto cpu_session = reinterpret_cast<LlmInferenceEngineCpu_Session*>(session);
@@ -383,7 +382,6 @@ void LlmInferenceEngine_Session_PredictAsync(
     callback(callback_context, response_context.release());
   };
 
-  cpu_session->prompt = input;
   cpu_session->final_output = "";
   cpu_session->last_10_char = "";
   cpu_session->early_stop = false;
@@ -394,12 +392,19 @@ void LlmInferenceEngine_Session_PredictAsync(
                  cpu_session);
 }
 
+int LlmInferenceEngine_Session_Clone(
+    LlmInferenceEngine_Session* session,
+    LlmInferenceEngine_Session** cloned_session, char** error_msg) {
+  *error_msg = strdup("Not implemented");
+  return 12;
+}
+
 int LlmInferenceEngine_Session_SizeInTokens(LlmInferenceEngine_Session* session,
                                             const char* input,
                                             char** error_msg) {
   auto cpu_session = reinterpret_cast<LlmInferenceEngineCpu_Session*>(session);
   std::vector<int> output_ids;
-  auto status = cpu_session->tokenizer->Encode(input, &output_ids);
+  auto status = cpu_session->engine->tokenizer->Encode(input, &output_ids);
   if (!status.ok()) {
     *error_msg = strdup(status.ToString().c_str());
     return -1;

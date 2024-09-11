@@ -203,7 +203,7 @@ struct MotionVector {
                                         int index);
 };
 
-constexpr float kTrackingDefaultFps = 30.0;
+inline constexpr float kTrackingDefaultFps = 30.0;
 
 // Holds motion vectors and background model for each frame.
 // Note: Specified in the aspect preserving domain under uniform scaling,

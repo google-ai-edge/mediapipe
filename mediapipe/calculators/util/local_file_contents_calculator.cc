@@ -18,6 +18,7 @@
 #include "mediapipe/calculators/util/local_file_contents_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/status.h"
+#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/util/resource_util.h"
 
 namespace mediapipe {
@@ -89,8 +90,8 @@ class LocalFileContentsCalculator : public CalculatorBase {
       MP_ASSIGN_OR_RETURN(file_path, PathToResourceAsFile(file_path));
 
       std::string contents;
-      MP_RETURN_IF_ERROR(GetResourceContents(
-          file_path, &contents, /*read_as_binary=*/!options.text_mode()));
+      MP_RETURN_IF_ERROR(cc->GetResources().ReadContents(
+          file_path, contents, {/* read_as_binary= */ !options.text_mode()}));
       cc->OutputSidePackets().Get(output_id).Set(
           MakePacket<std::string>(std::move(contents)));
     }

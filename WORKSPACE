@@ -71,6 +71,15 @@ load("@rules_python//python:repositories.bzl", "py_repositories")
 py_repositories()
 
 http_archive(
+    name = "rules_android_ndk",
+    sha256 = "d230a980e0d3a42b85d5fce2cb17ec3ac52b88d2cff5aaf86bae0f05b48adc55",
+    strip_prefix = "rules_android_ndk-d5c9d46a471e8fcd80e7ec5521b78bb2df48f4e0",
+    url = "https://github.com/bazelbuild/rules_android_ndk/archive/d5c9d46a471e8fcd80e7ec5521b78bb2df48f4e0.zip",
+)
+
+load("@rules_android_ndk//:rules.bzl", "android_ndk_repository")
+
+http_archive(
     name = "com_google_protobuf",
     sha256 = "87407cd28e7a9c95d9f61a098a53cf031109d451a7763e7dd1253abf8b4df422",
     strip_prefix = "protobuf-3.19.1",
@@ -85,20 +94,30 @@ http_archive(
 
 http_archive(
     name = "cpuinfo",
-    sha256 = "a615cac78fad03952cc3e1fd231ce789a8df6e81a5957b64350cb8200364b385",
-    strip_prefix = "cpuinfo-d6860c477c99f1fce9e28eb206891af3c0e1a1d7",
+    sha256 = "ea028ced757dbc3309518ae7038ed625b02d58190078a5801d30e7b28f8b9e9c",
+    strip_prefix = "cpuinfo-ca678952a9a8eaa6de112d154e8e104b22f9ab3f",
     urls = [
-        "https://github.com/pytorch/cpuinfo/archive/d6860c477c99f1fce9e28eb206891af3c0e1a1d7.zip"
+        "https://github.com/pytorch/cpuinfo/archive/ca678952a9a8eaa6de112d154e8e104b22f9ab3f.zip"
     ],
 )
 
-# XNNPACK on 2024-06-28
+# KleidiAI is needed to get the best possible performance out of XNNPack
+http_archive(
+    name = "KleidiAI",
+    sha256 = "88233e427be6579560073267575f00f3b5fc370a31a43bbdd87a1810bd4bf1b6",
+    strip_prefix = "kleidiai-cddf991af5de49fd34949fa39690e4e906e04074",
+    urls = [
+        "https://gitlab.arm.com/kleidi/kleidiai/-/archive/cddf991af5de49fd34949fa39690e4e906e04074/kleidiai-cddf991af5de49fd34949fa39690e4e906e04074.zip",
+    ],
+)
+
+# XNNPACK on 2024-07-16
 http_archive(
     name = "XNNPACK",
     # `curl -L <url> | shasum -a 256`
-    sha256 = "3c28cb74c2c1ea67e0295587aa788b49071385fab38be1f1fc2064378ff156b5",
-    strip_prefix = "XNNPACK-3cef165957437753597e5483d43d6e8fb7837591",
-    url = "https://github.com/google/XNNPACK/archive/3cef165957437753597e5483d43d6e8fb7837591.zip",
+    sha256 = "0e5d5c16686beff813e3946b26ca412f28acaf611228d20728ffb6479264fe19",
+    strip_prefix = "XNNPACK-9ddeb74f9f6866174d61888947e4aa9ffe963b1b",
+    url = "https://github.com/google/XNNPACK/archive/9ddeb74f9f6866174d61888947e4aa9ffe963b1b.zip",
 )
 
 # TODO: This is an are indirect depedency. We should factor it out.
@@ -417,7 +436,7 @@ http_archive(
     build_file = "@//third_party:opencv_android.BUILD",
     strip_prefix = "OpenCV-android-sdk",
     type = "zip",
-    url = "https://github.com/opencv/opencv/releases/download/3.4.3/opencv-3.4.3-android-sdk.zip",
+    url = "https://github.com/opencv/opencv/releases/download/4.10.0/opencv-4.10.0-android-sdk.zip",
 )
 
 # After OpenCV 3.2.0, the pre-compiled opencv2.framework has google protobuf symbols, which will
@@ -541,10 +560,10 @@ http_archive(
 )
 
 # TensorFlow repo should always go after the other external dependencies.
-# TF on 2024-06-28.
-_TENSORFLOW_GIT_COMMIT = "7f70113fb821691afbd3efc8b7e04e482523caab"
-# curl -L https://github.com/tensorflow/tensorflow/archive/7f70113fb821691afbd3efc8b7e04e482523caab.tar.gz | shasum -a 256
-_TENSORFLOW_SHA256 = "f4e02ae66fcbba12f7b4d542c7cd5e961dbf499fc9476b5482b2b5ee2bd2063f"
+# TF on 2024-07-18.
+_TENSORFLOW_GIT_COMMIT = "117a62ac439ed87eb26f67208be60e01c21960de"
+# curl -L https://github.com/tensorflow/tensorflow/archive/117a62ac439ed87eb26f67208be60e01c21960de.tar.gz | shasum -a 256
+_TENSORFLOW_SHA256 = "2a1e56f9f83f99e2b9d01a184bc6f409209b36c98fb94b6d5db3f0ab20ec33f2"
 http_archive(
     name = "org_tensorflow",
     urls = [
@@ -557,9 +576,6 @@ http_archive(
         # Works around Bazel issue with objc_library.
         # See https://github.com/bazelbuild/bazel/issues/19912
         "@//third_party:org_tensorflow_objc_build_fixes.diff",
-        # Restores scores for text pipelines, which return different results
-        # with subgraph reshaping
-        "@//third_party:org_tensorflow_disable_subgraph_reshaping.diff"
     ],
     patch_args = [
         "-p1",

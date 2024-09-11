@@ -42,7 +42,7 @@ class CalculatorBaseFactoryFor<
 
   std::unique_ptr<CalculatorBase> CreateCalculator(
       CalculatorContext* calculator_context) final {
-    return absl::make_unique<T>();
+    return std::make_unique<T>();
   }
 
  private:
@@ -64,11 +64,11 @@ namespace internal {
 
 MEDIAPIPE_STATIC_REGISTRATOR_TEMPLATE(
     NodeRegistrator, mediapipe::CalculatorBaseRegistry, T::kCalculatorName,
-    absl::make_unique<mediapipe::internal::CalculatorBaseFactoryFor<T>>)
+    std::make_unique<mediapipe::internal::CalculatorBaseFactoryFor<T>>)
 
 MEDIAPIPE_STATIC_REGISTRATOR_TEMPLATE(SubgraphRegistrator,
                                       mediapipe::SubgraphRegistry,
-                                      T::kCalculatorName, absl::make_unique<T>)
+                                      T::kCalculatorName, std::make_unique<T>)
 
 }  // namespace internal
 
@@ -173,20 +173,20 @@ class SubgraphImpl : public Subgraph,
   MEDIAPIPE_REGISTER_FACTORY_FUNCTION_QUALIFIED(                  \
       mediapipe::CalculatorBaseRegistry, calculator_registration, \
       Impl::kCalculatorName,                                      \
-      absl::make_unique<mediapipe::internal::CalculatorBaseFactoryFor<Impl>>)
+      std::make_unique<mediapipe::internal::CalculatorBaseFactoryFor<Impl>>)
 
 // This macro is used to register a non-split-contract calculator. Deprecated.
 #define MEDIAPIPE_REGISTER_NODE(name)                                    \
   MEDIAPIPE_REGISTER_FACTORY_FUNCTION_QUALIFIED(                         \
       mediapipe::CalculatorBaseRegistry, calculator_registration, #name, \
-      absl::make_unique<mediapipe::internal::CalculatorBaseFactoryFor<name>>)
+      std::make_unique<mediapipe::internal::CalculatorBaseFactoryFor<name>>)
 
 // This macro is used to define a subgraph that does not use automatic
 // registration. Deprecated.
 #define MEDIAPIPE_SUBGRAPH_IMPLEMENTATION(Impl)           \
   MEDIAPIPE_REGISTER_FACTORY_FUNCTION_QUALIFIED(          \
       mediapipe::SubgraphRegistry, subgraph_registration, \
-      Impl::kCalculatorName, absl::make_unique<Impl>)
+      Impl::kCalculatorName, std::make_unique<Impl>)
 
 }  // namespace api2
 }  // namespace mediapipe

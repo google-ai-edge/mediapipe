@@ -18,13 +18,13 @@
 #include <complex>
 #include <cstdint>
 #include <memory>
-#include <numeric>
 #include <optional>
 #include <string>
 #include <vector>
 
 #include "Eigen/Core"
 #include "absl/log/absl_log.h"
+#include "absl/status/status.h"
 #include "audio/dsp/number_util.h"
 #include "mediapipe/calculators/audio/spectrogram_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -34,8 +34,8 @@
 #include "mediapipe/framework/port/benchmark.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/util/time_series_test_util.h"
+#include "mediapipe/util/time_series_util.h"
 
 namespace mediapipe {
 namespace {
