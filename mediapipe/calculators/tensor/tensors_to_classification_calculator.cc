@@ -13,20 +13,28 @@
 // limitations under the License.
 
 #include <algorithm>
+#include <cstdint>
+#include <limits>
+#include <memory>
 #include <string>
-#include <unordered_map>
+#include <utility>
 #include <vector>
 
-#include "absl/strings/str_format.h"
-#include "absl/types/span.h"
+#include "absl/container/flat_hash_set.h"
+#include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 #include "mediapipe/calculators/tensor/tensors_to_classification_calculator.pb.h"
 #include "mediapipe/framework/api2/node.h"
+#include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/ret_check.h"
+#include "mediapipe/framework/port/status_macros.h"
+#include "mediapipe/framework/resources.h"
 #include "mediapipe/util/label_map.pb.h"
 #include "mediapipe/util/resource_util.h"
+#include "mediapipe/util/str_util.h"
 #if defined(MEDIAPIPE_MOBILE)
 #include "mediapipe/util/android/file/base/file.h"
 #include "mediapipe/util/android/file/base/helpers.h"
@@ -113,18 +121,15 @@ absl::Status TensorsToClassificationCalculator::Open(CalculatorContext* cc) {
     std::string string_path;
     MP_ASSIGN_OR_RETURN(string_path,
                         PathToResourceAsFile(options.label_map_path()));
-    std::string label_map_string;
-    MP_RETURN_IF_ERROR(
-        cc->GetResources().ReadContents(string_path, label_map_string));
-
-    std::istringstream stream(label_map_string);
-    std::string line;
+    MP_ASSIGN_OR_RETURN(std::unique_ptr<mediapipe::Resource> label_map,
+                        cc->GetResources().Get(string_path));
     int i = 0;
-    while (std::getline(stream, line)) {
-      LabelMapItem item;
-      item.set_name(line);
-      local_label_map_[i++] = item;
-    }
+    mediapipe::ForEachLine(label_map->ToStringView(),
+                           [&](absl::string_view line) {
+                             LabelMapItem item;
+                             item.set_name(std::string(line));
+                             local_label_map_[i++] = std::move(item);
+                           });
     label_map_loaded_ = true;
   } else if (!options.label_items().empty()) {
     label_map_loaded_ = true;
@@ -182,7 +187,7 @@ absl::Status TensorsToClassificationCalculator::Process(CalculatorContext* cc) {
   auto view = input_tensors[0].GetCpuReadView();
   auto raw_scores = view.buffer<float>();
 
-  auto classification_list = absl::make_unique<ClassificationList>();
+  auto classification_list = std::make_unique<ClassificationList>();
   if (is_binary_classification_) {
     Classification* class_first = classification_list->add_classification();
     Classification* class_second = classification_list->add_classification();

@@ -1374,15 +1374,22 @@ cc_library(
     deps = [
         ":tensors_to_classification_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:resources",
         "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/api2:port",
         "//mediapipe/framework/formats:classification_cc_proto",
         "//mediapipe/framework/formats:location",
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
         "//mediapipe/util:label_map_cc_proto",
         "//mediapipe/util:resource_util",
+        "//mediapipe/util:str_util",
+        "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/container:node_hash_map",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_absl//absl/types:span",
     ] + select({
         "//mediapipe:android": [

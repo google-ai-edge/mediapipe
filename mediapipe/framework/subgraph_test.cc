@@ -21,7 +21,9 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/string_view.h"
 #include "mediapipe/calculators/core/constant_side_packet_calculator.pb.h"
+#include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/graph_service.h"
 #include "mediapipe/framework/port/gmock.h"
@@ -32,9 +34,13 @@
 // Because of portability issues, we include this directly.
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"  // NOLINT(build/deprecated)
+#include "mediapipe/framework/resources.h"
 
 namespace mediapipe {
 namespace {
+
+using ::mediapipe::api2::builder::Graph;
+using ::mediapipe::api2::builder::SidePacket;
 
 class SubgraphTest : public ::testing::Test {
  protected:
@@ -142,26 +148,19 @@ class EmitFileStringTestSubgraph : public Subgraph {
  public:
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       mediapipe::SubgraphContext* sc) override {
-    std::string data;
-    MP_RETURN_IF_ERROR(sc->GetResources().ReadContents(
-        "mediapipe/framework/testdata/resource_subgraph.data", data));
-    absl::RemoveExtraAsciiWhitespace(&data);
-    CalculatorGraphConfig config =
-        mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
-            absl::StrFormat(R"(
-          output_side_packet: "string"
-          node {
-            calculator: "ConstantSidePacketCalculator"
-            output_side_packet: "PACKET:string"
-            options: {
-              [mediapipe.ConstantSidePacketCalculatorOptions.ext]: {
-                packet { string_value: "%s" }
-              }
-            }
-          }
-        )",
-                            data));
-    return config;
+    MP_ASSIGN_OR_RETURN(
+        std::unique_ptr<mediapipe::Resource> data,
+        sc->GetResources().Get(
+            "mediapipe/framework/testdata/resource_subgraph.data"));
+    Graph graph;
+    auto& node = graph.AddNode("ConstantSidePacketCalculator");
+    node.GetOptions<mediapipe::ConstantSidePacketCalculatorOptions>()
+        .add_packet()
+        ->set_string_value(std::string(data->ToStringView()));
+    SidePacket<std::string> side_string =
+        node.SideOut("PACKET").Cast<std::string>();
+    side_string.SetName("string") >> graph.SideOut(0);
+    return graph.GetConfig();
   }
 };
 REGISTER_MEDIAPIPE_GRAPH(EmitFileStringTestSubgraph);
@@ -183,7 +182,7 @@ TEST(SubgraphServicesTest, CanLoadResourcesThroughSubgraphContext) {
 
   MP_ASSERT_OK_AND_ASSIGN(Packet str_packet, graph.GetOutputSidePacket("str"));
   ASSERT_FALSE(str_packet.IsEmpty());
-  EXPECT_EQ(str_packet.Get<std::string>(), "File system subgraph contents");
+  EXPECT_EQ(str_packet.Get<std::string>(), "File system subgraph contents\n");
 }
 
 class OptionsCheckingSubgraph : public Subgraph {
@@ -197,22 +196,15 @@ class OptionsCheckingSubgraph : public Subgraph {
               .packet(0)
               .string_value();
     }
-    CalculatorGraphConfig config =
-        mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
-            absl::StrFormat(R"(
-          output_side_packet: "string"
-          node {
-            calculator: "ConstantSidePacketCalculator"
-            output_side_packet: "PACKET:string"
-            options: {
-              [mediapipe.ConstantSidePacketCalculatorOptions.ext]: {
-                packet { string_value: "%s" }
-              }
-            }
-          }
-        )",
-                            subgraph_side_packet_val));
-    return config;
+    Graph graph;
+    auto& node = graph.AddNode("ConstantSidePacketCalculator");
+    node.GetOptions<mediapipe::ConstantSidePacketCalculatorOptions>()
+        .add_packet()
+        ->set_string_value(subgraph_side_packet_val);
+    SidePacket<std::string> side_string =
+        node.SideOut("PACKET").Cast<std::string>();
+    side_string.SetName("string") >> graph.SideOut(0);
+    return graph.GetConfig();
   }
 };
 REGISTER_MEDIAPIPE_GRAPH(OptionsCheckingSubgraph);

@@ -26,6 +26,7 @@
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"
+#include "mediapipe/framework/resources.h"
 #include "mediapipe/framework/testdata/night_light_calculator.pb.h"
 #include "mediapipe/framework/testdata/sky_light_calculator.pb.h"
 #include "mediapipe/framework/tool/tag_map_helper.h"
@@ -170,11 +171,11 @@ TEST(CalculatorContextTest, CanLoadResourcesThroughCalculatorContext) {
   auto calculator_state = MakeCalculatorState(config.node(0), 0);
   auto cc = MakeCalculatorContext(calculator_state.get());
 
-  std::string data;
-  MP_ASSERT_OK(cc->GetResources().ReadContents(
-      "mediapipe/framework/testdata/resource_calculator.data", data));
-  absl::StripTrailingAsciiWhitespace(&data);
-  EXPECT_EQ(data, "File system calculator contents");
+  MP_ASSERT_OK_AND_ASSIGN(
+      std::unique_ptr<mediapipe::Resource> data,
+      cc->GetResources().Get(
+          "mediapipe/framework/testdata/resource_calculator.data"));
+  EXPECT_EQ(data->ToStringView(), "File system calculator contents\n");
 }
 
 }  // namespace test_ns
