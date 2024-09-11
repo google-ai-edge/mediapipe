@@ -20,8 +20,6 @@
 #import "mediapipe/tasks/ios/test/audio/core/utils/sources/AVAudioPCMBuffer+TestUtils.h"
 #import "mediapipe/tasks/ios/test/utils/sources/MPPFileInfo.h"
 
-#include <vector>
-
 static MPPFileInfo *const kYamnetModelFileInfo =
     [[MPPFileInfo alloc] initWithName:@"yamnet_audio_classifier_with_metadata" type:@"tflite"];
 static MPPFileInfo *const kTwoHeadsModelFileInfo = [[MPPFileInfo alloc] initWithName:@"two_heads"
