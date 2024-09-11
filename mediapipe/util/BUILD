@@ -479,3 +479,24 @@ cc_test(
         "//mediapipe/framework/port:gtest_main",
     ],
 )
+
+cc_library(
+    name = "str_util",
+    srcs = ["str_util.cc"],
+    hdrs = ["str_util.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_google_absl//absl/functional:any_invocable",
+        "@com_google_absl//absl/strings:string_view",
+    ],
+)
+
+cc_test(
+    name = "str_util_test",
+    srcs = ["str_util_test.cc"],
+    deps = [
+        ":str_util",
+        "//mediapipe/framework/port:gtest_main",
+        "@com_google_absl//absl/strings:string_view",
+    ],
+)
