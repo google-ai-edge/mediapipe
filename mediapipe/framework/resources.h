@@ -67,9 +67,10 @@ class Resources {
   // Android) other options are possible (e.g. returning a resource from Android
   // assets or loading from "content://..." URIs).
   //
-  // NOTE: Resources::Get is preferable, except cases where `absl::string_view`
-  // cannot be used (e.g. `istringstream`). Reasources::ReadContents may involve
-  // unnecessary memory copies.
+  // NOTE: Reasources::ReadContents may involve unnecessary memory copies, so
+  // Resources::Get is preferable, except cases where `absl::string_view` cannot
+  // be used (e.g. `istringstream`), but first consider alternatives like
+  // `ForEachLine(absl::string_view, ...)`.
   //
   // NOTE: can be accessed simultaneously from multiple threads.
   virtual absl::Status ReadContents(absl::string_view resource_id,
@@ -84,9 +85,10 @@ class Resources {
   // Android) other options are possible (e.g. returning a resource from Android
   // assets or loading from "content://..." URIs).
   //
-  // NOTE: Resources::Get is preferable, except cases where `absl::string_view`
-  // cannot be used (e.g. `istringstream`). Reasources::ReadContents may involve
-  // unnecessary memory copies.
+  // NOTE: Reasources::ReadContents may involve unnecessary memory copies, so
+  // Resources::Get is preferable, except cases where `absl::string_view` cannot
+  // be used (e.g. `istringstream`), but first consider alternatives like
+  // `ForEachLine(absl::string_view, ...)`.
   //
   // NOTE: can be accessed simultaneously from multiple threads.
   inline absl::Status ReadContents(absl::string_view resource_id,
