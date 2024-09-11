@@ -110,7 +110,8 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
   MPPAudioClassifier *audioClassifier =
       [[MPPAudioClassifier alloc] initWithModelPath:kYamnetModelFileInfo.path error:nil];
   XCTAssertNotNil(audioClassifier);
-
+  
+  // Classify 48KHz speech file.
   [MPPAudioClassifierTests
           assertResultsOfClassifyAudioClipWithFileInfo:kSpeech48KHzMonoFileInfo
                                   usingAudioClassifier:audioClassifier
@@ -119,6 +120,7 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
                     expectedClassificationResultsCount:kYamnetClassificationResultsCount
           expectedClassificationHeadsCategoryCountInfo:kYamnetModelHeadsInfo];
 
+  // Classify 16KHz speech file.
   [MPPAudioClassifierTests
           assertResultsOfClassifyAudioClipWithFileInfo:kSpeech16KHzMonoFileInfo
                                   usingAudioClassifier:audioClassifier
@@ -133,6 +135,7 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
       [self audioClassifierOptionsWithModelFileInfo:kTwoHeadsModelFileInfo];
   MPPAudioClassifier *audioClassifier = [self audioClassifierWithOptions:options];
 
+  // Classify 44KHz speech file.
   [MPPAudioClassifierTests
           assertResultsOfClassifyAudioClipWithFileInfo:kTwoHeads44KHzMonoFileInfo
                                   usingAudioClassifier:audioClassifier
@@ -140,6 +143,7 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
                                                            expectedPartial44kHzTwoHeadsResult]
           expectedClassificationHeadsCategoryCountInfo:kTwoHeadModelHeadsInfo];
 
+  // Classify 16KHz speech file.
   [MPPAudioClassifierTests
           assertResultsOfClassifyAudioClipWithFileInfo:kTwoHeads16KHzMonoFileInfo
                                   usingAudioClassifier:audioClassifier
