@@ -14,32 +14,30 @@
 
 #include "mediapipe/util/label_map_util.h"
 
+#include <cstdint>
 #include <string>
+#include <utility>
 #include <vector>
 
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
-#include "mediapipe/framework/port/statusor.h"
+#include "google/protobuf/map.h"
 #include "mediapipe/util/label_map.pb.h"
 
 namespace mediapipe {
 
 absl::StatusOr<proto_ns::Map<int64_t, LabelMapItem>> BuildLabelMapFromFiles(
     absl::string_view labels_file_contents,
-    absl::string_view display_names_file) {
+    absl::string_view display_names_file_contents) {
   if (labels_file_contents.empty()) {
     return absl::InvalidArgumentError("Expected non-empty labels file.");
   }
   std::vector<absl::string_view> labels =
       absl::StrSplit(labels_file_contents, '\n');
-  // In most cases, there is an empty line (i.e. newline character) at the end
-  // of the file that needs to be ignored. In such a situation, StrSplit() will
-  // produce a vector with an empty string as final element. Also note that in
-  // case `labels_file_contents` is entirely empty, StrSplit() will produce a
-  // vector with one single empty substring, so there's no out-of-range risk
-  // here.
-  if (labels[labels.size() - 1].empty()) {
+  if (!labels.empty() && labels.back().empty()) {
     labels.pop_back();
   }
 
@@ -48,15 +46,13 @@ absl::StatusOr<proto_ns::Map<int64_t, LabelMapItem>> BuildLabelMapFromFiles(
   for (int i = 0; i < labels.size(); ++i) {
     LabelMapItem item;
     item.set_name(std::string(labels[i]));
-    label_map_items.emplace_back(item);
+    label_map_items.push_back(std::move(item));
   }
 
-  if (!display_names_file.empty()) {
-    std::vector<std::string> display_names =
-        absl::StrSplit(display_names_file, '\n');
-    // In most cases, there is an empty line (i.e. newline character) at the end
-    // of the file that needs to be ignored. See above.
-    if (display_names[display_names.size() - 1].empty()) {
+  if (!display_names_file_contents.empty()) {
+    std::vector<absl::string_view> display_names =
+        absl::StrSplit(display_names_file_contents, '\n');
+    if (!display_names.empty() && display_names.back().empty()) {
       display_names.pop_back();
     }
     if (display_names.size() != labels.size()) {
@@ -65,12 +61,12 @@ absl::StatusOr<proto_ns::Map<int64_t, LabelMapItem>> BuildLabelMapFromFiles(
           labels.size(), display_names.size()));
     }
     for (int i = 0; i < display_names.size(); ++i) {
-      label_map_items[i].set_display_name(display_names[i]);
+      label_map_items[i].set_display_name(std::string(display_names[i]));
     }
   }
   proto_ns::Map<int64_t, LabelMapItem> label_map;
   for (int i = 0; i < label_map_items.size(); ++i) {
-    label_map[i] = label_map_items[i];
+    label_map[i] = std::move(label_map_items[i]);
   }
   return label_map;
 }
