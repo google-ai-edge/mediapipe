@@ -1,0 +1,7 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_exit"
+        android:title="@string/action_exit_title"
+        app:showAsAction="never" />
+</menu>

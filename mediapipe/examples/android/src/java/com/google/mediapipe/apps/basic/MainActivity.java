@@ -14,14 +14,18 @@
 
 package com.google.mediapipe.apps.basic;
 
+import android.app.ProgressDialog;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.graphics.SurfaceTexture;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
 import android.util.Size;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -33,6 +37,7 @@ import com.google.mediapipe.components.FrameProcessor;
 import com.google.mediapipe.components.PermissionHelper;
 import com.google.mediapipe.framework.AndroidAssetUtil;
 import com.google.mediapipe.glutil.EglManager;
+import java.lang.ref.WeakReference;
 
 /** Main activity of MediaPipe basic app. */
 public class MainActivity extends AppCompatActivity {
@@ -79,6 +84,9 @@ public class MainActivity extends AppCompatActivity {
 
   // ApplicationInfo for retrieving metadata defined in the manifest.
   private ApplicationInfo applicationInfo;
+
+  // Progress dialog to show for the actions that must be executed on non-UI thread.
+  private ProgressDialog progressDialog;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -133,6 +141,28 @@ public class MainActivity extends AppCompatActivity {
     if (PermissionHelper.cameraPermissionsGranted(this)) {
       startCamera();
     }
+  }
+
+  @Override
+  public boolean onCreateOptionsMenu(Menu menu) {
+    getMenuInflater().inflate(R.menu.main_menu, menu);
+    return true;
+  }
+
+  @Override
+  public boolean onOptionsItemSelected(MenuItem item) {
+    final int id = item.getItemId();
+    if (id == R.id.action_exit) {
+      progressDialog = new ProgressDialog(this);
+      progressDialog.setMessage("Closing graph, waiting until done & exiting...");
+      progressDialog.setCancelable(false);
+
+      new CloseProcessorAndExitTask(
+              new WeakReference<>(progressDialog), new WeakReference<>(processor))
+          .execute();
+      return true;
+    }
+    return false;
   }
 
   @Override
@@ -220,5 +250,47 @@ public class MainActivity extends AppCompatActivity {
                 processor.getVideoSurfaceOutput().setSurface(null);
               }
             });
+  }
+
+  private static class CloseProcessorAndExitTask extends AsyncTask<Void, Void, Boolean> {
+    private final WeakReference<ProgressDialog> progressDialogRef;
+    private final WeakReference<FrameProcessor> frameProcessorRef;
+
+    public CloseProcessorAndExitTask(
+        WeakReference<ProgressDialog> progressDialogRef,
+        WeakReference<FrameProcessor> frameProcessorRef) {
+      this.progressDialogRef = progressDialogRef;
+      this.frameProcessorRef = frameProcessorRef;
+    }
+
+    @Override
+    protected void onPreExecute() {
+      ProgressDialog progressDialog = progressDialogRef.get();
+      if (progressDialog != null) {
+        progressDialog.show();
+      }
+    }
+
+    @Override
+    protected Boolean doInBackground(Void... voids) {
+      FrameProcessor frameProcessor = frameProcessorRef.get();
+      if (frameProcessor != null) {
+        frameProcessor.close();
+        return true;
+      }
+      return false;
+    }
+
+    @Override
+    protected void onPostExecute(Boolean isProcessorClosed) {
+      if (!isProcessorClosed) {
+        throw new IllegalStateException("Processor was not closed.");
+      }
+      ProgressDialog progressDialog = progressDialogRef.get();
+      if (progressDialog != null && progressDialog.isShowing()) {
+        progressDialog.dismiss();
+        progressDialog.getOwnerActivity().finish();
+      }
+    }
   }
 }
