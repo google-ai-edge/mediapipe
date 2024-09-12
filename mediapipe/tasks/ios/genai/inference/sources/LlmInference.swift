@@ -214,7 +214,7 @@ import MediaPipeTasksGenAIC
     llmResponses: [String], stripLeadingWhitespaces: Bool = true
   ) -> String? {
     guard let llmResponse = llmResponses.first else {
-      return nil
+      return ""
     }
     return llmResponse.humanReadableString(stripLeadingWhitespaces: stripLeadingWhitespaces)
   }
