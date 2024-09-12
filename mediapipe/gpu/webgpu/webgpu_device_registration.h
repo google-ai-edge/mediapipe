@@ -15,8 +15,6 @@
 #ifndef MEDIAPIPE_GPU_WEBGPU_WEBGPU_DEVICE_REGISTRATION_H_
 #define MEDIAPIPE_GPU_WEBGPU_WEBGPU_DEVICE_REGISTRATION_H_
 
-#include <memory>
-
 #include "mediapipe/framework/deps/no_destructor.h"
 #include "third_party/dawn/include/webgpu/webgpu_cpp.h"
 
@@ -30,11 +28,11 @@ class WebGpuDeviceRegistration {
   WebGpuDeviceRegistration(const WebGpuDeviceRegistration&) = delete;
   WebGpuDeviceRegistration& operator=(const WebGpuDeviceRegistration&) = delete;
 
-  void RegisterWebGpuDevice(std::shared_ptr<wgpu::Device> device);
+  void RegisterWebGpuDevice(wgpu::Device device);
 
   void UnRegisterWebGpuDevice();
 
-  std::shared_ptr<wgpu::Device> GetWebGpuDevice() const { return device_; }
+  wgpu::Device GetWebGpuDevice() const { return device_; }
 
  private:
   friend class NoDestructor<WebGpuDeviceRegistration>;
@@ -42,7 +40,7 @@ class WebGpuDeviceRegistration {
   WebGpuDeviceRegistration();
   ~WebGpuDeviceRegistration();
 
-  std::shared_ptr<wgpu::Device> device_;
+  wgpu::Device device_;
 };
 
 }  // namespace mediapipe

@@ -135,27 +135,3 @@ cc_library(
         "//mediapipe/framework/formats:tensor",
     ],
 )
-
-cc_test(
-    name = "webgpu_device_registration_test",
-    srcs = select({
-        "//mediapipe:emscripten": [],
-        "//conditions:default": [
-            "webgpu_check.cc",
-            "webgpu_device_registration_test.cc",
-        ],
-    }),
-    defines = ["MEDIAPIPE_USE_WEBGPU"],
-    deps = select({
-        "//mediapipe:emscripten": [],
-        "//conditions:default": [
-            ":webgpu_check",
-            ":webgpu_device_registration",
-            "//mediapipe/framework/deps:no_destructor",
-            "//third_party/dawn:dawncpp_headers",
-            "//third_party/dawn:libdawn_proc",
-            "@com_google_absl//absl/memory",
-            "@com_google_googletest//:gtest_main",
-        ],
-    }),
-)

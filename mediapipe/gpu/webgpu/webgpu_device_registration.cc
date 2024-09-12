@@ -28,8 +28,7 @@ WebGpuDeviceRegistration& WebGpuDeviceRegistration::GetInstance() {
   return *instance;
 }
 
-void WebGpuDeviceRegistration::RegisterWebGpuDevice(
-    std::shared_ptr<wgpu::Device> device) {
+void WebGpuDeviceRegistration::RegisterWebGpuDevice(wgpu::Device device) {
   device_ = std::move(device);
 }
 

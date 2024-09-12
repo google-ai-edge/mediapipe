@@ -73,7 +73,7 @@ WebGpuService::WebGpuService()
 #else
 WebGpuService::WebGpuService()
     : canvas_selector_(""),
-      device_(*WebGpuDeviceRegistration::GetInstance().GetWebGpuDevice()) {}
+      device_(WebGpuDeviceRegistration::GetInstance().GetWebGpuDevice()) {}
 #endif  // __EMSCRIPTEN__
 
 ABSL_CONST_INIT const GraphService<WebGpuService> kWebGpuService(

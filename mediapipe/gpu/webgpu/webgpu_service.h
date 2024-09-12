@@ -125,7 +125,7 @@ static WebGpuDeviceAttachmentManager& GetEmscriptenDeviceAttachmentManager() {
 #else
 static WebGpuDeviceAttachmentManager& GetNativeDeviceAttachmentManager() {
   static mediapipe::NoDestructor<WebGpuDeviceAttachmentManager> manager(
-      wgpu::Device(*WebGpuDeviceRegistration::GetInstance().GetWebGpuDevice()));
+      wgpu::Device(WebGpuDeviceRegistration::GetInstance().GetWebGpuDevice()));
   return *manager;
 }
 #endif  // __EMSCRIPTEN__
