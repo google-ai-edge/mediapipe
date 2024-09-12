@@ -141,6 +141,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":label_map_cc_proto",
+        ":str_util",
         "//mediapipe/framework/port:core_proto",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",

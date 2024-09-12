@@ -22,10 +22,10 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
-#include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "google/protobuf/map.h"
 #include "mediapipe/util/label_map.pb.h"
+#include "mediapipe/util/str_util.h"
 
 namespace mediapipe {
 
@@ -35,8 +35,10 @@ absl::StatusOr<proto_ns::Map<int64_t, LabelMapItem>> BuildLabelMapFromFiles(
   if (labels_file_contents.empty()) {
     return absl::InvalidArgumentError("Expected non-empty labels file.");
   }
-  std::vector<absl::string_view> labels =
-      absl::StrSplit(labels_file_contents, '\n');
+  std::vector<absl::string_view> labels;
+  mediapipe::ForEachLine(
+      labels_file_contents,
+      [&labels](absl::string_view line) { labels.push_back(line); });
   if (!labels.empty() && labels.back().empty()) {
     labels.pop_back();
   }
@@ -50,8 +52,11 @@ absl::StatusOr<proto_ns::Map<int64_t, LabelMapItem>> BuildLabelMapFromFiles(
   }
 
   if (!display_names_file_contents.empty()) {
-    std::vector<absl::string_view> display_names =
-        absl::StrSplit(display_names_file_contents, '\n');
+    std::vector<absl::string_view> display_names;
+    mediapipe::ForEachLine(display_names_file_contents,
+                           [&display_names](absl::string_view line) {
+                             display_names.push_back(line);
+                           });
     if (!display_names.empty() && display_names.back().empty()) {
       display_names.pop_back();
     }
