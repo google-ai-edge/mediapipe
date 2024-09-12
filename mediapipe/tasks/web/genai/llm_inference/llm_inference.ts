@@ -144,6 +144,14 @@ class Deferred<T> {
 }
 
 /**
+ * Small helper to round up to the nearest even number, except for n=1.
+ */
+function roundUpToNearestEven(n: number): number {
+  if (n === 1) return 1;
+  return (n + (n % 2));
+}
+
+/**
  * Performs LLM Inference on text.
  */
 export class LlmInference extends TaskRunner {
@@ -834,7 +842,11 @@ export class LlmInference extends TaskRunner {
           stripLeadingWhitespace,
         );
         decodedText.forEach((text, index) => {
-          this.generationResults[index].push(text);
+          // TODO: Remove this when we no longer need to have an
+          // even number of responses in multi-output.
+          if (index < this.options.getNumResponses()) {
+            this.generationResults[index].push(text);
+          }
         });
         // Don't trigger the user progress listener if there are WebGPU errors.
         if (this.userProgressListener && this.wgpuErrors.length === 0) {
@@ -1033,7 +1045,10 @@ export class LlmInference extends TaskRunner {
     llmGpuOptions.setWeightPath(LlmInference.LLM_MODEL_NAME);
     // Set seq batch size to 0 to use automated sequence batch search.
     llmGpuOptions.setSequenceBatchSize(0);
-    llmGpuOptions.setNumOutputHeads(this.options.getNumResponses());
+    // TODO: Remove this when we no longer need to have an even
+    // number of responses in multi-output.
+    llmGpuOptions.setNumOutputHeads(roundUpToNearestEven(
+        this.options.getNumResponses()));
     llmGpuOptions.setSamplerParams(this.options.getSamplerParams());
 
     const gpuModelInfo = new LlmGpuCalculatorOptions.GpuModelInfo();
@@ -1080,7 +1095,10 @@ export class LlmInference extends TaskRunner {
       'type.googleapis.com/odml.infra.proto.DetokenizerCalculatorOptions',
     );
     const detokenizerOptions = new DetokenizerCalculatorOptions();
-    detokenizerOptions.setNumOutputHeads(this.options.getNumResponses());
+    // TODO: Remove this when we no longer need to have an even
+    // number of responses in multi-output.
+    detokenizerOptions.setNumOutputHeads(roundUpToNearestEven(
+        this.options.getNumResponses()));
     // No need to set spm model, instead reuse TokenizerCalculator's side input.
     detokenizerOptions.addStopTokens('<eos>');
     detokenizerOptions.addStopTokens('<|endoftext|>');
