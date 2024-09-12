@@ -114,6 +114,7 @@ LlmParams LlmParams::FromLLMParametersProto(
       .head_dim_H = static_cast<size_t>(transformer_params.head_dimension()),
       .n_heads_N = static_cast<size_t>(transformer_params.num_heads()),
       .voc_size_V = static_cast<size_t>(llm_params.vocab_size()),
+      .query_rescale_factor = transformer_params.query_rescale_factor(),
 
       .num_kv_heads =
           static_cast<size_t>(transformer_params.num_kv_heads() == 0
@@ -146,6 +147,8 @@ LlmParams LlmParams::FromLLMParametersProto(
   };
   params.final_proj_params = LlmParams::FinalProjectParams{
       .no_bias = transformer_params.final_project_parameters().no_bias(),
+      .soft_cap_value =
+          transformer_params.final_project_parameters().soft_cap_value(),
   };
   switch (transformer_params.feed_forward_parameters().activation()) {
     case TransformerParameters::ACTIVATION_UNSPECIFIED:
@@ -160,6 +163,9 @@ LlmParams LlmParams::FromLLMParametersProto(
       break;
     case TransformerParameters::RELU:
       params.ff_params.activation = LlmParams::Activation::RELU;
+      break;
+    case TransformerParameters::RELU1P5:
+      params.ff_params.activation = LlmParams::Activation::RELU1P5;
       break;
     default:
       ABSL_LOG(DFATAL)

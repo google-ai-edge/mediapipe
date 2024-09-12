@@ -75,6 +75,8 @@ message TransformerParameters {
     // RELU stands for Rectified Linear Unit, see
     // https://dl.acm.org/doi/10.5555/3104322.3104425 for details.
     RELU = 3;
+    // The output of RELU is multiplied by its square root.
+    RELU1P5 = 4;
   }
 
   enum Norm {
@@ -183,4 +185,7 @@ message TransformerParameters {
   }
 
   optional ResidualAdapterParameters residual_adapter_parameters = 22;
+
+  // Scale the queries by this value.
+  optional float query_rescale_factor = 25;
 }

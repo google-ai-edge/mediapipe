@@ -48,6 +48,7 @@ struct LlmParams {
   size_t n_heads_N = 0;
   size_t voc_size_V = 0;
   size_t draft_size_G = 0;
+  float query_rescale_factor = 1.f;
 
   // Number of kv heads. In case of Multi-Head-Attention (MHA), num_kv_heads is
   // the same as n_heads_N, which is number of query heads; In case of
@@ -75,6 +76,8 @@ struct LlmParams {
     SILU = 2,
     // Rectified Linear Unit.
     RELU = 3,
+    // Rectified Linear Unit 1p5
+    RELU1P5 = 4,
   };
 
   enum class Norm {
@@ -123,6 +126,7 @@ struct LlmParams {
   struct FinalProjectParams {
     // If `no_bias`, final fully connect will degrade to matrix multiply.
     bool no_bias = false;
+    float soft_cap_value = 0.0f;
   } final_proj_params;
 
   /*
