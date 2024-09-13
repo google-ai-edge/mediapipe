@@ -33,7 +33,7 @@ using EmbedderOptionsProto = ::mediapipe::tasks::components::processors::proto::
   AudioEmbedderGraphOptionsProto *graphOptions =
       optionsProto->MutableExtension(AudioEmbedderGraphOptionsProto::ext);
   [self.baseOptions copyToProto:graphOptions->mutable_base_options()
-              withUseStreamMode:self.runningMode != MPPAudioRunningModeAudioStream];
+              withUseStreamMode:self.runningMode == MPPAudioRunningModeAudioStream];
 
   EmbedderOptionsProto *embedderOptionsProto = graphOptions->mutable_embedder_options();
   embedderOptionsProto->Clear();
