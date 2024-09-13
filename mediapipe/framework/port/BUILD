@@ -383,7 +383,9 @@ cc_library(
 cc_library(
     name = "singleton",
     hdrs = ["singleton.h"],
-    deps = ["//mediapipe/framework/deps:singleton"],
+    deps = [
+        "//mediapipe/framework/deps:singleton",
+    ],
 )
 
 cc_library(
