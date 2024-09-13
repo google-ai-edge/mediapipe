@@ -38,3 +38,29 @@ objc_library(
         "//third_party/apple_frameworks:Foundation",
     ],
 )
+
+objc_library(
+    name = "MPPAudioEmbedder",
+    srcs = ["sources/MPPAudioEmbedder.mm"],
+    hdrs = ["sources/MPPAudioEmbedder.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+        "-x objective-c++",
+    ],
+    deps = [
+        ":MPPAudioEmbedderOptions",
+        ":MPPAudioEmbedderResult",
+        "//mediapipe/tasks/cc/audio/audio_embedder:audio_embedder_graph",
+        "//mediapipe/tasks/ios/audio/audio_embedder/utils:MPPAudioEmbedderOptionsHelpers",
+        "//mediapipe/tasks/ios/audio/audio_embedder/utils:MPPAudioEmbedderResultHelpers",
+        "//mediapipe/tasks/ios/audio/core:MPPAudioData",
+        "//mediapipe/tasks/ios/audio/core:MPPAudioRecord",
+        "//mediapipe/tasks/ios/audio/core:MPPAudioTaskRunner",
+        "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
+        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
+        "//mediapipe/tasks/ios/core:MPPTaskInfo",
+        "//third_party/apple_frameworks:Foundation",
+    ],
+)
+
