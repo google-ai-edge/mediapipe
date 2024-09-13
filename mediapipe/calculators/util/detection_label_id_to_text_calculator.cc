@@ -29,8 +29,8 @@
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/resources.h"
 #include "mediapipe/util/label_map.pb.h"
+#include "mediapipe/util/label_map_util.h"
 #include "mediapipe/util/resource_util.h"
-#include "mediapipe/util/str_util.h"
 
 #if defined(MEDIAPIPE_MOBILE)
 #include "mediapipe/util/android/file/base/file.h"
@@ -94,17 +94,12 @@ absl::Status DetectionLabelIdToTextCalculator::Open(CalculatorContext* cc) {
     std::string string_path;
     MP_ASSIGN_OR_RETURN(string_path,
                         PathToResourceAsFile(options.label_map_path()));
-    std::string label_map_string;
     MP_ASSIGN_OR_RETURN(std::unique_ptr<mediapipe::Resource> label_map,
                         cc->GetResources().Get(string_path));
-
-    int i = 0;
-    mediapipe::ForEachLine(label_map->ToStringView(),
-                           [&](absl::string_view line) {
-                             LabelMapItem item;
-                             item.set_name(std::string(line));
-                             local_label_map_[i++] = std::move(item);
-                           });
+    MP_ASSIGN_OR_RETURN(
+        local_label_map_,
+        BuildLabelMapFromFiles(label_map->ToStringView(),
+                               /*display_names_file_contents=*/{}));
   } else if (!options.label().empty()) {
     RET_CHECK(options.label_items().empty())
         << "Only can set one of the following fields in the CalculatorOptions: "
@@ -112,7 +107,7 @@ absl::Status DetectionLabelIdToTextCalculator::Open(CalculatorContext* cc) {
     for (int i = 0; i < options.label_size(); ++i) {
       LabelMapItem item;
       item.set_name(options.label(i));
-      local_label_map_[i] = item;
+      local_label_map_[i] = std::move(item);
     }
   }
   keep_label_id_ = options.keep_label_id();

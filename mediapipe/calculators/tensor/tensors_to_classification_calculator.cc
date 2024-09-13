@@ -33,8 +33,8 @@
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/resources.h"
 #include "mediapipe/util/label_map.pb.h"
+#include "mediapipe/util/label_map_util.h"
 #include "mediapipe/util/resource_util.h"
-#include "mediapipe/util/str_util.h"
 #if defined(MEDIAPIPE_MOBILE)
 #include "mediapipe/util/android/file/base/file.h"
 #include "mediapipe/util/android/file/base/helpers.h"
@@ -123,13 +123,10 @@ absl::Status TensorsToClassificationCalculator::Open(CalculatorContext* cc) {
                         PathToResourceAsFile(options.label_map_path()));
     MP_ASSIGN_OR_RETURN(std::unique_ptr<mediapipe::Resource> label_map,
                         cc->GetResources().Get(string_path));
-    int i = 0;
-    mediapipe::ForEachLine(label_map->ToStringView(),
-                           [&](absl::string_view line) {
-                             LabelMapItem item;
-                             item.set_name(std::string(line));
-                             local_label_map_[i++] = std::move(item);
-                           });
+    MP_ASSIGN_OR_RETURN(
+        local_label_map_,
+        BuildLabelMapFromFiles(label_map->ToStringView(),
+                               /*display_names_file_contents*/ {}));
     label_map_loaded_ = true;
   } else if (!options.label_items().empty()) {
     label_map_loaded_ = true;
@@ -140,7 +137,7 @@ absl::Status TensorsToClassificationCalculator::Open(CalculatorContext* cc) {
           << "Duplicate id found: " << entry.id();
       LabelMapItem item;
       item.set_name(entry.label());
-      local_label_map_[entry.id()] = item;
+      local_label_map_[entry.id()] = std::move(item);
     }
     label_map_loaded_ = true;
   }

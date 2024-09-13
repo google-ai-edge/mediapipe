@@ -316,8 +316,8 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "//mediapipe/util:label_map_cc_proto",
+        "//mediapipe/util:label_map_util",
         "//mediapipe/util:resource_util",
-        "//mediapipe/util:str_util",
         "@com_google_absl//absl/container:node_hash_map",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings:string_view",
@@ -339,6 +339,27 @@ cc_library(
         ],
     }),
     alwayslink = 1,
+)
+
+cc_test(
+    name = "detection_label_id_to_text_calculator_test",
+    srcs = ["detection_label_id_to_text_calculator_test.cc"],
+    deps = [
+        ":detection_label_id_to_text_calculator",
+        ":detection_label_id_to_text_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:resources",
+        "//mediapipe/framework:resources_service",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status_matchers",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
+    ],
 )
 
 cc_library(
