@@ -43,8 +43,10 @@ typedef NSDictionary<NSString *, NSNumber *> ClassificationHeadsCategoryCountInf
 
 static ClassificationHeadsCategoryCountInfo *const kYamnetModelHeadsInfo =
     @{kYamnetModelHeadName : @(kYamnetCategoriesCount)};
-static ClassificationHeadsCategoryCountInfo *const kTwoHeadModelHeadsInfo =
-    @{kTwoHeadsModelYamnetHeadName : @(kYamnetCategoriesCount), kTwoHeadsModelBirdClassificationHeadName : @(5)};
+static ClassificationHeadsCategoryCountInfo *const kTwoHeadModelHeadsInfo = @{
+  kTwoHeadsModelYamnetHeadName : @(kYamnetCategoriesCount),
+  kTwoHeadsModelBirdClassificationHeadName : @(5)
+};
 
 static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 
@@ -90,27 +92,28 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 
 - (void)testCreateImageClassifierAllowlistAndDenylistFails {
   MPPAudioClassifierOptions *options =
-      [self audioClassifierOptionsWithModelFileInfo:kTwoHeadsModelFileInfo];
+      [MPPAudioClassifierTests audioClassifierOptionsWithModelFileInfo:kTwoHeadsModelFileInfo];
   options.categoryAllowlist = @[ @"Speech" ];
   options.categoryDenylist = @[ @"Speech" ];
 
-  [self assertCreateAudioClassifierWithOptions:options
-                        failsWithExpectedError:
-                            [NSError
-                                errorWithDomain:kExpectedErrorDomain
-                                           code:MPPTasksErrorCodeInvalidArgumentError
-                                       userInfo:@{
-                                         NSLocalizedDescriptionKey :
-                                             @"INVALID_ARGUMENT: `category_allowlist` and "
-                                             @"`category_denylist` are mutually exclusive options."
-                                       }]];
+  [MPPAudioClassifierTests
+      assertCreateAudioClassifierWithOptions:options
+                      failsWithExpectedError:
+                          [NSError
+                              errorWithDomain:kExpectedErrorDomain
+                                         code:MPPTasksErrorCodeInvalidArgumentError
+                                     userInfo:@{
+                                       NSLocalizedDescriptionKey :
+                                           @"INVALID_ARGUMENT: `category_allowlist` and "
+                                           @"`category_denylist` are mutually exclusive options."
+                                     }]];
 }
 
 - (void)testClassifyWithYamnetAndModelPathSucceeds {
   MPPAudioClassifier *audioClassifier =
       [[MPPAudioClassifier alloc] initWithModelPath:kYamnetModelFileInfo.path error:nil];
   XCTAssertNotNil(audioClassifier);
-  
+
   // Classify 48KHz speech file.
   [MPPAudioClassifierTests
           assertResultsOfClassifyAudioClipWithFileInfo:kSpeech48KHzMonoFileInfo
@@ -132,8 +135,9 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 
 - (void)testClassifyWithTwoHeadsAndOptionsSucceeds {
   MPPAudioClassifierOptions *options =
-      [self audioClassifierOptionsWithModelFileInfo:kTwoHeadsModelFileInfo];
-  MPPAudioClassifier *audioClassifier = [self audioClassifierWithOptions:options];
+      [MPPAudioClassifierTests audioClassifierOptionsWithModelFileInfo:kTwoHeadsModelFileInfo];
+  MPPAudioClassifier *audioClassifier =
+      [MPPAudioClassifierTests audioClassifierWithOptions:options];
 
   // Classify 44KHz speech file.
   [MPPAudioClassifierTests
@@ -188,7 +192,7 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
   return options;
 }
 
-- (MPPAudioClassifier *)audioClassifierWithOptions:(MPPAudioClassifierOptions *)options {
++ (MPPAudioClassifier *)audioClassifierWithOptions:(MPPAudioClassifierOptions *)options {
   NSError *error;
   MPPAudioClassifier *audioClassifier = [[MPPAudioClassifier alloc] initWithOptions:options
                                                                               error:&error];
@@ -198,15 +202,7 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
   return audioClassifier;
 }
 
-- (MPPAudioClassifierOptions *)audioClassifierOptionsWithModelFileInfo:
-    (MPPFileInfo *)modelFileInfo {
-  MPPAudioClassifierOptions *audioClassifierOptions = [[MPPAudioClassifierOptions alloc] init];
-  audioClassifierOptions.baseOptions.modelAssetPath = modelFileInfo.path;
-
-  return audioClassifierOptions;
-}
-
-- (MPPAudioClassifier *)createAudioClassifierWithOptionsSucceeds:
++ (MPPAudioClassifier *)createAudioClassifierWithOptionsSucceeds:
     (MPPAudioClassifierOptions *)audioClassifierOptions {
   NSError *error;
   MPPAudioClassifier *audioClassifier =
@@ -217,7 +213,7 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
   return audioClassifier;
 }
 
-- (void)assertCreateAudioClassifierWithOptions:(MPPAudioClassifierOptions *)options
++ (void)assertCreateAudioClassifierWithOptions:(MPPAudioClassifierOptions *)options
                         failsWithExpectedError:(NSError *)expectedError {
   NSError *error = nil;
   MPPAudioClassifier *audioClassifier = [[MPPAudioClassifier alloc] initWithOptions:options
