@@ -19,6 +19,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <functional>
 #include <memory>
 #include <numeric>
@@ -178,6 +179,9 @@ struct Tensor {
   // the tensor is loaded from.
   std::string tag;
 
+  // Actually allocate buffer unless necessary.
+  virtual void AllocateBufferIfNeeded();
+
  protected:
   friend class XnnGraphBuilder;
   friend class XnnGraph;
@@ -185,9 +189,6 @@ struct Tensor {
 
   // Invoke xnn_define_*tensor_value to add this tensor to the `subgraph`.
   virtual absl::Status DefineInSubgraph(xnn_subgraph& subgraph, uint32_t flags);
-
-  // Actually allocate buffer unless necessary.
-  virtual void AllocateBufferIfNeeded();
 
   virtual size_t ElementSize(size_t num_elements) const {
     return num_elements * 4;

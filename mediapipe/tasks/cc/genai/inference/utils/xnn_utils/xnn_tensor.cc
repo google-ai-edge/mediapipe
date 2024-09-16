@@ -383,6 +383,7 @@ std::shared_ptr<Tensor> Tensor::Transpose() {
   DimsType out_dims{dims.rbegin(), dims.rend()};
   auto result =
       std::make_shared<Tensor>(std::move(out_dims), datatype, is_sparse());
+  result->tag = tag;
   result->AllocateBufferIfNeeded();
   xnn_status s;
   const DimsType perm{1, 0};
@@ -513,6 +514,7 @@ std::shared_ptr<Tensor> QCTensor::Transpose() {
   DimsType out_dims{dims.rbegin(), dims.rend()};
   auto result = std::make_shared<QCTensor>(std::move(out_dims), 1 - dim_scale,
                                            datatype, is_sparse());
+  result->tag = tag;
   result->zero_point = zero_point;
   result->AllocateBufferIfNeeded();
   memcpy(result->scale_data.get(), scale_data.get(),

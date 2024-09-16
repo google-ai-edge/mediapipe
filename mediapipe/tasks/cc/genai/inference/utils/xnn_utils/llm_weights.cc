@@ -20,6 +20,7 @@
 #include <memory>
 #include <optional>
 #include <utility>
+#include <vector>
 
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
@@ -64,9 +65,11 @@ LlmParams::Norm TransformerParametersProtoNormTypeToLlmParamsNormType(
   return LlmParams::Norm::UNSPECIFIED;
 }
 
+}  // namespace
+
 // According to norm_type, load necessary weights with given basename.
 absl::StatusOr<std::optional<LlmWeights::NormWeights>> LoadNormWeights(
-    LlmParams::Norm norm_type, const LlmParams& params,
+    LlmParams::Norm norm_type, std::vector<size_t> dims,
     absl::string_view basename, WeightAccessor& weight_accessor) {
   switch (norm_type) {
     case LlmParams::Norm::UNSPECIFIED:
@@ -77,20 +80,20 @@ absl::StatusOr<std::optional<LlmWeights::NormWeights>> LoadNormWeights(
       auto rms_norm_weights = RMSNormWeights();
       MP_ASSIGN_OR_RETURN(
           rms_norm_weights.norm_weight,
-          weight_accessor.LoadWeight(absl::StrCat(basename, ".scale"),
-                                     {params.model_dim_D}));
+          weight_accessor.LoadWeight(absl::StrCat(basename, ".scale"), dims));
       return rms_norm_weights;
     }
     case LlmParams::Norm::LAYER_NORM: {
+      RET_CHECK_EQ(dims.size(), 1);
       auto layer_norm_weights = LayerNormWeights();
       MP_ASSIGN_OR_RETURN(
           layer_norm_weights.beta,
           weight_accessor.LoadWeight(absl::StrCat(basename, ".bias"),
-                                     {1, 1, params.model_dim_D}));
+                                     {1, 1, dims[0]}));
       MP_ASSIGN_OR_RETURN(
           layer_norm_weights.gamma,
           weight_accessor.LoadWeight(absl::StrCat(basename, ".scale"),
-                                     {1, 1, params.model_dim_D}));
+                                     {1, 1, dims[0]}));
       return layer_norm_weights;
     }
     default:
@@ -98,8 +101,6 @@ absl::StatusOr<std::optional<LlmWeights::NormWeights>> LoadNormWeights(
   }
   return std::nullopt;
 }
-
-}  // namespace
 
 LlmParams LlmParams::FromLLMParametersProto(
     const odml::infra::proto::LlmParameters& llm_params) {
@@ -471,11 +472,12 @@ absl::StatusOr<LlmWeights> LlmWeightsLoader::LoadWeights() {
   }
   RET_CHECK(result.softmax_linear) << kLogitsFfnWeightFilename;
 
-  MP_ASSIGN_OR_RETURN(
-      result.token_embedding,
-      weight_accessor_->LoadWeight(kTokenEmbedding,
-                                   {params_.voc_size_V, params_.model_dim_D},
-                                   /*dim_scale_if_any=*/0));
+  result.token_embedding =
+      weight_accessor_
+          ->LoadWeight(kTokenEmbedding,
+                       {params_.voc_size_V, params_.model_dim_D},
+                       /*dim_scale_if_any=*/0)
+          .value_or(nullptr);
 
   return result;
 }

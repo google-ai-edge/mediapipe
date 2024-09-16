@@ -191,6 +191,7 @@ struct LlmWeights {
   std::optional<NormWeights> final_norm_weight;
   std::shared_ptr<Tensor> softmax_linear;
   std::shared_ptr<Tensor> softmax_bias;
+  std::optional<NormWeights> embedding_norm_weight;
 
   // Usually same as softmax_linear, but some models use different
   // softmax_linear v.s. embedding table.
@@ -201,6 +202,17 @@ struct LlmWeights {
   // store in this map. The builder can then access these custom weights.
   absl::flat_hash_map<std::string, std::shared_ptr<Tensor>> custom_weights;
 };
+
+absl::StatusOr<std::optional<LlmWeights::NormWeights>> LoadNormWeights(
+    LlmParams::Norm norm_type, std::vector<size_t> dims,
+    absl::string_view basename, WeightAccessor& weight_accessor);
+
+inline absl::StatusOr<std::optional<LlmWeights::NormWeights>> LoadNormWeights(
+    LlmParams::Norm norm_type, const LlmParams& params,
+    absl::string_view basename, WeightAccessor& weight_accessor) {
+  return LoadNormWeights(norm_type, std::vector<size_t>{params.model_dim_D},
+                         basename, weight_accessor);
+}
 
 class LlmWeightsLoader {
  public:
@@ -229,9 +241,10 @@ class LlmWeightsLoader {
   }
 
  protected:
-  absl::StatusOr<LlmWeights::SelfAttentionWeights> LoadSelfAttention(
+  virtual absl::StatusOr<LlmWeights::SelfAttentionWeights> LoadSelfAttention(
       int layer_id);
-  absl::StatusOr<LlmWeights::FeedForwardWeights> LoadFeedForward(int layer_id);
+  virtual absl::StatusOr<LlmWeights::FeedForwardWeights> LoadFeedForward(
+      int layer_id);
 
   // is_query: indicating whether the weight is for query projection or not.
   // Note that the key/value projection weights are handled differently between
@@ -246,6 +259,7 @@ class LlmWeightsLoader {
 
 class DefaultLlmWeightsLoader : public LlmWeightsLoader {
  public:
+  using LlmWeightsLoader::LlmWeightsLoader;
   DefaultLlmWeightsLoader(absl::string_view weight_path,
                           const LlmParams& params);
 
