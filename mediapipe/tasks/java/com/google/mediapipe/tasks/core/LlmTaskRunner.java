@@ -15,6 +15,7 @@
 package com.google.mediapipe.tasks.core;
 
 import android.content.Context;
+import androidx.annotation.Nullable;
 import com.google.mediapipe.tasks.core.OutputHandler.ProgressListener;
 import com.google.mediapipe.tasks.core.jni.proto.LlmOptionsProto.LlmModelSettings;
 import com.google.mediapipe.tasks.core.jni.proto.LlmOptionsProto.LlmSessionConfig;
@@ -24,6 +25,7 @@ import com.google.mediapipe.tasks.core.logging.TasksStatsLogger;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Internal Task Runner class for all LLM Tasks.
@@ -32,20 +34,27 @@ import java.util.Optional;
  */
 public final class LlmTaskRunner implements AutoCloseable {
   private final long engineHandle;
-  private final long sessionHandle;
   private final Optional<ProgressListener<List<String>>> resultListener;
   private final long callbackHandle;
   private final TasksStatsLogger statsLogger;
+  private final AtomicBoolean isProcessing;
+
+  /** The session to use for LLM inference calls. */
+  public static final class LlmSession {
+    private final long sessionHandle;
+
+    LlmSession(long sessionHandle) {
+      this.sessionHandle = sessionHandle;
+    }
+  }
 
   public LlmTaskRunner(
       Context context,
       String taskName,
       LlmModelSettings modelSettings,
-      LlmSessionConfig sessionConfig,
       Optional<ProgressListener<List<String>>> resultListener) {
     statsLogger = TasksStatsDummyLogger.create(context, taskName, /* taskRunningModeStr= */ "");
     this.engineHandle = nativeCreateEngine(modelSettings.toByteArray());
-    this.sessionHandle = nativeCreateSession(sessionConfig.toByteArray(), engineHandle);
 
     this.resultListener = resultListener;
     if (resultListener.isPresent()) {
@@ -53,28 +62,68 @@ public final class LlmTaskRunner implements AutoCloseable {
     } else {
       this.callbackHandle = 0;
     }
+
+    this.isProcessing = new AtomicBoolean(false);
+  }
+
+  /** Creates a new LLM session. */
+  public LlmSession createSession(LlmSessionConfig sessionConfig) {
+    validateState();
+    long sessionHandle = nativeCreateSession(sessionConfig.toByteArray(), engineHandle);
     statsLogger.logSessionStart();
+    return new LlmSession(sessionHandle);
   }
 
-  /** Invokes the LLM with the provided input and waits for the result. */
-  public List<String> predictSync(String input) {
-    nativeAddQueryChunk(sessionHandle, input);
-    byte[] responseBytes = nativePredictSync(sessionHandle);
-    return parseResponse(responseBytes).getResponsesList();
+  /** Adds a new query to the session context. */
+  public void addQueryChunk(LlmSession session, String input) {
+    validateState();
+    nativeAddQueryChunk(session.sessionHandle, input);
   }
 
-  /** Invokes the LLM with the provided input and calls the callback with the result. */
-  public void predictAsync(String input) {
+  /** Invokes the LLM with the given session and waits for the result. */
+  public List<String> predictSync(LlmSession session) {
+    validateState();
+    try {
+      isProcessing.set(true);
+      byte[] responseBytes = nativePredictSync(session.sessionHandle);
+      return parseResponse(responseBytes).getResponsesList();
+    } finally {
+      isProcessing.set(false);
+    }
+  }
+
+  /** Invokes the LLM with the given session and calls the callback with the result. */
+  public void predictAsync(LlmSession session) {
+    validateState();
+
     if (callbackHandle == 0) {
       throw new IllegalStateException("No result listener provided.");
     }
-    nativeAddQueryChunk(sessionHandle, input);
-    nativePredictAsync(sessionHandle, callbackHandle);
+
+    try {
+      isProcessing.set(true);
+      nativePredictAsync(session.sessionHandle, callbackHandle);
+    } catch (Throwable t) {
+      // Only reset `isProcessing` if we fail to start the async inference. For successful
+      // inferences, we reset `isProcessing` when we receive `done=true`.
+      isProcessing.set(false);
+      throw t;
+    }
   }
 
   /** Invokes the native token cost calculator and returns the size of the string in tokens. */
-  public int sizeInTokens(String text) {
-    return nativeSizeInTokens(sessionHandle, text);
+  public int sizeInTokens(LlmSession session, String text) {
+    validateState();
+    return nativeSizeInTokens(session.sessionHandle, text);
+  }
+
+  /** If provided, removes the session and frees up its context. */
+  public void deleteSession(@Nullable LlmSession session) {
+    validateState();
+    if (session != null) {
+      nativeDeleteSession(session.sessionHandle);
+      statsLogger.logSessionEnd();
+    }
   }
 
   private LlmResponseContext parseResponse(byte[] response) {
@@ -87,16 +136,24 @@ public final class LlmTaskRunner implements AutoCloseable {
 
   private void onAsyncResponse(byte[] responseBytes) {
     LlmResponseContext respone = parseResponse(responseBytes);
+    if (respone.getDone()) {
+      isProcessing.set(false);
+    }
     resultListener.get().run(respone.getResponsesList(), respone.getDone());
   }
 
   @Override
   public void close() {
+    validateState();
     if (callbackHandle != 0) {
       nativeRemoveCallback(callbackHandle);
     }
-    nativeDeleteSession(sessionHandle);
-    statsLogger.logSessionEnd();
+  }
+
+  private void validateState() {
+    if (isProcessing.get()) {
+      throw new IllegalStateException("Previous invocation still processing. Wait for done=true.");
+    }
   }
 
   private static native long nativeCreateEngine(byte[] modelSettings);

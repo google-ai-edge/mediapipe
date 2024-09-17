@@ -6,13 +6,14 @@ import com.google.common.collect.ImmutableList;
 import com.google.mediapipe.framework.MediaPipeException;
 import com.google.mediapipe.tasks.core.ErrorListener;
 import com.google.mediapipe.tasks.core.LlmTaskRunner;
+import com.google.mediapipe.tasks.core.LlmTaskRunner.LlmSession;
 import com.google.mediapipe.tasks.core.OutputHandler.ProgressListener;
 import com.google.mediapipe.tasks.core.TaskOptions;
 import com.google.mediapipe.tasks.core.jni.proto.LlmOptionsProto.LlmModelSettings;
 import com.google.mediapipe.tasks.core.jni.proto.LlmOptionsProto.LlmSessionConfig;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /** LlmInference Task Java API */
 public class LlmInference implements AutoCloseable {
@@ -24,7 +25,13 @@ public class LlmInference implements AutoCloseable {
   private static final int NUM_DECODE_STEPS_PER_SYNC = 3;
 
   private final LlmTaskRunner taskRunner;
-  private final AtomicBoolean isProcessing;
+  private final LlmSessionConfig sessionConfig;
+
+  /**
+   * An implicit session for all request that do use the public session API. These sessions are
+   * short-lived and are only kept for a single inference.
+   */
+  private final AtomicReference<LlmSession> implicitSession;
 
   static {
     System.loadLibrary("llm_inference_engine_jni");
@@ -46,7 +53,6 @@ public class LlmInference implements AutoCloseable {
 
     // Configure LLM session config.
     LlmSessionConfig.Builder sessionConfig = LlmSessionConfig.newBuilder();
-
     sessionConfig.setTopk(options.topK());
     sessionConfig.setTemperature(options.temperature());
     sessionConfig.setRandomSeed(options.randomSeed());
@@ -81,8 +87,9 @@ public class LlmInference implements AutoCloseable {
                           partialResult, /* stripLeadingWhitespace= */ !receivedFirstToken);
                   if (done) {
                     receivedFirstToken = false; // Reset to initial state
-                    isProcessing.set(false);
                     resultListener.get().run(result, done);
+                    LlmSession session = implicitSession.getAndSet(null);
+                    taskRunner.deleteSession(session);
                   } else if (!result.isEmpty()) {
                     receivedFirstToken = true;
                     resultListener.get().run(result, done);
@@ -93,44 +100,59 @@ public class LlmInference implements AutoCloseable {
       llmResultListener = Optional.empty();
     }
 
-    this.taskRunner =
-        new LlmTaskRunner(context, taskName, modelSettings, sessionConfig, llmResultListener);
-    this.isProcessing = new AtomicBoolean(false);
+    this.sessionConfig = sessionConfig;
+    this.taskRunner = new LlmTaskRunner(context, taskName, modelSettings, llmResultListener);
+    this.implicitSession = new AtomicReference<>();
   }
 
   /**
    * Generates a response based on the input text.
+   *
+   * <p>This method creates a new session for each call.
    *
    * @param inputText a {@link String} for processing.
    * @throws MediaPipeException if the inference fails.
    */
   public String generateResponse(String inputText) {
     validateState();
-    isProcessing.set(true);
+
     try {
-      List<String> tokens = taskRunner.predictSync(inputText);
+      implicitSession.set(taskRunner.createSession(sessionConfig));
+      taskRunner.addQueryChunk(implicitSession.get(), inputText);
+      List<String> tokens = taskRunner.predictSync(implicitSession.get());
       return decodeResponse(tokens, /* stripLeadingWhitespace= */ true);
     } finally {
-      isProcessing.set(false);
+      LlmSession session = implicitSession.getAndSet(null);
+      taskRunner.deleteSession(session);
     }
   }
 
   /**
    * Generates a response based on the input text.
    *
+   * <p>This method creates a new session for each call.
+   *
    * @param inputText a {@link String} for processing.
    * @throws MediaPipeException if the inference fails.
    */
   public void generateResponseAsync(String inputText) {
     validateState();
-    isProcessing.set(true);
+
     try {
-      taskRunner.predictAsync(inputText);
-    } catch (MediaPipeException e) {
-      // Only reset `isProcessing` if we fail to start the async task. For successful starts, we
-      // will reset `isProcessing` in the result listener.
-      isProcessing.set(false);
-      throw e;
+      implicitSession.set(taskRunner.createSession(sessionConfig));
+      taskRunner.addQueryChunk(implicitSession.get(), inputText);
+      taskRunner.predictAsync(implicitSession.get());
+    } catch (Throwable t) {
+      // Only remove the current session if we fail to start the async task. For successful starts,
+      // we delete the session in the result listener.
+      LlmSession session = implicitSession.getAndSet(null);
+      taskRunner.deleteSession(session);
+      if (t instanceof MediaPipeException) {
+        throw t;
+      } else {
+        throw new MediaPipeException(
+            MediaPipeException.StatusCode.INTERNAL.ordinal(), t.getMessage());
+      }
     }
   }
 
@@ -145,11 +167,12 @@ public class LlmInference implements AutoCloseable {
    */
   public int sizeInTokens(String text) {
     validateState();
-    isProcessing.set(true);
     try {
-      return taskRunner.sizeInTokens(text);
+      implicitSession.set(taskRunner.createSession(sessionConfig));
+      return taskRunner.sizeInTokens(implicitSession.get(), text);
     } finally {
-      isProcessing.set(false);
+      LlmSession session = implicitSession.getAndSet(null);
+      taskRunner.deleteSession(session);
     }
   }
 
@@ -172,8 +195,8 @@ public class LlmInference implements AutoCloseable {
   }
 
   private void validateState() {
-    if (isProcessing.get()) {
-      throw new IllegalStateException("Previous invocation still processing. Wait for done=true.");
+    if (implicitSession.get() != null) {
+      throw new IllegalStateException("Previous session still active.");
     }
   }
 
