@@ -133,6 +133,7 @@ bzl_library(
 # linker, so if library A depends on library B, library B must come _after_.
 # Hence core is at the bottom.
 OPENCV_MODULES = [
+    "flann",
     "calib3d",
     "features2d",
     "highgui",
@@ -149,7 +150,7 @@ OPENCV_MODULES = [
 # to switch to static libraries.
 OPENCV_SHARED_LIBS = True
 
-OPENCV_SO_VERSION = "3.4"
+OPENCV_SO_VERSION = "407"
 
 cmake(
     name = "opencv_cmake",
@@ -157,6 +158,7 @@ cmake(
     # here are serving to provide some CMake script configuration options
     cache_entries = {
         "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_INSTALL_LIBDIR": "lib",
         # The module list is always sorted alphabetically so that we do not
         # cause a rebuild when changing the link order.
         "BUILD_LIST": ",".join(sorted(OPENCV_MODULES)),
@@ -227,6 +229,7 @@ cmake(
         "-lpthread",
         "-lrt",
     ],
+    out_include_dir = "include/opencv4",
     out_shared_libs = select({
         "@bazel_tools//src/conditions:darwin": ["libopencv_%s.%s.dylib" % (module, OPENCV_SO_VERSION) for module in OPENCV_MODULES],
         # Only the shared objects listed here will be linked in the directory
