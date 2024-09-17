@@ -14,12 +14,32 @@
 
 #import "mediapipe/tasks/ios/test/audio/core/utils/sources/AVAudioPCMBuffer+TestUtils.h"
 
+#define AudioFileWithInfo(fileInfo) \
+  [[AVAudioFile alloc] initForReading:[NSURL fileURLWithPath:fileInfo.path] error:nil]
+
 @implementation AVAudioPCMBuffer (TestUtils)
+
++ (nullable AVAudioPCMBuffer *)interleavedFloat32BufferFromAudioFileWithInfo:
+    (MPPFileInfo *)fileInfo {
+  AVAudioFile *audioFile = AudioFileWithInfo(fileInfo);
+
+  AVAudioFormat *outputProcessingFormat =
+      [[AVAudioFormat alloc] initWithCommonFormat:AVAudioPCMFormatFloat32
+                                       sampleRate:audioFile.processingFormat.sampleRate
+                                         channels:audioFile.processingFormat.channelCount
+                                      interleaved:YES];
+  return [AVAudioPCMBuffer bufferFromAudioFile:audioFile processingFormat:outputProcessingFormat];
+}
 
 + (nullable AVAudioPCMBuffer *)bufferFromAudioFileWithInfo:(MPPFileInfo *)fileInfo
                                           processingFormat:(AVAudioFormat *)processingFormat {
-  AVAudioFile *audioFile = [[AVAudioFile alloc] initForReading:[NSURL fileURLWithPath:fileInfo.path]
-                                                         error:nil];
+  AVAudioFile *audioFile = AudioFileWithInfo(fileInfo);
+
+  return [AVAudioPCMBuffer bufferFromAudioFile:audioFile processingFormat:processingFormat];
+}
+
++ (nullable AVAudioPCMBuffer *)bufferFromAudioFile:(AVAudioFile *)audioFile
+                                  processingFormat:(AVAudioFormat *)processingFormat {
   AVAudioPCMBuffer *buffer =
       [[AVAudioPCMBuffer alloc] initWithPCMFormat:audioFile.processingFormat
                                     frameCapacity:(AVAudioFrameCount)audioFile.length];
