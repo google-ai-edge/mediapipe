@@ -321,6 +321,7 @@ cc_library_with_tflite(
     deps = [
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:packet",
+        "//mediapipe/framework:resources",
         "//mediapipe/framework/port:ret_check",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings:string_view",
@@ -553,6 +554,7 @@ cc_test(
         "//mediapipe/calculators/util:local_file_contents_calculator",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework:resources",
         "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",

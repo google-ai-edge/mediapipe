@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <string>
 
@@ -24,6 +25,7 @@
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"  // NOLINT
+#include "mediapipe/framework/resources.h"
 #include "tensorflow/lite/model_builder.h"
 #include "tensorflow/lite/schema/schema_generated.h"
 
@@ -131,6 +133,7 @@ TEST(TfLiteModelCalculatorTest, ModelSpanToUniqueModel) {
   MP_ASSERT_OK(graph.WaitUntilIdle());
   MP_ASSERT_OK_AND_ASSIGN(auto model_packet,
                           graph.GetOutputSidePacket("model"));
+  ASSERT_FALSE(model_packet.IsEmpty());
   const auto& model = model_packet.Get<
       std::unique_ptr<tflite::FlatBufferModel,
                       std::function<void(tflite::FlatBufferModel*)>>>();
@@ -163,7 +166,41 @@ TEST(TfLiteModelCalculatorTest, ModelSpanToSharedModel) {
   MP_ASSERT_OK(graph.WaitUntilIdle());
   MP_ASSERT_OK_AND_ASSIGN(auto model_packet,
                           graph.GetOutputSidePacket("model"));
+  ASSERT_FALSE(model_packet.IsEmpty());
   auto model = model_packet.Get<std::shared_ptr<tflite::FlatBufferModel>>();
+
+  VerifySubgraphs(*model->GetModel());
+}
+
+TEST(TfLiteModelCalculatorTest, ModelReasourceInputWorks) {
+  std::string model_content;
+  MP_ASSERT_OK(mediapipe::file::GetContents(
+      "mediapipe/calculators/tflite/testdata/add.bin", &model_content));
+
+  // Prepare single calculator graph and wait for packets.
+  CalculatorGraphConfig graph_config =
+      ParseTextProtoOrDie<CalculatorGraphConfig>(
+          R"pb(
+            input_side_packet: "model_resource"
+            node {
+              calculator: "TfLiteModelCalculator"
+              input_side_packet: "MODEL_RESOURCE:model_resource"
+              output_side_packet: "MODEL:model"
+            }
+          )pb");
+  CalculatorGraph graph(graph_config);
+  MP_ASSERT_OK(graph.StartRun(
+      {{"model_resource",
+        mediapipe::Adopt(
+            MakeNoCleanupResource(model_content.data(), model_content.size())
+                .release())}}));
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK_AND_ASSIGN(auto model_packet,
+                          graph.GetOutputSidePacket("model"));
+  ASSERT_FALSE(model_packet.IsEmpty());
+  const auto& model = model_packet.Get<
+      std::unique_ptr<tflite::FlatBufferModel,
+                      std::function<void(tflite::FlatBufferModel*)>>>();
 
   VerifySubgraphs(*model->GetModel());
 }
