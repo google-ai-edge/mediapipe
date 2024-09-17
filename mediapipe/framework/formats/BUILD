@@ -542,6 +542,7 @@ cc_library(
         "//conditions:default": [],
         # Option for vendor binaries to avoid linking libandroid.so.
         "//mediapipe/framework:android_no_jni": [],
+        "//mediapipe/gpu/webgpu:use_webgpu_emscripten": ["-sUSE_WEBGPU=1"],
     }),
     deps = [
         "//mediapipe/framework:memory_manager",

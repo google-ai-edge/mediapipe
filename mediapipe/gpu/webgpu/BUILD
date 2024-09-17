@@ -19,6 +19,14 @@ selects.config_setting_group(
     ],
 )
 
+selects.config_setting_group(
+    name = "use_webgpu_emscripten",
+    match_all = [
+        ":use_webgpu_define",
+        "//mediapipe:emscripten",
+    ],
+)
+
 exports_files([
     "tensor_webgpu_texture_view.cc",
 ])
