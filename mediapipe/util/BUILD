@@ -321,6 +321,22 @@ cc_test(
 )
 
 cc_library(
+    name = "resources_test_util",
+    testonly = True,
+    srcs = ["resources_test_util.cc"],
+    hdrs = ["resources_test_util.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:resources",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
+    ],
+)
+
+cc_library(
     name = "tensor_to_detection",
     srcs = ["tensor_to_detection.cc"],
     hdrs = ["tensor_to_detection.h"],
