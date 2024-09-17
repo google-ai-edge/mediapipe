@@ -49,6 +49,7 @@
 #include "mediapipe/framework/output_stream_shard.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/packet_generator_graph.h"
+#include "mediapipe/framework/resources_service.h"
 #include "mediapipe/framework/scheduler.h"
 #include "mediapipe/framework/scheduler_shared.h"
 #include "mediapipe/framework/subgraph.h"
@@ -427,7 +428,15 @@ class CalculatorGraph {
   template <typename T>
   absl::Status SetServiceObject(const GraphService<T>& service,
                                 std::shared_ptr<T> object) {
-    // TODO: check that the graph has not been started!
+    if (initialized_) {
+      // TODO: check that the graph has not been initialized for
+      // all services!
+      if (service.key == kResourcesService.key) {
+        return absl::InternalError(
+            "Service objects must be set before graph is initialized.");
+      }
+    }
+
     return service_manager_->SetServiceObject(service, object);
   }
 
