@@ -1214,6 +1214,54 @@ cc_library(
     alwayslink = 1,
 )
 
+mediapipe_proto_library(
+    name = "resource_provider_calculator_proto",
+    srcs = ["resource_provider_calculator.proto"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
+cc_library(
+    name = "resource_provider_calculator",
+    srcs = ["resource_provider_calculator.cc"],
+    hdrs = ["resource_provider_calculator.h"],
+    deps = [
+        ":resource_provider_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:resources",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/api2:packet",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/functional:any_invocable",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings:string_view",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "resource_provider_calculator_test",
+    srcs = ["resource_provider_calculator_test.cc"],
+    deps = [
+        ":resource_provider_calculator",
+        ":resource_provider_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:resources",
+        "//mediapipe/framework:resources_service",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/api2:packet",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/util:resources_test_util",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
 cc_library(
     name = "local_file_pattern_contents_calculator",
     srcs = ["local_file_pattern_contents_calculator.cc"],
