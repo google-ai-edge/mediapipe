@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 
+#include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
@@ -121,6 +122,44 @@ class Resources {
 
 // `Resources` object which can be used in place of `GetResourceContents`.
 std::unique_ptr<Resources> CreateDefaultResources();
+
+// Creates `Resources` object which enables resource mapping within a graph and
+// can be used in place of `GetResourceContents`.
+//
+// `mapping` keys are resources ids.
+//
+// Example:
+//
+// `CalculatorGraphConfig`:
+//   node {
+//     ...
+//     options {
+//       [type.googleapis.com/...] {
+//         model_path: "$MODEL"
+//       }
+//     }
+//   }
+//
+// `CalculatorGraph` setup:
+//
+//   CalculatorGraph graph;
+//   std::shared_ptr<Resources> resources = CreateDefaultResourcesWithMapping(
+//       {{"$MODEL", "real/path/to/the/model"}});
+//   graph.SetServiceObject(kResourcesService, std::move(resources));
+//   graph.Initialize(std::move(config));
+//
+// As a result, when loading using ...Context::GetResources, not will be able
+// to load the model from "real/path/to/the/model".
+std::unique_ptr<Resources> CreateDefaultResourcesWithMapping(
+    absl::flat_hash_map<std::string, std::string> mapping);
+
+// Wraps `resources` to provide resources by resource id using a mapping when
+// available.
+//
+// `mapping` keys are resources ids.
+std::unique_ptr<Resources> CreateResourcesWithMapping(
+    std::unique_ptr<Resources> resources,
+    absl::flat_hash_map<std::string, std::string> mapping);
 
 }  // namespace mediapipe
 

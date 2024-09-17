@@ -1,4 +1,3 @@
-
 #include <memory>
 #include <string>
 #include <utility>
@@ -21,6 +20,7 @@
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/framework/resources.h"
 #include "mediapipe/framework/resources_service.h"
+#include "mediapipe/framework/testdata/resource_path.pb.h"
 
 namespace mediapipe {
 namespace {
@@ -46,15 +46,19 @@ class TestResourcesCalculator : public Node {
   MEDIAPIPE_NODE_CONTRACT(kSideOut, kOut);
 
   absl::Status Open(CalculatorContext* cc) override {
-    MP_ASSIGN_OR_RETURN(std::unique_ptr<Resource> resource,
-                        cc->GetResources().Get(kCalculatorResource));
+    MP_ASSIGN_OR_RETURN(
+        std::unique_ptr<Resource> resource,
+        cc->GetResources().Get(
+            cc->Options<mediapipe::ResourcePathOptions>().path()));
     kSideOut(cc).Set(api2::PacketAdopting(std::move(resource)));
     return absl::OkStatus();
   }
 
   absl::Status Process(CalculatorContext* cc) override {
-    MP_ASSIGN_OR_RETURN(std::unique_ptr<Resource> resource,
-                        cc->GetResources().Get(kCalculatorResource));
+    MP_ASSIGN_OR_RETURN(
+        std::unique_ptr<Resource> resource,
+        cc->GetResources().Get(
+            cc->Options<mediapipe::ResourcePathOptions>().path()));
     kOut(cc).Send(std::move(resource));
     return tool::StatusStop();
   }
@@ -65,8 +69,10 @@ class TestResourcesSubgraph : public Subgraph {
  public:
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       SubgraphContext* sc) override {
-    MP_ASSIGN_OR_RETURN(std::unique_ptr<Resource> resource,
-                        sc->GetResources().Get(kSubgraphResource));
+    MP_ASSIGN_OR_RETURN(
+        std::unique_ptr<Resource> resource,
+        sc->GetResources().Get(
+            sc->Options<mediapipe::ResourcePathOptions>().path()));
     Graph graph;
     auto& constants_node = graph.AddNode("ConstantSidePacketCalculator");
     auto& constants_options =
@@ -90,13 +96,18 @@ struct ResourceContentsPackets {
   Packet calculator_side_out;
 };
 
-CalculatorGraphConfig BuildGraphProducingResourceContentsPackets() {
+CalculatorGraphConfig BuildGraphProducingResourceContentsPackets(
+    absl::string_view calculator_path, absl::string_view subgraph_path) {
   Graph graph;
 
   auto& subgraph = graph.AddNode("TestResourcesSubgraph");
+  subgraph.GetOptions<mediapipe::ResourcePathOptions>().set_path(
+      std::string(subgraph_path));
   subgraph.SideOut("SIDE_OUT").SetName("subgraph_side_out");
 
   auto& calculator = graph.AddNode("TestResourcesCalculator");
+  calculator.GetOptions<mediapipe::ResourcePathOptions>().set_path(
+      std::string(calculator_path));
   calculator.SideOut("SIDE_OUT").SetName("calculator_side_out");
   calculator.Out("OUT").SetName("calculator_out");
 
@@ -129,8 +140,9 @@ RunGraphAndCollectResourceContentsPackets(CalculatorGraph& calculator_graph) {
 
 TEST(CalculatorGraphResourcesTest, GraphAndContextsHaveDefaultResources) {
   CalculatorGraph calculator_graph;
-  MP_ASSERT_OK(calculator_graph.Initialize(
-      BuildGraphProducingResourceContentsPackets()));
+  MP_ASSERT_OK(
+      calculator_graph.Initialize(BuildGraphProducingResourceContentsPackets(
+          kCalculatorResource, kSubgraphResource)));
   MP_ASSERT_OK_AND_ASSIGN(
       ResourceContentsPackets packets,
       RunGraphAndCollectResourceContentsPackets(calculator_graph));
@@ -189,8 +201,9 @@ TEST(CalculatorGraphResourcesTest, CustomResourcesCanBeSetOnGraph) {
   std::shared_ptr<Resources> resources = std::make_shared<CustomResources>();
   MP_ASSERT_OK(calculator_graph.SetServiceObject(kResourcesService,
                                                  std::move(resources)));
-  MP_ASSERT_OK(calculator_graph.Initialize(
-      BuildGraphProducingResourceContentsPackets()));
+  MP_ASSERT_OK(
+      calculator_graph.Initialize(BuildGraphProducingResourceContentsPackets(
+          kCalculatorResource, kSubgraphResource)));
   MP_ASSERT_OK_AND_ASSIGN(
       ResourceContentsPackets packets,
       RunGraphAndCollectResourceContentsPackets(calculator_graph));
@@ -234,8 +247,9 @@ TEST(CalculatorGraphResourcesTest,
       std::make_shared<CustomizedDefaultResources>();
   MP_ASSERT_OK(calculator_graph.SetServiceObject(kResourcesService,
                                                  std::move(resources)));
-  MP_ASSERT_OK(calculator_graph.Initialize(
-      BuildGraphProducingResourceContentsPackets()));
+  MP_ASSERT_OK(
+      calculator_graph.Initialize(BuildGraphProducingResourceContentsPackets(
+          kCalculatorResource, kSubgraphResource)));
   MP_ASSERT_OK_AND_ASSIGN(
       ResourceContentsPackets packets,
       RunGraphAndCollectResourceContentsPackets(calculator_graph));
@@ -246,6 +260,29 @@ TEST(CalculatorGraphResourcesTest,
             "Customized: File system calculator contents\n");
   EXPECT_EQ(packets.calculator_side_out.Get<Resource>().ToStringView(),
             "Customized: File system calculator contents\n");
+}
+
+TEST(CalculatorGraphResourcesTest,
+     DefaultResourcesWithMappingCanBeSetAndUsedOnGraph) {
+  CalculatorGraph calculator_graph;
+  std::shared_ptr<Resources> resources = CreateDefaultResourcesWithMapping(
+      {{"$CALCULATOR_PATH", std::string(kCalculatorResource)},
+       {"$SUBGRAPH_PATH", std::string(kSubgraphResource)}});
+  MP_ASSERT_OK(calculator_graph.SetServiceObject(kResourcesService,
+                                                 std::move(resources)));
+  MP_ASSERT_OK(
+      calculator_graph.Initialize(BuildGraphProducingResourceContentsPackets(
+          "$CALCULATOR_PATH", "$SUBGRAPH_PATH")));
+  MP_ASSERT_OK_AND_ASSIGN(
+      ResourceContentsPackets packets,
+      RunGraphAndCollectResourceContentsPackets(calculator_graph));
+
+  EXPECT_EQ(packets.subgraph_side_out.Get<std::string>(),
+            "File system subgraph contents\n");
+  EXPECT_EQ(packets.calculator_out.Get<Resource>().ToStringView(),
+            "File system calculator contents\n");
+  EXPECT_EQ(packets.calculator_side_out.Get<Resource>().ToStringView(),
+            "File system calculator contents\n");
 }
 
 }  // namespace

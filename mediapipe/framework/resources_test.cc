@@ -2,7 +2,9 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 
+#include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
@@ -24,7 +26,7 @@ TEST(Resources, CanCreateNoCleanupResource) {
   EXPECT_EQ(resource->ToStringView(), "Test string.");
 }
 
-TEST(Resources, CanCreateDefaultResourcesThatAndReadFileContents) {
+TEST(Resources, CanCreateDefaultResourcesAndReadFileContents) {
   std::unique_ptr<Resources> resources = CreateDefaultResources();
 
   std::string contents;
@@ -35,6 +37,21 @@ TEST(Resources, CanCreateDefaultResourcesThatAndReadFileContents) {
   MP_ASSERT_OK_AND_ASSIGN(
       std::unique_ptr<Resource> resource,
       resources->Get("mediapipe/framework/testdata/resource_calculator.data"));
+  EXPECT_EQ(resource->ToStringView(), "File system calculator contents\n");
+}
+
+TEST(Resources, CanCreateDefaultResourcesWithMappingAndReadFileContents) {
+  absl::flat_hash_map<std::string, std::string> mapping = {
+      {"$CUSTOM_ID", "mediapipe/framework/testdata/resource_calculator.data"}};
+  std::unique_ptr<Resources> resources =
+      CreateDefaultResourcesWithMapping(std::move(mapping));
+
+  std::string contents;
+  MP_ASSERT_OK(resources->ReadContents("$CUSTOM_ID", contents));
+  EXPECT_EQ(contents, "File system calculator contents\n");
+
+  MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<Resource> resource,
+                          resources->Get("$CUSTOM_ID"));
   EXPECT_EQ(resource->ToStringView(), "File system calculator contents\n");
 }
 
@@ -77,6 +94,29 @@ TEST(Resources, CanCreateCustomResourcesAndReuseDefault) {
       resources->Get("mediapipe/framework/testdata/resource_calculator.data"));
   EXPECT_EQ(resource->ToStringView(), "File system calculator contents\n");
   MP_ASSERT_OK_AND_ASSIGN(resource, resources->Get("custom/resource/id"));
+  EXPECT_EQ(resource->ToStringView(), "Custom content.");
+}
+
+TEST(Resources, CanCreateCustomResourcesAndUseMapping) {
+  std::unique_ptr<Resources> resources = std::make_unique<CustomResources>();
+  absl::flat_hash_map<std::string, std::string> mapping = {
+      {"$CUSTOM_ID", "custom/resource/id"}};
+  resources =
+      CreateResourcesWithMapping(std::move(resources), std::move(mapping));
+
+  std::string contents;
+  MP_ASSERT_OK(resources->ReadContents(
+      "mediapipe/framework/testdata/resource_calculator.data", contents));
+  EXPECT_EQ(contents, "File system calculator contents\n");
+  MP_ASSERT_OK(resources->ReadContents("$CUSTOM_ID", contents));
+  EXPECT_EQ(contents, "Custom content.");
+
+  std::unique_ptr<Resource> resource;
+  MP_ASSERT_OK_AND_ASSIGN(
+      resource,
+      resources->Get("mediapipe/framework/testdata/resource_calculator.data"));
+  EXPECT_EQ(resource->ToStringView(), "File system calculator contents\n");
+  MP_ASSERT_OK_AND_ASSIGN(resource, resources->Get("$CUSTOM_ID"));
   EXPECT_EQ(resource->ToStringView(), "Custom content.");
 }
 

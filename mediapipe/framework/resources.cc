@@ -5,6 +5,7 @@
 #include <string>
 #include <utility>
 
+#include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
@@ -47,6 +48,42 @@ class DefaultResources : public Resources {
   }
 };
 
+class ResourcesWithMapping : public Resources {
+ public:
+  explicit ResourcesWithMapping(
+      std::unique_ptr<Resources> resources,
+      absl::flat_hash_map<std::string, std::string> mapping)
+      : resources_(std::move(resources)), mapping_(std::move(mapping)) {}
+
+  absl::Status ReadContents(absl::string_view resource_id, std::string& output,
+                            const Options& options) const final {
+    auto iter = mapping_.find(resource_id);
+    absl::string_view resolved_res_id;
+    if (iter != mapping_.end()) {
+      resolved_res_id = iter->second;
+    } else {
+      resolved_res_id = resource_id;
+    }
+    return resources_->ReadContents(resolved_res_id, output, options);
+  }
+
+  absl::StatusOr<std::unique_ptr<Resource>> Get(
+      absl::string_view resource_id, const Options& options) const final {
+    auto iter = mapping_.find(resource_id);
+    absl::string_view resolved_res_id;
+    if (iter != mapping_.end()) {
+      resolved_res_id = iter->second;
+    } else {
+      resolved_res_id = resource_id;
+    }
+    return resources_->Get(resolved_res_id, options);
+  }
+
+ private:
+  std::unique_ptr<Resources> resources_;
+  absl::flat_hash_map<std::string, std::string> mapping_;
+};
+
 }  // namespace
 
 std::unique_ptr<Resource> MakeStringResource(std::string&& s) {
@@ -61,6 +98,19 @@ std::unique_ptr<Resource> MakeNoCleanupResource(const void* data,
 
 std::unique_ptr<Resources> CreateDefaultResources() {
   return std::make_unique<DefaultResources>();
+}
+
+std::unique_ptr<Resources> CreateDefaultResourcesWithMapping(
+    absl::flat_hash_map<std::string, std::string> mapping) {
+  return CreateResourcesWithMapping(CreateDefaultResources(),
+                                    std::move(mapping));
+}
+
+std::unique_ptr<Resources> CreateResourcesWithMapping(
+    std::unique_ptr<Resources> resources,
+    absl::flat_hash_map<std::string, std::string> mapping) {
+  return std::make_unique<ResourcesWithMapping>(std::move(resources),
+                                                std::move(mapping));
 }
 
 }  // namespace mediapipe

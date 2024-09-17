@@ -668,6 +668,7 @@ cc_library(
     deps = [
         "//mediapipe/framework/port:status",
         "//mediapipe/util:resource_util",
+        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings:string_view",
@@ -684,6 +685,7 @@ cc_test(
         ":resources",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:status_matchers",
+        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings:string_view",
@@ -721,6 +723,7 @@ cc_test(
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:status_matchers",
+        "//mediapipe/framework/testdata:resource_path_cc_proto",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
