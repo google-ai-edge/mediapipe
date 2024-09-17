@@ -6,9 +6,11 @@
 #include <utility>
 
 #include "absl/container/flat_hash_map.h"
+#include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "mediapipe/framework/port/status_macros.h"
+#include "mediapipe/framework/tool/status_util.h"
 #include "mediapipe/util/resource_util.h"
 
 namespace mediapipe {
@@ -37,10 +39,32 @@ class DefaultResources : public Resources {
  public:
   absl::StatusOr<std::unique_ptr<Resource>> Get(
       absl::string_view resource_id, const Options& options) const final {
-    std::string contents;
-    MP_RETURN_IF_ERROR(GetResourceContents(std::string(resource_id), &contents,
-                                           options.read_as_binary));
-    return MakeStringResource(std::move(contents));
+    // First try to load resource as is.
+    std::string path(resource_id);
+    std::string output;
+    absl::Status status =
+        GetResourceContents(path, &output, options.read_as_binary);
+    if (status.ok()) {
+      return MakeStringResource(std::move(output));
+    }
+
+    // Try to resolve resource_id.
+    absl::StatusOr<std::string> resolved_path = PathToResourceAsFile(path);
+    if (!resolved_path.ok() || resolved_path.value() == path) {
+      return tool::CombinedStatus(
+          absl::StrCat("Failed to load resource: ", resource_id),
+          {status, resolved_path.status()});
+    }
+
+    // Try to load by resolved path.
+    absl::Status status_for_resolved = GetResourceContents(
+        resolved_path.value(), &output, options.read_as_binary);
+    if (status_for_resolved.ok()) {
+      return MakeStringResource(std::move(output));
+    }
+    return tool::CombinedStatus(
+        absl::StrCat("Failed to load resource: ", resource_id),
+        {status, status_for_resolved});
   }
 };
 

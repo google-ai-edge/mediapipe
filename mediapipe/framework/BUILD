@@ -667,11 +667,12 @@ cc_library(
     hdrs = ["resources.h"],
     visibility = ["//visibility:public"],
     deps = [
-        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/tool:status_util",
         "//mediapipe/util:resource_util",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
     ],
 )
@@ -687,7 +688,7 @@ cc_test(
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:status_matchers",
         "@com_google_absl//absl/container:flat_hash_map",
-        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings:string_view",
     ],

@@ -5,12 +5,15 @@
 #include <utility>
 
 #include "absl/container/flat_hash_map.h"
-#include "absl/status/status.h"
+#include "absl/flags/declare.h"
+#include "absl/flags/flag.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/status_matchers.h"
+
+ABSL_DECLARE_FLAG(std::string, resource_root_dir);
 
 namespace mediapipe {
 namespace {
@@ -28,6 +31,27 @@ TEST(Resources, CanCreateNoCleanupResource) {
 }
 
 TEST(Resources, CanCreateDefaultResourcesAndReadFileContents) {
+  std::unique_ptr<Resources> resources = CreateDefaultResources();
+
+  MP_ASSERT_OK_AND_ASSIGN(
+      std::unique_ptr<Resource> resource,
+      resources->Get("mediapipe/framework/testdata/resource_calculator.data"));
+  EXPECT_EQ(resource->ToStringView(), "File system calculator contents\n");
+}
+
+TEST(Resources, CanReadFileContentsByUnresolvedId) {
+  absl::SetFlag(&FLAGS_resource_root_dir, "mediapipe/framework/testdata");
+  std::unique_ptr<Resources> resources = CreateDefaultResources();
+
+  MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<Resource> resource,
+                          resources->Get("resource_calculator.data"));
+  EXPECT_EQ(resource->ToStringView(), "File system calculator contents\n");
+}
+
+// PathToResourceFile is called in many in places and Resource object may
+// receive an already resolved id.
+TEST(Resources, CanReadFileContentsByResolvedIdWhenRootDirSpecified) {
+  absl::SetFlag(&FLAGS_resource_root_dir, "mediapipe/framework/testdata");
   std::unique_ptr<Resources> resources = CreateDefaultResources();
 
   MP_ASSERT_OK_AND_ASSIGN(
