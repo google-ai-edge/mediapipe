@@ -33,11 +33,6 @@ class TestLabelMapResources : public Resources {
       : label_map_resource_id_(label_map_resource_id),
         label_map_file_contents_(absl::StrJoin(labels, "\n")) {}
 
-  absl::Status ReadContents(absl::string_view resource_id, std::string& output,
-                            const Options& options) const final {
-    return absl::UnimplementedError("not implemented");
-  }
-
   absl::StatusOr<std::unique_ptr<Resource>> Get(
       absl::string_view resource_id, const Options& options) const final {
     RET_CHECK_EQ(resource_id, label_map_resource_id_);

@@ -162,19 +162,6 @@ constexpr absl::string_view kCustomCalculatorContents =
 
 class CustomResources : public Resources {
  public:
-  absl::Status ReadContents(absl::string_view resource_id, std::string& output,
-                            const Resources::Options& options) const final {
-    if (resource_id == kSubgraphResource) {
-      output = kCustomSubgraphContents;
-    } else if (resource_id == kCalculatorResource) {
-      output = kCustomCalculatorContents;
-    } else {
-      return absl::NotFoundError(
-          absl::StrCat("Resource [", resource_id, "] not found."));
-    }
-    return absl::OkStatus();
-  }
-
   // Avoids copy of kCustomSubtraph/CalculatorContents - while it's not that
   // beneficial for these specific strings, but it showcases one can avoid
   // copying whole ML models.
@@ -218,22 +205,14 @@ TEST(CalculatorGraphResourcesTest, CustomResourcesCanBeSetOnGraph) {
 
 class CustomizedDefaultResources : public Resources {
  public:
-  absl::Status ReadContents(absl::string_view resource_id, std::string& output,
-                            const Resources::Options& options) const final {
-    MP_RETURN_IF_ERROR(
-        default_resources_->ReadContents(resource_id, output, options));
-    output.insert(0, "Customized: ");
-    return absl::OkStatus();
-  }
-
   absl::StatusOr<std::unique_ptr<Resource>> Get(
       absl::string_view resource_id,
       const Resources::Options& options) const final {
-    std::string output;
-    MP_RETURN_IF_ERROR(
-        default_resources_->ReadContents(resource_id, output, options));
-    output.insert(0, "Customized: ");
-    return MakeStringResource(std::move(output));
+    MP_ASSIGN_OR_RETURN(std::unique_ptr<Resource> output,
+                        default_resources_->Get(resource_id, options));
+    std::string contents = std::move(*output).ReleaseOrCopyAsString();
+    contents.insert(0, "Customized: ");
+    return MakeStringResource(std::move(contents));
   }
 
  private:

@@ -8,6 +8,7 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
+#include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/status_matchers.h"
 
@@ -29,11 +30,6 @@ TEST(Resources, CanCreateNoCleanupResource) {
 TEST(Resources, CanCreateDefaultResourcesAndReadFileContents) {
   std::unique_ptr<Resources> resources = CreateDefaultResources();
 
-  std::string contents;
-  MP_ASSERT_OK(resources->ReadContents(
-      "mediapipe/framework/testdata/resource_calculator.data", contents));
-  EXPECT_EQ(contents, "File system calculator contents\n");
-
   MP_ASSERT_OK_AND_ASSIGN(
       std::unique_ptr<Resource> resource,
       resources->Get("mediapipe/framework/testdata/resource_calculator.data"));
@@ -46,10 +42,6 @@ TEST(Resources, CanCreateDefaultResourcesWithMappingAndReadFileContents) {
   std::unique_ptr<Resources> resources =
       CreateDefaultResourcesWithMapping(std::move(mapping));
 
-  std::string contents;
-  MP_ASSERT_OK(resources->ReadContents("$CUSTOM_ID", contents));
-  EXPECT_EQ(contents, "File system calculator contents\n");
-
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<Resource> resource,
                           resources->Get("$CUSTOM_ID"));
   EXPECT_EQ(resource->ToStringView(), "File system calculator contents\n");
@@ -57,15 +49,6 @@ TEST(Resources, CanCreateDefaultResourcesWithMappingAndReadFileContents) {
 
 class CustomResources : public Resources {
  public:
-  absl::Status ReadContents(absl::string_view resource_id, std::string& output,
-                            const Options& options) const final {
-    if (resource_id == "custom/resource/id") {
-      output = "Custom content.";
-      return absl::OkStatus();
-    }
-    return default_resources_->ReadContents(resource_id, output, options);
-  }
-
   absl::StatusOr<std::unique_ptr<Resource>> Get(
       absl::string_view resource_id, const Options& options) const final {
     if (resource_id == "custom/resource/id") {
@@ -80,13 +63,6 @@ class CustomResources : public Resources {
 
 TEST(Resources, CanCreateCustomResourcesAndReuseDefault) {
   std::unique_ptr<Resources> resources = std::make_unique<CustomResources>();
-
-  std::string contents;
-  MP_ASSERT_OK(resources->ReadContents(
-      "mediapipe/framework/testdata/resource_calculator.data", contents));
-  EXPECT_EQ(contents, "File system calculator contents\n");
-  MP_ASSERT_OK(resources->ReadContents("custom/resource/id", contents));
-  EXPECT_EQ(contents, "Custom content.");
 
   std::unique_ptr<Resource> resource;
   MP_ASSERT_OK_AND_ASSIGN(
@@ -104,13 +80,6 @@ TEST(Resources, CanCreateCustomResourcesAndUseMapping) {
   resources =
       CreateResourcesWithMapping(std::move(resources), std::move(mapping));
 
-  std::string contents;
-  MP_ASSERT_OK(resources->ReadContents(
-      "mediapipe/framework/testdata/resource_calculator.data", contents));
-  EXPECT_EQ(contents, "File system calculator contents\n");
-  MP_ASSERT_OK(resources->ReadContents("$CUSTOM_ID", contents));
-  EXPECT_EQ(contents, "Custom content.");
-
   std::unique_ptr<Resource> resource;
   MP_ASSERT_OK_AND_ASSIGN(
       resource,
@@ -118,6 +87,14 @@ TEST(Resources, CanCreateCustomResourcesAndUseMapping) {
   EXPECT_EQ(resource->ToStringView(), "File system calculator contents\n");
   MP_ASSERT_OK_AND_ASSIGN(resource, resources->Get("$CUSTOM_ID"));
   EXPECT_EQ(resource->ToStringView(), "Custom content.");
+}
+
+TEST(Resource, StringResourceCanBeConsumed) {
+  constexpr absl::string_view kData = "contents";
+  std::string data(kData);
+  std::unique_ptr<Resource> resource = MakeStringResource(std::move(data));
+  std::string consumed_str = std::move(*resource).ReleaseOrCopyAsString();
+  EXPECT_EQ(consumed_str, kData);
 }
 
 }  // namespace

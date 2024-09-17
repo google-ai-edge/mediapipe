@@ -6,7 +6,6 @@
 #include <utility>
 
 #include "absl/container/flat_hash_map.h"
-#include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/port/status_macros.h"
@@ -21,6 +20,8 @@ class StringResource : public Resource {
   explicit StringResource(std::unique_ptr<std::string> s)
       : Resource(s->data(), s->size()), s_(std::move(s)) {};
 
+  std::string ReleaseOrCopyAsString() && final { return *std::move(s_); }
+
  private:
   std::unique_ptr<std::string> s_;
 };
@@ -34,16 +35,11 @@ class NoCleanupResource : public Resource {
 
 class DefaultResources : public Resources {
  public:
-  absl::Status ReadContents(absl::string_view resource_id, std::string& output,
-                            const Options& options) const final {
-    return GetResourceContents(std::string(resource_id), &output,
-                               options.read_as_binary);
-  }
-
   absl::StatusOr<std::unique_ptr<Resource>> Get(
       absl::string_view resource_id, const Options& options) const final {
     std::string contents;
-    MP_RETURN_IF_ERROR(ReadContents(resource_id, contents, options));
+    MP_RETURN_IF_ERROR(GetResourceContents(std::string(resource_id), &contents,
+                                           options.read_as_binary));
     return MakeStringResource(std::move(contents));
   }
 };
@@ -54,18 +50,6 @@ class ResourcesWithMapping : public Resources {
       std::unique_ptr<Resources> resources,
       absl::flat_hash_map<std::string, std::string> mapping)
       : resources_(std::move(resources)), mapping_(std::move(mapping)) {}
-
-  absl::Status ReadContents(absl::string_view resource_id, std::string& output,
-                            const Options& options) const final {
-    auto iter = mapping_.find(resource_id);
-    absl::string_view resolved_res_id;
-    if (iter != mapping_.end()) {
-      resolved_res_id = iter->second;
-    } else {
-      resolved_res_id = resource_id;
-    }
-    return resources_->ReadContents(resolved_res_id, output, options);
-  }
 
   absl::StatusOr<std::unique_ptr<Resource>> Get(
       absl::string_view resource_id, const Options& options) const final {
