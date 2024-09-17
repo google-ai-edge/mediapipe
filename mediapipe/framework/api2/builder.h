@@ -307,18 +307,18 @@ using SideSource = SourceImpl<true, T>;
 //   parts utility/convenience functions or classes.
 //
 // For example:
-//   SidePacket<TfLiteModelPtr> GetModel(SidePacket<std::string> model_blob,
+//   SidePacket<TfLiteModelPtr> GetModel(SidePacket<Resource> model_resource,
 //                                       Graph& graph) {
 //     auto& model_node = graph.AddNode("TfLiteModelCalculator");
-//     model_blob >> model_node.SideIn("MODEL_BLOB");
+//     model_resource >> model_node.SideIn("MODEL_RESOURCE");
 //     return model_node.SideOut("MODEL").Cast<TfLiteModelPtr>();
 //   }
 //
 // Where graph can use it as:
 //   Graph graph;
-//   SidePacket<std::string> model_blob =
-//     graph.SideIn("MODEL_BLOB").Cast<std::string>();
-//   SidePacket<TfLiteModelPtr> model = GetModel(model_blob, graph);
+//   SidePacket<Resource> model_resource =
+//     graph.SideIn("MODEL_RESOURCE").Cast<Resource>();
+//   SidePacket<TfLiteModelPtr> model = GetModel(model_resource, graph);
 template <typename T>
 using SidePacket = SideSource<T>;
 
