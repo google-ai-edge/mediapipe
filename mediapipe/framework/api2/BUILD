@@ -189,8 +189,13 @@ cc_test(
         "port_test.cc",
     ],
     deps = [
+        ":builder",
+        ":node",
+        ":packet",
         ":port",
+        "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/port:gtest_main",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
 )

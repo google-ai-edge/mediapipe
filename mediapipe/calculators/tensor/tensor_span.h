@@ -15,29 +15,12 @@
 #ifndef MEDIAPIPE_CALCULATORS_TENSOR_TENSOR_SPAN_H_
 #define MEDIAPIPE_CALCULATORS_TENSOR_TENSOR_SPAN_H_
 
+#include <utility>
 #include <vector>
 
-#include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/formats/tensor.h"
 
 namespace mediapipe {
-
-class TensorSpan;
-
-// Supported factory functions:
-// Makes a TensorSpan from a memory-owning vector of Tensors
-TensorSpan MakeTensorSpan(const std::vector<Tensor>& tensors);
-
-// Makes a TensorSpan from a collection of input streams of Tensors, using the
-// api2 framework. Example usage:
-// ```
-//   static constexpr Input<Tensor>::Multiple kInTensor{"TENSOR"};
-//   ... check for any empty input Tensors and handle accordingly ...
-//   MakeTensorSpan(kInTensor(cc));
-// ```
-TensorSpan MakeTensorSpan(api2::internal::MultiplePortAccess<
-                          Tensor, InputStreamShard, CalculatorContext>
-                              tensor_streams);
 
 // Utility class to allow for iterating over various containers of Tensors
 // *without* making any deep-copies or keeping any memory alive. Essentially
@@ -58,6 +41,28 @@ class TensorSpan {
  private:
   std::vector<const Tensor*> tensor_refs_;
 };
+
+// Supported factory functions:
+// Makes a TensorSpan from a memory-owning vector of Tensors
+TensorSpan MakeTensorSpan(const std::vector<Tensor>& tensors);
+
+// Makes a TensorSpan from a collection of input streams of Tensors, using the
+// api2 framework. Example usage:
+// ```
+//   static constexpr Input<Tensor>::Multiple kInTensor{"TENSOR"};
+//   ... check for any empty input Tensors and handle accordingly ...
+//   MakeTensorSpan(kInTensor(cc));
+// ```
+template <typename TensorInputStreamT>
+TensorSpan MakeTensorSpan(const TensorInputStreamT& tensor_streams) {
+  std::vector<const Tensor*> refs;
+  const int num_tensors = tensor_streams.Count();
+  refs.reserve(num_tensors);
+  for (int i = 0; i < num_tensors; ++i) {
+    refs.push_back(&(*tensor_streams[i]));
+  }
+  return TensorSpan(std::move(refs));
+}
 
 }  // namespace mediapipe
 

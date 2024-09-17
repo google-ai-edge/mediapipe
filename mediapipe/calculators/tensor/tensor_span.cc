@@ -17,26 +17,9 @@
 #include <utility>
 #include <vector>
 
-#include "mediapipe/framework/api2/port.h"
-#include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/tensor.h"
-#include "mediapipe/framework/input_stream_shard.h"
 
 namespace mediapipe {
-
-// Create reference pointer vector from a collection of input streams using the
-// api2 framework. It is the caller's responsibility to check for empty inputs.
-TensorSpan MakeTensorSpan(api2::internal::MultiplePortAccess<
-                          Tensor, InputStreamShard, CalculatorContext>
-                              tensor_streams) {
-  std::vector<const Tensor*> refs;
-  const int num_tensors = tensor_streams.Count();
-  refs.reserve(num_tensors);
-  for (int i = 0; i < num_tensors; ++i) {
-    refs.push_back(&(*tensor_streams[i]));
-  }
-  return TensorSpan(std::move(refs));
-}
 
 // Create reference pointer vector from vector of tensors
 TensorSpan MakeTensorSpan(const std::vector<Tensor>& tensors) {

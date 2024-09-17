@@ -457,12 +457,7 @@ cc_library(
     name = "tensor_span",
     srcs = ["tensor_span.cc"],
     hdrs = ["tensor_span.h"],
-    deps = [
-        "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework:input_stream_shard",
-        "//mediapipe/framework/api2:port",
-        "//mediapipe/framework/formats:tensor",
-    ],
+    deps = ["//mediapipe/framework/formats:tensor"],
 )
 
 cc_library_with_tflite(
