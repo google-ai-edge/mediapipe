@@ -31,11 +31,11 @@ using ::mediapipe::Packet;
   NSInteger timestampInMilliseconds =
       (NSInteger)(packet.Timestamp().Value() / kMicrosecondsPerMillisecond);
 
-  if (!packet.ValidateAsType<EmbeddingResultProto>().ok()) {
+  if (!packet.ValidateAsType<std::vector<EmbeddingResultProto>>().ok()) {
     // MPPAudioEmbedderResult's timestamp is populated from timestamp `EmbeddingResultProto`'s
     // timestamp_ms(). It is 0 since the packet can't be validated as a `EmbeddingResultProto`.
     return [[MPPAudioEmbedderResult alloc] initWithEmbeddingResults:nil
-                                           timestampInMilliseconds:timestampInMilliseconds];
+                                            timestampInMilliseconds:timestampInMilliseconds];
   }
 
   std::vector<EmbeddingResultProto> cppEmbeddingResultProtos =
