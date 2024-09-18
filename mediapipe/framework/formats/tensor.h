@@ -211,6 +211,9 @@ class Tensor {
 
   class AHardwareBufferView : public View {
    public:
+    // Returns the AHardwareBuffer handle. Note that writes to the handle may be
+    // pending. To enable synchronized read access, a fence FD can be obtained
+    // from GetWriteCompleteFenceFd().
     AHardwareBuffer* handle() const {
       return hardware_buffer_->GetAHardwareBuffer();
     }
@@ -223,6 +226,10 @@ class Tensor {
       is_write_view_ = src.is_write_view_;
     }
 
+    // Returns a file descriptor fence that signals the end of a pending write
+    // operation.
+    // Note that the provided file descriptor is valid only during the lifetime
+    // of the view and must be duplicated if used outside of the view.
     int GetWriteCompleteFenceFd() const {
       ABSL_CHECK(!is_write_view_)
           << "AHWB write view can't return write complete fence FD'";
