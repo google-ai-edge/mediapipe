@@ -22,6 +22,7 @@ public enum GenAiInferenceError: Error {
   case failedToInitializeSession(String?)
   case failedToInitializeEngine(String?)
   case failedToAddQueryToSession(String, String?)
+  case failedToCloneSession(String?)
 }
 
 extension GenAiInferenceError: LocalizedError {
@@ -31,19 +32,27 @@ extension GenAiInferenceError: LocalizedError {
     case .invalidResponse:
       return "The response returned by the model is invalid."
     case .illegalMethodCall:
-      return "Response generation is already in progress."
+      return
+        """
+        Response generation is already in progress. The request in progress may have been \
+        initated on the current session or on one of the sessions created from the `LlmInference` \
+        that was used to create the current session.
+        """
     case .failedToComputeSizeInTokens(let message):
-      let explanation = message.flatMap { $0 } ?? "An internal error occured."
+      let explanation = message.flatMap { $0 } ?? "An internal error occurred."
       return "Failed to compute size of text in tokens: \(explanation)"
     case .failedToInitializeSession(let message):
-      let explanation = message.flatMap { $0 } ?? "An internal error occured."
+      let explanation = message.flatMap { $0 } ?? "An internal error occurred."
       return "Failed to initialize LlmInference session: \(explanation)"
     case .failedToInitializeEngine(let message):
-      let explanation = message.flatMap { $0 } ?? "An internal error occured."
+      let explanation = message.flatMap { $0 } ?? "An internal error occurred."
       return "Failed to initialize LlmInference engine: \(explanation)"
     case .failedToAddQueryToSession(let query, let message):
-      let explanation = message.flatMap { $0 } ?? "An internal error occured."
+      let explanation = message.flatMap { $0 } ?? "An internal error occurred."
       return "Failed to add query: \(query) to LlmInference session: \(explanation)"
+    case .failedToCloneSession(let message):
+      let explanation = message.flatMap { $0 } ?? "An internal error occurred."
+      return "Failed to clone LlmInference session: \(explanation)"
     }
   }
 }
@@ -68,6 +77,8 @@ extension GenAiInferenceError: CustomNSError {
       return 4
     case .failedToAddQueryToSession:
       return 5
+    case .failedToCloneSession:
+      return 6
     }
   }
 }

@@ -17,6 +17,10 @@ import MediaPipeTasksGenAIC
 
 /// A MediaPipe task that performs inference using a given Large Language Model.
 ///
+/// An instance of `LlmInference` will only be deallocated after all sessions created from it are
+/// destroyed. This means that an LLM inference can stay in memory even if a reference to it goes
+/// out of scope if at least one of its sessions outlives its scope.
+///
 /// Note: Inherits from `NSObject` for Objective C interoperability.
 @objc(MPPLLMInference) public final class LlmInference: NSObject {
   private static let numberOfDecodeStepsPerSync = 3
@@ -26,73 +30,56 @@ import MediaPipeTasksGenAIC
 
   private let llmTaskRunner: LlmTaskRunner
 
+  /// Serial queue that reads and updates `responseGenerationInProgress` to restrict simultaneous
+  /// execution of response generation functions across sessions created from this
+  /// `LlmInference`.
   private let responseGenerationInProgressQueue = DispatchQueue(
-    label: LlmInference.responseGenerationInProgressQueueName,
-    attributes: .concurrent)
+    label: LlmInference.responseGenerationInProgressQueueName)
 
   /// Tracks whether a response generation is in progress.
-  /// Readers writers lock to prevent race condition as this variable can be accessed from multiple
-  /// threads.
-  private var responseGenerationInProgressInternal = false
-  private var responseGenerationInProgress: Bool {
-    get {
-      responseGenerationInProgressQueue.sync {
-        return self.responseGenerationInProgressInternal
-      }
-    }
-    set {
-      responseGenerationInProgressQueue.async(flags: .barrier) {
-        self.responseGenerationInProgressInternal = newValue
-      }
-    }
-  }
-  private var supportedLoraRanks: UnsafeMutableBufferPointer<Int>?
+  private var responseGenerationInProgress = false
 
   /// Creates a new instance of `LlmInference` with the given options.
+  /// An instance of `LlmInference` will only be deallocated after all sessions created from it are
+  /// destroyed. This means that an LLM inference can stay in memory even if the reference to it
+  /// goes out of scope if at least one of its sessions outlives its scope.
   ///
   /// - Parameters:
-  ///   - options: The options of type `LlmInference.Options` to use for configuring the `LlmInference`.
+  ///   - options: The options of type `LlmInference.Options` to use for configuring the
+  /// `LlmInference`.
   /// - Throws: An error if `LlmInference` instance could not be initialized.
   @objc public init(options: Options) throws {
-    let modelPath = strdup(options.modelPath)
-    let cacheDirectory = strdup(FileManager.default.temporaryDirectory.path)
-    let loraPath = strdup(options.loraPath == nil ? "" : options.loraPath!)
+    let cacheDirectory = FileManager.default.temporaryDirectory.path
 
-    defer {
-      free(modelPath)
-      free(cacheDirectory)
-      free(loraPath)
+    let sequenceBatchSize = LlmInference.sequenceBatchSize
+    let numberOfDecodeStepsPerSync = LlmInference.numberOfDecodeStepsPerSync
+    llmTaskRunner = try options.modelPath.withCString { modelPath in
+      try cacheDirectory.withCString { cacheDirectory in
+        try options.supportedLoraRanks.withUnsafeMutableBufferPointer { supportedLoraRanks in
+          let modelSetting = LlmModelSettings(
+            model_path: modelPath,
+            cache_dir: cacheDirectory,
+            max_num_tokens: options.maxTokens,
+            num_decode_steps_per_sync: numberOfDecodeStepsPerSync,
+            sequence_batch_size: sequenceBatchSize,
+            number_of_supported_lora_ranks: supportedLoraRanks.count,
+            supported_lora_ranks: supportedLoraRanks.baseAddress,
+            max_top_k: options.maxTopk,
+            llm_activation_data_type: options.activationDataType.activationDataTypeC,
+            num_draft_tokens: 0)
+          return try LlmTaskRunner(modelSettings: modelSetting)
+        }
+      }
     }
-    var loraRanks: UnsafeMutableBufferPointer<Int>?
-    options.supportedLoraRanks.withUnsafeMutableBufferPointer { pointer in
-      loraRanks = pointer
-    }
-    supportedLoraRanks = loraRanks
-
-    let modelSetting = LlmModelSettings(
-      model_path: modelPath,
-      cache_dir: cacheDirectory,
-      max_num_tokens: options.maxTokens,
-      num_decode_steps_per_sync: LlmInference.numberOfDecodeStepsPerSync,
-      sequence_batch_size: LlmInference.sequenceBatchSize,
-      number_of_supported_lora_ranks: options.supportedLoraRanks.count,
-      supported_lora_ranks: supportedLoraRanks?.baseAddress,
-      max_top_k: options.topk,
-      llm_activation_data_type: options.activationDataType.activationDataTypeC,
-      num_draft_tokens: 0)
-    let sessionConfig = LlmSessionConfig(
-      topk: options.topk,
-      topp: 1.0,
-      temperature: options.temperature,
-      random_seed: options.randomSeed,
-      lora_path: loraPath)
-    try llmTaskRunner = LlmTaskRunner(modelSettings: modelSetting, sessionConfig: sessionConfig)
 
     super.init()
   }
 
   /// A convenience initializer that creates a new instance of `LlmInference` from an absolute path
   /// to a model asset bundle stored locally on the device and the default `LlmInference.Options`.
+  /// An instance of `LlmInference` will only be deallocated after all sessions created from it are
+  /// destroyed. This means that an LLM inference can stay in memory even if the reference to it
+  /// goes out of scope if at least one of its sessions outlives its scope.
   ///
   /// - Parameters:
   ///   - modelPath: The absolute path to a model asset bundle stored locally on the device.
@@ -102,31 +89,37 @@ import MediaPipeTasksGenAIC
     try self.init(options: options)
   }
 
-  /// Generates a response based on the input text.
+  /// Creates and returns a session runner that wraps around a new session created by the underlying
+  /// LLM engine.
+  ///
+  /// - Parameters:
+  ///   - sessionConfig: The C config of type `LlmSessionConfig` that configures how to execute the
+  /// model.
+  /// - Returns:
+  ///   - An `LlmSessionRunner` that wraps around a new session.
+  /// - Throws: An error if the underlying engine could not create a session.
+  func createSessionRunner(sessionConfig: LlmSessionConfig) throws -> LlmSessionRunner {
+    return try llmTaskRunner.createSessionRunner(sessionConfig: sessionConfig)
+  }
+
+  /// Generates a response based on the input text. This function creates a new session for each
+  /// call. If you want to have a stateful inference, use `LlmInference.Session`'s
+  /// `generateResponse()` instead.
   ///
   /// - Parameters:
   ///   - inputText: A `String` that is used to query the LLM.
   /// - Throws: An error if the LLM's response is invalid.
   @objc public func generateResponse(inputText: String) throws -> String {
-
-    /// Disallow response generation if another response generation call is already in progress.
-    try shouldContinueWithResponseGeneration()
-
-    let tokens = try llmTaskRunner.predict(inputText: inputText)
-
-    responseGenerationInProgress = false
-
-    guard let humanReadableLlmResponse = LlmInference.humanReadableString(llmResponses: tokens)
-    else {
-      throw GenAiInferenceError.invalidResponse
-    }
-
-    return humanReadableLlmResponse
+    let session = try LlmInference.Session(llmInference: self)
+    try session.addQueryChunk(inputText: inputText)
+    return try session.generateResponse()
   }
 
   /// Generates a response based on the input text asynchronously. The `progress` callback returns
   /// the partial responses from the LLM or any errors. `completion` callback is invoked once the
-  /// LLM is done generating responses.
+  /// LLM is done generating responses. This function creates a new session for each call.
+  /// If you want to have a stateful inference, use `LlmInference.Session`'s
+  /// `generateResponseAsync(progress: completion:) throws` instead.
   ///
   /// - Parameters:
   ///   - progress: A callback invoked when a partial response is available from the LLM.
@@ -137,36 +130,14 @@ import MediaPipeTasksGenAIC
     progress: @escaping (_ partialResponse: String?, _ error: Error?) -> Void,
     completion: @escaping (() -> Void)
   ) throws {
-    /// Disallow response generation if another response generation call is already in progress.
-    try shouldContinueWithResponseGeneration()
-
-    /// Used to make a decision about whitespace stripping.
-    var receivedFirstToken = true
-
-    try llmTaskRunner.predict(
-      inputText: inputText,
-      progress: { partialResponseStrings, error in
-
-        guard let responseStrings = partialResponseStrings,
-          let humanReadableLlmResponse = LlmInference.humanReadableString(
-            llmResponses: responseStrings, stripLeadingWhitespaces: receivedFirstToken)
-        else {
-          progress(nil, GenAiInferenceError.invalidResponse)
-          return
-        }
-
-        /// Reset state after first response is processed.
-        receivedFirstToken = false
-
-        progress(humanReadableLlmResponse, nil)
-      },
-      completion: { [weak self] in
-        self?.responseGenerationInProgress = false
-        completion()
-      })
+    let session = try LlmInference.Session(llmInference: self)
+    try session.addQueryChunk(inputText: inputText)
+    try session.generateResponseAsync(progress: progress, completion: completion)
   }
 
-  /// Generates a response based on the input text asynchronously.
+  /// Generates a response based on the input text asynchronously. This function creates a new
+  /// session for each call. If you want to have a stateful inference, use `LlmInference.Session`'s
+  /// `generateResponseAsync() -> AsyncThrowingStream<String, Error>` instead.
   ///
   /// - Parameters:
   ///   - inputText: The prompt used to query the LLM.
@@ -175,8 +146,9 @@ import MediaPipeTasksGenAIC
   public func generateResponseAsync(inputText: String) -> AsyncThrowingStream<String, Error> {
     AsyncThrowingStream { continuation in
       do {
-        try generateResponseAsync(
-          inputText: inputText,
+        let session = try LlmInference.Session(llmInference: self)
+        try session.addQueryChunk(inputText: inputText)
+        try session.generateResponseAsync(
           progress: { partialResponse, error in
             if let error {
               continuation.finish(throwing: error)
@@ -193,32 +165,38 @@ import MediaPipeTasksGenAIC
     }
   }
 
-  /// Returns the size in tokens of the provided text.
+  /// If no response generation using any session created from this `LlmInference` is currently in
+  /// progress, this function updates the response generation state to `true` and returns
+  /// successfully thereby granting access to its caller to execute response generation.
+  /// If this function throws an error, the invoking session must abort the response generation
+  /// call. This function must be called before invoking the response generation function on the
+  /// underlying `LlmSessionRunner`.
   ///
-  /// You may use this function to verify this size before submitting the prompt to ensure it
-  /// doesn't exceed the configured maximum token size.
-  public func sizeInTokens(text: String) throws -> Int {
-    return try llmTaskRunner.sizeInTokens(text: text)
-  }
-
-  /// Throw error if response generation is in progress or update response generation state.
-  private func shouldContinueWithResponseGeneration() throws {
-    if responseGenerationInProgress {
-      throw GenAiInferenceError.illegalMethodCall
+  /// - Throws: An error if response generation is already in progress.
+  func shouldContinueWithResponseGeneration() throws {
+    /// `responseGenerationInProgressQueue` is a serial queue. Executing a sync block on a serial
+    /// queue ensures that at any time only one call to this function tests and writes the current
+    /// state of response generation. All other calls are blocked until the state is
+    /// updated. If the state indicates that response generation is currently in progress, the
+    /// block throws an error. Since it is a synchronous block that blocks execution until it is
+    /// complete, the error is in turn propagated as an error thrown by the function.
+    try responseGenerationInProgressQueue.sync {
+      if !responseGenerationInProgress {
+        responseGenerationInProgress = true
+      } else {
+        throw GenAiInferenceError.illegalMethodCall
+      }
     }
-
-    responseGenerationInProgress = true
   }
 
-  private static func humanReadableString(
-    llmResponses: [String], stripLeadingWhitespaces: Bool = true
-  ) -> String? {
-    guard let llmResponse = llmResponses.first else {
-      return ""
+  /// Marks response generation as complete by updating the state to `false`. Any session created
+  /// using this `LlmInference` must use this function to indicate the completion of response
+  /// generation using the underlying `LlmSessionRunner`.
+  func markResponseGenerationCompleted() {
+    responseGenerationInProgressQueue.sync {
+      responseGenerationInProgress = false
     }
-    return llmResponse.humanReadableString(stripLeadingWhitespaces: stripLeadingWhitespaces)
   }
-
 }
 
 // Extension to `LlmInference` for defining `LlmInference.Options`
@@ -234,29 +212,20 @@ extension LlmInference {
     /// tokens the model needs to handle.
     @objc public var maxTokens: Int = 512
 
-    /// The top K number of tokens to be sampled from for each decoding step. A value of 1 means
-    /// greedy decoding. Defaults to 40.
-    @objc public var topk: Int = 40
-
-    /// The randomness when decoding the next token. A value of 0.0f means greedy decoding. Defaults
-    /// to 0.8.
-    @objc public var temperature: Float = 0.8
-
-    /// The random seed for sampling tokens.
-    @objc public var randomSeed: Int = 0
+    /// Maximum top k, which is the max Top-K value supported for all sessions created with the
+    /// `LlmInference`, used by GPU only. If a session with Top-K value larger than this is being
+    /// asked to be created, it will be rejected(throw error). A value of 1 means only greedy
+    // decoding is supported for any sessions created with this `LlmInference`. Default value is 40.
+    @objc public var maxTopk: Int = 40
 
     /// The supported lora ranks for the base model. Used by GPU only.
     @objc public var supportedLoraRanks: [Int] = []
 
-    /// The absolute path to the LoRA model asset bundle stored locally on the device. Optional.
-    /// This is only compatible with GPU models.
-    @objc public var loraPath: String?
-
     /// The activation data type for the model.
     @objc public var activationDataType: ActivationDataType = .default
 
-    /// Creates a new instance of `Options` with the modelPath and default values of
-    /// `maxTokens`, `topK``, `temperature` and `randomSeed`.
+    /// Creates a new instance of `Options` with the given `modelPath` and default values of
+    /// `maxTokens`, `maxTopk`, `supportedLoraRanks` and `activationDataType`.
     /// This function is only intended to be used from Objective C.
     ///
     /// - Parameters:
@@ -293,22 +262,5 @@ extension LlmInference.ActivationDataType {
     case .int8:
       return kLlmActivationDataTypeInt8
     }
-  }
-}
-
-/// An extension to `String` to add some utility functions.
-extension String {
-  private static let tokenSplitter = "▁"
-  /// Note this is NOT an underscore: ▁(U+2581)
-  private static let newLine = "<0x0A>"
-  private static let eod = "\\[eod\\]"
-
-  fileprivate func humanReadableString(stripLeadingWhitespaces: Bool = true) -> String? {
-    var humanReadableString = self.replacingOccurrences(of: String.tokenSplitter, with: " ")
-      .replacingOccurrences(of: String.newLine, with: "\n")
-    humanReadableString =
-      stripLeadingWhitespaces
-      ? humanReadableString.trimmingCharacters(in: .whitespaces) : humanReadableString
-    return humanReadableString.components(separatedBy: String.eod).first
   }
 }
