@@ -93,10 +93,4 @@ absl::StatusOr<api2::Packet<TfLiteModelPtr>> TfLiteModelLoader::LoadFromPath(
         delete model_resource;
       });
 }
-
-absl::StatusOr<api2::Packet<TfLiteModelPtr>> TfLiteModelLoader::LoadFromPath(
-    const std::string& path, bool try_mmap) {
-  std::unique_ptr<Resources> resources = CreateDefaultResources();
-  return LoadFromPath(*resources, path, try_mmap);
-}
 }  // namespace mediapipe
