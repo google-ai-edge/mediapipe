@@ -114,8 +114,8 @@ TEST(InferenceCalculatorUtilsTest,
   Tensor tensor(ElementType::kInt32, Tensor::Shape({values_len}));
   std::memcpy(tensor.GetCpuWriteView().buffer<int32_t>(), values.data(),
               values_len * sizeof(int32_t));
-  MP_EXPECT_OK(
-      CopyCpuInputIntoInterpreterTensor(tensor, interpreter, tensor_index));
+  TfLiteTensor* tflite_tensor = interpreter.input_tensor(tensor_index);
+  MP_EXPECT_OK(CopyCpuInputIntoTfLiteTensor(tensor, *tflite_tensor));
   EXPECT_THAT(TfLiteInputTensorData<int32_t>(interpreter, tensor_index),
               ElementsAreArray(values));
 }
@@ -131,8 +131,8 @@ TEST(InferenceCalculatorUtilsTest,
   Tensor tensor(ElementType::kInt64, Tensor::Shape({values_len}));
   std::memcpy(tensor.GetCpuWriteView().buffer<int64_t>(), values.data(),
               values_len * sizeof(int64_t));
-  MP_EXPECT_OK(
-      CopyCpuInputIntoInterpreterTensor(tensor, interpreter, tensor_index));
+  TfLiteTensor* tflite_tensor = interpreter.input_tensor(tensor_index);
+  MP_EXPECT_OK(CopyCpuInputIntoTfLiteTensor(tensor, *tflite_tensor));
   EXPECT_THAT(TfLiteInputTensorData<int64_t>(interpreter, tensor_index),
               ElementsAreArray(values));
 }
@@ -148,8 +148,8 @@ TEST(InferenceCalculatorUtilsTest,
   Tensor tensor(ElementType::kUInt8, Tensor::Shape({values_len}));
   std::memcpy(tensor.GetCpuWriteView().buffer<uint8_t>(), values.data(),
               values_len * sizeof(uint8_t));
-  MP_EXPECT_OK(
-      CopyCpuInputIntoInterpreterTensor(tensor, interpreter, tensor_index));
+  TfLiteTensor* tflite_tensor = interpreter.input_tensor(tensor_index);
+  MP_EXPECT_OK(CopyCpuInputIntoTfLiteTensor(tensor, *tflite_tensor));
   EXPECT_THAT(TfLiteInputTensorData<uint8_t>(interpreter, tensor_index),
               ElementsAreArray(values));
 }
@@ -165,8 +165,8 @@ TEST(InferenceCalculatorUtilsTest,
   Tensor tensor(ElementType::kInt8, Tensor::Shape({values_len}));
   std::memcpy(tensor.GetCpuWriteView().buffer<int8_t>(), values.data(),
               values_len * sizeof(int8_t));
-  MP_EXPECT_OK(
-      CopyCpuInputIntoInterpreterTensor(tensor, interpreter, tensor_index));
+  TfLiteTensor* tflite_tensor = interpreter.input_tensor(tensor_index);
+  MP_EXPECT_OK(CopyCpuInputIntoTfLiteTensor(tensor, *tflite_tensor));
   EXPECT_THAT(TfLiteInputTensorData<int8_t>(interpreter, tensor_index),
               ElementsAreArray(values));
 }
@@ -182,8 +182,8 @@ TEST(InferenceCalculatorUtilsTest,
   Tensor tensor(ElementType::kFloat32, Tensor::Shape({values_len}));
   std::memcpy(tensor.GetCpuWriteView().buffer<float>(), values.data(),
               values_len * sizeof(float));
-  MP_EXPECT_OK(
-      CopyCpuInputIntoInterpreterTensor(tensor, interpreter, tensor_index));
+  TfLiteTensor* tflite_tensor = interpreter.input_tensor(tensor_index);
+  MP_EXPECT_OK(CopyCpuInputIntoTfLiteTensor(tensor, *tflite_tensor));
   EXPECT_THAT(TfLiteInputTensorData<float>(interpreter, tensor_index),
               ElementsAreArray(values));
 }
@@ -199,8 +199,8 @@ TEST(InferenceCalculatorUtilsTest,
   Tensor tensor(ElementType::kChar, Tensor::Shape({values_len}));
   std::memcpy(tensor.GetCpuWriteView().buffer<char>(), values.data(),
               values_len * sizeof(char));
-  MP_EXPECT_OK(
-      CopyCpuInputIntoInterpreterTensor(tensor, interpreter, tensor_index));
+  TfLiteTensor* tflite_tensor = interpreter.input_tensor(tensor_index);
+  MP_EXPECT_OK(CopyCpuInputIntoTfLiteTensor(tensor, *tflite_tensor));
   EXPECT_THAT(TfLiteInputTensorData<char>(interpreter, tensor_index),
               ElementsAreArray(values));
 }
@@ -216,8 +216,8 @@ TEST(InferenceCalculatorUtilsTest,
   Tensor tensor(ElementType::kFloat32, Tensor::Shape({values_len}));
   std::memcpy(tensor.GetCpuWriteView().buffer<float>(), values.data(),
               values_len * sizeof(float));
-  absl::Status status =
-      CopyCpuInputIntoInterpreterTensor(tensor, interpreter, tensor_index);
+  TfLiteTensor* tflite_tensor = interpreter.input_tensor(tensor_index);
+  absl::Status status = CopyCpuInputIntoTfLiteTensor(tensor, *tflite_tensor);
   EXPECT_FALSE(status.ok());
   EXPECT_THAT(status.message(),
               HasSubstr("Input and interpreter tensor type do not match"));
@@ -234,8 +234,8 @@ TEST(InferenceCalculatorUtilsTest,
   Tensor tensor(ElementType::kFloat32, Tensor::Shape({values_len}));
   std::memcpy(tensor.GetCpuWriteView().buffer<float>(), values.data(),
               values_len * sizeof(float));
-  absl::Status status =
-      CopyCpuInputIntoInterpreterTensor(tensor, interpreter, tensor_index);
+  TfLiteTensor* tflite_tensor = interpreter.input_tensor(tensor_index);
+  absl::Status status = CopyCpuInputIntoTfLiteTensor(tensor, *tflite_tensor);
   EXPECT_FALSE(status.ok());
   EXPECT_THAT(status.message(),
               HasSubstr("TfLiteTensor and Tensor sizes do not match"));
@@ -253,8 +253,8 @@ TEST(InferenceCalculatorUtilsTest,
   Tensor tensor(ElementType::kFloat32, Tensor::Shape({values_len}));
   std::memcpy(tensor.GetCpuWriteView().buffer<float>(), values.data(),
               values_len * sizeof(float));
-  absl::Status status =
-      CopyCpuInputIntoInterpreterTensor(tensor, interpreter, tensor_index);
+  TfLiteTensor* tflite_tensor = interpreter.input_tensor(tensor_index);
+  absl::Status status = CopyCpuInputIntoTfLiteTensor(tensor, *tflite_tensor);
   EXPECT_FALSE(status.ok());
   EXPECT_THAT(status.message(), HasSubstr("TfLiteTensor data is null"));
 }
@@ -277,8 +277,8 @@ TEST(InferenceCalculatorUtilsTest,
   std::vector<float> values{1.0f, 2.0f, 3.0f, 4.0f};
   int values_len = values.size();
   Tensor tensor(ElementType::kNone, Tensor::Shape({values_len}));
-  absl::Status status =
-      CopyCpuInputIntoInterpreterTensor(tensor, interpreter, tensor_index);
+  TfLiteTensor* tflite_tensor = interpreter.input_tensor(tensor_index);
+  absl::Status status = CopyCpuInputIntoTfLiteTensor(tensor, *tflite_tensor);
   EXPECT_FALSE(status.ok());
   EXPECT_THAT(status.message(), HasSubstr("Unsupported input data type:"));
 }
@@ -315,8 +315,9 @@ TEST(InferenceCalculatorUtilsTest,
   dynamic_buffer.AddString(values.data(), values.size());
   dynamic_buffer.WriteToTensorAsVector(
       interpreter.tensor(interpreter.outputs()[tensor_index]));
-  MP_EXPECT_OK(
-      CopyInterpreterTensorIntoCpuOutput(interpreter, tensor_index, tensor));
+
+  const TfLiteTensor* tflite_tensor = interpreter.tensor(tensor_index);
+  MP_EXPECT_OK(CopyTfLiteTensorIntoCpuOutput(*tflite_tensor, tensor));
   EXPECT_THAT(absl::MakeConstSpan(tensor.GetCpuReadView().buffer<char>(),
                                   tensor.shape().num_elements()),
               ElementsAreArray(values));
@@ -370,8 +371,8 @@ TEST(InferenceCalculatorUtilsTest,
   Tensor tensor(ElementType::kFloat32, Tensor::Shape({values_len}));
   std::memcpy(tensor.GetCpuWriteView().buffer<float>(), values.data(),
               values_len * sizeof(float));
-  absl::Status status =
-      CopyInterpreterTensorIntoCpuOutput(interpreter, tensor_index, tensor);
+  const TfLiteTensor* tflite_tensor = interpreter.tensor(tensor_index);
+  absl::Status status = CopyTfLiteTensorIntoCpuOutput(*tflite_tensor, tensor);
   EXPECT_FALSE(status.ok());
   EXPECT_THAT(status.message(),
               HasSubstr("TfLiteTensor tensor buffer is null"));
@@ -395,8 +396,8 @@ TEST(InferenceCalculatorUtilsTest,
   std::vector<uint8_t> values{1, 2, 3, 4};
   int values_len = values.size();
   Tensor tensor(ElementType::kNone, Tensor::Shape({values_len}));
-  absl::Status status =
-      CopyInterpreterTensorIntoCpuOutput(interpreter, tensor_index, tensor);
+  const TfLiteTensor* tflite_tensor = interpreter.tensor(tensor_index);
+  absl::Status status = CopyTfLiteTensorIntoCpuOutput(*tflite_tensor, tensor);
   EXPECT_FALSE(status.ok());
   EXPECT_THAT(status.message(), HasSubstr("Unsupported output data type:"));
 }

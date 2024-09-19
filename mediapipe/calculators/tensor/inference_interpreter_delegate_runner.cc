@@ -23,7 +23,6 @@
 #include "absl/container/flat_hash_set.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
-#include "absl/strings/str_cat.h"
 #include "mediapipe/calculators/tensor/inference_calculator_utils.h"
 #include "mediapipe/calculators/tensor/inference_feedback_manager.h"
 #include "mediapipe/calculators/tensor/inference_io_mapper.h"
@@ -38,7 +37,6 @@
 #include "tensorflow/lite/c/c_api_types.h"
 #include "tensorflow/lite/c/common.h"
 #include "tensorflow/lite/interpreter_builder.h"
-#include "tensorflow/lite/string_util.h"
 #include "tensorflow/lite/util.h"
 
 namespace mediapipe {
@@ -47,42 +45,6 @@ namespace {
 
 using Interpreter = ::tflite::Interpreter;
 using InterpreterBuilder = ::tflite::InterpreterBuilder;
-
-template <typename T>
-void CopyTensorBufferToInterpreter(const Tensor& input_tensor,
-                                   Interpreter* interpreter,
-                                   int input_tensor_index) {
-  auto input_tensor_view = input_tensor.GetCpuReadView();
-  auto input_tensor_buffer = input_tensor_view.buffer<T>();
-  T* local_tensor_buffer =
-      interpreter->typed_input_tensor<T>(input_tensor_index);
-  std::memcpy(local_tensor_buffer, input_tensor_buffer, input_tensor.bytes());
-}
-
-template <>
-void CopyTensorBufferToInterpreter<char>(const Tensor& input_tensor,
-                                         Interpreter* interpreter,
-                                         int input_tensor_index) {
-  const char* input_tensor_buffer =
-      input_tensor.GetCpuReadView().buffer<char>();
-  tflite::DynamicBuffer dynamic_buffer;
-  dynamic_buffer.AddString(input_tensor_buffer,
-                           input_tensor.shape().num_elements());
-  dynamic_buffer.WriteToTensorAsVector(
-      interpreter->tensor(interpreter->inputs()[input_tensor_index]));
-}
-
-template <typename T>
-void CopyTensorBufferFromInterpreter(Interpreter* interpreter,
-                                     int output_tensor_index,
-                                     Tensor* output_tensor) {
-  auto output_tensor_view = output_tensor->GetCpuWriteView();
-  auto output_tensor_buffer = output_tensor_view.buffer<T>();
-  T* local_tensor_buffer =
-      interpreter->typed_output_tensor<T>(output_tensor_index);
-  std::memcpy(output_tensor_buffer, local_tensor_buffer,
-              output_tensor->bytes());
-}
 
 absl::Status VerifyModelTensorsForCustomAllocation(
     const Interpreter& interpreter) {
@@ -107,151 +69,42 @@ absl::Status VerifyModelTensorsForCustomAllocation(
   return absl::OkStatus();
 }
 
-absl::StatusOr<Tensor> AllocateOutputTensor(const int tensor_index,
-                                            const Interpreter& interpreter) {
-  const TfLiteTensor* tensor = interpreter.tensor(tensor_index);
-  Tensor::Shape shape{std::vector<int>{
-      tensor->dims->data, tensor->dims->data + tensor->dims->size}};
-  switch (tensor->type) {
-    case TfLiteType::kTfLiteFloat16:
-    case TfLiteType::kTfLiteFloat32:
-      return Tensor(Tensor::ElementType::kFloat32, shape,
-                    Tensor::QuantizationParameters{tensor->params.scale,
-                                                   tensor->params.zero_point},
-                    /*memory_manager=*/nullptr,
-                    tflite::kDefaultTensorAlignment);
-      break;
-    case TfLiteType::kTfLiteUInt8:
-      return Tensor(Tensor::ElementType::kUInt8, shape,
-                    Tensor::QuantizationParameters{tensor->params.scale,
-                                                   tensor->params.zero_point},
-                    /*memory_manager=*/nullptr,
-                    tflite::kDefaultTensorAlignment);
-      break;
-    case TfLiteType::kTfLiteInt8:
-      return Tensor(Tensor::ElementType::kInt8, shape,
-                    Tensor::QuantizationParameters{tensor->params.scale,
-                                                   tensor->params.zero_point},
-                    /*memory_manager=*/nullptr,
-                    tflite::kDefaultTensorAlignment);
-      break;
-    case TfLiteType::kTfLiteInt32:
-      return Tensor(Tensor::ElementType::kInt32, shape,
-                    Tensor::QuantizationParameters{tensor->params.scale,
-                                                   tensor->params.zero_point},
-                    /*memory_manager=*/nullptr,
-                    tflite::kDefaultTensorAlignment);
-      break;
-    case TfLiteType::kTfLiteBool:
-      return Tensor(Tensor::ElementType::kBool, shape,
-                    Tensor::QuantizationParameters{1.0f, 0},
-                    /*memory_manager=*/nullptr,
-                    tflite::kDefaultTensorAlignment);
-      break;
-    case TfLiteType::kTfLiteString:
-      // No current use-case for copying TfLiteTensors with string type to
-      // MediaPipe Tensors.
-    default:
-      break;
-  }
-  return absl::InvalidArgumentError(absl::StrCat(
-      "Unsupported output tensor type:", TfLiteTypeGetName(tensor->type)));
-}
-
-absl::Status CopyTensorToInterpreter(const Tensor& input_tensor,
-                                     Interpreter* interpreter,
-                                     int model_input_index) {
-  const TfLiteType input_tensor_type =
-      interpreter->tensor(interpreter->inputs()[model_input_index])->type;
-  switch (input_tensor_type) {
-    case TfLiteType::kTfLiteFloat16:
-    case TfLiteType::kTfLiteFloat32: {
-      CopyTensorBufferToInterpreter<float>(input_tensor, interpreter,
-                                           model_input_index);
-      break;
-    }
-    case TfLiteType::kTfLiteUInt8: {
-      CopyTensorBufferToInterpreter<uint8_t>(input_tensor, interpreter,
-                                             model_input_index);
-      break;
-    }
-    case TfLiteType::kTfLiteInt8: {
-      CopyTensorBufferToInterpreter<int8_t>(input_tensor, interpreter,
-                                            model_input_index);
-      break;
-    }
-    case TfLiteType::kTfLiteInt32: {
-      CopyTensorBufferToInterpreter<int32_t>(input_tensor, interpreter,
-                                             model_input_index);
-      break;
-    }
-    case TfLiteType::kTfLiteString: {
-      CopyTensorBufferToInterpreter<char>(input_tensor, interpreter,
-                                          model_input_index);
-      break;
-    }
-    case TfLiteType::kTfLiteBool: {
-      CopyTensorBufferToInterpreter<bool>(input_tensor, interpreter,
-                                          model_input_index);
-      break;
-    }
-    default:
-      return absl::InvalidArgumentError(
-          absl::StrCat("Unsupported input tensor type:", input_tensor_type));
-  }
-  return absl::OkStatus();
-}
-
-absl::Status CopyTensorFromInterpreter(Interpreter* interpreter,
-                                       int output_model_index,
-                                       Tensor* output_tensor) {
-  TfLiteTensor* tensor =
-      interpreter->tensor(interpreter->outputs()[output_model_index]);
-  switch (tensor->type) {
-    case TfLiteType::kTfLiteFloat16:
-    case TfLiteType::kTfLiteFloat32:
-      CopyTensorBufferFromInterpreter<float>(interpreter, output_model_index,
-                                             output_tensor);
-      break;
-    case TfLiteType::kTfLiteUInt8:
-      CopyTensorBufferFromInterpreter<uint8_t>(interpreter, output_model_index,
-                                               output_tensor);
-      break;
-    case TfLiteType::kTfLiteInt8:
-      CopyTensorBufferFromInterpreter<int8_t>(interpreter, output_model_index,
-                                              output_tensor);
-      break;
-    case TfLiteType::kTfLiteInt32:
-      CopyTensorBufferFromInterpreter<int32_t>(interpreter, output_model_index,
-                                               output_tensor);
-      break;
-    case TfLiteType::kTfLiteBool:
-      CopyTensorBufferFromInterpreter<bool>(interpreter, output_model_index,
-                                            output_tensor);
-      break;
-    case TfLiteType::kTfLiteString:
-      // No current use-case for copying TfLiteTensors with string type to
-      // MediaPipe Tensors.
-    default:
-      return absl::InvalidArgumentError(absl::StrCat(
-          "Unsupported output tensor type:", TfLiteTypeGetName(tensor->type)));
-  }
-  return absl::OkStatus();
-}
-
 absl::StatusOr<std::vector<Tensor>> AllocateOutputTensors(
     const std::vector<int>& model_output_indexes,
     const Interpreter& interpreter) {
   std::vector<Tensor> output_tensors;
   output_tensors.reserve(model_output_indexes.size());
   for (int i = 0; i < model_output_indexes.size(); ++i) {
-    MP_ASSIGN_OR_RETURN(
-        Tensor output_tensor,
-        AllocateOutputTensor(interpreter.outputs()[model_output_indexes[i]],
-                             interpreter));
+    const TfLiteTensor* reference_tensor =
+        interpreter.tensor(interpreter.outputs()[model_output_indexes[i]]);
+    MP_ASSIGN_OR_RETURN(Tensor output_tensor,
+                        CreateTensorWithTfLiteTensorSpecs(
+                            *reference_tensor, /*memory_manager=*/nullptr,
+                            tflite::kDefaultTensorAlignment));
     output_tensors.push_back(std::move(output_tensor));
   }
   return output_tensors;
+}
+
+absl::Status CopyCpuInputIntoInterpreterTensor(const Tensor& input_tensor,
+                                               tflite::Interpreter& interpreter,
+                                               int input_tensor_index) {
+  TfLiteTensor* tflite_tensor = interpreter.input_tensor(input_tensor_index);
+  RET_CHECK(tflite_tensor);
+  MP_RETURN_IF_ERROR(CopyCpuInputIntoTfLiteTensor(input_tensor, *tflite_tensor))
+      << " at index " << input_tensor_index;
+  return absl::OkStatus();
+}
+
+absl::Status CopyInterpreterTensorIntoCpuOutput(
+    const tflite::Interpreter& interpreter, int output_tensor_index,
+    Tensor& output_tensor) {
+  const TfLiteTensor* tflite_tensor = interpreter.tensor(output_tensor_index);
+  RET_CHECK(tflite_tensor);
+  MP_RETURN_IF_ERROR(
+      CopyTfLiteTensorIntoCpuOutput(*tflite_tensor, output_tensor))
+      << " at index " << output_tensor_index;
+  return absl::OkStatus();
 }
 
 }  // namespace
@@ -365,8 +218,8 @@ absl::StatusOr<std::vector<Tensor>> InferenceInterpreterDelegateRunner::Run(
       continue;
     }
 
-    MP_RETURN_IF_ERROR(CopyTensorToInterpreter(input_tensor, interpreter_.get(),
-                                               input_tensor_index));
+    MP_RETURN_IF_ERROR(CopyCpuInputIntoInterpreterTensor(
+        input_tensor, *interpreter_, input_tensor_index));
   }
 
   MP_ASSIGN_OR_RETURN(
@@ -410,9 +263,10 @@ absl::StatusOr<std::vector<Tensor>> InferenceInterpreterDelegateRunner::Run(
   } else {
     // Copy output tensors from the interpreter.
     for (int i = 0; i < output_indices_excluding_feedback_tensors.size(); ++i) {
-      MP_RETURN_IF_ERROR(CopyTensorFromInterpreter(
-          interpreter_.get(), output_indices_excluding_feedback_tensors[i],
-          &output_tensors[i]));
+      const int output_tensor_index =
+          interpreter_->outputs()[output_indices_excluding_feedback_tensors[i]];
+      MP_RETURN_IF_ERROR(CopyInterpreterTensorIntoCpuOutput(
+          *interpreter_, output_tensor_index, output_tensors[i]));
     }
   }
   if (feedback_manager_) {
