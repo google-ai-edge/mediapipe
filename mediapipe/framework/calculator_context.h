@@ -140,8 +140,10 @@ class CalculatorContext {
 
   // Returns the graph-level service manager for sharing its services with
   // calculator-nested MP graphs.
-  std::shared_ptr<GraphServiceManager> GetSharedGraphServiceManager() const {
-    return calculator_state_->GetSharedGraphServiceManager();
+  // Note: For accessing MP services from a calculator, use the
+  // ServiceBinding<T> Service(kService) method above.
+  const GraphServiceManager* GetGraphServiceManager() const {
+    return calculator_state_->GetGraphServiceManager();
   }
 
   // Gets interface to access resources (file system, assets, etc.) from
