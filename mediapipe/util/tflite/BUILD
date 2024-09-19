@@ -155,14 +155,17 @@ cc_library_with_tflite(
     visibility = ["//visibility:public"],
     deps = [
         ":error_reporter",
+        "//mediapipe/framework:resources",
         "//mediapipe/framework/api2:packet",
         "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "//mediapipe/util:resource_util",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -182,6 +185,7 @@ cc_test_with_tflite(
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_state",
         "//mediapipe/framework:legacy_calculator_support",
+        "//mediapipe/framework:resources",
         "//mediapipe/framework/api2:packet",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/tool:tag_map_helper",
@@ -220,6 +224,7 @@ cc_test(
         ":tflite_model_loader",
         ":tflite_signature_reader",
         "//mediapipe/framework:packet",
+        "//mediapipe/framework:resources",
         "//mediapipe/framework/deps:file_path",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:status",
