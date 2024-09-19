@@ -291,7 +291,8 @@ extension String {
       .replacingOccurrences(of: String.newLine, with: "\n")
     humanReadableString =
       stripLeadingWhitespaces
-      ? humanReadableString.trimmingCharacters(in: .whitespaces) : humanReadableString
+      ? String(humanReadableString.drop(while: { $0.isWhitespace || $0.isNewline }))
+      : humanReadableString
     return humanReadableString.components(separatedBy: String.eod).first
   }
 }
