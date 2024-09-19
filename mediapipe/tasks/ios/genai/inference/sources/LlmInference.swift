@@ -66,7 +66,7 @@ import MediaPipeTasksGenAIC
             supported_lora_ranks: supportedLoraRanks.baseAddress,
             max_top_k: options.maxTopk,
             llm_activation_data_type: options.activationDataType.activationDataTypeC,
-            num_draft_tokens: 0)
+            num_draft_tokens: options.draftTokenCount)
           return try LlmTaskRunner(modelSettings: modelSetting)
         }
       }
@@ -223,6 +223,10 @@ extension LlmInference {
 
     /// The activation data type for the model.
     @objc public var activationDataType: ActivationDataType = .default
+
+    /// Number of draft tokens to generate when using speculative decoding. Setting to 0 will 
+    /// disable speculative decoding.
+    @objc public var draftTokenCount: Int = 0
 
     /// Creates a new instance of `Options` with the given `modelPath` and default values of
     /// `maxTokens`, `maxTopk`, `supportedLoraRanks` and `activationDataType`.
