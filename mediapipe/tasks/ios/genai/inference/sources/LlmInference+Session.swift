@@ -171,8 +171,14 @@ extension LlmInference {
             return
           }
 
-          /// Reset state after first response is processed.
-          receivedFirstToken = false
+          /// Reset state after first non empty response is processed. Ensures that leading 
+          /// whitespaces are stripped from the first non empty response.
+          /// Some models generate series of empty responses for a few times in the beginning before 
+          /// generating a valid response. Ensures that leading white spaces are stripped from the 
+          /// first non empty response.
+          if !humanReadableLlmResponse.isEmpty {
+            receivedFirstToken = false
+          }
 
           progress(humanReadableLlmResponse, nil)
         },
@@ -291,7 +297,7 @@ extension String {
       .replacingOccurrences(of: String.newLine, with: "\n")
     humanReadableString =
       stripLeadingWhitespaces
-      ? String(humanReadableString.drop(while: { $0.isWhitespace || $0.isNewline }))
+      ? String(humanReadableString.drop(while: {$0.isWhitespace}))
       : humanReadableString
     return humanReadableString.components(separatedBy: String.eod).first
   }
