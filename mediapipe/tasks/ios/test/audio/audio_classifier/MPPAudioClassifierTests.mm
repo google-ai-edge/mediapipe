@@ -187,7 +187,7 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
   MPPAudioClassifier *audioClassifier =
       [MPPAudioClassifierTests audioClassifierWithOptions:options];
 
-  const NSInteger expectedCategoryCount = 1;
+  const NSInteger expectedCategoryCount = options.categoryAllowlist.count;
   ClassificationHeadsCategoryCountInfo *const yamnetModelHeadsInfo =
       @{kYamnetModelHeadName : @(expectedCategoryCount)};
   // Classify 16KHz speech file.
@@ -204,7 +204,6 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 
 - (void)testClassifyWithCategoryDenylistSucceeds {
   NSString *deniedCategory = @"Speech";
-
   MPPAudioClassifierOptions *options =
       [MPPAudioClassifierTests audioClassifierOptionsWithModelFileInfo:kYamnetModelFileInfo];
   options.categoryDenylist = @[ deniedCategory ];
@@ -240,16 +239,22 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
   ClassificationHeadsCategoryCountInfo *const yamnetModelHeadsInfo =
       @{kYamnetModelHeadName : @(kYamnetCategoriesCount - options.categoryDenylist.count)};
 
-  MPPAudioDataFormat *format = [[MPPAudioDataFormat alloc] initWithChannelCount:1 sampleRate:16000];
-  MPPAudioData *audioData = [[MPPAudioData alloc] initWithFormat:format sampleCount:14000];
+  const NSInteger sampleCount = 14000;
+  const double sampleRate = 16000;
+  const NSInteger channelCount = 1;
+  const NSInteger expectedClassificationResultsCount = 1;
+
+  MPPAudioDataFormat *format = [[MPPAudioDataFormat alloc] initWithChannelCount:channelCount
+                                                                     sampleRate:sampleRate];
+  MPPAudioData *audioData = [[MPPAudioData alloc] initWithFormat:format sampleCount:sampleCount];
 
   MPPAudioClassifierResult *result = [audioClassifier classifyAudioClip:audioData error:nil];
   XCTAssertNotNil(result);
-
+  
   [MPPAudioClassifierTests assertAudioClassifierResult:result
       approximatelyEqualToExpectedAudioClassifierResult:[MPPAudioClassifierTests
                                                             expectedYamnetInsufficientSilenceResult]
-                     expectedClassificationResultsCount:1
+                     expectedClassificationResultsCount:expectedClassificationResultsCount
            expectedClassificationHeadsCategoryCountInfo:kYamnetModelHeadsInfo];
 }
 
