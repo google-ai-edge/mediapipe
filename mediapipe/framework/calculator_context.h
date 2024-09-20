@@ -138,14 +138,6 @@ class CalculatorContext {
     return ServiceBinding<T>(calculator_state_->GetServiceObject(service));
   }
 
-  // Returns the graph-level service manager for sharing its services with
-  // calculator-nested MP graphs.
-  // Note: For accessing MP services from a calculator, use the
-  // ServiceBinding<T> Service(kService) method above.
-  const GraphServiceManager* GetGraphServiceManager() const {
-    return calculator_state_->GetGraphServiceManager();
-  }
-
   // Gets interface to access resources (file system, assets, etc.) from
   // calculators.
   //
@@ -159,7 +151,18 @@ class CalculatorContext {
     return calculator_state_->GetResources();
   }
 
+  // Enables access to private GetGraphServiceManager() method.
+  friend class CalculatorGraph;
+
  private:
+  // Returns the graph-level service manager for sharing its services with
+  // calculator-nested MP graphs.
+  // Note: For accessing MP services from a calculator, use the
+  // ServiceBinding<T> Service(kService) method above.
+  const GraphServiceManager* GetGraphServiceManager() const {
+    return calculator_state_->GetGraphServiceManager();
+  }
+
   int NumberOfTimestamps() const {
     return static_cast<int>(input_timestamps_.size());
   }
