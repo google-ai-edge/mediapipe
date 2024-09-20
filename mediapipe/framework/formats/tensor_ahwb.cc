@@ -446,23 +446,10 @@ void* Tensor::MapAhwbToCpuRead() const {
         CompleteAndEraseUsages(ahwb_usages_);
       }
     }
-    // ahwb_->Lock takes ownership of the fence fd. See b/358020559
-    // Duplicate fence since it may be simultaneously accessed via the
-    // AHardwareBufferView class.
-    const int fence_fd = write_complete_fence_fd_.Get();
-    int duplicate_fence = -1;
-    if (fence_fd != -1) {
-      duplicate_fence = dup(fence_fd);
-      if (duplicate_fence == -1) {
-        ABSL_LOG(ERROR) << "Failed to duplicate fence fd: " << fence_fd;
-      }
-    }
     auto ptr =
         ahwb_->Lock(HardwareBufferSpec::AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN,
-                    duplicate_fence);
+                    write_complete_fence_fd_.Release());
     ABSL_CHECK_OK(ptr) << "Lock of AHWB failed";
-    // TODO b/362214354 - Is it safe to reset ssbo_written_ here?
-    write_complete_fence_fd_.Reset();
     return *ptr;
   }
   return nullptr;

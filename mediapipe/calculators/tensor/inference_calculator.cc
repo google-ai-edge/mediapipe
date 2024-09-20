@@ -110,8 +110,8 @@ absl::StatusOr<Packet<TfLiteModelPtr>> InferenceCalculator::GetModelAsPacket(
     CalculatorContext* cc) {
   const auto& options = cc->Options<mediapipe::InferenceCalculatorOptions>();
   if (!options.model_path().empty()) {
-    return TfLiteModelLoader::LoadFromPath(options.model_path(),
-                                           options.try_mmap_model());
+    return TfLiteModelLoader::LoadFromPath(
+        cc->GetResources(), options.model_path(), options.try_mmap_model());
   }
   if (!kSideInModel(cc).IsEmpty()) return kSideInModel(cc);
   return absl::Status(absl::StatusCode::kNotFound,

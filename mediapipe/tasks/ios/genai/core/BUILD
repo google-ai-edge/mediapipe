@@ -18,14 +18,16 @@ licenses(["notice"])
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
 exports_files([
-    "sources/LlmTaskRunner.swift",
     "sources/GenAiInferenceError.swift",
+    "sources/LlmSessionRunner.swift",
+    "sources/LlmTaskRunner.swift",
 ])
 
 swift_library(
     name = "LlmTaskRunner",
     srcs = [
         "sources/GenAiInferenceError.swift",
+        "sources/LlmSessionRunner.swift",
         "sources/LlmTaskRunner.swift",
     ],
     # This ensures the compiler does not complain about MediaPipeTasksGenAIC being built separately.
