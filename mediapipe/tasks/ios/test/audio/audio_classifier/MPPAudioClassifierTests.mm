@@ -175,7 +175,6 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
       approximatelyEqualsExpectedAudioClassifierResult:[MPPAudioClassifierTests
                                                            expectedPartialYamnetResult]
                     expectedClassificationResultsCount:kYamnetClassificationResultsCount
-
           expectedClassificationHeadsCategoryCountInfo:yamnetModelHeadsInfo];
 }
 
@@ -196,9 +195,7 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
                                   usingAudioClassifier:audioClassifier
       approximatelyEqualsExpectedAudioClassifierResult:[MPPAudioClassifierTests
                                                            expectedPartialYamnetResult]
-
                     expectedClassificationResultsCount:kYamnetClassificationResultsCount
-
           expectedClassificationHeadsCategoryCountInfo:yamnetModelHeadsInfo];
 }
 
