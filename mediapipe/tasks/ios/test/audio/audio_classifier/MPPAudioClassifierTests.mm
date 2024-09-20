@@ -64,7 +64,7 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
   XCTAssertEqualObjects(category.displayName, expectedCategory.displayName, @"index i = %d",    \
                         categoryIndex);
 
-@interface MPPAudioClassifierTests : XCTestCase
+@interface MPPAudioClassifierTests : XCTestCase <MPPAudioClassifierStreamDelegate>
 @end
 
 @implementation MPPAudioClassifierTests
@@ -154,6 +154,204 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
       approximatelyEqualsExpectedAudioClassifierResult:[MPPAudioClassifierTests
                                                            expectedPartial16kHzTwoHeadsResult]
           expectedClassificationHeadsCategoryCountInfo:kTwoHeadModelHeadsInfo];
+}
+
+- (void)testClassifyWithMaxResultsSucceeds {
+  const NSInteger maxResults = 1;
+
+  MPPAudioClassifierOptions *options =
+      [MPPAudioClassifierTests audioClassifierOptionsWithModelFileInfo:kYamnetModelFileInfo];
+  options.maxResults = maxResults;
+
+  MPPAudioClassifier *audioClassifier =
+      [MPPAudioClassifierTests audioClassifierWithOptions:options];
+
+  ClassificationHeadsCategoryCountInfo *const yamnetModelHeadsInfo =
+      @{kYamnetModelHeadName : @(maxResults)};
+  // Classify 16KHz speech file.
+  [MPPAudioClassifierTests
+          assertResultsOfClassifyAudioClipWithFileInfo:kSpeech16KHzMonoFileInfo
+                                  usingAudioClassifier:audioClassifier
+      approximatelyEqualsExpectedAudioClassifierResult:[MPPAudioClassifierTests
+                                                           expectedPartialYamnetResult]
+                    expectedClassificationResultsCount:kYamnetClassificationResultsCount
+
+          expectedClassificationHeadsCategoryCountInfo:yamnetModelHeadsInfo];
+}
+
+- (void)testClassifyWithCategoryAllowlistSucceeds {
+  MPPAudioClassifierOptions *options =
+      [MPPAudioClassifierTests audioClassifierOptionsWithModelFileInfo:kYamnetModelFileInfo];
+  options.categoryAllowlist = @[ @"Speech" ];
+
+  MPPAudioClassifier *audioClassifier =
+      [MPPAudioClassifierTests audioClassifierWithOptions:options];
+
+  const NSInteger expectedCategoryCount = 1;
+  ClassificationHeadsCategoryCountInfo *const yamnetModelHeadsInfo =
+      @{kYamnetModelHeadName : @(expectedCategoryCount)};
+  // Classify 16KHz speech file.
+  [MPPAudioClassifierTests
+          assertResultsOfClassifyAudioClipWithFileInfo:kSpeech16KHzMonoFileInfo
+                                  usingAudioClassifier:audioClassifier
+      approximatelyEqualsExpectedAudioClassifierResult:[MPPAudioClassifierTests
+                                                           expectedPartialYamnetResult]
+
+                    expectedClassificationResultsCount:kYamnetClassificationResultsCount
+
+          expectedClassificationHeadsCategoryCountInfo:yamnetModelHeadsInfo];
+}
+
+- (void)testClassifyWithCategoryDenylistSucceeds {
+  NSString *deniedCategory = @"Speech";
+
+  MPPAudioClassifierOptions *options =
+      [MPPAudioClassifierTests audioClassifierOptionsWithModelFileInfo:kYamnetModelFileInfo];
+  options.categoryDenylist = @[ deniedCategory ];
+
+  MPPAudioClassifier *audioClassifier =
+      [MPPAudioClassifierTests audioClassifierWithOptions:options];
+
+  ClassificationHeadsCategoryCountInfo *const yamnetModelHeadsInfo =
+      @{kYamnetModelHeadName : @(kYamnetCategoriesCount - options.categoryDenylist.count)};
+
+  // Classify 16KHz speech file.
+  MPPAudioClassifierResult *result =
+      [MPPAudioClassifierTests classifyAudioClipWithFileInfo:kSpeech16KHzMonoFileInfo
+                                        usingAudioClassifier:audioClassifier];
+
+  // Asserting that first category is not equal to `deniedCategory` in each `classificationResult`.
+  XCTAssertEqual(result.classificationResults.count, kYamnetClassificationResultsCount);
+  for (MPPClassificationResult *classificationResult in result.classificationResults) {
+    XCTAssertEqual(classificationResult.classifications.count, 1);
+    MPPClassifications *classifications = classificationResult.classifications[0];
+    XCTAssertEqual(classifications.categories.count,
+                   kYamnetCategoriesCount - options.categoryDenylist.count);
+    XCTAssertFalse([classifications.categories[0].categoryName isEqualToString:deniedCategory]);
+  }
+}
+
+- (void)testClassifyWithScoreThresholdSucceeds {
+  NSString *deniedCategory = @"Speech";
+
+  MPPAudioClassifierOptions *options =
+      [MPPAudioClassifierTests audioClassifierOptionsWithModelFileInfo:kYamnetModelFileInfo];
+  options.categoryDenylist = @[ deniedCategory ];
+
+  MPPAudioClassifier *audioClassifier =
+      [MPPAudioClassifierTests audioClassifierWithOptions:options];
+
+  ClassificationHeadsCategoryCountInfo *const yamnetModelHeadsInfo =
+      @{kYamnetModelHeadName : @(kYamnetCategoriesCount - options.categoryDenylist.count)};
+
+  // Classify 16KHz speech file.
+  MPPAudioClassifierResult *result =
+      [MPPAudioClassifierTests classifyAudioClipWithFileInfo:kSpeech16KHzMonoFileInfo
+                                        usingAudioClassifier:audioClassifier];
+
+  // Asserting that first category is not equal to `deniedCategory` in each `classificationResult`.
+  XCTAssertEqual(result.classificationResults.count, kYamnetClassificationResultsCount);
+  for (MPPClassificationResult *classificationResult in result.classificationResults) {
+    XCTAssertEqual(classificationResult.classifications.count, 1);
+    MPPClassifications *classifications = classificationResult.classifications[0];
+    XCTAssertEqual(classifications.categories.count,
+                   kYamnetCategoriesCount - options.categoryDenylist.count);
+    XCTAssertFalse([classifications.categories[0].categoryName isEqualToString:deniedCategory]);
+  }
+}
+
+- (void)testClassifyWithInsufficientDataSucceeds {
+  MPPAudioClassifierOptions *options =
+      [MPPAudioClassifierTests audioClassifierOptionsWithModelFileInfo:kYamnetModelFileInfo];
+  MPPAudioClassifier *audioClassifier =
+      [MPPAudioClassifierTests audioClassifierWithOptions:options];
+
+  ClassificationHeadsCategoryCountInfo *const yamnetModelHeadsInfo =
+      @{kYamnetModelHeadName : @(kYamnetCategoriesCount - options.categoryDenylist.count)};
+
+  MPPAudioDataFormat *format = [[MPPAudioDataFormat alloc] initWithChannelCount:1 sampleRate:16000];
+  MPPAudioData *audioData = [[MPPAudioData alloc] initWithFormat:format sampleCount:14000];
+
+  MPPAudioClassifierResult *result = [audioClassifier classifyAudioClip:audioData error:nil];
+  XCTAssertNotNil(result);
+
+  [MPPAudioClassifierTests assertAudioClassifierResult:result
+      approximatelyEqualToExpectedAudioClassifierResult:[MPPAudioClassifierTests
+                                                            expectedYamnetInsufficientSilenceResult]
+                     expectedClassificationResultsCount:1
+           expectedClassificationHeadsCategoryCountInfo:kYamnetModelHeadsInfo];
+}
+
+- (void)testCreateAudioClassifierFailsWithDelegateInAudioClipsMode {
+  MPPAudioClassifierOptions *options =
+      [MPPAudioClassifierTests audioClassifierOptionsWithModelFileInfo:kYamnetModelFileInfo];
+  options.audioClassifierStreamDelegate = self;
+
+  [MPPAudioClassifierTests
+      assertCreateAudioClassifierWithOptions:options
+                      failsWithExpectedError:
+                          [NSError
+                              errorWithDomain:kExpectedErrorDomain
+                                         code:MPPTasksErrorCodeInvalidArgumentError
+                                     userInfo:@{
+                                       NSLocalizedDescriptionKey : [NSString
+                                           stringWithFormat:@"The audio task is in audio clips "
+                                                            @"mode. The delegate must not be set "
+                                                            @"in the task's options."]
+                                     }]];
+}
+
+- (void)testClassifyFailsWithCallingWrongApiInAudioClipsMode {
+  MPPAudioClassifierOptions *options =
+      [MPPAudioClassifierTests audioClassifierOptionsWithModelFileInfo:kYamnetModelFileInfo];
+
+  MPPAudioClassifier *audioClassifier =
+      [MPPAudioClassifierTests audioClassifierWithOptions:options];
+
+  MPPAudioData *audioClip =
+      [MPPAudioClassifierTests audioDataFromAudioFileWithInfo:kSpeech16KHzMonoFileInfo];
+  NSError *error;
+  XCTAssertFalse([audioClassifier classifyAsyncAudioBlock:audioClip
+                                  timestampInMilliseconds:0
+                                                    error:&error]);
+
+  NSError *expectedError = [NSError
+      errorWithDomain:kExpectedErrorDomain
+                 code:MPPTasksErrorCodeInvalidArgumentError
+             userInfo:@{
+               NSLocalizedDescriptionKey :
+                   [NSString stringWithFormat:@"The audio task is not initialized with "
+                                              @"audio stream mode. Current Running Mode: %@",
+                                              MPPAudioRunningModeDisplayName(options.runningMode)]
+             }];
+  AssertEqualErrors(error, expectedError);
+}
+
+- (void)testClassifyFailsWithCallingWrongApiInAudioStreamMode {
+  MPPAudioClassifierOptions *options =
+      [MPPAudioClassifierTests audioClassifierOptionsWithModelFileInfo:kYamnetModelFileInfo];
+  options.runningMode = MPPAudioRunningModeAudioStream;
+  options.audioClassifierStreamDelegate = self;
+
+  MPPAudioClassifier *audioClassifier =
+      [MPPAudioClassifierTests audioClassifierWithOptions:options];
+
+  MPPAudioData *audioClip =
+      [MPPAudioClassifierTests audioDataFromAudioFileWithInfo:kSpeech16KHzMonoFileInfo];
+
+  NSError *error;
+  XCTAssertFalse([audioClassifier classifyAudioClip:audioClip error:&error]);
+
+  NSError *expectedError = [NSError
+      errorWithDomain:kExpectedErrorDomain
+                 code:MPPTasksErrorCodeInvalidArgumentError
+             userInfo:@{
+               NSLocalizedDescriptionKey :
+                   [NSString stringWithFormat:@"The audio task is not initialized with "
+                                              @"audio clips. Current Running Mode: %@",
+                                              MPPAudioRunningModeDisplayName(options.runningMode)]
+             }];
+  AssertEqualErrors(error, expectedError);
 }
 
 #pragma mark Audio Data Initializers
@@ -454,6 +652,23 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 
   return [[MPPAudioClassifierResult alloc] initWithClassificationResults:classificationResults
                                                  timestampInMilliseconds:timestampInMilliseconds];
+}
+
++ (MPPAudioClassifierResult *)expectedYamnetInsufficientSilenceResult {
+  NSArray<MPPClassificationResult *> *classificationResults = @[
+    [[MPPClassificationResult alloc] initWithClassifications:@[
+      [[MPPClassifications alloc] initWithHeadIndex:0
+                                           headName:kYamnetModelHeadName
+                                         categories:@[ [[MPPCategory alloc] initWithIndex:494
+                                                                                    score:0.8f
+                                                                             categoryName:@"Silence"
+                                                                              displayName:nil] ]],
+    ]
+                                     timestampInMilliseconds:0],
+  ];
+
+  return [[MPPAudioClassifierResult alloc] initWithClassificationResults:classificationResults
+                                                 timestampInMilliseconds:0];
 }
 
 @end
