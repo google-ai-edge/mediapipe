@@ -16,6 +16,8 @@
 
 #import "mediapipe/tasks/ios/test/audio/core/utils/sources/AVAudioPCMBuffer+TestUtils.h"
 
+static const NSInteger kMilliSecondsPerSecond = 1000;
+
 @implementation MPPTimestampedAudioData
 
 - (instancetype)initWithAudioData:(MPPAudioData *)audioData
@@ -42,16 +44,19 @@
   // Calculates the maximum no: of samples possible in any one input chunk of audio samples by
   // scaling the `modelSampleCount` to the sample rate of the input audio PCM Buffer. Each audio
   // data in the returned array will have `intervalSize` of samples except for the last one. The
-  // last one will have all the remaining samples from the audio file.
-  AVAudioFrameCount intervalSize =
-      modelSampleCount * audioPCMBuffer.format.sampleRate / modelSampleRate;
-  .NSInteger currentPosition = 0;
+  // last one will have all the samples at the end of the audio file that have not been read for
+  // streaming until then.
+  AVAudioFrameCount intervalSize = (AVAudioFrameCount)ceil(
+      modelSampleCount * audioPCMBuffer.format.sampleRate / modelSampleRate);
+  NSInteger currentPosition = 0;
   NSInteger audioListCount =
       (NSInteger)ceil((float)audioPCMBuffer.frameLength / (float)intervalSize);
   NSMutableArray<MPPTimestampedAudioData *> *timestampedAudioDataList =
       [NSMutableArray arrayWithCapacity:audioListCount];
+
   while (currentPosition < audioPCMBuffer.frameLength) {
     NSInteger lengthToBeLoaded = MIN(audioPCMBuffer.frameLength - currentPosition, intervalSize);
+    
     MPPAudioDataFormat *audioDataFormat =
         [[MPPAudioDataFormat alloc] initWithChannelCount:audioPCMBuffer.format.channelCount
                                               sampleRate:audioPCMBuffer.format.sampleRate];
@@ -62,14 +67,15 @@
     MPPFloatBuffer *floatBuffer =
         [[MPPFloatBuffer alloc] initWithData:audioPCMBuffer.floatChannelData + currentPosition
                                       length:lengthToBeLoaded];
-    [audioData loadBuffer:floatBuffer offset:0 length:floatBuffer.length error:nil]
+    [audioData loadBuffer:floatBuffer offset:0 length:floatBuffer.length error:nil];
 
-        NSInteger timestampInMilliseconds =
-            currentPosition / audioPCMBuffer.format.sampleRate * 1000;
+    NSInteger timestampInMilliseconds =
+        currentPosition / audioPCMBuffer.format.sampleRate * kMilliSecondsPerSecond;
     MPPTimestampedAudioData *timestampedAudioData =
         [[MPPTimestampedAudioData alloc] initWithAudioData:audioData
                                    timestampInMilliseconds:timestampInMilliseconds];
     [timestampedAudioDataList addObject:timestampedAudioData];
+    
     currentPosition += lengthToBeLoaded;
   }
   return timestampedAudioDataList;

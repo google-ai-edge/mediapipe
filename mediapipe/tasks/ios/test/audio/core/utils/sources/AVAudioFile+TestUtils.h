@@ -54,10 +54,12 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  * Creates an array of `MPPTimestampedAudioData` to mimic streaming an audio file by splitting the
  * file so that the number of samples in each audio data in the array can fit to the number of
- * samples the model takes as input.
+ * samples the model takes as input. The audio data objects are ordered by monotonically increasing
+ * timestamps in the returned array.
  *
- * @param modelSampleCount `FileInfo` with name and type of the audio file stored in the bundle.
- * @param modelSampleRate The `AVAudioFormat` to which the audio samples are to be converted.
+ * @param fileInfo `FileInfo` with name and type of the audio file stored in the bundle.
+ * @param modelSampleCount  Model's input size in number of samples.
+ * @param modelSampleRate Sample rate of the model.
  *
  * @return Newly created array of `MPPTimestampedAudioData`.
  */
