@@ -211,9 +211,6 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
   MPPAudioClassifier *audioClassifier =
       [MPPAudioClassifierTests audioClassifierWithOptions:options];
 
-  ClassificationHeadsCategoryCountInfo *const yamnetModelHeadsInfo =
-      @{kYamnetModelHeadName : @(kYamnetCategoriesCount - options.categoryDenylist.count)};
-
   // Classify 16KHz speech file.
   MPPAudioClassifierResult *result =
       [MPPAudioClassifierTests classifyAudioClipWithFileInfo:kSpeech16KHzMonoFileInfo
@@ -228,6 +225,35 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
                    kYamnetCategoriesCount - options.categoryDenylist.count);
     XCTAssertFalse([classifications.categories[0].categoryName isEqualToString:deniedCategory]);
   }
+}
+
+- (void)testClassifyWithScoreThresholdSucceeds {
+  MPPAudioClassifierOptions *options =
+      [MPPAudioClassifierTests audioClassifierOptionsWithModelFileInfo:kYamnetModelFileInfo];
+  options.scoreThreshold = 0.90f;
+
+  MPPAudioClassifier *audioClassifier =
+      [MPPAudioClassifierTests audioClassifierWithOptions:options];
+
+  // Classify 16KHz speech file.
+  MPPAudioClassifierResult *result =
+      [MPPAudioClassifierTests classifyAudioClipWithFileInfo:kSpeech16KHzMonoFileInfo
+                                        usingAudioClassifier:audioClassifier];
+  
+  // Expecting only one category with a very high threshold.
+  const NSInteger expectedCategoriesCount = 1;
+
+  ClassificationHeadsCategoryCountInfo *const yamnetModelHeadsInfo =
+      @{kYamnetModelHeadName : @(expectedCategoriesCount)};
+  
+  // Classify 16KHz speech file.
+  [MPPAudioClassifierTests
+          assertResultsOfClassifyAudioClipWithFileInfo:kSpeech16KHzMonoFileInfo
+                                  usingAudioClassifier:audioClassifier
+      approximatelyEqualsExpectedAudioClassifierResult:[MPPAudioClassifierTests
+                                                           expectedPartialYamnetResult]
+                    expectedClassificationResultsCount:kYamnetClassificationResultsCount
+          expectedClassificationHeadsCategoryCountInfo:yamnetModelHeadsInfo];
 }
 
 - (void)testClassifyWithInsufficientDataSucceeds {
