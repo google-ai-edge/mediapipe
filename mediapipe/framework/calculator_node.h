@@ -107,13 +107,14 @@ class CalculatorNode {
   // output_side_packets is expected to point to a contiguous flat array with
   // OutputSidePacketImpls corresponding to the output side packet indexes in
   // validated_graph.
-  absl::Status Initialize(
-      const ValidatedGraphConfig* validated_graph,
-      NodeTypeInfo::NodeRef node_ref, InputStreamManager* input_stream_managers,
-      OutputStreamManager* output_stream_managers,
-      OutputSidePacketImpl* output_side_packets, int* buffer_size_hint,
-      std::shared_ptr<ProfilingContext> profiling_context,
-      std::shared_ptr<GraphServiceManager> graph_service_manager);
+  absl::Status Initialize(const ValidatedGraphConfig* validated_graph,
+                          NodeTypeInfo::NodeRef node_ref,
+                          InputStreamManager* input_stream_managers,
+                          OutputStreamManager* output_stream_managers,
+                          OutputSidePacketImpl* output_side_packets,
+                          int* buffer_size_hint,
+                          std::shared_ptr<ProfilingContext> profiling_context,
+                          const GraphServiceManager* graph_service_manager);
 
   // Sets up the node at the beginning of CalculatorGraph::Run(). This
   // method is executed before any OpenNode() calls to the nodes

@@ -20,6 +20,7 @@
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/port/status_matchers.h"
+#include "mediapipe/gpu/gpu_service.h"
 
 namespace mediapipe {
 namespace api2 {
@@ -29,12 +30,14 @@ using ::mediapipe::MakePacket;
 using ::mediapipe::Packet;
 using ::mediapipe::Tensor;
 using ::mediapipe::api2::builder::Stream;
+using ::testing::HasSubstr;
 
 constexpr const char kInt32ModelFile[] =
     "mediapipe/calculators/tensor/testdata/"
     "1x3_square_int32.tflite";
 
-inline constexpr GraphService<int> kTestService(
+using TestService = GraphService<int>;
+inline constexpr TestService kTestService(
     "test_service", GraphServiceBase::kAllowDefaultInitialization);
 
 absl::StatusOr<Tensor> Create1x3IntTensor(std::vector<int> values) {
@@ -165,21 +168,23 @@ using ServiceRequestCalculatorWithoutUseServiceRequest =
 REGISTER_CALCULATOR(ServiceRequestCalculatorWithUseServiceRequest);
 REGISTER_CALCULATOR(ServiceRequestCalculatorWithoutUseServiceRequest);
 
-class SubGraphServiceTestCalculator : public Node {
+class NestedGraphServiceTestCalculator : public Node {
  public:
   static constexpr Input<int> kTestValue{"TEST_VALUE"};
-  MEDIAPIPE_NODE_CONTRACT(kTestValue);
+  static constexpr Output<absl::Status> kStartupError{"STARTUP_ERROR"};
+  MEDIAPIPE_NODE_CONTRACT(kTestValue, kStartupError);
 
   absl::Status Process(CalculatorContext* cc) override {
-    const auto test_value = kTestValue(cc).Get();
+    const auto& test_value = kTestValue(cc).Get();
 
     CalculatorGraph graph(cc);
 
-    // Check that the service is available on the sub graph (not the
-    // calculator).
-    const auto service = graph.GetServiceObject(kTestService);
-    EXPECT_NE(service, nullptr);
-    EXPECT_EQ(*service, test_value);
+    if (test_value > 0) {
+      // Check that the service is available on the current graph.
+      const auto service = graph.GetServiceObject(kTestService);
+      EXPECT_NE(service, nullptr);
+      EXPECT_EQ(*service, test_value);
+    }
 
     // Test that inherited services must be still request on calculators on the
     // sub graph.
@@ -197,38 +202,151 @@ class SubGraphServiceTestCalculator : public Node {
         )pb");
 
     MP_RETURN_IF_ERROR(graph.Initialize(graph_config));
-    MP_RETURN_IF_ERROR(graph.StartRun({}));
-    MP_RETURN_IF_ERROR(graph.AddPacketToInputStream(
-        "tick", mediapipe::MakePacket<int>(123).At(mediapipe::Timestamp(1))));
+    const auto status = graph.StartRun({});
+    kStartupError(cc).Send(status);
+    if (!status.ok()) {
+      // Exit early if the graph failed to start.
+      return absl::OkStatus();
+    }
+    MP_RETURN_IF_ERROR(graph.AddPacketToInputStream("tick", kTestValue(cc)));
     MP_RETURN_IF_ERROR(graph.CloseAllInputStreams());
     MP_RETURN_IF_ERROR(graph.WaitUntilDone());
-
     return absl::OkStatus();
   }
 };
-REGISTER_CALCULATOR(SubGraphServiceTestCalculator);
 
-TEST(NestedCalculatorGraphTest, TestSubGraphServiceInheriting) {
+REGISTER_CALCULATOR(NestedGraphServiceTestCalculator);
+
+TEST(NestedCalculatorGraphTest, TestNestedGraphServiceInheriting) {
   auto graph_config = ParseTextProtoOrDie<CalculatorGraphConfig>(
       R"pb(
-        input_stream: "input"
         input_stream: "test_value"
+        output_stream: "startup_error"
         node {
-          calculator: "SubGraphServiceTestCalculator"
+          calculator: "NestedGraphServiceTestCalculator"
           input_stream: "TEST_VALUE:test_value"
+          output_stream: "STARTUP_ERROR:startup_error"
         })pb");
   CalculatorGraph graph;
 
   constexpr int kTestValue = 123;
   MP_EXPECT_OK(
       graph.SetServiceObject(kTestService, std::make_shared<int>(kTestValue)));
-
+  std::vector<Packet> result_status;
+  tool::AddVectorSink("startup_error", &graph_config, &result_status);
   MP_ASSERT_OK(graph.Initialize(graph_config));
 
   MP_ASSERT_OK(graph.StartRun({}));
+
+  const mediapipe::Timestamp timestamp(1);
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
+      "test_value", mediapipe::MakePacket<int>(kTestValue).At(timestamp)));
+  MP_ASSERT_OK(graph.CloseAllInputStreams());
+  MP_ASSERT_OK(graph.WaitUntilDone());
+  MP_EXPECT_OK(result_status[0].Get<absl::Status>());
+}
+
+TEST(NestedCalculatorGraphTest, NestedGraphsCannotRegisterNewServices) {
+  auto graph_config = ParseTextProtoOrDie<CalculatorGraphConfig>(
+      R"pb(
+        input_stream: "test_value"
+        output_stream: "startup_error"
+        node {
+          calculator: "NestedGraphServiceTestCalculator"
+          input_stream: "TEST_VALUE:test_value"
+          output_stream: "STARTUP_ERROR:startup_error"
+        })pb");
+  CalculatorGraph graph;
+  std::vector<Packet> result_status;
+  tool::AddVectorSink("startup_error", &graph_config, &result_status);
+  MP_ASSERT_OK(graph.Initialize(graph_config));
+  MP_ASSERT_OK(graph.StartRun({}));
   MP_ASSERT_OK(graph.AddPacketToInputStream(
       "test_value",
-      mediapipe::MakePacket<int>(kTestValue).At(mediapipe::Timestamp(1))));
+      mediapipe::MakePacket<int>(
+          -1  // disable service check in  NestedGraphServiceTestCalculator
+          )
+          .At(mediapipe::Timestamp(1))));
+  MP_ASSERT_OK(graph.CloseAllInputStreams());
+  MP_ASSERT_OK(graph.WaitUntilDone());
+  EXPECT_THAT(
+      result_status[0].Get<absl::Status>(),
+      StatusIs(absl::StatusCode::kInternal,
+               HasSubstr("Service default initialization is disallowed.")));
+}
+
+class GpuServiceRequestingCalculator : public Node {
+ public:
+  static constexpr Input<int> kTick{"TICK"};
+  MEDIAPIPE_NODE_CONTRACT(kTick);
+
+  static absl::Status UpdateContract(CalculatorContract* cc) {
+    cc->UseService(kGpuService);
+    return absl::OkStatus();
+  }
+
+  absl::Status Open(CalculatorContext* cc) override {
+    auto service = cc->Service(kGpuService);
+    EXPECT_TRUE(service.IsAvailable());
+    return absl::OkStatus();
+  }
+
+  absl::Status Process(CalculatorContext* cc) override {
+    return absl::OkStatus();
+  }
+};
+REGISTER_CALCULATOR(GpuServiceRequestingCalculator);
+
+class NestedGraphWithGpuServiceRequestingCalculator : public Node {
+ public:
+  static constexpr Input<int> kTick{"TICK"};
+  MEDIAPIPE_NODE_CONTRACT(kTick);
+
+  absl::Status Open(CalculatorContext* cc) override {
+    CalculatorGraph graph(cc);
+
+    const auto service = graph.GetServiceObject(kGpuService);
+    EXPECT_EQ(service, nullptr);
+
+    // Test that inherited services must be still request on calculators on the
+    // sub graph.
+    auto graph_config = ParseTextProtoOrDie<CalculatorGraphConfig>(
+        R"pb(
+          input_stream: "tick"
+          node {
+            calculator: "GpuServiceRequestingCalculator"
+            input_stream: "TICK:tick"
+          }
+        )pb");
+
+    MP_RETURN_IF_ERROR(graph.Initialize(graph_config));
+    EXPECT_THAT(
+        graph.StartRun({}),
+        StatusIs(absl::StatusCode::kInternal,
+                 HasSubstr("Service default initialization is disallowed.")));
+    return absl::OkStatus();
+  }
+
+  absl::Status Process(CalculatorContext* cc) override {
+    return absl::OkStatus();
+  }
+};
+REGISTER_CALCULATOR(NestedGraphWithGpuServiceRequestingCalculator);
+
+TEST(NestedCalculatorGraphTest, NestedGraphWithGpuServiceRequestShouldFail) {
+  auto graph_config = ParseTextProtoOrDie<CalculatorGraphConfig>(
+      R"pb(
+        input_stream: "input"
+        input_stream: "tick"
+        node {
+          calculator: "NestedGraphWithGpuServiceRequestingCalculator"
+          input_stream: "TICK:tick"
+        })pb");
+  CalculatorGraph graph;
+  MP_ASSERT_OK(graph.Initialize(graph_config));
+  MP_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
+      "tick", mediapipe::MakePacket<int>(0).At(mediapipe::Timestamp(1))));
   MP_ASSERT_OK(graph.CloseAllInputStreams());
   MP_ASSERT_OK(graph.WaitUntilDone());
 }

@@ -16,7 +16,6 @@
 #define MEDIAPIPE_FRAMEWORK_VALIDATED_GRAPH_CONFIG_H_
 
 #include <map>
-#include <memory>
 #include <string>
 #include <vector>
 
@@ -208,7 +207,7 @@ class ValidatedGraphConfig {
       CalculatorGraphConfig input_config,
       const GraphRegistry* graph_registry = nullptr,
       const Subgraph::SubgraphOptions* graph_options = nullptr,
-      std::shared_ptr<GraphServiceManager> service_manager = nullptr);
+      const GraphServiceManager* service_manager = nullptr);
 
   // Initializes the ValidatedGraphConfig from registered graph and subgraph
   // configs.  Subgraphs are retrieved from the specified graph registry or from
@@ -218,7 +217,7 @@ class ValidatedGraphConfig {
       const std::string& graph_type,
       const GraphRegistry* graph_registry = nullptr,
       const Subgraph::SubgraphOptions* graph_options = nullptr,
-      std::shared_ptr<GraphServiceManager> service_manager = nullptr);
+      const GraphServiceManager* service_manager = nullptr);
 
   // Initializes the ValidatedGraphConfig from the specified graph and subgraph
   // configs.  Template graph and subgraph configs can be specified through
@@ -231,7 +230,7 @@ class ValidatedGraphConfig {
       const std::vector<CalculatorGraphTemplate>& input_templates,
       const std::string& graph_type = "",
       const Subgraph::SubgraphOptions* graph_options = nullptr,
-      std::shared_ptr<GraphServiceManager> service_manager = nullptr);
+      const GraphServiceManager* service_manager = nullptr);
 
   // Returns true if the ValidatedGraphConfig has been initialized.
   bool Initialized() const { return initialized_; }
@@ -325,7 +324,7 @@ class ValidatedGraphConfig {
   absl::Status PerformBasicTransforms(
       const GraphRegistry* graph_registry,
       const Subgraph::SubgraphOptions* graph_options,
-      std::shared_ptr<GraphServiceManager> service_manager);
+      const GraphServiceManager* service_manager);
 
   // Initialize the PacketGenerator information.
   absl::Status InitializeGeneratorInfo();

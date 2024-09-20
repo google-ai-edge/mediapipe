@@ -31,6 +31,7 @@
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_base.h"
+#include "mediapipe/framework/calculator_state.h"
 #include "mediapipe/framework/counter_factory.h"
 #include "mediapipe/framework/graph_service_manager.h"
 #include "mediapipe/framework/input_stream_manager.h"
@@ -128,7 +129,7 @@ absl::Status CalculatorNode::Initialize(
     OutputStreamManager* output_stream_managers,
     OutputSidePacketImpl* output_side_packets, int* buffer_size_hint,
     std::shared_ptr<ProfilingContext> profiling_context,
-    std::shared_ptr<GraphServiceManager> graph_service_manager) {
+    const GraphServiceManager* graph_service_manager) {
   RET_CHECK(buffer_size_hint) << "buffer_size_hint is NULL";
   validated_graph_ = validated_graph;
   profiling_context_ = profiling_context;
@@ -171,7 +172,7 @@ absl::Status CalculatorNode::Initialize(
                                     node_type_info_->OutputStreamTypes()));
   MP_RETURN_IF_ERROR(InitializeOutputStreams(output_stream_managers));
 
-  calculator_state_ = absl::make_unique<CalculatorState>(
+  calculator_state_ = std::make_unique<CalculatorState>(
       name_, node_ref.index, node_config->calculator(), *node_config,
       profiling_context_, graph_service_manager);
 

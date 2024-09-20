@@ -16,7 +16,6 @@
 #define MEDIAPIPE_CALCULATORS_TENSOR_TENSORS_TO_SEGMENTATION_CONVERTER_H_
 
 #include <memory>
-#include <vector>
 
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/formats/image.h"
@@ -28,14 +27,13 @@ class TensorsToSegmentationConverter {
  public:
   virtual ~TensorsToSegmentationConverter() = default;
 
-  // Converts tensors to image mask.
+  // Converts a tensor to image mask.
   // Returns a unique pointer containing the converted image.
-  // @input_tensors contains the tensors needed to be processed.
+  // @input_tensor is the tensor to be processed.
   // @output_width/height describes output dimensions to reshape the output mask
   // into.
   virtual absl::StatusOr<std::unique_ptr<Image>> Convert(
-      const std::vector<Tensor>& input_tensors, int output_width,
-      int output_height) = 0;
+      const Tensor& input_tensor, int output_width, int output_height) = 0;
 };
 
 }  // namespace mediapipe

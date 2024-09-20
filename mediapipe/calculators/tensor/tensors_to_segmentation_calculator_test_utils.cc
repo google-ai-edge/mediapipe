@@ -15,12 +15,18 @@
 #include "mediapipe/calculators/tensor/tensors_to_segmentation_calculator_test_utils.h"
 
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/log/absl_log.h"
+#include "absl/status/status.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/substitute.h"
 #include "mediapipe/calculators/tensor/tensors_to_segmentation_calculator.pb.h"
 #include "mediapipe/framework/calculator.pb.h"
+#include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/formats/tensor.h"
+#include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 
 namespace mediapipe {
@@ -67,17 +73,23 @@ std::vector<float> MakeRedAlphaMatrix(const std::vector<float>& values) {
 // to CPU, using ToImageCalculator. The output is an ImageFrame.
 mediapipe::CalculatorGraphConfig CreateGraphConfigForTest(
     bool test_gpu,
-    const TensorsToSegmentationCalculatorOptions::Activation& activation) {
-  std::string pre_process = R"pb(
-    node {
-      calculator: "mediapipe.aimatter.TensorViewRequestor"
-      input_stream: "TENSORS:tensors"
-      output_stream: "TENSORS:tensors_gpu"
-      options {
-        [mediapipe.aimatter.TensorViewRequestorOptions.ext] { gpu {} }
-      }
-    }
-  )pb";
+    const TensorsToSegmentationCalculatorOptions::Activation& activation,
+    bool use_single_tensor) {
+  std::string input_stream = use_single_tensor ? "tensor" : "tensors";
+  std::string input_tag = use_single_tensor ? "TENSOR" : "TENSORS";
+  std::string input_tag_and_stream = absl::StrCat(input_tag, ":", input_stream);
+  std::string pre_process = absl::Substitute(
+      R"pb(
+        node {
+          calculator: "mediapipe.aimatter.TensorViewRequestor"
+          input_stream: "$0"
+          output_stream: "$0_gpu"
+          options {
+            [mediapipe.aimatter.TensorViewRequestorOptions.ext] { gpu {} }
+          }
+        }
+      )pb",
+      input_tag_and_stream);
   std::string post_process = R"pb(
     node {
       calculator: "FromImageCalculator"
@@ -88,24 +100,39 @@ mediapipe::CalculatorGraphConfig CreateGraphConfigForTest(
   return mediapipe::ParseTextProtoOrDie<mediapipe::CalculatorGraphConfig>(
       absl::Substitute(
           R"pb(
-            input_stream: "tensors"
-            input_stream: "size" $0
+            input_stream: "$0"
+            input_stream: "size" $1
             node {
               calculator: "TensorsToSegmentationCalculator"
-              input_stream: "TENSORS:tensors$1"
+              input_stream: "$2$3"
               input_stream: "OUTPUT_SIZE:size"
-              output_stream: "MASK:image_as_mask$2"
+              output_stream: "MASK:image_as_mask$3"
               options: {
                 [mediapipe.TensorsToSegmentationCalculatorOptions.ext] {
-                  activation: $3
+                  activation: $4
                   gpu_origin: TOP_LEFT
                 }
               }
-            } $4
+            } $5
           )pb",
-          test_gpu ? pre_process : "", test_gpu ? "_gpu" : "",
+          input_stream, test_gpu ? pre_process : "", input_tag_and_stream,
           test_gpu ? "_gpu" : "", ActivationTypeToString(activation),
           test_gpu ? post_process : ""));
 }
+
+absl::Status AddTensorInput(Tensor tensor, bool use_single_tensor,
+                            CalculatorGraph& graph) {
+  if (use_single_tensor) {
+    return graph.AddPacketToInputStream(
+        "tensor", MakePacket<Tensor>(std::move(tensor)).At(Timestamp(0)));
+  }
+
+  std::vector<Tensor> tensors;
+  tensors.push_back(std::move(tensor));
+  return graph.AddPacketToInputStream(
+      "tensors",
+      MakePacket<std::vector<Tensor>>(std::move(tensors)).At(Timestamp(0)));
+}
+
 }  // namespace tensors_to_segmentation_utils
 }  // namespace mediapipe

@@ -114,7 +114,12 @@ public final class LlmTaskRunner implements AutoCloseable {
   /** Invokes the native token cost calculator and returns the size of the string in tokens. */
   public int sizeInTokens(LlmSession session, String text) {
     validateState();
-    return nativeSizeInTokens(session.sessionHandle, text);
+    try {
+      isProcessing.set(true);
+      return nativeSizeInTokens(session.sessionHandle, text);
+    } finally {
+      isProcessing.set(false);
+    }
   }
 
   /** If provided, removes the session and frees up its context. */

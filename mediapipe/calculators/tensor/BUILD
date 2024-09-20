@@ -804,6 +804,7 @@ cc_library(
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
@@ -1970,6 +1971,7 @@ cc_test(
 cc_library(
     name = "tensors_to_segmentation_converter",
     hdrs = ["tensors_to_segmentation_converter.h"],
+    visibility = ["//visibility:private"],
     deps = [
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:tensor",
@@ -1981,6 +1983,7 @@ cc_library(
     name = "tensors_to_segmentation_converter_opencv",
     srcs = ["tensors_to_segmentation_converter_opencv.cc"],
     hdrs = ["tensors_to_segmentation_converter_opencv.h"],
+    visibility = ["//visibility:private"],
     deps = [
         ":tensors_to_segmentation_calculator_cc_proto",
         ":tensors_to_segmentation_converter",
@@ -2002,6 +2005,7 @@ cc_library(
     name = "tensors_to_segmentation_converter_gl_texture",
     srcs = ["tensors_to_segmentation_converter_gl_texture.cc"],
     hdrs = ["tensors_to_segmentation_converter_gl_texture.h"],
+    visibility = ["//visibility:private"],
     deps = [
         "//mediapipe/framework:port",
     ] + select({
@@ -2036,6 +2040,7 @@ cc_library(
     name = "tensors_to_segmentation_converter_gl_buffer",
     srcs = ["tensors_to_segmentation_converter_gl_buffer.cc"],
     hdrs = ["tensors_to_segmentation_converter_gl_buffer.h"],
+    visibility = ["//visibility:private"],
     deps = ["//mediapipe/framework:port"] + selects.with_or({
         "//mediapipe:emscripten": [],
         "//mediapipe:apple": [],
@@ -2083,6 +2088,7 @@ cc_library(
         ],
         "//conditions:default": [],
     }),
+    visibility = ["//visibility:private"],
     deps = [
         "//mediapipe/framework:port",
     ] + selects.with_or({
@@ -2142,8 +2148,12 @@ cc_library(
     deps = [
         ":tensors_to_segmentation_calculator_cc_proto",
         "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:parse_text_proto",
         "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
 )

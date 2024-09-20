@@ -437,12 +437,12 @@ class CalculatorGraph {
       }
     }
 
-    return service_manager_->SetServiceObject(service, object);
+    return service_manager_.SetServiceObject(service, object);
   }
 
   template <typename T>
   std::shared_ptr<T> GetServiceObject(const GraphService<T>& service) {
-    return service_manager_->GetServiceObject(service);
+    return service_manager_.GetServiceObject(service);
   }
 
   // Disallows/disables default initialization of MediaPipe graph services.
@@ -483,13 +483,10 @@ class CalculatorGraph {
   // Only the Java API should call this directly.
   absl::Status SetServicePacket(const GraphServiceBase& service, Packet p) {
     // TODO: check that the graph has not been started!
-    return service_manager_->SetServicePacket(service, p);
+    return service_manager_.SetServicePacket(service, p);
   }
 
  private:
-  explicit CalculatorGraph(
-      std::shared_ptr<GraphServiceManager> service_manager);
-
   // GraphRunState is used as a parameter in the function CallStatusHandlers.
   enum class GraphRunState {
     // State of the graph before the run; see status_handler.h for details.
@@ -722,7 +719,7 @@ class CalculatorGraph {
   std::map<std::string, Packet> current_run_side_packets_;
 
   // Object to manage graph services.
-  std::shared_ptr<GraphServiceManager> service_manager_;
+  GraphServiceManager service_manager_;
 
   // Indicates whether service default initialization is allowed.
   bool allow_service_default_initialization_ = true;

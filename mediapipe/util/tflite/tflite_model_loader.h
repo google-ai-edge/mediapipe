@@ -44,11 +44,6 @@ class TfLiteModelLoader {
   static absl::StatusOr<api2::Packet<TfLiteModelPtr>> LoadFromPath(
       const Resources& resources, const std::string& path,
       bool try_mmap = false);
-
-  // Do not use as it will be deleted.
-  ABSL_DEPRECATED("Use LoadFromPath(resources, ...) version")
-  static absl::StatusOr<api2::Packet<TfLiteModelPtr>> LoadFromPath(
-      const std::string& path, bool try_mmap = false);
 };
 
 }  // namespace mediapipe

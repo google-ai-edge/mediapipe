@@ -33,7 +33,7 @@ CalculatorState::CalculatorState(
     const std::string& calculator_type,
     const CalculatorGraphConfig::Node& node_config,
     std::shared_ptr<ProfilingContext> profiling_context,
-    std::shared_ptr<GraphServiceManager> graph_service_manager)
+    const GraphServiceManager* graph_service_manager)
     : node_name_(node_name),
       node_id_(node_id),
       calculator_type_(calculator_type),

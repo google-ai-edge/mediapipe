@@ -36,16 +36,8 @@ int GetXnnpackNumThreads(
     const bool opts_has_delegate,
     const mediapipe::InferenceCalculatorOptions::Delegate& opts_delegate);
 
-absl::Status CopyCpuInputIntoInterpreterTensor(const Tensor& input_tensor,
-                                               tflite::Interpreter& interpreter,
-                                               int input_tensor_index);
-
 absl::Status CopyCpuInputIntoTfLiteTensor(const Tensor& input_tensor,
                                           TfLiteTensor& tflite_tensor);
-
-absl::Status CopyInterpreterTensorIntoCpuOutput(
-    const tflite::Interpreter& interpreter, int output_tensor_index,
-    Tensor& output_tensor);
 
 absl::Status CopyTfLiteTensorIntoCpuOutput(const TfLiteTensor& tflite_tensor,
                                            Tensor& output_tensor);

@@ -26,7 +26,6 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
-#include "absl/types/optional.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/deps/registration.h"
 #include "mediapipe/framework/graph_service.h"
@@ -43,17 +42,20 @@ class SubgraphContext {
   SubgraphContext() : SubgraphContext(nullptr, nullptr) {}
   // @node and/or @service_manager can be nullptr.
   SubgraphContext(CalculatorGraphConfig::Node* node,
-                  std::shared_ptr<GraphServiceManager> service_manager)
+                  const GraphServiceManager* service_manager)
       : default_node_(node ? std::nullopt
                            : std::optional<CalculatorGraphConfig::Node>(
                                  CalculatorGraphConfig::Node())),
         original_node_(node ? *node : default_node_.value()),
-        service_manager_(service_manager
-                             ? std::move(service_manager)
-                             : std::make_shared<GraphServiceManager>()),
+        default_service_manager_(
+            service_manager
+                ? std::nullopt
+                : std::optional<GraphServiceManager>(GraphServiceManager())),
+        service_manager_(service_manager ? *std::move(service_manager)
+                                         : default_service_manager_.value()),
         resources_([this]() {
           std::shared_ptr<Resources> resources =
-              service_manager_->GetServiceObject(kResourcesService);
+              service_manager_.GetServiceObject(kResourcesService);
           if (!resources) {
             resources = CreateDefaultResources();
           }
@@ -83,7 +85,7 @@ class SubgraphContext {
 
   template <typename T>
   ServiceBinding<T> Service(const GraphService<T>& service) const {
-    return ServiceBinding<T>(service_manager_->GetServiceObject(service));
+    return ServiceBinding<T>(service_manager_.GetServiceObject(service));
   }
 
   // Gets interface to access resources (file system, assets, etc.) from
@@ -103,7 +105,10 @@ class SubgraphContext {
 
   CalculatorGraphConfig::Node& original_node_;
 
-  std::shared_ptr<GraphServiceManager> service_manager_;
+  // Populated if service manager is not provided during construction.
+  const std::optional<GraphServiceManager> default_service_manager_;
+
+  const GraphServiceManager& service_manager_;
 
   std::shared_ptr<Resources> resources_;
 

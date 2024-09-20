@@ -60,9 +60,9 @@ class TensorsToSegmentationMetalConverter
   ~TensorsToSegmentationMetalConverter() override;
   absl::Status Init(CalculatorContext* cc,
                     const TensorsToSegmentationCalculatorOptions& options);
-  absl::StatusOr<std::unique_ptr<Image>> Convert(
-      const std::vector<Tensor>& input_tensors, int output_width,
-      int output_height) override;
+  absl::StatusOr<std::unique_ptr<Image>> Convert(const Tensor& input_tensor,
+                                                 int output_width,
+                                                 int output_height) override;
 
  private:
   mediapipe::GlCalculatorHelper gpu_helper_;
@@ -230,88 +230,80 @@ kernel void segmentationKernel(
 // 2. process segmentation tensor into small mask
 // 3. upsample small mask into output mask to be same size as input image
 absl::StatusOr<std::unique_ptr<Image>>
-TensorsToSegmentationMetalConverter::Convert(
-    const std::vector<Tensor>& input_tensors, int output_width,
-    int output_height) {
-  if (input_tensors.empty()) {
-    return absl::InvalidArgumentError("input_tensors vector is empty.");
-  }
+TensorsToSegmentationMetalConverter::Convert(const Tensor& input_tensor,
+                                             int output_width,
+                                             int output_height) {
   std::unique_ptr<Image> output_image_mask;
 
-  MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext(
-      [this, &input_tensors, &output_image_mask, output_width,
-       output_height]() -> absl::Status {
-        // Create initial working mask texture.
-        mediapipe::GlTexture small_mask_texture;
+  MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext([this, &input_tensor,
+                                                 &output_image_mask,
+                                                 output_width, output_height]()
+                                                    -> absl::Status {
+    // Create initial working mask texture.
+    mediapipe::GlTexture small_mask_texture;
 
-        MP_ASSIGN_OR_RETURN(auto hwc,
-                            GetHwcFromDims(input_tensors[0].shape().dims));
-        auto [tensor_height, tensor_width, tensor_channels] = hwc;
+    MP_ASSIGN_OR_RETURN(auto hwc, GetHwcFromDims(input_tensor.shape().dims));
+    auto [tensor_height, tensor_width, tensor_channels] = hwc;
 
-        // Run shader, process mask tensor.
-        {
-          id<MTLCommandBuffer> command_buffer = [metal_helper_ commandBuffer];
-          command_buffer.label = @"SegmentationKernel";
-          id<MTLComputeCommandEncoder> command_encoder =
-              [command_buffer computeCommandEncoder];
-          [command_encoder setComputePipelineState:mask_program_];
+    // Run shader, process mask tensor.
+    {
+      id<MTLCommandBuffer> command_buffer = [metal_helper_ commandBuffer];
+      command_buffer.label = @"SegmentationKernel";
+      id<MTLComputeCommandEncoder> command_encoder =
+          [command_buffer computeCommandEncoder];
+      [command_encoder setComputePipelineState:mask_program_];
 
-          auto read_view =
-              MtlBufferView::GetReadView(input_tensors[0], command_buffer);
-          [command_encoder setBuffer:read_view.buffer() offset:0 atIndex:0];
+      auto read_view = MtlBufferView::GetReadView(input_tensor, command_buffer);
+      [command_encoder setBuffer:read_view.buffer() offset:0 atIndex:0];
 
-          mediapipe::GpuBuffer small_mask_buffer = [metal_helper_
-              mediapipeGpuBufferWithWidth:tensor_width
-                                   height:tensor_height
-                                   format:mediapipe::GpuBufferFormat::kBGRA32];
-          id<MTLTexture> small_mask_texture_metal =
-              [metal_helper_ metalTextureWithGpuBuffer:small_mask_buffer];
-          [command_encoder setTexture:small_mask_texture_metal atIndex:1];
+      mediapipe::GpuBuffer small_mask_buffer = [metal_helper_
+          mediapipeGpuBufferWithWidth:tensor_width
+                               height:tensor_height
+                               format:mediapipe::GpuBufferFormat::kBGRA32];
+      id<MTLTexture> small_mask_texture_metal =
+          [metal_helper_ metalTextureWithGpuBuffer:small_mask_buffer];
+      [command_encoder setTexture:small_mask_texture_metal atIndex:1];
 
-          unsigned int out_size[] = {static_cast<unsigned int>(tensor_width),
-                                     static_cast<unsigned int>(tensor_height)};
-          [command_encoder setBytes:&out_size
-                             length:sizeof(out_size)
-                            atIndex:2];
+      unsigned int out_size[] = {static_cast<unsigned int>(tensor_width),
+                                 static_cast<unsigned int>(tensor_height)};
+      [command_encoder setBytes:&out_size length:sizeof(out_size) atIndex:2];
 
-          MTLSize threads_per_group =
-              MTLSizeMake(kWorkgroupSize, kWorkgroupSize, 1);
-          MTLSize threadgroups =
-              MTLSizeMake(NumGroups(tensor_width, kWorkgroupSize),
-                          NumGroups(tensor_height, kWorkgroupSize), 1);
-          [command_encoder dispatchThreadgroups:threadgroups
-                          threadsPerThreadgroup:threads_per_group];
-          [command_encoder endEncoding];
-          [command_buffer commit];
+      MTLSize threads_per_group =
+          MTLSizeMake(kWorkgroupSize, kWorkgroupSize, 1);
+      MTLSize threadgroups =
+          MTLSizeMake(NumGroups(tensor_width, kWorkgroupSize),
+                      NumGroups(tensor_height, kWorkgroupSize), 1);
+      [command_encoder dispatchThreadgroups:threadgroups
+                      threadsPerThreadgroup:threads_per_group];
+      [command_encoder endEncoding];
+      [command_buffer commit];
 
-          small_mask_texture =
-              gpu_helper_.CreateSourceTexture(small_mask_buffer);
-        }
+      small_mask_texture = gpu_helper_.CreateSourceTexture(small_mask_buffer);
+    }
 
-        // Upsample small mask into output.
-        mediapipe::GlTexture output_texture =
-            gpu_helper_.CreateDestinationTexture(
-                output_width, output_height,
-                mediapipe::GpuBufferFormat::kBGRA32);  // actually GL_RGBA8
+    // Upsample small mask into output.
+    mediapipe::GlTexture output_texture = gpu_helper_.CreateDestinationTexture(
+        output_width, output_height,
+        mediapipe::GpuBufferFormat::kBGRA32);  // actually GL_RGBA8
 
-        // Run shader, upsample result.
-        {
-          gpu_helper_.BindFramebuffer(output_texture);
-          glActiveTexture(GL_TEXTURE1);
-          glBindTexture(GL_TEXTURE_2D, small_mask_texture.name());
-          glUseProgram(upsample_program_);
-          GlRender();
-          glBindTexture(GL_TEXTURE_2D, 0);
-          glFlush();
-        }
+    // Run shader, upsample result.
+    {
+      gpu_helper_.BindFramebuffer(output_texture);
+      glActiveTexture(GL_TEXTURE1);
+      glBindTexture(GL_TEXTURE_2D, small_mask_texture.name());
+      glUseProgram(upsample_program_);
+      GlRender();
+      glBindTexture(GL_TEXTURE_2D, 0);
+      glFlush();
+    }
 
-        // Store the result into the output pointer.
-        output_image_mask = output_texture.GetFrame<Image>();
+    // Store the result into the output pointer.
+    output_image_mask = output_texture.GetFrame<Image>();
 
-        // Cleanup
-        output_texture.Release();
-        return absl::OkStatus();
-      }));
+    // Cleanup
+    output_texture.Release();
+    return absl::OkStatus();
+  }));
   return output_image_mask;
 }
 

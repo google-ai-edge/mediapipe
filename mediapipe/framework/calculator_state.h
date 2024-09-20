@@ -51,7 +51,7 @@ class CalculatorState {
                   const std::string& calculator_type,
                   const CalculatorGraphConfig::Node& node_config,
                   std::shared_ptr<ProfilingContext> profiling_context,
-                  std::shared_ptr<GraphServiceManager> graph_service_manager);
+                  const GraphServiceManager* graph_service_manager);
   CalculatorState(const CalculatorState&) = delete;
   CalculatorState& operator=(const CalculatorState&) = delete;
   ~CalculatorState();
@@ -97,8 +97,7 @@ class CalculatorState {
 
   // Returns the graph-level service manager for sharing its services with
   // calculator-nested MP graphs.
-  const std::shared_ptr<GraphServiceManager>& GetSharedGraphServiceManager()
-      const {
+  const GraphServiceManager* GetGraphServiceManager() const {
     return graph_service_manager_;
   }
 
@@ -144,8 +143,8 @@ class CalculatorState {
   // The graph tracing and profiling interface.
   std::shared_ptr<ProfilingContext> profiling_context_;
 
-  // Shared pointer to the graph-level service manager.
-  std::shared_ptr<GraphServiceManager> graph_service_manager_;
+  // Const pointer to the graph-level service manager.
+  const GraphServiceManager* graph_service_manager_ = nullptr;
 
   // calculator_service_manager_ contains only the services that are requested
   // by the calculator in UpdateContract() via cc->UseService(...).

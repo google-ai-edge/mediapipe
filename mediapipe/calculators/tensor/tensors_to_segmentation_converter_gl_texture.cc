@@ -55,9 +55,9 @@ class TensorsToSegmentationGlTextureConverter
   ~TensorsToSegmentationGlTextureConverter() override;
   absl::Status Init(CalculatorContext* cc,
                     const TensorsToSegmentationCalculatorOptions& options);
-  absl::StatusOr<std::unique_ptr<Image>> Convert(
-      const std::vector<Tensor>& input_tensors, int output_width,
-      int output_height) override;
+  absl::StatusOr<std::unique_ptr<Image>> Convert(const Tensor& input_tensor,
+                                                 int output_width,
+                                                 int output_height) override;
 
  private:
   mediapipe::GlCalculatorHelper gpu_helper_;
@@ -203,18 +203,15 @@ void main() {
 // 2. process segmentation tensor into small mask
 // 3. upsample small mask into output mask to be same size as input image
 absl::StatusOr<std::unique_ptr<Image>>
-TensorsToSegmentationGlTextureConverter::Convert(
-    const std::vector<Tensor>& input_tensors, int output_width,
-    int output_height) {
-  if (input_tensors.empty()) {
-    return absl::InvalidArgumentError("input_tensors vector is empty.");
-  }
+TensorsToSegmentationGlTextureConverter::Convert(const Tensor& input_tensor,
+                                                 int output_width,
+                                                 int output_height) {
   std::unique_ptr<Image> output_image_mask;
   MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext(
-      [this, &input_tensors, output_width, output_height,
+      [this, &input_tensor, output_width, output_height,
        &output_image_mask]() -> absl::Status {
         MP_ASSIGN_OR_RETURN(auto hwc,
-                            GetHwcFromDims(input_tensors[0].shape().dims));
+                            GetHwcFromDims(input_tensor.shape().dims));
         auto [tensor_height, tensor_width, tensor_channels] = hwc;
 
         // Create initial working mask texture.
@@ -229,11 +226,11 @@ TensorsToSegmentationGlTextureConverter::Convert(
           // Go through CPU if not already texture 2D (no direct conversion
           // yet). Tensor::GetOpenGlTexture2dReadView() doesn't automatically
           // convert types.
-          if (!input_tensors[0].ready_as_opengl_texture_2d()) {
-            (void)input_tensors[0].GetCpuReadView();
+          if (!input_tensor.ready_as_opengl_texture_2d()) {
+            (void)input_tensor.GetCpuReadView();
           }
 
-          auto read_view = input_tensors[0].GetOpenGlTexture2dReadView();
+          auto read_view = input_tensor.GetOpenGlTexture2dReadView();
 
           gpu_helper_.BindFramebuffer(small_mask_texture);
           glActiveTexture(GL_TEXTURE1);

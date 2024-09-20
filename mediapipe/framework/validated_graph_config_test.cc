@@ -1,6 +1,5 @@
 #include "mediapipe/framework/validated_graph_config.h"
 
-#include <memory>
 #include <string_view>
 
 #include "absl/status/status.h"
@@ -133,13 +132,13 @@ TEST(ValidatedGraphConfigTest, InitializeByTypeSubgraphWithServiceCalculatorB) {
   for (const std::string& calculator_name :
        {"CalculatorA", "CalculatorB", "CalculatorC"}) {
     ValidatedGraphConfig config;
-    auto service_manager = std::make_shared<GraphServiceManager>();
-    MP_ASSERT_OK(service_manager->SetServiceObject(
+    GraphServiceManager service_manager;
+    MP_ASSERT_OK(service_manager.SetServiceObject(
         kStringTestService, std::make_shared<std::string>(calculator_name)));
     MP_EXPECT_OK(config.Initialize("TestServiceSubgraph",
                                    /*options=*/nullptr,
                                    /*graph_registry=*/nullptr,
-                                   service_manager));
+                                   /*service_manager=*/&service_manager));
     ASSERT_TRUE(config.Initialized());
     EXPECT_THAT(config.Config(), EqualsProto(ExpectedConfig(calculator_name)));
   }
@@ -152,13 +151,13 @@ TEST(ValidatedGraphConfigTest, InitializeSubgraphWithServiceCalculatorB) {
     graph.add_node()->set_calculator("TestServiceSubgraph");
 
     ValidatedGraphConfig config;
-    auto service_manager = std::make_shared<GraphServiceManager>();
-    MP_ASSERT_OK(service_manager->SetServiceObject(
+    GraphServiceManager service_manager;
+    MP_ASSERT_OK(service_manager.SetServiceObject(
         kStringTestService, std::make_shared<std::string>(calculator_name)));
     MP_EXPECT_OK(config.Initialize(graph,
                                    /*graph_registry=*/nullptr,
                                    /*subgraph_options=*/nullptr,
-                                   service_manager));
+                                   /*service_manager=*/&service_manager));
     ASSERT_TRUE(config.Initialized());
     EXPECT_THAT(config.Config(), EqualsProto(ExpectedConfigExpandedFromGraph(
                                      "TestServiceSubgraph", calculator_name)));
