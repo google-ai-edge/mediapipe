@@ -239,13 +239,13 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
   MPPAudioClassifierResult *result =
       [MPPAudioClassifierTests classifyAudioClipWithFileInfo:kSpeech16KHzMonoFileInfo
                                         usingAudioClassifier:audioClassifier];
-  
+
   // Expecting only one category with a very high threshold.
   const NSInteger expectedCategoriesCount = 1;
 
   ClassificationHeadsCategoryCountInfo *const yamnetModelHeadsInfo =
       @{kYamnetModelHeadName : @(expectedCategoriesCount)};
-  
+
   // Classify 16KHz speech file.
   [MPPAudioClassifierTests
           assertResultsOfClassifyAudioClipWithFileInfo:kSpeech16KHzMonoFileInfo
@@ -276,7 +276,7 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 
   MPPAudioClassifierResult *result = [audioClassifier classifyAudioClip:audioData error:nil];
   XCTAssertNotNil(result);
-  
+
   [MPPAudioClassifierTests assertAudioClassifierResult:result
       approximatelyEqualToExpectedAudioClassifierResult:[MPPAudioClassifierTests
                                                             expectedYamnetInsufficientSilenceResult]
