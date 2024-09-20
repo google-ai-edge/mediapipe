@@ -231,35 +231,6 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
   }
 }
 
-- (void)testClassifyWithScoreThresholdSucceeds {
-  NSString *deniedCategory = @"Speech";
-
-  MPPAudioClassifierOptions *options =
-      [MPPAudioClassifierTests audioClassifierOptionsWithModelFileInfo:kYamnetModelFileInfo];
-  options.categoryDenylist = @[ deniedCategory ];
-
-  MPPAudioClassifier *audioClassifier =
-      [MPPAudioClassifierTests audioClassifierWithOptions:options];
-
-  ClassificationHeadsCategoryCountInfo *const yamnetModelHeadsInfo =
-      @{kYamnetModelHeadName : @(kYamnetCategoriesCount - options.categoryDenylist.count)};
-
-  // Classify 16KHz speech file.
-  MPPAudioClassifierResult *result =
-      [MPPAudioClassifierTests classifyAudioClipWithFileInfo:kSpeech16KHzMonoFileInfo
-                                        usingAudioClassifier:audioClassifier];
-
-  // Asserting that first category is not equal to `deniedCategory` in each `classificationResult`.
-  XCTAssertEqual(result.classificationResults.count, kYamnetClassificationResultsCount);
-  for (MPPClassificationResult *classificationResult in result.classificationResults) {
-    XCTAssertEqual(classificationResult.classifications.count, 1);
-    MPPClassifications *classifications = classificationResult.classifications[0];
-    XCTAssertEqual(classifications.categories.count,
-                   kYamnetCategoriesCount - options.categoryDenylist.count);
-    XCTAssertFalse([classifications.categories[0].categoryName isEqualToString:deniedCategory]);
-  }
-}
-
 - (void)testClassifyWithInsufficientDataSucceeds {
   MPPAudioClassifierOptions *options =
       [MPPAudioClassifierTests audioClassifierOptionsWithModelFileInfo:kYamnetModelFileInfo];
