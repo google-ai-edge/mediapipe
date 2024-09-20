@@ -56,7 +56,7 @@ static const NSInteger kMilliSecondsPerSecond = 1000;
 
   while (currentPosition < audioPCMBuffer.frameLength) {
     NSInteger lengthToBeLoaded = MIN(audioPCMBuffer.frameLength - currentPosition, intervalSize);
-    
+
     MPPAudioDataFormat *audioDataFormat =
         [[MPPAudioDataFormat alloc] initWithChannelCount:audioPCMBuffer.format.channelCount
                                               sampleRate:audioPCMBuffer.format.sampleRate];
@@ -75,7 +75,7 @@ static const NSInteger kMilliSecondsPerSecond = 1000;
         [[MPPTimestampedAudioData alloc] initWithAudioData:audioData
                                    timestampInMilliseconds:timestampInMilliseconds];
     [timestampedAudioDataList addObject:timestampedAudioData];
-    
+
     currentPosition += lengthToBeLoaded;
   }
   return timestampedAudioDataList;
