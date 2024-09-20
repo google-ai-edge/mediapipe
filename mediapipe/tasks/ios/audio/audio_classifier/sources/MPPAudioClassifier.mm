@@ -75,7 +75,7 @@ static const int kMicrosecondsPerMillisecond = 1000;
                                              kTimestampedClassificationsOutStreamName]
                 ]
                   taskOptions:options
-           enableFlowLimiting:options.runningMode == MPPAudioRunningModeAudioStream
+           enableFlowLimiting:NO
                         error:error];
 
     if (!taskInfo) {
