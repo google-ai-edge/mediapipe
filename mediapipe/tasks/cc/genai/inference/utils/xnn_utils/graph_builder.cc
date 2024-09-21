@@ -21,7 +21,6 @@
 #include <cstdlib>
 #include <fstream>
 #include <functional>
-#include <iostream>
 #include <memory>
 #include <numeric>
 #include <optional>
@@ -644,10 +643,14 @@ absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::RmsNorm(
   // div_out = input / rms
   MP_ASSIGN_OR_RETURN(auto div_out, ElementDiv(input, clamped_rms));
 
-  // div_out * (1 + scale) = div_out + div_out * scale
-  MP_ASSIGN_OR_RETURN(auto normed_div_out, ElementMul(div_out, scale));
+  if (scale) {
+    // div_out * (1 + scale) = div_out + div_out * scale
+    MP_ASSIGN_OR_RETURN(auto normed_div_out, ElementMul(div_out, scale));
 
-  return ElementAdd(div_out, normed_div_out);
+    return ElementAdd(div_out, normed_div_out);
+  } else {
+    return div_out;
+  }
 }
 
 absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::ElementAdd(
