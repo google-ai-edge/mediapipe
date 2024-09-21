@@ -303,6 +303,9 @@ class XnnGraphBuilder {
       std::shared_ptr<Tensor> beta = nullptr);
 
  protected:
+  absl::StatusOr<std::shared_ptr<Tensor>> ExpandDims(
+      std::shared_ptr<Tensor> input, Tensor::DimsType new_axes);
+
   absl::StatusOr<std::shared_ptr<Tensor>> IntermediateTensor(
       Tensor::DimsType dims, absl::string_view tag = "");
   absl::StatusOr<std::shared_ptr<Tensor>> IntermediateTensor(
