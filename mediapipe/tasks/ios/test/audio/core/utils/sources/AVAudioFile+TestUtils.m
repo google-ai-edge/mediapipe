@@ -65,7 +65,7 @@ static const NSInteger kMilliSecondsPerSecond = 1000;
                                  sampleCount:lengthToBeLoaded / audioDataFormat.channelCount];
 
     MPPFloatBuffer *floatBuffer =
-        [[MPPFloatBuffer alloc] initWithData:audioPCMBuffer.floatChannelData + currentPosition
+        [[MPPFloatBuffer alloc] initWithData:audioPCMBuffer.floatChannelData[0] + currentPosition
                                       length:lengthToBeLoaded];
     [audioData loadBuffer:floatBuffer offset:0 length:floatBuffer.length error:nil];
 
