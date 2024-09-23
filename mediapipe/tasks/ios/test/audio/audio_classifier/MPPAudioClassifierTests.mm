@@ -17,7 +17,9 @@
 #import "mediapipe/tasks/ios/audio/audio_classifier/sources/MPPAudioClassifier.h"
 #import "mediapipe/tasks/ios/common/sources/MPPCommon.h"
 #import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
+#import "mediapipe/tasks/ios/test/audio/core/utils/sources/AVAudioFile+TestUtils.h"
 #import "mediapipe/tasks/ios/test/audio/core/utils/sources/AVAudioPCMBuffer+TestUtils.h"
+#import "mediapipe/tasks/ios/test/audio/core/utils/sources/MPPAudioData+TestUtils.h"
 #import "mediapipe/tasks/ios/test/utils/sources/MPPFileInfo.h"
 
 static MPPFileInfo *const kYamnetModelFileInfo =
@@ -35,6 +37,11 @@ static MPPFileInfo *const kTwoHeads44KHzMonoFileInfo =
 
 static const NSInteger kYamnetCategoriesCount = 521;
 static const NSInteger kYamnetClassificationResultsCount = 5;
+static const NSInteger kYamnetSampleCount = 15600;
+static const double kYamnetSampleRate = 16000.0;
+static const NSInteger kMillisecondsPerSeconds = 1000;
+static const NSInteger kYamnetIntervalSizeInMilliseconds =
+    (NSInteger)((float)kYamnetSampleCount / kYamnetSampleRate * kMillisecondsPerSeconds);
 static NSString *const kYamnetModelHeadName = @"scores";
 static NSString *const kTwoHeadsModelYamnetHeadName = @"yamnet_classification";
 static NSString *const kTwoHeadsModelBirdClassificationHeadName = @"bird_classification";
@@ -49,6 +56,8 @@ static ClassificationHeadsCategoryCountInfo *const kTwoHeadModelHeadsInfo = @{
 };
 
 static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
+static NSString *const kAudioStreamTestsDictClassifierKey = @"audioClassifier";
+static NSString *const kAudioStreamTestsDictExpectationKey = @"expectation";
 
 #define AssertEqualErrors(error, expectedError)              \
   XCTAssertNotNil(error);                                    \
@@ -64,7 +73,11 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
   XCTAssertEqualObjects(category.displayName, expectedCategory.displayName, @"index i = %d",    \
                         categoryIndex);
 
-@interface MPPAudioClassifierTests : XCTestCase <MPPAudioClassifierStreamDelegate>
+@interface MPPAudioClassifierTests : XCTestCase <MPPAudioClassifierStreamDelegate> {
+  NSDictionary<NSString *, id> *_16kHZAudioStreamSucceedsTestDict;
+  NSDictionary<NSString *, id> *_48kHZAudioStreamSucceedsTestDict;
+  NSDictionary<NSString *, id> *_outOfOrderTimestampTestDict;
+}
 @end
 
 @implementation MPPAudioClassifierTests
@@ -267,9 +280,9 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
   const NSInteger channelCount = 1;
   const NSInteger expectedClassificationResultsCount = 1;
 
-  MPPAudioDataFormat *format = [[MPPAudioDataFormat alloc] initWithChannelCount:channelCount
-                                                                     sampleRate:sampleRate];
-  MPPAudioData *audioData = [[MPPAudioData alloc] initWithFormat:format sampleCount:sampleCount];
+  MPPAudioData *audioData = [[MPPAudioData alloc] initWithChannelCount:channelCount
+                                                            sampleRate:sampleRate
+                                                           sampleCount:sampleCount];
 
   MPPAudioClassifierResult *result = [audioClassifier classifyAudioClip:audioData error:nil];
   XCTAssertNotNil(result);
@@ -279,6 +292,44 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
                                                             expectedYamnetInsufficientSilenceResult]
                      expectedClassificationResultsCount:expectedClassificationResultsCount
            expectedClassificationHeadsCategoryCountInfo:kYamnetModelHeadsInfo];
+}
+
+- (void)testClassifyAfterCloseFailsInAudioClipsMode {
+  MPPAudioClassifier *audioClassifier =
+      [[MPPAudioClassifier alloc] initWithModelPath:kYamnetModelFileInfo.path error:nil];
+  XCTAssertNotNil(audioClassifier);
+
+  // Classify 48KHz speech file.
+  [MPPAudioClassifierTests
+          assertResultsOfClassifyAudioClipWithFileInfo:kSpeech48KHzMonoFileInfo
+                                  usingAudioClassifier:audioClassifier
+      approximatelyEqualsExpectedAudioClassifierResult:[MPPAudioClassifierTests
+                                                           expectedPartialYamnetResult]
+                    expectedClassificationResultsCount:kYamnetClassificationResultsCount
+          expectedClassificationHeadsCategoryCountInfo:kYamnetModelHeadsInfo];
+
+  NSError *closeError;
+  XCTAssertTrue([audioClassifier closeWithError:&closeError]);
+  XCTAssertNil(closeError);
+
+  const NSInteger channelCount = 1;
+  MPPAudioData *audioData = [[MPPAudioData alloc] initWithChannelCount:channelCount
+                                                            sampleRate:kYamnetSampleRate
+                                                           sampleCount:kYamnetSampleCount];
+
+  NSError *classifyError;
+
+  [audioClassifier classifyAudioClip:audioData error:&classifyError];
+
+  NSError *expectedClassifyError = [NSError
+      errorWithDomain:kExpectedErrorDomain
+                 code:MPPTasksErrorCodeInvalidArgumentError
+             userInfo:@{
+               NSLocalizedDescriptionKey : [NSString
+                   stringWithFormat:@"INVALID_ARGUMENT: Task runner is currently not running."]
+             }];
+
+  AssertEqualErrors(classifyError, expectedClassifyError);
 }
 
 - (void)testCreateAudioClassifierFailsWithDelegateInAudioClipsMode {
@@ -353,6 +404,121 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
   AssertEqualErrors(error, expectedError);
 }
 
+- (void)testClassifyWithAudioStreamModeAndOutOfOrderTimestampsFails {
+  MPPAudioClassifier *audioClassifier =
+      [self audioClassifierInStreamModeWithModelFileInfo:kYamnetModelFileInfo];
+  NSArray<MPPTimestampedAudioData *> *streamedAudioDataList =
+      [MPPAudioClassifierTests streamedAudioDataListforYamnet];
+
+  XCTestExpectation *expectation = [[XCTestExpectation alloc]
+      initWithDescription:@"classifyWithOutOfOrderTimestampsAndLiveStream"];
+  expectation.expectedFulfillmentCount = 1;
+
+  _outOfOrderTimestampTestDict = @{
+    kAudioStreamTestsDictClassifierKey : audioClassifier,
+    kAudioStreamTestsDictExpectationKey : expectation
+  };
+
+  // Can safely access indices 1 and 0 `streamedAudioDataList` count is already asserted.
+  XCTAssertTrue([audioClassifier
+      classifyAsyncAudioBlock:streamedAudioDataList[1].audioData
+      timestampInMilliseconds:streamedAudioDataList[1].timestampInMilliseconds
+                        error:nil]);
+
+  NSError *error;
+  XCTAssertFalse([audioClassifier
+      classifyAsyncAudioBlock:streamedAudioDataList[0].audioData
+      timestampInMilliseconds:streamedAudioDataList[0].timestampInMilliseconds
+                        error:&error]);
+
+  NSError *expectedError =
+      [NSError errorWithDomain:kExpectedErrorDomain
+                          code:MPPTasksErrorCodeInvalidArgumentError
+                      userInfo:@{
+                        NSLocalizedDescriptionKey :
+                            @"INVALID_ARGUMENT: Input timestamp must be monotonically increasing."
+                      }];
+  AssertEqualErrors(error, expectedError);
+
+  [audioClassifier closeWithError:nil];
+
+  NSTimeInterval timeout = 1.0f;
+  [self waitForExpectations:@[ expectation ] timeout:timeout];
+}
+
+- (void)testClassifyWithAudioStreamModeSucceeds {
+  [self testClassifyUsingYamnetAsyncAudioFileWithInfo:kSpeech16KHzMonoFileInfo
+                                                 info:&_16kHZAudioStreamSucceedsTestDict];
+  [self testClassifyUsingYamnetAsyncAudioFileWithInfo:kSpeech48KHzMonoFileInfo
+                                                 info:&_48kHZAudioStreamSucceedsTestDict];
+}
+
+// info is strong here since address of global variables will be passed to this function. By default
+// `NSDictionary **` will be `NSDictionary * __autoreleasing *.
+- (void)testClassifyUsingYamnetAsyncAudioFileWithInfo:(MPPFileInfo *)audioFileInfo
+                                                 info:(NSDictionary<NSString *, id> *__strong *)
+                                                          info {
+  MPPAudioClassifier *audioClassifier =
+      [self audioClassifierInStreamModeWithModelFileInfo:kYamnetModelFileInfo];
+
+  NSArray<MPPTimestampedAudioData *> *streamedAudioDataList =
+      [MPPAudioClassifierTests streamedAudioDataListforYamnet];
+
+  XCTestExpectation *expectation = [[XCTestExpectation alloc]
+      initWithDescription:[NSString
+                              stringWithFormat:@"classifyWithStreamMode_%@", audioFileInfo.name]];
+  expectation.expectedFulfillmentCount = streamedAudioDataList.count;
+
+  *info = @{
+    kAudioStreamTestsDictClassifierKey : audioClassifier,
+    kAudioStreamTestsDictExpectationKey : expectation
+  };
+
+  for (MPPTimestampedAudioData *timestampedAudioData in streamedAudioDataList) {
+    XCTAssertTrue([audioClassifier
+        classifyAsyncAudioBlock:timestampedAudioData.audioData
+        timestampInMilliseconds:timestampedAudioData.timestampInMilliseconds
+                          error:nil]);
+  }
+
+  [audioClassifier closeWithError:nil];
+
+  NSTimeInterval timeout = 1.0f;
+  [self waitForExpectations:@[ expectation ] timeout:timeout];
+}
+
+- (void)audioClassifier:(MPPAudioClassifier *)audioClassifier
+    didFinishClassificationWithResult:(MPPAudioClassifierResult *)result
+              timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                                error:(NSError *)error {
+  // Can safely test for yamnet results before `audioClassifier` object tests since only yamnet with
+  // 16khz and 48khz speech files are used for async tests.
+
+  // Returns a `nil` `expectedResult` for the last timestamp to prevent the result from being
+  // tested.
+  MPPAudioClassifierResult *expectedResult = [MPPAudioClassifierTests
+      expectedPartialYamnetResultWithTimestampInMilliseconds:timestampInMilliseconds
+                                                isStreamMode:YES];
+
+  // `expectedResult` will be `nil` for last timestamp since we are not testing for it.
+  if (expectedResult) {
+    [MPPAudioClassifierTests assertAudioClassifierResult:result
+        approximatelyEqualToExpectedAudioClassifierResult:expectedResult
+                       expectedClassificationResultsCount:1
+             expectedClassificationHeadsCategoryCountInfo:kYamnetModelHeadsInfo];
+  }
+
+  if (audioClassifier == _outOfOrderTimestampTestDict[kAudioStreamTestsDictClassifierKey]) {
+    [_outOfOrderTimestampTestDict[kAudioStreamTestsDictExpectationKey] fulfill];
+  } else if (audioClassifier ==
+             _16kHZAudioStreamSucceedsTestDict[kAudioStreamTestsDictClassifierKey]) {
+    [_16kHZAudioStreamSucceedsTestDict[kAudioStreamTestsDictExpectationKey] fulfill];
+  } else if (audioClassifier ==
+             _48kHZAudioStreamSucceedsTestDict[kAudioStreamTestsDictClassifierKey]) {
+    [_48kHZAudioStreamSucceedsTestDict[kAudioStreamTestsDictExpectationKey] fulfill];
+  }
+}
+
 #pragma mark Audio Data Initializers
 
 + (MPPAudioData *)audioDataFromAudioFileWithInfo:(MPPFileInfo *)fileInfo {
@@ -366,20 +532,51 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
   MPPFloatBuffer *bufferData = [[MPPFloatBuffer alloc] initWithData:buffer.floatChannelData[0]
                                                              length:buffer.frameLength];
 
-  // Create the audio data with the same format as the `AVAudioPCMBuffer`.
-  MPPAudioDataFormat *audioDataFormat =
-      [[MPPAudioDataFormat alloc] initWithChannelCount:buffer.format.channelCount
-                                            sampleRate:buffer.format.sampleRate];
-
-  MPPAudioData *audioData = [[MPPAudioData alloc] initWithFormat:audioDataFormat
-                                                     sampleCount:buffer.frameLength];
+  MPPAudioData *audioData = [[MPPAudioData alloc] initWithChannelCount:buffer.format.channelCount
+                                                            sampleRate:buffer.format.sampleRate
+                                                           sampleCount:buffer.frameLength];
 
   // Load all the samples in the audio file to the newly created audio data.
   [audioData loadBuffer:bufferData offset:0 length:bufferData.length error:nil];
   return audioData;
 }
 
++ (MPPAudioData *)audioDataWithChannelCount:(NSUInteger)channelCount
+                                 sampleRate:(double)sampleRate
+                                sampleCount:(NSUInteger)sampleCount {
+  MPPAudioDataFormat *audioDataFormat =
+      [[MPPAudioDataFormat alloc] initWithChannelCount:channelCount sampleRate:sampleRate];
+
+  MPPAudioData *audioData = [[MPPAudioData alloc] initWithFormat:audioDataFormat
+                                                     sampleCount:sampleCount];
+
+  return audioData;
+}
+
++ (NSArray<MPPTimestampedAudioData *> *)streamedAudioDataListforYamnet {
+  NSArray<MPPTimestampedAudioData *> *streamedAudioDataList =
+      [AVAudioFile streamedAudioBlocksFromAudioFileWithInfo:kSpeech16KHzMonoFileInfo
+                                           modelSampleCount:kYamnetSampleCount
+                                            modelSampleRate:kYamnetSampleRate];
+
+  XCTAssertEqual(streamedAudioDataList.count, 5);
+
+  return streamedAudioDataList;
+}
+
 #pragma mark Audio Classifier Initializers
+
+- (MPPAudioClassifier *)audioClassifierInStreamModeWithModelFileInfo:(MPPFileInfo *)fileInfo {
+  MPPAudioClassifierOptions *options =
+      [MPPAudioClassifierTests audioClassifierOptionsWithModelFileInfo:kYamnetModelFileInfo];
+  options.runningMode = MPPAudioRunningModeAudioStream;
+  options.audioClassifierStreamDelegate = self;
+
+  MPPAudioClassifier *audioClassifier =
+      [MPPAudioClassifierTests audioClassifierWithOptions:options];
+
+  return audioClassifier;
+}
 
 + (MPPAudioClassifierOptions *)audioClassifierOptionsWithModelFileInfo:
     (MPPFileInfo *)modelFileInfo {
@@ -523,15 +720,34 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 }
 
 + (MPPAudioClassifierResult *)expectedPartialYamnetResult {
-  return [MPPAudioClassifierTests expectedPartialYamnetResultWithTimestampInMilliseconds:0];
+  return [MPPAudioClassifierTests expectedPartialYamnetResultWithTimestampInMilliseconds:0
+                                                                            isStreamMode:NO];
 }
 
 // Returns only one top category for each classification head.
 // Last classification result (timestamped result) is omitted because it varies between test
 // runs due to the low confidence score. Ensure that the subset of classification results in the
 // predicted audio classifier result is compared with the expected result returned from this method.
-+ (MPPAudioClassifierResult *)expectedPartialYamnetResultWithTimestampInMilliseconds:
-    (NSInteger)timestampInMilliseconds {
+// If `isStream` mode is set, returned result will only have the `classificationResult` for the
+// given `timestampInMilliseconds`.
++ (MPPAudioClassifierResult *)
+    expectedPartialYamnetResultWithTimestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                                              isStreamMode:(BOOL)isStreamMode {
+  const NSInteger maxTimestampToCompare = 2925;
+  const NSInteger minTimestampToCompare = 0;
+
+  // Last timestamp and any other illegal values of timestamp are not allowed to pass through.
+  if (timestampInMilliseconds > maxTimestampToCompare ||
+      timestampInMilliseconds < minTimestampToCompare ||
+      timestampInMilliseconds % kYamnetIntervalSizeInMilliseconds != 0) {
+    return nil;
+  }
+
+  // Only one of the classification results corresponding to the given  timestamp is to be returned
+  // as the expected result for stream mode. Calculate index of the `classificationResult` to be
+  // returned based on the timestamp and the input size of the Yamnet model in milliseconds.
+  NSInteger index = timestampInMilliseconds / kYamnetIntervalSizeInMilliseconds;
+
   NSArray<MPPClassificationResult *> *classificationResults = @[
     [[MPPClassificationResult alloc] initWithClassifications:@[
       [[MPPClassifications alloc] initWithHeadIndex:0
@@ -572,8 +788,12 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 
   ];
 
-  return [[MPPAudioClassifierResult alloc] initWithClassificationResults:classificationResults
-                                                 timestampInMilliseconds:timestampInMilliseconds];
+  // In stream mode, only one classification result corresponding to the requested timestamp is
+  // returned. In clips mode, the full array of classification results are returned.
+  return [[MPPAudioClassifierResult alloc]
+      initWithClassificationResults:isStreamMode ? @[ classificationResults[index] ]
+                                                 : classificationResults
+            timestampInMilliseconds:timestampInMilliseconds];
 }
 
 + (MPPAudioClassifierResult *)expectedPartial44kHzTwoHeadsResult {
