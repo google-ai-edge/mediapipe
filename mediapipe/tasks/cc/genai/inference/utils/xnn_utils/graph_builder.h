@@ -160,8 +160,11 @@ class XnnGraphBuilder {
 
   absl::StatusOr<std::shared_ptr<Tensor>> Rms(std::shared_ptr<Tensor> input);
 
+  // Root Mean Square normalization
+  // out = input / rms(input) * (1 + scale)
+  // if scale is absent, scale is considered to be zero.
   absl::StatusOr<std::shared_ptr<Tensor>> RmsNorm(
-      std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> scale);
+      std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> scale = nullptr);
 
   absl::StatusOr<std::shared_ptr<Tensor>> Reshape(std::shared_ptr<Tensor> input,
                                                   Tensor::DimsType new_dims);
@@ -303,6 +306,9 @@ class XnnGraphBuilder {
       std::shared_ptr<Tensor> beta = nullptr);
 
  protected:
+  absl::StatusOr<std::shared_ptr<Tensor>> ExpandDims(
+      std::shared_ptr<Tensor> input, Tensor::DimsType new_axes);
+
   absl::StatusOr<std::shared_ptr<Tensor>> IntermediateTensor(
       Tensor::DimsType dims, absl::string_view tag = "");
   absl::StatusOr<std::shared_ptr<Tensor>> IntermediateTensor(

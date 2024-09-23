@@ -16,6 +16,7 @@
 
 #include <fcntl.h>
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -329,11 +330,14 @@ absl::Status Tensor::LoadFromBuffer(const void* buffer) {
 absl::Status Tensor::LoadFromVec(const std::vector<float>& data,
                                  bool exact_match) {
   AllocateBufferIfNeeded();
+  size_t load_size = data.size();
   if (exact_match) {
     RET_CHECK_EQ(ElementSize(num_elements), data.size() * sizeof(float));
+  } else {
+    load_size = std::min(data.size(), num_elements);
   }
 
-  memcpy(Data(), data.data(), data.size() * sizeof(float));
+  memcpy(Data(), data.data(), load_size * sizeof(float));
 
   return absl::OkStatus();
 }

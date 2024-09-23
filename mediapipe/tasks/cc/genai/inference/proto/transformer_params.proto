@@ -188,4 +188,7 @@ message TransformerParameters {
 
   // Scale the queries by this value.
   optional float query_rescale_factor = 25;
+
+  // Vision parameters
+  int32 vision_tokens_num = 26;
 }

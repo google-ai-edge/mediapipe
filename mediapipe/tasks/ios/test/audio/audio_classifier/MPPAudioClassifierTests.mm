@@ -245,14 +245,8 @@ static NSString *const kAudioStreamTestsDictExpectationKey = @"expectation";
   MPPAudioClassifier *audioClassifier =
       [MPPAudioClassifierTests audioClassifierWithOptions:options];
 
-  // Classify 16KHz speech file.
-  MPPAudioClassifierResult *result =
-      [MPPAudioClassifierTests classifyAudioClipWithFileInfo:kSpeech16KHzMonoFileInfo
-                                        usingAudioClassifier:audioClassifier];
-
   // Expecting only one category with a very high threshold.
   const NSInteger expectedCategoriesCount = 1;
-
   ClassificationHeadsCategoryCountInfo *const yamnetModelHeadsInfo =
       @{kYamnetModelHeadName : @(expectedCategoriesCount)};
 
@@ -291,7 +285,7 @@ static NSString *const kAudioStreamTestsDictExpectationKey = @"expectation";
       approximatelyEqualToExpectedAudioClassifierResult:[MPPAudioClassifierTests
                                                             expectedYamnetInsufficientSilenceResult]
                      expectedClassificationResultsCount:expectedClassificationResultsCount
-           expectedClassificationHeadsCategoryCountInfo:kYamnetModelHeadsInfo];
+           expectedClassificationHeadsCategoryCountInfo:yamnetModelHeadsInfo];
 }
 
 - (void)testClassifyAfterCloseFailsInAudioClipsMode {

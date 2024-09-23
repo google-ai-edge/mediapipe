@@ -50,4 +50,3 @@ objc_library(
         "//mediapipe/tasks/ios/audio/core:MPPAudioData",
     ],
 )
-

@@ -26,13 +26,21 @@ export function isWebKit(browser = navigator) {
 export function isIOS() {
   // Source:
   // https://stackoverflow.com/questions/9038625/detect-if-device-is-ios
-  return [
-    'iPad Simulator', 'iPhone Simulator', 'iPod Simulator', 'iPad', 'iPhone',
-    'iPod'
-    // tslint:disable-next-line:deprecation
-  ].includes(navigator.platform)
-      // iPad on iOS 13 detection
-      || (navigator.userAgent.includes('Mac') && 'ontouchend' in self.document);
+  return (
+    [
+      'iPad Simulator',
+      'iPhone Simulator',
+      'iPod Simulator',
+      'iPad',
+      'iPhone',
+      'iPod',
+      // tslint:disable-next-line:deprecation
+    ].includes(navigator.platform) ||
+    // iPad on iOS 13 detection
+    (navigator.userAgent.includes('Mac') &&
+      'document' in self &&
+      'ontouchend' in self.document)
+  );
 }
 
 /**
