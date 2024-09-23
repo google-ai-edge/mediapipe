@@ -24,8 +24,8 @@ NS_ASSUME_NONNULL_BEGIN
  * Initializes an `MPPAudioData` from channel count, sample rate and sample count.
  *
  * @param channelCount Number of channels.
- * @param channelCount Sample rate.
- * @param channelCount Sample count.
+ * @param sampleRate Sample rate.
+ * @param sampleCount Sample count.
  *
  * @return The `MPPAudioData` object with the specified channel count, sample rate and sample count.
  */
