@@ -157,6 +157,10 @@ static const int kMicrosecondsPerMillisecond = 1000;
                                                          error:error];
 }
 
+- (BOOL)closeWithError:(NSError **)error {
+  return [_audioTaskRunner closeWithError:error];
+}
+
 #pragma mark - Private
 
 - (void)processAudioStreamResult:(absl::StatusOr<PacketMap>)audioStreamResult {

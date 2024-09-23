@@ -146,6 +146,22 @@ NS_SWIFT_NAME(AudioClassifier)
                           error:(NSError **)error
     NS_SWIFT_NAME(classifyAsync(audioBlock:timestampInMilliseconds:));
 
+/**
+ * Closes and cleans up the MediaPipe audio task.
+ *
+ * For tasks initialized with `.audioStream` mode, ensure that this method is called after all audio
+ * blocks in an audio stream are sent for inference using
+ * `classifyAsync(audioBlock:timestampInMilliseconds:)`. Otherwise, the task will not
+ * process the last audio block (of type `AudioData`) in the stream if its `bufferLength` is shorter
+ * than the model's input length. Once a task is closed, you cannot send any inference requests
+ * to the task. You must create a new instance of the task to send any pending requests. Ensure that
+ * you are ready to dispose off the task before this method is invoked.
+ *
+ * @return Returns successfully if the task was closed. Fails otherwise. Otherwise, throws an error
+ * indicating the reason for failure.
+ */
+- (BOOL)closeWithError:(NSError **)error;
+
 - (instancetype)init NS_UNAVAILABLE;
 
 /**
@@ -169,7 +185,8 @@ NS_SWIFT_NAME(AudioClassifier)
 + (MPPAudioRecord *)createAudioRecordWithChannelCount:(NSUInteger)channelCount
                                            sampleRate:(double)sampleRate
                                          bufferLength:(NSUInteger)bufferLength
-                                                error:(NSError **)error;
+                                                error:(NSError **)error
+    NS_SWIFT_NAME(createAudioRecord(channelCount:sampleRate:bufferLength:));
 
 + (instancetype)new NS_UNAVAILABLE;
 
