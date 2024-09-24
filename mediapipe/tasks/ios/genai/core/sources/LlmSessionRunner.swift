@@ -161,6 +161,7 @@ final class LlmSessionRunner {
 
   /// Creates a clone of the current instance of `LlmSessionRunner` by cloning the underlying C
   /// LLM session.
+  /// Note: Currently, this method is only available for GPU models.
   ///
   /// - Returns: Cloned `LlmSessionRunner`.
   /// - Throws: An error if the underlying C LLM session could not be cloned.
