@@ -447,40 +447,6 @@ static NSString *const kAudioStreamTestsDictExpectationKey = @"expectation";
                                                  info:&_48kHZAudioStreamSucceedsTestDict];
 }
 
-// info is strong here since address of global variables will be passed to this function. By default
-// `NSDictionary **` will be `NSDictionary * __autoreleasing *.
-- (void)testClassifyUsingYamnetAsyncAudioFileWithInfo:(MPPFileInfo *)audioFileInfo
-                                                 info:(NSDictionary<NSString *, id> *__strong *)
-                                                          info {
-  MPPAudioClassifier *audioClassifier =
-      [self audioClassifierInStreamModeWithModelFileInfo:kYamnetModelFileInfo];
-
-  NSArray<MPPTimestampedAudioData *> *streamedAudioDataList =
-      [MPPAudioClassifierTests streamedAudioDataListforYamnet];
-
-  XCTestExpectation *expectation = [[XCTestExpectation alloc]
-      initWithDescription:[NSString
-                              stringWithFormat:@"classifyWithStreamMode_%@", audioFileInfo.name]];
-  expectation.expectedFulfillmentCount = streamedAudioDataList.count;
-
-  *info = @{
-    kAudioStreamTestsDictClassifierKey : audioClassifier,
-    kAudioStreamTestsDictExpectationKey : expectation
-  };
-
-  for (MPPTimestampedAudioData *timestampedAudioData in streamedAudioDataList) {
-    XCTAssertTrue([audioClassifier
-        classifyAsyncAudioBlock:timestampedAudioData.audioData
-        timestampInMilliseconds:timestampedAudioData.timestampInMilliseconds
-                          error:nil]);
-  }
-
-  [audioClassifier closeWithError:nil];
-
-  NSTimeInterval timeout = 1.0f;
-  [self waitForExpectations:@[ expectation ] timeout:timeout];
-}
-
 - (void)audioClassifier:(MPPAudioClassifier *)audioClassifier
     didFinishClassificationWithResult:(MPPAudioClassifierResult *)result
               timestampInMilliseconds:(NSInteger)timestampInMilliseconds
@@ -511,6 +477,42 @@ static NSString *const kAudioStreamTestsDictExpectationKey = @"expectation";
              _48kHZAudioStreamSucceedsTestDict[kAudioStreamTestsDictClassifierKey]) {
     [_48kHZAudioStreamSucceedsTestDict[kAudioStreamTestsDictExpectationKey] fulfill];
   }
+}
+
+#pragma mark Audio Stream Mode Test Helpers
+
+// info is strong here since address of global variables will be passed to this function. By default
+// `NSDictionary **` will be `NSDictionary * __autoreleasing *.
+- (void)classifyUsingYamnetAsyncAudioFileWithInfo:(MPPFileInfo *)audioFileInfo
+                                                 info:(NSDictionary<NSString *, id> *__strong *)
+                                                          info {
+  MPPAudioClassifier *audioClassifier =
+      [self audioClassifierInStreamModeWithModelFileInfo:kYamnetModelFileInfo];
+
+  NSArray<MPPTimestampedAudioData *> *streamedAudioDataList =
+      [MPPAudioClassifierTests streamedAudioDataListforYamnet];
+
+  XCTestExpectation *expectation = [[XCTestExpectation alloc]
+      initWithDescription:[NSString
+                              stringWithFormat:@"classifyWithStreamMode_%@", audioFileInfo.name]];
+  expectation.expectedFulfillmentCount = streamedAudioDataList.count;
+
+  *info = @{
+    kAudioStreamTestsDictClassifierKey : audioClassifier,
+    kAudioStreamTestsDictExpectationKey : expectation
+  };
+
+  for (MPPTimestampedAudioData *timestampedAudioData in streamedAudioDataList) {
+    XCTAssertTrue([audioClassifier
+        classifyAsyncAudioBlock:timestampedAudioData.audioData
+        timestampInMilliseconds:timestampedAudioData.timestampInMilliseconds
+                          error:nil]);
+  }
+
+  [audioClassifier closeWithError:nil];
+
+  NSTimeInterval timeout = 1.0f;
+  [self waitForExpectations:@[ expectation ] timeout:timeout];
 }
 
 #pragma mark Audio Data Initializers
