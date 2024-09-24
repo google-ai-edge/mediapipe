@@ -113,7 +113,8 @@ export interface GraphRunnerApi {
    * @param numChannels The number of channels of audio input. Only 1
    *     is supported for now.
    * @param numSamples The number of samples that are taken in each
-   *     audio capture.
+   *     audio capture. Setting this to null will allow for variable-length
+   *     audio input.
    * @param sampleRate The rate, in Hz, of the sampling.
    * @param streamName The optional name of the input stream to additionally
    *     configure with audio information. This configuration only occurs before
