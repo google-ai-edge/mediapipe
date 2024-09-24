@@ -41,3 +41,12 @@ objc_library(
         "//third_party/apple_frameworks:Foundation",
     ],
 )
+
+objc_library(
+    name = "MPPAudioDataTestUtils",
+    srcs = ["sources/MPPAudioData+TestUtils.m"],
+    hdrs = ["sources/MPPAudioData+TestUtils.h"],
+    deps = [
+        "//mediapipe/tasks/ios/audio/core:MPPAudioData",
+    ],
+)

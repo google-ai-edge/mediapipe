@@ -63,9 +63,10 @@ static const NSInteger kMilliSecondsPerSecond = 1000;
     MPPAudioData *audioData =
         [[MPPAudioData alloc] initWithFormat:audioDataFormat
                                  sampleCount:lengthToBeLoaded / audioDataFormat.channelCount];
-
+    // Can safely access `floatChannelData[0]` since the input file is expected to have atleast 1
+    // channel.
     MPPFloatBuffer *floatBuffer =
-        [[MPPFloatBuffer alloc] initWithData:audioPCMBuffer.floatChannelData[currentPosition]
+        [[MPPFloatBuffer alloc] initWithData:audioPCMBuffer.floatChannelData[0] + currentPosition
                                       length:lengthToBeLoaded];
     [audioData loadBuffer:floatBuffer offset:0 length:floatBuffer.length error:nil];
 
