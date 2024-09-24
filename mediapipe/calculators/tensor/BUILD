@@ -408,6 +408,14 @@ mediapipe_proto_library(
     ],
 )
 
+config_setting(
+    name = "force_cpu_inference",
+    values = {
+        "define": "MEDIAPIPE_FORCE_CPU_INFERENCE=true",
+    },
+    visibility = ["//visibility:public"],
+)
+
 # This target defines the "InferenceCalculator" component, which looks for the available concrete
 # implementations linked into the current binary and picks the one to use.
 # You can depend on :inference_calculator instead if you want to automatically include a default
@@ -420,6 +428,10 @@ cc_library_with_tflite(
     name = "inference_calculator_interface",
     srcs = ["inference_calculator.cc"],
     hdrs = ["inference_calculator.h"],
+    local_defines = select({
+        ":force_cpu_inference": ["MEDIAPIPE_FORCE_CPU_INFERENCE=1"],
+        "//conditions:default": [],
+    }),
     tflite_deps = [
         ":inference_runner",
         ":inference_io_mapper",
