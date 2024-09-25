@@ -88,8 +88,9 @@ typedef absl::StatusOr<OutputStreamPoller> StatusOrPoller;
 //       "3edb9503834e9b42");
 //   MP_RETURN_IF_ERROR(graph.Run(extra_side_packets));
 //
-//   // Run again (demonstrating the more concise initializer list syntax).
-//   MP_RETURN_IF_ERROR(graph.Run(
+//   // Run again (demonstrating the asynchronous StartRun call with more
+//   // concise initializer list syntax).
+//   MP_RETURN_IF_ERROR(graph.StartRun(
 //       {{"video_id", mediapipe::MakePacket<std::string>("Ex-uGhDzue4")}}));
 //   // See mediapipe/framework/graph_runner.h for an interface
 //   // to insert and extract packets from a graph as it runs.
