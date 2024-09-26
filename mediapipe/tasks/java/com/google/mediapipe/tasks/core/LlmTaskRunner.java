@@ -15,7 +15,6 @@
 package com.google.mediapipe.tasks.core;
 
 import android.content.Context;
-import androidx.annotation.Nullable;
 import com.google.mediapipe.tasks.core.OutputHandler.ProgressListener;
 import com.google.mediapipe.tasks.core.jni.proto.LlmOptionsProto.LlmModelSettings;
 import com.google.mediapipe.tasks.core.jni.proto.LlmOptionsProto.LlmSessionConfig;
@@ -122,13 +121,19 @@ public final class LlmTaskRunner implements AutoCloseable {
     }
   }
 
-  /** If provided, removes the session and frees up its context. */
-  public void deleteSession(@Nullable LlmSession session) {
+  /** Clones the current session. */
+  public LlmSession cloneSession(LlmSession session) {
     validateState();
-    if (session != null) {
-      nativeDeleteSession(session.sessionHandle);
-      statsLogger.logSessionEnd();
-    }
+    long clonedSessionHandle = nativeCloneSession(session.sessionHandle);
+    statsLogger.logSessionClone();
+    return new LlmSession(clonedSessionHandle);
+  }
+
+  /** Removes the session and frees up its context. */
+  public void deleteSession(LlmSession session) {
+    validateState();
+    nativeDeleteSession(session.sessionHandle);
+    statsLogger.logSessionEnd();
   }
 
   private LlmResponseContext parseResponse(byte[] response) {
@@ -140,11 +145,11 @@ public final class LlmTaskRunner implements AutoCloseable {
   }
 
   private void onAsyncResponse(byte[] responseBytes) {
-    LlmResponseContext respone = parseResponse(responseBytes);
-    if (respone.getDone()) {
+    LlmResponseContext response = parseResponse(responseBytes);
+    if (response.getDone()) {
       isProcessing.set(false);
     }
-    resultListener.get().run(respone.getResponsesList(), respone.getDone());
+    resultListener.get().run(response.getResponsesList(), response.getDone());
   }
 
   @Override
@@ -166,6 +171,8 @@ public final class LlmTaskRunner implements AutoCloseable {
   private static native void nativeDeleteEngine(long enginePointer);
 
   private static native long nativeCreateSession(byte[] sessionConfig, long enginePointer);
+
+  private static native long nativeCloneSession(long sessionPointer);
 
   private static native void nativeDeleteSession(long sessionPointer);
 

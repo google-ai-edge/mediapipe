@@ -172,6 +172,20 @@ JNIEXPORT jlong JNICALL JNI_METHOD(nativeCreateSession)(
   return reinterpret_cast<jlong>(session);
 }
 
+JNIEXPORT jlong JNICALL JNI_METHOD(nativeCloneSession)(JNIEnv* env, jclass thiz,
+                                                       jlong session_handle) {
+  void* session = nullptr;
+  char* error_msg = nullptr;
+  int error_code = LlmInferenceEngine_Session_Clone(
+      reinterpret_cast<void*>(session_handle), &session, &error_msg);
+  if (error_code) {
+    ThrowIfError(env, absl::InternalError(absl::StrCat(
+                          "Failed to clone session: %s", error_msg)));
+    free(error_msg);
+  }
+  return reinterpret_cast<jlong>(session);
+}
+
 JNIEXPORT void JNICALL JNI_METHOD(nativeDeleteSession)(JNIEnv* env, jclass thiz,
                                                        jlong session_handle) {
   LlmInferenceEngine_Session_Delete(reinterpret_cast<void*>(session_handle));
