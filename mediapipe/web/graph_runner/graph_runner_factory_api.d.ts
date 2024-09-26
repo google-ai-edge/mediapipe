@@ -14,6 +14,18 @@ export declare interface FileLocator {
 }
 
 /**
+ * Helper type macro for use with createMediaPipeLib. Allows us to easily infer
+ * the type of a mixin-extended GraphRunner. Example usage:
+ * const GraphRunnerConstructor =
+ *     SupportImage(SupportSerialization(GraphRunner));
+ * let mediaPipe: ReturnType<typeof GraphRunnerConstructor>;
+ * ...
+ * mediaPipe = await createMediaPipeLib(GraphRunnerConstructor, ...);
+ */
+// tslint:disable-next-line:no-any
+export type ReturnType<T> = T extends(...args: unknown[]) => infer R ? R : any;
+
+/**
  * Internal type of constructors used for initializing GraphRunner and
  * subclasses.
  */
