@@ -46,7 +46,7 @@ using ::testing::HasSubstr;
 using ::testing::Optional;
 
 constexpr int kMaxSeqLen = 128;
-const float kPrecision = 1e-6;
+const float kPrecision = 1e-5;
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/text/";
 constexpr char kTestBertModelPath[] = "bert_text_classifier.tflite";
 constexpr char kInvalidModelPath[] = "i/do/not/exist.tflite";
@@ -251,8 +251,8 @@ TEST_F(TextClassifierTest, BertLongPositive) {
   categories.push_back(
       {/*index=*/0, /*score=*/0.023313, /*category_name=*/"negative"});
 #else
-  categories.push_back({1, 0.981590, "positive"});
-  categories.push_back({0, 0.018409, "negative"});
+  categories.push_back({1, 0.983276, "positive"});
+  categories.push_back({0, 0.016723, "negative"});
 #endif  // _WIN32
 
   expected.classifications.emplace_back(

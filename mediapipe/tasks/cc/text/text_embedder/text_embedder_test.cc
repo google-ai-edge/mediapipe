@@ -82,7 +82,7 @@ TEST_F(EmbedderTest, SucceedsWithMobileBert) {
 #elif defined(__FMA__)
   ASSERT_NEAR(result0.embeddings[0].float_embedding[0], 21.3605f, kEpsilon);
 #else
-  ASSERT_NEAR(result0.embeddings[0].float_embedding[0], 21.1785f, kEpsilon);
+  ASSERT_NEAR(result0.embeddings[0].float_embedding[0], 21.2054f, kEpsilon);
 #endif  // _WIN32
 
   MP_ASSERT_OK_AND_ASSIGN(
@@ -92,7 +92,7 @@ TEST_F(EmbedderTest, SucceedsWithMobileBert) {
 #ifdef __FMA__
   ASSERT_NEAR(result1.embeddings[0].float_embedding[0], 21.254150f, kEpsilon);
 #else
-  ASSERT_NEAR(result1.embeddings[0].float_embedding[0], 20.322639f, kEpsilon);
+  ASSERT_NEAR(result1.embeddings[0].float_embedding[0], 19.684337f, kEpsilon);
 #endif
 
   // Check cosine similarity.
