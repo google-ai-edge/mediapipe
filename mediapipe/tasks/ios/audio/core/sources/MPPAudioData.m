@@ -50,6 +50,11 @@
   MPPFloatBuffer *audioRecordBuffer = [audioRecord readAtOffset:0
                                                      withLength:audioRecord.bufferLength
                                                           error:error];
+ 
+  if (!audioRecordBuffer) {
+    return NO;
+  }  
+
   return [_ringBuffer loadFloatBuffer:audioRecordBuffer
                                offset:0
                                length:audioRecordBuffer.length
