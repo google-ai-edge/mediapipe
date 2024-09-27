@@ -442,10 +442,57 @@ static NSString *const kAudioStreamTestsDictExpectationKey = @"expectation";
 
 - (void)testClassifyWithAudioStreamModeSucceeds {
   [self classifyUsingYamnetAsyncAudioFileWithInfo:kSpeech16KHzMonoFileInfo
-                                                 info:&_16kHZAudioStreamSucceedsTestDict];
+                                             info:&_16kHZAudioStreamSucceedsTestDict];
   [self classifyUsingYamnetAsyncAudioFileWithInfo:kSpeech48KHzMonoFileInfo
-                                                 info:&_48kHZAudioStreamSucceedsTestDict];
+                                             info:&_48kHZAudioStreamSucceedsTestDict];
 }
+
+#pragma mark Audio Record Tests
+
+- (void)testCreateAudioRecordSucceeds {
+  const NSUInteger channelCount = 1;
+  const NSUInteger bufferLength = channelCount * kYamnetSampleCount;
+
+  NSError *error;
+  MPPAudioRecord *audioRecord =
+      [MPPAudioClassifier createAudioRecordWithChannelCount:channelCount
+                                                 sampleRate:kYamnetSampleRate
+                                               bufferLength:kYamnetSampleCount * channelCount
+                                                      error:&error];
+
+  XCTAssertNotNil(audioRecord);
+  XCTAssertNil(error);
+  XCTAssertEqual(audioRecord.audioDataFormat.channelCount, channelCount);
+  XCTAssertEqual(audioRecord.audioDataFormat.sampleRate, kYamnetSampleRate);
+  XCTAssertEqual(audioRecord.bufferLength, bufferLength);
+}
+
+// Test for error propogation from audio record creation.
+- (void)testCreateAudioRecordWithInvalidChannelCountFails {
+  const NSUInteger channelCount = 3;
+  const NSUInteger bufferLength = channelCount * kYamnetSampleCount;
+
+  NSError *error;
+  MPPAudioRecord *audioRecord =
+      [MPPAudioClassifier createAudioRecordWithChannelCount:channelCount
+                                                 sampleRate:kYamnetSampleRate
+                                               bufferLength:kYamnetSampleCount * channelCount
+                                                      error:&error];
+  XCTAssertNil(audioRecord);
+
+  NSError *expectedError = [NSError
+      errorWithDomain:kExpectedErrorDomain
+                 code:MPPTasksErrorCodeInvalidArgumentError
+             userInfo:@{
+               NSLocalizedDescriptionKey : @"The channel count provided does not match the "
+                                           @"supported channel count. Only channels counts "
+                                           @"in the range [1 : 2] are supported"
+             }];
+
+  AssertEqualErrors(error, expectedError);
+}
+
+#pragma mark MPPAudioClassifierStreamDelegate
 
 - (void)audioClassifier:(MPPAudioClassifier *)audioClassifier
     didFinishClassificationWithResult:(MPPAudioClassifierResult *)result
@@ -484,8 +531,7 @@ static NSString *const kAudioStreamTestsDictExpectationKey = @"expectation";
 // info is strong here since address of global variables will be passed to this function. By default
 // `NSDictionary **` will be `NSDictionary * __autoreleasing *.
 - (void)classifyUsingYamnetAsyncAudioFileWithInfo:(MPPFileInfo *)audioFileInfo
-                                                 info:(NSDictionary<NSString *, id> *__strong *)
-                                                          info {
+                                             info:(NSDictionary<NSString *, id> *__strong *)info {
   MPPAudioClassifier *audioClassifier =
       [self audioClassifierInStreamModeWithModelFileInfo:kYamnetModelFileInfo];
 
