@@ -101,7 +101,6 @@ function build_ios_frameworks_and_libraries {
   # the order of GBs. All iOS framework and library build commands for distribution via
   # CocoaPods must set --apple_generate_dsym=false inorder to shave down the binary size to
   # the order of a few MBs.
-  
   # Build Task Library xcframework.
   local FRAMEWORK_CQUERY_COMMAND="-c opt --config=ios_sim_device_fat --apple_generate_dsym=false --define OPENCV=source ${FULL_FRAMEWORK_TARGET}"
 
