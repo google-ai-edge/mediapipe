@@ -16,7 +16,9 @@
 # Set the following variables as appropriate.
 #   * BAZEL: path to bazel. defaults to the first one available in PATH
 #   * FRAMEWORK_NAME: name of the iOS framework to be built. Currently the
-#   * accepted values are MediaPipeTasksCommon, MediaPipeTasksText, MediaPipeTasksVision.
+#   * accepted values are MediaPipeTasksCommon, MediaPipeTasksText, 
+#   * MediaPipeTasksVision, MediaPipeTasksAudio, MediaPipeTasksGenAIC, 
+#   * MediaPipeTasksGenAI.
 #   * MPP_BUILD_VERSION: to specify the release version. defaults to 0.0.1-dev
 #   * IS_RELEASE_BUILD: set as true if this build should be a release build
 #   * ARCHIVE_FRAMEWORK: set as true if the framework should be archived

@@ -26,7 +26,7 @@ NS_ASSUME_NONNULL_BEGIN
  *
  * Internally the class manages an instance of `AVAudioEngine` for tapping the microphone samples.
  *
- * Recording sessions set the following parameters on the `AVAudioSession.sharedInstance()`
+ * Recording sets the following parameters on the `AVAudioSession.sharedInstance()`
  *
  * 1. `category` = .playAndRecord
  * 2. `mode` = .default
@@ -34,21 +34,27 @@ NS_ASSUME_NONNULL_BEGIN
  *
  * If you need more control, use the native `AVAudioEngine` directly for tapping the microphone.
  * `AudioRecord` does not actively monitor audio interruptions, route changes, resetting of media
- * services etc., They can be handled using the notifications provided by `AVFAudio`. Refer to the
- * official docs for:
- * 1. Handling audio interruptions.
+ * services etc. They can be handled in the app using the notifications provided by `AVFAudio`.
+ * Refer to the official docs for the following:
+ * 1. Handling audio interruptions
  * https://developer.apple.com/documentation/avfaudio/handling_audio_interruptions
  *
  * 2. Responding to audio route changes
  * https://developer.apple.com/documentation/avfaudio/responding_to_audio_route_change
  *
- * If audio recording is interrupted by the system or a route change happens, iOS automatically
- * stops the audio engine. In such cases `read(offset:length:)`, returns
+ * 3. Responding to resetting of media services
+ * https://developer.apple.com/documentation/avfaudio/avaudiosessionmediaserviceswereresetnotification
+ *
+ * iOS may automatically stop the audio engine in some cases. A few examples of such events are a
+ * system interrupt, route change, etc. In such cases, `read(offset:length:)` returns
  * `TasksErrorCode.audioRecordNotTappingMicError`. You can restart recording using
  * `startRecording()`.
- * Note: Avoid setting the `AVAudioSession.sharedInstance()` category, mode,
- * options or other parameters while audio is being actively recorded using the audio record.
- * Setting these parameters while a recording is in progress will result in undefined behaviour.
+ *
+ * Note: Avoid setting the `AVAudioSession.sharedInstance()` category, mode, options, channel
+ * configuration (enabling stereo) or other parameters while audio is being actively recorded using
+ * the audio record. Setting these parameters or changing the configuration of
+ * `AVAudioSession.sharedInstance()` while a recording is in progress will result in undefined
+ * behaviour.
  */
 NS_SWIFT_NAME(AudioRecord)
 @interface MPPAudioRecord : NSObject
@@ -89,23 +95,26 @@ NS_SWIFT_NAME(AudioRecord)
  *
  * Use `stop()` to stop recording audio sample from the microphone.
  *
- * Internally this function sets the AVAudioSession.sharedInstance() active with the following
- * parameters:
+ * Internally this function activates the `AVAudioSession.sharedInstance()` with the following
+ * parameters before tapping the microphone using the `AVAudioEngine`:
  * 1. `category` = .playAndRecord
  * 2. `mode` = .default
  * 3. `categoryOptions` = [.overrideMutedMicrophoneInterruption]
  *
  * If you need more control, use the native `AVAudioEngine` directly for tapping the microphone.
- * AudioRecord does not actively monitor audio interruptions, route changes, media services reset
- * etc., They can be handled using the notifications provided by `AVFAudio`. Refer to the official
- * docs for:
- * 1. Handling audio interruptions.
+ * `AudioRecord` does not actively monitor audio interruptions, route changes, resetting of media
+ * services etc. They can be handled in the app using the notifications provided by `AVFAudio`.
+ * Refer to the official docs for the following:
+ * 1. Handling audio interruptions
  * https://developer.apple.com/documentation/avfaudio/handling_audio_interruptions
  *
  * 2. Responding to audio route changes
- * https://developer.apple.com/documentation/avfaudio/responding_to_audio_route_changes
+ * https://developer.apple.com/documentation/avfaudio/responding_to_audio_route_change
  *
- * @return Boolean value indicating if audio recording started successfully.
+ * 3. Responding to resetting of media services
+ * https://developer.apple.com/documentation/avfaudio/avaudiosessionmediaserviceswereresetnotification
+ *
+ * @return Returns successfully if audio recording has started.
  */
 - (BOOL)startRecordingWithError:(NSError **)error NS_SWIFT_NAME(startRecording());
 
@@ -113,7 +122,16 @@ NS_SWIFT_NAME(AudioRecord)
  * Stops recording audio from the microphone. All elements in the internal buffer of `AudioRecord`
  * will also be set to zero.
  *
- * @return Returns an error if .
+ * Internally, this method deactivates the `AVAudioSession.sharedInstance()` after recording is
+ * stopped. If some audio resources are running in the app when the session is deactivated, this
+ * function throws an error. The session gets deactivated by the OS irrespective of the return
+ * status of this function. The error thrown by this method is a warning to indicate the termination
+ * of any running audio resources. Refer to the official documentation for more details:
+ * https://developer.apple.com/documentation/avfaudio/avaudiosession/1616627-setactive
+ *
+ * @return Returns successfully if recording was stopped and the deactivation of
+ * `AVAudioSession.sharedInstance()` succeeded. Throws any error encountered when deactivating
+ * `AVAudioSession.sharedInstance()`.
  */
 - (BOOL)stopWithError:(NSError **)error;
 
@@ -121,8 +139,8 @@ NS_SWIFT_NAME(AudioRecord)
  * Returns the `length` number of elements in the internal buffer of `AudioRecord` starting at
  * `offset`, i.e, `buffer[offset:offset+length]`.
  *
- * If  recording is interrupted by the system or a route change happens, iOS automatically stops the
- * audio engine. In such cases, this function returns
+ * iOS may automatically stop the audio engine in some cases. A few examples of such events are a
+ * system interrupt, route change, etc. In such cases, this function returns
  * `TasksErrorCode.audioRecordNotTappingMicError`. You can restart recording using
  * `startRecording()`.
  *

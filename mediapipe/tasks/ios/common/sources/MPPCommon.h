@@ -111,8 +111,10 @@ typedef NS_ENUM(NSUInteger, MPPTasksErrorCode) {
   /** Indicates that `AudioRecord` is waiting for new mic input. */
   MPPTasksErrorCodeAudioRecordWaitingForNewMicInputError = 19,
 
-  /** Indicates that `AudioRecord` is not tapping the mic. Operations permitted only while the mic
-     is being actively tapped can return this error. */
+  /**
+   * Indicates that `AudioRecord` is not tapping the mic. Operations permitted only while the mic is
+   * being actively tapped can return this error. 
+   */
   MPPTasksErrorCodeAudioRecordNotTappingMicError = 20,
 
   /** The first error code in MPPTasksErrorCode (for internal use only). */
