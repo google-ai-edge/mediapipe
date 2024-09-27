@@ -66,9 +66,7 @@ http_archive(
     url = "https://github.com/bazelbuild/rules_python/releases/download/0.26.0/rules_python-0.26.0.tar.gz",
 )
 
-load("@rules_python//python:repositories.bzl", "py_repositories", "python_register_toolchains")
-python_register_toolchains("python", ignore_root_user_error = True, python_version = "3.10")
-
+load("@rules_python//python:repositories.bzl", "py_repositories")
 py_repositories()
 
 http_archive(
