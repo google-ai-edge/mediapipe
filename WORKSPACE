@@ -66,7 +66,8 @@ http_archive(
     url = "https://github.com/bazelbuild/rules_python/releases/download/0.26.0/rules_python-0.26.0.tar.gz",
 )
 
-load("@rules_python//python:repositories.bzl", "py_repositories")
+load("@rules_python//python:repositories.bzl", "py_repositories", "python_register_toolchains")
+python_register_toolchains("python", ignore_root_user_error = True, python_version = "3.10")
 
 py_repositories()
 
@@ -111,13 +112,13 @@ http_archive(
     ],
 )
 
-# XNNPACK on 2024-07-16
+# XNNPACK on 2024-09-24
 http_archive(
     name = "XNNPACK",
     # `curl -L <url> | shasum -a 256`
-    sha256 = "08489dff917a8009bf2187995fc8e0a33a2207eef466e400302bbf3ef40e4811",
-    strip_prefix = "XNNPACK-3014fb625c73f3b1ce1f6d3e45f1e216f9cb7105",
-    url = "https://github.com/google/XNNPACK/archive/3014fb625c73f3b1ce1f6d3e45f1e216f9cb7105.zip",
+    sha256 = "feecde71526d955a0125f7ddd28b9f2d282cd6fca6c1c6bde48f29f86365dd0b",
+    strip_prefix = "XNNPACK-9007aa93227010168e615f9c6552035040c94a15",
+    url = "https://github.com/google/XNNPACK/archive/9007aa93227010168e615f9c6552035040c94a15.zip",
 )
 
 # TODO: This is an are indirect depedency. We should factor it out.
@@ -560,10 +561,12 @@ http_archive(
 )
 
 # TensorFlow repo should always go after the other external dependencies.
-# TF on 2024-07-18.
-_TENSORFLOW_GIT_COMMIT = "117a62ac439ed87eb26f67208be60e01c21960de"
-# curl -L https://github.com/tensorflow/tensorflow/archive/117a62ac439ed87eb26f67208be60e01c21960de.tar.gz | shasum -a 256
-_TENSORFLOW_SHA256 = "2a1e56f9f83f99e2b9d01a184bc6f409209b36c98fb94b6d5db3f0ab20ec33f2"
+# TF on 2024-09-24
+_TENSORFLOW_GIT_COMMIT = "5329ec8dd396487982ef3e743f98c0195af39a6b"
+
+# curl -L https://github.com/tensorflow/tensorflow/archive/<COMMIT>.tar.gz | shasum -a 256
+_TENSORFLOW_SHA256 = "eb1f8d740d59ea3dee91108ab1fc19d91c4e9ac2fd17d9ab86d865c3c43d81c9"
+
 http_archive(
     name = "org_tensorflow",
     urls = [
@@ -588,6 +591,36 @@ load("@org_tensorflow//tensorflow:workspace3.bzl", "tf_workspace3")
 tf_workspace3()
 load("@org_tensorflow//tensorflow:workspace2.bzl", "tf_workspace2")
 tf_workspace2()
+
+load(
+    "@org_tensorflow//third_party/gpus/cuda/hermetic:cuda_json_init_repository.bzl",
+    "cuda_json_init_repository",
+)
+
+cuda_json_init_repository()
+
+load(
+    "@cuda_redist_json//:distributions.bzl",
+    "CUDA_REDISTRIBUTIONS",
+    "CUDNN_REDISTRIBUTIONS",
+)
+load(
+    "@org_tensorflow//third_party/gpus/cuda/hermetic:cuda_redist_init_repositories.bzl",
+    "cuda_redist_init_repositories",
+    "cudnn_redist_init_repository",
+)
+cuda_redist_init_repositories(
+    cuda_redistributions = CUDA_REDISTRIBUTIONS,
+)
+cudnn_redist_init_repository(
+    cudnn_redistributions = CUDNN_REDISTRIBUTIONS,
+)
+
+load(
+    "@org_tensorflow//third_party/gpus/cuda/hermetic:cuda_configure.bzl",
+    "cuda_configure",
+)
+cuda_configure(name = "local_config_cuda")
 
 # Edge TPU
 http_archive(

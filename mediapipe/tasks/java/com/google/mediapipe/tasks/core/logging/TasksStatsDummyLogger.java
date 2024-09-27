@@ -37,6 +37,10 @@ public class TasksStatsDummyLogger implements TasksStatsLogger {
   @Override
   public void logSessionStart() {}
 
+  /** Logs the cloning of a MediaPipe Tasks API session. */
+  @Override
+  public void logSessionClone() {}
+
   /**
    * Records MediaPipe Tasks API receiving CPU input data.
    *

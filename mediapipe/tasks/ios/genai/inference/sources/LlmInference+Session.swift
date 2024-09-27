@@ -229,6 +229,7 @@ extension LlmInference {
 
     /// Clones the current session.
     /// You can continue prompting the LLM from where you left off using the cloned session.
+    /// Note: Currently, this method is only available for GPU models.
     ///
     /// - Returns: A new instance of `Session` which is cloned from the current session.
     /// - Throws: An error if cloning the current session fails.

@@ -441,9 +441,9 @@ static NSString *const kAudioStreamTestsDictExpectationKey = @"expectation";
 }
 
 - (void)testClassifyWithAudioStreamModeSucceeds {
-  [self testClassifyUsingYamnetAsyncAudioFileWithInfo:kSpeech16KHzMonoFileInfo
+  [self classifyUsingYamnetAsyncAudioFileWithInfo:kSpeech16KHzMonoFileInfo
                                                  info:&_16kHZAudioStreamSucceedsTestDict];
-  [self testClassifyUsingYamnetAsyncAudioFileWithInfo:kSpeech48KHzMonoFileInfo
+  [self classifyUsingYamnetAsyncAudioFileWithInfo:kSpeech48KHzMonoFileInfo
                                                  info:&_48kHZAudioStreamSucceedsTestDict];
 }
 

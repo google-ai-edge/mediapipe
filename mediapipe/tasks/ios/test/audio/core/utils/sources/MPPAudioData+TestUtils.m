@@ -21,11 +21,7 @@
                          sampleCount:(NSUInteger)sampleCount {
   MPPAudioDataFormat *audioDataFormat =
       [[MPPAudioDataFormat alloc] initWithChannelCount:channelCount sampleRate:sampleRate];
-
-  MPPAudioData *audioData = [[MPPAudioData alloc] initWithFormat:audioDataFormat
-                                                     sampleCount:sampleCount];
-
-  return audioData;
+  return [self initWithFormat:audioDataFormat sampleCount:sampleCount];
 }
 
 @end
