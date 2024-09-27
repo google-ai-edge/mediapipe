@@ -6,7 +6,7 @@ Pod::Spec.new do |s|
   s.homepage         = 'https://github.com/google/mediapipe'
   s.source           = { :http => '${MPP_VISION_DOWNLOAD_URL}' }
   s.summary          = 'MediaPipe Task Library - Audio'
-  s.description      = 'The Vision APIs of the MediaPipe Task Library'
+  s.description      = 'The audio APIs of the MediaPipe Task Library'
 
   s.ios.deployment_target = '12.0'
 
