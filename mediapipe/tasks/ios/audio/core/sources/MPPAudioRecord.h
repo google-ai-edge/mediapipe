@@ -26,7 +26,7 @@ NS_ASSUME_NONNULL_BEGIN
  *
  * Internally the class manages an instance of `AVAudioEngine` for tapping the microphone samples.
  *
- * Recording sets the following parameters on the `AVAudioSession.sharedInstance()`
+ * Recording sets the following parameters on the `AVAudioSession.sharedInstance()`:
  *
  * 1. `category` = .playAndRecord
  * 2. `mode` = .default
@@ -122,11 +122,11 @@ NS_SWIFT_NAME(AudioRecord)
  * Stops recording audio from the microphone. All elements in the internal buffer of `AudioRecord`
  * will also be set to zero.
  *
- * Internally, this method deactivates the `AVAudioSession.sharedInstance()` after recording is
+ * Internally, this function deactivates the `AVAudioSession.sharedInstance()` after recording is
  * stopped. If some audio resources are running in the app when the session is deactivated, this
  * function throws an error. The session gets deactivated by the OS irrespective of the return
- * status of this function. The error thrown by this method is a warning to indicate the termination
- * of any running audio resources. Refer to the official documentation for more details:
+ * status of this function. The error thrown is a warning to indicate the termination of any running
+ * audio resources. Refer to the official documentation for more details:
  * https://developer.apple.com/documentation/avfaudio/avaudiosession/1616627-setactive
  *
  * @return Returns successfully if recording was stopped and the deactivation of
