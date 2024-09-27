@@ -15,7 +15,8 @@
 #
 
 ARG BASE_IMAGE
-FROM ubuntu:20.04 as base
+## Start of base image ############################################
+FROM $BASE_IMAGE as base
 
 LABEL version="0.0.1"
 ARG JOBS=16
@@ -54,7 +55,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rm -rf /var/lib/apt/lists/*
 
 RUN pip3 install setuptools==70.1.0
-RUN pip3 install attrs matplotlib wheel future absl-py opencv-contrib-python numpy==1.24.4 tensorflow==2.9.0 protobuf==3.20.1 six==1.14.0 tf_slim
+RUN pip3 install attrs matplotlib wheel future absl-py opencv-contrib-python numpy==1.24.4 tensorflow==2.9.0 protobuf==3.20.2 six==1.14.0 tf_slim
 
 RUN ln -s /usr/bin/python3 /usr/bin/python
 RUN apt-get update && apt-get install -y protobuf-compiler
@@ -166,12 +167,28 @@ RUN wget https://github.com/PINTO0309/tflite2tensorflow/raw/main/schema/schema.f
 RUN git clone -b v2.0.8 https://github.com/google/flatbuffers.git
 RUN cd flatbuffers && mkdir build && cd build && cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release .. && make -j$(nproc) && cd ../..
 
-## End of base image
-
+## End of base image ###############################################################
+####################################################################################
+## Start of build image ############################################################
 FROM base as build
 
 RUN wget -O video.mp4 "https://www.pexels.com/download/video/3044127/?fps=24.0&h=1080&w=1920"
-COPY . /mediapipe/
+COPY mediapipe /mediapipe/mediapipe/
+COPY third_party /mediapipe/third_party/
+COPY .bazelrc /mediapipe/
+COPY .bazelversion /mediapipe/
+COPY *.sh /mediapipe/
+COPY *.py /mediapipe/
+COPY BUILD.bazel /mediapipe/
+COPY LICENSE /mediapipe/
+COPY Makefile /mediapipe/
+COPY MANIFEST.in /mediapipe/
+COPY package.json /mediapipe/
+COPY platform_mappings /mediapipe/
+COPY README.md /mediapipe/
+COPY platform_mappings /mediapipe/
+COPY tsconfig.json /mediapipe/
+COPY requirements.txt /mediapipe/
 
 # BUILD Geti calculators
 RUN bazel build //mediapipe:geti_targets
@@ -185,3 +202,79 @@ RUN curl https://storage.googleapis.com/mediapipe-assets/ssdlite_object_detectio
 
 # BUILD python framework
 RUN python setup.py install
+## End of build image ################################################################
+######################################################################################
+## Start of demos image - minimal size ###############################################
+FROM $BASE_IMAGE as demos
+ENV DEBIAN_FRONTEND noninteractive
+RUN apt-get update && apt-get install --no-install-recommends -y curl libpugixml1v5 libtbb2 libxml2-dev uuid-dev uuid libssl-dev --no-install-recommends
+RUN apt-get update && apt-get install --no-install-recommends -y ffmpeg
+
+# Python samples requirements start
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    python3 \
+    python3-opencv \
+    python3-pip
+
+RUN pip3 install attrs matplotlib protobuf==3.20.2 numpy==1.24.4
+RUN ln -s /usr/bin/python3 /usr/bin/python
+# Python samples requirements end
+
+# Openvino
+RUN apt-get update && apt-get install -y libavformat-dev libdc1394-dev libgtk2.0-dev
+RUN mkdir -p /opt/intel/openvino/runtime/lib/intel64/
+COPY --from=build /opt/intel/openvino/runtime/lib/intel64/ /opt/intel/openvino/runtime/lib/intel64/
+RUN mkdir -p /opt/intel/openvino/runtime/3rdparty/tbb/lib/
+COPY --from=build /opt/intel/openvino/runtime/3rdparty/tbb/lib/ /opt/intel/openvino/runtime/3rdparty/tbb/lib/
+
+# 2GB with python 3.8 - currently excluded as only .so libs are copied
+COPY --from=build /usr/local/lib/*.so* /usr/local/lib/
+
+# Models
+RUN mkdir -p /mediapipe/mediapipe/models/
+COPY --from=build /mediapipe/mediapipe/models/ /mediapipe/mediapipe/models/
+
+# Graphs
+RUN mkdir -p /mediapipe/mediapipe/graphs/
+COPY --from=build /mediapipe/mediapipe/graphs/ /mediapipe/mediapipe/graphs/
+
+# Object detection
+RUN mkdir -p /mediapipe/mediapipe/examples/desktop/object_detection/
+COPY --from=build /mediapipe/mediapipe/examples/desktop/object_detection/test_video.mp4 /mediapipe/mediapipe/examples/desktop/object_detection/ 
+COPY --from=build /mediapipe/bazel-bin/mediapipe/examples/desktop/object_detection/object_detection_ovms /mediapipe/bazel-bin/mediapipe/examples/desktop/object_detection/ 
+COPY --from=build /mediapipe/video.mp4 /mediapipe/
+
+# Face detection
+RUN mkdir -p /mediapipe/bazel-bin/mediapipe/examples/desktop/face_detection/
+COPY --from=build /mediapipe/bazel-bin/mediapipe/examples/desktop/face_detection/face_detection_cpu /mediapipe/bazel-bin/mediapipe/examples/desktop/face_detection/
+
+# Holistic tracking
+RUN mkdir -p /mediapipe/bazel-bin/mediapipe/examples/desktop/holistic_tracking/
+COPY --from=build /mediapipe/bazel-bin/mediapipe/examples/desktop/holistic_tracking/holistic_tracking_cpu /mediapipe/bazel-bin/mediapipe/examples/desktop/holistic_tracking/
+RUN mkdir -p /mediapipe/mediapipe/modules/hand_landmark/
+COPY --from=build /mediapipe/mediapipe/modules/hand_landmark/handedness.txt /mediapipe/mediapipe/modules/hand_landmark/
+
+# Iris tracking
+RUN mkdir -p /mediapipe/bazel-bin/mediapipe/examples/desktop/iris_tracking/
+COPY --from=build /mediapipe/bazel-bin/mediapipe/examples/desktop/iris_tracking/iris_tracking_cpu /mediapipe/bazel-bin/mediapipe/examples/desktop/iris_tracking/
+
+# Pose tracking
+RUN mkdir -p /mediapipe/bazel-bin/mediapipe/examples/desktop/pose_tracking/
+COPY --from=build /mediapipe/bazel-bin/mediapipe/examples/desktop/pose_tracking/pose_tracking_cpu /mediapipe/bazel-bin/mediapipe/examples/desktop/pose_tracking/
+
+#OVMS Config
+RUN mkdir -p /mediapipe/mediapipe/calculators/ovms/
+COPY --from=build /mediapipe/mediapipe/calculators/ovms/config.json /mediapipe/mediapipe/calculators/ovms/
+
+# Makefile
+COPY --from=build /mediapipe/Makefile /mediapipe/
+
+# Add python solutions
+COPY --from=build /mediapipe/build/ /mediapipe/build/
+
+# Environment variables
+ENV GLOG_logtostderr=1
+ENV LD_LIBRARY_PATH=/usr/local/lib:/opt/intel/openvino/runtime/lib/intel64/:/opt/intel/openvino/runtime/3rdparty/tbb/lib/
+WORKDIR /mediapipe
+
+## End of demos image #########################################################

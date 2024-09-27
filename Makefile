@@ -18,6 +18,8 @@ HTTP_PROXY := "$(http_proxy)"
 HTTPS_PROXY := "$(https_proxy)"
 OVMS_MEDIA_DOCKER_IMAGE ?= mediapipe_ovms
 OVMS_MEDIA_IMAGE_TAG ?= latest
+BASE_IMAGE := "ubuntu:20.04"
+
 INPUT_VIDEO_LINK ?= "https://www.pexels.com/download/video/3044127/?fps=24.0&h=1080&w=1920"
 # ovms 2024.3RC2 (#2578)
 OVMS_COMMIT ?="0e33a366b16a6d1b477d0b791100a7e7206c6ec0"
@@ -29,9 +31,11 @@ docker_build:
 	docker build -f Dockerfile.openvino \
 	--build-arg http_proxy=$(HTTP_PROXY) --build-arg https_proxy=$(HTTPS_PROXY) \
 	--build-arg DLDT_PACKAGE_URL=$(DLDT_PACKAGE_URL) \
+	--build-arg BASE_IMAGE=$(BASE_IMAGE) \
 	--build-arg JOBS=$(JOBS) . \
 	--build-arg OVMS_COMMIT=$(OVMS_COMMIT) \
-	-t $(OVMS_MEDIA_DOCKER_IMAGE):$(OVMS_MEDIA_IMAGE_TAG)
+	-t $(OVMS_MEDIA_DOCKER_IMAGE):$(OVMS_MEDIA_IMAGE_TAG) \
+	--target=build
 
 tests: run_unit_tests run_hello_world run_hello_ovms
 run_hello_ovms:
@@ -47,7 +51,7 @@ run_hello_world:
 	docker run $(OVMS_MEDIA_DOCKER_IMAGE):$(OVMS_MEDIA_IMAGE_TAG) bazel-bin/mediapipe/examples/desktop/hello_world/hello_world
 
 run_demos_in_docker:
-	docker run $(OVMS_MEDIA_DOCKER_IMAGE):$(OVMS_MEDIA_IMAGE_TAG) make run_demos 2>&1 | tee test_demos.log 
+	docker run $(OVMS_MEDIA_DOCKER_IMAGE)-demos:$(OVMS_MEDIA_IMAGE_TAG) make run_demos 2>&1 | tee test_demos.log 
 	cat test_demos.log | grep -a FPS | grep -v echo
 	if [ `cat test_demos.log | grep -a FPS: | wc -l` != "5" ]; then echo "Some demo was not executed correctly. Check the logs"; fi
 
@@ -55,7 +59,7 @@ run_demos_in_docker:
 	cat test_demos.log | grep -a FPS: | wc -l | grep -q "5"
 
 run_python_demos_in_docker:
-	docker run $(OVMS_MEDIA_DOCKER_IMAGE):$(OVMS_MEDIA_IMAGE_TAG) make run_python_demos
+	docker run $(OVMS_MEDIA_DOCKER_IMAGE)-demos:$(OVMS_MEDIA_IMAGE_TAG) make run_python_demos
 
 # Targets to use inside running mediapipe_ovms container
 run_demos: run_holistic_tracking run_face_detection run_iris_tracking run_object_detection run_pose_tracking
@@ -108,3 +112,12 @@ run_python_face_detection:
 	cp build/lib.linux-x86_64-cpython-38/mediapipe/examples/python/ovms_face_detection.py build/lib.linux-x86_64-cpython-38
 	python build/lib.linux-x86_64-cpython-38/ovms_face_detection.py
 
+ovms_demos_image:
+	docker build -f Dockerfile.openvino \
+	--build-arg http_proxy=$(HTTP_PROXY) --build-arg https_proxy=$(HTTPS_PROXY) \
+	--build-arg DLDT_PACKAGE_URL=$(DLDT_PACKAGE_URL) \
+	--build-arg BASE_IMAGE=$(BASE_IMAGE) \
+	--build-arg JOBS=$(JOBS) . \
+	--build-arg OVMS_COMMIT=$(OVMS_COMMIT) \
+	-t $(OVMS_MEDIA_DOCKER_IMAGE)-demos:$(OVMS_MEDIA_IMAGE_TAG) \
+	--target=demos
