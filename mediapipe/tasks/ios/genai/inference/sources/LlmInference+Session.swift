@@ -159,20 +159,26 @@ extension LlmInference {
       try llmInference.shouldContinueWithResponseGeneration()
 
       /// Used to make a decision about whitespace stripping.
-      var receivedFirstToken = true
+      var receivedFirstNonEmptyToken = false
 
       llmSessionRunner.predictAsync(
         progress: { partialResponseStrings, error in
           guard let responseStrings = partialResponseStrings,
             let humanReadableLlmResponse = Session.humanReadableString(
-              llmResponses: responseStrings, stripLeadingWhitespaces: receivedFirstToken)
+              llmResponses: responseStrings, stripLeadingWhitespaces: !receivedFirstNonEmptyToken)
           else {
             progress(nil, GenAiInferenceError.invalidResponse)
             return
           }
 
-          /// Reset state after first response is processed.
-          receivedFirstToken = false
+          /// Reset state after first non empty response is processed. Ensures that leading 
+          /// whitespaces are stripped from the first non empty response.
+          /// Some models generate series of empty responses for a few times in the beginning before 
+          /// generating a valid response. Ensures that leading white spaces are stripped from the 
+          /// first non empty response.
+          if !humanReadableLlmResponse.isEmpty {
+            receivedFirstNonEmptyToken = true
+          }
 
           progress(humanReadableLlmResponse, nil)
         },
@@ -292,7 +298,8 @@ extension String {
       .replacingOccurrences(of: String.newLine, with: "\n")
     humanReadableString =
       stripLeadingWhitespaces
-      ? humanReadableString.trimmingCharacters(in: .whitespaces) : humanReadableString
+      ? String(humanReadableString.drop(while: {$0.isWhitespace}))
+      : humanReadableString
     return humanReadableString.components(separatedBy: String.eod).first
   }
 }
