@@ -34,7 +34,9 @@ TEST(UniqueFdTest, ShouldCloseFdDuringDestruction) {
   const int fd = GetValidFd();
   EXPECT_TRUE(IsFdValid(fd));
 
-  { UniqueFd unique_fd(fd); }
+  {
+    UniqueFd unique_fd(fd);
+  }
 
   EXPECT_FALSE(IsFdValid(fd));
 }

@@ -26,10 +26,9 @@ auto filter(List<Args...>) -> List<Args...> {
 }
 
 template <template <typename> class Pred, typename Head, typename... Tail>
-auto filter(List<Head, Tail...>)
-    -> decltype(concat(typename std::conditional<Pred<Head>::value, List<Head>,
-                                                 List<>>::type{},
-                       filter<Pred>(List<Tail...>{}))) {
+auto filter(List<Head, Tail...>) -> decltype(concat(
+    typename std::conditional<Pred<Head>::value, List<Head>, List<>>::type{},
+    filter<Pred>(List<Tail...>{}))) {
   return {};
 }
 
@@ -39,10 +38,9 @@ auto filter(Pred, List<>) -> List<> {
 }
 
 template <typename Pred, typename Head, typename... Tail>
-auto filter(Pred pred, List<Head, Tail...>)
-    -> decltype(concat(
-        typename std::conditional<pred(Head{}), List<Head>, List<>>::type{},
-        filter(pred, List<Tail...>{}))) {
+auto filter(Pred pred, List<Head, Tail...>) -> decltype(concat(
+    typename std::conditional<pred(Head{}), List<Head>, List<>>::type{},
+    filter(pred, List<Tail...>{}))) {
   return {};
 }
 
