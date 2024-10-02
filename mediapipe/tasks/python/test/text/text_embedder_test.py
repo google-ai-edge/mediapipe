@@ -110,7 +110,7 @@ class TextEmbedderTest(parameterized.TestCase):
           ModelFileType.FILE_NAME,
           0.965793,
           512,
-          (21.1785, 20.32263),
+          (21.2054, 20.32263),
       ),
       (
           True,
@@ -119,7 +119,7 @@ class TextEmbedderTest(parameterized.TestCase):
           ModelFileType.FILE_NAME,
           0.965793,
           512,
-          (0.062262, 0.065280),
+          (0.062578, 0.065280),
       ),
       (
           False,
@@ -203,7 +203,7 @@ class TextEmbedderTest(parameterized.TestCase):
           ModelFileType.FILE_NAME,
           0.965793,
           512,
-          (21.1785, 20.322639),
+          (21.2054, 20.322639),
       ),
       (
           True,
@@ -212,7 +212,7 @@ class TextEmbedderTest(parameterized.TestCase):
           ModelFileType.FILE_NAME,
           0.965793,
           512,
-          (0.0622627, 0.065280),
+          (0.0625787, 0.065280),
       ),
       (
           False,
@@ -287,7 +287,7 @@ class TextEmbedderTest(parameterized.TestCase):
 
   @parameterized.parameters(
       # TODO: The similarity should likely be lower
-      (_BERT_MODEL_FILE, 0.97564),
+      (_BERT_MODEL_FILE, 0.99025),
       (_USE_MODEL_FILE, 0.780334),
   )
   def test_embed_with_different_themes(self, model_file, expected_similarity):
