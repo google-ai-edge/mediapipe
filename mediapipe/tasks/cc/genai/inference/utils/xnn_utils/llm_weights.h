@@ -261,7 +261,9 @@ class LlmWeightsLoader {
 
 class DefaultLlmWeightsLoader : public LlmWeightsLoader {
  public:
-  using LlmWeightsLoader::LlmWeightsLoader;
+  DefaultLlmWeightsLoader(std::unique_ptr<WeightAccessor> weight_accessor,
+                          const LlmParams& params)
+      : LlmWeightsLoader(std::move(weight_accessor), params) {}
   DefaultLlmWeightsLoader(absl::string_view weight_path,
                           const LlmParams& params);
 
