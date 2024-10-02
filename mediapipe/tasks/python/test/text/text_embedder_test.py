@@ -110,7 +110,7 @@ class TextEmbedderTest(parameterized.TestCase):
           ModelFileType.FILE_NAME,
           0.965793,
           512,
-          (21.2054, 20.32263),
+          (21.2054, 19.6843),
       ),
       (
           True,
@@ -119,7 +119,7 @@ class TextEmbedderTest(parameterized.TestCase):
           ModelFileType.FILE_NAME,
           0.965793,
           512,
-          (0.062578, 0.065280),
+          (0.062578, 0.067393),
       ),
       (
           False,
@@ -203,7 +203,7 @@ class TextEmbedderTest(parameterized.TestCase):
           ModelFileType.FILE_NAME,
           0.965793,
           512,
-          (21.2054, 20.322639),
+          (21.2054, 19.684337),
       ),
       (
           True,
@@ -212,7 +212,7 @@ class TextEmbedderTest(parameterized.TestCase):
           ModelFileType.FILE_NAME,
           0.965793,
           512,
-          (0.0625787, 0.065280),
+          (0.0625787, 0.0673937),
       ),
       (
           False,
