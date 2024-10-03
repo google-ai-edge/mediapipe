@@ -113,6 +113,8 @@ cc_library(
         ":status",
         "//mediapipe/framework/deps:file_helpers",
         "//mediapipe/framework/deps:file_path",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
