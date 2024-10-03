@@ -30,5 +30,7 @@ py_test(
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/test:test_utils",
         "//mediapipe/tasks/python/text:language_detector",
+        "@mediapipe_pip_deps//absl/testing:absltest",
+        "@mediapipe_pip_deps//absl/testing:parameterized",
     ],
 )

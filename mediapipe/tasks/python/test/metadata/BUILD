@@ -19,6 +19,9 @@ py_test(
         "//mediapipe/tasks/python/metadata",
         "//mediapipe/tasks/python/test:test_utils",
         "@flatbuffers//:runtime_py",
+        "@mediapipe_pip_deps//absl/testing:absltest",
+        "@mediapipe_pip_deps//absl/testing:parameterized",
+        "@mediapipe_pip_deps//six",
     ],
 )
 
@@ -27,5 +30,9 @@ py_test(
     srcs = ["metadata_parser_test.py"],
     python_version = "PY3",
     srcs_version = "PY2AND3",
-    deps = ["//mediapipe/tasks/python/metadata"],
+    deps = [
+        "//mediapipe/tasks/python/metadata",
+        "@mediapipe_pip_deps//absl/testing:absltest",
+        "@mediapipe_pip_deps//absl/testing:parameterized",
+    ],
 )

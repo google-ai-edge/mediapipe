@@ -33,6 +33,9 @@ py_test(
         "//mediapipe/tasks/python/components/containers:classification_result",
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/test:test_utils",
+        "@mediapipe_pip_deps//absl/testing:absltest",
+        "@mediapipe_pip_deps//absl/testing:parameterized",
+        "@mediapipe_pip_deps//numpy",
     ],
 )
 
@@ -50,5 +53,8 @@ py_test(
         "//mediapipe/tasks/python/components/containers:audio_data",
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/test:test_utils",
+        "@mediapipe_pip_deps//absl/testing:absltest",
+        "@mediapipe_pip_deps//absl/testing:parameterized",
+        "@mediapipe_pip_deps//numpy",
     ],
 )

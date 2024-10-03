@@ -27,6 +27,7 @@ py_library(
         "//mediapipe/tasks/metadata:schema_py",
         "//mediapipe/tasks/python/metadata/flatbuffers_lib:_pywrap_flatbuffers",
         "@flatbuffers//:runtime_py",
+        "@mediapipe_pip_deps//numpy",
     ],
 )
 
@@ -36,5 +37,9 @@ py_binary(
     visibility = [
         "//visibility:public",
     ],
-    deps = [":metadata"],
+    deps = [
+        ":metadata",
+        "@mediapipe_pip_deps//absl:app",
+        "@mediapipe_pip_deps//absl/flags",
+    ],
 )

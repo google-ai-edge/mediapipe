@@ -69,6 +69,20 @@ http_archive(
 load("@rules_python//python:repositories.bzl", "py_repositories")
 py_repositories()
 
+load("@rules_python//python:pip.bzl", "pip_parse")
+pip_parse(
+    name = "mediapipe_pip_deps",
+    requirements_lock = "@//:requirements.txt",
+)
+load("@mediapipe_pip_deps//:requirements.bzl", mp_install_deps = "install_deps")
+mp_install_deps()
+pip_parse(
+    name = "model_maker_pip_deps",
+    requirements_lock = "@//mediapipe/model_maker:requirements_bazel.txt",
+)
+load("@model_maker_pip_deps//:requirements.bzl", mm_install_deps = "install_deps")
+mm_install_deps()
+
 http_archive(
     name = "rules_android_ndk",
     sha256 = "d230a980e0d3a42b85d5fce2cb17ec3ac52b88d2cff5aaf86bae0f05b48adc55",

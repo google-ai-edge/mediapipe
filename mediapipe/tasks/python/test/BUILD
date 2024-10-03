@@ -30,5 +30,7 @@ py_library(
     deps = [
         "//mediapipe/python:_framework_bindings",
         "@com_google_protobuf//:protobuf_python",
+        "@mediapipe_pip_deps//absl/flags",
+        "@mediapipe_pip_deps//six",
     ],
 )

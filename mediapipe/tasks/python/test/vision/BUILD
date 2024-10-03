@@ -36,6 +36,9 @@ py_test(
         "//mediapipe/tasks/python/vision:object_detector",
         "//mediapipe/tasks/python/vision/core:image_processing_options",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
+        "@mediapipe_pip_deps//absl/testing:absltest",
+        "@mediapipe_pip_deps//absl/testing:parameterized",
+        "@mediapipe_pip_deps//numpy",
     ],
 )
 
@@ -57,6 +60,9 @@ py_test(
         "//mediapipe/tasks/python/vision:image_classifier",
         "//mediapipe/tasks/python/vision/core:image_processing_options",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
+        "@mediapipe_pip_deps//absl/testing:absltest",
+        "@mediapipe_pip_deps//absl/testing:parameterized",
+        "@mediapipe_pip_deps//numpy",
     ],
 )
 
@@ -77,6 +83,9 @@ py_test(
         "//mediapipe/tasks/python/vision:image_embedder",
         "//mediapipe/tasks/python/vision/core:image_processing_options",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
+        "@mediapipe_pip_deps//absl/testing:absltest",
+        "@mediapipe_pip_deps//absl/testing:parameterized",
+        "@mediapipe_pip_deps//numpy",
     ],
 )
 
@@ -94,6 +103,9 @@ py_test(
         "//mediapipe/tasks/python/test:test_utils",
         "//mediapipe/tasks/python/vision:image_segmenter",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
+        "@mediapipe_pip_deps//absl/testing:absltest",
+        "@mediapipe_pip_deps//absl/testing:parameterized",
+        "@mediapipe_pip_deps//numpy",
     ],
 )
 
@@ -118,6 +130,8 @@ py_test(
         "//mediapipe/tasks/python/vision/core:image_processing_options",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
         "@com_google_protobuf//:protobuf_python",
+        "@mediapipe_pip_deps//absl/testing:absltest",
+        "@mediapipe_pip_deps//absl/testing:parameterized",
     ],
 )
 
@@ -143,6 +157,9 @@ py_test(
         "//mediapipe/tasks/python/vision/core:image_processing_options",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
         "@com_google_protobuf//:protobuf_python",
+        "@mediapipe_pip_deps//absl/testing:absltest",
+        "@mediapipe_pip_deps//absl/testing:parameterized",
+        "@mediapipe_pip_deps//numpy",
     ],
 )
 
@@ -167,6 +184,9 @@ py_test(
         "//mediapipe/tasks/python/vision/core:image_processing_options",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
         "@com_google_protobuf//:protobuf_python",
+        "@mediapipe_pip_deps//absl/testing:absltest",
+        "@mediapipe_pip_deps//absl/testing:parameterized",
+        "@mediapipe_pip_deps//numpy",
     ],
 )
 
@@ -191,6 +211,9 @@ py_test(
         "//mediapipe/tasks/python/vision/core:image_processing_options",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
         "@com_google_protobuf//:protobuf_python",
+        "@mediapipe_pip_deps//absl/testing:absltest",
+        "@mediapipe_pip_deps//absl/testing:parameterized",
+        "@mediapipe_pip_deps//numpy",
     ],
 )
 
@@ -212,6 +235,9 @@ py_test(
         "//mediapipe/tasks/python/vision/core:image_processing_options",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
         "@com_google_protobuf//:protobuf_python",
+        "@mediapipe_pip_deps//absl/testing:absltest",
+        "@mediapipe_pip_deps//absl/testing:parameterized",
+        "@mediapipe_pip_deps//numpy",
     ],
 )
 
@@ -230,6 +256,8 @@ py_test(
         "//mediapipe/tasks/python/test:test_utils",
         "//mediapipe/tasks/python/vision:face_aligner",
         "//mediapipe/tasks/python/vision/core:image_processing_options",
+        "@mediapipe_pip_deps//absl/testing:absltest",
+        "@mediapipe_pip_deps//absl/testing:parameterized",
     ],
 )
 
@@ -247,5 +275,7 @@ py_test(
         "//mediapipe/tasks/python/test:test_utils",
         "//mediapipe/tasks/python/vision:face_stylizer",
         "//mediapipe/tasks/python/vision/core:image_processing_options",
+        "@mediapipe_pip_deps//absl/testing:absltest",
+        "@mediapipe_pip_deps//absl/testing:parameterized",
     ],
 )

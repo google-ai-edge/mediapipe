@@ -21,5 +21,10 @@ licenses(["notice"])
 py_test(
     name = "audio_record_test",
     srcs = ["audio_record_test.py"],
-    deps = ["//mediapipe/tasks/python/audio/core:audio_record"],
+    deps = [
+        "//mediapipe/tasks/python/audio/core:audio_record",
+        "@mediapipe_pip_deps//absl/testing:absltest",
+        "@mediapipe_pip_deps//absl/testing:parameterized",
+        "@mediapipe_pip_deps//numpy",
+    ],
 )
