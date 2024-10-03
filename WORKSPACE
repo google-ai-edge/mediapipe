@@ -737,3 +737,10 @@ http_archive(
     urls = ["https://github.com/nlohmann/json/releases/download/v3.9.1/include.zip"],
     build_file = "@//third_party:nlohmann.BUILD",
 )
+
+http_archive(
+    name = "io_abseil_py",
+    sha256 = "0fb3a4916a157eb48124ef309231cecdfdd96ff54adf1660b39c0d4a9790a2c0",
+    strip_prefix = "abseil-py-1.4.0",
+    urls = ["https://github.com/abseil/abseil-py/archive/refs/tags/v1.4.0.tar.gz"],
+)
