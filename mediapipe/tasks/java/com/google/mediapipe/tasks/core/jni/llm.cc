@@ -58,6 +58,7 @@ LlmModelSettings ParseModelSettings(void* bytes, int size) {
   }
   output.llm_activation_data_type = kLlmActivationDataTypeDefault;
   output.num_draft_tokens = 0;
+  output.wait_for_weight_uploads = false;
   return output;
 }
 

@@ -96,6 +96,11 @@ typedef struct {
   // Optional setting for the number of draft tokens to generate when using
   // speculative decoding. Setting to 0 will disable speculative decoding.
   size_t num_draft_tokens;
+
+  // If true, waits for weights to finish uploading when initializing. Otherwise
+  // initialization may finish before weights have finished uploading which
+  // might push some of the weight upload time into input processing.
+  bool wait_for_weight_uploads;
 } LlmModelSettings;
 
 // LlmSessionConfig configures how to execute the model.
