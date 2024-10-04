@@ -279,6 +279,12 @@ Tensor::AHardwareBufferView Tensor::GetAHardwareBufferWriteView() const {
   auto lock(std::make_unique<absl::MutexLock>(&view_mutex_));
   ABSL_CHECK_OK(AllocateAHardwareBuffer())
       << "AHardwareBuffer is not supported on the target system.";
+  if (valid_ != 0) {
+    ABSL_LOG(ERROR)
+        << "Tensors are designed for single writes. Multiple writes to a "
+           "Tensor instance are not supported and may lead to undefined "
+           "behavior due to lack of synchronization.";
+  }
   valid_ = kValidAHardwareBuffer;
 
   EraseCompletedUsages(ahwb_usages_);

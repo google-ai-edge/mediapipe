@@ -406,6 +406,12 @@ Tensor::OpenGlBufferView Tensor::GetOpenGlBufferWriteView(
            "between multiple OpenGL contexts.";
   }
   AllocateOpenGlBuffer();
+  if (valid_ != 0) {
+    ABSL_LOG(ERROR)
+        << "Tensors are designed for single writes. Multiple writes to a "
+           "Tensor instance are not supported and may lead to undefined "
+           "behavior due to lack of synchronization.";
+  }
   valid_ = kValidOpenGlBuffer;
   return {opengl_buffer_, std::move(lock), nullptr};
 }
@@ -723,6 +729,12 @@ Tensor::CpuWriteView Tensor::GetCpuWriteView(
   auto lock = std::make_unique<absl::MutexLock>(&view_mutex_);
   TrackAhwbUsage(source_location_hash);
   ABSL_CHECK_OK(AllocateCpuBuffer()) << "AllocateCpuBuffer failed.";
+  if (valid_ != 0) {
+    ABSL_LOG(ERROR)
+        << "Tensors are designed for single writes. Multiple writes to a "
+           "Tensor instance are not supported and may lead to undefined "
+           "behavior due to lack of synchronization.";
+  }
   valid_ = kValidCpu;
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
   if (__builtin_available(android 26, *)) {
