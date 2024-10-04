@@ -72,13 +72,13 @@ py_repositories()
 load("@rules_python//python:pip.bzl", "pip_parse")
 pip_parse(
     name = "mediapipe_pip_deps",
-    requirements_lock = "@//:requirements.txt",
+    requirements_lock = "@//:requirements_lock.txt",
 )
 load("@mediapipe_pip_deps//:requirements.bzl", mp_install_deps = "install_deps")
 mp_install_deps()
 pip_parse(
     name = "model_maker_pip_deps",
-    requirements_lock = "@//mediapipe/model_maker:requirements_bazel.txt",
+    requirements_lock = "@//mediapipe/model_maker:requirements_lock.txt",
 )
 load("@model_maker_pip_deps//:requirements.bzl", mm_install_deps = "install_deps")
 mm_install_deps()
