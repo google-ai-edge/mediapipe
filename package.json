@@ -1,6 +1,6 @@
 {
   "name": "medipipe-dev",
-  "version": "0.0.0-alphga",
+  "version": "0.0.0-alpha",
   "description": "MediaPipe GitHub repo",
   "devDependencies": {
     "@bazel/jasmine": "^5.7.2",
