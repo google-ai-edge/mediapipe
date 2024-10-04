@@ -58,6 +58,7 @@ cc_library(
     hdrs = ["metadata_utils.h"],
     deps = [
         "//mediapipe/tasks/cc/genai/inference/proto:llm_params_cc_proto",
+        "@com_google_absl//absl/algorithm:container",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
