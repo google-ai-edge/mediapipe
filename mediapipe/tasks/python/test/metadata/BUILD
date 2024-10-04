@@ -19,9 +19,8 @@ py_test(
         "//mediapipe/tasks/python/metadata",
         "//mediapipe/tasks/python/test:test_utils",
         "@flatbuffers//:runtime_py",
-        "@mediapipe_pip_deps//absl/testing:absltest",
-        "@mediapipe_pip_deps//absl/testing:parameterized",
-        "@mediapipe_pip_deps//six",
+        "@mediapipe_pip_deps_absl_py//:pkg",
+        "@mediapipe_pip_deps_six//:pkg",
     ],
 )
 
@@ -32,7 +31,6 @@ py_test(
     srcs_version = "PY2AND3",
     deps = [
         "//mediapipe/tasks/python/metadata",
-        "@mediapipe_pip_deps//absl/testing:absltest",
-        "@mediapipe_pip_deps//absl/testing:parameterized",
+        "@mediapipe_pip_deps_absl_py//:pkg",
     ],
 )

@@ -33,8 +33,8 @@ py_library(
     deps = [
         ":model_util",
         "//mediapipe/model_maker/python/core/data:dataset",
-        "@model_maker_pip_deps//numpy",
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_numpy//:pkg",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
@@ -44,8 +44,8 @@ py_library(
     deps = [
         ":quantization",
         "//mediapipe/model_maker/python/core/data:dataset",
-        "@model_maker_pip_deps//numpy",
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_numpy//:pkg",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
@@ -56,8 +56,8 @@ py_test(
         ":model_util",
         ":quantization",
         ":test_util",
-        "@model_maker_pip_deps//absl/testing:parameterized",
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_absl_py//:pkg",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
@@ -73,7 +73,7 @@ py_test(
     tags = ["requires-net:external"],
     deps = [
         ":file_util",
-        "@model_maker_pip_deps//absl/testing:absltest",
+        "@model_maker_pip_deps_absl_py//:pkg",
     ],
 )
 
@@ -81,7 +81,7 @@ py_library(
     name = "hub_loader",
     srcs = ["hub_loader.py"],
     deps = [
-        "@model_maker_pip_deps//tensorflow_hub",
+        "@model_maker_pip_deps_tensorflow_hub//:pkg",
     ],
 )
 
@@ -92,8 +92,8 @@ py_test(
     deps = [
         ":hub_loader",
         "//mediapipe/tasks/python/test:test_utils",
-        "@model_maker_pip_deps//absl/testing:parameterized",
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_absl_py//:pkg",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
@@ -104,9 +104,9 @@ py_library(
     deps = [
         ":file_util",
         ":model_util",
-        "@model_maker_pip_deps//numpy",
-        "@model_maker_pip_deps//tensorflow",
-        "@model_maker_pip_deps//tensorflow_models/official/modeling:tf_utils",
+        "@model_maker_pip_deps_numpy//:pkg",
+        "@model_maker_pip_deps_tensorflow//:pkg",
+        "@model_maker_pip_deps_tf_models_official//:pkg",
     ],
 )
 
@@ -118,8 +118,8 @@ py_test(
     ],
     deps = [
         ":loss_functions",
-        "@model_maker_pip_deps//absl/testing:parameterized",
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_absl_py//:pkg",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
@@ -135,7 +135,7 @@ py_library(
     name = "metrics",
     srcs = ["metrics.py"],
     deps = [
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
@@ -144,9 +144,9 @@ py_test(
     srcs = ["metrics_test.py"],
     deps = [
         ":metrics",
-        "@model_maker_pip_deps//absl/testing:parameterized",
-        "@model_maker_pip_deps//numpy",
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_absl_py//:pkg",
+        "@model_maker_pip_deps_numpy//:pkg",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
@@ -157,7 +157,7 @@ py_library(
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/model_maker/python/core/data:dataset",
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
@@ -167,7 +167,7 @@ py_test(
     deps = [
         ":quantization",
         ":test_util",
-        "@model_maker_pip_deps//absl/testing:parameterized",
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_absl_py//:pkg",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )

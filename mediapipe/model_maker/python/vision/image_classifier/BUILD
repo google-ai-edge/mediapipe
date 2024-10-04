@@ -49,8 +49,8 @@ py_test(
     srcs = ["model_spec_test.py"],
     deps = [
         ":model_spec",
-        "@model_maker_pip_deps//absl/testing:parameterized",
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_absl_py//:pkg",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
@@ -60,7 +60,7 @@ py_library(
     deps = [
         "//mediapipe/model_maker/python/core/data:classification_dataset",
         "//mediapipe/model_maker/python/vision/core:image_utils",
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
@@ -71,8 +71,8 @@ py_test(
         ":dataset",
         "//mediapipe/model_maker/python/vision/core:image_utils",
         "//mediapipe/model_maker/python/vision/core:test_utils",
-        "@model_maker_pip_deps//numpy",
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_numpy//:pkg",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
@@ -115,8 +115,8 @@ py_library(
         "//mediapipe/model_maker/python/vision/core:image_preprocessing",
         "//mediapipe/tasks/python/metadata/metadata_writers:image_classifier",
         "//mediapipe/tasks/python/metadata/metadata_writers:metadata_writer",
-        "@model_maker_pip_deps//tensorflow",
-        "@model_maker_pip_deps//tensorflow_hub",
+        "@model_maker_pip_deps_tensorflow//:pkg",
+        "@model_maker_pip_deps_tensorflow_hub//:pkg",
     ],
 )
 
@@ -130,9 +130,9 @@ py_library(
         ":image_classifier_import",
         ":model_options",
         "//mediapipe/tasks/python/test:test_utils",
-        "@model_maker_pip_deps//absl/testing:parameterized",
-        "@model_maker_pip_deps//numpy",
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_absl_py//:pkg",
+        "@model_maker_pip_deps_numpy//:pkg",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
@@ -156,9 +156,7 @@ py_binary(
     deps = [
         ":image_classifier_import",
         "//mediapipe/model_maker/python/core/utils:quantization",
-        "@model_maker_pip_deps//absl:app",
-        "@model_maker_pip_deps//absl/flags",
-        "@model_maker_pip_deps//absl/logging",
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_absl_py//:pkg",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )

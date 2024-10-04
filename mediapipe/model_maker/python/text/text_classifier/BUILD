@@ -78,7 +78,7 @@ py_test(
         ":hyperparameters",
         ":model_options",
         ":model_spec",
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
@@ -88,7 +88,7 @@ py_library(
     deps = [
         "//mediapipe/model_maker/python/core/data:cache_files",
         "//mediapipe/model_maker/python/core/data:classification_dataset",
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
@@ -97,7 +97,7 @@ py_test(
     srcs = ["dataset_test.py"],
     deps = [
         ":dataset",
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
@@ -105,7 +105,7 @@ py_library(
     name = "model_with_tokenizer",
     srcs = ["model_with_tokenizer.py"],
     deps = [
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
@@ -118,8 +118,8 @@ py_test(
         ":model_spec",
         ":model_with_tokenizer",
         "//mediapipe/model_maker/python/core/utils:hub_loader",
-        "@model_maker_pip_deps//tensorflow",
-        "@model_maker_pip_deps//tensorflow_hub",
+        "@model_maker_pip_deps_tensorflow//:pkg",
+        "@model_maker_pip_deps_tensorflow_hub//:pkg",
     ],
 )
 
@@ -127,9 +127,9 @@ py_library(
     name = "bert_tokenizer",
     srcs = ["bert_tokenizer.py"],
     deps = [
-        "@model_maker_pip_deps//tensorflow",
-        "@model_maker_pip_deps//tensorflow_models/official/nlp/tools:tokenization",
-        "@model_maker_pip_deps//tensorflow_text",
+        "@model_maker_pip_deps_tensorflow//:pkg",
+        "@model_maker_pip_deps_tensorflow_text//:pkg",
+        "@model_maker_pip_deps_tf_models_official//:pkg",
     ],
 )
 
@@ -140,9 +140,9 @@ py_test(
     deps = [
         ":bert_tokenizer",
         ":model_spec",
-        "@model_maker_pip_deps//absl/testing:parameterized",
-        "@model_maker_pip_deps//tensorflow",
-        "@model_maker_pip_deps//tensorflow_hub",
+        "@model_maker_pip_deps_absl_py//:pkg",
+        "@model_maker_pip_deps_tensorflow//:pkg",
+        "@model_maker_pip_deps_tensorflow_hub//:pkg",
     ],
 )
 
@@ -153,8 +153,8 @@ py_library(
         ":bert_tokenizer",
         ":dataset",
         "//mediapipe/model_maker/python/core/data:cache_files",
-        "@model_maker_pip_deps//tensorflow",
-        "@model_maker_pip_deps//tensorflow_hub",
+        "@model_maker_pip_deps_tensorflow//:pkg",
+        "@model_maker_pip_deps_tensorflow_hub//:pkg",
     ],
 )
 
@@ -168,9 +168,9 @@ py_test(
         ":model_spec",
         ":preprocessor",
         "//mediapipe/model_maker/python/core/data:cache_files",
-        "@model_maker_pip_deps//absl/testing:parameterized",
-        "@model_maker_pip_deps//numpy",
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_absl_py//:pkg",
+        "@model_maker_pip_deps_numpy//:pkg",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
@@ -205,9 +205,9 @@ py_library(
         "//mediapipe/model_maker/python/core/utils:quantization",
         "//mediapipe/tasks/python/metadata/metadata_writers:metadata_writer",
         "//mediapipe/tasks/python/metadata/metadata_writers:text_classifier",
-        "@model_maker_pip_deps//tensorflow",
-        "@model_maker_pip_deps//tensorflow_addons",
-        "@model_maker_pip_deps//tensorflow_hub",
+        "@model_maker_pip_deps_tensorflow//:pkg",
+        "@model_maker_pip_deps_tensorflow_addons//:pkg",
+        "@model_maker_pip_deps_tensorflow_hub//:pkg",
     ],
 )
 
@@ -228,8 +228,8 @@ py_test(
         ":text_classifier_import",
         "//mediapipe/model_maker/python/core/utils:loss_functions",
         "//mediapipe/tasks/python/test:test_utils",
-        "@model_maker_pip_deps//absl/testing:parameterized",
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_absl_py//:pkg",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
@@ -239,10 +239,8 @@ py_library(
     deps = [
         ":text_classifier_import",
         "//mediapipe/model_maker/python/core/utils:quantization",
-        "@model_maker_pip_deps//absl:app",
-        "@model_maker_pip_deps//absl/flags",
-        "@model_maker_pip_deps//absl/logging",
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_absl_py//:pkg",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 

@@ -50,7 +50,7 @@ py_test(
     srcs = ["model_spec_test.py"],
     deps = [
         ":model_spec",
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
@@ -73,7 +73,7 @@ py_library(
         "//mediapipe/python:_framework_bindings",
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/vision:face_aligner",
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
@@ -91,8 +91,8 @@ py_library(
         "//mediapipe/model_maker/python/core/utils:model_util",
         "//mediapipe/model_maker/python/vision/core:image_preprocessing",
         "//mediapipe/tasks/python/metadata/metadata_writers:face_stylizer",
-        "@model_maker_pip_deps//numpy",
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_numpy//:pkg",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 

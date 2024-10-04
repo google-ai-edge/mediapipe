@@ -35,6 +35,6 @@ py_test(
     srcs_version = "PY3",
     deps = [
         ":llm_bundler",
-        "@mediapipe_pip_deps//absl/testing:absltest",
+        "@mediapipe_pip_deps_absl_py//:pkg",
     ],
 )

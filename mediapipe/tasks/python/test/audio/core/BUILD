@@ -23,8 +23,7 @@ py_test(
     srcs = ["audio_record_test.py"],
     deps = [
         "//mediapipe/tasks/python/audio/core:audio_record",
-        "@mediapipe_pip_deps//absl/testing:absltest",
-        "@mediapipe_pip_deps//absl/testing:parameterized",
-        "@mediapipe_pip_deps//numpy",
+        "@mediapipe_pip_deps_absl_py//:pkg",
+        "@mediapipe_pip_deps_numpy//:pkg",
     ],
 )

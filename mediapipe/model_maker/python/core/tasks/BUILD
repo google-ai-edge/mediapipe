@@ -26,7 +26,7 @@ py_library(
         "//mediapipe/model_maker/python/core/data:dataset",
         "//mediapipe/model_maker/python/core/utils:model_util",
         "//mediapipe/model_maker/python/core/utils:quantization",
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
@@ -36,7 +36,7 @@ py_test(
     deps = [
         ":custom_model",
         "//mediapipe/model_maker/python/core/utils:test_util",
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
@@ -49,7 +49,7 @@ py_library(
         "//mediapipe/model_maker/python/core/data:classification_dataset",
         "//mediapipe/model_maker/python/core/data:dataset",
         "//mediapipe/model_maker/python/core/utils:model_util",
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
@@ -59,6 +59,6 @@ py_test(
     deps = [
         ":classifier",
         "//mediapipe/model_maker/python/core/utils:test_util",
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )

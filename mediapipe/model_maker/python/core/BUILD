@@ -25,7 +25,7 @@ py_library(
     name = "hyperparameters",
     srcs = ["hyperparameters.py"],
     deps = [
-        "@model_maker_pip_deps//tensorflow",
-        "@model_maker_pip_deps//tensorflow_models/official/common:distribute_utils",
+        "@model_maker_pip_deps_tensorflow//:pkg",
+        "@model_maker_pip_deps_tf_models_official//:pkg",
     ],
 )

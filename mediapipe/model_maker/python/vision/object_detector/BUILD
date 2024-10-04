@@ -41,9 +41,7 @@ py_binary(
     tags = ["requires-net:external"],
     deps = [
         ":object_detector_import",
-        "@model_maker_pip_deps//absl:app",
-        "@model_maker_pip_deps//absl/flags",
-        "@model_maker_pip_deps//absl/logging",
+        "@model_maker_pip_deps_absl_py//:pkg",
     ],
 )
 
@@ -61,8 +59,8 @@ py_library(
         ":dataset_util",
         "//mediapipe/model_maker/python/core/data:cache_files",
         "//mediapipe/model_maker/python/core/data:classification_dataset",
-        "@model_maker_pip_deps//tensorflow",
-        "@model_maker_pip_deps//tensorflow_models/official/vision/dataloaders:tf_example_decoder",
+        "@model_maker_pip_deps_tensorflow//:pkg",
+        "@model_maker_pip_deps_tf_models_official//:pkg",
     ],
 )
 
@@ -75,7 +73,7 @@ py_test(
         "//mediapipe/model_maker/python/vision/core:image_utils",
         "//mediapipe/model_maker/python/vision/core:test_utils",
         "//mediapipe/tasks/python/test:test_utils",
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
@@ -84,8 +82,8 @@ py_library(
     srcs = ["dataset_util.py"],
     deps = [
         "//mediapipe/model_maker/python/core/data:cache_files",
-        "@model_maker_pip_deps//tensorflow",
-        "@model_maker_pip_deps//tensorflow_models/official/vision/data:tfrecord_lib",
+        "@model_maker_pip_deps_tensorflow//:pkg",
+        "@model_maker_pip_deps_tf_models_official//:pkg",
     ],
 )
 
@@ -97,7 +95,7 @@ py_test(
         ":dataset_util",
         "//mediapipe/model_maker/python/vision/core:test_utils",
         "//mediapipe/tasks/python/test:test_utils",
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
@@ -105,7 +103,7 @@ py_library(
     name = "detection",
     srcs = ["detection.py"],
     deps = [
-        "@model_maker_pip_deps//tensorflow_models/official/vision/serving:detection",
+        "@model_maker_pip_deps_tf_models_official//:pkg",
     ],
 )
 
@@ -114,10 +112,8 @@ py_test(
     srcs = ["detection_test.py"],
     deps = [
         ":detection",
-        "@model_maker_pip_deps//tensorflow",
-        "@model_maker_pip_deps//tensorflow_models/official/core:config_definitions",
-        "@model_maker_pip_deps//tensorflow_models/official/vision/configs",
-        "@model_maker_pip_deps//tensorflow_models/official/vision/serving:detection",
+        "@model_maker_pip_deps_tensorflow//:pkg",
+        "@model_maker_pip_deps_tf_models_official//:pkg",
     ],
 )
 
@@ -134,11 +130,8 @@ py_library(
     srcs = ["preprocessor.py"],
     deps = [
         ":model_spec",
-        "@model_maker_pip_deps//tensorflow",
-        "@model_maker_pip_deps//tensorflow_models/official/vision/dataloaders:utils",
-        "@model_maker_pip_deps//tensorflow_models/official/vision/ops:anchor",
-        "@model_maker_pip_deps//tensorflow_models/official/vision/ops:box_ops",
-        "@model_maker_pip_deps//tensorflow_models/official/vision/ops:preprocess_ops",
+        "@model_maker_pip_deps_tensorflow//:pkg",
+        "@model_maker_pip_deps_tf_models_official//:pkg",
     ],
 )
 
@@ -149,8 +142,8 @@ py_test(
         ":model_spec",
         ":preprocessor",
         "//mediapipe/model_maker/python/vision/core:test_utils",
-        "@model_maker_pip_deps//absl/testing:parameterized",
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_absl_py//:pkg",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
@@ -161,16 +154,8 @@ py_library(
         ":detection",
         ":model_options",
         ":model_spec",
-        "@model_maker_pip_deps//tensorflow",
-        "@model_maker_pip_deps//tensorflow_models/official/core:config_definitions",
-        "@model_maker_pip_deps//tensorflow_models/official/projects/qat/vision/configs:common",
-        "@model_maker_pip_deps//tensorflow_models/official/projects/qat/vision/modeling:factory",
-        "@model_maker_pip_deps//tensorflow_models/official/vision/configs",
-        "@model_maker_pip_deps//tensorflow_models/official/vision/losses:focal_loss",
-        "@model_maker_pip_deps//tensorflow_models/official/vision/losses:loss_utils",
-        "@model_maker_pip_deps//tensorflow_models/official/vision/modeling:factory",
-        "@model_maker_pip_deps//tensorflow_models/official/vision/modeling:retinanet_model",
-        "@model_maker_pip_deps//tensorflow_models/official/vision/modeling/layers:detection_generator",
+        "@model_maker_pip_deps_tensorflow//:pkg",
+        "@model_maker_pip_deps_tf_models_official//:pkg",
     ],
 )
 
@@ -193,8 +178,8 @@ py_test(
         ":model_spec",
         ":preprocessor",
         "//mediapipe/tasks/python/test:test_utils",
-        "@model_maker_pip_deps//numpy",
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_numpy//:pkg",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
@@ -226,8 +211,8 @@ py_library(
         "//mediapipe/tasks/python/metadata/metadata_writers:metadata_info",
         "//mediapipe/tasks/python/metadata/metadata_writers:metadata_writer",
         "//mediapipe/tasks/python/metadata/metadata_writers:object_detector",
-        "@model_maker_pip_deps//tensorflow",
-        "@model_maker_pip_deps//tensorflow_models/official/vision/evaluation:coco_evaluator",
+        "@model_maker_pip_deps_tensorflow//:pkg",
+        "@model_maker_pip_deps_tf_models_official//:pkg",
     ],
 )
 
@@ -240,8 +225,8 @@ py_test(
     deps = [
         ":object_detector_import",
         "//mediapipe/tasks/python/test:test_utils",
-        "@model_maker_pip_deps//absl/testing:parameterized",
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_absl_py//:pkg",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 

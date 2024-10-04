@@ -27,7 +27,7 @@ py_library(
     name = "audio_record",
     srcs = ["audio_record.py"],
     deps = [
-        "@mediapipe_pip_deps//numpy",
+        "@mediapipe_pip_deps_numpy//:pkg",
     ],
 )
 

@@ -25,7 +25,7 @@ py_library(
     name = "image_preprocessing",
     srcs = ["image_preprocessing.py"],
     deps = [
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
@@ -34,8 +34,8 @@ py_test(
     srcs = ["image_preprocessing_test.py"],
     deps = [
         ":image_preprocessing",
-        "@model_maker_pip_deps//numpy",
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_numpy//:pkg",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
@@ -43,7 +43,7 @@ py_library(
     name = "image_utils",
     srcs = ["image_utils.py"],
     deps = [
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
@@ -53,7 +53,7 @@ py_test(
     deps = [
         ":image_utils",
         ":test_utils",
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
@@ -61,7 +61,7 @@ py_library(
     name = "test_utils",
     srcs = ["test_utils.py"],
     deps = [
-        "@model_maker_pip_deps//numpy",
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_numpy//:pkg",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )

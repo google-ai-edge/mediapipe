@@ -23,9 +23,9 @@ py_library(
     name = "data_util",
     srcs = ["data_util.py"],
     deps = [
-        "@model_maker_pip_deps//cv2",
-        "@model_maker_pip_deps//numpy",
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_numpy//:pkg",
+        "@model_maker_pip_deps_opencv_python//:pkg",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
@@ -35,8 +35,8 @@ py_test(
     data = ["//mediapipe/model_maker/python/core/data/testdata"],
     deps = [
         ":data_util",
-        "@model_maker_pip_deps//absl/flags",
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_absl_py//:pkg",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
@@ -44,7 +44,7 @@ py_library(
     name = "dataset",
     srcs = ["dataset.py"],
     srcs_version = "PY3",
-    deps = ["@model_maker_pip_deps//tensorflow"],
+    deps = ["@model_maker_pip_deps_tensorflow//:pkg"],
 )
 
 py_test(
@@ -53,8 +53,8 @@ py_test(
     deps = [
         ":dataset",
         "//mediapipe/model_maker/python/core/utils:test_util",
-        "@model_maker_pip_deps//numpy",
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_numpy//:pkg",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
@@ -63,7 +63,7 @@ py_library(
     srcs = ["classification_dataset.py"],
     deps = [
         ":dataset",
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
@@ -72,14 +72,14 @@ py_test(
     srcs = ["classification_dataset_test.py"],
     deps = [
         ":classification_dataset",
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
 py_library(
     name = "cache_files",
     srcs = ["cache_files.py"],
-    deps = ["@model_maker_pip_deps//tensorflow"],
+    deps = ["@model_maker_pip_deps_tensorflow//:pkg"],
 )
 
 py_test(
@@ -87,6 +87,6 @@ py_test(
     srcs = ["cache_files_test.py"],
     deps = [
         ":cache_files",
-        "@model_maker_pip_deps//tensorflow",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )

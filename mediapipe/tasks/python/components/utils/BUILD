@@ -25,6 +25,6 @@ py_library(
     srcs = ["cosine_similarity.py"],
     deps = [
         "//mediapipe/tasks/python/components/containers:embedding_result",
-        "@mediapipe_pip_deps//numpy",
+        "@mediapipe_pip_deps_numpy//:pkg",
     ],
 )
