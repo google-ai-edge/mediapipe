@@ -244,7 +244,7 @@ def convert_bpe_vocab(vocab_model_file: str, output_dir: str) -> str:
   if not os.path.isdir(vocab_model_file):
     raise ValueError(
         'The input BPE vocab model file path is expected to be a directory that'
-        ' conatins both tokenizer.json and tokenizer_config.json files.'
+        ' contains both tokenizer.json and tokenizer_config.json files.'
     )
   output_vocab_file = os.path.join(output_dir, 'spm.model')
   model_ckpt_util.ConvertHfTokenizer(vocab_model_file, output_vocab_file)

@@ -162,7 +162,7 @@ def get_best_bound(
     p_value: float = 1.0,
     per_channel: bool = False,
 ) -> JTensor:
-  """Scan mutliple factors on max value to get best bound value.
+  """Scan multiple factors on max value to get best bound value.
 
   This does a scan to get bound value(s) that minimize mean absolute error (MAE)
   between original tensor 't' and quantized tensor. It's (almost) equivalent to
@@ -239,7 +239,7 @@ def reduce_precision(
 
   Args:
     t: Input tensor.
-    contract_dims: Speficies contracting dimesnions of the input tensor.
+    contract_dims: Specifies contracting dimensions of the input tensor.
     need_gradient: If gradient is needed out of this function.
     bits: Target number of bits.
     optimization_on_bound: If MAE bound optimizer is used.
@@ -405,7 +405,7 @@ def pack_4bit(
     packed_dtype: Target type to pack to, int32 or int8.
 
   Returns:
-    int32 or int8 packed tensor where the pack_dim size is dividened by 8
+    int32 or int8 packed tensor where the pack_dim size is dividend by 8
     from the original tensor x.
   """
   x = jnp.asarray(x)
