@@ -267,7 +267,9 @@ static OVMS_DataType OVPrecision2CAPI(ov::element::Type_t datatype) {
         {ov::element::Type_t::boolean, OVMS_DATATYPE_BOOL},
         {ov::element::Type_t::bf16, OVMS_DATATYPE_BF16},
         {ov::element::Type_t::undefined, OVMS_DATATYPE_UNDEFINED},
-        {ov::element::Type_t::dynamic, OVMS_DATATYPE_DYNAMIC}
+        {ov::element::Type_t::dynamic, OVMS_DATATYPE_DYNAMIC},
+        {ov::element::Type_t::string, OVMS_DATATYPE_STRING}
+        
         //    {ov::element::Type_t::, OVMS_DATATYPE_MIXEDMIXED},
         //    {ov::element::Type_t::, OVMS_DATATYPE_Q78Q78},
         //    {ov::element::Type_t::, OVMS_DATATYPE_BINBIN},
