@@ -27,11 +27,18 @@ extension LlmInference {
   ///
   /// Note: Inherits from `NSObject` for Objective-C interoperability.
   @objc(MPPLLMInferenceSession) public final class Session: NSObject {
-    // Session runner that manages the creation, deletion and execution of the underlying C session.
+    /// Provides key metrics including response generation time.
+    public private(set) var metrics: Metrics
+
+    /// Session runner that manages the creation, deletion and execution of the underlying C
+    /// session.
     private let llmSessionRunner: LlmSessionRunner
 
-    // LLM Inference used to create this session.
+    /// LLM Inference used to create this session.
     private let llmInference: LlmInference
+
+    /// The start time of the current response generation.
+    private var responseGenerationStartTime = TimeInterval.zero
 
     /// Creates a new instance of `LlmInference.Session` with the given options and `llmInference`.
     /// Note: This class maintains a strong reference to `llmInference`. `llmInference` will
@@ -60,6 +67,7 @@ extension LlmInference {
         } ?? llmInference.createSessionRunner(sessionConfig: sessionConfig)
 
       self.llmInference = llmInference
+      self.metrics = Metrics(responseGenerationTimeInMillis: 0)
       super.init()
     }
 
@@ -89,6 +97,7 @@ extension LlmInference {
     init(llmSessionRunner: LlmSessionRunner, llmInference: LlmInference) {
       self.llmSessionRunner = llmSessionRunner
       self.llmInference = llmInference
+      self.metrics = Metrics(responseGenerationTimeInMillis: 0)
       super.init()
     }
 
@@ -117,10 +126,10 @@ extension LlmInference {
       ///
       /// TODO: If simultaneous response generations on multiple sessions or the same session
       /// are allowed to happen it leads to a crash. Investigate if this can be handled by C++.
-      try llmInference.shouldContinueWithResponseGeneration()
+      try shouldContinueWithResponseGeneration()
 
       defer {
-        llmInference.markResponseGenerationCompleted()
+        markResponseGenerationCompleted()
       }
 
       let tokens = try llmSessionRunner.predict()
@@ -156,7 +165,7 @@ extension LlmInference {
       ///
       /// TODO: If simultaneous response generations on multiple sessions or the same session
       /// are allowed to happen it leads to a crash. Investigate if this can be handled by C++.
-      try llmInference.shouldContinueWithResponseGeneration()
+      try shouldContinueWithResponseGeneration()
 
       /// Used to make a decision about whitespace stripping.
       var receivedFirstToken = true
@@ -177,7 +186,7 @@ extension LlmInference {
           progress(humanReadableLlmResponse, nil)
         },
         completion: { [weak self] in
-          self?.llmInference.markResponseGenerationCompleted()
+          self?.markResponseGenerationCompleted()
           completion()
         })
     }
@@ -238,6 +247,20 @@ extension LlmInference {
       return Session(llmSessionRunner: clonedSessionRunner, llmInference: self.llmInference)
     }
 
+    private func shouldContinueWithResponseGeneration() throws {
+      try llmInference.shouldContinueWithResponseGeneration()
+      responseGenerationStartTime = TimeInterval(clock_gettime_nsec_np(CLOCK_MONOTONIC_RAW))
+    }
+
+    /// Marks the response generation as completed and updates the metrics.
+    private func markResponseGenerationCompleted() {
+      llmInference.markResponseGenerationCompleted()
+      metrics = Metrics(
+        responseGenerationTimeInMillis: (TimeInterval(clock_gettime_nsec_np(CLOCK_MONOTONIC_RAW))
+          - responseGenerationStartTime) * 1000
+          / TimeInterval(NSEC_PER_SEC))
+    }
+
     private static func humanReadableString(
       llmResponses: [String], stripLeadingWhitespaces: Bool = true
     ) -> String? {
@@ -277,6 +300,24 @@ extension LlmInference.Session {
     /// The optional absolute path to the LoRA model asset bundle stored locally on the device.
     /// This is only compatible with GPU models.
     @objc public var loraPath: String?
+  }
+}
+
+/// Extension to `LlmInference.Session` for defining `LlmInference.Session.Metrics`
+extension LlmInference.Session {
+  /// Provides some key metrics for the `LlmInference.Session`.
+  ///
+  /// Note: Inherits from `NSObject` for Objective C interoperability.
+  @objc(MPPLLMInferenceSessionMetrics) public final class Metrics: NSObject {
+
+    /// The time it took to generate the full response for last query, in milliseconds.
+    @objc public private(set) var responseGenerationTimeInMillis: TimeInterval
+
+    @objc public init(
+      responseGenerationTimeInMillis: TimeInterval
+    ) {
+      self.responseGenerationTimeInMillis = responseGenerationTimeInMillis
+    }
   }
 }
 

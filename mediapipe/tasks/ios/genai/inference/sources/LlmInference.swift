@@ -22,11 +22,17 @@ import MediaPipeTasksGenAIC
 /// out of scope if at least one of its sessions outlives its scope.
 ///
 /// Note: Inherits from `NSObject` for Objective C interoperability.
+///
+/// Note: Initializing an LLM inference engine is an expensive operation. Avoid initializing it on
+/// the main thread.
 @objc(MPPLLMInference) public final class LlmInference: NSObject {
   private static let numberOfDecodeStepsPerSync = 3
   private static let sequenceBatchSize = 0
   private static let responseGenerationInProgressQueueName =
     "com.google.mediapipe.genai.isResponseGenerationInProgressQueue"
+
+  /// Provides key metrics including initialization duration.
+  public private(set) var metrics: Metrics
 
   private let llmTaskRunner: LlmTaskRunner
 
@@ -53,6 +59,7 @@ import MediaPipeTasksGenAIC
 
     let sequenceBatchSize = LlmInference.sequenceBatchSize
     let numberOfDecodeStepsPerSync = LlmInference.numberOfDecodeStepsPerSync
+    let timeBeforeInit = clock_gettime_nsec_np(CLOCK_MONOTONIC_RAW)
     llmTaskRunner = try options.modelPath.withCString { modelPath in
       try cacheDirectory.withCString { cacheDirectory in
         try options.supportedLoraRanks.withUnsafeMutableBufferPointer { supportedLoraRanks in
@@ -72,6 +79,10 @@ import MediaPipeTasksGenAIC
         }
       }
     }
+    let timeAfterInit = clock_gettime_nsec_np(CLOCK_MONOTONIC_RAW)
+    metrics = Metrics(
+      initializationTimeInMillis: (TimeInterval(timeAfterInit - timeBeforeInit) * 1000)
+        / TimeInterval(NSEC_PER_SEC))
 
     super.init()
   }
@@ -267,6 +278,22 @@ extension LlmInference.ActivationDataType {
       return kLlmActivationDataTypeInt16
     case .int8:
       return kLlmActivationDataTypeInt8
+    }
+  }
+}
+
+extension LlmInference {
+  /// Provides some key metrics for the `LlmInference`.
+  ///
+  /// Note: Inherits from `NSObject` for Objective C interoperability.
+  @objc(MPPLLMInferenceMetrics) public final class Metrics: NSObject {
+    /// The time it took to initialize the LLM inference engine, in milliseconds.
+    /// If you want to include the time it took to load the model weights, set
+    /// `LlmInference.Options.waitForWeightUploads` to true.
+    @objc public private(set) var initializationTimeInMillis: TimeInterval
+
+    @objc public init(initializationTimeInMillis: TimeInterval) {
+      self.initializationTimeInMillis = initializationTimeInMillis
     }
   }
 }
