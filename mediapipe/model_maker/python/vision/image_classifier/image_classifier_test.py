@@ -19,7 +19,6 @@ import tempfile
 
 from unittest import mock as unittest_mock
 from absl.testing import parameterized
-import mock
 import numpy as np
 import tensorflow as tf
 
@@ -143,7 +142,7 @@ class ImageClassifierTest(tf.test.TestCase, parameterized.TestCase):
 
   def test_continual_training_by_loading_checkpoint(self):
     mock_stdout = io.StringIO()
-    with mock.patch('sys.stdout', mock_stdout):
+    with unittest_mock.patch('sys.stdout', mock_stdout):
       options = image_classifier.ImageClassifierOptions(
           supported_model=image_classifier.SupportedModels.EFFICIENTNET_LITE0,
           hparams=image_classifier.HParams(
