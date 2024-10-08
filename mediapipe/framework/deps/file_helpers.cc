@@ -20,7 +20,6 @@
 #include <Windows.h>
 #include <direct.h>
 
-#include <codecvt>
 #include <locale>
 #else
 #include <dirent.h>
@@ -94,16 +93,23 @@ class DirectoryListing {
 };
 #else
 #if defined(UNICODE)
+
 using PathString = std::wstring;
 
 PathString Utf8ToNative(const std::string& string) {
-  std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> converter;
-  return converter.from_bytes(string.data(), string.data() + string.size());
+    int wideSize = MultiByteToWideChar(CP_UTF8, 0, string.data(), (int)string.size(), nullptr, 0);
+    std::wstring result(wideSize, 0);
+    MultiByteToWideChar(CP_UTF8, 0, string.data(), (int)string.size(), &result[0], wideSize);
+    return result;
 }
+
 std::string NativeToUtf8(const PathString& string) {
-  std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> converter;
-  return converter.to_bytes(string.data(), string.data() + string.size());
+    int utf8Size = WideCharToMultiByte(CP_UTF8, 0, string.data(), (int)string.size(), nullptr, 0, nullptr, nullptr);
+    std::string result(utf8Size, 0);
+    WideCharToMultiByte(CP_UTF8, 0, string.data(), (int)string.size(), &result[0], utf8Size, nullptr, nullptr);
+    return result;
 }
+
 #define FILE_PATH_LITERAL_INTERNAL(x) L##x
 #define FILE_PATH_LITERAL(x) FILE_PATH_LITERAL_INTERNAL(x)
 #else
