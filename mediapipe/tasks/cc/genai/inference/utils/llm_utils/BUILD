@@ -82,7 +82,6 @@ cc_library(
         "//mediapipe/framework/port:status",
         "//mediapipe/tasks/cc/genai/inference/proto:llm_file_metadata_cc_proto",
         "//mediapipe/tasks/cc/genai/inference/proto:llm_params_cc_proto",
-        "//third_party/ml_drift/common:data_type",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
