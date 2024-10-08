@@ -30,6 +30,7 @@
 #include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/memory_mapped_file.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/scoped_file.h"
 #include "tensorflow/lite/model_builder.h"
+#include "third_party/ml_drift/common/data_type.h"
 
 namespace mediapipe::tasks::genai::llm_utils {
 
@@ -168,6 +169,14 @@ struct LoRAData {
 
   // The weight data for this LoRA.
   std::shared_ptr<ModelData> model_data;
+};
+
+struct EmbeddingRaw {
+  ml_drift::DataType data_type;
+  std::unique_ptr<mediapipe::tasks::genai::llm_utils::DataHolder<uint8_t>>
+      weights;
+  std::unique_ptr<mediapipe::tasks::genai::llm_utils::DataHolder<uint8_t>>
+      scales;
 };
 
 }  // namespace mediapipe::tasks::genai::llm_utils
