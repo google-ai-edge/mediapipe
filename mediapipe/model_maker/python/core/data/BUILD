@@ -79,7 +79,10 @@ py_test(
 py_library(
     name = "cache_files",
     srcs = ["cache_files.py"],
-    deps = ["@model_maker_pip_deps_tensorflow//:pkg"],
+    deps = [
+        "@model_maker_pip_deps_pyyaml//:pkg",
+        "@model_maker_pip_deps_tensorflow//:pkg",
+    ],
 )
 
 py_test(

@@ -64,6 +64,9 @@ py_test(
 py_library(
     name = "file_util",
     srcs = ["file_util.py"],
+    deps = [
+        "@model_maker_pip_deps_requests//:pkg",
+    ],
 )
 
 py_test(
@@ -74,6 +77,7 @@ py_test(
     deps = [
         ":file_util",
         "@model_maker_pip_deps_absl_py//:pkg",
+        "@model_maker_pip_deps_requests//:pkg",
     ],
 )
 

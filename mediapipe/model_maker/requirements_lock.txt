@@ -339,7 +339,8 @@ zipp==3.20.2
     #   importlib-resources
 
 # The following packages are considered to be unsafe in a requirements file:
-setuptools==75.1.0
+setuptools==70.3.0
     # via
+    #   -r mediapipe/opensource_only/model_maker_requirements_bazel.txt
     #   tensorboard
     #   tensorflow

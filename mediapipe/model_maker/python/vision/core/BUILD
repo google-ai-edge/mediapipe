@@ -43,6 +43,7 @@ py_library(
     name = "image_utils",
     srcs = ["image_utils.py"],
     deps = [
+        "@model_maker_pip_deps_pillow//:pkg",
         "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
