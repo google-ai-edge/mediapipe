@@ -17,6 +17,7 @@
 
 #import "mediapipe/tasks/ios/audio/core/sources/MPPAudioData.h"
 #import "mediapipe/tasks/ios/common/sources/MPPCommon.h"
+#import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
 #import "mediapipe/tasks/ios/test/audio/core/utils/sources/AVAudioPCMBuffer+TestUtils.h"
 #import "mediapipe/tasks/ios/test/utils/sources/MPPFileInfo.h"
 
@@ -70,6 +71,37 @@ NS_ASSUME_NONNULL_BEGIN
                                       error:(NSError **)error;
 
 - (BOOL)loadAudioPCMBuffer:(AVAudioPCMBuffer *)pcmBuffer error:(NSError **)error;
+
+- (nullable MPPFloatBuffer *)internalReadAtOffset:(NSUInteger)offset
+                                       withLength:(NSUInteger)length
+                                            error:(NSError **)error;
+@end
+
+@interface MPPAudioData (Tests)
+- (BOOL)mockLoadAudioRecord:(MPPAudioRecord *)audioRecord error:(NSError **)error;
+- (BOOL)loadRingBufferWithAudioRecordBuffer:audioRecordBuffer error:(NSError **)error;
+- (BOOL)isValidAudioRecordFormat:(MPPAudioDataFormat *)format error:(NSError **)error;
+@end
+
+@implementation MPPAudioData (Tests)
+// Mocks the logic of `loadAudioRecord` for tests to prevent audio engine running state checks.
+- (BOOL)mockLoadAudioRecord:(MPPAudioRecord *)audioRecord error:(NSError **)error {
+  if (![self isValidAudioRecordFormat:audioRecord.audioDataFormat error:error]) {
+    return NO;
+  }
+
+  // Invoking `internalReadAtOffset` instead of `readAtOffset` to avoid audio engine running state
+  // checks.
+  MPPFloatBuffer *audioRecordBuffer = [audioRecord internalReadAtOffset:0
+                                                             withLength:audioRecord.bufferLength
+                                                                  error:error];
+
+  // if (!audioRecordBuffer) {
+  //   return NO;
+  // }
+
+  return [self loadRingBufferWithAudioRecordBuffer:audioRecordBuffer error:error];
+}
 @end
 
 @interface MPPAudioDataTests : XCTestCase
@@ -392,11 +424,11 @@ NS_ASSUME_NONNULL_BEGIN
                      fromAudioRecord:(MPPAudioRecord *)audioRecord {
   MPPFloatBuffer *previousStateOfAudioData = audioData.buffer;
 
-  XCTAssertTrue([audioData loadAudioRecord:audioRecord error:nil]);
+  XCTAssertTrue([audioData mockLoadAudioRecord:audioRecord error:nil]);
 
-  MPPFloatBuffer *audioRecordBuffer = [audioRecord readAtOffset:0
-                                                     withLength:audioRecord.bufferLength
-                                                          error:nil];
+  MPPFloatBuffer *audioRecordBuffer = [audioRecord internalReadAtOffset:0
+                                                             withLength:audioRecord.bufferLength
+                                                                  error:nil];
 
   [MPPAudioDataTests assertDataOfFloatBuffer:audioData.buffer
       containsInOrderSamplesFromPreviousStateOfFloatBuffer:previousStateOfAudioData

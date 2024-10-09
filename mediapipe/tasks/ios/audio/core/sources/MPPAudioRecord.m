@@ -170,6 +170,12 @@ static const NSUInteger kMaximumChannelCount = 2;
     return nil;
   }
 
+  return [self internalReadAtOffset:offset withLength:length error:error];
+}
+
+- (nullable MPPFloatBuffer *)internalReadAtOffset:(NSUInteger)offset
+                                       withLength:(NSUInteger)length
+                                            error:(NSError **)error {
   __block MPPFloatBuffer *bufferToReturn = nil;
   __block NSError *readError = nil;
 
@@ -210,11 +216,8 @@ static const NSUInteger kMaximumChannelCount = 2;
   // app while an audio record is running.
   // TODO: Investigate safe starting of `AVAudioEngine` without any side effects to enable this
   // class ot accept custom category, mode and options.
-  if (!([[AVAudioSession sharedInstance]
-            setCategory:AVAudioSessionCategoryPlayAndRecord
-                   mode:AVAudioSessionModeDefault
-                options:AVAudioSessionCategoryOptionOverrideMutedMicrophoneInterruption
-                  error:error] &&
+  if (!([[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayAndRecord
+                                               error:error] &&
         [[AVAudioSession sharedInstance]
               setActive:YES
             withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation
