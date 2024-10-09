@@ -17,7 +17,6 @@
 
 #import "mediapipe/tasks/ios/audio/core/sources/MPPAudioData.h"
 #import "mediapipe/tasks/ios/common/sources/MPPCommon.h"
-#import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
 #import "mediapipe/tasks/ios/test/audio/core/utils/sources/AVAudioPCMBuffer+TestUtils.h"
 #import "mediapipe/tasks/ios/test/utils/sources/MPPFileInfo.h"
 
@@ -84,7 +83,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @implementation MPPAudioData (Tests)
-// Mocks the logic of `loadAudioRecord` for tests to prevent audio engine running state checks.
+// Mocks the logic of `loadAudioRecord` for tests to avoid audio engine running state checks.
 - (BOOL)mockLoadAudioRecord:(MPPAudioRecord *)audioRecord error:(NSError **)error {
   if (![self isValidAudioRecordFormat:audioRecord.audioDataFormat error:error]) {
     return NO;
@@ -95,10 +94,6 @@ NS_ASSUME_NONNULL_BEGIN
   MPPFloatBuffer *audioRecordBuffer = [audioRecord internalReadAtOffset:0
                                                              withLength:audioRecord.bufferLength
                                                                   error:error];
-
-  // if (!audioRecordBuffer) {
-  //   return NO;
-  // }
 
   return [self loadRingBufferWithAudioRecordBuffer:audioRecordBuffer error:error];
 }
