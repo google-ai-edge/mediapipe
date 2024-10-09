@@ -93,6 +93,16 @@ static const NSUInteger kMaximumChannelCount = 2;
 }
 
 - (BOOL)startRecordingWithError:(NSError **)error {
+  // The audio engine's running state will be set to `NO` when a system interrupt happens and the
+  // user did not explicitly invoke `stop()`. This method allows restarting recording in such cases.
+  if (_audioEngine.isRunning) {
+    [MPPCommonUtils createCustomError:error
+                             withCode:MPPTasksErrorCodeAudioRecordNotTappingMicError
+                          description:@"Recording of microphone samples is already in progress. "
+                                      @"You can stop recording using `stopRecording()`."];
+    return NO;
+  }
+
   // TODO: This API is deprecated from iOS 17.0. Update to new APIs and restrict the following
   // code's use to versions below iOS 17.0.
   switch ([AVAudioSession sharedInstance].recordPermission) {
@@ -115,17 +125,15 @@ static const NSUInteger kMaximumChannelCount = 2;
     }
 
     case AVAudioSessionRecordPermissionGranted: {
-      [self startTappingMicrophoneWithError:error];
-      return YES;
+      return [self startTappingMicrophoneWithError:error];
     }
   }
 
   return NO;
 }
 
-- (void)stop {
-  [[_audioEngine inputNode] removeTapOnBus:0];
-  [_audioEngine stop];
+- (BOOL)stopWithError:(NSError **)error {
+  [self stopAndResetAudioEngine];
 
   // Using strong `self` (instance variable is available through strong self) is okay since the
   // block is shortlived and it'll release its strong reference to `self` when it finishes
@@ -136,11 +144,38 @@ static const NSUInteger kMaximumChannelCount = 2;
   dispatch_barrier_async(_convertLoadAndReadBufferQueue, ^{
     [_floatRingBuffer clear];
   });
+
+  // If any audio resources outside this audio record are currently running in the app (eg:, an
+  // audio player), an error maybe thrown when deactivating `AVAudioSession.sharedInstance()`.
+  // Irrespective of whether an error is returned, the session will be deactivated by iOS. Official
+  // docs that explain the reasons for an error:
+  // https://developer.apple.com/documentation/avfaudio/avaudiosession/1616627-setactive.
+  return [[AVAudioSession sharedInstance]
+        setActive:NO
+      withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation
+            error:error];
 }
 
 - (nullable MPPFloatBuffer *)readAtOffset:(NSUInteger)offset
                                withLength:(NSUInteger)length
                                     error:(NSError **)error {
+  if (!_audioEngine.isRunning) {
+    [MPPCommonUtils
+        createCustomError:error
+                 withCode:MPPTasksErrorCodeAudioRecordNotTappingMicError
+              description:
+                  @"Recording of microphone samples is not in progress. You may not have started a "
+                  @"recording or OS may have stopped the engine due to an interrupt, route change "
+                  @"etc. You can start recording microphone samples using `startRecording()`."];
+    return nil;
+  }
+
+  return [self internalReadAtOffset:offset withLength:length error:error];
+}
+
+- (nullable MPPFloatBuffer *)internalReadAtOffset:(NSUInteger)offset
+                                       withLength:(NSUInteger)length
+                                            error:(NSError **)error {
   __block MPPFloatBuffer *bufferToReturn = nil;
   __block NSError *readError = nil;
 
@@ -165,7 +200,31 @@ static const NSUInteger kMaximumChannelCount = 2;
   return bufferToReturn;
 }
 
-- (void)startTappingMicrophoneWithError:(NSError **)error {
+- (BOOL)startTappingMicrophoneWithError:(NSError **)error {
+  // Stopping and resetting the audio engine to handle the case where user maybe resuming the audio
+  // engine stopped by the OS due to an interrupt (eg:, a phone call) or a route change. In such
+  // cases, if a new tap is installed without removing an existing tap the app will crash.
+  [self stopAndResetAudioEngine];
+
+  // For tapping the microphone, `AVAudioSession`'s `category` must be set and it must be
+  // activated. This audio record is not allowed to tap the microphone with any custom option
+  // including
+  // `.allowBluetooth`. This disallows  microphone route changes in most scenarios to ensure that
+  // the recording happens through the device microphone. If users need more control over the
+  // recording devices or OS interruptions, native `AVAudioEngine` can be used. `category` is set to
+  // `AVAudioSessionCategoryPlayAndRecord` to ensure that audio playback can be configured in the
+  // app while an audio record is running.
+  // TODO: Investigate safe starting of `AVAudioEngine` without any side effects to enable this
+  // class ot accept custom category, mode and options.
+  if (!([[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayAndRecord
+                                               error:error] &&
+        [[AVAudioSession sharedInstance]
+              setActive:YES
+            withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation
+                  error:error])) {
+    return NO;
+  }
+
   AVAudioNode *inputNode = [_audioEngine inputNode];
   AVAudioFormat *format = [inputNode outputFormatForBus:0];
 
@@ -209,6 +268,15 @@ static const NSUInteger kMaximumChannelCount = 2;
 
   [_audioEngine prepare];
   [_audioEngine startAndReturnError:error];
+
+  return YES;
+}
+
+// To stop engine internally without deactivating `AVAudioSession.sharedInstance()`.
+- (void)stopAndResetAudioEngine {
+  [[_audioEngine inputNode] removeTapOnBus:0];
+  [_audioEngine stop];
+  [_audioEngine reset];
 }
 
 - (BOOL)loadAudioPCMBuffer:(AVAudioPCMBuffer *)pcmBuffer error:(NSError **)error {

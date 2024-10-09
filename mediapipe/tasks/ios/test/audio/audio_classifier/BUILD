@@ -42,7 +42,6 @@ objc_library(
     ],
     deps = [
         "//mediapipe/tasks/ios/audio/audio_classifier:MPPAudioClassifier",
-        "//mediapipe/tasks/ios/audio/core:MPPAudioData",
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
         "//mediapipe/tasks/ios/test/audio/core/utils:AVAudioFileTestUtils",

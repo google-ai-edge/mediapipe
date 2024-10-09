@@ -48,6 +48,10 @@ NS_ASSUME_NONNULL_BEGIN
 /** Clears the `FloatBuffer` by setting all elements to zero */
 - (void)clear;
 
+- (instancetype)init NS_UNAVAILABLE;
+
++ (instancetype)new NS_UNAVAILABLE;
+
 @end
 
 NS_ASSUME_NONNULL_END
