@@ -134,8 +134,12 @@ TEST(ConcatenateNormalizedLandmarkListCalculatorTest,
   NormalizedLandmarkList input_2 =
       GenerateLandmarks(/*landmarks_size=*/2, /*value_multiplier=*/2);
   std::vector<NormalizedLandmarkList> inputs = {input_0, input_1, input_2};
-  { AddInputLandmarkLists(inputs, /*timestamp=*/1, &runner); }
-  { AddInputLandmarkLists(inputs, /*timestamp=*/2, &runner); }
+  {
+    AddInputLandmarkLists(inputs, /*timestamp=*/1, &runner);
+  }
+  {
+    AddInputLandmarkLists(inputs, /*timestamp=*/2, &runner);
+  }
   MP_ASSERT_OK(runner.Run());
 
   const std::vector<Packet>& outputs = runner.Outputs().Index(0).packets;

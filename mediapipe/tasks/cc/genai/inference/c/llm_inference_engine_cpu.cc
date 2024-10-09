@@ -212,14 +212,10 @@ LlmInferenceEngine_CreateEngine_Helper(const LlmModelSettings* model_settings) {
   auto runtime_configs =
       std::make_unique<mediapipe::tasks::genai::xnn_utils::RuntimeConfigs>();
 
-  MP_ASSIGN_OR_RETURN(
-      auto builder,
-      mediapipe::tasks::genai::xnn_utils::CreateLlmBuilder(
-          llm_params, std::move(runtime_configs), nullptr, *model_type));
-
   MP_ASSIGN_OR_RETURN(auto llm,
-                      mediapipe::tasks::genai::xnn_utils::Llm::CreateLlm(
-                          std::move(weight_loader), std::move(builder)));
+                      mediapipe::tasks::genai::xnn_utils::CreateLlm(
+                          llm_params, std::move(runtime_configs),
+                          std::move(weight_loader), nullptr, *model_type));
 
   auto tokenizer = std::make_unique<sentencepiece::SentencePieceProcessor>();
   MP_RETURN_IF_ERROR(tokenizer->LoadFromSerializedProto(spm_model_content));

@@ -20,14 +20,16 @@ namespace mediapipe {
 
 TEST(StatusBuilder, OkStatusLvalue) {
   StatusBuilder builder(absl::OkStatus(), MEDIAPIPE_LOC);
-  builder << "annotated message1 " << "annotated message2";
+  builder << "annotated message1 "
+          << "annotated message2";
   absl::Status status = builder;
   ASSERT_EQ(status, absl::OkStatus());
 }
 
 TEST(StatusBuilder, OkStatusRvalue) {
   absl::Status status = StatusBuilder(absl::OkStatus(), MEDIAPIPE_LOC)
-                        << "annotated message1 " << "annotated message2";
+                        << "annotated message1 "
+                        << "annotated message2";
   ASSERT_EQ(status, absl::OkStatus());
 }
 
@@ -35,7 +37,8 @@ TEST(StatusBuilder, AnnotateMode) {
   absl::Status status = StatusBuilder(absl::Status(absl::StatusCode::kNotFound,
                                                    "original message"),
                                       MEDIAPIPE_LOC)
-                        << "annotated message1 " << "annotated message2";
+                        << "annotated message1 "
+                        << "annotated message2";
   ASSERT_FALSE(status.ok());
   EXPECT_EQ(status.code(), absl::StatusCode::kNotFound);
   EXPECT_EQ(status.message(),
@@ -46,13 +49,15 @@ TEST(StatusBuilder, PrependModeLvalue) {
   StatusBuilder builder(
       absl::Status(absl::StatusCode::kInvalidArgument, "original message"),
       MEDIAPIPE_LOC);
-  builder.SetPrepend() << "prepended message1 " << "prepended message2 ";
+  builder.SetPrepend() << "prepended message1 "
+                       << "prepended message2 ";
   absl::Status status =
       StatusBuilder(
           absl::Status(absl::StatusCode::kInvalidArgument, "original message"),
           MEDIAPIPE_LOC)
           .SetPrepend()
-      << "prepended message1 " << "prepended message2 ";
+      << "prepended message1 "
+      << "prepended message2 ";
   ASSERT_FALSE(status.ok());
   EXPECT_EQ(status.code(), absl::StatusCode::kInvalidArgument);
   EXPECT_EQ(status.message(),
@@ -65,7 +70,8 @@ TEST(StatusBuilder, PrependModeRvalue) {
           absl::Status(absl::StatusCode::kInvalidArgument, "original message"),
           MEDIAPIPE_LOC)
           .SetPrepend()
-      << "prepended message1 " << "prepended message2 ";
+      << "prepended message1 "
+      << "prepended message2 ";
   ASSERT_FALSE(status.ok());
   EXPECT_EQ(status.code(), absl::StatusCode::kInvalidArgument);
   EXPECT_EQ(status.message(),
@@ -76,7 +82,8 @@ TEST(StatusBuilder, AppendModeLvalue) {
   StatusBuilder builder(
       absl::Status(absl::StatusCode::kInternal, "original message"),
       MEDIAPIPE_LOC);
-  builder.SetAppend() << " extra message1" << " extra message2";
+  builder.SetAppend() << " extra message1"
+                      << " extra message2";
   absl::Status status = builder;
   ASSERT_FALSE(status.ok());
   EXPECT_EQ(status.code(), absl::StatusCode::kInternal);
@@ -88,7 +95,8 @@ TEST(StatusBuilder, AppendModeRvalue) {
                                                    "original message"),
                                       MEDIAPIPE_LOC)
                             .SetAppend()
-                        << " extra message1" << " extra message2";
+                        << " extra message1"
+                        << " extra message2";
   ASSERT_FALSE(status.ok());
   EXPECT_EQ(status.code(), absl::StatusCode::kInternal);
   EXPECT_EQ(status.message(), "original message extra message1 extra message2");

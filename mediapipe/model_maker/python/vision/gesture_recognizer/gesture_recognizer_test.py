@@ -18,7 +18,6 @@ import tempfile
 from unittest import mock as unittest_mock
 import zipfile
 
-import mock
 import tensorflow as tf
 
 from mediapipe.model_maker.python.core.utils import test_util
@@ -170,7 +169,7 @@ class GestureRecognizerTest(tf.test.TestCase):
     gesture_recognizer_options = gesture_recognizer.GestureRecognizerOptions(
         model_options=mo, hparams=hparams)
     mock_stdout = io.StringIO()
-    with mock.patch('sys.stdout', mock_stdout):
+    with unittest_mock.patch('sys.stdout', mock_stdout):
       model = gesture_recognizer.GestureRecognizer.create(
           train_data=self._train_data,
           validation_data=self._validation_data,

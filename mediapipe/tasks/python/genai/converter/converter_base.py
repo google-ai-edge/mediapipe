@@ -23,7 +23,7 @@ import numpy as np
 class QuantizationAction:
   """Container of the tensor values and its corresponding quantization settings.
 
-  The contrainer is responsible for hosting all of the information that is
+  The container is responsible for hosting all of the information that is
   required to execute the weight-only quantization.
 
   Attributes:

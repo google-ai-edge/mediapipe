@@ -344,6 +344,8 @@ export class LlmInference extends TaskRunner {
       requiredLimits: {
         'maxStorageBufferBindingSize': MAX_STORAGE_BUFFER_BINDING_SIZE_FOR_LLM,
         'maxBufferSize': maxBufferSize,
+        'maxStorageBuffersPerShaderStage':
+          adapter.limits.maxStorageBuffersPerShaderStage,
       },
     };
 

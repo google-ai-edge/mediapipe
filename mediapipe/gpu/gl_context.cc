@@ -656,10 +656,10 @@ class GlSyncWrapper {
 
   void WaitOnGpu() {
     if (!sync_) return;
-      // WebGL2 specifies a waitSync call, but since cross-context
-      // synchronization is not supported, it's actually a no-op. Firefox prints
-      // a warning when it's called, so let's just skip the call. See
-      // b/184637485 for details.
+    // WebGL2 specifies a waitSync call, but since cross-context
+    // synchronization is not supported, it's actually a no-op. Firefox prints
+    // a warning when it's called, so let's just skip the call. See
+    // b/184637485 for details.
 #ifndef __EMSCRIPTEN__
 
     if (!GlContext::IsAnyContextCurrent()) {

@@ -89,7 +89,7 @@ export class RagPipeline {
         // We currently only use a single .wasm file and a single .data file (for
         // the tasks that have to load assets). We need to revisit how we
         // initialize the file locator if we ever need to differentiate between
-        // diffferent files.
+        // different files.
         if (file.endsWith('.wasm')) {
           return wasmFileset.wasmBinaryPath.toString();
         } else if (wasmFileset.assetBinaryPath && file.endsWith('.data')) {

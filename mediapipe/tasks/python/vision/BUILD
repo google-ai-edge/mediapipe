@@ -194,6 +194,7 @@ py_library(
         "//mediapipe/tasks/python/vision/core:base_vision_task_api",
         "//mediapipe/tasks/python/vision/core:image_processing_options",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
+        "@mediapipe_pip_deps_numpy//:pkg",
     ],
 )
 
@@ -239,6 +240,7 @@ py_library(
         "//mediapipe/tasks/python/vision/core:base_vision_task_api",
         "//mediapipe/tasks/python/vision/core:image_processing_options",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
+        "@mediapipe_pip_deps_numpy//:pkg",
     ],
 )
 

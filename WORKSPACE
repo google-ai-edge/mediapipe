@@ -66,10 +66,22 @@ http_archive(
     url = "https://github.com/bazelbuild/rules_python/releases/download/0.26.0/rules_python-0.26.0.tar.gz",
 )
 
-load("@rules_python//python:repositories.bzl", "py_repositories", "python_register_toolchains")
-python_register_toolchains("python", ignore_root_user_error = True, python_version = "3.10")
-
+load("@rules_python//python:repositories.bzl", "py_repositories")
 py_repositories()
+
+load("@rules_python//python:pip.bzl", "pip_parse")
+pip_parse(
+    name = "mediapipe_pip_deps",
+    requirements_lock = "@//:requirements_lock.txt",
+)
+load("@mediapipe_pip_deps//:requirements.bzl", mp_install_deps = "install_deps")
+mp_install_deps()
+pip_parse(
+    name = "model_maker_pip_deps",
+    requirements_lock = "@//mediapipe/model_maker:requirements_lock.txt",
+)
+load("@model_maker_pip_deps//:requirements.bzl", mm_install_deps = "install_deps")
+mm_install_deps()
 
 http_archive(
     name = "rules_android_ndk",
@@ -395,8 +407,8 @@ http_archive(
 http_archive(
     name = "opencv",
     build_file_content = all_content,
-    strip_prefix = "opencv-3.4.10",
-    urls = ["https://github.com/opencv/opencv/archive/3.4.10.tar.gz"],
+    strip_prefix = "opencv-3.4.11",
+    urls = ["https://github.com/opencv/opencv/archive/3.4.11.tar.gz"],
 )
 
 new_local_repository(
@@ -738,4 +750,11 @@ http_archive(
     sha256 = "6bea5877b1541d353bd77bdfbdb2696333ae5ed8f9e8cc22df657192218cad91",
     urls = ["https://github.com/nlohmann/json/releases/download/v3.9.1/include.zip"],
     build_file = "@//third_party:nlohmann.BUILD",
+)
+
+http_archive(
+    name = "io_abseil_py",
+    sha256 = "0fb3a4916a157eb48124ef309231cecdfdd96ff54adf1660b39c0d4a9790a2c0",
+    strip_prefix = "abseil-py-1.4.0",
+    urls = ["https://github.com/abseil/abseil-py/archive/refs/tags/v1.4.0.tar.gz"],
 )

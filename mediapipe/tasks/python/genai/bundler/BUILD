@@ -33,5 +33,8 @@ py_test(
     name = "llm_bundler_test",
     srcs = ["llm_bundler_test.py"],
     srcs_version = "PY3",
-    deps = [":llm_bundler"],
+    deps = [
+        ":llm_bundler",
+        "@mediapipe_pip_deps_absl_py//:pkg",
+    ],
 )
