@@ -430,7 +430,7 @@ cc_library_with_tflite(
     hdrs = ["inference_calculator.h"],
     local_defines = select({
         ":force_cpu_inference": ["MEDIAPIPE_FORCE_CPU_INFERENCE=1"],
-        "//conditions:default": [],
+        "//conditions:default": ["MEDIAPIPE_FORCE_CPU_INFERENCE=0"],
     }),
     tflite_deps = [
         ":inference_runner",
@@ -782,6 +782,10 @@ cc_library(
     srcs = [
         "inference_calculator_cpu.cc",
     ],
+    local_defines = select({
+        ":force_cpu_inference": ["MEDIAPIPE_FORCE_CPU_INFERENCE=1"],
+        "//conditions:default": ["MEDIAPIPE_FORCE_CPU_INFERENCE=0"],
+    }),
     deps = [
         ":inference_calculator_interface",
         ":inference_calculator_utils",

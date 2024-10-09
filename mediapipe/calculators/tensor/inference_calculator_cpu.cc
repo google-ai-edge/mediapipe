@@ -146,7 +146,7 @@ InferenceCalculatorCpuImpl::MaybeCreateDelegate(CalculatorContext* cc) {
   }
 #endif  // MEDIAPIPE_ANDROID
 
-#if defined(__EMSCRIPTEN__)
+#if defined(__EMSCRIPTEN__) || MEDIAPIPE_FORCE_CPU_INFERENCE
   const bool use_xnnpack = true;
 #else
   const bool use_xnnpack = opts_has_delegate && opts_delegate.has_xnnpack();

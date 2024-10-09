@@ -51,7 +51,7 @@ class InferenceCalculatorSelectorImpl
             subgraph_node);
     std::vector<absl::string_view> impls;
 
-#if !defined(MEDIAPIPE_FORCE_CPU_INFERENCE) || !MEDIAPIPE_FORCE_CPU_INFERENCE
+#if !MEDIAPIPE_FORCE_CPU_INFERENCE
 
     const bool should_use_gpu =
         !options.has_delegate() ||  // Use GPU delegate if not specified
@@ -73,8 +73,7 @@ class InferenceCalculatorSelectorImpl
         impls.emplace_back("GlAdvanced");
       }
     }
-#endif  // !defined(MEDIAPIPE_FORCE_CPU_INFERENCE) ||
-        // !MEDIAPIPE_FORCE_CPU_INFERENCE
+#endif  // !MEDIAPIPE_FORCE_CPU_INFERENCE
     impls.emplace_back("Cpu");
     impls.emplace_back("Xnnpack");
     std::vector<std::string> missing_impls;

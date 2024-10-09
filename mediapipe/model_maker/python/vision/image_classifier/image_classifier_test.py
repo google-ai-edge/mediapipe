@@ -128,7 +128,9 @@ class ImageClassifierTest(tf.test.TestCase, parameterized.TestCase):
                                         'metadata.json')
     output_tflite_file = os.path.join(options.hparams.export_dir,
                                       'model.tflite')
-    expected_metadata_file = test_utils.get_test_data_path('metadata.json')
+    expected_metadata_file = test_utils.get_test_data_path(
+        'image_classifier_metadata.json'
+    )
 
     self.assertTrue(os.path.exists(output_tflite_file))
     self.assertGreater(os.path.getsize(output_tflite_file), 0)
