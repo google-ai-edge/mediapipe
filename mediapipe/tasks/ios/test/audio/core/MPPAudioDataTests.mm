@@ -95,11 +95,7 @@ NS_ASSUME_NONNULL_BEGIN
   MPPFloatBuffer *audioRecordBuffer = [audioRecord internalReadAtOffset:0
                                                              withLength:audioRecord.bufferLength
                                                                   error:error];
-
-  // if (!audioRecordBuffer) {
-  //   return NO;
-  // }
-
+                                                                  
   return [self loadRingBufferWithAudioRecordBuffer:audioRecordBuffer error:error];
 }
 @end
