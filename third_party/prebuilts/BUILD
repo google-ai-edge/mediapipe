@@ -13,6 +13,7 @@ mediapipe_files(srcs = [
     "libopencv_core.3.4.darwin_arm64.a",
     "libopencv_imgproc.3.4.darwin.a",
     "libopencv_imgproc.3.4.darwin_arm64.a",
+    "opencv2.xcframework.zip",
 ])
 
 cc_import(
