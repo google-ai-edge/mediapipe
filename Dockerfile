@@ -41,6 +41,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libopencv-video-dev \
         libopencv-calib3d-dev \
         libopencv-features2d-dev \
+        libopencv-contrib-dev \
         software-properties-common && \
     apt-get update && apt-get install -y openjdk-8-jdk && \
     apt-get install -y mesa-common-dev libegl1-mesa-dev libgles2-mesa-dev && \
