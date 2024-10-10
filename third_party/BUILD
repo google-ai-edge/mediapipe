@@ -20,7 +20,13 @@ licenses(["notice"])  # Apache License 2.0
 
 package(default_visibility = ["//visibility:public"])
 
-exports_files(["LICENSE"])
+exports_files([
+    "LICENSE",
+    "requirements_lock.txt",
+    "requirements_lock_3_10.txt",
+    "requirements_lock_3_11.txt",
+    "requirements_lock_3_12.txt",
+])
 
 cc_library(
     name = "glog",
