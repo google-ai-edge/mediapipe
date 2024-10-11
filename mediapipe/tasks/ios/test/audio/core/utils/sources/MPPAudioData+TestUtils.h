@@ -14,6 +14,7 @@
 
 #import <Foundation/Foundation.h>
 #import "mediapipe/tasks/ios/audio/core/sources/MPPAudioData.h"
+#import "mediapipe/tasks/ios/test/utils/sources/MPPFileInfo.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -33,6 +34,14 @@ NS_ASSUME_NONNULL_BEGIN
                           sampleRate:(double)sampleRate
                          sampleCount:(NSUInteger)sampleCount;
 
+/**
+ * Creats an `MPPAudioData` and loads it with samples from an audio file specified by `fileInfo`.
+ *
+ * @param fileInfo `MPPFileInfo` with name and type of the audio file stored in the bundle.
+ *
+ * @return The `MPPAudioData` object loaded with samples from the input audio file.
+ */
+- (instancetype)initWithFileInfo:(MPPFileInfo *)fileInfo;
 @end
 
 NS_ASSUME_NONNULL_END

@@ -353,7 +353,7 @@ static NSString *const kAudioStreamTestsDictExpectationKey = @"expectation";
       [MPPAudioClassifierTests audioClassifierWithOptions:options];
 
   MPPAudioData *audioClip =
-      [MPPAudioClassifierTests audioDataFromAudioFileWithInfo:kSpeech16KHzMonoFileInfo];
+     [[MPPAudioData alloc] initWithFileInfo:kSpeech16KHzMonoFileInfo];
   NSError *error;
   XCTAssertFalse([audioClassifier classifyAsyncAudioBlock:audioClip
                                   timestampInMilliseconds:0
@@ -381,7 +381,7 @@ static NSString *const kAudioStreamTestsDictExpectationKey = @"expectation";
       [MPPAudioClassifierTests audioClassifierWithOptions:options];
 
   MPPAudioData *audioClip =
-      [MPPAudioClassifierTests audioDataFromAudioFileWithInfo:kSpeech16KHzMonoFileInfo];
+      [[MPPAudioData alloc] initWithFileInfo:kSpeech16KHzMonoFileInfo];
 
   NSError *error;
   XCTAssertFalse([audioClassifier classifyAudioClip:audioClip error:&error]);
@@ -517,38 +517,6 @@ static NSString *const kAudioStreamTestsDictExpectationKey = @"expectation";
 
 #pragma mark Audio Data Initializers
 
-+ (MPPAudioData *)audioDataFromAudioFileWithInfo:(MPPFileInfo *)fileInfo {
-  // Load the samples from the audio file in `Float32` interleaved format to
-  // an `AVAudioPCMBuffer`.
-  AVAudioPCMBuffer *buffer =
-      [AVAudioPCMBuffer interleavedFloat32BufferFromAudioFileWithInfo:fileInfo];
-
-  // Create a float buffer from the `floatChannelData` of `AVAudioPCMBuffer`. This float buffer will
-  // be used to load the audio data.
-  MPPFloatBuffer *bufferData = [[MPPFloatBuffer alloc] initWithData:buffer.floatChannelData[0]
-                                                             length:buffer.frameLength];
-
-  MPPAudioData *audioData = [[MPPAudioData alloc] initWithChannelCount:buffer.format.channelCount
-                                                            sampleRate:buffer.format.sampleRate
-                                                           sampleCount:buffer.frameLength];
-
-  // Load all the samples in the audio file to the newly created audio data.
-  [audioData loadBuffer:bufferData offset:0 length:bufferData.length error:nil];
-  return audioData;
-}
-
-+ (MPPAudioData *)audioDataWithChannelCount:(NSUInteger)channelCount
-                                 sampleRate:(double)sampleRate
-                                sampleCount:(NSUInteger)sampleCount {
-  MPPAudioDataFormat *audioDataFormat =
-      [[MPPAudioDataFormat alloc] initWithChannelCount:channelCount sampleRate:sampleRate];
-
-  MPPAudioData *audioData = [[MPPAudioData alloc] initWithFormat:audioDataFormat
-                                                     sampleCount:sampleCount];
-
-  return audioData;
-}
-
 + (NSArray<MPPTimestampedAudioData *> *)streamedAudioDataListforYamnet {
   NSArray<MPPTimestampedAudioData *> *streamedAudioDataList =
       [AVAudioFile streamedAudioBlocksFromAudioFileWithInfo:kSpeech16KHzMonoFileInfo
@@ -656,7 +624,7 @@ static NSString *const kAudioStreamTestsDictExpectationKey = @"expectation";
 
 + (MPPAudioClassifierResult *)classifyAudioClipWithFileInfo:(MPPFileInfo *)fileInfo
                                        usingAudioClassifier:(MPPAudioClassifier *)audioClassifier {
-  MPPAudioData *audioData = [MPPAudioClassifierTests audioDataFromAudioFileWithInfo:fileInfo];
+  MPPAudioData *audioData = [[MPPAudioData alloc] initWithFileInfo:fileInfo];
   MPPAudioClassifierResult *result = [audioClassifier classifyAudioClip:audioData error:nil];
   XCTAssertNotNil(result);
 
