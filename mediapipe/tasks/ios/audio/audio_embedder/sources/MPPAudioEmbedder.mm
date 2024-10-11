@@ -72,7 +72,7 @@ static const int kMicrosecondsPerMillisecond = 1000;
                                              kTimestampedEmbeddingsOutStreamName]
                 ]
                   taskOptions:options
-           enableFlowLimiting:options.runningMode == MPPAudioRunningModeAudioStream
+           enableFlowLimiting:NO
                         error:error];
 
     if (!taskInfo) {
@@ -152,6 +152,10 @@ static const int kMicrosecondsPerMillisecond = 1000;
                                                     sampleRate:sampleRate
                                                   bufferLength:bufferLength
                                                          error:error];
+}
+
+- (BOOL)closeWithError:(NSError **)error {
+  return [_audioTaskRunner closeWithError:error];
 }
 
 #pragma mark - Private
