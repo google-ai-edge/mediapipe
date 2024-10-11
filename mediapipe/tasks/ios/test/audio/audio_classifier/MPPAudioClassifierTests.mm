@@ -352,8 +352,7 @@ static NSString *const kAudioStreamTestsDictExpectationKey = @"expectation";
   MPPAudioClassifier *audioClassifier =
       [MPPAudioClassifierTests audioClassifierWithOptions:options];
 
-  MPPAudioData *audioClip =
-     [[MPPAudioData alloc] initWithFileInfo:kSpeech16KHzMonoFileInfo];
+  MPPAudioData *audioClip = [[MPPAudioData alloc] initWithFileInfo:kSpeech16KHzMonoFileInfo];
   NSError *error;
   XCTAssertFalse([audioClassifier classifyAsyncAudioBlock:audioClip
                                   timestampInMilliseconds:0
@@ -380,8 +379,7 @@ static NSString *const kAudioStreamTestsDictExpectationKey = @"expectation";
   MPPAudioClassifier *audioClassifier =
       [MPPAudioClassifierTests audioClassifierWithOptions:options];
 
-  MPPAudioData *audioClip =
-      [[MPPAudioData alloc] initWithFileInfo:kSpeech16KHzMonoFileInfo];
+  MPPAudioData *audioClip = [[MPPAudioData alloc] initWithFileInfo:kSpeech16KHzMonoFileInfo];
 
   NSError *error;
   XCTAssertFalse([audioClassifier classifyAudioClip:audioClip error:&error]);
@@ -442,9 +440,9 @@ static NSString *const kAudioStreamTestsDictExpectationKey = @"expectation";
 
 - (void)testClassifyWithAudioStreamModeSucceeds {
   [self classifyUsingYamnetAsyncAudioFileWithInfo:kSpeech16KHzMonoFileInfo
-                                                 info:&_16kHZAudioStreamSucceedsTestDict];
+                                             info:&_16kHZAudioStreamSucceedsTestDict];
   [self classifyUsingYamnetAsyncAudioFileWithInfo:kSpeech48KHzMonoFileInfo
-                                                 info:&_48kHZAudioStreamSucceedsTestDict];
+                                             info:&_48kHZAudioStreamSucceedsTestDict];
 }
 
 - (void)audioClassifier:(MPPAudioClassifier *)audioClassifier
@@ -484,8 +482,7 @@ static NSString *const kAudioStreamTestsDictExpectationKey = @"expectation";
 // info is strong here since address of global variables will be passed to this function. By default
 // `NSDictionary **` will be `NSDictionary * __autoreleasing *.
 - (void)classifyUsingYamnetAsyncAudioFileWithInfo:(MPPFileInfo *)audioFileInfo
-                                                 info:(NSDictionary<NSString *, id> *__strong *)
-                                                          info {
+                                             info:(NSDictionary<NSString *, id> *__strong *)info {
   MPPAudioClassifier *audioClassifier =
       [self audioClassifierInStreamModeWithModelFileInfo:kYamnetModelFileInfo];
 
@@ -532,7 +529,7 @@ static NSString *const kAudioStreamTestsDictExpectationKey = @"expectation";
 
 - (MPPAudioClassifier *)audioClassifierInStreamModeWithModelFileInfo:(MPPFileInfo *)fileInfo {
   MPPAudioClassifierOptions *options =
-      [MPPAudioClassifierTests audioClassifierOptionsWithModelFileInfo:kYamnetModelFileInfo];
+      [MPPAudioClassifierTests audioClassifierOptionsWithModelFileInfo:fileInfo];
   options.runningMode = MPPAudioRunningModeAudioStream;
   options.audioClassifierStreamDelegate = self;
 

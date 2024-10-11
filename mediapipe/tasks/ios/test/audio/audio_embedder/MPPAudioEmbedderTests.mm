@@ -48,7 +48,7 @@ static NSString *const kAudioStreamTestsDictExpectationKey = @"expectation";
 
 #define AssertEmbeddingResultHasOneEmbedding(embeddingResult) \
   XCTAssertNotNil(embeddingResult);                           \
-  \                                                          
+  \                                                         
   XCTAssertEqual(embeddingResult.embeddings.count, 1);
 
 #define AssertEmbeddingHasCorrectTypeAndDimension(embedding, quantize, expectedLength) \
@@ -94,21 +94,21 @@ static NSString *const kAudioStreamTestsDictExpectationKey = @"expectation";
   XCTAssertNotNil(audioEmbedder);
 
   [MPPAudioEmbedderTests
-      assertResultsOfEmbedAudioClipWithFileInfo:kSpeech16KHzMonoFileInfo
-                             usingAudioEmbedder:audioEmbedder
-                                    isQuantized:NO
-                  expectedEmbeddingResultsCount:kExpectedEmbeddingResultsCountForSpeechFiles];
+      assertResultsOfNonQuantizedEmbedAudioClipWithFileInfo:kSpeech16KHzMonoFileInfo
+                                         usingAudioEmbedder:audioEmbedder
+                              expectedEmbeddingResultsCount:
+                                  kExpectedEmbeddingResultsCountForSpeechFiles];
   [MPPAudioEmbedderTests
-      assertResultsOfEmbedAudioClipWithFileInfo:kSpeech48KHzMonoFileInfo
-                             usingAudioEmbedder:audioEmbedder
-                                    isQuantized:NO
-                  expectedEmbeddingResultsCount:kExpectedEmbeddingResultsCountForSpeechFiles];
+      assertResultsOfNonQuantizedEmbedAudioClipWithFileInfo:kSpeech48KHzMonoFileInfo
+                                         usingAudioEmbedder:audioEmbedder
+                              expectedEmbeddingResultsCount:
+                                  kExpectedEmbeddingResultsCountForSpeechFiles];
 
   const NSInteger expectedEmbeddingResultCount = 1;
-  [MPPAudioEmbedderTests assertResultsOfEmbedAudioClipWithFileInfo:kTwoHeads16KHzMonoFileInfo
-                                                usingAudioEmbedder:audioEmbedder
-                                                       isQuantized:NO
-                                     expectedEmbeddingResultsCount:expectedEmbeddingResultCount];
+  [MPPAudioEmbedderTests
+      assertResultsOfNonQuantizedEmbedAudioClipWithFileInfo:kTwoHeads16KHzMonoFileInfo
+                                         usingAudioEmbedder:audioEmbedder
+                              expectedEmbeddingResultsCount:expectedEmbeddingResultCount];
 }
 
 - (void)testEmbedWithOptionsSucceeds {
@@ -118,15 +118,15 @@ static NSString *const kAudioStreamTestsDictExpectationKey = @"expectation";
   MPPAudioEmbedder *audioEmbedder = [MPPAudioEmbedderTests audioEmbedderWithOptions:options];
 
   [MPPAudioEmbedderTests
-      assertResultsOfEmbedAudioClipWithFileInfo:kSpeech16KHzMonoFileInfo
-                             usingAudioEmbedder:audioEmbedder
-                                    isQuantized:options.quantize
-                  expectedEmbeddingResultsCount:kExpectedEmbeddingResultsCountForSpeechFiles];
+      assertResultsOfNonQuantizedEmbedAudioClipWithFileInfo:kSpeech16KHzMonoFileInfo
+                                         usingAudioEmbedder:audioEmbedder
+                              expectedEmbeddingResultsCount:
+                                  kExpectedEmbeddingResultsCountForSpeechFiles];
   [MPPAudioEmbedderTests
-      assertResultsOfEmbedAudioClipWithFileInfo:kSpeech48KHzMonoFileInfo
-                             usingAudioEmbedder:audioEmbedder
-                                    isQuantized:options.quantize
-                  expectedEmbeddingResultsCount:kExpectedEmbeddingResultsCountForSpeechFiles];
+      assertResultsOfNonQuantizedEmbedAudioClipWithFileInfo:kSpeech48KHzMonoFileInfo
+                                         usingAudioEmbedder:audioEmbedder
+                              expectedEmbeddingResultsCount:
+                                  kExpectedEmbeddingResultsCountForSpeechFiles];
 }
 
 - (void)testEmbedWithQuantizationSucceeds {
@@ -155,15 +155,15 @@ static NSString *const kAudioStreamTestsDictExpectationKey = @"expectation";
   MPPAudioEmbedder *audioEmbedder = [MPPAudioEmbedderTests audioEmbedderWithOptions:options];
 
   [MPPAudioEmbedderTests
-      assertResultsOfEmbedAudioClipWithFileInfo:kSpeech16KHzMonoFileInfo
-                             usingAudioEmbedder:audioEmbedder
-                                    isQuantized:options.quantize
-                  expectedEmbeddingResultsCount:kExpectedEmbeddingResultsCountForSpeechFiles];
+      assertResultsOfNonQuantizedEmbedAudioClipWithFileInfo:kSpeech16KHzMonoFileInfo
+                                         usingAudioEmbedder:audioEmbedder
+                              expectedEmbeddingResultsCount:
+                                  kExpectedEmbeddingResultsCountForSpeechFiles];
   [MPPAudioEmbedderTests
-      assertResultsOfEmbedAudioClipWithFileInfo:kSpeech48KHzMonoFileInfo
-                             usingAudioEmbedder:audioEmbedder
-                                    isQuantized:options.quantize
-                  expectedEmbeddingResultsCount:kExpectedEmbeddingResultsCountForSpeechFiles];
+      assertResultsOfNonQuantizedEmbedAudioClipWithFileInfo:kSpeech48KHzMonoFileInfo
+                                         usingAudioEmbedder:audioEmbedder
+                              expectedEmbeddingResultsCount:
+                                  kExpectedEmbeddingResultsCountForSpeechFiles];
 }
 
 - (void)testEmbedWithSilenceSucceeds {
@@ -180,11 +180,10 @@ static NSString *const kAudioStreamTestsDictExpectationKey = @"expectation";
   MPPAudioEmbedderResult *result = [audioEmbedder embedAudioClip:audioData error:nil];
   XCTAssertNotNil(result);
 
-  const NSInteger expectedClassificationResultsCount = 1;
-
+  const NSInteger expectedEmbedderResultsCount = 1;
   [MPPAudioEmbedderTests assertAudioEmbedderResult:result
                                        isQuantized:options.quantize
-                  hasExpectedEmbeddingResultsCount:expectedClassificationResultsCount
+                     expectedEmbeddingResultsCount:expectedEmbedderResultsCount
                            expectedEmbeddingLength:kExpectedEmbeddingLength];
 }
 
@@ -225,6 +224,7 @@ static NSString *const kAudioStreamTestsDictExpectationKey = @"expectation";
 }
 
 #pragma mark Running mode tests
+
 - (void)testCreateAudioEmbedderFailsWithDelegateInAudioClipsMode {
   MPPAudioEmbedderOptions *options =
       [MPPAudioEmbedderTests audioEmbedderOptionsWithModelFileInfo:kYamnetModelFileInfo];
@@ -337,26 +337,13 @@ static NSString *const kAudioStreamTestsDictExpectationKey = @"expectation";
   AssertEqualErrors(error, expectedError);
 }
 
-#pragma mark MPPAudioEmbedderrStreamDelegate
+#pragma mark MPPAudioEmbedderStreamDelegate
 
 - (void)audioEmbedder:(MPPAudioEmbedder *)audioEmbedder
     didFinishEmbeddingWithResult:(MPPAudioEmbedderResult *)result
          timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                            error:(NSError *)error {
-  // TODO: Test for results when stream mode inference tests are added.
-}
-
-#pragma mark Audio Data Initializers
-
-+ (NSArray<MPPTimestampedAudioData *> *)streamedAudioDataListforYamnet {
-  NSArray<MPPTimestampedAudioData *> *streamedAudioDataList =
-      [AVAudioFile streamedAudioBlocksFromAudioFileWithInfo:kSpeech16KHzMonoFileInfo
-                                           modelSampleCount:kYamnetSampleCount
-                                            modelSampleRate:kYamnetSampleRate];
-
-  XCTAssertEqual(streamedAudioDataList.count, 5);
-
-  return streamedAudioDataList;
+  // TODO: Add assertion for the result when stream mode inference tests are added.
 }
 
 #pragma mark Audio Embedder Initializers
@@ -399,6 +386,16 @@ static NSString *const kAudioStreamTestsDictExpectationKey = @"expectation";
 
 #pragma mark Results
 
++ (void)assertResultsOfNonQuantizedEmbedAudioClipWithFileInfo:(MPPFileInfo *)fileInfo
+                                           usingAudioEmbedder:(MPPAudioEmbedder *)audioEmbedder
+                                expectedEmbeddingResultsCount:
+                                    (NSInteger)expectedEmbeddingResultsCount {
+  [MPPAudioEmbedderTests assertResultsOfEmbedAudioClipWithFileInfo:fileInfo
+                                                usingAudioEmbedder:audioEmbedder
+                                                       isQuantized:NO
+                                     expectedEmbeddingResultsCount:expectedEmbeddingResultsCount];
+}
+
 + (void)assertResultsOfEmbedAudioClipWithFileInfo:(MPPFileInfo *)fileInfo
                                usingAudioEmbedder:(MPPAudioEmbedder *)audioEmbedder
                                       isQuantized:(BOOL)isQuantized
@@ -408,14 +405,14 @@ static NSString *const kAudioStreamTestsDictExpectationKey = @"expectation";
 
   [MPPAudioEmbedderTests assertAudioEmbedderResult:result
                                        isQuantized:isQuantized
-                  hasExpectedEmbeddingResultsCount:expectedEmbeddingResultsCount
+                     expectedEmbeddingResultsCount:expectedEmbeddingResultsCount
                            expectedEmbeddingLength:kExpectedEmbeddingLength];
 }
 
 + (void)assertAudioEmbedderResult:(MPPAudioEmbedderResult *)result
-                         isQuantized:(BOOL)isQuantized
-    hasExpectedEmbeddingResultsCount:(NSInteger)expectedEmbeddingResultsCount
-             expectedEmbeddingLength:(NSInteger)expectedEmbeddingLength {
+                      isQuantized:(BOOL)isQuantized
+    expectedEmbeddingResultsCount:(NSInteger)expectedEmbeddingResultsCount
+          expectedEmbeddingLength:(NSInteger)expectedEmbeddingLength {
   XCTAssertEqual(result.embeddingResults.count, expectedEmbeddingResultsCount);
   for (MPPEmbeddingResult *embeddingResult in result.embeddingResults) {
     AssertEmbeddingResultHasOneEmbedding(embeddingResult);
