@@ -126,6 +126,22 @@ NS_SWIFT_NAME(AudioEmbedder)
                        error:(NSError **)error
     NS_SWIFT_NAME(classifyAsync(audioBlock:timestampInMilliseconds:));
 
+/**
+ * Closes and cleans up the MediaPipe audio embedder.
+ *
+ * For audio embedders initialized with `.audioStream` mode, ensure that this method is called
+ * after all audio blocks in an audio stream are sent for inference using
+ * `embedAsync(audioBlock:timestampInMilliseconds:)`. Otherwise, the audio embedder will not
+ * process the last audio block (of type `AudioData`) in the stream if its `bufferLength` is shorter
+ * than the model's input length. Once an audio embedder is closed, you cannot send any inference
+ * requests to it. You must create a new instance of `AudioEmbedder` to send any pending requests.
+ * Ensure that you are ready to dispose off the audio embedder before this method is invoked.
+ *
+ * @return Returns successfully if the task was closed. Otherwise, throws an error
+ * indicating the reason for failure.
+ */
+- (BOOL)closeWithError:(NSError **)error;
+
 - (instancetype)init NS_UNAVAILABLE;
 
 /**
