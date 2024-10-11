@@ -48,7 +48,7 @@ objc_library(
     hdrs = ["sources/MPPAudioData+TestUtils.h"],
     deps = [
         ":AVAudioPCMBufferTestUtils",
-        "//mediapipe/tasks/ios/test/utils:MPPFileInfo",
         "//mediapipe/tasks/ios/audio/core:MPPAudioData",
+        "//mediapipe/tasks/ios/test/utils:MPPFileInfo",
     ],
 )
