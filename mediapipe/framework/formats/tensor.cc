@@ -730,7 +730,7 @@ Tensor::CpuWriteView Tensor::GetCpuWriteView(
   TrackAhwbUsage(source_location_hash);
   ABSL_CHECK_OK(AllocateCpuBuffer()) << "AllocateCpuBuffer failed.";
   if (valid_ != 0) {
-    ABSL_LOG(ERROR)
+    ABSL_LOG_FIRST_N(ERROR, 1)
         << "Tensors are designed for single writes. Multiple writes to a "
            "Tensor instance are not supported and may lead to undefined "
            "behavior due to lack of synchronization.";
