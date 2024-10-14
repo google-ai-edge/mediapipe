@@ -191,8 +191,8 @@ static NSString *const kAudioStreamTestsDictExpectationKey = @"expectation";
                                        isQuantized:options.quantize
                      expectedEmbeddingResultsCount:expectedEmbedderResultsCount
                            expectedEmbeddingLength:kExpectedEmbeddingLength];
-  std::array<float, 3> expectedEmbeddingValuesSubset = {2.07613f, 0.392721f, 0.543622f};
-  constexpr float valueDifferenceTolerance = 3e-6;
+  const std::array<float, 3> expectedEmbeddingValuesSubset = {2.07613f, 0.392721f, 0.543622f};
+  const float valueDifferenceTolerance = 3e-6f;
 
   NSArray<NSNumber *> *floatEmbedding = result.embeddingResults[0].embeddings[0].floatEmbedding;
   for (int i; i < expectedEmbeddingValuesSubset.size(); i++) {
