@@ -195,7 +195,7 @@ static NSString *const kAudioStreamTestsDictExpectationKey = @"expectation";
   const float valueDifferenceTolerance = 3e-6f;
 
   NSArray<NSNumber *> *floatEmbedding = result.embeddingResults[0].embeddings[0].floatEmbedding;
-  for (int i; i < expectedEmbeddingValuesSubset.size(); i++) {
+  for (int i = 0; i < expectedEmbeddingValuesSubset.size(); i++) {
     XCTAssertEqualWithAccuracy(expectedEmbeddingValuesSubset[i], floatEmbedding[i].floatValue,
                                valueDifferenceTolerance);
   }
