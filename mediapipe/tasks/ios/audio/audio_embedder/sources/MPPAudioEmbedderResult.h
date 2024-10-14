@@ -43,7 +43,7 @@ NS_SWIFT_NAME(AudioEmbedderResult)
  * @return An instance of `AudioEmbedderResult` initialized with the given array of
  * `EmbeddingResult` objects and timestamp (in milliseconds).
  */
-- (instancetype)initWithEmbeddingResults:(nullable NSArray<MPPEmbeddingResult *> *)embeddingResults
+- (instancetype)initWithEmbeddingResults:(NSArray<MPPEmbeddingResult *> *)embeddingResults
                  timestampInMilliseconds:(NSInteger)timestampInMilliseconds;
 
 - (instancetype)init NS_UNAVAILABLE;

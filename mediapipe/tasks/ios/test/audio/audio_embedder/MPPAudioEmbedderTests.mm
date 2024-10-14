@@ -406,9 +406,6 @@ static NSString *const kAudioStreamTestsDictExpectationKey = @"expectation";
                            error:(NSError *)error {
   // Can safely test for yamnet results before `audioEmbedder` object tests since only yamnet with
   // 16khz and 48khz speech files are used for async tests.
-
-  // Returns a `nil` `expectedResult` for the last timestamp to prevent the result from being
-  // tested.
   [MPPAudioEmbedderTests
       assertNonQuantizedAudioEmbedderYamnetStreamModeResult:result
                                     timestampInMilliseconds:timestampInMilliseconds
@@ -546,7 +543,7 @@ static NSString *const kAudioStreamTestsDictExpectationKey = @"expectation";
 + (void)assertNonQuantizedAudioEmbedderYamnetStreamModeResult:(MPPAudioEmbedderResult *)result
                                       timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                                       expectedEmbeddingLength:(NSInteger)expectedEmbeddingLength {
-  // In stream mode result will only have one embedding result corresponding to the timestamp at
+  // In stream mode, `result` will only have one embedding result corresponding to the timestamp at
   // which it was sent for inference.
   XCTAssertEqual(result.embeddingResults.count, 1);
 
