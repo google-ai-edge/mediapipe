@@ -70,6 +70,7 @@ TENSORFLOW_LITE_C_DEPS = [
 
 CALCULATORS_AND_GRAPHS = [
     "//mediapipe/calculators/core:flow_limiter_calculator",
+    "//mediapipe/tasks/cc/audio/audio_classifier:audio_classifier_graph",
     "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
     "//mediapipe/tasks/cc/text/text_embedder:text_embedder_graph",
     "//mediapipe/tasks/cc/vision/face_detector:face_detector_graph",
@@ -112,6 +113,14 @@ strip_api_include_path_prefix(
         "//mediapipe/tasks/ios/core:sources/MPPBaseOptions.h",
         "//mediapipe/tasks/ios/core:sources/MPPTaskOptions.h",
         "//mediapipe/tasks/ios/core:sources/MPPTaskResult.h",
+        "//mediapipe/tasks/ios/audio/audio_classifier:sources/MPPAudioClassifier.h",
+        "//mediapipe/tasks/ios/audio/audio_classifier:sources/MPPAudioClassifierOptions.h",
+        "//mediapipe/tasks/ios/audio/audio_classifier:sources/MPPAudioClassifierResult.h",
+        "//mediapipe/tasks/ios/audio/core:sources/MPPAudioData.h",
+        "//mediapipe/tasks/ios/audio/core:sources/MPPAudioDataFormat.h",
+        "//mediapipe/tasks/ios/audio/core:sources/MPPAudioRecord.h",
+        "//mediapipe/tasks/ios/audio/core:sources/MPPAudioRunningMode.h",
+        "//mediapipe/tasks/ios/audio/core:sources/MPPFloatBuffer.h",
         "//mediapipe/tasks/ios/text/text_classifier:sources/MPPTextClassifier.h",
         "//mediapipe/tasks/ios/text/text_classifier:sources/MPPTextClassifierOptions.h",
         "//mediapipe/tasks/ios/text/text_classifier:sources/MPPTextClassifierResult.h",
@@ -161,6 +170,44 @@ strip_api_include_path_prefix(
         "//mediapipe/tasks/ios/vision/pose_landmarker:sources/MPPPoseLandmarkerOptions.h",
         "//mediapipe/tasks/ios/vision/pose_landmarker:sources/MPPPoseLandmarkerResult.h",
         "//mediapipe/tasks/cc/genai/inference/c:llm_inference_engine.h",
+    ],
+)
+
+apple_static_xcframework(
+    name = "MediaPipeTasksAudio_framework",
+    # Avoid dependencies of ":MediaPipeTasksCommon_framework" and
+    # ":MediaPipeTaskGraphs_library in order to prevent duplicate symbols error
+    # when the frameworks are imported in iOS projects.
+    avoid_deps = MEDIAPIPE_TASKS_COMMON_DEPS + CALCULATORS_AND_GRAPHS,
+    bundle_name = "MediaPipeTasksAudio",
+    ios = {
+        "simulator": [
+            "arm64",
+            "x86_64",
+        ],
+        "device": ["arm64"],
+    },
+    minimum_os_versions = {
+        "ios": MPP_TASK_MINIMUM_OS_VERSION,
+    },
+    public_hdrs = [
+        ":MPPAudioClassifier.h",
+        ":MPPAudioClassifierOptions.h",
+        ":MPPAudioClassifierResult.h",
+        ":MPPAudioData.h",
+        ":MPPAudioDataFormat.h",
+        ":MPPAudioRecord.h",
+        ":MPPAudioRunningMode.h",
+        ":MPPBaseOptions.h",
+        ":MPPCategory.h",
+        ":MPPClassificationResult.h",
+        ":MPPCommon.h",
+        ":MPPFloatBuffer.h",
+        ":MPPTaskOptions.h",
+        ":MPPTaskResult.h",
+    ],
+    deps = [
+        "//mediapipe/tasks/ios/audio/audio_classifier:MPPAudioClassifier",
     ],
 )
 

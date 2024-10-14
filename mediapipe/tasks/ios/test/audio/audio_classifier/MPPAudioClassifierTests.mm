@@ -445,6 +445,52 @@ static NSString *const kAudioStreamTestsDictExpectationKey = @"expectation";
                                              info:&_48kHZAudioStreamSucceedsTestDict];
 }
 
+#pragma mark Audio Record Tests
+
+- (void)testCreateAudioRecordSucceeds {
+  const NSUInteger channelCount = 1;
+  const NSUInteger bufferLength = channelCount * kYamnetSampleCount;
+
+  NSError *error;
+  MPPAudioRecord *audioRecord =
+      [MPPAudioClassifier createAudioRecordWithChannelCount:channelCount
+                                                 sampleRate:kYamnetSampleRate
+                                               bufferLength:kYamnetSampleCount * channelCount
+                                                      error:&error];
+
+  XCTAssertNotNil(audioRecord);
+  XCTAssertNil(error);
+  XCTAssertEqual(audioRecord.audioDataFormat.channelCount, channelCount);
+  XCTAssertEqual(audioRecord.audioDataFormat.sampleRate, kYamnetSampleRate);
+  XCTAssertEqual(audioRecord.bufferLength, bufferLength);
+}
+
+// Test for error propogation from audio record creation.
+- (void)testCreateAudioRecordWithInvalidChannelCountFails {
+  const NSUInteger channelCount = 3;
+
+  NSError *error;
+  MPPAudioRecord *audioRecord =
+      [MPPAudioClassifier createAudioRecordWithChannelCount:channelCount
+                                                 sampleRate:kYamnetSampleRate
+                                               bufferLength:kYamnetSampleCount * channelCount
+                                                      error:&error];
+  XCTAssertNil(audioRecord);
+
+  NSError *expectedError = [NSError
+      errorWithDomain:kExpectedErrorDomain
+                 code:MPPTasksErrorCodeInvalidArgumentError
+             userInfo:@{
+               NSLocalizedDescriptionKey : @"The channel count provided does not match the "
+                                           @"supported channel count. Only channels counts "
+                                           @"in the range [1 : 2] are supported"
+             }];
+
+  AssertEqualErrors(error, expectedError);
+}
+
+#pragma mark MPPAudioClassifierStreamDelegate
+
 - (void)audioClassifier:(MPPAudioClassifier *)audioClassifier
     didFinishClassificationWithResult:(MPPAudioClassifierResult *)result
               timestampInMilliseconds:(NSInteger)timestampInMilliseconds

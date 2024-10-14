@@ -212,6 +212,10 @@ LlmParams LlmParams::FromLLMParametersProto(
         params.sa_params.attention_scale_type =
             LlmParams::AttentionScaleType::INV_SQRT_HEAD_DIM;
         break;
+      case TransformerParameters::SCALE_TYPE_RESCALE_FACTOR_INV_HEAD_DIM:
+        params.sa_params.attention_scale_type =
+            LlmParams::AttentionScaleType::RESCALE_FACTOR_INV_HEAD_DIM;
+        break;
       default:
         ABSL_LOG(DFATAL) << "Unknown attention_scale_type: "
                          << transformer_params.self_attention_parameters()

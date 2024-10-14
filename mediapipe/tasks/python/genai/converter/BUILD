@@ -44,6 +44,7 @@ py_library(
         ":converter_factory",
         ":quantization_util",
         "//mediapipe/python:_framework_bindings",
+        "@mediapipe_pip_deps_numpy//:pkg",
     ],
 )
 

@@ -94,6 +94,8 @@ struct LlmParams {
     PER_DIM_SCALE = 1,
     // Query is scaled by 1/sqrt(head_dim).
     INV_SQRT_HEAD_DIM = 2,
+    // Query is scaled by rescale_factor / head_dim.
+    RESCALE_FACTOR_INV_HEAD_DIM = 3,
   };
 
   // If false, add absolute positional embeddings.
@@ -259,7 +261,9 @@ class LlmWeightsLoader {
 
 class DefaultLlmWeightsLoader : public LlmWeightsLoader {
  public:
-  using LlmWeightsLoader::LlmWeightsLoader;
+  DefaultLlmWeightsLoader(std::unique_ptr<WeightAccessor> weight_accessor,
+                          const LlmParams& params)
+      : LlmWeightsLoader(std::move(weight_accessor), params) {}
   DefaultLlmWeightsLoader(absl::string_view weight_path,
                           const LlmParams& params);
 

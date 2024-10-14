@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/flags/flag.h"
 #include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
@@ -38,15 +39,22 @@
 #include "tensorflow/lite/portable_type_to_tflitetype.h"
 #include "tensorflow/lite/string_util.h"
 
+ABSL_FLAG(int, xnnpack_default_num_threads, 0,
+          "Default number of xnnpack threads to use. If unset, determines a "
+          "good default number based on the platform.");
+
 #if !defined(__EMSCRIPTEN__) || defined(__EMSCRIPTEN_PTHREADS__)
 #include "mediapipe/util/cpu_util.h"
 #endif  // !__EMSCRIPTEN__ || __EMSCRIPTEN_PTHREADS__
 
 namespace mediapipe {
-
 namespace {
 
 int GetXnnpackDefaultNumThreads() {
+  int default_from_flag = absl::GetFlag(FLAGS_xnnpack_default_num_threads);
+  if (default_from_flag > 0) {
+    return default_from_flag;
+  }
 #if defined(MEDIAPIPE_ANDROID) || defined(MEDIAPIPE_IOS) || \
     defined(__EMSCRIPTEN_PTHREADS__)
   constexpr int kMinNumThreadsByDefault = 1;
@@ -216,7 +224,7 @@ absl::Status CopyTfLiteTensorToTensor<char>(const TfLiteTensor& tflite_tensor,
 }  // namespace
 
 int GetXnnpackNumThreads(
-    const bool opts_has_delegate,
+    bool opts_has_delegate,
     const mediapipe::InferenceCalculatorOptions::Delegate& opts_delegate) {
   static constexpr int kDefaultNumThreads = -1;
   if (opts_has_delegate && opts_delegate.has_xnnpack() &&

@@ -8,7 +8,6 @@ import {CreateGraphRunnerApi, CreateMediaPipeLibApi, FileLocator, WasmMediaPipeC
 import {EmptyPacketListener, ErrorListener, SimpleListener, VectorListener} from './listener_types';
 import {WasmModule} from './wasm_module';
 
-export {type ReturnType} from './graph_runner_factory_api';
 // This file contains the internal implementations behind the public APIs
 // declared in "graph_runner_api.d.ts" and "graph_runner_factory_api.d.ts".
 

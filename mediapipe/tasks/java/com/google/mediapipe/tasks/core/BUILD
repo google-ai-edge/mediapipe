@@ -88,7 +88,6 @@ android_library(
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto:llm_options_java_proto_lite",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto:llm_response_context_java_proto_lite",
         "//third_party/java/protobuf:protobuf_lite",
-        "@maven//:androidx_annotation_annotation",
         "@maven//:com_google_guava_guava",
     ],
 )

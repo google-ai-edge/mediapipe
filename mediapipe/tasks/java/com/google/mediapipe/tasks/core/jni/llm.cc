@@ -58,6 +58,7 @@ LlmModelSettings ParseModelSettings(void* bytes, int size) {
   }
   output.llm_activation_data_type = kLlmActivationDataTypeDefault;
   output.num_draft_tokens = 0;
+  output.wait_for_weight_uploads = false;
   return output;
 }
 
@@ -167,6 +168,20 @@ JNIEXPORT jlong JNICALL JNI_METHOD(nativeCreateSession)(
   if (error_code) {
     ThrowIfError(env, absl::InternalError(absl::StrCat(
                           "Failed to initialize session: %s", error_msg)));
+    free(error_msg);
+  }
+  return reinterpret_cast<jlong>(session);
+}
+
+JNIEXPORT jlong JNICALL JNI_METHOD(nativeCloneSession)(JNIEnv* env, jclass thiz,
+                                                       jlong session_handle) {
+  void* session = nullptr;
+  char* error_msg = nullptr;
+  int error_code = LlmInferenceEngine_Session_Clone(
+      reinterpret_cast<void*>(session_handle), &session, &error_msg);
+  if (error_code) {
+    ThrowIfError(env, absl::InternalError(absl::StrCat(
+                          "Failed to clone session: %s", error_msg)));
     free(error_msg);
   }
   return reinterpret_cast<jlong>(session);

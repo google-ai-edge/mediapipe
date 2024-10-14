@@ -14,7 +14,7 @@
 
 #import <XCTest/XCTest.h>
 
-#import "mediapipe/tasks/ios/audio/audio_Embedder/sources/MPPAudioEmbedder.h"
+#import "mediapipe/tasks/ios/audio/audio_embedder/sources/MPPAudioEmbedder.h"
 #import "mediapipe/tasks/ios/common/sources/MPPCommon.h"
 #import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
 #import "mediapipe/tasks/ios/test/audio/core/utils/sources/AVAudioFile+TestUtils.h"
@@ -50,7 +50,7 @@ static NSString *const kAudioStreamTestsDictExpectationKey = @"expectation";
 
 #define AssertEmbeddingResultHasOneEmbedding(embeddingResult) \
   XCTAssertNotNil(embeddingResult);                           \
-  \                                                         
+  \
   XCTAssertEqual(embeddingResult.embeddings.count, 1);
 
 #define AssertEmbeddingHasCorrectTypeAndDimension(embedding, quantize, expectedLength) \

@@ -49,6 +49,13 @@ JNIEXPORT jlong JNICALL JNI_METHOD(nativeCreateSession)(JNIEnv *, jclass,
 
 /*
  * Class:     com_google_mediapipe_tasks_core_LlmTaskRunner
+ * Method:    nativeCloneSession
+ * Signature: (J)J
+ */
+JNIEXPORT jlong JNICALL JNI_METHOD(nativeCloneSession)(JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     com_google_mediapipe_tasks_core_LlmTaskRunner
  * Method:    nativeDeleteSession
  * Signature: (J)V
  */

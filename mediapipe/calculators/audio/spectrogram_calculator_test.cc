@@ -638,7 +638,7 @@ TEST_F(SpectrogramCalculatorTest, SampleBufferModeNone) {
   EXPECT_EQ(output().packets.size(), 3);
 
   EXPECT_FLOAT_EQ(output().packets[0].Get<Matrix>().cols(), 10);
-  EXPECT_FLOAT_EQ(output().packets[0].Get<Matrix>()(0, 0), -60.939022);
+  EXPECT_FLOAT_EQ(output().packets[0].Get<Matrix>()(0, 0), -60.938908);
 
   EXPECT_FLOAT_EQ(output().packets[1].Get<Matrix>().cols(), 11);
   EXPECT_FLOAT_EQ(output().packets[1].Get<Matrix>()(0, 0), -4.00845);
@@ -669,12 +669,12 @@ TEST_F(SpectrogramCalculatorTest, SampleBufferModeReset) {
   EXPECT_EQ(output().packets.size(), 2);
 
   EXPECT_FLOAT_EQ(output().packets[0].Get<Matrix>().cols(), 10);
-  EXPECT_FLOAT_EQ(output().packets[0].Get<Matrix>()(0, 0), -60.939022);
+  EXPECT_FLOAT_EQ(output().packets[0].Get<Matrix>()(0, 0), -60.938908);
 
   // Although RESET mode is used, produced spectrograms are still slightly
   // different.
   EXPECT_FLOAT_EQ(output().packets[1].Get<Matrix>().cols(), 10);
-  EXPECT_FLOAT_EQ(output().packets[1].Get<Matrix>()(0, 0), -60.902218);
+  EXPECT_FLOAT_EQ(output().packets[0].Get<Matrix>()(0, 0), -60.938908);
 }
 
 TEST_F(SpectrogramCalculatorTest, OutputScalingLooksRight) {

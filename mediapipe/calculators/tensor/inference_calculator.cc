@@ -23,6 +23,7 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
 #include "mediapipe/framework/api2/node.h"
@@ -50,7 +51,7 @@ class InferenceCalculatorSelectorImpl
             subgraph_node);
     std::vector<absl::string_view> impls;
 
-#if !defined(MEDIAPIPE_FORCE_CPU_INFERENCE) || !MEDIAPIPE_FORCE_CPU_INFERENCE
+#if !MEDIAPIPE_FORCE_CPU_INFERENCE
 
     const bool should_use_gpu =
         !options.has_delegate() ||  // Use GPU delegate if not specified
@@ -72,19 +73,23 @@ class InferenceCalculatorSelectorImpl
         impls.emplace_back("GlAdvanced");
       }
     }
-#endif  // !defined(MEDIAPIPE_FORCE_CPU_INFERENCE) ||
-        // !MEDIAPIPE_FORCE_CPU_INFERENCE
+#endif  // !MEDIAPIPE_FORCE_CPU_INFERENCE
     impls.emplace_back("Cpu");
     impls.emplace_back("Xnnpack");
+    std::vector<std::string> missing_impls;
     for (const auto& suffix : impls) {
       const auto impl = absl::StrCat("InferenceCalculator", suffix);
       if (!CalculatorBaseRegistry::IsRegistered(impl)) {
-        ABSL_LOG(WARNING) << absl::StrFormat(
-            "Missing InferenceCalculator registration for %s. Check if the "
-            "build dependency is present.",
-            impl);
+        missing_impls.push_back(impl);
         continue;
       };
+
+      if (!missing_impls.empty()) {
+        ABSL_LOG(WARNING) << absl::StrFormat(
+            "Missing InferenceCalculator registration for %s. Falling back to "
+            "%s, Check if the build dependency is present.",
+            absl::StrJoin(missing_impls, ", "), impl);
+      }
 
       VLOG(1) << "Using " << suffix << " for InferenceCalculator with "
               << (options.has_model_path()

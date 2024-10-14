@@ -18,6 +18,7 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "absl/flags/declare.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
@@ -27,13 +28,16 @@
 #include "tensorflow/lite/interpreter.h"
 #include "tensorflow/lite/util.h"
 
+ABSL_DECLARE_FLAG(int, xnnpack_default_num_threads);
+
 namespace mediapipe {
 
 // Returns number of threads to configure XNNPACK delegate with.
 // Returns user provided value if specified. Otherwise, tries to choose optimal
-// number of threads depending on the device.
+// number of threads depending on the device. The default can be overridden by
+// setting the --xnnpack_default_num_threads flag.
 int GetXnnpackNumThreads(
-    const bool opts_has_delegate,
+    bool opts_has_delegate,
     const mediapipe::InferenceCalculatorOptions::Delegate& opts_delegate);
 
 absl::Status CopyCpuInputIntoTfLiteTensor(const Tensor& input_tensor,

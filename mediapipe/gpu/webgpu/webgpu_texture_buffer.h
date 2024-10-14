@@ -59,7 +59,8 @@ class WebGpuTextureBuffer
 };
 
 class Canvas;
-Canvas& RenderToWebGpuCanvas(const std::shared_ptr<WebGpuTextureBuffer>& input);
+Canvas& RenderToWebGpuCanvas(const std::shared_ptr<WebGpuTextureBuffer>& input,
+                             int canvas_width, int canvas_height);
 
 class WebGpuTextureBufferPool : public ReusablePool<WebGpuTextureBuffer> {
  public:

@@ -430,7 +430,7 @@ cc_library_with_tflite(
     hdrs = ["inference_calculator.h"],
     local_defines = select({
         ":force_cpu_inference": ["MEDIAPIPE_FORCE_CPU_INFERENCE=1"],
-        "//conditions:default": [],
+        "//conditions:default": ["MEDIAPIPE_FORCE_CPU_INFERENCE=0"],
     }),
     tflite_deps = [
         ":inference_runner",
@@ -453,6 +453,7 @@ cc_library_with_tflite(
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/stream_handler:fixed_size_input_stream_handler",
         "//mediapipe/framework/tool:subgraph_expansion",
+        "//mediapipe/util:cpu_util",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
@@ -781,6 +782,10 @@ cc_library(
     srcs = [
         "inference_calculator_cpu.cc",
     ],
+    local_defines = select({
+        ":force_cpu_inference": ["MEDIAPIPE_FORCE_CPU_INFERENCE=1"],
+        "//conditions:default": ["MEDIAPIPE_FORCE_CPU_INFERENCE=0"],
+    }),
     deps = [
         ":inference_calculator_interface",
         ":inference_calculator_utils",
@@ -816,6 +821,8 @@ cc_library(
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
@@ -841,9 +848,12 @@ cc_test(
     name = "inference_calculator_utils_test",
     srcs = ["inference_calculator_utils_test.cc"],
     deps = [
+        ":inference_calculator_cc_proto",
         ":inference_calculator_utils",
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:gtest_main",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/types:span",

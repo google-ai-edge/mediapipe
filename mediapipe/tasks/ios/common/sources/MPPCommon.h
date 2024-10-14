@@ -108,14 +108,20 @@ typedef NS_ENUM(NSUInteger, MPPTasksErrorCode) {
    */
   MPPTasksErrorCodeAudioRecordPermissionUndeterminedError = 18,
 
-  /** Indicates that `AudioRecord` is waiting for new mic input. */
+  /** Indicates that `AudioRecord` is waiting for new microphone input. */
   MPPTasksErrorCodeAudioRecordWaitingForNewMicInputError = 19,
+
+  /**
+   * Indicates that `AudioRecord` is not tapping the microphone. Operations permitted only while the
+   * microphone is being actively tapped can return this error.
+   */
+  MPPTasksErrorCodeAudioRecordNotTappingMicError = 20,
 
   /** The first error code in MPPTasksErrorCode (for internal use only). */
   MPPTasksErrorCodeFirst = MPPTasksErrorCodeCancelledError,
 
   /** The last error code in MPPTasksErrorCode (for internal use only). */
-  MPPTasksErrorCodeLast = MPPTasksErrorCodeAudioRecordWaitingForNewMicInputError,
+  MPPTasksErrorCodeLast = MPPTasksErrorCodeAudioRecordNotTappingMicError,
 
 } NS_SWIFT_NAME(TasksErrorCode);
 

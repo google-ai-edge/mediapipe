@@ -36,6 +36,8 @@ py_test(
         "//mediapipe/tasks/python/vision:object_detector",
         "//mediapipe/tasks/python/vision/core:image_processing_options",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
+        "@mediapipe_pip_deps_absl_py//:pkg",
+        "@mediapipe_pip_deps_numpy//:pkg",
     ],
 )
 
@@ -57,6 +59,8 @@ py_test(
         "//mediapipe/tasks/python/vision:image_classifier",
         "//mediapipe/tasks/python/vision/core:image_processing_options",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
+        "@mediapipe_pip_deps_absl_py//:pkg",
+        "@mediapipe_pip_deps_numpy//:pkg",
     ],
 )
 
@@ -77,6 +81,8 @@ py_test(
         "//mediapipe/tasks/python/vision:image_embedder",
         "//mediapipe/tasks/python/vision/core:image_processing_options",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
+        "@mediapipe_pip_deps_absl_py//:pkg",
+        "@mediapipe_pip_deps_numpy//:pkg",
     ],
 )
 
@@ -94,6 +100,8 @@ py_test(
         "//mediapipe/tasks/python/test:test_utils",
         "//mediapipe/tasks/python/vision:image_segmenter",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
+        "@mediapipe_pip_deps_absl_py//:pkg",
+        "@mediapipe_pip_deps_numpy//:pkg",
     ],
 )
 
@@ -118,6 +126,7 @@ py_test(
         "//mediapipe/tasks/python/vision/core:image_processing_options",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
         "@com_google_protobuf//:protobuf_python",
+        "@mediapipe_pip_deps_absl_py//:pkg",
     ],
 )
 
@@ -143,6 +152,8 @@ py_test(
         "//mediapipe/tasks/python/vision/core:image_processing_options",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
         "@com_google_protobuf//:protobuf_python",
+        "@mediapipe_pip_deps_absl_py//:pkg",
+        "@mediapipe_pip_deps_numpy//:pkg",
     ],
 )
 
@@ -167,6 +178,8 @@ py_test(
         "//mediapipe/tasks/python/vision/core:image_processing_options",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
         "@com_google_protobuf//:protobuf_python",
+        "@mediapipe_pip_deps_absl_py//:pkg",
+        "@mediapipe_pip_deps_numpy//:pkg",
     ],
 )
 
@@ -191,6 +204,8 @@ py_test(
         "//mediapipe/tasks/python/vision/core:image_processing_options",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
         "@com_google_protobuf//:protobuf_python",
+        "@mediapipe_pip_deps_absl_py//:pkg",
+        "@mediapipe_pip_deps_numpy//:pkg",
     ],
 )
 
@@ -212,6 +227,8 @@ py_test(
         "//mediapipe/tasks/python/vision/core:image_processing_options",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
         "@com_google_protobuf//:protobuf_python",
+        "@mediapipe_pip_deps_absl_py//:pkg",
+        "@mediapipe_pip_deps_numpy//:pkg",
     ],
 )
 
@@ -230,6 +247,7 @@ py_test(
         "//mediapipe/tasks/python/test:test_utils",
         "//mediapipe/tasks/python/vision:face_aligner",
         "//mediapipe/tasks/python/vision/core:image_processing_options",
+        "@mediapipe_pip_deps_absl_py//:pkg",
     ],
 )
 
@@ -247,5 +265,6 @@ py_test(
         "//mediapipe/tasks/python/test:test_utils",
         "//mediapipe/tasks/python/vision:face_stylizer",
         "//mediapipe/tasks/python/vision/core:image_processing_options",
+        "@mediapipe_pip_deps_absl_py//:pkg",
     ],
 )

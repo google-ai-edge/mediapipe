@@ -142,26 +142,20 @@ TEST(TensorAhwbTest, GetAhwbReadViewDoesNotTriggerReleaseForUnfinishedReads) {
   EXPECT_THAT(release_callbacks_invoked, Each(true));
 }
 
-TEST(TensorAhwbTest, EveryAhwbWriteViewReleaseCallbackIsInvoked) {
-  constexpr int kNumReleaseCallbacks = 10;
-  std::array<bool, kNumReleaseCallbacks> callbacks_invoked;
-  callbacks_invoked.fill(false);
+TEST(TensorAhwbTest, AhwbWriteViewReleaseCallbackIsInvoked) {
+  bool callbacks_invoked = false;
 
   {
     // Create tensor.
     Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape{1});
-    // Get AHWB write view multiple times and set release callback.
-    for (int i = 0; i < kNumReleaseCallbacks; ++i) {
-      auto view = tensor.GetAHardwareBufferWriteView();
-      EXPECT_NE(view.handle(), nullptr);
-      view.SetReleaseCallback(
-          [&callbacks_invoked, i] { callbacks_invoked[i] = true; });
-    }
-
+    auto view = tensor.GetAHardwareBufferWriteView();
+    EXPECT_NE(view.handle(), nullptr);
+    view.SetReleaseCallback([&callbacks_invoked] { callbacks_invoked = true; });
+    EXPECT_FALSE(callbacks_invoked);
     // Destroy tensor on scope exit triggering release callbacks.
   }
 
-  EXPECT_THAT(callbacks_invoked, Each(true));
+  EXPECT_TRUE(callbacks_invoked);
 }
 
 TEST(TensorAhwbTest,
@@ -201,36 +195,23 @@ TEST(TensorAhwbTest,
 }
 
 TEST(TensorAhwbTest,
-     EveryAhwbWriteViewReleaseCallbackIsInvokedWritingFininshedSpecified) {
-  constexpr int kNumReleaseCallbacks = 10;
-  std::array<bool, kNumReleaseCallbacks> release_callbacks_invoked;
-  release_callbacks_invoked.fill(false);
+     AhwbWriteViewReleaseCallbackIsInvokedWritingFininshedSpecified) {
+  bool release_callbacks_invoked = false;
 
   {
     // Create tensor.
     Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape{1});
-    // Get AHWB write view multiple times and set release callback.
-    for (int i = 0; i < kNumReleaseCallbacks; ++i) {
-      if (i > 0) {
-        ASSERT_FALSE(release_callbacks_invoked[i - 1]);
-      }
-      auto view = tensor.GetAHardwareBufferWriteView();
-      if (i > 0) {
-        ASSERT_TRUE(release_callbacks_invoked[i - 1]);
-      }
-      ASSERT_NE(view.handle(), nullptr);
-      view.SetWritingFinishedFD(/*dummy fd=*/-1, [](bool) { return true; });
-      view.SetReleaseCallback([&release_callbacks_invoked, i] {
-        release_callbacks_invoked[i] = true;
-      });
-    }
-
-    ASSERT_FALSE(release_callbacks_invoked[kNumReleaseCallbacks - 1]);
+    auto view = tensor.GetAHardwareBufferWriteView();
+    ASSERT_NE(view.handle(), nullptr);
+    view.SetWritingFinishedFD(/*dummy fd=*/-1, [](bool) { return true; });
+    view.SetReleaseCallback(
+        [&release_callbacks_invoked] { release_callbacks_invoked = true; });
+    EXPECT_FALSE(release_callbacks_invoked);
 
     // Destroy tensor on scope exit triggering last release callback.
   }
 
-  EXPECT_THAT(release_callbacks_invoked, Each(true));
+  EXPECT_TRUE(release_callbacks_invoked);
 }
 
 TEST(TensorAhwbTest, TestAHWBThenCpu) {

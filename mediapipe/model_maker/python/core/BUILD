@@ -24,4 +24,8 @@ licenses(["notice"])
 py_library(
     name = "hyperparameters",
     srcs = ["hyperparameters.py"],
+    deps = [
+        "@model_maker_pip_deps_tensorflow//:pkg",
+        "@model_maker_pip_deps_tf_models_official//:pkg",
+    ],
 )

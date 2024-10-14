@@ -66,10 +66,6 @@ http_archive(
     url = "https://github.com/bazelbuild/rules_python/releases/download/0.26.0/rules_python-0.26.0.tar.gz",
 )
 
-load("@rules_python//python:repositories.bzl", "py_repositories")
-
-py_repositories()
-
 http_archive(
     name = "rules_android_ndk",
     sha256 = "d230a980e0d3a42b85d5fce2cb17ec3ac52b88d2cff5aaf86bae0f05b48adc55",
@@ -92,40 +88,14 @@ http_archive(
     ],
 )
 
-http_archive(
-    name = "cpuinfo",
-    sha256 = "2bf2b62eb86e2d2eaf862d0b9683a6c467a4d69fb2f7f1dc47c799809148608f",
-    strip_prefix = "cpuinfo-fa1c679da8d19e1d87f20175ae1ec10995cd3dd3",
-    urls = [
-        "https://github.com/pytorch/cpuinfo/archive/fa1c679da8d19e1d87f20175ae1ec10995cd3dd3.zip",
-    ],
-)
 
-# KleidiAI is needed to get the best possible performance out of XNNPack
+# GoogleTest/GoogleMock framework. Used by most unit-tests.
+# Last updated 2021-07-02.
 http_archive(
-    name = "KleidiAI",
-    sha256 = "88233e427be6579560073267575f00f3b5fc370a31a43bbdd87a1810bd4bf1b6",
-    strip_prefix = "kleidiai-cddf991af5de49fd34949fa39690e4e906e04074",
-    urls = [
-        "https://gitlab.arm.com/kleidi/kleidiai/-/archive/cddf991af5de49fd34949fa39690e4e906e04074/kleidiai-cddf991af5de49fd34949fa39690e4e906e04074.zip",
-    ],
-)
-
-# XNNPACK on 2024-07-16
-http_archive(
-    name = "XNNPACK",
-    # `curl -L <url> | shasum -a 256`
-    sha256 = "08489dff917a8009bf2187995fc8e0a33a2207eef466e400302bbf3ef40e4811",
-    strip_prefix = "XNNPACK-3014fb625c73f3b1ce1f6d3e45f1e216f9cb7105",
-    url = "https://github.com/google/XNNPACK/archive/3014fb625c73f3b1ce1f6d3e45f1e216f9cb7105.zip",
-)
-
-# TODO: This is an are indirect depedency. We should factor it out.
-http_archive(
-    name = "pthreadpool",
-    sha256 = "a4cf06de57bfdf8d7b537c61f1c3071bce74e57524fe053e0bbd2332feca7f95",
-    strip_prefix = "pthreadpool-4fe0e1e183925bf8cfa6aae24237e724a96479b8",
-    urls = ["https://github.com/Maratyszcza/pthreadpool/archive/4fe0e1e183925bf8cfa6aae24237e724a96479b8.zip"],
+    name = "com_google_googletest",
+    urls = ["https://github.com/google/googletest/archive/4ec4cd23f486bf70efcc5d2caa40f24368f752e3.zip"],
+    strip_prefix = "googletest-4ec4cd23f486bf70efcc5d2caa40f24368f752e3",
+    sha256 = "de682ea824bfffba05b4e33b67431c247397d6175962534305136aa06f92e049",
 )
 
 # Load Zlib before initializing TensorFlow and the iOS build rules to guarantee
@@ -144,64 +114,6 @@ http_archive(
     ],
 )
 
-# iOS basic build deps.
-http_archive(
-    name = "build_bazel_rules_apple",
-    sha256 = "3e2c7ae0ddd181c4053b6491dad1d01ae29011bc322ca87eea45957c76d3a0c3",
-    url = "https://github.com/bazelbuild/rules_apple/releases/download/2.1.0/rules_apple.2.1.0.tar.gz",
-    patches = [
-        # Bypass checking ios unit test runner when building MP ios applications.
-        "@//third_party:build_bazel_rules_apple_bypass_test_runner_check.diff"
-    ],
-    patch_args = [
-        "-p1",
-    ],
-)
-
-load(
-    "@build_bazel_rules_apple//apple:repositories.bzl",
-    "apple_rules_dependencies",
-)
-apple_rules_dependencies()
-
-load(
-    "@build_bazel_rules_swift//swift:repositories.bzl",
-    "swift_rules_dependencies",
-)
-swift_rules_dependencies()
-
-load(
-    "@build_bazel_rules_swift//swift:extras.bzl",
-    "swift_rules_extra_dependencies",
-)
-swift_rules_extra_dependencies()
-
-load(
-    "@build_bazel_apple_support//lib:repositories.bzl",
-    "apple_support_dependencies",
-)
-apple_support_dependencies()
-
-# This is used to select all contents of the archives for CMake-based packages to give CMake access to them.
-all_content = """filegroup(name = "all", srcs = glob(["**"]), visibility = ["//visibility:public"])"""
-
-# GoogleTest/GoogleMock framework. Used by most unit-tests.
-# Last updated 2021-07-02.
-http_archive(
-    name = "com_google_googletest",
-    urls = ["https://github.com/google/googletest/archive/4ec4cd23f486bf70efcc5d2caa40f24368f752e3.zip"],
-    strip_prefix = "googletest-4ec4cd23f486bf70efcc5d2caa40f24368f752e3",
-    sha256 = "de682ea824bfffba05b4e33b67431c247397d6175962534305136aa06f92e049",
-)
-
-# Google Benchmark library v1.6.1 released on 2022-01-10.
-http_archive(
-    name = "com_google_benchmark",
-    urls = ["https://github.com/google/benchmark/archive/refs/tags/v1.6.1.tar.gz"],
-    strip_prefix = "benchmark-1.6.1",
-    sha256 = "6132883bc8c9b0df5375b16ab520fac1a85dc9e4cf5be59480448ece74b278d4",
-    build_file = "@//third_party:benchmark.BUILD",
-)
 
 # gflags needed by glog
 http_archive(
@@ -253,6 +165,263 @@ http_archive(
     patch_args = [
         "-p1",
     ],
+)
+
+# Maven dependencies.
+RULES_JVM_EXTERNAL_TAG = "4.0"
+RULES_JVM_EXTERNAL_SHA = "31701ad93dbfe544d597dbe62c9a1fdd76d81d8a9150c2bf1ecf928ecdf97169"
+
+http_archive(
+    name = "rules_jvm_external",
+    strip_prefix = "rules_jvm_external-%s" % RULES_JVM_EXTERNAL_TAG,
+    sha256 = RULES_JVM_EXTERNAL_SHA,
+    url = "https://github.com/bazelbuild/rules_jvm_external/archive/%s.zip" % RULES_JVM_EXTERNAL_TAG,
+)
+
+load("@rules_jvm_external//:defs.bzl", "maven_install")
+
+# Important: there can only be one maven_install rule. Add new maven deps here.
+maven_install(
+    artifacts = [
+        "androidx.concurrent:concurrent-futures:1.0.0-alpha03",
+        "androidx.lifecycle:lifecycle-common:2.3.1",
+        "androidx.activity:activity:1.2.2",
+        "androidx.exifinterface:exifinterface:1.3.3",
+        "androidx.fragment:fragment:1.3.4",
+        "androidx.annotation:annotation:aar:1.1.0",
+        "androidx.appcompat:appcompat:aar:1.1.0-rc01",
+        "androidx.camera:camera-core:1.0.0-beta10",
+        "androidx.camera:camera-camera2:1.0.0-beta10",
+        "androidx.camera:camera-lifecycle:1.0.0-beta10",
+        "androidx.constraintlayout:constraintlayout:aar:1.1.3",
+        "androidx.core:core:aar:1.1.0-rc03",
+        "androidx.legacy:legacy-support-v4:aar:1.0.0",
+        "androidx.recyclerview:recyclerview:aar:1.1.0-beta02",
+        "androidx.test.espresso:espresso-core:3.1.1",
+        "com.github.bumptech.glide:glide:4.11.0",
+        "com.google.android.material:material:aar:1.0.0-rc01",
+        "com.google.auto.value:auto-value:1.8.1",
+        "com.google.auto.value:auto-value-annotations:1.8.1",
+        "com.google.code.findbugs:jsr305:latest.release",
+        "com.google.android.datatransport:transport-api:3.0.0",
+        "com.google.android.datatransport:transport-backend-cct:3.1.0",
+        "com.google.android.datatransport:transport-runtime:3.1.0",
+        "com.google.flogger:flogger-system-backend:0.6",
+        "com.google.flogger:flogger:0.6",
+        "com.google.guava:guava:27.0.1-android",
+        "com.google.guava:listenablefuture:1.0",
+        "junit:junit:4.12",
+        "org.hamcrest:hamcrest-library:1.3",
+    ],
+    repositories = [
+        "https://maven.google.com",
+        "https://dl.google.com/dl/android/maven2",
+        "https://repo1.maven.org/maven2",
+        "https://jcenter.bintray.com",
+    ],
+    fetch_sources = True,
+    version_conflict_policy = "pinned",
+)
+
+# Needed by TensorFlow
+http_archive(
+    name = "io_bazel_rules_closure",
+    sha256 = "e0a111000aeed2051f29fcc7a3f83be3ad8c6c93c186e64beb1ad313f0c7f9f9",
+    strip_prefix = "rules_closure-cf1e44edb908e9616030cc83d085989b8e6cd6df",
+    urls = [
+        "http://mirror.tensorflow.org/github.com/bazelbuild/rules_closure/archive/cf1e44edb908e9616030cc83d085989b8e6cd6df.tar.gz",
+        "https://github.com/bazelbuild/rules_closure/archive/cf1e44edb908e9616030cc83d085989b8e6cd6df.tar.gz",  # 2019-04-04
+    ],
+)
+
+# XNNPACK on 2024-09-24
+http_archive(
+    name = "XNNPACK",
+    # `curl -L <url> | shasum -a 256`
+    sha256 = "feecde71526d955a0125f7ddd28b9f2d282cd6fca6c1c6bde48f29f86365dd0b",
+    strip_prefix = "XNNPACK-9007aa93227010168e615f9c6552035040c94a15",
+    url = "https://github.com/google/XNNPACK/archive/9007aa93227010168e615f9c6552035040c94a15.zip",
+)
+
+
+# 2020-07-09
+http_archive(
+    name = "pybind11_bazel",
+    strip_prefix = "pybind11_bazel-203508e14aab7309892a1c5f7dd05debda22d9a5",
+    urls = ["https://github.com/pybind/pybind11_bazel/archive/203508e14aab7309892a1c5f7dd05debda22d9a5.zip"],
+    sha256 = "75922da3a1bdb417d820398eb03d4e9bd067c4905a4246d35a44c01d62154d91",
+)
+
+# 2022-10-20
+http_archive(
+    name = "pybind11",
+    urls = [
+        "https://github.com/pybind/pybind11/archive/v2.10.1.zip",
+    ],
+    sha256 = "fcf94065efcfd0a7a828bacf118fa11c43f6390d0c805e3e6342ac119f2e9976",
+    strip_prefix = "pybind11-2.10.1",
+    build_file = "@pybind11_bazel//:pybind11.BUILD",
+)
+
+http_archive(
+    name = "pybind11_protobuf",
+    sha256 = "baa1f53568283630a5055c85f0898b8810f7a6431bd01bbaedd32b4c1defbcb1",
+    strip_prefix = "pybind11_protobuf-3594106f2df3d725e65015ffb4c7886d6eeee683",
+    urls = [
+        "https://github.com/pybind/pybind11_protobuf/archive/3594106f2df3d725e65015ffb4c7886d6eeee683.tar.gz",
+    ],
+)
+
+# TF on 2024-09-24
+_TENSORFLOW_GIT_COMMIT = "5329ec8dd396487982ef3e743f98c0195af39a6b"
+
+# curl -L https://github.com/tensorflow/tensorflow/archive/<COMMIT>.tar.gz | shasum -a 256
+_TENSORFLOW_SHA256 = "eb1f8d740d59ea3dee91108ab1fc19d91c4e9ac2fd17d9ab86d865c3c43d81c9"
+
+http_archive(
+    name = "org_tensorflow",
+    urls = [
+      "https://github.com/tensorflow/tensorflow/archive/%s.tar.gz" % _TENSORFLOW_GIT_COMMIT,
+    ],
+    patches = [
+        "@//third_party:org_tensorflow_system_python.diff",
+        # Diff is generated with a script, don't update it manually.
+        "@//third_party:org_tensorflow_custom_ops.diff",
+        # Works around Bazel issue with objc_library.
+        # See https://github.com/bazelbuild/bazel/issues/19912
+        "@//third_party:org_tensorflow_objc_build_fixes.diff",
+    ],
+    patch_args = [
+        "-p1",
+    ],
+    strip_prefix = "tensorflow-%s" % _TENSORFLOW_GIT_COMMIT,
+    sha256 = _TENSORFLOW_SHA256,
+)
+
+load("@org_tensorflow//tensorflow:workspace3.bzl", "tf_workspace3")
+tf_workspace3()
+
+# Initialize hermetic Python
+load("@org_tensorflow//third_party/xla/third_party/py:python_init_rules.bzl", "python_init_rules")
+python_init_rules()
+
+load("@org_tensorflow//third_party/xla/third_party/py:python_init_repositories.bzl", "python_init_repositories")
+python_init_repositories(
+    default_python_version = "system",
+    local_wheel_dist_folder = "dist",
+    requirements = {
+        "3.9": "//:requirements_lock.txt",
+        "3.10": "//:requirements_lock_3_10.txt",
+        "3.11": "//:requirements_lock_3_11.txt",
+        "3.12": "//:requirements_lock_3_12.txt",
+    },
+    local_wheel_inclusion_list = ["mediapipe*"],
+    local_wheel_workspaces = ["//:WORKSPACE"],
+)
+
+load("@org_tensorflow//third_party/xla/third_party/py:python_init_toolchains.bzl", "python_init_toolchains")
+python_init_toolchains()
+
+load("@org_tensorflow//third_party/xla/third_party/py:python_init_pip.bzl", "python_init_pip")
+python_init_pip()
+
+load("@pypi//:requirements.bzl", "install_deps")
+install_deps()
+# End hermetic Python initialization
+
+load("@org_tensorflow//tensorflow:workspace2.bzl", "tf_workspace2")
+tf_workspace2()
+
+load("@rules_python//python:pip.bzl", "pip_parse")
+pip_parse(
+    name = "mediapipe_pip_deps",
+    requirements_lock = "@//:requirements_lock.txt",
+)
+load("@mediapipe_pip_deps//:requirements.bzl", mp_install_deps = "install_deps")
+mp_install_deps()
+pip_parse(
+    name = "model_maker_pip_deps",
+    requirements_lock = "@//mediapipe/model_maker:requirements_lock.txt",
+)
+load("@model_maker_pip_deps//:requirements.bzl", mm_install_deps = "install_deps")
+mm_install_deps()
+
+http_archive(
+    name = "cpuinfo",
+    sha256 = "2bf2b62eb86e2d2eaf862d0b9683a6c467a4d69fb2f7f1dc47c799809148608f",
+    strip_prefix = "cpuinfo-fa1c679da8d19e1d87f20175ae1ec10995cd3dd3",
+    urls = [
+        "https://github.com/pytorch/cpuinfo/archive/fa1c679da8d19e1d87f20175ae1ec10995cd3dd3.zip",
+    ],
+)
+
+# KleidiAI is needed to get the best possible performance out of XNNPack
+http_archive(
+    name = "KleidiAI",
+    sha256 = "88233e427be6579560073267575f00f3b5fc370a31a43bbdd87a1810bd4bf1b6",
+    strip_prefix = "kleidiai-cddf991af5de49fd34949fa39690e4e906e04074",
+    urls = [
+        "https://gitlab.arm.com/kleidi/kleidiai/-/archive/cddf991af5de49fd34949fa39690e4e906e04074/kleidiai-cddf991af5de49fd34949fa39690e4e906e04074.zip",
+    ],
+)
+
+# TODO: This is an are indirect dependency. We should factor it out.
+http_archive(
+    name = "pthreadpool",
+    sha256 = "a4cf06de57bfdf8d7b537c61f1c3071bce74e57524fe053e0bbd2332feca7f95",
+    strip_prefix = "pthreadpool-4fe0e1e183925bf8cfa6aae24237e724a96479b8",
+    urls = ["https://github.com/Maratyszcza/pthreadpool/archive/4fe0e1e183925bf8cfa6aae24237e724a96479b8.zip"],
+)
+
+# iOS basic build deps.
+http_archive(
+    name = "build_bazel_rules_apple",
+    sha256 = "3e2c7ae0ddd181c4053b6491dad1d01ae29011bc322ca87eea45957c76d3a0c3",
+    url = "https://github.com/bazelbuild/rules_apple/releases/download/2.1.0/rules_apple.2.1.0.tar.gz",
+    patches = [
+        # Bypass checking ios unit test runner when building MP ios applications.
+        "@//third_party:build_bazel_rules_apple_bypass_test_runner_check.diff"
+    ],
+    patch_args = [
+        "-p1",
+    ],
+)
+
+load(
+    "@build_bazel_rules_apple//apple:repositories.bzl",
+    "apple_rules_dependencies",
+)
+apple_rules_dependencies()
+
+load(
+    "@build_bazel_rules_swift//swift:repositories.bzl",
+    "swift_rules_dependencies",
+)
+swift_rules_dependencies()
+
+load(
+    "@build_bazel_rules_swift//swift:extras.bzl",
+    "swift_rules_extra_dependencies",
+)
+swift_rules_extra_dependencies()
+
+load(
+    "@build_bazel_apple_support//lib:repositories.bzl",
+    "apple_support_dependencies",
+)
+apple_support_dependencies()
+
+# This is used to select all contents of the archives for CMake-based packages to give CMake access to them.
+all_content = """filegroup(name = "all", srcs = glob(["**"]), visibility = ["//visibility:public"])"""
+
+
+# Google Benchmark library v1.6.1 released on 2022-01-10.
+http_archive(
+    name = "com_google_benchmark",
+    urls = ["https://github.com/google/benchmark/archive/refs/tags/v1.6.1.tar.gz"],
+    strip_prefix = "benchmark-1.6.1",
+    sha256 = "6132883bc8c9b0df5375b16ab520fac1a85dc9e4cf5be59480448ece74b278d4",
+    build_file = "@//third_party:benchmark.BUILD",
 )
 
 # easyexif
@@ -349,34 +518,6 @@ http_archive(
     ],
 )
 
-# 2020-07-09
-http_archive(
-    name = "pybind11_bazel",
-    strip_prefix = "pybind11_bazel-203508e14aab7309892a1c5f7dd05debda22d9a5",
-    urls = ["https://github.com/pybind/pybind11_bazel/archive/203508e14aab7309892a1c5f7dd05debda22d9a5.zip"],
-    sha256 = "75922da3a1bdb417d820398eb03d4e9bd067c4905a4246d35a44c01d62154d91",
-)
-
-# 2022-10-20
-http_archive(
-    name = "pybind11",
-    urls = [
-        "https://github.com/pybind/pybind11/archive/v2.10.1.zip",
-    ],
-    sha256 = "fcf94065efcfd0a7a828bacf118fa11c43f6390d0c805e3e6342ac119f2e9976",
-    strip_prefix = "pybind11-2.10.1",
-    build_file = "@pybind11_bazel//:pybind11.BUILD",
-)
-
-http_archive(
-    name = "pybind11_protobuf",
-    sha256 = "baa1f53568283630a5055c85f0898b8810f7a6431bd01bbaedd32b4c1defbcb1",
-    strip_prefix = "pybind11_protobuf-3594106f2df3d725e65015ffb4c7886d6eeee683",
-    urls = [
-        "https://github.com/pybind/pybind11_protobuf/archive/3594106f2df3d725e65015ffb4c7886d6eeee683.tar.gz",
-    ],
-)
-
 # Point to the commit that deprecates the usage of Eigen::MappedSparseMatrix.
 http_archive(
     name = "ceres_solver",
@@ -394,8 +535,8 @@ http_archive(
 http_archive(
     name = "opencv",
     build_file_content = all_content,
-    strip_prefix = "opencv-3.4.10",
-    urls = ["https://github.com/opencv/opencv/archive/3.4.10.tar.gz"],
+    strip_prefix = "opencv-3.4.11",
+    urls = ["https://github.com/opencv/opencv/archive/3.4.11.tar.gz"],
 )
 
 new_local_repository(
@@ -491,103 +632,35 @@ http_archive(
     build_file = "@//third_party:google_toolbox_for_mac.BUILD",
 )
 
-# Maven dependencies.
-
-RULES_JVM_EXTERNAL_TAG = "4.0"
-RULES_JVM_EXTERNAL_SHA = "31701ad93dbfe544d597dbe62c9a1fdd76d81d8a9150c2bf1ecf928ecdf97169"
-
-http_archive(
-    name = "rules_jvm_external",
-    strip_prefix = "rules_jvm_external-%s" % RULES_JVM_EXTERNAL_TAG,
-    sha256 = RULES_JVM_EXTERNAL_SHA,
-    url = "https://github.com/bazelbuild/rules_jvm_external/archive/%s.zip" % RULES_JVM_EXTERNAL_TAG,
+load(
+    "@org_tensorflow//third_party/gpus/cuda/hermetic:cuda_json_init_repository.bzl",
+    "cuda_json_init_repository",
 )
 
-load("@rules_jvm_external//:defs.bzl", "maven_install")
+cuda_json_init_repository()
 
-# Important: there can only be one maven_install rule. Add new maven deps here.
-maven_install(
-    artifacts = [
-        "androidx.concurrent:concurrent-futures:1.0.0-alpha03",
-        "androidx.lifecycle:lifecycle-common:2.3.1",
-        "androidx.activity:activity:1.2.2",
-        "androidx.exifinterface:exifinterface:1.3.3",
-        "androidx.fragment:fragment:1.3.4",
-        "androidx.annotation:annotation:aar:1.1.0",
-        "androidx.appcompat:appcompat:aar:1.1.0-rc01",
-        "androidx.camera:camera-core:1.0.0-beta10",
-        "androidx.camera:camera-camera2:1.0.0-beta10",
-        "androidx.camera:camera-lifecycle:1.0.0-beta10",
-        "androidx.constraintlayout:constraintlayout:aar:1.1.3",
-        "androidx.core:core:aar:1.1.0-rc03",
-        "androidx.legacy:legacy-support-v4:aar:1.0.0",
-        "androidx.recyclerview:recyclerview:aar:1.1.0-beta02",
-        "androidx.test.espresso:espresso-core:3.1.1",
-        "com.github.bumptech.glide:glide:4.11.0",
-        "com.google.android.material:material:aar:1.0.0-rc01",
-        "com.google.auto.value:auto-value:1.8.1",
-        "com.google.auto.value:auto-value-annotations:1.8.1",
-        "com.google.code.findbugs:jsr305:latest.release",
-        "com.google.android.datatransport:transport-api:3.0.0",
-        "com.google.android.datatransport:transport-backend-cct:3.1.0",
-        "com.google.android.datatransport:transport-runtime:3.1.0",
-        "com.google.flogger:flogger-system-backend:0.6",
-        "com.google.flogger:flogger:0.6",
-        "com.google.guava:guava:27.0.1-android",
-        "com.google.guava:listenablefuture:1.0",
-        "junit:junit:4.12",
-        "org.hamcrest:hamcrest-library:1.3",
-    ],
-    repositories = [
-        "https://maven.google.com",
-        "https://dl.google.com/dl/android/maven2",
-        "https://repo1.maven.org/maven2",
-        "https://jcenter.bintray.com",
-    ],
-    fetch_sources = True,
-    version_conflict_policy = "pinned",
+load(
+    "@cuda_redist_json//:distributions.bzl",
+    "CUDA_REDISTRIBUTIONS",
+    "CUDNN_REDISTRIBUTIONS",
+)
+load(
+    "@org_tensorflow//third_party/gpus/cuda/hermetic:cuda_redist_init_repositories.bzl",
+    "cuda_redist_init_repositories",
+    "cudnn_redist_init_repository",
+)
+cuda_redist_init_repositories(
+    cuda_redistributions = CUDA_REDISTRIBUTIONS,
+)
+cudnn_redist_init_repository(
+    cudnn_redistributions = CUDNN_REDISTRIBUTIONS,
 )
 
-# Needed by TensorFlow
-http_archive(
-    name = "io_bazel_rules_closure",
-    sha256 = "e0a111000aeed2051f29fcc7a3f83be3ad8c6c93c186e64beb1ad313f0c7f9f9",
-    strip_prefix = "rules_closure-cf1e44edb908e9616030cc83d085989b8e6cd6df",
-    urls = [
-        "http://mirror.tensorflow.org/github.com/bazelbuild/rules_closure/archive/cf1e44edb908e9616030cc83d085989b8e6cd6df.tar.gz",
-        "https://github.com/bazelbuild/rules_closure/archive/cf1e44edb908e9616030cc83d085989b8e6cd6df.tar.gz",  # 2019-04-04
-    ],
+load(
+    "@org_tensorflow//third_party/gpus/cuda/hermetic:cuda_configure.bzl",
+    "cuda_configure",
 )
-
-# TensorFlow repo should always go after the other external dependencies.
-# TF on 2024-07-18.
-_TENSORFLOW_GIT_COMMIT = "117a62ac439ed87eb26f67208be60e01c21960de"
-# curl -L https://github.com/tensorflow/tensorflow/archive/117a62ac439ed87eb26f67208be60e01c21960de.tar.gz | shasum -a 256
-_TENSORFLOW_SHA256 = "2a1e56f9f83f99e2b9d01a184bc6f409209b36c98fb94b6d5db3f0ab20ec33f2"
-http_archive(
-    name = "org_tensorflow",
-    urls = [
-      "https://github.com/tensorflow/tensorflow/archive/%s.tar.gz" % _TENSORFLOW_GIT_COMMIT,
-    ],
-    patches = [
-        "@//third_party:org_tensorflow_system_python.diff",
-        # Diff is generated with a script, don't update it manually.
-        "@//third_party:org_tensorflow_custom_ops.diff",
-        # Works around Bazel issue with objc_library.
-        # See https://github.com/bazelbuild/bazel/issues/19912
-        "@//third_party:org_tensorflow_objc_build_fixes.diff",
-    ],
-    patch_args = [
-        "-p1",
-    ],
-    strip_prefix = "tensorflow-%s" % _TENSORFLOW_GIT_COMMIT,
-    sha256 = _TENSORFLOW_SHA256,
-)
-
-load("@org_tensorflow//tensorflow:workspace3.bzl", "tf_workspace3")
-tf_workspace3()
-load("@org_tensorflow//tensorflow:workspace2.bzl", "tf_workspace2")
-tf_workspace2()
+cuda_configure(name = "local_config_cuda")
 
 # Edge TPU
 http_archive(
@@ -705,4 +778,11 @@ http_archive(
     sha256 = "6bea5877b1541d353bd77bdfbdb2696333ae5ed8f9e8cc22df657192218cad91",
     urls = ["https://github.com/nlohmann/json/releases/download/v3.9.1/include.zip"],
     build_file = "@//third_party:nlohmann.BUILD",
+)
+
+http_archive(
+    name = "io_abseil_py",
+    sha256 = "0fb3a4916a157eb48124ef309231cecdfdd96ff54adf1660b39c0d4a9790a2c0",
+    strip_prefix = "abseil-py-1.4.0",
+    urls = ["https://github.com/abseil/abseil-py/archive/refs/tags/v1.4.0.tar.gz"],
 )

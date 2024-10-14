@@ -19,7 +19,6 @@ import tempfile
 
 from unittest import mock as unittest_mock
 from absl.testing import parameterized
-import mock
 import numpy as np
 import tensorflow as tf
 
@@ -129,7 +128,9 @@ class ImageClassifierTest(tf.test.TestCase, parameterized.TestCase):
                                         'metadata.json')
     output_tflite_file = os.path.join(options.hparams.export_dir,
                                       'model.tflite')
-    expected_metadata_file = test_utils.get_test_data_path('metadata.json')
+    expected_metadata_file = test_utils.get_test_data_path(
+        'image_classifier_metadata.json'
+    )
 
     self.assertTrue(os.path.exists(output_tflite_file))
     self.assertGreater(os.path.getsize(output_tflite_file), 0)
@@ -143,7 +144,7 @@ class ImageClassifierTest(tf.test.TestCase, parameterized.TestCase):
 
   def test_continual_training_by_loading_checkpoint(self):
     mock_stdout = io.StringIO()
-    with mock.patch('sys.stdout', mock_stdout):
+    with unittest_mock.patch('sys.stdout', mock_stdout):
       options = image_classifier.ImageClassifierOptions(
           supported_model=image_classifier.SupportedModels.EFFICIENTNET_LITE0,
           hparams=image_classifier.HParams(

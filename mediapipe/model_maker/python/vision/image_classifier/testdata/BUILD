@@ -19,5 +19,5 @@ package(
 
 filegroup(
     name = "testdata",
-    srcs = ["metadata.json"],
+    srcs = ["image_classifier_metadata.json"],
 )

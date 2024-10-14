@@ -25,9 +25,10 @@
 
 namespace mediapipe::tasks::genai::xnn_utils {
 
-absl::StatusOr<std::unique_ptr<LlmBuilder>> CreateLlmBuilder(
+absl::StatusOr<std::unique_ptr<Llm>> CreateLlm(
     const LlmParams& llm_params,
     std::unique_ptr<RuntimeConfigs> runtime_configs,
+    std::unique_ptr<LlmWeightsLoader> weight_loader,
     std::unique_ptr<Sampler> sampler,
     odml::infra::proto::LlmModelType model_type);
 

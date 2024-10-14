@@ -145,7 +145,7 @@ class Llm : protected xnn_utils::XnnGraph {
   virtual absl::Status LoadContext(
       absl::Nullable<std::shared_ptr<Context>> context);
 
- protected:
+  // protected:
   friend class PrefixDecodeLlm;
   friend class LlmTest;
   friend class LlmBuilder;
@@ -166,6 +166,7 @@ class Llm : protected xnn_utils::XnnGraph {
   const std::shared_ptr<Tensor>& transformer_input() const;
   std::shared_ptr<Tensor>& logits_output();
   const std::shared_ptr<Tensor>& logits_output() const;
+
   // Previous ids, including prompt.
   std::vector<std::vector<int>>& batch_prev_ids();
   const std::vector<std::vector<int>>& batch_prev_ids() const;
@@ -176,6 +177,8 @@ class Llm : protected xnn_utils::XnnGraph {
   // embedding provided through weights. The first ids.size() * model_dim_D
   // elements pointed by `embedding` will be filled.
   absl::Status GetTokenEmbedding(const std::vector<int>& ids, float* embedding);
+  virtual absl::Status GetInputTokenEmbeddings(
+      absl::Span<const std::vector<int>> batch_input_ids);
 
   absl::Status ReshapeInputResource();
 
@@ -185,6 +188,8 @@ class Llm : protected xnn_utils::XnnGraph {
   std::shared_ptr<Tensor> pos_embedding_;
   std::shared_ptr<Tensor> atten_masks_;
   std::shared_ptr<Tensor> segment_pos_;
+  std::shared_ptr<Tensor> query_positions_;
+  std::shared_ptr<Tensor> key_positions_;
 
   // Embedding input to the model.
   std::shared_ptr<Tensor> transformer_input_;
@@ -203,7 +208,7 @@ class Llm : protected xnn_utils::XnnGraph {
 //      embedding preparations..etc.
 //   2) SelfAttentionIncludeResidual: the self-attention module along with
 //      residual connections and some normalizations.
-//   3) FeedForwardIncludeResidual: The feedforward layers that follows the
+//   3) FeedForward: The feedforward layers that follows the
 //      attention outputs, including residual connections and normalizations.
 //   4) PostProcess: the final projection layer after the stacked transformers.
 // The LlmBuilder allows developers to overwrite the logics of those components
@@ -227,6 +232,8 @@ class LlmBuilder : protected XnnGraphBuilder {
     std::shared_ptr<Tensor> pos_embedding;
     std::shared_ptr<Tensor> atten_mask;
     std::shared_ptr<Tensor> segment_pos;
+    std::shared_ptr<Tensor> query_positions;
+    std::shared_ptr<Tensor> key_positions;
 
     // The type of this field will be updated in the future. Please contact
     // odml-llm-support if you'd like to use this field.
@@ -243,6 +250,10 @@ class LlmBuilder : protected XnnGraphBuilder {
       : XnnGraphBuilder(std::move(runtime_configs), datatype),
         llm_params_(llm_params),
         sampler_(std::move(sampler)) {}
+
+  virtual std::unique_ptr<Llm> GetLlm(XnnGraph&& graph) {
+    return std::make_unique<Llm>(std::move(graph));
+  }
 
   using XnnGraphBuilder::Build;
   using XnnGraphBuilder::NewInput;
@@ -269,6 +280,9 @@ class LlmBuilder : protected XnnGraphBuilder {
   virtual absl::StatusOr<std::shared_ptr<Tensor>> SelfAttentionIncludeResidual(
       std::shared_ptr<Tensor> input, InputResource resource,
       const LlmWeights::SelfAttentionWeights& sa_weights);
+  virtual absl::StatusOr<std::shared_ptr<Tensor>> FeedForward(
+      std::shared_ptr<Tensor> input,
+      const LlmWeights::FeedForwardWeights& ff_weights);
   virtual absl::StatusOr<std::shared_ptr<Tensor>> FeedForwardIncludeResidual(
       std::shared_ptr<Tensor> input,
       const LlmWeights::FeedForwardWeights& ff_weights);
@@ -305,8 +319,19 @@ class LlmBuilder : protected XnnGraphBuilder {
                                       size_t process_seq_len,
                                       Tensor& out_segment_pos);
 
+  absl::Status InitQueryPositions(size_t current_seq_len, size_t input_seq_len,
+                                  Tensor& out_positions);
+  absl::Status InitKeyPositions(size_t current_seq_len, size_t input_seq_len,
+                                Tensor& out_positions);
   // Run sampling on model's output logits.
   absl::StatusOr<std::vector<std::vector<int>>> Sample(const Tensor& logits);
+
+  // Apply normalization according to `norm_type`, generally the output tensor
+  // should have the same shape as `input`.
+  absl::StatusOr<std::shared_ptr<Tensor>> ApplyNorm(
+      std::shared_ptr<Tensor> input,
+      std::optional<LlmWeights::NormWeights> weights,
+      LlmParams::Norm norm_type);
 
  protected:
   friend class Llm;
@@ -318,17 +343,14 @@ class LlmBuilder : protected XnnGraphBuilder {
   absl::Status InitPosEmbeddingValues(size_t process_seq_len);
   absl::Status InitSegmentPosValues(size_t rope_size);
 
+  absl::StatusOr<std::shared_ptr<Tensor>> ScaleQuery(
+      std::shared_ptr<Tensor> query_proj,
+      const LlmWeights::SelfAttentionWeights& sa_weights);
+
   absl::StatusOr<std::shared_ptr<Tensor>> DotAttention(
       std::shared_ptr<Tensor> query_proj, std::shared_ptr<Tensor> key_proj,
       std::shared_ptr<Tensor> value_proj, std::shared_ptr<Tensor> atten_mask,
       const LlmWeights::SelfAttentionWeights& sa_weights);
-
-  // Apply normalization according to `norm_type`, generally the output tensor
-  // should have the same shape as `input`.
-  absl::StatusOr<std::shared_ptr<Tensor>> ApplyNorm(
-      std::shared_ptr<Tensor> input,
-      std::optional<LlmWeights::NormWeights> weights,
-      LlmParams::Norm norm_type);
 
   virtual absl::StatusOr<std::shared_ptr<Tensor>> SelfAttentionExcludeNorm(
       std::shared_ptr<Tensor> input, InputResource resource,

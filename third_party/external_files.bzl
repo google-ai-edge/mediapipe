@@ -264,8 +264,8 @@ def external_files():
 
     http_file(
         name = "com_google_mediapipe_dummy_gesture_recognizer_task",
-        sha256 = "18e54586bda33300d459ca140cd045f6daf43d897224ba215a16db3423eae18e",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/dummy_gesture_recognizer.task?generation=1665707319890725"],
+        sha256 = "76de8c58d206d098557959d574953c2db3a4363fa52922ca198450d5d696814d",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/dummy_gesture_recognizer.task?generation=1728509644439822"],
     )
 
     http_file(
@@ -288,8 +288,8 @@ def external_files():
 
     http_file(
         name = "com_google_mediapipe_efficientdet_lite0_fp16_no_nms_tflite",
-        sha256 = "237a58389081333e5cf4154e42b593ce7dd357445536fcaf4ca5bc51c2c50f1c",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/efficientdet_lite0_fp16_no_nms.tflite?generation=1693610182046114"],
+        sha256 = "bcda125c96d3767bca894c8cbe7bc458379c9974c9fd8bdc6204e7124a74082a",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/efficientdet_lite0_fp16_no_nms.tflite?generation=1728573738871723"],
     )
 
     http_file(
@@ -446,6 +446,12 @@ def external_files():
         name = "com_google_mediapipe_face_stylizer_task",
         sha256 = "423f350aab236123818adb7b39e0a14e14708a9a019fb2fe00a015a2561fd0c8",
         urls = ["https://storage.googleapis.com/mediapipe-assets/face_stylizer.task?generation=1693433010526766"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_falcon_rw_1b_test_weight_pt",
+        sha256 = "62972530d362e881747f0f309573f32421a13b787603ab89874a23f4a5d44f44",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/falcon_rw_1b_test_weight.pt?generation=1728509646701969"],
     )
 
     http_file(
@@ -708,8 +714,32 @@ def external_files():
 
     http_file(
         name = "com_google_mediapipe_libimagegenerator_gpu_so",
-        sha256 = "9bfb1954ad1397f7b3fff621738ccd43ad0bc0c6bce42438a806ae2368f4c5b5",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/libimagegenerator_gpu.so?generation=1694488131511338"],
+        sha256 = "e4407c7c0a2559b168a0f76cda6eb23ce2d167fa757a0d4887ccf57af70c0179",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/libimagegenerator_gpu.so?generation=1728509649298093"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_libopencv_core_3_4_darwin_a",
+        sha256 = "1e4355f5a3813f7656cf7c2d64b6c5d42d4c20688c2c4a08b51572b714e3795a",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/libopencv_core.3.4.darwin.a?generation=1728509651551637"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_libopencv_core_3_4_darwin_arm64_a",
+        sha256 = "4a836f880d86123cb8bc1d838e53bf44053c683951c4e87921dddca7434d8be3",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/libopencv_core.3.4.darwin_arm64.a?generation=1728509653713172"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_libopencv_imgproc_3_4_darwin_a",
+        sha256 = "6501109ed42eec78f54330ec14b99cae86c5f0db52651636ccf2a44297808eb7",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/libopencv_imgproc.3.4.darwin.a?generation=1728509656218122"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_libopencv_imgproc_3_4_darwin_arm64_a",
+        sha256 = "4e8019ca2732c07c173188dbf156b8321e350873ce2115327642788001ead246",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/libopencv_imgproc.3.4.darwin_arm64.a?generation=1728509658402901"],
     )
 
     http_file(
@@ -881,6 +911,12 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_mobile_raid_det_nms_max_detections_40_max_labels_per_box_5_norm_coord_tflite",
+        sha256 = "7df0e6fa124c6f30e5c5661f244e6c98bb8470ce2b487597541996b610c7cc87",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/mobile_raid_det_nms_max_detections_40_max_labels_per_box_5_norm_coord.tflite?generation=1728509661004483"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_mobile_raid_one_stage_v2_1_uint8_tflite",
         sha256 = "2e397b750d8f270e3f41731c1ec1f5b7811f93bc3a39fb81a4c47dd5e9055915",
         urls = ["https://storage.googleapis.com/mediapipe-assets/mobile_raid_one_stage_v2_1_uint8.tflite?generation=1699635098658451"],
@@ -980,6 +1016,12 @@ def external_files():
         name = "com_google_mediapipe_ocr_text_jpg",
         sha256 = "88052e93aa910330433741f5cef140f8f9ec463230a332aef7038b5457b06482",
         urls = ["https://storage.googleapis.com/mediapipe-assets/ocr_text.jpg?generation=1681244241009078"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_opencv2_xcframework_zip",
+        sha256 = "6b625f564b72fd7c0946de2ae61507bed5daf84f3dbb5296ef4fef19da491160",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/opencv2.xcframework.zip?generation=1728573757773068"],
     )
 
     http_file(
@@ -1346,6 +1388,12 @@ def external_files():
         name = "com_google_mediapipe_ssd_mobilenet_v1_tflite",
         sha256 = "cbdecd08b44c5dea3821f77c5468e2936ecfbf43cde0795a2729fdb43401e58b",
         urls = ["https://storage.googleapis.com/mediapipe-assets/ssd_mobilenet_v1.tflite?generation=1661875947436302"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_stablelm_3b_4e1t_test_weight_safetensors",
+        sha256 = "c732deb063697cb46ad55013ed87372d57fd22b9e1cdf913a5e563601f50b7ec",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/stablelm_3b_4e1t_test_weight.safetensors?generation=1728509663906850"],
     )
 
     http_file(

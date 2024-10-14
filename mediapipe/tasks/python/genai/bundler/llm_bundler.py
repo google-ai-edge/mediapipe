@@ -34,7 +34,7 @@ class BundleConfig:
       passed here.
     start_token: Token that will be used to signify the beginning of a sequence.
     stop_tokens: Tokens that will be used to signify the end of a sequence.
-    output_filename: Name of the generated `.task` file containg the Bundle.
+    output_filename: Name of the generated `.task` file containing the Bundle.
     enable_bytes_to_unicode_mapping: Enables GPT-2 style bytes to unicode
       mapping. For more details see:
       https://github.com/openai/gpt-2/blob/master/src/encoder.py#L9

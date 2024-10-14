@@ -20,7 +20,13 @@ licenses(["notice"])  # Apache License 2.0
 
 package(default_visibility = ["//visibility:public"])
 
-exports_files(["LICENSE"])
+exports_files([
+    "LICENSE",
+    "requirements_lock.txt",
+    "requirements_lock_3_10.txt",
+    "requirements_lock_3_11.txt",
+    "requirements_lock_3_12.txt",
+])
 
 cc_library(
     name = "glog",
@@ -57,6 +63,14 @@ config_setting(
     name = "opencv_source_build",
     define_values = {
         "OPENCV": "source",
+    },
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "opencv_prebuilt_build",
+    define_values = {
+        "OPENCV": "prebuilt",
     },
     visibility = ["//visibility:public"],
 )
@@ -105,10 +119,43 @@ config_setting(
     },
 )
 
+config_setting(
+    name = "opencv_darwin_prebuild",
+    define_values = {
+        "OPENCV": "prebuilt",
+    },
+    values = {
+        "apple_platform_type": "macos",
+        "cpu": "darwin",
+    },
+)
+
+config_setting(
+    name = "opencv_darwin_arm64_prebuild",
+    define_values = {
+        "OPENCV": "prebuilt",
+    },
+    values = {
+        "apple_platform_type": "macos",
+        "cpu": "darwin_arm64",
+    },
+)
+
+alias(
+    name = "opencv_prebuilt",
+    actual = select({
+        "//mediapipe:ios": "@ios_opencv//:opencv",
+        ":opencv_darwin_prebuild": "//third_party/prebuilts:opencv_darwin",
+        ":opencv_darwin_arm64_prebuild": "//third_party/prebuilts:opencv_darwin_arm64",
+        "//conditions:default": ":opencv_cmake",
+    }),
+)
+
 alias(
     name = "opencv",
     actual = select({
         ":opencv_source_build": ":opencv_cmake",
+        ":opencv_prebuilt_build": ":opencv_prebuilt",
         ":opencv_ios_sim_arm64_source_build": "@ios_opencv_source//:opencv",
         ":opencv_ios_arm64_source_build": "@ios_opencv_source//:opencv",
         ":opencv_ios_x86_64_source_build": "@ios_opencv_source//:opencv",

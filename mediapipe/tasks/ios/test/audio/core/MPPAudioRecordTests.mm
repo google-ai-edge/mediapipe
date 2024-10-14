@@ -62,6 +62,10 @@ NS_ASSUME_NONNULL_BEGIN
                                       error:(NSError **)error;
 
 - (BOOL)loadAudioPCMBuffer:(AVAudioPCMBuffer *)pcmBuffer error:(NSError **)error;
+
+- (nullable MPPFloatBuffer *)internalReadAtOffset:(NSUInteger)offset
+                                       withLength:(NSUInteger)length
+                                            error:(NSError **)error;
 @end
 
 @implementation MPPAudioRecordTests
@@ -239,7 +243,7 @@ NS_ASSUME_NONNULL_BEGIN
   const NSUInteger offset = 4;
   const NSUInteger length = 100;
   NSError *error;
-  [audioRecord readAtOffset:offset withLength:length error:&error];
+  [audioRecord internalReadAtOffset:offset withLength:length error:&error];
 
   NSError *expectedError = [NSError
       errorWithDomain:kExpectedErrorDomain
@@ -322,9 +326,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (void)assertSuccessOfLoadAudioRecord:(MPPAudioRecord *)audioRecord
                          withPCMBuffer:(AVAudioPCMBuffer *)bufferInAudioRecordFormat {
-  MPPFloatBuffer *previousAudioRecordBuffer = [audioRecord readAtOffset:0
-                                                             withLength:audioRecord.bufferLength
-                                                                  error:nil];
+  MPPFloatBuffer *previousAudioRecordBuffer =
+      [audioRecord internalReadAtOffset:0 withLength:audioRecord.bufferLength error:nil];
 
   XCTAssertTrue([audioRecord loadAudioPCMBuffer:bufferInAudioRecordFormat error:nil]);
 
@@ -360,7 +363,9 @@ NS_ASSUME_NONNULL_BEGIN
 + (MPPFloatBuffer *)readAudioRecord:(MPPAudioRecord *)audioRecord
                            atOffset:(NSUInteger)offset
                              length:(NSUInteger)length {
-  MPPFloatBuffer *audioRecordBuffer = [audioRecord readAtOffset:offset withLength:length error:nil];
+  MPPFloatBuffer *audioRecordBuffer = [audioRecord internalReadAtOffset:offset
+                                                             withLength:length
+                                                                  error:nil];
   XCTAssertNotNil(audioRecordBuffer);
   XCTAssertEqual(audioRecordBuffer.length, length);
   return audioRecordBuffer;
