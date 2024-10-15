@@ -26,6 +26,7 @@ py_library(
     deps = [
         "//mediapipe/tasks/cc/genai/inference/proto:llm_params_py_pb2",
         "//mediapipe/tasks/python/metadata/metadata_writers:model_asset_bundle_utils",
+        "@com_google_sentencepiece//python:sentencepiece_processor",
     ],
 )
 
@@ -35,6 +36,7 @@ py_test(
     srcs_version = "PY3",
     deps = [
         ":llm_bundler",
+        "@com_google_sentencepiece//:sentencepiece_model_py_pb2",
         "@mediapipe_pip_deps_absl_py//:pkg",
     ],
 )

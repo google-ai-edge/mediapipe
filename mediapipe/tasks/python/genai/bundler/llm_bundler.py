@@ -20,6 +20,7 @@ from typing import List, Optional
 
 from mediapipe.tasks.python.metadata.metadata_writers import model_asset_bundle_utils
 from mediapipe.tasks.cc.genai.inference.proto import llm_params_pb2
+import sentencepiece
 
 
 @dataclasses.dataclass(frozen=True)
@@ -66,8 +67,50 @@ class _BundleTags(enum.Enum):
   METADATA = 3
 
 
+def _validate_config(config: BundleConfig):
+  """Validates the given config.
+
+  Args:
+    config: The config to validate.
+
+  Raises:
+    ValueError if the config is invalid. Invalid configs can be:
+    - tokenizer_model is not a valid SentencePiece model.
+    - start_token is not a valid token in the tokenizer_model.
+    - stop_tokens is not a list of valid tokens in the tokenizer_model.
+  """
+  if not isinstance(config.stop_tokens, list):
+    raise ValueError("stop_tokens must be a list of strings.")
+  if not config.stop_tokens:
+    raise ValueError("stop_tokens must be non-empty.")
+
+  try:
+    sp = sentencepiece.SentencePieceProcessor()
+    sp.Load(config.tokenizer_model)
+  except Exception as e:
+    raise ValueError(
+        f"Failed to load tokenizer model from {config.tokenizer_model}. "
+        "Please ensure you are passing a valid SentencePiece model."
+    ) from e
+
+  encoded_start_token = sp.PieceToId(config.start_token)
+  if encoded_start_token == sp.unk_id():
+    raise ValueError(
+        f"Failed to encode start token {config.start_token} with tokenizer."
+    )
+
+  for stop_token in config.stop_tokens:
+    encoded_stop_token = sp.PieceToId(stop_token)
+    if encoded_stop_token == sp.unk_id():
+      raise ValueError(
+          f"Failed to encode stop token {stop_token} with tokenizer."
+      )
+
+
 def create_bundle(config: BundleConfig):
   """Creates a bundle from the given config."""
+  _validate_config(config)
+
   artifacts = {}
   with open(config.tflite_model, "rb") as f:
     artifacts[_BundleTags.TF_LITE_PREFILL_DECODE.name] = f.read()

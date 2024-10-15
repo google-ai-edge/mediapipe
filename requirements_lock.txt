@@ -66,6 +66,8 @@ scipy==1.13.1
     # via
     #   jax
     #   jaxlib
+sentencepiece==0.2.0
+    # via -r mediapipe/opensource_only/requirements.txt
 six==1.16.0
     # via python-dateutil
 sounddevice==0.5.0
