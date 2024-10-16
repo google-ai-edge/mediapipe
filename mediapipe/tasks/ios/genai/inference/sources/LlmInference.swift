@@ -72,7 +72,7 @@ import MediaPipeTasksGenAIC
             number_of_supported_lora_ranks: supportedLoraRanks.count,
             supported_lora_ranks: supportedLoraRanks.baseAddress,
             max_top_k: options.maxTopk,
-            llm_activation_data_type: options.activationDataType.activationDataTypeC,
+            llm_activation_data_type: kLlmActivationDataTypeDefault,
             num_draft_tokens: 0,
             wait_for_weight_uploads: options.waitForWeightUploads)
           return try LlmTaskRunner(modelSettings: modelSetting)
@@ -233,16 +233,13 @@ extension LlmInference {
     /// The supported lora ranks for the base model. Used by GPU only.
     @objc public var supportedLoraRanks: [Int] = []
 
-    /// The activation data type for the model.
-    @objc public var activationDataType: ActivationDataType = .default
-
     /// If true, waits for weights to finish uploading when initializing. Otherwise initialization
     /// may finish before weights have finished uploading which might push some of the weight upload
     /// time into input processing.
     @objc public var waitForWeightUploads: Bool = false
 
     /// Creates a new instance of `Options` with the given `modelPath` and default values of
-    /// `maxTokens`, `maxTopk`, `supportedLoraRanks` and `activationDataType`.
+    /// `maxTokens`, `maxTopk`, `supportedLoraRanks`.
     /// This function is only intended to be used from Objective C.
     ///
     /// - Parameters:
@@ -250,34 +247,6 @@ extension LlmInference {
     @objc public init(modelPath: String) {
       self.modelPath = modelPath
       super.init()
-    }
-  }
-
-  /// The activation data type for the model.
-  @objc(MPPLLMInferenceActivationDataType)
-  public enum ActivationDataType: Int {
-    case `default` = 0
-    case float32 = 1
-    case float16 = 2
-    case int16 = 3
-    case int8 = 4
-  }
-}
-
-extension LlmInference.ActivationDataType {
-  /// Mapping to the engine C API.
-  fileprivate var activationDataTypeC: LlmActivationDataType {
-    switch self {
-    case .default:
-      return kLlmActivationDataTypeDefault
-    case .float32:
-      return kLlmActivationDataTypeFloat32
-    case .float16:
-      return kLlmActivationDataTypeFloat16
-    case .int16:
-      return kLlmActivationDataTypeInt16
-    case .int8:
-      return kLlmActivationDataTypeInt8
     }
   }
 }
