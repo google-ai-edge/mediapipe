@@ -29,6 +29,13 @@ mediapipe_proto_library(
     ],
 )
 
+config_setting(
+    name = "force_gpu_segmentation",
+    values = {
+        "define": "mediapipe_force_gpu_segmentation=1",
+    },
+)
+
 cc_library(
     name = "tensors_to_segmentation_calculator",
     srcs = ["tensors_to_segmentation_calculator.cc"],
