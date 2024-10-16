@@ -44,6 +44,7 @@ py_library(
     deps = [
         ":quantization",
         "//mediapipe/model_maker/python/core/data:dataset",
+        "@model_maker_pip_deps_ai_edge_litert//:pkg",
         "@model_maker_pip_deps_numpy//:pkg",
         "@model_maker_pip_deps_tensorflow//:pkg",
     ],
@@ -172,6 +173,7 @@ py_test(
         ":quantization",
         ":test_util",
         "@model_maker_pip_deps_absl_py//:pkg",
+        "@model_maker_pip_deps_ai_edge_litert//:pkg",
         "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )

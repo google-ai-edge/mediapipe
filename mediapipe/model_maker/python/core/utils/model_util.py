@@ -28,6 +28,7 @@ import tensorflow as tf
 
 from mediapipe.model_maker.python.core.data import dataset
 from mediapipe.model_maker.python.core.utils import quantization
+from ai_edge_litert import interpreter as tfl_interpreter
 
 DEFAULT_SCALE, DEFAULT_ZERO_POINT = 0, 0
 ESTIMITED_STEPS_PER_EPOCH = 1000
@@ -273,7 +274,7 @@ class LiteRunner(object):
     Args:
       tflite_model: A valid flatbuffer representing the TFLite model.
     """
-    self.interpreter = tf.lite.Interpreter(model_content=tflite_model)
+    self.interpreter = tfl_interpreter.Interpreter(model_content=tflite_model)
     self.interpreter.allocate_tensors()
     self.input_details = self.interpreter.get_input_details()
     self.output_details = self.interpreter.get_output_details()

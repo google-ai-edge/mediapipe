@@ -1,4 +1,5 @@
 absl-py
+ai-edge-litert
 numpy<2
 opencv-python
 setuptools==70.3.0 # needed due to https://github.com/pypa/setuptools/issues/4487
