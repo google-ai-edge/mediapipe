@@ -649,7 +649,7 @@ and for iOS modify `kNumHands` in
         [`mediapipe/examples/desktop/hand_tracking:hand_tracking_cpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/desktop/hand_tracking/BUILD)
 *   Running on GPU
     *   Graph:
-        [`mediapipe/graphs/hand_tracking/hand_tracking_desktop_live_gpu.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/hand_tracking_desktop_gpu.pbtxt)
+        [`mediapipe/graphs/hand_tracking/hand_tracking_desktop_live_gpu.pbtxt`](https://github.com/google/mediapipe/blob/master/mediapipe/graphs/hand_tracking/hand_tracking_desktop_live_gpu.pbtxt)
     *   Target:
         [`mediapipe/examples/desktop/hand_tracking:hand_tracking_gpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/desktop/hand_tracking/BUILD)
 
