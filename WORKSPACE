@@ -234,6 +234,34 @@ http_archive(
     url = "https://github.com/google/XNNPACK/archive/9007aa93227010168e615f9c6552035040c94a15.zip",
 )
 
+# 2020-07-09
+http_archive(
+    name = "pybind11_bazel",
+    strip_prefix = "pybind11_bazel-203508e14aab7309892a1c5f7dd05debda22d9a5",
+    urls = ["https://github.com/pybind/pybind11_bazel/archive/203508e14aab7309892a1c5f7dd05debda22d9a5.zip"],
+    sha256 = "75922da3a1bdb417d820398eb03d4e9bd067c4905a4246d35a44c01d62154d91",
+)
+
+# 2022-10-20
+http_archive(
+    name = "pybind11",
+    urls = [
+        "https://github.com/pybind/pybind11/archive/v2.10.1.zip",
+    ],
+    sha256 = "fcf94065efcfd0a7a828bacf118fa11c43f6390d0c805e3e6342ac119f2e9976",
+    strip_prefix = "pybind11-2.10.1",
+    build_file = "@pybind11_bazel//:pybind11.BUILD",
+)
+
+http_archive(
+    name = "pybind11_protobuf",
+    sha256 = "baa1f53568283630a5055c85f0898b8810f7a6431bd01bbaedd32b4c1defbcb1",
+    strip_prefix = "pybind11_protobuf-3594106f2df3d725e65015ffb4c7886d6eeee683",
+    urls = [
+        "https://github.com/pybind/pybind11_protobuf/archive/3594106f2df3d725e65015ffb4c7886d6eeee683.tar.gz",
+    ],
+)
+
 # TF on 2024-09-24
 _TENSORFLOW_GIT_COMMIT = "5329ec8dd396487982ef3e743f98c0195af39a6b"
 
