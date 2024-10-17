@@ -42,7 +42,7 @@ using ::mediapipe::Packet;
     cppEmbeddingResults = packet.Get<std::vector<EmbeddingResultProto>>();
   } else {
     // If packet does not contain protobuf of a type expected by the audio embedder.
-    return [[MPPAudioEmbedderResult alloc] initWithEmbeddingResults:nil
+    return [[MPPAudioEmbedderResult alloc] initWithEmbeddingResults:@[]
                                             timestampInMilliseconds:timestampInMilliseconds];
   }
 

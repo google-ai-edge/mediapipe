@@ -124,7 +124,7 @@ NS_SWIFT_NAME(AudioEmbedder)
 - (BOOL)embedAsyncAudioBlock:(MPPAudioData *)audioBlock
      timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                        error:(NSError **)error
-    NS_SWIFT_NAME(classifyAsync(audioBlock:timestampInMilliseconds:));
+    NS_SWIFT_NAME(embedAsync(audioBlock:timestampInMilliseconds:));
 
 /**
  * Closes and cleans up the MediaPipe audio embedder.

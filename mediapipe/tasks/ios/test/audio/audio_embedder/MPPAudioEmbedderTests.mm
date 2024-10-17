@@ -22,6 +22,8 @@
 #import "mediapipe/tasks/ios/test/audio/core/utils/sources/MPPAudioData+TestUtils.h"
 #import "mediapipe/tasks/ios/test/utils/sources/MPPFileInfo.h"
 
+#include <array>
+
 static MPPFileInfo *const kYamnetModelFileInfo =
     [[MPPFileInfo alloc] initWithName:@"yamnet_embedding_metadata" type:@"tflite"];
 static MPPFileInfo *const kSpeech16KHzMonoFileInfo =
@@ -62,7 +64,11 @@ static NSString *const kAudioStreamTestsDictExpectationKey = @"expectation";
     XCTAssertEqual(embedding.floatEmbedding.count, expectedLength);                    \
   }
 
-@interface MPPAudioEmbedderTests : XCTestCase <MPPAudioEmbedderStreamDelegate>
+@interface MPPAudioEmbedderTests : XCTestCase <MPPAudioEmbedderStreamDelegate> {
+  NSDictionary<NSString *, id> *_16kHZAudioStreamSucceedsTestDict;
+  NSDictionary<NSString *, id> *_48kHZAudioStreamSucceedsTestDict;
+  NSDictionary<NSString *, id> *_outOfOrderTimestampTestDict;
+}
 @end
 
 @implementation MPPAudioEmbedderTests
@@ -185,6 +191,14 @@ static NSString *const kAudioStreamTestsDictExpectationKey = @"expectation";
                                        isQuantized:options.quantize
                      expectedEmbeddingResultsCount:expectedEmbedderResultsCount
                            expectedEmbeddingLength:kExpectedEmbeddingLength];
+  const std::array<float, 3> expectedEmbeddingValuesSubset = {2.07613f, 0.392721f, 0.543622f};
+  const float valueDifferenceTolerance = 4e-6f;
+
+  NSArray<NSNumber *> *floatEmbedding = result.embeddingResults[0].embeddings[0].floatEmbedding;
+  for (int i = 0; i < expectedEmbeddingValuesSubset.size(); i++) {
+    XCTAssertEqualWithAccuracy(expectedEmbeddingValuesSubset[i], floatEmbedding[i].floatValue,
+                               valueDifferenceTolerance);
+  }
 }
 
 - (void)testEmbedAfterCloseFailsInAudioClipsMode {
@@ -337,16 +351,119 @@ static NSString *const kAudioStreamTestsDictExpectationKey = @"expectation";
   AssertEqualErrors(error, expectedError);
 }
 
+- (void)testEmbedWithAudioStreamModeAndOutOfOrderTimestampsFails {
+  MPPAudioEmbedder *audioEmbedder =
+      [self audioEmbedderInStreamModeWithModelFileInfo:kYamnetModelFileInfo];
+  NSArray<MPPTimestampedAudioData *> *streamedAudioDataList =
+      [MPPAudioEmbedderTests streamedAudioDataListforYamnet];
+
+  XCTestExpectation *expectation =
+      [[XCTestExpectation alloc] initWithDescription:@"embedWithOutOfOrderTimestampsAndLiveStream"];
+  expectation.expectedFulfillmentCount = 1;
+
+  _outOfOrderTimestampTestDict = @{
+    kAudioStreamTestsDictEmbedderKey : audioEmbedder,
+    kAudioStreamTestsDictExpectationKey : expectation
+  };
+
+  // Can safely access indices 1 and 0 `streamedAudioDataList` count is already asserted.
+  XCTAssertTrue([audioEmbedder embedAsyncAudioBlock:streamedAudioDataList[1].audioData
+                            timestampInMilliseconds:streamedAudioDataList[1].timestampInMilliseconds
+                                              error:nil]);
+
+  NSError *error;
+  XCTAssertFalse([audioEmbedder
+         embedAsyncAudioBlock:streamedAudioDataList[0].audioData
+      timestampInMilliseconds:streamedAudioDataList[0].timestampInMilliseconds
+                        error:&error]);
+
+  NSError *expectedError =
+      [NSError errorWithDomain:kExpectedErrorDomain
+                          code:MPPTasksErrorCodeInvalidArgumentError
+                      userInfo:@{
+                        NSLocalizedDescriptionKey :
+                            @"INVALID_ARGUMENT: Input timestamp must be monotonically increasing."
+                      }];
+  AssertEqualErrors(error, expectedError);
+
+  [audioEmbedder closeWithError:nil];
+}
+
+- (void)testClassifyWithAudioStreamModeSucceeds {
+  [self embedUsingYamnetAsyncAudioFileWithInfo:kSpeech16KHzMonoFileInfo
+                                          info:&_16kHZAudioStreamSucceedsTestDict];
+  [self embedUsingYamnetAsyncAudioFileWithInfo:kSpeech48KHzMonoFileInfo
+                                          info:&_48kHZAudioStreamSucceedsTestDict];
+}
+
 #pragma mark MPPAudioEmbedderStreamDelegate
 
 - (void)audioEmbedder:(MPPAudioEmbedder *)audioEmbedder
     didFinishEmbeddingWithResult:(MPPAudioEmbedderResult *)result
          timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                            error:(NSError *)error {
-  // TODO: Add assertion for the result when stream mode inference tests are added.
+  // Can safely test for yamnet results before `audioEmbedder` object tests since only yamnet with
+  // 16khz and 48khz speech files are used for async tests.
+  [MPPAudioEmbedderTests
+      assertNonQuantizedAudioEmbedderYamnetStreamModeResult:result
+                                    timestampInMilliseconds:timestampInMilliseconds
+                                    expectedEmbeddingLength:kExpectedEmbeddingLength];
+
+  if (audioEmbedder == _outOfOrderTimestampTestDict[kAudioStreamTestsDictEmbedderKey]) {
+    [_outOfOrderTimestampTestDict[kAudioStreamTestsDictExpectationKey] fulfill];
+  } else if (audioEmbedder == _16kHZAudioStreamSucceedsTestDict[kAudioStreamTestsDictEmbedderKey]) {
+    [_16kHZAudioStreamSucceedsTestDict[kAudioStreamTestsDictExpectationKey] fulfill];
+  } else if (audioEmbedder == _48kHZAudioStreamSucceedsTestDict[kAudioStreamTestsDictEmbedderKey]) {
+    [_48kHZAudioStreamSucceedsTestDict[kAudioStreamTestsDictExpectationKey] fulfill];
+  }
+}
+
+#pragma mark Audio Stream Mode Test Helpers
+
+// info is strong here since address of global variables will be passed to this function. By default
+// `NSDictionary **` will be `NSDictionary * __autoreleasing *.
+- (void)embedUsingYamnetAsyncAudioFileWithInfo:(MPPFileInfo *)audioFileInfo
+                                          info:(NSDictionary<NSString *, id> *__strong *)info {
+  MPPAudioEmbedder *audioEmbedder =
+      [self audioEmbedderInStreamModeWithModelFileInfo:kYamnetModelFileInfo];
+
+  NSArray<MPPTimestampedAudioData *> *streamedAudioDataList =
+      [MPPAudioEmbedderTests streamedAudioDataListforYamnet];
+
+  XCTestExpectation *expectation = [[XCTestExpectation alloc]
+      initWithDescription:[NSString
+                              stringWithFormat:@"embedWithStreamMode_%@", audioFileInfo.name]];
+  expectation.expectedFulfillmentCount = streamedAudioDataList.count;
+
+  *info = @{
+    kAudioStreamTestsDictEmbedderKey : audioEmbedder,
+    kAudioStreamTestsDictExpectationKey : expectation
+  };
+
+  for (MPPTimestampedAudioData *timestampedAudioData in streamedAudioDataList) {
+    XCTAssertTrue([audioEmbedder embedAsyncAudioBlock:timestampedAudioData.audioData
+                              timestampInMilliseconds:timestampedAudioData.timestampInMilliseconds
+                                                error:nil]);
+  }
+
+  [audioEmbedder closeWithError:nil];
+
+  NSTimeInterval timeout = 1.0f;
+  [self waitForExpectations:@[ expectation ] timeout:timeout];
 }
 
 #pragma mark Audio Embedder Initializers
+
+- (MPPAudioEmbedder *)audioEmbedderInStreamModeWithModelFileInfo:(MPPFileInfo *)fileInfo {
+  MPPAudioEmbedderOptions *options =
+      [MPPAudioEmbedderTests audioEmbedderOptionsWithModelFileInfo:fileInfo];
+  options.runningMode = MPPAudioRunningModeAudioStream;
+  options.audioEmbedderStreamDelegate = self;
+
+  MPPAudioEmbedder *audioEmbedder = [MPPAudioEmbedderTests audioEmbedderWithOptions:options];
+
+  return audioEmbedder;
+}
 
 + (MPPAudioEmbedderOptions *)audioEmbedderOptionsWithModelFileInfo:(MPPFileInfo *)modelFileInfo {
   MPPAudioEmbedderOptions *options = [[MPPAudioEmbedderOptions alloc] init];
@@ -421,6 +538,21 @@ static NSString *const kAudioStreamTestsDictExpectationKey = @"expectation";
   }
 }
 
++ (void)assertNonQuantizedAudioEmbedderYamnetStreamModeResult:(MPPAudioEmbedderResult *)result
+                                      timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                                      expectedEmbeddingLength:(NSInteger)expectedEmbeddingLength {
+  // In stream mode, `result` will only have one embedding result corresponding to the timestamp at
+  // which it was sent for inference.
+  XCTAssertEqual(result.embeddingResults.count, 1);
+
+  MPPEmbeddingResult *embeddingResult = result.embeddingResults[0];
+  AssertEmbeddingResultHasOneEmbedding(embeddingResult);
+  AssertEmbeddingHasCorrectTypeAndDimension(embeddingResult.embeddings[0], NO,
+                                            expectedEmbeddingLength);
+
+  XCTAssertEqual(result.timestampInMilliseconds, timestampInMilliseconds);
+}
+
 + (MPPAudioEmbedderResult *)embedAudioClipWithFileInfo:(MPPFileInfo *)fileInfo
                                     usingAudioEmbedder:(MPPAudioEmbedder *)audioEmbedder {
   MPPAudioData *audioData = [[MPPAudioData alloc] initWithFileInfo:fileInfo];
@@ -428,6 +560,17 @@ static NSString *const kAudioStreamTestsDictExpectationKey = @"expectation";
   XCTAssertNotNil(result);
 
   return result;
+}
+
++ (NSArray<MPPTimestampedAudioData *> *)streamedAudioDataListforYamnet {
+  NSArray<MPPTimestampedAudioData *> *streamedAudioDataList =
+      [AVAudioFile streamedAudioBlocksFromAudioFileWithInfo:kSpeech16KHzMonoFileInfo
+                                           modelSampleCount:kYamnetSampleCount
+                                            modelSampleRate:kYamnetSampleRate];
+
+  XCTAssertEqual(streamedAudioDataList.count, 5);
+
+  return streamedAudioDataList;
 }
 
 @end

@@ -71,6 +71,7 @@ TENSORFLOW_LITE_C_DEPS = [
 CALCULATORS_AND_GRAPHS = [
     "//mediapipe/calculators/core:flow_limiter_calculator",
     "//mediapipe/tasks/cc/audio/audio_classifier:audio_classifier_graph",
+    "//mediapipe/tasks/cc/audio/audio_embedder:audio_embedder_graph",
     "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
     "//mediapipe/tasks/cc/text/text_embedder:text_embedder_graph",
     "//mediapipe/tasks/cc/vision/face_detector:face_detector_graph",
@@ -116,6 +117,9 @@ strip_api_include_path_prefix(
         "//mediapipe/tasks/ios/audio/audio_classifier:sources/MPPAudioClassifier.h",
         "//mediapipe/tasks/ios/audio/audio_classifier:sources/MPPAudioClassifierOptions.h",
         "//mediapipe/tasks/ios/audio/audio_classifier:sources/MPPAudioClassifierResult.h",
+        "//mediapipe/tasks/ios/audio/audio_embedder:sources/MPPAudioEmbedder.h",
+        "//mediapipe/tasks/ios/audio/audio_embedder:sources/MPPAudioEmbedderOptions.h",
+        "//mediapipe/tasks/ios/audio/audio_embedder:sources/MPPAudioEmbedderResult.h",
         "//mediapipe/tasks/ios/audio/core:sources/MPPAudioData.h",
         "//mediapipe/tasks/ios/audio/core:sources/MPPAudioDataFormat.h",
         "//mediapipe/tasks/ios/audio/core:sources/MPPAudioRecord.h",
@@ -194,6 +198,9 @@ apple_static_xcframework(
         ":MPPAudioClassifier.h",
         ":MPPAudioClassifierOptions.h",
         ":MPPAudioClassifierResult.h",
+        ":MPPAudioEmbedder.h",
+        ":MPPAudioEmbedderOptions.h",
+        ":MPPAudioEmbedderResult.h",
         ":MPPAudioData.h",
         ":MPPAudioDataFormat.h",
         ":MPPAudioRecord.h",
@@ -202,12 +209,15 @@ apple_static_xcframework(
         ":MPPCategory.h",
         ":MPPClassificationResult.h",
         ":MPPCommon.h",
+        ":MPPEmbedding.h",
+        ":MPPEmbeddingResult.h",
         ":MPPFloatBuffer.h",
         ":MPPTaskOptions.h",
         ":MPPTaskResult.h",
     ],
     deps = [
         "//mediapipe/tasks/ios/audio/audio_classifier:MPPAudioClassifier",
+        "//mediapipe/tasks/ios/audio/audio_embedder:MPPAudioEmbedder",
     ],
 )
 
