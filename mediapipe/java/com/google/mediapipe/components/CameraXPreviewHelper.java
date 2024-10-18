@@ -370,10 +370,24 @@ public class CameraXPreviewHelper extends CameraHelper {
    * @param onImageSavedCallback Callback to be called for the newly captured image.
    */
   public void takePicture(File outputFile, OnImageSavedCallback onImageSavedCallback) {
+    takePicture(outputFile, onImageSavedCallback, imageCaptureExecutorService);
+  }
+
+  /**
+   * Captures a new still image and saves to a file along with application specified metadata. This
+   * method works when {@link CameraXPreviewHelper#startCamera(Activity, ImageCapture.Builder,
+   * CameraFacing, Size)} has been called previously enabling image capture. The callback will be
+   * called only once for every invocation of this method.
+   *
+   * @param outputFile Save location for captured image.
+   * @param onImageSavedCallback Callback to be called for the newly captured image.
+   * @param executorService Executor service to handle image capture.
+   */
+  public void takePicture(
+      File outputFile, OnImageSavedCallback onImageSavedCallback, ExecutorService executorService) {
     if (isImageCaptureEnabled) {
       OutputFileOptions outputFileOptions = new OutputFileOptions.Builder(outputFile).build();
-      imageCapture.takePicture(
-          outputFileOptions, imageCaptureExecutorService, onImageSavedCallback);
+      imageCapture.takePicture(outputFileOptions, executorService, onImageSavedCallback);
     }
   }
 
