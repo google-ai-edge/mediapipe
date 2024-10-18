@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-// Placeholder for internal dependency on resourceUrlSafeByReview
+// Placeholder for internal dependency on trusted resource url
+// Placeholder for internal dependency on trusted resource url
 
 import {WasmFileset} from './wasm_fileset';
 
@@ -47,7 +48,8 @@ async function isSimdSupported(): Promise<boolean> {
 }
 
 async function createFileset(
-    taskName: MediaPipeTaskCategory, basePath = ''): Promise<WasmFileset> {
+    taskName: MediaPipeTaskCategory,
+    basePath: string = ``): Promise<WasmFileset> {
   const suffix =
       await isSimdSupported() ? 'wasm_internal' : 'wasm_nosimd_internal';
 
