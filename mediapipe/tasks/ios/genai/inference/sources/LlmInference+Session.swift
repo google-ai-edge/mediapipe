@@ -67,7 +67,7 @@ extension LlmInference {
         } ?? llmInference.createSessionRunner(sessionConfig: sessionConfig)
 
       self.llmInference = llmInference
-      self.metrics = Metrics(responseGenerationTimeInMillis: 0)
+      self.metrics = Metrics(responseGenerationTimeInSeconds: 0)
       super.init()
     }
 
@@ -97,7 +97,7 @@ extension LlmInference {
     init(llmSessionRunner: LlmSessionRunner, llmInference: LlmInference) {
       self.llmSessionRunner = llmSessionRunner
       self.llmInference = llmInference
-      self.metrics = Metrics(responseGenerationTimeInMillis: 0)
+      self.metrics = Metrics(responseGenerationTimeInSeconds: 0)
       super.init()
     }
 
@@ -256,9 +256,8 @@ extension LlmInference {
     private func markResponseGenerationCompleted() {
       llmInference.markResponseGenerationCompleted()
       metrics = Metrics(
-        responseGenerationTimeInMillis: (TimeInterval(clock_gettime_nsec_np(CLOCK_MONOTONIC_RAW))
-          - responseGenerationStartTime) * 1000
-          / TimeInterval(NSEC_PER_SEC))
+        responseGenerationTimeInSeconds: (TimeInterval(clock_gettime_nsec_np(CLOCK_MONOTONIC_RAW))
+          - responseGenerationStartTime) / TimeInterval(NSEC_PER_SEC))
     }
 
     private static func humanReadableString(
@@ -310,13 +309,11 @@ extension LlmInference.Session {
   /// Note: Inherits from `NSObject` for Objective C interoperability.
   @objc(MPPLLMInferenceSessionMetrics) public final class Metrics: NSObject {
 
-    /// The time it took to generate the full response for last query, in milliseconds.
-    @objc public private(set) var responseGenerationTimeInMillis: TimeInterval
+    /// The time it took to generate the full response for last query, in seconds.
+    @objc public private(set) var responseGenerationTimeInSeconds: TimeInterval
 
-    @objc public init(
-      responseGenerationTimeInMillis: TimeInterval
-    ) {
-      self.responseGenerationTimeInMillis = responseGenerationTimeInMillis
+    @objc public init(responseGenerationTimeInSeconds: TimeInterval) {
+      self.responseGenerationTimeInSeconds = responseGenerationTimeInSeconds
     }
   }
 }
