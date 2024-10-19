@@ -30,7 +30,22 @@ mediapipe_proto_library(
 )
 
 config_setting(
-    name = "force_gpu_segmentation",
+    name = "android_x86_32_and_force_gpu_segmentation",
+    constraint_values = [
+        "@platforms/cpu:x86_32",
+        "@platforms/os:android",
+    ],
+    values = {
+        "define": "mediapipe_force_gpu_segmentation=1",
+    },
+)
+
+config_setting(
+    name = "android_x86_64_and_force_gpu_segmentation",
+    constraint_values = [
+        "@platforms/cpu:x86_64",
+        "@platforms/os:android",
+    ],
     values = {
         "define": "mediapipe_force_gpu_segmentation=1",
     },
