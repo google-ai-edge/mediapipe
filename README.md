@@ -6,7 +6,7 @@ Check the included demos with pipeline examples or create your own graphs and ex
 
 # List of changes introduced in this repository fork
 
-- added [Dockerfile.openvino](Dockerfile.openvino) dockerfile that creates runtime and development environment.
+- added [Dockerfile.openvino](Dockerfile.openvino) dockerfile that creates runtime and development environment. This is a build environment image not suitable for production use.
 - added [Makefile](Makefile) file with build, test and demo targets for the ease of use.
 - modified [build_desktop_examples.sh](build_desktop_examples.sh) script to build new demos.
 - added [calculators](mediapipe/calculators/ovms) and [calculators](mediapipe/calculators/openvino) for OpenVINO&trade; inference in mediapipe graphs
