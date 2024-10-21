@@ -87,7 +87,7 @@ struct NoneType {
 
 template <auto& kP>
 struct SameType {
-  static constexpr const decltype(kP)& kPort = kP;
+  static constexpr const decltype(kP) & kPort = kP;
 };
 
 class PacketTypeAccess;
