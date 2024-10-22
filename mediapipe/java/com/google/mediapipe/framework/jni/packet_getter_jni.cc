@@ -223,7 +223,7 @@ JNIEXPORT void JNICALL PACKET_GETTER_METHOD(nativeGetProto)(JNIEnv* env,
   if (!ThrowIfError(env, status)) {
     // Convert type_name and value to Java data.
     const auto& proto_message = mediapipe_packet.GetProtoMessageLite();
-    std::string type_name = proto_message.GetTypeName();
+    std::string type_name(proto_message.GetTypeName());
     jstring j_type_name = env->NewStringUTF(type_name.c_str());
     std::string proto_bytes;
     proto_message.SerializeToString(&proto_bytes);
