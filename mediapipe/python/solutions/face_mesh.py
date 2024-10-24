@@ -54,6 +54,8 @@ from mediapipe.python.solutions.face_mesh_connections import FACEMESH_TESSELATIO
 
 FACEMESH_NUM_LANDMARKS = 468
 FACEMESH_NUM_LANDMARKS_WITH_IRISES = 478
+FACEMESH_LEFT_PUPIL_CENTER = 473
+FACEMESH_RIGHT_PUPIL_CENTER = 468
 _BINARYPB_FILE_PATH = 'mediapipe/modules/face_landmark/face_landmark_front_cpu.binarypb'
 
 
