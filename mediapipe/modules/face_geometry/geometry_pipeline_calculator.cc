@@ -169,7 +169,8 @@ class GeometryPipelineCalculator : public CalculatorBase {
                         _ << "Failed to read a metadata blob from file!");
 
     face_geometry::GeometryPipelineMetadata metadata;
-    RET_CHECK(metadata.ParseFromString(metadata_blob->ToStringView()))
+    absl::string_view metadata_str = metadata_blob->ToStringView();
+    RET_CHECK(metadata.ParseFromArray(metadata_str.data(), metadata_str.size()))
         << "Failed to parse a metadata proto from a binary blob!";
 
     return metadata;
