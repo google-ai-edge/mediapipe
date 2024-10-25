@@ -240,7 +240,11 @@ absl::Status CopyCpuInputIntoTfLiteTensor(const Tensor& input_tensor,
   const Tensor::ElementType input_tensor_type = input_tensor.element_type();
   RET_CHECK(input_tensor_type == interpreter_tensor_type)
           .SetCode(absl::StatusCode::kInvalidArgument)
-      << "Input and interpreter tensor type do not match.";
+      << absl::StrFormat(
+             "Input and interpreter tensor type do not match: Input tensor "
+             "type %s vs interpreter tensor type %s.",
+             GetTensorTypeString(input_tensor_type),
+             TfLiteTypeGetName(interpreter_tensor_type));
   switch (interpreter_tensor_type) {
     case TfLiteType::kTfLiteFloat16:
     case TfLiteType::kTfLiteFloat32: {
