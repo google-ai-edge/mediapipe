@@ -1,2 +1,2 @@
 Content moved to
-[MediaPipe KNIFT](https://google.github.io/mediapipe/solutions/knift)
+[MediaPipe KNIFT](https://google-ai-edge.github.io/mediapipe/solutions/knift)

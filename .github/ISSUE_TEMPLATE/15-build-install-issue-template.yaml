@@ -5,7 +5,7 @@ body:
   - type: markdown
     id: link
     attributes:
-      value: Please make sure that this is a build/installation issue and also refer to the [troubleshooting](https://google.github.io/mediapipe/getting_started/troubleshooting.html) documentation before raising any issues.
+      value: Please make sure that this is a build/installation issue and also refer to the [troubleshooting](https://google-ai-edge.github.io/mediapipe/getting_started/troubleshooting.html) documentation before raising any issues.
   - type: input
     id: os
     attributes:
@@ -91,7 +91,7 @@ body:
     id: what-happened
     attributes:
       label: Describe the problem
-      description: Provide the exact sequence of commands / steps that you executed before running into the [problem](https://google.github.io/mediapipe/getting_started/getting_started.html)
+      description: Provide the exact sequence of commands / steps that you executed before running into the [problem](https://google-ai-edge.github.io/mediapipe/getting_started/getting_started.html)
       placeholder: Tell us what you see!
       value: "A bug happened!"
     validations:

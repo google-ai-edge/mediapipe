@@ -1,2 +1,2 @@
 Content moved to
-[MediaPipe Hair Segmentation](https://google.github.io/mediapipe/solutions/hair_segmentation)
+[MediaPipe Hair Segmentation](https://google-ai-edge.github.io/mediapipe/solutions/hair_segmentation)
