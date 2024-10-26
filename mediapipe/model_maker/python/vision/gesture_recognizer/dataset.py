@@ -50,7 +50,7 @@ class HandDataPreprocessingParams:
 class HandData:
   """A dataclass represents hand data for training gesture recognizer model.
 
-  See https://google.github.io/mediapipe/solutions/hands#mediapipe-hands for
+  See https://google-ai-edge.github.io/mediapipe/solutions/hands#mediapipe-hands for
   more details of the hand gesture data API.
 
   Attributes:
