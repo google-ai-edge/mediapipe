@@ -66,6 +66,6 @@ mediapipe_ts_library(
 
 jasmine_node_test(
     name = "image_classifier_test",
+    srcs = [":image_classifier_test_lib"],
     tags = ["nomsan"],
-    deps = [":image_classifier_test_lib"],
 )
