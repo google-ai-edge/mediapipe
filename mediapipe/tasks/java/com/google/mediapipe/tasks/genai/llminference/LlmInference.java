@@ -232,6 +232,9 @@ public final class LlmInference implements AutoCloseable {
     /** The error listener to use for the {@link LlmInference#generateAsync} API. */
     public abstract Optional<ErrorListener> errorListener();
 
+    /** Returns a new builder with the same values as this instance. */
+    public abstract Builder toBuilder();
+
     /** Instantiates a new LlmInferenceOptions builder. */
     public static Builder builder() {
       return new AutoValue_LlmInference_LlmInferenceOptions.Builder()
