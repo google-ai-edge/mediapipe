@@ -533,16 +533,25 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
                                     withLandmarkTypeName:@"pose_landmarks"
       areApproximatelyEqualToExpectedNormalizedLandmarks:expectedHolisticLandmarkerResult
                                                              .poseLandmarks];
+  // Comparing world landmark counts of the actual result to pose landmark counts of expected result
+  // to ensure world landmarks are present since expected result does not contain world landmarks.
+  XCTAssertEqual(holisticLandmarkerResult.poseWorldLandmarks.count,
+                 expectedHolisticLandmarkerResult.poseLandmarks.count);
 
   [self assertNormalizedLandmarks:holisticLandmarkerResult.leftHandLandmarks
                                     withLandmarkTypeName:@"left_hand_landmarks"
       areApproximatelyEqualToExpectedNormalizedLandmarks:expectedHolisticLandmarkerResult
                                                              .leftHandLandmarks];
+  XCTAssertEqual(holisticLandmarkerResult.leftHandWorldLandmarks.count,
+                 expectedHolisticLandmarkerResult.leftHandLandmarks.count);
 
   [self assertNormalizedLandmarks:holisticLandmarkerResult.rightHandLandmarks
                                     withLandmarkTypeName:@"right_hand_landmarks"
       areApproximatelyEqualToExpectedNormalizedLandmarks:expectedHolisticLandmarkerResult
                                                              .rightHandLandmarks];
+
+  XCTAssertEqual(holisticLandmarkerResult.rightHandWorldLandmarks.count,
+                 expectedHolisticLandmarkerResult.rightHandLandmarks.count);
 
   [self assertFaceBlendshapes:holisticLandmarkerResult.faceBlendshapes
       areApproximatelyEqualToExpectedFaceBlendshapes:expectedHolisticLandmarkerResult
