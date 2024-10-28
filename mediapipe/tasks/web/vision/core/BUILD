@@ -61,7 +61,7 @@ mediapipe_ts_library(
 
 jasmine_node_test(
     name = "drawing_utils_test",
-    deps = [":drawing_utils_test_lib"],
+    srcs = [":drawing_utils_test_lib"],
 )
 
 mediapipe_ts_library(
@@ -87,7 +87,7 @@ mediapipe_ts_library(
 
 jasmine_node_test(
     name = "image_test",
-    deps = [":image_test_lib"],
+    srcs = [":image_test_lib"],
 )
 
 mediapipe_ts_library(
@@ -113,7 +113,7 @@ mediapipe_ts_library(
 
 jasmine_node_test(
     name = "mask_test",
-    deps = [":mask_test_lib"],
+    srcs = [":mask_test_lib"],
 )
 
 mediapipe_ts_library(
@@ -152,5 +152,5 @@ mediapipe_ts_library(
 
 jasmine_node_test(
     name = "vision_task_runner_test",
-    deps = [":vision_task_runner_test_lib"],
+    srcs = [":vision_task_runner_test_lib"],
 )

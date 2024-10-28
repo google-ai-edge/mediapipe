@@ -23,5 +23,5 @@ mediapipe_ts_library(
 
 jasmine_node_test(
     name = "cosine_similarity_test",
-    deps = [":cosine_similarity_test_lib"],
+    srcs = [":cosine_similarity_test_lib"],
 )
