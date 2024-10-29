@@ -282,3 +282,15 @@ calculators designed specifically for this purpose such as
 [`CalculatorBase::Close`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator_base.h
 [`FlowLimiterCalculator`]: https://github.com/google/mediapipe/tree/master/mediapipe/calculators/core/flow_limiter_calculator.cc
 [`How to process realtime input streams`]: faq.md#how-to-process-realtime-input-streams
+
+## Unsupported flags during build
+
+If you are using Clang 18 or older, you may have to disable some compiler
+optimizations in our CPU backend.
+
+To disable support for `avxvnniint8`, add the following to you `.bazelrc`:
+
+```
+build --define=xnn_enable_avxvnniint8=false
+```
+
