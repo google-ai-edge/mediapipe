@@ -611,8 +611,6 @@ http_archive(
     ],
 )
 
-# More iOS deps.
-
 http_archive(
     name = "google_toolbox_for_mac",
     url = "https://github.com/google/google-toolbox-for-mac/archive/v2.2.1.zip",
@@ -621,6 +619,7 @@ http_archive(
     build_file = "@//third_party:google_toolbox_for_mac.BUILD",
 )
 
+# Hermetic CUDA
 load(
     "@org_tensorflow//third_party/gpus/cuda/hermetic:cuda_json_init_repository.bzl",
     "cuda_json_init_repository",
