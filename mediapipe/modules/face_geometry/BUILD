@@ -82,6 +82,7 @@ cc_library(
         "//mediapipe/util:resource_util",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:optional",
     ],
     alwayslink = 1,
