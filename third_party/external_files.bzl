@@ -288,8 +288,8 @@ def external_files():
 
     http_file(
         name = "com_google_mediapipe_efficientdet_lite0_fp16_no_nms_tflite",
-        sha256 = "bcda125c96d3767bca894c8cbe7bc458379c9974c9fd8bdc6204e7124a74082a",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/efficientdet_lite0_fp16_no_nms.tflite?generation=1728573738871723"],
+        sha256 = "237a58389081333e5cf4154e42b593ce7dd357445536fcaf4ca5bc51c2c50f1c",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/efficientdet_lite0_fp16_no_nms.tflite?generation=1730305296514873"],
     )
 
     http_file(
@@ -710,6 +710,12 @@ def external_files():
         name = "com_google_mediapipe_leopard_jpg",
         sha256 = "d66fda0aa655f87c9fe87965a642e7b33ec990a3d9ed5812f1e5513da9d7d744",
         urls = ["https://storage.googleapis.com/mediapipe-assets/leopard.jpg?generation=1685997280368627"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_libc___shared_so",
+        sha256 = "816d497229b6678db485b5dc16ae7d2ac63dc015691b1828bc35c4aa2ed6eed4",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/libc++_shared.so?generation=1730305298946708"],
     )
 
     http_file(

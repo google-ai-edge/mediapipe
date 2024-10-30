@@ -15,6 +15,10 @@
 
 load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
 load("@rules_foreign_cc//foreign_cc:cmake.bzl", "cmake")
+load(
+    "//mediapipe/framework/tool:mediapipe_files.bzl",
+    "mediapipe_files",
+)
 
 licenses(["notice"])  # Apache License 2.0
 
@@ -26,6 +30,10 @@ exports_files([
     "requirements_lock_3_10.txt",
     "requirements_lock_3_11.txt",
     "requirements_lock_3_12.txt",
+])
+
+mediapipe_files(srcs = [
+    "libc++_shared.so",
 ])
 
 cc_library(
@@ -426,4 +434,17 @@ java_import(
     jars = [
         "@com_google_protobuf//java/core:libcore.jar",
     ],
+)
+
+cc_binary(
+    name = "libc++_shared",
+    srcs = ["libc++_shared.so"],
+    linkshared = 1,
+    linkstatic = 1,
+)
+
+cc_library(
+    name = "libc++_shared_lib",
+    srcs = [":libc++_shared.so"],
+    alwayslink = 1,
 )
