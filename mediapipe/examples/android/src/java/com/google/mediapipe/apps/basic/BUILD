@@ -80,5 +80,6 @@ android_binary(
     deps = [
         ":basic_lib",
         ":mediapipe_jni_lib",
+        "//third_party:libc++_shared_lib",
     ],
 )
