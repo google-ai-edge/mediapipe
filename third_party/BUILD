@@ -258,6 +258,15 @@ alias(
     }),
 )
 
+alias(
+    name = "openvino",
+    actual = select({
+        "//mediapipe:windows": "@windows_openvino//:openvino",
+        "//conditions:default": "@linux_openvino//:openvino",
+    }),
+    visibility = ["//visibility:public"],
+)
+
 cc_library(
     name = "libffmpeg",
     visibility = ["//visibility:public"],

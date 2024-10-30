@@ -70,7 +70,7 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/stream_handler:fixed_size_input_stream_handler",
         "//mediapipe/util:resource_util",
-        "@linux_openvino//:openvino",
+        "//third_party:openvino",
     ],
     alwayslink = 1,
 )
@@ -84,7 +84,7 @@ cc_library(
     #    ]),
     visibility = ["//visibility:public"],
     deps = [
-        "@linux_openvino//:openvino",
+        "//third_party:openvino",
     ],
 )
 
@@ -108,7 +108,7 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:map_util",
         "//mediapipe/framework:packet",
-        "@linux_openvino//:openvino",
+        "//third_party:openvino",
     ] + select({
         "//conditions:default": [
         ],
@@ -130,7 +130,7 @@ cc_library(
         "//mediapipe/framework/formats:location",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/util:resource_util",
-        "@linux_openvino//:openvino",
+        "//third_party:openvino",
     ] + select({
         "//mediapipe:android": [
             "//mediapipe/util/android/file/base",
@@ -176,7 +176,7 @@ cc_library(
         "//mediapipe/framework/formats:location",
         "//mediapipe/framework/formats/object_detection:anchor_cc_proto",
         "//mediapipe/framework/port:ret_check",
-        "@linux_openvino//:openvino",
+        "//third_party:openvino",
     ],
     alwayslink = 1,
 )

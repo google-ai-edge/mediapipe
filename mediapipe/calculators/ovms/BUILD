@@ -51,7 +51,7 @@ cc_library(
         "//mediapipe/framework/port:logging",
         "@ovms//src:ovms_header",
         "@model_api//:model_api",
-        "@linux_openvino//:openvino",
+        "//third_party:openvino",
     ],
     copts = ["-Iexternal/ovms/src","-Isrc"],
 )
@@ -80,7 +80,7 @@ cc_library(
         "openvinoinferencedumputils.h"
     ],
     deps = [ 
-        "@linux_openvino//:openvino",
+        "//third_party:openvino",
     ],
     alwayslink = 1,
 )
@@ -116,7 +116,7 @@ cc_library(
         ":openvinoinferencecalculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:tensor", # Tensor GetContract
-        "@linux_openvino//:openvino",
+        "//third_party:openvino",
         "@org_tensorflow//tensorflow/core:framework",
         "@org_tensorflow//tensorflow/lite/c:c_api",
         "@ovms//src:ovms_header",
@@ -138,7 +138,7 @@ cc_library(
         ":openvinoinferenceutils",
         ":openvinomodelserversessioncalculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
-        "@linux_openvino//:openvino",
+        "//third_party:openvino",
         "@ovms//src:ovms_header",
     ],
     copts = ["-Iexternal/ovms/src","-Isrc"],

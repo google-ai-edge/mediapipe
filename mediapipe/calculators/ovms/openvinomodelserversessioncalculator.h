@@ -33,8 +33,6 @@
 #pragma GCC diagnostic pop
 namespace mediapipe {
 
-using ovms::OVMSInferenceAdapter;
-
 class OpenVINOModelServerSessionCalculator : public CalculatorBase {
     std::shared_ptr<::InferenceAdapter> adapter;
     std::unordered_map<std::string, std::string> outputNameToTag;

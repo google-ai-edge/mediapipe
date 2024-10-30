@@ -14,13 +14,57 @@
 # limitations under the License.
 #
 
-def _impl(repository_ctx):
-    http_proxy = repository_ctx.os.environ.get("http_proxy", "")
-    https_proxy = repository_ctx.os.environ.get("https_proxy", "")
-    # Note we need to escape '{/}' by doubling them due to call to format
+def _is_windows(ctx):
+    return ctx.os.name.lower().find("windows") != -1
+
+def _get_windows_build_file():
     build_file_content = """
 load("@rules_foreign_cc//foreign_cc:cmake.bzl", "cmake")
-#load("@bazel_skylib//rules:common_settings.bzl", "string_flag")
+
+visibility = ["//visibility:public"]
+
+filegroup(
+    name = "all_srcs",
+    srcs = glob(["model_api/cpp/**"]),
+    visibility = ["//visibility:public"],
+)
+
+cmake(
+    name = "model_api_cmake",
+    build_args = [
+        "--verbose",
+        "-j 24",
+    ],
+    cache_entries = {{
+        "CMAKE_POSITION_INDEPENDENT_CODE": "ON",
+        "OpenVINO_DIR": "C:/opt/intel/openvino_2024/runtime/cmake",
+        "OpenCV_DIR": "C:/opt/opencv/build",
+    }},
+    env = {{
+        "HTTP_PROXY": "{http_proxy}",
+        "HTTPS_PROXY": "{https_proxy}",
+    }},
+    lib_source = ":all_srcs",
+    out_static_libs = ["model_api.lib"],
+    tags = ["requires-network"],
+)
+
+cc_library(
+    name = "model_api",
+    deps = [
+        "@mediapipe//mediapipe/framework/port:opencv_core",
+        "@mediapipe//third_party:openvino",
+        ":model_api_cmake",
+    ],
+    visibility = ["//visibility:public"],
+)
+"""
+    
+    return build_file_content
+
+def _get_linux_build_file():
+    build_file_content = """
+load("@rules_foreign_cc//foreign_cc:cmake.bzl", "cmake")
 
 visibility = ["//visibility:public"]
 
@@ -38,7 +82,7 @@ cmake(
         # https://github.com/bazelbuild/rules_foreign_cc/issues/329
         # there is no elegant paralell compilation support
         "VERBOSE=1",
-        "-j 4",
+        "-j 24",
     ],
     cache_entries = {{
         "CMAKE_POSITION_INDEPENDENT_CODE": "ON",
@@ -50,20 +94,29 @@ cmake(
     }},
     lib_source = ":all_srcs",
     out_static_libs = ["libmodel_api.a"],
-    tags = ["requires-network"]
+    tags = ["requires-network"],
 )
 
 cc_library(
     name = "model_api",
     deps = [
         "@mediapipe//mediapipe/framework/port:opencv_core",
-        "@linux_openvino//:openvino",
+        "@mediapipe//third_party:openvino",
         ":model_api_cmake",
     ],
     visibility = ["//visibility:public"],
-)
+)"""
+    return build_file_content
 
-"""
+def _impl(repository_ctx):
+    http_proxy = repository_ctx.os.environ.get("HTTP_PROXY", "")
+    https_proxy = repository_ctx.os.environ.get("HTTPS_PROXY", "")
+    # Note we need to escape '{/}' by doubling them due to call to format
+    if _is_windows(repository_ctx):
+        build_file_content = _get_windows_build_file()
+    else:
+        build_file_content = _get_linux_build_file()
+
     repository_ctx.file("BUILD", build_file_content.format(http_proxy=http_proxy, https_proxy=https_proxy))
 
 model_api_repository = repository_rule(

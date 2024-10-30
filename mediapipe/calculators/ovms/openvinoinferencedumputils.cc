@@ -44,8 +44,8 @@ using InferenceInput = std::map<std::string, ov::Tensor>;
 static std::stringstream dumpOvTensor(const ov::Tensor& tensor) {
     std::stringstream dumpStream;
     switch (tensor.get_element_type()) {
-        TYPE_CASE(ov::element::Type_t::f64, _Float64)
-        TYPE_CASE(ov::element::Type_t::f32, _Float32)
+        TYPE_CASE(ov::element::Type_t::f64, double)
+        TYPE_CASE(ov::element::Type_t::f32, float)
         TYPE_CASE(ov::element::Type_t::i64, int64_t)
         TYPE_CASE(ov::element::Type_t::i32, int32_t)
         TYPE_CASE(ov::element::Type_t::i16, int16_t)

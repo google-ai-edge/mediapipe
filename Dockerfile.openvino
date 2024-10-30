@@ -85,9 +85,26 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     build-essential \
     unzip
 
+# Add Nvidia dev tool if needed
+RUN apt-get update ; \
+apt-get install -y --no-install-recommends opencl-clhpp-headers opencl-c-headers intel-opencl-icd libva-dev&& \
+apt-get clean && rm -rf /var/lib/apt/lists/* && rm -rf /tmp/* ;
+
+ARG INSTALL_DRIVER_VERSION="23.22.26516"
+RUN mkdir /tmp/gpu_deps && cd /tmp/gpu_deps ; \
+        curl -L -O https://github.com/intel/compute-runtime/releases/download/23.22.26516.18/intel-level-zero-gpu_1.3.26516.18_amd64.deb ; \
+        curl -L -O https://github.com/intel/intel-graphics-compiler/releases/download/igc-1.0.14062.11/intel-igc-core_1.0.14062.11_amd64.deb ; \
+        curl -L -O https://github.com/intel/intel-graphics-compiler/releases/download/igc-1.0.14062.11/intel-igc-opencl_1.0.14062.11_amd64.deb ; \
+        curl -L -O https://github.com/intel/compute-runtime/releases/download/23.22.26516.18/intel-opencl-icd_23.22.26516.18_amd64.deb ; \
+        curl -L -O https://github.com/intel/compute-runtime/releases/download/23.22.26516.18/libigdgmm12_22.3.0_amd64.deb ; \
+        dpkg -i *.deb && rm -Rf /tmp/gpu_deps ;
+
+WORKDIR /usr/lib/x86_64-linux-gnu/
+RUN ln -s libOpenCL.so.1 libOpenCL.so
+
 # install ovms_lib requirements
 # xml2, uuid for azure
-RUN apt-get install -y curl libpugixml1v5 libtbb2 libxml2-dev uuid-dev uuid libssl-dev --no-install-recommends
+RUN apt-get update && apt-get install -y curl libpugixml1v5 libtbb2 libxml2-dev uuid-dev uuid libssl-dev --no-install-recommends
 
 RUN apt-get update && apt-get install --no-install-recommends -y libtool
 

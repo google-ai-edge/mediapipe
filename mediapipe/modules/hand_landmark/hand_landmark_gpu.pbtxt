@@ -130,7 +130,7 @@ node {
   options: {
     [mediapipe.TensorsToClassificationCalculatorOptions.ext] {
       top_k: 1
-      label_map_path: "/mediapipe/mediapipe/modules/hand_landmark/handedness.txt"
+      label_map_path: "mediapipe/modules/hand_landmark/handedness.txt"
       binary_classification: true
     }
   }
