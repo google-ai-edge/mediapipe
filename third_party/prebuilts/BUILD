@@ -38,6 +38,7 @@ cc_import(
 
 cc_library(
     name = "opencv_darwin",
+    linkstatic = 1,
     deps = [
         ":opencv_core_darwin",
         ":opencv_imgproc_darwin",
@@ -47,6 +48,7 @@ cc_library(
 
 cc_library(
     name = "opencv_darwin_arm64",
+    linkstatic = 1,
     deps = [
         ":opencv_core_darwin_arm64",
         ":opencv_imgproc_darwin_arm64",
