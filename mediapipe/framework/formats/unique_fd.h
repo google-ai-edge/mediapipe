@@ -7,6 +7,8 @@
 
 #include "absl/base/attributes.h"
 #include "absl/log/absl_log.h"
+#include "absl/status/statusor.h"
+#include "mediapipe/framework/port/ret_check.h"
 
 #if (__ANDROID_API__ >= 29) && defined(__BIONIC__) && !defined(NDEBUG)
 #define MEDIAPIPE_USE_FDSAN 1
@@ -56,10 +58,16 @@ class UniqueFd {
   }
 
   // Returns a non-owned file descriptor.
-  int Get() { return fd_; }
+  int Get() const { return fd_; }
 
   // Checks if a valid file descriptor is wrapped.
   bool IsValid() const { return fd_ >= 0; }
+
+  absl::StatusOr<UniqueFd> Dup() const {
+    RET_CHECK(IsValid());
+    int dup_fd = dup(Get());
+    return UniqueFd(dup_fd);
+  }
 
   // Releases ownership of the file descriptor and returns it.
   ABSL_MUST_USE_RESULT int Release() {
