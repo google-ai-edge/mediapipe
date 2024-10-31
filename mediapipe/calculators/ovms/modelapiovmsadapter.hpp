@@ -56,8 +56,8 @@ public:
     OVMSInferenceAdapter(const std::string& servableName, uint32_t servableVersion = 0, OVMS_Server* server = nullptr) :
         servableName(servableName),
         servableVersion(servableVersion) {
-        if (nullptr != cserver) {
-            this->cserver = cserver;
+        if (nullptr != server) {
+            this->cserver = server;
         } else {
             OVMS_ServerNew(&this->cserver);
         }
