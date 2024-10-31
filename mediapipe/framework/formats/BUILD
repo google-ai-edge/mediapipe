@@ -302,8 +302,11 @@ cc_library(
     name = "unique_fd",
     hdrs = ["unique_fd.h"],
     deps = [
+        "//mediapipe/framework/port:ret_check",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
     ],
 )
 
@@ -313,6 +316,7 @@ cc_test(
     deps = [
         ":unique_fd",
         "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:status_matchers",
     ],
 )
 
