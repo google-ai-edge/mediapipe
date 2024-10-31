@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <climits>
 #include <cstdint>
 #include <optional>
 #include <string>
@@ -361,11 +362,12 @@ class PackMediaSequenceCalculator : public CalculatorBase {
   }
 
   absl::Status VerifySize() {
-    const int64_t MAX_PROTO_BYTES = 1073741823;
+    constexpr int kMaxProtoBytes = INT_MAX;
+
     std::string id = mpms::HasExampleId(*sequence_)
                          ? mpms::GetExampleId(*sequence_)
                          : "example";
-    RET_CHECK_LT(sequence_->ByteSizeLong(), MAX_PROTO_BYTES)
+    RET_CHECK_LT(sequence_->ByteSizeLong(), kMaxProtoBytes)
         << "sequence '" << id
         << "' would be too many bytes to serialize after adding features.";
     return absl::OkStatus();
