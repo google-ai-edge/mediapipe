@@ -236,7 +236,7 @@ absl::Status LappedTensorBufferCalculator::AddBatchDimension(
 absl::Status LappedTensorBufferCalculator::ProcessBuffer(
     CalculatorContext* cc) {
   auto concatenated = ::absl::make_unique<tf::Tensor>();
-  const tf::Status concat_status = tf::tensor::Concat(
+  const absl::Status concat_status = tf::tensor::Concat(
       std::vector<tf::Tensor>(buffer_->begin(), buffer_->end()),
       concatenated.get());
   RET_CHECK(concat_status.ok()) << concat_status.ToString();

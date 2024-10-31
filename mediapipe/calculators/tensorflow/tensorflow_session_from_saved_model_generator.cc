@@ -145,7 +145,7 @@ class TensorFlowSessionFromSavedModelGenerator : public PacketGenerator {
     tensorflow::SessionOptions session_options;
     session_options.config = options.session_config();
     auto saved_model = absl::make_unique<tensorflow::SavedModelBundle>();
-    ::tensorflow::Status status = tensorflow::LoadSavedModel(
+    absl::Status status = tensorflow::LoadSavedModel(
         session_options, run_options, path, tags_set, saved_model.get());
     if (!status.ok()) {
       return absl::Status(static_cast<absl::StatusCode>(status.code()),
