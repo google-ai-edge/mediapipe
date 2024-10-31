@@ -249,10 +249,10 @@
   resolved "https://registry.npmjs.org/@types/resolve/-/resolve-1.20.2.tgz"
   integrity sha512-60BCwRFOZCQhDncwQdxxeOEEkbc5dIMccYLwbxsS4TUNeVECQ/pBJ0j09mrHOl/JJvpRPGwO9SvE4nR2Nb/a4Q==
 
-"@webgpu/types@^0.1.40":
-  version "0.1.40"
-  resolved "https://registry.yarnpkg.com/@webgpu/types/-/types-0.1.40.tgz#cf72d1df6f9f8adc5d39556041f20ff2e8a58885"
-  integrity sha512-/BBkHLS6/eQjyWhY2H7Dx5DHcVrS2ICj9owvSRdgtQT6KcafLZA86tPze0xAOsd4FbsYKCUBUQyNi87q7gV7kw==
+"@webgpu/types@^0.1.49":
+  version "0.1.49"
+  resolved "https://registry.yarnpkg.com/@webgpu/types/-/types-0.1.49.tgz#eb9f6535e321214e5c6e9dcc6c7d17e0f7584707"
+  integrity sha512-NMmS8/DofhH/IFeW+876XrHVWel+J/vdcFCHLDqeJgkH9x0DeiwjVd8LcBdaxdG/T7Rf8VUAYsA8X1efMzLjRQ==
 
 "@xmldom/xmldom@^0.8.5":
   version "0.8.10"
