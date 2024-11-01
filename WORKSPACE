@@ -225,13 +225,13 @@ http_archive(
     ],
 )
 
-# XNNPACK on 2024-09-24
+# XNNPACK on 2024-10-30
 http_archive(
     name = "XNNPACK",
     # `curl -L <url> | shasum -a 256`
-    sha256 = "feecde71526d955a0125f7ddd28b9f2d282cd6fca6c1c6bde48f29f86365dd0b",
-    strip_prefix = "XNNPACK-9007aa93227010168e615f9c6552035040c94a15",
-    url = "https://github.com/google/XNNPACK/archive/9007aa93227010168e615f9c6552035040c94a15.zip",
+    sha256 = "7587e5b9272c9d37ea6c9feac46568858dd153c99aa2fbd9c7744fa6415ca297",
+    strip_prefix = "XNNPACK-92b6d8722c34198be870ee956ffe504a11f44093",
+    url = "https://github.com/google/XNNPACK/archive/92b6d8722c34198be870ee956ffe504a11f44093.zip",
 )
 
 # 2020-07-09
@@ -259,6 +259,25 @@ http_archive(
     strip_prefix = "pybind11_protobuf-3594106f2df3d725e65015ffb4c7886d6eeee683",
     urls = [
         "https://github.com/pybind/pybind11_protobuf/archive/3594106f2df3d725e65015ffb4c7886d6eeee683.tar.gz",
+    ],
+)
+
+# KleidiAI is needed to get the best possible performance out of XNNPack
+http_archive(
+    name = "KleidiAI",
+    sha256 = "ccdb61c0c5df9174128f433f82430b1afa8a809cf17f43ecae9a1eec9c2dfabf",
+    strip_prefix = "kleidiai-0dadcdb307f4e5ac98a42e4d4888aad7c23edaf3",
+    urls = [
+        "https://gitlab.arm.com/kleidi/kleidiai/-/archive/0dadcdb307f4e5ac98a42e4d4888aad7c23edaf3/kleidiai-0dadcdb307f4e5ac98a42e4d4888aad7c23edaf3.zip",
+    ],
+)
+
+http_archive(
+    name = "cpuinfo",
+    sha256 = "e2bd8049d29dfbed675a0bc7c01947f8b8bd3f17f706b827d3f6c1e5c64dd8c3",
+    strip_prefix = "cpuinfo-8df44962d437a0477f07ba6b8843d0b6a48646a4",
+    urls = [
+        "https://github.com/pytorch/cpuinfo/archive/8df44962d437a0477f07ba6b8843d0b6a48646a4.zip",
     ],
 )
 
@@ -348,25 +367,6 @@ rules_foreign_cc_dependencies()
 
 load("@bazel_features//:deps.bzl", "bazel_features_deps")
 bazel_features_deps()
-
-http_archive(
-    name = "cpuinfo",
-    sha256 = "2bf2b62eb86e2d2eaf862d0b9683a6c467a4d69fb2f7f1dc47c799809148608f",
-    strip_prefix = "cpuinfo-fa1c679da8d19e1d87f20175ae1ec10995cd3dd3",
-    urls = [
-        "https://github.com/pytorch/cpuinfo/archive/fa1c679da8d19e1d87f20175ae1ec10995cd3dd3.zip",
-    ],
-)
-
-# KleidiAI is needed to get the best possible performance out of XNNPack
-http_archive(
-    name = "KleidiAI",
-    sha256 = "88233e427be6579560073267575f00f3b5fc370a31a43bbdd87a1810bd4bf1b6",
-    strip_prefix = "kleidiai-cddf991af5de49fd34949fa39690e4e906e04074",
-    urls = [
-        "https://gitlab.arm.com/kleidi/kleidiai/-/archive/cddf991af5de49fd34949fa39690e4e906e04074/kleidiai-cddf991af5de49fd34949fa39690e4e906e04074.zip",
-    ],
-)
 
 # TODO: This is an are indirect dependency. We should factor it out.
 http_archive(

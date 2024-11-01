@@ -155,7 +155,7 @@ TEST_F(TextClassifierTest, TextClassifierWithBert) {
       /*head_index=*/0,
       /*head_name=*/"probability"});
   positive_expected.classifications.emplace_back(Classifications{
-      /*categories=*/{{1, 0.9999413, "positive"}, {0, 0.000058, "negative"}},
+      /*categories=*/{{1, 0.9999370, "positive"}, {0, 0.0000629, "negative"}},
       /*head_index=*/0,
       /*head_name=*/"probability"});
 #endif  // _WIN32
@@ -251,8 +251,8 @@ TEST_F(TextClassifierTest, BertLongPositive) {
   categories.push_back(
       {/*index=*/0, /*score=*/0.023313, /*category_name=*/"negative"});
 #else
-  categories.push_back({1, 0.983276, "positive"});
-  categories.push_back({0, 0.016723, "negative"});
+  categories.push_back({1, 0.981097, "positive"});
+  categories.push_back({0, 0.018902, "negative"});
 #endif  // _WIN32
 
   expected.classifications.emplace_back(
