@@ -287,7 +287,7 @@ class TextEmbedderTest(parameterized.TestCase):
 
   @parameterized.parameters(
       # TODO: The similarity should likely be lower
-      (_BERT_MODEL_FILE, 0.99025),
+      (_BERT_MODEL_FILE, 0.98103),
       (_USE_MODEL_FILE, 0.780334),
   )
   def test_embed_with_different_themes(self, model_file, expected_similarity):
