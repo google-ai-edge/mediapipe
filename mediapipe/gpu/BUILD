@@ -842,38 +842,6 @@ cc_library(
 )
 
 cc_library(
-    name = "egl_errors",
-    srcs = ["egl_errors.cc"],
-    hdrs = ["egl_errors.h"],
-    visibility = ["//visibility:public"],
-    deps = [
-        ":gl_base",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
-    ],
-)
-
-cc_library(
-    name = "egl_sync",
-    srcs = ["egl_sync.cc"],
-    hdrs = ["egl_sync.h"],
-    visibility = ["//visibility:public"],
-    deps = [
-        ":egl_errors",
-        ":gl_base",
-        "//mediapipe/framework/deps:no_destructor",
-        "//mediapipe/framework/formats:unique_fd",
-        "//mediapipe/framework/port:ret_check",
-        "//mediapipe/framework/port:status",
-        "@com_google_absl//absl/cleanup",
-        "@com_google_absl//absl/log:absl_log",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:statusor",
-        "@com_google_absl//absl/strings",
-    ],
-)
-
-cc_library(
     name = "gl_texture_util",
     srcs = ["gl_texture_util.cc"],
     hdrs = ["gl_texture_util.h"],
