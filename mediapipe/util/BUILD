@@ -241,6 +241,8 @@ cc_library(
     srcs = [
         "resource_util.cc",
         "resource_util_internal.h",
+        "resource_path_manager.cc",
+        "resource_path_manager.h",
     ] + select({
         "//conditions:default": ["resource_util_default.cc"],
         "//mediapipe:android": ["resource_util_android.cc"],

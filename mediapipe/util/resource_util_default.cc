@@ -18,6 +18,7 @@
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/statusor.h"
+#include "mediapipe/util/resource_path_manager.h"
 
 ABSL_FLAG(
     std::string, resource_root_dir, "",
@@ -41,6 +42,15 @@ absl::Status DefaultGetResourceContents(const std::string& path,
 absl::StatusOr<std::string> PathToResourceAsFile(const std::string& path) {
   if (absl::StartsWith(path, "/")) {
     return path;
+  }
+
+  // try to load file in potentially declared resource paths
+  {
+    auto status_or_path = ResourcePathManager::ResolveFilePath(path);
+    if (status_or_path.ok()) {
+        LOG(INFO) << "Successfully loaded: " << path;
+        return status_or_path;
+    }
   }
 
   // Try to load the file from bazel-bin. If it does not exist, fall back to the
