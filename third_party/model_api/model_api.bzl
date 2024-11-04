@@ -92,6 +92,8 @@ cmake(
     env = {{
         "HTTP_PROXY": "{http_proxy}",
         "HTTPS_PROXY": "{https_proxy}",
+        "http_proxy": "{http_proxy}",
+        "https_proxy": "{https_proxy}",
     }},
     lib_source = ":all_srcs",
     out_static_libs = ["libmodel_api.a"],
@@ -112,6 +114,11 @@ cc_library(
 def _impl(repository_ctx):
     http_proxy = repository_ctx.os.environ.get("HTTP_PROXY", "")
     https_proxy = repository_ctx.os.environ.get("HTTPS_PROXY", "")
+    if not http_proxy:
+        http_proxy = repository_ctx.os.environ.get("http_proxy", "")
+    if not https_proxy:
+        https_proxy = repository_ctx.os.environ.get("https_proxy", "")
+        
     # Note we need to escape '{/}' by doubling them due to call to format
     if _is_windows(repository_ctx):
         build_file_content = _get_windows_build_file()
