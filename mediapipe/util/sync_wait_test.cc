@@ -5,6 +5,7 @@
 #include "absl/log/absl_check.h"
 #include "absl/status/status.h"
 #include "absl/time/time.h"
+#include "mediapipe/framework/formats/unique_fd.h"
 #include "mediapipe/framework/port.h"  // IWYU pragma: keep (DRIHSTI_OSX)
 #include "mediapipe/framework/port/benchmark.h"
 #include "mediapipe/framework/port/gmock.h"
@@ -21,16 +22,7 @@ namespace mediapipe {
 namespace {
 
 struct TestTimer {
-  TestTimer() = default;
-  ~TestTimer() {
-    if (fd != -1) {
-      ABSL_CHECK_EQ(close(fd), 0);
-    }
-  }
-  TestTimer(TestTimer&& timer) = default;
-  TestTimer& operator=(TestTimer&& timer) = default;
-
-  int fd = -1;
+  UniqueFd fd;
 };
 
 #ifdef MEDIAPIPE_OSX
@@ -45,24 +37,22 @@ TestTimer CreateTestTimer(absl::Duration duration) {
          NOTE_CRITICAL, timeout, NULL);
   kevent(kq, &kev, 1, NULL, 0, NULL);
 
-  TestTimer timer;
-  timer.fd = kq;
-  return timer;
+  return TestTimer{UniqueFd(kq)};
 }
 #else
 TestTimer CreateTestTimer(absl::Duration duration) {
-  TestTimer timer;
-  timer.fd = timerfd_create(CLOCK_MONOTONIC, /*flags*/ 0);
-  ABSL_CHECK_NE(timer.fd, -1);
+  const int fd = timerfd_create(CLOCK_MONOTONIC, /*flags*/ 0);
+  ABSL_CHECK_NE(fd, -1);
+  TestTimer timer = {UniqueFd(fd)};
 
   struct itimerspec new_value;
   new_value.it_value = absl::ToTimespec(duration);
   new_value.it_interval.tv_sec = 0;
   new_value.it_interval.tv_nsec = 0;
 
-  ABSL_CHECK_NE(
-      timerfd_settime(timer.fd, /*flags=*/0, &new_value, /*oldtimer=*/nullptr),
-      -1);
+  ABSL_CHECK_NE(timerfd_settime(timer.fd.Get(), /*flags=*/0, &new_value,
+                                /*oldtimer=*/nullptr),
+                -1);
 
   return timer;
 }

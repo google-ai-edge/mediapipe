@@ -201,6 +201,7 @@ cc_library(
     hdrs = ["sync_wait.h"],
     visibility = ["//mediapipe:__subpackages__"],
     deps = [
+        "//mediapipe/framework/formats:unique_fd",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/cleanup",
@@ -217,6 +218,7 @@ cc_test(
     deps = [
         ":sync_wait",
         "//mediapipe/framework:port",
+        "//mediapipe/framework/formats:unique_fd",
         "//mediapipe/framework/port:benchmark",
         "//mediapipe/framework/port:gtest_main",
         "@com_google_absl//absl/log:absl_check",
