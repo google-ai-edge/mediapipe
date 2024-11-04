@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "new_git_repository")
 def _is_windows(ctx):
     return ctx.os.name.lower().find("windows") != -1
 
@@ -123,3 +124,13 @@ model_api_repository = repository_rule(
     implementation = _impl,
     local=False,
 )
+
+def workspace_model_api():
+    model_api_repository(name="_model-api")
+    new_git_repository(
+        name = "model_api",
+        remote = "https:///github.com/openvinotoolkit/model_api/",
+        build_file = "@_model-api//:BUILD",
+        commit = "25c88f8fd1ebe08447aca9a959a7a5f37751867e" # master 31th October 2024 Adjust cpp inference adapters for OVMS (#212)
+    )
+

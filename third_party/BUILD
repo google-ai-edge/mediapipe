@@ -158,6 +158,14 @@ cmake(
     name = "opencv_cmake",
     # Values to be passed as -Dkey=value on the CMake command line;
     # here are serving to provide some CMake script configuration options
+    build_args = [
+        "--verbose",
+        "--",  # <- Pass remaining options to the native tool.
+        # https://github.com/bazelbuild/rules_foreign_cc/issues/329
+        # there is no elegant parallel compilation support
+        "VERBOSE=1",
+        "-j 32",
+    ],
     cache_entries = {
         "CMAKE_BUILD_TYPE": "Release",
         # The module list is always sorted alphabetically so that we do not

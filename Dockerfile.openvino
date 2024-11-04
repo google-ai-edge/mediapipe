@@ -193,6 +193,7 @@ RUN wget -O video.mp4 "https://www.pexels.com/download/video/3044127/?fps=24.0&h
 COPY mediapipe /mediapipe/mediapipe/
 COPY third_party /mediapipe/third_party/
 COPY .bazelrc /mediapipe/
+COPY .user.bazelrc /mediapipe/
 COPY .bazelversion /mediapipe/
 COPY *.sh /mediapipe/
 COPY *.py /mediapipe/

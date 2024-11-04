@@ -70,6 +70,87 @@ OVMSInferenceAdapter::~OVMSInferenceAdapter() {
     LOG(INFO) << "OVMSAdapter destr";
 }
 
+inline std::vector<int64_t> getShapeAcceptableByCAPI(const ov::Shape& shape) {
+    if (std::any_of(shape.begin(), shape.end(), [](size_t dim) {
+            return dim > std::numeric_limits<int64_t>::max();})) {
+        throw std::runtime_error("Cannot use C-API with dimension size greater than int64_t max value");
+    }
+    return std::vector<int64_t>{shape.begin(), shape.end()};
+}
+
+void OVMSInferenceAdapter::infer(const InferenceInput& input, InferenceOutput& output) {
+    /////////////////////
+    // PREPARE REQUEST
+    /////////////////////
+    OVMS_InferenceRequest* request{nullptr};
+    ASSERT_CAPI_STATUS_NULL(OVMS_InferenceRequestNew(&request, cserver, servableName.c_str(), servableVersion));
+    CREATE_GUARD(requestGuard, OVMS_InferenceRequest, request);
+    
+    OVMS_Status* status{nullptr};
+    std::vector<std::string> outputsSet;
+    // PREPARE EACH INPUT
+    // extract single tensor
+    for (const auto& [name, input_tensor] : input) {
+        const char* realName = name.c_str();
+        const auto& ovShape = input_tensor.get_shape();
+        std::vector<int64_t> capiShape = getShapeAcceptableByCAPI(ovShape);
+        OVMS_DataType inputDataType = OVPrecision2CAPI(input_tensor.get_element_type());
+        ASSERT_CAPI_STATUS_NULL(OVMS_InferenceRequestAddInput(request, realName, inputDataType, capiShape.data(), capiShape.size()));
+        const uint32_t NOT_USED_NUM = 0;
+        ASSERT_CAPI_STATUS_NULL(OVMS_InferenceRequestInputSetData(request,
+            realName,
+            reinterpret_cast<void*>(input_tensor.data()),
+            input_tensor.get_byte_size(),
+            OVMS_BUFFERTYPE_CPU,
+            NOT_USED_NUM));
+    }
+    for (const auto& [name, output_tensor] : output) {
+        outputsSet.emplace_back(name);
+        const char* realName = name.c_str();
+        const auto& ovShape = output_tensor.get_shape();
+        std::vector<int64_t> capiShape = getShapeAcceptableByCAPI(ovShape);
+        OVMS_DataType inputDataType = OVPrecision2CAPI(output_tensor.get_element_type());
+        ASSERT_CAPI_STATUS_NULL(OVMS_InferenceRequestAddOutput(request, realName, inputDataType, capiShape.data(), capiShape.size()));
+        const uint32_t NOT_USED_NUM = 0;
+        ASSERT_CAPI_STATUS_NULL(OVMS_InferenceRequestOutputSetData(request,
+            realName,
+            reinterpret_cast<void*>(output_tensor.data()),
+            output_tensor.get_byte_size(),
+            OVMS_BUFFERTYPE_CPU,
+            NOT_USED_NUM));
+
+    }
+#if (OVMS_DUMP_TO_FILE == 1)
+    dumpOvTensorInput(input,"input");
+#endif
+    //////////////////
+    //  INFERENCE
+    //////////////////
+    OVMS_InferenceResponse* response = nullptr;
+    ASSERT_CAPI_STATUS_NULL(OVMS_Inference(cserver, request, &response));
+    CREATE_GUARD(responseGuard, OVMS_InferenceResponse, response);
+    uint32_t outputCount = 42;
+    ASSERT_CAPI_STATUS_NULL(OVMS_InferenceResponseOutputCount(response, &outputCount));
+    uint32_t parameterCount = 42;
+    ASSERT_CAPI_STATUS_NULL(OVMS_InferenceResponseParameterCount(response, &parameterCount));
+    const void* voutputData;
+    size_t bytesize = 42;
+    OVMS_DataType datatype = (OVMS_DataType)199;
+    const int64_t* shape{nullptr};
+    size_t dimCount = 42;
+    OVMS_BufferType bufferType = (OVMS_BufferType)199;
+    uint32_t deviceId = 42;
+    const char* outputName{nullptr};
+    for (size_t i = 0; i < outputCount; ++i) {
+        ASSERT_CAPI_STATUS_NULL(OVMS_InferenceResponseOutput(response, i, &outputName, &datatype, &shape, &dimCount, &voutputData, &bytesize, &bufferType, &deviceId));
+        if (std::find(outputsSet.begin(), outputsSet.end(), outputName) == outputsSet.end()) {
+            output.emplace(outputName, std::move(makeOvTensor(datatype, shape, dimCount, voutputData, bytesize)));
+        }
+    }
+#if (OVMS_DUMP_TO_FILE == 1)
+    dumpOvTensorInput(output,"output");
+#endif
+}
 InferenceOutput OVMSInferenceAdapter::infer(const InferenceInput& input) {
     /////////////////////
     // PREPARE REQUEST
@@ -77,24 +158,19 @@ InferenceOutput OVMSInferenceAdapter::infer(const InferenceInput& input) {
     OVMS_InferenceRequest* request{nullptr};
     ASSERT_CAPI_STATUS_NULL(OVMS_InferenceRequestNew(&request, cserver, servableName.c_str(), servableVersion));
     CREATE_GUARD(requestGuard, OVMS_InferenceRequest, request);
-
+    
     InferenceOutput output;
     OVMS_Status* status{nullptr};
     // PREPARE EACH INPUT
-    // extract single tensor
     for (const auto& [name, input_tensor] : input) {
-        const char* realInputName = name.c_str();
-        const auto& ovinputShape = input_tensor.get_shape();
-        if (std::any_of(ovinputShape.begin(), ovinputShape.end(), [](size_t dim) {
-                return dim > std::numeric_limits<int64_t>::max();})) {
-            throw std::runtime_error("Cannot use C-API with dimension size greater than int64_t max value");
-        }
-        std::vector<int64_t> inputShape{ovinputShape.begin(), ovinputShape.end()};
+        const char* realName = name.c_str();
+        const auto& ovShape = input_tensor.get_shape();
+        std::vector<int64_t> capiShape = getShapeAcceptableByCAPI(ovShape);
         OVMS_DataType inputDataType = OVPrecision2CAPI(input_tensor.get_element_type());
-        ASSERT_CAPI_STATUS_NULL(OVMS_InferenceRequestAddInput(request, realInputName, inputDataType, inputShape.data(), inputShape.size()));
+        ASSERT_CAPI_STATUS_NULL(OVMS_InferenceRequestAddInput(request, realName, inputDataType, capiShape.data(), capiShape.size()));
         const uint32_t NOT_USED_NUM = 0;
         ASSERT_CAPI_STATUS_NULL(OVMS_InferenceRequestInputSetData(request,
-            realInputName,
+            realName,
             reinterpret_cast<void*>(input_tensor.data()),
             input_tensor.get_byte_size(),
             OVMS_BUFFERTYPE_CPU,
@@ -135,7 +211,7 @@ InferenceOutput OVMSInferenceAdapter::infer(const InferenceInput& input) {
     const char* outputName{nullptr};
     for (size_t i = 0; i < outputCount; ++i) {
         ASSERT_CAPI_STATUS_NULL(OVMS_InferenceResponseOutput(response, i, &outputName, &datatype, &shape, &dimCount, &voutputData, &bytesize, &bufferType, &deviceId));
-        output[outputName] = makeOvTensor(datatype, shape, dimCount, voutputData, bytesize);
+        output.emplace(outputName, std::move(makeOvTensor(datatype, shape, dimCount, voutputData, bytesize)));
     }
 #if (OVMS_DUMP_TO_FILE == 1)
     dumpOvTensorInput(output,"output");
@@ -169,14 +245,30 @@ void OVMSInferenceAdapter::loadModel(const std::shared_ptr<const ov::Model>& mod
             inputMinMax.second.emplace_back(shapeMax[i]);
         }
         this->inShapesMinMaxes.insert({tensorName, std::move(inputMinMax)});
+        this->inputDatatypes.insert({tensorName, CAPI2OVPrecision(datatype)});
     }
     for (id = 0; id < outputCount; ++id) {
         ASSERT_CAPI_STATUS_NULL(OVMS_ServableMetadataOutput(servableMetadata, id, &tensorName, &datatype, &dimCount, &shapeMin, &shapeMax));
         outputNames.emplace_back(tensorName);
+        shape_min_max_t outputMinMax;
+        for (size_t i = 0; i < dimCount; ++i) {
+            outputMinMax.first.emplace_back(shapeMin[i]);
+            outputMinMax.second.emplace_back(shapeMax[i]);
+        }
+        this->outShapesMinMaxes.insert({tensorName, std::move(outputMinMax)});
+        this->outputDatatypes.insert({tensorName, CAPI2OVPrecision(datatype)});
     }
     const ov::AnyMap* servableMetadataRtInfo;
     ASSERT_CAPI_STATUS_NULL(OVMS_ServableMetadataInfo(servableMetadata, reinterpret_cast<const void**>(&servableMetadataRtInfo)));
     this->modelConfig = *servableMetadataRtInfo;
+}
+
+ov::element::Type_t OVMSInferenceAdapter::getInputDatatype(const std::string& inputName) const {
+    return inputDatatypes.at(inputName);
+}
+
+ov::element::Type_t OVMSInferenceAdapter::getOutputDatatype(const std::string& outputName) const {
+    return outputDatatypes.at(outputName);
 }
 
 ov::PartialShape OVMSInferenceAdapter::getInputShape(const std::string& inputName) const {
@@ -184,6 +276,21 @@ ov::PartialShape OVMSInferenceAdapter::getInputShape(const std::string& inputNam
     if (it == inShapesMinMaxes.end()) {
         LOG(INFO) << "Could not find input:" << inputName;
         throw std::runtime_error(std::string("Adapter could not find input:") + inputName);
+    }
+
+    ov::PartialShape ovShape;
+    const auto& [minBorder, maxBorder] = it->second;
+    ovShape.reserve(minBorder.size());
+    for (size_t i = 0; i < minBorder.size(); ++i) {
+        ovShape.emplace_back(ov::Dimension{minBorder[i], maxBorder[i]});
+    }
+    return ovShape;
+}
+ov::PartialShape OVMSInferenceAdapter::getOutputShape(const std::string& outputName) const {
+    auto it = outShapesMinMaxes.find(outputName);
+    if (it == outShapesMinMaxes.end()) {
+        LOG(INFO) << "Could not find output:" << outputName;
+        throw std::runtime_error(std::string("Adapter could not find output:") + outputName);
     }
 
     ov::PartialShape ovShape;

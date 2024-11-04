@@ -106,21 +106,11 @@ try-import %workspace%/.user.bazelrc
 
 # Disable native ovms mediapipe support when building in mediapipe repository
 build --define=MEDIAPIPE_DISABLE=1
-coverage --define=MEDIAPIPE_DISABLE=1
-test --define=MEDIAPIPE_DISABLE=1
 
 build --cxxopt=-DMEDIAPIPE_DISABLE=1
-coverage --cxxopt=-DMEDIAPIPE_DISABLE=1
-test --cxxopt=-DMEDIAPIPE_DISABLE=1
 
 build --define=PYTHON_DISABLE=1
-coverage --define=PYTHON_DISABLE=1
-test --define=PYTHON_DISABLE=1
 
 build --cxxopt=-DPYTHON_DISABLE=1
-coverage --cxxopt=-DPYTHON_DISABLE=1
-test --cxxopt=-DPYTHON_DISABLE=1
 
 build --cxxopt=-DOVMS_DUMP_TO_FILE=0
-coverage --cxxopt=-DOVMS_DUMP_TO_FILE=0
-test --cxxopt=-DOVMS_DUMP_TO_FILE=0
