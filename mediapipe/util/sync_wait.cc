@@ -9,6 +9,7 @@
 #include "absl/status/status.h"
 #include "absl/strings/str_format.h"
 #include "absl/time/time.h"
+#include "mediapipe/framework/formats/unique_fd.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
 
@@ -44,6 +45,11 @@ absl::Status SyncWait(int fd, absl::Duration timeout) {
 
   return absl::ErrnoToStatus(errno,
                              absl::StrFormat("Failed to wait for fd: %d.", fd));
+}
+
+absl::Status SyncWait(const UniqueFd& fd, absl::Duration timeout) {
+  RET_CHECK(fd.IsValid());
+  return SyncWait(fd.Get(), timeout);
 }
 
 }  // namespace mediapipe
