@@ -260,7 +260,16 @@ void OVMSInferenceAdapter::loadModel(const std::shared_ptr<const ov::Model>& mod
     }
     const ov::AnyMap* servableMetadataRtInfo;
     ASSERT_CAPI_STATUS_NULL(OVMS_ServableMetadataInfo(servableMetadata, reinterpret_cast<const void**>(&servableMetadataRtInfo)));
-    this->modelConfig = *servableMetadataRtInfo;
+    try {
+        if ((*servableMetadataRtInfo).count("model_info") == 0) {
+            this->modelConfig = ov::AnyMap{};
+        } else {
+            this->modelConfig = (*servableMetadataRtInfo).at("model_info").as<ov::AnyMap>();
+        }
+    } catch (const std::exception& e) {
+        LOG(INFO) << "Exception occurred while accessing model_info: " << e.what();
+        this->modelConfig = ov::AnyMap{};
+    }
 }
 
 ov::element::Type_t OVMSInferenceAdapter::getInputDatatype(const std::string& inputName) const {
