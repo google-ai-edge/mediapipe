@@ -300,6 +300,7 @@ cc_test(
 
 cc_library(
     name = "unique_fd",
+    srcs = ["unique_fd.cc"],
     hdrs = ["unique_fd.h"],
     deps = [
         "//mediapipe/framework/port:ret_check",
