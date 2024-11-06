@@ -16,7 +16,17 @@ load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
 
 licenses(["notice"])
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
+package(default_visibility = [
+    ":clients",
+    "//mediapipe/tasks:internal",
+])
+
+package_group(
+    name = "clients",
+    packages = [
+        "//googlemac/iPhone/Home/OnDeviceML/...",
+    ],
+)
 
 swift_library(
     name = "LlmInference",
