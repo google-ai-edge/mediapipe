@@ -1,13 +1,10 @@
 #ifndef MEDIAPIPE_GPU_EGL_SYNC_H_
 #define MEDIAPIPE_GPU_EGL_SYNC_H_
 
-#include <EGL/egl.h>
-#include <EGL/eglext.h>
-
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/formats/unique_fd.h"
-#include "mediapipe/gpu/gl_base.h"
+#include "mediapipe/gpu/egl_base.h"
 
 namespace mediapipe {
 
@@ -25,6 +22,9 @@ class EglSync {
   // Create a native fence in OpenGL command stream based on a native fence FD.
   static absl::StatusOr<EglSync> CreateNative(EGLDisplay display,
                                               const UniqueFd& native_fence_fd);
+
+  static bool IsSupported(EGLDisplay display);
+  static bool IsNativeSupported(EGLDisplay display);
 
   // Move-only
   EglSync(EglSync&& sync);

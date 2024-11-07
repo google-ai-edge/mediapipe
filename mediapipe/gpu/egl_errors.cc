@@ -2,7 +2,7 @@
 
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
-#include "mediapipe/gpu/gl_base.h"
+#include "mediapipe/gpu/egl_base.h"
 
 namespace mediapipe {
 
