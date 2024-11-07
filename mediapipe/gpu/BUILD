@@ -126,6 +126,13 @@ cc_library(
 )
 
 cc_library(
+    name = "egl_base",
+    textual_hdrs = ["egl_base.h"],
+    visibility = ["//visibility:public"],
+    deps = [":gl_base"],
+)
+
+cc_library(
     name = "gl_base_hdr",
     hdrs = ["gl_base.h"],
     features = ["-layering_check"],
@@ -219,6 +226,7 @@ cc_library(
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:statusor",
         "//mediapipe/framework/port:threadpool",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/base:dynamic_annotations",
         "@com_google_absl//absl/debugging:leak_check",
         "@com_google_absl//absl/log:absl_check",
@@ -849,7 +857,7 @@ cc_library(
     hdrs = ["egl_errors.h"],
     visibility = ["//visibility:public"],
     deps = [
-        ":gl_base",
+        ":egl_base",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
@@ -861,18 +869,32 @@ cc_library(
     hdrs = ["egl_sync.h"],
     visibility = ["//visibility:public"],
     deps = [
+        ":egl_base",
         ":egl_errors",
-        ":gl_base",
         "//mediapipe/framework/deps:no_destructor",
         "//mediapipe/framework/formats:unique_fd",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
-        "//third_party/GL:EGL_headers",
         "@com_google_absl//absl/cleanup",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library(
+    name = "egl_sync_point",
+    srcs = ["egl_sync_point.cc"],
+    hdrs = ["egl_sync_point.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":egl_base",
+        ":egl_sync",
+        ":gl_context",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
     ],
 )
 

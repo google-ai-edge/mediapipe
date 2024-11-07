@@ -1,7 +1,5 @@
 #include "mediapipe/gpu/egl_sync.h"
 
-#include <EGL/egl.h>
-#include <EGL/eglext.h>
 #include <unistd.h>
 
 #include <cstring>
@@ -16,6 +14,7 @@
 #include "mediapipe/framework/formats/unique_fd.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
+#include "mediapipe/gpu/egl_base.h"
 #include "mediapipe/gpu/egl_errors.h"
 
 namespace mediapipe {
@@ -140,6 +139,14 @@ absl::StatusOr<EglSync> EglSync::CreateNative(EGLDisplay display,
   std::move(fd_cleanup).Cancel();
 
   return EglSync(display, egl_sync);
+}
+
+bool EglSync::IsSupported(EGLDisplay display) {
+  return CheckEglSyncSupported(display).ok();
+}
+
+bool EglSync::IsNativeSupported(EGLDisplay display) {
+  return CheckEglNativeSyncSupported(display).ok();
 }
 
 EglSync::EglSync(EglSync&& sync) { *this = std::move(sync); }
