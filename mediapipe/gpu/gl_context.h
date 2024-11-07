@@ -18,11 +18,18 @@
 #include <pthread.h>
 
 #include <atomic>
+#include <cstdint>
 #include <functional>
 #include <memory>
+#include <type_traits>
 
+#include "absl/base/attributes.h"
+#include "absl/base/thread_annotations.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/log/absl_check.h"
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
+#include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/executor.h"
 #include "mediapipe/framework/mediapipe_profiling.h"
