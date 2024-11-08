@@ -14,6 +14,7 @@
 #include "mediapipe/framework/formats/unique_fd.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
+#include "mediapipe/framework/profiler/perfetto_profiling.h"
 #include "mediapipe/gpu/egl_base.h"
 #include "mediapipe/gpu/egl_errors.h"
 
@@ -104,6 +105,7 @@ absl::StatusOr<EglSync> EglSync::Create(EGLDisplay display) {
 }
 
 absl::StatusOr<EglSync> EglSync::CreateNative(EGLDisplay display) {
+  MEDIAPIPE_PERFETTO_TRACE_EVENT("EglSync::CreateNative");
   MP_RETURN_IF_ERROR(CheckEglSyncSupported(display));
   MP_RETURN_IF_ERROR(CheckEglNativeSyncSupported(display));
 
@@ -116,6 +118,9 @@ absl::StatusOr<EglSync> EglSync::CreateNative(EGLDisplay display) {
 
 absl::StatusOr<EglSync> EglSync::CreateNative(EGLDisplay display,
                                               const UniqueFd& native_fence_fd) {
+  MEDIAPIPE_PERFETTO_TRACE_EVENT(
+      absl::StrCat("EglSync::CreateNative for FD: ", native_fence_fd.Get()));
+
   RET_CHECK(native_fence_fd.IsValid());
   MP_RETURN_IF_ERROR(CheckEglSyncSupported(display));
   MP_RETURN_IF_ERROR(CheckEglNativeSyncSupported(display));
