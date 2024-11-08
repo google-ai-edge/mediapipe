@@ -14,7 +14,7 @@ mediapipe_ts_library(
 mediapipe_ts_library(
     name = "cosine_similarity_test_lib",
     testonly = True,
-    srcs = ["cosine_similarity.test.ts"],
+    srcs = ["cosine_similarity_test.ts"],
     deps = [
         ":cosine_similarity",
         "//mediapipe/tasks/web/components/containers:embedding_result",
