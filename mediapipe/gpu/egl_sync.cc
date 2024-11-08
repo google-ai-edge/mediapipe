@@ -106,6 +106,7 @@ absl::StatusOr<EglSync> EglSync::Create(EGLDisplay display) {
 
 absl::StatusOr<EglSync> EglSync::CreateNative(EGLDisplay display) {
   MEDIAPIPE_PERFETTO_TRACE_EVENT("EglSync::CreateNative");
+
   MP_RETURN_IF_ERROR(CheckEglSyncSupported(display));
   MP_RETURN_IF_ERROR(CheckEglNativeSyncSupported(display));
 
@@ -189,6 +190,8 @@ void EglSync::Invalidate() {
 }
 
 absl::Status EglSync::WaitOnGpu() {
+  MEDIAPIPE_PERFETTO_TRACE_EVENT("EglSync::WaitOnGpu");
+
   MP_RETURN_IF_ERROR(CheckEglSyncSupported(display_));
 
   const EGLint result = eglWaitSyncKHR(display_, sync_, 0);
@@ -197,6 +200,8 @@ absl::Status EglSync::WaitOnGpu() {
 }
 
 absl::Status EglSync::Wait() {
+  MEDIAPIPE_PERFETTO_TRACE_EVENT("EglSync::Wait");
+
   MP_RETURN_IF_ERROR(CheckEglSyncSupported(display_));
 
   const EGLint result = eglClientWaitSyncKHR(
@@ -207,6 +212,8 @@ absl::Status EglSync::Wait() {
 }
 
 absl::StatusOr<UniqueFd> EglSync::DupNativeFd() {
+  MEDIAPIPE_PERFETTO_TRACE_EVENT("EglSync::DupNativeFd");
+
   MP_RETURN_IF_ERROR(CheckEglNativeSyncSupported(display_));
 
   const int fd = eglDupNativeFenceFDANDROID(display_, sync_);
@@ -216,6 +223,8 @@ absl::StatusOr<UniqueFd> EglSync::DupNativeFd() {
 }
 
 absl::StatusOr<bool> EglSync::IsSignaled() {
+  MEDIAPIPE_PERFETTO_TRACE_EVENT("EglSync::IsSignaled");
+
   EGLint status;
   const EGLBoolean success =
       eglGetSyncAttribKHR(display_, sync_, EGL_SYNC_STATUS_KHR, &status);
