@@ -138,7 +138,7 @@ mediapipe_ts_library(
 mediapipe_ts_library(
     name = "vision_task_runner_test_lib",
     testonly = True,
-    srcs = ["vision_task_runner.test.ts"],
+    srcs = ["vision_task_runner_test.ts"],
     deps = [
         ":image_processing_options",
         ":vision_task_options",
