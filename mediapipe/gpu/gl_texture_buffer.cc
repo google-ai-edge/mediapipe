@@ -14,6 +14,7 @@
 
 #include "mediapipe/gpu/gl_texture_buffer.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <utility>
@@ -357,8 +358,8 @@ void GlTextureBuffer::ViewDoneWriting(const GlTextureView& view) {
 #endif  // __ANDROID__
 }
 
-static void ReadTexture(GlContext& ctx, const GlTextureView& view,
-                        GpuBufferFormat format, void* output, size_t size) {
+void ReadTexture(GlContext& ctx, const GlTextureView& view,
+                 GpuBufferFormat format, void* output, size_t size) {
   // TODO: check buffer size? We could use glReadnPixels where available
   // (OpenGL ES 3.2, i.e. nowhere). Note that, to fully check that the read
   // won't overflow the buffer with glReadPixels, we'd also need to check or
