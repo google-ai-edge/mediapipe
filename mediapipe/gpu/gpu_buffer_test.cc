@@ -22,8 +22,6 @@
 #include "mediapipe/framework/tool/test_util.h"
 #include "mediapipe/gpu/gl_texture_buffer.h"
 #include "mediapipe/gpu/gl_texture_util.h"
-#include "mediapipe/gpu/gpu_buffer_storage_ahwb.h"
-#include "mediapipe/gpu/gpu_buffer_storage_image_frame.h"
 #include "mediapipe/gpu/gpu_test_base.h"
 #include "stb_image.h"
 #include "stb_image_write.h"

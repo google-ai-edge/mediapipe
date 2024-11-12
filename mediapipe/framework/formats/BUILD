@@ -130,6 +130,7 @@ cc_library(
     deps = [
         ":hardware_buffer",
         "//mediapipe/framework:port",
+        "//mediapipe/framework/formats:unique_fd",
         "//mediapipe/gpu:gpu_buffer_storage",
     ],
 )
