@@ -88,9 +88,12 @@ export function SupportWebGpu<TBase extends LibConstructor>(Base: TBase) {
       // Our inference engines can utilize the adapter info to optimize WebGPU
       // shader performance. Therefore, we attempt to attach that information to
       // our internal GPUDevice reference.
-      (device as unknown as GPUDeviceWithAdapterInfo).adapterInfo =
-        adapter.info;
-
+      // We only apply workaround for browsers/environments where necessary,
+      // otherwise we'll encounter a runtime error, since this is read-only.
+      const deviceWithInfo = (device as unknown as GPUDeviceWithAdapterInfo);
+      if (!deviceWithInfo.adapterInfo) {
+        deviceWithInfo.adapterInfo = adapter.info;
+      }
       return device;
     }
 
