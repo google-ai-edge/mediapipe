@@ -90,6 +90,22 @@ TEST(SyncWait, ReportsInvalidFd) {
               StatusIs(absl::StatusCode::kInternal));
 }
 
+TEST(SyncWait, IsSignaledWorks) {
+  TestTimer timer = CreateTestTimer(absl::Milliseconds(100));
+  MP_ASSERT_OK_AND_ASSIGN(bool is_signaled, IsSignaled(timer.fd));
+  EXPECT_FALSE(is_signaled);
+
+  MP_ASSERT_OK(SyncWait(timer.fd, absl::InfiniteDuration()));
+
+  MP_ASSERT_OK_AND_ASSIGN(is_signaled, IsSignaled(timer.fd));
+  EXPECT_TRUE(is_signaled);
+}
+
+TEST(SyncWait, IsSignaledReportsInvalidFd) {
+  const int fd = -1;
+  EXPECT_THAT(IsSignaled(fd), StatusIs(absl::StatusCode::kInternal));
+}
+
 void BM_SyncWaitZeroTimeout(benchmark::State& state) {
   // Non blocking waits will be used and timer canceled automatically after
   // benchmark completion.
