@@ -19,6 +19,7 @@
 #include <openvino/openvino.hpp>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "../inference/kserve.h"
@@ -37,7 +38,17 @@
 
 namespace mediapipe {
 
-inference::ModelInferRequest build_request(std::string& file_path) {
+const auto graph_content = R"pb(
+  input_stream: "input"
+  output_stream: "output"
+  node {
+    calculator: "ModelInferRequestImageCalculator"
+    input_stream: "REQUEST:input"
+    output_stream: "IMAGE:output"
+  }
+)pb";
+
+inference::ModelInferRequest build_request(const std::string& file_path) {
   auto request = inference::ModelInferRequest();
   std::ifstream is(file_path);
   std::stringstream ss;
@@ -51,16 +62,8 @@ TEST(ModelInferRequestImageCalculatorTest, ImageIsConvertedToCVMatrix) {
   std::string file_path = "/data/pearl.jpg";
 
   CalculatorGraphConfig graph_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig>(absl::Substitute(
-          R"pb(
-            input_stream: "input"
-            output_stream: "output"
-            node {
-              calculator: "ModelInferRequestImageCalculator"
-              input_stream: "REQUEST:input"
-              output_stream: "IMAGE:output"
-            }
-          )pb"));
+      ParseTextProtoOrDie<CalculatorGraphConfig>(
+          absl::Substitute(graph_content));
 
   const cv::Mat raw_image = cv::imread(file_path);
   auto request = build_request(file_path);
@@ -77,6 +80,106 @@ TEST(ModelInferRequestImageCalculatorTest, ImageIsConvertedToCVMatrix) {
   cv::cvtColor(raw_image, expected_image, cv::COLOR_BGR2RGB);
   bool image_is_identical = !cv::norm(image, expected_image, cv::NORM_L1);
   ASSERT_TRUE(image_is_identical);
+}
+
+TEST(ModelInferRequestImageCalculatorTest, WebpIsConvertedToCVMatrix) {
+  std::string file_path = "/data/pearl.webp";
+
+  CalculatorGraphConfig graph_config =
+      ParseTextProtoOrDie<CalculatorGraphConfig>(
+          absl::Substitute(graph_content));
+
+  const cv::Mat raw_image = cv::imread(file_path);
+  auto request = build_request(file_path);
+  auto packet =
+      mediapipe::MakePacket<const inference::ModelInferRequest*>(&request);
+  std::vector<Packet> output_packets;
+  geti::RunGraph(packet, graph_config, output_packets);
+
+  auto& image = output_packets[0].Get<cv::Mat>();
+  ASSERT_EQ(image.cols, raw_image.cols);
+  ASSERT_EQ(image.rows, image.rows);
+
+  cv::Mat expected_image;
+  cv::cvtColor(raw_image, expected_image, cv::COLOR_BGR2RGB);
+  bool image_is_identical = !cv::norm(image, expected_image, cv::NORM_L1);
+  ASSERT_TRUE(image_is_identical);
+}
+
+TEST(ModelInferRequestImageCalculatorTest, ImageTooSmallThrowsError) {
+  testing::internal::CaptureStdout();
+  std::string file_path = "/data/pearl.jpg";
+
+  CalculatorGraphConfig graph_config =
+      ParseTextProtoOrDie<CalculatorGraphConfig>(
+          absl::Substitute(graph_content));
+
+  const cv::Mat raw_image = cv::imread(file_path);
+  cv::Mat too_small_image;
+  cv::resize(raw_image, too_small_image, cv::Size(25, 25));
+
+  std::vector<uchar> buffer;
+  cv::imencode(".jpg", too_small_image, buffer);
+
+  std::string image_data(buffer.begin(), buffer.end());
+
+  auto request = inference::ModelInferRequest();
+  request.mutable_raw_input_contents()->Add(std::move(image_data));
+  auto packet =
+      mediapipe::MakePacket<const inference::ModelInferRequest*>(&request);
+  std::vector<Packet> output_packets;
+  mediapipe::tool::AddVectorSink("output", &graph_config, &output_packets);
+
+  mediapipe::CalculatorGraph graph(graph_config);
+
+  MP_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
+      "input", packet.At(mediapipe::Timestamp(0))));
+
+  auto status = graph.WaitUntilIdle();
+  ASSERT_FALSE(status.ok());
+  ASSERT_EQ(0, output_packets.size());
+  std::string output = testing::internal::GetCapturedStdout();
+  ASSERT_EQ(output,
+            "Caught exception with message: IMAGE_SIZE_OUT_OF_BOUNDS\n");
+}
+
+TEST(ModelInferRequestImageCalculatorTest, ImageTooBigThrowsError) {
+  testing::internal::CaptureStdout();
+  std::string file_path = "/data/pearl.jpg";
+
+  CalculatorGraphConfig graph_config =
+      ParseTextProtoOrDie<CalculatorGraphConfig>(
+          absl::Substitute(graph_content));
+
+  const cv::Mat raw_image = cv::imread(file_path);
+  cv::Mat too_big_image;
+  cv::resize(raw_image, too_big_image, cv::Size(8000, 8000));
+
+  std::vector<uchar> buffer;
+  cv::imencode(".jpg", too_big_image, buffer);
+
+  std::string image_data(buffer.begin(), buffer.end());
+
+  auto request = inference::ModelInferRequest();
+  request.mutable_raw_input_contents()->Add(std::move(image_data));
+  auto packet =
+      mediapipe::MakePacket<const inference::ModelInferRequest*>(&request);
+  std::vector<Packet> output_packets;
+  mediapipe::tool::AddVectorSink("output", &graph_config, &output_packets);
+
+  mediapipe::CalculatorGraph graph(graph_config);
+
+  MP_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
+      "input", packet.At(mediapipe::Timestamp(0))));
+
+  auto status = graph.WaitUntilIdle();
+  ASSERT_FALSE(status.ok());
+  ASSERT_EQ(0, output_packets.size());
+  std::string output = testing::internal::GetCapturedStdout();
+  ASSERT_EQ(output,
+            "Caught exception with message: IMAGE_SIZE_OUT_OF_BOUNDS\n");
 }
 
 }  // namespace mediapipe

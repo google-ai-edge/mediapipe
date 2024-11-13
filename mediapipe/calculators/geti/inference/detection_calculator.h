@@ -22,6 +22,7 @@
 #include <tilers/detection.h>
 
 #include <memory>
+#include <vector>
 
 #include "../inference/geti_calculator_base.h"
 #include "mediapipe/framework/calculator_framework.h"

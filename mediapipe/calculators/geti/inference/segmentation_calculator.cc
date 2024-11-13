@@ -18,10 +18,12 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "../inference/utils.h"
 #include "models/image_model.h"
 #include "../utils/data_structures.h"
+#include "mediapipe/calculators/geti/utils/emptylabel.pb.h"
 
 namespace mediapipe {
 
@@ -90,9 +92,13 @@ absl::Status SegmentationCalculator::GetiProcess(CalculatorContext *cc) {
           {saliency_maps_split[i], roi, labels[i - 1]});
   }
 
+  const auto &options = cc->Options<EmptyLabelOptions>();
+  std::string empty_label_name =
+      options.label().empty() ? geti::GETI_EMPTY_LABEL : options.label();
+
   for (const auto &contour : model->getContours(inference)) {
     std::vector<cv::Point> approxCurve;
-    if (contour.shape.size() > 0) {
+    if ((contour.shape.size() > 0) && (contour.label != empty_label_name)) {
       cv::approxPolyDP(contour.shape, approxCurve, 1.0f, true);
       if (approxCurve.size() > 2) {
         result->polygons.push_back(

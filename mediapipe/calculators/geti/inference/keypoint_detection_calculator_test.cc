@@ -1,7 +1,7 @@
 /**
  *  INTEL CONFIDENTIAL
  *
- *  Copyright (C) 2023 Intel Corporation
+ *  Copyright (C) 2024 Intel Corporation
  *
  *  This software and the related documents are Intel copyrighted materials, and
  * your use of them is governed by the express license under which they were
@@ -14,7 +14,7 @@
  * License.
  */
 
-#include "anomaly_calculator.h"
+#include "keypoint_detection_calculator.h"
 
 #include <map>
 #include <string>
@@ -31,15 +31,10 @@
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/util/image_test_utils.h"
-#include "models/image_model.h"
-#include "../utils/data_structures.h"
 
 namespace mediapipe {
 
-TEST(AnomalyCalculatorTest, TestImageAnomaly) {
-  const cv::Mat raw_image = cv::imread("/data/cattle.jpg");
-  const std::string model_path = "/data/geti/anomaly_classification_padim.xml";
-
+TEST(KeypointDetectionCalculatorTest, TestDetection) {
   CalculatorGraphConfig graph_config =
       ParseTextProtoOrDie<CalculatorGraphConfig>(absl::Substitute(
           R"pb(
@@ -54,13 +49,18 @@ TEST(AnomalyCalculatorTest, TestImageAnomaly) {
               output_side_packet: "INFERENCE_ADAPTER:adapter"
             }
             node {
-              calculator: "AnomalyCalculator"
+              calculator: "KeypointDetectionCalculator"
               input_side_packet: "INFERENCE_ADAPTER:adapter"
               input_stream: "IMAGE:input"
               output_stream: "INFERENCE_RESULT:output"
             }
           )pb"));
+
+  const cv::Mat raw_image = cv::imread("/data/tennis.jpg");
+  cv::cvtColor(raw_image, raw_image, cv::COLOR_BGR2RGB);
   std::vector<Packet> output_packets;
+  std::string model_path =
+      "/data/omz_models/public/rtmpose_tiny/rtmpose_tiny.xml";
 
   std::map<std::string, mediapipe::Packet> inputSidePackets;
   inputSidePackets["model_path"] =
@@ -68,18 +68,33 @@ TEST(AnomalyCalculatorTest, TestImageAnomaly) {
           .At(mediapipe::Timestamp(0));
   inputSidePackets["device"] =
       mediapipe::MakePacket<std::string>("AUTO").At(mediapipe::Timestamp(0));
-
-  auto packet = mediapipe::MakePacket<cv::Mat>(raw_image);
-  geti::RunGraph(packet, graph_config, output_packets, inputSidePackets);
-
+  geti::RunGraph(mediapipe::MakePacket<cv::Mat>(raw_image), graph_config,
+                 output_packets, inputSidePackets);
   ASSERT_EQ(1, output_packets.size());
 
-  auto &result = output_packets[0].Get<geti::InferenceResult>();
-  cv::Rect roi(0, 0, raw_image.cols, raw_image.rows);
-  ASSERT_EQ(result.roi, roi);
-  ASSERT_EQ(1, result.rectangles.size());
-  ASSERT_NEAR(0.699, result.rectangles[0].labels[0].probability, 0.01);
-  ASSERT_EQ("Anomaly", result.rectangles[0].labels[0].label.label);
-  ASSERT_EQ("Anomaly", result.saliency_maps[0].label.label);
+  auto result = output_packets[0].Get<geti::InferenceResult>();
+  std::vector<DetectedKeypoints> poses = result.poses;
+
+  ASSERT_EQ(poses.size(), 1);
+  ASSERT_EQ(poses[0].scores.size(), 17);
+  ASSERT_EQ(poses[0].scores.size(), poses[0].keypoints.size());
+
+  cv::Point3f expected[17] = {
+      {246.7f, 101.8f, 0.985f}, {238.3f, 83.6f, 1.058f},
+      {238.3f, 83.6f, 1.067f},  {238.3f, 82.8f, 0.834f},
+      {221.7f, 82.8f, 1.156f},  {225.0f, 105.6f, 0.697f},
+      {201.7f, 114.7f, 0.956f}, {246.7f, 151.2f, 0.819f},
+      {198.3f, 152.7f, 1.075f}, {280.0f, 162.6f, 0.774f},
+      {246.7f, 172.5f, 0.645f}, {246.7f, 180.8f, 0.778f},
+      {200.0f, 180.1f, 0.629f}, {248.3f, 224.1f, 0.722f},
+      {236.7f, 240.1f, 0.906f}, {193.3f, 286.4f, 0.683f},
+      {185.0f, 298.6f, 0.810f}};
+
+  for (int i = 0; i < 2; i++) {
+    ASSERT_NEAR(poses[0].keypoints[i].x, expected[i].x, 0.1f);
+    ASSERT_NEAR(poses[0].keypoints[i].y, expected[i].y, 0.1f);
+    ASSERT_NEAR(poses[0].scores[i], expected[i].z, 0.001f);
+  }
 }
+
 }  // namespace mediapipe

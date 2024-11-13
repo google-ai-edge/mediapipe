@@ -14,10 +14,13 @@
  * License.
  */
 
-#include "utils.h"
+#include "../inference/utils.h"
 
+#include <string>
 namespace geti {
 
 const std::string GETI_EMPTY_LABEL = "Empty";
+const std::string GETI_NOCLASS_LABEL = "No_class";
+const std::string GETI_NOOBJECT_LABEL = "No_object";
 
 }  // namespace geti

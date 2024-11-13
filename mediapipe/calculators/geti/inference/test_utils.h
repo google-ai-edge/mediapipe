@@ -17,10 +17,14 @@
 #ifndef TEST_UTILS_H_
 #define TEST_UTILS_H_
 
+#include <map>
+#include <nlohmann/json.hpp>
+#include <string>
+#include <vector>
+
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
 #include "mediapipe/framework/port/status_matchers.h"
-#include "nlohmann/json.hpp"
 
 using namespace nlohmann;
 
@@ -77,7 +81,8 @@ static inline bool json_equals(json::const_reference source,
       }
       return true;
     case json::value_t::number_float:
-      return std::abs((float)source - (float)target) <= epsilon;
+      return std::abs(static_cast<float>(source) -
+                      static_cast<float>(target)) <= epsilon;
     case json::value_t::null:
     case json::value_t::string:
     case json::value_t::boolean:

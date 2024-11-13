@@ -1,7 +1,7 @@
 /**
  *  INTEL CONFIDENTIAL
  *
- *  Copyright (C) 2023 Intel Corporation
+ *  Copyright (C) 2024 Intel Corporation
  *
  *  This software and the related documents are Intel copyrighted materials, and
  * your use of them is governed by the express license under which they were
@@ -13,54 +13,40 @@
  * or implied warranties, other than those that are expressly stated in the
  * License.
  */
-#ifndef SEGMENTATION_CALCULATOR_H
-#define SEGMENTATION_CALCULATOR_H
+#ifndef HTTPSERIALIZATION_CALCULATOR_H_
+#define HTTPSERIALIZATION_CALCULATOR_H_
 
-#include <models/input_data.h>
 #include <models/results.h>
-#include <models/segmentation_model.h>
 
-#include <map>
 #include <memory>
-#include <string>
-#include <vector>
 
 #include "../inference/geti_calculator_base.h"
 #include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/formats/image_frame.h"
-#include "mediapipe/framework/formats/image_frame_opencv.h"
+#include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
+#include "mediapipe/framework/port/opencv_imgcodecs_inc.h"
 #include "mediapipe/framework/port/status.h"
-#include "../utils/data_structures.h"
+#include "../serialization/result_serialization.h"
 
 namespace mediapipe {
 
-// Runs segmentation inference on the provided image and OpenVINO model.
-//
-// Input:
-//  IMAGE - cv::Mat
-//
-// Output:
-//  RESULT - SegmentationResult
+// Serialize the output detections to a std::string
 //
 // Input side packet:
-//  INFERENCE_ADAPTER - std::shared_ptr<InferenceAdapter>
+//  RESULT - Result that has serialization implementation
+//
+// Output side packet:
+//  RESPONSE - stdd:string
 //
 
-class SegmentationCalculator : public GetiCalculatorBase {
+class HttpSerializationCalculator : public GetiCalculatorBase {
  public:
   static absl::Status GetContract(CalculatorContract *cc);
   absl::Status Open(CalculatorContext *cc) override;
   absl::Status GetiProcess(CalculatorContext *cc) override;
   absl::Status Close(CalculatorContext *cc) override;
-
- private:
-  std::shared_ptr<InferenceAdapter> ia;
-  std::unique_ptr<SegmentationModel> model;
-  std::vector<geti::Label> labels;
-  std::map<std::string, geti::Label> labels_map;
 };
 
 }  // namespace mediapipe
 
-#endif  // SEGMENTATION_CALCULATOR_H
+#endif  // SERIALIZATION_CALCULATOR_H_

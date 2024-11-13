@@ -18,10 +18,12 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "../inference/utils.h"
 #include "../utils/data_structures.h"
+#include "mediapipe/calculators/geti/utils/emptylabel.pb.h"
 
 namespace mediapipe {
 
@@ -88,10 +90,17 @@ absl::Status DetectionCalculator::GetiProcess(CalculatorContext *cc) {
     inference_result = model->infer(cvimage);
   }
 
+  const auto &options = cc->Options<EmptyLabelOptions>();
+  std::string no_object_name =
+      options.label().empty() ? geti::GETI_NOOBJECT_LABEL : options.label();
+
   for (auto &obj : inference_result->objects) {
-    if (labels.size() > obj.labelID)
-      result->rectangles.push_back(
-          {{geti::LabelResult{obj.confidence, labels[obj.labelID]}}, obj});
+    if (labels.size() > obj.labelID) {
+      if (labels[obj.labelID].label != no_object_name) {
+        result->rectangles.push_back(
+            {{geti::LabelResult{obj.confidence, labels[obj.labelID]}}, obj});
+      }
+    }
   }
 
   result->roi = cv::Rect(0, 0, cvimage.cols, cvimage.rows);

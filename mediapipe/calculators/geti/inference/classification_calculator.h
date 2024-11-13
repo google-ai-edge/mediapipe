@@ -22,6 +22,7 @@
 #include <models/results.h>
 
 #include <memory>
+#include <vector>
 
 #include "../inference/geti_calculator_base.h"
 #include "../inference/utils.h"

@@ -17,12 +17,14 @@
 #include <filesystem>
 #include <fstream>
 #include <map>
+#include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include <opencv2/core/base.hpp>
 #include <openvino/openvino.hpp>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "gtest/gtest.h"
@@ -41,7 +43,6 @@
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/util/image_test_utils.h"
 #include "models/results.h"
-#include "nlohmann/json.hpp"
 #include "third_party/cpp-base64/base64.h"
 #include "../utils/data_structures.h"
 
@@ -111,8 +112,8 @@ TEST(SerializationCalculatorTest, SerializationTestWithoutXAICullsMaps) {
   RunGraph(request_packet, result_packet, output_packets);
 
   ASSERT_EQ(1, output_packets.size());
-  auto& response = output_packets[0].Get<KFSResponse*>();
-  auto& actual_string = response->parameters().at("predictions").string_param();
+  auto response = output_packets[0].Get<KFSResponse>();
+  auto& actual_string = response.parameters().at("predictions").string_param();
   nlohmann::json actual = nlohmann::json::parse(actual_string);
 
   ASSERT_EQ(1, actual["predictions"].size());
@@ -139,8 +140,8 @@ TEST(SerializationCalculatorTest, SerializationTestWithXAIReturnsMaps) {
   RunGraph(request_packet, result_packet, output_packets);
 
   ASSERT_EQ(1, output_packets.size());
-  auto& response = output_packets[0].Get<KFSResponse*>();
-  auto& actual_string = response->parameters().at("predictions").string_param();
+  auto response = output_packets[0].Get<KFSResponse>();
+  auto& actual_string = response.parameters().at("predictions").string_param();
   nlohmann::json actual = nlohmann::json::parse(actual_string);
 
   ASSERT_EQ(1, actual["maps"].size());
@@ -166,8 +167,8 @@ TEST(SerializationCalculatorTest,
   RunGraph(request_packet, result_packet, output_packets);
 
   ASSERT_EQ(1, output_packets.size());
-  auto& response = output_packets[0].Get<KFSResponse*>();
-  auto& actual_string = response->parameters().at("predictions").string_param();
+  auto response = output_packets[0].Get<KFSResponse>();
+  auto& actual_string = response.parameters().at("predictions").string_param();
   nlohmann::json actual = nlohmann::json::parse(actual_string);
 
   ASSERT_EQ(0, actual["maps"].size());

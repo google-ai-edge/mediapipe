@@ -1,7 +1,7 @@
 /**
  *  INTEL CONFIDENTIAL
  *
- *  Copyright (C) 2023 Intel Corporation
+ *  Copyright (C) 2024 Intel Corporation
  *
  *  This software and the related documents are Intel copyrighted materials, and
  * your use of them is governed by the express license under which they were
@@ -13,16 +13,14 @@
  * or implied warranties, other than those that are expressly stated in the
  * License.
  */
-#ifndef SEGMENTATION_CALCULATOR_H
-#define SEGMENTATION_CALCULATOR_H
+#ifndef KEYPOINT_DETECTION_CALCULATOR_H
+#define KEYPOINT_DETECTION_CALCULATOR_H
 
 #include <models/input_data.h>
+#include <models/keypoint_detection.h>
 #include <models/results.h>
-#include <models/segmentation_model.h>
 
-#include <map>
 #include <memory>
-#include <string>
 #include <vector>
 
 #include "../inference/geti_calculator_base.h"
@@ -35,19 +33,19 @@
 
 namespace mediapipe {
 
-// Runs segmentation inference on the provided image and OpenVINO model.
+// Runs keypoint detection inference on the provided image and OpenVINO model.
 //
 // Input:
 //  IMAGE - cv::Mat
 //
 // Output:
-//  RESULT - SegmentationResult
+//  INFERENCE_RESULT - KeypointDetectionResult
 //
 // Input side packet:
 //  INFERENCE_ADAPTER - std::shared_ptr<InferenceAdapter>
 //
 
-class SegmentationCalculator : public GetiCalculatorBase {
+class KeypointDetectionCalculator : public GetiCalculatorBase {
  public:
   static absl::Status GetContract(CalculatorContract *cc);
   absl::Status Open(CalculatorContext *cc) override;
@@ -56,11 +54,10 @@ class SegmentationCalculator : public GetiCalculatorBase {
 
  private:
   std::shared_ptr<InferenceAdapter> ia;
-  std::unique_ptr<SegmentationModel> model;
+  std::unique_ptr<KeypointDetectionModel> model;
   std::vector<geti::Label> labels;
-  std::map<std::string, geti::Label> labels_map;
 };
 
 }  // namespace mediapipe
 
-#endif  // SEGMENTATION_CALCULATOR_H
+#endif  // KEYPOINT_DETECTION_CALCULATOR_H

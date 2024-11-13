@@ -16,8 +16,10 @@
 
 #include "instance_segmentation_calculator.h"
 
+#include <algorithm>
 #include <map>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "../inference/test_utils.h"

@@ -99,7 +99,7 @@ TEST(RotatedDetectionCalculatorTest, TestRotatedDetectionTiler) {
   const auto &result = output_packets[0].Get<geti::InferenceResult>();
   cv::Rect roi(0, 0, image.cols, image.rows);
   ASSERT_EQ(result.roi, roi);
-  ASSERT_EQ(result.rotated_rectangles.size(), 18);
+  ASSERT_EQ(result.rotated_rectangles.size(), 6);
   const auto &obj = result.rotated_rectangles[0];
   ASSERT_EQ(obj.labels[0].label.label_id, "65c1ecc04a85ba6e7cc68002");
 

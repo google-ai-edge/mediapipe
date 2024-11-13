@@ -14,6 +14,9 @@
 // License.
 //
 
+#include <string>
+#include <vector>
+
 #include "../inference/test_utils.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
@@ -26,7 +29,6 @@
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"
 #include "../utils/data_structures.h"
-
 namespace mediapipe {
 
 const geti::Label test_label = {"label_id", "test_label_name"};

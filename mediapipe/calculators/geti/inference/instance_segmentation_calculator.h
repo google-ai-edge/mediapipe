@@ -22,8 +22,9 @@
 #include <tilers/instance_segmentation.h>
 
 #include <memory>
+#include <vector>
 
-#include "geti_calculator_base.h"
+#include "../inference/geti_calculator_base.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/image_frame_opencv.h"
@@ -58,6 +59,8 @@ class InstanceSegmentationCalculator : public GetiCalculatorBase {
   std::unique_ptr<MaskRCNNModel> model;
   std::unique_ptr<InstanceSegmentationTiler> tiler;
   std::vector<geti::Label> labels;
+
+  bool use_ellipse_shapes = false;
 };
 
 }  // namespace mediapipe

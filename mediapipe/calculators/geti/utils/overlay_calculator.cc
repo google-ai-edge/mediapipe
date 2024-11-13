@@ -15,6 +15,7 @@
  */
 #include "overlay_calculator.h"
 
+#include <vector>
 namespace mediapipe {
 
 absl::Status OverlayCalculator::GetContract(CalculatorContract *cc) {
@@ -77,6 +78,21 @@ absl::Status OverlayCalculator::GetiProcess(CalculatorContext *cc) {
                 cv::FONT_HERSHEY_COMPLEX_SMALL, 1., color, 2);
   }
 
+  for (auto &obj : result.circles) {
+    for (auto &label : obj.labels) {
+      std::ostringstream predictions;
+      predictions << ":" << label.label.label << "("
+                  << std::to_string(label.probability) << ")";
+
+      cv::Point2f position{obj.shape.x, obj.shape.y};
+      cv::circle(output_img, position, obj.shape.radius, color, 2);
+      cv::putText(output_img, predictions.str(), position,
+                  cv::FONT_HERSHEY_COMPLEX_SMALL, 1., cv::Scalar(255, 255, 255),
+                  3);
+      cv::putText(output_img, predictions.str(), position,
+                  cv::FONT_HERSHEY_COMPLEX_SMALL, 1., color, 2);
+    }
+  }
   for (auto &obj : result.rotated_rectangles) {
     auto position = obj.shape.center;
     std::ostringstream conf;

@@ -25,7 +25,7 @@
 #include "mediapipe/framework/formats/image_frame_opencv.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/status.h"
-#include "data_structures.h"
+#include "../utils/data_structures.h"
 #include "mediapipe/calculators/geti/utils/emptylabel.pb.h"
 
 namespace mediapipe {

@@ -18,6 +18,7 @@
 
 #include <models/results.h>
 
+#include <string>
 #include <vector>
 
 namespace geti {
@@ -52,11 +53,24 @@ struct RotatedRectanglePrediction {
   cv::RotatedRect shape;
 };
 
+struct Circle {
+  float x;
+  float y;
+  float radius;
+};
+
+struct CirclePrediction {
+  std::vector<LabelResult> labels;
+  Circle shape;
+};
+
 struct InferenceResult {
   std::vector<RectanglePrediction> rectangles;
   std::vector<RotatedRectanglePrediction> rotated_rectangles;
   std::vector<PolygonPrediction> polygons;
+  std::vector<CirclePrediction> circles;
   std::vector<SaliencyMap> saliency_maps;
+  std::vector<DetectedKeypoints> poses;
   cv::Rect roi;
 };
 }  // namespace geti

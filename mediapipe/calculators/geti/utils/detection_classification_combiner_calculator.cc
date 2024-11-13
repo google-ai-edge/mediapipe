@@ -16,6 +16,9 @@
 
 #include "detection_classification_combiner_calculator.h"
 
+#include <memory>
+#include <string>
+
 #include "../inference/utils.h"
 #include "../utils/data_structures.h"
 

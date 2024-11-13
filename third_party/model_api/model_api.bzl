@@ -138,6 +138,6 @@ def workspace_model_api():
         name = "model_api",
         remote = "https:///github.com/openvinotoolkit/model_api/",
         build_file = "@_model-api//:BUILD",
-        commit = "25c88f8fd1ebe08447aca9a959a7a5f37751867e" # master 31th October 2024 Adjust cpp inference adapters for OVMS (#212)
+        commit = "9b5d37c22d97603de2e7ece07bea2e24d5a199d8",
     )
 

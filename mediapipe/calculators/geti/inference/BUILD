@@ -41,10 +41,12 @@ cc_library(
         "classification_calculator.cc",
         "detection_calculator.cc",
         "instance_segmentation_calculator.cc",
+        "keypoint_detection_calculator.cc",
         "openvino_inference_adapter_calculator.cc",
         "rotated_detection_calculator.cc",
         "segmentation_calculator.cc",
         "model_infer_request_image_calculator.cc",
+        "model_infer_http_request_calculator.cc",
     ],
     hdrs = [
         "anomaly_calculator.h",
@@ -52,10 +54,14 @@ cc_library(
         "detection_calculator.h",
         "instance_segmentation_calculator.h",
         "kserve.h",
+        "keypoint_detection_calculator.h",
         "openvino_inference_adapter_calculator.h",
         "rotated_detection_calculator.h",
         "segmentation_calculator.h",
         "model_infer_request_image_calculator.h",
+        "model_infer_http_request_calculator.h",
+        "http_payload.h",
+        "client_connection.h"
     ],
     deps = [
         ":openvino_inference_adapter_calculator_cc_proto",
@@ -65,11 +71,12 @@ cc_library(
         "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:opencv_imgcodecs",
         "//mediapipe/framework/port:opencv_imgproc",
-        "//mediapipe/calculators/geti/utils:data_structures",
-        "//mediapipe/calculators/geti/utils:emptylabel_cc_proto",
+        "//mediapipe/calculators/geti/utils:utils",
         ":inference_utils",
         "@model_api//:model_api",
         ":geti_calculator_base",
+        "@com_github_tencent_rapidjson//:rapidjson",
+        "//third_party/cpp-base64:cpp-base64",
     ],
     defines = [
         "USE_MODELADAPTER",
@@ -126,6 +133,7 @@ cc_test(
         "anomaly_calculator_test.cc",
         "classification_calculator_test.cc",
         "detection_calculator_test.cc",
+        "keypoint_detection_calculator_test.cc",
         "rotated_detection_calculator_test.cc",
         "segmentation_calculator_test.cc",
         "instance_segmentation_calculator_test.cc",
@@ -143,6 +151,24 @@ cc_test(
     name = "model_infer_request_image_calculator_test",
     srcs = [
         "model_infer_request_image_calculator_test.cc",
+    ],
+    deps = [
+        ":inference_calculators",
+        ":test_deps"
+    ],
+    defines = [
+        "USE_MODELADAPTER",
+    ],
+    env = {
+        "OPENCV_IO_MAX_IMAGE_WIDTH":"7860",
+        "OPENCV_IO_MAX_IMAGE_HEIGHT":"4320"
+    },
+)
+
+cc_test(
+    name = "model_infer_http_request_calculator_test",
+    srcs = [
+        "model_infer_http_request_calculator_test.cc",
     ],
     deps = [
         ":inference_calculators",

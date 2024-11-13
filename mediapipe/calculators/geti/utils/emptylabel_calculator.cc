@@ -17,8 +17,9 @@
 #include "emptylabel_calculator.h"
 
 #include <memory>
+#include <string>
 
-#include "data_structures.h"
+#include "../utils/data_structures.h"
 
 namespace mediapipe {
 
@@ -38,9 +39,9 @@ absl::Status EmptyLabelCalculator::Open(CalculatorContext *cc) {
 absl::Status EmptyLabelCalculator::GetiProcess(CalculatorContext *cc) {
   LOG(INFO) << "EmptyLabelCalculator::GetiProcess()";
   auto prediction = cc->Inputs().Tag("PREDICTION").Get<geti::InferenceResult>();
-  size_t n_predictions = prediction.polygons.size() +
-                         prediction.rectangles.size() +
-                         prediction.rotated_rectangles.size();
+  size_t n_predictions =
+      prediction.polygons.size() + prediction.rectangles.size() +
+      prediction.circles.size() + prediction.rotated_rectangles.size();
   if (n_predictions == 0) {
     const auto &options = cc->Options<EmptyLabelOptions>();
     auto label = get_label_from_options(options);

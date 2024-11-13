@@ -19,6 +19,8 @@
 #include <memory>
 #include <string>
 
+#include "mediapipe/calculators/geti/utils/emptylabel.pb.h"
+
 namespace mediapipe {
 
 absl::Status ClassificationCalculator::GetContract(CalculatorContract *cc) {
@@ -69,14 +71,19 @@ absl::Status ClassificationCalculator::GetiProcess(CalculatorContext *cc) {
   std::unique_ptr<geti::InferenceResult> result =
       std::make_unique<geti::InferenceResult>();
 
+  const auto &options = cc->Options<EmptyLabelOptions>();
+  std::string no_class_name =
+      options.label().empty() ? geti::GETI_NOCLASS_LABEL : options.label();
   cv::Rect roi(0, 0, cvimage.cols, cvimage.rows);
   result->roi = roi;
   if (inference_result->topLabels.size() > 0) {
     result->rectangles.push_back(geti::RectanglePrediction{{}, roi});
     for (const auto &classification : inference_result->topLabels) {
       if (classification.id < labels.size()) {
-        result->rectangles[0].labels.push_back(
-            geti::LabelResult{classification.score, labels[classification.id]});
+        if (labels[classification.id].label != no_class_name) {
+          result->rectangles[0].labels.push_back(geti::LabelResult{
+              classification.score, labels[classification.id]});
+        }
       }
     }
 

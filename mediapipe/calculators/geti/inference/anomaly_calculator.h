@@ -21,6 +21,7 @@
 #include <models/results.h>
 
 #include <memory>
+#include <string>
 
 #include "../inference/geti_calculator_base.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -29,6 +30,11 @@
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/status.h"
 #include "../utils/data_structures.h"
+
+inline std::string getEnvVar(std::string const &key) {
+  char *val = getenv(key.c_str());
+  return val == nullptr ? std::string("") : std::string(val);
+}
 
 namespace mediapipe {
 
@@ -44,11 +50,11 @@ namespace mediapipe {
 //  INFERENCE_ADAPTER
 //
 
-class AnomalyCalculator : public CalculatorBase {
+class AnomalyCalculator : public GetiCalculatorBase {
  public:
   static absl::Status GetContract(CalculatorContract *cc);
   absl::Status Open(CalculatorContext *cc) override;
-  absl::Status Process(CalculatorContext *cc) override;
+  absl::Status GetiProcess(CalculatorContext *cc) override;
   absl::Status Close(CalculatorContext *cc) override;
 
  private:

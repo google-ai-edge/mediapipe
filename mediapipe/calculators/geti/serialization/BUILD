@@ -19,11 +19,11 @@ cc_library(
     name = "calculators",
     hdrs = [
         "serialization_calculators.h",
-
+        "httpserialization_calculator.h",
     ],
     srcs = [
         "serialization_calculators.cc",
-
+        "httpserialization_calculator.cc",
     ],
     deps = [
         "//mediapipe/calculators/geti/inference:inference_calculators",

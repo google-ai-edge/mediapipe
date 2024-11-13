@@ -33,28 +33,29 @@
 #include "mediapipe/util/image_test_utils.h"
 
 namespace mediapipe {
-CalculatorGraphConfig graph_config =
-    ParseTextProtoOrDie<CalculatorGraphConfig>(absl::Substitute(
-        R"pb(
-          input_stream: "input"
-          input_side_packet: "model_path"
-          input_side_packet: "device"
-          output_stream: "output"
-          node {
-            calculator: "OpenVINOInferenceAdapterCalculator"
-            input_side_packet: "MODEL_PATH:model_path"
-            input_side_packet: "DEVICE:device"
-            output_side_packet: "INFERENCE_ADAPTER:adapter"
-          }
-          node {
-            calculator: "DetectionCalculator"
-            input_side_packet: "INFERENCE_ADAPTER:adapter"
-            input_stream: "IMAGE:input"
-            output_stream: "INFERENCE_RESULT:output"
-          }
-        )pb"));
 
 TEST(DetectionCalculatorTest, TestDetection) {
+  CalculatorGraphConfig graph_config =
+      ParseTextProtoOrDie<CalculatorGraphConfig>(absl::Substitute(
+          R"pb(
+            input_stream: "input"
+            input_side_packet: "model_path"
+            input_side_packet: "device"
+            output_stream: "output"
+            node {
+              calculator: "OpenVINOInferenceAdapterCalculator"
+              input_side_packet: "MODEL_PATH:model_path"
+              input_side_packet: "DEVICE:device"
+              output_side_packet: "INFERENCE_ADAPTER:adapter"
+            }
+            node {
+              calculator: "DetectionCalculator"
+              input_side_packet: "INFERENCE_ADAPTER:adapter"
+              input_stream: "IMAGE:input"
+              output_stream: "INFERENCE_RESULT:output"
+            }
+          )pb"));
+
   const cv::Mat raw_image = cv::imread("/data/cattle.jpg");
   std::vector<Packet> output_packets;
   std::string model_path = "/data/geti/detection_atss.xml";

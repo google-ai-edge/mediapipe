@@ -17,6 +17,8 @@
 #define MODEL_INFER_REQUEST_IMAGE_CALCULATOR_H_
 
 #include <memory>
+#include <string>
+#include <vector>
 
 #include "../inference/geti_calculator_base.h"
 #include "../inference/kserve.h"
@@ -26,7 +28,6 @@
 #include "mediapipe/framework/port/opencv_imgcodecs_inc.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/framework/port/status.h"
-
 namespace mediapipe {
 
 // Create model infer request image calculator that transforms the
@@ -40,11 +41,17 @@ namespace mediapipe {
 //
 
 class ModelInferRequestImageCalculator : public GetiCalculatorBase {
+  const size_t MIN_SIZE = 32;
+  const std::string OUT_OF_BOUNDS_ERROR = "IMAGE_SIZE_OUT_OF_BOUNDS";
+
  public:
   static absl::Status GetContract(CalculatorContract *cc);
   absl::Status Open(CalculatorContext *cc) override;
   absl::Status GetiProcess(CalculatorContext *cc) override;
   absl::Status Close(CalculatorContext *cc) override;
+
+ private:
+  cv::Mat load_image(const std::vector<uint8_t> &image_data);
 };
 
 }  // namespace mediapipe

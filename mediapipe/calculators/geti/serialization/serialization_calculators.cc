@@ -14,14 +14,16 @@
  * License.
  */
 
-#include "serialization_calculators.h"
+#include "../serialization/serialization_calculators.h"
 
+#include <memory>
+#include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
+#include <string>
 
 #include "../inference/kserve.h"
 #include "../inference/utils.h"
-#include "nlohmann/json.hpp"
-#include "result_serialization.h"
+#include "../serialization/result_serialization.h"
 #include "../utils/data_structures.h"
 #include "utils/ocv_common.hpp"
 
@@ -33,7 +35,7 @@ absl::Status SerializationCalculator::GetContract(CalculatorContract *cc) {
   cc->Inputs().Tag("RESULT").Set<geti::InferenceResult>().Optional();
 
   cc->Inputs().Tag("REQUEST").Set<const KFSRequest *>();
-  cc->Outputs().Tag("RESPONSE").Set<KFSResponse *>();
+  cc->Outputs().Tag("RESPONSE").Set<KFSResponse>();
 
   return absl::OkStatus();
 }
@@ -64,11 +66,11 @@ absl::Status SerializationCalculator::GetiProcess(CalculatorContext *cc) {
   int roi_x = 0;
   int roi_y = 0;
   if (request->parameters().find("x") != request->parameters().end()) {
-    roi_x = (int)request->parameters().at("x").int64_param();
-    roi_y = (int)request->parameters().at("y").int64_param();
+    roi_x = static_cast<int>(request->parameters().at("x").int64_param());
+    roi_y = static_cast<int>(request->parameters().at("y").int64_param());
   }
 
-  auto response = std::make_unique<inference::ModelInferResponse>();
+  inference::ModelInferResponse response;
   if (!include_xai) {
     result.saliency_maps.clear();
   }
@@ -91,10 +93,10 @@ absl::Status SerializationCalculator::GetiProcess(CalculatorContext *cc) {
 
   auto param = inference::InferParameter();
   param.mutable_string_param()->assign(data.dump());
-  response->mutable_parameters()->insert({"predictions", param});
+  response.mutable_parameters()->insert({"predictions", param});
   cc->Outputs()
       .Tag("RESPONSE")
-      .AddPacket(MakePacket<KFSResponse *>(response.release())
+      .AddPacket(MakePacket<KFSResponse>(response)
                      .At(cc->InputTimestamp()));
   return absl::OkStatus();
 }
