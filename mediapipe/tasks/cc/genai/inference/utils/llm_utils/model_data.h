@@ -159,6 +159,14 @@ class ModelData {
 
   // Frees the underlying data.
   virtual void Clear() = 0;
+
+  // Holds the tflite model as well as the backing data.
+  struct ModelWithData {
+    std::unique_ptr<tflite::FlatBufferModel> model;
+    std::unique_ptr<DataHolder<uint8_t>> data;
+  };
+  // Reads a tflite model from the main model.
+  virtual absl::StatusOr<ModelWithData> ReadModel(absl::string_view name) = 0;
 };
 
 // Holds data referring to a set of LoRA weights.
