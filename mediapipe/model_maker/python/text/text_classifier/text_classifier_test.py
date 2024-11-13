@@ -149,6 +149,7 @@ class TextClassifierTest(tf.test.TestCase, parameterized.TestCase):
             batch_size=1,
             learning_rate=3e-5,
             distribution_strategy='off',
+            class_weights={0: 1.0, 1: 1.0},
         ),
     )
     bert_classifier = text_classifier.TextClassifier.create(
