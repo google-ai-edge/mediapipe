@@ -165,7 +165,7 @@ class FocalLoss(tf.keras.losses.Loss):
     y_pred_rank = y_pred.shape.ndims
     if y_pred_rank - weight_rank == 1:
       sample_weight = tf.expand_dims(sample_weight, [-1])
-    elif weight_rank != 0:
+    elif weight_rank != 0 and y_pred_rank != weight_rank:
       raise ValueError(f'Unexpected sample_weights, should be either a scalar'
                        f'or a vector of batch_size:{batch_size.numpy()}')
     ce = -tf.math.log(y_pred)
