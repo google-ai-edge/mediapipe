@@ -48,6 +48,8 @@ class ConversionConfig(object):
     lora_output_tflite_file: A string indicating the name of the generated
       tflite file for the LoRA weight. Only applicable when the lora_rank is not
       zero.
+    image_encoder_file: A string with the name of the image encoder tflite file.
+    image_adapter_file: A string with the name of the image adapter tflite file.
     use_fake_weights: Whether to use fake weights. If set to True, the weights
       will be filled with zeros.
   """
@@ -71,6 +73,8 @@ class ConversionConfig(object):
       lora_ckpt: Optional[str] = None,
       lora_rank: Optional[int] = None,
       lora_output_tflite_file: Optional[str] = None,
+      image_encoder_file: Optional[str] = None,
+      image_adapter_file: Optional[str] = None,
       use_fake_weights: bool = False,
   ):
     self.input_ckpt = input_ckpt
@@ -90,6 +94,8 @@ class ConversionConfig(object):
     self.combine_file_only = combine_file_only
     self.vocab_model_file = vocab_model_file
     self.obfuscate = obfuscate
+    self.image_encoder_file = image_encoder_file
+    self.image_adapter_file = image_adapter_file
     self.use_fake_weights = use_fake_weights
     if output_tflite_file:
       parent_dir = os.path.dirname(output_tflite_file)
@@ -212,6 +218,8 @@ def combined_weight_bins_to_tflite(
     lora_rank: Optional[int] = None,
     lora_weight_path: Optional[str] = None,
     lora_output_tflite_file: Optional[str] = None,
+    image_encoder_file: Optional[str] = None,
+    image_adapter_file: Optional[str] = None,
 ):
   """Combines weight files to tflite file."""
   if backend == 'cpu':
@@ -235,6 +243,8 @@ def combined_weight_bins_to_tflite(
         0 if lora_rank is None else lora_rank,
         '' if lora_weight_path is None else lora_weight_path,
         '' if lora_output_tflite_file is None else lora_output_tflite_file,
+        '' if image_encoder_file is None else image_encoder_file,
+        '' if image_adapter_file is None else image_adapter_file,
     )
   else:
     raise ValueError('Unsupported backend: %s' % backend)
@@ -353,4 +363,6 @@ def convert_checkpoint(config: ConversionConfig) -> None:
       lora_rank=config.lora_rank,
       lora_weight_path=config.output_dir,
       lora_output_tflite_file=config.lora_output_tflite_file,
+      image_encoder_file=config.image_encoder_file,
+      image_adapter_file=config.image_adapter_file,
   )
