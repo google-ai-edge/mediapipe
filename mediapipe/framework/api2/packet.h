@@ -273,11 +273,14 @@ class Packet : public Packet<internal::Generic> {
       const CalculatorContext* calculator_context =
           LegacyCalculatorSupport::Scoped<CalculatorContext>::current();
       if (calculator_context) {
-        ABSL_LOG(FATAL) << absl::StrCat(
-            "Get() called on empty packet during execution of ",
-            calculator_context->NodeName(), ".");
+        ABSL_LOG(FATAL) << absl::StrCat("Get() called for type ",
+                                        MediaPipeTypeStringOrDemangled<T>(),
+                                        " on empty packet during execution of ",
+                                        calculator_context->NodeName(), ".");
       }
-      ABSL_LOG(FATAL) << "Get() called on empty packet.";
+      ABSL_LOG(FATAL) << absl::StrCat("Get() called for type ",
+                                      MediaPipeTypeStringOrDemangled<T>(),
+                                      " on empty packet.");
     }
     const packet_internal::Holder<T>* typed_payload = payload_->As<T>();
     ABSL_CHECK(typed_payload);
