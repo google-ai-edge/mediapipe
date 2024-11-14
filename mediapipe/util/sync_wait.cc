@@ -10,6 +10,7 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "absl/time/time.h"
+#include "mediapipe/framework/formats/shared_fd.h"
 #include "mediapipe/framework/formats/unique_fd.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
@@ -53,6 +54,11 @@ absl::Status SyncWait(const UniqueFd& fd, absl::Duration timeout) {
   return SyncWait(fd.Get(), timeout);
 }
 
+absl::Status SyncWait(const SharedFd& fd, absl::Duration timeout) {
+  RET_CHECK(fd);
+  return SyncWait(fd.Get(), timeout);
+}
+
 absl::StatusOr<bool> IsSignaled(int fd) {
   RET_CHECK_GE(fd, 0) << "Invalid file descriptor.";
 
@@ -76,6 +82,11 @@ absl::StatusOr<bool> IsSignaled(int fd) {
 }
 
 absl::StatusOr<bool> IsSignaled(const UniqueFd& fd) {
+  return IsSignaled(fd.Get());
+}
+
+absl::StatusOr<bool> IsSignaled(const SharedFd& fd) {
+  RET_CHECK(fd);
   return IsSignaled(fd.Get());
 }
 
