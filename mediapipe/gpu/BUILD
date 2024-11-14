@@ -880,6 +880,7 @@ cc_library(
         ":egl_base",
         ":egl_errors",
         "//mediapipe/framework/deps:no_destructor",
+        "//mediapipe/framework/formats:shared_fd",
         "//mediapipe/framework/formats:unique_fd",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",

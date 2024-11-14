@@ -3,6 +3,7 @@
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "mediapipe/framework/formats/shared_fd.h"
 #include "mediapipe/framework/formats/unique_fd.h"
 #include "mediapipe/gpu/egl_base.h"
 
@@ -19,9 +20,13 @@ class EglSync {
   // *not* flushed.
   static absl::StatusOr<EglSync> CreateNative(EGLDisplay display);
 
-  // Create a native fence in OpenGL command stream based on a native fence FD.
+  // Creates a native fence in OpenGL command stream based on a native fence FD.
   static absl::StatusOr<EglSync> CreateNative(EGLDisplay display,
                                               const UniqueFd& native_fence_fd);
+
+  // Creates a native fence in OpenGL command stream based on a native fence FD.
+  static absl::StatusOr<EglSync> CreateNative(EGLDisplay display,
+                                              const SharedFd& native_fence_fd);
 
   static bool IsSupported(EGLDisplay display);
   static bool IsNativeSupported(EGLDisplay display);
@@ -57,6 +62,12 @@ class EglSync {
  private:
   EglSync(EGLDisplay display, EGLSyncKHR sync)
       : display_(display), sync_(sync) {}
+
+  // `native_fence_fd` - valid native fence FD.
+  // NOTE: this function duplicates `native_fence_fd` (doesn't take ownership or
+  // modifies it)
+  static absl::StatusOr<EglSync> CreateNative(EGLDisplay display,
+                                              int native_fence_fd);
 
   void Invalidate();
 
