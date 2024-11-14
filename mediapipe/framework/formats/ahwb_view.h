@@ -11,7 +11,7 @@
 #include "absl/functional/any_invocable.h"
 #include "absl/status/status.h"
 #include "mediapipe/framework/formats/hardware_buffer.h"
-#include "mediapipe/framework/formats/unique_fd.h"
+#include "mediapipe/framework/formats/shared_fd.h"
 #include "mediapipe/gpu/gpu_buffer_storage.h"
 
 namespace mediapipe {
@@ -27,9 +27,9 @@ namespace mediapipe {
 
 class AhwbView {
  public:
-  explicit AhwbView(HardwareBuffer* ahwb, int width_step_bytes,
-                    absl::AnyInvocable<absl::Status(std::shared_ptr<UniqueFd>)>
-                        set_usage_fence_fn)
+  explicit AhwbView(
+      HardwareBuffer* ahwb, int width_step_bytes,
+      absl::AnyInvocable<absl::Status(SharedFd)> set_usage_fence_fn)
       : ahwb_(ahwb),
         width_step_bytes_(width_step_bytes),
         set_usage_fence_fn_(std::move(set_usage_fence_fn)) {}
@@ -68,15 +68,14 @@ class AhwbView {
   //   following GL operations wait for write completion.
   //
   // TODO: b/376753887 - replace with a dedicated type (MP's Fence)
-  absl::Status SetUsageFence(std::shared_ptr<UniqueFd> fence) {
-    return set_usage_fence_fn_(fence);
+  absl::Status SetUsageFence(SharedFd fence) {
+    return set_usage_fence_fn_(std::move(fence));
   }
 
  private:
   const HardwareBuffer* ahwb_;
   const int width_step_bytes_;
-  absl::AnyInvocable<absl::Status(std::shared_ptr<UniqueFd>)>
-      set_usage_fence_fn_;
+  absl::AnyInvocable<absl::Status(SharedFd)> set_usage_fence_fn_;
 };
 
 namespace internal {
