@@ -11,6 +11,7 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/deps/no_destructor.h"
+#include "mediapipe/framework/formats/shared_fd.h"
 #include "mediapipe/framework/formats/unique_fd.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
@@ -115,30 +116,40 @@ absl::StatusOr<EglSync> EglSync::CreateNative(EGLDisplay display) {
 }
 
 absl::StatusOr<EglSync> EglSync::CreateNative(EGLDisplay display,
-                                              const UniqueFd& native_fence_fd) {
-  RET_CHECK(native_fence_fd.IsValid());
+                                              int native_fence_fd) {
   MP_RETURN_IF_ERROR(CheckEglSyncSupported(display));
   MP_RETURN_IF_ERROR(CheckEglNativeSyncSupported(display));
 
-  MP_ASSIGN_OR_RETURN(UniqueFd fd_for_egl, native_fence_fd.Dup());
-  // NOTE: it looks like one could rely on `UniqueFd` for the cleanup, but
-  // there's some clashing on ownership of the FD when passing it to
-  // eglCreateSyncKHR and then using `UniqueFd::Release`, hence relying on
-  // absl::Cleanup.
-  const int fd = fd_for_egl.Release();
+  // NOTE: cannot use `UniqueFd`, as there's clashing on ownership of the FD
+  // when passing it to eglCreateSyncKHR (which takes the ownership of the FD)
+  // which makes `UniqueFd` to be in an invalid state and there are related
+  // fdsan issues, hence relying on absl::Cleanup.
+  const int fd = dup(native_fence_fd);
   absl::Cleanup fd_cleanup = [fd]() { close(fd); };
   const EGLint sync_attribs[] = {EGL_SYNC_NATIVE_FENCE_FD_ANDROID,
                                  static_cast<EGLint>(fd), EGL_NONE};
   const EGLSyncKHR egl_sync =
       eglCreateSyncKHR(display, EGL_SYNC_NATIVE_FENCE_ANDROID, sync_attribs);
   RET_CHECK_NE(egl_sync, EGL_NO_SYNC_KHR) << absl::StrCat(
-      "CreateNative/eglCreateSyncKHR with original FD: ", native_fence_fd.Get(),
+      "CreateNative/eglCreateSyncKHR with original FD: ", native_fence_fd,
       " and dup FD: ", fd, " - failed: ", GetEglError());
   // EGL took ownership of the passed FD as eglCreateSyncKHR succeeded, so
   // cancelling the cleanup.
   std::move(fd_cleanup).Cancel();
 
   return EglSync(display, egl_sync);
+}
+
+absl::StatusOr<EglSync> EglSync::CreateNative(EGLDisplay display,
+                                              const UniqueFd& native_fence_fd) {
+  RET_CHECK(native_fence_fd.IsValid());
+  return CreateNative(display, native_fence_fd.Get());
+}
+
+absl::StatusOr<EglSync> EglSync::CreateNative(EGLDisplay display,
+                                              const SharedFd& native_fence_fd) {
+  RET_CHECK(native_fence_fd);
+  return CreateNative(display, native_fence_fd.Get());
 }
 
 bool EglSync::IsSupported(EGLDisplay display) {
