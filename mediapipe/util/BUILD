@@ -98,6 +98,13 @@ cc_library(
 )
 
 cc_library(
+    name = "fd_test_util",
+    testonly = True,
+    hdrs = ["fd_test_util.h"],
+    visibility = ["//mediapipe:__subpackages__"],
+)
+
+cc_library(
     name = "header_util",
     srcs = ["header_util.cc"],
     hdrs = ["header_util.h"],
