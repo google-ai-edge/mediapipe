@@ -1,22 +1,14 @@
 #include "mediapipe/framework/formats/unique_fd.h"
 
-#include <fcntl.h>
-#include <unistd.h>
-
 #include <utility>
 
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/status_matchers.h"
+#include "mediapipe/util/fd_test_util.h"
 
 namespace mediapipe {
 
 namespace {
-
-// Returns a valid system file descriptor.
-int GetValidFd() { return dup(STDOUT_FILENO); }
-
-// Helper function to check if the file descriptor is valid (still open).
-int IsFdValid(int fd) { return fcntl(fd, F_GETFD) != -1; }
 
 TEST(UniqueFdTest, ShouldInitializeInvalidFd) {
   UniqueFd unique_fd;
