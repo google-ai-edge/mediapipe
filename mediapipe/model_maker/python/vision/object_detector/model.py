@@ -256,7 +256,7 @@ class ObjectDetectorModel(tf.keras.Model):
 
   # The remaining method overrides are used to train this object detector model
   # using model.fit().
-  def call(
+  def call(  # pytype: disable=annotation-type-mismatch
       self,
       images: Union[tf.Tensor, Sequence[tf.Tensor]],
       image_shape: Optional[tf.Tensor] = None,
