@@ -814,3 +814,17 @@ http_archive(
     strip_prefix = "abseil-py-1.4.0",
     urls = ["https://github.com/abseil/abseil-py/archive/refs/tags/v1.4.0.tar.gz"],
 )
+
+http_archive(
+    name = "skia",
+    sha256 = "038d4a21f9c72d71ab49e3a7d7677b39585329465d093a4260b6c73d2f3984d6",
+    strip_prefix = "skia-ac75382cb971d2f5465b4608a74561ecb68599c5",
+    urls = ["https://github.com/google/skia/archive/ac75382cb971d2f5465b4608a74561ecb68599c5.zip"],
+)
+
+http_archive(
+    name = "skia_user_config",
+    sha256 = "038d4a21f9c72d71ab49e3a7d7677b39585329465d093a4260b6c73d2f3984d6",
+    strip_prefix = "skia-ac75382cb971d2f5465b4608a74561ecb68599c5/include/config",
+    urls = ["https://github.com/google/skia/archive/ac75382cb971d2f5465b4608a74561ecb68599c5.zip"],
+)
