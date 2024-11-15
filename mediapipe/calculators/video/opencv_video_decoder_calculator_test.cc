@@ -60,10 +60,8 @@ TEST(OpenCvVideoDecoderCalculatorTest, TestMp4Avc720pVideo) {
   EXPECT_FLOAT_EQ(6.0f, header.duration);
   EXPECT_FLOAT_EQ(30.0f, header.frame_rate);
   // The number of the output packets should be 180.
-  // Some OpenCV version returns the first two frames with the same timestamp on
-  // macos and we might miss one frame here.
   int num_of_packets = runner.Outputs().Tag(kVideoTag).packets.size();
-  EXPECT_GE(num_of_packets, 179);
+  EXPECT_GE(num_of_packets, 180);
   for (int i = 0; i < num_of_packets; ++i) {
     Packet image_frame_packet = runner.Outputs().Tag(kVideoTag).packets[i];
     cv::Mat output_mat =
@@ -148,10 +146,8 @@ TEST(OpenCvVideoDecoderCalculatorTest, TestMkvVp8Video) {
   EXPECT_FLOAT_EQ(6.0f, header.duration);
   EXPECT_FLOAT_EQ(30.0f, header.frame_rate);
   // The number of the output packets should be 180.
-  // Some OpenCV version returns the first two frames with the same timestamp on
-  // macos and we might miss one frame here.
   int num_of_packets = runner.Outputs().Tag(kVideoTag).packets.size();
-  EXPECT_GE(num_of_packets, 179);
+  EXPECT_GE(num_of_packets, 180);
   for (int i = 0; i < num_of_packets; ++i) {
     Packet image_frame_packet = runner.Outputs().Tag(kVideoTag).packets[i];
     cv::Mat output_mat =

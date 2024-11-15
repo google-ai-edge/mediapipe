@@ -28,12 +28,14 @@
 #include <unordered_set>
 
 #include "absl/base/macros.h"
+#include "absl/status/status.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_base.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_context_manager.h"
 #include "mediapipe/framework/calculator_state.h"
+#include "mediapipe/framework/graph_service_manager.h"
 #include "mediapipe/framework/input_side_packet_handler.h"
 #include "mediapipe/framework/input_stream_handler.h"
 #include "mediapipe/framework/legacy_calculator_support.h"
@@ -111,7 +113,8 @@ class CalculatorNode {
                           OutputStreamManager* output_stream_managers,
                           OutputSidePacketImpl* output_side_packets,
                           int* buffer_size_hint,
-                          std::shared_ptr<ProfilingContext> profiling_context);
+                          std::shared_ptr<ProfilingContext> profiling_context,
+                          const GraphServiceManager* graph_service_manager);
 
   // Sets up the node at the beginning of CalculatorGraph::Run(). This
   // method is executed before any OpenNode() calls to the nodes

@@ -12,15 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """APIs to train image classifier model."""
-import os
 
-from typing import List, Optional
+import os
+from typing import List, Optional, Sequence
 
 import tensorflow as tf
 import tensorflow_hub as hub
 
 from mediapipe.model_maker.python.core.data import classification_dataset as classification_ds
 from mediapipe.model_maker.python.core.tasks import classifier
+from mediapipe.model_maker.python.core.utils import metrics
 from mediapipe.model_maker.python.core.utils import model_util
 from mediapipe.model_maker.python.core.utils import quantization
 from mediapipe.model_maker.python.vision.core import image_preprocessing
@@ -58,50 +59,112 @@ class ImageClassifier(classifier.Classifier):
         use_augmentation=hparams.do_data_augmentation,
         one_hot=hparams.one_hot,
     )
-    self._callbacks = model_util.get_default_callbacks(
-        self._hparams.export_dir, self._hparams.checkpoint_frequency
-    )
-
-    if not self._hparams.multi_labels:
-      self._loss_function = tf.keras.losses.CategoricalCrossentropy(
-          label_smoothing=self._hparams.label_smoothing
+    with self._hparams.get_strategy().scope():
+      self._callbacks = list(
+          model_util.get_default_callbacks(
+              self._hparams.export_dir, self._hparams.checkpoint_frequency
+          )
       )
-      self._metric_functions = ['accuracy']
-    else:
-      self._loss_function = tf.keras.losses.BinaryCrossentropy()
-      self._metric_functions = [
-          tf.keras.metrics.BinaryAccuracy(),
-          tf.keras.metrics.Recall(thresholds=0.25, name='Recall_0.25'),
-          tf.keras.metrics.Recall(thresholds=0.5, name='Recall_0.5'),
-          tf.keras.metrics.Recall(thresholds=0.75, name='Recall_0.75'),
-          tf.keras.metrics.Precision(thresholds=0.25, name='Precision_0.25'),
-          tf.keras.metrics.Precision(thresholds=0.5, name='Precision_0.5'),
-          tf.keras.metrics.Precision(thresholds=0.75, name='Precision_0.75'),
-          tf.keras.metrics.AUC(),
-      ]
-      if self._num_classes > 1:
+      if self._hparams.best_model_metric_name:
+        self._callbacks.append(
+            tf.keras.callbacks.ModelCheckpoint(
+                os.path.join(self._hparams.export_dir, 'best_model'),
+                monitor=self._hparams.best_model_metric_name,
+                mode='max',
+                save_best_only=True,
+                save_weights_only=False,
+            )
+        )
+
+      if not self._hparams.multi_labels:
+        # Multiclass classification task
+        self._loss_function = tf.keras.losses.CategoricalCrossentropy(
+            label_smoothing=self._hparams.label_smoothing
+        )
+        self._metric_functions = ['accuracy', tf.keras.metrics.AUC()]
+
+        if self._num_classes == 2:
+          self._metric_functions.extend(
+              self._create_desired_metrics(
+                  self._hparams.desired_precisions,
+                  self._hparams.desired_recalls,
+                  self._hparams.desired_thresholds,
+                  1,
+              )
+          )
+        else:
+          if self._hparams.desired_precisions or self._hparams.desired_recalls:
+            raise ValueError(
+                'desired_recalls and desired_precisions parameters are binary'
+                ' metrics and not supported for num_classes > 2. Found'
+                f' num_classes: {self._num_classes}'
+            )
+      else:
+        self._loss_function = tf.keras.losses.BinaryCrossentropy()
+        self._metric_functions = [
+            tf.keras.metrics.BinaryAccuracy(),
+            tf.keras.metrics.AUC(multi_label=True),
+        ]
+        # Multilabel classification task
         for i in range(self._num_classes):
-          self._metric_functions.extend([
-              tf.keras.metrics.Recall(
-                  thresholds=0.25, name=f'Recall_0.25_{i}', class_id=i
-              ),
-              tf.keras.metrics.Recall(
-                  thresholds=0.5, name=f'Recall_0.5_{i}', class_id=i
-              ),
-              tf.keras.metrics.Recall(
-                  thresholds=0.75, name=f'Recall_0.75_{i}', class_id=i
-              ),
-              tf.keras.metrics.Precision(
-                  thresholds=0.25, name=f'Precision_0.25_{i}', class_id=i
-              ),
-              tf.keras.metrics.Precision(
-                  thresholds=0.5, name=f'Precision_0.5_{i}', class_id=i
-              ),
-              tf.keras.metrics.Precision(
-                  thresholds=0.75, name=f'Precision_0.75_{i}', class_id=i
-              ),
-          ])
+          self._metric_functions.append(
+              metrics.BinaryAUC(name=f'AUC_{i}', class_id=i)
+          )
+          self._metric_functions.extend(
+              self._create_desired_metrics(
+                  self._hparams.desired_precisions,
+                  self._hparams.desired_recalls,
+                  self._hparams.desired_thresholds,
+                  i,
+                  f'_class{i}',
+              )
+          )
     self._history = None  # Training history returned from `keras_model.fit`.
+
+  def _create_desired_metrics(
+      self,
+      desired_precisions: Sequence[float],
+      desired_recalls: Sequence[float],
+      desired_thresholds: Sequence[float],
+      class_id: int,
+      name_suffix: str = '',
+  ) -> List[str]:
+    """Creates desired metrics for model training."""
+    metric_functions = []
+    for desired_precision in desired_precisions:
+      metric_functions.append(
+          tf.keras.metrics.RecallAtPrecision(
+              desired_precision,
+              name=f'recall_at_precision_{desired_precision}{name_suffix}',
+              num_thresholds=1000,
+              class_id=class_id,
+          )
+      )
+    for desired_recall in desired_recalls:
+      metric_functions.append(
+          tf.keras.metrics.PrecisionAtRecall(
+              desired_recall,
+              name=f'precision_at_recall_{desired_recall}{name_suffix}',
+              num_thresholds=1000,
+              class_id=class_id,
+          )
+      )
+    for desired_threshold in desired_thresholds:
+      metric_functions.append(
+          tf.keras.metrics.Precision(
+              thresholds=desired_threshold,
+              name=f'precision_at_{desired_threshold}{name_suffix}',
+              class_id=class_id,
+          )
+      )
+      metric_functions.append(
+          tf.keras.metrics.Recall(
+              thresholds=desired_threshold,
+              name=f'recall_at_{desired_threshold}{name_suffix}',
+              class_id=class_id,
+          )
+      )
+    return metric_functions
 
   @classmethod
   def create(
@@ -143,6 +206,40 @@ class ImageClassifier(classifier.Classifier):
       image_classifier._create_and_train_model(train_data, validation_data)
     return image_classifier
 
+  @classmethod
+  def load_image_classifier(
+      cls,
+      options: image_classifier_options.ImageClassifierOptions,
+      saved_model_path: str,
+      label_names: List[str],
+  ) -> 'ImageClassifier':
+    if options.hparams is None:
+      options.hparams = hp.HParams()
+
+    if options.model_options is None:
+      options.model_options = model_opt.ImageClassifierModelOptions()
+
+    with options.hparams.get_strategy().scope():
+      image_classifier = ImageClassifier(
+          model_spec=ms.SupportedModels.get(options.supported_model),
+          label_names=label_names,
+          hparams=options.hparams,
+          model_options=options.model_options,
+      )
+      image_classifier._create_model()
+      if not image_classifier._hparams.steps_per_epoch:
+        image_classifier._hparams.steps_per_epoch = 100
+      image_classifier._optimizer = image_classifier._create_optimizer()
+      image_classifier._model = tf.keras.models.load_model(
+          saved_model_path, compile=False
+      )
+      image_classifier._model.compile(
+          optimizer=image_classifier._optimizer,
+          loss=image_classifier._loss_function,
+          metrics=image_classifier._metric_functions,
+      )
+    return image_classifier
+
   def _create_and_train_model(
       self, train_data: classification_ds.ClassificationDataset,
       validation_data: classification_ds.ClassificationDataset):
@@ -152,19 +249,21 @@ class ImageClassifier(classifier.Classifier):
       train_data: Training data.
       validation_data: Validation data.
     """
-    self._create_model()
+    self._hparams.steps_per_epoch = model_util.get_steps_per_epoch(
+        steps_per_epoch=self._hparams.steps_per_epoch,
+        batch_size=self._hparams.batch_size,
+        train_data=train_data,
+    )
+    with self._hparams.get_strategy().scope():
+      self._create_model()
+      self._optimizer = self._create_optimizer()
 
     ckpt_path = tf.train.latest_checkpoint(
         self._hparams.export_dir + '/checkpoint'
     )
     if ckpt_path is not None:
       self._model.load_weights(ckpt_path)
-    self._hparams.steps_per_epoch = model_util.get_steps_per_epoch(
-        steps_per_epoch=self._hparams.steps_per_epoch,
-        batch_size=self._hparams.batch_size,
-        train_data=train_data,
-    )
-    self._optimizer = self._create_optimizer()
+
     self._train_model(
         train_data=train_data,
         validation_data=validation_data,
@@ -217,7 +316,11 @@ class ImageClassifier(classifier.Classifier):
       self._model = tf.keras.Model(inputs=inputs, outputs=outputs)
     else:
       module_layer = hub.KerasLayer(
-          handle=self._model_spec.uri, trainable=self._hparams.do_fine_tuning
+          handle=self._model_spec.uri,
+          trainable=self._hparams.do_fine_tuning,
+          load_options=tf.saved_model.LoadOptions(
+              experimental_io_device='/job:localhost'
+          ),
       )
       self._model = tf.keras.Sequential([
           tf.keras.Input(shape=(image_size[0], image_size[1], 3)),
@@ -233,6 +336,25 @@ class ImageClassifier(classifier.Classifier):
           ),
       ])
     print(self._model.summary())
+
+  def save_model(
+      self,
+      model_name: str = 'saved_model',
+  ):
+    """Saves the model in SavedModel format.
+
+    For more information, see https://www.tensorflow.org/guide/saved_model.
+
+    Args:
+      model_name: Name of the saved model.
+    """
+    tf.io.gfile.makedirs(self._hparams.export_dir)
+    saved_model_file = os.path.join(self._hparams.export_dir, model_name)
+    self._model.save(
+        saved_model_file,
+        include_optimizer=False,
+        save_format='tf',
+    )
 
   def export_model(
       self,
@@ -266,7 +388,7 @@ class ImageClassifier(classifier.Classifier):
         labels=metadata_writer.Labels().add(list(self._label_names)))
     tflite_model_with_metadata, metadata_json = writer.populate()
     model_util.save_tflite(tflite_model_with_metadata, tflite_file)
-    with open(metadata_file, 'w') as f:
+    with tf.io.gfile.GFile(metadata_file, 'w') as f:
       f.write(metadata_json)
 
   def _create_optimizer(self) -> tf.keras.optimizers.Optimizer:

@@ -37,7 +37,7 @@ mediapipe_simple_subgraph(
     deps = [
         "//mediapipe/calculators/core:constant_side_packet_calculator",
         "//mediapipe/calculators/tflite:tflite_model_calculator",
-        "//mediapipe/calculators/util:local_file_contents_calculator",
+        "//mediapipe/calculators/util:resource_provider_calculator",
         "//mediapipe/framework/tool:switch_container",
     ],
 )

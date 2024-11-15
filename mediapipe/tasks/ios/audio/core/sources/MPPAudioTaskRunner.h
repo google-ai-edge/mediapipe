@@ -1,4 +1,4 @@
-// Copyright 2023 The MediaPipe Authors.
+// Copyright 2024 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,9 +13,9 @@
 // limitations under the License.
 
 #import <Foundation/Foundation.h>
-#import <UIKit/UIKit.h>
 
 #import "mediapipe/tasks/ios/audio/core/sources/MPPAudioData.h"
+#import "mediapipe/tasks/ios/audio/core/sources/MPPAudioRecord.h"
 #import "mediapipe/tasks/ios/audio/core/sources/MPPAudioRunningMode.h"
 #import "mediapipe/tasks/ios/core/sources/MPPTaskRunner.h"
 
@@ -57,7 +57,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable instancetype)initWithTaskInfo:(MPPTaskInfo *)taskInfo
                               runningMode:(MPPAudioRunningMode)runningMode
                           packetsCallback:(mediapipe::tasks::core::PacketsCallback)packetsCallback
-                     audioInputStreamName:(NSString *)imageInputStreamName
+                     audioInputStreamName:(NSString *)audioInputStreamName
                 sampleRateInputStreamName:(nullable NSString *)normRectInputStreamName
                                     error:(NSError **)error NS_DESIGNATED_INITIALIZER;
 
@@ -75,11 +75,71 @@ NS_ASSUME_NONNULL_BEGIN
 - (std::optional<mediapipe::tasks::core::PacketMap>)processAudioClip:(MPPAudioData *)audioClip
                                                                error:(NSError **)error;
 
+/**
+ * An asynchronous method to send audio stream data to the C++ task runner. The call returns
+ * immediately indicating if the audio clip was sent successfully to the C++ task runner. The
+ * results will be available in the user-defined `packetsCallback` that was provided during
+ * initialization of the `MPPAudioTaskRunner`.
+ *
+ * @param audioClip An audio clip input of type `MPPAudioData` to the task.
+ * @param timestampInMilliseconds The audio clip's timestamp (in milliseconds). The input timestamps
+ * must be monotonically increasing.
+ * @param error Pointer to the memory location where errors if any should be saved. If @c NULL, no
+ * error will be saved.
+ *
+ * @return A `BOOL` indicating if the audio stream data was sent to the C++ task runner
+ * successfully. Please note that any errors during processing of the audio stream packet map will
+ * only be available in the user-defined `packetsCallback` that was provided during initialization
+ * of the `MPPAudioTaskRunner`.
+ */
+- (BOOL)processStreamAudioClip:(MPPAudioData *)audioClip
+       timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                         error:(NSError **)error;
+
+/**
+ * Creates an `MPPAudioRecord` instance to get samples from the audio stream produced by the
+ * microphone.
+ *
+ * The client must call appropriate methods from the audio record to start receiving samples from
+ * the microphone.
+ *
+ * Note that MediaPipe Audio tasks will up/down sample automatically to fit the sample rate required
+ * by the model. The default sample rate of the MediaPipe pretrained audio model, Yamnet is 16kHz.
+ *
+ * @param channelCount Number of channels expected by the client.
+ * @param sampleRate Sample rate of the audio expected by the client.
+ * @param bufferLength Maximum number of elements the internal buffer of `AudioRecord` can hold at
+ * any given point of time. The buffer length must be a multiple of `format.channelCount`.
+ * @param error Pointer to the memory location where errors if any should be saved. If @c NULL, no
+ * error will be saved.
+ *
+ * @return An new instance of `MPPAudioRecord` with the given audio format and buffer length. `nil`
+ * if there is an error in initializing `MPPAudioRecord`.
+ */
++ (MPPAudioRecord *)createAudioRecordWithChannelCount:(NSUInteger)channelCount
+                                           sampleRate:(double)sampleRate
+                                         bufferLength:(NSUInteger)bufferLength
+                                                error:(NSError **)error;
+
 - (instancetype)initWithTaskInfo:(MPPTaskInfo *)taskInfo
                  packetsCallback:(mediapipe::tasks::core::PacketsCallback)packetsCallback
                            error:(NSError **)error NS_UNAVAILABLE;
 
 - (instancetype)init NS_UNAVAILABLE;
+
+/**
+ * This method returns a unique dispatch queue name by adding the given suffix and a `UUID` to the
+ * pre-defined queue name prefix for audio tasks. The audio tasks can use this method to get
+ * unique dispatch queue names which are consistent with other audio tasks.
+ * Dispatch queue names need not be unique, but for easy debugging we ensure that the queue names
+ * are unique.
+ *
+ * @param suffix A suffix that identifies a dispatch queue's functionality.
+ *
+ * @return A unique dispatch queue name by adding the given suffix and a `UUID` to the pre-defined
+ * queue name prefix for audio tasks.
+ */
++ (const char *)uniqueDispatchQueueNameWithSuffix:(NSString *)suffix;
 
 + (instancetype)new NS_UNAVAILABLE;
 

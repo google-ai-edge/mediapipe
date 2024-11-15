@@ -1018,7 +1018,7 @@ TEST(FrameBufferUtil, PaddedYuvConvertGray) {
   constexpr int row_stride_y = 8;
   const std::vector<FrameBuffer::Plane> planes = {
       {kNV21PaddedTestData, /*stride=*/{row_stride_y, 1}},
-      {kNV21PaddedTestData + (row_stride_y * kBufferDimension.width),
+      {kNV21PaddedTestData + row_stride_y,
        /*stride=*/{row_stride_y, 2}}};
   auto input = std::make_shared<FrameBuffer>(planes, kBufferDimension,
                                              FrameBuffer::Format::kNV21);

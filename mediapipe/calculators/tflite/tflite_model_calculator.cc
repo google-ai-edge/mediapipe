@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <memory>
 #include <string>
+#include <tuple>
 #include <utility>
 
 #include "absl/status/status.h"
@@ -24,6 +26,7 @@
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/ret_check.h"
+#include "mediapipe/framework/resources.h"
 #include "tensorflow/lite/allocation.h"
 #include "tensorflow/lite/model_builder.h"
 
@@ -33,6 +36,8 @@ namespace mediapipe {
 // corresponding side packet.
 //
 // Input side packets:
+//   MODEL_RESOURCE - TfLite model file as mediapipe::Resource - enables
+//                    managed, unmanaged, in-memory, mmaped resources.
 //   MODEL_BLOB - TfLite model blob/file-contents (std::string). You can read
 //                model blob from file (using whatever APIs you have) and pass
 //                it to the graph as input side packet or you can use some of
@@ -55,7 +60,7 @@ namespace mediapipe {
 //
 // node {
 //   calculator: "TfLiteModelCalculator"
-//   input_side_packet: "MODEL_BLOB:model_blob"
+//   input_side_packet: "MODEL_RESOURCE:model_resource"
 //   output_side_packet: "MODEL:model"
 // }
 //
@@ -66,6 +71,7 @@ class TfLiteModelCalculator : public CalculatorBase {
                       std::function<void(tflite::FlatBufferModel*)>>;
   using SharedTfLiteModelPtr = std::shared_ptr<tflite::FlatBufferModel>;
 
+  static constexpr absl::string_view kModelResourceTag = "MODEL_RESOURCE";
   static constexpr absl::string_view kModelSpanTag = "MODEL_SPAN";
   static constexpr absl::string_view kModelBlobTag = "MODEL_BLOB";
   static constexpr absl::string_view kModelFDTag = "MODEL_FD";
@@ -89,6 +95,10 @@ class TfLiteModelCalculator : public CalculatorBase {
           .Set<absl::Span<const uint8_t>>();
     }
 
+    if (cc->InputSidePackets().HasTag(kModelResourceTag)) {
+      cc->InputSidePackets().Tag(kModelResourceTag).Set<Resource>();
+    }
+
     RET_CHECK(cc->OutputSidePackets().HasTag(kModelTag) ^
               cc->OutputSidePackets().HasTag(kSharedModelTag));
 
@@ -107,6 +117,7 @@ class TfLiteModelCalculator : public CalculatorBase {
 
     if (cc->InputSidePackets().HasTag(kModelBlobTag)) {
       model_packet = cc->InputSidePackets().Tag(kModelBlobTag);
+      RET_CHECK(!model_packet.IsEmpty());
       const std::string& model_blob = model_packet.Get<std::string>();
       model = tflite::FlatBufferModel::BuildFromBuffer(model_blob.data(),
                                                        model_blob.size());
@@ -114,10 +125,20 @@ class TfLiteModelCalculator : public CalculatorBase {
 
     if (cc->InputSidePackets().HasTag(kModelSpanTag)) {
       model_packet = cc->InputSidePackets().Tag(kModelSpanTag);
+      RET_CHECK(!model_packet.IsEmpty());
       const absl::Span<const uint8_t>& model_view =
           model_packet.Get<absl::Span<const uint8_t>>();
       model = tflite::FlatBufferModel::BuildFromBuffer(
           reinterpret_cast<const char*>(model_view.data()), model_view.size());
+    }
+
+    if (cc->InputSidePackets().HasTag(kModelResourceTag)) {
+      model_packet = cc->InputSidePackets().Tag(kModelResourceTag);
+      RET_CHECK(!model_packet.IsEmpty());
+      absl::string_view model_view =
+          model_packet.Get<Resource>().ToStringView();
+      model = tflite::FlatBufferModel::BuildFromBuffer(model_view.data(),
+                                                       model_view.size());
     }
 
     if (cc->InputSidePackets().HasTag(kModelFDTag)) {

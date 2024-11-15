@@ -15,6 +15,7 @@
 #include "mediapipe/framework/formats/tensor.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <memory>
 #include <utility>
@@ -45,6 +46,10 @@
 #else
 #include <cstdlib>
 #endif  // MEDIAPIPE_METAL_ENABLED
+
+#if MEDIAPIPE_USE_WEBGPU
+#include "mediapipe/gpu/webgpu/webgpu_utils.h"
+#endif  // MEDIAPIPE_USE_WEBGPU
 
 namespace mediapipe {
 
@@ -131,7 +136,7 @@ MtlBufferView MtlBufferView::GetReadView(const Tensor& tensor,
       FATAL, !(tensor.valid_ & (Tensor::kValidCpu | Tensor::kValidMetalBuffer)))
       << "Tensor conversion between different GPU backing formats is not "
          "supported yet.";
-  auto lock(absl::make_unique<absl::MutexLock>(&tensor.view_mutex_));
+  auto lock(std::make_unique<absl::MutexLock>(&tensor.view_mutex_));
   tensor.valid_ |= Tensor::kValidMetalBuffer;
   AllocateMtlBuffer(tensor, [command_buffer device]);
   return {tensor.mtl_resources_->metal_buffer, std::move(lock)};
@@ -147,7 +152,7 @@ MtlBufferView MtlBufferView::GetWriteView(const Tensor& tensor,
 
 MtlBufferView MtlBufferView::GetWriteView(const Tensor& tensor,
                                           id<MTLDevice> device) {
-  auto lock(absl::make_unique<absl::MutexLock>(&tensor.view_mutex_));
+  auto lock(std::make_unique<absl::MutexLock>(&tensor.view_mutex_));
   tensor.valid_ = Tensor::kValidMetalBuffer;
   AllocateMtlBuffer(tensor, device);
   return {tensor.mtl_resources_->metal_buffer, std::move(lock)};
@@ -178,12 +183,12 @@ Tensor::OpenGlTexture2dView Tensor::GetOpenGlTexture2dReadView() const {
   ABSL_LOG_IF(FATAL, !(valid_ & (kValidCpu | kValidOpenGlTexture2d)))
       << "Tensor conversion between different GPU backing formats is not "
          "supported yet.";
-  auto lock = absl::make_unique<absl::MutexLock>(&view_mutex_);
+  auto lock = std::make_unique<absl::MutexLock>(&view_mutex_);
   AllocateOpenGlTexture2d();
   if (!(valid_ & kValidOpenGlTexture2d)) {
     const int padded_size =
         texture_height_ * texture_width_ * 4 * element_size();
-    auto temp_buffer = absl::make_unique<uint8_t[]>(padded_size);
+    auto temp_buffer = std::make_unique<uint8_t[]>(padded_size);
     uint8_t* dest_buffer = temp_buffer.get();
     uint8_t* src_buffer = reinterpret_cast<uint8_t*>(cpu_buffer_);
     const int num_elements = BhwcWidthFromShape(shape_) *
@@ -227,7 +232,7 @@ Tensor::OpenGlTexture2dView Tensor::GetOpenGlTexture2dReadView() const {
 }
 
 Tensor::OpenGlTexture2dView Tensor::GetOpenGlTexture2dWriteView() const {
-  auto lock = absl::make_unique<absl::MutexLock>(&view_mutex_);
+  auto lock = std::make_unique<absl::MutexLock>(&view_mutex_);
   AllocateOpenGlTexture2d();
 #ifdef __EMSCRIPTEN__
   // On web, we may have to change type from float to half-float
@@ -349,7 +354,7 @@ Tensor::OpenGlBufferView Tensor::GetOpenGlBufferReadView() const {
                                  kValidOpenGlBuffer)))
       << "Tensor conversion between different GPU backing formats is not "
          "supported yet.";
-  auto lock(absl::make_unique<absl::MutexLock>(&view_mutex_));
+  auto lock(std::make_unique<absl::MutexLock>(&view_mutex_));
   if ((valid_ & kValidOpenGlBuffer) && gl_context_ != nullptr &&
       !gl_context_->IsCurrent() && GlContext::IsAnyContextCurrent()) {
     ABSL_LOG_FIRST_N(WARNING, 1)
@@ -390,7 +395,7 @@ Tensor::OpenGlBufferView Tensor::GetOpenGlBufferReadView() const {
 
 Tensor::OpenGlBufferView Tensor::GetOpenGlBufferWriteView(
     uint64_t source_location_hash) const {
-  auto lock(absl::make_unique<absl::MutexLock>(&view_mutex_));
+  auto lock(std::make_unique<absl::MutexLock>(&view_mutex_));
   TrackAhwbUsage(source_location_hash);
   if ((valid_ & kValidOpenGlBuffer) && gl_context_ != nullptr &&
       !gl_context_->IsCurrent() && GlContext::IsAnyContextCurrent()) {
@@ -401,6 +406,12 @@ Tensor::OpenGlBufferView Tensor::GetOpenGlBufferWriteView(
            "between multiple OpenGL contexts.";
   }
   AllocateOpenGlBuffer();
+  if (valid_ != 0) {
+    ABSL_LOG_FIRST_N(ERROR, 1)
+        << "Tensors are designed for single writes. Multiple writes to a "
+           "Tensor instance are not supported and may lead to undefined "
+           "behavior due to lack of synchronization.";
+  }
   valid_ = kValidOpenGlBuffer;
   return {opengl_buffer_, std::move(lock), nullptr};
 }
@@ -456,6 +467,11 @@ void Tensor::Move(Tensor* src) {
   src->opengl_buffer_ = GL_INVALID_INDEX;
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
+
+#if MEDIAPIPE_USE_WEBGPU
+  webgpu_texture2d_ = std::move(src->webgpu_texture2d_);
+  webgpu_device_ = std::move(src->webgpu_device_);
+#endif  // MEDIAPIPE_USE_WEBGPU
 }
 
 Tensor::Tensor(ElementType element_type, const Shape& shape,
@@ -569,6 +585,9 @@ void Tensor::Invalidate() {
   }
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
 
+#if MEDIAPIPE_USE_WEBGPU
+  if (webgpu_texture2d_) webgpu_texture2d_.Destroy();
+#endif  // MEDIAPIPE_USE_WEBGPU
   FreeCpuBuffer();
 }
 #endif  // MEDIAPIPE_METAL_ENABLED
@@ -633,13 +652,56 @@ absl::Status Tensor::ReadBackGpuToCpu() const {
     return absl::OkStatus();
   }
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
+#if __EMSCRIPTEN__ && MEDIAPIPE_USE_WEBGPU
+  // TODO: GetTexture2dData is only supported on Emscripten right now.
+  if (valid_ & kValidWebGpuTexture2d) {
+    const int width = BhwcWidthFromShape(shape_);
+    const int height = BhwcHeightFromShape(shape_);
+    const int depth = BhwcDepthFromShape(shape_);
+    // CPU data layout may not match texture data layout.
+    MP_ASSIGN_OR_RETURN(
+        const int padded_depth,
+        WebGpuTextureFormatDepth(webgpu_texture2d_.GetFormat()));
+
+    // imageCopyBuffer.bytesPerRow must be a multiple of 256
+    int bytes_per_row =
+        (width * padded_depth * element_size() + 255) / 256 * 256;
+    const wgpu::Queue& queue = webgpu_device_.GetQueue();
+
+    const int buffer_size = height * bytes_per_row;
+    std::vector<uint8_t> buffer_data(buffer_size);
+
+    RET_CHECK_OK(GetTexture2dData(webgpu_device_, queue, webgpu_texture2d_,
+                                  width, height, bytes_per_row,
+                                  buffer_data.data()));
+
+    uint8_t* src_buffer = buffer_data.data();
+    uint8_t* dst_buffer = reinterpret_cast<uint8_t*>(cpu_buffer_);
+    const int actual_depth_size = depth * element_size();
+    const int padded_depth_size = padded_depth * element_size();
+    for (int r = 0; r < height; r++) {
+      uint8_t const* row = src_buffer;
+
+      for (int e = 0; e < width; e++) {
+        for (int i = 0; i < actual_depth_size; i++) {
+          dst_buffer[i] = row[i];
+        }
+        dst_buffer += actual_depth_size;
+        row += padded_depth_size;
+      }
+      src_buffer += bytes_per_row;
+    }
+
+    return absl::OkStatus();
+  }
+#endif  // __EMSCRIPTEN__ && MEDIAPIPE_USE_WEBGPU
 
   return absl::FailedPreconditionError(absl::StrCat(
       "Failed to read back data from GPU to CPU. Valid formats: ", valid_));
 }
 
 Tensor::CpuReadView Tensor::GetCpuReadView() const {
-  auto lock = absl::make_unique<absl::MutexLock>(&view_mutex_);
+  auto lock = std::make_unique<absl::MutexLock>(&view_mutex_);
   ABSL_LOG_IF(FATAL, valid_ == kValidNone)
       << "Tensor must be written prior to read from.";
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
@@ -664,19 +726,29 @@ Tensor::CpuReadView Tensor::GetCpuReadView() const {
 
 Tensor::CpuWriteView Tensor::GetCpuWriteView(
     uint64_t source_location_hash) const {
-  auto lock = absl::make_unique<absl::MutexLock>(&view_mutex_);
+  auto lock = std::make_unique<absl::MutexLock>(&view_mutex_);
   TrackAhwbUsage(source_location_hash);
   ABSL_CHECK_OK(AllocateCpuBuffer()) << "AllocateCpuBuffer failed.";
+  if (valid_ != 0) {
+    ABSL_LOG_FIRST_N(ERROR, 1)
+        << "Tensors are designed for single writes. Multiple writes to a "
+           "Tensor instance are not supported and may lead to undefined "
+           "behavior due to lack of synchronization.";
+  }
   valid_ = kValidCpu;
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
   if (__builtin_available(android 26, *)) {
     void* ptr = MapAhwbToCpuWrite();
     if (ptr) {
       return {ptr, std::move(lock),
-              [ahwb = ahwb_.get(), fence_fd = &fence_fd_] {
+              [ahwb = ahwb_.get(),
+               write_complete_fence_fd = &write_complete_fence_fd_] {
                 auto fence_fd_status = ahwb->UnlockAsync();
                 ABSL_CHECK_OK(fence_fd_status) << "Unlock failed.";
-                *fence_fd = fence_fd_status.value();
+                if (write_complete_fence_fd->IsValid()) {
+                  ABSL_LOG(DFATAL) << "Write complete fence FD is already set.";
+                }
+                *write_complete_fence_fd = UniqueFd(fence_fd_status.value());
               }};
     }
   }

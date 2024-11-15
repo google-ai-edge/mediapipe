@@ -23,5 +23,8 @@ licenses(["notice"])
 py_library(
     name = "cosine_similarity",
     srcs = ["cosine_similarity.py"],
-    deps = ["//mediapipe/tasks/python/components/containers:embedding_result"],
+    deps = [
+        "//mediapipe/tasks/python/components/containers:embedding_result",
+        "@mediapipe_pip_deps_numpy//:pkg",
+    ],
 )

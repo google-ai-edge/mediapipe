@@ -50,17 +50,25 @@ class WeightBinsWriter(converter_base.ModelWriterBase):
     shape_str = '_'.join(map(str, weight.shape))
     return f'mdl_vars.{var_name}.{dtype_str}.{shape_str}\n'
 
-  def write_variables(self, variables: Dict[str, Tuple[np.ndarray, bool]]):
+  def write_variables(
+      self,
+      variables: Dict[str, Tuple[np.ndarray, bool]],
+      use_fake_values: bool = False,
+  ):
     """Writes variable to the binary files. One for each layer.
 
     Args:
       variables: A dictionary that maps from the target variable names to the
         quantized tensor values along with a boolean that indicates whether to
         pack the values (only applicable for the 4-bit quantized tensors).
+      use_fake_values: Whether to use fake values for the weights. If set to
+        True, the weights will be filled with zeros.
     """
     weights_info = []
     for var_name, value in variables.items():
       output = value[0]
+      if use_fake_values:
+        output.fill(0)
       if value[1]:
         # Squeeze the tensor to make sure it is a 1D array for packing.
         output = np.expand_dims(np.ravel(output), axis=-1)

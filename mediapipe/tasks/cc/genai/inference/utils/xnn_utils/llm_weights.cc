@@ -20,6 +20,7 @@
 #include <memory>
 #include <optional>
 #include <utility>
+#include <vector>
 
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
@@ -64,9 +65,11 @@ LlmParams::Norm TransformerParametersProtoNormTypeToLlmParamsNormType(
   return LlmParams::Norm::UNSPECIFIED;
 }
 
+}  // namespace
+
 // According to norm_type, load necessary weights with given basename.
 absl::StatusOr<std::optional<LlmWeights::NormWeights>> LoadNormWeights(
-    LlmParams::Norm norm_type, const LlmParams& params,
+    LlmParams::Norm norm_type, std::vector<size_t> dims,
     absl::string_view basename, WeightAccessor& weight_accessor) {
   switch (norm_type) {
     case LlmParams::Norm::UNSPECIFIED:
@@ -77,20 +80,20 @@ absl::StatusOr<std::optional<LlmWeights::NormWeights>> LoadNormWeights(
       auto rms_norm_weights = RMSNormWeights();
       MP_ASSIGN_OR_RETURN(
           rms_norm_weights.norm_weight,
-          weight_accessor.LoadWeight(absl::StrCat(basename, ".scale"),
-                                     {params.model_dim_D}));
+          weight_accessor.LoadWeight(absl::StrCat(basename, ".scale"), dims));
       return rms_norm_weights;
     }
     case LlmParams::Norm::LAYER_NORM: {
+      RET_CHECK_EQ(dims.size(), 1);
       auto layer_norm_weights = LayerNormWeights();
       MP_ASSIGN_OR_RETURN(
           layer_norm_weights.beta,
           weight_accessor.LoadWeight(absl::StrCat(basename, ".bias"),
-                                     {1, 1, params.model_dim_D}));
+                                     {1, 1, dims[0]}));
       MP_ASSIGN_OR_RETURN(
           layer_norm_weights.gamma,
           weight_accessor.LoadWeight(absl::StrCat(basename, ".scale"),
-                                     {1, 1, params.model_dim_D}));
+                                     {1, 1, dims[0]}));
       return layer_norm_weights;
     }
     default:
@@ -98,8 +101,6 @@ absl::StatusOr<std::optional<LlmWeights::NormWeights>> LoadNormWeights(
   }
   return std::nullopt;
 }
-
-}  // namespace
 
 LlmParams LlmParams::FromLLMParametersProto(
     const odml::infra::proto::LlmParameters& llm_params) {
@@ -114,6 +115,7 @@ LlmParams LlmParams::FromLLMParametersProto(
       .head_dim_H = static_cast<size_t>(transformer_params.head_dimension()),
       .n_heads_N = static_cast<size_t>(transformer_params.num_heads()),
       .voc_size_V = static_cast<size_t>(llm_params.vocab_size()),
+      .query_rescale_factor = transformer_params.query_rescale_factor(),
 
       .num_kv_heads =
           static_cast<size_t>(transformer_params.num_kv_heads() == 0
@@ -121,6 +123,9 @@ LlmParams LlmParams::FromLLMParametersProto(
                                   : transformer_params.num_kv_heads()),
       .enable_kv_cache = true,
       .enable_dynamic_shape = true};
+  if (llm_params.has_num_draft_tokens()) {
+    params.draft_size_G = llm_params.num_draft_tokens();
+  }
   switch (
       transformer_params.self_attention_parameters().attention_mask_type()) {
     case TransformerParameters::UNSPECIFIED:
@@ -143,6 +148,8 @@ LlmParams LlmParams::FromLLMParametersProto(
   };
   params.final_proj_params = LlmParams::FinalProjectParams{
       .no_bias = transformer_params.final_project_parameters().no_bias(),
+      .soft_cap_value =
+          transformer_params.final_project_parameters().soft_cap_value(),
   };
   switch (transformer_params.feed_forward_parameters().activation()) {
     case TransformerParameters::ACTIVATION_UNSPECIFIED:
@@ -157,6 +164,9 @@ LlmParams LlmParams::FromLLMParametersProto(
       break;
     case TransformerParameters::RELU:
       params.ff_params.activation = LlmParams::Activation::RELU;
+      break;
+    case TransformerParameters::RELU1P5:
+      params.ff_params.activation = LlmParams::Activation::RELU1P5;
       break;
     default:
       ABSL_LOG(DFATAL)
@@ -201,6 +211,10 @@ LlmParams LlmParams::FromLLMParametersProto(
       case TransformerParameters::SCALE_TYPE_INV_SQRT_HEAD_DIM:
         params.sa_params.attention_scale_type =
             LlmParams::AttentionScaleType::INV_SQRT_HEAD_DIM;
+        break;
+      case TransformerParameters::SCALE_TYPE_RESCALE_FACTOR_INV_HEAD_DIM:
+        params.sa_params.attention_scale_type =
+            LlmParams::AttentionScaleType::RESCALE_FACTOR_INV_HEAD_DIM;
         break;
       default:
         ABSL_LOG(DFATAL) << "Unknown attention_scale_type: "
@@ -462,11 +476,12 @@ absl::StatusOr<LlmWeights> LlmWeightsLoader::LoadWeights() {
   }
   RET_CHECK(result.softmax_linear) << kLogitsFfnWeightFilename;
 
-  MP_ASSIGN_OR_RETURN(
-      result.token_embedding,
-      weight_accessor_->LoadWeight(kTokenEmbedding,
-                                   {params_.voc_size_V, params_.model_dim_D},
-                                   /*dim_scale_if_any=*/0));
+  result.token_embedding =
+      weight_accessor_
+          ->LoadWeight(kTokenEmbedding,
+                       {params_.voc_size_V, params_.model_dim_D},
+                       /*dim_scale_if_any=*/0)
+          .value_or(nullptr);
 
   return result;
 }

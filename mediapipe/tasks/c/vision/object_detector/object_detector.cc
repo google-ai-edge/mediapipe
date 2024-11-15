@@ -104,7 +104,7 @@ ObjectDetector* CppObjectDetectorCreate(const ObjectDetectorOptions& options,
           if (!cpp_result.ok()) {
             ABSL_LOG(ERROR) << "Detection failed: " << cpp_result.status();
             CppProcessError(cpp_result.status(), &error_msg);
-            result_callback(nullptr, MpImage(), timestamp, error_msg);
+            result_callback(nullptr, nullptr, timestamp, error_msg);
             free(error_msg);
             return;
           }
@@ -122,10 +122,8 @@ ObjectDetector* CppObjectDetectorCreate(const ObjectDetectorOptions& options,
                   .width = image_frame->Width(),
                   .height = image_frame->Height()}};
 
-          result_callback(&result, mp_image, timestamp,
+          result_callback(&result, &mp_image, timestamp,
                           /* error_msg= */ nullptr);
-
-          CppCloseDetectionResult(&result);
         };
   }
 

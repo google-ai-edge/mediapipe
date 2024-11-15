@@ -60,9 +60,9 @@ FaceStylizer* CppFaceStylizerCreate(const FaceStylizerOptions& options,
   return stylizer->release();
 }
 
-int CppFaceStylizerStylize(void* stylizer, const MpImage& image,
+int CppFaceStylizerStylize(void* stylizer, const MpImage* image,
                            MpImage* result, char** error_msg) {
-  if (image.type == MpImage::GPU_BUFFER) {
+  if (image->type == MpImage::GPU_BUFFER) {
     const absl::Status status =
         absl::InvalidArgumentError("GPU Buffer not supported yet.");
 
@@ -71,9 +71,9 @@ int CppFaceStylizerStylize(void* stylizer, const MpImage& image,
   }
 
   const auto img = CreateImageFromBuffer(
-      static_cast<ImageFormat::Format>(image.image_frame.format),
-      image.image_frame.image_buffer, image.image_frame.width,
-      image.image_frame.height);
+      static_cast<ImageFormat::Format>(image->image_frame.format),
+      image->image_frame.image_buffer, image->image_frame.width,
+      image->image_frame.height);
 
   if (!img.ok()) {
     ABSL_LOG(ERROR) << "Failed to create Image: " << img.status();
@@ -130,7 +130,7 @@ void* face_stylizer_create(struct FaceStylizerOptions* options,
       *options, error_msg);
 }
 
-int face_stylizer_stylize_image(void* stylizer, const MpImage& image,
+int face_stylizer_stylize_image(void* stylizer, const MpImage* image,
                                 MpImage* result, char** error_msg) {
   return mediapipe::tasks::c::vision::face_stylizer::CppFaceStylizerStylize(
       stylizer, image, result, error_msg);

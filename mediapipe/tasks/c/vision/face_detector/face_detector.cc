@@ -92,17 +92,17 @@ FaceDetector* CppFaceDetectorCreate(const FaceDetectorOptions& options,
           if (!cpp_result.ok()) {
             ABSL_LOG(ERROR) << "Detection failed: " << cpp_result.status();
             CppProcessError(cpp_result.status(), &error_msg);
-            result_callback({}, MpImage(), timestamp, error_msg);
+            result_callback(nullptr, nullptr, timestamp, error_msg);
             free(error_msg);
             return;
           }
 
           // Result is valid for the lifetime of the callback function.
-          FaceDetectorResult result;
-          CppConvertToDetectionResult(*cpp_result, &result);
+          auto result = std::make_unique<FaceDetectorResult>();
+          CppConvertToDetectionResult(*cpp_result, result.get());
 
           const auto& image_frame = image.GetImageFrameSharedPtr();
-          const MpImage mp_image = {
+          MpImage mp_image = {
               .type = MpImage::IMAGE_FRAME,
               .image_frame = {
                   .format = static_cast<::ImageFormat>(image_frame->Format()),
@@ -110,10 +110,8 @@ FaceDetector* CppFaceDetectorCreate(const FaceDetectorOptions& options,
                   .width = image_frame->Width(),
                   .height = image_frame->Height()}};
 
-          result_callback(&result, mp_image, timestamp,
+          result_callback(result.release(), &mp_image, timestamp,
                           /* error_msg= */ nullptr);
-
-          CppCloseDetectionResult(&result);
         };
   }
 
@@ -126,9 +124,9 @@ FaceDetector* CppFaceDetectorCreate(const FaceDetectorOptions& options,
   return detector->release();
 }
 
-int CppFaceDetectorDetect(void* detector, const MpImage& image,
+int CppFaceDetectorDetect(void* detector, const MpImage* image,
                           FaceDetectorResult* result, char** error_msg) {
-  if (image.type == MpImage::GPU_BUFFER) {
+  if (image->type == MpImage::GPU_BUFFER) {
     const absl::Status status =
         absl::InvalidArgumentError("GPU Buffer not supported yet.");
 
@@ -137,9 +135,9 @@ int CppFaceDetectorDetect(void* detector, const MpImage& image,
   }
 
   const auto img = CreateImageFromBuffer(
-      static_cast<ImageFormat::Format>(image.image_frame.format),
-      image.image_frame.image_buffer, image.image_frame.width,
-      image.image_frame.height);
+      static_cast<ImageFormat::Format>(image->image_frame.format),
+      image->image_frame.image_buffer, image->image_frame.width,
+      image->image_frame.height);
 
   if (!img.ok()) {
     ABSL_LOG(ERROR) << "Failed to create Image: " << img.status();
@@ -156,11 +154,11 @@ int CppFaceDetectorDetect(void* detector, const MpImage& image,
   return 0;
 }
 
-int CppFaceDetectorDetectForVideo(void* detector, const MpImage& image,
+int CppFaceDetectorDetectForVideo(void* detector, const MpImage* image,
                                   int64_t timestamp_ms,
                                   FaceDetectorResult* result,
                                   char** error_msg) {
-  if (image.type == MpImage::GPU_BUFFER) {
+  if (image->type == MpImage::GPU_BUFFER) {
     absl::Status status =
         absl::InvalidArgumentError("GPU Buffer not supported yet");
 
@@ -169,9 +167,9 @@ int CppFaceDetectorDetectForVideo(void* detector, const MpImage& image,
   }
 
   const auto img = CreateImageFromBuffer(
-      static_cast<ImageFormat::Format>(image.image_frame.format),
-      image.image_frame.image_buffer, image.image_frame.width,
-      image.image_frame.height);
+      static_cast<ImageFormat::Format>(image->image_frame.format),
+      image->image_frame.image_buffer, image->image_frame.width,
+      image->image_frame.height);
 
   if (!img.ok()) {
     ABSL_LOG(ERROR) << "Failed to create Image: " << img.status();
@@ -188,9 +186,9 @@ int CppFaceDetectorDetectForVideo(void* detector, const MpImage& image,
   return 0;
 }
 
-int CppFaceDetectorDetectAsync(void* detector, const MpImage& image,
+int CppFaceDetectorDetectAsync(void* detector, const MpImage* image,
                                int64_t timestamp_ms, char** error_msg) {
-  if (image.type == MpImage::GPU_BUFFER) {
+  if (image->type == MpImage::GPU_BUFFER) {
     absl::Status status =
         absl::InvalidArgumentError("GPU Buffer not supported yet");
 
@@ -199,9 +197,9 @@ int CppFaceDetectorDetectAsync(void* detector, const MpImage& image,
   }
 
   const auto img = CreateImageFromBuffer(
-      static_cast<ImageFormat::Format>(image.image_frame.format),
-      image.image_frame.image_buffer, image.image_frame.width,
-      image.image_frame.height);
+      static_cast<ImageFormat::Format>(image->image_frame.format),
+      image->image_frame.image_buffer, image->image_frame.width,
+      image->image_frame.height);
 
   if (!img.ok()) {
     ABSL_LOG(ERROR) << "Failed to create Image: " << img.status();
@@ -243,13 +241,13 @@ void* face_detector_create(struct FaceDetectorOptions* options,
       *options, error_msg);
 }
 
-int face_detector_detect_image(void* detector, const MpImage& image,
+int face_detector_detect_image(void* detector, const MpImage* image,
                                FaceDetectorResult* result, char** error_msg) {
   return mediapipe::tasks::c::vision::face_detector::CppFaceDetectorDetect(
       detector, image, result, error_msg);
 }
 
-int face_detector_detect_for_video(void* detector, const MpImage& image,
+int face_detector_detect_for_video(void* detector, const MpImage* image,
                                    int64_t timestamp_ms,
                                    FaceDetectorResult* result,
                                    char** error_msg) {
@@ -258,7 +256,7 @@ int face_detector_detect_for_video(void* detector, const MpImage& image,
                                     error_msg);
 }
 
-int face_detector_detect_async(void* detector, const MpImage& image,
+int face_detector_detect_async(void* detector, const MpImage* image,
                                int64_t timestamp_ms, char** error_msg) {
   return mediapipe::tasks::c::vision::face_detector::CppFaceDetectorDetectAsync(
       detector, image, timestamp_ms, error_msg);

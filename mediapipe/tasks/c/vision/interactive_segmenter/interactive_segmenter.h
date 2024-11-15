@@ -83,8 +83,8 @@ MP_EXPORT void* interactive_segmenter_create(
 // parameter to an an error message (if `error_msg` is not `nullptr`). You must
 // free the memory allocated for the error message.
 MP_EXPORT int interactive_segmenter_segment_image(void* segmenter,
-                                                  const MpImage& image,
-                                                  const RegionOfInterest& roi,
+                                                  const MpImage* image,
+                                                  const RegionOfInterest* roi,
                                                   ImageSegmenterResult* result,
                                                   char** error_msg);
 

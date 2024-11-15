@@ -12,7 +12,7 @@ index 19cdd37ed4f..b4253b49a61 100644
 -    ],
 +    deps = ["//tensorflow/lite/core/c:c_api_experimental"],
  )
- 
+
  # Same as ":c_api_experimental", but without linking in the default CreateOpResolver implementation.
 @@ -143,10 +140,7 @@ cc_library_with_tflite_with_c_headers_test(
      tflite_deps = [
@@ -24,7 +24,7 @@ index 19cdd37ed4f..b4253b49a61 100644
 -    ],
 +    deps = ["//tensorflow/lite/core/c:c_api_experimental_without_op_resolver"],
  )
- 
+
  # Same as ":c_api_experimental", but without linking in the default CreateOpResolver implementation,
 @@ -183,6 +177,7 @@ cc_library_with_tflite_with_c_headers_test(
      copts = tflite_copts() + tflite_copts_warnings(),
@@ -33,7 +33,7 @@ index 19cdd37ed4f..b4253b49a61 100644
 +    linkstatic = 1,
      deps = ["//tensorflow/lite/core/c:c_api_opaque"],
  )
- 
+
 @@ -209,7 +204,7 @@ cc_library_with_tflite_with_c_headers_test(
      tflite_deps = [
          ":c_api_without_op_resolver_without_alwayslink",
@@ -41,7 +41,7 @@ index 19cdd37ed4f..b4253b49a61 100644
 -    deps = ["//tensorflow/lite/core/c:c_api_opaque_without_op_resolver_without_alwayslink"],
 +    deps = ["//tensorflow/lite/core/c:c_api_experimental_without_op_resolver_without_alwayslink"],
  )
- 
+
  cc_library_with_tflite_with_c_headers_test(
 @@ -457,7 +452,6 @@ cc_test(
          ":c_api_experimental",
@@ -52,7 +52,7 @@ index 19cdd37ed4f..b4253b49a61 100644
          "//tensorflow/lite/core/c:common",
      ],
 diff --git a/tensorflow/lite/core/c/BUILD b/tensorflow/lite/core/c/BUILD
-index 1b0bccb9e48..cd391a21b0b 100644
+index 018b6e1004c..cf355612386 100644
 --- a/tensorflow/lite/core/c/BUILD
 +++ b/tensorflow/lite/core/c/BUILD
 @@ -378,7 +378,6 @@ tflite_cc_library_with_c_headers_test(
@@ -95,56 +95,3 @@ index 1b0bccb9e48..cd391a21b0b 100644
          ":c_api_types",
          ":c_api_without_op_resolver_without_alwayslink",
          ":common",
-diff --git a/tensorflow/tools/toolchains/cpus/aarch64/aarch64_compiler_configure.bzl b/tensorflow/tools/toolchains/cpus/aarch64/aarch64_compiler_configure.bzl
-index 00cd6983ca3..d9c5ef16f9b 100644
---- a/tensorflow/tools/toolchains/cpus/aarch64/aarch64_compiler_configure.bzl
-+++ b/tensorflow/tools/toolchains/cpus/aarch64/aarch64_compiler_configure.bzl
-@@ -1,7 +1,7 @@
- """Configurations of AARCH64 builds used with Docker container."""
- 
- load("//tensorflow/tools/toolchains:cpus/aarch64/aarch64.bzl", "remote_aarch64_configure")
--load("//third_party/py:python_configure.bzl", "remote_python_configure")
-+load("//third_party/py/non_hermetic:python_configure.bzl", "remote_python_configure")
- load("//third_party/remote_config:remote_platform_configure.bzl", "remote_platform_configure")
- 
- def ml2014_tf_aarch64_configs(name_container_map, env):
-
-diff --git a/tensorflow/tools/toolchains/remote_config/rbe_config.bzl b/tensorflow/tools/toolchains/remote_config/rbe_config.bzl
-index ae776c2a2fd..108e79edbd7 100644
---- a/tensorflow/tools/toolchains/remote_config/rbe_config.bzl
-+++ b/tensorflow/tools/toolchains/remote_config/rbe_config.bzl
-@@ -4,7 +4,7 @@ load("//tensorflow/tools/toolchains/remote_config:containers.bzl", "containers")
- load("//third_party/gpus:cuda_configure.bzl", "remote_cuda_configure")
- load("//third_party/gpus:rocm_configure.bzl", "remote_rocm_configure")
- load("//third_party/nccl:nccl_configure.bzl", "remote_nccl_configure")
--load("//third_party/py:python_configure.bzl", "local_python_configure", "remote_python_configure")
-+load("//third_party/py/non_hermetic:python_configure.bzl", "local_python_configure", "remote_python_configure")
- load("//third_party/remote_config:remote_platform_configure.bzl", "remote_platform_configure")
- load("//third_party/tensorrt:tensorrt_configure.bzl", "remote_tensorrt_configure")
- 
-diff --git a/tensorflow/workspace2.bzl b/tensorflow/workspace2.bzl
-index 056df85ffdb..7422baf8c59 100644
---- a/tensorflow/workspace2.bzl
-+++ b/tensorflow/workspace2.bzl
-@@ -37,7 +37,7 @@ load("//third_party/nasm:workspace.bzl", nasm = "repo")
- load("//third_party/nccl:nccl_configure.bzl", "nccl_configure")
- load("//third_party/opencl_headers:workspace.bzl", opencl_headers = "repo")
- load("//third_party/pasta:workspace.bzl", pasta = "repo")
--load("//third_party/py:python_configure.bzl", "python_configure")
-+load("//third_party/py/non_hermetic:python_configure.bzl", "python_configure")
- load("//third_party/py/ml_dtypes:workspace.bzl", ml_dtypes = "repo")
- load("//third_party/pybind11_abseil:workspace.bzl", pybind11_abseil = "repo")
- load("//third_party/pybind11_bazel:workspace.bzl", pybind11_bazel = "repo")
-diff --git a/third_party/py/non_hermetic/python_configure.bzl b/third_party/py/non_hermetic/python_configure.bzl
-index 89732c3e33d..4ac1c8f5c04 100644
---- a/third_party/py/non_hermetic/python_configure.bzl
-+++ b/third_party/py/non_hermetic/python_configure.bzl
-@@ -203,7 +203,7 @@ def _create_local_python_repository(repository_ctx):
-     # Resolve all labels before doing any real work. Resolving causes the
-     # function to be restarted with all previous state being lost. This
-     # can easily lead to a O(n^2) runtime in the number of labels.
--    build_tpl = repository_ctx.path(Label("//third_party/py:BUILD.tpl"))
-+    build_tpl = repository_ctx.path(Label("//third_party/py/non_hermetic:BUILD.tpl"))
- 
-     python_bin = get_python_bin(repository_ctx)
-     _check_python_bin(repository_ctx, python_bin)

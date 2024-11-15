@@ -131,14 +131,25 @@ void CalculatorGraph::GraphInputStream::Close() {
   manager_->Close();
 }
 
-CalculatorGraph::CalculatorGraph()
-    : profiler_(std::make_shared<ProfilingContext>()), scheduler_(this) {
-  counter_factory_ = absl::make_unique<BasicCounterFactory>();
+CalculatorGraph::CalculatorGraph() : CalculatorGraph(/*cc=*/nullptr) {}
+
+// Adopt all services from the CalculatorContext / parent graph.
+CalculatorGraph::CalculatorGraph(CalculatorContext* cc)
+    : counter_factory_(std::make_unique<BasicCounterFactory>()),
+      service_manager_(cc != nullptr ? cc->GetGraphServiceManager() : nullptr),
+      profiler_(std::make_shared<ProfilingContext>()),
+      scheduler_(this) {
+  if (cc != nullptr) {
+    // Nested graphs should not create default initialized services to avoid
+    // collisions between newly created and inherited graphs.
+    // TODO b/368015341- Use factory method to avoid CHECK in constructor.
+    ABSL_CHECK_OK(DisallowServiceDefaultInitialization());
+  }
 }
 
 CalculatorGraph::CalculatorGraph(CalculatorGraphConfig config)
     : CalculatorGraph() {
-  counter_factory_ = absl::make_unique<BasicCounterFactory>();
+  counter_factory_ = std::make_unique<BasicCounterFactory>();
   MEDIAPIPE_CHECK_OK(Initialize(std::move(config)));
 }
 
@@ -157,7 +168,7 @@ absl::Status CalculatorGraph::InitializePacketGeneratorGraph(
     const std::map<std::string, Packet>& side_packets) {
   // Create and initialize the output side packets.
   if (!validated_graph_->OutputSidePacketInfos().empty()) {
-    output_side_packets_ = absl::make_unique<OutputSidePacketImpl[]>(
+    output_side_packets_ = std::make_unique<OutputSidePacketImpl[]>(
         validated_graph_->OutputSidePacketInfos().size());
   }
   for (int index = 0; index < validated_graph_->OutputSidePacketInfos().size();
@@ -186,7 +197,7 @@ absl::Status CalculatorGraph::InitializeStreams() {
   any_packet_type_.SetAny();
 
   // Create and initialize the input streams.
-  input_stream_managers_ = absl::make_unique<InputStreamManager[]>(
+  input_stream_managers_ = std::make_unique<InputStreamManager[]>(
       validated_graph_->InputStreamInfos().size());
   for (int index = 0; index < validated_graph_->InputStreamInfos().size();
        ++index) {
@@ -197,7 +208,7 @@ absl::Status CalculatorGraph::InitializeStreams() {
   }
 
   // Create and initialize the output streams.
-  output_stream_managers_ = absl::make_unique<OutputStreamManager[]>(
+  output_stream_managers_ = std::make_unique<OutputStreamManager[]>(
       validated_graph_->OutputStreamInfos().size());
   for (int index = 0; index < validated_graph_->OutputStreamInfos().size();
        ++index) {
@@ -223,7 +234,7 @@ absl::Status CalculatorGraph::InitializeStreams() {
               edge_info.parent_node.type)
         .SetNoLogging();
 
-    graph_input_streams_[stream_name] = absl::make_unique<GraphInputStream>(
+    graph_input_streams_[stream_name] = std::make_unique<GraphInputStream>(
         &output_stream_managers_[output_stream_index]);
 
     // Assign a virtual node ID to each graph input stream so we can treat
@@ -267,11 +278,11 @@ absl::Status CalculatorGraph::InitializeCalculatorNodes() {
     // the graph proto.
     int buffer_size_hint = 0;
     NodeTypeInfo::NodeRef node_ref(NodeTypeInfo::NodeType::CALCULATOR, node_id);
-    nodes_.push_back(absl::make_unique<CalculatorNode>());
+    nodes_.push_back(std::make_unique<CalculatorNode>());
     const absl::Status result = nodes_.back()->Initialize(
         validated_graph_.get(), node_ref, input_stream_managers_.get(),
         output_stream_managers_.get(), output_side_packets_.get(),
-        &buffer_size_hint, profiler_);
+        &buffer_size_hint, profiler_, &service_manager_);
     MaybeFixupLegacyGpuNodeContract(*nodes_.back());
     if (buffer_size_hint > 0) {
       max_queue_size_ = std::max(max_queue_size_, buffer_size_hint);
@@ -305,11 +316,11 @@ absl::Status CalculatorGraph::InitializePacketGeneratorNodes(
     int buffer_size_hint = 0;
     NodeTypeInfo::NodeRef node_ref(NodeTypeInfo::NodeType::PACKET_GENERATOR,
                                    index);
-    nodes_.push_back(absl::make_unique<CalculatorNode>());
+    nodes_.push_back(std::make_unique<CalculatorNode>());
     const absl::Status result = nodes_.back()->Initialize(
         validated_graph_.get(), node_ref, input_stream_managers_.get(),
         output_stream_managers_.get(), output_side_packets_.get(),
-        &buffer_size_hint, profiler_);
+        &buffer_size_hint, profiler_, &service_manager_);
     MaybeFixupLegacyGpuNodeContract(*nodes_.back());
     if (!result.ok()) {
       // Collect as many errors as we can before failing.
@@ -455,7 +466,7 @@ absl::Status CalculatorGraph::Initialize(CalculatorGraphConfig input_config) {
 absl::Status CalculatorGraph::Initialize(
     CalculatorGraphConfig input_config,
     const std::map<std::string, Packet>& side_packets) {
-  auto validated_graph = absl::make_unique<ValidatedGraphConfig>();
+  auto validated_graph = std::make_unique<ValidatedGraphConfig>();
   MP_RETURN_IF_ERROR(validated_graph->Initialize(
       std::move(input_config), /*graph_registry=*/nullptr,
       /*graph_options=*/nullptr, &service_manager_));
@@ -467,7 +478,7 @@ absl::Status CalculatorGraph::Initialize(
     const std::vector<CalculatorGraphTemplate>& input_templates,
     const std::map<std::string, Packet>& side_packets,
     const std::string& graph_type, const Subgraph::SubgraphOptions* options) {
-  auto validated_graph = absl::make_unique<ValidatedGraphConfig>();
+  auto validated_graph = std::make_unique<ValidatedGraphConfig>();
   MP_RETURN_IF_ERROR(validated_graph->Initialize(
       input_configs, input_templates, graph_type, options, &service_manager_));
   return Initialize(std::move(validated_graph), side_packets);
@@ -487,7 +498,7 @@ absl::Status CalculatorGraph::ObserveOutputStream(
            << "Unable to attach observer to output stream \"" << stream_name
            << "\" because it doesn't exist.";
   }
-  auto observer = absl::make_unique<internal::OutputStreamObserver>();
+  auto observer = std::make_unique<internal::OutputStreamObserver>();
   MP_RETURN_IF_ERROR(observer->Initialize(
       stream_name, &any_packet_type_, std::move(packet_callback),
       &output_stream_managers_[output_stream_index], observe_timestamp_bounds));
@@ -631,7 +642,7 @@ std::map<std::string, Packet> CalculatorGraph::MaybeCreateLegacyGpuSidePacket(
        legacy_sp.Get<::mediapipe::GpuSharedData*>()->gpu_resources !=
            gpu_resources)) {
     legacy_gpu_shared_ =
-        absl::make_unique<mediapipe::GpuSharedData>(gpu_resources);
+        std::make_unique<mediapipe::GpuSharedData>(gpu_resources);
     additional_side_packets[kGpuSharedSidePacketName] =
         MakePacket<::mediapipe::GpuSharedData*>(legacy_gpu_shared_.get());
   }

@@ -24,5 +24,31 @@ objc_library(
         "//mediapipe/tasks/ios/audio/core:MPPAudioDataFormat",
         "//mediapipe/tasks/ios/audio/core:MPPFloatBuffer",
         "//mediapipe/tasks/ios/test/utils:MPPFileInfo",
+        "//third_party/apple_frameworks:AVFoundation",
+        "//third_party/apple_frameworks:Foundation",
+    ],
+)
+
+objc_library(
+    name = "AVAudioFileTestUtils",
+    srcs = ["sources/AVAudioFile+TestUtils.m"],
+    hdrs = ["sources/AVAudioFile+TestUtils.h"],
+    deps = [
+        ":AVAudioPCMBufferTestUtils",
+        "//mediapipe/tasks/ios/audio/core:MPPAudioData",
+        "//mediapipe/tasks/ios/test/utils:MPPFileInfo",
+        "//third_party/apple_frameworks:AVFoundation",
+        "//third_party/apple_frameworks:Foundation",
+    ],
+)
+
+objc_library(
+    name = "MPPAudioDataTestUtils",
+    srcs = ["sources/MPPAudioData+TestUtils.m"],
+    hdrs = ["sources/MPPAudioData+TestUtils.h"],
+    deps = [
+        ":AVAudioPCMBufferTestUtils",
+        "//mediapipe/tasks/ios/audio/core:MPPAudioData",
+        "//mediapipe/tasks/ios/test/utils:MPPFileInfo",
     ],
 )

@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <climits>
 #include <cstdint>
 #include <optional>
 #include <string>
@@ -361,11 +362,12 @@ class PackMediaSequenceCalculator : public CalculatorBase {
   }
 
   absl::Status VerifySize() {
-    const int64_t MAX_PROTO_BYTES = 1073741823;
+    constexpr int kMaxProtoBytes = INT_MAX;
+
     std::string id = mpms::HasExampleId(*sequence_)
                          ? mpms::GetExampleId(*sequence_)
                          : "example";
-    RET_CHECK_LT(sequence_->ByteSizeLong(), MAX_PROTO_BYTES)
+    RET_CHECK_LT(sequence_->ByteSizeLong(), kMaxProtoBytes)
         << "sequence '" << id
         << "' would be too many bytes to serialize after adding features.";
     return absl::OkStatus();
@@ -515,7 +517,14 @@ class PackMediaSequenceCalculator : public CalculatorBase {
         const std::string& key = tag.substr(
             sizeof(kClipLabelPrefixTag) / sizeof(*kClipLabelPrefixTag) - 1);
         const Detection& detection = cc->Inputs().Tag(tag).Get<Detection>();
+        bool add_empty_labels =
+            cc->Options<PackMediaSequenceCalculatorOptions>()
+                .add_empty_labels();
         if (detection.score().empty()) {
+          if (add_empty_labels) {
+            mpms::SetClipLabelString(key, {}, sequence_.get());
+            mpms::SetClipLabelConfidence(key, {}, sequence_.get());
+          }
           continue;
         }
         if (detection.label().empty() && detection.label_id().empty()) {

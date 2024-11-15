@@ -21,10 +21,12 @@
 #include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/string_view.h"
 #include "mediapipe/framework/api2/packet.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
+#include "mediapipe/framework/resources.h"
 #include "mediapipe/util/resource_util.h"
 #include "mediapipe/util/tflite/error_reporter.h"
 #include "tensorflow/lite/allocation.h"
@@ -38,27 +40,31 @@ using ::tflite::FlatBufferModel;
 using ::tflite::MMAPAllocation;
 
 absl::StatusOr<api2::Packet<TfLiteModelPtr>> TfLiteModelLoader::LoadFromPath(
-    const std::string& path, bool try_mmap) {
+    const Resources& resources, const std::string& path, bool try_mmap) {
   std::string model_path = path;
 
-  if (!file::Exists(model_path).ok()) {
+  bool file_exists = file::Exists(model_path).ok();
+  if (!file_exists) {
     // TODO: get rid of manual resolving with PathToResourceAsFile
     // as soon as it's incorporated into GetResourceContents.
-    MP_ASSIGN_OR_RETURN(model_path,
-                        mediapipe::PathToResourceAsFile(model_path));
-    VLOG(2) << "Loading the model from " << model_path;
+    absl::StatusOr<std::string> resolved_model_path =
+        mediapipe::PathToResourceAsFile(model_path);
+    if (resolved_model_path.ok()) {
+      VLOG(2) << "Loading the model from " << model_path;
+      model_path = *std::move(resolved_model_path);
+      file_exists = true;
+    }
   }
 
   // Try to memory map file if available. Falls back to loading from buffer on
   // error.
-  if (try_mmap && MMAPAllocation::IsSupported()) {
+  if (file_exists && try_mmap && MMAPAllocation::IsSupported()) {
     ErrorReporter error_reporter;
     std::unique_ptr<Allocation> allocation =
         std::make_unique<MMAPAllocation>(model_path.c_str(), &error_reporter);
 
     if (!error_reporter.HasError()) {
-      auto model = FlatBufferModel::BuildFromAllocation(std::move(allocation),
-                                                        &error_reporter);
+      auto model = FlatBufferModel::BuildFromAllocation(std::move(allocation));
       if (model) {
         return api2::MakePacket<TfLiteModelPtr>(
             model.release(), [](FlatBufferModel* model) { delete model; });
@@ -70,20 +76,21 @@ absl::StatusOr<api2::Packet<TfLiteModelPtr>> TfLiteModelLoader::LoadFromPath(
                       << error_reporter.message();
   }
 
-  // Load into a buffer.
-  std::string model_blob;
-  MP_RETURN_IF_ERROR(mediapipe::GetResourceContents(model_path, &model_blob));
-
-  auto model = FlatBufferModel::VerifyAndBuildFromBuffer(model_blob.data(),
-                                                         model_blob.size());
+  // Load model resource.
+  MP_ASSIGN_OR_RETURN(std::unique_ptr<Resource> model_resource,
+                      resources.Get(model_path));
+  absl::string_view model_view = model_resource->ToStringView();
+  auto model = FlatBufferModel::VerifyAndBuildFromBuffer(model_view.data(),
+                                                         model_view.size());
 
   RET_CHECK(model) << "Failed to load model from path " << model_path;
   return api2::MakePacket<TfLiteModelPtr>(
-      model.release(),
-      [model_blob = std::move(model_blob)](FlatBufferModel* model) {
-        // It's required that model_blob is deleted only after
-        // model is deleted, hence capturing model_blob.
+      model.release(), [model_resource = model_resource.release()](
+                           FlatBufferModel* model) mutable {
+        // It's required that model resource, used for model creation, outlives
+        // the created model.
         delete model;
+        delete model_resource;
       });
 }
 }  // namespace mediapipe

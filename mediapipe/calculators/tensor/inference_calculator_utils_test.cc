@@ -16,13 +16,19 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
+#include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
+#include "absl/flags/flag.h"
 #include "absl/log/absl_check.h"
+#include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/types/span.h"
+#include "mediapipe/calculators/tensor/inference_calculator.pb.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
@@ -36,6 +42,8 @@
 
 namespace mediapipe {
 namespace {
+
+constexpr int kDefaultNumXnnpackThreads = 1;
 
 using ElementType = ::mediapipe::Tensor::ElementType;
 using ::testing::ElementsAreArray;
@@ -100,8 +108,60 @@ std::vector<char> TfLiteInputTensorData<char>(const Interpreter& interpreter,
   return std::vector<char>(str.begin(), str.end());
 }
 
-TEST(InferenceCalculatorUtilsTest,
-     CopyCpuInputIntoInterpreterTensorWorksCorrectlyForInt32) {
+class InferenceCalculatorUtilsTest : public ::testing::Test {
+ protected:
+  void TearDown() override {
+    absl::SetFlag(&FLAGS_xnnpack_default_num_threads, 0);
+  }
+};
+
+TEST_F(InferenceCalculatorUtilsTest, GetXnnpackNumThreadsReturnsDefault) {
+  EXPECT_EQ(GetXnnpackNumThreads(/*opts_has_delegate=*/false,
+                                 /*opts_delegate=*/{}),
+            kDefaultNumXnnpackThreads);
+}
+
+TEST_F(InferenceCalculatorUtilsTest, GetXnnpackNumThreadsReturnsSetDefault) {
+  absl::SetFlag(&FLAGS_xnnpack_default_num_threads, 42);
+  EXPECT_EQ(GetXnnpackNumThreads(/*opts_has_delegate=*/false,
+                                 /*opts_delegate=*/{}),
+            42);
+}
+
+TEST_F(InferenceCalculatorUtilsTest,
+       GetXnnpackNumThreadsReturnsDefaultIfHasDelegateIsTrueButUnset) {
+  EXPECT_EQ(GetXnnpackNumThreads(/*opts_has_delegate=*/true,
+                                 /*opts_delegate=*/{}),
+            kDefaultNumXnnpackThreads);
+}
+
+TEST_F(InferenceCalculatorUtilsTest,
+       GetXnnpackNumThreadsReturnsDefaultIfThreadsNotSpecified) {
+  mediapipe::InferenceCalculatorOptions::Delegate opts_delegate;
+  opts_delegate.mutable_xnnpack();
+  EXPECT_EQ(GetXnnpackNumThreads(/*opts_has_delegate=*/true, opts_delegate),
+            kDefaultNumXnnpackThreads);
+}
+
+TEST_F(InferenceCalculatorUtilsTest,
+       GetXnnpackNumThreadsReturnsSetNumberOfThreads) {
+  absl::SetFlag(&FLAGS_xnnpack_default_num_threads, 42);
+  mediapipe::InferenceCalculatorOptions::Delegate opts_delegate;
+  opts_delegate.mutable_xnnpack()->set_num_threads(43);
+  EXPECT_EQ(GetXnnpackNumThreads(/*opts_has_delegate=*/true, opts_delegate),
+            43);
+}
+
+TEST_F(InferenceCalculatorUtilsTest,
+       GetXnnpackNumThreadsReturnsDefaultIfHasDelegateIsFalse) {
+  mediapipe::InferenceCalculatorOptions::Delegate opts_delegate;
+  opts_delegate.mutable_xnnpack()->set_num_threads(44);
+  EXPECT_EQ(GetXnnpackNumThreads(/*opts_has_delegate=*/false, opts_delegate),
+            kDefaultNumXnnpackThreads);
+}
+
+TEST_F(InferenceCalculatorUtilsTest,
+       CopyCpuInputIntoInterpreterTensorWorksCorrectlyForInt32) {
   tflite::Interpreter interpreter;
   int tensor_index, tensor_len = 4;
   AddInterpreterInput(kTfLiteInt32, tensor_len, tensor_index,
@@ -111,14 +171,14 @@ TEST(InferenceCalculatorUtilsTest,
   Tensor tensor(ElementType::kInt32, Tensor::Shape({values_len}));
   std::memcpy(tensor.GetCpuWriteView().buffer<int32_t>(), values.data(),
               values_len * sizeof(int32_t));
-  MP_EXPECT_OK(
-      CopyCpuInputIntoInterpreterTensor(tensor, interpreter, tensor_index));
+  TfLiteTensor* tflite_tensor = interpreter.input_tensor(tensor_index);
+  MP_EXPECT_OK(CopyCpuInputIntoTfLiteTensor(tensor, *tflite_tensor));
   EXPECT_THAT(TfLiteInputTensorData<int32_t>(interpreter, tensor_index),
               ElementsAreArray(values));
 }
 
-TEST(InferenceCalculatorUtilsTest,
-     CopyCpuInputIntoInterpreterTensorWorksCorrectlyForInt64) {
+TEST_F(InferenceCalculatorUtilsTest,
+       CopyCpuInputIntoInterpreterTensorWorksCorrectlyForInt64) {
   tflite::Interpreter interpreter;
   int tensor_index, tensor_len = 4;
   AddInterpreterInput(kTfLiteInt64, tensor_len, tensor_index,
@@ -128,14 +188,14 @@ TEST(InferenceCalculatorUtilsTest,
   Tensor tensor(ElementType::kInt64, Tensor::Shape({values_len}));
   std::memcpy(tensor.GetCpuWriteView().buffer<int64_t>(), values.data(),
               values_len * sizeof(int64_t));
-  MP_EXPECT_OK(
-      CopyCpuInputIntoInterpreterTensor(tensor, interpreter, tensor_index));
+  TfLiteTensor* tflite_tensor = interpreter.input_tensor(tensor_index);
+  MP_EXPECT_OK(CopyCpuInputIntoTfLiteTensor(tensor, *tflite_tensor));
   EXPECT_THAT(TfLiteInputTensorData<int64_t>(interpreter, tensor_index),
               ElementsAreArray(values));
 }
 
-TEST(InferenceCalculatorUtilsTest,
-     CopyCpuInputIntoInterpreterTensorWorksCorrectlyForUInt8) {
+TEST_F(InferenceCalculatorUtilsTest,
+       CopyCpuInputIntoInterpreterTensorWorksCorrectlyForUInt8) {
   tflite::Interpreter interpreter;
   int tensor_index, tensor_len = 4;
   AddInterpreterInput(kTfLiteUInt8, tensor_len, tensor_index,
@@ -145,14 +205,14 @@ TEST(InferenceCalculatorUtilsTest,
   Tensor tensor(ElementType::kUInt8, Tensor::Shape({values_len}));
   std::memcpy(tensor.GetCpuWriteView().buffer<uint8_t>(), values.data(),
               values_len * sizeof(uint8_t));
-  MP_EXPECT_OK(
-      CopyCpuInputIntoInterpreterTensor(tensor, interpreter, tensor_index));
+  TfLiteTensor* tflite_tensor = interpreter.input_tensor(tensor_index);
+  MP_EXPECT_OK(CopyCpuInputIntoTfLiteTensor(tensor, *tflite_tensor));
   EXPECT_THAT(TfLiteInputTensorData<uint8_t>(interpreter, tensor_index),
               ElementsAreArray(values));
 }
 
-TEST(InferenceCalculatorUtilsTest,
-     CopyCpuInputIntoInterpreterTensorWorksCorrectlyForInt8) {
+TEST_F(InferenceCalculatorUtilsTest,
+       CopyCpuInputIntoInterpreterTensorWorksCorrectlyForInt8) {
   tflite::Interpreter interpreter;
   int tensor_index, tensor_len = 4;
   AddInterpreterInput(kTfLiteInt8, tensor_len, tensor_index,
@@ -162,14 +222,14 @@ TEST(InferenceCalculatorUtilsTest,
   Tensor tensor(ElementType::kInt8, Tensor::Shape({values_len}));
   std::memcpy(tensor.GetCpuWriteView().buffer<int8_t>(), values.data(),
               values_len * sizeof(int8_t));
-  MP_EXPECT_OK(
-      CopyCpuInputIntoInterpreterTensor(tensor, interpreter, tensor_index));
+  TfLiteTensor* tflite_tensor = interpreter.input_tensor(tensor_index);
+  MP_EXPECT_OK(CopyCpuInputIntoTfLiteTensor(tensor, *tflite_tensor));
   EXPECT_THAT(TfLiteInputTensorData<int8_t>(interpreter, tensor_index),
               ElementsAreArray(values));
 }
 
-TEST(InferenceCalculatorUtilsTest,
-     CopyCpuInputIntoInterpreterTensorWorksCorrectlyForFloat32) {
+TEST_F(InferenceCalculatorUtilsTest,
+       CopyCpuInputIntoInterpreterTensorWorksCorrectlyForFloat32) {
   tflite::Interpreter interpreter;
   int tensor_index, tensor_len = 4;
   AddInterpreterInput(kTfLiteFloat32, tensor_len, tensor_index,
@@ -179,14 +239,14 @@ TEST(InferenceCalculatorUtilsTest,
   Tensor tensor(ElementType::kFloat32, Tensor::Shape({values_len}));
   std::memcpy(tensor.GetCpuWriteView().buffer<float>(), values.data(),
               values_len * sizeof(float));
-  MP_EXPECT_OK(
-      CopyCpuInputIntoInterpreterTensor(tensor, interpreter, tensor_index));
+  TfLiteTensor* tflite_tensor = interpreter.input_tensor(tensor_index);
+  MP_EXPECT_OK(CopyCpuInputIntoTfLiteTensor(tensor, *tflite_tensor));
   EXPECT_THAT(TfLiteInputTensorData<float>(interpreter, tensor_index),
               ElementsAreArray(values));
 }
 
-TEST(InferenceCalculatorUtilsTest,
-     CopyCpuInputIntoInterpreterTensorWorksCorrectlyForString) {
+TEST_F(InferenceCalculatorUtilsTest,
+       CopyCpuInputIntoInterpreterTensorWorksCorrectlyForString) {
   tflite::Interpreter interpreter;
   int tensor_index, tensor_len = 4;
   AddInterpreterInput(kTfLiteString, tensor_len, tensor_index,
@@ -196,14 +256,14 @@ TEST(InferenceCalculatorUtilsTest,
   Tensor tensor(ElementType::kChar, Tensor::Shape({values_len}));
   std::memcpy(tensor.GetCpuWriteView().buffer<char>(), values.data(),
               values_len * sizeof(char));
-  MP_EXPECT_OK(
-      CopyCpuInputIntoInterpreterTensor(tensor, interpreter, tensor_index));
+  TfLiteTensor* tflite_tensor = interpreter.input_tensor(tensor_index);
+  MP_EXPECT_OK(CopyCpuInputIntoTfLiteTensor(tensor, *tflite_tensor));
   EXPECT_THAT(TfLiteInputTensorData<char>(interpreter, tensor_index),
               ElementsAreArray(values));
 }
 
-TEST(InferenceCalculatorUtilsTest,
-     CopyCpuInputIntoInterpreterTensorTypeMismatch) {
+TEST_F(InferenceCalculatorUtilsTest,
+       CopyCpuInputIntoInterpreterTensorTypeMismatch) {
   tflite::Interpreter interpreter;
   int tensor_index, tensor_len = 4;
   AddInterpreterInput(kTfLiteInt32, tensor_len, tensor_index,
@@ -213,15 +273,15 @@ TEST(InferenceCalculatorUtilsTest,
   Tensor tensor(ElementType::kFloat32, Tensor::Shape({values_len}));
   std::memcpy(tensor.GetCpuWriteView().buffer<float>(), values.data(),
               values_len * sizeof(float));
-  absl::Status status =
-      CopyCpuInputIntoInterpreterTensor(tensor, interpreter, tensor_index);
+  TfLiteTensor* tflite_tensor = interpreter.input_tensor(tensor_index);
+  absl::Status status = CopyCpuInputIntoTfLiteTensor(tensor, *tflite_tensor);
   EXPECT_FALSE(status.ok());
   EXPECT_THAT(status.message(),
               HasSubstr("Input and interpreter tensor type do not match"));
 }
 
-TEST(InferenceCalculatorUtilsTest,
-     CopyCpuInputIntoInterpreterTensorSizeMismatch) {
+TEST_F(InferenceCalculatorUtilsTest,
+       CopyCpuInputIntoInterpreterTensorSizeMismatch) {
   tflite::Interpreter interpreter;
   int tensor_index, tensor_len = 5;
   AddInterpreterInput(kTfLiteFloat32, tensor_len, tensor_index,
@@ -231,15 +291,15 @@ TEST(InferenceCalculatorUtilsTest,
   Tensor tensor(ElementType::kFloat32, Tensor::Shape({values_len}));
   std::memcpy(tensor.GetCpuWriteView().buffer<float>(), values.data(),
               values_len * sizeof(float));
-  absl::Status status =
-      CopyCpuInputIntoInterpreterTensor(tensor, interpreter, tensor_index);
+  TfLiteTensor* tflite_tensor = interpreter.input_tensor(tensor_index);
+  absl::Status status = CopyCpuInputIntoTfLiteTensor(tensor, *tflite_tensor);
   EXPECT_FALSE(status.ok());
   EXPECT_THAT(status.message(),
               HasSubstr("TfLiteTensor and Tensor sizes do not match"));
 }
 
-TEST(InferenceCalculatorUtilsTest,
-     CopyCpuInputIntoInterpreterTensorNullBuffer) {
+TEST_F(InferenceCalculatorUtilsTest,
+       CopyCpuInputIntoInterpreterTensorNullBuffer) {
   tflite::Interpreter interpreter;
   int tensor_index, tensor_len = 4;
   // Make TFLite interpreter's buffer null.
@@ -250,14 +310,14 @@ TEST(InferenceCalculatorUtilsTest,
   Tensor tensor(ElementType::kFloat32, Tensor::Shape({values_len}));
   std::memcpy(tensor.GetCpuWriteView().buffer<float>(), values.data(),
               values_len * sizeof(float));
-  absl::Status status =
-      CopyCpuInputIntoInterpreterTensor(tensor, interpreter, tensor_index);
+  TfLiteTensor* tflite_tensor = interpreter.input_tensor(tensor_index);
+  absl::Status status = CopyCpuInputIntoTfLiteTensor(tensor, *tflite_tensor);
   EXPECT_FALSE(status.ok());
   EXPECT_THAT(status.message(), HasSubstr("TfLiteTensor data is null"));
 }
 
-TEST(InferenceCalculatorUtilsTest,
-     CopyCpuInputIntoInterpreterTensorUnsupportedType) {
+TEST_F(InferenceCalculatorUtilsTest,
+       CopyCpuInputIntoInterpreterTensorUnsupportedType) {
   tflite::Interpreter interpreter;
   int tensor_index, tensor_len = 4;
 
@@ -274,14 +334,14 @@ TEST(InferenceCalculatorUtilsTest,
   std::vector<float> values{1.0f, 2.0f, 3.0f, 4.0f};
   int values_len = values.size();
   Tensor tensor(ElementType::kNone, Tensor::Shape({values_len}));
-  absl::Status status =
-      CopyCpuInputIntoInterpreterTensor(tensor, interpreter, tensor_index);
+  TfLiteTensor* tflite_tensor = interpreter.input_tensor(tensor_index);
+  absl::Status status = CopyCpuInputIntoTfLiteTensor(tensor, *tflite_tensor);
   EXPECT_FALSE(status.ok());
   EXPECT_THAT(status.message(), HasSubstr("Unsupported input data type:"));
 }
 
-TEST(InferenceCalculatorUtilsTest,
-     CopyInterpreterTensorIntoCpuOutputWorksCorrectlyForFloat32) {
+TEST_F(InferenceCalculatorUtilsTest,
+       CopyInterpreterTensorIntoCpuOutputWorksCorrectlyForFloat32) {
   std::vector<float> values{100.f, 200.f, 300.f, 400.f, 500.f, 600.f};
 
   tflite::CastOpModel m({TensorType_INT32, {2, 3}},
@@ -297,8 +357,8 @@ TEST(InferenceCalculatorUtilsTest,
               ElementsAreArray(values));
 }
 
-TEST(InferenceCalculatorUtilsTest,
-     CopyInterpreterTensorIntoCpuOutputWorksCorrectlyForString) {
+TEST_F(InferenceCalculatorUtilsTest,
+       CopyInterpreterTensorIntoCpuOutputWorksCorrectlyForString) {
   std::vector<char> values{'a', 'b', 'c', 'd'};
   int values_len = values.size();
   Tensor tensor(ElementType::kChar, Tensor::Shape({values_len}));
@@ -312,15 +372,16 @@ TEST(InferenceCalculatorUtilsTest,
   dynamic_buffer.AddString(values.data(), values.size());
   dynamic_buffer.WriteToTensorAsVector(
       interpreter.tensor(interpreter.outputs()[tensor_index]));
-  MP_EXPECT_OK(
-      CopyInterpreterTensorIntoCpuOutput(interpreter, tensor_index, tensor));
+
+  const TfLiteTensor* tflite_tensor = interpreter.tensor(tensor_index);
+  MP_EXPECT_OK(CopyTfLiteTensorIntoCpuOutput(*tflite_tensor, tensor));
   EXPECT_THAT(absl::MakeConstSpan(tensor.GetCpuReadView().buffer<char>(),
                                   tensor.shape().num_elements()),
               ElementsAreArray(values));
 }
 
-TEST(InferenceCalculatorUtilsTest,
-     CopyInterpreterTensorIntoCpuOutputTypeMismatch) {
+TEST_F(InferenceCalculatorUtilsTest,
+       CopyInterpreterTensorIntoCpuOutputTypeMismatch) {
   std::vector<float> values{100.f, 200.f, 300.f, 400.f, 500.f, 600.f};
 
   tflite::CastOpModel m({TensorType_INT32, {2, 3}},
@@ -337,8 +398,8 @@ TEST(InferenceCalculatorUtilsTest,
               HasSubstr("Output and TfLiteTensor types do not match"));
 }
 
-TEST(InferenceCalculatorUtilsTest,
-     CopyInterpreterTensorIntoCpuOutputSizeMismatch) {
+TEST_F(InferenceCalculatorUtilsTest,
+       CopyInterpreterTensorIntoCpuOutputSizeMismatch) {
   std::vector<float> values{100.f, 200.f, 300.f, 400.f, 500.f, 600.f};
 
   tflite::CastOpModel m({TensorType_INT32, {2, 3}},
@@ -355,8 +416,8 @@ TEST(InferenceCalculatorUtilsTest,
               HasSubstr("TfLiteTensor and Tensor shape do not match"));
 }
 
-TEST(InferenceCalculatorUtilsTest,
-     CopyInterpreterTensorIntoCpuOutputNullBuffer) {
+TEST_F(InferenceCalculatorUtilsTest,
+       CopyInterpreterTensorIntoCpuOutputNullBuffer) {
   tflite::Interpreter interpreter;
   int tensor_index, tensor_len = 4;
   // Make TFLite interpreter's buffer null.
@@ -367,15 +428,15 @@ TEST(InferenceCalculatorUtilsTest,
   Tensor tensor(ElementType::kFloat32, Tensor::Shape({values_len}));
   std::memcpy(tensor.GetCpuWriteView().buffer<float>(), values.data(),
               values_len * sizeof(float));
-  absl::Status status =
-      CopyInterpreterTensorIntoCpuOutput(interpreter, tensor_index, tensor);
+  const TfLiteTensor* tflite_tensor = interpreter.tensor(tensor_index);
+  absl::Status status = CopyTfLiteTensorIntoCpuOutput(*tflite_tensor, tensor);
   EXPECT_FALSE(status.ok());
   EXPECT_THAT(status.message(),
               HasSubstr("TfLiteTensor tensor buffer is null"));
 }
 
-TEST(InferenceCalculatorUtilsTest,
-     CopyInterpreterTensorIntoCpuOutputUnsupportedType) {
+TEST_F(InferenceCalculatorUtilsTest,
+       CopyInterpreterTensorIntoCpuOutputUnsupportedType) {
   tflite::Interpreter interpreter;
   int tensor_index, tensor_len = 4;
 
@@ -392,13 +453,13 @@ TEST(InferenceCalculatorUtilsTest,
   std::vector<uint8_t> values{1, 2, 3, 4};
   int values_len = values.size();
   Tensor tensor(ElementType::kNone, Tensor::Shape({values_len}));
-  absl::Status status =
-      CopyInterpreterTensorIntoCpuOutput(interpreter, tensor_index, tensor);
+  const TfLiteTensor* tflite_tensor = interpreter.tensor(tensor_index);
+  absl::Status status = CopyTfLiteTensorIntoCpuOutput(*tflite_tensor, tensor);
   EXPECT_FALSE(status.ok());
   EXPECT_THAT(status.message(), HasSubstr("Unsupported output data type:"));
 }
 
-TEST(InferenceCalculatorUtilsTest, ConvertTfLiteTensorToFloat32) {
+TEST_F(InferenceCalculatorUtilsTest, ConvertTfLiteTensorToFloat32) {
   const std::vector<float> expected_values{100.f, 200.f, 300.f,
                                            400.f, 500.f, 600.f};
 
@@ -416,7 +477,7 @@ TEST(InferenceCalculatorUtilsTest, ConvertTfLiteTensorToFloat32) {
               ElementsAreArray(expected_values));
 }
 
-TEST(InferenceCalculatorUtilsTest, ShouldSetCustomAllocatorForCpuWriteView) {
+TEST_F(InferenceCalculatorUtilsTest, ShouldSetCustomAllocatorForCpuWriteView) {
   tflite::Interpreter interpreter;
   int tensor_index, tensor_size = 4;
   AddInterpreterInput(kTfLiteInt32, tensor_size, tensor_index,
@@ -445,7 +506,7 @@ TEST(InferenceCalculatorUtilsTest, ShouldSetCustomAllocatorForCpuWriteView) {
   }
 }
 
-TEST(InferenceCalculatorUtilsTest, ShouldSetCustomAllocatorForCpuReadView) {
+TEST_F(InferenceCalculatorUtilsTest, ShouldSetCustomAllocatorForCpuReadView) {
   tflite::Interpreter interpreter;
   int tensor_index, tensor_size = 4;
   AddInterpreterInput(kTfLiteInt32, tensor_size, tensor_index,
@@ -466,7 +527,7 @@ TEST(InferenceCalculatorUtilsTest, ShouldSetCustomAllocatorForCpuReadView) {
               ElementsAreArray(values));
 }
 
-TEST(InferenceCalculatorUtilsTest, ShouldConfirmTfLiteMemoryAlignment) {
+TEST_F(InferenceCalculatorUtilsTest, ShouldConfirmTfLiteMemoryAlignment) {
   std::vector<int32_t> values{1, 2, 3, 4};
   int values_len = values.size();
   Tensor tensor(ElementType::kInt32, Tensor::Shape({values_len}),
@@ -477,7 +538,7 @@ TEST(InferenceCalculatorUtilsTest, ShouldConfirmTfLiteMemoryAlignment) {
   EXPECT_TRUE(IsAlignedWithTFLiteDefaultAlignment(read_view.buffer<int32_t>()));
 }
 
-TEST(InferenceCalculatorUtilsTest, ShouldNotConfirmTfLiteMemoryAlignment) {
+TEST_F(InferenceCalculatorUtilsTest, ShouldNotConfirmTfLiteMemoryAlignment) {
   std::vector<int32_t> values{1, 2, 3, 4};
   int values_len = values.size();
   Tensor tensor(ElementType::kInt32, Tensor::Shape({values_len}),
@@ -488,6 +549,60 @@ TEST(InferenceCalculatorUtilsTest, ShouldNotConfirmTfLiteMemoryAlignment) {
   EXPECT_FALSE(IsAlignedWithTFLiteDefaultAlignment(read_view.buffer<int32_t>() +
                                                    sizeof(int32_t)));
 }
+
+static std::vector<std::pair<TfLiteType, Tensor::ElementType>>
+GetTensorTypePairs() {
+  return {{TfLiteType::kTfLiteFloat16, Tensor::ElementType::kFloat32},
+          {TfLiteType::kTfLiteFloat32, Tensor::ElementType::kFloat32},
+          {TfLiteType::kTfLiteUInt8, Tensor::ElementType::kUInt8},
+          {TfLiteType::kTfLiteInt8, Tensor::ElementType::kInt8},
+          {TfLiteType::kTfLiteInt32, Tensor::ElementType::kInt32},
+          {TfLiteType::kTfLiteBool, Tensor::ElementType::kBool}};
+}
+
+static auto CreateTfLiteTensor(TfLiteType type, int num_elements, float scale,
+                               float zero_point) {
+  auto dealloc = [](TfLiteTensor* tensor) {
+    TfLiteIntArrayFree(tensor->dims);
+    delete (tensor);
+  };
+  std::unique_ptr<TfLiteTensor, decltype(dealloc)> tflite_tensor(
+      new TfLiteTensor, dealloc);
+  tflite_tensor->type = type;
+  tflite_tensor->allocation_type = kTfLiteDynamic;
+  tflite_tensor->quantization.type = kTfLiteNoQuantization;
+  TfLiteIntArray* dims = tflite::ConvertVectorToTfLiteIntArray({num_elements});
+  tflite_tensor->dims = dims;
+  tflite_tensor->params.scale = scale;
+  tflite_tensor->params.zero_point = zero_point;
+  return tflite_tensor;
+}
+
+class AllocateTensorWithTfLiteTensorSpecsTest
+    : public ::testing::TestWithParam<
+          std::pair<TfLiteType, Tensor::ElementType>> {};
+
+TEST_P(AllocateTensorWithTfLiteTensorSpecsTest,
+       ShouldAllocateTensorWithTfLiteTensorSpecs) {
+  const auto& config = GetParam();
+  const auto tflite_tensor =
+      CreateTfLiteTensor(config.first, /*num_elements=*/4,
+                         /*scale=*/2.0f, /*zero_point=*/3.0f);
+  MP_ASSERT_OK_AND_ASSIGN(Tensor mp_tensor,
+                          CreateTensorWithTfLiteTensorSpecs(
+                              *tflite_tensor, /*memory_manager=*/nullptr,
+                              tflite::kDefaultTensorAlignment));
+  EXPECT_EQ(mp_tensor.element_type(), config.second);
+  EXPECT_EQ(mp_tensor.shape().num_elements(), 4);
+  if (config.first != TfLiteType::kTfLiteBool) {
+    EXPECT_FLOAT_EQ(mp_tensor.quantization_parameters().scale, 2.0f);
+    EXPECT_FLOAT_EQ(mp_tensor.quantization_parameters().zero_point, 3.0f);
+  }
+}
+
+INSTANTIATE_TEST_SUITE_P(AllocateTensorWithTfLiteTensorSpecsParamTest,
+                         AllocateTensorWithTfLiteTensorSpecsTest,
+                         ::testing::ValuesIn(GetTensorTypePairs()));
 
 }  // namespace
 }  // namespace mediapipe

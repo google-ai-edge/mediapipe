@@ -65,7 +65,7 @@ TEST(FaceStylizerTest, ImageModeTest) {
                       .height = image_frame->Height()}};
 
   MpImage result = {.type = MpImage::IMAGE_FRAME};
-  face_stylizer_stylize_image(stylizer, mp_image, &result,
+  face_stylizer_stylize_image(stylizer, &mp_image, &result,
                               /* error_msg */ nullptr);
   EXPECT_EQ(result.image_frame.width, kModelImageSize);
   EXPECT_EQ(result.image_frame.height, kModelImageSize);
@@ -105,7 +105,7 @@ TEST(FaceStylizerTest, FailedStylizationHandling) {
   const MpImage mp_image = {.type = MpImage::GPU_BUFFER, .gpu_buffer = {}};
   MpImage result = {.type = MpImage::IMAGE_FRAME};
   char* error_msg;
-  face_stylizer_stylize_image(stylizer, mp_image, &result, &error_msg);
+  face_stylizer_stylize_image(stylizer, &mp_image, &result, &error_msg);
   EXPECT_THAT(error_msg, HasSubstr("GPU Buffer not supported yet"));
   free(error_msg);
   face_stylizer_close(stylizer, /* error_msg */ nullptr);

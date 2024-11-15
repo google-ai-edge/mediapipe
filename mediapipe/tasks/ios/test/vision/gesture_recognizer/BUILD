@@ -26,7 +26,7 @@ TFL_DISABLED_SANITIZER_TAGS = [
 
 objc_library(
     name = "MPPGestureRecognizerObjcTestLibrary",
-    testonly = 1,
+    testonly = True,
     srcs = ["MPPGestureRecognizerTests.m"],
     copts = [
         "-ObjC++",
@@ -43,6 +43,7 @@ objc_library(
         "//mediapipe/tasks/ios/test/vision/gesture_recognizer/utils:MPPGestureRecognizerResultProtobufHelpers",
         "//mediapipe/tasks/ios/test/vision/utils:MPPImageTestUtils",
         "//mediapipe/tasks/ios/vision/gesture_recognizer:MPPGestureRecognizer",
+        "//third_party/apple_frameworks:XCTest",
     ] + select({
         "//third_party:opencv_ios_sim_arm64_source_build": ["@ios_opencv_source//:opencv_xcframework"],
         "//third_party:opencv_ios_arm64_source_build": ["@ios_opencv_source//:opencv_xcframework"],

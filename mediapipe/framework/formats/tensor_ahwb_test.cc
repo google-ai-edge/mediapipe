@@ -1,14 +1,13 @@
 #include <android/hardware_buffer.h>
 
 #include <array>
-#include <memory>
 
 #include "mediapipe/framework/formats/hardware_buffer.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/memory_manager.h"
+#include "mediapipe/framework/port/gmock.h"
+#include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/gpu/multi_pool.h"
-#include "testing/base/public/gmock.h"
-#include "testing/base/public/gunit.h"
 
 namespace mediapipe {
 namespace {
@@ -143,59 +142,76 @@ TEST(TensorAhwbTest, GetAhwbReadViewDoesNotTriggerReleaseForUnfinishedReads) {
   EXPECT_THAT(release_callbacks_invoked, Each(true));
 }
 
-TEST(TensorAhwbTest, EveryAhwbWriteViewReleaseCallbackIsInvoked) {
-  constexpr int kNumReleaseCallbacks = 10;
-  std::array<bool, kNumReleaseCallbacks> callbacks_invoked;
-  callbacks_invoked.fill(false);
+TEST(TensorAhwbTest, AhwbWriteViewReleaseCallbackIsInvoked) {
+  bool callbacks_invoked = false;
 
   {
     // Create tensor.
     Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape{1});
-    // Get AHWB write view multiple times and set release callback.
-    for (int i = 0; i < kNumReleaseCallbacks; ++i) {
-      auto view = tensor.GetAHardwareBufferWriteView();
-      EXPECT_NE(view.handle(), nullptr);
-      view.SetReleaseCallback(
-          [&callbacks_invoked, i] { callbacks_invoked[i] = true; });
-    }
-
+    auto view = tensor.GetAHardwareBufferWriteView();
+    EXPECT_NE(view.handle(), nullptr);
+    view.SetReleaseCallback([&callbacks_invoked] { callbacks_invoked = true; });
+    EXPECT_FALSE(callbacks_invoked);
     // Destroy tensor on scope exit triggering release callbacks.
   }
 
-  EXPECT_THAT(callbacks_invoked, Each(true));
+  EXPECT_TRUE(callbacks_invoked);
 }
 
 TEST(TensorAhwbTest,
-     EveryAhwbWriteViewReleaseCallbackIsInvokedWritingFininshedSpecified) {
-  constexpr int kNumReleaseCallbacks = 10;
-  std::array<bool, kNumReleaseCallbacks> release_callbacks_invoked;
-  release_callbacks_invoked.fill(false);
+     ShouldSupportMultipleDelayedAhwbReadersFollowedByACpuReader) {
+  Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape{1});
+  {
+    auto write_view = tensor.GetAHardwareBufferWriteView();
+    EXPECT_NE(write_view.handle(), nullptr);
+  }
+  bool reading_finished = false;
+  {
+    auto ahwb_read_view = tensor.GetAHardwareBufferReadView();
+    EXPECT_NE(ahwb_read_view.handle(), nullptr);
+    ahwb_read_view.SetReadingFinishedFunc(
+        [&reading_finished](bool) { return reading_finished; });
+    ahwb_read_view.SetReleaseCallback([]() {});
+    // Since SetReadingFinishedFunc is blocked, the AhwbUsage instance on
+    // ahwb_usages_ is not cleared.
+  }
+  {
+    auto ahwb_read_view = tensor.GetAHardwareBufferReadView();
+    EXPECT_NE(ahwb_read_view.handle(), nullptr);
+    ahwb_read_view.SetReadingFinishedFunc(
+        [&reading_finished](bool) { return reading_finished; });
+    ahwb_read_view.SetReleaseCallback([]() {});
+    // Since SetReadingFinishedFunc is blocked, the AhwbUsage instance on
+    // ahwb_usages_ is not cleared.
+  }
+
+  // Now we release the AHWB readers.
+  reading_finished = true;
+  {
+    // We can now read from CPU.
+    auto view = tensor.GetCpuReadView();
+    EXPECT_NE(view.buffer<float>(), nullptr);
+  }
+}
+
+TEST(TensorAhwbTest,
+     AhwbWriteViewReleaseCallbackIsInvokedWritingFininshedSpecified) {
+  bool release_callbacks_invoked = false;
 
   {
     // Create tensor.
     Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape{1});
-    // Get AHWB write view multiple times and set release callback.
-    for (int i = 0; i < kNumReleaseCallbacks; ++i) {
-      if (i > 0) {
-        ASSERT_FALSE(release_callbacks_invoked[i - 1]);
-      }
-      auto view = tensor.GetAHardwareBufferWriteView();
-      if (i > 0) {
-        ASSERT_TRUE(release_callbacks_invoked[i - 1]);
-      }
-      ASSERT_NE(view.handle(), nullptr);
-      view.SetWritingFinishedFD(/*dummy fd=*/-1, [](bool) { return true; });
-      view.SetReleaseCallback([&release_callbacks_invoked, i] {
-        release_callbacks_invoked[i] = true;
-      });
-    }
-
-    ASSERT_FALSE(release_callbacks_invoked[kNumReleaseCallbacks - 1]);
+    auto view = tensor.GetAHardwareBufferWriteView();
+    ASSERT_NE(view.handle(), nullptr);
+    view.SetWritingFinishedFD(/*dummy fd=*/-1, [](bool) { return true; });
+    view.SetReleaseCallback(
+        [&release_callbacks_invoked] { release_callbacks_invoked = true; });
+    EXPECT_FALSE(release_callbacks_invoked);
 
     // Destroy tensor on scope exit triggering last release callback.
   }
 
-  EXPECT_THAT(release_callbacks_invoked, Each(true));
+  EXPECT_TRUE(release_callbacks_invoked);
 }
 
 TEST(TensorAhwbTest, TestAHWBThenCpu) {
@@ -227,18 +243,18 @@ TEST(TensorAhwbTest, TestAhwbAlignment) {
   }
 }
 
-// Tensor::GetCpuView uses source location mechanism that gives source file name
-// and line from where the method is called. The function is intended just to
-// have two calls providing the same source file name and line.
+// Tensor::GetCpuView uses source location mechanism that gives source file
+// name and line from where the method is called. The function is intended
+// just to have two calls providing the same source file name and line.
 auto GetCpuView(const Tensor &tensor) { return tensor.GetCpuWriteView(); }
 
-// The test checks the tracking mechanism: when a tensor's Cpu view is retrieved
-// for the first time then the source location is attached to the tensor. If the
-// Ahwb view is requested then from the tensor then the previously recorded Cpu
-// view request source location is marked for using Ahwb storage.
-// When a Cpu view with the same source location (but for the newly allocated
-// tensor) is requested and the location is marked to use Ahwb storage then the
-// Ahwb storage is allocated for the CpuView.
+// The test checks the tracking mechanism: when a tensor's Cpu view is
+// retrieved for the first time then the source location is attached to the
+// tensor. If the Ahwb view is requested then from the tensor then the
+// previously recorded Cpu view request source location is marked for using
+// Ahwb storage. When a Cpu view with the same source location (but for the
+// newly allocated tensor) is requested and the location is marked to use Ahwb
+// storage then the Ahwb storage is allocated for the CpuView.
 TEST(TensorAhwbTest, TestTrackingAhwb) {
   // Create first tensor and request Cpu and then Ahwb view to mark the source
   // location for Ahwb storage.
@@ -253,7 +269,7 @@ TEST(TensorAhwbTest, TestTrackingAhwb) {
       // Align size of the Ahwb by multiple of 16.
       auto view = tensor.GetAHardwareBufferWriteView();
       EXPECT_NE(view.handle(), nullptr);
-      view.SetReadingFinishedFunc([](bool) { return true; });
+      view.SetWritingFinishedFD(/*fd=*/-1, [](bool) { return true; });
     }
   }
   {
@@ -311,6 +327,32 @@ TEST(TensorAhwbTest, ShouldNotReuseHardwareBufferFromHardwareBufferPool) {
                   &memory_manager);
     auto view = tensor.GetAHardwareBufferWriteView();
     EXPECT_NE(view.handle(), buffer);
+  }
+}
+
+// Forwarding file-handle fences is critical in async DarwiNN inference where
+// the inference completion fence FD is assigned to all output tensors via
+// SetWritingFinishedFD. When executing a subsequent async DarwiNN inference,
+// previous output tensors become input tensors and need to forward the
+// corresponding fence FD to DarwiNN.
+TEST(TensorAhwbTest, ShouldForwardFinishFdToAHardwareBufferReadView) {
+  // Create tensor.
+  Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape{1});
+  constexpr int kTestFd = 123;
+  {
+    auto view = tensor.GetAHardwareBufferWriteView();
+    ASSERT_NE(view.handle(), nullptr);
+    view.SetWritingFinishedFD(kTestFd, [](bool) { return true; });
+  }
+  {
+    auto view = tensor.GetAHardwareBufferReadView();
+    ASSERT_NE(view.handle(), nullptr);
+    EXPECT_EQ(view.GetWriteCompleteFenceFd(), kTestFd);
+  }
+  {
+    auto view = tensor.GetAHardwareBufferReadView();
+    ASSERT_NE(view.handle(), nullptr);
+    EXPECT_EQ(view.GetWriteCompleteFenceFd(), kTestFd);
   }
 }
 

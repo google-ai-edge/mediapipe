@@ -23,6 +23,7 @@
 #include <variant>
 #include <vector>
 
+#include "absl/base/attributes.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
@@ -46,6 +47,8 @@ struct LlmParams {
   size_t head_dim_H = 0;
   size_t n_heads_N = 0;
   size_t voc_size_V = 0;
+  size_t draft_size_G = 0;
+  float query_rescale_factor = 1.f;
 
   // Number of kv heads. In case of Multi-Head-Attention (MHA), num_kv_heads is
   // the same as n_heads_N, which is number of query heads; In case of
@@ -73,6 +76,8 @@ struct LlmParams {
     SILU = 2,
     // Rectified Linear Unit.
     RELU = 3,
+    // Rectified Linear Unit 1p5
+    RELU1P5 = 4,
   };
 
   enum class Norm {
@@ -89,6 +94,8 @@ struct LlmParams {
     PER_DIM_SCALE = 1,
     // Query is scaled by 1/sqrt(head_dim).
     INV_SQRT_HEAD_DIM = 2,
+    // Query is scaled by rescale_factor / head_dim.
+    RESCALE_FACTOR_INV_HEAD_DIM = 3,
   };
 
   // If false, add absolute positional embeddings.
@@ -121,6 +128,7 @@ struct LlmParams {
   struct FinalProjectParams {
     // If `no_bias`, final fully connect will degrade to matrix multiply.
     bool no_bias = false;
+    float soft_cap_value = 0.0f;
   } final_proj_params;
 
   /*
@@ -131,7 +139,8 @@ struct LlmParams {
   bool enable_kv_cache = false;
   // If true, inference engine will optimize tensor shape according to current
   // sequence length to avoid computation waste.
-  bool enable_dynamic_shape = false;
+  bool enable_dynamic_shape ABSL_DEPRECATED(
+      "This is always enabled if enable_kv_cache is true.") = false;
 
   // If provided, the runtime will prepare cache at the provided directory.
   // Otherwise, cache will be prepared besides the original model.
@@ -180,9 +189,11 @@ struct LlmWeights {
 
   std::vector<FeedForwardWeights> ffs;
   std::vector<SelfAttentionWeights> sas;
+  std::vector<SelfAttentionWeights> cas;
   std::optional<NormWeights> final_norm_weight;
   std::shared_ptr<Tensor> softmax_linear;
   std::shared_ptr<Tensor> softmax_bias;
+  std::optional<NormWeights> embedding_norm_weight;
 
   // Usually same as softmax_linear, but some models use different
   // softmax_linear v.s. embedding table.
@@ -193,6 +204,17 @@ struct LlmWeights {
   // store in this map. The builder can then access these custom weights.
   absl::flat_hash_map<std::string, std::shared_ptr<Tensor>> custom_weights;
 };
+
+absl::StatusOr<std::optional<LlmWeights::NormWeights>> LoadNormWeights(
+    LlmParams::Norm norm_type, std::vector<size_t> dims,
+    absl::string_view basename, WeightAccessor& weight_accessor);
+
+inline absl::StatusOr<std::optional<LlmWeights::NormWeights>> LoadNormWeights(
+    LlmParams::Norm norm_type, const LlmParams& params,
+    absl::string_view basename, WeightAccessor& weight_accessor) {
+  return LoadNormWeights(norm_type, std::vector<size_t>{params.model_dim_D},
+                         basename, weight_accessor);
+}
 
 class LlmWeightsLoader {
  public:
@@ -221,9 +243,10 @@ class LlmWeightsLoader {
   }
 
  protected:
-  absl::StatusOr<LlmWeights::SelfAttentionWeights> LoadSelfAttention(
+  virtual absl::StatusOr<LlmWeights::SelfAttentionWeights> LoadSelfAttention(
       int layer_id);
-  absl::StatusOr<LlmWeights::FeedForwardWeights> LoadFeedForward(int layer_id);
+  virtual absl::StatusOr<LlmWeights::FeedForwardWeights> LoadFeedForward(
+      int layer_id);
 
   // is_query: indicating whether the weight is for query projection or not.
   // Note that the key/value projection weights are handled differently between
@@ -238,6 +261,9 @@ class LlmWeightsLoader {
 
 class DefaultLlmWeightsLoader : public LlmWeightsLoader {
  public:
+  DefaultLlmWeightsLoader(std::unique_ptr<WeightAccessor> weight_accessor,
+                          const LlmParams& params)
+      : LlmWeightsLoader(std::move(weight_accessor), params) {}
   DefaultLlmWeightsLoader(absl::string_view weight_path,
                           const LlmParams& params);
 

@@ -942,6 +942,7 @@ cc_test(
 cc_test(
     name = "pack_media_sequence_calculator_test",
     srcs = ["pack_media_sequence_calculator_test.cc"],
+    tags = ["nomsan"],  # TestTooLargeInputFailsSoftly runs out of memory in msan.
     deps = [
         ":pack_media_sequence_calculator",
         ":pack_media_sequence_calculator_cc_proto",

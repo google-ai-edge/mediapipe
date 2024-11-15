@@ -26,7 +26,7 @@ TFL_DISABLED_SANITIZER_TAGS = [
 
 objc_library(
     name = "MPPObjectDetectorObjcTestLibrary",
-    testonly = 1,
+    testonly = True,
     srcs = ["MPPObjectDetectorTests.m"],
     copts = [
         "-ObjC++",
@@ -41,6 +41,7 @@ objc_library(
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/test/vision/utils:MPPImageTestUtils",
         "//mediapipe/tasks/ios/vision/object_detector:MPPObjectDetector",
+        "//third_party/apple_frameworks:XCTest",
     ] + select({
         "//third_party:opencv_ios_sim_arm64_source_build": ["@ios_opencv_source//:opencv_xcframework"],
         "//third_party:opencv_ios_arm64_source_build": ["@ios_opencv_source//:opencv_xcframework"],

@@ -69,7 +69,10 @@ class InputStreamManager {
   // Sets the header Packet.
   absl::Status SetHeader(const Packet& header);
 
-  const Packet& Header() const { return header_; }
+  Packet Header() const {
+    absl::MutexLock stream_lock(&stream_mutex_);
+    return header_;
+  }
 
   // Reset the input stream for another run of the graph (i.e. another
   // image/video/audio).
@@ -211,7 +214,7 @@ class InputStreamManager {
   const PacketType* packet_type_;
   bool back_edge_;
   // The header packet of the input stream.
-  Packet header_;
+  Packet header_ ABSL_GUARDED_BY(stream_mutex_);
 
   // The maximum queue size for this stream if set.
   int max_queue_size_ ABSL_GUARDED_BY(stream_mutex_) = -1;

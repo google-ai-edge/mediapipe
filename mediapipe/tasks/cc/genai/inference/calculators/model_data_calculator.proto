@@ -23,8 +23,7 @@ message ModelDataCalculatorOptions {
   // The path to the base model data.
   string weight_path = 1;
 
-  // The path to LoRA data that should be loaded on model initialization.
-  string lora_path = 2;
+  reserved 2;
 
   // The path to the SentencePiece model file.
   string spm_model_file = 3;

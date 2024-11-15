@@ -22,11 +22,12 @@
 #include <vector>
 
 #include "absl/base/attributes.h"
+#include "absl/base/nullability.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
-#include "mediapipe/framework/formats/tensor.h"
+#include "mediapipe/tasks/cc/genai/inference/common/mdspan.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/graph_builder.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/llm_weights.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/sampling.h"
@@ -49,12 +50,34 @@ class LlmBuilder;
 //   1) to implement Llama, one should make the changes in the LlmGraphBuilder.
 //   2) to implement an "encoder-only" model (i.e. only run the prefix graph
 //      with no decode graphs and kv-cache), one should inherit from this and
-//      udpate the logics. See llm_encoder_only.h for more details.
+//      update the logics. See llm_encoder_only.h for more details.
 class Llm : protected xnn_utils::XnnGraph {
  public:
   explicit Llm(XnnGraph&& other) : XnnGraph(std::move(other)) {}
   Llm(Llm&&) = default;
   ~Llm() override = default;
+
+  // Enable if enable_kv_cache
+  struct KVCache {
+    std::shared_ptr<Tensor> k_cache;
+    std::shared_ptr<Tensor> v_cache;
+    std::shared_ptr<Tensor> k_slice;
+    std::shared_ptr<Tensor> v_slice;
+  };
+
+  // An aggregation of all the data that can represent the context of the
+  // model.
+  struct Context {
+    // Previous ids, including prompt.
+    std::vector<std::vector<int>> batch_prev_ids;
+    std::vector<KVCache> kv_cache;
+  };
+
+  // Reduce the number of previous ids to effectively undo the last
+  // `batch_num_tokens` tokens. Used for reverting incorrect draft tokens in
+  // speculative decoding.
+  static absl::Status ReduceContextPrevIds(std::shared_ptr<Context> context,
+                                           std::vector<int> batch_num_tokens);
 
   // Create LLM graph using the `DefaultLlmWeightsLoader` to load model from
   // `weights_folder`.
@@ -89,28 +112,40 @@ class Llm : protected xnn_utils::XnnGraph {
   virtual absl::Status AddInputTokens(
       absl::Span<const std::vector<int>> batch_input_ids);
 
-  // (Re)Initialize with input token ids. This will reset the cache, mask etc.
-  virtual absl::Status InitInputTokens(
-      absl::Span<const std::vector<int>> batch_input_ids);
-  // Exist for backward compatibility, constructs a span of size 1, and calls
-  // the above batched version.
-  ABSL_DEPRECATED("Use batched version instead")
-  absl::Status InitInputTokens(const std::vector<int>& input_ids);
+  // Seeks to the given time step. This is typically used to go back to certain
+  // status for speculative decoding. SeekTimeStep(0) is effectively resetting
+  // the internal state.
+  absl::Status SeekTimeStep(size_t time_step);
 
   // Samples the logits from ComputeLogits() and returns the sampled ids. This
   // also AddInputTokens() with the sampled ids.
+  ABSL_DEPRECATED("Use ComputeLogits() and do your own sampling.")
   virtual absl::Status GetNextToken(std::vector<int>* output_ids);
 
   // Computes logits with all previously added tokens. Output is in shape of
-  // [batch_B, 1, vacab_size_V].
-  virtual absl::StatusOr<std::shared_ptr<Tensor>> ComputeLogits();
+  // [batch_B, expected_seq_len, vacab_size_V] representing the last
+  // `expected_seq_len` along the sequence dimension.
+  virtual absl::StatusOr<std::shared_ptr<Tensor>> ComputeLogits(
+      size_t expected_seq_len);
+  absl::StatusOr<std::shared_ptr<Tensor>> ComputeLogits() {
+    return this->ComputeLogits(1);
+  }
 
   // The size of all tokens, including prompt and generated tokens.
   virtual size_t TotalTokenSize() const;
 
   const LlmParams& GetLlmParams() { return llm_params_; }
 
- protected:
+  // Create a new context with internal model parameters. The variables in the
+  // context will have proper batch size, sequence length, etc.
+  virtual absl::StatusOr<Context> NewContext() const;
+
+  // If `context` is non-null, and different from existing context_, load the
+  // context into the model.
+  virtual absl::Status LoadContext(
+      absl::Nullable<std::shared_ptr<Context>> context);
+
+  // protected:
   friend class PrefixDecodeLlm;
   friend class LlmTest;
   friend class LlmBuilder;
@@ -123,31 +158,27 @@ class Llm : protected xnn_utils::XnnGraph {
     bool stop_at_last_kv_cache = false;
   };
 
-  // Creates a `Llm` instance that under-the-hood contains a prefix model and
-  // a decode model that is responsible for decoding one token at a time. The
-  // two models share the KVCache.
+  // Creates a `Llm` instance with prefix-decoder architecture.
   static absl::StatusOr<std::unique_ptr<Llm>> CreatePrefixDecodeLlm(
-      std::unique_ptr<LlmWeightsLoader> weight_loader,
-      std::shared_ptr<LlmBuilder> builder);
-  // Creates a `Llm` instance for prefix processing. If `enable_kv_cache` is
-  // true, the returned Llm will have `kv_cache_` prepared.
-  static absl::StatusOr<std::unique_ptr<Llm>> CreatePrefixOnlyLlm(
-      LlmWeights weights, std::shared_ptr<LlmBuilder> builder);
+      LlmWeights, std::shared_ptr<LlmBuilder> builder);
 
-  absl::Status Reset();
+  std::shared_ptr<Tensor>& transformer_input();
+  const std::shared_ptr<Tensor>& transformer_input() const;
+  std::shared_ptr<Tensor>& logits_output();
+  const std::shared_ptr<Tensor>& logits_output() const;
 
-  // Enable if enable_kv_cache
-  struct KVCache {
-    std::shared_ptr<Tensor> k_cache;
-    std::shared_ptr<Tensor> v_cache;
-    std::shared_ptr<Tensor> k_slice;
-    std::shared_ptr<Tensor> v_slice;
-  };
+  // Previous ids, including prompt.
+  std::vector<std::vector<int>>& batch_prev_ids();
+  const std::vector<std::vector<int>>& batch_prev_ids() const;
+  std::vector<KVCache>& kv_cache();
+  const std::vector<KVCache>& kv_cache() const;
 
   // Fill `embedding` according to given `ids`, by table lookup the token
   // embedding provided through weights. The first ids.size() * model_dim_D
   // elements pointed by `embedding` will be filled.
   absl::Status GetTokenEmbedding(const std::vector<int>& ids, float* embedding);
+  virtual absl::Status GetInputTokenEmbeddings(
+      absl::Span<const std::vector<int>> batch_input_ids);
 
   absl::Status ReshapeInputResource();
 
@@ -157,14 +188,14 @@ class Llm : protected xnn_utils::XnnGraph {
   std::shared_ptr<Tensor> pos_embedding_;
   std::shared_ptr<Tensor> atten_masks_;
   std::shared_ptr<Tensor> segment_pos_;
+  std::shared_ptr<Tensor> query_positions_;
+  std::shared_ptr<Tensor> key_positions_;
 
+  // Embedding input to the model.
   std::shared_ptr<Tensor> transformer_input_;
-  std::shared_ptr<Tensor> input_pivot_;
+  // Logits output from the model.
   std::shared_ptr<Tensor> logits_output_;
-
-  // Previous ids, including prompt.
-  std::vector<std::vector<int>> prev_ids_;
-  std::vector<KVCache> kv_cache_;
+  std::shared_ptr<Context> context_;
 
   // Hold a shared_ptr to the LlmBuilder for initializing the input resources
   // as well as performing necessary wiring customizations at decoding time.
@@ -177,7 +208,7 @@ class Llm : protected xnn_utils::XnnGraph {
 //      embedding preparations..etc.
 //   2) SelfAttentionIncludeResidual: the self-attention module along with
 //      residual connections and some normalizations.
-//   3) FeedForwardIncludeResidual: The feedforward layers that follows the
+//   3) FeedForward: The feedforward layers that follows the
 //      attention outputs, including residual connections and normalizations.
 //   4) PostProcess: the final projection layer after the stacked transformers.
 // The LlmBuilder allows developers to overwrite the logics of those components
@@ -201,6 +232,8 @@ class LlmBuilder : protected XnnGraphBuilder {
     std::shared_ptr<Tensor> pos_embedding;
     std::shared_ptr<Tensor> atten_mask;
     std::shared_ptr<Tensor> segment_pos;
+    std::shared_ptr<Tensor> query_positions;
+    std::shared_ptr<Tensor> key_positions;
 
     // The type of this field will be updated in the future. Please contact
     // odml-llm-support if you'd like to use this field.
@@ -217,6 +250,10 @@ class LlmBuilder : protected XnnGraphBuilder {
       : XnnGraphBuilder(std::move(runtime_configs), datatype),
         llm_params_(llm_params),
         sampler_(std::move(sampler)) {}
+
+  virtual std::unique_ptr<Llm> GetLlm(XnnGraph&& graph) {
+    return std::make_unique<Llm>(std::move(graph));
+  }
 
   using XnnGraphBuilder::Build;
   using XnnGraphBuilder::NewInput;
@@ -243,6 +280,9 @@ class LlmBuilder : protected XnnGraphBuilder {
   virtual absl::StatusOr<std::shared_ptr<Tensor>> SelfAttentionIncludeResidual(
       std::shared_ptr<Tensor> input, InputResource resource,
       const LlmWeights::SelfAttentionWeights& sa_weights);
+  virtual absl::StatusOr<std::shared_ptr<Tensor>> FeedForward(
+      std::shared_ptr<Tensor> input,
+      const LlmWeights::FeedForwardWeights& ff_weights);
   virtual absl::StatusOr<std::shared_ptr<Tensor>> FeedForwardIncludeResidual(
       std::shared_ptr<Tensor> input,
       const LlmWeights::FeedForwardWeights& ff_weights);
@@ -259,7 +299,7 @@ class LlmBuilder : protected XnnGraphBuilder {
   // number of tokens has been processed, and it's about to process
   // `process_seq_len` number of tokens.
   virtual absl::Status InitAttentionMask(size_t current_seq_len,
-                                         size_t process_seq_len, bool is_prefix,
+                                         size_t process_seq_len,
                                          Tensor& out_attn_mask);
 
   // Initialize the `out_pos_embedding` values given the condition that
@@ -279,25 +319,12 @@ class LlmBuilder : protected XnnGraphBuilder {
                                       size_t process_seq_len,
                                       Tensor& out_segment_pos);
 
+  absl::Status InitQueryPositions(size_t current_seq_len, size_t input_seq_len,
+                                  Tensor& out_positions);
+  absl::Status InitKeyPositions(size_t current_seq_len, size_t input_seq_len,
+                                Tensor& out_positions);
   // Run sampling on model's output logits.
-  absl::StatusOr<std::vector<int>> Sample(const Tensor& logits);
-
- protected:
-  friend class Llm;
-  friend class LlmBuilderTest;
-  friend absl::StatusOr<std::unique_ptr<Llm>> Llm::CreatePrefixDecodeLlm(
-      std::unique_ptr<LlmWeightsLoader>, std::shared_ptr<LlmBuilder>);
-  friend absl::StatusOr<std::unique_ptr<Llm>> Llm::CreatePrefixOnlyLlm(
-      LlmWeights, std::shared_ptr<LlmBuilder>);
-
-  absl::Status InitAttentionMaskValues(size_t process_seq_len);
-  absl::Status InitPosEmbeddingValues(size_t process_seq_len);
-  absl::Status InitSegmentPosValues(size_t rope_size);
-
-  absl::StatusOr<std::shared_ptr<Tensor>> DotAttention(
-      std::shared_ptr<Tensor> query_proj, std::shared_ptr<Tensor> key_proj,
-      std::shared_ptr<Tensor> value_proj, std::shared_ptr<Tensor> atten_mask,
-      const LlmWeights::SelfAttentionWeights& sa_weights);
+  absl::StatusOr<std::vector<std::vector<int>>> Sample(const Tensor& logits);
 
   // Apply normalization according to `norm_type`, generally the output tensor
   // should have the same shape as `input`.
@@ -305,6 +332,25 @@ class LlmBuilder : protected XnnGraphBuilder {
       std::shared_ptr<Tensor> input,
       std::optional<LlmWeights::NormWeights> weights,
       LlmParams::Norm norm_type);
+
+ protected:
+  friend class Llm;
+  friend class LlmBuilderTest;
+  friend absl::StatusOr<std::unique_ptr<Llm>> Llm::CreatePrefixDecodeLlm(
+      LlmWeights, std::shared_ptr<LlmBuilder>);
+
+  absl::Status InitAttentionMaskValues(size_t process_seq_len);
+  absl::Status InitPosEmbeddingValues(size_t process_seq_len);
+  absl::Status InitSegmentPosValues(size_t rope_size);
+
+  absl::StatusOr<std::shared_ptr<Tensor>> ScaleQuery(
+      std::shared_ptr<Tensor> query_proj,
+      const LlmWeights::SelfAttentionWeights& sa_weights);
+
+  absl::StatusOr<std::shared_ptr<Tensor>> DotAttention(
+      std::shared_ptr<Tensor> query_proj, std::shared_ptr<Tensor> key_proj,
+      std::shared_ptr<Tensor> value_proj, std::shared_ptr<Tensor> atten_mask,
+      const LlmWeights::SelfAttentionWeights& sa_weights);
 
   virtual absl::StatusOr<std::shared_ptr<Tensor>> SelfAttentionExcludeNorm(
       std::shared_ptr<Tensor> input, InputResource resource,
@@ -322,12 +368,12 @@ class LlmBuilder : protected XnnGraphBuilder {
   Llm::InternalLlmParams internal_llm_params_;
 
   // Storing values of attention mask with shape [max_seq_len, max_seq_len]
-  std::shared_ptr<std::vector<float>> attention_mask_values_;
+  MdSpan<float, 2> attention_mask_values_;
   // Storing values of positional embedding with shape [max_seq_len,
   // model_dimension]
   std::shared_ptr<std::vector<float>> position_embedding_values_;
   // Storing values of segment pos with shape [max_seq_len, head_dimension]
-  std::shared_ptr<std::vector<float>> segment_pos_values_;
+  MdSpan<float, 2> segment_pos_values_;
 
   std::unique_ptr<Sampler> sampler_;
 };

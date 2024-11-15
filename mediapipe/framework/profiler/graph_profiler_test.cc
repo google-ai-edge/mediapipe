@@ -14,11 +14,15 @@
 
 #include "mediapipe/framework/profiler/graph_profiler.h"
 
+#include <functional>
+#include <queue>
+
 #include "absl/log/absl_log.h"
 #include "absl/status/statusor.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/time/time.h"
 #include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/executor.h"
 #include "mediapipe/framework/mediapipe_profiling.h"
 #include "mediapipe/framework/port/core_proto_inc.h"
 #include "mediapipe/framework/port/gmock.h"
@@ -36,6 +40,24 @@ namespace mediapipe {
 namespace {
 
 constexpr char kDummyTestCalculatorName[] = "DummyTestCalculator";
+
+// A simple executor that runs all tasks in the queue sequentially.
+class DelayExecutor : public Executor {
+ public:
+  ~DelayExecutor() override = default;
+
+  void Schedule(std::function<void()> task) override { task_queue_.push(task); }
+
+  void Run() {
+    while (!task_queue_.empty()) {
+      task_queue_.front()();
+      task_queue_.pop();
+    }
+  }
+
+ private:
+  std::queue<std::function<void()>> task_queue_;
+};
 
 CalculatorGraphConfig::Node CreateNodeConfig(
     const std::string& raw_node_config) {
@@ -1339,6 +1361,87 @@ TEST(GraphProfilerTest, CaptureProfilePopulateConfig) {
                     calculator_name: "DummyTestCalculator_1"
                     calculator_name: "DummyTestCalculator_2"
                   )pb"))));
+}
+
+TEST_F(GraphProfilerTestPeer, ExecutorRunEarly) {
+  // Checks defaults before initialization.
+  ASSERT_EQ(GetIsInitialized(), false);
+  ASSERT_EQ(GetIsProfiling(), false);
+  ASSERT_EQ(GetIsProfilingStreamLatency(), false);
+  ASSERT_EQ(GetTraceLogDisabled(), false);
+  ASSERT_EQ(GetUsePacketTimeStampForAddedPacket(), false);
+
+  CalculatorGraphConfig graph_config = CreateGraphConfig(R"(
+    profiler_config {
+      histogram_interval_size_usec: 1000
+      num_histogram_intervals: 3
+      enable_profiler: true
+      enable_stream_latency: true
+      use_packet_timestamp_for_added_packet: true
+      trace_enabled: true
+    }
+    input_stream: "input_stream"
+    node {
+      calculator: "DummyTestCalculator"
+      input_stream: "input_stream"
+    })");
+
+  mediapipe::ValidatedGraphConfig validated_graph;
+  MP_ASSERT_OK(validated_graph.Initialize(graph_config));
+  profiler_.Initialize(validated_graph);
+
+  DelayExecutor executor;
+  MP_ASSERT_OK(profiler_.Start(&executor));
+
+  ASSERT_EQ(GetIsInitialized(), true);
+  ASSERT_EQ(GetIsProfiling(), true);
+  ASSERT_EQ(GetIsProfilingStreamLatency(), true);
+  ASSERT_EQ(GetUsePacketTimeStampForAddedPacket(), true);
+
+  MP_ASSERT_OK(profiler_.Stop());
+  executor.Run();
+}
+
+TEST_F(GraphProfilerTestPeer, ExecutorRunLate) {
+  // Checks defaults before initialization.
+  ASSERT_EQ(GetIsInitialized(), false);
+  ASSERT_EQ(GetIsProfiling(), false);
+  ASSERT_EQ(GetIsProfilingStreamLatency(), false);
+  ASSERT_EQ(GetTraceLogDisabled(), false);
+  ASSERT_EQ(GetUsePacketTimeStampForAddedPacket(), false);
+
+  CalculatorGraphConfig graph_config = CreateGraphConfig(R"(
+    profiler_config {
+      histogram_interval_size_usec: 1000
+      num_histogram_intervals: 3
+      enable_profiler: true
+      enable_stream_latency: true
+      use_packet_timestamp_for_added_packet: true
+      trace_enabled: true
+    }
+    input_stream: "input_stream"
+    node {
+      calculator: "DummyTestCalculator"
+      input_stream: "input_stream"
+    })");
+
+  mediapipe::ValidatedGraphConfig validated_graph;
+  MP_ASSERT_OK(validated_graph.Initialize(graph_config));
+  profiler_.Initialize(validated_graph);
+
+  DelayExecutor executor;
+  MP_ASSERT_OK(profiler_.Start(&executor));
+
+  ASSERT_EQ(GetIsInitialized(), true);
+  ASSERT_EQ(GetIsProfiling(), true);
+  ASSERT_EQ(GetIsProfilingStreamLatency(), true);
+  ASSERT_EQ(GetUsePacketTimeStampForAddedPacket(), true);
+
+  MP_ASSERT_OK(profiler_.Stop());
+
+  // Destroy the profiler before the executor runs should not crash.
+  profiler_ptr_.reset();
+  executor.Run();
 }
 
 }  // namespace

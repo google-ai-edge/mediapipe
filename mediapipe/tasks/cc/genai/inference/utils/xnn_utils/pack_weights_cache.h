@@ -64,7 +64,7 @@ class PackWeightsCache : public XnnWeightsCache {
   virtual bool ShouldDoubleCheckCompatibility(
       const xnn_weights_cache_look_up_key*);
 
-  // Returns mmaped memory of `filename`. Returns nullptr in case of any error.
+  // Returns mapped memory of `filename`. Returns nullptr in case of any error.
   // Inheritance classes can overwrite this function e.g. if there's no
   // filesystem.
   virtual std::shared_ptr<llm_utils::MemoryMappedFile> GetMmapFile(

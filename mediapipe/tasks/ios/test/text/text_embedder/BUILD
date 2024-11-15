@@ -33,7 +33,7 @@ TFL_DISABLED_SANITIZER_TAGS = [
 
 objc_library(
     name = "MPPTextEmbedderObjcTestLibrary",
-    testonly = 1,
+    testonly = True,
     srcs = ["MPPTextEmbedderTests.m"],
     data = [
         "//mediapipe/tasks/testdata/text:mobilebert_embedding_model",
@@ -42,6 +42,7 @@ objc_library(
     deps = [
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/text/text_embedder:MPPTextEmbedder",
+        "//third_party/apple_frameworks:XCTest",
     ],
 )
 
@@ -56,7 +57,7 @@ ios_unit_test(
 
 swift_library(
     name = "MPPTextEmbedderSwiftTestLibrary",
-    testonly = 1,
+    testonly = True,
     srcs = ["TextEmbedderTests.swift"],
     data = [
         "//mediapipe/tasks/testdata/text:mobilebert_embedding_model",
@@ -66,6 +67,7 @@ swift_library(
     deps = [
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/text/text_embedder:MPPTextEmbedder",
+        "//third_party/apple_frameworks:XCTest",
     ],
 )
 

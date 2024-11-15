@@ -28,7 +28,7 @@ NS_SWIFT_NAME(AudioDataFormat)
 @property(nonatomic, readonly) NSUInteger channelCount;
 
 /** Sample rate */
-@property(nonatomic, readonly) NSUInteger sampleRate;
+@property(nonatomic, readonly) double sampleRate;
 
 /**
  * Initializes a new `AudioDataFormat` with the given channel count and sample rate.
@@ -38,7 +38,7 @@ NS_SWIFT_NAME(AudioDataFormat)
  *
  * @return A new instance of `AudioDataFormat` with the given channel count and sample rate.
  */
-- (instancetype)initWithChannelCount:(NSUInteger)channelCount sampleRate:(NSUInteger)sampleRate;
+- (instancetype)initWithChannelCount:(NSUInteger)channelCount sampleRate:(double)sampleRate;
 
 /**
  * Initializes a new `AudioDataFormat` with the default channel count of 1 and the given sample
@@ -48,7 +48,7 @@ NS_SWIFT_NAME(AudioDataFormat)
  * @return A new instance of `AudioDataFormat` with the default channel count of 1 and the given
  * sample rate.
  */
-- (instancetype)initWithSampleRate:(NSUInteger)sampleRate;
+- (instancetype)initWithSampleRate:(double)sampleRate;
 
 - (instancetype)init NS_UNAVAILABLE;
 

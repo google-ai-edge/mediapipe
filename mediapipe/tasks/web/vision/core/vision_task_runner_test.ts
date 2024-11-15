@@ -25,7 +25,6 @@ import {ImageSource} from '../../../../web/graph_runner/graph_runner';
 import {VisionTaskOptions} from './vision_task_options';
 import {VisionGraphRunner, VisionTaskRunner} from './vision_task_runner';
 
-
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern
 
@@ -36,7 +35,7 @@ const IMAGE = {} as unknown as HTMLImageElement;
 const TIMESTAMP = 42;
 
 class VisionTaskRunnerFake extends VisionTaskRunner {
-  override graphRunner!: VisionGraphRunner;
+  declare graphRunner: VisionGraphRunner;
 
   baseOptions = new BaseOptionsProto();
   fakeGraphRunner: jasmine.SpyObj<VisionGraphRunner>;
@@ -45,34 +44,43 @@ class VisionTaskRunnerFake extends VisionTaskRunner {
 
   constructor(roiAllowed = true) {
     super(
-        jasmine.createSpyObj<VisionGraphRunner>([
-          'addProtoToStream', 'addGpuBufferAsImageToStream',
-          'setAutoRenderToScreen', 'registerModelResourcesGraphService',
-          'finishProcessing', 'wasmModule'
-        ]),
-        IMAGE_STREAM, NORM_RECT_STREAM, roiAllowed);
+      jasmine.createSpyObj<VisionGraphRunner>([
+        'addProtoToStream',
+        'addGpuBufferAsImageToStream',
+        'setAutoRenderToScreen',
+        'registerModelResourcesGraphService',
+        'finishProcessing',
+        'wasmModule',
+      ]),
+      IMAGE_STREAM,
+      NORM_RECT_STREAM,
+      roiAllowed,
+    );
 
-    this.fakeGraphRunner =
-        this.graphRunner as unknown as jasmine.SpyObj<VisionGraphRunner>;
+    this.fakeGraphRunner = this
+      .graphRunner as unknown as jasmine.SpyObj<VisionGraphRunner>;
 
-    (this.graphRunner.addProtoToStream as jasmine.Spy)
-        .and.callFake((serializedData, type, streamName, timestamp) => {
-          expect(type).toBe('mediapipe.NormalizedRect');
-          expect(streamName).toBe(NORM_RECT_STREAM);
-          expect(timestamp).toBe(TIMESTAMP);
+    (this.graphRunner.addProtoToStream as jasmine.Spy).and.callFake(
+      (serializedData, type, streamName, timestamp) => {
+        expect(type).toBe('mediapipe.NormalizedRect');
+        expect(streamName).toBe(NORM_RECT_STREAM);
+        expect(timestamp).toBe(TIMESTAMP);
 
-          const actualNormalizedRect =
-              NormalizedRect.deserializeBinary(serializedData);
-          expect(actualNormalizedRect.toObject())
-              .toEqual(this.expectedNormalizedRect!.toObject());
-        });
+        const actualNormalizedRect =
+          NormalizedRect.deserializeBinary(serializedData);
+        expect(actualNormalizedRect.toObject()).toEqual(
+          this.expectedNormalizedRect!.toObject(),
+        );
+      },
+    );
 
-    (this.graphRunner.addGpuBufferAsImageToStream as jasmine.Spy)
-        .and.callFake((imageSource, streamName, timestamp) => {
-          expect(streamName).toBe(IMAGE_STREAM);
-          expect(timestamp).toBe(TIMESTAMP);
-          expect(imageSource).toBe(this.expectedImageSource!);
-        });
+    (this.graphRunner.addGpuBufferAsImageToStream as jasmine.Spy).and.callFake(
+      (imageSource, streamName, timestamp) => {
+        expect(streamName).toBe(IMAGE_STREAM);
+        expect(timestamp).toBe(TIMESTAMP);
+        expect(imageSource).toBe(this.expectedImageSource!);
+      },
+    );
 
     // SetOptions with a modelAssetBuffer runs synchronously
     void this.setOptions({baseOptions: {modelAssetBuffer: new Uint8Array([])}});
@@ -85,20 +93,26 @@ class VisionTaskRunnerFake extends VisionTaskRunner {
   }
 
   override processImageData(
-      image: ImageSource,
-      imageProcessingOptions: ImageProcessingOptions|undefined): void {
+    image: ImageSource,
+    imageProcessingOptions: ImageProcessingOptions | undefined,
+  ): void {
     super.processImageData(image, imageProcessingOptions);
   }
 
   override processVideoData(
-      imageFrame: ImageSource,
-      imageProcessingOptions: ImageProcessingOptions|undefined,
-      timestamp: number): void {
+    imageFrame: ImageSource,
+    imageProcessingOptions: ImageProcessingOptions | undefined,
+    timestamp: number,
+  ): void {
     super.processVideoData(imageFrame, imageProcessingOptions, timestamp);
   }
 
   expectNormalizedRect(
-      xCenter: number, yCenter: number, width: number, height: number): void {
+    xCenter: number,
+    yCenter: number,
+    width: number,
+    height: number,
+  ): void {
     const rect = new NormalizedRect();
     rect.setXCenter(xCenter);
     rect.setYCenter(yCenter);
@@ -120,15 +134,17 @@ describe('VisionTaskRunner', () => {
   it('can enable image mode', async () => {
     const visionTaskRunner = new VisionTaskRunnerFake();
     await visionTaskRunner.setOptions({runningMode: 'IMAGE'});
-    expect(visionTaskRunner.baseOptions.toObject())
-        .toEqual(jasmine.objectContaining({useStreamMode: false}));
+    expect(visionTaskRunner.baseOptions.toObject()).toEqual(
+      jasmine.objectContaining({useStreamMode: false}),
+    );
   });
 
   it('can enable video mode', async () => {
     const visionTaskRunner = new VisionTaskRunnerFake();
     await visionTaskRunner.setOptions({runningMode: 'VIDEO'});
-    expect(visionTaskRunner.baseOptions.toObject())
-        .toEqual(jasmine.objectContaining({useStreamMode: true}));
+    expect(visionTaskRunner.baseOptions.toObject()).toEqual(
+      jasmine.objectContaining({useStreamMode: true}),
+    );
   });
 
   it('can clear running mode', async () => {
@@ -136,10 +152,12 @@ describe('VisionTaskRunner', () => {
     await visionTaskRunner.setOptions({runningMode: 'VIDEO'});
 
     // Clear running mode
-    await visionTaskRunner.setOptions(
-        {runningMode: /* imageProcessingOptions= */ undefined});
-    expect(visionTaskRunner.baseOptions.toObject())
-        .toEqual(jasmine.objectContaining({useStreamMode: false}));
+    await visionTaskRunner.setOptions({
+      runningMode: /* imageProcessingOptions= */ undefined,
+    });
+    expect(visionTaskRunner.baseOptions.toObject()).toEqual(
+      jasmine.objectContaining({useStreamMode: false}),
+    );
   });
 
   it('cannot process images with video mode', async () => {
@@ -147,7 +165,9 @@ describe('VisionTaskRunner', () => {
     await visionTaskRunner.setOptions({runningMode: 'VIDEO'});
     expect(() => {
       visionTaskRunner.processImageData(
-          IMAGE, /* imageProcessingOptions= */ undefined);
+        IMAGE,
+        /* imageProcessingOptions= */ undefined,
+      );
     }).toThrowError(/Task is not initialized with image mode./);
   });
 
@@ -156,14 +176,20 @@ describe('VisionTaskRunner', () => {
     // Use default for `useStreamMode`
     expect(() => {
       visionTaskRunner.processVideoData(
-          IMAGE, /* imageProcessingOptions= */ undefined, TIMESTAMP);
+        IMAGE,
+        /* imageProcessingOptions= */ undefined,
+        TIMESTAMP,
+      );
     }).toThrowError(/Task is not initialized with video mode./);
 
     // Explicitly set to image mode
     await visionTaskRunner.setOptions({runningMode: 'IMAGE'});
     expect(() => {
       visionTaskRunner.processVideoData(
-          IMAGE, /* imageProcessingOptions= */ undefined, TIMESTAMP);
+        IMAGE,
+        /* imageProcessingOptions= */ undefined,
+        TIMESTAMP,
+      );
     }).toThrowError(/Task is not initialized with video mode./);
   });
 
@@ -185,22 +211,21 @@ describe('VisionTaskRunner', () => {
     }).toThrowError(/You must create a new task to reset the canvas./);
   });
 
-  it('validates that an undefined canvas leaves the graph unmodified',
-     async () => {
-       if (typeof OffscreenCanvas === 'undefined') {
-         console.log('Test is not supported under Node.');
-         return;
-       }
+  it('validates that an undefined canvas leaves the graph unmodified', async () => {
+    if (typeof OffscreenCanvas === 'undefined') {
+      console.log('Test is not supported under Node.');
+      return;
+    }
 
-       const visionTaskRunner = new VisionTaskRunnerFake();
-       const canvas = new OffscreenCanvas(1, 1);
-       visionTaskRunner.graphRunner.wasmModule.canvas = canvas;
+    const visionTaskRunner = new VisionTaskRunnerFake();
+    const canvas = new OffscreenCanvas(1, 1);
+    visionTaskRunner.graphRunner.wasmModule.canvas = canvas;
 
-       await visionTaskRunner.setOptions({canvas});
-       await visionTaskRunner.setOptions({canvas: undefined});
+    await visionTaskRunner.setOptions({canvas});
+    await visionTaskRunner.setOptions({canvas: undefined});
 
-       expect(visionTaskRunner.graphRunner.wasmModule.canvas).toBe(canvas);
-     });
+    expect(visionTaskRunner.graphRunner.wasmModule.canvas).toBe(canvas);
+  });
 
   it('sends packets to graph', async () => {
     const visionTaskRunner = new VisionTaskRunnerFake();
@@ -209,7 +234,10 @@ describe('VisionTaskRunner', () => {
     visionTaskRunner.expectImage(IMAGE);
     visionTaskRunner.expectNormalizedRect(0.5, 0.5, 1, 1);
     visionTaskRunner.processVideoData(
-        IMAGE, /* imageProcessingOptions= */ undefined, TIMESTAMP);
+      IMAGE,
+      /* imageProcessingOptions= */ undefined,
+      TIMESTAMP,
+    );
   });
 
   it('sends packets to graph with image processing options', async () => {
@@ -219,9 +247,10 @@ describe('VisionTaskRunner', () => {
     visionTaskRunner.expectImage(IMAGE);
     visionTaskRunner.expectNormalizedRect(0.3, 0.6, 0.2, 0.4);
     visionTaskRunner.processVideoData(
-        IMAGE,
-        {regionOfInterest: {left: 0.2, right: 0.4, top: 0.4, bottom: 0.8}},
-        TIMESTAMP);
+      IMAGE,
+      {regionOfInterest: {left: 0.2, right: 0.4, top: 0.4, bottom: 0.8}},
+      TIMESTAMP,
+    );
   });
 
   describe('validates processing options', () => {
@@ -234,7 +263,7 @@ describe('VisionTaskRunner', () => {
             right: 0.1,
             top: 0.1,
             bottom: 0.2,
-          }
+          },
         });
       }).toThrowError('Expected RectF with left < right and top < bottom.');
     });
@@ -248,7 +277,7 @@ describe('VisionTaskRunner', () => {
             right: 0.2,
             top: 0.2,
             bottom: 0.1,
-          }
+          },
         });
       }).toThrowError('Expected RectF with left < right and top < bottom.');
     });
@@ -262,15 +291,15 @@ describe('VisionTaskRunner', () => {
             right: 1.1,
             top: 0.1,
             bottom: 0.2,
-          }
+          },
         });
       }).toThrowError('Expected RectF values to be in [0,1].');
     });
 
-
     it('without region of interest support', () => {
-      const visionTaskRunner =
-          new VisionTaskRunnerFake(/* roiAllowed= */ false);
+      const visionTaskRunner = new VisionTaskRunnerFake(
+        /* roiAllowed= */ false,
+      );
       expect(() => {
         visionTaskRunner.processImageData(IMAGE, {
           regionOfInterest: {
@@ -278,9 +307,9 @@ describe('VisionTaskRunner', () => {
             right: 0.2,
             top: 0.1,
             bottom: 0.2,
-          }
+          },
         });
-      }).toThrowError('This task doesn\'t support region-of-interest.');
+      }).toThrowError("This task doesn't support region-of-interest.");
     });
 
     it('with non-90 degree rotation', () => {

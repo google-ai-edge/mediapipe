@@ -90,7 +90,7 @@ TEST(InteractiveSegmenterTest,
                           .scribble_count = 0};
 
   const int error =
-      interactive_segmenter_segment_image(segmenter, mp_image, roi, &result,
+      interactive_segmenter_segment_image(segmenter, &mp_image, &roi, &result,
                                           /* error_msg */ nullptr);
   EXPECT_EQ(error, 0);
 
@@ -146,7 +146,7 @@ TEST(InteractiveSegmenterTest,
                           .scribble_count = 3};
 
   const int error =
-      interactive_segmenter_segment_image(segmenter, mp_image, roi, &result,
+      interactive_segmenter_segment_image(segmenter, &mp_image, &roi, &result,
                                           /* error_msg */ nullptr);
   EXPECT_EQ(error, 0);
 
@@ -206,7 +206,7 @@ TEST(InteractiveSegmenterTest, FailedRecognitionHandling) {
                           .scribble = nullptr,
                           .scribble_count = 0};
 
-  interactive_segmenter_segment_image(segmenter, mp_image, roi, &result,
+  interactive_segmenter_segment_image(segmenter, &mp_image, &roi, &result,
                                       &error_msg);
   EXPECT_THAT(error_msg, HasSubstr("GPU Buffer not supported yet"));
   free(error_msg);

@@ -26,7 +26,7 @@ TFL_DISABLED_SANITIZER_TAGS = [
 
 objc_library(
     name = "MPPFaceLandmarkeResultHelpersTestLibrary",
-    testonly = 1,
+    testonly = True,
     srcs = ["sources/MPPFaceLandmarkerResult+HelpersTests.mm"],
     copts = [
         "-ObjC++",
@@ -41,6 +41,7 @@ objc_library(
         "//mediapipe/tasks/cc/vision/face_geometry/proto:face_geometry_cc_proto",
         "//mediapipe/tasks/ios/vision/face_landmarker:MPPFaceLandmarkerResult",
         "//mediapipe/tasks/ios/vision/face_landmarker/utils:MPPFaceLandmarkerResultHelpers",
+        "//third_party/apple_frameworks:XCTest",
     ],
 )
 

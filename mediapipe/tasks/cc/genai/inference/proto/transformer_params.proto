@@ -24,7 +24,7 @@ message TransformerParameters {
   // Batch size of tensors.
   int32 batch_size = 1;
 
-  // TODO: Deprecate parameter.
+  // TODO: b/319312256 - Deprecate parameter.
   // Maximum sequence length of the input/output tensor.
   int32 max_seq_length = 2;
 
@@ -59,6 +59,7 @@ message TransformerParameters {
     UNSPECIFIED = 0;
     CAUSAL = 1;
     PREFIX = 2;
+    BIDIRECTIONAL = 3;
   }
   // Deprecated, use SelfAttentionParameters.
   reserved 10;
@@ -66,14 +67,16 @@ message TransformerParameters {
   enum Activation {
     ACTIVATION_UNSPECIFIED = 0;
     // GELU stands for Gaussian Error Linear Unit, see
-    // https://arxiv.org/pdf/1606.08415.pdf for deatils.
+    // https://arxiv.org/pdf/1606.08415.pdf for details.
     GELU = 1;
     // SILU stands for Sigmoid-Weighted Linear Unit, see
-    // https://arxiv.org/pdf/1702.03118v3.pdf for deatils.
+    // https://arxiv.org/pdf/1702.03118v3.pdf for details.
     SILU = 2;
     // RELU stands for Rectified Linear Unit, see
     // https://dl.acm.org/doi/10.5555/3104322.3104425 for details.
     RELU = 3;
+    // The output of RELU is multiplied by its square root.
+    RELU1P5 = 4;
   }
 
   enum Norm {
@@ -81,10 +84,10 @@ message TransformerParameters {
     // No normalization operation will be perform.
     NO_NORM = 1;
     // RMSNORM stands for Root Mean Square Layer Normalization, see
-    // https://arxiv.org/pdf/1910.07467.pdf for deatils.
+    // https://arxiv.org/pdf/1910.07467.pdf for details.
     RMS_NORM = 2;
     // LAYERNORM stands for Layer Normalization, see
-    // https://arxiv.org/pdf/1607.06450v1.pdf for deatils.
+    // https://arxiv.org/pdf/1607.06450v1.pdf for details.
     LAYER_NORM = 3;
   }
 
@@ -130,6 +133,9 @@ message TransformerParameters {
     // Query is scaled by 1/sqrt(model_dim/num_heads)
     // model_dim/num_heads is not always equal to head_dim
     SCALE_TYPE_INV_SQRT_D_MODEL_DIV_NUM_HEADS = 3;
+
+    // Query is scaled by query_rescale_factor/ head_dim.
+    SCALE_TYPE_RESCALE_FACTOR_INV_HEAD_DIM = 4;
   }
 
   message SelfAttentionParameters {
@@ -149,6 +155,8 @@ message TransformerParameters {
     // default, and SCALE_TYPE_INV_SQRT_HEAD_DIM is used for
     // Multi-Head-Attention by default.
     optional AttentionScaleType attention_scale_type = 5;
+
+    reserved 6;
   }
 
   SelfAttentionParameters self_attention_parameters = 16;
@@ -158,4 +166,32 @@ message TransformerParameters {
   // the absolute positional embeddings will be applied to the token embeddings
   // before the attention.
   bool skip_absolute_positional_embeddings = 18;
+
+  reserved 19, 20, 21, 23, 24;
+
+  // Audio parameters
+  // Describes where to interleave residual adapters with transformer layers.
+  enum WhereToInterleave {
+    // Add a residual adapter after every transformer layer.
+    INTERLEAVE_UNSPECIFIED = 0;
+    ALL = 1;
+    // Add a residual adapter after every 4th transformer layer, starting with
+    // index 0 (i.e. after 0, 4, 8, ...).
+    EVERY_OTHER_4 = 2;
+  }
+
+  // Holds information on audio residual adapters
+  message ResidualAdapterParameters {
+    WhereToInterleave where_to_interleave = 1;
+    // bottleneck_dim is akin to hidden_dim in the FF layer
+    int32 bottleneck_dimension = 2;
+  }
+
+  optional ResidualAdapterParameters residual_adapter_parameters = 22;
+
+  // Scale the queries by this value.
+  optional float query_rescale_factor = 25;
+
+  // Vision parameters
+  int32 vision_tokens_num = 26;
 }

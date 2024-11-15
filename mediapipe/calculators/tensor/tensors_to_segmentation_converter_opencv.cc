@@ -46,9 +46,9 @@ class TensorsToSegmentationOpenCvConverter
     return absl::OkStatus();
   }
 
-  absl::StatusOr<std::unique_ptr<Image>> Convert(
-      const std::vector<Tensor>& input_tensors, int output_width,
-      int output_height) override;
+  absl::StatusOr<std::unique_ptr<Image>> Convert(const Tensor& input_tensor,
+                                                 int output_width,
+                                                 int output_height) override;
 
  private:
   template <class T>
@@ -58,19 +58,16 @@ class TensorsToSegmentationOpenCvConverter
 };
 
 absl::StatusOr<std::unique_ptr<Image>>
-TensorsToSegmentationOpenCvConverter::Convert(
-    const std::vector<Tensor>& input_tensors, int output_width,
-    int output_height) {
-  if (input_tensors.empty()) {
-    return absl::InvalidArgumentError("input_tensors vector is empty.");
-  }
-  MP_ASSIGN_OR_RETURN(auto hwc, GetHwcFromDims(input_tensors[0].shape().dims));
+TensorsToSegmentationOpenCvConverter::Convert(const Tensor& input_tensor,
+                                              int output_width,
+                                              int output_height) {
+  MP_ASSIGN_OR_RETURN(auto hwc, GetHwcFromDims(input_tensor.shape().dims));
   auto [tensor_height, tensor_width, tensor_channels] = hwc;
   // Create initial working mask.
   cv::Mat small_mask_mat(cv::Size(tensor_width, tensor_height), CV_32FC1);
 
   // Wrap input tensor.
-  auto raw_input_tensor = &input_tensors[0];
+  auto raw_input_tensor = &input_tensor;
   auto raw_input_view = raw_input_tensor->GetCpuReadView();
   const float* raw_input_data = raw_input_view.buffer<float>();
   cv::Mat tensor_mat(cv::Size(tensor_width, tensor_height),

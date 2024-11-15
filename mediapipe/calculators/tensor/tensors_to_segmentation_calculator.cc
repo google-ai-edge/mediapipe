@@ -79,6 +79,9 @@ namespace mediapipe {
 //   TENSORS: Vector of Tensors of type kFloat32. Only the first tensor will be
 //            used. The tensor dimensions are specified in this calculator's
 //            options.
+//   TENSOR: Tensor of type kFloat32. Use this instead of TENSORS when the
+//           tensors are available as individual Tensor streams, not as a stream
+//           of vector of Tensors. Either TENSORS or TENSORS must be specified.
 //   OUTPUT_SIZE(optional): std::pair<int, int>,
 //                          If provided, the size to upscale mask to.
 //
@@ -103,11 +106,12 @@ namespace mediapipe {
 // }
 class TensorsToSegmentationCalculator : public Node {
  public:
-  static constexpr Input<std::vector<Tensor>> kTensorsIn{"TENSORS"};
+  static constexpr Input<std::vector<Tensor>>::Optional kTensorsIn{"TENSORS"};
+  static constexpr Input<Tensor>::Optional kTensorIn{"TENSOR"};
   static constexpr Input<std::pair<int, int>>::Optional kOutputSizeIn{
       "OUTPUT_SIZE"};
   static constexpr Output<Image> kMaskOut{"MASK"};
-  MEDIAPIPE_NODE_CONTRACT(kTensorsIn, kOutputSizeIn, kMaskOut);
+  MEDIAPIPE_NODE_CONTRACT(kTensorsIn, kTensorIn, kOutputSizeIn, kMaskOut);
 
   static absl::Status UpdateContract(CalculatorContract* cc);
 
@@ -156,6 +160,8 @@ MEDIAPIPE_REGISTER_NODE(TensorsToSegmentationCalculator);
 // static
 absl::Status TensorsToSegmentationCalculator::UpdateContract(
     CalculatorContract* cc) {
+  RET_CHECK(kTensorsIn(cc).IsConnected() ^ kTensorIn(cc).IsConnected())
+      << "Either TENSOR or TENSORS must be connected";
   if (CanUseGpu()) {
 #if !MEDIAPIPE_DISABLE_GPU
     MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(
@@ -175,29 +181,28 @@ absl::Status TensorsToSegmentationCalculator::Open(CalculatorContext* cc) {
 }
 
 absl::Status TensorsToSegmentationCalculator::Process(CalculatorContext* cc) {
-  if (kTensorsIn(cc).IsEmpty()) {
-    return absl::OkStatus();
+  const Tensor* input_tensor = nullptr;
+  if (kTensorsIn(cc).IsConnected()) {
+    if (kTensorsIn(cc).IsEmpty()) return absl::OkStatus();
+    RET_CHECK(!kTensorsIn(cc).Get().empty());
+    input_tensor = &kTensorsIn(cc).Get()[0];
+  } else {
+    RET_CHECK(kTensorIn(cc).IsConnected());
+    if (kTensorIn(cc).IsEmpty()) return absl::OkStatus();
+    input_tensor = &kTensorIn(cc).Get();
   }
-
-  const auto& input_tensors = kTensorsIn(cc).Get();
+  RET_CHECK_NE(input_tensor, nullptr);
 
   bool use_gpu = false;
   if (CanUseGpu()) {
     // Use GPU processing only if at least one input tensor is already on GPU.
-    for (const auto& tensor : input_tensors) {
-      if (tensor.ready_on_gpu()) {
-        use_gpu = true;
-        break;
-      }
-    }
+    use_gpu = input_tensor->ready_on_gpu();
   }
 
   // Validate tensor channels and activation type.
   {
-    RET_CHECK(!input_tensors.empty());
-    RET_CHECK(input_tensors[0].element_type() == Tensor::ElementType::kFloat32);
-    MP_ASSIGN_OR_RETURN(auto hwc,
-                        GetHwcFromDims(input_tensors[0].shape().dims));
+    RET_CHECK(input_tensor->element_type() == Tensor::ElementType::kFloat32);
+    MP_ASSIGN_OR_RETURN(auto hwc, GetHwcFromDims(input_tensor->shape().dims));
     int tensor_channels = std::get<2>(hwc);
     using Options = ::mediapipe::TensorsToSegmentationCalculatorOptions;
     switch (options_.activation()) {
@@ -214,7 +219,7 @@ absl::Status TensorsToSegmentationCalculator::Process(CalculatorContext* cc) {
   }
 
   // Get dimensions.
-  MP_ASSIGN_OR_RETURN(auto hwc, GetHwcFromDims(input_tensors[0].shape().dims));
+  MP_ASSIGN_OR_RETURN(auto hwc, GetHwcFromDims(input_tensor->shape().dims));
   auto [tensor_height, tensor_width, tensor_channels] = hwc;
   int output_width = tensor_width, output_height = tensor_height;
   if (kOutputSizeIn(cc).IsConnected()) {
@@ -229,7 +234,7 @@ absl::Status TensorsToSegmentationCalculator::Process(CalculatorContext* cc) {
     MP_RETURN_IF_ERROR(InitConverterIfNecessary(use_gpu, cc));
     MP_ASSIGN_OR_RETURN(
         std::unique_ptr<Image> output_mask,
-        gpu_converter_->Convert(input_tensors, output_width, output_height));
+        gpu_converter_->Convert(*input_tensor, output_width, output_height));
     kMaskOut(cc).Send(std::move(output_mask));
 #else
     RET_CHECK_FAIL() << "GPU processing disabled.";
@@ -240,7 +245,7 @@ absl::Status TensorsToSegmentationCalculator::Process(CalculatorContext* cc) {
     MP_RETURN_IF_ERROR(InitConverterIfNecessary(use_gpu, cc));
     MP_ASSIGN_OR_RETURN(
         std::unique_ptr<Image> output_mask,
-        cpu_converter_->Convert(input_tensors, output_width, output_height));
+        cpu_converter_->Convert(*input_tensor, output_width, output_height));
     kMaskOut(cc).Send(std::move(output_mask));
 #else
     RET_CHECK_FAIL() << "OpenCV processing disabled.";

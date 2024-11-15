@@ -12,6 +12,7 @@
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/port/status_matchers.h"
+#include "mediapipe/framework/resources.h"
 #include "mediapipe/util/tflite/tflite_model_loader.h"
 #include "tensorflow/lite/interpreter.h"
 #include "tensorflow/lite/interpreter_builder.h"
@@ -31,9 +32,11 @@ class TfLiteSignatureReaderTest : public Test {
  protected:
   absl::StatusOr<std::unique_ptr<tflite::Interpreter>>
   ReadModelAndBuildInterpreter(const std::string& model_path) {
-    MP_ASSIGN_OR_RETURN(Packet model_packet,
-                        TfLiteModelLoader::LoadFromPath(
-                            file::JoinPath(kModelPath, model_path)));
+    std::unique_ptr<Resources> resources = CreateDefaultResources();
+    MP_ASSIGN_OR_RETURN(
+        Packet model_packet,
+        TfLiteModelLoader::LoadFromPath(
+            *resources, file::JoinPath(kModelPath, model_path)));
     const auto& model = *model_packet.Get<TfLiteModelPtr>();
 
     std::unique_ptr<tflite::Interpreter> interpreter;

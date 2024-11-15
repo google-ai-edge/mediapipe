@@ -96,14 +96,14 @@ ImageSegmenter* CppImageSegmenterCreate(const ImageSegmenterOptions& options,
           if (!cpp_result.ok()) {
             LOG(ERROR) << "Segmentation failed: " << cpp_result.status();
             CppProcessError(cpp_result.status(), &error_msg);
-            result_callback(nullptr, MpImage(), timestamp, error_msg);
+            result_callback(nullptr, nullptr, timestamp, error_msg);
             free(error_msg);
             return;
           }
 
           // Result is valid for the lifetime of the callback function.
-          ImageSegmenterResult result;
-          CppConvertToImageSegmenterResult(*cpp_result, &result);
+          auto result = std::make_unique<ImageSegmenterResult>();
+          CppConvertToImageSegmenterResult(*cpp_result, result.get());
 
           const auto& image_frame = image.GetImageFrameSharedPtr();
           const MpImage mp_image = {
@@ -114,10 +114,8 @@ ImageSegmenter* CppImageSegmenterCreate(const ImageSegmenterOptions& options,
                   .width = image_frame->Width(),
                   .height = image_frame->Height()}};
 
-          result_callback(&result, mp_image, timestamp,
+          result_callback(result.release(), &mp_image, timestamp,
                           /* error_msg= */ nullptr);
-
-          CppCloseImageSegmenterResult(&result);
         };
   }
 
@@ -130,9 +128,9 @@ ImageSegmenter* CppImageSegmenterCreate(const ImageSegmenterOptions& options,
   return segmenter->release();
 }
 
-int CppImageSegmenterSegment(void* segmenter, const MpImage& image,
+int CppImageSegmenterSegment(void* segmenter, const MpImage* image,
                              ImageSegmenterResult* result, char** error_msg) {
-  if (image.type == MpImage::GPU_BUFFER) {
+  if (image->type == MpImage::GPU_BUFFER) {
     const absl::Status status =
         absl::InvalidArgumentError("GPU Buffer not supported yet.");
 
@@ -141,9 +139,9 @@ int CppImageSegmenterSegment(void* segmenter, const MpImage& image,
   }
 
   const auto img = CreateImageFromBuffer(
-      static_cast<ImageFormat::Format>(image.image_frame.format),
-      image.image_frame.image_buffer, image.image_frame.width,
-      image.image_frame.height);
+      static_cast<ImageFormat::Format>(image->image_frame.format),
+      image->image_frame.image_buffer, image->image_frame.width,
+      image->image_frame.height);
 
   if (!img.ok()) {
     LOG(ERROR) << "Failed to create Image: " << img.status();
@@ -160,11 +158,11 @@ int CppImageSegmenterSegment(void* segmenter, const MpImage& image,
   return 0;
 }
 
-int CppImageSegmenterSegmentForVideo(void* segmenter, const MpImage& image,
+int CppImageSegmenterSegmentForVideo(void* segmenter, const MpImage* image,
                                      int64_t timestamp_ms,
                                      ImageSegmenterResult* result,
                                      char** error_msg) {
-  if (image.type == MpImage::GPU_BUFFER) {
+  if (image->type == MpImage::GPU_BUFFER) {
     absl::Status status =
         absl::InvalidArgumentError("GPU Buffer not supported yet");
 
@@ -173,9 +171,9 @@ int CppImageSegmenterSegmentForVideo(void* segmenter, const MpImage& image,
   }
 
   const auto img = CreateImageFromBuffer(
-      static_cast<ImageFormat::Format>(image.image_frame.format),
-      image.image_frame.image_buffer, image.image_frame.width,
-      image.image_frame.height);
+      static_cast<ImageFormat::Format>(image->image_frame.format),
+      image->image_frame.image_buffer, image->image_frame.width,
+      image->image_frame.height);
 
   if (!img.ok()) {
     LOG(ERROR) << "Failed to create Image: " << img.status();
@@ -192,9 +190,9 @@ int CppImageSegmenterSegmentForVideo(void* segmenter, const MpImage& image,
   return 0;
 }
 
-int CppImageSegmenterSegmentAsync(void* segmenter, const MpImage& image,
+int CppImageSegmenterSegmentAsync(void* segmenter, const MpImage* image,
                                   int64_t timestamp_ms, char** error_msg) {
-  if (image.type == MpImage::GPU_BUFFER) {
+  if (image->type == MpImage::GPU_BUFFER) {
     absl::Status status =
         absl::InvalidArgumentError("GPU Buffer not supported yet");
 
@@ -203,9 +201,9 @@ int CppImageSegmenterSegmentAsync(void* segmenter, const MpImage& image,
   }
 
   const auto img = CreateImageFromBuffer(
-      static_cast<ImageFormat::Format>(image.image_frame.format),
-      image.image_frame.image_buffer, image.image_frame.width,
-      image.image_frame.height);
+      static_cast<ImageFormat::Format>(image->image_frame.format),
+      image->image_frame.image_buffer, image->image_frame.width,
+      image->image_frame.height);
 
   if (!img.ok()) {
     LOG(ERROR) << "Failed to create Image: " << img.status();
@@ -247,14 +245,14 @@ void* image_segmenter_create(struct ImageSegmenterOptions* options,
       *options, error_msg);
 }
 
-int image_segmenter_segment_image(void* segmenter, const MpImage& image,
+int image_segmenter_segment_image(void* segmenter, const MpImage* image,
                                   ImageSegmenterResult* result,
                                   char** error_msg) {
   return mediapipe::tasks::c::vision::image_segmenter::CppImageSegmenterSegment(
       segmenter, image, result, error_msg);
 }
 
-int image_segmenter_segment_for_video(void* segmenter, const MpImage& image,
+int image_segmenter_segment_for_video(void* segmenter, const MpImage* image,
                                       int64_t timestamp_ms,
                                       ImageSegmenterResult* result,
                                       char** error_msg) {
@@ -263,7 +261,7 @@ int image_segmenter_segment_for_video(void* segmenter, const MpImage& image,
                                        error_msg);
 }
 
-int image_segmenter_segment_async(void* segmenter, const MpImage& image,
+int image_segmenter_segment_async(void* segmenter, const MpImage* image,
                                   int64_t timestamp_ms, char** error_msg) {
   return mediapipe::tasks::c::vision::image_segmenter::
       CppImageSegmenterSegmentAsync(segmenter, image, timestamp_ms, error_msg);

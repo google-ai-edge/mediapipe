@@ -65,5 +65,5 @@ mediapipe_ts_library(
 
 jasmine_node_test(
     name = "image_embedder_test",
-    deps = [":image_embedder_test_lib"],
+    srcs = [":image_embedder_test_lib"],
 )

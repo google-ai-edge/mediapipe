@@ -16,9 +16,9 @@
 
 @implementation MPPAudioClassifierResult
 
-- (instancetype)initWithClassificationResult:
+- (instancetype)initWithClassificationResults:
                     (NSArray<MPPClassificationResult *> *)classificationResults
-                     timestampInMilliseconds:(NSInteger)timestampInMilliseconds {
+                      timestampInMilliseconds:(NSInteger)timestampInMilliseconds {
   self = [super initWithTimestampInMilliseconds:timestampInMilliseconds];
   if (self) {
     _classificationResults = classificationResults;

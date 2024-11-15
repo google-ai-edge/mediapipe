@@ -37,6 +37,7 @@ message LlmGpuCalculatorOptions {
     bool use_low_power = 4;
     bool prefer_texture_weights = 5;
     bool enable_host_mapped_pointer = 6;
+    bool disallow_8bit_convs = 7;
   }
   GpuModelInfo gpu_model_info = 10;
 
@@ -50,9 +51,11 @@ message LlmGpuCalculatorOptions {
 
   int32 sequence_batch_size = 14;
 
-  string lora_path = 19;
+  reserved 19;
 
   odml.infra.proto.LlmParameters llm_parameters = 20;
+
+  reserved 21;
 
   // Each output head will generate tokens independently of the others.
   int32 num_output_heads = 22;

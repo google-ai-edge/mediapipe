@@ -207,11 +207,12 @@ cc_library(
 
 cc_library(
     name = "test_context_builder",
-    testonly = 1,
+    testonly = True,
     hdrs = ["test_context_builder.h"],
     deps = [
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_options_cc_proto",
+        "//mediapipe/framework:calculator_state",
         "//mediapipe/framework:mediapipe_options_cc_proto",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:statusor",

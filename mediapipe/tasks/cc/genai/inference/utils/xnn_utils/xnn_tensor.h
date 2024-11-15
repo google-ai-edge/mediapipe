@@ -19,6 +19,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <functional>
 #include <memory>
 #include <numeric>
@@ -86,7 +87,7 @@ struct Tensor {
   // Load the tensor from vector of data. If not exact_match, data can hold less
   // than num_elements.
   absl::Status LoadFromVec(const std::vector<float>& data,
-                           bool exact_match = true);
+                           bool exact_match = false);
   // Load the tensor from file.
   //   file_path: a string representing the path to the file to load from.
   //   use_mmap: whether or not to use mmap to access the file.
@@ -112,6 +113,9 @@ struct Tensor {
   std::shared_ptr<Tensor> Slice(DimsType offset);
   // Slice along the `index`th dimension, offset at this dimension.
   virtual std::shared_ptr<Tensor> Slice(size_t index, size_t offset);
+  // Slice along the `index`th dimension from index start to index end. e.g.
+  // Tensor[A,B,C,D].Slice(1, 0, 5) returns a tensor of shape [A,5,C,D].
+  virtual std::shared_ptr<Tensor> Slice(size_t index, size_t start, size_t end);
 
   // Point the underline data to the borrowed tensor's data.
   Tensor& Borrow(std::shared_ptr<Tensor>, size_t element_offset = 0);
@@ -143,6 +147,9 @@ struct Tensor {
   // Transpose the tensor.
   virtual std::shared_ptr<Tensor> Transpose();
 
+  // Print the tensor values. Tensors with dims > 4 unsupported.
+  void PrintSpan();
+
   // Convert the tensor to f32 format.
   virtual absl::StatusOr<std::shared_ptr<Tensor>> ConvertToF32();
 
@@ -170,7 +177,10 @@ struct Tensor {
 
   // Optional, annotates where the tensor comes from. E.g. the filename where
   // the tensor is loaded from.
-  std::string source;
+  std::string tag;
+
+  // Actually allocate buffer unless necessary.
+  virtual void AllocateBufferIfNeeded();
 
  protected:
   friend class XnnGraphBuilder;
@@ -179,9 +189,6 @@ struct Tensor {
 
   // Invoke xnn_define_*tensor_value to add this tensor to the `subgraph`.
   virtual absl::Status DefineInSubgraph(xnn_subgraph& subgraph, uint32_t flags);
-
-  // Actually allocate buffer unless necessary.
-  virtual void AllocateBufferIfNeeded();
 
   virtual size_t ElementSize(size_t num_elements) const {
     return num_elements * 4;
@@ -195,6 +202,8 @@ struct Tensor {
 
   absl::flat_hash_map<std::string, int> metadata;
 
+  // The same tensor can be used in multiple subgraphs, this is mapping from
+  // subgraph to a per-subgraph id.
   absl::flat_hash_map<xnn_subgraph_t, uint32_t> map_subgraph_to_tensor_id;
 };
 

@@ -96,5 +96,6 @@ android_binary(
         ":instantmotiontracking_lib",
         ":mediapipe_jni_lib",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework",
+        "//third_party:libc++_shared_lib",
     ],
 )

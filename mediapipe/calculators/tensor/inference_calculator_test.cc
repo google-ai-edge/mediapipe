@@ -67,24 +67,18 @@ constexpr char kGraphWithModelAsInputSidePacket[] = R"(
     input_stream: "tensor_in"
 
     node {
-      calculator: "ConstantSidePacketCalculator"
-      output_side_packet: "PACKET:model_path"
-      options: {
-        [mediapipe.ConstantSidePacketCalculatorOptions.ext]: {
-          packet { string_value: "mediapipe/calculators/tensor/testdata/add.bin" }
+      calculator: "ResourceProviderCalculator"
+      output_side_packet: "RESOURCE:model_resource"
+      node_options {
+        [type.googleapis.com/mediapipe.ResourceProviderCalculatorOptions]: {
+          resource_id: "mediapipe/calculators/tensor/testdata/add.bin"
         }
       }
     }
 
     node {
-      calculator: "LocalFileContentsCalculator"
-      input_side_packet: "FILE_PATH:model_path"
-      output_side_packet: "CONTENTS:model_blob"
-    }
-
-    node {
       calculator: "TfLiteModelCalculator"
-      input_side_packet: "MODEL_BLOB:model_blob"
+      input_side_packet: "MODEL_RESOURCE:model_resource"
       output_side_packet: "MODEL:model"
     }
 

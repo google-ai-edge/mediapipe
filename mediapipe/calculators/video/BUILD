@@ -279,6 +279,9 @@ cc_library(
         "//mediapipe:ios": [
             "//mediapipe/util/android/file/base",
         ],
+        "//mediapipe:emscripten": [
+            "//mediapipe/util/android/file/base",
+        ],
         "//mediapipe:macos": [
             "//mediapipe/framework/port:file_helpers",
         ],
@@ -426,6 +429,7 @@ cc_test(
     copts = ["-DPARALLEL_INVOKER_ACTIVE"] + select({
         "//mediapipe:apple": [],
         "//mediapipe:android": [],
+        "//mediapipe:emscripten": ["-UPARALLEL_INVOKER_ACTIVE"],
         "//conditions:default": [],
     }),
     data = [

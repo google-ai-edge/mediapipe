@@ -513,15 +513,16 @@ class TemplateParser::Parser::ParserImpl {
 
       if (field == NULL) {
         if (!allow_unknown_field_ && !allow_unknown_extension_) {
-          ReportError("Extension \"" + field_name +
-                      "\" is not defined or "
-                      "is not an extension of \"" +
-                      descriptor->full_name() + "\".");
+          ReportError(absl::StrCat("Extension \"", field_name,
+                                   "\" is not defined or "
+                                   "is not an extension of \"",
+                                   descriptor->full_name(), "\"."));
           return false;
         } else {
-          ReportWarning("Ignoring extension \"" + field_name +
-                        "\" which is not defined or is not an extension of \"" +
-                        descriptor->full_name() + "\".");
+          ReportWarning(absl::StrCat(
+              "Ignoring extension \"", field_name,
+              "\" which is not defined or is not an extension of \"",
+              descriptor->full_name(), "\"."));
         }
       }
     } else {
@@ -569,12 +570,14 @@ class TemplateParser::Parser::ParserImpl {
 
       if (field == NULL && !reserved_field) {
         if (!allow_unknown_field_) {
-          ReportError("Message type \"" + descriptor->full_name() +
-                      "\" has no field named \"" + field_name + "\".");
+          ReportError(absl::StrCat("Message type \"", descriptor->full_name(),
+                                   "\" has no field named \"", field_name,
+                                   "\"."));
           return false;
         } else {
-          ReportWarning("Message type \"" + descriptor->full_name() +
-                        "\" has no field named \"" + field_name + "\".");
+          ReportWarning(absl::StrCat("Message type \"", descriptor->full_name(),
+                                     "\" has no field named \"", field_name,
+                                     "\"."));
         }
       }
     }
@@ -610,13 +613,10 @@ class TemplateParser::Parser::ParserImpl {
       if (oneof != NULL && reflection->HasOneof(*message, oneof)) {
         const FieldDescriptor* other_field =
             reflection->GetOneofFieldDescriptor(*message, oneof);
-        ReportError("Field \"" + field_name +
-                    "\" is specified along with "
-                    "field \"" +
-                    other_field->name() +
-                    "\", another member "
-                    "of oneof \"" +
-                    oneof->name() + "\".");
+        ReportError(absl::StrCat(
+            "Field \"", field_name, "\" is specified along with field \"",
+            other_field->name(), "\", another member of oneof \"",
+            oneof->name(), "\"."));
         return false;
       }
     }
@@ -846,8 +846,9 @@ class TemplateParser::Parser::ParserImpl {
           } else if (value == "false" || value == "False" || value == "f") {
             SET_FIELD(Bool, false);
           } else {
-            ReportError("Invalid value for boolean field \"" + field->name() +
-                        "\". Value: \"" + value + "\".");
+            ReportError(absl::StrCat("Invalid value for boolean field \"",
+                                     field->name(), "\". Value: \"", value,
+                                     "\"."));
             return false;
           }
         }
@@ -883,16 +884,13 @@ class TemplateParser::Parser::ParserImpl {
             SET_FIELD(EnumValue, int_value);
             return true;
           } else if (!allow_unknown_enum_) {
-            ReportError("Unknown enumeration value of \"" + value +
-                        "\" for "
-                        "field \"" +
-                        field->name() + "\".");
+            ReportError(absl::StrCat("Unknown enumeration value of \"", value,
+                                     "\" for field \"", field->name(), "\"."));
             return false;
           } else {
-            ReportWarning("Unknown enumeration value of \"" + value +
-                          "\" for "
-                          "field \"" +
-                          field->name() + "\".");
+            ReportWarning(absl::StrCat("Unknown enumeration value of \"", value,
+                                       "\" for field \"", field->name(),
+                                       "\"."));
             return true;
           }
         }
@@ -1240,9 +1238,9 @@ class TemplateParser::Parser::ParserImpl {
       value->AppendPartialToString(serialized_value);
     } else {
       if (!value->IsInitialized()) {
-        ReportError(
-            "Value of type \"" + value_descriptor->full_name() +
-            "\" stored in google.protobuf.Any has missing required fields");
+        ReportError(absl::StrCat(
+            "Value of type \"", value_descriptor->full_name(),
+            "\" stored in google.protobuf.Any has missing required fields"));
         return false;
       }
       value->AppendToString(serialized_value);

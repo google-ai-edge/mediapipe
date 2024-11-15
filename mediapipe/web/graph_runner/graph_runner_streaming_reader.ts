@@ -168,7 +168,13 @@ export class StreamingReader {
     if (mode === ReadMode.DISCARD_ALL) {
       this.dataArray = [];
       this.fetchMoreData = () => Promise.resolve(undefined);
-      this.onFinished(); // Signal that we're done with data
+      // Signal asynchronously that we're done with the data. This ensures that
+      // we finish the rest of our (synchronous from this point on)
+      // initialization before we resolve the data loading promise, avoiding
+      // infinite stalls in some cases.
+      setTimeout(() => {
+        this.onFinished();
+      }, 0);
       return Promise.resolve(0);
     }
 

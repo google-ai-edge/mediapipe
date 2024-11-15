@@ -266,6 +266,7 @@ cc_test(
         "//mediapipe/calculators/core:pass_through_calculator",
         "//mediapipe/calculators/core:round_robin_demux_calculator",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_state",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
     ],

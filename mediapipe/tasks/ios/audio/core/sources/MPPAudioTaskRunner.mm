@@ -25,16 +25,19 @@
 
 namespace {
 using ::mediapipe::Packet;
+using ::mediapipe::Timestamp;
 using ::mediapipe::tasks::core::PacketMap;
 using ::mediapipe::tasks::core::PacketsCallback;
 }  // namespace
 
 static NSString *const kTaskPrefix = @"com.mediapipe.tasks.audio";
+static const double kInitialDefaultSampleRate = -1.0f;
 
 @interface MPPAudioTaskRunner () {
   MPPAudioRunningMode _runningMode;
   NSString *_audioInputStreamName;
   NSString *_sampleRateInputStreamName;
+  double _sampleRate;
 }
 @end
 
@@ -103,6 +106,7 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.audio";
   }
 
   _runningMode = runningMode;
+  _sampleRate = kInitialDefaultSampleRate;
 
   self = [super initWithTaskInfo:taskInfo packetsCallback:packetsCallback error:error];
   return self;
@@ -127,6 +131,87 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.audio";
                                     : std::nullopt;
 }
 
+- (BOOL)processStreamAudioClip:(MPPAudioData *)audioClip
+       timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                         error:(NSError **)error {
+  if (_runningMode != MPPAudioRunningModeAudioStream) {
+    [MPPCommonUtils
+        createCustomError:error
+                 withCode:MPPTasksErrorCodeInvalidArgumentError
+              description:[NSString stringWithFormat:@"The audio task is not initialized with "
+                                                     @"audio stream mode. Current Running Mode: %@",
+                                                     MPPAudioRunningModeDisplayName(_runningMode)]];
+    return NO;
+  }
+
+  if (![self checkOrSetSampleRate:audioClip.format.sampleRate error:error]) {
+    return NO;
+  }
+
+  Packet matrixPacket = [MPPAudioPacketCreator createPacketWithAudioData:audioClip
+                                                 timestampInMilliseconds:timestampInMilliseconds
+                                                                   error:error];
+  if (matrixPacket.IsEmpty()) {
+    return NO;
+  }
+
+  PacketMap inputPacketMap = {{_audioInputStreamName.cppString, matrixPacket}};
+  return [self sendPacketMap:inputPacketMap error:error];
+}
+
+- (BOOL)checkOrSetSampleRate:(double)sampleRate error:(NSError **)error {
+  if (_runningMode != MPPAudioRunningModeAudioStream) {
+    [MPPCommonUtils
+        createCustomError:error
+                 withCode:MPPTasksErrorCodeInvalidArgumentError
+              description:[NSString stringWithFormat:@"The audio task is not initialized with "
+                                                     @"audio stream mode. Current Running Mode: %@",
+                                                     MPPAudioRunningModeDisplayName(_runningMode)]];
+    return NO;
+  }
+
+  if (_sampleRate == kInitialDefaultSampleRate) {
+    // Sample rate hasn't been initialized yet
+    PacketMap inputPacketMap = {
+        {_sampleRateInputStreamName.cppString,
+         [MPPPacketCreator createWithDouble:sampleRate].At(Timestamp::PreStream())}};
+    BOOL sendStatus = [self sendPacketMap:inputPacketMap error:error];
+    if (sendStatus) {
+      _sampleRate = sampleRate;
+    }
+    return sendStatus;
+  }
+
+  if (sampleRate != _sampleRate) {
+    [MPPCommonUtils
+        createCustomError:error
+                 withCode:MPPTasksErrorCodeInvalidArgumentError
+              description:[NSString
+                              stringWithFormat:@"The input audio sample rate: %f is inconsistent "
+                                               @"with the previously provided: %f",
+                                               sampleRate, _sampleRate]];
+    return NO;
+  }
+
+  return YES;
+}
+
++ (MPPAudioRecord *)createAudioRecordWithChannelCount:(NSUInteger)channelCount
+                                           sampleRate:(double)sampleRate
+                                         bufferLength:(NSUInteger)bufferLength
+                                                error:(NSError **)error {
+  MPPAudioDataFormat *format = [[MPPAudioDataFormat alloc] initWithChannelCount:channelCount
+                                                                     sampleRate:sampleRate];
+  return [[MPPAudioRecord alloc] initWithAudioDataFormat:format
+                                            bufferLength:bufferLength
+                                                   error:error];
+}
+
++ (const char *)uniqueDispatchQueueNameWithSuffix:(NSString *)suffix {
+  return [NSString stringWithFormat:@"%@.%@_%@", kTaskPrefix, suffix, [NSString uuidString]]
+      .UTF8String;
+}
+
 - (std::optional<PacketMap>)inputPacketMapWithMPPAudioData:(MPPAudioData *)audioData
                                                      error:(NSError **)error {
   PacketMap inputPacketMap;
@@ -139,7 +224,7 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.audio";
   inputPacketMap[_audioInputStreamName.cppString] = matrixPacket;
 
   inputPacketMap[_sampleRateInputStreamName.cppString] =
-      [MPPPacketCreator createWithDouble:(double)audioData.format.sampleRate];
+      [MPPPacketCreator createWithDouble:audioData.format.sampleRate];
 
   return inputPacketMap;
 }

@@ -14,6 +14,7 @@
 #include "mediapipe/framework/legacy_calculator_support.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/status_matchers.h"
+#include "mediapipe/framework/resources.h"
 #include "mediapipe/framework/tool/tag_map_helper.h"
 #include "tensorflow/lite/test_util.h"
 
@@ -30,7 +31,8 @@ class TfLiteModelLoaderTest : public tflite::testing::Test {
     // Create a stub calculator state.
     CalculatorGraphConfig::Node config;
     calculator_state_ = std::make_unique<CalculatorState>(
-        "fake_node", 0, "fake_type", config, nullptr);
+        "fake_node", 0, "fake_type", config, /*profiling_context=*/nullptr,
+        /*graph_service_manager=*/nullptr);
 
     // Create a stub calculator context.
     calculator_context_ = std::make_unique<CalculatorContext>(
@@ -48,8 +50,10 @@ TEST_F(TfLiteModelLoaderTest, LoadFromPath) {
   // TODO: remove LegacyCalculatorSupport usage.
   LegacyCalculatorSupport::Scoped<CalculatorContext> scope(
       calculator_context_.get());
-  MP_ASSERT_OK_AND_ASSIGN(api2::Packet<TfLiteModelPtr> model,
-                          TfLiteModelLoader::LoadFromPath(model_path_));
+  std::unique_ptr<Resources> resources = CreateDefaultResources();
+  MP_ASSERT_OK_AND_ASSIGN(
+      api2::Packet<TfLiteModelPtr> model,
+      TfLiteModelLoader::LoadFromPath(*resources, model_path_));
   EXPECT_NE(model.Get(), nullptr);
 }
 
@@ -59,8 +63,10 @@ TEST_F(TfLiteModelLoaderTest, LoadFromPathRelativeToRootDir) {
   // TODO: remove LegacyCalculatorSupport usage.
   LegacyCalculatorSupport::Scoped<CalculatorContext> scope(
       calculator_context_.get());
-  MP_ASSERT_OK_AND_ASSIGN(api2::Packet<TfLiteModelPtr> model,
-                          TfLiteModelLoader::LoadFromPath(kModelFilename));
+  std::unique_ptr<Resources> resources = CreateDefaultResources();
+  MP_ASSERT_OK_AND_ASSIGN(
+      api2::Packet<TfLiteModelPtr> model,
+      TfLiteModelLoader::LoadFromPath(*resources, kModelFilename));
   EXPECT_NE(model.Get(), nullptr);
 }
 
@@ -68,10 +74,15 @@ TEST_F(TfLiteModelLoaderTest, LoadFromPathWithMmap) {
   // TODO: remove LegacyCalculatorSupport usage.
   LegacyCalculatorSupport::Scoped<CalculatorContext> scope(
       calculator_context_.get());
+  std::unique_ptr<Resources> resources = CreateDefaultResources();
   MP_ASSERT_OK_AND_ASSIGN(
       api2::Packet<TfLiteModelPtr> model,
-      TfLiteModelLoader::LoadFromPath(model_path_, /* try_mmap=*/true));
-  EXPECT_NE(model.Get(), nullptr);
+      TfLiteModelLoader::LoadFromPath(*resources, model_path_,
+                                      /* try_mmap=*/true));
+  ASSERT_NE(model.Get(), nullptr);
+
+  // Tiny regression test for b/345663816.
+  model.Get()->error_reporter()->Report("Test%i", 1);
 }
 
 }  // namespace

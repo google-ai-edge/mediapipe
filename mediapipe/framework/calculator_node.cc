@@ -14,6 +14,7 @@
 
 #include "mediapipe/framework/calculator_node.h"
 
+#include <memory>
 #include <set>
 #include <string>
 #include <unordered_map>
@@ -30,7 +31,9 @@
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_base.h"
+#include "mediapipe/framework/calculator_state.h"
 #include "mediapipe/framework/counter_factory.h"
+#include "mediapipe/framework/graph_service_manager.h"
 #include "mediapipe/framework/input_stream_manager.h"
 #include "mediapipe/framework/mediapipe_profiling.h"
 #include "mediapipe/framework/output_stream_manager.h"
@@ -125,7 +128,8 @@ absl::Status CalculatorNode::Initialize(
     InputStreamManager* input_stream_managers,
     OutputStreamManager* output_stream_managers,
     OutputSidePacketImpl* output_side_packets, int* buffer_size_hint,
-    std::shared_ptr<ProfilingContext> profiling_context) {
+    std::shared_ptr<ProfilingContext> profiling_context,
+    const GraphServiceManager* graph_service_manager) {
   RET_CHECK(buffer_size_hint) << "buffer_size_hint is NULL";
   validated_graph_ = validated_graph;
   profiling_context_ = profiling_context;
@@ -168,9 +172,9 @@ absl::Status CalculatorNode::Initialize(
                                     node_type_info_->OutputStreamTypes()));
   MP_RETURN_IF_ERROR(InitializeOutputStreams(output_stream_managers));
 
-  calculator_state_ = absl::make_unique<CalculatorState>(
+  calculator_state_ = std::make_unique<CalculatorState>(
       name_, node_ref.index, node_config->calculator(), *node_config,
-      profiling_context_);
+      profiling_context_, graph_service_manager);
 
   // Inform the scheduler that this node has buffering behavior and that the
   // maximum input queue size should be adjusted accordingly.

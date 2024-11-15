@@ -106,7 +106,9 @@ BenchmarkMixedInt48WeightAccessor::LoadWeight(absl::string_view filename_prefix,
                                               size_t dim_scale_if_any) const {
   if (absl::StrContains(filename_prefix, "ff_layer.ffn_layer1") ||
       absl::StrContains(filename_prefix, "ff_layer.ffn_layer2") ||
-      absl::StrContains(filename_prefix, "softmax.logits_ffn")) {
+      absl::StrContains(filename_prefix, "softmax.logits_ffn") ||
+      absl::StrContains(filename_prefix, "embedding") ||
+      absl::StrContains(filename_prefix, "mlp")) {
     return int4_weight_loader_->LoadWeight(filename_prefix, dims,
                                            dim_scale_if_any);
   }

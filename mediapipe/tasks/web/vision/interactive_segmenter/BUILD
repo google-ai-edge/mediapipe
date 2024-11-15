@@ -61,6 +61,6 @@ mediapipe_ts_library(
 
 jasmine_node_test(
     name = "interactive_segmenter_test",
+    srcs = [":interactive_segmenter_test_lib"],
     tags = ["nomsan"],
-    deps = [":interactive_segmenter_test_lib"],
 )

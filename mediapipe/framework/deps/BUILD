@@ -232,6 +232,7 @@ cc_library(
     hdrs = ["registration.h"],
     visibility = [
         "mediapipe_internal",
+        "//buzz/diffractor/mediapipe:__pkg__",
     ],
     deps = [
         ":registration_token",
@@ -301,7 +302,7 @@ cc_library(
 
 cc_library(
     name = "status_matchers",
-    testonly = 1,
+    testonly = True,
     hdrs = ["status_matchers.h"],
 
     # Use this library through "mediapipe/framework/port:gtest_main".

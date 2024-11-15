@@ -1,0 +1,11 @@
+absl-py
+numpy<2
+opencv-python
+setuptools==70.3.0 # needed due to https://github.com/pypa/setuptools/issues/4487
+tensorflow>=2.10,<2.16
+tensorflow-addons
+tensorflow-datasets
+tensorflow-hub
+tensorflow-model-optimization<0.8.0
+tensorflow-text
+tf-models-official>=2.13.2,<2.16.0

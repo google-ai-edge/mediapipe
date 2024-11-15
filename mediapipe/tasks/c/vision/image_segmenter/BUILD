@@ -73,7 +73,6 @@ cc_library(
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/tasks/c/core:base_options",
         "//mediapipe/tasks/c/core:base_options_converter",
-        "//mediapipe/tasks/c/test:test_utils",
         "//mediapipe/tasks/c/vision/core:common",
         "//mediapipe/tasks/cc/vision/core:running_mode",
         "//mediapipe/tasks/cc/vision/image_segmenter",

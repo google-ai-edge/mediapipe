@@ -15,6 +15,7 @@
 #ifndef MEDIAPIPE_TASKS_GENAI_INFERENCE_UTILS_LLM_UTILS_METADATA_UTILS_H_
 #define MEDIAPIPE_TASKS_GENAI_INFERENCE_UTILS_LLM_UTILS_METADATA_UTILS_H_
 
+#include "absl/algorithm/container.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/tasks/cc/genai/inference/proto/llm_params.pb.h"
@@ -26,15 +27,12 @@ constexpr absl::string_view kLlmModelTypeName = "odml.infra.LlmModelType";
 constexpr absl::string_view kLlmBackendName = "backend";
 constexpr absl::string_view kSpmVocabName = "spm_vocab_model";
 constexpr absl::string_view kLoRARank = "lora_rank";
+constexpr absl::string_view kImageEncoder = "image_encoder";
+constexpr absl::string_view kImageAdapter = "image_adapter";
 
 // Retrieve LlmModelType from tflite flatbuffer metadata.
 absl::StatusOr<odml::infra::proto::LlmModelType> GetLlmModelType(
     const ::tflite::FlatBufferModel& fb_model);
-
-// Retrieves SentencePiece from tflite's metadata and returns a string_view of
-// the model content.
-absl::StatusOr<absl::string_view> ExtractSentencePieceToStringView(
-    const tflite::FlatBufferModel& model, absl::string_view metadata_key);
 
 inline bool RequireBytesToUnicodeMapping(
     odml::infra::proto::LlmModelType model_type) {
@@ -44,8 +42,11 @@ inline bool RequireBytesToUnicodeMapping(
 }
 
 inline bool RequireFp32Model(odml::infra::proto::LlmModelType model_type) {
-  return model_type == odml::infra::proto::LLM_MODEL_TYPE_PHI_2 ||
-         model_type == odml::infra::proto::LLM_MODEL_TYPE_FALCON_RW_1B;
+  constexpr odml::infra::proto::LlmModelType kFp32Models[] = {
+      odml::infra::proto::LLM_MODEL_TYPE_PHI_2,
+      odml::infra::proto::LLM_MODEL_TYPE_FALCON_RW_1B,
+  };
+  return absl::c_linear_search(kFp32Models, model_type);
 }
 
 }  // namespace mediapipe::tasks::genai::llm_utils

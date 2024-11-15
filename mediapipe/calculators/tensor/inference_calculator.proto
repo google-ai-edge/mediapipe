@@ -145,6 +145,7 @@ message InferenceCalculatorOptions {
       optional string accelerator_name = 3;
     }
     message Xnnpack {
+      reserved 3;
       // Number of threads for XNNPACK delegate. (By default, calculator tries
       // to choose optimal number of threads depending on the device.)
       optional int32 num_threads = 1 [default = -1];

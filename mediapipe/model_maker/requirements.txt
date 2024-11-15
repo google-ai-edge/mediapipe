@@ -1,6 +1,6 @@
 absl-py
 mediapipe>=0.10.0
-numpy
+numpy<2
 opencv-python
 tensorflow>=2.10,<2.16
 tensorflow-addons

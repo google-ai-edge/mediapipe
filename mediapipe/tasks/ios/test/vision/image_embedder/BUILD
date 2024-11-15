@@ -40,7 +40,7 @@ TFL_DISABLED_SANITIZER_TAGS = [
 
 objc_library(
     name = "MPPImageEmbedderObjcTestLibrary",
-    testonly = 1,
+    testonly = True,
     srcs = ["MPPImageEmbedderTests.mm"],
     copts = [
         "-ObjC++",
@@ -57,6 +57,8 @@ objc_library(
         "//mediapipe/tasks/ios/test/vision/utils:MPPImageTestUtils",
         "//mediapipe/tasks/ios/vision/image_embedder:MPPImageEmbedder",
         "//mediapipe/tasks/ios/vision/image_embedder:MPPImageEmbedderResult",
+        "//third_party/apple_frameworks:Foundation",
+        "//third_party/apple_frameworks:XCTest",
     ] + select({
         "//third_party:opencv_ios_sim_arm64_source_build": ["@ios_opencv_source//:opencv_xcframework"],
         "//third_party:opencv_ios_arm64_source_build": ["@ios_opencv_source//:opencv_xcframework"],

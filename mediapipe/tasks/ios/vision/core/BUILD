@@ -30,6 +30,7 @@ objc_library(
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
         "//third_party/apple_frameworks:CoreMedia",
         "//third_party/apple_frameworks:CoreVideo",
+        "//third_party/apple_frameworks:Foundation",
         "//third_party/apple_frameworks:UIKit",
     ],
 )
@@ -38,6 +39,7 @@ objc_library(
     name = "MPPRunningMode",
     hdrs = ["sources/MPPRunningMode.h"],
     module_name = "MPPRunningMode",
+    deps = ["//third_party/apple_frameworks:Foundation"],
 )
 
 objc_library(
@@ -57,6 +59,7 @@ objc_library(
         "//mediapipe/tasks/ios/components/containers:MPPRegionOfInterest",
         "//mediapipe/tasks/ios/components/containers/utils:MPPRegionOfInterestHelpers",
         "//mediapipe/tasks/ios/vision/core/utils:MPPImageUtils",
+        "//third_party/apple_frameworks:Foundation",
     ],
 )
 
@@ -80,6 +83,7 @@ objc_library(
         "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
         "//mediapipe/tasks/ios/core:MPPTaskInfo",
         "//mediapipe/tasks/ios/core:MPPTaskRunner",
+        "//third_party/apple_frameworks:Foundation",
         "//third_party/apple_frameworks:UIKit",
         "@com_google_absl//absl/status:statusor",
     ],
@@ -96,5 +100,6 @@ objc_library(
     deps = [
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
+        "//third_party/apple_frameworks:Foundation",
     ],
 )

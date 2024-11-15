@@ -45,23 +45,4 @@ absl::StatusOr<odml::infra::proto::LlmModelType> GetLlmModelType(
                    " in tflite metadata"));
 }
 
-absl::StatusOr<absl::string_view> ExtractSentencePieceToStringView(
-    const tflite::FlatBufferModel& model, absl::string_view metadata_key) {
-  const std::string key =
-      std::string(metadata_key.empty() ? kSpmVocabName : metadata_key);
-  for (const auto& metadata : *model.GetModel()->metadata()) {
-    if (key == metadata->name()->c_str()) {
-      const int spm_vocab_index = metadata->buffer();
-      auto spm_vocab_buffer = model.GetModel()->buffers()->Get(spm_vocab_index);
-      return absl::string_view(
-          static_cast<const char*>(model.allocation()->base()) +
-              spm_vocab_buffer->offset(),
-          spm_vocab_buffer->size());
-    }
-  }
-
-  return absl::InvalidArgumentError(
-      absl::StrCat(key, " missing in tflite metadata"));
-}
-
 }  // namespace mediapipe::tasks::genai::llm_utils

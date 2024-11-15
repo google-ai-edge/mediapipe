@@ -80,7 +80,7 @@ absl::Status PackWeightsCache::Initialize() {
   cache_provider_.offset_to_addr =
       (void* (*)(void*, size_t))PackWeightsCache::offset_to_addr;
   cache_provider_.delete_cache =
-      (enum xnn_status(*)(void*))PackWeightsCache::delete_cache;
+      (enum xnn_status (*)(void*))PackWeightsCache::delete_cache;
 
   return absl::OkStatus();
 }

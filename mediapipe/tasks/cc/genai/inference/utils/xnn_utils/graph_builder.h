@@ -113,8 +113,8 @@ class XnnGraphBuilder {
   absl::StatusOr<std::unique_ptr<XnnGraph>> Build();
 
   // New input or output tensor.
-  absl::StatusOr<std::shared_ptr<Tensor>> NewInput(
-      Tensor::DimsType dims, absl::string_view source = "");
+  absl::StatusOr<std::shared_ptr<Tensor>> NewInput(Tensor::DimsType dims,
+                                                   absl::string_view tag = "");
   absl::Status MarkInput(std::shared_ptr<Tensor> t);
 
   // New static weight, populate value before Build()
@@ -135,6 +135,16 @@ class XnnGraphBuilder {
 
   absl::StatusOr<std::shared_ptr<Tensor>> Relu(std::shared_ptr<Tensor> input);
 
+  absl::StatusOr<std::shared_ptr<Tensor>> Relu1p5(
+      std::shared_ptr<Tensor> input);
+
+  absl::StatusOr<std::shared_ptr<Tensor>> Abs(std::shared_ptr<Tensor> input);
+
+  absl::StatusOr<std::shared_ptr<Tensor>> Log(std::shared_ptr<Tensor> input);
+
+  absl::StatusOr<std::shared_ptr<Tensor>> CopySign(std::shared_ptr<Tensor> lhs,
+                                                   std::shared_ptr<Tensor> rhs);
+
   absl::StatusOr<std::shared_ptr<Tensor>> Clamp(std::shared_ptr<Tensor> input,
                                                 ClampParams params);
 
@@ -150,8 +160,11 @@ class XnnGraphBuilder {
 
   absl::StatusOr<std::shared_ptr<Tensor>> Rms(std::shared_ptr<Tensor> input);
 
+  // Root Mean Square normalization
+  // out = input / rms(input) * (1 + scale)
+  // if scale is absent, scale is considered to be zero.
   absl::StatusOr<std::shared_ptr<Tensor>> RmsNorm(
-      std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> scale);
+      std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> scale = nullptr);
 
   absl::StatusOr<std::shared_ptr<Tensor>> Reshape(std::shared_ptr<Tensor> input,
                                                   Tensor::DimsType new_dims);
@@ -160,7 +173,7 @@ class XnnGraphBuilder {
                                                   Tensor::DimsType permute);
 
   // Create a slice of the input tensor. Both `starts` and `ends` must have
-  // the same sizes as the number of dimmensions in the input tensor. The
+  // the same sizes as the number of dimensions in the input tensor. The
   // resulting slice includes data from `[start[i], end[i])` for each dimension.
   // For instance, for input A = [1, 2, 3, 4] and starts = [1] and ends = [3],
   // the resulting slice would be [2, 3].
@@ -248,6 +261,10 @@ class XnnGraphBuilder {
       std::shared_ptr<Tensor> lhs, float rhs,
       ClampParams params = ClampParams());
 
+  absl::StatusOr<std::shared_ptr<Tensor>> ElementSub(
+      float lhs, std::shared_ptr<Tensor> rhs,
+      ClampParams params = ClampParams());
+
   absl::StatusOr<std::shared_ptr<Tensor>> ElementMul(
       std::shared_ptr<Tensor> lhs, std::shared_ptr<Tensor> rhs,
       ClampParams params = ClampParams());
@@ -289,11 +306,14 @@ class XnnGraphBuilder {
       std::shared_ptr<Tensor> beta = nullptr);
 
  protected:
+  absl::StatusOr<std::shared_ptr<Tensor>> ExpandDims(
+      std::shared_ptr<Tensor> input, Tensor::DimsType new_axes);
+
   absl::StatusOr<std::shared_ptr<Tensor>> IntermediateTensor(
-      Tensor::DimsType dims, absl::string_view source = "");
+      Tensor::DimsType dims, absl::string_view tag = "");
   absl::StatusOr<std::shared_ptr<Tensor>> IntermediateTensor(
       Tensor::DimsType dims, xnn_datatype data_type,
-      absl::string_view source = "");
+      absl::string_view tag = "");
 
   std::unique_ptr<RuntimeConfigs> runtime_configs_;
   const xnn_datatype data_type_;

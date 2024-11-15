@@ -25,6 +25,7 @@
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
+#include "mediapipe/tasks/cc/genai/inference/common/mdspan.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/llm.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/llm_weights.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/xnn_tensor.h"
@@ -88,55 +89,28 @@ FalconRW1BBuilder::FeedForwardExcludeNorm(
 
 absl::Status FalconRW1BBuilder::InitAttentionMask(size_t current_seq_len,
                                                   size_t process_seq_len,
-                                                  bool is_prefix,
                                                   Tensor& out_attn_mask) {
-  if (!attention_mask_values_) {
+  if (!attention_mask_values_.data()) {
     MP_RETURN_IF_ERROR(InitAlibiAttentionMaskValues());
   }
 
   if (llm_params_.enable_dynamic_shape) {
-    if (!is_prefix) {
-      out_attn_mask.Resize(Tensor::DimsType{1, llm_params_.n_heads_N,
-                                            current_seq_len + process_seq_len});
+    out_attn_mask.Resize(Tensor::DimsType{process_seq_len,
+                                          llm_params_.n_heads_N,
+                                          current_seq_len + process_seq_len});
+    for (size_t r = 0; r < out_attn_mask.dims[0]; ++r) {
       for (size_t n = 0; n < llm_params_.n_heads_N; ++n) {
-        auto slice = out_attn_mask.Slice(1, n);
+        auto slice = out_attn_mask.Slice(0, r)->Slice(1, n);
         MP_RETURN_IF_ERROR(slice->LoadFromBuffer(
-            attention_mask_values_->data() +
-            (current_seq_len * llm_params_.n_heads_N + n) *
-                llm_params_.seq_size_T));
-      }
-    } else {
-      out_attn_mask.Resize(Tensor::DimsType{process_seq_len,
-                                            llm_params_.n_heads_N,
-                                            current_seq_len + process_seq_len});
-      for (size_t r = 0; r < out_attn_mask.dims[0]; ++r) {
-        for (size_t n = 0; n < llm_params_.n_heads_N; ++n) {
-          auto slice = out_attn_mask.Slice(0, r)->Slice(1, n);
-          MP_RETURN_IF_ERROR(slice->LoadFromBuffer(
-              attention_mask_values_->data() +
-              ((current_seq_len + r) * llm_params_.n_heads_N + n) *
-                  llm_params_.seq_size_T));
-        }
+            attention_mask_values_[r + current_seq_len][n].data()));
       }
     }
   } else {
-    if (!is_prefix) {
-      RET_CHECK_EQ(out_attn_mask.num_elements,
-                   llm_params_.n_heads_N * llm_params_.seq_size_T);
-      out_attn_mask.flat_data = std::shared_ptr<char>(
-          attention_mask_values_,
-          reinterpret_cast<char*>(attention_mask_values_->data() +
-                                  llm_params_.n_heads_N *
-                                      llm_params_.seq_size_T *
-                                      current_seq_len));
-    } else {
-      RET_CHECK_EQ(out_attn_mask.num_elements, llm_params_.seq_size_T *
-                                                   llm_params_.n_heads_N *
-                                                   llm_params_.seq_size_T);
-      out_attn_mask.flat_data = std::shared_ptr<char>(
-          attention_mask_values_,
-          reinterpret_cast<char*>(attention_mask_values_->data()));
-    }
+    RET_CHECK_EQ(out_attn_mask.num_elements, llm_params_.seq_size_T *
+                                                 llm_params_.n_heads_N *
+                                                 llm_params_.seq_size_T);
+    MP_RETURN_IF_ERROR(
+        out_attn_mask.LoadFromBuffer(attention_mask_values_.data()));
   }
 
   return absl::OkStatus();
@@ -148,9 +122,15 @@ absl::Status FalconRW1BBuilder::InitAlibiAttentionMaskValues() {
   const float base = 1 / sqrt(sqrt(2));
   const float scale = 1.0f / sqrt(llm_params_.head_dim_H);
 
-  attention_mask_values_ = std::make_shared<std::vector<float>>(
-      llm_params_.n_heads_N * llm_params_.seq_size_T * llm_params_.seq_size_T,
-      0.8 * std::numeric_limits<float>::lowest());
+  {
+    std::vector<float> values(
+        llm_params_.seq_size_T * llm_params_.n_heads_N * llm_params_.seq_size_T,
+        0.8 * std::numeric_limits<float>::lowest());
+    float* values_ptr = values.data();
+    attention_mask_values_ =
+        MakeMdSpan(values_ptr, llm_params_.seq_size_T, llm_params_.n_heads_N,
+                   llm_params_.seq_size_T, [values = std::move(values)]() {});
+  }
 
   // mask: T,N,T
   // Note: Since the mask has different values across the heads, we use an
@@ -164,9 +144,7 @@ absl::Status FalconRW1BBuilder::InitAlibiAttentionMaskValues() {
         if (k > i) {
           break;
         }
-        int idx = i * llm_params_.n_heads_N * llm_params_.seq_size_T +
-                  j * llm_params_.seq_size_T + k;
-        (*attention_mask_values_)[idx] = k * alibi * scale;
+        attention_mask_values_.at(i, j, k) = k * alibi * scale;
       }
     }
   }

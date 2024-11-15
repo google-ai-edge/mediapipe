@@ -45,15 +45,6 @@ ABSL_FLAG(std::optional<std::string>, model_path, std::nullopt,
 ABSL_FLAG(std::optional<std::string>, cache_dir, std::nullopt,
           "Path to the cache directory.");
 
-ABSL_FLAG(int, sequence_batch_size, 0,
-          "Number of input tokens to process at a time for batch processing. "
-          "Setting this value to 1 means both the encoding and decoding share "
-          "the same graph of sequence length of 1. Setting this value to 0 "
-          "means the batch size will be optimized by ml_drift.");
-
-ABSL_FLAG(int, num_decode_steps_per_sync, 3,
-          "Number of decode steps per sync.");
-
 // Maximum number of sequence length for input + output.
 ABSL_FLAG(int, max_tokens, 512,
           "Maximum number of input and output tokens. This value needs to be "
@@ -61,13 +52,13 @@ ABSL_FLAG(int, max_tokens, 512,
 
 ABSL_FLAG(std::optional<uint32_t>, topk, std::nullopt,
           "Number of tokens to sample from at each decoding step for top-k "
-          "sampling. Currently only used for MLDrift.");
+          "sampling.");
 
 ABSL_FLAG(
     std::optional<float>, temperature, std::nullopt,
     "Softmax temperature. For any value less than 1/1024 (the difference "
     "between 1.0 and the next representable value for half-precision floats), "
-    "the sampling op collapses to an ArgMax. Currently only used for MLDrift.");
+    "the sampling op collapses to an ArgMax.");
 
 ABSL_FLAG(std::optional<uint32_t>, random_seed, std::nullopt,
           "Random seed for sampling tokens.");
@@ -102,10 +93,6 @@ int main(int argc, char** argv) {
   }
   const size_t max_tokens =
       static_cast<size_t>(absl::GetFlag(FLAGS_max_tokens));
-  const size_t sequence_batch_size =
-      static_cast<size_t>(absl::GetFlag(FLAGS_sequence_batch_size));
-  const size_t num_decode_steps_per_sync =
-      static_cast<size_t>(absl::GetFlag(FLAGS_num_decode_steps_per_sync));
 
   std::optional<std::string> prompt = absl::GetFlag(FLAGS_prompt);
   if (!prompt.has_value()) {
@@ -116,12 +103,13 @@ int main(int argc, char** argv) {
   const float temperature = absl::GetFlag(FLAGS_temperature).value_or(0.0f);
   const uint32_t random_seed = absl::GetFlag(FLAGS_random_seed).value_or(0);
 
-  const LlmSessionConfig session_config = {
+  const LlmModelSettings model_settings = {
       .model_path = model_path.c_str(),
       .cache_dir = cache_dir.c_str(),
-      .sequence_batch_size = sequence_batch_size,
-      .num_decode_steps_per_sync = num_decode_steps_per_sync,
-      .max_tokens = max_tokens,
+      .max_num_tokens = max_tokens,
+  };
+
+  const LlmSessionConfig session_config = {
       .topk = topk,
       .topp = 1.0f,
       .temperature = temperature,
@@ -131,10 +119,18 @@ int main(int argc, char** argv) {
   ABSL_LOG(INFO) << "Prompt: " << prompt.value();
 
   // Create Llm inference engine session.
-  void* llm_engine_session = nullptr;
+  void* llm_engine = nullptr;
   char* error_msg = nullptr;
-  int error_code = LlmInferenceEngine_CreateSession(
-      &session_config, &llm_engine_session, &error_msg);
+  int error_code =
+      LlmInferenceEngine_CreateEngine(&model_settings, &llm_engine, &error_msg);
+  if (error_code) {
+    ABSL_LOG(ERROR) << "Failed to create session: " << std::string(error_msg);
+    free(error_msg);
+    return EXIT_FAILURE;
+  }
+  void* llm_engine_session = nullptr;
+  error_code = LlmInferenceEngine_CreateSession(
+      llm_engine, &session_config, &llm_engine_session, &error_msg);
   if (error_code) {
     ABSL_LOG(ERROR) << "Failed to create session: " << std::string(error_msg);
     free(error_msg);
@@ -150,6 +146,15 @@ int main(int argc, char** argv) {
   // Get a pointer to the underlying character array
   char* prompt_str = char_vec.data();
 
+  ABSL_LOG(INFO) << "AddQueryChunk";
+  error_code = LlmInferenceEngine_Session_AddQueryChunk(llm_engine_session,
+                                                        prompt_str, &error_msg);
+  if (error_code) {
+    ABSL_LOG(ERROR) << "Failed to add query chunk: " << std::string(error_msg);
+    free(error_msg);
+    return EXIT_FAILURE;
+  }
+
   // Optional to receive the number of tokens of the input.
   // ABSL_LOG(INFO) << "SizeInToken";
   // int num_tokens = LlmInferenceEngine_Session_SizeInTokens(
@@ -159,20 +164,22 @@ int main(int argc, char** argv) {
   ABSL_LOG(INFO) << "PredictAsync";
   LlmInferenceEngine_Session_PredictAsync(llm_engine_session,
                                           /*callback_context=*/nullptr,
-                                          prompt_str, async_callback_print);
+                                          async_callback_print);
 
   // Optional to use the following for the sync version.
+  // ABSL_LOG(INFO) << "PredictSync";
   // auto output =
-  //     LlmInferenceEngine_Session_PredictSync(llm_engine_session,
-  // prompt_str);
+  //     LlmInferenceEngine_Session_PredictSync(llm_engine_session);
   // for (int i = 0; output.response_array[0][i] != '\0'; ++i) {
   //   std::cout << output.response_array[0][i] << std::flush;
   // }
+  // std::cout << std::endl;
   //
   // LlmInferenceEngine_CloseResponseContext(&output);
 
   ABSL_LOG(INFO) << "DeleteSession";
   LlmInferenceEngine_Session_Delete(llm_engine_session);
+  LlmInferenceEngine_Engine_Delete(llm_engine);
 
   return EXIT_SUCCESS;
 }

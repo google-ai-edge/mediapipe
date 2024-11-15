@@ -58,5 +58,6 @@ android_binary(
     deps = [
         ":mediapipe_jni_lib",
         "//mediapipe/examples/android/src/java/com/google/mediapipe/apps/basic:basic_lib",
+        "//third_party:libc++_shared_lib",
     ],
 )

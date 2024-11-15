@@ -145,6 +145,9 @@ cc_library(
     name = "kinematic_path_solver",
     srcs = ["kinematic_path_solver.cc"],
     hdrs = ["kinematic_path_solver.h"],
+    visibility = [
+        "//mediapipe/examples:__subpackages__",
+    ],
     deps = [
         ":kinematic_path_solver_cc_proto",
         "//mediapipe/framework/port:integral_types",

@@ -31,5 +31,6 @@ objc_library(
         "//mediapipe/tasks/ios/test/vision/utils:parse_proto_utils",
         "//mediapipe/tasks/ios/vision/pose_landmarker:MPPPoseLandmarkerResult",
         "//mediapipe/tasks/ios/vision/pose_landmarker/utils:MPPPoseLandmarkerResultHelpers",
+        "//third_party/apple_frameworks:Foundation",
     ],
 )

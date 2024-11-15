@@ -8,7 +8,6 @@ import {CreateGraphRunnerApi, CreateMediaPipeLibApi, FileLocator, WasmMediaPipeC
 import {EmptyPacketListener, ErrorListener, SimpleListener, VectorListener} from './listener_types';
 import {WasmModule} from './wasm_module';
 
-export {type ReturnType} from './graph_runner_factory_api';
 // This file contains the internal implementations behind the public APIs
 // declared in "graph_runner_api.d.ts" and "graph_runner_factory_api.d.ts".
 
@@ -151,7 +150,7 @@ export class GraphRunner implements GraphRunnerApi {
   }
 
   /** {@override GraphRunnerApi} */
-  configureAudio(numChannels: number, numSamples: number, sampleRate: number,
+  configureAudio(numChannels: number, numSamples: number | null, sampleRate: number,
       streamName?: string, headerName?: string) {
     if (!this.wasmModule._configureAudio) {
       console.warn(
@@ -163,7 +162,7 @@ export class GraphRunner implements GraphRunnerApi {
       headerName = headerName || 'audio_header';
       this.wrapStringPtr(headerName, (headerNamePtr: number) => {
         this.wasmModule._configureAudio(streamNamePtr, headerNamePtr,
-          numChannels, numSamples, sampleRate);
+          numChannels, numSamples ?? 0, sampleRate);
       });
     });
   }

@@ -16,6 +16,7 @@
 
 #include <fstream>
 #include <list>
+#include <memory>
 
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
@@ -259,13 +260,21 @@ absl::Status GraphProfiler::Start(mediapipe::Executor* executor) {
     }
 
     is_running_ = true;
-    executor->Schedule([this] {
-      absl::Time deadline = clock_->TimeNow() + tracer()->GetTraceLogInterval();
-      while (is_running_) {
-        clock_->SleepUntil(deadline);
-        deadline = clock_->TimeNow() + tracer()->GetTraceLogInterval();
-        if (is_running_) {
-          WriteProfile().IgnoreError();
+
+    std::weak_ptr<GraphProfiler> weak = weak_from_this();
+    executor->Schedule([weak] {
+      std::shared_ptr<GraphProfiler> self = weak.lock();
+      if (!self) {
+        return;
+      }
+      absl::Time deadline =
+          self->clock_->TimeNow() + self->tracer()->GetTraceLogInterval();
+      while (self->is_running_) {
+        self->clock_->SleepUntil(deadline);
+        deadline =
+            self->clock_->TimeNow() + self->tracer()->GetTraceLogInterval();
+        if (self->is_running_) {
+          self->WriteProfile().IgnoreError();
         }
       }
     });

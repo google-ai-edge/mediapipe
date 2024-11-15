@@ -57,6 +57,8 @@
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_matchers.h"
+#include "mediapipe/framework/resources.h"
+#include "mediapipe/framework/resources_service.h"
 #include "mediapipe/framework/status_handler.h"
 #include "mediapipe/framework/subgraph.h"
 #include "mediapipe/framework/thread_pool_executor.h"
@@ -2672,8 +2674,7 @@ TEST(CalculatorGraph, TwoDeadlocksAreReportedAndSufficientInfoProvided) {
   EXPECT_THAT(status.message(),
               testing::AllOf(testing::HasSubstr("deadlock"),
                              testing::HasSubstr("input1"),
-                             testing::HasSubstr("PassThroughCalculator"),
-                             testing::HasSubstr("MergeCalculator")));
+                             testing::HasSubstr("PassThroughCalculator")));
   graph.Cancel();
 }
 

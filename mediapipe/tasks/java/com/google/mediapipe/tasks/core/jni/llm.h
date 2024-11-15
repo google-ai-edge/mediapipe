@@ -26,11 +26,33 @@ extern "C" {
 
 /*
  * Class:     com_google_mediapipe_tasks_core_LlmTaskRunner
- * Method:    nativeCreateSession
+ * Method:    nativeCreateEngine
  * Signature: ([B)J
  */
+JNIEXPORT jlong JNICALL JNI_METHOD(nativeCreateEngine)(JNIEnv *, jclass,
+                                                       jbyteArray);
+
+/*
+ * Class:     com_google_mediapipe_tasks_core_LlmTaskRunner
+ * Method:    nativeDeleteEngine
+ * Signature: (J)V
+ */
+JNIEXPORT void JNICALL JNI_METHOD(nativeDeleteEngine)(JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     com_google_mediapipe_tasks_core_LlmTaskRunner
+ * Method:    nativeCreateSession
+ * Signature: ([BJL)J
+ */
 JNIEXPORT jlong JNICALL JNI_METHOD(nativeCreateSession)(JNIEnv *, jclass,
-                                                        jbyteArray);
+                                                        jbyteArray, jlong);
+
+/*
+ * Class:     com_google_mediapipe_tasks_core_LlmTaskRunner
+ * Method:    nativeCloneSession
+ * Signature: (J)J
+ */
+JNIEXPORT jlong JNICALL JNI_METHOD(nativeCloneSession)(JNIEnv *, jclass, jlong);
 
 /*
  * Class:     com_google_mediapipe_tasks_core_LlmTaskRunner
@@ -41,11 +63,19 @@ JNIEXPORT void JNICALL JNI_METHOD(nativeDeleteSession)(JNIEnv *, jclass, jlong);
 
 /*
  * Class:     com_google_mediapipe_tasks_core_LlmTaskRunner
+ * Method:    nativeAddQueryChunk
+ * Signature: (JLjava/lang/String;)V
+ */
+JNIEXPORT void JNICALL JNI_METHOD(nativeAddQueryChunk)(JNIEnv *, jclass, jlong,
+                                                       jstring);
+
+/*
+ * Class:     com_google_mediapipe_tasks_core_LlmTaskRunner
  * Method:    nativePredictSync
- * Signature: (JLjava/lang/String;)[B
+ * Signature: (JL)[B
  */
 JNIEXPORT jbyteArray JNICALL JNI_METHOD(nativePredictSync)(JNIEnv *, jclass,
-                                                           jlong, jstring);
+                                                           jlong);
 
 /*
  * Class:     com_google_mediapipe_tasks_core_LlmTaskRunner
@@ -66,10 +96,10 @@ JNIEXPORT void JNICALL JNI_METHOD(nativeRemoveCallback)(JNIEnv *, jclass,
 /*
  * Class:     com_google_mediapipe_tasks_core_LlmTaskRunner
  * Method:    nativePredictAsync
- * Signature: (JLjava/lang/Object;Ljava/lang/String;)V
+ * Signature: (JLjava/lang/Object;)V
  */
 JNIEXPORT void JNICALL JNI_METHOD(nativePredictAsync)(JNIEnv *, jclass, jlong,
-                                                      jobject, jstring);
+                                                      jobject);
 
 /*
  * Class:     com_google_mediapipe_tasks_core_LlmTaskRunner

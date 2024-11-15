@@ -15,7 +15,7 @@ limitations under the License.
 
 namespace mediapipe::tasks::vision::pose_landmarker {
 
-static constexpr int kNumPoseLandmarks = 33;
+inline constexpr int kNumPoseLandmarks = 33;
 
 // BlazePose 33 landmark names.
 enum class PoseLandmarkName {

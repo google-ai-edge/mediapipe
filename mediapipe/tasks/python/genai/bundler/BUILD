@@ -15,17 +15,13 @@
 # Placeholder for internal Python strict library and test compatibility macro.
 # Placeholder for internal Python strict test compatibility macro.
 
-package(default_visibility = [
-    "//mediapipe:__subpackages__",
-    "//third_party/odml:__subpackages__",
-])
-
 py_library(
     name = "llm_bundler",
     srcs = ["llm_bundler.py"],
     deps = [
         "//mediapipe/tasks/cc/genai/inference/proto:llm_params_py_pb2",
         "//mediapipe/tasks/python/metadata/metadata_writers:model_asset_bundle_utils",
+        "@com_google_sentencepiece//python:sentencepiece_processor",
     ],
 )
 
@@ -33,5 +29,9 @@ py_test(
     name = "llm_bundler_test",
     srcs = ["llm_bundler_test.py"],
     srcs_version = "PY3",
-    deps = [":llm_bundler"],
+    deps = [
+        ":llm_bundler",
+        "@com_google_sentencepiece//:sentencepiece_model_py_pb2",
+        "@mediapipe_pip_deps_absl_py//:pkg",
+    ],
 )

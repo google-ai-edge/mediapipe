@@ -42,6 +42,20 @@ NS_ASSUME_NONNULL_BEGIN
                                           processingFormat:(AVAudioFormat *)processingFormat;
 
 /**
+ * Creates an `AVAudioPCMBuffer` from the file specified by `fileInfo` with `Float32` interleaved
+ * data and sample rate equal to the input audio file. If the format of the audio file is `Float32`
+ * interleaved, the samples loaded from the file are directly returned. If not, the pcm buffer is
+ * converted to the processing format.
+ *
+ * @param fileInfo `FileInfo` with name and type of the audio file stored in the bundle.
+ *
+ * @return Newly created `Float32` interleaved audio pcm buffer. `nil` if there was an
+ * error during conversion.
+ */
++ (nullable AVAudioPCMBuffer *)interleavedFloat32BufferFromAudioFileWithInfo:
+    (MPPFileInfo *)fileInfo;
+
+/**
  * Converts the current pcm buffer to a pcm buffer using the specified audio converter
  *
  * @param audioConverter The audio converter to use for conversion.

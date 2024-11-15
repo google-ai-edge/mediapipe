@@ -123,8 +123,8 @@ class BeginLoopCalculator : public CalculatorBase {
 
     // Input streams tagged with "CLONE" are cloned to the corresponding
     // "CLONE" output streams at loop timestamps.
-    RET_CHECK(cc->Inputs().NumEntries("CLONE") ==
-              cc->Outputs().NumEntries("CLONE"));
+    RET_CHECK_EQ(cc->Inputs().NumEntries("CLONE"),
+                 cc->Outputs().NumEntries("CLONE"));
     if (cc->Inputs().NumEntries("CLONE") > 0) {
       for (int i = 0; i < cc->Inputs().NumEntries("CLONE"); ++i) {
         cc->Inputs().Get("CLONE", i).SetAny();

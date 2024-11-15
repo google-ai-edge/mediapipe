@@ -32,6 +32,7 @@
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"
+#include "mediapipe/framework/resources.h"
 #include "mediapipe/util/tflite/tflite_model_loader.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
 #include "tensorflow/lite/core/interpreter_builder.h"
@@ -110,8 +111,9 @@ static Tensor CreateSingleIntTensor(int value) {
 class InferenceFeedbackManagerTest : public ::testing::Test {
  protected:
   void InitModelAndInterpreter(const std::string& model_path) {
-    MP_ASSERT_OK_AND_ASSIGN(model_,
-                            TfLiteModelLoader::LoadFromPath(model_path));
+    std::unique_ptr<Resources> resources = CreateDefaultResources();
+    MP_ASSERT_OK_AND_ASSIGN(
+        model_, TfLiteModelLoader::LoadFromPath(*resources, model_path));
     op_resolver_ = std::make_unique<tflite::ops::builtin::BuiltinOpResolver>(
         tflite::ops::builtin::BuiltinOpResolverWithoutDefaultDelegates());
     InterpreterBuilder builder(*model_.Get(), *op_resolver_);

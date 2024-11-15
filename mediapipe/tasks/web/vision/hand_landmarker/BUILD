@@ -71,8 +71,8 @@ mediapipe_ts_library(
 
 jasmine_node_test(
     name = "hand_landmarker_test",
+    srcs = [":hand_landmarker_test_lib"],
     tags = ["nomsan"],
-    deps = [":hand_landmarker_test_lib"],
 )
 
 mediapipe_ts_library(

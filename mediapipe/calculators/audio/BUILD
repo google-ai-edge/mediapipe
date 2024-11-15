@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library", "mediapipe_proto_library")
 # Placeholder: load py_proto_library
 
 licenses(["notice"])
@@ -201,13 +201,11 @@ cc_library(
         ":spectrogram_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:matrix",
-        "//mediapipe/framework/port:core_proto",
-        "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:ret_check",
-        "//mediapipe/framework/port:source_location",
         "//mediapipe/framework/port:status",
         "//mediapipe/util:time_series_util",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_audio_tools//audio/dsp:window_functions",
         "@com_google_audio_tools//audio/dsp/spectrogram",
@@ -296,10 +294,10 @@ cc_test(
         "//mediapipe/framework/formats:time_series_header_cc_proto",
         "//mediapipe/framework/port:benchmark",
         "//mediapipe/framework/port:gtest_main",
-        "//mediapipe/framework/port:integral_types",
-        "//mediapipe/framework/port:status",
         "//mediapipe/util:time_series_test_util",
+        "//mediapipe/util:time_series_util",
         "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/status",
         "@com_google_audio_tools//audio/dsp:number_util",
         "@eigen_archive//:eigen3",
     ],
@@ -349,10 +347,10 @@ cc_test(
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/framework/formats:time_series_header_cc_proto",
         "//mediapipe/framework/port:gtest_main",
-        "//mediapipe/framework/port:integral_types",
-        "//mediapipe/framework/port:status",
         "//mediapipe/util:time_series_test_util",
+        "//mediapipe/util:time_series_util",
         "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/status",
         "@com_google_audio_tools//audio/dsp:window_functions",
         "@eigen_archive//:eigen3",
     ],
