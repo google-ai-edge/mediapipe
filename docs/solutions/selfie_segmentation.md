@@ -61,11 +61,11 @@ Please find more detail about the models in the
 ## ML Pipeline
 
 The pipeline is implemented as a MediaPipe
-[graph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/selfie_segmentation/selfie_segmentation_gpu.pbtxt)
+[graph](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/selfie_segmentation/selfie_segmentation_gpu.pbtxt)
 that uses a
-[selfie segmentation subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/modules/selfie_segmentation/selfie_segmentation_gpu.pbtxt)
+[selfie segmentation subgraph](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/modules/selfie_segmentation/selfie_segmentation_gpu.pbtxt)
 from the
-[selfie segmentation module](https://github.com/google/mediapipe/tree/master/mediapipe/modules/selfie_segmentation).
+[selfie segmentation module](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/modules/selfie_segmentation).
 
 Note: To visualize a graph, copy the graph and paste it into
 [MediaPipe Visualizer](https://viz.mediapipe.dev/). For more information on how
@@ -266,12 +266,12 @@ to visualize its associated subgraphs, please see
 ### Mobile
 
 *   Graph:
-    [`mediapipe/graphs/selfie_segmentation/selfie_segmentation_gpu.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/selfie_segmentation/selfie_segmentation_gpu.pbtxt)
+    [`mediapipe/graphs/selfie_segmentation/selfie_segmentation_gpu.pbtxt`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/selfie_segmentation/selfie_segmentation_gpu.pbtxt)
 *   Android target:
     [(or download prebuilt ARM64 APK)](https://drive.google.com/file/d/1DoeyGzMmWUsjfVgZfGGecrn7GKzYcEAo/view?usp=sharing)
-    [`mediapipe/examples/android/src/java/com/google/mediapipe/apps/selfiesegmentationgpu:selfiesegmentationgpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/selfiesegmentationgpu/BUILD)
+    [`mediapipe/examples/android/src/java/com/google/mediapipe/apps/selfiesegmentationgpu:selfiesegmentationgpu`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/selfiesegmentationgpu/BUILD)
 *   iOS target:
-    [`mediapipe/examples/ios/selfiesegmentationgpu:SelfieSegmentationGpuApp`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/ios/selfiesegmentationgpu/BUILD)
+    [`mediapipe/examples/ios/selfiesegmentationgpu:SelfieSegmentationGpuApp`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/ios/selfiesegmentationgpu/BUILD)
 
 ### Desktop
 
@@ -280,14 +280,14 @@ on how to build MediaPipe examples.
 
 *   Running on CPU
     *   Graph:
-        [`mediapipe/graphs/selfie_segmentation/selfie_segmentation_cpu.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/selfie_segmentation/selfie_segmentation_cpu.pbtxt)
+        [`mediapipe/graphs/selfie_segmentation/selfie_segmentation_cpu.pbtxt`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/selfie_segmentation/selfie_segmentation_cpu.pbtxt)
     *   Target:
-        [`mediapipe/examples/desktop/selfie_segmentation:selfie_segmentation_cpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/desktop/selfie_segmentation/BUILD)
+        [`mediapipe/examples/desktop/selfie_segmentation:selfie_segmentation_cpu`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/desktop/selfie_segmentation/BUILD)
 *   Running on GPU
     *   Graph:
-        [`mediapipe/graphs/selfie_segmentation/selfie_segmentation_gpu.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/selfie_segmentation/selfie_segmentation_gpu.pbtxt)
+        [`mediapipe/graphs/selfie_segmentation/selfie_segmentation_gpu.pbtxt`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/selfie_segmentation/selfie_segmentation_gpu.pbtxt)
     *   Target:
-        [`mediapipe/examples/desktop/selfie_segmentation:selfie_segmentation_gpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/desktop/selfie_segmentation/BUILD)
+        [`mediapipe/examples/desktop/selfie_segmentation:selfie_segmentation_gpu`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/desktop/selfie_segmentation/BUILD)
 
 ## Resources
 

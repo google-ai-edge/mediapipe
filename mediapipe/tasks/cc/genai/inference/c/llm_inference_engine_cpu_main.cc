@@ -83,7 +83,7 @@ int main(int argc, char** argv) {
   absl::ParseCommandLine(argc, argv);
 
   ABSL_QCHECK(absl::GetFlag(FLAGS_model_path).has_value())
-      << "--vocab_model is required.";
+      << "--model_path is required.";
   const std::string model_path = absl::GetFlag(FLAGS_model_path).value();
   std::string cache_dir;
   if (absl::GetFlag(FLAGS_cache_dir).has_value()) {

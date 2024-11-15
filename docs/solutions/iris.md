@@ -64,23 +64,23 @@ isolate the eye region in the original image for use in the subsequent iris
 tracking step.
 
 The pipeline is implemented as a MediaPipe
-[graph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/iris_tracking/iris_tracking_gpu.pbtxt)
+[graph](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/iris_tracking/iris_tracking_gpu.pbtxt)
 that uses a
-[face landmark subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_landmark/face_landmark_front_gpu.pbtxt)
+[face landmark subgraph](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/modules/face_landmark/face_landmark_front_gpu.pbtxt)
 from the
-[face landmark module](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_landmark),
+[face landmark module](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/modules/face_landmark),
 an
-[iris landmark subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/modules/iris_landmark/iris_landmark_left_and_right_gpu.pbtxt)
+[iris landmark subgraph](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/modules/iris_landmark/iris_landmark_left_and_right_gpu.pbtxt)
 from the
-[iris landmark module](https://github.com/google/mediapipe/tree/master/mediapipe/modules/iris_landmark),
+[iris landmark module](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/modules/iris_landmark),
 and renders using a dedicated
-[iris-and-depth renderer subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/iris_tracking/subgraphs/iris_and_depth_renderer_gpu.pbtxt).
+[iris-and-depth renderer subgraph](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/iris_tracking/subgraphs/iris_and_depth_renderer_gpu.pbtxt).
 The
-[face landmark subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_landmark/face_landmark_front_gpu.pbtxt)
+[face landmark subgraph](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/modules/face_landmark/face_landmark_front_gpu.pbtxt)
 internally uses a
-[face detection subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_detection/face_detection_short_range_gpu.pbtxt)
+[face detection subgraph](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/modules/face_detection/face_detection_short_range_gpu.pbtxt)
 from the
-[face detection module](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_detection).
+[face detection module](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/modules/face_detection).
 
 Note: To visualize a graph, copy the graph and paste it into
 [MediaPipe Visualizer](https://viz.mediapipe.dev/). For more information on how
@@ -142,10 +142,10 @@ to visualize its associated subgraphs, please see
 ### Mobile
 
 *   Graph:
-    [`mediapipe/graphs/iris_tracking/iris_tracking_gpu.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/iris_tracking/iris_tracking_gpu.pbtxt)
+    [`mediapipe/graphs/iris_tracking/iris_tracking_gpu.pbtxt`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/iris_tracking/iris_tracking_gpu.pbtxt)
 *   Android target:
     [(or download prebuilt ARM64 APK)](https://drive.google.com/file/d/1cywcNtqk764TlZf1lvSTV4F3NGB2aL1R/view?usp=sharing)
-    [`mediapipe/examples/android/src/java/com/google/mediapipe/apps/iristrackinggpu:iristrackinggpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/iristrackinggpu/BUILD)
+    [`mediapipe/examples/android/src/java/com/google/mediapipe/apps/iristrackinggpu:iristrackinggpu`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/iristrackinggpu/BUILD)
 *   iOS target:
     [`mediapipe/examples/ios/iristrackinggpu:IrisTrackingGpuApp`](http:/mediapipe/examples/ios/iristrackinggpu/BUILD)
 
@@ -158,14 +158,14 @@ on how to build MediaPipe examples.
 
 *   Running on CPU
     *   Graph:
-        [`mediapipe/graphs/iris_tracking/iris_tracking_cpu.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/iris_tracking/iris_tracking_cpu.pbtxt)
+        [`mediapipe/graphs/iris_tracking/iris_tracking_cpu.pbtxt`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/iris_tracking/iris_tracking_cpu.pbtxt)
     *   Target:
-        [`mediapipe/examples/desktop/iris_tracking:iris_tracking_cpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/desktop/iris_tracking/BUILD)
+        [`mediapipe/examples/desktop/iris_tracking:iris_tracking_cpu`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/desktop/iris_tracking/BUILD)
 *   Running on GPU
     *   Graph:
-        [`mediapipe/graphs/iris_tracking/iris_tracking_gpu.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/iris_tracking/iris_tracking_gpu.pbtxt)
+        [`mediapipe/graphs/iris_tracking/iris_tracking_gpu.pbtxt`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/iris_tracking/iris_tracking_gpu.pbtxt)
     *   Target:
-        [`mediapipe/examples/desktop/iris_tracking:iris_tracking_gpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/desktop/iris_tracking/BUILD)
+        [`mediapipe/examples/desktop/iris_tracking:iris_tracking_gpu`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/desktop/iris_tracking/BUILD)
 
 #### Video File Input
 

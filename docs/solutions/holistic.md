@@ -89,21 +89,21 @@ models that play the role of
 corresponding model's inference time.
 
 The pipeline is implemented as a MediaPipe
-[graph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/holistic_tracking/holistic_tracking_gpu.pbtxt)
+[graph](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/holistic_tracking/holistic_tracking_gpu.pbtxt)
 that uses a
-[holistic landmark subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/modules/holistic_landmark/holistic_landmark_gpu.pbtxt)
+[holistic landmark subgraph](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/modules/holistic_landmark/holistic_landmark_gpu.pbtxt)
 from the
-[holistic landmark module](https://github.com/google/mediapipe/tree/master/mediapipe/modules/holistic_landmark)
+[holistic landmark module](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/modules/holistic_landmark)
 and renders using a dedicated
-[holistic renderer subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/holistic_tracking/holistic_tracking_to_render_data.pbtxt).
+[holistic renderer subgraph](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/holistic_tracking/holistic_tracking_to_render_data.pbtxt).
 The
-[holistic landmark subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/modules/holistic_landmark/holistic_landmark_gpu.pbtxt)
+[holistic landmark subgraph](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/modules/holistic_landmark/holistic_landmark_gpu.pbtxt)
 internally uses a
-[pose landmark module](https://github.com/google/mediapipe/tree/master/mediapipe/modules/pose_landmark)
+[pose landmark module](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/modules/pose_landmark)
 ,
-[hand landmark module](https://github.com/google/mediapipe/tree/master/mediapipe/modules/hand_landmark)
+[hand landmark module](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/modules/hand_landmark)
 and
-[face landmark module](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_landmark/).
+[face landmark module](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/modules/face_landmark/).
 Please check them for implementation details.
 
 Note: To visualize a graph, copy the graph and paste it into
@@ -470,10 +470,10 @@ to visualize its associated subgraphs, please see
 ### Mobile
 
 *   Graph:
-    [`mediapipe/graphs/holistic_tracking/holistic_tracking_gpu.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/holistic_tracking/holistic_tracking_gpu.pbtxt)
+    [`mediapipe/graphs/holistic_tracking/holistic_tracking_gpu.pbtxt`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/holistic_tracking/holistic_tracking_gpu.pbtxt)
 *   Android target:
     [(or download prebuilt ARM64 APK)](https://drive.google.com/file/d/1o-Trp2GIRitA0OvmZWUQjVMa476xpfgK/view?usp=sharing)
-    [`mediapipe/examples/android/src/java/com/google/mediapipe/apps/holistictrackinggpu:holistictrackinggpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/holistictrackinggpu/BUILD)
+    [`mediapipe/examples/android/src/java/com/google/mediapipe/apps/holistictrackinggpu:holistictrackinggpu`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/holistictrackinggpu/BUILD)
 *   iOS target:
     [`mediapipe/examples/ios/holistictrackinggpu:HolisticTrackingGpuApp`](http:/mediapipe/examples/ios/holistictrackinggpu/BUILD)
 
@@ -484,14 +484,14 @@ on how to build MediaPipe examples.
 
 *   Running on CPU
     *   Graph:
-        [`mediapipe/graphs/holistic_tracking/holistic_tracking_cpu.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/holistic_tracking/holistic_tracking_cpu.pbtxt)
+        [`mediapipe/graphs/holistic_tracking/holistic_tracking_cpu.pbtxt`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/holistic_tracking/holistic_tracking_cpu.pbtxt)
     *   Target:
-        [`mediapipe/examples/desktop/holistic_tracking:holistic_tracking_cpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/desktop/holistic_tracking/BUILD)
+        [`mediapipe/examples/desktop/holistic_tracking:holistic_tracking_cpu`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/desktop/holistic_tracking/BUILD)
 *   Running on GPU
     *   Graph:
-        [`mediapipe/graphs/holistic_tracking/holistic_tracking_gpu.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/holistic_tracking/holistic_tracking_gpu.pbtxt)
+        [`mediapipe/graphs/holistic_tracking/holistic_tracking_gpu.pbtxt`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/holistic_tracking/holistic_tracking_gpu.pbtxt)
     *   Target:
-        [`mediapipe/examples/desktop/holistic_tracking:holistic_tracking_gpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/desktop/holistic_tracking/BUILD)
+        [`mediapipe/examples/desktop/holistic_tracking:holistic_tracking_gpu`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/desktop/holistic_tracking/BUILD)
 
 ## Resources
 

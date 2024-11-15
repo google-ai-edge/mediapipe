@@ -53,7 +53,7 @@ following these [instructions](./android_archive_library.md).
 ## Building solution example apps
 
 Detailed usage examples of the Android Solution APIs can be found in the
-[source code](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/solutions)
+[source code](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/android/solutions)
 of the solution example apps.
 
 To build these apps:

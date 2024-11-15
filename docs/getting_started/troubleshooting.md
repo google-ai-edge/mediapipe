@@ -270,17 +270,17 @@ calculators designed specifically for this purpose such as
 [`FlowLimiterCalculator`] as described in
 [`How to process realtime input streams`].
 
-[`CalculatorGraphConfig`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator.proto
-[`CalculatorGraphConfig::max_queue_size`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator.proto
-[`CalculatorGraphConfig::report_deadlock`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator.proto
-[`REGISTER_CALCULATOR`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator_registry.h
-[`registration.h`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/deps/registration.h
-[`CalculatorGraph::CloseAllPacketSources`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator_graph.h
-[`CalculatorGraph::Cancel`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator_graph.h
-[`CalculatorGraph::WaitUntilDone`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator_graph.h
-[`Timestamp::Done`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/timestamp.h
-[`CalculatorBase::Close`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator_base.h
-[`FlowLimiterCalculator`]: https://github.com/google/mediapipe/tree/master/mediapipe/calculators/core/flow_limiter_calculator.cc
+[`CalculatorGraphConfig`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator.proto
+[`CalculatorGraphConfig::max_queue_size`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator.proto
+[`CalculatorGraphConfig::report_deadlock`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator.proto
+[`REGISTER_CALCULATOR`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator_registry.h
+[`registration.h`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/deps/registration.h
+[`CalculatorGraph::CloseAllPacketSources`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator_graph.h
+[`CalculatorGraph::Cancel`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator_graph.h
+[`CalculatorGraph::WaitUntilDone`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator_graph.h
+[`Timestamp::Done`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/timestamp.h
+[`CalculatorBase::Close`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator_base.h
+[`FlowLimiterCalculator`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/calculators/core/flow_limiter_calculator.cc
 [`How to process realtime input streams`]: faq.md#how-to-process-realtime-input-streams
 
 ## Unsupported flags during build

@@ -43,10 +43,10 @@ to visualize its associated subgraphs, please see
 ### Mobile
 
 *   Graph:
-    [`mediapipe/graphs/hair_segmentation/hair_segmentation_mobile_gpu.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hair_segmentation/hair_segmentation_mobile_gpu.pbtxt)
+    [`mediapipe/graphs/hair_segmentation/hair_segmentation_mobile_gpu.pbtxt`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/hair_segmentation/hair_segmentation_mobile_gpu.pbtxt)
 *   Android target:
     [(or download prebuilt ARM64 APK)](https://drive.google.com/open?id=1mmLtyL8IRfCUbqqu0-E-Hgjr_e6P3XAy)
-    [`mediapipe/examples/android/src/java/com/google/mediapipe/apps/hairsegmentationgpu:hairsegmentationgpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/hairsegmentationgpu/BUILD)
+    [`mediapipe/examples/android/src/java/com/google/mediapipe/apps/hairsegmentationgpu:hairsegmentationgpu`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/hairsegmentationgpu/BUILD)
 *   iOS target: Not available
 
 ### Desktop
@@ -54,9 +54,9 @@ to visualize its associated subgraphs, please see
 *   Running on CPU: Not available
 *   Running on GPU
     *   Graph:
-        [`mediapipe/graphs/hair_segmentation/hair_segmentation_mobile_gpu.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hair_segmentation/hair_segmentation_mobile_gpu.pbtxt)
+        [`mediapipe/graphs/hair_segmentation/hair_segmentation_mobile_gpu.pbtxt`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/hair_segmentation/hair_segmentation_mobile_gpu.pbtxt)
     *   Target:
-        [`mediapipe/examples/desktop/hair_segmentation:hair_segmentation_gpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/desktop/hair_segmentation/BUILD)
+        [`mediapipe/examples/desktop/hair_segmentation:hair_segmentation_gpu`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/desktop/hair_segmentation/BUILD)
 
 ### Web
 

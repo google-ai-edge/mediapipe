@@ -28,7 +28,7 @@
 static constexpr int kMicrosecondsPerMillisecond = 1000;
 
 // Constants for the underlying MP Tasks Graph. See
-// https://github.com/google/mediapipe/tree/master/mediapipe/tasks/cc/vision/image_segmenter/image_segmenter_graph.cc
+// https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/tasks/cc/vision/image_segmenter/image_segmenter_graph.cc
 static NSString *const kConfidenceMasksStreamName = @"confidence_masks";
 static NSString *const kConfidenceMasksTag = @"CONFIDENCE_MASKS";
 static NSString *const kCategoryMaskStreamName = @"category_mask";

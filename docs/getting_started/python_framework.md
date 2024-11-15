@@ -38,10 +38,10 @@ The packet is the basic data flow unit in MediaPipe. A packet consists of a
 numeric timestamp and a shared pointer to an immutable payload. In Python, a
 MediaPipe packet can be created by calling one of the packet creator methods in
 the
-[`mp.packet_creator`](https://github.com/google/mediapipe/tree/master/mediapipe/python/pybind/packet_creator.cc)
+[`mp.packet_creator`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/python/pybind/packet_creator.cc)
 module. Correspondingly, the packet payload can be retrieved by using one of the
 packet getter methods in the
-[`mp.packet_getter`](https://github.com/google/mediapipe/tree/master/mediapipe/python/pybind/packet_getter.cc)
+[`mp.packet_getter`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/python/pybind/packet_getter.cc)
 module. Note that the packet payload becomes **immutable** after packet
 creation. Thus, the modification of the retrieved packet content doesn't affect
 the actual payload in the packet. MediaPipe framework Python API supports the
@@ -176,17 +176,17 @@ the Packet API provides a convenience method `packet.at()` to define the numeric
 timestamp of a packet. More generally, `packet.timestamp` is the packet class
 property for accessing the underlying timestamp. To convert an Unix epoch to a
 MediaPipe timestamp,
-[the Timestamp API](https://github.com/google/mediapipe/tree/master/mediapipe/python/pybind/timestamp.cc)
+[the Timestamp API](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/python/pybind/timestamp.cc)
 offers a method `mp.Timestamp.from_seconds()` for this purpose.
 
 ### ImageFrame
 
 ImageFrame is the container for storing an image or a video frame. Formats
 supported by ImageFrame are listed in
-[the ImageFormat enum](https://github.com/google/mediapipe/tree/master/mediapipe/python/pybind/image_frame.cc#l=170).
+[the ImageFormat enum](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/python/pybind/image_frame.cc#l=170).
 Pixels are encoded row-major with interleaved color components, and ImageFrame
 supports uint8, uint16, and float as its data types. MediaPipe provides
-[an ImageFrame Python API](https://github.com/google/mediapipe/tree/master/mediapipe/python/pybind/image_frame.cc)
+[an ImageFrame Python API](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/python/pybind/image_frame.cc)
 to access the ImageFrame C++ class. In Python, the easiest way to retrieve the
 pixel data is to call `image_frame.numpy_view()` to get a numpy ndarray. Note
 that the returned numpy ndarray, a reference to the internal pixel data, is
@@ -200,7 +200,7 @@ contiguous when it's returned to the Python side.
 
 In MediaPipe, all processing takes places within the context of a
 CalculatorGraph.
-[The CalculatorGraph Python API](https://github.com/google/mediapipe/tree/master/mediapipe/python/pybind/calculator_graph.cc)
+[The CalculatorGraph Python API](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/python/pybind/calculator_graph.cc)
 is a direct binding to the C++ CalculatorGraph class. The major difference is
 the CalculatorGraph Python API raises a Python error instead of returning a
 non-OK Status when an error occurs. Therefore, as a Python user, you can handle

@@ -249,7 +249,7 @@ camera.start();
 Please first follow general
 [instructions](../getting_started/android_solutions.md) to add MediaPipe Gradle
 dependencies and try the Android Solution API in the companion
-[example Android Studio project](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/solutions/facedetection),
+[example Android Studio project](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/android/solutions/facedetection),
 and learn more in the usage example below.
 
 Supported configuration options:
@@ -468,12 +468,12 @@ to visualize its associated subgraphs, please see
 #### GPU Pipeline
 
 *   Graph:
-    [`mediapipe/graphs/face_detection/face_detection_mobile_gpu.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/face_detection/face_detection_mobile_gpu.pbtxt)
+    [`mediapipe/graphs/face_detection/face_detection_mobile_gpu.pbtxt`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/face_detection/face_detection_mobile_gpu.pbtxt)
 *   Android target:
     [(or download prebuilt ARM64 APK)](https://drive.google.com/open?id=1DZTCy1gp238kkMnu4fUkwI3IrF77Mhy5)
-    [`mediapipe/examples/android/src/java/com/google/mediapipe/apps/facedetectiongpu:facedetectiongpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/facedetectiongpu/BUILD)
+    [`mediapipe/examples/android/src/java/com/google/mediapipe/apps/facedetectiongpu:facedetectiongpu`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/facedetectiongpu/BUILD)
 *   iOS target:
-    [`mediapipe/examples/ios/facedetectiongpu:FaceDetectionGpuApp`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/ios/facedetectiongpu/BUILD)
+    [`mediapipe/examples/ios/facedetectiongpu:FaceDetectionGpuApp`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/ios/facedetectiongpu/BUILD)
 
 #### CPU Pipeline
 
@@ -483,30 +483,30 @@ image transfer respectively. As a result, the rest of graph, which shares the
 same configuration as the GPU pipeline, runs entirely on CPU.
 
 *   Graph:
-    [`mediapipe/graphs/face_detection/face_detection_mobile_cpu.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/face_detection/face_detection_mobile_cpu.pbtxt)
+    [`mediapipe/graphs/face_detection/face_detection_mobile_cpu.pbtxt`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/face_detection/face_detection_mobile_cpu.pbtxt)
 *   Android target:
     [(or download prebuilt ARM64 APK)](https://drive.google.com/open?id=1npiZY47jbO5m2YaL63o5QoCQs40JC6C7)
-    [`mediapipe/examples/android/src/java/com/google/mediapipe/apps/facedetectioncpu:facedetectioncpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/facedetectioncpu/BUILD)
+    [`mediapipe/examples/android/src/java/com/google/mediapipe/apps/facedetectioncpu:facedetectioncpu`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/facedetectioncpu/BUILD)
 *   iOS target:
-    [`mediapipe/examples/ios/facedetectioncpu:FaceDetectionCpuApp`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/ios/facedetectioncpu/BUILD)
+    [`mediapipe/examples/ios/facedetectioncpu:FaceDetectionCpuApp`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/ios/facedetectioncpu/BUILD)
 
 ### Desktop
 
 *   Running on CPU:
     *   Graph:
-        [`mediapipe/graphs/face_detection/face_detection_desktop_live.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/face_detection/face_detection_desktop_live.pbtxt)
+        [`mediapipe/graphs/face_detection/face_detection_desktop_live.pbtxt`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/face_detection/face_detection_desktop_live.pbtxt)
     *   Target:
-        [`mediapipe/examples/desktop/face_detection:face_detection_cpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/desktop/face_detection/BUILD)
+        [`mediapipe/examples/desktop/face_detection:face_detection_cpu`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/desktop/face_detection/BUILD)
 *   Running on GPU
     *   Graph:
-        [`mediapipe/graphs/face_detection/face_detection_mobile_gpu.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/face_detection/face_detection_mobile_gpu.pbtxt)
+        [`mediapipe/graphs/face_detection/face_detection_mobile_gpu.pbtxt`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/face_detection/face_detection_mobile_gpu.pbtxt)
     *   Target:
-        [`mediapipe/examples/desktop/face_detection:face_detection_gpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/desktop/face_detection/BUILD)
+        [`mediapipe/examples/desktop/face_detection:face_detection_gpu`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/desktop/face_detection/BUILD)
 
 ### Coral
 
 Please refer to
-[these instructions](https://github.com/google/mediapipe/tree/master/mediapipe/examples/coral/README.md)
+[these instructions](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/coral/README.md)
 to cross-compile and run MediaPipe examples on the
 [Coral Dev Board](https://coral.ai/products/dev-board).
 

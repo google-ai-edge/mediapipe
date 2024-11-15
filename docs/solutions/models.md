@@ -25,11 +25,11 @@ We encourage you to check out the new MediaPipe Solutions at:
 
 ----
 
-### [Face Detection](https://google.github.io/mediapipe/solutions/face_detection)
+### [Face Detection](https://google-ai-edge.github.io/mediapipe/solutions/face_detection)
 
 *   Short-range model (best for faces within 2 meters from the camera):
     [TFLite model](https://storage.googleapis.com/mediapipe-assets/face_detection_short_range.tflite),
-    [TFLite model quantized for EdgeTPU/Coral](https://github.com/google/mediapipe/tree/master/mediapipe/examples/coral/models/face-detector-quantized_edgetpu.tflite),
+    [TFLite model quantized for EdgeTPU/Coral](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/coral/models/face-detector-quantized_edgetpu.tflite),
     [Model card](https://mediapipe.page.link/blazeface-mc)
 *   Full-range model (dense, best for faces within 5 meters from the camera):
     [TFLite model](https://storage.googleapis.com/mediapipe-assets/face_detection_full_range.tflite),
@@ -49,7 +49,7 @@ sparse model is ~30% faster when executing on CPU via
 demonstrate comparable latencies. Depending on your application, you may prefer
 one over the other.
 
-### [Face Mesh](https://google.github.io/mediapipe/solutions/face_mesh)
+### [Face Mesh](https://google-ai-edge.github.io/mediapipe/solutions/face_mesh)
 
 *   Face landmark model:
     [TFLite model](https://storage.googleapis.com/mediapipe-assets/face_landmark.tflite),
@@ -59,13 +59,13 @@ one over the other.
 *   [Model card](https://mediapipe.page.link/facemesh-mc),
     [Model card (w/ attention)](https://mediapipe.page.link/attentionmesh-mc)
 
-### [Iris](https://google.github.io/mediapipe/solutions/iris)
+### [Iris](https://google-ai-edge.github.io/mediapipe/solutions/iris)
 
 *   Iris landmark model:
     [TFLite model](https://storage.googleapis.com/mediapipe-assets/iris_landmark.tflite)
 *   [Model card](https://mediapipe.page.link/iris-mc)
 
-### [Hands](https://google.github.io/mediapipe/solutions/hands)
+### [Hands](https://google-ai-edge.github.io/mediapipe/solutions/hands)
 
 *   Palm detection model:
     [TFLite model (lite)](https://storage.googleapis.com/mediapipe-assets/palm_detection_lite.tflite),
@@ -77,7 +77,7 @@ one over the other.
     [TF.js model](https://tfhub.dev/mediapipe/handskeleton/1)
 *   [Model card](https://mediapipe.page.link/handmc)
 
-### [Pose](https://google.github.io/mediapipe/solutions/pose)
+### [Pose](https://google-ai-edge.github.io/mediapipe/solutions/pose)
 
 *   Pose detection model:
     [TFLite model](https://storage.googleapis.com/mediapipe-assets/pose_detection.tflite)
@@ -87,30 +87,30 @@ one over the other.
     [TFLite model (heavy)](https://storage.googleapis.com/mediapipe-assets/pose_landmark_heavy.tflite)
 *   [Model card](https://mediapipe.page.link/blazepose-mc)
 
-### [Holistic](https://google.github.io/mediapipe/solutions/holistic)
+### [Holistic](https://google-ai-edge.github.io/mediapipe/solutions/holistic)
 
 *   Hand recrop model:
     [TFLite model](https://storage.googleapis.com/mediapipe-assets/hand_recrop.tflite)
 
-### [Selfie Segmentation](https://google.github.io/mediapipe/solutions/selfie_segmentation)
+### [Selfie Segmentation](https://google-ai-edge.github.io/mediapipe/solutions/selfie_segmentation)
 
 *   [TFLite model (general)](https://storage.googleapis.com/mediapipe-assets/selfie_segmentation.tflite)
 *   [TFLite model (landscape)](https://storage.googleapis.com/mediapipe-assets/selfie_segmentation_landscape.tflite)
 *   [Model card](https://mediapipe.page.link/selfiesegmentation-mc)
 
-### [Hair Segmentation](https://google.github.io/mediapipe/solutions/hair_segmentation)
+### [Hair Segmentation](https://google-ai-edge.github.io/mediapipe/solutions/hair_segmentation)
 
 *   [TFLite model](https://storage.googleapis.com/mediapipe-assets/hair_segmentation.tflite)
 *   [Model card](https://mediapipe.page.link/hairsegmentation-mc)
 
-### [Object Detection](https://google.github.io/mediapipe/solutions/object_detection)
+### [Object Detection](https://google-ai-edge.github.io/mediapipe/solutions/object_detection)
 
 *   [TFLite model](https://storage.googleapis.com/mediapipe-assets/ssdlite_object_detection.tflite)
-*   [TFLite model quantized for EdgeTPU/Coral](https://github.com/google/mediapipe/tree/master/mediapipe/examples/coral/models/object-detector-quantized_edgetpu.tflite)
+*   [TFLite model quantized for EdgeTPU/Coral](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/coral/models/object-detector-quantized_edgetpu.tflite)
 *   [TensorFlow model](https://storage.googleapis.com/mediapipe-assets/object_detection_saved_model/archive.zip)
 *   [Model information](https://storage.googleapis.com/mediapipe-assets/object_detection_saved_model/README.md)
 
-### [Objectron](https://google.github.io/mediapipe/solutions/objectron)
+### [Objectron](https://google-ai-edge.github.io/mediapipe/solutions/objectron)
 
 *   [TFLite model for shoes](https://storage.googleapis.com/mediapipe-assets/object_detection_3d_sneakers.tflite)
 *   [TFLite model for chairs](https://storage.googleapis.com/mediapipe-assets/object_detection_3d_chair.tflite)
@@ -120,7 +120,7 @@ one over the other.
 *   [Single-stage TFLite model for chairs](https://storage.googleapis.com/mediapipe-assets/object_detection_3d_chair_1stage.tflite)
 *   [Model card](https://mediapipe.page.link/objectron-mc)
 
-### [KNIFT](https://google.github.io/mediapipe/solutions/knift)
+### [KNIFT](https://google-ai-edge.github.io/mediapipe/solutions/knift)
 
 *   [TFLite model for up to 200 keypoints](https://storage.googleapis.com/mediapipe-assets/knift_float.tflite)
 *   [TFLite model for up to 400 keypoints](https://storage.googleapis.com/mediapipe-assets/knift_float_400.tflite)

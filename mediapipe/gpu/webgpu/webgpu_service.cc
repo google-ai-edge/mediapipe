@@ -14,12 +14,15 @@
 
 #include "mediapipe/gpu/webgpu/webgpu_service.h"
 
+#ifdef __EMSCRIPTEN__
+#include <cstring>
+#endif  // __EMSCRIPTEN__
+
 #include "mediapipe/framework/graph_service.h"
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
 #include <emscripten/em_js.h>
-#include <emscripten/html5_webgpu.h>
 #include <webgpu/webgpu_cpp.h>
 
 EM_JS_DEPS(webgpu_service_deps, "$stringToNewUTF8")
@@ -65,10 +68,14 @@ EM_JS(char*, GetAdapterVendor, (), {
 WebGpuService::WebGpuService()
     : canvas_selector_("canvas_webgpu"),
       device_(wgpu::Device::Acquire(emscripten_webgpu_get_device())) {
-  adapter_info_.architecture = GetAdapterArchitecture();
-  adapter_info_.description = GetAdapterDescription();
-  adapter_info_.device = GetAdapterDeviceName();
-  adapter_info_.vendor = GetAdapterVendor();
+  adapter_info_.architecture.data = GetAdapterArchitecture();
+  adapter_info_.architecture.length = strlen(adapter_info_.architecture.data);
+  adapter_info_.description.data = GetAdapterDescription();
+  adapter_info_.description.length = strlen(adapter_info_.description.data);
+  adapter_info_.device.data = GetAdapterDeviceName();
+  adapter_info_.device.length = strlen(adapter_info_.device.data);
+  adapter_info_.vendor.data = GetAdapterVendor();
+  adapter_info_.vendor.length = strlen(adapter_info_.vendor.data);
 }
 #else
 WebGpuService::WebGpuService()

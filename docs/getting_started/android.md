@@ -77,7 +77,7 @@ to build (and install) all MediaPipe Android example apps.
     `android_binary` build target. For instance, for
     [MediaPipe Hands](../solutions/hands.md) the target is `handtrackinggpu` in
     the
-    [BUILD](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/handtrackinggpu/BUILD)
+    [BUILD](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/handtrackinggpu/BUILD)
     file:
 
     Note: To reduce the binary size, consider appending `--linkopt="-s"` to the

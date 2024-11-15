@@ -33,7 +33,7 @@ using ::mediapipe::tasks::core::PacketsCallback;
 static constexpr int kMicrosecondsPerMillisecond = 1000;
 
 // Constants for the underlying MP Tasks Graph. See
-// https://github.com/google/mediapipe/tree/master/mediapipe/tasks/cc/vision/face_landmarker/face_landmarker_graph.cc
+// https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/tasks/cc/vision/face_landmarker/face_landmarker_graph.cc
 static NSString *const kLandmarksOutStreamName = @"landmarks_out";
 static NSString *const kLandmarksOutTag = @"NORM_LANDMARKS";
 static NSString *const kBlendshapesOutStreamName = @"blendshapes_out";

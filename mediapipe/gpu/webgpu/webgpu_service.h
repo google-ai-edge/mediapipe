@@ -28,7 +28,6 @@
 #include "mediapipe/gpu/webgpu/webgpu_check.h"
 
 #ifdef __EMSCRIPTEN__
-#include <emscripten/html5_webgpu.h>
 #include <webgpu/webgpu_cpp.h>
 #else
 #include "mediapipe/gpu/webgpu/webgpu_device_registration.h"
