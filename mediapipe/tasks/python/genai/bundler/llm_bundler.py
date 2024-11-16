@@ -93,19 +93,6 @@ def _validate_config(config: BundleConfig):
         "Please ensure you are passing a valid SentencePiece model."
     ) from e
 
-  encoded_start_token = sp.PieceToId(config.start_token)
-  if encoded_start_token == sp.unk_id():
-    raise ValueError(
-        f"Failed to encode start token {config.start_token} with tokenizer."
-    )
-
-  for stop_token in config.stop_tokens:
-    encoded_stop_token = sp.PieceToId(stop_token)
-    if encoded_stop_token == sp.unk_id():
-      raise ValueError(
-          f"Failed to encode stop token {stop_token} with tokenizer."
-      )
-
 
 def create_bundle(config: BundleConfig):
   """Creates a bundle from the given config."""

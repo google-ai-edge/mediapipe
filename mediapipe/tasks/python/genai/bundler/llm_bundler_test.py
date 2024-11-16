@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Tests for llm_bundler."""
-
 import os
 import string
 import zipfile
@@ -145,35 +143,6 @@ class LlmBundlerTest(absltest.TestCase):
         output_filename=output_file,
     )
     with self.assertRaisesRegex(ValueError, "stop_tokens must be non-empty"):
-      llm_bundler.create_bundle(config)
-
-  def test_invalid_start_stop_tokens_raises_value_error(self):
-    tempdir = self.create_tempdir()
-    sp_file_path = self._create_sp_model(tempdir.full_path)
-    tflite_file_path = self._create_tflite_model(tempdir.full_path)
-    output_file = os.path.join(tempdir, "test.task")
-    config = llm_bundler.BundleConfig(
-        tflite_model=tflite_file_path,
-        tokenizer_model=sp_file_path,
-        start_token="invalid_token",
-        stop_tokens=[self.EOS],
-        output_filename=output_file,
-    )
-    with self.assertRaisesRegex(
-        ValueError, "Failed to encode start token invalid_token with tokenizer"
-    ):
-      llm_bundler.create_bundle(config)
-
-    config = llm_bundler.BundleConfig(
-        tflite_model=tflite_file_path,
-        tokenizer_model=sp_file_path,
-        start_token=self.BOS,
-        stop_tokens=["invalid_token"],
-        output_filename=output_file,
-    )
-    with self.assertRaisesRegex(
-        ValueError, "Failed to encode stop token invalid_token with tokenizer"
-    ):
       llm_bundler.create_bundle(config)
 
   def test_invalid_tokenizer_model_raises_value_error(self):
