@@ -358,6 +358,7 @@ cc_library(
         ":thread_pool_executor_cc_proto",
         ":timestamp",
         ":validated_graph_config",
+        ":vlog_overrides",
         "//mediapipe/framework/port:core_proto",
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:logging",
@@ -1924,5 +1925,21 @@ cc_library(
     deps = [
         ":graph_service",
         ":memory_manager",
+    ],
+)
+
+cc_library(
+    name = "vlog_overrides",
+    srcs = ["vlog_overrides.cc"],
+    hdrs = ["vlog_overrides.h"],
+    visibility = ["//visibility:private"],
+    deps = [
+        "//mediapipe/framework/deps:no_destructor",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/log:globals",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )

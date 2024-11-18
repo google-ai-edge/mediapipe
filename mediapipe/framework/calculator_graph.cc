@@ -76,6 +76,7 @@
 #include "mediapipe/framework/tool/validate.h"
 #include "mediapipe/framework/tool/validate_name.h"
 #include "mediapipe/framework/validated_graph_config.h"
+#include "mediapipe/framework/vlog_overrides.h"
 #include "mediapipe/gpu/gpu_service.h"
 #include "mediapipe/gpu/graph_support.h"
 #include "mediapipe/util/cpu_util.h"
@@ -145,6 +146,7 @@ CalculatorGraph::CalculatorGraph(CalculatorContext* cc)
     // TODO b/368015341- Use factory method to avoid CHECK in constructor.
     ABSL_CHECK_OK(DisallowServiceDefaultInitialization());
   }
+  SetVLogOverrides();
 }
 
 CalculatorGraph::CalculatorGraph(CalculatorGraphConfig config)
