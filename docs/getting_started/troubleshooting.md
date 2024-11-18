@@ -270,6 +270,37 @@ calculators designed specifically for this purpose such as
 [`FlowLimiterCalculator`] as described in
 [`How to process realtime input streams`].
 
+## VLOG is your friend
+
+MediaPipe uses `VLOG` in many places to log important events for debugging
+purposes, while not affecting performance if logging is not enabled.
+
+See more about `VLOG` on [abseil `VLOG`]
+
+Mind that `VLOG` can be spammy if you enable it globally e.g. (using `--v`
+flag). The solution `--vmodule` flag that allows different levels to be set for
+different source files.
+
+In cases when `--v` / `--vmodule` cannot be used (e.g. running an Android app),
+MediaPipe allows to set `VLOG` `--v` / `--vmodule` flags overrides for debugging
+purposes which are applied when `CalculatorGraph` is created.
+
+Overrides:
+
+- `MEDIAPIPE_VLOG_V`: define and provide value you provide for `--v`
+- `MEDIAPIPE_VLOG_VMODULE`: define and provide value you provide for `--vmodule`
+
+You can set overrides by adding:
+`--copt=-DMEDIAPIPE_VLOG_VMODULE=\"*calculator*=5\"`
+
+with your desired module patterns and `VLOG` levels (see more details for
+`--vmodule` at [abseil `VLOG`]) to your build command.
+
+IMPORTANT: mind that adding the above to your build command will trigger rebuild
+of the whole binary including dependencies. So, considering `VLOG` overrides
+exist for debugging purposes only, it is faster to simply modify
+[`vlog_overrides.cc`] adding `MEDIAPIPE_VLOG_V/VMODULE` at the very top.
+
 [`CalculatorGraphConfig`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator.proto
 [`CalculatorGraphConfig::max_queue_size`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator.proto
 [`CalculatorGraphConfig::report_deadlock`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator.proto
@@ -282,6 +313,8 @@ calculators designed specifically for this purpose such as
 [`CalculatorBase::Close`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator_base.h
 [`FlowLimiterCalculator`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/calculators/core/flow_limiter_calculator.cc
 [`How to process realtime input streams`]: faq.md#how-to-process-realtime-input-streams
+[`vlog_overrides.cc`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/vlog_overrides.cc
+[abseil `VLOG`]: https://abseil.io/docs/cpp/guides/logging#VLOG
 
 ## Unsupported flags during build
 
