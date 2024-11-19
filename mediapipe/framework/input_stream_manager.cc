@@ -302,6 +302,7 @@ Packet InputStreamManager::PopPacketAtTimestamp(Timestamp timestamp,
     if (current_timestamp != timestamp) {
       // The timestamp bound reported when no packet is sent.
       Timestamp bound = MinTimestampOrBoundHelper();
+      // Generate empty packet at the timestamp bound.
       packet = Packet().At(bound.PreviousAllowedInStream());
       ++(*num_packets_dropped);
     }

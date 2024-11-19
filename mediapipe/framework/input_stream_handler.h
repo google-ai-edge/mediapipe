@@ -150,6 +150,13 @@ class InputStreamHandler {
   // Returns a string that concatenates the stream names of all managed streams.
   std::string DebugStreamNames() const;
 
+  // Return the stream name for an input stream in the format:
+  // stream_tag:stream_index:stream_name.
+  std::string DebugStreamName(CollectionItemId id) const;
+
+  // Returns the node name of the calculator node.
+  std::string GetNodeName() const;
+
   // Keeps scheduling new invocations until 1) the node is not ready or 2) the
   // max number of invocations that are allowed to be scheduled is reached.
   // Returns true if at least one invocation has been scheduled.
