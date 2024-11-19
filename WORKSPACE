@@ -228,13 +228,13 @@ http_archive(
     ],
 )
 
-# XNNPACK on 2024-10-30
+# XNNPACK on 2024-11-18
 http_archive(
     name = "XNNPACK",
     # `curl -L <url> | shasum -a 256`
-    sha256 = "7587e5b9272c9d37ea6c9feac46568858dd153c99aa2fbd9c7744fa6415ca297",
-    strip_prefix = "XNNPACK-92b6d8722c34198be870ee956ffe504a11f44093",
-    url = "https://github.com/google/XNNPACK/archive/92b6d8722c34198be870ee956ffe504a11f44093.zip",
+    sha256 = "af30fe2b301330a7e19cd422acf22991de3c1f5d91dda58e9ee67544d608fa51",
+    strip_prefix = "XNNPACK-dc1549a7141c7a9496ae160bb27b8700f0f6e1f1",
+    url = "https://github.com/google/XNNPACK/archive/dc1549a7141c7a9496ae160bb27b8700f0f6e1f1.zip",
 )
 
 # 2020-07-09
@@ -268,10 +268,10 @@ http_archive(
 # KleidiAI is needed to get the best possible performance out of XNNPack
 http_archive(
     name = "KleidiAI",
-    sha256 = "ccdb61c0c5df9174128f433f82430b1afa8a809cf17f43ecae9a1eec9c2dfabf",
-    strip_prefix = "kleidiai-0dadcdb307f4e5ac98a42e4d4888aad7c23edaf3",
+    sha256 = "ad37707084a6d4ff41be10cbe8540c75bea057ba79d0de6c367c1bfac6ba0852",
+    strip_prefix = "kleidiai-40a926833857fb64786e02f97703e42b1537cb57",
     urls = [
-        "https://gitlab.arm.com/kleidi/kleidiai/-/archive/0dadcdb307f4e5ac98a42e4d4888aad7c23edaf3/kleidiai-0dadcdb307f4e5ac98a42e4d4888aad7c23edaf3.zip",
+        "https://gitlab.arm.com/kleidi/kleidiai/-/archive/40a926833857fb64786e02f97703e42b1537cb57/kleidiai-40a926833857fb64786e02f97703e42b1537cb57.zip"
     ],
 )
 

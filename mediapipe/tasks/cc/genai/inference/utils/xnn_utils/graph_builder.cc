@@ -484,11 +484,11 @@ absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::Slice(
 }
 
 absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::Slice(
-    std::shared_ptr<Tensor> input, size_t axis, size_t offset, size_t length) {
+    std::shared_ptr<Tensor> input, size_t axis, int64_t offset, size_t length) {
   const auto& input_dims = input->dims;
-  Tensor::DimsType offsets(input_dims.size(), 0);
+  std::vector<int64_t> offsets(input_dims.size(), 0);
   offsets[axis] = offset;
-  Tensor::DimsType output_dims = input_dims;
+  std::vector<size_t> output_dims = input_dims;
   output_dims[axis] = length;
   Tensor::DimsType inferrable_output_dims(input_dims.size(), 0);
   inferrable_output_dims[axis] = length;
@@ -499,7 +499,7 @@ absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::Slice(
   build_steps_.push_back([input, output, offsets, inferrable_output_dims](
                              xnn_subgraph_t subgraph) -> absl::Status {
     RET_CHECK_EQ(xnn_status_success,
-                 xnn_define_static_slice(
+                 xnn_define_static_slice_v2(
                      subgraph, offsets.size(), offsets.data(),
                      inferrable_output_dims.data(), input->tensor_id(subgraph),
                      output->tensor_id(subgraph), /*flags=*/0));

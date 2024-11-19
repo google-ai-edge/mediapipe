@@ -185,7 +185,7 @@ class XnnGraphBuilder {
   // dimensions unchanged. For instance, for input A = [B, M, N] and axis = 1,
   // the output slice would be [B, offset:offset+length, N].
   absl::StatusOr<std::shared_ptr<Tensor>> Slice(std::shared_ptr<Tensor> input,
-                                                size_t axis, size_t offset,
+                                                size_t axis, int64_t offset,
                                                 size_t length);
 
   // Concatenate two input tensors along the provided axis. Both input tensors
