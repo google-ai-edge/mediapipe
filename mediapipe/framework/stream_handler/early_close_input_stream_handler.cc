@@ -14,6 +14,7 @@
 #include "mediapipe/framework/stream_handler/early_close_input_stream_handler.h"
 
 #include <algorithm>
+#include <utility>
 
 #include "absl/log/absl_check.h"
 #include "absl/strings/substitute.h"
