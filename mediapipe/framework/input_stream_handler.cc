@@ -14,7 +14,12 @@
 
 #include "mediapipe/framework/input_stream_handler.h"
 
+#include <string>
+#include <vector>
+
 #include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/substitute.h"
 #include "mediapipe/framework/collection_item_id.h"
@@ -143,6 +148,19 @@ std::string InputStreamHandler::DebugStreamNames() const {
   }
   return absl::StrCat("input streams: <", absl::StrJoin(stream_names, ","),
                       ">");
+}
+
+std::string InputStreamHandler::DebugStreamName(CollectionItemId id) const {
+  const auto tag_map = input_stream_managers_.TagMap();
+  const std::string& stream_name = tag_map->Names()[id.value()];
+  const auto& [stream_tag, stream_idx] = tag_map->TagAndIndexFromId(id);
+  return absl::StrCat(stream_tag, ":", stream_idx, ":", stream_name);
+}
+
+std::string InputStreamHandler::GetNodeName() const {
+  const auto* calculator_context =
+      calculator_context_manager_->GetDefaultCalculatorContext();
+  return calculator_context ? calculator_context->NodeName() : "<unknown>";
 }
 
 bool InputStreamHandler::ScheduleInvocations(int max_allowance,
@@ -409,17 +427,34 @@ void SyncSet::FillInputSet(Timestamp input_timestamp,
                            InputStreamShardSet* input_set) {
   ABSL_CHECK(input_timestamp.IsAllowedInStream());
   ABSL_CHECK(input_set);
+  std::vector<std::string> streams_with_missing_packets;
   for (CollectionItemId id : stream_ids_) {
     const auto& stream = input_stream_handler_->input_stream_managers_.Get(id);
     int num_packets_dropped = 0;
     bool stream_is_done = false;
     Packet current_packet = stream->PopPacketAtTimestamp(
         input_timestamp, &num_packets_dropped, &stream_is_done);
+    if (current_packet.IsEmpty()) {
+      // Track the streams that have no packets at the current timestamp.
+      streams_with_missing_packets.push_back(
+          input_stream_handler_->DebugStreamName(id));
+    }
     ABSL_CHECK_EQ(num_packets_dropped, 0)
         << absl::Substitute("Dropped $0 packet(s) on input stream \"$1\".",
                             num_packets_dropped, stream->Name());
     input_stream_handler_->AddPacketToShard(
         &input_set->Get(id), std::move(current_packet), stream_is_done);
+  }
+
+  const std::string node_name = input_stream_handler_->GetNodeName();
+  if (!streams_with_missing_packets.empty()) {
+    VLOG(1) << absl::StrCat(
+        node_name, ": Filled input set at ts: ", input_timestamp.DebugString(),
+        " with MISSING packets in input streams: ",
+        absl::StrJoin(streams_with_missing_packets, ", "), ".");
+  } else {
+    VLOG(1) << absl::StrCat(
+        node_name, ": Filled input set at ts: ", input_timestamp.DebugString());
   }
 }
 

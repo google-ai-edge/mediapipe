@@ -786,6 +786,7 @@ cc_library(
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/tool:tag_map",
         "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/strings",
     ],
 )

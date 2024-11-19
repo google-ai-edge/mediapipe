@@ -22,11 +22,10 @@
 #include <string>
 
 #include "absl/base/thread_annotations.h"
+#include "absl/status/status.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/packet_type.h"
-#include "mediapipe/framework/port.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/timestamp.h"
 
 namespace mediapipe {
