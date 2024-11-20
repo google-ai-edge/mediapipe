@@ -194,4 +194,8 @@ message TransformerParameters {
 
   // Vision parameters
   int32 vision_tokens_num = 26;
+
+  // The number of stacks that are treated as "extra", which may have slightly
+  // different loading behavior.
+  int32 num_extra_stacks = 27;
 }
