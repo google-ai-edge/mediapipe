@@ -978,6 +978,21 @@ cc_test(
     ],
 )
 
+cc_library(
+    name = "graph_runtime_info_utils",
+    srcs = ["graph_runtime_info_utils.cc"],
+    hdrs = ["graph_runtime_info_utils.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:graph_runtime_info_cc_proto",
+        "//mediapipe/framework:timestamp",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/time",
+    ],
+)
+
 exports_files(
     ["build_defs.bzl"],
     visibility = [

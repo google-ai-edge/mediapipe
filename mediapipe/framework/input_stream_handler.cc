@@ -14,11 +14,15 @@
 
 #include "mediapipe/framework/input_stream_handler.h"
 
+#include <functional>
+#include <optional>
 #include <string>
+#include <tuple>
 #include <vector>
 
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
+#include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/substitute.h"
@@ -27,7 +31,40 @@
 #include "mediapipe/framework/port/ret_check.h"
 
 namespace mediapipe {
+
+namespace {
 using SyncSet = InputStreamHandler::SyncSet;
+
+// Helper class to vlog the streams with missing packets during FillInputSet
+// calls.
+class FillInputSetLogger {
+ public:
+  FillInputSetLogger(const std::string& node_name, Timestamp timestamp)
+      : node_name_(node_name), timestamp_(timestamp) {}
+  ~FillInputSetLogger() { OutputLogs(); }
+
+  void AddMissingPacketStreamName(const std::string& stream_name) {
+    missing_streams_.push_back(stream_name);
+  }
+
+ private:
+  void OutputLogs() const {
+    if (!missing_streams_.empty()) {
+      VLOG(1) << absl::StrCat(
+          node_name_, ": Filled input set at ts: ", timestamp_.DebugString(),
+          " with MISSING packets in input streams: ",
+          absl::StrJoin(missing_streams_, ", "), ".");
+    } else {
+      VLOG(1) << absl::StrCat(
+          node_name_, ": Filled input set at ts: ", timestamp_.DebugString());
+    }
+  }
+
+  const std::string node_name_;
+  const Timestamp timestamp_;
+  std::vector<std::string> missing_streams_;
+};
+}  // namespace
 
 absl::Status InputStreamHandler::InitializeInputStreamManagers(
     InputStreamManager* flat_input_stream_managers) {
@@ -60,13 +97,15 @@ std::vector<std::tuple<std::string, int, int, Timestamp>>
 InputStreamHandler::GetMonitoringInfo() {
   std::vector<std::tuple<std::string, int, int, Timestamp>>
       monitoring_info_vector;
-  for (auto& stream : input_stream_managers_) {
+  for (CollectionItemId id = input_stream_managers_.BeginId();
+       id < input_stream_managers_.EndId(); ++id) {
+    const auto& stream = input_stream_managers_.Get(id);
     if (!stream) {
       continue;
     }
     monitoring_info_vector.emplace_back(
         std::tuple<std::string, int, int, Timestamp>(
-            stream->Name(), stream->QueueSize(), stream->NumPacketsAdded(),
+            DebugStreamName(id), stream->QueueSize(), stream->NumPacketsAdded(),
             stream->MinTimestampOrBound(nullptr)));
   }
   return monitoring_info_vector;
@@ -427,6 +466,10 @@ void SyncSet::FillInputSet(Timestamp input_timestamp,
                            InputStreamShardSet* input_set) {
   ABSL_CHECK(input_timestamp.IsAllowedInStream());
   ABSL_CHECK(input_set);
+  std::optional<FillInputSetLogger> logger;
+  if (VLOG_IS_ON(1)) {
+    logger.emplace(input_stream_handler_->GetNodeName(), input_timestamp);
+  }
   std::vector<std::string> streams_with_missing_packets;
   for (CollectionItemId id : stream_ids_) {
     const auto& stream = input_stream_handler_->input_stream_managers_.Get(id);
@@ -434,9 +477,9 @@ void SyncSet::FillInputSet(Timestamp input_timestamp,
     bool stream_is_done = false;
     Packet current_packet = stream->PopPacketAtTimestamp(
         input_timestamp, &num_packets_dropped, &stream_is_done);
-    if (current_packet.IsEmpty()) {
+    if (current_packet.IsEmpty() && logger.has_value()) {
       // Track the streams that have no packets at the current timestamp.
-      streams_with_missing_packets.push_back(
+      logger->AddMissingPacketStreamName(
           input_stream_handler_->DebugStreamName(id));
     }
     ABSL_CHECK_EQ(num_packets_dropped, 0)
@@ -444,17 +487,6 @@ void SyncSet::FillInputSet(Timestamp input_timestamp,
                             num_packets_dropped, stream->Name());
     input_stream_handler_->AddPacketToShard(
         &input_set->Get(id), std::move(current_packet), stream_is_done);
-  }
-
-  const std::string node_name = input_stream_handler_->GetNodeName();
-  if (!streams_with_missing_packets.empty()) {
-    VLOG(1) << absl::StrCat(
-        node_name, ": Filled input set at ts: ", input_timestamp.DebugString(),
-        " with MISSING packets in input streams: ",
-        absl::StrJoin(streams_with_missing_packets, ", "), ".");
-  } else {
-    VLOG(1) << absl::StrCat(
-        node_name, ": Filled input set at ts: ", input_timestamp.DebugString());
   }
 }
 
