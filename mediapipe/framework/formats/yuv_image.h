@@ -118,6 +118,12 @@ class YUVImage {
   YUVImage() = default;
   ~YUVImage() { Clear(); }
 
+  // YUVImage is neither copyable nor movable.
+  YUVImage(const YUVImage&) = delete;
+  YUVImage& operator=(const YUVImage&) = delete;
+  YUVImage(YUVImage&&) = delete;
+  YUVImage& operator=(YUVImage&&) = delete;
+
   // Convenience constructor
   YUVImage(libyuv::FourCC fourcc,                     //
            std::unique_ptr<uint8_t[]> data_location,  //
