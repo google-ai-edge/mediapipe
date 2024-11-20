@@ -50,6 +50,7 @@ class ConversionConfig(object):
       zero.
     image_encoder_file: A string with the name of the image encoder tflite file.
     image_adapter_file: A string with the name of the image adapter tflite file.
+    submodel_type: Name of submodel, e.g. GEMMA_2B.
     use_fake_weights: Whether to use fake weights. If set to True, the weights
       will be filled with zeros.
   """
@@ -75,6 +76,7 @@ class ConversionConfig(object):
       lora_output_tflite_file: Optional[str] = None,
       image_encoder_file: Optional[str] = None,
       image_adapter_file: Optional[str] = None,
+      submodel_type: Optional[str] = None,
       use_fake_weights: bool = False,
   ):
     self.input_ckpt = input_ckpt
@@ -96,6 +98,7 @@ class ConversionConfig(object):
     self.obfuscate = obfuscate
     self.image_encoder_file = image_encoder_file
     self.image_adapter_file = image_adapter_file
+    self.submodel_type = submodel_type
     self.use_fake_weights = use_fake_weights
     if output_tflite_file:
       parent_dir = os.path.dirname(output_tflite_file)
@@ -220,6 +223,7 @@ def combined_weight_bins_to_tflite(
     lora_output_tflite_file: Optional[str] = None,
     image_encoder_file: Optional[str] = None,
     image_adapter_file: Optional[str] = None,
+    submodel_type: Optional[str] = None,
 ):
   """Combines weight files to tflite file."""
   if backend == 'cpu':
@@ -245,6 +249,7 @@ def combined_weight_bins_to_tflite(
         '' if lora_output_tflite_file is None else lora_output_tflite_file,
         '' if image_encoder_file is None else image_encoder_file,
         '' if image_adapter_file is None else image_adapter_file,
+        '' if submodel_type is None else submodel_type,
     )
   else:
     raise ValueError('Unsupported backend: %s' % backend)
@@ -365,4 +370,5 @@ def convert_checkpoint(config: ConversionConfig) -> None:
       lora_output_tflite_file=config.lora_output_tflite_file,
       image_encoder_file=config.image_encoder_file,
       image_adapter_file=config.image_adapter_file,
+      submodel_type=config.submodel_type,
   )
