@@ -20,6 +20,7 @@
 #include <list>
 #include <memory>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -92,8 +93,8 @@ class InputStreamHandler {
   // Sets up the InputStreamShardSet by propagating data from the managers.
   absl::Status SetupInputShards(InputStreamShardSet* input_shards);
 
-  // Returns a vector of pairs of stream name and queue size for monitoring
-  // purpose.
+  // Returns a vector of tuples of stream name, queue size, number of packets
+  // added, and minimum timestamp or bound for monitoring purpose.
   std::vector<std::tuple<std::string, int, int, Timestamp>> GetMonitoringInfo();
 
   // Resets the input stream handler and its underlying input streams for

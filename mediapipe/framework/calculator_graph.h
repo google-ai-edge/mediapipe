@@ -40,6 +40,7 @@
 #include "mediapipe/framework/counter_factory.h"
 #include "mediapipe/framework/executor.h"
 #include "mediapipe/framework/graph_output_stream.h"
+#include "mediapipe/framework/graph_runtime_info.pb.h"
 #include "mediapipe/framework/graph_service.h"
 #include "mediapipe/framework/graph_service_manager.h"
 #include "mediapipe/framework/mediapipe_profiling.h"
@@ -256,6 +257,11 @@ class CalculatorGraph {
 
   // Quick non-locking means of checking if the graph has encountered an error.
   bool HasError() const { return has_error_; }
+
+  // Returns debugging information about the graph transient state, including
+  // information about all input streams and their timestamp bounds. This method
+  // is thread safe and can be called from any thread.
+  absl::StatusOr<GraphRuntimeInfo> GetGraphRuntimeInfo();
 
   // Add a Packet to a graph input stream based on the graph input stream add
   // mode. If the mode is ADD_IF_NOT_FULL, the packet will not be added if any
