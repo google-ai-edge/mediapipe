@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <climits>
 #include <cstdint>
+#include <limits>
 #include <optional>
 #include <string>
 #include <vector>
@@ -105,6 +105,8 @@ namespace mpms = mediapipe::mediasequence;
 //   }
 // }
 namespace {
+constexpr int kMaxProtoBytes = std::numeric_limits<int>::max();
+
 uint8_t ConvertFloatToByte(const float float_value) {
   float clamped_value = std::clamp(0.0f, 1.0f, float_value);
   return static_cast<uint8_t>(clamped_value * 255.0 + .5f);
@@ -361,15 +363,21 @@ class PackMediaSequenceCalculator : public CalculatorBase {
     }
   }
 
-  absl::Status VerifySize() {
-    constexpr int kMaxProtoBytes = INT_MAX;
+  absl::Status VerifySize(const PackMediaSequenceCalculatorOptions& options) {
+    if (!options.skip_large_sequences()) {
+      return absl::OkStatus();
+    }
+
+    const int max_bytes = (options.max_sequence_bytes() > 0)
+                              ? options.max_sequence_bytes()
+                              : kMaxProtoBytes;
 
     std::string id = mpms::HasExampleId(*sequence_)
                          ? mpms::GetExampleId(*sequence_)
                          : "example";
-    RET_CHECK_LT(sequence_->ByteSizeLong(), kMaxProtoBytes)
-        << "sequence '" << id
-        << "' would be too many bytes to serialize after adding features.";
+    RET_CHECK_LT(sequence_->ByteSizeLong(), max_bytes)
+        << "sequence '" << id << "' with " << sequence_->ByteSizeLong()
+        << " bytes would be more than " << max_bytes << " bytes.";
     return absl::OkStatus();
   }
 
@@ -381,9 +389,7 @@ class PackMediaSequenceCalculator : public CalculatorBase {
           options.reconcile_region_annotations(), sequence_.get()));
     }
 
-    if (options.skip_large_sequences()) {
-      RET_CHECK_OK(VerifySize());
-    }
+    RET_CHECK_OK(VerifySize(options));
     if (options.output_only_if_all_present()) {
       absl::Status status = VerifySequence();
       if (!status.ok()) {
