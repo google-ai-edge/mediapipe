@@ -2,6 +2,12 @@
 
 # This is a simple script to run LLM inference on Android via the MediaPipe
 # LLM inference engine.
+#
+# This script allows running transformer-based LLM models in *.task or *.bin
+# format. We recommend using `gemma2-2b-it-cpu-int8.task` (from
+# https://www.kaggle.com/models/google/gemma-2/tfLite/gemma2-2b-it-cpu-int8) or
+# the smaller `gemma-1.1-2b-it-cpu-int4.bin` model (from
+# https://www.kaggle.com/models/google/gemma/tfLite/gemma-1.1-2b-it-cpu-int4).
 
 MODEL_FILENAME="gemma2-2b-it-cpu-int8.task"
 ADB_WORK_DIR="/data/local/tmp"
