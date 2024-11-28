@@ -111,12 +111,20 @@ cc_library(
 )
 
 cc_library(
+    name = "platform_strings",
+    srcs = ["platform_strings.cc"],
+    hdrs = ["platform_strings.h"],
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
     name = "file_helpers",
     srcs = ["file_helpers.cc"],
     hdrs = ["file_helpers.h"],
     visibility = ["//visibility:public"],
     deps = [
         ":file_path",
+        ":platform_strings",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
