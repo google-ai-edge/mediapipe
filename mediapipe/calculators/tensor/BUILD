@@ -633,6 +633,7 @@ cc_library(
         ":inference_io_mapper",
         ":inference_on_disk_cache_helper",
         ":tensor_span",
+        "//mediapipe/calculators/tensor:inference_runner",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:mediapipe_profiling",
         "//mediapipe/framework/api2:packet",
