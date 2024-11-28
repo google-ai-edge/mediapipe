@@ -33,7 +33,9 @@
 #include <string>
 
 #include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 #include "mediapipe/framework/deps/file_path.h"
+#include "mediapipe/framework/deps/platform_strings.h"  // IWYU pragma: keep
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_builder.h"
@@ -93,31 +95,12 @@ class DirectoryListing {
   struct dirent* next_entry_ = nullptr;
 };
 #else
-#if defined(UNICODE)
-using PathString = std::wstring;
-
-PathString Utf8ToNative(const std::string& string) {
-  std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> converter;
-  return converter.from_bytes(string.data(), string.data() + string.size());
-}
-std::string NativeToUtf8(const PathString& string) {
-  std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> converter;
-  return converter.to_bytes(string.data(), string.data() + string.size());
-}
-#define FILE_PATH_LITERAL_INTERNAL(x) L##x
-#define FILE_PATH_LITERAL(x) FILE_PATH_LITERAL_INTERNAL(x)
-#else
-using PathString = std::string;
-PathString Utf8ToNative(const std::string& string) { return string; }
-std::string NativeToUtf8(const PathString& string) { return string; }
-#define FILE_PATH_LITERAL(x) x
-#endif
-
 class DirectoryListing {
  public:
   explicit DirectoryListing(const std::string& directory)
       : directory_(Utf8ToNative(directory)) {
-    PathString search_string = directory_ + Utf8ToNative("\\*.*");
+    PlatformString search_string =
+        directory_ + PLATFORM_STRING_LITERAL("\\*.*");
     find_handle_ = FindFirstFile(search_string.c_str(), &find_data_);
   }
 
@@ -134,8 +117,8 @@ class DirectoryListing {
   // after the one that is returned, if it exists.
   std::string NextEntry() {
     if (HasNextEntry()) {
-      PathString result =
-          directory_ + Utf8ToNative("\\") + PathString(find_data_.cFileName);
+      PlatformString result = directory_ + PLATFORM_STRING_LITERAL("\\") +
+                              PlatformString(find_data_.cFileName);
       ReadNextEntry();
       return NativeToUtf8(result);
     } else {
@@ -146,9 +129,10 @@ class DirectoryListing {
  private:
   void ReadNextEntry() {
     int find_result = FindNextFile(find_handle_, &find_data_);
-    while (find_result != 0 &&
-           (PathString(find_data_.cFileName) == FILE_PATH_LITERAL(".") ||
-            PathString(find_data_.cFileName) == FILE_PATH_LITERAL(".."))) {
+    while (find_result != 0 && (PlatformString(find_data_.cFileName) ==
+                                    PLATFORM_STRING_LITERAL(".") ||
+                                PlatformString(find_data_.cFileName) ==
+                                    PLATFORM_STRING_LITERAL(".."))) {
       find_result = FindNextFile(find_handle_, &find_data_);
     }
 
@@ -158,7 +142,7 @@ class DirectoryListing {
     }
   }
 
-  const PathString directory_;
+  const PlatformString directory_;
   HANDLE find_handle_ = INVALID_HANDLE_VALUE;
   WIN32_FIND_DATA find_data_;
 };
@@ -166,12 +150,12 @@ class DirectoryListing {
 
 }  // namespace
 
-absl::Status GetContents(absl::string_view file_name, std::string* output,
+absl::Status GetContents(absl::string_view path, std::string* output,
                          bool read_as_binary) {
-  FILE* fp = fopen(file_name.data(), read_as_binary ? "rb" : "r");
+  FILE* fp = fopen(std::string(path).c_str(), read_as_binary ? "rb" : "r");
   if (fp == NULL) {
     return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
-           << "Can't find file: " << file_name;
+           << "Can't find file: " << path;
   }
 
   output->clear();
@@ -179,8 +163,8 @@ absl::Status GetContents(absl::string_view file_name, std::string* output,
     char buf[4096];
     size_t ret = fread(buf, 1, 4096, fp);
     if (ret == 0 && ferror(fp)) {
-      return mediapipe::InternalErrorBuilder(MEDIAPIPE_LOC)
-             << "Error while reading file: " << file_name;
+      return mediapipe::UnavailableErrorBuilder(MEDIAPIPE_LOC)
+             << "Error while reading file: " << path;
     }
     output->append(std::string(buf, ret));
   }
@@ -188,37 +172,36 @@ absl::Status GetContents(absl::string_view file_name, std::string* output,
   return absl::OkStatus();
 }
 
-absl::Status SetContents(absl::string_view file_name,
-                         absl::string_view content) {
-  FILE* fp = fopen(file_name.data(), "wb");
+absl::Status SetContents(absl::string_view path, absl::string_view content) {
+  FILE* fp = fopen(std::string(path).c_str(), "wb");
   if (fp == NULL) {
     return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
-           << "Can't open file: " << file_name;
+           << "Can't open file: " << path;
   }
 
   fwrite(content.data(), sizeof(char), content.size(), fp);
   size_t write_error = ferror(fp);
   if (fclose(fp) != 0 || write_error) {
-    return mediapipe::InternalErrorBuilder(MEDIAPIPE_LOC)
-           << "Error while writing file: " << file_name
+    return mediapipe::UnavailableErrorBuilder(MEDIAPIPE_LOC)
+           << "Error while writing file: " << path
            << ". Error message: " << strerror(write_error);
   }
   return absl::OkStatus();
 }
 
-absl::Status AppendStringToFile(absl::string_view file_name,
+absl::Status AppendStringToFile(absl::string_view path,
                                 absl::string_view contents) {
-  FILE* fp = fopen(file_name.data(), "ab");
+  FILE* fp = fopen(std::string(path).c_str(), "ab");
   if (!fp) {
     return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
-           << "Can't open file: " << file_name;
+           << "Can't open file: " << path;
   }
 
   fwrite(contents.data(), sizeof(char), contents.size(), fp);
   size_t write_error = ferror(fp);
   if (fclose(fp) != 0 || write_error) {
-    return mediapipe::InternalErrorBuilder(MEDIAPIPE_LOC)
-           << "Error while writing file: " << file_name
+    return mediapipe::UnavailableErrorBuilder(MEDIAPIPE_LOC)
+           << "Error while writing file: " << path
            << ". Error message: " << strerror(write_error);
   }
   return absl::OkStatus();
