@@ -14,6 +14,7 @@
 
 load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
+# Placeholder: load proto_library
 
 licenses(["notice"])
 

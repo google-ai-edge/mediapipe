@@ -14,6 +14,7 @@
 
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library", "mediapipe_proto_library")
 # Placeholder: load py_proto_library
+# Placeholder: load proto_library
 
 licenses(["notice"])
 
