@@ -688,3 +688,13 @@ cc_test(
         "//mediapipe/framework/port:status",
     ],
 )
+
+cc_test(
+    name = "yuv_image_test",
+    srcs = ["yuv_image_test.cc"],
+    deps = [
+        ":yuv_image",
+        "//mediapipe/framework/port:gtest_main",
+        "@libyuv",
+    ],
+)
