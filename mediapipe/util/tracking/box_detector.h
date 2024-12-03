@@ -68,7 +68,8 @@ class BoxDetectorInterface {
   // `timestamp_msec` should correspond to `tracking_data`.
   void DetectAndAddBox(const TrackingData &tracking_data,
                        const TimedBoxProtoList &tracked_boxes,
-                       int64 timestamp_msec, TimedBoxProtoList *detected_boxes);
+                       int64_t timestamp_msec,
+                       TimedBoxProtoList *detected_boxes);
 
   // Detects pre-set boxes from input frame and adds features from new boxes
   // into detector's index structure. Features and descriptors are extracted
@@ -77,7 +78,8 @@ class BoxDetectorInterface {
   // `timestamp_msec` should correspond to `image`.
   void DetectAndAddBox(const cv::Mat &image,
                        const TimedBoxProtoList &tracked_boxes,
-                       int64 timestamp_msec, TimedBoxProtoList *detected_boxes);
+                       int64_t timestamp_msec,
+                       TimedBoxProtoList *detected_boxes);
 
   // Stops detection of box with `box_id`.
   void CancelBoxDetection(int box_id);
@@ -97,7 +99,7 @@ class BoxDetectorInterface {
   void DetectAndAddBoxFromFeatures(const std::vector<Vector2_f> &features,
                                    const cv::Mat &descriptors,
                                    const TimedBoxProtoList &tracked_boxes,
-                                   int64 timestamp_msec, float scale_x,
+                                   int64_t timestamp_msec, float scale_x,
                                    float scale_y,
                                    TimedBoxProtoList *detected_boxes);
 

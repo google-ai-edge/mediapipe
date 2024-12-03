@@ -22,16 +22,16 @@ export declare interface BaseOptions {
    * The model path to the model asset file. Only one of `modelAssetPath` or
    * `modelAssetBuffer` can be set.
    */
-  modelAssetPath?: string|undefined;
+  modelAssetPath?: string | undefined;
 
   /**
-   * A buffer containing the model aaset. Only one of `modelAssetPath` or
-   * `modelAssetBuffer` can be set.
+   * A buffer or stream reader containing the model asset. Only one of
+   * `modelAssetPath` or `modelAssetBuffer` can be set.
    */
-  modelAssetBuffer?: Uint8Array|undefined;
+  modelAssetBuffer?: Uint8Array | ReadableStreamDefaultReader | undefined;
 
   /** Overrides the default backend to use for the provided model. */
-  delegate?: 'CPU'|'GPU'|undefined;
+  delegate?: 'CPU' | 'GPU' | undefined;
 }
 
 /** Options to configure MediaPipe Tasks in general. */

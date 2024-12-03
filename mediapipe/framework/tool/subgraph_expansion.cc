@@ -62,8 +62,8 @@ absl::Status FindIgnoredStreams(
     const proto_ns::RepeatedPtrField<ProtoString>& src_streams,
     const proto_ns::RepeatedPtrField<ProtoString>& dst_streams,
     std::set<std::string>* result) {
-  ASSIGN_OR_RETURN(auto src_map, tool::TagMap::Create(src_streams));
-  ASSIGN_OR_RETURN(auto dst_map, tool::TagMap::Create(dst_streams));
+  MP_ASSIGN_OR_RETURN(auto src_map, tool::TagMap::Create(src_streams));
+  MP_ASSIGN_OR_RETURN(auto dst_map, tool::TagMap::Create(dst_streams));
   for (auto id = src_map->BeginId(); id < src_map->EndId(); ++id) {
     std::pair<std::string, int> tag_index = src_map->TagAndIndexFromId(id);
     if (!dst_map->GetId(tag_index.first, tag_index.second).IsValid()) {
@@ -149,8 +149,8 @@ absl::Status FindCorrespondingStreams(
     std::map<std::string, std::string>* stream_map,
     const proto_ns::RepeatedPtrField<ProtoString>& src_streams,
     const proto_ns::RepeatedPtrField<ProtoString>& dst_streams) {
-  ASSIGN_OR_RETURN(auto src_map, tool::TagMap::Create(src_streams));
-  ASSIGN_OR_RETURN(auto dst_map, tool::TagMap::Create(dst_streams));
+  MP_ASSIGN_OR_RETURN(auto src_map, tool::TagMap::Create(src_streams));
+  MP_ASSIGN_OR_RETURN(auto dst_map, tool::TagMap::Create(dst_streams));
   for (const auto& it : dst_map->Mapping()) {
     const std::string& tag = it.first;
     const TagMap::TagData* src_tag_data =
@@ -299,9 +299,10 @@ absl::Status ExpandSubgraphs(CalculatorGraphConfig* config,
       std::string node_name = CanonicalNodeName(*config, node_id);
       MP_RETURN_IF_ERROR(ValidateSubgraphFields(node));
       SubgraphContext subgraph_context(&node, service_manager);
-      ASSIGN_OR_RETURN(auto subgraph, graph_registry->CreateByName(
-                                          config->package(), node.calculator(),
-                                          &subgraph_context));
+      MP_ASSIGN_OR_RETURN(
+          auto subgraph,
+          graph_registry->CreateByName(config->package(), node.calculator(),
+                                       &subgraph_context));
       MP_RETURN_IF_ERROR(mediapipe::tool::DefineGraphOptions(node, &subgraph));
       MP_RETURN_IF_ERROR(PrefixNames(node_name, &subgraph));
       MP_RETURN_IF_ERROR(ConnectSubgraphStreams(node, &subgraph));

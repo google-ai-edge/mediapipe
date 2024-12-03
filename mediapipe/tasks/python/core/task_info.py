@@ -14,9 +14,8 @@
 """MediaPipe Tasks' task info data class."""
 
 import dataclasses
-
 from typing import Any, List
-
+from google.protobuf import any_pb2
 from mediapipe.calculators.core import flow_limiter_calculator_pb2
 from mediapipe.framework import calculator_options_pb2
 from mediapipe.framework import calculator_pb2
@@ -80,21 +79,34 @@ class TaskInfo:
       raise ValueError(
           '`task_options` doesn`t provide `to_pb2()` method to convert itself to be a protobuf object.'
       )
-    task_subgraph_options = calculator_options_pb2.CalculatorOptions()
+
     task_options_proto = self.task_options.to_pb2()
-    task_subgraph_options.Extensions[task_options_proto.ext].CopyFrom(
-        task_options_proto)
+
+    node_config = calculator_pb2.CalculatorGraphConfig.Node(
+        calculator=self.task_graph,
+        input_stream=self.input_streams,
+        output_stream=self.output_streams,
+    )
+
+    if hasattr(task_options_proto, 'ext'):
+      # Use the extension mechanism for task_subgraph_options (proto2)
+      task_subgraph_options = calculator_options_pb2.CalculatorOptions()
+      task_subgraph_options.Extensions[task_options_proto.ext].CopyFrom(
+          task_options_proto
+      )
+      node_config.options.CopyFrom(task_subgraph_options)
+    else:
+      # Use the Any type for task_subgraph_options (proto3)
+      task_subgraph_options = any_pb2.Any()
+      task_subgraph_options.Pack(self.task_options.to_pb2())
+      node_config.node_options.append(task_subgraph_options)
+
     if not enable_flow_limiting:
       return calculator_pb2.CalculatorGraphConfig(
-          node=[
-              calculator_pb2.CalculatorGraphConfig.Node(
-                  calculator=self.task_graph,
-                  input_stream=self.input_streams,
-                  output_stream=self.output_streams,
-                  options=task_subgraph_options)
-          ],
+          node=[node_config],
           input_stream=self.input_streams,
-          output_stream=self.output_streams)
+          output_stream=self.output_streams,
+      )
     # When a FlowLimiterCalculator is inserted to lower the overall graph
     # latency, the task doesn't guarantee that each input must have the
     # corresponding output.
@@ -120,13 +132,8 @@ class TaskInfo:
         ],
         options=flow_limiter_options)
     config = calculator_pb2.CalculatorGraphConfig(
-        node=[
-            calculator_pb2.CalculatorGraphConfig.Node(
-                calculator=self.task_graph,
-                input_stream=task_subgraph_inputs,
-                output_stream=self.output_streams,
-                options=task_subgraph_options), flow_limiter
-        ],
+        node=[node_config, flow_limiter],
         input_stream=self.input_streams,
-        output_stream=self.output_streams)
+        output_stream=self.output_streams,
+    )
     return config

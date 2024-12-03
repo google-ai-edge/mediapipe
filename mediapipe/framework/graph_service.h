@@ -19,6 +19,7 @@
 #include <type_traits>
 #include <utility>
 
+#include "absl/log/absl_check.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/status.h"
@@ -42,7 +43,7 @@ class GraphServiceBase {
     kDisallowDefaultInitialization
   };
 
-  constexpr GraphServiceBase(const char* key) : key(key) {}
+  explicit constexpr GraphServiceBase(const char* key) : key(key) {}
 
   inline virtual absl::StatusOr<Packet> CreateDefaultObject() const {
     return DefaultInitializationUnsupported();
@@ -125,7 +126,7 @@ class ServiceBinding {
  public:
   bool IsAvailable() { return service_ != nullptr; }
   T& GetObject() {
-    CHECK(service_) << "Service is unavailable.";
+    ABSL_CHECK(service_) << "Service is unavailable.";
     return *service_;
   }
 

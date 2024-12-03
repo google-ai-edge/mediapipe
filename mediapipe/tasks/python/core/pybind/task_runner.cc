@@ -14,6 +14,7 @@
 
 #include "mediapipe/tasks/python/core/pybind/task_runner.h"
 
+#include "absl/log/absl_log.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/python/pybind/util.h"
 #include "mediapipe/tasks/cc/core/mediapipe_builtin_op_resolver.h"
@@ -21,6 +22,9 @@
 #include "pybind11/stl.h"
 #include "pybind11_protobuf/native_proto_caster.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
+#if !MEDIAPIPE_DISABLE_GPU
+#include "mediapipe/gpu/gpu_shared_data_internal.h"
+#endif  // MEDIAPIPE_DISABLE_GPU
 
 namespace mediapipe {
 namespace tasks {
@@ -74,10 +78,27 @@ mode) or not (synchronous mode).)doc");
                 return absl::OkStatus();
               };
         }
+
+#if !MEDIAPIPE_DISABLE_GPU
+        auto gpu_resources_ = mediapipe::GpuResources::Create();
+        if (!gpu_resources_.ok()) {
+          ABSL_LOG(INFO) << "GPU suport is not available: "
+                         << gpu_resources_.status();
+          gpu_resources_ = nullptr;
+        }
+        auto task_runner = TaskRunner::Create(
+            std::move(graph_config),
+            absl::make_unique<core::MediaPipeBuiltinOpResolver>(),
+            std::move(callback),
+            /* default_executor= */ nullptr,
+            /* input_side_packes= */ std::nullopt, std::move(*gpu_resources_));
+#else
         auto task_runner = TaskRunner::Create(
             std::move(graph_config),
             absl::make_unique<core::MediaPipeBuiltinOpResolver>(),
             std::move(callback));
+#endif  // !MEDIAPIPE_DISABLE_GPU
+
         RaisePyErrorIfNotOk(task_runner.status());
         return std::move(*task_runner);
       },

@@ -14,16 +14,16 @@
 
 #include "mediapipe/framework/profiler/sharded_map.h"
 
+#include <cstdint>
 #include <functional>
 
 #include "absl/container/node_hash_map.h"
+#include "absl/log/absl_log.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/integral_types.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/threadpool.h"
 
 namespace {
@@ -57,11 +57,11 @@ void TestWriteAndRead(Map& time_map) {
 
 // Tests writing, reading and erasing in a ShardedMap.
 TEST(ShardedMapTest, TestWriteAndRead) {
-  absl::node_hash_map<int64, int64> simple_map;
+  absl::node_hash_map<int64_t, int64_t> simple_map;
   TestWriteAndRead(simple_map);
-  ShardedMap<int64, int64> safe_map(4999, 1);
+  ShardedMap<int64_t, int64_t> safe_map(4999, 1);
   TestWriteAndRead(safe_map);
-  ShardedMap<int64, int64> sharded_map(4999);
+  ShardedMap<int64_t, int64_t> sharded_map(4999);
   TestWriteAndRead(sharded_map);
 }
 
@@ -73,17 +73,17 @@ TEST(ShardedMapTest, TestWriteAndRead) {
 // Returns when all worker threads are done.
 template <class Map>
 void TestParallelAccess(Map& time_map, int num_threads) {
-  int64 kNumTasks = 12;
-  int64 kMaxKey = 9901;
-  int64 kKeyStep = 1234;
-  int64 kNumWrites = 1000;
-  int64 kNumReads = 10;
+  int64_t kNumTasks = 12;
+  int64_t kMaxKey = 9901;
+  int64_t kKeyStep = 1234;
+  int64_t kNumWrites = 1000;
+  int64_t kNumReads = 10;
 
   mediapipe::ThreadPool pool(num_threads);
   pool.StartWorkers();
   for (int i = 0; i < kNumTasks; ++i) {
     pool.Schedule([=, &time_map]() {
-      int64 next_key = i * kNumWrites * kNumReads * kKeyStep % kMaxKey;
+      int64_t next_key = i * kNumWrites * kNumReads * kKeyStep % kMaxKey;
       for (int j = 0; j < kNumWrites; ++j) {
         // One map write.
         time_map.insert({next_key, next_key});
@@ -123,20 +123,20 @@ absl::Duration time(const std::function<void()>& f) {
 // With bazel build -c opt, the ShardedMap reduces CPU time by 60%.
 TEST(ShardedMapTest, TestParallelAccess) {
   absl::Duration simple_time = time([] {
-    absl::node_hash_map<int64, int64> simple_map;
+    absl::node_hash_map<int64_t, int64_t> simple_map;
     TestParallelAccess(simple_map, 1);
   });
   absl::Duration safe_time = time([] {
-    ShardedMap<int64, int64> safe_map(4999, 1);
+    ShardedMap<int64_t, int64_t> safe_map(4999, 1);
     TestParallelAccess(safe_map, 13);
   });
   absl::Duration sharded_time = time([] {
-    ShardedMap<int64, int64> sharded_map(4999);
+    ShardedMap<int64_t, int64_t> sharded_map(4999);
     TestParallelAccess(sharded_map, 13);
   });
-  LOG(INFO) << "Ellapsed time: simple_map: " << simple_time;
-  LOG(INFO) << "Ellapsed time: safe_map: " << safe_time;
-  LOG(INFO) << "Ellapsed time: sharded_map: " << sharded_time;
+  ABSL_LOG(INFO) << "Ellapsed time: simple_map: " << simple_time;
+  ABSL_LOG(INFO) << "Ellapsed time: safe_map: " << safe_time;
+  ABSL_LOG(INFO) << "Ellapsed time: sharded_map: " << sharded_time;
 }
 
 }  // namespace

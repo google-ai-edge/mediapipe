@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "absl/log/absl_log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/time/time.h"
 #include "mediapipe/calculators/util/latency.pb.h"
@@ -20,7 +21,6 @@
 #include "mediapipe/framework/calculator_options.pb.h"
 #include "mediapipe/framework/deps/clock.h"
 #include "mediapipe/framework/deps/monotonic_clock.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/timestamp.h"
@@ -237,7 +237,7 @@ absl::Status PacketLatencyCalculator::Process(CalculatorContext* cc) {
   }
 
   if (first_process_time_usec_ < 0) {
-    LOG(WARNING) << "No reference packet received.";
+    ABSL_LOG(WARNING) << "No reference packet received.";
     return absl::OkStatus();
   }
 

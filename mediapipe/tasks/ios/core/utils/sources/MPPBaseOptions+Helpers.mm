@@ -12,12 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "mediapipe/calculators/tensor/inference_calculator.pb.h"
 #include "mediapipe/tasks/cc/core/proto/acceleration.pb.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
 #import "mediapipe/tasks/ios/core/utils/sources/MPPBaseOptions+Helpers.h"
 
 namespace {
 using BaseOptionsProto = ::mediapipe::tasks::core::proto::BaseOptions;
+using InferenceCalculatorOptionsProto = ::mediapipe::InferenceCalculatorOptions;
 }
 
 @implementation MPPBaseOptions (Helpers)
@@ -32,6 +34,11 @@ using BaseOptionsProto = ::mediapipe::tasks::core::proto::BaseOptions;
 
   if (self.modelAssetPath) {
     baseOptionsProto->mutable_model_asset()->set_file_name(self.modelAssetPath.UTF8String);
+  }
+
+  if (self.delegate == MPPDelegateGPU) {
+    baseOptionsProto->mutable_acceleration()->mutable_gpu()->MergeFrom(
+        InferenceCalculatorOptionsProto::Delegate::Gpu());
   }
 }
 

@@ -2,8 +2,8 @@
 #
 # This task takes video or image frames and outputs the classification result.
 
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_declaration", "mediapipe_ts_library")
 load("@npm//@bazel/jasmine:index.bzl", "jasmine_node_test")
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_declaration", "mediapipe_ts_library")
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 

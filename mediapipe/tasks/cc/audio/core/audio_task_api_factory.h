@@ -81,10 +81,10 @@ class AudioTaskApiFactory {
           "callback shouldn't be provided.",
           MediaPipeTasksStatus::kInvalidTaskGraphConfigError);
     }
-    ASSIGN_OR_RETURN(auto runner,
-                     tasks::core::TaskRunner::Create(
-                         std::move(graph_config), std::move(resolver),
-                         std::move(packets_callback)));
+    MP_ASSIGN_OR_RETURN(auto runner,
+                        tasks::core::TaskRunner::Create(
+                            std::move(graph_config), std::move(resolver),
+                            std::move(packets_callback)));
     return std::make_unique<T>(std::move(runner), running_mode);
   }
 };

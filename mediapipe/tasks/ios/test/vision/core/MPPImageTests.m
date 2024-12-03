@@ -82,7 +82,7 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
   AssertEqualErrors(error, expectedError);
 }
 
-- (void)testInitWithImageSuceeds {
+- (void)testInitWithImageSucceeds {
   MPPImage *mppImage = [[MPPImage alloc] initWithUIImage:self.image error:nil];
   [self assertMPPImage:mppImage
          hasSourceType:MPPImageSourceTypeImage

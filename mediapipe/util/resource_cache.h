@@ -15,10 +15,12 @@
 #ifndef MEDIAPIPE_UTIL_RESOURCE_CACHE_H_
 #define MEDIAPIPE_UTIL_RESOURCE_CACHE_H_
 
+#include <cstddef>
 #include <unordered_map>
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/functional/function_ref.h"
+#include "absl/log/absl_check.h"
 #include "mediapipe/framework/port/logging.h"
 
 namespace mediapipe {
@@ -40,10 +42,10 @@ class ResourceCache {
       std::tie(map_it, std::ignore) =
           map_.try_emplace(key, std::make_unique<Entry>(key));
       entry = map_it->second.get();
-      CHECK_EQ(entry->request_count, 0);
+      ABSL_CHECK_EQ(entry->request_count, 0);
       entry->request_count = 1;
       entry_list_.Append(entry);
-      if (entry->prev != nullptr) CHECK_GE(entry->prev->request_count, 1);
+      if (entry->prev != nullptr) ABSL_CHECK_GE(entry->prev->request_count, 1);
     } else {
       entry = map_it->second.get();
       ++entry->request_count;
@@ -68,7 +70,8 @@ class ResourceCache {
     std::vector<Value> evicted;
 
     // Remove excess entries.
-    while (entry_list_.size() > max_count) {
+    ABSL_CHECK_GE(max_count, 0);
+    while (entry_list_.size() > static_cast<size_t>(max_count)) {
       Entry* victim = entry_list_.tail();
       evicted.emplace_back(std::move(victim->value));
       entry_list_.Remove(victim);

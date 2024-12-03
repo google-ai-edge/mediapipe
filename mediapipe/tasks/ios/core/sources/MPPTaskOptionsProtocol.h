@@ -14,6 +14,7 @@
 
 #import <Foundation/Foundation.h>
 
+#include "google/protobuf/any.pb.h"
 #include "mediapipe/framework/calculator_options.pb.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -21,12 +22,19 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  * Any MediaPipe task options should confirm to this protocol.
  */
-@protocol MPPTaskOptionsProtocol
+@protocol MPPTaskOptionsProtocol <NSObject>
+
+@optional
 
 /**
- * Copies the iOS MediaPipe task options to an object of mediapipe::CalculatorOptions proto.
+ * Copies the iOS MediaPipe task options to an object of `mediapipe::CalculatorOptions` proto.
  */
 - (void)copyToProto:(::mediapipe::CalculatorOptions *)optionsProto;
+
+/**
+ * Copies the iOS MediaPipe task options to an object of `google::protobuf::Any` proto.
+ */
+- (void)copyToAnyProto:(::google::protobuf::Any *)optionsProto;
 
 @end
 

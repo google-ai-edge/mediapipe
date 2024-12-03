@@ -54,6 +54,17 @@ static NSString *const kTaskName = @"gestureRecognizer";
     }                                                       \
   }
 
+#define GestureRecognizerResultWithOutputPacketMap(outputPacketMap)                              \
+  ([MPPGestureRecognizerResult                                                                   \
+      gestureRecognizerResultWithHandGesturesPacket:outputPacketMap[kHandGesturesOutStreamName   \
+                                                                        .cppString]              \
+                                   handednessPacket:outputPacketMap[kHandednessOutStreamName     \
+                                                                        .cppString]              \
+                                handLandmarksPacket:outputPacketMap[kLandmarksOutStreamName      \
+                                                                        .cppString]              \
+                               worldLandmarksPacket:outputPacketMap[kWorldLandmarksOutStreamName \
+                                                                        .cppString]])
+
 @interface MPPGestureRecognizer () {
   /** iOS Vision Task Runner */
   MPPVisionTaskRunner *_visionTaskRunner;
@@ -64,56 +75,6 @@ static NSString *const kTaskName = @"gestureRecognizer";
 @end
 
 @implementation MPPGestureRecognizer
-
-- (nullable MPPGestureRecognizerResult *)gestureRecognizerResultWithOutputPacketMap:
-    (PacketMap &)outputPacketMap {
-  return [MPPGestureRecognizerResult
-      gestureRecognizerResultWithHandGesturesPacket:outputPacketMap[kHandGesturesOutStreamName
-                                                                        .cppString]
-                                   handednessPacket:outputPacketMap[kHandednessOutStreamName
-                                                                        .cppString]
-                                handLandmarksPacket:outputPacketMap[kLandmarksOutStreamName
-                                                                        .cppString]
-                               worldLandmarksPacket:outputPacketMap[kWorldLandmarksOutStreamName
-                                                                        .cppString]];
-}
-
-- (void)processLiveStreamResult:(absl::StatusOr<PacketMap>)liveStreamResult {
-  if (![self.gestureRecognizerLiveStreamDelegate
-          respondsToSelector:@selector(gestureRecognizer:
-                                 didFinishRecognitionWithResult:timestampInMilliseconds:error:)]) {
-    return;
-  }
-
-  NSError *callbackError = nil;
-  if (![MPPCommonUtils checkCppError:liveStreamResult.status() toError:&callbackError]) {
-    dispatch_async(_callbackQueue, ^{
-      [self.gestureRecognizerLiveStreamDelegate gestureRecognizer:self
-                                   didFinishRecognitionWithResult:nil
-                                          timestampInMilliseconds:Timestamp::Unset().Value()
-                                                            error:callbackError];
-    });
-    return;
-  }
-
-  PacketMap &outputPacketMap = liveStreamResult.value();
-  if (outputPacketMap[kImageOutStreamName.cppString].IsEmpty()) {
-    return;
-  }
-
-  MPPGestureRecognizerResult *result =
-      [self gestureRecognizerResultWithOutputPacketMap:outputPacketMap];
-
-  NSInteger timeStampInMilliseconds =
-      outputPacketMap[kImageOutStreamName.cppString].Timestamp().Value() /
-      kMicroSecondsPerMilliSecond;
-  dispatch_async(_callbackQueue, ^{
-    [self.gestureRecognizerLiveStreamDelegate gestureRecognizer:self
-                                 didFinishRecognitionWithResult:result
-                                        timestampInMilliseconds:timeStampInMilliseconds
-                                                          error:callbackError];
-  });
-}
 
 - (instancetype)initWithOptions:(MPPGestureRecognizerOptions *)options error:(NSError **)error {
   self = [super init];
@@ -161,11 +122,13 @@ static NSString *const kTaskName = @"gestureRecognizer";
       };
     }
 
-    _visionTaskRunner =
-        [[MPPVisionTaskRunner alloc] initWithCalculatorGraphConfig:[taskInfo generateGraphConfig]
-                                                       runningMode:options.runningMode
-                                                   packetsCallback:std::move(packetsCallback)
-                                                             error:error];
+    _visionTaskRunner = [[MPPVisionTaskRunner alloc] initWithTaskInfo:taskInfo
+                                                          runningMode:options.runningMode
+                                                           roiAllowed:NO
+                                                      packetsCallback:std::move(packetsCallback)
+                                                 imageInputStreamName:kImageInStreamName
+                                              normRectInputStreamName:kNormRectInStreamName
+                                                                error:error];
     if (!_visionTaskRunner) {
       return nil;
     }
@@ -181,93 +144,76 @@ static NSString *const kTaskName = @"gestureRecognizer";
   return [self initWithOptions:options error:error];
 }
 
-- (nullable MPPGestureRecognizerResult *)gestureRecognizerResultWithOptionalOutputPacketMap:
-    (std::optional<PacketMap> &)outputPacketMap {
-  if (!outputPacketMap.has_value()) {
-    return nil;
-  }
-  MPPGestureRecognizerResult *result =
-      [self gestureRecognizerResultWithOutputPacketMap:outputPacketMap.value()];
-  return result;
-}
-
 - (nullable MPPGestureRecognizerResult *)recognizeImage:(MPPImage *)image error:(NSError **)error {
-  std::optional<NormalizedRect> rect =
-      [_visionTaskRunner normalizedRectWithImageOrientation:image.orientation
-                                                  imageSize:CGSizeMake(image.width, image.height)
-                                                      error:error];
-  if (!rect.has_value()) {
-    return nil;
-  }
+  std::optional<PacketMap> outputPacketMap = [_visionTaskRunner processImage:image error:error];
 
-  Packet imagePacket = [MPPVisionPacketCreator createPacketWithMPPImage:image error:error];
-  if (imagePacket.IsEmpty()) {
-    return nil;
-  }
-
-  Packet normalizedRectPacket =
-      [MPPVisionPacketCreator createPacketWithNormalizedRect:rect.value()];
-
-  PacketMap inputPacketMap = InputPacketMap(imagePacket, normalizedRectPacket);
-
-  std::optional<PacketMap> outputPacketMap = [_visionTaskRunner processImagePacketMap:inputPacketMap
-                                                                                error:error];
-  return [self gestureRecognizerResultWithOptionalOutputPacketMap:outputPacketMap];
-}
-
-- (std::optional<PacketMap>)inputPacketMapWithMPPImage:(MPPImage *)image
-                               timestampInMilliseconds:(NSInteger)timestampInMilliseconds
-                                                 error:(NSError **)error {
-  std::optional<NormalizedRect> rect =
-      [_visionTaskRunner normalizedRectWithImageOrientation:image.orientation
-                                                  imageSize:CGSizeMake(image.width, image.height)
-                                                      error:error];
-  if (!rect.has_value()) {
-    return std::nullopt;
-  }
-
-  Packet imagePacket = [MPPVisionPacketCreator createPacketWithMPPImage:image
-                                                timestampInMilliseconds:timestampInMilliseconds
-                                                                  error:error];
-  if (imagePacket.IsEmpty()) {
-    return std::nullopt;
-  }
-
-  Packet normalizedRectPacket =
-      [MPPVisionPacketCreator createPacketWithNormalizedRect:rect.value()
-                                     timestampInMilliseconds:timestampInMilliseconds];
-
-  PacketMap inputPacketMap = InputPacketMap(imagePacket, normalizedRectPacket);
-  return inputPacketMap;
+  return [MPPGestureRecognizer gestureRecognizerResultWithOptionalOutputPacketMap:outputPacketMap];
 }
 
 - (nullable MPPGestureRecognizerResult *)recognizeVideoFrame:(MPPImage *)image
                                      timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                                                        error:(NSError **)error {
-  std::optional<PacketMap> inputPacketMap = [self inputPacketMapWithMPPImage:image
-                                                     timestampInMilliseconds:timestampInMilliseconds
-                                                                       error:error];
-  if (!inputPacketMap.has_value()) {
-    return nil;
-  }
-
   std::optional<PacketMap> outputPacketMap =
-      [_visionTaskRunner processVideoFramePacketMap:inputPacketMap.value() error:error];
+      [_visionTaskRunner processVideoFrame:image
+                   timestampInMilliseconds:timestampInMilliseconds
+                                     error:error];
 
-  return [self gestureRecognizerResultWithOptionalOutputPacketMap:outputPacketMap];
+  return [MPPGestureRecognizer gestureRecognizerResultWithOptionalOutputPacketMap:outputPacketMap];
 }
 
 - (BOOL)recognizeAsyncImage:(MPPImage *)image
     timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                       error:(NSError **)error {
-  std::optional<PacketMap> inputPacketMap = [self inputPacketMapWithMPPImage:image
-                                                     timestampInMilliseconds:timestampInMilliseconds
-                                                                       error:error];
-  if (!inputPacketMap.has_value()) {
-    return NO;
+  return [_visionTaskRunner processLiveStreamImage:image
+                           timestampInMilliseconds:timestampInMilliseconds
+                                             error:error];
+}
+
+#pragma mark - Private
+
+- (void)processLiveStreamResult:(absl::StatusOr<PacketMap>)liveStreamResult {
+  if (![self.gestureRecognizerLiveStreamDelegate
+          respondsToSelector:@selector(gestureRecognizer:
+                                 didFinishRecognitionWithResult:timestampInMilliseconds:error:)]) {
+    return;
   }
 
-  return [_visionTaskRunner processLiveStreamPacketMap:inputPacketMap.value() error:error];
+  NSError *callbackError = nil;
+  if (![MPPCommonUtils checkCppError:liveStreamResult.status() toError:&callbackError]) {
+    dispatch_async(_callbackQueue, ^{
+      [self.gestureRecognizerLiveStreamDelegate gestureRecognizer:self
+                                   didFinishRecognitionWithResult:nil
+                                          timestampInMilliseconds:Timestamp::Unset().Value()
+                                                            error:callbackError];
+    });
+    return;
+  }
+
+  PacketMap &outputPacketMap = liveStreamResult.value();
+  if (outputPacketMap[kImageOutStreamName.cppString].IsEmpty()) {
+    return;
+  }
+
+  MPPGestureRecognizerResult *result = GestureRecognizerResultWithOutputPacketMap(outputPacketMap);
+
+  NSInteger timestampInMilliseconds =
+      outputPacketMap[kImageOutStreamName.cppString].Timestamp().Value() /
+      kMicrosecondsPerMillisecond;
+  dispatch_async(_callbackQueue, ^{
+    [self.gestureRecognizerLiveStreamDelegate gestureRecognizer:self
+                                 didFinishRecognitionWithResult:result
+                                        timestampInMilliseconds:timestampInMilliseconds
+                                                          error:callbackError];
+  });
+}
+
++ (nullable MPPGestureRecognizerResult *)gestureRecognizerResultWithOptionalOutputPacketMap:
+    (std::optional<PacketMap> &)outputPacketMap {
+  if (!outputPacketMap.has_value()) {
+    return nil;
+  }
+
+  return GestureRecognizerResultWithOutputPacketMap(outputPacketMap.value());
 }
 
 @end

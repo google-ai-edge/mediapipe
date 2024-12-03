@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("//mediapipe/java/com/google/mediapipe:mediapipe_aar.bzl", "mediapipe_aar")
+
 package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
@@ -127,8 +129,6 @@ cc_library(
     visibility = ["//visibility:public"],
     alwayslink = 1,
 )
-
-load("//mediapipe/java/com/google/mediapipe:mediapipe_aar.bzl", "mediapipe_aar")
 
 mediapipe_aar(
     name = "solution_core",

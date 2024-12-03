@@ -1,0 +1,28 @@
+// Placeholder for internal dependency on jsloader
+// Placeholder for internal dependency on trusted resource url
+
+/**
+ * Fetches each URL in urls, executes them one-by-one in the order they are
+ * passed, and then returns (or throws if something went amiss).
+ */
+declare function importScripts(...urls: Array<string|URL>): void;
+
+// Quick helper to run the given script safely
+export async function runScript(scriptUrl: string) {
+  if (typeof importScripts === 'function') {
+    importScripts(scriptUrl.toString());
+  } else {
+    const script = document.createElement('script');
+    (script as {src:string}).src = scriptUrl.toString();
+    script.crossOrigin = 'anonymous';
+    return new Promise<void>((resolve, revoke) => {
+      script.addEventListener('load', () => {
+        resolve();
+      }, false);
+      script.addEventListener('error', e => {
+        revoke(e);
+      }, false);
+      document.body.appendChild(script);
+    });
+  }
+}

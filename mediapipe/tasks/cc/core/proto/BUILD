@@ -40,12 +40,11 @@ mediapipe_proto_library(
 mediapipe_proto_library(
     name = "base_options_proto",
     srcs = ["base_options.proto"],
-    visibility = [
-        "//mediapipe/tasks:internal",
-    ],
+    visibility = ["//visibility:public"],
     deps = [
         ":acceleration_proto",
         ":external_file_proto",
+        "//mediapipe/gpu:gpu_origin_proto",
     ],
 )
 

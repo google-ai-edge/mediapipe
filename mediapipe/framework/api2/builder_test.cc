@@ -14,6 +14,7 @@
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"
+#include "mediapipe/framework/stream_handler/fixed_size_input_stream_handler.pb.h"
 #include "mediapipe/framework/testdata/night_light_calculator.pb.h"
 #include "mediapipe/framework/testdata/sky_light_calculator.pb.h"
 
@@ -59,6 +60,155 @@ TEST(BuilderTest, BuildGraph) {
           calculator: "Bar"
           input_stream: "IN:__stream_0"
           output_stream: "OUT:out"
+        }
+      )pb");
+  EXPECT_THAT(graph.GetConfig(), EqualsProto(expected));
+}
+
+TEST(BuilderTest, BuildGraphDefiningAndSettingExecutors) {
+  Graph graph;
+
+  // Graph inputs.
+  Stream<AnyType> base = graph.In("IN").SetName("base");
+  SidePacket<AnyType> side = graph.SideIn("SIDE").SetName("side");
+
+  // Executors
+  auto& executor0 = graph.AddExecutor("ThreadPoolExecutor");
+
+  auto& executor1 = graph.AddExecutor("ThreadPoolExecutor");
+  auto& executor1_opts = executor1.GetOptions<ThreadPoolExecutorOptions>();
+  executor1_opts.set_num_threads(42);
+
+  // Nodes
+  auto& foo1 = graph.AddNode("Foo");
+  foo1.SetExecutor(executor0);
+  base >> foo1.In("BASE");
+  side >> foo1.SideIn("SIDE");
+  Stream<AnyType> foo1_out = foo1.Out("OUT");
+
+  auto& foo2 = graph.AddNode("Foo");
+  foo2.SetExecutor(executor1);
+  base >> foo2.In("BASE");
+  side >> foo2.SideIn("SIDE");
+  Stream<AnyType> foo2_out = foo2.Out("OUT");
+
+  auto& bar1 = graph.AddNode("Bar");
+  bar1.SetExecutor(executor0);
+  foo1_out >> bar1.In("IN");
+  Stream<AnyType> bar1_out = bar1.Out("OUT");
+
+  auto& bar2 = graph.AddNode("Bar");
+  bar2.SetExecutor(executor1);
+  foo2_out >> bar2.In("IN");
+  Stream<AnyType> bar2_out = bar2.Out("OUT");
+
+  // Graph outputs.
+  bar1_out.SetName("out1") >> graph.Out("OUT")[0];
+  bar2_out.SetName("out2") >> graph.Out("OUT")[1];
+
+  CalculatorGraphConfig expected =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        input_side_packet: "SIDE:side"
+        input_stream: "IN:base"
+        output_stream: "OUT:0:out1"
+        output_stream: "OUT:1:out2"
+
+        executor { name: "_b_executor_0" type: "ThreadPoolExecutor" }
+        executor {
+          name: "_b_executor_1"
+          type: "ThreadPoolExecutor"
+          options {
+            [mediapipe.ThreadPoolExecutorOptions.ext] { num_threads: 42 }
+          }
+        }
+
+        node {
+          calculator: "Foo"
+          input_stream: "BASE:base"
+          output_stream: "OUT:__stream_0"
+          input_side_packet: "SIDE:side"
+          executor: "_b_executor_0"
+        }
+        node {
+          calculator: "Foo"
+          input_stream: "BASE:base"
+          output_stream: "OUT:__stream_1"
+          input_side_packet: "SIDE:side"
+          executor: "_b_executor_1"
+        }
+        node {
+          calculator: "Bar"
+          input_stream: "IN:__stream_0"
+          output_stream: "OUT:out1"
+          executor: "_b_executor_0"
+        }
+        node {
+          calculator: "Bar"
+          input_stream: "IN:__stream_1"
+          output_stream: "OUT:out2"
+          executor: "_b_executor_1"
+        }
+      )pb");
+  EXPECT_THAT(graph.GetConfig(), EqualsProto(expected));
+}
+
+TEST(BuilderTest, BuildGraphSettingInputAndOutputStreamHandlers) {
+  Graph graph;
+  // Graph inputs.
+  Stream<AnyType> base = graph.In("IN").SetName("base");
+  SidePacket<AnyType> side = graph.SideIn("SIDE").SetName("side");
+
+  auto& foo = graph.AddNode("Foo");
+  auto& foo_ish_opts =
+      foo.SetInputStreamHandler("FixedSizeInputStreamHandler")
+          .GetOptions<mediapipe::FixedSizeInputStreamHandlerOptions>();
+  foo_ish_opts.set_target_queue_size(2);
+  foo_ish_opts.set_trigger_queue_size(3);
+  foo_ish_opts.set_fixed_min_size(true);
+  base >> foo.In("BASE");
+  side >> foo.SideIn("SIDE");
+  Stream<AnyType> foo_out = foo.Out("OUT");
+
+  auto& bar = graph.AddNode("Bar");
+  bar.SetInputStreamHandler("ImmediateInputStreamHandler");
+  bar.SetOutputStreamHandler("InOrderOutputStreamHandler");
+  foo_out >> bar.In("IN");
+  Stream<AnyType> bar_out = bar.Out("OUT");
+
+  // Graph outputs.
+  bar_out.SetName("out") >> graph.Out("OUT");
+
+  CalculatorGraphConfig expected =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        input_stream: "IN:base"
+        input_side_packet: "SIDE:side"
+        output_stream: "OUT:out"
+        node {
+          calculator: "Foo"
+          input_stream: "BASE:base"
+          input_side_packet: "SIDE:side"
+          output_stream: "OUT:__stream_0"
+          input_stream_handler {
+            input_stream_handler: "FixedSizeInputStreamHandler"
+            options {
+              [mediapipe.FixedSizeInputStreamHandlerOptions.ext] {
+                trigger_queue_size: 3
+                target_queue_size: 2
+                fixed_min_size: true
+              }
+            }
+          }
+        }
+        node {
+          calculator: "Bar"
+          input_stream: "IN:__stream_0"
+          output_stream: "OUT:out"
+          input_stream_handler {
+            input_stream_handler: "ImmediateInputStreamHandler"
+          }
+          output_stream_handler {
+            output_stream_handler: "InOrderOutputStreamHandler"
+          }
         }
       )pb");
   EXPECT_THAT(graph.GetConfig(), EqualsProto(expected));
@@ -741,6 +891,16 @@ TEST(GetOptionsTest, AddBothProto23Options) {
         }
       )pb");
   EXPECT_THAT(graph.GetConfig(), EqualsProto(expected));
+}
+
+// Checks casting logic.
+TEST(CastTest, FromAnyToAny) {
+  Graph graph;
+  Stream<int> int_inp = graph.In("A").SetName("a").Cast<int>();
+  Stream<AnyType> any_inp = graph.In("B").SetName("b");
+
+  [[maybe_unused]] Stream<AnyType> any_dest = int_inp.Cast<AnyType>();
+  [[maybe_unused]] Stream<int> int_dest = any_inp.Cast<int>();
 }
 
 }  // namespace

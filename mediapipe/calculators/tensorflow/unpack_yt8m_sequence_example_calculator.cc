@@ -14,6 +14,8 @@
 
 #include <iterator>
 
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "mediapipe/calculators/tensorflow/lapped_tensor_buffer_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/packet.h"
@@ -46,7 +48,7 @@ std::string GetQuantizedFeature(
                                .Get(index)
                                .bytes_list()
                                .value();
-  CHECK_EQ(1, bytes_list.size());
+  ABSL_CHECK_EQ(1, bytes_list.size());
   return bytes_list.Get(0);
 }
 }  // namespace
@@ -149,8 +151,9 @@ class UnpackYt8mSequenceExampleCalculator : public CalculatorBase {
             .Set(MakePacket<int>(segment_size));
       }
     }
-    LOG(INFO) << "Reading the sequence example that contains yt8m id: "
-              << yt8m_id << ". Feature list length: " << feature_list_length_;
+    ABSL_LOG(INFO) << "Reading the sequence example that contains yt8m id: "
+                   << yt8m_id
+                   << ". Feature list length: " << feature_list_length_;
     return absl::OkStatus();
   }
 

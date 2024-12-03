@@ -16,6 +16,7 @@
 
 #include <cstring>
 #include <memory>
+#include <utility>
 
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
@@ -27,6 +28,7 @@
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/formats/time_series_header.pb.h"
 #include "mediapipe/framework/formats/video_stream_header.h"
+#include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/core_proto_inc.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/colorspace.h"
@@ -478,6 +480,15 @@ JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateInt32Array)(
   // that this is an array - this way Holder will call delete[].
   mediapipe::Packet packet =
       mediapipe::Adopt(reinterpret_cast<int32_t(*)[]>(ints));
+  return CreatePacketWithContext(context, packet);
+}
+
+JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateInt32Pair)(
+    JNIEnv* env, jobject thiz, jlong context, jint first, jint second) {
+  static_assert(std::is_same<int32_t, jint>::value, "jint must be int32_t");
+
+  mediapipe::Packet packet = mediapipe::MakePacket<std::pair<int32_t, int32_t>>(
+      std::make_pair(first, second));
   return CreatePacketWithContext(context, packet);
 }
 

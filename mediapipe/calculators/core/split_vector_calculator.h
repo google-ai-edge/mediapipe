@@ -15,6 +15,7 @@
 #ifndef MEDIAPIPE_CALCULATORS_CORE_SPLIT_VECTOR_CALCULATOR_H_
 #define MEDIAPIPE_CALCULATORS_CORE_SPLIT_VECTOR_CALCULATOR_H_
 
+#include <cstdint>
 #include <type_traits>
 #include <vector>
 
@@ -242,9 +243,9 @@ class SplitVectorCalculator : public CalculatorBase {
     return absl::OkStatus();
   }
 
-  std::vector<std::pair<int32, int32>> ranges_;
-  int32 max_range_end_ = -1;
-  int32 total_elements_ = 0;
+  std::vector<std::pair<int32_t, int32_t>> ranges_;
+  int32_t max_range_end_ = -1;
+  int32_t total_elements_ = 0;
   bool element_only_ = false;
   bool combine_outputs_ = false;
 };

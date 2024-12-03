@@ -45,7 +45,7 @@ limitations under the License.
 #ifdef __EMSCRIPTEN__
 #define TASK_SEGMENTATION_USE_GL_POSTPROCESSING 1
 #elif MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31 && \
-    !MEDIAPIPE_USING_SWIFTSHADER && defined(MEDIAPIPE_ANDROID)
+    !MEDIAPIPE_USING_LEGACY_SWIFTSHADER && defined(MEDIAPIPE_ANDROID)
 #define TASK_SEGMENTATION_USE_GL_POSTPROCESSING 1
 #else
 #undef TASK_SEGMENTATION_USE_GL_POSTPROCESSING
@@ -363,8 +363,8 @@ absl::Status TensorsToSegmentationCalculator::Process(
         "Expect input tensor vector of size 1 or 2.");
   }
   const auto& input_tensor = *input_tensors.rbegin();
-  ASSIGN_OR_RETURN(const Shape input_shape,
-                   GetImageLikeTensorShape(input_tensor));
+  MP_ASSIGN_OR_RETURN(const Shape input_shape,
+                      GetImageLikeTensorShape(input_tensor));
 
   // TODO: should use tensor signature to get the correct output
   // tensor.

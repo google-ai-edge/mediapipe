@@ -151,13 +151,13 @@ absl::Status ConfigureEmbeddingPostprocessingGraph(
     const ModelResources& model_resources,
     const proto::EmbedderOptions& embedder_options,
     proto::EmbeddingPostprocessingGraphOptions* options) {
-  ASSIGN_OR_RETURN(bool has_quantized_outputs,
-                   HasQuantizedOutputs(model_resources));
+  MP_ASSIGN_OR_RETURN(bool has_quantized_outputs,
+                      HasQuantizedOutputs(model_resources));
   options->set_has_quantized_outputs(has_quantized_outputs);
   auto* tensors_to_embeddings_options =
       options->mutable_tensors_to_embeddings_options();
   *tensors_to_embeddings_options->mutable_embedder_options() = embedder_options;
-  ASSIGN_OR_RETURN(auto head_names, GetHeadNames(model_resources));
+  MP_ASSIGN_OR_RETURN(auto head_names, GetHeadNames(model_resources));
   if (!head_names.empty()) {
     *tensors_to_embeddings_options->mutable_head_names() = {head_names.begin(),
                                                             head_names.end()};
@@ -197,7 +197,7 @@ class EmbeddingPostprocessingGraph : public mediapipe::Subgraph {
   absl::StatusOr<mediapipe::CalculatorGraphConfig> GetConfig(
       mediapipe::SubgraphContext* sc) override {
     Graph graph;
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         auto output_streams,
         BuildEmbeddingPostprocessing(
             sc->Options<proto::EmbeddingPostprocessingGraphOptions>(),

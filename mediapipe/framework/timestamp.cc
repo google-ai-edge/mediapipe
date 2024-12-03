@@ -16,6 +16,8 @@
 
 #include <string>
 
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "absl/strings/str_cat.h"
 
 namespace mediapipe {
@@ -26,7 +28,7 @@ constexpr double Timestamp::kTimestampUnitsPerSecond;
 // - The safe int type will check for overflow/underflow and other errors.
 // - The CHECK in the constructor will disallow special values.
 TimestampDiff Timestamp::operator-(const Timestamp other) const {
-  CHECK(IsRangeValue() && other.IsRangeValue())
+  ABSL_CHECK(IsRangeValue() && other.IsRangeValue())
       << "This timestamp is " << DebugString() << " and other was "
       << other.DebugString();
   TimestampBaseType tmp_base = timestamp_ - other.timestamp_;
@@ -43,7 +45,7 @@ TimestampDiff TimestampDiff::operator-(const TimestampDiff other) const {
 
 // Clamp the addition to the range [Timestamp::Min(), Timestamp::Max()].
 Timestamp Timestamp::operator+(const TimestampDiff offset) const {
-  CHECK(IsRangeValue()) << "Timestamp is: " << DebugString();
+  ABSL_CHECK(IsRangeValue()) << "Timestamp is: " << DebugString();
   TimestampBaseType offset_base(offset.Value());
   if (offset_base >= TimestampBaseType(0)) {
     if (timestamp_.value() >= Timestamp::Max().Value() - offset_base.value()) {
@@ -112,7 +114,7 @@ std::string Timestamp::DebugString() const {
     } else if (*this == Timestamp::Done()) {
       return "Timestamp::Done()";
     } else {
-      LOG(FATAL) << "Unknown special type.";
+      ABSL_LOG(FATAL) << "Unknown special type.";
     }
   }
   return absl::StrCat(timestamp_.value());

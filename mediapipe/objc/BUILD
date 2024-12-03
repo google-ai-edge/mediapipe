@@ -39,6 +39,8 @@ cc_library(
         "//mediapipe/framework/port:source_location",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
     ],
 )
@@ -50,9 +52,9 @@ objc_library(
 )
 
 MEDIAPIPE_IOS_SRCS = [
-    "MPPGraph.mm",
-    "MPPTimestampConverter.mm",
-    "NSError+util_status.mm",
+    "MPPGraph.cc",
+    "MPPTimestampConverter.cc",
+    "NSError+util_status.cc",
 ]
 
 MEDIAPIPE_IOS_HDRS = [
@@ -61,11 +63,13 @@ MEDIAPIPE_IOS_HDRS = [
     "NSError+util_status.h",
 ]
 
-objc_library(
+cc_library(
     name = "mediapipe_framework_ios",
     srcs = MEDIAPIPE_IOS_SRCS,
     hdrs = MEDIAPIPE_IOS_HDRS,
     copts = [
+        "-x objective-c++",
+        "-fobjc-arc",  # enable reference-counting
         "-Wno-shorten-64-to-32",
     ],
     # This build rule is public to allow external customers to build their own iOS apps.
@@ -97,6 +101,7 @@ objc_library(
         "@com_google_absl//absl/synchronization",
         "@google_toolbox_for_mac//:GTM_Defines",
     ],
+    alwayslink = 1,
 )
 
 objc_library(
@@ -213,7 +218,7 @@ objc_library(
 
 objc_library(
     name = "MPPGraphTestBase",
-    testonly = 1,
+    testonly = True,
     srcs = [
         "MPPGraphTestBase.mm",
     ],
@@ -243,7 +248,7 @@ objc_library(
 
 objc_library(
     name = "mediapipe_framework_ios_testLib",
-    testonly = 1,
+    testonly = True,
     srcs = [
         "CFHolderTests.mm",
         "MPPDisplayLinkWeakTargetTests.mm",

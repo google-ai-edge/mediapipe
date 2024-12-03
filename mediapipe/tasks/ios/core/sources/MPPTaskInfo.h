@@ -61,7 +61,7 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  * Creates a MediaPipe Task  protobuf message from the MPPTaskInfo instance.
  */
-- (::mediapipe::CalculatorGraphConfig)generateGraphConfig;
+- (std::optional<::mediapipe::CalculatorGraphConfig>)generateGraphConfigWithError:(NSError **)error;
 
 - (instancetype)init NS_UNAVAILABLE;
 

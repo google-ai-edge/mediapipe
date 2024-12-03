@@ -14,6 +14,7 @@
 
 #include "mediapipe/modules/objectron/calculators/model.h"
 
+#include "absl/log/absl_check.h"
 #include "mediapipe/framework/port/logging.h"
 
 namespace mediapipe {
@@ -66,9 +67,9 @@ const Eigen::Ref<const Eigen::Matrix3f> Model::GetRotation() const {
 const std::string& Model::GetCategory() const { return category_; }
 
 void Model::Deserialize(const Object& obj) {
-  CHECK_EQ(obj.rotation_size(), 9);
-  CHECK_EQ(obj.translation_size(), 3);
-  CHECK_EQ(obj.scale_size(), 3);
+  ABSL_CHECK_EQ(obj.rotation_size(), 9);
+  ABSL_CHECK_EQ(obj.translation_size(), 3);
+  ABSL_CHECK_EQ(obj.scale_size(), 3);
   category_ = obj.category();
 
   using RotationMatrix = Eigen::Matrix<float, 3, 3, Eigen::RowMajor>;

@@ -49,7 +49,7 @@ std::string FourCCToString(libyuv::FourCC fourcc) {
 // The input `YUVImage` is expected to be in the NV12, NV21, YV12 or I420 (aka
 // YV21) format (as per the `fourcc()` property). This covers the most commonly
 // used YUV image formats used on mobile devices. Other formats are not
-// supported and wil result in an `InvalidArgumentError`.
+// supported and will result in an `InvalidArgumentError`.
 class YUVToImageCalculator : public Node {
  public:
   static constexpr Input<YUVImage> kInput{"YUV_IMAGE"};

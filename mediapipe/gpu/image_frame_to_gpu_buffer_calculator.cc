@@ -24,6 +24,11 @@
 namespace mediapipe {
 
 // Convert ImageFrame to GpuBuffer.
+//
+// NOTE: all ImageFrameToGpuBufferCalculators use a common dedicated shared GL
+// context thread by default, which is different from the main GL context thread
+// used by the graph. (If MediaPipe uses multithreading and multiple OpenGL
+// contexts.)
 class ImageFrameToGpuBufferCalculator : public CalculatorBase {
  public:
   ImageFrameToGpuBufferCalculator() {}

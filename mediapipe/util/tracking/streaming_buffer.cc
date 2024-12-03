@@ -14,6 +14,8 @@
 
 #include "mediapipe/util/tracking/streaming_buffer.h"
 
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "absl/strings/str_cat.h"
 
 namespace mediapipe {
@@ -21,9 +23,9 @@ namespace mediapipe {
 StreamingBuffer::StreamingBuffer(
     const std::vector<TaggedType>& data_configuration, int overlap)
     : overlap_(overlap) {
-  CHECK_GE(overlap, 0);
+  ABSL_CHECK_GE(overlap, 0);
   for (auto& item : data_configuration) {
-    CHECK(data_config_.find(item.first) == data_config_.end())
+    ABSL_CHECK(data_config_.find(item.first) == data_config_.end())
         << "Tag " << item.first << " already exists";
     data_config_[item.first] = item.second;
     // Init deque.
@@ -45,7 +47,7 @@ bool StreamingBuffer::HasTags(const std::vector<std::string>& tags) const {
 }
 
 int StreamingBuffer::BufferSize(const std::string& tag) const {
-  CHECK(HasTag(tag));
+  ABSL_CHECK(HasTag(tag));
   return data_.find(tag)->second.size();
 }
 
@@ -94,9 +96,9 @@ bool StreamingBuffer::TruncateBuffer(bool flush) {
     const int buffer_elems_to_clear =
         std::min<int>(elems_to_clear, buffer.size());
     if (buffer_elems_to_clear < elems_to_clear) {
-      LOG(WARNING) << "For tag " << item.first << " got "
-                   << elems_to_clear - buffer_elems_to_clear
-                   << "fewer elements than buffer can hold.";
+      ABSL_LOG(WARNING) << "For tag " << item.first << " got "
+                        << elems_to_clear - buffer_elems_to_clear
+                        << "fewer elements than buffer can hold.";
       is_consistent = false;
     }
     buffer.erase(buffer.begin(), buffer.begin() + buffer_elems_to_clear);
@@ -108,9 +110,9 @@ bool StreamingBuffer::TruncateBuffer(bool flush) {
   for (const auto& item : data_) {
     const auto& buffer = item.second;
     if (buffer.size() != remaining_elems) {
-      LOG(WARNING) << "After trunctation, for tag " << item.first << "got "
-                   << buffer.size() << " elements, "
-                   << "expected " << remaining_elems;
+      ABSL_LOG(WARNING) << "After trunctation, for tag " << item.first << "got "
+                        << buffer.size() << " elements, "
+                        << "expected " << remaining_elems;
       is_consistent = false;
     }
   }
@@ -119,7 +121,7 @@ bool StreamingBuffer::TruncateBuffer(bool flush) {
 }
 
 void StreamingBuffer::DiscardDatum(const std::string& tag, int num_frames) {
-  CHECK(HasTag(tag));
+  ABSL_CHECK(HasTag(tag));
   auto& queue = data_[tag];
   if (queue.empty()) {
     return;
@@ -130,7 +132,7 @@ void StreamingBuffer::DiscardDatum(const std::string& tag, int num_frames) {
 
 void StreamingBuffer::DiscardDatumFromEnd(const std::string& tag,
                                           int num_frames) {
-  CHECK(HasTag(tag));
+  ABSL_CHECK(HasTag(tag));
   auto& queue = data_[tag];
   if (queue.empty()) {
     return;

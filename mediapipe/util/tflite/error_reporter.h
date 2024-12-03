@@ -20,13 +20,13 @@
 #include "tensorflow/lite/core/api/error_reporter.h"
 #include "tensorflow/lite/stateful_error_reporter.h"
 
-namespace mediapipe {
-namespace util {
-namespace tflite {
+namespace mediapipe::util::tflite {
 
 // An ErrorReporter that logs to stderr and captures the last two messages.
 class ErrorReporter : public ::tflite::StatefulErrorReporter {
  public:
+  static constexpr int kBufferSize = 1024;
+
   ErrorReporter();
 
   // We declared two functions with name 'Report', so that the variadic Report
@@ -36,17 +36,17 @@ class ErrorReporter : public ::tflite::StatefulErrorReporter {
 
   int Report(const char* format, std::va_list args) override;
 
+  // Returns true if any error was reported.
+  bool HasError() const;
+
   std::string message() override;
   std::string previous_message();
 
  private:
-  static constexpr int kBufferSize = 1024;
   char message_[kBufferSize];
   char previous_message_[kBufferSize];
 };
 
-}  // namespace tflite
-}  // namespace util
-}  // namespace mediapipe
+}  // namespace mediapipe::util::tflite
 
 #endif  // MEDIAPIPE_UTIL_TFLITE_ERROR_REPORTER_H_

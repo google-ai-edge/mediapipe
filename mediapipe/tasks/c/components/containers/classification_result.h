@@ -19,6 +19,10 @@ limitations under the License.
 #include <stdbool.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Defines classification results for a given classifier head.
 struct Classifications {
   // The array of predicted categories, usually sorted by descending scores,
@@ -56,5 +60,9 @@ struct ClassificationResult {
   // Specifies whether the timestamp contains a valid value.
   bool has_timestamp_ms;
 };
+
+#ifdef __cplusplus
+}  // extern C
+#endif
 
 #endif  // MEDIAPIPE_TASKS_C_COMPONENTS_CONTAINERS_CLASSIFICATION_RESULT_H_

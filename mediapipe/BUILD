@@ -12,59 +12,56 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@mediapipe//mediapipe:platforms.bzl", "config_setting_and_platform")
+
 licenses(["notice"])  # Apache 2.0
 
-# Note: yes, these need to use "//external:android/crosstool", not
-# @androidndk//:default_crosstool.
-
+# Generic Android
 config_setting(
     name = "android",
-    values = {"crosstool_top": "//external:android/crosstool"},
+    constraint_values = [
+        "@platforms//os:android",
+    ],
     visibility = ["//visibility:public"],
 )
 
-config_setting(
+# Android x86 32-bit.
+config_setting_and_platform(
     name = "android_x86",
-    values = {
-        "crosstool_top": "//external:android/crosstool",
-        "cpu": "x86",
-    },
+    constraint_values = [
+        "@platforms//os:android",
+        "@platforms//cpu:x86_32",
+    ],
     visibility = ["//visibility:public"],
 )
 
-config_setting(
+# Android x86 64-bit.
+config_setting_and_platform(
     name = "android_x86_64",
-    values = {
-        "crosstool_top": "//external:android/crosstool",
-        "cpu": "x86_64",
-    },
+    constraint_values = [
+        "@platforms//os:android",
+        "@platforms//cpu:x86_64",
+    ],
     visibility = ["//visibility:public"],
 )
 
-config_setting(
-    name = "android_armeabi",
-    values = {
-        "crosstool_top": "//external:android/crosstool",
-        "cpu": "armeabi",
-    },
-    visibility = ["//visibility:public"],
-)
-
-config_setting(
+# Android ARMv7.
+config_setting_and_platform(
     name = "android_arm",
-    values = {
-        "crosstool_top": "//external:android/crosstool",
-        "cpu": "armeabi-v7a",
-    },
+    constraint_values = [
+        "@platforms//os:android",
+        "@platforms//cpu:armv7",
+    ],
     visibility = ["//visibility:public"],
 )
 
-config_setting(
+# Android ARM64.
+config_setting_and_platform(
     name = "android_arm64",
-    values = {
-        "crosstool_top": "//external:android/crosstool",
-        "cpu": "arm64-v8a",
-    },
+    constraint_values = [
+        "@platforms//os:android",
+        "@platforms//cpu:arm64",
+    ],
     visibility = ["//visibility:public"],
 )
 
@@ -78,7 +75,7 @@ config_setting(
 )
 
 # MacOS x86 64-bit.
-config_setting(
+config_setting_and_platform(
     name = "macos_x86_64",
     constraint_values = [
         "@platforms//os:macos",
@@ -88,7 +85,7 @@ config_setting(
 )
 
 # MacOS ARM64.
-config_setting(
+config_setting_and_platform(
     name = "macos_arm64",
     constraint_values = [
         "@platforms//os:macos",
@@ -107,7 +104,7 @@ config_setting(
 )
 
 # iOS device ARM32.
-config_setting(
+config_setting_and_platform(
     name = "ios_armv7",
     constraint_values = [
         "@platforms//os:ios",
@@ -117,7 +114,7 @@ config_setting(
 )
 
 # iOS device ARM64.
-config_setting(
+config_setting_and_platform(
     name = "ios_arm64",
     constraint_values = [
         "@platforms//os:ios",
@@ -127,7 +124,7 @@ config_setting(
 )
 
 # iOS device ARM64E.
-config_setting(
+config_setting_and_platform(
     name = "ios_arm64e",
     constraint_values = [
         "@platforms//os:ios",
@@ -137,7 +134,7 @@ config_setting(
 )
 
 # iOS simulator x86 32-bit.
-config_setting(
+config_setting_and_platform(
     name = "ios_i386",
     constraint_values = [
         "@platforms//os:ios",
@@ -148,7 +145,7 @@ config_setting(
 )
 
 # iOS simulator x86 64-bit.
-config_setting(
+config_setting_and_platform(
     name = "ios_x86_64",
     constraint_values = [
         "@platforms//os:ios",
@@ -159,7 +156,7 @@ config_setting(
 )
 
 # iOS simulator ARM64.
-config_setting(
+config_setting_and_platform(
     name = "ios_sim_arm64",
     constraint_values = [
         "@platforms//os:ios",
@@ -169,7 +166,6 @@ config_setting(
     visibility = ["//visibility:public"],
 )
 
-# Generic Apple.
 alias(
     name = "apple",
     actual = select({
@@ -180,9 +176,33 @@ alias(
     visibility = ["//visibility:public"],
 )
 
-config_setting(
+# Windows 64-bit.
+config_setting_and_platform(
     name = "windows",
-    values = {"cpu": "x64_windows"},
+    constraint_values = [
+        "@platforms//os:windows",
+        "@platforms//cpu:x86_64",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+# Linux 64-bit.
+config_setting_and_platform(
+    name = "linux",
+    constraint_values = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+# Emscripten (WebAssembly)
+config_setting_and_platform(
+    name = "emscripten",
+    constraint_values = [
+        "@platforms//cpu:wasm32",
+    ],
+    visibility = ["//visibility:public"],
 )
 
 exports_files(

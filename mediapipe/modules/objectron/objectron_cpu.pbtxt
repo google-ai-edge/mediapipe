@@ -37,17 +37,17 @@ output_stream: "MULTI_LANDMARKS:multi_box_landmarks"
 # Crop rectangles derived from bounding box landmarks.
 output_stream: "NORM_RECTS:multi_box_rects"
 
-# Loads the file in the specified path into a blob.
+# Loads the file in the specified path as a resource.
 node {
-  calculator: "LocalFileContentsCalculator"
-  input_side_packet: "FILE_PATH:0:box_landmark_model_path"
-  output_side_packet: "CONTENTS:0:box_landmark_model_blob"
+  calculator: "ResourceProviderCalculator"
+  input_side_packet: "RESOURCE_ID:0:box_landmark_model_path"
+  output_side_packet: "RESOURCE:0:box_landmark_model_resource"
 }
 
-# Converts the input blob into a TF Lite model.
+# Converts the resource into a TF Lite model.
 node {
   calculator: "TfLiteModelCalculator"
-  input_side_packet: "MODEL_BLOB:box_landmark_model_blob"
+  input_side_packet: "MODEL_RESOURCE:box_landmark_model_resource"
   output_side_packet: "MODEL:box_landmark_model"
 }
 

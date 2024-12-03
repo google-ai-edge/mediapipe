@@ -28,10 +28,10 @@ static const float scoreDifferenceTolerance = 0.02f;
 static NSString *const kLiveStreamTestsDictObjectDetectorKey = @"object_detector";
 static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
 
-#define AssertEqualErrors(error, expectedError)                                               \
-  XCTAssertNotNil(error);                                                                     \
-  XCTAssertEqualObjects(error.domain, expectedError.domain);                                  \
-  XCTAssertEqual(error.code, expectedError.code);                                             \
+#define AssertEqualErrors(error, expectedError)              \
+  XCTAssertNotNil(error);                                    \
+  XCTAssertEqualObjects(error.domain, expectedError.domain); \
+  XCTAssertEqual(error.code, expectedError.code);            \
   XCTAssertEqualObjects(error.localizedDescription, expectedError.localizedDescription)
 
 #define AssertEqualCategories(category, expectedCategory, detectionIndex, categoryIndex)           \
@@ -194,7 +194,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
                  usingObjectDetector:(MPPObjectDetector *)objectDetector
                           maxResults:(NSInteger)maxResults
           equalsObjectDetectorResult:(MPPObjectDetectorResult *)expectedObjectDetectorResult {
-  MPPObjectDetectorResult *ObjectDetectorResult = [objectDetector detectInImage:mppImage error:nil];
+  MPPObjectDetectorResult *ObjectDetectorResult = [objectDetector detectImage:mppImage error:nil];
 
   [self assertObjectDetectorResult:ObjectDetectorResult
            isEqualToExpectedResult:expectedObjectDetectorResult
@@ -495,9 +495,9 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   MPPImage *image = [self imageWithFileInfo:kCatsAndDogsImage];
 
   NSError *liveStreamApiCallError;
-  XCTAssertFalse([objectDetector detectAsyncInImage:image
-                            timestampInMilliseconds:0
-                                              error:&liveStreamApiCallError]);
+  XCTAssertFalse([objectDetector detectAsyncImage:image
+                          timestampInMilliseconds:0
+                                            error:&liveStreamApiCallError]);
 
   NSError *expectedLiveStreamApiCallError =
       [NSError errorWithDomain:kExpectedErrorDomain
@@ -510,9 +510,9 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   AssertEqualErrors(liveStreamApiCallError, expectedLiveStreamApiCallError);
 
   NSError *videoApiCallError;
-  XCTAssertFalse([objectDetector detectInVideoFrame:image
-                            timestampInMilliseconds:0
-                                              error:&videoApiCallError]);
+  XCTAssertFalse([objectDetector detectVideoFrame:image
+                          timestampInMilliseconds:0
+                                            error:&videoApiCallError]);
 
   NSError *expectedVideoApiCallError =
       [NSError errorWithDomain:kExpectedErrorDomain
@@ -533,9 +533,9 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   MPPImage *image = [self imageWithFileInfo:kCatsAndDogsImage];
 
   NSError *liveStreamApiCallError;
-  XCTAssertFalse([objectDetector detectAsyncInImage:image
-                            timestampInMilliseconds:0
-                                              error:&liveStreamApiCallError]);
+  XCTAssertFalse([objectDetector detectAsyncImage:image
+                          timestampInMilliseconds:0
+                                            error:&liveStreamApiCallError]);
 
   NSError *expectedLiveStreamApiCallError =
       [NSError errorWithDomain:kExpectedErrorDomain
@@ -548,7 +548,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   AssertEqualErrors(liveStreamApiCallError, expectedLiveStreamApiCallError);
 
   NSError *imageApiCallError;
-  XCTAssertFalse([objectDetector detectInImage:image error:&imageApiCallError]);
+  XCTAssertFalse([objectDetector detectImage:image error:&imageApiCallError]);
 
   NSError *expectedImageApiCallError =
       [NSError errorWithDomain:kExpectedErrorDomain
@@ -571,7 +571,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   MPPImage *image = [self imageWithFileInfo:kCatsAndDogsImage];
 
   NSError *imageApiCallError;
-  XCTAssertFalse([objectDetector detectInImage:image error:&imageApiCallError]);
+  XCTAssertFalse([objectDetector detectImage:image error:&imageApiCallError]);
 
   NSError *expectedImageApiCallError =
       [NSError errorWithDomain:kExpectedErrorDomain
@@ -583,9 +583,9 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   AssertEqualErrors(imageApiCallError, expectedImageApiCallError);
 
   NSError *videoApiCallError;
-  XCTAssertFalse([objectDetector detectInVideoFrame:image
-                            timestampInMilliseconds:0
-                                              error:&videoApiCallError]);
+  XCTAssertFalse([objectDetector detectVideoFrame:image
+                          timestampInMilliseconds:0
+                                            error:&videoApiCallError]);
 
   NSError *expectedVideoApiCallError =
       [NSError errorWithDomain:kExpectedErrorDomain
@@ -610,9 +610,9 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   MPPImage *image = [self imageWithFileInfo:kCatsAndDogsImage];
 
   for (int i = 0; i < 3; i++) {
-    MPPObjectDetectorResult *ObjectDetectorResult = [objectDetector detectInVideoFrame:image
-                                                               timestampInMilliseconds:i
-                                                                                 error:nil];
+    MPPObjectDetectorResult *ObjectDetectorResult = [objectDetector detectVideoFrame:image
+                                                             timestampInMilliseconds:i
+                                                                               error:nil];
 
     [self assertObjectDetectorResult:ObjectDetectorResult
              isEqualToExpectedResult:
@@ -643,10 +643,10 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
 
   MPPImage *image = [self imageWithFileInfo:kCatsAndDogsImage];
 
-  XCTAssertTrue([objectDetector detectAsyncInImage:image timestampInMilliseconds:1 error:nil]);
+  XCTAssertTrue([objectDetector detectAsyncImage:image timestampInMilliseconds:1 error:nil]);
 
   NSError *error;
-  XCTAssertFalse([objectDetector detectAsyncInImage:image timestampInMilliseconds:0 error:&error]);
+  XCTAssertFalse([objectDetector detectAsyncImage:image timestampInMilliseconds:0 error:&error]);
 
   NSError *expectedError =
       [NSError errorWithDomain:kExpectedErrorDomain
@@ -702,7 +702,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   MPPImage *image = [self imageWithFileInfo:kCatsAndDogsImage];
 
   for (int i = 0; i < iterationCount; i++) {
-    XCTAssertTrue([objectDetector detectAsyncInImage:image timestampInMilliseconds:i error:nil]);
+    XCTAssertTrue([objectDetector detectAsyncImage:image timestampInMilliseconds:i error:nil]);
   }
 
   NSTimeInterval timeout = 0.5f;

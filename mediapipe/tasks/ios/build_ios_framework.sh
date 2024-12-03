@@ -16,7 +16,9 @@
 # Set the following variables as appropriate.
 #   * BAZEL: path to bazel. defaults to the first one available in PATH
 #   * FRAMEWORK_NAME: name of the iOS framework to be built. Currently the
-#   * accepted values are MediaPipeTasksCommon, MediaPipeTasksText, MediaPipeTasksVision.
+#   * accepted values are MediaPipeTasksCommon, MediaPipeTasksText,
+#   * MediaPipeTasksVision, MediaPipeTasksAudio, MediaPipeTasksGenAIC,
+#   * MediaPipeTasksGenAI.
 #   * MPP_BUILD_VERSION: to specify the release version. defaults to 0.0.1-dev
 #   * IS_RELEASE_BUILD: set as true if this build should be a release build
 #   * ARCHIVE_FRAMEWORK: set as true if the framework should be archived
@@ -56,8 +58,14 @@ case $FRAMEWORK_NAME in
     ;;
   "MediaPipeTasksText")
     ;;
+  "MediaPipeTasksAudio")
+    ;;
+  "MediaPipeTasksGenAIC")
+    ;;
+  "MediaPipeTasksGenAI")
+    ;;
   *)
-    echo "Wrong framework name. The following framework names are allowed: MediaPipeTasksText, MediaPipeTasksVision, MediaPipeTasksCommon"
+    echo "Wrong framework name. The following framework names are allowed: MediaPipeTasksText, MediaPipeTasksVision, MediaPipeTasksAudio, MediaPipeTasksCommon, MediaPipeTasksGenAI, MediaPipeTasksGenAIC"
     exit 1
   ;;
 esac
@@ -90,7 +98,6 @@ EOF
 function build_ios_frameworks_and_libraries {
   local TARGET_PREFIX="//mediapipe/tasks/ios"
   FULL_FRAMEWORK_TARGET="${TARGET_PREFIX}:${FRAMEWORK_NAME}_framework"
-  FULL_GRAPH_LIBRARY_TARGET="${TARGET_PREFIX}:${FRAMEWORK_NAME}_GraphLibrary"
 
   # .bazelrc sets --apple_generate_dsym=true by default which bloats the libraries to sizes of
   # the order of GBs. All iOS framework and library build commands for distribution via
@@ -98,33 +105,48 @@ function build_ios_frameworks_and_libraries {
   # the order of a few MBs.
 
   # Build Task Library xcframework.
-  local FRAMEWORK_CQUERY_COMMAND="-c opt --apple_generate_dsym=false --define OPENCV=source ${FULL_FRAMEWORK_TARGET}"
+  local FRAMEWORK_CQUERY_COMMAND="-c opt --config=ios_sim_device_fat --apple_generate_dsym=false --define OPENCV=source ${FULL_FRAMEWORK_TARGET}"
+
   ${BAZEL} build ${FRAMEWORK_CQUERY_COMMAND}
   IOS_FRAMEWORK_PATH="$(get_output_file_path "${FRAMEWORK_CQUERY_COMMAND}")"
 
-  # `MediaPipeTasksCommon` pods must also include the task graph libraries which
+  case $FRAMEWORK_NAME in
+    # `MediaPipeTasksCommon` pods must also include the task graph libraries which
   # are to be force loaded. Hence the graph libraies are only built if the framework
   # name is `MediaPipeTasksCommon`.`
-  case $FRAMEWORK_NAME in
     "MediaPipeTasksCommon")
       local IOS_SIM_FAT_LIBRARY_CQUERY_COMMAND="-c opt --config=ios_sim_fat --apple_generate_dsym=false --define OPENCV=source //mediapipe/tasks/ios:MediaPipeTaskGraphs_library"
       ${BAZEL} build ${IOS_SIM_FAT_LIBRARY_CQUERY_COMMAND}
       IOS_GRAPHS_SIMULATOR_LIBRARY_PATH="$(get_output_file_path "${IOS_SIM_FAT_LIBRARY_CQUERY_COMMAND}")"
 
       # Build static library for iOS devices with arch ios_arm64. We don't need to build for armv7 since
-      # our deployment target is iOS 11.0. iOS 11.0 and upwards is not supported by old armv7 devices.
+      # our deployment target is iOS 12.0. iOS 12.0 and upwards is not supported by old armv7 devices.
       local IOS_DEVICE_LIBRARY_CQUERY_COMMAND="-c opt --config=ios_arm64 --apple_generate_dsym=false --define OPENCV=source //mediapipe/tasks/ios:MediaPipeTaskGraphs_library"
       ${BAZEL} build ${IOS_DEVICE_LIBRARY_CQUERY_COMMAND}
       IOS_GRAPHS_DEVICE_LIBRARY_PATH="$(get_output_file_path "${IOS_DEVICE_LIBRARY_CQUERY_COMMAND}")"
       ;;
+    # This section is for internal purposes only.
+    "MediaPipeTasksGenAIC")
+      if [[ ! -z ${ENABLE_ODML_COCOAPODS_BUILD+x} ]]; then
+        local IOS_SIM_FAT_LIBRARY_CQUERY_COMMAND="-c opt --config=ios_sim_fat --apple_generate_dsym=false //mediapipe/tasks/ios:MediaPipeTasksGenAI_library"
+        ${BAZEL} build ${IOS_SIM_FAT_LIBRARY_CQUERY_COMMAND}
+        IOS_GENAI_SIMULATOR_LIBRARY_PATH="$(get_output_file_path "${IOS_SIM_FAT_LIBRARY_CQUERY_COMMAND}")"
+
+        # Build static library for iOS devices with arch ios_arm64. We don't need to build for armv7 since
+        # our deployment target is iOS 12.0. iOS 12.0 and upwards is not supported by old armv7 devices.
+        local IOS_DEVICE_LIBRARY_CQUERY_COMMAND="-c opt --config=ios_arm64 --apple_generate_dsym=false //mediapipe/tasks/ios:MediaPipeTasksGenAI_library"
+        ${BAZEL} build ${IOS_DEVICE_LIBRARY_CQUERY_COMMAND}
+        IOS_GENAI_DEVICE_LIBRARY_PATH="$(get_output_file_path "${IOS_DEVICE_LIBRARY_CQUERY_COMMAND}")"
+      fi
+      ;;
     *)
-    ;;
+      ;;
   esac
 }
 
 function create_framework_archive {
   # Change to the Bazel iOS output directory.
-  pushd "${BAZEL_IOS_OUTDIR}"
+  pushd "${MPP_ROOT_DIR}"
 
   # Create the temporary directory for the given framework.
   local ARCHIVE_NAME="${FRAMEWORK_NAME}-${MPP_BUILD_VERSION}"
@@ -139,9 +161,9 @@ function create_framework_archive {
   echo ${IOS_FRAMEWORK_PATH}
   unzip "${IOS_FRAMEWORK_PATH}" -d "${FRAMEWORKS_DIR}"
 
-  # If the framwork being built is `MediaPipeTasksCommon`, the built graph
-  # libraries should be copied to the output directory which is to be archived.
   case $FRAMEWORK_NAME in
+    # If the framework being built is `MediaPipeTasksCommon`, the built graph
+    # libraries should be copied to the output directory which is to be archived.
     "MediaPipeTasksCommon")
       local GRAPH_LIBRARIES_DIR="graph_libraries"
       # Create the parent folder which will hold the graph libraries of all architectures.
@@ -159,15 +181,35 @@ function create_framework_archive {
       echo ${IOS_GRAPHS_DEVICE_LIBRARY_PATH}
       cp "${IOS_GRAPHS_DEVICE_LIBRARY_PATH}" "${IOS_DEVICE_GRAPH_LIBRARY_PATH}"
       ;;
+    # This section is for internal purposes only.
+    "MediaPipeTasksGenAIC")
+      if [[ ! -z ${ENABLE_ODML_COCOAPODS_BUILD+x} ]]; then
+        local GENAI_LIBRARIES_DIR="genai_libraries"
+        # Create the parent folder which will hold the genai libraries of all architectures.
+        mkdir -p "${FRAMEWORKS_DIR}/${GENAI_LIBRARIES_DIR}"
+
+        local SIMULATOR_GENAI_LIBRARY_PATH="${FRAMEWORKS_DIR}/${GENAI_LIBRARIES_DIR}/lib${FRAMEWORK_NAME}_simulator.a"
+
+        # Copy ios simulator fat library into a separate directory.
+        echo ${IOS_GENAI_SIMULATOR_LIBRARY_PATH}
+        cp "${IOS_GENAI_SIMULATOR_LIBRARY_PATH}" "${SIMULATOR_GENAI_LIBRARY_PATH}"
+
+        local IOS_DEVICE_GENAI_LIBRARY_PATH="${FRAMEWORKS_DIR}/${GENAI_LIBRARIES_DIR}/lib${FRAMEWORK_NAME}_device.a"
+
+        # Copy ios device library into a separate directory.
+        echo ${IOS_GENAI_DEVICE_LIBRARY_PATH}
+        cp "${IOS_GENAI_DEVICE_LIBRARY_PATH}" "${IOS_DEVICE_GENAI_LIBRARY_PATH}"
+      fi
+      ;;
     *)
       ;;
   esac
 
   #----- (3) Move the framework to the destination -----
   if [[ "${ARCHIVE_FRAMEWORK}" == true ]]; then
-    local TARGET_DIR="$(realpath "${FRAMEWORK_NAME}")"
-
     # Create the framework archive directory.
+    mkdir -p "${FRAMEWORK_NAME}"
+    local TARGET_DIR="$(realpath "${FRAMEWORK_NAME}")"
 
     local FRAMEWORK_ARCHIVE_DIR
     if [[ "${IS_RELEASE_BUILD}" == true ]]; then
@@ -186,8 +228,11 @@ function create_framework_archive {
     mv "${MPP_ARCHIVE_FILE}" "${FRAMEWORK_ARCHIVE_DIR}"
     popd
 
-    # Move the target directory to the Kokoro artifacts directory.
-    mv "${TARGET_DIR}" "$(realpath "${DEST_DIR}")"/
+    # Move the target directory to the Kokoro artifacts directory and clean up
+    # the artifacts directory in the mediapipe root directory even if the
+    # move command fails.
+    mv "${TARGET_DIR}" "$(realpath "${DEST_DIR}")"/ || true
+    rm -rf "${TARGET_DIR}"
   else
     rsync -r "${MPP_TMPDIR}/" "$(realpath "${DEST_DIR}")/"
   fi

@@ -1,3 +1,4 @@
 <resources>
     <string name="no_camera_access" translatable="false">Please grant camera permissions.</string>
+    <string name="action_exit_title" translatable="false">Close Graph, Wait Until Done &amp; Exit</string>
 </resources>

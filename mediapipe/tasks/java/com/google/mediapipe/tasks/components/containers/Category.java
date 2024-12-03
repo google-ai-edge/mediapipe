@@ -16,6 +16,10 @@ package com.google.mediapipe.tasks.components.containers;
 
 import com.google.auto.value.AutoValue;
 import com.google.mediapipe.formats.proto.ClassificationProto;
+import com.google.mediapipe.formats.proto.ClassificationProto.Classification;
+import com.google.mediapipe.formats.proto.ClassificationProto.ClassificationList;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -47,6 +51,22 @@ public abstract class Category {
    */
   public static Category createFromProto(ClassificationProto.Classification proto) {
     return create(proto.getScore(), proto.getIndex(), proto.getLabel(), proto.getDisplayName());
+  }
+
+  /**
+   * Creates a list of {@link Category} objects from a {@link
+   * ClassificationProto.ClassificationList}.
+   *
+   * @param classificationListProto the {@link ClassificationProto.ClassificationList} protobuf
+   *     message to convert.
+   * @return A list of {@link Category} objects.
+   */
+  public static List<Category> createListFromProto(ClassificationList classificationListProto) {
+    List<Category> categoryList = new ArrayList<>();
+    for (Classification classification : classificationListProto.getClassificationList()) {
+      categoryList.add(createFromProto(classification));
+    }
+    return categoryList;
   }
 
   /** The probability score of this label category. */

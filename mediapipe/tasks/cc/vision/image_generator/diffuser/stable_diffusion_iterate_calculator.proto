@@ -1,0 +1,84 @@
+/* Copyright 2023 The MediaPipe Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+==============================================================================*/
+
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+
+option java_package = "com.google.mediapipe.calculator.proto";
+option java_outer_classname = "StableDiffusionIterateCalculatorOptionsProto";
+
+message StableDiffusionIterateCalculatorOptions {
+  extend mediapipe.CalculatorOptions {
+    optional StableDiffusionIterateCalculatorOptions ext = 510855836;
+  }
+
+  // The random seed that is fed into the calculator to control the randomness
+  // of the generated image.
+  optional uint32 base_seed = 1 [default = 0];
+
+  // The target output image size. Must be a multiple of 8 and larger than 384.
+  optional int32 output_image_width = 2 [default = 512];
+  optional int32 output_image_height = 3 [default = 512];
+
+  // The folder name must end of '/'.
+  optional string file_folder = 4 [default = "bins/"];
+
+  // Note: only one of lora_file_folder and lora_weights_layer_mapping should be
+  // set.
+  // The LoRA file folder. The folder name must end of '/'.
+  optional string lora_file_folder = 9 [default = ""];
+
+  // The LoRA layer name mapping to the weight buffer position in the file.
+  map<string, uint64> lora_weights_layer_mapping = 10;
+
+  // The LoRA rank.
+  optional int32 lora_rank = 12 [default = 4];
+
+  // Determine when to run image decoding for how many every iterations.
+  // Setting this to 1 means we run the image decoding for every iteration for
+  // displaying the intermediate result, but it will also introduce much higher
+  // overall latency.
+  // Setting this to be the targeted number of iterations will only run the
+  // image decoding at the end, giving the best overall latency.
+  optional int32 show_every_n_iteration = 5 [default = 1];
+
+  // If set to be True, the calculator will perform a GPU-CPU sync and emit an
+  // empty packet. It is used to provide the signal of which iterations it is
+  // currently at, typically used to create a progress bar. Note that this also
+  // introduce overhead, but not significantly based on our experiments (~1ms).
+  optional bool emit_empty_packet = 6 [default = false];
+
+  enum ClPriorityHint {
+    PRIORITY_HINT_NORMAL = 0;  // Default, must be first.
+    PRIORITY_HINT_LOW = 1;
+    PRIORITY_HINT_HIGH = 2;
+  }
+
+  // OpenCL priority hint. Set this to LOW to yield to other GPU contexts.
+  // This lowers inference speed, but helps keeping the UI responsive.
+  optional ClPriorityHint cl_priority_hint = 7;
+
+  enum ModelType {
+    DEFAULT = 0;
+    SD_1 = 1;  // Stable Diffusion v1 models, including SD 1.4 and 1.5.
+  }
+  // Stable Diffusion model type. Default to Stable Diffusion v1.
+  optional ModelType model_type = 8 [default = SD_1];
+  // The strength of the diffusion plugins inputs.
+  optional float plugins_strength = 11 [default = 1.0];
+}

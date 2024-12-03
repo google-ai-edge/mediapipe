@@ -102,6 +102,7 @@ public final class InteractiveSegmenter extends BaseVisionTaskApi {
   private List<String> labels = new ArrayList<>();
 
   static {
+    System.loadLibrary("mediapipe_tasks_vision_jni");
     ProtoUtil.registerTypeName(RenderData.class, "mediapipe.RenderData");
   }
 

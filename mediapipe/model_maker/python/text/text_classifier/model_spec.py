@@ -23,16 +23,8 @@ from mediapipe.model_maker.python.text.text_classifier import hyperparameters as
 from mediapipe.model_maker.python.text.text_classifier import model_options as mo
 
 
-MOBILEBERT_TINY_FILES = file_util.DownloadedFiles(
-    'text_classifier/mobilebert_tiny',
-    'https://storage.googleapis.com/mediapipe-assets/mobilebert_tiny.tar.gz',
-    is_folder=True,
-)
-
-EXBERT_FILES = file_util.DownloadedFiles(
-    'text_classifier/exbert',
-    'https://storage.googleapis.com/mediapipe-assets/exbert.tar.gz',
-    is_folder=True,
+MOBILEBERT_FILES = (
+    'https://tfhub.dev/google/mobilebert/uncased_L-24_H-128_B-512_A-4_F-4_OPT/1'
 )
 
 
@@ -57,8 +49,10 @@ class AverageWordEmbeddingClassifierSpec:
   )
   name: str = 'AverageWordEmbedding'
 
+
 average_word_embedding_classifier_spec = functools.partial(
-    AverageWordEmbeddingClassifierSpec)
+    AverageWordEmbeddingClassifierSpec
+)
 
 
 @dataclasses.dataclass
@@ -74,26 +68,18 @@ class BertClassifierSpec(bert_model_spec.BertModelSpec):
 
 mobilebert_classifier_spec = functools.partial(
     BertClassifierSpec,
-    downloaded_files=MOBILEBERT_TINY_FILES,
+    files=MOBILEBERT_FILES,
     hparams=hp.BertHParams(
         epochs=3, batch_size=48, learning_rate=3e-5, distribution_strategy='off'
     ),
-    name='MobileBert',
-)
-
-exbert_classifier_spec = functools.partial(
-    BertClassifierSpec,
-    downloaded_files=EXBERT_FILES,
-    hparams=hp.BertHParams(
-        epochs=3, batch_size=48, learning_rate=3e-5, distribution_strategy='off'
-    ),
-    name='ExBert',
+    name='MobileBERT',
+    is_tf2=False,
 )
 
 
 @enum.unique
 class SupportedModels(enum.Enum):
   """Predefined text classifier model specs supported by Model Maker."""
+
   AVERAGE_WORD_EMBEDDING_CLASSIFIER = average_word_embedding_classifier_spec
   MOBILEBERT_CLASSIFIER = mobilebert_classifier_spec
-  EXBERT_CLASSIFIER = exbert_classifier_spec

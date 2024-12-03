@@ -233,6 +233,7 @@ cc_test(
     size = "large",
     timeout = "long",
     srcs = ["scene_cropping_calculator_test.cc"],
+    tags = ["noasan"],  #  TODO b/352507058 - ASAN run takes 25 minutes. Disabled for now.
     deps = [
         ":scene_cropping_calculator",
         "//mediapipe/examples/desktop/autoflip:autoflip_messages_cc_proto",
@@ -306,6 +307,7 @@ cc_library(
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/log:absl_log",
     ],
     alwayslink = 1,
 )

@@ -13,12 +13,12 @@
 # limitations under the License.
 
 load(
-    "//mediapipe/framework/tool:mediapipe_graph.bzl",
-    "mediapipe_simple_subgraph",
-)
-load(
     "//mediapipe/framework/tool:mediapipe_files.bzl",
     "mediapipe_files",
+)
+load(
+    "//mediapipe/framework/tool:mediapipe_graph.bzl",
+    "mediapipe_simple_subgraph",
 )
 
 licenses(["notice"])

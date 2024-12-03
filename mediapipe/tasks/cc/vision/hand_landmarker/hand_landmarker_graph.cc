@@ -83,7 +83,7 @@ struct HandLandmarkerOutputs {
   Stream<std::vector<NormalizedLandmarkList>> landmark_lists;
   Stream<std::vector<LandmarkList>> world_landmark_lists;
   Stream<std::vector<NormalizedRect>> hand_rects_next_frame;
-  Stream<std::vector<ClassificationList>> handednesses;
+  Stream<std::vector<ClassificationList>> handedness;
   Stream<std::vector<NormalizedRect>> palm_rects;
   Stream<std::vector<Detection>> palm_detections;
   Stream<Image> image;
@@ -96,8 +96,8 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
   auto* hand_detector_graph_options =
       options->mutable_hand_detector_graph_options();
   if (!hand_detector_graph_options->base_options().has_model_asset()) {
-    ASSIGN_OR_RETURN(const auto hand_detector_file,
-                     resources.GetFile(kHandDetectorTFLiteName));
+    MP_ASSIGN_OR_RETURN(const auto hand_detector_file,
+                        resources.GetFile(kHandDetectorTFLiteName));
     SetExternalFile(hand_detector_file,
                     hand_detector_graph_options->mutable_base_options()
                         ->mutable_model_asset(),
@@ -112,8 +112,8 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
       options->mutable_hand_landmarks_detector_graph_options();
   if (!hand_landmarks_detector_graph_options->base_options()
            .has_model_asset()) {
-    ASSIGN_OR_RETURN(const auto hand_landmarks_detector_file,
-                     resources.GetFile(kHandLandmarksDetectorTFLiteName));
+    MP_ASSIGN_OR_RETURN(const auto hand_landmarks_detector_file,
+                        resources.GetFile(kHandLandmarksDetectorTFLiteName));
     SetExternalFile(
         hand_landmarks_detector_file,
         hand_landmarks_detector_graph_options->mutable_base_options()
@@ -125,6 +125,11 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
       ->CopyFrom(options->base_options().acceleration());
   hand_landmarks_detector_graph_options->mutable_base_options()
       ->set_use_stream_mode(options->base_options().use_stream_mode());
+
+  hand_detector_graph_options->mutable_base_options()->set_gpu_origin(
+      options->base_options().gpu_origin());
+  hand_landmarks_detector_graph_options->mutable_base_options()->set_gpu_origin(
+      options->base_options().gpu_origin());
   return absl::OkStatus();
 }
 }  // namespace
@@ -215,7 +220,7 @@ class HandLandmarkerGraph : public core::ModelTaskGraph {
     if (sc->Options<HandLandmarkerGraphOptions>()
             .base_options()
             .has_model_asset()) {
-      ASSIGN_OR_RETURN(
+      MP_ASSIGN_OR_RETURN(
           const auto* model_asset_bundle_resources,
           CreateModelAssetBundleResources<HandLandmarkerGraphOptions>(sc));
       // Copies the file content instead of passing the pointer of file in
@@ -231,7 +236,7 @@ class HandLandmarkerGraph : public core::ModelTaskGraph {
     if (HasInput(sc->OriginalNode(), kNormRectTag)) {
       norm_rect_in = graph.In(kNormRectTag).Cast<NormalizedRect>();
     }
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         auto hand_landmarker_outputs,
         BuildHandLandmarkerGraph(sc->Options<HandLandmarkerGraphOptions>(),
                                  image_in, norm_rect_in, graph));
@@ -241,7 +246,7 @@ class HandLandmarkerGraph : public core::ModelTaskGraph {
         graph[Output<std::vector<LandmarkList>>(kWorldLandmarksTag)];
     hand_landmarker_outputs.hand_rects_next_frame >>
         graph[Output<std::vector<NormalizedRect>>(kHandRectNextFrameTag)];
-    hand_landmarker_outputs.handednesses >>
+    hand_landmarker_outputs.handedness >>
         graph[Output<std::vector<ClassificationList>>(kHandednessTag)];
     hand_landmarker_outputs.palm_rects >>
         graph[Output<std::vector<NormalizedRect>>(kPalmRectsTag)];
@@ -249,18 +254,8 @@ class HandLandmarkerGraph : public core::ModelTaskGraph {
         graph[Output<std::vector<Detection>>(kPalmDetectionsTag)];
     hand_landmarker_outputs.image >> graph[Output<Image>(kImageTag)];
 
-    // TODO remove when support is fixed.
-    // As mediapipe GraphBuilder currently doesn't support configuring
-    // InputStreamInfo, modifying the CalculatorGraphConfig proto directly.
     CalculatorGraphConfig config = graph.GetConfig();
-    for (int i = 0; i < config.node_size(); ++i) {
-      if (config.node(i).calculator() == kPreviousLoopbackCalculatorName) {
-        auto* info = config.mutable_node(i)->add_input_stream_info();
-        info->set_tag_index("LOOP");
-        info->set_back_edge(true);
-        break;
-      }
-    }
+    core::FixGraphBackEdges(config);
     return config;
   }
 

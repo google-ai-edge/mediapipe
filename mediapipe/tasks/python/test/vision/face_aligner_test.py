@@ -113,8 +113,8 @@ class FaceAlignerTest(parameterized.TestCase):
     aligner = _FaceAligner.create_from_options(options)
 
     # Performs face alignment on the input.
-    alignd_image = aligner.align(self.test_image)
-    self.assertIsInstance(alignd_image, _Image)
+    aligned_image = aligner.align(self.test_image)
+    self.assertIsInstance(aligned_image, _Image)
     # Closes the aligner explicitly when the aligner is not used in
     # a context.
     aligner.close()
@@ -144,10 +144,10 @@ class FaceAlignerTest(parameterized.TestCase):
     options = _FaceAlignerOptions(base_options=base_options)
     with _FaceAligner.create_from_options(options) as aligner:
       # Performs face alignment on the input.
-      alignd_image = aligner.align(self.test_image)
-      self.assertIsInstance(alignd_image, _Image)
-      self.assertEqual(alignd_image.width, _MODEL_IMAGE_SIZE)
-      self.assertEqual(alignd_image.height, _MODEL_IMAGE_SIZE)
+      aligned_image = aligner.align(self.test_image)
+      self.assertIsInstance(aligned_image, _Image)
+      self.assertEqual(aligned_image.width, _MODEL_IMAGE_SIZE)
+      self.assertEqual(aligned_image.height, _MODEL_IMAGE_SIZE)
 
   def test_align_succeeds_with_region_of_interest(self):
     base_options = _BaseOptions(model_asset_path=self.model_path)
@@ -163,10 +163,10 @@ class FaceAlignerTest(parameterized.TestCase):
       roi = _Rect(left=0.32, top=0.02, right=0.67, bottom=0.32)
       image_processing_options = _ImageProcessingOptions(roi)
       # Performs face alignment on the input.
-      alignd_image = aligner.align(test_image, image_processing_options)
-      self.assertIsInstance(alignd_image, _Image)
-      self.assertEqual(alignd_image.width, _MODEL_IMAGE_SIZE)
-      self.assertEqual(alignd_image.height, _MODEL_IMAGE_SIZE)
+      aligned_image = aligner.align(test_image, image_processing_options)
+      self.assertIsInstance(aligned_image, _Image)
+      self.assertEqual(aligned_image.width, _MODEL_IMAGE_SIZE)
+      self.assertEqual(aligned_image.height, _MODEL_IMAGE_SIZE)
 
   def test_align_succeeds_with_no_face_detected(self):
     base_options = _BaseOptions(model_asset_path=self.model_path)
@@ -182,8 +182,8 @@ class FaceAlignerTest(parameterized.TestCase):
       roi = _Rect(left=0.1, top=0.1, right=0.2, bottom=0.2)
       image_processing_options = _ImageProcessingOptions(roi)
       # Performs face alignment on the input.
-      alignd_image = aligner.align(test_image, image_processing_options)
-      self.assertIsNone(alignd_image)
+      aligned_image = aligner.align(test_image, image_processing_options)
+      self.assertIsNone(aligned_image)
 
 
 if __name__ == '__main__':

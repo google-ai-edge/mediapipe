@@ -16,6 +16,7 @@
 
 #include <tuple>
 
+#include "absl/log/absl_check.h"
 #include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
@@ -195,7 +196,7 @@ absl::Status ProtoUtilLite::ReplaceFieldRange(
   proto_path.erase(proto_path.begin());
   FieldType type =
       !proto_path.empty() ? WireFormatLite::TYPE_MESSAGE : field_type;
-  ASSIGN_OR_RETURN(auto r, AccessField(entry, type, *message));
+  MP_ASSIGN_OR_RETURN(auto r, AccessField(entry, type, *message));
   FieldAccess& access = r.first;
   int index = r.second;
   std::vector<FieldValue>& v = *access.mutable_field_values();
@@ -222,7 +223,7 @@ absl::Status ProtoUtilLite::GetFieldRange(
   proto_path.erase(proto_path.begin());
   FieldType type =
       !proto_path.empty() ? WireFormatLite::TYPE_MESSAGE : field_type;
-  ASSIGN_OR_RETURN(auto r, AccessField(entry, type, message));
+  MP_ASSIGN_OR_RETURN(auto r, AccessField(entry, type, message));
   FieldAccess& access = r.first;
   int index = r.second;
   std::vector<FieldValue>& v = *access.mutable_field_values();
@@ -251,7 +252,7 @@ absl::Status ProtoUtilLite::GetFieldCount(const FieldValue& message,
   proto_path.erase(proto_path.begin());
   FieldType type =
       !proto_path.empty() ? WireFormatLite::TYPE_MESSAGE : field_type;
-  ASSIGN_OR_RETURN(auto r, AccessField(entry, type, message));
+  MP_ASSIGN_OR_RETURN(auto r, AccessField(entry, type, message));
   FieldAccess& access = r.first;
   int index = r.second;
   std::vector<FieldValue>& v = *access.mutable_field_values();
@@ -411,7 +412,7 @@ static absl::Status DeserializeValue(const FieldValue& bytes,
     }
     case W::TYPE_GROUP:
     case W::TYPE_MESSAGE:
-      CHECK(false) << "DeserializeValue cannot deserialize a Message.";
+      ABSL_CHECK(false) << "DeserializeValue cannot deserialize a Message.";
     case W::TYPE_UINT32:
       return ReadPrimitive<uint32_t, W::TYPE_UINT32>(&input, result);
     case W::TYPE_ENUM:

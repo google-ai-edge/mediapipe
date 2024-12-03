@@ -44,8 +44,8 @@ public final class PacketGetter {
       this.second = second;
     }
 
-    final Packet first;
-    final Packet second;
+    public final Packet first;
+    public final Packet second;
   }
 
   /**
@@ -126,6 +126,16 @@ public final class PacketGetter {
     SerializedMessage result = new SerializedMessage();
     nativeGetProto(packet.getNativeHandle(), result);
     return ProtoUtil.unpack(result, defaultInstance);
+  }
+
+  public static <T extends MessageLite> T getProto(final Packet packet, Parser<T> messageParser) {
+    SerializedMessage result = new SerializedMessage();
+    nativeGetProto(packet.getNativeHandle(), result);
+    try {
+      return messageParser.parseFrom(result.value);
+    } catch (InvalidProtocolBufferException e) {
+      throw new IllegalArgumentException(e);
+    }
   }
 
   /**

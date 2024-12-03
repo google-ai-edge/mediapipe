@@ -14,7 +14,7 @@
 """Custom classifier."""
 
 import os
-from typing import Any, Callable, Optional, Sequence, Union
+from typing import Any, Callable, Dict, Optional, Sequence, Union
 
 import tensorflow as tf
 
@@ -69,30 +69,43 @@ class Classifier(custom_model.CustomModel):
         checkpoint in the directory.
     """
     tf.compat.v1.logging.info('Training the models...')
-    if len(train_data) < self._hparams.batch_size:
+    if not self._hparams.repeat and len(train_data) < self._hparams.batch_size:
       raise ValueError(
-          f'The size of the train_data {len(train_data)} can\'t be smaller than'
+          f"The size of the train_data {len(train_data)} can't be smaller than"
           f' batch_size {self._hparams.batch_size}. To solve this problem, set'
-          ' the batch_size smaller or increase the size of the train_data.')
+          ' the batch_size smaller or increase the size of the train_data.'
+      )
 
     train_dataset = train_data.gen_tf_dataset(
         batch_size=self._hparams.batch_size,
         is_training=True,
         shuffle=self._shuffle,
-        preprocess=preprocessor)
+        preprocess=preprocessor,
+        drop_remainder=True,
+        num_parallel_preprocess_calls=self._hparams.num_parallel_calls,
+    )
+    if self._hparams.repeat and self._hparams.steps_per_epoch is None:
+      raise ValueError(
+          '`steps_per_epoch` must be set if training `repeat` is True.'
+      )
     self._hparams.steps_per_epoch = model_util.get_steps_per_epoch(
         steps_per_epoch=self._hparams.steps_per_epoch,
         batch_size=self._hparams.batch_size,
         train_data=train_data)
+    if self._hparams.repeat:
+      train_dataset = train_dataset.repeat()
     train_dataset = train_dataset.take(count=self._hparams.steps_per_epoch)
     validation_dataset = validation_data.gen_tf_dataset(
         batch_size=self._hparams.batch_size,
         is_training=False,
-        preprocess=preprocessor)
+        preprocess=preprocessor,
+        drop_remainder=True,
+        num_parallel_preprocess_calls=self._hparams.num_parallel_calls,
+    )
     self._model.compile(
         optimizer=self._optimizer,
         loss=self._loss_function,
-        metrics=self._metric_functions,
+        weighted_metrics=self._metric_functions,
     )
 
     latest_checkpoint = (
@@ -102,31 +115,45 @@ class Classifier(custom_model.CustomModel):
       print(f'Resuming from {latest_checkpoint}')
       self._model.load_weights(latest_checkpoint)
 
+    # `steps_per_epoch` is intentionally set to None in case the dataset is not
+    # repeated. Otherwise, the training process will stop when the dataset is
+    # exhausted even if there are epochs remaining.
+    if not self._hparams.repeat:
+      steps_per_epoch = None
+    else:
+      steps_per_epoch = self._hparams.steps_per_epoch
     self._history = self._model.fit(
         x=train_dataset,
         epochs=self._hparams.epochs,
-        # `steps_per_epoch` is intentionally set to None in case the dataset
-        # is not repeated. Otherwise, the training process will stop when the
-        # dataset is exhausted even if there are epochs remaining.
-        steps_per_epoch=None,
+        steps_per_epoch=steps_per_epoch,
         validation_data=validation_dataset,
         callbacks=self._callbacks,
         class_weight=self._hparams.class_weights,
     )
 
-  def evaluate(self, data: dataset.Dataset, batch_size: int = 32) -> Any:
+  def evaluate(
+      self,
+      data: dataset.Dataset,
+      batch_size: int = 32,
+      **kwargs: Dict[str, Any],
+  ) -> Any:
     """Evaluates the classifier with the provided evaluation dataset.
 
     Args:
         data: Evaluation dataset
         batch_size: Number of samples per evaluation step.
+        **kwargs: Additional arguments to pass to `model.evaluate`.
 
     Returns:
       The loss value and accuracy.
     """
     ds = data.gen_tf_dataset(
-        batch_size, is_training=False, preprocess=self._preprocess)
-    return self._model.evaluate(ds)
+        batch_size,
+        is_training=False,
+        preprocess=self._preprocess,
+        num_parallel_preprocess_calls=self._hparams.num_parallel_calls,
+    )
+    return self._model.evaluate(ds, **kwargs)
 
   def export_labels(self, export_dir: str, label_filename: str = 'labels.txt'):
     """Exports classification labels into a label file.

@@ -244,7 +244,7 @@ absl::Status ValidateFloatTensorInputs(const FrameBuffer& buffer,
   if (shape.dims.size() != 4 || shape.dims[0] != 1) {
     return absl::InvalidArgumentError("Expected tensor with batch size of 1.");
   }
-  ASSIGN_OR_RETURN(int channels, NumberOfChannels(buffer));
+  MP_ASSIGN_OR_RETURN(int channels, NumberOfChannels(buffer));
   if (shape.dims[2] != buffer.dimension().width ||
       shape.dims[1] != buffer.dimension().height || shape.dims[3] != channels) {
     return absl::InvalidArgumentError(
@@ -260,8 +260,8 @@ absl::Status ValidateFloatTensorInputs(const FrameBuffer& buffer,
 // output YuvBuffer is agnostic to the YUV format since the YUV buffers are
 // managed individually.
 absl::StatusOr<YuvBuffer> CreateYuvBuffer(const FrameBuffer& buffer) {
-  ASSIGN_OR_RETURN(FrameBuffer::YuvData yuv_data,
-                   FrameBuffer::GetYuvDataFromFrameBuffer(buffer));
+  MP_ASSIGN_OR_RETURN(FrameBuffer::YuvData yuv_data,
+                      FrameBuffer::GetYuvDataFromFrameBuffer(buffer));
   return YuvBuffer(const_cast<uint8_t*>(yuv_data.y_buffer),
                    const_cast<uint8_t*>(yuv_data.u_buffer),
                    const_cast<uint8_t*>(yuv_data.v_buffer),
@@ -293,8 +293,8 @@ absl::StatusOr<RgbBuffer> CreateRgbBuffer(const FrameBuffer& buffer) {
 
 absl::Status CropGrayscale(const FrameBuffer& buffer, int x0, int y0, int x1,
                            int y1, FrameBuffer* output_buffer) {
-  ASSIGN_OR_RETURN(auto input, CreateGrayBuffer(buffer));
-  ASSIGN_OR_RETURN(auto output, CreateGrayBuffer(*output_buffer));
+  MP_ASSIGN_OR_RETURN(auto input, CreateGrayBuffer(buffer));
+  MP_ASSIGN_OR_RETURN(auto output, CreateGrayBuffer(*output_buffer));
   bool success_crop = input.Crop(x0, y0, x1, y1);
   if (!success_crop) {
     return absl::UnknownError("Halide grayscale crop operation failed.");
@@ -308,8 +308,8 @@ absl::Status CropGrayscale(const FrameBuffer& buffer, int x0, int y0, int x1,
 
 absl::Status ResizeGrayscale(const FrameBuffer& buffer,
                              FrameBuffer* output_buffer) {
-  ASSIGN_OR_RETURN(auto input, CreateGrayBuffer(buffer));
-  ASSIGN_OR_RETURN(auto output, CreateGrayBuffer(*output_buffer));
+  MP_ASSIGN_OR_RETURN(auto input, CreateGrayBuffer(buffer));
+  MP_ASSIGN_OR_RETURN(auto output, CreateGrayBuffer(*output_buffer));
   return input.Resize(&output)
              ? absl::OkStatus()
              : absl::UnknownError("Halide grayscale resize operation failed.");
@@ -317,8 +317,8 @@ absl::Status ResizeGrayscale(const FrameBuffer& buffer,
 
 absl::Status RotateGrayscale(const FrameBuffer& buffer, int angle_deg,
                              FrameBuffer* output_buffer) {
-  ASSIGN_OR_RETURN(auto input, CreateGrayBuffer(buffer));
-  ASSIGN_OR_RETURN(auto output, CreateGrayBuffer(*output_buffer));
+  MP_ASSIGN_OR_RETURN(auto input, CreateGrayBuffer(buffer));
+  MP_ASSIGN_OR_RETURN(auto output, CreateGrayBuffer(*output_buffer));
   return input.Rotate(angle_deg % 360, &output)
              ? absl::OkStatus()
              : absl::UnknownError("Halide grayscale rotate operation failed.");
@@ -326,8 +326,8 @@ absl::Status RotateGrayscale(const FrameBuffer& buffer, int angle_deg,
 
 absl::Status FlipHorizontallyGrayscale(const FrameBuffer& buffer,
                                        FrameBuffer* output_buffer) {
-  ASSIGN_OR_RETURN(auto input, CreateGrayBuffer(buffer));
-  ASSIGN_OR_RETURN(auto output, CreateGrayBuffer(*output_buffer));
+  MP_ASSIGN_OR_RETURN(auto input, CreateGrayBuffer(buffer));
+  MP_ASSIGN_OR_RETURN(auto output, CreateGrayBuffer(*output_buffer));
   return input.FlipHorizontally(&output)
              ? absl::OkStatus()
              : absl::UnknownError(
@@ -336,8 +336,8 @@ absl::Status FlipHorizontallyGrayscale(const FrameBuffer& buffer,
 
 absl::Status FlipVerticallyGrayscale(const FrameBuffer& buffer,
                                      FrameBuffer* output_buffer) {
-  ASSIGN_OR_RETURN(auto input, CreateGrayBuffer(buffer));
-  ASSIGN_OR_RETURN(auto output, CreateGrayBuffer(*output_buffer));
+  MP_ASSIGN_OR_RETURN(auto input, CreateGrayBuffer(buffer));
+  MP_ASSIGN_OR_RETURN(auto output, CreateGrayBuffer(*output_buffer));
   return input.FlipVertically(&output)
              ? absl::OkStatus()
              : absl::UnknownError(
@@ -348,25 +348,25 @@ absl::Status FlipVerticallyGrayscale(const FrameBuffer& buffer,
 //------------------------------------------------------------------------------
 
 absl::Status ResizeRgb(const FrameBuffer& buffer, FrameBuffer* output_buffer) {
-  ASSIGN_OR_RETURN(auto input, CreateRgbBuffer(buffer));
-  ASSIGN_OR_RETURN(auto output, CreateRgbBuffer(*output_buffer));
+  MP_ASSIGN_OR_RETURN(auto input, CreateRgbBuffer(buffer));
+  MP_ASSIGN_OR_RETURN(auto output, CreateRgbBuffer(*output_buffer));
   return input.Resize(&output)
              ? absl::OkStatus()
              : absl::UnknownError("Halide rgb[a] resize operation failed.");
 }
 
 absl::Status ConvertRgb(const FrameBuffer& buffer, FrameBuffer* output_buffer) {
-  ASSIGN_OR_RETURN(auto input, CreateRgbBuffer(buffer));
+  MP_ASSIGN_OR_RETURN(auto input, CreateRgbBuffer(buffer));
   bool result = false;
   if (output_buffer->format() == FrameBuffer::Format::kGRAY) {
-    ASSIGN_OR_RETURN(auto output, CreateGrayBuffer(*output_buffer));
+    MP_ASSIGN_OR_RETURN(auto output, CreateGrayBuffer(*output_buffer));
     result = input.Convert(&output);
   } else if (IsSupportedYuvBuffer(*output_buffer)) {
-    ASSIGN_OR_RETURN(auto output, CreateYuvBuffer(*output_buffer));
+    MP_ASSIGN_OR_RETURN(auto output, CreateYuvBuffer(*output_buffer));
     result = input.Convert(&output);
   } else if (output_buffer->format() == FrameBuffer::Format::kRGBA ||
              output_buffer->format() == FrameBuffer::Format::kRGB) {
-    ASSIGN_OR_RETURN(auto output, CreateRgbBuffer(*output_buffer));
+    MP_ASSIGN_OR_RETURN(auto output, CreateRgbBuffer(*output_buffer));
     result = input.Convert(&output);
   }
   return result ? absl::OkStatus()
@@ -375,8 +375,8 @@ absl::Status ConvertRgb(const FrameBuffer& buffer, FrameBuffer* output_buffer) {
 
 absl::Status CropRgb(const FrameBuffer& buffer, int x0, int y0, int x1, int y1,
                      FrameBuffer* output_buffer) {
-  ASSIGN_OR_RETURN(auto input, CreateRgbBuffer(buffer));
-  ASSIGN_OR_RETURN(auto output, CreateRgbBuffer(*output_buffer));
+  MP_ASSIGN_OR_RETURN(auto input, CreateRgbBuffer(buffer));
+  MP_ASSIGN_OR_RETURN(auto output, CreateRgbBuffer(*output_buffer));
   bool success_crop = input.Crop(x0, y0, x1, y1);
   if (!success_crop) {
     return absl::UnknownError("Halide rgb[a] crop operation failed.");
@@ -390,8 +390,8 @@ absl::Status CropRgb(const FrameBuffer& buffer, int x0, int y0, int x1, int y1,
 
 absl::Status FlipHorizontallyRgb(const FrameBuffer& buffer,
                                  FrameBuffer* output_buffer) {
-  ASSIGN_OR_RETURN(auto input, CreateRgbBuffer(buffer));
-  ASSIGN_OR_RETURN(auto output, CreateRgbBuffer(*output_buffer));
+  MP_ASSIGN_OR_RETURN(auto input, CreateRgbBuffer(buffer));
+  MP_ASSIGN_OR_RETURN(auto output, CreateRgbBuffer(*output_buffer));
   return input.FlipHorizontally(&output)
              ? absl::OkStatus()
              : absl::UnknownError(
@@ -400,8 +400,8 @@ absl::Status FlipHorizontallyRgb(const FrameBuffer& buffer,
 
 absl::Status FlipVerticallyRgb(const FrameBuffer& buffer,
                                FrameBuffer* output_buffer) {
-  ASSIGN_OR_RETURN(auto input, CreateRgbBuffer(buffer));
-  ASSIGN_OR_RETURN(auto output, CreateRgbBuffer(*output_buffer));
+  MP_ASSIGN_OR_RETURN(auto input, CreateRgbBuffer(buffer));
+  MP_ASSIGN_OR_RETURN(auto output, CreateRgbBuffer(*output_buffer));
   return input.FlipVertically(&output)
              ? absl::OkStatus()
              : absl::UnknownError(
@@ -410,8 +410,8 @@ absl::Status FlipVerticallyRgb(const FrameBuffer& buffer,
 
 absl::Status RotateRgb(const FrameBuffer& buffer, int angle,
                        FrameBuffer* output_buffer) {
-  ASSIGN_OR_RETURN(auto input, CreateRgbBuffer(buffer));
-  ASSIGN_OR_RETURN(auto output, CreateRgbBuffer(*output_buffer));
+  MP_ASSIGN_OR_RETURN(auto input, CreateRgbBuffer(buffer));
+  MP_ASSIGN_OR_RETURN(auto output, CreateRgbBuffer(*output_buffer));
   return input.Rotate(angle % 360, &output)
              ? absl::OkStatus()
              : absl::UnknownError("Halide rgb[a] rotate operation failed.");
@@ -419,8 +419,8 @@ absl::Status RotateRgb(const FrameBuffer& buffer, int angle,
 
 absl::Status ToFloatTensorRgb(const FrameBuffer& buffer, float scale,
                               float offset, Tensor& tensor) {
-  ASSIGN_OR_RETURN(auto input, CreateRgbBuffer(buffer));
-  ASSIGN_OR_RETURN(int channels, NumberOfChannels(buffer));
+  MP_ASSIGN_OR_RETURN(auto input, CreateRgbBuffer(buffer));
+  MP_ASSIGN_OR_RETURN(int channels, NumberOfChannels(buffer));
   auto view = tensor.GetCpuWriteView();
   float* data = view.buffer<float>();
   FloatBuffer output(data, buffer.dimension().width, buffer.dimension().height,
@@ -435,8 +435,8 @@ absl::Status ToFloatTensorRgb(const FrameBuffer& buffer, float scale,
 
 absl::Status CropYuv(const FrameBuffer& buffer, int x0, int y0, int x1, int y1,
                      FrameBuffer* output_buffer) {
-  ASSIGN_OR_RETURN(auto input, CreateYuvBuffer(buffer));
-  ASSIGN_OR_RETURN(auto output, CreateYuvBuffer(*output_buffer));
+  MP_ASSIGN_OR_RETURN(auto input, CreateYuvBuffer(buffer));
+  MP_ASSIGN_OR_RETURN(auto output, CreateYuvBuffer(*output_buffer));
   bool success_crop = input.Crop(x0, y0, x1, y1);
   if (!success_crop) {
     return absl::UnknownError("Halide YUV crop operation failed.");
@@ -449,8 +449,8 @@ absl::Status CropYuv(const FrameBuffer& buffer, int x0, int y0, int x1, int y1,
 }
 
 absl::Status ResizeYuv(const FrameBuffer& buffer, FrameBuffer* output_buffer) {
-  ASSIGN_OR_RETURN(auto input, CreateYuvBuffer(buffer));
-  ASSIGN_OR_RETURN(auto output, CreateYuvBuffer(*output_buffer));
+  MP_ASSIGN_OR_RETURN(auto input, CreateYuvBuffer(buffer));
+  MP_ASSIGN_OR_RETURN(auto output, CreateYuvBuffer(*output_buffer));
   return input.Resize(&output)
              ? absl::OkStatus()
              : absl::UnknownError("Halide YUV resize operation failed.");
@@ -458,8 +458,8 @@ absl::Status ResizeYuv(const FrameBuffer& buffer, FrameBuffer* output_buffer) {
 
 absl::Status RotateYuv(const FrameBuffer& buffer, int angle_deg,
                        FrameBuffer* output_buffer) {
-  ASSIGN_OR_RETURN(auto input, CreateYuvBuffer(buffer));
-  ASSIGN_OR_RETURN(auto output, CreateYuvBuffer(*output_buffer));
+  MP_ASSIGN_OR_RETURN(auto input, CreateYuvBuffer(buffer));
+  MP_ASSIGN_OR_RETURN(auto output, CreateYuvBuffer(*output_buffer));
   return input.Rotate(angle_deg % 360, &output)
              ? absl::OkStatus()
              : absl::UnknownError("Halide YUV rotate operation failed.");
@@ -467,8 +467,8 @@ absl::Status RotateYuv(const FrameBuffer& buffer, int angle_deg,
 
 absl::Status FlipHorizontallyYuv(const FrameBuffer& buffer,
                                  FrameBuffer* output_buffer) {
-  ASSIGN_OR_RETURN(auto input, CreateYuvBuffer(buffer));
-  ASSIGN_OR_RETURN(auto output, CreateYuvBuffer(*output_buffer));
+  MP_ASSIGN_OR_RETURN(auto input, CreateYuvBuffer(buffer));
+  MP_ASSIGN_OR_RETURN(auto output, CreateYuvBuffer(*output_buffer));
   return input.FlipHorizontally(&output)
              ? absl::OkStatus()
              : absl::UnknownError(
@@ -477,8 +477,8 @@ absl::Status FlipHorizontallyYuv(const FrameBuffer& buffer,
 
 absl::Status FlipVerticallyYuv(const FrameBuffer& buffer,
                                FrameBuffer* output_buffer) {
-  ASSIGN_OR_RETURN(auto input, CreateYuvBuffer(buffer));
-  ASSIGN_OR_RETURN(auto output, CreateYuvBuffer(*output_buffer));
+  MP_ASSIGN_OR_RETURN(auto input, CreateYuvBuffer(buffer));
+  MP_ASSIGN_OR_RETURN(auto output, CreateYuvBuffer(*output_buffer));
   return input.FlipVertically(&output)
              ? absl::OkStatus()
              : absl::UnknownError("Halide YUV vertical flip operation failed.");
@@ -488,10 +488,10 @@ absl::Status FlipVerticallyYuv(const FrameBuffer& buffer,
 // scale format.
 absl::Status ConvertYuv(const FrameBuffer& buffer, FrameBuffer* output_buffer) {
   bool success_convert = false;
-  ASSIGN_OR_RETURN(auto input, CreateYuvBuffer(buffer));
+  MP_ASSIGN_OR_RETURN(auto input, CreateYuvBuffer(buffer));
   if (output_buffer->format() == FrameBuffer::Format::kRGBA ||
       output_buffer->format() == FrameBuffer::Format::kRGB) {
-    ASSIGN_OR_RETURN(auto output, CreateRgbBuffer(*output_buffer));
+    MP_ASSIGN_OR_RETURN(auto output, CreateRgbBuffer(*output_buffer));
     bool half_sampling = false;
     if (buffer.dimension().width / 2 == output_buffer->dimension().width &&
         buffer.dimension().height / 2 == output_buffer->dimension().height) {
@@ -517,7 +517,7 @@ absl::Status ConvertYuv(const FrameBuffer& buffer, FrameBuffer* output_buffer) {
     }
     success_convert = true;
   } else if (IsSupportedYuvBuffer(*output_buffer)) {
-    ASSIGN_OR_RETURN(auto output, CreateYuvBuffer(*output_buffer));
+    MP_ASSIGN_OR_RETURN(auto output, CreateYuvBuffer(*output_buffer));
     success_convert = input.Resize(&output);
   }
   return success_convert
@@ -607,8 +607,8 @@ absl::StatusOr<std::shared_ptr<FrameBuffer>> CreateFromRawBuffer(
       return std::make_shared<FrameBuffer>(planes, dimension, target_format);
     }
     case FrameBuffer::Format::kYV12: {
-      ASSIGN_OR_RETURN(const FrameBuffer::Dimension uv_dimension,
-                       GetUvPlaneDimension(dimension, target_format));
+      MP_ASSIGN_OR_RETURN(const FrameBuffer::Dimension uv_dimension,
+                          GetUvPlaneDimension(dimension, target_format));
       return CreateFromYuvRawBuffer(
           /*y_plane=*/buffer,
           /*u_plane=*/buffer + dimension.Size() + uv_dimension.Size(),
@@ -617,8 +617,8 @@ absl::StatusOr<std::shared_ptr<FrameBuffer>> CreateFromRawBuffer(
           /*pixel_stride_uv=*/1);
     }
     case FrameBuffer::Format::kYV21: {
-      ASSIGN_OR_RETURN(const FrameBuffer::Dimension uv_dimension,
-                       GetUvPlaneDimension(dimension, target_format));
+      MP_ASSIGN_OR_RETURN(const FrameBuffer::Dimension uv_dimension,
+                          GetUvPlaneDimension(dimension, target_format));
       return CreateFromYuvRawBuffer(
           /*y_plane=*/buffer, /*u_plane=*/buffer + dimension.Size(),
           /*v_plane=*/buffer + dimension.Size() + uv_dimension.Size(),
@@ -820,8 +820,8 @@ absl::StatusOr<const uint8_t*> GetUvRawBuffer(const FrameBuffer& buffer) {
     return absl::InvalidArgumentError(
         "Only support getting biplanar UV buffer from NV12/NV21 frame buffer.");
   }
-  ASSIGN_OR_RETURN(FrameBuffer::YuvData yuv_data,
-                   FrameBuffer::GetYuvDataFromFrameBuffer(buffer));
+  MP_ASSIGN_OR_RETURN(FrameBuffer::YuvData yuv_data,
+                      FrameBuffer::GetYuvDataFromFrameBuffer(buffer));
   const uint8_t* uv_buffer = buffer.format() == FrameBuffer::Format::kNV12
                                  ? yuv_data.u_buffer
                                  : yuv_data.v_buffer;

@@ -56,6 +56,13 @@ static NSString *const kTaskName = @"faceLandmarker";
     }                                                     \
   }
 
+#define FaceLandmarkerResultWithOutputPacketMap(outputPacketMap)                                   \
+  ([MPPFaceLandmarkerResult                                                                        \
+      faceLandmarkerResultWithLandmarksPacket:outputPacketMap[kLandmarksOutStreamName.cppString]   \
+                            blendshapesPacket:outputPacketMap[kBlendshapesOutStreamName.cppString] \
+                 transformationMatrixesPacket:outputPacketMap[kFaceGeometryOutStreamName           \
+                                                                  .cppString]])
+
 @interface MPPFaceLandmarker () {
   /** iOS Vision Task Runner */
   MPPVisionTaskRunner *_visionTaskRunner;
@@ -70,6 +77,8 @@ static NSString *const kTaskName = @"faceLandmarker";
 @end
 
 @implementation MPPFaceLandmarker
+
+#pragma mark - Public
 
 - (instancetype)initWithOptions:(MPPFaceLandmarkerOptions *)options error:(NSError **)error {
   self = [super init];
@@ -124,12 +133,13 @@ static NSString *const kTaskName = @"faceLandmarker";
       };
     }
 
-    _visionTaskRunner =
-        [[MPPVisionTaskRunner alloc] initWithCalculatorGraphConfig:[taskInfo generateGraphConfig]
-                                                       runningMode:options.runningMode
-                                                   packetsCallback:std::move(packetsCallback)
-                                                             error:error];
-
+    _visionTaskRunner = [[MPPVisionTaskRunner alloc] initWithTaskInfo:taskInfo
+                                                          runningMode:options.runningMode
+                                                           roiAllowed:NO
+                                                      packetsCallback:std::move(packetsCallback)
+                                                 imageInputStreamName:kImageInStreamName
+                                              normRectInputStreamName:kNormRectStreamName
+                                                                error:error];
     if (!_visionTaskRunner) {
       return nil;
     }
@@ -144,138 +154,29 @@ static NSString *const kTaskName = @"faceLandmarker";
   return [self initWithOptions:options error:error];
 }
 
-- (std::optional<PacketMap>)inputPacketMapWithMPPImage:(MPPImage *)image
+- (nullable MPPFaceLandmarkerResult *)detectImage:(MPPImage *)image error:(NSError **)error {
+  std::optional<PacketMap> outputPacketMap = [_visionTaskRunner processImage:image error:error];
+
+  return [MPPFaceLandmarker faceLandmarkerResultWithOptionalOutputPacketMap:outputPacketMap];
+}
+
+- (nullable MPPFaceLandmarkerResult *)detectVideoFrame:(MPPImage *)image
                                timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                                                  error:(NSError **)error {
-  std::optional<NormalizedRect> rect =
-      [_visionTaskRunner normalizedRectWithImageOrientation:image.orientation
-                                                  imageSize:CGSizeMake(image.width, image.height)
-                                                      error:error];
-  if (!rect.has_value()) {
-    return std::nullopt;
-  }
-
-  Packet imagePacket = [MPPVisionPacketCreator createPacketWithMPPImage:image
-                                                timestampInMilliseconds:timestampInMilliseconds
-                                                                  error:error];
-  if (imagePacket.IsEmpty()) {
-    return std::nullopt;
-  }
-
-  Packet normalizedRectPacket =
-      [MPPVisionPacketCreator createPacketWithNormalizedRect:*rect
-                                     timestampInMilliseconds:timestampInMilliseconds];
-
-  PacketMap inputPacketMap = InputPacketMap(imagePacket, normalizedRectPacket);
-  return inputPacketMap;
-}
-
-- (nullable MPPFaceLandmarkerResult *)detectInImage:(MPPImage *)image error:(NSError **)error {
-  std::optional<NormalizedRect> rect =
-      [_visionTaskRunner normalizedRectWithImageOrientation:image.orientation
-                                                  imageSize:CGSizeMake(image.width, image.height)
-                                                      error:error];
-  if (!rect.has_value()) {
-    return nil;
-  }
-
-  Packet imagePacket = [MPPVisionPacketCreator createPacketWithMPPImage:image error:error];
-  if (imagePacket.IsEmpty()) {
-    return nil;
-  }
-
-  Packet normalizedRectPacket = [MPPVisionPacketCreator createPacketWithNormalizedRect:*rect];
-
-  PacketMap inputPacketMap = InputPacketMap(imagePacket, normalizedRectPacket);
-
-  std::optional<PacketMap> outputPacketMap = [_visionTaskRunner processImagePacketMap:inputPacketMap
-                                                                                error:error];
-  if (!outputPacketMap.has_value()) {
-    return nil;
-  }
-
-  return [MPPFaceLandmarkerResult
-      faceLandmarkerResultWithLandmarksPacket:outputPacketMap
-                                                  .value()[kLandmarksOutStreamName.cppString]
-                            blendshapesPacket:outputPacketMap
-                                                  .value()[kBlendshapesOutStreamName.cppString]
-                 transformationMatrixesPacket:outputPacketMap
-                                                  .value()[kFaceGeometryOutStreamName.cppString]];
-}
-
-- (nullable MPPFaceLandmarkerResult *)detectInVideoFrame:(MPPImage *)image
-                                 timestampInMilliseconds:(NSInteger)timestampInMilliseconds
-                                                   error:(NSError **)error {
-  std::optional<PacketMap> inputPacketMap = [self inputPacketMapWithMPPImage:image
-                                                     timestampInMilliseconds:timestampInMilliseconds
-                                                                       error:error];
-  if (!inputPacketMap.has_value()) {
-    return nil;
-  }
-
   std::optional<PacketMap> outputPacketMap =
-      [_visionTaskRunner processVideoFramePacketMap:*inputPacketMap error:error];
-  if (!outputPacketMap.has_value()) {
-    return nil;
-  }
+      [_visionTaskRunner processVideoFrame:image
+                   timestampInMilliseconds:timestampInMilliseconds
+                                     error:error];
 
-  return [MPPFaceLandmarkerResult
-      faceLandmarkerResultWithLandmarksPacket:outputPacketMap
-                                                  .value()[kLandmarksOutStreamName.cppString]
-                            blendshapesPacket:outputPacketMap
-                                                  .value()[kBlendshapesOutStreamName.cppString]
-                 transformationMatrixesPacket:outputPacketMap
-                                                  .value()[kFaceGeometryOutStreamName.cppString]];
+  return [MPPFaceLandmarker faceLandmarkerResultWithOptionalOutputPacketMap:outputPacketMap];
 }
 
-- (BOOL)detectAsyncInImage:(MPPImage *)image
+- (BOOL)detectAsyncImage:(MPPImage *)image
     timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                       error:(NSError **)error {
-  std::optional<PacketMap> inputPacketMap = [self inputPacketMapWithMPPImage:image
-                                                     timestampInMilliseconds:timestampInMilliseconds
-                                                                       error:error];
-  if (!inputPacketMap.has_value()) {
-    return NO;
-  }
-
-  return [_visionTaskRunner processLiveStreamPacketMap:*inputPacketMap error:error];
-}
-
-- (void)processLiveStreamResult:(absl::StatusOr<PacketMap>)liveStreamResult {
-  NSError *callbackError;
-  if (![MPPCommonUtils checkCppError:liveStreamResult.status() toError:&callbackError]) {
-    dispatch_async(_callbackQueue, ^{
-      [_faceLandmarkerLiveStreamDelegate faceLandmarker:self
-                           didFinishDetectionWithResult:nil
-                                timestampInMilliseconds:Timestamp::Unset().Value()
-                                                  error:callbackError];
-    });
-    return;
-  }
-
-  PacketMap &outputPacketMap = *liveStreamResult;
-  if (outputPacketMap[kImageOutStreamName.cppString].IsEmpty()) {
-    // The graph did not return a result. We therefore do not raise the user callback. This mirrors
-    // returning `nil` in the other methods and is acceptable for the live stream delegate since
-    // it is expected that we drop frames and don't return results for every input.
-    return;
-  }
-
-  MPPFaceLandmarkerResult *result = [MPPFaceLandmarkerResult
-      faceLandmarkerResultWithLandmarksPacket:outputPacketMap[kLandmarksOutStreamName.cppString]
-                            blendshapesPacket:outputPacketMap[kBlendshapesOutStreamName.cppString]
-                 transformationMatrixesPacket:outputPacketMap[kFaceGeometryOutStreamName
-                                                                  .cppString]];
-
-  NSInteger timeStampInMilliseconds =
-      outputPacketMap[kImageOutStreamName.cppString].Timestamp().Value() /
-      kMicrosecondsPerMillisecond;
-  dispatch_async(_callbackQueue, ^{
-    [_faceLandmarkerLiveStreamDelegate faceLandmarker:self
-                         didFinishDetectionWithResult:result
-                              timestampInMilliseconds:timeStampInMilliseconds
-                                                error:callbackError];
-  });
+  return [_visionTaskRunner processLiveStreamImage:image
+                           timestampInMilliseconds:timestampInMilliseconds
+                                             error:error];
 }
 
 + (NSArray<MPPConnection *> *)lipsConnections {
@@ -320,6 +221,50 @@ static NSString *const kTaskName = @"faceLandmarker";
 
 + (NSArray<MPPConnection *> *)faceConnections {
   return MPPFaceConnections;
+}
+
+#pragma mark - Private
+
++ (nullable MPPFaceLandmarkerResult *)faceLandmarkerResultWithOptionalOutputPacketMap:
+    (std::optional<PacketMap>)outputPacketMap {
+  if (!outputPacketMap.has_value()) {
+    return nil;
+  }
+
+  return FaceLandmarkerResultWithOutputPacketMap(outputPacketMap.value());
+}
+
+- (void)processLiveStreamResult:(absl::StatusOr<PacketMap>)liveStreamResult {
+  NSError *callbackError;
+  if (![MPPCommonUtils checkCppError:liveStreamResult.status() toError:&callbackError]) {
+    dispatch_async(_callbackQueue, ^{
+      [_faceLandmarkerLiveStreamDelegate faceLandmarker:self
+                           didFinishDetectionWithResult:nil
+                                timestampInMilliseconds:Timestamp::Unset().Value()
+                                                  error:callbackError];
+    });
+    return;
+  }
+
+  PacketMap &outputPacketMap = *liveStreamResult;
+  if (outputPacketMap[kImageOutStreamName.cppString].IsEmpty()) {
+    // The graph did not return a result. We therefore do not raise the user callback. This mirrors
+    // returning `nil` in the other methods and is acceptable for the live stream delegate since
+    // it is expected that we drop frames and don't return results for every input.
+    return;
+  }
+
+  MPPFaceLandmarkerResult *result = FaceLandmarkerResultWithOutputPacketMap(outputPacketMap);
+
+  NSInteger timestampInMilliseconds =
+      outputPacketMap[kImageOutStreamName.cppString].Timestamp().Value() /
+      kMicrosecondsPerMillisecond;
+  dispatch_async(_callbackQueue, ^{
+    [_faceLandmarkerLiveStreamDelegate faceLandmarker:self
+                         didFinishDetectionWithResult:result
+                              timestampInMilliseconds:timestampInMilliseconds
+                                                error:callbackError];
+  });
 }
 
 @end

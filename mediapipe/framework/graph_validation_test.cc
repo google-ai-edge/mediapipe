@@ -19,6 +19,7 @@
 
 #include <functional>
 
+#include "absl/log/absl_check.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
@@ -121,7 +122,7 @@ TEST(GraphValidationTest, InitializeGraphFromLinker) {
 TEST(GraphValidationTest, InitializeTemplateFromProtos) {
   mediapipe::tool::TemplateParser::Parser parser;
   CalculatorGraphTemplate config_1;
-  CHECK(parser.ParseFromString(R"(
+  ABSL_CHECK(parser.ParseFromString(R"(
     type: "PassThroughGraph"
     input_stream: % "INPUT:" + in_name %
     output_stream: "OUTPUT:stream_2"
@@ -132,7 +133,7 @@ TEST(GraphValidationTest, InitializeTemplateFromProtos) {
       output_stream: "stream_2"  # Same as input.
     }
   )",
-                               &config_1));
+                                    &config_1));
   auto config_2 = ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
     input_stream: "INPUT:stream_1"
     output_stream: "OUTPUT:stream_2"

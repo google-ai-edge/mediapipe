@@ -15,6 +15,8 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/vision/face_landmarker/face_landmarker.h"
 
+#include <utility>
+
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/image.h"
@@ -187,16 +189,18 @@ absl::StatusOr<std::unique_ptr<FaceLandmarker>> FaceLandmarker::Create(
           options->output_facial_transformation_matrixes,
           options->running_mode == core::RunningMode::LIVE_STREAM),
       std::move(options->base_options.op_resolver), options->running_mode,
-      std::move(packets_callback));
+      std::move(packets_callback),
+      /*disable_default_service=*/
+      options->base_options.disable_default_service);
 }
 
 absl::StatusOr<FaceLandmarkerResult> FaceLandmarker::Detect(
     mediapipe::Image image,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
-  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                   ConvertToNormalizedRect(image_processing_options, image,
-                                           /*roi_allowed=*/false));
-  ASSIGN_OR_RETURN(
+  MP_ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                      ConvertToNormalizedRect(image_processing_options, image,
+                                              /*roi_allowed=*/false));
+  MP_ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessImageData(
           {{kImageInStreamName, MakePacket<Image>(std::move(image))},
@@ -211,10 +215,10 @@ absl::StatusOr<FaceLandmarkerResult> FaceLandmarker::Detect(
 absl::StatusOr<FaceLandmarkerResult> FaceLandmarker::DetectForVideo(
     mediapipe::Image image, int64_t timestamp_ms,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
-  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                   ConvertToNormalizedRect(image_processing_options, image,
-                                           /*roi_allowed=*/false));
-  ASSIGN_OR_RETURN(
+  MP_ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                      ConvertToNormalizedRect(image_processing_options, image,
+                                              /*roi_allowed=*/false));
+  MP_ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessVideoData(
           {{kImageInStreamName,
@@ -232,9 +236,9 @@ absl::StatusOr<FaceLandmarkerResult> FaceLandmarker::DetectForVideo(
 absl::Status FaceLandmarker::DetectAsync(
     mediapipe::Image image, int64_t timestamp_ms,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
-  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                   ConvertToNormalizedRect(image_processing_options, image,
-                                           /*roi_allowed=*/false));
+  MP_ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                      ConvertToNormalizedRect(image_processing_options, image,
+                                              /*roi_allowed=*/false));
   return SendLiveStreamData(
       {{kImageInStreamName,
         MakePacket<Image>(std::move(image))

@@ -15,7 +15,7 @@
 #include "mediapipe/util/tracking/measure_time.h"
 
 #ifdef SET_FLAG_MEASURE_TIME
-// If set to true, outputs time measurements to LOG(INFO).
+// If set to true, outputs time measurements to ABSL_LOG(INFO).
 bool flags_measure_time = true;
 #else
 bool flags_measure_time = false;

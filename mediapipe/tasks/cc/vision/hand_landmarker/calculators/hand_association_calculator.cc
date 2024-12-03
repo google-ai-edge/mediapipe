@@ -13,10 +13,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#include <cstdint>
 #include <memory>
 #include <utility>
 #include <vector>
 
+#include "absl/log/absl_check.h"
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/collection_item_id.h"
@@ -89,14 +91,14 @@ class HandAssociationCalculator : public CalculatorBase {
     cc->SetOffset(TimestampDiff(0));
 
     options_ = cc->Options<HandAssociationCalculatorOptions>();
-    CHECK_GT(options_.min_similarity_threshold(), 0.0);
-    CHECK_LE(options_.min_similarity_threshold(), 1.0);
+    ABSL_CHECK_GT(options_.min_similarity_threshold(), 0.0);
+    ABSL_CHECK_LE(options_.min_similarity_threshold(), 1.0);
 
     return absl::OkStatus();
   }
 
   absl::Status Process(CalculatorContext* cc) override {
-    ASSIGN_OR_RETURN(auto result, GetNonOverlappingElements(cc));
+    MP_ASSIGN_OR_RETURN(auto result, GetNonOverlappingElements(cc));
 
     auto output =
         std::make_unique<std::vector<NormalizedRect>>(std::move(result));
@@ -138,7 +140,7 @@ class HandAssociationCalculator : public CalculatorBase {
       }
 
       for (auto rect : input_stream.Get<std::vector<NormalizedRect>>()) {
-        ASSIGN_OR_RETURN(
+        MP_ASSIGN_OR_RETURN(
             bool is_overlapping,
             mediapipe::DoesRectOverlap(rect, result,
                                        options_.min_similarity_threshold()));
@@ -160,7 +162,7 @@ class HandAssociationCalculator : public CalculatorBase {
   // Note: This rect_id_ is local to an instance of this calculator. And it is
   // expected that the hand tracking graph to have only one instance of
   // this association calculator.
-  int64 rect_id_ = 1;
+  int64_t rect_id_ = 1;
 
   inline int GetNextRectId() { return rect_id_++; }
 };

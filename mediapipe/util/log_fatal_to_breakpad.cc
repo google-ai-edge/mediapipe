@@ -2,7 +2,6 @@
 
 #import <Foundation/Foundation.h>
 
-#include "absl/log/log.h"
 #include "absl/log/log_sink.h"
 #include "absl/log/log_sink_registry.h"
 #import "googlemac/iPhone/Shared/GoogleIOSBreakpad/Classes/GoogleBreakpadController.h"

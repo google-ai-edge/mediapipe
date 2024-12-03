@@ -22,8 +22,6 @@
 #import "mediapipe/tasks/ios/vision/face_detector/utils/sources/MPPFaceDetectorOptions+Helpers.h"
 #import "mediapipe/tasks/ios/vision/face_detector/utils/sources/MPPFaceDetectorResult+Helpers.h"
 
-using ::mediapipe::NormalizedRect;
-using ::mediapipe::Packet;
 using ::mediapipe::Timestamp;
 using ::mediapipe::tasks::core::PacketMap;
 using ::mediapipe::tasks::core::PacketsCallback;
@@ -48,6 +46,12 @@ static NSString *const kTaskName = @"faceDetector";
       kNormRectStreamName.cppString, normalizedRectPacket \
     }                                                     \
   }
+
+#define FaceDetectorResultWithOutputPacketMap(outputPacketMap)                                   \
+  (                                                                                              \
+    [MPPFaceDetectorResult                                                                       \
+        faceDetectorResultWithDetectionsPacket:outputPacketMap[kDetectionsStreamName.cppString]] \
+  )
 
 @interface MPPFaceDetector () {
   /** iOS Vision Task Runner */
@@ -102,11 +106,13 @@ static NSString *const kTaskName = @"faceDetector";
       };
     }
 
-    _visionTaskRunner =
-        [[MPPVisionTaskRunner alloc] initWithCalculatorGraphConfig:[taskInfo generateGraphConfig]
-                                                       runningMode:options.runningMode
-                                                   packetsCallback:std::move(packetsCallback)
-                                                             error:error];
+    _visionTaskRunner = [[MPPVisionTaskRunner alloc] initWithTaskInfo:taskInfo
+                                                          runningMode:options.runningMode
+                                                           roiAllowed:NO
+                                                      packetsCallback:std::move(packetsCallback)
+                                                 imageInputStreamName:kImageInStreamName
+                                              normRectInputStreamName:kNormRectStreamName
+                                                                error:error];
 
     if (!_visionTaskRunner) {
       return nil;
@@ -124,95 +130,29 @@ static NSString *const kTaskName = @"faceDetector";
   return [self initWithOptions:options error:error];
 }
 
-- (std::optional<PacketMap>)inputPacketMapWithMPPImage:(MPPImage *)image
-                               timestampInMilliseconds:(NSInteger)timestampInMilliseconds
-                                                 error:(NSError **)error {
-  std::optional<NormalizedRect> rect =
-      [_visionTaskRunner normalizedRectWithImageOrientation:image.orientation
-                                                  imageSize:CGSizeMake(image.width, image.height)
-                                                      error:error];
-  if (!rect.has_value()) {
-    return std::nullopt;
-  }
+- (nullable MPPFaceDetectorResult *)detectImage:(MPPImage *)image error:(NSError **)error {
+  std::optional<PacketMap> outputPacketMap = [_visionTaskRunner processImage:image error:error];
 
-  Packet imagePacket = [MPPVisionPacketCreator createPacketWithMPPImage:image
-                                                timestampInMilliseconds:timestampInMilliseconds
-                                                                  error:error];
-  if (imagePacket.IsEmpty()) {
-    return std::nullopt;
-  }
-
-  Packet normalizedRectPacket =
-      [MPPVisionPacketCreator createPacketWithNormalizedRect:rect.value()
-                                     timestampInMilliseconds:timestampInMilliseconds];
-
-  PacketMap inputPacketMap = InputPacketMap(imagePacket, normalizedRectPacket);
-  return inputPacketMap;
+  return [MPPFaceDetector faceDetectorResultWithOptionalOutputPacketMap:outputPacketMap];
 }
 
-- (nullable MPPFaceDetectorResult *)detectInImage:(MPPImage *)image error:(NSError **)error {
-  std::optional<NormalizedRect> rect =
-      [_visionTaskRunner normalizedRectWithImageOrientation:image.orientation
-                                                  imageSize:CGSizeMake(image.width, image.height)
-                                                      error:error];
-  if (!rect.has_value()) {
-    return nil;
-  }
-
-  Packet imagePacket = [MPPVisionPacketCreator createPacketWithMPPImage:image error:error];
-  if (imagePacket.IsEmpty()) {
-    return nil;
-  }
-
-  Packet normalizedRectPacket =
-      [MPPVisionPacketCreator createPacketWithNormalizedRect:rect.value()];
-
-  PacketMap inputPacketMap = InputPacketMap(imagePacket, normalizedRectPacket);
-
-  std::optional<PacketMap> outputPacketMap = [_visionTaskRunner processImagePacketMap:inputPacketMap
-                                                                                error:error];
-  if (!outputPacketMap.has_value()) {
-    return nil;
-  }
-
-  return [MPPFaceDetectorResult
-      faceDetectorResultWithDetectionsPacket:outputPacketMap
-                                                 .value()[kDetectionsStreamName.cppString]];
-}
-
-- (nullable MPPFaceDetectorResult *)detectInVideoFrame:(MPPImage *)image
+- (nullable MPPFaceDetectorResult *)detectVideoFrame:(MPPImage *)image
                                timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                                                  error:(NSError **)error {
-  std::optional<PacketMap> inputPacketMap = [self inputPacketMapWithMPPImage:image
-                                                     timestampInMilliseconds:timestampInMilliseconds
-                                                                       error:error];
-  if (!inputPacketMap.has_value()) {
-    return nil;
-  }
-
   std::optional<PacketMap> outputPacketMap =
-      [_visionTaskRunner processVideoFramePacketMap:inputPacketMap.value() error:error];
+      [_visionTaskRunner processVideoFrame:image
+                   timestampInMilliseconds:timestampInMilliseconds
+                                     error:error];
 
-  if (!outputPacketMap.has_value()) {
-    return nil;
-  }
-
-  return [MPPFaceDetectorResult
-      faceDetectorResultWithDetectionsPacket:outputPacketMap
-                                                 .value()[kDetectionsStreamName.cppString]];
+  return [MPPFaceDetector faceDetectorResultWithOptionalOutputPacketMap:outputPacketMap];
 }
 
-- (BOOL)detectAsyncInImage:(MPPImage *)image
+- (BOOL)detectAsyncImage:(MPPImage *)image
     timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                       error:(NSError **)error {
-  std::optional<PacketMap> inputPacketMap = [self inputPacketMapWithMPPImage:image
-                                                     timestampInMilliseconds:timestampInMilliseconds
-                                                                       error:error];
-  if (!inputPacketMap.has_value()) {
-    return NO;
-  }
-
-  return [_visionTaskRunner processLiveStreamPacketMap:inputPacketMap.value() error:error];
+  return [_visionTaskRunner processLiveStreamImage:image
+                           timestampInMilliseconds:timestampInMilliseconds
+                                             error:error];
 }
 
 - (void)processLiveStreamResult:(absl::StatusOr<PacketMap>)liveStreamResult {
@@ -237,19 +177,26 @@ static NSString *const kTaskName = @"faceDetector";
     return;
   }
 
-  MPPFaceDetectorResult *result = [MPPFaceDetectorResult
-      faceDetectorResultWithDetectionsPacket:liveStreamResult
-                                                 .value()[kDetectionsStreamName.cppString]];
+  MPPFaceDetectorResult *result = FaceDetectorResultWithOutputPacketMap(liveStreamResult.value());
 
-  NSInteger timeStampInMilliseconds =
+  NSInteger timestampInMilliseconds =
       outputPacketMap[kImageOutStreamName.cppString].Timestamp().Value() /
       kMicrosecondsPerMillisecond;
   dispatch_async(_callbackQueue, ^{
     [self.faceDetectorLiveStreamDelegate faceDetector:self
                          didFinishDetectionWithResult:result
-                              timestampInMilliseconds:timeStampInMilliseconds
+                              timestampInMilliseconds:timestampInMilliseconds
                                                 error:callbackError];
   });
+}
+
++ (nullable MPPFaceDetectorResult *)faceDetectorResultWithOptionalOutputPacketMap:
+    (std::optional<PacketMap>)outputPacketMap {
+  if (!outputPacketMap.has_value()) {
+    return nil;
+  }
+
+  return FaceDetectorResultWithOutputPacketMap(outputPacketMap.value());
 }
 
 @end

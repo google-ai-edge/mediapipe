@@ -23,4 +23,5 @@ objc_library(
     name = "MPPClassifierOptions",
     srcs = ["sources/MPPClassifierOptions.m"],
     hdrs = ["sources/MPPClassifierOptions.h"],
+    deps = ["//third_party/apple_frameworks:Foundation"],
 )

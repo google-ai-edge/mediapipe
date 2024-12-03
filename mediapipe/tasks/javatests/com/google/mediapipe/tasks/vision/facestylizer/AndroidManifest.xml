@@ -8,7 +8,7 @@
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 
   <uses-sdk android:minSdkVersion="24"
-      android:targetSdkVersion="30" />
+      android:targetSdkVersion="34" />
 
   <application
       android:label="facestylizertest"

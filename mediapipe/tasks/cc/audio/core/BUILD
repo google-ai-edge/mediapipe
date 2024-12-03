@@ -28,6 +28,7 @@ cc_library(
     deps = [
         ":running_mode",
         "//mediapipe/calculators/core:flow_limiter_calculator",
+        "//mediapipe/tasks/cc:common",
         "//mediapipe/tasks/cc/core:base_task_api",
         "//mediapipe/tasks/cc/core:task_runner",
         "@com_google_absl//absl/status",

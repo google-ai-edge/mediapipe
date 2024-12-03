@@ -12,15 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "absl/status/statusor.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
+#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/tool/options_util.h"
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gl_quad_renderer.h"
 #include "mediapipe/gpu/gl_scaler_calculator.pb.h"
 #include "mediapipe/gpu/gl_simple_shaders.h"
+#include "mediapipe/gpu/gpu_buffer.h"
+#include "mediapipe/gpu/gpu_buffer_format.h"
 #include "mediapipe/gpu/shader_util.h"
 
 #ifdef __ANDROID__
@@ -88,9 +92,15 @@ class GlScalerCalculator : public CalculatorBase {
   void GetOutputPadding(int src_width, int src_height, int dst_width,
                         int dst_height, float* top_bottom_padding,
                         float* left_right_padding);
-  GpuBufferFormat GetOutputFormat() { return GpuBufferFormat::kBGRA32; }
+  GpuBufferFormat GetOutputFormat(GpuBufferFormat input_format) {
+    return use_input_format_for_output_ ? input_format
+                                        : GpuBufferFormat::kBGRA32;
+  }
 
  private:
+  // Returns the input GpuBuffer, or fails if it's empty.
+  absl::StatusOr<GpuBuffer> GetInputGpuBuffer(CalculatorContext* cc);
+
   GlCalculatorHelper helper_;
   int dst_width_ = 0;
   int dst_height_ = 0;
@@ -105,6 +115,7 @@ class GlScalerCalculator : public CalculatorBase {
   bool horizontal_flip_output_;
   FrameScaleMode scale_mode_ = FrameScaleMode::kStretch;
   bool use_nearest_neighbor_interpolation_ = false;
+  bool use_input_format_for_output_ = false;
 };
 REGISTER_CALCULATOR(GlScalerCalculator);
 
@@ -189,6 +200,7 @@ absl::Status GlScalerCalculator::Open(CalculatorContext* cc) {
   }
   use_nearest_neighbor_interpolation_ =
       options.use_nearest_neighbor_interpolation();
+  use_input_format_for_output_ = options.use_input_format_for_output();
   if (HasTagOrIndex(cc->InputSidePackets(), "OUTPUT_DIMENSIONS", 1)) {
     const auto& dimensions =
         TagOrIndex(cc->InputSidePackets(), "OUTPUT_DIMENSIONS", 1)
@@ -205,6 +217,18 @@ absl::Status GlScalerCalculator::Open(CalculatorContext* cc) {
   return absl::OkStatus();
 }
 
+absl::StatusOr<GpuBuffer> GlScalerCalculator::GetInputGpuBuffer(
+    CalculatorContext* cc) {
+  if (cc->Inputs().HasTag(kImageTag)) {
+    auto& input = cc->Inputs().Tag(kImageTag);
+    RET_CHECK(!input.IsEmpty());
+    return input.Get<Image>().GetGpuBuffer();
+  }
+  auto& input = TagOrIndex(cc->Inputs(), "VIDEO", 0);
+  RET_CHECK(!input.IsEmpty());
+  return input.Get<GpuBuffer>();
+}
+
 absl::Status GlScalerCalculator::Process(CalculatorContext* cc) {
   if (cc->Inputs().HasTag(kOutputDimensionsTag)) {
     if (cc->Inputs().Tag(kOutputDimensionsTag).IsEmpty()) {
@@ -219,10 +243,7 @@ absl::Status GlScalerCalculator::Process(CalculatorContext* cc) {
   }
 
   return helper_.RunInGlContext([this, cc]() -> absl::Status {
-    const auto& input =
-        cc->Inputs().HasTag(kImageTag)
-            ? cc->Inputs().Tag(kImageTag).Get<Image>().GetGpuBuffer()
-            : TagOrIndex(cc->Inputs(), "VIDEO", 0).Get<GpuBuffer>();
+    MP_ASSIGN_OR_RETURN(GpuBuffer input, GetInputGpuBuffer(cc));
     QuadRenderer* renderer = nullptr;
     GlTexture src1;
     GlTexture src2;
@@ -288,10 +309,18 @@ absl::Status GlScalerCalculator::Process(CalculatorContext* cc) {
               MakePacket<float>(left_right_padding).At(cc->InputTimestamp()));
     }
 
-    auto dst = helper_.CreateDestinationTexture(dst_width, dst_height,
-                                                GetOutputFormat());
+    auto dst = helper_.CreateDestinationTexture(
+        dst_width, dst_height, GetOutputFormat(input.format()));
 
     helper_.BindFramebuffer(dst);
+
+    if (scale_mode_ == FrameScaleMode::kFit) {
+      // In kFit scale mode, the rendered quad does not fill the whole
+      // framebuffer, so clear it beforehand.
+      glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+      glClear(GL_COLOR_BUFFER_BIT);
+    }
+
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(src1.target(), src1.name());
     if (src2.name()) {

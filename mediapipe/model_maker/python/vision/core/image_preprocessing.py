@@ -23,17 +23,21 @@ CROP_PADDING = 32
 class Preprocessor(object):
   """Preprocessor for image classification."""
 
-  def __init__(self,
-               input_shape,
-               num_classes,
-               mean_rgb,
-               stddev_rgb,
-               use_augmentation=False):
+  def __init__(
+      self,
+      input_shape,
+      num_classes,
+      mean_rgb,
+      stddev_rgb,
+      use_augmentation=False,
+      one_hot=True,
+  ):
     self.input_shape = input_shape
     self.num_classes = num_classes
     self.mean_rgb = mean_rgb
     self.stddev_rgb = stddev_rgb
     self.use_augmentation = use_augmentation
+    self.one_hot = one_hot
 
   def __call__(self, image, label, is_training=True):
     if self.use_augmentation:
@@ -50,8 +54,8 @@ class Preprocessor(object):
 
     image -= tf.constant(self.mean_rgb, shape=[1, 1, 3], dtype=image.dtype)
     image /= tf.constant(self.stddev_rgb, shape=[1, 1, 3], dtype=image.dtype)
-
-    label = tf.one_hot(label, depth=self.num_classes)
+    if self.one_hot:
+      label = tf.one_hot(label, depth=self.num_classes)
     return image, label
 
   # TODO: Changes to preprocess to support batch input.
@@ -63,7 +67,8 @@ class Preprocessor(object):
     image /= tf.constant(self.stddev_rgb, shape=[1, 1, 3], dtype=image.dtype)
 
     image = tf.compat.v1.image.resize(image, self.input_shape)
-    label = tf.one_hot(label, depth=self.num_classes)
+    if self.one_hot:
+      label = tf.one_hot(label, depth=self.num_classes)
     return image, label
 
 

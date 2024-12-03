@@ -14,12 +14,13 @@
 
 #include "mediapipe/python/pybind/packet_creator.h"
 
+#include <cstdint>
+
 #include "absl/memory/memory.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/packet.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/timestamp.h"
 #include "mediapipe/python/pybind/image_frame_util.h"
 #include "mediapipe/python/pybind/util.h"

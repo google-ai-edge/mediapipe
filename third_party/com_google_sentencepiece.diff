@@ -1,0 +1,2357 @@
+diff --git a/src/bpe_model.cc b/src/bpe_model.cc
+index 22cd115..97e0bda 100644
+--- a/src/bpe_model.cc
++++ b/src/bpe_model.cc
+@@ -21,7 +21,7 @@
+ 
+ #include "bpe_model.h"
+ #include "freelist.h"
+-#include "third_party/absl/container/flat_hash_map.h"
++#include "absl/container/flat_hash_map.h"
+ #include "util.h"
+ 
+ namespace sentencepiece {
+diff --git a/src/bpe_model_trainer.cc b/src/bpe_model_trainer.cc
+index 964d44e..64878cd 100644
+--- a/src/bpe_model_trainer.cc
++++ b/src/bpe_model_trainer.cc
+@@ -18,7 +18,8 @@
+ #include <vector>
+ 
+ #include "bpe_model_trainer.h"
+-#include "third_party/absl/container/flat_hash_set.h"
++#include "absl/container/flat_hash_set.h"
++#include "absl/status/status.h"
+ #include "util.h"
+ 
+ namespace sentencepiece {
+@@ -171,7 +172,7 @@ void Trainer::UpdateActiveSymbols() {
+   active_symbols_.insert(symbols.begin(), symbols.begin() + size);
+ }
+ 
+-util::Status Trainer::Train() {
++absl::Status Trainer::Train() {
+   RETURN_IF_ERROR(status());
+ 
+   CHECK_OR_RETURN(normalizer_spec_.escape_whitespaces());
+diff --git a/src/bpe_model_trainer.h b/src/bpe_model_trainer.h
+index e011a37..a17e580 100644
+--- a/src/bpe_model_trainer.h
++++ b/src/bpe_model_trainer.h
+@@ -20,7 +20,8 @@
+ #include <vector>
+ 
+ #include "sentencepiece_model.pb.h"
+-#include "third_party/absl/container/flat_hash_map.h"
++#include "absl/container/flat_hash_map.h"
++#include "absl/status/status.h"
+ #include "trainer_interface.h"
+ 
+ namespace sentencepiece {
+@@ -35,7 +36,7 @@ class Trainer : public TrainerInterface {
+       : TrainerInterface::TrainerInterface(trainer_spec, normalizer_spec,
+                                            denormalizer_spec) {}
+ 
+-  util::Status Train() override;
++  absl::Status Train() override;
+ 
+  private:
+   // Symbol represents a character or symbol bigram.
+diff --git a/src/bpe_model_trainer_test.cc b/src/bpe_model_trainer_test.cc
+index 173eb9c..2a43c3a 100644
+--- a/src/bpe_model_trainer_test.cc
++++ b/src/bpe_model_trainer_test.cc
+@@ -20,8 +20,8 @@
+ #include "sentencepiece_processor.h"
+ #include "sentencepiece_trainer.h"
+ #include "testharness.h"
+-#include "third_party/absl/strings/str_cat.h"
+-#include "third_party/absl/strings/str_join.h"
++#include "absl/strings/str_cat.h"
++#include "absl/strings/str_join.h"
+ #include "util.h"
+ 
+ namespace sentencepiece {
+diff --git a/src/builder.cc b/src/builder.cc
+index 378aaa0..fd8edf8 100644
+--- a/src/builder.cc
++++ b/src/builder.cc
+@@ -18,10 +18,11 @@
+ 
+ #include "builder.h"
+ #include "filesystem.h"
+-#include "third_party/absl/strings/str_join.h"
+-#include "third_party/absl/strings/str_replace.h"
+-#include "third_party/absl/strings/str_split.h"
+-#include "third_party/absl/strings/strip.h"
++#include "absl/strings/str_join.h"
++#include "absl/strings/str_replace.h"
++#include "absl/strings/str_split.h"
++#include "absl/strings/strip.h"
++#include "absl/status/status.h"
+ 
+ #ifdef ENABLE_NFKC_COMPILE
+ #include <unicode/errorcode.h>
+@@ -36,7 +37,7 @@
+ 
+ #include "normalization_rule.h"
+ #include "normalizer.h"
+-#include "third_party/darts_clone/darts.h"
++#include "include/darts.h"
+ #include "util.h"
+ 
+ namespace sentencepiece {
+@@ -145,7 +146,7 @@ Builder::Chars Normalize(const Builder::CharsMap &chars_map,
+ }  // namespace
+ 
+ // static
+-util::Status Builder::CompileCharsMap(const CharsMap &chars_map,
++absl::Status Builder::CompileCharsMap(const CharsMap &chars_map,
+                                       std::string *output) {
+   CHECK_OR_RETURN(output);
+   CHECK_OR_RETURN(!chars_map.empty());
+@@ -212,7 +213,7 @@ util::Status Builder::CompileCharsMap(const CharsMap &chars_map,
+ }
+ 
+ // static
+-util::Status Builder::DecompileCharsMap(absl::string_view blob,
++absl::Status Builder::DecompileCharsMap(absl::string_view blob,
+                                         Builder::CharsMap *chars_map) {
+   CHECK_OR_RETURN(chars_map);
+   chars_map->clear();
+@@ -265,7 +266,7 @@ util::Status Builder::DecompileCharsMap(absl::string_view blob,
+ }
+ 
+ // static
+-util::Status Builder::GetPrecompiledCharsMap(const std::string &name,
++absl::Status Builder::GetPrecompiledCharsMap(const std::string &name,
+                                              std::string *output) {
+   CHECK_OR_RETURN(output);
+ 
+@@ -282,12 +283,12 @@ util::Status Builder::GetPrecompiledCharsMap(const std::string &name,
+       return util::OkStatus();
+     }
+   }
+-  return util::StatusBuilder(util::StatusCode::kNotFound, GTL_LOC)
++  return util::StatusBuilder(absl::StatusCode::kNotFound, GTL_LOC)
+          << "No precompiled charsmap is found: " << name;
+ }
+ 
+ // static
+-util::Status Builder::BuildNFKCMap(CharsMap *chars_map) {
++absl::Status Builder::BuildNFKCMap(CharsMap *chars_map) {
+ #ifdef ENABLE_NFKC_COMPILE
+   LOG(INFO) << "Running BuildNFKCMap";
+ 
+@@ -345,7 +346,7 @@ util::Status Builder::BuildNFKCMap(CharsMap *chars_map) {
+   return util::OkStatus();
+ }
+ 
+-util::Status Builder::BuildNmtNFKCMap(CharsMap *chars_map) {
++absl::Status Builder::BuildNmtNFKCMap(CharsMap *chars_map) {
+ #ifdef ENABLE_NFKC_COMPILE
+   LOG(INFO) << "Running BuildNmtNFKCMap";
+ 
+@@ -420,7 +421,7 @@ util::Status Builder::BuildNmtNFKCMap(CharsMap *chars_map) {
+ }
+ 
+ // static
+-util::Status Builder::MergeUnicodeCaseFoldMap(Builder::CharsMap *chars_map) {
++absl::Status Builder::MergeUnicodeCaseFoldMap(Builder::CharsMap *chars_map) {
+ #ifdef ENABLE_NFKC_COMPILE
+   for (auto &c : *chars_map) {
+     std::vector<char32> trg;
+@@ -445,7 +446,7 @@ util::Status Builder::MergeUnicodeCaseFoldMap(Builder::CharsMap *chars_map) {
+ }
+ 
+ // static
+-util::Status Builder::BuildNFKC_CFMap(CharsMap *chars_map) {
++absl::Status Builder::BuildNFKC_CFMap(CharsMap *chars_map) {
+ #ifdef ENABLE_NFKC_COMPILE
+   CharsMap nfkc_map;
+   RETURN_IF_ERROR(Builder::BuildNFKCMap(&nfkc_map));
+@@ -460,7 +461,7 @@ util::Status Builder::BuildNFKC_CFMap(CharsMap *chars_map) {
+ }
+ 
+ //  static
+-util::Status Builder::BuildNmtNFKC_CFMap(CharsMap *chars_map) {
++absl::Status Builder::BuildNmtNFKC_CFMap(CharsMap *chars_map) {
+ #ifdef ENABLE_NFKC_COMPILE
+   CharsMap nfkc_map;
+   RETURN_IF_ERROR(Builder::BuildNmtNFKCMap(&nfkc_map));
+@@ -475,7 +476,7 @@ util::Status Builder::BuildNmtNFKC_CFMap(CharsMap *chars_map) {
+ }
+ 
+ // static
+-util::Status Builder::LoadCharsMap(absl::string_view filename,
++absl::Status Builder::LoadCharsMap(absl::string_view filename,
+                                    CharsMap *chars_map) {
+   LOG(INFO) << "Loading mapping file: " << filename.data();
+   CHECK_OR_RETURN(chars_map);
+@@ -510,7 +511,7 @@ util::Status Builder::LoadCharsMap(absl::string_view filename,
+ }
+ 
+ // static
+-util::Status Builder::SaveCharsMap(absl::string_view filename,
++absl::Status Builder::SaveCharsMap(absl::string_view filename,
+                                    const Builder::CharsMap &chars_map) {
+   auto output = filesystem::NewWritableFile(filename);
+   RETURN_IF_ERROR(output->status());
+@@ -540,7 +541,7 @@ util::Status Builder::SaveCharsMap(absl::string_view filename,
+ }
+ 
+ // static
+-util::Status Builder::RemoveRedundantMap(CharsMap *chars_map) {
++absl::Status Builder::RemoveRedundantMap(CharsMap *chars_map) {
+   CHECK_OR_RETURN(chars_map);
+ 
+   CharsMap new_chars_map;
+diff --git a/src/builder.h b/src/builder.h
+index 49d2884..8ad872c 100644
+--- a/src/builder.h
++++ b/src/builder.h
+@@ -22,7 +22,8 @@
+ #include "common.h"
+ #include "sentencepiece_model.pb.h"
+ #include "sentencepiece_processor.h"
+-#include "third_party/absl/strings/string_view.h"
++#include "absl/strings/string_view.h"
++#include "absl/status/status.h"
+ 
+ namespace sentencepiece {
+ namespace normalizer {
+@@ -43,15 +44,15 @@ class Builder {
+   // String-to-string mapping.
+   using CharsMap = std::map<Chars, Chars>;
+ 
+-  static util::Status CompileCharsMap(const CharsMap &chars_map,
++  static absl::Status CompileCharsMap(const CharsMap &chars_map,
+                                       std::string *output);
+ 
+   // Decompiles `blob` into `chars_map`.
+-  static util::Status DecompileCharsMap(absl::string_view blob,
++  static absl::Status DecompileCharsMap(absl::string_view blob,
+                                         CharsMap *chars_map);
+ 
+   // Returns a pre-compiled binary index with `name`.
+-  static util::Status GetPrecompiledCharsMap(const std::string &name,
++  static absl::Status GetPrecompiledCharsMap(const std::string &name,
+                                              std::string *output);
+ 
+   // Makes a normalization mapping based on NFKC.
+@@ -89,30 +90,30 @@ class Builder {
+   //     normalizer is the goal of SentencePiece.
+   //
+   // TODO(taku): Make NFC, NFD, and NFKD mapping if necessary.
+-  static util::Status BuildNFKCMap(CharsMap *chars_map);
++  static absl::Status BuildNFKCMap(CharsMap *chars_map);
+ 
+   // Makes an NFKC-based mapping with NMT specific modifications around
+   // whitespaces.
+-  static util::Status BuildNmtNFKCMap(CharsMap *chars_map);
++  static absl::Status BuildNmtNFKCMap(CharsMap *chars_map);
+ 
+   // Merge Unicode case folding mapping into `chars_map`.
+-  static util::Status MergeUnicodeCaseFoldMap(CharsMap *chars_map);
++  static absl::Status MergeUnicodeCaseFoldMap(CharsMap *chars_map);
+ 
+   // Makes NFKC with Unicode case folding.
+-  static util::Status BuildNFKC_CFMap(CharsMap *chars_map);
++  static absl::Status BuildNFKC_CFMap(CharsMap *chars_map);
+ 
+   // Makes NMT NFKC with Unicode case folding.
+-  static util::Status BuildNmtNFKC_CFMap(CharsMap *chars_map);
++  static absl::Status BuildNmtNFKC_CFMap(CharsMap *chars_map);
+ 
+   // Builds Chars map save in `filename`.
+   // Format:
+   // src_uchar1 src_uchar2 ... <tab> trg_uchar1 trg_uchar2...
+   // (src|trg)_ucharX must be a hex of Unicode code point.
+-  static util::Status LoadCharsMap(absl::string_view filename,
++  static absl::Status LoadCharsMap(absl::string_view filename,
+                                    CharsMap *chars_map);
+ 
+   // Saves Chars map to `filename` as TSV.
+-  static util::Status SaveCharsMap(absl::string_view filename,
++  static absl::Status SaveCharsMap(absl::string_view filename,
+                                    const CharsMap &chars_map);
+ 
+  private:
+@@ -121,7 +122,7 @@ class Builder {
+   // Removes redundant rules from `chars_map`.
+   // When char_maps have "aa" => "bb" and "a" => "b", the first
+   // rule is not necessary since the second rule can cover the first rule.
+-  static util::Status RemoveRedundantMap(CharsMap *chars_map);
++  static absl::Status RemoveRedundantMap(CharsMap *chars_map);
+ };
+ }  // namespace normalizer
+ }  // namespace sentencepiece
+diff --git a/src/builder_test.cc b/src/builder_test.cc
+index 4acb7b3..1dee5c7 100644
+--- a/src/builder_test.cc
++++ b/src/builder_test.cc
+@@ -18,7 +18,7 @@
+ #include "normalizer.h"
+ #include "sentencepiece_trainer.h"
+ #include "testharness.h"
+-#include "third_party/absl/strings/str_cat.h"
++#include "absl/strings/str_cat.h"
+ #include "util.h"
+ 
+ namespace sentencepiece {
+diff --git a/src/char_model_trainer.cc b/src/char_model_trainer.cc
+index f438d78..4f4c603 100644
+--- a/src/char_model_trainer.cc
++++ b/src/char_model_trainer.cc
+@@ -16,12 +16,13 @@
+ 
+ #include "char_model.h"
+ #include "char_model_trainer.h"
++#include "absl/status/status.h"
+ #include "util.h"
+ 
+ namespace sentencepiece {
+ namespace character {
+ 
+-util::Status Trainer::Train() {
++absl::Status Trainer::Train() {
+   RETURN_IF_ERROR(status());
+ 
+   CHECK_OR_RETURN(normalizer_spec_.escape_whitespaces());
+diff --git a/src/char_model_trainer.h b/src/char_model_trainer.h
+index e563819..a5d021c 100644
+--- a/src/char_model_trainer.h
++++ b/src/char_model_trainer.h
+@@ -17,6 +17,7 @@
+ 
+ #include "sentencepiece_model.pb.h"
+ #include "trainer_interface.h"
++#include "absl/status/status.h"
+ 
+ namespace sentencepiece {
+ namespace character {
+@@ -30,7 +31,7 @@ class Trainer : public TrainerInterface {
+       : TrainerInterface::TrainerInterface(trainer_spec, normalizer_spec,
+                                            denormalizer_spec) {}
+ 
+-  util::Status Train() override;
++  absl::Status Train() override;
+ };
+ }  // namespace character
+ }  // namespace sentencepiece
+diff --git a/src/char_model_trainer_test.cc b/src/char_model_trainer_test.cc
+index 8c2e4b7..e8b4979 100644
+--- a/src/char_model_trainer_test.cc
++++ b/src/char_model_trainer_test.cc
+@@ -19,8 +19,8 @@
+ #include "filesystem.h"
+ #include "sentencepiece_processor.h"
+ #include "testharness.h"
+-#include "third_party/absl/strings/str_cat.h"
+-#include "third_party/absl/strings/str_join.h"
++#include "absl/strings/str_cat.h"
++#include "absl/strings/str_join.h"
+ #include "util.h"
+ 
+ namespace sentencepiece {
+diff --git a/src/common.h b/src/common.h
+index 7595634..3a2f4e1 100644
+--- a/src/common.h
++++ b/src/common.h
+@@ -46,7 +46,7 @@ typedef int32_t int32;
+ typedef int64_t int64;
+ typedef uint8_t uint8;
+ typedef uint16_t uint16;
+-typedef uint32_t char32;
++typedef int32_t char32;
+ typedef uint32_t uint32;
+ typedef uint64_t uint64;
+ 
+@@ -146,6 +146,7 @@ inline const char *BaseName(const char *path) {
+ }  // namespace logging
+ }  // namespace sentencepiece
+ 
++#ifndef LOG
+ #define LOG(severity)                                                        \
+   (::sentencepiece::logging::GetMinLogLevel() >                              \
+    ::sentencepiece::logging::LOG_##severity)                                 \
+@@ -156,6 +157,7 @@ inline const char *BaseName(const char *path) {
+             std::cerr << ::sentencepiece::logging::BaseName(__FILE__) << "(" \
+                       << __LINE__ << ") "                                    \
+                       << "LOG(" << #severity << ") "
++#endif  // LOG
+ 
+ #define CHECK(condition)                                                      \
+   (condition) ? 0                                                             \
+diff --git a/src/compile_charsmap_main.cc b/src/compile_charsmap_main.cc
+index c5a5188..e5db1d7 100644
+--- a/src/compile_charsmap_main.cc
++++ b/src/compile_charsmap_main.cc
+@@ -22,8 +22,9 @@
+ #include "filesystem.h"
+ #include "init.h"
+ #include "sentencepiece_processor.h"
+-#include "third_party/absl/flags/flag.h"
+-#include "third_party/absl/strings/string_view.h"
++#include "absl/flags/flag.h"
++#include "absl/strings/string_view.h"
++#include "absl/status/status.h"
+ 
+ using sentencepiece::normalizer::Builder;
+ 
+@@ -160,7 +161,7 @@ int main(int argc, char **argv) {
+ 
+   const std::vector<std::pair<
+       std::string,
+-      std::function<sentencepiece::util::Status(Builder::CharsMap *)>>>
++      std::function<sentencepiece::absl::Status(Builder::CharsMap *)>>>
+       kRuleList = {{"nfkc", Builder::BuildNFKCMap},
+                    {"nmt_nfkc", Builder::BuildNmtNFKCMap},
+                    {"nfkc_cf", Builder::BuildNFKC_CFMap},
+diff --git a/src/error.cc b/src/error.cc
+index a226d98..ab4675d 100644
+--- a/src/error.cc
++++ b/src/error.cc
+@@ -20,8 +20,8 @@
+ #ifdef _USE_EXTERNAL_ABSL
+ // Naive workaround to define minloglevel on external absl package.
+ // We want to define them in other cc file.
+-#include "third_party/absl/flags/flag.h"
+-#include "third_party/absl/flags/parse.h"
++#include "absl/flags/flag.h"
++#include "absl/flags/parse.h"
+ ABSL_FLAG(int32, minloglevel, 0,
+           "Messages logged at a lower level than this don't actually.");
+ #endif
+diff --git a/src/filesystem.cc b/src/filesystem.cc
+index 833c8f7..9a1b6c9 100644
+--- a/src/filesystem.cc
++++ b/src/filesystem.cc
+@@ -15,7 +15,8 @@
+ #include <iostream>
+ 
+ #include "filesystem.h"
+-#include "third_party/absl/memory/memory.h"
++#include "absl/status/status.h"
++#include "absl/memory/memory.h"
+ #include "util.h"
+ 
+ #if defined(OS_WIN) && defined(UNICODE) && defined(_UNICODE)
+@@ -36,7 +37,7 @@ class PosixReadableFile : public ReadableFile {
+                                     is_binary ? std::ios::binary | std::ios::in
+                                               : std::ios::in)) {
+     if (!*is_)
+-      status_ = util::StatusBuilder(util::StatusCode::kNotFound, GTL_LOC)
++      status_ = util::StatusBuilder(absl::StatusCode::kNotFound, GTL_LOC)
+                 << "\"" << filename.data() << "\": " << util::StrError(errno);
+   }
+ 
+@@ -44,7 +45,7 @@ class PosixReadableFile : public ReadableFile {
+     if (is_ != &std::cin) delete is_;
+   }
+ 
+-  util::Status status() const { return status_; }
++  absl::Status status() const { return status_; }
+ 
+   bool ReadLine(std::string *line) {
+     return static_cast<bool>(std::getline(*is_, *line));
+@@ -61,7 +62,7 @@ class PosixReadableFile : public ReadableFile {
+   }
+ 
+  private:
+-  util::Status status_;
++  absl::Status status_;
+   std::istream *is_;
+ };
+ 
+@@ -75,7 +76,7 @@ class PosixWritableFile : public WritableFile {
+                                               : std::ios::out)) {
+     if (!*os_)
+       status_ =
+-          util::StatusBuilder(util::StatusCode::kPermissionDenied, GTL_LOC)
++          util::StatusBuilder(absl::StatusCode::kPermissionDenied, GTL_LOC)
+           << "\"" << filename.data() << "\": " << util::StrError(errno);
+   }
+ 
+@@ -83,7 +84,7 @@ class PosixWritableFile : public WritableFile {
+     if (os_ != &std::cout) delete os_;
+   }
+ 
+-  util::Status status() const { return status_; }
++  absl::Status status() const { return status_; }
+ 
+   bool Write(absl::string_view text) {
+     os_->write(text.data(), text.size());
+@@ -93,7 +94,7 @@ class PosixWritableFile : public WritableFile {
+   bool WriteLine(absl::string_view text) { return Write(text) && Write("\n"); }
+ 
+  private:
+-  util::Status status_;
++  absl::Status status_;
+   std::ostream *os_;
+ };
+ 
+diff --git a/src/filesystem.h b/src/filesystem.h
+index e572b4b..6e8e305 100644
+--- a/src/filesystem.h
++++ b/src/filesystem.h
+@@ -23,7 +23,8 @@
+ 
+ #include "common.h"
+ #include "sentencepiece_processor.h"
+-#include "third_party/absl/strings/string_view.h"
++#include "absl/strings/string_view.h"
++#include "absl/status/status.h"
+ 
+ namespace sentencepiece {
+ namespace filesystem {
+@@ -33,7 +34,7 @@ class ReadableFile {
+   explicit ReadableFile(absl::string_view filename, bool is_binary = false) {}
+   virtual ~ReadableFile() {}
+ 
+-  virtual util::Status status() const = 0;
++  virtual absl::Status status() const = 0;
+   virtual bool ReadLine(std::string *line) = 0;
+   virtual bool ReadAll(std::string *line) = 0;
+ };
+@@ -44,7 +45,7 @@ class WritableFile {
+   explicit WritableFile(absl::string_view filename, bool is_binary = false) {}
+   virtual ~WritableFile() {}
+ 
+-  virtual util::Status status() const = 0;
++  virtual absl::Status status() const = 0;
+   virtual bool Write(absl::string_view text) = 0;
+   virtual bool WriteLine(absl::string_view text) = 0;
+ };
+diff --git a/src/filesystem_test.cc b/src/filesystem_test.cc
+index 790e756..39ece99 100644
+--- a/src/filesystem_test.cc
++++ b/src/filesystem_test.cc
+@@ -14,7 +14,7 @@
+ 
+ #include "filesystem.h"
+ #include "testharness.h"
+-#include "third_party/absl/strings/str_cat.h"
++#include "absl/strings/str_cat.h"
+ #include "util.h"
+ 
+ namespace sentencepiece {
+diff --git a/src/init.h b/src/init.h
+index 090a2d9..acfda8a 100644
+--- a/src/init.h
++++ b/src/init.h
+@@ -16,8 +16,8 @@
+ #define INIT_H_
+ 
+ #include "common.h"
+-#include "third_party/absl/flags/flag.h"
+-#include "third_party/absl/flags/parse.h"
++#include "absl/flags/flag.h"
++#include "absl/flags/parse.h"
+ 
+ ABSL_DECLARE_FLAG(int32, minloglevel);
+ 
+diff --git a/src/model_factory.cc b/src/model_factory.cc
+index be99501..040c00c 100644
+--- a/src/model_factory.cc
++++ b/src/model_factory.cc
+@@ -15,7 +15,7 @@
+ #include "bpe_model.h"
+ #include "char_model.h"
+ #include "model_factory.h"
+-#include "third_party/absl/memory/memory.h"
++#include "absl/memory/memory.h"
+ #include "unigram_model.h"
+ #include "word_model.h"
+ 
+diff --git a/src/model_interface.cc b/src/model_interface.cc
+index c49be1e..22c6378 100644
+--- a/src/model_interface.cc
++++ b/src/model_interface.cc
+@@ -16,8 +16,8 @@
+ 
+ #include "model_interface.h"
+ #include "sentencepiece_model.pb.h"
+-#include "third_party/absl/memory/memory.h"
+-#include "third_party/absl/strings/str_format.h"
++#include "absl/memory/memory.h"
++#include "absl/strings/str_format.h"
+ #include "util.h"
+ 
+ namespace sentencepiece {
+diff --git a/src/model_interface.h b/src/model_interface.h
+index aef5b53..c7858fb 100644
+--- a/src/model_interface.h
++++ b/src/model_interface.h
+@@ -25,9 +25,10 @@
+ #include "normalizer.h"
+ #include "sentencepiece_model.pb.h"
+ #include "sentencepiece_processor.h"
+-#include "third_party/absl/container/flat_hash_map.h"
+-#include "third_party/absl/strings/string_view.h"
+-#include "third_party/darts_clone/darts.h"
++#include "absl/container/flat_hash_map.h"
++#include "absl/strings/string_view.h"
++#include "absl/status/status.h"
++#include "include/darts.h"
+ #include "util.h"
+ 
+ namespace sentencepiece {
+@@ -69,7 +70,7 @@ class ModelInterface {
+ 
+   // Returns Status.
+   // Encode/Decode functions are valid only when status is OK.
+-  virtual util::Status status() const { return status_; }
++  virtual absl::Status status() const { return status_; }
+ 
+   virtual const ModelProto &model_proto() const { return *model_proto_; }
+ 
+@@ -82,7 +83,7 @@ class ModelInterface {
+   // normally users do not need to call this function. This function is provided
+   // just in case that a user want to manually choose which encoder version to
+   // use.
+-  virtual util::Status SetEncoderVersion(EncoderVersion encoder_version) {
++  virtual absl::Status SetEncoderVersion(EncoderVersion encoder_version) {
+     encoder_version_ = encoder_version;
+     return util::OkStatus();
+   }
+@@ -261,7 +262,7 @@ class ModelInterface {
+   EncoderVersion encoder_version_ = EncoderVersion::kOptimized;
+ 
+   // status.
+-  util::Status status_;
++  absl::Status status_;
+ };
+ }  // namespace sentencepiece
+ #endif  // MODEL_INTERFACE_H_
+diff --git a/src/model_interface_test.cc b/src/model_interface_test.cc
+index 69ee4e6..26a1e05 100644
+--- a/src/model_interface_test.cc
++++ b/src/model_interface_test.cc
+@@ -15,7 +15,7 @@
+ #include "model_factory.h"
+ #include "model_interface.h"
+ #include "testharness.h"
+-#include "third_party/absl/container/flat_hash_map.h"
++#include "absl/container/flat_hash_map.h"
+ #include "util.h"
+ 
+ namespace sentencepiece {
+diff --git a/src/normalizer.cc b/src/normalizer.cc
+index 100b875..c553906 100644
+--- a/src/normalizer.cc
++++ b/src/normalizer.cc
+@@ -18,11 +18,12 @@
+ #include <vector>
+ 
+ #include "common.h"
+-#include "third_party/absl/memory/memory.h"
+-#include "third_party/absl/strings/match.h"
+-#include "third_party/absl/strings/string_view.h"
+-#include "third_party/absl/strings/strip.h"
+-#include "third_party/darts_clone/darts.h"
++#include "absl/memory/memory.h"
++#include "absl/strings/match.h"
++#include "absl/strings/string_view.h"
++#include "absl/strings/strip.h"
++#include "absl/status/status.h"
++#include "include/darts.h"
+ #include "util.h"
+ 
+ namespace sentencepiece {
+@@ -71,7 +72,7 @@ void Normalizer::Init() {
+   }
+ }
+ 
+-util::Status Normalizer::Normalize(absl::string_view input,
++absl::Status Normalizer::Normalize(absl::string_view input,
+                                    std::string *normalized,
+                                    std::vector<size_t> *norm_to_orig) const {
+   norm_to_orig->clear();
+@@ -274,7 +275,7 @@ std::string Normalizer::EncodePrecompiledCharsMap(
+ }
+ 
+ // static
+-util::Status Normalizer::DecodePrecompiledCharsMap(
++absl::Status Normalizer::DecodePrecompiledCharsMap(
+     absl::string_view blob, absl::string_view *trie_blob,
+     absl::string_view *normalized, std::string *buffer) {
+   uint32 trie_blob_size = 0;
+diff --git a/src/normalizer.h b/src/normalizer.h
+index 622bbd2..21d1385 100644
+--- a/src/normalizer.h
++++ b/src/normalizer.h
+@@ -24,8 +24,9 @@
+ #include "common.h"
+ #include "sentencepiece_model.pb.h"
+ #include "sentencepiece_processor.h"
+-#include "third_party/absl/strings/string_view.h"
+-#include "third_party/darts_clone/darts.h"
++#include "absl/strings/string_view.h"
++#include "absl/status/status.h"
++#include "include/darts.h"
+ #include "util.h"
+ 
+ namespace sentencepiece {
+@@ -75,7 +76,7 @@ class Normalizer {
+ 
+   // Returns Status.
+   // Normalizes function is valid only when status is OK.
+-  virtual util::Status status() const { return status_; }
++  virtual absl::Status status() const { return status_; }
+ 
+   // Normalizes a plain utf8 string into an internal representation for
+   // Sentencepiece model. |norm_to_orig| stores the byte-alignment from
+@@ -86,7 +87,7 @@ class Normalizer {
+   // - Adds a prefix space.
+   // - Replaces a space with a meta symbol.
+   // - Removing heading, tailing and other redundant spaces.
+-  virtual util::Status Normalize(absl::string_view input,
++  virtual absl::Status Normalize(absl::string_view input,
+                                  std::string *normalized,
+                                  std::vector<size_t> *norm_to_orig) const;
+ 
+@@ -121,7 +122,7 @@ class Normalizer {
+                                                absl::string_view normalized);
+ 
+   // Decodes blob into trie_blob and normalized string.
+-  static util::Status DecodePrecompiledCharsMap(absl::string_view blob,
++  static absl::Status DecodePrecompiledCharsMap(absl::string_view blob,
+                                                 absl::string_view *trie_blob,
+                                                 absl::string_view *normalized,
+                                                 std::string *buffer = nullptr);
+@@ -153,7 +154,7 @@ class Normalizer {
+ #endif
+ 
+   // Normalizer's status.
+-  util::Status status_;
++  absl::Status status_;
+ };
+ }  // namespace normalizer
+ }  // namespace sentencepiece
+diff --git a/src/pretokenizer_for_training.cc b/src/pretokenizer_for_training.cc
+index 049658e..8021511 100644
+--- a/src/pretokenizer_for_training.cc
++++ b/src/pretokenizer_for_training.cc
+@@ -14,7 +14,7 @@
+ #include <string>
+ 
+ #include "pretokenizer_for_training.h"
+-#include "third_party/absl/strings/str_replace.h"
++#include "absl/strings/str_replace.h"
+ 
+ namespace sentencepiece {
+ namespace pretokenizer {
+diff --git a/src/pretokenizer_for_training.h b/src/pretokenizer_for_training.h
+index 2d3bc82..b4a6de3 100644
+--- a/src/pretokenizer_for_training.h
++++ b/src/pretokenizer_for_training.h
+@@ -21,7 +21,8 @@
+ #include "common.h"
+ #include "sentencepiece.pb.h"
+ #include "sentencepiece_processor.h"
+-#include "third_party/absl/strings/string_view.h"
++#include "absl/strings/string_view.h"
++#include "absl/status/status.h"
+ 
+ namespace sentencepiece {
+ namespace pretokenizer {
+@@ -30,7 +31,7 @@ class PretokenizerForTrainingInterface {
+  public:
+   PretokenizerForTrainingInterface() {}
+   virtual ~PretokenizerForTrainingInterface() {}
+-  virtual util::Status status() const = 0;
++  virtual absl::Status status() const = 0;
+ 
+   // Puts kUPPBoundaryStr before and after the pre-tokenizer's segmentation
+   // when there are no spaces between these tokens.
+diff --git a/src/pretokenizer_for_training_test.cc b/src/pretokenizer_for_training_test.cc
+index 80f4787..de89fe3 100644
+--- a/src/pretokenizer_for_training_test.cc
++++ b/src/pretokenizer_for_training_test.cc
+@@ -13,8 +13,9 @@
+ // limitations under the License.!
+ #include "pretokenizer_for_training.h"
+ #include "testharness.h"
+-#include "third_party/absl/strings/str_cat.h"
++#include "absl/strings/str_cat.h"
+ #include "trainer_interface.h"
++#include "absl/status/status.h"
+ 
+ namespace sentencepiece {
+ namespace pretokenizer {
+@@ -28,7 +29,7 @@ class MockPretokenizer : public PretokenizerForTrainingInterface {
+     return spt_;
+   }
+ 
+-  util::Status status() const override { return util::OkStatus(); }
++  absl::Status status() const override { return util::OkStatus(); }
+ 
+   void SetOutput(const SentencePieceText &spt) { spt_ = spt; }
+ 
+diff --git a/src/sentencepiece_processor.cc b/src/sentencepiece_processor.cc
+index 1e4e7a0..78ae527 100644
+--- a/src/sentencepiece_processor.cc
++++ b/src/sentencepiece_processor.cc
+@@ -23,14 +23,15 @@
+ #include "normalizer.h"
+ #include "sentencepiece.pb.h"
+ #include "sentencepiece_processor.h"
+-#include "third_party/absl/memory/memory.h"
+-#include "third_party/absl/strings/numbers.h"
+-#include "third_party/absl/strings/str_cat.h"
+-#include "third_party/absl/strings/str_join.h"
+-#include "third_party/absl/strings/str_replace.h"
+-#include "third_party/absl/strings/str_split.h"
+-#include "third_party/absl/strings/string_view.h"
+-#include "third_party/absl/strings/strip.h"
++#include "absl/memory/memory.h"
++#include "absl/strings/numbers.h"
++#include "absl/strings/str_cat.h"
++#include "absl/strings/str_join.h"
++#include "absl/strings/str_replace.h"
++#include "absl/strings/str_split.h"
++#include "absl/strings/string_view.h"
++#include "absl/strings/strip.h"
++#include "absl/status/status.h"
+ #include "unigram_model.h"
+ #include "util.h"
+ 
+@@ -52,7 +53,7 @@ const char kReplacementCharacter[] = "\xef\xbf\xbd";
+ SentencePieceProcessor::SentencePieceProcessor() {}
+ SentencePieceProcessor::~SentencePieceProcessor() {}
+ 
+-util::Status SentencePieceProcessor::Load(absl::string_view filename) {
++absl::Status SentencePieceProcessor::Load(absl::string_view filename) {
+   auto model_proto = absl::make_unique<ModelProto>();
+   RETURN_IF_ERROR(io::LoadModelProto(filename, model_proto.get()));
+   return Load(std::move(model_proto));
+@@ -62,13 +63,13 @@ void SentencePieceProcessor::LoadOrDie(absl::string_view filename) {
+   CHECK_OK(Load(filename));
+ }
+ 
+-util::Status SentencePieceProcessor::Load(const ModelProto &model_proto) {
++absl::Status SentencePieceProcessor::Load(const ModelProto &model_proto) {
+   auto model_proto_copy = absl::make_unique<ModelProto>();
+   *model_proto_copy = model_proto;
+   return Load(std::move(model_proto_copy));
+ }
+ 
+-util::Status SentencePieceProcessor::LoadFromSerializedProto(
++absl::Status SentencePieceProcessor::LoadFromSerializedProto(
+     absl::string_view serialized) {
+   auto model_proto = absl::make_unique<ModelProto>();
+   CHECK_OR_RETURN(
+@@ -76,7 +77,7 @@ util::Status SentencePieceProcessor::LoadFromSerializedProto(
+   return Load(std::move(model_proto));
+ }
+ 
+-util::Status SentencePieceProcessor::Load(
++absl::Status SentencePieceProcessor::Load(
+     std::unique_ptr<ModelProto> model_proto) {
+   model_proto_ = std::move(model_proto);
+   model_ = ModelFactory::Create(*model_proto_);
+@@ -117,7 +118,7 @@ util::Status SentencePieceProcessor::Load(
+   return util::OkStatus();
+ }
+ 
+-util::Status SentencePieceProcessor::SetEncoderVersion(
++absl::Status SentencePieceProcessor::SetEncoderVersion(
+     EncoderVersion encoder_version) {
+   return model_->SetEncoderVersion(encoder_version);
+ }
+@@ -126,17 +127,17 @@ EncoderVersion SentencePieceProcessor::GetEncoderVersion() const {
+   return model_->GetEncoderVersion();
+ }
+ 
+-util::Status SentencePieceProcessor::SetEncodeExtraOptions(
++absl::Status SentencePieceProcessor::SetEncodeExtraOptions(
+     absl::string_view extra_options) {
+   return ParseExtraOptions(extra_options, &encode_extra_options_);
+ }
+ 
+-util::Status SentencePieceProcessor::SetDecodeExtraOptions(
++absl::Status SentencePieceProcessor::SetDecodeExtraOptions(
+     absl::string_view extra_options) {
+   return ParseExtraOptions(extra_options, &decode_extra_options_);
+ }
+ 
+-util::Status SentencePieceProcessor::status() const {
++absl::Status SentencePieceProcessor::status() const {
+   CHECK_OR_RETURN(model_) << "Model is not initialized.";
+   CHECK_OR_RETURN(normalizer_) << "Normalizer is not initialized.";
+   RETURN_IF_ERROR(model_->status());
+@@ -144,7 +145,7 @@ util::Status SentencePieceProcessor::status() const {
+   return util::OkStatus();
+ }
+ 
+-util::Status SentencePieceProcessor::SetVocabulary(
++absl::Status SentencePieceProcessor::SetVocabulary(
+     const std::vector<std::string> &valid_vocab) {
+   RETURN_IF_ERROR(status());
+ 
+@@ -174,7 +175,7 @@ util::Status SentencePieceProcessor::SetVocabulary(
+   return util::OkStatus();
+ }
+ 
+-util::Status SentencePieceProcessor::ResetVocabulary() {
++absl::Status SentencePieceProcessor::ResetVocabulary() {
+   RETURN_IF_ERROR(status());
+   for (auto &piece : *(model_proto_->mutable_pieces())) {
+     if (piece.type() == ModelProto::SentencePiece::UNUSED)
+@@ -184,7 +185,7 @@ util::Status SentencePieceProcessor::ResetVocabulary() {
+   return util::OkStatus();
+ }
+ 
+-util::Status SentencePieceProcessor::LoadVocabulary(absl::string_view filename,
++absl::Status SentencePieceProcessor::LoadVocabulary(absl::string_view filename,
+                                                     int threshold) {
+   auto input = filesystem::NewReadableFile(filename);
+   RETURN_IF_ERROR(input->status());
+@@ -221,7 +222,7 @@ util::Status SentencePieceProcessor::LoadVocabulary(absl::string_view filename,
+ 
+ //////////////////////////////////////////////////////////////
+ // Simple API.
+-util::Status SentencePieceProcessor::Encode(
++absl::Status SentencePieceProcessor::Encode(
+     absl::string_view input, std::vector<std::string> *pieces) const {
+   CHECK_OR_RETURN_STATUS_STL(pieces);
+ 
+@@ -234,7 +235,7 @@ util::Status SentencePieceProcessor::Encode(
+   return util::OkStatus();
+ }
+ 
+-util::Status SentencePieceProcessor::Encode(absl::string_view input,
++absl::Status SentencePieceProcessor::Encode(absl::string_view input,
+                                             std::vector<int> *ids) const {
+   CHECK_OR_RETURN_STATUS_STL(ids);
+ 
+@@ -247,7 +248,7 @@ util::Status SentencePieceProcessor::Encode(absl::string_view input,
+   return util::OkStatus();
+ }
+ 
+-util::Status SentencePieceProcessor::Decode(
++absl::Status SentencePieceProcessor::Decode(
+     const std::vector<std::string> &pieces, std::string *detokenized) const {
+   CHECK_OR_RETURN_STATUS_STL(detokenized);
+ 
+@@ -258,7 +259,7 @@ util::Status SentencePieceProcessor::Decode(
+   return util::OkStatus();
+ }
+ 
+-util::Status SentencePieceProcessor::Decode(const std::vector<int> &ids,
++absl::Status SentencePieceProcessor::Decode(const std::vector<int> &ids,
+                                             std::string *detokenized) const {
+   CHECK_OR_RETURN_STATUS_STL(detokenized);
+ 
+@@ -269,7 +270,7 @@ util::Status SentencePieceProcessor::Decode(const std::vector<int> &ids,
+   return util::OkStatus();
+ }
+ 
+-util::Status SentencePieceProcessor::NBestEncode(
++absl::Status SentencePieceProcessor::NBestEncode(
+     absl::string_view input, int nbest_size,
+     std::vector<std::vector<std::string>> *pieces) const {
+   CHECK_OR_RETURN_STATUS_STL(pieces);
+@@ -287,7 +288,7 @@ util::Status SentencePieceProcessor::NBestEncode(
+   return util::OkStatus();
+ }
+ 
+-util::Status SentencePieceProcessor::NBestEncode(
++absl::Status SentencePieceProcessor::NBestEncode(
+     absl::string_view input, int nbest_size,
+     std::vector<std::vector<int>> *ids) const {
+   CHECK_OR_RETURN_STATUS_STL(ids);
+@@ -305,7 +306,7 @@ util::Status SentencePieceProcessor::NBestEncode(
+   return util::OkStatus();
+ }
+ 
+-util::Status SentencePieceProcessor::SampleEncode(
++absl::Status SentencePieceProcessor::SampleEncode(
+     absl::string_view input, int nbest_size, float alpha,
+     std::vector<std::string> *pieces) const {
+   CHECK_OR_RETURN_STATUS_STL(pieces);
+@@ -319,7 +320,7 @@ util::Status SentencePieceProcessor::SampleEncode(
+   return util::OkStatus();
+ }
+ 
+-util::Status SentencePieceProcessor::SampleEncode(absl::string_view input,
++absl::Status SentencePieceProcessor::SampleEncode(absl::string_view input,
+                                                   int nbest_size, float alpha,
+                                                   std::vector<int> *ids) const {
+   CHECK_OR_RETURN_STATUS_STL(ids);
+@@ -333,7 +334,7 @@ util::Status SentencePieceProcessor::SampleEncode(absl::string_view input,
+   return util::OkStatus();
+ }
+ 
+-util::Status SentencePieceProcessor::PopulateSentencePieceText(
++absl::Status SentencePieceProcessor::PopulateSentencePieceText(
+     absl::string_view input, absl::string_view normalized,
+     const std::vector<size_t> &norm_to_orig, const EncodeResult &result,
+     SentencePieceText *spt) const {
+@@ -424,7 +425,7 @@ util::Status SentencePieceProcessor::PopulateSentencePieceText(
+   return util::OkStatus();
+ }  // namespace sentencepiece
+ 
+-util::Status SentencePieceProcessor::Encode(absl::string_view input,
++absl::Status SentencePieceProcessor::Encode(absl::string_view input,
+                                             SentencePieceText *spt) const {
+   CHECK_OR_RETURN_STATUS_PROTO(spt);
+ 
+@@ -439,7 +440,7 @@ util::Status SentencePieceProcessor::Encode(absl::string_view input,
+   return util::OkStatus();
+ }
+ 
+-util::Status SentencePieceProcessor::NBestEncode(
++absl::Status SentencePieceProcessor::NBestEncode(
+     absl::string_view input, int nbest_size,
+     NBestSentencePieceText *nbest_spt) const {
+   CHECK_OR_RETURN_STATUS_PROTO(nbest_spt);
+@@ -464,7 +465,7 @@ util::Status SentencePieceProcessor::NBestEncode(
+   return util::OkStatus();
+ }
+ 
+-util::Status SentencePieceProcessor::SampleEncode(
++absl::Status SentencePieceProcessor::SampleEncode(
+     absl::string_view input, int nbest_size, float alpha,
+     SentencePieceText *spt) const {
+   CHECK_OR_RETURN_STATUS_PROTO(spt);
+@@ -503,7 +504,7 @@ util::Status SentencePieceProcessor::SampleEncode(
+   return util::OkStatus();
+ }
+ 
+-util::Status SentencePieceProcessor::SampleEncodeAndScore(
++absl::Status SentencePieceProcessor::SampleEncodeAndScore(
+     absl::string_view input, int samples, float theta, bool wor,
+     bool include_best, NBestSentencePieceText *samples_spt) const {
+   CHECK_OR_RETURN(model_->IsSampleEncodeAndScoreAvailable())
+@@ -527,7 +528,7 @@ util::Status SentencePieceProcessor::SampleEncodeAndScore(
+   return util::OkStatus();
+ }
+ 
+-util::Status SentencePieceProcessor::CalculateEntropy(absl::string_view input,
++absl::Status SentencePieceProcessor::CalculateEntropy(absl::string_view input,
+                                                       float theta,
+                                                       float *entropy) const {
+   CHECK_OR_RETURN(model_->IsCalculateEntropyAvailable())
+@@ -540,7 +541,7 @@ util::Status SentencePieceProcessor::CalculateEntropy(absl::string_view input,
+   return util::OkStatus();
+ }
+ 
+-util::Status SentencePieceProcessor::Decode(
++absl::Status SentencePieceProcessor::Decode(
+     const std::vector<std::string> &pieces, SentencePieceText *spt) const {
+   CHECK_OR_RETURN_STATUS_PROTO(spt);
+ 
+@@ -591,7 +592,7 @@ util::Status SentencePieceProcessor::Decode(
+   };
+ 
+   auto ProcessBytePieces = [&](int token_index_begin,
+-                               int token_index_end) -> util::Status {
++                               int token_index_end) -> absl::Status {
+     if (token_index_begin >= token_index_end) {
+       return util::OkStatus();
+     }
+@@ -661,14 +662,14 @@ util::Status SentencePieceProcessor::Decode(
+   return util::OkStatus();
+ }
+ 
+-util::Status SentencePieceProcessor::Decode(const std::vector<int> &ids,
++absl::Status SentencePieceProcessor::Decode(const std::vector<int> &ids,
+                                             SentencePieceText *spt) const {
+   std::vector<std::string> pieces;
+   const int num_pieces = GetPieceSize();
+   pieces.reserve(ids.size());
+   for (const int id : ids) {
+     if (id < 0 || id >= num_pieces) {
+-      return util::Status(util::StatusCode::kOutOfRange,
++      return absl::Status(absl::StatusCode::kOutOfRange,
+                           absl::StrCat("Invalid id: ", id));
+     }
+     pieces.emplace_back(IdToPiece(id));
+@@ -783,7 +784,7 @@ int SentencePieceProcessor::pad_id() const {
+ }
+ 
+ // static
+-util::Status SentencePieceProcessor::ApplyExtraOptions(
++absl::Status SentencePieceProcessor::ApplyExtraOptions(
+     const std::vector<ExtraOption> &extra_options,
+     SentencePieceText *spt) const {
+   for (const auto &extra_option : extra_options) {
+@@ -818,7 +819,7 @@ util::Status SentencePieceProcessor::ApplyExtraOptions(
+ }
+ 
+ // static
+-util::Status SentencePieceProcessor::ParseExtraOptions(
++absl::Status SentencePieceProcessor::ParseExtraOptions(
+     absl::string_view _extra_option,
+     std::vector<SentencePieceProcessor::ExtraOption> *extra_options) const {
+   absl::string_view extra_option(_extra_option.data(), _extra_option.size());
+@@ -877,7 +878,7 @@ void SetRandomGeneratorSeed(unsigned int seed);
+ 
+ namespace io {
+ 
+-util::Status LoadModelProto(absl::string_view filename,
++absl::Status LoadModelProto(absl::string_view filename,
+                             ModelProto *model_proto) {
+   if (filename.empty()) {
+     return util::NotFoundError("model file path should not be empty.");
+@@ -893,7 +894,7 @@ util::Status LoadModelProto(absl::string_view filename,
+   return util::OkStatus();
+ }
+ 
+-util::Status SaveModelProto(absl::string_view filename,
++absl::Status SaveModelProto(absl::string_view filename,
+                             const ModelProto &model_proto) {
+   if (filename.empty()) {
+     return util::NotFoundError("model file path should not be empty.");
+diff --git a/src/sentencepiece_processor.h b/src/sentencepiece_processor.h
+index e8bd5f5..346fb0e 100644
+--- a/src/sentencepiece_processor.h
++++ b/src/sentencepiece_processor.h
+@@ -20,9 +20,10 @@
+ #include <string>
+ #include <utility>
+ #include <vector>
++#include "absl/status/status.h"
+ 
+ #if defined(_USE_INTERNAL_STRING_VIEW)
+-#include "third_party/absl/strings/string_view.h"
++#include "absl/strings/string_view.h"
+ #elif defined(_USE_TF_STRING_VIEW)
+ #include "absl/strings/string_view.h"
+ #else
+@@ -185,7 +186,7 @@ class SentencePieceProcessor {
+ 
+   // Loads model from `filename`.
+   // Returns false if `filename` cannot be loaded.
+-  virtual util::Status Load(absl::string_view filename);
++  virtual absl::Status Load(absl::string_view filename);
+ 
+   // Loads model from `filename`.
+   // Crash if `filename` cannot be loaded.
+@@ -193,24 +194,24 @@ class SentencePieceProcessor {
+ 
+   // Loads model from `model_proto`.
+   // `model_proto` is copied.
+-  virtual util::Status Load(const ModelProto &model_proto);
++  virtual absl::Status Load(const ModelProto &model_proto);
+ 
+   // Loads model from `model_proto`.
+   // `model_proto` is moved.
+-  virtual util::Status Load(std::unique_ptr<ModelProto> model_proto);
++  virtual absl::Status Load(std::unique_ptr<ModelProto> model_proto);
+ 
+   // Loads model from `serialized`, which is a string-serialized model proto.
+   // Useful to load the model from a platform independent blob object.
+-  virtual util::Status LoadFromSerializedProto(absl::string_view serialized);
++  virtual absl::Status LoadFromSerializedProto(absl::string_view serialized);
+ 
+   // Returns the status. Encode/Decode methods are valid when status is OK.
+-  virtual util::Status status() const;
++  virtual absl::Status status() const;
+ 
+   // Sets encode extra_option sequence.
+-  virtual util::Status SetEncodeExtraOptions(absl::string_view extra_option);
++  virtual absl::Status SetEncodeExtraOptions(absl::string_view extra_option);
+ 
+   // Sets decode extra_option sequence.
+-  virtual util::Status SetDecodeExtraOptions(absl::string_view extra_option);
++  virtual absl::Status SetDecodeExtraOptions(absl::string_view extra_option);
+ 
+   //////////////////////////////////////////////////////////////
+   // Vocabulary restriction.
+@@ -219,41 +220,41 @@ class SentencePieceProcessor {
+ 
+   // Restricts the vocabulary set.
+   // The input sentences are encoded into the tokens in `valid_vocab`.
+-  virtual util::Status SetVocabulary(
++  virtual absl::Status SetVocabulary(
+       const std::vector<std::string> &valid_vocab);
+ 
+   // Reverts the vocabulary restriction.
+-  virtual util::Status ResetVocabulary();
++  virtual absl::Status ResetVocabulary();
+ 
+   // Loads the valid vocabulary set from `filename` in TSV format.
+   // Format:  <token> <tab> <freq>.
+   // Any token with frequency < threshold will be treated as OOV.
+-  virtual util::Status LoadVocabulary(absl::string_view filename,
++  virtual absl::Status LoadVocabulary(absl::string_view filename,
+                                       int threshold);
+ 
+   //////////////////////////////////////////////////////////////
+   // Simple API.
+   //
+   // Given a UTF8 input, encodes it into a sequence of sentence pieces.
+-  virtual util::Status Encode(absl::string_view input,
++  virtual absl::Status Encode(absl::string_view input,
+                               std::vector<std::string> *pieces) const;
+ 
+   // Given a UTF8 input, encodes it into a sequence of ids.
+-  virtual util::Status Encode(absl::string_view input,
++  virtual absl::Status Encode(absl::string_view input,
+                               std::vector<int> *ids) const;
+ 
+   // Given a sequence of pieces, decodes it into a detokenized output.
+-  virtual util::Status Decode(const std::vector<std::string> &pieces,
++  virtual absl::Status Decode(const std::vector<std::string> &pieces,
+                               std::string *detokenized) const;
+ 
+   // Given a sequence of ids, decodes it into a detokenized output.
+-  virtual util::Status Decode(const std::vector<int> &ids,
++  virtual absl::Status Decode(const std::vector<int> &ids,
+                               std::string *detokenized) const;
+ 
+   // Sets the encoder version. Normally users do not need to call this function.
+   // But they can call this fucntion just in case if they want to fall back to
+   // the original encoder.
+-  virtual util::Status SetEncoderVersion(EncoderVersion encoder_version);
++  virtual absl::Status SetEncoderVersion(EncoderVersion encoder_version);
+ 
+   // Returns the current encoder version in use.
+   virtual EncoderVersion GetEncoderVersion() const;
+@@ -261,12 +262,12 @@ class SentencePieceProcessor {
+   //////////////////////////////////////////////////////////////
+   // NBest API.
+   // Same as Encode, but returns nbest results.
+-  virtual util::Status NBestEncode(
++  virtual absl::Status NBestEncode(
+       absl::string_view input, int nbest_size,
+       std::vector<std::vector<std::string>> *pieces) const;
+ 
+   // Same as Encode, but returns nbest results.
+-  virtual util::Status NBestEncode(absl::string_view input, int nbest_size,
++  virtual absl::Status NBestEncode(absl::string_view input, int nbest_size,
+                                    std::vector<std::vector<int>> *ids) const;
+ 
+   //////////////////////////////////////////////////////////////
+@@ -289,12 +290,12 @@ class SentencePieceProcessor {
+   // in https://arxiv.org/abs/1910.13267
+   // Nbest-based sampling is not supported so nbest_size parameter is ignored in
+   // BPE.
+-  virtual util::Status SampleEncode(absl::string_view input, int nbest_size,
++  virtual absl::Status SampleEncode(absl::string_view input, int nbest_size,
+                                     float alpha,
+                                     std::vector<std::string> *pieces) const;
+ 
+   // Same as above, but returns a sequence of ids.
+-  virtual util::Status SampleEncode(absl::string_view input, int nbest_size,
++  virtual absl::Status SampleEncode(absl::string_view input, int nbest_size,
+                                     float alpha, std::vector<int> *ids) const;
+ 
+   //////////////////////////////////////////////////////////////
+@@ -303,16 +304,16 @@ class SentencePieceProcessor {
+   // and internal sentencepiece sequence.
+   //
+   // Given a UTF8 input, encodes it into SentencePieceText.
+-  virtual util::Status Encode(absl::string_view input,
++  virtual absl::Status Encode(absl::string_view input,
+                               SentencePieceText *spt) const;
+ 
+   // Same as above, but returns NBestSentencePieceText.
+-  virtual util::Status NBestEncode(absl::string_view input, int nbest_size,
++  virtual absl::Status NBestEncode(absl::string_view input, int nbest_size,
+                                    NBestSentencePieceText *nbest_spt) const;
+ 
+   // Same as above, but samples one segmentation from the hypotheses
+   // (Lattice).
+-  virtual util::Status SampleEncode(absl::string_view input, int nbest_size,
++  virtual absl::Status SampleEncode(absl::string_view input, int nbest_size,
+                                     float alpha, SentencePieceText *spt) const;
+ 
+   // Sample `samples` segmentations from the segmentation lattice.
+@@ -323,21 +324,21 @@ class SentencePieceProcessor {
+   // If `include_best` is true, the best tokenization is always included in the
+   // sample, and the remaining elements are sampled excluding the best.
+   // This method is only available in Unigram mode.
+-  virtual util::Status SampleEncodeAndScore(
++  virtual absl::Status SampleEncodeAndScore(
+       absl::string_view input, int samples, float theta, bool wor,
+       bool include_best, NBestSentencePieceText *samples_spt) const;
+ 
+   // Calculate entropy of possible tokenization.
+   // Only available in unigram mode.
+-  virtual util::Status CalculateEntropy(absl::string_view input, float theta,
++  virtual absl::Status CalculateEntropy(absl::string_view input, float theta,
+                                         float *entropy) const;
+ 
+   // Given a sequence of pieces, decodes it into SentencePieceText.
+-  virtual util::Status Decode(const std::vector<std::string> &pieces,
++  virtual absl::Status Decode(const std::vector<std::string> &pieces,
+                               SentencePieceText *spt) const;
+ 
+   // Given a sequence of ids, decodes it into SentencePieceText.
+-  virtual util::Status Decode(const std::vector<int> &ids,
++  virtual absl::Status Decode(const std::vector<int> &ids,
+                               SentencePieceText *spt) const;
+ 
+   //////////////////////////////////////////////////////////////
+@@ -487,13 +488,13 @@ class SentencePieceProcessor {
+  private:
+   enum ExtraOption { REVERSE, BOS, EOS };
+ 
+-  util::Status ParseExtraOptions(absl::string_view extra_option,
++  absl::Status ParseExtraOptions(absl::string_view extra_option,
+                                  std::vector<ExtraOption> *extra_options) const;
+ 
+-  util::Status ApplyExtraOptions(const std::vector<ExtraOption> &extra_options,
++  absl::Status ApplyExtraOptions(const std::vector<ExtraOption> &extra_options,
+                                  SentencePieceText *spt) const;
+ 
+-  util::Status PopulateSentencePieceText(
++  absl::Status PopulateSentencePieceText(
+       absl::string_view input, absl::string_view normalized,
+       const std::vector<size_t> &norm_to_orig,
+       const std::vector<std::pair<absl::string_view, int>> &result,
+@@ -526,10 +527,10 @@ namespace io {
+ //  io::LoadModelProto("//path/spm.model", model_proto.get());
+ //  SentencePieceProcessor sp;
+ //  CHECK_OK(sp.Load(std::move(model_proto)));
+-util::Status LoadModelProto(absl::string_view, ModelProto *model_proto);
++absl::Status LoadModelProto(absl::string_view, ModelProto *model_proto);
+ 
+ // Saves `model_proto` as `filename`.
+-util::Status SaveModelProto(absl::string_view, const ModelProto &model_proto);
++absl::Status SaveModelProto(absl::string_view, const ModelProto &model_proto);
+ }  // namespace io
+ #endif  // SWIG
+ }  // namespace sentencepiece
+diff --git a/src/sentencepiece_processor_test.cc b/src/sentencepiece_processor_test.cc
+index 373e73e..829c3d4 100644
+--- a/src/sentencepiece_processor_test.cc
++++ b/src/sentencepiece_processor_test.cc
+@@ -23,10 +23,10 @@
+ #include "sentencepiece_processor.h"
+ #include "sentencepiece_trainer.h"
+ #include "testharness.h"
+-#include "third_party/absl/container/flat_hash_map.h"
+-#include "third_party/absl/memory/memory.h"
+-#include "third_party/absl/strings/str_cat.h"
+-#include "third_party/absl/strings/string_view.h"
++#include "absl/container/flat_hash_map.h"
++#include "absl/memory/memory.h"
++#include "absl/strings/str_cat.h"
++#include "absl/strings/string_view.h"
+ #include "util.h"
+ 
+ namespace sentencepiece {
+diff --git a/src/sentencepiece_trainer.cc b/src/sentencepiece_trainer.cc
+index b9fe64f..5b33cd7 100644
+--- a/src/sentencepiece_trainer.cc
++++ b/src/sentencepiece_trainer.cc
+@@ -22,12 +22,13 @@
+ #include "sentencepiece_model.pb.h"
+ #include "sentencepiece_trainer.h"
+ #include "spec_parser.h"
+-#include "third_party/absl/flags/flag.h"
+-#include "third_party/absl/strings/numbers.h"
+-#include "third_party/absl/strings/str_cat.h"
+-#include "third_party/absl/strings/str_split.h"
+-#include "third_party/absl/strings/string_view.h"
+-#include "third_party/absl/strings/strip.h"
++#include "absl/flags/flag.h"
++#include "absl/strings/numbers.h"
++#include "absl/strings/str_cat.h"
++#include "absl/strings/str_split.h"
++#include "absl/strings/string_view.h"
++#include "absl/strings/strip.h"
++#include "absl/status/status.h"
+ #include "trainer_factory.h"
+ #include "util.h"
+ 
+@@ -37,7 +38,7 @@ static constexpr char kDefaultNormalizerName[] = "nmt_nfkc";
+ }  // namespace
+ 
+ // static
+-util::Status SentencePieceTrainer::Train(const TrainerSpec &trainer_spec,
++absl::Status SentencePieceTrainer::Train(const TrainerSpec &trainer_spec,
+                                          SentenceIterator *sentence_iterator,
+                                          std::string *serialized_model_proto) {
+   NormalizerSpec normalizer_spec;
+@@ -45,7 +46,7 @@ util::Status SentencePieceTrainer::Train(const TrainerSpec &trainer_spec,
+                serialized_model_proto);
+ }
+ 
+-util::Status SentencePieceTrainer::Train(const TrainerSpec &trainer_spec,
++absl::Status SentencePieceTrainer::Train(const TrainerSpec &trainer_spec,
+                                          const NormalizerSpec &normalizer_spec,
+                                          SentenceIterator *sentence_iterator,
+                                          std::string *serialized_model_proto) {
+@@ -55,7 +56,7 @@ util::Status SentencePieceTrainer::Train(const TrainerSpec &trainer_spec,
+ }
+ 
+ // static
+-util::Status SentencePieceTrainer::Train(
++absl::Status SentencePieceTrainer::Train(
+     const TrainerSpec &trainer_spec, const NormalizerSpec &normalizer_spec,
+     const NormalizerSpec &denormalizer_spec,
+     SentenceIterator *sentence_iterator, std::string *serialized_model_proto) {
+@@ -97,7 +98,7 @@ NormalizerSpec SentencePieceTrainer::GetNormalizerSpec(absl::string_view name) {
+ }
+ 
+ // static
+-util::Status SentencePieceTrainer::MergeSpecsFromArgs(
++absl::Status SentencePieceTrainer::MergeSpecsFromArgs(
+     absl::string_view args, TrainerSpec *trainer_spec,
+     NormalizerSpec *normalizer_spec, NormalizerSpec *denormalizer_spec) {
+   CHECK_OR_RETURN(trainer_spec) << "`trainer_spec` must not be null.";
+@@ -125,7 +126,7 @@ util::Status SentencePieceTrainer::MergeSpecsFromArgs(
+ }
+ 
+ // static
+-util::Status SentencePieceTrainer::MergeSpecsFromArgs(
++absl::Status SentencePieceTrainer::MergeSpecsFromArgs(
+     const std::unordered_map<std::string, std::string> &kwargs,
+     TrainerSpec *trainer_spec, NormalizerSpec *normalizer_spec,
+     NormalizerSpec *denormalizer_spec) {
+@@ -171,7 +172,7 @@ util::Status SentencePieceTrainer::MergeSpecsFromArgs(
+ }
+ 
+ // static
+-util::Status SentencePieceTrainer::Train(absl::string_view args,
++absl::Status SentencePieceTrainer::Train(absl::string_view args,
+                                          SentenceIterator *sentence_iterator,
+                                          std::string *serialized_model_proto) {
+   LOG(INFO) << "Running command: " << args.data();
+@@ -185,7 +186,7 @@ util::Status SentencePieceTrainer::Train(absl::string_view args,
+ }
+ 
+ // static
+-util::Status SentencePieceTrainer::Train(
++absl::Status SentencePieceTrainer::Train(
+     const std::unordered_map<std::string, std::string> &kwargs,
+     SentenceIterator *sentence_iterator, std::string *serialized_model_proto) {
+   TrainerSpec trainer_spec;
+@@ -198,7 +199,7 @@ util::Status SentencePieceTrainer::Train(
+ }
+ 
+ // static
+-util::Status SentencePieceTrainer::PopulateNormalizerSpec(
++absl::Status SentencePieceTrainer::PopulateNormalizerSpec(
+     NormalizerSpec *normalizer_spec, bool is_denormalizer) {
+   CHECK_OR_RETURN(normalizer_spec);
+ 
+@@ -226,7 +227,7 @@ util::Status SentencePieceTrainer::PopulateNormalizerSpec(
+ }
+ 
+ // static
+-util::Status SentencePieceTrainer::PopulateModelTypeFromString(
++absl::Status SentencePieceTrainer::PopulateModelTypeFromString(
+     absl::string_view type, TrainerSpec *spec) {
+   static const std::unordered_map<std::string, TrainerSpec::ModelType>
+       kModelTypeMap = {{"unigram", TrainerSpec::UNIGRAM},
+@@ -239,7 +240,7 @@ util::Status SentencePieceTrainer::PopulateModelTypeFromString(
+     return util::OkStatus();
+   }
+ 
+-  return util::StatusBuilder(util::StatusCode::kInternal, GTL_LOC)
++  return util::StatusBuilder(absl::StatusCode::kInternal, GTL_LOC)
+          << "\"" << type << "\" is not found in TrainerSpec";
+ }
+ 
+@@ -248,7 +249,7 @@ const pretokenizer::PretokenizerForTrainingInterface *g_pretokenizer = nullptr;
+ }  // namespace
+ 
+ // static
+-util::Status SentencePieceTrainer::SetPretokenizerForTraining(
++absl::Status SentencePieceTrainer::SetPretokenizerForTraining(
+     const pretokenizer::PretokenizerForTrainingInterface *pretokenizer) {
+   g_pretokenizer = pretokenizer;
+   return util::OkStatus();
+diff --git a/src/sentencepiece_trainer.h b/src/sentencepiece_trainer.h
+index bb74ab9..ec6cf93 100644
+--- a/src/sentencepiece_trainer.h
++++ b/src/sentencepiece_trainer.h
+@@ -19,6 +19,7 @@
+ #include <unordered_map>
+ 
+ #include "sentencepiece_processor.h"
++#include "absl/status/status.h"
+ 
+ namespace sentencepiece {
+ 
+@@ -46,7 +47,7 @@ class SentenceIterator {
+   virtual bool done() const = 0;
+   virtual void Next() = 0;
+   virtual const std::string &value() const = 0;
+-  virtual util::Status status() const = 0;
++  virtual absl::Status status() const = 0;
+ };
+ 
+ class SentencePieceTrainer {
+@@ -54,14 +55,14 @@ class SentencePieceTrainer {
+   // Trains SentencePiece model with `trainer_spec`.
+   // Default `normalizer_spec` is used.
+   // When `sentence_iterator` is passed, load sentences from the iterator.
+-  static util::Status Train(const TrainerSpec &trainer_spec,
++  static absl::Status Train(const TrainerSpec &trainer_spec,
+                             SentenceIterator *sentence_iterator = nullptr,
+                             std::string *serialized_model_proto = nullptr);
+ 
+   // Trains SentencePiece model with `trainer_spec` and
+   // `normalizer_spec`.
+   // When `sentence_iterator` is passed, load sentences from the iterator.
+-  static util::Status Train(const TrainerSpec &trainer_spec,
++  static absl::Status Train(const TrainerSpec &trainer_spec,
+                             const NormalizerSpec &normalizer_spec,
+                             SentenceIterator *sentence_iterator = nullptr,
+                             std::string *serialized_model_proto = nullptr);
+@@ -69,7 +70,7 @@ class SentencePieceTrainer {
+   // Trains SentencePiece model with `trainer_spec`, `normalizer_spec`
+   // and `denormalizer_spec`.
+   // When `sentence_iterator` is passed, load sentences from the iterator.
+-  static util::Status Train(const TrainerSpec &trainer_spec,
++  static absl::Status Train(const TrainerSpec &trainer_spec,
+                             const NormalizerSpec &normalizer_spec,
+                             const NormalizerSpec &denormalizer_spec,
+                             SentenceIterator *sentence_iterator = nullptr,
+@@ -78,13 +79,13 @@ class SentencePieceTrainer {
+   // e.g.,
+   // '--input=data --model_prefix=m --vocab_size=8192 model_type=unigram'
+   // When `sentence_iterator` is passed, load sentences from the iterator.
+-  static util::Status Train(absl::string_view args,
++  static absl::Status Train(absl::string_view args,
+                             SentenceIterator *sentence_iterator = nullptr,
+                             std::string *serialized_model_proto = nullptr);
+ 
+   // Trains SentencePiece model with mapin `kwargs`.
+   // e.g., {{"input", "data"}, {"model_prefix, "m"}, {"vocab_size", "8192"}...}
+-  static util::Status Train(
++  static absl::Status Train(
+       const std::unordered_map<std::string, std::string> &kwargs,
+       SentenceIterator *sentence_iterator = nullptr,
+       std::string *serialized_model_proto = nullptr);
+@@ -96,19 +97,19 @@ class SentencePieceTrainer {
+ 
+   // Populates necessary fields (precompiled_charmap) from
+   // `NormalizerSpec::name` or `NormalizerSpec::normalization_rule_tsv`.
+-  static util::Status PopulateNormalizerSpec(NormalizerSpec *normalizer_spec,
++  static absl::Status PopulateNormalizerSpec(NormalizerSpec *normalizer_spec,
+                                              bool is_denormalizer = false);
+ 
+   // Overrides `trainer_spec`, `normalizer_spec`, `denormalizer_spec` with the
+   // std::unordered_map in `kargs`.
+-  static util::Status MergeSpecsFromArgs(
++  static absl::Status MergeSpecsFromArgs(
+       const std::unordered_map<std::string, std::string> &kwargs,
+       TrainerSpec *trainer_spec, NormalizerSpec *normalizer_spec,
+       NormalizerSpec *denormalizer_spec);
+ 
+   // Overrides `trainer_spec`, `normalizer_spec`, `denormalizer_spec` with the
+   // command line flags in `args`.
+-  static util::Status MergeSpecsFromArgs(absl::string_view args,
++  static absl::Status MergeSpecsFromArgs(absl::string_view args,
+                                          TrainerSpec *trainer_spec,
+                                          NormalizerSpec *normalizer_spec,
+                                          NormalizerSpec *denormalizer_spec);
+@@ -116,7 +117,7 @@ class SentencePieceTrainer {
+   // Injects global pre-tokenizer that are applied in training time.
+   // Pretokenizer is only used for extracting pieces.
+   // TODO(taku): It would be better to inject per `trainer_spec`.
+-  static util::Status SetPretokenizerForTraining(
++  static absl::Status SetPretokenizerForTraining(
+       const pretokenizer::PretokenizerForTrainingInterface *pretokenizer);
+ 
+   // Returns the current pretokenizer. if no pretokenizer is defined, returns
+@@ -129,17 +130,17 @@ class SentencePieceTrainer {
+   // with comma-separated values. `field_name` must not be a nested message.
+   // The body of these functions are automatically generated with
+   // data/gen_spec_parser.pl
+-  static util::Status SetProtoField(const std::string &name,
++  static absl::Status SetProtoField(const std::string &name,
+                                     const std::string &value,
+                                     TrainerSpec *message);
+ 
+-  static util::Status SetProtoField(const std::string &name,
++  static absl::Status SetProtoField(const std::string &name,
+                                     const std::string &value,
+                                     NormalizerSpec *message);
+ 
+   // Populates model type from string representation, e.g., "bpe".
+   // Supported model: "unigram", "bpe", "word", "char".
+-  static util::Status PopulateModelTypeFromString(absl::string_view type,
++  static absl::Status PopulateModelTypeFromString(absl::string_view type,
+                                                   TrainerSpec *trainer_spec);
+ 
+  private:
+diff --git a/src/sentencepiece_trainer_test.cc b/src/sentencepiece_trainer_test.cc
+index e44e66b..00c8d08 100644
+--- a/src/sentencepiece_trainer_test.cc
++++ b/src/sentencepiece_trainer_test.cc
+@@ -16,7 +16,8 @@
+ #include "sentencepiece_model.pb.h"
+ #include "sentencepiece_trainer.h"
+ #include "testharness.h"
+-#include "third_party/absl/strings/str_cat.h"
++#include "absl/strings/str_cat.h"
++#include "absl/status/status.h"
+ #include "util.h"
+ 
+ namespace sentencepiece {
+@@ -109,7 +110,7 @@ TEST(SentencePieceTrainerTest, TrainFromIterator) {
+     bool done() const override { return idx_ == vec_.size(); }
+     void Next() override { ++idx_; }
+     const std::string &value() const override { return vec_[idx_]; }
+-    util::Status status() const override { return util::OkStatus(); }
++    absl::Status status() const override { return util::OkStatus(); }
+ 
+    private:
+     std::vector<std::string> vec_;
+diff --git a/src/spec_parser.h b/src/spec_parser.h
+index 2c5a95b..259c45d 100644
+--- a/src/spec_parser.h
++++ b/src/spec_parser.h
+@@ -19,8 +19,9 @@
+ #include <vector>
+ 
+ #include "sentencepiece_processor.h"
+-#include "third_party/absl/strings/ascii.h"
+-#include "third_party/absl/strings/str_split.h"
++#include "absl/strings/ascii.h"
++#include "absl/strings/str_split.h"
++#include "absl/status/status.h"
+ #include "util.h"
+ 
+ namespace sentencepiece {
+@@ -49,7 +50,7 @@ namespace sentencepiece {
+   if (name == #param_name) {                                                  \
+     int32 v;                                                                  \
+     if (!string_util::lexical_cast(value, &v))                                \
+-      return util::StatusBuilder(util::StatusCode::kInvalidArgument, GTL_LOC) \
++      return util::StatusBuilder(absl::StatusCode::kInvalidArgument, GTL_LOC) \
+              << "cannot parse \"" << value << "\" as int.";                   \
+     message->set_##param_name(v);                                             \
+     return util::OkStatus();                                                  \
+@@ -59,7 +60,7 @@ namespace sentencepiece {
+   if (name == #param_name) {                                                  \
+     uint64 v;                                                                 \
+     if (!string_util::lexical_cast(value, &v))                                \
+-      return util::StatusBuilder(util::StatusCode::kInvalidArgument, GTL_LOC) \
++      return util::StatusBuilder(absl::StatusCode::kInvalidArgument, GTL_LOC) \
+              << "cannot parse \"" << value << "\" as int.";                   \
+     message->set_##param_name(v);                                             \
+     return util::OkStatus();                                                  \
+@@ -69,7 +70,7 @@ namespace sentencepiece {
+   if (name == #param_name) {                                                  \
+     double v;                                                                 \
+     if (!string_util::lexical_cast(value, &v))                                \
+-      return util::StatusBuilder(util::StatusCode::kInvalidArgument, GTL_LOC) \
++      return util::StatusBuilder(absl::StatusCode::kInvalidArgument, GTL_LOC) \
+              << "cannot parse \"" << value << "\" as int.";                   \
+     message->set_##param_name(v);                                             \
+     return util::OkStatus();                                                  \
+@@ -79,7 +80,7 @@ namespace sentencepiece {
+   if (name == #param_name) {                                                  \
+     bool v;                                                                   \
+     if (!string_util::lexical_cast(value.empty() ? "true" : value, &v))       \
+-      return util::StatusBuilder(util::StatusCode::kInvalidArgument, GTL_LOC) \
++      return util::StatusBuilder(absl::StatusCode::kInvalidArgument, GTL_LOC) \
+              << "cannot parse \"" << value << "\" as bool.";                  \
+     message->set_##param_name(v);                                             \
+     return util::OkStatus();                                                  \
+@@ -89,7 +90,7 @@ namespace sentencepiece {
+   if (name == #param_name) {                                                  \
+     const auto it = map_name.find(absl::AsciiStrToUpper(value));              \
+     if (it == map_name.end())                                                 \
+-      return util::StatusBuilder(util::StatusCode::kInvalidArgument, GTL_LOC) \
++      return util::StatusBuilder(absl::StatusCode::kInvalidArgument, GTL_LOC) \
+              << "unknown enumeration value of \"" << value << "\" as "        \
+              << #map_name;                                                    \
+     message->set_##param_name(it->second);                                    \
+@@ -186,7 +187,7 @@ inline std::string PrintProto(const NormalizerSpec &message,
+   return os.str();
+ }
+ 
+-util::Status SentencePieceTrainer::SetProtoField(const std::string &name,
++absl::Status SentencePieceTrainer::SetProtoField(const std::string &name,
+                                                  const std::string &value,
+                                                  TrainerSpec *message) {
+   CHECK_OR_RETURN(message);
+@@ -239,11 +240,11 @@ util::Status SentencePieceTrainer::SetProtoField(const std::string &name,
+   PARSE_STRING(pad_piece);
+   PARSE_STRING(unk_surface);
+ 
+-  return util::StatusBuilder(util::StatusCode::kNotFound, GTL_LOC)
++  return util::StatusBuilder(absl::StatusCode::kNotFound, GTL_LOC)
+          << "unknown field name \"" << name << "\" in TrainerSpec.";
+ }
+ 
+-util::Status SentencePieceTrainer::SetProtoField(const std::string &name,
++absl::Status SentencePieceTrainer::SetProtoField(const std::string &name,
+                                                  const std::string &value,
+                                                  NormalizerSpec *message) {
+   CHECK_OR_RETURN(message);
+@@ -255,7 +256,7 @@ util::Status SentencePieceTrainer::SetProtoField(const std::string &name,
+   PARSE_BOOL(escape_whitespaces);
+   PARSE_STRING(normalization_rule_tsv);
+ 
+-  return util::StatusBuilder(util::StatusCode::kNotFound, GTL_LOC)
++  return util::StatusBuilder(absl::StatusCode::kNotFound, GTL_LOC)
+          << "unknown field name \"" << name << "\" in NormalizerSpec.";
+ }
+ 
+diff --git a/src/spm_decode_main.cc b/src/spm_decode_main.cc
+index 3382ddc..9dda65c 100644
+--- a/src/spm_decode_main.cc
++++ b/src/spm_decode_main.cc
+@@ -21,8 +21,8 @@
+ #include "init.h"
+ #include "sentencepiece.pb.h"
+ #include "sentencepiece_processor.h"
+-#include "third_party/absl/flags/flag.h"
+-#include "third_party/absl/strings/str_split.h"
++#include "absl/flags/flag.h"
++#include "absl/strings/str_split.h"
+ #include "util.h"
+ 
+ ABSL_FLAG(std::string, model, "", "model file name");
+diff --git a/src/spm_encode_main.cc b/src/spm_encode_main.cc
+index 4d12a38..29b7458 100644
+--- a/src/spm_encode_main.cc
++++ b/src/spm_encode_main.cc
+@@ -21,10 +21,10 @@
+ #include "init.h"
+ #include "sentencepiece.pb.h"
+ #include "sentencepiece_processor.h"
+-#include "third_party/absl/container/flat_hash_map.h"
+-#include "third_party/absl/flags/flag.h"
+-#include "third_party/absl/strings/str_cat.h"
+-#include "third_party/absl/strings/str_join.h"
++#include "absl/container/flat_hash_map.h"
++#include "absl/flags/flag.h"
++#include "absl/strings/str_cat.h"
++#include "absl/strings/str_join.h"
+ #include "trainer_interface.h"
+ 
+ ABSL_FLAG(std::string, model, "", "model file name");
+diff --git a/src/spm_export_vocab_main.cc b/src/spm_export_vocab_main.cc
+index b5d93cb..70a65c1 100644
+--- a/src/spm_export_vocab_main.cc
++++ b/src/spm_export_vocab_main.cc
+@@ -20,7 +20,7 @@
+ #include "init.h"
+ #include "sentencepiece_model.pb.h"
+ #include "sentencepiece_processor.h"
+-#include "third_party/absl/flags/flag.h"
++#include "absl/flags/flag.h"
+ 
+ ABSL_FLAG(std::string, output, "", "Output filename");
+ ABSL_FLAG(std::string, model, "", "input model file name");
+diff --git a/src/spm_normalize_main.cc b/src/spm_normalize_main.cc
+index 96da360..8c541b8 100644
+--- a/src/spm_normalize_main.cc
++++ b/src/spm_normalize_main.cc
+@@ -21,7 +21,7 @@
+ #include "sentencepiece_model.pb.h"
+ #include "sentencepiece_processor.h"
+ #include "sentencepiece_trainer.h"
+-#include "third_party/absl/flags/flag.h"
++#include "absl/flags/flag.h"
+ 
+ ABSL_FLAG(std::string, model, "", "Model file name");
+ ABSL_FLAG(bool, use_internal_normalization, false,
+diff --git a/src/spm_train_main.cc b/src/spm_train_main.cc
+index baf8dbf..ba1e811 100644
+--- a/src/spm_train_main.cc
++++ b/src/spm_train_main.cc
+@@ -18,10 +18,10 @@
+ #include "init.h"
+ #include "sentencepiece_model.pb.h"
+ #include "sentencepiece_trainer.h"
+-#include "third_party/absl/flags/flag.h"
+-#include "third_party/absl/strings/ascii.h"
+-#include "third_party/absl/strings/str_join.h"
+-#include "third_party/absl/strings/str_split.h"
++#include "absl/flags/flag.h"
++#include "absl/strings/ascii.h"
++#include "absl/strings/str_join.h"
++#include "absl/strings/str_split.h"
+ #include "util.h"
+ 
+ using sentencepiece::NormalizerSpec;
+diff --git a/src/testharness.cc b/src/testharness.cc
+index f6b1efe..daf2d14 100644
+--- a/src/testharness.cc
++++ b/src/testharness.cc
+@@ -26,7 +26,7 @@
+ #include <vector>
+ 
+ #include "common.h"
+-#include "third_party/absl/strings/str_cat.h"
++#include "absl/strings/str_cat.h"
+ #include "util.h"
+ 
+ namespace sentencepiece {
+diff --git a/src/testharness.h b/src/testharness.h
+index 9879b06..98317ad 100644
+--- a/src/testharness.h
++++ b/src/testharness.h
+@@ -21,9 +21,9 @@
+ #include <string>
+ 
+ #include "common.h"
+-#include "third_party/absl/flags/flag.h"
+-#include "third_party/absl/flags/parse.h"
+-#include "third_party/absl/strings/string_view.h"
++#include "absl/flags/flag.h"
++#include "absl/flags/parse.h"
++#include "absl/strings/string_view.h"
+ 
+ ABSL_DECLARE_FLAG(std::string, test_tmpdir);
+ ABSL_DECLARE_FLAG(std::string, test_srcdir);
+diff --git a/src/trainer_factory.cc b/src/trainer_factory.cc
+index d1d2541..ff594d0 100644
+--- a/src/trainer_factory.cc
++++ b/src/trainer_factory.cc
+@@ -14,7 +14,7 @@
+ 
+ #include "bpe_model_trainer.h"
+ #include "char_model_trainer.h"
+-#include "third_party/absl/memory/memory.h"
++#include "absl/memory/memory.h"
+ #include "trainer_factory.h"
+ #include "unigram_model_trainer.h"
+ #include "word_model_trainer.h"
+diff --git a/src/trainer_interface.cc b/src/trainer_interface.cc
+index a3a4b74..3e441ec 100644
+--- a/src/trainer_interface.cc
++++ b/src/trainer_interface.cc
+@@ -26,13 +26,14 @@
+ #include "normalizer.h"
+ #include "sentencepiece_processor.h"
+ #include "sentencepiece_trainer.h"
+-#include "third_party/absl/container/flat_hash_map.h"
+-#include "third_party/absl/memory/memory.h"
+-#include "third_party/absl/strings/numbers.h"
+-#include "third_party/absl/strings/str_cat.h"
+-#include "third_party/absl/strings/str_format.h"
+-#include "third_party/absl/strings/str_join.h"
+-#include "third_party/absl/strings/str_split.h"
++#include "absl/container/flat_hash_map.h"
++#include "absl/memory/memory.h"
++#include "absl/strings/numbers.h"
++#include "absl/strings/str_cat.h"
++#include "absl/strings/str_format.h"
++#include "absl/strings/str_join.h"
++#include "absl/strings/str_split.h"
++#include "absl/status/status.h"
+ #include "trainer_interface.h"
+ #include "unicode_script.h"
+ #include "util.h"
+@@ -49,7 +50,7 @@ const char32 TrainerInterface::kUPPBoundaryChar = L'\u0009';
+ const char TrainerInterface::kUPPBoundaryStr[] = "\t";
+ 
+ namespace {
+-util::Status VerifySpec(const TrainerSpec &trainer_spec) {
++absl::Status VerifySpec(const TrainerSpec &trainer_spec) {
+   CHECK_GT_OR_RETURN(trainer_spec.vocab_size(), 0);
+ 
+   if (trainer_spec.model_type() == TrainerSpec::UNIGRAM ||
+@@ -164,7 +165,7 @@ bool MultiFileSentenceIterator::done() const {
+   return (!read_done_ && file_index_ == files_.size());
+ }
+ 
+-util::Status MultiFileSentenceIterator::status() const {
++absl::Status MultiFileSentenceIterator::status() const {
+   CHECK_OR_RETURN(fp_);
+   return fp_->status();
+ }
+@@ -212,7 +213,7 @@ bool TrainerInterface::IsValidSentencePiece(
+   }
+ 
+   constexpr unicode_script::ScriptType kAnyType =
+-      static_cast<unicode_script::ScriptType>(-1);
++      static_cast<unicode_script::ScriptType>(0);
+ 
+   unicode_script::ScriptType prev_script = kAnyType;
+   bool all_whitespace_piece =
+@@ -296,7 +297,7 @@ bool TrainerInterface::IsValidSentencePiece(
+   return true;
+ }
+ 
+-util::Status TrainerInterface::LoadSentences() {
++absl::Status TrainerInterface::LoadSentences() {
+   RETURN_IF_ERROR(status());
+   CHECK_OR_RETURN(sentences_.empty());
+   CHECK_OR_RETURN(required_chars_.empty());
+@@ -537,7 +538,7 @@ void TrainerInterface::SplitSentencesByWhitespace() {
+   LOG(INFO) << "Done! " << sentences_.size();
+ }
+ 
+-util::Status TrainerInterface::Serialize(ModelProto *model_proto) const {
++absl::Status TrainerInterface::Serialize(ModelProto *model_proto) const {
+   RETURN_IF_ERROR(status());
+ 
+   // Duplicated sentencepiece is not allowed.
+@@ -611,7 +612,7 @@ util::Status TrainerInterface::Serialize(ModelProto *model_proto) const {
+   return util::OkStatus();
+ }
+ 
+-util::Status TrainerInterface::SaveModel(absl::string_view filename) const {
++absl::Status TrainerInterface::SaveModel(absl::string_view filename) const {
+   LOG(INFO) << "Saving model: " << filename;
+   ModelProto model_proto;
+   RETURN_IF_ERROR(Serialize(&model_proto));
+@@ -622,7 +623,7 @@ util::Status TrainerInterface::SaveModel(absl::string_view filename) const {
+   return util::OkStatus();
+ }
+ 
+-util::Status TrainerInterface::SaveVocab(absl::string_view filename) const {
++absl::Status TrainerInterface::SaveVocab(absl::string_view filename) const {
+   LOG(INFO) << "Saving vocabs: " << filename;
+   ModelProto model_proto;
+   RETURN_IF_ERROR(Serialize(&model_proto));
+@@ -644,7 +645,7 @@ util::Status TrainerInterface::SaveVocab(absl::string_view filename) const {
+   return util::OkStatus();
+ }
+ 
+-util::Status TrainerInterface::Save() const {
++absl::Status TrainerInterface::Save() const {
+   if (output_model_proto_) {
+     RETURN_IF_ERROR(Serialize(output_model_proto_));
+   } else {
+@@ -654,7 +655,7 @@ util::Status TrainerInterface::Save() const {
+   return util::OkStatus();
+ }
+ 
+-util::Status TrainerInterface::InitMetaPieces() {
++absl::Status TrainerInterface::InitMetaPieces() {
+   CHECK_OR_RETURN(meta_pieces_.empty());
+   bool has_unk = false;
+ 
+diff --git a/src/trainer_interface.h b/src/trainer_interface.h
+index f66d59a..b4fbc7b 100644
+--- a/src/trainer_interface.h
++++ b/src/trainer_interface.h
+@@ -27,7 +27,8 @@
+ #include "sentencepiece_model.pb.h"
+ #include "sentencepiece_processor.h"
+ #include "sentencepiece_trainer.h"
+-#include "third_party/absl/container/flat_hash_map.h"
++#include "absl/container/flat_hash_map.h"
++#include "absl/status/status.h"
+ #include "util.h"
+ 
+ namespace sentencepiece {
+@@ -57,7 +58,7 @@ class MultiFileSentenceIterator : public SentenceIterator {
+   bool done() const override;
+   void Next() override;
+   const std::string &value() const override { return value_; }
+-  util::Status status() const override;
++  absl::Status status() const override;
+ 
+  private:
+   void TryRead();
+@@ -90,16 +91,16 @@ class TrainerInterface {
+ 
+   // Loads sentence from `sentence_iterator` and stores the model
+   // to `output_model_proto`.
+-  virtual util::Status Train(SentenceIterator *sentence_iterator,
++  virtual absl::Status Train(SentenceIterator *sentence_iterator,
+                              ModelProto *output_model_proto) {
+     sentence_iterator_ = sentence_iterator;
+     output_model_proto_ = output_model_proto;
+     return Train();
+   }
+ 
+-  virtual util::Status Train() { return status(); }
++  virtual absl::Status Train() { return status(); }
+ 
+-  virtual util::Status status() const { return status_; }
++  virtual absl::Status status() const { return status_; }
+ 
+   FRIEND_TEST(TrainerInterfaceTest, IsValidSentencePieceTest);
+   FRIEND_TEST(TrainerInterfaceTest, OverrideSpecialPiecesTest);
+@@ -115,7 +116,7 @@ class TrainerInterface {
+ 
+   // Loads all sentences from spec.input() or SentenceIterator.
+   // It loads at most input_sentence_size sentences.
+-  util::Status LoadSentences();
++  absl::Status LoadSentences();
+ 
+   // Splits all sentencecs by whitespaces and
+   // replace the |sentences_| with tokenized string.
+@@ -125,7 +126,7 @@ class TrainerInterface {
+   void SplitSentencesByWhitespace();
+ 
+   // Save model files into spec.model_prefix().
+-  util::Status Save() const;
++  absl::Status Save() const;
+ 
+   // Set of characters which must be included in the final vocab.
+   // The value of this map stores the frequency.
+@@ -152,7 +153,7 @@ class TrainerInterface {
+       meta_pieces_;
+ 
+   // Detect errors on initialization.
+-  util::Status status_;
++  absl::Status status_;
+ 
+   // Loads sentences from SentenceIterator if not null.
+   SentenceIterator *sentence_iterator_ = nullptr;
+@@ -162,19 +163,19 @@ class TrainerInterface {
+ 
+  private:
+   // Serialize final_pieces_ to |model_proto|.
+-  util::Status Serialize(ModelProto *model_proto) const;
++  absl::Status Serialize(ModelProto *model_proto) const;
+ 
+   // Saves the best sentence split with the current model for debugging.
+-  util::Status SaveSplits(absl::string_view filename) const;
++  absl::Status SaveSplits(absl::string_view filename) const;
+ 
+   // Saves model file.
+-  util::Status SaveModel(absl::string_view filename) const;
++  absl::Status SaveModel(absl::string_view filename) const;
+ 
+   // Saves vocabulary file for NMT.
+-  util::Status SaveVocab(absl::string_view filename) const;
++  absl::Status SaveVocab(absl::string_view filename) const;
+ 
+   // Initializes `meta_pieces_` from TrainerSpec.
+-  util::Status InitMetaPieces();
++  absl::Status InitMetaPieces();
+ 
+   // Randomly sampled raw sentences for self-testing.
+   std::vector<std::string> self_test_samples_;
+diff --git a/src/trainer_interface_test.cc b/src/trainer_interface_test.cc
+index 70a51ad..d7f3f0c 100644
+--- a/src/trainer_interface_test.cc
++++ b/src/trainer_interface_test.cc
+@@ -16,8 +16,8 @@
+ 
+ #include "filesystem.h"
+ #include "testharness.h"
+-#include "third_party/absl/strings/str_cat.h"
+-#include "third_party/absl/strings/str_format.h"
++#include "absl/strings/str_cat.h"
++#include "absl/strings/str_format.h"
+ #include "trainer_interface.h"
+ #include "util.h"
+ 
+diff --git a/src/unicode_script.cc b/src/unicode_script.cc
+index 583dc30..11b24dc 100644
+--- a/src/unicode_script.cc
++++ b/src/unicode_script.cc
+@@ -14,7 +14,7 @@
+ 
+ #include <unordered_map>
+ 
+-#include "third_party/absl/container/flat_hash_map.h"
++#include "absl/container/flat_hash_map.h"
+ #include "unicode_script.h"
+ #include "unicode_script_map.h"
+ #include "util.h"
+diff --git a/src/unicode_script_map.h b/src/unicode_script_map.h
+index f2e67e9..f1b8299 100644
+--- a/src/unicode_script_map.h
++++ b/src/unicode_script_map.h
+@@ -14,7 +14,7 @@
+ 
+ #ifndef UNICODE_SCRIPT_DATA_H_
+ #define UNICODE_SCRIPT_DATA_H_
+-#include "third_party/absl/container/flat_hash_map.h"
++#include "absl/container/flat_hash_map.h"
+ namespace sentencepiece {
+ namespace unicode_script {
+ namespace {
+diff --git a/src/unicode_script_test.cc b/src/unicode_script_test.cc
+index ab33565..e0b1c4d 100644
+--- a/src/unicode_script_test.cc
++++ b/src/unicode_script_test.cc
+@@ -14,7 +14,7 @@
+ 
+ #include "common.h"
+ #include "testharness.h"
+-#include "third_party/absl/strings/string_view.h"
++#include "absl/strings/string_view.h"
+ #include "unicode_script.h"
+ #include "util.h"
+ 
+diff --git a/src/unigram_model.cc b/src/unigram_model.cc
+index 3b99060..9c72fb9 100644
+--- a/src/unigram_model.cc
++++ b/src/unigram_model.cc
+@@ -22,9 +22,9 @@
+ #include <utility>
+ #include <vector>
+ 
+-#include "third_party/absl/memory/memory.h"
+-#include "third_party/absl/strings/str_split.h"
+-#include "third_party/absl/strings/string_view.h"
++#include "absl/memory/memory.h"
++#include "absl/strings/str_split.h"
++#include "absl/strings/string_view.h"
+ #include "unigram_model.h"
+ #include "util.h"
+ 
+diff --git a/src/unigram_model.h b/src/unigram_model.h
+index 448e489..9062f12 100644
+--- a/src/unigram_model.h
++++ b/src/unigram_model.h
+@@ -24,7 +24,7 @@
+ #include "freelist.h"
+ #include "model_interface.h"
+ #include "sentencepiece_model.pb.h"
+-#include "third_party/darts_clone/darts.h"
++#include "include/darts.h"
+ 
+ namespace sentencepiece {
+ namespace unigram {
+diff --git a/src/unigram_model_test.cc b/src/unigram_model_test.cc
+index f93b21c..808e907 100644
+--- a/src/unigram_model_test.cc
++++ b/src/unigram_model_test.cc
+@@ -22,8 +22,8 @@
+ #include "sentencepiece_model.pb.h"
+ #include "sentencepiece_processor.h"
+ #include "testharness.h"
+-#include "third_party/absl/strings/str_cat.h"
+-#include "third_party/absl/strings/str_join.h"
++#include "absl/strings/str_cat.h"
++#include "absl/strings/str_join.h"
+ #include "util.h"
+ 
+ namespace sentencepiece {
+diff --git a/src/unigram_model_trainer.cc b/src/unigram_model_trainer.cc
+index 9615040..7d16bd2 100644
+--- a/src/unigram_model_trainer.cc
++++ b/src/unigram_model_trainer.cc
+@@ -25,8 +25,9 @@
+ #include "normalizer.h"
+ #include "pretokenizer_for_training.h"
+ #include "sentencepiece_trainer.h"
+-#include "third_party/absl/container/flat_hash_map.h"
+-#include "third_party/absl/memory/memory.h"
++#include "absl/container/flat_hash_map.h"
++#include "absl/memory/memory.h"
++#include "absl/status/status.h"
+ #include "third_party/esaxx/esa.hxx"  // Suffix array library.
+ #include "unicode_script.h"
+ #include "unigram_model_trainer.h"
+@@ -463,7 +464,7 @@ TrainerModel::SentencePieces Trainer::FinalizeSentencePieces(
+   return Sorted(final_sentencepieces);
+ }
+ 
+-util::Status Trainer::Train() {
++absl::Status Trainer::Train() {
+   RETURN_IF_ERROR(status());
+ 
+   CHECK_EQ_OR_RETURN(TrainerSpec::UNIGRAM, trainer_spec_.model_type());
+diff --git a/src/unigram_model_trainer.h b/src/unigram_model_trainer.h
+index 91fbeb4..d41967d 100644
+--- a/src/unigram_model_trainer.h
++++ b/src/unigram_model_trainer.h
+@@ -21,7 +21,8 @@
+ #include <vector>
+ 
+ #include "sentencepiece_model.pb.h"
+-#include "third_party/absl/strings/string_view.h"
++#include "absl/strings/string_view.h"
++#include "absl/status/status.h"
+ #include "trainer_interface.h"
+ #include "unigram_model.h"
+ #include "util.h"
+@@ -68,7 +69,7 @@ class Trainer : public TrainerInterface {
+       : TrainerInterface::TrainerInterface(trainer_spec, normalizer_spec,
+                                            denormalizer_spec) {}
+ 
+-  util::Status Train() override;
++  absl::Status Train() override;
+ 
+  private:
+   FRIEND_TEST(TrainerTest, IsValidSentencePieceTest);
+diff --git a/src/unigram_model_trainer_test.cc b/src/unigram_model_trainer_test.cc
+index ffe515e..fdb25f6 100644
+--- a/src/unigram_model_trainer_test.cc
++++ b/src/unigram_model_trainer_test.cc
+@@ -16,8 +16,8 @@
+ #include "sentencepiece_processor.h"
+ #include "sentencepiece_trainer.h"
+ #include "testharness.h"
+-#include "third_party/absl/strings/str_cat.h"
+-#include "third_party/absl/strings/str_join.h"
++#include "absl/strings/str_cat.h"
++#include "absl/strings/str_join.h"
+ #include "unigram_model_trainer.h"
+ #include "util.h"
+ 
+diff --git a/src/util.h b/src/util.h
+index 0d15863..7122c7c 100644
+--- a/src/util.h
++++ b/src/util.h
+@@ -30,7 +30,8 @@
+ 
+ #include "common.h"
+ #include "sentencepiece_processor.h"
+-#include "third_party/absl/strings/string_view.h"
++#include "absl/strings/string_view.h"
++#include "absl/status/status.h"
+ 
+ #ifdef SPM_NO_THREADLOCAL
+ #include <pthread.h>
+@@ -359,14 +360,14 @@ std::string StrError(int errnum);
+ 
+ std::vector<std::string> StrSplitAsCSV(absl::string_view text);
+ 
+-inline Status OkStatus() { return Status(); }
++inline absl::Status OkStatus() { return absl::Status(); }
+ 
+ #define DECLARE_ERROR(FUNC)                                \
+-  inline util::Status FUNC##Error(absl::string_view str) { \
+-    return util::Status(StatusCode::k##FUNC, str.data());  \
++  inline absl::Status FUNC##Error(absl::string_view str) { \
++    return absl::Status(absl::StatusCode::k##FUNC, str.data());  \
+   }                                                        \
+-  inline bool Is##FUNC(const util::Status &status) {       \
+-    return status.code() == StatusCode::k##FUNC;           \
++  inline bool Is##FUNC(const absl::Status &status) {       \
++    return status.code() ==absl::StatusCode::k##FUNC;           \
+   }
+ 
+ DECLARE_ERROR(Cancelled)
+@@ -390,8 +391,8 @@ DECLARE_ERROR(Unauthenticated)
+ 
+ class StatusBuilder {
+  public:
+-  explicit StatusBuilder(StatusCode code) : code_(code) {}
+-  explicit StatusBuilder(StatusCode code, int loc) : code_(code) {}
++  explicit StatusBuilder(absl::StatusCode code) : code_(code) {}
++  explicit StatusBuilder(absl::StatusCode code, int loc) : code_(code) {}
+ 
+   template <typename T>
+   StatusBuilder &operator<<(const T &value) {
+@@ -399,10 +400,10 @@ class StatusBuilder {
+     return *this;
+   }
+ 
+-  operator Status() const { return Status(code_, os_.str()); }
++  operator absl::Status() const { return absl::Status(code_, os_.str()); }
+ 
+  private:
+-  StatusCode code_;
++  absl::StatusCode code_;
+   std::ostringstream os_;
+ };
+ 
+@@ -410,7 +411,7 @@ class StatusBuilder {
+   if (condition) {                                           \
+   } else /* NOLINT */                                        \
+     return ::sentencepiece::util::StatusBuilder(             \
+-               ::sentencepiece::util::StatusCode::kInternal) \
++               ::absl::StatusCode::kInternal) \
+            << __FILE__ << "(" << __LINE__ << ") [" << #condition << "] "
+ 
+ #define CHECK_EQ_OR_RETURN(a, b) CHECK_OR_RETURN((a) == (b))
+diff --git a/src/util_test.cc b/src/util_test.cc
+index 71d006f..67290dc 100644
+--- a/src/util_test.cc
++++ b/src/util_test.cc
+@@ -16,7 +16,8 @@
+ 
+ #include "filesystem.h"
+ #include "testharness.h"
+-#include "third_party/absl/strings/str_cat.h"
++#include "absl/strings/str_cat.h"
++#include "absl/status/status.h"
+ #include "util.h"
+ 
+ namespace sentencepiece {
+@@ -376,27 +377,27 @@ TEST(UtilTest, STLDeleteELementsTest) {
+ }
+ 
+ TEST(UtilTest, StatusTest) {
+-  const util::Status ok;
++  const absl::Status ok;
+   EXPECT_TRUE(ok.ok());
+-  EXPECT_EQ(util::StatusCode::kOk, ok.code());
++  EXPECT_EQ(absl::StatusCode::kOk, ok.code());
+   EXPECT_EQ(std::string(""), ok.message());
+ 
+-  const util::Status s1(util::StatusCode::kUnknown, "unknown");
+-  const util::Status s2(util::StatusCode::kUnknown, std::string("unknown"));
++  const absl::Status s1(absl::StatusCode::kUnknown, "unknown");
++  const absl::Status s2(absl::StatusCode::kUnknown, std::string("unknown"));
+ 
+-  EXPECT_EQ(util::StatusCode::kUnknown, s1.code());
+-  EXPECT_EQ(util::StatusCode::kUnknown, s2.code());
++  EXPECT_EQ(absl::StatusCode::kUnknown, s1.code());
++  EXPECT_EQ(absl::StatusCode::kUnknown, s2.code());
+   EXPECT_EQ(std::string("unknown"), s1.message());
+   EXPECT_EQ(std::string("unknown"), s2.message());
+ 
+   auto ok2 = util::OkStatus();
+   EXPECT_TRUE(ok2.ok());
+-  EXPECT_EQ(util::StatusCode::kOk, ok2.code());
++  EXPECT_EQ(absl::StatusCode::kOk, ok2.code());
+   EXPECT_EQ(std::string(""), ok2.message());
+ 
+   util::OkStatus().IgnoreError();
+   for (int i = 1; i <= 16; ++i) {
+-    util::Status s(static_cast<util::StatusCode>(i), "message");
++    absl::Status s(static_cast<absl::StatusCode>(i), "message");
+     EXPECT_TRUE(s.ToString().find("message") != std::string::npos)
+         << s.ToString();
+   }
+diff --git a/src/word_model_trainer.cc b/src/word_model_trainer.cc
+index 0b8b062..bc1f86b 100644
+--- a/src/word_model_trainer.cc
++++ b/src/word_model_trainer.cc
+@@ -15,8 +15,9 @@
+ #include <cmath>
+ #include <string>
+ 
+-#include "third_party/absl/container/flat_hash_map.h"
+-#include "third_party/absl/strings/string_view.h"
++#include "absl/container/flat_hash_map.h"
++#include "absl/strings/string_view.h"
++#include "absl/status/status.h"
+ #include "util.h"
+ #include "word_model.h"
+ #include "word_model_trainer.h"
+@@ -24,7 +25,7 @@
+ namespace sentencepiece {
+ namespace word {
+ 
+-util::Status Trainer::Train() {
++absl::Status Trainer::Train() {
+   RETURN_IF_ERROR(status());
+ 
+   CHECK_OR_RETURN(normalizer_spec_.escape_whitespaces());
+diff --git a/src/word_model_trainer.h b/src/word_model_trainer.h
+index 76f8f32..436e595 100644
+--- a/src/word_model_trainer.h
++++ b/src/word_model_trainer.h
+@@ -17,6 +17,7 @@
+ 
+ #include "sentencepiece_model.pb.h"
+ #include "trainer_interface.h"
++#include "absl/status/status.h"
+ 
+ namespace sentencepiece {
+ namespace word {
+@@ -34,7 +35,7 @@ class Trainer : public TrainerInterface {
+       : TrainerInterface::TrainerInterface(trainer_spec, normalizer_spec,
+                                            denormalizer_spec) {}
+ 
+-  util::Status Train() override;
++  absl::Status Train() override;
+ };
+ }  // namespace word
+ }  // namespace sentencepiece
+diff --git a/src/word_model_trainer_test.cc b/src/word_model_trainer_test.cc
+index c4a8bc6..366810f 100644
+--- a/src/word_model_trainer_test.cc
++++ b/src/word_model_trainer_test.cc
+@@ -18,8 +18,8 @@
+ #include "filesystem.h"
+ #include "sentencepiece_processor.h"
+ #include "testharness.h"
+-#include "third_party/absl/strings/str_cat.h"
+-#include "third_party/absl/strings/str_join.h"
++#include "absl/strings/str_cat.h"
++#include "absl/strings/str_join.h"
+ #include "util.h"
+ #include "word_model_trainer.h"
+ 

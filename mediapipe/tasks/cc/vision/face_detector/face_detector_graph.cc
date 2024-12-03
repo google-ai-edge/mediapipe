@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#include <string>
 #include <vector>
 
 #include "absl/status/status.h"
@@ -26,6 +27,7 @@ limitations under the License.
 #include "mediapipe/calculators/util/rect_transformation_calculator.pb.h"
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/api2/port.h"
+#include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/rect.pb.h"
@@ -193,14 +195,14 @@ class FaceDetectorGraph : public core::ModelTaskGraph {
  public:
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       SubgraphContext* sc) override {
-    ASSIGN_OR_RETURN(const auto* model_resources,
-                     CreateModelResources<FaceDetectorGraphOptions>(sc));
+    MP_ASSIGN_OR_RETURN(const auto* model_resources,
+                        CreateModelResources<FaceDetectorGraphOptions>(sc));
     Graph graph;
-    ASSIGN_OR_RETURN(auto outs,
-                     BuildFaceDetectionSubgraph(
-                         sc->Options<FaceDetectorGraphOptions>(),
-                         *model_resources, graph[Input<Image>(kImageTag)],
-                         graph[Input<NormalizedRect>(kNormRectTag)], graph));
+    MP_ASSIGN_OR_RETURN(auto outs,
+                        BuildFaceDetectionSubgraph(
+                            sc->Options<FaceDetectorGraphOptions>(),
+                            *model_resources, graph[Input<Image>(kImageTag)],
+                            graph[Input<NormalizedRect>(kNormRectTag)], graph));
     outs.face_detections >>
         graph.Out(kDetectionsTag).Cast<std::vector<Detection>>();
     outs.face_rects >>
@@ -213,19 +215,21 @@ class FaceDetectorGraph : public core::ModelTaskGraph {
   }
 
  private:
+  std::string GetImagePreprocessingGraphName() {
+    return "mediapipe.tasks.components.processors.ImagePreprocessingGraph";
+  }
   absl::StatusOr<FaceDetectionOuts> BuildFaceDetectionSubgraph(
       const FaceDetectorGraphOptions& subgraph_options,
       const core::ModelResources& model_resources, Source<Image> image_in,
       Source<NormalizedRect> norm_rect_in, Graph& graph) {
     // Image preprocessing subgraph to convert image to tensor for the tflite
     // model.
-    auto& preprocessing = graph.AddNode(
-        "mediapipe.tasks.components.processors.ImagePreprocessingGraph");
+    auto& preprocessing = graph.AddNode(GetImagePreprocessingGraphName());
     bool use_gpu =
         components::processors::DetermineImagePreprocessingGpuBackend(
             subgraph_options.base_options().acceleration());
     MP_RETURN_IF_ERROR(components::processors::ConfigureImagePreprocessingGraph(
-        model_resources, use_gpu,
+        model_resources, use_gpu, subgraph_options.base_options().gpu_origin(),
         &preprocessing.GetOptions<
             components::processors::proto::ImagePreprocessingGraphOptions>()));
     auto& image_to_tensor_options =
@@ -337,7 +341,7 @@ class FaceDetectorGraph : public core::ModelTaskGraph {
 };
 
 REGISTER_MEDIAPIPE_GRAPH(
-    ::mediapipe::tasks::vision::face_detector::FaceDetectorGraph);
+    ::mediapipe::tasks::vision::face_detector::FaceDetectorGraph)
 
 }  // namespace face_detector
 }  // namespace vision

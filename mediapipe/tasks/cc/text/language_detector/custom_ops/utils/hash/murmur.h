@@ -29,8 +29,6 @@ limitations under the License.
 
 #include <cstdint>
 
-#include "mediapipe/framework/port/integral_types.h"
-
 namespace mediapipe::tasks::text::language_detector::custom_ops::hash {
 
 // Hash function for a byte array. Has a seed which allows this hash function to

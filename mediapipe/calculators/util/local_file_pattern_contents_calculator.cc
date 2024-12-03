@@ -15,6 +15,7 @@
 #include <memory>
 #include <string>
 
+#include "absl/log/absl_log.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/status.h"
@@ -58,7 +59,7 @@ class LocalFilePatternContentsCalculator : public CalculatorBase {
   absl::Status Process(CalculatorContext* cc) override {
     if (current_output_ < filenames_.size()) {
       auto contents = absl::make_unique<std::string>();
-      LOG(INFO) << filenames_[current_output_];
+      ABSL_LOG(INFO) << filenames_[current_output_];
       MP_RETURN_IF_ERROR(mediapipe::file::GetContents(
           filenames_[current_output_], contents.get()));
       ++current_output_;

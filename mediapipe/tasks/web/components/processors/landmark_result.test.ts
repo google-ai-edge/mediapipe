@@ -27,13 +27,13 @@ describe('convertToLandmarks()', () => {
   it('transforms custom values', () => {
     const landmarkListProto = createLandmarks(0.1, 0.2, 0.3);
     const result = convertToLandmarks(landmarkListProto);
-    expect(result).toEqual([{x: 0.1, y: 0.2, z: 0.3}]);
+    expect(result).toEqual([{x: 0.1, y: 0.2, z: 0.3, visibility: 0}]);
   });
 
   it('transforms default values', () => {
     const landmarkListProto = createLandmarks();
     const result = convertToLandmarks(landmarkListProto);
-    expect(result).toEqual([{x: 0, y: 0, z: 0}]);
+    expect(result).toEqual([{x: 0, y: 0, z: 0, visibility: 0}]);
   });
 });
 
@@ -41,12 +41,12 @@ describe('convertToWorldLandmarks()', () => {
   it('transforms custom values', () => {
     const worldLandmarkListProto = createWorldLandmarks(10, 20, 30);
     const result = convertToWorldLandmarks(worldLandmarkListProto);
-    expect(result).toEqual([{x: 10, y: 20, z: 30}]);
+    expect(result).toEqual([{x: 10, y: 20, z: 30, visibility: 0}]);
   });
 
   it('transforms default values', () => {
     const worldLandmarkListProto = createWorldLandmarks();
     const result = convertToWorldLandmarks(worldLandmarkListProto);
-    expect(result).toEqual([{x: 0, y: 0, z: 0}]);
+    expect(result).toEqual([{x: 0, y: 0, z: 0, visibility: 0}]);
   });
 });

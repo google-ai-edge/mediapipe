@@ -19,6 +19,10 @@
 #include <iostream>
 #endif
 
+#include <cstdint>
+
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
@@ -35,7 +39,7 @@ namespace {
 #if defined(GL_DEBUG)
 #define GLCHECK(command) \
   command;               \
-  if (int err = glGetError()) LOG(ERROR) << "GL error detected: " << err;
+  if (int err = glGetError()) ABSL_LOG(ERROR) << "GL error detected: " << err;
 #else
 #define GLCHECK(command) command
 #endif
@@ -84,11 +88,11 @@ static const float kModelMatrix[] = {0.83704215,  -0.36174262, 0.41049102, 0.0,
 //     VERTICES
 //     TEXTURE_COORDS
 //     INDICES
-//     The header consists of 3 int32 lengths, the sizes of the vertex data,
+//     The header consists of 3 int32_t lengths, the sizes of the vertex data,
 //     the texcoord data, and the index data, respectively. Let us call those
 //     N1, N2, and N3. Then we expect N1 float32's for vertex information
 //     (x1,y1,z1,x2,y2,z2,etc.), followed by N2 float32's for texcoord
-//     information (u1,v1,u2,v2,u3,v3,etc.), followed by N3 shorts/int16's
+//     information (u1,v1,u2,v2,u3,v3,etc.), followed by N3 shorts/int16_t's
 //     for triangle indices (a1,b1,c1,a2,b2,c2,etc.).
 //   CAMERA_PARAMETERS_PROTO_STRING (String, optional):
 //     Serialized proto std::string of CameraParametersProto. We need this to
@@ -355,12 +359,13 @@ bool GlAnimationOverlayCalculator::ReadBytesFromAsset(AAsset *asset,
   }
   // At least log any I/O errors encountered.
   if (bytes_read < 0) {
-    LOG(ERROR) << "Error reading from AAsset: " << bytes_read;
+    ABSL_LOG(ERROR) << "Error reading from AAsset: " << bytes_read;
     return false;
   }
   if (bytes_left > 0) {
     // Reached EOF before reading in specified number of bytes.
-    LOG(WARNING) << "Reached EOF before reading in specified number of bytes.";
+    ABSL_LOG(WARNING)
+        << "Reached EOF before reading in specified number of bytes.";
     return false;
   }
   return true;
@@ -374,7 +379,7 @@ bool GlAnimationOverlayCalculator::LoadAnimationAndroid(
       Singleton<mediapipe::AssetManager>::get();
   AAssetManager *asset_manager = mediapipe_asset_manager->GetAssetManager();
   if (!asset_manager) {
-    LOG(ERROR) << "Failed to access Android asset manager.";
+    ABSL_LOG(ERROR) << "Failed to access Android asset manager.";
     return false;
   }
 
@@ -382,13 +387,13 @@ bool GlAnimationOverlayCalculator::LoadAnimationAndroid(
   AAsset *asset = AAssetManager_open(asset_manager, filename.c_str(),
                                      AASSET_MODE_STREAMING);
   if (!asset) {
-    LOG(ERROR) << "Failed to open animation asset: " << filename;
+    ABSL_LOG(ERROR) << "Failed to open animation asset: " << filename;
     return false;
   }
 
   // And now, while we are able to stream in more frames, we do so.
   frame_count_ = 0;
-  int32 lengths[3];
+  int32_t lengths[3];
   while (ReadBytesFromAsset(asset, (void *)lengths, sizeof(lengths[0]) * 3)) {
     // About to start reading the next animation frame.  Stream it in here.
     // Each frame stores first the object counts of its three arrays
@@ -400,22 +405,22 @@ bool GlAnimationOverlayCalculator::LoadAnimationAndroid(
     triangle_mesh.vertices.reset(new float[lengths[0]]);
     if (!ReadBytesFromAsset(asset, (void *)triangle_mesh.vertices.get(),
                             sizeof(float) * lengths[0])) {
-      LOG(ERROR) << "Failed to read vertices for frame " << frame_count_;
+      ABSL_LOG(ERROR) << "Failed to read vertices for frame " << frame_count_;
       return false;
     }
     // Try to read in texture coordinates (4-byte floats)
     triangle_mesh.texture_coords.reset(new float[lengths[1]]);
     if (!ReadBytesFromAsset(asset, (void *)triangle_mesh.texture_coords.get(),
                             sizeof(float) * lengths[1])) {
-      LOG(ERROR) << "Failed to read tex-coords for frame " << frame_count_;
+      ABSL_LOG(ERROR) << "Failed to read tex-coords for frame " << frame_count_;
       return false;
     }
     // Try to read in indices (2-byte shorts)
     triangle_mesh.index_count = lengths[2];
-    triangle_mesh.triangle_indices.reset(new int16[lengths[2]]);
+    triangle_mesh.triangle_indices.reset(new int16_t[lengths[2]]);
     if (!ReadBytesFromAsset(asset, (void *)triangle_mesh.triangle_indices.get(),
-                            sizeof(int16) * lengths[2])) {
-      LOG(ERROR) << "Failed to read indices for frame " << frame_count_;
+                            sizeof(int16_t) * lengths[2])) {
+      ABSL_LOG(ERROR) << "Failed to read indices for frame " << frame_count_;
       return false;
     }
 
@@ -426,9 +431,10 @@ bool GlAnimationOverlayCalculator::LoadAnimationAndroid(
   }
   AAsset_close(asset);
 
-  LOG(INFO) << "Finished parsing " << frame_count_ << " animation frames.";
+  ABSL_LOG(INFO) << "Finished parsing " << frame_count_ << " animation frames.";
   if (meshes->empty()) {
-    LOG(ERROR) << "No animation frames were parsed!  Erroring out calculator.";
+    ABSL_LOG(ERROR)
+        << "No animation frames were parsed!  Erroring out calculator.";
     return false;
   }
   return true;
@@ -439,7 +445,7 @@ bool GlAnimationOverlayCalculator::LoadAnimationAndroid(
 bool GlAnimationOverlayCalculator::LoadAnimation(const std::string &filename) {
   std::ifstream infile(filename.c_str(), std::ifstream::binary);
   if (!infile) {
-    LOG(ERROR) << "Error opening asset with filename: " << filename;
+    ABSL_LOG(ERROR) << "Error opening asset with filename: " << filename;
     return false;
   }
 
@@ -462,7 +468,7 @@ bool GlAnimationOverlayCalculator::LoadAnimation(const std::string &filename) {
     infile.read((char *)(triangle_mesh.vertices.get()),
                 sizeof(float) * lengths[0]);
     if (!infile) {
-      LOG(ERROR) << "Failed to read vertices for frame " << frame_count_;
+      ABSL_LOG(ERROR) << "Failed to read vertices for frame " << frame_count_;
       return false;
     }
 
@@ -471,8 +477,8 @@ bool GlAnimationOverlayCalculator::LoadAnimation(const std::string &filename) {
     infile.read((char *)(triangle_mesh.texture_coords.get()),
                 sizeof(float) * lengths[1]);
     if (!infile) {
-      LOG(ERROR) << "Failed to read texture coordinates for frame "
-                 << frame_count_;
+      ABSL_LOG(ERROR) << "Failed to read texture coordinates for frame "
+                      << frame_count_;
       return false;
     }
 
@@ -482,8 +488,8 @@ bool GlAnimationOverlayCalculator::LoadAnimation(const std::string &filename) {
     infile.read((char *)(triangle_mesh.triangle_indices.get()),
                 sizeof(int16_t) * lengths[2]);
     if (!infile) {
-      LOG(ERROR) << "Failed to read triangle indices for frame "
-                 << frame_count_;
+      ABSL_LOG(ERROR) << "Failed to read triangle indices for frame "
+                      << frame_count_;
       return false;
     }
 
@@ -493,9 +499,10 @@ bool GlAnimationOverlayCalculator::LoadAnimation(const std::string &filename) {
     frame_count_++;
   }
 
-  LOG(INFO) << "Finished parsing " << frame_count_ << " animation frames.";
+  ABSL_LOG(INFO) << "Finished parsing " << frame_count_ << " animation frames.";
   if (triangle_meshes_.empty()) {
-    LOG(ERROR) << "No animation frames were parsed!  Erroring out calculator.";
+    ABSL_LOG(ERROR)
+        << "No animation frames were parsed!  Erroring out calculator.";
     return false;
   }
   return true;
@@ -506,8 +513,8 @@ bool GlAnimationOverlayCalculator::LoadAnimation(const std::string &filename) {
 void GlAnimationOverlayCalculator::ComputeAspectRatioAndFovFromCameraParameters(
     const CameraParametersProto &camera_parameters, float *aspect_ratio,
     float *vertical_fov_degrees) {
-  CHECK(aspect_ratio != nullptr);
-  CHECK(vertical_fov_degrees != nullptr);
+  ABSL_CHECK(aspect_ratio != nullptr);
+  ABSL_CHECK(vertical_fov_degrees != nullptr);
   *aspect_ratio =
       camera_parameters.portrait_width() / camera_parameters.portrait_height();
   *vertical_fov_degrees =
@@ -560,7 +567,7 @@ absl::Status GlAnimationOverlayCalculator::Open(CalculatorContext *cc) {
         cc->InputSidePackets().Tag("MASK_ASSET").Get<std::string>();
     loaded_animation = LoadAnimationAndroid(mask_asset_name, &mask_meshes_);
     if (!loaded_animation) {
-      LOG(ERROR) << "Failed to load mask asset.";
+      ABSL_LOG(ERROR) << "Failed to load mask asset.";
       return absl::UnknownError("Failed to load mask asset.");
     }
   }
@@ -569,7 +576,7 @@ absl::Status GlAnimationOverlayCalculator::Open(CalculatorContext *cc) {
   loaded_animation = LoadAnimation(asset_name);
 #endif
   if (!loaded_animation) {
-    LOG(ERROR) << "Failed to load animation asset.";
+    ABSL_LOG(ERROR) << "Failed to load animation asset.";
     return absl::UnknownError("Failed to load animation asset.");
   }
 
@@ -608,7 +615,7 @@ void GlAnimationOverlayCalculator::LoadModelMatrices(
   current_model_matrices->clear();
   for (int i = 0; i < model_matrices.model_matrix_size(); ++i) {
     const auto &model_matrix = model_matrices.model_matrix(i);
-    CHECK(model_matrix.matrix_entries_size() == kNumMatrixEntries)
+    ABSL_CHECK(model_matrix.matrix_entries_size() == kNumMatrixEntries)
         << "Invalid Model Matrix";
     current_model_matrices->emplace_back();
     ModelMatrix &new_matrix = current_model_matrices->back();
@@ -669,8 +676,8 @@ absl::Status GlAnimationOverlayCalculator::Process(CalculatorContext *cc) {
         height = input_frame->height();
         dst = helper_.CreateSourceTexture(*input_frame);
       } else {
-        LOG(ERROR) << "Unable to consume input video frame for overlay!";
-        LOG(ERROR) << "Status returned was: " << result.status();
+        ABSL_LOG(ERROR) << "Unable to consume input video frame for overlay!";
+        ABSL_LOG(ERROR) << "Status returned was: " << result.status();
         dst = helper_.CreateDestinationTexture(width, height);
       }
     } else if (!has_video_stream_) {
@@ -699,7 +706,7 @@ absl::Status GlAnimationOverlayCalculator::Process(CalculatorContext *cc) {
                                       GL_RENDERBUFFER, renderbuffer_));
     GLenum status = GLCHECK(glCheckFramebufferStatus(GL_FRAMEBUFFER));
     if (status != GL_FRAMEBUFFER_COMPLETE) {
-      LOG(ERROR) << "Incomplete framebuffer with status: " << status;
+      ABSL_LOG(ERROR) << "Incomplete framebuffer with status: " << status;
     }
     GLCHECK(glClear(GL_DEPTH_BUFFER_BIT));
 

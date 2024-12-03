@@ -25,6 +25,7 @@ package_group(
     name = "1p_client",
     packages = [
         "//cloud/ml/applications/vision/model_garden/model_oss/mediapipe/...",
+        "//intelligence/magiclab/...",
         "//research/privacy/learning/fl_eval/pcvr/...",
     ],
 )

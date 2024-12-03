@@ -74,10 +74,11 @@ class MultiWorldLandmarksSmoothingCalculatorImpl
         object_scale = GetObjectScale(object_scale_roi_vec.value()[i]);
       }
 
-      ASSIGN_OR_RETURN(auto* landmarks_filter,
-                       multi_filters_.GetOrCreate(
-                           tracking_ids[i],
-                           cc->Options<LandmarksSmoothingCalculatorOptions>()));
+      MP_ASSIGN_OR_RETURN(
+          auto* landmarks_filter,
+          multi_filters_.GetOrCreate(
+              tracking_ids[i],
+              cc->Options<LandmarksSmoothingCalculatorOptions>()));
 
       LandmarkList out_landmarks;
       MP_RETURN_IF_ERROR(landmarks_filter->Apply(in_landmarks, timestamp,

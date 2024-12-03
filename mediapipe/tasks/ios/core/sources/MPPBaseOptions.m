@@ -20,6 +20,7 @@
   self = [super init];
   if (self) {
     self.modelAssetPath = [[NSString alloc] init];
+    self.delegate = MPPDelegateCPU;
   }
   return self;
 }
@@ -28,6 +29,7 @@
   MPPBaseOptions *baseOptions = [[MPPBaseOptions alloc] init];
 
   baseOptions.modelAssetPath = self.modelAssetPath;
+  baseOptions.delegate = self.delegate;
 
   return baseOptions;
 }

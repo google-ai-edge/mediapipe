@@ -35,6 +35,7 @@ export abstract class AudioTaskRunner<T> extends TaskRunner {
    * Sets the sample rate for API calls that omit an explicit sample rate.
    * `48000` is used as a default if this method is not called.
    *
+   * @export
    * @param sampleRate A sample rate (e.g. `44100`).
    */
   setDefaultSampleRate(sampleRate: number) {

@@ -39,6 +39,10 @@ class BaseHParams:
     class_weights: An optional mapping of indices to weights for weighting the
       loss function during training.
     shuffle: True if the dataset is shuffled before training.
+    repeat: True if the training dataset is repeated infinitely to support
+      training without checking the dataset size.
+    num_parallel_calls: The number of parallel calls to use when processing the
+      dataset. Defaults to tf.data.AUTOTUNE.
     export_dir: The location of the model checkpoint files.
     distribution_strategy: A string specifying which Distribution Strategy to
       use. Accepted values are 'off', 'one_device', 'mirrored',
@@ -63,6 +67,8 @@ class BaseHParams:
 
   # Dataset-related parameters
   shuffle: bool = False
+  repeat: bool = False
+  num_parallel_calls: int = tf.data.AUTOTUNE
 
   # Parameters for model / checkpoint files
   export_dir: str = tempfile.mkdtemp()

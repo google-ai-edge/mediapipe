@@ -49,13 +49,13 @@ NS_SWIFT_NAME(Landmark)
 @property(nonatomic, readonly, nullable) NSNumber *presence;
 
 /**
- * Initializes a new `MPPLandmark` object with the given x, y and z coordinates.
+ * Initializes a new `Landmark` object with the given x, y and z coordinates.
  *
  * @param x The x coordinates of the landmark.
  * @param y The y coordinates of the landmark.
  * @param z The z coordinates of the landmark.
  *
- * @return An instance of `MPPLandmark` initialized with the given x, y and z coordinates.
+ * @return An instance of `Landmark` initialized with the given x, y and z coordinates.
  */
 - (instancetype)initWithX:(float)x
                         y:(float)y
@@ -103,13 +103,13 @@ NS_SWIFT_NAME(NormalizedLandmark)
 @property(nonatomic, readonly, nullable) NSNumber *presence;
 
 /**
- * Initializes a new `MPPNormalizedLandmark` object with the given x, y and z coordinates.
+ * Initializes a new `NormalizedLandmark` object with the given x, y and z coordinates.
  *
  * @param x The x coordinates of the landmark.
  * @param y The y coordinates of the landmark.
  * @param z The z coordinates of the landmark.
  *
- * @return An instance of `MPPNormalizedLandmark` initialized with the given x, y and z coordinates.
+ * @return An instance of `NormalizedLandmark` initialized with the given x, y and z coordinates.
  */
 - (instancetype)initWithX:(float)x
                         y:(float)y

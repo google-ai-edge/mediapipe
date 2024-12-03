@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "Eigen/Core"
+#include "absl/log/absl_check.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
 #include "mediapipe/framework/formats/matrix.h"
@@ -209,7 +210,7 @@ TEST(MatrixMultiplyCalculatorTest, Multiply) {
   MatrixFromTextProto(kSamplesText, &samples);
   Matrix expected;
   MatrixFromTextProto(kExpectedText, &expected);
-  CHECK_EQ(samples.cols(), expected.cols());
+  ABSL_CHECK_EQ(samples.cols(), expected.cols());
 
   for (int i = 0; i < samples.cols(); ++i) {
     // Take a column from samples and produce a packet with just that

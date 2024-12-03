@@ -19,11 +19,11 @@
 #include <unistd.h>
 
 #include "absl/base/call_once.h"
+#include "absl/log/absl_log.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_replace.h"
 #include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
-#include "mediapipe/framework/port/logging.h"
 
 #ifdef __APPLE__
 static_assert(sizeof(off_t) == 8, "Large file support is required");
@@ -95,7 +95,7 @@ void LocalHostInit() {
     buf[sizeof(buf) - 1] = '\0';
     localhost_name_str = new std::string(buf);
   } else {
-    LOG(ERROR) << "Could not get local host name";
+    ABSL_LOG(ERROR) << "Could not get local host name";
     localhost_name_str = new std::string("localhost");
   }
 }

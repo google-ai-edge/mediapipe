@@ -35,10 +35,19 @@ mediapipe_proto_library(
     srcs = ["hand_landmarker_graph_options.proto"],
     deps = [
         ":hand_landmarks_detector_graph_options_proto",
+        ":hand_roi_refinement_graph_options_proto",
         "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
         "//mediapipe/tasks/cc/core/proto:base_options_proto",
         "//mediapipe/tasks/cc/vision/hand_detector/proto:hand_detector_graph_options_proto",
+    ],
+)
+
+mediapipe_proto_library(
+    name = "hand_roi_refinement_graph_options_proto",
+    srcs = ["hand_roi_refinement_graph_options.proto"],
+    deps = [
+        "//mediapipe/tasks/cc/core/proto:base_options_proto",
     ],
 )
 

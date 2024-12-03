@@ -14,6 +14,8 @@
 
 #include "mediapipe/calculators/core/end_loop_calculator.h"
 
+#include <array>
+#include <utility>
 #include <vector>
 
 #include "mediapipe/framework/formats/classification.pb.h"
@@ -83,5 +85,9 @@ REGISTER_CALCULATOR(EndLoopImageCalculator);
 typedef EndLoopCalculator<std::vector<std::array<float, 16>>>
     EndLoopAffineMatrixCalculator;
 REGISTER_CALCULATOR(EndLoopAffineMatrixCalculator);
+
+typedef EndLoopCalculator<std::vector<std::pair<int, int>>>
+    EndLoopImageSizeCalculator;
+REGISTER_CALCULATOR(EndLoopImageSizeCalculator);
 
 }  // namespace mediapipe

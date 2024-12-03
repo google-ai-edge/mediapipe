@@ -68,9 +68,10 @@ absl::StatusOr<TextModelType::ModelType> GetModelTypeFromFile(
     absl::string_view file_name) {
   auto model_file = std::make_unique<ExternalFile>();
   model_file->set_file_name(GetFullPath(file_name));
-  ASSIGN_OR_RETURN(auto model_resources,
-                   ModelResources::Create(std::string(kTestModelResourcesTag),
-                                          std::move(model_file)));
+  MP_ASSIGN_OR_RETURN(
+      auto model_resources,
+      ModelResources::Create(std::string(kTestModelResourcesTag),
+                             std::move(model_file)));
   return GetModelType(*model_resources);
 }
 

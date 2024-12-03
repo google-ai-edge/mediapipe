@@ -14,6 +14,7 @@
 
 #include "mediapipe/java/com/google/mediapipe/framework/jni/graph_texture_frame_jni.h"
 
+#include "absl/log/absl_log.h"
 #include "absl/strings/str_format.h"
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gl_context.h"
@@ -101,8 +102,8 @@ JNIEXPORT void JNICALL GRAPH_TEXTURE_FRAME_METHOD(nativeDidRead)(
   // However, `DidRead` may succeed resulting in a later crash and masking the
   // actual problem.)
   if (token.use_count() == 0) {
-    LOG_FIRST_N(ERROR, 5) << absl::StrFormat("invalid sync token ref: %d",
-                                             consumerSyncToken);
+    ABSL_LOG_FIRST_N(ERROR, 5)
+        << absl::StrFormat("invalid sync token ref: %d", consumerSyncToken);
     return;
   }
   (*buffer)->DidRead(token);

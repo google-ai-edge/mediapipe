@@ -37,7 +37,7 @@ bool IsRightHand(const Classification& c) {
   return absl::EqualsIgnoreCase(c.label(), "Right");
 }
 
-absl::StatusOr<float> GetLeftHandScore(
+absl::StatusOr<float> GetRightHandScore(
     const ClassificationList& classification_list) {
   auto classifications = classification_list.classification();
   auto iter_max =
@@ -50,9 +50,9 @@ absl::StatusOr<float> GetLeftHandScore(
   RET_CHECK_GE(h.score(), 0.5f);
   RET_CHECK_LE(h.score(), 1.0f);
   if (IsLeftHand(h)) {
-    return h.score();
-  } else if (IsRightHand(h)) {
     return 1.0f - h.score();
+  } else if (IsRightHand(h)) {
+    return h.score();
   } else {
     // Unrecognized handedness label.
     RET_CHECK_FAIL() << "Unrecognized handedness: " << h.label();

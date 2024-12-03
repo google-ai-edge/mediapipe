@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "absl/flags/flag.h"
+#include <cstdint>
+
 #include "absl/strings/substitute.h"
+#include "google/protobuf/text_format.h"
 #include "mediapipe/calculators/tensorflow/tensorflow_session.h"
 #include "mediapipe/calculators/tensorflow/tensorflow_session_from_frozen_graph_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -30,6 +32,7 @@
 #include "mediapipe/framework/tool/validate_type.h"
 #include "tensorflow/core/framework/tensor.h"
 #include "tensorflow/core/protobuf/config.pb.h"
+#include "testing/base/public/gunit.h"
 
 namespace mediapipe {
 
@@ -42,7 +45,7 @@ constexpr char kStringModelTag[] = "STRING_MODEL";
 constexpr char kSessionTag[] = "SESSION";
 
 std::string GetGraphDefPath() {
-  return mediapipe::file::JoinPath("./",
+  return mediapipe::file::JoinPath(::testing::SrcDir(),
                                    "mediapipe/calculators/tensorflow/"
                                    "testdata/frozen_graph_def.pb");
 }
@@ -50,12 +53,19 @@ std::string GetGraphDefPath() {
 // Helper function that creates Tensor INT32 matrix with size 1x3.
 tf::Tensor TensorMatrix1x3(const int v1, const int v2, const int v3) {
   tf::Tensor tensor(tf::DT_INT32,
-                    tf::TensorShape(std::vector<tf::int64>({1, 3})));
+                    tf::TensorShape(std::vector<int64_t>({1, 3})));
   auto matrix = tensor.matrix<int32_t>();
   matrix(0, 0) = v1;
   matrix(0, 1) = v2;
   matrix(0, 2) = v3;
   return tensor;
+}
+
+std::string PrintOptionsAsTextProto(
+    const TensorFlowSessionFromFrozenGraphCalculatorOptions& options) {
+  std::string text_proto;
+  google::protobuf::TextFormat::PrintToString(options, &text_proto);
+  return text_proto;
 }
 
 class TensorFlowSessionFromFrozenGraphCalculatorTest : public ::testing::Test {
@@ -104,7 +114,8 @@ class TensorFlowSessionFromFrozenGraphCalculatorTest : public ::testing::Test {
 
 TEST_F(TensorFlowSessionFromFrozenGraphCalculatorTest,
        CreatesPacketWithGraphAndBindings) {
-  CalculatorRunner runner(absl::Substitute(R"(
+  CalculatorRunner runner(
+      absl::Substitute(R"(
         calculator: "TensorFlowSessionFromFrozenGraphCalculator"
         output_side_packet: "SESSION:tf_model"
         options {
@@ -112,7 +123,7 @@ TEST_F(TensorFlowSessionFromFrozenGraphCalculatorTest,
             $0
           }
         })",
-                                           calculator_options_->DebugString()));
+                       PrintOptionsAsTextProto(*calculator_options_)));
 
   MP_ASSERT_OK(runner.Run());
   const TensorFlowSession& session =
@@ -151,7 +162,7 @@ TEST_F(TensorFlowSessionFromFrozenGraphCalculatorTest,
       }
       input_stream: "a_tensor"
   )",
-                           calculator_options_->DebugString()));
+                           PrintOptionsAsTextProto(*calculator_options_)));
 
   CalculatorGraph graph;
   MP_ASSERT_OK(graph.Initialize(config));
@@ -180,7 +191,8 @@ TEST_F(TensorFlowSessionFromFrozenGraphCalculatorTest,
 TEST_F(TensorFlowSessionFromFrozenGraphCalculatorTest,
        CreatesPacketWithGraphAndBindingsFromInputSidePacket) {
   calculator_options_->clear_graph_proto_path();
-  CalculatorRunner runner(absl::Substitute(R"(
+  CalculatorRunner runner(
+      absl::Substitute(R"(
         calculator: "TensorFlowSessionFromFrozenGraphCalculator"
         input_side_packet: "STRING_MODEL:model"
         output_side_packet: "SESSION:session"
@@ -189,7 +201,7 @@ TEST_F(TensorFlowSessionFromFrozenGraphCalculatorTest,
             $0
           }
         })",
-                                           calculator_options_->DebugString()));
+                       PrintOptionsAsTextProto(*calculator_options_)));
 
   std::string serialized_graph_contents;
   MP_EXPECT_OK(mediapipe::file::GetContents(GetGraphDefPath(),
@@ -207,7 +219,8 @@ TEST_F(
     TensorFlowSessionFromFrozenGraphCalculatorTest,
     CreatesPacketWithGraphAndBindingsFromInputSidePacketStringModelFilePath) {
   calculator_options_->clear_graph_proto_path();
-  CalculatorRunner runner(absl::Substitute(R"(
+  CalculatorRunner runner(
+      absl::Substitute(R"(
         calculator: "TensorFlowSessionFromFrozenGraphCalculator"
         input_side_packet: "STRING_MODEL_FILE_PATH:file_path"
         output_side_packet: "SESSION:session"
@@ -216,7 +229,7 @@ TEST_F(
             $0
           }
         })",
-                                           calculator_options_->DebugString()));
+                       PrintOptionsAsTextProto(*calculator_options_)));
   runner.MutableSidePackets()->Tag(kStringModelFilePathTag) =
       Adopt(new std::string(GetGraphDefPath()));
   MP_ASSERT_OK(runner.Run());
@@ -228,7 +241,8 @@ TEST_F(
 
 TEST_F(TensorFlowSessionFromFrozenGraphCalculatorTest,
        CheckFailureForOptionsAndInputsProvideGraphDefProto) {
-  CalculatorRunner runner(absl::Substitute(R"(
+  CalculatorRunner runner(
+      absl::Substitute(R"(
         calculator: "TensorFlowSessionFromFrozenGraphCalculator"
         input_side_packet: "STRING_MODEL_FILE_PATH:file_path"
         output_side_packet: "SESSION:session"
@@ -237,7 +251,7 @@ TEST_F(TensorFlowSessionFromFrozenGraphCalculatorTest,
             $0
           }
         })",
-                                           calculator_options_->DebugString()));
+                       PrintOptionsAsTextProto(*calculator_options_)));
   runner.MutableSidePackets()->Tag(kStringModelFilePathTag) =
       Adopt(new std::string(GetGraphDefPath()));
   auto run_status = runner.Run();
@@ -248,7 +262,8 @@ TEST_F(TensorFlowSessionFromFrozenGraphCalculatorTest,
 
 TEST_F(TensorFlowSessionFromFrozenGraphCalculatorTest,
        CheckFailureForAllInputsProvideGraphDefProto) {
-  CalculatorRunner runner(absl::Substitute(R"(
+  CalculatorRunner runner(
+      absl::Substitute(R"(
         calculator: "TensorFlowSessionFromFrozenGraphCalculator"
         input_side_packet: "STRING_MODEL_FILE_PATH:file_path"
         input_side_packet: "STRING_MODEL:model"
@@ -258,7 +273,7 @@ TEST_F(TensorFlowSessionFromFrozenGraphCalculatorTest,
             $0
           }
         })",
-                                           calculator_options_->DebugString()));
+                       PrintOptionsAsTextProto(*calculator_options_)));
   runner.MutableSidePackets()->Tag(kStringModelFilePathTag) =
       Adopt(new std::string(GetGraphDefPath()));
   std::string serialized_graph_contents;
@@ -275,7 +290,8 @@ TEST_F(TensorFlowSessionFromFrozenGraphCalculatorTest,
 TEST_F(TensorFlowSessionFromFrozenGraphCalculatorTest,
        CheckFailureForOnlyBothInputSidePacketsProvideGraphDefProto) {
   calculator_options_->clear_graph_proto_path();
-  CalculatorRunner runner(absl::Substitute(R"(
+  CalculatorRunner runner(
+      absl::Substitute(R"(
         calculator: "TensorFlowSessionFromFrozenGraphCalculator"
         input_side_packet: "STRING_MODEL_FILE_PATH:file_path"
         input_side_packet: "STRING_MODEL:model"
@@ -285,7 +301,7 @@ TEST_F(TensorFlowSessionFromFrozenGraphCalculatorTest,
             $0
           }
         })",
-                                           calculator_options_->DebugString()));
+                       PrintOptionsAsTextProto(*calculator_options_)));
   runner.MutableSidePackets()->Tag(kStringModelFilePathTag) =
       Adopt(new std::string(GetGraphDefPath()));
   std::string serialized_graph_contents;
@@ -302,7 +318,8 @@ TEST_F(TensorFlowSessionFromFrozenGraphCalculatorTest,
 TEST_F(TensorFlowSessionFromFrozenGraphCalculatorTest,
        CheckInitializationOpName) {
   calculator_options_->add_initialization_op_names("multiplied:0");
-  CalculatorRunner runner(absl::Substitute(R"(
+  CalculatorRunner runner(
+      absl::Substitute(R"(
         calculator: "TensorFlowSessionFromFrozenGraphCalculator"
         output_side_packet: "SESSION:session"
         options {
@@ -310,7 +327,7 @@ TEST_F(TensorFlowSessionFromFrozenGraphCalculatorTest,
             $0
           }
         })",
-                                           calculator_options_->DebugString()));
+                       PrintOptionsAsTextProto(*calculator_options_)));
   MP_ASSERT_OK(runner.Run());
 
   const TensorFlowSession& session =

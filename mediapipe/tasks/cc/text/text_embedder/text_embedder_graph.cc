@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#include "absl/log/absl_check.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
@@ -86,11 +87,12 @@ class TextEmbedderGraph : public core::ModelTaskGraph {
  public:
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       SubgraphContext* sc) override {
-    CHECK(sc != nullptr);
-    ASSIGN_OR_RETURN(const ModelResources* model_resources,
-                     CreateModelResources<proto::TextEmbedderGraphOptions>(sc));
+    ABSL_CHECK(sc != nullptr);
+    MP_ASSIGN_OR_RETURN(
+        const ModelResources* model_resources,
+        CreateModelResources<proto::TextEmbedderGraphOptions>(sc));
     Graph graph;
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         Source<EmbeddingResult> embedding_result_out,
         BuildTextEmbedderTask(sc->Options<proto::TextEmbedderGraphOptions>(),
                               *model_resources,
@@ -141,8 +143,8 @@ class TextEmbedderGraph : public core::ModelTaskGraph {
 
     // The UniversalSentenceEncoder model has an extraneous output head.
     std::vector<absl::string_view> filtered_head_names;
-    ASSIGN_OR_RETURN(TextModelType::ModelType model_type,
-                     GetModelType(model_resources));
+    MP_ASSIGN_OR_RETURN(TextModelType::ModelType model_type,
+                        GetModelType(model_resources));
     if (model_type == TextModelType::USE_MODEL) {
       postprocessing_options->mutable_tensors_to_embeddings_options()
           ->add_ignored_head_names(kUSEQueryTensorName);

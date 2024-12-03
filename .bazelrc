@@ -15,6 +15,7 @@ test --test_env="GTEST_INSTALL_FAILURE_SIGNAL_HANDLER=1"
 build:linux --cxxopt=-std=c++17
 build:linux --host_cxxopt=-std=c++17
 build:linux --copt=-w
+build:linux --define=xnn_enable_avx512amx=false
 
 # windows
 build:windows --cxxopt=/std:c++17
@@ -28,6 +29,7 @@ build:windows --host_copt=/D_USE_MATH_DEFINES
 build:macos --cxxopt=-std=c++17
 build:macos --host_cxxopt=-std=c++17
 build:macos --copt=-w
+build:macos --define=xnn_enable_avx512amx=false
 
 # Sets the default Apple platform to macOS.
 build --apple_platform_type=macos
@@ -50,6 +52,8 @@ build:android --linkopt=-ldl
 build:android --linkopt=-llog
 build:android --linkopt=-lm
 build:android --linkopt=-Wl,--gc-sections
+# TODO: Remove this flag once we updated to NDK 25
+build:android --define=xnn_enable_arm_i8mm=false
 
 build:android_arm --config=android
 build:android_arm --cpu=armeabi-v7a
@@ -90,6 +94,9 @@ build:ios_fat --watchos_cpus=armv7k
 build:ios_sim_fat --config=ios
 build:ios_sim_fat --ios_multi_cpus=x86_64,sim_arm64
 
+build:ios_sim_device_fat --config=ios
+build:ios_sim_device_fat --ios_multi_cpus=x86_64,sim_arm64,arm64
+
 build:darwin_x86_64 --apple_platform_type=macos
 build:darwin_x86_64 --macos_minimum_os=10.12
 build:darwin_x86_64 --cpu=darwin_x86_64
@@ -97,6 +104,9 @@ build:darwin_x86_64 --cpu=darwin_x86_64
 build:darwin_arm64 --apple_platform_type=macos
 build:darwin_arm64 --macos_minimum_os=10.16
 build:darwin_arm64 --cpu=darwin_arm64
+
+# Turn off maximum stdout size
+build --experimental_ui_max_stdouterr_bytes=-1
 
 # This bazelrc file is meant to be written by a setup script.
 try-import %workspace%/.configure.bazelrc

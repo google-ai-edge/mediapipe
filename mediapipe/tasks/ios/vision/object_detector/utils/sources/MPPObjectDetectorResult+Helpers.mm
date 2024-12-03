@@ -27,7 +27,7 @@ using ::mediapipe::Packet;
     (const Packet &)packet {
 
   NSInteger timestampInMilliseconds = (NSInteger)(packet.Timestamp().Value() /
-                                                                      kMicroSecondsPerMilliSecond);
+                                                                      kMicrosecondsPerMillisecond);
   if (!packet.ValidateAsType<std::vector<DetectionProto>>().ok()) {
     return [[MPPObjectDetectorResult alloc] initWithDetections:@[]
                                   timestampInMilliseconds:timestampInMilliseconds];

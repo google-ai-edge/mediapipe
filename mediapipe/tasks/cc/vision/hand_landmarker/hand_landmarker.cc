@@ -15,6 +15,8 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/vision/hand_landmarker/hand_landmarker.h"
 
+#include <utility>
+
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/formats/classification.pb.h"
@@ -173,7 +175,9 @@ absl::StatusOr<std::unique_ptr<HandLandmarker>> HandLandmarker::Create(
           std::move(options_proto),
           options->running_mode == core::RunningMode::LIVE_STREAM),
       std::move(options->base_options.op_resolver), options->running_mode,
-      std::move(packets_callback));
+      std::move(packets_callback),
+      /*disable_default_service=*/
+      options->base_options.disable_default_service);
 }
 
 absl::StatusOr<HandLandmarkerResult> HandLandmarker::Detect(
@@ -185,10 +189,10 @@ absl::StatusOr<HandLandmarkerResult> HandLandmarker::Detect(
         "GPU input images are currently not supported.",
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                   ConvertToNormalizedRect(image_processing_options, image,
-                                           /*roi_allowed=*/false));
-  ASSIGN_OR_RETURN(
+  MP_ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                      ConvertToNormalizedRect(image_processing_options, image,
+                                              /*roi_allowed=*/false));
+  MP_ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessImageData(
           {{kImageInStreamName, MakePacket<Image>(std::move(image))},
@@ -223,10 +227,10 @@ absl::StatusOr<HandLandmarkerResult> HandLandmarker::DetectForVideo(
         absl::StrCat("GPU input images are currently not supported."),
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                   ConvertToNormalizedRect(image_processing_options, image,
-                                           /*roi_allowed=*/false));
-  ASSIGN_OR_RETURN(
+  MP_ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                      ConvertToNormalizedRect(image_processing_options, image,
+                                              /*roi_allowed=*/false));
+  MP_ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessVideoData(
           {{kImageInStreamName,
@@ -264,9 +268,9 @@ absl::Status HandLandmarker::DetectAsync(
         absl::StrCat("GPU input images are currently not supported."),
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                   ConvertToNormalizedRect(image_processing_options, image,
-                                           /*roi_allowed=*/false));
+  MP_ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                      ConvertToNormalizedRect(image_processing_options, image,
+                                              /*roi_allowed=*/false));
   return SendLiveStreamData(
       {{kImageInStreamName,
         MakePacket<Image>(std::move(image))

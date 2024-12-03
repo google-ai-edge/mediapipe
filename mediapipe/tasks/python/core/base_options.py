@@ -47,11 +47,11 @@ class BaseOptions:
   Attributes:
     model_asset_path: Path to the model asset file.
     model_asset_buffer: The model asset file contents as bytes.
-    delegate: Accelaration to use. Supported values are GPU and CPU. GPU support
+    delegate: Acceleration to use. Supported values are GPU and CPU. GPU support
       is currently limited to Ubuntu platforms.
   """
 
-  class Delegate(enum.Enum):
+  class Delegate(enum.IntEnum):
     CPU = 0
     GPU = 1
 
@@ -70,7 +70,7 @@ class BaseOptions:
     platform_name = platform.system()
 
     if self.delegate == BaseOptions.Delegate.GPU:
-      if platform_name == 'Linux':
+      if platform_name in ['Linux', 'Darwin']:
         acceleration_proto = _AccelerationProto(gpu=_DelegateProto.Gpu())
       else:
         raise NotImplementedError(

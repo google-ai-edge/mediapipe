@@ -1,0 +1,57 @@
+/* Copyright 2023 The MediaPipe Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+==============================================================================*/
+
+syntax = "proto3";
+
+package mediapipe.tasks.vision.holistic_landmarker.proto;
+
+import "mediapipe/tasks/cc/core/proto/base_options.proto";
+import "mediapipe/tasks/cc/vision/face_detector/proto/face_detector_graph_options.proto";
+import "mediapipe/tasks/cc/vision/face_landmarker/proto/face_landmarks_detector_graph_options.proto";
+import "mediapipe/tasks/cc/vision/hand_landmarker/proto/hand_landmarks_detector_graph_options.proto";
+import "mediapipe/tasks/cc/vision/hand_landmarker/proto/hand_roi_refinement_graph_options.proto";
+import "mediapipe/tasks/cc/vision/pose_detector/proto/pose_detector_graph_options.proto";
+import "mediapipe/tasks/cc/vision/pose_landmarker/proto/pose_landmarks_detector_graph_options.proto";
+
+option java_package = "com.google.mediapipe.tasks.vision.holisticlandmarker.proto";
+option java_outer_classname = "HolisticLandmarkerGraphOptionsProto";
+
+message HolisticLandmarkerGraphOptions {
+  // Base options for configuring MediaPipe Tasks, such as specifying the model
+  // asset bundle file with metadata, accelerator options, etc.
+  core.proto.BaseOptions base_options = 1;
+
+  // Options for hand landmarks graph.
+  hand_landmarker.proto.HandLandmarksDetectorGraphOptions
+      hand_landmarks_detector_graph_options = 2;
+
+  // Options for hand roi refinement graph.
+  hand_landmarker.proto.HandRoiRefinementGraphOptions
+      hand_roi_refinement_graph_options = 3;
+
+  // Options for face detector graph.
+  face_detector.proto.FaceDetectorGraphOptions face_detector_graph_options = 4;
+
+  // Options for face landmarks detector graph.
+  face_landmarker.proto.FaceLandmarksDetectorGraphOptions
+      face_landmarks_detector_graph_options = 5;
+
+  // Options for pose detector graph.
+  pose_detector.proto.PoseDetectorGraphOptions pose_detector_graph_options = 6;
+
+  // Options for pose landmarks detector graph.
+  pose_landmarker.proto.PoseLandmarksDetectorGraphOptions
+      pose_landmarks_detector_graph_options = 7;
+}

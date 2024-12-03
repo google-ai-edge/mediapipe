@@ -66,6 +66,7 @@ cc_library(
         "//mediapipe/tasks/cc/core/proto:model_resources_calculator_cc_proto",
         "//mediapipe/tasks/cc/text/text_embedder/proto:text_embedder_graph_options_cc_proto",
         "//mediapipe/tasks/cc/text/utils:text_model_utils",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
@@ -91,7 +92,7 @@ cc_test(
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
-        "@com_google_sentencepiece//src:sentencepiece_processor",
+        "@com_google_sentencepiece//:sentencepiece_processor",
         "@org_tensorflow//tensorflow/lite:test_util",
     ],
 )

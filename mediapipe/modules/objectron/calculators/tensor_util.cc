@@ -14,14 +14,16 @@
 
 #include "mediapipe/modules/objectron/calculators/tensor_util.h"
 
+#include "absl/log/absl_check.h"
 #include "mediapipe/framework/port/logging.h"
 
 namespace mediapipe {
 
 cv::Mat ConvertTfliteTensorToCvMat(const TfLiteTensor& tensor) {
   // Check tensor is BxCxWxH (size = 4) and the batch size is one(data[0] = 1)
-  CHECK(tensor.dims->size == 4 && tensor.dims->data[0] == 1);
-  CHECK_EQ(kTfLiteFloat32, tensor.type) << "tflite_tensor type is not float";
+  ABSL_CHECK(tensor.dims->size == 4 && tensor.dims->data[0] == 1);
+  ABSL_CHECK_EQ(kTfLiteFloat32, tensor.type)
+      << "tflite_tensor type is not float";
 
   const size_t num_output_channels = tensor.dims->data[3];
   const int dims = 2;
@@ -32,9 +34,9 @@ cv::Mat ConvertTfliteTensorToCvMat(const TfLiteTensor& tensor) {
 
 cv::Mat ConvertTensorToCvMat(const mediapipe::Tensor& tensor) {
   // Check tensor is BxCxWxH (size = 4) and the batch size is one(data[0] = 1)
-  CHECK(tensor.shape().dims.size() == 4 && tensor.shape().dims[0] == 1);
-  CHECK_EQ(mediapipe::Tensor::ElementType::kFloat32 == tensor.element_type(),
-           true)
+  ABSL_CHECK(tensor.shape().dims.size() == 4 && tensor.shape().dims[0] == 1);
+  ABSL_CHECK_EQ(
+      mediapipe::Tensor::ElementType::kFloat32 == tensor.element_type(), true)
       << "tensor type is not float";
 
   const size_t num_output_channels = tensor.shape().dims[3];

@@ -15,6 +15,7 @@
 #ifndef MEDIAPIPE_EXAMPLES_DESKTOP_AUTOFLIP_CALCULATORS_SCENE_CROPPING_CALCULATOR_H_
 #define MEDIAPIPE_EXAMPLES_DESKTOP_AUTOFLIP_CALCULATORS_SCENE_CROPPING_CALCULATOR_H_
 
+#include <cstdint>
 #include <memory>
 #include <vector>
 
@@ -224,7 +225,7 @@ class SceneCroppingCalculator : public CalculatorBase {
   // size. Add to struct and store together in one vector.
   std::vector<cv::Mat> scene_frames_or_empty_;
   std::vector<cv::Mat> raw_scene_frames_or_empty_;
-  std::vector<int64> scene_frame_timestamps_;
+  std::vector<int64_t> scene_frame_timestamps_;
   std::vector<bool> is_key_frames_;
 
   // Static border information for the scene.
@@ -256,7 +257,7 @@ class SceneCroppingCalculator : public CalculatorBase {
   // Buffered static features and their timestamps used in padding with solid
   // background color (size = number of frames with static features).
   std::vector<StaticFeatures> static_features_;
-  std::vector<int64> static_features_timestamps_;
+  std::vector<int64_t> static_features_timestamps_;
   bool has_solid_background_ = false;
   // CIELAB yields more natural color transitions than RGB and HSV: RGB tends
   // to produce darker in-between colors and HSV can introduce new hues. See

@@ -16,6 +16,7 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_CC_VISION_GESTURE_RECOGNIZRER_GESTURE_RECOGNIZER_H_
 #define MEDIAPIPE_TASKS_CC_VISION_GESTURE_RECOGNIZRER_GESTURE_RECOGNIZER_H_
 
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <vector>
@@ -82,7 +83,7 @@ struct GestureRecognizerOptions {
   // The result callback should only be specified when the running mode is set
   // to RunningMode::LIVE_STREAM.
   std::function<void(absl::StatusOr<GestureRecognizerResult>, const Image&,
-                     int64)>
+                     int64_t)>
       result_callback = nullptr;
 };
 
@@ -157,7 +158,7 @@ class GestureRecognizer : tasks::vision::core::BaseVisionTaskApi {
   // provide the video frame's timestamp (in milliseconds). The input timestamps
   // must be monotonically increasing.
   absl::StatusOr<GestureRecognizerResult> RecognizeForVideo(
-      Image image, int64 timestamp_ms,
+      Image image, int64_t timestamp_ms,
       std::optional<core::ImageProcessingOptions> image_processing_options =
           std::nullopt);
 
@@ -185,7 +186,7 @@ class GestureRecognizer : tasks::vision::core::BaseVisionTaskApi {
   //     longer be valid when the callback returns. To access the image data
   //     outside of the callback, callers need to make a copy of the image.
   //   - The input timestamp in milliseconds.
-  absl::Status RecognizeAsync(Image image, int64 timestamp_ms,
+  absl::Status RecognizeAsync(Image image, int64_t timestamp_ms,
                               std::optional<core::ImageProcessingOptions>
                                   image_processing_options = std::nullopt);
 

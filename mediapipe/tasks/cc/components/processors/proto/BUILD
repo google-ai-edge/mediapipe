@@ -93,8 +93,3 @@ mediapipe_proto_library(
         "//mediapipe/framework:calculator_proto",
     ],
 )
-
-mediapipe_proto_library(
-    name = "transformer_params_proto",
-    srcs = ["transformer_params.proto"],
-)

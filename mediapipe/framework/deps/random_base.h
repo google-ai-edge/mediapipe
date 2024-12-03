@@ -15,7 +15,7 @@
 #ifndef MEDIAPIPE_DEPS_RANDOM_BASE_H_
 #define MEDIAPIPE_DEPS_RANDOM_BASE_H_
 
-#include "mediapipe/framework/port/integral_types.h"
+#include <cstdint>
 
 class RandomBase {
  public:
@@ -25,7 +25,7 @@ class RandomBase {
 
   virtual float RandFloat() { return 0; }
   virtual int UnbiasedUniform(int n) { return 0; }
-  virtual uint64 UnbiasedUniform64(uint64 n) { return 0; }
+  virtual uint64_t UnbiasedUniform64(uint64_t n) { return 0; }
 };
 
 #endif  // MEDIAPIPE_DEPS_RANDOM_BASE_H_

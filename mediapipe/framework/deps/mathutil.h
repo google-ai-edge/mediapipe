@@ -20,11 +20,11 @@
 #define MEDIAPIPE_DEPS_MATHUTIL_H_
 
 #include <cmath>
+#include <cstdint>
 #include <limits>
 #include <type_traits>
 
-#include "mediapipe/framework/port/integral_types.h"
-#include "mediapipe/framework/port/logging.h"
+#include "absl/log/absl_check.h"
 
 namespace mediapipe {
 
@@ -47,7 +47,7 @@ class MathUtil {
   //   Example usage:
   //     double y, z;
   //     int x = Round<int>(y + 3.7);
-  //     int64 b = Round<int64>(0.3 * z);
+  //     int64_t b = Round<int64_t>(0.3 * z);
   //
   //   Note that the floating-point template parameter is typically inferred
   //   from the argument type, i.e. there is no need to specify it explicitly.
@@ -185,16 +185,16 @@ class MathUtil {
   //   rounded.
   //
   //   There are template specializations of Round() which call these
-  //   functions (for "int" and "int64" only), but it's safer to call them
+  //   functions (for "int" and "int64_t" only), but it's safer to call them
   //   directly.
   //   --------------------------------------------------------------------
 
-  static int32 FastIntRound(double x) {
+  static int32_t FastIntRound(double x) {
 #if defined __GNUC__ && (defined __i386__ || defined __SSE2__ || \
                          defined __aarch64__ || defined __powerpc64__)
 #if defined __AVX__
     // AVX.
-    int32 result;
+    int32_t result;
     __asm__ __volatile__(
         "vcvtsd2si %1, %0"
         : "=r"(result)  // Output operand is a register
@@ -202,7 +202,7 @@ class MathUtil {
     return result;
 #elif defined __SSE2__
     // SSE2.
-    int32 result;
+    int32_t result;
     __asm__ __volatile__(
         "cvtsd2si %1, %0"
         : "=r"(result)  // Output operand is a register
@@ -210,21 +210,21 @@ class MathUtil {
     return result;
 #elif defined __i386__
     // FPU stack.  Adapted from /usr/include/bits/mathinline.h.
-    int32 result;
+    int32_t result;
     __asm__ __volatile__("fistpl %0"
                          : "=m"(result)  // Output operand is a memory location
                          : "t"(x)        // Input operand is top of FP stack
                          : "st");        // Clobbers (pops) top of FP stack
     return result;
 #elif defined __aarch64__
-    int64 result;
+    int64_t result;
     __asm__ __volatile__("fcvtns %d0, %d1"
                          : "=w"(result)  // Vector floating point register
                          : "w"(x)        // Vector floating point register
                          : /* No clobbers */);
-    return static_cast<int32>(result);
+    return static_cast<int32_t>(result);
 #elif defined __powerpc64__
-    int64 result;
+    int64_t result;
     __asm__ __volatile__("fctid %0, %1"
                          : "=d"(result)
                          : "d"(x)
@@ -232,16 +232,16 @@ class MathUtil {
     return result;
 #endif  // defined __powerpc64__
 #else
-    return Round<int32>(x);
+    return Round<int32_t>(x);
 #endif  // if defined __GNUC__ && ...
   }
 
-  static int32 FastIntRound(float x) {
+  static int32_t FastIntRound(float x) {
 #if defined __GNUC__ && (defined __i386__ || defined __SSE2__ || \
                          defined __aarch64__ || defined __powerpc64__)
 #if defined __AVX__
     // AVX.
-    int32 result;
+    int32_t result;
     __asm__ __volatile__(
         "vcvtss2si %1, %0"
         : "=r"(result)  // Output operand is a register
@@ -249,7 +249,7 @@ class MathUtil {
     return result;
 #elif defined __SSE2__
     // SSE2.
-    int32 result;
+    int32_t result;
     __asm__ __volatile__(
         "cvtss2si %1, %0"
         : "=r"(result)  // Output operand is a register
@@ -257,38 +257,38 @@ class MathUtil {
     return result;
 #elif defined __i386__
     // FPU stack.  Adapted from /usr/include/bits/mathinline.h.
-    int32 result;
+    int32_t result;
     __asm__ __volatile__("fistpl %0"
                          : "=m"(result)  // Output operand is a memory location
                          : "t"(x)        // Input operand is top of FP stack
                          : "st");        // Clobbers (pops) top of FP stack
     return result;
 #elif defined __aarch64__
-    int64 result;
+    int64_t result;
     __asm__ __volatile__("fcvtns %s0, %s1"
                          : "=w"(result)  // Vector floating point register
                          : "w"(x)        // Vector floating point register
                          : /* No clobbers */);
-    return static_cast<int32>(result);
+    return static_cast<int32_t>(result);
 #elif defined __powerpc64__
-    uint64 output;
+    uint64_t output;
     __asm__ __volatile__("fctiw %0, %1"
                          : "=d"(output)
                          : "f"(x)
                          : /* No clobbers */);
-    return bit_cast<int32>(static_cast<uint32>(output >> 32));
+    return bit_cast<int32_t>(static_cast<uint32_t>(output >> 32));
 #endif  // defined __powerpc64__
 #else
-    return Round<int32>(x);
+    return Round<int32_t>(x);
 #endif  // if defined __GNUC__ && ...
   }
 
-  static int64 FastInt64Round(double x) {
+  static int64_t FastInt64Round(double x) {
 #if defined __GNUC__ && (defined __i386__ || defined __x86_64__ || \
                          defined __aarch64__ || defined __powerpc64__)
 #if defined __AVX__
     // AVX.
-    int64 result;
+    int64_t result;
     __asm__ __volatile__(
         "vcvtsd2si %1, %0"
         : "=r"(result)  // Output operand is a register
@@ -296,7 +296,7 @@ class MathUtil {
     return result;
 #elif defined __x86_64__
     // SSE2.
-    int64 result;
+    int64_t result;
     __asm__ __volatile__(
         "cvtsd2si %1, %0"
         : "=r"(result)  // Output operand is a register
@@ -305,7 +305,7 @@ class MathUtil {
 #elif defined __i386__
     // There is no CVTSD2SI in i386 to produce a 64 bit int, even with SSE2.
     // FPU stack.  Adapted from /usr/include/bits/mathinline.h.
-    int64 result;
+    int64_t result;
     __asm__ __volatile__("fistpll %0"
                          : "=m"(result)  // Output operand is a memory location
                          : "t"(x)        // Input operand is top of FP stack
@@ -314,14 +314,14 @@ class MathUtil {
 #elif defined __aarch64__
     // Floating-point convert to signed integer,
     // rounding to nearest with ties to even.
-    int64 result;
+    int64_t result;
     __asm__ __volatile__("fcvtns %d0, %d1"
                          : "=w"(result)
                          : "w"(x)
                          : /* No clobbers */);
     return result;
 #elif defined __powerpc64__
-    int64 result;
+    int64_t result;
     __asm__ __volatile__("fctid %0, %1"
                          : "=d"(result)
                          : "d"(x)
@@ -329,17 +329,17 @@ class MathUtil {
     return result;
 #endif  // if defined __powerpc64__
 #else
-    return Round<int64>(x);
+    return Round<int64_t>(x);
 #endif  // if defined __GNUC__ && ...
   }
 
-  static int64 FastInt64Round(float x) {
+  static int64_t FastInt64Round(float x) {
     return FastInt64Round(static_cast<double>(x));
   }
 
-  static int32 FastIntRound(long double x) { return Round<int32>(x); }
+  static int32_t FastIntRound(long double x) { return Round<int32_t>(x); }
 
-  static int64 FastInt64Round(long double x) { return Round<int64>(x); }
+  static int64_t FastInt64Round(long double x) { return Round<int64_t>(x); }
 
   // Absolute value of the difference between two numbers.
   // Works correctly for signed types and special floating point values.
@@ -354,7 +354,7 @@ class MathUtil {
   template <typename T>  // T models LessThanComparable.
   static const T& Clamp(const T& low, const T& high, const T& value) {
     // Prevents errors in ordering the arguments.
-    DCHECK(!(high < low));
+    ABSL_DCHECK(!(high < low));
     if (high < value) return high;
     if (value < low) return low;
     return value;
@@ -364,7 +364,7 @@ class MathUtil {
   // absolute margin of error.
   template <typename T>
   static bool WithinMargin(const T x, const T y, const T margin) {
-    DCHECK_GE(margin, 0);
+    ABSL_DCHECK_GE(margin, 0);
     return (std::abs(x) <= std::abs(y) + margin) &&
            (std::abs(x) >= std::abs(y) - margin);
   }
@@ -380,22 +380,22 @@ class MathUtil {
 // partial specialization of templatized functions.
 
 template <>
-inline int32 MathUtil::Round<int32, float>(float x) {
+inline int32_t MathUtil::Round<int32_t, float>(float x) {
   return FastIntRound(x);
 }
 
 template <>
-inline int32 MathUtil::Round<int32, double>(double x) {
+inline int32_t MathUtil::Round<int32_t, double>(double x) {
   return FastIntRound(x);
 }
 
 template <>
-inline int64 MathUtil::Round<int64, float>(float x) {
+inline int64_t MathUtil::Round<int64_t, float>(float x) {
   return FastInt64Round(x);
 }
 
 template <>
-inline int64 MathUtil::Round<int64, double>(double x) {
+inline int64_t MathUtil::Round<int64_t, double>(double x) {
   return FastInt64Round(x);
 }
 

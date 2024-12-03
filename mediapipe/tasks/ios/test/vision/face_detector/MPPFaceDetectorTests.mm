@@ -109,7 +109,7 @@ static const float kKeypointErrorThreshold = 1e-2;
 
   NSError *error;
   MPPImage *mppImage = [self imageWithFileInfo:kCatImage];
-  MPPFaceDetectorResult *faceDetectorResult = [faceDetector detectInImage:mppImage error:&error];
+  MPPFaceDetectorResult *faceDetectorResult = [faceDetector detectImage:mppImage error:&error];
   XCTAssertNil(error);
   XCTAssertNotNil(faceDetectorResult);
   XCTAssertEqual(faceDetectorResult.detections.count, 0);
@@ -125,9 +125,9 @@ static const float kKeypointErrorThreshold = 1e-2;
 
   MPPImage *image = [self imageWithFileInfo:kPortraitImage];
   for (int i = 0; i < 3; i++) {
-    MPPFaceDetectorResult *faceDetectorResult = [faceDetector detectInVideoFrame:image
-                                                         timestampInMilliseconds:i
-                                                                           error:nil];
+    MPPFaceDetectorResult *faceDetectorResult = [faceDetector detectVideoFrame:image
+                                                       timestampInMilliseconds:i
+                                                                         error:nil];
     [self assertFaceDetectorResult:faceDetectorResult
          containsExpectedKeypoints:kPortraitExpectedKeypoints];
   }
@@ -141,9 +141,9 @@ static const float kKeypointErrorThreshold = 1e-2;
 
   MPPImage *image = [self imageWithFileInfo:kPortraitRotatedImage];
   for (int i = 0; i < 3; i++) {
-    MPPFaceDetectorResult *faceDetectorResult = [faceDetector detectInVideoFrame:image
-                                                         timestampInMilliseconds:i
-                                                                           error:nil];
+    MPPFaceDetectorResult *faceDetectorResult = [faceDetector detectVideoFrame:image
+                                                       timestampInMilliseconds:i
+                                                                         error:nil];
     [self assertFaceDetectorResult:faceDetectorResult
          containsExpectedKeypoints:kPortraitRotatedExpectedKeypoints];
   }
@@ -181,7 +181,7 @@ static const float kKeypointErrorThreshold = 1e-2;
   };
 
   for (int i = 0; i < iterationCount; i++) {
-    XCTAssertTrue([faceDetector detectAsyncInImage:image timestampInMilliseconds:i error:nil]);
+    XCTAssertTrue([faceDetector detectAsyncImage:image timestampInMilliseconds:i error:nil]);
   }
 
   NSTimeInterval timeout = 0.5f;
@@ -205,10 +205,10 @@ static const float kKeypointErrorThreshold = 1e-2;
   };
 
   MPPImage *image = [self imageWithFileInfo:kPortraitImage];
-  XCTAssertTrue([faceDetector detectAsyncInImage:image timestampInMilliseconds:1 error:nil]);
+  XCTAssertTrue([faceDetector detectAsyncImage:image timestampInMilliseconds:1 error:nil]);
 
   NSError *error;
-  XCTAssertFalse([faceDetector detectAsyncInImage:image timestampInMilliseconds:0 error:&error]);
+  XCTAssertFalse([faceDetector detectAsyncImage:image timestampInMilliseconds:0 error:&error]);
 
   NSError *expectedError =
       [NSError errorWithDomain:kExpectedErrorDomain
@@ -274,9 +274,9 @@ static const float kKeypointErrorThreshold = 1e-2;
   MPPImage *image = [self imageWithFileInfo:kPortraitImage];
 
   NSError *liveStreamApiCallError;
-  XCTAssertFalse([faceDetector detectAsyncInImage:image
-                          timestampInMilliseconds:0
-                                            error:&liveStreamApiCallError]);
+  XCTAssertFalse([faceDetector detectAsyncImage:image
+                        timestampInMilliseconds:0
+                                          error:&liveStreamApiCallError]);
 
   NSError *expectedLiveStreamApiCallError =
       [NSError errorWithDomain:kExpectedErrorDomain
@@ -288,9 +288,9 @@ static const float kKeypointErrorThreshold = 1e-2;
   AssertEqualErrors(liveStreamApiCallError, expectedLiveStreamApiCallError);
 
   NSError *videoApiCallError;
-  XCTAssertFalse([faceDetector detectInVideoFrame:image
-                          timestampInMilliseconds:0
-                                            error:&videoApiCallError]);
+  XCTAssertFalse([faceDetector detectVideoFrame:image
+                        timestampInMilliseconds:0
+                                          error:&videoApiCallError]);
 
   NSError *expectedVideoApiCallError =
       [NSError errorWithDomain:kExpectedErrorDomain
@@ -312,9 +312,9 @@ static const float kKeypointErrorThreshold = 1e-2;
   MPPImage *image = [self imageWithFileInfo:kPortraitImage];
 
   NSError *liveStreamApiCallError;
-  XCTAssertFalse([faceDetector detectAsyncInImage:image
-                          timestampInMilliseconds:0
-                                            error:&liveStreamApiCallError]);
+  XCTAssertFalse([faceDetector detectAsyncImage:image
+                        timestampInMilliseconds:0
+                                          error:&liveStreamApiCallError]);
 
   NSError *expectedLiveStreamApiCallError =
       [NSError errorWithDomain:kExpectedErrorDomain
@@ -326,7 +326,7 @@ static const float kKeypointErrorThreshold = 1e-2;
   AssertEqualErrors(liveStreamApiCallError, expectedLiveStreamApiCallError);
 
   NSError *imageApiCallError;
-  XCTAssertFalse([faceDetector detectInImage:image error:&imageApiCallError]);
+  XCTAssertFalse([faceDetector detectImage:image error:&imageApiCallError]);
 
   NSError *expectedImageApiCallError =
       [NSError errorWithDomain:kExpectedErrorDomain
@@ -350,7 +350,7 @@ static const float kKeypointErrorThreshold = 1e-2;
   MPPImage *image = [self imageWithFileInfo:kPortraitImage];
 
   NSError *imageApiCallError;
-  XCTAssertFalse([faceDetector detectInImage:image error:&imageApiCallError]);
+  XCTAssertFalse([faceDetector detectImage:image error:&imageApiCallError]);
 
   NSError *expectedImageApiCallError =
       [NSError errorWithDomain:kExpectedErrorDomain
@@ -362,9 +362,9 @@ static const float kKeypointErrorThreshold = 1e-2;
   AssertEqualErrors(imageApiCallError, expectedImageApiCallError);
 
   NSError *videoApiCallError;
-  XCTAssertFalse([faceDetector detectInVideoFrame:image
-                          timestampInMilliseconds:0
-                                            error:&videoApiCallError]);
+  XCTAssertFalse([faceDetector detectVideoFrame:image
+                        timestampInMilliseconds:0
+                                          error:&videoApiCallError]);
 
   NSError *expectedVideoApiCallError =
       [NSError errorWithDomain:kExpectedErrorDomain
@@ -407,7 +407,7 @@ static const float kKeypointErrorThreshold = 1e-2;
 
   MPPImage *image = [self imageWithFileInfo:kPortraitImage];
   for (int i = 0; i < iterationCount; i++) {
-    XCTAssertTrue([faceDetector detectAsyncInImage:image timestampInMilliseconds:i error:nil]);
+    XCTAssertTrue([faceDetector detectAsyncImage:image timestampInMilliseconds:i error:nil]);
   }
 
   NSTimeInterval timeout = 0.5f;
@@ -503,7 +503,7 @@ static const float kKeypointErrorThreshold = 1e-2;
                    usingFaceDetector:(MPPFaceDetector *)faceDetector
            containsExpectedKeypoints:(NSArray<NSArray *> *)expectedKeypoints {
   NSError *error;
-  MPPFaceDetectorResult *faceDetectorResult = [faceDetector detectInImage:mppImage error:&error];
+  MPPFaceDetectorResult *faceDetectorResult = [faceDetector detectImage:mppImage error:&error];
   XCTAssertNil(error);
   XCTAssertNotNil(faceDetectorResult);
   [self assertFaceDetectorResult:faceDetectorResult containsExpectedKeypoints:expectedKeypoints];

@@ -84,3 +84,16 @@ objc_library(
         "//mediapipe/tasks/ios/components/containers:MPPLandmark",
     ],
 )
+
+objc_library(
+    name = "MPPRegionOfInterestHelpers",
+    srcs = ["sources/MPPRegionOfInterest+Helpers.mm"],
+    hdrs = ["sources/MPPRegionOfInterest+Helpers.h"],
+    deps = [
+        "//mediapipe/tasks/ios/common:MPPCommon",
+        "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
+        "//mediapipe/tasks/ios/components/containers:MPPRegionOfInterest",
+        "//mediapipe/util:color_cc_proto",
+        "//mediapipe/util:render_data_cc_proto",
+    ],
+)

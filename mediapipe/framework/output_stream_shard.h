@@ -18,6 +18,7 @@
 #include <list>
 #include <string>
 
+#include "absl/log/absl_check.h"
 #include "mediapipe/framework/output_stream.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/packet_type.h"
@@ -34,7 +35,7 @@ struct OutputStreamSpec {
   // Triggers the error callback with absl::Status info when an error
   // occurs.
   void TriggerErrorCallback(const absl::Status& status) const {
-    CHECK(error_callback);
+    ABSL_CHECK(error_callback);
     error_callback(status);
   }
 

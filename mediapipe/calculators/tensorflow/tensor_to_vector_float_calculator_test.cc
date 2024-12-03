@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cstdint>
+#include <memory>
+
 #include "mediapipe/calculators/tensorflow/tensor_to_vector_float_calculator_options.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
@@ -19,6 +22,7 @@
 #include "mediapipe/util/packet_test_util.h"
 #include "tensorflow/core/framework/tensor.h"
 #include "tensorflow/core/framework/types.pb.h"
+#include "tensorflow/core/platform/bfloat16.h"
 
 namespace mediapipe {
 
@@ -45,7 +49,7 @@ class TensorToVectorFloatCalculatorTest : public ::testing::Test {
 
 TEST_F(TensorToVectorFloatCalculatorTest, ConvertsToVectorFloat) {
   SetUpRunner(false, false);
-  const tf::TensorShape tensor_shape(std::vector<tf::int64>{5});
+  const tf::TensorShape tensor_shape(std::vector<int64_t>{5});
   auto tensor = absl::make_unique<tf::Tensor>(tf::DT_FLOAT, tensor_shape);
   auto tensor_vec = tensor->vec<float>();
   for (int i = 0; i < 5; ++i) {
@@ -72,9 +76,65 @@ TEST_F(TensorToVectorFloatCalculatorTest, ConvertsToVectorFloat) {
   }
 }
 
+TEST_F(TensorToVectorFloatCalculatorTest, CheckBFloat16Type) {
+  SetUpRunner(false, false);
+  const tf::TensorShape tensor_shape(std::vector<int64_t>{5});
+  auto tensor = std::make_unique<tf::Tensor>(tf::DT_BFLOAT16, tensor_shape);
+  auto tensor_vec = tensor->vec<tf::bfloat16>();
+  for (int i = 0; i < 5; ++i) {
+    tensor_vec(i) = static_cast<tf::bfloat16>(1 << i);
+  }
+
+  const int64_t time = 1234;
+  runner_->MutableInputs()->Index(0).packets.push_back(
+      Adopt(tensor.release()).At(Timestamp(time)));
+
+  EXPECT_TRUE(runner_->Run().ok());
+  const std::vector<Packet>& output_packets =
+      runner_->Outputs().Index(0).packets;
+  EXPECT_EQ(1, output_packets.size());
+  EXPECT_EQ(time, output_packets[0].Timestamp().Value());
+  const std::vector<float>& output_vector =
+      output_packets[0].Get<std::vector<float>>();
+
+  EXPECT_EQ(5, output_vector.size());
+  for (int i = 0; i < 5; ++i) {
+    const float expected = static_cast<float>(1 << i);
+    EXPECT_EQ(expected, output_vector[i]);
+  }
+}
+
+TEST_F(TensorToVectorFloatCalculatorTest, CheckBFloat16TypeAllDim) {
+  SetUpRunner(false, true);
+  const tf::TensorShape tensor_shape(std::vector<int64_t>{2, 2, 2});
+  auto tensor = std::make_unique<tf::Tensor>(tf::DT_BFLOAT16, tensor_shape);
+  auto slice = tensor->flat<tf::bfloat16>();
+  for (int i = 0; i < 2 * 2 * 2; ++i) {
+    // 2^i can be represented exactly in floating point numbers if 'i' is small.
+    slice(i) = static_cast<tf::bfloat16>(1 << i);
+  }
+
+  const int64_t time = 1234;
+  runner_->MutableInputs()->Index(0).packets.push_back(
+      Adopt(tensor.release()).At(Timestamp(time)));
+
+  EXPECT_TRUE(runner_->Run().ok());
+  const std::vector<Packet>& output_packets =
+      runner_->Outputs().Index(0).packets;
+  EXPECT_EQ(1, output_packets.size());
+  EXPECT_EQ(time, output_packets[0].Timestamp().Value());
+  const std::vector<float>& output_vector =
+      output_packets[0].Get<std::vector<float>>();
+  EXPECT_EQ(2 * 2 * 2, output_vector.size());
+  for (int i = 0; i < 2 * 2 * 2; ++i) {
+    const float expected = static_cast<float>(1 << i);
+    EXPECT_EQ(expected, output_vector[i]);
+  }
+}
+
 TEST_F(TensorToVectorFloatCalculatorTest, ConvertsBatchedToVectorVectorFloat) {
   SetUpRunner(true, false);
-  const tf::TensorShape tensor_shape(std::vector<tf::int64>{1, 5});
+  const tf::TensorShape tensor_shape(std::vector<int64_t>{1, 5});
   auto tensor = absl::make_unique<tf::Tensor>(tf::DT_FLOAT, tensor_shape);
   auto slice = tensor->Slice(0, 1).flat<float>();
   for (int i = 0; i < 5; ++i) {
@@ -104,7 +164,7 @@ TEST_F(TensorToVectorFloatCalculatorTest, ConvertsBatchedToVectorVectorFloat) {
 
 TEST_F(TensorToVectorFloatCalculatorTest, FlattenShouldTakeAllDimensions) {
   SetUpRunner(false, true);
-  const tf::TensorShape tensor_shape(std::vector<tf::int64>{2, 2, 2});
+  const tf::TensorShape tensor_shape(std::vector<int64_t>{2, 2, 2});
   auto tensor = absl::make_unique<tf::Tensor>(tf::DT_FLOAT, tensor_shape);
   auto slice = tensor->flat<float>();
   for (int i = 0; i < 2 * 2 * 2; ++i) {
@@ -133,7 +193,7 @@ TEST_F(TensorToVectorFloatCalculatorTest, FlattenShouldTakeAllDimensions) {
 TEST_F(TensorToVectorFloatCalculatorTest, AcceptsUnalignedTensors) {
   SetUpRunner(/*tensor_is_2d=*/false, /*flatten_nd=*/false);
 
-  const tf::TensorShape tensor_shape(std::vector<tf::int64>{2, 5});
+  const tf::TensorShape tensor_shape(std::vector<int64_t>{2, 5});
   tf::Tensor tensor(tf::DT_FLOAT, tensor_shape);
   auto slice = tensor.Slice(1, 1).flat<float>();
   for (int i = 0; i < 5; ++i) {

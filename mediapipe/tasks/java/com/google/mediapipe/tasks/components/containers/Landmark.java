@@ -14,7 +14,11 @@
 
 package com.google.mediapipe.tasks.components.containers;
 
+import android.annotation.TargetApi;
 import com.google.auto.value.AutoValue;
+import com.google.mediapipe.formats.proto.LandmarkProto;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -24,16 +28,42 @@ import java.util.Optional;
  * is to the camera.
  */
 @AutoValue
+@TargetApi(31)
 public abstract class Landmark {
   private static final float TOLERANCE = 1e-6f;
 
+  /** Creates a landmark from x, y, z coordinates. */
   public static Landmark create(float x, float y, float z) {
     return new AutoValue_Landmark(x, y, z, Optional.empty(), Optional.empty());
   }
 
+  /**
+   * Creates a normalized landmark from x, y, z coordinates with optional visibility and presence.
+   */
   public static Landmark create(
       float x, float y, float z, Optional<Float> visibility, Optional<Float> presence) {
     return new AutoValue_Landmark(x, y, z, visibility, presence);
+  }
+
+  /** Creates a landmark from a landmark proto. */
+  public static Landmark createFromProto(LandmarkProto.Landmark landmarkProto) {
+    return Landmark.create(
+        landmarkProto.getX(),
+        landmarkProto.getY(),
+        landmarkProto.getZ(),
+        landmarkProto.hasVisibility()
+            ? Optional.of(landmarkProto.getVisibility())
+            : Optional.empty(),
+        landmarkProto.hasPresence() ? Optional.of(landmarkProto.getPresence()) : Optional.empty());
+  }
+
+  /** Creates a list of landmarks from a {@link LandmarkList}. */
+  public static List<Landmark> createListFromProto(LandmarkProto.LandmarkList landmarkListProto) {
+    List<Landmark> landmarkList = new ArrayList<>();
+    for (LandmarkProto.Landmark landmarkProto : landmarkListProto.getLandmarkList()) {
+      landmarkList.add(createFromProto(landmarkProto));
+    }
+    return landmarkList;
   }
 
   // The x coordinates of the landmark.

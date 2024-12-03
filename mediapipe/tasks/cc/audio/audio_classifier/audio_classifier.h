@@ -16,6 +16,7 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_CC_AUDIO_AUDIO_CLASSIFIER_AUDIO_CLASSIFIER_H_
 #define MEDIAPIPE_TASKS_CC_AUDIO_AUDIO_CLASSIFIER_AUDIO_CLASSIFIER_H_
 
+#include <cstdint>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -165,7 +166,7 @@ class AudioClassifier : tasks::audio::core::BaseAudioTaskApi {
   // into multiple chunks. For this reason, the callback may be called multiple
   // times (once per chunk) for each call to this function.
   absl::Status ClassifyAsync(mediapipe::Matrix audio_block,
-                             double audio_sample_rate, int64 timestamp_ms);
+                             double audio_sample_rate, int64_t timestamp_ms);
 
   // Shuts down the AudioClassifier when all works are done.
   absl::Status Close() { return runner_->Close(); }

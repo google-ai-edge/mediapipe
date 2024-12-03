@@ -95,11 +95,11 @@ class ImageEmbedderGraph : public core::ModelTaskGraph {
  public:
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       SubgraphContext* sc) override {
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         const auto* model_resources,
         CreateModelResources<proto::ImageEmbedderGraphOptions>(sc));
     Graph graph;
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         auto output_streams,
         BuildImageEmbedderTask(
             sc->Options<proto::ImageEmbedderGraphOptions>(), *model_resources,
@@ -137,7 +137,7 @@ class ImageEmbedderGraph : public core::ModelTaskGraph {
         components::processors::DetermineImagePreprocessingGpuBackend(
             task_options.base_options().acceleration());
     MP_RETURN_IF_ERROR(components::processors::ConfigureImagePreprocessingGraph(
-        model_resources, use_gpu,
+        model_resources, use_gpu, task_options.base_options().gpu_origin(),
         &preprocessing.GetOptions<tasks::components::processors::proto::
                                       ImagePreprocessingGraphOptions>()));
     image_in >> preprocessing.In(kImageTag);

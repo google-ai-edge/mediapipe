@@ -109,7 +109,7 @@ class ModelResourcesCalculator : public api2::Node {
             "ModelResourcesCacheService, and the CalculatorOptions has no "
             "'model_file' field to create a local ModelResources.");
       }
-      ASSIGN_OR_RETURN(
+      MP_ASSIGN_OR_RETURN(
           model_resources_,
           ModelResources::Create(
               "", std::make_unique<proto::ExternalFile>(options.model_file())));

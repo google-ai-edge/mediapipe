@@ -17,13 +17,14 @@ package com.google.mediapipe.components;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 
-import android.graphics.Bitmap;
 import android.graphics.SurfaceTexture;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
+import android.opengl.GLES31;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.util.Log;
+import android.util.Pair;
 import com.google.mediapipe.framework.TextureFrame;
 import com.google.mediapipe.glutil.CommonShaders;
 import com.google.mediapipe.glutil.ShaderUtil;
@@ -50,11 +51,9 @@ import javax.microedition.khronos.opengles.GL10;
  * {@link TextureFrame} (call {@link #setNextFrame(TextureFrame)}).
  */
 public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
-  /**
-   * Listener for Bitmap capture requests.
-   */
-  public interface BitmapCaptureListener {
-    void onBitmapCaptured(Bitmap result);
+  /** Listener for image capture requests. */
+  public interface ImageCaptureListener {
+    void onImageCaptured(int width, int height, int[] data);
   }
 
   /**
@@ -85,27 +84,28 @@ public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
   private float[] textureTransformMatrix = new float[16];
   private SurfaceTexture surfaceTexture = null;
   private final AtomicReference<TextureFrame> nextFrame = new AtomicReference<>();
-  private final AtomicBoolean captureNextFrameBitmap = new AtomicBoolean();
-  private BitmapCaptureListener bitmapCaptureListener;
+  private final AtomicBoolean captureNextFrameImage = new AtomicBoolean();
+  private ImageCaptureListener imageCaptureListener;
   // Specifies whether a black CLAMP_TO_BORDER effect should be used.
   private boolean shouldClampToBorder = false;
   private Scale scale = Scale.FILL;
 
-  /**
-   * Sets the {@link BitmapCaptureListener}.
-   */
-  public void setBitmapCaptureListener(BitmapCaptureListener bitmapCaptureListener) {
-    this.bitmapCaptureListener = bitmapCaptureListener;
+  private float zoomFactor = 1.0f;
+  private Pair<Float, Float> zoomLocation = new Pair<>(0.5f, 0.5f);
+
+  /** Sets the {@link ImageCaptureListener}. */
+  public void setImageCaptureListener(ImageCaptureListener imageCaptureListener) {
+    this.imageCaptureListener = imageCaptureListener;
   }
 
   /**
-   * Request to capture Bitmap of the next frame.
+   * Request to capture Image of the next frame.
    *
-   * The result will be provided to the {@link BitmapCaptureListener} if one is set. Please note
+   * <p>The result will be provided to the {@link ImageCaptureListener} if one is set. Please note
    * this is an expensive operation and the result may not be available for a while.
    */
-  public void captureNextFrameBitmap() {
-    captureNextFrameBitmap.set(true);
+  public void captureNextFrameImage() {
+    captureNextFrameImage.set(true);
   }
 
   @Override
@@ -201,28 +201,42 @@ public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
     GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
     ShaderUtil.checkGlError("glDrawArrays");
 
-    // Capture Bitmap if requested.
-    BitmapCaptureListener bitmapCaptureListener = this.bitmapCaptureListener;
-    if (captureNextFrameBitmap.getAndSet(false) && bitmapCaptureListener != null) {
-      int bitmapSize = surfaceWidth * surfaceHeight;
-      ByteBuffer byteBuffer = ByteBuffer.allocateDirect(bitmapSize * 4);
-      byteBuffer.order(ByteOrder.nativeOrder());
-      GLES20.glReadPixels(
-          0, 0, surfaceWidth, surfaceHeight, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, byteBuffer);
-      int[] pixelBuffer = new int[bitmapSize];
-      byteBuffer.asIntBuffer().get(pixelBuffer);
-      for (int i = 0; i < bitmapSize; i++) {
-        // Swap R and B channels.
-        pixelBuffer[i] =
-            (pixelBuffer[i] & 0xff00ff00)
-                | ((pixelBuffer[i] & 0x000000ff) << 16)
-                | ((pixelBuffer[i] & 0x00ff0000) >> 16);
+    // Capture image if requested.
+    ImageCaptureListener imageCaptureListener = this.imageCaptureListener;
+    if (captureNextFrameImage.getAndSet(false) && imageCaptureListener != null) {
+      // Find the name of the bound texture.
+      int[] texName = new int[1];
+      if (surfaceTexture != null) {
+        GLES20.glGetIntegerv(GLES11Ext.GL_TEXTURE_BINDING_EXTERNAL_OES, texName, 0);
+      } else {
+        texName[0] = frame.getTextureName();
       }
-      Bitmap bitmap = Bitmap.createBitmap(surfaceWidth, surfaceHeight, Bitmap.Config.ARGB_8888);
-      bitmap.setPixels(
-          pixelBuffer, /* offset= */bitmapSize - surfaceWidth, /* stride= */-surfaceWidth,
-          /* x= */0, /* y= */0, surfaceWidth, surfaceHeight);
-      bitmapCaptureListener.onBitmapCaptured(bitmap);
+
+      // Find texture size and create byte buffer large enough to hold an RGBA image.
+      int[] texDims = new int[2];
+      GLES31.glGetTexLevelParameteriv(textureTarget, 0, GLES31.GL_TEXTURE_WIDTH, texDims, 0);
+      GLES31.glGetTexLevelParameteriv(textureTarget, 0, GLES31.GL_TEXTURE_HEIGHT, texDims, 1);
+      int texWidth = texDims[0];
+      int texHeight = texDims[1];
+      int imageSize = texWidth * texHeight;
+      ByteBuffer byteBuffer = ByteBuffer.allocateDirect(imageSize * 4);
+      byteBuffer.order(ByteOrder.nativeOrder());
+
+      // Read pixels from texture.
+      int[] fbo = new int[1];
+      GLES20.glGenFramebuffers(1, fbo, 0);
+      GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, fbo[0]);
+      GLES20.glFramebufferTexture2D(
+          GLES20.GL_FRAMEBUFFER, GLES20.GL_COLOR_ATTACHMENT0, GLES20.GL_TEXTURE_2D, texName[0], 0);
+      GLES20.glReadPixels(
+          0, 0, texWidth, texHeight, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, byteBuffer);
+      GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
+      GLES20.glDeleteFramebuffers(1, fbo, 0);
+      ShaderUtil.checkGlError("capture frame");
+
+      int[] data = new int[imageSize];
+      byteBuffer.asIntBuffer().get(data);
+      imageCaptureListener.onImageCaptured(texWidth, texHeight, data);
     }
 
     GLES20.glBindTexture(textureTarget, 0);
@@ -260,6 +274,15 @@ public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
     float textureRight = textureLeft + scaleWidth;
     float textureBottom = (1.0f - scaleHeight) * alignmentVertical;
     float textureTop = textureBottom + scaleHeight;
+
+    Pair<Float, Float> currentZoomLocation = this.zoomLocation;
+    float zoomLocationX = currentZoomLocation.first;
+    float zoomLocationY = currentZoomLocation.second;
+
+    textureLeft = (textureLeft - 0.5f) / zoomFactor + zoomLocationX;
+    textureRight = (textureRight - 0.5f) / zoomFactor + zoomLocationX;
+    textureBottom = (textureBottom - 0.5f) / zoomFactor + zoomLocationY;
+    textureTop = (textureTop - 0.5f) / zoomFactor + zoomLocationY;
 
     return new float[] {textureLeft, textureRight, textureBottom, textureTop};
   }
@@ -345,6 +368,22 @@ public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
   /** {@link Scale} option to use when frame and view have different aspect ratios. */
   public void setScale(Scale scale) {
     this.scale = scale;
+  }
+
+  /** Zoom factor applied to the frame, must not be 0. */
+  public void setZoomFactor(float zoomFactor) {
+    if (zoomFactor == 0.f) {
+      return;
+    }
+    this.zoomFactor = zoomFactor;
+  }
+
+  /**
+   * Location where to apply the zooming of the frame to. Default is 0.5, 0.5 (scaling is applied to
+   * the center).
+   */
+  public void setZoomLocation(float zoomLocationX, float zoomLocationY) {
+    this.zoomLocation = new Pair<>(zoomLocationX, zoomLocationY);
   }
 
   private boolean isExternalTexture() {

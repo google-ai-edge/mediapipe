@@ -14,8 +14,8 @@
 #
 
 load("@bazel_skylib//lib:selects.bzl", "selects")
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 load("//mediapipe/framework:mediapipe_register_type.bzl", "mediapipe_register_type")
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 
 package(
     default_visibility = ["//visibility:public"],
@@ -104,7 +104,7 @@ cc_library(
     srcs = ["deleting_file.cc"],
     hdrs = ["deleting_file.h"],
     deps = [
-        "//mediapipe/framework/port:logging",
+        "@com_google_absl//absl/log:absl_log",
     ],
 )
 
@@ -119,7 +119,18 @@ cc_library(
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/log:absl_check",
         "@eigen_archive//:eigen3",
+    ],
+)
+
+cc_library(
+    name = "ahwb_view",
+    hdrs = ["ahwb_view.h"],
+    deps = [
+        ":hardware_buffer",
+        "//mediapipe/framework:port",
+        "//mediapipe/gpu:gpu_buffer_storage",
     ],
 )
 
@@ -146,6 +157,41 @@ cc_library(
 )
 
 cc_library(
+    name = "hardware_buffer",
+    srcs = ["hardware_buffer_android.cc"],
+    hdrs = ["hardware_buffer.h"],
+    linkopts = select({
+        "//conditions:default": [],
+        # Option for vendor binaries to avoid linking libandroid.so.
+        "//mediapipe/framework:android_no_jni": [],
+        "//mediapipe:android": ["-landroid"],
+        ":android_link_native_window": [
+            "-lnativewindow",  # Provides <android/hardware_buffer.h> to vendor binaries on Android API >= 26.
+        ],
+    }),
+    visibility = [
+        "//mediapipe/framework:__pkg__",
+        "//mediapipe/gpu:__pkg__",
+    ],
+    deps = [
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:statusor",
+        "@com_google_absl//absl/log:absl_check",
+    ],
+)
+
+cc_library(
+    name = "hardware_buffer_pool",
+    hdrs = ["hardware_buffer_pool.h"],
+    visibility = ["//mediapipe/framework:__pkg__"],
+    deps = [
+        ":hardware_buffer",
+        "//mediapipe/gpu:multi_pool",
+        "//mediapipe/gpu:reusable_pool",
+    ],
+)
+
+cc_library(
     name = "image_frame",
     srcs = ["image_frame.cc"],
     hdrs = ["image_frame.h"],
@@ -155,11 +201,12 @@ cc_library(
         "//mediapipe/framework/port:aligned_malloc_and_free",
         "//mediapipe/framework/port:core_proto",
         "//mediapipe/framework/port:integral_types",
-        "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:source_location",
         "//mediapipe/framework/tool:type_util",
         "@com_google_absl//absl/base",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ] + select({
@@ -206,7 +253,6 @@ cc_library(
         "//mediapipe/framework/formats/annotation:locus_cc_proto",
         "//mediapipe/framework/formats/annotation:rasterization_cc_proto",
         "//mediapipe/framework/port:integral_types",
-        "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:point",
         "//mediapipe/framework/port:rectangle",
         "//mediapipe/framework/port:ret_check",
@@ -214,6 +260,8 @@ cc_library(
         "//mediapipe/framework/port:statusor",
         "//mediapipe/framework/tool:status_util",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
         "@com_google_protobuf//:protobuf",
@@ -234,6 +282,7 @@ cc_library(
         ":location",
         "//mediapipe/framework/formats/annotation:rasterization_cc_proto",
         "//mediapipe/framework/port:opencv_imgproc",
+        "@com_google_absl//absl/log:absl_log",
     ],
     alwayslink = 1,
 )
@@ -246,6 +295,24 @@ cc_test(
         "//mediapipe/framework/formats/annotation:rasterization_cc_proto",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:rectangle",
+    ],
+)
+
+cc_library(
+    name = "unique_fd",
+    hdrs = ["unique_fd.h"],
+    deps = [
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/log:absl_log",
+    ],
+)
+
+cc_test(
+    name = "unique_fd_test",
+    srcs = ["unique_fd_test.cc"],
+    deps = [
+        ":unique_fd",
+        "//mediapipe/framework/port:gtest_main",
     ],
 )
 
@@ -339,6 +406,7 @@ cc_library(
         "//mediapipe/framework/port:logging",
         "//mediapipe/gpu:gpu_buffer",
         "//mediapipe/gpu:gpu_buffer_format",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/synchronization",
     ] + select({
         "//conditions:default": [
@@ -363,6 +431,7 @@ cc_library(
         ":image_frame_pool",
         "//mediapipe/framework:port",
         "//mediapipe/framework/port:logging",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/synchronization",
     ] + select({
@@ -400,6 +469,7 @@ cc_library(
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:statusor",
+        "@com_google_absl//absl/log:absl_check",
     ],
 )
 
@@ -427,10 +497,26 @@ cc_test(
     ],
 )
 
+# Used by vendor processes that don't have access to libandroid.so, but want to use AHardwareBuffer.
+config_setting(
+    name = "android_link_native_window",
+    define_values = {
+        "MEDIAPIPE_ANDROID_LINK_NATIVE_WINDOW": "1",
+        "MEDIAPIPE_NO_JNI": "1",
+    },
+    values = {"crosstool_top": "//external:android/crosstool"},
+    visibility = ["//mediapipe/framework:__pkg__"],
+)
+
 cc_library(
     name = "tensor",
     srcs =
-        [
+        select({
+            "//mediapipe/gpu/webgpu:use_webgpu": [
+                "//mediapipe/gpu/webgpu:tensor_webgpu_texture_view.cc",
+            ],
+            "//conditions:default": [],
+        }) + [
             "tensor.cc",
             "tensor_ahwb.cc",
         ],
@@ -438,7 +524,7 @@ cc_library(
         "tensor.h",
         "//mediapipe/framework/formats/tensor:internal.h",
     ] + select({
-        "//mediapipe:ios": ["tensor_mtl_buffer_view.h"],
+        "//mediapipe:apple": ["tensor_mtl_buffer_view.h"],
         "//conditions:default": [],
     }),
     copts = select({
@@ -448,30 +534,59 @@ cc_library(
         ],
         "//conditions:default": [],
     }),
-    defines = select({
-        "//mediapipe/framework:android_no_jni": ["MEDIAPIPE_NO_JNI"],
-        "//conditions:default": [],
-    }),
     linkopts = select({
-        "//mediapipe:ios": [
+        "//mediapipe:apple": [
             "-framework CoreVideo",
             "-framework MetalKit",
         ],
         "//conditions:default": [],
+        # Option for vendor binaries to avoid linking libandroid.so.
         "//mediapipe/framework:android_no_jni": [],
-        "//mediapipe:android": [
-            "-landroid",
-        ],
+        "//mediapipe/gpu/webgpu:use_webgpu_emscripten": ["-sUSE_WEBGPU=1"],
     }),
     deps = [
+        "//mediapipe/framework:memory_manager",
         "//mediapipe/framework:port",
-        "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/deps:no_destructor",
+        "//mediapipe/framework/port:aligned_malloc_and_free",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/gpu/webgpu:webgpu_check",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/functional:any_invocable",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
     ] + select({
         "//mediapipe/gpu:disable_gpu": [],
+        "//mediapipe/gpu/webgpu:use_webgpu": [
+            "//mediapipe/gpu:gl_base",
+            "//mediapipe/gpu:gl_context",
+            "//mediapipe/gpu/webgpu:webgpu_service",
+            "//mediapipe/gpu/webgpu:webgpu_utils",
+        ],
         "//conditions:default": [
+            "//mediapipe/gpu:gl_base",
+            "//mediapipe/gpu:gl_context",
+        ],
+        "//mediapipe:android": [
+            ":hardware_buffer",
+            ":hardware_buffer_pool",
+            ":tensor_ahwb_usage",
+            ":unique_fd",
+            "//mediapipe/gpu:gl_base",
+            "//mediapipe/gpu:gl_context",
+        ],
+        ":android_link_native_window": [
+            ":hardware_buffer",
+            ":hardware_buffer_pool",
+            ":tensor_ahwb_usage",
+            ":unique_fd",
             "//mediapipe/gpu:gl_base",
             "//mediapipe/gpu:gl_context",
         ],
@@ -481,7 +596,10 @@ cc_library(
 cc_test(
     name = "tensor_test",
     srcs = ["tensor_test.cc"],
-    tags = ["not_run:arm"],
+    tags = [
+        "noasan",
+        "not_run:arm",  # TODO: Remove noasan tag when SwiftShader supports sanitizers
+    ],
     deps = [
         ":tensor",
         "//mediapipe/framework/port:gtest_main",
@@ -500,8 +618,45 @@ cc_library(
     hdrs = ["frame_buffer.h"],
     deps = [
         "//mediapipe/framework/port:integral_types",
-        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
+    ],
+)
+
+mediapipe_proto_library(
+    name = "body_rig_proto",
+    srcs = ["body_rig.proto"],
+)
+
+mediapipe_register_type(
+    base_name = "body_rig",
+    include_headers = ["mediapipe/framework/formats/body_rig.pb.h"],
+    types = [
+        "::mediapipe::Joint",
+        "::mediapipe::JointList",
+        "::std::vector<::mediapipe::JointList>",
+    ],
+    deps = [":body_rig_cc_proto"],
+)
+
+cc_library(
+    name = "tensor_ahwb_usage",
+    srcs = ["tensor_ahwb_usage.cc"],
+    hdrs = ["tensor_ahwb_usage.h"],
+    deps = [
+        "//mediapipe/framework/port",
+        "@com_google_absl//absl/functional:any_invocable",
+        "@com_google_absl//absl/log:absl_log",
+    ],
+)
+
+cc_test(
+    name = "tensor_ahwb_usage_test",
+    srcs = ["tensor_ahwb_usage_test.cc"],
+    deps = [
+        ":tensor_ahwb_usage",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:status",
     ],
 )

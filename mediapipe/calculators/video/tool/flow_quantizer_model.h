@@ -17,9 +17,10 @@
 #ifndef MEDIAPIPE_CALCULATORS_VIDEO_TOOL_FLOW_QUANTIZER_MODEL_H_
 #define MEDIAPIPE_CALCULATORS_VIDEO_TOOL_FLOW_QUANTIZER_MODEL_H_
 
+#include <cstdint>
+
 #include "mediapipe/calculators/video/tool/flow_quantizer_model.pb.h"
 #include "mediapipe/framework/formats/motion/optical_flow_field.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/tool/status_util.h"
 
 namespace mediapipe {
@@ -29,7 +30,7 @@ class FlowQuantizerModel {
   // Initializes the model proto.
   void Init();
   // Quantizes flow field with the model.
-  uint8 Apply(const float val, const int channel) const;
+  uint8_t Apply(const float val, const int channel) const;
   // Loads model from proto.
   void LoadFromProto(const QuantizerModelData& data);
   // Gets proto from model.

@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#include <memory>
 #include <string_view>
 #include <utility>
 
@@ -27,6 +28,7 @@ limitations under the License.
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/tasks/cc/core/mediapipe_builtin_op_resolver.h"
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
+#include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
 #include "mediapipe/tasks/cc/vision/face_landmarker/proto/face_blendshapes_graph_options.pb.h"
 #include "tensorflow/lite/test_util.h"
@@ -102,7 +104,7 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateTaskRunner() {
       graph[Output<ClassificationList>(kBlendshapesTag)];
 
   return TaskRunner::Create(
-      graph.GetConfig(), absl::make_unique<core::MediaPipeBuiltinOpResolver>());
+      graph.GetConfig(), std::make_unique<core::MediaPipeBuiltinOpResolver>());
 }
 
 class FaceBlendshapesTest : public tflite::testing::Test {};

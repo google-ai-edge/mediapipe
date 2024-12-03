@@ -98,8 +98,8 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
       options->mutable_face_landmarker_graph_options()
           ->mutable_face_detector_graph_options();
   if (!face_detector_graph_options->base_options().has_model_asset()) {
-    ASSIGN_OR_RETURN(const auto face_detector_file,
-                     resources.GetFile(kFaceDetectorTFLiteName));
+    MP_ASSIGN_OR_RETURN(const auto face_detector_file,
+                        resources.GetFile(kFaceDetectorTFLiteName));
     SetExternalFile(face_detector_file,
                     face_detector_graph_options->mutable_base_options()
                         ->mutable_model_asset(),
@@ -108,15 +108,13 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
   face_detector_graph_options->mutable_base_options()
       ->mutable_acceleration()
       ->CopyFrom(options->base_options().acceleration());
-  face_detector_graph_options->mutable_base_options()->set_use_stream_mode(
-      options->base_options().use_stream_mode());
   auto* face_landmarks_detector_graph_options =
       options->mutable_face_landmarker_graph_options()
           ->mutable_face_landmarks_detector_graph_options();
   if (!face_landmarks_detector_graph_options->base_options()
            .has_model_asset()) {
-    ASSIGN_OR_RETURN(const auto face_landmarks_detector_file,
-                     resources.GetFile(kFaceLandmarksDetectorTFLiteName));
+    MP_ASSIGN_OR_RETURN(const auto face_landmarks_detector_file,
+                        resources.GetFile(kFaceLandmarksDetectorTFLiteName));
     SetExternalFile(
         face_landmarks_detector_file,
         face_landmarks_detector_graph_options->mutable_base_options()
@@ -130,8 +128,8 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
       ->set_use_stream_mode(options->base_options().use_stream_mode());
 
   if (face_stylizer_external_file) {
-    ASSIGN_OR_RETURN(const auto face_stylizer_file,
-                     resources.GetFile(kFaceStylizerTFLiteName));
+    MP_ASSIGN_OR_RETURN(const auto face_stylizer_file,
+                        resources.GetFile(kFaceStylizerTFLiteName));
     SetExternalFile(face_stylizer_file, face_stylizer_external_file, is_copy);
   }
   return absl::OkStatus();
@@ -235,7 +233,7 @@ class FaceStylizerGraph : public core::ModelTaskGraph {
     bool output_alignment = HasOutput(sc->OriginalNode(), kFaceAlignmentTag);
     auto face_stylizer_external_file = absl::make_unique<ExternalFile>();
     if (sc->Options<FaceStylizerGraphOptions>().has_base_options()) {
-      ASSIGN_OR_RETURN(
+      MP_ASSIGN_OR_RETURN(
           const auto* model_asset_bundle_resources,
           CreateModelAssetBundleResources<FaceStylizerGraphOptions>(sc));
       // Copies the file content instead of passing the pointer of file in
@@ -254,7 +252,7 @@ class FaceStylizerGraph : public core::ModelTaskGraph {
           MediaPipeTasksStatus::kInvalidArgumentError);
     }
     Graph graph;
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         auto face_landmark_lists,
         BuildFaceLandmarkerGraph(
             sc->MutableOptions<FaceStylizerGraphOptions>()
@@ -263,12 +261,12 @@ class FaceStylizerGraph : public core::ModelTaskGraph {
             graph[Input<NormalizedRect>::Optional(kNormRectTag)], graph));
     const ModelResources* face_stylizer_model_resources = nullptr;
     if (output_stylized) {
-      ASSIGN_OR_RETURN(
+      MP_ASSIGN_OR_RETURN(
           const auto* model_resources,
           CreateModelResources(sc, std::move(face_stylizer_external_file)));
       face_stylizer_model_resources = model_resources;
     }
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         auto output_streams,
         BuildFaceStylizerGraph(sc->Options<FaceStylizerGraphOptions>(),
                                face_stylizer_model_resources, output_alignment,
@@ -397,7 +395,7 @@ class FaceStylizerGraph : public core::ModelTaskGraph {
         components::processors::DetermineImagePreprocessingGpuBackend(
             task_options.base_options().acceleration());
     MP_RETURN_IF_ERROR(components::processors::ConfigureImagePreprocessingGraph(
-        *model_resources, use_gpu,
+        *model_resources, use_gpu, task_options.base_options().gpu_origin(),
         &preprocessing.GetOptions<tasks::components::processors::proto::
                                       ImagePreprocessingGraphOptions>()));
     auto& image_to_tensor_options =

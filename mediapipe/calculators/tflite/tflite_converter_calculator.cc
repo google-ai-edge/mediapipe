@@ -15,6 +15,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/log/absl_check.h"
 #include "mediapipe/calculators/tflite/tflite_converter_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_frame.h"
@@ -94,7 +95,7 @@ struct GPUData {
 // into a TfLiteTensor (float 32) or a GpuBuffer to a tflite::gpu::GlBuffer
 // or MTLBuffer.
 //
-// This calculator is designed to be used with the TfLiteInferenceCalcualtor,
+// This calculator is designed to be used with the TfLiteInferenceCalculator,
 // as a pre-processing step for calculator inputs.
 //
 // IMAGE and IMAGE_GPU inputs are normalized to [-1,1] (default) or [0,1],
@@ -643,7 +644,7 @@ absl::Status TfLiteConverterCalculator::LoadOptions(CalculatorContext* cc) {
   if (options.has_output_tensor_float_range()) {
     output_range_.emplace(options.output_tensor_float_range().min(),
                           options.output_tensor_float_range().max());
-    CHECK_GT(output_range_->second, output_range_->first);
+    ABSL_CHECK_GT(output_range_->second, output_range_->first);
   }
 
   // Custom div and sub values.
@@ -661,9 +662,9 @@ absl::Status TfLiteConverterCalculator::LoadOptions(CalculatorContext* cc) {
 
   // Get desired way to handle input channels.
   max_num_channels_ = options.max_num_channels();
-  CHECK_GE(max_num_channels_, 1);
-  CHECK_LE(max_num_channels_, 4);
-  CHECK_NE(max_num_channels_, 2);
+  ABSL_CHECK_GE(max_num_channels_, 1);
+  ABSL_CHECK_LE(max_num_channels_, 4);
+  ABSL_CHECK_NE(max_num_channels_, 2);
 #if defined(MEDIAPIPE_IOS)
   if (cc->Inputs().HasTag(kGpuBufferTag))
     // Currently on iOS, tflite gpu input tensor must be 4 channels,

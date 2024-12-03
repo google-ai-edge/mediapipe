@@ -136,7 +136,7 @@ class MPMaskTestContext {
       shaderContext: MPImageShaderContext, input: MaskType, width: number,
       height: number): MPMask {
     return new MPMask(
-        [input],
+        [input], /* interpolateValues= */ false,
         /* ownsWebGLTexture= */ false, context.canvas, shaderContext, width,
         height);
   }
@@ -182,7 +182,7 @@ class MPMaskTestContext {
 
     const shaderContext = new MPImageShaderContext();
     const mask = new MPMask(
-        [context.webGLTexture],
+        [context.webGLTexture], /* interpolateValues= */ false,
         /* ownsWebGLTexture= */ false, context.canvas, shaderContext, WIDTH,
         HEIGHT);
 
@@ -196,7 +196,7 @@ class MPMaskTestContext {
 
     const shaderContext = new MPImageShaderContext();
     const mask = new MPMask(
-        [context.webGLTexture],
+        [context.webGLTexture], /* interpolateValues= */ false,
         /* ownsWebGLTexture= */ false, context.canvas, shaderContext, WIDTH,
         HEIGHT);
 

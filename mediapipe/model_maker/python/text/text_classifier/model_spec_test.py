@@ -42,8 +42,8 @@ class ModelSpecTest(tf.test.TestCase):
   def test_predefined_bert_spec(self):
     model_spec_obj = ms.SupportedModels.MOBILEBERT_CLASSIFIER.value()
     self.assertIsInstance(model_spec_obj, ms.BertClassifierSpec)
-    self.assertEqual(model_spec_obj.name, 'MobileBert')
-    self.assertTrue(os.path.exists(model_spec_obj.downloaded_files.get_path()))
+    self.assertEqual(model_spec_obj.name, 'MobileBERT')
+    self.assertTrue(model_spec_obj.files)
     self.assertTrue(model_spec_obj.do_lower_case)
     self.assertEqual(
         model_spec_obj.tflite_input_name,

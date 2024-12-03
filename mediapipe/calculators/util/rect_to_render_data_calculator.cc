@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "absl/log/absl_check.h"
 #include "mediapipe/calculators/util/rect_to_render_data_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/rect.pb.h"
@@ -41,8 +42,8 @@ RenderAnnotation::Rectangle* NewRect(
   annotation->set_thickness(options.thickness());
 
   if (options.has_top_left_thickness()) {
-    CHECK(!options.oval());
-    CHECK(!options.filled());
+    ABSL_CHECK(!options.oval());
+    ABSL_CHECK(!options.filled());
     annotation->mutable_rectangle()->set_top_left_thickness(
         options.top_left_thickness());
   }

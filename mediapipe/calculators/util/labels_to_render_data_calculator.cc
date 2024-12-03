@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/log/absl_check.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/calculators/util/labels_to_render_data_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -114,7 +115,8 @@ absl::Status LabelsToRenderDataCalculator::Process(CalculatorContext* cc) {
     video_height_ = video_header.height;
     return absl::OkStatus();
   } else {
-    CHECK_EQ(options_.location(), LabelsToRenderDataCalculatorOptions::TOP_LEFT)
+    ABSL_CHECK_EQ(options_.location(),
+                  LabelsToRenderDataCalculatorOptions::TOP_LEFT)
         << "Only TOP_LEFT is supported without VIDEO_PRESTREAM.";
   }
 
@@ -144,7 +146,7 @@ absl::Status LabelsToRenderDataCalculator::Process(CalculatorContext* cc) {
     if (cc->Inputs().HasTag(kScoresTag)) {
       std::vector<float> score_vector =
           cc->Inputs().Tag(kScoresTag).Get<std::vector<float>>();
-      CHECK_EQ(label_vector.size(), score_vector.size());
+      ABSL_CHECK_EQ(label_vector.size(), score_vector.size());
       scores.resize(label_vector.size());
       for (int i = 0; i < label_vector.size(); ++i) {
         scores[i] = score_vector[i];

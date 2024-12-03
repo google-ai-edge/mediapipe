@@ -138,7 +138,7 @@ Create a `BUILD` file in the `$APPLICATION_PATH` and add the following build
 rules:
 
 ```
-MIN_IOS_VERSION = "11.0"
+MIN_IOS_VERSION = "12.0"
 
 load(
     "@build_bazel_rules_apple//apple:ios.bzl",

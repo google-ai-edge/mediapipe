@@ -48,7 +48,17 @@ class CSVParameters:
 
 
 class Dataset(classification_dataset.ClassificationDataset):
-  """Dataset library for text classifier."""
+  """Dataset library for text classifier.
+
+  Attributes:
+    tfrecord_cache_files: TFRecordCacheFiles object for caching the dataset.
+    has_label_mask: Whether the dataset has a label mask. If True, then the
+      underlying dataset is expected to have (text, label, mask) for each
+      example. Otherwise the default format for the dataset is (text, label).
+    label_shape: Shape of the label_feature and mask_feature(if specified).
+      Defaults to 1 for id-based labels, but should be num_classes if data is
+      ono-hot encoded.
+  """
 
   def __init__(
       self,
@@ -56,6 +66,8 @@ class Dataset(classification_dataset.ClassificationDataset):
       label_names: List[str],
       tfrecord_cache_files: Optional[cache_files_lib.TFRecordCacheFiles] = None,
       size: Optional[int] = None,
+      has_label_mask: bool = False,
+      label_shape: int = 1,
   ):
     super().__init__(dataset, label_names, size)
     if not tfrecord_cache_files:
@@ -63,6 +75,8 @@ class Dataset(classification_dataset.ClassificationDataset):
           cache_prefix_filename="tfrecord", num_shards=1
       )
     self.tfrecord_cache_files = tfrecord_cache_files
+    self.has_label_mask = has_label_mask
+    self.label_shape = label_shape
 
   @classmethod
   def from_csv(

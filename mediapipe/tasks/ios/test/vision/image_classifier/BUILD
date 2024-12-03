@@ -1,11 +1,11 @@
 load("@build_bazel_rules_apple//apple:ios.bzl", "ios_unit_test")
 load(
-    "//mediapipe/framework/tool:ios.bzl",
-    "MPP_TASK_MINIMUM_OS_VERSION",
-)
-load(
     "@org_tensorflow//tensorflow/lite:special_rules.bzl",
     "tflite_ios_lab_runner",
+)
+load(
+    "//mediapipe/framework/tool:ios.bzl",
+    "MPP_TASK_MINIMUM_OS_VERSION",
 )
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
@@ -26,7 +26,7 @@ TFL_DISABLED_SANITIZER_TAGS = [
 
 objc_library(
     name = "MPPImageClassifierObjcTestLibrary",
-    testonly = 1,
+    testonly = True,
     srcs = ["MPPImageClassifierTests.m"],
     copts = [
         "-ObjC++",
@@ -41,6 +41,7 @@ objc_library(
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/test/vision/utils:MPPImageTestUtils",
         "//mediapipe/tasks/ios/vision/image_classifier:MPPImageClassifier",
+        "//third_party/apple_frameworks:XCTest",
     ] + select({
         "//third_party:opencv_ios_sim_arm64_source_build": ["@ios_opencv_source//:opencv_xcframework"],
         "//third_party:opencv_ios_arm64_source_build": ["@ios_opencv_source//:opencv_xcframework"],

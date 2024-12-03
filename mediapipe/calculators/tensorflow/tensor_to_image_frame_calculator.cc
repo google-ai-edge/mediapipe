@@ -14,6 +14,7 @@
 
 #include <iostream>
 
+#include "absl/log/absl_check.h"
 #include "mediapipe/calculators/tensorflow/tensor_to_image_frame_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_frame.h"
@@ -99,7 +100,7 @@ absl::Status TensorToImageFrameCalculator::Process(CalculatorContext* cc) {
   const tf::Tensor& input_tensor = cc->Inputs().Tag(kTensor).Get<tf::Tensor>();
   int32_t depth = 1;
   if (input_tensor.dims() != 2) {  // Depth is 1 for 2D tensors.
-    CHECK(3 == input_tensor.dims())
+    ABSL_CHECK(3 == input_tensor.dims())
         << "Only 2 or 3-D Tensors can be converted to frames. Instead got: "
         << input_tensor.dims();
     depth = input_tensor.dim_size(2);
