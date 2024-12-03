@@ -15,9 +15,11 @@
 #ifndef MEDIAPIPE_FRAMEWORK_FORMATS_YUV_IMAGE_H_
 #define MEDIAPIPE_FRAMEWORK_FORMATS_YUV_IMAGE_H_
 
+#include <algorithm>
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <utility>
 
 #include "libyuv/video_common.h"
 
@@ -121,8 +123,24 @@ class YUVImage {
   // YUVImage is neither copyable nor movable.
   YUVImage(const YUVImage&) = delete;
   YUVImage& operator=(const YUVImage&) = delete;
-  YUVImage(YUVImage&&) = delete;
-  YUVImage& operator=(YUVImage&&) = delete;
+  YUVImage(YUVImage&& b) { *this = std::move(b); }
+
+  YUVImage& operator=(YUVImage&& b) {
+    if (this != &b) {
+      Clear();
+      deallocation_function_ = std::exchange(b.deallocation_function_, nullptr);
+      fourcc_ = std::exchange(b.fourcc_, libyuv::FOURCC_ANY);
+      std::swap_ranges(data_, data_ + kMaxNumPlanes, b.data_);
+      std::swap_ranges(stride_, stride_ + kMaxNumPlanes, b.stride_);
+      width_ = std::exchange(b.width_, 0);
+      height_ = std::exchange(b.height_, 0);
+      bit_depth_ = std::exchange(b.bit_depth_, 0);
+      matrix_coefficients_ = std::exchange(
+          b.matrix_coefficients_, COLOR_MATRIX_COEFFICIENTS_UNSPECIFIED);
+      full_range_ = std::exchange(b.full_range_, false);
+    }
+    return *this;
+  }
 
   // Convenience constructor
   YUVImage(libyuv::FourCC fourcc,                     //
