@@ -120,7 +120,7 @@ class YUVImage {
   YUVImage() = default;
   ~YUVImage() { Clear(); }
 
-  // YUVImage is neither copyable nor movable.
+  // YUVImage is move-only.
   YUVImage(const YUVImage&) = delete;
   YUVImage& operator=(const YUVImage&) = delete;
   YUVImage(YUVImage&& b) { *this = std::move(b); }
