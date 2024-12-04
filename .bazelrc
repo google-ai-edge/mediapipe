@@ -124,3 +124,8 @@ build --define=PYTHON_DISABLE=1
 build --cxxopt=-DPYTHON_DISABLE=1
 
 build --cxxopt=-DOVMS_DUMP_TO_FILE=0
+# those below are required for XNNPACK build with gcc <12 (ubuntu 22 default is 11)
+build --define=xnn_enable_avxvnniint8=false
+build --define=xnn_enable_avx512fp16=false
+build --define=xnn_enable_avx512amx=false
+build  --repo_env=HERMETIC_PYTHON_VERSION=3.10
