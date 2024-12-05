@@ -18,10 +18,10 @@
 #include <sstream>
 
 #include "absl/log/absl_log.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/match.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/statusor.h"
 #include "mediapipe/util/resource_util.h"
 
 namespace mediapipe {
@@ -55,7 +55,8 @@ absl::Status DefaultGetResourceContents(const std::string& path,
 }
 }  // namespace internal
 
-absl::StatusOr<std::string> PathToResourceAsFile(const std::string& path) {
+absl::StatusOr<std::string> PathToResourceAsFile(const std::string& path,
+                                                 bool /*shadow_copy*/) {
   // Return full path.
   if (absl::StartsWith(path, "/")) {
     return path;
