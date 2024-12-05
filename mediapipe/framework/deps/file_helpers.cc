@@ -19,9 +19,6 @@
 #ifdef _WIN32
 #include <Windows.h>
 #include <direct.h>
-
-#include <codecvt>
-#include <locale>
 #else
 #include <dirent.h>
 #endif  // _WIN32
