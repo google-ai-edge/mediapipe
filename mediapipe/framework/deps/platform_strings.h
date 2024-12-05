@@ -14,6 +14,8 @@
 
 #ifndef MEDIAPIPE_DEPS_PLATFORM_STRINGS_H_
 #define MEDIAPIPE_DEPS_PLATFORM_STRINGS_H_
+#include <codecvt>
+#include <locale>
 #include <string>
 
 namespace mediapipe {
