@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MEDIAPIPE_DEPS_FILE_HELPERS_H_
-#define MEDIAPIPE_DEPS_FILE_HELPERS_H_
+#ifndef MEDIAPIPE_FRAMEWORK_DEPS_FILE_HELPERS_H_
+#define MEDIAPIPE_FRAMEWORK_DEPS_FILE_HELPERS_H_
 
+#include "absl/status/status.h"
 #include "absl/strings/match.h"
-#include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
 namespace file {
@@ -46,4 +46,4 @@ absl::Status RecursivelyCreateDir(absl::string_view path);
 }  // namespace file
 }  // namespace mediapipe
 
-#endif  // MEDIAPIPE_DEPS_FILE_HELPERS_H_
+#endif  // MEDIAPIPE_FRAMEWORK_DEPS_FILE_HELPERS_H_
