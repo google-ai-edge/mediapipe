@@ -1,6 +1,6 @@
 #include "mediapipe/framework/api2/builder.h"
 
-#include <functional>
+#include <vector>
 
 #include "absl/strings/string_view.h"
 #include "absl/strings/substitute.h"
@@ -901,6 +901,20 @@ TEST(CastTest, FromAnyToAny) {
 
   [[maybe_unused]] Stream<AnyType> any_dest = int_inp.Cast<AnyType>();
   [[maybe_unused]] Stream<int> int_dest = any_inp.Cast<int>();
+}
+
+TEST(BuilderTest, CrashWithUsefulMessageIfSkippingInputSource) {
+  Graph graph;
+
+  auto& multi_node = graph.AddNode("MultiInputsOutputs");
+  Stream<AnyType> base = graph.In("IN").SetName("base");
+  // We only connect to the second input. Missing source for input stream at
+  // index 0.
+  base >> multi_node.In(1);
+
+  EXPECT_DEATH(graph.GetConfig(),
+               testing::HasSubstr("MultiInputsOutputs: Missing source for "
+                                  "input stream with tag (empty) at index 0"));
 }
 
 }  // namespace
