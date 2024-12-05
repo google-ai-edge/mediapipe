@@ -14,8 +14,6 @@
 
 #include "mediapipe/framework/deps/file_helpers.h"
 
-#include "absl/strings/str_cat.h"
-
 #ifdef _WIN32
 #include <Windows.h>
 #include <direct.h>
@@ -30,12 +28,10 @@
 #include <string>
 
 #include "absl/status/status.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/deps/platform_strings.h"  // IWYU pragma: keep
-#include "mediapipe/framework/port/canonical_errors.h"
-#include "mediapipe/framework/port/status.h"
-#include "mediapipe/framework/port/status_builder.h"
 #include "mediapipe/framework/port/status_macros.h"
 
 namespace mediapipe {
@@ -151,8 +147,7 @@ absl::Status GetContents(absl::string_view path, std::string* output,
                          bool read_as_binary) {
   FILE* fp = fopen(std::string(path).c_str(), read_as_binary ? "rb" : "r");
   if (fp == NULL) {
-    return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
-           << "Can't find file: " << path;
+    return absl::InvalidArgumentError(absl::StrCat("Can't find file: ", path));
   }
 
   output->clear();
@@ -160,8 +155,8 @@ absl::Status GetContents(absl::string_view path, std::string* output,
     char buf[4096];
     size_t ret = fread(buf, 1, 4096, fp);
     if (ret == 0 && ferror(fp)) {
-      return mediapipe::UnavailableErrorBuilder(MEDIAPIPE_LOC)
-             << "Error while reading file: " << path;
+      return absl::UnavailableError(
+          absl::StrCat("Error while reading file: ", path));
     }
     output->append(std::string(buf, ret));
   }
@@ -172,16 +167,15 @@ absl::Status GetContents(absl::string_view path, std::string* output,
 absl::Status SetContents(absl::string_view path, absl::string_view content) {
   FILE* fp = fopen(std::string(path).c_str(), "wb");
   if (fp == NULL) {
-    return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
-           << "Can't open file: " << path;
+    return absl::InvalidArgumentError(absl::StrCat("Can't open file: ", path));
   }
 
   fwrite(content.data(), sizeof(char), content.size(), fp);
   size_t write_error = ferror(fp);
   if (fclose(fp) != 0 || write_error) {
-    return mediapipe::UnavailableErrorBuilder(MEDIAPIPE_LOC)
-           << "Error while writing file: " << path
-           << ". Error message: " << strerror(write_error);
+    return absl::UnavailableError(
+        absl::StrCat("Error while writing file: ", path,
+                     ". Error message: ", strerror(write_error)));
   }
   return absl::OkStatus();
 }
@@ -190,16 +184,15 @@ absl::Status AppendStringToFile(absl::string_view path,
                                 absl::string_view contents) {
   FILE* fp = fopen(std::string(path).c_str(), "ab");
   if (!fp) {
-    return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
-           << "Can't open file: " << path;
+    return absl::InvalidArgumentError(absl::StrCat("Can't open file: ", path));
   }
 
   fwrite(contents.data(), sizeof(char), contents.size(), fp);
   size_t write_error = ferror(fp);
   if (fclose(fp) != 0 || write_error) {
-    return mediapipe::UnavailableErrorBuilder(MEDIAPIPE_LOC)
-           << "Error while writing file: " << path
-           << ". Error message: " << strerror(write_error);
+    return absl::UnavailableError(
+        absl::StrCat("Error while writing file: ", path,
+                     ". Error message: ", strerror(write_error)));
   }
   return absl::OkStatus();
 }
@@ -252,7 +245,7 @@ absl::Status Exists(absl::string_view file_name) {
   }
   switch (errno) {
     case EACCES:
-      return mediapipe::PermissionDeniedError("Insufficient permissions.");
+      return absl::PermissionDeniedError("Insufficient permissions.");
     default:
       return absl::NotFoundError(
           absl::StrCat("The path does not exist: ", file_name));
@@ -294,7 +287,7 @@ absl::Status RecursivelyCreateDir(absl::string_view path) {
   if (mkdir(std::string(path)) != 0) {
     switch (errno) {
       case EACCES:
-        return mediapipe::PermissionDeniedError("Insufficient permissions.");
+        return absl::PermissionDeniedError("Insufficient permissions.");
       default:
         return absl::UnavailableError("Failed to create directory.");
     }
