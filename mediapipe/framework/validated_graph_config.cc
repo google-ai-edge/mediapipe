@@ -405,6 +405,7 @@ absl::Status ValidatedGraphConfig::Initialize(
   VLOG(1) << "ValidatedGraphConfig produced canonical config:\n"
           << config_.DebugString();
 #endif
+
   initialized_ = true;
   return absl::OkStatus();
 }
