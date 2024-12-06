@@ -4,7 +4,7 @@
 
 #ifdef _WIN32
 // clang-format off
-#include <windows.h>  // Must come before other Windows headers
+#include <windows.h>  // Must come before other Windows headers.
 // clang-format on
 #include <memoryapi.h>
 #else

@@ -41,7 +41,9 @@
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/deps/mmapped_file.h"
 #include "mediapipe/framework/deps/platform_strings.h"  // IWYU pragma: keep
+#ifndef _WIN32
 #include "mediapipe/framework/formats/unique_fd.h"
+#endif  // !_WIN32
 #include "mediapipe/framework/port/status_macros.h"
 
 namespace mediapipe {
@@ -296,7 +298,7 @@ absl::Status WindowsMMap::Close() {
   if (!success) {
     return absl::UnavailableError(
         absl::StrCat("Failed to close the memory mapping for file '", Path(),
-                     "': " << FormatLastError()));
+                     "': ", FormatLastError()));
   }
   success = CloseHandle(file_handle_);
   if (!success) {

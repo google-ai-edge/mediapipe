@@ -135,14 +135,16 @@ cc_library(
         ":file_path",
         ":mmapped_file",
         ":platform_strings",
-        "//mediapipe/framework/formats:unique_fd",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/base:config",
         "@com_google_absl//absl/cleanup",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
-    ],
+    ] + select({
+        "//mediapipe:windows": [],
+        "//conditions:default": ["//mediapipe/framework/formats:unique_fd"],
+    }),
 )
 
 cc_library(
