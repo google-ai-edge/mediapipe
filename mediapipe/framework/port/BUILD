@@ -113,6 +113,7 @@ cc_library(
         ":status",
         "//mediapipe/framework/deps:file_helpers",
         "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/deps:mmapped_file",
     ],
 )
 

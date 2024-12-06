@@ -17,27 +17,36 @@
 #ifdef _WIN32
 #include <Windows.h>
 #include <direct.h>
+#include <handleapi.h>
 #else
 #include <dirent.h>
+#include <fcntl.h>
+#include <sys/mman.h>
 #endif  // _WIN32
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
 
 #include <cerrno>
+#include <memory>
 #include <string>
+#include <utility>
 
+#include "absl/base/config.h"
+#include "absl/cleanup/cleanup.h"  // IWYU pragma: keep
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/deps/file_path.h"
+#include "mediapipe/framework/deps/mmapped_file.h"
 #include "mediapipe/framework/deps/platform_strings.h"  // IWYU pragma: keep
+#include "mediapipe/framework/formats/unique_fd.h"
 #include "mediapipe/framework/port/status_macros.h"
 
 namespace mediapipe {
 namespace file {
 namespace {
-
 // Helper class that returns all entries (files, directories) in a directory,
 // except "." and "..". Example usage:
 //
@@ -196,6 +205,181 @@ absl::Status AppendStringToFile(absl::string_view path,
   }
   return absl::OkStatus();
 }
+
+#ifdef _WIN32
+class WindowsMMap : public MemoryMappedFile {
+ public:
+  WindowsMMap(std::string path, const void* base_address, size_t length,
+              HANDLE file_handle, HANDLE mapping_handle)
+      : MemoryMappedFile(std::move(path), base_address, length),
+        file_handle_(file_handle),
+        mapping_handle_(mapping_handle) {}
+
+  virtual absl::Status Close() override;
+
+ private:
+  const HANDLE file_handle_;
+  const HANDLE mapping_handle_;
+};
+
+absl::StatusOr<std::unique_ptr<MemoryMappedFile>> MMapFile(
+    absl::string_view path) {
+  std::string name_string = std::string(path);
+  const HANDLE file_handle = CreateFile(
+      /*lpFileName=*/Utf8ToNative(name_string).c_str(),
+      /*dwDesiredAccess=*/GENERIC_READ,
+      /*dwShareMode=*/FILE_SHARE_READ,
+      /*lpSecurityAttributes=*/NULL,
+      /*dwCreationDisposition=*/OPEN_EXISTING,
+      /*dwFlagsAndAttributes=*/FILE_ATTRIBUTE_NORMAL,
+      /*hTemplateFile=*/NULL);
+  if (file_handle == INVALID_HANDLE_VALUE) {
+    return absl::UnavailableError(
+        absl::StrCat("Failed to open the file '", path,
+                     "' for reading: ", FormatLastError()));
+  }
+  absl::Cleanup file_closer = [file_handle] { CloseHandle(file_handle); };
+
+  // We're calling `CreateFileMappingA` regardless of `UNICODE` because we don't
+  // pass the `lpName` string parameter.
+  const HANDLE mapping_handle = CreateFileMappingA(
+      /*hFile=*/file_handle,
+      /*lpFileMappingAttributes=*/NULL,
+      /*flProtect=*/PAGE_READONLY,
+      /*dwMaximumSizeHigh=*/0,  // If `dwMaximumSize{Low,High} are zero,
+      /*dwMaximumSizeLow=*/0,   // the maximum mapping size is the file size.
+      /*lpName=*/NULL);
+  if (mapping_handle == INVALID_HANDLE_VALUE) {
+    return absl::UnavailableError(
+        absl::StrCat("Failed to create a memory mapping for the file '", path,
+                     "': ", FormatLastError()));
+  }
+  absl::Cleanup mapping_closer = [mapping_handle] {
+    CloseHandle(mapping_handle);
+  };
+
+  const LPVOID base_address = MapViewOfFile(
+      /*hFileMappingObject=*/mapping_handle,
+      /*dwDesiredAccess=*/FILE_MAP_READ,
+      /*dwFileOffsetHigh=*/0,
+      /*dwFileOffsetLow=*/0,
+      /*dwNumberOfBytesToMap=*/0  // Extends to the file end.
+  );
+  if (base_address == NULL) {
+    return absl::UnavailableError(absl::StrCat(
+        "Failed to memory-map the file '", path, "': ", FormatLastError()));
+  }
+
+  LARGE_INTEGER large_length;
+  const BOOL success = GetFileSizeEx(file_handle, &large_length);
+  if (!success) {
+    return absl::UnavailableError(
+        absl::StrCat("Failed to determine the size of the file '", path,
+                     "': ", FormatLastError()));
+  }
+  const size_t length = static_cast<size_t>(large_length.QuadPart);
+
+  std::move(file_closer).Cancel();
+  std::move(mapping_closer).Cancel();
+
+  return std::make_unique<WindowsMMap>(std::move(name_string), base_address,
+                                       length, file_handle, mapping_handle);
+}
+
+absl::Status WindowsMMap::Close() {
+  BOOL success = UnmapViewOfFile(BaseAddress());
+  if (!success) {
+    return absl::UnavailableError(absl::StrCat(
+        "Failed to unmap the file '", Path(), "': ", FormatLastError()));
+  }
+  success = CloseHandle(mapping_handle_);
+  if (!success) {
+    return absl::UnavailableError(
+        absl::StrCat("Failed to close the memory mapping for file '", Path(),
+                     "': " << FormatLastError()));
+  }
+  success = CloseHandle(file_handle_);
+  if (!success) {
+    return absl::UnavailableError(absl::StrCat(
+        "Failed to close the file '", Path(), "': ", FormatLastError()));
+  }
+  return absl::OkStatus();
+}
+#elif ABSL_HAVE_MMAP
+class PosixMMap : public MemoryMappedFile {
+ public:
+  PosixMMap(std::string path, const void* base_address, size_t length,
+            UniqueFd&& fd)
+      : MemoryMappedFile(path, base_address, length),
+        unique_fd_(std::move(fd)) {}
+
+  absl::Status Close() override;
+
+ private:
+  UniqueFd unique_fd_;
+};
+
+absl::StatusOr<std::unique_ptr<MemoryMappedFile>> MMapFile(
+    absl::string_view path) {
+  std::string name_string = std::string(path);
+  const int fd = open(name_string.c_str(), O_RDONLY);
+  if (fd < 0) {
+    return absl::UnavailableError(absl::StrCat(
+        "Couldn't open file '", path, "' for reading: ", FormatLastError()));
+  }
+  UniqueFd unique_fd(fd);
+
+  struct stat file_stat;
+  const int status = fstat(unique_fd.Get(), &file_stat);
+  if (status < 0) {
+    return absl::UnavailableError(
+        absl::StrCat("Couldn't stat file '", path, "': ", FormatLastError()));
+  }
+  size_t length = file_stat.st_size;
+
+  const void* base_address =
+      mmap(nullptr, length, PROT_READ, /*flags=*/0, unique_fd.Get(),
+           /*offset=*/0);
+  if (base_address == nullptr) {
+    return absl::UnavailableError(absl::StrCat(
+        "Couldn't map file '", path, "' into memory: ", FormatLastError()));
+  }
+
+  return std::make_unique<PosixMMap>(std::move(name_string), base_address,
+                                     length, std::move(unique_fd));
+}
+
+absl::Status PosixMMap::Close() {
+  int status = munmap(const_cast<void*>(BaseAddress()), Length());
+  if (status < 0) {
+    return absl::UnavailableError(absl::StrCat(
+        "Couldn't unmap file '", Path(), "' from memory: ", FormatLastError()));
+  }
+
+  status = close(unique_fd_.Release());
+  if (status < 0) {
+    return absl::UnavailableError(absl::StrCat("Couldn't close file '", Path(),
+                                               "': ", FormatLastError()));
+  }
+  return absl::OkStatus();
+}
+#else   // _WIN32 / ABSL_HAVE_MMAP
+absl::StatusOr<std::unique_ptr<MemoryMappedFile>> MMapFile(
+    absl::string_view path) {
+  return absl::UnavailableError(absl::StrCat(
+      "No supported memory-mapping mechanism is provided for file '", path,
+      "'"));
+}
+
+absl::Status LockMemory(const void* base_address, size_t length) {
+  return absl::UnavailableError("Locking memory unsupported");
+}
+
+absl::Status UnlockMemory(const void* base_address, size_t length) {
+  return absl::UnavailableError(
+      "Shouldn't attempt unlocking memory where locking is not supported");
+}
+#endif  // _WIN32 / ABSL_HAVE_MMAP
 
 absl::Status MatchInTopSubdirectories(const std::string& parent_directory,
                                       const std::string& file_name,
