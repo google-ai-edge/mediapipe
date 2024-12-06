@@ -232,6 +232,8 @@ class SourceImpl {
     return !(*this == other);
   }
 
+  const std::string& Name() const { return base_->name_; }
+
   Src& SetName(const char* name) {
     base_->name_ = std::string(name);
     return *this;
