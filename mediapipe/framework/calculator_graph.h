@@ -58,6 +58,10 @@
 #include "mediapipe/framework/timestamp.h"
 #include "mediapipe/framework/validated_graph_config.h"
 
+#if !defined(__EMSCRIPTEN__)
+#include "mediapipe/framework/tool/graph_runtime_info_logger.h"
+#endif  // !defined(__EMSCRIPTEN__)
+
 namespace mediapipe {
 
 #if !MEDIAPIPE_DISABLE_GPU
@@ -770,6 +774,11 @@ class CalculatorGraph {
   std::shared_ptr<ProfilingContext> profiler_;
 
   internal::Scheduler scheduler_;
+
+#if !defined(__EMSCRIPTEN__)
+  // Collects runtime information about the graph in the background.
+  tool::GraphRuntimeInfoLogger graph_runtime_info_logger_;
+#endif  // !defined(__EMSCRIPTEN__)
 };
 
 }  // namespace mediapipe

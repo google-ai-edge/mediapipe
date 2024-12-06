@@ -369,6 +369,7 @@ cc_library(
         "//mediapipe/framework/port:source_location",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/tool:fill_packet_set",
+        "//mediapipe/framework/tool:graph_runtime_info_logger",
         "//mediapipe/framework/tool:packet_generator_wrapper_calculator",
         "//mediapipe/framework/tool:status_util",
         "//mediapipe/framework/tool:tag_map",

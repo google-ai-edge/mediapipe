@@ -460,6 +460,23 @@ absl::Status CalculatorGraph::Initialize(
 #endif
 
   initialized_ = true;
+
+  // Emscripten only supports single threaded applications.
+  const auto& runtime_info_logger_config =
+      validated_graph_->Config().runtime_info();
+#if !defined(__EMSCRIPTEN__)
+  if (runtime_info_logger_config.enable_graph_runtime_info()) {
+    MP_RETURN_IF_ERROR(graph_runtime_info_logger_.StartInBackground(
+        runtime_info_logger_config,
+        [this]() { return GetGraphRuntimeInfo(); }));
+  }
+#else
+  // TODO - remove once graph runtime infos are supported in
+  // Emscripten.
+  if (runtime_info_logger_config.enable_graph_runtime_info()) {
+    ABSL_LOG(WARNING) << "Graph runtime infos are not supported in Emscripten.";
+  }
+#endif  // defined(__EMSCRIPTEN__)
   return absl::OkStatus();
 }
 
