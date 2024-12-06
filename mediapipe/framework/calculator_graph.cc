@@ -468,16 +468,18 @@ absl::Status CalculatorGraph::Initialize(
 
   initialized_ = true;
 
+#if !defined(__EMSCRIPTEN__)
   // Emscripten only supports single threaded applications.
   const auto& runtime_info_logger_config =
       validated_graph_->Config().runtime_info();
-#if !defined(__EMSCRIPTEN__)
   if (runtime_info_logger_config.enable_graph_runtime_info()) {
     MP_RETURN_IF_ERROR(graph_runtime_info_logger_.StartInBackground(
         runtime_info_logger_config,
         [this]() { return GetGraphRuntimeInfo(); }));
   }
 #else
+  const auto& runtime_info_logger_config =
+      validated_graph_->Config().runtime_info();
   // TODO - remove once graph runtime infos are supported in
   // Emscripten.
   if (runtime_info_logger_config.enable_graph_runtime_info()) {
