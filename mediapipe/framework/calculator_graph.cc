@@ -395,6 +395,11 @@ absl::Status CalculatorGraph::InitializeExecutors() {
     MEDIAPIPE_CHECK_OK(SetExecutorInternal(
         executor_config.name(), std::shared_ptr<Executor>(executor)));
   }
+#ifdef __EMSCRIPTEN__
+  // Emscripten runs the application single threaded and therefore requires to
+  // use the application thread.
+  use_application_thread = true;
+#endif  // __EMSCRIPTEN__
 
   if (!mediapipe::ContainsKey(executors_, "")) {
     MP_RETURN_IF_ERROR(InitializeDefaultExecutor(default_executor_options,
@@ -408,7 +413,9 @@ absl::Status CalculatorGraph::InitializeDefaultExecutor(
     const ThreadPoolExecutorOptions* default_executor_options,
     bool use_application_thread) {
 #ifdef __EMSCRIPTEN__
-  use_application_thread = true;
+  // Emscripten runs the application single threaded and therefore requires to
+  // use the application thread.
+  RET_CHECK(use_application_thread);
 #endif  // __EMSCRIPTEN__
   // If specified, run synchronously on the calling thread.
   if (use_application_thread) {
