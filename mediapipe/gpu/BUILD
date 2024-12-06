@@ -570,10 +570,16 @@ cc_library(
         "//mediapipe/framework/formats:shared_fd",
         "//mediapipe/framework/formats:unique_fd",
         "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
         "//mediapipe/util:sync_wait",
         "//third_party/GL:EGL_headers",
+        "@com_google_absl//absl/base",
         "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/time",
     ] + select({
         "//conditions:default": [],
         "//mediapipe:android": [
