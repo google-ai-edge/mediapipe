@@ -60,6 +60,21 @@ std::unique_ptr<Resource> MakeStringResource(std::string&& s);
 std::unique_ptr<Resource> MakeNoCleanupResource(const void* data,
                                                 size_t length);
 
+// Creates a resource by memory-mapping the file at `path`.
+absl::StatusOr<std::unique_ptr<Resource>> MakeMMapResource(
+    absl::string_view path, bool mlock);
+
+enum class MMapMode {
+  // Map the file contents into memory when supported, read otherwise.
+  kMMapOrRead,
+  // Fail if memory mapping is not available.
+  kMMap,
+  // Like `kMMap` with additional memory-locking of the mapped pages.
+  // This makes sure the data is resident in memory (never swapped) but comes
+  // with increased memory usage and takes time to perform the initial read.
+  kMMapAndMLock,
+};
+
 // Represents an interface to load resources in calculators and subgraphs.
 //
 // Should be accessed through `CalculatorContext::GetResources` and
@@ -71,6 +86,11 @@ class Resources {
  public:
   struct Options {
     bool read_as_binary = true;
+
+    // If specified, attempt memory-mapping file-based resources in the given
+    // mode. Otherwise the file contents are read into memory.
+    // Memory-mapped files are always `read_as_binary`.
+    std::optional<MMapMode> mmap_mode;
   };
 
   virtual ~Resources() = default;
