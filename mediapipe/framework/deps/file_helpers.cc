@@ -49,6 +49,10 @@
 namespace mediapipe {
 namespace file {
 namespace {
+size_t RoundUp(size_t size, size_t align) {
+  return (size + align - 1) & ~(align - 1);
+}
+
 // Helper class that returns all entries (files, directories) in a directory,
 // except "." and "..". Example usage:
 //
@@ -158,7 +162,7 @@ absl::Status GetContents(absl::string_view path, std::string* output,
                          bool read_as_binary) {
   FILE* fp = fopen(std::string(path).c_str(), read_as_binary ? "rb" : "r");
   if (fp == NULL) {
-    return absl::InvalidArgumentError(absl::StrCat("Can't find file: ", path));
+    return absl::NotFoundError(absl::StrCat("Can't find file: ", path));
   }
 
   output->clear();
@@ -340,9 +344,9 @@ absl::StatusOr<std::unique_ptr<MemoryMappedFile>> MMapFile(
   size_t length = file_stat.st_size;
 
   const void* base_address =
-      mmap(nullptr, length, PROT_READ, /*flags=*/0, unique_fd.Get(),
+      mmap(nullptr, length, PROT_READ, /*flags=*/MAP_SHARED, unique_fd.Get(),
            /*offset=*/0);
-  if (base_address == nullptr) {
+  if (base_address == MAP_FAILED) {
     return absl::UnavailableError(absl::StrCat(
         "Couldn't map file '", path, "' into memory: ", FormatLastError()));
   }
@@ -352,7 +356,11 @@ absl::StatusOr<std::unique_ptr<MemoryMappedFile>> MMapFile(
 }
 
 absl::Status PosixMMap::Close() {
-  int status = munmap(const_cast<void*>(BaseAddress()), Length());
+  // `munmap` length should be a multiple of page size.
+  const int page_size = sysconf(_SC_PAGESIZE);
+  const size_t aligned_length =
+      RoundUp(Length(), static_cast<size_t>(page_size));
+  int status = munmap(const_cast<void*>(BaseAddress()), aligned_length);
   if (status < 0) {
     return absl::UnavailableError(absl::StrCat(
         "Couldn't unmap file '", Path(), "' from memory: ", FormatLastError()));

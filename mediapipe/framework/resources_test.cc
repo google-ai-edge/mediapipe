@@ -39,6 +39,28 @@ TEST(Resources, CanCreateDefaultResourcesAndReadFileContents) {
   EXPECT_EQ(resource->ToStringView(), "File system calculator contents\n");
 }
 
+TEST(Resources, CanCreateDefaultResourcesAndReadFileContentsWithMMap) {
+  std::unique_ptr<Resources> resources = CreateDefaultResources();
+
+  Resources::Options options{.mmap_mode = MMapMode::kMMap};
+  MP_ASSERT_OK_AND_ASSIGN(
+      std::unique_ptr<Resource> resource,
+      resources->Get("mediapipe/framework/testdata/resource_calculator.data",
+                     options));
+  EXPECT_EQ(resource->ToStringView(), "File system calculator contents\n");
+}
+
+TEST(Resources, CanCreateDefaultResourcesAndReadFileContentsWithMMapAndMLock) {
+  std::unique_ptr<Resources> resources = CreateDefaultResources();
+
+  Resources::Options options{.mmap_mode = MMapMode::kMMapAndMLock};
+  MP_ASSERT_OK_AND_ASSIGN(
+      std::unique_ptr<Resource> resource,
+      resources->Get("mediapipe/framework/testdata/resource_calculator.data",
+                     options));
+  EXPECT_EQ(resource->ToStringView(), "File system calculator contents\n");
+}
+
 TEST(Resources, CanReadFileContentsByUnresolvedId) {
   absl::SetFlag(&FLAGS_resource_root_dir, "mediapipe/framework/testdata");
   std::unique_ptr<Resources> resources = CreateDefaultResources();

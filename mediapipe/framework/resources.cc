@@ -6,10 +6,15 @@
 #include <utility>
 
 #include "absl/container/flat_hash_map.h"
+#include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "mediapipe/framework/deps/mlock_helpers.h"
+#include "mediapipe/framework/deps/mmapped_file.h"
+#include "mediapipe/framework/port/file_helpers.h"
+#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/tool/status_util.h"
 #include "mediapipe/util/resource_util.h"
 
@@ -35,30 +40,75 @@ class NoCleanupResource : public Resource {
   NoCleanupResource(const void* data, size_t length) : Resource(data, length) {}
 };
 
+class MMapResource : public Resource {
+ public:
+  MMapResource(std::unique_ptr<file::MemoryMappedFile> mmapped_file,
+               bool mlocked)
+      : Resource(mmapped_file->BaseAddress(), mmapped_file->Length()),
+        mmapped_file_(std::move(mmapped_file)),
+        mlocked_(mlocked) {}
+
+  ~MMapResource() override {
+    if (mlocked_) {
+      auto status =
+          UnlockMemory(mmapped_file_->BaseAddress(), mmapped_file_->Length());
+      if (!status.ok()) {
+        ABSL_LOG(DFATAL) << status;
+      }
+    }
+    auto status = mmapped_file_->Close();
+    if (!status.ok()) {
+      ABSL_LOG(DFATAL) << status;
+    }
+  }
+
+ private:
+  std::unique_ptr<file::MemoryMappedFile> mmapped_file_;
+  bool mlocked_;
+};
+
 class DefaultResources : public Resources {
  public:
   absl::StatusOr<std::unique_ptr<Resource>> Get(
       absl::string_view resource_id, const Options& options) const final {
-    // First try to load resource as is.
-    std::string path(resource_id);
+    const std::string path(resource_id);
+    if (options.mmap_mode.has_value()) {
+      const MMapMode mode = options.mmap_mode.value();
+      // Try to resolve `resource_id` into a path.
+      const absl::StatusOr<std::string> resolved_path =
+          PathToResourceAsFile(path, /*shadow_copy=*/false);
+      if (resolved_path.ok()) {
+        auto status_or_mmap =
+            MakeMMapResource(path,
+                             /*mlock=*/mode == MMapMode::kMMapAndMLock);
+        if (status_or_mmap.ok() || mode != MMapMode::kMMapOrRead) {
+          return status_or_mmap;
+        }
+      } else if (mode != MMapMode::kMMapOrRead) {
+        return resolved_path.status();
+      }
+    }
+
+    // Try to load the resource as is.
     std::string output;
-    absl::Status status =
+    const absl::Status status =
         GetResourceContents(path, &output, options.read_as_binary);
     if (status.ok()) {
       return MakeStringResource(std::move(output));
     }
 
-    // Try to resolve resource_id.
-    absl::StatusOr<std::string> resolved_path = PathToResourceAsFile(path);
-    if (!resolved_path.ok() || resolved_path.value() == path) {
+    // Try the path resolution again, this time possibly with shadow copying.
+    const absl::StatusOr<std::string> resolved_path_maybe_shadow =
+        PathToResourceAsFile(path, /*shadow_copy=*/true);
+    if (!resolved_path_maybe_shadow.ok()) {
       return tool::CombinedStatus(
           absl::StrCat("Failed to load resource: ", resource_id),
-          {status, resolved_path.status()});
+          {status, resolved_path_maybe_shadow.status()});
     }
 
     // Try to load by resolved path.
     absl::Status status_for_resolved = GetResourceContents(
-        resolved_path.value(), &output, options.read_as_binary);
+        resolved_path_maybe_shadow.value(), &output, options.read_as_binary);
     if (status_for_resolved.ok()) {
       return MakeStringResource(std::move(output));
     }
@@ -102,6 +152,24 @@ std::unique_ptr<Resource> MakeStringResource(std::string&& s) {
 std::unique_ptr<Resource> MakeNoCleanupResource(const void* data,
                                                 size_t length) {
   return std::make_unique<NoCleanupResource>(data, length);
+}
+
+absl::StatusOr<std::unique_ptr<Resource>> MakeMMapResource(
+    absl::string_view path, bool mlock) {
+  auto mmap_or_error = file::MMapFile(path);
+  if (!mmap_or_error.ok()) {
+    return mmap_or_error.status();
+  }
+  std::unique_ptr<file::MemoryMappedFile> mmap = std::move(*mmap_or_error);
+
+  if (mlock) {
+    auto status = LockMemory(mmap->BaseAddress(), mmap->Length());
+    if (!status.ok()) {
+      return absl::UnavailableError(absl::StrCat("Locking memory for file '",
+                                                 path, "' failed: ", status));
+    }
+  }
+  return std::make_unique<MMapResource>(std::move(mmap), mlock);
 }
 
 std::unique_ptr<Resources> CreateDefaultResources() {
