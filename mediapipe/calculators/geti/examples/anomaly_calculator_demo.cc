@@ -59,7 +59,7 @@ absl::Status ProcessImage(std::unique_ptr<mediapipe::CalculatorGraph> graph) {
   const cv::Mat raw_image = cv::imread(absl::GetFlag(FLAGS_input_image_path));
 
   LOG(INFO) << "Start running the calculator graph.";
-  ASSIGN_OR_RETURN(mediapipe::OutputStreamPoller output_image_poller,
+  MP_ASSIGN_OR_RETURN(mediapipe::OutputStreamPoller output_image_poller,
                    graph->AddOutputStreamPoller(kOutputStream));
 
   LOG(INFO) << "Start running the calculator graph input.";

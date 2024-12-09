@@ -86,7 +86,7 @@ absl::Status RunMediapipeGraph() {
   CalculatorGraph graph;
   CALL_AND_CHECK_RET(graph.Initialize(config));
   
-  ASSIGN_OR_RETURN(OutputStreamPoller poller,
+  MP_ASSIGN_OR_RETURN(OutputStreamPoller poller,
                    graph.AddOutputStreamPoller("out"));
   CALL_AND_CHECK_RET(graph.StartRun({}));
 

@@ -128,4 +128,5 @@ build --cxxopt=-DOVMS_DUMP_TO_FILE=0
 build --define=xnn_enable_avxvnniint8=false
 build --define=xnn_enable_avx512fp16=false
 build --define=xnn_enable_avx512amx=false
-build  --repo_env=HERMETIC_PYTHON_VERSION=3.10
+build --repo_env=HERMETIC_PYTHON_VERSION=3.11
+build --incompatible_strict_action_env
