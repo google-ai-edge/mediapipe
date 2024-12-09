@@ -283,7 +283,7 @@ message InferenceCalculatorOptions {
       TensorNamesMap input_tensor_names_map = 3;
     }
 
-    // Maps the output tensors of the TfLite model to the the output tensors of
+    // Maps the output tensors of the TfLite model to the output tensors of
     // the InferenceCalculator. Values are model I/O tensor indices or tensor
     // names.
     oneof OutputTensorMap {
