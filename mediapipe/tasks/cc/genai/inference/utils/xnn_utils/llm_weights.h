@@ -31,6 +31,7 @@
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/graph_builder.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/pack_weights_cache.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/xnn_tensor.h"
+#include "tensorflow/lite/model_builder.h"
 
 namespace mediapipe::tasks::genai::xnn_utils {
 
@@ -264,8 +265,9 @@ class DefaultLlmWeightsLoader : public LlmWeightsLoader {
   DefaultLlmWeightsLoader(std::unique_ptr<WeightAccessor> weight_accessor,
                           const LlmParams& params)
       : LlmWeightsLoader(std::move(weight_accessor), params) {}
-  DefaultLlmWeightsLoader(absl::string_view weight_path,
-                          const LlmParams& params);
+  DefaultLlmWeightsLoader(
+      absl::string_view weight_path, const LlmParams& params,
+      std::shared_ptr<tflite::FlatBufferModel> flat_buffer_model = nullptr);
 
   std::shared_ptr<XnnWeightsCache> GetXnnWeightsCache() override {
     return xnn_weights_cache_;
