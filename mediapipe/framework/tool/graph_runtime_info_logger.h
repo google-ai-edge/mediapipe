@@ -42,8 +42,8 @@ class GraphRuntimeInfoLogger {
 
   absl::Notification shutdown_signal_;
   absl::Notification is_running_;
-  ThreadPool thread_pool_;
   absl::AnyInvocable<absl::StatusOr<GraphRuntimeInfo>()> get_runtime_info_fn_;
+  ThreadPool thread_pool_;
 };
 
 }  // namespace mediapipe::tool
