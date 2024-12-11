@@ -324,7 +324,7 @@ index 00000000000..4e73cf649e6
 +  if (node_inputs.size() != 1) {
 +    return {TransformStatus::SKIPPED, ""};
 +  }
-+  // Recognize preeceding scalar Mul operation and save the value.
++  // Recognize preceding scalar Mul operation and save the value.
 +  auto mul = graph->FindProducer(node_inputs[0]->id);
 +  if (mul->operation.type != ToString(OperationType::MUL)) {
 +    return {TransformStatus::SKIPPED, ""};
@@ -620,7 +620,7 @@ index 00000000000..fba7e742998
 +            "Landmarks operation's output value."};
 +  }
 +
-+  // Delete preceding and succeding Reshape operations.
++  // Delete preceding and succeeding Reshape operations.
 +  absl::Status removed_preceding =
 +      RemoveSimpleNodeKeepInput(graph, preceding_reshape);
 +  if (!removed_preceding.ok()) {
