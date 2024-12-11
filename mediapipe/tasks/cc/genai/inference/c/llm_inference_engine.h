@@ -58,6 +58,12 @@ typedef struct {
   // Path to the model artifact.
   const char* model_path;
 
+  // Path to the vision encoder to use for vision modality. Optional.
+  const char* vision_encoder_path;
+
+  // Path to the vision adapter  to use for vision modality. Optional.
+  const char* vision_adapter_path;
+
   // Directory path for storing model related tokenizer and cache weights. the
   // user is responsible for providing the directory that can be writable by the
   // program.
@@ -121,6 +127,13 @@ typedef struct {
   // Path to the LoRA tflite flatbuffer file. Optional.
   // This is only compatible with GPU models.
   const char* lora_path;
+
+  // Whether to configure the graph to include the token cost calculator,
+  // which allows users to only compute the cost of a prompt.
+  bool include_token_cost_calculator;
+
+  // Whether to configure the graph to include the vision modality.
+  bool enable_vision_modality;
 } LlmSessionConfig;
 
 // LlmResponseContext is the return type for
@@ -165,6 +178,11 @@ ODML_EXPORT void LlmInferenceEngine_Session_Delete(
 // concatenated prompt, but able to be processed in chunks.
 ODML_EXPORT int LlmInferenceEngine_Session_AddQueryChunk(
     LlmInferenceEngine_Session* session, const char* input, char** error_msg);
+
+// Adds an SKBitmap to the session.
+ODML_EXPORT int LlmInferenceEngine_Session_AddImage(
+    LlmInferenceEngine_Session* session, const void* sk_bitmap,
+    char** error_msg);
 
 // Return the generated output based on the previously added query chunks in
 // sync mode.
