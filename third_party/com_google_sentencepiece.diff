@@ -1204,7 +1204,7 @@ index e8bd5f5..346fb0e 100644
                                std::string *detokenized) const;
  
    // Sets the encoder version. Normally users do not need to call this function.
-   // But they can call this fucntion just in case if they want to fall back to
+   // But they can call this function just in case if they want to fall back to
    // the original encoder.
 -  virtual util::Status SetEncoderVersion(EncoderVersion encoder_version);
 +  virtual absl::Status SetEncoderVersion(EncoderVersion encoder_version);
