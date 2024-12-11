@@ -43,6 +43,8 @@ LlmModelSettings ParseModelSettings(void* bytes, int size) {
 
   LlmModelSettings output;
   output.model_path = strdup(input.model_path().c_str());
+  output.vision_encoder_path = nullptr;
+  output.vision_adapter_path = nullptr;
   output.cache_dir = strdup(input.cache_dir().c_str());
   output.sequence_batch_size = input.sequence_batch_size();
   output.num_decode_steps_per_sync = input.num_decode_steps_per_sync();
@@ -74,6 +76,8 @@ LlmSessionConfig ParseSessionConfig(void* bytes, int size) {
   if (input.has_lora_path()) {
     output.lora_path = strdup(input.lora_path().c_str());
   }
+  output.include_token_cost_calculator = true;
+  output.enable_vision_modality = false;
   return output;
 }
 

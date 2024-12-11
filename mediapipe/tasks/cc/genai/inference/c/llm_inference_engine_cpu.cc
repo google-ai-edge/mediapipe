@@ -584,6 +584,13 @@ int LlmInferenceEngine_Session_AddQueryChunk(
   return 0;
 }
 
+ODML_EXPORT int LlmInferenceEngine_Session_AddImage(
+    LlmInferenceEngine_Session* session, const void* sk_bitmap,
+    char** error_msg) {
+  *error_msg = strdup("Not implemented");
+  return 12;
+}
+
 LlmResponseContext LlmInferenceEngine_Session_PredictSync(
     LlmInferenceEngine_Session* session) {
   LlmInferenceEngine_Session_PredictAsync(

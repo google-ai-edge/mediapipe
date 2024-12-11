@@ -65,6 +65,8 @@ import MediaPipeTasksGenAIC
         try options.supportedLoraRanks.withUnsafeMutableBufferPointer { supportedLoraRanks in
           let modelSetting = LlmModelSettings(
             model_path: modelPath,
+            vision_encoder_path: nil,
+            vision_adapter_path: nil,
             cache_dir: cacheDirectory,
             max_num_tokens: options.maxTokens,
             num_decode_steps_per_sync: numberOfDecodeStepsPerSync,
