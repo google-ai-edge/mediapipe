@@ -35,7 +35,7 @@ public final class LlmInference implements AutoCloseable {
   /** Creates an LlmInference Task. */
   public static LlmInference createFromOptions(Context context, LlmInferenceOptions options) {
     // Configure LLM model settings.
-    LlmModelSettings modelSettings =
+    LlmModelSettings.Builder modelSettings =
         LlmModelSettings.newBuilder()
             .setModelPath(options.modelPath())
             .setCacheDir(context.getCacheDir().getAbsolutePath())
@@ -43,10 +43,20 @@ public final class LlmInference implements AutoCloseable {
             .setMaxTokens(options.maxTokens())
             .setMaxTopK(options.maxTopK())
             .setNumberOfSupportedLoraRanks(options.supportedLoraRanks().size())
-            .addAllSupportedLoraRanks(options.supportedLoraRanks())
-            .build();
+            .addAllSupportedLoraRanks(options.supportedLoraRanks());
 
-    return new LlmInference(context, STATS_TAG, modelSettings, options.resultListener());
+    if (options.visionModelOptions().isPresent()) {
+      VisionModelOptions visionModelOptions = options.visionModelOptions().get();
+
+      LlmModelSettings.VisionModelSettings.Builder visionModelSettings =
+          LlmModelSettings.VisionModelSettings.newBuilder();
+      visionModelOptions.getEncoderPath().ifPresent(visionModelSettings::setEncoderPath);
+      visionModelOptions.getAdapterPath().ifPresent(visionModelSettings::setAdapterPath);
+
+      modelSettings.setVisionModelSettings(visionModelSettings.build());
+    }
+
+    return new LlmInference(context, STATS_TAG, modelSettings.build(), options.resultListener());
   }
 
   /** Constructor to initialize an {@link LlmInference}. */
@@ -196,8 +206,11 @@ public final class LlmInference implements AutoCloseable {
        */
       public abstract Builder setMaxTopK(int maxTopK);
 
-      /** The supported lora ranks for the base model. Used by GPU only. */
+      /** Sets the supported lora ranks for the base model. Used by GPU only. */
       public abstract Builder setSupportedLoraRanks(List<Integer> supportedLoraRanks);
+
+      /** Sets the model options to use for vision modality. */
+      public abstract Builder setVisionModelOptions(VisionModelOptions visionModelOptions);
 
       abstract LlmInferenceOptions autoBuild();
 
@@ -231,6 +244,9 @@ public final class LlmInference implements AutoCloseable {
 
     /** The error listener to use for the {@link LlmInference#generateAsync} API. */
     public abstract Optional<ErrorListener> errorListener();
+
+    /** The model options to for vision modality. */
+    public abstract Optional<VisionModelOptions> visionModelOptions();
 
     /** Returns a new builder with the same values as this instance. */
     public abstract Builder toBuilder();
