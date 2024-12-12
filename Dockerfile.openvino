@@ -223,7 +223,7 @@ RUN bash build_desktop_examples.sh -b
 RUN curl https://storage.googleapis.com/mediapipe-assets/ssdlite_object_detection_labelmap.txt -o mediapipe/models/ssdlite_object_detection_labelmap.txt
 
 # BUILD python framework
-RUN python setup.py install
+#RUN python setup.py install
 ## End of build image ################################################################
 ######################################################################################
 ## Start of demos image - minimal size ###############################################
