@@ -796,7 +796,9 @@ git_repository(
     name = "ovms",
     remote = "https://github.com/openvinotoolkit/model_server",
     #commit = "aa07d47407557781036e2e4f00501bfa5bf3c79b" # Windows groovy (#2762)
-    commit = "7f3b2aaefec2434eede292827cf1b3d2a90c406c" # part 1
+    #commit = "7f3b2aaefec2434eede292827cf1b3d2a90c406c" # part 1
+    #commit = "027f6d05ba865d1a6913837f2f7ccf80d9d84042" # part 1
+    commit = "06cff7d195b249a710597050328663877f94c835" # part 1
 )
 
 load("@//third_party/model_api:model_api.bzl", "workspace_model_api")
