@@ -71,6 +71,14 @@ JNIEXPORT void JNICALL JNI_METHOD(nativeAddQueryChunk)(JNIEnv *, jclass, jlong,
 
 /*
  * Class:     com_google_mediapipe_tasks_core_LlmTaskRunner
+ * Method:    nativeAddImage
+ * Signature: (JLL)V
+ */
+JNIEXPORT void JNICALL JNI_METHOD(nativeAddImage)(JNIEnv *, jclass, jlong,
+                                                  jlong);
+
+/*
+ * Class:     com_google_mediapipe_tasks_core_LlmTaskRunner
  * Method:    nativePredictSync
  * Signature: (JL)[B
  */
@@ -108,6 +116,23 @@ JNIEXPORT void JNICALL JNI_METHOD(nativePredictAsync)(JNIEnv *, jclass, jlong,
  */
 JNIEXPORT jint JNICALL JNI_METHOD(nativeSizeInTokens)(JNIEnv *, jclass, jlong,
                                                       jstring);
+
+/*
+ * Class:     com_google_mediapipe_tasks_core_LlmTaskRunner
+ * Method:    nativeCreateSkBitmap
+ * Signature: (Ljava/nio/ByteBuffer;IIII)J
+ */
+JNIEXPORT jlong JNICALL JNI_METHOD(nativeCreateSkBitmap)(JNIEnv *, jclass,
+                                                         jobject, jint, jint,
+                                                         jint, jint);
+
+/*
+ * Class:     com_google_mediapipe_tasks_core_LlmTaskRunner
+ * Method:    nativeDeleteSkBitmap
+ * Signature: (J)V
+ */
+JNIEXPORT void JNICALL JNI_METHOD(nativeDeleteSkBitmap)(JNIEnv *, jclass,
+                                                        jlong);
 
 #ifdef __cplusplus
 }  // extern "C"
