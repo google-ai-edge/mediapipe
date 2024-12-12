@@ -1,6 +1,7 @@
 package com.google.mediapipe.tasks.genai.llminference;
 
 import com.google.auto.value.AutoValue;
+import com.google.mediapipe.framework.image.MPImage;
 import com.google.mediapipe.tasks.core.LlmTaskRunner;
 import com.google.mediapipe.tasks.core.LlmTaskRunner.LlmSession;
 import com.google.mediapipe.tasks.core.jni.proto.LlmOptionsProto.LlmSessionConfig;
@@ -37,6 +38,16 @@ public final class LlmInferenceSession implements AutoCloseable {
       sessionConfig.setLoraPath("");
     }
 
+    if (options.graphOptions().isPresent()) {
+      GraphOptions graphOptions = options.graphOptions().get();
+      LlmSessionConfig.GraphConfig graphConfig =
+          LlmSessionConfig.GraphConfig.newBuilder()
+              .setIncludeTokenCostCalculator(graphOptions.includeTokenCostCalculator())
+              .setEnableVisionModality(graphOptions.enableVisionModality())
+              .build();
+      sessionConfig.setGraphConfig(graphConfig);
+    }
+
     LlmTaskRunner taskRunner = llmInference.getTaskRunner();
     LlmSession session = taskRunner.createSession(sessionConfig.build());
     return new LlmInferenceSession(taskRunner, session);
@@ -58,6 +69,16 @@ public final class LlmInferenceSession implements AutoCloseable {
    */
   public void addQueryChunk(String inputText) {
     taskRunner.addQueryChunk(session, inputText);
+  }
+
+  /**
+   * Add an image to the session.
+   *
+   * @param image a MediaPipe {@link MPImage} object for processing.
+   * @throws MediaPipeException if there is an internal error.
+   */
+  public void addImage(MPImage image) {
+    taskRunner.addImage(session, image);
   }
 
   /**
@@ -170,6 +191,9 @@ public final class LlmInferenceSession implements AutoCloseable {
        */
       public abstract Builder setLoraPath(String loraPath);
 
+      /** Sets the parameters to customize the graph. */
+      public abstract Builder setGraphOptions(GraphOptions graphOptions);
+
       abstract LlmInferenceSessionOptions autoBuild();
 
       /** Validates and builds the {@link LlmInferenceSessionOptions} instance. */
@@ -195,6 +219,9 @@ public final class LlmInferenceSession implements AutoCloseable {
      * compatible with GPU models.
      */
     public abstract Optional<String> loraPath();
+
+    /** Returns the parameters to customize the graph. */
+    public abstract Optional<GraphOptions> graphOptions();
 
     /** Instantiates a new LlmInferenceOptions builder. */
     public static Builder builder() {
