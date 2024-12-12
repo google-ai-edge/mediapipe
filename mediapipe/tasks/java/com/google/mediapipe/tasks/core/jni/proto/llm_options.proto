@@ -34,6 +34,20 @@ message LlmSessionConfig {
   // The absolute path to the LoRA model asset bundle stored locally on the
   // device. This is only compatible with GPU models.
   optional string lora_path = 4;
+
+  // Parameters to customize the graph.
+  message GraphConfig {
+    // Whether to configure the graph to include the token cost calculator,
+    // which allows users to only compute the cost of a prompt.
+    optional bool include_token_cost_calculator = 1;
+
+    // Whether to configure the graph to include the vision modality. Only one
+    // of enable_vision_modality or enable_audio_modality can be true currently.
+    optional bool enable_vision_modality = 2;
+  }
+
+  // Parameters to customize the graph.
+  optional GraphConfig graph_config = 5;
 }
 
 // Configurable model parameters for creating an LLM inference engine.
@@ -72,4 +86,15 @@ message LlmModelSettings {
   // means only greedy decoding is supported for any sessions created with this
   // engine.
   uint32 max_top_k = 8;
+
+  // A container for vision model related settings.
+  message VisionModelSettings {
+    // Path to the vision encoder model file.
+    optional string encoder_path = 1;
+
+    // Path to the vision adapter model file.
+    optional string adapter_path = 2;
+  }
+
+  optional VisionModelSettings vision_model_settings = 9;
 }
