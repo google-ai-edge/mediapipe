@@ -12,13 +12,14 @@
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/tool/graph_runtime_info_utils.h"
+#include "mediapipe/framework/vlog_utils.h"
 
 namespace mediapipe::tool {
 
 constexpr absl::Duration kDefaultCaptureInterval = absl::Seconds(10);
 
 GraphRuntimeInfoLogger::GraphRuntimeInfoLogger()
-    : thread_pool_("GraphRuntimeInfoLogger", 1) {}
+    : thread_pool_("GraphRuntimeInfoLogger", /*num_threads=*/1) {}
 
 GraphRuntimeInfoLogger::~GraphRuntimeInfoLogger() { Stop(); };
 
@@ -49,7 +50,7 @@ absl::Status GraphRuntimeInfoLogger::StartInBackground(
                          << runtime_info_str.status();
         return;
       }
-      ABSL_LOG(INFO) << *runtime_info_str;
+      VlogLargeMessage(/*verbose_level=*/0, *runtime_info_str);
       shutdown_signal_.WaitForNotificationWithTimeout(interval);
     }
   });

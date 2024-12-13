@@ -20,6 +20,7 @@
 #include "absl/container/flat_hash_set.h"
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
+#include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
@@ -46,6 +47,7 @@
 #include "mediapipe/framework/tool/status_util.h"
 #include "mediapipe/framework/tool/subgraph_expansion.h"
 #include "mediapipe/framework/tool/validate_name.h"
+#include "mediapipe/framework/vlog_utils.h"
 
 namespace mediapipe {
 
@@ -325,11 +327,12 @@ absl::Status ValidatedGraphConfig::Initialize(
     const GraphServiceManager* service_manager) {
   RET_CHECK(!initialized_)
       << "ValidatedGraphConfig can be initialized only once.";
-
-#if !defined(MEDIAPIPE_MOBILE)
-  VLOG(1) << "ValidatedGraphConfig::Initialize called with config:\n"
-          << input_config.DebugString();
-#endif
+  if (VLOG_IS_ON(1)) {
+    VlogLargeMessage(
+        /*verbose_level=*/1,
+        absl::StrCat("ValidatedGraphConfig::Initialize called with config:\n",
+                     input_config.DebugString()));
+  }
 
   config_ = std::move(input_config);
   MP_RETURN_IF_ERROR(
@@ -401,10 +404,12 @@ absl::Status ValidatedGraphConfig::Initialize(
 
   MP_RETURN_IF_ERROR(ValidateExecutors());
 
-#if !defined(MEDIAPIPE_MOBILE)
-  VLOG(1) << "ValidatedGraphConfig produced canonical config:\n"
-          << config_.DebugString();
-#endif
+  if (VLOG_IS_ON(1)) {
+    VlogLargeMessage(
+        /*verbose_level=*/1,
+        absl::StrCat("ValidatedGraphConfig produced canonical config:\n",
+                     config_.DebugString()));
+  }
 
   initialized_ = true;
   return absl::OkStatus();
