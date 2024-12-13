@@ -1363,6 +1363,7 @@ cc_library(
         ":stream_handler_cc_proto",
         ":subgraph",
         ":thread_pool_executor_cc_proto",
+        ":vlog_utils",
         "//mediapipe/framework/port:core_proto",
         "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:logging",
@@ -1377,6 +1378,7 @@ cc_library(
         "//mediapipe/framework/tool:validate_name",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
@@ -1962,6 +1964,20 @@ cc_library(
         "@com_google_absl//absl/log:globals",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/strings:string_view",
+    ],
+)
+
+cc_library(
+    name = "vlog_utils",
+    srcs = ["vlog_utils.cc"],
+    hdrs = ["vlog_utils.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework/port:logging",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
     ],
 )
