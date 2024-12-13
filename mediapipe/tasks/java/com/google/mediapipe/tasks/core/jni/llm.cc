@@ -24,16 +24,16 @@
 #include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
+#include "include/core/SkAlphaType.h"  // from @skia
+#include "include/core/SkBitmap.h"     // from @skia
+#include "include/core/SkImage.h"      // from @skia
+#include "include/core/SkImageInfo.h"  // from @skia
 #include "mediapipe/java/com/google/mediapipe/framework/jni/class_registry.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/jni_util.h"
 #include "mediapipe/tasks/cc/genai/inference/c/llm_inference_engine.h"
 #include "mediapipe/tasks/cc/genai/inference/proto/tflite_delegate_options.pb.h"
 #include "mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto/llm_options.pb.h"
 #include "mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto/llm_response_context.pb.h"
-#include "third_party/skia/HEAD/include/core/SkAlphaType.h"
-#include "third_party/skia/HEAD/include/core/SkBitmap.h"
-#include "third_party/skia/HEAD/include/core/SkImage.h"
-#include "third_party/skia/HEAD/include/core/SkImageInfo.h"
 
 namespace {
 
