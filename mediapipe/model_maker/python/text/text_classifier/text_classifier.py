@@ -859,6 +859,7 @@ class _BertClassifier(TextClassifier):
       self,
       model_name: str = "model.tflite",
       quantization_config: Optional[quantization.QuantizationConfig] = None,
+      batch_size: int | None = None,
   ):
     """Converts and saves the model to a TFLite file with metadata included.
 
@@ -873,6 +874,8 @@ class _BertClassifier(TextClassifier):
       model_name: File name to save TFLite model with metadata. The full export
         path is {self._hparams.export_dir}/{model_name}.
       quantization_config: The configuration for model quantization.
+      batch_size: Inference batch size to use for the TFlite model. Default is
+        None, which means the batch size is dynamic.
     """
     tf.io.gfile.makedirs(self._hparams.export_dir)
     tflite_file = os.path.join(self._hparams.export_dir, model_name)
@@ -883,16 +886,19 @@ class _BertClassifier(TextClassifier):
             shape=(self._model_options.seq_len,),
             dtype=tf.int32,
             name="input_word_ids",
+            batch_size=batch_size,
         ),
         input_mask=tf.keras.layers.Input(
             shape=(self._model_options.seq_len,),
             dtype=tf.int32,
             name="input_mask",
+            batch_size=batch_size,
         ),
         input_type_ids=tf.keras.layers.Input(
             shape=(self._model_options.seq_len,),
             dtype=tf.int32,
             name="input_type_ids",
+            batch_size=batch_size,
         ),
     )
     output = self._model(constant_len_inputs)
