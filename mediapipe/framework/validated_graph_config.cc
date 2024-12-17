@@ -1090,7 +1090,7 @@ absl::Status ValidatedGraphConfig::ValidateRequiredSidePacketTypes(
   }
   if (!statuses.empty()) {
     return tool::CombinedStatus(
-        "ValidateRequiredSidePackets failed to validate: ", statuses);
+        "ValidateRequiredSidePacketTypes failed to validate: ", statuses);
   }
   return absl::OkStatus();
 }
