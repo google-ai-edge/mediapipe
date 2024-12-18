@@ -111,12 +111,49 @@ cc_library(
 )
 
 cc_library(
+    name = "platform_strings",
+    srcs = ["platform_strings.cc"],
+    hdrs = ["platform_strings.h"],
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "mmapped_file",
+    hdrs = ["mmapped_file.h"],
+    deps = [
+        "//mediapipe/framework/port:logging",
+        "@com_google_absl//absl/status",
+    ],
+)
+
+cc_library(
     name = "file_helpers",
     srcs = ["file_helpers.cc"],
     hdrs = ["file_helpers.h"],
     visibility = ["//visibility:public"],
     deps = [
         ":file_path",
+        ":mmapped_file",
+        ":platform_strings",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/base:config",
+        "@com_google_absl//absl/cleanup",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+    ] + select({
+        "//mediapipe:windows": [],
+        "//conditions:default": ["//mediapipe/framework/formats:unique_fd"],
+    }),
+)
+
+cc_library(
+    name = "mlock_helpers",
+    srcs = ["mlock_helpers.cc"],
+    hdrs = ["mlock_helpers.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":platform_strings",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",

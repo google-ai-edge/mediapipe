@@ -135,19 +135,19 @@ MacOS, Android, and iOS.  The core of MediaPipe framework is a C++ library
 conforming to the C++11 standard, so it is relatively easy to port to
 additional platforms.
 
-[`object_detection_mobile_cpu.pbtxt`]: https://github.com/google/mediapipe/tree/master/mediapipe/graphs/object_detection/object_detection_mobile_cpu.pbtxt
-[`ImageFrame`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/formats/image_frame.h
-[`GpuBuffer`]: https://github.com/google/mediapipe/tree/master/mediapipe/gpu/gpu_buffer.h
-[`GpuBufferToImageFrameCalculator`]: https://github.com/google/mediapipe/tree/master/mediapipe/gpu/gpu_buffer_to_image_frame_calculator.cc
-[`ImageFrameToGpuBufferCalculator`]: https://github.com/google/mediapipe/tree/master/mediapipe/gpu/image_frame_to_gpu_buffer_calculator.cc
-[`AnnotationOverlayCalculator`]: https://github.com/google/mediapipe/tree/master/mediapipe/calculators/util/annotation_overlay_calculator.cc
-[`face_detection_mobile_gpu.pbtxt`]: https://github.com/google/mediapipe/tree/master/mediapipe/graphs/face_detection/face_detection_mobile_gpu.pbtxt
-[`CalculatorBase::Process`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator_base.h
-[`max_in_flight`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator.proto
-[`RoundRobinDemuxCalculator`]: https://github.com/google/mediapipe/tree/master//mediapipe/calculators/core/round_robin_demux_calculator.cc
-[`ScaleImageCalculator`]: https://github.com/google/mediapipe/tree/master/mediapipe/calculators/image/scale_image_calculator.cc
-[`ImmediateInputStreamHandler`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/stream_handler/immediate_input_stream_handler.cc
-[`CalculatorGraphConfig`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator.proto
-[`FlowLimiterCalculator`]: https://github.com/google/mediapipe/tree/master/mediapipe/calculators/core/flow_limiter_calculator.cc
-[`PacketClonerCalculator`]: https://github.com/google/mediapipe/tree/master/mediapipe/calculators/core/packet_cloner_calculator.cc
-[`MakePairCalculator`]: https://github.com/google/mediapipe/tree/master/mediapipe/calculators/core/make_pair_calculator.cc
+[`object_detection_mobile_cpu.pbtxt`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/object_detection/object_detection_mobile_cpu.pbtxt
+[`ImageFrame`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/formats/image_frame.h
+[`GpuBuffer`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/gpu/gpu_buffer.h
+[`GpuBufferToImageFrameCalculator`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/gpu/gpu_buffer_to_image_frame_calculator.cc
+[`ImageFrameToGpuBufferCalculator`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/gpu/image_frame_to_gpu_buffer_calculator.cc
+[`AnnotationOverlayCalculator`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/calculators/util/annotation_overlay_calculator.cc
+[`face_detection_mobile_gpu.pbtxt`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/face_detection/face_detection_mobile_gpu.pbtxt
+[`CalculatorBase::Process`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator_base.h
+[`max_in_flight`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator.proto
+[`RoundRobinDemuxCalculator`]: https://github.com/google-ai-edge/mediapipe/tree/master//mediapipe/calculators/core/round_robin_demux_calculator.cc
+[`ScaleImageCalculator`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/calculators/image/scale_image_calculator.cc
+[`ImmediateInputStreamHandler`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/stream_handler/immediate_input_stream_handler.cc
+[`CalculatorGraphConfig`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator.proto
+[`FlowLimiterCalculator`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/calculators/core/flow_limiter_calculator.cc
+[`PacketClonerCalculator`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/calculators/core/packet_cloner_calculator.cc
+[`MakePairCalculator`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/calculators/core/make_pair_calculator.cc

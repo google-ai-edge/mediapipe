@@ -37,10 +37,12 @@
 #include "absl/strings/string_view.h"
 #include "absl/strings/substitute.h"
 #include "absl/synchronization/mutex.h"
+#include "absl/time/time.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_base.h"
 #include "mediapipe/framework/counter_factory.h"
 #include "mediapipe/framework/delegating_executor.h"
+#include "mediapipe/framework/deps/clock.h"
 #include "mediapipe/framework/executor.h"
 #include "mediapipe/framework/graph_output_stream.h"
 #include "mediapipe/framework/graph_service_manager.h"
@@ -76,6 +78,7 @@
 #include "mediapipe/framework/tool/validate.h"
 #include "mediapipe/framework/tool/validate_name.h"
 #include "mediapipe/framework/validated_graph_config.h"
+#include "mediapipe/framework/vlog_overrides.h"
 #include "mediapipe/gpu/gpu_service.h"
 #include "mediapipe/gpu/graph_support.h"
 #include "mediapipe/util/cpu_util.h"
@@ -145,6 +148,7 @@ CalculatorGraph::CalculatorGraph(CalculatorContext* cc)
     // TODO b/368015341- Use factory method to avoid CHECK in constructor.
     ABSL_CHECK_OK(DisallowServiceDefaultInitialization());
   }
+  SetVLogOverrides();
 }
 
 CalculatorGraph::CalculatorGraph(CalculatorGraphConfig config)
@@ -391,6 +395,11 @@ absl::Status CalculatorGraph::InitializeExecutors() {
     MEDIAPIPE_CHECK_OK(SetExecutorInternal(
         executor_config.name(), std::shared_ptr<Executor>(executor)));
   }
+#ifdef __EMSCRIPTEN__
+  // Emscripten runs the application single threaded and therefore requires to
+  // use the application thread.
+  use_application_thread = true;
+#endif  // __EMSCRIPTEN__
 
   if (!mediapipe::ContainsKey(executors_, "")) {
     MP_RETURN_IF_ERROR(InitializeDefaultExecutor(default_executor_options,
@@ -404,7 +413,9 @@ absl::Status CalculatorGraph::InitializeDefaultExecutor(
     const ThreadPoolExecutorOptions* default_executor_options,
     bool use_application_thread) {
 #ifdef __EMSCRIPTEN__
-  use_application_thread = true;
+  // Emscripten runs the application single threaded and therefore requires to
+  // use the application thread.
+  RET_CHECK(use_application_thread);
 #endif  // __EMSCRIPTEN__
   // If specified, run synchronously on the calling thread.
   if (use_application_thread) {
@@ -456,6 +467,25 @@ absl::Status CalculatorGraph::Initialize(
 #endif
 
   initialized_ = true;
+
+#if !defined(__EMSCRIPTEN__)
+  // Emscripten only supports single threaded applications.
+  const auto& runtime_info_logger_config =
+      validated_graph_->Config().runtime_info();
+  if (runtime_info_logger_config.enable_graph_runtime_info()) {
+    MP_RETURN_IF_ERROR(graph_runtime_info_logger_.StartInBackground(
+        runtime_info_logger_config,
+        [this]() { return GetGraphRuntimeInfo(); }));
+  }
+#else
+  const auto& runtime_info_logger_config =
+      validated_graph_->Config().runtime_info();
+  // TODO - remove once graph runtime infos are supported in
+  // Emscripten.
+  if (runtime_info_logger_config.enable_graph_runtime_info()) {
+    ABSL_LOG(WARNING) << "Graph runtime infos are not supported in Emscripten.";
+  }
+#endif  // defined(__EMSCRIPTEN__)
   return absl::OkStatus();
 }
 
@@ -910,6 +940,17 @@ absl::Status CalculatorGraph::WaitUntilDone() {
 
 absl::Status CalculatorGraph::WaitForObservedOutput() {
   return scheduler_.WaitForObservedOutput();
+}
+
+absl::StatusOr<GraphRuntimeInfo> CalculatorGraph::GetGraphRuntimeInfo() {
+  RET_CHECK(initialized_);
+  GraphRuntimeInfo info;
+  for (const auto& node : nodes_) {
+    *info.add_calculator_infos() = node->GetStreamMonitoringInfo();
+  }
+  const absl::Time time_now = mediapipe::Clock::RealClock()->TimeNow();
+  info.set_capture_time_unix_us(absl::ToUnixMicros(time_now));
+  return info;
 }
 
 absl::Status CalculatorGraph::AddPacketToInputStream(

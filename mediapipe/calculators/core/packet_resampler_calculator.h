@@ -146,6 +146,14 @@ class PacketResamplerCalculator : public CalculatorBase {
       const mediapipe::PacketResamplerCalculatorOptions& options);
 
  private:
+  // Updates the frame rate of the calculator.
+  //
+  // This updates the metadata of the frame rate of the calculator moving
+  // forward. All already processed packets will be ignored.
+  absl::Status UpdateFrameRate(
+      const mediapipe::PacketResamplerCalculatorOptions& resampler_options,
+      double frame_rate);
+
   std::unique_ptr<class PacketResamplerStrategy> strategy_;
 
   // The timestamp of the first packet received.

@@ -145,6 +145,20 @@ class TfliteModelData : public ModelData {
     return nullptr;
   }
 
+  absl::StatusOr<ModelWithData> ReadModel(absl::string_view name) override {
+    MP_ASSIGN_OR_RETURN(auto data, ReadTensor(name));
+    if (!data) {
+      return ModelWithData{};
+    }
+    auto model = tflite::FlatBufferModel::BuildFromBuffer(
+        reinterpret_cast<const char*>(data->GetData().data()),
+        data->GetData().size());
+    return ModelWithData{
+        .model = std::move(model),
+        .data = std::move(data),
+    };
+  }
+
   absl::Status InitLlmParameters() {
     MP_ASSIGN_OR_RETURN(std::string proto_str,
                         ReadMetadata(llm_parameters_.GetTypeName()));

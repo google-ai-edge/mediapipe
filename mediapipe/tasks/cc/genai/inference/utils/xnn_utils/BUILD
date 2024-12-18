@@ -146,6 +146,8 @@ cc_library(
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
+        "@org_tensorflow//tensorflow/compiler/mlir/lite/schema:schema_fbs",
+        "@org_tensorflow//tensorflow/lite:model_builder",
     ],
 )
 

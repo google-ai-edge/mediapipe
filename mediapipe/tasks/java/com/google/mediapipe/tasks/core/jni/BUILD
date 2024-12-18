@@ -72,6 +72,7 @@ cc_library(
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@skia//:core",
     ] + select({
         "//conditions:default": [
             "//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu",

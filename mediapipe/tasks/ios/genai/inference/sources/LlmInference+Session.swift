@@ -54,7 +54,9 @@ extension LlmInference {
         topp: options.topp,
         temperature: options.temperature,
         random_seed: options.randomSeed,
-        lora_path: nil)
+        lora_path: nil,
+        include_token_cost_calculator: true,
+        enable_vision_modality: false)
 
       /// If `loraPath` is != nil, modify session config with the corresponding C string and invoke
       /// the method to create session runner within the scope where the C String of the `loraPath`

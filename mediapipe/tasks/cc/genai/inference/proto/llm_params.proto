@@ -27,7 +27,7 @@ enum LlmModelType {
   // Unknown LLM model type
   LLM_MODEL_TYPE_UNKNOWN = 0;
 
-  reserved 1, 2, 3, 4, 7, 9, 10, 13, 14, 15, 16, 17;
+  reserved 1, 2, 3, 4, 7, 9, 10, 13, 14, 15, 16, 17, 19;
 
   // FALCON RefinedWeb with 1B parameters.
   // https://huggingface.co/tiiuae/falcon-rw-1b
@@ -94,4 +94,8 @@ message LlmParameters {
   optional string system_role_token = 12;
   optional string model_role_token = 13;
   optional string end_role_token = 14;
+
+  // If this model includes a submodel, these params can be used to load the
+  // submodel.
+  optional TransformerParameters submodel_transformer_parameters = 16;
 }

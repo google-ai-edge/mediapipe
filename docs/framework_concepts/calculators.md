@@ -29,7 +29,7 @@ packets and produces zero or more output streams and/or side packets.
 ## CalculatorBase
 
 A calculator is created by defining a new sub-class of the
-[`CalculatorBase`](https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator_base.cc)
+[`CalculatorBase`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator_base.cc)
 class, implementing a number of methods, and registering the new sub-class with
 Mediapipe. At a minimum, a new calculator must implement the below four methods
 
@@ -65,7 +65,7 @@ Mediapipe. At a minimum, a new calculator must implement the below four methods
         soon as the graph finishes running.
 
 The following are code snippets from
-[CalculatorBase.h](https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator_base.h).
+[CalculatorBase.h](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator_base.h).
 
 ```c++
 class CalculatorBase {
@@ -140,7 +140,7 @@ write outputs. After Close returns, the calculator is destroyed.
 Calculators with no inputs are referred to as sources. A source calculator
 continues to have `Process()` called as long as it returns an `Ok` status. A
 source calculator indicates that it is exhausted by returning a stop status
-(i.e. [`mediaPipe::tool::StatusStop()`](https://github.com/google/mediapipe/tree/master/mediapipe/framework/tool/status_util.cc).).
+(i.e. [`mediaPipe::tool::StatusStop()`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/tool/status_util.cc).).
 
 ## Identifying inputs and outputs
 

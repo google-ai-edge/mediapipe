@@ -75,6 +75,6 @@ mediapipe_ts_library(
 
 jasmine_node_test(
     name = "gesture_recognizer_test",
+    srcs = [":gesture_recognizer_test_lib"],
     tags = ["nomsan"],
-    deps = [":gesture_recognizer_test_lib"],
 )

@@ -66,6 +66,6 @@ mediapipe_ts_library(
 
 jasmine_node_test(
     name = "object_detector_test",
+    srcs = [":object_detector_test_lib"],
     tags = ["nomsan"],
-    deps = [":object_detector_test_lib"],
 )

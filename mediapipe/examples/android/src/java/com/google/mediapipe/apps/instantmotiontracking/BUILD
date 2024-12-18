@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Placeholder: load java_lite_proto_library
+
 licenses(["notice"])
 
 package(default_visibility = ["//visibility:private"])
@@ -96,5 +98,6 @@ android_binary(
         ":instantmotiontracking_lib",
         ":mediapipe_jni_lib",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework",
+        "//third_party:libc++_shared_lib",
     ],
 )

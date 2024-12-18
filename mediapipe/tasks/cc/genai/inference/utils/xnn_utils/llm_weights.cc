@@ -17,6 +17,7 @@
 #include <sys/stat.h>
 
 #include <cstddef>
+#include <cstring>
 #include <memory>
 #include <optional>
 #include <utility>
@@ -38,6 +39,8 @@
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/tflite_weight_accessor.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/utils.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/xnn_tensor.h"
+#include "tensorflow/compiler/mlir/lite/schema/schema_generated.h"
+#include "tensorflow/lite/model_builder.h"
 
 namespace mediapipe::tasks::genai::xnn_utils {
 
@@ -486,8 +489,9 @@ absl::StatusOr<LlmWeights> LlmWeightsLoader::LoadWeights() {
   return result;
 }
 
-DefaultLlmWeightsLoader::DefaultLlmWeightsLoader(absl::string_view weight_path,
-                                                 const LlmParams& params)
+DefaultLlmWeightsLoader::DefaultLlmWeightsLoader(
+    absl::string_view weight_path, const LlmParams& params,
+    std::shared_ptr<tflite::FlatBufferModel> flat_buffer_model)
     : LlmWeightsLoader(nullptr, params) {
   xnn_weights_cache_ = std::make_shared<PackWeightsCache>(
       params.cache_dir.empty()
@@ -497,9 +501,20 @@ DefaultLlmWeightsLoader::DefaultLlmWeightsLoader(absl::string_view weight_path,
                 absl::StrCat(mediapipe::file::Basename(weight_path),
                              ".cache")));
   ABSL_CHECK_OK(xnn_weights_cache_->Initialize());
-  weight_accessor_ = std::make_unique<WeightAccessorCompositeWithCache>(
-      std::make_shared<TfLiteWeightAccessor>(weight_path),
-      xnn_weights_cache_.get());
+  if (flat_buffer_model != nullptr) {
+    const tflite::Model* model = flat_buffer_model->GetModel();
+    std::shared_ptr<const tflite::Model> tflite_model(
+        model, [](const tflite::Model*) { /* No deletion needed */ });
+    char* data = const_cast<char*>(
+        reinterpret_cast<const char*>(flat_buffer_model->allocation()->base()));
+    weight_accessor_ = std::make_unique<WeightAccessorCompositeWithCache>(
+        std::make_shared<TfLiteWeightAccessor>(tflite_model, data),
+        xnn_weights_cache_.get());
+  } else {
+    weight_accessor_ = std::make_unique<WeightAccessorCompositeWithCache>(
+        std::make_shared<TfLiteWeightAccessor>(weight_path),
+        xnn_weights_cache_.get());
+  }
 }
 
 }  // namespace mediapipe::tasks::genai::xnn_utils

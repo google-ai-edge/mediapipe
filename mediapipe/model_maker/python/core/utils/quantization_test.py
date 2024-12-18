@@ -17,7 +17,6 @@ import tensorflow as tf
 
 from mediapipe.model_maker.python.core.utils import quantization
 from mediapipe.model_maker.python.core.utils import test_util
-from ai_edge_litert import interpreter as tfl_interpreter
 
 
 class QuantizationTest(tf.test.TestCase, parameterized.TestCase):
@@ -60,7 +59,7 @@ class QuantizationTest(tf.test.TestCase, parameterized.TestCase):
     self.assertEqual(config.supported_ops,
                      [tf.lite.OpsSet.TFLITE_BUILTINS_INT8])
     tflite_model = converter.convert()
-    interpreter = tfl_interpreter.Interpreter(model_content=tflite_model)
+    interpreter = tf.lite.Interpreter(model_content=tflite_model)
     self.assertEqual(interpreter.get_input_details()[0]['dtype'], tf.uint8)
     self.assertEqual(interpreter.get_output_details()[0]['dtype'], tf.uint8)
 
@@ -83,7 +82,7 @@ class QuantizationTest(tf.test.TestCase, parameterized.TestCase):
     converter = config.set_converter_with_quantization(converter=converter)
     self.assertEqual(config.supported_types, [tf.float16])
     tflite_model = converter.convert()
-    interpreter = tfl_interpreter.Interpreter(model_content=tflite_model)
+    interpreter = tf.lite.Interpreter(model_content=tflite_model)
     # The input and output are expected to be set to float32 by default.
     self.assertEqual(interpreter.get_input_details()[0]['dtype'], tf.float32)
     self.assertEqual(interpreter.get_output_details()[0]['dtype'], tf.float32)

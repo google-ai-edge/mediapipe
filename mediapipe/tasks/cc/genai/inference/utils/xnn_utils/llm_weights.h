@@ -28,9 +28,9 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/tasks/cc/genai/inference/proto/llm_params.pb.h"
-#include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/graph_builder.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/pack_weights_cache.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/xnn_tensor.h"
+#include "tensorflow/lite/model_builder.h"
 
 namespace mediapipe::tasks::genai::xnn_utils {
 
@@ -237,11 +237,6 @@ class LlmWeightsLoader {
   LlmParams& llm_params() { return params_; }
   const LlmParams& llm_params() const { return params_; }
 
-  // Returns the XnnWeightsCache that could work with weights loader, if any.
-  virtual std::shared_ptr<XnnWeightsCache> GetXnnWeightsCache() {
-    return nullptr;
-  }
-
  protected:
   virtual absl::StatusOr<LlmWeights::SelfAttentionWeights> LoadSelfAttention(
       int layer_id);
@@ -264,12 +259,9 @@ class DefaultLlmWeightsLoader : public LlmWeightsLoader {
   DefaultLlmWeightsLoader(std::unique_ptr<WeightAccessor> weight_accessor,
                           const LlmParams& params)
       : LlmWeightsLoader(std::move(weight_accessor), params) {}
-  DefaultLlmWeightsLoader(absl::string_view weight_path,
-                          const LlmParams& params);
-
-  std::shared_ptr<XnnWeightsCache> GetXnnWeightsCache() override {
-    return xnn_weights_cache_;
-  }
+  DefaultLlmWeightsLoader(
+      absl::string_view weight_path, const LlmParams& params,
+      std::shared_ptr<tflite::FlatBufferModel> flat_buffer_model = nullptr);
 
  private:
   std::shared_ptr<PackWeightsCache> xnn_weights_cache_;

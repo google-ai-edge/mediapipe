@@ -3,2343 +3,2343 @@
 mesh {
   vertex_type: VERTEX_PT
   primitive_type: TRIANGLE
-  vertex_buffer: -0.05458094
+  vertex_buffer: -0.054581404
   vertex_buffer: -3.9104233
-  vertex_buffer: 6.2336426
+  vertex_buffer: 6.233639
   vertex_buffer: 0.499977
   vertex_buffer: 0.652534
-  vertex_buffer: -0.08718063
-  vertex_buffer: -2.5412483
+  vertex_buffer: -0.08718109
+  vertex_buffer: -2.5412502
   vertex_buffer: 7.949688
   vertex_buffer: 0.500026
   vertex_buffer: 0.547487
-  vertex_buffer: -0.062314644
-  vertex_buffer: -2.6207771
-  vertex_buffer: 6.3720016
+  vertex_buffer: -0.062315032
+  vertex_buffer: -2.620779
+  vertex_buffer: 6.371998
   vertex_buffer: 0.499974
   vertex_buffer: 0.602372
-  vertex_buffer: -0.5262091
-  vertex_buffer: -0.13145256
+  vertex_buffer: -0.52620995
+  vertex_buffer: -0.13145065
   vertex_buffer: 6.791649
   vertex_buffer: 0.482113
   vertex_buffer: 0.471979
-  vertex_buffer: -0.07805602
-  vertex_buffer: -1.9441948
+  vertex_buffer: -0.078056484
+  vertex_buffer: -1.9441929
   vertex_buffer: 8.094444
   vertex_buffer: 0.500151
   vertex_buffer: 0.527156
-  vertex_buffer: -0.058286533
-  vertex_buffer: -1.0193558
-  vertex_buffer: 7.732723
+  vertex_buffer: -0.05828686
+  vertex_buffer: -1.0193539
+  vertex_buffer: 7.7327194
   vertex_buffer: 0.49991
   vertex_buffer: 0.498253
-  vertex_buffer: 0.015007198
-  vertex_buffer: 1.6476421
+  vertex_buffer: 0.015007228
+  vertex_buffer: 1.6476498
   vertex_buffer: 5.7056847
   vertex_buffer: 0.499523
   vertex_buffer: 0.401062
-  vertex_buffer: -4.176094
-  vertex_buffer: 2.6367798
-  vertex_buffer: 2.9135933
+  vertex_buffer: -4.1760993
+  vertex_buffer: 2.6367893
+  vertex_buffer: 2.9135857
   vertex_buffer: 0.289712
   vertex_buffer: 0.380764
-  vertex_buffer: 0.03712082
-  vertex_buffer: 2.985258
-  vertex_buffer: 5.0371017
+  vertex_buffer: 0.037120968
+  vertex_buffer: 2.9852676
+  vertex_buffer: 5.037098
   vertex_buffer: 0.499955
   vertex_buffer: 0.312398
-  vertex_buffer: 0.06068772
-  vertex_buffer: 3.787365
+  vertex_buffer: 0.06068799
+  vertex_buffer: 3.7873764
   vertex_buffer: 5.021179
   vertex_buffer: 0.499987
   vertex_buffer: 0.269919
-  vertex_buffer: 0.121769845
-  vertex_buffer: 8.058422
+  vertex_buffer: 0.12177047
+  vertex_buffer: 8.058437
   vertex_buffer: 3.8209877
   vertex_buffer: 0.500023
   vertex_buffer: 0.10705
-  vertex_buffer: -0.04902646
-  vertex_buffer: -4.1000786
+  vertex_buffer: -0.049026906
+  vertex_buffer: -4.1000805
   vertex_buffer: 6.1800804
   vertex_buffer: 0.500023
   vertex_buffer: 0.666234
-  vertex_buffer: -0.03831458
-  vertex_buffer: -4.228405
+  vertex_buffer: -0.038315058
+  vertex_buffer: -4.228407
   vertex_buffer: 6.0491524
   vertex_buffer: 0.500016
   vertex_buffer: 0.679224
-  vertex_buffer: -0.05387768
-  vertex_buffer: -4.2712173
-  vertex_buffer: 5.8285065
+  vertex_buffer: -0.053878143
+  vertex_buffer: -4.2712193
+  vertex_buffer: 5.8285027
   vertex_buffer: 0.500023
   vertex_buffer: 0.692348
-  vertex_buffer: -0.053183556
+  vertex_buffer: -0.053184003
   vertex_buffer: -5.543394
-  vertex_buffer: 5.0727234
+  vertex_buffer: 5.0727158
   vertex_buffer: 0.499977
   vertex_buffer: 0.695278
-  vertex_buffer: -0.059314266
-  vertex_buffer: -5.8140745
-  vertex_buffer: 5.2457848
+  vertex_buffer: -0.059314743
+  vertex_buffer: -5.8140755
+  vertex_buffer: 5.245777
   vertex_buffer: 0.499977
   vertex_buffer: 0.705934
-  vertex_buffer: -0.046299785
-  vertex_buffer: -6.184594
-  vertex_buffer: 5.4517365
+  vertex_buffer: -0.04630032
+  vertex_buffer: -6.184597
+  vertex_buffer: 5.4517326
   vertex_buffer: 0.499977
   vertex_buffer: 0.719385
-  vertex_buffer: -0.0507226
-  vertex_buffer: -6.5362883
-  vertex_buffer: 5.412071
+  vertex_buffer: -0.050723135
+  vertex_buffer: -6.536292
+  vertex_buffer: 5.4120636
   vertex_buffer: 0.499977
   vertex_buffer: 0.737019
-  vertex_buffer: -0.0614883
-  vertex_buffer: -7.299967
-  vertex_buffer: 5.0314445
+  vertex_buffer: -0.061488867
+  vertex_buffer: -7.2999697
+  vertex_buffer: 5.031437
   vertex_buffer: 0.499968
   vertex_buffer: 0.781371
-  vertex_buffer: -0.080724046
-  vertex_buffer: -2.802185
+  vertex_buffer: -0.08072452
+  vertex_buffer: -2.8021832
   vertex_buffer: 7.659096
   vertex_buffer: 0.499816
   vertex_buffer: 0.562981
-  vertex_buffer: -0.7109383
+  vertex_buffer: -0.7109394
   vertex_buffer: -2.4929829
   vertex_buffer: 6.7737694
   vertex_buffer: 0.473773
   vertex_buffer: 0.57391
-  vertex_buffer: -7.1076756
-  vertex_buffer: 6.3111076
+  vertex_buffer: -7.1076837
+  vertex_buffer: 6.311123
   vertex_buffer: -0.36587524
   vertex_buffer: 0.104907
   vertex_buffer: 0.254141
-  vertex_buffer: -2.470239
-  vertex_buffer: 1.9644203
-  vertex_buffer: 3.584652
+  vertex_buffer: -2.4702423
+  vertex_buffer: 1.964428
+  vertex_buffer: 3.5846405
   vertex_buffer: 0.36593
   vertex_buffer: 0.409576
-  vertex_buffer: -3.0842545
-  vertex_buffer: 1.9237556
-  vertex_buffer: 3.5713196
+  vertex_buffer: -3.0842586
+  vertex_buffer: 1.9237652
+  vertex_buffer: 3.571312
   vertex_buffer: 0.338758
   vertex_buffer: 0.413025
-  vertex_buffer: -3.7028773
-  vertex_buffer: 1.9847145
-  vertex_buffer: 3.4238892
+  vertex_buffer: -3.702882
+  vertex_buffer: 1.9847221
+  vertex_buffer: 3.4238815
   vertex_buffer: 0.31112
   vertex_buffer: 0.40946
-  vertex_buffer: -4.5404453
-  vertex_buffer: 2.4034252
-  vertex_buffer: 2.868042
+  vertex_buffer: -4.540451
+  vertex_buffer: 2.4034386
+  vertex_buffer: 2.8680344
   vertex_buffer: 0.274658
   vertex_buffer: 0.389131
-  vertex_buffer: -1.9506176
-  vertex_buffer: 2.0792522
+  vertex_buffer: -1.95062
+  vertex_buffer: 2.0792599
   vertex_buffer: 3.545063
   vertex_buffer: 0.393362
   vertex_buffer: 0.403706
-  vertex_buffer: -3.3600674
-  vertex_buffer: 3.3302898
-  vertex_buffer: 3.677475
+  vertex_buffer: -3.3600717
+  vertex_buffer: 3.3302975
+  vertex_buffer: 3.6774712
   vertex_buffer: 0.345234
   vertex_buffer: 0.344011
-  vertex_buffer: -2.6583462
-  vertex_buffer: 3.3343391
-  vertex_buffer: 3.6318817
+  vertex_buffer: -2.6583493
+  vertex_buffer: 3.3343468
+  vertex_buffer: 3.631878
   vertex_buffer: 0.370094
   vertex_buffer: 0.346076
-  vertex_buffer: -4.0172
-  vertex_buffer: 3.2417145
-  vertex_buffer: 3.5189857
+  vertex_buffer: -4.017204
+  vertex_buffer: 3.241726
+  vertex_buffer: 3.5189743
   vertex_buffer: 0.319322
   vertex_buffer: 0.347265
-  vertex_buffer: -4.4652123
-  vertex_buffer: 3.105711
-  vertex_buffer: 3.2689667
+  vertex_buffer: -4.465218
+  vertex_buffer: 3.1057186
+  vertex_buffer: 3.2689629
   vertex_buffer: 0.297903
   vertex_buffer: 0.353591
-  vertex_buffer: -5.148801
-  vertex_buffer: 2.13056
-  vertex_buffer: 2.6144447
+  vertex_buffer: -5.1488075
+  vertex_buffer: 2.1305676
+  vertex_buffer: 2.614441
   vertex_buffer: 0.247792
   vertex_buffer: 0.41081
-  vertex_buffer: -2.5560007
-  vertex_buffer: -8.121601
-  vertex_buffer: 4.312229
+  vertex_buffer: -2.5560045
+  vertex_buffer: -8.121606
+  vertex_buffer: 4.3122253
   vertex_buffer: 0.396889
   vertex_buffer: 0.842755
-  vertex_buffer: -4.4293623
-  vertex_buffer: 2.7792645
-  vertex_buffer: 2.6971169
+  vertex_buffer: -4.429368
+  vertex_buffer: 2.779272
+  vertex_buffer: 2.6971092
   vertex_buffer: 0.280098
   vertex_buffer: 0.3756
-  vertex_buffer: -7.3019996
-  vertex_buffer: 3.2599068
-  vertex_buffer: -0.24933624
+  vertex_buffer: -7.3020077
+  vertex_buffer: 3.2599182
+  vertex_buffer: -0.24934387
   vertex_buffer: 0.10631
   vertex_buffer: 0.399956
-  vertex_buffer: -5.9285183
-  vertex_buffer: 2.6113186
-  vertex_buffer: 1.935009
+  vertex_buffer: -5.9285254
+  vertex_buffer: 2.6113281
+  vertex_buffer: 1.9350014
   vertex_buffer: 0.209925
   vertex_buffer: 0.391353
-  vertex_buffer: -3.3364365
-  vertex_buffer: -0.7940159
-  vertex_buffer: 4.6608505
+  vertex_buffer: -3.336441
+  vertex_buffer: -0.79401016
+  vertex_buffer: 4.6608467
   vertex_buffer: 0.355808
   vertex_buffer: 0.534406
-  vertex_buffer: -1.073098
-  vertex_buffer: -3.7692108
+  vertex_buffer: -1.0730996
+  vertex_buffer: -3.769209
   vertex_buffer: 6.153408
   vertex_buffer: 0.471751
   vertex_buffer: 0.650404
-  vertex_buffer: -1.0261879
+  vertex_buffer: -1.0261894
   vertex_buffer: -4.1541195
-  vertex_buffer: 5.910328
+  vertex_buffer: 5.910324
   vertex_buffer: 0.474155
   vertex_buffer: 0.680192
-  vertex_buffer: -2.0449853
+  vertex_buffer: -2.0449882
   vertex_buffer: -3.767992
-  vertex_buffer: 5.6874237
+  vertex_buffer: 5.687416
   vertex_buffer: 0.439785
   vertex_buffer: 0.657229
-  vertex_buffer: -2.7272358
-  vertex_buffer: -3.7194214
-  vertex_buffer: 4.9273148
+  vertex_buffer: -2.7272398
+  vertex_buffer: -3.7194176
+  vertex_buffer: 4.927311
   vertex_buffer: 0.414617
   vertex_buffer: 0.666541
-  vertex_buffer: -1.8418827
-  vertex_buffer: -4.0302353
-  vertex_buffer: 5.497223
+  vertex_buffer: -1.8418853
+  vertex_buffer: -4.0302334
+  vertex_buffer: 5.497219
   vertex_buffer: 0.450374
   vertex_buffer: 0.680861
-  vertex_buffer: -2.4798682
-  vertex_buffer: -3.8946476
-  vertex_buffer: 4.8089104
+  vertex_buffer: -2.4798715
+  vertex_buffer: -3.8946457
+  vertex_buffer: 4.808899
   vertex_buffer: 0.428771
   vertex_buffer: 0.682691
-  vertex_buffer: -3.4621422
+  vertex_buffer: -3.4621468
   vertex_buffer: -4.7935104
-  vertex_buffer: 3.6339455
+  vertex_buffer: 3.6339378
   vertex_buffer: 0.374971
   vertex_buffer: 0.727805
-  vertex_buffer: -0.6082711
-  vertex_buffer: -2.526701
+  vertex_buffer: -0.6082723
+  vertex_buffer: -2.526699
   vertex_buffer: 7.89365
   vertex_buffer: 0.486717
   vertex_buffer: 0.547629
-  vertex_buffer: -0.62934816
+  vertex_buffer: -0.62934923
   vertex_buffer: -1.9188957
   vertex_buffer: 8.013584
   vertex_buffer: 0.485301
   vertex_buffer: 0.527395
-  vertex_buffer: -5.3245864
-  vertex_buffer: 3.4533978
-  vertex_buffer: 3.129799
+  vertex_buffer: -5.324592
+  vertex_buffer: 3.4534073
+  vertex_buffer: 3.129795
   vertex_buffer: 0.257765
   vertex_buffer: 0.31449
-  vertex_buffer: -1.8589399
-  vertex_buffer: 0.70103836
-  vertex_buffer: 4.5687027
+  vertex_buffer: -1.8589423
+  vertex_buffer: 0.701046
+  vertex_buffer: 4.568695
   vertex_buffer: 0.401223
   vertex_buffer: 0.455172
-  vertex_buffer: -2.21105
-  vertex_buffer: -1.6402969
+  vertex_buffer: -2.211053
+  vertex_buffer: -1.6402931
   vertex_buffer: 6.246376
   vertex_buffer: 0.429819
   vertex_buffer: 0.548615
-  vertex_buffer: -2.2373412
-  vertex_buffer: -1.2092209
-  vertex_buffer: 5.9900475
+  vertex_buffer: -2.2373445
+  vertex_buffer: -1.209219
+  vertex_buffer: 5.9900436
   vertex_buffer: 0.421352
   vertex_buffer: 0.533741
-  vertex_buffer: -5.2615614
-  vertex_buffer: -0.38985252
-  vertex_buffer: 3.8133812
+  vertex_buffer: -5.2615685
+  vertex_buffer: -0.3898449
+  vertex_buffer: 3.8133736
   vertex_buffer: 0.276896
   vertex_buffer: 0.532057
-  vertex_buffer: -0.57935333
-  vertex_buffer: -1.0133495
+  vertex_buffer: -0.5793542
+  vertex_buffer: -1.0133476
   vertex_buffer: 7.52845
   vertex_buffer: 0.48337
   vertex_buffer: 0.499587
-  vertex_buffer: -3.619615
-  vertex_buffer: 3.6594543
-  vertex_buffer: 4.1930656
+  vertex_buffer: -3.6196196
+  vertex_buffer: 3.6594658
+  vertex_buffer: 4.193058
   vertex_buffer: 0.337212
   vertex_buffer: 0.282883
-  vertex_buffer: -4.5898757
-  vertex_buffer: 3.6197815
-  vertex_buffer: 3.7516823
+  vertex_buffer: -4.589881
+  vertex_buffer: 3.619793
+  vertex_buffer: 3.7516785
   vertex_buffer: 0.296392
   vertex_buffer: 0.293243
-  vertex_buffer: -6.3526697
-  vertex_buffer: 7.150507
-  vertex_buffer: 0.71819305
+  vertex_buffer: -6.352678
+  vertex_buffer: 7.150524
+  vertex_buffer: 0.7181854
   vertex_buffer: 0.169295
   vertex_buffer: 0.193814
-  vertex_buffer: -1.0129352
-  vertex_buffer: 3.025011
+  vertex_buffer: -1.0129362
+  vertex_buffer: 3.0250225
   vertex_buffer: 4.796524
   vertex_buffer: 0.44758
   vertex_buffer: 0.30261
-  vertex_buffer: -2.0709233
-  vertex_buffer: 3.2252083
-  vertex_buffer: 3.4418488
+  vertex_buffer: -2.0709255
+  vertex_buffer: 3.2252178
+  vertex_buffer: 3.4418411
   vertex_buffer: 0.39239
   vertex_buffer: 0.353888
-  vertex_buffer: -4.02202
-  vertex_buffer: -3.7557068
-  vertex_buffer: 3.5507584
+  vertex_buffer: -4.0220246
+  vertex_buffer: -3.7557049
+  vertex_buffer: 3.5507507
   vertex_buffer: 0.35449
   vertex_buffer: 0.696784
-  vertex_buffer: -6.623052
-  vertex_buffer: -3.412384
-  vertex_buffer: -0.97278595
+  vertex_buffer: -6.6230597
+  vertex_buffer: -3.4123821
+  vertex_buffer: -0.9727936
   vertex_buffer: 0.067305
   vertex_buffer: 0.730105
-  vertex_buffer: -1.7937524
-  vertex_buffer: -1.979456
-  vertex_buffer: 6.017292
+  vertex_buffer: -1.7937549
+  vertex_buffer: -1.979454
+  vertex_buffer: 6.017288
   vertex_buffer: 0.442739
   vertex_buffer: 0.572826
-  vertex_buffer: -1.2062981
+  vertex_buffer: -1.2062998
   vertex_buffer: -2.2445698
   vertex_buffer: 6.1706963
   vertex_buffer: 0.457098
   vertex_buffer: 0.584792
-  vertex_buffer: -3.57981
-  vertex_buffer: -3.7382832
-  vertex_buffer: 3.4588318
+  vertex_buffer: -3.5798144
+  vertex_buffer: -3.7382813
+  vertex_buffer: 3.458828
   vertex_buffer: 0.381974
   vertex_buffer: 0.694711
-  vertex_buffer: -3.3970556
-  vertex_buffer: -3.7821655
-  vertex_buffer: 3.5801582
+  vertex_buffer: -3.3970602
+  vertex_buffer: -3.7821636
+  vertex_buffer: 3.5801468
   vertex_buffer: 0.392389
   vertex_buffer: 0.694203
-  vertex_buffer: -4.9694285
-  vertex_buffer: 4.1729107
-  vertex_buffer: 3.340042
+  vertex_buffer: -4.9694343
+  vertex_buffer: 4.172926
+  vertex_buffer: 3.3400345
   vertex_buffer: 0.277076
   vertex_buffer: 0.271932
-  vertex_buffer: -2.315681
+  vertex_buffer: -2.3156843
   vertex_buffer: -1.7466087
-  vertex_buffer: 5.9153595
+  vertex_buffer: 5.9153557
   vertex_buffer: 0.422552
   vertex_buffer: 0.563233
-  vertex_buffer: -2.4251802
-  vertex_buffer: 3.4840698
-  vertex_buffer: 4.546856
+  vertex_buffer: -2.4251833
+  vertex_buffer: 3.4840775
+  vertex_buffer: 4.5468445
   vertex_buffer: 0.385919
   vertex_buffer: 0.281364
-  vertex_buffer: -2.5284352
-  vertex_buffer: 4.002569
-  vertex_buffer: 4.621155
+  vertex_buffer: -2.5284379
+  vertex_buffer: 4.0025826
+  vertex_buffer: 4.621151
   vertex_buffer: 0.383103
   vertex_buffer: 0.25584
-  vertex_buffer: -3.5193088
-  vertex_buffer: 7.9853344
-  vertex_buffer: 2.9795952
+  vertex_buffer: -3.5193126
+  vertex_buffer: 7.9853497
+  vertex_buffer: 2.9795876
   vertex_buffer: 0.331431
   vertex_buffer: 0.119714
-  vertex_buffer: -5.6371226
-  vertex_buffer: 5.7293034
-  vertex_buffer: 2.1390076
+  vertex_buffer: -5.6371293
+  vertex_buffer: 5.7293186
+  vertex_buffer: 2.1390038
   vertex_buffer: 0.229924
   vertex_buffer: 0.232003
-  vertex_buffer: -2.971123
-  vertex_buffer: 6.184988
+  vertex_buffer: -2.9711266
+  vertex_buffer: 6.1849995
   vertex_buffer: 3.8050308
   vertex_buffer: 0.364501
   vertex_buffer: 0.189114
-  vertex_buffer: -5.761087
-  vertex_buffer: 3.9773064
-  vertex_buffer: 2.541832
+  vertex_buffer: -5.761094
+  vertex_buffer: 3.9773197
+  vertex_buffer: 2.5418282
   vertex_buffer: 0.229622
   vertex_buffer: 0.299541
-  vertex_buffer: -6.4531307
-  vertex_buffer: 5.1509743
-  vertex_buffer: 1.08535
+  vertex_buffer: -6.453139
+  vertex_buffer: 5.1509914
+  vertex_buffer: 1.0853424
   vertex_buffer: 0.173287
   vertex_buffer: 0.278748
-  vertex_buffer: -1.0653346
-  vertex_buffer: -3.9987717
-  vertex_buffer: 6.0787888
+  vertex_buffer: -1.0653361
+  vertex_buffer: -3.9987736
+  vertex_buffer: 6.078785
   vertex_buffer: 0.472879
   vertex_buffer: 0.666198
-  vertex_buffer: -1.9331014
+  vertex_buffer: -1.9331044
   vertex_buffer: -3.916172
-  vertex_buffer: 5.592533
+  vertex_buffer: 5.5925255
   vertex_buffer: 0.446828
   vertex_buffer: 0.668527
-  vertex_buffer: -2.5978663
+  vertex_buffer: -2.5978699
   vertex_buffer: -3.812233
-  vertex_buffer: 4.909237
+  vertex_buffer: 4.9092293
   vertex_buffer: 0.422762
   vertex_buffer: 0.67389
-  vertex_buffer: -1.6448693
-  vertex_buffer: -2.058361
-  vertex_buffer: 5.9337997
+  vertex_buffer: -1.6448718
+  vertex_buffer: -2.0583591
+  vertex_buffer: 5.933792
   vertex_buffer: 0.445308
   vertex_buffer: 0.580066
-  vertex_buffer: -3.4851413
-  vertex_buffer: -3.7586155
-  vertex_buffer: 3.5274696
+  vertex_buffer: -3.4851453
+  vertex_buffer: -3.7586174
+  vertex_buffer: 3.5274658
   vertex_buffer: 0.388103
   vertex_buffer: 0.693961
-  vertex_buffer: -3.066307
+  vertex_buffer: -3.066311
   vertex_buffer: -4.4653883
-  vertex_buffer: 3.8333206
+  vertex_buffer: 3.8333168
   vertex_buffer: 0.403039
   vertex_buffer: 0.70654
-  vertex_buffer: -3.3134317
-  vertex_buffer: -3.8092175
-  vertex_buffer: 3.5993462
+  vertex_buffer: -3.313436
+  vertex_buffer: -3.8092194
+  vertex_buffer: 3.5993423
   vertex_buffer: 0.403629
   vertex_buffer: 0.693953
-  vertex_buffer: -1.3705826
-  vertex_buffer: -2.1870499
+  vertex_buffer: -1.3705846
+  vertex_buffer: -2.187048
   vertex_buffer: 6.929592
   vertex_buffer: 0.460042
   vertex_buffer: 0.557139
-  vertex_buffer: -2.3757484
+  vertex_buffer: -2.3757515
   vertex_buffer: -3.9299736
-  vertex_buffer: 4.7485847
+  vertex_buffer: 4.748581
   vertex_buffer: 0.431158
   vertex_buffer: 0.692366
-  vertex_buffer: -1.7447376
+  vertex_buffer: -1.7447399
   vertex_buffer: -4.0353317
-  vertex_buffer: 5.2845726
+  vertex_buffer: 5.284565
   vertex_buffer: 0.452182
   vertex_buffer: 0.692366
-  vertex_buffer: -0.97020155
-  vertex_buffer: -4.186224
-  vertex_buffer: 5.687355
+  vertex_buffer: -0.97020316
+  vertex_buffer: -4.186222
+  vertex_buffer: 5.687351
   vertex_buffer: 0.475387
   vertex_buffer: 0.692366
-  vertex_buffer: -1.1198573
-  vertex_buffer: -7.185463
-  vertex_buffer: 4.9469795
+  vertex_buffer: -1.119859
+  vertex_buffer: -7.185467
+  vertex_buffer: 4.946968
   vertex_buffer: 0.465828
   vertex_buffer: 0.77919
-  vertex_buffer: -1.040087
-  vertex_buffer: -6.4274054
-  vertex_buffer: 5.3075333
+  vertex_buffer: -1.0400888
+  vertex_buffer: -6.427408
+  vertex_buffer: 5.3075294
   vertex_buffer: 0.472329
   vertex_buffer: 0.736226
-  vertex_buffer: -1.0275493
-  vertex_buffer: -6.0652637
-  vertex_buffer: 5.31258
+  vertex_buffer: -1.027551
+  vertex_buffer: -6.0652666
+  vertex_buffer: 5.3125763
   vertex_buffer: 0.473087
   vertex_buffer: 0.717857
-  vertex_buffer: -0.9899579
+  vertex_buffer: -0.9899597
   vertex_buffer: -5.712208
-  vertex_buffer: 5.0865936
+  vertex_buffer: 5.086586
   vertex_buffer: 0.473122
   vertex_buffer: 0.704626
-  vertex_buffer: -0.922419
-  vertex_buffer: -5.449852
-  vertex_buffer: 4.9381943
+  vertex_buffer: -0.9224205
+  vertex_buffer: -5.449853
+  vertex_buffer: 4.938183
   vertex_buffer: 0.473033
   vertex_buffer: 0.695278
-  vertex_buffer: -2.3016758
+  vertex_buffer: -2.3016791
   vertex_buffer: -4.864131
-  vertex_buffer: 4.200348
+  vertex_buffer: 4.2003365
   vertex_buffer: 0.427942
   vertex_buffer: 0.695278
-  vertex_buffer: -2.4079256
-  vertex_buffer: -4.9618464
-  vertex_buffer: 4.3218575
+  vertex_buffer: -2.4079297
+  vertex_buffer: -4.9618473
+  vertex_buffer: 4.32185
   vertex_buffer: 0.426479
   vertex_buffer: 0.70354
-  vertex_buffer: -2.539156
-  vertex_buffer: -5.145029
-  vertex_buffer: 4.4079857
+  vertex_buffer: -2.5391598
+  vertex_buffer: -5.145028
+  vertex_buffer: 4.407978
   vertex_buffer: 0.423162
   vertex_buffer: 0.711846
-  vertex_buffer: -2.626017
+  vertex_buffer: -2.626021
   vertex_buffer: -5.3240175
-  vertex_buffer: 4.311016
+  vertex_buffer: 4.3110046
   vertex_buffer: 0.418309
   vertex_buffer: 0.720063
-  vertex_buffer: -3.234158
-  vertex_buffer: -3.0173168
-  vertex_buffer: 4.740303
+  vertex_buffer: -3.2341623
+  vertex_buffer: -3.017315
+  vertex_buffer: 4.740299
   vertex_buffer: 0.390095
   vertex_buffer: 0.639573
-  vertex_buffer: -7.579906
-  vertex_buffer: 0.5933876
-  vertex_buffer: -2.304924
+  vertex_buffer: -7.5799155
+  vertex_buffer: 0.59339714
+  vertex_buffer: -2.3049393
   vertex_buffer: 0.013954
   vertex_buffer: 0.560034
-  vertex_buffer: -0.07802668
-  vertex_buffer: -2.6862774
-  vertex_buffer: 6.828209
+  vertex_buffer: -0.07802707
+  vertex_buffer: -2.6862755
+  vertex_buffer: 6.828205
   vertex_buffer: 0.499914
   vertex_buffer: 0.580147
-  vertex_buffer: -2.7698386
-  vertex_buffer: -4.4213257
-  vertex_buffer: 3.7819366
+  vertex_buffer: -2.7698421
+  vertex_buffer: -4.421324
+  vertex_buffer: 3.7819328
   vertex_buffer: 0.4132
   vertex_buffer: 0.6954
-  vertex_buffer: -2.9227178
-  vertex_buffer: -4.4475775
-  vertex_buffer: 3.845951
+  vertex_buffer: -2.9227223
+  vertex_buffer: -4.4475765
+  vertex_buffer: 3.8459435
   vertex_buffer: 0.409626
   vertex_buffer: 0.701823
-  vertex_buffer: -1.0003803
+  vertex_buffer: -1.0003818
   vertex_buffer: -2.492979
   vertex_buffer: 6.198204
   vertex_buffer: 0.46808
   vertex_buffer: 0.601535
-  vertex_buffer: -2.1424727
-  vertex_buffer: -1.9390526
-  vertex_buffer: 5.46101
+  vertex_buffer: -2.1424758
+  vertex_buffer: -1.9390469
+  vertex_buffer: 5.461006
   vertex_buffer: 0.422729
   vertex_buffer: 0.585985
-  vertex_buffer: -1.0979404
-  vertex_buffer: -2.3909836
-  vertex_buffer: 6.2144356
+  vertex_buffer: -1.097942
+  vertex_buffer: -2.3909798
+  vertex_buffer: 6.214432
   vertex_buffer: 0.46308
   vertex_buffer: 0.593784
-  vertex_buffer: -2.5645185
-  vertex_buffer: 0.45451736
-  vertex_buffer: 4.4030495
+  vertex_buffer: -2.5645218
+  vertex_buffer: 0.45452118
+  vertex_buffer: 4.403042
   vertex_buffer: 0.37212
   vertex_buffer: 0.473414
-  vertex_buffer: -3.6344466
-  vertex_buffer: 0.15174484
-  vertex_buffer: 4.2981873
+  vertex_buffer: -3.6344514
+  vertex_buffer: 0.15174866
+  vertex_buffer: 4.2981834
   vertex_buffer: 0.334562
   vertex_buffer: 0.496073
-  vertex_buffer: -2.4170141
-  vertex_buffer: -1.3526745
-  vertex_buffer: 5.642761
+  vertex_buffer: -2.4170175
+  vertex_buffer: -1.3526707
+  vertex_buffer: 5.6427574
   vertex_buffer: 0.411671
   vertex_buffer: 0.546965
-  vertex_buffer: -5.1738615
-  vertex_buffer: 7.6968765
-  vertex_buffer: 1.9025688
+  vertex_buffer: -5.1738667
+  vertex_buffer: 7.696892
+  vertex_buffer: 1.9025612
   vertex_buffer: 0.242176
   vertex_buffer: 0.147676
-  vertex_buffer: -4.5046306
-  vertex_buffer: 6.0956154
-  vertex_buffer: 3.0134354
+  vertex_buffer: -4.5046363
+  vertex_buffer: 6.0956287
+  vertex_buffer: 3.0134315
   vertex_buffer: 0.290777
   vertex_buffer: 0.201446
-  vertex_buffer: -3.840843
-  vertex_buffer: 4.263878
-  vertex_buffer: 3.9735641
+  vertex_buffer: -3.8408475
+  vertex_buffer: 4.2638893
+  vertex_buffer: 3.9735603
   vertex_buffer: 0.327338
   vertex_buffer: 0.256527
-  vertex_buffer: -2.8679767
-  vertex_buffer: -5.7141867
-  vertex_buffer: 4.0249977
+  vertex_buffer: -2.8679805
+  vertex_buffer: -5.7141886
+  vertex_buffer: 4.02499
   vertex_buffer: 0.39951
   vertex_buffer: 0.748921
-  vertex_buffer: -1.1987953
-  vertex_buffer: 3.787548
+  vertex_buffer: -1.1987965
+  vertex_buffer: 3.7875595
   vertex_buffer: 4.9401436
   vertex_buffer: 0.441728
   vertex_buffer: 0.261676
-  vertex_buffer: -1.5314405
-  vertex_buffer: 6.164812
-  vertex_buffer: 4.248989
+  vertex_buffer: -1.5314423
+  vertex_buffer: 6.1648254
+  vertex_buffer: 4.2489853
   vertex_buffer: 0.429765
   vertex_buffer: 0.187834
-  vertex_buffer: -1.8419411
-  vertex_buffer: 8.065584
+  vertex_buffer: -1.8419428
+  vertex_buffer: 8.065599
   vertex_buffer: 3.6402245
   vertex_buffer: 0.412198
   vertex_buffer: 0.108901
-  vertex_buffer: -4.211664
-  vertex_buffer: 2.1525154
-  vertex_buffer: 3.1534004
+  vertex_buffer: -4.211669
+  vertex_buffer: 2.1525269
+  vertex_buffer: 3.1533928
   vertex_buffer: 0.288955
   vertex_buffer: 0.398952
-  vertex_buffer: -5.888899
-  vertex_buffer: 1.8484287
-  vertex_buffer: 2.299553
+  vertex_buffer: -5.888906
+  vertex_buffer: 1.8484383
+  vertex_buffer: 2.2995453
   vertex_buffer: 0.218937
   vertex_buffer: 0.435411
-  vertex_buffer: -1.6175318
-  vertex_buffer: 2.2701035
-  vertex_buffer: 3.4401398
+  vertex_buffer: -1.6175336
+  vertex_buffer: 2.270111
+  vertex_buffer: 3.440136
   vertex_buffer: 0.412782
   vertex_buffer: 0.39897
-  vertex_buffer: -5.159606
-  vertex_buffer: 3.0025787
-  vertex_buffer: 2.737915
+  vertex_buffer: -5.1596127
+  vertex_buffer: 3.0025902
+  vertex_buffer: 2.7379074
   vertex_buffer: 0.257135
   vertex_buffer: 0.35544
-  vertex_buffer: -1.3773215
-  vertex_buffer: 0.9951744
-  vertex_buffer: 4.782261
+  vertex_buffer: -1.377323
+  vertex_buffer: 0.9951782
+  vertex_buffer: 4.782257
   vertex_buffer: 0.427685
   vertex_buffer: 0.437961
-  vertex_buffer: -1.7201958
-  vertex_buffer: -1.7159519
+  vertex_buffer: -1.720198
+  vertex_buffer: -1.7159481
   vertex_buffer: 6.867691
   vertex_buffer: 0.44834
   vertex_buffer: 0.536936
-  vertex_buffer: -6.6515293
-  vertex_buffer: 1.5498962
-  vertex_buffer: 1.696167
+  vertex_buffer: -6.6515374
+  vertex_buffer: 1.5499058
+  vertex_buffer: 1.6961594
   vertex_buffer: 0.17856
   vertex_buffer: 0.457554
-  vertex_buffer: -5.4059763
-  vertex_buffer: 1.3487549
-  vertex_buffer: 2.9207191
+  vertex_buffer: -5.4059834
+  vertex_buffer: 1.3487625
+  vertex_buffer: 2.9207115
   vertex_buffer: 0.247308
   vertex_buffer: 0.457194
-  vertex_buffer: -4.583771
-  vertex_buffer: 1.0079613
-  vertex_buffer: 3.5124168
+  vertex_buffer: -4.583777
+  vertex_buffer: 1.0079708
+  vertex_buffer: 3.512413
   vertex_buffer: 0.286267
   vertex_buffer: 0.467675
-  vertex_buffer: -3.3820121
-  vertex_buffer: 0.9262314
-  vertex_buffer: 3.8521194
+  vertex_buffer: -3.3820162
+  vertex_buffer: 0.926239
+  vertex_buffer: 3.8521156
   vertex_buffer: 0.332828
   vertex_buffer: 0.460712
-  vertex_buffer: -2.477497
-  vertex_buffer: 1.0757065
-  vertex_buffer: 3.953865
+  vertex_buffer: -2.4775004
+  vertex_buffer: 1.075716
+  vertex_buffer: 3.9538612
   vertex_buffer: 0.368756
   vertex_buffer: 0.447207
-  vertex_buffer: -1.8026321
-  vertex_buffer: 1.2566261
-  vertex_buffer: 4.115402
+  vertex_buffer: -1.8026342
+  vertex_buffer: 1.2566338
+  vertex_buffer: 4.1153984
   vertex_buffer: 0.398964
   vertex_buffer: 0.432655
-  vertex_buffer: -0.5538964
-  vertex_buffer: 1.5615921
-  vertex_buffer: 5.4430733
+  vertex_buffer: -0.553897
+  vertex_buffer: 1.5615997
+  vertex_buffer: 5.4430695
   vertex_buffer: 0.47641
   vertex_buffer: 0.405806
-  vertex_buffer: -6.6932607
-  vertex_buffer: 0.20049477
-  vertex_buffer: 2.0159836
+  vertex_buffer: -6.6932683
+  vertex_buffer: 0.20050049
+  vertex_buffer: 2.015976
   vertex_buffer: 0.189241
   vertex_buffer: 0.523924
-  vertex_buffer: -5.6793036
-  vertex_buffer: 3.1260548
-  vertex_buffer: 2.4527283
+  vertex_buffer: -5.6793103
+  vertex_buffer: 3.1260643
+  vertex_buffer: 2.4527206
   vertex_buffer: 0.228962
   vertex_buffer: 0.348951
-  vertex_buffer: -0.4061323
-  vertex_buffer: -2.7714462
-  vertex_buffer: 7.6199875
+  vertex_buffer: -0.4061332
+  vertex_buffer: -2.7714443
+  vertex_buffer: 7.6199837
   vertex_buffer: 0.490726
   vertex_buffer: 0.562401
-  vertex_buffer: -1.9291446
-  vertex_buffer: -0.004880905
-  vertex_buffer: 4.950474
+  vertex_buffer: -1.929147
+  vertex_buffer: -0.0048770905
+  vertex_buffer: 4.95047
   vertex_buffer: 0.40467
   vertex_buffer: 0.485133
-  vertex_buffer: -7.719159
-  vertex_buffer: 3.9393787
-  vertex_buffer: -2.2868347
+  vertex_buffer: -7.7191677
+  vertex_buffer: 3.939392
+  vertex_buffer: -2.2868423
   vertex_buffer: 0.019469
   vertex_buffer: 0.401564
-  vertex_buffer: -1.3079104
-  vertex_buffer: 1.5567074
-  vertex_buffer: 4.179184
+  vertex_buffer: -1.307912
+  vertex_buffer: 1.556715
+  vertex_buffer: 4.1791763
   vertex_buffer: 0.426243
   vertex_buffer: 0.420431
-  vertex_buffer: -2.5166872
-  vertex_buffer: -1.1328773
-  vertex_buffer: 4.9170837
+  vertex_buffer: -2.5166903
+  vertex_buffer: -1.1328754
+  vertex_buffer: 4.91708
   vertex_buffer: 0.396993
   vertex_buffer: 0.548797
-  vertex_buffer: -4.802832
-  vertex_buffer: 2.761158
-  vertex_buffer: 2.5843391
+  vertex_buffer: -4.8028374
+  vertex_buffer: 2.7611675
+  vertex_buffer: 2.5843315
   vertex_buffer: 0.26647
   vertex_buffer: 0.376977
-  vertex_buffer: -1.7231433
-  vertex_buffer: -1.1866455
-  vertex_buffer: 6.5593147
+  vertex_buffer: -1.7231458
+  vertex_buffer: -1.1866398
+  vertex_buffer: 6.559307
   vertex_buffer: 0.439121
   vertex_buffer: 0.518958
-  vertex_buffer: -7.232868
-  vertex_buffer: -1.3291702
-  vertex_buffer: -1.7797775
+  vertex_buffer: -7.2328777
+  vertex_buffer: -1.3291626
+  vertex_buffer: -1.7797928
   vertex_buffer: 0.032314
   vertex_buffer: 0.644357
-  vertex_buffer: -1.6283221
-  vertex_buffer: 2.525772
-  vertex_buffer: 3.2109795
+  vertex_buffer: -1.6283238
+  vertex_buffer: 2.5257816
+  vertex_buffer: 3.2109756
   vertex_buffer: 0.419054
   vertex_buffer: 0.387155
-  vertex_buffer: -1.1273737
-  vertex_buffer: -1.0895672
-  vertex_buffer: 7.164959
+  vertex_buffer: -1.1273751
+  vertex_buffer: -1.0895634
+  vertex_buffer: 7.164955
   vertex_buffer: 0.462783
   vertex_buffer: 0.505747
-  vertex_buffer: -5.139789
+  vertex_buffer: -5.139796
   vertex_buffer: -5.5858536
-  vertex_buffer: 1.9622345
+  vertex_buffer: 1.9622269
   vertex_buffer: 0.238979
   vertex_buffer: 0.779745
-  vertex_buffer: -5.005826
+  vertex_buffer: -5.005832
   vertex_buffer: -6.508588
-  vertex_buffer: 1.2313309
+  vertex_buffer: 1.2313194
   vertex_buffer: 0.198221
   vertex_buffer: 0.831938
-  vertex_buffer: -7.366962
-  vertex_buffer: 0.3376236
-  vertex_buffer: -0.16316223
+  vertex_buffer: -7.3669715
+  vertex_buffer: 0.33763313
+  vertex_buffer: -0.16316986
   vertex_buffer: 0.10755
   vertex_buffer: 0.540755
-  vertex_buffer: -5.9915476
-  vertex_buffer: -4.4671774
-  vertex_buffer: 1.3122635
+  vertex_buffer: -5.9915557
+  vertex_buffer: -4.4671764
+  vertex_buffer: 1.3122559
   vertex_buffer: 0.18361
   vertex_buffer: 0.740257
-  vertex_buffer: -6.912982
-  vertex_buffer: 4.4011097
-  vertex_buffer: 0.22525787
+  vertex_buffer: -6.91299
+  vertex_buffer: 4.401125
+  vertex_buffer: 0.22525024
   vertex_buffer: 0.13441
   vertex_buffer: 0.333683
-  vertex_buffer: -2.616919
-  vertex_buffer: -9.00794
-  vertex_buffer: 4.171379
+  vertex_buffer: -2.6169233
+  vertex_buffer: -9.007946
+  vertex_buffer: 4.1713715
   vertex_buffer: 0.385764
   vertex_buffer: 0.883154
-  vertex_buffer: -0.33355132
-  vertex_buffer: -2.6564388
-  vertex_buffer: 6.7840347
+  vertex_buffer: -0.3335521
+  vertex_buffer: -2.656437
+  vertex_buffer: 6.784031
   vertex_buffer: 0.490967
   vertex_buffer: 0.579378
-  vertex_buffer: -2.5573
-  vertex_buffer: -0.3414135
-  vertex_buffer: 4.7602386
+  vertex_buffer: -2.557304
+  vertex_buffer: -0.34140968
+  vertex_buffer: 4.760235
   vertex_buffer: 0.382385
   vertex_buffer: 0.508573
-  vertex_buffer: -6.5110135
-  vertex_buffer: 2.69775
-  vertex_buffer: 1.3233795
+  vertex_buffer: -6.511022
+  vertex_buffer: 2.6977615
+  vertex_buffer: 1.3233719
   vertex_buffer: 0.174399
   vertex_buffer: 0.397671
-  vertex_buffer: -3.575697
-  vertex_buffer: 2.4028053
-  vertex_buffer: 3.2938614
+  vertex_buffer: -3.5757012
+  vertex_buffer: 2.4028168
+  vertex_buffer: 3.2938538
   vertex_buffer: 0.318785
   vertex_buffer: 0.396235
-  vertex_buffer: -3.063976
-  vertex_buffer: 2.3301315
+  vertex_buffer: -3.0639794
+  vertex_buffer: 2.330141
   vertex_buffer: 3.4520035
   vertex_buffer: 0.343364
   vertex_buffer: 0.400597
-  vertex_buffer: -3.1599689
-  vertex_buffer: -4.557003
-  vertex_buffer: 3.7644958
+  vertex_buffer: -3.1599734
+  vertex_buffer: -4.557002
+  vertex_buffer: 3.7644844
   vertex_buffer: 0.3961
   vertex_buffer: 0.710217
-  vertex_buffer: -6.6972475
-  vertex_buffer: -1.218895
-  vertex_buffer: 1.9558678
+  vertex_buffer: -6.6972566
+  vertex_buffer: -1.2188911
+  vertex_buffer: 1.9558601
   vertex_buffer: 0.187885
   vertex_buffer: 0.588538
-  vertex_buffer: -1.4729099
-  vertex_buffer: -10.254865
-  vertex_buffer: 4.3090057
+  vertex_buffer: -1.4729123
+  vertex_buffer: -10.254872
+  vertex_buffer: 4.308998
   vertex_buffer: 0.430987
   vertex_buffer: 0.944065
-  vertex_buffer: -3.3332095
-  vertex_buffer: -8.75649
-  vertex_buffer: 2.8909073
+  vertex_buffer: -3.3332138
+  vertex_buffer: -8.756494
+  vertex_buffer: 2.8909035
   vertex_buffer: 0.318993
   vertex_buffer: 0.898285
-  vertex_buffer: -4.0895295
-  vertex_buffer: -7.7846384
-  vertex_buffer: 2.1102676
+  vertex_buffer: -4.0895343
+  vertex_buffer: -7.7846413
+  vertex_buffer: 2.11026
   vertex_buffer: 0.266248
   vertex_buffer: 0.869701
-  vertex_buffer: 0.09045166
-  vertex_buffer: 6.096033
+  vertex_buffer: 0.090452164
+  vertex_buffer: 6.0960445
   vertex_buffer: 4.42157
   vertex_buffer: 0.500023
   vertex_buffer: 0.190576
-  vertex_buffer: -0.13197118
-  vertex_buffer: -10.441204
-  vertex_buffer: 4.505329
+  vertex_buffer: -0.13197199
+  vertex_buffer: -10.44121
+  vertex_buffer: 4.5053177
   vertex_buffer: 0.499977
   vertex_buffer: 0.954453
-  vertex_buffer: -2.5613708
-  vertex_buffer: 2.3542728
-  vertex_buffer: 3.479847
+  vertex_buffer: -2.561374
+  vertex_buffer: 2.3542805
+  vertex_buffer: 3.4798431
   vertex_buffer: 0.36617
   vertex_buffer: 0.398822
-  vertex_buffer: -2.0838258
-  vertex_buffer: 2.4268627
-  vertex_buffer: 3.3835602
+  vertex_buffer: -2.0838282
+  vertex_buffer: 2.4268703
+  vertex_buffer: 3.3835564
   vertex_buffer: 0.393207
   vertex_buffer: 0.395537
-  vertex_buffer: -1.7622774
-  vertex_buffer: 2.4867592
-  vertex_buffer: 3.2451553
+  vertex_buffer: -1.762279
+  vertex_buffer: 2.4867668
+  vertex_buffer: 3.2451515
   vertex_buffer: 0.410373
   vertex_buffer: 0.39108
-  vertex_buffer: -6.192421
-  vertex_buffer: 3.5102692
-  vertex_buffer: 1.7944756
+  vertex_buffer: -6.192429
+  vertex_buffer: 3.5102787
+  vertex_buffer: 1.7944717
   vertex_buffer: 0.194993
   vertex_buffer: 0.342102
-  vertex_buffer: -2.2021916
-  vertex_buffer: 2.8239002
-  vertex_buffer: 3.3703003
+  vertex_buffer: -2.202194
+  vertex_buffer: 2.8239098
+  vertex_buffer: 3.3702965
   vertex_buffer: 0.388665
   vertex_buffer: 0.362284
-  vertex_buffer: -2.7161317
-  vertex_buffer: 2.9166946
+  vertex_buffer: -2.716135
+  vertex_buffer: 2.9167042
   vertex_buffer: 3.4998627
   vertex_buffer: 0.365962
   vertex_buffer: 0.355971
-  vertex_buffer: -3.1931787
-  vertex_buffer: 2.9413223
+  vertex_buffer: -3.1931822
+  vertex_buffer: 2.9413319
   vertex_buffer: 3.4861336
   vertex_buffer: 0.343364
   vertex_buffer: 0.355357
-  vertex_buffer: -3.6920981
-  vertex_buffer: 2.897976
+  vertex_buffer: -3.6921024
+  vertex_buffer: 2.8979855
   vertex_buffer: 3.3511238
   vertex_buffer: 0.318785
   vertex_buffer: 0.35834
-  vertex_buffer: -4.030469
-  vertex_buffer: 2.838482
+  vertex_buffer: -4.0304737
+  vertex_buffer: 2.8384895
   vertex_buffer: 3.1473236
   vertex_buffer: 0.301415
   vertex_buffer: 0.363156
-  vertex_buffer: -7.534716
-  vertex_buffer: 5.377041
-  vertex_buffer: -1.4887314
+  vertex_buffer: -7.5347247
+  vertex_buffer: 5.377056
+  vertex_buffer: -1.4887466
   vertex_buffer: 0.058133
   vertex_buffer: 0.319076
-  vertex_buffer: -3.9188557
-  vertex_buffer: 2.5209522
-  vertex_buffer: 3.0982513
+  vertex_buffer: -3.918861
+  vertex_buffer: 2.5209599
+  vertex_buffer: 3.0982437
   vertex_buffer: 0.301415
   vertex_buffer: 0.387449
-  vertex_buffer: -0.056284398
-  vertex_buffer: -3.0145187
+  vertex_buffer: -0.05628477
+  vertex_buffer: -3.0145168
   vertex_buffer: 6.172512
   vertex_buffer: 0.499988
   vertex_buffer: 0.618434
-  vertex_buffer: -2.4927456
-  vertex_buffer: -2.8486595
-  vertex_buffer: 5.3483696
+  vertex_buffer: -2.4927492
+  vertex_buffer: -2.8486557
+  vertex_buffer: 5.348366
   vertex_buffer: 0.415838
   vertex_buffer: 0.624196
-  vertex_buffer: -1.7608254
-  vertex_buffer: -1.9913807
-  vertex_buffer: 6.25832
+  vertex_buffer: -1.7608279
+  vertex_buffer: -1.9913769
+  vertex_buffer: 6.258316
   vertex_buffer: 0.445682
   vertex_buffer: 0.566077
-  vertex_buffer: -1.0984011
-  vertex_buffer: -2.9661674
-  vertex_buffer: 6.087311
+  vertex_buffer: -1.0984027
+  vertex_buffer: -2.9661636
+  vertex_buffer: 6.087303
   vertex_buffer: 0.465844
   vertex_buffer: 0.620641
-  vertex_buffer: 0.034968972
-  vertex_buffer: 2.4771328
-  vertex_buffer: 5.1017494
+  vertex_buffer: 0.03496912
+  vertex_buffer: 2.4771404
+  vertex_buffer: 5.1017456
   vertex_buffer: 0.499923
   vertex_buffer: 0.351524
-  vertex_buffer: -4.2818146
-  vertex_buffer: -6.8262396
-  vertex_buffer: 2.5633278
+  vertex_buffer: -4.2818203
+  vertex_buffer: -6.8262415
+  vertex_buffer: 2.5633202
   vertex_buffer: 0.288719
   vertex_buffer: 0.819946
-  vertex_buffer: -3.4656432
-  vertex_buffer: -7.906004
-  vertex_buffer: 3.3282852
+  vertex_buffer: -3.4656482
+  vertex_buffer: -7.906007
+  vertex_buffer: 3.3282738
   vertex_buffer: 0.335279
   vertex_buffer: 0.85282
-  vertex_buffer: -1.483537
-  vertex_buffer: -9.706334
-  vertex_buffer: 4.882229
+  vertex_buffer: -1.4835393
+  vertex_buffer: -9.706341
+  vertex_buffer: 4.882221
   vertex_buffer: 0.440512
   vertex_buffer: 0.902419
-  vertex_buffer: -5.8149533
-  vertex_buffer: -5.1643486
-  vertex_buffer: 0.16642761
+  vertex_buffer: -5.81496
+  vertex_buffer: -5.1643467
+  vertex_buffer: 0.16641235
   vertex_buffer: 0.128294
   vertex_buffer: 0.791941
-  vertex_buffer: -1.818965
-  vertex_buffer: 2.6498566
+  vertex_buffer: -1.8189665
+  vertex_buffer: 2.649866
   vertex_buffer: 3.2792091
   vertex_buffer: 0.408772
   vertex_buffer: 0.373894
-  vertex_buffer: -0.98224825
-  vertex_buffer: 0.49705887
-  vertex_buffer: 5.730484
+  vertex_buffer: -0.9822496
+  vertex_buffer: 0.4970646
+  vertex_buffer: 5.73048
   vertex_buffer: 0.455607
   vertex_buffer: 0.451801
-  vertex_buffer: -0.11441803
-  vertex_buffer: -9.953
-  vertex_buffer: 5.0419807
+  vertex_buffer: -0.114418834
+  vertex_buffer: -9.953008
+  vertex_buffer: 5.041973
   vertex_buffer: 0.499877
   vertex_buffer: 0.90899
-  vertex_buffer: -2.4964733
-  vertex_buffer: -9.630109
-  vertex_buffer: 3.7255173
+  vertex_buffer: -2.4964771
+  vertex_buffer: -9.630114
+  vertex_buffer: 3.7255058
   vertex_buffer: 0.375437
   vertex_buffer: 0.924192
-  vertex_buffer: -7.1446133
-  vertex_buffer: -1.3387032
-  vertex_buffer: 0.109550476
+  vertex_buffer: -7.1446214
+  vertex_buffer: -1.3386974
+  vertex_buffer: 0.10954285
   vertex_buffer: 0.11421
   vertex_buffer: 0.615022
-  vertex_buffer: -1.6615427
+  vertex_buffer: -1.6615449
   vertex_buffer: -5.223667
-  vertex_buffer: 4.611267
+  vertex_buffer: 4.6112633
   vertex_buffer: 0.448662
   vertex_buffer: 0.695278
-  vertex_buffer: -1.7678626
-  vertex_buffer: -5.3901997
-  vertex_buffer: 4.7363663
+  vertex_buffer: -1.7678653
+  vertex_buffer: -5.3902016
+  vertex_buffer: 4.7363586
   vertex_buffer: 0.44802
   vertex_buffer: 0.704632
-  vertex_buffer: -1.8549478
-  vertex_buffer: -5.672799
-  vertex_buffer: 4.8468857
+  vertex_buffer: -1.8549504
+  vertex_buffer: -5.672801
+  vertex_buffer: 4.846882
   vertex_buffer: 0.447112
   vertex_buffer: 0.715808
-  vertex_buffer: -1.914007
-  vertex_buffer: -5.997034
-  vertex_buffer: 4.790905
+  vertex_buffer: -1.9140096
+  vertex_buffer: -5.997035
+  vertex_buffer: 4.7908974
   vertex_buffer: 0.444832
   vertex_buffer: 0.730794
-  vertex_buffer: -2.1178837
-  vertex_buffer: -6.5948715
-  vertex_buffer: 4.522606
+  vertex_buffer: -2.1178868
+  vertex_buffer: -6.5948734
+  vertex_buffer: 4.5225983
   vertex_buffer: 0.430012
   vertex_buffer: 0.766809
-  vertex_buffer: -3.028949
-  vertex_buffer: -3.8013363
-  vertex_buffer: 4.1697693
+  vertex_buffer: -3.0289533
+  vertex_buffer: -3.8013344
+  vertex_buffer: 4.169758
   vertex_buffer: 0.406787
   vertex_buffer: 0.685673
-  vertex_buffer: -3.1446614
+  vertex_buffer: -3.1446655
   vertex_buffer: -3.7468567
-  vertex_buffer: 4.1317177
+  vertex_buffer: 4.13171
   vertex_buffer: 0.400738
   vertex_buffer: 0.681069
-  vertex_buffer: -3.2364228
+  vertex_buffer: -3.2364273
   vertex_buffer: -3.6879635
-  vertex_buffer: 4.140358
+  vertex_buffer: 4.1403503
   vertex_buffer: 0.3924
   vertex_buffer: 0.677703
-  vertex_buffer: -3.808137
-  vertex_buffer: -3.2578716
-  vertex_buffer: 4.065346
+  vertex_buffer: -3.808142
+  vertex_buffer: -3.2578678
+  vertex_buffer: 4.065342
   vertex_buffer: 0.367856
   vertex_buffer: 0.663919
-  vertex_buffer: -5.896332
-  vertex_buffer: -1.8010445
-  vertex_buffer: 3.2329674
+  vertex_buffer: -5.8963394
+  vertex_buffer: -1.8010387
+  vertex_buffer: 3.2329636
   vertex_buffer: 0.247923
   vertex_buffer: 0.601333
-  vertex_buffer: -0.9425743
-  vertex_buffer: 1.3286476
-  vertex_buffer: 5.0629654
+  vertex_buffer: -0.94257545
+  vertex_buffer: 1.3286552
+  vertex_buffer: 5.062958
   vertex_buffer: 0.45277
   vertex_buffer: 0.42085
-  vertex_buffer: -1.1735758
-  vertex_buffer: 2.8160534
-  vertex_buffer: 3.6443062
+  vertex_buffer: -1.1735771
+  vertex_buffer: 2.816063
+  vertex_buffer: 3.6442986
   vertex_buffer: 0.436392
   vertex_buffer: 0.359887
-  vertex_buffer: -1.5453613
-  vertex_buffer: 2.8436775
+  vertex_buffer: -1.5453631
+  vertex_buffer: 2.843687
   vertex_buffer: 3.3741112
   vertex_buffer: 0.416164
   vertex_buffer: 0.368714
-  vertex_buffer: -2.933605
-  vertex_buffer: -3.8272305
-  vertex_buffer: 4.132
+  vertex_buffer: -2.933609
+  vertex_buffer: -3.8272285
+  vertex_buffer: 4.1319923
   vertex_buffer: 0.413386
   vertex_buffer: 0.692366
-  vertex_buffer: -5.9479156
-  vertex_buffer: -3.431078
-  vertex_buffer: 2.3189926
+  vertex_buffer: -5.947923
+  vertex_buffer: -3.431076
+  vertex_buffer: 2.318985
   vertex_buffer: 0.228018
   vertex_buffer: 0.683572
-  vertex_buffer: -0.6934988
-  vertex_buffer: 2.5053654
-  vertex_buffer: 4.5957108
+  vertex_buffer: -0.69349945
+  vertex_buffer: 2.505373
+  vertex_buffer: 4.595703
   vertex_buffer: 0.468268
   vertex_buffer: 0.352671
-  vertex_buffer: -2.3358104
-  vertex_buffer: -7.2656155
-  vertex_buffer: 4.386078
+  vertex_buffer: -2.3358138
+  vertex_buffer: -7.2656193
+  vertex_buffer: 4.386074
   vertex_buffer: 0.411362
   vertex_buffer: 0.804327
-  vertex_buffer: -0.03143847
-  vertex_buffer: -0.11379433
-  vertex_buffer: 7.009609
+  vertex_buffer: -0.03143871
+  vertex_buffer: -0.113788605
+  vertex_buffer: 7.0096054
   vertex_buffer: 0.499989
   vertex_buffer: 0.469825
-  vertex_buffer: -0.53570485
-  vertex_buffer: 0.67900276
-  vertex_buffer: 6.160198
+  vertex_buffer: -0.53570557
+  vertex_buffer: 0.6790085
+  vertex_buffer: 6.1601944
   vertex_buffer: 0.479154
   vertex_buffer: 0.442654
-  vertex_buffer: -0.021373034
-  vertex_buffer: 0.75474167
+  vertex_buffer: -0.021373123
+  vertex_buffer: 0.7547493
   vertex_buffer: 6.3074684
   vertex_buffer: 0.499974
   vertex_buffer: 0.439637
-  vertex_buffer: -1.508091
-  vertex_buffer: -0.4657917
-  vertex_buffer: 5.860111
+  vertex_buffer: -1.5080929
+  vertex_buffer: -0.4657898
+  vertex_buffer: 5.8601074
   vertex_buffer: 0.432112
   vertex_buffer: 0.493589
-  vertex_buffer: -0.10210103
-  vertex_buffer: -9.131883
-  vertex_buffer: 5.220871
+  vertex_buffer: -0.1021018
+  vertex_buffer: -9.131888
+  vertex_buffer: 5.2208633
   vertex_buffer: 0.499886
   vertex_buffer: 0.866917
-  vertex_buffer: -0.07414225
-  vertex_buffer: -8.138553
-  vertex_buffer: 5.1079254
+  vertex_buffer: -0.07414287
+  vertex_buffer: -8.138557
+  vertex_buffer: 5.107918
   vertex_buffer: 0.499913
   vertex_buffer: 0.821729
-  vertex_buffer: -1.2661052
-  vertex_buffer: -7.9413004
-  vertex_buffer: 4.9270973
+  vertex_buffer: -1.2661073
+  vertex_buffer: -7.941305
+  vertex_buffer: 4.9270897
   vertex_buffer: 0.456549
   vertex_buffer: 0.819201
-  vertex_buffer: -3.778433
-  vertex_buffer: -5.121208
-  vertex_buffer: 3.4297066
+  vertex_buffer: -3.778438
+  vertex_buffer: -5.12121
+  vertex_buffer: 3.429699
   vertex_buffer: 0.344549
   vertex_buffer: 0.745439
-  vertex_buffer: -3.004316
-  vertex_buffer: -1.5952225
-  vertex_buffer: 4.7329597
+  vertex_buffer: -3.0043197
+  vertex_buffer: -1.5952206
+  vertex_buffer: 4.732956
   vertex_buffer: 0.378909
   vertex_buffer: 0.57401
-  vertex_buffer: -3.1108878
-  vertex_buffer: -6.3109074
-  vertex_buffer: 3.8444405
+  vertex_buffer: -3.110892
+  vertex_buffer: -6.3109083
+  vertex_buffer: 3.844429
   vertex_buffer: 0.374293
   vertex_buffer: 0.780185
-  vertex_buffer: -4.4307637
-  vertex_buffer: -1.4898453
-  vertex_buffer: 4.4148483
+  vertex_buffer: -4.4307694
+  vertex_buffer: -1.4898396
+  vertex_buffer: 4.4148407
   vertex_buffer: 0.319688
   vertex_buffer: 0.570738
-  vertex_buffer: -3.635557
-  vertex_buffer: -2.2050133
-  vertex_buffer: 4.4749756
+  vertex_buffer: -3.6355615
+  vertex_buffer: -2.2050095
+  vertex_buffer: 4.474972
   vertex_buffer: 0.357155
   vertex_buffer: 0.60427
-  vertex_buffer: -5.041381
-  vertex_buffer: -2.4032383
-  vertex_buffer: 3.8168907
+  vertex_buffer: -5.041387
+  vertex_buffer: -2.4032345
+  vertex_buffer: 3.816887
   vertex_buffer: 0.295284
   vertex_buffer: 0.621581
-  vertex_buffer: -1.4315786
-  vertex_buffer: -8.901685
-  vertex_buffer: 5.0258293
+  vertex_buffer: -1.4315811
+  vertex_buffer: -8.9016905
+  vertex_buffer: 5.0258217
   vertex_buffer: 0.44775
   vertex_buffer: 0.862477
-  vertex_buffer: -1.9901543
-  vertex_buffer: -0.60396385
-  vertex_buffer: 5.4264526
+  vertex_buffer: -1.9901569
+  vertex_buffer: -0.60396004
+  vertex_buffer: 5.426449
   vertex_buffer: 0.410986
   vertex_buffer: 0.508723
-  vertex_buffer: -4.198247
-  vertex_buffer: -5.8466797
-  vertex_buffer: 3.0578117
+  vertex_buffer: -4.1982517
+  vertex_buffer: -5.8466806
+  vertex_buffer: 3.057808
   vertex_buffer: 0.313951
   vertex_buffer: 0.775308
-  vertex_buffer: -3.3484576
-  vertex_buffer: -7.0401354
-  vertex_buffer: 3.6005745
+  vertex_buffer: -3.3484623
+  vertex_buffer: -7.0401382
+  vertex_buffer: 3.6005669
   vertex_buffer: 0.354128
   vertex_buffer: 0.812553
-  vertex_buffer: -4.370291
-  vertex_buffer: -4.006874
-  vertex_buffer: 3.421772
+  vertex_buffer: -4.3702974
+  vertex_buffer: -4.006872
+  vertex_buffer: 3.4217644
   vertex_buffer: 0.324548
   vertex_buffer: 0.703993
-  vertex_buffer: -6.537344
-  vertex_buffer: -2.4688148
-  vertex_buffer: 1.8110313
+  vertex_buffer: -6.537352
+  vertex_buffer: -2.468813
+  vertex_buffer: 1.8110199
   vertex_buffer: 0.189096
   vertex_buffer: 0.6463
-  vertex_buffer: -5.0787134
-  vertex_buffer: -4.265339
-  vertex_buffer: 2.9516716
+  vertex_buffer: -5.07872
+  vertex_buffer: -4.265337
+  vertex_buffer: 2.951664
   vertex_buffer: 0.279777
   vertex_buffer: 0.714658
-  vertex_buffer: -6.688318
-  vertex_buffer: -2.9515648
-  vertex_buffer: 0.50354004
+  vertex_buffer: -6.688326
+  vertex_buffer: -2.951559
+  vertex_buffer: 0.5035248
   vertex_buffer: 0.133823
   vertex_buffer: 0.682701
-  vertex_buffer: -4.2454205
-  vertex_buffer: -2.8282986
-  vertex_buffer: 4.063446
+  vertex_buffer: -4.2454257
+  vertex_buffer: -2.8282967
+  vertex_buffer: 4.0634384
   vertex_buffer: 0.336768
   vertex_buffer: 0.644733
-  vertex_buffer: -1.4265988
-  vertex_buffer: 0.2535839
+  vertex_buffer: -1.4266007
+  vertex_buffer: 0.25359154
   vertex_buffer: 5.3043365
   vertex_buffer: 0.429884
   vertex_buffer: 0.466522
-  vertex_buffer: -1.5445278
-  vertex_buffer: -2.0910187
+  vertex_buffer: -1.5445302
+  vertex_buffer: -2.0910168
   vertex_buffer: 7.042053
   vertex_buffer: 0.455528
   vertex_buffer: 0.548623
-  vertex_buffer: -2.0375082
-  vertex_buffer: -1.9200306
-  vertex_buffer: 6.35569
+  vertex_buffer: -2.0375109
+  vertex_buffer: -1.9200287
+  vertex_buffer: 6.355686
   vertex_buffer: 0.437114
   vertex_buffer: 0.558896
-  vertex_buffer: -1.1873711
-  vertex_buffer: -1.8289967
+  vertex_buffer: -1.1873728
+  vertex_buffer: -1.8289948
   vertex_buffer: 7.5009995
   vertex_buffer: 0.467288
   vertex_buffer: 0.529925
-  vertex_buffer: -1.5844951
-  vertex_buffer: 3.1812801
-  vertex_buffer: 3.7376862
+  vertex_buffer: -1.5844966
+  vertex_buffer: 3.1812916
+  vertex_buffer: 3.7376823
   vertex_buffer: 0.414712
   vertex_buffer: 0.33522
-  vertex_buffer: -2.5590115
-  vertex_buffer: 3.4128933
-  vertex_buffer: 3.864193
+  vertex_buffer: -2.5590146
+  vertex_buffer: 3.4129047
+  vertex_buffer: 3.8641853
   vertex_buffer: 0.377046
   vertex_buffer: 0.322778
-  vertex_buffer: -3.4523673
-  vertex_buffer: 3.4629288
-  vertex_buffer: 3.869194
+  vertex_buffer: -3.4523714
+  vertex_buffer: 3.4629383
+  vertex_buffer: 3.8691864
   vertex_buffer: 0.344108
   vertex_buffer: 0.320151
-  vertex_buffer: -4.252108
-  vertex_buffer: 3.39855
-  vertex_buffer: 3.6475868
+  vertex_buffer: -4.2521133
+  vertex_buffer: 3.3985596
+  vertex_buffer: 3.647583
   vertex_buffer: 0.312876
   vertex_buffer: 0.322332
-  vertex_buffer: -4.8403144
-  vertex_buffer: 3.246275
-  vertex_buffer: 3.259838
+  vertex_buffer: -4.8403196
+  vertex_buffer: 3.2462864
+  vertex_buffer: 3.2598343
   vertex_buffer: 0.283526
   vertex_buffer: 0.33319
-  vertex_buffer: -5.280643
-  vertex_buffer: 2.652216
-  vertex_buffer: 2.3635025
+  vertex_buffer: -5.2806497
+  vertex_buffer: 2.6522255
+  vertex_buffer: 2.3634949
   vertex_buffer: 0.241246
   vertex_buffer: 0.382786
-  vertex_buffer: -7.408005
-  vertex_buffer: 1.8267059
-  vertex_buffer: -0.24343109
+  vertex_buffer: -7.408014
+  vertex_buffer: 1.8267155
+  vertex_buffer: -0.24343872
   vertex_buffer: 0.102986
   vertex_buffer: 0.468763
-  vertex_buffer: -4.746617
-  vertex_buffer: 1.8352318
-  vertex_buffer: 2.945816
+  vertex_buffer: -4.746623
+  vertex_buffer: 1.8352432
+  vertex_buffer: 2.9458122
   vertex_buffer: 0.267612
   vertex_buffer: 0.42456
-  vertex_buffer: -4.077169
-  vertex_buffer: 1.5753078
-  vertex_buffer: 3.3490562
+  vertex_buffer: -4.077174
+  vertex_buffer: 1.5753174
+  vertex_buffer: 3.3490486
   vertex_buffer: 0.297879
   vertex_buffer: 0.433176
-  vertex_buffer: -3.2392907
-  vertex_buffer: 1.4697704
-  vertex_buffer: 3.6222115
+  vertex_buffer: -3.2392948
+  vertex_buffer: 1.4697781
+  vertex_buffer: 3.6222038
   vertex_buffer: 0.333434
   vertex_buffer: 0.433878
-  vertex_buffer: -2.4502244
-  vertex_buffer: 1.5540104
-  vertex_buffer: 3.6770782
+  vertex_buffer: -2.4502277
+  vertex_buffer: 1.554018
+  vertex_buffer: 3.6770744
   vertex_buffer: 0.366427
   vertex_buffer: 0.426116
-  vertex_buffer: -1.836082
-  vertex_buffer: 1.712101
+  vertex_buffer: -1.8360842
+  vertex_buffer: 1.7121105
   vertex_buffer: 3.73732
   vertex_buffer: 0.396012
   vertex_buffer: 0.416696
-  vertex_buffer: -1.4331815
-  vertex_buffer: 1.8971863
+  vertex_buffer: -1.4331831
+  vertex_buffer: 1.897192
   vertex_buffer: 3.7476387
   vertex_buffer: 0.420121
   vertex_buffer: 0.410228
-  vertex_buffer: -7.6809406
-  vertex_buffer: 2.3514805
-  vertex_buffer: -2.5189133
+  vertex_buffer: -7.68095
+  vertex_buffer: 2.35149
+  vertex_buffer: -2.5189285
   vertex_buffer: 0.007561
   vertex_buffer: 0.480777
-  vertex_buffer: -2.060004
+  vertex_buffer: -2.060007
   vertex_buffer: -1.9369621
-  vertex_buffer: 6.0419006
+  vertex_buffer: 6.041897
   vertex_buffer: 0.432949
   vertex_buffer: 0.569518
-  vertex_buffer: -1.007299
-  vertex_buffer: -0.26156425
+  vertex_buffer: -1.0073003
+  vertex_buffer: -0.26155853
   vertex_buffer: 6.350731
   vertex_buffer: 0.458639
   vertex_buffer: 0.479089
-  vertex_buffer: -1.0573628
-  vertex_buffer: -2.3342552
-  vertex_buffer: 7.56081
+  vertex_buffer: -1.0573645
+  vertex_buffer: -2.3342514
+  vertex_buffer: 7.5608063
   vertex_buffer: 0.473466
   vertex_buffer: 0.545744
-  vertex_buffer: -0.734902
+  vertex_buffer: -0.73490334
   vertex_buffer: -2.5882797
   vertex_buffer: 7.3467026
   vertex_buffer: 0.476088
   vertex_buffer: 0.56383
-  vertex_buffer: -1.0897002
-  vertex_buffer: -2.3481636
+  vertex_buffer: -1.0897019
+  vertex_buffer: -2.3481655
   vertex_buffer: 7.254524
   vertex_buffer: 0.468472
   vertex_buffer: 0.555057
-  vertex_buffer: -1.9190764
-  vertex_buffer: -2.0415
-  vertex_buffer: 5.8397217
+  vertex_buffer: -1.9190793
+  vertex_buffer: -2.0414982
+  vertex_buffer: 5.839718
   vertex_buffer: 0.433991
   vertex_buffer: 0.582362
-  vertex_buffer: -0.6197953
-  vertex_buffer: -2.7030697
+  vertex_buffer: -0.6197964
+  vertex_buffer: -2.7030678
   vertex_buffer: 7.5222588
   vertex_buffer: 0.483518
   vertex_buffer: 0.562984
-  vertex_buffer: -0.55812526
+  vertex_buffer: -0.5581263
   vertex_buffer: -2.5777187
   vertex_buffer: 6.7721367
   vertex_buffer: 0.482483
   vertex_buffer: 0.577849
-  vertex_buffer: -1.4102633
-  vertex_buffer: 2.4753132
+  vertex_buffer: -1.4102648
+  vertex_buffer: 2.4753227
   vertex_buffer: 3.3475037
   vertex_buffer: 0.42645
   vertex_buffer: 0.389799
-  vertex_buffer: -1.1224699
-  vertex_buffer: 2.2189388
-  vertex_buffer: 3.7918434
+  vertex_buffer: -1.1224712
+  vertex_buffer: 2.2189503
+  vertex_buffer: 3.7918396
   vertex_buffer: 0.438999
   vertex_buffer: 0.396495
-  vertex_buffer: -0.95554155
-  vertex_buffer: 1.9475307
-  vertex_buffer: 4.352604
+  vertex_buffer: -0.9555427
+  vertex_buffer: 1.9475403
+  vertex_buffer: 4.3526
   vertex_buffer: 0.450067
   vertex_buffer: 0.400434
-  vertex_buffer: -4.2466135
-  vertex_buffer: 2.7904205
-  vertex_buffer: 2.9572182
+  vertex_buffer: -4.2466187
+  vertex_buffer: 2.7904282
+  vertex_buffer: 2.9572067
   vertex_buffer: 0.289712
   vertex_buffer: 0.368253
-  vertex_buffer: -4.777348
-  vertex_buffer: 2.9552498
-  vertex_buffer: 2.9142609
+  vertex_buffer: -4.777354
+  vertex_buffer: 2.9552612
+  vertex_buffer: 2.914257
   vertex_buffer: 0.27667
   vertex_buffer: 0.363373
-  vertex_buffer: 0.45843273
-  vertex_buffer: -0.12243652
-  vertex_buffer: 6.785671
+  vertex_buffer: 0.45843312
+  vertex_buffer: -0.1224308
+  vertex_buffer: 6.7856674
   vertex_buffer: 0.517862
   vertex_buffer: 0.471948
-  vertex_buffer: 4.2937965
-  vertex_buffer: 2.7028866
-  vertex_buffer: 2.880951
+  vertex_buffer: 4.2938013
+  vertex_buffer: 2.7028942
+  vertex_buffer: 2.880947
   vertex_buffer: 0.710288
   vertex_buffer: 0.380764
-  vertex_buffer: 0.563513
-  vertex_buffer: -2.4813404
+  vertex_buffer: 0.5635134
+  vertex_buffer: -2.4813385
   vertex_buffer: 6.769951
   vertex_buffer: 0.526227
   vertex_buffer: 0.57391
-  vertex_buffer: 7.1661444
-  vertex_buffer: 6.344303
-  vertex_buffer: -0.44289398
+  vertex_buffer: 7.166153
+  vertex_buffer: 6.3443146
+  vertex_buffer: -0.4429016
   vertex_buffer: 0.895093
   vertex_buffer: 0.254141
-  vertex_buffer: 2.565932
-  vertex_buffer: 2.0484772
-  vertex_buffer: 3.5651283
+  vertex_buffer: 2.5659351
+  vertex_buffer: 2.0484886
+  vertex_buffer: 3.5651245
   vertex_buffer: 0.63407
   vertex_buffer: 0.409576
-  vertex_buffer: 3.1454465
-  vertex_buffer: 1.9983158
-  vertex_buffer: 3.5477753
+  vertex_buffer: 3.1454506
+  vertex_buffer: 1.9983253
+  vertex_buffer: 3.5477676
   vertex_buffer: 0.661242
   vertex_buffer: 0.413025
-  vertex_buffer: 3.7646618
-  vertex_buffer: 2.0593147
-  vertex_buffer: 3.3925018
+  vertex_buffer: 3.7646666
+  vertex_buffer: 2.0593224
+  vertex_buffer: 3.392498
   vertex_buffer: 0.68888
   vertex_buffer: 0.40946
-  vertex_buffer: 4.6312976
-  vertex_buffer: 2.4678402
-  vertex_buffer: 2.835617
+  vertex_buffer: 4.631304
+  vertex_buffer: 2.4678497
+  vertex_buffer: 2.8356094
   vertex_buffer: 0.725342
   vertex_buffer: 0.389131
-  vertex_buffer: 2.0515
-  vertex_buffer: 2.162346
-  vertex_buffer: 3.5288582
+  vertex_buffer: 2.0515027
+  vertex_buffer: 2.1623554
+  vertex_buffer: 3.5288506
   vertex_buffer: 0.60663
   vertex_buffer: 0.403705
-  vertex_buffer: 3.488614
-  vertex_buffer: 3.3744526
+  vertex_buffer: 3.4886181
+  vertex_buffer: 3.374464
   vertex_buffer: 3.65485
   vertex_buffer: 0.654766
   vertex_buffer: 0.344011
-  vertex_buffer: 2.8172188
-  vertex_buffer: 3.3635693
-  vertex_buffer: 3.6155205
+  vertex_buffer: 2.817222
+  vertex_buffer: 3.3635788
+  vertex_buffer: 3.6155167
   vertex_buffer: 0.629906
   vertex_buffer: 0.346076
-  vertex_buffer: 4.1270013
-  vertex_buffer: 3.2975655
-  vertex_buffer: 3.4852333
+  vertex_buffer: 4.1270065
+  vertex_buffer: 3.297575
+  vertex_buffer: 3.4852295
   vertex_buffer: 0.680678
   vertex_buffer: 0.347265
-  vertex_buffer: 4.5772557
-  vertex_buffer: 3.166031
-  vertex_buffer: 3.235653
+  vertex_buffer: 4.5772614
+  vertex_buffer: 3.1660423
+  vertex_buffer: 3.2356453
   vertex_buffer: 0.702097
   vertex_buffer: 0.353591
-  vertex_buffer: 5.2090616
-  vertex_buffer: 2.1991062
-  vertex_buffer: 2.5853577
+  vertex_buffer: 5.209068
+  vertex_buffer: 2.1991177
+  vertex_buffer: 2.5853539
   vertex_buffer: 0.752212
   vertex_buffer: 0.410805
-  vertex_buffer: 2.4598808
-  vertex_buffer: -8.035987
-  vertex_buffer: 4.3135834
+  vertex_buffer: 2.459883
+  vertex_buffer: -8.035992
+  vertex_buffer: 4.313572
   vertex_buffer: 0.602918
   vertex_buffer: 0.842863
-  vertex_buffer: 4.5487585
-  vertex_buffer: 2.8514423
-  vertex_buffer: 2.6670074
+  vertex_buffer: 4.5487647
+  vertex_buffer: 2.8514538
+  vertex_buffer: 2.6669998
   vertex_buffer: 0.719902
   vertex_buffer: 0.3756
-  vertex_buffer: 7.2774625
-  vertex_buffer: 3.2908878
-  vertex_buffer: -0.31038666
+  vertex_buffer: 7.277471
+  vertex_buffer: 3.2908974
+  vertex_buffer: -0.3103943
   vertex_buffer: 0.893693
   vertex_buffer: 0.39996
-  vertex_buffer: 5.9919224
-  vertex_buffer: 2.67066
-  vertex_buffer: 1.8980141
+  vertex_buffer: 5.9919305
+  vertex_buffer: 2.6706696
+  vertex_buffer: 1.8980103
   vertex_buffer: 0.790082
   vertex_buffer: 0.391354
-  vertex_buffer: 3.2944977
-  vertex_buffer: -0.7652359
-  vertex_buffer: 4.665989
+  vertex_buffer: 3.2945013
+  vertex_buffer: -0.765234
+  vertex_buffer: 4.665985
   vertex_buffer: 0.643998
   vertex_buffer: 0.534488
-  vertex_buffer: 0.96783084
-  vertex_buffer: -3.7113724
+  vertex_buffer: 0.9678316
+  vertex_buffer: -3.7113743
   vertex_buffer: 6.1592064
   vertex_buffer: 0.528249
   vertex_buffer: 0.650404
-  vertex_buffer: 0.9485325
-  vertex_buffer: -4.094248
-  vertex_buffer: 5.9200745
+  vertex_buffer: 0.9485334
+  vertex_buffer: -4.0942497
+  vertex_buffer: 5.9200706
   vertex_buffer: 0.52585
   vertex_buffer: 0.680191
-  vertex_buffer: 1.9597192
+  vertex_buffer: 1.9597212
   vertex_buffer: -3.6362228
-  vertex_buffer: 5.690422
+  vertex_buffer: 5.6904182
   vertex_buffer: 0.560215
   vertex_buffer: 0.657229
-  vertex_buffer: 2.7033787
+  vertex_buffer: 2.7033815
   vertex_buffer: -3.5398808
-  vertex_buffer: 4.9262657
+  vertex_buffer: 4.926262
   vertex_buffer: 0.585384
   vertex_buffer: 0.666541
-  vertex_buffer: 1.7868371
+  vertex_buffer: 1.7868391
   vertex_buffer: -3.933569
-  vertex_buffer: 5.5071907
+  vertex_buffer: 5.507183
   vertex_buffer: 0.549626
   vertex_buffer: 0.680861
-  vertex_buffer: 2.472351
-  vertex_buffer: -3.7304955
-  vertex_buffer: 4.8139343
+  vertex_buffer: 2.472354
+  vertex_buffer: -3.7304974
+  vertex_buffer: 4.8139305
   vertex_buffer: 0.571228
   vertex_buffer: 0.682692
-  vertex_buffer: 3.5094898
-  vertex_buffer: -4.677987
-  vertex_buffer: 3.6270447
+  vertex_buffer: 3.5094936
+  vertex_buffer: -4.677991
+  vertex_buffer: 3.6270409
   vertex_buffer: 0.624852
   vertex_buffer: 0.728099
-  vertex_buffer: 0.42484653
+  vertex_buffer: 0.42484662
   vertex_buffer: -2.513298
   vertex_buffer: 7.892376
   vertex_buffer: 0.51305
   vertex_buffer: 0.547282
-  vertex_buffer: 0.48307395
-  vertex_buffer: -1.9238777
+  vertex_buffer: 0.48307416
+  vertex_buffer: -1.9238758
   vertex_buffer: 8.017586
   vertex_buffer: 0.515097
   vertex_buffer: 0.527252
-  vertex_buffer: 5.405193
-  vertex_buffer: 3.5107555
-  vertex_buffer: 3.0897903
+  vertex_buffer: 5.4052
+  vertex_buffer: 3.5107632
+  vertex_buffer: 3.0897827
   vertex_buffer: 0.742247
   vertex_buffer: 0.314507
-  vertex_buffer: 1.8350537
-  vertex_buffer: 0.72956085
-  vertex_buffer: 4.5594444
+  vertex_buffer: 1.8350562
+  vertex_buffer: 0.7295685
+  vertex_buffer: 4.559437
   vertex_buffer: 0.598631
   vertex_buffer: 0.454979
-  vertex_buffer: 2.090765
-  vertex_buffer: -1.5839405
-  vertex_buffer: 6.243725
+  vertex_buffer: 2.0907671
+  vertex_buffer: -1.5839367
+  vertex_buffer: 6.243721
   vertex_buffer: 0.570338
   vertex_buffer: 0.548575
-  vertex_buffer: 2.1136065
-  vertex_buffer: -1.156723
-  vertex_buffer: 5.9879227
+  vertex_buffer: 2.1136088
+  vertex_buffer: -1.1567173
+  vertex_buffer: 5.987919
   vertex_buffer: 0.578632
   vertex_buffer: 0.533623
-  vertex_buffer: 5.2506566
-  vertex_buffer: -0.35006142
-  vertex_buffer: 3.8119774
+  vertex_buffer: 5.250663
+  vertex_buffer: -0.3500576
+  vertex_buffer: 3.8119736
   vertex_buffer: 0.723087
   vertex_buffer: 0.532054
-  vertex_buffer: 0.4557106
-  vertex_buffer: -0.9948273
+  vertex_buffer: 0.45571092
+  vertex_buffer: -0.99482155
   vertex_buffer: 7.528843
   vertex_buffer: 0.516446
   vertex_buffer: 0.499639
-  vertex_buffer: 3.7202723
-  vertex_buffer: 3.7115192
-  vertex_buffer: 4.1818047
+  vertex_buffer: 3.7202773
+  vertex_buffer: 3.7115288
+  vertex_buffer: 4.181797
   vertex_buffer: 0.662801
   vertex_buffer: 0.282918
-  vertex_buffer: 4.683783
-  vertex_buffer: 3.6740036
+  vertex_buffer: 4.683789
+  vertex_buffer: 3.6740131
   vertex_buffer: 3.73135
   vertex_buffer: 0.703624
   vertex_buffer: 0.293271
-  vertex_buffer: 6.4526186
-  vertex_buffer: 7.177004
-  vertex_buffer: 0.64782715
+  vertex_buffer: 6.4526267
+  vertex_buffer: 7.1770153
+  vertex_buffer: 0.6478195
   vertex_buffer: 0.830705
   vertex_buffer: 0.193814
-  vertex_buffer: 1.140491
-  vertex_buffer: 3.0603447
-  vertex_buffer: 4.7917366
+  vertex_buffer: 1.1404927
+  vertex_buffer: 3.0603523
+  vertex_buffer: 4.791733
   vertex_buffer: 0.552386
   vertex_buffer: 0.302568
-  vertex_buffer: 2.2480388
-  vertex_buffer: 3.2713928
+  vertex_buffer: 2.2480416
+  vertex_buffer: 3.2714005
   vertex_buffer: 3.4257584
   vertex_buffer: 0.60761
   vertex_buffer: 0.353888
-  vertex_buffer: 4.12534
+  vertex_buffer: 4.1253448
   vertex_buffer: -3.6359367
-  vertex_buffer: 3.5436134
+  vertex_buffer: 3.5436096
   vertex_buffer: 0.645429
   vertex_buffer: 0.696707
-  vertex_buffer: 6.629145
-  vertex_buffer: -3.3822517
-  vertex_buffer: -1.0385818
+  vertex_buffer: 6.629153
+  vertex_buffer: -3.3822498
+  vertex_buffer: -1.0385971
   vertex_buffer: 0.932695
   vertex_buffer: 0.730105
-  vertex_buffer: 1.641717
-  vertex_buffer: -1.9287262
-  vertex_buffer: 6.0156593
+  vertex_buffer: 1.641719
+  vertex_buffer: -1.9287205
+  vertex_buffer: 6.0156555
   vertex_buffer: 0.557261
   vertex_buffer: 0.572826
-  vertex_buffer: 1.0766811
-  vertex_buffer: -2.2036495
+  vertex_buffer: 1.0766822
+  vertex_buffer: -2.2036476
   vertex_buffer: 6.1743774
   vertex_buffer: 0.542902
   vertex_buffer: 0.584792
-  vertex_buffer: 3.624907
-  vertex_buffer: -3.503807
-  vertex_buffer: 3.442051
+  vertex_buffer: 3.6249113
+  vertex_buffer: -3.5038052
+  vertex_buffer: 3.4420433
   vertex_buffer: 0.618026
   vertex_buffer: 0.694711
-  vertex_buffer: 3.4461956
-  vertex_buffer: -3.5624218
-  vertex_buffer: 3.5712547
+  vertex_buffer: 3.4461992
+  vertex_buffer: -3.56242
+  vertex_buffer: 3.571247
   vertex_buffer: 0.607591
   vertex_buffer: 0.694203
-  vertex_buffer: 5.070438
-  vertex_buffer: 4.2198524
-  vertex_buffer: 3.3080864
+  vertex_buffer: 5.070444
+  vertex_buffer: 4.219864
+  vertex_buffer: 3.3080826
   vertex_buffer: 0.722943
   vertex_buffer: 0.271963
-  vertex_buffer: 2.1962533
-  vertex_buffer: -1.6779041
+  vertex_buffer: 2.1962554
+  vertex_buffer: -1.6779022
   vertex_buffer: 5.9193077
   vertex_buffer: 0.577414
   vertex_buffer: 0.563167
-  vertex_buffer: 2.5358021
-  vertex_buffer: 3.5196838
-  vertex_buffer: 4.539776
+  vertex_buffer: 2.5358052
+  vertex_buffer: 3.5196915
+  vertex_buffer: 4.539768
   vertex_buffer: 0.614083
   vertex_buffer: 0.281387
-  vertex_buffer: 2.6456668
-  vertex_buffer: 4.0347195
+  vertex_buffer: 2.6456702
+  vertex_buffer: 4.034727
   vertex_buffer: 4.60878
   vertex_buffer: 0.616907
   vertex_buffer: 0.255886
-  vertex_buffer: 3.675518
-  vertex_buffer: 7.9906406
-  vertex_buffer: 2.9460526
+  vertex_buffer: 3.675523
+  vertex_buffer: 7.990658
+  vertex_buffer: 2.9460487
   vertex_buffer: 0.668509
   vertex_buffer: 0.119914
-  vertex_buffer: 5.6913533
-  vertex_buffer: 5.756613
-  vertex_buffer: 2.0977516
+  vertex_buffer: 5.6913605
+  vertex_buffer: 5.756626
+  vertex_buffer: 2.0977478
   vertex_buffer: 0.770092
   vertex_buffer: 0.232021
-  vertex_buffer: 3.0768647
-  vertex_buffer: 6.201044
+  vertex_buffer: 3.0768685
+  vertex_buffer: 6.2010574
   vertex_buffer: 3.7766457
   vertex_buffer: 0.635536
   vertex_buffer: 0.189249
-  vertex_buffer: 5.831969
-  vertex_buffer: 4.0339775
-  vertex_buffer: 2.4737282
+  vertex_buffer: 5.831976
+  vertex_buffer: 4.033989
+  vertex_buffer: 2.4737244
   vertex_buffer: 0.770391
   vertex_buffer: 0.299556
-  vertex_buffer: 6.487762
-  vertex_buffer: 5.180357
-  vertex_buffer: 1.0317268
+  vertex_buffer: 6.4877706
+  vertex_buffer: 5.1803684
+  vertex_buffer: 1.0317192
   vertex_buffer: 0.826722
   vertex_buffer: 0.278755
-  vertex_buffer: 0.9777184
+  vertex_buffer: 0.9777193
   vertex_buffer: -3.945898
-  vertex_buffer: 6.0843506
+  vertex_buffer: 6.084347
   vertex_buffer: 0.527121
   vertex_buffer: 0.666198
-  vertex_buffer: 1.8753169
-  vertex_buffer: -3.8008995
-  vertex_buffer: 5.5984306
+  vertex_buffer: 1.8753189
+  vertex_buffer: -3.8008976
+  vertex_buffer: 5.598423
   vertex_buffer: 0.553172
   vertex_buffer: 0.668527
-  vertex_buffer: 2.5915039
+  vertex_buffer: 2.5915065
   vertex_buffer: -3.6574516
-  vertex_buffer: 4.915451
+  vertex_buffer: 4.915447
   vertex_buffer: 0.577238
   vertex_buffer: 0.67389
-  vertex_buffer: 1.5212762
-  vertex_buffer: -1.9988365
-  vertex_buffer: 5.9348717
+  vertex_buffer: 1.5212778
+  vertex_buffer: -1.9988327
+  vertex_buffer: 5.934868
   vertex_buffer: 0.554692
   vertex_buffer: 0.580066
-  vertex_buffer: 3.5580156
-  vertex_buffer: -3.5292492
-  vertex_buffer: 3.51326
+  vertex_buffer: 3.5580196
+  vertex_buffer: -3.5292473
+  vertex_buffer: 3.5132523
   vertex_buffer: 0.611897
   vertex_buffer: 0.693961
-  vertex_buffer: 3.0891697
-  vertex_buffer: -4.274349
-  vertex_buffer: 3.8229141
+  vertex_buffer: 3.0891728
+  vertex_buffer: -4.2743473
+  vertex_buffer: 3.8229103
   vertex_buffer: 0.596961
   vertex_buffer: 0.70654
-  vertex_buffer: 3.3768747
-  vertex_buffer: -3.600422
-  vertex_buffer: 3.5875587
+  vertex_buffer: 3.3768785
+  vertex_buffer: -3.60042
+  vertex_buffer: 3.587551
   vertex_buffer: 0.596371
   vertex_buffer: 0.693953
-  vertex_buffer: 1.2161286
-  vertex_buffer: -2.1466656
-  vertex_buffer: 6.9213715
+  vertex_buffer: 1.2161298
+  vertex_buffer: -2.1466618
+  vertex_buffer: 6.9213676
   vertex_buffer: 0.539958
   vertex_buffer: 0.557139
-  vertex_buffer: 2.3516455
-  vertex_buffer: -3.7717247
-  vertex_buffer: 4.75354
+  vertex_buffer: 2.351648
+  vertex_buffer: -3.7717228
+  vertex_buffer: 4.753536
   vertex_buffer: 0.568842
   vertex_buffer: 0.692366
-  vertex_buffer: 1.6980877
-  vertex_buffer: -3.940525
-  vertex_buffer: 5.294464
+  vertex_buffer: 1.6980895
+  vertex_buffer: -3.9405231
+  vertex_buffer: 5.2944603
   vertex_buffer: 0.547818
   vertex_buffer: 0.692366
-  vertex_buffer: 0.8974841
+  vertex_buffer: 0.8974848
   vertex_buffer: -4.14546
   vertex_buffer: 5.696514
   vertex_buffer: 0.524613
   vertex_buffer: 0.692366
-  vertex_buffer: 1.0443137
-  vertex_buffer: -7.1271086
-  vertex_buffer: 4.956272
+  vertex_buffer: 1.0443145
+  vertex_buffer: -7.1271124
+  vertex_buffer: 4.9562645
   vertex_buffer: 0.53409
   vertex_buffer: 0.779141
-  vertex_buffer: 0.987621
-  vertex_buffer: -6.3614016
-  vertex_buffer: 5.318268
+  vertex_buffer: 0.9876218
+  vertex_buffer: -6.3614044
+  vertex_buffer: 5.31826
   vertex_buffer: 0.527671
   vertex_buffer: 0.736226
-  vertex_buffer: 0.96364325
-  vertex_buffer: -6.0137033
-  vertex_buffer: 5.3195267
+  vertex_buffer: 0.963644
+  vertex_buffer: -6.013706
+  vertex_buffer: 5.319519
   vertex_buffer: 0.526913
   vertex_buffer: 0.717857
-  vertex_buffer: 0.92498523
-  vertex_buffer: -5.6456995
-  vertex_buffer: 5.0970116
+  vertex_buffer: 0.9249861
+  vertex_buffer: -5.6457005
+  vertex_buffer: 5.097004
   vertex_buffer: 0.526878
   vertex_buffer: 0.704626
-  vertex_buffer: 0.8514866
+  vertex_buffer: 0.8514873
   vertex_buffer: -5.4173384
-  vertex_buffer: 4.945057
+  vertex_buffer: 4.9450493
   vertex_buffer: 0.526967
   vertex_buffer: 0.695278
-  vertex_buffer: 2.2936535
+  vertex_buffer: 2.2936554
   vertex_buffer: -4.7114153
-  vertex_buffer: 4.1935005
+  vertex_buffer: 4.193493
   vertex_buffer: 0.572058
   vertex_buffer: 0.695278
-  vertex_buffer: 2.3988762
-  vertex_buffer: -4.7940826
-  vertex_buffer: 4.318264
+  vertex_buffer: 2.3988786
+  vertex_buffer: -4.7940845
+  vertex_buffer: 4.31826
   vertex_buffer: 0.573521
   vertex_buffer: 0.70354
-  vertex_buffer: 2.52226
+  vertex_buffer: 2.5222626
   vertex_buffer: -4.9738216
-  vertex_buffer: 4.4091377
+  vertex_buffer: 4.40913
   vertex_buffer: 0.576838
   vertex_buffer: 0.711846
-  vertex_buffer: 2.618237
+  vertex_buffer: 2.6182396
   vertex_buffer: -5.130539
-  vertex_buffer: 4.305893
+  vertex_buffer: 4.3058853
   vertex_buffer: 0.581691
   vertex_buffer: 0.720063
-  vertex_buffer: 3.2409048
+  vertex_buffer: 3.2409084
   vertex_buffer: -2.943821
-  vertex_buffer: 4.736702
+  vertex_buffer: 4.736698
   vertex_buffer: 0.609945
   vertex_buffer: 0.63991
-  vertex_buffer: 7.502926
-  vertex_buffer: 0.59869766
-  vertex_buffer: -2.361534
+  vertex_buffer: 7.5029354
+  vertex_buffer: 0.5987072
+  vertex_buffer: -2.3615494
   vertex_buffer: 0.986046
   vertex_buffer: 0.560034
-  vertex_buffer: 2.8017242
+  vertex_buffer: 2.8017273
   vertex_buffer: -4.2447968
-  vertex_buffer: 3.7659073
+  vertex_buffer: 3.7659035
   vertex_buffer: 0.5868
   vertex_buffer: 0.6954
-  vertex_buffer: 2.929969
-  vertex_buffer: -4.253687
-  vertex_buffer: 3.836361
+  vertex_buffer: 2.9299724
+  vertex_buffer: -4.253685
+  vertex_buffer: 3.8363533
   vertex_buffer: 0.590372
   vertex_buffer: 0.701823
-  vertex_buffer: 0.8780336
+  vertex_buffer: 0.87803423
   vertex_buffer: -2.4603996
   vertex_buffer: 6.1991234
   vertex_buffer: 0.531915
   vertex_buffer: 0.601537
-  vertex_buffer: 2.025136
+  vertex_buffer: 2.0251384
   vertex_buffer: -1.8861618
-  vertex_buffer: 5.4707375
+  vertex_buffer: 5.4707336
   vertex_buffer: 0.577268
   vertex_buffer: 0.585935
-  vertex_buffer: 0.967478
-  vertex_buffer: -2.3653927
+  vertex_buffer: 0.9674789
+  vertex_buffer: -2.3653946
   vertex_buffer: 6.2165947
   vertex_buffer: 0.536915
   vertex_buffer: 0.593786
-  vertex_buffer: 2.5313063
-  vertex_buffer: 0.5067806
-  vertex_buffer: 4.393051
+  vertex_buffer: 2.531309
+  vertex_buffer: 0.50678635
+  vertex_buffer: 4.3930473
   vertex_buffer: 0.627543
   vertex_buffer: 0.473352
-  vertex_buffer: 3.617191
-  vertex_buffer: 0.18891716
-  vertex_buffer: 4.296589
+  vertex_buffer: 3.6171951
+  vertex_buffer: 0.18892479
+  vertex_buffer: 4.296585
   vertex_buffer: 0.665586
   vertex_buffer: 0.495951
-  vertex_buffer: 2.3044915
-  vertex_buffer: -1.2837143
-  vertex_buffer: 5.6435738
+  vertex_buffer: 2.304494
+  vertex_buffer: -1.2837124
+  vertex_buffer: 5.64357
   vertex_buffer: 0.588354
   vertex_buffer: 0.546862
-  vertex_buffer: 5.3009076
-  vertex_buffer: 7.7115097
-  vertex_buffer: 1.8507767
+  vertex_buffer: 5.3009152
+  vertex_buffer: 7.711525
+  vertex_buffer: 1.850769
   vertex_buffer: 0.757824
   vertex_buffer: 0.147676
-  vertex_buffer: 4.5862565
-  vertex_buffer: 6.1100426
-  vertex_buffer: 2.9832764
+  vertex_buffer: 4.586262
+  vertex_buffer: 6.1100597
+  vertex_buffer: 2.9832726
   vertex_buffer: 0.70925
   vertex_buffer: 0.201508
-  vertex_buffer: 3.9455872
-  vertex_buffer: 4.307043
-  vertex_buffer: 3.948494
+  vertex_buffer: 3.945592
+  vertex_buffer: 4.3070507
+  vertex_buffer: 3.9484863
   vertex_buffer: 0.672684
   vertex_buffer: 0.256581
-  vertex_buffer: 2.880608
-  vertex_buffer: -5.605525
-  vertex_buffer: 4.019226
+  vertex_buffer: 2.8806114
+  vertex_buffer: -5.605528
+  vertex_buffer: 4.0192223
   vertex_buffer: 0.600409
   vertex_buffer: 0.749005
-  vertex_buffer: 1.3191733
-  vertex_buffer: 3.8142223
-  vertex_buffer: 4.931698
+  vertex_buffer: 1.3191751
+  vertex_buffer: 3.8142319
+  vertex_buffer: 4.931694
   vertex_buffer: 0.558266
   vertex_buffer: 0.261672
-  vertex_buffer: 1.6745269
-  vertex_buffer: 6.172098
+  vertex_buffer: 1.6745294
+  vertex_buffer: 6.1721096
   vertex_buffer: 4.240856
   vertex_buffer: 0.570304
   vertex_buffer: 0.187871
-  vertex_buffer: 2.0401752
-  vertex_buffer: 8.078575
+  vertex_buffer: 2.0401783
+  vertex_buffer: 8.078587
   vertex_buffer: 3.6178894
   vertex_buffer: 0.588166
   vertex_buffer: 0.109044
-  vertex_buffer: 4.2982955
-  vertex_buffer: 2.2354507
-  vertex_buffer: 3.1172485
+  vertex_buffer: 4.2983003
+  vertex_buffer: 2.2354584
+  vertex_buffer: 3.1172447
   vertex_buffer: 0.711045
   vertex_buffer: 0.398952
-  vertex_buffer: 5.918257
-  vertex_buffer: 1.8992882
-  vertex_buffer: 2.2622795
+  vertex_buffer: 5.9182653
+  vertex_buffer: 1.8992939
+  vertex_buffer: 2.2622757
   vertex_buffer: 0.78107
   vertex_buffer: 0.435405
-  vertex_buffer: 1.7605395
-  vertex_buffer: 2.3266659
-  vertex_buffer: 3.42659
+  vertex_buffer: 1.7605418
+  vertex_buffer: 2.3266754
+  vertex_buffer: 3.4265862
   vertex_buffer: 0.587247
   vertex_buffer: 0.398932
-  vertex_buffer: 5.2549534
-  vertex_buffer: 3.0604095
-  vertex_buffer: 2.6985817
+  vertex_buffer: 5.2549596
+  vertex_buffer: 3.060419
+  vertex_buffer: 2.698578
   vertex_buffer: 0.74287
   vertex_buffer: 0.355446
-  vertex_buffer: 1.3581057
-  vertex_buffer: 1.0136013
-  vertex_buffer: 4.7732735
+  vertex_buffer: 1.3581073
+  vertex_buffer: 1.0136089
+  vertex_buffer: 4.7732697
   vertex_buffer: 0.572156
   vertex_buffer: 0.437652
-  vertex_buffer: 1.5795965
-  vertex_buffer: -1.6822205
-  vertex_buffer: 6.861721
+  vertex_buffer: 1.5795982
+  vertex_buffer: -1.6822186
+  vertex_buffer: 6.861717
   vertex_buffer: 0.551868
   vertex_buffer: 0.53657
-  vertex_buffer: 6.6445875
-  vertex_buffer: 1.6044445
-  vertex_buffer: 1.6377296
+  vertex_buffer: 6.6445966
+  vertex_buffer: 1.6044521
+  vertex_buffer: 1.637722
   vertex_buffer: 0.821442
   vertex_buffer: 0.457556
-  vertex_buffer: 5.438588
-  vertex_buffer: 1.4010563
-  vertex_buffer: 2.8901978
+  vertex_buffer: 5.4385943
+  vertex_buffer: 1.4010639
+  vertex_buffer: 2.890194
   vertex_buffer: 0.752702
   vertex_buffer: 0.457182
-  vertex_buffer: 4.6051846
-  vertex_buffer: 1.0590935
-  vertex_buffer: 3.492607
+  vertex_buffer: 4.60519
+  vertex_buffer: 1.0591011
+  vertex_buffer: 3.4926033
   vertex_buffer: 0.713757
   vertex_buffer: 0.467627
-  vertex_buffer: 3.4062254
-  vertex_buffer: 0.9862709
+  vertex_buffer: 3.4062293
+  vertex_buffer: 0.9862766
   vertex_buffer: 3.838192
   vertex_buffer: 0.667113
   vertex_buffer: 0.460673
-  vertex_buffer: 2.4928606
-  vertex_buffer: 1.1352692
+  vertex_buffer: 2.4928637
+  vertex_buffer: 1.1352768
   vertex_buffer: 3.9427338
   vertex_buffer: 0.631101
   vertex_buffer: 0.447154
-  vertex_buffer: 1.8204823
-  vertex_buffer: 1.3184166
-  vertex_buffer: 4.103424
+  vertex_buffer: 1.8204843
+  vertex_buffer: 1.3184261
+  vertex_buffer: 4.1034203
   vertex_buffer: 0.600862
   vertex_buffer: 0.432473
-  vertex_buffer: 0.5738768
-  vertex_buffer: 1.5734634
+  vertex_buffer: 0.57387745
+  vertex_buffer: 1.5734692
   vertex_buffer: 5.444023
   vertex_buffer: 0.523481
   vertex_buffer: 0.405627
-  vertex_buffer: 6.6679235
-  vertex_buffer: 0.22402573
-  vertex_buffer: 1.9835739
+  vertex_buffer: 6.667932
+  vertex_buffer: 0.22403145
+  vertex_buffer: 1.9835663
   vertex_buffer: 0.810748
   vertex_buffer: 0.523926
-  vertex_buffer: 5.7407603
-  vertex_buffer: 3.1849308
-  vertex_buffer: 2.401783
+  vertex_buffer: 5.7407665
+  vertex_buffer: 3.1849384
+  vertex_buffer: 2.4017792
   vertex_buffer: 0.771046
   vertex_buffer: 0.348959
-  vertex_buffer: 0.23790747
-  vertex_buffer: -2.7562447
+  vertex_buffer: 0.23790738
+  vertex_buffer: -2.7562466
   vertex_buffer: 7.6178856
   vertex_buffer: 0.509127
   vertex_buffer: 0.562718
-  vertex_buffer: 1.8713548
-  vertex_buffer: 0.033107758
+  vertex_buffer: 1.8713568
+  vertex_buffer: 0.033109665
   vertex_buffer: 4.94363
   vertex_buffer: 0.595293
   vertex_buffer: 0.485024
-  vertex_buffer: 7.683481
-  vertex_buffer: 3.9597416
-  vertex_buffer: -2.3439941
+  vertex_buffer: 7.683491
+  vertex_buffer: 3.959755
+  vertex_buffer: -2.3440018
   vertex_buffer: 0.980531
   vertex_buffer: 0.401564
-  vertex_buffer: 1.3603485
-  vertex_buffer: 1.609335
-  vertex_buffer: 4.160656
+  vertex_buffer: 1.3603501
+  vertex_buffer: 1.6093407
+  vertex_buffer: 4.160652
   vertex_buffer: 0.5735
   vertex_buffer: 0.42
-  vertex_buffer: 2.412501
-  vertex_buffer: -1.0677414
+  vertex_buffer: 2.4125037
+  vertex_buffer: -1.0677376
   vertex_buffer: 4.927147
   vertex_buffer: 0.602995
   vertex_buffer: 0.548688
-  vertex_buffer: 4.92097
-  vertex_buffer: 2.8164482
-  vertex_buffer: 2.5507278
+  vertex_buffer: 4.920976
+  vertex_buffer: 2.8164597
+  vertex_buffer: 2.550724
   vertex_buffer: 0.73353
   vertex_buffer: 0.376977
-  vertex_buffer: 1.6102984
-  vertex_buffer: -1.1498814
-  vertex_buffer: 6.5544205
+  vertex_buffer: 1.6103003
+  vertex_buffer: -1.1498775
+  vertex_buffer: 6.5544167
   vertex_buffer: 0.560611
   vertex_buffer: 0.519017
-  vertex_buffer: 7.1972446
-  vertex_buffer: -1.315155
-  vertex_buffer: -1.8514862
+  vertex_buffer: 7.197254
+  vertex_buffer: -1.3151512
+  vertex_buffer: -1.8515015
   vertex_buffer: 0.967686
   vertex_buffer: 0.644357
-  vertex_buffer: 1.7810719
-  vertex_buffer: 2.5902557
-  vertex_buffer: 3.1927032
+  vertex_buffer: 1.7810742
+  vertex_buffer: 2.5902653
+  vertex_buffer: 3.1926994
   vertex_buffer: 0.580985
   vertex_buffer: 0.38716
-  vertex_buffer: 1.0172381
-  vertex_buffer: -1.0713634
-  vertex_buffer: 7.1607246
+  vertex_buffer: 1.017239
+  vertex_buffer: -1.0713615
+  vertex_buffer: 7.160721
   vertex_buffer: 0.537728
   vertex_buffer: 0.505385
-  vertex_buffer: 5.189652
-  vertex_buffer: -5.526311
-  vertex_buffer: 1.940609
+  vertex_buffer: 5.189658
+  vertex_buffer: -5.526314
+  vertex_buffer: 1.9405975
   vertex_buffer: 0.760966
   vertex_buffer: 0.779753
-  vertex_buffer: 4.9922805
-  vertex_buffer: -6.4331474
-  vertex_buffer: 1.185112
+  vertex_buffer: 4.9922867
+  vertex_buffer: -6.4331484
+  vertex_buffer: 1.1851006
   vertex_buffer: 0.801779
   vertex_buffer: 0.831938
-  vertex_buffer: 7.3186183
-  vertex_buffer: 0.3694744
-  vertex_buffer: -0.21674347
+  vertex_buffer: 7.318627
+  vertex_buffer: 0.36948395
+  vertex_buffer: -0.2167511
   vertex_buffer: 0.892441
   vertex_buffer: 0.540761
-  vertex_buffer: 6.056026
-  vertex_buffer: -4.434767
-  vertex_buffer: 1.2825623
+  vertex_buffer: 6.0560336
+  vertex_buffer: -4.434766
+  vertex_buffer: 1.2825546
   vertex_buffer: 0.816351
   vertex_buffer: 0.74026
-  vertex_buffer: 6.927325
-  vertex_buffer: 4.4287663
-  vertex_buffer: 0.16318512
+  vertex_buffer: 6.927334
+  vertex_buffer: 4.4287796
+  vertex_buffer: 0.16317749
   vertex_buffer: 0.865595
   vertex_buffer: 0.333687
-  vertex_buffer: 2.4872823
-  vertex_buffer: -8.917337
-  vertex_buffer: 4.1714897
+  vertex_buffer: 2.4872847
+  vertex_buffer: -8.917343
+  vertex_buffer: 4.1714783
   vertex_buffer: 0.614074
   vertex_buffer: 0.883246
-  vertex_buffer: 0.18507135
+  vertex_buffer: 0.18507123
   vertex_buffer: -2.6379662
   vertex_buffer: 6.7830925
   vertex_buffer: 0.508953
   vertex_buffer: 0.579438
-  vertex_buffer: 2.4989808
-  vertex_buffer: -0.297657
-  vertex_buffer: 4.7593803
+  vertex_buffer: 2.4989836
+  vertex_buffer: -0.2976513
+  vertex_buffer: 4.7593727
   vertex_buffer: 0.617942
   vertex_buffer: 0.508316
-  vertex_buffer: 6.560847
-  vertex_buffer: 2.7619705
-  vertex_buffer: 1.2603416
+  vertex_buffer: 6.560855
+  vertex_buffer: 2.76198
+  vertex_buffer: 1.260334
   vertex_buffer: 0.825608
   vertex_buffer: 0.397675
-  vertex_buffer: 3.6496165
-  vertex_buffer: 2.498146
-  vertex_buffer: 3.2662697
+  vertex_buffer: 3.649621
+  vertex_buffer: 2.4981575
+  vertex_buffer: 3.2662582
   vertex_buffer: 0.681215
   vertex_buffer: 0.396235
-  vertex_buffer: 3.155451
-  vertex_buffer: 2.4324074
-  vertex_buffer: 3.4271507
+  vertex_buffer: 3.1554554
+  vertex_buffer: 2.432415
+  vertex_buffer: 3.427147
   vertex_buffer: 0.656636
   vertex_buffer: 0.400597
-  vertex_buffer: 3.1980324
-  vertex_buffer: -4.3204155
-  vertex_buffer: 3.7522202
+  vertex_buffer: 3.198036
+  vertex_buffer: -4.3204174
+  vertex_buffer: 3.7522125
   vertex_buffer: 0.6039
   vertex_buffer: 0.710217
-  vertex_buffer: 6.7209496
-  vertex_buffer: -1.2013817
-  vertex_buffer: 1.948906
+  vertex_buffer: 6.720958
+  vertex_buffer: -1.201376
+  vertex_buffer: 1.9488983
   vertex_buffer: 0.812086
   vertex_buffer: 0.588539
-  vertex_buffer: 1.2246006
-  vertex_buffer: -10.21917
-  vertex_buffer: 4.311302
+  vertex_buffer: 1.2246015
+  vertex_buffer: -10.219176
+  vertex_buffer: 4.3112946
   vertex_buffer: 0.568013
   vertex_buffer: 0.944565
-  vertex_buffer: 3.186315
-  vertex_buffer: -8.656027
-  vertex_buffer: 2.8606186
+  vertex_buffer: 3.1863186
+  vertex_buffer: -8.656031
+  vertex_buffer: 2.8606071
   vertex_buffer: 0.681008
   vertex_buffer: 0.898285
-  vertex_buffer: 4.006108
-  vertex_buffer: -7.676532
-  vertex_buffer: 2.0705223
+  vertex_buffer: 4.006112
+  vertex_buffer: -7.6765366
+  vertex_buffer: 2.0705109
   vertex_buffer: 0.733752
   vertex_buffer: 0.869701
-  vertex_buffer: 2.6482399
-  vertex_buffer: 2.4515076
-  vertex_buffer: 3.45673
+  vertex_buffer: 2.648243
+  vertex_buffer: 2.451519
+  vertex_buffer: 3.4567223
   vertex_buffer: 0.63383
   vertex_buffer: 0.398822
-  vertex_buffer: 2.2057068
-  vertex_buffer: 2.506771
-  vertex_buffer: 3.3655663
+  vertex_buffer: 2.2057095
+  vertex_buffer: 2.5067787
+  vertex_buffer: 3.3655624
   vertex_buffer: 0.606793
   vertex_buffer: 0.395537
-  vertex_buffer: 1.9240649
-  vertex_buffer: 2.5685253
-  vertex_buffer: 3.2245102
+  vertex_buffer: 1.9240671
+  vertex_buffer: 2.5685349
+  vertex_buffer: 3.2245064
   vertex_buffer: 0.58966
   vertex_buffer: 0.391062
-  vertex_buffer: 6.265646
-  vertex_buffer: 3.5524426
-  vertex_buffer: 1.7489777
+  vertex_buffer: 6.2656546
+  vertex_buffer: 3.552454
+  vertex_buffer: 1.7489738
   vertex_buffer: 0.805016
   vertex_buffer: 0.342108
-  vertex_buffer: 2.3390827
-  vertex_buffer: 2.884201
+  vertex_buffer: 2.3390853
+  vertex_buffer: 2.8842087
   vertex_buffer: 3.3479233
   vertex_buffer: 0.611335
   vertex_buffer: 0.362284
-  vertex_buffer: 2.8314958
-  vertex_buffer: 2.9797497
-  vertex_buffer: 3.476944
+  vertex_buffer: 2.8314993
+  vertex_buffer: 2.9797573
+  vertex_buffer: 3.4769402
   vertex_buffer: 0.634038
   vertex_buffer: 0.355971
-  vertex_buffer: 3.3190825
-  vertex_buffer: 2.999731
-  vertex_buffer: 3.4610176
+  vertex_buffer: 3.3190868
+  vertex_buffer: 2.9997406
+  vertex_buffer: 3.4610138
   vertex_buffer: 0.656636
   vertex_buffer: 0.355357
-  vertex_buffer: 3.7897182
-  vertex_buffer: 2.961588
-  vertex_buffer: 3.317852
+  vertex_buffer: 3.789723
+  vertex_buffer: 2.9615993
+  vertex_buffer: 3.3178482
   vertex_buffer: 0.681215
   vertex_buffer: 0.35834
-  vertex_buffer: 4.145367
-  vertex_buffer: 2.891821
-  vertex_buffer: 3.1133041
+  vertex_buffer: 4.1453724
+  vertex_buffer: 2.8918304
+  vertex_buffer: 3.1133003
   vertex_buffer: 0.698585
   vertex_buffer: 0.363156
-  vertex_buffer: 7.5618553
-  vertex_buffer: 5.420641
-  vertex_buffer: -1.5621185
+  vertex_buffer: 7.561866
+  vertex_buffer: 5.420656
+  vertex_buffer: -1.5621338
   vertex_buffer: 0.941867
   vertex_buffer: 0.319076
-  vertex_buffer: 4.0105886
-  vertex_buffer: 2.5953503
+  vertex_buffer: 4.010593
+  vertex_buffer: 2.595358
   vertex_buffer: 3.0636559
   vertex_buffer: 0.698585
   vertex_buffer: 0.387449
-  vertex_buffer: 2.4361215
-  vertex_buffer: -2.783411
-  vertex_buffer: 5.3472176
+  vertex_buffer: 2.4361243
+  vertex_buffer: -2.783409
+  vertex_buffer: 5.3472137
   vertex_buffer: 0.584177
   vertex_buffer: 0.624107
-  vertex_buffer: 1.6050982
-  vertex_buffer: -1.9455338
+  vertex_buffer: 1.6051
+  vertex_buffer: -1.9455318
   vertex_buffer: 6.2601547
   vertex_buffer: 0.554318
   vertex_buffer: 0.566077
-  vertex_buffer: 1.0137081
-  vertex_buffer: -2.9374046
-  vertex_buffer: 6.0877533
+  vertex_buffer: 1.013709
+  vertex_buffer: -2.9374008
+  vertex_buffer: 6.0877495
   vertex_buffer: 0.534154
   vertex_buffer: 0.62064
-  vertex_buffer: 4.2468576
-  vertex_buffer: -6.707801
-  vertex_buffer: 2.5414963
+  vertex_buffer: 4.2468624
+  vertex_buffer: -6.7078037
+  vertex_buffer: 2.5414886
   vertex_buffer: 0.711218
   vertex_buffer: 0.819975
-  vertex_buffer: 3.3817728
-  vertex_buffer: -7.8021345
-  vertex_buffer: 3.3166351
+  vertex_buffer: 3.3817763
+  vertex_buffer: -7.8021374
+  vertex_buffer: 3.3166275
   vertex_buffer: 0.66463
   vertex_buffer: 0.852871
-  vertex_buffer: 1.2883689
-  vertex_buffer: -9.677936
-  vertex_buffer: 4.8929443
+  vertex_buffer: 1.28837
+  vertex_buffer: -9.677942
+  vertex_buffer: 4.8929367
   vertex_buffer: 0.5591
   vertex_buffer: 0.902632
-  vertex_buffer: 5.832577
+  vertex_buffer: 5.8325844
   vertex_buffer: -5.1295977
-  vertex_buffer: 0.12055969
+  vertex_buffer: 0.12055206
   vertex_buffer: 0.871706
   vertex_buffer: 0.791941
-  vertex_buffer: 1.9733884
-  vertex_buffer: 2.7239323
-  vertex_buffer: 3.2599945
+  vertex_buffer: 1.9733912
+  vertex_buffer: 2.72394
+  vertex_buffer: 3.2599869
   vertex_buffer: 0.591234
   vertex_buffer: 0.373894
-  vertex_buffer: 0.93809897
-  vertex_buffer: 0.5055809
-  vertex_buffer: 5.7244835
+  vertex_buffer: 0.9381001
+  vertex_buffer: 0.5055866
+  vertex_buffer: 5.724476
   vertex_buffer: 0.544341
   vertex_buffer: 0.451584
-  vertex_buffer: 2.3015637
-  vertex_buffer: -9.5524845
-  vertex_buffer: 3.7121239
+  vertex_buffer: 2.3015656
+  vertex_buffer: -9.552489
+  vertex_buffer: 3.7121162
   vertex_buffer: 0.624563
   vertex_buffer: 0.924192
-  vertex_buffer: 7.139088
-  vertex_buffer: -1.3418045
-  vertex_buffer: 0.07254028
+  vertex_buffer: 7.139097
+  vertex_buffer: -1.3418007
+  vertex_buffer: 0.072525024
   vertex_buffer: 0.88577
   vertex_buffer: 0.615029
-  vertex_buffer: 1.6386461
-  vertex_buffer: -5.1091747
-  vertex_buffer: 4.613632
+  vertex_buffer: 1.6386478
+  vertex_buffer: -5.1091776
+  vertex_buffer: 4.6136246
   vertex_buffer: 0.551338
   vertex_buffer: 0.695278
-  vertex_buffer: 1.728884
-  vertex_buffer: -5.284889
-  vertex_buffer: 4.7355385
+  vertex_buffer: 1.7288855
+  vertex_buffer: -5.284891
+  vertex_buffer: 4.7355347
   vertex_buffer: 0.55198
   vertex_buffer: 0.704632
-  vertex_buffer: 1.8350952
-  vertex_buffer: -5.5643196
-  vertex_buffer: 4.855278
+  vertex_buffer: 1.835097
+  vertex_buffer: -5.5643215
+  vertex_buffer: 4.855274
   vertex_buffer: 0.552888
   vertex_buffer: 0.715808
-  vertex_buffer: 1.887146
-  vertex_buffer: -5.842271
-  vertex_buffer: 4.792778
+  vertex_buffer: 1.887148
+  vertex_buffer: -5.8422728
+  vertex_buffer: 4.7927704
   vertex_buffer: 0.555168
   vertex_buffer: 0.730794
-  vertex_buffer: 2.1029322
-  vertex_buffer: -6.506687
-  vertex_buffer: 4.525856
+  vertex_buffer: 2.1029344
+  vertex_buffer: -6.50669
+  vertex_buffer: 4.5258446
   vertex_buffer: 0.569944
   vertex_buffer: 0.767035
-  vertex_buffer: 3.061017
-  vertex_buffer: -3.6268826
-  vertex_buffer: 4.165062
+  vertex_buffer: 3.0610201
+  vertex_buffer: -3.6268806
+  vertex_buffer: 4.165058
   vertex_buffer: 0.593203
   vertex_buffer: 0.685676
-  vertex_buffer: 3.1612403
+  vertex_buffer: 3.1612434
   vertex_buffer: -3.5417175
-  vertex_buffer: 4.122753
+  vertex_buffer: 4.1227455
   vertex_buffer: 0.599262
   vertex_buffer: 0.681069
-  vertex_buffer: 3.2587636
-  vertex_buffer: -3.4861755
-  vertex_buffer: 4.125637
+  vertex_buffer: 3.2587674
+  vertex_buffer: -3.4861774
+  vertex_buffer: 4.1256294
   vertex_buffer: 0.6076
   vertex_buffer: 0.677703
-  vertex_buffer: 3.8822236
+  vertex_buffer: 3.882228
   vertex_buffer: -3.1814423
-  vertex_buffer: 4.05299
+  vertex_buffer: 4.0529823
   vertex_buffer: 0.631938
   vertex_buffer: 0.6635
-  vertex_buffer: 5.9277196
-  vertex_buffer: -1.7721405
+  vertex_buffer: 5.9277267
+  vertex_buffer: -1.7721386
   vertex_buffer: 3.2307892
   vertex_buffer: 0.752033
   vertex_buffer: 0.601315
-  vertex_buffer: 0.9365861
-  vertex_buffer: 1.3445549
-  vertex_buffer: 5.05389
+  vertex_buffer: 0.9365872
+  vertex_buffer: 1.3445606
+  vertex_buffer: 5.0538864
   vertex_buffer: 0.547226
   vertex_buffer: 0.420395
-  vertex_buffer: 1.3117576
-  vertex_buffer: 2.863121
-  vertex_buffer: 3.6299706
+  vertex_buffer: 1.3117594
+  vertex_buffer: 2.8631287
+  vertex_buffer: 3.6299667
   vertex_buffer: 0.563544
   vertex_buffer: 0.359828
-  vertex_buffer: 1.710571
-  vertex_buffer: 2.8931694
-  vertex_buffer: 3.3603477
+  vertex_buffer: 1.7105736
+  vertex_buffer: 2.893179
+  vertex_buffer: 3.360344
   vertex_buffer: 0.583841
   vertex_buffer: 0.368714
-  vertex_buffer: 2.9408464
-  vertex_buffer: -3.642933
-  vertex_buffer: 4.1286964
+  vertex_buffer: 2.9408498
+  vertex_buffer: -3.642931
+  vertex_buffer: 4.1286926
   vertex_buffer: 0.586614
   vertex_buffer: 0.692366
-  vertex_buffer: 6.0170794
-  vertex_buffer: -3.4064217
-  vertex_buffer: 2.3072815
+  vertex_buffer: 6.0170856
+  vertex_buffer: -3.4064198
+  vertex_buffer: 2.3072739
   vertex_buffer: 0.771915
   vertex_buffer: 0.683578
-  vertex_buffer: 0.7762793
-  vertex_buffer: 2.5255527
-  vertex_buffer: 4.588814
+  vertex_buffer: 0.7762805
+  vertex_buffer: 2.5255604
+  vertex_buffer: 4.58881
   vertex_buffer: 0.531597
   vertex_buffer: 0.352483
-  vertex_buffer: 2.2923872
-  vertex_buffer: -7.176118
-  vertex_buffer: 4.395317
+  vertex_buffer: 2.2923894
+  vertex_buffer: -7.1761208
+  vertex_buffer: 4.3953133
   vertex_buffer: 0.588371
   vertex_buffer: 0.804441
-  vertex_buffer: 0.5088966
-  vertex_buffer: 0.68442154
-  vertex_buffer: 6.1560097
+  vertex_buffer: 0.5088972
+  vertex_buffer: 0.68442535
+  vertex_buffer: 6.156002
   vertex_buffer: 0.520797
   vertex_buffer: 0.442565
-  vertex_buffer: 1.4301867
-  vertex_buffer: -0.42539024
+  vertex_buffer: 1.4301882
+  vertex_buffer: -0.42538643
   vertex_buffer: 5.853489
   vertex_buffer: 0.567985
   vertex_buffer: 0.493479
-  vertex_buffer: 1.1599193
-  vertex_buffer: -7.917469
-  vertex_buffer: 4.9433784
+  vertex_buffer: 1.1599201
+  vertex_buffer: -7.917472
+  vertex_buffer: 4.9433746
   vertex_buffer: 0.543283
   vertex_buffer: 0.819255
-  vertex_buffer: 3.8333597
-  vertex_buffer: -5.020096
-  vertex_buffer: 3.4186134
+  vertex_buffer: 3.833364
+  vertex_buffer: -5.0200977
+  vertex_buffer: 3.418602
   vertex_buffer: 0.655317
   vertex_buffer: 0.745515
-  vertex_buffer: 2.9397933
-  vertex_buffer: -1.5405922
-  vertex_buffer: 4.737316
+  vertex_buffer: 2.9397964
+  vertex_buffer: -1.5405884
+  vertex_buffer: 4.7373123
   vertex_buffer: 0.621009
   vertex_buffer: 0.574018
-  vertex_buffer: 3.1156285
-  vertex_buffer: -6.183937
-  vertex_buffer: 3.8408585
+  vertex_buffer: 3.1156316
+  vertex_buffer: -6.183938
+  vertex_buffer: 3.840847
   vertex_buffer: 0.62556
   vertex_buffer: 0.780312
-  vertex_buffer: 4.4402833
-  vertex_buffer: -1.4682465
-  vertex_buffer: 4.4270935
+  vertex_buffer: 4.440288
+  vertex_buffer: -1.4682484
+  vertex_buffer: 4.427086
   vertex_buffer: 0.680198
   vertex_buffer: 0.570719
-  vertex_buffer: 3.6551414
-  vertex_buffer: -2.1533604
-  vertex_buffer: 4.4729767
+  vertex_buffer: 3.6551456
+  vertex_buffer: -2.1533585
+  vertex_buffer: 4.472973
   vertex_buffer: 0.642764
   vertex_buffer: 0.604338
-  vertex_buffer: 5.071462
+  vertex_buffer: 5.0714684
   vertex_buffer: -2.356783
-  vertex_buffer: 3.8250847
+  vertex_buffer: 3.8250809
   vertex_buffer: 0.704663
   vertex_buffer: 0.62153
-  vertex_buffer: 1.2959383
-  vertex_buffer: -8.866041
-  vertex_buffer: 5.036125
+  vertex_buffer: 1.2959392
+  vertex_buffer: -8.866048
+  vertex_buffer: 5.0361176
   vertex_buffer: 0.552012
   vertex_buffer: 0.862592
-  vertex_buffer: 1.8981676
-  vertex_buffer: -0.56002426
-  vertex_buffer: 5.423908
+  vertex_buffer: 1.8981696
+  vertex_buffer: -0.56001854
+  vertex_buffer: 5.4239044
   vertex_buffer: 0.589072
   vertex_buffer: 0.508637
-  vertex_buffer: 4.186279
-  vertex_buffer: -5.741809
-  vertex_buffer: 3.0424232
+  vertex_buffer: 4.1862836
+  vertex_buffer: -5.741811
+  vertex_buffer: 3.0424118
   vertex_buffer: 0.685945
   vertex_buffer: 0.775357
-  vertex_buffer: 3.320751
-  vertex_buffer: -6.9206285
-  vertex_buffer: 3.599121
+  vertex_buffer: 3.3207548
+  vertex_buffer: -6.9206305
+  vertex_buffer: 3.5991096
   vertex_buffer: 0.645735
   vertex_buffer: 0.81264
-  vertex_buffer: 4.447845
-  vertex_buffer: -3.8932133
-  vertex_buffer: 3.412632
+  vertex_buffer: 4.44785
+  vertex_buffer: -3.8932114
+  vertex_buffer: 3.4126244
   vertex_buffer: 0.675343
   vertex_buffer: 0.703978
-  vertex_buffer: 6.592035
-  vertex_buffer: -2.4481583
-  vertex_buffer: 1.7984543
+  vertex_buffer: 6.5920415
+  vertex_buffer: -2.4481525
+  vertex_buffer: 1.7984428
   vertex_buffer: 0.810858
   vertex_buffer: 0.646305
-  vertex_buffer: 5.1553717
-  vertex_buffer: -4.20376
-  vertex_buffer: 2.9434357
+  vertex_buffer: 5.1553783
+  vertex_buffer: -4.2037582
+  vertex_buffer: 2.943428
   vertex_buffer: 0.720122
   vertex_buffer: 0.714667
-  vertex_buffer: 6.7463055
-  vertex_buffer: -2.9502907
-  vertex_buffer: 0.47159576
+  vertex_buffer: 6.7463136
+  vertex_buffer: -2.9502869
+  vertex_buffer: 0.47158813
   vertex_buffer: 0.866152
   vertex_buffer: 0.682705
-  vertex_buffer: 4.296149
+  vertex_buffer: 4.296153
   vertex_buffer: -2.7682056
-  vertex_buffer: 4.064972
+  vertex_buffer: 4.064968
   vertex_buffer: 0.663187
   vertex_buffer: 0.644597
-  vertex_buffer: 1.3760409
-  vertex_buffer: 0.28308105
-  vertex_buffer: 5.2958755
+  vertex_buffer: 1.3760425
+  vertex_buffer: 0.28308678
+  vertex_buffer: 5.2958717
   vertex_buffer: 0.570082
   vertex_buffer: 0.466326
-  vertex_buffer: 1.3695476
-  vertex_buffer: -2.0489216
-  vertex_buffer: 7.035427
+  vertex_buffer: 1.369549
+  vertex_buffer: -2.0489197
+  vertex_buffer: 7.0354233
   vertex_buffer: 0.544562
   vertex_buffer: 0.548376
-  vertex_buffer: 1.8866544
-  vertex_buffer: -1.8764362
+  vertex_buffer: 1.8866564
+  vertex_buffer: -1.8764381
   vertex_buffer: 6.3556557
   vertex_buffer: 0.562759
   vertex_buffer: 0.558785
-  vertex_buffer: 1.0421567
-  vertex_buffer: -1.8033142
+  vertex_buffer: 1.0421576
+  vertex_buffer: -1.8033104
   vertex_buffer: 7.4998665
   vertex_buffer: 0.531987
   vertex_buffer: 0.53014
-  vertex_buffer: 1.7499065
-  vertex_buffer: 3.2145195
+  vertex_buffer: 1.749909
+  vertex_buffer: 3.2145271
   vertex_buffer: 3.722023
   vertex_buffer: 0.585271
   vertex_buffer: 0.335177
-  vertex_buffer: 2.6983814
-  vertex_buffer: 3.4560604
+  vertex_buffer: 2.6983845
+  vertex_buffer: 3.456068
   vertex_buffer: 3.8515701
   vertex_buffer: 0.622953
   vertex_buffer: 0.322779
-  vertex_buffer: 3.5685785
-  vertex_buffer: 3.4978447
-  vertex_buffer: 3.8557777
+  vertex_buffer: 3.568583
+  vertex_buffer: 3.4978542
+  vertex_buffer: 3.855774
   vertex_buffer: 0.655896
   vertex_buffer: 0.320163
-  vertex_buffer: 4.353757
-  vertex_buffer: 3.4455433
-  vertex_buffer: 3.6230545
+  vertex_buffer: 4.3537617
+  vertex_buffer: 3.445551
+  vertex_buffer: 3.6230507
   vertex_buffer: 0.687132
   vertex_buffer: 0.322346
-  vertex_buffer: 4.9293575
-  vertex_buffer: 3.3051414
-  vertex_buffer: 3.2275352
+  vertex_buffer: 4.9293637
+  vertex_buffer: 3.305151
+  vertex_buffer: 3.2275314
   vertex_buffer: 0.716482
   vertex_buffer: 0.333201
-  vertex_buffer: 5.3603797
-  vertex_buffer: 2.7067642
+  vertex_buffer: 5.360387
+  vertex_buffer: 2.7067719
   vertex_buffer: 2.3262787
   vertex_buffer: 0.758757
   vertex_buffer: 0.382787
-  vertex_buffer: 7.3424206
-  vertex_buffer: 1.8563805
-  vertex_buffer: -0.3018341
+  vertex_buffer: 7.3424306
+  vertex_buffer: 1.85639
+  vertex_buffer: -0.30184937
   vertex_buffer: 0.897013
   vertex_buffer: 0.468769
-  vertex_buffer: 4.8157883
-  vertex_buffer: 1.8869534
-  vertex_buffer: 2.9183197
+  vertex_buffer: 4.8157945
+  vertex_buffer: 1.886961
+  vertex_buffer: 2.918312
   vertex_buffer: 0.732392
   vertex_buffer: 0.424547
-  vertex_buffer: 4.117226
-  vertex_buffer: 1.6413307
-  vertex_buffer: 3.3260117
+  vertex_buffer: 4.1172314
+  vertex_buffer: 1.6413403
+  vertex_buffer: 3.3260078
   vertex_buffer: 0.702114
   vertex_buffer: 0.433163
-  vertex_buffer: 3.2758975
-  vertex_buffer: 1.5367126
+  vertex_buffer: 3.2759013
+  vertex_buffer: 1.5367184
   vertex_buffer: 3.6020355
   vertex_buffer: 0.666525
   vertex_buffer: 0.433866
-  vertex_buffer: 2.4952793
-  vertex_buffer: 1.6289577
-  vertex_buffer: 3.6608086
+  vertex_buffer: 2.4952826
+  vertex_buffer: 1.6289654
+  vertex_buffer: 3.660801
   vertex_buffer: 0.633505
   vertex_buffer: 0.426088
-  vertex_buffer: 1.9153266
-  vertex_buffer: 1.7806721
-  vertex_buffer: 3.7212715
+  vertex_buffer: 1.9153291
+  vertex_buffer: 1.7806797
+  vertex_buffer: 3.721264
   vertex_buffer: 0.603876
   vertex_buffer: 0.416587
-  vertex_buffer: 1.5041876
-  vertex_buffer: 1.947649
-  vertex_buffer: 3.7355576
+  vertex_buffer: 1.5041896
+  vertex_buffer: 1.9476566
+  vertex_buffer: 3.73555
   vertex_buffer: 0.579658
   vertex_buffer: 0.409945
-  vertex_buffer: 7.62904
-  vertex_buffer: 2.3723297
+  vertex_buffer: 7.6290493
+  vertex_buffer: 2.3723392
   vertex_buffer: -2.5805435
   vertex_buffer: 0.99244
   vertex_buffer: 0.480777
-  vertex_buffer: 1.9259956
-  vertex_buffer: -1.8737621
+  vertex_buffer: 1.9259976
+  vertex_buffer: -1.8737583
   vertex_buffer: 6.0489655
   vertex_buffer: 0.567192
   vertex_buffer: 0.56942
-  vertex_buffer: 0.9361145
-  vertex_buffer: -0.23275948
+  vertex_buffer: 0.9361154
+  vertex_buffer: -0.23275757
   vertex_buffer: 6.340225
   vertex_buffer: 0.541366
   vertex_buffer: 0.478899
-  vertex_buffer: 0.8889647
-  vertex_buffer: -2.3080616
-  vertex_buffer: 7.563141
+  vertex_buffer: 0.8889656
+  vertex_buffer: -2.3080597
+  vertex_buffer: 7.5631332
   vertex_buffer: 0.526564
   vertex_buffer: 0.546118
-  vertex_buffer: 0.57550555
+  vertex_buffer: 0.575506
   vertex_buffer: -2.5688763
   vertex_buffer: 7.3445854
   vertex_buffer: 0.523913
   vertex_buffer: 0.56383
-  vertex_buffer: 0.9179589
-  vertex_buffer: -2.3308792
-  vertex_buffer: 7.255516
+  vertex_buffer: 0.9179598
+  vertex_buffer: -2.3308773
+  vertex_buffer: 7.255512
   vertex_buffer: 0.531529
   vertex_buffer: 0.555057
-  vertex_buffer: 1.8029492
-  vertex_buffer: -1.9879112
-  vertex_buffer: 5.845417
+  vertex_buffer: 1.8029512
+  vertex_buffer: -1.9879055
+  vertex_buffer: 5.845413
   vertex_buffer: 0.566036
   vertex_buffer: 0.582329
-  vertex_buffer: 0.44685143
+  vertex_buffer: 0.44685158
   vertex_buffer: -2.682705
-  vertex_buffer: 7.525955
+  vertex_buffer: 7.5259476
   vertex_buffer: 0.516311
   vertex_buffer: 0.563054
-  vertex_buffer: 0.40712923
-  vertex_buffer: -2.5848274
-  vertex_buffer: 6.774906
+  vertex_buffer: 0.40712938
+  vertex_buffer: -2.5848255
+  vertex_buffer: 6.7748985
   vertex_buffer: 0.517472
   vertex_buffer: 0.577877
-  vertex_buffer: 1.5503142
-  vertex_buffer: 2.5380096
+  vertex_buffer: 1.5503162
+  vertex_buffer: 2.5380173
   vertex_buffer: 3.3313866
   vertex_buffer: 0.573595
   vertex_buffer: 0.389807
-  vertex_buffer: 1.2257941
-  vertex_buffer: 2.2664852
-  vertex_buffer: 3.7727013
+  vertex_buffer: 1.2257959
+  vertex_buffer: 2.266489
+  vertex_buffer: 3.7726974
   vertex_buffer: 0.560698
   vertex_buffer: 0.395332
-  vertex_buffer: 1.0358994
-  vertex_buffer: 1.9741764
-  vertex_buffer: 4.3474655
+  vertex_buffer: 1.0359008
+  vertex_buffer: 1.974184
+  vertex_buffer: 4.3474617
   vertex_buffer: 0.549756
   vertex_buffer: 0.399751
-  vertex_buffer: 4.367508
-  vertex_buffer: 2.8476372
-  vertex_buffer: 2.9235992
+  vertex_buffer: 4.3675127
+  vertex_buffer: 2.8476448
+  vertex_buffer: 2.9235954
   vertex_buffer: 0.710288
   vertex_buffer: 0.368253
-  vertex_buffer: 4.9116855
-  vertex_buffer: 3.011652
+  vertex_buffer: 4.911691
+  vertex_buffer: 3.0116596
   vertex_buffer: 2.8815002
   vertex_buffer: 0.72333
   vertex_buffer: 0.363373
@@ -5041,20 +5041,20 @@ mesh {
 pose_transform_matrix {
   rows: 4
   cols: 4
-  packed_data: 0.99995184
-  packed_data: 0.006250852
-  packed_data: -0.0075720036
+  packed_data: 0.9999519
+  packed_data: 0.006250915
+  packed_data: -0.007572061
   packed_data: 0
-  packed_data: -0.0060578818
-  packed_data: 0.9996628
-  packed_data: 0.025243768
+  packed_data: -0.006057945
+  packed_data: 0.9996629
+  packed_data: 0.025243366
   packed_data: 0
-  packed_data: 0.0077272463
-  packed_data: -0.025196675
-  packed_data: 0.9996526
+  packed_data: 0.0077273026
+  packed_data: -0.025196271
+  packed_data: 0.9996527
   packed_data: 0
-  packed_data: -0.35120884
-  packed_data: 21.932339
-  packed_data: -64.35148
+  packed_data: -0.3512094
+  packed_data: 21.932364
+  packed_data: -64.351555
   packed_data: 1
 }

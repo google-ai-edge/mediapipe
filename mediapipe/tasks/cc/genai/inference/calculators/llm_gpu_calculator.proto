@@ -67,4 +67,7 @@ message LlmGpuCalculatorOptions {
   reserved 30;
 
   proto.SamplerParameters sampler_params = 31;
+
+  // Whether the audio model is loaded in streaming mode or not.
+  bool audio_streaming_enabled = 32;
 }

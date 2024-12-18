@@ -17,7 +17,7 @@ nav_order: 10
 [https://developers.google.com/mediapipe](https://developers.google.com/mediapipe)
 as the primary developer documentation site for MediaPipe as of April 3, 2023.*
 
-----
+--------------------------------------------------------------------------------
 
 ## Missing Python binary path
 
@@ -113,9 +113,10 @@ ERROR: Could not find a version that satisfies the requirement mediapipe
 ERROR: No matching distribution found for mediapipe
 ```
 
-after running `pip install mediapipe` usually indicates that there is no qualified MediaPipe Python for your system.
-Please note that MediaPipe Python PyPI officially supports the **64-bit**
-version of Python 3.7 to 3.10 on the following OS:
+after running `pip install mediapipe` usually indicates that there is no
+qualified MediaPipe Python for your system. Please note that MediaPipe Python
+PyPI officially supports the **64-bit** version of Python 3.7 to 3.10 on the
+following OS:
 
 -   x86_64 Linux
 -   x86_64 macOS 10.15+
@@ -270,15 +271,112 @@ calculators designed specifically for this purpose such as
 [`FlowLimiterCalculator`] as described in
 [`How to process realtime input streams`].
 
-[`CalculatorGraphConfig`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator.proto
-[`CalculatorGraphConfig::max_queue_size`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator.proto
-[`CalculatorGraphConfig::report_deadlock`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator.proto
-[`REGISTER_CALCULATOR`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator_registry.h
-[`registration.h`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/deps/registration.h
-[`CalculatorGraph::CloseAllPacketSources`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator_graph.h
-[`CalculatorGraph::Cancel`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator_graph.h
-[`CalculatorGraph::WaitUntilDone`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator_graph.h
-[`Timestamp::Done`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/timestamp.h
-[`CalculatorBase::Close`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator_base.h
-[`FlowLimiterCalculator`]: https://github.com/google/mediapipe/tree/master/mediapipe/calculators/core/flow_limiter_calculator.cc
+## Monitor calculator inputs and timestamp settlements
+
+Debugging MediaPipe calculators often requires a deep understanding of the data
+flow and timestamp synchronization. Incoming packets to calculators are first
+buffered in input queues per stream to be synchronized by the assigned
+`InputStreamHandler`. The `InputStreamHandler` job is to determine the input
+packet set for a settled timestamp, which puts the calculator into a “ready”
+state, followed by triggering a Calculator::Process call with the determined
+packet set as input.
+
+The `DebugInputStreamHandler` can be used to track incoming packets and
+timestamp settlements in real-time in the application's LOG(INFO) output. It can
+be assigned to specific calculators via the Calculator's input_stream_handler or
+graph globally via the `CalculatorGraphConfig`'s input_stream_handler field.
+
+During the graph execution, incoming packets generate LOG messages which reveal
+the timestamp and type of the packet, followed by the current state of all input
+queues:
+
+```
+[INFO] SomeCalculator: Adding packet (ts:2, type:int) to stream INPUT_B:0:input_b
+[INFO] SomeCalculator: INPUT_A:0:input_a num_packets: 0 min_ts: 2
+[INFO] SomeCalculator: INPUT_B:0:input_b num_packets: 1 min_ts: 2
+```
+
+In addition, it enables the monitoring of timestamp settlement events (in case
+the `DefaultInputStreamHandler` is applied). This can help to reveal an
+unexpected timestamp bound increase on input streams resulting in a
+Calculator::Process call with an incomplete input set resulting in empty packets
+on (potentially required) input streams.
+
+*Example scenario:*
+
+```
+node {
+  calculator: "SomeCalculator"
+  input_stream: "INPUT_A:a"
+  input_stream: "INPUT_B:b"
+  ...
+}
+```
+
+Given a calculator with two inputs, receiving an incoming packet with timestamp
+1 on stream A followed by an input packet with timestamp 2 on stream B. The
+timestamp bound increase to 2 on stream B with pending input packet on stream A
+at timestamp 1 triggers the Calculator::Process call with an incomplete input
+set for timestamp 1. In this case, the `DefaultInputStreamHandler` outputs:
+
+```
+[INFO] SomeCalculator: Filled input set at ts: 1 with MISSING packets in input streams: INPUT_B:0:input_b.
+```
+
+## VLOG is your friend
+
+MediaPipe uses `VLOG` in many places to log important events for debugging
+purposes, while not affecting performance if logging is not enabled.
+
+See more about `VLOG` on [abseil `VLOG`]
+
+Mind that `VLOG` can be spammy if you enable it globally e.g. (using `--v`
+flag). The solution `--vmodule` flag that allows different levels to be set for
+different source files.
+
+In cases when `--v` / `--vmodule` cannot be used (e.g. running an Android app),
+MediaPipe allows to set `VLOG` `--v` / `--vmodule` flags overrides for debugging
+purposes which are applied when `CalculatorGraph` is created.
+
+Overrides:
+
+-   `MEDIAPIPE_VLOG_V`: define and provide value you provide for `--v`
+-   `MEDIAPIPE_VLOG_VMODULE`: define and provide value you provide for
+    `--vmodule`
+
+You can set overrides by adding:
+`--copt=-DMEDIAPIPE_VLOG_VMODULE=\"*calculator*=5\"`
+
+with your desired module patterns and `VLOG` levels (see more details for
+`--vmodule` at [abseil `VLOG`]) to your build command.
+
+IMPORTANT: mind that adding the above to your build command will trigger rebuild
+of the whole binary including dependencies. So, considering `VLOG` overrides
+exist for debugging purposes only, it is faster to simply modify
+[`vlog_overrides.cc`] adding `MEDIAPIPE_VLOG_V/VMODULE` at the very top.
+
+[`CalculatorGraphConfig`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator.proto
+[`CalculatorGraphConfig::max_queue_size`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator.proto
+[`CalculatorGraphConfig::report_deadlock`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator.proto
+[`REGISTER_CALCULATOR`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator_registry.h
+[`registration.h`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/deps/registration.h
+[`CalculatorGraph::CloseAllPacketSources`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator_graph.h
+[`CalculatorGraph::Cancel`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator_graph.h
+[`CalculatorGraph::WaitUntilDone`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator_graph.h
+[`Timestamp::Done`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/timestamp.h
+[`CalculatorBase::Close`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator_base.h
+[`FlowLimiterCalculator`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/calculators/core/flow_limiter_calculator.cc
 [`How to process realtime input streams`]: faq.md#how-to-process-realtime-input-streams
+[`vlog_overrides.cc`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/vlog_overrides.cc
+[abseil `VLOG`]: https://abseil.io/docs/cpp/guides/logging#VLOG
+
+## Unsupported flags during build
+
+If you are using Clang 18 or older, you may have to disable some compiler
+optimizations in our CPU backend.
+
+To disable support for `avxvnniint8`, add the following to you `.bazelrc`:
+
+```
+build --define=xnn_enable_avxvnniint8=false
+```

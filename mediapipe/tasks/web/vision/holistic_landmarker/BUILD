@@ -80,8 +80,8 @@ mediapipe_ts_library(
 
 jasmine_node_test(
     name = "holistic_landmarker_test",
+    srcs = [":holistic_landmarker_test_lib"],
     tags = ["nomsan"],
-    deps = [":holistic_landmarker_test_lib"],
 )
 
 mediapipe_ts_library(

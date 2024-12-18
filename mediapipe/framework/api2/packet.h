@@ -11,16 +11,20 @@
 #define MEDIAPIPE_FRAMEWORK_API2_PACKET_H_
 
 #include <memory>
+#include <string>
 #include <type_traits>
 #include <utility>
 
 #include "absl/base/attributes.h"
 #include "absl/base/optimization.h"
 #include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "absl/meta/type_traits.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/str_cat.h"
 #include "mediapipe/framework/api2/tuple.h"
+#include "mediapipe/framework/legacy_calculator_support.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/status_macros.h"
@@ -263,7 +267,21 @@ class Packet : public Packet<internal::Generic> {
   Packet<T> At(Timestamp timestamp) &&;
 
   const T& Get() const {
-    ABSL_CHECK(payload_);
+    if (!payload_) {
+      // TODO - Remove this check once stack trace symbolization
+      // works on Android non-apk execution.
+      const CalculatorContext* calculator_context =
+          LegacyCalculatorSupport::Scoped<CalculatorContext>::current();
+      if (calculator_context) {
+        ABSL_LOG(FATAL) << absl::StrCat("Get() called for type ",
+                                        MediaPipeTypeStringOrDemangled<T>(),
+                                        " on empty packet during execution of ",
+                                        calculator_context->NodeName(), ".");
+      }
+      ABSL_LOG(FATAL) << absl::StrCat("Get() called for type ",
+                                      MediaPipeTypeStringOrDemangled<T>(),
+                                      " on empty packet.");
+    }
     const packet_internal::Holder<T>* typed_payload = payload_->As<T>();
     ABSL_CHECK(typed_payload);
     return typed_payload->data();

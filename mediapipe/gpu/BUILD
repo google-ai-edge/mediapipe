@@ -126,6 +126,13 @@ cc_library(
 )
 
 cc_library(
+    name = "egl_base",
+    textual_hdrs = ["egl_base.h"],
+    visibility = ["//visibility:public"],
+    deps = [":gl_base"],
+)
+
+cc_library(
     name = "gl_base_hdr",
     hdrs = ["gl_base.h"],
     features = ["-layering_check"],
@@ -219,6 +226,7 @@ cc_library(
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:statusor",
         "//mediapipe/framework/port:threadpool",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/base:dynamic_annotations",
         "@com_google_absl//absl/debugging:leak_check",
         "@com_google_absl//absl/log:absl_check",
@@ -226,7 +234,9 @@ cc_library(
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_absl//absl/synchronization",
     ] + select({
         "//conditions:default": [],
@@ -557,11 +567,26 @@ cc_library(
         "//mediapipe/framework/formats:ahwb_view",
         "//mediapipe/framework/formats:hardware_buffer",
         "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:shared_fd",
+        "//mediapipe/framework/formats:unique_fd",
         "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/util:sync_wait",
         "//third_party/GL:EGL_headers",
+        "@com_google_absl//absl/base",
         "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings:str_format",
-    ],
+        "@com_google_absl//absl/time",
+    ] + select({
+        "//conditions:default": [],
+        "//mediapipe:android": [
+            ":egl_sync",
+            ":egl_sync_point",
+        ],
+    }),
 )
 
 mediapipe_proto_library(
@@ -839,6 +864,54 @@ cc_library(
             ":pixel_buffer_pool_util",
         ],
     }),
+)
+
+cc_library(
+    name = "egl_errors",
+    srcs = ["egl_errors.cc"],
+    hdrs = ["egl_errors.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":egl_base",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library(
+    name = "egl_sync",
+    srcs = ["egl_sync.cc"],
+    hdrs = ["egl_sync.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":egl_base",
+        ":egl_errors",
+        "//mediapipe/framework/deps:no_destructor",
+        "//mediapipe/framework/formats:shared_fd",
+        "//mediapipe/framework/formats:unique_fd",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/cleanup",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library(
+    name = "egl_sync_point",
+    srcs = ["egl_sync_point.cc"],
+    hdrs = ["egl_sync_point.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":egl_base",
+        ":egl_sync",
+        ":gl_context",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+    ],
 )
 
 cc_library(
@@ -1314,13 +1387,24 @@ mediapipe_cc_test(
     ],
     requires_full_emulation = True,
     deps = [
+        ":egl_sync",
         ":gl_texture_buffer",
         ":gl_texture_util",
+        ":gl_texture_view",
         ":gpu_buffer_format",
         ":gpu_buffer_storage_ahwb",
         ":gpu_test_base",
+        "//mediapipe/framework:port",
+        "//mediapipe/framework/formats:ahwb_view",
+        "//mediapipe/framework/formats:hardware_buffer",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:shared_fd",
+        "//mediapipe/framework/formats:unique_fd",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/tool:test_util",
+        "//mediapipe/util:sync_wait",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/time",
     ],
 )
 

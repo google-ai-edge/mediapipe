@@ -17,7 +17,6 @@ import dataclasses
 import enum
 import functools
 
-from mediapipe.model_maker.python.core.utils import file_util
 from mediapipe.model_maker.python.text.core import bert_model_spec
 from mediapipe.model_maker.python.text.text_classifier import hyperparameters as hp
 from mediapipe.model_maker.python.text.text_classifier import model_options as mo

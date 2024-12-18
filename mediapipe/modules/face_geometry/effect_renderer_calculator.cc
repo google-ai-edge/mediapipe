@@ -20,6 +20,7 @@
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/string_view.h"
 #include "absl/types/optional.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_frame.h"
@@ -256,9 +257,10 @@ class EffectRendererCalculator : public CalculatorBase {
     MP_ASSIGN_OR_RETURN(std::unique_ptr<mediapipe::Resource> mesh_3d_blob,
                         ReadContentBlobFromFile(cc, mesh_3d_path),
                         _ << "Failed to read mesh 3D blob from file!");
+    absl::string_view mesh_str = mesh_3d_blob->ToStringView();
 
     face_geometry::Mesh3d mesh_3d;
-    RET_CHECK(mesh_3d.ParseFromString(mesh_3d_blob->ToStringView()))
+    RET_CHECK(mesh_3d.ParseFromArray(mesh_str.data(), mesh_str.size()))
         << "Failed to parse a mesh 3D proto from a binary blob!";
 
     return mesh_3d;

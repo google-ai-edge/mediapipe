@@ -75,16 +75,17 @@ cc_library(
         "//mediapipe/framework:graph_service",
         "//mediapipe/framework/deps:no_destructor",
         "//mediapipe/gpu:attachments",
+        "//third_party/dawn:webgpu_headers",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
     ] + select({
-        "//mediapipe:emscripten": [],
+        "//mediapipe:emscripten": [
+        ],
         "//conditions:default": [
             ":webgpu_device_registration",
-            "//third_party/dawn:dawncpp_headers",
         ],
     }),
 )
@@ -127,6 +128,7 @@ cc_library(
     deps = [
         "//mediapipe/framework/port:status",
         "//mediapipe/web:jspi_check",
+        "//third_party/dawn:webgpu_headers",
         "@com_google_absl//absl/status:statusor",
     ],
 )

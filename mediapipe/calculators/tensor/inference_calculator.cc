@@ -19,6 +19,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/absl_check.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
@@ -118,8 +119,16 @@ absl::StatusOr<Packet<TfLiteModelPtr>> InferenceCalculator::GetModelAsPacket(
     CalculatorContext* cc) {
   const auto& options = cc->Options<mediapipe::InferenceCalculatorOptions>();
   if (!options.model_path().empty()) {
-    return TfLiteModelLoader::LoadFromPath(
-        cc->GetResources(), options.model_path(), options.try_mmap_model());
+    MP_ASSIGN_OR_RETURN(
+        auto model, TfLiteModelLoader::LoadFromPath(cc->GetResources(),
+                                                    options.model_path(),
+                                                    options.try_mmap_model()));
+    ABSL_CHECK(!model.IsEmpty());
+    VLOG(1) << absl::StrFormat(
+        "GetModelAsPacket successfully loaded model "
+        "(path: %s, size: %ld bytes)",
+        options.model_path(), model.Get()->allocation()->bytes());
+    return model;
   }
   if (!kSideInModel(cc).IsEmpty()) return kSideInModel(cc);
   return absl::Status(absl::StatusCode::kNotFound,

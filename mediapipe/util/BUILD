@@ -98,6 +98,13 @@ cc_library(
 )
 
 cc_library(
+    name = "fd_test_util",
+    testonly = True,
+    hdrs = ["fd_test_util.h"],
+    visibility = ["//mediapipe:__subpackages__"],
+)
+
+cc_library(
     name = "header_util",
     srcs = ["header_util.cc"],
     hdrs = ["header_util.h"],
@@ -201,11 +208,12 @@ cc_library(
     hdrs = ["sync_wait.h"],
     visibility = ["//mediapipe:__subpackages__"],
     deps = [
+        "//mediapipe/framework/formats:shared_fd",
+        "//mediapipe/framework/formats:unique_fd",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
-        "@com_google_absl//absl/cleanup",
-        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/time",
     ],
@@ -217,6 +225,8 @@ cc_test(
     deps = [
         ":sync_wait",
         "//mediapipe/framework:port",
+        "//mediapipe/framework/formats:shared_fd",
+        "//mediapipe/framework/formats:unique_fd",
         "//mediapipe/framework/port:benchmark",
         "//mediapipe/framework/port:gtest_main",
         "@com_google_absl//absl/log:absl_check",
@@ -271,7 +281,6 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:singleton",
         "//mediapipe/framework/port:status",
-        "//mediapipe/framework/port:statusor",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",

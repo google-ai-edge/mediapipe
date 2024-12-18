@@ -1,2 +1,2 @@
 Content moved to
-[MediaPipe Objectron](https://google.github.io/mediapipe/solutions/objectron)
+[MediaPipe Objectron](https://google-ai-edge.github.io/mediapipe/solutions/objectron)

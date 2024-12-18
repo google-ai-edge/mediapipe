@@ -85,8 +85,9 @@ class PackMediaSequenceCalculatorTest : public ::testing::Test {
                        const bool replace_instead_of_append,
                        const bool output_as_zero_timestamp = false,
                        const bool add_empty_labels = false,
-                       const std::vector<std::string>& input_side_packets = {
-                           "SEQUENCE_EXAMPLE:input_sequence"}) {
+                       const std::vector<std::string>& input_side_packets =
+                           {"SEQUENCE_EXAMPLE:input_sequence"},
+                       const int32_t max_sequence_bytes = -1) {
     CalculatorGraphConfig::Node config;
     config.set_calculator("PackMediaSequenceCalculator");
     for (const std::string& side_packet : input_side_packets) {
@@ -103,6 +104,7 @@ class PackMediaSequenceCalculatorTest : public ::testing::Test {
     options->set_replace_data_instead_of_append(replace_instead_of_append);
     options->set_output_as_zero_timestamp(output_as_zero_timestamp);
     options->set_add_empty_labels(add_empty_labels);
+    options->set_max_sequence_bytes(max_sequence_bytes);
     runner_ = ::absl::make_unique<CalculatorRunner>(config);
   }
 
@@ -1985,6 +1987,38 @@ TEST_F(PackMediaSequenceCalculatorTest, TestTooLargeInputFailsSoftly) {
   runner_->MutableSidePackets()->Tag(kSequenceExampleTag) =
       Adopt(input_sequence.release());
   ASSERT_FALSE(runner_->Run().ok());
+}
+
+TEST_F(PackMediaSequenceCalculatorTest, SkipLargeSequence) {
+  SetUpCalculator({"IMAGE:images"}, {}, false, true, false, false,
+                  {"SEQUENCE_EXAMPLE:input_sequence"},
+                  /*max_sequence_bytes=*/10);
+  auto input_sequence = ::absl::make_unique<tf::SequenceExample>();
+  std::string test_video_id = "test_video_id";
+  mpms::SetClipMediaId(test_video_id, input_sequence.get());
+  cv::Mat image(2, 3, CV_8UC3, cv::Scalar(0, 0, 255));
+  std::vector<uchar> bytes;
+  ASSERT_TRUE(
+      cv::imencode(".jpg", image, bytes, {cv::IMWRITE_HDR_COMPRESSION, 1}));
+  OpenCvImageEncoderCalculatorResults encoded_image;
+  encoded_image.set_encoded_image(bytes.data(), bytes.size());
+  encoded_image.set_width(2);
+  encoded_image.set_height(1);
+
+  int num_images = 2;
+  for (int i = 0; i < num_images; ++i) {
+    auto image_ptr =
+        ::absl::make_unique<OpenCvImageEncoderCalculatorResults>(encoded_image);
+    runner_->MutableInputs()->Tag(kImageTag).packets.push_back(
+        Adopt(image_ptr.release()).At(Timestamp(i)));
+  }
+
+  runner_->MutableSidePackets()->Tag(kSequenceExampleTag) =
+      Adopt(input_sequence.release());
+
+  absl::Status status = runner_->Run();
+  EXPECT_THAT(status.ToString(),
+              ::testing::HasSubstr("bytes would be more than 10 bytes"));
 }
 
 }  // namespace

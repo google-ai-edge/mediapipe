@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <cstring>
 #include <limits>
 #include <memory>
@@ -349,13 +350,6 @@ absl::Status Llm::AddInputTokens(
                      transformer_input()->tensor_id(owned_subgraph_.get()),
                      transformer_input()->dims.size(),
                      transformer_input()->dims.data()));
-    logits_output()->Resize(Tensor::DimsType{
-        batch_input_ids.size(), input_seq_len, llm_params_.voc_size_V});
-    RET_CHECK_EQ(
-        xnn_status_success,
-        xnn_reshape_external_value(
-            runtime_.get(), logits_output()->tensor_id(owned_subgraph_.get()),
-            logits_output()->dims.size(), logits_output()->dims.data()));
     for (auto& kv_cache : kv_cache()) {
       auto key = kv_cache.k_cache;
       auto value = kv_cache.v_cache;
@@ -373,6 +367,14 @@ absl::Status Llm::AddInputTokens(
                        value->dims.size(), value->dims.data()));
     }
     RET_CHECK_EQ(xnn_status_success, xnn_reshape_runtime(runtime_.get()));
+    size_t num_output_dims = 0;
+    std::vector<size_t> output_dims(3);
+    RET_CHECK_EQ(
+        xnn_status_success,
+        xnn_get_external_value_shape(
+            runtime_.get(), logits_output()->tensor_id(owned_subgraph_.get()),
+            &num_output_dims, output_dims.data()));
+    logits_output()->Resize(output_dims);
   }
 
   for (auto& kv_cache : kv_cache()) {
@@ -662,9 +664,16 @@ absl::StatusOr<std::shared_ptr<Tensor>> LlmBuilder::PostProcess(
                       ApplyNorm(transformer_out, weights.final_norm_weight,
                                 llm_params_.final_norm));
   RET_CHECK(weights.softmax_linear);
+
+  int64_t slice_size = llm_params_.draft_size_G + 1;
+  // The KV caches have been filled, we only need to compute the tokens which
+  // will be used for computation or output.
+  MP_ASSIGN_OR_RETURN(auto slice,
+                      Slice(transformer_out, /*axis=*/1, /*offset=*/-slice_size,
+                            /*length=*/slice_size));
   MP_ASSIGN_OR_RETURN(
       auto logits_output,
-      FullConn(transformer_out, weights.softmax_linear, weights.softmax_bias));
+      FullConn(slice, weights.softmax_linear, weights.softmax_bias));
   return logits_output;
 }
 

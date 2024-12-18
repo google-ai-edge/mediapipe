@@ -14,17 +14,15 @@
 
 #include "mediapipe/framework/scheduler_queue.h"
 
-#include <memory>
+#include <cstdint>
 #include <queue>
-#include <utility>
 
 #include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/calculator_node.h"
 #include "mediapipe/framework/executor.h"
-#include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/logging.h"
-#include "mediapipe/framework/port/status.h"
 
 #ifdef __APPLE__
 #define AUTORELEASEPOOL @autoreleasepool
@@ -97,7 +95,7 @@ void SchedulerQueue::Reset() {
 void SchedulerQueue::SetExecutor(Executor* executor) { executor_ = executor; }
 
 bool SchedulerQueue::IsIdle() {
-  VLOG(3) << "Scheduler queue empty: " << queue_.empty()
+  VLOG(3) << "Scheduler queue (" << queue_name_ << ") empty: " << queue_.empty()
           << ", # of pending tasks: " << num_pending_tasks_;
   return queue_.empty() && num_pending_tasks_ == 0;
 }
@@ -140,7 +138,8 @@ void SchedulerQueue::AddItemToQueue(Item&& item) {
     was_idle = IsIdle();
     queue_.push(item);
     ++num_tasks_to_add_;
-    VLOG(4) << node->DebugName() << " was added to the scheduler queue.";
+    VLOG(4) << node->DebugName() << " was added to the scheduler queue ("
+            << queue_name_ << ")";
 
     // Now grab the tasks to execute while still holding the lock. This will
     // gather any waiting tasks, in addition to the one we just added.
@@ -235,13 +234,15 @@ void SchedulerQueue::RunNextTask() {
 
 void SchedulerQueue::RunCalculatorNode(CalculatorNode* node,
                                        CalculatorContext* cc) {
-  VLOG(3) << "Running " << node->DebugName();
+  VLOG(3) << "Running " << node->DebugName() << " on queue (" << queue_name_
+          << ")";
 
   // If we are in the process of stopping the graph (due to tool::StatusStop()
   // from a non-source node or due to CalculatorGraph::CloseAllPacketSources),
   // we should not run any more sources.  Close the node if it is a source.
   if (shared_->stopping && node->IsSource()) {
-    VLOG(4) << "Closing " << node->DebugName() << " due to StatusStop().";
+    VLOG(4) << "Closing " << node->DebugName()
+            << " due to StatusStop() on queue (" << queue_name_ << ").";
     int64_t start_time = shared_->timer.StartNode();
     // It's OK to not reset/release the prepared CalculatorContext since a
     // source node always reuses the same CalculatorContext and Close() doesn't
@@ -252,7 +253,8 @@ void SchedulerQueue::RunCalculatorNode(CalculatorNode* node,
     shared_->timer.EndNode(start_time);
     if (!result.ok()) {
       VLOG(3) << node->DebugName()
-              << " had an error while closing due to StatusStop()!";
+              << " had an error while closing due to StatusStop()! on queue ("
+              << queue_name_ << ")";
       shared_->error_callback(result);
     }
   } else {
@@ -273,23 +275,27 @@ void SchedulerQueue::RunCalculatorNode(CalculatorNode* node,
         shared_->stopping = true;
       } else {
         // If we have an error in this calculator.
-        VLOG(3) << node->DebugName() << " had an error!";
+        VLOG(3) << node->DebugName() << " had an error on queue ("
+                << queue_name_ << ")!";
         shared_->error_callback(result);
       }
     }
   }
 
-  VLOG(4) << "Done running " << node->DebugName();
+  VLOG(4) << "Done running " << node->DebugName() << " on queue ("
+          << queue_name_ << ")";
   node->EndScheduling();
 }
 
 void SchedulerQueue::OpenCalculatorNode(CalculatorNode* node) {
-  VLOG(3) << "Opening " << node->DebugName();
+  VLOG(3) << "Opening " << node->DebugName() << " on queue (" << queue_name_
+          << ")";
   int64_t start_time = shared_->timer.StartNode();
   const absl::Status result = node->OpenNode();
   shared_->timer.EndNode(start_time);
   if (!result.ok()) {
-    VLOG(3) << node->DebugName() << " had an error!";
+    VLOG(3) << node->DebugName() << " had an error on queue (" << queue_name_
+            << ")!";
     shared_->error_callback(result);
     return;
   }

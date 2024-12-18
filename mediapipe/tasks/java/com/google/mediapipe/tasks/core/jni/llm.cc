@@ -16,12 +16,18 @@
 
 #include <jni.h>
 
+#include <cstdint>
 #include <cstdlib>
+#include <memory>
 #include <string>
 
 #include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
+#include "include/core/SkAlphaType.h"  // from @skia
+#include "include/core/SkBitmap.h"     // from @skia
+#include "include/core/SkImage.h"      // from @skia
+#include "include/core/SkImageInfo.h"  // from @skia
 #include "mediapipe/java/com/google/mediapipe/framework/jni/class_registry.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/jni_util.h"
 #include "mediapipe/tasks/cc/genai/inference/c/llm_inference_engine.h"
@@ -37,12 +43,22 @@ using mediapipe::android::JStringToStdString;
 using mediapipe::android::ThrowIfError;
 using mediapipe::java::GetJNIEnv;
 
+const bool kDefaultIncludeTokenCostCalculator = true;
+
 LlmModelSettings ParseModelSettings(void* bytes, int size) {
   LlmModelSettingsProto input;
   input.ParseFromArray(bytes, size);
 
   LlmModelSettings output;
   output.model_path = strdup(input.model_path().c_str());
+  output.vision_encoder_path =
+      input.vision_model_settings().has_encoder_path()
+          ? strdup(input.vision_model_settings().encoder_path().c_str())
+          : nullptr;
+  output.vision_adapter_path =
+      input.vision_model_settings().has_adapter_path()
+          ? strdup(input.vision_model_settings().adapter_path().c_str())
+          : nullptr;
   output.cache_dir = strdup(input.cache_dir().c_str());
   output.sequence_batch_size = input.sequence_batch_size();
   output.num_decode_steps_per_sync = input.num_decode_steps_per_sync();
@@ -55,6 +71,8 @@ LlmModelSettings ParseModelSettings(void* bytes, int size) {
     for (int i = 0; i < input.supported_lora_ranks_size(); ++i) {
       output.supported_lora_ranks[i] = input.supported_lora_ranks(i);
     }
+  } else {
+    output.supported_lora_ranks = nullptr;
   }
   output.llm_activation_data_type = kLlmActivationDataTypeDefault;
   output.num_draft_tokens = 0;
@@ -74,12 +92,20 @@ LlmSessionConfig ParseSessionConfig(void* bytes, int size) {
   if (input.has_lora_path()) {
     output.lora_path = strdup(input.lora_path().c_str());
   }
+  output.include_token_cost_calculator =
+      input.graph_config().has_include_token_cost_calculator()
+          ? input.graph_config().include_token_cost_calculator()
+          : kDefaultIncludeTokenCostCalculator;
+  output.enable_vision_modality = input.graph_config().enable_vision_modality();
   return output;
 }
 
 void FreeModelSettings(LlmModelSettings* model_settings) {
   delete model_settings->model_path;
+  delete model_settings->vision_adapter_path;
+  delete model_settings->vision_encoder_path;
   delete model_settings->cache_dir;
+  delete[] model_settings->supported_lora_ranks;
   model_settings->model_path = nullptr;
   model_settings->cache_dir = nullptr;
 }
@@ -207,6 +233,20 @@ JNIEXPORT void JNICALL JNI_METHOD(nativeAddQueryChunk)(JNIEnv* env, jclass thiz,
   }
 }
 
+JNIEXPORT void JNICALL JNI_METHOD(nativeAddImage)(JNIEnv* env, jclass thiz,
+                                                  jlong session_handle,
+                                                  jlong image_handle) {
+  char* error_msg = nullptr;
+  int error_code = LlmInferenceEngine_Session_AddImage(
+      reinterpret_cast<void*>(session_handle),
+      reinterpret_cast<void*>(image_handle), &error_msg);
+  if (error_code) {
+    ThrowIfError(env, absl::InternalError(
+                          absl::StrCat("Failed to add image:, %s", error_msg)));
+    free(error_msg);
+  }
+}
+
 JNIEXPORT jbyteArray JNICALL
 JNI_METHOD(nativePredictSync)(JNIEnv* env, jclass thiz, jlong session_handle) {
   LlmResponseContext response_context = LlmInferenceEngine_Session_PredictSync(
@@ -254,4 +294,35 @@ JNIEXPORT jint JNICALL JNI_METHOD(nativeSizeInTokens)(JNIEnv* env, jclass thiz,
     free(error_msg);
   }
   return size;
+}
+
+JNIEXPORT jlong JNICALL JNI_METHOD(nativeCreateSkBitmap)(
+    JNIEnv* env, jclass thiz, jobject byte_buffer, jint width, jint height,
+    jint color_type, jint alpha_type) {
+  const int64_t buffer_size = env->GetDirectBufferCapacity(byte_buffer);
+  void* buffer_data = env->GetDirectBufferAddress(byte_buffer);
+  if (buffer_data == nullptr || buffer_size < 0) {
+    ThrowIfError(env, absl::InternalError("Cannot get direct access to the "
+                                          "input buffer. It should be created "
+                                          "using allocateDirect."));
+  }
+
+  SkColorType sk_color_type = static_cast<SkColorType>(color_type);
+  SkAlphaType sk_alpha_type = static_cast<SkAlphaType>(alpha_type);
+  SkImageInfo imageInfo =
+      SkImageInfo::Make(width, height, sk_color_type, sk_alpha_type);
+
+  auto bitmap = std::make_unique<SkBitmap>();
+  bool success =
+      bitmap->installPixels(imageInfo, buffer_data, imageInfo.minRowBytes());
+  if (!success) {
+    ThrowIfError(env, absl::InternalError("Cannot initialize SkBitmap."));
+  }
+
+  return reinterpret_cast<jlong>(bitmap.release());
+}
+
+JNIEXPORT void JNICALL JNI_METHOD(nativeDeleteSkBitmap)(JNIEnv*, jclass,
+                                                        jlong bitmap_handle) {
+  delete reinterpret_cast<SkBitmap*>(bitmap_handle);
 }

@@ -763,21 +763,21 @@ feed! Congrats!
 ![edge_detection_android_gpu_gif](https://mediapipe.dev/images/mobile/edge_detection_android_gpu.gif)
 
 If you ran into any issues, please see the full code of the tutorial
-[here](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/basic).
+[here](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/basic).
 
 [`ApplicationInfo`]:https://developer.android.com/reference/android/content/pm/ApplicationInfo
-[`AndroidAssetUtil`]:https://github.com/google/mediapipe/tree/master/mediapipe/java/com/google/mediapipe/framework/AndroidAssetUtil.java
+[`AndroidAssetUtil`]:https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/java/com/google/mediapipe/framework/AndroidAssetUtil.java
 [Bazel]:https://bazel.build/
-[`CameraHelper`]:https://github.com/google/mediapipe/tree/master/mediapipe/java/com/google/mediapipe/components/CameraHelper.java
+[`CameraHelper`]:https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/java/com/google/mediapipe/components/CameraHelper.java
 [CameraX]:https://developer.android.com/training/camerax
-[`CameraXPreviewHelper`]:https://github.com/google/mediapipe/tree/master/mediapipe/java/com/google/mediapipe/components/CameraXPreviewHelper.java
+[`CameraXPreviewHelper`]:https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/java/com/google/mediapipe/components/CameraXPreviewHelper.java
 [developer options]:https://developer.android.com/studio/debug/dev-options
-[`edge_detection_mobile_gpu.pbtxt`]:https://github.com/google/mediapipe/tree/master/mediapipe/graphs/edge_detection/edge_detection_mobile_gpu.pbtxt
-[`EglManager`]:https://github.com/google/mediapipe/tree/master/mediapipe/java/com/google/mediapipe/glutil/EglManager.java
-[`ExternalTextureConverter`]:https://github.com/google/mediapipe/tree/master/mediapipe/java/com/google/mediapipe/components/ExternalTextureConverter.java
+[`edge_detection_mobile_gpu.pbtxt`]:https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/edge_detection/edge_detection_mobile_gpu.pbtxt
+[`EglManager`]:https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/java/com/google/mediapipe/glutil/EglManager.java
+[`ExternalTextureConverter`]:https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/java/com/google/mediapipe/components/ExternalTextureConverter.java
 [`FrameLayout`]:https://developer.android.com/reference/android/widget/FrameLayout
-[`FrameProcessor`]:https://github.com/google/mediapipe/tree/master/mediapipe/java/com/google/mediapipe/components/FrameProcessor.java
-[`PermissionHelper`]: https://github.com/google/mediapipe/tree/master/mediapipe/java/com/google/mediapipe/components/PermissionHelper.java
+[`FrameProcessor`]:https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/java/com/google/mediapipe/components/FrameProcessor.java
+[`PermissionHelper`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/java/com/google/mediapipe/components/PermissionHelper.java
 [`SurfaceHolder.Callback`]:https://developer.android.com/reference/android/view/SurfaceHolder.Callback.html
 [`SurfaceView`]:https://developer.android.com/reference/android/view/SurfaceView
 [`SurfaceView`]:https://developer.android.com/reference/android/view/SurfaceView

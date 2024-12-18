@@ -20,7 +20,6 @@ from __future__ import print_function
 import functools
 from typing import Any, Callable, Optional, Tuple, TypeVar
 
-# Dependency imports
 import tensorflow as tf
 
 _DatasetT = TypeVar('_DatasetT', bound='Dataset')

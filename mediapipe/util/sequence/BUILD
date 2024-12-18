@@ -25,6 +25,7 @@ cc_library(
     hdrs = ["media_sequence_util.h"],
     visibility = [
         "//home/interaction:__subpackages__",
+        "//learning/eval/canon/util/conversion/tensorflow/mediasequence:__pkg__",
         "//mediapipe:__subpackages__",
     ],
     deps = [

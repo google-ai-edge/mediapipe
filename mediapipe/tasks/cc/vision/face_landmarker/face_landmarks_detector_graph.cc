@@ -335,6 +335,7 @@ class SingleFaceLandmarksDetectorGraph : public core::ModelTaskGraph {
     auto& landmark_projection = graph.AddNode("LandmarkProjectionCalculator");
     landmarks_letterbox_removed >> landmark_projection.In(kNormLandmarksTag);
     face_rect >> landmark_projection.In(kNormRectTag);
+    image_size >> landmark_projection.In("IMAGE_DIMENSIONS");
     Stream<NormalizedLandmarkList> projected_landmarks = AllowIf(
         landmark_projection[Output<NormalizedLandmarkList>(kNormLandmarksTag)],
         presence, graph);

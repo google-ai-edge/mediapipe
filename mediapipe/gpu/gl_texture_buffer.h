@@ -18,6 +18,7 @@
 #ifndef MEDIAPIPE_GPU_GL_TEXTURE_BUFFER_H_
 #define MEDIAPIPE_GPU_GL_TEXTURE_BUFFER_H_
 
+#include <cstddef>
 #include <functional>
 #include <memory>
 
@@ -174,6 +175,13 @@ class GlTextureBuffer
   DeletionCallback deletion_callback_;
   std::shared_ptr<GlContext> producer_context_;
 };
+
+// Reads `texture_view` into `output`.
+// NOTE: It's clients responsibility to allocate `output` properly and provide
+// the right `size`.
+// NOTE: Must be invoked on a thread with GL context.
+void ReadTexture(GlContext& ctx, const GlTextureView& texture_view,
+                 GpuBufferFormat format, void* output, size_t size);
 
 using GlTextureBufferSharedPtr = std::shared_ptr<GlTextureBuffer>;
 

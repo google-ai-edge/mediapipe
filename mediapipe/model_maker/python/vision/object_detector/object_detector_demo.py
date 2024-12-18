@@ -14,8 +14,6 @@
 """Demo for making an object detector model by MediaPipe Model Maker."""
 
 import os
-# Dependency imports
-
 from absl import app
 from absl import flags
 from absl import logging

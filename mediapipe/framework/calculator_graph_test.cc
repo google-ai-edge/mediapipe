@@ -43,6 +43,7 @@
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/collection_item_id.h"
 #include "mediapipe/framework/counter_factory.h"
+#include "mediapipe/framework/deps/clock.h"
 #include "mediapipe/framework/executor.h"
 #include "mediapipe/framework/input_stream_handler.h"
 #include "mediapipe/framework/lifetime_tracker.h"
@@ -70,7 +71,6 @@
 #include "mediapipe/gpu/gpu_service.h"
 
 namespace mediapipe {
-
 namespace {
 
 constexpr char kCounter2Tag[] = "COUNTER2";
@@ -83,8 +83,9 @@ constexpr char kOutputTag[] = "OUTPUT";
 constexpr char kInputTag[] = "INPUT";
 constexpr char kSelectTag[] = "SELECT";
 
-using testing::ElementsAre;
-using testing::HasSubstr;
+using ::mediapipe::Clock;
+using ::testing::ElementsAre;
+using ::testing::HasSubstr;
 
 // Pass packets through. Note that it calls SetOffset() in Process()
 // instead of Open().
