@@ -233,7 +233,21 @@ http_archive(
     strip_prefix = "XNNPACK-9007aa93227010168e615f9c6552035040c94a15",
     url = "https://github.com/google/XNNPACK/archive/9007aa93227010168e615f9c6552035040c94a15.zip",
 )
-
+# taken from OVMS begin
+#http_archive(
+#  name = "pybind11_bazel",
+#  strip_prefix = "pybind11_bazel-b162c7c88a253e3f6b673df0c621aca27596ce6b",
+#  urls = ["https://github.com/pybind/pybind11_bazel/archive/b162c7c88a253e3f6b673df0c621aca27596ce6b.zip"],
+#)
+#http_archive(
+#  name = "pybind11",
+#  build_file = "@pybind11_bazel//:pybind11.BUILD",
+#  strip_prefix = "pybind11-2.11.1", #  Jul 17, 2023
+#  urls = ["https://github.com/pybind/pybind11/archive/v2.11.1.tar.gz"],
+#)
+#load("@pybind11_bazel//:python_configure.bzl", "python_configure")
+#python_configure(name = "local_config_python")
+# taken from OVMS end
 # 2020-07-09
 http_archive(
     name = "pybind11_bazel",
@@ -792,14 +806,31 @@ new_local_repository( # TODO @atobisze import from OVMS
     path = "/opt/intel/openvino/runtime",
 )
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+http_archive(
+    name = "aspect_bazel_lib",
+    sha256 = "7b39d9f38b82260a8151b18dd4a6219d2d7fc4a0ac313d4f5a630ae6907d205d",
+    strip_prefix = "bazel-lib-2.10.0",
+    url = "https://github.com/bazel-contrib/bazel-lib/releases/download/v2.10.0/bazel-lib-v2.10.0.tar.gz",
+)
+
+load("@aspect_bazel_lib//lib:repositories.bzl", "register_coreutils_toolchains")
+register_coreutils_toolchains()
+
 git_repository(
     name = "ovms",
     remote = "https://github.com/openvinotoolkit/model_server",
     #commit = "aa07d47407557781036e2e4f00501bfa5bf3c79b" # Windows groovy (#2762)
     #commit = "7f3b2aaefec2434eede292827cf1b3d2a90c406c" # part 1
     #commit = "027f6d05ba865d1a6913837f2f7ccf80d9d84042" # part 1
-    commit = "06cff7d195b249a710597050328663877f94c835" # part 1
+    #commit = "06cff7d195b249a710597050328663877f94c835" # part 1 working before rebase
+    #commit = "ecab246276042725f52b8da4cb76a9677632f6a7" # part 1 OVMS works, but MP examples do not build due to GENAI inclusion in non-python build
+    commit = "0bb2763d556577e943b3602f91b16e99513280f5" # part 1
 )
+
+### OpenVINO GenAI
+#load("@ovms//third_party/llm_engine:llm_engine.bzl", "llm_engine")
+#llm_engine()
 
 load("@//third_party/model_api:model_api.bzl", "workspace_model_api")
 workspace_model_api()
