@@ -313,7 +313,6 @@ rewrite_target_list = [
     "visibility_smoothing_calculator_proto",
     "visualizer_calculator_proto",
     "visualizer_proto",
-    "visuals_renderer_calculator_proto",
     "vulkan_shader_calculator_proto",
     "warp_affine_calculator_proto",
     "xenomorph_proto",
