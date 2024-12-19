@@ -759,20 +759,22 @@ export class LlmInference extends TaskRunner {
             modelAsset,
           );
     const loraModel = new LoraModel(this);
+    const syntheticTimestamp = this.getSynctheticTimestamp();
     (
       this.graphRunner as unknown as LlmGraphRunner
     ).addWasmFileReferenceToStream(
       wasmFileReference,
       LORA_MODEL_REF_INPUT_STREAM,
-      this.getSynctheticTimestamp(),
+      syntheticTimestamp,
     );
     this.graphRunner.addUintToStream(
       loraModel.loraModelId,
       LORA_MODEL_ID_TO_LOAD_INPUT_STREAM,
-      this.getSynctheticTimestamp(),
+      syntheticTimestamp,
     );
     this.finishProcessing();
     wasmFileReference.free();
+    this.setLatestOutputTimestamp(syntheticTimestamp);
     this.isProcessing = false;
     return loraModel;
   }
