@@ -94,17 +94,17 @@ http_archive(
 http_archive(
     name = "zlib",
     build_file = "@//third_party:zlib.BUILD",
-    sha256 = "b3a24de97a8fdbc835b9833169501030b8977031bcb54b3b3ac13740f846ab30",
-    strip_prefix = "zlib-1.2.13",
-    url = "http://zlib.net/fossils/zlib-1.2.13.tar.gz",
-    patches = [
-        "@//third_party:zlib.diff",
-    ],
-    patch_args = [
-        "-p1",
-    ],
+    # Removed patch for 1.2.11-13 version Does not apply in 1.3.1 - IOS specific changes for mediapipe
+    #patch_args = [
+    #    "-p1",
+    #],
+    #patches = [
+    #    "@//third_party:zlib.diff",
+    #],
+    sha256 = "9a93b2b7dfdac77ceba5a558a580e74667dd6fede4585b91eefb60f03b72df23",
+    strip_prefix = "zlib-1.3.1",
+    url = "http://zlib.net/fossils/zlib-1.3.1.tar.gz",
 )
-
 
 # gflags needed by glog
 http_archive(
@@ -279,13 +279,7 @@ http_archive(
 # TF on 2024-09-24
 _TENSORFLOW_GIT_COMMIT = "5329ec8dd396487982ef3e743f98c0195af39a6b"
 _TENSORFLOW_SHA256 = "eb1f8d740d59ea3dee91108ab1fc19d91c4e9ac2fd17d9ab86d865c3c43d81c9"
-# TF on @atobisze TODO
-# TFS 2.18.0
-#_TENSORFLOW_GIT_COMMIT = "6550e4bd80223cdb8be6c3afd1f81e86a4d433c3"
-#_TENSORFLOW_SHA256 = "403916fbcfcbd5657cd891a871debc72433d7a8c56760297a79085e1abc8f18a"
-
 # curl -L https://github.com/tensorflow/tensorflow/archive/<COMMIT>.tar.gz | shasum -a 256
-
 http_archive(
     name = "org_tensorflow",
     urls = [
@@ -798,9 +792,8 @@ http_archive(
     urls = ["https://github.com/abseil/abseil-py/archive/refs/tags/v1.4.0.tar.gz"],
 )
 
-
 # OVMS begin
-new_local_repository( # TODO @atobisze import from OVMS
+new_local_repository(
     name = "linux_openvino",
     build_file = "@ovms//third_party/openvino:BUILD",
     path = "/opt/intel/openvino/runtime",
@@ -820,12 +813,12 @@ register_coreutils_toolchains()
 git_repository(
     name = "ovms",
     remote = "https://github.com/openvinotoolkit/model_server",
-    #commit = "aa07d47407557781036e2e4f00501bfa5bf3c79b" # Windows groovy (#2762)
-    #commit = "7f3b2aaefec2434eede292827cf1b3d2a90c406c" # part 1
-    #commit = "027f6d05ba865d1a6913837f2f7ccf80d9d84042" # part 1
-    #commit = "06cff7d195b249a710597050328663877f94c835" # part 1 working before rebase
-    #commit = "ecab246276042725f52b8da4cb76a9677632f6a7" # part 1 OVMS works, but MP examples do not build due to GENAI inclusion in non-python build
-    commit = "0bb2763d556577e943b3602f91b16e99513280f5" # part 1
+    commit = "14aa74a639202bbfd29257432ebc1a9c0283f882", # OVMS 09/01/2025 from MP 0.10.18 update branch
+    patches = [
+        "@//third_party:ovms_no_rerank_embed.patch", # TODO investigate why in MP repository bazel builds rerank/embed calcs with no mp option
+        # even when we have those set in .bazelrc here
+    ],
+    patch_args = ["-p1"],
 )
 
 ### OpenVINO GenAI
@@ -1001,5 +994,13 @@ git_repository(
     name = "nlohmann_json",
     remote = "https://github.com/nlohmann/json/",
     tag = "v3.11.3",
+)
+new_local_repository(
+    name = "mediapipe_calculators",
+    build_file = "@ovms//third_party/mediapipe_calculators:BUILD",
+    #path = "/ovms/third_party/mediapipe_calculators", # original path from OVMS repo
+    # for some reason Bazel needs to see repository definition even when it doesn't use it
+    # for actual build
+    path = "/mediapipe", # this is temporary hack - this is not actually used to build
 )
 # OVMS end

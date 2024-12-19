@@ -130,3 +130,5 @@ build --define=xnn_enable_avx512fp16=false
 build --define=xnn_enable_avx512amx=false
 build --repo_env=HERMETIC_PYTHON_VERSION=3.11
 build --incompatible_strict_action_env
+# required due to use strict_action_env
+test --test_env LD_LIBRARY_PATH=/opt/opencv/lib/:/opt/intel/openvino/runtime/lib/intel64/:/opt/intel/openvino/runtime/3rdparty/tbb/lib/

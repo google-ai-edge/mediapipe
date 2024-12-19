@@ -211,19 +211,17 @@ COPY requirements*.txt /mediapipe/
 COPY yarn.lock /mediapipe/
 
 # BUILD Geti calculators
-#RUN bazel build   --repo_env=HERMETIC_PYTHON_VERSION=3.10 //mediapipe:geti_targets
 RUN bazel build //mediapipe:geti_targets
 
 # BUILD examples
 ENV GLOG_logtostderr=1
 ENV LD_LIBRARY_PATH="/opt/intel/openvino/runtime/3rdparty/tbb/lib:/opt/intel/openvino/runtime/lib/intel64/:${LD_LIBRARY_PATH}"
 RUN python setup_ovms.py --get_models && python setup_ovms.py --convert_pose --force
-#FROM build as ASD
 RUN bash build_desktop_examples.sh -b
 RUN curl https://storage.googleapis.com/mediapipe-assets/ssdlite_object_detection_labelmap.txt -o mediapipe/models/ssdlite_object_detection_labelmap.txt
 
 # BUILD python framework
-#RUN python setup.py install
+RUN python setup.py install
 ## End of build image ################################################################
 ######################################################################################
 ## Start of demos image - minimal size ###############################################
@@ -291,8 +289,8 @@ COPY --from=build /mediapipe/mediapipe/calculators/ovms/config.json /mediapipe/m
 # Makefile
 COPY --from=build /mediapipe/Makefile /mediapipe/
 
-# Add python solutions
-COPY --from=build /mediapipe/build/ /mediapipe/build/
+# Add python solutions TODO currently disabled
+#COPY --from=build /mediapipe/build/ /mediapipe/build/
 
 # Environment variables
 ENV GLOG_logtostderr=1

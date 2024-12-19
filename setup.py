@@ -211,6 +211,10 @@ class GeneratePyProtos(build_ext.build_ext):
         # Ignore testdata dir.
         if 'testdata' in proto_file:
           continue
+        if 'genai' in proto_file:
+          continue
+        if 'detection_postprocessing_graph_options' in proto_file:
+          continue
         self._add_empty_init_file(
             os.path.abspath(
                 os.path.join(MP_ROOT_PATH, self.build_lib,
@@ -275,7 +279,7 @@ class BuildModules(build_ext.build_ext):
       self._download_external_file(external_file)
 
     binary_graphs = [
-# TODO FIXME @atobisze was on fork
+# TODO reenable with python - disabled after 0.10.18 update
 #        'face_detection/face_detection_short_range_cpu',
 #        'face_detection/face_detection_full_range_cpu',
 #        'face_landmark/face_landmark_front_cpu',
@@ -429,6 +433,7 @@ class BuildExtension(build_ext.build_ext):
   def _build_binary(self, ext, extra_args=None):
     if not os.path.exists(self.build_temp):
       os.makedirs(self.build_temp)
+    # TODO dispose keep_going after python build fix
     bazel_command = [
         'bazel',
         'build',

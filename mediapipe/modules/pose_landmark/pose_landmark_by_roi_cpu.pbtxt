@@ -127,11 +127,11 @@ node: {
 }
 
 # Loads the pose landmark TF Lite model.
-node {
-  calculator: "PoseLandmarkModelLoader"
-  input_side_packet: "MODEL_COMPLEXITY:model_complexity"
-  output_side_packet: "MODEL:model"
-}
+#node {
+#  calculator: "PoseLandmarkModelLoader"
+#  input_side_packet: "MODEL_COMPLEXITY:model_complexity"
+#  output_side_packet: "MODEL:model"
+#}
 
 # Runs model inference on CPU.
 #node {
