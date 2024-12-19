@@ -437,6 +437,7 @@ cc_library(
         "//mediapipe/framework/formats:location",
         "//mediapipe/framework/port:rectangle",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
     ],

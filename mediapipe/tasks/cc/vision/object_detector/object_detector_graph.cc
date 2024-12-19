@@ -218,9 +218,9 @@ class ObjectDetectorGraph : public core::ModelTaskGraph {
         task_options.category_allowlist());
     detector_options.mutable_category_denylist()->CopyFrom(
         task_options.category_denylist());
-    // TODO: expose min suppression threshold in
-    // ObjectDetectorOptions.
-    detector_options.set_min_suppression_threshold(0.3);
+    detector_options.set_multiclass_nms(task_options.multiclass_nms());
+    detector_options.set_min_suppression_threshold(
+        task_options.min_suppression_threshold());
     MP_RETURN_IF_ERROR(
         components::processors::ConfigureDetectionPostprocessingGraph(
             model_resources, detector_options,

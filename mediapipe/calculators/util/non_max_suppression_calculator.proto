@@ -65,4 +65,6 @@ message NonMaxSuppressionCalculatorOptions {
     WEIGHTED = 1;
   }
   optional NmsAlgorithm algorithm = 7 [default = DEFAULT];
+
+  optional bool multiclass_nms = 8 [default = false];
 }
