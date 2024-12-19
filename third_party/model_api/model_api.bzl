@@ -38,8 +38,8 @@ cmake(
     ],
     cache_entries = {{
         "CMAKE_POSITION_INDEPENDENT_CODE": "ON",
-        "OpenVINO_DIR": "C:/opt/intel/openvino_2024/runtime/cmake",
-        "OpenCV_DIR": "C:/opt/opencv/build",
+        "OpenVINO_DIR": "{openvino_dir}",
+        "OpenCV_DIR": "{opencv_dir}",
     }},
     env = {{
         "HTTP_PROXY": "{http_proxy}",
@@ -114,6 +114,8 @@ cc_library(
 def _impl(repository_ctx):
     http_proxy = repository_ctx.os.environ.get("HTTP_PROXY", "")
     https_proxy = repository_ctx.os.environ.get("HTTPS_PROXY", "")
+    openvino_dir = repository_ctx.os.environ.get("OpenVINO_DIR", "")
+    opencv_dir = repository_ctx.os.environ.get("OpenCV_DIR", "")
     if not http_proxy:
         http_proxy = repository_ctx.os.environ.get("http_proxy", "")
     if not https_proxy:
@@ -125,7 +127,7 @@ def _impl(repository_ctx):
     else:
         build_file_content = _get_linux_build_file()
 
-    repository_ctx.file("BUILD", build_file_content.format(http_proxy=http_proxy, https_proxy=https_proxy))
+    repository_ctx.file("BUILD", build_file_content.format(http_proxy=http_proxy, https_proxy=https_proxy, openvino_dir=openvino_dir, opencv_dir=opencv_dir))
 
 model_api_repository = repository_rule(
     implementation = _impl,
