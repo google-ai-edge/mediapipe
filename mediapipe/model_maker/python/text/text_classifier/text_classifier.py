@@ -859,7 +859,7 @@ class _BertClassifier(TextClassifier):
       self,
       model_name: str = "model.tflite",
       quantization_config: Optional[quantization.QuantizationConfig] = None,
-      batch_size: int | None = None,
+      batch_size: Optional[int] = None,
   ):
     """Converts and saves the model to a TFLite file with metadata included.
 
