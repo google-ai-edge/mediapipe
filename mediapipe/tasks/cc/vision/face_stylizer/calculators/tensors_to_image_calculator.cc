@@ -164,7 +164,7 @@ absl::Status TensorsToImageCalculator::UpdateContract(CalculatorContract* cc) {
   MP_RETURN_IF_ERROR([MPPMetalHelper updateContract:cc]);
 #else
   return GlCalculatorHelper::UpdateContract(cc,
-                                            /*requesst_gpu_as_optional=*/true);
+                                            /*request_gpu_as_optional=*/true);
 #endif  // MEDIAPIPE_METAL_ENABLED
 #endif  // !MEDIAPIPE_DISABLE_GPU
   return absl::OkStatus();
