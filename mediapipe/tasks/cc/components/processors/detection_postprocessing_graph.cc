@@ -692,6 +692,7 @@ void ConfigureNonMaxSuppressionCalculator(
   options->set_algorithm(
       mediapipe::NonMaxSuppressionCalculatorOptions::DEFAULT);
   options->set_max_num_detections(detector_options.max_results());
+  options->set_multiclass_nms(detector_options.multiclass_nms());
 }
 
 // Sets the labels from post PostProcessingSpecs.
