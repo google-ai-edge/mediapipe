@@ -446,7 +446,7 @@ JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateFloat32Array)(
   // The reinterpret_cast is needed to make the Adopt template recognize
   // that this is an array - this way Holder will call delete[].
   mediapipe::Packet packet =
-      mediapipe::Adopt(reinterpret_cast<float(*)[]>(floats));
+      mediapipe::Adopt(reinterpret_cast<float (*)[]>(floats));
   return CreatePacketWithContext(context, packet);
 }
 
@@ -479,7 +479,7 @@ JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateInt32Array)(
   // The reinterpret_cast is needed to make the Adopt template recognize
   // that this is an array - this way Holder will call delete[].
   mediapipe::Packet packet =
-      mediapipe::Adopt(reinterpret_cast<int32_t(*)[]>(ints));
+      mediapipe::Adopt(reinterpret_cast<int32_t (*)[]>(ints));
   return CreatePacketWithContext(context, packet);
 }
 

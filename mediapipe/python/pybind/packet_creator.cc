@@ -390,7 +390,7 @@ void PublicPacketCreators(pybind11::module* m) {
       [](const std::vector<int>& data) {
         int* ints = new int[data.size()];
         std::copy(data.begin(), data.end(), ints);
-        return Adopt(reinterpret_cast<int(*)[]>(ints));
+        return Adopt(reinterpret_cast<int (*)[]>(ints));
       },
       R"doc(Create a MediaPipe int array Packet from a list of integers.
 
@@ -413,7 +413,7 @@ void PublicPacketCreators(pybind11::module* m) {
       [](const std::vector<float>& data) {
         float* floats = new float[data.size()];
         std::copy(data.begin(), data.end(), floats);
-        return Adopt(reinterpret_cast<float(*)[]>(floats));
+        return Adopt(reinterpret_cast<float (*)[]>(floats));
       },
       R"doc(Create a MediaPipe float array Packet from a list of floats.
 

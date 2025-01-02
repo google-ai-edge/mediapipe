@@ -113,6 +113,7 @@ class OpenCvVideoDecoderCalculator : public CalculatorBase {
       return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
              << "Fail to open video file at " << input_file_path;
     }
+    cap_->set(cv::CAP_PROP_ORIENTATION_AUTO, true);
     width_ = static_cast<int>(cap_->get(cv::CAP_PROP_FRAME_WIDTH));
     height_ = static_cast<int>(cap_->get(cv::CAP_PROP_FRAME_HEIGHT));
     double fps = static_cast<double>(cap_->get(cv::CAP_PROP_FPS));
