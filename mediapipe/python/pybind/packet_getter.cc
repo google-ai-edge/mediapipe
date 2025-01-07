@@ -447,7 +447,7 @@ void InternalPacketGetters(pybind11::module* m) {
         if (proto_vector.value().empty()) {
           return std::string();
         }
-        return proto_vector.value()[0]->GetTypeName();
+        return std::string(proto_vector.value()[0]->GetTypeName());
       },
       py::return_value_policy::move);
 
