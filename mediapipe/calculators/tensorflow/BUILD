@@ -312,6 +312,10 @@ cc_library(
 cc_library(
     name = "matrix_to_tensor_calculator",
     srcs = ["matrix_to_tensor_calculator.cc"],
+    features = select({
+        "//mediapipe:android": ["-layering_check"],
+        "//conditions:default": [],
+    }),
     deps = [
         ":matrix_to_tensor_calculator_options_cc_proto",
         "//mediapipe/framework:calculator_framework",
@@ -422,6 +426,10 @@ cc_library(
 cc_library(
     name = "tensorflow_inference_calculator_for_boq",
     srcs = ["tensorflow_inference_calculator.cc"],
+    features = select({
+        "//mediapipe:android": ["-layering_check"],
+        "//conditions:default": [],
+    }),
     deps = [
         ":tensorflow_inference_calculator_cc_proto",
         ":tensorflow_session",
@@ -685,6 +693,10 @@ cc_library(
 cc_library(
     name = "tensor_to_matrix_calculator",
     srcs = ["tensor_to_matrix_calculator.cc"],
+    features = select({
+        "//mediapipe:android": ["-layering_check"],
+        "//conditions:default": [],
+    }),
     deps = [
         ":tensor_to_matrix_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
