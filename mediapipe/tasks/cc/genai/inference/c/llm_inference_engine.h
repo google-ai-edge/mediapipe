@@ -186,8 +186,9 @@ ODML_EXPORT int LlmInferenceEngine_Session_AddImage(
 
 // Return the generated output based on the previously added query chunks in
 // sync mode.
-ODML_EXPORT LlmResponseContext
-LlmInferenceEngine_Session_PredictSync(LlmInferenceEngine_Session* session);
+ODML_EXPORT int LlmInferenceEngine_Session_PredictSync(
+    LlmInferenceEngine_Session* session, LlmResponseContext* response_context,
+    char** error_msg);
 
 // Run callback function in async mode.
 // The callback will be invoked multiple times until `response_context.done`
@@ -195,8 +196,9 @@ LlmInferenceEngine_Session_PredictSync(LlmInferenceEngine_Session* session);
 // each invocation to free memory.
 // The callback context can be a pointer to any user defined data structure as
 // it is passed to the callback unmodified.
-ODML_EXPORT void LlmInferenceEngine_Session_PredictAsync(
+ODML_EXPORT int LlmInferenceEngine_Session_PredictAsync(
     LlmInferenceEngine_Session* session, void* callback_context,
+    char** error_msg,
     void (*callback)(void* callback_context,
                      LlmResponseContext* response_context));
 

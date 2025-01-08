@@ -249,8 +249,15 @@ JNIEXPORT void JNICALL JNI_METHOD(nativeAddImage)(JNIEnv* env, jclass thiz,
 
 JNIEXPORT jbyteArray JNICALL
 JNI_METHOD(nativePredictSync)(JNIEnv* env, jclass thiz, jlong session_handle) {
-  LlmResponseContext response_context = LlmInferenceEngine_Session_PredictSync(
-      reinterpret_cast<void*>(session_handle));
+  char* error_msg = nullptr;
+  LlmResponseContext response_context;
+  int error_code = LlmInferenceEngine_Session_PredictSync(
+      reinterpret_cast<void*>(session_handle), &response_context, &error_msg);
+  if (error_code) {
+    ThrowIfError(env, absl::InternalError(absl::StrCat(
+                          "Failed to predict sync: %s", error_msg)));
+    free(error_msg);
+  }
   const jbyteArray response_bytes = ToByteArray(env, response_context);
   LlmInferenceEngine_CloseResponseContext(&response_context);
   return response_bytes;
@@ -276,9 +283,15 @@ JNIEXPORT void JNICALL JNI_METHOD(nativeRemoveCallback)(JNIEnv* env,
 JNIEXPORT void JNICALL JNI_METHOD(nativePredictAsync)(JNIEnv* env, jclass thiz,
                                                       jlong session_handle,
                                                       jobject callback_ref) {
-  LlmInferenceEngine_Session_PredictAsync(
+  char* error_msg = nullptr;
+  int error_code = LlmInferenceEngine_Session_PredictAsync(
       reinterpret_cast<LlmInferenceEngine_Session*>(session_handle),
-      reinterpret_cast<void*>(callback_ref), &ProcessAsyncResponse);
+      reinterpret_cast<void*>(callback_ref), &error_msg, &ProcessAsyncResponse);
+  if (error_code) {
+    ThrowIfError(env, absl::InternalError(absl::StrCat(
+                          "Failed to predict async: %s", error_msg)));
+    free(error_msg);
+  }
 }
 
 JNIEXPORT jint JNICALL JNI_METHOD(nativeSizeInTokens)(JNIEnv* env, jclass thiz,

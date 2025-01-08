@@ -591,11 +591,15 @@ ODML_EXPORT int LlmInferenceEngine_Session_AddImage(
   return 12;
 }
 
-LlmResponseContext LlmInferenceEngine_Session_PredictSync(
-    LlmInferenceEngine_Session* session) {
-  LlmInferenceEngine_Session_PredictAsync(
-      session, nullptr,
+int LlmInferenceEngine_Session_PredictSync(LlmInferenceEngine_Session* session,
+                                           LlmResponseContext* response_context,
+                                           char** error_msg) {
+  auto status = LlmInferenceEngine_Session_PredictAsync(
+      session, nullptr, error_msg,
       [](void* callback_context, LlmResponseContext* response_context) {});
+  if (status != 0) {
+    return status;
+  }
 
   auto cpu_session = reinterpret_cast<LlmInferenceEngineCpu_Session*>(session);
   pthread_join(cpu_session->work_id, nullptr);
@@ -604,30 +608,45 @@ LlmResponseContext LlmInferenceEngine_Session_PredictSync(
 
   char** result = (char**)malloc(sizeof(char*) * 1);
   if (result == nullptr) {
-    ABSL_LOG(FATAL) << "Failed to allocate result for cpu session.";
+    *error_msg = strdup("Failed to allocate result for cpu session.");
+    return static_cast<int>(absl::StatusCode::kResourceExhausted);
   }
 
   result[0] = (char*)malloc(sizeof(char*) * (final_output.size() + 1));
   if (result[0] == nullptr) {
-    ABSL_LOG(FATAL) << "Failed to allocate result for cpu session.";
+    *error_msg = strdup("Failed to allocate result for cpu session.");
+    return static_cast<int>(absl::StatusCode::kResourceExhausted);
   }
 
   snprintf(result[0], final_output.size() + 1, "%s", final_output.c_str());
 
-  LlmResponseContext response_context = {
-      .response_array = result,
-      .response_count = 1,
-      .done = true,
-  };
+  response_context->response_array = result;
+  response_context->response_count = 1;
+  response_context->done = true;
 
-  return response_context;
+  return 0;
 }
 
-void LlmInferenceEngine_Session_PredictAsync(
+int LlmInferenceEngine_Session_PredictAsync(
     LlmInferenceEngine_Session* session, void* callback_context,
+    char** error_msg,
     void (*callback)(void* callback_context,
                      LlmResponseContext* response_context)) {
+  if (session == nullptr) {
+    *error_msg = strdup("Session is null.");
+    return static_cast<int>(absl::StatusCode::kInvalidArgument);
+  }
+  if (callback == nullptr) {
+    *error_msg = strdup("Callback is null.");
+    return static_cast<int>(absl::StatusCode::kInvalidArgument);
+  }
+
   auto cpu_session = reinterpret_cast<LlmInferenceEngineCpu_Session*>(session);
+
+  if (cpu_session == nullptr) {
+    *error_msg = strdup("Provided session is not a CPU session.");
+    return static_cast<int>(absl::StatusCode::kInvalidArgument);
+  }
 
   cpu_session->cpu_callback = [=](std::string responses) -> void {
     char** result = (char**)malloc(sizeof(char*) * 1);
@@ -656,6 +675,8 @@ void LlmInferenceEngine_Session_PredictAsync(
   cpu_session->work_id = work_id;
   pthread_create(&cpu_session->work_id, nullptr, start_llm_function,
                  cpu_session);
+
+  return 0;
 }
 
 int LlmInferenceEngine_Session_Clone(

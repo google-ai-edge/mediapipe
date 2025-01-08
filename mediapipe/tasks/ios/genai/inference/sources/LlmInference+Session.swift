@@ -172,7 +172,7 @@ extension LlmInference {
       /// Used to make a decision about whitespace stripping.
       var receivedFirstToken = true
 
-      llmSessionRunner.predictAsync(
+      try llmSessionRunner.predictAsync(
         progress: { partialResponseStrings, error in
           guard let responseStrings = partialResponseStrings,
             let humanReadableLlmResponse = Session.humanReadableString(
