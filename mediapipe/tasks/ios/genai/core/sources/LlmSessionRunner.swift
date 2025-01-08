@@ -57,10 +57,17 @@ final class LlmSessionRunner {
   /// - Returns: Array of `String` responses from the LLM.
   /// - Throws: An error if the LLM's response is invalid.
   func predict() throws -> [String] {
+    var cErrorMessage: UnsafeMutablePointer<CChar>? = nil
     /// No safe guards for the call since the C++ APIs only throw fatal errors.
     /// `LlmInferenceEngine_Session_PredictSync()` will always return a `LlmResponseContext` if the
     /// call completes.
-    var responseContext = LlmInferenceEngine_Session_PredictSync(cLlmSession)
+    var responseContext = LlmResponseContext()
+    guard
+      LlmInferenceEngine_Session_PredictSync(cLlmSession, &responseContext, &cErrorMessage)
+        == StatusCode.success.rawValue
+    else {
+      throw GenAiInferenceError.failedToPredictSync(String(allocatedCErrorMessage: cErrorMessage))
+    }
 
     defer {
       withUnsafeMutablePointer(to: &responseContext) {
@@ -88,11 +95,12 @@ final class LlmSessionRunner {
   func predictAsync(
     progress: @escaping (_ partialResult: [String]?, _ error: Error?) -> Void,
     completion: @escaping (() -> Void)
-  ) {
+  ) throws {
+    var cErrorMessage: UnsafeMutablePointer<CChar>? = nil
     let callbackInfo = CallbackInfo(progress: progress, completion: completion)
     let callbackContext = UnsafeMutableRawPointer(Unmanaged.passRetained(callbackInfo).toOpaque())
 
-    LlmInferenceEngine_Session_PredictAsync(cLlmSession, callbackContext) {
+    let errorCode = LlmInferenceEngine_Session_PredictAsync(cLlmSession, callbackContext, &cErrorMessage) {
       context, responseContext in
       guard let cContext = context else {
         return
@@ -134,6 +142,10 @@ final class LlmSessionRunner {
       if cResponse.done {
         cCallbackInfo.completion()
       }
+    }
+
+    guard errorCode == StatusCode.success.rawValue else {
+      throw GenAiInferenceError.failedToPredictAsync(String(allocatedCErrorMessage: cErrorMessage))
     }
   }
 
