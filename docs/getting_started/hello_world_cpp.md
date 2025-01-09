@@ -50,7 +50,7 @@ as the primary developer documentation site for MediaPipe as of April 3, 2023.*
 3.  The [`hello world`] example uses a simple MediaPipe graph in the
     `PrintHelloWorld()` function, defined in a [`CalculatorGraphConfig`] proto.
 
-    ```C++
+    ```c++
     absl::Status PrintHelloWorld() {
       // Configures a simple graph, which concatenates 2 PassThroughCalculators.
       CalculatorGraphConfig config = ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
@@ -126,7 +126,7 @@ as the primary developer documentation site for MediaPipe as of April 3, 2023.*
     ```c++
     mediapipe::Packet packet;
     while (poller.Next(&packet)) {
-      LOG(INFO) << packet.Get<string>();
+      ABSL_LOG(INFO) << packet.Get<string>();
     }
     ```
 

@@ -227,7 +227,7 @@ absl::Status TopKScoresCalculator::Process(CalculatorContext* cc) {
 
 absl::Status TopKScoresCalculator::LoadLabelmap(std::string label_map_path) {
   std::string string_path;
-  ASSIGN_OR_RETURN(string_path, PathToResourceAsFile(label_map_path));
+  MP_ASSIGN_OR_RETURN(string_path, PathToResourceAsFile(label_map_path));
   std::string label_map_string;
   MP_RETURN_IF_ERROR(file::GetContents(string_path, &label_map_string));
 

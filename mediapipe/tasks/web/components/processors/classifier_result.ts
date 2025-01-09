@@ -25,7 +25,7 @@ const DEFAULT_SCORE = 0.0;
  * Converts a list of Classification protos to a Classifications object.
  */
 export function convertFromClassifications(
-    classifications: ClassificationProto[], headIndex = DEFAULT_INDEX,
+    classifications: readonly ClassificationProto[], headIndex = DEFAULT_INDEX,
     headName = ''): Classifications {
   const categories = classifications.map(classification => {
     return {

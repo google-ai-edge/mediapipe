@@ -21,11 +21,12 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <deque>
 #include <memory>
 #include <vector>
 
-#include "mediapipe/framework/port/integral_types.h"
+#include "absl/log/absl_check.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
@@ -150,8 +151,8 @@ template <int C>
 void ToneEstimation::ComputeClipMask(const ClipMaskOptions& options,
                                      const cv::Mat& frame,
                                      ClipMask<C>* clip_mask) {
-  CHECK(clip_mask != nullptr);
-  CHECK_EQ(frame.channels(), C);
+  ABSL_CHECK(clip_mask != nullptr);
+  ABSL_CHECK_EQ(frame.channels(), C);
 
   // Over / Underexposure handling.
   // Masks pixels affected by clipping.
@@ -163,7 +164,7 @@ void ToneEstimation::ComputeClipMask(const ClipMaskOptions& options,
 
   std::vector<cv::Mat> planes;
   cv::split(frame, planes);
-  CHECK_EQ(C, planes.size());
+  ABSL_CHECK_EQ(C, planes.size());
   float min_exposure[C];
   float max_exposure[C];
   for (int c = 0; c < C; ++c) {
@@ -177,8 +178,8 @@ void ToneEstimation::ComputeClipMask(const ClipMaskOptions& options,
   }
 
   for (int i = 0; i < frame.rows; ++i) {
-    const uint8* img_ptr = frame.ptr<uint8>(i);
-    uint8* clip_ptr = clip_mask->mask.template ptr<uint8>(i);
+    const uint8_t* img_ptr = frame.ptr<uint8_t>(i);
+    uint8_t* clip_ptr = clip_mask->mask.template ptr<uint8_t>(i);
 
     for (int j = 0; j < frame.cols; ++j) {
       const int idx = C * j;
@@ -223,9 +224,9 @@ void ToneEstimation::ComputeToneMatches(
     const ClipMask<C>& curr_clip_mask,  // Optional.
     const ClipMask<C>& prev_clip_mask,  // Optional.
     ColorToneMatches* color_tone_matches, cv::Mat* debug_output) {
-  CHECK(color_tone_matches != nullptr);
-  CHECK_EQ(curr_frame.channels(), C);
-  CHECK_EQ(prev_frame.channels(), C);
+  ABSL_CHECK(color_tone_matches != nullptr);
+  ABSL_CHECK_EQ(curr_frame.channels(), C);
+  ABSL_CHECK_EQ(prev_frame.channels(), C);
 
   color_tone_matches->clear();
   color_tone_matches->resize(C);
@@ -327,8 +328,8 @@ void ToneEstimation::ComputeToneMatches(
     // bins to the right). However, matches that are over or underexposed
     // are discarded afterwards.
     for (int i = 0; i < patch_diam; ++i) {
-      const uint8* prev_ptr = prev_patch.ptr<uint8>(i);
-      const uint8* curr_ptr = curr_patch.ptr<uint8>(i);
+      const uint8_t* prev_ptr = prev_patch.ptr<uint8_t>(i);
+      const uint8_t* curr_ptr = curr_patch.ptr<uint8_t>(i);
       for (int j = 0; j < patch_diam; ++j) {
         const int j_c = C * j;
         for (int c = 0; c < C; ++c) {

@@ -14,8 +14,8 @@
 
 #include "mediapipe/java/com/google/mediapipe/framework/jni/register_natives.h"
 
+#include "absl/log/absl_log.h"
 #include "absl/strings/str_format.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/class_registry.h"
 
 #if defined(__ANDROID__)
@@ -65,9 +65,10 @@ void RegisterNativesVector(JNIEnv *env, jclass cls,
   // in exchange for flexibility to list out all registrations without worrying
   // about usage subset by client Java projects.
   if (!cls || methods.empty()) {
-    LOG(INFO) << "Skipping registration and clearing exception. Class or "
-                 "native methods not found, may be unused and/or trimmed by "
-                 "Proguard.";
+    ABSL_LOG(INFO)
+        << "Skipping registration and clearing exception. Class or "
+           "native methods not found, may be unused and/or trimmed by "
+           "Proguard.";
     env->ExceptionClear();
     return;
   }
@@ -81,7 +82,7 @@ void RegisterNativesVector(JNIEnv *env, jclass cls,
   }
   // Fatal crash if registration fails.
   if (env->RegisterNatives(cls, methods_array, methods.size()) < 0) {
-    LOG(FATAL)
+    ABSL_LOG(FATAL)
         << "Failed during native method registration, so likely the "
            "signature of a method is incorrect. Make sure there are no typos "
            "and "

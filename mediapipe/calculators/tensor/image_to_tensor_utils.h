@@ -74,7 +74,7 @@ absl::StatusOr<std::array<float, 4>> PadRoi(int input_tensor_width,
 // Represents a transformation of value which involves scaling and offsetting.
 // To apply transformation:
 // ValueTransformation transform = ...
-// float transformed_value = transform.scale * value + transfrom.offset;
+// float transformed_value = transform.scale * value + transform.offset;
 struct ValueTransformation {
   float scale;
   float offset;
@@ -99,11 +99,11 @@ absl::StatusOr<ValueTransformation> GetValueRangeTransformation(
 // @sub_rect - rotated sub rect in absolute coordinates
 // @rect_width - rect width
 // @rect_height - rect height
-// @flip_horizontaly - we need to flip the output buffer.
+// @flip_horizontally - we need to flip the output buffer.
 // @matrix - 4x4 matrix (array of 16 elements) to populate
 void GetRotatedSubRectToRectTransformMatrix(const RotatedRect& sub_rect,
                                             int rect_width, int rect_height,
-                                            bool flip_horizontaly,
+                                            bool flip_horizontally,
                                             std::array<float, 16>* matrix);
 
 // Returns the transpose of the matrix found with
@@ -118,11 +118,11 @@ void GetRotatedSubRectToRectTransformMatrix(const RotatedRect& sub_rect,
 // @sub_rect - rotated sub rect in absolute coordinates
 // @rect_width - rect width
 // @rect_height - rect height
-// @flip_horizontaly - we need to flip the output buffer.
+// @flip_horizontally - we need to flip the output buffer.
 // @matrix - 4x4 matrix (array of 16 elements) to populate
 void GetTransposedRotatedSubRectToRectTransformMatrix(
     const RotatedRect& sub_rect, int rect_width, int rect_height,
-    bool flip_horizontaly, std::array<float, 16>* matrix);
+    bool flip_horizontally, std::array<float, 16>* matrix);
 
 // Validates the output dimensions set in the option proto. The input option
 // proto is expected to have to following fields:
@@ -199,12 +199,6 @@ OutputTensorParams GetOutputTensorParams(const T& options) {
   params.is_float_output = options.has_output_tensor_float_range();
   params.output_batch = 1;
   return params;
-}
-
-// Returns whether the GPU input format starts at the bottom.
-template <typename T>
-bool DoesGpuInputStartAtBottom(const T& options) {
-  return options.gpu_origin() != mediapipe::GpuOrigin_Mode_TOP_LEFT;
 }
 
 // Converts the BorderMode proto into struct.

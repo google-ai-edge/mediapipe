@@ -1,11 +1,11 @@
 load("@build_bazel_rules_apple//apple:ios.bzl", "ios_unit_test")
 load(
-    "//mediapipe/framework/tool:ios.bzl",
-    "MPP_TASK_MINIMUM_OS_VERSION",
-)
-load(
     "@org_tensorflow//tensorflow/lite:special_rules.bzl",
     "tflite_ios_lab_runner",
+)
+load(
+    "//mediapipe/framework/tool:ios.bzl",
+    "MPP_TASK_MINIMUM_OS_VERSION",
 )
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
@@ -26,7 +26,7 @@ TFL_DISABLED_SANITIZER_TAGS = [
 
 objc_library(
     name = "MPPFaceLandmarkerObjcTestLibrary",
-    testonly = 1,
+    testonly = True,
     srcs = ["MPPFaceLandmarkerTests.mm"],
     copts = [
         "-ObjC++",
@@ -51,7 +51,9 @@ objc_library(
         "//mediapipe/tasks/ios/test/vision/utils:parse_proto_utils",
         "//mediapipe/tasks/ios/vision/face_landmarker:MPPFaceLandmarker",
         "//mediapipe/tasks/ios/vision/face_landmarker:MPPFaceLandmarkerResult",
+        "//third_party/apple_frameworks:Foundation",
         "//third_party/apple_frameworks:UIKit",
+        "//third_party/apple_frameworks:XCTest",
     ] + select({
         "//third_party:opencv_ios_sim_arm64_source_build": ["@ios_opencv_source//:opencv_xcframework"],
         "//third_party:opencv_ios_arm64_source_build": ["@ios_opencv_source//:opencv_xcframework"],

@@ -71,8 +71,9 @@ cc_library(
     deps = [
         ":tokenizer",
         "//mediapipe/framework/port:logging",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/strings",
-        "@com_google_sentencepiece//src:sentencepiece_processor",
+        "@com_google_sentencepiece//:sentencepiece_processor",
     ],
 )
 
@@ -86,7 +87,8 @@ cc_test(
         ":sentencepiece_tokenizer",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/tasks/cc/core:utils",
-        "@com_google_sentencepiece//src:sentencepiece_processor",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_sentencepiece//:sentencepiece_processor",
     ],
 )
 
@@ -105,6 +107,7 @@ cc_library(
         "//mediapipe/tasks/cc:common",
         "//mediapipe/tasks/cc/metadata:metadata_extractor",
         "//mediapipe/tasks/metadata:metadata_schema_cc",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
@@ -119,6 +122,7 @@ cc_test(
         "//mediapipe/tasks/testdata/text:albert_model",
         "//mediapipe/tasks/testdata/text:mobile_bert_model",
         "//mediapipe/tasks/testdata/text:text_classifier_models",
+        "@com_google_absl//absl/log:absl_check",
     ],
     linkopts = ["-ldl"],
     deps = [
@@ -136,7 +140,7 @@ cc_test(
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:cord",
-        "@com_google_sentencepiece//src:sentencepiece_processor",
+        "@com_google_sentencepiece//:sentencepiece_processor",
     ],
 )
 

@@ -144,6 +144,8 @@ message TrackingOptions {
 
   optional FastExtractionSettings fast_settings = 31;
 
+  // Radius of the window size so that the full window is
+  // 2*tracking_window_size+1
   optional int32 tracking_window_size = 4 [default = 10];
 
   optional int32 tracking_iterations = 5 [default = 10];
@@ -226,10 +228,6 @@ message TrackingOptions {
   // they are reset and extracted from scratch.
   optional float reuse_features_min_survived_frac = 18 [default = 0.7];
 
-  // If set uses newer OpenCV tracking algorithm.
-  // Recommended to be set for all new projects.
-  optional bool use_cv_tracking_algorithm = 30 [default = true];
-
   enum KltTrackerImplementation {
     UNSPECIFIED = 0;
     KLT_OPENCV = 1;  // Use OpenCV's implementation of KLT tracker.
@@ -240,7 +238,7 @@ message TrackingOptions {
       [default = KLT_OPENCV];
 
   // Deprecated fields.
-  extensions 3, 11, 12;
+  extensions 3, 11, 12, 30;
 }
 
 // Next tag: 67

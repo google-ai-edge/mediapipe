@@ -264,7 +264,7 @@ describe('FaceLandmarker', () => {
     expect(faceLandmarker.fakeWasmModule._waitUntilIdle).toHaveBeenCalled();
 
     expect(landmarks).toEqual({
-      faceLandmarks: [[{x: 0, y: 0, z: 0}]],
+      faceLandmarks: [[{x: 0, y: 0, z: 0, visibility: 0}]],
       faceBlendshapes: [{
         categories: [{
           index: 1,

@@ -22,4 +22,5 @@ objc_library(
         "sources/MPPCommon.h",
     ],
     module_name = "MPPCommon",
+    deps = ["//third_party/apple_frameworks:Foundation"],
 )

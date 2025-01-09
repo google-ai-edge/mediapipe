@@ -9,7 +9,8 @@
         android:id="@+id/preview_display_layout"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:keepScreenOn="true">
         <TextView
             android:id="@+id/no_camera_access_view"
             android:layout_height="fill_parent"

@@ -16,6 +16,12 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_C_COMPONENTS_CONTAINERS_CATEGORY_H_
 #define MEDIAPIPE_TASKS_C_COMPONENTS_CONTAINERS_CATEGORY_H_
 
+#include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Defines a single classification result.
 //
 // The label maps packed into the TFLite Model Metadata [1] are used to populate
@@ -38,5 +44,15 @@ struct Category {
   // packed in the TFLite Model Metadata if present.
   char* display_name;
 };
+
+// A list of categories.
+struct Categories {
+  struct Category* categories;
+  uint32_t categories_count;
+};
+
+#ifdef __cplusplus
+}  // extern C
+#endif
 
 #endif  // MEDIAPIPE_TASKS_C_COMPONENTS_CONTAINERS_CATEGORY_H_

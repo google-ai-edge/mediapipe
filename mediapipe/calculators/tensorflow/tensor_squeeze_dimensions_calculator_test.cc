@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cstdint>
+
 #include "mediapipe/calculators/tensorflow/tensor_squeeze_dimensions_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
@@ -30,7 +32,7 @@ class TensorSqueezeDimensionsCalculatorTest : public ::testing::Test {
  protected:
   TensorSqueezeDimensionsCalculatorTest() {
     // Initialize tensor_ with deterministic values.
-    tensor_shape_ = tf::TensorShape(std::vector<tf::int64>({1, 3, 1, 3, 1}));
+    tensor_shape_ = tf::TensorShape(std::vector<int64_t>({1, 3, 1, 3, 1}));
     tensor_ = tf::Tensor(tf::DT_INT32, tensor_shape_);
     auto tensor_values = tensor_.tensor<int32_t, 5>();
     for (int i = 0; i < 3; ++i) {
@@ -59,7 +61,7 @@ TEST_F(TensorSqueezeDimensionsCalculatorTest, CanSqueezeAllSingleDimensions) {
   runner_.reset(new CalculatorRunner(config));
   std::unique_ptr<tf::Tensor> tensor_copy(new tf::Tensor);
   EXPECT_TRUE(tensor_copy->CopyFrom(tensor_, tensor_shape_));
-  const tf::int64 time = 1234;
+  const int64_t time = 1234;
   runner_->MutableInputs()->Index(0).packets.push_back(
       Adopt(tensor_copy.release()).At(Timestamp(time)));
 
@@ -69,7 +71,7 @@ TEST_F(TensorSqueezeDimensionsCalculatorTest, CanSqueezeAllSingleDimensions) {
   EXPECT_EQ(1, output_packets.size());
   EXPECT_EQ(time, output_packets[0].Timestamp().Value());
   const tf::Tensor& output_tensor = output_packets[0].Get<tf::Tensor>();
-  const tf::TensorShape expected_shape(std::vector<tf::int64>({3, 3}));
+  const tf::TensorShape expected_shape(std::vector<int64_t>({3, 3}));
   EXPECT_EQ(expected_shape.DebugString(), output_tensor.shape().DebugString());
   const auto tensor_values = output_tensor.tensor<int32_t, 2>();
   for (int i = 0; i < 3; ++i) {
@@ -95,7 +97,7 @@ TEST_F(TensorSqueezeDimensionsCalculatorTest, CanSqueezeSpecifiedDimensions) {
   runner_.reset(new CalculatorRunner(config));
   std::unique_ptr<tf::Tensor> tensor_copy(new tf::Tensor);
   EXPECT_TRUE(tensor_copy->CopyFrom(tensor_, tensor_shape_));
-  const tf::int64 time = 1234;
+  const int64_t time = 1234;
   runner_->MutableInputs()->Index(0).packets.push_back(
       Adopt(tensor_copy.release()).At(Timestamp(time)));
 
@@ -105,7 +107,7 @@ TEST_F(TensorSqueezeDimensionsCalculatorTest, CanSqueezeSpecifiedDimensions) {
   EXPECT_EQ(1, output_packets.size());
   EXPECT_EQ(time, output_packets[0].Timestamp().Value());
   const tf::Tensor& output_tensor = output_packets[0].Get<tf::Tensor>();
-  const tf::TensorShape expected_shape(std::vector<tf::int64>({3, 1, 3}));
+  const tf::TensorShape expected_shape(std::vector<int64_t>({3, 1, 3}));
   EXPECT_EQ(expected_shape.DebugString(), output_tensor.shape().DebugString());
   const auto tensor_values = output_tensor.tensor<int32_t, 3>();
   for (int i = 0; i < 3; ++i) {

@@ -20,6 +20,8 @@
 #include <cmath>
 #include <memory>
 
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/port/logging.h"
@@ -36,8 +38,8 @@ namespace mediapipe {
 FlowPackager::FlowPackager(const FlowPackagerOptions& options)
     : options_(options) {
   if (options_.binary_tracking_data_support()) {
-    CHECK_LE(options.domain_width(), 256);
-    CHECK_LE(options.domain_height(), 256);
+    ABSL_CHECK_LE(options.domain_width(), 256);
+    ABSL_CHECK_LE(options.domain_height(), 256);
   }
 }
 
@@ -105,7 +107,7 @@ inline std::string EncodeVectorToString(const std::vector<T>& vec) {
 
 template <typename T>
 inline bool DecodeFromStringView(absl::string_view str, T* result) {
-  CHECK(result != nullptr);
+  ABSL_CHECK(result != nullptr);
   if (sizeof(*result) != str.size()) {
     return false;
   }
@@ -116,7 +118,7 @@ inline bool DecodeFromStringView(absl::string_view str, T* result) {
 template <typename T>
 inline bool DecodeVectorFromStringView(absl::string_view str,
                                        std::vector<T>* result) {
-  CHECK(result != nullptr);
+  ABSL_CHECK(result != nullptr);
   if (str.size() % sizeof(T) != 0) return false;
   result->clear();
   result->reserve(str.size() / sizeof(T));
@@ -134,9 +136,9 @@ inline bool DecodeVectorFromStringView(absl::string_view str,
 void FlowPackager::PackFlow(const RegionFlowFeatureList& feature_list,
                             const CameraMotion* camera_motion,
                             TrackingData* tracking_data) const {
-  CHECK(tracking_data);
-  CHECK_GT(feature_list.frame_width(), 0);
-  CHECK_GT(feature_list.frame_height(), 0);
+  ABSL_CHECK(tracking_data);
+  ABSL_CHECK_GT(feature_list.frame_width(), 0);
+  ABSL_CHECK_GT(feature_list.frame_height(), 0);
 
   // Scale flow to output domain.
   const float dim_x_scale =
@@ -231,12 +233,12 @@ void FlowPackager::PackFlow(const RegionFlowFeatureList& feature_list,
     const int curr_col = loc.x();
 
     if (curr_col != last_col) {
-      CHECK_LT(last_col, curr_col);
-      CHECK_EQ(-1, col_start[curr_col]);
+      ABSL_CHECK_LT(last_col, curr_col);
+      ABSL_CHECK_EQ(-1, col_start[curr_col]);
       col_start[curr_col] = data->row_indices_size() - 1;
       last_col = curr_col;
     } else {
-      CHECK_LE(last_row, loc.y());
+      ABSL_CHECK_LE(last_row, loc.y());
     }
     last_row = loc.y();
   }
@@ -247,7 +249,7 @@ void FlowPackager::PackFlow(const RegionFlowFeatureList& feature_list,
   // Fill unset values with previously set value. Propagate end value.
   for (int i = options_.domain_width() - 1; i > 0; --i) {
     if (col_start[i] < 0) {
-      DCHECK_GE(col_start[i + 1], 0);
+      ABSL_DCHECK_GE(col_start[i + 1], 0);
       col_start[i] = col_start[i + 1];
     }
   }
@@ -261,11 +263,11 @@ void FlowPackager::PackFlow(const RegionFlowFeatureList& feature_list,
     const int r_start = data->col_starts(c);
     const int r_end = data->col_starts(c + 1);
     for (int r = r_start; r < r_end - 1; ++r) {
-      CHECK_LE(data->row_indices(r), data->row_indices(r + 1));
+      ABSL_CHECK_LE(data->row_indices(r), data->row_indices(r + 1));
     }
   }
 
-  CHECK_EQ(data->vector_data_size(), 2 * data->row_indices_size());
+  ABSL_CHECK_EQ(data->vector_data_size(), 2 * data->row_indices_size());
 
   *data->mutable_actively_discarded_tracked_ids() =
       feature_list.actively_discarded_tracked_ids();
@@ -273,8 +275,8 @@ void FlowPackager::PackFlow(const RegionFlowFeatureList& feature_list,
 
 void FlowPackager::EncodeTrackingData(const TrackingData& tracking_data,
                                       BinaryTrackingData* binary_data) const {
-  CHECK(options_.binary_tracking_data_support());
-  CHECK(binary_data != nullptr);
+  ABSL_CHECK(options_.binary_tracking_data_support());
+  ABSL_CHECK(binary_data != nullptr);
 
   int32_t frame_flags = 0;
   const bool high_profile = options_.use_high_profile();
@@ -313,7 +315,7 @@ void FlowPackager::EncodeTrackingData(const TrackingData& tracking_data,
 
   const int32_t domain_width = tracking_data.domain_width();
   const int32_t domain_height = tracking_data.domain_height();
-  CHECK_LT(domain_height, 256) << "Only heights below 256 are supported.";
+  ABSL_CHECK_LT(domain_height, 256) << "Only heights below 256 are supported.";
   const float frame_aspect = tracking_data.frame_aspect();
 
   // Limit vector value from above (to 20% frame diameter) and below (small
@@ -321,9 +323,9 @@ void FlowPackager::EncodeTrackingData(const TrackingData& tracking_data,
   const float max_vector_threshold = hypot(domain_width, domain_height) * 0.2f;
   // Warn if too much truncation.
   if (max_vector_value > max_vector_threshold * 1.5f) {
-    LOG(WARNING) << "A lot of truncation will occur during encoding. "
-                 << "Vector magnitudes are larger than 20% of the "
-                 << "frame diameter.";
+    ABSL_LOG(WARNING) << "A lot of truncation will occur during encoding. "
+                      << "Vector magnitudes are larger than 20% of the "
+                      << "frame diameter.";
   }
 
   max_vector_value =
@@ -393,7 +395,7 @@ void FlowPackager::EncodeTrackingData(const TrackingData& tracking_data,
           flow_compressed_8.push_back(flow_y);
         }
 
-        DCHECK_LT(motion_data.row_indices(r), 256);
+        ABSL_DCHECK_LT(motion_data.row_indices(r), 256);
         row_idx.push_back(motion_data.row_indices(r));
       }
     }
@@ -470,7 +472,7 @@ void FlowPackager::EncodeTrackingData(const TrackingData& tracking_data,
         // Delta compress.
         int delta_row = motion_data.row_indices(r) -
                         (r == r_start ? 0 : motion_data.row_indices(r - 1));
-        CHECK_GE(delta_row, 0);
+        ABSL_CHECK_GE(delta_row, 0);
 
         bool combined = false;
         if (r > r_start) {
@@ -520,9 +522,9 @@ void FlowPackager::EncodeTrackingData(const TrackingData& tracking_data,
     }
 
     if (options_.high_fidelity_16bit_encode()) {
-      CHECK_EQ(2 * encoded, flow_compressed_16.size());
+      ABSL_CHECK_EQ(2 * encoded, flow_compressed_16.size());
     } else {
-      CHECK_EQ(2 * encoded, flow_compressed_8.size());
+      ABSL_CHECK_EQ(2 * encoded, flow_compressed_8.size());
     }
 
     // Adjust column start by compressions.
@@ -530,11 +532,11 @@ void FlowPackager::EncodeTrackingData(const TrackingData& tracking_data,
     for (int k = 0; k < domain_width; ++k) {
       curr_adjust -= compressions_per_column[k];
       col_starts[k + 1] += curr_adjust;
-      CHECK_LE(col_starts[k], col_starts[k + 1]);
+      ABSL_CHECK_LE(col_starts[k], col_starts[k + 1]);
     }
 
-    CHECK_EQ(row_idx.size(), col_starts.back());
-    CHECK_EQ(num_vectors, row_idx.size() + compressible);
+    ABSL_CHECK_EQ(row_idx.size(), col_starts.back());
+    ABSL_CHECK_EQ(num_vectors, row_idx.size() + compressible);
   }
 
   // Delta compress col_starts.
@@ -542,7 +544,7 @@ void FlowPackager::EncodeTrackingData(const TrackingData& tracking_data,
   col_start_delta[0] = col_starts[0];
   for (int k = 1; k < domain_width + 1; ++k) {
     const int delta = col_starts[k] - col_starts[k - 1];
-    CHECK_LT(delta, 256) << "Only up to 255 items per column supported.";
+    ABSL_CHECK_LT(delta, 256) << "Only up to 255 items per column supported.";
     col_start_delta[k] = delta;
   }
 
@@ -602,7 +604,7 @@ std::string PopSubstring(int len, absl::string_view* piece) {
 
 void FlowPackager::DecodeTrackingData(const BinaryTrackingData& container_data,
                                       TrackingData* tracking_data) const {
-  CHECK(tracking_data != nullptr);
+  ABSL_CHECK(tracking_data != nullptr);
 
   absl::string_view data(container_data.data());
   int32_t frame_flags = 0;
@@ -618,8 +620,8 @@ void FlowPackager::DecodeTrackingData(const BinaryTrackingData& container_data,
   DecodeFromStringView(PopSubstring(4, &data), &domain_height);
   DecodeFromStringView(PopSubstring(4, &data), &frame_aspect);
 
-  CHECK_LE(domain_width, 256);
-  CHECK_LE(domain_height, 256);
+  ABSL_CHECK_LE(domain_width, 256);
+  ABSL_CHECK_LE(domain_height, 256);
 
   DecodeVectorFromStringView(
       PopSubstring(4 * HomographyAdapter::NumParameters(), &data),
@@ -662,7 +664,7 @@ void FlowPackager::DecodeTrackingData(const BinaryTrackingData& container_data,
 
   // Should not have more row indices than vectors. (One for each in baseline
   // profile, less in high profile).
-  CHECK_LE(row_idx_size, num_vectors);
+  ABSL_CHECK_LE(row_idx_size, num_vectors);
   DecodeVectorFromStringView(PopSubstring(row_idx_size, &data), &row_idx);
 
   // Records for each vector whether to advance pointer in the vector data array
@@ -707,7 +709,7 @@ void FlowPackager::DecodeTrackingData(const BinaryTrackingData& container_data,
       }
     }
     row_idx.swap(row_idx_unpacked);
-    CHECK_EQ(num_vectors, row_idx.size());
+    ABSL_CHECK_EQ(num_vectors, row_idx.size());
 
     // Adjust column start by expansions.
     int curr_adjust = 0;
@@ -717,7 +719,7 @@ void FlowPackager::DecodeTrackingData(const BinaryTrackingData& container_data,
     }
   }
 
-  CHECK_EQ(num_vectors, col_starts.back());
+  ABSL_CHECK_EQ(num_vectors, col_starts.back());
 
   int vector_data_size;
   DecodeFromStringView(PopSubstring(4, &data), &vector_data_size);
@@ -749,7 +751,7 @@ void FlowPackager::DecodeTrackingData(const BinaryTrackingData& container_data,
         motion_data->add_vector_data(prev_flow_y * flow_denom);
       }
     }
-    CHECK_EQ(vector_data_size, counter);
+    ABSL_CHECK_EQ(vector_data_size, counter);
   } else {
     std::vector<int8_t> vector_data;
     DecodeVectorFromStringView(
@@ -775,7 +777,7 @@ void FlowPackager::DecodeTrackingData(const BinaryTrackingData& container_data,
         motion_data->add_vector_data(prev_flow_y * flow_denom);
       }
     }
-    CHECK_EQ(vector_data_size, counter);
+    ABSL_CHECK_EQ(vector_data_size, counter);
   }
 
   for (auto idx : row_idx) {
@@ -789,7 +791,7 @@ void FlowPackager::DecodeTrackingData(const BinaryTrackingData& container_data,
 
 void FlowPackager::BinaryTrackingDataToContainer(
     const BinaryTrackingData& binary_data, TrackingContainer* container) const {
-  CHECK(container != nullptr);
+  ABSL_CHECK(container != nullptr);
   container->Clear();
   container->set_header("TRAK");
   container->set_version(1);
@@ -799,17 +801,17 @@ void FlowPackager::BinaryTrackingDataToContainer(
 
 void FlowPackager::BinaryTrackingDataFromContainer(
     const TrackingContainer& container, BinaryTrackingData* binary_data) const {
-  CHECK_EQ("TRAK", container.header());
-  CHECK_EQ(1, container.version()) << "Unsupported version.";
+  ABSL_CHECK_EQ("TRAK", container.header());
+  ABSL_CHECK_EQ(1, container.version()) << "Unsupported version.";
   *binary_data->mutable_data() = container.data();
 }
 
 void FlowPackager::DecodeMetaData(const TrackingContainer& container_data,
                                   MetaData* meta_data) const {
-  CHECK(meta_data != nullptr);
+  ABSL_CHECK(meta_data != nullptr);
 
-  CHECK_EQ("META", container_data.header());
-  CHECK_EQ(1, container_data.version()) << "Unsupported version.";
+  ABSL_CHECK_EQ("META", container_data.header());
+  ABSL_CHECK_EQ(1, container_data.version()) << "Unsupported version.";
 
   absl::string_view data(container_data.data());
 
@@ -833,14 +835,14 @@ void FlowPackager::DecodeMetaData(const TrackingContainer& container_data,
 void FlowPackager::FinalizeTrackingContainerFormat(
     std::vector<uint32_t>* timestamps,
     TrackingContainerFormat* container_format) {
-  CHECK(container_format != nullptr);
+  ABSL_CHECK(container_format != nullptr);
 
   // Compute binary sizes of track_data.
   const int num_frames = container_format->track_data_size();
 
   std::vector<uint32_t> msecs(num_frames, 0);
   if (timestamps) {
-    CHECK_EQ(num_frames, timestamps->size());
+    ABSL_CHECK_EQ(num_frames, timestamps->size());
     msecs = *timestamps;
   }
   std::vector<int> sizes(num_frames, 0);
@@ -877,14 +879,14 @@ void FlowPackager::FinalizeTrackingContainerFormat(
 
 void FlowPackager::FinalizeTrackingContainerProto(
     std::vector<uint32_t>* timestamps, TrackingContainerProto* proto) {
-  CHECK(proto != nullptr);
+  ABSL_CHECK(proto != nullptr);
 
   // Compute binary sizes of track_data.
   const int num_frames = proto->track_data_size();
 
   std::vector<uint32_t> msecs(num_frames, 0);
   if (timestamps) {
-    CHECK_EQ(num_frames, timestamps->size());
+    ABSL_CHECK_EQ(num_frames, timestamps->size());
     msecs = *timestamps;
   }
 
@@ -909,8 +911,8 @@ void FlowPackager::InitializeMetaData(int num_frames,
                                       const std::vector<int>& data_sizes,
                                       MetaData* meta_data) const {
   meta_data->set_num_frames(num_frames);
-  CHECK_EQ(num_frames, msecs.size());
-  CHECK_EQ(num_frames, data_sizes.size());
+  ABSL_CHECK_EQ(num_frames, msecs.size());
+  ABSL_CHECK_EQ(num_frames, data_sizes.size());
 
   int curr_offset = 0;
   for (int f = 0; f < num_frames; ++f) {
@@ -923,9 +925,9 @@ void FlowPackager::InitializeMetaData(int num_frames,
 
 void FlowPackager::AddContainerToString(const TrackingContainer& container,
                                         std::string* binary_data) {
-  CHECK(binary_data != nullptr);
+  ABSL_CHECK(binary_data != nullptr);
   std::string header_string(container.header());
-  CHECK_EQ(4, header_string.size());
+  ABSL_CHECK_EQ(4, header_string.size());
 
   std::vector<char> header{header_string[0], header_string[1], header_string[2],
                            header_string[3]};
@@ -936,10 +938,10 @@ void FlowPackager::AddContainerToString(const TrackingContainer& container,
 
 std::string FlowPackager::SplitContainerFromString(
     absl::string_view* binary_data, TrackingContainer* container) {
-  CHECK(binary_data != nullptr);
-  CHECK(container != nullptr);
-  CHECK_GE(binary_data->size(), 12) << "Data does not contain "
-                                    << "valid container";
+  ABSL_CHECK(binary_data != nullptr);
+  ABSL_CHECK(container != nullptr);
+  ABSL_CHECK_GE(binary_data->size(), 12) << "Data does not contain "
+                                         << "valid container";
 
   container->set_header(PopSubstring(4, binary_data));
 
@@ -961,7 +963,7 @@ std::string FlowPackager::SplitContainerFromString(
 
 void FlowPackager::TrackingContainerFormatToBinary(
     const TrackingContainerFormat& container_format, std::string* binary) {
-  CHECK(binary != nullptr);
+  ABSL_CHECK(binary != nullptr);
   binary->clear();
 
   AddContainerToString(container_format.meta_data(), binary);
@@ -974,28 +976,28 @@ void FlowPackager::TrackingContainerFormatToBinary(
 
 void FlowPackager::TrackingContainerFormatFromBinary(
     const std::string& binary, TrackingContainerFormat* container_format) {
-  CHECK(container_format != nullptr);
+  ABSL_CHECK(container_format != nullptr);
   container_format->Clear();
 
   absl::string_view data(binary);
 
-  CHECK_EQ("META", SplitContainerFromString(
-                       &data, container_format->mutable_meta_data()));
+  ABSL_CHECK_EQ("META", SplitContainerFromString(
+                            &data, container_format->mutable_meta_data()));
   MetaData meta_data;
   DecodeMetaData(container_format->meta_data(), &meta_data);
 
   for (int f = 0; f < meta_data.num_frames(); ++f) {
     TrackingContainer* container = container_format->add_track_data();
-    CHECK_EQ("TRAK", SplitContainerFromString(&data, container));
+    ABSL_CHECK_EQ("TRAK", SplitContainerFromString(&data, container));
   }
 
-  CHECK_EQ("TERM", SplitContainerFromString(
-                       &data, container_format->mutable_term_data()));
+  ABSL_CHECK_EQ("TERM", SplitContainerFromString(
+                            &data, container_format->mutable_term_data()));
 }
 
 void FlowPackager::SortRegionFlowFeatureList(
     float scale_x, float scale_y, RegionFlowFeatureList* feature_list) const {
-  CHECK(feature_list != nullptr);
+  ABSL_CHECK(feature_list != nullptr);
   // Sort features lexicographically.
   std::sort(feature_list->mutable_feature()->begin(),
             feature_list->mutable_feature()->end(),

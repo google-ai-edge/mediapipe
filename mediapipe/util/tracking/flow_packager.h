@@ -15,11 +15,11 @@
 #ifndef MEDIAPIPE_UTIL_TRACKING_FLOW_PACKAGER_H_
 #define MEDIAPIPE_UTIL_TRACKING_FLOW_PACKAGER_H_
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
 #include "absl/strings/string_view.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/util/tracking/flow_packager.pb.h"
 #include "mediapipe/util/tracking/motion_estimation.pb.h"
 #include "mediapipe/util/tracking/region_flow.pb.h"
@@ -117,10 +117,10 @@ class FlowPackager {
   // Fills in meta (first container) and termination data (last container).
   // Optionally, pass timestamps for each frame.
   void FinalizeTrackingContainerFormat(
-      std::vector<uint32>* timestamps,  // optional, can be null.
+      std::vector<uint32_t>* timestamps,  // optional, can be null.
       TrackingContainerFormat* container_fromat);
   void FinalizeTrackingContainerProto(
-      std::vector<uint32>* timestamps,  // optional, can be null.
+      std::vector<uint32_t>* timestamps,  // optional, can be null.
       TrackingContainerProto* proto);
 
   // Fast encode to binary representation.
@@ -150,7 +150,7 @@ class FlowPackager {
 
  private:
   // Sets meta data for a set
-  void InitializeMetaData(int num_frames, const std::vector<uint32>& msecs,
+  void InitializeMetaData(int num_frames, const std::vector<uint32_t>& msecs,
                           const std::vector<int>& data_sizes,
                           MetaData* meta_data) const;
 

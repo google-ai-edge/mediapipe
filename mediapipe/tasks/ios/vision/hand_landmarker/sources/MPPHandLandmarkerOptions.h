@@ -23,11 +23,11 @@ NS_ASSUME_NONNULL_BEGIN
 @class MPPHandLandmarker;
 
 /**
- * This protocol defines an interface for the delegates of `MPPHandLandmarker` object to receive
- * results of performing asynchronous hand landmark detection on images (i.e, when `runningMode` =
- * `MPPRunningModeLiveStream`).
+ * This protocol defines an interface for the delegates of `HandLandmarker` object to receive
+ * results of performing asynchronous hand landmark detection on images (i.e, when
+ * `runningMode` = `.liveStream`).
  *
- * The delegate of `MPPHandLandmarker` must adopt `MPPHandLandmarkerLiveStreamDelegate` protocol.
+ * The delegate of `HandLandmarker` must adopt `HandLandmarkerLiveStreamDelegate` protocol.
  * The methods in this protocol are optional.
  */
 NS_SWIFT_NAME(HandLandmarkerLiveStreamDelegate)
@@ -37,14 +37,14 @@ NS_SWIFT_NAME(HandLandmarkerLiveStreamDelegate)
 
 /**
  * This method notifies a delegate that the results of asynchronous hand landmark detection of an
- * image submitted to the `MPPHandLandmarker` is available.
+ * image submitted to the `HandLandmarker` is available.
  *
- * This method is called on a private serial dispatch queue created by the `MPPHandLandmarker`
- * for performing the asynchronous delegates calls.
+ * This method is called on a private serial dispatch queue created by the `HandLandmarker` for
+ * performing the asynchronous delegates calls.
  *
  * @param handLandmarker The hand landmarker which performed the hand landmarking.
- * This is useful to test equality when there are multiple instances of `MPPHandLandmarker`.
- * @param result The `MPPHandLandmarkerResult` object that contains a list of detections, each
+ * This is useful to test equality when there are multiple instances of `HandLandmarker`.
+ * @param result The `HandLandmarkerResult` object that contains a list of detections, each
  * detection has a bounding box that is expressed in the unrotated input frame of reference
  * coordinates system, i.e. in `[0,image_width) x [0,image_height)`, which are the dimensions of the
  * underlying image data.
@@ -60,32 +60,30 @@ NS_SWIFT_NAME(HandLandmarkerLiveStreamDelegate)
     NS_SWIFT_NAME(handLandmarker(_:didFinishDetection:timestampInMilliseconds:error:));
 @end
 
-/** Options for setting up a `MPPHandLandmarker`. */
+/** Options for setting up a `HandLandmarker`. */
 NS_SWIFT_NAME(HandLandmarkerOptions)
 @interface MPPHandLandmarkerOptions : MPPTaskOptions <NSCopying>
 
 /**
- * Running mode of the hand landmarker task. Defaults to `MPPRunningModeImage`.
- * `MPPHandLandmarker` can be created with one of the following running modes:
- *  1. `MPPRunningModeImage`: The mode for performing hand landmark detection on single image
- * inputs.
- *  2. `MPPRunningModeVideo`: The mode for performing hand landmark detection on the decoded frames
- * of a video.
- *  3. `MPPRunningModeLiveStream`: The mode for performing hand landmark detection on a live stream
- * of input data, such as from the camera.
+ * Running mode of the hand landmarker task. Defaults to `.image`.
+ * `HandLandmarker` can be created with one of the following running modes:
+ *  1. `image`: The mode for performing hand landmark detection on single image inputs.
+ *  2. `video`: The mode for performing hand landmark detection on the decoded frames of a video.
+ *  3. `liveStream`: The mode for performing hand landmark detection on a live stream of input data,
+ * such as from the camera.
  */
 @property(nonatomic) MPPRunningMode runningMode;
 
 /**
- * An object that confirms to `MPPHandLandmarkerLiveStreamDelegate` protocol. This object must
+ * An object that confirms to `HandLandmarkerLiveStreamDelegate` protocol. This object must
  * implement `handLandmarker:didFinishDetectionWithResult:timestampInMilliseconds:error:` to
  * receive the results of performing asynchronous hand landmark detection on images (i.e, when
- * `runningMode` = `MPPRunningModeLiveStream`).
+ * `runningMode` = `.liveStream`).
  */
 @property(nonatomic, weak, nullable) id<MPPHandLandmarkerLiveStreamDelegate>
     handLandmarkerLiveStreamDelegate;
 
-/** The maximum number of hands that can be detected by the `MPPHandLandmarker`. */
+/** The maximum number of hands that can be detected by the `HandLandmarker`. */
 @property(nonatomic) NSInteger numHands;
 
 /** The minimum confidence score for the hand detection to be considered successful. */

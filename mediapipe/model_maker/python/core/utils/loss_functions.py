@@ -29,6 +29,68 @@ from official.modeling import tf_utils
 _VGG_IMAGENET_PERCEPTUAL_MODEL_URL = 'https://storage.googleapis.com/mediapipe-assets/vgg_feature_extractor.tar.gz'
 
 
+class MaskedBinaryCrossentropy(tf.keras.losses.BinaryCrossentropy):
+  """Modified BinaryCrossentropy that uses sample_weights as a mask.
+
+  This loss is similar to BinaryCrossentropy, but it allows for the
+  specification of sample_weights as a mask for each item of y_pred.
+  Typical usage of BinaryCrossentropy expects sample_weights to specify a single
+  scalar per example which does not provide granularity to mask each element of
+  y_pred.
+
+  This loss differs from BinaryCrossentropy in that it does not AVG loss per
+  example and SUM over batch. Instead, it SUMs loss per example and batch.
+  """
+
+  def __init__(
+      self, *args, class_weights: Optional[Sequence[float]] = None, **kwargs
+  ):
+    """Initializes MaskedBinaryCrossentropy and sets class_weights.
+
+    Args:
+      *args: Args to pass to the base class.
+      class_weights: Optional class weights. If provided, the loss will be
+        weighted by the class weights. Expected to be in shape [num_classes].
+      **kwargs: Kwargs to pass to the base class.
+    """
+    super().__init__(*args, **kwargs)
+    self._class_weights = (
+        tf.expand_dims(tf.convert_to_tensor(class_weights), axis=0)
+        if class_weights is not None
+        else None
+    )
+
+  def __call__(self, y_true, y_pred, sample_weight=None):
+    """Override the __call__ method to apply the sample_weight as a mask.
+
+    Args:
+      y_true: The ground truth values. Expected to be in shape [batch_size,
+        num_classes]
+      y_pred: The predicted values. Expected to be in shape [batch_size,
+        num_classes]
+      sample_weight: Optional weighting of each example. Defaults to 1.0.
+        Expected to be in shape [batch_size, num_classes]
+
+    Returns:
+      The loss.
+    """
+    if self._class_weights is not None:
+      if sample_weight is not None:
+        sample_weight = sample_weight * self._class_weights
+      else:
+        sample_weight = tf.repeat(
+            self._class_weights, repeats=y_true.shape[0], axis=0
+        )
+
+    return super().__call__(  # pytype: disable=attribute-error
+        tf.reshape(y_true, [-1, 1]),
+        tf.reshape(y_pred, [-1, 1]),
+        tf.reshape(sample_weight, [-1, 1])
+        if sample_weight is not None
+        else None,
+    )
+
+
 class FocalLoss(tf.keras.losses.Loss):
   """Implementation of focal loss (https://arxiv.org/pdf/1708.02002.pdf).
 

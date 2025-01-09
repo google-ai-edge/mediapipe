@@ -13,14 +13,20 @@
 # limitations under the License.
 #
 
-load("@rules_foreign_cc//foreign_cc:cmake.bzl", "cmake")
 load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
+load("@rules_foreign_cc//foreign_cc:cmake.bzl", "cmake")
 
 licenses(["notice"])  # Apache License 2.0
 
 package(default_visibility = ["//visibility:public"])
 
-exports_files(["LICENSE"])
+exports_files([
+    "LICENSE",
+    "requirements_lock.txt",
+    "requirements_lock_3_10.txt",
+    "requirements_lock_3_11.txt",
+    "requirements_lock_3_12.txt",
+])
 
 cc_library(
     name = "glog",
@@ -30,9 +36,6 @@ cc_library(
             "@com_github_glog_glog_no_gflags//:glog",
         ],
         "//mediapipe:android_x86_64": [
-            "@com_github_glog_glog_no_gflags//:glog",
-        ],
-        "//mediapipe:android_armeabi": [
             "@com_github_glog_glog_no_gflags//:glog",
         ],
         "//mediapipe:android_arm": [
@@ -48,7 +51,7 @@ cc_library(
             "@com_github_glog_glog//:glog",
         ],
         "//mediapipe:windows": [
-            "@com_github_glog_glog//:glog",
+            "@com_github_glog_glog_windows//:glog",
         ],
         "//conditions:default": [
             "@com_github_glog_glog//:glog",
@@ -60,6 +63,14 @@ config_setting(
     name = "opencv_source_build",
     define_values = {
         "OPENCV": "source",
+    },
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "opencv_prebuilt_build",
+    define_values = {
+        "OPENCV": "prebuilt",
     },
     visibility = ["//visibility:public"],
 )
@@ -108,10 +119,43 @@ config_setting(
     },
 )
 
+config_setting(
+    name = "opencv_darwin_prebuild",
+    define_values = {
+        "OPENCV": "prebuilt",
+    },
+    values = {
+        "apple_platform_type": "macos",
+        "cpu": "darwin",
+    },
+)
+
+config_setting(
+    name = "opencv_darwin_arm64_prebuild",
+    define_values = {
+        "OPENCV": "prebuilt",
+    },
+    values = {
+        "apple_platform_type": "macos",
+        "cpu": "darwin_arm64",
+    },
+)
+
+alias(
+    name = "opencv_prebuilt",
+    actual = select({
+        "//mediapipe:ios": "@ios_opencv//:opencv",
+        ":opencv_darwin_prebuild": "//third_party/prebuilts:opencv_darwin",
+        ":opencv_darwin_arm64_prebuild": "//third_party/prebuilts:opencv_darwin_arm64",
+        "//conditions:default": ":opencv_cmake",
+    }),
+)
+
 alias(
     name = "opencv",
     actual = select({
         ":opencv_source_build": ":opencv_cmake",
+        ":opencv_prebuilt_build": ":opencv_prebuilt",
         ":opencv_ios_sim_arm64_source_build": "@ios_opencv_source//:opencv",
         ":opencv_ios_arm64_source_build": "@ios_opencv_source//:opencv",
         ":opencv_ios_x86_64_source_build": "@ios_opencv_source//:opencv",
@@ -256,7 +300,6 @@ alias(
     actual = select({
         "//mediapipe:android_x86": "@android_opencv//:libopencv_x86",
         "//mediapipe:android_x86_64": "@android_opencv//:libopencv_x86_64",
-        "//mediapipe:android_armeabi": "@android_opencv//:libopencv_armeabi-v7a",
         "//mediapipe:android_arm": "@android_opencv//:libopencv_armeabi-v7a",
         "//mediapipe:android_arm64": "@android_opencv//:libopencv_arm64-v8a",
         "//mediapipe:ios": "@ios_opencv//:opencv",
@@ -281,7 +324,6 @@ cc_library(
     deps = select({
         "//mediapipe:android_x86": [],
         "//mediapipe:android_x86_64": [],
-        "//mediapipe:android_armeabi": [],
         "//mediapipe:android_arm": [],
         "//mediapipe:android_arm64": [],
         "//mediapipe:ios": [],

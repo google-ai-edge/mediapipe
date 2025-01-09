@@ -37,9 +37,9 @@ namespace tensor_internal {
 
 // Compile-time hash function
 // https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function
-constexpr uint64_t kFnvPrime = 0x00000100000001B3;
-constexpr uint64_t kFnvOffsetBias = 0xcbf29ce484222325;
-constexpr uint64_t FnvHash64(uint64_t value1, uint64_t value2) {
+inline constexpr uint64_t kFnvPrime = 0x00000100000001B3;
+inline constexpr uint64_t kFnvOffsetBias = 0xcbf29ce484222325;
+inline constexpr uint64_t FnvHash64(uint64_t value1, uint64_t value2) {
   return (value2 ^ value1) * kFnvPrime;
 }
 constexpr uint64_t FnvHash64(const char* str, uint64_t hash = kFnvOffsetBias) {

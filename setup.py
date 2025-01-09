@@ -40,12 +40,18 @@ MP_THIRD_PARTY_BUILD = os.path.join(MP_ROOT_PATH, 'third_party/BUILD')
 MP_ROOT_INIT_PY = os.path.join(MP_ROOT_PATH, '__init__.py')
 
 GPU_OPTIONS_DISBALED = ['--define=MEDIAPIPE_DISABLE_GPU=1']
+
 GPU_OPTIONS_ENBALED = [
     '--copt=-DTFLITE_GPU_EXTRA_GLES_DEPS',
     '--copt=-DMEDIAPIPE_OMIT_EGL_WINDOW_BIT',
     '--copt=-DMESA_EGL_NO_X11_HEADERS',
     '--copt=-DEGL_NO_X11',
 ]
+if IS_MAC:
+  GPU_OPTIONS_ENBALED.append(
+      '--copt=-DMEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER'
+  )
+
 GPU_OPTIONS = GPU_OPTIONS_DISBALED if MP_DISABLE_GPU else GPU_OPTIONS_ENBALED
 
 OVMS_OPTIONS = ['--define=MEDIAPIPE_DISABLE=1 --define=PYTHON_DISABLE=1 --cxxopt=-DPYTHON_DISABLE=1 --cxxopt=-DMEDIAPIPE_DISABLE=1']
@@ -205,6 +211,10 @@ class GeneratePyProtos(build_ext.build_ext):
         # Ignore testdata dir.
         if 'testdata' in proto_file:
           continue
+        if 'genai' in proto_file:
+          continue
+        if 'detection_postprocessing_graph_options' in proto_file:
+          continue
         self._add_empty_init_file(
             os.path.abspath(
                 os.path.join(MP_ROOT_PATH, self.build_lib,
@@ -269,16 +279,25 @@ class BuildModules(build_ext.build_ext):
       self._download_external_file(external_file)
 
     binary_graphs = [
-        'face_detection/face_detection_short_range_cpu',
-        'face_detection/face_detection_full_range_cpu',
-        'face_landmark/face_landmark_front_cpu',
-        'hand_landmark/hand_landmark_tracking_cpu',
-        'holistic_landmark/holistic_landmark_cpu', 'objectron/objectron_cpu',
-        'pose_landmark/pose_landmark_cpu',
-        'selfie_segmentation/selfie_segmentation_cpu',
-        'ovms_modules/object_detection_ovms',
-        'ovms_modules/holistic_tracking_ovms',
-        'ovms_modules/face_detection_ovms',
+# TODO reenable with python - disabled after 0.10.18 update
+#        'face_detection/face_detection_short_range_cpu',
+#        'face_detection/face_detection_full_range_cpu',
+#        'face_landmark/face_landmark_front_cpu',
+#        'hand_landmark/hand_landmark_tracking_cpu',
+#        'holistic_landmark/holistic_landmark_cpu', 'objectron/objectron_cpu',
+#        'pose_landmark/pose_landmark_cpu',
+#        'selfie_segmentation/selfie_segmentation_cpu',
+#        'ovms_modules/object_detection_ovms',
+#        'ovms_modules/holistic_tracking_ovms',
+#        'ovms_modules/face_detection_ovms',
+        'face_detection/face_detection_short_range_cpu.binarypb',
+        'face_detection/face_detection_full_range_cpu.binarypb',
+        'face_landmark/face_landmark_front_cpu.binarypb',
+        'hand_landmark/hand_landmark_tracking_cpu.binarypb',
+        'holistic_landmark/holistic_landmark_cpu.binarypb',
+        'objectron/objectron_cpu.binarypb',
+        'pose_landmark/pose_landmark_cpu.binarypb',
+        'selfie_segmentation/selfie_segmentation_cpu.binarypb'
     ]
     for elem in binary_graphs:
       binary_graph = os.path.join('mediapipe/modules/', elem)
@@ -312,7 +331,7 @@ class BuildModules(build_ext.build_ext):
       bazel_command.append('--define=OPENCV=source')
 
     _invoke_shell_command(bazel_command)
-    _copy_to_build_lib_dir(self.build_lib, binary_graph_target + '.binarypb')
+    _copy_to_build_lib_dir(self.build_lib, binary_graph_target)
 
 
 class GenerateMetadataSchema(build_ext.build_ext):
@@ -404,6 +423,8 @@ class BuildExtension(build_ext.build_ext):
             arm64_name,
         ]
         _invoke_shell_command(lipo_command)
+        # Delete the arm64 file (the x86 file was overwritten by lipo)
+        _invoke_shell_command(['rm', arm64_name])
     else:
       for ext in self.extensions:
         self._build_binary(ext)
@@ -412,11 +433,13 @@ class BuildExtension(build_ext.build_ext):
   def _build_binary(self, ext, extra_args=None):
     if not os.path.exists(self.build_temp):
       os.makedirs(self.build_temp)
+    # TODO dispose keep_going after python build fix
     bazel_command = [
         'bazel',
         'build',
         '--compilation_mode=opt',
         '--copt=-DNDEBUG',
+        '--keep_going',
         '--action_env=PYTHON_BIN_PATH=' + _normalize_path(sys.executable),
         str(ext.bazel_target + '.so'),
     ] + GPU_OPTIONS + OVMS_OPTIONS
@@ -557,6 +580,7 @@ setuptools.setup(
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
         'Programming Language :: Python :: 3 :: Only',
         'Topic :: Scientific/Engineering',
         'Topic :: Scientific/Engineering :: Artificial Intelligence',

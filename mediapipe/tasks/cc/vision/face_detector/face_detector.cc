@@ -15,6 +15,8 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/vision/face_detector/face_detector.h"
 
+#include <utility>
+
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/tasks/cc/components/containers/detection_result.h"
@@ -130,16 +132,18 @@ absl::StatusOr<std::unique_ptr<FaceDetector>> FaceDetector::Create(
           std::move(options_proto),
           options->running_mode == core::RunningMode::LIVE_STREAM),
       std::move(options->base_options.op_resolver), options->running_mode,
-      std::move(packets_callback));
+      std::move(packets_callback),
+      /*disable_default_service=*/
+      options->base_options.disable_default_service);
 }
 
 absl::StatusOr<FaceDetectorResult> FaceDetector::Detect(
     mediapipe::Image image,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
-  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                   ConvertToNormalizedRect(image_processing_options, image,
-                                           /*roi_allowed=*/false));
-  ASSIGN_OR_RETURN(
+  MP_ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                      ConvertToNormalizedRect(image_processing_options, image,
+                                              /*roi_allowed=*/false));
+  MP_ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessImageData(
           {{kImageInStreamName, MakePacket<Image>(std::move(image))},
@@ -156,10 +160,10 @@ absl::StatusOr<FaceDetectorResult> FaceDetector::Detect(
 absl::StatusOr<FaceDetectorResult> FaceDetector::DetectForVideo(
     mediapipe::Image image, uint64_t timestamp_ms,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
-  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                   ConvertToNormalizedRect(image_processing_options, image,
-                                           /*roi_allowed=*/false));
-  ASSIGN_OR_RETURN(
+  MP_ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                      ConvertToNormalizedRect(image_processing_options, image,
+                                              /*roi_allowed=*/false));
+  MP_ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessVideoData(
           {{kImageInStreamName,
@@ -179,9 +183,9 @@ absl::StatusOr<FaceDetectorResult> FaceDetector::DetectForVideo(
 absl::Status FaceDetector::DetectAsync(
     mediapipe::Image image, uint64_t timestamp_ms,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
-  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                   ConvertToNormalizedRect(image_processing_options, image,
-                                           /*roi_allowed=*/false));
+  MP_ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                      ConvertToNormalizedRect(image_processing_options, image,
+                                              /*roi_allowed=*/false));
   return SendLiveStreamData(
       {{kImageInStreamName,
         MakePacket<Image>(std::move(image))

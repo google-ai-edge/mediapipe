@@ -31,18 +31,16 @@ body:
       label: URL that shows the problem
     validations:
       required: false
-  - type: textarea
+  - type: input
     id: current_model
     attributes:
       label: Describe the actual behavior
-      render: shell
     validations:
       required: false
-  - type: textarea
+  - type: input
     id: expected_model
     attributes:
       label: Describe the expected behaviour
-      render: shell
     validations:
       required: false
   - type: textarea

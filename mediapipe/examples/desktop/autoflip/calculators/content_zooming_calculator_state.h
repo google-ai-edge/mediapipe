@@ -1,6 +1,7 @@
 #ifndef MEDIAPIPE_EXAMPLES_DESKTOP_AUTOFLIP_CALCULATORS_CONTENT_ZOOMING_CALCULATOR_STATE_H_
 #define MEDIAPIPE_EXAMPLES_DESKTOP_AUTOFLIP_CALCULATORS_CONTENT_ZOOMING_CALCULATOR_STATE_H_
 
+#include <cstdint>
 #include <optional>
 
 #include "mediapipe/examples/desktop/autoflip/quality/kinematic_path_solver.h"
@@ -22,7 +23,7 @@ struct ContentZoomingCalculatorState {
   // Stores the first crop rectangle.
   mediapipe::NormalizedRect first_rect;
   // Stores the time of the last "only_required" input.
-  int64 last_only_required_detection = 0;
+  int64_t last_only_required_detection = 0;
   // Rect values of last message with detection(s).
   int last_measured_height = 0;
   int last_measured_x_offset = 0;

@@ -219,8 +219,12 @@ describe('PoseLandmarker', () => {
           .toHaveBeenCalledTimes(1);
       expect(poseLandmarker.fakeWasmModule._waitUntilIdle).toHaveBeenCalled();
 
-      expect(result.landmarks).toEqual([[{'x': 0, 'y': 0, 'z': 0}]]);
-      expect(result.worldLandmarks).toEqual([[{'x': 0, 'y': 0, 'z': 0}]]);
+      expect(result.landmarks).toEqual([
+        [{'x': 0, 'y': 0, 'z': 0, 'visibility': 0}]
+      ]);
+      expect(result.worldLandmarks).toEqual([
+        [{'x': 0, 'y': 0, 'z': 0, 'visibility': 0}]
+      ]);
       expect(result.segmentationMasks![0]).toBeInstanceOf(MPMask);
       done();
     });
@@ -278,10 +282,12 @@ describe('PoseLandmarker', () => {
     // Invoke the pose landmarker
     poseLandmarker.detect({} as HTMLImageElement, result => {
       expect(result.landmarks).toEqual([
-        [{'x': 0.1, 'y': 0.2, 'z': 0.3}], [{'x': 0.4, 'y': 0.5, 'z': 0.6}]
+        [{'x': 0.1, 'y': 0.2, 'z': 0.3, 'visibility': 0}],
+        [{'x': 0.4, 'y': 0.5, 'z': 0.6, 'visibility': 0}]
       ]);
       expect(result.worldLandmarks).toEqual([
-        [{'x': 1, 'y': 2, 'z': 3}], [{'x': 4, 'y': 5, 'z': 6}]
+        [{'x': 1, 'y': 2, 'z': 3, 'visibility': 0}],
+        [{'x': 4, 'y': 5, 'z': 6, 'visibility': 0}]
       ]);
       done();
     });
@@ -333,8 +339,12 @@ describe('PoseLandmarker', () => {
     // Invoke the pose landmarker
     const result = poseLandmarker.detect({} as HTMLImageElement);
     expect(poseLandmarker.fakeWasmModule._waitUntilIdle).toHaveBeenCalled();
-    expect(result.landmarks).toEqual([[{'x': 0, 'y': 0, 'z': 0}]]);
-    expect(result.worldLandmarks).toEqual([[{'x': 0, 'y': 0, 'z': 0}]]);
+    expect(result.landmarks).toEqual([
+      [{'x': 0, 'y': 0, 'z': 0, 'visibility': 0}]
+    ]);
+    expect(result.worldLandmarks).toEqual([
+      [{'x': 0, 'y': 0, 'z': 0, 'visibility': 0}]
+    ]);
     result.close();
   });
 });

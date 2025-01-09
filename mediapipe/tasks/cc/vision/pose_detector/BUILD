@@ -22,6 +22,7 @@ cc_library(
     name = "pose_detector_graph",
     srcs = ["pose_detector_graph.cc"],
     deps = [
+        "//mediapipe/calculators/core:clip_vector_size_calculator",
         "//mediapipe/calculators/core:clip_vector_size_calculator_cc_proto",
         "//mediapipe/calculators/tensor:image_to_tensor_calculator_cc_proto",
         "//mediapipe/calculators/tensor:inference_calculator",

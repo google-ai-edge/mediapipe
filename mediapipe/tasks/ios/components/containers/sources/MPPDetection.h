@@ -35,7 +35,7 @@ NS_SWIFT_NAME(NormalizedKeypoint)
 @property(nonatomic, readonly) float score;
 
 /**
- * Initializes a new `MPPNormalizedKeypoint` object with the given location, label and score.
+ * Initializes a new `NormalizedKeypoint` object with the given location, label and score.
  * You must pass 0.0 for `score` if it is not present.
  *
  * @param location The (x,y) coordinates location of the normalized keypoint.
@@ -43,7 +43,7 @@ NS_SWIFT_NAME(NormalizedKeypoint)
  * @param score The optional score of the normalized keypoint. You must pass 0.0 for score if it
  * is not present.
  *
- * @return An instance of `MPPNormalizedKeypoint` initialized with the given given location, label
+ * @return An instance of `NormalizedKeypoint` initialized with the given given location, label
  * and score.
  */
 - (instancetype)initWithLocation:(CGPoint)location
@@ -56,18 +56,18 @@ NS_SWIFT_NAME(NormalizedKeypoint)
 
 @end
 
-/** Represents one detected object in the results of `MPPObjectDetector`. */
+/** Represents one detected object in the results of `ObjectDetector`. */
 NS_SWIFT_NAME(Detection)
 @interface MPPDetection : NSObject
 
-/** An array of `MPPCategory` objects containing the predicted categories. */
+/** An array of `Category` objects containing the predicted categories. */
 @property(nonatomic, readonly) NSArray<MPPCategory *> *categories;
 
 /** The bounding box of the detected object. */
 @property(nonatomic, readonly) CGRect boundingBox;
 
 /**
- * An optional array of `MPPNormalizedKeypoint` objects associated with the detection. Keypoints
+ * An optional array of `NormalizedKeypoint` objects associated with the detection. Keypoints
  * represent interesting points related to the detection. For example, the keypoints represent the
  * eyes, ear and mouth from the from detection model. In template matching detection, e.g. KNIFT,
  * they can instead represent the feature points for template matching.
@@ -75,18 +75,18 @@ NS_SWIFT_NAME(Detection)
 @property(nonatomic, readonly, nullable) NSArray<MPPNormalizedKeypoint *> *keypoints;
 
 /**
- * Initializes a new `MPPDetection` object with the given array of categories, bounding box and
+ * Initializes a new `Detection` object with the given array of categories, bounding box and
  * optional array of keypoints;
  *
- * @param categories A list of `MPPCategory` objects that contain category name, display name,
+ * @param categories A list of `Category` objects that contain category name, display name,
  * score, and the label index.
  * @param boundingBox  A `CGRect` that represents the bounding box.
- * @param keypoints: An optional array of `MPPNormalizedKeypoint` objects associated with the
+ * @param keypoints: An optional array of `NormalizedKeypoint` objects associated with the
  * detection. Keypoints represent interesting points related to the detection. For example, the
  * keypoints represent the eyes, ear and mouth from the face detection model. In template matching
  * detection, e.g. KNIFT, they can instead represent the feature points for template matching.
  *
- * @return An instance of `MPPDetection` initialized with the given array of categories, bounding
+ * @return An instance of `Detection` initialized with the given array of categories, bounding
  * box and `nil` keypoints.
  */
 - (instancetype)initWithCategories:(NSArray<MPPCategory *> *)categories

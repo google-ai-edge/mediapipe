@@ -35,4 +35,11 @@ message PoseLandmarksDetectorGraphOptions {
   // Minimum confidence value ([0.0, 1.0]) for pose presence score to be
   // considered successfully detecting a pose in the image.
   optional float min_detection_confidence = 2 [default = 0.5];
+
+  // Whether to smooth the detected landmarks over timestamps. Note that
+  // landmarks smoothing is only applicable for a single pose. If multiple poses
+  // landmarks are given, and smooth_landmarks is true, only the first pose
+  // landmarks would be smoothed, and the remaining landmarks are discarded in
+  // the returned landmarks list.
+  optional bool smooth_landmarks = 3;
 }

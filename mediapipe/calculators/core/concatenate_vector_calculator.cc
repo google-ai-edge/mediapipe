@@ -14,13 +14,13 @@
 
 #include "mediapipe/calculators/core/concatenate_vector_calculator.h"
 
+#include <cstdint>
 #include <vector>
 
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/tensor.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/util/render_data.pb.h"
 #include "tensorflow/lite/interpreter.h"
 

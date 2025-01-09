@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
@@ -22,6 +23,7 @@ objc_library(
     deps = [
         "//mediapipe/tasks/ios/core:MPPTaskResult",
         "//mediapipe/tasks/ios/vision/core:MPPMask",
+        "//third_party/apple_frameworks:Foundation",
     ],
 )
 
@@ -33,15 +35,35 @@ objc_library(
         ":MPPImageSegmenterResult",
         "//mediapipe/tasks/ios/core:MPPTaskOptions",
         "//mediapipe/tasks/ios/vision/core:MPPRunningMode",
+        "//third_party/apple_frameworks:Foundation",
     ],
 )
 
 objc_library(
     name = "MPPImageSegmenter",
-    hdrs = ["sources/MPPImageSegmenterOptions.h"],
+    srcs = ["sources/MPPImageSegmenter.mm"],
+    hdrs = ["sources/MPPImageSegmenter.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+        "-x objective-c++",
+    ],
+    module_name = "MPPImageSegmenter",
     deps = [
         ":MPPImageSegmenterOptions",
         ":MPPImageSegmenterResult",
+        "//mediapipe/tasks/cc/vision/image_segmenter:image_segmenter_graph",
+        "//mediapipe/tasks/cc/vision/image_segmenter/calculators:tensors_to_segmentation_calculator",
+        "//mediapipe/tasks/cc/vision/image_segmenter/calculators:tensors_to_segmentation_calculator_cc_proto",
+        "//mediapipe/tasks/ios/common:MPPCommon",
+        "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
+        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
+        "//mediapipe/tasks/ios/core:MPPTaskInfo",
         "//mediapipe/tasks/ios/vision/core:MPPImage",
+        "//mediapipe/tasks/ios/vision/core:MPPVisionTaskRunner",
+        "//mediapipe/tasks/ios/vision/image_segmenter/utils:MPPImageSegmenterOptionsHelpers",
+        "//mediapipe/tasks/ios/vision/image_segmenter/utils:MPPImageSegmenterResultHelpers",
+        "//mediapipe/util:label_map_cc_proto",
+        "//third_party/apple_frameworks:Foundation",
     ],
 )

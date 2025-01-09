@@ -20,8 +20,9 @@ limitations under the License.
 #include <utility>
 #include <vector>
 
-#include "absl/flags/flag.h"
+#include "absl/log/absl_check.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/match.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/api2/builder.h"
@@ -43,6 +44,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/task_runner.h"
 #include "mediapipe/tasks/cc/vision/face_detector/proto/face_detector_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
+#include "testing/base/public/gunit.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -91,15 +93,14 @@ constexpr float kFaceDetectionMaxDiff = 0.01;
 
 // Helper function to create a TaskRunner.
 absl::StatusOr<std::unique_ptr<TaskRunner>> CreateTaskRunner(
-    absl::string_view model_name) {
+    absl::string_view model_name, std::string graph_name) {
   Graph graph;
 
-  auto& face_detector_graph =
-      graph.AddNode("mediapipe.tasks.vision.face_detector.FaceDetectorGraph");
+  auto& face_detector_graph = graph.AddNode(graph_name);
 
   auto options = std::make_unique<FaceDetectorGraphOptions>();
   options->mutable_base_options()->mutable_model_asset()->set_file_name(
-      JoinPath("./", kTestDataDirectory, model_name));
+      JoinPath(::testing::SrcDir(), kTestDataDirectory, model_name));
   options->set_min_detection_confidence(0.6);
   options->set_min_suppression_threshold(0.3);
   face_detector_graph.GetOptions<FaceDetectorGraphOptions>().Swap(
@@ -119,8 +120,9 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateTaskRunner(
 
 Detection GetExpectedFaceDetectionResult(absl::string_view file_name) {
   Detection detection;
-  CHECK_OK(GetTextProto(file::JoinPath("./", kTestDataDirectory, file_name),
-                        &detection, Defaults()))
+  ABSL_CHECK_OK(GetTextProto(
+      file::JoinPath(::testing::SrcDir(), kTestDataDirectory, file_name),
+      &detection, Defaults()))
       << "Expected face detection result does not exist.";
   return detection;
 }
@@ -134,21 +136,25 @@ struct TestParams {
   std::string test_image_name;
   // Expected face detection results.
   std::vector<Detection> expected_result;
+  // The name of the mediapipe graph to run.
+  std::string graph_name;
 };
 
 class FaceDetectorGraphTest : public testing::TestWithParam<TestParams> {};
 
 TEST_P(FaceDetectorGraphTest, Succeed) {
   MP_ASSERT_OK_AND_ASSIGN(
-      Image image, DecodeImageFromFile(JoinPath("./", kTestDataDirectory,
-                                                GetParam().test_image_name)));
+      Image image,
+      DecodeImageFromFile(JoinPath(::testing::SrcDir(), kTestDataDirectory,
+                                   GetParam().test_image_name)));
   NormalizedRect input_norm_rect;
   input_norm_rect.set_x_center(0.5);
   input_norm_rect.set_y_center(0.5);
   input_norm_rect.set_width(1.0);
   input_norm_rect.set_height(1.0);
-  MP_ASSERT_OK_AND_ASSIGN(
-      auto task_runner, CreateTaskRunner(GetParam().face_detection_model_name));
+  MP_ASSERT_OK_AND_ASSIGN(auto task_runner,
+                          CreateTaskRunner(GetParam().face_detection_model_name,
+                                           GetParam().graph_name));
   auto output_packets = task_runner->Process(
       {{kImageName, MakePacket<Image>(std::move(image))},
        {kNormRectName,
@@ -163,11 +169,15 @@ TEST_P(FaceDetectorGraphTest, Succeed) {
 
 INSTANTIATE_TEST_SUITE_P(
     FaceDetectorGraphTest, FaceDetectorGraphTest,
-    Values(TestParams{.test_name = "ShortRange",
-                      .face_detection_model_name = kShortRangeBlazeFaceModel,
-                      .test_image_name = kPortraitImage,
-                      .expected_result = {GetExpectedFaceDetectionResult(
-                          kPortraitExpectedDetection)}}),
+    Values(
+        TestParams{
+            .test_name = "ShortRange",
+            .face_detection_model_name = kShortRangeBlazeFaceModel,
+            .test_image_name = kPortraitImage,
+            .expected_result = {GetExpectedFaceDetectionResult(
+                kPortraitExpectedDetection)},
+            .graph_name =
+                "mediapipe.tasks.vision.face_detector.FaceDetectorGraph"}, ),
     [](const TestParamInfo<FaceDetectorGraphTest::ParamType>& info) {
       return info.param.test_name;
     });

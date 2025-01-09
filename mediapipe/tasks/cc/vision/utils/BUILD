@@ -33,6 +33,7 @@ cc_library_with_tflite(
         "//mediapipe/tasks/cc/metadata:metadata_extractor",
         "//mediapipe/tasks/metadata:metadata_schema_cc",
         "@com_google_absl//absl/algorithm:container",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
@@ -60,6 +61,7 @@ cc_test_with_tflite(
         "//mediapipe/tasks/cc/metadata:metadata_extractor",
         "//mediapipe/tasks/metadata:metadata_schema_cc",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
@@ -73,6 +75,7 @@ cc_library(
     name = "image_utils",
     srcs = ["image_utils.cc"],
     hdrs = ["image_utils.h"],
+    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:image_frame",
@@ -81,6 +84,21 @@ cc_library(
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings:str_format",
         "@stblib//:stb_image",
+    ],
+)
+
+cc_test(
+    name = "image_utils_test",
+    srcs = ["image_utils_test.cc"],
+    deps = [
+        ":image_utils",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:gtest_main",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_googletest//:gtest_main",
     ],
 )
 
@@ -108,5 +126,25 @@ cc_test(
         ":landmarks_utils",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/tasks/cc/components/containers:rect",
+    ],
+)
+
+cc_library(
+    name = "data_renderer",
+    srcs = ["data_renderer.cc"],
+    hdrs = ["data_renderer.h"],
+    deps = [
+        "//mediapipe/calculators/util:annotation_overlay_calculator",
+        "//mediapipe/calculators/util:landmarks_to_render_data_calculator",
+        "//mediapipe/calculators/util:landmarks_to_render_data_calculator_cc_proto",
+        "//mediapipe/calculators/util:rect_to_render_data_calculator_cc_proto",
+        "//mediapipe/calculators/util:rect_to_render_scale_calculator",
+        "//mediapipe/calculators/util:rect_to_render_scale_calculator_cc_proto",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/util:render_data_cc_proto",
+        "@com_google_absl//absl/types:span",
     ],
 )

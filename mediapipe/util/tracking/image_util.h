@@ -17,6 +17,7 @@
 
 #include <vector>
 
+#include "absl/log/absl_check.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/framework/port/vector.h"
@@ -75,7 +76,7 @@ void CopyMatBorder(cv::Mat* mat) {
     }
 
     // src and dst should point to same column from here.
-    DCHECK_EQ(0, (src_ptr - dst_ptr) * sizeof(T) % mat->step[0]);
+    ABSL_DCHECK_EQ(0, (src_ptr - dst_ptr) * sizeof(T) % mat->step[0]);
 
     // Top row copy.
     memcpy(dst_ptr, src_ptr, width * channels * sizeof(dst_ptr[0]));
@@ -122,7 +123,7 @@ void CopyMatBorder(cv::Mat* mat) {
     }
 
     // src and dst should point to same column from here.
-    DCHECK_EQ(0, (dst_ptr - src_ptr) * sizeof(T) % mat->step[0]);
+    ABSL_DCHECK_EQ(0, (dst_ptr - src_ptr) * sizeof(T) % mat->step[0]);
     memcpy(dst_ptr, src_ptr, width * channels * sizeof(dst_ptr[0]));
     src_ptr += width * channels;  // Points one behind the end.
     dst_ptr += width * channels;

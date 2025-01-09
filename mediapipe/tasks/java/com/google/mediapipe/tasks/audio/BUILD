@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl", "mediapipe_tasks_audio_aar")
+
 licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
@@ -107,8 +109,6 @@ android_library(
         "@maven//:com_google_guava_guava",
     ],
 )
-
-load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl", "mediapipe_tasks_audio_aar")
 
 mediapipe_tasks_audio_aar(
     name = "tasks_audio",

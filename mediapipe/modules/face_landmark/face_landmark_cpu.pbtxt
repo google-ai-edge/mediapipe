@@ -61,11 +61,11 @@ node: {
 }
 
 # Loads the face landmarks TF Lite model.
-node {
-  calculator: "FaceLandmarksModelLoader"
-  input_side_packet: "WITH_ATTENTION:with_attention"
-  output_side_packet: "MODEL:model"
-}
+#node {
+#  calculator: "FaceLandmarksModelLoader"
+#  input_side_packet: "WITH_ATTENTION:with_attention"
+#  output_side_packet: "MODEL:model"
+#}
 
 # Generates a single side packet containing a TensorFlow Lite op resolver that
 # supports custom ops needed by the model used in this graph.

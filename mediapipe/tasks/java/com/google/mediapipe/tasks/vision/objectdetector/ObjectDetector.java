@@ -113,6 +113,10 @@ public final class ObjectDetector extends BaseVisionTaskApi {
   private static final int IMAGE_OUT_STREAM_INDEX = 1;
   private static final String TASK_GRAPH_NAME = "mediapipe.tasks.vision.ObjectDetectorGraph";
 
+  static {
+    System.loadLibrary("mediapipe_tasks_vision_jni");
+  }
+
   /**
    * Creates an {@link ObjectDetector} instance from a model file and the default {@link
    * ObjectDetectorOptions}.

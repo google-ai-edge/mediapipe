@@ -1,0 +1,75 @@
+/* Copyright 2023 The MediaPipe Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+==============================================================================*/
+
+syntax = "proto3";
+
+package mediapipe.tasks.core.jni;
+
+option java_package = "com.google.mediapipe.tasks.core.jni.proto";
+option java_outer_classname = "LlmOptionsProto";
+
+// Configurable parameters for creating an LLM session.
+message LlmSessionConfig {
+  // Top K number of tokens to be sampled from for each decoding step.
+  uint32 topk = 1;
+
+  // Randomness when decoding the next token, 0.0f means greedy decoding.
+  float temperature = 2;
+
+  // Random seed for sampling tokens.
+  optional uint32 random_seed = 3;
+
+  // The absolute path to the LoRA model asset bundle stored locally on the
+  // device. This is only compatible with GPU models.
+  optional string lora_path = 4;
+}
+
+// Configurable model parameters for creating an LLM inference engine.
+message LlmModelSettings {
+  // Path to the tflite model file.
+  string model_path = 1;
+
+  // Directory for saving the weight cache file. If this is not set, the
+  // directory provided through model_path will be used for caching purposes.
+  string cache_dir = 2;
+
+  // The number of input tokens to process at a time for batch processing
+  uint32 sequence_batch_size = 3;
+
+  // The number of decoding steps to run for each GPU-CPU sync. 1 stands for
+  // full streaming mode (i.e. the model outputs one token at a time). -1 stands
+  // for non-streaming mode (i.e. the model decodes all the way to the end and
+  // output the result at once). Note that the more frequent to perform GPU-CPU
+  // sync (i.e. closer to 1), the more latency we expect to introduce.
+  uint32 num_decode_steps_per_sync = 4;
+
+  // The total number of tokens for kv-cache. In other words, this is the total
+  // number of input + output tokens the model needs to handle.
+  uint32 max_tokens = 5;
+
+  // Number of supported lora ranks for the base model. Used by GPU only.
+  uint32 number_of_supported_lora_ranks = 6;
+
+  // The supported lora ranks for the base model. Used by GPU only.
+  repeated uint32 supported_lora_ranks = 7;
+
+  // Maximum top k, which is the max Top-K value supported for all
+  // sessions created with the engine, used by GPU only. If a session with Top-K
+  // value larger than this is being asked to be created, it will be
+  // rejected(throw error). If not provided, the max top k will be 1, which
+  // means only greedy decoding is supported for any sessions created with this
+  // engine.
+  uint32 max_top_k = 8;
+}

@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <cmath>
+#include <cstdint>
 #include <vector>
 
 #include "absl/flags/flag.h"
@@ -31,7 +32,6 @@
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/opencv_imgcodecs_inc.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
@@ -284,7 +284,7 @@ std::array<float, 16> GetMatrix(cv::Mat input, mediapipe::NormalizedRect roi,
       .IgnoreError();
   mediapipe::GetRotatedSubRectToRectTransformMatrix(
       roi_absolute, input.cols, input.rows,
-      /*flip_horizontaly=*/false, &transform_mat);
+      /*flip_horizontally=*/false, &transform_mat);
   return transform_mat;
 }
 

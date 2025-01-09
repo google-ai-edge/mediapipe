@@ -30,7 +30,7 @@
 
   imageSegmenterOptions.runningMode = self.runningMode;
   imageSegmenterOptions.shouldOutputConfidenceMasks = self.shouldOutputConfidenceMasks;
-  imageSegmenterOptions.shouldOutputCategoryMasks = self.shouldOutputConfidenceMasks;
+  imageSegmenterOptions.shouldOutputCategoryMask = self.shouldOutputCategoryMask;
   imageSegmenterOptions.displayNamesLocale = self.displayNamesLocale;
   imageSegmenterOptions.imageSegmenterLiveStreamDelegate = self.imageSegmenterLiveStreamDelegate;
 

@@ -19,7 +19,7 @@ package mediapipe.autoflip;
 import "mediapipe/examples/desktop/autoflip/quality/kinematic_path_solver.proto";
 import "mediapipe/framework/calculator.proto";
 
-// NextTag: 21
+// NextTag: 22
 message ContentZoomingCalculatorOptions {
   extend mediapipe.CalculatorOptions {
     optional ContentZoomingCalculatorOptions ext = 313091992;
@@ -81,6 +81,10 @@ message ContentZoomingCalculatorOptions {
   // Does not apply to the first instance (first detection will still animate).
   // Use "ANIMATE_ZOOM" input stream to control the first animation.
   optional bool disable_animations = 18;
+
+  // When true, the output crop rectangle is not clamped to the image boundary
+  // and is allowed to extend beyond the edges.
+  optional bool allow_cropping_outside_frame = 21 [default = false];
 
   // Deprecated parameters
   optional KinematicOptions kinematic_options = 2 [deprecated = true];

@@ -50,7 +50,8 @@ class GpuBufferTest : public GpuTestBase {};
 
 TEST_F(GpuBufferTest, BasicTest) {
   RunInGlContext([this] {
-    GpuBuffer buffer = gpu_shared_.gpu_buffer_pool.GetBuffer(300, 200);
+    MP_ASSERT_OK_AND_ASSIGN(GpuBuffer buffer,
+                            gpu_shared_.gpu_buffer_pool.GetBuffer(300, 200));
     EXPECT_EQ(buffer.width(), 300);
     EXPECT_EQ(buffer.height(), 200);
     EXPECT_TRUE(buffer);

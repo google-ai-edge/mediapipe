@@ -1,0 +1,18 @@
+diff --git a/src/BUILD b/src/BUILD
+index 7ab523679..571a8045a 100644
+--- a/src/BUILD
++++ b/src/BUILD
+@@ -458,9 +458,10 @@ cc_library(
+         }) + select({
+             "//conditions:default": [],
+             "//:not_disable_mediapipe" : [
+-                "//src/llm:openai_completions_api_handler",
+-                "//src/embeddings:embeddingscalculator",
+-                "//src/rerank:rerankcalculator",],
++                #"//src/llm:openai_completions_api_handler",
++                #"//src/embeddings:embeddingscalculator",
++                #"//src/rerank:rerankcalculator",
++            ],
+         }) + select({
+             "//:enable_drogon": ["libdrogon_http_server"],
+             "//conditions:default" : ["libnet_http_server"],

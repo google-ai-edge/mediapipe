@@ -59,7 +59,7 @@ class OpenCvRunner
       const ImageFrame& input, const std::array<float, 16>& matrix,
       const AffineTransformation::Size& size,
       AffineTransformation::BorderMode border_mode) override {
-    // OpenCV warpAffine works in absolute coordinates, so the transfom (which
+    // OpenCV warpAffine works in absolute coordinates, so the transform (which
     // accepts and produces relative coordinates) should be adjusted to first
     // normalize coordinates and then scale them.
     // clang-format off

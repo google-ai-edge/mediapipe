@@ -3,12 +3,12 @@ load(
     "ios_unit_test",
 )
 load(
-    "//mediapipe/framework/tool:ios.bzl",
-    "MPP_TASK_MINIMUM_OS_VERSION",
-)
-load(
     "@org_tensorflow//tensorflow/lite:special_rules.bzl",
     "tflite_ios_lab_runner",
+)
+load(
+    "//mediapipe/framework/tool:ios.bzl",
+    "MPP_TASK_MINIMUM_OS_VERSION",
 )
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
@@ -29,7 +29,7 @@ TFL_DISABLED_SANITIZER_TAGS = [
 
 objc_library(
     name = "MPPImageObjcTestLibrary",
-    testonly = 1,
+    testonly = True,
     srcs = ["MPPImageTests.m"],
     data = [
         "//mediapipe/tasks/testdata/vision:test_images",
@@ -42,6 +42,7 @@ objc_library(
         "//third_party/apple_frameworks:CoreMedia",
         "//third_party/apple_frameworks:CoreVideo",
         "//third_party/apple_frameworks:UIKit",
+        "//third_party/apple_frameworks:XCTest",
     ],
 )
 
@@ -57,9 +58,12 @@ ios_unit_test(
 
 objc_library(
     name = "MPPMaskObjcTestLibrary",
-    testonly = 1,
+    testonly = True,
     srcs = ["MPPMaskTests.m"],
-    deps = ["//mediapipe/tasks/ios/vision/core:MPPMask"],
+    deps = [
+        "//mediapipe/tasks/ios/vision/core:MPPMask",
+        "//third_party/apple_frameworks:XCTest",
+    ],
 )
 
 ios_unit_test(

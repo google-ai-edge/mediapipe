@@ -37,7 +37,7 @@ message AudioToTensorCalculatorOptions {
   // will be converted into tensors.
   optional double target_sample_rate = 4;
 
-  // Whether to treat the input audio stream as a continous stream or a batch
+  // Whether to treat the input audio stream as a continuous stream or a batch
   // of unrelated audio buffers.
   optional bool stream_mode = 5 [default = true];
 

@@ -16,6 +16,7 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_CC_VISION_IMAGE_CLASSIFIER_IMAGE_CLASSIFIER_H_
 #define MEDIAPIPE_TASKS_CC_VISION_IMAGE_CLASSIFIER_IMAGE_CLASSIFIER_H_
 
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -61,7 +62,7 @@ struct ImageClassifierOptions {
   // The result callback should only be specified when the running mode is set
   // to RunningMode::LIVE_STREAM.
   std::function<void(absl::StatusOr<ImageClassifierResult>, const Image&,
-                     int64)>
+                     int64_t)>
       result_callback = nullptr;
 };
 
@@ -148,7 +149,7 @@ class ImageClassifier : tasks::vision::core::BaseVisionTaskApi {
   // provide the video frame's timestamp (in milliseconds). The input timestamps
   // must be monotonically increasing.
   absl::StatusOr<ImageClassifierResult> ClassifyForVideo(
-      mediapipe::Image image, int64 timestamp_ms,
+      mediapipe::Image image, int64_t timestamp_ms,
       std::optional<core::ImageProcessingOptions> image_processing_options =
           std::nullopt);
 
@@ -179,7 +180,7 @@ class ImageClassifier : tasks::vision::core::BaseVisionTaskApi {
   //     longer be valid when the callback returns. To access the image data
   //     outside of the callback, callers need to make a copy of the image.
   //   - The input timestamp in milliseconds.
-  absl::Status ClassifyAsync(mediapipe::Image image, int64 timestamp_ms,
+  absl::Status ClassifyAsync(mediapipe::Image image, int64_t timestamp_ms,
                              std::optional<core::ImageProcessingOptions>
                                  image_processing_options = std::nullopt);
 

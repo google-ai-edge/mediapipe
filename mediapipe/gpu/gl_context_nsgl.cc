@@ -14,8 +14,8 @@
 
 #include <utility>
 
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_builder.h"
@@ -53,18 +53,17 @@ absl::Status GlContext::CreateContext(NSOpenGLContext* share_context) {
   // TODO: Remove the need for the OSX_ENABLE_3_2_CORE if this
   // proves to be safe in general.
 #if defined(TARGET_OS_OSX) && defined(OSX_ENABLE_3_2_CORE)
-    NSOpenGLPFAOpenGLProfile,
-    NSOpenGLProfileVersion3_2Core,
+      NSOpenGLPFAOpenGLProfile,
+      NSOpenGLProfileVersion3_2Core,
 #endif
-    NSOpenGLPFAAccelerated,
-    NSOpenGLPFAColorSize,
-    24,
-    NSOpenGLPFAAlphaSize,
-    8,
-    NSOpenGLPFADepthSize,
-    16,
-    0
-  };
+      NSOpenGLPFAAccelerated,
+      NSOpenGLPFAColorSize,
+      24,
+      NSOpenGLPFAAlphaSize,
+      8,
+      NSOpenGLPFADepthSize,
+      16,
+      0};
 
   pixel_format_ = [[NSOpenGLPixelFormat alloc] initWithAttributes:attrs];
   // If OpenGL 3.2 Core does not work, try again without it.
@@ -83,7 +82,7 @@ absl::Status GlContext::CreateContext(NSOpenGLContext* share_context) {
   if (!pixel_format_) {
     // On several Forge machines, the default config fails. For now let's do
     // this.
-    LOG(WARNING)
+    ABSL_LOG(WARNING)
         << "failed to create pixel format; trying without acceleration";
     NSOpenGLPixelFormatAttribute attrs_no_accel[] = {NSOpenGLPFAColorSize,
                                                      24,
@@ -102,7 +101,8 @@ absl::Status GlContext::CreateContext(NSOpenGLContext* share_context) {
 
   // Try to query pixel format from shared context.
   if (!context_) {
-    LOG(WARNING) << "Requested context not created, using queried context.";
+    ABSL_LOG(WARNING)
+        << "Requested context not created, using queried context.";
     CGLContextObj cgl_ctx =
         static_cast<CGLContextObj>([share_context CGLContextObj]);
     CGLPixelFormatObj cgl_fmt =

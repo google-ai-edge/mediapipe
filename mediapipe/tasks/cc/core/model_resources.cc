@@ -110,12 +110,12 @@ absl::Status ModelResources::BuildModelFromExternalFileProto() {
     } else {
       // If the model file name is a relative path, searches the file in a
       // platform-specific location and returns the absolute path on success.
-      ASSIGN_OR_RETURN(std::string path_to_resource,
-                       PathToResourceAsFile(model_file_->file_name()));
+      MP_ASSIGN_OR_RETURN(std::string path_to_resource,
+                          PathToResourceAsFile(model_file_->file_name()));
       model_file_->set_file_name(path_to_resource);
     }
   }
-  ASSIGN_OR_RETURN(
+  MP_ASSIGN_OR_RETURN(
       model_file_handler_,
       ExternalFileHandler::CreateFromExternalFile(model_file_.get()));
   const char* buffer_data = model_file_handler_->GetFileContent().data();
@@ -152,9 +152,9 @@ absl::Status ModelResources::BuildModelFromExternalFileProto() {
 
   model_packet_ = MakePacket<ModelPtr>(
       model.release(), [](tflite::FlatBufferModel* model) { delete model; });
-  ASSIGN_OR_RETURN(auto model_metadata_extractor,
-                   metadata::ModelMetadataExtractor::CreateFromModelBuffer(
-                       buffer_data, buffer_size));
+  MP_ASSIGN_OR_RETURN(auto model_metadata_extractor,
+                      metadata::ModelMetadataExtractor::CreateFromModelBuffer(
+                          buffer_data, buffer_size));
   metadata_extractor_packet_ = PacketAdopting<metadata::ModelMetadataExtractor>(
       std::move(model_metadata_extractor));
   return absl::OkStatus();

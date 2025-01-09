@@ -14,10 +14,14 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 
+#include "absl/status/status.h"
 #include "mediapipe/calculators/util/local_file_contents_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/status.h"
+#include "mediapipe/framework/port/status_macros.h"
+#include "mediapipe/framework/resources.h"
 #include "mediapipe/util/resource_util.h"
 
 namespace mediapipe {
@@ -81,16 +85,19 @@ class LocalFileContentsCalculator : public CalculatorBase {
     CollectionItemId output_id = cc->OutputSidePackets().BeginId(kContentsTag);
     auto options = cc->Options<mediapipe::LocalFileContentsCalculatorOptions>();
 
-    // Number of inputs and outpus is the same according to the contract.
+    // Number of inputs and outputs is the same according to the contract.
     for (; input_id != cc->InputSidePackets().EndId(kFilePathTag);
          ++input_id, ++output_id) {
       std::string file_path =
           cc->InputSidePackets().Get(input_id).Get<std::string>();
-      ASSIGN_OR_RETURN(file_path, PathToResourceAsFile(file_path));
+      MP_ASSIGN_OR_RETURN(file_path, PathToResourceAsFile(file_path));
 
-      std::string contents;
-      MP_RETURN_IF_ERROR(GetResourceContents(
-          file_path, &contents, /*read_as_binary=*/!options.text_mode()));
+      MP_ASSIGN_OR_RETURN(
+          std::unique_ptr<Resource> resource,
+          cc->GetResources().Get(file_path,
+                                 {/* read_as_binary= */ !options.text_mode()}));
+
+      std::string contents = std::move(*resource).ReleaseOrCopyAsString();
       cc->OutputSidePackets().Get(output_id).Set(
           MakePacket<std::string>(std::move(contents)));
     }

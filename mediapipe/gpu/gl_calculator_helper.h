@@ -67,7 +67,8 @@ class GlCalculatorHelper {
 
   // This method can be called from GetContract to set up the needed GPU
   // resources.
-  static absl::Status UpdateContract(CalculatorContract* cc);
+  static absl::Status UpdateContract(CalculatorContract* cc,
+                                     bool request_gpu_as_optional = false);
 
   // This method can be called from FillExpectations to set the correct types
   // for the shared GL input side packet(s).
@@ -162,6 +163,9 @@ class GlCalculatorHelper {
       int output_width, int output_height,
       GpuBufferFormat format = GpuBufferFormat::kBGRA32);
 
+  // Allows user provided buffers to be used as rendering destinations.
+  GlTexture CreateDestinationTexture(GpuBuffer& buffer);
+
   // Creates a destination texture copying and uploading passed image frame.
   //
   // WARNING: mind that this functions creates a new texture every time and
@@ -169,6 +173,10 @@ class GlCalculatorHelper {
   // TODO: ensure buffer pool is used when creating textures out of
   // ImageFrame.
   GlTexture CreateDestinationTexture(const ImageFrame& image_frame);
+
+  // Creates the framebuffer for rendering. Use this when the calculator
+  // needs a managed framebuffer but manages its own textures.
+  void CreateFramebuffer();
 
   // The OpenGL name of the output framebuffer.
   GLuint framebuffer() const;
@@ -178,6 +186,8 @@ class GlCalculatorHelper {
   void BindFramebuffer(const GlTexture& dst);
 
   GlContext& GetGlContext() const { return *gl_context_; }
+
+  std::shared_ptr<GlContext> GetSharedGlContext() const { return gl_context_; }
 
   GlVersion GetGlVersion() const { return gl_context_->GetGlVersion(); }
 
@@ -193,9 +203,6 @@ class GlCalculatorHelper {
   // Makes a GpuBuffer accessible as a texture in the GL context.
   GlTexture MapGpuBuffer(const GpuBuffer& gpu_buffer, GlTextureView view);
 
-  // Create the framebuffer for rendering.
-  void CreateFramebuffer();
-
   std::shared_ptr<GlContext> gl_context_;
 
   GLuint framebuffer_ = 0;
@@ -204,8 +211,8 @@ class GlCalculatorHelper {
 };
 
 // Represents an OpenGL texture, and is a 'view' into the memory pool.
-// It's more like a GlTextureLock, because it's main purpose (in conjunction
-// with the helper): to manage GL sync points in the gl command queue.
+// It's more like a GlTextureLock, because its main purpose (in conjunction
+// with the helper) is: to manage GL sync points in the gl command queue.
 //
 // This class should be the main way to interface with GL memory within a single
 // calculator. This is the preferred way to utilize the memory pool inside of

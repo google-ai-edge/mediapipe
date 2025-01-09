@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 // Helper class and macro to take time measurements within current scope.
-// Takes time measurement within current scope. Outputs to LOG(INFO) if
+// Takes time measurement within current scope. Outputs to ABSL_LOG(INFO) if
 // flag --measure_time is set or if build flag SET_FLAG_MEASURE_TIME is
 // defined (add --copt=-DSET_FLAG_MEASURE_TIME to your build command).
 // Additionally you can limit time measurements to specific files,
@@ -28,15 +28,16 @@
 #ifndef MEDIAPIPE_UTIL_TRACKING_MEASURE_TIME_H_
 #define MEDIAPIPE_UTIL_TRACKING_MEASURE_TIME_H_
 
+#include <cstdint>
 #include <memory>
 #include <sstream>
 
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/time/clock.h"
-#include "mediapipe/framework/port/integral_types.h"
-#include "mediapipe/framework/port/logging.h"
 
 extern bool flags_measure_time;
 
@@ -101,7 +102,7 @@ class ScopedWallTimer {
         show_output_(show_output),
         accumulator_(accumulator) {
     if (show_output_) {
-      CHECK(accumulator_);
+      ABSL_CHECK(accumulator_);
       start_time_ = GetWallTime();
     }
   }
@@ -115,10 +116,10 @@ class ScopedWallTimer {
       double accum_time = 0.0;
       int count = 0;
       accumulator_->Accumulate(passed_time, &accum_time, &count);
-      LOG(INFO) << stream_.str() << " TIMES: [Curr: " << passed_time * 1e-6
-                << " ms, "
-                << "Avg: " << accum_time * 1e-6 / std::max(1, count) << " ms, "
-                << count << " calls]";
+      ABSL_LOG(INFO) << stream_.str() << " TIMES: [Curr: " << passed_time * 1e-6
+                     << " ms, "
+                     << "Avg: " << accum_time * 1e-6 / std::max(1, count)
+                     << " ms, " << count << " calls]";
     }
   }
 
@@ -132,10 +133,10 @@ class ScopedWallTimer {
   // While LogMessage is adequate for this, no good equivalent exists on
   // Android, so we employ a portable ostringstream for buffering.
   std::ostringstream stream_;
-  int64 start_time_;
+  int64_t start_time_;
   Accumulator* accumulator_;
 
-  int64 GetWallTime() { return absl::GetCurrentTimeNanos(); }
+  int64_t GetWallTime() { return absl::GetCurrentTimeNanos(); }
 };
 
 class MeasureTimeFilter {

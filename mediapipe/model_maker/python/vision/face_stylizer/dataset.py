@@ -40,6 +40,12 @@ def _preprocess_face_dataset(
     tf.compat.v1.logging.info('Preprocess image %s', path)
     image = image_module.Image.create_from_file(path)
     aligned_image = aligner.align(image)
+    if aligned_image is None:
+      raise ValueError(
+          'ERROR: Invalid image. No face is detected and aligned. Please make'
+          ' sure the image has a single face that is facing straightforward and'
+          ' not significantly rotated.'
+      )
     aligned_image_tensor = tf.convert_to_tensor(aligned_image.numpy_view())
     preprocessed_images.append(aligned_image_tensor)
 
@@ -51,71 +57,41 @@ class Dataset(classification_dataset.ClassificationDataset):
   """Dataset library for face stylizer fine tuning."""
 
   @classmethod
-  def from_folder(
-      cls, dirname: str
+  def from_image(
+      cls, filename: str
   ) -> classification_dataset.ClassificationDataset:
-    """Loads images from the given directory.
+    """Creates a dataset from single image.
 
-    The style image dataset directory is expected to contain one subdirectory
-    whose name represents the label of the style. There can be one or multiple
-    images of the same style in that subdirectory. Supported input image formats
-    include 'jpg', 'jpeg', 'png'.
+    Supported input image formats include 'jpg', 'jpeg', 'png'.
 
     Args:
-      dirname: Name of the directory containing the image files.
+      filename: Name of the image file.
 
     Returns:
-      Dataset containing images and labels and other related info.
-    Raises:
-      ValueError: if the input data directory is empty.
+      Dataset containing image and label and other related info.
     """
-    data_root = os.path.abspath(dirname)
+    file_path = os.path.abspath(filename)
+    image_filename = os.path.basename(filename)
+    image_name, ext_name = os.path.splitext(image_filename)
 
-    # Assumes the image data of the same label are in the same subdirectory,
-    # gets image path and label names.
-    all_image_paths = list(tf.io.gfile.glob(data_root + r'/*/*'))
-    all_image_size = len(all_image_paths)
-    if all_image_size == 0:
-      raise ValueError('Invalid input data directory')
-    if not any(
-        fname.endswith(('.jpg', '.jpeg', '.png')) for fname in all_image_paths
-    ):
-      raise ValueError('No images found under given directory')
+    if not ext_name.endswith(('.jpg', '.jpeg', '.png')):
+      raise ValueError('Unsupported image formats: %s' % ext_name)
 
-    image_data = _preprocess_face_dataset(all_image_paths)
-    label_names = sorted(
-        name
-        for name in os.listdir(data_root)
-        if os.path.isdir(os.path.join(data_root, name))
-    )
-    all_label_size = len(label_names)
-    index_by_label = dict(
-        (name, index) for index, name in enumerate(label_names)
-    )
-    # Get the style label from the subdirectory name.
-    all_image_labels = [
-        index_by_label[os.path.basename(os.path.dirname(path))]
-        for path in all_image_paths
-    ]
+    image_data = _preprocess_face_dataset([file_path])
+    label_names = [image_name]
 
     image_ds = tf.data.Dataset.from_tensor_slices(image_data)
 
     # Load label
-    label_ds = tf.data.Dataset.from_tensor_slices(
-        tf.cast(all_image_labels, tf.int64)
-    )
+    label_ds = tf.data.Dataset.from_tensor_slices(tf.cast([0], tf.int64))
 
     # Create a dataset of (image, label) pairs
     image_label_ds = tf.data.Dataset.zip((image_ds, label_ds))
 
-    logging.info(
-        'Load images dataset with size: %d, num_label: %d, labels: %s.',
-        all_image_size,
-        all_label_size,
-        ', '.join(label_names),
-    )
+    logging.info('Create dataset for style: %s.', image_name)
+
     return Dataset(
         dataset=image_label_ds,
         label_names=label_names,
-        size=all_image_size,
+        size=1,
     )

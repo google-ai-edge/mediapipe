@@ -169,12 +169,12 @@ class CalculatorContract {
   // For services which allow default initialization:
   // - `CalculatorGraph` will try to create corresponding service object by
   //   default even if request is made optional
-  //   (`GraphServiceRequest::Optional()`)
+  //   (`GraphServiceRequest::Optional()`).
   //
   // For services which disallow default initialization:
   // - `CalculatorGraph` requires client to set corresponding service object and
-  //   otherwise fails, unles request is mad optional
-  //   (`GraphServiceRequest::Optional()`)
+  //   otherwise fails, unless request is made optional
+  //   (`GraphServiceRequest::Optional()`).
   GraphServiceRequest& UseService(const GraphServiceBase& service) {
     auto it = service_requests_.emplace(service.key, service).first;
     return it->second;

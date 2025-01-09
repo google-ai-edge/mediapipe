@@ -12,12 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <array>
 #include <cmath>
 #include <functional>
-#include <vector>
+#include <utility>
 
+#include "absl/log/absl_log.h"
+#include "absl/status/status.h"
+#include "mediapipe/calculators/tensor/image_to_tensor_utils.h"
 #include "mediapipe/calculators/util/landmark_projection_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/collection_item_id.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/port/ret_check.h"
@@ -31,6 +36,7 @@ namespace {
 constexpr char kLandmarksTag[] = "NORM_LANDMARKS";
 constexpr char kRectTag[] = "NORM_RECT";
 constexpr char kProjectionMatrix[] = "PROJECTION_MATRIX";
+constexpr char kImageDimensionsTag[] = "IMAGE_DIMENSIONS";
 
 }  // namespace
 
@@ -44,6 +50,11 @@ constexpr char kProjectionMatrix[] = "PROJECTION_MATRIX";
 //   NORM_RECT - NormalizedRect
 //     Represents a normalized rectangle in image coordinates and results in
 //     landmarks with their locations adjusted to the image.
+//   IMAGE_DIMENSIONS - std::pair<int, int>
+//     The dimensions of the original image. Original image dimensions are
+//     needed to properly scale the landmarks in the general, non-square
+//     NORM_RECT case. It can be unset if NORM_RECT is a square, and is allowed
+//     for backwards compatibility.
 //   PROJECTION_MATRIX - std::array<float, 16>
 //     A 4x4 row-major-order matrix that maps landmarks' locations from one
 //     coordinate system to another. In this case from the coordinate system of
@@ -106,8 +117,14 @@ class LandmarkProjectionCalculator : public CalculatorBase {
     RET_CHECK(cc->Inputs().HasTag(kRectTag) ^
               cc->Inputs().HasTag(kProjectionMatrix))
         << "Either NORM_RECT or PROJECTION_MATRIX must be specified.";
+    if (cc->Inputs().HasTag(kImageDimensionsTag))
+      RET_CHECK(cc->Inputs().HasTag(kRectTag))
+          << "IMAGE_DIMENSIONS can only be specified with NORM_RECT";
     if (cc->Inputs().HasTag(kRectTag)) {
       cc->Inputs().Tag(kRectTag).Set<NormalizedRect>();
+      if (cc->Inputs().HasTag(kImageDimensionsTag)) {
+        cc->Inputs().Tag(kImageDimensionsTag).Set<std::pair<int, int>>();
+      }
     } else {
       cc->Inputs().Tag(kProjectionMatrix).Set<std::array<float, 16>>();
     }
@@ -159,17 +176,22 @@ class LandmarkProjectionCalculator : public CalculatorBase {
   absl::Status Process(CalculatorContext* cc) override {
     std::function<void(const NormalizedLandmark&, NormalizedLandmark*)>
         project_fn;
-    if (cc->Inputs().HasTag(kRectTag)) {
+    std::array<float, 16> project_mat;
+    const bool has_rect = cc->Inputs().HasTag(kRectTag);
+    const bool has_image_dims = cc->Inputs().HasTag(kImageDimensionsTag);
+    if (has_rect && !has_image_dims) {
       if (cc->Inputs().Tag(kRectTag).IsEmpty()) {
         return absl::OkStatus();
       }
+      ABSL_LOG_FIRST_N(WARNING, 1)
+          << "Using NORM_RECT without IMAGE_DIMENSIONS is only "
+             "supported for the square ROI. Provide "
+             "IMAGE_DIMENSIONS or use PROJECTION_MATRIX.";
       const auto& input_rect = cc->Inputs().Tag(kRectTag).Get<NormalizedRect>();
       const auto& options =
           cc->Options<mediapipe::LandmarkProjectionCalculatorOptions>();
       project_fn = [&input_rect, &options](const NormalizedLandmark& landmark,
                                            NormalizedLandmark* new_landmark) {
-        // TODO: fix projection or deprecate (current projection
-        // calculations are incorrect for general case).
         const float x = landmark.x() - 0.5f;
         const float y = landmark.y() - 0.5f;
         const float angle =
@@ -187,11 +209,38 @@ class LandmarkProjectionCalculator : public CalculatorBase {
         new_landmark->set_y(new_y);
         new_landmark->set_z(new_z);
       };
+    } else if (has_rect && has_image_dims) {
+      if (cc->Inputs().Tag(kRectTag).IsEmpty() ||
+          cc->Inputs().Tag(kImageDimensionsTag).IsEmpty()) {
+        return absl::OkStatus();
+      }
+      const auto& input_rect = cc->Inputs().Tag(kRectTag).Get<NormalizedRect>();
+      const auto& options =
+          cc->Options<mediapipe::LandmarkProjectionCalculatorOptions>();
+      const auto& image_dimensions =
+          cc->Inputs().Tag(kImageDimensionsTag).Get<std::pair<int, int>>();
+      RotatedRect rotated_rect = {
+          /*center_x=*/input_rect.x_center() * image_dimensions.first,
+          /*center_y=*/input_rect.y_center() * image_dimensions.second,
+          /*width=*/input_rect.width() * image_dimensions.first,
+          /*height=*/input_rect.height() * image_dimensions.second,
+          /*rotation=*/options.ignore_rotation() ? 0.0f
+                                                 : input_rect.rotation()};
+      GetRotatedSubRectToRectTransformMatrix(
+          rotated_rect, image_dimensions.first, image_dimensions.second,
+          /*flip_horizontaly=*/false, &project_mat);
+      const float z_scale = CalculateZScale(project_mat);
+      project_fn = [&project_mat, z_scale](const NormalizedLandmark& lm,
+                                           NormalizedLandmark* new_landmark) {
+        *new_landmark = lm;
+        ProjectXY(lm, project_mat, new_landmark);
+        new_landmark->set_z(z_scale * lm.z());
+      };
     } else if (cc->Inputs().HasTag(kProjectionMatrix)) {
       if (cc->Inputs().Tag(kProjectionMatrix).IsEmpty()) {
         return absl::OkStatus();
       }
-      const auto& project_mat =
+      project_mat =
           cc->Inputs().Tag(kProjectionMatrix).Get<std::array<float, 16>>();
       const float z_scale = CalculateZScale(project_mat);
       project_fn = [&project_mat, z_scale](const NormalizedLandmark& lm,
@@ -206,7 +255,7 @@ class LandmarkProjectionCalculator : public CalculatorBase {
 
     CollectionItemId input_id = cc->Inputs().BeginId(kLandmarksTag);
     CollectionItemId output_id = cc->Outputs().BeginId(kLandmarksTag);
-    // Number of inputs and outpus is the same according to the contract.
+    // Number of inputs and outputs is the same according to the contract.
     for (; input_id != cc->Inputs().EndId(kLandmarksTag);
          ++input_id, ++output_id) {
       const auto& input_packet = cc->Inputs().Get(input_id);

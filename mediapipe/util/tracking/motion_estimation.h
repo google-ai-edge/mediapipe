@@ -51,13 +51,13 @@
 #define MEDIAPIPE_UTIL_TRACKING_MOTION_ESTIMATION_H_
 
 #include <algorithm>
+#include <cstdint>
 #include <deque>
 #include <list>
 #include <memory>
 #include <unordered_map>
 #include <vector>
 
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/vector.h"
 #include "mediapipe/util/tracking/camera_motion.pb.h"
 #include "mediapipe/util/tracking/motion_estimation.pb.h"
@@ -675,8 +675,8 @@ class MotionEstimation {
 // during camera motion estimation.
 struct CameraMotionStreamHeader {
   CameraMotionStreamHeader() : frame_width(0), frame_height(0) {}
-  int32 frame_width;
-  int32 frame_height;
+  int32_t frame_width;
+  int32_t frame_height;
 };
 
 // Direct fitting functions.

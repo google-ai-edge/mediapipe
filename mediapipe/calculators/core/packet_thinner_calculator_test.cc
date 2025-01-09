@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
 
+#include "absl/log/absl_check.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/calculators/core/packet_thinner_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -23,7 +25,6 @@
 #include "mediapipe/framework/formats/video_stream_header.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/status_matchers.h"
 
 namespace mediapipe {
@@ -70,7 +71,7 @@ class SimpleRunner : public CalculatorRunner {
   }
 
   double GetFrameRate() const {
-    CHECK(!Outputs().Index(0).header.IsEmpty());
+    ABSL_CHECK(!Outputs().Index(0).header.IsEmpty());
     return Outputs().Index(0).header.Get<VideoHeader>().frame_rate;
   }
 };

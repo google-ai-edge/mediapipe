@@ -23,12 +23,12 @@
 
 #include <string>
 
+#include "absl/log/absl_log.h"
 #include "mediapipe/calculators/tensorflow/tensorflow_session.h"
 #include "mediapipe/calculators/tensorflow/tensorflow_session_from_frozen_graph_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/deps/clock.h"
 #include "mediapipe/framework/deps/monotonic_clock.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/tool/status_util.h"
@@ -156,8 +156,8 @@ class TensorFlowSessionFromFrozenGraphCalculator : public CalculatorBase {
 
     cc->OutputSidePackets().Tag(kSessionTag).Set(Adopt(session.release()));
     const uint64_t end_time = absl::ToUnixMicros(clock->TimeNow());
-    LOG(INFO) << "Loaded frozen model in: " << end_time - start_time
-              << " microseconds.";
+    ABSL_LOG(INFO) << "Loaded frozen model in: " << end_time - start_time
+                   << " microseconds.";
     return absl::OkStatus();
   }
 

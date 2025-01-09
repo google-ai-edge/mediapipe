@@ -1,0 +1,46 @@
+// Copyright 2023 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+import "mediapipe/framework/formats/body_rig.proto";
+
+message CombineJointsCalculatorOptions {
+  extend CalculatorOptions {
+    optional CombineJointsCalculatorOptions ext = 406440185;
+  }
+
+  // Mapping from joint set to the resulting set.
+  message JointsMapping {
+    // Indexes of provided joints in the resulting joint set.
+    // All indexes must be within the [0, num_joints - 1] range.
+    repeated int32 idx = 1 [packed = true];
+  }
+
+  // Number of joints in the resulting set.
+  optional int32 num_joints = 1;
+
+  // Mapping from joint sets to the resulting set.
+  // Number of mappings must be equal to number of provided joint sets. Number
+  // of indexes in each mapping must be equal to number of joints in
+  // corresponding joint set. Mappings are applied in the provided order and can
+  // overwrite each other.
+  repeated JointsMapping joints_mapping = 2;
+
+  // Default joint to initialize joints in the resulting set.
+  optional Joint default_joint = 3;
+}

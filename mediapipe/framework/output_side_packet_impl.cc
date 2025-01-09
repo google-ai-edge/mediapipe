@@ -14,6 +14,7 @@
 
 #include "mediapipe/framework/output_side_packet_impl.h"
 
+#include "absl/log/absl_check.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/source_location.h"
 #include "mediapipe/framework/port/status_builder.h"
@@ -42,7 +43,7 @@ void OutputSidePacketImpl::Set(const Packet& packet) {
 
 void OutputSidePacketImpl::AddMirror(
     InputSidePacketHandler* input_side_packet_handler, CollectionItemId id) {
-  CHECK(input_side_packet_handler);
+  ABSL_CHECK(input_side_packet_handler);
   mirrors_.emplace_back(input_side_packet_handler, id);
 }
 
@@ -81,7 +82,7 @@ absl::Status OutputSidePacketImpl::SetInternal(const Packet& packet) {
 
 void OutputSidePacketImpl::TriggerErrorCallback(
     const absl::Status& status) const {
-  CHECK(error_callback_);
+  ABSL_CHECK(error_callback_);
   error_callback_(status);
 }
 

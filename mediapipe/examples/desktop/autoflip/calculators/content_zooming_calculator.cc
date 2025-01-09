@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <algorithm>
+#include <cmath>
 #include <memory>
 
 #include "absl/status/status.h"
@@ -240,15 +241,10 @@ absl::Status ContentZoomingCalculator::ConvertToPanTiltZoom(
   // frame size.
   float fit_size = fmin(max_frame_value_, fit_size_raw);
   // Prevent box from extending beyond the image.
-  if (y_center - fit_size / 2 < 0) {
-    y_center = fit_size / 2;
-  } else if (y_center + fit_size / 2 > 1) {
-    y_center = 1 - fit_size / 2;
-  }
-  if (x_center - fit_size / 2 < 0) {
-    x_center = fit_size / 2;
-  } else if (x_center + fit_size / 2 > 1) {
-    x_center = 1 - fit_size / 2;
+  if (!options_.allow_cropping_outside_frame()) {
+    float half_fit_size = fit_size / 2.0f;
+    y_center = std::clamp(y_center, half_fit_size, 1 - half_fit_size);
+    x_center = std::clamp(x_center, half_fit_size, 1 - half_fit_size);
   }
   // Scale to pixel coordinates.
   *tilt_offset = frame_height_ * y_center;
@@ -463,8 +459,8 @@ absl::Status ContentZoomingCalculator::InitializeState(
   first_rect_timestamp_ = Timestamp::Unset();
   last_only_required_detection_ = 0;
   last_measured_height_ = max_frame_value_ * frame_height_;
-  last_measured_x_offset_ = target_aspect_ * frame_width_;
-  last_measured_y_offset_ = frame_width_ / 2;
+  last_measured_x_offset_ = frame_width_ / 2;
+  last_measured_y_offset_ = frame_height_ / 2;
   return absl::OkStatus();
 }
 
@@ -760,6 +756,10 @@ absl::Status ContentZoomingCalculator::Process(
 absl::Status ContentZoomingCalculator::SmoothAndClampPath(
     int target_width, int target_height, float path_width, float path_height,
     float* path_offset_x, float* path_offset_y) {
+  if (options_.allow_cropping_outside_frame()) {
+    return absl::OkStatus();
+  }
+
   float delta_height;
   MP_RETURN_IF_ERROR(path_solver_zoom_->GetDeltaState(&delta_height));
   const int delta_width = delta_height * target_aspect_;
@@ -774,10 +774,8 @@ absl::Status ContentZoomingCalculator::SmoothAndClampPath(
         abs(*path_offset_x - frame_width_ / 2) - width_space / 2;
     if (*path_offset_x < frame_width_ / 2) {
       *path_offset_x += delta_width * (required_width / remaining_width);
-      MP_RETURN_IF_ERROR(path_solver_pan_->SetState(*path_offset_x));
     } else {
       *path_offset_x -= delta_width * (required_width / remaining_width);
-      MP_RETURN_IF_ERROR(path_solver_pan_->SetState(*path_offset_x));
     }
   }
 
@@ -790,29 +788,22 @@ absl::Status ContentZoomingCalculator::SmoothAndClampPath(
         abs(*path_offset_y - frame_height_ / 2) - height_space / 2;
     if (*path_offset_y < frame_height_ / 2) {
       *path_offset_y += delta_height * (required_height / remaining_height);
-      MP_RETURN_IF_ERROR(path_solver_tilt_->SetState(*path_offset_y));
     } else {
       *path_offset_y -= delta_height * (required_height / remaining_height);
-      MP_RETURN_IF_ERROR(path_solver_tilt_->SetState(*path_offset_y));
     }
   }
 
   // Prevent box from extending beyond the image after camera smoothing.
-  if (*path_offset_y - ceil(path_height / 2.0) < 0) {
-    *path_offset_y = ceil(path_height / 2.0);
-    MP_RETURN_IF_ERROR(path_solver_tilt_->SetState(*path_offset_y));
-  } else if (*path_offset_y + ceil(path_height / 2.0) > frame_height_) {
-    *path_offset_y = frame_height_ - ceil(path_height / 2.0);
-    MP_RETURN_IF_ERROR(path_solver_tilt_->SetState(*path_offset_y));
-  }
+  float half_path_height = ceil(path_height / 2.0);
+  *path_offset_y = std::clamp(*path_offset_y, half_path_height,
+                              frame_height_ - half_path_height);
 
-  if (*path_offset_x - ceil(path_width / 2.0) < 0) {
-    *path_offset_x = ceil(path_width / 2.0);
-    MP_RETURN_IF_ERROR(path_solver_pan_->SetState(*path_offset_x));
-  } else if (*path_offset_x + ceil(path_width / 2.0) > frame_width_) {
-    *path_offset_x = frame_width_ - ceil(path_width / 2.0);
-    MP_RETURN_IF_ERROR(path_solver_pan_->SetState(*path_offset_x));
-  }
+  float half_path_width = ceil(path_width / 2.0);
+  *path_offset_x = std::clamp(*path_offset_x, half_path_width,
+                              frame_width_ - half_path_width);
+
+  MP_RETURN_IF_ERROR(path_solver_pan_->SetState(*path_offset_x));
+  MP_RETURN_IF_ERROR(path_solver_tilt_->SetState(*path_offset_y));
 
   return absl::OkStatus();
 }

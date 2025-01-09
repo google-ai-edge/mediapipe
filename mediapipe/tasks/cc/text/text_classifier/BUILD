@@ -88,7 +88,7 @@ cc_test(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:cord",
-        "@com_google_sentencepiece//src:sentencepiece_processor",  # fixdeps: keep
+        "@com_google_sentencepiece//:sentencepiece_processor",  # fixdeps: keep
         "@org_tensorflow//tensorflow/lite:test_util",
     ],
 )

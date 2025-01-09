@@ -19,7 +19,7 @@
 
 namespace mediapipe {
 
-// Implementats a subset of RE2 using std::regex_match.
+// Implements a subset of RE2 using std::regex_match.
 class RE2 {
  public:
   RE2(const std::string& pattern) : std_regex_(pattern) {}

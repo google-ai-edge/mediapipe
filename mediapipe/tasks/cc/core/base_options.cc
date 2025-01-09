@@ -19,7 +19,7 @@ limitations under the License.
 #include <string>
 #include <variant>
 
-#include "absl/log/log.h"
+#include "absl/log/absl_log.h"
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
 #include "mediapipe/tasks/cc/core/proto/acceleration.pb.h"
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
@@ -58,8 +58,8 @@ void SetDelegateOptionsOrDie(const BaseOptions* base_options,
                              proto::BaseOptions& base_options_proto) {
   if (base_options->delegate_options.has_value()) {
     if (!std::holds_alternative<T>(*base_options->delegate_options)) {
-      LOG(FATAL) << "Specified Delegate type does not match the provided "
-                    "delegate options.";
+      ABSL_LOG(FATAL) << "Specified Delegate type does not match the provided "
+                         "delegate options.";
     } else {
       std::visit(
           [&base_options_proto](const auto& delegate_options) {

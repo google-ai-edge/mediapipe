@@ -14,9 +14,20 @@
 
 #include "mediapipe/gpu/gl_texture_buffer.h"
 
+#include <cstdint>
+#include <memory>
+#include <utility>
+
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
+#include "absl/strings/str_format.h"
+#include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/formats/image_frame.h"
+#include "mediapipe/gpu/gl_base.h"
 #include "mediapipe/gpu/gl_context.h"
 #include "mediapipe/gpu/gl_texture_view.h"
+#include "mediapipe/gpu/gpu_buffer_format.h"
+#include "mediapipe/gpu/gpu_buffer_storage.h"
 #include "mediapipe/gpu/gpu_buffer_storage_image_frame.h"
 
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
@@ -29,25 +40,26 @@ namespace mediapipe {
 std::unique_ptr<GlTextureBuffer> GlTextureBuffer::Wrap(
     GLenum target, GLuint name, int width, int height, GpuBufferFormat format,
     DeletionCallback deletion_callback) {
-  return absl::make_unique<GlTextureBuffer>(target, name, width, height, format,
-                                            deletion_callback);
+  return std::make_unique<GlTextureBuffer>(target, name, width, height, format,
+                                           deletion_callback);
 }
 
 std::unique_ptr<GlTextureBuffer> GlTextureBuffer::Wrap(
     GLenum target, GLuint name, int width, int height, GpuBufferFormat format,
     std::shared_ptr<GlContext> context, DeletionCallback deletion_callback) {
-  return absl::make_unique<GlTextureBuffer>(target, name, width, height, format,
-                                            deletion_callback, context);
+  return std::make_unique<GlTextureBuffer>(target, name, width, height, format,
+                                           deletion_callback, context);
 }
 
 std::unique_ptr<GlTextureBuffer> GlTextureBuffer::Create(int width, int height,
                                                          GpuBufferFormat format,
                                                          const void* data,
                                                          int alignment) {
-  auto buf = absl::make_unique<GlTextureBuffer>(GL_TEXTURE_2D, 0, width, height,
-                                                format, nullptr);
+  auto buf = std::make_unique<GlTextureBuffer>(GL_TEXTURE_2D, 0, width, height,
+                                               format, nullptr);
   if (!buf->CreateInternal(data, alignment)) {
-    LOG(WARNING) << "Failed to create a GL texture";
+    ABSL_LOG(WARNING) << absl::StrFormat(
+        "Failed to create a GL texture: %d x %d, %d", width, height, format);
     return nullptr;
   }
   return buf;
@@ -108,7 +120,7 @@ GlTextureBuffer::GlTextureBuffer(GLenum target, GLuint name, int width,
 bool GlTextureBuffer::CreateInternal(const void* data, int alignment) {
   auto context = GlContext::GetCurrent();
   if (!context) {
-    LOG(WARNING) << "Cannot create a GL texture without a valid context";
+    ABSL_LOG(WARNING) << "Cannot create a GL texture without a valid context";
     return false;
   }
 
@@ -127,7 +139,14 @@ bool GlTextureBuffer::CreateInternal(const void* data, int alignment) {
   if (info.gl_internal_format == GL_RGBA16F &&
       context->GetGlVersion() != GlVersion::kGLES2 &&
       SymbolAvailable(&glTexStorage2D)) {
-    CHECK(data == nullptr) << "unimplemented";
+    ABSL_CHECK(data == nullptr) << "unimplemented";
+    glTexStorage2D(target_, 1, info.gl_internal_format, width_, height_);
+  } else if (info.immutable) {
+    ABSL_CHECK(SymbolAvailable(&glTexStorage2D) &&
+               context->GetGlVersion() != GlVersion::kGLES2)
+        << "Immutable GpuBuffer format requested is not supported in this "
+        << "GlContext. Format was " << static_cast<uint32_t>(format_);
+    ABSL_CHECK(data == nullptr) << "unimplemented";
     glTexStorage2D(target_, 1, info.gl_internal_format, width_, height_);
   } else {
     glTexImage2D(target_, 0 /* level */, info.gl_internal_format, width_,
@@ -149,10 +168,10 @@ bool GlTextureBuffer::CreateInternal(const void* data, int alignment) {
 
   // Use the deletion callback to delete the texture on the context
   // that created it.
-  CHECK(!deletion_callback_);
+  ABSL_CHECK(!deletion_callback_);
   deletion_callback_ = [this,
                         context](std::shared_ptr<GlSyncPoint> sync_token) {
-    CHECK_NE(name_, 0);
+    ABSL_CHECK_NE(name_, 0);
     GLuint name_to_delete = name_;
     context->RunWithoutWaiting([name_to_delete]() {
       // Note that we do not wait for consumers to be done before deleting the
@@ -171,7 +190,7 @@ bool GlTextureBuffer::CreateInternal(const void* data, int alignment) {
       // normal single-context behavior. E.g. if you do bind, delete, render,
       // unbind, the object is not deleted until the unbind, and it waits for
       // the render to finish.
-      DLOG_IF(ERROR, !glIsTexture(name_to_delete))
+      ABSL_DLOG_IF(ERROR, !glIsTexture(name_to_delete))
           << "Deleting invalid texture id: " << name_to_delete;
       glDeleteTextures(1, &name_to_delete);
     });
@@ -193,16 +212,16 @@ void GlTextureBuffer::Reuse() {
     absl::MutexLock lock(&consumer_sync_mutex_);
     // Reset the sync points.
     old_consumer_sync = std::move(consumer_multi_sync_);
-    consumer_multi_sync_ = absl::make_unique<GlMultiSyncPoint>();
+    consumer_multi_sync_ = std::make_unique<GlMultiSyncPoint>();
     producer_sync_ = nullptr;
   }
   old_consumer_sync->WaitOnGpu();
 }
 
 void GlTextureBuffer::Updated(std::shared_ptr<GlSyncPoint> prod_token) {
-  CHECK(!producer_sync_)
+  ABSL_CHECK(!producer_sync_)
       << "Updated existing texture which had not been marked for reuse!";
-  CHECK(prod_token);
+  ABSL_CHECK(prod_token);
   producer_sync_ = std::move(prod_token);
   const auto& synced_context = producer_sync_->GetContext();
   if (synced_context) {
@@ -216,7 +235,7 @@ void GlTextureBuffer::DidRead(std::shared_ptr<GlSyncPoint> cons_token) const {
     consumer_multi_sync_->Add(std::move(cons_token));
   } else {
     // TODO: change to a CHECK.
-    LOG_FIRST_N(WARNING, 5) << "unexpected null sync in DidRead";
+    ABSL_LOG_FIRST_N(WARNING, 5) << "unexpected null sync in DidRead";
   }
 }
 
@@ -263,11 +282,11 @@ void GlTextureBuffer::WaitForConsumersOnGpu() {
 GlTextureView GlTextureBuffer::GetReadView(internal::types<GlTextureView>,
                                            int plane) const {
   auto gl_context = GlContext::GetCurrent();
-  CHECK(gl_context);
-  CHECK_EQ(plane, 0);
+  ABSL_CHECK(gl_context);
+  ABSL_CHECK_EQ(plane, 0);
   // Note that this method is only supposed to be called by GpuBuffer, which
   // ensures this condition is satisfied.
-  DCHECK(!weak_from_this().expired())
+  ABSL_DCHECK(!weak_from_this().expired())
       << "GlTextureBuffer must be held in shared_ptr to get a GlTextureView";
   // Insert wait call to sync with the producer.
   WaitOnGpu();
@@ -284,11 +303,11 @@ GlTextureView GlTextureBuffer::GetReadView(internal::types<GlTextureView>,
 GlTextureView GlTextureBuffer::GetWriteView(internal::types<GlTextureView>,
                                             int plane) {
   auto gl_context = GlContext::GetCurrent();
-  CHECK(gl_context);
-  CHECK_EQ(plane, 0);
+  ABSL_CHECK(gl_context);
+  ABSL_CHECK_EQ(plane, 0);
   // Note that this method is only supposed to be called by GpuBuffer, which
   // ensures this condition is satisfied.
-  DCHECK(!weak_from_this().expired())
+  ABSL_DCHECK(!weak_from_this().expired())
       << "GlTextureBuffer must be held in shared_ptr to get a GlTextureView";
   // Insert wait call to sync with the producer.
   WaitOnGpu();
@@ -345,7 +364,7 @@ static void ReadTexture(GlContext& ctx, const GlTextureView& view,
   // won't overflow the buffer with glReadPixels, we'd also need to check or
   // reset several glPixelStore parameters (e.g. what if someone had the
   // ill-advised idea of setting GL_PACK_SKIP_PIXELS?).
-  CHECK(view.gl_context());
+  ABSL_CHECK(view.gl_context());
   GlTextureInfo info = GlTextureInfoForGpuBufferFormat(
       format, view.plane(), view.gl_context()->GetGlVersion());
 
@@ -365,8 +384,8 @@ static std::shared_ptr<GpuBufferStorageImageFrame> ConvertToImageFrame(
   ImageFormat::Format image_format =
       ImageFormatForGpuBufferFormat(buf->format());
   auto output =
-      absl::make_unique<ImageFrame>(image_format, buf->width(), buf->height(),
-                                    ImageFrame::kGlDefaultAlignmentBoundary);
+      std::make_unique<ImageFrame>(image_format, buf->width(), buf->height(),
+                                   ImageFrame::kGlDefaultAlignmentBoundary);
   auto ctx = GlContext::GetCurrent();
   if (!ctx) ctx = buf->GetProducerContext();
   ctx->Run([buf, &output, &ctx] {
@@ -395,7 +414,7 @@ static auto kConverterRegistration2 =
 
 static std::shared_ptr<GpuBufferStorageCvPixelBuffer> ConvertToCvPixelBuffer(
     std::shared_ptr<GlTextureBuffer> buf) {
-  auto output = absl::make_unique<GpuBufferStorageCvPixelBuffer>(
+  auto output = std::make_unique<GpuBufferStorageCvPixelBuffer>(
       buf->width(), buf->height(), buf->format());
   auto ctx = GlContext::GetCurrent();
   if (!ctx) ctx = buf->GetProducerContext();

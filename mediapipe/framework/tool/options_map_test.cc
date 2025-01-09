@@ -17,14 +17,11 @@
 
 #include <unistd.h>
 
-#include <memory>
-
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
-#include "mediapipe/framework/port/status.h"
-#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/testdata/night_light_calculator.pb.h"
+#include "mediapipe/framework/testdata/proto3_options.pb.h"
 
 namespace mediapipe {
 namespace tool {
@@ -40,9 +37,10 @@ TEST(OptionsMapTest, QueryNotFound) {
   OptionsMap options;
   options.Initialize(node);
   EXPECT_FALSE(options.Has<mediapipe::NightLightCalculatorOptions>());
+  EXPECT_FALSE(options.Has<mediapipe::Proto3Options>());
 }
 
-TEST(OptionsMapTest, QueryFound) {
+TEST(OptionsMapTest, Proto2QueryFound) {
   CalculatorGraphConfig::Node node =
       ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
         calculator: "NightLightCalculator"
@@ -64,7 +62,7 @@ TEST(OptionsMapTest, QueryFound) {
       123);
 }
 
-TEST(MutableOptionsMapTest, InsertAndQueryFound) {
+TEST(MutableOptionsMapTest, InsertProto2AndQueryFound) {
   CalculatorGraphConfig::Node node =
       ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
         calculator: "NightLightCalculator"
@@ -81,6 +79,83 @@ TEST(MutableOptionsMapTest, InsertAndQueryFound) {
   EXPECT_EQ(
       options.Get<mediapipe::NightLightCalculatorOptions>().base_timestamp()[0],
       123);
+}
+
+TEST(OptionsMapTest, Proto3QueryFound) {
+  CalculatorGraphConfig::Node node =
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
+        calculator: "NightLightCalculator"
+        input_side_packet: "input_value"
+        output_stream: "values"
+        node_options {
+          [type.googleapis.com/mediapipe.Proto3Options] { test_value: 123 }
+        }
+      )pb");
+  OptionsMap options;
+  options.Initialize(node);
+  EXPECT_TRUE(options.Has<mediapipe::Proto3Options>());
+  EXPECT_EQ(options.Get<mediapipe::Proto3Options>().test_value(), 123);
+}
+
+TEST(MutableOptionsMapTest, InsertProto3AndQueryFound) {
+  CalculatorGraphConfig::Node node =
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
+        calculator: "NightLightCalculator"
+        input_side_packet: "input_value"
+        output_stream: "values"
+      )pb");
+  MutableOptionsMap options;
+  options.Initialize(node);
+  EXPECT_FALSE(options.Has<mediapipe::Proto3Options>());
+  mediapipe::Proto3Options proto3_options;
+  proto3_options.set_test_value(123);
+  options.Set(proto3_options);
+  EXPECT_TRUE(options.Has<mediapipe::Proto3Options>());
+  EXPECT_EQ(options.Get<mediapipe::Proto3Options>().test_value(), 123);
+}
+
+TEST(OptionsMapTest, BothProto2AndProto3QueriesFound) {
+  CalculatorGraphConfig::Node node =
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
+        calculator: "NightLightCalculator"
+        input_side_packet: "input_value"
+        output_stream: "values"
+        options {
+          [mediapipe.NightLightCalculatorOptions.ext] { jitter: 321 }
+        }
+        node_options {
+          [type.googleapis.com/mediapipe.Proto3Options] { test_value: 123 }
+        }
+      )pb");
+  OptionsMap options;
+  options.Initialize(node);
+  EXPECT_TRUE(options.Has<mediapipe::Proto3Options>());
+  EXPECT_EQ(options.Get<mediapipe::Proto3Options>().test_value(), 123);
+  EXPECT_TRUE(options.Has<mediapipe::NightLightCalculatorOptions>());
+  EXPECT_EQ(options.Get<mediapipe::NightLightCalculatorOptions>().jitter(),
+            321);
+}
+
+TEST(OptionsMapTest, PrefersOptionsOverNodeOptions) {
+  CalculatorGraphConfig::Node node =
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
+        calculator: "NightLightCalculator"
+        input_side_packet: "input_value"
+        output_stream: "values"
+        options {
+          [mediapipe.NightLightCalculatorOptions.ext] { jitter: 111 }
+        }
+        node_options {
+          [type.googleapis.com/mediapipe.NightLightCalculatorOptions] {
+            jitter: 222
+          }
+        }
+      )pb");
+  OptionsMap options;
+  options.Initialize(node);
+  EXPECT_TRUE(options.Has<mediapipe::NightLightCalculatorOptions>());
+  EXPECT_EQ(options.Get<mediapipe::NightLightCalculatorOptions>().jitter(),
+            111);
 }
 
 }  // namespace

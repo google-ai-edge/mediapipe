@@ -17,7 +17,9 @@
 
 #include <string>
 
-#include "mediapipe/framework/port/statusor.h"
+#include "absl/base/attributes.h"
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 
 namespace mediapipe {
 
@@ -40,8 +42,16 @@ namespace mediapipe {
 // provided later. TODO.
 absl::StatusOr<std::string> PathToResourceAsFile(const std::string& path);
 
+// DEPRECATED: use `CalculatorContext::GetResources` and
+// `SubgraphContext::GetResources` which allow for fine grained per graph
+// resource loading configuration.
+//
 // Reads the entire contents of a resource. The search path is as in
 // PathToResourceAsFile.
+ABSL_DEPRECATED(
+    "Use `CalculatorContext::GetResources` and "
+    "`SubgraphContext::GetResources` which allow for fine grained per graph "
+    "resource loading configuration.")
 absl::Status GetResourceContents(const std::string& path, std::string* output,
                                  bool read_as_binary = true);
 

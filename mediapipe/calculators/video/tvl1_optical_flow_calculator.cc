@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "absl/base/macros.h"
+#include "absl/log/absl_check.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_frame.h"
@@ -158,7 +159,7 @@ absl::Status Tvl1OpticalFlowCalculator::Process(CalculatorContext* cc) {
 absl::Status Tvl1OpticalFlowCalculator::CalculateOpticalFlow(
     const ImageFrame& current_frame, const ImageFrame& next_frame,
     OpticalFlowField* flow) {
-  CHECK(flow);
+  ABSL_CHECK(flow);
   if (!ImageSizesMatch(current_frame, next_frame)) {
     return tool::StatusInvalid("Images are different sizes.");
   }
@@ -182,7 +183,7 @@ absl::Status Tvl1OpticalFlowCalculator::CalculateOpticalFlow(
   flow->Allocate(first.cols, first.rows);
   cv::Mat cv_flow(flow->mutable_flow_data());
   tvl1_computer->calc(first, second, cv_flow);
-  CHECK_EQ(flow->mutable_flow_data().data, cv_flow.data);
+  ABSL_CHECK_EQ(flow->mutable_flow_data().data, cv_flow.data);
   // Inserts the idle DenseOpticalFlow object back to the cache for reuse.
   {
     absl::MutexLock lock(&mutex_);

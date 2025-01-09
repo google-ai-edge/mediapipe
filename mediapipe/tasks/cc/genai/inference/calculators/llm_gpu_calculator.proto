@@ -1,0 +1,70 @@
+// Copyright 2024 The ODML Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package odml.infra.proto;
+
+import "mediapipe/tasks/cc/genai/inference/proto/llm_file_metadata.proto";
+import "mediapipe/tasks/cc/genai/inference/proto/llm_params.proto";
+import "mediapipe/tasks/cc/genai/inference/proto/sampler_params.proto";
+
+option java_package = "com.google.odml.infra.proto";
+option java_outer_classname = "LlmGpuCalculatorOptionsProto";
+
+message LlmGpuCalculatorOptions {
+  string weight_path = 1;
+
+  // Use LlmParameters instead.
+  reserved 2, 3, 4, 5, 6, 7, 8, 9;
+
+  message GpuModelInfo {
+    // If set True, use float16 precision in computation.
+    bool allow_precision_loss = 1;
+    bool enable_fast_tuning = 2;
+    bool enable_winograd_opt = 3;
+    bool use_low_power = 4;
+    bool prefer_texture_weights = 5;
+    bool enable_host_mapped_pointer = 6;
+    bool disallow_8bit_convs = 7;
+  }
+  GpuModelInfo gpu_model_info = 10;
+
+  // Use LlmParameters instead.
+  reserved 11;
+
+  int32 num_decode_tokens = 12;
+
+  // Use lora_ranks instead.
+  reserved 13;
+
+  int32 sequence_batch_size = 14;
+
+  reserved 19;
+
+  odml.infra.proto.LlmParameters llm_parameters = 20;
+
+  reserved 21;
+
+  // Each output head will generate tokens independently of the others.
+  int32 num_output_heads = 22;
+
+  reserved 23 to 27;
+
+  repeated int32 lora_ranks = 29;
+
+  reserved 30;
+
+  proto.SamplerParameters sampler_params = 31;
+}

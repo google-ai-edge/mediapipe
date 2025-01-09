@@ -1,0 +1,97 @@
+// Copyright 2023 The ODML Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package odml.infra.proto;
+
+import "mediapipe/tasks/cc/genai/inference/proto/prompt_template.proto";
+import "mediapipe/tasks/cc/genai/inference/proto/transformer_params.proto";
+
+option java_package = "com.google.odml.infra.proto";
+option java_outer_classname = "LLMParametersProto";
+
+// Naming convention is as following: LLM_MODEL_TYPE_<model_name>_<model_size>.
+enum LlmModelType {
+  // Unknown LLM model type
+  LLM_MODEL_TYPE_UNKNOWN = 0;
+
+  reserved 1, 2, 3, 4, 7, 9, 10, 13, 14, 15, 16, 17;
+
+  // FALCON RefinedWeb with 1B parameters.
+  // https://huggingface.co/tiiuae/falcon-rw-1b
+  LLM_MODEL_TYPE_FALCON_RW_1B = 5;
+
+  // GEMMA with 2B parameters
+  LLM_MODEL_TYPE_GEMMA_2B = 6;
+
+  // GEMMA with 7B parameters
+  LLM_MODEL_TYPE_GEMMA_7B = 12;
+
+  // GEMMA v2 with 2B parameters.
+  LLM_MODEL_TYPE_GEMMA2_2B = 18;
+
+  // StableLM 4E1T with 3B parameters
+  LLM_MODEL_TYPE_STABLELM_4E1T_3B = 8;
+
+  // Phi-2
+  // https://huggingface.co/microsoft/phi-2
+  LLM_MODEL_TYPE_PHI_2 = 11;
+
+  // Arbitrary TfLite model via ODML stack.
+  LLM_MODEL_TYPE_TF_LITE = 100;
+}
+
+// Parameters for Large Language Models (LLM).
+message LlmParameters {
+  TransformerParameters transformer_parameters = 1;
+
+  // Size of vocabulary.
+  int32 vocab_size = 2;
+
+  // Was used for disable_kv_cache.
+  reserved 3;
+
+  // Start token prepended to the beginning of input sequence.
+  oneof start_token_union {
+    int32 start_token_id = 4;
+
+    string start_token = 6;
+  }
+
+  // Stop tokens to determine the end of output stream.
+  repeated string stop_tokens = 5;
+
+  enum InputOutputNormalization {
+    INPUT_OUTPUT_NORMALIZATION_UNKNOWN = 0;
+
+    // Enables GPT2 stype bytes to unicode mapping normalization. For more
+    // details, see:
+    // https://github.com/openai/gpt-2/blob/master/src/encoder.py#L9
+    INPUT_OUTPUT_NORMALIZATION_BYTES_TO_UNICODE = 1;
+  }
+
+  repeated InputOutputNormalization input_output_normalizations = 7;
+
+  PromptTemplate prompt_template = 8;
+
+  // Number of tokens to draft in a single step when using speculative decoding.
+  optional int32 num_draft_tokens = 9;
+
+  // Tokens used to delineate different roles within a prompt for this model.
+  optional string user_role_token = 11;
+  optional string system_role_token = 12;
+  optional string model_role_token = 13;
+  optional string end_role_token = 14;
+}

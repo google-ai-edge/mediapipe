@@ -27,6 +27,9 @@ message ConstantSidePacketCalculatorOptions {
     optional ConstantSidePacketCalculatorOptions ext = 291214597;
   }
 
+  message StringVector {
+    repeated string string_value = 1;
+  }
   message ConstantSidePacket {
     oneof value {
       int32 int_value = 1;
@@ -40,6 +43,7 @@ message ConstantSidePacketCalculatorOptions {
       LandmarkList landmark_list_value = 7;
       TimeSeriesHeader time_series_header_value = 10;
       MatrixData matrix_data_value = 12;
+      StringVector string_vector_value = 13;
     }
   }
 

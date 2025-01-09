@@ -25,24 +25,23 @@ class DatasetTest(tf.test.TestCase):
   def setUp(self):
     super().setUp()
 
-  def test_from_folder(self):
-    test_data_dirname = 'input/style'
-    input_data_dir = test_utils.get_test_data_path(test_data_dirname)
-    data = dataset.Dataset.from_folder(dirname=input_data_dir)
-    self.assertEqual(data.num_classes, 2)
-    self.assertEqual(data.label_names, ['cartoon', 'sketch'])
-    self.assertLen(data, 2)
+  def test_from_image(self):
+    test_image_file = 'input/style/cartoon/cartoon.jpg'
+    input_image_path = test_utils.get_test_data_path(test_image_file)
+    data = dataset.Dataset.from_image(filename=input_image_path)
+    self.assertEqual(data.num_classes, 1)
+    self.assertEqual(data.label_names, ['cartoon'])
+    self.assertLen(data, 1)
 
-  def test_from_folder_raise_value_error_for_invalid_path(self):
-    with self.assertRaisesRegex(ValueError, 'Invalid input data directory'):
-      dataset.Dataset.from_folder(dirname='invalid')
+  def test_from_image_raise_value_error_for_invalid_path(self):
+    with self.assertRaisesRegex(ValueError, 'Unsupported image formats: .zip'):
+      dataset.Dataset.from_image(filename='input/style/cartoon/cartoon.zip')
 
-  def test_from_folder_raise_value_error_for_valid_no_data_path(self):
-    input_data_dir = test_utils.get_test_data_path('face_stylizer')
-    with self.assertRaisesRegex(
-        ValueError, 'No images found under given directory'
-    ):
-      dataset.Dataset.from_folder(dirname=input_data_dir)
+  def test_from_image_raise_value_error_for_invalid_image(self):
+    with self.assertRaisesRegex(ValueError, 'Invalid image'):
+      test_image_file = 'input/style/sketch/boy-6030802_1280.jpg'
+      input_image_path = test_utils.get_test_data_path(test_image_file)
+      dataset.Dataset.from_image(filename=input_image_path)
 
 
 if __name__ == '__main__':

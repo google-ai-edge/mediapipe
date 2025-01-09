@@ -33,24 +33,23 @@ constexpr char kConvolution2DTransposeBiasOpName[] =
 constexpr int kConvolution2DTransposeBiasOpVersion = 1;
 
 TfLiteRegistration* RegisterMaxPoolingWithArgmax2D() {
-  static TfLiteRegistrationExternal* reg_external = []() {
+  static TfLiteOperator* reg_external = []() {
     // Intentionally allocated and never destroyed.
-    auto* r = TfLiteRegistrationExternalCreate(
+    auto* r = TfLiteOperatorCreate(
         kTfLiteBuiltinCustom, kMaxPoolingWithArgmax2DOpName,
-        kMaxPoolingWithArgmax2DOpVersion);
-    TfLiteRegistrationExternalSetInit(
+        kMaxPoolingWithArgmax2DOpVersion, /*user_data=*/nullptr);
+    TfLiteOperatorSetInit(
         r, [](TfLiteOpaqueContext*, const char*, size_t) -> void* {
           return new TfLitePaddingValues();
         });
-    TfLiteRegistrationExternalSetFree(
-        r, [](TfLiteOpaqueContext*, void* buffer) -> void {
-          delete reinterpret_cast<TfLitePaddingValues*>(buffer);
-        });
-    TfLiteRegistrationExternalSetPrepare(
+    TfLiteOperatorSetFree(r, [](TfLiteOpaqueContext*, void* buffer) -> void {
+      delete reinterpret_cast<TfLitePaddingValues*>(buffer);
+    });
+    TfLiteOperatorSetPrepare(
         r,
         [](TfLiteOpaqueContext* context,
            TfLiteOpaqueNode* node) -> TfLiteStatus { return kTfLiteOk; });
-    TfLiteRegistrationExternalSetInvoke(
+    TfLiteOperatorSetInvoke(
         r, [](TfLiteOpaqueContext* context, TfLiteOpaqueNode*) -> TfLiteStatus {
           TfLiteOpaqueContextReportError(
               context, "MaxPoolingWithArgmax2D is only available on the GPU.");
@@ -64,22 +63,22 @@ TfLiteRegistration* RegisterMaxPoolingWithArgmax2D() {
 }
 
 TfLiteRegistration* RegisterMaxUnpooling2D() {
-  static TfLiteRegistrationExternal* reg_external =
+  static TfLiteOperator* reg_external =
       // Intentionally allocated and never destroyed.
-      TfLiteRegistrationExternalCreate(kTfLiteBuiltinCustom,
-                                       kMaxUnpooling2DOpName,
-                                       kMaxUnpooling2DOpVersion);
+      TfLiteOperatorCreate(kTfLiteBuiltinCustom, kMaxUnpooling2DOpName,
+                           kMaxUnpooling2DOpVersion,
+                           /*user_data=*/nullptr);
   static TfLiteRegistration reg{};
   reg.registration_external = reg_external;
   return &reg;
 }
 
 TfLiteRegistration* RegisterConvolution2DTransposeBias() {
-  static TfLiteRegistrationExternal* reg_external =
+  static TfLiteOperator* reg_external =
       // Intentionally allocated and never destroyed.
-      TfLiteRegistrationExternalCreate(kTfLiteBuiltinCustom,
-                                       kConvolution2DTransposeBiasOpName,
-                                       kConvolution2DTransposeBiasOpVersion);
+      TfLiteOperatorCreate(
+          kTfLiteBuiltinCustom, kConvolution2DTransposeBiasOpName,
+          kConvolution2DTransposeBiasOpVersion, /*user_data=*/nullptr);
   static TfLiteRegistration reg{};
   reg.registration_external = reg_external;
   return &reg;

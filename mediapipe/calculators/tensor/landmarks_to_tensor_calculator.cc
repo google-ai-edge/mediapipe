@@ -17,12 +17,15 @@
 #include <memory>
 #include <optional>
 #include <type_traits>
+#include <vector>
 
 #include "mediapipe/calculators/tensor/landmarks_to_tensor_calculator.pb.h"
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/tensor.h"
+#include "mediapipe/framework/memory_manager.h"
+#include "mediapipe/framework/memory_manager_service.h"
 #include "mediapipe/framework/port/ret_check.h"
 
 namespace mediapipe {
@@ -67,7 +70,8 @@ float GetAttribute(
 template <typename LandmarksT>
 Tensor ConvertLandmarksToTensor(
     const LandmarksT& landmarks, const std::vector<float>& attribute_scales,
-    const LandmarksToTensorCalculatorOptions& options) {
+    const LandmarksToTensorCalculatorOptions& options,
+    MemoryManager* memory_manager) {
   // Determine tensor shape.
   const int n_landmarks = landmarks.landmark_size();
   const int n_attributes = options.attributes_size();
@@ -76,7 +80,7 @@ Tensor ConvertLandmarksToTensor(
                           : Tensor::Shape{1, n_landmarks, n_attributes};
 
   // Create empty tesnor.
-  Tensor tensor(Tensor::ElementType::kFloat32, tensor_shape);
+  Tensor tensor(Tensor::ElementType::kFloat32, tensor_shape, memory_manager);
   auto* buffer = tensor.GetCpuWriteView().buffer<float>();
 
   // Fill tensor with landmark attributes.
@@ -97,6 +101,9 @@ class LandmarksToTensorCalculatorImpl
     : public NodeImpl<LandmarksToTensorCalculator> {
  public:
   absl::Status Open(CalculatorContext* cc) override {
+    if (cc->Service(kMemoryManagerService).IsAvailable()) {
+      memory_manager_ = &cc->Service(kMemoryManagerService).GetObject();
+    }
     options_ = cc->Options<LandmarksToTensorCalculatorOptions>();
     RET_CHECK(options_.attributes_size() > 0)
         << "At least one attribute must be specified";
@@ -134,15 +141,17 @@ class LandmarksToTensorCalculatorImpl
       if (kInLandmarkList(cc).IsEmpty()) {
         return absl::OkStatus();
       }
-      Tensor tensor = ConvertLandmarksToTensor(kInLandmarkList(cc).Get(),
-                                               attribute_scales, options_);
+      Tensor tensor =
+          ConvertLandmarksToTensor(kInLandmarkList(cc).Get(), attribute_scales,
+                                   options_, memory_manager_);
       result.push_back(std::move(tensor));
     } else {
       if (kInNormLandmarkList(cc).IsEmpty()) {
         return absl::OkStatus();
       }
-      Tensor tensor = ConvertLandmarksToTensor(kInNormLandmarkList(cc).Get(),
-                                               attribute_scales, options_);
+      Tensor tensor =
+          ConvertLandmarksToTensor(kInNormLandmarkList(cc).Get(),
+                                   attribute_scales, options_, memory_manager_);
       result.push_back(std::move(tensor));
     }
 
@@ -151,8 +160,15 @@ class LandmarksToTensorCalculatorImpl
     return absl::OkStatus();
   }
 
+  static absl::Status UpdateContract(CalculatorContract* cc) {
+    cc->UseService(kMemoryManagerService).Optional();
+    return absl::OkStatus();
+  }
+
  private:
   LandmarksToTensorCalculatorOptions options_;
+  // Enable pooling of AHWBs in Tensor instances.
+  MemoryManager* memory_manager_ = nullptr;
 };
 MEDIAPIPE_NODE_IMPLEMENTATION(LandmarksToTensorCalculatorImpl);
 

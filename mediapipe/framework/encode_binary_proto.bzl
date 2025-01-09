@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """A rule for encoding a text format protocol buffer into binary.
 
 Example usage:
@@ -36,6 +35,8 @@ Args:
   message_type: The root message of the buffer.
   output: The desired name of the output file. Optional.
 """
+
+# buildifier: disable=out-of-order-load
 
 load("@bazel_skylib//lib:paths.bzl", "paths")
 
@@ -76,10 +77,12 @@ def _get_proto_provider(dep):
     """
     if ProtoInfo in dep:
         return dep[ProtoInfo]
+
     elif hasattr(dep, "proto"):
         return dep.proto
     else:
-        fail("cannot happen, rule definition requires .proto or ProtoInfo")
+        fail("cannot happen, rule definition requires .proto" +
+             " or ProtoInfo")
 
 def _encode_binary_proto_impl(ctx):
     """Implementation of the encode_binary_proto rule."""
@@ -124,6 +127,7 @@ def _encode_binary_proto_impl(ctx):
         command = "${@:3} < $1 > $2",
         arguments = [args],
         mnemonic = "EncodeProto",
+        toolchain = None,
     )
 
     output_depset = depset([binarypb])
@@ -141,7 +145,10 @@ _encode_binary_proto = rule(
             cfg = "exec",
         ),
         "deps": attr.label_list(
-            providers = [[ProtoInfo], ["proto"]],
+            providers = [
+                [ProtoInfo],
+                ["proto"],
+            ],
         ),
         "input": attr.label(
             mandatory = True,
@@ -157,14 +164,14 @@ _encode_binary_proto = rule(
 def encode_binary_proto(name, input, message_type, deps, **kwargs):
     if type(input) == type("string"):
         input_label = input
-        textproto_srcs = [input]
+        srcs = [input]
     elif type(input) == type(dict()):
         # We cannot accept a select, as macros are unable to manipulate selects.
         input_label = select(input)
         srcs_dict = dict()
         for k, v in input.items():
             srcs_dict[k] = [v]
-        textproto_srcs = select(srcs_dict)
+        srcs = select(srcs_dict)
     else:
         fail("input should be a string or a dict, got %s" % input)
 
@@ -181,7 +188,10 @@ def _generate_proto_descriptor_set_impl(ctx):
     all_protos = depset(transitive = [
         _get_proto_provider(dep).transitive_sources
         for dep in ctx.attr.deps
-        if ProtoInfo in dep or hasattr(dep, "proto")
+        if (
+            ProtoInfo in dep or
+            hasattr(dep, "proto")
+        )
     ])
     descriptor = ctx.outputs.output
 
@@ -212,7 +222,10 @@ generate_proto_descriptor_set = rule(
             cfg = "exec",
         ),
         "deps": attr.label_list(
-            providers = [[ProtoInfo], ["proto"]],
+            providers = [
+                [ProtoInfo],
+                ["proto"],
+            ],
         ),
     },
     outputs = {"output": "%{name}.proto.bin"},

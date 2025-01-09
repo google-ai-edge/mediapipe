@@ -42,7 +42,7 @@ message TensorFlowInferenceCalculatorOptions {
   // If the 0th dimension is the batch dimension, then the tensors are
   // concatenated on that dimension. If the 0th is a data dimension, then a 0th
   // dimension is added before concatenating. If added, the extra dimension is
-  // removed before outputing the tensor. Examples of each case: If you want
+  // removed before outputting the tensor. Examples of each case: If you want
   // to batch spectra of audio over time for an LSTM, a time-frequency
   // representation has a 0th dimension as the batch dimension. If you want to
   // batch frames of video that are [width, height, channels], the batch

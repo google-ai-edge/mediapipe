@@ -338,8 +338,8 @@ absl::Status Equals(std::vector<FieldData> b1, std::vector<FieldData> b2) {
   using tool::options_field_util::AsPacket;
   RET_CHECK_EQ(b1.size(), b2.size());
   for (int i = 0; i < b1.size(); ++i) {
-    ASSIGN_OR_RETURN(Packet p1, AsPacket(b1.at(i)));
-    ASSIGN_OR_RETURN(Packet p2, AsPacket(b2.at(i)));
+    MP_ASSIGN_OR_RETURN(Packet p1, AsPacket(b1.at(i)));
+    MP_ASSIGN_OR_RETURN(Packet p2, AsPacket(b2.at(i)));
     MP_RETURN_IF_ERROR(Equals(p1.Get<FieldType>(), p2.Get<FieldType>()));
   }
   return absl::OkStatus();

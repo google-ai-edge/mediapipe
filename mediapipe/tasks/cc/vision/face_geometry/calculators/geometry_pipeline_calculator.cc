@@ -148,7 +148,7 @@ class GeometryPipelineCalculator : public CalculatorBase {
 
     const auto& options = cc->Options<FaceGeometryPipelineCalculatorOptions>();
 
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         GeometryPipelineMetadata metadata,
         ReadMetadataFromFile(options.metadata_file()),
         _ << "Failed to read the geometry pipeline metadata from file!");
@@ -162,9 +162,9 @@ class GeometryPipelineCalculator : public CalculatorBase {
     MP_RETURN_IF_ERROR(ValidateEnvironment(environment))
         << "Invalid environment!";
 
-    ASSIGN_OR_RETURN(geometry_pipeline_,
-                     CreateGeometryPipeline(environment, metadata),
-                     _ << "Failed to create a geometry pipeline!");
+    MP_ASSIGN_OR_RETURN(geometry_pipeline_,
+                        CreateGeometryPipeline(environment, metadata),
+                        _ << "Failed to create a geometry pipeline!");
     return absl::OkStatus();
   }
 
@@ -192,7 +192,7 @@ class GeometryPipelineCalculator : public CalculatorBase {
 
       auto multi_face_geometry = absl::make_unique<std::vector<FaceGeometry>>();
 
-      ASSIGN_OR_RETURN(
+      MP_ASSIGN_OR_RETURN(
           *multi_face_geometry,
           geometry_pipeline_->EstimateFaceGeometry(
               multi_face_landmarks,  //
@@ -215,7 +215,7 @@ class GeometryPipelineCalculator : public CalculatorBase {
               .Tag(kFaceLandmarksTag)
               .Get<mediapipe::NormalizedLandmarkList>();
 
-      ASSIGN_OR_RETURN(
+      MP_ASSIGN_OR_RETURN(
           std::vector<FaceGeometry> multi_face_geometry,
           geometry_pipeline_->EstimateFaceGeometry(
               {face_landmarks},  //
@@ -239,7 +239,7 @@ class GeometryPipelineCalculator : public CalculatorBase {
  private:
   static absl::StatusOr<GeometryPipelineMetadata> ReadMetadataFromFile(
       const core::proto::ExternalFile& metadata_file) {
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         const auto file_handler,
         core::ExternalFileHandler::CreateFromExternalFile(&metadata_file));
 

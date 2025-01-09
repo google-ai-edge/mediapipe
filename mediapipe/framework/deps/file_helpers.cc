@@ -14,9 +14,14 @@
 
 #include "mediapipe/framework/deps/file_helpers.h"
 
+#include "absl/strings/str_cat.h"
+
 #ifdef _WIN32
 #include <Windows.h>
 #include <direct.h>
+
+#include <codecvt>
+#include <locale>
 #else
 #include <dirent.h>
 #endif  // _WIN32
@@ -25,7 +30,9 @@
 #include <sys/stat.h>
 
 #include <cerrno>
+#include <string>
 
+#include "absl/status/status.h"
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/status.h"
@@ -86,11 +93,31 @@ class DirectoryListing {
   struct dirent* next_entry_ = nullptr;
 };
 #else
+#if defined(UNICODE)
+using PathString = std::wstring;
+
+PathString Utf8ToNative(const std::string& string) {
+  std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> converter;
+  return converter.from_bytes(string.data(), string.data() + string.size());
+}
+std::string NativeToUtf8(const PathString& string) {
+  std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> converter;
+  return converter.to_bytes(string.data(), string.data() + string.size());
+}
+#define FILE_PATH_LITERAL_INTERNAL(x) L##x
+#define FILE_PATH_LITERAL(x) FILE_PATH_LITERAL_INTERNAL(x)
+#else
+using PathString = std::string;
+PathString Utf8ToNative(const std::string& string) { return string; }
+std::string NativeToUtf8(const PathString& string) { return string; }
+#define FILE_PATH_LITERAL(x) x
+#endif
+
 class DirectoryListing {
  public:
-  explicit DirectoryListing(const std::string& directory) {
-    directory_ = directory;
-    std::string search_string = directory + "\\*.*";
+  explicit DirectoryListing(const std::string& directory)
+      : directory_(Utf8ToNative(directory)) {
+    PathString search_string = directory_ + Utf8ToNative("\\*.*");
     find_handle_ = FindFirstFile(search_string.c_str(), &find_data_);
   }
 
@@ -107,10 +134,10 @@ class DirectoryListing {
   // after the one that is returned, if it exists.
   std::string NextEntry() {
     if (HasNextEntry()) {
-      std::string result =
-          std::string(directory_ + "\\" + find_data_.cFileName);
+      PathString result =
+          directory_ + Utf8ToNative("\\") + PathString(find_data_.cFileName);
       ReadNextEntry();
-      return result;
+      return NativeToUtf8(result);
     } else {
       return std::string();
     }
@@ -119,8 +146,9 @@ class DirectoryListing {
  private:
   void ReadNextEntry() {
     int find_result = FindNextFile(find_handle_, &find_data_);
-    while (find_result != 0 && (std::string(find_data_.cFileName) == "." ||
-                                std::string(find_data_.cFileName) == "..")) {
+    while (find_result != 0 &&
+           (PathString(find_data_.cFileName) == FILE_PATH_LITERAL(".") ||
+            PathString(find_data_.cFileName) == FILE_PATH_LITERAL(".."))) {
       find_result = FindNextFile(find_handle_, &find_data_);
     }
 
@@ -130,7 +158,7 @@ class DirectoryListing {
     }
   }
 
-  std::string directory_;
+  const PathString directory_;
   HANDLE find_handle_ = INVALID_HANDLE_VALUE;
   WIN32_FIND_DATA find_data_;
 };
@@ -163,13 +191,31 @@ absl::Status GetContents(absl::string_view file_name, std::string* output,
 
 absl::Status SetContents(absl::string_view file_name,
                          absl::string_view content) {
-  FILE* fp = fopen(file_name.data(), "w");
+  FILE* fp = fopen(file_name.data(), "wb");
   if (fp == NULL) {
     return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
            << "Can't open file: " << file_name;
   }
 
   fwrite(content.data(), sizeof(char), content.size(), fp);
+  size_t write_error = ferror(fp);
+  if (fclose(fp) != 0 || write_error) {
+    return mediapipe::InternalErrorBuilder(MEDIAPIPE_LOC)
+           << "Error while writing file: " << file_name
+           << ". Error message: " << strerror(write_error);
+  }
+  return absl::OkStatus();
+}
+
+absl::Status AppendStringToFile(absl::string_view file_name,
+                                absl::string_view contents) {
+  FILE* fp = fopen(file_name.data(), "ab");
+  if (!fp) {
+    return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
+           << "Can't open file: " << file_name;
+  }
+
+  fwrite(contents.data(), sizeof(char), contents.size(), fp);
   size_t write_error = ferror(fp);
   if (fclose(fp) != 0 || write_error) {
     return mediapipe::InternalErrorBuilder(MEDIAPIPE_LOC)
@@ -214,15 +260,39 @@ absl::Status MatchFileTypeInDirectory(const std::string& directory,
 }
 
 absl::Status Exists(absl::string_view file_name) {
+#ifdef _WIN32
+  // Windows needs to use stat64 for >2GB files.
+  struct _stat64 buffer;
+  int status = _stat64(std::string(file_name).c_str(), &buffer);
+#else
   struct stat buffer;
-  int status;
-  status = stat(std::string(file_name).c_str(), &buffer);
+  int status = stat(std::string(file_name).c_str(), &buffer);
+#endif
   if (status == 0) {
     return absl::OkStatus();
   }
   switch (errno) {
     case EACCES:
       return mediapipe::PermissionDeniedError("Insufficient permissions.");
+    default:
+      return absl::NotFoundError(
+          absl::StrCat("The path does not exist: ", file_name));
+  }
+}
+
+absl::Status IsDirectory(absl::string_view file_name) {
+  struct stat buffer;
+  int status;
+  status = stat(std::string(file_name).c_str(), &buffer);
+  if (status == 0) {
+    if ((buffer.st_mode & S_IFMT) == S_IFDIR) {
+      return absl::OkStatus();
+    }
+    return absl::FailedPreconditionError("The path is not a directory.");
+  }
+  switch (errno) {
+    case EACCES:
+      return absl::PermissionDeniedError("Insufficient permissions.");
     default:
       return absl::NotFoundError("The path does not exist.");
   }

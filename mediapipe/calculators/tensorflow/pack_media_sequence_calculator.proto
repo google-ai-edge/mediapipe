@@ -68,4 +68,8 @@ message PackMediaSequenceCalculatorOptions {
 
   // If true/false, outputs the SequenceExample at timestamp 0/PostStream.
   optional bool output_as_zero_timestamp = 8 [default = false];
+
+  // If true, an empty clip label won't be ignored but will be added as an
+  // empty list (for both clip/label/string and clip/label/confidence).
+  optional bool add_empty_labels = 9 [default = false];
 }

@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <utility>
 
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "mediapipe/examples/desktop/autoflip/quality/math_utils.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
@@ -121,12 +122,12 @@ absl::Status PackKeyFrameInfo(const int64_t frame_timestamp_ms,
       ScaleRect(original_detection.location(), scale_x, scale_y, &location);
     } else {
       has_valid_location = false;
-      LOG(ERROR) << "Detection missing a bounding box, skipped.";
+      ABSL_LOG(ERROR) << "Detection missing a bounding box, skipped.";
     }
     if (has_valid_location) {
       if (!ClampRect(original_frame_width, original_frame_height, &location)
                .ok()) {
-        LOG(ERROR) << "Invalid detection bounding box, skipped.";
+        ABSL_LOG(ERROR) << "Invalid detection bounding box, skipped.";
         continue;
       }
       auto* detection = processed_detections->add_detections();

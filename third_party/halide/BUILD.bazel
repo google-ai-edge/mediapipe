@@ -22,24 +22,29 @@ package(
 
 halide_library_runtimes()
 
-# Aliases to platform-specific targets.
-[
-    alias(
-        name = target_name,
-        actual = select(
-            {
-                "@mediapipe//mediapipe:macos_x86_64": "@macos_x86_64_halide//:%s" % target_name,
-                "@mediapipe//mediapipe:macos_arm64": "@macos_arm_64_halide//:%s" % target_name,
-                "@mediapipe//mediapipe:windows": "@windows_halide//:%s" % target_name,
-                # Assume Linux x86_64 by default.
-                # TODO: add mediapipe configs for linux to avoid assuming it's the default.
-                "//conditions:default": "@linux_halide//:%s" % target_name,
-            },
-        ),
-    )
-    for target_name in [
-        "language",
-        "runtime",
-        "gengen",
-    ]
-]
+# Alias the 'gengen' target so that it uses the correct Halide release based on host platform.
+alias(
+    name = "gengen",
+    actual = select(
+        {
+            "@mediapipe//mediapipe:macos_x86_64": "@macos_x86_64_halide//:gengen",
+            "@mediapipe//mediapipe:macos_arm64": "@macos_arm_64_halide//:gengen",
+            "@mediapipe//mediapipe:windows": "@windows_halide//:gengen",
+            "@mediapipe//mediapipe:linux": "@linux_halide//:gengen",
+            # Deliberately no //condition:default clause here.
+        },
+        no_match_error = "Compiling Halide code requires that the build host is one of Linux x86-64, Windows x86-64, macOS x86-64, or macOS arm64.",
+    ),
+)
+
+# Arbitrarily alias the 'runtime' and 'language' targets to the Linux Halide release. The underlying
+# targets are identical for all host platforms.
+alias(
+    name = "runtime",
+    actual = "@linux_halide//:runtime",
+)
+
+alias(
+    name = "language",
+    actual = "@linux_halide//:language",
+)

@@ -29,7 +29,8 @@ function convertFromEmbeddingsProto(source: EmbeddingProto): Embedding {
   };
 
   if (source.hasFloatEmbedding()) {
-    embedding.floatEmbedding = source.getFloatEmbedding()!.getValuesList();
+    embedding.floatEmbedding =
+        source.getFloatEmbedding()!.getValuesList().slice();
   } else {
       const encodedValue = source.getQuantizedEmbedding()?.getValues() ?? '';
       embedding.quantizedEmbedding = typeof encodedValue == 'string' ?

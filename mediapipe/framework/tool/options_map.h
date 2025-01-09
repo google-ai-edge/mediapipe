@@ -5,14 +5,16 @@
 #include <memory>
 #include <type_traits>
 
+#include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/port/any_proto.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/tool/type_util.h"
 
 namespace mediapipe {
 
 namespace tool {
+
+extern absl::Mutex option_extension_lock;
 
 // A compile-time detector for the constant |T::ext|.
 template <typename T>
@@ -43,6 +45,7 @@ bool HasExtension(const CalculatorOptions& options) {
 template <class T,
           typename std::enable_if<IsExtension<T>::value, int>::type = 0>
 T* GetExtension(CalculatorOptions& options) {
+  absl::MutexLock lock(&option_extension_lock);
   if (options.HasExtension(T::ext)) {
     return options.MutableExtension(T::ext);
   }
@@ -128,7 +131,8 @@ class OptionsMap {
       return *options_.Get<T>();
     }
     T* result = options_.Get<T>();
-    if (node_config_->has_options()) {
+    if (node_config_->has_options() &&
+        HasExtension<T>(node_config_->options())) {
       GetExtension(node_config_->options(), result);
     } else {
       GetNodeOptions(*node_config_, result);
@@ -141,8 +145,9 @@ class OptionsMap {
     if (options_.Has<T>()) {
       return true;
     }
-    if (node_config_->has_options()) {
-      return HasExtension<T>(node_config_->options());
+    if (node_config_->has_options() &&
+        HasExtension<T>(node_config_->options())) {
+      return true;
     }
 #if defined(MEDIAPIPE_PROTO_LITE) && defined(MEDIAPIPE_PROTO_THIRD_PARTY)
     // protobuf::Any is unavailable with third_party/protobuf:protobuf-lite.
@@ -170,7 +175,8 @@ class MutableOptionsMap : public OptionsMap {
   template <class T>
   void Set(const T& value) const {
     *options_.Get<T>() = value;
-    if (node_config_->has_options()) {
+    if (node_config_->has_options() &&
+        HasExtension<T>(node_config_->options())) {
       *GetExtension<T>(*node_config_->mutable_options()) = value;
     } else {
       SetNodeOptions(*node_config_, value);
@@ -182,7 +188,8 @@ class MutableOptionsMap : public OptionsMap {
     if (options_.Has<T>()) {
       return options_.Get<T>();
     }
-    if (node_config_->has_options()) {
+    if (node_config_->has_options() &&
+        HasExtension<T>(node_config_->options())) {
       return GetExtension<T>(*node_config_->mutable_options());
     }
     T* result = options_.Get<T>();

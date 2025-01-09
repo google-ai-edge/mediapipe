@@ -31,14 +31,14 @@
 // A StrongInt<T> with a NullStrongIntValidator should compile away to a raw T
 // in optimized mode.  What this means is that the generated assembly for:
 //
-//   int64 foo = 123;
-//   int64 bar = 456;
-//   int64 baz = foo + bar;
-//   constexpr int64 fubar = 789;
+//   int64_t foo = 123;
+//   int64_t bar = 456;
+//   int64_t baz = foo + bar;
+//   constexpr int64_t fubar = 789;
 //
 // ...should be identical to the generated assembly for:
 //
-//    DEFINE_STRONG_INT_TYPE(MyStrongInt, int64);
+//    DEFINE_STRONG_INT_TYPE(MyStrongInt, int64_t);
 //    MyStrongInt foo(123);
 //    MyStrongInt bar(456);
 //    MyStrongInt baz = foo + bar;
@@ -97,13 +97,14 @@
 #ifndef MEDIAPIPE_DEPS_STRONG_INT_H_
 #define MEDIAPIPE_DEPS_STRONG_INT_H_
 
+#include <cstdint>
 #include <iosfwd>
 #include <limits>
 #include <ostream>
 #include <type_traits>
 
 #include "absl/base/macros.h"
-#include "mediapipe/framework/port/integral_types.h"
+#include "absl/log/absl_log.h"
 #include "mediapipe/framework/port/port.h"
 
 namespace mediapipe {
@@ -134,7 +135,7 @@ struct NullStrongIntValidator {
   //
   //   template<typename T, typename U>
   //   static void ValidateInit(U arg) {
-  //     if (arg < 0) LOG(FATAL) << "arg < 0";
+  //     if (arg < 0) ABSL_LOG(FATAL) << "arg < 0";
   //   }
   //
   //   template<typename T, typename U>
@@ -150,52 +151,40 @@ struct NullStrongIntValidator {
   }
   // Verify -value.
   template <typename T>
-  static void ValidateNegate(T value) { /* do nothing */
-  }
+  static void ValidateNegate(T value) { /* do nothing */ }
   // Verify ~value;
   template <typename T>
-  static void ValidateBitNot(T value) { /* do nothing */
-  }
+  static void ValidateBitNot(T value) { /* do nothing */ }
   // Verify lhs + rhs.
   template <typename T>
-  static void ValidateAdd(T lhs, T rhs) { /* do nothing */
-  }
+  static void ValidateAdd(T lhs, T rhs) { /* do nothing */ }
   // Verify lhs - rhs.
   template <typename T>
-  static void ValidateSubtract(T lhs, T rhs) { /* do nothing */
-  }
+  static void ValidateSubtract(T lhs, T rhs) { /* do nothing */ }
   // Verify lhs * rhs.
   template <typename T, typename U>
-  static void ValidateMultiply(T lhs, U rhs) { /* do nothing */
-  }
+  static void ValidateMultiply(T lhs, U rhs) { /* do nothing */ }
   // Verify lhs / rhs.
   template <typename T, typename U>
-  static void ValidateDivide(T lhs, U rhs) { /* do nothing */
-  }
+  static void ValidateDivide(T lhs, U rhs) { /* do nothing */ }
   // Verify lhs % rhs.
   template <typename T, typename U>
-  static void ValidateModulo(T lhs, U rhs) { /* do nothing */
-  }
+  static void ValidateModulo(T lhs, U rhs) { /* do nothing */ }
   // Verify lhs << rhs.
   template <typename T>
-  static void ValidateLeftShift(T lhs, int64 rhs) { /* do nothing */
-  }
+  static void ValidateLeftShift(T lhs, int64_t rhs) { /* do nothing */ }
   // Verify lhs >> rhs.
   template <typename T>
-  static void ValidateRightShift(T lhs, int64 rhs) { /* do nothing */
-  }
+  static void ValidateRightShift(T lhs, int64_t rhs) { /* do nothing */ }
   // Verify lhs & rhs.
   template <typename T>
-  static void ValidateBitAnd(T lhs, T rhs) { /* do nothing */
-  }
+  static void ValidateBitAnd(T lhs, T rhs) { /* do nothing */ }
   // Verify lhs | rhs.
   template <typename T>
-  static void ValidateBitOr(T lhs, T rhs) { /* do nothing */
-  }
+  static void ValidateBitOr(T lhs, T rhs) { /* do nothing */ }
   // Verify lhs ^ rhs.
   template <typename T>
-  static void ValidateBitXor(T lhs, T rhs) { /* do nothing */
-  }
+  static void ValidateBitXor(T lhs, T rhs) { /* do nothing */ }
 };
 
 // Holds an integer value (of type NativeType) and behaves as a NativeType by
@@ -223,8 +212,8 @@ class StrongInt {
   //
   // Example: Assume you have two StrongInt types.
   //
-  //      DEFINE_STRONG_INT_TYPE(Bytes, int64);
-  //      DEFINE_STRONG_INT_TYPE(Megabytes, int64);
+  //      DEFINE_STRONG_INT_TYPE(Bytes, int64_t);
+  //      DEFINE_STRONG_INT_TYPE(Megabytes, int64_t);
   //
   //  If you want to be able to (explicitly) construct an instance of Bytes from
   //  an instance of Megabytes, simply define a converter function in the same
@@ -336,12 +325,12 @@ class StrongInt {
     value_ %= arg;
     return *this;
   }
-  StrongInt &operator<<=(int64 arg) {  // NOLINT(whitespace/operators)
+  StrongInt &operator<<=(int64_t arg) {  // NOLINT(whitespace/operators)
     ValidatorType::template ValidateLeftShift<ValueType>(value_, arg);
     value_ <<= arg;
     return *this;
   }
-  StrongInt &operator>>=(int64 arg) {  // NOLINT(whitespace/operators)
+  StrongInt &operator>>=(int64_t arg) {  // NOLINT(whitespace/operators)
     ValidatorType::template ValidateRightShift<ValueType>(value_, arg);
     value_ >>= arg;
     return *this;
@@ -377,19 +366,19 @@ std::ostream &operator<<(std::ostream &os,
   return os << arg.value();
 }
 
-// Provide the << operator, primarily for logging purposes. Specialized for int8
-// so that an integer and not a character is printed.
+// Provide the << operator, primarily for logging purposes. Specialized for
+// int8_t so that an integer and not a character is printed.
 template <typename TagType, typename ValidatorType>
 std::ostream &operator<<(std::ostream &os,
-                         StrongInt<TagType, int8, ValidatorType> arg) {
+                         StrongInt<TagType, int8_t, ValidatorType> arg) {
   return os << static_cast<int>(arg.value());
 }
 
 // Provide the << operator, primarily for logging purposes. Specialized for
-// uint8 so that an integer and not a character is printed.
+// uint8_t so that an integer and not a character is printed.
 template <typename TagType, typename ValidatorType>
 std::ostream &operator<<(std::ostream &os,
-                         StrongInt<TagType, uint8, ValidatorType> arg) {
+                         StrongInt<TagType, uint8_t, ValidatorType> arg) {
   return os << static_cast<unsigned int>(arg.value());
 }
 

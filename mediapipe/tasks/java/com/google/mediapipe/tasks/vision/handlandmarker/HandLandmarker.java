@@ -89,6 +89,10 @@ public final class HandLandmarker extends BaseVisionTaskApi {
   private static final String TASK_GRAPH_NAME =
       "mediapipe.tasks.vision.hand_landmarker.HandLandmarkerGraph";
 
+  static {
+    System.loadLibrary("mediapipe_tasks_vision_jni");
+  }
+
   /**
    * Creates a {@link HandLandmarker} instance from a model file and the default {@link
    * HandLandmarkerOptions}.

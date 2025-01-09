@@ -35,6 +35,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         ffmpeg \
         git \
         wget \
+        less \
+        tmux \
         unzip \
         nodejs \
         npm \
@@ -192,7 +194,7 @@ FROM base as build
 RUN wget -O video.mp4 "https://www.pexels.com/download/video/3044127/?fps=24.0&h=1080&w=1920"
 COPY mediapipe /mediapipe/mediapipe/
 COPY third_party /mediapipe/third_party/
-COPY .bazelrc /mediapipe/
+COPY .bazelrc .user.bazelr[c] /mediapipe/
 COPY .bazelversion /mediapipe/
 COPY *.sh /mediapipe/
 COPY *.py /mediapipe/
@@ -205,7 +207,8 @@ COPY platform_mappings /mediapipe/
 COPY README.md /mediapipe/
 COPY platform_mappings /mediapipe/
 COPY tsconfig.json /mediapipe/
-COPY requirements.txt /mediapipe/
+COPY requirements*.txt /mediapipe/
+COPY yarn.lock /mediapipe/
 
 # BUILD Geti calculators
 RUN bazel build //mediapipe:geti_targets
@@ -286,8 +289,8 @@ COPY --from=build /mediapipe/mediapipe/calculators/ovms/config.json /mediapipe/m
 # Makefile
 COPY --from=build /mediapipe/Makefile /mediapipe/
 
-# Add python solutions
-COPY --from=build /mediapipe/build/ /mediapipe/build/
+# Add python solutions TODO currently disabled
+#COPY --from=build /mediapipe/build/ /mediapipe/build/
 
 # Environment variables
 ENV GLOG_logtostderr=1

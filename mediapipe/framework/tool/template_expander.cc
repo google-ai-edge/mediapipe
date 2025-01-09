@@ -15,20 +15,16 @@
 #include "mediapipe/framework/tool/template_expander.h"
 
 #include <algorithm>
-#include <map>
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
-#include "absl/strings/str_join.h"
-#include "absl/strings/str_split.h"
 #include "mediapipe/framework/calculator.pb.h"
-#include "mediapipe/framework/port/canonical_errors.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/numbers.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
@@ -183,8 +179,8 @@ FieldType GetFieldType(const TemplateExpression& rule) {
 int FieldCount(const FieldValue& base, ProtoPath field_path,
                FieldType field_type) {
   int result = 0;
-  CHECK(
-      ProtoUtilLite::GetFieldCount(base, field_path, field_type, &result).ok());
+  ABSL_CHECK_OK(
+      ProtoUtilLite::GetFieldCount(base, field_path, field_type, &result));
   return result;
 }
 
@@ -647,7 +643,7 @@ class TemplateExpanderImpl {
     for (int i = 0; i < args.size(); ++i) {
       if (args[i].has_dict()) {
         FieldValue dict_bytes;
-        CHECK(args[i].dict().SerializePartialToString(&dict_bytes));
+        ABSL_CHECK(args[i].dict().SerializePartialToString(&dict_bytes));
         result->push_back(dict_bytes);
       } else if (args[i].has_num() || args[i].has_str()) {
         std::string text_value = args[i].has_num()
@@ -694,7 +690,7 @@ absl::Status TemplateExpander::ExpandTemplates(
   }
   absl::Status status;
   for (const absl::Status& error : errors_) {
-    LOG(ERROR) << error;
+    ABSL_LOG(ERROR) << error;
     status.Update(error);
   }
   return status;

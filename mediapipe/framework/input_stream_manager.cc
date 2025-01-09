@@ -14,10 +14,16 @@
 
 #include "mediapipe/framework/input_stream_manager.h"
 
+#include <string>
 #include <type_traits>
 #include <utility>
 
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_format.h"
+#include "absl/strings/str_join.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/logging.h"
@@ -71,6 +77,7 @@ Packet InputStreamManager::QueueHead() const {
 }
 
 absl::Status InputStreamManager::SetHeader(const Packet& header) {
+  absl::MutexLock stream_lock(&stream_mutex_);
   if (header.Timestamp() != Timestamp::Unset()) {
     return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
            << "Headers must not have a timestamp.  Stream: \"" << name_
@@ -100,6 +107,19 @@ absl::Status InputStreamManager::AddOrMovePacketsInternal(Container container,
     // Scope to prevent locking the stream when notification is called.
     absl::MutexLock stream_lock(&stream_mutex_);
     if (closed_) {
+      // There are some elaborate use cases where adding to an already closed
+      // stream may be fine (e.g. CalculatorGraph.DirectFormII test case).
+      // However, high chances packet dropping indicates issues in calculators
+      // or graph config.
+      ABSL_LOG(WARNING) << absl::StrFormat(
+          "Dropping %d packet(s) (%s) on attempt to add to a closed \"%s\" "
+          "stream.",
+          container.size(),
+          absl::StrJoin(container, ", ",
+                        [](std::string* out, const Packet& p) {
+                          return absl::StrAppend(out, p.DebugString());
+                        }),
+          name_);
       return absl::OkStatus();
     }
     // Check if the queue was full before packets came in.
@@ -244,7 +264,7 @@ Timestamp InputStreamManager::MinTimestampOrBoundHelper() const
 Packet InputStreamManager::PopPacketAtTimestamp(Timestamp timestamp,
                                                 int* num_packets_dropped,
                                                 bool* stream_is_done) {
-  CHECK(enable_timestamps_);
+  ABSL_CHECK(enable_timestamps_);
   *num_packets_dropped = -1;
   *stream_is_done = false;
   bool queue_became_non_full = false;
@@ -252,7 +272,7 @@ Packet InputStreamManager::PopPacketAtTimestamp(Timestamp timestamp,
   {
     absl::MutexLock stream_lock(&stream_mutex_);
     // Make sure timestamp didn't decrease from last time.
-    CHECK_LE(last_select_timestamp_, timestamp);
+    ABSL_CHECK_LE(last_select_timestamp_, timestamp);
     last_select_timestamp_ = timestamp;
 
     // Make sure AddPacket and SetNextTimestampBound are not called with
@@ -299,7 +319,7 @@ Packet InputStreamManager::PopPacketAtTimestamp(Timestamp timestamp,
 }
 
 Packet InputStreamManager::PopQueueHead(bool* stream_is_done) {
-  CHECK(!enable_timestamps_);
+  ABSL_CHECK(!enable_timestamps_);
   *stream_is_done = false;
   bool queue_became_non_full = false;
   Packet packet;

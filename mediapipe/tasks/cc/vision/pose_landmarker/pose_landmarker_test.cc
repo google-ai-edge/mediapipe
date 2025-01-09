@@ -21,6 +21,7 @@ limitations under the License.
 #include <utility>
 
 #include "absl/flags/flag.h"
+#include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
@@ -105,17 +106,17 @@ MATCHER_P2(LandmarksMatches, expected_landmarks, toleration, "") {
   for (int i = 0; i < arg.size(); i++) {
     for (int j = 0; j < arg[i].landmarks.size(); j++) {
       if (arg[i].landmarks.size() != expected_landmarks[i].landmarks.size()) {
-        LOG(INFO) << "sizes not equal";
+        ABSL_LOG(INFO) << "sizes not equal";
         return false;
       }
       if (std::abs(arg[i].landmarks[j].x -
                    expected_landmarks[i].landmarks[j].x) > toleration ||
           std::abs(arg[i].landmarks[j].y -
                    expected_landmarks[i].landmarks[j].y) > toleration) {
-        LOG(INFO) << DUMP_VARS(arg[i].landmarks[j].x,
-                               expected_landmarks[i].landmarks[j].x);
-        LOG(INFO) << DUMP_VARS(arg[i].landmarks[j].y,
-                               expected_landmarks[i].landmarks[j].y);
+        ABSL_LOG(INFO) << DUMP_VARS(arg[i].landmarks[j].x,
+                                    expected_landmarks[i].landmarks[j].x);
+        ABSL_LOG(INFO) << DUMP_VARS(arg[i].landmarks[j].y,
+                                    expected_landmarks[i].landmarks[j].y);
         return false;
       }
     }
@@ -239,7 +240,7 @@ TEST_P(ImageModeTest, Succeeds) {
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    PoseGestureTest, ImageModeTest,
+    PoseTest, ImageModeTest,
     Values(TestParams{
                /* test_name= */ "Pose",
                /* test_image_name= */ kPoseImage,
@@ -316,7 +317,7 @@ TEST_P(VideoModeTest, Succeeds) {
       MP_ASSERT_OK_AND_ASSIGN(pose_landmarker_results,
                               pose_landmarker->DetectForVideo(image, i));
     }
-    LOG(INFO) << i;
+    ABSL_LOG(INFO) << i;
     ExpectPoseLandmarkerResultsCorrect(
         pose_landmarker_results, expected_results, kLandmarksOnVideoAbsMargin);
   }
@@ -327,7 +328,7 @@ TEST_P(VideoModeTest, Succeeds) {
 // TODO Investigate PoseLandmarker performance in VideoMode.
 
 INSTANTIATE_TEST_SUITE_P(
-    PoseGestureTest, VideoModeTest,
+    PoseTest, VideoModeTest,
     Values(TestParams{
                /* test_name= */ "Pose",
                /* test_image_name= */ kPoseImage,
@@ -443,7 +444,7 @@ TEST_P(LiveStreamModeTest, Succeeds) {
 // Investigate PoseLandmarker performance in LiveStreamMode.
 
 INSTANTIATE_TEST_SUITE_P(
-    PoseGestureTest, LiveStreamModeTest,
+    PoseTest, LiveStreamModeTest,
     Values(TestParams{
                /* test_name= */ "Pose",
                /* test_image_name= */ kPoseImage,

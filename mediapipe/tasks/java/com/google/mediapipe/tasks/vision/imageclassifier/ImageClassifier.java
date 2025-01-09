@@ -104,6 +104,7 @@ public final class ImageClassifier extends BaseVisionTaskApi {
       "mediapipe.tasks.vision.image_classifier.ImageClassifierGraph";
 
   static {
+    System.loadLibrary("mediapipe_tasks_vision_jni");
     ProtoUtil.registerTypeName(
         ClassificationsProto.ClassificationResult.class,
         "mediapipe.tasks.components.containers.proto.ClassificationResult");

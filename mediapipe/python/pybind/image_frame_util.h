@@ -15,6 +15,8 @@
 #ifndef MEDIAPIPE_PYTHON_PYBIND_IMAGE_FRAME_UTIL_H_
 #define MEDIAPIPE_PYTHON_PYBIND_IMAGE_FRAME_UTIL_H_
 
+#include <cstdint>
+
 #include "absl/memory/memory.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/formats/image_format.pb.h"
@@ -40,7 +42,7 @@ std::unique_ptr<ImageFrame> CreateImageFrame(
   if (copy) {
     auto image_frame = absl::make_unique<ImageFrame>(
         format, /*width=*/cols, /*height=*/rows, width_step,
-        static_cast<uint8*>(data.request().ptr),
+        static_cast<uint8_t*>(data.request().ptr),
         ImageFrame::PixelDataDeleter::kNone);
     auto image_frame_copy = absl::make_unique<ImageFrame>();
     // Set alignment_boundary to kGlDefaultAlignmentBoundary so that both
@@ -52,8 +54,8 @@ std::unique_ptr<ImageFrame> CreateImageFrame(
   PyObject* data_pyobject = data.ptr();
   auto image_frame = absl::make_unique<ImageFrame>(
       format, /*width=*/cols, /*height=*/rows, width_step,
-      static_cast<uint8*>(data.request().ptr),
-      /*deleter=*/[data_pyobject](uint8*) { Py_XDECREF(data_pyobject); });
+      static_cast<uint8_t*>(data.request().ptr),
+      /*deleter=*/[data_pyobject](uint8_t*) { Py_XDECREF(data_pyobject); });
   Py_XINCREF(data_pyobject);
   return image_frame;
 }
@@ -93,11 +95,11 @@ py::array GenerateContiguousDataArrayHelper(const ImageFrame& image_frame,
 inline py::array GenerateContiguousDataArray(const ImageFrame& image_frame,
                                              const py::object& py_object) {
   switch (image_frame.ChannelSize()) {
-    case sizeof(uint8):
-      return GenerateContiguousDataArrayHelper<uint8>(image_frame, py_object)
+    case sizeof(uint8_t):
+      return GenerateContiguousDataArrayHelper<uint8_t>(image_frame, py_object)
           .cast<py::array>();
-    case sizeof(uint16):
-      return GenerateContiguousDataArrayHelper<uint16>(image_frame, py_object)
+    case sizeof(uint16_t):
+      return GenerateContiguousDataArrayHelper<uint16_t>(image_frame, py_object)
           .cast<py::array>();
     case sizeof(float):
       return GenerateContiguousDataArrayHelper<float>(image_frame, py_object)

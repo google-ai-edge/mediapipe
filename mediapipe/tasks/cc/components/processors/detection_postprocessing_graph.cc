@@ -15,15 +15,18 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/components/processors/detection_postprocessing_graph.h"
 
+#include <algorithm>
 #include <optional>
 #include <string>
 #include <vector>
 
 #include "absl/container/flat_hash_set.h"
+#include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "flatbuffers/flexbuffers.h"
 #include "mediapipe/calculators/core/split_vector_calculator.pb.h"
 #include "mediapipe/calculators/tensor/tensors_to_detections_calculator.pb.h"
 #include "mediapipe/calculators/tflite/ssd_anchors_calculator.pb.h"
@@ -97,6 +100,8 @@ constexpr absl::string_view kIndicesTag = "INDICES";
 constexpr absl::string_view kScoresTag = "SCORES";
 constexpr absl::string_view kTensorsTag = "TENSORS";
 constexpr absl::string_view kAnchorsTag = "ANCHORS";
+constexpr absl::string_view kDetectionPostProcessOpName =
+    "TFLite_Detection_PostProcess";
 
 // Struct holding the different output streams produced by the graph.
 struct DetectionPostprocessingOutputStreams {
@@ -220,15 +225,16 @@ absl::StatusOr<LabelItems> GetLabelItemsIfAny(
     LabelItems empty_label_items;
     return empty_label_items;
   }
-  ASSIGN_OR_RETURN(absl::string_view labels_file,
-                   metadata_extractor.GetAssociatedFile(labels_filename));
+  MP_ASSIGN_OR_RETURN(absl::string_view labels_file,
+                      metadata_extractor.GetAssociatedFile(labels_filename));
   const std::string display_names_filename =
       ModelMetadataExtractor::FindFirstAssociatedFileName(
           tensor_metadata, associated_file_type, locale);
   absl::string_view display_names_file;
   if (!display_names_filename.empty()) {
-    ASSIGN_OR_RETURN(display_names_file, metadata_extractor.GetAssociatedFile(
-                                             display_names_filename));
+    MP_ASSIGN_OR_RETURN(
+        display_names_file,
+        metadata_extractor.GetAssociatedFile(display_names_filename));
   }
   return mediapipe::BuildLabelMapFromFiles(labels_file, display_names_file);
 }
@@ -236,7 +242,7 @@ absl::StatusOr<LabelItems> GetLabelItemsIfAny(
 absl::StatusOr<float> GetScoreThreshold(
     const ModelMetadataExtractor& metadata_extractor,
     const TensorMetadata& tensor_metadata) {
-  ASSIGN_OR_RETURN(
+  MP_ASSIGN_OR_RETURN(
       const ProcessUnit* score_thresholding_process_unit,
       metadata_extractor.FindFirstProcessUnit(
           tensor_metadata, ProcessUnitOptions_ScoreThresholdingOptions));
@@ -287,7 +293,7 @@ GetScoreCalibrationOptionsIfAny(
     const ModelMetadataExtractor& metadata_extractor,
     const TensorMetadata& tensor_metadata) {
   // Get ScoreCalibrationOptions, if any.
-  ASSIGN_OR_RETURN(
+  MP_ASSIGN_OR_RETURN(
       const ProcessUnit* score_calibration_process_unit,
       metadata_extractor.FindFirstProcessUnit(
           tensor_metadata, tflite::ProcessUnitOptions_ScoreCalibrationOptions));
@@ -308,7 +314,7 @@ GetScoreCalibrationOptionsIfAny(
         "parameters file with type TENSOR_AXIS_SCORE_CALIBRATION.",
         MediaPipeTasksStatus::kMetadataAssociatedFileNotFoundError);
   }
-  ASSIGN_OR_RETURN(
+  MP_ASSIGN_OR_RETURN(
       absl::string_view score_calibration_file,
       metadata_extractor.GetAssociatedFile(score_calibration_filename));
   ScoreCalibrationCalculatorOptions score_calibration_calculator_options;
@@ -336,7 +342,7 @@ absl::StatusOr<std::vector<int>> GetOutputTensorIndices(
       int output_index = output_indices[i];
       // If tensor name is not found, set the default output indices.
       if (output_index == -1) {
-        LOG(WARNING) << absl::StrFormat(
+        ABSL_LOG(WARNING) << absl::StrFormat(
             "You don't seem to be matching tensor names in metadata list. The "
             "tensor name \"%s\" at index %d in the model metadata doesn't "
             "match "
@@ -360,7 +366,7 @@ absl::StatusOr<std::vector<int>> GetOutputTensorIndices(
       int output_index = output_indices[i];
       // If tensor name is not found, set the default output indices.
       if (output_index == -1) {
-        LOG(WARNING) << absl::StrFormat(
+        ABSL_LOG(WARNING) << absl::StrFormat(
             "You don't seem to be matching tensor names in metadata list. The "
             "tensor name \"%s\" at index %d in the model metadata doesn't "
             "match "
@@ -383,6 +389,37 @@ absl::StatusOr<std::vector<int>> GetOutputTensorIndices(
   return output_indices;
 }
 
+// Get the MaxClassesPerDetection from TFLite_Detection_PostProcess op, if the
+// op is found in the tflite model.
+int GetMaxClassesPerDetection(const tflite::Model& model) {
+  int max_classes_per_detection = 1;
+  auto op_code_it = std::find_if(
+      model.operator_codes()->begin(), model.operator_codes()->end(),
+      [](const auto& op_code) {
+        return op_code->builtin_code() == tflite::BuiltinOperator_CUSTOM &&
+               op_code->custom_code()->str() == kDetectionPostProcessOpName;
+      });
+  if (op_code_it == model.operator_codes()->end()) {
+    return max_classes_per_detection;
+  }
+  const int detection_opcode_index =
+      op_code_it - model.operator_codes()->begin();
+  const auto& operators = *model.subgraphs()->Get(0)->operators();
+  auto detection_op_it =
+      std::find_if(operators.begin(), operators.end(),
+                   [detection_opcode_index](const auto& op) {
+                     return op->opcode_index() == detection_opcode_index;
+                   });
+  if (detection_op_it != operators.end()) {
+    auto op_config =
+        flexbuffers::GetRoot(detection_op_it->custom_options()->Data(),
+                             detection_op_it->custom_options()->size())
+            .AsMap();
+    return op_config["max_classes_per_detection"].AsInt32();
+  }
+  return max_classes_per_detection;
+}
+
 // Builds PostProcessingSpecs from DetectorOptions and model metadata for
 // configuring the post-processing calculators.
 absl::StatusOr<PostProcessingSpecs> BuildPostProcessingSpecs(
@@ -392,13 +429,13 @@ absl::StatusOr<PostProcessingSpecs> BuildPostProcessingSpecs(
       metadata_extractor->GetOutputTensorMetadata();
   PostProcessingSpecs specs;
   specs.max_results = options.max_results();
-  ASSIGN_OR_RETURN(specs.output_tensor_indices,
-                   GetOutputTensorIndices(output_tensors_metadata));
+  MP_ASSIGN_OR_RETURN(specs.output_tensor_indices,
+                      GetOutputTensorIndices(output_tensors_metadata));
   // Extracts mandatory BoundingBoxProperties and performs sanity checks on the
   // fly.
-  ASSIGN_OR_RETURN(const BoundingBoxProperties* bounding_box_properties,
-                   GetBoundingBoxProperties(*output_tensors_metadata->Get(
-                       specs.output_tensor_indices[0])));
+  MP_ASSIGN_OR_RETURN(const BoundingBoxProperties* bounding_box_properties,
+                      GetBoundingBoxProperties(*output_tensors_metadata->Get(
+                          specs.output_tensor_indices[0])));
   if (bounding_box_properties->index() == nullptr) {
     specs.bounding_box_corners_order = {0, 1, 2, 3};
   } else {
@@ -414,7 +451,7 @@ absl::StatusOr<PostProcessingSpecs> BuildPostProcessingSpecs(
   // For models with in-model-nms, the label map is stored in the Category
   // tensor which use TENSOR_VALUE_LABELS. For models with out-of-model-nms, the
   // label map is stored in the Score tensor which use TENSOR_AXIS_LABELS.
-  ASSIGN_OR_RETURN(
+  MP_ASSIGN_OR_RETURN(
       specs.label_items,
       GetLabelItemsIfAny(
           *metadata_extractor,
@@ -424,7 +461,7 @@ absl::StatusOr<PostProcessingSpecs> BuildPostProcessingSpecs(
           options.display_names_locale()));
   // Obtains allow/deny categories.
   specs.is_allowlist = !options.category_allowlist().empty();
-  ASSIGN_OR_RETURN(
+  MP_ASSIGN_OR_RETURN(
       specs.allow_or_deny_categories,
       GetAllowOrDenyCategoryIndicesIfAny(options, specs.label_items));
 
@@ -432,7 +469,7 @@ absl::StatusOr<PostProcessingSpecs> BuildPostProcessingSpecs(
   if (options.has_score_threshold()) {
     specs.score_threshold = options.score_threshold();
   } else {
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         specs.score_threshold,
         GetScoreThreshold(
             *metadata_extractor,
@@ -443,7 +480,7 @@ absl::StatusOr<PostProcessingSpecs> BuildPostProcessingSpecs(
   }
   if (in_model_nms) {
     // Builds score calibration options (if available) from metadata.
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         specs.score_calibration_options,
         GetScoreCalibrationOptionsIfAny(
             *metadata_extractor,
@@ -479,7 +516,7 @@ absl::StatusOr<PostProcessingSpecs> BuildInModelNmsPostProcessingSpecs(
 // Fills in the TensorsToDetectionsCalculatorOptions based on
 // PostProcessingSpecs.
 void ConfigureInModelNmsTensorsToDetectionsCalculator(
-    const PostProcessingSpecs& specs,
+    const PostProcessingSpecs& specs, const tflite::Model& model,
     mediapipe::TensorsToDetectionsCalculatorOptions* options) {
   options->set_num_classes(specs.label_items.size());
   options->set_num_coords(4);
@@ -511,6 +548,8 @@ void ConfigureInModelNmsTensorsToDetectionsCalculator(
   box_boundaries_indices->set_ymin(specs.bounding_box_corners_order[1]);
   box_boundaries_indices->set_xmax(specs.bounding_box_corners_order[2]);
   box_boundaries_indices->set_ymax(specs.bounding_box_corners_order[3]);
+
+  options->set_max_classes_per_detection(GetMaxClassesPerDetection(model));
 }
 
 // Builds PostProcessingSpecs from DetectorOptions and model metadata for
@@ -708,6 +747,57 @@ absl::StatusOr<Source<std::vector<Tensor>>> CalibrateScores(
   return model_output_tensors;
 }
 
+// Identifies whether or not the model has quantized outputs, and performs
+// sanity checks.
+absl::StatusOr<bool> HasQuantizedOutputs(
+    const core::ModelResources& model_resources) {
+  const tflite::Model& model = *model_resources.GetTfLiteModel();
+  // Model is checked to have single subgraph before.
+  const auto* primary_subgraph = (*model.subgraphs())[0];
+  int num_output_tensors = primary_subgraph->outputs()->size();
+  // Sanity check tensor types and check if model outputs are quantized or not.
+  int num_quantized_tensors = 0;
+  for (int i = 0; i < num_output_tensors; ++i) {
+    const auto* tensor =
+        primary_subgraph->tensors()->Get(primary_subgraph->outputs()->Get(i));
+    if (tensor->type() != tflite::TensorType_FLOAT32 &&
+        tensor->type() != tflite::TensorType_UINT8) {
+      return CreateStatusWithPayload(
+          absl::StatusCode::kInvalidArgument,
+          absl::StrFormat("Expected output tensor at index %d to have type "
+                          "UINT8 or FLOAT32, found %s instead.",
+                          i, tflite::EnumNameTensorType(tensor->type())),
+          MediaPipeTasksStatus::kInvalidOutputTensorTypeError);
+    }
+    if (tensor->type() == tflite::TensorType_UINT8) {
+      num_quantized_tensors++;
+    }
+  }
+  if (num_quantized_tensors != num_output_tensors &&
+      num_quantized_tensors != 0) {
+    return CreateStatusWithPayload(
+        absl::StatusCode::kInvalidArgument,
+        absl::StrFormat(
+            "Expected either all or none of the output tensors to be "
+            "quantized, but found %d quantized outputs for %d total outputs.",
+            num_quantized_tensors, num_output_tensors),
+        MediaPipeTasksStatus::kInvalidOutputTensorTypeError);
+  }
+  // Check if metadata is consistent with model topology.
+  const auto* output_tensors_metadata =
+      model_resources.GetMetadataExtractor()->GetOutputTensorMetadata();
+  if (output_tensors_metadata != nullptr &&
+      num_output_tensors != output_tensors_metadata->size()) {
+    return CreateStatusWithPayload(
+        absl::StatusCode::kInvalidArgument,
+        absl::StrFormat("Mismatch between number of output tensors (%d) and "
+                        "output tensors metadata (%d).",
+                        num_output_tensors, output_tensors_metadata->size()),
+        MediaPipeTasksStatus::kMetadataInconsistencyError);
+  }
+  return num_quantized_tensors > 0;
+}
+
 }  // namespace
 
 absl::Status ConfigureDetectionPostprocessingGraph(
@@ -736,15 +826,18 @@ absl::Status ConfigureDetectionPostprocessingGraph(
             model.subgraphs()->Get(0)->outputs()->size()),
         MediaPipeTasksStatus::kInvalidArgumentError);
   }
-
+  MP_ASSIGN_OR_RETURN(bool has_quantized_outputs,
+                      HasQuantizedOutputs(model_resources));
+  options.set_has_quantized_outputs(has_quantized_outputs);
   const ModelMetadataExtractor* metadata_extractor =
       model_resources.GetMetadataExtractor();
   if (in_model_nms) {
-    ASSIGN_OR_RETURN(auto post_processing_specs,
-                     BuildInModelNmsPostProcessingSpecs(detector_options,
-                                                        metadata_extractor));
+    MP_ASSIGN_OR_RETURN(auto post_processing_specs,
+                        BuildInModelNmsPostProcessingSpecs(detector_options,
+                                                           metadata_extractor));
     ConfigureInModelNmsTensorsToDetectionsCalculator(
-        post_processing_specs, options.mutable_tensors_to_detections_options());
+        post_processing_specs, model,
+        options.mutable_tensors_to_detections_options());
     ConfigureDetectionLabelIdToTextCalculator(
         post_processing_specs,
         options.mutable_detection_label_ids_to_text_options());
@@ -753,9 +846,9 @@ absl::Status ConfigureDetectionPostprocessingGraph(
           std::move(*post_processing_specs.score_calibration_options);
     }
   } else {
-    ASSIGN_OR_RETURN(auto post_processing_specs,
-                     BuildOutModelNmsPostProcessingSpecs(detector_options,
-                                                         metadata_extractor));
+    MP_ASSIGN_OR_RETURN(auto post_processing_specs,
+                        BuildOutModelNmsPostProcessingSpecs(
+                            detector_options, metadata_extractor));
     MP_RETURN_IF_ERROR(ConfigureOutModelNmsTensorsToDetectionsCalculator(
         metadata_extractor, post_processing_specs,
         options.mutable_tensors_to_detections_options()));
@@ -794,7 +887,7 @@ class DetectionPostprocessingGraph : public mediapipe::Subgraph {
   absl::StatusOr<mediapipe::CalculatorGraphConfig> GetConfig(
       mediapipe::SubgraphContext* sc) override {
     Graph graph;
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         auto output_streams,
         BuildDetectionPostprocessing(
             *sc->MutableOptions<proto::DetectionPostprocessingGraphOptions>(),
@@ -818,12 +911,20 @@ class DetectionPostprocessingGraph : public mediapipe::Subgraph {
   BuildDetectionPostprocessing(
       proto::DetectionPostprocessingGraphOptions& graph_options,
       Source<std::vector<Tensor>> tensors_in, Graph& graph) {
+    Source<std::vector<Tensor>> tensors = tensors_in;
+    if (graph_options.has_quantized_outputs()) {
+      auto& tensors_dequantization_node =
+          graph.AddNode("TensorsDequantizationCalculator");
+      tensors_in >> tensors_dequantization_node.In(kTensorsTag);
+      tensors = tensors_dequantization_node.Out(kTensorsTag)
+                    .Cast<std::vector<Tensor>>();
+    }
     std::optional<Source<std::vector<Detection>>> detections;
     if (!graph_options.has_non_max_suppression_options()) {
       // Calculators to perform score calibration, if specified in the options.
       if (graph_options.has_score_calibration_options()) {
-        ASSIGN_OR_RETURN(tensors_in,
-                         CalibrateScores(tensors_in, graph_options, graph));
+        MP_ASSIGN_OR_RETURN(tensors,
+                            CalibrateScores(tensors, graph_options, graph));
       }
       // Calculator to convert output tensors to a detection proto vector.
       auto& tensors_to_detections =
@@ -831,7 +932,7 @@ class DetectionPostprocessingGraph : public mediapipe::Subgraph {
       tensors_to_detections
           .GetOptions<mediapipe::TensorsToDetectionsCalculatorOptions>()
           .Swap(graph_options.mutable_tensors_to_detections_options());
-      tensors_in >> tensors_to_detections.In(kTensorsTag);
+      tensors >> tensors_to_detections.In(kTensorsTag);
       detections = tensors_to_detections.Out(kDetectionsTag)
                        .Cast<std::vector<Detection>>();
     } else {
@@ -848,7 +949,7 @@ class DetectionPostprocessingGraph : public mediapipe::Subgraph {
           .GetOptions<mediapipe::TensorsToDetectionsCalculatorOptions>()
           .Swap(graph_options.mutable_tensors_to_detections_options());
       anchors >> tensors_to_detections.SideIn(kAnchorsTag);
-      tensors_in >> tensors_to_detections.In(kTensorsTag);
+      tensors >> tensors_to_detections.In(kTensorsTag);
       detections = tensors_to_detections.Out(kDetectionsTag)
                        .Cast<std::vector<mediapipe::Detection>>();
       // Non maximum suppression removes redundant object detections.

@@ -85,12 +85,12 @@ class MotionAnalysis {
   // Call with every frame. Timestamp is optional (set to zero if not needed).
   // Optionally outputs list of features extracted from this frame.
   // Returns true on success.
-  bool AddFrame(const cv::Mat& frame, int64 timestamp_usec,
+  bool AddFrame(const cv::Mat& frame, int64_t timestamp_usec,
                 RegionFlowFeatureList* feature_list = nullptr);
 
   // Same as above, but uses specified initial transform to seed
   // feature locations.
-  bool AddFrameWithSeed(const cv::Mat& frame, int64 timestamp_usec,
+  bool AddFrameWithSeed(const cv::Mat& frame, int64_t timestamp_usec,
                         const Homography& initial_transform,
                         RegionFlowFeatureList* feature_list = nullptr);
 
@@ -106,7 +106,7 @@ class MotionAnalysis {
   // modification is applied. To yield modified features, simply
   // apply modify_features function to returned result.
   bool AddFrameGeneric(
-      const cv::Mat& frame, int64 timestamp_usec,
+      const cv::Mat& frame, int64_t timestamp_usec,
       const Homography& initial_transform,
       const Homography* rejection_transform = nullptr,
       const RegionFlowFeatureList* external_features = nullptr,

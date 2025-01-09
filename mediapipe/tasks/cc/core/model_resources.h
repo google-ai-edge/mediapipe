@@ -78,10 +78,10 @@ class ModelResources {
   ModelResources& operator=(const ModelResources&) = delete;
 
   // Returns the model resources tag.
-  std::string GetTag() const { return tag_; }
+  const std::string& GetTag() const { return tag_; }
 
-  // Returns a copy of the model file proto.
-  proto::ExternalFile GetModelFile() const { return *model_file_; }
+  // Returns the model file proto.
+  const proto::ExternalFile& GetModelFile() const { return *model_file_; }
 
   // Returns a pointer to tflite::model.
   const tflite::Model* GetTfLiteModel() const;

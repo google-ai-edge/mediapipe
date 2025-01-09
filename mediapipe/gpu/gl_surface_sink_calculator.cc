@@ -12,21 +12,47 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <memory>
+
+#include "absl/log/absl_log.h"
+#include "absl/status/status.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/api2/node.h"
+#include "mediapipe/framework/api2/packet.h"
+#include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/gpu/egl_surface_holder.h"
+#include "mediapipe/gpu/gl_base.h"
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gl_quad_renderer.h"
 #include "mediapipe/gpu/gl_surface_sink_calculator.pb.h"
 #include "mediapipe/gpu/gpu_buffer.h"
-#include "mediapipe/gpu/shader_util.h"
+
+#if HAS_EGL
+
+#ifdef __ANDROID__
+#include "EGL/eglext.h"
+#endif  // __ANDROID__
 
 namespace mediapipe {
 namespace api2 {
+namespace {
+#ifdef EGL_ANDROID_presentation_time
+// Helper function to safely initialize the eglPresentationTimeANDROID
+// function pointer.
+EGLBoolean SetPresentationTime(EGLDisplay dpy, EGLSurface surface,
+                               EGLnsecsANDROID time) {
+  static PFNEGLPRESENTATIONTIMEANDROIDPROC eglPresentationTimeANDROID =
+      reinterpret_cast<PFNEGLPRESENTATIONTIMEANDROIDPROC>(
+          eglGetProcAddress("eglPresentationTimeANDROID"));
+  if (!eglPresentationTimeANDROID) return EGL_FALSE;
+  return eglPresentationTimeANDROID(dpy, surface, time);
+}
+#endif  // EGL_ANDROID_presentation_time
+}  // namespace
 
 enum { kAttribVertex, kAttribTexturePosition, kNumberOfAttributes };
 
@@ -39,6 +65,10 @@ enum { kAttribVertex, kAttribTexturePosition, kNumberOfAttributes };
 //   SURFACE: unique_ptr to an EglSurfaceHolder to draw to.
 //
 // See GlSurfaceSinkCalculatorOptions for options.
+//
+// NOTE: all GlSurfaceSinkCalculators use a common dedicated shared GL context
+// thread by default, which is different from the main GL context thread used by
+// the graph. (If MediaPipe uses multithreading and multiple OpenGL contexts.)
 class GlSurfaceSinkCalculator : public Node {
  public:
   static constexpr Input<
@@ -95,7 +125,7 @@ absl::Status GlSurfaceSinkCalculator::Process(CalculatorContext* cc) {
     absl::MutexLock lock(&surface_holder_->mutex);
     EGLSurface surface = surface_holder_->surface;
     if (surface == EGL_NO_SURFACE) {
-      LOG_EVERY_N(INFO, 300) << "GlSurfaceSinkCalculator: no surface";
+      ABSL_LOG_EVERY_N(INFO, 300) << "GlSurfaceSinkCalculator: no surface";
       return absl::OkStatus();
     }
 
@@ -112,7 +142,7 @@ absl::Status GlSurfaceSinkCalculator::Process(CalculatorContext* cc) {
       input = packet.Get<mediapipe::Image>().GetGpuBuffer();
 
     if (!initialized_) {
-      renderer_ = absl::make_unique<mediapipe::QuadRenderer>();
+      renderer_ = std::make_unique<mediapipe::QuadRenderer>();
       MP_RETURN_IF_ERROR(renderer_->GlSetup());
       initialized_ = true;
     }
@@ -151,6 +181,16 @@ absl::Status GlSurfaceSinkCalculator::Process(CalculatorContext* cc) {
 
     glBindTexture(src.target(), 0);
 
+#ifdef EGL_ANDROID_presentation_time
+    // Propagate the packet timestamp as a presentation timestamp on Android.
+    // This enables consumers like ImageReader or SurfaceTexture to recover it.
+    if (surface_holder_->update_presentation_time) {
+      success = SetPresentationTime(display, surface,
+                                    packet.Timestamp().Microseconds() * 1000);
+      RET_CHECK(success) << "failed to update presentation time";
+    }
+#endif
+
     success = eglSwapBuffers(display, surface);
     RET_CHECK(success) << "failed to swap buffers";
 
@@ -175,3 +215,5 @@ GlSurfaceSinkCalculator::~GlSurfaceSinkCalculator() {
 
 }  // namespace api2
 }  // namespace mediapipe
+
+#endif  // HAS_EGL

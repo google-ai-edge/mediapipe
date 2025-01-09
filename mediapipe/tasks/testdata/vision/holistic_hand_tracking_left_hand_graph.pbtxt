@@ -1,0 +1,183 @@
+node {
+  calculator: "SplitNormalizedLandmarkListCalculator"
+  input_stream: "pose_landmarks_in"
+  output_stream: "__stream_0"
+  options {
+    [mediapipe.SplitVectorCalculatorOptions.ext] {
+      ranges {
+        begin: 15
+        end: 16
+      }
+      ranges {
+        begin: 17
+        end: 18
+      }
+      ranges {
+        begin: 19
+        end: 20
+      }
+      combine_outputs: true
+    }
+  }
+}
+node {
+  calculator: "SplitNormalizedLandmarkListCalculator"
+  input_stream: "__stream_0"
+  output_stream: "__stream_1"
+  options {
+    [mediapipe.SplitVectorCalculatorOptions.ext] {
+      ranges {
+        begin: 0
+        end: 1
+      }
+      combine_outputs: true
+    }
+  }
+}
+node {
+  calculator: "LandmarkVisibilityCalculator"
+  input_stream: "NORM_LANDMARKS:__stream_1"
+  output_stream: "VISIBILITY:__stream_2"
+}
+node {
+  calculator: "ThresholdingCalculator"
+  input_stream: "FLOAT:__stream_2"
+  output_stream: "FLAG:__stream_3"
+  options {
+    [mediapipe.ThresholdingCalculatorOptions.ext] {
+      threshold: 0.1
+    }
+  }
+}
+node {
+  calculator: "GateCalculator"
+  input_stream: "__stream_0"
+  input_stream: "ALLOW:__stream_3"
+  output_stream: "__stream_4"
+}
+node {
+  calculator: "ImagePropertiesCalculator"
+  input_stream: "IMAGE:image_in"
+  output_stream: "SIZE:__stream_5"
+}
+node {
+  calculator: "LandmarksToDetectionCalculator"
+  input_stream: "NORM_LANDMARKS:__stream_4"
+  output_stream: "DETECTION:__stream_6"
+}
+node {
+  calculator: "HandDetectionsFromPoseToRectsCalculator"
+  input_stream: "DETECTION:__stream_6"
+  input_stream: "IMAGE_SIZE:__stream_5"
+  output_stream: "NORM_RECT:__stream_7"
+}
+node {
+  calculator: "RectTransformationCalculator"
+  input_stream: "IMAGE_SIZE:__stream_5"
+  input_stream: "NORM_RECT:__stream_7"
+  output_stream: "__stream_8"
+  options {
+    [mediapipe.RectTransformationCalculatorOptions.ext] {
+      scale_x: 2.7
+      scale_y: 2.7
+      shift_x: 0
+      shift_y: -0.1
+      square_long: true
+    }
+  }
+}
+node {
+  calculator: "mediapipe.tasks.vision.hand_landmarker.HandRoiRefinementGraph"
+  input_stream: "IMAGE:image_in"
+  input_stream: "NORM_RECT:__stream_8"
+  output_stream: "NORM_RECT:__stream_9"
+  node_options {
+    [type.googleapis.com/mediapipe.tasks.vision.hand_landmarker.proto.HandRoiRefinementGraphOptions] {
+      base_options {
+        model_asset {
+          file_name: "$0/mediapipe/tasks/testdata/vision/handrecrop_2020_07_21_v0.f16.tflite"
+        }
+      }
+    }
+  }
+}
+node {
+  calculator: "PreviousLoopbackCalculator"
+  input_stream: "LOOP:left_hand_landmarks_out"
+  input_stream: "MAIN:__stream_5"
+  output_stream: "PREV_LOOP:__stream_10"
+}
+node {
+  calculator: "HandLandmarksToRectCalculator"
+  input_stream: "IMAGE_SIZE:__stream_5"
+  input_stream: "NORM_LANDMARKS:__stream_10"
+  output_stream: "NORM_RECT:__stream_11"
+}
+node {
+  calculator: "RectTransformationCalculator"
+  input_stream: "IMAGE_SIZE:__stream_5"
+  input_stream: "NORM_RECT:__stream_11"
+  output_stream: "__stream_12"
+  options {
+    [mediapipe.RectTransformationCalculatorOptions.ext] {
+      scale_x: 2
+      scale_y: 2
+      shift_x: 0
+      shift_y: -0.1
+      square_long: true
+    }
+  }
+}
+node {
+  calculator: "RoiTrackingCalculator"
+  input_stream: "IMAGE_SIZE:__stream_5"
+  input_stream: "PREV_LANDMARKS:__stream_10"
+  input_stream: "PREV_LANDMARKS_RECT:__stream_12"
+  input_stream: "RECROP_RECT:__stream_9"
+  output_stream: "TRACKING_RECT:__stream_13"
+  options {
+    [mediapipe.RoiTrackingCalculatorOptions.ext] {
+      rect_requirements {
+        rotation_degrees: 40
+        translation: 0.2
+        scale: 0.4
+      }
+      landmarks_requirements {
+        recrop_rect_margin: -0.1
+      }
+    }
+  }
+}
+node {
+  calculator: "mediapipe.tasks.vision.hand_landmarker.SingleHandLandmarksDetectorGraph"
+  input_stream: "HAND_RECT:__stream_13"
+  input_stream: "IMAGE:image_in"
+  output_stream: "LANDMARKS:left_hand_landmarks_out"
+  output_stream: "WORLD_LANDMARKS:__stream_14"
+  options {
+    [mediapipe.tasks.vision.hand_landmarker.proto.HandLandmarksDetectorGraphOptions.ext] {
+      base_options {
+        model_asset {
+          file_name: "$1/mediapipe/tasks/testdata/vision/hand_landmark_full.tflite"
+        }
+      }
+    }
+  }
+}
+node {
+  calculator: "AlignHandToPoseInWorldCalculator"
+  input_stream: "HAND_LANDMARKS:__stream_14"
+  input_stream: "POSE_LANDMARKS:pose_world_landmarks_in"
+  output_stream: "HAND_LANDMARKS:left_hand_world_landmarks_out"
+  options {
+    [mediapipe.AlignHandToPoseInWorldCalculatorOptions.ext] {
+      hand_wrist_idx: 0
+      pose_wrist_idx: 15
+    }
+  }
+}
+input_stream: "IMAGE:image_in"
+input_stream: "POSE_LANDMARKS:pose_landmarks_in"
+input_stream: "POSE_WORLD_LANDMARKS:pose_world_landmarks_in"
+output_stream: "LEFT_HAND_LANDMARKS:left_hand_landmarks_out"
+output_stream: "LEFT_HAND_WORLD_LANDMARKS:left_hand_world_landmarks_out"

@@ -12,6 +12,7 @@ objc_library(
     ],
     module_name = "MPPImageUtils",
     deps = [
+        "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:image_format_cc_proto",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/tasks/ios/common:MPPCommon",
@@ -21,5 +22,6 @@ objc_library(
         "//third_party/apple_frameworks:CoreGraphics",
         "//third_party/apple_frameworks:CoreImage",
         "//third_party/apple_frameworks:CoreVideo",
+        "//third_party/apple_frameworks:Foundation",
     ],
 )

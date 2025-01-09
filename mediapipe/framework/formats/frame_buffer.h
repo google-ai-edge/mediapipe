@@ -16,11 +16,11 @@ limitations under the License.
 #ifndef MEDIAPIPE_FRAMEWORK_FORMATS_FRAME_BUFFER_H_
 #define MEDIAPIPE_FRAMEWORK_FORMATS_FRAME_BUFFER_H_
 
+#include <cstdint>
 #include <vector>
 
-#include "absl/log/check.h"
+#include "absl/log/absl_check.h"
 #include "absl/status/statusor.h"
-#include "mediapipe/framework/port/integral_types.h"
 
 namespace mediapipe {
 
@@ -76,13 +76,13 @@ class FrameBuffer {
 
   // Plane encapsulates buffer and stride information.
   struct Plane {
-    Plane(uint8* buffer, Stride stride) : buffer_(buffer), stride_(stride) {}
-    const uint8* buffer() const { return buffer_; }
-    uint8* mutable_buffer() { return buffer_; }
+    Plane(uint8_t* buffer, Stride stride) : buffer_(buffer), stride_(stride) {}
+    const uint8_t* buffer() const { return buffer_; }
+    uint8_t* mutable_buffer() { return buffer_; }
     Stride stride() const { return stride_; }
 
    private:
-    uint8* buffer_;
+    uint8_t* buffer_;
     Stride stride_;
   };
 
@@ -121,9 +121,9 @@ class FrameBuffer {
 
   // YUV data structure.
   struct YuvData {
-    const uint8* y_buffer;
-    const uint8* u_buffer;
-    const uint8* v_buffer;
+    const uint8_t* y_buffer;
+    const uint8_t* u_buffer;
+    const uint8_t* v_buffer;
     // Y buffer row stride in bytes.
     int y_row_stride;
     // U/V buffer row stride in bytes.
@@ -147,15 +147,15 @@ class FrameBuffer {
 
   // Returns plane indexed by the input `index`.
   const Plane& plane(int index) const {
-    CHECK_GE(index, 0);
-    CHECK_LT(static_cast<size_t>(index), planes_.size());
+    ABSL_CHECK_GE(index, 0);
+    ABSL_CHECK_LT(static_cast<size_t>(index), planes_.size());
     return planes_[index];
   }
 
   // Returns mutable plane indexed by the input `index`.
   Plane mutable_plane(int index) {
-    CHECK_GE(index, 0);
-    CHECK_LT(static_cast<size_t>(index), planes_.size());
+    ABSL_CHECK_GE(index, 0);
+    ABSL_CHECK_LT(static_cast<size_t>(index), planes_.size());
     return planes_[index];
   }
 

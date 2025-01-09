@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cstdint>
+
 #include "mediapipe/calculators/tensorflow/tensor_to_matrix_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
@@ -80,7 +82,7 @@ class TensorToMatrixCalculatorTest : public ::testing::Test {
 TEST_F(TensorToMatrixCalculatorTest, Converts1DTensorToMatrix) {
   // This test converts a 1 Dimensional Tensor of length M to a Matrix of Mx1.
   SetUpRunner();
-  const tf::TensorShape tensor_shape(std::vector<tf::int64>{5});
+  const tf::TensorShape tensor_shape(std::vector<int64_t>{5});
   auto tensor = absl::make_unique<tf::Tensor>(tf::DT_FLOAT, tensor_shape);
   auto tensor_vec = tensor->vec<float>();
   for (int i = 0; i < 5; ++i) {
@@ -108,7 +110,7 @@ TEST_F(TensorToMatrixCalculatorTest, Converts1DTensorToMatrix) {
 TEST_F(TensorToMatrixCalculatorTest, Converts2DTensorofWidthOneToMatrix) {
   // This test converts a 2 Dimensional Tensor of shape 1xM to a Matrix of Mx1.
   SetUpRunner();
-  const tf::TensorShape tensor_shape(std::vector<tf::int64>({1, 4}));
+  const tf::TensorShape tensor_shape(std::vector<int64_t>({1, 4}));
   auto tensor = absl::make_unique<tf::Tensor>(tf::DT_FLOAT, tensor_shape);
   auto slice = tensor->Slice(0, 1).flat<float>();
   for (int i = 0; i < 4; ++i) {
@@ -135,7 +137,7 @@ TEST_F(TensorToMatrixCalculatorTest, Converts2DTensorofWidthOneToMatrix) {
 TEST_F(TensorToMatrixCalculatorTest, Converts2DTensorToMatrix) {
   // This test converts a 2 Dimensional Tensor of shape NxM to a Matrix of MxN.
   SetUpRunner();
-  const tf::TensorShape tensor_shape(std::vector<tf::int64>({3, 4}));
+  const tf::TensorShape tensor_shape(std::vector<int64_t>({3, 4}));
   auto tensor = absl::make_unique<tf::Tensor>(tf::DT_FLOAT, tensor_shape);
   auto slice = tensor->Slice(0, 1).flat<float>();
   for (int i = 0; i < 3; ++i) {
@@ -166,7 +168,7 @@ TEST_F(TensorToMatrixCalculatorTest, Converts2DTensorToMatrix) {
 TEST_F(TensorToMatrixCalculatorTest, ConvertsWithReferenceTimeSeriesHeader) {
   // This test converts a 1 Dimensional Tensor of length M to a Matrix of Mx1.
   SetUpRunnerWithReference(5, 1, -1, true);
-  const tf::TensorShape tensor_shape(std::vector<tf::int64>{5});
+  const tf::TensorShape tensor_shape(std::vector<int64_t>{5});
   auto tensor = absl::make_unique<tf::Tensor>(tf::DT_FLOAT, tensor_shape);
   auto tensor_vec = tensor->vec<float>();
   for (int i = 0; i < 5; ++i) {
@@ -198,7 +200,7 @@ TEST_F(TensorToMatrixCalculatorTest, ConvertsWithReferenceTimeSeriesHeader) {
 TEST_F(TensorToMatrixCalculatorTest, TimeSeriesOverridesWork) {
   // This test converts a 1 Dimensional Tensor of length M to a Matrix of Mx1.
   SetUpRunnerWithReference(7, 1, 5, true);
-  const tf::TensorShape tensor_shape(std::vector<tf::int64>{5});
+  const tf::TensorShape tensor_shape(std::vector<int64_t>{5});
   auto tensor = absl::make_unique<tf::Tensor>(tf::DT_FLOAT, tensor_shape);
   auto tensor_vec = tensor->vec<float>();
   for (int i = 0; i < 5; ++i) {

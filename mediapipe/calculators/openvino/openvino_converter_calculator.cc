@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Intel Corporation
+// Copyright (c) 2025 Intel Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -179,7 +179,7 @@ absl::Status OpenVINOConverterCalculator::Process(CalculatorContext* cc) {
       RET_CHECK(tensor_buffer);
 
       if (image_frame.ByteDepth() == 1) {
-        MP_RETURN_IF_ERROR(NormalizeImage<uint8>(image_frame, flip_vertically_,
+        MP_RETURN_IF_ERROR(NormalizeImage<uint8_t>(image_frame, flip_vertically_,
                                                  tensor_buffer));
       } else if (image_frame.ByteDepth() == 4) {
         MP_RETURN_IF_ERROR(NormalizeImage<float>(image_frame, flip_vertically_,
@@ -209,10 +209,10 @@ absl::Status OpenVINOConverterCalculator::Process(CalculatorContext* cc) {
       // Copy pixel data from the ImageFrame to the tensor.
       // TODO: what if there are strides in the tensor?
       if (data_type == ov::element::u8) {
-        uint8 *dst = (uint8 *) tensor.data();
+        uint8_t *dst = (uint8_t *) tensor.data();
         image_frame.CopyToBuffer(dst, num_components);
       } else if (data_type == ov::element::u16) {
-        uint16 *dst = (uint16_t *) tensor.data();
+        uint16_t *dst = (uint16_t *) tensor.data();
         image_frame.CopyToBuffer(dst, num_components);
       } else {
         float *dst = (float *) tensor.data();

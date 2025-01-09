@@ -21,7 +21,7 @@ limitations under the License.
 
 namespace mediapipe::tasks::components::containers {
 
-constexpr float kRectFTolerance = 1e-4;
+inline constexpr float kRectFTolerance = 1e-4;
 
 // Defines a rectangle, used e.g. as part of detection results or as input
 // region-of-interest.

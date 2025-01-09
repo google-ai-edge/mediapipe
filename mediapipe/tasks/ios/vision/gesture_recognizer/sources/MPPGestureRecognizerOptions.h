@@ -24,12 +24,12 @@ NS_ASSUME_NONNULL_BEGIN
 @class MPPGestureRecognizer;
 
 /**
- * This protocol defines an interface for the delegates of `MPPGestureRecognizer` object to receive
+ * This protocol defines an interface for the delegates of `GestureRecognizer` object to receive
  * results of performing asynchronous gesture recognition on images (i.e, when `runningMode` =
- * `MPPRunningModeLiveStream`).
+ * `.liveStream`).
  *
- * The delegate of `MPPGestureRecognizer` must adopt `MPPGestureRecognizerLiveStreamDelegate`
- * protocol. The methods in this protocol are optional.
+ * The delegate of `GestureRecognizer` must adopt `GestureRecognizerLiveStreamDelegate` protocol.
+ * The methods in this protocol are optional.
  */
 NS_SWIFT_NAME(GestureRecognizerLiveStreamDelegate)
 @protocol MPPGestureRecognizerLiveStreamDelegate <NSObject>
@@ -37,15 +37,15 @@ NS_SWIFT_NAME(GestureRecognizerLiveStreamDelegate)
 @optional
 
 /**
- * This method notifies a delegate that the results of asynchronous gesture recognition of
- * an image submitted to the `MPPGestureRecognizer` is available.
+ * This method notifies a delegate that the results of asynchronous gesture recognition of an image
+ * submitted to the `GestureRecognizer` is available.
  *
- * This method is called on a private serial dispatch queue created by the `MPPGestureRecognizer`
- * for performing the asynchronous delegates calls.
+ * This method is called on a private serial dispatch queue created by the `GestureRecognizer` for
+ * performing the asynchronous delegates calls.
  *
- * @param gestureRecognizer The gesture recognizer which performed the gesture recognition.
- * This is useful to test equality when there are multiple instances of `MPPGestureRecognizer`.
- * @param result The `MPPGestureRecognizerResult` object that contains a list of detections, each
+ * @param gestureRecognizer The gesture recognizer which performed the gesture recognition. This is
+ * useful to test equality when there are multiple instances of `GestureRecognizer`.
+ * @param result The `GestureRecognizerResult` object that contains a list of detections, each
  * detection has a bounding box that is expressed in the unrotated input frame of reference
  * coordinates system, i.e. in `[0,image_width) x [0,image_height)`, which are the dimensions of the
  * underlying image data.
@@ -62,26 +62,25 @@ NS_SWIFT_NAME(GestureRecognizerLiveStreamDelegate)
     NS_SWIFT_NAME(gestureRecognizer(_:didFinishGestureRecognition:timestampInMilliseconds:error:));
 @end
 
-/** Options for setting up a `MPPGestureRecognizer`. */
+/** Options for setting up a `GestureRecognizer`. */
 NS_SWIFT_NAME(GestureRecognizerOptions)
 @interface MPPGestureRecognizerOptions : MPPTaskOptions <NSCopying>
 
 /**
- * Running mode of the gesture recognizer task. Defaults to `MPPRunningModeImage`.
- * `MPPGestureRecognizer` can be created with one of the following running modes:
- *  1. `MPPRunningModeImage`: The mode for performing gesture recognition on single image inputs.
- *  2. `MPPRunningModeVideo`: The mode for performing gesture recognition on the decoded frames of a
- *      video.
- *  3. `MPPRunningModeLiveStream`: The mode for performing gesture recognition on a live stream of
- *      input data, such as from the camera.
+ * Running mode of the gesture recognizer task. Defaults to `.video`.
+ * `GestureRecognizer` can be created with one of the following running modes:
+ *  1. `image`: The mode for performing gesture recognition on single image inputs.
+ *  2. `video`: The mode for performing gesture recognition on the decoded frames of a video.
+ *  3. `liveStream`: The mode for performing gesture recognition on a live stream of input data,
+ * such as from the camera.
  */
 @property(nonatomic) MPPRunningMode runningMode;
 
 /**
- * An object that confirms to `MPPGestureRecognizerLiveStreamDelegate` protocol. This object must
- * implement `gestureRecognizer:didFinishRecognitionWithResult:timestampInMilliseconds:error:` to
+ * An object that confirms to `GestureRecognizerLiveStreamDelegate` protocol. This object must
+ * implement `gestureRecognizer(_:didFinishRecognitionWithResult:timestampInMilliseconds:error:)` to
  * receive the results of performing asynchronous gesture recognition on images (i.e, when
- * `runningMode` = `MPPRunningModeLiveStream`).
+ * `runningMode` = `.liveStream`).
  */
 @property(nonatomic, weak, nullable) id<MPPGestureRecognizerLiveStreamDelegate>
     gestureRecognizerLiveStreamDelegate;
@@ -99,18 +98,18 @@ NS_SWIFT_NAME(GestureRecognizerOptions)
 @property(nonatomic) float minTrackingConfidence;
 
 /**
- * Sets the optional `MPPClassifierOptions` controlling the canned gestures classifier, such as
- * score threshold, allow list and deny list of gestures. The categories for canned gesture
- * classifiers are: ["None", "Closed_Fist", "Open_Palm", "Pointing_Up", "Thumb_Down", "Thumb_Up",
- * "Victory", "ILoveYou"].
+ * Sets the optional `ClassifierOptions` controlling the canned gestures classifier, such as score
+ * threshold, allow list and deny list of gestures. The categories for canned gesture classifiers
+ * are: ["None", "Closed_Fist", "Open_Palm", "Pointing_Up", "Thumb_Down", "Thumb_Up", "Victory",
+ * "ILoveYou"].
  *
  * TODO:  Note this option is subject to change, after scoring merging calculator is implemented.
  */
 @property(nonatomic, copy, nullable) MPPClassifierOptions *cannedGesturesClassifierOptions;
 
 /**
- * Sets the optional {@link ClassifierOptions} controlling the custom gestures classifier, such as
- * score threshold, allow list and deny list of gestures.
+ * Sets the optional `ClassifierOptions` controlling the custom gestures classifier, such as score
+ * threshold, allow list and deny list of gestures.
  *
  * TODO:  Note this option is subject to change, after scoring merging calculator is implemented.
  */

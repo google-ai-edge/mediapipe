@@ -96,8 +96,8 @@ _HALIDE_TARGET_CONFIG_SETTINGS_MAP = {
     # Windows
     "x86-64-windows": ["@mediapipe//mediapipe:windows"],
     # Linux
-    # TODO: add mediapipe configs for linux to avoid assuming it's the default.
-    "x86-64-linux": ["//conditions:default"],
+    "x86-64-linux": ["@mediapipe//mediapipe:linux"],
+    # Deliberately no //condition:default clause here.
 }
 
 _HALIDE_TARGET_MAP_DEFAULT = {
@@ -490,7 +490,6 @@ _gengen = rule(
         "_cc_toolchain": attr.label(default = "@bazel_tools//tools/cpp:current_cc_toolchain"),
     },
     fragments = ["cpp"],
-    output_to_genfiles = True,
     toolchains = use_cpp_toolchain(),
     exec_groups = {
         "generator": exec_group(),

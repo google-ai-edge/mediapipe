@@ -47,17 +47,17 @@ using ::mediapipe::Packet;
                                                 ->PixelData()
                                       width:confidenceMask.width()
                                      height:confidenceMask.height()
-                                 shouldCopy:shouldCopyMaskPacketData ? YES : NO]];
+                                 shouldCopy:shouldCopyMaskPacketData]];
     }
   }
 
   if (categoryMaskPacket.ValidateAsType<Image>().ok()) {
-    const Image &cppCategoryMask = confidenceMasksPacket.Get<Image>();
+    const Image &cppCategoryMask = categoryMaskPacket.Get<Image>();
     categoryMask = [[MPPMask alloc]
         initWithUInt8Data:(UInt8 *)cppCategoryMask.GetImageFrameSharedPtr().get()->PixelData()
                     width:cppCategoryMask.width()
                    height:cppCategoryMask.height()
-               shouldCopy:shouldCopyMaskPacketData ? YES : NO];
+               shouldCopy:shouldCopyMaskPacketData];
   }
 
   if (qualityScoresPacket.ValidateAsType<std::vector<float>>().ok()) {

@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/log/absl_check.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "tensorflow/lite/c/common.h"
@@ -45,8 +46,8 @@ class KmeansEmbeddingLookupModel : public tflite::SingleOpModel {
   void Invoke(const std::vector<int>& input,
               const std::vector<uint8_t>& encoding_table,
               const std::vector<float>& codebook) {
-    CHECK_EQ(SetUpInputTensor(input, encoding_table, codebook), kTfLiteOk);
-    CHECK_EQ(SingleOpModel::Invoke(), kTfLiteOk);
+    ABSL_CHECK_EQ(SetUpInputTensor(input, encoding_table, codebook), kTfLiteOk);
+    ABSL_CHECK_EQ(SingleOpModel::Invoke(), kTfLiteOk);
   }
 
   TfLiteStatus InvokeUnchecked(const std::vector<int>& input,

@@ -1,0 +1,84 @@
+diff --git a/tensorflow/lite/delegates/gpu/BUILD b/tensorflow/lite/delegates/gpu/BUILD
+index bd47abe9057..4400a836191 100644
+--- a/tensorflow/lite/delegates/gpu/BUILD
++++ b/tensorflow/lite/delegates/gpu/BUILD
+@@ -74,13 +74,16 @@ cc_library(
+     }) + tflite_extra_gles_deps(),
+ )
+ 
+-objc_library(
++cc_library(
+     name = "metal_delegate",
+-    srcs = ["metal_delegate.mm"],
++    srcs = ["metal_delegate.cc"],
+     hdrs = ["metal_delegate.h"],
+-    copts = ["-std=c++17"],
+-    module_name = "TensorFlowLiteCMetal",
+-    sdk_frameworks = ["Metal"],
++    copts = [
++        "-ObjC++",
++        "-std=c++17",
++        "-fobjc-arc",
++    ],
++    linkopts = ["-framework Metal"],
+     deps = [
+         "//tensorflow/lite:kernel_api",
+         "//tensorflow/lite:minimal_logging",
+@@ -103,14 +106,20 @@ objc_library(
+         "@com_google_absl//absl/container:flat_hash_set",
+         "@com_google_absl//absl/types:span",
+     ],
++    alwayslink = 1,
+ )
+ 
+-objc_library(
++cc_library(
+     name = "metal_delegate_internal",
+     hdrs = ["metal_delegate_internal.h"],
+-    copts = ["-std=c++17"],
+-    sdk_frameworks = ["Metal"],
++    copts = [
++         "-ObjC++",
++         "-std=c++17",
++        "-fobjc-arc",
++    ],
++    linkopts = ["-framework Metal"],
+     deps = ["//tensorflow/lite/delegates/gpu:metal_delegate"],
++    alwayslink = 1,
+ )
+ 
+ # build -c opt --config android_arm64 --copt -Os --copt -DTFLITE_GPU_BINARY_RELEASE --linkopt -s --strip always :libtensorflowlite_gpu_gl.so
+diff --git a/tensorflow/lite/delegates/gpu/metal/BUILD b/tensorflow/lite/delegates/gpu/metal/BUILD
+index 0c555a4e6b9..f66e51051c9 100644
+--- a/tensorflow/lite/delegates/gpu/metal/BUILD
++++ b/tensorflow/lite/delegates/gpu/metal/BUILD
+@@ -137,14 +137,15 @@ objc_library(
+     ],
+ )
+ 
+-objc_library(
++cc_library(
+     name = "inference_context",
+     srcs = ["inference_context.cc"],
+     hdrs = ["inference_context.h"],
+     copts = DEFAULT_COPTS + [
+         "-ObjC++",
++        "-fobjc-arc",
+     ],
+-    sdk_frameworks = ["Metal"],
++    linkopts = ["-framework Metal"],
+     deps = [
+         ":compute_task",
+         ":inference_context_cc_fbs",
+@@ -170,6 +171,7 @@ objc_library(
+         "@com_google_absl//absl/strings",
+         "@com_google_absl//absl/time",
+     ],
++    alwayslink = 1,
+ )
+ 
+ flatbuffer_cc_library(
+diff --git a/tensorflow/lite/delegates/gpu/metal_delegate.mm b/tensorflow/lite/delegates/gpu/metal_delegate.cc
+similarity index 100%
+rename from tensorflow/lite/delegates/gpu/metal_delegate.mm
+rename to tensorflow/lite/delegates/gpu/metal_delegate.cc

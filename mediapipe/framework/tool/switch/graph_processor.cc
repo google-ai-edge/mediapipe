@@ -8,10 +8,10 @@ namespace mediapipe {
 absl::Status GraphProcessor::Initialize(CalculatorGraphConfig graph_config) {
   graph_config_ = graph_config;
 
-  ASSIGN_OR_RETURN(graph_input_map_,
-                   tool::TagMap::Create(graph_config_.input_stream()));
-  ASSIGN_OR_RETURN(graph_output_map_,
-                   tool::TagMap::Create(graph_config_.output_stream()));
+  MP_ASSIGN_OR_RETURN(graph_input_map_,
+                      tool::TagMap::Create(graph_config_.input_stream()));
+  MP_ASSIGN_OR_RETURN(graph_output_map_,
+                      tool::TagMap::Create(graph_config_.output_stream()));
   return absl::OkStatus();
 }
 

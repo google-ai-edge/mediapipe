@@ -16,11 +16,13 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_CC_VISION_UTILS_IMAGE_UTILS_H_
 #define MEDIAPIPE_TASKS_CC_VISION_UTILS_IMAGE_UTILS_H_
 
+#include <cstdint>
 #include <memory>
 #include <string>
 
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/formats/image.h"
+#include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/tensor.h"
 
 namespace mediapipe {
@@ -42,6 +44,14 @@ struct Shape {
 // Note: this function is not optimized for speed, and thus shouldn't be used
 // outside of tests or simple CLI demo tools.
 absl::StatusOr<mediapipe::Image> DecodeImageFromFile(const std::string& path);
+
+// Creates an image and returns it as a mediapipe::Image object.
+//
+// Support a wide range of image formats, namely grayscale (1 channel), RGB (3
+// channels) or RGBA (4 channels) and BGRA (4 channels).
+absl::StatusOr<Image> CreateImageFromBuffer(ImageFormat::Format format,
+                                            const uint8_t* pixel_data,
+                                            int width, int height);
 
 // Get the shape of a image-like tensor.
 //

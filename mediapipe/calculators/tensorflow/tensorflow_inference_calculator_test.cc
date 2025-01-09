@@ -12,11 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
 
-#include "absl/flags/flag.h"
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "mediapipe/calculators/tensorflow/tensorflow_inference_calculator.pb.h"
 #include "mediapipe/calculators/tensorflow/tensorflow_session_from_frozen_graph_generator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -24,13 +26,13 @@
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/status_matchers.h"  // NOLINT
 #include "mediapipe/framework/tool/validate_type.h"
 #include "tensorflow/core/framework/tensor.h"
 #include "tensorflow/core/framework/tensor_shape.h"
 #include "tensorflow/core/framework/tensor_testutil.h"
 #include "tensorflow/core/framework/types.h"
+#include "testing/base/public/gunit.h"
 
 #ifdef __APPLE__
 #include <CoreFoundation/CoreFoundation.h>
@@ -65,7 +67,7 @@ std::string GetGraphDefPath() {
                                    "testdata/frozen_graph_def.pb");
 #else
   return mediapipe::file::JoinPath(
-      "./",
+      ::testing::SrcDir(),
       // This should match the path of the output files
       // of the genrule() that generates test model files.
       "mediapipe/calculators/tensorflow/testdata/", "frozen_graph_def.pb");
@@ -118,7 +120,7 @@ class TensorflowInferenceCalculatorTest : public ::testing::Test {
   // Create tensor from Vector and add as a Packet to the provided tag as input.
   void AddVectorToInputsAsPacket(const std::vector<Packet>& packets,
                                  const std::string& tag) {
-    CHECK(!packets.empty())
+    ABSL_CHECK(!packets.empty())
         << "Please specify at least some data in the packet";
     auto packets_ptr = absl::make_unique<std::vector<Packet>>(packets);
     runner_->MutableInputs()->Tag(tag).packets.push_back(
@@ -586,12 +588,12 @@ TEST_F(TensorflowInferenceCalculatorTest, TestRecurrentStates) {
       runner_->Outputs().Tag(kMultipliedTag).packets;
   ASSERT_EQ(2, output_packets_mult.size());
   const tf::Tensor& tensor_mult = output_packets_mult[0].Get<tf::Tensor>();
-  LOG(INFO) << "timestamp: " << 0;
+  ABSL_LOG(INFO) << "timestamp: " << 0;
   auto expected_tensor = tf::test::AsTensor<int32_t>({3, 8, 15});
   tf::test::ExpectTensorEqual<int32_t>(tensor_mult, expected_tensor);
   const tf::Tensor& tensor_mult1 = output_packets_mult[1].Get<tf::Tensor>();
   auto expected_tensor1 = tf::test::AsTensor<int32_t>({9, 32, 75});
-  LOG(INFO) << "timestamp: " << 1;
+  ABSL_LOG(INFO) << "timestamp: " << 1;
   tf::test::ExpectTensorEqual<int32_t>(tensor_mult1, expected_tensor1);
 
   EXPECT_EQ(2, runner_
@@ -627,12 +629,12 @@ TEST_F(TensorflowInferenceCalculatorTest, TestRecurrentStateOverride) {
       runner_->Outputs().Tag(kMultipliedTag).packets;
   ASSERT_EQ(2, output_packets_mult.size());
   const tf::Tensor& tensor_mult = output_packets_mult[0].Get<tf::Tensor>();
-  LOG(INFO) << "timestamp: " << 0;
+  ABSL_LOG(INFO) << "timestamp: " << 0;
   auto expected_tensor = tf::test::AsTensor<int32_t>({3, 4, 5});
   tf::test::ExpectTensorEqual<int32_t>(tensor_mult, expected_tensor);
   const tf::Tensor& tensor_mult1 = output_packets_mult[1].Get<tf::Tensor>();
   auto expected_tensor1 = tf::test::AsTensor<int32_t>({3, 4, 5});
-  LOG(INFO) << "timestamp: " << 1;
+  ABSL_LOG(INFO) << "timestamp: " << 1;
   tf::test::ExpectTensorEqual<int32_t>(tensor_mult1, expected_tensor1);
 
   EXPECT_EQ(2, runner_

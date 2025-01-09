@@ -21,6 +21,7 @@ limitations under the License.
 #include <type_traits>
 
 #include "absl/flags/flag.h"
+#include "absl/log/absl_check.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/cord.h"
@@ -179,7 +180,7 @@ TEST_F(ImageTensorSpecsTest, BuildInputImageTensorSpecsFromModelResources) {
                           core::ModelResources::Create(kTestModelResourcesTag,
                                                        std::move(model_file)));
   const tflite::Model* model = model_resources->GetTfLiteModel();
-  CHECK(model != nullptr);
+  ABSL_CHECK(model != nullptr);
   absl::StatusOr<ImageTensorSpecs> input_specs_or =
       BuildInputImageTensorSpecs(*model_resources);
   MP_ASSERT_OK(input_specs_or);

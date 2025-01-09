@@ -21,6 +21,7 @@ import mediapipe.tasks.python.vision.face_landmarker
 import mediapipe.tasks.python.vision.face_stylizer
 import mediapipe.tasks.python.vision.gesture_recognizer
 import mediapipe.tasks.python.vision.hand_landmarker
+import mediapipe.tasks.python.vision.holistic_landmarker
 import mediapipe.tasks.python.vision.image_classifier
 import mediapipe.tasks.python.vision.image_embedder
 import mediapipe.tasks.python.vision.image_segmenter
@@ -54,6 +55,7 @@ ImageEmbedderOptions = image_embedder.ImageEmbedderOptions
 ImageEmbedderResult = image_embedder.ImageEmbedderResult
 ImageSegmenter = image_segmenter.ImageSegmenter
 ImageSegmenterOptions = image_segmenter.ImageSegmenterOptions
+ImageProcessingOptions = core.image_processing_options.ImageProcessingOptions
 InteractiveSegmenter = interactive_segmenter.InteractiveSegmenter
 InteractiveSegmenterOptions = interactive_segmenter.InteractiveSegmenterOptions
 InteractiveSegmenterRegionOfInterest = interactive_segmenter.RegionOfInterest
@@ -64,6 +66,10 @@ PoseLandmarker = pose_landmarker.PoseLandmarker
 PoseLandmarkerOptions = pose_landmarker.PoseLandmarkerOptions
 PoseLandmarkerResult = pose_landmarker.PoseLandmarkerResult
 PoseLandmarksConnections = pose_landmarker.PoseLandmarksConnections
+HolisticLandmarker = holistic_landmarker.HolisticLandmarker
+HolisticLandmarkerOptions = holistic_landmarker.HolisticLandmarkerOptions
+HolisticLandmarkerResult = holistic_landmarker.HolisticLandmarkerResult
+
 RunningMode = core.vision_task_running_mode.VisionTaskRunningMode
 
 # Remove unnecessary modules to avoid duplication in API docs.
@@ -74,6 +80,7 @@ del face_landmarker
 del face_stylizer
 del gesture_recognizer
 del hand_landmarker
+del holistic_landmarker
 del image_classifier
 del image_embedder
 del image_segmenter

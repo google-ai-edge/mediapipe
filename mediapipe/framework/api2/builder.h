@@ -11,13 +11,19 @@
 #include <vector>
 
 #include "absl/container/btree_map.h"
+#include "absl/log/absl_check.h"
+#include "absl/memory/memory.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "google/protobuf/message_lite.h"
+#include "mediapipe/framework/api2/packet.h"
 #include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/calculator_base.h"
 #include "mediapipe/framework/calculator_contract.h"
+#include "mediapipe/framework/mediapipe_options.pb.h"
 #include "mediapipe/framework/port/any_proto.h"
 #include "mediapipe/framework/port/ret_check.h"
+#include "mediapipe/framework/stream_handler.pb.h"
 
 namespace mediapipe {
 namespace api2 {
@@ -38,7 +44,7 @@ T& GetWithAutoGrow(std::vector<std::unique_ptr<T>>* vecp, size_t index) {
     vec.resize(index + 1);
   }
   if (vec[index] == nullptr) {
-    vec[index] = absl::make_unique<T>();
+    vec[index] = std::make_unique<T>();
   }
   return *vec[index];
 }
@@ -109,7 +115,7 @@ class MultiPort : public Single {
       : Single(vec), vec_(*vec) {}
 
   Single operator[](int index) {
-    CHECK_GE(index, 0);
+    ABSL_CHECK_GE(index, 0);
     return Single{&GetWithAutoGrow(&vec_, index)};
   }
 
@@ -127,7 +133,8 @@ class MultiPort : public Single {
 namespace internal_builder {
 
 template <typename T, typename U>
-using AllowCast = std::integral_constant<bool, std::is_same_v<T, AnyType> &&
+using AllowCast = std::integral_constant<bool, (std::is_same_v<T, AnyType> ||
+                                                std::is_same_v<U, AnyType>) &&
                                                    !std::is_same_v<T, U>>;
 
 }  // namespace internal_builder
@@ -193,7 +200,7 @@ class SourceImpl {
   template <typename U,
             typename std::enable_if<AllowConnection<U>{}, int>::type = 0>
   Src& ConnectTo(const Dst<U>& dest) {
-    CHECK(dest.base_.source == nullptr);
+    ABSL_CHECK(dest.base_.source == nullptr);
     dest.base_.source = base_;
     base_->dests_.emplace_back(&dest.base_);
     return *this;
@@ -300,18 +307,18 @@ using SideSource = SourceImpl<true, T>;
 //   parts utility/convenience functions or classes.
 //
 // For example:
-//   SidePacket<TfLiteModelPtr> GetModel(SidePacket<std::string> model_blob,
+//   SidePacket<TfLiteModelPtr> GetModel(SidePacket<Resource> model_resource,
 //                                       Graph& graph) {
 //     auto& model_node = graph.AddNode("TfLiteModelCalculator");
-//     model_blob >> model_node.SideIn("MODEL_BLOB");
+//     model_resource >> model_node.SideIn("MODEL_RESOURCE");
 //     return model_node.SideOut("MODEL").Cast<TfLiteModelPtr>();
 //   }
 //
 // Where graph can use it as:
 //   Graph graph;
-//   SidePacket<std::string> model_blob =
-//     graph.SideIn("MODEL_BLOB").Cast<std::string>();
-//   SidePacket<TfLiteModelPtr> model = GetModel(model_blob, graph);
+//   SidePacket<Resource> model_resource =
+//     graph.SideIn("MODEL_RESOURCE").Cast<Resource>();
+//   SidePacket<TfLiteModelPtr> model = GetModel(model_resource, graph);
 template <typename T>
 using SidePacket = SideSource<T>;
 
@@ -327,8 +334,82 @@ using MultiDestination = MultiPort<Destination<T>>;
 template <typename T = internal::Generic>
 using MultiSideDestination = MultiPort<SideDestination<T>>;
 
+namespace internal_builder {
+
+template <typename OptionsT>
+OptionsT& GetOptions(std::optional<mediapipe::MediaPipeOptions>& options) {
+  if (!options.has_value()) {
+    options = mediapipe::MediaPipeOptions();
+  }
+  return *options->MutableExtension(OptionsT::ext);
+}
+
+}  // namespace internal_builder
+
+class Executor {
+ public:
+  template <typename OptionsT>
+  OptionsT& GetOptions() {
+    return internal_builder::GetOptions<OptionsT>(options_);
+  }
+
+ private:
+  explicit Executor(std::string type) : type_(std::move(type)) {}
+
+  std::string type_;
+  std::string name_;
+
+  std::optional<mediapipe::MediaPipeOptions> options_;
+
+  friend class Graph;
+};
+
+class NodeBase;
+
+class InputStreamHandler {
+ public:
+  template <typename OptionsT>
+  OptionsT& GetOptions() {
+    return internal_builder::GetOptions<OptionsT>(options_);
+  }
+
+ protected:
+  explicit InputStreamHandler() = default;
+
+  std::string type_;
+  std::optional<mediapipe::MediaPipeOptions> options_;
+
+  friend class NodeBase;
+  friend class Graph;
+};
+
+class OutputStreamHandler {
+ public:
+  template <typename OptionsT>
+  OptionsT& GetOptions() {
+    return internal_builder::GetOptions<OptionsT>(options_);
+  }
+
+ protected:
+  explicit OutputStreamHandler() = default;
+
+  std::string type_;
+  std::optional<mediapipe::MediaPipeOptions> options_;
+
+  friend class NodeBase;
+  friend class Graph;
+};
+
 class NodeBase {
  public:
+  NodeBase() = default;
+  ~NodeBase() = default;
+  NodeBase(NodeBase&&) = default;
+  NodeBase& operator=(NodeBase&&) = default;
+  // Explicitly delete copies to improve error messages.
+  NodeBase(const NodeBase&) = delete;
+  NodeBase& operator=(const NodeBase&) = delete;
+
   // TODO: right now access to an indexed port is made directly by
   // specifying both a tag and an index. It would be better to represent this
   // as a two-step lookup, first getting a multi-port, and then accessing one
@@ -416,6 +497,24 @@ class NodeBase {
     return *calculator_option_->MutableExtension(ext);
   }
 
+  void SetExecutor(Executor& executor) { executor_ = &executor; }
+
+  InputStreamHandler& SetInputStreamHandler(absl::string_view type) {
+    if (!input_stream_handler_) {
+      input_stream_handler_ = InputStreamHandler();
+    }
+    input_stream_handler_->type_ = std::string(type.data(), type.size());
+    return *input_stream_handler_;
+  }
+
+  OutputStreamHandler& SetOutputStreamHandler(absl::string_view type) {
+    if (!output_stream_handler_) {
+      output_stream_handler_ = OutputStreamHandler();
+    }
+    output_stream_handler_->type_ = std::string(type.data(), type.size());
+    return *output_stream_handler_;
+  }
+
  protected:
   // GetOptionsInternal resolutes the overload greedily, which finds the first
   // match then succeed (template specialization tries all matches, thus could
@@ -453,6 +552,12 @@ class NodeBase {
     std::function<bool(protobuf::Any&)> packer;
   };
   std::map<TypeId, MessageAndPacker> node_options_;
+
+  Executor* executor_ = nullptr;
+
+  std::optional<InputStreamHandler> input_stream_handler_;
+  std::optional<OutputStreamHandler> output_stream_handler_;
+
   friend class Graph;
 };
 
@@ -584,6 +689,14 @@ class PacketGenerator {
 
 class Graph {
  public:
+  Graph() = default;
+  ~Graph() = default;
+  Graph(Graph&&) = default;
+  Graph& operator=(Graph&&) = default;
+  // Explicitly delete copies to improve error messages.
+  Graph(const Graph&) = delete;
+  Graph& operator=(const Graph&) = delete;
+
   void SetType(std::string type) { type_ = std::move(type); }
 
   // Creates a node of a specific type. Should be used for calculators whose
@@ -626,6 +739,14 @@ class Graph {
     auto node_p = node.get();
     packet_gens_.emplace_back(std::move(node));
     return *node_p;
+  }
+
+  Executor& AddExecutor(absl::string_view type) {
+    auto executor =
+        absl::WrapUnique(new Executor(std::string(type.data(), type.size())));
+    auto* executor_p = executor.get();
+    executors_.emplace_back(std::move(executor));
+    return *executor_p;
   }
 
   // Graph ports, non-typed.
@@ -720,15 +841,31 @@ class Graph {
     if (!type_.empty()) {
       config.set_type(type_);
     }
+
+    // Name and add executors.
+    int executor_index = 0;
+    for (std::unique_ptr<Executor>& executor : executors_) {
+      // Names starting from "__" are historically reserved for internal
+      // executors.
+      executor->name_ = absl::StrCat("_b_executor_", executor_index++);
+
+      auto* out_executor = config.add_executor();
+      out_executor->set_name(executor->name_);
+      out_executor->set_type(executor->type_);
+      if (executor->options_) {
+        *out_executor->mutable_options() = *executor->options_;
+      }
+    }
+
     FixUnnamedConnections();
-    CHECK_OK(UpdateBoundaryConfig(&config));
+    ABSL_CHECK_OK(UpdateBoundaryConfig(&config));
     for (const std::unique_ptr<NodeBase>& node : nodes_) {
       auto* out_node = config.add_node();
-      CHECK_OK(UpdateNodeConfig(*node, out_node));
+      ABSL_CHECK_OK(UpdateNodeConfig(*node, out_node));
     }
     for (const std::unique_ptr<PacketGenerator>& node : packet_gens_) {
       auto* out_node = config.add_packet_generator();
-      CHECK_OK(UpdateNodeConfig(*node, out_node));
+      ABSL_CHECK_OK(UpdateNodeConfig(*node, out_node));
     }
     return config;
   }
@@ -782,7 +919,7 @@ class Graph {
     config->set_calculator(node.type_);
     node.in_streams_.Visit(
         [&](const TagIndexLocation& loc, const DestinationBase& endpoint) {
-          CHECK(endpoint.source != nullptr);
+          ABSL_CHECK(endpoint.source != nullptr);
           config->add_input_stream(TaggedName(loc, endpoint.source->name_));
         });
     node.out_streams_.Visit(
@@ -791,7 +928,7 @@ class Graph {
         });
     node.in_sides_.Visit([&](const TagIndexLocation& loc,
                              const DestinationBase& endpoint) {
-      CHECK(endpoint.source != nullptr);
+      ABSL_CHECK(endpoint.source != nullptr);
       config->add_input_side_packet(TaggedName(loc, endpoint.source->name_));
     });
     node.out_sides_.Visit(
@@ -804,6 +941,25 @@ class Graph {
     for (auto& [type_id, message_and_packer] : node.node_options_) {
       RET_CHECK(message_and_packer.packer(*config->add_node_options()));
     }
+    if (node.executor_ != nullptr) {
+      config->set_executor(node.executor_->name_);
+    }
+    if (node.input_stream_handler_) {
+      config->mutable_input_stream_handler()->set_input_stream_handler(
+          node.input_stream_handler_->type_);
+      if (node.input_stream_handler_->options_) {
+        *config->mutable_input_stream_handler()->mutable_options() =
+            *node.input_stream_handler_->options_;
+      }
+    }
+    if (node.output_stream_handler_) {
+      config->mutable_output_stream_handler()->set_output_stream_handler(
+          node.output_stream_handler_->type_);
+      if (node.output_stream_handler_->options_) {
+        *config->mutable_output_stream_handler()->mutable_options() =
+            *node.output_stream_handler_->options_;
+      }
+    }
     return {};
   }
 
@@ -812,7 +968,7 @@ class Graph {
     config->set_packet_generator(node.type_);
     node.in_sides_.Visit([&](const TagIndexLocation& loc,
                              const DestinationBase& endpoint) {
-      CHECK(endpoint.source != nullptr);
+      ABSL_CHECK(endpoint.source != nullptr);
       config->add_input_side_packet(TaggedName(loc, endpoint.source->name_));
     });
     node.out_sides_.Visit(
@@ -829,7 +985,7 @@ class Graph {
   absl::Status UpdateBoundaryConfig(CalculatorGraphConfig* config) {
     graph_boundary_.in_streams_.Visit(
         [&](const TagIndexLocation& loc, const DestinationBase& endpoint) {
-          CHECK(endpoint.source != nullptr);
+          ABSL_CHECK(endpoint.source != nullptr);
           config->add_output_stream(TaggedName(loc, endpoint.source->name_));
         });
     graph_boundary_.out_streams_.Visit(
@@ -838,7 +994,7 @@ class Graph {
         });
     graph_boundary_.in_sides_.Visit([&](const TagIndexLocation& loc,
                                         const DestinationBase& endpoint) {
-      CHECK(endpoint.source != nullptr);
+      ABSL_CHECK(endpoint.source != nullptr);
       config->add_output_side_packet(TaggedName(loc, endpoint.source->name_));
     });
     graph_boundary_.out_sides_.Visit(
@@ -849,6 +1005,7 @@ class Graph {
   }
 
   std::string type_;
+  std::vector<std::unique_ptr<Executor>> executors_;
   std::vector<std::unique_ptr<NodeBase>> nodes_;
   std::vector<std::unique_ptr<PacketGenerator>> packet_gens_;
   // Special node representing graph inputs and outputs.

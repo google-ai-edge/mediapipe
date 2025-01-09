@@ -16,14 +16,14 @@
 
 #include <utility>
 
-#include "absl/log/log.h"
+#include "absl/log/absl_log.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 
 // The default implementation of halide_error calls abort(), which we don't
 // want. Instead, log the error and let the filter invocation fail.
 extern "C" void halide_error(void*, const char* message) {
-  LOG(ERROR) << "Halide Error: " << message;
+  ABSL_LOG(ERROR) << "Halide Error: " << message;
 }
 
 namespace mediapipe {

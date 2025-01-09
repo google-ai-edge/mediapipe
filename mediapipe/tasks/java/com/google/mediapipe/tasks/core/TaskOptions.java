@@ -25,7 +25,7 @@ import com.google.protobuf.ByteString;
 
 /**
  * MediaPipe Tasks options base class. Any MediaPipe task-specific options class should extend
- * {@link TaskOptions} and implement exactly one of converTo*Proto() methods.
+ * {@link TaskOptions} and implement exactly one of convertTo*Proto() methods.
  */
 public abstract class TaskOptions {
   /**

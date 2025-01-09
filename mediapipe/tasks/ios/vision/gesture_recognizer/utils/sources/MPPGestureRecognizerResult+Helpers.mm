@@ -117,7 +117,7 @@ static const NSInteger kDefaultGestureIndex = -1;
                               handLandmarksPacket:(const Packet &)handLandmarksPacket
                              worldLandmarksPacket:(const Packet &)worldLandmarksPacket {
   NSInteger timestampInMilliseconds =
-      (NSInteger)(handGesturesPacket.Timestamp().Value() / kMicroSecondsPerMilliSecond);
+      (NSInteger)(handGesturesPacket.Timestamp().Value() / kMicrosecondsPerMillisecond);
 
   if (handGesturesPacket.IsEmpty()) {
     return [MPPGestureRecognizerResult

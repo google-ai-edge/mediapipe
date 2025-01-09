@@ -31,7 +31,7 @@ const vision = await FilesetResolver.forVisionTasks(
     "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm"
 );
 const faceLandmarker = await FaceLandmarker.createFromModelPath(vision,
-    "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task`"
+    "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task"
 );
 const image = document.getElementById("image") as HTMLImageElement;
 const landmarks = faceLandmarker.detect(image);
@@ -66,7 +66,7 @@ const vision = await FilesetResolver.forVisionTasks(
     "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm"
 );
 const gestureRecognizer = await GestureRecognizer.createFromModelPath(vision,
-    "hhttps://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task"
+    "https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task"
 );
 const image = document.getElementById("image") as HTMLImageElement;
 const recognitions = gestureRecognizer.recognize(image);
@@ -92,6 +92,24 @@ const landmarks = handLandmarker.detect(image);
 ```
 
 For more information, refer to the [Hand Landmarker](https://developers.google.com/mediapipe/solutions/vision/hand_landmarker/web_js) documentation.
+
+
+## Holistic Landmarker
+
+The MediaPipe Holistic Landmarker task task lets you combine components of the
+pose, face, and hand landmarkers to create a complete landmarker for the human
+body.
+
+```
+const vision = await FilesetResolver.forVisionTasks(
+    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm"
+);
+const holisticLandmarker = await HolisticLandmarker.createFromModelPath(vision,
+    "https://storage.googleapis.com/mediapipe-models/holistic_landmarker/holistic_landmarker/float16/1/hand_landmark.task"
+);
+const image = document.getElementById("image") as HTMLImageElement;
+const landmarks = holisticLandmarker.detect(image);
+```
 
 ## Image Classifier
 

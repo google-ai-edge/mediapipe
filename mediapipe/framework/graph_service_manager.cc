@@ -1,5 +1,11 @@
 #include "mediapipe/framework/graph_service_manager.h"
 
+#include <utility>
+
+#include "absl/status/status.h"
+#include "mediapipe/framework/graph_service.h"
+#include "mediapipe/framework/packet.h"
+
 namespace mediapipe {
 
 absl::Status GraphServiceManager::SetServicePacket(

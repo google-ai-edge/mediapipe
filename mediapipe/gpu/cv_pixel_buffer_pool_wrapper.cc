@@ -14,10 +14,17 @@
 
 #include "mediapipe/gpu/cv_pixel_buffer_pool_wrapper.h"
 
-#include <tuple>
+#include <cstdint>
+#include <string>
 
 #include "CoreFoundation/CFBase.h"
+#include "absl/log/absl_check.h"
+#include "absl/status/statusor.h"
+#include "absl/strings/str_format.h"
 #include "mediapipe/framework/port/logging.h"
+#include "mediapipe/framework/port/ret_check.h"
+#include "mediapipe/gpu/cv_texture_cache_manager.h"
+#include "mediapipe/gpu/gpu_buffer_format.h"
 #include "mediapipe/objc/CFHolder.h"
 #include "mediapipe/objc/util.h"
 
@@ -26,15 +33,19 @@ namespace mediapipe {
 CvPixelBufferPoolWrapper::CvPixelBufferPoolWrapper(
     int width, int height, GpuBufferFormat format, CFTimeInterval maxAge,
     CvTextureCacheManager* texture_caches) {
+  width_ = width;
+  height_ = height;
+  format_ = format;
   OSType cv_format = CVPixelFormatForGpuBufferFormat(format);
-  CHECK_NE(cv_format, -1) << "unsupported pixel format";
+  ABSL_CHECK_NE(cv_format, -1) << "unsupported pixel format";
   pool_ = MakeCFHolderAdopting(
       /* keep count is 0 because the age param keeps buffers around anyway */
       CreateCVPixelBufferPool(width, height, cv_format, 0, maxAge));
   texture_caches_ = texture_caches;
 }
 
-CFHolder<CVPixelBufferRef> CvPixelBufferPoolWrapper::GetBuffer() {
+absl::StatusOr<CFHolder<CVPixelBufferRef>>
+CvPixelBufferPoolWrapper::GetBuffer() {
   CVPixelBufferRef buffer;
   int threshold = 1;
   NSMutableDictionary* auxAttributes =
@@ -58,7 +69,10 @@ CFHolder<CVPixelBufferRef> CvPixelBufferPoolWrapper::GetBuffer() {
       ++threshold;
     }
   }
-  CHECK(!err) << "Error creating pixel buffer: " << err;
+  RET_CHECK_EQ(err, kCVReturnSuccess)
+      << absl::StrFormat("Error creating pixel buffer (%d x %d, %d).", width_,
+                         height_, static_cast<uint32_t>(format_))
+      << err;
   count_ = threshold;
   return MakeCFHolderAdopting(buffer);
 }
@@ -70,14 +84,19 @@ std::string CvPixelBufferPoolWrapper::GetDebugString() const {
 
 void CvPixelBufferPoolWrapper::Flush() { CVPixelBufferPoolFlush(*pool_, 0); }
 
-CFHolder<CVPixelBufferRef> CvPixelBufferPoolWrapper::CreateBufferWithoutPool(
+absl::StatusOr<CFHolder<CVPixelBufferRef>>
+CvPixelBufferPoolWrapper::CreateBufferWithoutPool(
     const internal::GpuBufferSpec& spec) {
   OSType cv_format = CVPixelFormatForGpuBufferFormat(spec.format);
-  CHECK_NE(cv_format, -1) << "unsupported pixel format";
+  RET_CHECK_NE(cv_format, -1) << "unsupported pixel format";
   CVPixelBufferRef buffer;
   CVReturn err = CreateCVPixelBufferWithoutPool(spec.width, spec.height,
                                                 cv_format, &buffer);
-  CHECK(!err) << "Error creating pixel buffer: " << err;
+  RET_CHECK_EQ(err, kCVReturnSuccess)
+      << absl::StrFormat("Error creating pixel buffer (%d x %d, %d).",
+                         spec.width, spec.height,
+                         static_cast<uint32_t>(spec.format))
+      << err;
   return MakeCFHolderAdopting(buffer);
 }
 

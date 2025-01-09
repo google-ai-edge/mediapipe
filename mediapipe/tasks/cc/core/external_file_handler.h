@@ -16,12 +16,12 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_CC_CORE_EXTERNAL_FILE_HANDLER_H_
 #define MEDIAPIPE_TASKS_CC_CORE_EXTERNAL_FILE_HANDLER_H_
 
+#include <cstdint>
 #include <memory>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
 
 namespace mediapipe {
@@ -74,17 +74,17 @@ class ExternalFileHandler {
   void* buffer_{};
 
   // The mapped memory buffer offset, if any.
-  int64 buffer_offset_{};
+  int64_t buffer_offset_{};
   // The size in bytes of the mapped memory buffer, if any.
-  int64 buffer_size_{};
+  int64_t buffer_size_{};
 
   // As mmap(2) requires the offset to be a multiple of sysconf(_SC_PAGE_SIZE):
 
   // The aligned mapped memory buffer offset, if any.
-  int64 buffer_aligned_offset_{};
+  int64_t buffer_aligned_offset_{};
   // The aligned mapped memory buffer size in bytes taking into account the
   // offset shift introduced by buffer_aligned_memory_offset_, if any.
-  int64 buffer_aligned_size_{};
+  int64_t buffer_aligned_size_{};
 };
 
 }  // namespace core

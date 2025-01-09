@@ -20,6 +20,7 @@ limitations under the License.
 #include <optional>
 #include <string>
 #include <variant>
+#include <vector>
 
 #include "absl/memory/memory.h"
 #include "mediapipe/tasks/cc/core/mediapipe_builtin_op_resolver.h"
@@ -98,6 +99,14 @@ struct BaseOptions {
   // Options for the chosen delegate. If not set, the default delegate options
   // is used.
   std::optional<std::variant<CpuOptions, GpuOptions>> delegate_options;
+
+  // Disallows/disables default initialization of MediaPipe graph services. This
+  // can be used to disable default OpenCL context creation so that the whole
+  // pipeline can run on CPU.
+  //
+  // Recommendation: do not use unless you have to (for example, default
+  // initialization has side effects)
+  bool disable_default_service = false;
 };
 
 // Converts a BaseOptions to a BaseOptionsProto.

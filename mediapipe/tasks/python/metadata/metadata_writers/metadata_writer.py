@@ -736,7 +736,7 @@ class MetadataWriter(object):
     content is used to interpret the metadata content.
 
     Returns:
-      A tuple of (model_with_metadata_in_bytes, metdata_json_content)
+      A tuple of (model_with_metadata_in_bytes, metadata_json_content)
     """
     # Populates metadata and associated files into TFLite model buffer.
     populator = metadata.MetadataPopulator.with_model_buffer(self._model_buffer)
@@ -840,6 +840,6 @@ class MetadataWriterBase:
     content is used to interpret the metadata content.
 
     Returns:
-      A tuple of (model_with_metadata_in_bytes, metdata_json_content)
+      A tuple of (model_with_metadata_in_bytes, metadata_json_content)
     """
     return self.writer.populate()

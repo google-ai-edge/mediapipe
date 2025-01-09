@@ -15,11 +15,14 @@
 #ifndef MEDIAPIPE_UTIL_TIME_SERIES_TEST_UTIL_H_
 #define MEDIAPIPE_UTIL_TIME_SERIES_TEST_UTIL_H_
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
 
 #include "Eigen/Core"
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/strings/substitute.h"
@@ -29,7 +32,6 @@
 #include "mediapipe/framework/formats/time_series_header.pb.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_matchers.h"
@@ -139,7 +141,7 @@ class TimeSeriesCalculatorTest : public ::testing::Test {
   // <base_names[0]>_<ids[0]>, <base_names[1]>_<ids[1]>, etc.
   std::vector<std::string> MakeNames(const std::vector<std::string>& base_names,
                                      const std::vector<std::string>& ids) {
-    CHECK_EQ(base_names.size(), ids.size());
+    ABSL_CHECK_EQ(base_names.size(), ids.size());
     std::vector<std::string> names;
     for (int i = 0; i < base_names.size(); ++i) {
       const std::string name_template = R"($0_$1)";
@@ -186,7 +188,8 @@ class TimeSeriesCalculatorTest : public ::testing::Test {
 
   void InitializeGraph(const CalculatorOptions& options) {
     if (num_external_inputs_ != -1) {
-      LOG(WARNING) << "Use num_side_packets_ instead of num_external_inputs_.";
+      ABSL_LOG(WARNING)
+          << "Use num_side_packets_ instead of num_external_inputs_.";
       num_side_packets_ = num_external_inputs_;
     }
 
@@ -289,7 +292,7 @@ class TimeSeriesCalculatorTest : public ::testing::Test {
 
   // Overload to allow explicit conversion from int64 to Timestamp
   template <typename T>
-  void AppendInputPacket(const T* payload, const int64 timestamp,
+  void AppendInputPacket(const T* payload, const int64_t timestamp,
                          const size_t input_index = 0) {
     AppendInputPacket(payload, Timestamp(timestamp), input_index);
   }
@@ -302,7 +305,7 @@ class TimeSeriesCalculatorTest : public ::testing::Test {
   }
 
   template <typename T>
-  void AppendInputPacket(const T* payload, const int64 timestamp,
+  void AppendInputPacket(const T* payload, const int64_t timestamp,
                          const std::string& input_tag) {
     AppendInputPacket(payload, Timestamp(timestamp), input_tag);
   }
@@ -447,7 +450,7 @@ class MultiStreamTimeSeriesCalculatorTest
 
   // Overload to allow explicit conversion from int64 to Timestamp
   void AppendInputPacket(const std::vector<Matrix>* input_vector,
-                         const int64 timestamp) {
+                         const int64_t timestamp) {
     AppendInputPacket(input_vector, Timestamp(timestamp));
   }
 

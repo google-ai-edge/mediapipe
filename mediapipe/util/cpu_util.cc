@@ -15,6 +15,7 @@
 #include "mediapipe/util/cpu_util.h"
 
 #include <cmath>
+#include <cstdint>
 
 #ifdef __ANDROID__
 #include "ndk/sources/android/cpufeatures/cpu-features.h"
@@ -31,7 +32,6 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/substitute.h"
 #include "mediapipe/framework/port/canonical_errors.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/statusor.h"
 
 namespace mediapipe {

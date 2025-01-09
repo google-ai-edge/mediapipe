@@ -14,8 +14,8 @@
 
 #include "mediapipe/util/filtering/low_pass_filter.h"
 
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
-#include "mediapipe/framework/port/logging.h"
 
 namespace mediapipe {
 
@@ -49,7 +49,7 @@ float LowPassFilter::LastValue() { return stored_value_; }
 
 void LowPassFilter::SetAlpha(float alpha) {
   if (alpha < 0.0f || alpha > 1.0f) {
-    LOG(ERROR) << "alpha: " << alpha << " should be in [0.0, 1.0] range";
+    ABSL_LOG(ERROR) << "alpha: " << alpha << " should be in [0.0, 1.0] range";
     return;
   }
   alpha_ = alpha;

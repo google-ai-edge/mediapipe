@@ -96,6 +96,7 @@ android_library(
         "-Xep:AndroidJdkLibsChecker:OFF",
     ],
     deps = [
+        "//mediapipe/framework/formats:landmark_java_proto_lite",
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
     ],
@@ -108,6 +109,7 @@ android_library(
         "-Xep:AndroidJdkLibsChecker:OFF",
     ],
     deps = [
+        "//mediapipe/framework/formats:landmark_java_proto_lite",
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
     ],

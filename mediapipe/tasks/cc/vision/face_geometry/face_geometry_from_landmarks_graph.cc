@@ -122,13 +122,13 @@ class FaceGeometryFromLandmarksGraph : public Subgraph {
       environment = std::make_optional<>(
           graph.SideIn(kEnvironmentTag).Cast<Environment>());
     }
-    ASSIGN_OR_RETURN(auto outs,
-                     BuildFaceGeometryFromLandmarksGraph(
-                         *sc->MutableOptions<proto::FaceGeometryGraphOptions>(),
-                         graph.In(kFaceLandmarksTag)
-                             .Cast<std::vector<NormalizedLandmarkList>>(),
-                         graph.In(kImageSizeTag).Cast<std::pair<int, int>>(),
-                         environment, graph));
+    MP_ASSIGN_OR_RETURN(
+        auto outs, BuildFaceGeometryFromLandmarksGraph(
+                       *sc->MutableOptions<proto::FaceGeometryGraphOptions>(),
+                       graph.In(kFaceLandmarksTag)
+                           .Cast<std::vector<NormalizedLandmarkList>>(),
+                       graph.In(kImageSizeTag).Cast<std::pair<int, int>>(),
+                       environment, graph));
     outs.multi_face_geometry >>
         graph.Out(kFaceGeometryTag).Cast<std::vector<FaceGeometry>>();
     return graph.GetConfig();

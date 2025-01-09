@@ -19,11 +19,11 @@
 #include <cstring>
 #include <memory>
 
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_format.pb.h"
 #include "mediapipe/framework/formats/image_frame.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/colorspace.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/graph.h"
 
@@ -49,26 +49,26 @@ std::unique_ptr<mediapipe::ImageFrame> CreateImageFrameFromBitmap(
   void* pixel_addr = nullptr;
   int result = AndroidBitmap_lockPixels(env, bitmap, &pixel_addr);
   if (result != ANDROID_BITMAP_RESULT_SUCCESS) {
-    LOG(ERROR) << "AndroidBitmap_lockPixels() failed with result code "
-               << result;
+    ABSL_LOG(ERROR) << "AndroidBitmap_lockPixels() failed with result code "
+                    << result;
     return nullptr;
   }
 
   if (format == mediapipe::ImageFormat::SRGBA) {
     const int64_t buffer_size = stride * height;
     if (buffer_size != image_frame->PixelDataSize()) {
-      LOG(ERROR) << "Bitmap stride: " << stride
-                 << " times bitmap height: " << height
-                 << " is not equal to the expected size: "
-                 << image_frame->PixelDataSize();
+      ABSL_LOG(ERROR) << "Bitmap stride: " << stride
+                      << " times bitmap height: " << height
+                      << " is not equal to the expected size: "
+                      << image_frame->PixelDataSize();
       return nullptr;
     }
     std::memcpy(image_frame->MutablePixelData(), pixel_addr,
                 image_frame->PixelDataSize());
   } else if (format == mediapipe::ImageFormat::SRGB) {
     if (stride != width * 4) {
-      LOG(ERROR) << "Bitmap stride: " << stride
-                 << "is not equal to 4 times bitmap width: " << width;
+      ABSL_LOG(ERROR) << "Bitmap stride: " << stride
+                      << "is not equal to 4 times bitmap width: " << width;
       return nullptr;
     }
     const uint8_t* rgba_data = static_cast<uint8_t*>(pixel_addr);
@@ -76,14 +76,14 @@ std::unique_ptr<mediapipe::ImageFrame> CreateImageFrameFromBitmap(
                                   image_frame->MutablePixelData(),
                                   image_frame->WidthStep());
   } else {
-    LOG(ERROR) << "unsupported image format: " << format;
+    ABSL_LOG(ERROR) << "unsupported image format: " << format;
     return nullptr;
   }
 
   result = AndroidBitmap_unlockPixels(env, bitmap);
   if (result != ANDROID_BITMAP_RESULT_SUCCESS) {
-    LOG(ERROR) << "AndroidBitmap_unlockPixels() failed with result code "
-               << result;
+    ABSL_LOG(ERROR) << "AndroidBitmap_unlockPixels() failed with result code "
+                    << result;
     return nullptr;
   }
 
@@ -98,7 +98,8 @@ JNIEXPORT jlong JNICALL ANDROID_PACKET_CREATOR_METHOD(
   AndroidBitmapInfo info;
   int result = AndroidBitmap_getInfo(env, bitmap, &info);
   if (result != ANDROID_BITMAP_RESULT_SUCCESS) {
-    LOG(ERROR) << "AndroidBitmap_getInfo() failed with result code " << result;
+    ABSL_LOG(ERROR) << "AndroidBitmap_getInfo() failed with result code "
+                    << result;
     return 0L;
   }
 
@@ -117,7 +118,8 @@ JNIEXPORT jlong JNICALL ANDROID_PACKET_CREATOR_METHOD(
   AndroidBitmapInfo info;
   int result = AndroidBitmap_getInfo(env, bitmap, &info);
   if (result != ANDROID_BITMAP_RESULT_SUCCESS) {
-    LOG(ERROR) << "AndroidBitmap_getInfo() failed with result code " << result;
+    ABSL_LOG(ERROR) << "AndroidBitmap_getInfo() failed with result code "
+                    << result;
     return 0L;
   }
 
@@ -135,7 +137,8 @@ JNIEXPORT jlong JNICALL ANDROID_PACKET_CREATOR_METHOD(nativeCreateRgbaImage)(
   AndroidBitmapInfo info;
   int result = AndroidBitmap_getInfo(env, bitmap, &info);
   if (result != ANDROID_BITMAP_RESULT_SUCCESS) {
-    LOG(ERROR) << "AndroidBitmap_getInfo() failed with result code " << result;
+    ABSL_LOG(ERROR) << "AndroidBitmap_getInfo() failed with result code "
+                    << result;
     return 0L;
   }
 

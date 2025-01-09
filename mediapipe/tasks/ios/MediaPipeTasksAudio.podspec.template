@@ -1,0 +1,18 @@
+Pod::Spec.new do |s|
+  s.name             = 'MediaPipeTasksAudio'
+  s.version          = '${MPP_BUILD_VERSION}'
+  s.authors          = 'Google Inc.'
+  s.license          = { :type => 'Apache',:file => "LICENSE" }
+  s.homepage         = 'https://github.com/google/mediapipe'
+  s.source           = { :http => '${MPP_VISION_DOWNLOAD_URL}' }
+  s.summary          = 'MediaPipe Task Library - Audio'
+  s.description      = 'The audio APIs of the MediaPipe Task Library'
+
+  s.ios.deployment_target = '12.0'
+
+  s.module_name = 'MediaPipeTasksAudio'
+  s.static_framework = true
+  s.dependency 'MediaPipeTasksCommon', '${MPP_TASKS_COMMON_VERSION}'
+  s.library = 'c++'
+  s.vendored_frameworks = 'frameworks/MediaPipeTasksAudio.xcframework'
+end

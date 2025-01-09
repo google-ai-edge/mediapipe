@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "absl/log/absl_log.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
@@ -78,7 +79,7 @@ absl::Status ImmediateMuxCalculator::Process(CalculatorContext* cc) {
       if (packet.Timestamp() >= cc->Outputs().Index(0).NextTimestampBound()) {
         cc->Outputs().Index(0).AddPacket(packet);
       } else {
-        LOG_FIRST_N(WARNING, 5)
+        ABSL_LOG_FIRST_N(WARNING, 5)
             << "Dropping a packet with timestamp " << packet.Timestamp();
       }
       if (cc->Outputs().NumEntries() >= 2) {

@@ -21,6 +21,7 @@
 #include <sstream>
 #include <string>
 
+#include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/calculator.pb.h"
@@ -43,15 +44,15 @@ using ::testing::IsSupersetOf;
 void LoadGraphProfile(const std::string& path, GraphProfile* proto) {
   int fd = open(path.c_str(), O_RDONLY);
   if (fd == -1) {
-    LOG(ERROR) << "could not open test graph: " << path
-               << ", error: " << strerror(errno);
+    ABSL_LOG(ERROR) << "could not open test graph: " << path
+                    << ", error: " << strerror(errno);
     return;
   }
   proto_ns::io::FileInputStream input(fd);
   bool success = proto->ParseFromZeroCopyStream(&input);
   close(fd);
   if (!success) {
-    LOG(ERROR) << "could not parse test graph: " << path;
+    ABSL_LOG(ERROR) << "could not parse test graph: " << path;
   }
 }
 

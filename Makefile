@@ -18,7 +18,7 @@ HTTP_PROXY := "$(http_proxy)"
 HTTPS_PROXY := "$(https_proxy)"
 OVMS_MEDIA_DOCKER_IMAGE ?= mediapipe_ovms
 OVMS_MEDIA_IMAGE_TAG ?= latest
-BASE_IMAGE := "ubuntu:20.04"
+BASE_IMAGE := "ubuntu:22.04"
 
 INPUT_VIDEO_LINK ?= "https://www.pexels.com/download/video/3044127/?fps=24.0&h=1080&w=1920"
 # ovms 2024.3RC2 (#2578)

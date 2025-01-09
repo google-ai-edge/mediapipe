@@ -16,6 +16,7 @@
 
 #include <cmath>
 
+#include "absl/log/absl_log.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/image_frame_opencv.h"
 #include "mediapipe/framework/formats/rect.pb.h"
@@ -202,8 +203,9 @@ absl::Status ImageCroppingCalculator::ValidateBorderModeForGPU(
 
   switch (options.border_mode()) {
     case mediapipe::ImageCroppingCalculatorOptions::BORDER_ZERO:
-      LOG(WARNING) << "BORDER_ZERO mode is not supported by GPU "
-                   << "implementation and will fall back into BORDER_REPLICATE";
+      ABSL_LOG(WARNING)
+          << "BORDER_ZERO mode is not supported by GPU "
+          << "implementation and will fall back into BORDER_REPLICATE";
       break;
     case mediapipe::ImageCroppingCalculatorOptions::BORDER_REPLICATE:
       break;

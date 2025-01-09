@@ -31,6 +31,7 @@ option java_outer_classname = "InferenceCalculatorProto";
 //   options {
 //     [mediapipe.InferenceCalculatorOptions.ext] {
 //       model_path: "model.tflite"
+//       try_mmap_model: true
 //       delegate { gpu {} }
 //     }
 //   }
@@ -67,13 +68,21 @@ message InferenceCalculatorOptions {
       optional bool allow_precision_loss = 3 [default = true];
 
       // Load pre-compiled serialized binary cache to accelerate init process.
-      // Only available for OpenCL delegate on Android.
+      //
       // Kernel caching will only be enabled if this path is set.
+      //
+      // NOTE: available for OpenCL delegate on Android only when
+      // "use_advanced_gpu_api" is set  to true and either "model_path" or
+      // "model_token" is specified saving to:
+      // $cached_kernel_path/basename($model_path).ker
+      // or
+      // $cached_kernel_path/$model_token.ker if model_path is not specified.
+      // TODO b/330806422 - update to prefer model_token
       //
       // NOTE: binary cache usage may be skipped if valid serialized model,
       // specified by "serialized_model_dir", exists.
       //
-      // TODO: update to cached_kernel_dir
+      // TODO b/202767296 - update to cached_kernel_dir
       optional string cached_kernel_path = 2;
 
       // A dir to load from and save to a pre-compiled serialized model used to
@@ -87,6 +96,20 @@ message InferenceCalculatorOptions {
       // specified by "cached_kernel_path", which still can be used if
       // serialized model is invalid or missing.
       optional string serialized_model_dir = 7;
+
+      enum CacheWritingBehavior {
+        // Do not write any caches.
+        NO_WRITE = 0;
+
+        // Try to write caches, log on failure.
+        TRY_WRITE = 1;
+
+        // Write caches or return an error if write fails.
+        WRITE_OR_ERROR = 2;
+      }
+      // Specifies how GPU caches are written to disk.
+      optional CacheWritingBehavior cache_writing_behavior = 10
+          [default = WRITE_OR_ERROR];
 
       // Unique token identifying the model. Used in conjunction with
       // "serialized_model_dir". It is the caller's responsibility to ensure
@@ -122,9 +145,18 @@ message InferenceCalculatorOptions {
       optional string accelerator_name = 3;
     }
     message Xnnpack {
+      reserved 3;
       // Number of threads for XNNPACK delegate. (By default, calculator tries
       // to choose optimal number of threads depending on the device.)
       optional int32 num_threads = 1 [default = -1];
+      // Enables an experimental TfLite feature to directly access the MP input
+      // tensors (and this way avoids copying the data). Note that this requires
+      // *all* input tensors to be aligned to tflite::kDefaultTensorAlignment
+      // bytes and that the model has no duplicate output tensors (tensors with
+      // identical TfLite tensor indices) and no passthrough input->output
+      // tensors (input and output tensors with identical TfLite tensor
+      // indices).
+      optional bool enable_zero_copy_tensor_io = 7;
     }
 
     oneof delegate {
@@ -138,6 +170,12 @@ message InferenceCalculatorOptions {
   // Path to the TF Lite model (ex: /path/to/modelname.tflite).
   // On mobile, this is generally just modelname.tflite.
   optional string model_path = 1;
+
+  // If true, and model_path is specified, tries to load the model as memory
+  // mapped file if available. This can be significantly faster that loading the
+  // model into a buffer first. If memory mapping is not available or fails,
+  // falls back to loading from buffer.
+  optional bool try_mmap_model = 7;
 
   // Whether the TF Lite GPU or CPU backend should be used. Effective only when
   // input tensors are on CPU. For input tensors on GPU, GPU backend is always
@@ -164,4 +202,117 @@ message InferenceCalculatorOptions {
   // NOTE: use_gpu/use_nnapi are ignored if specified. (Delegate takes
   // precedence over use_* deprecated options.)
   optional Delegate delegate = 5;
+
+  // InputOutputConfig enables us to reorder the tensors in the input and output
+  // of the InferenceCalculator. This is useful when the order of the tensors in
+  // the input and output of the InferenceCalculator does not match the order of
+  // the tensors in the input and output of the underlying TFLite model. In this
+  // example, Tensor_1 and Tensor_2 are swapped.
+  //
+  //                 Inference Calculator Inputs
+  //    ┌─────▼─────────▼─────────▼────────▼──────────▼──────────┐
+  //    │  Tensor_0, Tensor_1, Tensor_2, Tensor_3, Tensor_4      │
+  //    └────────────────────────────────────────────────────────┘
+  //                      [input_tensor_map]
+  //    ┌────────────────────────────────────────────────────────┐
+  //    │  Tensor_0, Tensor_2, Tensor_1, Tensor_3, Tensor_4      │
+  //    └─────┬─────────┬─────────┬────────┬──────────┬──────────┘
+  //          │         │         │        │          │
+  //    ┌─────▼─────────▼─────────▼────────▼──────────▼──────────┐
+  //    │                       Inference                        │
+  //    └─────┬─────────┬─────────┬────────┬──────────┬──────────┘
+  //          │         │         │        │          │
+  //    ┌─────▼─────────▼─────────▼────────▼──────────▼──────────┐
+  //    │  Tensor_0, Tensor_2, Tensor_1, Tensor_3, Tensor_4      │
+  //    └────────────────────────────────────────────────────────┘
+  //                     [output_tensor_map]
+  //    ┌────────────────────────────────────────────────────────┐
+  //    │  Tensor_0, Tensor_1, Tensor_2, Tensor_3, Tensor_4      │
+  //    └──────┬─────────┬─────────┬────────┬──────────┬─────────┘
+  //           ▼         ▼         ▼        ▼          ▼
+  //                 Inference Calculator Outputs
+  //
+  message InputOutputConfig {
+    // Defines tensor order described by the indices.
+    message TensorIndicesMap {
+      // Ordered list of tensor indices describing a bijective mapping between
+      // the InferenceCalculator tensor index and the TFLite model I/O index.
+      // The nth entry in the list maps the nth InferenceCalculator tensor to
+      // *[nth] model I/O index. The size of the list must match the number of
+      // tensors in the input or output of the InferenceCalculator.
+      //
+      // Example configurations:
+      // Input (Input<std::vector<Tensor>> or Input<Tensor>::Multiple) config:
+      // - Desired inference calculator input order: tensor0, tensor1, tensor2
+      // - Given model tensor input order: [Tensor2, Tensor1, Tensor0]
+      // - model_tensor_indices: [2, 1, 0]
+      // Output (Output<std::vector<Tensor>> or Output<Tensor>::Multiple)
+      // config:
+      // - Given model tensor output order: [Tensor2, Tensor1, Tensor0]
+      // - Desired InferenceCalculator output order: tensor0, tensor1, tensor2
+      // - model_tensor_indices: [2, 1, 0]
+      repeated int32 model_tensor_indices = 1 [packed = true];
+    }
+
+    // Defines tensor order described by the TfLite signature names.
+    message TensorNamesMap {
+      // Ordered list of tensor names describing a bijective mapping between
+      // the InferenceCalculator tensor I/O index and the TFLite model I/O
+      // tensor names (only models with a single signature are supported). The
+      // nth entry in the list maps the nth InferenceCalculator I/O tensor. The
+      // size of the list must match the number of tensors in the input or
+      // output of the InferenceCalculator.
+      //
+      // Example configurations:
+      // Input (Input<std::vector<Tensor>> or Input<Tensor>::Multiple) config:
+      // - Desired inference calculator input order: tensor0, tensor1, tensor2
+      // - Given model tensor input order: [Tensor2, Tensor1, Tensor0]
+      // - tensor_names_map: ["Tensor0", "Tensor1", "Tensor2"]
+      // Output (Output<std::vector<Tensor>> or Output<Tensor>::Multiple)
+      // config:
+      // - Given model tensor output order: [Tensor2, Tensor1, Tensor0]
+      // - Desired InferenceCalculator output order: tensor0, tensor1, tensor2
+      // - tensor_names_map: ["Tensor0", "Tensor1", "Tensor2"]
+      repeated string tensor_names = 1;
+    }
+
+    // Maps the input tensors of the InferenceCalculator to the input tensors of
+    // the TFLite model. Values are model I/O tensor indices or tensor names.
+    oneof InputTensorMap {
+      TensorIndicesMap input_tensor_indices_map = 1;
+      TensorNamesMap input_tensor_names_map = 3;
+    }
+
+    // Maps the output tensors of the TfLite model to the the output tensors of
+    // the InferenceCalculator. Values are model I/O tensor indices or tensor
+    // names.
+    oneof OutputTensorMap {
+      TensorIndicesMap output_tensor_indices_map = 2;
+      TensorNamesMap output_tensor_names_map = 4;
+    }
+
+    // Feedback tensor links are pairs of model input / output tensors where
+    // the output should be set as inputs in the next model invocation. This
+    // allows to manage a notion of temporal state by continuously feeding from
+    // the model's output to the model's input during each inference step.  Note
+    // that these feedback tensors must be excluded from the input/output
+    // tensor maps above as they are not used as regular inputs/outputs of the
+    // inference calculator.
+    message FeedbackTensorLink {
+      // TfLite output tensor name from default TfLite signature to use as
+      // source.
+      optional string from_output_tensor_name = 1;
+      // TfLite tensor name from default TfLitesignature to pass input
+      // tensor to.
+      optional string to_input_tensor_name = 2;
+    }
+
+    // Defines a mapping between output tensors that should be
+    // used as input tensors during the next inference invocation.
+    repeated FeedbackTensorLink feedback_tensor_links = 5;
+  }
+
+  // Optionally remaps input and output tensors to align with TfLite model and
+  // InferenceCalculator input/output stream order.
+  optional InputOutputConfig input_output_config = 8;
 }

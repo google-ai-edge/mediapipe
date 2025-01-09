@@ -194,10 +194,10 @@ class HandDetectorGraph : public core::ModelTaskGraph {
  public:
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       SubgraphContext* sc) override {
-    ASSIGN_OR_RETURN(const auto* model_resources,
-                     CreateModelResources<HandDetectorGraphOptions>(sc));
+    MP_ASSIGN_OR_RETURN(const auto* model_resources,
+                        CreateModelResources<HandDetectorGraphOptions>(sc));
     Graph graph;
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         auto hand_detection_outs,
         BuildHandDetectionSubgraph(
             sc->Options<HandDetectorGraphOptions>(), *model_resources,
@@ -242,7 +242,7 @@ class HandDetectorGraph : public core::ModelTaskGraph {
         components::processors::DetermineImagePreprocessingGpuBackend(
             subgraph_options.base_options().acceleration());
     MP_RETURN_IF_ERROR(components::processors::ConfigureImagePreprocessingGraph(
-        model_resources, use_gpu,
+        model_resources, use_gpu, subgraph_options.base_options().gpu_origin(),
         &preprocessing.GetOptions<
             components::processors::proto::ImagePreprocessingGraphOptions>()));
     image_in >> preprocessing.In("IMAGE");

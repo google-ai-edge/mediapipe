@@ -26,13 +26,11 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  * Initializes a new `MPPTextTaskRunner` with the MediaPipe calculator config proto.
  *
- * @param graphConfig A MediaPipe calculator config proto.
+ * @param taskInfo A `MPPTaskInfo` initialized by the task.
  *
- * @return An instance of `MPPTextTaskRunner` initialized to the given MediaPipe calculator config
- * proto.
+ * @return An instance of `MPPTextTaskRunner` initialized with the given task info.
  */
-- (instancetype)initWithCalculatorGraphConfig:(mediapipe::CalculatorGraphConfig)graphConfig
-                                        error:(NSError **)error;
+- (instancetype)initWithTaskInfo:(MPPTaskInfo *)taskInfo error:(NSError **)error;
 
 - (instancetype)init NS_UNAVAILABLE;
 

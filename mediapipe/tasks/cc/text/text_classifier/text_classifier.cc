@@ -91,7 +91,7 @@ absl::StatusOr<std::unique_ptr<TextClassifier>> TextClassifier::Create(
 
 absl::StatusOr<TextClassifierResult> TextClassifier::Classify(
     absl::string_view text) {
-  ASSIGN_OR_RETURN(
+  MP_ASSIGN_OR_RETURN(
       auto output_packets,
       runner_->Process(
           {{kTextStreamName, MakePacket<std::string>(std::string(text))}}));

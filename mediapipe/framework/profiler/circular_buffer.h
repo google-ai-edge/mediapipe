@@ -17,10 +17,9 @@
 
 #include <atomic>
 #include <cstddef>
+#include <cstdint>
 #include <iterator>
 #include <vector>
-
-#include "mediapipe/framework/port/integral_types.h"
 
 namespace mediapipe {
 
@@ -167,7 +166,7 @@ char CircularBuffer<T>::MaxLap(char u, char v) {
 
 template <typename T>
 class CircularBuffer<T>::iterator
-    : public std::iterator<std::random_access_iterator_tag, T, int64> {
+    : public std::iterator<std::random_access_iterator_tag, T, int64_t> {
  public:
   explicit iterator(const CircularBuffer* buffer, size_t index)
       : buffer_(buffer), index_(index) {}
@@ -177,10 +176,10 @@ class CircularBuffer<T>::iterator
   T operator*() const { return buffer_->GetAbsolute(index_); }
   T* operator->() const { &buffer_->GetAbsolute(index_); }
   iterator& operator++() { return (*this) += 1; }
-  iterator& operator+=(const int64& num) { return index_ += num, *this; }
-  int64 operator-(const iterator& it) const { return index_ - it.index_; }
-  iterator& operator+(const int64& num) { return iterator(*this) += num; }
-  iterator& operator-(const int64& num) { return iterator(*this) += -num; }
+  iterator& operator+=(const int64_t& num) { return index_ += num, *this; }
+  int64_t operator-(const iterator& it) const { return index_ - it.index_; }
+  iterator& operator+(const int64_t& num) { return iterator(*this) += num; }
+  iterator& operator-(const int64_t& num) { return iterator(*this) += -num; }
 
  private:
   const CircularBuffer* buffer_;
