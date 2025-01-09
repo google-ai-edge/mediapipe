@@ -323,7 +323,7 @@ absl::StatusOr<std::shared_ptr<ModelData>> ModelData::Create(
   MP_ASSIGN_OR_RETURN(
       auto data, CreateMemoryMappedDataHolder<const uint8_t>(
                      file->file(), /*offset=*/0, /*size=*/kTfliteBaseSize));
-  auto model = tflite::FlatBufferModel::BuildFromBuffer(
+  auto model = tflite::FlatBufferModel::VerifyAndBuildFromBuffer(
       reinterpret_cast<const char*>(data->GetData().data()),
       data->GetData().size());
   RET_CHECK(model) << "Error building tflite model.";
