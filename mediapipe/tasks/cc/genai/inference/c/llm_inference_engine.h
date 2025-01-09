@@ -125,7 +125,8 @@ typedef struct {
   size_t random_seed;
 
   // Path to the LoRA tflite flatbuffer file. Optional.
-  // This is only compatible with GPU models.
+  // This is only compatible with GPU handwritten models and converter based
+  // models.
   const char* lora_path;
 
   // Whether to configure the graph to include the token cost calculator,
