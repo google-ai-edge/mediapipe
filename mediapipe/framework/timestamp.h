@@ -46,6 +46,8 @@
 
 #include <cmath>
 #include <cstdint>
+#include <limits>
+#include <ostream>
 #include <string>
 
 #include "absl/log/absl_check.h"
@@ -74,6 +76,7 @@ class Timestamp {
 
   // Timestamps are in microseconds.
   static constexpr double kTimestampUnitsPerSecond = 1000000.0;
+  static constexpr double kTimestampUnitsPerMillisecond = 1000.0;
 
   // Use the default copy constructor, assignment operator, and destructor.
 
@@ -83,6 +86,11 @@ class Timestamp {
   // Return the value in units of seconds (the underlying value is in
   // microseconds).
   double Seconds() const { return Value() / kTimestampUnitsPerSecond; }
+  // Return the value in units of milliseconds (the underlying value is in
+  // microseconds).
+  double Milliseconds() const {
+    return Value() / kTimestampUnitsPerMillisecond;
+  }
   // Return the value in units of microseconds.  The underlying value is already
   // in microseconds, but this function should be preferred over Value() in case
   // the underlying representation changes.
@@ -98,6 +106,15 @@ class Timestamp {
   static Timestamp FromSeconds(double seconds) {
     return Timestamp(
         TimestampBaseType{std::round(seconds * kTimestampUnitsPerSecond)});
+  }
+  // Create a timestamp from a milliseconds value.
+  static Timestamp FromMilliseconds(double milliseconds) {
+    return Timestamp(TimestampBaseType{
+        std::round(milliseconds * kTimestampUnitsPerMillisecond)});
+  }
+  // Create a timestamp from an integer microseconds value.
+  static Timestamp FromMicroseconds(int64_t microseconds) {
+    return Timestamp(TimestampBaseType{microseconds});
   }
 
   // Special values.
@@ -140,22 +157,22 @@ class Timestamp {
   }
 
   // Common operators.
-  bool operator==(const Timestamp other) const {
+  bool operator==(Timestamp other) const {
     return timestamp_ == other.timestamp_;
   }
-  bool operator!=(const Timestamp other) const {
+  bool operator!=(Timestamp other) const {
     return !(timestamp_ == other.timestamp_);
   }
-  bool operator<(const Timestamp other) const {
+  bool operator<(Timestamp other) const {
     return timestamp_ < other.timestamp_;
   }
-  bool operator<=(const Timestamp other) const {
+  bool operator<=(Timestamp other) const {
     return timestamp_ <= other.timestamp_;
   }
-  bool operator>(const Timestamp other) const {
+  bool operator>(Timestamp other) const {
     return timestamp_ > other.timestamp_;
   }
-  bool operator>=(const Timestamp other) const {
+  bool operator>=(Timestamp other) const {
     return timestamp_ >= other.timestamp_;
   }
   // Addition and subtraction of Timestamp and TimestampDiff values.
@@ -169,14 +186,14 @@ class Timestamp {
   //
   // Not all operations are allowed, in particular, you cannot add two
   // Timestamps, and you cannot subtract a Timestamp from a TimestampDiff.
-  TimestampDiff operator-(const Timestamp other) const;
-  Timestamp operator+(const TimestampDiff other) const;
-  Timestamp operator-(const TimestampDiff other) const;
+  TimestampDiff operator-(Timestamp other) const;
+  Timestamp operator+(TimestampDiff offset) const;
+  Timestamp operator-(TimestampDiff offset) const;
   // Unary negation of a Timestamp is not allowed.
 
   // Provided for convenience.
-  Timestamp operator+=(const TimestampDiff other);
-  Timestamp operator-=(const TimestampDiff other);
+  Timestamp operator+=(TimestampDiff other);
+  Timestamp operator-=(TimestampDiff other);
   Timestamp operator++();
   Timestamp operator--();
   Timestamp operator++(int);
@@ -221,36 +238,56 @@ class TimestampDiff {
   double Seconds() const {
     return Value() / Timestamp::kTimestampUnitsPerSecond;
   }
+  // Return the value in units of milliseconds (the underlying value is in
+  // microseconds).
+  double Milliseconds() const {
+    return Value() / Timestamp::kTimestampUnitsPerMillisecond;
+  }
   // Return the value in units of microseconds.  The underlying value is already
   // in microseconds, but this function should be preferred over Value() in case
   // the underlying representation changes.
   int64_t Microseconds() const { return Value(); }
   std::string DebugString() const;
 
-  bool operator==(const TimestampDiff other) const {
+  bool operator==(TimestampDiff other) const {
     return timestamp_ == other.timestamp_;
   }
-  bool operator!=(const TimestampDiff other) const {
+  bool operator!=(TimestampDiff other) const {
     return !(timestamp_ == other.timestamp_);
   }
-  bool operator<(const TimestampDiff other) const {
+  bool operator<(TimestampDiff other) const {
     return timestamp_ < other.timestamp_;
   }
-  bool operator<=(const TimestampDiff other) const {
+  bool operator<=(TimestampDiff other) const {
     return timestamp_ <= other.timestamp_;
   }
-  bool operator>(const TimestampDiff other) const {
+  bool operator>(TimestampDiff other) const {
     return timestamp_ > other.timestamp_;
   }
-  bool operator>=(const TimestampDiff other) const {
+  bool operator>=(TimestampDiff other) const {
     return timestamp_ >= other.timestamp_;
   }
   // Unary negation of a TimestampDiff is allowed.
-  const TimestampDiff operator-() const { return TimestampDiff(-timestamp_); }
+  TimestampDiff operator-() const { return TimestampDiff(-timestamp_); }
   // See the addition and subtraction functions in Timestamp for details.
-  TimestampDiff operator+(const TimestampDiff other) const;
-  TimestampDiff operator-(const TimestampDiff other) const;
-  Timestamp operator+(const Timestamp other) const;
+  TimestampDiff operator+(TimestampDiff other) const;
+  TimestampDiff operator-(TimestampDiff other) const;
+  Timestamp operator+(Timestamp timestamp) const;
+
+  // Create a timestamp from a seconds value.
+  static TimestampDiff FromSeconds(double seconds) {
+    return TimestampDiff(TimestampBaseType{
+        std::round(seconds * Timestamp::kTimestampUnitsPerSecond)});
+  }
+  // Create a timestamp from a milliseconds value.
+  static TimestampDiff FromMilliseconds(double milliseconds) {
+    return TimestampDiff(TimestampBaseType{
+        std::round(milliseconds * Timestamp::kTimestampUnitsPerMillisecond)});
+  }
+  // Create a timestamp from an integer microseconds value.
+  static TimestampDiff FromMicroseconds(int64_t microseconds) {
+    return TimestampDiff(TimestampBaseType{microseconds});
+  }
 
   // Special values.
 
