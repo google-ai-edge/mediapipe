@@ -158,7 +158,7 @@ void ConfigureLandmarksSmoothingCalculator(
   // Min cutoff 0.05 results into ~0.01 alpha in landmark EMA filter when
   // landmark is static.
   options.mutable_one_euro_filter()->set_min_cutoff(0.05f);
-  // Beta 80.0 in combintation with min_cutoff 0.05 results into ~0.94
+  // Beta 80.0 in combination with min_cutoff 0.05 results into ~0.94
   // alpha in landmark EMA filter when landmark is moving fast.
   options.mutable_one_euro_filter()->set_beta(80.0f);
   // Derivative cutoff 1.0 results into ~0.17 alpha in landmark velocity

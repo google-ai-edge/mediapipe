@@ -236,7 +236,7 @@ cmake(
         # For example, when building //mediapipe/calculators/video:opencv_video_encoder_calculator_test,
         # the dependency //mediapipe/framework/formats:image_frame_opencv will
         # be built as a shared library, which depends on a cv::Mat constructor,
-        # and expects it to be provided by the main exacutable. The main
+        # and expects it to be provided by the main executable. The main
         # executable depends on libimage_frame_opencv.so and links in
         # libopencv_core.a, which contains cv::Mat. However, if
         # libopencv_core.a marks its symbols as hidden, then cv::Mat is in
