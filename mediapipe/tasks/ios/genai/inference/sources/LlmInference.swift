@@ -76,7 +76,8 @@ import MediaPipeTasksGenAIC
             max_top_k: options.maxTopk,
             llm_activation_data_type: kLlmActivationDataTypeDefault,
             num_draft_tokens: 0,
-            wait_for_weight_uploads: options.waitForWeightUploads)
+            wait_for_weight_uploads: options.waitForWeightUploads,
+            use_submodel: options.useSubmodel)
           return try LlmTaskRunner(modelSettings: modelSetting)
         }
       }
@@ -239,6 +240,9 @@ extension LlmInference {
     /// may finish before weights have finished uploading which might push some of the weight upload
     /// time into input processing.
     @objc public var waitForWeightUploads: Bool = false
+
+    // Whether to use the submodel if available.
+    @objc public var useSubmodel: Bool = false
 
     /// Creates a new instance of `Options` with the given `modelPath` and default values of
     /// `maxTokens`, `maxTopk`, `supportedLoraRanks`.
