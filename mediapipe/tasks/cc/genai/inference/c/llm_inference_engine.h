@@ -107,6 +107,9 @@ typedef struct {
   // initialization may finish before weights have finished uploading which
   // might push some of the weight upload time into input processing.
   bool wait_for_weight_uploads;
+
+  // Whether the submodel should be used if available.
+  bool use_submodel;
 } LlmModelSettings;
 
 // LlmSessionConfig configures how to execute the model.
