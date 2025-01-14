@@ -84,14 +84,14 @@ class NoDestructor {
                               void(NoDestructor)>::value,
                 int>::type = 0>
   explicit NoDestructor(Ts&&... args) {
-    new (&space_) T(std::forward<Ts>(args)...);
+    new (space_) T(std::forward<Ts>(args)...);
   }
 
   // Forwards copy and move construction for T. Enables usage like this:
   //   static NoDestructor<std::array<std::string, 3>> x{{{"1", "2", "3"}}};
   //   static NoDestructor<std::vector<int>> x{{1, 2, 3}};
-  explicit NoDestructor(const T& x) { new (&space_) T(x); }
-  explicit NoDestructor(T&& x) { new (&space_) T(std::move(x)); }
+  explicit NoDestructor(const T& x) { new (space_) T(x); }
+  explicit NoDestructor(T&& x) { new (space_) T(std::move(x)); }
 
   // No copying.
   NoDestructor(const NoDestructor&) = delete;
@@ -101,13 +101,13 @@ class NoDestructor {
   // Never returns a null pointer.
   T& operator*() { return *get(); }
   T* operator->() { return get(); }
-  T* get() { return reinterpret_cast<T*>(&space_); }
+  T* get() { return reinterpret_cast<T*>(space_); }
   const T& operator*() const { return *get(); }
   const T* operator->() const { return get(); }
-  const T* get() const { return reinterpret_cast<const T*>(&space_); }
+  const T* get() const { return reinterpret_cast<const T*>(space_); }
 
  private:
-  typename std::aligned_storage<sizeof(T), alignof(T)>::type space_;
+  alignas(T) char space_[sizeof(T)];
 };
 
 }  // namespace mediapipe
