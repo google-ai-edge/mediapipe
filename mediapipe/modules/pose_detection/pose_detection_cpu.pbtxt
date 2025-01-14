@@ -96,8 +96,8 @@ node {
   output_stream: "TENSORS:detection_tensors"
   node_options: {
     [type.googleapis.com / mediapipe.OpenVINOInferenceCalculatorOptions]: {
-          output_order_list: ["Identity:0", "Identity_1:0"]
-          input_order_list: ["input_1:0"]
+          output_order_list: ["Identity", "Identity_1"]
+          input_order_list: ["input_1"]
         }
   }
 }

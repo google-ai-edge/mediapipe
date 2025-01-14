@@ -180,12 +180,6 @@ WORKDIR /mediapipe
 RUN ./setup_opencv.sh
 ####### End of OpenCV
 
-# tools for pose_detection model convertion for missing tflite densify op nodes support workaround
-RUN pip3 install tflite2tensorflow==1.22 pandas==1.4.2 gdown==5.2.0 tensorflow-datasets==4.9.2
-RUN wget https://github.com/PINTO0309/tflite2tensorflow/raw/main/schema/schema.fbs
-RUN git clone -b v2.0.8 https://github.com/google/flatbuffers.git
-RUN cd flatbuffers && mkdir build && cd build && cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release .. && make -j$(nproc) && cd ../..
-
 ## End of base image ###############################################################
 ####################################################################################
 ## Start of build image ############################################################
@@ -216,7 +210,7 @@ RUN bazel build //mediapipe:geti_targets
 # BUILD examples
 ENV GLOG_logtostderr=1
 ENV LD_LIBRARY_PATH="/opt/intel/openvino/runtime/3rdparty/tbb/lib:/opt/intel/openvino/runtime/lib/intel64/:${LD_LIBRARY_PATH}"
-RUN python setup_ovms.py --get_models && python setup_ovms.py --convert_pose --force
+RUN python setup_ovms.py --get_models
 RUN bash build_desktop_examples.sh -b
 RUN curl https://storage.googleapis.com/mediapipe-assets/ssdlite_object_detection_labelmap.txt -o mediapipe/models/ssdlite_object_detection_labelmap.txt
 
