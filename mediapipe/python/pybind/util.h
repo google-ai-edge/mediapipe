@@ -67,7 +67,7 @@ inline void RaisePyErrorIfNotOk(const absl::Status& status,
 inline void RaisePyErrorIfOverflow(int64_t value, int64_t min, int64_t max) {
   if (value > max) {
     throw RaisePyError(PyExc_OverflowError,
-                       absl::StrCat(value, " execeeds the maximum value (", max,
+                       absl::StrCat(value, " exceeds the maximum value (", max,
                                     ") the data type can have.")
                            .c_str());
   } else if (value < min) {

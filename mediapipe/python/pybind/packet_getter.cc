@@ -458,7 +458,7 @@ void InternalPacketGetters(pybind11::module* m) {
         // https://github.com/pybind/pybind11/issues/1236
         // However, when Pybind11 performs the C++ to Python transition, it
         // only increases the py::bytes object's ref count. See the
-        // implmentation at line 1583 in "pybind11/cast.h".
+        // implementation at line 1583 in "pybind11/cast.h".
         return py::bytes(packet.GetProtoMessageLite().SerializeAsString());
       },
       py::return_value_policy::move);

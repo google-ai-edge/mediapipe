@@ -84,7 +84,7 @@ void ValidatedGraphConfigSubmodule(pybind11::module* module) {
 
   Raises:
     FileNotFoundError: If the binary graph file can't be found.
-    ValueError: If the input arguments prvoided are more than needed or the
+    ValueError: If the input arguments provided are more than needed or the
       graph validation process contains error.
 
   Examples:

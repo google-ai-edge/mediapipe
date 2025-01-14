@@ -377,7 +377,7 @@ void PublicPacketCreators(pybind11::module* m) {
     A MediaPipe double Packet.
 
   Raises:
-    TypeError: If the input is neither a float nore a np.double.
+    TypeError: If the input is neither a float nor a np.double.
 
   Examples:
     packet = mp.packet_creator.create_double(0.1)
@@ -702,7 +702,7 @@ void InternalPacketCreators(pybind11::module* m) {
         // TODO: Implement this.
         throw RaisePyError(PyExc_NotImplementedError,
                            "Creating a packet from a vector of proto messages "
-                           "is not supproted yet.");
+                           "is not supported yet.");
         return Packet();
       },
       py::return_value_policy::move);

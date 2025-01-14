@@ -125,7 +125,7 @@ void CalculatorGraphSubmodule(pybind11::module* module) {
 
   Raises:
     FileNotFoundError: If the binary graph file can't be found.
-    ValueError: If the input arguments prvoided are more than needed or the
+    ValueError: If the input arguments provided are more than needed or the
       graph validation process contains error.
 )doc");
 
@@ -202,7 +202,7 @@ void CalculatorGraphSubmodule(pybind11::module* module) {
     graph.add_packet_to_input_stream(
         stream='in',
         packet=packet_creator.create_string('hello world'),
-        timstamp=1)
+        timestamp=1)
 )doc",
       py::arg("stream"), py::arg("packet"),
       py::arg("timestamp") = Timestamp::Unset());
@@ -461,7 +461,7 @@ void CalculatorGraphSubmodule(pybind11::module* module) {
       R"doc(Get output side packet by name after the graph is done.
 
   Args:
-    stream: The name of the outnput stream.
+    stream: The name of the output stream.
 
   Raises:
     RuntimeError: If the graph is still running or the output side packet is not

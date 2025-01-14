@@ -66,7 +66,7 @@ class ModelResources {
   // Takes the ownership of the provided ExternalFile proto and creates
   // ModelResources from the proto and an op resolver mediapipe packet. A
   // non-empty tag must be set if the ModelResources will be used through
-  // ModelResourcesCacheService. The op resolver packet, usually prvoided by a
+  // ModelResourcesCacheService. The op resolver packet, usually provided by a
   // ModelResourcesCacheService object, contains the TFLite op resolvers
   // required by the model.
   static absl::StatusOr<std::unique_ptr<ModelResources>> Create(
