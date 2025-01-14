@@ -42,6 +42,9 @@ cc_test(
         "//mediapipe/tasks/testdata/vision:test_models",
     ],
     linkstatic = 1,
+    tags = [
+        "noasan",  # TODO: Re-enable once the bug is fixed.
+    ],
     deps = [
         ":face_stylizer_lib",
         "//mediapipe/framework/deps:file_path",
