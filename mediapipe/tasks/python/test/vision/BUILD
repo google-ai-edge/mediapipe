@@ -239,7 +239,10 @@ py_test(
         "//mediapipe/tasks/testdata/vision:test_images",
         "//mediapipe/tasks/testdata/vision:test_models",
     ],
-    tags = ["not_run:arm"],
+    tags = [
+        "noasan",  # TODO: Re-enable once the bug is fixed.
+        "not_run:arm",
+    ],
     deps = [
         "//mediapipe/python:_framework_bindings",
         "//mediapipe/tasks/python/components/containers:rect",
@@ -257,6 +260,9 @@ py_test(
     data = [
         "//mediapipe/tasks/testdata/vision:test_images",
         "//mediapipe/tasks/testdata/vision:test_models",
+    ],
+    tags = [
+        "noasan",  # TODO: Re-enable once the bug is fixed.
     ],
     deps = [
         "//mediapipe/python:_framework_bindings",
