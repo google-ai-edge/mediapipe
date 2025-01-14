@@ -64,7 +64,7 @@ class BaseAudioTaskApi(object):
           'callback should not be provided.')
     self._runner = _TaskRunner.create(graph_config, packet_callback)
     self._running_mode = running_mode
-    self._default_sample_rate = None
+    self._default_sample_rate: Optional[float] = None
 
   def _process_audio_clip(
       self, inputs: Mapping[str, _Packet]) -> Mapping[str, _Packet]:
@@ -142,7 +142,7 @@ class BaseAudioTaskApi(object):
 
     Note that MediaPipe Audio tasks will up/down sample automatically to fit the
     sample rate required by the model. The default sample rate of the MediaPipe
-    pretrained audio model, Yamnet is 16kHz.
+    pretrained audio model, YAMNet is 16kHz.
 
     Args:
       num_channels: The number of audio channels.

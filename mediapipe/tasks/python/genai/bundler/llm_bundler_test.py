@@ -17,9 +17,9 @@ import string
 import zipfile
 
 from absl.testing import absltest
+from sentencepiece import sentencepiece_model_pb2
 
 from mediapipe.tasks.python.genai.bundler import llm_bundler
-from sentencepiece import sentencepiece_model_pb2
 
 
 class LlmBundlerTest(absltest.TestCase):
@@ -127,7 +127,7 @@ class LlmBundlerTest(absltest.TestCase):
         tflite_model=tflite_file_path,
         tokenizer_model=sp_file_path,
         start_token=self.BOS,
-        stop_tokens=self.EOS,
+        stop_tokens=[self.EOS],
         output_filename=output_file,
     )
     with self.assertRaisesRegex(

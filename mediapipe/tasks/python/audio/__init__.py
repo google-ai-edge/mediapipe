@@ -14,9 +14,9 @@
 
 """MediaPipe Tasks Audio API."""
 
-import mediapipe.tasks.python.audio.core
-import mediapipe.tasks.python.audio.audio_classifier
-import mediapipe.tasks.python.audio.audio_embedder
+import mediapipe.tasks.python.audio.core.audio_task_running_mode as audio_task_running_mode
+import mediapipe.tasks.python.audio.audio_classifier as audio_classifier
+import mediapipe.tasks.python.audio.audio_embedder as audio_embedder
 
 AudioClassifier = audio_classifier.AudioClassifier
 AudioClassifierOptions = audio_classifier.AudioClassifierOptions
@@ -24,10 +24,9 @@ AudioClassifierResult = audio_classifier.AudioClassifierResult
 AudioEmbedder = audio_embedder.AudioEmbedder
 AudioEmbedderOptions = audio_embedder.AudioEmbedderOptions
 AudioEmbedderResult = audio_embedder.AudioEmbedderResult
-RunningMode = core.audio_task_running_mode.AudioTaskRunningMode
+RunningMode = audio_task_running_mode.AudioTaskRunningMode
 
 # Remove unnecessary modules to avoid duplication in API docs.
 del audio_classifier
 del audio_embedder
-del core
-del mediapipe
+del audio_task_running_mode

@@ -87,7 +87,7 @@ class MetadataWriter:
         inside.
       input_norm_mean: the mean value used in the input tensor normalization for
         face stylizer model [1].
-      input_norm_std: the std value used in the input tensor normalizarion for
+      input_norm_std: the std value used in the input tensor normalization for
         face stylizer model [1].
 
       [1]:

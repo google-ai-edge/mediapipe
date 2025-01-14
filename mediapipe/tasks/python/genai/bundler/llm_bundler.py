@@ -18,9 +18,9 @@ import dataclasses
 import enum
 from typing import List, Optional
 
+import sentencepiece
 from mediapipe.tasks.python.metadata.metadata_writers import model_asset_bundle_utils
 from mediapipe.tasks.cc.genai.inference.proto import llm_params_pb2
-import sentencepiece
 
 
 @dataclasses.dataclass(frozen=True)
@@ -30,7 +30,7 @@ class BundleConfig:
   Attributes:
     tflite_model: Path to the multi-signature tflite model with "prefill" and
       "decode" signatures converted using ODML Transformers APIs.
-    tokenizer_model: Path to the tokenizer model. Currently only SentencePience
+    tokenizer_model: Path to the tokenizer model. Currently only SentencePiece
       tokenizer is supported. As such, tokenizer.model proto is expected to be
       passed here.
     start_token: Token that will be used to signify the beginning of a sequence.

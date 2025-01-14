@@ -47,7 +47,7 @@ class MetadataWriter(metadata_writer.MetadataWriterBase):
       model_buffer: A valid flatbuffer loaded from the TFLite model file.
       input_norm_mean: the mean value used in the input tensor normalization
         [1].
-      input_norm_std: the std value used in the input tensor normalizarion [1].
+      input_norm_std: the std value used in the input tensor normalization [1].
       labels: an instance of Labels helper class used in the output
         classification tensor [2].
       score_calibration: A container of the score calibration operation [3] in

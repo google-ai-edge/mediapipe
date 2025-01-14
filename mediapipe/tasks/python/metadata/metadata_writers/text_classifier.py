@@ -19,7 +19,7 @@ from typing import Union
 from mediapipe.tasks.python.metadata.metadata_writers import metadata_writer
 
 _MODEL_NAME = "TextClassifier"
-_MODEL_DESCRIPTION = ("Classify the input text into a set of known categories.")
+_MODEL_DESCRIPTION = "Classify the input text into a set of known categories."
 
 # The input tensor names of models created by Model Maker.
 _DEFAULT_ID_NAME = "serving_default_input_word_ids:0"
@@ -35,7 +35,7 @@ class MetadataWriter(metadata_writer.MetadataWriterBase):
       cls, model_buffer: bytearray,
       regex_tokenizer: metadata_writer.RegexTokenizer,
       labels: metadata_writer.Labels) -> "MetadataWriter":
-    """Creates MetadataWriter for TFLite model with regex tokentizer.
+    """Creates MetadataWriter for TFLite model with regex tokenizer.
 
     The parameters required in this method are mandatory when using MediaPipe
     Tasks.
@@ -90,7 +90,7 @@ class MetadataWriter(metadata_writer.MetadataWriterBase):
     Args:
       model_buffer: valid buffer of the model file.
       tokenizer: information of the tokenizer used to process the input string,
-        if any. Supported tokenziers are: `BertTokenizer` [1] and
+        if any. Supported tokenizers are: `BertTokenizer` [1] and
         `SentencePieceTokenizer` [2]. If the tokenizer is `RegexTokenizer` [3],
         refer to `create_for_regex_model`.
       labels: an instance of Labels helper class used in the output

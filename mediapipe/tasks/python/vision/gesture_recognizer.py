@@ -213,7 +213,7 @@ class GestureRecognizerOptions:
     """Generates an GestureRecognizerOptions protobuf object."""
     base_options_proto = self.base_options.to_pb2()
     base_options_proto.use_stream_mode = (
-        False if self.running_mode == _RunningMode.IMAGE else True
+        self.running_mode != _RunningMode.IMAGE
     )
 
     # Initialize gesture recognizer options from base options.

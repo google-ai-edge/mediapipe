@@ -14,7 +14,7 @@
 
 """MediaPipe Tasks GenAI Bundler API."""
 
-import mediapipe.tasks.python.genai.bundler.llm_bundler
+import mediapipe.tasks.python.genai.bundler.llm_bundler as llm_bundler
 
 BundleConfig = llm_bundler.BundleConfig
 create_bundle = llm_bundler.create_bundle

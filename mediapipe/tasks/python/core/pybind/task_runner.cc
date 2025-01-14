@@ -82,7 +82,7 @@ mode) or not (synchronous mode).)doc");
 #if !MEDIAPIPE_DISABLE_GPU
         auto gpu_resources_ = mediapipe::GpuResources::Create();
         if (!gpu_resources_.ok()) {
-          ABSL_LOG(INFO) << "GPU suport is not available: "
+          ABSL_LOG(INFO) << "GPU support is not available: "
                          << gpu_resources_.status();
           gpu_resources_ = nullptr;
         }
@@ -91,7 +91,7 @@ mode) or not (synchronous mode).)doc");
             absl::make_unique<core::MediaPipeBuiltinOpResolver>(),
             std::move(callback),
             /* default_executor= */ nullptr,
-            /* input_side_packes= */ std::nullopt, std::move(*gpu_resources_));
+            /* input_side_packets= */ std::nullopt, std::move(*gpu_resources_));
 #else
         auto task_runner = TaskRunner::Create(
             std::move(graph_config),
@@ -117,7 +117,7 @@ Args:
 Raises:
   RuntimeError: Any of the following:
     a) The graph config proto is invalid.
-    b) The underlying medipaipe graph fails to initialize and start.
+    b) The underlying mediapipe graph fails to initialize and start.
 )doc",
       py::arg("graph_config"), py::arg("packets_callback") = py::none());
 
@@ -155,7 +155,7 @@ Raises:
   RuntimeError: Any of the following:
     a) TaskRunner is in the asynchronous mode (the packets callback is set).
     b) Any input stream name is not valid.
-    c) The underlying medipaipe graph occurs any error during this call.
+    c) The underlying mediapipe graph occurs any error during this call.
 )doc",
       py::arg("input_packets"));
 
@@ -191,7 +191,7 @@ Raises:
        queue size or the wrong packet type.
     d) The timestamp of any packet is invalid or is not greater than the
        previously received timestamps.
-    e) The underlying medipaipe graph occurs any error during adding input
+    e) The underlying mediapipe graph occurs any error during adding input
        packets.
 )doc",
       py::arg("input_packets"));
@@ -208,7 +208,7 @@ After the runner is closed, any calls that send input data to the runner are
 illegal and will receive errors.
 
 Raises:
-  RuntimeError: The underlying medipaipe graph fails to close any input streams
+  RuntimeError: The underlying mediapipe graph fails to close any input streams
     or calculators.
 )doc");
 
@@ -223,7 +223,7 @@ Raises:
 This can be useful for resetting a stateful task graph to process new data.
 
 Raises:
-  RuntimeError: The underlying medipaipe graph fails to reset and restart.
+  RuntimeError: The underlying mediapipe graph fails to reset and restart.
 )doc");
 
   task_runner.def(
