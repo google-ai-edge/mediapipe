@@ -14,10 +14,9 @@
 
 """CkptLoader implementation for loading the Pytorch file."""
 
-from typing import Iterator
 import enum
 import os
-from typing import List, Optional
+from typing import List, Optional, Iterator
 
 import numpy as np
 import torch
