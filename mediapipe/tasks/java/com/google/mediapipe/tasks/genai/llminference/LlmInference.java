@@ -15,7 +15,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 /** LlmInference Task Java API */
-public final class LlmInference implements AutoCloseable {
+public class LlmInference implements AutoCloseable {
   private static final String STATS_TAG = LlmInference.class.getSimpleName();
 
   private static final int NUM_DECODE_STEPS_PER_SYNC = 3;

@@ -17,7 +17,7 @@ import java.util.Optional;
  * #generateResponseAsync()} and can also be shared across multiple sessions using {@link
  * #cloneSession()}.
  */
-public final class LlmInferenceSession implements AutoCloseable {
+public class LlmInferenceSession implements AutoCloseable {
   private static final char TOKEN_SPLITTER = '▁'; // Note this is NOT an underscore: ▁(U+2581)
   private static final String NEW_LINE = "<0x0A>";
   private static final String EOD = "\\[eod\\]";
@@ -222,6 +222,9 @@ public final class LlmInferenceSession implements AutoCloseable {
 
     /** Returns the parameters to customize the graph. */
     public abstract Optional<GraphOptions> graphOptions();
+
+    /** Returns a builder with the current options. */
+    public abstract Builder toBuilder();
 
     /** Instantiates a new LlmInferenceOptions builder. */
     public static Builder builder() {
