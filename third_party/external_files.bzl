@@ -378,8 +378,8 @@ def external_files():
 
     http_file(
         name = "com_google_mediapipe_face_geometry_expected_out_pbtxt",
-        sha256 = "4a4ed08055a5bc9281472dd60180d11f0cdc9a15fa1788d87a58af3d06b2c6e4",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/face_geometry_expected_out.pbtxt?generation=1678323580380646"],
+        sha256 = "c23c55c14b24523e7fe51ee9ff90b9d4d32d82852ab3e452af9064e60c91c4d1",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/face_geometry_expected_out.pbtxt?generation=1737065432962469"],
     )
 
     http_file(
@@ -956,6 +956,12 @@ def external_files():
         name = "com_google_mediapipe_mozart_square_jpg",
         sha256 = "4feb4dadc5d6f853ade57b8c9d4c9a1f5ececd6469616c8e505f9a14823392b6",
         urls = ["https://storage.googleapis.com/mediapipe-assets/mozart_square.jpg?generation=1661875853838871"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_mraid_v2_2_multiclass_nms_200_40_qat_tflite",
+        sha256 = "1507a03e3c0e2567d2384b159dc17e21fb67f86c6390b10aab5d74275640ebda",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/mraid_v2_2_multiclass_nms_200_40_qat.tflite?generation=1737065441446005"],
     )
 
     http_file(
