@@ -424,6 +424,26 @@ class PackMediaSequenceCalculator : public CalculatorBase {
       if (!cc->Inputs().Tag(tag).IsEmpty()) {
         features_present_[tag] = true;
       }
+      if (absl::StartsWith(tag, kEncodedMediaStartTimestamp) &&
+          !cc->Inputs().Tag(tag).IsEmpty()) {
+        int64_t encoded_video_start_timestamp =
+            cc->Inputs().Tag(tag).Get<Timestamp>().Value();
+        std::string key =
+            std::string(absl::StripPrefix(tag, kEncodedMediaStartTimestamp));
+        key = absl::StripPrefix(key, "_");
+        mpms::SetClipEncodedMediaStartTimestamp(
+            key, encoded_video_start_timestamp, sequence_.get());
+      } else if (absl::StartsWith(tag, kEncodedMediaBytes) &&
+                 !cc->Inputs().Tag(tag).IsEmpty()) {
+        const std::string& encoded_video_bytes =
+            cc->Inputs().Tag(tag).Get<std::string>();
+        std::string key =
+            std::string(absl::StripPrefix(tag, kEncodedMediaBytes));
+        key = absl::StripPrefix(key, "_");
+        mpms::SetClipEncodedMediaBytes(key, encoded_video_bytes,
+                                       sequence_.get());
+      }
+
       if (absl::StartsWith(tag, kImageTag) &&
           !cc->Inputs().Tag(tag).IsEmpty()) {
         std::string key = "";
