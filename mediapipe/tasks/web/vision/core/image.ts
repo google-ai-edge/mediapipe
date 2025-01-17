@@ -246,7 +246,7 @@ export class MPImage {
     if (!this.canvas) {
       throw new Error(
           'Conversion to different image formats require that a canvas ' +
-          'is passed when iniitializing the image.');
+          'is passed when initializing the image.');
     }
     if (!this.gl) {
       this.gl = assertExists(

@@ -62,7 +62,7 @@ static void FreeRefConReleaseCallback(void *refCon, const void *baseAddress) { f
   }
 
   // To create a `CVPixelBuffer` from `CGImage`, the underlying buffer of the `CGImage` is extracted
-  // in the format `kCVPixelFormatType32BGRA`. since `CVPixelBuffer`s only suport the pixel format
+  // in the format `kCVPixelFormatType32BGRA`. since `CVPixelBuffer`s only support the pixel format
   // `kCVPixelFormatType32BGRA` for 32 bit RGBA images (All RGB images are stored with an alpha
   // value of 255.0 by iOS).
   //

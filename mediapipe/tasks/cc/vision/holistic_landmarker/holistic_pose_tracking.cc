@@ -199,7 +199,7 @@ TrackHolisticPoseUsingCustomPoseDetection(
       {// Min cutoff 0.01 results into ~0.002 alpha in landmark EMA filter when
        // landmark is static.
        /*.min_cutoff = */ 0.01,
-       // Beta 10.0 in combintation with min_cutoff 0.01 results into ~0.68
+       // Beta 10.0 in combination with min_cutoff 0.01 results into ~0.68
        // alpha in landmark EMA filter when landmark is moving fast.
        /*.beta = */ 10.0,
        // Derivative cutoff 1.0 results into ~0.17 alpha in landmark velocity

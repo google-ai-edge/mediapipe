@@ -150,7 +150,7 @@ export class AudioEmbedder extends AudioTaskRunner<AudioEmbedderResult[]> {
    * @param sampleRate The sample rate in Hz of the provided audio data. If not
    *     set, defaults to the sample rate set via `setDefaultSampleRate()` or
    *     `48000` if no custom default was set.
-   * @return The embedding resuls of the audio
+   * @return The embedding results of the audio
    */
   embed(audioData: Float32Array, sampleRate?: number): AudioEmbedderResult[] {
     return this.processAudioClip(audioData, sampleRate);

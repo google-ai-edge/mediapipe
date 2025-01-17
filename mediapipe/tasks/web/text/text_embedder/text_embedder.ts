@@ -155,7 +155,7 @@ export class TextEmbedder extends TaskRunner {
    *
    * @export
    * @param text The text to process.
-   * @return The embedding resuls of the text
+   * @return The embedding results of the text
    */
   embed(text: string): TextEmbedderResult {
     this.graphRunner.addStringToStream(
