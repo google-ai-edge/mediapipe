@@ -150,12 +150,12 @@ NS_ASSUME_NONNULL_BEGIN
   const NSUInteger channelCount = 1;
   const NSUInteger sampleRate = 8000;
 
-  // Buffer length is equal to the interim buffer produced by `MPPAudioRecord` after coversion of
+  // Buffer length is equal to the interim buffer produced by `MPPAudioRecord` after conversion of
   // the audio samples to its format. Test ensures that the entire buffer is loaded into the ring
   // buffer of audio record in this scenario.
   const NSUInteger expectedBufferLengthOfInternalConvertedAudioBuffer = 34180;
 
-  // Buffer length is equal to the interim buffer produced by `MPPAudioRecord` after coversion of
+  // Buffer length is equal to the interim buffer produced by `MPPAudioRecord` after conversion of
   // the audio samples to its format. Test ensures that the entire buffer is loaded into the ring
   // buffer of audio record in this scenario.
   [MPPAudioRecordTests
@@ -165,7 +165,7 @@ NS_ASSUME_NONNULL_BEGIN
                                                      expectedBufferLengthOfInternalConvertedAudioBuffer
                                                  channelCount:channelCount];
 
-  // Buffer length is longer than the interim buffer produced by `MPPAudioRecord` after coversion of
+  // Buffer length is longer than the interim buffer produced by `MPPAudioRecord` after conversion of
   // the audio samples to its format. Test ensures that the entire buffer is loaded as the most
   // recent samples of the ring buffer of audio record by pushing out the oldest samples in this
   // scenario. After loading the ring buffer, the earliest samples should be all zeroes since we
@@ -183,7 +183,7 @@ NS_ASSUME_NONNULL_BEGIN
   const NSUInteger channelCount = 1;
   const NSUInteger sampleRate = 8000;
 
-  // Buffer length is longer than the interim buffer produced by `MPPAudioRecord` after coversion of
+  // Buffer length is longer than the interim buffer produced by `MPPAudioRecord` after conversion of
   // the audio samples to its format. Test ensures that the entire buffer is loaded as the most
   // recent samples of the ring buffer of audio record by pushing out the oldest samples in this
   // scenario. After loading the ring buffer, the earliest samples should be all zeroes since we
@@ -209,12 +209,12 @@ NS_ASSUME_NONNULL_BEGIN
   const NSUInteger channelCount = 1;
   const NSUInteger sampleRate = 8000;
 
-  // Buffer length is equal to the interim buffer produced by `MPPAudioRecord` after coversion of
+  // Buffer length is equal to the interim buffer produced by `MPPAudioRecord` after conversion of
   // the audio samples to its format. Test ensures that the entire buffer is loaded into the ring
   // buffer of audio record in this scenario.
   const NSUInteger expectedBufferLengthOfInternalConvertedAudioBuffer = 34180;
 
-  // Buffer length is equal to the interim buffer produced by `MPPAudioRecord` after coversion of
+  // Buffer length is equal to the interim buffer produced by `MPPAudioRecord` after conversion of
   // the audio samples to its format. Test ensures that the entire buffer is loaded into the ring
   // buffer of audio record in this scenario.
   MPPAudioRecord *audioRecord = [MPPAudioRecordTests
@@ -398,7 +398,7 @@ NS_ASSUME_NONNULL_BEGIN
                                FLT_EPSILON);
   }
 
-  // Starting indices for comparison of the second chunks in float bufer and `pcmBuffer` are
+  // Starting indices for comparison of the second chunks in float buffer and `pcmBuffer` are
   // calculated.
   const NSInteger startIndexForComparisonInFloatBuffer = firstChunkLength;
   const NSInteger startIndexForComparisonInPCMBuffer = pcmBuffer.frameLength - secondChunkLength;

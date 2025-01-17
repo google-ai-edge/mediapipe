@@ -465,7 +465,7 @@ static NSString *const kAudioStreamTestsDictExpectationKey = @"expectation";
   XCTAssertEqual(audioRecord.bufferLength, bufferLength);
 }
 
-// Test for error propogation from audio record creation.
+// Test for error propagation from audio record creation.
 - (void)testCreateAudioRecordWithInvalidChannelCountFails {
   const NSUInteger channelCount = 3;
 

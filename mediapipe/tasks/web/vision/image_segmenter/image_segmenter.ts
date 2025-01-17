@@ -169,7 +169,7 @@ export class ImageSegmenter extends VisionTaskRunner {
    */
   override setOptions(options: ImageSegmenterOptions): Promise<void> {
     // Note that we have to support both JSPB and ProtobufJS, hence we
-    // have to expliclity clear the values instead of setting them to
+    // have to explicitly clear the values instead of setting them to
     // `undefined`.
     if (options.displayNamesLocale !== undefined) {
       this.options.setDisplayNamesLocale(options.displayNamesLocale);

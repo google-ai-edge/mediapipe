@@ -308,7 +308,7 @@ export class DrawingUtils {
    *
    * @export
    * @param boundingBox The bounding box to draw.
-   * @param style The style to visualize the boundin box.
+   * @param style The style to visualize the bounding box.
    */
   drawBoundingBox(boundingBox: BoundingBox, style?: DrawingOptions): void {
     const ctx = this.getCanvasRenderingContext();

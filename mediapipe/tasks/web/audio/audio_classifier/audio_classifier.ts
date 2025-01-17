@@ -191,7 +191,7 @@ export class AudioClassifier extends AudioTaskRunner<AudioClassifierResult[]> {
 
   /**
    * Internal function for converting raw data into classification results, and
-   * adding them to our classfication results list.
+   * adding them to our classification results list.
    **/
   private addJsAudioClassificationResults(binaryProtos: Uint8Array[]): void {
     binaryProtos.forEach((binaryProto) => {
