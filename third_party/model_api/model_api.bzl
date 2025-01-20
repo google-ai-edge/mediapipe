@@ -48,6 +48,10 @@ cmake(
     lib_source = ":all_srcs",
     out_static_libs = ["model_api.lib"],
     tags = ["requires-network"],
+    deps = [
+        "@mediapipe//mediapipe/framework/port:opencv_core",
+        "@mediapipe//third_party:openvino",
+    ],
 )
 
 cc_library(
@@ -98,6 +102,10 @@ cmake(
     lib_source = ":all_srcs",
     out_static_libs = ["libmodel_api.a"],
     tags = ["requires-network"],
+    deps = [
+        "@mediapipe//mediapipe/framework/port:opencv_core",
+        "@mediapipe//third_party:openvino",
+    ],
 )
 
 cc_library(
