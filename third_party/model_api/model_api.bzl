@@ -131,6 +131,7 @@ def _impl(repository_ctx):
         
     # Note we need to escape '{/}' by doubling them due to call to format
     if _is_windows(repository_ctx):
+        openvino_dir = openvino_dir.replace("\\", "\\\\").replace("/", "\\\\")
         build_file_content = _get_windows_build_file()
     else:
         build_file_content = _get_linux_build_file()
