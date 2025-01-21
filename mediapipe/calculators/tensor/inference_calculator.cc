@@ -103,7 +103,9 @@ class InferenceCalculatorSelectorImpl
       impl_node.set_calculator(impl);
       return tool::MakeSingleNodeGraph(std::move(impl_node));
     }
-    return absl::UnimplementedError("no implementation available");
+    return absl::UnimplementedError(
+        absl::StrCat("no implementation available with suffixes: ",
+                     absl::StrJoin(impls, ", ")));
   }
 };
 
