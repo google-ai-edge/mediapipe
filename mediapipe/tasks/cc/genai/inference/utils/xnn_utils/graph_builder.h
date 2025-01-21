@@ -328,6 +328,9 @@ class XnnGraphBuilder {
   std::vector<std::shared_ptr<Tensor>> interm_tensors_added_order_;
   // Intermediate tensors in hash_set, for easy existence check.
   absl::flat_hash_set<std::shared_ptr<Tensor>> interm_tensors_;
+
+  // Static weights keeping the same order as how they were added.
+  std::vector<std::shared_ptr<Tensor>> static_weights_added_order_;
   absl::flat_hash_set<std::shared_ptr<Tensor>> static_weights_;
 
   // Caches
@@ -370,8 +373,6 @@ class XnnGraph {
 
   std::vector<std::shared_ptr<Tensor>> input_tensors_;
   std::vector<std::shared_ptr<Tensor>> output_tensors_;
-
-  absl::flat_hash_set<std::shared_ptr<Tensor>> static_weights_;
 };
 
 }  // namespace xnn_utils

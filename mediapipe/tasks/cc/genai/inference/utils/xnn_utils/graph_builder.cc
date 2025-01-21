@@ -169,7 +169,7 @@ absl::StatusOr<std::unique_ptr<XnnGraph>> XnnGraphBuilder::Build() {
 
   XnnSubgraphPtr subgraph{subgraph_ptr, xnn_delete_subgraph};
 
-  for (auto& t : static_weights_) {
+  for (auto& t : static_weights_added_order_) {
     MP_RETURN_IF_ERROR(t->DefineWeight(*subgraph_ptr));
   }
   for (auto& input : input_tensors_added_order_) {
@@ -190,7 +190,6 @@ absl::StatusOr<std::unique_ptr<XnnGraph>> XnnGraphBuilder::Build() {
                   std::make_unique<RuntimeConfigs>(*runtime_configs_));
   result.input_tensors_ = std::move(input_tensors_added_order_);
   result.output_tensors_ = std::move(output_tensors);
-  result.static_weights_ = std::move(static_weights_);
 
   VLOG(2) << "XnnGraphBuilder::Build() creating runtime...";
   MP_RETURN_IF_ERROR(result.CreateRuntime());
@@ -218,10 +217,12 @@ absl::Status XnnGraphBuilder::MarkInput(std::shared_ptr<Tensor> t) {
 }
 
 void XnnGraphBuilder::NewWeight(std::shared_ptr<Tensor> t) {
-  if (interm_tensors_.contains(t) || input_tensors_.contains(t)) {
+  if (interm_tensors_.contains(t) || input_tensors_.contains(t) ||
+      static_weights_.contains(t)) {
     return;
   }
 
+  static_weights_added_order_.push_back(t);
   static_weights_.insert(t);
 }
 
