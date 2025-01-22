@@ -77,8 +77,14 @@ absl::StatusOr<api2::Packet<TfLiteModelPtr>> TfLiteModelLoader::LoadFromPath(
   }
 
   // Load model resource.
-  MP_ASSIGN_OR_RETURN(std::unique_ptr<Resource> model_resource,
-                      resources.Get(model_path));
+  MP_ASSIGN_OR_RETURN(
+      std::unique_ptr<Resource> model_resource,
+      resources.Get(
+          model_path,
+          Resources::Options{/* read_as_binary= */ true,
+                             /* mmap_mode= */ try_mmap
+                                 ? std::make_optional(MMapMode::kMMapOrRead)
+                                 : std::nullopt}));
   absl::string_view model_view = model_resource->ToStringView();
   auto model = FlatBufferModel::VerifyAndBuildFromBuffer(model_view.data(),
                                                          model_view.size());
