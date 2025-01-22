@@ -664,7 +664,7 @@ cc_library(
     ],
     tags = ["ios"],
     deps = [
-        "inference_calculator_interface",
+        ":inference_calculator_interface",
         ":inference_io_mapper",
         ":tensor_span",
         "//mediapipe/framework/formats:tensor",
