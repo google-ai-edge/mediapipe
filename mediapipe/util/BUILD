@@ -418,6 +418,7 @@ cc_test(
     srcs = ["time_series_util_test.cc"],
     deps = [
         ":time_series_util",
+        "//mediapipe/calculators/audio:resample_time_series_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:time_series_header_cc_proto",
         "//mediapipe/framework/port:gtest_main",
