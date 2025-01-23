@@ -1,0 +1,102 @@
+// Copyright 2025 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+
+message ResampleTimeSeriesCalculatorOptions {
+  extend CalculatorOptions {
+    optional ResampleTimeSeriesCalculatorOptions ext = 49296647;
+  }
+
+  // target_sample_rate is the sample rate, in Hertz, of the output
+  // stream.  Required.  Must be greater than 0.
+  optional double target_sample_rate = 1;
+
+  enum ResamplerType {
+    UNDEFINED = 0;
+
+    reserved 1;
+
+    // RESAMPLER_RATIONAL_FACTOR selects QResampler which
+    // replaces RationalFactorResampler.
+    RESAMPLER_RATIONAL_FACTOR = 2;
+  }
+
+  optional ResamplerType resampler_type = 2
+      [default = RESAMPLER_RATIONAL_FACTOR];
+  // Parameters for initializing LibResampleResampler. See LibResampleResampler
+  // for more details.
+  message ResamplerLibResampleOptions {
+    // Whether to use libresample's high-quality resampling mode.
+    optional bool use_high_quality_resampler = 1 [default = false];
+  }
+
+  optional ResamplerLibResampleOptions resampler_libresample_options = 3;
+
+  // Parameters for initializing the RationalFactorResampler. See
+  // RationalFactorResampler for more details.
+  message ResamplerRationalFactorOptions {
+    // Scale factor for the resampling kernel's nonzero support radius. If
+    // upsampling, the kernel radius is `filter_radius_factor` input samples. If
+    // downsampling, the kernel radius is `filter_radius_factor` *output*
+    // samples. Larger radius makes the transition between passband and stopband
+    // sharper, but proportionally increases computation and memory cost.
+    //
+    // The default value 5.0 corresponds to libresample's "low quality" mode
+    // (which despite the name, is quite good quality).
+    //
+    // A value of 17.0 corresponds to libresample's "high quality" mode.
+    optional double radius_factor = 4 [default = 5.0];
+
+    // Antialiasing cutoff frequency as a proportion of
+    //   min(input_sample_rate, output_sample_rate) / 2.
+    // The default is 0.9, meaning the cutoff is at 90% of the input Nyquist
+    // frequency or the output Nyquist frequency, whichever is smaller.
+    optional double cutoff_proportion = 5 [default = 0.9];
+
+    // The Kaiser beta parameter for the kernel window. A larger value implies
+    // wider transistion band and stronger stopband attenuation.
+    optional double kaiser_beta = 3 [default = 6.0];
+
+    // The following fields are an older, alternative parameterization of the
+    // resampling kernel preserved for backward compatibility.
+
+    // Kernel radius in units of input samples. It is related to radius_factor
+    // by radius_factor = radius * min(1, output_rate / input_rate).
+    optional double radius = 1;
+
+    // Anti-aliasing cutoff frequency in Hertz. A reasonable setting is
+    // 0.45 * min(input_rate, output_rate). It is related to cutoff_proportion
+    // by cutoff_proportion = 2 * cutoff / min(output_rate, input_rate).
+    optional double cutoff = 2;
+  }
+
+  optional ResamplerRationalFactorOptions resampler_rational_factor_options = 4;
+
+  // Set to false to disable checks for jitter in timestamp values. Useful with
+  // live audio input.
+  optional bool check_inconsistent_timestamps = 5 [default = true];
+
+  // Set to false to throw an error if the original audio has lower sample rate
+  // than `target_sample_rate`.
+  optional bool allow_upsampling = 6 [default = true];
+
+  // min_source_sample_rate is the minimum allowed sample rate of the input
+  // stream, in Hertz. Only used when allow_upsampling is set to true.
+  optional double min_source_sample_rate = 7 [default = 0.0];
+}
