@@ -230,7 +230,7 @@ extension LlmInference {
     /// Maximum top k, which is the max Top-K value supported for all sessions created with the
     /// `LlmInference`, used by GPU only. If a session with Top-K value larger than this is being
     /// asked to be created, it will be rejected(throw error). A value of 1 means only greedy
-    // decoding is supported for any sessions created with this `LlmInference`. Default value is 40.
+    /// decoding is supported for any sessions created with this `LlmInference`. Default value is 40.
     @objc public var maxTopk: Int = 40
 
     /// The supported lora ranks for the base model. Used by GPU only.
@@ -241,7 +241,7 @@ extension LlmInference {
     /// time into input processing.
     @objc public var waitForWeightUploads: Bool = false
 
-    // Whether to use the submodel if available.
+    /// Whether to use the submodel if available.
     @objc public var useSubmodel: Bool = false
 
     /// Creates a new instance of `Options` with the given `modelPath` and default values of
