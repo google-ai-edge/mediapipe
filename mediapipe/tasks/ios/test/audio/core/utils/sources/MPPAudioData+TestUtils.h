@@ -35,7 +35,7 @@ NS_ASSUME_NONNULL_BEGIN
                          sampleCount:(NSUInteger)sampleCount;
 
 /**
- * Creats an `MPPAudioData` and loads it with samples from an audio file specified by `fileInfo`.
+ * Creates an `MPPAudioData` and loads it with samples from an audio file specified by `fileInfo`.
  *
  * @param fileInfo `MPPFileInfo` with name and type of the audio file stored in the bundle.
  *

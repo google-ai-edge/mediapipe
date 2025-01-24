@@ -215,7 +215,7 @@ static const NSUInteger kMaximumChannelCount = 2;
   // `AVAudioSessionCategoryPlayAndRecord` to ensure that audio playback can be configured in the
   // app while an audio record is running.
   // TODO: Investigate safe starting of `AVAudioEngine` without any side effects to enable this
-  // class ot accept custom category, mode and options.
+  // class to accept custom category, mode and options.
   if (!([[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayAndRecord
                                                error:error] &&
         [[AVAudioSession sharedInstance]

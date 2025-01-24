@@ -37,7 +37,7 @@ extension GenAiInferenceError: LocalizedError {
       return
         """
         Response generation is already in progress. The request in progress may have been \
-        initated on the current session or on one of the sessions created from the `LlmInference` \
+        initiated on the current session or on one of the sessions created from the `LlmInference` \
         that was used to create the current session.
         """
     case .failedToComputeSizeInTokens(let message):

@@ -40,7 +40,7 @@ NS_SWIFT_NAME(FaceLandmarkerLiveStreamDelegate)
  * This method is called on a private serial dispatch queue created by the `FaceLandmarker`
  * for performing the asynchronous delegates calls.
  *
- * @param faceLandmarker The face landmarker which performed the face landmark detctions.
+ * @param faceLandmarker The face landmarker which performed the face landmark detections.
  * This is useful to test equality when there are multiple instances of `FaceLandmarker`.
  * @param result The `FaceLandmarkerResult` object that contains a list of landmarks.
  * @param timestampInMilliseconds The timestamp (in milliseconds) which indicates when the input
@@ -60,7 +60,7 @@ NS_SWIFT_NAME(FaceLandmarkerOptions)
 @interface MPPFaceLandmarkerOptions : MPPTaskOptions <NSCopying>
 
 /**
- * Running mode of the face landmark dection task. Defaults to `.image`. `FaceLandmarker` can be
+ * Running mode of the face landmark detection task. Defaults to `.image`. `FaceLandmarker` can be
  * created with one of the following running modes:
  *  1. `.image`: The mode for performing face detection on single image inputs.
  *  2. `.video`: The mode for performing face detection on the decoded frames of a video.

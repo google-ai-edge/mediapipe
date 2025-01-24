@@ -75,7 +75,7 @@ NS_SWIFT_NAME(AudioData)
  * @param offset Starting index in the source buffer from which elements should be copied.
  * @param length The number of elements to be copied.
  *
- * @return A boolean indicating if the load operation succeded.
+ * @return A boolean indicating if the load operation succeeded.
  */
 - (BOOL)loadBuffer:(MPPFloatBuffer *)buffer
             offset:(NSUInteger)offset
@@ -94,7 +94,7 @@ NS_SWIFT_NAME(AudioData)
  * @param audioRecord `MPPAudioRecord` whose values are to be loaded into `AudioData`. For
  * multi-channel input, the audio record must hold interleaved data.
  *
- * @return A boolean indicating if the load operation succeded.
+ * @return A boolean indicating if the load operation succeeded.
  */
 - (BOOL)loadAudioRecord:(MPPAudioRecord *)audioRecord
                   error:(NSError **)error NS_SWIFT_NAME(load(audioRecord:));
