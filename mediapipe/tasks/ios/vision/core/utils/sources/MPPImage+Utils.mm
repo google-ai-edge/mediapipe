@@ -167,7 +167,7 @@ static void FreeCGDataProviderReleaseCallback(void *info, const void *data, size
     default: {
       [MPPCommonUtils createCustomError:error
                                withCode:MPPTasksErrorCodeInvalidArgumentError
-                            description:@"Some internal error occured."];
+                            description:@"Some internal error occurred."];
       return nullptr;
     }
   }
@@ -175,7 +175,7 @@ static void FreeCGDataProviderReleaseCallback(void *info, const void *data, size
   if (convertError != kvImageNoError) {
     [MPPCommonUtils createCustomError:error
                              withCode:MPPTasksErrorCodeInternalError
-                          description:@"Some error occured while preprocessing the input image. "
+                          description:@"Some error occurred while preprocessing the input image. "
                                       @"Please verify that the image is not corrupted."];
     return nullptr;
   }
@@ -212,7 +212,7 @@ static void FreeCGDataProviderReleaseCallback(void *info, const void *data, size
       if (!shouldCopy) {
         [MPPCommonUtils createCustomError:error
                                  withCode:MPPTasksErrorCodeInternalError
-                              description:@"An error occured while processing the output image "
+                              description:@"An error occurred while processing the output image "
                                           @"pixels of the vision task."];
         return nullptr;
       }
@@ -230,7 +230,7 @@ static void FreeCGDataProviderReleaseCallback(void *info, const void *data, size
     default: {
       [MPPCommonUtils createCustomError:error
                                withCode:MPPTasksErrorCodeInternalError
-                            description:@"An error occured while processing the output image "
+                            description:@"An error occurred while processing the output image "
                                         @"pixels of the vision task."];
       return nullptr;
     }
@@ -249,7 +249,7 @@ static void FreeCGDataProviderReleaseCallback(void *info, const void *data, size
         createCustomError:error
                  withCode:MPPTasksErrorCodeInternalError
               description:
-                  @"An error occured while processing the output image pixels of the vision task."];
+                  @"An error occurred while processing the output image pixels of the vision task."];
 
     return nullptr;
   }
@@ -300,7 +300,7 @@ static void FreeCGDataProviderReleaseCallback(void *info, const void *data, size
     default: {
       [MPPCommonUtils createCustomError:error
                                withCode:MPPTasksErrorCodeInternalError
-                            description:@"An error occured while creating a CVPixelBuffer from the "
+                            description:@"An error occurred while creating a CVPixelBuffer from the "
                                         @"output image of the vision task."];
       return nullptr;
     }
@@ -341,7 +341,7 @@ static void FreeCGDataProviderReleaseCallback(void *info, const void *data, size
 
   [MPPCommonUtils createCustomError:error
                            withCode:MPPTasksErrorCodeInternalError
-                        description:@"An error occured while creating a CVPixelBuffer from the "
+                        description:@"An error occurred while creating a CVPixelBuffer from the "
                                     @"output image of the vision task."];
   return nullptr;
 }
@@ -422,7 +422,7 @@ static void FreeCGDataProviderReleaseCallback(void *info, const void *data, size
     default:
       [MPPCommonUtils createCustomError:error
                                withCode:MPPTasksErrorCodeInternalError
-                            description:@"An error occured while creating a CGImage from the "
+                            description:@"An error occurred while creating a CGImage from the "
                                         @"output image of the vision task."];
       return nullptr;
   }
@@ -455,7 +455,7 @@ static void FreeCGDataProviderReleaseCallback(void *info, const void *data, size
   if (!cgImageRef) {
     [MPPCommonUtils createCustomError:error
                              withCode:MPPTasksErrorCodeInternalError
-                          description:@"An error occured while converting the output image of the "
+                          description:@"An error occurred while converting the output image of the "
                                       @"vision task to a CGImage."];
   }
 
@@ -584,7 +584,7 @@ static void FreeCGDataProviderReleaseCallback(void *info, const void *data, size
       if (CMSampleBufferGetSampleTimingInfo(sourceImage.sampleBuffer, 0, &timingInfo) != 0) {
         [MPPCommonUtils createCustomError:error
                                  withCode:MPPTasksErrorCodeInvalidArgumentError
-                              description:@"Some error occured while fetching the sample timing "
+                              description:@"Some error occurred while fetching the sample timing "
                                           @"info of the CMSampleBuffer."];
         return nil;
       }

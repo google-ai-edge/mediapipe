@@ -460,7 +460,7 @@ NS_ASSUME_NONNULL_BEGIN
                                FLT_EPSILON);
   }
 
-  // Starting indices for comparison of the second chunks in float bufer and
+  // Starting indices for comparison of the second chunks in float buffer and
   // `newlyLoadedFloatBuffer` are calculated.
   const NSInteger startIndexForComparisonInFloatBuffer = firstChunkLength;
   const NSInteger startIndexForComparisonInNewlyLoadedBuffer =

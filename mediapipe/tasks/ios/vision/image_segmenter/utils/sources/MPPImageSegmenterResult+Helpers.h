@@ -24,7 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
  * Creates an `MPPImageSegmenterResult` from confidence masks, category mask and quality scores
  * packets.
  *
- * If `shouldCopyMaskPacketData` is set to `YES`, the confidence and catergory masks of the newly
+ * If `shouldCopyMaskPacketData` is set to `YES`, the confidence and category masks of the newly
  * created `MPPImageSegmenterResult` holds references to deep copied pixel data of the output
  * respective masks.
  *
