@@ -53,18 +53,14 @@ export class WasmFileReference {
     return this.fileSize;
   }
 
-  /*
-   * Creates a WasmFileReference from a URL.
-   * @param wasmModule The underlying Wasm Module to use.
-   * @param url The URL to request the file.
-   */
-  static async loadFromUrl(wasmModule: WasmModule, url: string):
-      Promise<WasmFileReference> {
-    const response = await fetch(url.toString());
-    const fileSize = Number(response.headers.get('content-length'));
+  private static async loadFromReadableStream(
+    wasmModule: WasmModule,
+    readableStream: ReadableStream<Uint8Array>,
+    fileSize: number,
+  ): Promise<WasmFileReference> {
     const fileReference = new WasmFileReference(wasmModule, fileSize);
     let offset = 0;
-    const reader = response?.body?.getReader();
+    const reader = readableStream.getReader();
     while (true) {
       const {value, done} =
           await (reader as ReadableStreamDefaultReader).read();
@@ -81,6 +77,42 @@ export class WasmFileReference {
           `Loaded ${offset}/${fileSize} bytes before failure`);
     }
     return fileReference;
+  }
+
+  /*
+   * Creates a WasmFileReference from a URL.
+   * @param wasmModule The underlying Wasm Module to use.
+   * @param url The URL to request the file.
+   */
+  static async loadFromUrl(wasmModule: WasmModule, url: string):
+      Promise<WasmFileReference> {
+    const response = await fetch(url.toString());
+    const fileSize = Number(response.headers.get('content-length'));
+    if (!response.body) {
+      throw new Error('Response body is not available.');
+    }
+    if (!fileSize) {
+      throw new Error('File size is 0.');
+    }
+    return WasmFileReference.loadFromReadableStream(
+      wasmModule,
+      response.body,
+      fileSize,
+    );
+  }
+
+  /*
+   * Creates a WasmFileReference from a blob.
+   * @param wasmModule The underlying Wasm Module to use.
+   * @param blob The file data.
+   */
+  static async loadFromBlob(wasmModule: WasmModule, blob: Blob):
+      Promise<WasmFileReference> {
+    return WasmFileReference.loadFromReadableStream(
+        wasmModule,
+        blob.stream(),
+        blob.size,
+    );
   }
 
   /*
