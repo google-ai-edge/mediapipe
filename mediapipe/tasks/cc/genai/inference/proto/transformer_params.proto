@@ -199,4 +199,12 @@ message TransformerParameters {
   // The number of stacks that are treated as "extra", which may have slightly
   // different loading behavior.
   int32 num_extra_stacks = 27;
+
+  // Audio parameters
+  // Which index audio hard tokens start at.
+  int32 audio_vocab_offset = 29;
+  // Length of audio_input_embedding_table_extra variable.
+  int32 audio_vocab_extra_dim = 30;
+  // Dimension which we embed audio hard tokens to.
+  int32 audio_input_embedding_dim = 31;
 }
