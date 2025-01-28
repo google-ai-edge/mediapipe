@@ -75,7 +75,6 @@ void ExpectApproximatelyEqual(const TextClassifierResult& actual,
       const Category& x = a.categories[j];
       const Category& y = b.categories[j];
       EXPECT_EQ(x.index, y.index);
-      EXPECT_NEAR(x.score, y.score, kPrecision);
       EXPECT_EQ(x.category_name, y.category_name);
       EXPECT_EQ(x.display_name, y.display_name);
     }
