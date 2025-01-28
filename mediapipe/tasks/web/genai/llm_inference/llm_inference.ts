@@ -518,6 +518,15 @@ export class LlmInference extends TaskRunner {
   }
 
   /**
+   * Returns whether the LlmInference instance is idle.
+   *
+   * @export
+   */
+  get isIdle(): boolean {
+    return !this.isProcessing && !this.resultDeferred;
+  }
+
+  /**
    * Performs LLM Inference on the provided text and waits
    * asynchronously for the response. Only one call to `generateResponse()` can
    * run at a time.
