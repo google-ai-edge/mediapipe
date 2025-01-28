@@ -30,6 +30,7 @@ public class LlmInferenceSession implements AutoCloseable {
       LlmInference llmInference, LlmInferenceSessionOptions options) {
     LlmSessionConfig.Builder sessionConfig = LlmSessionConfig.newBuilder();
     sessionConfig.setTopk(options.topK());
+    sessionConfig.setTopp(options.topP());
     sessionConfig.setTemperature(options.temperature());
     sessionConfig.setRandomSeed(options.randomSeed());
     if (options.loraPath().isPresent()) {
@@ -177,6 +178,12 @@ public class LlmInferenceSession implements AutoCloseable {
       public abstract Builder setTopK(int topK);
 
       /**
+       * The maximum cumulative probability over the tokens to sample from in each decoding step for
+       * top-p / nucleus sampling.
+       */
+      public abstract Builder setTopP(float topP);
+
+      /**
        * Configures randomness when decoding the next token. A value of 0.0f means greedy decoding.
        * The default value is 0.8f.
        */
@@ -208,6 +215,12 @@ public class LlmInferenceSession implements AutoCloseable {
      */
     public abstract int topK();
 
+    /**
+     * The maximum cumulative probability over the tokens to sample from in each decoding step for
+     * top-p / nucleus sampling.
+     */
+    public abstract float topP();
+
     /** Randomness when decoding the next token. A value of 0.0f means greedy decoding. */
     public abstract float temperature();
 
@@ -230,6 +243,7 @@ public class LlmInferenceSession implements AutoCloseable {
     public static Builder builder() {
       return new AutoValue_LlmInferenceSession_LlmInferenceSessionOptions.Builder()
           .setTopK(40)
+          .setTopP(1.0f)
           .setTemperature(0.8f)
           .setRandomSeed(0);
     }
