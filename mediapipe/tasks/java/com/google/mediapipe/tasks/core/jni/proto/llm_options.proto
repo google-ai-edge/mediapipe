@@ -25,15 +25,19 @@ message LlmSessionConfig {
   // Top K number of tokens to be sampled from for each decoding step.
   uint32 topk = 1;
 
+  // Maximum cumulative probability over the tokens to sample from in each
+  // decoding step for top-p / nucleus sampling.
+  float topp = 2;
+
   // Randomness when decoding the next token, 0.0f means greedy decoding.
-  float temperature = 2;
+  float temperature = 3;
 
   // Random seed for sampling tokens.
-  optional uint32 random_seed = 3;
+  optional uint32 random_seed = 4;
 
   // The absolute path to the LoRA model asset bundle stored locally on the
   // device. This is only compatible with GPU models.
-  optional string lora_path = 4;
+  optional string lora_path = 5;
 
   // Parameters to customize the graph.
   message GraphConfig {
@@ -47,7 +51,7 @@ message LlmSessionConfig {
   }
 
   // Parameters to customize the graph.
-  optional GraphConfig graph_config = 5;
+  optional GraphConfig graph_config = 6;
 }
 
 // Configurable model parameters for creating an LLM inference engine.
