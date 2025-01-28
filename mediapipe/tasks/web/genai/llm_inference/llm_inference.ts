@@ -549,7 +549,7 @@ export class LlmInference extends TaskRunner {
    */
   generateResponse(
     text: string,
-    progressListener: ProgressListener,
+    progressListener?: ProgressListener,
   ): Promise<string>;
   /**
    * Performs LLM Inference on the provided text and waits
@@ -561,7 +561,7 @@ export class LlmInference extends TaskRunner {
    * @param loraModel The LoRA model to apply on the text generation.
    * @return The generated text result.
    */
-  generateResponse(text: string, loraModel: LoraModel): Promise<string>;
+  generateResponse(text: string, loraModel?: LoraModel): Promise<string>;
   /**
    * Performs LLM Inference on the provided text and waits
    * asynchronously for the response. Only one call to `generateResponse()` can
@@ -576,8 +576,8 @@ export class LlmInference extends TaskRunner {
    */
   generateResponse(
     text: string,
-    loraModel: LoraModel,
-    progressListener: ProgressListener,
+    loraModel?: LoraModel,
+    progressListener?: ProgressListener,
   ): Promise<string>;
   /** @export */
   generateResponse(
