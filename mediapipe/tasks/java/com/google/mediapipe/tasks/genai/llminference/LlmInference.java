@@ -9,6 +9,7 @@ import com.google.mediapipe.tasks.core.LlmTaskRunner;
 import com.google.mediapipe.tasks.core.OutputHandler.ProgressListener;
 import com.google.mediapipe.tasks.core.TaskOptions;
 import com.google.mediapipe.tasks.core.jni.proto.LlmOptionsProto.LlmModelSettings;
+import com.google.mediapipe.tasks.core.jni.proto.LlmOptionsProto.LlmModelSettings.LlmPreferredBackend;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -54,6 +55,10 @@ public class LlmInference implements AutoCloseable {
       visionModelOptions.getAdapterPath().ifPresent(visionModelSettings::setAdapterPath);
 
       modelSettings.setVisionModelSettings(visionModelSettings.build());
+    }
+
+    if (options.llmPreferredBackend().isPresent()) {
+      modelSettings.setLlmPreferredBackend(options.llmPreferredBackend().get());
     }
 
     return new LlmInference(context, STATS_TAG, modelSettings.build(), options.resultListener());
@@ -212,6 +217,9 @@ public class LlmInference implements AutoCloseable {
       /** Sets the model options to use for vision modality. */
       public abstract Builder setVisionModelOptions(VisionModelOptions visionModelOptions);
 
+      /** Sets the preferred backend to use for the LLM model. */
+      public abstract Builder setLlmPreferredBackend(LlmPreferredBackend llmPreferredBackend);
+
       abstract LlmInferenceOptions autoBuild();
 
       /** Validates and builds the {@link ImageGeneratorOptions} instance. */
@@ -247,6 +255,9 @@ public class LlmInference implements AutoCloseable {
 
     /** The model options to for vision modality. */
     public abstract Optional<VisionModelOptions> visionModelOptions();
+
+    /** Returns the preferred backend to use for the LLM model. */
+    public abstract Optional<LlmPreferredBackend> llmPreferredBackend();
 
     /** Returns a new builder with the same values as this instance. */
     public abstract Builder toBuilder();
