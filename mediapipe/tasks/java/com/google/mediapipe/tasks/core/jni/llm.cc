@@ -78,6 +78,7 @@ LlmModelSettings ParseModelSettings(void* bytes, int size) {
   output.num_draft_tokens = 0;
   output.wait_for_weight_uploads = false;
   output.use_submodel = false;
+  output.preferred_backend = kLlmPreferredBackendDefault;
   return output;
 }
 

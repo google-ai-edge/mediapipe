@@ -77,7 +77,8 @@ import MediaPipeTasksGenAIC
             llm_activation_data_type: kLlmActivationDataTypeDefault,
             num_draft_tokens: 0,
             wait_for_weight_uploads: options.waitForWeightUploads,
-            use_submodel: options.useSubmodel)
+            use_submodel: options.useSubmodel,
+            preferred_backend: kLlmPreferredBackendDefault)
           return try LlmTaskRunner(modelSettings: modelSetting)
         }
       }
