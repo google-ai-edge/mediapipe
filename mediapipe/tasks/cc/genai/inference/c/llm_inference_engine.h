@@ -53,6 +53,16 @@ typedef enum {
   kLlmActivationDataTypeInt8 = 4,
 } LlmActivationDataType;
 
+// Specify the LiteRT backend to use for the LLM model. If not specified, the
+// default backend will be used.
+typedef enum {
+  // Use default backend extracted from the model.
+  kLlmPreferredBackendDefault = 0,
+
+  // Use GPU backend.
+  kLlmPreferredBackendGpu = 1,
+} LlmPreferredBackend;
+
 // LlmSessionConfig configures how to execute the model.
 typedef struct {
   // Path to the model artifact.
@@ -110,6 +120,9 @@ typedef struct {
 
   // Whether the submodel should be used if available.
   bool use_submodel;
+
+  // Optional setting to prefer specific backend instead.
+  LlmPreferredBackend preferred_backend;
 } LlmModelSettings;
 
 // LlmSessionConfig configures how to execute the model.
