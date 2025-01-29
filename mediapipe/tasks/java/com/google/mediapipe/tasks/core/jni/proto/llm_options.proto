@@ -101,4 +101,15 @@ message LlmModelSettings {
   }
 
   optional VisionModelSettings vision_model_settings = 9;
+
+  // Reserved for audio model settings.
+  reserved 10;
+
+  // Optional setting to set the preferred backend.
+  enum LlmPreferredBackend {
+    DEFAULT = 0;
+    CPU = 1;
+    GPU = 2;
+  }
+  optional LlmPreferredBackend llm_preferred_backend = 11;
 }
