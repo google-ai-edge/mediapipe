@@ -17,6 +17,8 @@ load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 package(default_visibility = [
     "//mediapipe/tasks:__subpackages__",
     "//mediapipe/tasks/web/genai/llm_inference:__subpackages__",
+    "//third_party/odml/infra/genai/inference:__subpackages__",
+    "//third_party/odml/litert/llm:__subpackages__",
 ])
 
 licenses(["notice"])

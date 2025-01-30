@@ -16,6 +16,8 @@
 
 package(default_visibility = [
     "//mediapipe/tasks/cc:__subpackages__",
+    "//third_party/odml/infra/genai/inference:__subpackages__",
+    "//third_party/odml/litert:__subpackages__",
 ])
 
 cc_library(
