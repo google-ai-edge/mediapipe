@@ -17,6 +17,16 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /** LlmInference Task Java API */
 public class LlmInference implements AutoCloseable {
+  /** The backend to use for inference. */
+  public enum Backend {
+    /** Use the default backend for the model. */
+    DEFAULT,
+    /** Use the CPU backend for inference. */
+    CPU,
+    /** Use the GPU backend for inference. */
+    GPU
+  }
+
   private static final String STATS_TAG = LlmInference.class.getSimpleName();
 
   private static final int NUM_DECODE_STEPS_PER_SYNC = 3;
@@ -57,8 +67,18 @@ public class LlmInference implements AutoCloseable {
       modelSettings.setVisionModelSettings(visionModelSettings.build());
     }
 
-    if (options.llmPreferredBackend().isPresent()) {
-      modelSettings.setLlmPreferredBackend(options.llmPreferredBackend().get());
+    if (options.preferredBackend().isPresent()) {
+      switch (options.preferredBackend().get()) {
+        case DEFAULT:
+          modelSettings.setLlmPreferredBackend(LlmPreferredBackend.DEFAULT);
+          break;
+        case CPU:
+          modelSettings.setLlmPreferredBackend(LlmPreferredBackend.CPU);
+          break;
+        case GPU:
+          modelSettings.setLlmPreferredBackend(LlmPreferredBackend.GPU);
+          break;
+      }
     }
 
     return new LlmInference(context, STATS_TAG, modelSettings.build(), options.resultListener());
@@ -217,8 +237,8 @@ public class LlmInference implements AutoCloseable {
       /** Sets the model options to use for vision modality. */
       public abstract Builder setVisionModelOptions(VisionModelOptions visionModelOptions);
 
-      /** Sets the preferred backend to use for the LLM model. */
-      public abstract Builder setLlmPreferredBackend(LlmPreferredBackend llmPreferredBackend);
+      /** Sets the preferred backend to use for inference. */
+      public abstract Builder setPreferredBackend(Backend preferredBackend);
 
       abstract LlmInferenceOptions autoBuild();
 
@@ -256,8 +276,8 @@ public class LlmInference implements AutoCloseable {
     /** The model options to for vision modality. */
     public abstract Optional<VisionModelOptions> visionModelOptions();
 
-    /** Returns the preferred backend to use for the LLM model. */
-    public abstract Optional<LlmPreferredBackend> llmPreferredBackend();
+    /** Returns the preferred backend to use for inference. */
+    public abstract Optional<Backend> preferredBackend();
 
     /** Returns a new builder with the same values as this instance. */
     public abstract Builder toBuilder();
