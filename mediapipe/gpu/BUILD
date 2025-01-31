@@ -435,6 +435,7 @@ mediapipe_cc_test(
     timeout = "long",
     srcs = ["gpu_buffer_storage_cv_pixel_buffer_test.cc"],
     platforms = ["ios"],
+    test_host = None,
     deps = [
         ":gl_texture_buffer",
         ":gl_texture_util",
