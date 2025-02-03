@@ -169,7 +169,7 @@ TEST_F(VectorIntToTensorCalculatorTest, TestInt64) {
   const int64_t time = 1234;
   runner_->MutableInputs()
       ->Tag(kSingleIntTag)
-      .packets.push_back(MakePacket<int>(1LL << 31).At(Timestamp(time)));
+      .packets.push_back(MakePacket<int64_t>(1LL << 31).At(Timestamp(time)));
 
   EXPECT_TRUE(runner_->Run().ok());
 
@@ -183,7 +183,7 @@ TEST_F(VectorIntToTensorCalculatorTest, TestInt64) {
   EXPECT_EQ(output_tensor.dtype(), tf::DT_INT64);
   const auto vec = output_tensor.vec<int64_t>();
   // 1LL << 31 overflows the positive int and becomes negative.
-  EXPECT_EQ(static_cast<int>(1LL << 31), vec(0));
+  EXPECT_EQ(static_cast<int64_t>(1LL << 31), vec(0));
 }
 
 TEST_F(VectorIntToTensorCalculatorTest, TestUint8) {
