@@ -1393,6 +1393,7 @@ mediapipe_cc_test(
         ":gl_texture_util",
         ":gl_texture_view",
         ":gpu_buffer_format",
+        ":gpu_buffer_storage",
         ":gpu_buffer_storage_ahwb",
         ":gpu_test_base",
         "//mediapipe/framework:port",
@@ -1406,6 +1407,7 @@ mediapipe_cc_test(
         "//mediapipe/util:sync_wait",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/time",
+        "@com_google_googletest//:gtest",
     ],
 )
 
