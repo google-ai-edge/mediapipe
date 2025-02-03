@@ -110,8 +110,8 @@ const MAX_STORAGE_BUFFER_BINDING_SIZE_FOR_LLM = 524550144;
  * The LoRA model to be used for `generateResponse()` of a LLM Inference task.
  */
 export class LoraModel {
-  private static nextLoraModelId = 0;
-  readonly loraModelId: number;
+  private static nextLoraModelId = 1;
+  readonly loraModelId: number; // Always a positive number.
   constructor(readonly owner: LlmInference) {
     this.loraModelId = LoraModel.nextLoraModelId;
     LoraModel.nextLoraModelId++;
