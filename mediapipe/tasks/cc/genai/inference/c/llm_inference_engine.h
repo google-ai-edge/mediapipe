@@ -23,6 +23,10 @@
 #include <stdint.h>
 #endif
 
+#ifdef __EMSCRIPTEN__
+#include <functional>
+#endif  // __EMSCRIPTEN__
+
 #ifndef ODML_EXPORT
 #define ODML_EXPORT __attribute__((visibility("default")))
 #endif  // ODML_EXPORT
@@ -67,6 +71,21 @@ typedef enum {
 typedef struct {
   // Path to the model artifact.
   const char* model_path;
+
+#ifdef __EMSCRIPTEN__
+  // Function to read model file.
+  // The function returns a pointer to heap memory that contains the model file
+  // contents started from `offset` with `size`.
+  // Since the model file is hosted on JavaScript layer and this function copies
+  // the data to the heap memory, the `mode` instructs how the source model file
+  // data should be mainuplated:
+  //   0: Data will be kept in memory after read.
+  //   1: Data will not be accessed again and can be discarded.
+  //   2: All data has been used and can be discarded.
+  using ReadDataFn =
+      std::function<void*(uint64_t offset, uint64_t size, int mode)>;
+  ReadDataFn* read_model_fn;
+#endif  // __EMSCRIPTEN__
 
   // Path to the vision encoder to use for vision modality. Optional.
   const char* vision_encoder_path;
