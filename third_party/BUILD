@@ -329,13 +329,6 @@ cc_library(
 )
 
 android_library(
-    name = "androidx_annotation",
-    exports = [
-        "@maven//:androidx_annotation_annotation",
-    ],
-)
-
-android_library(
     name = "androidx_appcompat",
     exports = [
         "@maven//:androidx_appcompat_appcompat",
