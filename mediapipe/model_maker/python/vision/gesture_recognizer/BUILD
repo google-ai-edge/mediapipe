@@ -177,7 +177,6 @@ py_binary(
     name = "gesture_recognizer_demo",
     srcs = ["gesture_recognizer_demo.py"],
     data = [":testdata"],
-    python_version = "PY3",
     tags = ["requires-net:external"],
     deps = [
         ":gesture_recognizer_import",

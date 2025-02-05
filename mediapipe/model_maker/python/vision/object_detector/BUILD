@@ -37,7 +37,6 @@ py_binary(
     name = "object_detector_demo",
     srcs = ["object_detector_demo.py"],
     data = [":testdata"],
-    python_version = "PY3",
     tags = ["requires-net:external"],
     deps = [
         ":object_detector_import",

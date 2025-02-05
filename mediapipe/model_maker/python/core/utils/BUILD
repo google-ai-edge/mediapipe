@@ -104,7 +104,6 @@ py_test(
 py_library(
     name = "loss_functions",
     srcs = ["loss_functions.py"],
-    srcs_version = "PY3",
     deps = [
         ":file_util",
         ":model_util",
@@ -157,7 +156,6 @@ py_test(
 py_library(
     name = "quantization",
     srcs = ["quantization.py"],
-    srcs_version = "PY3",
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/model_maker/python/core/data:dataset",

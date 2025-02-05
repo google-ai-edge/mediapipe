@@ -43,7 +43,6 @@ py_test(
 py_library(
     name = "dataset",
     srcs = ["dataset.py"],
-    srcs_version = "PY3",
     deps = ["@model_maker_pip_deps_tensorflow//:pkg"],
 )
 
