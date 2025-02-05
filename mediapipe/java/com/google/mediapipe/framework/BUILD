@@ -60,8 +60,8 @@ android_library(
     deps = [
         ":android_core",
         "//mediapipe/java/com/google/mediapipe/framework/image",
-        "//third_party:androidx_legacy_support_v4",
         "@maven//:androidx_annotation_annotation",
+        "@maven//:androidx_legacy_legacy_support_v4",
         "@maven//:com_google_code_findbugs_jsr305",
         "@maven//:com_google_flogger_flogger",
         "@maven//:com_google_flogger_flogger_system_backend",

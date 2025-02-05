@@ -22,9 +22,9 @@ android_library(
     manifest = "AndroidManifest.xml",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party:androidx_legacy_support_v4",
         "//third_party:autovalue",
         "@maven//:androidx_annotation_annotation",
+        "@maven//:androidx_legacy_legacy_support_v4",
         "@maven//:com_google_guava_guava",
     ],
 )

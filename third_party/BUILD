@@ -329,13 +329,6 @@ cc_library(
 )
 
 android_library(
-    name = "androidx_legacy_support_v4",
-    exports = [
-        "@maven//:androidx_legacy_legacy_support_v4",
-    ],
-)
-
-android_library(
     name = "androidx_material",
     exports = [
         "@maven//:com_google_android_material_material",
