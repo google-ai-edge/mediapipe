@@ -329,13 +329,6 @@ cc_library(
 )
 
 android_library(
-    name = "androidx_constraint_layout",
-    exports = [
-        "@maven//:androidx_constraintlayout_constraintlayout",
-    ],
-)
-
-android_library(
     name = "androidx_core",
     exports = [
         "@maven//:androidx_core_core",

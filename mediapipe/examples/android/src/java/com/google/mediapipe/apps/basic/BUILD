@@ -26,10 +26,10 @@ android_library(
         "//mediapipe/java/com/google/mediapipe/components:android_components",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework",
         "//mediapipe/java/com/google/mediapipe/glutil",
-        "//third_party:androidx_constraint_layout",
         "//third_party:opencv",
         "@maven//:androidx_appcompat_appcompat",
         "@maven//:androidx_concurrent_concurrent_futures",
+        "@maven//:androidx_constraintlayout_constraintlayout",
         "@maven//:com_google_guava_guava",
     ],
 )
