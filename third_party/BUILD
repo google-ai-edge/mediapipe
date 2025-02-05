@@ -329,13 +329,6 @@ cc_library(
 )
 
 android_library(
-    name = "androidx_recyclerview",
-    exports = [
-        "@maven//:androidx_recyclerview_recyclerview",
-    ],
-)
-
-android_library(
     name = "camerax_camera2",
     exports = [
         "@maven//:androidx_camera_camera_camera2",
