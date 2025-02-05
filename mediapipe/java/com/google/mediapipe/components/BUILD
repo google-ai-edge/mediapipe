@@ -49,10 +49,10 @@ android_library(
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/java/com/google/mediapipe/glutil",
-        "//third_party:camerax_camera2",
-        "//third_party:camerax_core",
-        "//third_party:camerax_lifecycle",
         "@maven//:androidx_appcompat_appcompat",
+        "@maven//:androidx_camera_camera_camera2",
+        "@maven//:androidx_camera_camera_core",
+        "@maven//:androidx_camera_camera_lifecycle",
         "@maven//:androidx_concurrent_concurrent_futures",
         "@maven//:androidx_core_core",
         "@maven//:androidx_legacy_legacy_support_v4",

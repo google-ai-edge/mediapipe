@@ -328,27 +328,6 @@ cc_library(
     }),
 )
 
-android_library(
-    name = "camerax_camera2",
-    exports = [
-        "@maven//:androidx_camera_camera_camera2",
-    ],
-)
-
-android_library(
-    name = "camerax_core",
-    exports = [
-        "@maven//:androidx_camera_camera_core",
-    ],
-)
-
-android_library(
-    name = "camerax_lifecycle",
-    exports = [
-        "@maven//:androidx_camera_camera_lifecycle",
-    ],
-)
-
 java_plugin(
     name = "autovalue_plugin",
     processor_class = "com.google.auto.value.processor.AutoValueProcessor",
