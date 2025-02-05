@@ -329,13 +329,6 @@ cc_library(
 )
 
 android_library(
-    name = "androidx_material",
-    exports = [
-        "@maven//:com_google_android_material_material",
-    ],
-)
-
-android_library(
     name = "androidx_recyclerview",
     exports = [
         "@maven//:androidx_recyclerview_recyclerview",
