@@ -404,30 +404,6 @@ EOF
 
 def _mediapipe_tasks_aar(name, srcs, manifest, java_proto_lite_targets, native_library):
     """Builds medaipipe tasks AAR."""
-
-    # When "--define EXCLUDE_OPENCV_SO_LIB=1" is set in the build command,
-    # the OpenCV so libraries will be excluded from the AAR package to
-    # save the package size.
-    native.config_setting(
-        name = "exclude_opencv_so_lib",
-        define_values = {
-            "EXCLUDE_OPENCV_SO_LIB": "1",
-        },
-        visibility = ["//visibility:public"],
-    )
-
-    native.cc_library(
-        name = name + "_jni_opencv_cc_lib",
-        srcs = select({
-            "//mediapipe:android_arm64": ["@android_opencv//:libopencv_java4_so_arm64-v8a"],
-            "//mediapipe:android_arm": ["@android_opencv//:libopencv_java4_so_armeabi-v7a"],
-            "//mediapipe:android_x86": ["@android_opencv//:libopencv_java4_so_x86"],
-            "//mediapipe:android_x86_64": ["@android_opencv//:libopencv_java4_so_x86_64"],
-            "//conditions:default": [],
-        }),
-        alwayslink = 1,
-    )
-
     android_library(
         name = name + "_android_lib",
         srcs = srcs,
@@ -467,9 +443,9 @@ def _mediapipe_tasks_aar(name, srcs, manifest, java_proto_lite_targets, native_l
             "@maven//:com_google_guava_guava",
             "@com_google_protobuf//:protobuf_javalite",
         ] + select({
-            "//conditions:default": [":" + name + "_jni_opencv_cc_lib"],
+            "//conditions:default": ["//third_party:android_jni_opencv_cc_lib"],
             "//mediapipe/framework/port:disable_opencv": [],
-            "exclude_opencv_so_lib": [],
+            "//third_party:exclude_opencv_so_lib": [],
         }),
     )
 

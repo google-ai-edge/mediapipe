@@ -310,6 +310,29 @@ alias(
     }),
 )
 
+# When "--define EXCLUDE_OPENCV_SO_LIB=1" is set in the build command,
+# the OpenCV so libraries will be excluded from the AAR package to
+# save the package size.
+config_setting(
+    name = "exclude_opencv_so_lib",
+    define_values = {
+        "EXCLUDE_OPENCV_SO_LIB": "1",
+    },
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "android_jni_opencv_cc_lib",
+    srcs = select({
+        "//mediapipe:android_arm64": ["@android_opencv//:libopencv_java4_so_arm64-v8a"],
+        "//mediapipe:android_arm": ["@android_opencv//:libopencv_java4_so_armeabi-v7a"],
+        "//mediapipe:android_x86": ["@android_opencv//:libopencv_java4_so_x86"],
+        "//mediapipe:android_x86_64": ["@android_opencv//:libopencv_java4_so_x86_64"],
+        "//conditions:default": [],
+    }),
+    alwayslink = 1,
+)
+
 cc_library(
     name = "libffmpeg",
     visibility = ["//visibility:public"],

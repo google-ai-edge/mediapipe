@@ -61,17 +61,6 @@ def mediapipe_aar(
       assets_dir: path where the assets will the packaged.
     """
 
-    # When "--define EXCLUDE_OPENCV_SO_LIB=1" is set in the build command,
-    # the OpenCV so libraries will be excluded from the AAR package to
-    # save the package size.
-    native.config_setting(
-        name = "exclude_opencv_so_lib",
-        define_values = {
-            "EXCLUDE_OPENCV_SO_LIB": "1",
-        },
-        visibility = ["//visibility:public"],
-    )
-
     # When "--define ENABLE_STATS_LOGGING=1" is set in the build command,
     # the solution stats logging component will be added into the AAR.
     # This flag is for internal use only.
@@ -149,9 +138,9 @@ EOF
             "@maven//:com_google_guava_guava",
             "@maven//:androidx_lifecycle_lifecycle_common",
         ] + select({
-            "//conditions:default": [":" + name + "_jni_opencv_cc_lib"],
+            "//conditions:default": ["//third_party:android_jni_opencv_cc_lib"],
             "//mediapipe/framework/port:disable_opencv": [],
-            "exclude_opencv_so_lib": [],
+            "//third_party:exclude_opencv_so_lib": [],
         }) + select({
             "//conditions:default": [],
             "enable_stats_logging": [
@@ -190,18 +179,6 @@ def _mediapipe_jni(name, gen_libmediapipe, calculators = []):
     native.cc_library(
         name = name + "_cc_lib",
         srcs = [":libmediapipe_jni.so"],
-        alwayslink = 1,
-    )
-
-    native.cc_library(
-        name = name + "_opencv_cc_lib",
-        srcs = select({
-            "//mediapipe:android_arm64": ["@android_opencv//:libopencv_java4_so_arm64-v8a"],
-            "//mediapipe:android_arm": ["@android_opencv//:libopencv_java4_so_armeabi-v7a"],
-            "//mediapipe:android_x86": ["@android_opencv//:libopencv_java4_so_x86"],
-            "//mediapipe:android_x86_64": ["@android_opencv//:libopencv_java4_so_x86_64"],
-            "//conditions:default": [],
-        }),
         alwayslink = 1,
     )
 
