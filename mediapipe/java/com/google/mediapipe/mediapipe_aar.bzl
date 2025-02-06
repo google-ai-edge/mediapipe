@@ -267,16 +267,21 @@ def mediapipe_java_proto_src_extractor(target, src_out, name = ""):
     Returns:
       The output java proto src code path.
     """
-
     if not name:
         name = target.split(":")[-1] + "_proto_java_src_extractor"
-    src_jar = target.replace("_java_proto_lite", "_proto-lite-src.jar").replace(":", "/").replace("//", "")
+
     native.genrule(
-        name = name + "_proto_java_src_extractor",
+        name = name,
         srcs = [target],
         outs = [src_out],
-        cmd = "unzip $(GENDIR)/" + src_jar + " -d $(GENDIR) && mv $(GENDIR)/" +
-              src_out + " $$(dirname $(location " + src_out + "))",
+        cmd = """
+        for FILE in $(SRCS); do
+          if [[ "$$FILE" == *"_proto-lite-src.jar" ]]; then
+            unzip -p "$$FILE" {0} > $@
+            break
+          fi
+        done
+        """.format(src_out),
     )
     return src_out
 
