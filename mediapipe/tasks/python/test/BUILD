@@ -22,7 +22,6 @@ py_library(
     name = "test_utils",
     testonly = True,
     srcs = ["test_utils.py"],
-    srcs_version = "PY3",
     visibility = [
         "//mediapipe/model_maker/python:__subpackages__",
         "//mediapipe/tasks:internal",

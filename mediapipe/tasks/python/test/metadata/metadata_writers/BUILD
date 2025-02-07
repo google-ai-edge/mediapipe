@@ -13,8 +13,6 @@ py_test(
     data = [
         "//mediapipe/tasks/testdata/metadata:data_files",
     ],
-    python_version = "PY3",
-    srcs_version = "PY3",
     deps = [
         "//mediapipe/tasks/metadata:metadata_schema_py",
         "//mediapipe/tasks/metadata:schema_py",

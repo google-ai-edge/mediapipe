@@ -28,7 +28,6 @@ py_library(
 py_test(
     name = "llm_bundler_test",
     srcs = ["llm_bundler_test.py"],
-    srcs_version = "PY3",
     deps = [
         ":llm_bundler",
         "@com_google_sentencepiece//:sentencepiece_model_py_pb2",

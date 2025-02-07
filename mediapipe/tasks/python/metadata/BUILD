@@ -19,7 +19,6 @@ py_library(
         ":metadata_parser_py",
     ],
     data = ["//mediapipe/tasks/metadata:metadata_schema.fbs"],
-    srcs_version = "PY3",
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/tasks/cc/metadata/python:_pywrap_metadata_version",
