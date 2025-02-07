@@ -175,12 +175,23 @@ absl::Status GlContext::DedicatedThread::Run(GlStatusFunction gl_func) {
   }
   bool done = false;  // Guarded by mutex_ after initialization.
   absl::Status status;
+#ifdef MEDIAPIPE_HAS_GOOGLE_THREAD
+  PutJob(
+      util::functional::WithCurrentContext([this, gl_func, &done, &status]() {
+        status = gl_func();
+        absl::MutexLock lock(&mutex_);
+        done = true;
+        gl_job_done_cv_.SignalAll();
+        ENDO_EVENT("Done signal");
+      }));
+#else
   PutJob([this, gl_func, &done, &status]() {
     status = gl_func();
     absl::MutexLock lock(&mutex_);
     done = true;
     gl_job_done_cv_.SignalAll();
   });
+#endif
 
   absl::MutexLock lock(&mutex_);
   while (!done) {
@@ -308,7 +319,12 @@ absl::Status GlContext::GetGlExtensionsCompat() {
 absl::Status GlContext::FinishInitialization(bool create_thread) {
   if (create_thread) {
     thread_ = absl::make_unique<GlContext::DedicatedThread>();
+#ifdef MEDIAPIPE_HAS_GOOGLE_THREAD
+    MP_RETURN_IF_ERROR(thread_->Run(util::functional::WithCurrentContext(
+        [this] { return EnterContext(nullptr); })));
+#else
     MP_RETURN_IF_ERROR(thread_->Run([this] { return EnterContext(nullptr); }));
+#endif
   }
 
   return Run([this]() -> absl::Status {
@@ -412,10 +428,18 @@ GlContext::~GlContext() {
   };
 
   if (thread_) {
+#ifdef MEDIAPIPE_HAS_GOOGLE_THREAD
+    auto status = thread_->Run(
+        util::functional::WithCurrentContext([this, clear_attachments] {
+          clear_attachments();
+          return ExitContext(nullptr);
+        }));
+#else
     auto status = thread_->Run([this, clear_attachments] {
       clear_attachments();
       return ExitContext(nullptr);
     });
+#endif
     ABSL_LOG_IF(ERROR, !status.ok())
         << "Failed to deactivate context on thread: " << status;
     if (thread_->IsCurrentThread()) {
@@ -466,11 +490,20 @@ absl::Status GlContext::Run(GlStatusFunction gl_func, int node_id,
   }
   if (thread_) {
     bool had_gl_errors = false;
+#ifdef MEDIAPIPE_HAS_GOOGLE_THREAD
+    status = thread_->Run(
+        util::functional::WithCurrentContext([this, gl_func, &had_gl_errors] {
+          auto status = gl_func();
+          had_gl_errors = CheckForGlErrors();
+          return status;
+        }));
+#else
     status = thread_->Run([this, gl_func, &had_gl_errors] {
       auto status = gl_func();
       had_gl_errors = CheckForGlErrors();
       return status;
     });
+#endif
     LogUncheckedGlErrors(had_gl_errors);
   } else {
     status = SwitchContextAndRun(gl_func);
@@ -482,10 +515,18 @@ void GlContext::RunWithoutWaiting(GlVoidFunction gl_func) {
   if (thread_) {
     // Add ref to keep the context alive while the task is executing.
     auto context = shared_from_this();
+#ifdef MEDIAPIPE_HAS_GOOGLE_THREAD
+    thread_->RunWithoutWaiting(
+        util::functional::WithCurrentContext([this, context, gl_func] {
+          gl_func();
+          LogUncheckedGlErrors(CheckForGlErrors());
+        }));
+#else
     thread_->RunWithoutWaiting([this, context, gl_func] {
       gl_func();
       LogUncheckedGlErrors(CheckForGlErrors());
     });
+#endif
   } else {
     // TODO: queue up task instead.
     auto status = SwitchContextAndRun([gl_func] {
