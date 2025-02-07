@@ -247,18 +247,20 @@ def mediapipe_java_proto_src_extractor(target, src_out, name = ""):
     if not name:
         name = target.split(":")[-1] + "_proto_java_src_extractor"
 
+    src_jar = target.replace("_java_proto_lite", "_proto-lite-src.jar").replace(":", "/").replace("//", "")
+
     native.genrule(
         name = name,
         srcs = [target],
         outs = [src_out],
         cmd = """
         for FILE in $(SRCS); do
-          if [[ "$$FILE" == *"_proto-lite-src.jar" ]]; then
-            unzip -p "$$FILE" {0} > $@
+          if [[ "$$FILE" == *{0} ]]; then
+            unzip -p "$$FILE" {1} > $@
             break
           fi
         done
-        """.format(src_out),
+        """.format(src_jar, src_out),
     )
     return src_out
 
