@@ -57,19 +57,6 @@ android_library(
     ],
 )
 
-android_library(
-    name = "llm",
-    javacopts = [
-        "-Xep:AndroidJdkLibsChecker:OFF",
-    ],
-    manifest = "AndroidManifest.xml",
-    exports = [
-        ":llm_java",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:llm",
-    ],
-    deps = ["@maven//:com_google_guava_guava"],
-)
-
 filegroup(
     name = "llm_java_srcs",
     srcs = ["LlmTaskRunner.java"],
