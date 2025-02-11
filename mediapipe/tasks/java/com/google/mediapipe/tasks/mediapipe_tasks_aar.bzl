@@ -437,6 +437,7 @@ def _mediapipe_tasks_aar(name, srcs, manifest, java_proto_lite_targets, native_l
         "@maven//:androidx_annotation_annotation",
         "@maven//:com_google_guava_guava",
         "@com_google_protobuf//:protobuf_javalite",
+        "//third_party:any_java_proto",
     ]
 
     deps += select({

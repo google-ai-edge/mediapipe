@@ -466,7 +466,9 @@ mediapipe_tasks_vision_aar(
     name = "tasks_vision",
     srcs = glob(
         ["**/*.java"],
-        exclude = ["imagegenerator/**"],
+        exclude = [
+            "imagegenerator/**",
+        ],
     ),
     native_library = ":libmediapipe_tasks_vision_jni_lib",
 )
