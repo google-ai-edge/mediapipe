@@ -14,6 +14,8 @@
 
 package com.google.mediapipe.tasks.audio.core;
 
+import static java.lang.Math.max;
+
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
@@ -29,6 +31,10 @@ import java.util.Map;
 public class BaseAudioTaskApi implements AutoCloseable {
   private static final long MICROSECONDS_PER_MILLISECOND = 1000;
   private static final long PRESTREAM_TIMESTAMP = Long.MIN_VALUE + 2;
+  private static final int BUFFER_SIZE_MULTIPLEIER = 2;
+
+  // Note: the same as Float.BYTES but supported in older version.
+  private static final int FLOAT_BYTES = Float.SIZE / Byte.SIZE;
 
   private final TaskRunner runner;
   private final RunningMode runningMode;
@@ -192,11 +198,9 @@ public class BaseAudioTaskApi implements AutoCloseable {
       throw new IllegalStateException(
           String.format("AudioRecord.getMinBufferSize failed. Returned: %d", bufferSizeInBytes));
     }
-    int bufferSizeMultiplier = 2;
-    int modelRequiredBufferSize = requiredInputBufferSize * Float.BYTES * bufferSizeMultiplier;
-    if (bufferSizeInBytes < modelRequiredBufferSize) {
-      bufferSizeInBytes = modelRequiredBufferSize;
-    }
+    int modelRequiredBufferSize = requiredInputBufferSize * FLOAT_BYTES * BUFFER_SIZE_MULTIPLEIER;
+    bufferSizeInBytes = max(bufferSizeInBytes, modelRequiredBufferSize);
+
     AudioRecord audioRecord =
         new AudioRecord(
             // including MIC, UNPROCESSED, and CAMCORDER.
