@@ -150,7 +150,8 @@ void ProcessAsyncResponse(void* callback_ref,
   jclass class_ref = env->GetObjectClass(object_ref);
   auto& class_registry = mediapipe::android::ClassRegistry::GetInstance();
   std::string method_name = class_registry.GetMethodName(
-      "com/google/mediapipe/tasks/core/LlmTaskRunner", "onAsyncResponse");
+      "com/google/mediapipe/tasks/genai/llminference/LlmTaskRunner",
+      "onAsyncResponse");
   jmethodID method_id =
       env->GetMethodID(class_ref, method_name.c_str(), "([B)V");
 

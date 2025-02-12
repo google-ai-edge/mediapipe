@@ -36,6 +36,6 @@ cc_library(
 
 mediapipe_tasks_genai_aar(
     name = "tasks_genai",
-    srcs = glob(["**/*.java"]) + ["//mediapipe/tasks/java/com/google/mediapipe/tasks/core:llm_java_srcs"],
+    srcs = glob(["**/*.java"]),
     native_library = ":libllm_inference_engine_jni_lib",
 )

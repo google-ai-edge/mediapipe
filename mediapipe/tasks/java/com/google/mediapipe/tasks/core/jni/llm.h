@@ -22,10 +22,10 @@ extern "C" {
 #endif  // __cplusplus
 
 #define JNI_METHOD(METHOD_NAME) \
-  Java_com_google_mediapipe_tasks_core_LlmTaskRunner_##METHOD_NAME
+  Java_com_google_mediapipe_tasks_genai_llminference_LlmTaskRunner_##METHOD_NAME
 
 /*
- * Class:     com_google_mediapipe_tasks_core_LlmTaskRunner
+ * Class:     com_google_mediapipe_tasks_genai_llminference_LlmTaskRunner
  * Method:    nativeCreateEngine
  * Signature: ([B)J
  */
@@ -33,14 +33,14 @@ JNIEXPORT jlong JNICALL JNI_METHOD(nativeCreateEngine)(JNIEnv *, jclass,
                                                        jbyteArray);
 
 /*
- * Class:     com_google_mediapipe_tasks_core_LlmTaskRunner
+ * Class:     com_google_mediapipe_tasks_genai_llminference_LlmTaskRunner
  * Method:    nativeDeleteEngine
  * Signature: (J)V
  */
 JNIEXPORT void JNICALL JNI_METHOD(nativeDeleteEngine)(JNIEnv *, jclass, jlong);
 
 /*
- * Class:     com_google_mediapipe_tasks_core_LlmTaskRunner
+ * Class:     com_google_mediapipe_tasks_genai_llminference_LlmTaskRunner
  * Method:    nativeCreateSession
  * Signature: ([BJL)J
  */
@@ -48,21 +48,21 @@ JNIEXPORT jlong JNICALL JNI_METHOD(nativeCreateSession)(JNIEnv *, jclass,
                                                         jbyteArray, jlong);
 
 /*
- * Class:     com_google_mediapipe_tasks_core_LlmTaskRunner
+ * Class:     com_google_mediapipe_tasks_genai_llminference_LlmTaskRunner
  * Method:    nativeCloneSession
  * Signature: (J)J
  */
 JNIEXPORT jlong JNICALL JNI_METHOD(nativeCloneSession)(JNIEnv *, jclass, jlong);
 
 /*
- * Class:     com_google_mediapipe_tasks_core_LlmTaskRunner
+ * Class:     com_google_mediapipe_tasks_genai_llminference_LlmTaskRunner
  * Method:    nativeDeleteSession
  * Signature: (J)V
  */
 JNIEXPORT void JNICALL JNI_METHOD(nativeDeleteSession)(JNIEnv *, jclass, jlong);
 
 /*
- * Class:     com_google_mediapipe_tasks_core_LlmTaskRunner
+ * Class:     com_google_mediapipe_tasks_genai_llminference_LlmTaskRunner
  * Method:    nativeAddQueryChunk
  * Signature: (JLjava/lang/String;)V
  */
@@ -70,7 +70,7 @@ JNIEXPORT void JNICALL JNI_METHOD(nativeAddQueryChunk)(JNIEnv *, jclass, jlong,
                                                        jstring);
 
 /*
- * Class:     com_google_mediapipe_tasks_core_LlmTaskRunner
+ * Class:     com_google_mediapipe_tasks_genai_llminference_LlmTaskRunner
  * Method:    nativeAddImage
  * Signature: (JLL)V
  */
@@ -78,7 +78,7 @@ JNIEXPORT void JNICALL JNI_METHOD(nativeAddImage)(JNIEnv *, jclass, jlong,
                                                   jlong);
 
 /*
- * Class:     com_google_mediapipe_tasks_core_LlmTaskRunner
+ * Class:     com_google_mediapipe_tasks_genai_llminference_LlmTaskRunner
  * Method:    nativePredictSync
  * Signature: (JL)[B
  */
@@ -86,7 +86,7 @@ JNIEXPORT jbyteArray JNICALL JNI_METHOD(nativePredictSync)(JNIEnv *, jclass,
                                                            jlong);
 
 /*
- * Class:     com_google_mediapipe_tasks_core_LlmTaskRunner
+ * Class:     com_google_mediapipe_tasks_genai_llminference_LlmTaskRunner
  * Method:    nativeRegisterCallback
  * Signature: (Ljava/lang/Object;)Ljava/lang/Object
  */
@@ -94,7 +94,7 @@ JNIEXPORT jobject JNICALL JNI_METHOD(nativeRegisterCallback)(JNIEnv *, jclass,
                                                              jobject);
 
 /*
- * Class:     com_google_mediapipe_tasks_core_LlmTaskRunner
+ * Class:     com_google_mediapipe_tasks_genai_llminference_LlmTaskRunner
  * Method:    nativeRemoveCallback
  * Signature: (Ljava/lang/Object;)V
  */
@@ -102,7 +102,7 @@ JNIEXPORT void JNICALL JNI_METHOD(nativeRemoveCallback)(JNIEnv *, jclass,
                                                         jobject);
 
 /*
- * Class:     com_google_mediapipe_tasks_core_LlmTaskRunner
+ * Class:     com_google_mediapipe_tasks_genai_llminference_LlmTaskRunner
  * Method:    nativePredictAsync
  * Signature: (JLjava/lang/Object;)V
  */
@@ -110,7 +110,7 @@ JNIEXPORT void JNICALL JNI_METHOD(nativePredictAsync)(JNIEnv *, jclass, jlong,
                                                       jobject);
 
 /*
- * Class:     com_google_mediapipe_tasks_core_LlmTaskRunner
+ * Class:     com_google_mediapipe_tasks_genai_llminference_LlmTaskRunner
  * Method:    nativeSizeInTokens
  * Signature: (JLjava/lang/String;)I
  */
@@ -118,7 +118,7 @@ JNIEXPORT jint JNICALL JNI_METHOD(nativeSizeInTokens)(JNIEnv *, jclass, jlong,
                                                       jstring);
 
 /*
- * Class:     com_google_mediapipe_tasks_core_LlmTaskRunner
+ * Class:     com_google_mediapipe_tasks_genai_llminference_LlmTaskRunner
  * Method:    nativeCreateSkBitmap
  * Signature: (Ljava/nio/ByteBuffer;IIII)J
  */
@@ -127,7 +127,7 @@ JNIEXPORT jlong JNICALL JNI_METHOD(nativeCreateSkBitmap)(JNIEnv *, jclass,
                                                          jint, jint);
 
 /*
- * Class:     com_google_mediapipe_tasks_core_LlmTaskRunner
+ * Class:     com_google_mediapipe_tasks_genai_llminference_LlmTaskRunner
  * Method:    nativeDeleteSkBitmap
  * Signature: (J)V
  */

@@ -32,10 +32,7 @@ android_library(
 
 android_library(
     name = "core_java",
-    srcs = glob(
-        ["*.java"],
-        exclude = ["LlmTaskRunner.java"],
-    ),
+    srcs = glob(["*.java"]),
     javacopts = [
         "-Xep:AndroidJdkLibsChecker:OFF",
     ],
@@ -57,29 +54,6 @@ android_library(
     ],
 )
 
-filegroup(
-    name = "llm_java_srcs",
-    srcs = ["LlmTaskRunner.java"],
-)
-
-android_library(
-    name = "llm_java",
-    srcs = [":llm_java_srcs"],
-    javacopts = [
-        "-Xep:AndroidJdkLibsChecker:OFF",
-    ],
-    manifest = "AndroidManifest.xml",
-    deps = [
-        ":core_java",
-        ":logging",
-        "//mediapipe/java/com/google/mediapipe/framework/image",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto:llm_options_java_proto_lite",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto:llm_response_context_java_proto_lite",
-        "//third_party/java/protobuf:protobuf_lite",
-        "@maven//:com_google_guava_guava",
-    ],
-)
-
 android_library(
     name = "logging",
     srcs = glob(
@@ -93,10 +67,7 @@ android_library(
 
 mediapipe_tasks_core_aar(
     name = "tasks_core",
-    srcs = glob(
-        ["**/*.java"],
-        exclude = ["LlmTaskRunner.java"],
-    ) + [
+    srcs = glob(["**/*.java"]) + [
         "//mediapipe/java/com/google/mediapipe/framework/image:java_src",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:java_src",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/processors:java_src",

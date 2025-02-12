@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.mediapipe.tasks.core;
+package com.google.mediapipe.tasks.genai.llminference;
 
 import android.content.Context;
 import android.graphics.Bitmap;

@@ -5,7 +5,6 @@ import static com.google.mediapipe.tasks.genai.llminference.LlmInferenceSession.
 import android.content.Context;
 import com.google.auto.value.AutoValue;
 import com.google.mediapipe.tasks.core.ErrorListener;
-import com.google.mediapipe.tasks.core.LlmTaskRunner;
 import com.google.mediapipe.tasks.core.OutputHandler.ProgressListener;
 import com.google.mediapipe.tasks.core.TaskOptions;
 import com.google.mediapipe.tasks.core.jni.proto.LlmOptionsProto.LlmModelSettings;

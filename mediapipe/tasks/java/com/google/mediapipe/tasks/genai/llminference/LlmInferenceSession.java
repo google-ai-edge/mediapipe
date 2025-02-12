@@ -2,9 +2,8 @@ package com.google.mediapipe.tasks.genai.llminference;
 
 import com.google.auto.value.AutoValue;
 import com.google.mediapipe.framework.image.MPImage;
-import com.google.mediapipe.tasks.core.LlmTaskRunner;
-import com.google.mediapipe.tasks.core.LlmTaskRunner.LlmSession;
 import com.google.mediapipe.tasks.core.jni.proto.LlmOptionsProto.LlmSessionConfig;
+import com.google.mediapipe.tasks.genai.llminference.LlmTaskRunner.LlmSession;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
