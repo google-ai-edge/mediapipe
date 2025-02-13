@@ -28,7 +28,7 @@ public abstract class ObjectDetectorResult extends ObjectDetectionResult {
    * Creates an {@link ObjectDetectorResult} instance from a list of {@link Detection} protobuf
    * messages.
    *
-   * @param detectionList a list of {@link DetectionOuterClass.Detection} protobuf messages.
+   * @param detectionList a list of {@link DetectionProto.Detection} protobuf messages.
    * @param timestampMs a timestamp for this result.
    */
   public static ObjectDetectorResult create(List<Detection> detectionList, long timestampMs) {
