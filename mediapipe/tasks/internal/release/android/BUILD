@@ -1,4 +1,5 @@
-load("//mediapipe/tasks/internal/release/android:maven_repo.bzl", "VERSION", "maven_artifact", "maven_repository")
+load("//mediapipe:version.bzl", "MEDIAPIPE_FULL_VERSION")
+load("//mediapipe/tasks/internal/release/android:maven_repo.bzl", "maven_artifact", "maven_repository")
 
 sh_binary(
     name = "maven_artifact",
@@ -23,6 +24,7 @@ maven_artifact(
     lib_description = "The MediaPipe Tasks core components.",
     lib_name = "MediaPipe Taksks Core",
     lib_url = "https://mediapipe.dev/",
+    version = MEDIAPIPE_FULL_VERSION,
 )
 
 maven_artifact(
@@ -33,7 +35,7 @@ maven_artifact(
         "com.google.auto.value:auto-value-annotations:1.8.1",
         "com.google.auto.value:auto-value:1.8.1",
         "com.google.guava:guava:27.0.1-android",
-        "com.google.mediapipe:tasks-core:" + VERSION,
+        "com.google.mediapipe:tasks-core:" + MEDIAPIPE_FULL_VERSION,
     ],
     artifact_id = "tasks-audio",
     group_id = "com.google.mediapipe",
@@ -41,6 +43,7 @@ maven_artifact(
     lib_description = "The MediaPipe Tasks Audio APIs.",
     lib_name = "MediaPipe Tasks Audio",
     lib_url = "https://mediapipe.dev/",
+    version = MEDIAPIPE_FULL_VERSION,
 )
 
 maven_artifact(
@@ -51,7 +54,7 @@ maven_artifact(
         "com.google.auto.value:auto-value-annotations:1.8.1",
         "com.google.auto.value:auto-value:1.8.1",
         "com.google.guava:guava:27.0.1-android",
-        "com.google.mediapipe:tasks-core:" + VERSION,
+        "com.google.mediapipe:tasks-core:" + MEDIAPIPE_FULL_VERSION,
     ],
     artifact_id = "tasks-vision",
     group_id = "com.google.mediapipe",
@@ -59,6 +62,7 @@ maven_artifact(
     lib_description = "The MediaPipe Tasks Vision APIs.",
     lib_name = "MediaPipe Tasks Vision",
     lib_url = "https://mediapipe.dev/",
+    version = MEDIAPIPE_FULL_VERSION,
 )
 
 maven_artifact(
@@ -69,7 +73,7 @@ maven_artifact(
         "com.google.auto.value:auto-value-annotations:1.8.1",
         "com.google.auto.value:auto-value:1.8.1",
         "com.google.guava:guava:27.0.1-android",
-        "com.google.mediapipe:tasks-core:" + VERSION,
+        "com.google.mediapipe:tasks-core:" + MEDIAPIPE_FULL_VERSION,
     ],
     artifact_id = "tasks-text",
     group_id = "com.google.mediapipe",
@@ -77,6 +81,7 @@ maven_artifact(
     lib_description = "The MediaPipe Tasks Text APIs.",
     lib_name = "MediaPipe Tasks Text",
     lib_url = "https://mediapipe.dev/",
+    version = MEDIAPIPE_FULL_VERSION,
 )
 
 maven_artifact(
@@ -87,7 +92,7 @@ maven_artifact(
         "com.google.auto.value:auto-value-annotations:1.8.1",
         "com.google.auto.value:auto-value:1.8.1",
         "com.google.guava:guava:27.0.1-android",
-        "com.google.mediapipe:tasks-core:" + VERSION,
+        "com.google.mediapipe:tasks-core:" + MEDIAPIPE_FULL_VERSION,
     ],
     artifact_id = "tasks-vision-image-generator",
     group_id = "com.google.mediapipe",
@@ -95,6 +100,7 @@ maven_artifact(
     lib_description = "The MediaPipe Tasks Vision Image Generator Android API.",
     lib_name = "MediaPipe Tasks Vision Image Generator",
     lib_url = "https://mediapipe.dev/",
+    version = MEDIAPIPE_FULL_VERSION,
 )
 
 maven_artifact(
@@ -105,7 +111,7 @@ maven_artifact(
         "com.google.auto.value:auto-value-annotations:1.8.1",
         "com.google.auto.value:auto-value:1.8.1",
         "com.google.guava:guava:27.0.1-android",
-        "com.google.mediapipe:tasks-core:" + VERSION,
+        "com.google.mediapipe:tasks-core:" + MEDIAPIPE_FULL_VERSION,
     ],
     artifact_id = "tasks-genai",
     group_id = "com.google.mediapipe",
@@ -113,6 +119,7 @@ maven_artifact(
     lib_description = "The MediaPipe Tasks GenAI Android API.",
     lib_name = "MediaPipe Tasks Text GenAI",
     lib_url = "https://mediapipe.dev/",
+    version = MEDIAPIPE_FULL_VERSION,
 )
 
 maven_repository(

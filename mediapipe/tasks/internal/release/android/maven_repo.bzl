@@ -2,7 +2,6 @@
 
 # Release version and timestamp
 LAST_UPDATED = "yyyymmdd000000"
-VERSION = "0.0.0-alpha-0"
 
 _pom_tmpl = "\n".join([
     '<?xml version="1.0" encoding="UTF-8"?>',
@@ -162,7 +161,7 @@ maven_artifact = rule(
         ),
         "group_id": attr.string(mandatory = True),
         "artifact_id": attr.string(mandatory = True),
-        "version": attr.string(default = VERSION),
+        "version": attr.string(mandatory = True),
         "last_updated": attr.string(default = LAST_UPDATED),
         "artifact_deps": attr.string_list(),
         "lib_name": attr.string(default = ""),
