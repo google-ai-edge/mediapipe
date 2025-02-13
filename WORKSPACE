@@ -469,9 +469,9 @@ http_archive(
     # TODO: Fix this in AudioTools directly
     patches = ["@//third_party:com_google_audio_tools_fixes.diff"],
     repo_mapping = {"@com_github_glog_glog": "@com_github_glog_glog_no_gflags"},
-    sha256 = "fe346e1aee4f5069c4cbccb88706a9a2b2b4cf98aeb91ec1319be77e07dd7435",
-    strip_prefix = "multichannel-audio-tools-1f6b1319f13282eda6ff1317be13de67f4723860",
-    urls = ["https://github.com/google/multichannel-audio-tools/archive/1f6b1319f13282eda6ff1317be13de67f4723860.zip"],
+    sha256 = "0856be6971c636d62c9eaaf8fca3c8aa85b9be55ac5cf124d05d1dfe4a77eaf1",
+    strip_prefix = "multichannel-audio-tools-9aebbcabc1b5ed3827755f44339d8a0d572e16ec",
+    urls = ["https://github.com/google/multichannel-audio-tools/archive/9aebbcabc1b5ed3827755f44339d8a0d572e16ec.zip"],
 )
 
 http_archive(

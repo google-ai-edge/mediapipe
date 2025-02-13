@@ -33,6 +33,7 @@ index 56e45d2..37ab6e9 100644
 +#include <cstdint>
  #include <iostream>
  #include <cmath>
+ #include <limits>
  #include <string>
 diff --git a/audio/dsp/spectrogram/spectrogram.cc b/audio/dsp/spectrogram/spectrogram.cc
 index e52280d..13c45d0 100644
