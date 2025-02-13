@@ -25,7 +25,7 @@ cc_binary(
         "-fvisibility=hidden",
     ],
     linkshared = 1,
-    deps = ["//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:llm"],
+    deps = ["//mediapipe/tasks/java/com/google/mediapipe/tasks/genai/llminference/jni:llm"],
 )
 
 cc_library(

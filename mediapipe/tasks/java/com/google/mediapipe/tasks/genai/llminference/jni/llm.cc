@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/llm.h"
+#include "mediapipe/tasks/java/com/google/mediapipe/tasks/genai/llminference/jni/llm.h"
 
 #include <jni.h>
 
