@@ -15,9 +15,9 @@ limitations under the License.
 
 syntax = "proto3";
 
-package mediapipe.tasks.core.jni;
+package mediapipe.tasks.genai.llminference.jni;
 
-option java_package = "com.google.mediapipe.tasks.core.jni.proto";
+option java_package = "com.google.mediapipe.tasks.genai.llminference.jni.proto";
 option java_outer_classname = "LlmOptionsProto";
 
 // Configurable parameters for creating an LLM session.

@@ -94,8 +94,8 @@ _TEXT_TASKS_JAVA_PROTO_LITE_TARGETS = [
 ]
 
 _GENAI_TASKS_JAVA_PROTO_LITE_TARGETS = [
-    "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto:llm_options_java_proto_lite",
-    "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto:llm_response_context_java_proto_lite",
+    "//mediapipe/tasks/java/com/google/mediapipe/tasks/genai/llminference/jni/proto:llm_options_java_proto_lite",
+    "//mediapipe/tasks/java/com/google/mediapipe/tasks/genai/llminference/jni/proto:llm_response_context_java_proto_lite",
 ]
 
 def mediapipe_tasks_core_aar(name, srcs, manifest):
@@ -385,13 +385,13 @@ EOF
 
     mediapipe_genai_java_proto_srcs = []
     mediapipe_genai_java_proto_srcs.append(mediapipe_java_proto_src_extractor(
-        target = "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto:llm_options_java_proto_lite",
-        src_out = "com/google/mediapipe/tasks/core/jni/proto/LlmOptionsProto.java",
+        target = "//mediapipe/tasks/java/com/google/mediapipe/tasks/genai/llminference/jni/proto:llm_options_java_proto_lite",
+        src_out = "com/google/mediapipe/tasks/genai/llminference/jni/proto/LlmOptionsProto.java",
     ))
 
     mediapipe_genai_java_proto_srcs.append(mediapipe_java_proto_src_extractor(
-        target = "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto:llm_response_context_java_proto_lite",
-        src_out = "com/google/mediapipe/tasks/core/jni/proto/LlmResponseContextProto.java",
+        target = "//mediapipe/tasks/java/com/google/mediapipe/tasks/genai/llminference/jni/proto:llm_response_context_java_proto_lite",
+        src_out = "com/google/mediapipe/tasks/genai/llminference/jni/proto/LlmResponseContextProto.java",
     ))
 
     _mediapipe_tasks_aar(

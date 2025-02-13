@@ -31,14 +31,17 @@
 #include "mediapipe/java/com/google/mediapipe/framework/jni/class_registry.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/jni_util.h"
 #include "mediapipe/tasks/cc/genai/inference/c/llm_inference_engine.h"
-#include "mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto/llm_options.pb.h"
-#include "mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto/llm_response_context.pb.h"
+#include "mediapipe/tasks/java/com/google/mediapipe/tasks/genai/llminference/jni/proto/llm_options.pb.h"
+#include "mediapipe/tasks/java/com/google/mediapipe/tasks/genai/llminference/jni/proto/llm_response_context.pb.h"
 
 namespace {
 
-using LlmModelSettingsProto = mediapipe::tasks::core::jni::LlmModelSettings;
-using LlmSessionConfigProto = mediapipe::tasks::core::jni::LlmSessionConfig;
-using LlmResponseContextProto = mediapipe::tasks::core::jni::LlmResponseContext;
+using LlmModelSettingsProto =
+    mediapipe::tasks::genai::llminference::jni::LlmModelSettings;
+using LlmSessionConfigProto =
+    mediapipe::tasks::genai::llminference::jni::LlmSessionConfig;
+using LlmResponseContextProto =
+    mediapipe::tasks::genai::llminference::jni::LlmResponseContext;
 using mediapipe::android::JStringToStdString;
 using mediapipe::android::ThrowIfError;
 using mediapipe::java::GetJNIEnv;
