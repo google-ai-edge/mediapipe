@@ -1,8 +1,5 @@
 """Starlark rule to create a maven repository from a single artifact."""
 
-# Release version and timestamp
-LAST_UPDATED = "yyyymmdd000000"
-
 _pom_tmpl = "\n".join([
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"',
@@ -60,7 +57,7 @@ _metadata_tmpl = "\n".join([
     "    <versions>",
     "      <version>{version}</version>",
     "    </versions>",
-    "  <lastUpdated>{last_updated}</lastUpdated>",
+    "    {last_updated_xml}",
     "  </versioning>",
     "</metadata>",
     "",
@@ -104,11 +101,18 @@ def _create_pom_string(ctx):
 
 def _create_metadata_string(ctx):
     """Returns the string contents of maven-metadata.xml for the group."""
+
+    # Include the last_updated string only if provided.
+    last_updated_xml = ""
+    last_updated = ctx.var.get("MAVEN_ARTIFACT_LAST_UPDATED", "")
+    if last_updated != "":
+        last_updated_xml = "<lastUpdated>%s</lastUpdated>" % last_updated
+
     return _metadata_tmpl.format(
         group_id = ctx.attr.group_id,
         artifact_id = ctx.attr.artifact_id,
         version = ctx.attr.version,
-        last_updated = ctx.attr.last_updated,
+        last_updated_xml = last_updated_xml,
     )
 
 def _maven_artifact_impl(ctx):
@@ -162,7 +166,7 @@ maven_artifact = rule(
         "group_id": attr.string(mandatory = True),
         "artifact_id": attr.string(mandatory = True),
         "version": attr.string(mandatory = True),
-        "last_updated": attr.string(default = LAST_UPDATED),
+        "last_updated": attr.string(mandatory = True),
         "artifact_deps": attr.string_list(),
         "lib_name": attr.string(default = ""),
         "lib_description": attr.string(default = ""),

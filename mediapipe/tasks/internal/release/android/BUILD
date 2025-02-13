@@ -1,6 +1,13 @@
 load("//mediapipe:version.bzl", "MEDIAPIPE_FULL_VERSION")
 load("//mediapipe/tasks/internal/release/android:maven_repo.bzl", "maven_artifact", "maven_repository")
 
+# To set the "last_updated" field in the maven artifact, build with:
+#
+#   --define MAVEN_ARTIFACT_LAST_UPDATED=$(date "+%Y%m%d000000")
+#
+# If not provided, the "last_updated" field will not be included in
+# the maven artifact.
+
 sh_binary(
     name = "maven_artifact",
     srcs = ["maven_artifact.sh"],
@@ -21,6 +28,7 @@ maven_artifact(
     artifact_id = "tasks-core",
     group_id = "com.google.mediapipe",
     inception_year = "2022",
+    last_updated = "$(MAVEN_ARTIFACT_LAST_UPDATED)",
     lib_description = "The MediaPipe Tasks core components.",
     lib_name = "MediaPipe Taksks Core",
     lib_url = "https://mediapipe.dev/",
@@ -40,6 +48,7 @@ maven_artifact(
     artifact_id = "tasks-audio",
     group_id = "com.google.mediapipe",
     inception_year = "2022",
+    last_updated = "$(MAVEN_ARTIFACT_LAST_UPDATED)",
     lib_description = "The MediaPipe Tasks Audio APIs.",
     lib_name = "MediaPipe Tasks Audio",
     lib_url = "https://mediapipe.dev/",
@@ -59,6 +68,7 @@ maven_artifact(
     artifact_id = "tasks-vision",
     group_id = "com.google.mediapipe",
     inception_year = "2022",
+    last_updated = "$(MAVEN_ARTIFACT_LAST_UPDATED)",
     lib_description = "The MediaPipe Tasks Vision APIs.",
     lib_name = "MediaPipe Tasks Vision",
     lib_url = "https://mediapipe.dev/",
@@ -78,6 +88,7 @@ maven_artifact(
     artifact_id = "tasks-text",
     group_id = "com.google.mediapipe",
     inception_year = "2022",
+    last_updated = "$(MAVEN_ARTIFACT_LAST_UPDATED)",
     lib_description = "The MediaPipe Tasks Text APIs.",
     lib_name = "MediaPipe Tasks Text",
     lib_url = "https://mediapipe.dev/",
@@ -97,6 +108,7 @@ maven_artifact(
     artifact_id = "tasks-vision-image-generator",
     group_id = "com.google.mediapipe",
     inception_year = "2023",
+    last_updated = "$(MAVEN_ARTIFACT_LAST_UPDATED)",
     lib_description = "The MediaPipe Tasks Vision Image Generator Android API.",
     lib_name = "MediaPipe Tasks Vision Image Generator",
     lib_url = "https://mediapipe.dev/",
@@ -116,6 +128,7 @@ maven_artifact(
     artifact_id = "tasks-genai",
     group_id = "com.google.mediapipe",
     inception_year = "2023",
+    last_updated = "$(MAVEN_ARTIFACT_LAST_UPDATED)",
     lib_description = "The MediaPipe Tasks GenAI Android API.",
     lib_name = "MediaPipe Tasks Text GenAI",
     lib_url = "https://mediapipe.dev/",
