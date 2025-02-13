@@ -80,7 +80,7 @@ COPY . /mediapipe/
 WORKDIR /mediapipe
 
 # Set version number
-RUN export MP_VERSION_NUMBER=$(awk '/MEDIAPIPE_FULL_VERSION/ {split($0, a, "="); print a[2]}' version.bzl | sed 's/[" ]//g') && \
+RUN export MP_VERSION_NUMBER=$(awk '/MEDIAPIPE_FULL_VERSION/ {split($0, a, "="); print a[2]}' mediapipe/version.bzl | sed 's/[" ]//g') && \
     sed -i "s/__version__ = 'dev'/__version__ = '${MP_VERSION_NUMBER}'/g" setup.py
 
 # Set build flags for MediaPipe and OpenCV.
