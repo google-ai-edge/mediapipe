@@ -195,7 +195,8 @@ ODML_EXPORT int LlmInferenceEngine_CreateEngine(
     const LlmModelSettings* model_settings,
     LlmInferenceEngine_Engine** engine_out, char** error_msg);
 
-// Free the engine, will wait until graph is done executing.
+// Free the engine, will release ownership of resource held by the engine.
+// Resource might be freed if no sessions are referencing to it.
 ODML_EXPORT void LlmInferenceEngine_Engine_Delete(
     LlmInferenceEngine_Engine* engine);
 
