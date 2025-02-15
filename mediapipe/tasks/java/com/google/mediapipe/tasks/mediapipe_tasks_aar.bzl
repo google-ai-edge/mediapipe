@@ -92,11 +92,6 @@ _TEXT_TASKS_JAVA_PROTO_LITE_TARGETS = [
     "//mediapipe/tasks/cc/text/text_embedder/proto:text_embedder_graph_options_java_proto_lite",
 ]
 
-_GENAI_TASKS_JAVA_PROTO_LITE_TARGETS = [
-    "//mediapipe/tasks/java/com/google/mediapipe/tasks/genai/llminference/jni/proto:llm_options_java_proto_lite",
-    "//mediapipe/tasks/java/com/google/mediapipe/tasks/genai/llminference/jni/proto:llm_response_context_java_proto_lite",
-]
-
 def mediapipe_tasks_core_aar(name, srcs, manifest):
     """Builds medaipipe tasks core AAR.
 
@@ -354,50 +349,6 @@ EOF
         srcs = srcs,
         manifest = "AndroidManifest.xml",
         java_proto_lite_targets = _CORE_TASKS_JAVA_PROTO_LITE_TARGETS + _TEXT_TASKS_JAVA_PROTO_LITE_TARGETS,
-        native_library = native_library,
-    )
-
-def mediapipe_tasks_genai_aar(name, srcs, native_library):
-    """Builds medaipipe tasks text text generator AAR.
-
-    Args:
-      name: The bazel target name.
-      srcs: MediaPipe Text Generator Tasks' source files.
-      native_library: The native library that contains text generator task's graph and calculators.
-    """
-
-    native.genrule(
-        name = name + "tasks_manifest_generator",
-        outs = ["AndroidManifest.xml"],
-        cmd = """
-cat > $(OUTS) <<EOF
-<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.google.mediapipe.tasks.genai">
-    <uses-sdk
-        android:minSdkVersion="24"
-        android:targetSdkVersion="34" />
-</manifest>
-EOF
-""",
-    )
-
-    mediapipe_genai_java_proto_srcs = []
-    mediapipe_genai_java_proto_srcs.append(mediapipe_java_proto_src_extractor(
-        target = "//mediapipe/tasks/java/com/google/mediapipe/tasks/genai/llminference/jni/proto:llm_options_java_proto_lite",
-        src_out = "com/google/mediapipe/tasks/genai/llminference/jni/proto/LlmOptionsProto.java",
-    ))
-
-    mediapipe_genai_java_proto_srcs.append(mediapipe_java_proto_src_extractor(
-        target = "//mediapipe/tasks/java/com/google/mediapipe/tasks/genai/llminference/jni/proto:llm_response_context_java_proto_lite",
-        src_out = "com/google/mediapipe/tasks/genai/llminference/jni/proto/LlmResponseContextProto.java",
-    ))
-
-    _mediapipe_tasks_aar(
-        name = name,
-        srcs = srcs + mediapipe_genai_java_proto_srcs,
-        manifest = "AndroidManifest.xml",
-        java_proto_lite_targets = _CORE_TASKS_JAVA_PROTO_LITE_TARGETS + _GENAI_TASKS_JAVA_PROTO_LITE_TARGETS,
         native_library = native_library,
     )
 
