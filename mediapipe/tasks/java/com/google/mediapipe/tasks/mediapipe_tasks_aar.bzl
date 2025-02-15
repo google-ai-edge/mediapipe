@@ -219,39 +219,6 @@ def mediapipe_tasks_core_aar(name, srcs, manifest):
                }),
     )
 
-def mediapipe_tasks_audio_aar(name, srcs, native_library):
-    """Builds medaipipe tasks audio AAR.
-
-    Args:
-      name: The bazel target name.
-      srcs: MediaPipe Audio Tasks' source files.
-      native_library: The native library that contains audio tasks' graph and calculators.
-    """
-
-    native.genrule(
-        name = name + "tasks_manifest_generator",
-        outs = ["AndroidManifest.xml"],
-        cmd = """
-cat > $(OUTS) <<EOF
-<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.google.mediapipe.tasks.audio">
-    <uses-sdk
-        android:minSdkVersion="24"
-        android:targetSdkVersion="34" />
-</manifest>
-EOF
-""",
-    )
-
-    _mediapipe_tasks_aar(
-        name = name,
-        srcs = srcs,
-        manifest = "AndroidManifest.xml",
-        java_proto_lite_targets = _CORE_TASKS_JAVA_PROTO_LITE_TARGETS + _AUDIO_TASKS_JAVA_PROTO_LITE_TARGETS,
-        native_library = native_library,
-    )
-
 def mediapipe_tasks_vision_aar(name, srcs, native_library):
     """Builds medaipipe tasks vision AAR.
 
@@ -316,39 +283,6 @@ EOF
         srcs = srcs,
         manifest = "AndroidManifest.xml",
         java_proto_lite_targets = _CORE_TASKS_JAVA_PROTO_LITE_TARGETS + _VISION_TASKS_IMAGE_GENERATOR_JAVA_PROTO_LITE_TARGETS,
-        native_library = native_library,
-    )
-
-def mediapipe_tasks_text_aar(name, srcs, native_library):
-    """Builds medaipipe tasks text AAR.
-
-    Args:
-      name: The bazel target name.
-      srcs: MediaPipe Text Tasks' source files.
-      native_library: The native library that contains text tasks' graph and calculators.
-    """
-
-    native.genrule(
-        name = name + "tasks_manifest_generator",
-        outs = ["AndroidManifest.xml"],
-        cmd = """
-cat > $(OUTS) <<EOF
-<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.google.mediapipe.tasks.text">
-    <uses-sdk
-        android:minSdkVersion="24"
-        android:targetSdkVersion="34" />
-</manifest>
-EOF
-""",
-    )
-
-    _mediapipe_tasks_aar(
-        name = name,
-        srcs = srcs,
-        manifest = "AndroidManifest.xml",
-        java_proto_lite_targets = _CORE_TASKS_JAVA_PROTO_LITE_TARGETS + _TEXT_TASKS_JAVA_PROTO_LITE_TARGETS,
         native_library = native_library,
     )
 

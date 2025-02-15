@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl", "mediapipe_tasks_audio_aar")
+load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl", "mediapipe_build_aar_with_jni")
 
 licenses(["notice"])
 
@@ -110,8 +110,30 @@ android_library(
     ],
 )
 
-mediapipe_tasks_audio_aar(
-    name = "tasks_audio",
+android_library(
+    name = "tasks_audio_aar_library",
     srcs = glob(["**/*.java"]),
-    native_library = ":libmediapipe_tasks_audio_jni_lib",
+    manifest = "AndroidManifest.xml",
+    deps = [
+        ":libmediapipe_tasks_audio_jni_lib",
+        "//mediapipe/java/com/google/mediapipe/framework:android_framework_no_mff",
+        "//mediapipe/tasks/cc/audio/audio_classifier/proto:audio_classifier_graph_options_java_proto_lite",
+        "//mediapipe/tasks/cc/audio/audio_embedder/proto:audio_embedder_graph_options_java_proto_lite",
+        "//mediapipe/tasks/cc/components/containers/proto:classifications_java_proto_lite",
+        "//mediapipe/tasks/cc/components/containers/proto:embeddings_java_proto_lite",
+        "//mediapipe/tasks/cc/components/processors/proto:classifier_options_java_proto_lite",
+        "//mediapipe/tasks/cc/components/processors/proto:embedder_options_java_proto_lite",
+        "//mediapipe/tasks/cc/core/proto:base_options_java_proto_lite",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:audiodata",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:classificationresult",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:embeddingresult",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core:core_java",
+        "//third_party:autovalue",
+        "@maven//:com_google_guava_guava",
+    ],
+)
+
+mediapipe_build_aar_with_jni(
+    name = "tasks_audio",
+    android_library = ":tasks_audio_aar_library",
 )
