@@ -402,6 +402,7 @@ cc_library(
     deps = [
         ":graph_service",
         ":packet",
+        "//mediapipe/framework/port:ret_check",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/status",
     ],

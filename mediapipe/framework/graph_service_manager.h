@@ -5,9 +5,11 @@
 #include <memory>
 #include <string>
 
+#include "absl/log/absl_check.h"
 #include "absl/status/status.h"
 #include "mediapipe/framework/graph_service.h"
 #include "mediapipe/framework/packet.h"
+#include "mediapipe/framework/port/ret_check.h"
 
 namespace mediapipe {
 
@@ -31,6 +33,8 @@ class GraphServiceManager {
   template <typename T>
   absl::Status SetServiceObject(const GraphService<T>& service,
                                 std::shared_ptr<T> object) {
+    RET_CHECK(object != nullptr) << "SetServiceObject called for "
+                                 << service.key << " with empty shared_ptr.";
     return SetServicePacket(service,
                             MakePacket<std::shared_ptr<T>>(std::move(object)));
   }
@@ -41,7 +45,11 @@ class GraphServiceManager {
   std::shared_ptr<T> GetServiceObject(const GraphService<T>& service) const {
     Packet p = GetServicePacket(service);
     if (p.IsEmpty()) return nullptr;
-    return p.Get<std::shared_ptr<T>>();
+    auto ptr = p.Get<std::shared_ptr<T>>();
+    ABSL_CHECK(ptr != nullptr)
+        << "GraphService " << service.key << " is not set (empty shared_ptr).";
+
+    return ptr;
   }
   const ServiceMap& ServicePackets() const { return service_packets_; }
 
