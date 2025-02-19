@@ -271,7 +271,7 @@ http_archive(
     sha256 = "ad37707084a6d4ff41be10cbe8540c75bea057ba79d0de6c367c1bfac6ba0852",
     strip_prefix = "kleidiai-40a926833857fb64786e02f97703e42b1537cb57",
     urls = [
-        "https://gitlab.arm.com/kleidi/kleidiai/-/archive/40a926833857fb64786e02f97703e42b1537cb57/kleidiai-40a926833857fb64786e02f97703e42b1537cb57.zip"
+        "https://gitlab.arm.com/kleidi/kleidiai/-/archive/40a926833857fb64786e02f97703e42b1537cb57/kleidiai-40a926833857fb64786e02f97703e42b1537cb57.zip",
     ],
 )
 
@@ -469,9 +469,9 @@ http_archive(
     # TODO: Fix this in AudioTools directly
     patches = ["@//third_party:com_google_audio_tools_fixes.diff"],
     repo_mapping = {"@com_github_glog_glog": "@com_github_glog_glog_no_gflags"},
-    sha256 = "0856be6971c636d62c9eaaf8fca3c8aa85b9be55ac5cf124d05d1dfe4a77eaf1",
-    strip_prefix = "multichannel-audio-tools-9aebbcabc1b5ed3827755f44339d8a0d572e16ec",
-    urls = ["https://github.com/google/multichannel-audio-tools/archive/9aebbcabc1b5ed3827755f44339d8a0d572e16ec.zip"],
+    sha256 = "7d7227cc6bb1f8917a9c9013e8f3578ec681c49e20fe2fc38ba90965394de60c",
+    strip_prefix = "multichannel-audio-tools-bbf15de4b7cd825d650296d21917afc07e8fe18b",
+    urls = ["https://github.com/google/multichannel-audio-tools/archive/bbf15de4b7cd825d650296d21917afc07e8fe18b.tar.gz"],
 )
 
 http_archive(
