@@ -169,26 +169,15 @@ absl::Status CopyTensorToTfLiteTensor<char>(const Tensor& input_tensor,
 template <typename T>
 absl::Status CopyTfLiteTensorToTensor(const TfLiteTensor& tflite_tensor,
                                       Tensor& output_tensor) {
+  MP_RETURN_IF_ERROR(TensorDimsAndTypeEqual(output_tensor, tflite_tensor));
   auto output_tensor_view = output_tensor.GetCpuWriteView();
   T* output_tensor_buffer = output_tensor_view.buffer<T>();
   RET_CHECK(output_tensor_buffer) << "Output tensor buffer is null.";
   RET_CHECK_EQ(tflite_tensor.type, tflite::typeToTfLiteType<T>())
           .SetCode(absl::StatusCode::kInvalidArgument)
       << "TfLite tensor type and requested output type do not match.";
-  const Tensor::ElementType output_tensor_type = output_tensor.element_type();
-  RET_CHECK(output_tensor_type == tflite_tensor.type)
-          .SetCode(absl::StatusCode::kInvalidArgument)
-      << "Output and TfLiteTensor types do not match";
   const void* local_tensor_buffer = tflite_tensor.data.raw;
   RET_CHECK(local_tensor_buffer) << "TfLiteTensor tensor buffer is null.";
-  if (!TfLiteIntArrayEqualsArray(tflite_tensor.dims,
-                                 output_tensor.shape().dims.size(),
-                                 output_tensor.shape().dims.data())) {
-    return absl::InvalidArgumentError(
-        absl::StrCat("TfLiteTensor and Tensor shape do not match: ",
-                     GetTfLiteTensorDebugInfo(tflite_tensor), " vs. ",
-                     GetMpTensorDebugInfo(output_tensor)));
-  }
 
   std::memcpy(output_tensor_buffer, local_tensor_buffer, output_tensor.bytes());
   return absl::OkStatus();
@@ -418,6 +407,33 @@ absl::StatusOr<Tensor> CreateTensorWithTfLiteTensorSpecs(
   return absl::InvalidArgumentError(
       absl::StrCat("Unsupported output tensor type:",
                    TfLiteTypeGetName(reference_tflite_tensor.type)));
+}
+
+absl::Status TensorDimsAndTypeEqual(const Tensor& mp_tensor,
+                                    const TfLiteTensor& tflite_tensor) {
+  const Tensor::ElementType output_tensor_type = mp_tensor.element_type();
+  RET_CHECK(output_tensor_type == tflite_tensor.type)
+          .SetCode(absl::StatusCode::kInvalidArgument)
+      << absl::StrFormat(
+             "MediaPipe and TfLite tensor type do not match: MediaPipe tensor "
+             "type %s vs TfLite tensor type %s.",
+             GetTensorTypeString(output_tensor_type),
+             TfLiteTypeGetName(tflite_tensor.type));
+  if (!TfLiteIntArrayEqualsArray(tflite_tensor.dims,
+                                 mp_tensor.shape().dims.size(),
+                                 mp_tensor.shape().dims.data())) {
+    return absl::InvalidArgumentError(
+        absl::StrCat("TfLiteTensor and Tensor shape do not match: ",
+                     GetTfLiteTensorDebugInfo(tflite_tensor), " vs. ",
+                     GetMpTensorDebugInfo(mp_tensor)));
+  }
+  RET_CHECK_EQ(mp_tensor.bytes(), tflite_tensor.bytes)
+          .SetCode(absl::StatusCode::kInvalidArgument)
+      << absl::StrFormat(
+             "MediaPipe and TfLite tensor bytes do not match: Mediapipe "
+             "tensor bytes %d vs TfLite tensor bytes %d.",
+             mp_tensor.bytes(), tflite_tensor.bytes);
+  return absl::OkStatus();
 }
 
 }  // namespace mediapipe
