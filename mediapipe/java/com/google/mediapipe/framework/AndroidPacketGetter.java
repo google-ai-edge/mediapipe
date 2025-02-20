@@ -21,6 +21,7 @@ import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Locale;
 
 /**
  * Android-specific subclass of PacketGetter.
@@ -111,8 +112,10 @@ public final class AndroidPacketGetter {
     checkState(
         status,
         String.format(
+            Locale.getDefault(),
             "Got error from getImageData, returning null Bitmap. Image width %d, height %d",
-            width, height));
+            width,
+            height));
     mutableBitmap.copyPixelsFromBuffer(buffer);
   }
 

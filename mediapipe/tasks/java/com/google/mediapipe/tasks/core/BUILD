@@ -82,13 +82,18 @@ public final class TasksStatsLoggerFactory {
 EOF""",
 )
 
-android_library(
-    name = "logging",
+filegroup(
+    name = "logging_java_src",
     srcs = [
         "logging/TasksStatsDummyLogger.java",
         "logging/TasksStatsLogger.java",
         "logging/TasksStatsLoggerFactory.java",
     ],
+)
+
+android_library(
+    name = "logging",
+    srcs = [":logging_java_src"],
     deps = [
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
@@ -97,7 +102,8 @@ android_library(
 
 mediapipe_tasks_core_aar(
     name = "tasks_core",
-    srcs = glob(["**/*.java"]) + [
+    srcs = glob(["*.java"]) + [
+        ":logging_java_src",
         "//mediapipe/java/com/google/mediapipe/framework/image:java_src",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:java_src",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/processors:java_src",

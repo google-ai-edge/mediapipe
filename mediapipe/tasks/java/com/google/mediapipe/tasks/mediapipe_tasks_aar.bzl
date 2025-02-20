@@ -166,6 +166,8 @@ def mediapipe_tasks_core_aar(name, srcs, manifest):
         ],
         manifest = manifest,
         deps = [
+                   "//third_party:any_java_proto",
+                   "@com_google_protobuf//:protobuf_javalite",
                    "//mediapipe/calculators/core:flow_limiter_calculator_java_proto_lite",
                    "//mediapipe/calculators/tensor:inference_calculator_java_proto_lite",
                    "//mediapipe/framework:calculator_java_proto_lite",
@@ -186,11 +188,9 @@ def mediapipe_tasks_core_aar(name, srcs, manifest):
                    "//mediapipe/tasks/cc/vision/image_segmenter/calculators:tensors_to_segmentation_calculator_java_proto_lite",
                    "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:model_resources_cache_jni",
                    "//third_party:autovalue",
-                   "@com_google_protobuf//:protobuf_javalite",
                    "@maven//:androidx_annotation_annotation",
-                   "@maven//:com_google_guava_guava",
                    "@maven//:com_google_flogger_flogger",
-                   "@maven//:com_google_flogger_flogger_system_backend",
+                   "@maven//:com_google_guava_guava",
                    "@maven//:com_google_code_findbugs_jsr305",
                ] +
                _AUDIO_TASKS_JAVA_PROTO_LITE_TARGETS +
@@ -329,7 +329,7 @@ def _mediapipe_tasks_aar(name, srcs, manifest, java_proto_lite_targets, native_l
     mediapipe_build_aar_with_jni(name, name + "_android_lib")
 
 def _mediapipe_tasks_java_proto_src_extractor(target):
-    proto_path = "com/google/" + target.split(":")[0].replace("cc/", "").replace("//", "").replace("_", "") + "/"
+    proto_path = "com/google/" + target.split(":")[0].replace("cc/", "").replace("//", "").replace("third_party/", "").replace("_", "") + "/"
     proto_name = target.split(":")[-1].replace("_java_proto_lite", "").replace("_", " ").title().replace(" ", "") + "Proto.java"
     return mediapipe_java_proto_src_extractor(
         target = target,
