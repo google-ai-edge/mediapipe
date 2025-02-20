@@ -57,6 +57,9 @@ export function tee<T>(
       cancel() {
         myCache.active = false;
         myCache.cache.length = 0;
+        if (!otherCache.active) {
+          mainStream.cancel();
+        }
       },
     });
   }
@@ -148,7 +151,7 @@ const FORMAT_TESTERS: Array<[ModelFormat, FormatTester]> = [
  * one of the streams to this function. Do not use the native browser tee
  * function as it will cache the entire model in memory.
  */
-export async function getModelFormat(
+export async function getModelFormatAndClose(
   modelStream: ReadableStreamDefaultReader<Uint8Array>,
 ): Promise<ModelFormat> {
   const matchedFormats: ModelFormat[] = [];
@@ -162,6 +165,7 @@ export async function getModelFormat(
       matchedFormats.push(format);
     }
   }
+  await modelStream.cancel();
 
   if (matchedFormats.length === 0) {
     throw new Error('No model format matched.');
