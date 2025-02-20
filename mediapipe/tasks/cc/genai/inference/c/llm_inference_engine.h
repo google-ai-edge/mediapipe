@@ -73,6 +73,11 @@ typedef struct {
   const char* model_path;
 
 #ifdef __EMSCRIPTEN__
+  // Web only supports the following model loading methods:
+  // * File System loading for converted LLMs. model_path has to be set and its
+  //  name has to end with .task.
+  // * Stream loading for handwritten LLMs. read_model_fn has to be set.
+
   // Function to read model file.
   // The function returns a pointer to heap memory that contains the model file
   // contents started from `offset` with `size`.
