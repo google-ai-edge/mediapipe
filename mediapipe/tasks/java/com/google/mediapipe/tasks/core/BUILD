@@ -54,11 +54,41 @@ android_library(
     ],
 )
 
+# When "--define ENABLE_TASKS_USAGE_LOGGING=1" is set in the build command,
+# the mediapipe tasks usage logging component will be added into the AAR.
+# This flag is for internal use only.
+config_setting(
+    name = "enable_tasks_usage_logging",
+    define_values = {
+        "ENABLE_TASKS_USAGE_LOGGING": "1",
+    },
+    visibility = ["//visibility:public"],
+)
+
+genrule(
+    name = "logging_factory",
+    srcs = ["logging/TasksStatsDummyLogger.java"],
+    outs = ["logging/TasksStatsLoggerFactory.java"],
+    cmd = """
+cat <<EOF > $@
+package com.google.mediapipe.tasks.core.logging;
+import android.content.Context;
+public final class TasksStatsLoggerFactory {
+  public static TasksStatsLogger create(
+      Context context, String taskNameStr, String taskRunningModeStr) {
+    return $$(basename $< .java).create(context, taskNameStr, taskRunningModeStr);
+  }
+}
+EOF""",
+)
+
 android_library(
     name = "logging",
-    srcs = glob(
-        ["logging/*.java"],
-    ),
+    srcs = [
+        "logging/TasksStatsDummyLogger.java",
+        "logging/TasksStatsLogger.java",
+        "logging/TasksStatsLoggerFactory.java",
+    ],
     deps = [
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",

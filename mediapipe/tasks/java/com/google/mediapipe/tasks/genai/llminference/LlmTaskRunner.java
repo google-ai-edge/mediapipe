@@ -24,8 +24,8 @@ import com.google.mediapipe.framework.image.MPImage;
 import com.google.mediapipe.framework.image.MPImageProperties;
 import com.google.mediapipe.framework.image.MediaImageExtractor;
 import com.google.mediapipe.tasks.core.OutputHandler.ProgressListener;
-import com.google.mediapipe.tasks.core.logging.TasksStatsDummyLogger;
 import com.google.mediapipe.tasks.core.logging.TasksStatsLogger;
+import com.google.mediapipe.tasks.core.logging.TasksStatsLoggerFactory;
 import com.google.mediapipe.tasks.genai.llminference.jni.proto.LlmOptionsProto.LlmModelSettings;
 import com.google.mediapipe.tasks.genai.llminference.jni.proto.LlmOptionsProto.LlmSessionConfig;
 import com.google.mediapipe.tasks.genai.llminference.jni.proto.LlmResponseContextProto.LlmResponseContext;
@@ -164,7 +164,7 @@ public final class LlmTaskRunner implements AutoCloseable {
       String taskName,
       LlmModelSettings modelSettings,
       Optional<ProgressListener<List<String>>> resultListener) {
-    statsLogger = TasksStatsDummyLogger.create(context, taskName, /* taskRunningModeStr= */ "");
+    statsLogger = TasksStatsLoggerFactory.create(context, taskName, /* taskRunningModeStr= */ "");
     this.engineHandle = nativeCreateEngine(modelSettings.toByteArray());
 
     this.resultListener = resultListener;
