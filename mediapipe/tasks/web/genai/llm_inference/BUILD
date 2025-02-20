@@ -11,10 +11,13 @@ licenses(["notice"])
 
 mediapipe_ts_library(
     name = "llm_inference",
-    srcs = ["llm_inference.ts"],
+    srcs = [
+        "llm_inference.ts",
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":llm_inference_types",
+        ":model_loading_utils",
         "//mediapipe/framework:calculator_jspb_proto",
         "//mediapipe/tasks/cc/core/proto:base_options_jspb_proto",
         "//mediapipe/tasks/cc/genai/inference/calculators:detokenizer_calculator_jspb_proto",
@@ -42,5 +45,12 @@ mediapipe_ts_declaration(
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/tasks/web/core",
+    ],
+)
+
+mediapipe_ts_library(
+    name = "model_loading_utils",
+    srcs = [
+        "model_loading_utils.ts",
     ],
 )
