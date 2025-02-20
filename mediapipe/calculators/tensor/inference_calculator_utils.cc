@@ -419,9 +419,15 @@ absl::Status TensorDimsAndTypeEqual(const Tensor& mp_tensor,
              "type %s vs TfLite tensor type %s.",
              GetTensorTypeString(output_tensor_type),
              TfLiteTypeGetName(tflite_tensor.type));
-  if (!TfLiteIntArrayEqualsArray(tflite_tensor.dims,
-                                 mp_tensor.shape().dims.size(),
-                                 mp_tensor.shape().dims.data())) {
+
+  // Scalar input in TensorFlow is described by an empty shape.
+  // In MediaPipe, we represent it as a shape with one element.
+  // For more details, see https://www.tensorflow.org/api_docs/python/tf/shape.
+  const bool is_scalar_input =
+      tflite_tensor.dims->size == 0 && mp_tensor.shape().num_elements() == 1;
+  if (!is_scalar_input && !TfLiteIntArrayEqualsArray(
+                              tflite_tensor.dims, mp_tensor.shape().dims.size(),
+                              mp_tensor.shape().dims.data())) {
     return absl::InvalidArgumentError(
         absl::StrCat("TfLiteTensor and Tensor shape do not match: ",
                      GetTfLiteTensorDebugInfo(tflite_tensor), " vs. ",

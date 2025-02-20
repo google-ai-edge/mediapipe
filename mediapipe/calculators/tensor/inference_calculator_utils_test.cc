@@ -641,6 +641,16 @@ TEST_F(InferenceCalculatorUtilsTest, TensorDimsAndTypeEqualDiffersInSize) {
               HasSubstr("MediaPipe and TfLite tensor bytes do not match"));
 }
 
+TEST_F(InferenceCalculatorUtilsTest, TensorDimsAndTypeEqualWithScalarInput) {
+  Tensor tensor(ElementType::kInt32, Tensor::Shape({1, 1}));
+  std::vector<int> dims = {};
+  auto tflite_tensor =
+      CreateTfLiteTensor(TfLiteType::kTfLiteInt32, dims, /*scale=*/1.0f,
+                         /*zero_point=*/0.0f);
+  tflite_tensor->bytes = sizeof(int32_t);
+  MP_EXPECT_OK(TensorDimsAndTypeEqual(tensor, *tflite_tensor));
+}
+
 static std::vector<std::pair<TfLiteType, Tensor::ElementType>>
 GetTensorTypePairs() {
   return {{TfLiteType::kTfLiteFloat16, Tensor::ElementType::kFloat32},
