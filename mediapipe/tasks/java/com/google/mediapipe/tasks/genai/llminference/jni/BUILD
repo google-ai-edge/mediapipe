@@ -50,6 +50,8 @@ cc_library(
             "@odml//odml/infra/genai/inference/c:libllm_inference_engine",
         ],
     }) + select({
+        "//conditions:default": [
+        ],
         "//mediapipe:android": [],
     }),
     alwayslink = 1,

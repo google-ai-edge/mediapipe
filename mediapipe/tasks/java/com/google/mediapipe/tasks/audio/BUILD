@@ -116,6 +116,7 @@ android_library(
     manifest = "AndroidManifest.xml",
     deps = [
         ":libmediapipe_tasks_audio_jni_lib",
+        "//mediapipe/framework:calculator_options_java_proto_lite",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework_no_mff",
         "//mediapipe/tasks/cc/audio/audio_classifier/proto:audio_classifier_graph_options_java_proto_lite",
         "//mediapipe/tasks/cc/audio/audio_embedder/proto:audio_embedder_graph_options_java_proto_lite",
