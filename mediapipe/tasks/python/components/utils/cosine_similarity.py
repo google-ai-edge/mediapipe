@@ -24,7 +24,7 @@ def _compute_cosine_similarity(u: np.ndarray, v: np.ndarray):
   """Computes cosine similarity between two embeddings."""
 
   if len(u) <= 0:
-    raise ValueError("Cannot compute cosing similarity on empty embeddings.")
+    raise ValueError("Cannot compute cosine similarity on empty embeddings.")
 
   norm_u = np.linalg.norm(u)
   norm_v = np.linalg.norm(v)
