@@ -112,7 +112,7 @@ static ov::element::Type_t MPType2OVType(Tensor::ElementType precision) {
     };
     auto it = precisionMap.find(precision);
     if (it == precisionMap.end()) {
-        return ov::element::Type_t::undefined;
+        return ov::element::Type_t::dynamic;
     }
     return it->second;
 }
@@ -141,7 +141,7 @@ static ov::Tensor convertMPTensor2OVTensor(const Tensor& inputTensor) {
         break;
     }
     auto datatype = MPType2OVType(inputTensor.element_type());;
-    if (datatype == ov::element::Type_t::undefined) {
+    if (datatype == ov::element::Type_t::dynamic) {
         std::stringstream ss;
         LOG(INFO) << "Not supported precision for Mediapipe tensor deserialization";
         std::runtime_error exc("Not supported precision for Mediapipe tensor deserialization");
@@ -216,7 +216,7 @@ ov::element::Type_t TFSPrecisionToIE2Precision(TFSDataType precision) {
     };
     auto it = precisionMap.find(precision);
     if (it == precisionMap.end()) {
-        return ov::element::Type_t::undefined;
+        return ov::element::Type_t::dynamic;
     }
     return it->second;
 }
@@ -249,7 +249,7 @@ static tensorflow::Tensor convertOVTensor2TFTensor(const ov::Tensor& t) {
 static ov::Tensor convertTFTensor2OVTensor(const tensorflow::Tensor& t) {
     void* data = t.data();
     auto datatype = TFSPrecisionToIE2Precision(t.dtype());
-    if (datatype == ov::element::Type_t::undefined) {
+    if (datatype == ov::element::Type_t::dynamic) {
         std::stringstream ss;
         LOG(INFO) << "Not supported precision for Tensorflow tensor deserialization: " << t.dtype();
         std::runtime_error exc("Not supported precision for Tensorflow tensor deserialization");

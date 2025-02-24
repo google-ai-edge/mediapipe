@@ -363,7 +363,6 @@ static OVMS_DataType OVPrecision2CAPI(ov::element::Type_t datatype) {
         {ov::element::Type_t::u1, OVMS_DATATYPE_U1},
         {ov::element::Type_t::boolean, OVMS_DATATYPE_BOOL},
         {ov::element::Type_t::bf16, OVMS_DATATYPE_BF16},
-        {ov::element::Type_t::undefined, OVMS_DATATYPE_UNDEFINED},
         {ov::element::Type_t::dynamic, OVMS_DATATYPE_DYNAMIC},
         {ov::element::Type_t::string, OVMS_DATATYPE_STRING}
         
@@ -397,7 +396,7 @@ static ov::element::Type_t CAPI2OVPrecision(OVMS_DataType datatype) {
         {OVMS_DATATYPE_U1, ov::element::Type_t::u1},
         {OVMS_DATATYPE_BOOL, ov::element::Type_t::boolean},
         {OVMS_DATATYPE_BF16, ov::element::Type_t::bf16},
-        {OVMS_DATATYPE_UNDEFINED, ov::element::Type_t::undefined},
+        {OVMS_DATATYPE_UNDEFINED, ov::element::Type_t::dynamic},
         {OVMS_DATATYPE_DYNAMIC, ov::element::Type_t::dynamic}
         //    {OVMS_DATATYPE_MIXED, ov::element::Type_t::MIXED},
         //    {OVMS_DATATYPE_Q78, ov::element::Type_t::Q78},
@@ -406,7 +405,7 @@ static ov::element::Type_t CAPI2OVPrecision(OVMS_DataType datatype) {
     };
     auto it = precisionMap.find(datatype);
     if (it == precisionMap.end()) {
-        return ov::element::Type_t::undefined;
+        return ov::element::Type_t::dynamic;
     }
     return it->second;
 }

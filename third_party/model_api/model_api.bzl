@@ -26,7 +26,7 @@ visibility = ["//visibility:public"]
 
 filegroup(
     name = "all_srcs",
-    srcs = glob(["model_api/cpp/**"]),
+    srcs = glob(["src/cpp/**"]),
     visibility = ["//visibility:public"],
 )
 
@@ -38,6 +38,7 @@ cmake(
     ],
     cache_entries = {{
         "CMAKE_POSITION_INDEPENDENT_CODE": "ON",
+        "ENABLE_PY_BINDINGS": "OFF",
         "OpenVINO_DIR": "{openvino_dir}",
         "OpenCV_DIR": "{opencv_dir}",
     }},
@@ -75,7 +76,7 @@ visibility = ["//visibility:public"]
 
 filegroup(
     name = "all_srcs",
-    srcs = glob(["model_api/cpp/**"]),
+    srcs = glob(["src/cpp/**"]),
     visibility = ["//visibility:public"],
 )
 
@@ -91,6 +92,7 @@ cmake(
     ],
     cache_entries = {{
         "CMAKE_POSITION_INDEPENDENT_CODE": "ON",
+        "ENABLE_PY_BINDINGS": "OFF",
         "OpenVINO_DIR": "/opt/intel/openvino/runtime/cmake",
     }},
     env = {{
@@ -149,6 +151,6 @@ def workspace_model_api():
         name = "model_api",
         remote = "https:///github.com/openvinotoolkit/model_api/",
         build_file = "@_model-api//:BUILD",
-        commit = "9b5d37c22d97603de2e7ece07bea2e24d5a199d8",
+        commit = "060f65856cdb6334b050e47c88a83c1e3d0e083c",
     )
 

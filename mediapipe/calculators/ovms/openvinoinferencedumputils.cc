@@ -55,7 +55,6 @@ static std::stringstream dumpOvTensor(const ov::Tensor& tensor) {
         TYPE_CASE(ov::element::Type_t::u8, uint8_t)
         TYPE_CASE(ov::element::Type_t::boolean, bool)
         case ov::element::Type_t::bf16:
-        case ov::element::Type_t::undefined:
         case ov::element::Type_t::dynamic:
         case ov::element::Type_t::f16:
         case ov::element::Type_t::i4:
