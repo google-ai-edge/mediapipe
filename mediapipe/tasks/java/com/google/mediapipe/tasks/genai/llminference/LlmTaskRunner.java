@@ -23,7 +23,6 @@ import com.google.mediapipe.framework.image.ByteBufferExtractor;
 import com.google.mediapipe.framework.image.MPImage;
 import com.google.mediapipe.framework.image.MPImageProperties;
 import com.google.mediapipe.framework.image.MediaImageExtractor;
-import com.google.mediapipe.tasks.core.OutputHandler.ProgressListener;
 import com.google.mediapipe.tasks.core.logging.TasksStatsLogger;
 import com.google.mediapipe.tasks.core.logging.TasksStatsLoggerFactory;
 import com.google.mediapipe.tasks.genai.llminference.jni.proto.LlmOptionsProto.LlmModelSettings;

@@ -4,9 +4,6 @@ import static com.google.mediapipe.tasks.genai.llminference.LlmInferenceSession.
 
 import android.content.Context;
 import com.google.auto.value.AutoValue;
-import com.google.mediapipe.tasks.core.ErrorListener;
-import com.google.mediapipe.tasks.core.OutputHandler.ProgressListener;
-import com.google.mediapipe.tasks.core.TaskOptions;
 import com.google.mediapipe.tasks.genai.llminference.jni.proto.LlmOptionsProto.LlmModelSettings;
 import com.google.mediapipe.tasks.genai.llminference.jni.proto.LlmOptionsProto.LlmModelSettings.LlmPreferredBackend;
 import java.util.Collections;
@@ -206,7 +203,7 @@ public class LlmInference implements AutoCloseable {
 
   /** Options for setting up an {@link LlmInference}. */
   @AutoValue
-  public abstract static class LlmInferenceOptions extends TaskOptions {
+  public abstract static class LlmInferenceOptions {
     /** Builder for {@link LlmInferenceOptions}. */
     @AutoValue.Builder
     public abstract static class Builder {
