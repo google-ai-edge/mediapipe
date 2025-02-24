@@ -129,8 +129,8 @@ cc_library(
     hdrs = ["ahwb_view.h"],
     deps = [
         ":hardware_buffer",
+        ":shared_fd",
         "//mediapipe/framework:port",
-        "//mediapipe/framework/formats:shared_fd",
         "//mediapipe/gpu:gpu_buffer_storage",
     ],
 )
@@ -154,6 +154,39 @@ cc_library(
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
         "@com_google_protobuf//:protobuf",
+    ],
+)
+
+cc_library(
+    name = "ahwb_gpu_releaser",
+    srcs = ["ahwb_gpu_releaser.cc"],
+    hdrs = ["ahwb_gpu_releaser.h"],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":hardware_buffer",
+        ":tensor_ahwb_usage",
+        "//mediapipe/framework:port",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/gpu:gl_base_hdr",
+        "//mediapipe/gpu:gl_context",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/synchronization",
+    ],
+)
+
+# Real device is required to test GLES31+ and Ahwb:
+# bazel build -c dbg --config=android_arm64 --android_ndk_min_sdk_version=33 --config=force_full_protos //mediapipe/framework/formats:ahwb_gpu_releaser_test && \
+# adb push bazel-bin/mediapipe/framework/formats/ahwb_gpu_releaser_test /data/local/tmp && \
+# adb shell "/data/local/tmp/ahwb_gpu_releaser_test"
+cc_test(
+    name = "ahwb_gpu_releaser_test",
+    srcs = ["ahwb_gpu_releaser_test.cc"],
+    deps = [
+        ":tensor",
+        "//mediapipe/framework/port:gtest",
+        "//mediapipe/gpu:gl_context",
+        "//mediapipe/gpu:gpu_service",
+        "@com_google_googletest//:gtest_main",
     ],
 )
 
@@ -573,6 +606,7 @@ cc_library(
         "//mediapipe/gpu/webgpu:use_webgpu_emscripten": ["-sUSE_WEBGPU=1"],
     }),
     deps = [
+        ":ahwb_gpu_releaser",
         "//mediapipe/framework:memory_manager",
         "//mediapipe/framework:port",
         "//mediapipe/framework/deps:no_destructor",

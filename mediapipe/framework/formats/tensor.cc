@@ -432,14 +432,14 @@ void Tensor::AllocateOpenGlBuffer() const {
 
 Tensor& Tensor::operator=(Tensor&& src) {
   if (this != &src) {
-    Invalidate();
+    ABSL_CHECK_OK(Invalidate());
     Move(&src);
   }
   return *this;
 }
 
 Tensor::Tensor(Tensor&& src) { Move(&src); }
-Tensor::~Tensor() { Invalidate(); }
+Tensor::~Tensor() { ABSL_CHECK_OK(Invalidate()); }
 
 void Tensor::Move(Tensor* src) {
   valid_ = src->valid_;
@@ -502,7 +502,7 @@ Tensor::Tensor(ElementType element_type, const Shape& shape,
 }
 
 #if MEDIAPIPE_METAL_ENABLED
-void Tensor::Invalidate() {
+absl::Status Tensor::Invalidate() {
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
   GLuint cleanup_gl_tex = GL_INVALID_INDEX;
   GLuint cleanup_gl_fb = GL_INVALID_INDEX;
@@ -538,11 +538,12 @@ void Tensor::Invalidate() {
     });
   }
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
+  return absl::OkStatus();
 }
 
 #else
 
-void Tensor::Invalidate() {
+absl::Status Tensor::Invalidate() {
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
   GLuint cleanup_gl_tex = GL_INVALID_INDEX;
   GLuint cleanup_gl_fb = GL_INVALID_INDEX;
@@ -552,7 +553,7 @@ void Tensor::Invalidate() {
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
   {
     absl::MutexLock lock(&view_mutex_);
-    ReleaseAhwbStuff();
+    MP_RETURN_IF_ERROR(ReleaseAhwbStuff());
 
     // Don't need to wait for the resource to be deleted because if will be
     // released on last reference deletion inside the OpenGL driver.
@@ -589,6 +590,7 @@ void Tensor::Invalidate() {
   if (webgpu_texture2d_) webgpu_texture2d_.Destroy();
 #endif  // MEDIAPIPE_USE_WEBGPU
   FreeCpuBuffer();
+  return absl::OkStatus();
 }
 #endif  // MEDIAPIPE_METAL_ENABLED
 

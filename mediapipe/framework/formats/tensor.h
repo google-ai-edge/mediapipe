@@ -432,7 +432,7 @@ class Tensor {
  private:
   friend class MtlBufferView;
   void Move(Tensor*);
-  void Invalidate();
+  absl::Status Invalidate();
   absl::Status ReadBackGpuToCpu() const;
 
   ElementType element_type_;
@@ -502,7 +502,7 @@ class Tensor {
   bool AllocateAhwbMapToSsbo() const;
   bool InsertAhwbToSsboFence() const;
   void MoveAhwbStuff(Tensor* src);
-  void ReleaseAhwbStuff();
+  absl::Status ReleaseAhwbStuff();
   void* MapAhwbToCpuRead() const;
   void* MapAhwbToCpuWrite() const;
   void MoveCpuOrSsboToAhwb() const;
