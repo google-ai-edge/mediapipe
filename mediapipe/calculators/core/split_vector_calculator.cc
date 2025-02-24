@@ -14,8 +14,10 @@
 
 #include "mediapipe/calculators/core/split_vector_calculator.h"
 
-#include <vector>
+#include <array>
+#include <cstdint>
 
+#include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/framework/formats/image.h"
