@@ -211,7 +211,7 @@ ODML_EXPORT int LlmInferenceEngine_CreateSession(
     LlmInferenceEngine_Session** session_out, char** error_msg);
 
 // Free the session, will wait until graph is done executing.
-ODML_EXPORT void LlmInferenceEngine_Session_Delete(
+ODML_EXPORT int LlmInferenceEngine_Session_Delete(
     LlmInferenceEngine_Session* session);
 
 // Add query chunk to the session. This can be called multiple times to add

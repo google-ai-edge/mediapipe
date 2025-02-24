@@ -573,8 +573,9 @@ int LlmInferenceEngine_CreateSession(LlmInferenceEngine_Engine* engine,
   return 0;
 }
 
-void LlmInferenceEngine_Session_Delete(LlmInferenceEngine_Session* session) {
+int LlmInferenceEngine_Session_Delete(LlmInferenceEngine_Session* session) {
   delete reinterpret_cast<LlmInferenceEngineCpu_Session*>(session);
+  return 0;
 }
 
 int LlmInferenceEngine_Session_AddQueryChunk(
