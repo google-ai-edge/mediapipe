@@ -19,6 +19,7 @@
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/framework/formats/image.h"
+#include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/formats/rect.pb.h"
@@ -90,6 +91,10 @@ REGISTER_CALCULATOR(SplitFloatVectorCalculator);
 typedef SplitVectorCalculator<mediapipe::Image, false>
     SplitImageVectorCalculator;
 REGISTER_CALCULATOR(SplitImageVectorCalculator);
+
+typedef SplitVectorCalculator<mediapipe::ImageFrame, false>
+    SplitImageFrameVectorCalculator;
+REGISTER_CALCULATOR(SplitImageFrameVectorCalculator);
 
 typedef SplitVectorCalculator<std::array<float, 16>, false>
     SplitAffineMatrixVectorCalculator;
