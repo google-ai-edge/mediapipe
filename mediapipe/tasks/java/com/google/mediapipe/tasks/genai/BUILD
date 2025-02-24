@@ -50,7 +50,6 @@ android_library(
     deps = [
         ":libllm_inference_engine_jni_lib",
         "//mediapipe/java/com/google/mediapipe/framework/image",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core:logging",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/genai/llminference/jni/proto:llm_options_java_proto_lite",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/genai/llminference/jni/proto:llm_response_context_java_proto_lite",
         "//third_party:autovalue",

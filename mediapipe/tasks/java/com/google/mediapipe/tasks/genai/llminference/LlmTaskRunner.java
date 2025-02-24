@@ -23,8 +23,6 @@ import com.google.mediapipe.framework.image.ByteBufferExtractor;
 import com.google.mediapipe.framework.image.MPImage;
 import com.google.mediapipe.framework.image.MPImageProperties;
 import com.google.mediapipe.framework.image.MediaImageExtractor;
-import com.google.mediapipe.tasks.core.logging.TasksStatsLogger;
-import com.google.mediapipe.tasks.core.logging.TasksStatsLoggerFactory;
 import com.google.mediapipe.tasks.genai.llminference.jni.proto.LlmOptionsProto.LlmModelSettings;
 import com.google.mediapipe.tasks.genai.llminference.jni.proto.LlmOptionsProto.LlmSessionConfig;
 import com.google.mediapipe.tasks.genai.llminference.jni.proto.LlmResponseContextProto.LlmResponseContext;
@@ -43,7 +41,6 @@ public final class LlmTaskRunner implements AutoCloseable {
   private final long engineHandle;
   private final Optional<ProgressListener<List<String>>> resultListener;
   private final long callbackHandle;
-  private final TasksStatsLogger statsLogger;
   private final AtomicBoolean isProcessing;
 
   /**
@@ -163,7 +160,6 @@ public final class LlmTaskRunner implements AutoCloseable {
       String taskName,
       LlmModelSettings modelSettings,
       Optional<ProgressListener<List<String>>> resultListener) {
-    statsLogger = TasksStatsLoggerFactory.create(context, taskName, /* taskRunningModeStr= */ "");
     this.engineHandle = nativeCreateEngine(modelSettings.toByteArray());
 
     this.resultListener = resultListener;
@@ -180,7 +176,6 @@ public final class LlmTaskRunner implements AutoCloseable {
   public LlmSession createSession(LlmSessionConfig sessionConfig) {
     validateState();
     long sessionHandle = nativeCreateSession(sessionConfig.toByteArray(), engineHandle);
-    statsLogger.logSessionStart();
     return new LlmSession(sessionHandle);
   }
 
@@ -251,7 +246,6 @@ public final class LlmTaskRunner implements AutoCloseable {
   public LlmSession cloneSession(LlmSession session) {
     validateState();
     long clonedSessionHandle = nativeCloneSession(session.sessionHandle);
-    statsLogger.logSessionClone();
     return new LlmSession(clonedSessionHandle);
   }
 
@@ -259,7 +253,6 @@ public final class LlmTaskRunner implements AutoCloseable {
   public void deleteSession(LlmSession session) {
     validateState();
     nativeDeleteSession(session.sessionHandle);
-    statsLogger.logSessionEnd();
   }
 
   private LlmResponseContext parseResponse(byte[] response) {
