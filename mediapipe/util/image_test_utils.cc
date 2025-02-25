@@ -131,7 +131,7 @@ GpuBuffer CreateTestGrey8GpuBuffer(int width, int height) {
 }
 
 GpuBuffer CreateTestRgba8GpuBuffer(int width, int height) {
-  GpuBuffer buffer(width, height, GpuBufferFormat::kBGRA32);
+  GpuBuffer buffer(width, height, GpuBufferFormat::kRGBA32);
   std::shared_ptr<ImageFrame> view = buffer.GetWriteView<ImageFrame>();
   *view = CreateTestRgba8ImageFrame(width, height);
   return buffer;
