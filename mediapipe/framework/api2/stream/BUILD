@@ -343,7 +343,6 @@ cc_library(
         "//mediapipe/calculators/util:multi_world_landmarks_smoothing_calculator",
         "//mediapipe/calculators/util:visibility_smoothing_calculator",
         "//mediapipe/calculators/util:visibility_smoothing_calculator_cc_proto",
-        "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/api2:builder",
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/formats:rect_cc_proto",
