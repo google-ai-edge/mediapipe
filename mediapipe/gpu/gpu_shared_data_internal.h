@@ -57,6 +57,12 @@ class GpuResources {
       PlatformGlContext external_context,
       const MultiPoolOptions* gpu_buffer_pool_options = nullptr);
 
+  // Creates a GpuResources instance that is shared with the GL context provided
+  // by the gpu_resources argument.
+  static StatusOrGpuResources Create(
+      const GpuResources& gpu_resources,
+      const MultiPoolOptions* gpu_buffer_pool_options = nullptr);
+
   // The destructor must be defined in the implementation file so that on iOS
   // the correct ARC release calls are generated.
   ~GpuResources();
@@ -65,9 +71,11 @@ class GpuResources {
 
   // Shared GL context for calculators.
   // TODO: require passing a context or node identifier.
-  const std::shared_ptr<GlContext>& gl_context() { return gl_context(nullptr); }
+  const std::shared_ptr<GlContext>& gl_context() const {
+    return gl_context(nullptr);
+  }
 
-  const std::shared_ptr<GlContext>& gl_context(CalculatorContext* cc);
+  const std::shared_ptr<GlContext>& gl_context(CalculatorContext* cc) const;
 
   // Shared buffer pool.
   GpuBufferMultiPool& gpu_buffer_pool() { return gpu_buffer_pool_; }

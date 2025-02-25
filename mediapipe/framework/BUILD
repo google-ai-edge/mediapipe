@@ -376,6 +376,7 @@ cc_library(
         "//mediapipe/framework/tool:validate",
         "//mediapipe/framework/tool:validate_name",
         "//mediapipe/gpu:gpu_service",
+        "//mediapipe/gpu:gpu_shared_data_internal",
         "//mediapipe/gpu:graph_support",
         "//mediapipe/util:cpu_util",
         "@com_google_absl//absl/base:core_headers",

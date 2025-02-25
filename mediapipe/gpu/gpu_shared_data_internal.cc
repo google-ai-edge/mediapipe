@@ -108,6 +108,13 @@ GpuResources::StatusOrGpuResources GpuResources::Create(
   return gpu_resources;
 }
 
+GpuResources::StatusOrGpuResources GpuResources::Create(
+    const GpuResources& gpu_resources,
+    const MultiPoolOptions* gpu_buffer_pool_options) {
+  return Create(gpu_resources.gl_context()->native_context(),
+                gpu_buffer_pool_options);
+}
+
 GpuResources::GpuResources(std::shared_ptr<GlContext> gl_context,
                            const MultiPoolOptions* gpu_buffer_pool_options)
     : gl_key_context_(new GlContextMapType(),
@@ -241,9 +248,10 @@ absl::Status GpuResources::PrepareGpuNode(CalculatorNode* node) {
 // TODO: expose and use an actual ID instead of using the
 // canonicalized name.
 const std::shared_ptr<GlContext>& GpuResources::gl_context(
-    CalculatorContext* cc) {
+    CalculatorContext* cc) const {
   if (cc) {
-    auto it = gl_key_context_->find(node_key_[cc->NodeName()]);
+    const auto node_key_it = node_key_.find(cc->NodeName());
+    const auto it = gl_key_context_->find(node_key_it->second);
     if (it != gl_key_context_->end()) {
       return it->second;
     }
