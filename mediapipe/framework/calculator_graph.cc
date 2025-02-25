@@ -80,9 +80,12 @@
 #include "mediapipe/framework/validated_graph_config.h"
 #include "mediapipe/framework/vlog_overrides.h"
 #include "mediapipe/gpu/gpu_service.h"
-#include "mediapipe/gpu/gpu_shared_data_internal.h"
 #include "mediapipe/gpu/graph_support.h"
 #include "mediapipe/util/cpu_util.h"
+
+#if !MEDIAPIPE_DISABLE_GPU
+#include "mediapipe/gpu/gpu_shared_data_internal.h"
+#endif  // !MEDIAPIPE_DISABLE_GPU
 
 namespace mediapipe {
 
@@ -154,6 +157,7 @@ CalculatorGraph::CalculatorGraph(CalculatorContext* cc)
         parent_service_manager->ServicePackets();
     GraphServiceManager::ServiceMap service_packets;
     for (const auto& [key, packet] : parent_service_packets) {
+#if !MEDIAPIPE_DISABLE_GPU
       if (key == kGpuService.key) {
         // To avoid deadlocks when sharing the same GPU thread between
         // multiple graphs, we create a new GpuResources instance for each
@@ -163,9 +167,10 @@ CalculatorGraph::CalculatorGraph(CalculatorContext* cc)
         ABSL_CHECK_OK(resources);
         service_packets[key] =
             MakePacket<std::shared_ptr<mediapipe::GpuResources>>(*resources);
-      } else {
-        service_packets[key] = packet;
+        continue;
       }
+#endif  // !MEDIAPIPE_DISABLE_GPU
+      service_packets[key] = packet;
     }
     service_manager_.SetServicePackets(service_packets);
   }
