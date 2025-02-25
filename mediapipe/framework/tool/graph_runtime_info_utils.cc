@@ -1,5 +1,7 @@
 #include "mediapipe/framework/tool/graph_runtime_info_utils.h"
 
+#include <algorithm>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -17,12 +19,28 @@ absl::StatusOr<std::string> GetGraphRuntimeInfoString(
   const absl::Time caputure_time =
       absl::FromUnixMicros(graph_runtime_info.capture_time_unix_us());
   std::string calculators_runtime_info_str;
-  std::vector<std::string> calculators_with_unprocessed_packets;
+  std::set<std::string> calculators_with_unprocessed_packets;
   std::vector<std::string> running_calculators;
-  int num_packets_in_input_queues = 0;
+
+  // Analyze packets in input queues.
+  int num_total_pending_packets = 0;
   for (const auto& calculator_info : graph_runtime_info.calculator_infos()) {
     const bool is_idle = calculator_info.last_process_finish_unix_us() >=
                          calculator_info.last_process_start_unix_us();
+    int calculator_pending_packets = 0;
+    Timestamp min_ts_bound_of_streams_with_unprocessed_packets =
+        Timestamp::Max();
+    for (const auto& input_stream_info : calculator_info.input_stream_infos()) {
+      calculator_pending_packets += input_stream_info.queue_size();
+      num_total_pending_packets += input_stream_info.queue_size();
+      const Timestamp stream_ts_bound = Timestamp::CreateNoErrorChecking(
+          input_stream_info.minimum_timestamp_or_bound());
+      if (input_stream_info.queue_size() > 0) {
+        min_ts_bound_of_streams_with_unprocessed_packets = std::min(
+            min_ts_bound_of_streams_with_unprocessed_packets, stream_ts_bound);
+      }
+    }
+    // Determine calculator state.
     const std::string calculator_state_str =
         is_idle ? absl::StrFormat(
                       "idle for %.2fs",
@@ -39,20 +57,44 @@ absl::StatusOr<std::string> GetGraphRuntimeInfoString(
     if (!is_idle) {
       running_calculators.push_back(calculator_info.calculator_name());
     }
+    const Timestamp calculator_ts_bound =
+        Timestamp::CreateNoErrorChecking(calculator_info.timestamp_bound());
     absl::StrAppend(
         &calculators_runtime_info_str,
-        absl::StrFormat(
-            "\n%s: (%s, ts bound : %s)\n", calculator_info.calculator_name(),
-            calculator_state_str,
-            Timestamp::CreateNoErrorChecking(calculator_info.timestamp_bound())
-                .DebugString()));
-    bool calculator_has_unprocessed_packets = false;
+        absl::StrFormat("\n%s: (%s%s, ts bound : %s)\n",
+                        calculator_info.calculator_name(), calculator_state_str,
+                        calculator_pending_packets > 0
+                            ? absl::StrCat(", pending packets: ",
+                                           calculator_pending_packets)
+                            : "",
+                        calculator_ts_bound.DebugString()));
+    if (calculator_pending_packets > 0) {
+      // Predict streams that might be waiting for packets.
+      std::vector<std::string> streams_with_waiting_for_packets;
+      for (const auto& input_stream_info :
+           calculator_info.input_stream_infos()) {
+        const Timestamp stream_ts_bound = Timestamp::CreateNoErrorChecking(
+            input_stream_info.minimum_timestamp_or_bound());
+        if (stream_ts_bound <
+            min_ts_bound_of_streams_with_unprocessed_packets) {
+          streams_with_waiting_for_packets.push_back(
+              input_stream_info.stream_name());
+        }
+      }
+      const std::string waiting_for_packets_str =
+          absl::StrCat("waiting on stream(s): ",
+                       absl::StrJoin(streams_with_waiting_for_packets, ", "));
+      absl::StrAppend(&calculators_runtime_info_str, waiting_for_packets_str,
+                      "\n");
+      calculators_with_unprocessed_packets.insert(absl::StrCat(
+          calculator_info.calculator_name(), " ", waiting_for_packets_str));
+    }
+
+    // List input streams with state.
     if (!calculator_info.input_stream_infos().empty()) {
       absl::StrAppend(&calculators_runtime_info_str, "Input streams:\n");
     }
     for (const auto& input_stream_info : calculator_info.input_stream_infos()) {
-      num_packets_in_input_queues += input_stream_info.queue_size();
-      calculator_has_unprocessed_packets |= input_stream_info.queue_size() > 0;
       absl::StrAppend(
           &calculators_runtime_info_str, " * ", input_stream_info.stream_name(),
           " - queue size: ", input_stream_info.queue_size(),
@@ -63,6 +105,7 @@ absl::StatusOr<std::string> GetGraphRuntimeInfoString(
               .DebugString(),
           "\n");
     }
+    // List output streams with state.
     if (!calculator_info.output_stream_infos().empty()) {
       absl::StrAppend(&calculators_runtime_info_str, "Output streams:\n");
     }
@@ -77,17 +120,13 @@ absl::StatusOr<std::string> GetGraphRuntimeInfoString(
                           .DebugString(),
                       "\n");
     }
-    if (calculator_has_unprocessed_packets) {
-      calculators_with_unprocessed_packets.push_back(
-          calculator_info.calculator_name());
-    }
   }
+
   const std::string calulators_with_unprocessed_packets_str =
-      num_packets_in_input_queues > 0
+      !calculators_with_unprocessed_packets.empty()
           ? absl::StrCat(
-                " (in calculators: ",
-                absl::StrJoin(calculators_with_unprocessed_packets, ", "), ")")
-          : "";
+                absl::StrJoin(calculators_with_unprocessed_packets, "\n"))
+          : "\n";
   const std::string running_calculators_str =
       running_calculators.empty()
           ? "None"
@@ -95,8 +134,8 @@ absl::StatusOr<std::string> GetGraphRuntimeInfoString(
                          absl::StrJoin(running_calculators, ", "), ")");
   return absl::StrFormat(
       "Graph runtime info: \nRunning calculators: %s\nNum packets in input "
-      "queues: %d%s\n%s\n",
-      running_calculators_str, num_packets_in_input_queues,
+      "queues: %d\n%s\n%s\n",
+      running_calculators_str, num_total_pending_packets,
       calulators_with_unprocessed_packets_str, calculators_runtime_info_str);
 }
 
