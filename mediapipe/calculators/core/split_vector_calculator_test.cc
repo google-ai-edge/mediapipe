@@ -16,12 +16,14 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/memory/memory.h"
 #include "mediapipe/calculators/core/split_vector_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
+#include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
@@ -685,6 +687,50 @@ TEST_F(MovableSplitUniqueIntPtrCalculatorTest, SmokeTestCombiningOutputs) {
   std::vector<int> input_end_indices = {1, 3, 5};
   ValidateCombinedVectorOutput(range_0_packets, /*expected_elements=*/3,
                                input_begin_indices, input_end_indices);
+}
+
+TEST(MovableSplitImageFrameVectorCalculatorTest, SmokeTest) {
+  CalculatorGraphConfig graph_config =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
+          R"pb(
+            input_stream: "input_frames"
+            node {
+              calculator: "MovableSplitImageFrameVectorCalculator"
+              input_stream: "input_frames"
+              output_stream: "output_frame"
+              options {
+                [mediapipe.SplitVectorCalculatorOptions.ext] {
+                  ranges: { begin: 0 end: 1 }
+                  element_only: true
+                }
+              }
+            }
+          )pb");
+
+  std::vector<Packet> output_frame_packets;
+  tool::AddVectorSink("output_frame", &graph_config, &output_frame_packets);
+
+  CalculatorGraph graph;
+  MP_ASSERT_OK(graph.Initialize(graph_config));
+  MP_ASSERT_OK(graph.StartRun({}));
+
+  std::vector<ImageFrame> input_frames;
+  input_frames.push_back(ImageFrame(ImageFormat::SRGB, 20, 10));
+
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
+      "input_frames",
+      MakePacket<std::vector<ImageFrame>>(std::move(input_frames))
+          .At(Timestamp(1))));
+
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.CloseAllPacketSources());
+  MP_ASSERT_OK(graph.WaitUntilDone());
+
+  ASSERT_EQ(output_frame_packets.size(), 1);
+  const ImageFrame& output_frame = output_frame_packets[0].Get<ImageFrame>();
+  EXPECT_EQ(output_frame.Format(), ImageFormat::SRGB);
+  EXPECT_EQ(output_frame.Width(), 20);
+  EXPECT_EQ(output_frame.Height(), 10);
 }
 
 }  // namespace mediapipe

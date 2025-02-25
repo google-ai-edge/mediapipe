@@ -987,6 +987,7 @@ cc_test(
         ":split_vector_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/tool:validate_type",

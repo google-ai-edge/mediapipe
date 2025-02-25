@@ -94,9 +94,9 @@ typedef SplitVectorCalculator<mediapipe::Image, false>
     SplitImageVectorCalculator;
 REGISTER_CALCULATOR(SplitImageVectorCalculator);
 
-typedef SplitVectorCalculator<mediapipe::ImageFrame, false>
-    SplitImageFrameVectorCalculator;
-REGISTER_CALCULATOR(SplitImageFrameVectorCalculator);
+typedef SplitVectorCalculator<mediapipe::ImageFrame, true>
+    MovableSplitImageFrameVectorCalculator;
+REGISTER_CALCULATOR(MovableSplitImageFrameVectorCalculator);
 
 typedef SplitVectorCalculator<std::array<float, 16>, false>
     SplitAffineMatrixVectorCalculator;
