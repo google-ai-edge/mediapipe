@@ -16,7 +16,7 @@ load(
     "//mediapipe/framework/tool:mediapipe_files.bzl",
     "mediapipe_files",
 )
-load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl", "mediapipe_tasks_vision_image_generator_aar")
+load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl", "mediapipe_build_aar_with_jni")
 
 licenses(["notice"])
 
@@ -86,12 +86,53 @@ android_library(
     ],
 )
 
-mediapipe_tasks_vision_image_generator_aar(
-    name = "tasks_vision_image_generator",
+android_library(
+    name = "tasks_vision_image_generator_aar_library",
     srcs = glob(["**/*.java"]) + [
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:core_java_src",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:face_landmarker_java_src",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:image_segmenter_java_src",
     ],
-    native_library = ":libmediapipe_tasks_vision_image_generator_jni_lib",
+    manifest = "AndroidManifest.xml",
+    deps = [
+        ":libmediapipe_tasks_vision_image_generator_jni_lib",
+        "//mediapipe/framework:calculator_java_proto_lite",
+        "//mediapipe/framework:calculator_options_java_proto_lite",
+        "//mediapipe/framework/formats:classification_java_proto_lite",
+        "//mediapipe/framework/formats:landmark_java_proto_lite",
+        "//mediapipe/framework/formats:matrix_data_java_proto_lite",
+        "//mediapipe/framework/formats:rect_java_proto_lite",
+        "//mediapipe/java/com/google/mediapipe/framework:android_framework_no_mff",
+        "//mediapipe/java/com/google/mediapipe/framework/image",
+        "//mediapipe/tasks/cc/core/proto:base_options_java_proto_lite",
+        "//mediapipe/tasks/cc/core/proto:external_file_java_proto_lite",
+        "//mediapipe/tasks/cc/vision/face_detector/proto:face_detector_graph_options_java_proto_lite",
+        "//mediapipe/tasks/cc/vision/face_geometry/proto:face_geometry_java_proto_lite",
+        "//mediapipe/tasks/cc/vision/face_landmarker/proto:face_landmarker_graph_options_java_proto_lite",
+        "//mediapipe/tasks/cc/vision/face_landmarker/proto:face_landmarks_detector_graph_options_java_proto_lite",
+        "//mediapipe/tasks/cc/vision/image_generator/diffuser:stable_diffusion_iterate_calculator_java_proto_lite",
+        "//mediapipe/tasks/cc/vision/image_generator/proto:conditioned_image_graph_options_java_proto_lite",
+        "//mediapipe/tasks/cc/vision/image_generator/proto:control_plugin_graph_options_java_proto_lite",
+        "//mediapipe/tasks/cc/vision/image_generator/proto:image_generator_graph_options_java_proto_lite",
+        "//mediapipe/tasks/cc/vision/image_segmenter/calculators:tensors_to_segmentation_calculator_java_proto_lite",
+        "//mediapipe/tasks/cc/vision/image_segmenter/proto:image_segmenter_graph_options_java_proto_lite",
+        "//mediapipe/tasks/cc/vision/image_segmenter/proto:segmenter_options_java_proto_lite",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:category",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:connection",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:normalized_landmark",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core:core_java",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:core_java",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:facelandmarker",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:imagesegmenter_java",
+        "//third_party:any_java_proto",
+        "//third_party:autovalue",
+        "//third_party/java/protobuf:protobuf_lite",
+        "@maven//:androidx_annotation_annotation",
+        "@maven//:com_google_guava_guava",
+    ],
+)
+
+mediapipe_build_aar_with_jni(
+    name = "tasks_vision_image_generator",
+    android_library = ":tasks_vision_image_generator_aar_library",
 )
