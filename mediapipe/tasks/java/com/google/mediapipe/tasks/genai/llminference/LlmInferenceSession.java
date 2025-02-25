@@ -65,7 +65,7 @@ public class LlmInferenceSession implements AutoCloseable {
    * prompt, but able to be processed in chunks.
    *
    * @param inputText The query chunk to add to the session.
-   * @throws MediaPipeException if adding a query chunk to the session fails.
+   * @throws IllegalStateException if adding a query chunk to the session fails.
    */
   public void addQueryChunk(String inputText) {
     taskRunner.addQueryChunk(session, inputText);
@@ -75,7 +75,7 @@ public class LlmInferenceSession implements AutoCloseable {
    * Add an image to the session.
    *
    * @param image a MediaPipe {@link MPImage} object for processing.
-   * @throws MediaPipeException if there is an internal error.
+   * @throws IllegalStateException if there is an internal error.
    */
   public void addImage(MPImage image) {
     taskRunner.addImage(session, image);
@@ -89,7 +89,7 @@ public class LlmInferenceSession implements AutoCloseable {
    * using the same {@link LlmInference}. You have to wait for the currently running response
    * generation call to complete before initiating another one.
    *
-   * @throws MediaPipeException if the inference fails.
+   * @throws IllegalStateException if the inference fails.
    */
   public String generateResponse() {
     List<String> tokens = Collections.unmodifiableList(taskRunner.predictSync(session));
@@ -107,7 +107,7 @@ public class LlmInferenceSession implements AutoCloseable {
    * using the same {@link LlmInference}. You have to wait for the currently running response
    * generation call to complete before initiating another one.
    *
-   * @throws MediaPipeException if the inference fails.
+   * @throws IllegalStateException if the inference fails.
    */
   public void generateResponseAsync() {
     taskRunner.predictAsync(session);
@@ -119,7 +119,7 @@ public class LlmInferenceSession implements AutoCloseable {
    *
    * @param text The text to tokenize.
    * @return The number of tokens in the resulting tokenization of the text.
-   * @throws MediaPipeException if the tokenization fails.
+   * @throws IllegalStateException if the tokenization fails.
    */
   public int sizeInTokens(String text) {
     return taskRunner.sizeInTokens(session, text);
@@ -150,7 +150,7 @@ public class LlmInferenceSession implements AutoCloseable {
    * <p>You can continue prompting the LLM from where you left off using the cloned session.
    *
    * @return A new instance of `Session` which is cloned from the current session.
-   * @throws MediaPipeException if cloning the current session fails.
+   * @throws IllegalStateException if cloning the current session fails.
    */
   LlmInferenceSession cloneSession() {
     LlmSession clonedSession = taskRunner.cloneSession(session);

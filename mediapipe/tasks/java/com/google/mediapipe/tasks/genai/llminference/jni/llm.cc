@@ -43,10 +43,28 @@ using LlmSessionConfigProto =
 using LlmResponseContextProto =
     mediapipe::tasks::genai::llminference::jni::LlmResponseContext;
 using mediapipe::android::JStringToStdString;
-using mediapipe::android::ThrowIfError;
 using mediapipe::java::GetJNIEnv;
 
 const bool kDefaultIncludeTokenCostCalculator = true;
+
+void ThrowIllegalStateException(JNIEnv* env, const std::string& message) {
+  jclass exceptionClass = env->FindClass("java/lang/IllegalStateException");
+  jmethodID exceptionInit =
+      env->GetMethodID(exceptionClass, "<init>", "(Ljava/lang/String;)V");
+  jstring exceptionMessage = env->NewStringUTF(message.c_str());
+  jthrowable exception = static_cast<jthrowable>(
+      env->NewObject(exceptionClass, exceptionInit, exceptionMessage));
+  env->Throw(exception);
+}
+
+bool ThrowIfError(JNIEnv* env, absl::Status status) {
+  if (!status.ok()) {
+    std::string error_message = std::string(status.message());
+    ThrowIllegalStateException(env, error_message);
+    return true;
+  }
+  return false;
+}
 
 LlmModelSettings ParseModelSettings(void* bytes, int size) {
   LlmModelSettingsProto input;

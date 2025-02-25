@@ -127,7 +127,7 @@ public class LlmInference implements AutoCloseable {
    * generation call to complete before initiating another one.
    *
    * @param inputText a {@link String} for processing.
-   * @throws MediaPipeException if the inference fails.
+   * @throws IllegalStateException if the inference fails.
    */
   public String generateResponse(String inputText) {
     LlmInferenceSession session = resetImplicitSession();
@@ -147,7 +147,7 @@ public class LlmInference implements AutoCloseable {
    * generation call to complete before initiating another one.
    *
    * @param inputText a {@link String} for processing.
-   * @throws MediaPipeException if the inference fails.
+   * @throws IllegalStateException if the inference fails.
    */
   public void generateResponseAsync(String inputText) {
     LlmInferenceSession session = resetImplicitSession();
@@ -166,7 +166,7 @@ public class LlmInference implements AutoCloseable {
    *
    * @param text The text to tokenize.
    * @return The number of tokens in the resulting tokenization of the text.
-   * @throws MediaPipeException if the tokenization fails.
+   * @throws IllegalStateException if the tokenization fails.
    */
   public int sizeInTokens(String text) {
     LlmInferenceSession session = resetImplicitSession();
