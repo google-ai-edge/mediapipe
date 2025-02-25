@@ -21,12 +21,6 @@ package(default_visibility = [
 
 licenses(["notice"])
 
-config_setting(
-    name = "enable_odml_maven_build",
-    define_values = {"ENABLE_ODML_MAVEN_BUILD": "1"},
-    visibility = ["//visibility:public"],
-)
-
 cc_library(
     name = "llm",
     srcs = ["llm.cc"],
@@ -34,7 +28,7 @@ cc_library(
     deps = [
         "//mediapipe/java/com/google/mediapipe/framework/jni:class_registry",
         "//mediapipe/java/com/google/mediapipe/framework/jni:jni_util",
-        "//mediapipe/tasks/cc/genai/inference/c:llm_inference_engine_hdr",  # needed with ENABLE_ODML_MAVEN_BUILD
+        "//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/genai/llminference/jni/proto:llm_options_cc_proto",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/genai/llminference/jni/proto:llm_response_context_cc_proto",
         "@com_google_absl//absl/log:absl_log",
@@ -42,14 +36,6 @@ cc_library(
         "@com_google_absl//absl/strings",
         "@skia//:core",
     ] + select({
-        "//conditions:default": [
-            "//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu",
-        ],
-        ":enable_odml_maven_build": [
-            "@odml//odml/infra/genai/inference:all_possible_calculators",
-            "@odml//odml/infra/genai/inference/c:libllm_inference_engine",
-        ],
-    }) + select({
         "//conditions:default": [
         ],
         "//mediapipe:android": [],
