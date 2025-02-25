@@ -116,6 +116,11 @@ ImageFrame CreateTestRgba8ImageFrame(int width, int height) {
       width, height, /*max_value=*/255.0f);
 }
 
+ImageFrame CreateTestRgb8ImageFrame(int width, int height) {
+  return CreateTestImageFrame<ImageFormat::SRGB, uint8_t>(width, height,
+                                                          /*max_value=*/255.0f);
+}
+
 GpuBuffer CreateTestFloat32GpuBuffer(int width, int height) {
   GpuBuffer buffer(width, height, GpuBufferFormat::kGrayFloat32);
   std::shared_ptr<ImageFrame> view = buffer.GetWriteView<ImageFrame>();
@@ -134,6 +139,13 @@ GpuBuffer CreateTestRgba8GpuBuffer(int width, int height) {
   GpuBuffer buffer(width, height, GpuBufferFormat::kRGBA32);
   std::shared_ptr<ImageFrame> view = buffer.GetWriteView<ImageFrame>();
   *view = CreateTestRgba8ImageFrame(width, height);
+  return buffer;
+}
+
+GpuBuffer CreateTestRgb8GpuBuffer(int width, int height) {
+  GpuBuffer buffer(width, height, GpuBufferFormat::kRGB24);
+  std::shared_ptr<ImageFrame> view = buffer.GetWriteView<ImageFrame>();
+  *view = CreateTestRgb8ImageFrame(width, height);
   return buffer;
 }
 

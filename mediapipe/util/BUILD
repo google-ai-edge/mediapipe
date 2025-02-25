@@ -494,7 +494,6 @@ cc_library(
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/gpu:gpu_buffer",
         "//mediapipe/gpu:gpu_buffer_format",
-        "//mediapipe/gpu:gpu_buffer_storage_image_frame",
         "@com_google_absl//absl/log:absl_log",
     ],
 )
