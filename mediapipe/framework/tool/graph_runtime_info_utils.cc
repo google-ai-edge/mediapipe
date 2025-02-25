@@ -42,11 +42,14 @@ absl::StatusOr<std::string> GetGraphRuntimeInfoString(
     absl::StrAppend(
         &calculators_runtime_info_str,
         absl::StrFormat(
-            "\n%s: (%s, ts bound : %s)", calculator_info.calculator_name(),
+            "\n%s: (%s, ts bound : %s)\n", calculator_info.calculator_name(),
             calculator_state_str,
             Timestamp::CreateNoErrorChecking(calculator_info.timestamp_bound())
                 .DebugString()));
     bool calculator_has_unprocessed_packets = false;
+    if (!calculator_info.input_stream_infos().empty()) {
+      absl::StrAppend(&calculators_runtime_info_str, "Input streams:\n");
+    }
     for (const auto& input_stream_info : calculator_info.input_stream_infos()) {
       num_packets_in_input_queues += input_stream_info.queue_size();
       calculator_has_unprocessed_packets |= input_stream_info.queue_size() > 0;
@@ -54,11 +57,25 @@ absl::StatusOr<std::string> GetGraphRuntimeInfoString(
           &calculators_runtime_info_str, " * ", input_stream_info.stream_name(),
           " - queue size: ", input_stream_info.queue_size(),
           ", total added: ", input_stream_info.number_of_packets_added(),
-          ", min ts: ",
+          ", ts bound: ",
           Timestamp::CreateNoErrorChecking(
               input_stream_info.minimum_timestamp_or_bound())
               .DebugString(),
           "\n");
+    }
+    if (!calculator_info.output_stream_infos().empty()) {
+      absl::StrAppend(&calculators_runtime_info_str, "Output streams:\n");
+    }
+    for (const auto& output_stream_info :
+         calculator_info.output_stream_infos()) {
+      absl::StrAppend(&calculators_runtime_info_str, " * ",
+                      output_stream_info.stream_name(), ", total added: ",
+                      output_stream_info.number_of_packets_added(),
+                      ", ts bound: ",
+                      Timestamp::CreateNoErrorChecking(
+                          output_stream_info.minimum_timestamp_or_bound())
+                          .DebugString(),
+                      "\n");
     }
     if (calculator_has_unprocessed_packets) {
       calculators_with_unprocessed_packets.push_back(

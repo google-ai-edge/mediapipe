@@ -230,26 +230,35 @@ absl::Status CalculatorNode::Initialize(
 }
 
 CalculatorRuntimeInfo CalculatorNode::GetStreamMonitoringInfo() const {
-  CalculatorRuntimeInfo calulator_info;
-  calulator_info.set_calculator_name(DebugName());
+  CalculatorRuntimeInfo calculator_info;
+  calculator_info.set_calculator_name(DebugName());
   {
     absl::MutexLock lock(&runtime_info_mutex_);
-    calulator_info.set_last_process_start_unix_us(
+    calculator_info.set_last_process_start_unix_us(
         absl::ToUnixMicros(last_process_start_ts_));
-    calulator_info.set_last_process_finish_unix_us(
+    calculator_info.set_last_process_finish_unix_us(
         absl::ToUnixMicros(last_process_finish_ts_));
   }
-  const auto monitoring_info = input_stream_handler_->GetMonitoringInfo();
+  const auto input_stream_info = input_stream_handler_->GetMonitoringInfo();
   for (const auto& [stream_name, queue_size, num_packets_added,
-                    minimum_timestamp_or_bound] : monitoring_info) {
-    auto* stream_info = calulator_info.add_input_stream_infos();
+                    minimum_timestamp_or_bound] : input_stream_info) {
+    auto* stream_info = calculator_info.add_input_stream_infos();
     stream_info->set_stream_name(stream_name);
     stream_info->set_queue_size(queue_size);
     stream_info->set_number_of_packets_added(num_packets_added);
     stream_info->set_minimum_timestamp_or_bound(
         minimum_timestamp_or_bound.Value());
   }
-  return calulator_info;
+  const auto output_stream_info = output_stream_handler_->GetMonitoringInfo();
+  for (const auto& [stream_name, num_packets_added,
+                    minimum_timestamp_or_bound] : output_stream_info) {
+    auto* stream_info = calculator_info.add_output_stream_infos();
+    stream_info->set_stream_name(stream_name);
+    stream_info->set_number_of_packets_added(num_packets_added);
+    stream_info->set_minimum_timestamp_or_bound(
+        minimum_timestamp_or_bound.Value());
+  }
+  return calculator_info;
 }
 
 absl::Status CalculatorNode::InitializeOutputSidePackets(

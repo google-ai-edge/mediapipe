@@ -958,6 +958,8 @@ cc_library(
         "//mediapipe/framework/tool:tag_map",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
     ],
 )
@@ -974,9 +976,10 @@ cc_library(
         ":packet_type",
         ":port",
         ":timestamp",
-        "//mediapipe/framework/port:source_location",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/synchronization",
     ],
 )
@@ -1473,7 +1476,6 @@ cc_test(
         "//mediapipe/framework/tool:source",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
-        "@com_google_absl//absl/memory",
     ],
 )
 

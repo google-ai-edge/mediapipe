@@ -15,10 +15,12 @@
 #ifndef MEDIAPIPE_FRAMEWORK_OUTPUT_STREAM_MANAGER_H_
 #define MEDIAPIPE_FRAMEWORK_OUTPUT_STREAM_MANAGER_H_
 
+#include <cstdint>
 #include <functional>
 #include <string>
 #include <vector>
 
+#include "absl/base/thread_annotations.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/output_stream_shard.h"
 #include "mediapipe/framework/packet.h"
@@ -102,6 +104,10 @@ class OutputStreamManager {
   OutputStreamSpec* Spec() { return &output_stream_spec_; }
   const OutputStreamSpec* Spec() const { return &output_stream_spec_; }
 
+  // Returns the total number of packets added to the output stream. This is
+  // used for monitoring purposes.
+  int NumPacketsAdded() const;
+
  private:
   // The necessary information to locate an InputStreamImpl.
   struct Mirror {
@@ -120,6 +126,9 @@ class OutputStreamManager {
   mutable absl::Mutex stream_mutex_;
   Timestamp next_timestamp_bound_ ABSL_GUARDED_BY(stream_mutex_);
   bool closed_ ABSL_GUARDED_BY(stream_mutex_);
+  // Monotonically increasing total number of packets added to the output
+  // stream. This is used for monitoring purposes.
+  int64_t num_packets_added_ ABSL_GUARDED_BY(stream_mutex_) = 0;
 };
 
 }  // namespace mediapipe

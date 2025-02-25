@@ -14,7 +14,9 @@
 
 #include "mediapipe/framework/output_stream_manager.h"
 
+#include <functional>
 #include <memory>
+#include <string>
 
 #include "absl/memory/memory.h"
 #include "mediapipe/framework/input_stream_handler.h"
@@ -32,7 +34,7 @@ namespace {
 
 class OutputStreamManagerTest : public ::testing::Test {
  protected:
-  OutputStreamManagerTest() {}
+  OutputStreamManagerTest() = default;
 
   void SetUp() override {
     packet_type_.Set<std::string>();
@@ -686,6 +688,22 @@ TEST_F(OutputStreamManagerTest, AddPacketAndMovePacket) {
   EXPECT_EQ(Timestamp(21), ComputeBoundAndPropagateUpdates(input_timestamp));
   EXPECT_FALSE(input_stream_manager_.IsEmpty());
   EXPECT_TRUE(errors_.empty());
+}
+
+TEST_F(OutputStreamManagerTest, ShouldReportNumPacketsAdded) {
+  Timestamp input_timestamp = Timestamp(0);
+  output_stream_shard_.AddPacket(
+      MakePacket<std::string>("packet 1").At(Timestamp(1)));
+  output_stream_shard_.AddPacket(
+      MakePacket<std::string>("packet 2").At(Timestamp(2)));
+
+  Timestamp output_bound = output_stream_manager_->ComputeOutputTimestampBound(
+      output_stream_shard_, input_timestamp);
+  output_stream_manager_->PropagateUpdatesToMirrors(output_bound,
+                                                    &output_stream_shard_);
+  ASSERT_TRUE(errors_.empty());
+  EXPECT_EQ(input_stream_manager_.NumPacketsAdded(), 2);
+  EXPECT_TRUE(output_stream_shard_.IsEmpty());
 }
 
 }  // namespace

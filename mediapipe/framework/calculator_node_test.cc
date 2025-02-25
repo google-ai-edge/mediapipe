@@ -20,7 +20,6 @@
 
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
-#include "absl/memory/memory.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/output_side_packet_impl.h"
 #include "mediapipe/framework/port/gmock.h"
@@ -571,6 +570,44 @@ TEST_F(CalculatorNodeTest, CleanupAfterRunTwice) {
 TEST_F(CalculatorNodeTest, CleanupAfterRunTwiceWithTags) {
   InitializeEnvironment(/*use_tags=*/true);
   TestCleanupAfterRunTwice();
+}
+
+TEST_F(CalculatorNodeTest, ShouldGenerateStreamMonitoringInfo) {
+  InitializeEnvironment(/*use_tags=*/false);
+  MP_ASSERT_OK(PrepareNodeForRun());
+
+  SimulateParentOpenNode();
+  MP_EXPECT_OK(node_->OpenNode());
+
+  OutputStreamShard stream_a_shard;
+  stream_a_shard.SetSpec(stream_a_manager_->Spec());
+  stream_a_shard.Add(new int(1), Timestamp(1));
+  stream_a_manager_->PropagateUpdatesToMirrors(Timestamp(2), &stream_a_shard);
+  EXPECT_EQ(1, schedule_count_);
+  EXPECT_TRUE(node_->TryToBeginScheduling());
+  MP_EXPECT_OK(node_->ProcessNode(cc_));
+  cc_ = nullptr;
+  node_->EndScheduling();
+  EXPECT_EQ(1, schedule_count_);
+
+  const auto stream_monitoring_info = node_->GetStreamMonitoringInfo();
+  EXPECT_EQ(stream_monitoring_info.calculator_name(), "CountCalculator");
+  EXPECT_EQ(stream_monitoring_info.input_stream_infos_size(), 1);
+  EXPECT_THAT(stream_monitoring_info.input_stream_infos(0),
+              mediapipe::EqualsProto(
+                  mediapipe::ParseTextProtoOrDie<InputStreamRuntimeInfo>(R"pb(
+                    stream_name: ":0:stream_a"
+                    number_of_packets_added: 1
+                    minimum_timestamp_or_bound: 2
+                  )pb")));
+  EXPECT_EQ(stream_monitoring_info.output_stream_infos_size(), 1);
+  EXPECT_THAT(stream_monitoring_info.output_stream_infos(0),
+              mediapipe::EqualsProto(
+                  mediapipe::ParseTextProtoOrDie<OutputStreamRuntimeInfo>(R"pb(
+                    stream_name: ":0:stream_b"
+                    number_of_packets_added: 1
+                    minimum_timestamp_or_bound: 2
+                  )pb")));
 }
 
 }  // namespace
