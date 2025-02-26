@@ -606,7 +606,6 @@ cc_library(
         "//mediapipe/gpu/webgpu:use_webgpu_emscripten": ["-sUSE_WEBGPU=1"],
     }),
     deps = [
-        ":ahwb_gpu_releaser",
         "//mediapipe/framework:memory_manager",
         "//mediapipe/framework:port",
         "//mediapipe/framework/deps:no_destructor",
@@ -625,30 +624,28 @@ cc_library(
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
     ] + select({
-        "//mediapipe/gpu:disable_gpu": [],
         "//mediapipe/gpu/webgpu:use_webgpu": [
-            "//mediapipe/gpu:gl_base",
-            "//mediapipe/gpu:gl_context",
             "//mediapipe/gpu/webgpu:webgpu_service",
             "//mediapipe/gpu/webgpu:webgpu_utils",
         ],
-        "//conditions:default": [
-            "//mediapipe/gpu:gl_base",
-            "//mediapipe/gpu:gl_context",
-        ],
         "//mediapipe:android": [
+            ":ahwb_gpu_releaser",
             ":hardware_buffer",
             ":hardware_buffer_pool",
             ":tensor_ahwb_usage",
             ":unique_fd",
-            "//mediapipe/gpu:gl_base",
-            "//mediapipe/gpu:gl_context",
         ],
         ":android_link_native_window": [
+            ":ahwb_gpu_releaser",
             ":hardware_buffer",
             ":hardware_buffer_pool",
             ":tensor_ahwb_usage",
             ":unique_fd",
+        ],
+        "//conditions:default": [],
+    }) + select({
+        "//mediapipe/gpu:disable_gpu": [],
+        "//conditions:default": [
             "//mediapipe/gpu:gl_base",
             "//mediapipe/gpu:gl_context",
         ],
