@@ -355,14 +355,6 @@ Tensor::OpenGlBufferView Tensor::GetOpenGlBufferReadView() const {
       << "Tensor conversion between different GPU backing formats is not "
          "supported yet.";
   auto lock(std::make_unique<absl::MutexLock>(&view_mutex_));
-  if ((valid_ & kValidOpenGlBuffer) && gl_context_ != nullptr &&
-      !gl_context_->IsCurrent() && GlContext::IsAnyContextCurrent()) {
-    ABSL_LOG_FIRST_N(WARNING, 1)
-        << "Tensor::GetOpenGlBufferReadView is not executed on the same GL "
-           "context where GL buffer was created. Note that Tensor has "
-           "limited synchronization support when sharing OpenGl objects "
-           "between multiple OpenGL contexts.";
-  }
   AllocateOpenGlBuffer();
   if (!(valid_ & kValidOpenGlBuffer)) {
     // If the call succeeds then AHWB -> SSBO are synchronized so any usage of
@@ -378,7 +370,8 @@ Tensor::OpenGlBufferView Tensor::GetOpenGlBufferReadView() const {
     }
     valid_ |= kValidOpenGlBuffer;
   }
-  return {opengl_buffer_, std::move(lock),
+
+  return {/*is_write_view=*/false, opengl_buffer_, std::move(lock),
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
           // ssbo_read_ is passed to be populated on OpenGlBufferView
           // destruction in order to perform delayed resources releasing (see
@@ -386,11 +379,11 @@ Tensor::OpenGlBufferView Tensor::GetOpenGlBufferReadView() const {
           //
           // Not passing for the case when AHWB is not in use to avoid creation
           // of unnecessary sync object and memory leak.
-          use_ahwb_ ? &ssbo_read_ : nullptr
+          use_ahwb_ ? &ssbo_read_ : nullptr,
 #else
-          nullptr
+          nullptr,
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
-  };
+          gl_context_.get(), &gl_write_read_sync_};
 }
 
 Tensor::OpenGlBufferView Tensor::GetOpenGlBufferWriteView(
@@ -413,12 +406,17 @@ Tensor::OpenGlBufferView Tensor::GetOpenGlBufferWriteView(
            "behavior due to lack of synchronization.";
   }
   valid_ = kValidOpenGlBuffer;
-  return {opengl_buffer_, std::move(lock), nullptr};
+  return {/*is_write_view=*/true, opengl_buffer_,
+          std::move(lock),
+          /*ssbo_read=*/nullptr,  gl_context_.get(),
+          &gl_write_read_sync_};
 }
 
 void Tensor::AllocateOpenGlBuffer() const {
   if (opengl_buffer_ == GL_INVALID_INDEX) {
-    gl_context_ = mediapipe::GlContext::GetCurrent();
+    if (gl_context_ == nullptr) {
+      gl_context_ = mediapipe::GlContext::GetCurrent();
+    }
     ABSL_LOG_IF(FATAL, !gl_context_) << "GlContext is not bound to the thread.";
     glGenBuffers(1, &opengl_buffer_);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, opengl_buffer_);
@@ -465,6 +463,7 @@ void Tensor::Move(Tensor* src) {
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
   opengl_buffer_ = src->opengl_buffer_;
   src->opengl_buffer_ = GL_INVALID_INDEX;
+  gl_write_read_sync_ = std::move(src->gl_write_read_sync_);
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
 

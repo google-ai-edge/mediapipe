@@ -356,24 +356,74 @@ class Tensor {
       ssbo_read_ = std::exchange(src.ssbo_read_, nullptr);
     }
     ~OpenGlBufferView() {
-      if (ssbo_read_) {
-        // TODO: update tensor to properly handle cases when
-        // multiple views were requested multiple sync fence may be needed.
-        *ssbo_read_ = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+      if (!is_write_view_) {
+        // Read view destruction.
+        if (ssbo_read_) {
+          // TODO: update tensor to properly handle cases when
+          // multiple views were requested multiple sync fence may be needed.
+          *ssbo_read_ = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+        }
+      } else {
+        // Write view destruction.
+        *gl_write_read_sync_ = gl_context_->CreateSyncToken();
       }
     }
 
    protected:
     friend class Tensor;
 
-    OpenGlBufferView(GLuint name, std::unique_ptr<absl::MutexLock>&& lock,
-                     GLsync* ssbo_read)
-        : View(std::move(lock)), name_(name), ssbo_read_(ssbo_read) {}
+    OpenGlBufferView(bool is_write_view, GLuint name,
+                     std::unique_ptr<absl::MutexLock>&& lock, GLsync* ssbo_read,
+                     GlContext* gl_context,
+                     std::shared_ptr<GlSyncPoint>* gl_write_read_sync)
+        : View(std::move(lock)),
+          is_write_view_(is_write_view),
+          name_(name),
+          ssbo_read_(ssbo_read),
+          gl_context_(gl_context),
+          gl_write_read_sync_(gl_write_read_sync) {
+      if (!is_write_view) {
+        MaybeWaitForWrites();
+      }
+    }
+
+    void MaybeWaitForWrites() {
+      if (gl_context_->IsCurrent()) {
+        // Sync is not needed if the view is requested on the same context where
+        // the write view was requested.
+        return;
+      }
+      if (GlContext::IsAnyContextCurrent() && *gl_write_read_sync_ != nullptr) {
+        // In case the read view is requested on a different context than the
+        // one where the write view was requested, we need to wait for the
+        // write sync point to be reached.
+        (*gl_write_read_sync_)->WaitOnGpu();
+        gl_write_read_sync_->reset();
+      }
+    }
+
+    bool is_write_view_;
     GLuint name_;
     GLsync* ssbo_read_;
+    GlContext* gl_context_;
+    std::shared_ptr<GlSyncPoint>* gl_write_read_sync_;
   };
   // A valid OpenGL context must be bound to the calling thread due to possible
   // GPU resource allocation.
+  // Notes on (multi-context) GL synchronization:
+  // 1. GetOpenGlBufferWriteView returns a view that creates a GlSync fence
+  //    object during its destruction.
+  // 2. If the read view is requested on the same context where the write view
+  //    was requested, no GL fence synchronization is needed and the write
+  //    fence object is ignored.
+  // 3. If the read view is requested on a different context than the one where
+  //    the write view was requested, GetOpenGLBufferReadView will wait (on GPU)
+  //    for the sync point created during write view destruction.
+  // 4. A memory barrier is needed when operating on GL buffers to ensure that
+  //    the write operations are visible to subsequent read operations (even on
+  //    the same context) - GL fence synchronization is not enough. GL buffer
+  //    memory barriers are currentlyh NOT manged by the Tensor class and must
+  //    be handled externally.
   OpenGlBufferView GetOpenGlBufferReadView() const;
   OpenGlBufferView GetOpenGlBufferWriteView(
       uint64_t source_location_hash =
@@ -522,6 +572,7 @@ class Tensor {
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
   mutable GLuint opengl_buffer_ = GL_INVALID_INDEX;
   void AllocateOpenGlBuffer() const;
+  mutable std::shared_ptr<GlSyncPoint> gl_write_read_sync_;
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
   bool NeedsHalfFloatRenderTarget() const;
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30

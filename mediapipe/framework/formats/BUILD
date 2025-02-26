@@ -661,10 +661,12 @@ cc_test(
     ],
     deps = [
         ":tensor",
+        "//mediapipe/framework:port",
         "//mediapipe/framework/port:gtest_main",
     ] + select({
         "//conditions:default": [
             "//mediapipe/gpu:gl_calculator_helper",
+            "//mediapipe/gpu:gl_context",
             "//mediapipe/gpu:gpu_buffer_format",
         ],
         "//mediapipe/gpu:disable_gpu": [],
