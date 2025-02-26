@@ -46,7 +46,11 @@ export function tee<T>(
             if (otherCache.active) {
               otherCache.cache.push(value);
             }
-            controller.enqueue(value);
+            if (myCache.active) {
+              // cancel() may be called at any time, so we need to check if this
+              // stream is still active before enqueuing.
+              controller.enqueue(value);
+            }
           }
           if (done) {
             controller.close();
@@ -174,4 +178,19 @@ export async function getModelFormatAndClose(
   } else {
     throw new Error(`Multiple model formats matched: ${matchedFormats}`);
   }
+}
+
+/**
+ * Turns the input data into a stream.
+ */
+export function uint8ArrayToStream(
+  data: Uint8Array,
+): ReadableStream<Uint8Array> {
+  return new ReadableStream<Uint8Array>({
+    start(controller) {},
+    async pull(controller) {
+      controller.enqueue(data);
+      controller.close();
+    },
+  });
 }

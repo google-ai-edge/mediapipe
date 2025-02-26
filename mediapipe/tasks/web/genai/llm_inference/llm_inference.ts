@@ -45,6 +45,12 @@ import {TransformerParameters} from '../../../../tasks/cc/genai/inference/proto/
 // Placeholder for internal dependency on trusted resource url
 
 import {LlmInferenceOptions} from './llm_inference_options';
+import {
+  ModelFormat,
+  getModelFormatAndClose,
+  tee,
+  uint8ArrayToStream,
+} from './model_loading_utils';
 
 export * from './llm_inference_options';
 
@@ -383,7 +389,7 @@ export class LlmInference extends TaskRunner {
    * @export
    * @param options The options for the LLM Inference task.
    */
-  override setOptions(options: LlmInferenceOptions): Promise<void> {
+  override async setOptions(options: LlmInferenceOptions): Promise<void> {
     // TODO: b/324482487 - Support customizing config for Web task of LLM
     // Inference.
     if (this.isProcessing) {
@@ -448,46 +454,67 @@ export class LlmInference extends TaskRunner {
     const finishedLoadingDataPromise = new Promise<void>((resolve, reject) => {
       onFinishedLoadingData = resolve;
     });
+
     if (
-      options.baseOptions?.modelAssetPath ||
+      options.baseOptions?.modelAssetPath &&
       options.baseOptions?.modelAssetBuffer
     ) {
-      if (
-        options.baseOptions.modelAssetPath &&
-        options.baseOptions.modelAssetBuffer
-      ) {
+      throw new Error(
+        'Cannot set both baseOptions.modelAssetPath and baseOptions.modelAssetBuffer',
+      );
+    }
+
+    let modelStream: ReadableStreamDefaultReader<Uint8Array> | undefined;
+    if (options.baseOptions?.modelAssetPath) {
+      const request = await fetch(
+        options.baseOptions.modelAssetPath.toString(),
+      );
+      if (!request.ok) {
         throw new Error(
-          'Cannot set both baseOptions.modelAssetPath and baseOptions.modelAssetBuffer',
+          `Failed to fetch model: ${options.baseOptions.modelAssetPath} (${request.status})`,
         );
       }
-      let consumedBuffer = false;
-      if (options.baseOptions.modelAssetPath) {
-        this.streamingReader = StreamingReader.loadFromUrl(
-          options.baseOptions.modelAssetPath,
-          onFinishedLoadingData,
+      if (!request.body) {
+        throw new Error(
+          `Failed to fetch model: ${options.baseOptions.modelAssetPath} (no body)`,
         );
-      } else if (options.baseOptions.modelAssetBuffer instanceof Uint8Array) {
-        this.streamingReader = StreamingReader.loadFromArray(
-          options.baseOptions.modelAssetBuffer,
-          onFinishedLoadingData,
-        );
-        consumedBuffer = true;
-      } else if (options.baseOptions.modelAssetBuffer) {
-        this.streamingReader = StreamingReader.loadFromReader(
-          options.baseOptions.modelAssetBuffer,
-          onFinishedLoadingData,
-        );
-        consumedBuffer = true;
-      } else {
-        onFinishedLoadingData();
+      }
+      modelStream = request.body.getReader();
+    } else if (options.baseOptions?.modelAssetBuffer instanceof Uint8Array) {
+      modelStream = uint8ArrayToStream(
+        options.baseOptions.modelAssetBuffer,
+      ).getReader();
+    } else if (
+      options.baseOptions?.modelAssetBuffer instanceof
+      ReadableStreamDefaultReader
+    ) {
+      modelStream = options.baseOptions.modelAssetBuffer;
+    } else {
+      onFinishedLoadingData();
+    }
+
+    if (options.baseOptions?.modelAssetBuffer) {
+      // Remove the reference on the asset buffer since we will be reading
+      // through it and consuming it.
+      options.baseOptions.modelAssetBuffer = undefined;
+    }
+
+    if (modelStream) {
+      const [modelStreamForLoading, modelStreamForFormatTest] =
+        tee(modelStream);
+      const modelFormat = await getModelFormatAndClose(
+        modelStreamForFormatTest,
+      );
+      if (modelFormat === ModelFormat.CONVERTED) {
+        throw new Error('Converted models are not supported yet.');
       }
 
-      if (consumedBuffer) {
-        // Remove the reference on the asset buffer since it is now owned by
-        // `streamingReader`.
-        options.baseOptions.modelAssetBuffer = undefined;
-      }
+      this.streamingReader = StreamingReader.loadFromReader(
+        modelStreamForLoading,
+        onFinishedLoadingData,
+      );
     }
+
     // To allow graph closure across ASYNCIFY, where we cannot get a callback,
     // we instead invoke it with a special mechanism and then wrap it into a
     // promise. We then chain the graph-refresh promise with our data-loading
