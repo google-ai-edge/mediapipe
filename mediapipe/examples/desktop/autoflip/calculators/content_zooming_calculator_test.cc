@@ -45,6 +45,7 @@ constexpr char kBordersTag[] = "BORDERS";
 constexpr char kSalientRegionsTag[] = "SALIENT_REGIONS";
 constexpr char kVideoTag[] = "VIDEO";
 constexpr char kMaxZoomFactorPctTag[] = "MAX_ZOOM_FACTOR_PCT";
+constexpr char kScaleFactorPctTag[] = "SCALE_FACTOR_PCT";
 constexpr char kAnimateZoomTag[] = "ANIMATE_ZOOM";
 constexpr char kVideoSizeTag[] = "VIDEO_SIZE";
 constexpr char kDetectionsTag[] = "DETECTIONS";
@@ -203,6 +204,33 @@ const char kConfigF[] = R"(
     }
     )";
 
+const char kConfigG[] = R"(
+    calculator: "ContentZoomingCalculator"
+    input_stream: "VIDEO_SIZE:size"
+    input_stream: "DETECTIONS:detections"
+    input_stream: "SCALE_FACTOR_PCT:scale_factor_pct"
+    output_stream: "CROP_RECT:rect"
+    output_stream: "FIRST_CROP_RECT:first_rect"
+    options: {
+      [mediapipe.autoflip.ContentZoomingCalculatorOptions.ext]: {
+        max_zoom_value_deg: 0
+        scale_factor: 1.0
+        kinematic_options_zoom {
+          min_motion_to_reframe: 1.2
+          max_velocity: 18
+        }
+        kinematic_options_tilt {
+          min_motion_to_reframe: 1.2
+          max_velocity: 18
+        }
+        kinematic_options_pan {
+          min_motion_to_reframe: 1.2
+          max_velocity: 18
+        }
+      }
+    }
+    )";
+
 void CheckBorder(const StaticFeatures& static_features, int width, int height,
                  int top_border, int bottom_border) {
   ASSERT_EQ(2, static_features.border().size());
@@ -224,6 +252,7 @@ void CheckBorder(const StaticFeatures& static_features, int width, int height,
 struct AddDetectionFlags {
   std::optional<bool> animated_zoom;
   std::optional<int> max_zoom_factor_percent;
+  std::optional<int> scale_factor_percent;
 };
 
 void AddDetectionFrameSize(const cv::Rect_<float>& position, const int64_t time,
@@ -271,6 +300,14 @@ void AddDetectionFrameSize(const cv::Rect_<float>& position, const int64_t time,
         ->Tag(kMaxZoomFactorPctTag)
         .packets.push_back(
             mediapipe::MakePacket<int>(flags.max_zoom_factor_percent.value())
+                .At(Timestamp(time)));
+  }
+
+  if (flags.scale_factor_percent.has_value()) {
+    runner->MutableInputs()
+        ->Tag(kScaleFactorPctTag)
+        .packets.push_back(
+            mediapipe::MakePacket<int>(flags.scale_factor_percent.value())
                 .At(Timestamp(time)));
   }
 }
@@ -825,6 +862,41 @@ TEST(ContentZoomingCalculatorTest, MaxZoomValueOverride) {
   CheckCropRect(640, 360, 769, 433, 2,
                 runner->Outputs().Tag(kCropRectTag).packets);
   CheckCropRect(320, 240, 480, 360, 3,
+                runner->Outputs().Tag(kCropRectTag).packets);
+}
+
+TEST(ContentZoomingCalculatorTest, ScaleFactor) {
+  auto config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigD);
+  auto* options = config.mutable_options()->MutableExtension(
+      ContentZoomingCalculatorOptions::ext);
+  options->set_scale_factor(0.5);
+  auto runner = ::absl::make_unique<CalculatorRunner>(config);
+  AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 0, 1000, 1000,
+                        runner.get());
+  MP_ASSERT_OK(runner->Run());
+  CheckCropRect(500, 500, 400, 400, 0,
+                runner->Outputs().Tag(kCropRectTag).packets);
+}
+
+TEST(ContentZoomingCalculatorTest, ScaleFactorOverride) {
+  auto config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigG);
+  auto runner = ::absl::make_unique<CalculatorRunner>(config);
+  AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 0, 1000, 1000,
+                        runner.get(), {.scale_factor_percent = 50});
+  AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 1000000, 1000, 1000,
+                        runner.get(), {.scale_factor_percent = 33});
+  AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 2000000, 1000, 1000,
+                        runner.get(), {.scale_factor_percent = 33});
+  AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 3000000, 1000, 1000,
+                        runner.get(), {.scale_factor_percent = 10});
+  AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 4000000, 1000, 1000,
+                        runner.get(), {.scale_factor_percent = 10});
+  MP_ASSERT_OK(runner->Run());
+  CheckCropRect(500, 500, 400, 400, 0,
+                runner->Outputs().Tag(kCropRectTag).packets);
+  CheckCropRect(500, 500, 630, 630, 2,
+                runner->Outputs().Tag(kCropRectTag).packets);
+  CheckCropRect(500, 500, 1000, 1000, 4,
                 runner->Outputs().Tag(kCropRectTag).packets);
 }
 
