@@ -27,7 +27,6 @@ import MediaPipeTasksGenAIC
 /// the main thread.
 @objc(MPPLLMInference) public final class LlmInference: NSObject {
   private static let numberOfDecodeStepsPerSync = 3
-  private static let sequenceBatchSize = 0
   private static let responseGenerationInProgressQueueName =
     "com.google.mediapipe.genai.isResponseGenerationInProgressQueue"
 
@@ -57,7 +56,6 @@ import MediaPipeTasksGenAIC
   @objc public init(options: Options) throws {
     let cacheDirectory = FileManager.default.temporaryDirectory.path
 
-    let sequenceBatchSize = LlmInference.sequenceBatchSize
     let numberOfDecodeStepsPerSync = LlmInference.numberOfDecodeStepsPerSync
     let timeBeforeInit = clock_gettime_nsec_np(CLOCK_MONOTONIC_RAW)
     llmTaskRunner = try options.modelPath.withCString { modelPath in
@@ -70,7 +68,7 @@ import MediaPipeTasksGenAIC
             cache_dir: cacheDirectory,
             max_num_tokens: options.maxTokens,
             num_decode_steps_per_sync: numberOfDecodeStepsPerSync,
-            sequence_batch_size: sequenceBatchSize,
+            sequence_batch_size: options.sequenceBatchSize,
             number_of_supported_lora_ranks: supportedLoraRanks.count,
             supported_lora_ranks: supportedLoraRanks.baseAddress,
             max_top_k: options.maxTopk,
@@ -244,6 +242,13 @@ extension LlmInference {
 
     /// Whether to use the submodel if available.
     @objc public var useSubmodel: Bool = false
+
+    /// Sequence batch size for encoding. Used by GPU only. Number of input tokens
+    /// to process at a time for batch processing. Setting this value to 1 means
+    /// both the encoding and decoding share the same graph of sequence length
+    /// of 1. Setting this value to 0 means the batch size will be optimized
+    /// programmatically.
+    @objc public var sequenceBatchSize: Int = 0
 
     /// Creates a new instance of `Options` with the given `modelPath` and default values of
     /// `maxTokens`, `maxTopk`, `supportedLoraRanks`.
