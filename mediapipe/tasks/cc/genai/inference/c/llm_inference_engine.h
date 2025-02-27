@@ -83,7 +83,7 @@ typedef struct {
   // contents started from `offset` with `size`.
   // Since the model file is hosted on JavaScript layer and this function copies
   // the data to the heap memory, the `mode` instructs how the source model file
-  // data should be mainuplated:
+  // data should be manipulated:
   //   0: Data will be kept in memory after read.
   //   1: Data will not be accessed again and can be discarded.
   //   2: All data has been used and can be discarded.
