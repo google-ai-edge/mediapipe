@@ -131,7 +131,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
                                                kTileSize, kTileSize);
 
     // Create the shader module.
-    wgpu::ShaderModuleWGSLDescriptor wgsl;
+    wgpu::ShaderSourceWGSL wgsl;
     wgsl.code = shader.c_str();
     wgpu::ShaderModuleDescriptor shader_desc = {.nextInChain = &wgsl};
     wgpu::ShaderModule module =
