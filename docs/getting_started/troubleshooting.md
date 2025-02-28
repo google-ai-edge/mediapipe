@@ -234,6 +234,18 @@ If some calculators or streams cannot reach state [`Timestamp::Done`] or
 called to terminate the graph run without waiting for all pending calculators
 and packets to complete.
 
+To understand why a graph hangs/stalls,
+[graph runtime monitoring](#graph-runtime-monitoring) can provide valuable
+insights into input stream packet queues (understand where packets are queued up
+in the MediaPipe graph). This information reveals which calculators are waiting
+on their input queues for additional input before triggering their next
+Calculator::Process call.
+
+For the specific monitoring of timestamp settlements of a specific calculator in
+your MediaPipe graph,
+[DebugInputStreamHandler](#monitor-calculator-inputs-and-timestamp-settlements)
+can be your friend.
+
 ## Output timing is uneven
 
 Some realtime MediaPipe graphs produce a series of video frames for viewing as a
@@ -322,6 +334,62 @@ set for timestamp 1. In this case, the `DefaultInputStreamHandler` outputs:
 ```
 [INFO] SomeCalculator: Filled input set at ts: 1 with MISSING packets in input streams: INPUT_B:0:input_b.
 ```
+
+## Graph runtime monitoring
+
+Graph runtime monitoring can be a helpful tool to debug stalled MediaPipe
+graphs. It utilizes a background thread to periodically capture a "snapshot" of
+the graph's calculators and input/output streams state at predetermined
+intervals.
+
+The output begins by listing the calculators that are currently running
+(Calculator::Process runs),
+
+```
+Running calculators: PacketClonerCalculator, RectTransformationCalculator
+```
+
+followed by an overview of packets that are currently in flight, as well as
+those waiting in calculator input streams/queues to be processed.
+
+```
+Running calculators: PacketClonerCalculator
+Num packets in input queues: 4
+GateCalculator_2 waiting on stream(s): :1:norm_start_rect
+MergeCalculator waiting on stream(s): :0:output_frames_gpu_ao, :1:segmentation_preview_gpu
+```
+
+The monitoring output continues with a detailed overview of all calculator
+states, including timestamp bounds, time of last activity, and statistics about
+their input and output streams.
+
+```
+PreviousLoopbackCalculator: (idle for 8.17s, ts bound : 0)
+Input streams:
+ * LOOP:0:segmentation_finished - queue size: 0, total added: 0, ts bound: 569604400011
+ * MAIN:0:input_frames_gpu - queue size: 0, total added: 2, ts bound: 569604400011
+Output streams:
+ * PREV_LOOP:0:prev_segmentation_finished, total added: 0, ts bound: 569604400011
+```
+
+Graph runtime monitoring can be enabled with the flag
+`enable_graph_runtime_info`. This enables the background capturing of graph
+runtime monitoring which is written to LOG(INFO).
+
+```
+graph {
+  runtime_info {
+    enable_graph_runtime_info: true
+  }
+  ...
+}
+```
+
+Since adb logging might be throttled for larger graph runtime information, as an
+alternative, its output can be written to a file at the specified capture
+interval. This will overwrite the file each time. To enable this, use the flag
+`mp_graph_runtime_info_output_file`. Note: On Android, the output file may need
+to be created first to avoid permission issues.
 
 ## VLOG is your friend
 
