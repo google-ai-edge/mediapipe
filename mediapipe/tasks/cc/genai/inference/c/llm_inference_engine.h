@@ -65,6 +65,9 @@ typedef enum {
 
   // Use GPU backend.
   kLlmPreferredBackendGpu = 1,
+
+  // Use CPU backend.
+  kLlmPreferredBackendCpu = 2,
 } LlmPreferredBackend;
 
 // LlmSessionConfig configures how to execute the model.
