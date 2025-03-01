@@ -84,7 +84,10 @@ message LlmParameters {
 
   repeated InputOutputNormalization input_output_normalizations = 7;
 
-  PromptTemplate prompt_template = 8;
+  PromptTemplate prompt_template = 8 [deprecated = true];
+
+  // Prompt templates for different roles.
+  optional PromptTemplates prompt_templates = 17;
 
   // Number of tokens to draft in a single step when using speculative decoding.
   optional int32 num_draft_tokens = 9;
