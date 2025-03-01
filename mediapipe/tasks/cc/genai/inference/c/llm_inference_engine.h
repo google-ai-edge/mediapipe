@@ -180,7 +180,7 @@ typedef struct {
 // LlmResponseContext is the return type for
 // LlmInferenceEngine_Session_PredictSync.
 typedef struct {
-  // An array of string. The size of the array depends on the number of
+  // An array of strings. The size of the array depends on the number of
   // responses.
   char** response_array;
 

@@ -1,6 +1,8 @@
 package com.google.mediapipe.tasks.genai.llminference;
 
 import com.google.auto.value.AutoValue;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import com.google.mediapipe.framework.image.MPImage;
 import com.google.mediapipe.tasks.genai.llminference.LlmTaskRunner.LlmSession;
 import com.google.mediapipe.tasks.genai.llminference.jni.proto.LlmOptionsProto.LlmSessionConfig;
@@ -97,20 +99,57 @@ public class LlmInferenceSession implements AutoCloseable {
   }
 
   /**
-   * Generates a response based on the previously added query chunks asynchronously.
+   * Asynchronously generates a response based on the input text. This method cannot be called while
+   * other queries are active.
    *
-   * <p>The {@code resultListener} callback of the {@link LlmInference} instance returns the partial
-   * responses from the LLM. Use {@link #addQueryChunk(String)} to add at least one query chunk
-   * before calling this function.
+   * <p>The method returns the complete response as a {@link ListenableFuture}. Use {@link
+   * #addQueryChunk(String)} to add at least one query chunk before calling this function.
    *
    * <p>Note: You cannot invoke simultaneous response generation calls on active sessions created
    * using the same {@link LlmInference}. You have to wait for the currently running response
    * generation call to complete before initiating another one.
    *
+   * @return a {@link ListenableFuture} with the complete response once the inference is complete.
    * @throws IllegalStateException if the inference fails.
    */
-  public void generateResponseAsync() {
-    taskRunner.predictAsync(session);
+  public ListenableFuture<String> generateResponseAsync() {
+    return generateResponseAsync((unused1, unused2) -> {});
+  }
+
+  /**
+   * Asynchronously generates a response based on the input text and emits partial results. This
+   * method cannot be called while other queries are active.
+   *
+   * <p>The method returns the complete response as a {@link ListenableFuture} and invokes the
+   * {@code progressListener} as the response is generated. Use {@link #addQueryChunk(String)} to
+   * add at least one query chunk before calling this function.
+   *
+   * <p>Note: You cannot invoke simultaneous response generation calls on active sessions created
+   * using the same {@link LlmInference}. You have to wait for the currently running response
+   * generation call to complete before initiating another one.
+   *
+   * @param progressListener a {@link ProgressListener} to receive partial results.
+   * @return a {@link ListenableFuture} with the complete response once the inference is complete.
+   * @throws IllegalStateException if the inference fails.
+   */
+  public ListenableFuture<String> generateResponseAsync(ProgressListener<String> progressListener) {
+    SettableFuture<String> future = SettableFuture.create();
+    StringBuilder response = new StringBuilder();
+    taskRunner.predictAsync(
+        session,
+        (partialResult, done) -> {
+          // Not using isEmpty() because it's not available on Android < 30.
+          boolean stripLeadingWhitespace = response.length() == 0;
+          String partialResultDecoded = decodeResponse(partialResult, stripLeadingWhitespace);
+          response.append(partialResultDecoded);
+          if (done) {
+            progressListener.run(partialResultDecoded, done);
+            future.set(response.toString());
+          } else if (!partialResultDecoded.isEmpty()) {
+            progressListener.run(partialResultDecoded, done);
+          }
+        });
+    return future;
   }
 
   /**
@@ -126,7 +165,7 @@ public class LlmInferenceSession implements AutoCloseable {
   }
 
   /** Decodes the response from the LLM engine and returns a human-readable string. */
-  static String decodeResponse(List<String> responses, boolean stripLeadingWhitespace) {
+  private static String decodeResponse(List<String> responses, boolean stripLeadingWhitespace) {
     if (responses.isEmpty()) {
       // Technically, this is an error. We should always get at least one response.
       return "";

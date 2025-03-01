@@ -1,9 +1,9 @@
 package com.google.mediapipe.tasks.genai.llminference;
 
-import static com.google.mediapipe.tasks.genai.llminference.LlmInferenceSession.decodeResponse;
 
 import android.content.Context;
 import com.google.auto.value.AutoValue;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.mediapipe.tasks.genai.llminference.jni.proto.LlmOptionsProto.LlmModelSettings;
 import com.google.mediapipe.tasks.genai.llminference.jni.proto.LlmOptionsProto.LlmModelSettings.LlmPreferredBackend;
 import java.util.Collections;
@@ -77,41 +77,12 @@ public class LlmInference implements AutoCloseable {
       }
     }
 
-    return new LlmInference(context, STATS_TAG, modelSettings.build(), options.resultListener());
+    return new LlmInference(context, STATS_TAG, modelSettings.build());
   }
 
   /** Constructor to initialize an {@link LlmInference}. */
-  private LlmInference(
-      Context context,
-      String taskName,
-      LlmModelSettings modelSettings,
-      Optional<ProgressListener<String>> resultListener) {
-    Optional<ProgressListener<List<String>>> llmResultListener;
-    if (resultListener.isPresent()) {
-      llmResultListener =
-          Optional.of(
-              new ProgressListener<List<String>>() {
-                private boolean receivedFirstToken = false;
-
-                @Override
-                public void run(List<String> partialResult, boolean done) {
-                  String result =
-                      decodeResponse(
-                          partialResult, /* stripLeadingWhitespace= */ !receivedFirstToken);
-                  if (done) {
-                    receivedFirstToken = false; // Reset to initial state
-                    resultListener.get().run(result, done);
-                  } else if (!result.isEmpty()) {
-                    receivedFirstToken = true;
-                    resultListener.get().run(result, done);
-                  }
-                }
-              });
-    } else {
-      llmResultListener = Optional.empty();
-    }
-
-    this.taskRunner = new LlmTaskRunner(context, taskName, modelSettings, llmResultListener);
+  private LlmInference(Context context, String taskName, LlmModelSettings modelSettings) {
+    this.taskRunner = new LlmTaskRunner(context, taskName, modelSettings);
     this.implicitSession = new AtomicReference<>();
   }
 
@@ -136,23 +107,50 @@ public class LlmInference implements AutoCloseable {
   }
 
   /**
-   * Generates a response based on the input text. This method cannot be called while other queries
-   * are active.
+   * Asynchronously generates a response based on the input text. This method cannot be called while
+   * other queries are active.
    *
-   * <p>This function creates a new session for each call. If you want to have a stateful inference,
-   * use {@link LlmInferenceSession#generateResponseAsync()} instead.
+   * <p>This function creates a new session for each call and returns the complete response as a
+   * {@link ListenableFuture}. If you want to have a stateful inference, use {@link
+   * LlmInferenceSession#generateResponseAsync()} instead.
    *
    * <p>Note: You cannot invoke simultaneous response generation calls on active sessions created
    * using the same {@link LlmInference}. You have to wait for the currently running response
    * generation call to complete before initiating another one.
    *
    * @param inputText a {@link String} for processing.
+   * @return a {@link ListenableFuture} with the complete response once the inference is complete.
    * @throws IllegalStateException if the inference fails.
    */
-  public void generateResponseAsync(String inputText) {
+  public ListenableFuture<String> generateResponseAsync(String inputText) {
     LlmInferenceSession session = resetImplicitSession();
     session.addQueryChunk(inputText);
-    session.generateResponseAsync();
+    return session.generateResponseAsync();
+  }
+
+  /**
+   * Asynchronously generates a response based on the input text and emits partial results. This
+   * method cannot be called while other queries are active.
+   *
+   * <p>This function creates a new session for each call and returns the complete response as a
+   * {@link ListenableFuture} and invokes the {@code progressListener} as the response is generated.
+   * If you want to have a stateful inference, use {@link
+   * LlmInferenceSession#generateResponseAsync()} instead.
+   *
+   * <p>Note: You cannot invoke simultaneous response generation calls on active sessions created
+   * using the same {@link LlmInference}. You have to wait for the currently running response
+   * generation call to complete before initiating another one.
+   *
+   * @param inputText a {@link String} for processing.
+   * @param progressListener a {@link ProgressListener} to receive partial results.
+   * @return a {@link ListenableFuture} with the complete response once the inference is complete.
+   * @throws IllegalStateException if the inference fails.
+   */
+  public ListenableFuture<String> generateResponseAsync(
+      String inputText, ProgressListener<String> progressListener) {
+    LlmInferenceSession session = resetImplicitSession();
+    session.addQueryChunk(inputText);
+    return session.generateResponseAsync(progressListener);
   }
 
   /**
@@ -211,12 +209,6 @@ public class LlmInference implements AutoCloseable {
       /** Sets the model path for the text generator task. */
       public abstract Builder setModelPath(String modelPath);
 
-      /** Sets the result listener to invoke with the async API. */
-      public abstract Builder setResultListener(ProgressListener<String> listener);
-
-      /** Sets the error listener to invoke with the async API. */
-      public abstract Builder setErrorListener(ErrorListener listener);
-
       /** Configures the total number of tokens for input and output). */
       public abstract Builder setMaxTokens(int maxTokens);
 
@@ -262,12 +254,6 @@ public class LlmInference implements AutoCloseable {
 
     /** The supported lora ranks for the base model. Used by GPU only. */
     public abstract List<Integer> supportedLoraRanks();
-
-    /** The result listener to use for the {@link LlmInference#generateAsync} API. */
-    public abstract Optional<ProgressListener<String>> resultListener();
-
-    /** The error listener to use for the {@link LlmInference#generateAsync} API. */
-    public abstract Optional<ErrorListener> errorListener();
 
     /** The model options to for vision modality. */
     public abstract Optional<VisionModelOptions> visionModelOptions();

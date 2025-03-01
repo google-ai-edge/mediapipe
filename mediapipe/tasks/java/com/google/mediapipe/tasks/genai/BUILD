@@ -53,6 +53,8 @@ android_library(
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/genai/llminference/jni/proto:llm_options_java_proto_lite",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/genai/llminference/jni/proto:llm_response_context_java_proto_lite",
         "//third_party:autovalue",
+        "//third_party/java/android_libs/guava_jdk5:concurrent",
+        "//third_party/java/android_libs/guava_jdk5:listenablefuture",
         "@com_google_protobuf//:protobuf_javalite",
         "@maven//:com_google_guava_guava",
     ],

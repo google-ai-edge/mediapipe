@@ -29,7 +29,6 @@ import com.google.mediapipe.tasks.genai.llminference.jni.proto.LlmResponseContex
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.nio.ByteBuffer;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -39,9 +38,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public final class LlmTaskRunner implements AutoCloseable {
   private final long engineHandle;
-  private final Optional<ProgressListener<List<String>>> resultListener;
   private final long callbackHandle;
   private final AtomicBoolean isProcessing;
+
+  private ProgressListener<List<String>> resultListener = (unused1, unused2) -> {};
 
   /**
    * Describes how pixel bits encode color. A pixel may be an alpha mask, a grayscale, RGB, or ARGB.
@@ -155,20 +155,9 @@ public final class LlmTaskRunner implements AutoCloseable {
     }
   }
 
-  public LlmTaskRunner(
-      Context context,
-      String taskName,
-      LlmModelSettings modelSettings,
-      Optional<ProgressListener<List<String>>> resultListener) {
+  public LlmTaskRunner(Context context, String taskName, LlmModelSettings modelSettings) {
     this.engineHandle = nativeCreateEngine(modelSettings.toByteArray());
-
-    this.resultListener = resultListener;
-    if (resultListener.isPresent()) {
-      this.callbackHandle = nativeRegisterCallback(this);
-    } else {
-      this.callbackHandle = 0;
-    }
-
+    this.callbackHandle = nativeRegisterCallback(this);
     this.isProcessing = new AtomicBoolean(false);
   }
 
@@ -213,20 +202,18 @@ public final class LlmTaskRunner implements AutoCloseable {
   }
 
   /** Invokes the LLM with the given session and calls the callback with the result. */
-  public void predictAsync(LlmSession session) {
+  public void predictAsync(LlmSession session, ProgressListener<List<String>> resultListener) {
     validateState();
-
-    if (callbackHandle == 0) {
-      throw new IllegalStateException("No result listener provided.");
-    }
 
     try {
       isProcessing.set(true);
+      this.resultListener = resultListener;
       nativePredictAsync(session.sessionHandle, callbackHandle);
     } catch (Throwable t) {
       // Only reset `isProcessing` if we fail to start the async inference. For successful
       // inferences, we reset `isProcessing` when we receive `done=true`.
       isProcessing.set(false);
+      this.resultListener = (unused1, unused2) -> {};
       throw t;
     }
   }
@@ -265,10 +252,12 @@ public final class LlmTaskRunner implements AutoCloseable {
 
   private void onAsyncResponse(byte[] responseBytes) {
     LlmResponseContext response = parseResponse(responseBytes);
+    ProgressListener<List<String>> resultListener = this.resultListener;
     if (response.getDone()) {
       isProcessing.set(false);
+      this.resultListener = (unused1, unused2) -> {};
     }
-    resultListener.get().run(response.getResponsesList(), response.getDone());
+    resultListener.run(response.getResponsesList(), response.getDone());
   }
 
   @Override
