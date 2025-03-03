@@ -181,6 +181,10 @@ cc_library(
     name = "llm_builder_factory",
     srcs = ["llm_builder_factory.cc"],
     hdrs = ["llm_builder_factory.h"],
+    defines = select({
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/genai:exclude_internal_names_from_llm_inference_engine_g3_build": ["EXCLUDE_INTERNAL_NAMES_FROM_LLM_INFERENCE_ENGINE_G3_BUILD"],
+        "//conditions:default": [],
+    }),
     deps = [
         ":falcon",
         ":graph_builder",
