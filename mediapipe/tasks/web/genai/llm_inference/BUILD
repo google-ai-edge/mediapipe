@@ -53,4 +53,5 @@ mediapipe_ts_library(
     srcs = [
         "model_loading_utils.ts",
     ],
+    visibility = ["//visibility:public"],
 )

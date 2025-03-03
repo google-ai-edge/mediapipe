@@ -277,6 +277,23 @@ export class GraphRunner implements GraphRunnerApi {
 
   /**
    * Converts JavaScript string input parameters into C++ c-string pointers.
+   * See b/204830158 for more details. Intended for internal usage.
+   */
+  async wrapStringPtrAsync(stringData: string,
+                           stringPtrFunc: (ptr: number) => Promise<void>):
+      Promise<void> {
+    if (!this.hasMultiStreamSupport) {
+      console.error(
+          'No wasm multistream support detected: ensure dependency ' +
+          'inclusion of :gl_graph_runner_internal_multi_input target');
+    }
+    const stringDataPtr = this.wasmModule.stringToNewUTF8(stringData);
+    await stringPtrFunc(stringDataPtr);
+    this.wasmModule._free(stringDataPtr);
+  }
+
+  /**
+   * Converts JavaScript string input parameters into C++ c-string pointers.
    * See b/204830158 for more details.
    */
   wrapStringPtrPtr(stringData: string[], ptrFunc: (ptr: number) => void): void {

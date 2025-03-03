@@ -23,6 +23,7 @@ import {
   BaseOptions,
   TaskRunnerOptions,
 } from '../../../tasks/web/core/task_runner_options';
+import {streamToUint8Array} from '../../../tasks/web/genai/llm_inference/model_loading_utils';
 import {
   FileLocator,
   GraphRunner,
@@ -381,38 +382,6 @@ export abstract class TaskRunner {
   close(): void {
     this.keepaliveNode = undefined;
     this.graphRunner.closeGraph();
-  }
-}
-
-/** Converts a ReadableStreamDefaultReader to a Uint8Array. */
-async function streamToUint8Array(
-  reader: ReadableStreamDefaultReader<Uint8Array>,
-): Promise<Uint8Array> {
-  const chunks: Uint8Array[] = [];
-  let totalLength = 0;
-
-  while (true) {
-    const {done, value} = await reader.read();
-    if (done) {
-      break;
-    }
-    chunks.push(value);
-    totalLength += value.length;
-  }
-
-  if (chunks.length === 0) {
-    return new Uint8Array(0);
-  } else if (chunks.length === 1) {
-    return chunks[0];
-  } else {
-    // Merge chunks
-    const combined = new Uint8Array(totalLength);
-    let offset = 0;
-    for (const chunk of chunks) {
-      combined.set(chunk, offset);
-      offset += chunk.length;
-    }
-    return combined;
   }
 }
 

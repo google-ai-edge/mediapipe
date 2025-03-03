@@ -150,3 +150,18 @@ mediapipe_ts_library(
         ":graph_runner_ts",
     ],
 )
+
+mediapipe_ts_library(
+    name = "graph_runner_llm_inference_lib_ts",
+    srcs = [
+        "graph_runner_llm_inference_lib.ts",
+    ],
+    allow_unoptimized_namespaces = True,
+    deps = [
+        ":graph_runner_ts",
+        "//mediapipe/tasks/cc/genai/inference/proto:sampler_params_jspb_proto",
+        "//mediapipe/tasks/web/genai/llm_inference:llm_inference_types",
+        "//mediapipe/tasks/web/genai/llm_inference:model_loading_utils",
+        "//mediapipe/tasks/web/genai/llm_inference/proto:llm_inference_graph_options_jspb_proto",
+    ],
+)

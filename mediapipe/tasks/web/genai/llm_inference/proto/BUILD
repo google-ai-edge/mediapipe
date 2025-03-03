@@ -16,6 +16,7 @@ load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 
 package(default_visibility = [
     "//mediapipe/tasks:internal",
+    "//mediapipe/web/graph_runner:__subpackages__",
 ])
 
 licenses(["notice"])
