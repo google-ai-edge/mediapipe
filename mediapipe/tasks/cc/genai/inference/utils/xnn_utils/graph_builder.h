@@ -91,9 +91,6 @@ struct RuntimeConfigs {
   } activation_precision = ActivationPrecision::kFP32;
 };
 
-absl::StatusOr<std::shared_ptr<XnnWeightsCache>> CreateWeightsCache(
-    size_t buffer_size = /*XNN_DEFAULT_WEIGHTS_BUFFER_SIZE=*/1048576);
-
 class XnnGraph;
 
 // XnnGraphBuilder is used to construct XnnGraph (through Build()). Once a

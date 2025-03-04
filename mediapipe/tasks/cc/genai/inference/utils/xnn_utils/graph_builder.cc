@@ -123,15 +123,6 @@ absl::Status XnnWeightsCache::Finalize() {
   return absl::OkStatus();
 }
 
-absl::StatusOr<std::shared_ptr<XnnWeightsCache>> CreateWeightsCache(
-    size_t buffer_size) {
-  RET_CHECK_EQ(xnn_status_success, xnn_initialize(/*allocator=*/nullptr));
-  xnn_weights_cache_t weights_cache = nullptr;
-  RET_CHECK_EQ(xnn_status_success,
-               xnn_create_weights_cache_with_size(buffer_size, &weights_cache));
-  return std::make_shared<XnnWeightsCache>(weights_cache);
-}
-
 absl::StatusOr<std::unique_ptr<XnnGraph>> XnnGraphBuilder::Build() {
   VLOG(2) << "XnnGraphBuilder::Build() building...";
   RET_CHECK_EQ(xnn_status_success, xnn_initialize(nullptr));
