@@ -27,6 +27,7 @@ import {
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {LlmInferenceGraphOptions} from '../../../../tasks/web/genai/llm_inference/proto/llm_inference_graph_options_pb';
 import {WasmModule} from '../../../../web/graph_runner/graph_runner';
+import {SupportLlmInference} from '../../../../web/graph_runner/graph_runner_llm_inference_lib';
 import {
   StreamingReader,
   SupportStreamingReader,
@@ -59,8 +60,10 @@ export * from './llm_inference_options';
 
 // TODO: b/327515383 - Use ReturnType patter to apply extensions to LLM Web API.
 // tslint:disable-next-line:enforce-name-casing
-const LlmGraphRunnerType = SupportWebGpu(
-  SupportStreamingReader(SupportWasmFileReference(CachedGraphRunner)),
+const LlmGraphRunnerType = SupportLlmInference(
+  SupportWebGpu(
+    SupportStreamingReader(SupportWasmFileReference(CachedGraphRunner)),
+  ),
 );
 class LlmGraphRunner extends LlmGraphRunnerType {}
 
@@ -168,6 +171,9 @@ export class LlmInference extends TaskRunner {
   private static readonly TOKENIZER_MODEL_IN_TFLITE_KEY = 'spm_vocab_model';
 
   private readonly generationResults: string[][] = [];
+  // TODO: Move options and samplerParams to LlmInferenceSupportedGraphRunner
+  // class once LlmInferenceSupportedGraphRunner becomes the only entry point
+  // for LLM inference.
   private readonly options: LlmInferenceGraphOptions;
   private readonly samplerParams: SamplerParameters;
   private isProcessing = false;
@@ -178,6 +184,8 @@ export class LlmInference extends TaskRunner {
     | ProgressListener
     | MultiResponseProgressListener;
   private streamingReader?: StreamingReader;
+
+  private isConvertedLlmModel = false;
 
   // The WebGPU device used for LLM inference.
   private wgpuDevice?: GPUDevice;
@@ -395,7 +403,6 @@ export class LlmInference extends TaskRunner {
     if (this.isProcessing) {
       throw new Error('Cannot set options while loading or processing.');
     }
-    this.isProcessing = true;
 
     if (options.baseOptions?.gpuOptions?.device) {
       if (this.wgpuDevice) {
@@ -449,7 +456,6 @@ export class LlmInference extends TaskRunner {
         );
       }
     }
-
     let onFinishedLoadingData!: () => void;
     const finishedLoadingDataPromise = new Promise<void>((resolve, reject) => {
       onFinishedLoadingData = resolve;
@@ -506,14 +512,37 @@ export class LlmInference extends TaskRunner {
         modelStreamForFormatTest,
       );
       if (modelFormat === ModelFormat.CONVERTED) {
-        throw new Error('Converted models are not supported yet.');
+        this.isConvertedLlmModel = true;
+        modelStream = modelStreamForLoading;
+      } else {
+        this.isConvertedLlmModel = false;
+        this.streamingReader = StreamingReader.loadFromReader(
+          modelStreamForLoading,
+          onFinishedLoadingData,
+        );
       }
-
-      this.streamingReader = StreamingReader.loadFromReader(
-        modelStreamForLoading,
-        onFinishedLoadingData,
-      );
+    } else {
+      throw new Error('No model asset provided.');
     }
+
+    // If the model is a converted LLM, use LlmInferenceSupportedGraphRunner's
+    // members for the functionality support.
+    if (this.isConvertedLlmModel) {
+      (
+        this.graphRunner as unknown as LlmGraphRunner
+      ).deleteLlmInferenceEngine();
+      return (this.graphRunner as unknown as LlmGraphRunner)
+        .createLlmInferenceEngine(modelStream, this.options)
+        .then(() => {
+          this.checkWgpuErrors();
+        });
+    }
+
+    // If the model is a handwritten LLM, construct the MediaPipe graph to
+    // support the functionality.
+    // Variable isProcessing blocks handwritten LLMs' execution, while the guard
+    // for converted LLMs is in LlmInferenceSupportedGraphRunner class.
+    this.isProcessing = true;
 
     // To allow graph closure across ASYNCIFY, where we cannot get a callback,
     // we instead invoke it with a special mechanism and then wrap it into a
@@ -703,13 +732,35 @@ export class LlmInference extends TaskRunner {
       | LoraModel,
     progressListener?: MultiResponseProgressListener | ProgressListener,
   ): Promise<string[]> {
-    if (this.isProcessing) {
-      throw new Error('Previous invocation or loading is still ongoing.');
-    }
     this.userProgressListener =
       typeof loraModelOrProgressListener === 'function'
         ? loraModelOrProgressListener
         : progressListener;
+    if (this.isConvertedLlmModel) {
+      if (this.isMultiResponseGeneration) {
+        throw new Error(
+          'Multi-response generation is not supported for converted LLM ' +
+            'models (.task format) yet. Please use the .bin format.',
+        );
+      }
+      if (loraModelOrProgressListener instanceof LoraModel) {
+        throw new Error(
+          'LoRA is not supported for converted LLM models (.task format) ' +
+            'yet. Please use the .bin format.',
+        );
+      }
+      // TODO: b/398904237 - Support streaming generation by passing the
+      // progress listener.
+      return (this.graphRunner as unknown as LlmGraphRunner)
+        .generateResponseSync(text, this.samplerParams)
+        .then((responses) => {
+          this.checkWgpuErrors();
+          return [responses];
+        });
+    }
+    if (this.isProcessing) {
+      throw new Error('Previous invocation or loading is still ongoing.');
+    }
     this.isProcessing = true;
     this.generationResults.length = 0;
     for (let i = 0; i < this.options.getNumResponses(); i++) {
@@ -752,6 +803,14 @@ export class LlmInference extends TaskRunner {
    *         May return undefined if an error occurred.
    */
   sizeInTokens(text: string): number | undefined {
+    // TODO: b/398903655 - Support sizeInTokens for converted LLM models
+    // (.task format).
+    if (this.isConvertedLlmModel) {
+      throw new Error(
+        'sizeInTokens() is not supported for converted LLM models (.task ' +
+          'format) yet. Please use the .bin format.',
+      );
+    }
     if (this.isProcessing) {
       throw new Error('Previous invocation or loading is still ongoing.');
     }
@@ -780,6 +839,13 @@ export class LlmInference extends TaskRunner {
   async loadLoraModel(
     modelAsset: string | Uint8Array | Blob,
   ): Promise<LoraModel> {
+    // TODO: b/398858769 - Support LoRA for converted LLM models (.task format).
+    if (this.isConvertedLlmModel) {
+      throw new Error(
+        'LoRA is not supported for converted LLM models (.task format) yet. ' +
+          'Please use the old foramat (.bin) to use LoRA.',
+      );
+    }
     if (this.isProcessing) {
       throw new Error('Cannot load LoRA model while loading or processing.');
     }
@@ -1188,6 +1254,11 @@ export class LlmInference extends TaskRunner {
       'uncapturederror',
       this.wgpuErrorHandler,
     );
+    if (this.isConvertedLlmModel) {
+      (
+        this.graphRunner as unknown as LlmGraphRunner
+      ).deleteLlmInferenceEngine();
+    }
     super.close();
   }
 }

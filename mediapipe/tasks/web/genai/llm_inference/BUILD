@@ -30,6 +30,7 @@ mediapipe_ts_library(
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/core:task_runner",
         "//mediapipe/tasks/web/genai/llm_inference/proto:llm_inference_graph_options_jspb_proto",
+        "//mediapipe/web/graph_runner:graph_runner_llm_inference_lib_ts",
         "//mediapipe/web/graph_runner:graph_runner_streaming_reader_ts",
         "//mediapipe/web/graph_runner:graph_runner_ts",
         "//mediapipe/web/graph_runner:graph_runner_wasm_file_reference_ts",
