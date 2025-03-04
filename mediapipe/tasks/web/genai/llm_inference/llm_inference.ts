@@ -744,22 +744,18 @@ export class LlmInference extends TaskRunner {
       // TODO: b/398904237 - Support streaming generation by passing the
       // progress listener.
       return (this.graphRunner as unknown as LlmGraphRunner)
-        .generateResponseSync(
-          text,
-          this.samplerParams,
-          (partialResult, done) => {
-            // Don't trigger the user progress listener if there are WebGPU
-            // errors.
-            if (this.wgpuErrors.length === 0) {
-              // TODO: b/398949555 - Support multi-response generation for
-              // converted LLM models (.task format).
-              (this.userProgressListener as ProgressListener)(
-                /* partialResult= */ partialResult,
-                /* done= */ done,
-              );
-            }
-          },
-        )
+        .generateResponse(text, this.samplerParams, (partialResult, done) => {
+          // Don't trigger the user progress listener if there are WebGPU
+          // errors.
+          if (this.wgpuErrors.length === 0) {
+            // TODO: b/398949555 - Support multi-response generation for
+            // converted LLM models (.task format).
+            (this.userProgressListener as ProgressListener)(
+              /* partialResult= */ partialResult,
+              /* done= */ done,
+            );
+          }
+        })
         .then((responses) => {
           this.checkWgpuErrors();
           return [responses];

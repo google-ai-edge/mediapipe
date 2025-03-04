@@ -124,7 +124,7 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
      *     LLM Inference sessions.
      * @return The generated text result.
      */
-    async generateResponseSync(
+    async generateResponse(
       text: string,
       samplerParameters: SamplerParameters,
       // TODO: b/398949555 - Support multi-response generation for converted LLM
@@ -152,13 +152,19 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
       await this.wrapStringPtrAsync(text, (textPtr: number) => {
         // TODO: b/398858545 - Pass samplerParameters to the C function.
         return (this.wasmModule as unknown as WasmLlmInferenceModule).ccall(
-          'GenerateResponseSync',
+          'GenerateResponse',
           'void',
           ['number'],
           [textPtr],
           {async: true},
         );
       });
+      // TODO: b/399215600 - Remove the following trigger of the user progress
+      // listener when the underlying LLM Inference Engine is fixed to trigger
+      // it at the end of the generation.
+      if (userProgressListener) {
+        userProgressListener(/* partialResult= */ '', /* done= */ true);
+      }
       (
         this.wasmModule as unknown as WasmLlmInferenceModule
       )._userProgressListener = undefined;
