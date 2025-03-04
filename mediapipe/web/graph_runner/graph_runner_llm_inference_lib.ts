@@ -12,10 +12,31 @@ import {SamplerParameters} from '../../tasks/cc/genai/inference/proto/sampler_pa
 type LibConstructor = new (...args: any[]) => GraphRunner;
 
 /**
+ * A listener that receives the newly generated partial result and an indication
+ * whether the generation is complete.
+ */
+export type ProgressListener = (
+  partialResult: string,
+  done: boolean,
+) => unknown;
+
+/**
+ * A listener that receives the newly generated partial results for multiple
+ * responses and an indication whether the generation is complete.
+ */
+export type MultiResponseProgressListener = (
+  partialResult: string[],
+  done: boolean,
+) => unknown;
+
+/**
  * Declarations for Emscripten's WebAssembly Module behavior, so TS compiler
  * doesn't break our JS/C++ bridge.
  */
 export declare interface WasmLlmInferenceModule {
+  // TODO: b/398949555 - Support multi-response generation for converted LLM
+  // models (.task format).
+  _userProgressListener: ProgressListener | undefined;
   ccall: (
     name: string,
     type: string,
@@ -106,8 +127,28 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
     async generateResponseSync(
       text: string,
       samplerParameters: SamplerParameters,
+      // TODO: b/398949555 - Support multi-response generation for converted LLM
+      // models (.task format).
+      userProgressListener?: ProgressListener,
     ): Promise<string> {
       this._startLlmEngineProcessing();
+      const result: string[] = [];
+      // This additional wrapper on top of userProgressListener is to collect
+      // all partial results and then to return them together as the full
+      // result.
+      const progressListener = (partialResult: string, done: boolean) => {
+        if (partialResult) {
+          // TODO: b/398904237 - Support streaming generation: use the done flag
+          // to indicate the end of the generation.
+          result.push(partialResult);
+        }
+        if (userProgressListener) {
+          userProgressListener(partialResult, done);
+        }
+      };
+      (
+        this.wasmModule as unknown as WasmLlmInferenceModule
+      )._userProgressListener = progressListener;
       await this.wrapStringPtrAsync(text, (textPtr: number) => {
         // TODO: b/398858545 - Pass samplerParameters to the C function.
         return (this.wasmModule as unknown as WasmLlmInferenceModule).ccall(
@@ -118,9 +159,12 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
           {async: true},
         );
       });
+      (
+        this.wasmModule as unknown as WasmLlmInferenceModule
+      )._userProgressListener = undefined;
       this._endLlmEngineProcessing();
       // TODO: b/398880215 - return the generated string from the C function.
-      return '';
+      return result.join('');
     }
 
     /**

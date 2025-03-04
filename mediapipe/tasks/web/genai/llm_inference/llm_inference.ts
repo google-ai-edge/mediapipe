@@ -27,7 +27,11 @@ import {
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {LlmInferenceGraphOptions} from '../../../../tasks/web/genai/llm_inference/proto/llm_inference_graph_options_pb';
 import {WasmModule} from '../../../../web/graph_runner/graph_runner';
-import {SupportLlmInference} from '../../../../web/graph_runner/graph_runner_llm_inference_lib';
+import {
+  MultiResponseProgressListener,
+  ProgressListener,
+  SupportLlmInference,
+} from '../../../../web/graph_runner/graph_runner_llm_inference_lib';
 import {
   StreamingReader,
   SupportStreamingReader,
@@ -53,6 +57,10 @@ import {
   uint8ArrayToStream,
 } from './model_loading_utils';
 
+export type {
+  MultiResponseProgressListener,
+  ProgressListener,
+} from '../../../../web/graph_runner/graph_runner_llm_inference_lib';
 export * from './llm_inference_options';
 
 // The OSS JS API does not support the builder pattern.
@@ -66,24 +74,6 @@ const LlmGraphRunnerType = SupportLlmInference(
   ),
 );
 class LlmGraphRunner extends LlmGraphRunnerType {}
-
-/**
- * A listener that receives the newly generated partial result and an indication
- * whether the generation is complete.
- */
-export type ProgressListener = (
-  partialResult: string,
-  done: boolean,
-) => unknown;
-
-/**
- * A listener that receives the newly generated partial results for multiple
- * responses and an indication whether the generation is complete.
- */
-export type MultiResponseProgressListener = (
-  partialResult: string[],
-  done: boolean,
-) => unknown;
 
 const INPUT_STREAM = 'text_in';
 const OUTPUT_STREAM = 'text_out';
@@ -737,6 +727,8 @@ export class LlmInference extends TaskRunner {
         ? loraModelOrProgressListener
         : progressListener;
     if (this.isConvertedLlmModel) {
+      // TODO: b/398949555 - Support multi-response generation for converted LLM
+      // models (.task format).
       if (this.isMultiResponseGeneration) {
         throw new Error(
           'Multi-response generation is not supported for converted LLM ' +
@@ -752,7 +744,22 @@ export class LlmInference extends TaskRunner {
       // TODO: b/398904237 - Support streaming generation by passing the
       // progress listener.
       return (this.graphRunner as unknown as LlmGraphRunner)
-        .generateResponseSync(text, this.samplerParams)
+        .generateResponseSync(
+          text,
+          this.samplerParams,
+          (partialResult, done) => {
+            // Don't trigger the user progress listener if there are WebGPU
+            // errors.
+            if (this.wgpuErrors.length === 0) {
+              // TODO: b/398949555 - Support multi-response generation for
+              // converted LLM models (.task format).
+              (this.userProgressListener as ProgressListener)(
+                /* partialResult= */ partialResult,
+                /* done= */ done,
+              );
+            }
+          },
+        )
         .then((responses) => {
           this.checkWgpuErrors();
           return [responses];
