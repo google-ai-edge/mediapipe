@@ -106,6 +106,9 @@ LlmModelSettings ParseModelSettings(void* bytes, int size) {
     case LlmModelSettingsProto::GPU:
       output.preferred_backend = kLlmPreferredBackendGpu;
       break;
+    case LlmModelSettingsProto::CPU:
+      output.preferred_backend = kLlmPreferredBackendCpu;
+      break;
     default:
       output.preferred_backend = kLlmPreferredBackendDefault;
       break;
