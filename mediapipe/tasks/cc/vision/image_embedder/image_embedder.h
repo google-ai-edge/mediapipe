@@ -156,7 +156,7 @@ class ImageEmbedder : core::BaseVisionTaskApi {
   // sent to the object detector. The input timestamps must be monotonically
   // increasing.
   //
-  // The "result_callback" prvoides
+  // The "result_callback" provides
   //   - The embedding results as a
   //     components::containers::proto::EmbeddingResult object.
   //   - The const reference to the corresponding input image that the image

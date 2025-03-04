@@ -42,7 +42,7 @@ _OUTPUT_SEGMENTATION_MASKS_DESCRIPTION = (
 # Detection tensor result to be grouped together.
 _DETECTION_GROUP_NAME = 'detection_result'
 # File name to export score calibration parameters.
-_SCORE_CALIBATION_FILENAME = 'score_calibration.txt'
+_SCORE_CALIBRATION_FILENAME = 'score_calibration.txt'
 
 
 @dataclasses.dataclass
@@ -409,7 +409,7 @@ class MetadataWriter(object):
   with open(model_path, 'rb') as f:
     writer = MetadataWriter.create(f.read())
     model_content, metadata_json_content = writer
-        .add_genernal_info('model_name', 'model description')
+        .add_general_info('model_name', 'model description')
         .add_image_input()
         .add_feature_input()
         .add_classification_output(Labels().add(['A', 'B']))
@@ -439,7 +439,7 @@ class MetadataWriter(object):
       self,
       model_name: str,
       model_description: Optional[str] = None) -> 'MetadataWriter':
-    """Adds a general info metadata for the general metadata informantion."""
+    """Adds a general info metadata for the general metadata information."""
     # Will overwrite the previous `self._general_md` if exists.
     self._general_md = metadata_info.GeneralMd(
         name=model_name, description=model_description)
@@ -535,7 +535,7 @@ class MetadataWriter(object):
 
     Args:
       tokenizer: information of the tokenizer used to process the input string,
-        if any. Supported tokenziers are: `BertTokenizer` [1] and
+        if any. Supported tokenizers are: `BertTokenizer` [1] and
         `SentencePieceTokenizer` [2].
       ids_name: name of the ids tensor, which represents the tokenized ids of
         the input text.
@@ -802,7 +802,7 @@ class MetadataWriter(object):
         score_transformation_type=score_calibration.transformation_type,
         default_score=score_calibration.default_score,
         file_path=self._export_calibration_file(
-            _SCORE_CALIBATION_FILENAME, score_calibration.parameters
+            _SCORE_CALIBRATION_FILENAME, score_calibration.parameters
         ),
     )
 
