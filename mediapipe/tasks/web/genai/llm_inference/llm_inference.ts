@@ -393,6 +393,72 @@ export class LlmInference extends TaskRunner {
       throw new Error('Cannot set options while loading or processing.');
     }
 
+    if (
+      options.baseOptions?.modelAssetPath &&
+      options.baseOptions?.modelAssetBuffer
+    ) {
+      throw new Error(
+        'Cannot set both baseOptions.modelAssetPath and baseOptions.modelAssetBuffer',
+      );
+    }
+
+    let onFinishedLoadingData!: () => void;
+    const finishedLoadingDataPromise = new Promise<void>((resolve, reject) => {
+      onFinishedLoadingData = resolve;
+    });
+
+    let modelStream: ReadableStreamDefaultReader<Uint8Array> | undefined;
+    if (options.baseOptions?.modelAssetPath) {
+      const request = await fetch(
+        options.baseOptions.modelAssetPath.toString(),
+      );
+      if (!request.ok) {
+        throw new Error(
+          `Failed to fetch model: ${options.baseOptions.modelAssetPath} (${request.status})`,
+        );
+      }
+      if (!request.body) {
+        throw new Error(
+          `Failed to fetch model: ${options.baseOptions.modelAssetPath} (no body)`,
+        );
+      }
+      modelStream = request.body.getReader();
+    } else if (options.baseOptions?.modelAssetBuffer instanceof Uint8Array) {
+      modelStream = uint8ArrayToStream(
+        options.baseOptions.modelAssetBuffer,
+      ).getReader();
+    } else if (
+      options.baseOptions?.modelAssetBuffer instanceof
+      ReadableStreamDefaultReader
+    ) {
+      modelStream = options.baseOptions.modelAssetBuffer;
+      // Remove the reference on the asset buffer since we will be reading
+      // through it and consuming it.
+      options.baseOptions.modelAssetBuffer = undefined;
+    } else {
+      onFinishedLoadingData();
+    }
+
+    if (modelStream) {
+      const [modelStreamForLoading, modelStreamForFormatTest] =
+        tee(modelStream);
+      const modelFormat = await getModelFormatAndClose(
+        modelStreamForFormatTest,
+      );
+      if (modelFormat === ModelFormat.CONVERTED) {
+        this.isConvertedLlmModel = true;
+        modelStream = modelStreamForLoading;
+      } else {
+        this.isConvertedLlmModel = false;
+        this.streamingReader = StreamingReader.loadFromReader(
+          modelStreamForLoading,
+          onFinishedLoadingData,
+        );
+      }
+    } else {
+      throw new Error('No model asset provided.');
+    }
+
     if (options.baseOptions?.gpuOptions?.device) {
       if (this.wgpuDevice) {
         this.wgpuDevice.removeEventListener(
@@ -431,6 +497,11 @@ export class LlmInference extends TaskRunner {
       if (numResponsesToSet < 1) {
         throw new Error(`'numResponses' must be at least 1.`);
       }
+      if (this.isConvertedLlmModel && numResponsesToSet > 1) {
+        throw new Error(
+          `'numResponses > 1' is not supported for converted LLM models yet.`,
+        );
+      }
       this.options.setNumResponses(numResponsesToSet);
       const samplerParams = this.options.getSamplerParams();
       if (
@@ -444,74 +515,6 @@ export class LlmInference extends TaskRunner {
             'the same.',
         );
       }
-    }
-    let onFinishedLoadingData!: () => void;
-    const finishedLoadingDataPromise = new Promise<void>((resolve, reject) => {
-      onFinishedLoadingData = resolve;
-    });
-
-    if (
-      options.baseOptions?.modelAssetPath &&
-      options.baseOptions?.modelAssetBuffer
-    ) {
-      throw new Error(
-        'Cannot set both baseOptions.modelAssetPath and baseOptions.modelAssetBuffer',
-      );
-    }
-
-    let modelStream: ReadableStreamDefaultReader<Uint8Array> | undefined;
-    if (options.baseOptions?.modelAssetPath) {
-      const request = await fetch(
-        options.baseOptions.modelAssetPath.toString(),
-      );
-      if (!request.ok) {
-        throw new Error(
-          `Failed to fetch model: ${options.baseOptions.modelAssetPath} (${request.status})`,
-        );
-      }
-      if (!request.body) {
-        throw new Error(
-          `Failed to fetch model: ${options.baseOptions.modelAssetPath} (no body)`,
-        );
-      }
-      modelStream = request.body.getReader();
-    } else if (options.baseOptions?.modelAssetBuffer instanceof Uint8Array) {
-      modelStream = uint8ArrayToStream(
-        options.baseOptions.modelAssetBuffer,
-      ).getReader();
-    } else if (
-      options.baseOptions?.modelAssetBuffer instanceof
-      ReadableStreamDefaultReader
-    ) {
-      modelStream = options.baseOptions.modelAssetBuffer;
-    } else {
-      onFinishedLoadingData();
-    }
-
-    if (options.baseOptions?.modelAssetBuffer) {
-      // Remove the reference on the asset buffer since we will be reading
-      // through it and consuming it.
-      options.baseOptions.modelAssetBuffer = undefined;
-    }
-
-    if (modelStream) {
-      const [modelStreamForLoading, modelStreamForFormatTest] =
-        tee(modelStream);
-      const modelFormat = await getModelFormatAndClose(
-        modelStreamForFormatTest,
-      );
-      if (modelFormat === ModelFormat.CONVERTED) {
-        this.isConvertedLlmModel = true;
-        modelStream = modelStreamForLoading;
-      } else {
-        this.isConvertedLlmModel = false;
-        this.streamingReader = StreamingReader.loadFromReader(
-          modelStreamForLoading,
-          onFinishedLoadingData,
-        );
-      }
-    } else {
-      throw new Error('No model asset provided.');
     }
 
     // If the model is a converted LLM, use LlmInferenceSupportedGraphRunner's
@@ -746,7 +749,7 @@ export class LlmInference extends TaskRunner {
         .generateResponse(text, this.samplerParams, (partialResult, done) => {
           // Don't trigger the user progress listener if there are WebGPU
           // errors.
-          if (this.wgpuErrors.length === 0) {
+          if (this.wgpuErrors.length === 0 && this.userProgressListener) {
             // TODO: b/398949555 - Support multi-response generation for
             // converted LLM models (.task format).
             (this.userProgressListener as ProgressListener)(
@@ -1247,15 +1250,15 @@ export class LlmInference extends TaskRunner {
   }
 
   override close() {
-    this.wgpuDevice?.removeEventListener(
-      'uncapturederror',
-      this.wgpuErrorHandler,
-    );
     if (this.isConvertedLlmModel) {
       (
         this.graphRunner as unknown as LlmGraphRunner
       ).deleteLlmInferenceEngine();
     }
+    this.wgpuDevice?.removeEventListener(
+      'uncapturederror',
+      this.wgpuErrorHandler,
+    );
     super.close();
   }
 }

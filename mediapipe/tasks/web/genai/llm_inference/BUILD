@@ -5,6 +5,8 @@
 
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_declaration", "mediapipe_ts_library")
 
+# TODO: See if we can migrate to the new js_test_* rules eventually
+
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
@@ -22,7 +24,6 @@ mediapipe_ts_library(
         "//mediapipe/tasks/cc/core/proto:base_options_jspb_proto",
         "//mediapipe/tasks/cc/genai/inference/calculators:detokenizer_calculator_jspb_proto",
         "//mediapipe/tasks/cc/genai/inference/calculators:llm_gpu_calculator_jspb_proto",
-        "//mediapipe/tasks/cc/genai/inference/calculators:model_data_calculator_jspb_proto",
         "//mediapipe/tasks/cc/genai/inference/calculators:tokenizer_calculator_jspb_proto",
         "//mediapipe/tasks/cc/genai/inference/proto:llm_params_jspb_proto",
         "//mediapipe/tasks/cc/genai/inference/proto:sampler_params_jspb_proto",
