@@ -805,13 +805,8 @@ export class LlmInference extends TaskRunner {
    *         May return undefined if an error occurred.
    */
   sizeInTokens(text: string): number | undefined {
-    // TODO: b/398903655 - Support sizeInTokens for converted LLM models
-    // (.task format).
     if (this.isConvertedLlmModel) {
-      throw new Error(
-        'sizeInTokens() is not supported for converted LLM models (.task ' +
-          'format) yet. Please use the .bin format.',
-      );
+      return (this.graphRunner as unknown as LlmGraphRunner).sizeInTokens(text);
     }
     if (this.isProcessing) {
       throw new Error('Previous invocation or loading is still ongoing.');

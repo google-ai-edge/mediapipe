@@ -37,6 +37,7 @@ export declare interface WasmLlmInferenceModule {
   // TODO: b/398949555 - Support multi-response generation for converted LLM
   // models (.task format).
   _userProgressListener: ProgressListener | undefined;
+  _GetSizeInTokens: (textPtr: number) => number;
   ccall: (
     name: string,
     type: string,
@@ -179,6 +180,25 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
       this._endLlmEngineProcessing();
       // TODO: b/398880215 - return the generated string from the C function.
       return result.join('');
+    }
+
+    /**
+     * Runs an invocation of *only* the tokenization for the LLM, and returns
+     * the size (in tokens) of the result. Runs synchronously.
+     *
+     * @param text The text to tokenize.
+     * @return The number of tokens in the resulting tokenization of the text.
+     */
+    sizeInTokens(text: string): number {
+      this._startLlmEngineProcessing();
+      let result: number;
+      this.wrapStringPtr(text, (textPtr: number) => {
+        result = (
+          this.wasmModule as unknown as WasmLlmInferenceModule
+        )._GetSizeInTokens(textPtr);
+      });
+      this._endLlmEngineProcessing();
+      return result!;
     }
 
     /**
