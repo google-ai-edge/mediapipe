@@ -46,6 +46,16 @@ void PadElementDepth(uint8_t* src_buffer, uint8_t* dst_buffer, int num_elements,
 
 }  // namespace
 
+wgpu::ShaderModule CreateWgslShader(wgpu::Device device, const char* const code,
+                                    const char* label) {
+  wgpu::ShaderModuleWGSLDescriptor wgsl;
+  wgsl.code = code;
+  wgpu::ShaderModuleDescriptor desc;
+  desc.nextInChain = &wgsl;
+  desc.label = label;
+  return device.CreateShaderModule(&desc);
+}
+
 absl::StatusOr<uint32_t> WebGpuTextureFormatBytesPerPixel(
     wgpu::TextureFormat format) {
   switch (format) {

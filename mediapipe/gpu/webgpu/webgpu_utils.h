@@ -9,6 +9,9 @@
 
 namespace mediapipe {
 
+wgpu::ShaderModule CreateWgslShader(wgpu::Device device, const char* code,
+                                    const char* label);
+
 absl::StatusOr<uint32_t> WebGpuTextureFormatBytesPerPixel(
     wgpu::TextureFormat format);
 absl::StatusOr<uint32_t> WebGpuTextureFormatDepth(wgpu::TextureFormat format);
