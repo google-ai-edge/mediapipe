@@ -94,8 +94,8 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
       await (this.wasmModule as unknown as WasmLlmInferenceModule).ccall(
         'CreateLlmInferenceEngine',
         'void',
-        [],
-        [],
+        ['number'],
+        [llmInferenceGraphOptions.getMaxTokens() ?? 512],
         {async: true},
       );
       this._endLlmEngineProcessing();
@@ -149,13 +149,19 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
       (
         this.wasmModule as unknown as WasmLlmInferenceModule
       )._userProgressListener = progressListener;
+      // Sampler params
+      // OSS build does not support SamplerParameters.serializeBinary(...).
+      // tslint:disable-next-line:deprecation
+      const samplerParamsBin = samplerParameters.serializeBinary();
+      const samplerParamsPtr = this.wasmModule._malloc(samplerParamsBin.length);
+      this.wasmModule.HEAPU8.set(samplerParamsBin, samplerParamsPtr);
       await this.wrapStringPtrAsync(text, (textPtr: number) => {
         // TODO: b/398858545 - Pass samplerParameters to the C function.
         return (this.wasmModule as unknown as WasmLlmInferenceModule).ccall(
           'GenerateResponse',
           'void',
-          ['number'],
-          [textPtr],
+          ['number', 'number', 'number'],
+          [textPtr, samplerParamsPtr, samplerParamsBin.length],
           {async: true},
         );
       });
@@ -165,6 +171,8 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
       if (userProgressListener) {
         userProgressListener(/* partialResult= */ '', /* done= */ true);
       }
+      this.wasmModule._free(samplerParamsPtr);
+
       (
         this.wasmModule as unknown as WasmLlmInferenceModule
       )._userProgressListener = undefined;

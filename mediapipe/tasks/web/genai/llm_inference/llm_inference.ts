@@ -174,7 +174,6 @@ export class LlmInference extends TaskRunner {
     | ProgressListener
     | MultiResponseProgressListener;
   private streamingReader?: StreamingReader;
-
   private isConvertedLlmModel = false;
 
   // The WebGPU device used for LLM inference.
