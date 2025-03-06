@@ -211,6 +211,11 @@ JNIEXPORT jlong JNICALL JNI_METHOD(nativeCreateEngine)(
   return reinterpret_cast<jlong>(engine);
 }
 
+JNIEXPORT void JNICALL JNI_METHOD(nativeDeleteEngine)(JNIEnv* env, jclass thiz,
+                                                      jlong engine_handle) {
+  LlmInferenceEngine_Engine_Delete(reinterpret_cast<void*>(engine_handle));
+}
+
 JNIEXPORT jlong JNICALL JNI_METHOD(nativeCreateSession)(
     JNIEnv* env, jclass thiz, jbyteArray session_config_bytes,
     jlong engine_handle) {

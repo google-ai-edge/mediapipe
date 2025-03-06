@@ -263,6 +263,7 @@ public final class LlmTaskRunner implements AutoCloseable {
   @Override
   public void close() {
     validateState();
+    nativeDeleteEngine(engineHandle);
     if (callbackHandle != 0) {
       nativeRemoveCallback(callbackHandle);
     }
