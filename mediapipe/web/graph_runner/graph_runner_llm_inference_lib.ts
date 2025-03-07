@@ -95,8 +95,11 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
       await (this.wasmModule as unknown as WasmLlmInferenceModule).ccall(
         'CreateLlmInferenceEngine',
         'void',
-        ['number'],
-        [llmInferenceGraphOptions.getMaxTokens() ?? 512],
+        ['number', 'number'],
+        [
+          llmInferenceGraphOptions.getMaxTokens() ?? 512,
+          llmInferenceGraphOptions.getSamplerParams()?.getK() ?? 40,
+        ],
         {async: true},
       );
       this._endLlmEngineProcessing();

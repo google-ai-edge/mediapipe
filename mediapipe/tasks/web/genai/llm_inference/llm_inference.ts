@@ -731,7 +731,10 @@ export class LlmInference extends TaskRunner {
     if (this.isConvertedLlmModel) {
       // TODO: b/398949555 - Support multi-response generation for converted LLM
       // models (.task format).
-      if (this.isMultiResponseGeneration) {
+      if (
+        this.isMultiResponseGeneration &&
+        this.options.getNumResponses() > 1
+      ) {
         throw new Error(
           'Multi-response generation is not supported for converted LLM ' +
             'models (.task format) yet. Please use the .bin format.',
@@ -752,10 +755,17 @@ export class LlmInference extends TaskRunner {
           if (this.wgpuErrors.length === 0 && this.userProgressListener) {
             // TODO: b/398949555 - Support multi-response generation for
             // converted LLM models (.task format).
-            (this.userProgressListener as ProgressListener)(
-              /* partialResult= */ partialResult,
-              /* done= */ done,
-            );
+            if (this.isMultiResponseGeneration) {
+              (this.userProgressListener as MultiResponseProgressListener)(
+                /* partialResult= */ [partialResult],
+                /* done= */ done,
+              );
+            } else {
+              (this.userProgressListener as ProgressListener)(
+                /* partialResult= */ partialResult,
+                /* done= */ done,
+              );
+            }
           }
         })
         .then((responses) => {
