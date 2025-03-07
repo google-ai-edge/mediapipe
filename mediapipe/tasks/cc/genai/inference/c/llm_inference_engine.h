@@ -152,6 +152,27 @@ typedef struct {
   LlmPreferredBackend preferred_backend;
 } LlmModelSettings;
 
+// LlmPromptTemplates defines the prompt templates for the session.
+typedef struct {
+  // The prompt prefix for the user role.
+  const char* user_prefix;
+
+  // The prompt suffix for the user role.
+  const char* user_suffix;
+
+  // The prompt prefix for the model role.
+  const char* model_prefix;
+
+  // The prompt suffix for the model role.
+  const char* model_suffix;
+
+  // The prompt prefix for the system role.
+  const char* system_prefix;
+
+  // The prompt suffix for the system role.
+  const char* system_suffix;
+} LlmPromptTemplates;
+
 // LlmSessionConfig configures how to execute the model.
 typedef struct {
   // Top K number of tokens to be sampled from for each decoding step.
@@ -178,6 +199,10 @@ typedef struct {
 
   // Whether to configure the graph to include the vision modality.
   bool enable_vision_modality;
+
+  // Prompt templates to use for the session.
+  // If not provided, the default prompt templates will be used.
+  const LlmPromptTemplates* prompt_templates;
 } LlmSessionConfig;
 
 // LlmResponseContext is the return type for

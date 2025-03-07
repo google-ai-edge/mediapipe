@@ -56,7 +56,8 @@ extension LlmInference {
         random_seed: options.randomSeed,
         lora_path: nil,
         include_token_cost_calculator: true,
-        enable_vision_modality: false)
+        enable_vision_modality: false,
+        prompt_templates: nil)
 
       /// If `loraPath` is != nil, modify session config with the corresponding C string and invoke
       /// the method to create session runner within the scope where the C String of the `loraPath`

@@ -133,6 +133,7 @@ LlmSessionConfig ParseSessionConfig(void* bytes, int size) {
           ? input.graph_config().include_token_cost_calculator()
           : kDefaultIncludeTokenCostCalculator;
   output.enable_vision_modality = input.graph_config().enable_vision_modality();
+  output.prompt_templates = nullptr;
   return output;
 }
 
