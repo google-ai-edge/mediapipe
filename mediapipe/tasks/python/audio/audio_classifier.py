@@ -281,7 +281,7 @@ class AudioClassifier(base_audio_task_api.BaseAudioTaskApi):
     for adjacent calls of this method. This method will return immediately after
     the input audio data is accepted. The results will be available via the
     `result_callback` provided in the `AudioClassifierOptions`. The
-    `classify_async` method is designed to process auido stream data such as
+    `classify_async` method is designed to process audio stream data such as
     microphone input.
 
     The input audio data may be longer than what the model is able to process
