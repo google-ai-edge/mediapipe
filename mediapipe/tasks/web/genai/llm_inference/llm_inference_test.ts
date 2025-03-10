@@ -101,6 +101,14 @@ describe('LlmInference', () => {
         // Move this to the running tests once we can pass sampler params
         // on each call.
 
+        it('throws an error if maxTokens is too large', async () => {
+          await expectAsync(
+            load({...defaultOptions, maxTokens: 10_000}),
+          ).toBeRejectedWithError(
+            /Max number of tokens is larger than the maximum cache size supported/,
+          );
+        });
+
         it('throws an error if input is longer than maxTokens', async () => {
           const prompt = 'a'.repeat(1024);
           const llmInference = await load({...defaultOptions, maxTokens: 10});
