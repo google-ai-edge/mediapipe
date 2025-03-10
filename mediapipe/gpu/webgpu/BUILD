@@ -154,6 +154,7 @@ cc_library(
         ":webgpu_shader_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_options_cc_proto",
+        "//mediapipe/framework/api2:node",
         "//mediapipe/framework/deps:re2",
         "//mediapipe/framework/port:status",
         "//mediapipe/gpu:gpu_buffer",
