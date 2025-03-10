@@ -90,19 +90,22 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
       llmInferenceGraphOptions: LlmInferenceGraphOptions,
     ) {
       this._startLlmEngineProcessing();
-      await this.uploadToWasmFileSystem(modelStream);
-      // TODO: b/398858545 - Pass llmInferenceGraphOptions to the C function.
-      await (this.wasmModule as unknown as WasmLlmInferenceModule).ccall(
-        'CreateLlmInferenceEngine',
-        'void',
-        ['number', 'number'],
-        [
-          llmInferenceGraphOptions.getMaxTokens() ?? 512,
-          llmInferenceGraphOptions.getSamplerParams()?.getK() ?? 40,
-        ],
-        {async: true},
-      );
-      this._endLlmEngineProcessing();
+      try {
+        await this.uploadToWasmFileSystem(modelStream);
+        // TODO: b/398858545 - Pass llmInferenceGraphOptions to the C function.
+        await (this.wasmModule as unknown as WasmLlmInferenceModule).ccall(
+          'CreateLlmInferenceEngine',
+          'void',
+          ['number', 'number'],
+          [
+            llmInferenceGraphOptions.getMaxTokens() ?? 512,
+            llmInferenceGraphOptions.getSamplerParams()?.getK() ?? 40,
+          ],
+          {async: true},
+        );
+      } finally {
+        this._endLlmEngineProcessing();
+      }
     }
 
     /**
@@ -110,14 +113,17 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
      */
     deleteLlmInferenceEngine() {
       this._startLlmEngineProcessing();
-      (this.wasmModule as unknown as WasmLlmInferenceModule).ccall(
-        'DeleteLlmInferenceEngine',
-        'void',
-        [],
-        [],
-        {async: false},
-      );
-      this._endLlmEngineProcessing();
+      try {
+        (this.wasmModule as unknown as WasmLlmInferenceModule).ccall(
+          'DeleteLlmInferenceEngine',
+          'void',
+          [],
+          [],
+          {async: false},
+        );
+      } finally {
+        this._endLlmEngineProcessing();
+      }
     }
 
     /**
@@ -136,53 +142,58 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
       userProgressListener?: ProgressListener,
     ): Promise<string> {
       this._startLlmEngineProcessing();
-      const result: string[] = [];
-      // This additional wrapper on top of userProgressListener is to collect
-      // all partial results and then to return them together as the full
-      // result.
-      const progressListener = (partialResult: string, done: boolean) => {
-        if (partialResult) {
-          // TODO: b/398904237 - Support streaming generation: use the done flag
-          // to indicate the end of the generation.
-          result.push(partialResult);
-        }
-        if (userProgressListener) {
-          userProgressListener(partialResult, done);
-        }
-      };
-      (
-        this.wasmModule as unknown as WasmLlmInferenceModule
-      )._userProgressListener = progressListener;
-      // Sampler params
-      // OSS build does not support SamplerParameters.serializeBinary(...).
-      // tslint:disable-next-line:deprecation
-      const samplerParamsBin = samplerParameters.serializeBinary();
-      const samplerParamsPtr = this.wasmModule._malloc(samplerParamsBin.length);
-      this.wasmModule.HEAPU8.set(samplerParamsBin, samplerParamsPtr);
-      await this.wrapStringPtrAsync(text, (textPtr: number) => {
-        // TODO: b/398858545 - Pass samplerParameters to the C function.
-        return (this.wasmModule as unknown as WasmLlmInferenceModule).ccall(
-          'GenerateResponse',
-          'void',
-          ['number', 'number', 'number'],
-          [textPtr, samplerParamsPtr, samplerParamsBin.length],
-          {async: true},
+      try {
+        const result: string[] = [];
+        // This additional wrapper on top of userProgressListener is to collect
+        // all partial results and then to return them together as the full
+        // result.
+        const progressListener = (partialResult: string, done: boolean) => {
+          if (partialResult) {
+            // TODO: b/398904237 - Support streaming generation: use the done flag
+            // to indicate the end of the generation.
+            result.push(partialResult);
+          }
+          if (userProgressListener) {
+            userProgressListener(partialResult, done);
+          }
+        };
+        (
+          this.wasmModule as unknown as WasmLlmInferenceModule
+        )._userProgressListener = progressListener;
+        // Sampler params
+        // OSS build does not support SamplerParameters.serializeBinary(...).
+        // tslint:disable-next-line:deprecation
+        const samplerParamsBin = samplerParameters.serializeBinary();
+        const samplerParamsPtr = this.wasmModule._malloc(
+          samplerParamsBin.length,
         );
-      });
-      // TODO: b/399215600 - Remove the following trigger of the user progress
-      // listener when the underlying LLM Inference Engine is fixed to trigger
-      // it at the end of the generation.
-      if (userProgressListener) {
-        userProgressListener(/* partialResult= */ '', /* done= */ true);
-      }
-      this.wasmModule._free(samplerParamsPtr);
+        this.wasmModule.HEAPU8.set(samplerParamsBin, samplerParamsPtr);
+        await this.wrapStringPtrAsync(text, (textPtr: number) => {
+          // TODO: b/398858545 - Pass samplerParameters to the C function.
+          return (this.wasmModule as unknown as WasmLlmInferenceModule).ccall(
+            'GenerateResponse',
+            'void',
+            ['number', 'number', 'number'],
+            [textPtr, samplerParamsPtr, samplerParamsBin.length],
+            {async: true},
+          );
+        });
+        // TODO: b/399215600 - Remove the following trigger of the user progress
+        // listener when the underlying LLM Inference Engine is fixed to trigger
+        // it at the end of the generation.
+        if (userProgressListener) {
+          userProgressListener(/* partialResult= */ '', /* done= */ true);
+        }
+        this.wasmModule._free(samplerParamsPtr);
 
-      (
-        this.wasmModule as unknown as WasmLlmInferenceModule
-      )._userProgressListener = undefined;
-      this._endLlmEngineProcessing();
-      // TODO: b/398880215 - return the generated string from the C function.
-      return result.join('');
+        (
+          this.wasmModule as unknown as WasmLlmInferenceModule
+        )._userProgressListener = undefined;
+        // TODO: b/398880215 - return the generated string from the C function.
+        return result.join('');
+      } finally {
+        this._endLlmEngineProcessing();
+      }
     }
 
     /**
@@ -194,14 +205,17 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
      */
     sizeInTokens(text: string): number {
       this._startLlmEngineProcessing();
-      let result: number;
-      this.wrapStringPtr(text, (textPtr: number) => {
-        result = (
-          this.wasmModule as unknown as WasmLlmInferenceModule
-        )._GetSizeInTokens(textPtr);
-      });
-      this._endLlmEngineProcessing();
-      return result!;
+      try {
+        let result: number;
+        this.wrapStringPtr(text, (textPtr: number) => {
+          result = (
+            this.wasmModule as unknown as WasmLlmInferenceModule
+          )._GetSizeInTokens(textPtr);
+        });
+        return result!;
+      } finally {
+        this._endLlmEngineProcessing();
+      }
     }
 
     /**
