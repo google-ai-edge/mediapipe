@@ -26,19 +26,9 @@ import {LlmInferenceOptions} from './llm_inference_options';
 // These tests take a long time to run.
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 100_000;
 
-function countUniqueCharacters(text: string): number {
-  // Ideally, we'd count unique tokens, but we don't have access to the
-  // tokenizer here.
-  const chars = new Set<string>();
-  for (const char of text) {
-    chars.add(char);
-  }
-  return chars.size;
-}
-
 describe('LlmInference', () => {
   describe('with converted LLM model', () => {
-    const modelUrl = `http://localhost:8080/gemma3_int4_ekv1280.task`;
+    const modelUrl = `http://localhost:8080/gemma3_it_gpu_f32_ekv4096_dynamic_wi4_final_153192382_type_pt.task`;
     let modelData: Uint8Array;
     let defaultOptions: LlmInferenceOptions;
     let genaiFileset: WasmFileset;
@@ -145,66 +135,115 @@ describe('LlmInference', () => {
         });
 
         it('topk affects sampling', async () => {
-          pending('Sampler is always set to TopP currently.');
-          const prompt = 'hello';
-          const lowTopKOptions: LlmInferenceOptions = {
-            ...defaultOptions,
-            topK: 1,
-            temperature: 1,
-          };
-          llmInference = await load(lowTopKOptions);
-          const lowTopKResponse = await llmInference.generateResponse(prompt);
-          const lowTopKUniqueness =
-            countUniqueCharacters(lowTopKResponse) / lowTopKResponse.length;
+          const prompt = 'Write a poem about a cat.';
+          async function run(topK: number, seed: number) {
+            const options: LlmInferenceOptions = {
+              ...defaultOptions,
+              topK,
+              randomSeed: seed,
+            };
+            llmInference = await load(options);
+            const response = await llmInference.generateResponse(prompt);
+            llmInference.close();
+            return response;
+          }
 
-          llmInference.close();
+          const topK1Response1 = await run(1, defaultOptions.randomSeed!);
+          const topK1Response2 = await run(1, defaultOptions.randomSeed! + 1);
+          const topK20Response1 = await run(20, defaultOptions.randomSeed!);
+          const topK20Response2 = await run(20, defaultOptions.randomSeed! + 1);
 
-          const highTopKOptions: LlmInferenceOptions = {
-            ...defaultOptions,
-            topK: 20,
-            temperature: 1,
-          };
-          llmInference = await load(highTopKOptions);
-          const highTopKResponse = await llmInference.generateResponse(prompt);
-          const highTopKUniqueness =
-            countUniqueCharacters(highTopKResponse) / highTopKResponse.length;
+          // This is needed to avoid accidentally calling close multiple times
+          // on the same llmInference instance.
+          (llmInference as unknown) = undefined;
 
-          expect(lowTopKResponse).not.toEqual(highTopKResponse);
-          expect(lowTopKUniqueness).toBeLessThan(highTopKUniqueness);
+          // TODONT: Previously, this test contained a statistical
+          // check that higher values of topK would result in more
+          // unique responses. However, uniqueness was measured by
+          // unique characters, not tokens, so this test was flaky.
+          // A better test would use controlled decoding to measure the
+          // likelihood of a given response.
+
+          expect(topK1Response1)
+            .withContext('TopK=1 does not change with seed')
+            .toEqual(topK1Response2);
+          expect(topK20Response1)
+            .withContext('TopK=20 changes with seed')
+            .not.toEqual(topK20Response2);
+          expect(topK1Response1)
+            .withContext('Changing TopK changes the output')
+            .not.toEqual(topK20Response1);
         });
 
         it('temperature affects sampling', async () => {
-          const prompt = 'hello';
-          const lowTemperatureOptions: LlmInferenceOptions = {
-            ...defaultOptions,
-            temperature: 0,
-          };
-          llmInference = await load(lowTemperatureOptions);
+          const prompt = 'Write a poem about a cat.';
+          async function run(temperature: number, seed: number) {
+            const options: LlmInferenceOptions = {
+              ...defaultOptions,
+              temperature,
+              randomSeed: seed,
+            };
+            llmInference = await load(options);
+            const response = await llmInference.generateResponse(prompt);
+            llmInference.close();
+            return response;
+          }
 
-          const lowTemperatureResponse =
-            await llmInference.generateResponse(prompt);
-          const lowTemperatureUniqueness =
-            countUniqueCharacters(lowTemperatureResponse) /
-            lowTemperatureResponse.length;
+          const temp0Response1 = await run(0, defaultOptions.randomSeed!);
+          const temp0Response2 = await run(0, defaultOptions.randomSeed! + 1);
+          const temp1Response1 = await run(1, defaultOptions.randomSeed!);
+          const temp1Response2 = await run(1, defaultOptions.randomSeed! + 1);
 
-          llmInference.close();
+          // This is needed to avoid accidentally calling close multiple times
+          // on the same llmInference instance.
+          (llmInference as unknown) = undefined;
 
-          const highTemperatureOptions: LlmInferenceOptions = {
-            ...defaultOptions,
-            temperature: 1,
-          };
-          llmInference = await load(highTemperatureOptions);
+          // TODONT: Previously, this test contained a statistical
+          // check that higher values of temperature would result in
+          // more unique responses. However, uniqueness was measured by
+          // unique characters, not tokens, so this test was flaky.
+          // A better test would use controlled decoding to measure the
+          // likelihood of a given response.
 
-          const highTemperatureResponse =
-            await llmInference.generateResponse(prompt);
-          const highTemperatureUniqueness =
-            countUniqueCharacters(highTemperatureResponse) /
-            highTemperatureResponse.length;
+          expect(temp0Response1)
+            .withContext('Temperature=0 does not change with seed')
+            .toEqual(temp0Response2);
+          expect(temp1Response1)
+            .withContext('Temperature=1 changes with seed')
+            .not.toEqual(temp1Response2);
+          expect(temp0Response1)
+            .withContext('Changing Temperature changes the output')
+            .not.toEqual(temp1Response1);
+        });
 
-          expect(lowTemperatureResponse).not.toEqual(highTemperatureResponse);
-          expect(lowTemperatureUniqueness).toBeLessThan(
-            highTemperatureUniqueness,
+        it('temperature does not affect sampling when topk is 1', async () => {
+          const prompt = 'Write a poem about a cat.';
+          async function run(temperature: number, seed: number) {
+            const options: LlmInferenceOptions = {
+              ...defaultOptions,
+              temperature,
+              topK: 1,
+              randomSeed: seed,
+            };
+            llmInference = await load(options);
+            const response = await llmInference.generateResponse(prompt);
+            llmInference.close();
+            return response;
+          }
+          const lowTemperatureResponse = await run(
+            0,
+            defaultOptions.randomSeed!,
           );
+          const highTemperatureResponse = await run(
+            1,
+            defaultOptions.randomSeed!,
+          );
+
+          // This is needed to avoid accidentally calling close multiple times
+          // on the same llmInference instance.
+          (llmInference as unknown) = undefined;
+
+          expect(lowTemperatureResponse).toEqual(highTemperatureResponse);
         });
 
         it('throws an error when numResponses is defined and not 1', async () => {
