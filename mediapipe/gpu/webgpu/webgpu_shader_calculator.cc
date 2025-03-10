@@ -26,6 +26,7 @@
 #include "mediapipe/framework/deps/re2.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
+#include "mediapipe/framework/resources.h"
 #include "mediapipe/gpu/gpu_buffer.h"
 #include "mediapipe/gpu/gpu_buffer_format.h"
 #include "mediapipe/gpu/webgpu/webgpu_service.h"
@@ -631,8 +632,10 @@ absl::Status WebGpuShaderCalculator::Open(CalculatorContext* cc) {
   has_depth_input_stream_ = cc->Inputs().HasTag(kInputDepthTag);
 
   if (options.has_shader_path()) {
-    MP_RETURN_IF_ERROR(
-        GetResourceContents(options.shader_path(), &shader_source_));
+    std::unique_ptr<Resource> resource_shader_source;
+    MP_ASSIGN_OR_RETURN(resource_shader_source,
+                        cc->GetResources().Get(options.shader_path()));
+    shader_source_ = resource_shader_source->ToStringView();
   } else if (options.has_shader_source()) {
     shader_source_ = options.shader_source();
   } else {
