@@ -214,6 +214,48 @@ TEST(BuilderTest, BuildGraphSettingInputAndOutputStreamHandlers) {
   EXPECT_THAT(graph.GetConfig(), EqualsProto(expected));
 }
 
+TEST(BuilderTest, BuildGraphSettingSourceLayer) {
+  Graph graph;
+  // Graph inputs.
+  Stream<AnyType> base = graph.In("IN").SetName("base");
+  SidePacket<AnyType> side = graph.SideIn("SIDE").SetName("side");
+
+  auto& foo = graph.AddNode("Foo");
+  foo.SetSourceLayer(0);
+  base >> foo.In("BASE");
+  side >> foo.SideIn("SIDE");
+  Stream<AnyType> foo_out = foo.Out("OUT");
+
+  auto& bar = graph.AddNode("Bar");
+  bar.SetSourceLayer(1);
+  foo_out >> bar.In("IN");
+  Stream<AnyType> bar_out = bar.Out("OUT");
+
+  // Graph outputs.
+  bar_out.SetName("out") >> graph.Out("OUT");
+
+  CalculatorGraphConfig expected =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        input_stream: "IN:base"
+        input_side_packet: "SIDE:side"
+        output_stream: "OUT:out"
+        node {
+          calculator: "Foo"
+          input_stream: "BASE:base"
+          input_side_packet: "SIDE:side"
+          output_stream: "OUT:__stream_0"
+          source_layer: 0
+        }
+        node {
+          calculator: "Bar"
+          input_stream: "IN:__stream_0"
+          output_stream: "OUT:out"
+          source_layer: 1
+        }
+      )pb");
+  EXPECT_THAT(graph.GetConfig(), EqualsProto(expected));
+}
+
 TEST(BuilderTest, CopyableStream) {
   Graph graph;
   Stream<int> a = graph.In("A").SetName("a").Cast<int>();

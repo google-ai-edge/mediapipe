@@ -519,6 +519,8 @@ class NodeBase {
     return *output_stream_handler_;
   }
 
+  void SetSourceLayer(int source_layer) { source_layer_ = source_layer; }
+
  protected:
   // GetOptionsInternal resolutes the overload greedily, which finds the first
   // match then succeed (template specialization tries all matches, thus could
@@ -561,6 +563,8 @@ class NodeBase {
 
   std::optional<InputStreamHandler> input_stream_handler_;
   std::optional<OutputStreamHandler> output_stream_handler_;
+
+  std::optional<int> source_layer_;
 
   friend class Graph;
 };
@@ -987,6 +991,9 @@ class Graph {
         *config->mutable_output_stream_handler()->mutable_options() =
             *node.output_stream_handler_->options_;
       }
+    }
+    if (node.source_layer_.has_value()) {
+      config->set_source_layer(node.source_layer_.value());
     }
     return {};
   }
