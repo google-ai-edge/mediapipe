@@ -98,6 +98,7 @@ class PacketGenerator;
 struct SourceBase;
 struct DestinationBase {
   SourceBase* source = nullptr;
+  bool back_edge = false;
 };
 struct SourceBase {
   std::vector<DestinationBase*> dests_;
@@ -144,11 +145,15 @@ using AllowCast = std::integral_constant<bool, (std::is_same_v<T, AnyType> ||
 template <bool IsSide, typename T = internal::Generic>
 class SourceImpl;
 
+template <bool IsSide, typename T = internal::Generic>
+class DestinationImpl;
+
 // These classes wrap references to the underlying source/destination
 // endpoints, adding type information and the user-visible API.
-template <bool IsSide, typename T = internal::Generic>
-class DestinationImpl {
+template <typename T>
+class DestinationImpl</*IsSide=*/false, T> {
  public:
+  static constexpr bool kIsSide = false;
   using Base = DestinationBase;
 
   explicit DestinationImpl(std::vector<std::unique_ptr<Base>>* vec)
@@ -157,8 +162,54 @@ class DestinationImpl {
 
   template <typename U,
             std::enable_if_t<internal_builder::AllowCast<T, U>{}, int> = 0>
-  DestinationImpl<IsSide, U> Cast() {
-    return DestinationImpl<IsSide, U>(&base_);
+  DestinationImpl<kIsSide, U> Cast() {
+    return DestinationImpl<kIsSide, U>(&base_);
+  }
+
+  // Whether the input stream is a back edge.
+  //
+  // By default, MediaPipe requires graphs to be acyclic and treats cycles in a
+  // graph as errors. To allow MediaPipe to accept a cyclic graph, use/make
+  // corresponding inputs as back edges. A cyclic graph usually has an obvious
+  // forward direction, and a back edge goes in the opposite direction. For a
+  // formal definition of a back edge, please see
+  // https://en.wikipedia.org/wiki/Depth-first_search.
+  //
+  // Equivalent of having "input_stream_info" for an input stream in the config:
+  //   node {
+  //     ...
+  //     input_stream: "TAG:0:stream"
+  //     input_stream_info {
+  //       tag: "TAG:0"
+  //       back_edge: true
+  //     }
+  //   }
+  DestinationImpl<kIsSide, T>& AsBackEdge() {
+    base_.back_edge = true;
+    return *this;
+  }
+
+ private:
+  DestinationBase& base_;
+
+  template <bool Source_IsSide, typename Source_T>
+  friend class SourceImpl;
+};
+
+template <typename T>
+class DestinationImpl</*IsSide=*/true, T> {
+ public:
+  static constexpr bool kIsSide = true;
+  using Base = DestinationBase;
+
+  explicit DestinationImpl(std::vector<std::unique_ptr<Base>>* vec)
+      : DestinationImpl(&GetWithAutoGrow(vec, 0)) {}
+  explicit DestinationImpl(DestinationBase* base) : base_(*base) {}
+
+  template <typename U,
+            std::enable_if_t<internal_builder::AllowCast<T, U>{}, int> = 0>
+  DestinationImpl<kIsSide, U> Cast() {
+    return DestinationImpl<kIsSide, U>(&base_);
   }
 
  private:
@@ -916,7 +967,15 @@ class Graph {
     return absl::OkStatus();
   }
 
-  std::string TaggedName(const TagIndexLocation& loc, absl::string_view name) {
+  static std::string TagIndex(const TagIndexLocation& loc) {
+    if (loc.count <= 1) {
+      return loc.tag;
+    }
+    return absl::StrCat(loc.tag, ":", loc.index);
+  }
+
+  static std::string TaggedName(const TagIndexLocation& loc,
+                                absl::string_view name) {
     if (loc.tag.empty()) {
       // ParseTagIndexName does not allow using explicit indices without tags,
       // while ParseTagIndex does.
@@ -942,6 +1001,11 @@ class Graph {
               << (loc.tag.empty() ? "(empty)" : loc.tag) << " at index "
               << loc.index;
           config->add_input_stream(TaggedName(loc, endpoint.source->name_));
+          if (endpoint.back_edge) {
+            auto* info = config->add_input_stream_info();
+            info->set_back_edge(true);
+            info->set_tag_index(TagIndex(loc));
+          }
           return absl::OkStatus();
         }));
     MP_RETURN_IF_ERROR(node.out_streams_.Visit(
@@ -1034,7 +1098,11 @@ class Graph {
               << type_ << ": Missing source for graph output stream with tag "
               << (loc.tag.empty() ? "(empty)" : loc.tag) << " at index "
               << loc.index;
+          RET_CHECK(!endpoint.back_edge)
+              << "Graph output: " << (loc.tag.empty() ? "(empty)" : loc.tag)
+              << " at index " << loc.index << " cannot be a back edge";
           config->add_output_stream(TaggedName(loc, endpoint.source->name_));
+
           return absl::OkStatus();
         }));
     MP_RETURN_IF_ERROR(graph_boundary_.out_streams_.Visit(

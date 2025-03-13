@@ -1,5 +1,6 @@
 #include "mediapipe/framework/api2/builder.h"
 
+#include <utility>
 #include <vector>
 
 #include "absl/strings/string_view.h"
@@ -252,6 +253,150 @@ TEST(BuilderTest, BuildGraphSettingSourceLayer) {
           output_stream: "OUT:out"
           source_layer: 1
         }
+      )pb");
+  EXPECT_THAT(graph.GetConfig(), EqualsProto(expected));
+}
+
+TEST(BuilderTest, CanUseBackEdges) {
+  Graph graph;
+  // Graph inputs.
+  Stream<AnyType> image = graph.In("IMAGE").SetName("image");
+
+  auto [prev_detections, set_prev_detections_fn] = [&]() {
+    auto* loopback_node = &graph.AddNode("PreviousLoopbackCalculator");
+    image >> loopback_node->In("MAIN");
+    auto set_loop_fn = [loopback_node](Stream<AnyType> loop) {
+      loop >> loopback_node->In("LOOP").AsBackEdge();
+    };
+    Stream<AnyType> prev_loop = loopback_node->Out("PREV_LOOP");
+    return std::pair(prev_loop, set_loop_fn);
+  }();
+
+  Stream<AnyType> detections = [&]() {
+    auto& detection_node = graph.AddNode("ObjectDetectionCalculator");
+    image >> detection_node.In("IMAGE");
+    prev_detections >> detection_node.In("PREV_DETECTIONS");
+    return detection_node.Out("DETECTIONS");
+  }();
+
+  set_prev_detections_fn(detections);
+
+  // Graph outputs.
+  detections.SetName("detections") >> graph.Out("OUT");
+
+  CalculatorGraphConfig expected =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        node {
+          calculator: "PreviousLoopbackCalculator"
+          input_stream: "LOOP:detections"
+          input_stream: "MAIN:image"
+          output_stream: "PREV_LOOP:__stream_0"
+          input_stream_info { tag_index: "LOOP" back_edge: true }
+        }
+        node {
+          calculator: "ObjectDetectionCalculator"
+          input_stream: "IMAGE:image"
+          input_stream: "PREV_DETECTIONS:__stream_0"
+          output_stream: "DETECTIONS:detections"
+        }
+        input_stream: "IMAGE:image"
+        output_stream: "OUT:detections"
+      )pb");
+  EXPECT_THAT(graph.GetConfig(), EqualsProto(expected));
+}
+
+TEST(BuilderTest, CanUseBackEdgesWithIndex) {
+  Graph graph;
+  // Graph inputs.
+  Stream<AnyType> image = graph.In("IN").SetName("in_data");
+
+  auto [processed_data, set_back_edge_fn] = [&]() {
+    auto* back_edge_node = &graph.AddNode("SomeBackEdgeCalculator");
+    image >> back_edge_node->In("DATA")[0];
+    auto set_back_edge_fn = [back_edge_node](Stream<AnyType> loop) {
+      loop >> back_edge_node->In("DATA")[1].AsBackEdge();
+    };
+    Stream<AnyType> processed_data = back_edge_node->Out("PROCESSED_DATA");
+    return std::pair(processed_data, set_back_edge_fn);
+  }();
+
+  Stream<AnyType> output_data = [&]() {
+    auto& detection_node = graph.AddNode("SomeOutputDataCalculator");
+    image >> detection_node.In("IMAGE");
+    processed_data >> detection_node.In("PROCESSED_DATA");
+    return detection_node.Out("OUTPUT_DATA");
+  }();
+
+  set_back_edge_fn(output_data);
+
+  // Graph outputs.
+  output_data.SetName("out_data") >> graph.Out("OUT");
+
+  CalculatorGraphConfig expected =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        node {
+          calculator: "SomeBackEdgeCalculator"
+          input_stream: "DATA:0:in_data"
+          input_stream: "DATA:1:out_data"
+          output_stream: "PROCESSED_DATA:__stream_0"
+          input_stream_info { tag_index: "DATA:1" back_edge: true }
+        }
+        node {
+          calculator: "SomeOutputDataCalculator"
+          input_stream: "IMAGE:in_data"
+          input_stream: "PROCESSED_DATA:__stream_0"
+          output_stream: "OUTPUT_DATA:out_data"
+        }
+        input_stream: "IN:in_data"
+        output_stream: "OUT:out_data"
+      )pb");
+  EXPECT_THAT(graph.GetConfig(), EqualsProto(expected));
+}
+
+TEST(BuilderTest, CanUseBackEdgesWithIndexAndNoTag) {
+  Graph graph;
+  // Graph inputs.
+  Stream<AnyType> image = graph.In("IN").SetName("in_data");
+
+  auto [processed_data, set_back_edge_fn] = [&]() {
+    auto* back_edge_node = &graph.AddNode("SomeBackEdgeCalculator");
+    image >> back_edge_node->In(0);
+    auto set_back_edge_fn = [back_edge_node](Stream<AnyType> loop) {
+      loop >> back_edge_node->In(1).AsBackEdge();
+    };
+    Stream<AnyType> processed_data = back_edge_node->Out("PROCESSED_DATA");
+    return std::pair(processed_data, set_back_edge_fn);
+  }();
+
+  Stream<AnyType> output_data = [&]() {
+    auto& detection_node = graph.AddNode("SomeOutputDataCalculator");
+    image >> detection_node.In("IMAGE");
+    processed_data >> detection_node.In("PROCESSED_DATA");
+    return detection_node.Out("OUTPUT_DATA");
+  }();
+
+  set_back_edge_fn(output_data);
+
+  // Graph outputs.
+  output_data.SetName("out_data") >> graph.Out("OUT");
+
+  CalculatorGraphConfig expected =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        node {
+          calculator: "SomeBackEdgeCalculator"
+          input_stream: "in_data"
+          input_stream: "out_data"
+          output_stream: "PROCESSED_DATA:__stream_0"
+          input_stream_info { tag_index: ":1" back_edge: true }
+        }
+        node {
+          calculator: "SomeOutputDataCalculator"
+          input_stream: "IMAGE:in_data"
+          input_stream: "PROCESSED_DATA:__stream_0"
+          output_stream: "OUTPUT_DATA:out_data"
+        }
+        input_stream: "IN:in_data"
+        output_stream: "OUT:out_data"
       )pb");
   EXPECT_THAT(graph.GetConfig(), EqualsProto(expected));
 }
