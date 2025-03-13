@@ -813,7 +813,7 @@ register_coreutils_toolchains()
 git_repository(
     name = "ovms",
     remote = "https://github.com/openvinotoolkit/model_server",
-    commit = "4cb021763c2256bb93519000c83e7bed2775f077", # Cvs 154690 adjust demos to run on linux and windows (#2950) 20/01/2025
+    commit = "130d25794f4a4239f834761b80bf555b8bc93691", # Ignore HTTP connection:close header when streaming (#3113) 12/03/2025
     patches = [
         "@//third_party:ovms_no_rerank_embed.patch", # TODO investigate why in MP repository bazel builds rerank/embed calcs with no mp option
         # even when we have those set in .bazelrc here
@@ -882,6 +882,10 @@ git_repository(
 load("@ovms//third_party/aws-sdk-cpp:aws-sdk-cpp.bzl", "aws_sdk_cpp")
 aws_sdk_cpp()
 
+# This is not used because we build with USE_DROGON=0 (net_http)
+#load("@//third_party/drogon:drogon.bzl", "drogon_cpp")
+#drogon_cpp()
+
 # Azure Storage SDK
 new_local_repository(
     name = "azure",
@@ -899,15 +903,9 @@ new_local_repository(
 # Boost (needed for Azure Storage SDK)
 
 new_local_repository(
-    name = "linux_boost",
+    name = "boost",
     path = "/usr/local/lib/",
     build_file = "@ovms//third_party/boost:BUILD"
-)
-
-new_local_repository(
-    name = "windows_boost",
-    path = "C:\\local\\boost_1_69_0",
-    build_file = "@ovms//third_party/boost:boost_windows.BUILD"
 )
 
 # Google Cloud SDK

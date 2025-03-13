@@ -125,9 +125,9 @@ ARG DLDT_PACKAGE_URL
 # OV toolkit package
 RUN wget -nv $DLDT_PACKAGE_URL && \
     mkdir /opt/intel && \
-    tar -zxf l_openvino_toolkit*.tgz -C /opt/intel && \
-    ln -s /opt/intel/l_openvino_toolkit* /opt/intel/openvino && \
-    ln -s /opt/intel/l_openvino_toolkit* /opt/intel/openvino_2022
+    tar -zxf ./*openvino_toolkit*.tgz -C /opt/intel && \
+    ln -s /opt/intel/*openvino_toolkit* /opt/intel/openvino && \
+    ln -s /opt/intel/*openvino_toolkit* /opt/intel/openvino_2025
 
 ####### Azure SDK needs new boost:
 WORKDIR /boost

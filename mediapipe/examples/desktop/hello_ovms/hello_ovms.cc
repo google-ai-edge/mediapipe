@@ -128,6 +128,7 @@ void InitOvmsServer(OVMS_Server* srv, OVMS_ServerSettings* serverSettings, OVMS_
     ASSERT_CAPI_STATUS_NULL(OVMS_ModelsSettingsNew(&modelsSettings));
 
     ASSERT_CAPI_STATUS_NULL(OVMS_ModelsSettingsSetConfigPath(modelsSettings, "/mediapipe/mediapipe/examples/desktop/hello_ovms/config.json"));
+    ASSERT_CAPI_STATUS_NULL(OVMS_ServerSettingsSetGrpcPort(serverSettings, 9178));
     ASSERT_CAPI_STATUS_NULL(OVMS_ServerStartFromConfigurationFile(srv, serverSettings, modelsSettings));
 }
 

@@ -169,6 +169,7 @@ absl::Status OpenVINOModelServerSessionCalculator::Open(CalculatorContext* cc) {
             SettingsGuard guard;
             OVMS_ServerSettingsNew(&guard.serverSettings);
             OVMS_ModelsSettingsNew(&guard.modelsSettings);
+            OVMS_ServerSettingsSetGrpcPort(guard.serverSettings, 9178);
             OVMS_ModelsSettingsSetConfigPath(guard.modelsSettings, options.server_config().c_str());
             LOG(INFO) << "state config file:" << options.server_config();
             OVMS_ServerSettingsSetLogLevel(guard.serverSettings, OvmsLogLevel);
