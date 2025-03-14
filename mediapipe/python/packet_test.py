@@ -227,6 +227,23 @@ class PacketTest(absltest.TestCase):
                                                         offset:-offset, :]))
     self.assertEqual(p.timestamp, 100)
 
+  def test_image_frame_vector_packet(self):
+    mat_rgb = np.random.randint(2**8 - 1, size=(30, 40, 3), dtype=np.uint8)
+    mat_float = np.random.random(size=(40, 30)).astype(np.float32)
+    p = packet_creator.create_image_frame_vector([
+        ImageFrame(image_format=ImageFormat.SRGB, data=mat_rgb),
+        ImageFrame(image_format=ImageFormat.VEC32F1, data=mat_float),
+    ]).at(100)
+    output_list = packet_getter.get_image_frame_list(p)
+    self.assertLen(output_list, 2)
+    self.assertTrue(np.array_equal(output_list[0].numpy_view(), mat_rgb))
+    self.assertTrue(np.array_equal(output_list[1].numpy_view(), mat_float))
+    self.assertEqual(p.timestamp, 100)
+
+  def test_image_frame_vector_packet_type_error(self):
+    with self.assertRaisesRegex(TypeError, 'not an ImageFrame'):
+      packet_creator.create_image_frame_vector([None])
+
   def test_string_vector_packet(self):
     p = packet_creator.create_string_vector(['a', 'b', 'c']).at(100)
     output_list = packet_getter.get_str_list(p)
