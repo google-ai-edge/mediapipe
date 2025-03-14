@@ -130,8 +130,16 @@ cc_library(
         "//mediapipe/framework/port:status",
         "//mediapipe/web:jspi_check",
         "//third_party/dawn:webgpu_headers",
+        "@com_google_absl//absl/base:no_destructor",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
-    ],
+        "@com_google_absl//absl/time",
+    ] + select({
+        "//mediapipe:emscripten": [
+            "//third_party/emdawnwebgpu:webgpu",
+        ],
+        "//conditions:default": [],
+    }),
 )
 
 cc_library(

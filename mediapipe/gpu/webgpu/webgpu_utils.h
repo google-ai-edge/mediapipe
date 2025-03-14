@@ -4,13 +4,35 @@
 #include <webgpu/webgpu_cpp.h>
 
 #include <cstdint>
+#include <memory>
+#include <optional>
 
 #include "absl/status/statusor.h"
+#include "absl/time/time.h"
 
 namespace mediapipe {
 
+template <typename T>
+class WebGpuAsyncFuture {
+ public:
+  WebGpuAsyncFuture<T>() = default;
+  inline explicit WebGpuAsyncFuture(
+      wgpu::Future future,
+      std::unique_ptr<std::optional<absl::StatusOr<T>>> result)
+      : future_(future), result_(std::move(result)) {}
+
+  absl::StatusOr<T*> Get(absl::Duration timeout = absl::InfiniteDuration());
+
+ private:
+  wgpu::Future future_;
+  std::unique_ptr<std::optional<absl::StatusOr<T>>> result_;
+};
+
 wgpu::ShaderModule CreateWgslShader(wgpu::Device device, const char* code,
                                     const char* label);
+WebGpuAsyncFuture<wgpu::ComputePipeline> WebGpuCreateComputePipelineAsync(
+    const wgpu::Device& device,
+    wgpu::ComputePipelineDescriptor const* descriptor);
 
 absl::StatusOr<uint32_t> WebGpuTextureFormatBytesPerPixel(
     wgpu::TextureFormat format);
