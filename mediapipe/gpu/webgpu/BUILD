@@ -149,6 +149,7 @@ cc_library(
     deps = [
         ":webgpu_service",
         ":webgpu_texture_view",
+        ":webgpu_utils",
         "//mediapipe/calculators/tensor:image_to_tensor_converter",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:tensor",

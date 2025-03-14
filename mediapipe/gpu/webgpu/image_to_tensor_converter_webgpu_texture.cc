@@ -19,6 +19,7 @@
 #include "mediapipe/gpu/gpu_buffer_format.h"
 #include "mediapipe/gpu/webgpu/webgpu_service.h"
 #include "mediapipe/gpu/webgpu/webgpu_texture_view.h"
+#include "mediapipe/gpu/webgpu/webgpu_utils.h"
 
 namespace mediapipe {
 namespace {
@@ -147,7 +148,8 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
                 .constants = nullptr,
             },
     };
-    pipeline_ = service_.device().CreateComputePipeline(&pipeline_desc);
+    pipeline_ =
+        WebGpuCreateComputePipelineAsync(service_.device(), &pipeline_desc);
 
     // Create a uniform buffer for the parameters.
     wgpu::BufferDescriptor buffer_desc = {
@@ -217,8 +219,9 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
             .size = sizeof(Parameters),
         },
     };
+    MP_ASSIGN_OR_RETURN(wgpu::ComputePipeline * pipeline, pipeline_.Get());
     wgpu::BindGroupDescriptor bind_group_desc = {
-        .layout = pipeline_.GetBindGroupLayout(0),
+        .layout = pipeline->GetBindGroupLayout(0),
         .entryCount = sizeof(entries) / sizeof(entries[0]),
         .entries = entries,
     };
@@ -231,7 +234,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
     // Create and submit a command buffer that dispatches the compute shader.
     auto command_encoder = device.CreateCommandEncoder();
     auto pass_encoder = command_encoder.BeginComputePass();
-    pass_encoder.SetPipeline(pipeline_);
+    pass_encoder.SetPipeline(*pipeline);
     pass_encoder.SetBindGroup(0, bind_group);
     pass_encoder.DispatchWorkgroups(num_groups_x, num_groups_y);
     pass_encoder.End();
@@ -256,7 +259,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   }
 
   const WebGpuService& service_;
-  wgpu::ComputePipeline pipeline_;
+  WebGpuAsyncFuture<wgpu::ComputePipeline> pipeline_;
   wgpu::Buffer params_buffer_;
 
   struct Parameters {  // Must match `Parameters` in WGSL above.
