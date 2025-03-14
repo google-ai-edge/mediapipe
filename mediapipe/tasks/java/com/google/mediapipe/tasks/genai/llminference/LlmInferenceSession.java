@@ -6,9 +6,11 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.google.mediapipe.framework.image.MPImage;
 import com.google.mediapipe.tasks.genai.llminference.LlmTaskRunner.LlmSession;
 import com.google.mediapipe.tasks.genai.llminference.jni.proto.LlmOptionsProto.LlmSessionConfig;
+import com.google.mediapipe.tasks.genai.llminference.jni.proto.LlmResponseContextProto.LlmResponseContext;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 /**
  * LlmInferenceSession Task Java API.
@@ -25,6 +27,9 @@ public class LlmInferenceSession implements AutoCloseable {
 
   private final LlmTaskRunner taskRunner;
   private final LlmSession session;
+  private final long callbackHandle;
+
+  private Consumer<LlmResponseContext> currentListener = (unused) -> {};
 
   /** Constructor to initialize an {@link LlmInferenceSession}. */
   public static LlmInferenceSession createFromOptions(
@@ -58,6 +63,10 @@ public class LlmInferenceSession implements AutoCloseable {
   private LlmInferenceSession(LlmTaskRunner taskRunner, LlmSession session) {
     this.taskRunner = taskRunner;
     this.session = session;
+
+    this.callbackHandle =
+        taskRunner.registerCallback(
+            responseBytes -> currentListener.accept(taskRunner.parseResponse(responseBytes)));
   }
 
   /**
@@ -70,6 +79,7 @@ public class LlmInferenceSession implements AutoCloseable {
    * @throws IllegalStateException if adding a query chunk to the session fails.
    */
   public void addQueryChunk(String inputText) {
+    validateState();
     taskRunner.addQueryChunk(session, inputText);
   }
 
@@ -80,6 +90,7 @@ public class LlmInferenceSession implements AutoCloseable {
    * @throws IllegalStateException if there is an internal error.
    */
   public void addImage(MPImage image) {
+    validateState();
     taskRunner.addImage(session, image);
   }
 
@@ -94,6 +105,7 @@ public class LlmInferenceSession implements AutoCloseable {
    * @throws IllegalStateException if the inference fails.
    */
   public String generateResponse() {
+    validateState();
     List<String> tokens = Collections.unmodifiableList(taskRunner.predictSync(session));
     return decodeResponse(tokens, /* stripLeadingWhitespace= */ true);
   }
@@ -113,6 +125,7 @@ public class LlmInferenceSession implements AutoCloseable {
    * @throws IllegalStateException if the inference fails.
    */
   public ListenableFuture<String> generateResponseAsync() {
+    validateState();
     return generateResponseAsync((unused1, unused2) -> {});
   }
 
@@ -133,23 +146,46 @@ public class LlmInferenceSession implements AutoCloseable {
    * @throws IllegalStateException if the inference fails.
    */
   public ListenableFuture<String> generateResponseAsync(ProgressListener<String> progressListener) {
-    SettableFuture<String> future = SettableFuture.create();
-    StringBuilder response = new StringBuilder();
-    taskRunner.predictAsync(
-        session,
-        (partialResult, done) -> {
-          // Not using isEmpty() because it's not available on Android < 30.
-          boolean stripLeadingWhitespace = response.length() == 0;
-          String partialResultDecoded = decodeResponse(partialResult, stripLeadingWhitespace);
-          response.append(partialResultDecoded);
-          if (done) {
-            progressListener.run(partialResultDecoded, done);
-            future.set(response.toString());
-          } else if (!partialResultDecoded.isEmpty()) {
-            progressListener.run(partialResultDecoded, done);
-          }
-        });
-    return future;
+    validateState();
+
+    try {
+      taskRunner.acquireLock();
+
+      SettableFuture<String> future = SettableFuture.create();
+
+      currentListener =
+          new Consumer<LlmResponseContext>() {
+            private final StringBuilder response = new StringBuilder();
+
+            @Override
+            public void accept(LlmResponseContext responseContext) {
+              boolean done = responseContext.getDone();
+
+              // Not using isEmpty() because it's not available on Android < 30.
+              boolean stripLeadingWhitespace = response.length() == 0;
+              String partialResultDecoded =
+                  decodeResponse(responseContext.getResponsesList(), stripLeadingWhitespace);
+              response.append(partialResultDecoded);
+
+              if (done) {
+                taskRunner.releaseLock();
+                currentListener = unused -> {};
+                future.set(response.toString());
+              }
+
+              progressListener.run(partialResultDecoded, done);
+            }
+          };
+
+      taskRunner.predictAsync(session, callbackHandle);
+      return future;
+    } catch (Throwable t) {
+      // Only release the task lock if we fail to start the async inference. For successful
+      // inferences, we reset the task lock when we receive `done=true` in the callback above.
+      taskRunner.releaseLock();
+      this.currentListener = unused -> {};
+      throw t;
+    }
   }
 
   /**
@@ -161,6 +197,7 @@ public class LlmInferenceSession implements AutoCloseable {
    * @throws IllegalStateException if the tokenization fails.
    */
   public int sizeInTokens(String text) {
+    validateState();
     return taskRunner.sizeInTokens(session, text);
   }
 
@@ -199,7 +236,15 @@ public class LlmInferenceSession implements AutoCloseable {
   /** Closes and cleans up the {@link LlmInferenceSession}. */
   @Override
   public void close() {
+    validateState();
+    taskRunner.unregisterCallback(callbackHandle);
     taskRunner.deleteSession(session);
+  }
+
+  private void validateState() {
+    if (taskRunner.isLocked()) {
+      throw new IllegalStateException("Previous invocation still processing. Wait for done=true.");
+    }
   }
 
   /** Options for setting up an {@link LlmInferenceSessionOptions}. */
