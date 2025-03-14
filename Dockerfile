@@ -30,8 +30,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         git \
         wget \
         unzip \
-        nodejs \
-        npm \
         python3-dev \
         python3-opencv \
         python3-pip \
@@ -47,6 +45,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     apt-get install -y mesa-utils && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Verify the installation
+RUN node -v && npm -v
 
 # Install Clang 16
 RUN wget https://apt.llvm.org/llvm.sh
@@ -75,8 +81,7 @@ azel-${BAZEL_VERSION}-installer-linux-x86_64.sh" && \
     chmod +x /bazel/installer.sh && \
     /bazel/installer.sh  && \
     rm -f /bazel/installer.sh
-
-COPY . /mediapipe/
+    ENV PATH="/usr/local/bin:${PATH}"
 
 # If we want the docker image to contain the pre-built object_detection_offline_demo binary, do the following
 # RUN bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 mediapipe/examples/desktop/demo:object_detection_tensorflow_demo
