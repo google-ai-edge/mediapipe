@@ -401,7 +401,7 @@ class MetadataPopulator(object):
             "tflite model is still allowed.".format(f))
 
   def _copy_archived_files(self, src_zip, file_list, dst_zip):
-    """Copy archieved files in file_list from src_zip ro dst_zip."""
+    """Copy archived files in file_list from src_zip ro dst_zip."""
 
     if not _is_zipfile(src_zip):
       raise ValueError("File, '{0}', is not a zipfile.".format(src_zip))
@@ -585,7 +585,7 @@ class MetadataPopulator(object):
       metadata_field.buffer = len(model.buffers) - 1
       model.metadata.append(metadata_field)
 
-    # Packs model back to a flatbuffer binaray file.
+    # Packs model back to a flatbuffer binary file.
     b = flatbuffers.Builder(0)
     b.Finish(model.Pack(b), self.TFLITE_FILE_IDENTIFIER)
     model_buf = b.Output()

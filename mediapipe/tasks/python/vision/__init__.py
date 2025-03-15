@@ -14,20 +14,20 @@
 
 """MediaPipe Tasks Vision API."""
 
-import mediapipe.tasks.python.vision.core
-import mediapipe.tasks.python.vision.face_aligner
-import mediapipe.tasks.python.vision.face_detector
-import mediapipe.tasks.python.vision.face_landmarker
-import mediapipe.tasks.python.vision.face_stylizer
-import mediapipe.tasks.python.vision.gesture_recognizer
-import mediapipe.tasks.python.vision.hand_landmarker
-import mediapipe.tasks.python.vision.holistic_landmarker
-import mediapipe.tasks.python.vision.image_classifier
-import mediapipe.tasks.python.vision.image_embedder
-import mediapipe.tasks.python.vision.image_segmenter
-import mediapipe.tasks.python.vision.interactive_segmenter
-import mediapipe.tasks.python.vision.object_detector
-import mediapipe.tasks.python.vision.pose_landmarker
+import mediapipe.tasks.python.vision.core as core
+import mediapipe.tasks.python.vision.face_aligner as face_aligner
+import mediapipe.tasks.python.vision.face_detector as face_detector
+import mediapipe.tasks.python.vision.face_landmarker as face_landmarker
+import mediapipe.tasks.python.vision.face_stylizer as face_stylizer
+import mediapipe.tasks.python.vision.gesture_recognizer as gesture_recognizer
+import mediapipe.tasks.python.vision.hand_landmarker as hand_landmarker
+import mediapipe.tasks.python.vision.holistic_landmarker as holistic_landmarker
+import mediapipe.tasks.python.vision.image_classifier as image_classifier
+import mediapipe.tasks.python.vision.image_embedder as image_embedder
+import mediapipe.tasks.python.vision.image_segmenter as image_segmenter
+import mediapipe.tasks.python.vision.interactive_segmenter as interactive_segmenter
+import mediapipe.tasks.python.vision.object_detector as object_detector
+import mediapipe.tasks.python.vision.pose_landmarker as pose_landmarker
 
 FaceAligner = face_aligner.FaceAligner
 FaceAlignerOptions = face_aligner.FaceAlignerOptions
@@ -87,4 +87,3 @@ del image_segmenter
 del interactive_segmenter
 del object_detector
 del pose_landmarker
-del mediapipe
