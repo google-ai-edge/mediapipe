@@ -24,6 +24,7 @@ package(default_visibility = [
 package_group(
     name = "clients",
     packages = [
+        "//googlemac/iPhone/ConferenceKit/...",  # Google Meet (experimental)
         "//googlemac/iPhone/Home/OnDeviceML/...",
     ],
 )
