@@ -16,6 +16,7 @@ load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 
 package(default_visibility = [
     "//mediapipe/tasks:__subpackages__",
+    "//third_party/odml/litert/llm/engine:__subpackages__",
     "//third_party/odml/vogo:__subpackages__",
 ])
 
