@@ -57,22 +57,49 @@ void PadElementDepth(uint8_t* src_buffer, uint8_t* dst_buffer, int num_elements,
 }  // namespace
 
 template <typename T>
+WebGpuAsyncFuture<T>::WebGpuAsyncFuture(WebGpuAsyncFuture<T>&& other)
+    : future_(other.future_), result_(std::move(other.result_)) {
+  other.future_ = std::nullopt;
+}
+
+template <typename T>
+WebGpuAsyncFuture<T>::~WebGpuAsyncFuture() {
+  Reset();
+}
+
+template <typename T>
+WebGpuAsyncFuture<T>& WebGpuAsyncFuture<T>::operator=(
+    WebGpuAsyncFuture<T>&& other) {
+  Reset();  // Free the current future if any.
+  future_ = other.future_;
+  other.future_ = std::nullopt;
+  result_ = std::move(other.result_);
+  return *this;
+}
+
+template <typename T>
 absl::StatusOr<T*> WebGpuAsyncFuture<T>::Get(absl::Duration timeout) {
   if (result_ == nullptr) {
     return absl::FailedPreconditionError("Uninitialized WebGpuAsyncFuture.");
   }
 
   if (!result_->has_value()) {
+    if (!future_.has_value()) {
+      return absl::FailedPreconditionError("No value and no pending future.");
+    }
+
     wgpu::WaitStatus wait_status = kWebGpuInstance->WaitAny(
-        future_, timeout == absl::InfiniteDuration()
-                     ? UINT64_MAX
-                     : absl::ToInt64Nanoseconds(timeout));
+        future_.value(), timeout == absl::InfiniteDuration()
+                             ? UINT64_MAX
+                             : absl::ToInt64Nanoseconds(timeout));
     if (wait_status == wgpu::WaitStatus::TimedOut) {
       return absl::DeadlineExceededError(
           "Timed out waiting for WebGPU future.");
     } else if (wait_status != wgpu::WaitStatus::Success) {
       return absl::InternalError("WebGPU future wait failed.");
     }
+    future_ = std::nullopt;
+
     if (!result_->has_value()) {
       return absl::InternalError("Result not set.");
     }
@@ -84,6 +111,16 @@ absl::StatusOr<T*> WebGpuAsyncFuture<T>::Get(absl::Duration timeout) {
   } else {
     return value.status();
   }
+}
+
+template <typename T>
+void WebGpuAsyncFuture<T>::Reset() {
+  if (future_.has_value()) {
+    // Collect the result of the future to avoid a memory leak.
+    Get().IgnoreError();
+  }
+  future_ = std::nullopt;
+  result_ = nullptr;
 }
 
 template class WebGpuAsyncFuture<wgpu::ComputePipeline>;
@@ -108,7 +145,7 @@ WebGpuAsyncFuture<wgpu::ComputePipeline> WebGpuCreateComputePipelineAsync(
 #ifdef __EMSCRIPTEN__
   if (!IsJspiAvailable()) {
     *holder_ptr = device.CreateComputePipeline(descriptor);
-    return WebGpuAsyncFuture<wgpu::ComputePipeline>(wgpu::Future(),
+    return WebGpuAsyncFuture<wgpu::ComputePipeline>(std::nullopt,
                                                     std::move(holder));
   }
 #endif  // __EMSCRIPTEN__

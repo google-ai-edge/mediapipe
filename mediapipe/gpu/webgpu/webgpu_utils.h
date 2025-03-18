@@ -16,15 +16,20 @@ template <typename T>
 class WebGpuAsyncFuture {
  public:
   WebGpuAsyncFuture<T>() = default;
+  WebGpuAsyncFuture<T>(WebGpuAsyncFuture<T>&& other);
+  ~WebGpuAsyncFuture();
   inline explicit WebGpuAsyncFuture(
-      wgpu::Future future,
+      std::optional<wgpu::Future> future,
       std::unique_ptr<std::optional<absl::StatusOr<T>>> result)
       : future_(future), result_(std::move(result)) {}
 
+  WebGpuAsyncFuture<T>& operator=(WebGpuAsyncFuture<T>&& other);
+
   absl::StatusOr<T*> Get(absl::Duration timeout = absl::InfiniteDuration());
+  void Reset();
 
  private:
-  wgpu::Future future_;
+  std::optional<wgpu::Future> future_;
   std::unique_ptr<std::optional<absl::StatusOr<T>>> result_;
 };
 
