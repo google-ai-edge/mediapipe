@@ -331,7 +331,6 @@ void PublicPacketGetters(pybind11::module* m) {
 
   Args:
     packet: A MediaPipe Packet that holds std:vector<mediapipe::ImageFrame>.
-    copy: Whether to copy the ImageFrames.
 
   Returns:
     A list of MediaPipe ImageFrames that are copies of the original ImageFrames.
