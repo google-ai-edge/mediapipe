@@ -83,4 +83,25 @@ message SpectrogramCalculatorOptions {
   // the cumulative timestamping, which is inferred from the initial input
   // timestamp and the cumulative number of samples.
   optional bool use_local_timestamp = 8 [default = false];
+
+  // Defines a fixed FFT size. If set to 0, the FFT size will be determined
+  // based on the frame duration and sample rate.
+  optional int32 fft_size = 9 [default = 0];
+
+  // Support a fixed multiplicative scaling of the input.
+  optional float input_scale = 10 [default = 1.0];
+
+  // The SpectogramCalculator buffers incoming time domain signal to slice it up
+  // into chunks of frame_duration_seconds. This parameter controls how to treat
+  // leftover samples at the end of the signal that were not able to form a full
+  // chunk.
+  enum SampleBufferMode {
+    // Leftover samples from previous call are buffered and used for the next
+    // call.
+    NONE = 0;
+    // Leftover samples from previous call are discarded, i.e. every new signal
+    // is processed independently.
+    RESET = 1;
+  }
+  optional SampleBufferMode sample_buffer_mode = 11 [default = NONE];
 }

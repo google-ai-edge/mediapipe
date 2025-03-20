@@ -38,13 +38,18 @@ class Dataset(classification_dataset.ClassificationDataset):
     - https://cocodataset.org/#home
 
     Folder structure should be:
+
+    ```
       <data_dir>/
         images/
           <file0>.jpg
           ...
         labels.json
+    ```
 
     The `labels.json` annotations file should should have the following format:
+
+    ```
     {
         "categories": [{"id": 0, "name": "background"}, ...],
         "images": [{"id": 0, "file_name": "<file0>.jpg"}, ...],
@@ -55,6 +60,8 @@ class Dataset(classification_dataset.ClassificationDataset):
            "bbox": [x-top left, y-top left, width, height],
            }, ...]
     }
+    ```
+
     Note that category id 0 is reserved for the "background" class. It is
     optional to include, but if included it must be set to "background".
 
@@ -99,6 +106,8 @@ class Dataset(classification_dataset.ClassificationDataset):
     - http://host.robots.ox.ac.uk/pascal/VOC.
 
     Folder structure should be:
+
+    ```
       <data_dir>/
         images/
           <file0>.jpg
@@ -106,7 +115,11 @@ class Dataset(classification_dataset.ClassificationDataset):
         Annotations/
           <file0>.xml
           ...
+    ```
+
     Each <file0>.xml annotation file should have the following format:
+
+    ```
       <annotation>
         <filename>file0.jpg</filename>
         <object>
@@ -120,6 +133,7 @@ class Dataset(classification_dataset.ClassificationDataset):
         </object>
         <object>...</object>
       </annotation>
+    ```
 
     Args:
       data_dir: Name of the directory containing the data files.

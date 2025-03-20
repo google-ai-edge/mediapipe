@@ -23,6 +23,7 @@
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/formats/tensor.h"
+#include "mediapipe/framework/memory_manager.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
 
@@ -96,7 +97,7 @@ absl::Status CopyMatrixToTensor(const Matrix& matrix, bool is_row_major_matrix,
 
 absl::StatusOr<Tensor> ConvertImageFrameToTensorOnCpu(
     const ImageFrame& image_frame, const std::pair<float, float>& output_range,
-    bool flip_vertically, int max_num_channels) {
+    bool flip_vertically, int max_num_channels, MemoryManager* memory_manager) {
   const int height = image_frame.Height();
   const int width = image_frame.Width();
   const int channels = image_frame.NumberOfChannels();
@@ -110,7 +111,8 @@ absl::StatusOr<Tensor> ConvertImageFrameToTensorOnCpu(
     RET_CHECK_FAIL() << "Unsupported CPU input format.";
 
   Tensor output_tensor(Tensor::ElementType::kFloat32,
-                       Tensor::Shape{1, height, width, channels_preserved});
+                       Tensor::Shape{1, height, width, channels_preserved},
+                       memory_manager);
   auto cpu_view = output_tensor.GetCpuWriteView();
 
   // Copy image data into tensor.
@@ -129,13 +131,15 @@ absl::StatusOr<Tensor> ConvertImageFrameToTensorOnCpu(
   return output_tensor;
 }
 
-absl::StatusOr<Tensor> ConvertMatrixToTensorOnCpu(const Matrix& matrix,
-                                                  bool row_major_matrix) {
+absl::StatusOr<Tensor> ConvertMatrixToTensorOnCpu(
+    const Matrix& matrix, bool row_major_matrix,
+    MemoryManager* memory_manager) {
   const int height = matrix.rows();
   const int width = matrix.cols();
   const int channels = 1;
   Tensor output_tensor(Tensor::ElementType::kFloat32,
-                       Tensor::Shape{1, height, width, channels});
+                       Tensor::Shape{1, height, width, channels},
+                       memory_manager);
   MP_RETURN_IF_ERROR(
       CopyMatrixToTensor(matrix, row_major_matrix,
                          output_tensor.GetCpuWriteView().buffer<float>()));

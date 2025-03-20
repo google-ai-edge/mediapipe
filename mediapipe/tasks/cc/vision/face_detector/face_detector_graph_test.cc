@@ -20,7 +20,6 @@ limitations under the License.
 #include <utility>
 #include <vector>
 
-#include "absl/flags/flag.h"
 #include "absl/log/absl_check.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/match.h"
@@ -45,6 +44,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/task_runner.h"
 #include "mediapipe/tasks/cc/vision/face_detector/proto/face_detector_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
+#include "testing/base/public/gunit.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -100,7 +100,7 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateTaskRunner(
 
   auto options = std::make_unique<FaceDetectorGraphOptions>();
   options->mutable_base_options()->mutable_model_asset()->set_file_name(
-      JoinPath("./", kTestDataDirectory, model_name));
+      JoinPath(::testing::SrcDir(), kTestDataDirectory, model_name));
   options->set_min_detection_confidence(0.6);
   options->set_min_suppression_threshold(0.3);
   face_detector_graph.GetOptions<FaceDetectorGraphOptions>().Swap(
@@ -120,9 +120,9 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateTaskRunner(
 
 Detection GetExpectedFaceDetectionResult(absl::string_view file_name) {
   Detection detection;
-  ABSL_CHECK_OK(
-      GetTextProto(file::JoinPath("./", kTestDataDirectory, file_name),
-                   &detection, Defaults()))
+  ABSL_CHECK_OK(GetTextProto(
+      file::JoinPath(::testing::SrcDir(), kTestDataDirectory, file_name),
+      &detection, Defaults()))
       << "Expected face detection result does not exist.";
   return detection;
 }
@@ -144,8 +144,9 @@ class FaceDetectorGraphTest : public testing::TestWithParam<TestParams> {};
 
 TEST_P(FaceDetectorGraphTest, Succeed) {
   MP_ASSERT_OK_AND_ASSIGN(
-      Image image, DecodeImageFromFile(JoinPath("./", kTestDataDirectory,
-                                                GetParam().test_image_name)));
+      Image image,
+      DecodeImageFromFile(JoinPath(::testing::SrcDir(), kTestDataDirectory,
+                                   GetParam().test_image_name)));
   NormalizedRect input_norm_rect;
   input_norm_rect.set_x_center(0.5);
   input_norm_rect.set_y_center(0.5);

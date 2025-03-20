@@ -187,6 +187,8 @@ class GlCalculatorHelper {
 
   GlContext& GetGlContext() const { return *gl_context_; }
 
+  std::shared_ptr<GlContext> GetSharedGlContext() const { return gl_context_; }
+
   GlVersion GetGlVersion() const { return gl_context_->GetGlVersion(); }
 
   // Check if the calculator helper has been previously initialized.
@@ -209,8 +211,8 @@ class GlCalculatorHelper {
 };
 
 // Represents an OpenGL texture, and is a 'view' into the memory pool.
-// It's more like a GlTextureLock, because it's main purpose (in conjunction
-// with the helper): to manage GL sync points in the gl command queue.
+// It's more like a GlTextureLock, because its main purpose (in conjunction
+// with the helper) is: to manage GL sync points in the gl command queue.
 //
 // This class should be the main way to interface with GL memory within a single
 // calculator. This is the preferred way to utilize the memory pool inside of
@@ -258,15 +260,15 @@ class GlTexture {
 // same thing.
 template <typename T>
 ABSL_DEPRECATED("Only for legacy calculators")
-auto TagOrIndex(const T& collection, const std::string& tag,
-                int index) -> decltype(collection.Tag(tag)) {
+auto TagOrIndex(const T& collection, const std::string& tag, int index)
+    -> decltype(collection.Tag(tag)) {
   return collection.UsesTags() ? collection.Tag(tag) : collection.Index(index);
 }
 
 template <typename T>
 ABSL_DEPRECATED("Only for legacy calculators")
-auto TagOrIndex(T* collection, const std::string& tag,
-                int index) -> decltype(collection->Tag(tag)) {
+auto TagOrIndex(T* collection, const std::string& tag, int index)
+    -> decltype(collection->Tag(tag)) {
   return collection->UsesTags() ? collection->Tag(tag)
                                 : collection->Index(index);
 }

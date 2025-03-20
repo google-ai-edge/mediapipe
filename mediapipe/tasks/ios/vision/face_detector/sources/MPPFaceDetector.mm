@@ -29,7 +29,7 @@ using ::mediapipe::tasks::core::PacketsCallback;
 static constexpr int kMicrosecondsPerMillisecond = 1000;
 
 // Constants for the underlying MP Tasks Graph. See
-// https://github.com/google/mediapipe/tree/master/mediapipe/tasks/cc/vision/face_detector/face_detector_graph.cc
+// https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/tasks/cc/vision/face_detector/face_detector_graph.cc
 static NSString *const kDetectionsStreamName = @"detections_out";
 static NSString *const kDetectionsTag = @"DETECTIONS";
 static NSString *const kImageInStreamName = @"image_in";

@@ -1,7 +1,7 @@
 # This package contains options shared by all MediaPipe Vision Tasks for Web.
 
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_declaration", "mediapipe_ts_library")
 load("@npm//@bazel/jasmine:index.bzl", "jasmine_node_test")
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_declaration", "mediapipe_ts_library")
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
@@ -61,7 +61,7 @@ mediapipe_ts_library(
 
 jasmine_node_test(
     name = "drawing_utils_test",
-    deps = [":drawing_utils_test_lib"],
+    srcs = [":drawing_utils_test_lib"],
 )
 
 mediapipe_ts_library(
@@ -87,7 +87,7 @@ mediapipe_ts_library(
 
 jasmine_node_test(
     name = "image_test",
-    deps = [":image_test_lib"],
+    srcs = [":image_test_lib"],
 )
 
 mediapipe_ts_library(
@@ -113,7 +113,7 @@ mediapipe_ts_library(
 
 jasmine_node_test(
     name = "mask_test",
-    deps = [":mask_test_lib"],
+    srcs = [":mask_test_lib"],
 )
 
 mediapipe_ts_library(
@@ -138,7 +138,7 @@ mediapipe_ts_library(
 mediapipe_ts_library(
     name = "vision_task_runner_test_lib",
     testonly = True,
-    srcs = ["vision_task_runner.test.ts"],
+    srcs = ["vision_task_runner_test.ts"],
     deps = [
         ":image_processing_options",
         ":vision_task_options",
@@ -152,5 +152,5 @@ mediapipe_ts_library(
 
 jasmine_node_test(
     name = "vision_task_runner_test",
-    deps = [":vision_task_runner_test_lib"],
+    srcs = [":vision_task_runner_test_lib"],
 )

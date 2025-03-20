@@ -40,6 +40,7 @@
 #include "mediapipe/framework/counter_factory.h"
 #include "mediapipe/framework/executor.h"
 #include "mediapipe/framework/graph_output_stream.h"
+#include "mediapipe/framework/graph_runtime_info.pb.h"
 #include "mediapipe/framework/graph_service.h"
 #include "mediapipe/framework/graph_service_manager.h"
 #include "mediapipe/framework/mediapipe_profiling.h"
@@ -49,12 +50,17 @@
 #include "mediapipe/framework/output_stream_shard.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/packet_generator_graph.h"
+#include "mediapipe/framework/resources_service.h"
 #include "mediapipe/framework/scheduler.h"
 #include "mediapipe/framework/scheduler_shared.h"
 #include "mediapipe/framework/subgraph.h"
 #include "mediapipe/framework/thread_pool_executor.pb.h"
 #include "mediapipe/framework/timestamp.h"
 #include "mediapipe/framework/validated_graph_config.h"
+
+#if !defined(__EMSCRIPTEN__)
+#include "mediapipe/framework/tool/graph_runtime_info_logger.h"
+#endif  // !defined(__EMSCRIPTEN__)
 
 namespace mediapipe {
 
@@ -87,8 +93,9 @@ typedef absl::StatusOr<OutputStreamPoller> StatusOrPoller;
 //       "3edb9503834e9b42");
 //   MP_RETURN_IF_ERROR(graph.Run(extra_side_packets));
 //
-//   // Run again (demonstrating the more concise initializer list syntax).
-//   MP_RETURN_IF_ERROR(graph.Run(
+//   // Run again (demonstrating the asynchronous StartRun call with more
+//   // concise initializer list syntax).
+//   MP_RETURN_IF_ERROR(graph.StartRun(
 //       {{"video_id", mediapipe::MakePacket<std::string>("Ex-uGhDzue4")}}));
 //   // See mediapipe/framework/graph_runner.h for an interface
 //   // to insert and extract packets from a graph as it runs.
@@ -122,6 +129,11 @@ class CalculatorGraph {
   // Initializes the graph from its proto description (using Initialize())
   // and crashes if something goes wrong.
   explicit CalculatorGraph(CalculatorGraphConfig config);
+
+  // Initializes the graph with shared GraphServices from an existing MP graph
+  // environment. It enables to run a CalculatorGraph within a Calculator.
+  explicit CalculatorGraph(CalculatorContext* cc);
+
   virtual ~CalculatorGraph();
 
   // Initializes the graph from a its proto description.
@@ -249,6 +261,11 @@ class CalculatorGraph {
 
   // Quick non-locking means of checking if the graph has encountered an error.
   bool HasError() const { return has_error_; }
+
+  // Returns debugging information about the graph transient state, including
+  // information about all input streams and their timestamp bounds. This method
+  // is thread safe and can be called from any thread.
+  absl::StatusOr<GraphRuntimeInfo> GetGraphRuntimeInfo();
 
   // Add a Packet to a graph input stream based on the graph input stream add
   // mode. If the mode is ADD_IF_NOT_FULL, the packet will not be added if any
@@ -422,7 +439,15 @@ class CalculatorGraph {
   template <typename T>
   absl::Status SetServiceObject(const GraphService<T>& service,
                                 std::shared_ptr<T> object) {
-    // TODO: check that the graph has not been started!
+    if (initialized_) {
+      // TODO: check that the graph has not been initialized for
+      // all services!
+      if (service.key == kResourcesService.key) {
+        return absl::InternalError(
+            "Service objects must be set before graph is initialized.");
+      }
+    }
+
     return service_manager_.SetServiceObject(service, object);
   }
 
@@ -749,6 +774,11 @@ class CalculatorGraph {
   std::shared_ptr<ProfilingContext> profiler_;
 
   internal::Scheduler scheduler_;
+
+#if !defined(__EMSCRIPTEN__)
+  // Collects runtime information about the graph in the background.
+  tool::GraphRuntimeInfoLogger graph_runtime_info_logger_;
+#endif  // !defined(__EMSCRIPTEN__)
 };
 
 }  // namespace mediapipe

@@ -34,7 +34,7 @@ public abstract class FaceDetectorResult implements TaskResult {
    * Creates an {@link FaceDetectorResult} instance from a list of {@link Detection} protobuf
    * messages.
    *
-   * @param detectionList a list of {@link DetectionOuterClass.Detection} protobuf messages.
+   * @param detectionList a list of {@link DetectionProto.Detection} protobuf messages.
    * @param timestampMs a timestamp for this result.
    */
   public static FaceDetectorResult create(List<Detection> detectionList, long timestampMs) {

@@ -21,6 +21,7 @@ option java_outer_classname = "GpuOriginProto";
 
 message GpuOrigin {
   enum Mode {
+    // Defaults to CONVENTIONAL
     DEFAULT = 0;
 
     // OpenGL: bottom-left origin

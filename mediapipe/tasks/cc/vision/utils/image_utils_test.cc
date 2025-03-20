@@ -22,15 +22,16 @@ limitations under the License.
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame.h"
+#include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 
 namespace mediapipe::tasks::vision::utils {
 namespace {
 
-class ImageUtilsTest : public ::testing::TestWithParam<ImageFormat::Format> {};
+using ::mediapipe::Tensor;
 
-TEST_F(ImageUtilsTest, FailedImageFromBuffer) {
+TEST(ImageUtilsTest, FailedImageFromBuffer) {
   constexpr int width = 1;
   constexpr int height = 1;
   constexpr int max_channels = 1;
@@ -44,7 +45,19 @@ TEST_F(ImageUtilsTest, FailedImageFromBuffer) {
             "Expected image of SRGB, SRGBA or SBGRA format, but found 0.");
 }
 
-TEST_P(ImageUtilsTest, SuccessfulImageFromBuffer) {
+TEST(ImageUtilsTest, FailedGetImageLikeTensorShape) {
+  Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape{9});
+
+  auto shape = GetImageLikeTensorShape(tensor);
+  EXPECT_EQ(shape.status().code(), absl::StatusCode::kInvalidArgument);
+  EXPECT_EQ(shape.status().message(),
+            "Tensor should have 2, 3, or 4 dims, received: 1");
+}
+
+class ImageUtilsParamTest
+    : public ::testing::TestWithParam<ImageFormat::Format> {};
+
+TEST_P(ImageUtilsParamTest, SuccessfulImageFromBuffer) {
   constexpr int width = 4;
   constexpr int height = 4;
   constexpr int max_channels = 4;
@@ -59,7 +72,7 @@ TEST_P(ImageUtilsTest, SuccessfulImageFromBuffer) {
   EXPECT_EQ(image->GetImageFrameSharedPtr()->Height(), height);
 }
 
-INSTANTIATE_TEST_SUITE_P(ImageUtilsTests, ImageUtilsTest,
+INSTANTIATE_TEST_SUITE_P(ImageUtilsTests, ImageUtilsParamTest,
                          testing::Values(ImageFormat::SRGB, ImageFormat::SRGBA,
                                          ImageFormat::SBGRA));
 }  // namespace

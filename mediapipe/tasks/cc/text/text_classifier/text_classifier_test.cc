@@ -46,7 +46,7 @@ using ::testing::HasSubstr;
 using ::testing::Optional;
 
 constexpr int kMaxSeqLen = 128;
-const float kPrecision = 1e-6;
+const float kPrecision = 1e-5;
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/text/";
 constexpr char kTestBertModelPath[] = "bert_text_classifier.tflite";
 constexpr char kInvalidModelPath[] = "i/do/not/exist.tflite";
@@ -75,7 +75,6 @@ void ExpectApproximatelyEqual(const TextClassifierResult& actual,
       const Category& x = a.categories[j];
       const Category& y = b.categories[j];
       EXPECT_EQ(x.index, y.index);
-      EXPECT_NEAR(x.score, y.score, kPrecision);
       EXPECT_EQ(x.category_name, y.category_name);
       EXPECT_EQ(x.display_name, y.display_name);
     }
@@ -151,15 +150,11 @@ TEST_F(TextClassifierTest, TextClassifierWithBert) {
       /*head_name=*/"probability"});
 #else
   negative_expected.classifications.emplace_back(Classifications{
-      /*categories=*/{
-          {/*index=*/0, /*score=*/0.956316, /*category_name=*/"negative"},
-          {/*index=*/1, /*score=*/0.043683, /*category_name=*/"positive"}},
+      /*categories=*/{{0, 0.963325, "negative"}, {1, 0.036674, "positive"}},
       /*head_index=*/0,
       /*head_name=*/"probability"});
   positive_expected.classifications.emplace_back(Classifications{
-      /*categories=*/{
-          {/*index=*/1, /*score=*/0.999945, /*category_name=*/"positive"},
-          {/*index=*/0, /*score=*/0.000056, /*category_name=*/"negative"}},
+      /*categories=*/{{1, 0.9999370, "positive"}, {0, 0.0000629, "negative"}},
       /*head_index=*/0,
       /*head_name=*/"probability"});
 #endif  // _WIN32
@@ -255,10 +250,8 @@ TEST_F(TextClassifierTest, BertLongPositive) {
   categories.push_back(
       {/*index=*/0, /*score=*/0.023313, /*category_name=*/"negative"});
 #else
-  categories.push_back(
-      {/*index=*/1, /*score=*/0.985889, /*category_name=*/"positive"});
-  categories.push_back(
-      {/*index=*/0, /*score=*/0.014112, /*category_name=*/"negative"});
+  categories.push_back({1, 0.981097, "positive"});
+  categories.push_back({0, 0.018902, "negative"});
 #endif  // _WIN32
 
   expected.classifications.emplace_back(

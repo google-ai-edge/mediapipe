@@ -13,15 +13,23 @@
 // limitations under the License.
 
 #include <cstdint>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
+#include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 #include "mediapipe/calculators/util/detection_label_id_to_text_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/proto_ns.h"
-#include "mediapipe/framework/port/status.h"
+#include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
+#include "mediapipe/framework/resources.h"
 #include "mediapipe/util/label_map.pb.h"
+#include "mediapipe/util/label_map_util.h"
 #include "mediapipe/util/resource_util.h"
 
 #if defined(MEDIAPIPE_MOBILE)
@@ -86,18 +94,12 @@ absl::Status DetectionLabelIdToTextCalculator::Open(CalculatorContext* cc) {
     std::string string_path;
     MP_ASSIGN_OR_RETURN(string_path,
                         PathToResourceAsFile(options.label_map_path()));
-    std::string label_map_string;
-    MP_RETURN_IF_ERROR(
-        mediapipe::GetResourceContents(string_path, &label_map_string));
-
-    std::istringstream stream(label_map_string);
-    std::string line;
-    int i = 0;
-    while (std::getline(stream, line)) {
-      LabelMapItem item;
-      item.set_name(line);
-      local_label_map_[i++] = item;
-    }
+    MP_ASSIGN_OR_RETURN(std::unique_ptr<mediapipe::Resource> label_map,
+                        cc->GetResources().Get(string_path));
+    MP_ASSIGN_OR_RETURN(
+        local_label_map_,
+        BuildLabelMapFromFiles(label_map->ToStringView(),
+                               /*display_names_file_contents=*/{}));
   } else if (!options.label().empty()) {
     RET_CHECK(options.label_items().empty())
         << "Only can set one of the following fields in the CalculatorOptions: "
@@ -105,7 +107,7 @@ absl::Status DetectionLabelIdToTextCalculator::Open(CalculatorContext* cc) {
     for (int i = 0; i < options.label_size(); ++i) {
       LabelMapItem item;
       item.set_name(options.label(i));
-      local_label_map_[i] = item;
+      local_label_map_[i] = std::move(item);
     }
   }
   keep_label_id_ = options.keep_label_id();

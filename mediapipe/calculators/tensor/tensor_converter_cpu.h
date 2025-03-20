@@ -22,6 +22,7 @@
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/formats/tensor.h"
+#include "mediapipe/framework/memory_manager.h"
 
 namespace mediapipe {
 
@@ -29,18 +30,22 @@ namespace mediapipe {
 // @flip_vertically enables to flip the image during conversion.
 // @max_num_channels can be used to reserve extra channels in the output
 // tensors.
+// @memory_manager MemoryManager instance to enable memory pooling during Tensor
+// instantiation.
 // Returns output Tensor.
 absl::StatusOr<Tensor> ConvertImageFrameToTensorOnCpu(
     const ImageFrame& image_frame, const std::pair<float, float>& output_range,
-    bool flip_vertically, int max_num_channels);
+    bool flip_vertically, int max_num_channels, MemoryManager* memory_manager);
 
 // Converts a Matrix to a vector of Tensors.
 // @row_major_matrix defines the ordering in the input matrix.
 // @max_num_channels can be used to reserve extra channels in the output
 // tensors.
+// @memory_manager MemoryManager instance to enable memory pooling during Tensor
+// instantiation.
 // Returns output Tensor.
-absl::StatusOr<Tensor> ConvertMatrixToTensorOnCpu(const Matrix& matrix,
-                                                  bool row_major_matrix);
+absl::StatusOr<Tensor> ConvertMatrixToTensorOnCpu(
+    const Matrix& matrix, bool row_major_matrix, MemoryManager* memory_manager);
 
 // For testing only below.
 absl::Status NormalizeUInt8Image(const ImageFrame& image_frame,

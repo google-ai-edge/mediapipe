@@ -14,6 +14,8 @@
 
 #include <cstdint>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "mediapipe/calculators/core/constant_side_packet_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -74,6 +76,8 @@ class ConstantSidePacketCalculator : public CalculatorBase {
         packet.Set<int>();
       } else if (packet_options.has_float_value()) {
         packet.Set<float>();
+      } else if (packet_options.has_string_vector_value()) {
+        packet.Set<std::vector<std::string>>();
       } else if (packet_options.has_bool_value()) {
         packet.Set<bool>();
       } else if (packet_options.has_string_value()) {
@@ -114,6 +118,14 @@ class ConstantSidePacketCalculator : public CalculatorBase {
         packet.Set(MakePacket<float>(packet_options.float_value()));
       } else if (packet_options.has_bool_value()) {
         packet.Set(MakePacket<bool>(packet_options.bool_value()));
+      } else if (packet_options.has_string_vector_value()) {
+        std::vector<std::string> string_vector_values;
+        for (const auto& value :
+             packet_options.string_vector_value().string_value()) {
+          string_vector_values.push_back(value);
+        }
+        packet.Set(MakePacket<std::vector<std::string>>(
+            std::move(string_vector_values)));
       } else if (packet_options.has_string_value()) {
         packet.Set(MakePacket<std::string>(packet_options.string_value()));
       } else if (packet_options.has_uint64_value()) {

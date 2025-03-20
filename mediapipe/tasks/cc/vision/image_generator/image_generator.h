@@ -91,6 +91,12 @@ struct ImageGeneratorOptions {
   // The text to image model directory storing the model weights.
   std::string text2image_model_directory;
 
+  enum ModelType {
+    SD_1 = 1,  // Stable Diffusion v1 models, including SD 1.4 and 1.5.
+  }
+
+  model_type = ModelType::SD_1;
+
   // The path to LoRA weights file.
   std::optional<std::string> lora_weights_file_path;
 };

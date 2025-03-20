@@ -14,18 +14,24 @@
 
 #include "mediapipe/framework/packet.h"
 
+#include <initializer_list>
 #include <map>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "absl/memory/memory.h"
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
+#include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/packet_test.pb.h"
 #include "mediapipe/framework/port/core_proto_inc.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/status_matchers.h"
+#include "mediapipe/framework/port/statusor.h"
 #include "mediapipe/framework/type_map.h"
 
 namespace mediapipe {
@@ -368,6 +374,24 @@ TEST(PacketTest, TestPacketConsumeOrCopy) {
   EXPECT_TRUE(packet3.IsEmpty());
 }
 
+TEST(PacketTest, TestForeignCleanupIsInvokedOnceWhenAllPacketCopiesDestroyed) {
+  int num_cleanup = 0;
+  const float unused_data = 0;
+  Packet packet =
+      PointToForeign(&unused_data, [&num_cleanup]() { ++num_cleanup; });
+
+  std::vector<Packet> packet_copies(10, packet);
+  packet_copies.clear();
+  EXPECT_EQ(num_cleanup, 0);
+
+  packet_copies = std::vector<Packet>(10, packet);
+  packet = Packet();
+  EXPECT_EQ(num_cleanup, 0);
+
+  packet_copies.clear();
+  EXPECT_EQ(num_cleanup, 1);
+}
+
 TEST(PacketTest, TestConsumeForeignHolder) {
   std::unique_ptr<int> data(new int(33));
   Packet packet = PointToForeign(data.get());
@@ -502,6 +526,24 @@ TEST(PacketTest, PacketFromSerializedProto) {
   Packet packet = maybe_packet.value();
   MP_EXPECT_OK(packet.ValidateAsType<::mediapipe::SimpleProto>());
   EXPECT_FALSE(packet.ValidateAsType<::mediapipe::PacketTestProto>().ok());
+}
+
+TEST(PacketTest, Share) {
+  bool exist;
+  Packet packet = MakePacket<MyClass>(&exist);
+  ASSERT_EQ(exist, true);
+  ASSERT_THAT(packet.Share<std::string>(),
+              StatusIs(absl::StatusCode::kInvalidArgument));  // Wrong type.
+  MP_ASSERT_OK_AND_ASSIGN(std::shared_ptr<const MyClass> ptr,
+                          packet.Share<MyClass>());
+  packet = {};
+  ASSERT_THAT(packet.Share<MyClass>(),
+              StatusIs(absl::StatusCode::kInternal));  // Empty packet.
+  // The shared_ptr should still be retaining the object.
+  EXPECT_EQ(exist, true);
+  ptr = nullptr;
+  // Now it should be released.
+  EXPECT_EQ(exist, false);
 }
 
 TEST(PacketTest, SharedPtrWithPacketOwnership) {

@@ -27,13 +27,30 @@ import {convertFromClassifications} from '../../../../tasks/web/components/proce
 import {convertToLandmarks} from '../../../../tasks/web/components/processors/landmark_result';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {ImageProcessingOptions} from '../../../../tasks/web/vision/core/image_processing_options';
-import {VisionGraphRunner, VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
-import {ImageSource, WasmModule} from '../../../../web/graph_runner/graph_runner';
+import {
+  VisionGraphRunner,
+  VisionTaskRunner,
+} from '../../../../tasks/web/vision/core/vision_task_runner';
+import {
+  ImageSource,
+  WasmModule,
+} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
 import {FaceLandmarkerOptions} from './face_landmarker_options';
 import {FaceLandmarkerResult} from './face_landmarker_result';
-import {FACE_LANDMARKS_CONTOURS, FACE_LANDMARKS_FACE_OVAL, FACE_LANDMARKS_LEFT_EYE, FACE_LANDMARKS_LEFT_EYEBROW, FACE_LANDMARKS_LEFT_IRIS, FACE_LANDMARKS_LIPS, FACE_LANDMARKS_RIGHT_EYE, FACE_LANDMARKS_RIGHT_EYEBROW, FACE_LANDMARKS_RIGHT_IRIS, FACE_LANDMARKS_TESSELATION} from './face_landmarks_connections';
+import {
+  FACE_LANDMARKS_CONTOURS,
+  FACE_LANDMARKS_FACE_OVAL,
+  FACE_LANDMARKS_LEFT_EYE,
+  FACE_LANDMARKS_LEFT_EYEBROW,
+  FACE_LANDMARKS_LEFT_IRIS,
+  FACE_LANDMARKS_LIPS,
+  FACE_LANDMARKS_RIGHT_EYE,
+  FACE_LANDMARKS_RIGHT_EYEBROW,
+  FACE_LANDMARKS_RIGHT_IRIS,
+  FACE_LANDMARKS_TESSELATION,
+} from './face_landmarks_connections';
 
 export * from './face_landmarker_options';
 export * from './face_landmarker_result';
@@ -48,7 +65,7 @@ const LANDMARKS_STREAM = 'face_landmarks';
 const BLENDSHAPES_STREAM = 'blendshapes';
 const FACE_GEOMETRY_STREAM = 'face_geometry';
 const FACE_LANDMARKER_GRAPH =
-    'mediapipe.tasks.vision.face_landmarker.FaceLandmarkerGraph';
+  'mediapipe.tasks.vision.face_landmarker.FaceLandmarkerGraph';
 
 const DEFAULT_NUM_FACES = 1;
 const DEFAULT_SCORE_THRESHOLD = 0.5;
@@ -62,14 +79,13 @@ export class FaceLandmarker extends VisionTaskRunner {
   private result: FaceLandmarkerResult = {
     faceLandmarks: [],
     faceBlendshapes: [],
-    facialTransformationMatrixes: []
+    facialTransformationMatrixes: [],
   };
   private outputFaceBlendshapes = false;
   private outputFacialTransformationMatrixes = false;
 
   private readonly options: FaceLandmarkerGraphOptions;
-  private readonly faceLandmarksDetectorGraphOptions:
-      FaceLandmarksDetectorGraphOptions;
+  private readonly faceLandmarksDetectorGraphOptions: FaceLandmarksDetectorGraphOptions;
   private readonly faceDetectorGraphOptions: FaceDetectorGraphOptions;
 
   /**
@@ -83,10 +99,14 @@ export class FaceLandmarker extends VisionTaskRunner {
    *     be provided (via `baseOptions`).
    */
   static createFromOptions(
-      wasmFileset: WasmFileset,
-      faceLandmarkerOptions: FaceLandmarkerOptions): Promise<FaceLandmarker> {
+    wasmFileset: WasmFileset,
+    faceLandmarkerOptions: FaceLandmarkerOptions,
+  ): Promise<FaceLandmarker> {
     return VisionTaskRunner.createVisionInstance(
-        FaceLandmarker, wasmFileset, faceLandmarkerOptions);
+      FaceLandmarker,
+      wasmFileset,
+      faceLandmarkerOptions,
+    );
   }
 
   /**
@@ -95,13 +115,16 @@ export class FaceLandmarker extends VisionTaskRunner {
    * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
-   * @param modelAssetBuffer A binary representation of the model.
+   * @param modelAssetBuffer An array or a stream containing a binary
+   *    representation of the model.
    */
   static createFromModelBuffer(
-      wasmFileset: WasmFileset,
-      modelAssetBuffer: Uint8Array): Promise<FaceLandmarker> {
-    return VisionTaskRunner.createVisionInstance(
-        FaceLandmarker, wasmFileset, {baseOptions: {modelAssetBuffer}});
+    wasmFileset: WasmFileset,
+    modelAssetBuffer: Uint8Array | ReadableStreamDefaultReader,
+  ): Promise<FaceLandmarker> {
+    return VisionTaskRunner.createVisionInstance(FaceLandmarker, wasmFileset, {
+      baseOptions: {modelAssetBuffer},
+    });
   }
 
   /**
@@ -113,10 +136,12 @@ export class FaceLandmarker extends VisionTaskRunner {
    * @param modelAssetPath The path to the model asset.
    */
   static createFromModelPath(
-      wasmFileset: WasmFileset,
-      modelAssetPath: string): Promise<FaceLandmarker> {
-    return VisionTaskRunner.createVisionInstance(
-        FaceLandmarker, wasmFileset, {baseOptions: {modelAssetPath}});
+    wasmFileset: WasmFileset,
+    modelAssetPath: string,
+  ): Promise<FaceLandmarker> {
+    return VisionTaskRunner.createVisionInstance(FaceLandmarker, wasmFileset, {
+      baseOptions: {modelAssetPath},
+    });
   }
 
   /**
@@ -192,18 +217,23 @@ export class FaceLandmarker extends VisionTaskRunner {
 
   /** @hideconstructor */
   constructor(
-      wasmModule: WasmModule,
-      glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
+    wasmModule: WasmModule,
+    glCanvas?: HTMLCanvasElement | OffscreenCanvas | null,
+  ) {
     super(
-        new VisionGraphRunner(wasmModule, glCanvas), IMAGE_STREAM,
-        NORM_RECT_STREAM, /* roiAllowed= */ false);
+      new VisionGraphRunner(wasmModule, glCanvas),
+      IMAGE_STREAM,
+      NORM_RECT_STREAM,
+      /* roiAllowed= */ false,
+    );
 
     this.options = new FaceLandmarkerGraphOptions();
     this.options.setBaseOptions(new BaseOptionsProto());
     this.faceLandmarksDetectorGraphOptions =
-        new FaceLandmarksDetectorGraphOptions();
+      new FaceLandmarksDetectorGraphOptions();
     this.options.setFaceLandmarksDetectorGraphOptions(
-        this.faceLandmarksDetectorGraphOptions);
+      this.faceLandmarksDetectorGraphOptions,
+    );
     this.faceDetectorGraphOptions = new FaceDetectorGraphOptions();
     this.options.setFaceDetectorGraphOptions(this.faceDetectorGraphOptions);
 
@@ -232,21 +262,25 @@ export class FaceLandmarker extends VisionTaskRunner {
     // Configure face detector options.
     if ('numFaces' in options) {
       this.faceDetectorGraphOptions.setNumFaces(
-          options.numFaces ?? DEFAULT_NUM_FACES);
+        options.numFaces ?? DEFAULT_NUM_FACES,
+      );
     }
     if ('minFaceDetectionConfidence' in options) {
       this.faceDetectorGraphOptions.setMinDetectionConfidence(
-          options.minFaceDetectionConfidence ?? DEFAULT_SCORE_THRESHOLD);
+        options.minFaceDetectionConfidence ?? DEFAULT_SCORE_THRESHOLD,
+      );
     }
 
     // Configure face landmark detector options.
     if ('minTrackingConfidence' in options) {
       this.options.setMinTrackingConfidence(
-          options.minTrackingConfidence ?? DEFAULT_SCORE_THRESHOLD);
+        options.minTrackingConfidence ?? DEFAULT_SCORE_THRESHOLD,
+      );
     }
     if ('minFacePresenceConfidence' in options) {
       this.faceLandmarksDetectorGraphOptions.setMinDetectionConfidence(
-          options.minFacePresenceConfidence ?? DEFAULT_SCORE_THRESHOLD);
+        options.minFacePresenceConfidence ?? DEFAULT_SCORE_THRESHOLD,
+      );
     }
 
     if ('outputFaceBlendshapes' in options) {
@@ -255,7 +289,7 @@ export class FaceLandmarker extends VisionTaskRunner {
 
     if ('outputFacialTransformationMatrixes' in options) {
       this.outputFacialTransformationMatrixes =
-          !!options.outputFacialTransformationMatrixes;
+        !!options.outputFacialTransformationMatrixes;
     }
 
     return this.applyOptions(options);
@@ -272,8 +306,10 @@ export class FaceLandmarker extends VisionTaskRunner {
    *    to process the input image before running inference.
    * @return The detected face landmarks.
    */
-  detect(image: ImageSource, imageProcessingOptions?: ImageProcessingOptions):
-      FaceLandmarkerResult {
+  detect(
+    image: ImageSource,
+    imageProcessingOptions?: ImageProcessingOptions,
+  ): FaceLandmarkerResult {
     this.resetResults();
     this.processImageData(image, imageProcessingOptions);
     return this.result;
@@ -292,8 +328,10 @@ export class FaceLandmarker extends VisionTaskRunner {
    * @return The detected face landmarks.
    */
   detectForVideo(
-      videoFrame: ImageSource, timestamp: number,
-      imageProcessingOptions?: ImageProcessingOptions): FaceLandmarkerResult {
+    videoFrame: ImageSource,
+    timestamp: number,
+    imageProcessingOptions?: ImageProcessingOptions,
+  ): FaceLandmarkerResult {
     this.resetResults();
     this.processVideoData(videoFrame, imageProcessingOptions, timestamp);
     return this.result;
@@ -303,7 +341,7 @@ export class FaceLandmarker extends VisionTaskRunner {
     this.result = {
       faceLandmarks: [],
       faceBlendshapes: [],
-      facialTransformationMatrixes: []
+      facialTransformationMatrixes: [],
     };
   }
 
@@ -311,9 +349,11 @@ export class FaceLandmarker extends VisionTaskRunner {
   private initDefaults(): void {
     this.faceDetectorGraphOptions.setNumFaces(DEFAULT_NUM_FACES);
     this.faceDetectorGraphOptions.setMinDetectionConfidence(
-        DEFAULT_SCORE_THRESHOLD);
+      DEFAULT_SCORE_THRESHOLD,
+    );
     this.faceLandmarksDetectorGraphOptions.setMinDetectionConfidence(
-        DEFAULT_SCORE_THRESHOLD);
+      DEFAULT_SCORE_THRESHOLD,
+    );
     this.options.setMinTrackingConfidence(DEFAULT_SCORE_THRESHOLD);
   }
 
@@ -321,7 +361,7 @@ export class FaceLandmarker extends VisionTaskRunner {
   private addJsLandmarks(data: Uint8Array[]): void {
     for (const binaryProto of data) {
       const faceLandmarksProto =
-          NormalizedLandmarkListProto.deserializeBinary(binaryProto);
+        NormalizedLandmarkListProto.deserializeBinary(binaryProto);
       this.result.faceLandmarks.push(convertToLandmarks(faceLandmarksProto));
     }
   }
@@ -334,9 +374,12 @@ export class FaceLandmarker extends VisionTaskRunner {
 
     for (const binaryProto of data) {
       const classificationList =
-          ClassificationListProto.deserializeBinary(binaryProto);
-      this.result.faceBlendshapes.push(convertFromClassifications(
-          classificationList.getClassificationList() ?? []));
+        ClassificationListProto.deserializeBinary(binaryProto);
+      this.result.faceBlendshapes.push(
+        convertFromClassifications(
+          classificationList.getClassificationList() ?? [],
+        ),
+      );
     }
   }
 
@@ -348,13 +391,13 @@ export class FaceLandmarker extends VisionTaskRunner {
 
     for (const binaryProto of data) {
       const faceGeometryProto =
-          FaceGeometryProto.deserializeBinary(binaryProto);
+        FaceGeometryProto.deserializeBinary(binaryProto);
       const poseTransformMatrix = faceGeometryProto.getPoseTransformMatrix();
       if (poseTransformMatrix) {
         this.result.facialTransformationMatrixes.push({
           rows: poseTransformMatrix.getRows() ?? 0,
           columns: poseTransformMatrix.getCols() ?? 0,
-          data: poseTransformMatrix.getPackedDataList() ?? [],
+          data: poseTransformMatrix.getPackedDataList().slice() ?? [],
         });
       }
     }
@@ -369,7 +412,9 @@ export class FaceLandmarker extends VisionTaskRunner {
 
     const calculatorOptions = new CalculatorOptions();
     calculatorOptions.setExtension(
-        FaceLandmarkerGraphOptions.ext, this.options);
+      FaceLandmarkerGraphOptions.ext,
+      this.options,
+    );
 
     const landmarkerNode = new CalculatorGraphConfig.Node();
     landmarkerNode.setCalculator(FACE_LANDMARKER_GRAPH);
@@ -381,27 +426,35 @@ export class FaceLandmarker extends VisionTaskRunner {
     graphConfig.addNode(landmarkerNode);
 
     this.graphRunner.attachProtoVectorListener(
-        LANDMARKS_STREAM, (binaryProto, timestamp) => {
-          this.addJsLandmarks(binaryProto);
-          this.setLatestOutputTimestamp(timestamp);
-        });
+      LANDMARKS_STREAM,
+      (binaryProto, timestamp) => {
+        this.addJsLandmarks(binaryProto);
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
     this.graphRunner.attachEmptyPacketListener(
-      LANDMARKS_STREAM, timestamp => {
-          this.setLatestOutputTimestamp(timestamp);
-        });
+      LANDMARKS_STREAM,
+      (timestamp) => {
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
 
     if (this.outputFaceBlendshapes) {
       graphConfig.addOutputStream(BLENDSHAPES_STREAM);
       landmarkerNode.addOutputStream('BLENDSHAPES:' + BLENDSHAPES_STREAM);
       this.graphRunner.attachProtoVectorListener(
-          BLENDSHAPES_STREAM, (binaryProto, timestamp) => {
-            this.addBlenshape(binaryProto);
-            this.setLatestOutputTimestamp(timestamp);
-          });
+        BLENDSHAPES_STREAM,
+        (binaryProto, timestamp) => {
+          this.addBlenshape(binaryProto);
+          this.setLatestOutputTimestamp(timestamp);
+        },
+      );
       this.graphRunner.attachEmptyPacketListener(
-          BLENDSHAPES_STREAM, timestamp => {
-            this.setLatestOutputTimestamp(timestamp);
-          });
+        BLENDSHAPES_STREAM,
+        (timestamp) => {
+          this.setLatestOutputTimestamp(timestamp);
+        },
+      );
     }
 
     if (this.outputFacialTransformationMatrixes) {
@@ -409,14 +462,18 @@ export class FaceLandmarker extends VisionTaskRunner {
       landmarkerNode.addOutputStream('FACE_GEOMETRY:' + FACE_GEOMETRY_STREAM);
 
       this.graphRunner.attachProtoVectorListener(
-          FACE_GEOMETRY_STREAM, (binaryProto, timestamp) => {
-            this.addFacialTransformationMatrixes(binaryProto);
-            this.setLatestOutputTimestamp(timestamp);
-          });
+        FACE_GEOMETRY_STREAM,
+        (binaryProto, timestamp) => {
+          this.addFacialTransformationMatrixes(binaryProto);
+          this.setLatestOutputTimestamp(timestamp);
+        },
+      );
       this.graphRunner.attachEmptyPacketListener(
-          FACE_GEOMETRY_STREAM, timestamp => {
-            this.setLatestOutputTimestamp(timestamp);
-          });
+        FACE_GEOMETRY_STREAM,
+        (timestamp) => {
+          this.setLatestOutputTimestamp(timestamp);
+        },
+      );
     }
 
     const binaryGraph = graphConfig.serializeBinary();

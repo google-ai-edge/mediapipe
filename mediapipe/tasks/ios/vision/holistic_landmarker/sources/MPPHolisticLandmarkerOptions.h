@@ -53,7 +53,7 @@ NS_SWIFT_NAME(HolisticLandmarkerLiveStreamDelegate)
     didFinishDetectionWithResult:(nullable MPPHolisticLandmarkerResult *)result
          timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                            error:(nullable NSError *)error
-    NS_SWIFT_NAME(faceLandmarker(_:didFinishDetection:timestampInMilliseconds:error:));
+    NS_SWIFT_NAME(holisticLandmarker(_:didFinishDetection:timestampInMilliseconds:error:));
 @end
 
 /** Options for setting up a `HolisticLandmarker`. */

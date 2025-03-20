@@ -38,6 +38,7 @@
 #include "mediapipe/gpu/gl_simple_shaders.h"
 #include "mediapipe/gpu/gpu_buffer_format.h"
 #include "mediapipe/gpu/gpu_origin.pb.h"
+#include "mediapipe/gpu/gpu_origin_utils.h"
 #include "mediapipe/gpu/shader_util.h"
 
 namespace mediapipe {
@@ -48,14 +49,15 @@ enum { ATTRIB_VERTEX, ATTRIB_TEXTURE_POSITION, NUM_ATTRIBUTES };
 using ::mediapipe::tensors_to_segmentation_utils::GetHwcFromDims;
 using ::mediapipe::tensors_to_segmentation_utils::GlRender;
 
-class GlProcessor : public TensorsToSegmentationConverter {
+class TensorsToSegmentationGlTextureConverter
+    : public TensorsToSegmentationConverter {
  public:
-  ~GlProcessor() override;
+  ~TensorsToSegmentationGlTextureConverter() override;
   absl::Status Init(CalculatorContext* cc,
                     const TensorsToSegmentationCalculatorOptions& options);
-  absl::StatusOr<std::unique_ptr<Image>> Convert(
-      const std::vector<Tensor>& input_tensors, int output_width,
-      int output_height) override;
+  absl::StatusOr<std::unique_ptr<Image>> Convert(const Tensor& input_tensor,
+                                                 int output_width,
+                                                 int output_height) override;
 
  private:
   mediapipe::GlCalculatorHelper gpu_helper_;
@@ -65,7 +67,8 @@ class GlProcessor : public TensorsToSegmentationConverter {
   GLuint mask_program_20_;
 };
 
-GlProcessor::~GlProcessor() {
+TensorsToSegmentationGlTextureConverter::
+    ~TensorsToSegmentationGlTextureConverter() {
   if (gpu_initialized_) {
     gpu_helper_.RunInGlContext([this] {
       if (upsample_program_) glDeleteProgram(upsample_program_);
@@ -76,7 +79,7 @@ GlProcessor::~GlProcessor() {
   }
 }
 
-absl::Status GlProcessor::Init(
+absl::Status TensorsToSegmentationGlTextureConverter::Init(
     CalculatorContext* cc,
     const TensorsToSegmentationCalculatorOptions& options) {
   MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
@@ -140,8 +143,8 @@ void main() {
     const std::string output_layer_index =
         "\n#define OUTPUT_LAYER_INDEX int(" +
         std::to_string(options.output_layer_index()) + ")";
-    bool gpu_texture_starts_at_bottom =
-        (options.gpu_origin() != mediapipe::GpuOrigin::TOP_LEFT);
+    MP_ASSIGN_OR_RETURN(bool gpu_texture_starts_at_bottom,
+                        IsGpuOriginAtBottom(options.gpu_origin()));
     const std::string flip_y_coord =
         gpu_texture_starts_at_bottom ? "\n#define FLIP_Y_COORD" : "";
     const std::string fn_none =
@@ -199,18 +202,16 @@ void main() {
 // 1. receive tensor
 // 2. process segmentation tensor into small mask
 // 3. upsample small mask into output mask to be same size as input image
-absl::StatusOr<std::unique_ptr<Image>> GlProcessor::Convert(
-    const std::vector<Tensor>& input_tensors, int output_width,
-    int output_height) {
-  if (input_tensors.empty()) {
-    return absl::InvalidArgumentError("input_tensors vector is empty.");
-  }
+absl::StatusOr<std::unique_ptr<Image>>
+TensorsToSegmentationGlTextureConverter::Convert(const Tensor& input_tensor,
+                                                 int output_width,
+                                                 int output_height) {
   std::unique_ptr<Image> output_image_mask;
   MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext(
-      [this, &input_tensors, output_width, output_height,
+      [this, &input_tensor, output_width, output_height,
        &output_image_mask]() -> absl::Status {
         MP_ASSIGN_OR_RETURN(auto hwc,
-                            GetHwcFromDims(input_tensors[0].shape().dims));
+                            GetHwcFromDims(input_tensor.shape().dims));
         auto [tensor_height, tensor_width, tensor_channels] = hwc;
 
         // Create initial working mask texture.
@@ -225,11 +226,11 @@ absl::StatusOr<std::unique_ptr<Image>> GlProcessor::Convert(
           // Go through CPU if not already texture 2D (no direct conversion
           // yet). Tensor::GetOpenGlTexture2dReadView() doesn't automatically
           // convert types.
-          if (!input_tensors[0].ready_as_opengl_texture_2d()) {
-            (void)input_tensors[0].GetCpuReadView();
+          if (!input_tensor.ready_as_opengl_texture_2d()) {
+            (void)input_tensor.GetCpuReadView();
           }
 
-          auto read_view = input_tensors[0].GetOpenGlTexture2dReadView();
+          auto read_view = input_tensor.GetOpenGlTexture2dReadView();
 
           gpu_helper_.BindFramebuffer(small_mask_texture);
           glActiveTexture(GL_TEXTURE1);
@@ -274,7 +275,7 @@ absl::StatusOr<std::unique_ptr<TensorsToSegmentationConverter>>
 CreateGlTextureConverter(
     CalculatorContext* cc,
     const mediapipe::TensorsToSegmentationCalculatorOptions& options) {
-  auto converter = std::make_unique<GlProcessor>();
+  auto converter = std::make_unique<TensorsToSegmentationGlTextureConverter>();
   MP_RETURN_IF_ERROR(converter->Init(cc, options));
   return converter;
 }

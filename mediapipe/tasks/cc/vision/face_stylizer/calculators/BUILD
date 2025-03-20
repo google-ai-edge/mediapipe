@@ -115,7 +115,7 @@ cc_library(
 cc_library(
     name = "tensor_to_image_calculator_gpu_deps",
     visibility = ["//visibility:private"],
-    deps = select({
+    deps = selects.with_or({
         "//mediapipe:android": [
             "//mediapipe/gpu:gl_calculator_helper",
             "//mediapipe/gpu:gl_quad_renderer",

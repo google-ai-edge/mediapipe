@@ -1,7 +1,7 @@
 # This contains the MediaPipe Face Stylizer Task.
 
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_declaration", "mediapipe_ts_library")
 load("@npm//@bazel/jasmine:index.bzl", "jasmine_node_test")
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_declaration", "mediapipe_ts_library")
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
@@ -53,6 +53,6 @@ mediapipe_ts_library(
 
 jasmine_node_test(
     name = "face_stylizer_test",
+    srcs = [":face_stylizer_test_lib"],
     tags = ["nomsan"],
-    deps = [":face_stylizer_test_lib"],
 )

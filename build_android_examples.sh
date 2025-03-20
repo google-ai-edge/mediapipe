@@ -31,18 +31,6 @@
 
 set -e
 
-function switch_to_opencv_3() {
-  echo "Switching to OpenCV 3"
-  sed -i -e 's:4.0.1/opencv-4.0.1:3.4.3/opencv-3.4.3:g' WORKSPACE
-  sed -i -e 's:libopencv_java4:libopencv_java3:g' third_party/opencv_android.BUILD
-}
-
-function switch_to_opencv_4() {
-  echo "Switching to OpenCV 4"
-  sed -i -e 's:3.4.3/opencv-3.4.3:4.0.1/opencv-4.0.1:g' WORKSPACE
-  sed -i -e 's:libopencv_java3:libopencv_java4:g' third_party/opencv_android.BUILD
-}
-
 out_dir="."
 strip=true
 install_only=false
@@ -76,7 +64,6 @@ echo "strip: $strip"
 
 declare -a apks=()
 declare -a bazel_flags
-switch_to_opencv_3
 
 apps="${app_dir}/*"
 for app in ${apps}; do
@@ -117,14 +104,8 @@ for app in ${apps}; do
     else
       apk="${out_dir}/${target_name}.apk"
       if [[ $install_only == false ]]; then
-        if [[ ${app_name} == "templatematchingcpu" ]]; then
-          switch_to_opencv_4
-        fi
         bazelisk "${bazel_flags[@]}"
         cp -f "${bin}" "${apk}"
-        if [[ ${app_name} == "templatematchingcpu" ]]; then
-          switch_to_opencv_3
-        fi
       fi
       apks+=(${apk})
     fi

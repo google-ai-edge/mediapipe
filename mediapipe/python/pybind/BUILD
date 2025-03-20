@@ -18,6 +18,12 @@ licenses(["notice"])
 
 package(default_visibility = ["//mediapipe:__subpackages__"])
 
+config_setting(
+    name = "enable_odml_converter",
+    define_values = {"ENABLE_ODML_CONVERTER": "1"},
+    visibility = ["//visibility:public"],
+)
+
 pybind_library(
     name = "calculator_graph",
     srcs = ["calculator_graph.cc"],
@@ -68,7 +74,6 @@ pybind_library(
         ":util",
         "//mediapipe/framework/formats:image_format_cc_proto",
         "//mediapipe/framework/formats:image_frame",
-        "//mediapipe/framework/port:logging",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
@@ -102,10 +107,9 @@ pybind_library(
         ":image_frame_util",
         ":util",
         "//mediapipe/framework:packet",
-        "//mediapipe/framework:timestamp",
         "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:matrix",
-        "//mediapipe/framework/port:integral_types",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
@@ -119,10 +123,9 @@ pybind_library(
         ":image_frame_util",
         ":util",
         "//mediapipe/framework:packet",
-        "//mediapipe/framework:timestamp",
         "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:matrix",
-        "//mediapipe/framework/port:integral_types",
         "@com_google_absl//absl/status:statusor",
     ],
 )
@@ -170,4 +173,24 @@ pybind_library(
         "//mediapipe/framework:validated_graph_config",
         "//mediapipe/framework/port:parse_text_proto",
     ],
+)
+
+pybind_library(
+    name = "model_ckpt_util",
+    srcs = ["model_ckpt_util.cc"],
+    hdrs = ["model_ckpt_util.h"],
+    copts = select({
+        "//conditions:default": [],
+        ":enable_odml_converter": ["-DENABLE_ODML_CONVERTER"],
+    }),
+    deps = [
+        "@pybind11_abseil//pybind11_abseil:status_casters",
+    ] + select({
+        "//conditions:default": [],
+        ":enable_odml_converter": [
+            "//mediapipe/tasks/cc/text/utils:vocab_convert_utils",
+            "@odml//odml/infra/genai/inference/ml_drift/llm/tensor_loaders:model_ckpt_util",
+            "@odml//odml/infra/genai/inference/utils/xnn_utils:model_ckpt_util",
+        ],
+    }),
 )

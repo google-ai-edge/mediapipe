@@ -26,6 +26,7 @@
 #include "mediapipe/calculators/tensor/tensor_converter_gpu.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/tensor.h"
+#include "mediapipe/framework/memory_manager.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/gpu/gl_base.h"
@@ -44,8 +45,9 @@ int NumGroups(const int size, const int group_size) {  // NOLINT
 
 class TensorConverterGlImpl : public TensorConverterGpu {
  public:
-  explicit TensorConverterGlImpl(GlCalculatorHelper& gpu_helper)
-      : gpu_helper_(gpu_helper) {}
+  explicit TensorConverterGlImpl(GlCalculatorHelper& gpu_helper,
+                                 MemoryManager* memory_manager)
+      : gpu_helper_(gpu_helper), memory_manager_(memory_manager) {}
 
   ~TensorConverterGlImpl() override { glDeleteProgram(to_buffer_program_); }
 
@@ -107,7 +109,7 @@ class TensorConverterGlImpl : public TensorConverterGpu {
   absl::Status Init(int input_width, int input_height,
                     std::optional<std::pair<float, float>> output_range,
                     bool include_alpha, bool single_channel,
-                    bool flip_vertically, int num_output_channels) override {
+                    bool flip_vertically, int num_output_channels) {
     width_ = input_width;
     height_ = input_height;
     num_output_channels_ = num_output_channels;
@@ -118,7 +120,8 @@ class TensorConverterGlImpl : public TensorConverterGpu {
   Tensor Convert(const GpuBuffer& input) override {
     const auto input_texture = gpu_helper_.CreateSourceTexture(input);
     Tensor output(Tensor::ElementType::kFloat32,
-                  Tensor::Shape{1, height_, width_, num_output_channels_});
+                  Tensor::Shape{1, height_, width_, num_output_channels_},
+                  memory_manager_);
     // Convert GL texture into SSBO.
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, input_texture.name());
@@ -141,13 +144,22 @@ class TensorConverterGlImpl : public TensorConverterGpu {
   int num_output_channels_ = 0;
 
   GlCalculatorHelper& gpu_helper_;
+  MemoryManager* memory_manager_;
 };
 
 }  // namespace
 
-std::unique_ptr<TensorConverterGpu> CreateTensorConverterGl31(
-    GlCalculatorHelper& gpu_helper) {
-  return std::make_unique<TensorConverterGlImpl>(gpu_helper);
+absl::StatusOr<std::unique_ptr<TensorConverterGpu>> CreateTensorConverterGl31(
+    GlCalculatorHelper& gpu_helper, MemoryManager* memory_manager,
+    int input_width, int input_height,
+    std::optional<std::pair<float, float>> output_range, bool include_alpha,
+    bool single_channel, bool flip_vertically, int num_output_channels) {
+  auto converter =
+      std::make_unique<TensorConverterGlImpl>(gpu_helper, memory_manager);
+  MP_RETURN_IF_ERROR(converter->Init(input_width, input_height, output_range,
+                                     include_alpha, single_channel,
+                                     flip_vertically, num_output_channels));
+  return converter;
 }
 
 }  // namespace mediapipe

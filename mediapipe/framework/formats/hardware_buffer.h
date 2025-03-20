@@ -30,7 +30,7 @@ namespace mediapipe {
 
 struct HardwareBufferSpec {
   // Buffer pixel formats. See NDK's hardware_buffer.h for descriptions.
-  enum {
+  enum AhwbFormat {
     // This must be kept in sync with NDK's hardware_buffer.h
     AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM = 0x01,
     AHARDWAREBUFFER_FORMAT_R8G8B8_UNORM = 0x03,
@@ -40,7 +40,7 @@ struct HardwareBufferSpec {
   };
 
   // Buffer usage descriptions. See NDK's hardware_buffer.h for descriptions.
-  enum {
+  enum AhwbUsage {
     // This must be kept in sync with NDK's hardware_buffer.h
     AHARDWAREBUFFER_USAGE_CPU_READ_NEVER = 0x0UL,
     AHARDWAREBUFFER_USAGE_CPU_READ_RARELY = 0x2UL,
@@ -66,6 +66,7 @@ struct HardwareBufferSpec {
   uint32_t layers = 0;
   uint32_t format = 0;
   uint64_t usage = 0;
+  uint32_t stride = 0;
 };
 
 // Equality operators
@@ -89,7 +90,7 @@ class HardwareBuffer {
 
   // Constructs a HardwareBuffer instance from an existing Android NDK
   // AHardwareBuffer.
-  static absl::StatusOr<HardwareBuffer> WrapAndAquireAHardwareBuffer(
+  static absl::StatusOr<HardwareBuffer> WrapAndAcquireAHardwareBuffer(
       AHardwareBuffer* ahw_buffer);
 
   // Destructs the HardwareBuffer, releasing the AHardwareBuffer.
@@ -107,9 +108,9 @@ class HardwareBuffer {
   static bool IsSupported();
 
   // Lock the hardware buffer for the given usage flags. fence_file_descriptor
-  // specifies a fence file descriptor on which to wait before locking the
-  // buffer. Returns raw memory address if lock is successful, nullptr
-  // otherwise.
+  // specifies a fence file descriptor on which to wait and close (takes
+  // ownership) before locking the buffer. Returns raw memory address if lock is
+  // successful, nullptr otherwise.
   ABSL_MUST_USE_RESULT absl::StatusOr<void*> Lock(
       uint64_t usage, std::optional<int> fence_file_descriptor = std::nullopt);
 
@@ -148,12 +149,12 @@ class HardwareBuffer {
   static absl::StatusOr<AHardwareBuffer*> AllocateAHardwareBuffer(
       const HardwareBufferSpec& spec);
 
-  // Aquires an existing AHardwareBuffer instance and returns its
+  // Acquires an existing AHardwareBuffer instance and returns its
   // HardwareBufferSpec;
-  static absl::StatusOr<HardwareBufferSpec> AquireAHardwareBuffer(
+  static absl::StatusOr<HardwareBufferSpec> AcquireAHardwareBuffer(
       AHardwareBuffer* ahw_buffer);
 
-  // Constructs a HardwareBuffer instance from an already aquired
+  // Constructs a HardwareBuffer instance from an already acquired
   // AHardwareBuffer instance and its spec.
   HardwareBuffer(const HardwareBufferSpec& spec, AHardwareBuffer* ahwb);
 

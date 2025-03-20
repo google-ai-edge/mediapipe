@@ -127,11 +127,3 @@ cc_library(
     visibility = ["//visibility:public"],
     alwayslink = 1,
 )
-
-load("//mediapipe/java/com/google/mediapipe:mediapipe_aar.bzl", "mediapipe_aar")
-
-mediapipe_aar(
-    name = "solution_core",
-    srcs = glob(["**/*.java"]),
-    gen_libmediapipe = False,
-)

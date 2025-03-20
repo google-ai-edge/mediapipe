@@ -23,6 +23,7 @@ objc_library(
     deps = [
         "//mediapipe/tasks/ios/components/containers:MPPEmbeddingResult",
         "//mediapipe/tasks/ios/core:MPPTaskResult",
+        "//third_party/apple_frameworks:Foundation",
     ],
 )
 
@@ -60,5 +61,6 @@ objc_library(
         "//mediapipe/tasks/ios/vision/core:MPPVisionTaskRunner",
         "//mediapipe/tasks/ios/vision/image_embedder/utils:MPPImageEmbedderOptionsHelpers",
         "//mediapipe/tasks/ios/vision/image_embedder/utils:MPPImageEmbedderResultHelpers",
+        "//third_party/apple_frameworks:Foundation",
     ],
 )

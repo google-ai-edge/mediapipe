@@ -53,7 +53,7 @@ class BertTokenizerTest(tf.test.TestCase, parameterized.TestCase):
           tokenizer_class=bert_tokenizer.BertFastTokenizer,
       ),
   )
-  def test_bert_full_tokenizer(self, tokenizer_class):
+  def test_bert_tokenizer(self, tokenizer_class):
     tokenizer = tokenizer_class(self._vocab_file, True, 16)
     text_input = tf.constant(['this is an éxamplé input ¿foo'.encode('utf-8')])
     result = tokenizer.process(text_input)
@@ -84,6 +84,87 @@ class BertTokenizerTest(tf.test.TestCase, parameterized.TestCase):
     self.assertAllEqual(
         result['input_type_ids'],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    )
+
+  @parameterized.named_parameters(
+      dict(
+          testcase_name='with_padding',
+          skip_padding=False,
+          expected_output={
+              'input_word_ids': [
+                  101,
+                  2023,
+                  2003,
+                  2019,
+                  2742,
+                  7953,
+                  1094,
+                  29379,
+                  102,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+              ],
+              'input_mask': [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+              'input_type_ids': [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+              ],
+          },
+      ),
+      dict(
+          testcase_name='no_padding',
+          skip_padding=True,
+          expected_output={
+              'input_word_ids': [
+                  101,
+                  2023,
+                  2003,
+                  2019,
+                  2742,
+                  7953,
+                  1094,
+                  29379,
+                  102,
+              ],
+              'input_mask': [1, 1, 1, 1, 1, 1, 1, 1, 1],
+              'input_type_ids': [0, 0, 0, 0, 0, 0, 0, 0, 0],
+          },
+      ),
+  )
+  def test_bert_fast_tokenizer_process_fn(self, skip_padding, expected_output):
+    tokenizer = bert_tokenizer.BertFastTokenizer(self._vocab_file, True, 16)
+    text_input = tf.constant(['this is an éxamplé input ¿foo'.encode('utf-8')])
+    result = tokenizer.process_fn(text_input, skip_padding=skip_padding)
+    self.assertAllEqual(
+        result['input_word_ids'].numpy().tolist(),
+        expected_output['input_word_ids'],
+    )
+    self.assertAllEqual(
+        result['input_mask'].numpy().tolist(),
+        expected_output['input_mask'],
+    )
+    self.assertAllEqual(
+        result['input_type_ids'].numpy().tolist(),
+        expected_output['input_type_ids'],
     )
 
 

@@ -7,12 +7,12 @@ load(
     "swift_library",
 )
 load(
-    "//mediapipe/framework/tool:ios.bzl",
-    "MPP_TASK_MINIMUM_OS_VERSION",
-)
-load(
     "@org_tensorflow//tensorflow/lite:special_rules.bzl",
     "tflite_ios_lab_runner",
+)
+load(
+    "//mediapipe/framework/tool:ios.bzl",
+    "MPP_TASK_MINIMUM_OS_VERSION",
 )
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
@@ -33,7 +33,7 @@ TFL_DISABLED_SANITIZER_TAGS = [
 
 objc_library(
     name = "MPPTextClassifierObjcTestLibrary",
-    testonly = 1,
+    testonly = True,
     srcs = ["MPPTextClassifierTests.m"],
     data = [
         "//mediapipe/tasks/testdata/text:bert_text_classifier_models",
@@ -42,6 +42,7 @@ objc_library(
     deps = [
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/text/text_classifier:MPPTextClassifier",
+        "//third_party/apple_frameworks:XCTest",
     ],
 )
 
@@ -57,7 +58,7 @@ ios_unit_test(
 
 swift_library(
     name = "MPPTextClassifierSwiftTestLibrary",
-    testonly = 1,
+    testonly = True,
     srcs = ["TextClassifierTests.swift"],
     data = [
         "//mediapipe/tasks/testdata/text:bert_text_classifier_models",
@@ -67,6 +68,7 @@ swift_library(
     deps = [
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/text/text_classifier:MPPTextClassifier",
+        "//third_party/apple_frameworks:XCTest",
     ],
 )
 

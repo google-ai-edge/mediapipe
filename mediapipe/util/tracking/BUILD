@@ -199,6 +199,7 @@ cc_library(
 PARALLEL_COPTS = ["-DPARALLEL_INVOKER_ACTIVE"] + select({
     "//mediapipe:apple": [],
     "//mediapipe:android": [],
+    "//mediapipe:emscripten": ["-UPARALLEL_INVOKER_ACTIVE"],
     "//conditions:default": [],
 })
 

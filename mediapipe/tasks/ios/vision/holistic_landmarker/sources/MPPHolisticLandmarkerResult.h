@@ -25,35 +25,35 @@ NS_SWIFT_NAME(HolisticLandmarkerResult)
 @interface MPPHolisticLandmarkerResult : MPPTaskResult
 
 /** Detected face landmarks in normalized image coordinates. */
-@property(nonatomic, readonly) NSArray<NSArray<MPPNormalizedLandmark *> *> *faceLandmarks;
+@property(nonatomic, readonly) NSArray<MPPNormalizedLandmark *> *faceLandmarks;
 
 /** Face blendshapes results. Defaults to `nil` if not enabled. */
-@property(nonatomic, readonly, nullable) NSArray<MPPClassifications *> *faceBlendshapes;
+@property(nonatomic, readonly, nullable) MPPClassifications *faceBlendshapes;
 
 /** Detected pose landmarks in normalized image coordinates. */
-@property(nonatomic, readonly) NSArray<NSArray<MPPNormalizedLandmark *> *> *poseLandmarks;
+@property(nonatomic, readonly) NSArray<MPPNormalizedLandmark *> *poseLandmarks;
 
 /** Pose landmarks in world coordinates of detected poses. */
-@property(nonatomic, readonly) NSArray<NSArray<MPPLandmark *> *> *poseWorldLandmarks;
+@property(nonatomic, readonly) NSArray<MPPLandmark *> *poseWorldLandmarks;
 
 /** Optional segmentation mask for the detected pose. Defaults to `nil` if not enabled.*/
-@property(nonatomic, readonly, nullable) NSArray<MPPMask *> *poseSegmentationMasks;
+@property(nonatomic, readonly, nullable) MPPMask *poseSegmentationMask;
 
 /** Left hand landmarks in normalized image coordinates of detected left hands. */
-@property(nonatomic, readonly) NSArray<NSArray<MPPNormalizedLandmark *> *> *leftHandLandmarks;
+@property(nonatomic, readonly) NSArray<MPPNormalizedLandmark *> *leftHandLandmarks;
 
 /** Left hand landmarks in world coordinates of detected left hands. */
-@property(nonatomic, readonly) NSArray<NSArray<MPPLandmark *> *> *leftHandWorldLandmarks;
+@property(nonatomic, readonly) NSArray<MPPLandmark *> *leftHandWorldLandmarks;
 
 /** Right hand landmarks in normalized image coordinates of detected right hands. */
-@property(nonatomic, readonly) NSArray<NSArray<MPPNormalizedLandmark *> *> *rightHandLandmarks;
+@property(nonatomic, readonly) NSArray<MPPNormalizedLandmark *> *rightHandLandmarks;
 
 /** Right hand landmarks in world coordinates of detected right hands. */
-@property(nonatomic, readonly) NSArray<NSArray<MPPLandmark *> *> *rightHandWorldLandmarks;
+@property(nonatomic, readonly) NSArray<MPPLandmark *> *rightHandWorldLandmarks;
 
 /**
  * Initializes a new `HolisticLandmarkerResult` with the given array of face landmarks, face
- * blendshapes, pose landmarks, pose world landmarks, pose segmentation masks, left hand landmarks,
+ * blendshapes, pose landmarks, pose world landmarks, pose segmentation mask, left hand landmarks,
  * left hand world landmarks, right hand landmarks, right hand world landmarks and timestamp (in
  * milliseconds).
  *
@@ -61,7 +61,7 @@ NS_SWIFT_NAME(HolisticLandmarkerResult)
  * @param faceBlendshapes An array of `Classifications` objects.
  * @param poseLandmarks An array of `NormalizedLandmark` objects.
  * @param poseWorldLandmarks An array of `Landmark` objects.
- * @param poseSegmentationMasks An array of `Mask` objects.
+ * @param poseSegmentationMask A `Mask` object.
  * @param leftHandLandmarks An array of `NormalizedLandmark` objects.
  * @param leftHandWorldLandmarks An array of `Landmark` objects.
  * @param rightHandLandmarks An array of `NormalizedLandmark` objects.
@@ -69,21 +69,20 @@ NS_SWIFT_NAME(HolisticLandmarkerResult)
  * @param timestampInMilliseconds The timestamp (in milliseconds) for this result.
  *
  * @return An instance of `HolisticLandmarkerResult` initialized with the given array of face
- * landmarks, face blendshapes, pose landmarks, pose world landmarks, pose segmentation masks, left
+ * landmarks, face blendshapes, pose landmarks, pose world landmarks, pose segmentation mask, left
  * hand landmarks, left hand world landmarks, right hand landmarks, right hand world landmarks and
  * timestamp (in milliseconds).
  */
-- (instancetype)
-      initWithFaceLandmarks:(NSArray<NSArray<MPPNormalizedLandmark *> *> *)faceLandmarks
-            faceBlendshapes:(nullable NSArray<MPPClassifications *> *)faceBlendshapes
-              poseLandmarks:(NSArray<NSArray<MPPNormalizedLandmark *> *> *)poseLandmarks
-         poseWorldLandmarks:(NSArray<NSArray<MPPLandmark *> *> *)poseWorldLandmarks
-      poseSegmentationMasks:(NSArray<MPPMask *> *)poseSegmentationMasks
-          leftHandLandmarks:(NSArray<NSArray<MPPNormalizedLandmark *> *> *)leftHandLandmarks
-     leftHandWorldLandmarks:(NSArray<NSArray<MPPLandmark *> *> *)leftHandWorldLandmarks
-         rightHandLandmarks:(NSArray<NSArray<MPPNormalizedLandmark *> *> *)rightHandLandmarks
-    rightHandWorldLandmarks:(NSArray<NSArray<MPPLandmark *> *> *)rightHandWorldLandmarks
-    timestampInMilliseconds:(NSInteger)timestampInMilliseconds NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithFaceLandmarks:(NSArray<MPPNormalizedLandmark *> *)faceLandmarks
+                      faceBlendshapes:(nullable MPPClassifications *)faceBlendshapes
+                        poseLandmarks:(NSArray<MPPNormalizedLandmark *> *)poseLandmarks
+                   poseWorldLandmarks:(NSArray<MPPLandmark *> *)poseWorldLandmarks
+                 poseSegmentationMask:(nullable MPPMask *)poseSegmentationMask
+                    leftHandLandmarks:(NSArray<MPPNormalizedLandmark *> *)leftHandLandmarks
+               leftHandWorldLandmarks:(NSArray<MPPLandmark *> *)leftHandWorldLandmarks
+                   rightHandLandmarks:(NSArray<MPPNormalizedLandmark *> *)rightHandLandmarks
+              rightHandWorldLandmarks:(NSArray<MPPLandmark *> *)rightHandWorldLandmarks
+              timestampInMilliseconds:(NSInteger)timestampInMilliseconds NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)initWithTimestampInMilliseconds:(NSInteger)timestampInMilliseconds NS_UNAVAILABLE;
 

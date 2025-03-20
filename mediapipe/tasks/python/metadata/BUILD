@@ -1,6 +1,6 @@
-# Placeholder: load py_library
-# Placeholder: load py_binary
 load("//mediapipe/tasks/metadata:build_defs.bzl", "stamp_metadata_parser_version")
+# Placeholder: load py_binary
+# Placeholder: load py_library
 
 package(
     licenses = ["notice"],  # Apache 2.0
@@ -19,7 +19,6 @@ py_library(
         ":metadata_parser_py",
     ],
     data = ["//mediapipe/tasks/metadata:metadata_schema.fbs"],
-    srcs_version = "PY3",
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/tasks/cc/metadata/python:_pywrap_metadata_version",
@@ -27,6 +26,7 @@ py_library(
         "//mediapipe/tasks/metadata:schema_py",
         "//mediapipe/tasks/python/metadata/flatbuffers_lib:_pywrap_flatbuffers",
         "@flatbuffers//:runtime_py",
+        "@mediapipe_pip_deps_numpy//:pkg",
     ],
 )
 
@@ -36,5 +36,8 @@ py_binary(
     visibility = [
         "//visibility:public",
     ],
-    deps = [":metadata"],
+    deps = [
+        ":metadata",
+        "@mediapipe_pip_deps_absl_py//:pkg",
+    ],
 )

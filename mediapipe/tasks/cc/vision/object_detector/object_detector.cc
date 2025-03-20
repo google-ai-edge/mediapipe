@@ -107,6 +107,10 @@ std::unique_ptr<ObjectDetectorOptionsProto> ConvertObjectDetectorOptionsToProto(
   for (const std::string& category : options->category_denylist) {
     options_proto->add_category_denylist(category);
   }
+  options_proto->set_multiclass_nms(
+      options->non_max_suppression_options.multiclass_nms);
+  options_proto->set_min_suppression_threshold(
+      options->non_max_suppression_options.min_suppression_threshold);
   return options_proto;
 }
 
@@ -153,7 +157,9 @@ absl::StatusOr<std::unique_ptr<ObjectDetector>> ObjectDetector::Create(
           std::move(options_proto),
           options->running_mode == core::RunningMode::LIVE_STREAM),
       std::move(options->base_options.op_resolver), options->running_mode,
-      std::move(packets_callback));
+      std::move(packets_callback),
+      /*disable_default_service=*/
+      options->base_options.disable_default_service);
 }
 
 absl::StatusOr<ObjectDetectorResult> ObjectDetector::Detect(

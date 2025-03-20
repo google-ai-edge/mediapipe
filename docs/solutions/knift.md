@@ -74,7 +74,7 @@ in Google Developers Blog.
 ### Matching US Dollar Bills
 
 In MediaPipe, we've already provided an
-[index file](https://github.com/google/mediapipe/tree/master/mediapipe/models/knift_index.pb)
+[index file](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/models/knift_index.pb)
 pre-computed from the 3 template images (of US dollar bills) shown below. If
 you'd like to use your own template images, see
 [Matching Your Own Template Images](#matching-your-own-template-images).
@@ -90,10 +90,10 @@ to visualize its associated subgraphs, please see
 [visualizer documentation](../tools/visualizer.md).
 
 *   Graph:
-    [`mediapipe/graphs/template_matching/template_matching_mobile_cpu.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/template_matching/template_matching_mobile_cpu.pbtxt)
+    [`mediapipe/graphs/template_matching/template_matching_mobile_cpu.pbtxt`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/template_matching/template_matching_mobile_cpu.pbtxt)
 *   Android target:
     [(or download prebuilt ARM64 APK)](https://drive.google.com/open?id=1tSWRfes9rAM4NrzmJBplguNQQvaeBZSa)
-    [`mediapipe/examples/android/src/java/com/google/mediapipe/apps/templatematchingcpu:templatematchingcpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/templatematchingcpu/BUILD)
+    [`mediapipe/examples/android/src/java/com/google/mediapipe/apps/templatematchingcpu:templatematchingcpu`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/templatematchingcpu/BUILD)
 
 Note: MediaPipe uses OpenCV 3 by default. However, because of
 [issues](https://github.com/opencv/opencv/issues/11488) between NDK 17+ and
@@ -119,7 +119,7 @@ sed -i -e 's:libopencv_java4:libopencv_java3:g' third_party/opencv_android.BUILD
 Tip: The example uses the TFLite
 [XNNPACK delegate](https://github.com/tensorflow/tensorflow/tree/master/tensorflow/lite/delegates/xnnpack)
 by default for faster inference. Users can change the
-[option in TfLiteInferenceCalculator](https://github.com/google/mediapipe/tree/master/mediapipe/calculators/tflite/tflite_inference_calculator.proto)
+[option in TfLiteInferenceCalculator](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/calculators/tflite/tflite_inference_calculator.proto)
 to run regular TFLite inference.
 
 ### Matching Your Own Template Images
@@ -142,9 +142,9 @@ to run regular TFLite inference.
     The output index file includes the extracted KNIFT features.
 
 *   Step 3: Replace
-    [mediapipe/models/knift_index.pb](https://github.com/google/mediapipe/tree/master/mediapipe/models/knift_index.pb)
+    [mediapipe/models/knift_index.pb](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/models/knift_index.pb)
     with the index file you generated, and update
-    [mediapipe/models/knift_labelmap.txt](https://github.com/google/mediapipe/tree/master/mediapipe/models/knift_labelmap.txt)
+    [mediapipe/models/knift_labelmap.txt](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/models/knift_labelmap.txt)
     with your own template names.
 
 *   Step 4: Build and run the app using the same instructions in

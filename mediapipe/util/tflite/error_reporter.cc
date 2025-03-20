@@ -40,6 +40,8 @@ int ErrorReporter::Report(const char* format, va_list args) {
   return num_characters;
 }
 
+bool ErrorReporter::HasError() const { return message_[0] != '\0'; }
+
 std::string ErrorReporter::message() { return message_; }
 
 std::string ErrorReporter::previous_message() { return previous_message_; }

@@ -83,7 +83,8 @@ class TaskRunner {
       std::shared_ptr<Executor> default_executor = nullptr,
       std::optional<PacketMap> input_side_packets = std::nullopt,
       std::shared_ptr<::mediapipe::GpuResources> resources = nullptr,
-      std::optional<ErrorFn> error_fn = std::nullopt);
+      std::optional<ErrorFn> error_fn = std::nullopt,
+      bool disable_default_service = false);
 #else
   static absl::StatusOr<std::unique_ptr<TaskRunner>> Create(
       CalculatorGraphConfig config,
@@ -91,7 +92,8 @@ class TaskRunner {
       PacketsCallback packets_callback = nullptr,
       std::shared_ptr<Executor> default_executor = nullptr,
       std::optional<PacketMap> input_side_packets = std::nullopt,
-      std::optional<ErrorFn> error_fn = std::nullopt);
+      std::optional<ErrorFn> error_fn = std::nullopt,
+      bool disable_default_service = false);
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
   // TaskRunner is neither copyable nor movable.
@@ -147,7 +149,8 @@ class TaskRunner {
       std::unique_ptr<tflite::OpResolver> op_resolver = nullptr,
       std::shared_ptr<Executor> default_executor = nullptr,
       std::optional<PacketMap> input_side_packets = std::nullopt,
-      std::optional<ErrorFn> error_fn = std::nullopt);
+      std::optional<ErrorFn> error_fn = std::nullopt,
+      bool disable_default_service = false);
 
   // Starts the task runner. Returns an ok status to indicate that the
   // runner is ready to accept input data. Otherwise, returns an error status to

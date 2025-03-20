@@ -94,14 +94,14 @@ ImageEmbedder* CppImageEmbedderCreate(const ImageEmbedderOptions& options,
             ABSL_LOG(ERROR)
                 << "Embedding extraction failed: " << cpp_result.status();
             CppProcessError(cpp_result.status(), &error_msg);
-            result_callback(nullptr, MpImage(), timestamp, error_msg);
+            result_callback(nullptr, nullptr, timestamp, error_msg);
             free(error_msg);
             return;
           }
 
           // Result is valid for the lifetime of the callback function.
-          ImageEmbedderResult result;
-          CppConvertToEmbeddingResult(*cpp_result, &result);
+          auto result = std::make_unique<ImageEmbedderResult>();
+          CppConvertToEmbeddingResult(*cpp_result, result.get());
 
           const auto& image_frame = image.GetImageFrameSharedPtr();
           const MpImage mp_image = {
@@ -112,10 +112,8 @@ ImageEmbedder* CppImageEmbedderCreate(const ImageEmbedderOptions& options,
                   .width = image_frame->Width(),
                   .height = image_frame->Height()}};
 
-          result_callback(&result, mp_image, timestamp,
+          result_callback(result.release(), &mp_image, timestamp,
                           /* error_msg= */ nullptr);
-
-          CppCloseEmbeddingResult(&result);
         };
   }
 

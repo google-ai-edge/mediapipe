@@ -1,15 +1,19 @@
 #include <memory>
+#include <string>
 #include <utility>
 
-#include "absl/log/absl_log.h"
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/types/optional.h"
 #include "mediapipe/calculators/tensor/tensor_converter_gl30.h"
 #include "mediapipe/calculators/tensor/tensor_converter_gl31.h"
 #include "mediapipe/calculators/tensor/tensor_converter_gpu.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/tensor.h"
+#include "mediapipe/framework/memory_manager.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
+#include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/gpu/gpu_buffer.h"
 #include "mediapipe/gpu/gpu_test_base.h"
 #include "mediapipe/util/image_test_utils.h"
@@ -25,23 +29,33 @@ constexpr float kEpsilon = 1e-4f;
 enum GlVersion { GlVersion30, GlVersion31 };
 
 class TensorConverterGlTest : public GpuTestWithParamBase<GlVersion> {
-  void SetUp() override {
-    GpuTestWithParamBase::SetUp();
-    switch (GetParam()) {
-      case GlVersion30:
-        tensor_converter_ = CreateTensorConverterGl30(helper_);
-        break;
-      case GlVersion31:
-        tensor_converter_ = CreateTensorConverterGl31(helper_);
-        break;
-      default:
-        ABSL_LOG(FATAL) << "Unknown GlVersion: " << GetParam();
-        break;
-    }
-  }
+  void SetUp() override { GpuTestWithParamBase::SetUp(); }
 
  protected:
-  std::unique_ptr<TensorConverterGpu> tensor_converter_;
+  absl::StatusOr<std::unique_ptr<TensorConverterGpu>> CreateTensorConverter(
+      int width, int height, const std::pair<float, float>& output_range,
+      bool include_alpha, bool single_channel, bool flip_vertically,
+      int num_output_channels) {
+    std::unique_ptr<TensorConverterGpu> tensor_converter;
+    switch (GetParam()) {
+      case GlVersion30:
+        return CreateTensorConverterGl30(helper_, &memory_manager_, width,
+                                         height, output_range, include_alpha,
+                                         single_channel, flip_vertically,
+                                         num_output_channels);
+        break;
+      case GlVersion31:
+        return CreateTensorConverterGl31(helper_, &memory_manager_, width,
+                                         height, output_range, include_alpha,
+                                         single_channel, flip_vertically,
+                                         num_output_channels);
+        break;
+    }
+    return absl::InternalError("Unknown GlVersion: " +
+                               std::to_string(GetParam()));
+  }
+
+  MemoryManager memory_manager_;
 };
 
 INSTANTIATE_TEST_SUITE_P(ConfigValues, TensorConverterGlTest,
@@ -52,12 +66,15 @@ TEST_P(TensorConverterGlTest, ConvertFloat32ImageFrameToTensorOnGpu) {
   RunInGlContext([this]() {
     GpuBuffer input = CreateTestFloat32GpuBuffer(/*width=*/3, /*height=*/4);
 
-    MP_EXPECT_OK(tensor_converter_->Init(
-        input.width(), input.height(), kDefaultOutputRange,
-        /*include_alpha=*/false, /*single_channel=*/true,
-        /*flip_vertically=*/false, /*num_output_channels=*/1));
+    MP_ASSERT_OK_AND_ASSIGN(
+        auto tensor_converter,
+        CreateTensorConverter(input.width(), input.height(),
+                              kDefaultOutputRange,
+                              /*include_alpha=*/false, /*single_channel=*/true,
+                              /*flip_vertically=*/false,
+                              /*num_output_channels=*/1));
 
-    Tensor output = tensor_converter_->Convert(input);
+    Tensor output = tensor_converter->Convert(input);
 
     const auto input_view = input.GetReadView<ImageFrame>();
     const auto cpu_read_view = output.GetCpuReadView();
@@ -74,12 +91,14 @@ TEST_P(TensorConverterGlTest, ConvertScaledFloat32ImageFrameToTensorOnGpu) {
   RunInGlContext([this]() {
     GpuBuffer input = CreateTestFloat32GpuBuffer(/*width=*/3, /*height=*/4);
     const std::pair<float, float> output_range = {-1.0f, 1.0f};
-    MP_EXPECT_OK(tensor_converter_->Init(
-        input.width(), input.height(), output_range,
-        /*include_alpha=*/false, /*single_channel=*/true,
-        /*flip_vertically=*/false, /*num_output_channels=*/1));
+    MP_ASSERT_OK_AND_ASSIGN(
+        auto tensor_converter,
+        CreateTensorConverter(input.width(), input.height(), output_range,
+                              /*include_alpha=*/false, /*single_channel=*/true,
+                              /*flip_vertically=*/false,
+                              /*num_output_channels=*/1));
 
-    Tensor output = tensor_converter_->Convert(input);
+    Tensor output = tensor_converter->Convert(input);
 
     const auto input_view = input.GetReadView<ImageFrame>();
     const auto cpu_read_view = output.GetCpuReadView();
@@ -98,12 +117,15 @@ TEST_P(TensorConverterGlTest, ConvertGrey8ImageFrameToTensorOnGpu) {
   RunInGlContext([this]() {
     GpuBuffer input = CreateTestGrey8GpuBuffer(/*width=*/3, /*height=*/4);
 
-    MP_EXPECT_OK(tensor_converter_->Init(
-        input.width(), input.height(), kDefaultOutputRange,
-        /*include_alpha=*/false, /*single_channel=*/true,
-        /*flip_vertically=*/false, /*num_output_channels=*/1));
+    MP_ASSERT_OK_AND_ASSIGN(
+        auto tensor_converter,
+        CreateTensorConverter(input.width(), input.height(),
+                              kDefaultOutputRange,
+                              /*include_alpha=*/false, /*single_channel=*/true,
+                              /*flip_vertically=*/false,
+                              /*num_output_channels=*/1));
 
-    Tensor output = tensor_converter_->Convert(input);
+    Tensor output = tensor_converter->Convert(input);
     const auto input_view = input.GetReadView<ImageFrame>();
     const auto cpu_read_view = output.GetCpuReadView();
     const float* tensor_ptr = cpu_read_view.buffer<float>();
@@ -120,12 +142,15 @@ TEST_P(TensorConverterGlTest, ConvertRgbaImageFrameToTensorOnGpu) {
     constexpr int kNumChannels = 4;
     GpuBuffer input = CreateTestRgba8GpuBuffer(/*width=*/3, /*height=*/4);
 
-    MP_EXPECT_OK(tensor_converter_->Init(
-        input.width(), input.height(), kDefaultOutputRange,
-        /*include_alpha=*/true, /*single_channel=*/false,
-        /*flip_vertically=*/false, /*num_output_channels=*/4));
+    MP_ASSERT_OK_AND_ASSIGN(
+        auto tensor_converter,
+        CreateTensorConverter(input.width(), input.height(),
+                              kDefaultOutputRange,
+                              /*include_alpha=*/true, /*single_channel=*/false,
+                              /*flip_vertically=*/false,
+                              /*num_output_channels=*/4));
 
-    Tensor output = tensor_converter_->Convert(input);
+    Tensor output = tensor_converter->Convert(input);
     const auto input_view = input.GetReadView<ImageFrame>();
     const auto cpu_read_view = output.GetCpuReadView();
     const float* tensor_ptr = cpu_read_view.buffer<float>();
@@ -144,12 +169,15 @@ TEST_P(TensorConverterGlTest,
     constexpr int kNumOutputChannel = 3;
     GpuBuffer input = CreateTestRgba8GpuBuffer(/*width=*/3, /*height=*/4);
 
-    MP_EXPECT_OK(tensor_converter_->Init(
-        input.width(), input.height(), kDefaultOutputRange,
-        /*include_alpha=*/false, /*single_channel=*/false,
-        /*flip_vertically=*/false, /*num_output_channels=*/3));
+    MP_ASSERT_OK_AND_ASSIGN(
+        auto tensor_converter,
+        CreateTensorConverter(input.width(), input.height(),
+                              kDefaultOutputRange,
+                              /*include_alpha=*/false, /*single_channel=*/false,
+                              /*flip_vertically=*/false,
+                              /*num_output_channels=*/3));
 
-    Tensor output = tensor_converter_->Convert(input);
+    Tensor output = tensor_converter->Convert(input);
     const auto input_view = input.GetReadView<ImageFrame>();
     const auto cpu_read_view = output.GetCpuReadView();
     const float* tensor_ptr = cpu_read_view.buffer<float>();
@@ -170,12 +198,15 @@ TEST_P(TensorConverterGlTest, ConvertFlippedFloat32ImageFrameToTensorOnGpu) {
   RunInGlContext([this]() {
     GpuBuffer input = CreateTestFloat32GpuBuffer(/*width=*/3, /*height=*/4);
 
-    MP_EXPECT_OK(tensor_converter_->Init(
-        input.width(), input.height(), kDefaultOutputRange,
-        /*include_alpha=*/false, /*single_channel=*/true,
-        /*flip_vertically=*/true, /*num_output_channels=*/1));
+    MP_ASSERT_OK_AND_ASSIGN(
+        auto tensor_converter,
+        CreateTensorConverter(input.width(), input.height(),
+                              kDefaultOutputRange,
+                              /*include_alpha=*/false, /*single_channel=*/true,
+                              /*flip_vertically=*/true,
+                              /*num_output_channels=*/1));
 
-    Tensor output = tensor_converter_->Convert(input);
+    Tensor output = tensor_converter->Convert(input);
 
     const auto input_view = input.GetReadView<ImageFrame>();
     const auto cpu_read_view = output.GetCpuReadView();
@@ -198,12 +229,15 @@ TEST_P(TensorConverterGlTest, ConvertFlippedRgbaImageFrameToTensorOnGpu) {
     constexpr int kNumChannels = 4;
     GpuBuffer input = CreateTestRgba8GpuBuffer(/*width=*/3, /*height=*/2);
 
-    MP_EXPECT_OK(tensor_converter_->Init(
-        input.width(), input.height(), kDefaultOutputRange,
-        /*include_alpha=*/true, /*single_channel=*/false,
-        /*flip_vertically=*/true, /*num_output_channels=*/kNumChannels));
+    MP_ASSERT_OK_AND_ASSIGN(
+        auto tensor_converter,
+        CreateTensorConverter(input.width(), input.height(),
+                              kDefaultOutputRange,
+                              /*include_alpha=*/true, /*single_channel=*/false,
+                              /*flip_vertically=*/true,
+                              /*num_output_channels=*/kNumChannels));
 
-    Tensor output = tensor_converter_->Convert(input);
+    Tensor output = tensor_converter->Convert(input);
 
     const auto input_view = input.GetReadView<ImageFrame>();
     const auto cpu_read_view = output.GetCpuReadView();
@@ -229,12 +263,15 @@ TEST_P(TensorConverterGlTest,
   RunInGlContext([this]() {
     GpuBuffer input = CreateTestRgba8GpuBuffer(/*width=*/3, /*height=*/4);
 
-    MP_EXPECT_OK(tensor_converter_->Init(
-        input.width(), input.height(), kDefaultOutputRange,
-        /*include_alpha=*/false, /*single_channel=*/true,
-        /*flip_vertically=*/false, /*num_output_channels=*/1));
+    MP_ASSERT_OK_AND_ASSIGN(
+        auto tensor_converter,
+        CreateTensorConverter(input.width(), input.height(),
+                              kDefaultOutputRange,
+                              /*include_alpha=*/false, /*single_channel=*/true,
+                              /*flip_vertically=*/false,
+                              /*num_output_channels=*/1));
 
-    Tensor output = tensor_converter_->Convert(input);
+    Tensor output = tensor_converter->Convert(input);
 
     const auto input_view = input.GetReadView<ImageFrame>();
     const auto cpu_read_view = output.GetCpuReadView();

@@ -15,13 +15,12 @@
 #ifndef MEDIAPIPE_ANDROID_UTIL_ASSET_MANAGER_UTIL_H_
 #define MEDIAPIPE_ANDROID_UTIL_ASSET_MANAGER_UTIL_H_
 
-#include <string>
-#include <vector>
-
 #ifdef __ANDROID__
 #include <android/asset_manager.h>
 #include <android/asset_manager_jni.h>
 #include <jni.h>
+
+#include <string>
 
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/singleton.h"
@@ -31,11 +30,14 @@
 namespace mediapipe {
 
 // Thin wrapper over AAssetManager provided by JNI. This class is meant to be
-// used as a singleton.
+// used as a singleton. (Singleton<AssetManager>::get()->Initialize/ReadFile...)
 //
-// Usage: Call one of Initialize* functions from a JNI function that has access
-// to a context/activity/etc. This initializes the asset manager and now files
-// bundled in the assets folder can be read using ReadFile().
+// USAGE: call one of Initialize* functions from a JNI function that has access
+// to a context/activity/etc. (See
+// mediapipe/java/com/google/mediapipe/framework/AndroidAssetUtil.java
+// for initialization method you can use right away.) This initializes the
+// AssetManager and MediaPipe's GetResourceContents should be able to read
+// resources from the assets folder using AssetManager::ReadFile()
 //
 // NOTE: initialization should happen strictly once and guaranteed to complete
 // before any possible use, otherwise it cannot be used safely across multiple

@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <utility>
@@ -24,11 +25,11 @@
 #include "mediapipe/calculators/tensor/inference_calculator_utils.h"
 #include "mediapipe/calculators/tensor/inference_interpreter_delegate_runner.h"
 #include "mediapipe/calculators/tensor/inference_runner.h"
+#include "mediapipe/calculators/tensor/tensor_span.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
-#include "tensorflow/lite/interpreter.h"
 #if defined(MEDIAPIPE_ANDROID)
 #include "tensorflow/lite/delegates/nnapi/nnapi_delegate.h"
 #endif  // ANDROID
@@ -38,20 +39,20 @@ namespace mediapipe {
 namespace api2 {
 
 class InferenceCalculatorCpuImpl
-    : public NodeImpl<InferenceCalculatorCpu, InferenceCalculatorCpuImpl> {
+    : public InferenceCalculatorNodeImpl<InferenceCalculatorCpu,
+                                         InferenceCalculatorCpuImpl> {
  public:
   static absl::Status UpdateContract(CalculatorContract* cc);
 
   absl::Status Open(CalculatorContext* cc) override;
-  absl::Status Process(CalculatorContext* cc) override;
   absl::Status Close(CalculatorContext* cc) override;
 
  private:
   absl::StatusOr<std::unique_ptr<InferenceRunner>> CreateInferenceRunner(
       CalculatorContext* cc);
   absl::StatusOr<TfLiteDelegatePtr> MaybeCreateDelegate(CalculatorContext* cc);
-  absl::Status ProcessTensors(CalculatorContext* cc);
-  absl::Status ProcessTensorVectors(CalculatorContext* cc);
+  absl::StatusOr<std::vector<Tensor>> Process(
+      CalculatorContext* cc, const TensorSpan& tensor_span) override;
   std::unique_ptr<InferenceRunner> inference_runner_;
 };
 
@@ -61,66 +62,22 @@ absl::Status InferenceCalculatorCpuImpl::UpdateContract(
   RET_CHECK(!options.model_path().empty() ^ kSideInModel(cc).IsConnected())
       << "Either model as side packet or model path in options is required.";
 
-  // TODO: When this becomes integrated into additional
-  // InferenceCalculator variants, refactor into a common helper.
-  RET_CHECK(kInTensors(cc).IsConnected() ^ (kInTensor(cc).Count() > 0))
-      << "Exactly one of TENSORS and TENSOR must be used for input.";
-  RET_CHECK(kOutTensors(cc).IsConnected() ^ (kOutTensor(cc).Count() > 0))
-      << "Exactly one of TENSORS and TENSOR must be used for output.";
-  RET_CHECK(kInTensors(cc).IsConnected() ^ (kOutTensor(cc).Count() > 0))
-      << "TENSORS and TENSOR cannot be used together.";
+  MP_RETURN_IF_ERROR(TensorContractCheck(cc));
 
   return absl::OkStatus();
 }
 
 absl::Status InferenceCalculatorCpuImpl::Open(CalculatorContext* cc) {
   MP_ASSIGN_OR_RETURN(inference_runner_, CreateInferenceRunner(cc));
-  return absl::OkStatus();
+  return InferenceCalculatorNodeImpl::UpdateIoMapping(
+      cc, inference_runner_->GetInputOutputTensorNames());
 }
 
-absl::Status InferenceCalculatorCpuImpl::ProcessTensorVectors(
-    CalculatorContext* cc) {
-  // Skip if empty input stream, but error if input vector is empty.
-  if (kInTensors(cc).IsEmpty()) {
-    return absl::OkStatus();
-  }
-  const auto& input_tensors = *kInTensors(cc);
-  RET_CHECK(!input_tensors.empty());
-
+absl::StatusOr<std::vector<Tensor>> InferenceCalculatorCpuImpl::Process(
+    CalculatorContext* cc, const TensorSpan& tensor_span) {
   MP_ASSIGN_OR_RETURN(std::vector<Tensor> output_tensors,
-                      inference_runner_->Run(cc, input_tensors));
-  kOutTensors(cc).Send(std::move(output_tensors));
-  return absl::OkStatus();
-}
-
-absl::Status InferenceCalculatorCpuImpl::ProcessTensors(CalculatorContext* cc) {
-  // First, wrap inputs into a vector of pointers, returning early if any empty
-  // streams.
-  std::vector<const Tensor*> input_tensor_pointers;
-  for (int i = 0; i < kInTensor(cc).Count(); ++i) {
-    if (kInTensor(cc)[i].IsEmpty()) {
-      return absl::OkStatus();
-    }
-    input_tensor_pointers.push_back(&(*kInTensor(cc)[i]));
-  }
-
-  // Then perform inference
-  MP_ASSIGN_OR_RETURN(
-      std::vector<Tensor> output_tensors,
-      inference_runner_->RunFromPointers(cc, input_tensor_pointers));
-
-  // And pipe each one into the appropriate output stream
-  for (int i = 0; i < output_tensors.size(); ++i) {
-    kOutTensor(cc)[i].Send(std::move(output_tensors[i]));
-  }
-  return absl::OkStatus();
-}
-
-absl::Status InferenceCalculatorCpuImpl::Process(CalculatorContext* cc) {
-  if (kInTensors(cc).IsConnected()) {
-    return ProcessTensorVectors(cc);
-  }
-  return ProcessTensors(cc);
+                      inference_runner_->Run(cc, tensor_span));
+  return output_tensors;
 }
 
 absl::Status InferenceCalculatorCpuImpl::Close(CalculatorContext* cc) {
@@ -132,12 +89,14 @@ absl::StatusOr<std::unique_ptr<InferenceRunner>>
 InferenceCalculatorCpuImpl::CreateInferenceRunner(CalculatorContext* cc) {
   MP_ASSIGN_OR_RETURN(auto model_packet, GetModelAsPacket(cc));
   MP_ASSIGN_OR_RETURN(auto op_resolver_packet, GetOpResolverAsPacket(cc));
+  const auto& options = cc->Options<mediapipe::InferenceCalculatorOptions>();
   const int interpreter_num_threads =
       cc->Options<mediapipe::InferenceCalculatorOptions>().cpu_num_thread();
   MP_ASSIGN_OR_RETURN(TfLiteDelegatePtr delegate, MaybeCreateDelegate(cc));
   return CreateInferenceInterpreterDelegateRunner(
       std::move(model_packet), std::move(op_resolver_packet),
-      std::move(delegate), interpreter_num_threads);
+      std::move(delegate), interpreter_num_threads,
+      &options.input_output_config());
 }
 
 absl::StatusOr<TfLiteDelegatePtr>
@@ -187,7 +146,7 @@ InferenceCalculatorCpuImpl::MaybeCreateDelegate(CalculatorContext* cc) {
   }
 #endif  // MEDIAPIPE_ANDROID
 
-#if defined(__EMSCRIPTEN__)
+#if defined(__EMSCRIPTEN__) || MEDIAPIPE_FORCE_CPU_INFERENCE
   const bool use_xnnpack = true;
 #else
   const bool use_xnnpack = opts_has_delegate && opts_delegate.has_xnnpack();

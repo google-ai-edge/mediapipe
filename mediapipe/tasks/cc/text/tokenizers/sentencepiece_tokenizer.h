@@ -25,7 +25,7 @@ limitations under the License.
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/tasks/cc/text/tokenizers/tokenizer.h"
-#include "src/sentencepiece_processor.h"
+#include "sentencepiece/src/sentencepiece_processor.h"  // from @com_google_sentencepiece
 
 namespace mediapipe {
 namespace tasks {

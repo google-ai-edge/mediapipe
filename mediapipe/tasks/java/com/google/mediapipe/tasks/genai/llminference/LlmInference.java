@@ -1,26 +1,39 @@
 package com.google.mediapipe.tasks.genai.llminference;
 
+
 import android.content.Context;
 import com.google.auto.value.AutoValue;
-import com.google.mediapipe.tasks.core.ErrorListener;
-import com.google.mediapipe.tasks.core.LlmTaskRunner;
-import com.google.mediapipe.tasks.core.OutputHandler.ProgressListener;
-import com.google.mediapipe.tasks.core.TaskOptions;
-import com.google.mediapipe.tasks.core.jni.proto.LlmOptionsProto.LlmSessionConfig;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.mediapipe.tasks.genai.llminference.jni.proto.LlmOptionsProto.LlmModelSettings;
+import com.google.mediapipe.tasks.genai.llminference.jni.proto.LlmOptionsProto.LlmModelSettings.LlmPreferredBackend;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /** LlmInference Task Java API */
-public final class LlmInference implements AutoCloseable {
-  private static final char TOKEN_SPLITTER = '▁'; // Note this is NOT an underscore: ▁(U+2581)
-  private static final String NEW_LINE = "<0x0A>";
-  private static final String EOD = "\\[eod\\]";
+public class LlmInference implements AutoCloseable {
+  /** The backend to use for inference. */
+  public enum Backend {
+    /** Use the default backend for the model. */
+    DEFAULT,
+    /** Use the CPU backend for inference. */
+    CPU,
+    /** Use the GPU backend for inference. */
+    GPU
+  }
+
+  private static final String STATS_TAG = LlmInference.class.getSimpleName();
 
   private static final int NUM_DECODE_STEPS_PER_SYNC = 3;
 
   private final LlmTaskRunner taskRunner;
-  private final AtomicBoolean isProcessing;
+
+  /**
+   * An implicit session for all request that do use the public session API. These sessions are
+   * short-lived and are only kept for a single inference.
+   */
+  private final AtomicReference<LlmInferenceSession> implicitSession;
 
   static {
     System.loadLibrary("llm_inference_engine_jni");
@@ -28,111 +41,167 @@ public final class LlmInference implements AutoCloseable {
 
   /** Creates an LlmInference Task. */
   public static LlmInference createFromOptions(Context context, LlmInferenceOptions options) {
-    // Configure LLM session config.
-    LlmSessionConfig.Builder sessionConfig = LlmSessionConfig.newBuilder();
+    // Configure LLM model settings.
+    LlmModelSettings.Builder modelSettings =
+        LlmModelSettings.newBuilder()
+            .setModelPath(options.modelPath())
+            .setCacheDir(context.getCacheDir().getAbsolutePath())
+            .setNumDecodeStepsPerSync(NUM_DECODE_STEPS_PER_SYNC)
+            .setMaxTokens(options.maxTokens())
+            .setMaxTopK(options.maxTopK())
+            .setNumberOfSupportedLoraRanks(options.supportedLoraRanks().size())
+            .addAllSupportedLoraRanks(options.supportedLoraRanks());
 
-    sessionConfig.setModelPath(options.modelPath());
-    sessionConfig.setCacheDir(context.getCacheDir().getAbsolutePath());
-    sessionConfig.setNumDecodeStepsPerSync(NUM_DECODE_STEPS_PER_SYNC);
-    sessionConfig.setMaxSequenceLength(options.maxSequenceLength());
-    sessionConfig.setTopk(options.topK());
-    sessionConfig.setTemperature(options.temperature());
-    sessionConfig.setRandomSeed(options.randomSeed());
+    if (options.visionModelOptions().isPresent()) {
+      VisionModelOptions visionModelOptions = options.visionModelOptions().get();
 
-    return new LlmInference(sessionConfig.build(), options.resultListener());
+      LlmModelSettings.VisionModelSettings.Builder visionModelSettings =
+          LlmModelSettings.VisionModelSettings.newBuilder();
+      visionModelOptions.getEncoderPath().ifPresent(visionModelSettings::setEncoderPath);
+      visionModelOptions.getAdapterPath().ifPresent(visionModelSettings::setAdapterPath);
+
+      modelSettings.setVisionModelSettings(visionModelSettings.build());
+    }
+
+    if (options.preferredBackend().isPresent()) {
+      switch (options.preferredBackend().get()) {
+        case DEFAULT:
+          modelSettings.setLlmPreferredBackend(LlmPreferredBackend.DEFAULT);
+          break;
+        case CPU:
+          modelSettings.setLlmPreferredBackend(LlmPreferredBackend.CPU);
+          break;
+        case GPU:
+          modelSettings.setLlmPreferredBackend(LlmPreferredBackend.GPU);
+          break;
+      }
+    }
+
+    return new LlmInference(context, STATS_TAG, modelSettings.build());
   }
 
   /** Constructor to initialize an {@link LlmInference}. */
-  private LlmInference(
-      LlmSessionConfig sessionConfig, Optional<ProgressListener<String>> resultListener) {
-
-    Optional<ProgressListener<List<String>>> llmResultListener;
-    if (resultListener.isPresent()) {
-      llmResultListener =
-          Optional.of(
-              new ProgressListener<List<String>>() {
-                private boolean receivedFirstToken = false;
-
-                @Override
-                public void run(List<String> partialResult, boolean done) {
-                  String result =
-                      decodeResponse(
-                          partialResult, /* stripLeadingWhitespace= */ !receivedFirstToken);
-                  if (done) {
-                    receivedFirstToken = false; // Reset to initial state
-                    isProcessing.set(false);
-                    resultListener.get().run(result, done);
-                  } else if (!result.isEmpty()) {
-                    receivedFirstToken = true;
-                    resultListener.get().run(result, done);
-                  }
-                }
-              });
-    } else {
-      llmResultListener = Optional.empty();
-    }
-
-    this.taskRunner = new LlmTaskRunner(sessionConfig, llmResultListener);
-    this.isProcessing = new AtomicBoolean(false);
+  private LlmInference(Context context, String taskName, LlmModelSettings modelSettings) {
+    this.taskRunner = new LlmTaskRunner(context, taskName, modelSettings);
+    this.implicitSession = new AtomicReference<>();
   }
 
   /**
-   * Generates a response based on the input text.
+   * Generates a response based on the input text. This method cannot be called while other queries
+   * are active.
+   *
+   * <p>This function creates a new session for each call. If you want to have a stateful inference,
+   * use {@link LlmInferenceSession#generateResponse()} instead.
+   *
+   * <p>Note: You cannot invoke simultaneous response generation calls on active sessions created
+   * using the same {@link LlmInference}. You have to wait for the currently running response
+   * generation call to complete before initiating another one.
    *
    * @param inputText a {@link String} for processing.
+   * @throws IllegalStateException if the inference fails.
    */
   public String generateResponse(String inputText) {
-    validateState();
-    isProcessing.set(true);
-    List<String> tokens = taskRunner.predictSync(inputText);
-    isProcessing.set(false);
-    return decodeResponse(tokens, /* stripLeadingWhitespace= */ true);
+    LlmInferenceSession session = resetImplicitSession();
+    session.addQueryChunk(inputText);
+    return session.generateResponse();
   }
 
   /**
-   * Generates a response based on the input text.
+   * Asynchronously generates a response based on the input text. This method cannot be called while
+   * other queries are active.
+   *
+   * <p>This function creates a new session for each call and returns the complete response as a
+   * {@link ListenableFuture}. If you want to have a stateful inference, use {@link
+   * LlmInferenceSession#generateResponseAsync()} instead.
+   *
+   * <p>Note: You cannot invoke simultaneous response generation calls on active sessions created
+   * using the same {@link LlmInference}. You have to wait for the currently running response
+   * generation call to complete before initiating another one.
    *
    * @param inputText a {@link String} for processing.
+   * @return a {@link ListenableFuture} with the complete response once the inference is complete.
+   * @throws IllegalStateException if the inference fails.
    */
-  public void generateResponseAsync(String inputText) {
-    validateState();
-    isProcessing.set(true);
-    taskRunner.predictAsync(inputText);
+  public ListenableFuture<String> generateResponseAsync(String inputText) {
+    LlmInferenceSession session = resetImplicitSession();
+    session.addQueryChunk(inputText);
+    return session.generateResponseAsync();
   }
 
-  /** Decodes the response from the LLM engine and returns a human-readable string. */
-  private static String decodeResponse(List<String> responses, boolean stripLeadingWhitespace) {
-    if (responses.isEmpty()) {
-      // Technically, this is an error. We should always get at least one response.
-      return "";
-    }
-
-    String response = responses.get(0); // We only use the first response
-    response = response.replace(TOKEN_SPLITTER, ' '); // Note this is NOT an underscore: ▁(U+2581)
-    response = response.replace(NEW_LINE, "\n"); // Replace <0x0A> token with newline
-
-    if (stripLeadingWhitespace) {
-      response = stripLeading(response); // Strip all leading spaces for the first output
-    }
-
-    return response.split(EOD, -1)[0];
+  /**
+   * Asynchronously generates a response based on the input text and emits partial results. This
+   * method cannot be called while other queries are active.
+   *
+   * <p>This function creates a new session for each call and returns the complete response as a
+   * {@link ListenableFuture} and invokes the {@code progressListener} as the response is generated.
+   * If you want to have a stateful inference, use {@link
+   * LlmInferenceSession#generateResponseAsync()} instead.
+   *
+   * <p>Note: You cannot invoke simultaneous response generation calls on active sessions created
+   * using the same {@link LlmInference}. You have to wait for the currently running response
+   * generation call to complete before initiating another one.
+   *
+   * @param inputText a {@link String} for processing.
+   * @param progressListener a {@link ProgressListener} to receive partial results.
+   * @return a {@link ListenableFuture} with the complete response once the inference is complete.
+   * @throws IllegalStateException if the inference fails.
+   */
+  public ListenableFuture<String> generateResponseAsync(
+      String inputText, ProgressListener<String> progressListener) {
+    LlmInferenceSession session = resetImplicitSession();
+    session.addQueryChunk(inputText);
+    return session.generateResponseAsync(progressListener);
   }
 
-  private void validateState() {
-    if (isProcessing.get()) {
-      throw new IllegalStateException("Previous invocation still processing. Wait for done=true.");
+  /**
+   * Runs an invocation of <b>only</b> the tokenization for the LLM, and returns the size (in
+   * tokens) of the result. Cannot be called while a {@link #generateResponse(String)} query is
+   * active.
+   *
+   * <p>Note: You cannot invoke simultaneous this operation if any response generations using the
+   * same {@link LlmInference} are active. You have to wait for the currently running response
+   * generation call to complete before initiating new operations.
+   *
+   * @param text The text to tokenize.
+   * @return The number of tokens in the resulting tokenization of the text.
+   * @throws IllegalStateException if the tokenization fails.
+   */
+  public int sizeInTokens(String text) {
+    LlmInferenceSession session = resetImplicitSession();
+    return session.sizeInTokens(text);
+  }
+
+  /** Closes the last implicit session and creates a new one without any existing context. */
+  private LlmInferenceSession resetImplicitSession() {
+    LlmInferenceSession session = implicitSession.get();
+    if (session != null) {
+      session.close();
     }
+
+    session =
+        LlmInferenceSession.createFromOptions(
+            this, LlmInferenceSession.LlmInferenceSessionOptions.builder().build());
+    implicitSession.set(session);
+    return session;
+  }
+
+  LlmTaskRunner getTaskRunner() {
+    return taskRunner;
   }
 
   /** Closes and cleans up the {@link LlmInference}. */
   @Override
   public void close() {
+    LlmInferenceSession session = implicitSession.get();
+    if (session != null) {
+      session.close();
+    }
     taskRunner.close();
   }
 
   /** Options for setting up an {@link LlmInference}. */
   @AutoValue
-  public abstract static class LlmInferenceOptions extends TaskOptions {
+  public abstract static class LlmInferenceOptions {
     /** Builder for {@link LlmInferenceOptions}. */
     @AutoValue.Builder
     public abstract static class Builder {
@@ -140,32 +209,24 @@ public final class LlmInference implements AutoCloseable {
       /** Sets the model path for the text generator task. */
       public abstract Builder setModelPath(String modelPath);
 
-      /** Sets the result listener to invoke with the async API. */
-      public abstract Builder setResultListener(ProgressListener<String> listener);
-
-      /** Sets the error listener to invoke with the async API. */
-      public abstract Builder setErrorListener(ErrorListener listener);
+      /** Configures the total number of tokens for input and output). */
+      public abstract Builder setMaxTokens(int maxTokens);
 
       /**
-       * Configures the sequence length stands (i.e. the total number of tokens from input and
-       * output).
+       * Configures the maximum Top-K value, which is the max Top-K value supported for all sessions
+       * created with the engine, used by GPU only. If a session with Top-K value larger than this
+       * is being asked to be created, it will be rejected. The default value is 40.
        */
-      public abstract Builder setMaxSequenceLength(int maxSequenceLength);
+      public abstract Builder setMaxTopK(int maxTopK);
 
-      /**
-       * Configures the top K number of tokens to be sampled from for each decoding step. A value of
-       * 1 means greedy decoding. The default value is 40.
-       */
-      public abstract Builder setTopK(int topK);
+      /** Sets the supported lora ranks for the base model. Used by GPU only. */
+      public abstract Builder setSupportedLoraRanks(List<Integer> supportedLoraRanks);
 
-      /**
-       * Configures randomness when decoding the next token. A value of 0.0f means greedy decoding.
-       * The default value is 0.8f.
-       */
-      public abstract Builder setTemperature(float temperature);
+      /** Sets the model options to use for vision modality. */
+      public abstract Builder setVisionModelOptions(VisionModelOptions visionModelOptions);
 
-      /** Configures random seed for sampling tokens. */
-      public abstract Builder setRandomSeed(int randomSeed);
+      /** Sets the preferred backend to use for inference. */
+      public abstract Builder setPreferredBackend(Backend preferredBackend);
 
       abstract LlmInferenceOptions autoBuild();
 
@@ -176,52 +237,39 @@ public final class LlmInference implements AutoCloseable {
     }
 
     /** The path that points to the tflite model file. */
-    abstract String modelPath();
+    public abstract String modelPath();
 
     /**
      * The total length of the kv-cache. In other words, this is the total number of input + output
      * tokens the model needs to handle.
      */
-    abstract int maxSequenceLength();
+    public abstract int maxTokens();
 
     /**
-     * Top K number of tokens to be sampled from for each decoding step. A value of 1 means greedy
-     * decoding.
+     * Returns the maximum Top-K value, which is the max Top-K value supported for all sessions
+     * created with the engine, used by GPU only. If a session with Top-K value larger than this is
+     * being asked to be created, it will be rejected. The default value is 40.
      */
-    public abstract int topK();
+    public abstract int maxTopK();
 
-    /** Randomness when decoding the next token. A value of 0.0f means greedy decoding. */
-    public abstract float temperature();
+    /** The supported lora ranks for the base model. Used by GPU only. */
+    public abstract List<Integer> supportedLoraRanks();
 
-    /** Random seed for sampling tokens. */
-    public abstract int randomSeed();
+    /** The model options to for vision modality. */
+    public abstract Optional<VisionModelOptions> visionModelOptions();
 
-    /** The result listener to use for the {@link LlmInference#generateAsync} API. */
-    abstract Optional<ProgressListener<String>> resultListener();
+    /** Returns the preferred backend to use for inference. */
+    public abstract Optional<Backend> preferredBackend();
 
-    /** The error listener to use for the {@link LlmInference#generateAsync} API. */
-    abstract Optional<ErrorListener> errorListener();
+    /** Returns a new builder with the same values as this instance. */
+    public abstract Builder toBuilder();
 
     /** Instantiates a new LlmInferenceOptions builder. */
     public static Builder builder() {
       return new AutoValue_LlmInference_LlmInferenceOptions.Builder()
-          .setMaxSequenceLength(512)
-          .setTopK(40)
-          .setTemperature(0.8f)
-          .setRandomSeed(0);
+          .setMaxTokens(512)
+          .setMaxTopK(40)
+          .setSupportedLoraRanks(Collections.emptyList());
     }
-  }
-
-  static String stripLeading(String text) {
-    // stripLeading() implementation for Android < 33
-    int left = 0;
-    while (left < text.length()) {
-      final int codepoint = text.codePointAt(left);
-      if (!Character.isWhitespace(codepoint)) {
-        break;
-      }
-      left += Character.charCount(codepoint);
-    }
-    return text.substring(left);
   }
 }

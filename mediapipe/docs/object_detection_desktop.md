@@ -1,2 +1,2 @@
 Content moved to
-[MediaPipe Object Detection](https://google.github.io/mediapipe/solutions/object_detection)
+[MediaPipe Object Detection](https://google-ai-edge.github.io/mediapipe/solutions/object_detection)

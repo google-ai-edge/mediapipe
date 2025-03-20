@@ -16,7 +16,7 @@
 
 #include <cstdint>
 #include <limits>
-#include <memory>
+#include <string>
 #include <vector>
 
 #include "mediapipe/framework/port/gtest.h"
@@ -280,6 +280,18 @@ TEST(TimestampTest, AddZeroToMinAndMax) {
   EXPECT_EQ(Timestamp::Min(), Timestamp::Min() + TimestampDiff(0));
   EXPECT_EQ(Timestamp::Max(), Timestamp::Max() - TimestampDiff(0));
   EXPECT_EQ(Timestamp::Min(), Timestamp::Min() - TimestampDiff(0));
+}
+
+TEST(TimestampTest, TimestampStaticConstructors) {
+  EXPECT_EQ(Timestamp::FromSeconds(2.5).Microseconds(), 2500000);
+  EXPECT_EQ(Timestamp::FromMilliseconds(2.5).Microseconds(), 2500);
+  EXPECT_EQ(Timestamp::FromMicroseconds(25).Microseconds(), 25);
+}
+
+TEST(TimestampTest, TimestampDiffStaticConstructors) {
+  EXPECT_EQ(TimestampDiff::FromSeconds(2.5).Microseconds(), 2500000);
+  EXPECT_EQ(TimestampDiff::FromMilliseconds(2.5).Microseconds(), 2500);
+  EXPECT_EQ(TimestampDiff::FromMicroseconds(25).Microseconds(), 25);
 }
 
 // Note: Add test to timestamp_pcoder_test.cc if another special value is added.

@@ -18,6 +18,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/container/flat_hash_map.h"
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "mediapipe/calculators/util/non_max_suppression_calculator.pb.h"
@@ -121,6 +122,21 @@ float OverlapSimilarity(
   return OverlapSimilarity(overlap_type, rect1, rect2);
 }
 
+// Copy all the scores (there is a single score in each detection after
+// pruning detections) to an indexed vector for sorting. The first value is
+// the index of the detection in the original vector from which the score
+// stems, while the second is the actual score.
+IndexedScores GetIndexedScores(const Detections& detections) {
+  IndexedScores indexed_scores;
+  indexed_scores.reserve(detections.size());
+  for (int index = 0; index < detections.size(); ++index) {
+    indexed_scores.push_back(
+        std::make_pair(index, detections.at(index).score(0)));
+  }
+  std::sort(indexed_scores.begin(), indexed_scores.end(), SortBySecond);
+  return indexed_scores;
+}
+
 }  // namespace
 
 // A calculator performing non-maximum suppression on a set of detections.
@@ -203,7 +219,49 @@ class NonMaxSuppressionCalculator : public CalculatorBase {
       }
       return absl::OkStatus();
     }
+    auto retained_detections = std::make_unique<Detections>();
+    if (options_.multiclass_nms()) {
+      absl::flat_hash_map<int, Detections> category_index_to_detections;
+      for (const auto& detection : input_detections) {
+        for (int index : detection.label_id()) {
+          category_index_to_detections[index].push_back(detection);
+        }
+      }
+      // For each category, do non-maximum suppression separately.
+      Detections detections_nms;
+      for (auto& [index, detections] : category_index_to_detections) {
+        auto retained_detections_per_category = std::make_unique<Detections>();
+        DoNonMaxSuppression(detections, cc,
+                            retained_detections_per_category.get());
+        detections_nms.insert(detections_nms.end(),
+                              retained_detections_per_category->begin(),
+                              retained_detections_per_category->end());
+      }
 
+      // Descending sort and shrink the collected detections according to max
+      // num detections.
+      IndexedScores indexed_scores = GetIndexedScores(detections_nms);
+      int max_num_detections = static_cast<int>(indexed_scores.size());
+      if (options_.max_num_detections() > -1) {
+        max_num_detections =
+            std::min(max_num_detections, options_.max_num_detections());
+      }
+      retained_detections->reserve(max_num_detections);
+      for (int i = 0; i < max_num_detections; i++) {
+        retained_detections->push_back(
+            detections_nms.at(indexed_scores.at(i).first));
+      }
+    } else {
+      DoNonMaxSuppression(input_detections, cc, retained_detections.get());
+    }
+    cc->Outputs().Index(0).Add(retained_detections.release(),
+                               cc->InputTimestamp());
+    return absl::OkStatus();
+  }
+
+ private:
+  void DoNonMaxSuppression(Detections& input_detections, CalculatorContext* cc,
+                           Detections* output_detections) {
     // Remove all but the maximum scoring label from each input detection. This
     // corresponds to non-maximum suppression among detections which have
     // identical locations.
@@ -214,42 +272,24 @@ class NonMaxSuppressionCalculator : public CalculatorBase {
         pruned_detections.push_back(detection);
       }
     }
-
-    // Copy all the scores (there is a single score in each detection after
-    // the above pruning) to an indexed vector for sorting. The first value is
-    // the index of the detection in the original vector from which the score
-    // stems, while the second is the actual score.
-    IndexedScores indexed_scores;
-    indexed_scores.reserve(pruned_detections.size());
-    for (int index = 0; index < pruned_detections.size(); ++index) {
-      indexed_scores.push_back(
-          std::make_pair(index, pruned_detections[index].score(0)));
-    }
-    std::sort(indexed_scores.begin(), indexed_scores.end(), SortBySecond);
-
+    IndexedScores indexed_scores = GetIndexedScores(pruned_detections);
     const int max_num_detections =
         (options_.max_num_detections() > -1)
             ? options_.max_num_detections()
             : static_cast<int>(indexed_scores.size());
     // A set of detections and locations, wrapping the location data from each
     // detection, which are retained after the non-maximum suppression.
-    auto* retained_detections = new Detections();
-    retained_detections->reserve(max_num_detections);
+    output_detections->reserve(max_num_detections);
 
     if (options_.algorithm() == NonMaxSuppressionCalculatorOptions::WEIGHTED) {
       WeightedNonMaxSuppression(indexed_scores, pruned_detections,
-                                max_num_detections, cc, retained_detections);
+                                max_num_detections, cc, output_detections);
     } else {
       NonMaxSuppression(indexed_scores, pruned_detections, max_num_detections,
-                        cc, retained_detections);
+                        cc, output_detections);
     }
-
-    cc->Outputs().Index(0).Add(retained_detections, cc->InputTimestamp());
-
-    return absl::OkStatus();
   }
 
- private:
   void NonMaxSuppression(const IndexedScores& indexed_scores,
                          const Detections& detections, int max_num_detections,
                          CalculatorContext* cc, Detections* output_detections) {

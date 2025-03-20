@@ -1,5 +1,5 @@
 // Placeholder for internal dependency on assertTruthy
-import {isWebKit} from '../../web/graph_runner/platform_utils';
+import {supportsOffscreenCanvas} from '../../web/graph_runner/platform_utils';
 import {runScript} from '../../web/graph_runner/run_script_helper';
 // Placeholder for internal dependency on trusted resource url
 
@@ -8,7 +8,6 @@ import {CreateGraphRunnerApi, CreateMediaPipeLibApi, FileLocator, WasmMediaPipeC
 import {EmptyPacketListener, ErrorListener, SimpleListener, VectorListener} from './listener_types';
 import {WasmModule} from './wasm_module';
 
-export {type ReturnType} from './graph_runner_factory_api';
 // This file contains the internal implementations behind the public APIs
 // declared in "graph_runner_api.d.ts" and "graph_runner_factory_api.d.ts".
 
@@ -55,7 +54,8 @@ declare function importScripts(...urls: Array<string|URL>): void;
 /**
  * Detects image source size.
  */
-export function getImageSourceSize(imageSource: ImageSource): [number, number] {
+export function getImageSourceSize(imageSource: TexImageSource):
+    [number, number] {
   if ((imageSource as HTMLVideoElement).videoWidth !== undefined) {
     const videoElement = imageSource as HTMLVideoElement;
     return [videoElement.videoWidth, videoElement.videoHeight];
@@ -67,7 +67,7 @@ export function getImageSourceSize(imageSource: ImageSource): [number, number] {
     const videoFrame = imageSource as VideoFrame;
     return [videoFrame.displayWidth, videoFrame.displayHeight];
   } else {
-    const notVideoFrame = imageSource as Exclude<ImageSource, VideoFrame>;
+    const notVideoFrame = imageSource as Exclude<TexImageSource, VideoFrame>;
     return [notVideoFrame.width, notVideoFrame.height];
   }
 }
@@ -108,10 +108,10 @@ export class GraphRunner implements GraphRunnerApi {
 
     if (glCanvas !== undefined) {
       this.wasmModule.canvas = glCanvas;
-    } else if (typeof OffscreenCanvas !== 'undefined' && !isWebKit()) {
+    } else if (supportsOffscreenCanvas()) {
       // If no canvas is provided, assume Chrome/Firefox and just make an
-      // OffscreenCanvas for GPU processing. Note that we exclude Safari
-      // since it does not (yet) support WebGL for OffscreenCanvas.
+      // OffscreenCanvas for GPU processing. Note that we exclude older Safari
+      // versions that not support WebGL for OffscreenCanvas.
       this.wasmModule.canvas = new OffscreenCanvas(1, 1);
     } else {
       console.warn(
@@ -150,7 +150,7 @@ export class GraphRunner implements GraphRunnerApi {
   }
 
   /** {@override GraphRunnerApi} */
-  configureAudio(numChannels: number, numSamples: number, sampleRate: number,
+  configureAudio(numChannels: number, numSamples: number | null, sampleRate: number,
       streamName?: string, headerName?: string) {
     if (!this.wasmModule._configureAudio) {
       console.warn(
@@ -162,7 +162,7 @@ export class GraphRunner implements GraphRunnerApi {
       headerName = headerName || 'audio_header';
       this.wrapStringPtr(headerName, (headerNamePtr: number) => {
         this.wasmModule._configureAudio(streamNamePtr, headerNamePtr,
-          numChannels, numSamples, sampleRate);
+          numChannels, numSamples ?? 0, sampleRate);
       });
     });
   }
@@ -186,7 +186,7 @@ export class GraphRunner implements GraphRunnerApi {
    * Bind texture to our internal canvas, and upload image source to GPU.
    * Returns tuple [width, height] of texture.  Intended for internal usage.
    */
-  bindTextureToStream(imageSource: ImageSource, streamNamePtr?: number):
+  bindTextureToStream(imageSource: TexImageSource, streamNamePtr?: number):
       [number, number] {
     if (!this.wasmModule.canvas) {
       throw new Error('No OpenGL canvas configured.');
@@ -238,7 +238,7 @@ export class GraphRunner implements GraphRunnerApi {
    * @param timestamp The timestamp of the current frame, in ms.
    * @return texture? The WebGL texture reference, if one was produced.
    */
-  processGl(imageSource: ImageSource, timestamp: number): WebGLTexture
+  processGl(imageSource: TexImageSource, timestamp: number): WebGLTexture
       |undefined {
     // Bind to default input stream
     const [width, height] = this.bindTextureToStream(imageSource);
@@ -272,6 +272,23 @@ export class GraphRunner implements GraphRunnerApi {
     }
     const stringDataPtr = this.wasmModule.stringToNewUTF8(stringData);
     stringPtrFunc(stringDataPtr);
+    this.wasmModule._free(stringDataPtr);
+  }
+
+  /**
+   * Converts JavaScript string input parameters into C++ c-string pointers.
+   * See b/204830158 for more details. Intended for internal usage.
+   */
+  async wrapStringPtrAsync(stringData: string,
+                           stringPtrFunc: (ptr: number) => Promise<void>):
+      Promise<void> {
+    if (!this.hasMultiStreamSupport) {
+      console.error(
+          'No wasm multistream support detected: ensure dependency ' +
+          'inclusion of :gl_graph_runner_internal_multi_input target');
+    }
+    const stringDataPtr = this.wasmModule.stringToNewUTF8(stringData);
+    await stringPtrFunc(stringDataPtr);
     this.wasmModule._free(stringDataPtr);
   }
 
@@ -395,7 +412,8 @@ export class GraphRunner implements GraphRunnerApi {
 
   /** {@override GraphRunnerApi} */
   addGpuBufferToStream(
-      imageSource: ImageSource, streamName: string, timestamp: number): void {
+      imageSource: TexImageSource, streamName: string,
+      timestamp: number): void {
     this.wrapStringPtr(streamName, (streamNamePtr: number) => {
       const [width, height] =
           this.bindTextureToStream(imageSource, streamNamePtr);
@@ -432,6 +450,14 @@ export class GraphRunner implements GraphRunnerApi {
   addIntToStream(data: number, streamName: string, timestamp: number): void {
     this.wrapStringPtr(streamName, (streamNamePtr: number) => {
       this.wasmModule._addIntToInputStream(data, streamNamePtr, timestamp);
+    });
+  }
+
+  /** {@override GraphRunnerApi} */
+  addUintToStream(data: number, streamName: string, timestamp: number): void {
+    this.wrapStringPtr(streamName, (streamNamePtr: number) => {
+      this.wasmModule._addUintToInputStream(
+          data, streamNamePtr, timestamp);
     });
   }
 
@@ -549,6 +575,22 @@ export class GraphRunner implements GraphRunnerApi {
   }
 
   /** {@override GraphRunnerApi} */
+  addUintVectorToStream(data: number[], streamName: string, timestamp: number):
+      void {
+    this.wrapStringPtr(streamName, (streamNamePtr: number) => {
+      const vecPtr = this.wasmModule._allocateUintVector(data.length);
+      if (!vecPtr) {
+        throw new Error('Unable to allocate new unsigned int vector on heap.');
+      }
+      for (const entry of data) {
+        this.wasmModule._addUintVectorEntry(vecPtr, entry);
+      }
+      this.wasmModule._addUintVectorToInputStream(
+          vecPtr, streamNamePtr, timestamp);
+    });
+  }
+
+  /** {@override GraphRunnerApi} */
   addStringVectorToStream(
       data: string[], streamName: string, timestamp: number): void {
     this.wrapStringPtr(streamName, (streamNamePtr: number) => {
@@ -591,6 +633,13 @@ export class GraphRunner implements GraphRunnerApi {
   addIntToInputSidePacket(data: number, sidePacketName: string): void {
     this.wrapStringPtr(sidePacketName, (sidePacketNamePtr: number) => {
       this.wasmModule._addIntToInputSidePacket(data, sidePacketNamePtr);
+    });
+  }
+
+  /** {@override GraphRunnerApi} */
+  addUintToInputSidePacket(data: number, sidePacketName: string): void {
+    this.wrapStringPtr(sidePacketName, (sidePacketNamePtr: number) => {
+      this.wasmModule._addUintToInputSidePacket(data, sidePacketNamePtr);
     });
   }
 
@@ -682,6 +731,21 @@ export class GraphRunner implements GraphRunnerApi {
   }
 
   /** {@override GraphRunnerApi} */
+  addUintVectorToInputSidePacket(data: number[], sidePacketName: string): void {
+    this.wrapStringPtr(sidePacketName, (sidePacketNamePtr: number) => {
+      const vecPtr = this.wasmModule._allocateUintVector(data.length);
+      if (!vecPtr) {
+        throw new Error('Unable to allocate new unsigned int vector on heap.');
+      }
+      for (const entry of data) {
+        this.wasmModule._addUintVectorEntry(vecPtr, entry);
+      }
+      this.wasmModule._addUintVectorToInputSidePacket(
+          vecPtr, sidePacketNamePtr);
+    });
+  }
+
+  /** {@override GraphRunnerApi} */
   addStringVectorToInputSidePacket(data: string[], sidePacketName: string):
       void {
     this.wrapStringPtr(sidePacketName, (sidePacketNamePtr: number) => {
@@ -744,6 +808,31 @@ export class GraphRunner implements GraphRunnerApi {
     // Tell our graph to listen for std::vector<int> packets on this stream.
     this.wrapStringPtr(outputStreamName, (outputStreamNamePtr: number) => {
       this.wasmModule._attachIntVectorListener(outputStreamNamePtr);
+    });
+  }
+
+  /** {@override GraphRunnerApi} */
+  attachUintListener(
+      outputStreamName: string, callbackFcn: SimpleListener<number>): void {
+    // Set up our TS listener to receive any packets for this stream.
+    this.setListener(outputStreamName, callbackFcn);
+
+    // Tell our graph to listen for uint32_t packets on this stream.
+    this.wrapStringPtr(outputStreamName, (outputStreamNamePtr: number) => {
+      this.wasmModule._attachUintListener(outputStreamNamePtr);
+    });
+  }
+
+  /** {@override GraphRunnerApi} */
+  attachUintVectorListener(
+      outputStreamName: string, callbackFcn: SimpleListener<number[]>): void {
+    // Set up our TS listener to receive any packets for this stream.
+    this.setVectorListener(outputStreamName, callbackFcn);
+
+    // Tell our graph to listen for std::vector<uint32_t> packets on this
+    // stream.
+    this.wrapStringPtr(outputStreamName, (outputStreamNamePtr: number) => {
+      this.wasmModule._attachUintVectorListener(outputStreamNamePtr);
     });
   }
 

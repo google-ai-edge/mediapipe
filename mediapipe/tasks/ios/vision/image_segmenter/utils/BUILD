@@ -27,6 +27,7 @@ objc_library(
         "//mediapipe/tasks/ios/core:MPPTaskOptionsProtocol",
         "//mediapipe/tasks/ios/core/utils:MPPBaseOptionsHelpers",
         "//mediapipe/tasks/ios/vision/image_segmenter:MPPImageSegmenterOptions",
+        "//third_party/apple_frameworks:Foundation",
     ],
 )
 
@@ -38,5 +39,6 @@ objc_library(
         "//mediapipe/framework:packet",
         "//mediapipe/framework/formats:image",
         "//mediapipe/tasks/ios/vision/image_segmenter:MPPImageSegmenterResult",
+        "//third_party/apple_frameworks:Foundation",
     ],
 )

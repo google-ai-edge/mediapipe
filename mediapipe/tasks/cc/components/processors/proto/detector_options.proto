@@ -49,4 +49,8 @@ message DetectorOptions {
   // name is in this set will be filtered out. Duplicate or unknown category
   // names are ignored. Mutually exclusive with category_allowlist.
   repeated string category_denylist = 5;
+
+  // Whether to use multiclass NMS. That is, each category processes
+  // non-maximum-suppression separately.
+  optional bool multiclass_nms = 7 [default = false];
 }

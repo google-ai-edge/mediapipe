@@ -14,23 +14,32 @@
 
 #include "mediapipe/framework/calculator_node.h"
 
+#include <memory>
 #include <set>
 #include <string>
+#include <tuple>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 
+#include "absl/cleanup/cleanup.h"
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
+#include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "absl/strings/substitute.h"
 #include "absl/synchronization/mutex.h"
+#include "absl/time/time.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_base.h"
+#include "mediapipe/framework/calculator_state.h"
 #include "mediapipe/framework/counter_factory.h"
+#include "mediapipe/framework/deps/clock.h"
+#include "mediapipe/framework/graph_service_manager.h"
 #include "mediapipe/framework/input_stream_manager.h"
 #include "mediapipe/framework/mediapipe_profiling.h"
 #include "mediapipe/framework/output_stream_manager.h"
@@ -51,6 +60,7 @@
 
 namespace mediapipe {
 
+using ::mediapipe::Clock;
 namespace {
 
 const PacketType* GetPacketType(const PacketTypeSet& packet_type_set,
@@ -113,7 +123,11 @@ std::unique_ptr<PacketTypeSet> RemoveOmittedPacketTypes(
 
 }  // namespace
 
-CalculatorNode::CalculatorNode() {}
+CalculatorNode::CalculatorNode() {
+  absl::Time now = Clock::RealClock()->TimeNow();
+  last_process_start_ts_ = now;
+  last_process_finish_ts_ = now;
+}
 
 Timestamp CalculatorNode::SourceProcessOrder(
     const CalculatorContext* cc) const {
@@ -125,7 +139,8 @@ absl::Status CalculatorNode::Initialize(
     InputStreamManager* input_stream_managers,
     OutputStreamManager* output_stream_managers,
     OutputSidePacketImpl* output_side_packets, int* buffer_size_hint,
-    std::shared_ptr<ProfilingContext> profiling_context) {
+    std::shared_ptr<ProfilingContext> profiling_context,
+    const GraphServiceManager* graph_service_manager) {
   RET_CHECK(buffer_size_hint) << "buffer_size_hint is NULL";
   validated_graph_ = validated_graph;
   profiling_context_ = profiling_context;
@@ -168,9 +183,9 @@ absl::Status CalculatorNode::Initialize(
                                     node_type_info_->OutputStreamTypes()));
   MP_RETURN_IF_ERROR(InitializeOutputStreams(output_stream_managers));
 
-  calculator_state_ = absl::make_unique<CalculatorState>(
+  calculator_state_ = std::make_unique<CalculatorState>(
       name_, node_ref.index, node_config->calculator(), *node_config,
-      profiling_context_);
+      profiling_context_, graph_service_manager);
 
   // Inform the scheduler that this node has buffering behavior and that the
   // maximum input queue size should be adjusted accordingly.
@@ -212,6 +227,38 @@ absl::Status CalculatorNode::Initialize(
       contract.GetProcessTimestampBounds());
 
   return InitializeInputStreams(input_stream_managers, output_stream_managers);
+}
+
+CalculatorRuntimeInfo CalculatorNode::GetStreamMonitoringInfo() const {
+  CalculatorRuntimeInfo calculator_info;
+  calculator_info.set_calculator_name(DebugName());
+  {
+    absl::MutexLock lock(&runtime_info_mutex_);
+    calculator_info.set_last_process_start_unix_us(
+        absl::ToUnixMicros(last_process_start_ts_));
+    calculator_info.set_last_process_finish_unix_us(
+        absl::ToUnixMicros(last_process_finish_ts_));
+  }
+  const auto input_stream_info = input_stream_handler_->GetMonitoringInfo();
+  for (const auto& [stream_name, queue_size, num_packets_added,
+                    minimum_timestamp_or_bound] : input_stream_info) {
+    auto* stream_info = calculator_info.add_input_stream_infos();
+    stream_info->set_stream_name(stream_name);
+    stream_info->set_queue_size(queue_size);
+    stream_info->set_number_of_packets_added(num_packets_added);
+    stream_info->set_minimum_timestamp_or_bound(
+        minimum_timestamp_or_bound.Value());
+  }
+  const auto output_stream_info = output_stream_handler_->GetMonitoringInfo();
+  for (const auto& [stream_name, num_packets_added,
+                    minimum_timestamp_or_bound] : output_stream_info) {
+    auto* stream_info = calculator_info.add_output_stream_infos();
+    stream_info->set_stream_name(stream_name);
+    stream_info->set_number_of_packets_added(num_packets_added);
+    stream_info->set_minimum_timestamp_or_bound(
+        minimum_timestamp_or_bound.Value());
+  }
+  return calculator_info;
 }
 
 absl::Status CalculatorNode::InitializeOutputSidePackets(
@@ -665,14 +712,14 @@ void CalculatorNode::SchedulingLoop() {
     max_allowance = max_in_flight_ - current_in_flight_;
   }
   while (true) {
-    Timestamp input_bound;
-    // input_bound is set to a meaningful value iff the latest readiness of the
-    // node is kNotReady when ScheduleInvocations() returns.
-    input_stream_handler_->ScheduleInvocations(max_allowance, &input_bound);
-    if (input_bound != Timestamp::Unset()) {
+    // last_timestamp_bound_ is set to a meaningful value iff the latest
+    // readiness of the node is kNotReady when ScheduleInvocations() returns.
+    input_stream_handler_->ScheduleInvocations(max_allowance,
+                                               &last_timestamp_bound_);
+    if (last_timestamp_bound_ != Timestamp::Unset()) {
       // Updates the minimum timestamp for which a new packet could possibly
       // arrive.
-      output_stream_handler_->UpdateTaskTimestampBound(input_bound);
+      output_stream_handler_->UpdateTaskTimestampBound(last_timestamp_bound_);
     }
 
     {
@@ -801,6 +848,18 @@ std::string CalculatorNode::DebugName() const {
 // TODO: Split this function.
 absl::Status CalculatorNode::ProcessNode(
     CalculatorContext* calculator_context) {
+  // Update calculator runtime info.
+  {
+    absl::MutexLock lock(&runtime_info_mutex_);
+    last_process_start_ts_ = Clock::RealClock()->TimeNow();
+  }
+  absl::Cleanup last_process_finish_ts_cleanup([this]() {
+    {
+      absl::MutexLock lock(&runtime_info_mutex_);
+      last_process_finish_ts_ = Clock::RealClock()->TimeNow();
+    }
+  });
+
   if (IsSource()) {
     // This is a source Calculator.
     if (Closed()) {

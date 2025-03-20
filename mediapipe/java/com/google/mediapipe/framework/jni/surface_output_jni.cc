@@ -12,7 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <jni.h>
+
+#include <memory>
+
+#include "absl/status/status.h"
 #include "absl/synchronization/mutex.h"
+
 #ifdef __ANDROID__
 #include <android/native_window_jni.h>
 #endif  // __ANDROID__
@@ -20,8 +26,9 @@
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/gpu/egl_surface_holder.h"
+#include "mediapipe/gpu/gl_base.h"
+#include "mediapipe/gpu/gl_context.h"
 #include "mediapipe/gpu/gpu_shared_data_internal.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/graph.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/jni_util.h"
@@ -47,6 +54,13 @@ JNIEXPORT void JNICALL MEDIAPIPE_SURFACE_OUTPUT_METHOD(nativeSetFlipY)(
     JNIEnv* env, jobject thiz, jlong packet, jboolean flip) {
   mediapipe::EglSurfaceHolder* surface_holder = GetSurfaceHolder(packet);
   surface_holder->flip_y = flip;
+}
+
+JNIEXPORT void JNICALL MEDIAPIPE_SURFACE_OUTPUT_METHOD(
+    nativeSetUpdatePresentationTime)(JNIEnv* env, jobject thiz, jlong packet,
+                                     jboolean update_presentation_time) {
+  mediapipe::EglSurfaceHolder* surface_holder = GetSurfaceHolder(packet);
+  surface_holder->update_presentation_time = update_presentation_time;
 }
 
 JNIEXPORT void JNICALL MEDIAPIPE_SURFACE_OUTPUT_METHOD(nativeSetSurface)(
@@ -94,7 +108,7 @@ JNIEXPORT void JNICALL MEDIAPIPE_SURFACE_OUTPUT_METHOD(nativeSetSurface)(
         surface_holder->owned = egl_surface != EGL_NO_SURFACE;
         return absl::OkStatus();
       });
-  MEDIAPIPE_CHECK_OK(status);
+  ABSL_CHECK_OK(status);
 
   if (window) {
     VLOG(2) << "releasing window";
@@ -123,11 +137,10 @@ JNIEXPORT void JNICALL MEDIAPIPE_SURFACE_OUTPUT_METHOD(nativeSetEglSurface)(
   }
 
   if (old_surface != EGL_NO_SURFACE) {
-    MEDIAPIPE_CHECK_OK(
-        gl_context->Run([gl_context, old_surface]() -> absl::Status {
-          RET_CHECK(eglDestroySurface(gl_context->egl_display(), old_surface))
-              << "eglDestroySurface failed:" << eglGetError();
-          return absl::OkStatus();
-        }));
+    ABSL_CHECK_OK(gl_context->Run([gl_context, old_surface]() -> absl::Status {
+      RET_CHECK(eglDestroySurface(gl_context->egl_display(), old_surface))
+          << "eglDestroySurface failed:" << eglGetError();
+      return absl::OkStatus();
+    }));
   }
 }

@@ -43,7 +43,7 @@ TensorFlow.Examples. The goal of MediaSequence is to simplify working with
 SequenceExamples and to automate common preparation tasks. Much more information
 is available about the MediaSequence pipeline, including how to use it to
 process new data sets, in the documentation of
-[MediaSequence](https://github.com/google/mediapipe/tree/master/mediapipe/util/sequence).
+[MediaSequence](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/util/sequence).
 
 ## Preparing an example data set
 
@@ -108,7 +108,7 @@ process new data sets, in the documentation of
     ```
 
     and then you can import the data set in Python using
-    [read_demo_dataset.py](https://github.com/google/mediapipe/tree/master/mediapipe/examples/desktop/media_sequence/read_demo_dataset.py)
+    [read_demo_dataset.py](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/desktop/media_sequence/read_demo_dataset.py)
 
 ## Preparing a practical data set
 
@@ -136,7 +136,7 @@ python -m mediapipe.examples.desktop.media_sequence.charades_dataset \
 ## Preparing your own data set
 
 The process for preparing your own data set is described in the
-[MediaSequence documentation](https://github.com/google/mediapipe/tree/master/mediapipe/util/sequence).
+[MediaSequence documentation](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/util/sequence).
 The Python code for Charades can easily be modified to process most annotations,
 but the MediaPipe processing warrants further discussion. MediaSequence uses
 MediaPipe graphs to extract features related to the metadata or previously

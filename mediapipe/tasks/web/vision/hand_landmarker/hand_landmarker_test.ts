@@ -218,8 +218,8 @@ describe('HandLandmarker', () => {
     expect(handLandmarker.fakeWasmModule._waitUntilIdle).toHaveBeenCalled();
 
     expect(landmarks).toEqual({
-      'landmarks': [[{'x': 0, 'y': 0, 'z': 0}]],
-      'worldLandmarks': [[{'x': 0, 'y': 0, 'z': 0}]],
+      'landmarks': [[{'x': 0, 'y': 0, 'z': 0, 'visibility': 0}]],
+      'worldLandmarks': [[{'x': 0, 'y': 0, 'z': 0, 'visibility': 0}]],
       'handedness': [[{
         'score': 0.1,
         'index': 1,

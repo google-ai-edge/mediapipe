@@ -14,6 +14,8 @@
 
 #include "mediapipe/framework/profiler/graph_tracer.h"
 
+#include <atomic>
+
 #include "absl/synchronization/mutex.h"
 #include "absl/time/time.h"
 #include "mediapipe/framework/calculator_context.h"
@@ -32,7 +34,7 @@ const absl::Duration kDefaultTraceLogInterval = absl::Milliseconds(500);
 
 // Returns a unique identifier for the current thread.
 inline int GetCurrentThreadId() {
-  static int next_thread_id = 0;
+  static std::atomic<int> next_thread_id = 0;
   static thread_local int thread_id = next_thread_id++;
   return thread_id;
 }

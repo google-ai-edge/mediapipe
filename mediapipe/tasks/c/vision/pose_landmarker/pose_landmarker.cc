@@ -98,14 +98,14 @@ PoseLandmarker* CppPoseLandmarkerCreate(const PoseLandmarkerOptions& options,
           if (!cpp_result.ok()) {
             ABSL_LOG(ERROR) << "Detection failed: " << cpp_result.status();
             CppProcessError(cpp_result.status(), &error_msg);
-            result_callback(nullptr, MpImage(), timestamp, error_msg);
+            result_callback(nullptr, nullptr, timestamp, error_msg);
             free(error_msg);
             return;
           }
 
           // Result is valid for the lifetime of the callback function.
-          PoseLandmarkerResult result;
-          CppConvertToPoseLandmarkerResult(*cpp_result, &result);
+          auto result = std::make_unique<PoseLandmarkerResult>();
+          CppConvertToPoseLandmarkerResult(*cpp_result, result.get());
 
           const auto& image_frame = image.GetImageFrameSharedPtr();
           const MpImage mp_image = {
@@ -116,10 +116,8 @@ PoseLandmarker* CppPoseLandmarkerCreate(const PoseLandmarkerOptions& options,
                   .width = image_frame->Width(),
                   .height = image_frame->Height()}};
 
-          result_callback(&result, mp_image, timestamp,
+          result_callback(result.release(), &mp_image, timestamp,
                           /* error_msg= */ nullptr);
-
-          CppClosePoseLandmarkerResult(&result);
         };
   }
 
@@ -133,9 +131,9 @@ PoseLandmarker* CppPoseLandmarkerCreate(const PoseLandmarkerOptions& options,
   return landmarker->release();
 }
 
-int CppPoseLandmarkerDetect(void* landmarker, const MpImage& image,
+int CppPoseLandmarkerDetect(void* landmarker, const MpImage* image,
                             PoseLandmarkerResult* result, char** error_msg) {
-  if (image.type == MpImage::GPU_BUFFER) {
+  if (image->type == MpImage::GPU_BUFFER) {
     const absl::Status status =
         absl::InvalidArgumentError("GPU Buffer not supported yet.");
 
@@ -144,9 +142,9 @@ int CppPoseLandmarkerDetect(void* landmarker, const MpImage& image,
   }
 
   const auto img = CreateImageFromBuffer(
-      static_cast<ImageFormat::Format>(image.image_frame.format),
-      image.image_frame.image_buffer, image.image_frame.width,
-      image.image_frame.height);
+      static_cast<ImageFormat::Format>(image->image_frame.format),
+      image->image_frame.image_buffer, image->image_frame.width,
+      image->image_frame.height);
 
   if (!img.ok()) {
     ABSL_LOG(ERROR) << "Failed to create Image: " << img.status();
@@ -163,11 +161,11 @@ int CppPoseLandmarkerDetect(void* landmarker, const MpImage& image,
   return 0;
 }
 
-int CppPoseLandmarkerDetectForVideo(void* landmarker, const MpImage& image,
+int CppPoseLandmarkerDetectForVideo(void* landmarker, const MpImage* image,
                                     int64_t timestamp_ms,
                                     PoseLandmarkerResult* result,
                                     char** error_msg) {
-  if (image.type == MpImage::GPU_BUFFER) {
+  if (image->type == MpImage::GPU_BUFFER) {
     absl::Status status =
         absl::InvalidArgumentError("GPU Buffer not supported yet");
 
@@ -176,9 +174,9 @@ int CppPoseLandmarkerDetectForVideo(void* landmarker, const MpImage& image,
   }
 
   const auto img = CreateImageFromBuffer(
-      static_cast<ImageFormat::Format>(image.image_frame.format),
-      image.image_frame.image_buffer, image.image_frame.width,
-      image.image_frame.height);
+      static_cast<ImageFormat::Format>(image->image_frame.format),
+      image->image_frame.image_buffer, image->image_frame.width,
+      image->image_frame.height);
 
   if (!img.ok()) {
     ABSL_LOG(ERROR) << "Failed to create Image: " << img.status();
@@ -195,9 +193,9 @@ int CppPoseLandmarkerDetectForVideo(void* landmarker, const MpImage& image,
   return 0;
 }
 
-int CppPoseLandmarkerDetectAsync(void* landmarker, const MpImage& image,
+int CppPoseLandmarkerDetectAsync(void* landmarker, const MpImage* image,
                                  int64_t timestamp_ms, char** error_msg) {
-  if (image.type == MpImage::GPU_BUFFER) {
+  if (image->type == MpImage::GPU_BUFFER) {
     absl::Status status =
         absl::InvalidArgumentError("GPU Buffer not supported yet");
 
@@ -206,9 +204,9 @@ int CppPoseLandmarkerDetectAsync(void* landmarker, const MpImage& image,
   }
 
   const auto img = CreateImageFromBuffer(
-      static_cast<ImageFormat::Format>(image.image_frame.format),
-      image.image_frame.image_buffer, image.image_frame.width,
-      image.image_frame.height);
+      static_cast<ImageFormat::Format>(image->image_frame.format),
+      image->image_frame.image_buffer, image->image_frame.width,
+      image->image_frame.height);
 
   if (!img.ok()) {
     ABSL_LOG(ERROR) << "Failed to create Image: " << img.status();
@@ -250,14 +248,14 @@ void* pose_landmarker_create(struct PoseLandmarkerOptions* options,
       *options, error_msg);
 }
 
-int pose_landmarker_detect_image(void* landmarker, const MpImage& image,
+int pose_landmarker_detect_image(void* landmarker, const MpImage* image,
                                  PoseLandmarkerResult* result,
                                  char** error_msg) {
   return mediapipe::tasks::c::vision::pose_landmarker::CppPoseLandmarkerDetect(
       landmarker, image, result, error_msg);
 }
 
-int pose_landmarker_detect_for_video(void* landmarker, const MpImage& image,
+int pose_landmarker_detect_for_video(void* landmarker, const MpImage* image,
                                      int64_t timestamp_ms,
                                      PoseLandmarkerResult* result,
                                      char** error_msg) {
@@ -266,7 +264,7 @@ int pose_landmarker_detect_for_video(void* landmarker, const MpImage& image,
                                       error_msg);
 }
 
-int pose_landmarker_detect_async(void* landmarker, const MpImage& image,
+int pose_landmarker_detect_async(void* landmarker, const MpImage* image,
                                  int64_t timestamp_ms, char** error_msg) {
   return mediapipe::tasks::c::vision::pose_landmarker::
       CppPoseLandmarkerDetectAsync(landmarker, image, timestamp_ms, error_msg);

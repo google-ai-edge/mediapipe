@@ -17,7 +17,7 @@ mediapipe_ts_library(
 mediapipe_ts_library(
     name = "classifier_options_test_lib",
     testonly = True,
-    srcs = ["classifier_options.test.ts"],
+    srcs = ["classifier_options_test.ts"],
     deps = [
         ":classifier_options",
         "//mediapipe/tasks/cc/components/processors/proto:classifier_options_jspb_proto",
@@ -27,7 +27,7 @@ mediapipe_ts_library(
 
 jasmine_node_test(
     name = "classifier_options_test",
-    deps = [":classifier_options_test_lib"],
+    srcs = [":classifier_options_test_lib"],
 )
 
 mediapipe_ts_library(
@@ -43,7 +43,7 @@ mediapipe_ts_library(
 mediapipe_ts_library(
     name = "classifier_result_test_lib",
     testonly = True,
-    srcs = ["classifier_result.test.ts"],
+    srcs = ["classifier_result_test.ts"],
     deps = [
         ":classifier_result",
         "//mediapipe/framework/formats:classification_jspb_proto",
@@ -53,7 +53,7 @@ mediapipe_ts_library(
 
 jasmine_node_test(
     name = "classifier_result_test",
-    deps = [":classifier_result_test_lib"],
+    srcs = [":classifier_result_test_lib"],
 )
 
 mediapipe_ts_library(
@@ -68,7 +68,7 @@ mediapipe_ts_library(
 mediapipe_ts_library(
     name = "detection_result_test_lib",
     testonly = True,
-    srcs = ["detection_result.test.ts"],
+    srcs = ["detection_result_test.ts"],
     deps = [
         ":detection_result",
         "//mediapipe/framework/formats:detection_jspb_proto",
@@ -89,7 +89,7 @@ mediapipe_ts_library(
 mediapipe_ts_library(
     name = "embedder_result_test_lib",
     testonly = True,
-    srcs = ["embedder_result.test.ts"],
+    srcs = ["embedder_result_test.ts"],
     deps = [
         ":embedder_result",
         "//mediapipe/tasks/cc/components/containers/proto:embeddings_jspb_proto",
@@ -98,7 +98,7 @@ mediapipe_ts_library(
 
 jasmine_node_test(
     name = "embedder_result_test",
-    deps = [":embedder_result_test_lib"],
+    srcs = [":embedder_result_test_lib"],
 )
 
 mediapipe_ts_library(
@@ -113,7 +113,7 @@ mediapipe_ts_library(
 mediapipe_ts_library(
     name = "embedder_options_test_lib",
     testonly = True,
-    srcs = ["embedder_options.test.ts"],
+    srcs = ["embedder_options_test.ts"],
     deps = [
         ":embedder_options",
         "//mediapipe/tasks/cc/components/processors/proto:embedder_options_jspb_proto",
@@ -123,7 +123,7 @@ mediapipe_ts_library(
 
 jasmine_node_test(
     name = "embedder_options_test",
-    deps = [":embedder_options_test_lib"],
+    srcs = [":embedder_options_test_lib"],
 )
 
 mediapipe_ts_library(
@@ -141,11 +141,11 @@ mediapipe_ts_library(
 mediapipe_ts_library(
     name = "landmark_result_test_lib",
     testonly = True,
-    srcs = ["landmark_result.test.ts"],
+    srcs = ["landmark_result_test.ts"],
     deps = [":landmark_result"],
 )
 
 jasmine_node_test(
     name = "landmark_result_test",
-    deps = [":landmark_result_test_lib"],
+    srcs = [":landmark_result_test_lib"],
 )

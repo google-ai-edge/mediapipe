@@ -16,7 +16,11 @@
 
 import {BoundingBox} from '../../../../tasks/web/components/containers/bounding_box';
 import {NormalizedLandmark} from '../../../../tasks/web/components/containers/landmark';
-import {CategoryMaskShaderContext, CategoryToColorMap, RGBAColor} from '../../../../tasks/web/vision/core/drawing_utils_category_mask';
+import {
+  CategoryMaskShaderContext,
+  CategoryToColorMap,
+  RGBAColor,
+} from '../../../../tasks/web/vision/core/drawing_utils_category_mask';
 import {ConfidenceMaskShaderContext} from '../../../../tasks/web/vision/core/drawing_utils_confidence_mask';
 import {MPImageShaderContext} from '../../../../tasks/web/vision/core/image_shader_context';
 import {MPMask} from '../../../../tasks/web/vision/core/mask';
@@ -41,28 +45,28 @@ export declare interface LandmarkData {
 
 /** A color map with 22 classes. Used in our demos. */
 export const DEFAULT_CATEGORY_TO_COLOR_MAP = [
-  [0, 0, 0, 0],          // class 0 is BG = transparent
-  [255, 0, 0, 255],      // class 1 is red
-  [0, 255, 0, 255],      // class 2 is light green
-  [0, 0, 255, 255],      // class 3 is blue
-  [255, 255, 0, 255],    // class 4 is yellow
-  [255, 0, 255, 255],    // class 5 is light purple / magenta
-  [0, 255, 255, 255],    // class 6 is light blue / aqua
-  [128, 128, 128, 255],  // class 7 is gray
-  [255, 100, 0, 255],    // class 8 is dark orange
-  [128, 0, 255, 255],    // class 9 is dark purple
-  [0, 150, 0, 255],      // class 10 is green
-  [255, 255, 255, 255],  // class 11 is white
-  [255, 105, 180, 255],  // class 12 is pink
-  [255, 150, 0, 255],    // class 13 is orange
-  [255, 250, 224, 255],  // class 14 is light yellow
-  [148, 0, 211, 255],    // class 15 is dark violet
-  [0, 100, 0, 255],      // class 16 is dark green
-  [0, 0, 128, 255],      // class 17 is navy blue
-  [165, 42, 42, 255],    // class 18 is brown
-  [64, 224, 208, 255],   // class 19 is turquoise
-  [255, 218, 185, 255],  // class 20 is peach
-  [192, 192, 192, 255],  // class 21 is silver
+  [0, 0, 0, 0], // class 0 is BG = transparent
+  [255, 0, 0, 255], // class 1 is red
+  [0, 255, 0, 255], // class 2 is light green
+  [0, 0, 255, 255], // class 3 is blue
+  [255, 255, 0, 255], // class 4 is yellow
+  [255, 0, 255, 255], // class 5 is light purple / magenta
+  [0, 255, 255, 255], // class 6 is light blue / aqua
+  [128, 128, 128, 255], // class 7 is gray
+  [255, 100, 0, 255], // class 8 is dark orange
+  [128, 0, 255, 255], // class 9 is dark purple
+  [0, 150, 0, 255], // class 10 is green
+  [255, 255, 255, 255], // class 11 is white
+  [255, 105, 180, 255], // class 12 is pink
+  [255, 150, 0, 255], // class 13 is orange
+  [255, 250, 224, 255], // class 14 is light yellow
+  [148, 0, 211, 255], // class 15 is dark violet
+  [0, 100, 0, 255], // class 16 is dark green
+  [0, 0, 128, 255], // class 17 is navy blue
+  [165, 42, 42, 255], // class 18 is brown
+  [64, 224, 208, 255], // class 19 is turquoise
+  [255, 218, 185, 255], // class 20 is peach
+  [192, 192, 192, 255], // class 21 is silver
 ];
 
 /**
@@ -70,18 +74,24 @@ export const DEFAULT_CATEGORY_TO_COLOR_MAP = [
  */
 export declare interface DrawingOptions {
   /** The color that is used to draw the shape. Defaults to white. */
-  color?: string|CanvasGradient|CanvasPattern|
-      Callback<LandmarkData, string|CanvasGradient|CanvasPattern>;
+  color?:
+    | string
+    | CanvasGradient
+    | CanvasPattern
+    | Callback<LandmarkData, string | CanvasGradient | CanvasPattern>;
   /**
    * The color that is used to fill the shape. Defaults to `.color` (or black
    * if color is not set).
    */
-  fillColor?: string|CanvasGradient|CanvasPattern|
-      Callback<LandmarkData, string|CanvasGradient|CanvasPattern>;
+  fillColor?:
+    | string
+    | CanvasGradient
+    | CanvasPattern
+    | Callback<LandmarkData, string | CanvasGradient | CanvasPattern>;
   /** The width of the line boundary of the shape. Defaults to 4. */
-  lineWidth?: number|Callback<LandmarkData, number>;
+  lineWidth?: number | Callback<LandmarkData, number>;
   /** The radius of location marker. Defaults to 6. */
-  radius?: number|Callback<LandmarkData, number>;
+  radius?: number | Callback<LandmarkData, number>;
 }
 
 /**
@@ -90,7 +100,7 @@ export declare interface DrawingOptions {
 const DEFAULT_OPTIONS: DrawingOptions = {
   color: 'white',
   lineWidth: 4,
-  radius: 6
+  radius: 6,
 };
 
 /** Merges the user's options with the default options. */
@@ -107,19 +117,20 @@ function addDefaultOptions(style?: DrawingOptions): DrawingOptions {
  * Resolve the value from `value`. Invokes `value` with `data` if it is a
  * function.
  */
-function resolve<O, I>(value: O|Callback<I, O>, data: I): O {
+function resolve<O, I>(value: O | Callback<I, O>, data: I): O {
   return value instanceof Function ? value(data) : value;
 }
 
-export {type RGBAColor, type CategoryToColorMap};
+export {type CategoryToColorMap, type RGBAColor};
 
 /** Helper class to visualize the result of a MediaPipe Vision task. */
 export class DrawingUtils {
   private categoryMaskShaderContext?: CategoryMaskShaderContext;
   private confidenceMaskShaderContext?: ConfidenceMaskShaderContext;
   private convertToWebGLTextureShaderContext?: MPImageShaderContext;
-  private readonly context2d?: CanvasRenderingContext2D|
-      OffscreenCanvasRenderingContext2D;
+  private readonly context2d?:
+    | CanvasRenderingContext2D
+    | OffscreenCanvasRenderingContext2D;
   private readonly contextWebGL?: WebGL2RenderingContext;
 
   /**
@@ -142,18 +153,29 @@ export class DrawingUtils {
    *     `setOptions({ canvas: .. })`).
    */
   constructor(
-      cpuContext: CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D,
-      gpuContext?: WebGL2RenderingContext);
+    cpuContext: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+    gpuContext?: WebGL2RenderingContext,
+  );
   constructor(
-      cpuOrGpuGontext: CanvasRenderingContext2D|
-      OffscreenCanvasRenderingContext2D|WebGL2RenderingContext,
-      gpuContext?: WebGL2RenderingContext) {
-    if (cpuOrGpuGontext instanceof CanvasRenderingContext2D ||
-        cpuOrGpuGontext instanceof OffscreenCanvasRenderingContext2D) {
+    cpuOrGpuGontext:
+      | CanvasRenderingContext2D
+      | OffscreenCanvasRenderingContext2D
+      | WebGL2RenderingContext,
+    gpuContext?: WebGL2RenderingContext,
+  ) {
+    if (
+      (typeof CanvasRenderingContext2D !== 'undefined' &&
+        cpuOrGpuGontext instanceof CanvasRenderingContext2D) ||
+      cpuOrGpuGontext instanceof OffscreenCanvasRenderingContext2D
+    ) {
       this.context2d = cpuOrGpuGontext;
       this.contextWebGL = gpuContext;
     } else {
-      this.contextWebGL = cpuOrGpuGontext;
+      // If the first `if` statement is false, then the first argument must be a
+      // WebGL2RenderingContext, since CanvasRenderingContext2D can't be passed
+      // as the first argument. However, typescript isn't smart enough to infer
+      // this so we cast.
+      this.contextWebGL = cpuOrGpuGontext as WebGL2RenderingContext;
     }
   }
 
@@ -184,18 +206,25 @@ export class DrawingUtils {
    * @param y1 The y coordinate of the end value.
    * @return The interpolated value.
    */
-  static lerp(x: number, x0: number, x1: number, y0: number, y1: number):
-      number {
+  static lerp(
+    x: number,
+    x0: number,
+    x1: number,
+    y0: number,
+    y1: number,
+  ): number {
     const out =
-        y0 * (1 - (x - x0) / (x1 - x0)) + y1 * (1 - (x1 - x) / (x1 - x0));
+      y0 * (1 - (x - x0) / (x1 - x0)) + y1 * (1 - (x1 - x) / (x1 - x0));
     return DrawingUtils.clamp(out, y0, y1);
   }
 
-  private getCanvasRenderingContext(): CanvasRenderingContext2D
-      |OffscreenCanvasRenderingContext2D {
+  private getCanvasRenderingContext():
+    | CanvasRenderingContext2D
+    | OffscreenCanvasRenderingContext2D {
     if (!this.context2d) {
       throw new Error(
-          'CPU rendering requested but CanvasRenderingContext2D not provided.');
+        'CPU rendering requested but CanvasRenderingContext2D not provided.',
+      );
     }
     return this.context2d;
   }
@@ -203,7 +232,8 @@ export class DrawingUtils {
   private getWebGLRenderingContext(): WebGL2RenderingContext {
     if (!this.contextWebGL) {
       throw new Error(
-          'GPU rendering requested but WebGL2RenderingContext not provided.');
+        'GPU rendering requested but WebGL2RenderingContext not provided.',
+      );
     }
     return this.contextWebGL;
   }
@@ -232,8 +262,10 @@ export class DrawingUtils {
    * @param landmarks The landmarks to draw.
    * @param style The style to visualize the landmarks.
    */
-  drawLandmarks(landmarks?: NormalizedLandmark[], style?: DrawingOptions):
-      void {
+  drawLandmarks(
+    landmarks?: NormalizedLandmark[],
+    style?: DrawingOptions,
+  ): void {
     if (!landmarks) {
       return;
     }
@@ -252,8 +284,12 @@ export class DrawingUtils {
       const circle = new Path2D();
       // Decrease the size of the arc to compensate for the scale()
       circle.arc(
-          landmark.x * canvas.width, landmark.y * canvas.height,
-          resolve(options.radius!, {index, from: landmark}), 0, 2 * Math.PI);
+        landmark.x * canvas.width,
+        landmark.y * canvas.height,
+        resolve(options.radius!, {index, from: landmark}),
+        0,
+        2 * Math.PI,
+      );
       ctx.fill(circle);
       ctx.stroke(circle);
       ++index;
@@ -274,8 +310,10 @@ export class DrawingUtils {
    * @param style The style to visualize the landmarks.
    */
   drawConnectors(
-      landmarks?: NormalizedLandmark[], connections?: Connection[],
-      style?: DrawingOptions): void {
+    landmarks?: NormalizedLandmark[],
+    connections?: Connection[],
+    style?: DrawingOptions,
+  ): void {
     if (!landmarks || !connections) {
       return;
     }
@@ -308,7 +346,7 @@ export class DrawingUtils {
    *
    * @export
    * @param boundingBox The bounding box to draw.
-   * @param style The style to visualize the boundin box.
+   * @param style The style to visualize the bounding box.
    */
   drawBoundingBox(boundingBox: BoundingBox, style?: DrawingOptions): void {
     const ctx = this.getCanvasRenderingContext();
@@ -321,8 +359,9 @@ export class DrawingUtils {
     ctx.moveTo(boundingBox.originX, boundingBox.originY);
     ctx.lineTo(boundingBox.originX + boundingBox.width, boundingBox.originY);
     ctx.lineTo(
-        boundingBox.originX + boundingBox.width,
-        boundingBox.originY + boundingBox.height);
+      boundingBox.originX + boundingBox.width,
+      boundingBox.originY + boundingBox.height,
+    );
     ctx.lineTo(boundingBox.originX, boundingBox.originY + boundingBox.height);
     ctx.lineTo(boundingBox.originX, boundingBox.originY);
     ctx.stroke();
@@ -332,11 +371,13 @@ export class DrawingUtils {
 
   /** Draws a category mask on a CanvasRenderingContext2D. */
   private drawCategoryMask2D(
-      mask: MPMask, background: RGBAColor|ImageSource,
-      categoryToColorMap: Map<number, RGBAColor>|RGBAColor[]): void {
+    mask: MPMask,
+    background: RGBAColor | ImageSource,
+    categoryToColorMap: Map<number, RGBAColor> | RGBAColor[],
+  ): void {
     // Use the WebGL renderer to draw result on our internal canvas.
     const gl = this.getWebGLRenderingContext();
-    this.runWithWebGLTexture(mask, texture => {
+    this.runWithWebGLTexture(mask, (texture) => {
       this.drawCategoryMaskWebGL(texture, background, categoryToColorMap);
       // Draw the result on the user canvas.
       const ctx = this.getCanvasRenderingContext();
@@ -346,17 +387,22 @@ export class DrawingUtils {
 
   /** Draws a category mask on a WebGL2RenderingContext2D. */
   private drawCategoryMaskWebGL(
-      categoryTexture: WebGLTexture, background: RGBAColor|ImageSource,
-      categoryToColorMap: Map<number, RGBAColor>|RGBAColor[]): void {
+    categoryTexture: WebGLTexture,
+    background: RGBAColor | ImageSource,
+    categoryToColorMap: Map<number, RGBAColor> | RGBAColor[],
+  ): void {
     const shaderContext = this.getCategoryMaskShaderContext();
     const gl = this.getWebGLRenderingContext();
-    const backgroundImage = Array.isArray(background) ?
-        new ImageData(new Uint8ClampedArray(background), 1, 1) :
-        background;
+    const backgroundImage = Array.isArray(background)
+      ? new ImageData(new Uint8ClampedArray(background), 1, 1)
+      : background;
 
     shaderContext.run(gl, /* flipTexturesVertically= */ true, () => {
       shaderContext.bindAndUploadTextures(
-          categoryTexture, backgroundImage, categoryToColorMap);
+        categoryTexture,
+        backgroundImage,
+        categoryToColorMap,
+      );
       gl.clearColor(0, 0, 0, 0);
       gl.clear(gl.COLOR_BUFFER_BIT);
       gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
@@ -375,8 +421,10 @@ export class DrawingUtils {
    *     black.
    */
   drawCategoryMask(
-      mask: MPMask, categoryToColorMap: Map<number, RGBAColor>,
-      background?: RGBAColor|ImageSource): void;
+    mask: MPMask,
+    categoryToColorMap: Map<number, RGBAColor>,
+    background?: RGBAColor | ImageSource,
+  ): void;
   /**
    * Draws a category mask using the provided color array.
    *
@@ -389,17 +437,24 @@ export class DrawingUtils {
    *     black.
    */
   drawCategoryMask(
-      mask: MPMask, categoryToColorMap: RGBAColor[],
-      background?: RGBAColor|ImageSource): void;
+    mask: MPMask,
+    categoryToColorMap: RGBAColor[],
+    background?: RGBAColor | ImageSource,
+  ): void;
   /** @export */
   drawCategoryMask(
-      mask: MPMask, categoryToColorMap: CategoryToColorMap,
-      background: RGBAColor|ImageSource = [0, 0, 0, 255]): void {
+    mask: MPMask,
+    categoryToColorMap: CategoryToColorMap,
+    background: RGBAColor | ImageSource = [0, 0, 0, 255],
+  ): void {
     if (this.context2d) {
       this.drawCategoryMask2D(mask, background, categoryToColorMap);
     } else {
       this.drawCategoryMaskWebGL(
-          mask.getAsWebGLTexture(), background, categoryToColorMap);
+        mask.getAsWebGLTexture(),
+        background,
+        categoryToColorMap,
+      );
     }
   }
 
@@ -408,24 +463,27 @@ export class DrawingUtils {
    * up any new resources after the callback finished executing.
    */
   private runWithWebGLTexture(
-      mask: MPMask, callback: (texture: WebGLTexture) => void): void {
+    mask: MPMask,
+    callback: (texture: WebGLTexture) => void,
+  ): void {
     if (!mask.hasWebGLTexture()) {
       // Re-create the MPMask but use our the WebGL canvas so we can draw the
       // texture directly.
-      const data = mask.hasFloat32Array() ? mask.getAsFloat32Array() :
-                                            mask.getAsUint8Array();
+      const data = mask.hasFloat32Array()
+        ? mask.getAsFloat32Array()
+        : mask.getAsUint8Array();
       this.convertToWebGLTextureShaderContext =
-          this.convertToWebGLTextureShaderContext ?? new MPImageShaderContext();
+        this.convertToWebGLTextureShaderContext ?? new MPImageShaderContext();
       const gl = this.getWebGLRenderingContext();
 
       const convertedMask = new MPMask(
-          [data],
-          mask.interpolateValues,
-          /* ownsWebGlTexture= */ false,
-          gl.canvas,
-          this.convertToWebGLTextureShaderContext,
-          mask.width,
-          mask.height,
+        [data],
+        mask.interpolateValues,
+        /* ownsWebGlTexture= */ false,
+        gl.canvas,
+        this.convertToWebGLTextureShaderContext,
+        mask.width,
+        mask.height,
       );
       callback(convertedMask.getAsWebGLTexture());
       convertedMask.close();
@@ -436,20 +494,25 @@ export class DrawingUtils {
 
   /** Draws a confidence mask on a WebGL2RenderingContext2D. */
   private drawConfidenceMaskWebGL(
-      maskTexture: WebGLTexture, defaultTexture: RGBAColor|ImageSource,
-      overlayTexture: RGBAColor|ImageSource): void {
+    maskTexture: WebGLTexture,
+    defaultTexture: RGBAColor | ImageSource,
+    overlayTexture: RGBAColor | ImageSource,
+  ): void {
     const gl = this.getWebGLRenderingContext();
     const shaderContext = this.getConfidenceMaskShaderContext();
-    const defaultImage = Array.isArray(defaultTexture) ?
-        new ImageData(new Uint8ClampedArray(defaultTexture), 1, 1) :
-        defaultTexture;
-    const overlayImage = Array.isArray(overlayTexture) ?
-        new ImageData(new Uint8ClampedArray(overlayTexture), 1, 1) :
-        overlayTexture;
+    const defaultImage = Array.isArray(defaultTexture)
+      ? new ImageData(new Uint8ClampedArray(defaultTexture), 1, 1)
+      : defaultTexture;
+    const overlayImage = Array.isArray(overlayTexture)
+      ? new ImageData(new Uint8ClampedArray(overlayTexture), 1, 1)
+      : overlayTexture;
 
     shaderContext.run(gl, /* flipTexturesVertically= */ true, () => {
       shaderContext.bindAndUploadTextures(
-          defaultImage, overlayImage, maskTexture);
+        defaultImage,
+        overlayImage,
+        maskTexture,
+      );
       gl.clearColor(0, 0, 0, 0);
       gl.clear(gl.COLOR_BUFFER_BIT);
       gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
@@ -460,11 +523,13 @@ export class DrawingUtils {
 
   /** Draws a confidence mask on a CanvasRenderingContext2D. */
   private drawConfidenceMask2D(
-      mask: MPMask, defaultTexture: RGBAColor|ImageSource,
-      overlayTexture: RGBAColor|ImageSource): void {
+    mask: MPMask,
+    defaultTexture: RGBAColor | ImageSource,
+    overlayTexture: RGBAColor | ImageSource,
+  ): void {
     // Use the WebGL renderer to draw result on our internal canvas.
     const gl = this.getWebGLRenderingContext();
-    this.runWithWebGLTexture(mask, texture => {
+    this.runWithWebGLTexture(mask, (texture) => {
       this.drawConfidenceMaskWebGL(texture, defaultTexture, overlayTexture);
       // Draw the result on the user canvas.
       const ctx = this.getCanvasRenderingContext();
@@ -489,13 +554,18 @@ export class DrawingUtils {
    *     confidence values are high.
    */
   drawConfidenceMask(
-      mask: MPMask, defaultTexture: RGBAColor|ImageSource,
-      overlayTexture: RGBAColor|ImageSource): void {
+    mask: MPMask,
+    defaultTexture: RGBAColor | ImageSource,
+    overlayTexture: RGBAColor | ImageSource,
+  ): void {
     if (this.context2d) {
       this.drawConfidenceMask2D(mask, defaultTexture, overlayTexture);
     } else {
       this.drawConfidenceMaskWebGL(
-          mask.getAsWebGLTexture(), defaultTexture, overlayTexture);
+        mask.getAsWebGLTexture(),
+        defaultTexture,
+        overlayTexture,
+      );
     }
   }
   /**

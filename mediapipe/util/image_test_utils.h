@@ -41,6 +41,9 @@ ImageFrame CreateTestGrey8ImageFrame(int width, int height);
 // Generates 4 channel uint8 RGBA ImageFrame with increasing [0,255] values.
 ImageFrame CreateTestRgba8ImageFrame(int width, int height);
 
+// Generates 3 channel uint8 RGB ImageFrame with increasing [0,255] values.
+ImageFrame CreateTestRgb8ImageFrame(int width, int height);
+
 // Generates single-channel float32 GpuBuffer with increasing [0,1] values.
 GpuBuffer CreateTestFloat32GpuBuffer(int width, int height);
 
@@ -49,6 +52,9 @@ GpuBuffer CreateTestGrey8GpuBuffer(int width, int height);
 
 // Generates 4 channel uint8 RGBA GpuBuffer with increasing [0,255] values.
 GpuBuffer CreateTestRgba8GpuBuffer(int width, int height);
+
+// Generates 3 channel uint8 RGB GpuBuffer with increasing [0,255] values.
+GpuBuffer CreateTestRgb8GpuBuffer(int width, int height);
 
 }  // namespace mediapipe
 

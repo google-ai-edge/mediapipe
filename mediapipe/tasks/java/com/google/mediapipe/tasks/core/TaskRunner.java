@@ -22,8 +22,8 @@ import com.google.mediapipe.framework.AndroidPacketCreator;
 import com.google.mediapipe.framework.Graph;
 import com.google.mediapipe.framework.MediaPipeException;
 import com.google.mediapipe.framework.Packet;
-import com.google.mediapipe.tasks.core.logging.TasksStatsDummyLogger;
 import com.google.mediapipe.tasks.core.logging.TasksStatsLogger;
+import com.google.mediapipe.tasks.core.logging.TasksStatsLoggerFactory;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -56,7 +56,8 @@ public class TaskRunner implements AutoCloseable {
       TaskInfo<? extends TaskOptions> taskInfo,
       OutputHandler<? extends TaskResult, ?> outputHandler) {
     TasksStatsLogger statsLogger =
-        TasksStatsDummyLogger.create(context, taskInfo.taskName(), taskInfo.taskRunningModeName());
+        TasksStatsLoggerFactory.create(
+            context, taskInfo.taskName(), taskInfo.taskRunningModeName());
     AndroidAssetUtil.initializeNativeAssetManager(context);
     Graph mediapipeGraph = new Graph();
     mediapipeGraph.loadBinaryGraph(taskInfo.generateGraphConfig());

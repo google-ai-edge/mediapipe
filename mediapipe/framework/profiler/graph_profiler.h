@@ -351,7 +351,7 @@ class GraphProfiler : public std::enable_shared_from_this<ProfilingContext> {
   absl::Time previous_log_end_time_;
 
   // The index number of the previous output log.
-  int previous_log_index_;
+  std::atomic<int> previous_log_index_;
 
   // The configuration for the graph being profiled.
   const ValidatedGraphConfig* validated_graph_;

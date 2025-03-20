@@ -3,8 +3,8 @@
 # This task takes video frames and outputs synchronized frames along with
 # the detection results for one or more hand categories, using Hand Landmarker.
 
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_declaration", "mediapipe_ts_library")
 load("@npm//@bazel/jasmine:index.bzl", "jasmine_node_test")
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_declaration", "mediapipe_ts_library")
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
@@ -71,8 +71,8 @@ mediapipe_ts_library(
 
 jasmine_node_test(
     name = "hand_landmarker_test",
+    srcs = [":hand_landmarker_test_lib"],
     tags = ["nomsan"],
-    deps = [":hand_landmarker_test_lib"],
 )
 
 mediapipe_ts_library(

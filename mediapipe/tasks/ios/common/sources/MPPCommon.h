@@ -99,11 +99,29 @@ typedef NS_ENUM(NSUInteger, MPPTasksErrorCode) {
    */
   MPPTasksErrorCodeUnauthenticatedError = 16,
 
+  /** Indicates that audio record permissions were denied by the user. */
+  MPPTasksErrorCodeAudioRecordPermissionDeniedError = 17,
+
+  /**
+   * Audio record permissions cannot be determined. If this error is returned by Audio, the caller
+   * has to acquire permissions using AVFoundation.
+   */
+  MPPTasksErrorCodeAudioRecordPermissionUndeterminedError = 18,
+
+  /** Indicates that `AudioRecord` is waiting for new microphone input. */
+  MPPTasksErrorCodeAudioRecordWaitingForNewMicInputError = 19,
+
+  /**
+   * Indicates that `AudioRecord` is not tapping the microphone. Operations permitted only while the
+   * microphone is being actively tapped can return this error.
+   */
+  MPPTasksErrorCodeAudioRecordNotTappingMicError = 20,
+
   /** The first error code in MPPTasksErrorCode (for internal use only). */
   MPPTasksErrorCodeFirst = MPPTasksErrorCodeCancelledError,
 
   /** The last error code in MPPTasksErrorCode (for internal use only). */
-  MPPTasksErrorCodeLast = MPPTasksErrorCodeUnauthenticatedError,
+  MPPTasksErrorCodeLast = MPPTasksErrorCodeAudioRecordNotTappingMicError,
 
 } NS_SWIFT_NAME(TasksErrorCode);
 

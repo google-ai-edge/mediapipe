@@ -490,7 +490,6 @@ _gengen = rule(
         "_cc_toolchain": attr.label(default = "@bazel_tools//tools/cpp:current_cc_toolchain"),
     },
     fragments = ["cpp"],
-    output_to_genfiles = True,
     toolchains = use_cpp_toolchain(),
     exec_groups = {
         "generator": exec_group(),

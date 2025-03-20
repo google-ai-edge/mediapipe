@@ -18,5 +18,6 @@ objc_library(
         "//mediapipe/tasks/ios/test/vision/utils:parse_proto_utils",
         "//mediapipe/tasks/ios/vision/gesture_recognizer:MPPGestureRecognizerResult",
         "//mediapipe/tasks/ios/vision/gesture_recognizer/utils:MPPGestureRecognizerResultHelpers",
+        "//third_party/apple_frameworks:Foundation",
     ],
 )

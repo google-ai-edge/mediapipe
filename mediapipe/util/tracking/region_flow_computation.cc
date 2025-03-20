@@ -724,7 +724,8 @@ RegionFlowComputation::RegionFlowComputation(
         ABSL_LOG(ERROR)
             << "Long tracks are only supported if tracking direction "
             << "is set to FORWARD. Adjusting direction to FORWARD. "
-            << "This does not affect the expected " << "output_flow_direction";
+            << "This does not affect the expected "
+            << "output_flow_direction";
         options_.mutable_tracking_options()->set_internal_tracking_direction(
             TrackingOptions::FORWARD);
       }
@@ -1062,8 +1063,8 @@ bool RegionFlowComputation::AddImageAndTrack(
   curr_data->Reset(frame_num_, timestamp_usec);
 
   if (!IsModelIdentity(initial_transform)) {
-    ABSL_CHECK_EQ(1, frames_to_track_)
-        << "Initial transform is not supported " << "for multi frame tracking";
+    ABSL_CHECK_EQ(1, frames_to_track_) << "Initial transform is not supported "
+                                       << "for multi frame tracking";
     Homography transform = initial_transform;
     if (downsample_scale_ != 1) {
       const float scale = 1.0f / downsample_scale_;
@@ -2351,7 +2352,8 @@ void RegionFlowComputation::ExtractFeatures(
                       static int k = 0;
                       return k++ < 2;
                     }())
-            << "Expecting an assigned track id, " << "skipping feature.";
+            << "Expecting an assigned track id, "
+            << "skipping feature.";
         continue;
       }
 
@@ -2527,8 +2529,8 @@ void RegionFlowComputation::TrackFeatures(FrameTrackingData* from_data_ptr,
   }
 
   const int track_win_size = options_.tracking_options().tracking_window_size();
-  ABSL_CHECK_GT(track_win_size, 1)
-      << "Needs to be at least 2 pixels in each " << "direction";
+  ABSL_CHECK_GT(track_win_size, 1) << "Needs to be at least 2 pixels in each "
+                                   << "direction";
 
   // Proceed with gain correction only if it succeeds, and set flag accordingly.
   bool frame1_gain_reference = true;

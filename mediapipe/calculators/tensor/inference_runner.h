@@ -4,6 +4,8 @@
 #include <vector>
 
 #include "absl/status/statusor.h"
+#include "mediapipe/calculators/tensor/inference_io_mapper.h"
+#include "mediapipe/calculators/tensor/tensor_span.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/formats/tensor.h"
 
@@ -14,9 +16,11 @@ class InferenceRunner {
  public:
   virtual ~InferenceRunner() = default;
   virtual absl::StatusOr<std::vector<Tensor>> Run(
-      CalculatorContext* cc, const std::vector<Tensor>& inputs) = 0;
-  virtual absl::StatusOr<std::vector<Tensor>> RunFromPointers(
-      CalculatorContext* cc, const std::vector<const Tensor*>& inputs) = 0;
+      CalculatorContext* cc, const TensorSpan& tensor_span) = 0;
+
+  // Returns the TfLite model's input/output tensor names. This enables tensor
+  // name based I/O mapping in the InferenceCalculator base class.
+  virtual const InputOutputTensorNames& GetInputOutputTensorNames() const = 0;
 };
 
 }  // namespace mediapipe

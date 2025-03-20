@@ -21,7 +21,10 @@ import {BaseOptions as BaseOptionsProto} from '../../../../tasks/cc/core/proto/b
 import {TextClassifierGraphOptions} from '../../../../tasks/cc/text/text_classifier/proto/text_classifier_graph_options_pb';
 import {convertClassifierOptionsToProto} from '../../../../tasks/web/components/processors/classifier_options';
 import {convertFromClassificationResultProto} from '../../../../tasks/web/components/processors/classifier_result';
-import {CachedGraphRunner, TaskRunner} from '../../../../tasks/web/core/task_runner';
+import {
+  CachedGraphRunner,
+  TaskRunner,
+} from '../../../../tasks/web/core/task_runner';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {WasmModule} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
@@ -35,7 +38,7 @@ export * from './language_detector_result';
 const INPUT_STREAM = 'text_in';
 const CLASSIFICATIONS_STREAM = 'classifications_out';
 const TEXT_CLASSIFIER_GRAPH =
-    'mediapipe.tasks.text.text_classifier.TextClassifierGraph';
+  'mediapipe.tasks.text.text_classifier.TextClassifierGraph';
 
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern
@@ -56,11 +59,15 @@ export class LanguageDetector extends TaskRunner {
    *     provided (via `baseOptions`).
    */
   static createFromOptions(
-      wasmFileset: WasmFileset, textClassifierOptions: LanguageDetectorOptions):
-      Promise<LanguageDetector> {
+    wasmFileset: WasmFileset,
+    textClassifierOptions: LanguageDetectorOptions,
+  ): Promise<LanguageDetector> {
     return TaskRunner.createInstance(
-        LanguageDetector, /* canvas= */ null, wasmFileset,
-        textClassifierOptions);
+      LanguageDetector,
+      /* canvas= */ null,
+      wasmFileset,
+      textClassifierOptions,
+    );
   }
 
   /**
@@ -69,14 +76,19 @@ export class LanguageDetector extends TaskRunner {
    * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
-   * @param modelAssetBuffer A binary representation of the model.
+   * @param modelAssetBuffer An array or a stream containing a binary
+   *    representation of the model.
    */
   static createFromModelBuffer(
-      wasmFileset: WasmFileset,
-      modelAssetBuffer: Uint8Array): Promise<LanguageDetector> {
+    wasmFileset: WasmFileset,
+    modelAssetBuffer: Uint8Array | ReadableStreamDefaultReader,
+  ): Promise<LanguageDetector> {
     return TaskRunner.createInstance(
-        LanguageDetector, /* canvas= */ null, wasmFileset,
-        {baseOptions: {modelAssetBuffer}});
+      LanguageDetector,
+      /* canvas= */ null,
+      wasmFileset,
+      {baseOptions: {modelAssetBuffer}},
+    );
   }
 
   /**
@@ -88,17 +100,22 @@ export class LanguageDetector extends TaskRunner {
    * @param modelAssetPath The path to the model asset.
    */
   static createFromModelPath(
-      wasmFileset: WasmFileset,
-      modelAssetPath: string): Promise<LanguageDetector> {
+    wasmFileset: WasmFileset,
+    modelAssetPath: string,
+  ): Promise<LanguageDetector> {
     return TaskRunner.createInstance(
-        LanguageDetector, /* canvas= */ null, wasmFileset,
-        {baseOptions: {modelAssetPath}});
+      LanguageDetector,
+      /* canvas= */ null,
+      wasmFileset,
+      {baseOptions: {modelAssetPath}},
+    );
   }
 
   /** @hideconstructor */
   constructor(
-      wasmModule: WasmModule,
-      glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
+    wasmModule: WasmModule,
+    glCanvas?: HTMLCanvasElement | OffscreenCanvas | null,
+  ) {
     super(new CachedGraphRunner(wasmModule, glCanvas));
     this.options.setBaseOptions(new BaseOptionsProto());
   }
@@ -114,8 +131,12 @@ export class LanguageDetector extends TaskRunner {
    * @param options The options for the language detector.
    */
   override setOptions(options: LanguageDetectorOptions): Promise<void> {
-    this.options.setClassifierOptions(convertClassifierOptionsToProto(
-        options, this.options.getClassifierOptions()));
+    this.options.setClassifierOptions(
+      convertClassifierOptionsToProto(
+        options,
+        this.options.getClassifierOptions(),
+      ),
+    );
     return this.applyOptions(options);
   }
 
@@ -137,7 +158,10 @@ export class LanguageDetector extends TaskRunner {
   detect(text: string): LanguageDetectorResult {
     this.result = {languages: []};
     this.graphRunner.addStringToStream(
-        text, INPUT_STREAM, this.getSynctheticTimestamp());
+      text,
+      INPUT_STREAM,
+      this.getSynctheticTimestamp(),
+    );
     this.finishProcessing();
     return this.result;
   }
@@ -150,7 +174,9 @@ export class LanguageDetector extends TaskRunner {
 
     const calculatorOptions = new CalculatorOptions();
     calculatorOptions.setExtension(
-        TextClassifierGraphOptions.ext, this.options);
+      TextClassifierGraphOptions.ext,
+      this.options,
+    );
 
     const classifierNode = new CalculatorGraphConfig.Node();
     classifierNode.setCalculator(TEXT_CLASSIFIER_GRAPH);
@@ -161,27 +187,32 @@ export class LanguageDetector extends TaskRunner {
     graphConfig.addNode(classifierNode);
 
     this.graphRunner.attachProtoListener(
-        CLASSIFICATIONS_STREAM, (binaryProto, timestamp) => {
-          const {classifications} = convertFromClassificationResultProto(
-              ClassificationResult.deserializeBinary(binaryProto));
-          if (classifications.length !== 1) {
-            throw new Error(`Expected 1 classification head, got ${
-                classifications.length}`);
-          }
-          this.result.languages = classifications[0].categories.map(c => {
-            return {languageCode: c.categoryName, probability: c.score};
-          });
-          this.setLatestOutputTimestamp(timestamp);
+      CLASSIFICATIONS_STREAM,
+      (binaryProto, timestamp) => {
+        const {classifications} = convertFromClassificationResultProto(
+          ClassificationResult.deserializeBinary(binaryProto),
+        );
+        if (classifications.length !== 1) {
+          throw new Error(
+            `Expected 1 classification head, got ${classifications.length}`,
+          );
+        }
+        this.result.languages = classifications[0].categories.map((c) => {
+          return {languageCode: c.categoryName, probability: c.score};
         });
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
     this.graphRunner.attachEmptyPacketListener(
-        CLASSIFICATIONS_STREAM, timestamp => {
-          this.setLatestOutputTimestamp(timestamp);
-        });
+      CLASSIFICATIONS_STREAM,
+      (timestamp) => {
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
 
     const binaryGraph = graphConfig.serializeBinary();
     this.setGraph(new Uint8Array(binaryGraph), /* isBinary= */ true);
   }
 }
-
 
 

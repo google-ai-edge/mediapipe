@@ -406,6 +406,12 @@ class UnpackMediaSequenceCalculator : public CalculatorBase {
               possible_tag = absl::StrCat(kImageTag, "_", feature_key);
             }
             if (cc->Outputs().HasTag(possible_tag)) {
+              // If this is triggered, it means that there's no images to match
+              // the timestamps. This is clearly an error, but we don't want a
+              // segfault.
+              if (mpms::GetImageEncodedSize(feature_key, *sequence_) <= i) {
+                return tool::StatusStop();
+              }
               cc->Outputs()
                   .Tag(possible_tag)
                   .Add(new std::string(

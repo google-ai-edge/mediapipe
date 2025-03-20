@@ -1,8 +1,8 @@
 # This contains the MediaPipe Vision Tasks.
 
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_library")
 load("@build_bazel_rules_nodejs//:index.bzl", "pkg_npm")
 load("@npm//@bazel/rollup:index.bzl", "rollup_bundle")
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_library")
 load(
     "//mediapipe/framework/tool:mediapipe_files.bzl",
     "mediapipe_files",

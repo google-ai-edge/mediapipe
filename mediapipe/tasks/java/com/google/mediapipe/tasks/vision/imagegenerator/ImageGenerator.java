@@ -534,6 +534,11 @@ public final class ImageGenerator extends BaseVisionTaskApi {
   @AutoValue
   public abstract static class ImageGeneratorOptions extends TaskOptions {
 
+    /** The supported model types. */
+    public enum ModelType {
+      SD_1, // Stable Diffusion v1 models, including SD 1.4 and 1.5.
+    }
+
     /** Builder for {@link ImageGeneratorOptions}. */
     @AutoValue.Builder
     public abstract static class Builder {
@@ -543,6 +548,9 @@ public final class ImageGenerator extends BaseVisionTaskApi {
 
       /** Sets the path to LoRA weights file. */
       public abstract Builder setLoraWeightsFilePath(String loraWeightsFilePath);
+
+      /** Sets the model type. */
+      public abstract Builder setModelType(ModelType modelType);
 
       /** Sets an optional {@link ErrorListener}}. */
       public abstract Builder setErrorListener(ErrorListener value);
@@ -559,13 +567,27 @@ public final class ImageGenerator extends BaseVisionTaskApi {
 
     abstract Optional<String> loraWeightsFilePath();
 
+    abstract ModelType modelType();
+
     abstract Optional<ErrorListener> errorListener();
 
     private Optional<ConditionOptions> conditionOptions;
 
+    private StableDiffusionIterateCalculatorOptionsProto.StableDiffusionIterateCalculatorOptions
+            .ModelType
+        convertModelTypeToProto(ModelType modelType) {
+      switch (modelType) {
+        case SD_1:
+          return StableDiffusionIterateCalculatorOptionsProto
+              .StableDiffusionIterateCalculatorOptions.ModelType.SD_1;
+      }
+      throw new IllegalArgumentException("Unsupported model type: " + modelType.name());
+    }
+
     public static Builder builder() {
       return new AutoValue_ImageGenerator_ImageGeneratorOptions.Builder()
-          .setImageGeneratorModelDirectory("");
+          .setImageGeneratorModelDirectory("")
+          .setModelType(ModelType.SD_1);
     }
 
     /** Converts an {@link ImageGeneratorOptions} to a {@link Any} protobuf message. */
@@ -594,6 +616,7 @@ public final class ImageGenerator extends BaseVisionTaskApi {
               .newBuilder()
               .setBaseSeed(0)
               .setFileFolder(imageGeneratorModelDirectory())
+              .setModelType(convertModelTypeToProto(modelType()))
               .setOutputImageWidth(GENERATED_IMAGE_WIDTH)
               .setOutputImageHeight(GENERATED_IMAGE_HEIGHT)
               .setEmitEmptyPacket(true)
@@ -685,17 +708,17 @@ public final class ImageGenerator extends BaseVisionTaskApi {
                 .build());
       }
       if (depthConditionOptions().isPresent()) {
-          taskOptionsBuilder.addControlPluginGraphsOptions(
-              ControlPluginGraphOptionsProto.ControlPluginGraphOptions.newBuilder()
-                  .setBaseOptions(
-                      convertBaseOptionsToProto(
-                          depthConditionOptions().get().pluginModelBaseOptions()))
-                  .setConditionedImageGraphOptions(
-                      ConditionedImageGraphOptions.newBuilder()
-                          .setDepthConditionTypeOptions(
-                              depthConditionOptions().get().convertToProto())
-                          .build())
-                  .build());
+        taskOptionsBuilder.addControlPluginGraphsOptions(
+            ControlPluginGraphOptionsProto.ControlPluginGraphOptions.newBuilder()
+                .setBaseOptions(
+                    convertBaseOptionsToProto(
+                        depthConditionOptions().get().pluginModelBaseOptions()))
+                .setConditionedImageGraphOptions(
+                    ConditionedImageGraphOptions.newBuilder()
+                        .setDepthConditionTypeOptions(
+                            depthConditionOptions().get().convertToProto())
+                        .build())
+                .build());
       }
       return Any.newBuilder()
           .setTypeUrl(
@@ -832,20 +855,20 @@ public final class ImageGenerator extends BaseVisionTaskApi {
         public abstract Builder setPluginModelBaseOptions(BaseOptions baseOptions);
 
         /** First threshold for the hysteresis procedure. */
-        public abstract Builder setThreshold1(Float threshold1);
+        public abstract Builder setThreshold1(float threshold1);
 
         /** Second threshold for the hysteresis procedure. */
-        public abstract Builder setThreshold2(Float threshold2);
+        public abstract Builder setThreshold2(float threshold2);
 
         /** Aperture size for the Sobel operator. Typical range is 3~7. */
-        public abstract Builder setApertureSize(Integer apertureSize);
+        public abstract Builder setApertureSize(int apertureSize);
 
         /**
          * flag, indicating whether a more accurate L2 norm should be used to calculate the image
          * gradient magnitude ( L2gradient=true ), or whether the default L1 norm is enough (
          * L2gradient=false ).
          */
-        public abstract Builder setL2Gradient(Boolean l2Gradient);
+        public abstract Builder setL2Gradient(boolean l2Gradient);
 
         abstract EdgeConditionOptions autoBuild();
 
@@ -857,13 +880,13 @@ public final class ImageGenerator extends BaseVisionTaskApi {
 
       abstract BaseOptions pluginModelBaseOptions();
 
-      abstract Float threshold1();
+      abstract float threshold1();
 
-      abstract Float threshold2();
+      abstract float threshold2();
 
-      abstract Integer apertureSize();
+      abstract int apertureSize();
 
-      abstract Boolean l2Gradient();
+      abstract boolean l2Gradient();
 
       public static Builder builder() {
         return new AutoValue_ImageGenerator_ConditionOptions_EdgeConditionOptions.Builder()

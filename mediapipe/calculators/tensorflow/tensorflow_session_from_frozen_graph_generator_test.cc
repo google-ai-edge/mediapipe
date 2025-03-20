@@ -14,8 +14,8 @@
 
 #include <cstdint>
 
-#include "absl/flags/flag.h"
 #include "absl/strings/substitute.h"
+#include "google/protobuf/text_format.h"
 #include "mediapipe/calculators/tensorflow/tensorflow_session.h"
 #include "mediapipe/calculators/tensorflow/tensorflow_session_from_frozen_graph_generator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -32,6 +32,7 @@
 #include "mediapipe/framework/tool/validate_type.h"
 #include "tensorflow/core/framework/tensor.h"
 #include "tensorflow/core/protobuf/config.pb.h"
+#include "testing/base/public/gunit.h"
 
 namespace mediapipe {
 
@@ -44,7 +45,7 @@ constexpr char kStringModelTag[] = "STRING_MODEL";
 constexpr char kSessionTag[] = "SESSION";
 
 std::string GetGraphDefPath() {
-  return mediapipe::file::JoinPath("./",
+  return mediapipe::file::JoinPath(::testing::SrcDir(),
                                    "mediapipe/calculators/tensorflow/"
                                    "testdata/frozen_graph_def.pb");
 }
@@ -58,6 +59,13 @@ tf::Tensor TensorMatrix1x3(const int v1, const int v2, const int v3) {
   matrix(0, 1) = v2;
   matrix(0, 2) = v3;
   return tensor;
+}
+
+std::string PrintOptionsAsTextProto(
+    const TensorFlowSessionFromFrozenGraphGeneratorOptions& options) {
+  std::string text_proto;
+  google::protobuf::TextFormat::PrintToString(options, &text_proto);
+  return text_proto;
 }
 
 class TensorFlowSessionFromFrozenGraphGeneratorTest : public ::testing::Test {
@@ -149,7 +157,7 @@ TEST_F(TensorFlowSessionFromFrozenGraphGeneratorTest,
       }
       input_stream: "a_tensor"
   )",
-                           generator_options_->DebugString()));
+                           PrintOptionsAsTextProto(*generator_options_)));
 
   CalculatorGraph graph;
   MP_ASSERT_OK(graph.Initialize(config));

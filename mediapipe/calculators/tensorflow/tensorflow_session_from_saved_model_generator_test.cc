@@ -14,8 +14,8 @@
 
 #include <cstdint>
 
-#include "absl/flags/flag.h"
 #include "absl/strings/str_replace.h"
+#include "google/protobuf/text_format.h"
 #include "mediapipe/calculators/tensorflow/tensorflow_session.h"
 #include "mediapipe/calculators/tensorflow/tensorflow_session_from_saved_model_generator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -29,6 +29,7 @@
 #include "mediapipe/framework/tool/tag_map_helper.h"
 #include "mediapipe/framework/tool/validate_type.h"
 #include "tensorflow/core/framework/device_attributes.pb.h"
+#include "testing/base/public/gunit.h"
 
 namespace mediapipe {
 
@@ -42,9 +43,9 @@ constexpr char kStringSignatureNameTag[] = "STRING_SIGNATURE_NAME";
 constexpr char kSessionTag[] = "SESSION";
 
 std::string GetSavedModelDir() {
-  std::string out_path =
-      file::JoinPath("./", "mediapipe/calculators/tensorflow/testdata/",
-                     "tensorflow_saved_model/00000000");
+  std::string out_path = file::JoinPath(
+      ::testing::SrcDir(), "mediapipe/calculators/tensorflow/testdata/",
+      "tensorflow_saved_model/00000000");
   return out_path;
 }
 
@@ -57,6 +58,13 @@ tf::Tensor TensorMatrix1x3(const int v1, const int v2, const int v3) {
   matrix(0, 1) = v2;
   matrix(0, 2) = v3;
   return tensor;
+}
+
+std::string PrintOptionsAsTextProto(
+    const TensorFlowSessionFromSavedModelGeneratorOptions& options) {
+  std::string text_proto;
+  google::protobuf::TextFormat::PrintToString(options, &text_proto);
+  return text_proto;
 }
 
 class TensorFlowSessionFromSavedModelGeneratorTest : public ::testing::Test {
@@ -201,7 +209,7 @@ TEST_F(TensorFlowSessionFromSavedModelGeneratorTest,
       }
       input_stream: "a_tensor"
   )",
-                           generator_options_->DebugString()));
+                           PrintOptionsAsTextProto(*generator_options_)));
 
   CalculatorGraph graph;
   MP_ASSERT_OK(graph.Initialize(graph_config));
@@ -266,7 +274,7 @@ TEST_F(TensorFlowSessionFromSavedModelGeneratorTest,
   // Session must be set.
   ASSERT_NE(session.session, nullptr);
   std::vector<tensorflow::DeviceAttributes> devices;
-  ASSERT_EQ(session.session->ListDevices(&devices), tensorflow::OkStatus());
+  ASSERT_EQ(session.session->ListDevices(&devices), absl::OkStatus());
   EXPECT_THAT(devices.size(), 10);
 }
 

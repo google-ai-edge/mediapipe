@@ -75,6 +75,7 @@ cc_library(
     name = "image_utils",
     srcs = ["image_utils.cc"],
     hdrs = ["image_utils.h"],
+    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:image_frame",
@@ -93,6 +94,7 @@ cc_test(
         ":image_utils",
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:gtest_main",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",

@@ -24,6 +24,7 @@ objc_library(
         "//mediapipe/tasks/ios/components/containers:MPPLandmark",
         "//mediapipe/tasks/ios/core:MPPTaskResult",
         "//mediapipe/tasks/ios/vision/core:MPPMask",
+        "//third_party/apple_frameworks:Foundation",
     ],
 )
 
@@ -35,6 +36,7 @@ objc_library(
         ":MPPPoseLandmarkerResult",
         "//mediapipe/tasks/ios/core:MPPTaskOptions",
         "//mediapipe/tasks/ios/vision/core:MPPRunningMode",
+        "//third_party/apple_frameworks:Foundation",
     ],
 )
 
@@ -42,7 +44,10 @@ objc_library(
     name = "MPPPoseLandmarksConnections",
     hdrs = ["sources/MPPPoseLandmarksConnections.h"],
     module_name = "MPPPoseLandmarksConnections",
-    deps = ["//mediapipe/tasks/ios/components/containers:MPPConnection"],
+    deps = [
+        "//mediapipe/tasks/ios/components/containers:MPPConnection",
+        "//third_party/apple_frameworks:Foundation",
+    ],
 )
 
 objc_library(
@@ -69,5 +74,6 @@ objc_library(
         "//mediapipe/tasks/ios/vision/core:MPPVisionTaskRunner",
         "//mediapipe/tasks/ios/vision/pose_landmarker/utils:MPPPoseLandmarkerOptionsHelpers",
         "//mediapipe/tasks/ios/vision/pose_landmarker/utils:MPPPoseLandmarkerResultHelpers",
+        "//third_party/apple_frameworks:Foundation",
     ],
 )

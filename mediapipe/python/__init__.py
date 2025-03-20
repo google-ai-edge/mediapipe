@@ -14,6 +14,7 @@
 
 """MediaPipe Python API."""
 
+from mediapipe.python._framework_bindings import model_ckpt_util
 from mediapipe.python._framework_bindings import resource_util
 from mediapipe.python._framework_bindings.calculator_graph import CalculatorGraph
 from mediapipe.python._framework_bindings.calculator_graph import GraphInputStreamAddMode

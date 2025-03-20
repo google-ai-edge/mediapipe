@@ -594,6 +594,6 @@ this tutorial is used in the [common] template app. The [helloworld] app has the
 appropriate `BUILD` file dependencies for the edge detection graph.
 
 [Bazel]:https://bazel.build/
-[`edge_detection_mobile_gpu.pbtxt`]:https://github.com/google/mediapipe/tree/master/mediapipe/graphs/edge_detection/edge_detection_mobile_gpu.pbtxt
-[common]:https://github.com/google/mediapipe/tree/master/mediapipe/examples/ios/common
-[helloworld]:https://github.com/google/mediapipe/tree/master/mediapipe/examples/ios/helloworld
+[`edge_detection_mobile_gpu.pbtxt`]:https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/edge_detection/edge_detection_mobile_gpu.pbtxt
+[common]:https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/ios/common
+[helloworld]:https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/ios/helloworld

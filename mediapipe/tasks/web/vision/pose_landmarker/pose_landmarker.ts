@@ -16,18 +16,33 @@
 
 import {CalculatorGraphConfig} from '../../../../framework/calculator_pb';
 import {CalculatorOptions} from '../../../../framework/calculator_options_pb';
-import {LandmarkList, NormalizedLandmarkList} from '../../../../framework/formats/landmark_pb';
+import {
+  LandmarkList,
+  NormalizedLandmarkList,
+} from '../../../../framework/formats/landmark_pb';
 import {BaseOptions as BaseOptionsProto} from '../../../../tasks/cc/core/proto/base_options_pb';
 import {PoseDetectorGraphOptions} from '../../../../tasks/cc/vision/pose_detector/proto/pose_detector_graph_options_pb';
 import {PoseLandmarkerGraphOptions} from '../../../../tasks/cc/vision/pose_landmarker/proto/pose_landmarker_graph_options_pb';
 import {PoseLandmarksDetectorGraphOptions} from '../../../../tasks/cc/vision/pose_landmarker/proto/pose_landmarks_detector_graph_options_pb';
-import {Landmark, NormalizedLandmark} from '../../../../tasks/web/components/containers/landmark';
-import {convertToLandmarks, convertToWorldLandmarks} from '../../../../tasks/web/components/processors/landmark_result';
+import {
+  Landmark,
+  NormalizedLandmark,
+} from '../../../../tasks/web/components/containers/landmark';
+import {
+  convertToLandmarks,
+  convertToWorldLandmarks,
+} from '../../../../tasks/web/components/processors/landmark_result';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {ImageProcessingOptions} from '../../../../tasks/web/vision/core/image_processing_options';
 import {MPMask} from '../../../../tasks/web/vision/core/mask';
-import {VisionGraphRunner, VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
-import {ImageSource, WasmModule} from '../../../../web/graph_runner/graph_runner';
+import {
+  VisionGraphRunner,
+  VisionTaskRunner,
+} from '../../../../tasks/web/vision/core/vision_task_runner';
+import {
+  ImageSource,
+  WasmModule,
+} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
 import {PoseLandmarkerOptions} from './pose_landmarker_options';
@@ -47,7 +62,7 @@ const NORM_LANDMARKS_STREAM = 'normalized_landmarks';
 const WORLD_LANDMARKS_STREAM = 'world_landmarks';
 const SEGMENTATION_MASK_STREAM = 'segmentation_masks';
 const POSE_LANDMARKER_GRAPH =
-    'mediapipe.tasks.vision.pose_landmarker.PoseLandmarkerGraph';
+  'mediapipe.tasks.vision.pose_landmarker.PoseLandmarkerGraph';
 
 const DEFAULT_NUM_POSES = 1;
 const DEFAULT_SCORE_THRESHOLD = 0.5;
@@ -69,8 +84,7 @@ export class PoseLandmarker extends VisionTaskRunner {
   private outputSegmentationMasks = false;
   private userCallback?: PoseLandmarkerCallback;
   private readonly options: PoseLandmarkerGraphOptions;
-  private readonly poseLandmarksDetectorGraphOptions:
-      PoseLandmarksDetectorGraphOptions;
+  private readonly poseLandmarksDetectorGraphOptions: PoseLandmarksDetectorGraphOptions;
   private readonly poseDetectorGraphOptions: PoseDetectorGraphOptions;
 
   /**
@@ -92,10 +106,14 @@ export class PoseLandmarker extends VisionTaskRunner {
    *     be provided (via `baseOptions`).
    */
   static createFromOptions(
-      wasmFileset: WasmFileset,
-      poseLandmarkerOptions: PoseLandmarkerOptions): Promise<PoseLandmarker> {
+    wasmFileset: WasmFileset,
+    poseLandmarkerOptions: PoseLandmarkerOptions,
+  ): Promise<PoseLandmarker> {
     return VisionTaskRunner.createVisionInstance(
-        PoseLandmarker, wasmFileset, poseLandmarkerOptions);
+      PoseLandmarker,
+      wasmFileset,
+      poseLandmarkerOptions,
+    );
   }
 
   /**
@@ -104,13 +122,16 @@ export class PoseLandmarker extends VisionTaskRunner {
    * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
-   * @param modelAssetBuffer A binary representation of the model.
+   * @param modelAssetBuffer An array or a stream containing a binary
+   *    representation of the model.
    */
   static createFromModelBuffer(
-      wasmFileset: WasmFileset,
-      modelAssetBuffer: Uint8Array): Promise<PoseLandmarker> {
-    return VisionTaskRunner.createVisionInstance(
-        PoseLandmarker, wasmFileset, {baseOptions: {modelAssetBuffer}});
+    wasmFileset: WasmFileset,
+    modelAssetBuffer: Uint8Array|ReadableStreamDefaultReader,
+  ): Promise<PoseLandmarker> {
+    return VisionTaskRunner.createVisionInstance(PoseLandmarker, wasmFileset, {
+      baseOptions: {modelAssetBuffer},
+    });
   }
 
   /**
@@ -122,26 +143,33 @@ export class PoseLandmarker extends VisionTaskRunner {
    * @param modelAssetPath The path to the model asset.
    */
   static createFromModelPath(
-      wasmFileset: WasmFileset,
-      modelAssetPath: string): Promise<PoseLandmarker> {
-    return VisionTaskRunner.createVisionInstance(
-        PoseLandmarker, wasmFileset, {baseOptions: {modelAssetPath}});
+    wasmFileset: WasmFileset,
+    modelAssetPath: string,
+  ): Promise<PoseLandmarker> {
+    return VisionTaskRunner.createVisionInstance(PoseLandmarker, wasmFileset, {
+      baseOptions: {modelAssetPath},
+    });
   }
 
   /** @hideconstructor */
   constructor(
-      wasmModule: WasmModule,
-      glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
+    wasmModule: WasmModule,
+    glCanvas?: HTMLCanvasElement | OffscreenCanvas | null,
+  ) {
     super(
-        new VisionGraphRunner(wasmModule, glCanvas), IMAGE_STREAM,
-        NORM_RECT_STREAM, /* roiAllowed= */ false);
+      new VisionGraphRunner(wasmModule, glCanvas),
+      IMAGE_STREAM,
+      NORM_RECT_STREAM,
+      /* roiAllowed= */ false,
+    );
 
     this.options = new PoseLandmarkerGraphOptions();
     this.options.setBaseOptions(new BaseOptionsProto());
     this.poseLandmarksDetectorGraphOptions =
-        new PoseLandmarksDetectorGraphOptions();
+      new PoseLandmarksDetectorGraphOptions();
     this.options.setPoseLandmarksDetectorGraphOptions(
-        this.poseLandmarksDetectorGraphOptions);
+      this.poseLandmarksDetectorGraphOptions,
+    );
     this.poseDetectorGraphOptions = new PoseDetectorGraphOptions();
     this.options.setPoseDetectorGraphOptions(this.poseDetectorGraphOptions);
 
@@ -170,26 +198,30 @@ export class PoseLandmarker extends VisionTaskRunner {
     // Configure pose detector options.
     if ('numPoses' in options) {
       this.poseDetectorGraphOptions.setNumPoses(
-          options.numPoses ?? DEFAULT_NUM_POSES);
+        options.numPoses ?? DEFAULT_NUM_POSES,
+      );
     }
     if ('minPoseDetectionConfidence' in options) {
       this.poseDetectorGraphOptions.setMinDetectionConfidence(
-          options.minPoseDetectionConfidence ?? DEFAULT_SCORE_THRESHOLD);
+        options.minPoseDetectionConfidence ?? DEFAULT_SCORE_THRESHOLD,
+      );
     }
 
     // Configure pose landmark detector options.
     if ('minTrackingConfidence' in options) {
       this.options.setMinTrackingConfidence(
-          options.minTrackingConfidence ?? DEFAULT_SCORE_THRESHOLD);
+        options.minTrackingConfidence ?? DEFAULT_SCORE_THRESHOLD,
+      );
     }
     if ('minPosePresenceConfidence' in options) {
       this.poseLandmarksDetectorGraphOptions.setMinDetectionConfidence(
-          options.minPosePresenceConfidence ?? DEFAULT_SCORE_THRESHOLD);
+        options.minPosePresenceConfidence ?? DEFAULT_SCORE_THRESHOLD,
+      );
     }
 
     if ('outputSegmentationMasks' in options) {
       this.outputSegmentationMasks =
-          options.outputSegmentationMasks ?? DEFAULT_OUTPUT_SEGMENTATION_MASKS;
+        options.outputSegmentationMasks ?? DEFAULT_OUTPUT_SEGMENTATION_MASKS;
     }
 
     return this.applyOptions(options);
@@ -223,8 +255,10 @@ export class PoseLandmarker extends VisionTaskRunner {
    *    the callback.
    */
   detect(
-      image: ImageSource, imageProcessingOptions: ImageProcessingOptions,
-      callback: PoseLandmarkerCallback): void;
+    image: ImageSource,
+    imageProcessingOptions: ImageProcessingOptions,
+    callback: PoseLandmarkerCallback,
+  ): void;
   /**
    * Performs pose detection on the provided single image and waits
    * synchronously for the response. This method creates a copy of the resulting
@@ -252,21 +286,26 @@ export class PoseLandmarker extends VisionTaskRunner {
    *     limits.
    * @return The detected pose landmarks.
    */
-  detect(image: ImageSource, imageProcessingOptions: ImageProcessingOptions):
-      PoseLandmarkerResult;
+  detect(
+    image: ImageSource,
+    imageProcessingOptions: ImageProcessingOptions,
+  ): PoseLandmarkerResult;
   /** @export */
   detect(
-      image: ImageSource,
-      imageProcessingOptionsOrCallback?: ImageProcessingOptions|
-      PoseLandmarkerCallback,
-      callback?: PoseLandmarkerCallback): PoseLandmarkerResult|void {
+    image: ImageSource,
+    imageProcessingOptionsOrCallback?:
+      | ImageProcessingOptions
+      | PoseLandmarkerCallback,
+    callback?: PoseLandmarkerCallback,
+  ): PoseLandmarkerResult | void {
     const imageProcessingOptions =
-        typeof imageProcessingOptionsOrCallback !== 'function' ?
-        imageProcessingOptionsOrCallback :
-        {};
-    this.userCallback = typeof imageProcessingOptionsOrCallback === 'function' ?
-        imageProcessingOptionsOrCallback :
-        callback!;
+      typeof imageProcessingOptionsOrCallback !== 'function'
+        ? imageProcessingOptionsOrCallback
+        : {};
+    this.userCallback =
+      typeof imageProcessingOptionsOrCallback === 'function'
+        ? imageProcessingOptionsOrCallback
+        : callback!;
 
     this.resetResults();
     this.processImageData(image, imageProcessingOptions);
@@ -287,8 +326,10 @@ export class PoseLandmarker extends VisionTaskRunner {
    *    the callback.
    */
   detectForVideo(
-      videoFrame: ImageSource, timestamp: number,
-      callback: PoseLandmarkerCallback): void;
+    videoFrame: ImageSource,
+    timestamp: number,
+    callback: PoseLandmarkerCallback,
+  ): void;
   /**
    * Performs pose detection on the provided video frame and invokes the
    * callback with the response. The method returns synchronously once the
@@ -305,9 +346,11 @@ export class PoseLandmarker extends VisionTaskRunner {
    *    the callback.
    */
   detectForVideo(
-      videoFrame: ImageSource, timestamp: number,
-      imageProcessingOptions: ImageProcessingOptions,
-      callback: PoseLandmarkerCallback): void;
+    videoFrame: ImageSource,
+    timestamp: number,
+    imageProcessingOptions: ImageProcessingOptions,
+    callback: PoseLandmarkerCallback,
+  ): void;
   /**
    * Performs pose detection on the provided video frame and returns the result.
    * This method creates a copy of the resulting masks and should not be used
@@ -320,8 +363,10 @@ export class PoseLandmarker extends VisionTaskRunner {
    * @return The landmarker result. Any masks are copied to extend the
    *     lifetime of the returned data.
    */
-  detectForVideo(videoFrame: ImageSource, timestamp: number):
-      PoseLandmarkerResult;
+  detectForVideo(
+    videoFrame: ImageSource,
+    timestamp: number,
+  ): PoseLandmarkerResult;
   /**
    * Performs pose detection on the provided video frame and returns the result.
    * This method creates a copy of the resulting masks and should not be used
@@ -338,21 +383,27 @@ export class PoseLandmarker extends VisionTaskRunner {
    *     of the returned data.
    */
   detectForVideo(
-      videoFrame: ImageSource, timestamp: number,
-      imageProcessingOptions: ImageProcessingOptions): PoseLandmarkerResult;
+    videoFrame: ImageSource,
+    timestamp: number,
+    imageProcessingOptions: ImageProcessingOptions,
+  ): PoseLandmarkerResult;
   /** @export */
   detectForVideo(
-      videoFrame: ImageSource, timestamp: number,
-      imageProcessingOptionsOrCallback?: ImageProcessingOptions|
-      PoseLandmarkerCallback,
-      callback?: PoseLandmarkerCallback): PoseLandmarkerResult|void {
+    videoFrame: ImageSource,
+    timestamp: number,
+    imageProcessingOptionsOrCallback?:
+      | ImageProcessingOptions
+      | PoseLandmarkerCallback,
+    callback?: PoseLandmarkerCallback,
+  ): PoseLandmarkerResult | void {
     const imageProcessingOptions =
-        typeof imageProcessingOptionsOrCallback !== 'function' ?
-        imageProcessingOptionsOrCallback :
-        {};
-    this.userCallback = typeof imageProcessingOptionsOrCallback === 'function' ?
-        imageProcessingOptionsOrCallback :
-        callback;
+      typeof imageProcessingOptionsOrCallback !== 'function'
+        ? imageProcessingOptionsOrCallback
+        : {};
+    this.userCallback =
+      typeof imageProcessingOptionsOrCallback === 'function'
+        ? imageProcessingOptionsOrCallback
+        : callback;
 
     this.resetResults();
     this.processVideoData(videoFrame, imageProcessingOptions, timestamp);
@@ -365,10 +416,13 @@ export class PoseLandmarker extends VisionTaskRunner {
     this.segmentationMasks = undefined;
   }
 
-  private processResults(): PoseLandmarkerResult|void {
+  private processResults(): PoseLandmarkerResult | void {
     try {
       const result = new PoseLandmarkerResult(
-          this.landmarks, this.worldLandmarks, this.segmentationMasks);
+        this.landmarks,
+        this.worldLandmarks,
+        this.segmentationMasks,
+      );
       if (this.userCallback) {
         this.userCallback(result);
       } else {
@@ -384,9 +438,11 @@ export class PoseLandmarker extends VisionTaskRunner {
   private initDefaults(): void {
     this.poseDetectorGraphOptions.setNumPoses(DEFAULT_NUM_POSES);
     this.poseDetectorGraphOptions.setMinDetectionConfidence(
-        DEFAULT_SCORE_THRESHOLD);
+      DEFAULT_SCORE_THRESHOLD,
+    );
     this.poseLandmarksDetectorGraphOptions.setMinDetectionConfidence(
-        DEFAULT_SCORE_THRESHOLD);
+      DEFAULT_SCORE_THRESHOLD,
+    );
     this.options.setMinTrackingConfidence(DEFAULT_SCORE_THRESHOLD);
   }
 
@@ -397,7 +453,7 @@ export class PoseLandmarker extends VisionTaskRunner {
     this.landmarks = [];
     for (const binaryProto of data) {
       const poseLandmarksProto =
-          NormalizedLandmarkList.deserializeBinary(binaryProto);
+        NormalizedLandmarkList.deserializeBinary(binaryProto);
       this.landmarks.push(convertToLandmarks(poseLandmarksProto));
     }
   }
@@ -410,9 +466,10 @@ export class PoseLandmarker extends VisionTaskRunner {
     this.worldLandmarks = [];
     for (const binaryProto of data) {
       const poseWorldLandmarksProto =
-          LandmarkList.deserializeBinary(binaryProto);
+        LandmarkList.deserializeBinary(binaryProto);
       this.worldLandmarks.push(
-          convertToWorldLandmarks(poseWorldLandmarksProto));
+        convertToWorldLandmarks(poseWorldLandmarksProto),
+      );
     }
   }
 
@@ -427,7 +484,9 @@ export class PoseLandmarker extends VisionTaskRunner {
 
     const calculatorOptions = new CalculatorOptions();
     calculatorOptions.setExtension(
-        PoseLandmarkerGraphOptions.ext, this.options);
+      PoseLandmarkerGraphOptions.ext,
+      this.options,
+    );
 
     const landmarkerNode = new CalculatorGraphConfig.Node();
     landmarkerNode.setCalculator(POSE_LANDMARKER_GRAPH);
@@ -443,45 +502,61 @@ export class PoseLandmarker extends VisionTaskRunner {
     this.addKeepaliveNode(graphConfig);
 
     this.graphRunner.attachProtoVectorListener(
-        NORM_LANDMARKS_STREAM, (binaryProto, timestamp) => {
-          this.addJsLandmarks(binaryProto);
-          this.setLatestOutputTimestamp(timestamp);
-        });
+      NORM_LANDMARKS_STREAM,
+      (binaryProto, timestamp) => {
+        this.addJsLandmarks(binaryProto);
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
     this.graphRunner.attachEmptyPacketListener(
-        NORM_LANDMARKS_STREAM, timestamp => {
-          this.landmarks = [];
-          this.setLatestOutputTimestamp(timestamp);
-        });
+      NORM_LANDMARKS_STREAM,
+      (timestamp) => {
+        this.landmarks = [];
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
 
     this.graphRunner.attachProtoVectorListener(
-        WORLD_LANDMARKS_STREAM, (binaryProto, timestamp) => {
-          this.addJsWorldLandmarks(binaryProto);
-          this.setLatestOutputTimestamp(timestamp);
-        });
+      WORLD_LANDMARKS_STREAM,
+      (binaryProto, timestamp) => {
+        this.addJsWorldLandmarks(binaryProto);
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
     this.graphRunner.attachEmptyPacketListener(
-        WORLD_LANDMARKS_STREAM, timestamp => {
-          this.worldLandmarks = [];
-          this.setLatestOutputTimestamp(timestamp);
-        });
+      WORLD_LANDMARKS_STREAM,
+      (timestamp) => {
+        this.worldLandmarks = [];
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
 
     if (this.outputSegmentationMasks) {
       landmarkerNode.addOutputStream(
-          'SEGMENTATION_MASK:' + SEGMENTATION_MASK_STREAM);
+        'SEGMENTATION_MASK:' + SEGMENTATION_MASK_STREAM,
+      );
       this.keepStreamAlive(SEGMENTATION_MASK_STREAM);
 
       this.graphRunner.attachImageVectorListener(
-          SEGMENTATION_MASK_STREAM, (masks, timestamp) => {
-            this.segmentationMasks = masks.map(
-                wasmImage => this.convertToMPMask(
-                    wasmImage, /* interpolateValues= */ true,
-                    /* shouldCopyData= */ !this.userCallback));
-            this.setLatestOutputTimestamp(timestamp);
-          });
+        SEGMENTATION_MASK_STREAM,
+        (masks, timestamp) => {
+          this.segmentationMasks = masks.map((wasmImage) =>
+            this.convertToMPMask(
+              wasmImage,
+              /* interpolateValues= */ true,
+              /* shouldCopyData= */ !this.userCallback,
+            ),
+          );
+          this.setLatestOutputTimestamp(timestamp);
+        },
+      );
       this.graphRunner.attachEmptyPacketListener(
-          SEGMENTATION_MASK_STREAM, timestamp => {
-            this.segmentationMasks = [];
-            this.setLatestOutputTimestamp(timestamp);
-          });
+        SEGMENTATION_MASK_STREAM,
+        (timestamp) => {
+          this.segmentationMasks = [];
+          this.setLatestOutputTimestamp(timestamp);
+        },
+      );
     }
 
     const binaryGraph = graphConfig.serializeBinary();

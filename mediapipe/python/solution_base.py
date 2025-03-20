@@ -298,9 +298,12 @@ class SolutionBase:
     self._graph_outputs.clear()
 
     if isinstance(input_data, np.ndarray):
+      if self._input_stream_type_info is None:
+        raise ValueError('_input_stream_type_info is None in SolutionBase')
       if len(self._input_stream_type_info.keys()) != 1:
         raise ValueError(
-            "Can't process single image input since the graph has more than one input streams."
+            "Can't process single image input since the graph has more than one"
+            ' input streams.'
         )
       input_dict = {next(iter(self._input_stream_type_info)): input_data}
     else:
@@ -309,6 +312,8 @@ class SolutionBase:
     # Set the timestamp increment to 33333 us to simulate the 30 fps video
     # input.
     self._simulated_timestamp += 33333
+    if self._graph is None:
+      raise ValueError('_graph is None in SolutionBase')
     for stream_name, data in input_dict.items():
       input_stream_type = self._input_stream_type_info[stream_name]
       if (input_stream_type == PacketDataType.PROTO_LIST or
@@ -335,6 +340,8 @@ class SolutionBase:
     self._graph.wait_until_idle()
     # Create a NamedTuple object where the field names are mapping to the graph
     # output stream names.
+    if self._output_stream_type_info is None:
+      raise ValueError('_output_stream_type_info is None in SolutionBase')
     solution_outputs = collections.namedtuple(
         'SolutionOutputs', self._output_stream_type_info.keys())
     for stream_name in self._output_stream_type_info.keys():
@@ -350,6 +357,8 @@ class SolutionBase:
 
   def close(self) -> None:
     """Closes all the input sources and the graph."""
+    if self._graph is None:
+      raise ValueError('Closing SolutionBase._graph which is already None')
     self._graph.close()
     self._graph = None
     self._input_stream_type_info = None

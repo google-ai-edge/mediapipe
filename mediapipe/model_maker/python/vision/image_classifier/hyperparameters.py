@@ -14,6 +14,7 @@
 """Hyperparameters for training image classification models."""
 
 import dataclasses
+from typing import Optional, Sequence
 
 from mediapipe.model_maker.python.core import hyperparameters as hp
 
@@ -39,6 +40,22 @@ class HParams(hp.BaseHParams):
       and create the training optimizer.
     warmup_steps: Number of warmup steps for a linear increasing warmup schedule
       on learning rate. Used to set up warmup schedule by model_util.WarmUp.
+    checkpoint_frequency: Frequency to save checkpoint.
+    one_hot: Whether the label data is score input or one-hot.
+    multi_labels: Whether the model predict multi labels.
+    desired_precisions: If specified, adds a RecallAtPrecision metric per
+      desired_precisions[i] entry which tracks the recall given the constraint
+      on precision. Only supported for binary and multi-label classification.
+    desired_recalls: If specified, adds a PrecisionAtRecall metric per
+      desired_recalls[i] entry which tracks the precision given the constraint
+      on recall. Only supported for binary and multi-label classification.
+    desired_thresholds: If specified, adds a Precision and Recall metric per
+      desired_thresholds[i] entry which tracks the precision and recall given
+      the constraint on threshold. Only supported for binary and multi-label
+      classification.
+    best_model_metric_name: If specified, adds a callback that saves the model
+      with the best `best_model_metric_name` metric during training. Typically
+      these will be validation metrics such as `val_accuracy` and `val_auc`.
   """
   # Parameters from BaseHParams class.
   learning_rate: float = 0.001
@@ -53,3 +70,11 @@ class HParams(hp.BaseHParams):
   # TODO: Use lr_decay in hp.baseHParams to infer decay_samples.
   decay_samples: int = 10000 * 256
   warmup_epochs: int = 2
+  checkpoint_frequency: int = 1
+  one_hot: bool = True
+  multi_labels: bool = False
+  # Binary only precision/recalls
+  desired_precisions: Sequence[float] = dataclasses.field(default_factory=list)
+  desired_recalls: Sequence[float] = dataclasses.field(default_factory=list)
+  desired_thresholds: Sequence[float] = (0.25, 0.5, 0.75)
+  best_model_metric_name: Optional[str] = None

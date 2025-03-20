@@ -16,6 +16,7 @@
 
 #include <fstream>
 #include <list>
+#include <memory>
 
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
@@ -259,13 +260,21 @@ absl::Status GraphProfiler::Start(mediapipe::Executor* executor) {
     }
 
     is_running_ = true;
-    executor->Schedule([this] {
-      absl::Time deadline = clock_->TimeNow() + tracer()->GetTraceLogInterval();
-      while (is_running_) {
-        clock_->SleepUntil(deadline);
-        deadline = clock_->TimeNow() + tracer()->GetTraceLogInterval();
-        if (is_running_) {
-          WriteProfile().IgnoreError();
+
+    std::weak_ptr<GraphProfiler> weak = weak_from_this();
+    executor->Schedule([weak] {
+      std::shared_ptr<GraphProfiler> self = weak.lock();
+      if (!self) {
+        return;
+      }
+      absl::Time deadline =
+          self->clock_->TimeNow() + self->tracer()->GetTraceLogInterval();
+      while (self->is_running_) {
+        self->clock_->SleepUntil(deadline);
+        deadline =
+            self->clock_->TimeNow() + self->tracer()->GetTraceLogInterval();
+        if (self->is_running_) {
+          self->WriteProfile().IgnoreError();
         }
       }
     });
@@ -721,15 +730,19 @@ absl::Status GraphProfiler::WriteProfile() {
   }
 
   // Record the CalculatorGraphConfig, once per log file.
-  ++previous_log_index_;
-  bool is_new_file = (previous_log_index_ % log_interval_count == 0);
+  // Effective index should not change during the call, and thus should be
+  // stored in a local variable after the increment. Otherwise `is_new_file` and
+  // `log_index` may evaluate to incoherent values depending on spurious
+  // `previous_log_index_` increments by other threads.
+  int previous_log_index = ++previous_log_index_;
+  bool is_new_file = (previous_log_index % log_interval_count == 0);
   if (is_new_file) {
     *profile.mutable_config() = validated_graph_->Config();
     AssignNodeNames(&profile);
   }
 
   // Write the GraphProfile to the trace_log_path.
-  int log_index = previous_log_index_ / log_interval_count % log_file_count;
+  int log_index = previous_log_index / log_interval_count % log_file_count;
   std::string log_path = absl::StrCat(trace_log_path, log_index, ".binarypb");
   std::ofstream ofs;
   if (is_new_file) {

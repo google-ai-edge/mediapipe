@@ -174,9 +174,9 @@ This calculator-based approach gives the graph author control of where packets
 can be dropped, and allows flexibility in adapting and customizing the graph’s
 behavior depending on resource constraints.
 
-[`CalculatorBase`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator_base.h
-[`DefaultInputStreamHandler`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/stream_handler/default_input_stream_handler.h
-[`SyncSetInputStreamHandler`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/stream_handler/sync_set_input_stream_handler.cc
-[`ImmediateInputStreamHandler`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/stream_handler/immediate_input_stream_handler.cc
-[`CalculatorGraphConfig::max_queue_size`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator.proto
-[`FlowLimiterCalculator`]: https://github.com/google/mediapipe/tree/master/mediapipe/calculators/core/flow_limiter_calculator.cc
+[`CalculatorBase`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator_base.h
+[`DefaultInputStreamHandler`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/stream_handler/default_input_stream_handler.h
+[`SyncSetInputStreamHandler`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/stream_handler/sync_set_input_stream_handler.cc
+[`ImmediateInputStreamHandler`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/stream_handler/immediate_input_stream_handler.cc
+[`CalculatorGraphConfig::max_queue_size`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator.proto
+[`FlowLimiterCalculator`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/calculators/core/flow_limiter_calculator.cc

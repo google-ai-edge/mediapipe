@@ -2,8 +2,8 @@
 #
 # This task performs embedding extraction on images.
 
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_declaration", "mediapipe_ts_library")
 load("@npm//@bazel/jasmine:index.bzl", "jasmine_node_test")
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_declaration", "mediapipe_ts_library")
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
@@ -65,5 +65,5 @@ mediapipe_ts_library(
 
 jasmine_node_test(
     name = "image_embedder_test",
-    deps = [":image_embedder_test_lib"],
+    srcs = [":image_embedder_test_lib"],
 )

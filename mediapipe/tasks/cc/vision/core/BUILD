@@ -61,6 +61,7 @@ cc_library_with_tflite(
     hdrs = ["vision_task_api_factory.h"],
     tflite_deps = [
         ":base_vision_task_api",
+        "//mediapipe/tasks/cc/core:task_runner",
         "//mediapipe/tasks/cc/core:task_api_factory",
     ],
     deps = [

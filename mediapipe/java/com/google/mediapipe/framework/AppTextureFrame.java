@@ -180,6 +180,7 @@ public class AppTextureFrame implements TextureFrame {
     }
   }
 
+  @SuppressWarnings("Finalize")
   @Override
   public void finalize() {
     // Note: we do not normally want to rely on finalize to dispose of native objects. In this

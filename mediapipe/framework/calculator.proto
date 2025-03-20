@@ -217,6 +217,19 @@ message ProfilerConfig {
   string calculator_filter = 18;
 }
 
+// Configuration for the runtime info logger. It collects runtime information
+// and statistics about calculators and their input streams at the configured
+// capture rate and writes them to LOG(INFO). It can be used to inspect a
+// stalled graph by understanding which calculators are waiting for input
+// packets to triger their Process() method.
+message GraphRuntimeInfoConfig {
+  // If true, the runtime info logger is enabled and runs in the background.
+  bool enable_graph_runtime_info = 1;
+  // The period in seconds at which the runtime info logger is updated. The
+  // default value is 10 secods.
+  uint32 capture_period_msec = 2;
+}
+
 // Describes the topology and function of a MediaPipe Graph.  The graph of
 // Nodes must be a Directed Acyclic Graph (DAG) except as annotated by
 // "back_edge" in InputStreamInfo.  Use a mediapipe::CalculatorGraph object to
@@ -392,6 +405,9 @@ message CalculatorGraphConfig {
   // calculators from running.  If false, max_queue_size for an input stream
   // is adjusted when throttling prevents all calculators from running.
   bool report_deadlock = 21;
+  // Enable the collection of runtime information and statistics about
+  // calculators and their input streams.
+  GraphRuntimeInfoConfig runtime_info = 22;
   // Config for this graph's InputStreamHandler.
   // If unspecified, the framework will automatically install the default
   // handler, which works as follows.

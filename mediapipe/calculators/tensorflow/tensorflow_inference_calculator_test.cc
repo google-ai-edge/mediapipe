@@ -17,7 +17,6 @@
 #include <string>
 #include <vector>
 
-#include "absl/flags/flag.h"
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "mediapipe/calculators/tensorflow/tensorflow_inference_calculator.pb.h"
@@ -33,6 +32,7 @@
 #include "tensorflow/core/framework/tensor_shape.h"
 #include "tensorflow/core/framework/tensor_testutil.h"
 #include "tensorflow/core/framework/types.h"
+#include "testing/base/public/gunit.h"
 
 #ifdef __APPLE__
 #include <CoreFoundation/CoreFoundation.h>
@@ -67,7 +67,7 @@ std::string GetGraphDefPath() {
                                    "testdata/frozen_graph_def.pb");
 #else
   return mediapipe::file::JoinPath(
-      "./",
+      ::testing::SrcDir(),
       // This should match the path of the output files
       // of the genrule() that generates test model files.
       "mediapipe/calculators/tensorflow/testdata/", "frozen_graph_def.pb");

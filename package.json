@@ -1,6 +1,6 @@
 {
   "name": "medipipe-dev",
-  "version": "0.0.0-alphga",
+  "version": "0.0.0-alpha",
   "description": "MediaPipe GitHub repo",
   "devDependencies": {
     "@bazel/jasmine": "^5.7.2",
@@ -13,6 +13,7 @@
     "@types/jasmine": "^4.3.1",
     "@types/node": "^18.11.11",
     "@types/offscreencanvas": "^2019.7.0",
+    "@webgpu/types": "^0.1.49",
     "google-protobuf": "^3.21.2",
     "jasmine": "^4.5.0",
     "jasmine-core": "^4.5.0",

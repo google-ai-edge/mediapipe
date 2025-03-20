@@ -15,9 +15,13 @@
 #ifndef MEDIAPIPE_GPU_MULTI_POOL_H_
 #define MEDIAPIPE_GPU_MULTI_POOL_H_
 
+#include <functional>
 #include <memory>
+#include <vector>
 
+#include "absl/base/thread_annotations.h"
 #include "absl/status/statusor.h"
+#include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/util/resource_cache.h"
 
@@ -26,7 +30,7 @@ namespace mediapipe {
 struct MultiPoolOptions {
   // Keep this many buffers allocated for a given frame size.
   int keep_count = 2;
-  // The maximum size of the GpuBufferMultiPool. When the limit is reached, the
+  // The maximum size of a concrete MultiPool. When the limit is reached, the
   // oldest BufferSpec will be dropped.
   int max_pool_count = 10;
   // Time in seconds after which an inactive buffer can be dropped from the
@@ -60,8 +64,8 @@ class MultiPool {
   using SimplePoolFactory = std::function<std::shared_ptr<SimplePool>(
       const Spec& spec, const MultiPoolOptions& options)>;
 
-  MultiPool(SimplePoolFactory factory = DefaultMakeSimplePool,
-            MultiPoolOptions options = kDefaultMultiPoolOptions)
+  explicit MultiPool(SimplePoolFactory factory = DefaultMakeSimplePool,
+                     MultiPoolOptions options = kDefaultMultiPoolOptions)
       : create_simple_pool_(factory), options_(options) {}
   explicit MultiPool(MultiPoolOptions options)
       : MultiPool(DefaultMakeSimplePool, options) {}

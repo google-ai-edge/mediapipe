@@ -12,11 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MEDIAPIPE_DEPS_FILE_HELPERS_H_
-#define MEDIAPIPE_DEPS_FILE_HELPERS_H_
+#ifndef MEDIAPIPE_FRAMEWORK_DEPS_FILE_HELPERS_H_
+#define MEDIAPIPE_FRAMEWORK_DEPS_FILE_HELPERS_H_
 
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/match.h"
-#include "mediapipe/framework/port/status.h"
+#include "mediapipe/framework/deps/mmapped_file.h"
 
 namespace mediapipe {
 namespace file {
@@ -28,6 +30,12 @@ absl::Status SetContents(absl::string_view file_name,
 
 absl::Status AppendStringToFile(absl::string_view file_name,
                                 absl::string_view contents);
+
+absl::StatusOr<std::unique_ptr<MemoryMappedFile>> MMapFile(
+    absl::string_view path);
+
+absl::Status LockMemory(const void* base_address, size_t length);
+absl::Status UnlockMemory(const void* base_address, size_t length);
 
 absl::Status MatchInTopSubdirectories(const std::string& parent_directory,
                                       const std::string& file_name,
@@ -46,4 +54,4 @@ absl::Status RecursivelyCreateDir(absl::string_view path);
 }  // namespace file
 }  // namespace mediapipe
 
-#endif  // MEDIAPIPE_DEPS_FILE_HELPERS_H_
+#endif  // MEDIAPIPE_FRAMEWORK_DEPS_FILE_HELPERS_H_

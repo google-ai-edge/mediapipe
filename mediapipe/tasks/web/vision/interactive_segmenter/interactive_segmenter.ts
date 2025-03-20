@@ -23,10 +23,19 @@ import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {ImageProcessingOptions} from '../../../../tasks/web/vision/core/image_processing_options';
 import {MPMask} from '../../../../tasks/web/vision/core/mask';
 import {RegionOfInterest} from '../../../../tasks/web/vision/core/types';
-import {VisionGraphRunner, VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
+import {
+  VisionGraphRunner,
+  VisionTaskRunner,
+} from '../../../../tasks/web/vision/core/vision_task_runner';
 import {Color as ColorProto} from '../../../../util/color_pb';
-import {RenderAnnotation as RenderAnnotationProto, RenderData as RenderDataProto} from '../../../../util/render_data_pb';
-import {ImageSource, WasmModule} from '../../../../web/graph_runner/graph_runner';
+import {
+  RenderAnnotation as RenderAnnotationProto,
+  RenderData as RenderDataProto,
+} from '../../../../util/render_data_pb';
+import {
+  ImageSource,
+  WasmModule,
+} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
 import {InteractiveSegmenterOptions} from './interactive_segmenter_options';
@@ -34,8 +43,7 @@ import {InteractiveSegmenterResult} from './interactive_segmenter_result';
 
 export * from './interactive_segmenter_options';
 export * from './interactive_segmenter_result';
-export {type RegionOfInterest};
-export {type ImageSource};
+export {type ImageSource, type RegionOfInterest};
 
 const IMAGE_IN_STREAM = 'image_in';
 const NORM_RECT_IN_STREAM = 'norm_rect_in';
@@ -44,7 +52,7 @@ const CONFIDENCE_MASKS_STREAM = 'confidence_masks';
 const CATEGORY_MASK_STREAM = 'category_mask';
 const QUALITY_SCORES_STREAM = 'quality_scores';
 const IMAGEA_SEGMENTER_GRAPH =
-    'mediapipe.tasks.vision.interactive_segmenter.InteractiveSegmenterGraph';
+  'mediapipe.tasks.vision.interactive_segmenter.InteractiveSegmenterGraph';
 const DEFAULT_OUTPUT_CATEGORY_MASK = false;
 const DEFAULT_OUTPUT_CONFIDENCE_MASKS = true;
 
@@ -57,8 +65,9 @@ const DEFAULT_OUTPUT_CONFIDENCE_MASKS = true;
  * asynchronous processing is needed, all data needs to be copied before the
  * callback returns.
  */
-export type InteractiveSegmenterCallback =
-    (result: InteractiveSegmenterResult) => void;
+export type InteractiveSegmenterCallback = (
+  result: InteractiveSegmenterResult,
+) => void;
 
 /**
  * Performs interactive segmentation on images.
@@ -106,11 +115,14 @@ export class InteractiveSegmenter extends VisionTaskRunner {
    * @return A new `InteractiveSegmenter`.
    */
   static createFromOptions(
-      wasmFileset: WasmFileset,
-      interactiveSegmenterOptions: InteractiveSegmenterOptions):
-      Promise<InteractiveSegmenter> {
+    wasmFileset: WasmFileset,
+    interactiveSegmenterOptions: InteractiveSegmenterOptions,
+  ): Promise<InteractiveSegmenter> {
     return VisionTaskRunner.createVisionInstance(
-        InteractiveSegmenter, wasmFileset, interactiveSegmenterOptions);
+      InteractiveSegmenter,
+      wasmFileset,
+      interactiveSegmenterOptions,
+    );
   }
 
   /**
@@ -119,14 +131,19 @@ export class InteractiveSegmenter extends VisionTaskRunner {
    * @export
    * @param wasmFileset A configuration object that provides the location of
    *     the Wasm binary and its loader.
-   * @param modelAssetBuffer A binary representation of the model.
+   * @param modelAssetBuffer An array or a stream containing a binary
+   *    representation of the model.
    * @return A new `InteractiveSegmenter`.
    */
   static createFromModelBuffer(
-      wasmFileset: WasmFileset,
-      modelAssetBuffer: Uint8Array): Promise<InteractiveSegmenter> {
+    wasmFileset: WasmFileset,
+    modelAssetBuffer: Uint8Array | ReadableStreamDefaultReader,
+  ): Promise<InteractiveSegmenter> {
     return VisionTaskRunner.createVisionInstance(
-        InteractiveSegmenter, wasmFileset, {baseOptions: {modelAssetBuffer}});
+      InteractiveSegmenter,
+      wasmFileset,
+      {baseOptions: {modelAssetBuffer}},
+    );
   }
 
   /**
@@ -139,25 +156,32 @@ export class InteractiveSegmenter extends VisionTaskRunner {
    * @return A new `InteractiveSegmenter`.
    */
   static createFromModelPath(
-      wasmFileset: WasmFileset,
-      modelAssetPath: string): Promise<InteractiveSegmenter> {
+    wasmFileset: WasmFileset,
+    modelAssetPath: string,
+  ): Promise<InteractiveSegmenter> {
     return VisionTaskRunner.createVisionInstance(
-        InteractiveSegmenter, wasmFileset, {baseOptions: {modelAssetPath}});
+      InteractiveSegmenter,
+      wasmFileset,
+      {baseOptions: {modelAssetPath}},
+    );
   }
 
   /** @hideconstructor */
   constructor(
-      wasmModule: WasmModule,
-      glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
+    wasmModule: WasmModule,
+    glCanvas?: HTMLCanvasElement | OffscreenCanvas | null,
+  ) {
     super(
-        new VisionGraphRunner(wasmModule, glCanvas), IMAGE_IN_STREAM,
-        NORM_RECT_IN_STREAM, /* roiAllowed= */ false);
+      new VisionGraphRunner(wasmModule, glCanvas),
+      IMAGE_IN_STREAM,
+      NORM_RECT_IN_STREAM,
+      /* roiAllowed= */ false,
+    );
     this.options = new ImageSegmenterGraphOptionsProto();
     this.segmenterOptions = new SegmenterOptionsProto();
     this.options.setSegmenterOptions(this.segmenterOptions);
     this.options.setBaseOptions(new BaseOptionsProto());
   }
-
 
   protected override get baseOptions(): BaseOptionsProto {
     return this.options.getBaseOptions()!;
@@ -181,12 +205,12 @@ export class InteractiveSegmenter extends VisionTaskRunner {
   override setOptions(options: InteractiveSegmenterOptions): Promise<void> {
     if ('outputCategoryMask' in options) {
       this.outputCategoryMask =
-          options.outputCategoryMask ?? DEFAULT_OUTPUT_CATEGORY_MASK;
+        options.outputCategoryMask ?? DEFAULT_OUTPUT_CATEGORY_MASK;
     }
 
     if ('outputConfidenceMasks' in options) {
       this.outputConfidenceMasks =
-          options.outputConfidenceMasks ?? DEFAULT_OUTPUT_CONFIDENCE_MASKS;
+        options.outputConfidenceMasks ?? DEFAULT_OUTPUT_CONFIDENCE_MASKS;
     }
 
     return super.applyOptions(options);
@@ -205,8 +229,10 @@ export class InteractiveSegmenter extends VisionTaskRunner {
    *    callback.
    */
   segment(
-      image: ImageSource, roi: RegionOfInterest,
-      callback: InteractiveSegmenterCallback): void;
+    image: ImageSource,
+    roi: RegionOfInterest,
+    callback: InteractiveSegmenterCallback,
+  ): void;
   /**
    * Performs interactive segmentation on the provided single image and invokes
    * the callback with the response. The method returns synchronously once the
@@ -227,9 +253,11 @@ export class InteractiveSegmenter extends VisionTaskRunner {
    *    callback.
    */
   segment(
-      image: ImageSource, roi: RegionOfInterest,
-      imageProcessingOptions: ImageProcessingOptions,
-      callback: InteractiveSegmenterCallback): void;
+    image: ImageSource,
+    roi: RegionOfInterest,
+    imageProcessingOptions: ImageProcessingOptions,
+    callback: InteractiveSegmenterCallback,
+  ): void;
   /**
    * Performs interactive segmentation on the provided video frame and returns
    * the segmentation result. This method creates a copy of the resulting masks
@@ -241,8 +269,10 @@ export class InteractiveSegmenter extends VisionTaskRunner {
    * @return The segmentation result. The data is copied to avoid lifetime
    *     limits.
    */
-  segment(image: ImageSource, roi: RegionOfInterest):
-      InteractiveSegmenterResult;
+  segment(
+    image: ImageSource,
+    roi: RegionOfInterest,
+  ): InteractiveSegmenterResult;
   /**
    * Performs interactive segmentation on the provided video frame and returns
    * the segmentation result. This method creates a copy of the resulting masks
@@ -262,23 +292,27 @@ export class InteractiveSegmenter extends VisionTaskRunner {
    *     limits.
    */
   segment(
-      image: ImageSource, roi: RegionOfInterest,
-      imageProcessingOptions: ImageProcessingOptions):
-      InteractiveSegmenterResult;
+    image: ImageSource,
+    roi: RegionOfInterest,
+    imageProcessingOptions: ImageProcessingOptions,
+  ): InteractiveSegmenterResult;
   /** @export */
   segment(
-      image: ImageSource, roi: RegionOfInterest,
-      imageProcessingOptionsOrCallback?: ImageProcessingOptions|
-      InteractiveSegmenterCallback,
-      callback?: InteractiveSegmenterCallback): InteractiveSegmenterResult|
-      void {
+    image: ImageSource,
+    roi: RegionOfInterest,
+    imageProcessingOptionsOrCallback?:
+      | ImageProcessingOptions
+      | InteractiveSegmenterCallback,
+    callback?: InteractiveSegmenterCallback,
+  ): InteractiveSegmenterResult | void {
     const imageProcessingOptions =
-        typeof imageProcessingOptionsOrCallback !== 'function' ?
-        imageProcessingOptionsOrCallback :
-        {};
-    this.userCallback = typeof imageProcessingOptionsOrCallback === 'function' ?
-        imageProcessingOptionsOrCallback :
-        callback;
+      typeof imageProcessingOptionsOrCallback !== 'function'
+        ? imageProcessingOptionsOrCallback
+        : {};
+    this.userCallback =
+      typeof imageProcessingOptionsOrCallback === 'function'
+        ? imageProcessingOptionsOrCallback
+        : callback;
 
     this.reset();
     this.processRenderData(roi, this.getSynctheticTimestamp());
@@ -292,10 +326,13 @@ export class InteractiveSegmenter extends VisionTaskRunner {
     this.qualityScores = undefined;
   }
 
-  private processResults(): InteractiveSegmenterResult|void {
+  private processResults(): InteractiveSegmenterResult | void {
     try {
       const result = new InteractiveSegmenterResult(
-          this.confidenceMasks, this.categoryMask, this.qualityScores);
+        this.confidenceMasks,
+        this.categoryMask,
+        this.qualityScores,
+      );
       if (this.userCallback) {
         this.userCallback(result);
       } else {
@@ -317,7 +354,9 @@ export class InteractiveSegmenter extends VisionTaskRunner {
 
     const calculatorOptions = new CalculatorOptions();
     calculatorOptions.setExtension(
-        ImageSegmenterGraphOptionsProto.ext, this.options);
+      ImageSegmenterGraphOptionsProto.ext,
+      this.options,
+    );
 
     const segmenterNode = new CalculatorGraphConfig.Node();
     segmenterNode.setCalculator(IMAGEA_SEGMENTER_GRAPH);
@@ -332,24 +371,30 @@ export class InteractiveSegmenter extends VisionTaskRunner {
     if (this.outputConfidenceMasks) {
       graphConfig.addOutputStream(CONFIDENCE_MASKS_STREAM);
       segmenterNode.addOutputStream(
-          'CONFIDENCE_MASKS:' + CONFIDENCE_MASKS_STREAM);
+        'CONFIDENCE_MASKS:' + CONFIDENCE_MASKS_STREAM,
+      );
       this.keepStreamAlive(CONFIDENCE_MASKS_STREAM);
 
       this.graphRunner.attachImageVectorListener(
-          CONFIDENCE_MASKS_STREAM, (masks, timestamp) => {
-            this.confidenceMasks = masks.map(
-                wasmImage => this.convertToMPMask(
-                    wasmImage,
-                    /* interpolateValues= */ true,
-                    /* shouldCopyData= */ !this.userCallback,
-                    ));
-            this.setLatestOutputTimestamp(timestamp);
-          });
+        CONFIDENCE_MASKS_STREAM,
+        (masks, timestamp) => {
+          this.confidenceMasks = masks.map((wasmImage) =>
+            this.convertToMPMask(
+              wasmImage,
+              /* interpolateValues= */ true,
+              /* shouldCopyData= */ !this.userCallback,
+            ),
+          );
+          this.setLatestOutputTimestamp(timestamp);
+        },
+      );
       this.graphRunner.attachEmptyPacketListener(
-          CONFIDENCE_MASKS_STREAM, timestamp => {
-            this.confidenceMasks = [];
-            this.setLatestOutputTimestamp(timestamp);
-          });
+        CONFIDENCE_MASKS_STREAM,
+        (timestamp) => {
+          this.confidenceMasks = [];
+          this.setLatestOutputTimestamp(timestamp);
+        },
+      );
     }
 
     if (this.outputCategoryMask) {
@@ -358,32 +403,42 @@ export class InteractiveSegmenter extends VisionTaskRunner {
       this.keepStreamAlive(CATEGORY_MASK_STREAM);
 
       this.graphRunner.attachImageListener(
-          CATEGORY_MASK_STREAM, (mask, timestamp) => {
-            this.categoryMask = this.convertToMPMask(
-                mask, /* interpolateValues= */ false,
-                /* shouldCopyData= */ !this.userCallback);
-            this.setLatestOutputTimestamp(timestamp);
-          });
+        CATEGORY_MASK_STREAM,
+        (mask, timestamp) => {
+          this.categoryMask = this.convertToMPMask(
+            mask,
+            /* interpolateValues= */ false,
+            /* shouldCopyData= */ !this.userCallback,
+          );
+          this.setLatestOutputTimestamp(timestamp);
+        },
+      );
       this.graphRunner.attachEmptyPacketListener(
-          CATEGORY_MASK_STREAM, timestamp => {
-            this.categoryMask = undefined;
-            this.setLatestOutputTimestamp(timestamp);
-          });
+        CATEGORY_MASK_STREAM,
+        (timestamp) => {
+          this.categoryMask = undefined;
+          this.setLatestOutputTimestamp(timestamp);
+        },
+      );
     }
 
     graphConfig.addOutputStream(QUALITY_SCORES_STREAM);
     segmenterNode.addOutputStream('QUALITY_SCORES:' + QUALITY_SCORES_STREAM);
 
     this.graphRunner.attachFloatVectorListener(
-        QUALITY_SCORES_STREAM, (scores, timestamp) => {
-          this.qualityScores = scores;
-          this.setLatestOutputTimestamp(timestamp);
-        });
+      QUALITY_SCORES_STREAM,
+      (scores, timestamp) => {
+        this.qualityScores = scores;
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
     this.graphRunner.attachEmptyPacketListener(
-        QUALITY_SCORES_STREAM, timestamp => {
-          this.categoryMask = undefined;
-          this.setLatestOutputTimestamp(timestamp);
-        });
+      QUALITY_SCORES_STREAM,
+      (timestamp) => {
+        this.categoryMask = undefined;
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
 
     const binaryGraph = graphConfig.serializeBinary();
     this.setGraph(new Uint8Array(binaryGraph), /* isBinary= */ true);
@@ -426,8 +481,11 @@ export class InteractiveSegmenter extends VisionTaskRunner {
     renderData.addRenderAnnotations(renderAnnotation);
 
     this.graphRunner.addProtoToStream(
-        renderData.serializeBinary(), 'mediapipe.RenderData', ROI_IN_STREAM,
-        timestamp);
+      renderData.serializeBinary(),
+      'mediapipe.RenderData',
+      ROI_IN_STREAM,
+      timestamp,
+    );
   }
 }
 

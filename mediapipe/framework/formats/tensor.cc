@@ -14,15 +14,22 @@
 
 #include "mediapipe/framework/formats/tensor.h"
 
+#include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <memory>
 #include <utility>
 
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
+#include "absl/status/status.h"
+#include "absl/strings/str_cat.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/memory_manager.h"
 #include "mediapipe/framework/port.h"
+#include "mediapipe/framework/port/aligned_malloc_and_free.h"  // IWYU pragma: keep
+#include "mediapipe/framework/port/ret_check.h"
+#include "mediapipe/framework/port/status_macros.h"
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
 #include "mediapipe/gpu/gl_base.h"
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
@@ -39,6 +46,10 @@
 #else
 #include <cstdlib>
 #endif  // MEDIAPIPE_METAL_ENABLED
+
+#if MEDIAPIPE_USE_WEBGPU
+#include "mediapipe/gpu/webgpu/webgpu_utils.h"
+#endif  // MEDIAPIPE_USE_WEBGPU
 
 namespace mediapipe {
 
@@ -65,7 +76,7 @@ int BhwcDepthFromShape(const Tensor::Shape& shape) {
 }
 
 // TODO: Match channels count and padding for Texture2D:
-// 1) support 1/2/4 channesl texture for 1/2/3-4 depth.
+// 1) support 1/2/4 channels texture for 1/2/3-4 depth.
 // 2) Allocate cpu_buffer_ with padded amount of memory
 // 3) pad/"unpad" the bitmap after transfer CPU <-> GPU
 
@@ -125,7 +136,7 @@ MtlBufferView MtlBufferView::GetReadView(const Tensor& tensor,
       FATAL, !(tensor.valid_ & (Tensor::kValidCpu | Tensor::kValidMetalBuffer)))
       << "Tensor conversion between different GPU backing formats is not "
          "supported yet.";
-  auto lock(absl::make_unique<absl::MutexLock>(&tensor.view_mutex_));
+  auto lock(std::make_unique<absl::MutexLock>(&tensor.view_mutex_));
   tensor.valid_ |= Tensor::kValidMetalBuffer;
   AllocateMtlBuffer(tensor, [command_buffer device]);
   return {tensor.mtl_resources_->metal_buffer, std::move(lock)};
@@ -141,7 +152,7 @@ MtlBufferView MtlBufferView::GetWriteView(const Tensor& tensor,
 
 MtlBufferView MtlBufferView::GetWriteView(const Tensor& tensor,
                                           id<MTLDevice> device) {
-  auto lock(absl::make_unique<absl::MutexLock>(&tensor.view_mutex_));
+  auto lock(std::make_unique<absl::MutexLock>(&tensor.view_mutex_));
   tensor.valid_ = Tensor::kValidMetalBuffer;
   AllocateMtlBuffer(tensor, device);
   return {tensor.mtl_resources_->metal_buffer, std::move(lock)};
@@ -172,12 +183,12 @@ Tensor::OpenGlTexture2dView Tensor::GetOpenGlTexture2dReadView() const {
   ABSL_LOG_IF(FATAL, !(valid_ & (kValidCpu | kValidOpenGlTexture2d)))
       << "Tensor conversion between different GPU backing formats is not "
          "supported yet.";
-  auto lock = absl::make_unique<absl::MutexLock>(&view_mutex_);
+  auto lock = std::make_unique<absl::MutexLock>(&view_mutex_);
   AllocateOpenGlTexture2d();
   if (!(valid_ & kValidOpenGlTexture2d)) {
     const int padded_size =
         texture_height_ * texture_width_ * 4 * element_size();
-    auto temp_buffer = absl::make_unique<uint8_t[]>(padded_size);
+    auto temp_buffer = std::make_unique<uint8_t[]>(padded_size);
     uint8_t* dest_buffer = temp_buffer.get();
     uint8_t* src_buffer = reinterpret_cast<uint8_t*>(cpu_buffer_);
     const int num_elements = BhwcWidthFromShape(shape_) *
@@ -221,7 +232,7 @@ Tensor::OpenGlTexture2dView Tensor::GetOpenGlTexture2dReadView() const {
 }
 
 Tensor::OpenGlTexture2dView Tensor::GetOpenGlTexture2dWriteView() const {
-  auto lock = absl::make_unique<absl::MutexLock>(&view_mutex_);
+  auto lock = std::make_unique<absl::MutexLock>(&view_mutex_);
   AllocateOpenGlTexture2d();
 #ifdef __EMSCRIPTEN__
   // On web, we may have to change type from float to half-float
@@ -343,15 +354,7 @@ Tensor::OpenGlBufferView Tensor::GetOpenGlBufferReadView() const {
                                  kValidOpenGlBuffer)))
       << "Tensor conversion between different GPU backing formats is not "
          "supported yet.";
-  auto lock(absl::make_unique<absl::MutexLock>(&view_mutex_));
-  if ((valid_ & kValidOpenGlBuffer) && gl_context_ != nullptr &&
-      !gl_context_->IsCurrent() && GlContext::IsAnyContextCurrent()) {
-    ABSL_LOG_FIRST_N(WARNING, 1)
-        << "Tensor::GetOpenGlBufferReadView is not executed on the same GL "
-           "context where GL buffer was created. Note that Tensor has "
-           "limited synchronization support when sharing OpenGl objects "
-           "between multiple OpenGL contexts.";
-  }
+  auto lock(std::make_unique<absl::MutexLock>(&view_mutex_));
   AllocateOpenGlBuffer();
   if (!(valid_ & kValidOpenGlBuffer)) {
     // If the call succeeds then AHWB -> SSBO are synchronized so any usage of
@@ -367,7 +370,8 @@ Tensor::OpenGlBufferView Tensor::GetOpenGlBufferReadView() const {
     }
     valid_ |= kValidOpenGlBuffer;
   }
-  return {opengl_buffer_, std::move(lock),
+
+  return {/*is_write_view=*/false, opengl_buffer_, std::move(lock),
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
           // ssbo_read_ is passed to be populated on OpenGlBufferView
           // destruction in order to perform delayed resources releasing (see
@@ -375,16 +379,16 @@ Tensor::OpenGlBufferView Tensor::GetOpenGlBufferReadView() const {
           //
           // Not passing for the case when AHWB is not in use to avoid creation
           // of unnecessary sync object and memory leak.
-          use_ahwb_ ? &ssbo_read_ : nullptr
+          use_ahwb_ ? &ssbo_read_ : nullptr,
 #else
-          nullptr
+          nullptr,
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
-  };
+          gl_context_.get(), &gl_write_read_sync_};
 }
 
 Tensor::OpenGlBufferView Tensor::GetOpenGlBufferWriteView(
     uint64_t source_location_hash) const {
-  auto lock(absl::make_unique<absl::MutexLock>(&view_mutex_));
+  auto lock(std::make_unique<absl::MutexLock>(&view_mutex_));
   TrackAhwbUsage(source_location_hash);
   if ((valid_ & kValidOpenGlBuffer) && gl_context_ != nullptr &&
       !gl_context_->IsCurrent() && GlContext::IsAnyContextCurrent()) {
@@ -395,13 +399,24 @@ Tensor::OpenGlBufferView Tensor::GetOpenGlBufferWriteView(
            "between multiple OpenGL contexts.";
   }
   AllocateOpenGlBuffer();
+  if (valid_ != 0) {
+    ABSL_LOG_FIRST_N(ERROR, 1)
+        << "Tensors are designed for single writes. Multiple writes to a "
+           "Tensor instance are not supported and may lead to undefined "
+           "behavior due to lack of synchronization.";
+  }
   valid_ = kValidOpenGlBuffer;
-  return {opengl_buffer_, std::move(lock), nullptr};
+  return {/*is_write_view=*/true, opengl_buffer_,
+          std::move(lock),
+          /*ssbo_read=*/nullptr,  gl_context_.get(),
+          &gl_write_read_sync_};
 }
 
 void Tensor::AllocateOpenGlBuffer() const {
   if (opengl_buffer_ == GL_INVALID_INDEX) {
-    gl_context_ = mediapipe::GlContext::GetCurrent();
+    if (gl_context_ == nullptr) {
+      gl_context_ = mediapipe::GlContext::GetCurrent();
+    }
     ABSL_LOG_IF(FATAL, !gl_context_) << "GlContext is not bound to the thread.";
     glGenBuffers(1, &opengl_buffer_);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, opengl_buffer_);
@@ -415,24 +430,24 @@ void Tensor::AllocateOpenGlBuffer() const {
 
 Tensor& Tensor::operator=(Tensor&& src) {
   if (this != &src) {
-    Invalidate();
+    ABSL_CHECK_OK(Invalidate());
     Move(&src);
   }
   return *this;
 }
 
 Tensor::Tensor(Tensor&& src) { Move(&src); }
-Tensor::~Tensor() { Invalidate(); }
+Tensor::~Tensor() { ABSL_CHECK_OK(Invalidate()); }
 
 void Tensor::Move(Tensor* src) {
   valid_ = src->valid_;
   src->valid_ = kValidNone;
   shape_ = src->shape();
   quantization_parameters_ = src->quantization_parameters();
+  memory_alignment_ = src->memory_alignment_;
   element_type_ = src->element_type();
   src->element_type_ = ElementType::kNone;  // Mark as invalidated.
-  cpu_buffer_ = src->cpu_buffer_;
-  src->cpu_buffer_ = nullptr;
+  cpu_buffer_ = std::exchange(src->cpu_buffer_, nullptr);
   ahwb_tracking_key_ = src->ahwb_tracking_key_;
   mtl_resources_ = std::move(src->mtl_resources_);
   MoveAhwbStuff(src);
@@ -448,14 +463,21 @@ void Tensor::Move(Tensor* src) {
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
   opengl_buffer_ = src->opengl_buffer_;
   src->opengl_buffer_ = GL_INVALID_INDEX;
+  gl_write_read_sync_ = std::move(src->gl_write_read_sync_);
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
+
+#if MEDIAPIPE_USE_WEBGPU
+  webgpu_texture2d_ = std::move(src->webgpu_texture2d_);
+  webgpu_device_ = std::move(src->webgpu_device_);
+#endif  // MEDIAPIPE_USE_WEBGPU
 }
 
 Tensor::Tensor(ElementType element_type, const Shape& shape,
-               MemoryManager* memory_manager)
+               MemoryManager* memory_manager, int memory_alignment)
     : element_type_(element_type),
       shape_(shape),
+      memory_alignment_(memory_alignment),
       mtl_resources_(std::make_unique<MtlResources>()) {
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
   if (memory_manager) {
@@ -465,10 +487,11 @@ Tensor::Tensor(ElementType element_type, const Shape& shape,
 }
 Tensor::Tensor(ElementType element_type, const Shape& shape,
                const QuantizationParameters& quantization_parameters,
-               MemoryManager* memory_manager)
+               MemoryManager* memory_manager, int memory_alignment)
     : element_type_(element_type),
       shape_(shape),
       quantization_parameters_(quantization_parameters),
+      memory_alignment_(memory_alignment),
       mtl_resources_(std::make_unique<MtlResources>()) {
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
   if (memory_manager) {
@@ -478,7 +501,7 @@ Tensor::Tensor(ElementType element_type, const Shape& shape,
 }
 
 #if MEDIAPIPE_METAL_ENABLED
-void Tensor::Invalidate() {
+absl::Status Tensor::Invalidate() {
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
   GLuint cleanup_gl_tex = GL_INVALID_INDEX;
   GLuint cleanup_gl_fb = GL_INVALID_INDEX;
@@ -514,11 +537,12 @@ void Tensor::Invalidate() {
     });
   }
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
+  return absl::OkStatus();
 }
 
 #else
 
-void Tensor::Invalidate() {
+absl::Status Tensor::Invalidate() {
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
   GLuint cleanup_gl_tex = GL_INVALID_INDEX;
   GLuint cleanup_gl_fb = GL_INVALID_INDEX;
@@ -528,7 +552,7 @@ void Tensor::Invalidate() {
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
   {
     absl::MutexLock lock(&view_mutex_);
-    ReleaseAhwbStuff();
+    MP_RETURN_IF_ERROR(ReleaseAhwbStuff());
 
     // Don't need to wait for the resource to be deleted because if will be
     // released on last reference deletion inside the OpenGL driver.
@@ -561,15 +585,124 @@ void Tensor::Invalidate() {
   }
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
 
-  if (cpu_buffer_) {
-    free(cpu_buffer_);
-  }
-  cpu_buffer_ = nullptr;
+#if MEDIAPIPE_USE_WEBGPU
+  if (webgpu_texture2d_) webgpu_texture2d_.Destroy();
+#endif  // MEDIAPIPE_USE_WEBGPU
+  FreeCpuBuffer();
+  return absl::OkStatus();
 }
 #endif  // MEDIAPIPE_METAL_ENABLED
 
+absl::Status Tensor::ReadBackGpuToCpu() const {
+  // GPU-to-CPU synchronization and read-back.
+#if MEDIAPIPE_METAL_ENABLED
+  if (valid_ & kValidMetalBuffer) {
+    ABSL_LOG_IF(FATAL, !mtl_resources_->command_buffer)
+        << "Metal -> CPU synchronization "
+           "requires MTLCommandBuffer to be set.";
+    if (mtl_resources_->command_buffer) {
+      [mtl_resources_->command_buffer waitUntilCompleted];
+    }
+    return absl::OkStatus();
+  }
+#endif  // MEDIAPIPE_METAL_ENABLED
+
+#if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
+#if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
+  // TODO: we cannot just grab the GL context's lock while holding
+  // the view mutex here.
+  if (valid_ & kValidOpenGlBuffer) {
+    gl_context_->Run([this]() {
+      glBindBuffer(GL_SHADER_STORAGE_BUFFER, opengl_buffer_);
+      const void* ptr = glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, bytes(),
+                                         GL_MAP_READ_BIT);
+      std::memcpy(cpu_buffer_, ptr, bytes());
+      glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+    });
+    return absl::OkStatus();
+  }
+#endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
+  // Transfer data from texture if not transferred from SSBO/MTLBuffer
+  // yet.
+  if (valid_ & kValidOpenGlTexture2d) {
+    gl_context_->Run([this]() {
+      const int padded_size =
+          texture_height_ * texture_width_ * 4 * element_size();
+      auto temp_buffer = std::make_unique<uint8_t[]>(padded_size);
+      uint8_t* buffer = temp_buffer.get();
+
+      glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer_);
+      glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                             GL_TEXTURE_2D, opengl_texture2d_, 0);
+      glPixelStorei(GL_PACK_ALIGNMENT, 4);
+      glReadPixels(0, 0, texture_width_, texture_height_, GL_RGBA, GL_FLOAT,
+                   buffer);
+      uint8_t* dest_buffer = reinterpret_cast<uint8_t*>(cpu_buffer_);
+      const int actual_depth_size = BhwcDepthFromShape(shape_) * element_size();
+      const int num_slices = (BhwcDepthFromShape(shape_) + 3) / 4;
+      const int padded_depth_size = num_slices * 4 * element_size();
+      const int num_elements = BhwcWidthFromShape(shape_) *
+                               BhwcHeightFromShape(shape_) *
+                               BhwcBatchFromShape(shape_);
+      for (int e = 0; e < num_elements; e++) {
+        std::memcpy(dest_buffer, buffer, actual_depth_size);
+        dest_buffer += actual_depth_size;
+        buffer += padded_depth_size;
+      }
+    });
+    return absl::OkStatus();
+  }
+#endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
+#if __EMSCRIPTEN__ && MEDIAPIPE_USE_WEBGPU
+  // TODO: GetTexture2dData is only supported on Emscripten right now.
+  if (valid_ & kValidWebGpuTexture2d) {
+    const int width = BhwcWidthFromShape(shape_);
+    const int height = BhwcHeightFromShape(shape_);
+    const int depth = BhwcDepthFromShape(shape_);
+    // CPU data layout may not match texture data layout.
+    MP_ASSIGN_OR_RETURN(
+        const int padded_depth,
+        WebGpuTextureFormatDepth(webgpu_texture2d_.GetFormat()));
+
+    // imageCopyBuffer.bytesPerRow must be a multiple of 256
+    int bytes_per_row =
+        (width * padded_depth * element_size() + 255) / 256 * 256;
+    const wgpu::Queue& queue = webgpu_device_.GetQueue();
+
+    const int buffer_size = height * bytes_per_row;
+    std::vector<uint8_t> buffer_data(buffer_size);
+
+    RET_CHECK_OK(GetTexture2dData(webgpu_device_, queue, webgpu_texture2d_,
+                                  width, height, bytes_per_row,
+                                  buffer_data.data()));
+
+    uint8_t* src_buffer = buffer_data.data();
+    uint8_t* dst_buffer = reinterpret_cast<uint8_t*>(cpu_buffer_);
+    const int actual_depth_size = depth * element_size();
+    const int padded_depth_size = padded_depth * element_size();
+    for (int r = 0; r < height; r++) {
+      uint8_t const* row = src_buffer;
+
+      for (int e = 0; e < width; e++) {
+        for (int i = 0; i < actual_depth_size; i++) {
+          dst_buffer[i] = row[i];
+        }
+        dst_buffer += actual_depth_size;
+        row += padded_depth_size;
+      }
+      src_buffer += bytes_per_row;
+    }
+
+    return absl::OkStatus();
+  }
+#endif  // __EMSCRIPTEN__ && MEDIAPIPE_USE_WEBGPU
+
+  return absl::FailedPreconditionError(absl::StrCat(
+      "Failed to read back data from GPU to CPU. Valid formats: ", valid_));
+}
+
 Tensor::CpuReadView Tensor::GetCpuReadView() const {
-  auto lock = absl::make_unique<absl::MutexLock>(&view_mutex_);
+  auto lock = std::make_unique<absl::MutexLock>(&view_mutex_);
   ABSL_LOG_IF(FATAL, valid_ == kValidNone)
       << "Tensor must be written prior to read from.";
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
@@ -584,67 +717,9 @@ Tensor::CpuReadView Tensor::GetCpuReadView() const {
   }
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
 
-  AllocateCpuBuffer();
+  ABSL_CHECK_OK(AllocateCpuBuffer()) << "AllocateCpuBuffer failed.";
   if (!(valid_ & kValidCpu)) {
-    // GPU-to-CPU synchronization and read-back.
-#if MEDIAPIPE_METAL_ENABLED
-    if (valid_ & kValidMetalBuffer) {
-      ABSL_LOG_IF(FATAL, !mtl_resources_->command_buffer)
-          << "Metal -> CPU synchronization "
-             "requires MTLCommandBuffer to be set.";
-      if (mtl_resources_->command_buffer) {
-        [mtl_resources_->command_buffer waitUntilCompleted];
-      }
-    }
-#endif  // MEDIAPIPE_METAL_ENABLED
-
-#if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
-#if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
-    // TODO: we cannot just grab the GL context's lock while holding
-    // the view mutex here.
-    if (valid_ & kValidOpenGlBuffer) {
-      gl_context_->Run([this]() {
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, opengl_buffer_);
-        const void* ptr = glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, bytes(),
-                                           GL_MAP_READ_BIT);
-        std::memcpy(cpu_buffer_, ptr, bytes());
-        glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-      });
-    } else
-#endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
-    {
-      // Transfer data from texture if not transferred from SSBO/MTLBuffer
-      // yet.
-      if (valid_ & kValidOpenGlTexture2d) {
-        gl_context_->Run([this]() {
-          const int padded_size =
-              texture_height_ * texture_width_ * 4 * element_size();
-          auto temp_buffer = absl::make_unique<uint8_t[]>(padded_size);
-          uint8_t* buffer = temp_buffer.get();
-
-          glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer_);
-          glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-                                 GL_TEXTURE_2D, opengl_texture2d_, 0);
-          glPixelStorei(GL_PACK_ALIGNMENT, 4);
-          glReadPixels(0, 0, texture_width_, texture_height_, GL_RGBA, GL_FLOAT,
-                       buffer);
-          uint8_t* dest_buffer = reinterpret_cast<uint8_t*>(cpu_buffer_);
-          const int actual_depth_size =
-              BhwcDepthFromShape(shape_) * element_size();
-          const int num_slices = (BhwcDepthFromShape(shape_) + 3) / 4;
-          const int padded_depth_size = num_slices * 4 * element_size();
-          const int num_elements = BhwcWidthFromShape(shape_) *
-                                   BhwcHeightFromShape(shape_) *
-                                   BhwcBatchFromShape(shape_);
-          for (int e = 0; e < num_elements; e++) {
-            std::memcpy(dest_buffer, buffer, actual_depth_size);
-            dest_buffer += actual_depth_size;
-            buffer += padded_depth_size;
-          }
-        });
-      }
-    }
-#endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
+    ABSL_CHECK_OK(ReadBackGpuToCpu()) << "ReadBackGpuToCpu failed.";
     valid_ |= kValidCpu;
   }
   return {cpu_buffer_, std::move(lock)};
@@ -652,19 +727,29 @@ Tensor::CpuReadView Tensor::GetCpuReadView() const {
 
 Tensor::CpuWriteView Tensor::GetCpuWriteView(
     uint64_t source_location_hash) const {
-  auto lock = absl::make_unique<absl::MutexLock>(&view_mutex_);
+  auto lock = std::make_unique<absl::MutexLock>(&view_mutex_);
   TrackAhwbUsage(source_location_hash);
-  AllocateCpuBuffer();
+  ABSL_CHECK_OK(AllocateCpuBuffer()) << "AllocateCpuBuffer failed.";
+  if (valid_ != 0) {
+    ABSL_LOG_FIRST_N(ERROR, 1)
+        << "Tensors are designed for single writes. Multiple writes to a "
+           "Tensor instance are not supported and may lead to undefined "
+           "behavior due to lack of synchronization.";
+  }
   valid_ = kValidCpu;
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
   if (__builtin_available(android 26, *)) {
     void* ptr = MapAhwbToCpuWrite();
     if (ptr) {
       return {ptr, std::move(lock),
-              [ahwb = ahwb_.get(), fence_fd = &fence_fd_] {
+              [ahwb = ahwb_.get(),
+               write_complete_fence_fd = &write_complete_fence_fd_] {
                 auto fence_fd_status = ahwb->UnlockAsync();
                 ABSL_CHECK_OK(fence_fd_status) << "Unlock failed.";
-                *fence_fd = fence_fd_status.value();
+                if (write_complete_fence_fd->IsValid()) {
+                  ABSL_LOG(DFATAL) << "Write complete fence FD is already set.";
+                }
+                *write_complete_fence_fd = UniqueFd(fence_fd_status.value());
               }};
     }
   }
@@ -672,17 +757,45 @@ Tensor::CpuWriteView Tensor::GetCpuWriteView(
   return {cpu_buffer_, std::move(lock)};
 }
 
-void Tensor::AllocateCpuBuffer() const {
+absl::Status Tensor::AllocateCpuBuffer() const {
   if (!cpu_buffer_) {
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
-    if (use_ahwb_ && AllocateAHardwareBuffer().ok()) return;
+    if (use_ahwb_ && AllocateAHardwareBuffer().ok()) return absl::OkStatus();
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
 #if MEDIAPIPE_METAL_ENABLED
+    // AllocateVirtualMemory allocates memory aligned to the size of a virtual
+    // memory page which should match common alignment requirements.
     cpu_buffer_ = AllocateVirtualMemory(bytes());
 #else
-    cpu_buffer_ = malloc(bytes());
+    if (memory_alignment_ > 0) {
+      // TODO b/339271330 - Investigate how aligned memory performs in
+      // MP WebAssembly targets.
+      // TfLite custom allocation requires at least memory_alignment_ bytes.
+      cpu_buffer_ = aligned_malloc(std::max(memory_alignment_, bytes()),
+                                   memory_alignment_);
+    } else {
+      cpu_buffer_ = malloc(bytes());
+    }
+    RET_CHECK(cpu_buffer_) << "Failed to allocate CPU buffer.";
 #endif  // MEDIAPIPE_METAL_ENABLED
   }
+  return absl::OkStatus();
+}
+
+void Tensor::FreeCpuBuffer() const {
+  if (cpu_buffer_ == nullptr) {
+    return;
+  }
+#if MEDIAPIPE_METAL_ENABLED
+  free(cpu_buffer_);
+#else
+  if (memory_alignment_ > 0) {
+    aligned_free(cpu_buffer_);
+  } else {
+    free(cpu_buffer_);
+  }
+#endif  // MEDIAPIPE_METAL_ENABLED
+  cpu_buffer_ = nullptr;
 }
 
 }  // namespace mediapipe

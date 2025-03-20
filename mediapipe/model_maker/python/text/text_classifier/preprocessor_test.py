@@ -19,7 +19,6 @@ import tempfile
 from unittest import mock as unittest_mock
 
 from absl.testing import parameterized
-import mock
 import numpy as np
 import numpy.testing as npt
 import tensorflow as tf
@@ -113,7 +112,7 @@ class PreprocessorTest(tf.test.TestCase, parameterized.TestCase):
     labels = []
     input_masks = []
     for features, label in preprocessed_dataset.gen_tf_dataset():
-      self.assertEqual(label.shape, [1])
+      self.assertEqual(label.shape, [1, 1])
       labels.append(label.numpy()[0])
       self.assertSameElements(
           features.keys(), ['input_word_ids', 'input_mask', 'input_type_ids']
@@ -146,7 +145,7 @@ class PreprocessorTest(tf.test.TestCase, parameterized.TestCase):
         tokenizer=tokenizer,
     )
     ds_cache_files = dataset.tfrecord_cache_files
-    preprocessed_cache_files = bert_preprocessor._get_tfrecord_cache_files(
+    preprocessed_cache_files = bert_preprocessor.get_tfrecord_cache_files(
         ds_cache_files
     )
     self.assertFalse(preprocessed_cache_files.is_cached())
@@ -158,7 +157,7 @@ class PreprocessorTest(tf.test.TestCase, parameterized.TestCase):
 
     # The second time running preprocessor, it should load from cache directly
     mock_stdout = io.StringIO()
-    with mock.patch('sys.stdout', mock_stdout):
+    with unittest_mock.patch('sys.stdout', mock_stdout):
       _ = bert_preprocessor.preprocess(dataset)
     self.assertEqual(
         mock_stdout.getvalue(),
@@ -174,7 +173,7 @@ class PreprocessorTest(tf.test.TestCase, parameterized.TestCase):
         model_name=bert_spec.name,
         tokenizer=tokenizer,
     )
-    new_cf = bert_preprocessor._get_tfrecord_cache_files(cf)
+    new_cf = bert_preprocessor.get_tfrecord_cache_files(cf)
     return new_cf.cache_prefix_filename
 
   def test_bert_get_tfrecord_cache_files(self):

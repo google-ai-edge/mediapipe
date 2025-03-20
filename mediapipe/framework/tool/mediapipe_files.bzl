@@ -13,7 +13,7 @@ def mediapipe_files(srcs):
     """
 
     for src in srcs:
-        archive_name = "com_google_mediapipe_%s" % src.replace("/", "_").replace(".", "_")
+        archive_name = "com_google_mediapipe_%s" % src.replace("/", "_").replace(".", "_").replace("+", "_")
         native.genrule(
             name = "%s_ln" % archive_name,
             srcs = ["@%s//file" % archive_name],

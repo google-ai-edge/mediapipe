@@ -23,7 +23,7 @@ import {MPImageShaderContext} from '../../../../tasks/web/vision/core/image_shad
 import {MPMask} from '../../../../tasks/web/vision/core/mask';
 import {getImageSourceSize, GraphRunner, ImageSource, WasmMediaPipeConstructor} from '../../../../web/graph_runner/graph_runner';
 import {SupportImage, WasmImage} from '../../../../web/graph_runner/graph_runner_image_lib';
-import {isWebKit} from '../../../../web/graph_runner/platform_utils';
+import {supportsOffscreenCanvas} from '../../../../web/graph_runner/platform_utils';
 import {SupportModelResourcesGraphService} from '../../../../web/graph_runner/register_model_resources_graph_service';
 
 import {VisionTaskOptions} from './vision_task_options';
@@ -43,13 +43,10 @@ export class VisionGraphRunner extends GraphRunnerVisionType {}
  * GraphRunner should create its own canvas.
  */
 function createCanvas(): HTMLCanvasElement|OffscreenCanvas|undefined {
-  const supportsWebGL2ForOffscreenCanvas =
-      typeof OffscreenCanvas !== 'undefined' && !isWebKit();
-
   // Returns an HTML canvas or `undefined` if OffscreenCanvas is fully supported
   // (since the graph runner can initialize its own OffscreenCanvas).
-  return supportsWebGL2ForOffscreenCanvas ? undefined :
-                                            document.createElement('canvas');
+  return supportsOffscreenCanvas() ? undefined :
+                                     document.createElement('canvas');
 }
 
 /** Base class for all MediaPipe Vision Tasks. */

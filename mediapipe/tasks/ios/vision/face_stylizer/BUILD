@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
@@ -22,6 +23,7 @@ objc_library(
     deps = [
         "//mediapipe/tasks/ios/core:MPPTaskResult",
         "//mediapipe/tasks/ios/vision/core:MPPImage",
+        "//third_party/apple_frameworks:Foundation",
     ],
 )
 
@@ -29,15 +31,33 @@ objc_library(
     name = "MPPFaceStylizerOptions",
     srcs = ["sources/MPPFaceStylizerOptions.m"],
     hdrs = ["sources/MPPFaceStylizerOptions.h"],
-    deps = ["//mediapipe/tasks/ios/core:MPPTaskOptions"],
+    deps = [
+        "//mediapipe/tasks/ios/core:MPPTaskOptions",
+        "//third_party/apple_frameworks:Foundation",
+    ],
 )
 
 objc_library(
     name = "MPPFaceStylizer",
+    srcs = ["sources/MPPFaceStylizer.mm"],
     hdrs = ["sources/MPPFaceStylizer.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+        "-x objective-c++",
+        "",
+    ],
+    module_name = "MPPFaceStylizer",
     deps = [
         ":MPPFaceStylizerOptions",
         ":MPPFaceStylizerResult",
+        "//mediapipe/tasks/cc/vision/face_stylizer:face_stylizer_graph",
+        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
+        "//mediapipe/tasks/ios/core:MPPTaskInfo",
         "//mediapipe/tasks/ios/vision/core:MPPImage",
+        "//mediapipe/tasks/ios/vision/core:MPPVisionTaskRunner",
+        "//mediapipe/tasks/ios/vision/face_stylizer/utils:MPPFaceStylizerOptionsHelpers",
+        "//mediapipe/tasks/ios/vision/face_stylizer/utils:MPPFaceStylizerResultHelpers",
+        "//third_party/apple_frameworks:Foundation",
     ],
 )

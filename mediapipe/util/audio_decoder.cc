@@ -38,9 +38,11 @@
 extern "C" {
 #include "libavcodec/avcodec.h"
 #include "libavformat/avformat.h"
+#include "libavformat/version.h"
 #include "libavutil/avutil.h"
 #include "libavutil/mem.h"
 #include "libavutil/samplefmt.h"
+#include "libavutil/version.h"
 }
 
 ABSL_FLAG(int64_t, media_decoder_allowed_audio_gap_merge, 5,
@@ -142,7 +144,8 @@ std::string AvErrorToString(int error) {
       return "AVERROR_OUTPUT_CHANGED - Output changed between calls.";
     default:
       // FALLTHRU
-      {}
+      {
+      }
   }
 
   char buf[AV_ERROR_MAX_STRING_SIZE];
@@ -188,7 +191,8 @@ absl::Status LogStatus(const absl::Status& status,
     return status;
   }
 
-  VLOG(3) << "Failed to process packet:" << " media_type:"
+  VLOG(3) << "Failed to process packet:"
+          << " media_type:"
           << (avcodec_ctx.codec_type == AVMEDIA_TYPE_VIDEO ? "video" : "audio")
           << " codec_id:" << avcodec_ctx.codec_id
           << " frame_number:" << avcodec_ctx.frame_number
@@ -206,11 +210,9 @@ absl::Status LogStatus(const absl::Status& status,
 
 class AVPacketDeleter {
  public:
-  void operator()(void* x) const {
-    AVPacket* packet = static_cast<AVPacket*>(x);
-    if (packet) {
-      av_free_packet(packet);
-      delete packet;
+  void operator()(AVPacket* packet) const {
+    if (packet != nullptr) {
+      av_packet_free(&packet);
     }
   }
 };
@@ -239,7 +241,7 @@ absl::Status BasePacketProcessor::GetData(Packet* packet) {
 absl::Status BasePacketProcessor::Flush() {
   int64_t last_num_frames_processed;
   do {
-    std::unique_ptr<AVPacket, AVPacketDeleter> av_packet(new AVPacket());
+    std::unique_ptr<AVPacket, AVPacketDeleter> av_packet(av_packet_alloc());
     av_init_packet(av_packet.get());
     av_packet->size = 0;
     av_packet->data = nullptr;
@@ -590,7 +592,11 @@ int64_t AudioPacketProcessor::MaybeCorrectPtsForRollover(int64_t media_pts) {
 }
 
 // AudioDecoder
-AudioDecoder::AudioDecoder() { av_register_all(); }
+AudioDecoder::AudioDecoder() {
+#if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(58, 79, 100)
+  av_register_all();
+#endif
+}
 
 AudioDecoder::~AudioDecoder() {
   absl::Status status = Close();
@@ -769,7 +775,7 @@ absl::Status AudioDecoder::FillAudioHeader(
 }
 
 absl::Status AudioDecoder::ProcessPacket() {
-  std::unique_ptr<AVPacket, AVPacketDeleter> av_packet(new AVPacket());
+  std::unique_ptr<AVPacket, AVPacketDeleter> av_packet(av_packet_alloc());
   av_init_packet(av_packet.get());
   av_packet->size = 0;
   av_packet->data = nullptr;

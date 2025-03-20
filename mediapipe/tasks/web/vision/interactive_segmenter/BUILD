@@ -1,7 +1,7 @@
 # This contains the MediaPipe Interactive Segmenter Task.
 
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_declaration", "mediapipe_ts_library")
 load("@npm//@bazel/jasmine:index.bzl", "jasmine_node_test")
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_declaration", "mediapipe_ts_library")
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
@@ -61,6 +61,6 @@ mediapipe_ts_library(
 
 jasmine_node_test(
     name = "interactive_segmenter_test",
+    srcs = [":interactive_segmenter_test_lib"],
     tags = ["nomsan"],
-    deps = [":interactive_segmenter_test_lib"],
 )

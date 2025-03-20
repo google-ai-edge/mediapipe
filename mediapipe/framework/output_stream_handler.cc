@@ -14,7 +14,12 @@
 
 #include "mediapipe/framework/output_stream_handler.h"
 
+#include <string>
+#include <vector>
+
 #include "absl/log/absl_check.h"
+#include "absl/status/status.h"
+#include "absl/strings/str_cat.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/collection_item_id.h"
 #include "mediapipe/framework/output_stream_shard.h"
@@ -119,6 +124,30 @@ std::string OutputStreamHandler::FirstStreamName() const {
     return std::string();
   }
   return (*output_stream_managers_.begin())->Name();
+}
+
+std::string OutputStreamHandler::DebugStreamName(CollectionItemId id) const {
+  const auto tag_map = output_stream_managers_.TagMap();
+  const std::string& stream_name = tag_map->Names()[id.value()];
+  const auto& [stream_tag, stream_idx] = tag_map->TagAndIndexFromId(id);
+  return absl::StrCat(stream_tag, ":", stream_idx, ":", stream_name);
+}
+
+std::vector<OutputStreamHandler::OutputStreamMonitoringInfo>
+OutputStreamHandler::GetMonitoringInfo() {
+  std::vector<OutputStreamMonitoringInfo> monitoring_info_vector;
+  for (CollectionItemId id = output_stream_managers_.BeginId();
+       id < output_stream_managers_.EndId(); ++id) {
+    const auto& stream = output_stream_managers_.Get(id);
+    if (!stream) {
+      continue;
+    }
+    monitoring_info_vector.emplace_back(OutputStreamMonitoringInfo(
+        {.stream_name = DebugStreamName(id),
+         .num_packets_added = stream->NumPacketsAdded(),
+         .next_timestamp_bound = stream->NextTimestampBound()}));
+  }
+  return monitoring_info_vector;
 }
 
 void OutputStreamHandler::TryPropagateTimestampBound(Timestamp input_bound) {

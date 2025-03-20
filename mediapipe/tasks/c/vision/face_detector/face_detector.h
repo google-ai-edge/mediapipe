@@ -61,9 +61,10 @@ struct FaceDetectorOptions {
   // message in case of any failure. The validity of the passed arguments is
   // true for the lifetime of the callback function.
   //
-  // A caller is responsible for closing face detector result.
-  typedef void (*result_callback_fn)(const FaceDetectorResult* result,
-                                     const MpImage& image, int64_t timestamp_ms,
+  // The passed `image` is only valid for the lifetime of the call. A caller is
+  // responsible for closing the face detector result.
+  typedef void (*result_callback_fn)(FaceDetectorResult* result,
+                                     const MpImage* image, int64_t timestamp_ms,
                                      char* error_msg);
   result_callback_fn result_callback;
 };
@@ -80,7 +81,7 @@ MP_EXPORT void* face_detector_create(struct FaceDetectorOptions* options,
 // success. If an error occurs, returns an error code and sets the error
 // parameter to an an error message (if `error_msg` is not `nullptr`). You must
 // free the memory allocated for the error message.
-MP_EXPORT int face_detector_detect_image(void* detector, const MpImage& image,
+MP_EXPORT int face_detector_detect_image(void* detector, const MpImage* image,
                                          FaceDetectorResult* result,
                                          char** error_msg);
 
@@ -94,7 +95,7 @@ MP_EXPORT int face_detector_detect_image(void* detector, const MpImage& image,
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
 MP_EXPORT int face_detector_detect_for_video(void* detector,
-                                             const MpImage& image,
+                                             const MpImage* image,
                                              int64_t timestamp_ms,
                                              FaceDetectorResult* result,
                                              char** error_msg);
@@ -117,7 +118,9 @@ MP_EXPORT int face_detector_detect_for_video(void* detector,
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT int face_detector_detect_async(void* detector, const MpImage& image,
+// You need to invoke `face_detector_close_result` after each invocation to
+// free memory.
+MP_EXPORT int face_detector_detect_async(void* detector, const MpImage* image,
                                          int64_t timestamp_ms,
                                          char** error_msg);
 

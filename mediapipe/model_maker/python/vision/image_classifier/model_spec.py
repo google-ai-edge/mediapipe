@@ -15,25 +15,28 @@
 
 import enum
 import functools
-from typing import List, Optional
+from typing import List, Optional, Sequence
 
 
 class ModelSpec(object):
   """Specification of image classifier model."""
 
-  mean_rgb = [0.0]
-  stddev_rgb = [255.0]
-
-  def __init__(self,
-               uri: str,
-               input_image_shape: Optional[List[int]] = None,
-               name: str = ''):
+  def __init__(
+      self,
+      uri: str,
+      input_image_shape: Optional[List[int]] = None,
+      name: str = '',
+      mean_rgb: Optional[Sequence[float]] = None,
+      stddev_rgb: Optional[Sequence[float]] = None,
+  ):
     """Initializes a new instance of the image classifier `ModelSpec` class.
 
     Args:
       uri: str, URI to the pretrained model.
       input_image_shape: list of int, input image shape. Default: [224, 224].
       name: str, model spec name.
+      mean_rgb: Normalizing mean RGB.
+      stddev_rgb: Normalizing std RGB.
     """
     self.uri = uri
     self.name = name
@@ -42,35 +45,57 @@ class ModelSpec(object):
       input_image_shape = [224, 224]
     self.input_image_shape = input_image_shape
 
+    if mean_rgb is None:
+      mean_rgb = [0.0]
+    self.mean_rgb = mean_rgb
+
+    if stddev_rgb is None:
+      stddev_rgb = [255.0]
+    self.stddev_rgb = stddev_rgb
+
+
+mobilenet_v2_keras_spec = functools.partial(
+    ModelSpec,
+    uri=None,
+    name='mobilenet_v2_keras',
+    mean_rgb=[127.5],
+    stddev_rgb=[128.0],
+)
 
 mobilenet_v2_spec = functools.partial(
     ModelSpec,
     uri='https://tfhub.dev/google/tf2-preview/mobilenet_v2/feature_vector/4',
-    name='mobilenet_v2')
+    name='mobilenet_v2',
+)
 
 efficientnet_lite0_spec = functools.partial(
     ModelSpec,
     uri='https://tfhub.dev/tensorflow/efficientnet/lite0/feature-vector/2',
-    name='efficientnet_lite0')
+    name='efficientnet_lite0',
+)
 
 efficientnet_lite2_spec = functools.partial(
     ModelSpec,
     uri='https://tfhub.dev/tensorflow/efficientnet/lite2/feature-vector/2',
     input_image_shape=[260, 260],
-    name='efficientnet_lite2')
+    name='efficientnet_lite2',
+)
 
 efficientnet_lite4_spec = functools.partial(
     ModelSpec,
     uri='https://tfhub.dev/tensorflow/efficientnet/lite4/feature-vector/2',
     input_image_shape=[300, 300],
-    name='efficientnet_lite4')
+    name='efficientnet_lite4',
+)
 
 
 # TODO: Document the exposed models.
 @enum.unique
 class SupportedModels(enum.Enum):
   """Image classifier model supported by model maker."""
+
   MOBILENET_V2 = mobilenet_v2_spec
+  MOBILENET_V2_KERAS = mobilenet_v2_keras_spec
   EFFICIENTNET_LITE0 = efficientnet_lite0_spec
   EFFICIENTNET_LITE2 = efficientnet_lite2_spec
   EFFICIENTNET_LITE4 = efficientnet_lite4_spec

@@ -17,19 +17,34 @@
 import {CalculatorGraphConfig} from '../../../../framework/calculator_pb';
 import {CalculatorOptions} from '../../../../framework/calculator_options_pb';
 import {ClassificationList} from '../../../../framework/formats/classification_pb';
-import {LandmarkList, NormalizedLandmarkList} from '../../../../framework/formats/landmark_pb';
+import {
+  LandmarkList,
+  NormalizedLandmarkList,
+} from '../../../../framework/formats/landmark_pb';
 import {BaseOptions as BaseOptionsProto} from '../../../../tasks/cc/core/proto/base_options_pb';
 import {HandDetectorGraphOptions} from '../../../../tasks/cc/vision/hand_detector/proto/hand_detector_graph_options_pb';
 import {HandLandmarkerGraphOptions} from '../../../../tasks/cc/vision/hand_landmarker/proto/hand_landmarker_graph_options_pb';
 import {HandLandmarksDetectorGraphOptions} from '../../../../tasks/cc/vision/hand_landmarker/proto/hand_landmarks_detector_graph_options_pb';
 import {Category} from '../../../../tasks/web/components/containers/category';
-import {Landmark, NormalizedLandmark} from '../../../../tasks/web/components/containers/landmark';
-import {convertToLandmarks, convertToWorldLandmarks} from '../../../../tasks/web/components/processors/landmark_result';
+import {
+  Landmark,
+  NormalizedLandmark,
+} from '../../../../tasks/web/components/containers/landmark';
+import {
+  convertToLandmarks,
+  convertToWorldLandmarks,
+} from '../../../../tasks/web/components/processors/landmark_result';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {ImageProcessingOptions} from '../../../../tasks/web/vision/core/image_processing_options';
-import {VisionGraphRunner, VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
+import {
+  VisionGraphRunner,
+  VisionTaskRunner,
+} from '../../../../tasks/web/vision/core/vision_task_runner';
 import {HAND_CONNECTIONS} from '../../../../tasks/web/vision/hand_landmarker/hand_landmarks_connections';
-import {ImageSource, WasmModule} from '../../../../web/graph_runner/graph_runner';
+import {
+  ImageSource,
+  WasmModule,
+} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
 import {HandLandmarkerOptions} from './hand_landmarker_options';
@@ -48,7 +63,7 @@ const LANDMARKS_STREAM = 'hand_landmarks';
 const WORLD_LANDMARKS_STREAM = 'world_hand_landmarks';
 const HANDEDNESS_STREAM = 'handedness';
 const HAND_LANDMARKER_GRAPH =
-    'mediapipe.tasks.vision.hand_landmarker.HandLandmarkerGraph';
+  'mediapipe.tasks.vision.hand_landmarker.HandLandmarkerGraph';
 
 const DEFAULT_NUM_HANDS = 1;
 const DEFAULT_SCORE_THRESHOLD = 0.5;
@@ -61,8 +76,7 @@ export class HandLandmarker extends VisionTaskRunner {
   private handedness: Category[][] = [];
 
   private readonly options: HandLandmarkerGraphOptions;
-  private readonly handLandmarksDetectorGraphOptions:
-      HandLandmarksDetectorGraphOptions;
+  private readonly handLandmarksDetectorGraphOptions: HandLandmarksDetectorGraphOptions;
   private readonly handDetectorGraphOptions: HandDetectorGraphOptions;
 
   /**
@@ -84,10 +98,14 @@ export class HandLandmarker extends VisionTaskRunner {
    *     be provided (via `baseOptions`).
    */
   static createFromOptions(
-      wasmFileset: WasmFileset,
-      handLandmarkerOptions: HandLandmarkerOptions): Promise<HandLandmarker> {
+    wasmFileset: WasmFileset,
+    handLandmarkerOptions: HandLandmarkerOptions,
+  ): Promise<HandLandmarker> {
     return VisionTaskRunner.createVisionInstance(
-        HandLandmarker, wasmFileset, handLandmarkerOptions);
+      HandLandmarker,
+      wasmFileset,
+      handLandmarkerOptions,
+    );
   }
 
   /**
@@ -96,13 +114,16 @@ export class HandLandmarker extends VisionTaskRunner {
    * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
-   * @param modelAssetBuffer A binary representation of the model.
+   * @param modelAssetBuffer An array or a stream containing a binary
+   *    representation of the model.
    */
   static createFromModelBuffer(
-      wasmFileset: WasmFileset,
-      modelAssetBuffer: Uint8Array): Promise<HandLandmarker> {
-    return VisionTaskRunner.createVisionInstance(
-        HandLandmarker, wasmFileset, {baseOptions: {modelAssetBuffer}});
+    wasmFileset: WasmFileset,
+    modelAssetBuffer: Uint8Array | ReadableStreamDefaultReader,
+  ): Promise<HandLandmarker> {
+    return VisionTaskRunner.createVisionInstance(HandLandmarker, wasmFileset, {
+      baseOptions: {modelAssetBuffer},
+    });
   }
 
   /**
@@ -114,26 +135,33 @@ export class HandLandmarker extends VisionTaskRunner {
    * @param modelAssetPath The path to the model asset.
    */
   static createFromModelPath(
-      wasmFileset: WasmFileset,
-      modelAssetPath: string): Promise<HandLandmarker> {
-    return VisionTaskRunner.createVisionInstance(
-        HandLandmarker, wasmFileset, {baseOptions: {modelAssetPath}});
+    wasmFileset: WasmFileset,
+    modelAssetPath: string,
+  ): Promise<HandLandmarker> {
+    return VisionTaskRunner.createVisionInstance(HandLandmarker, wasmFileset, {
+      baseOptions: {modelAssetPath},
+    });
   }
 
   /** @hideconstructor */
   constructor(
-      wasmModule: WasmModule,
-      glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
+    wasmModule: WasmModule,
+    glCanvas?: HTMLCanvasElement | OffscreenCanvas | null,
+  ) {
     super(
-        new VisionGraphRunner(wasmModule, glCanvas), IMAGE_STREAM,
-        NORM_RECT_STREAM, /* roiAllowed= */ false);
+      new VisionGraphRunner(wasmModule, glCanvas),
+      IMAGE_STREAM,
+      NORM_RECT_STREAM,
+      /* roiAllowed= */ false,
+    );
 
     this.options = new HandLandmarkerGraphOptions();
     this.options.setBaseOptions(new BaseOptionsProto());
     this.handLandmarksDetectorGraphOptions =
-        new HandLandmarksDetectorGraphOptions();
+      new HandLandmarksDetectorGraphOptions();
     this.options.setHandLandmarksDetectorGraphOptions(
-        this.handLandmarksDetectorGraphOptions);
+      this.handLandmarksDetectorGraphOptions,
+    );
     this.handDetectorGraphOptions = new HandDetectorGraphOptions();
     this.options.setHandDetectorGraphOptions(this.handDetectorGraphOptions);
 
@@ -162,21 +190,25 @@ export class HandLandmarker extends VisionTaskRunner {
     // Configure hand detector options.
     if ('numHands' in options) {
       this.handDetectorGraphOptions.setNumHands(
-          options.numHands ?? DEFAULT_NUM_HANDS);
+        options.numHands ?? DEFAULT_NUM_HANDS,
+      );
     }
     if ('minHandDetectionConfidence' in options) {
       this.handDetectorGraphOptions.setMinDetectionConfidence(
-          options.minHandDetectionConfidence ?? DEFAULT_SCORE_THRESHOLD);
+        options.minHandDetectionConfidence ?? DEFAULT_SCORE_THRESHOLD,
+      );
     }
 
     // Configure hand landmark detector options.
     if ('minTrackingConfidence' in options) {
       this.options.setMinTrackingConfidence(
-          options.minTrackingConfidence ?? DEFAULT_SCORE_THRESHOLD);
+        options.minTrackingConfidence ?? DEFAULT_SCORE_THRESHOLD,
+      );
     }
     if ('minHandPresenceConfidence' in options) {
       this.handLandmarksDetectorGraphOptions.setMinDetectionConfidence(
-          options.minHandPresenceConfidence ?? DEFAULT_SCORE_THRESHOLD);
+        options.minHandPresenceConfidence ?? DEFAULT_SCORE_THRESHOLD,
+      );
     }
 
     return this.applyOptions(options);
@@ -193,8 +225,10 @@ export class HandLandmarker extends VisionTaskRunner {
    *    to process the input image before running inference.
    * @return The detected hand landmarks.
    */
-  detect(image: ImageSource, imageProcessingOptions?: ImageProcessingOptions):
-      HandLandmarkerResult {
+  detect(
+    image: ImageSource,
+    imageProcessingOptions?: ImageProcessingOptions,
+  ): HandLandmarkerResult {
     this.resetResults();
     this.processImageData(image, imageProcessingOptions);
     return this.processResults();
@@ -213,8 +247,10 @@ export class HandLandmarker extends VisionTaskRunner {
    * @return The detected hand landmarks.
    */
   detectForVideo(
-      videoFrame: ImageSource, timestamp: number,
-      imageProcessingOptions?: ImageProcessingOptions): HandLandmarkerResult {
+    videoFrame: ImageSource,
+    timestamp: number,
+    imageProcessingOptions?: ImageProcessingOptions,
+  ): HandLandmarkerResult {
     this.resetResults();
     this.processVideoData(videoFrame, imageProcessingOptions, timestamp);
     return this.processResults();
@@ -239,9 +275,11 @@ export class HandLandmarker extends VisionTaskRunner {
   private initDefaults(): void {
     this.handDetectorGraphOptions.setNumHands(DEFAULT_NUM_HANDS);
     this.handDetectorGraphOptions.setMinDetectionConfidence(
-        DEFAULT_SCORE_THRESHOLD);
+      DEFAULT_SCORE_THRESHOLD,
+    );
     this.handLandmarksDetectorGraphOptions.setMinDetectionConfidence(
-        DEFAULT_SCORE_THRESHOLD);
+      DEFAULT_SCORE_THRESHOLD,
+    );
     this.options.setMinTrackingConfidence(DEFAULT_SCORE_THRESHOLD);
   }
 
@@ -268,7 +306,7 @@ export class HandLandmarker extends VisionTaskRunner {
   private addJsLandmarks(data: Uint8Array[]): void {
     for (const binaryProto of data) {
       const handLandmarksProto =
-          NormalizedLandmarkList.deserializeBinary(binaryProto);
+        NormalizedLandmarkList.deserializeBinary(binaryProto);
       this.landmarks.push(convertToLandmarks(handLandmarksProto));
     }
   }
@@ -280,9 +318,10 @@ export class HandLandmarker extends VisionTaskRunner {
   private addJsWorldLandmarks(data: Uint8Array[]): void {
     for (const binaryProto of data) {
       const handWorldLandmarksProto =
-          LandmarkList.deserializeBinary(binaryProto);
+        LandmarkList.deserializeBinary(binaryProto);
       this.worldLandmarks.push(
-          convertToWorldLandmarks(handWorldLandmarksProto));
+        convertToWorldLandmarks(handWorldLandmarksProto),
+      );
     }
   }
 
@@ -297,7 +336,9 @@ export class HandLandmarker extends VisionTaskRunner {
 
     const calculatorOptions = new CalculatorOptions();
     calculatorOptions.setExtension(
-        HandLandmarkerGraphOptions.ext, this.options);
+      HandLandmarkerGraphOptions.ext,
+      this.options,
+    );
 
     const landmarkerNode = new CalculatorGraphConfig.Node();
     landmarkerNode.setCalculator(HAND_LANDMARKER_GRAPH);
@@ -311,34 +352,46 @@ export class HandLandmarker extends VisionTaskRunner {
     graphConfig.addNode(landmarkerNode);
 
     this.graphRunner.attachProtoVectorListener(
-        LANDMARKS_STREAM, (binaryProto, timestamp) => {
-          this.addJsLandmarks(binaryProto);
-          this.setLatestOutputTimestamp(timestamp);
-        });
+      LANDMARKS_STREAM,
+      (binaryProto, timestamp) => {
+        this.addJsLandmarks(binaryProto);
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
     this.graphRunner.attachEmptyPacketListener(
-      LANDMARKS_STREAM, timestamp => {
-          this.setLatestOutputTimestamp(timestamp);
-        });
+      LANDMARKS_STREAM,
+      (timestamp) => {
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
 
     this.graphRunner.attachProtoVectorListener(
-        WORLD_LANDMARKS_STREAM, (binaryProto, timestamp) => {
-          this.addJsWorldLandmarks(binaryProto);
-          this.setLatestOutputTimestamp(timestamp);
-        });
+      WORLD_LANDMARKS_STREAM,
+      (binaryProto, timestamp) => {
+        this.addJsWorldLandmarks(binaryProto);
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
     this.graphRunner.attachEmptyPacketListener(
-      WORLD_LANDMARKS_STREAM, timestamp => {
-          this.setLatestOutputTimestamp(timestamp);
-        });
+      WORLD_LANDMARKS_STREAM,
+      (timestamp) => {
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
 
     this.graphRunner.attachProtoVectorListener(
-        HANDEDNESS_STREAM, (binaryProto, timestamp) => {
-          this.handedness.push(...this.toJsCategories(binaryProto));
-          this.setLatestOutputTimestamp(timestamp);
-        });
+      HANDEDNESS_STREAM,
+      (binaryProto, timestamp) => {
+        this.handedness.push(...this.toJsCategories(binaryProto));
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
     this.graphRunner.attachEmptyPacketListener(
-      HANDEDNESS_STREAM, timestamp => {
-          this.setLatestOutputTimestamp(timestamp);
-        });
+      HANDEDNESS_STREAM,
+      (timestamp) => {
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
 
     const binaryGraph = graphConfig.serializeBinary();
     this.setGraph(new Uint8Array(binaryGraph), /* isBinary= */ true);

@@ -133,7 +133,7 @@ public class AssetCache {
       inStream = assetManager.open(assetPath);
       writeStreamToFile(inStream, destinationFile);
     } catch (IOException ioe) {
-      logger.atSevere().log("Unable to unpack: %s", assetPath);
+      logger.atSevere().withCause(ioe).log("Unable to unpack: %s", assetPath);
       try {
         if (inStream != null) {
           inStream.close();

@@ -1,18 +1,25 @@
 #include "mediapipe/framework/api2/node.h"
 
+#include <map>
+#include <string>
 #include <tuple>
 #include <utility>
+#include <vector>
 
 #include "absl/log/absl_log.h"
+#include "absl/status/status.h"
+#include "absl/strings/str_cat.h"
+#include "mediapipe/framework/api2/builder.h"
+#include "mediapipe/framework/api2/contract.h"
+#include "mediapipe/framework/api2/node_test.pb.h"
 #include "mediapipe/framework/api2/packet.h"
 #include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/api2/test_contracts.h"
-#include "mediapipe/framework/api2/tuple.h"
 #include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
+#include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/port/status_matchers.h"
 
@@ -576,6 +583,149 @@ struct LogSinkNode : public Node {
   }
 };
 MEDIAPIPE_REGISTER_NODE(LogSinkNode);
+
+/******************************************************************************/
+// Test different combinations of side packet connections.
+class SidePacketConnectionTestSuite
+    : public testing::TestWithParam<std::tuple<
+          bool,  // Wether graph provides side input,
+          bool,  // Whether graph connects side output.
+          bool,  // Whether producer node internally connects to consumer node.
+          bool   // Whether graph-level side packet connects to the first port.
+          >> {};
+
+struct SidePacktProducerNode : public Node {
+  static constexpr SideOutput<int>::Optional kSideOut1{"SIDE_OUT_1"};
+  static constexpr SideOutput<int>::Optional kSideOut2{"SIDE_OUT_2"};
+
+  MEDIAPIPE_NODE_CONTRACT(kSideOut1, kSideOut2);
+
+  absl::Status Open(CalculatorContext* cc) override {
+    const auto& options = cc->Options<SidePacketConnectionTestOptions>();
+    if (options.graph_connect_first_port()) {
+      RET_CHECK_EQ(options.graph_has_side_output(),
+                   kSideOut1(cc).IsConnected());
+      RET_CHECK_EQ(options.internal_side_connection(),
+                   kSideOut2(cc).IsConnected());
+    } else {
+      RET_CHECK_EQ(options.graph_has_side_output(),
+                   kSideOut2(cc).IsConnected());
+      RET_CHECK_EQ(options.internal_side_connection(),
+                   kSideOut1(cc).IsConnected());
+    }
+    return absl::OkStatus();
+  }
+
+  absl::Status Process(CalculatorContext* cc) override {
+    const auto& options = cc->Options<SidePacketConnectionTestOptions>();
+    if (options.graph_connect_first_port()) {
+      RET_CHECK_EQ(options.graph_has_side_output(),
+                   kSideOut1(cc).IsConnected());
+      RET_CHECK_EQ(options.internal_side_connection(),
+                   kSideOut2(cc).IsConnected());
+    } else {
+      RET_CHECK_EQ(options.graph_has_side_output(),
+                   kSideOut2(cc).IsConnected());
+      RET_CHECK_EQ(options.internal_side_connection(),
+                   kSideOut1(cc).IsConnected());
+    }
+    return absl::OkStatus();
+  }
+};
+MEDIAPIPE_REGISTER_NODE(SidePacktProducerNode);
+
+struct SidePacktConsumerNode : public Node {
+  static constexpr SideInput<int>::Optional kSideIn1{"SIDE_IN_1"};
+  static constexpr SideInput<int>::Optional kSideIn2{"SIDE_IN_2"};
+
+  MEDIAPIPE_NODE_CONTRACT(kSideIn1, kSideIn2);
+
+  absl::Status Open(CalculatorContext* cc) override {
+    const auto& options = cc->Options<SidePacketConnectionTestOptions>();
+    if (options.graph_connect_first_port()) {
+      RET_CHECK_EQ(options.graph_has_side_input(), kSideIn1(cc).IsConnected());
+      RET_CHECK_EQ(options.internal_side_connection(),
+                   kSideIn2(cc).IsConnected());
+    } else {
+      RET_CHECK_EQ(options.graph_has_side_input(), kSideIn2(cc).IsConnected());
+      RET_CHECK_EQ(options.internal_side_connection(),
+                   kSideIn1(cc).IsConnected());
+    }
+    return absl::OkStatus();
+  }
+
+  absl::Status Process(CalculatorContext* cc) override {
+    const auto& options = cc->Options<SidePacketConnectionTestOptions>();
+    if (options.graph_connect_first_port()) {
+      RET_CHECK_EQ(options.graph_has_side_input(), kSideIn1(cc).IsConnected());
+      RET_CHECK_EQ(options.internal_side_connection(),
+                   kSideIn2(cc).IsConnected());
+    } else {
+      RET_CHECK_EQ(options.graph_has_side_input(), kSideIn2(cc).IsConnected());
+      RET_CHECK_EQ(options.internal_side_connection(),
+                   kSideIn1(cc).IsConnected());
+    }
+    return absl::OkStatus();
+  }
+};
+MEDIAPIPE_REGISTER_NODE(SidePacktConsumerNode);
+
+INSTANTIATE_TEST_SUITE_P(
+    SidePacketConnectionTestGroup, SidePacketConnectionTestSuite,
+    testing::Combine(testing::Values(true, false), testing::Values(true, false),
+                     testing::Values(true, false),
+                     testing::Values(true, false)),
+    [](const testing::TestParamInfo<SidePacketConnectionTestSuite::ParamType>&
+           info) {
+      std::string name =
+          absl::StrCat(std::get<0>(info.param) ? "GraphSideIn" : "",
+                       std::get<1>(info.param) ? "GraphSideOut" : "",
+                       std::get<2>(info.param) ? "InternalSideConnection" : "",
+                       std::get<3>(info.param) ? "GraphConnectFirstPort"
+                                               : "GraphConnectSecondPort");
+      return name;
+    });
+
+TEST_P(SidePacketConnectionTestSuite, SidePacketConnectionTest) {
+  const bool graph_side_in = std::get<0>(GetParam());
+  const bool graph_side_out = std::get<1>(GetParam());
+  const bool internal_side_connection = std::get<2>(GetParam());
+  const bool graph_connect_first_port = std::get<3>(GetParam());
+  builder::Graph builder;
+  SidePacketConnectionTestOptions options;
+  options.set_graph_has_side_input(graph_side_in);
+  options.set_graph_has_side_output(graph_side_out);
+  options.set_internal_side_connection(internal_side_connection);
+  options.set_graph_connect_first_port(graph_connect_first_port);
+
+  auto& producer = builder.AddNode("SidePacktProducerNode");
+  producer.GetOptions<SidePacketConnectionTestOptions>() = options;
+  auto& consumer = builder.AddNode("SidePacktConsumerNode");
+  consumer.GetOptions<SidePacketConnectionTestOptions>() = options;
+  std::map<std::string, mediapipe::Packet> side_packets;
+  if (graph_side_in) {
+    builder.SideIn("").SetName("side_in") >>
+        consumer.SideIn(graph_connect_first_port ? "SIDE_IN_1" : "SIDE_IN_2");
+    side_packets["side_in"] = MakePacket<int>(10);
+  }
+  if (graph_side_out) {
+    producer.SideOut(graph_connect_first_port ? "SIDE_OUT_1" : "SIDE_OUT_2") >>
+        builder.SideOut("SIDE_OUT");
+  }
+  if (internal_side_connection) {
+    if (graph_connect_first_port) {
+      producer.SideOut("SIDE_OUT_2") >> consumer.SideIn("SIDE_IN_2");
+    } else {
+      producer.SideOut("SIDE_OUT_1") >> consumer.SideIn("SIDE_IN_1");
+    }
+  }
+  CalculatorGraph graph;
+  MP_EXPECT_OK(graph.Initialize(builder.GetConfig(), {}));
+  MP_EXPECT_OK(graph.StartRun(std::move(side_packets)));
+  MP_EXPECT_OK(graph.WaitUntilDone());
+}
+
+/******************************************************************************/
 
 }  // namespace test
 }  // namespace api2

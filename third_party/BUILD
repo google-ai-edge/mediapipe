@@ -13,14 +13,28 @@
 # limitations under the License.
 #
 
-load("@rules_foreign_cc//foreign_cc:cmake.bzl", "cmake")
 load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
+load("@rules_foreign_cc//foreign_cc:cmake.bzl", "cmake")
+load(
+    "//mediapipe/framework/tool:mediapipe_files.bzl",
+    "mediapipe_files",
+)
 
 licenses(["notice"])  # Apache License 2.0
 
 package(default_visibility = ["//visibility:public"])
 
-exports_files(["LICENSE"])
+exports_files([
+    "LICENSE",
+    "requirements_lock.txt",
+    "requirements_lock_3_10.txt",
+    "requirements_lock_3_11.txt",
+    "requirements_lock_3_12.txt",
+])
+
+mediapipe_files(srcs = [
+    "libc++_shared.so",
+])
 
 cc_library(
     name = "glog",
@@ -57,6 +71,14 @@ config_setting(
     name = "opencv_source_build",
     define_values = {
         "OPENCV": "source",
+    },
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "opencv_prebuilt_build",
+    define_values = {
+        "OPENCV": "prebuilt",
     },
     visibility = ["//visibility:public"],
 )
@@ -105,10 +127,43 @@ config_setting(
     },
 )
 
+config_setting(
+    name = "opencv_darwin_prebuild",
+    define_values = {
+        "OPENCV": "prebuilt",
+    },
+    values = {
+        "apple_platform_type": "macos",
+        "cpu": "darwin",
+    },
+)
+
+config_setting(
+    name = "opencv_darwin_arm64_prebuild",
+    define_values = {
+        "OPENCV": "prebuilt",
+    },
+    values = {
+        "apple_platform_type": "macos",
+        "cpu": "darwin_arm64",
+    },
+)
+
+alias(
+    name = "opencv_prebuilt",
+    actual = select({
+        "//mediapipe:ios": "@ios_opencv//:opencv",
+        ":opencv_darwin_prebuild": "//third_party/prebuilts:opencv_darwin",
+        ":opencv_darwin_arm64_prebuild": "//third_party/prebuilts:opencv_darwin_arm64",
+        "//conditions:default": ":opencv_cmake",
+    }),
+)
+
 alias(
     name = "opencv",
     actual = select({
         ":opencv_source_build": ":opencv_cmake",
+        ":opencv_prebuilt_build": ":opencv_prebuilt",
         ":opencv_ios_sim_arm64_source_build": "@ios_opencv_source//:opencv",
         ":opencv_ios_arm64_source_build": "@ios_opencv_source//:opencv",
         ":opencv_ios_x86_64_source_build": "@ios_opencv_source//:opencv",
@@ -181,7 +236,7 @@ cmake(
         # For example, when building //mediapipe/calculators/video:opencv_video_encoder_calculator_test,
         # the dependency //mediapipe/framework/formats:image_frame_opencv will
         # be built as a shared library, which depends on a cv::Mat constructor,
-        # and expects it to be provided by the main exacutable. The main
+        # and expects it to be provided by the main executable. The main
         # executable depends on libimage_frame_opencv.so and links in
         # libopencv_core.a, which contains cv::Mat. However, if
         # libopencv_core.a marks its symbols as hidden, then cv::Mat is in
@@ -255,6 +310,29 @@ alias(
     }),
 )
 
+# When "--define EXCLUDE_OPENCV_SO_LIB=1" is set in the build command,
+# the OpenCV so libraries will be excluded from the AAR package to
+# save the package size.
+config_setting(
+    name = "exclude_opencv_so_lib",
+    define_values = {
+        "EXCLUDE_OPENCV_SO_LIB": "1",
+    },
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "android_jni_opencv_cc_lib",
+    srcs = select({
+        "//mediapipe:android_arm64": ["@android_opencv//:libopencv_java4_so_arm64-v8a"],
+        "//mediapipe:android_arm": ["@android_opencv//:libopencv_java4_so_armeabi-v7a"],
+        "//mediapipe:android_x86": ["@android_opencv//:libopencv_java4_so_x86"],
+        "//mediapipe:android_x86_64": ["@android_opencv//:libopencv_java4_so_x86_64"],
+        "//conditions:default": [],
+    }),
+    alwayslink = 1,
+)
+
 cc_library(
     name = "libffmpeg",
     visibility = ["//visibility:public"],
@@ -271,76 +349,6 @@ cc_library(
             "@linux_ffmpeg//:libffmpeg",
         ],
     }),
-)
-
-android_library(
-    name = "androidx_annotation",
-    exports = [
-        "@maven//:androidx_annotation_annotation",
-    ],
-)
-
-android_library(
-    name = "androidx_appcompat",
-    exports = [
-        "@maven//:androidx_appcompat_appcompat",
-    ],
-)
-
-android_library(
-    name = "androidx_constraint_layout",
-    exports = [
-        "@maven//:androidx_constraintlayout_constraintlayout",
-    ],
-)
-
-android_library(
-    name = "androidx_core",
-    exports = [
-        "@maven//:androidx_core_core",
-    ],
-)
-
-android_library(
-    name = "androidx_legacy_support_v4",
-    exports = [
-        "@maven//:androidx_legacy_legacy_support_v4",
-    ],
-)
-
-android_library(
-    name = "androidx_material",
-    exports = [
-        "@maven//:com_google_android_material_material",
-    ],
-)
-
-android_library(
-    name = "androidx_recyclerview",
-    exports = [
-        "@maven//:androidx_recyclerview_recyclerview",
-    ],
-)
-
-android_library(
-    name = "camerax_camera2",
-    exports = [
-        "@maven//:androidx_camera_camera_camera2",
-    ],
-)
-
-android_library(
-    name = "camerax_core",
-    exports = [
-        "@maven//:androidx_camera_camera_core",
-    ],
-)
-
-android_library(
-    name = "camerax_lifecycle",
-    exports = [
-        "@maven//:androidx_camera_camera_lifecycle",
-    ],
 )
 
 java_plugin(
@@ -379,4 +387,17 @@ java_import(
     jars = [
         "@com_google_protobuf//java/core:libcore.jar",
     ],
+)
+
+cc_binary(
+    name = "libc++_shared",
+    srcs = ["libc++_shared.so"],
+    linkshared = 1,
+    linkstatic = 1,
+)
+
+cc_library(
+    name = "libc++_shared_lib",
+    srcs = [":libc++_shared.so"],
+    alwayslink = 1,
 )

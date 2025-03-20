@@ -41,6 +41,7 @@ pybind_extension(
         "//mediapipe/python/pybind:image",
         "//mediapipe/python/pybind:image_frame",
         "//mediapipe/python/pybind:matrix",
+        "//mediapipe/python/pybind:model_ckpt_util",
         "//mediapipe/python/pybind:packet",
         "//mediapipe/python/pybind:packet_creator",
         "//mediapipe/python/pybind:packet_getter",

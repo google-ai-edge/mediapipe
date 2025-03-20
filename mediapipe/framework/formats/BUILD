@@ -14,8 +14,8 @@
 #
 
 load("@bazel_skylib//lib:selects.bzl", "selects")
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 load("//mediapipe/framework:mediapipe_register_type.bzl", "mediapipe_register_type")
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 
 package(
     default_visibility = ["//visibility:public"],
@@ -129,6 +129,7 @@ cc_library(
     hdrs = ["ahwb_view.h"],
     deps = [
         ":hardware_buffer",
+        ":shared_fd",
         "//mediapipe/framework:port",
         "//mediapipe/gpu:gpu_buffer_storage",
     ],
@@ -153,6 +154,39 @@ cc_library(
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
         "@com_google_protobuf//:protobuf",
+    ],
+)
+
+cc_library(
+    name = "ahwb_gpu_releaser",
+    srcs = ["ahwb_gpu_releaser.cc"],
+    hdrs = ["ahwb_gpu_releaser.h"],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":hardware_buffer",
+        ":tensor_ahwb_usage",
+        "//mediapipe/framework:port",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/gpu:gl_base_hdr",
+        "//mediapipe/gpu:gl_context",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/synchronization",
+    ],
+)
+
+# Real device is required to test GLES31+ and Ahwb:
+# bazel build -c dbg --config=android_arm64 --android_ndk_min_sdk_version=33 --config=force_full_protos //mediapipe/framework/formats:ahwb_gpu_releaser_test && \
+# adb push bazel-bin/mediapipe/framework/formats/ahwb_gpu_releaser_test /data/local/tmp && \
+# adb shell "/data/local/tmp/ahwb_gpu_releaser_test"
+cc_test(
+    name = "ahwb_gpu_releaser_test",
+    srcs = ["ahwb_gpu_releaser_test.cc"],
+    deps = [
+        ":tensor",
+        "//mediapipe/framework/port:gtest",
+        "//mediapipe/gpu:gl_context",
+        "//mediapipe/gpu:gpu_service",
+        "@com_google_googletest//:gtest_main",
     ],
 )
 
@@ -295,6 +329,51 @@ cc_test(
         "//mediapipe/framework/formats/annotation:rasterization_cc_proto",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:rectangle",
+    ],
+)
+
+cc_library(
+    name = "unique_fd",
+    srcs = ["unique_fd.cc"],
+    hdrs = ["unique_fd.h"],
+    deps = [
+        "//mediapipe/framework/port:ret_check",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+    ],
+)
+
+cc_test(
+    name = "unique_fd_test",
+    srcs = ["unique_fd_test.cc"],
+    deps = [
+        ":unique_fd",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:status_matchers",
+        "//mediapipe/util:fd_test_util",
+    ],
+)
+
+cc_library(
+    name = "shared_fd",
+    hdrs = ["shared_fd.h"],
+    deps = [
+        ":unique_fd",
+        "@com_google_absl//absl/status:statusor",
+    ],
+)
+
+cc_test(
+    name = "shared_fd_test",
+    srcs = ["shared_fd_test.cc"],
+    deps = [
+        ":shared_fd",
+        ":unique_fd",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:status_matchers",
+        "//mediapipe/util:fd_test_util",
     ],
 )
 
@@ -493,7 +572,12 @@ config_setting(
 cc_library(
     name = "tensor",
     srcs =
-        [
+        select({
+            "//mediapipe/gpu/webgpu:use_webgpu": [
+                "//mediapipe/gpu/webgpu:tensor_webgpu_texture_view.cc",
+            ],
+            "//conditions:default": [],
+        }) + [
             "tensor.cc",
             "tensor_ahwb.cc",
         ],
@@ -519,31 +603,49 @@ cc_library(
         "//conditions:default": [],
         # Option for vendor binaries to avoid linking libandroid.so.
         "//mediapipe/framework:android_no_jni": [],
+        "//mediapipe/gpu/webgpu:use_webgpu_emscripten": ["-sUSE_WEBGPU=1"],
     }),
     deps = [
         "//mediapipe/framework:memory_manager",
         "//mediapipe/framework:port",
+        "//mediapipe/framework/deps:no_destructor",
+        "//mediapipe/framework/port:aligned_malloc_and_free",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/gpu/webgpu:webgpu_check",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/functional:any_invocable",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
     ] + select({
-        "//mediapipe/gpu:disable_gpu": [],
-        "//conditions:default": [
-            "//mediapipe/gpu:gl_base",
-            "//mediapipe/gpu:gl_context",
+        "//mediapipe/gpu/webgpu:use_webgpu": [
+            "//mediapipe/gpu/webgpu:webgpu_service",
+            "//mediapipe/gpu/webgpu:webgpu_utils",
         ],
         "//mediapipe:android": [
+            ":ahwb_gpu_releaser",
             ":hardware_buffer",
             ":hardware_buffer_pool",
-            "//mediapipe/gpu:gl_base",
-            "//mediapipe/gpu:gl_context",
+            ":tensor_ahwb_usage",
+            ":unique_fd",
         ],
         ":android_link_native_window": [
+            ":ahwb_gpu_releaser",
             ":hardware_buffer",
             ":hardware_buffer_pool",
+            ":tensor_ahwb_usage",
+            ":unique_fd",
+        ],
+        "//conditions:default": [],
+    }) + select({
+        "//mediapipe/gpu:disable_gpu": [],
+        "//conditions:default": [
             "//mediapipe/gpu:gl_base",
             "//mediapipe/gpu:gl_context",
         ],
@@ -553,13 +655,18 @@ cc_library(
 cc_test(
     name = "tensor_test",
     srcs = ["tensor_test.cc"],
-    tags = ["not_run:arm"],
+    tags = [
+        "noasan",
+        "not_run:arm",  # TODO: Remove noasan tag when SwiftShader supports sanitizers
+    ],
     deps = [
         ":tensor",
+        "//mediapipe/framework:port",
         "//mediapipe/framework/port:gtest_main",
     ] + select({
         "//conditions:default": [
             "//mediapipe/gpu:gl_calculator_helper",
+            "//mediapipe/gpu:gl_context",
             "//mediapipe/gpu:gpu_buffer_format",
         ],
         "//mediapipe/gpu:disable_gpu": [],
@@ -592,4 +699,35 @@ mediapipe_register_type(
         "::std::vector<::mediapipe::JointList>",
     ],
     deps = [":body_rig_cc_proto"],
+)
+
+cc_library(
+    name = "tensor_ahwb_usage",
+    srcs = ["tensor_ahwb_usage.cc"],
+    hdrs = ["tensor_ahwb_usage.h"],
+    deps = [
+        "//mediapipe/framework/port",
+        "@com_google_absl//absl/functional:any_invocable",
+        "@com_google_absl//absl/log:absl_log",
+    ],
+)
+
+cc_test(
+    name = "tensor_ahwb_usage_test",
+    srcs = ["tensor_ahwb_usage_test.cc"],
+    deps = [
+        ":tensor_ahwb_usage",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:status",
+    ],
+)
+
+cc_test(
+    name = "yuv_image_test",
+    srcs = ["yuv_image_test.cc"],
+    deps = [
+        ":yuv_image",
+        "//mediapipe/framework/port:gtest_main",
+        "@libyuv",
+    ],
 )

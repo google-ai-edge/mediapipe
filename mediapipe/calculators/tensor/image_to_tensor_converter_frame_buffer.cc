@@ -46,9 +46,9 @@ int RadiansToDegrees(float radians) {
 }
 
 // FrameBuffer-based implementation of ImageToTensorConverter.
-class FrameBufferProcessor : public ImageToTensorConverter {
+class ImageToTensorFrameBufferConverter : public ImageToTensorConverter {
  public:
-  FrameBufferProcessor(Tensor::ElementType tensor_type)
+  explicit ImageToTensorFrameBufferConverter(Tensor::ElementType tensor_type)
       : tensor_type_(tensor_type) {}
 
   absl::Status Convert(const mediapipe::Image& input, const RotatedRect& roi,
@@ -80,11 +80,9 @@ class FrameBufferProcessor : public ImageToTensorConverter {
   size_t output_buffer_size_ = 0;
 };
 
-absl::Status FrameBufferProcessor::Convert(const mediapipe::Image& input,
-                                           const RotatedRect& roi,
-                                           float range_min, float range_max,
-                                           int tensor_buffer_offset,
-                                           Tensor& output_tensor) {
+absl::Status ImageToTensorFrameBufferConverter::Convert(
+    const mediapipe::Image& input, const RotatedRect& roi, float range_min,
+    float range_max, int tensor_buffer_offset, Tensor& output_tensor) {
   // TODO: add support for non-zero tensor buffer offset.
   RET_CHECK_EQ(tensor_buffer_offset, 0)
       << "Non-zero tensor_buffer_offset input is not supported yet.";
@@ -133,7 +131,7 @@ absl::Status FrameBufferProcessor::Convert(const mediapipe::Image& input,
   return absl::OkStatus();
 }
 
-absl::Status FrameBufferProcessor::ValidateTensorShape(
+absl::Status ImageToTensorFrameBufferConverter::ValidateTensorShape(
     const Tensor::Shape& shape) {
   RET_CHECK_EQ(shape.dims.size(), 4)
       << "Wrong output dims size: " << shape.dims.size();
@@ -144,7 +142,7 @@ absl::Status FrameBufferProcessor::ValidateTensorShape(
   return absl::OkStatus();
 }
 
-absl::Status FrameBufferProcessor::CropRotateResize90Degrees(
+absl::Status ImageToTensorFrameBufferConverter::CropRotateResize90Degrees(
     std::shared_ptr<const FrameBuffer> input, const RotatedRect& roi,
     std::shared_ptr<FrameBuffer> output) {
   int rotation_degrees = RadiansToDegrees(roi.rotation);
@@ -211,7 +209,7 @@ absl::Status FrameBufferProcessor::CropRotateResize90Degrees(
   return absl::OkStatus();
 }
 
-absl::Status FrameBufferProcessor::ConvertToFloatTensor(
+absl::Status ImageToTensorFrameBufferConverter::ConvertToFloatTensor(
     std::shared_ptr<const FrameBuffer> input_frame, float range_min,
     float range_max, Tensor& output_tensor) {
   RET_CHECK(output_tensor.element_type() == Tensor::ElementType::kFloat32);
@@ -234,15 +232,16 @@ CreateFrameBufferConverter(CalculatorContext* cc, BorderMode border_mode,
       tensor_type != Tensor::ElementType::kFloat32) {
     return absl::InvalidArgumentError(
         absl::StrFormat("Tensor type is currently not supported by "
-                        "FrameBufferProcessor, type: %d.",
+                        "ImageToTensorFrameBufferConverter, type: %d.",
                         tensor_type));
   }
   // TODO: add support for BorderMode:kZero.
   if (border_mode == BorderMode::kZero) {
     return absl::UnimplementedError(
-        "BorderMode::kZero is not yet supported by FrameBufferProcessor");
+        "BorderMode::kZero is not yet supported by "
+        "ImageToTensorFrameBufferConverter");
   }
-  return std::make_unique<FrameBufferProcessor>(tensor_type);
+  return std::make_unique<ImageToTensorFrameBufferConverter>(tensor_type);
 }
 
 }  // namespace mediapipe

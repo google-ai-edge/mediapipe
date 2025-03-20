@@ -18,24 +18,23 @@
 
 @implementation MPPHolisticLandmarkerResult
 
-- (instancetype)
-      initWithFaceLandmarks:(NSArray<NSArray<MPPNormalizedLandmark *> *> *)faceLandmarks
-            faceBlendshapes:(nullable NSArray<MPPClassifications *> *)faceBlendshapes
-              poseLandmarks:(NSArray<NSArray<MPPNormalizedLandmark *> *> *)poseLandmarks
-         poseWorldLandmarks:(NSArray<NSArray<MPPLandmark *> *> *)poseWorldLandmarks
-      poseSegmentationMasks:(NSArray<MPPMask *> *)poseSegmentationMasks
-          leftHandLandmarks:(NSArray<NSArray<MPPNormalizedLandmark *> *> *)leftHandLandmarks
-     leftHandWorldLandmarks:(NSArray<NSArray<MPPLandmark *> *> *)leftHandWorldLandmarks
-         rightHandLandmarks:(NSArray<NSArray<MPPNormalizedLandmark *> *> *)rightHandLandmarks
-    rightHandWorldLandmarks:(NSArray<NSArray<MPPLandmark *> *> *)rightHandWorldLandmarks
-    timestampInMilliseconds:(NSInteger)timestampInMilliseconds {
+- (instancetype)initWithFaceLandmarks:(NSArray<MPPNormalizedLandmark *> *)faceLandmarks
+                      faceBlendshapes:(nullable MPPClassifications *)faceBlendshapes
+                        poseLandmarks:(NSArray<MPPNormalizedLandmark *> *)poseLandmarks
+                   poseWorldLandmarks:(NSArray<MPPLandmark *> *)poseWorldLandmarks
+                 poseSegmentationMask:(nullable MPPMask *)poseSegmentationMask
+                    leftHandLandmarks:(NSArray<MPPNormalizedLandmark *> *)leftHandLandmarks
+               leftHandWorldLandmarks:(NSArray<MPPLandmark *> *)leftHandWorldLandmarks
+                   rightHandLandmarks:(NSArray<MPPNormalizedLandmark *> *)rightHandLandmarks
+              rightHandWorldLandmarks:(NSArray<MPPLandmark *> *)rightHandWorldLandmarks
+              timestampInMilliseconds:(NSInteger)timestampInMilliseconds {
   self = [super initWithTimestampInMilliseconds:timestampInMilliseconds];
   if (self) {
     _faceLandmarks = faceLandmarks;
     _faceBlendshapes = faceBlendshapes;
     _poseLandmarks = poseLandmarks;
     _poseWorldLandmarks = poseWorldLandmarks;
-    _poseSegmentationMasks = poseSegmentationMasks;
+    _poseSegmentationMask = poseSegmentationMask;
     _leftHandLandmarks = leftHandLandmarks;
     _leftHandWorldLandmarks = leftHandWorldLandmarks;
     _rightHandLandmarks = rightHandLandmarks;

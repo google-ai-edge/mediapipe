@@ -301,8 +301,8 @@ describe('GestureRecognizer', () => {
         'categoryName': 'gesture_label',
         'displayName': 'gesture_display_name'
       }]],
-      'landmarks': [[{'x': 0.3, 'y': 0.4, 'z': 0.5}]],
-      'worldLandmarks': [[{'x': 21, 'y': 22, 'z': 23}]],
+      'landmarks': [[{'x': 0.3, 'y': 0.4, 'z': 0.5, 'visibility': 0}]],
+      'worldLandmarks': [[{'x': 21, 'y': 22, 'z': 23, 'visibility': 0}]],
       'handedness': [[{
         'score': 0.1,
         'index': 1,

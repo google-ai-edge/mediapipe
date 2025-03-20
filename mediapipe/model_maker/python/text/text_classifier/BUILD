@@ -15,7 +15,10 @@
 # Placeholder for internal Python strict binary and library compatibility macro.
 # Placeholder for internal Python strict test compatibility macro.
 
-package(default_visibility = ["//mediapipe:__subpackages__"])
+package(default_visibility = [
+    "//learning/tfx/autotfx:__subpackages__",
+    "//mediapipe:__subpackages__",
+])
 
 licenses(["notice"])
 
@@ -62,7 +65,6 @@ py_library(
     deps = [
         ":hyperparameters",
         ":model_options",
-        "//mediapipe/model_maker/python/core/utils:file_util",
         "//mediapipe/model_maker/python/text/core:bert_model_spec",
     ],
 )
@@ -75,6 +77,7 @@ py_test(
         ":hyperparameters",
         ":model_options",
         ":model_spec",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
@@ -84,18 +87,25 @@ py_library(
     deps = [
         "//mediapipe/model_maker/python/core/data:cache_files",
         "//mediapipe/model_maker/python/core/data:classification_dataset",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
 py_test(
     name = "dataset_test",
     srcs = ["dataset_test.py"],
-    deps = [":dataset"],
+    deps = [
+        ":dataset",
+        "@model_maker_pip_deps_tensorflow//:pkg",
+    ],
 )
 
 py_library(
     name = "model_with_tokenizer",
     srcs = ["model_with_tokenizer.py"],
+    deps = [
+        "@model_maker_pip_deps_tensorflow//:pkg",
+    ],
 )
 
 py_test(
@@ -107,12 +117,19 @@ py_test(
         ":model_spec",
         ":model_with_tokenizer",
         "//mediapipe/model_maker/python/core/utils:hub_loader",
+        "@model_maker_pip_deps_tensorflow//:pkg",
+        "@model_maker_pip_deps_tensorflow_hub//:pkg",
     ],
 )
 
 py_library(
     name = "bert_tokenizer",
     srcs = ["bert_tokenizer.py"],
+    deps = [
+        "@model_maker_pip_deps_tensorflow//:pkg",
+        "@model_maker_pip_deps_tensorflow_text//:pkg",
+        "@model_maker_pip_deps_tf_models_official//:pkg",
+    ],
 )
 
 py_test(
@@ -122,6 +139,9 @@ py_test(
     deps = [
         ":bert_tokenizer",
         ":model_spec",
+        "@model_maker_pip_deps_absl_py//:pkg",
+        "@model_maker_pip_deps_tensorflow//:pkg",
+        "@model_maker_pip_deps_tensorflow_hub//:pkg",
     ],
 )
 
@@ -132,6 +152,8 @@ py_library(
         ":bert_tokenizer",
         ":dataset",
         "//mediapipe/model_maker/python/core/data:cache_files",
+        "@model_maker_pip_deps_tensorflow//:pkg",
+        "@model_maker_pip_deps_tensorflow_hub//:pkg",
     ],
 )
 
@@ -145,6 +167,9 @@ py_test(
         ":model_spec",
         ":preprocessor",
         "//mediapipe/model_maker/python/core/data:cache_files",
+        "@model_maker_pip_deps_absl_py//:pkg",
+        "@model_maker_pip_deps_numpy//:pkg",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
@@ -179,6 +204,9 @@ py_library(
         "//mediapipe/model_maker/python/core/utils:quantization",
         "//mediapipe/tasks/python/metadata/metadata_writers:metadata_writer",
         "//mediapipe/tasks/python/metadata/metadata_writers:text_classifier",
+        "@model_maker_pip_deps_tensorflow//:pkg",
+        "@model_maker_pip_deps_tensorflow_addons//:pkg",
+        "@model_maker_pip_deps_tensorflow_hub//:pkg",
     ],
 )
 
@@ -199,6 +227,8 @@ py_test(
         ":text_classifier_import",
         "//mediapipe/model_maker/python/core/utils:loss_functions",
         "//mediapipe/tasks/python/test:test_utils",
+        "@model_maker_pip_deps_absl_py//:pkg",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
@@ -208,6 +238,8 @@ py_library(
     deps = [
         ":text_classifier_import",
         "//mediapipe/model_maker/python/core/utils:quantization",
+        "@model_maker_pip_deps_absl_py//:pkg",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 

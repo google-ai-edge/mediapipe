@@ -1,19 +1,19 @@
 # Description:
 #   OpenCV xcframework for video/image processing on iOS.
 
-licenses(["notice"])  # BSD license
-
-exports_files(["LICENSE"])
-
-load(
-    "@build_bazel_rules_apple//apple:apple.bzl",
-    "apple_static_xcframework_import",
-)
 load(
     "@//third_party:opencv_ios_source.bzl",
     "select_headers",
     "unzip_opencv_xcframework",
 )
+load(
+    "@build_bazel_rules_apple//apple:apple.bzl",
+    "apple_static_xcframework_import",
+)
+
+licenses(["notice"])  # BSD license
+
+exports_files(["LICENSE"])
 
 # Build opencv2.xcframework from source using a convenience script provided in
 # OPENCV sources and zip the xcframework. We only build the modules required by MediaPipe by specifying
@@ -42,6 +42,8 @@ genrule(
         --without objdetect \
         --without gapi \
         --without flann \
+        --without highgui \
+        --without videoio \
         --disable PROTOBUF \
         --disable-bitcode \
         --disable-swift \
@@ -94,7 +96,7 @@ cc_library(
         "@//mediapipe:ios_arm64": [
             ":opencv_xcframework_device_headers",
         ],
-        # A value from above is chosen arbitarily.
+        # A value from above is chosen arbitrarily.
         "//conditions:default": [
             ":opencv_xcframework_simulator_headers",
         ],

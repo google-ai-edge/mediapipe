@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-// Placeholder for internal dependency on resourceUrlSafeByReview
+// Placeholder for internal dependency on trusted resource url
+// Placeholder for internal dependency on trusted resource url
 
 import {WasmFileset} from './wasm_fileset';
 
@@ -31,7 +32,7 @@ const WASM_SIMD_CHECK = new Uint8Array([
 ]);
 
 /** The categories of tasks supported by MediaPipe. */
-type MediapipeTaskCategory = 'audio'|'text'|'vision';
+type MediaPipeTaskCategory = 'audio'|'genai'|'genai_experimental'|'text'|'vision';
 
 async function isSimdSupported(): Promise<boolean> {
   if (supportsSimd === undefined) {
@@ -47,7 +48,8 @@ async function isSimdSupported(): Promise<boolean> {
 }
 
 async function createFileset(
-    taskName: MediapipeTaskCategory, basePath = ''): Promise<WasmFileset> {
+    taskName: MediaPipeTaskCategory,
+    basePath: string = ``): Promise<WasmFileset> {
   const suffix =
       await isSimdSupported() ? 'wasm_internal' : 'wasm_nosimd_internal';
 
@@ -97,7 +99,33 @@ export class FilesetResolver {
     return createFileset('audio', basePath);
   }
 
+  /**
+   * Creates a fileset for the MediaPipe GenAI tasks.
+   *
+   * @export
+   * @param basePath An optional base path to specify the directory the Wasm
+   *    files should be loaded from. If not specified, the Wasm files are
+   *    loaded from the host's root directory.
+   * @return A `WasmFileset` that can be used to initialize MediaPipe GenAI
+   *    tasks.
+   */
+  static forGenAiTasks(basePath?: string): Promise<WasmFileset> {
+    return createFileset('genai', basePath);
+  }
 
+  /**
+   * Creates a fileset for the MediaPipe GenAI Experimental tasks.
+   *
+   * @export
+   * @param basePath An optional base path to specify the directory the Wasm
+   *    files should be loaded from. If not specified, the Wasm files are
+   *    loaded from the host's root directory.
+   * @return A `WasmFileset` that can be used to initialize MediaPipe GenAI
+   *    tasks.
+   */
+  static forGenAiExperimentalTasks(basePath?: string): Promise<WasmFileset> {
+    return createFileset('genai_experimental', basePath);
+  }
 
   /**
    * Creates a fileset for the MediaPipe Text tasks.

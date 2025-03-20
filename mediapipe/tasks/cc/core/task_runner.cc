@@ -102,7 +102,7 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> TaskRunner::Create(
     std::shared_ptr<Executor> default_executor,
     std::optional<PacketMap> input_side_packets,
     std::shared_ptr<::mediapipe::GpuResources> resources,
-    std::optional<ErrorFn> error_fn) {
+    std::optional<ErrorFn> error_fn, bool disable_default_service) {
 #else
 absl::StatusOr<std::unique_ptr<TaskRunner>> TaskRunner::Create(
     CalculatorGraphConfig config,
@@ -110,12 +110,13 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> TaskRunner::Create(
     PacketsCallback packets_callback,
     std::shared_ptr<Executor> default_executor,
     std::optional<PacketMap> input_side_packets,
-    std::optional<ErrorFn> error_fn) {
+    std::optional<ErrorFn> error_fn, bool disable_default_service) {
 #endif  // !MEDIAPIPE_DISABLE_GPU
   auto task_runner = absl::WrapUnique(new TaskRunner(packets_callback));
   MP_RETURN_IF_ERROR(task_runner->Initialize(
       std::move(config), std::move(op_resolver), std::move(default_executor),
-      std::move(input_side_packets), std::move(error_fn)));
+      std::move(input_side_packets), std::move(error_fn),
+      disable_default_service));
 
 #if !MEDIAPIPE_DISABLE_GPU
   if (resources) {
@@ -133,7 +134,7 @@ absl::Status TaskRunner::Initialize(
     std::unique_ptr<tflite::OpResolver> op_resolver,
     std::shared_ptr<Executor> default_executor,
     std::optional<PacketMap> input_side_packets,
-    std::optional<ErrorFn> error_fn) {
+    std::optional<ErrorFn> error_fn, bool disable_default_service) {
   if (initialized_) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
@@ -188,6 +189,9 @@ absl::Status TaskRunner::Initialize(
 
   if (error_fn) MP_RETURN_IF_ERROR(graph_.SetErrorCallback(*error_fn));
 
+  if (disable_default_service) {
+    MP_RETURN_IF_ERROR(graph_.DisallowServiceDefaultInitialization());
+  }
   auto model_resources_cache =
       std::make_shared<ModelResourcesCache>(std::move(op_resolver));
   MP_RETURN_IF_ERROR(

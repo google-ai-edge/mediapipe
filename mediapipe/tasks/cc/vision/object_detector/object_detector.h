@@ -41,6 +41,18 @@ namespace vision {
 using ObjectDetectorResult =
     ::mediapipe::tasks::components::containers::DetectionResult;
 
+// Options related to non-maximum-suppression.
+struct NonMaxSuppressionOptions {
+  // Whether to use multiclass non-max-suppression. That is, each category
+  // processes non-max-suppression separately.
+  bool multiclass_nms = false;
+
+  // Overlapping threshold for non-maximum-suppression. Only used for
+  // models without built-in non-maximum-suppression, i.e., models that don't
+  // use the Detection_Postprocess TFLite Op
+  float min_suppression_threshold = 0.3f;
+};
+
 // The options for configuring a mediapipe object detector task.
 struct ObjectDetectorOptions {
   // Base options for configuring MediaPipe Tasks, such as specifying the TfLite
@@ -87,6 +99,8 @@ struct ObjectDetectorOptions {
   std::function<void(absl::StatusOr<ObjectDetectorResult>, const Image&,
                      int64_t)>
       result_callback = nullptr;
+
+  NonMaxSuppressionOptions non_max_suppression_options;
 };
 
 // Performs object detection on single images, video frames, or live stream.

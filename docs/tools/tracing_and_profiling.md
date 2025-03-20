@@ -39,7 +39,7 @@ option: `--define MEDIAPIPE_PROFILING=0`.  For other platforms, you can use the
 bazel command line option `--define MEDIAPIPE_PROFILING=1` to link it.
 
 To enable tracing and profiling, the `CalculatorGraphConfig` (in
-[calculator.proto](https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator.proto))
+[calculator.proto](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator.proto))
 representing the graph must have a `profiler_config` message at its root. Here
 is a simple setup that turns on tracing and keeps 100 seconds of timing events:
 

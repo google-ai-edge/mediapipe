@@ -35,6 +35,7 @@
 #include "tensorflow/lite/error_reporter.h"
 #include "tensorflow/lite/kernels/register.h"
 #include "tensorflow/lite/model.h"
+#include "tensorflow/lite/util.h"
 
 #ifdef __APPLE__
 #include <CoreFoundation/CoreFoundation.h>
@@ -56,6 +57,7 @@ constexpr char kGraphWithModelPathInOption[] = R"(
       options {
         [mediapipe.InferenceCalculatorOptions.ext] {
           model_path: "mediapipe/calculators/tensor/testdata/add.bin"
+          try_mmap_model: $mmap
           $delegate
         }
       }
@@ -65,24 +67,18 @@ constexpr char kGraphWithModelAsInputSidePacket[] = R"(
     input_stream: "tensor_in"
 
     node {
-      calculator: "ConstantSidePacketCalculator"
-      output_side_packet: "PACKET:model_path"
-      options: {
-        [mediapipe.ConstantSidePacketCalculatorOptions.ext]: {
-          packet { string_value: "mediapipe/calculators/tensor/testdata/add.bin" }
+      calculator: "ResourceProviderCalculator"
+      output_side_packet: "RESOURCE:model_resource"
+      node_options {
+        [type.googleapis.com/mediapipe.ResourceProviderCalculatorOptions]: {
+          resource_id: "mediapipe/calculators/tensor/testdata/add.bin"
         }
       }
     }
 
     node {
-      calculator: "LocalFileContentsCalculator"
-      input_side_packet: "FILE_PATH:model_path"
-      output_side_packet: "CONTENTS:model_blob"
-    }
-
-    node {
       calculator: "TfLiteModelCalculator"
-      input_side_packet: "MODEL_BLOB:model_blob"
+      input_side_packet: "MODEL_RESOURCE:model_resource"
       output_side_packet: "MODEL:model"
     }
 
@@ -99,12 +95,15 @@ constexpr char kGraphWithModelAsInputSidePacket[] = R"(
     }
   )";
 
-std::vector<Tensor> CreateInputs() {
+std::vector<Tensor> CreateInputs(bool apply_default_tflite_tensor_alignment) {
   std::vector<Tensor> input_vec;
   // Prepare input tensor.
   input_vec.emplace_back(
       Tensor::ElementType::kFloat32,
-      Tensor::Shape{1, kTensorHeight, kTensorWidth, kTensorChannels});
+      Tensor::Shape{1, kTensorHeight, kTensorWidth, kTensorChannels},
+      /*memory_manager=*/nullptr,
+      apply_default_tflite_tensor_alignment ? tflite::kDefaultTensorAlignment
+                                            : 0);
   {
     auto view = input_vec.back().GetCpuWriteView();
     auto num_elements = input_vec.back().shape().num_elements();
@@ -145,8 +144,9 @@ void RunGraphOnUnwrappedTensorThenClose(CalculatorGraph& graph,
   MP_ASSERT_OK(graph.WaitUntilDone());
 }
 
-void DoSmokeTest(const std::string& graph_proto, bool use_vectors) {
-  auto input_vec = CreateInputs();
+void DoSmokeTest(const std::string& graph_proto, bool use_vectors,
+                 bool apply_default_tflite_tensor_alignment) {
+  auto input_vec = CreateInputs(apply_default_tflite_tensor_alignment);
 
   // Prepare single calculator graph to and wait for packets.
   CalculatorGraphConfig graph_config =
@@ -186,21 +186,33 @@ void DoSmokeTest(const std::string& graph_proto, bool use_vectors) {
 // Tests a simple add model that adds an input tensor to itself. We test CPU
 // inference only.
 TEST(InferenceCalculatorTest, SmokeTestTflite) {
-  DoSmokeTest(/*graph_proto=*/absl::StrReplaceAll(
-                  kGraphWithModelPathInOption,
-                  {{"$delegate", "delegate { tflite {} }"}}),
-              /*use_vectors=*/true);
+  DoSmokeTest(
+      /*graph_proto=*/absl::StrReplaceAll(
+          kGraphWithModelPathInOption,
+          {{"$delegate", "delegate { tflite {} }"}, {"$mmap", "false"}}),
+      /*use_vectors=*/true, /*apply_default_tflite_tensor_alignment=*/false);
+}
+TEST(InferenceCalculatorTest, SmokeTestTfliteMmap) {
+  DoSmokeTest(
+      /*graph_proto=*/absl::StrReplaceAll(
+          kGraphWithModelPathInOption,
+          {{"$delegate", "delegate { tflite {} }"}, {"$mmap", "true"}}),
+      /*use_vectors=*/true, /*apply_default_tflite_tensor_alignment=*/false);
 }
 TEST(InferenceCalculatorTest, SmokeTestXnnpack) {
-  DoSmokeTest(absl::StrReplaceAll(kGraphWithModelPathInOption,
-                                  {{"$delegate", "delegate { xnnpack {} }"}}),
-              true);
+  DoSmokeTest(
+      absl::StrReplaceAll(
+          kGraphWithModelPathInOption,
+          {{"$delegate", "delegate { xnnpack {} }"}, {"$mmap", "false"}}),
+      /*use_vectors=*/true, /*apply_default_tflite_tensor_alignment=*/false);
 }
 TEST(InferenceCalculatorTest, SmokeTestXnnpackMultithread) {
   DoSmokeTest(absl::StrReplaceAll(
                   kGraphWithModelPathInOption,
-                  {{"$delegate", "delegate { xnnpack { num_threads: 10 } }"}}),
-              true);
+                  {{"$delegate", "delegate { xnnpack { num_threads: 10 } }"},
+                   {"$mmap", "false"}}),
+              /*use_vectors=*/true,
+              /*apply_default_tflite_tensor_alignment=*/false);
 }
 
 // Run our above CPU inference SmokeTests, but with graphs altered to use the
@@ -208,25 +220,37 @@ TEST(InferenceCalculatorTest, SmokeTestXnnpackMultithread) {
 void DoUnwrappedTensorSmokeTest(const std::string& graph_proto) {
   const auto& unwrapped_tensor_graph =
       absl::StrReplaceAll(graph_proto, {{"TENSORS:", "TENSOR:"}});
-  DoSmokeTest(/*graph_proto=*/unwrapped_tensor_graph, /*use_vectors=*/false);
+  DoSmokeTest(/*graph_proto=*/unwrapped_tensor_graph, /*use_vectors=*/false,
+              /*apply_default_tflite_tensor_alignment=*/false);
 }
 
 TEST(InferenceCalculatorTest, SmokeTestTfliteUnwrapped) {
   DoUnwrappedTensorSmokeTest(/*graph_proto=*/absl::StrReplaceAll(
-      kGraphWithModelPathInOption, {{"$delegate", "delegate { tflite {} }"}}));
+      kGraphWithModelPathInOption,
+      {{"$delegate", "delegate { tflite {} }"}, {"$mmap", "false"}}));
 }
 TEST(InferenceCalculatorTest, SmokeTestXnnpackUnwrapped) {
   DoUnwrappedTensorSmokeTest(absl::StrReplaceAll(
-      kGraphWithModelPathInOption, {{"$delegate", "delegate { xnnpack {} }"}}));
+      kGraphWithModelPathInOption,
+      {{"$delegate", "delegate { xnnpack {} }"}, {"$mmap", "false"}}));
 }
 TEST(InferenceCalculatorTest, SmokeTestXnnpackMultithreadUnwrapped) {
   DoUnwrappedTensorSmokeTest(absl::StrReplaceAll(
       kGraphWithModelPathInOption,
-      {{"$delegate", "delegate { xnnpack { num_threads: 10 } }"}}));
+      {{"$delegate", "delegate { xnnpack { num_threads: 10 } }"},
+       {"$mmap", "false"}}));
 }
 
 TEST(InferenceCalculatorTest, ModelAsInputSidePacketSmokeTest) {
-  DoSmokeTest(kGraphWithModelAsInputSidePacket, /*use_vectors=*/true);
+  DoSmokeTest(kGraphWithModelAsInputSidePacket, /*use_vectors=*/true,
+              /*apply_default_tflite_tensor_alignment=*/false);
+}
+TEST(InferenceCalculatorTest, SmokeTestTfliteWithTensorAlignment) {
+  DoSmokeTest(
+      /*graph_proto=*/absl::StrReplaceAll(
+          kGraphWithModelPathInOption,
+          {{"$delegate", "delegate { tflite {} }"}, {"$mmap", "false"}}),
+      /*use_vectors=*/true, /*apply_default_tflite_tensor_alignment=*/true);
 }
 
 void BM_InitializeCalculator(benchmark::State& state) {

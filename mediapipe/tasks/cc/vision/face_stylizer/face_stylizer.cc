@@ -125,7 +125,9 @@ absl::StatusOr<std::unique_ptr<FaceStylizer>> FaceStylizer::Create(
                                             FaceStylizerGraphOptionsProto>(
       CreateGraphConfig(std::move(options_proto)),
       std::move(options->base_options.op_resolver), core::RunningMode::IMAGE,
-      std::move(packets_callback));
+      std::move(packets_callback),
+      /*disable_default_service=*/
+      options->base_options.disable_default_service);
 }
 
 absl::StatusOr<std::optional<Image>> FaceStylizer::Stylize(

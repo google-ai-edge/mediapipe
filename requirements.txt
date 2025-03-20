@@ -2,8 +2,10 @@ absl-py
 attrs>=19.1.0
 flatbuffers>=2.0
 jax
+jaxlib
 matplotlib
-numpy
+numpy<2
 opencv-contrib-python
-protobuf>=3.11,<4
+protobuf>=4.25.3,<5
 sounddevice>=0.4.4
+sentencepiece

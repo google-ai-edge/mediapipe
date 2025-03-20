@@ -36,18 +36,18 @@ void CppConvertToPoseLandmarkerResult(
     PoseLandmarkerResult* out) {
   if (in.segmentation_masks.has_value()) {
     out->segmentation_masks_count = in.segmentation_masks.value().size();
-    out->segmentation_masks = new MpImage[out->segmentation_masks_count];
+    out->segmentation_masks = new MpMask[out->segmentation_masks_count];
     for (uint32_t i = 0; i < out->segmentation_masks_count; ++i) {
       const auto& image_frame =
           in.segmentation_masks.value()[i].GetImageFrameSharedPtr();
-      MpImage mp_image = {
-          .type = MpImage::IMAGE_FRAME,
-          .image_frame = {
-              .format = static_cast<::ImageFormat>(image_frame->Format()),
-              .image_buffer = image_frame->PixelData(),
-              .width = image_frame->Width(),
-              .height = image_frame->Height()}};
-      out->segmentation_masks[i] = mp_image;
+
+      MpMask mp_mask = {
+          .type = MpMask::IMAGE_FRAME,
+          .image_frame = {.mask_format = MaskFormat::FLOAT,
+                          .image_buffer = image_frame->PixelData(),
+                          .width = image_frame->Width(),
+                          .height = image_frame->Height()}};
+      out->segmentation_masks[i] = mp_mask;
     }
   } else {
     out->segmentation_masks_count = 0;

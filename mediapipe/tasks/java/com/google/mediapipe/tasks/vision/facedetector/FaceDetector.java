@@ -372,13 +372,13 @@ public final class FaceDetector extends BaseVisionTaskApi {
        * Sets the minimum confidence score for the face detection to be considered successful. The
        * default minDetectionConfidence is 0.5.
        */
-      public abstract Builder setMinDetectionConfidence(Float value);
+      public abstract Builder setMinDetectionConfidence(float value);
 
       /**
        * Sets the minimum non-maximum-suppression threshold for face detection to be considered
        * overlapped. The default minSuppressionThreshold is 0.3.
        */
-      public abstract Builder setMinSuppressionThreshold(Float value);
+      public abstract Builder setMinSuppressionThreshold(float value);
 
       /**
        * Sets the {@link ResultListener} to receive the detection results asynchronously when the

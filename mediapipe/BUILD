@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-licenses(["notice"])  # Apache 2.0
-
 load("@mediapipe//mediapipe:platforms.bzl", "config_setting_and_platform")
+
+licenses(["notice"])  # Apache 2.0
 
 # Generic Android
 config_setting(
@@ -192,6 +192,15 @@ config_setting_and_platform(
     constraint_values = [
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+# Emscripten (WebAssembly)
+config_setting_and_platform(
+    name = "emscripten",
+    constraint_values = [
+        "@platforms//cpu:wasm32",
     ],
     visibility = ["//visibility:public"],
 )

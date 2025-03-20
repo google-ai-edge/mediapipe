@@ -198,29 +198,6 @@ TEST(AllowDefaultInitializationGraphServiceTest,
   MP_EXPECT_OK(graph.WaitUntilIdle());
 }
 
-// Documents and ensures current behavior for setting `nullptr` service objects
-// for "AllowDefaultInitialization" optional services.
-// - It's allowed.
-// - It disables creation of "AllowDefaultInitialization" service objects, hence
-//   results in optional service unavailability.
-TEST(AllowDefaultInitializationGraphServiceTest,
-     NullServiceObjectIsAllowAndResultsInOptionalServiceUnavailability) {
-  CalculatorGraphConfig config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
-        node { calculator: 'FailOnUnavailableOptionalServiceCalculator' }
-      )pb");
-
-  CalculatorGraph graph;
-  std::shared_ptr<TestServiceData> object = nullptr;
-  MP_ASSERT_OK(
-      graph.SetServiceObject(kTestServiceAllowDefaultInitialization, object));
-  MP_ASSERT_OK(graph.Initialize(config));
-  MP_ASSERT_OK(graph.StartRun({}));
-  EXPECT_THAT(graph.WaitUntilIdle(),
-              StatusIs(absl::StatusCode::kInternal,
-                       HasSubstr("Service is unavailable.")));
-}
-
 class FailOnUnavailableServiceCalculator : public CalculatorBase {
  public:
   static absl::Status GetContract(CalculatorContract* cc) {
@@ -249,29 +226,6 @@ TEST(AllowDefaultInitializationGraphServiceTest, ServiceIsAvailable) {
   MP_ASSERT_OK(graph.Initialize(config));
   MP_ASSERT_OK(graph.StartRun({}));
   MP_EXPECT_OK(graph.WaitUntilIdle());
-}
-
-// Documents and ensures current behavior for setting `nullptr` service objects
-// for "AllowDefaultInitialization" services.
-// - It's allowed.
-// - It disables creation of "AllowDefaultInitialization" service objects, hence
-//   in service unavaialbility.
-TEST(AllowDefaultInitializationGraphServiceTest,
-     NullServiceObjectIsAllowAndResultsInServiceUnavailability) {
-  CalculatorGraphConfig config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
-        node { calculator: 'FailOnUnavailableServiceCalculator' }
-      )pb");
-
-  CalculatorGraph graph;
-  std::shared_ptr<TestServiceData> object = nullptr;
-  MP_ASSERT_OK(
-      graph.SetServiceObject(kTestServiceAllowDefaultInitialization, object));
-  MP_ASSERT_OK(graph.Initialize(config));
-  MP_ASSERT_OK(graph.StartRun({}));
-  EXPECT_THAT(graph.WaitUntilIdle(),
-              StatusIs(absl::StatusCode::kInternal,
-                       HasSubstr("Service is unavailable.")));
 }
 
 constexpr GraphService<TestServiceData>

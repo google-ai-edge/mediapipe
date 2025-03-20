@@ -17,7 +17,6 @@ import dataclasses
 import enum
 import functools
 
-from mediapipe.model_maker.python.core.utils import file_util
 from mediapipe.model_maker.python.text.core import bert_model_spec
 from mediapipe.model_maker.python.text.text_classifier import hyperparameters as hp
 from mediapipe.model_maker.python.text.text_classifier import model_options as mo
@@ -49,8 +48,10 @@ class AverageWordEmbeddingClassifierSpec:
   )
   name: str = 'AverageWordEmbedding'
 
+
 average_word_embedding_classifier_spec = functools.partial(
-    AverageWordEmbeddingClassifierSpec)
+    AverageWordEmbeddingClassifierSpec
+)
 
 
 @dataclasses.dataclass
@@ -62,6 +63,7 @@ class BertClassifierSpec(bert_model_spec.BertModelSpec):
   """
 
   hparams: hp.BertHParams = dataclasses.field(default_factory=hp.BertHParams)
+
 
 mobilebert_classifier_spec = functools.partial(
     BertClassifierSpec,
@@ -77,5 +79,6 @@ mobilebert_classifier_spec = functools.partial(
 @enum.unique
 class SupportedModels(enum.Enum):
   """Predefined text classifier model specs supported by Model Maker."""
+
   AVERAGE_WORD_EMBEDDING_CLASSIFIER = average_word_embedding_classifier_spec
   MOBILEBERT_CLASSIFIER = mobilebert_classifier_spec

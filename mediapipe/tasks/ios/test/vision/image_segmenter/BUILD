@@ -12,15 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load(
-    "//mediapipe/framework/tool:ios.bzl",
-    "MPP_TASK_MINIMUM_OS_VERSION",
-)
+load("@build_bazel_rules_apple//apple:ios.bzl", "ios_unit_test")
 load(
     "@org_tensorflow//tensorflow/lite:special_rules.bzl",
     "tflite_ios_lab_runner",
 )
-load("@build_bazel_rules_apple//apple:ios.bzl", "ios_unit_test")
+load(
+    "//mediapipe/framework/tool:ios.bzl",
+    "MPP_TASK_MINIMUM_OS_VERSION",
+)
 
 package(default_visibility = ["//visibility:public"])
 
@@ -40,7 +40,7 @@ TFL_DISABLED_SANITIZER_TAGS = [
 
 objc_library(
     name = "MPPImageSegmenterObjcTestLibrary",
-    testonly = 1,
+    testonly = True,
     srcs = ["MPPImageSegmenterTests.mm"],
     copts = [
         "-ObjC++",
@@ -58,6 +58,8 @@ objc_library(
         "//mediapipe/tasks/ios/test/vision/utils:MPPMaskTestUtils",
         "//mediapipe/tasks/ios/vision/image_segmenter:MPPImageSegmenter",
         "//mediapipe/tasks/ios/vision/image_segmenter:MPPImageSegmenterResult",
+        "//third_party/apple_frameworks:Foundation",
+        "//third_party/apple_frameworks:XCTest",
     ] + select({
         "//third_party:opencv_ios_sim_arm64_source_build": ["@ios_opencv_source//:opencv_xcframework"],
         "//third_party:opencv_ios_arm64_source_build": ["@ios_opencv_source//:opencv_xcframework"],

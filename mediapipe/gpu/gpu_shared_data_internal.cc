@@ -14,7 +14,9 @@
 
 #include "mediapipe/gpu/gpu_shared_data_internal.h"
 
+#include <functional>
 #include <memory>
+#include <string>
 #include <utility>
 
 #include "absl/base/attributes.h"
@@ -22,16 +24,34 @@
 #include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/str_cat.h"
 #include "mediapipe/framework/deps/no_destructor.h"
+#include "mediapipe/framework/executor.h"
+#include "mediapipe/framework/graph_service.h"
+#include "mediapipe/framework/port/map_util.h"
+#include "mediapipe/framework/port/ret_check.h"
+#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/gpu/gl_context.h"
 #include "mediapipe/gpu/gl_context_options.pb.h"
 #include "mediapipe/gpu/graph_support.h"
+#include "mediapipe/gpu/multi_pool.h"
 
-#if __APPLE__
+#if MEDIAPIPE_METAL_ENABLED
 #include "mediapipe/gpu/metal_shared_resources.h"
-#endif  // __APPLE__
+#endif  // MEDIAPIPE_METAL_ENABLED
 
 namespace mediapipe {
+
+namespace {
+
+inline constexpr char kGpuExecutorName[] = "__gpu";
+
+// Returns the executor name from a context key .
+std::string GetExecutorNameFromContextKey(const std::string& context_key) {
+  return absl::StrCat(kGpuExecutorName, "_", context_key);
+}
+
+}  // namespace
 
 #if __APPLE__
 static constexpr bool kGlContextUseDedicatedThread = false;
@@ -59,7 +79,7 @@ static constexpr bool kGlCalculatorShareContext = true;
 class GlContextExecutor : public Executor {
  public:
   explicit GlContextExecutor(GlContext* gl_context) : gl_context_(gl_context) {}
-  ~GlContextExecutor() override {}
+  ~GlContextExecutor() override = default;
   void Schedule(std::function<void()> task) override {
     gl_context_->RunWithoutWaiting(std::move(task));
   }
@@ -78,16 +98,25 @@ GpuResources::StatusOrGpuResources GpuResources::Create() {
 }
 
 GpuResources::StatusOrGpuResources GpuResources::Create(
-    PlatformGlContext external_context) {
+    PlatformGlContext external_context,
+    const MultiPoolOptions* gpu_buffer_pool_options) {
   MP_ASSIGN_OR_RETURN(
       std::shared_ptr<GlContext> context,
       GlContext::Create(external_context, kGlContextUseDedicatedThread));
   std::shared_ptr<GpuResources> gpu_resources(
-      new GpuResources(std::move(context)));
+      new GpuResources(std::move(context), gpu_buffer_pool_options));
   return gpu_resources;
 }
 
-GpuResources::GpuResources(std::shared_ptr<GlContext> gl_context)
+GpuResources::StatusOrGpuResources GpuResources::Create(
+    const GpuResources& gpu_resources,
+    const MultiPoolOptions* gpu_buffer_pool_options) {
+  return Create(gpu_resources.gl_context()->native_context(),
+                gpu_buffer_pool_options);
+}
+
+GpuResources::GpuResources(std::shared_ptr<GlContext> gl_context,
+                           const MultiPoolOptions* gpu_buffer_pool_options)
     : gl_key_context_(new GlContextMapType(),
                       [](auto* map) {
                         // This flushes all pending jobs in all GL contexts,
@@ -103,26 +132,43 @@ GpuResources::GpuResources(std::shared_ptr<GlContext> gl_context)
                               << "Failed to flush GlContext jobs: " << status;
                         }
                         delete map;
-                      })
+                      }),
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
-      ,
       texture_caches_(std::make_shared<CvTextureCacheManager>()),
       gpu_buffer_pool_(
           [tc = texture_caches_](const internal::GpuBufferSpec& spec,
                                  const MultiPoolOptions& options) {
             return CvPixelBufferPoolWrapper::Create(spec, options, tc.get());
-          })
+          },
+          gpu_buffer_pool_options ? *gpu_buffer_pool_options
+                                  : kDefaultMultiPoolOptions)
+#else   // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+          gpu_buffer_pool_(gpu_buffer_pool_options ? *gpu_buffer_pool_options
+                                            : kDefaultMultiPoolOptions)
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 {
   gl_key_context_->insert({SharedContextKey(), gl_context});
-  named_executors_[kGpuExecutorName] =
+  const std::string executor_name =
+      GetExecutorNameFromContextKey(SharedContextKey());
+  named_executors_[executor_name] =
       std::make_shared<GlContextExecutor>(gl_context.get());
 #if __APPLE__
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
   texture_caches_->RegisterTextureCache(gl_context->cv_texture_cache());
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+#if MEDIAPIPE_METAL_ENABLED
   metal_shared_ = std::make_unique<MetalSharedResources>();
+#endif  // MEDIAPIPE_METAL_ENABLED
 #endif  // __APPLE__
+}
+
+absl::StatusOr<std::shared_ptr<Executor>> GpuResources::GetDefaultGpuExecutor()
+    const {
+  const std::string executor_name =
+      GetExecutorNameFromContextKey(SharedContextKey());
+  const auto it = named_executors_.find(executor_name);
+  RET_CHECK(it != named_executors_.end()) << "Can't find default gpu executor.";
+  return it->second;
 }
 
 GpuResources::~GpuResources() {
@@ -185,8 +231,8 @@ absl::Status GpuResources::PrepareGpuNode(CalculatorNode* node) {
                       GetOrCreateGlContext(context_key));
 
   if (kGlContextUseDedicatedThread) {
-    std::string executor_name =
-        absl::StrCat(kGpuExecutorName, "_", context_key);
+    const std::string executor_name =
+        GetExecutorNameFromContextKey(context_key);
     node->SetExecutor(executor_name);
     if (!ContainsKey(named_executors_, executor_name)) {
       named_executors_.emplace(
@@ -196,15 +242,16 @@ absl::Status GpuResources::PrepareGpuNode(CalculatorNode* node) {
   context->SetProfilingContext(
       node->GetCalculatorState().GetSharedProfilingContext());
 
-  return OkStatus();
+  return absl::OkStatus();
 }
 
 // TODO: expose and use an actual ID instead of using the
 // canonicalized name.
 const std::shared_ptr<GlContext>& GpuResources::gl_context(
-    CalculatorContext* cc) {
+    CalculatorContext* cc) const {
   if (cc) {
-    auto it = gl_key_context_->find(node_key_[cc->NodeName()]);
+    const auto node_key_it = node_key_.find(cc->NodeName());
+    const auto it = gl_key_context_->find(node_key_it->second);
     if (it != gl_key_context_->end()) {
       return it->second;
     }

@@ -15,14 +15,14 @@
 #ifndef MEDIAPIPE_FRAMEWORK_SCHEDULER_QUEUE_H_
 #define MEDIAPIPE_FRAMEWORK_SCHEDULER_QUEUE_H_
 
-#include <atomic>
 #include <cstdint>
 #include <functional>
-#include <memory>
 #include <queue>
+#include <string>
 #include <utility>
 
-#include "absl/base/macros.h"
+#include "absl/base/thread_annotations.h"
+#include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/executor.h"
@@ -76,7 +76,8 @@ class SchedulerQueue : public TaskQueue {
     bool is_open_node_ = false;  // True if the task should run OpenNode().
   };
 
-  explicit SchedulerQueue(SchedulerShared* shared) : shared_(shared) {}
+  explicit SchedulerQueue(absl::string_view queue_name, SchedulerShared* shared)
+      : queue_name_(queue_name), shared_(shared) {}
 
   // Sets the executor that will run the nodes. Must be called before the
   // scheduler is started.
@@ -144,6 +145,9 @@ class SchedulerQueue : public TaskQueue {
 
   // Checks whether the queue has no queued nodes or pending tasks.
   bool IsIdle() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_);
+
+  // Queue name for logging purposes.
+  const std::string queue_name_;
 
   Executor* executor_ = nullptr;
 

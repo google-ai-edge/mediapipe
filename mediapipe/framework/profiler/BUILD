@@ -34,16 +34,6 @@ config_setting(
     visibility = ["//visibility:public"],
 )
 
-config_setting(
-    name = "android_release",
-    values = {
-        "crosstool_top": "//tools/android:ndk",
-        "compilation_mode": "opt",
-        "define": "prod=1",
-    },
-    visibility = ["//visibility:public"],
-)
-
 # Maps either to graph_profiler_real or to graph_profiler_stub
 # depending on the platform, compilation mode, and MEDIAPIPE_PROFILING value.
 # This requires three levels of aliases because of limitations with select.
@@ -56,6 +46,10 @@ alias(
     actual = select({
         "//conditions:default": ":graph_profiler_default_on",
     }),
+    visibility = [
+        "//mediapipe/framework:__subpackages__",
+        "//mediapipe/java:__subpackages__",
+    ],
 )
 
 alias(
@@ -213,11 +207,12 @@ cc_library(
 
 cc_library(
     name = "test_context_builder",
-    testonly = 1,
+    testonly = True,
     hdrs = ["test_context_builder.h"],
     deps = [
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_options_cc_proto",
+        "//mediapipe/framework:calculator_state",
         "//mediapipe/framework:mediapipe_options_cc_proto",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:statusor",

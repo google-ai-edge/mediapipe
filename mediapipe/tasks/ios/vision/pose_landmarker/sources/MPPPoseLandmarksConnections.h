@@ -31,6 +31,7 @@ NSArray<MPPConnection *> *const MPPPoseLandmarksConnections = @[
   [[MPPConnection alloc] initWithStart:16 end:22], [[MPPConnection alloc] initWithStart:18 end:20],
   [[MPPConnection alloc] initWithStart:11 end:23], [[MPPConnection alloc] initWithStart:12 end:24],
   [[MPPConnection alloc] initWithStart:23 end:24], [[MPPConnection alloc] initWithStart:23 end:25],
+  [[MPPConnection alloc] initWithStart:24 end:26], [[MPPConnection alloc] initWithStart:25 end:27],
   [[MPPConnection alloc] initWithStart:26 end:28], [[MPPConnection alloc] initWithStart:27 end:29],
   [[MPPConnection alloc] initWithStart:28 end:30], [[MPPConnection alloc] initWithStart:29 end:31],
   [[MPPConnection alloc] initWithStart:30 end:32], [[MPPConnection alloc] initWithStart:27 end:31],

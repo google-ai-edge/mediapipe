@@ -14,7 +14,12 @@
 
 load("@org_tensorflow//tensorflow/lite/core/shims:cc_library_with_tflite.bzl", "cc_library_with_tflite")
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
+package(default_visibility = [
+    "//java/com/google/android/apps/inputmethod/latin:__subpackages__",
+    "//javatests/com/google/android/apps/inputmethod:__subpackages__",
+    "//mediapipe/tasks:internal",
+    "//third_party/generative_computing:__subpackages__",
+])
 
 licenses(["notice"])
 
@@ -46,52 +51,4 @@ cc_library_with_tflite(
         "//mediapipe:android": [],
     }),
     alwayslink = 1,
-)
-
-cc_library(
-    name = "llm_inference_engine_hdr",
-    hdrs = ["llm_inference_engine.h"],
-)
-
-cc_library(
-    name = "llm",
-    srcs = ["llm.cc"],
-    hdrs = ["llm.h"],
-    deps = [
-        ":llm_inference_engine_hdr",
-        "//mediapipe/java/com/google/mediapipe/framework/jni:class_registry",
-        "//mediapipe/java/com/google/mediapipe/framework/jni:jni_util",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto:llm_options_cc_proto",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto:llm_response_context_cc_proto",
-        "@com_google_absl//absl/log:absl_log",
-        "@com_google_absl//absl/status",
-        "@odml//odml/infra/genai/inference/c:libllm_inference_engine",
-        "@odml//odml/infra/genai/inference/c:libllm_inference_engine_deps",
-    ] + select({
-        "//mediapipe:android": [],
-    }),
-    alwayslink = 1,
-)
-
-cc_binary(
-    name = "llm_jni",
-    linkshared = 1,
-    deps = [":llm"],
-)
-
-genrule(
-    name = "copy_jni_h",
-    srcs = ["@bazel_tools//tools/jdk:jni_header"],
-    outs = ["jni.h"],
-    cmd = "cp -f $< $@",
-)
-
-genrule(
-    name = "copy_jni_md_h",
-    srcs = select({
-        "//mediapipe:macos": ["@bazel_tools//tools/jdk:jni_md_header-darwin"],
-        "//conditions:default": ["@bazel_tools//tools/jdk:jni_md_header-linux"],
-    }),
-    outs = ["jni_md.h"],
-    cmd = "cp -f $< $@",
 )

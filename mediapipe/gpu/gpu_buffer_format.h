@@ -15,6 +15,8 @@
 #ifndef MEDIAPIPE_GPU_GPU_BUFFER_FORMAT_H_
 #define MEDIAPIPE_GPU_GPU_BUFFER_FORMAT_H_
 
+#include <cstdint>
+
 #ifdef __APPLE__
 #include <CoreVideo/CoreVideo.h>
 #if !TARGET_OS_OSX

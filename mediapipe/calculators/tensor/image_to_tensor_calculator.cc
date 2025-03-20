@@ -14,6 +14,7 @@
 
 #include <array>
 #include <memory>
+#include <utility>
 #include <vector>
 
 #include "absl/log/absl_log.h"
@@ -21,6 +22,8 @@
 #include "mediapipe/calculators/tensor/image_to_tensor_converter.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_utils.h"
 #include "mediapipe/framework/api2/node.h"
+#include "mediapipe/framework/api2/packet.h"
+#include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame.h"
@@ -34,6 +37,8 @@
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/statusor.h"
 #include "mediapipe/gpu/gpu_origin.pb.h"
+#include "mediapipe/gpu/gpu_origin_utils.h"
+#include "mediapipe/gpu/webgpu/webgpu_check.h"
 
 #if !MEDIAPIPE_DISABLE_OPENCV
 #include "mediapipe/calculators/tensor/image_to_tensor_converter_opencv.h"
@@ -55,6 +60,11 @@
 #include "mediapipe/calculators/tensor/image_to_tensor_converter_gl_texture.h"
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gpu_service.h"
+#if MEDIAPIPE_USE_WEBGPU
+#include "mediapipe/gpu/webgpu/image_to_tensor_converter_webgpu_texture.h"
+#include "mediapipe/gpu/webgpu/webgpu_service.h"
+#include "mediapipe/gpu/webgpu/webgpu_texture_buffer.h"
+#endif  // MEDIAPIPE_USE_WEBGPU
 #endif  // MEDIAPIPE_METAL_ENABLED
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
@@ -129,12 +139,13 @@ class ImageToTensorCalculator : public Node {
   static constexpr Input<GpuBuffer>::Optional kInGpu{"IMAGE_GPU"};
   static constexpr Input<mediapipe::NormalizedRect>::Optional kInNormRect{
       "NORM_RECT"};
-  static constexpr Output<std::vector<Tensor>> kOutTensors{"TENSORS"};
+  static constexpr Output<std::vector<Tensor>>::Optional kOutTensors{"TENSORS"};
+  static constexpr Output<Tensor>::Optional kOutTensor{"TENSOR"};
   static constexpr Output<std::array<float, 4>>::Optional kOutLetterboxPadding{
       "LETTERBOX_PADDING"};
   static constexpr Output<std::array<float, 16>>::Optional kOutMatrix{"MATRIX"};
 
-  MEDIAPIPE_NODE_CONTRACT(kIn, kInGpu, kInNormRect, kOutTensors,
+  MEDIAPIPE_NODE_CONTRACT(kIn, kInGpu, kInNormRect, kOutTensors, kOutTensor,
                           kOutLetterboxPadding, kOutMatrix);
 
   static absl::Status UpdateContract(CalculatorContract* cc) {
@@ -144,6 +155,8 @@ class ImageToTensorCalculator : public Node {
     RET_CHECK_OK(ValidateOptionOutputDims(options));
     RET_CHECK(kIn(cc).IsConnected() ^ kInGpu(cc).IsConnected())
         << "One and only one of IMAGE and IMAGE_GPU input is expected.";
+    RET_CHECK(kOutTensors(cc).IsConnected() ^ kOutTensor(cc).IsConnected())
+        << "One and only one of TENSORS and TENSOR output is supported.";
 
 #if MEDIAPIPE_DISABLE_GPU
     if (kInGpu(cc).IsConnected()) {
@@ -155,6 +168,9 @@ class ImageToTensorCalculator : public Node {
     MP_RETURN_IF_ERROR([MPPMetalHelper updateContract:cc]);
 #else
     cc->UseService(kGpuService).Optional();
+#if MEDIAPIPE_USE_WEBGPU
+    cc->UseService(kWebGpuService).Optional();
+#endif  // MEDIAPIPE_USE_WEBGPU
 #endif  // MEDIAPIPE_METAL_ENABLED
 #endif  // MEDIAPIPE_DISABLE_GPU
 
@@ -191,7 +207,7 @@ class ImageToTensorCalculator : public Node {
         // gracefully by updating timestamp bound instead of returning failure.
         // Timestamp bound update happens automatically. (See Open().)
         // NOTE: usage of sentinel rects should be avoided.
-        DLOG(WARNING)
+        ABSL_DLOG(WARNING)
             << "Updating timestamp bound in response to a sentinel rect";
         return absl::OkStatus();
       }
@@ -236,10 +252,13 @@ class ImageToTensorCalculator : public Node {
                                      params_.range_max,
                                      /*tensor_buffer_offset=*/0, tensor));
 
-    auto result = std::make_unique<std::vector<Tensor>>();
-    result->push_back(std::move(tensor));
-    kOutTensors(cc).Send(std::move(result));
-
+    if (kOutTensors(cc).IsConnected()) {
+      auto result = std::make_unique<std::vector<Tensor>>();
+      result->push_back(std::move(tensor));
+      kOutTensors(cc).Send(std::move(result));
+    } else {
+      kOutTensor(cc).Send(std::move(tensor));
+    }
     return absl::OkStatus();
   }
 
@@ -260,17 +279,29 @@ class ImageToTensorCalculator : public Node {
             gpu_converter_,
             CreateMetalConverter(cc, GetBorderMode(options_.border_mode())));
 #elif MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
+        MP_ASSIGN_OR_RETURN(bool input_starts_at_bottom,
+                            IsGpuOriginAtBottom(options_.gpu_origin()));
         MP_ASSIGN_OR_RETURN(gpu_converter_,
                             CreateImageToGlBufferTensorConverter(
-                                cc, DoesGpuInputStartAtBottom(options_),
+                                cc, input_starts_at_bottom,
                                 GetBorderMode(options_.border_mode())));
 #else
+        if (IsWebGpuAvailable()) {
+#if MEDIAPIPE_USE_WEBGPU
+          MP_ASSIGN_OR_RETURN(gpu_converter_,
+                              CreateImageToWebGpuTextureTensorConverter(cc));
+#endif  // MEDIAPIPE_USE_WEBGPU
+        }
+#if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
         if (!gpu_converter_) {
+          MP_ASSIGN_OR_RETURN(bool input_starts_at_bottom,
+                              IsGpuOriginAtBottom(options_.gpu_origin()));
           MP_ASSIGN_OR_RETURN(gpu_converter_,
                               CreateImageToGlTextureTensorConverter(
-                                  cc, DoesGpuInputStartAtBottom(options_),
+                                  cc, input_starts_at_bottom,
                                   GetBorderMode(options_.border_mode())));
         }
+#endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
         if (!gpu_converter_) {
           return absl::UnimplementedError(
               "ImageToTensorConverter for the input GPU image is unavailable.");

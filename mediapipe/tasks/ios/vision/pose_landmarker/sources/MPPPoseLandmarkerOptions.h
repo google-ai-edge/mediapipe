@@ -60,7 +60,7 @@ NS_SWIFT_NAME(PoseLandmarkerOptions)
 @interface MPPPoseLandmarkerOptions : MPPTaskOptions <NSCopying>
 
 /**
- * Running mode of the pose landmark dection task. Defaults to `.image`. `PoseLandmarker` can be
+ * Running mode of the pose landmark detection task. Defaults to `.image`. `PoseLandmarker` can be
  * created with one of the following running modes:
  *  1. `.image`: The mode for performing pose landmark detection on single image inputs.
  *  2. `.video`: The mode for performing pose landmark detection on the decoded frames of a video.

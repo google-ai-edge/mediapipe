@@ -1,11 +1,15 @@
 """Provides BUILD macros for MediaPipe proto-buffers.
 """
 
+# buildifier: disable=out-of-order-load
 load("//mediapipe/framework/tool:mediapipe_graph.bzl", "mediapipe_options_library")
 load("//mediapipe/framework/tool:mediapipe_proto_allowlist.bzl", "rewrite_target_list")
 load("@com_google_protobuf//:protobuf.bzl", "cc_proto_library", "py_proto_library")
-load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@rules_proto//proto:defs.bzl", _proto_library = "proto_library")
 load("@rules_proto_grpc//js:defs.bzl", "js_proto_library")
+
+java_proto_library = native.java_proto_library
+java_lite_proto_library = native.java_lite_proto_library
 
 def provided_args(**kwargs):
     """Returns the keyword arguments omitting None arguments."""
@@ -86,7 +90,7 @@ def mediapipe_proto_library_impl(
     proto_deps = [":" + name]
 
     if def_proto:
-        native.proto_library(**provided_args(
+        _proto_library(**provided_args(
             name = name,
             srcs = srcs,
             deps = deps,
@@ -122,7 +126,7 @@ def mediapipe_proto_library_impl(
         ))
 
     if def_java_lite_proto:
-        native.java_lite_proto_library(**provided_args(
+        java_lite_proto_library(**provided_args(
             name = replace_suffix(name, "_proto", "_java_proto_lite"),
             deps = proto_deps,
             visibility = visibility,
@@ -131,7 +135,7 @@ def mediapipe_proto_library_impl(
         ))
 
     if def_java_proto:
-        native.java_proto_library(**provided_args(
+        java_proto_library(**provided_args(
             name = replace_suffix(name, "_proto", "_java_proto"),
             deps = proto_deps,
             visibility = visibility,
@@ -265,7 +269,7 @@ def mediapipe_proto_library(
         def_go_proto = True,
         def_dart_proto = True,
         def_options_lib = True,
-        def_rewrite = True,
+        def_rewrite = False,
         portable_deps = None):  # @unused
     """Defines the proto_library targets needed for all mediapipe platforms.
 
@@ -431,7 +435,7 @@ def mediapipe_js_proto_library_oss(
     _ignore = [deps, testonly, compatible_with]
 
     js_deps = replace_deps(lib_proto_deps, "_proto", "_jspb_proto", False)
-    proto_library(
+    _proto_library(
         name = replace_suffix(name, "_jspb_proto", "_lib_proto"),
         srcs = srcs,
         deps = lib_proto_deps,

@@ -69,6 +69,14 @@ absl::Status GlContext::CreateContextInternal(
   // TODO: Investigate this option in more detail, esp. on Safari.
   attrs.preserveDrawingBuffer = 0;
 
+  // TODO: Investigate making this toggle-able, so clients can choose
+  // to hint for dual-GPU platforms according to their individual needs. For
+  // now, we prefer highest performance at the expense of more power, since most
+  // use cases are realtime ML and rendering, where speed is essential. However,
+  // clients can override this if necessary by requesting their canvas' WebGL
+  // context manually before initializing the graph.
+  attrs.powerPreference = EM_WEBGL_POWER_PREFERENCE_HIGH_PERFORMANCE;
+
   // Quick patch for -s DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR so it also
   // looks for our #canvas target in Module.canvas, where we expect it to be.
   // -s OFFSCREENCANVAS_SUPPORT=1 will no longer work with this under the new

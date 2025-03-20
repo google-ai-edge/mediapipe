@@ -19,7 +19,6 @@
 #include <utility>
 #include <vector>
 
-#include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/strings/substitute.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -29,22 +28,16 @@
 #include "mediapipe/framework/formats/image_frame_opencv.h"
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/formats/tensor.h"
+#include "mediapipe/framework/memory_manager.h"
+#include "mediapipe/framework/memory_manager_service.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/opencv_core_inc.h"
+#include "mediapipe/framework/port/opencv_core_inc.h"  // NOLINT
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"  // NOLINT
 #include "mediapipe/framework/tool/validate_type.h"
 
 namespace mediapipe {
-namespace {
-
-constexpr char kTransposeOptionsString[] =
-    "[mediapipe.TensorConverterCalculatorOptions.ext]: {"
-    "row_major_matrix: True}";
-
-}  // namespace
-
 using RandomEngine = std::mt19937_64;
 using ::testing::HasSubstr;
 const uint32_t kSeed = 1234;
@@ -231,6 +224,8 @@ TEST_F(TensorConverterCalculatorTest, CustomDivAndSub) {
   tool::AddVectorSink("tensor", &graph_config, &output_packets);
 
   // Run the graph.
+  MP_ASSERT_OK(graph.SetServiceObject(kMemoryManagerService,
+                                      std::make_shared<MemoryManager>()));
   MP_ASSERT_OK(graph.Initialize(graph_config));
   MP_ASSERT_OK(graph.StartRun({}));
   auto input_image = std::make_unique<ImageFrame>(ImageFormat::GRAY8, 1, 1);
@@ -454,20 +449,14 @@ TEST_F(TensorConverterCalculatorTest,
   // Run the graph.
   MP_ASSERT_OK(graph.Initialize(graph_config));
   MP_ASSERT_OK(graph.StartRun({}));
-  auto input_image = std::make_unique<ImageFrame>(ImageFormat::GRAY8, 1, 1);
-  MP_ASSERT_OK(graph.AddPacketToInputStream(
-      "input_image", Adopt(input_image.release()).At(Timestamp(0))));
 
   // Processing should fail as we specified both flip_vertically and gpu_origin.
-  absl::Status status = graph.WaitUntilIdle();
-  EXPECT_FALSE(status.ok());
-  EXPECT_THAT(status.message(), HasSubstr("flip_vertically and gpu_origin"));
-  EXPECT_EQ(output_packets.size(), 0);
-
-  // Fully close graph at end, otherwise calculator+tensors are destroyed
-  // after calling WaitUntilDone().
-  MP_ASSERT_OK(graph.CloseInputStream("input_image"));
-  EXPECT_FALSE(graph.WaitUntilDone().ok());
+  EXPECT_THAT(
+      graph.WaitUntilIdle(),
+      StatusIs(
+          absl::StatusCode::kFailedPrecondition,
+          HasSubstr(
+              "Cannot specify both flip_vertically and gpu_origin options")));
 }
 
 TEST_F(TensorConverterCalculatorTest, GpuOriginIsIgnoredWithCpuImage) {

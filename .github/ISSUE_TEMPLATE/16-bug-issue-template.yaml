@@ -5,7 +5,7 @@ body:
   - type: markdown
     id: link
     attributes:
-      value: Please make sure that this is a bug and also refer to the [troubleshooting](https://google.github.io/mediapipe/getting_started/troubleshooting.html), FAQ documentation before raising any issues.
+      value: Please make sure that this is a bug and also refer to the [troubleshooting](https://google-ai-edge.github.io/mediapipe/getting_started/troubleshooting.html), FAQ documentation before raising any issues.
   - type: dropdown
     id: customcode_model
     attributes:
@@ -92,12 +92,11 @@ body:
       label: Describe the expected behaviour
     validations:
       required: true
-  - type: textarea
+  - type: input
     id: what-happened_model
     attributes:
       label: Standalone code/steps you may have used to try to get what you need
       description: If there is a problem, provide a reproducible test case that is the bare minimum necessary to generate the problem. If possible, please share a link to Colab, GitHub repo link or anything that we can use to reproduce the problem
-      render: shell
     validations:
        required: true
   - type: textarea

@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#if !defined(MEDIAPIPE_NO_JNI) && \
-    (__ANDROID_API__ >= 26 ||     \
+#if (!defined(MEDIAPIPE_NO_JNI) ||                     \
+     defined(MEDIAPIPE_ANDROID_LINK_NATIVE_WINDOW)) && \
+    (__ANDROID_API__ >= 26 ||                          \
      defined(__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__))
 
 #include <android/hardware_buffer.h>
@@ -48,10 +49,10 @@ absl::StatusOr<HardwareBuffer> HardwareBuffer::Create(
   return HardwareBuffer(spec, ahwb);
 }
 
-absl::StatusOr<HardwareBuffer> HardwareBuffer::WrapAndAquireAHardwareBuffer(
+absl::StatusOr<HardwareBuffer> HardwareBuffer::WrapAndAcquireAHardwareBuffer(
     AHardwareBuffer* ahw_buffer) {
   MP_ASSIGN_OR_RETURN(HardwareBufferSpec spec,
-                      AquireAHardwareBuffer(ahw_buffer));
+                      AcquireAHardwareBuffer(ahw_buffer));
   return HardwareBuffer(spec, ahw_buffer);
 }
 
@@ -81,11 +82,12 @@ absl::StatusOr<AHardwareBuffer*> HardwareBuffer::AllocateAHardwareBuffer(
     return absl::UnavailableError(
         "NDK's hardware buffer support requires Android API level >= 26");
   }
-  RET_CHECK(!error && output != nullptr) << "AHardwareBuffer_allocate failed";
+  RET_CHECK(!error && output != nullptr)
+      << "AHardwareBuffer_allocate failed: " << error;
   return output;
 }
 
-absl::StatusOr<HardwareBufferSpec> HardwareBuffer::AquireAHardwareBuffer(
+absl::StatusOr<HardwareBufferSpec> HardwareBuffer::AcquireAHardwareBuffer(
     AHardwareBuffer* ahw_buffer) {
   HardwareBufferSpec spec;
   if (__builtin_available(android 26, *)) {
@@ -96,7 +98,8 @@ absl::StatusOr<HardwareBufferSpec> HardwareBuffer::AquireAHardwareBuffer(
             .height = desc.height,
             .layers = desc.layers,
             .format = desc.format,
-            .usage = desc.usage};
+            .usage = desc.usage,
+            .stride = desc.stride};
     AHardwareBuffer_acquire(ahw_buffer);
   } else {
     return absl::UnavailableError(
@@ -191,5 +194,6 @@ void HardwareBuffer::Reset() {
 
 }  // namespace mediapipe
 
-#endif  // !defined(MEDIAPIPE_NO_JNI) && (__ANDROID_API__>= 26 ||
-        // defined(__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__))
+#endif  // (!defined(MEDIAPIPE_NO_JNI) ||
+        // defined(MEDIAPIPE_ANDROID_LINK_NATIVE_WINDOW)) && (__ANDROID_API__>=
+        // 26 || defined(__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__))

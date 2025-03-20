@@ -45,6 +45,7 @@ constexpr char kBordersTag[] = "BORDERS";
 constexpr char kSalientRegionsTag[] = "SALIENT_REGIONS";
 constexpr char kVideoTag[] = "VIDEO";
 constexpr char kMaxZoomFactorPctTag[] = "MAX_ZOOM_FACTOR_PCT";
+constexpr char kScaleFactorPctTag[] = "SCALE_FACTOR_PCT";
 constexpr char kAnimateZoomTag[] = "ANIMATE_ZOOM";
 constexpr char kVideoSizeTag[] = "VIDEO_SIZE";
 constexpr char kDetectionsTag[] = "DETECTIONS";
@@ -203,6 +204,33 @@ const char kConfigF[] = R"(
     }
     )";
 
+const char kConfigG[] = R"(
+    calculator: "ContentZoomingCalculator"
+    input_stream: "VIDEO_SIZE:size"
+    input_stream: "DETECTIONS:detections"
+    input_stream: "SCALE_FACTOR_PCT:scale_factor_pct"
+    output_stream: "CROP_RECT:rect"
+    output_stream: "FIRST_CROP_RECT:first_rect"
+    options: {
+      [mediapipe.autoflip.ContentZoomingCalculatorOptions.ext]: {
+        max_zoom_value_deg: 0
+        scale_factor: 1.0
+        kinematic_options_zoom {
+          min_motion_to_reframe: 1.2
+          max_velocity: 18
+        }
+        kinematic_options_tilt {
+          min_motion_to_reframe: 1.2
+          max_velocity: 18
+        }
+        kinematic_options_pan {
+          min_motion_to_reframe: 1.2
+          max_velocity: 18
+        }
+      }
+    }
+    )";
+
 void CheckBorder(const StaticFeatures& static_features, int width, int height,
                  int top_border, int bottom_border) {
   ASSERT_EQ(2, static_features.border().size());
@@ -224,6 +252,7 @@ void CheckBorder(const StaticFeatures& static_features, int width, int height,
 struct AddDetectionFlags {
   std::optional<bool> animated_zoom;
   std::optional<int> max_zoom_factor_percent;
+  std::optional<int> scale_factor_percent;
 };
 
 void AddDetectionFrameSize(const cv::Rect_<float>& position, const int64_t time,
@@ -271,6 +300,14 @@ void AddDetectionFrameSize(const cv::Rect_<float>& position, const int64_t time,
         ->Tag(kMaxZoomFactorPctTag)
         .packets.push_back(
             mediapipe::MakePacket<int>(flags.max_zoom_factor_percent.value())
+                .At(Timestamp(time)));
+  }
+
+  if (flags.scale_factor_percent.has_value()) {
+    runner->MutableInputs()
+        ->Tag(kScaleFactorPctTag)
+        .packets.push_back(
+            mediapipe::MakePacket<int>(flags.scale_factor_percent.value())
                 .At(Timestamp(time)));
   }
 }
@@ -828,6 +865,41 @@ TEST(ContentZoomingCalculatorTest, MaxZoomValueOverride) {
                 runner->Outputs().Tag(kCropRectTag).packets);
 }
 
+TEST(ContentZoomingCalculatorTest, ScaleFactor) {
+  auto config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigD);
+  auto* options = config.mutable_options()->MutableExtension(
+      ContentZoomingCalculatorOptions::ext);
+  options->set_scale_factor(0.5);
+  auto runner = ::absl::make_unique<CalculatorRunner>(config);
+  AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 0, 1000, 1000,
+                        runner.get());
+  MP_ASSERT_OK(runner->Run());
+  CheckCropRect(500, 500, 400, 400, 0,
+                runner->Outputs().Tag(kCropRectTag).packets);
+}
+
+TEST(ContentZoomingCalculatorTest, ScaleFactorOverride) {
+  auto config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigG);
+  auto runner = ::absl::make_unique<CalculatorRunner>(config);
+  AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 0, 1000, 1000,
+                        runner.get(), {.scale_factor_percent = 50});
+  AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 1000000, 1000, 1000,
+                        runner.get(), {.scale_factor_percent = 33});
+  AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 2000000, 1000, 1000,
+                        runner.get(), {.scale_factor_percent = 33});
+  AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 3000000, 1000, 1000,
+                        runner.get(), {.scale_factor_percent = 10});
+  AddDetectionFrameSize(cv::Rect_<float>(.4, .4, .2, .2), 4000000, 1000, 1000,
+                        runner.get(), {.scale_factor_percent = 10});
+  MP_ASSERT_OK(runner->Run());
+  CheckCropRect(500, 500, 400, 400, 0,
+                runner->Outputs().Tag(kCropRectTag).packets);
+  CheckCropRect(500, 500, 630, 630, 2,
+                runner->Outputs().Tag(kCropRectTag).packets);
+  CheckCropRect(500, 500, 1000, 1000, 4,
+                runner->Outputs().Tag(kCropRectTag).packets);
+}
+
 TEST(ContentZoomingCalculatorTest, MaxZoomOutValue) {
   auto config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigD);
   auto* options = config.mutable_options()->MutableExtension(
@@ -1014,6 +1086,46 @@ TEST(ContentZoomingCalculatorTest, ProvidesConstantFirstRect) {
     EXPECT_EQ(first_rect.width(), rect.width());
     EXPECT_EQ(first_rect.height(), rect.height());
   }
+}
+
+TEST(ContentZoomingCalculatorTest, AllowsCroppingOutsideFrame) {
+  auto config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigD);
+  auto* options = config.mutable_options()->MutableExtension(
+      ContentZoomingCalculatorOptions::ext);
+  options->set_allow_cropping_outside_frame(true);
+  auto runner = ::std::make_unique<CalculatorRunner>(config);
+
+  AddDetection(cv::Rect_<float>(-0.5, -0.5, 1.0, 1.0), 0, runner.get());
+  MP_ASSERT_OK(runner->Run());
+
+  CheckCropRect(/* x_center= */ 0, /* y_center= */ 0, /* width= */ 1000,
+                /* height= */ 1000, /* frame_number= */ 0,
+                runner->Outputs().Tag(kCropRectTag).packets);
+}
+
+TEST(ContentZoomingCalculatorTest, InitialEmptyDetectionDefaultsToNoCrop) {
+  auto config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigD);
+  auto* options = config.mutable_options()->MutableExtension(
+      ContentZoomingCalculatorOptions::ext);
+  options->set_allow_cropping_outside_frame(true);
+  auto runner = ::std::make_unique<CalculatorRunner>(config);
+  int64_t time = 0;
+  int width = 1000;
+  int height = 1000;
+
+  auto empty_detections = std::make_unique<std::vector<mediapipe::Detection>>();
+  runner->MutableInputs()
+      ->Tag("DETECTIONS")
+      .packets.push_back(Adopt(empty_detections.release()).At(Timestamp(time)));
+  auto input_size = ::std::make_unique<std::pair<int, int>>(width, height);
+  runner->MutableInputs()
+      ->Tag("VIDEO_SIZE")
+      .packets.push_back(Adopt(input_size.release()).At(Timestamp(time)));
+  MP_ASSERT_OK(runner->Run());
+
+  CheckCropRect(/* x_center= */ 500, /* y_center= */ 500, width, height,
+                /* frame_number= */ 0,
+                runner->Outputs().Tag(kCropRectTag).packets);
 }
 
 }  // namespace

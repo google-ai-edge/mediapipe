@@ -20,6 +20,7 @@
 
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/formats/tensor.h"
+#include "mediapipe/framework/memory_manager.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/status_matchers.h"
@@ -139,12 +140,14 @@ TEST(TensorConverterCpuTest, ShouldNormalizeFloatImageWithDefaultRange) {
 }
 
 TEST(TensorConverterCpuTest, ConvertImageFrameToTensorOnCpu) {
+  MemoryManager memory_manager;
   auto grey8_image_frame = CreateTestGrey8ImageFrame(/*width=*/3, /*height=*/4);
 
-  MP_ASSERT_OK_AND_ASSIGN(Tensor output, ConvertImageFrameToTensorOnCpu(
-                                             grey8_image_frame, {0.0f, 1.0f},
-                                             /*flip_vertically=*/false,
-                                             /*max_num_channels=*/1));
+  MP_ASSERT_OK_AND_ASSIGN(
+      Tensor output,
+      ConvertImageFrameToTensorOnCpu(grey8_image_frame, {0.0f, 1.0f},
+                                     /*flip_vertically=*/false,
+                                     /*max_num_channels=*/1, &memory_manager));
 
   const auto cpu_read_view = output.GetCpuReadView();
   const float* tensor_ptr = cpu_read_view.buffer<float>();
@@ -157,11 +160,13 @@ TEST(TensorConverterCpuTest, ConvertImageFrameToTensorOnCpu) {
 }
 
 TEST(TensorConverterCpuTest, ConvertMatrixToTensorOnCpu) {
+  MemoryManager memory_manager;
   auto test_matrix = CreateTestMatrix(/*num_rows=*/3, /*num_columns=*/4);
 
   MP_ASSERT_OK_AND_ASSIGN(
-      Tensor output, ConvertMatrixToTensorOnCpu(test_matrix,
-                                                /*row_major_matrix=*/false));
+      Tensor output,
+      ConvertMatrixToTensorOnCpu(test_matrix,
+                                 /*row_major_matrix=*/false, &memory_manager));
 
   const auto cpu_read_view = output.GetCpuReadView();
   const float* tensor_ptr = cpu_read_view.buffer<float>();

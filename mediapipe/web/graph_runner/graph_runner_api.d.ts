@@ -1,5 +1,4 @@
 import {EmptyPacketListener, ErrorListener, SimpleListener, VectorListener} from './listener_types';
-import {WasmModule} from './wasm_module';
 
 /**
  * This file can serve as a common interface for most MediaPipe-based TypeScript
@@ -25,9 +24,10 @@ export {
 
 /**
  * Valid types of image sources which we can run our GraphRunner over.
+ *
+ * @deprecated Use TexImageSource instead.
  */
-export type ImageSource = HTMLCanvasElement|HTMLVideoElement|HTMLImageElement|
-    ImageData|ImageBitmap|VideoFrame;
+export type ImageSource = TexImageSource;
 
 /**
  * Simple interface for a class to run an arbitrary MediaPipe graph on web, and
@@ -113,7 +113,8 @@ export interface GraphRunnerApi {
    * @param numChannels The number of channels of audio input. Only 1
    *     is supported for now.
    * @param numSamples The number of samples that are taken in each
-   *     audio capture.
+   *     audio capture. Setting this to null will allow for variable-length
+   *     audio input.
    * @param sampleRate The rate, in Hz, of the sampling.
    * @param streamName The optional name of the input stream to additionally
    *     configure with audio information. This configuration only occurs before
@@ -242,7 +243,7 @@ export interface GraphRunnerApi {
    * @param timestamp The timestamp of the input frame, in ms.
    */
   addGpuBufferToStream(
-      imageSource: ImageSource, streamName: string, timestamp: number): void;
+      imageSource: TexImageSource, streamName: string, timestamp: number): void;
 
   /**
    * Sends a boolean packet into the specified stream at the given timestamp.
@@ -275,6 +276,15 @@ export interface GraphRunnerApi {
    * @param timestamp The timestamp of the input data, in ms.
    */
   addIntToStream(data: number, streamName: string, timestamp: number): void;
+
+  /**
+   * Sends an unsigned integer packet into the specified stream at the given
+   * timestamp.
+   * @param data The unsigned integer data to send.
+   * @param streamName The name of the graph input stream to send data into.
+   * @param timestamp The timestamp of the input data, in ms.
+   */
+  addUintToStream(data: number, streamName: string, timestamp: number): void;
 
   /**
    * Sends a string packet into the specified stream at the given timestamp.
@@ -362,6 +372,16 @@ export interface GraphRunnerApi {
       void;
 
   /**
+   * Sends a vector<uint32_t> packet into the specified stream at the given
+   * timestamp.
+   * @param data The ordered array of unsigned integer data to send as a vector.
+   * @param streamName The name of the graph input stream to send data into.
+   * @param timestamp The timestamp of the input data, in ms.
+   */
+  addUintVectorToStream(data: number[], streamName: string, timestamp: number):
+      void;
+
+  /**
    * Sends a vector<string> packet into the specified stream at the given
    * timestamp.
    * @param data The ordered array of string data to send as a vector.
@@ -402,6 +422,14 @@ export interface GraphRunnerApi {
    *     into.
    */
   addIntToInputSidePacket(data: number, sidePacketName: string): void;
+
+  /**
+   * Attaches a unsigned integer packet to the specified input_side_packet.
+   * @param data The unsigned integer data to send.
+   * @param sidePacketName The name of the graph input side packet to send data
+   *     into.
+   */
+  addUintToInputSidePacket(data: number, sidePacketName: string): void;
 
   /**
    * Attaches a string packet to the specified input_side_packet.
@@ -455,6 +483,14 @@ export interface GraphRunnerApi {
    *     into.
    */
   addIntVectorToInputSidePacket(data: number[], sidePacketName: string): void;
+
+  /**
+   * Attaches a vector<uint32_t> packet to the specified input_side_packet.
+   * @param data The ordered array of unsigned integer data to send as a vector.
+   * @param sidePacketName The name of the graph input side packet to send data
+   *     into.
+   */
+  addUintVectorToInputSidePacket(data: number[], sidePacketName: string): void;
 
   /**
    * Attaches a vector<string> packet to the specified input_side_packet.
@@ -511,6 +547,30 @@ export interface GraphRunnerApi {
    *     should not perform overly complicated (or any async) behavior.
    */
   attachIntVectorListener(
+      outputStreamName: string, callbackFcn: SimpleListener<number[]>): void;
+
+  /**
+   * Attaches an unsigned int packet listener to the specified output_stream.
+   * @param outputStreamName The name of the graph output stream to grab
+   *     unsigned int data from.
+   * @param callbackFcn The function that will be called back with the data, as
+   *     it is received.  Note that the data is only guaranteed to exist for the
+   *     duration of the callback, and the callback will be called inline, so it
+   *     should not perform overly complicated (or any async) behavior.
+   */
+  attachUintListener(
+      outputStreamName: string, callbackFcn: SimpleListener<number>): void;
+
+  /**
+   * Attaches an uint[] packet listener to the specified output_stream.
+   * @param outputStreamName The name of the graph output stream to grab
+   *     std::vector<uint32_t> data from.
+   * @param callbackFcn The function that will be called back with the data, as
+   *     it is received.  Note that the data is only guaranteed to exist for the
+   *     duration of the callback, and the callback will be called inline, so it
+   *     should not perform overly complicated (or any async) behavior.
+   */
+  attachUintVectorListener(
       outputStreamName: string, callbackFcn: SimpleListener<number[]>): void;
 
   /**

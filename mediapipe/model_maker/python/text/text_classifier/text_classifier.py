@@ -87,8 +87,10 @@ class TextClassifier(classifier.Classifier):
 
   @classmethod
   def create(
-      cls, train_data: text_ds.Dataset, validation_data: text_ds.Dataset,
-      options: text_classifier_options.TextClassifierOptions
+      cls,
+      train_data: text_ds.Dataset,
+      validation_data: text_ds.Dataset,
+      options: text_classifier_options.TextClassifierOptions,
   ) -> "TextClassifier":
     """Factory function that creates and trains a text classifier.
 
@@ -110,7 +112,8 @@ class TextClassifier(classifier.Classifier):
     if train_data.label_names != validation_data.label_names:
       raise ValueError(
           f"Training data label names {train_data.label_names} not equal to "
-          f"validation data label names {validation_data.label_names}")
+          f"validation data label names {validation_data.label_names}"
+      )
 
     _validate(options)
     if options.model_options is None:
@@ -151,23 +154,16 @@ class TextClassifier(classifier.Classifier):
     )
 
   def evaluate(
-      self,
-      data: ds.Dataset,
-      batch_size: int = 32,
-      desired_precisions: Optional[Sequence[float]] = None,
-      desired_recalls: Optional[Sequence[float]] = None,
+      self, data: ds.Dataset, batch_size: int = 32, **kwargs: Any
   ) -> Any:
     """Overrides Classifier.evaluate().
 
     Args:
       data: Evaluation dataset. Must be a TextClassifier Dataset.
       batch_size: Number of samples per evaluation step.
-      desired_precisions: If specified, adds a RecallAtPrecision metric per
-        desired_precisions[i] entry which tracks the recall given the constraint
-        on precision. Only supported for binary classification.
-      desired_recalls: If specified, adds a PrecisionAtRecall metric per
-        desired_recalls[i] entry which tracks the precision given the constraint
-        on recall. Only supported for binary classification.
+      **kwargs: Additional keyword arguments to pass to `model.evaluate()` such
+        as return_dict=True. More info can be found at
+        https://www.tensorflow.org/api_docs/python/tf/keras/Model#evaluate.
 
     Returns:
       The loss value and accuracy.
@@ -185,7 +181,7 @@ class TextClassifier(classifier.Classifier):
     dataset = processed_data.gen_tf_dataset(batch_size, is_training=False)
 
     with self._hparams.get_strategy().scope():
-      return self._model.evaluate(dataset)
+      return self._model.evaluate(dataset, **kwargs)
 
   def save_model(
       self,
@@ -209,7 +205,8 @@ class TextClassifier(classifier.Classifier):
   def export_model(
       self,
       model_name: str = "model.tflite",
-      quantization_config: Optional[quantization.QuantizationConfig] = None):
+      quantization_config: Optional[quantization.QuantizationConfig] = None,
+  ):
     """Converts and saves the model to a TFLite file with metadata included.
 
     Note that only the TFLite file is needed for deployment. This function also
@@ -268,11 +265,10 @@ class _AverageWordEmbeddingClassifier(TextClassifier):
     self._loss_function = "sparse_categorical_crossentropy"
     self._metric_functions = [
         "accuracy",
-        metrics.SparsePrecision(name="precision", dtype=tf.float32),
-        metrics.SparseRecall(name="recall", dtype=tf.float32),
     ]
     self._text_preprocessor: (
-        preprocessor.AverageWordEmbeddingClassifierPreprocessor) = None
+        preprocessor.AverageWordEmbeddingClassifierPreprocessor
+    ) = None
 
   @classmethod
   def create_average_word_embedding_classifier(
@@ -295,13 +291,16 @@ class _AverageWordEmbeddingClassifier(TextClassifier):
         model_spec=options.supported_model.value(),
         model_options=options.model_options,
         hparams=options.hparams,
-        label_names=train_data.label_names)
+        label_names=train_data.label_names,
+    )
     average_word_embedding_classifier._create_and_train_model(
-        train_data, validation_data)
+        train_data, validation_data
+    )
     return average_word_embedding_classifier
 
-  def _create_and_train_model(self, train_data: text_ds.Dataset,
-                              validation_data: text_ds.Dataset):
+  def _create_and_train_model(
+      self, train_data: text_ds.Dataset, validation_data: text_ds.Dataset
+  ):
     """Creates the Average Word Embedding classifier keras model and trains it.
 
     Args:
@@ -309,7 +308,8 @@ class _AverageWordEmbeddingClassifier(TextClassifier):
       validation_data: Validation data.
     """
     (processed_train_data, processed_validation_data) = (
-        self._load_and_run_preprocessor(train_data, validation_data))
+        self._load_and_run_preprocessor(train_data, validation_data)
+    )
     self._create_model()
     self._optimizer = "rmsprop"
     self._train_model(processed_train_data, processed_validation_data)
@@ -335,9 +335,12 @@ class _AverageWordEmbeddingClassifier(TextClassifier):
             seq_len=self._model_options.seq_len,
             do_lower_case=self._model_options.do_lower_case,
             texts=train_texts + validation_texts,
-            vocab_size=self._model_options.vocab_size))
+            vocab_size=self._model_options.vocab_size,
+        )
+    )
     return self._text_preprocessor.preprocess(
-        train_data), self._text_preprocessor.preprocess(validation_data)
+        train_data
+    ), self._text_preprocessor.preprocess(validation_data)
 
   def _create_model(self):
     """Creates an Average Word Embedding model."""
@@ -370,8 +373,10 @@ class _AverageWordEmbeddingClassifier(TextClassifier):
         model_buffer=tflite_model,
         regex_tokenizer=metadata_writer.RegexTokenizer(
             delim_regex_pattern=self._DELIM_REGEX_PATTERN,
-            vocab_file_path=vocab_filepath),
-        labels=metadata_writer.Labels().add(list(self._label_names)))
+            vocab_file_path=vocab_filepath,
+        ),
+        labels=metadata_writer.Labels().add(list(self._label_names)),
+    )
 
 
 class _BertClassifier(TextClassifier):
@@ -388,6 +393,12 @@ class _BertClassifier(TextClassifier):
   ):
     super().__init__(model_spec, label_names, hparams.shuffle)
     self._hparams = hparams
+    if self._hparams.monitor:
+      monitor = f"val_{self._hparams.monitor}"
+    elif self._num_classes == 2 or self._hparams.is_multilabel:
+      monitor = "val_auc"  # auc is a binary or multilabel only metric
+    else:
+      monitor = "val_accuracy"
     self._callbacks = list(
         model_util.get_default_callbacks(
             self._hparams.export_dir, self._hparams.checkpoint_frequency
@@ -395,7 +406,7 @@ class _BertClassifier(TextClassifier):
     ) + [
         tf.keras.callbacks.ModelCheckpoint(
             os.path.join(self._hparams.export_dir, "best_model"),
-            monitor="val_auc",
+            monitor=monitor,
             mode="max",
             save_best_only=True,
             save_weights_only=False,
@@ -404,9 +415,19 @@ class _BertClassifier(TextClassifier):
     self._model_options = model_options
     self._text_preprocessor: preprocessor.BertClassifierPreprocessor = None
     with self._hparams.get_strategy().scope():
-      self._loss_function = loss_functions.SparseFocalLoss(
-          self._hparams.gamma, self._num_classes
+      class_weights = (
+          self._hparams.multiclass_loss_weights
+          if self._num_classes > 2
+          else None
       )
+      if self._hparams.is_multilabel:
+        self._loss_function = loss_functions.MaskedBinaryCrossentropy(
+            class_weights=class_weights
+        )
+      else:
+        self._loss_function = loss_functions.SparseFocalLoss(
+            self._hparams.gamma, self._num_classes, class_weight=class_weights
+        )
       self._metric_functions = self._create_metrics()
 
   @classmethod
@@ -432,6 +453,13 @@ class _BertClassifier(TextClassifier):
         hparams=options.hparams,
         label_names=train_data.label_names,
     )
+    tf.io.gfile.makedirs(bert_classifier._hparams.export_dir)
+    config_file = os.path.join(
+        bert_classifier._hparams.export_dir, "config.txt"
+    )
+    with tf.io.gfile.GFile(config_file, "w") as f:
+      f.write(str(options))
+      f.write(f"\nlabel_names:{train_data.label_names}")
     bert_classifier._create_and_train_model(train_data, validation_data)
     return bert_classifier
 
@@ -465,12 +493,13 @@ class _BertClassifier(TextClassifier):
     bert_classifier._model.compile(
         optimizer=bert_classifier._optimizer,
         loss=bert_classifier._loss_function,
-        metrics=bert_classifier._metric_functions,
+        weighted_metrics=bert_classifier._metric_functions,
     )
     return bert_classifier
 
-  def _create_and_train_model(self, train_data: text_ds.Dataset,
-                              validation_data: text_ds.Dataset):
+  def _create_and_train_model(
+      self, train_data: text_ds.Dataset, validation_data: text_ds.Dataset
+  ):
     """Creates the BERT-based classifier keras model and trains it.
 
     Args:
@@ -484,7 +513,11 @@ class _BertClassifier(TextClassifier):
     with self._hparams.get_strategy().scope():
       self._create_model()
       self._create_optimizer(processed_train_data)
-    self._train_model(processed_train_data, processed_validation_data)
+    self._train_model(
+        processed_train_data,
+        processed_validation_data,
+        checkpoint_path=os.path.join(self._hparams.export_dir, "checkpoint"),
+    )
 
   def _load_preprocessor(self):
     """Loads a BertClassifierPreprocessor."""
@@ -513,6 +546,36 @@ class _BertClassifier(TextClassifier):
         self._text_preprocessor.preprocess(validation_data),
     )
 
+  def _get_eligle_monitor_metric_variables(
+      self,
+  ) -> Tuple[Optional[str], Optional[Sequence[float]]]:
+    """Returns the monitor metric name and class weights if eligible."""
+    class_weights = self._hparams.best_checkpoint_monitor_weights
+    monitor_name = self._hparams.monitor
+
+    if (
+        class_weights
+        and monitor_name == "multiclass_recalls_accuracy_weighted_sum"
+    ):
+      return monitor_name, class_weights
+    elif (
+        not class_weights
+        and monitor_name == "multiclass_recalls_accuracy_weighted_sum"
+    ):
+      raise ValueError(
+          "best_checkpoint_monitor_weights must be specified for"
+          " multiclass_recalls_accuracy_weighted_sum monitor metric."
+      )
+    elif (
+        class_weights
+        and monitor_name != "multiclass_recalls_accuracy_weighted_sum"
+    ):
+      raise ValueError(
+          "best_checkpoint_monitor_weights can only be specified for"
+          " multiclass_recalls_accuracy_weighted_sum monitor metric."
+      )
+    return None, None
+
   def _create_metrics(self):
     """Creates metrics for training and evaluation.
 
@@ -520,45 +583,145 @@ class _BertClassifier(TextClassifier):
 
     For binary classification tasks only (num_classes=2):
       Users can configure PrecisionAtRecall and RecallAtPrecision metrics using
-      the desired_presisions and desired_recalls fields in BertHParams.
+      the desired_precisions and desired_recalls fields in BertHParams.
+      Users can also configure the desired_thresholds field to specify
+      thresholds for the BinarySparsePrecision and BinarySparseRecall metrics.
 
     Returns:
       A list of tf.keras.Metric subclasses which can be used with model.compile
     """
-    metric_functions = [
-        tf.keras.metrics.SparseCategoricalAccuracy(
-            "accuracy", dtype=tf.float32
-        ),
-        metrics.SparsePrecision(name="precision", dtype=tf.float32),
-        metrics.SparseRecall(name="recall", dtype=tf.float32),
-        metrics.BinaryAUC(name="auc", num_thresholds=1000),
-    ]
-    if self._num_classes == 2:
-      if self._hparams.desired_precisions:
-        for desired_precision in self._hparams.desired_precisions:
-          metric_functions.append(
-              metrics.BinarySparseRecallAtPrecision(
-                  desired_precision,
-                  name=f"recall_at_precision_{desired_precision}",
-                  num_thresholds=1000,
-              )
+    metric_functions = []
+    if self._hparams.is_multilabel:
+      metric_functions.append(tf.keras.metrics.BinaryAccuracy())
+      metric_functions.append(
+          tf.keras.metrics.AUC(
+              name="auc", multi_label=True, num_thresholds=1000
           )
-      if self._hparams.desired_recalls:
-        for desired_recall in self._hparams.desired_recalls:
-          metric_functions.append(
-              metrics.BinarySparseRecallAtPrecision(
-                  desired_recall,
-                  name=f"precision_at_recall_{desired_recall}",
-                  num_thresholds=1000,
-              )
-          )
-    else:
-      if self._hparams.desired_precisions or self._hparams.desired_recalls:
-        raise ValueError(
-            "desired_recalls and desired_precisions parameters are binary"
-            " metrics and not supported for num_classes > 2. Found"
-            f" num_classes: {self._num_classes}"
+      )
+      for i in range(self._num_classes):
+        metric_functions.append(
+            metrics.BinaryAUC(name=f"auc_{i}", num_thresholds=1000, class_id=i)
         )
+        if self._hparams.desired_precisions:
+          for desired_precision in self._hparams.desired_precisions:
+            metric_functions.append(
+                metrics.MaskedBinaryRecallAtPrecision(
+                    desired_precision,
+                    name=f"recall_at_precision_{desired_precision}_{i}",
+                    num_thresholds=1000,
+                    class_id=i,
+                )
+            )
+        if self._hparams.desired_recalls:
+          for desired_recall in self._hparams.desired_recalls:
+            metric_functions.append(
+                metrics.MaskedBinaryPrecisionAtRecall(
+                    desired_recall,
+                    name=f"precision_at_recall_{desired_recall}_{i}",
+                    num_thresholds=1000,
+                    class_id=i,
+                )
+            )
+        if self._hparams.desired_thresholds:
+          for desired_threshold in self._hparams.desired_thresholds:
+            metric_functions.append(
+                metrics.MaskedBinaryPrecision(
+                    desired_threshold,
+                    name=f"precision_at_{desired_threshold}_class{i}",
+                    class_id=i,
+                )
+            )
+            metric_functions.append(
+                metrics.MaskedBinaryRecall(
+                    desired_threshold,
+                    name=f"recall_at_{desired_threshold}_class{i}",
+                    class_id=i,
+                )
+            )
+    else:
+      metric_functions.append(
+          tf.keras.metrics.SparseCategoricalAccuracy(
+              "accuracy", dtype=tf.float32
+          ),
+      )
+      if self._num_classes == 2:
+        metric_functions.extend([
+            metrics.BinarySparseAUC(name="auc", num_thresholds=1000),
+        ])
+        if self._hparams.desired_thresholds:
+          for desired_threshold in self._hparams.desired_thresholds:
+            metric_functions.append(
+                metrics.BinarySparsePrecision(
+                    name=f"precision_{desired_threshold}",
+                    thresholds=desired_threshold,
+                )
+            )
+            metric_functions.append(
+                metrics.BinarySparseRecall(
+                    name=f"recall_{desired_threshold}",
+                    thresholds=desired_threshold,
+                )
+            )
+        if self._hparams.desired_precisions:
+          for desired_precision in self._hparams.desired_precisions:
+            metric_functions.append(
+                metrics.BinarySparseRecallAtPrecision(
+                    desired_precision,
+                    name=f"recall_at_precision_{desired_precision}",
+                    num_thresholds=1000,
+                )
+            )
+        if self._hparams.desired_recalls:
+          for desired_recall in self._hparams.desired_recalls:
+            metric_functions.append(
+                metrics.BinarySparseRecallAtPrecision(
+                    desired_recall,
+                    name=f"precision_at_recall_{desired_recall}",
+                    num_thresholds=1000,
+                )
+            )
+      else:
+        for i in range(self._num_classes):
+          metric_functions.append(
+              metrics.MultiClassSparsePrecision(
+                  name=f"class_{i}_precision", class_id=i
+              )
+          )
+          metric_functions.append(
+              metrics.MultiClassSparseRecall(
+                  name=f"class_{i}_recall", class_id=i
+              )
+          )
+        monitor_name, class_weights = (
+            self._get_eligle_monitor_metric_variables()
+        )
+        if monitor_name and class_weights:
+          monitor_metrics = [
+              tf.keras.metrics.SparseCategoricalAccuracy(
+                  "accuracy", dtype=tf.float32
+              )
+          ]
+          for i in range(self._num_classes):
+            monitor_metrics.append(
+                metrics.MultiClassSparseRecall(
+                    name=f"class_{i}_recall", class_id=i
+                ),
+            )
+          weights = [1.0 - sum(class_weights)]
+          weights.extend(class_weights)
+          metric_functions.append(
+              metrics.WeightedSumMetric(
+                  addend_metrics=monitor_metrics,
+                  weights=weights,
+                  name=monitor_name,
+              )
+          )
+        if self._hparams.desired_precisions or self._hparams.desired_recalls:
+          raise ValueError(
+              "desired_recalls and desired_precisions parameters are binary"
+              " metrics and not supported for num_classes > 2. Found"
+              f" num_classes: {self._num_classes}"
+          )
     return metric_functions
 
   def _create_model(self):
@@ -569,17 +732,17 @@ class _BertClassifier(TextClassifier):
     """
     encoder_inputs = dict(
         input_word_ids=tf.keras.layers.Input(
-            shape=(self._model_options.seq_len,),
+            shape=(None,),
             dtype=tf.int32,
             name="input_word_ids",
         ),
         input_mask=tf.keras.layers.Input(
-            shape=(self._model_options.seq_len,),
+            shape=(None,),
             dtype=tf.int32,
             name="input_mask",
         ),
         input_type_ids=tf.keras.layers.Input(
-            shape=(self._model_options.seq_len,),
+            shape=(None,),
             dtype=tf.int32,
             name="input_type_ids",
         ),
@@ -618,7 +781,7 @@ class _BertClassifier(TextClassifier):
         self._num_classes,
         kernel_initializer=initializer,
         name="output",
-        activation="softmax",
+        activation="sigmoid" if self._hparams.is_multilabel else "softmax",
         dtype=tf.float32,
     )(output)
     self._model = tf.keras.Model(inputs=encoder_inputs, outputs=output)
@@ -635,7 +798,8 @@ class _BertClassifier(TextClassifier):
     self._hparams.steps_per_epoch = model_util.get_steps_per_epoch(
         steps_per_epoch=self._hparams.steps_per_epoch,
         batch_size=self._hparams.batch_size,
-        train_data=train_data)
+        train_data=train_data,
+    )
     total_steps = self._hparams.steps_per_epoch * self._hparams.epochs
     warmup_steps = int(total_steps * 0.1)
     initial_lr = self._hparams.learning_rate
@@ -678,9 +842,8 @@ class _BertClassifier(TextClassifier):
 
   def _save_vocab(self, vocab_filepath: str):
     tf.io.gfile.copy(
-        self._text_preprocessor.get_vocab_file(),
-        vocab_filepath,
-        overwrite=True)
+        self._text_preprocessor.get_vocab_file(), vocab_filepath, overwrite=True
+    )
 
   def _get_metadata_writer(self, tflite_model: bytearray, vocab_filepath: str):
     return text_classifier_writer.MetadataWriter.create_for_bert_model(
@@ -689,7 +852,79 @@ class _BertClassifier(TextClassifier):
         labels=metadata_writer.Labels().add(list(self._label_names)),
         ids_name=self._model_spec.tflite_input_name["ids"],
         mask_name=self._model_spec.tflite_input_name["mask"],
-        segment_name=self._model_spec.tflite_input_name["segment_ids"])
+        segment_name=self._model_spec.tflite_input_name["segment_ids"],
+    )
+
+  def export_model(
+      self,
+      model_name: str = "model.tflite",
+      quantization_config: Optional[quantization.QuantizationConfig] = None,
+      batch_size: Optional[int] = None,
+  ):
+    """Converts and saves the model to a TFLite file with metadata included.
+
+    Note that only the TFLite file is needed for deployment. This function also
+    saves a metadata.json file to the same directory as the TFLite file which
+    can be used to interpret the metadata content in the TFLite file.
+
+    This override method is needed to disable dynamic sequence length in the
+    MediaPipe-wrapped model. See b/361090759 for more info.
+
+    Args:
+      model_name: File name to save TFLite model with metadata. The full export
+        path is {self._hparams.export_dir}/{model_name}.
+      quantization_config: The configuration for model quantization.
+      batch_size: Inference batch size to use for the TFlite model. Default is
+        None, which means the batch size is dynamic.
+    """
+    tf.io.gfile.makedirs(self._hparams.export_dir)
+    tflite_file = os.path.join(self._hparams.export_dir, model_name)
+    metadata_file = os.path.join(self._hparams.export_dir, "metadata.json")
+
+    constant_len_inputs = dict(
+        input_word_ids=tf.keras.layers.Input(
+            shape=(self._model_options.seq_len,),
+            dtype=tf.int32,
+            name="input_word_ids",
+            batch_size=batch_size,
+        ),
+        input_mask=tf.keras.layers.Input(
+            shape=(self._model_options.seq_len,),
+            dtype=tf.int32,
+            name="input_mask",
+            batch_size=batch_size,
+        ),
+        input_type_ids=tf.keras.layers.Input(
+            shape=(self._model_options.seq_len,),
+            dtype=tf.int32,
+            name="input_type_ids",
+            batch_size=batch_size,
+        ),
+    )
+    output = self._model(constant_len_inputs)
+    constant_len_model = tf.keras.Model(
+        inputs=constant_len_inputs, outputs=output
+    )
+    saved_model_file = os.path.join(
+        self._hparams.export_dir, "saved_model_constant_len"
+    )
+    constant_len_model.save(
+        saved_model_file,
+        include_optimizer=False,
+        save_format="tf",
+    )
+
+    tflite_model = model_util.convert_to_tflite_from_file(
+        saved_model_file, quantization_config=quantization_config
+    )
+    vocab_filepath = os.path.join(tempfile.mkdtemp(), "vocab.txt")
+    self._save_vocab(vocab_filepath)
+
+    writer = self._get_metadata_writer(tflite_model, vocab_filepath)
+    tflite_model_with_metadata, metadata_json = writer.populate()
+    model_util.save_tflite(tflite_model_with_metadata, tflite_file)
+    with tf.io.gfile.GFile(metadata_file, "w") as f:
+      f.write(metadata_json)
 
   def export_model_with_tokenizer(
       self,

@@ -242,7 +242,7 @@ absl::StatusOr<SubRectExtractorGl> SubRectExtractorGl::Create(
                             use_custom_zero_border, border_mode);
 }
 
-class GlProcessor : public ImageToTensorConverter {
+class ImageToTensorGlBufferConverter : public ImageToTensorConverter {
  public:
   absl::Status Init(CalculatorContext* cc, bool input_starts_at_bottom,
                     BorderMode border_mode) {
@@ -318,7 +318,7 @@ class GlProcessor : public ImageToTensorConverter {
     return absl::OkStatus();
   }
 
-  ~GlProcessor() override {
+  ~ImageToTensorGlBufferConverter() override {
     gl_helper_.RunInGlContext([this]() {
       // Release OpenGL resources.
       extractor_ = nullptr;
@@ -348,7 +348,7 @@ absl::StatusOr<std::unique_ptr<ImageToTensorConverter>>
 CreateImageToGlBufferTensorConverter(CalculatorContext* cc,
                                      bool input_starts_at_bottom,
                                      BorderMode border_mode) {
-  auto result = absl::make_unique<GlProcessor>();
+  auto result = absl::make_unique<ImageToTensorGlBufferConverter>();
   MP_RETURN_IF_ERROR(result->Init(cc, input_starts_at_bottom, border_mode));
 
   return result;

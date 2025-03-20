@@ -130,8 +130,8 @@ as the primary developer documentation site for MediaPipe as of April 3, 2023.*
     }
     ```
 
-[`hello world`]: https://github.com/google/mediapipe/tree/master/mediapipe/examples/desktop/hello_world/hello_world.cc
-[`CalculatorGraphConfig`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator.proto
-[`PassThroughCalculator`]: https://github.com/google/mediapipe/tree/master/mediapipe/calculators/core/pass_through_calculator.cc
-[`MakePacket`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/packet.h
-[`StartRun`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator_graph.h
+[`hello world`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/desktop/hello_world/hello_world.cc
+[`CalculatorGraphConfig`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator.proto
+[`PassThroughCalculator`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/calculators/core/pass_through_calculator.cc
+[`MakePacket`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/packet.h
+[`StartRun`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator_graph.h

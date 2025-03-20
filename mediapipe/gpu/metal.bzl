@@ -25,8 +25,8 @@ simple data file, but in that case any declared headers are not visible to
 dependent objc_library rules.
 """
 
-load("@build_bazel_apple_support//lib:apple_support.bzl", "apple_support")
 load("@bazel_skylib//lib:dicts.bzl", "dicts")
+load("@build_bazel_apple_support//lib:apple_support.bzl", "apple_support")
 
 # This load statement is overriding the visibility of the internal implementation of rules_apple.
 # This rule will be migrated to rules_apple in the future, hence the override. Please do not use
@@ -101,7 +101,9 @@ def _metal_library_impl(ctx):
                 _metal_compiler_args(ctx, src, obj, ctx.attr.minimum_os_version, ctx.attr.copts, diagnostics, deps_dump))
 
         apple_support.run(
-            ctx,
+            actions = ctx.actions,
+            xcode_config = ctx.attr._xcode_config[apple_common.XcodeVersionConfig],
+            apple_fragment = ctx.fragments.apple,
             xcode_path_resolve_level = apple_support.xcode_path_resolve_level.args,
             inputs = _metal_compiler_inputs(ctx.files.srcs, ctx.files.hdrs, ctx.attr.deps),
             outputs = [obj, diagnostics, deps_dump],
@@ -123,7 +125,9 @@ def _metal_library_impl(ctx):
     ] + [x.path for x in output_objs]
 
     apple_support.run(
-        ctx,
+        actions = ctx.actions,
+        xcode_config = ctx.attr._xcode_config[apple_common.XcodeVersionConfig],
+        apple_fragment = ctx.fragments.apple,
         xcode_path_resolve_level = apple_support.xcode_path_resolve_level.args,
         inputs = output_objs,
         outputs = (output_lib,),
@@ -157,7 +161,11 @@ def _metal_library_impl(ctx):
         objc_provider,
         cc_common.merge_cc_infos(cc_infos = cc_infos),
         # Return the provider for the new bundling logic of rules_apple.
-        resources.bucketize_typed([output_lib], "unprocessed"),
+        resources.bucketize_typed(
+            bucket_type = "unprocessed",
+            expect_files = True,
+            resources = [output_lib],
+        ),
     ]
 
 METAL_LIBRARY_ATTRS = dicts.add(apple_support.action_required_attrs(), {
@@ -172,7 +180,6 @@ metal_library = rule(
     implementation = _metal_library_impl,
     attrs = METAL_LIBRARY_ATTRS,
     fragments = ["apple", "objc"],
-    output_to_genfiles = True,
 )
 """
 Builds a Metal library.

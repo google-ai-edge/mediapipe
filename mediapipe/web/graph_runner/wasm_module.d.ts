@@ -48,6 +48,8 @@ export declare interface WasmModule {
       (data: number, streamNamePtr: number, timestamp: number) => void;
   _addIntToInputStream:
       (data: number, streamNamePtr: number, timestamp: number) => void;
+  _addUintToInputStream:
+      (data: number, streamNamePtr: number, timestamp: number) => void;
   _addStringToInputStream:
       (dataPtr: number, streamNamePtr: number, timestamp: number) => void;
   _addBoolVectorToInputStream:
@@ -58,10 +60,15 @@ export declare interface WasmModule {
       (vecPtr: number, streamNamePtr: number, timestamp: number) => void;
   _addIntVectorToInputStream:
       (vecPtr: number, streamNamePtr: number, timestamp: number) => void;
+  _addUintVectorToInputStream:
+      (vecPtr: number, streamNamePtr: number, timestamp: number) => void;
   _addStringVectorToInputStream:
       (vecPtr: number, streamNamePtr: number, timestamp: number) => void;
   _addFlatHashMapToInputStream:
       (keysPtr: number, valuesPtr: number, count: number, streamNamePtr: number,
+       timestamp: number) => void;
+  _addRawDataSpanToInputStream:
+      (dataPtr: number, dataSize: number, streamNamePtr: number,
        timestamp: number) => void;
   _addProtoToInputStream:
       (dataPtr: number, dataSize: number, protoNamePtr: number,
@@ -74,7 +81,11 @@ export declare interface WasmModule {
   _addDoubleToInputSidePacket: (data: number, streamNamePtr: number) => void;
   _addFloatToInputSidePacket: (data: number, streamNamePtr: number) => void;
   _addIntToInputSidePacket: (data: number, streamNamePtr: number) => void;
+  _addUintToInputSidePacket:
+      (data: number, streamNamePtr: number) => void;
   _addStringToInputSidePacket: (dataPtr: number, streamNamePtr: number) => void;
+  _addRawDataSpanToInputSidePacket:
+      (dataPtr: number, dataSize: number, streamNamePtr: number) => void;
   _addProtoToInputSidePacket:
       (dataPtr: number, dataSize: number, protoNamePtr: number,
        streamNamePtr: number) => void;
@@ -86,6 +97,8 @@ export declare interface WasmModule {
       (vecPtr: number, streamNamePtr: number) => void;
   _addIntVectorToInputSidePacket:
       (vecPtr: number, streamNamePtr: number) => void;
+  _addUintVectorToInputSidePacket:
+      (vecPtr: number, streamNamePtr: number) => void;
   _addStringVectorToInputSidePacket:
       (vecPtr: number, streamNamePtr: number) => void;
 
@@ -94,11 +107,13 @@ export declare interface WasmModule {
   _allocateDoubleVector: (size: number) => number;
   _allocateFloatVector: (size: number) => number;
   _allocateIntVector: (size: number) => number;
+  _allocateUintVector: (size: number) => number;
   _allocateStringVector: (size: number) => number;
   _addBoolVectorEntry: (vecPtr: number, entry: boolean) => void;
   _addDoubleVectorEntry: (vecPtr: number, entry: number) => void;
   _addFloatVectorEntry: (vecPtr: number, entry: number) => void;
   _addIntVectorEntry: (vecPtr: number, entry: number) => void;
+  _addUintVectorEntry: (vecPtr: number, entry: number) => void;
   _addStringVectorEntry: (vecPtr: number, entryStringPtr: number) => void;
 
   // Map of output streams to packet listeners.  Also built as part of
@@ -115,6 +130,8 @@ export declare interface WasmModule {
   _attachFloatVectorListener: (streamNamePtr: number) => void;
   _attachIntListener: (streamNamePtr: number) => void;
   _attachIntVectorListener: (streamNamePtr: number) => void;
+  _attachUintListener: (streamNamePtr: number) => void;
+  _attachUintVectorListener: (streamNamePtr: number) => void;
   _attachStringListener: (streamNamePtr: number) => void;
   _attachStringVectorListener: (streamNamePtr: number) => void;
   _attachProtoListener: (streamNamePtr: number, makeDeepCopy?: boolean) => void;

@@ -46,7 +46,7 @@ constexpr int kAttribVertex = 0;
 constexpr int kAttribTexturePosition = 1;
 constexpr int kNumAttributes = 2;
 
-class GlProcessor : public ImageToTensorConverter {
+class ImageToTensorGlTextureConverter : public ImageToTensorConverter {
  public:
   absl::Status Init(CalculatorContext* cc, bool input_starts_at_bottom,
                     BorderMode border_mode) {
@@ -309,7 +309,7 @@ class GlProcessor : public ImageToTensorConverter {
     return absl::OkStatus();
   }
 
-  ~GlProcessor() override {
+  ~ImageToTensorGlTextureConverter() override {
     gl_helper_.RunInGlContext([this]() {
       // Release OpenGL resources.
       if (framebuffer_ != 0) glDeleteFramebuffers(1, &framebuffer_);
@@ -349,7 +349,7 @@ absl::StatusOr<std::unique_ptr<ImageToTensorConverter>>
 CreateImageToGlTextureTensorConverter(CalculatorContext* cc,
                                       bool input_starts_at_bottom,
                                       BorderMode border_mode) {
-  auto result = absl::make_unique<GlProcessor>();
+  auto result = std::make_unique<ImageToTensorGlTextureConverter>();
   MP_RETURN_IF_ERROR(result->Init(cc, input_starts_at_bottom, border_mode));
   return result;
 }

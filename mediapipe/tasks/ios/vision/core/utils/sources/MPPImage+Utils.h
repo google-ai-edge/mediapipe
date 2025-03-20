@@ -59,7 +59,7 @@ NS_ASSUME_NONNULL_BEGIN
  * @return A new `MPImage` instance with the pixels from the given `mediapipe::Image` and meta data
  * equal to the `sourceImage`. `nil` if there is an error in initializing the `MPPImage`.
  */
-- (nullable instancetype)initWithCppImage:(mediapipe::Image &)image
+- (nullable instancetype)initWithCppImage:(const mediapipe::Image &)image
            cloningPropertiesOfSourceImage:(MPPImage *)sourceImage
                       shouldCopyPixelData:(BOOL)shouldCopyPixelData
                                     error:(NSError **)error;

@@ -61,7 +61,7 @@ NS_ASSUME_NONNULL_BEGIN
                                roiAllowed:(BOOL)roiAllowed
                           packetsCallback:(mediapipe::tasks::core::PacketsCallback)packetsCallback
                      imageInputStreamName:(NSString *)imageInputStreamName
-                  normRectInputStreamName:(NSString *)normRectInputStreamName
+                  normRectInputStreamName:(nullable NSString *)normRectInputStreamName
                                     error:(NSError **)error NS_DESIGNATED_INITIALIZER;
 
 /**

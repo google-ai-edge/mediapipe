@@ -3,12 +3,12 @@
 
 """.bzl file for mediapipe open source build configs."""
 
+load("@npm//@bazel/typescript:index.bzl", "ts_project")
 load(
     "//mediapipe/framework/tool:mediapipe_proto.bzl",
     _mediapipe_cc_proto_library = "mediapipe_cc_proto_library",
     _mediapipe_proto_library = "mediapipe_proto_library",
 )
-load("@npm//@bazel/typescript:index.bzl", "ts_project")
 
 # TODO: enable def_rewrite once alias proto sources are generated.
 def mediapipe_proto_library(def_rewrite = False, **kwargs):
@@ -52,6 +52,7 @@ def mediapipe_ts_library(
             "@npm//@types/node",
             "@npm//@types/offscreencanvas",
             "@npm//@types/google-protobuf",
+            "@npm//@webgpu/types",
         ],
         testonly = testonly,
         declaration = True,

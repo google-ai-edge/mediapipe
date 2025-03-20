@@ -14,14 +14,24 @@
 
 #include "mediapipe/framework/packet.h"
 
+#include <map>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "absl/base/optimization.h"
 #include "absl/log/absl_check.h"
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
-#include "mediapipe/framework/port.h"
-#include "mediapipe/framework/port/canonical_errors.h"
+#include "google/protobuf/message_lite.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
-#include "mediapipe/framework/port/status_builder.h"
+#include "mediapipe/framework/port/status_macros.h"
+#include "mediapipe/framework/port/statusor.h"
+#include "mediapipe/framework/timestamp.h"
 #include "mediapipe/framework/tool/type_util.h"
+#include "mediapipe/framework/type_map.h"
 
 namespace mediapipe {
 namespace packet_internal {
@@ -41,7 +51,7 @@ Packet Create(HolderBase* holder, Timestamp timestamp) {
   return result;
 }
 
-Packet Create(std::shared_ptr<HolderBase> holder, Timestamp timestamp) {
+Packet Create(std::shared_ptr<const HolderBase> holder, Timestamp timestamp) {
   Packet result;
   result.holder_ = std::move(holder);
   result.timestamp_ = timestamp;

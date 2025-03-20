@@ -1,7 +1,7 @@
 # This package contains options shared by all MediaPipe Tasks for Web.
 
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_declaration", "mediapipe_ts_library")
 load("@npm//@bazel/jasmine:index.bzl", "jasmine_node_test")
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_declaration", "mediapipe_ts_library")
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
@@ -23,6 +23,7 @@ mediapipe_ts_library(
         "//mediapipe/tasks/cc/core/proto:acceleration_jspb_proto",
         "//mediapipe/tasks/cc/core/proto:base_options_jspb_proto",
         "//mediapipe/tasks/cc/core/proto:external_file_jspb_proto",
+        "//mediapipe/tasks/web/genai/llm_inference:model_loading_utils",
         "//mediapipe/web/graph_runner:graph_runner_ts",
         "//mediapipe/web/graph_runner:register_model_resources_graph_service_ts",
     ],
@@ -74,7 +75,7 @@ mediapipe_ts_library(
 
 jasmine_node_test(
     name = "task_runner_test",
-    deps = [":task_runner_test_lib"],
+    srcs = [":task_runner_test_lib"],
 )
 
 mediapipe_ts_declaration(

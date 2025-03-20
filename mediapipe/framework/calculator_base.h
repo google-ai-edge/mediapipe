@@ -31,6 +31,8 @@
 
 namespace mediapipe {
 
+// SOFT DEPRECATION: use mediapipe::api2::NodeIntf/Impl instead.
+//
 // Experimental: CalculatorBase will eventually replace Calculator as the
 // base class of leaf (non-subgraph) nodes in a CalculatorGraph.
 //

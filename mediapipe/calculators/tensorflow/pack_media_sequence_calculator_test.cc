@@ -84,8 +84,10 @@ class PackMediaSequenceCalculatorTest : public ::testing::Test {
                        const bool output_only_if_all_present,
                        const bool replace_instead_of_append,
                        const bool output_as_zero_timestamp = false,
-                       const std::vector<std::string>& input_side_packets = {
-                           "SEQUENCE_EXAMPLE:input_sequence"}) {
+                       const bool add_empty_labels = false,
+                       const std::vector<std::string>& input_side_packets =
+                           {"SEQUENCE_EXAMPLE:input_sequence"},
+                       const int32_t max_sequence_bytes = -1) {
     CalculatorGraphConfig::Node config;
     config.set_calculator("PackMediaSequenceCalculator");
     for (const std::string& side_packet : input_side_packets) {
@@ -101,6 +103,8 @@ class PackMediaSequenceCalculatorTest : public ::testing::Test {
     options->set_output_only_if_all_present(output_only_if_all_present);
     options->set_replace_data_instead_of_append(replace_instead_of_append);
     options->set_output_as_zero_timestamp(output_as_zero_timestamp);
+    options->set_add_empty_labels(add_empty_labels);
+    options->set_max_sequence_bytes(max_sequence_bytes);
     runner_ = ::absl::make_unique<CalculatorRunner>(config);
   }
 
@@ -1308,6 +1312,36 @@ TEST_F(PackMediaSequenceCalculatorTest, PackTwoClipLabels_NoLabelOrLabelIndex) {
               "detection.label and detection.label_id can't be both empty")));
 }
 
+TEST_F(PackMediaSequenceCalculatorTest, PackTwoClipLabels_AddEmptyLabels) {
+  SetUpCalculator(
+      /*input_streams=*/{"CLIP_LABEL_TEST:test"},
+      /*features=*/{}, /*output_only_if_all_present=*/false,
+      /*replace_instead_of_append=*/true, /*output_as_zero_timestamp=*/false,
+      /*add_empty_labels=*/true);
+  auto input_sequence = std::make_unique<tf::SequenceExample>();
+
+  // No label or label_index in detection_1.
+  Detection detection;
+  runner_->MutableInputs()
+      ->Tag(kClipLabelTestTag)
+      .packets.push_back(MakePacket<Detection>(detection).At(Timestamp(1)));
+  runner_->MutableSidePackets()->Tag(kSequenceExampleTag) =
+      Adopt(input_sequence.release());
+
+  MP_ASSERT_OK(runner_->Run());
+
+  const std::vector<Packet>& output_packets =
+      runner_->Outputs().Tag(kSequenceExampleTag).packets;
+  ASSERT_EQ(1, output_packets.size());
+  const tf::SequenceExample& output_sequence =
+      output_packets[0].Get<tf::SequenceExample>();
+
+  ASSERT_THAT(mpms::GetClipLabelString("TEST", output_sequence),
+              testing::ElementsAre());
+  ASSERT_THAT(mpms::GetClipLabelConfidence("TEST", output_sequence),
+              testing::ElementsAre());
+}
+
 TEST_F(PackMediaSequenceCalculatorTest,
        PackTwoClipLabels_DifferentLabelScoreSize) {
   SetUpCalculator(
@@ -1542,7 +1576,8 @@ TEST_F(PackMediaSequenceCalculatorTest, AddClipMediaId) {
       /*features=*/{},
       /*output_only_if_all_present=*/false,
       /*replace_instead_of_append=*/true,
-      /*output_as_zero_timestamp=*/false, /*input_side_packets=*/
+      /*output_as_zero_timestamp=*/false, /*add_empty_labels=*/false,
+      /*input_side_packets=*/
       {"SEQUENCE_EXAMPLE:input_sequence", "CLIP_MEDIA_ID:video_id"});
   auto input_sequence = absl::make_unique<tf::SequenceExample>();
   const std::string test_video_id = "test_video_id";
@@ -1582,7 +1617,8 @@ TEST_F(PackMediaSequenceCalculatorTest, ReplaceClipMediaId) {
       /*features=*/{},
       /*output_only_if_all_present=*/false,
       /*replace_instead_of_append=*/true,
-      /*output_as_zero_timestamp=*/false, /*input_side_packets=*/
+      /*output_as_zero_timestamp=*/false, /*add_empty_labels=*/false,
+      /*input_side_packets=*/
       {"SEQUENCE_EXAMPLE:input_sequence", "CLIP_MEDIA_ID:video_id"});
   auto input_sequence = absl::make_unique<tf::SequenceExample>();
   const std::string existing_video_id = "existing_video_id";
@@ -1951,6 +1987,38 @@ TEST_F(PackMediaSequenceCalculatorTest, TestTooLargeInputFailsSoftly) {
   runner_->MutableSidePackets()->Tag(kSequenceExampleTag) =
       Adopt(input_sequence.release());
   ASSERT_FALSE(runner_->Run().ok());
+}
+
+TEST_F(PackMediaSequenceCalculatorTest, SkipLargeSequence) {
+  SetUpCalculator({"IMAGE:images"}, {}, false, true, false, false,
+                  {"SEQUENCE_EXAMPLE:input_sequence"},
+                  /*max_sequence_bytes=*/10);
+  auto input_sequence = ::absl::make_unique<tf::SequenceExample>();
+  std::string test_video_id = "test_video_id";
+  mpms::SetClipMediaId(test_video_id, input_sequence.get());
+  cv::Mat image(2, 3, CV_8UC3, cv::Scalar(0, 0, 255));
+  std::vector<uchar> bytes;
+  ASSERT_TRUE(
+      cv::imencode(".jpg", image, bytes, {cv::IMWRITE_HDR_COMPRESSION, 1}));
+  OpenCvImageEncoderCalculatorResults encoded_image;
+  encoded_image.set_encoded_image(bytes.data(), bytes.size());
+  encoded_image.set_width(2);
+  encoded_image.set_height(1);
+
+  int num_images = 2;
+  for (int i = 0; i < num_images; ++i) {
+    auto image_ptr =
+        ::absl::make_unique<OpenCvImageEncoderCalculatorResults>(encoded_image);
+    runner_->MutableInputs()->Tag(kImageTag).packets.push_back(
+        Adopt(image_ptr.release()).At(Timestamp(i)));
+  }
+
+  runner_->MutableSidePackets()->Tag(kSequenceExampleTag) =
+      Adopt(input_sequence.release());
+
+  absl::Status status = runner_->Run();
+  EXPECT_THAT(status.ToString(),
+              ::testing::HasSubstr("bytes would be more than 10 bytes"));
 }
 
 }  // namespace

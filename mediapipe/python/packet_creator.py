@@ -46,12 +46,13 @@ create_bool_vector = _packet_creator.create_bool_vector
 create_float_vector = _packet_creator.create_float_vector
 create_string_vector = _packet_creator.create_string_vector
 create_image_vector = _packet_creator.create_image_vector
+create_image_frame_vector = _packet_creator.create_image_frame_vector
 create_packet_vector = _packet_creator.create_packet_vector
 create_string_to_packet_map = _packet_creator.create_string_to_packet_map
 create_matrix = _packet_creator.create_matrix
 
 
-def create_image_frame(data: Union[image_frame.ImageFrame, np.ndarray],
+def create_image_frame(data: Union[image_frame.ImageFrame, np.ndarray],  # pytype: disable=annotation-type-mismatch
                        *,
                        image_format: image_frame.ImageFormat = None,
                        copy: bool = None) -> packet.Packet:
@@ -149,7 +150,7 @@ def create_image_frame(data: Union[image_frame.ImageFrame, np.ndarray],
     # pylint:enable=protected-access
 
 
-def create_image(data: Union[image.Image, np.ndarray],
+def create_image(data: Union[image.Image, np.ndarray],  # pytype: disable=annotation-type-mismatch
                  *,
                  image_format: image_frame.ImageFormat = None,
                  copy: bool = None) -> packet.Packet:

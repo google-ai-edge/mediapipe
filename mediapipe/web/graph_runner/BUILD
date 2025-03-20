@@ -1,7 +1,7 @@
 # The TypeScript graph runner used by all MediaPipe Web tasks.
 
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_declaration", "mediapipe_ts_library")
 load("@npm//@bazel/jasmine:index.bzl", "jasmine_node_test")
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_declaration", "mediapipe_ts_library")
 
 package(default_visibility = [
     "//mediapipe/tasks:internal",
@@ -113,7 +113,55 @@ mediapipe_ts_library(
 
 jasmine_node_test(
     name = "platform_utils_test",
-    deps = [
+    srcs = [
         ":platform_utils_test_lib",
+    ],
+)
+
+mediapipe_ts_library(
+    name = "graph_runner_webgpu_ts",
+    srcs = [
+        "graph_runner_webgpu.ts",
+    ],
+    allow_unoptimized_namespaces = True,
+    deps = [
+        ":graph_runner_ts",
+    ],
+)
+
+mediapipe_ts_library(
+    name = "graph_runner_wasm_file_reference_ts",
+    srcs = [
+        "graph_runner_wasm_file_reference.ts",
+    ],
+    allow_unoptimized_namespaces = True,
+    deps = [
+        ":graph_runner_ts",
+    ],
+)
+
+mediapipe_ts_library(
+    name = "graph_runner_streaming_reader_ts",
+    srcs = [
+        "graph_runner_streaming_reader.ts",
+    ],
+    allow_unoptimized_namespaces = True,
+    deps = [
+        ":graph_runner_ts",
+    ],
+)
+
+mediapipe_ts_library(
+    name = "graph_runner_llm_inference_lib_ts",
+    srcs = [
+        "graph_runner_llm_inference_lib.ts",
+    ],
+    allow_unoptimized_namespaces = True,
+    deps = [
+        ":graph_runner_ts",
+        "//mediapipe/tasks/cc/genai/inference/proto:sampler_params_jspb_proto",
+        "//mediapipe/tasks/web/genai/llm_inference:llm_inference_types",
+        "//mediapipe/tasks/web/genai/llm_inference:model_loading_utils",
+        "//mediapipe/tasks/web/genai/llm_inference/proto:llm_inference_graph_options_jspb_proto",
     ],
 )

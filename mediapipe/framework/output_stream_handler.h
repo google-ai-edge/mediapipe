@@ -22,6 +22,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
+#include <vector>
 
 // TODO: Move protos in another CL after the C++ code migration.
 #include "absl/base/thread_annotations.h"
@@ -34,7 +35,6 @@
 #include "mediapipe/framework/output_stream_manager.h"
 #include "mediapipe/framework/packet_set.h"
 #include "mediapipe/framework/port/logging.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/timestamp.h"
 #include "mediapipe/framework/tool/tag_map.h"
 
@@ -48,6 +48,15 @@ class OutputStreamHandler {
   typedef std::unordered_map<std::string, std::unordered_set<int>>
       OutputStreamToSourcesMap;
   typedef internal::Collection<OutputStreamManager*> OutputStreamManagerSet;
+
+  // Struct to return monitoring info via GetMonitoringInfo;
+  struct OutputStreamMonitoringInfo {
+    std::string stream_name;
+    // The total number of packets added to the output stream.
+    int num_packets_added;
+    // The next timestamp bound of the output stream.
+    Timestamp next_timestamp_bound;
+  };
 
   // The constructor of the OutputStreamHandler takes four arguments.
   // The tag_map argument holds the information needed for tag/index retrieval
@@ -91,7 +100,7 @@ class OutputStreamHandler {
   }
 
   // Calls OutputStreamManager::PrepareForRun(error_callback) per stream, and
-  // resets data memebers.
+  // resets data members.
   void PrepareForRun(const std::function<void(absl::Status)>& error_callback)
       ABSL_LOCKS_EXCLUDED(timestamp_mutex_);
 
@@ -123,6 +132,14 @@ class OutputStreamHandler {
   const OutputStreamManagerSet& OutputStreams() {
     return output_stream_managers_;
   }
+
+  // Return the stream name for an input stream in the format:
+  // stream_tag:stream_index:stream_name.
+  std::string DebugStreamName(CollectionItemId id) const;
+
+  // Returns a vector of tuples of stream name, number of packets added, and
+  // the next timestamp bound for each stream (for monitoring purposes).
+  std::vector<OutputStreamMonitoringInfo> GetMonitoringInfo();
 
  protected:
   // Checks if the given input bound should be propagated or not. If any output
@@ -203,12 +220,12 @@ using OutputStreamHandlerRegistry = GlobalFactoryRegistry<
 }  // namespace mediapipe
 
 // Macro for registering the output stream handler.
-#define REGISTER_OUTPUT_STREAM_HANDLER(name)                                \
-  REGISTER_FACTORY_FUNCTION_QUALIFIED(                                      \
-      mediapipe::OutputStreamHandlerRegistry, output_handler_registration,  \
-      name,                                                                 \
-      absl::make_unique<name, std::shared_ptr<tool::TagMap>,                \
-                        CalculatorContextManager*, const MediaPipeOptions&, \
-                        bool>)
+#define REGISTER_OUTPUT_STREAM_HANDLER(name)                               \
+  REGISTER_FACTORY_FUNCTION_QUALIFIED(                                     \
+      mediapipe::OutputStreamHandlerRegistry, output_handler_registration, \
+      name,                                                                \
+      std::make_unique<name, std::shared_ptr<tool::TagMap>,                \
+                       CalculatorContextManager*, const MediaPipeOptions&, \
+                       bool>)
 
 #endif  // MEDIAPIPE_FRAMEWORK_OUTPUT_STREAM_HANDLER_H_
