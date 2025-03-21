@@ -322,18 +322,15 @@ void PublicPacketGetters(pybind11::module* m) {
 )doc");
 
   m->def(
-      "get_image_frame_list",
-      [](const Packet& packet) {
-        return CreateImageFrameListFromVector(
-            GetContent<std::vector<ImageFrame>>(packet));
-      },
+      "get_image_frame_list", &CreateImageFrameListFromImageFrameVectorPacket,
       R"doc(Get the content of a MediaPipe Packet of ImageFrame vector as a list of MediaPipe ImageFrames.
 
   Args:
     packet: A MediaPipe Packet that holds std:vector<mediapipe::ImageFrame>.
 
   Returns:
-    A list of MediaPipe ImageFrames that are copies of the original ImageFrames.
+    A list of MediaPipe ImageFrames that reference the same pixel data
+    as the original ImageFrames.
 
   Raises:
     ValueError: If the Packet doesn't contain std:vector<mediapipe::ImageFrame>.
@@ -342,8 +339,7 @@ void PublicPacketGetters(pybind11::module* m) {
     packet = mp.packet_creator.create_image_frame_vector([
         image_frame_1, image_frame_2, image_frame_3])
     data = mp.packet_getter.get_image_frame_list(packet)
-)doc",
-      py::arg().noconvert(), py::return_value_policy::move);
+)doc");
 
   m->def(
       "get_packet_list", &GetContent<std::vector<Packet>>,

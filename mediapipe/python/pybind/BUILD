@@ -72,6 +72,7 @@ pybind_library(
     hdrs = ["image_frame_util.h"],
     deps = [
         ":util",
+        "//mediapipe/framework:packet",
         "//mediapipe/framework/formats:image_format_cc_proto",
         "//mediapipe/framework/formats:image_frame",
         "@com_google_absl//absl/memory",

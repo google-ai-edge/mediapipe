@@ -553,7 +553,7 @@ void PublicPacketCreators(pybind11::module* m) {
       "create_image_frame_vector",
       [](const py::list& data) {
         return MakePacket<std::vector<ImageFrame>>(
-            CreateImageFrameVectorFromList(data));
+            CreateImageFrameVectorFromImageFrameList(data));
       },
       R"doc(Create a MediaPipe Packet holding a vector of MediaPipe ImageFrames.
 
