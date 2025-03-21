@@ -75,7 +75,24 @@ absl::Status KeypointDetectionCalculator::GetiProcess(CalculatorContext *cc) {
   std::unique_ptr<KeypointDetectionResult> inference_result;
   inference_result = model->infer(cvimage);
   result->roi = cv::Rect(0, 0, cvimage.cols, cvimage.rows);
-  result->poses = inference_result->poses;
+  result->poses.clear();
+
+  if (inference_result->poses.size() > 0) {
+    geti::DetectedKeypointsWithLabels keypoints;
+    for (size_t i = 0; i < inference_result->poses[0].keypoints.size(); ++i) {
+      geti::KeypointWithLabel keypoint;
+      keypoint.x = inference_result->poses[0].keypoints[i].x;
+      keypoint.y = inference_result->poses[0].keypoints[i].y;
+      keypoint.score = inference_result->poses[0].scores[i];
+      if (i < labels.size()) {
+        keypoint.label_id = labels[i].label_id;
+        keypoint.label = labels[i].label;
+      }
+      keypoints.keypoints.push_back(keypoint);
+    }
+    result->poses.push_back(keypoints);
+  }
+
   LOG(INFO) << "Completed keypoint detection inference";
   cc->Outputs()
       .Tag("INFERENCE_RESULT")

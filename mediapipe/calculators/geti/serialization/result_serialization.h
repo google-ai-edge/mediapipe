@@ -58,12 +58,6 @@ inline void to_json(nlohmann::json& nlohmann_json_j,
 }
 }  // namespace cv
 
-inline void to_json(nlohmann::json& nlohmann_json_j,
-                    const DetectedKeypoints& nlohmann_json_t) {
-  nlohmann_json_j["scores"] = nlohmann_json_t.scores;
-  nlohmann_json_j["keypoints"] = nlohmann_json_t.keypoints;
-}
-
 namespace geti {
 
 static inline std::string base64_encode_mat(cv::Mat image) {
@@ -121,6 +115,20 @@ inline void to_json(nlohmann::json& nlohmann_json_j,
                     const CirclePrediction& nlohmann_json_t) {
   nlohmann_json_j["labels"] = nlohmann_json_t.labels;
   nlohmann_json_j["shape"] = nlohmann_json_t.shape;
+}
+
+inline void to_json(nlohmann::json& nlohmann_json_j,
+                    const KeypointWithLabel& nlohmann_json_t) {
+  nlohmann_json_j["name"] = nlohmann_json_t.label;
+  nlohmann_json_j["id"] = nlohmann_json_t.label_id;
+  nlohmann_json_j["score"] = nlohmann_json_t.score;
+  nlohmann_json_j["x"] = nlohmann_json_t.x;
+  nlohmann_json_j["y"] = nlohmann_json_t.y;
+}
+
+inline void to_json(nlohmann::json& nlohmann_json_j,
+                    const geti::DetectedKeypointsWithLabels& nlohmann_json_t) {
+  nlohmann_json_j["keypoints"] = nlohmann_json_t.keypoints;
 }
 
 inline void to_json(nlohmann::json& nlohmann_json_j,

@@ -151,6 +151,6 @@ def workspace_model_api():
         name = "model_api",
         remote = "https:///github.com/openvinotoolkit/model_api/",
         build_file = "@_model-api//:BUILD",
-        commit = "060f65856cdb6334b050e47c88a83c1e3d0e083c",
+        commit = "058a1ad80bca17beb4e5a8737e1183db8b570a5c",
     )
 

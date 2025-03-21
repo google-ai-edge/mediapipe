@@ -87,7 +87,8 @@ absl::Status ClassificationCalculator::GetiProcess(CalculatorContext *cc) {
       }
     }
 
-    if (inference_result->saliency_map) {
+    if ((inference_result->saliency_map) &&
+        (inference_result->saliency_map.get_shape().size() > 1)) {
       size_t shape_shift =
           (inference_result->saliency_map.get_shape().size() > 3) ? 1 : 0;
 

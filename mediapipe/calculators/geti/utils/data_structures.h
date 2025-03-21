@@ -64,13 +64,25 @@ struct CirclePrediction {
   Circle shape;
 };
 
+struct KeypointWithLabel {
+  std::string label_id;
+  std::string label;
+  float x;
+  float y;
+  float score;
+};
+
+struct DetectedKeypointsWithLabels {
+  std::vector<geti::KeypointWithLabel> keypoints;
+};
+
 struct InferenceResult {
   std::vector<RectanglePrediction> rectangles;
   std::vector<RotatedRectanglePrediction> rotated_rectangles;
   std::vector<PolygonPrediction> polygons;
   std::vector<CirclePrediction> circles;
   std::vector<SaliencyMap> saliency_maps;
-  std::vector<DetectedKeypoints> poses;
+  std::vector<DetectedKeypointsWithLabels> poses;
   cv::Rect roi;
 };
 }  // namespace geti
