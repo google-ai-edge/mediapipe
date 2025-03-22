@@ -14,15 +14,15 @@
 
 """MediaPipe Tasks Components Containers API."""
 
-import mediapipe.tasks.python.components.containers.audio_data
-import mediapipe.tasks.python.components.containers.bounding_box
-import mediapipe.tasks.python.components.containers.category
-import mediapipe.tasks.python.components.containers.classification_result
-import mediapipe.tasks.python.components.containers.detections
-import mediapipe.tasks.python.components.containers.embedding_result
-import mediapipe.tasks.python.components.containers.landmark
-import mediapipe.tasks.python.components.containers.landmark_detection_result
-import mediapipe.tasks.python.components.containers.rect
+import mediapipe.tasks.python.components.containers.audio_data as audio_data
+import mediapipe.tasks.python.components.containers.bounding_box as bounding_box
+import mediapipe.tasks.python.components.containers.category as category
+import mediapipe.tasks.python.components.containers.classification_result as classification_result
+import mediapipe.tasks.python.components.containers.detections as detections
+import mediapipe.tasks.python.components.containers.embedding_result as embedding_result
+import mediapipe.tasks.python.components.containers.landmark as landmark
+import mediapipe.tasks.python.components.containers.landmark_detection_result as landmark_detection_result
+import mediapipe.tasks.python.components.containers.rect as rect
 
 AudioDataFormat = audio_data.AudioDataFormat
 AudioData = audio_data.AudioData
@@ -50,4 +50,3 @@ del embedding_result
 del landmark
 del landmark_detection_result
 del rect
-del mediapipe
