@@ -712,6 +712,33 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "tensor_opencv",
+    srcs = ["tensor_opencv.cc"],
+    hdrs = ["tensor_opencv.h"],
+    deps = [
+        ":tensor",
+        "//mediapipe/framework/port:opencv_core",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "tensor_opencv_test",
+    srcs = ["tensor_opencv_test.cc"],
+    deps = [
+        ":tensor",
+        ":tensor_opencv",
+        "//mediapipe/framework/port:gtest_main",
+        "@com_google_absl//absl/status",
+    ],
+)
+
 cc_test(
     name = "tensor_ahwb_usage_test",
     srcs = ["tensor_ahwb_usage_test.cc"],
