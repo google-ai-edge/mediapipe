@@ -163,7 +163,7 @@ explicitly loaded using the function `System.loadLibrary`.
 
 ## No registered calculator found
 
-The error message:
+The error message
 
 ```
 No registered object with name: OurNewCalculator; Unable to find Calculator "OurNewCalculator"
@@ -173,16 +173,27 @@ usually indicates that `OurNewCalculator` is referenced by name in a
 [`CalculatorGraphConfig`] but that the library target for OurNewCalculator has
 not been linked to the application binary. When a new calculator is added to a
 calculator graph, that calculator must also be added as a build dependency of
-the applications using the calculator graph.
+the applications using the calculator graph. If you created the calculator
+yourself, be sure to add "alwayslink = True" to the BUILD target, e.g.
+
+```
+cc_library(
+    name = "our_new_calculator",
+    srcs = ["our_new_calculator.cc"],
+    deps = [ ... ],
+    alwayslink = True,
+)
+```
 
 This error is caught at runtime because calculator graphs reference their
 calculators by name through the field `CalculatorGraphConfig::Node:calculator`.
 When the library for a calculator is linked into an application binary, the
 calculator is automatically registered by name through the
-[`REGISTER_CALCULATOR`] macro using the [`registration.h`] library. Note that
-[`REGISTER_CALCULATOR`] can register a calculator with a namespace prefix,
-identical to its C++ namespace. In this case, the calculator graph must also use
-the same namespace prefix.
+[`REGISTER_CALCULATOR`] macro using the [`registration.h`] library. The
+calculator, including the registration, may get removed by the linker if
+"alwayslink = True" is missing. Note that [`REGISTER_CALCULATOR`] can register a
+calculator with a namespace prefix, identical to its C++ namespace. In this
+case, the calculator graph must also use the same namespace prefix.
 
 ## Out Of Memory error
 
@@ -390,6 +401,47 @@ alternative, its output can be written to a file at the specified capture
 interval. This will overwrite the file each time. To enable this, use the flag
 `mp_graph_runtime_info_output_file`. Note: On Android, the output file may need
 to be created first to avoid permission issues.
+
+## Debugging cv::Mats, Tensors and ImageFrames
+
+Tensors are used as inputs and outputs of InferenceCalculators. Sometimes it is
+necessary to visualize the contents of tensors. For instance, tensors could
+contain image data of shape [1, width, height, channels] for generative AI
+applications, and these tensors may be upside-down on some platforms, see
+[mediapipe/gpu/gpu_origin.proto]
+(https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/gpu/gpu_origin.proto).
+
+The file [mediapipe/framework/debug/logging.h]
+(https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/gpu/gpu_origin.proto) contains useful
+tools to quickly and easily visualize tensors in the command line terminal. As
+this is a text-based visualization, no graphical user interface is needed, so it
+even works over SSH. The command
+
+```
+debug::LogTensor(tensor)
+```
+
+prints out the contents of the tensor of shape [1, width, height, channels] in
+the terminal. Similarly, the contents of cv::Mat and ImageFrame can be printed
+with
+
+```
+debug::LogMat(mat);
+debug::LogImage(image_frame);
+```
+
+If the terminal supports truecolor ($COLORTERM == "truecolor"), the output is a
+low resolution pixel image:
+
+![sergey_color_png](https://mediapipe.dev/images/sergey_color.png)
+
+Most Linux terminals should support this mode. If the terminal does not support
+truecolor output, e.g. Android shells, an ASCII version is printed instead:
+
+![sergey_ascii_png](https://mediapipe.dev/images/sergey_ascii.png)
+
+Note that an optional name can be passed to the log commands, which is printed
+after each line. This allows easy grepping of logs for the visualizations.
 
 ## VLOG is your friend
 

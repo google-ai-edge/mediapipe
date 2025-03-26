@@ -40,7 +40,7 @@ cc_library(
 cc_test(
     name = "logging_test",
     srcs = ["logging_test.cc"],
-    data = ["testdata/lenna.png"],
+    data = ["testdata/sergey.png"],
     deps = [
         ":logging",
         "//mediapipe/framework/deps:file_path",
