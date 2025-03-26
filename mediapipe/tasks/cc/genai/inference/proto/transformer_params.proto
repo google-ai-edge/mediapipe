@@ -156,7 +156,7 @@ message TransformerParameters {
     // Multi-Head-Attention by default.
     optional AttentionScaleType attention_scale_type = 5;
 
-    reserved 6;
+    reserved 6, 7;
   }
 
   SelfAttentionParameters self_attention_parameters = 16;
@@ -167,7 +167,7 @@ message TransformerParameters {
   // before the attention.
   bool skip_absolute_positional_embeddings = 18;
 
-  reserved 19, 20, 21, 23, 24;
+  reserved 19, 20, 21, 23, 24, 32, 33;
 
   // Audio parameters
   // Describes where to interleave residual adapters with transformer layers.

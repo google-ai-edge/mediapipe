@@ -116,6 +116,7 @@ class LayerType(enum.Enum):
       4  # Layer is layer normalization before and after attention layer.
   )
   LORA = 5  # Layer is LoRA weights augmented on the base model layers.
+  SKIP = 6  # Log a warning, and remove this not-yet-supported layer entirely.
 
   @classmethod
   def get_layer_type(cls, layer_name: str):
@@ -128,6 +129,7 @@ class LayerType(enum.Enum):
     ]
     emb_layers = [
         "embed_tokens",
+        "embedder",
         "lm_head",
     ]
     layer_norms = [
@@ -139,6 +141,12 @@ class LayerType(enum.Enum):
         "post_feedforward_layernorm",
     ]
     lora_layers = ["lora"]
+    skip_layers = [
+        "multi_modal_projector",
+        "vision_tower",
+    ]
+    if any(sub_name in layer_name for sub_name in skip_layers):
+      return LayerType.SKIP
     if any(sub_name in layer_name for sub_name in lora_layers):
       return LayerType.LORA
     if any(sub_name in layer_name for sub_name in attn_layers):
@@ -399,10 +407,15 @@ class GemmaMapper(converter_base.LayerActionMapperBase):
       self, layer_name: str
   ) -> Optional[List[converter_base.QuantizationAction]]:
     """Map the given layer name to actions."""
+
+    layer_type = LayerType.get_layer_type(layer_name)
+    if layer_type == LayerType.SKIP:
+      print("Unsupported Gemma layer: %s, skipping." % layer_name)
+      return
+
     tensor_value = self._reader.read_tensor_as_numpy(layer_name)
     quantize_axis = None
     quantize_bits = None
-    layer_type = LayerType.get_layer_type(layer_name)
 
     if (
         layer_type != LayerType.LAYER_NORM
@@ -417,6 +430,13 @@ class GemmaMapper(converter_base.LayerActionMapperBase):
         if "o_proj" in layer_name:
           tensor_value = np.transpose(tensor_value)
           quantize_axis = [1]
+        if "q_norm" in layer_name:
+          # TODO: Look into quantization for q_norm and k_norm
+          quantize_axis = None
+          quantize_bits = None
+        if "k_norm" in layer_name:
+          quantize_axis = None
+          quantize_bits = None
       elif layer_type == LayerType.EMBEDDING:
         quantize_bits = self._embedding_quant_bits
 
@@ -436,6 +456,10 @@ class GemmaMapper(converter_base.LayerActionMapperBase):
 
   def update_target_name(self, target_name: str) -> str:
     """Updates the target name to match the tensor name convention."""
+
+    # For removing multimodality stack from Gemma3-4B
+    target_name = target_name.replace("language_model.", "")
+
     target_name = target_name.replace("base_model.model.", "")
     target_name = target_name.replace(
         "model.layers.", "params.lm.transformer.x_layers_"
@@ -450,7 +474,7 @@ class GemmaMapper(converter_base.LayerActionMapperBase):
         "pre_layer_norm.weight", "pre_layer_norm.scale"
     )
 
-    # Gemma and Gemma2 differ slightly in their use of the
+    # Gemma and Gemma2/Gemma3 differ slightly in their use of the
     # "post_attention_layernorm" tensor name.
     if self._is_v2:
       target_name = target_name.replace(
@@ -480,9 +504,29 @@ class GemmaMapper(converter_base.LayerActionMapperBase):
     target_name = target_name.replace("self_attn.k_proj", "self_attention.k")
     target_name = target_name.replace("self_attn.v_proj", "self_attention.v")
     target_name = target_name.replace("self_attn.o_proj", "self_attention.post")
+
+    # Gemma3 QK norms
+    target_name = target_name.replace(
+        "self_attn.q_norm", "self_attention.q_norm"
+    )
+    target_name = target_name.replace(
+        "self_attention.q_norm.weight", "self_attention.q_norm.scale"
+    )
+    target_name = target_name.replace(
+        "self_attn.k_norm", "self_attention.k_norm"
+    )
+    target_name = target_name.replace(
+        "self_attention.k_norm.weight", "self_attention.k_norm.scale"
+    )
+
     target_name = target_name.replace(
         "model.embed_tokens", "params.lm.softmax.logits_ffn"
     )
+    # Alternative Gemma3 embedding layer name
+    target_name = target_name.replace(
+        "embedder", "params.lm.softmax.logits_ffn"
+    )
+
     target_name = target_name.replace("model.norm", "params.lm.final_ln")
     target_name = target_name.replace("final_ln.weight", "final_ln.scale")
     target_name = target_name.replace(".weight", ".w")
@@ -556,7 +600,13 @@ class SafetensorsCkptLoader(converter_base.CkptLoaderBase):
           backend,
           self._reader,
       )
-    elif special_model in ["GEMMA_2B", "GEMMA_7B", "GEMMA2_2B"]:
+    elif special_model in [
+        "GEMMA_2B",
+        "GEMMA_7B",
+        "GEMMA2_2B",
+        "GEMMA3_1B",
+        "GEMMA3_4B",
+    ]:
       self.mapper = GemmaMapper(
           is_symmetric,
           attention_quant_bits,
@@ -564,7 +614,7 @@ class SafetensorsCkptLoader(converter_base.CkptLoaderBase):
           embedding_quant_bits,
           backend,
           self._reader,
-          True if special_model in ["GEMMA2_2B"] else False,
+          False if special_model in ["GEMMA_2B", "GEMMA_7B"] else True,
       )
     else:
       raise ValueError(f"Unknown special model: {special_model}")

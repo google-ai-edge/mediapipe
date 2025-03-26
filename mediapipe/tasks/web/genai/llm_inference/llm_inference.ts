@@ -104,6 +104,8 @@ const MAX_BUFFER_SIZE_FOR_LLM_7B = 786825216;
 const MAX_BUFFER_SIZE_FOR_LLM = 524550144;
 // Amount of the max WebGPU buffer binding size required for LLM models.
 const MAX_STORAGE_BUFFER_BINDING_SIZE_FOR_LLM = 524550144;
+// We request this limit if possible, for a few experimental large models.
+const MAX_STORAGE_BUFFER_BINDING_SIZE_FOR_LLM_EXPERIMENTAL = 671252480;
 
 /**
  * The LoRA model to be used for `generateResponse()` of a LLM Inference task.
@@ -318,7 +320,14 @@ export class LlmInference extends TaskRunner {
     const systemBufferSizeLimit = adapter.limits.maxBufferSize;
     const systemStorageBufferBindingSizeLimit =
       adapter.limits.maxStorageBufferBindingSize;
+    let maxStorageBufferBindingSize = MAX_STORAGE_BUFFER_BINDING_SIZE_FOR_LLM;
     if (
+      systemStorageBufferBindingSizeLimit >=
+      MAX_STORAGE_BUFFER_BINDING_SIZE_FOR_LLM_EXPERIMENTAL
+    ) {
+      maxStorageBufferBindingSize =
+        MAX_STORAGE_BUFFER_BINDING_SIZE_FOR_LLM_EXPERIMENTAL;
+    } else if (
       systemStorageBufferBindingSizeLimit <
       MAX_STORAGE_BUFFER_BINDING_SIZE_FOR_LLM
     ) {
@@ -329,6 +338,7 @@ export class LlmInference extends TaskRunner {
           `supports maxStorageBufferBindingSize of ${systemBufferSizeLimit}`,
       );
     }
+
     let maxBufferSize;
     if (systemBufferSizeLimit >= MAX_BUFFER_SIZE_FOR_LLM_7B) {
       maxBufferSize = MAX_BUFFER_SIZE_FOR_LLM_7B;
@@ -345,7 +355,7 @@ export class LlmInference extends TaskRunner {
     const deviceDescriptor: GPUDeviceDescriptor = {
       requiredFeatures: ['shader-f16'],
       requiredLimits: {
-        'maxStorageBufferBindingSize': MAX_STORAGE_BUFFER_BINDING_SIZE_FOR_LLM,
+        'maxStorageBufferBindingSize': maxStorageBufferBindingSize,
         'maxBufferSize': maxBufferSize,
         'maxStorageBuffersPerShaderStage':
           adapter.limits.maxStorageBuffersPerShaderStage,
