@@ -699,3 +699,17 @@ int LlmInferenceEngine_Session_SizeInTokens(LlmInferenceEngine_Session* session,
   }
   return output_ids.size();
 }
+
+int LlmInferenceEngine_UpdateRuntimeConfig(LlmInferenceEngine_Session* session,
+                                           const SessionRuntimeConfig* config,
+                                           char** error_msg) {
+  *error_msg = strdup("Not implemented");
+  return 12;
+}
+
+int LlmInferenceEngine_GetSentencePieceProcessor(
+    LlmInferenceEngine_Engine* engine,
+    const SentencePieceProcessor** processor_out, char** error_msg) {
+  *error_msg = strdup("Not implemented");
+  return 12;
+}

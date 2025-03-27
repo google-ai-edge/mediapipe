@@ -382,3 +382,78 @@ JNIEXPORT void JNICALL JNI_METHOD(nativeDeleteSkBitmap)(JNIEnv*, jclass,
                                                         jlong bitmap_handle) {
   delete reinterpret_cast<SkBitmap*>(bitmap_handle);
 }
+
+JNIEXPORT jlong JNICALL JNI_METHOD(nativeGetSentencePieceProcessor)(
+    JNIEnv* env, jclass thiz, jlong engine_handle) {
+  const void* processor = nullptr;
+  char* error_msg = nullptr;
+  int error_code = LlmInferenceEngine_GetSentencePieceProcessor(
+      reinterpret_cast<void*>(engine_handle), &processor, &error_msg);
+  if (error_code) {
+    ThrowIfError(env,
+                 absl::InternalError(absl::StrCat(
+                     "Failed to get SentencePieceProcessor: %s", error_msg)));
+    free(error_msg);
+    return 0;  // Return 0 on failure.
+  }
+  return reinterpret_cast<jlong>(processor);
+}
+
+JNIEXPORT void JNICALL JNI_METHOD(nativeUpdateSessionConfig)(
+    JNIEnv* env, jclass thiz, jlong session_handle, jbyteArray config_bytes) {
+  if (session_handle == 0) {
+    ThrowIfError(env, absl::InvalidArgumentError("Invalid session handle."));
+    return;
+  }
+
+  auto session = reinterpret_cast<LlmInferenceEngine_Session*>(session_handle);
+
+  // Get the byte array data.
+  jbyte* config_data = env->GetByteArrayElements(config_bytes, nullptr);
+  jsize config_length = env->GetArrayLength(config_bytes);
+
+  // Parse the byte array into an LlmSessionConfig proto.
+  LlmSessionConfigProto session_config_proto;
+  if (!session_config_proto.ParseFromArray(config_data, config_length)) {
+    env->ReleaseByteArrayElements(config_bytes, config_data, JNI_ABORT);
+    ThrowIfError(env, absl::InvalidArgumentError("Invalid config bytes."));
+    return;
+  }
+  env->ReleaseByteArrayElements(config_bytes, config_data, JNI_ABORT);
+
+  // Convert the proto to the C struct.
+  SessionRuntimeConfig config = {};
+  size_t topk = 0;
+  float topp = 0.0f;
+  float temperature = 0.0f;
+  size_t random_seed = 0;
+  if (session_config_proto.has_topk()) {
+    topk = session_config_proto.topk();
+    config.topk = &topk;
+  }
+  if (session_config_proto.has_topp()) {
+    topp = session_config_proto.topp();
+    config.topp = &topp;
+  }
+  if (session_config_proto.has_temperature()) {
+    temperature = session_config_proto.temperature();
+    config.temperature = &temperature;
+  }
+  if (session_config_proto.has_random_seed()) {
+    random_seed = session_config_proto.random_seed();
+    config.random_seed = &random_seed;
+  }
+  if (session_config_proto.has_constraint_handle()) {
+    config.constraint =
+        reinterpret_cast<Constraint*>(session_config_proto.constraint_handle());
+  }
+
+  char* error_msg = nullptr;
+  int error_code =
+      LlmInferenceEngine_UpdateRuntimeConfig(session, &config, &error_msg);
+  if (error_code) {
+    ThrowIfError(env, absl::InternalError(absl::StrCat(
+                          "Failed to update runtime config: %s", error_msg)));
+    free(error_msg);
+  }
+}

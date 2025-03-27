@@ -171,6 +171,10 @@ public class LlmInference implements AutoCloseable {
     return session.sizeInTokens(text);
   }
 
+  public long getSentencePieceProcessorHandle() {
+    return taskRunner.getSentencePieceProcessor();
+  }
+
   /** Closes the last implicit session and creates a new one without any existing context. */
   private LlmInferenceSession resetImplicitSession() {
     LlmInferenceSession session = implicitSession.get();

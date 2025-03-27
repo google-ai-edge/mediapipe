@@ -39,6 +39,10 @@ typedef void LlmInferenceEngine_Engine;
 
 typedef void LlmInferenceEngine_Session;
 
+typedef void SentencePieceProcessor;
+
+typedef void Constraint;
+
 // LlmActivationDataType defines the activation data type for the model.
 typedef enum {
   // Use Default activation data type mentioned in the model metadata file.
@@ -205,6 +209,25 @@ typedef struct {
   const LlmPromptTemplates* prompt_templates;
 } LlmSessionConfig;
 
+// The config used to update the runtime behavior of the session.
+typedef struct {
+  // Top K number of tokens to be sampled from for each decoding step.
+  size_t* topk;
+
+  // Maximum cumulative probability over the tokens to sample from in each
+  // decoding step for top-p / nucleus sampling.
+  float* topp;
+
+  // Randomness when decoding the next token, 0.0f means greedy decoding.
+  float* temperature;
+
+  // random seed, for reproducible sampling.
+  size_t* random_seed;
+
+  // The constraint to use for the session.
+  Constraint* constraint;
+} SessionRuntimeConfig;
+
 // LlmResponseContext is the return type for
 // LlmInferenceEngine_Session_PredictSync.
 typedef struct {
@@ -228,6 +251,11 @@ ODML_EXPORT int LlmInferenceEngine_CreateEngine(
     const LlmModelSettings* model_settings,
     LlmInferenceEngine_Engine** engine_out, char** error_msg);
 
+// Returns the SentencePieceProcessor handle used by the engine.
+ODML_EXPORT int LlmInferenceEngine_GetSentencePieceProcessor(
+    LlmInferenceEngine_Engine* engine,
+    const SentencePieceProcessor** processor_out, char** error_msg);
+
 // Free the engine, will release ownership of resource held by the engine.
 // Resource might be freed if no sessions are referencing to it.
 ODML_EXPORT void LlmInferenceEngine_Engine_Delete(
@@ -237,6 +265,11 @@ ODML_EXPORT void LlmInferenceEngine_Engine_Delete(
 ODML_EXPORT int LlmInferenceEngine_CreateSession(
     LlmInferenceEngine_Engine* engine, const LlmSessionConfig* session_config,
     LlmInferenceEngine_Session** session_out, char** error_msg);
+
+// Update the runtime config for the session.
+ODML_EXPORT int LlmInferenceEngine_UpdateRuntimeConfig(
+    LlmInferenceEngine_Session* session,
+    const SessionRuntimeConfig* runtime_config, char** error_msg);
 
 // Free the session, will wait until graph is done executing.
 ODML_EXPORT int LlmInferenceEngine_Session_Delete(

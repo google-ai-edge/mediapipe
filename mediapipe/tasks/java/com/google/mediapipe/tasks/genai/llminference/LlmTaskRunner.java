@@ -148,9 +148,15 @@ public final class LlmTaskRunner implements AutoCloseable {
   /** The session to use for LLM inference calls. */
   public static final class LlmSession {
     private final long sessionHandle;
+    private LlmSessionConfig sessionConfig;
 
-    LlmSession(long sessionHandle) {
+    LlmSession(long sessionHandle, LlmSessionConfig sessionConfig) {
       this.sessionHandle = sessionHandle;
+      this.sessionConfig = sessionConfig;
+    }
+
+    public LlmSessionConfig getSessionConfig() {
+      return sessionConfig;
     }
   }
 
@@ -161,7 +167,7 @@ public final class LlmTaskRunner implements AutoCloseable {
   /** Creates a new LLM session. */
   public LlmSession createSession(LlmSessionConfig sessionConfig) {
     long sessionHandle = nativeCreateSession(sessionConfig.toByteArray(), engineHandle);
-    return new LlmSession(sessionHandle);
+    return new LlmSession(sessionHandle, sessionConfig);
   }
 
   /** Adds a new query to the session context. */
@@ -183,6 +189,16 @@ public final class LlmTaskRunner implements AutoCloseable {
     }
   }
 
+  /**
+   * Returns the SentencePieceProcessor associated with the LLM engine.
+   *
+   * <p>The returned SentencePieceProcessor is owned by the LLM engine and should not be deleted by
+   * the caller.
+   */
+  final long getSentencePieceProcessor() {
+    return nativeGetSentencePieceProcessor(engineHandle);
+  }
+
   /** Invokes the LLM with the given session and waits for the result. */
   public List<String> predictSync(LlmSession session) {
       byte[] responseBytes = nativePredictSync(session.sessionHandle);
@@ -202,12 +218,19 @@ public final class LlmTaskRunner implements AutoCloseable {
   /** Clones the current session. */
   public LlmSession cloneSession(LlmSession session) {
     long clonedSessionHandle = nativeCloneSession(session.sessionHandle);
-    return new LlmSession(clonedSessionHandle);
+    return new LlmSession(clonedSessionHandle, session.getSessionConfig());
   }
 
   /** Removes the session and frees up its context. */
   public void deleteSession(LlmSession session) {
     nativeDeleteSession(session.sessionHandle);
+  }
+
+  /** Updates the session config. */
+  public void updateSessionConfig(LlmSession session, LlmSessionConfig config) {
+    byte[] configBytes = config.toByteArray();
+    session.sessionConfig = config;
+    nativeUpdateSessionConfig(session.sessionHandle, configBytes);
   }
 
   long registerCallback(LlmTaskRunnerDelegate delegate) {
@@ -348,7 +371,11 @@ public final class LlmTaskRunner implements AutoCloseable {
   private static native long nativeCreateSkBitmap(
       ByteBuffer buffer, int width, int height, int colorType, int alphaType);
 
+  private static native void nativeDeleteSkBitmap(long imagePointer);
+
   private static native void nativeAddImage(long sessionPointer, long imagePointer);
 
-  private static native void nativeDeleteSkBitmap(long imagePointer);
+  private static native long nativeGetSentencePieceProcessor(long enginePointer);
+
+  private static native void nativeUpdateSessionConfig(long sessionPointer, byte[] config);
 }

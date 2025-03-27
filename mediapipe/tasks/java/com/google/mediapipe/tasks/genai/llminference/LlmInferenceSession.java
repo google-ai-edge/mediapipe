@@ -1,5 +1,6 @@
 package com.google.mediapipe.tasks.genai.llminference;
 
+import android.util.Log;
 import com.google.auto.value.AutoValue;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -34,6 +35,28 @@ public class LlmInferenceSession implements AutoCloseable {
   /** Constructor to initialize an {@link LlmInferenceSession}. */
   public static LlmInferenceSession createFromOptions(
       LlmInference llmInference, LlmInferenceSessionOptions options) {
+    LlmTaskRunner taskRunner = llmInference.getTaskRunner();
+    return new LlmInferenceSession(taskRunner, createSessionConfigFromOptions(options));
+  }
+
+  private LlmInferenceSession(LlmTaskRunner taskRunner, LlmTaskRunner.LlmSession session) {
+    this.taskRunner = taskRunner;
+    this.session = session;
+    this.callbackHandle =
+        taskRunner.registerCallback(
+            responseBytes -> currentListener.accept(taskRunner.parseResponse(responseBytes)));
+  }
+
+  private LlmInferenceSession(LlmTaskRunner taskRunner, LlmSessionConfig sessionConfig) {
+    this.taskRunner = taskRunner;
+    this.session = taskRunner.createSession(sessionConfig);
+    this.callbackHandle =
+        taskRunner.registerCallback(
+            responseBytes -> currentListener.accept(taskRunner.parseResponse(responseBytes)));
+  }
+
+  private static LlmSessionConfig createSessionConfigFromOptions(
+      LlmInferenceSessionOptions options) {
     LlmSessionConfig.Builder sessionConfig = LlmSessionConfig.newBuilder();
     sessionConfig.setTopk(options.topK());
     sessionConfig.setTopp(options.topP());
@@ -54,19 +77,10 @@ public class LlmInferenceSession implements AutoCloseable {
               .build();
       sessionConfig.setGraphConfig(graphConfig);
     }
-
-    LlmTaskRunner taskRunner = llmInference.getTaskRunner();
-    LlmSession session = taskRunner.createSession(sessionConfig.build());
-    return new LlmInferenceSession(taskRunner, session);
-  }
-
-  private LlmInferenceSession(LlmTaskRunner taskRunner, LlmSession session) {
-    this.taskRunner = taskRunner;
-    this.session = session;
-
-    this.callbackHandle =
-        taskRunner.registerCallback(
-            responseBytes -> currentListener.accept(taskRunner.parseResponse(responseBytes)));
+    if (options.constraintHandle().isPresent()) {
+      sessionConfig.setConstraintHandle(options.constraintHandle().get());
+    }
+    return sessionConfig.build();
   }
 
   /**
@@ -232,6 +246,43 @@ public class LlmInferenceSession implements AutoCloseable {
     LlmSession clonedSession = taskRunner.cloneSession(session);
     return new LlmInferenceSession(taskRunner, clonedSession);
   }
+  
+  /**
+   * Updates the session config after the session is created.
+   *
+   * <p>The following fields are not supported to be updated after the session is created:
+   *
+   * <ul>
+   *   <li>LoRA path
+   *   <li>Graph config
+   * </ul>
+   *
+   * @throws IllegalArgumentException if the options contain unsupported fields.
+   */
+  public void updateSessionConfig(LlmInferenceSessionOptions options) {
+    LlmSessionConfig newLlmSessionconfig = createSessionConfigFromOptions(options);
+    LlmSessionConfig currentLlmSessionconfig = this.session.getSessionConfig();
+    if (currentLlmSessionconfig.equals(newLlmSessionconfig)) {
+      Log.i("LlmInferenceSession", "Session config is not updated because it is the same.");
+      return;
+    }
+    if (newLlmSessionconfig.hasLoraPath() && !newLlmSessionconfig.getLoraPath().isEmpty()) {
+      throw new IllegalArgumentException(
+          "Lora path is not supported to be updated after the session is created.");
+    }
+    if (newLlmSessionconfig.hasGraphConfig()) {
+      throw new IllegalArgumentException(
+          "Graph config is not supported to be updated after the session is created.");
+    }
+    LlmSessionConfig.Builder updatedLlmSessionConfigBuilder = newLlmSessionconfig.toBuilder();
+    if (currentLlmSessionconfig.hasLoraPath()) {
+      updatedLlmSessionConfigBuilder.setLoraPath(currentLlmSessionconfig.getLoraPath());
+    }
+    if (currentLlmSessionconfig.hasGraphConfig()) {
+      updatedLlmSessionConfigBuilder.setGraphConfig(currentLlmSessionconfig.getGraphConfig());
+    }
+    taskRunner.updateSessionConfig(session, updatedLlmSessionConfigBuilder.build());
+  }
 
   /** Closes and cleans up the {@link LlmInferenceSession}. */
   @Override
@@ -284,6 +335,9 @@ public class LlmInferenceSession implements AutoCloseable {
       /** Sets the parameters to customize the graph. */
       public abstract Builder setGraphOptions(GraphOptions graphOptions);
 
+      /** Sets the handle to the constraint. */
+      public abstract Builder setConstraintHandle(long constraintHandle);
+
       abstract LlmInferenceSessionOptions autoBuild();
 
       /** Validates and builds the {@link LlmInferenceSessionOptions} instance. */
@@ -319,6 +373,9 @@ public class LlmInferenceSession implements AutoCloseable {
     /** Returns the parameters to customize the graph. */
     public abstract Optional<GraphOptions> graphOptions();
 
+    /** Returns the handle to the constraint. */
+    public abstract Optional<Long> constraintHandle();
+
     /** Returns a builder with the current options. */
     public abstract Builder toBuilder();
 
@@ -328,7 +385,8 @@ public class LlmInferenceSession implements AutoCloseable {
           .setTopK(40)
           .setTopP(1.0f)
           .setTemperature(0.8f)
-          .setRandomSeed(0);
+          .setRandomSeed(0)
+          .setConstraintHandle(0);
     }
   }
 

@@ -23,14 +23,14 @@ option java_outer_classname = "LlmOptionsProto";
 // Configurable parameters for creating an LLM session.
 message LlmSessionConfig {
   // Top K number of tokens to be sampled from for each decoding step.
-  uint32 topk = 1;
+  optional uint32 topk = 1;
 
   // Maximum cumulative probability over the tokens to sample from in each
   // decoding step for top-p / nucleus sampling.
-  float topp = 2;
+  optional float topp = 2;
 
   // Randomness when decoding the next token, 0.0f means greedy decoding.
-  float temperature = 3;
+  optional float temperature = 3;
 
   // Random seed for sampling tokens.
   optional uint32 random_seed = 4;
@@ -52,6 +52,9 @@ message LlmSessionConfig {
 
   // Parameters to customize the graph.
   optional GraphConfig graph_config = 6;
+
+  // The handle to the constraint.
+  optional uint64 constraint_handle = 7;
 }
 
 // Configurable model parameters for creating an LLM inference engine.
