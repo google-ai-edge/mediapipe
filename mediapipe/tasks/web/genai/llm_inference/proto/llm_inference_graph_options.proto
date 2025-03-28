@@ -39,4 +39,8 @@ message LlmInferenceGraphOptions {
 
   // The number of responses to generate for 'generateResponses' call.
   optional uint32 num_responses = 5;
+
+  // Whether or not to force inference to be performed with F32 precision. By
+  // default, this will be false for best performance.
+  optional bool force_f32 = 6;
 }

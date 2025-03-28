@@ -1194,6 +1194,11 @@ export class LlmInference extends TaskRunner {
     // Use fp16 inference by default but still allow fp32 inference if it's
     // required by the internal inference engine.
     gpuModelInfo.setAllowPrecisionLoss(true);
+    // Disable this only if explicitly set, for debugging and quality
+    // verification purposes.
+    if (this.options.hasForceF32() && this.options.getForceF32()) {
+      gpuModelInfo.setAllowPrecisionLoss(false);
+    }
     gpuModelInfo.setEnableFastTuning(true);
     gpuModelInfo.setPreferTextureWeights(true);
     llmGpuOptions.setGpuModelInfo(gpuModelInfo);
