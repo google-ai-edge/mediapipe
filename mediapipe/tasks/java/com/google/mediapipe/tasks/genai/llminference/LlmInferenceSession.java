@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * LlmInferenceSession Task Java API.
@@ -29,6 +30,7 @@ public class LlmInferenceSession implements AutoCloseable {
   private final LlmTaskRunner taskRunner;
   private final LlmSession session;
   private final long callbackHandle;
+  private LlmInferenceSessionOptions options;
 
   private Consumer<LlmResponseContext> currentListener = (unused) -> {};
 
@@ -36,20 +38,25 @@ public class LlmInferenceSession implements AutoCloseable {
   public static LlmInferenceSession createFromOptions(
       LlmInference llmInference, LlmInferenceSessionOptions options) {
     LlmTaskRunner taskRunner = llmInference.getTaskRunner();
-    return new LlmInferenceSession(taskRunner, createSessionConfigFromOptions(options));
+    return new LlmInferenceSession(taskRunner, options);
   }
 
-  private LlmInferenceSession(LlmTaskRunner taskRunner, LlmTaskRunner.LlmSession session) {
+  private LlmInferenceSession(
+      LlmTaskRunner taskRunner,
+      LlmTaskRunner.LlmSession session,
+      LlmInferenceSessionOptions options) {
     this.taskRunner = taskRunner;
     this.session = session;
+    this.options = options;
     this.callbackHandle =
         taskRunner.registerCallback(
             responseBytes -> currentListener.accept(taskRunner.parseResponse(responseBytes)));
   }
 
-  private LlmInferenceSession(LlmTaskRunner taskRunner, LlmSessionConfig sessionConfig) {
+  private LlmInferenceSession(LlmTaskRunner taskRunner, LlmInferenceSessionOptions options) {
     this.taskRunner = taskRunner;
-    this.session = taskRunner.createSession(sessionConfig);
+    this.session = taskRunner.createSession(createSessionConfigFromOptions(options));
+    this.options = options;
     this.callbackHandle =
         taskRunner.registerCallback(
             responseBytes -> currentListener.accept(taskRunner.parseResponse(responseBytes)));
@@ -244,44 +251,57 @@ public class LlmInferenceSession implements AutoCloseable {
    */
   LlmInferenceSession cloneSession() {
     LlmSession clonedSession = taskRunner.cloneSession(session);
-    return new LlmInferenceSession(taskRunner, clonedSession);
+    return new LlmInferenceSession(taskRunner, clonedSession, options.toBuilder().build());
   }
-  
+
   /**
-   * Updates the session config after the session is created.
+   * Updates the session options using a function that modifies the current options builder.
    *
-   * <p>The following fields are not supported to be updated after the session is created:
+   * <p>The provided lambda function receives the current session options builder, allowing
+   * modifications. After the lambda executes, the builder is used to create the new options.
+   *
+   * <p>The following fields cannot be changed after the session is created:
    *
    * <ul>
    *   <li>LoRA path
    *   <li>Graph config
    * </ul>
    *
-   * @throws IllegalArgumentException if the options contain unsupported fields.
+   * @param optionsUpdater A {@link Function} that accepts the current {@link
+   *     LlmInferenceSessionOptions.Builder} and applies modifications, then return the updated
+   *     options.
+   * @throws IllegalArgumentException if the update attempts to change immutable fields (LoRA path
+   *     or Graph config).
    */
-  public void updateSessionConfig(LlmInferenceSessionOptions options) {
-    LlmSessionConfig newLlmSessionconfig = createSessionConfigFromOptions(options);
-    LlmSessionConfig currentLlmSessionconfig = this.session.getSessionConfig();
-    if (currentLlmSessionconfig.equals(newLlmSessionconfig)) {
-      Log.i("LlmInferenceSession", "Session config is not updated because it is the same.");
+  public void updateSessionOptions(
+      Function<LlmInferenceSessionOptions.Builder, LlmInferenceSessionOptions> optionsUpdater) {
+    LlmInferenceSessionOptions.Builder updatedOptionsBuilder = this.options.toBuilder();
+    LlmInferenceSessionOptions newOptions = optionsUpdater.apply(updatedOptionsBuilder);
+
+    if (this.options.equals(newOptions)) {
+      Log.i("LlmInferenceSession", "Session options were not updated because they are the same.");
       return;
     }
-    if (newLlmSessionconfig.hasLoraPath() && !newLlmSessionconfig.getLoraPath().isEmpty()) {
+
+    // Validate that immutable fields were not changed
+    if (!this.options.loraPath().equals(newOptions.loraPath())) {
       throw new IllegalArgumentException(
-          "Lora path is not supported to be updated after the session is created.");
+          "Lora path cannot be changed after the session is created.");
     }
-    if (newLlmSessionconfig.hasGraphConfig()) {
+    if (!this.options.graphOptions().equals(newOptions.graphOptions())) {
       throw new IllegalArgumentException(
-          "Graph config is not supported to be updated after the session is created.");
+          "Graph config cannot be changed after the session is created.");
     }
-    LlmSessionConfig.Builder updatedLlmSessionConfigBuilder = newLlmSessionconfig.toBuilder();
-    if (currentLlmSessionconfig.hasLoraPath()) {
-      updatedLlmSessionConfigBuilder.setLoraPath(currentLlmSessionconfig.getLoraPath());
-    }
-    if (currentLlmSessionconfig.hasGraphConfig()) {
-      updatedLlmSessionConfigBuilder.setGraphConfig(currentLlmSessionconfig.getGraphConfig());
-    }
-    taskRunner.updateSessionConfig(session, updatedLlmSessionConfigBuilder.build());
+
+    // Update internal options and native session config
+    this.options = newOptions;
+    // Note: createSessionConfigFromOptions expects the final options object
+    taskRunner.updateSessionConfig(session, createSessionConfigFromOptions(newOptions));
+  }
+
+  /** Returns the options used for the current session. */
+  public LlmInferenceSessionOptions getSessionOptions() {
+    return this.options;
   }
 
   /** Closes and cleans up the {@link LlmInferenceSession}. */
@@ -386,6 +406,7 @@ public class LlmInferenceSession implements AutoCloseable {
           .setTopP(1.0f)
           .setTemperature(0.8f)
           .setRandomSeed(0)
+          .setLoraPath("")
           .setConstraintHandle(0);
     }
   }
