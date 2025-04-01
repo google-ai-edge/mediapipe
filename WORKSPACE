@@ -813,7 +813,7 @@ register_coreutils_toolchains()
 git_repository(
     name = "ovms",
     remote = "https://github.com/openvinotoolkit/model_server",
-    commit = "130d25794f4a4239f834761b80bf555b8bc93691", # Ignore HTTP connection:close header when streaming (#3113) 12/03/2025
+    commit = "c3f94992cd393f2059303c63f10fba065bdc1a88", # update gpu drivers installation procedure (#3177) 31/03/2025
     patches = [
         "@//third_party:ovms_no_rerank_embed.patch", # TODO investigate why in MP repository bazel builds rerank/embed calcs with no mp option
         # even when we have those set in .bazelrc here
