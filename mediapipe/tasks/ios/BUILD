@@ -24,12 +24,6 @@ package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
-config_setting(
-    name = "enable_odml_cocoapods_build",
-    define_values = {"ENABLE_ODML_COCOAPODS_BUILD": "1"},
-    visibility = ["//visibility:public"],
-)
-
 # List of targets to be added in avoid_deps of ":MediaPipeTasksVision_framework"
 # and ":MediaPipeTasksText_framework".
 # The transitive closure of the following targets are used for building the
@@ -438,10 +432,9 @@ apple_static_xcframework(
         ":llm_inference_engine.h",
     ],
     # Including here the deps that were in avoid_deps in MediaPipeTasksGenAI_library.
-    deps = TENSORFLOW_LITE_C_DEPS + select({
-        "//conditions:default": ["//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu"],
-        ":enable_odml_cocoapods_build": ["@odml//odml/infra/genai/inference/c:libllm_inference_engine"],
-    }),
+    deps = TENSORFLOW_LITE_C_DEPS + [
+        "//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu",
+    ],
 )
 
 apple_static_library(
@@ -452,8 +445,4 @@ apple_static_library(
     ],
     minimum_os_version = MPP_TASK_MINIMUM_OS_VERSION,
     platform_type = "ios",
-    deps = select({
-        "//conditions:default": [],
-        ":enable_odml_cocoapods_build": ["@odml//odml/infra/genai/inference:all_possible_calculators"],
-    }),
 )
