@@ -240,7 +240,6 @@ public class LlmInferenceSession implements AutoCloseable {
     return response.split(EOD, -1)[0];
   }
 
-  // TODO: b/368657051 - Make this model public once we can clone GPU sessions on Android.
   /**
    * Clones the current session.
    *
@@ -249,7 +248,7 @@ public class LlmInferenceSession implements AutoCloseable {
    * @return A new instance of `Session` which is cloned from the current session.
    * @throws IllegalStateException if cloning the current session fails.
    */
-  LlmInferenceSession cloneSession() {
+  public LlmInferenceSession cloneSession() {
     LlmSession clonedSession = taskRunner.cloneSession(session);
     return new LlmInferenceSession(taskRunner, clonedSession, options.toBuilder().build());
   }
