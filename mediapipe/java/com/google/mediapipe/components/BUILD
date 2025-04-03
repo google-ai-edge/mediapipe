@@ -27,6 +27,7 @@ android_library(
     deps = [
         "//mediapipe/framework:calculator_java_proto_lite",
         "//mediapipe/framework:calculator_options_java_proto_lite",
+        "//mediapipe/framework/tool:calculator_graph_template_java_proto_lite",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework",
         "//mediapipe/java/com/google/mediapipe/glutil",
         "@maven//:androidx_appcompat_appcompat",
