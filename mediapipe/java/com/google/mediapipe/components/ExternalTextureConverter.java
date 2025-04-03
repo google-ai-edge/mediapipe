@@ -31,6 +31,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
+import javax.annotation.Nullable;
 import javax.microedition.khronos.egl.EGLContext;
 
 /**
@@ -44,6 +45,12 @@ public class ExternalTextureConverter implements TextureFrameProducer {
   private static final int DEFAULT_NUM_BUFFERS = 2; // Number of output frames allocated.
   private static final String THREAD_NAME = "ExternalTextureConverter";
 
+  /** Interface for adjusting the timestamp of the current frame. */
+  public interface TimestampComputer {
+    /** Calculates the timestamp for the current frame. */
+    Duration computeFrameTimestamp(Duration currentFrameTimestamp);
+  }
+
   private RenderThread thread;
   private Throwable startupException = null;
 
@@ -53,7 +60,18 @@ public class ExternalTextureConverter implements TextureFrameProducer {
    * @param numBuffers the number of camera frames that can enter processing simultaneously.
    */
   public ExternalTextureConverter(EGLContext parentContext, int numBuffers) {
-    thread = makeRenderThread(parentContext, numBuffers);
+    this(parentContext, numBuffers, /* timestampComputer= */ null);
+  }
+
+  /**
+   * Creates the ExternalTextureConverter to create a working copy of each camera frame.
+   *
+   * @param numBuffers the number of camera frames that can enter processing simultaneously.
+   * @param timestampComputer defines how frame timestamp should be calculated.
+   */
+  public ExternalTextureConverter(
+      EGLContext parentContext, int numBuffers, @Nullable TimestampComputer timestampComputer) {
+    thread = makeRenderThread(parentContext, numBuffers, timestampComputer);
     thread.setName(THREAD_NAME);
 
     // Catch exceptions raised during initialization. The user has not had a chance
@@ -187,7 +205,7 @@ public class ExternalTextureConverter implements TextureFrameProducer {
   /**
    * Sets an offset that can be used to adjust the timestamps on the camera frames, for example to
    * conform to a preferred time-base or to account for a known device latency. The offset is added
-   * to each frame timetamp read by the ExternalTextureConverter.
+   * to each frame timestamp read by the ExternalTextureConverter.
    */
   public void setTimestampOffsetNanos(long offsetInNanos) {
     thread.setTimestampOffsetNanos(offsetInNanos);
@@ -305,8 +323,9 @@ public class ExternalTextureConverter implements TextureFrameProducer {
     }
   }
 
-  protected RenderThread makeRenderThread(EGLContext parentContext, int numBuffers) {
-    return new RenderThread(parentContext, numBuffers);
+  protected RenderThread makeRenderThread(
+      EGLContext parentContext, int numBuffers, TimestampComputer timestampComputer) {
+    return new RenderThread(parentContext, numBuffers, timestampComputer);
   }
 
   /** The thread used to do rendering. This is only protected for testing purposes. */
@@ -337,6 +356,7 @@ public class ExternalTextureConverter implements TextureFrameProducer {
 
     protected int destinationWidth = 0;
     protected int destinationHeight = 0;
+    private final TimestampComputer timestampComputer;
 
     private class PoolTextureFrame extends AppTextureFrame {
       public PoolTextureFrame(int textureName, int width, int height) {
@@ -356,11 +376,18 @@ public class ExternalTextureConverter implements TextureFrameProducer {
       }
     }
 
-    public RenderThread(EGLContext parentContext, int numBuffers) {
+    public RenderThread(
+        EGLContext parentContext, int numBuffers, @Nullable TimestampComputer timestampComputer) {
       super(parentContext);
       bufferPoolSize = numBuffers;
       renderer = new ExternalTextureRenderer();
       consumers = new ArrayList<>();
+      this.timestampComputer =
+          timestampComputer == null ? getDefaultTimestampComputer() : timestampComputer;
+    }
+
+    public RenderThread(EGLContext parentContext, int numBuffers) {
+      this(parentContext, numBuffers, /* timestampComputer= */ null);
     }
 
     public void setBufferPoolSize(int bufferPoolSize) {
@@ -543,6 +570,28 @@ public class ExternalTextureConverter implements TextureFrameProducer {
       return new PoolTextureFrame(destinationTextureId, destinationWidth, destinationHeight);
     }
 
+    private TimestampComputer getDefaultTimestampComputer() {
+      // TODO: b/408046935 - Move necessary timestamp calculation information into the default
+      // implementation of the TimestampComputer.
+      return (currentFrameTimestamp) -> {
+        if (shouldOverrideTimestampWithSystemTime) {
+          return Duration.ofNanos(getElapsedRealtimeNanos() + overrideTimestampOffset.toNanos());
+        } else {
+          // Populate frame timestamp with surface texture timestamp after render() as renderer
+          // ensures that surface texture has the up-to-date timestamp. (Also adjust
+          // |nextFrameTimestampOffset| to ensure that timestamps increase monotonically.)
+          long textureTimestamp =
+              (currentFrameTimestamp.toNanos() + timestampOffsetNanos) / NANOS_PER_MICRO;
+          if (shouldAdjustTimestamps
+              && previousTimestampValid
+              && textureTimestamp + nextFrameTimestampOffset <= previousTimestamp) {
+            nextFrameTimestampOffset = previousTimestamp + 1 - textureTimestamp;
+          }
+          return Duration.ofNanos((textureTimestamp + nextFrameTimestampOffset) * NANOS_PER_MICRO);
+        }
+      };
+    }
+
     /**
      * Gets next available frame or creates new one if next frame is not initialized or cannot be
      * used with current surface texture.
@@ -609,23 +658,11 @@ public class ExternalTextureConverter implements TextureFrameProducer {
       // Copy surface texture's pixels to output frame
       bindFramebuffer(outputFrame.getTextureName(), destinationWidth, destinationHeight);
       renderer.render(surfaceTexture);
-
-      if (shouldOverrideTimestampWithSystemTime) {
-        outputFrame.setTimestamp(
-            (getElapsedRealtimeNanos() + overrideTimestampOffset.toNanos()) / NANOS_PER_MICRO);
-      } else {
-        // Populate frame timestamp with surface texture timestamp after render() as renderer
-        // ensures that surface texture has the up-to-date timestamp. (Also adjust
-        // |nextFrameTimestampOffset| to ensure that timestamps increase monotonically.)
-        long textureTimestamp =
-            (surfaceTexture.getTimestamp() + timestampOffsetNanos) / NANOS_PER_MICRO;
-        if (shouldAdjustTimestamps
-            && previousTimestampValid
-            && textureTimestamp + nextFrameTimestampOffset <= previousTimestamp) {
-          nextFrameTimestampOffset = previousTimestamp + 1 - textureTimestamp;
-        }
-        outputFrame.setTimestamp(textureTimestamp + nextFrameTimestampOffset);
-      }
+      outputFrame.setTimestamp(
+          timestampComputer
+                  .computeFrameTimestamp(Duration.ofNanos(surfaceTexture.getTimestamp()))
+                  .toNanos()
+              / NANOS_PER_MICRO);
       previousTimestamp = outputFrame.getTimestamp();
       previousTimestampValid = true;
     }
