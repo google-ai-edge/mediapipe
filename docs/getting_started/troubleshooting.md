@@ -115,17 +115,16 @@ ERROR: No matching distribution found for mediapipe
 
 after running `pip install mediapipe` usually indicates that there is no
 qualified MediaPipe Python for your system. Please note that MediaPipe Python
-PyPI officially supports the **64-bit** version of Python 3.7 to 3.10 on the
-following OS:
+PyPI officially supports the **64-bit** version of Python on the following OS:
 
 -   x86_64 Linux
 -   x86_64 macOS 10.15+
 -   amd64 Windows
 
 If the OS is currently supported and you still see this error, please make sure
-that both the Python and pip binary are for Python 3.7 to 3.10. Otherwise,
-please consider building the MediaPipe Python package locally by following the
-instructions [here](python.md#building-mediapipe-python-package).
+that both the Python and pip binary are for MediaPipe supported Python versions.
+Otherwise, please consider building the MediaPipe Python package locally by
+following the instructions [here](python.md#building-mediapipe-python-package).
 
 ## Python DLL load failure on Windows
 
