@@ -15,7 +15,7 @@
 """MediaPipe Pose."""
 
 import enum
-from typing import NamedTuple
+from typing import NamedTuple, Optional
 
 import numpy as np
 
@@ -43,11 +43,14 @@ from mediapipe.calculators.util import thresholding_calculator_pb2
 from mediapipe.calculators.util import visibility_smoothing_calculator_pb2
 from mediapipe.framework.tool import switch_container_pb2
 # pylint: enable=unused-import
-from mediapipe.python.solution_base import SolutionBase
+from mediapipe.python import solution_base
 from mediapipe.python.solutions import download_utils
 # pylint: disable=unused-import
 from mediapipe.python.solutions.pose_connections import POSE_CONNECTIONS
 # pylint: enable=unused-import
+
+SolutionBase = solution_base.SolutionBase
+ExtraSettings = solution_base.ExtraSettings
 
 
 class PoseLandmark(enum.IntEnum):
@@ -111,14 +114,17 @@ class Pose(SolutionBase):
   usage examples.
   """
 
-  def __init__(self,
-               static_image_mode=False,
-               model_complexity=1,
-               smooth_landmarks=True,
-               enable_segmentation=False,
-               smooth_segmentation=True,
-               min_detection_confidence=0.5,
-               min_tracking_confidence=0.5):
+  def __init__(
+      self,
+      static_image_mode=False,
+      model_complexity=1,
+      smooth_landmarks=True,
+      enable_segmentation=False,
+      smooth_segmentation=True,
+      min_detection_confidence=0.5,
+      min_tracking_confidence=0.5,
+      extra_settings: Optional[solution_base.ExtraSettings] = None,
+  ):
     """Initializes a MediaPipe Pose object.
 
     Args:
@@ -141,6 +147,8 @@ class Pose(SolutionBase):
       min_tracking_confidence: Minimum confidence value ([0.0, 1.0]) for the
         pose landmarks to be considered tracked successfully. See details in
         https://solutions.mediapipe.dev/pose#min_tracking_confidence.
+      extra_settings: An extra settings for the base solution, check
+        ExtraSettings for more details.
     """
     _download_oss_pose_landmark_model(model_complexity)
     super().__init__(
@@ -149,17 +157,22 @@ class Pose(SolutionBase):
             'model_complexity': model_complexity,
             'smooth_landmarks': smooth_landmarks and not static_image_mode,
             'enable_segmentation': enable_segmentation,
-            'smooth_segmentation':
-                smooth_segmentation and not static_image_mode,
+            'smooth_segmentation': (
+                smooth_segmentation and not static_image_mode
+            ),
             'use_prev_landmarks': not static_image_mode,
         },
         calculator_params={
-            'posedetectioncpu__TensorsToDetectionsCalculator.min_score_thresh':
-                min_detection_confidence,
-            'poselandmarkbyroicpu__tensorstoposelandmarksandsegmentation__ThresholdingCalculator.threshold':
-                min_tracking_confidence,
+            'posedetectioncpu__TensorsToDetectionsCalculator.min_score_thresh': (
+                min_detection_confidence
+            ),
+            'poselandmarkbyroicpu__tensorstoposelandmarksandsegmentation__ThresholdingCalculator.threshold': (
+                min_tracking_confidence
+            ),
         },
-        outputs=['pose_landmarks', 'pose_world_landmarks', 'segmentation_mask'])
+        outputs=['pose_landmarks', 'pose_world_landmarks', 'segmentation_mask'],
+        extra_settings=extra_settings,
+    )
 
   def process(self, image: np.ndarray) -> NamedTuple:
     """Processes an RGB image and returns the pose landmarks on the most prominent person detected.

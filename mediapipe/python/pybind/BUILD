@@ -31,14 +31,17 @@ pybind_library(
     deps = [
         ":util",
         "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_graph",
         "//mediapipe/framework:packet",
         "//mediapipe/framework/port:map_util",
         "//mediapipe/framework/port:parse_text_proto",
-        "//mediapipe/framework/port:status",
         "//mediapipe/framework/tool:calculator_graph_template_cc_proto",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/synchronization",
     ],
 )
 

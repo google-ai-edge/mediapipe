@@ -165,6 +165,22 @@ NAME_TO_TYPE: Mapping[str, 'PacketDataType'] = {
 }
 
 
+class ExtraSettings:
+  """Generic extra settings for any solution."""
+
+  def __init__(self, disallow_service_default_initialization: bool = False):
+    """Initializes the ExtraSettings object.
+
+    Args:
+      disallow_service_default_initialization: disallow service default
+        initialization for the underlying MediaPipe graph. (Read more in
+        CalculatorGraph::DisallowServiceDefaultInitialization for the effects).
+    """
+    self.disallow_service_default_initialization = (
+        disallow_service_default_initialization
+    )
+
+
 class SolutionBase:
   """The common base class for the high-level MediaPipe Solution APIs.
 
@@ -191,7 +207,9 @@ class SolutionBase:
       graph_options: Optional[message.Message] = None,
       side_inputs: Optional[Mapping[str, Any]] = None,
       outputs: Optional[List[str]] = None,
-      stream_type_hints: Optional[Mapping[str, PacketDataType]] = None):
+      stream_type_hints: Optional[Mapping[str, PacketDataType]] = None,
+      extra_settings: Optional[ExtraSettings] = None,
+  ):
     """Initializes the SolutionBase object.
 
     Args:
@@ -206,6 +224,7 @@ class SolutionBase:
         is empty, all the output streams listed in the graph config will be
         automatically observed by default.
       stream_type_hints: A mapping from the stream name to its packet type hint.
+      extra_settings: An extra/auxiliary solution settings.
 
     Raises:
       FileNotFoundError: If the binary graph file can't be found.
@@ -247,6 +266,9 @@ class SolutionBase:
 
     self._graph = calculator_graph.CalculatorGraph(
         graph_config=canonical_graph_config_proto)
+    if extra_settings:
+      if extra_settings.disallow_service_default_initialization:
+        self._graph.disallow_service_default_initialization()
     self._simulated_timestamp = 0
     self._graph_outputs = {}
 
