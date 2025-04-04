@@ -204,7 +204,7 @@ static NSString *const kTaskName = @"faceLandmarker";
 }
 
 + (NSArray<MPPConnection *> *)rightIrisConnections {
-  return MPPFaceLandmarksLeftIris;
+  return MPPFaceLandmarksRightIris;
 }
 
 + (NSArray<MPPConnection *> *)faceOvalConnections {
