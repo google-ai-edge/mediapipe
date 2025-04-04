@@ -124,6 +124,7 @@ void WebGpuAsyncFuture<T>::Reset() {
 }
 
 template class WebGpuAsyncFuture<wgpu::ComputePipeline>;
+template class WebGpuAsyncFuture<wgpu::RenderPipeline>;
 
 wgpu::ShaderModule CreateWgslShader(wgpu::Device device, const char* const code,
                                     const char* label) {
@@ -161,6 +162,34 @@ WebGpuAsyncFuture<wgpu::ComputePipeline> WebGpuCreateComputePipelineAsync(
         *holder_ptr = pipeline;
       });
   return WebGpuAsyncFuture<wgpu::ComputePipeline>(future, std::move(holder));
+}
+
+WebGpuAsyncFuture<wgpu::RenderPipeline> WebGpuCreateRenderPipelineAsync(
+    const wgpu::Device& device,
+    wgpu::RenderPipelineDescriptor const* descriptor) {
+  auto holder =
+      std::make_unique<std::optional<absl::StatusOr<wgpu::RenderPipeline>>>();
+  auto* holder_ptr = holder.get();
+
+#ifdef __EMSCRIPTEN__
+  if (!IsJspiAvailable()) {
+    *holder_ptr = device.CreateRenderPipeline(descriptor);
+    return WebGpuAsyncFuture<wgpu::RenderPipeline>(std::nullopt,
+                                                   std::move(holder));
+  }
+#endif  // __EMSCRIPTEN__
+
+  auto future = device.CreateRenderPipelineAsync(
+      descriptor, wgpu::CallbackMode::WaitAnyOnly,
+      [holder_ptr](wgpu::CreatePipelineAsyncStatus status,
+                   wgpu::RenderPipeline pipeline, wgpu::StringView message) {
+        if (status != wgpu::CreatePipelineAsyncStatus::Success) {
+          *holder_ptr = absl::InternalError(std::string(message));
+          return;
+        }
+        *holder_ptr = pipeline;
+      });
+  return WebGpuAsyncFuture<wgpu::RenderPipeline>(future, std::move(holder));
 }
 
 absl::StatusOr<uint32_t> WebGpuTextureFormatBytesPerPixel(

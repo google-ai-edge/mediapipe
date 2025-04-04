@@ -38,6 +38,9 @@ wgpu::ShaderModule CreateWgslShader(wgpu::Device device, const char* code,
 WebGpuAsyncFuture<wgpu::ComputePipeline> WebGpuCreateComputePipelineAsync(
     const wgpu::Device& device,
     wgpu::ComputePipelineDescriptor const* descriptor);
+WebGpuAsyncFuture<wgpu::RenderPipeline> WebGpuCreateRenderPipelineAsync(
+    const wgpu::Device& device,
+    wgpu::RenderPipelineDescriptor const* descriptor);
 
 absl::StatusOr<uint32_t> WebGpuTextureFormatBytesPerPixel(
     wgpu::TextureFormat format);
