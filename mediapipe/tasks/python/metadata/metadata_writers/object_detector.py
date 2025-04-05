@@ -92,7 +92,7 @@ class TensorsDecodingOptions:
   h_scale: float
   # Whether to apply exponential on box size.
   apply_exponential_on_box_size: bool
-  # Whether to apply sigmod function on the score.
+  # Whether to apply sigmoid function on the score.
   sigmoid_score: bool
 
 
@@ -239,7 +239,7 @@ class MetadataWriter(metadata_writer.MetadataWriterBase):
       model_buffer: A valid flatbuffer loaded from the TFLite model file.
       input_norm_mean: the mean value used in the input tensor normalization
         [2].
-      input_norm_std: the std value used in the input tensor normalizarion [2].
+      input_norm_std: the std value used in the input tensor normalization [2].
       labels: an instance of Labels helper class used in the output
         classification tensor [3].
       score_calibration: A container of the score calibration operation [4] in
@@ -294,7 +294,7 @@ class MetadataWriter(metadata_writer.MetadataWriterBase):
       model_buffer: A valid flatbuffer loaded from the TFLite model file.
       input_norm_mean: the mean value used in the input tensor normalization
         [2].
-      input_norm_std: the std value used in the input tensor normalizarion [2].
+      input_norm_std: the std value used in the input tensor normalization [2].
       labels: an instance of Labels helper class used in the output
         classification tensor [3].
       ssd_anchors_options: the ssd anchors options associated to the object
