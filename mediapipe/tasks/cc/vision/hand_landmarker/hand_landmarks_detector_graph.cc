@@ -382,9 +382,21 @@ class SingleHandLandmarksDetectorGraph : public core::ModelTaskGraph {
         AllowIf(hand_rect_transformation[Output<NormalizedRect>("")],
                 hand_presence, graph);
 
+
+
+    auto& landmark_merger = graph.AddNode("ConfidenceNormalizedLandmarkMergerCalculator");
+    projected_landmarks >> landmark_merger.In("LANDMARKS");
+    hand_presence_score >> landmark_merger.In("CONFIDENCE");
+    auto merged_landmarks = landmark_merger[Output<NormalizedLandmarkList>("LANDMARKS")];
+    
+    auto& world_landmark_merger = graph.AddNode("ConfidenceLandmarkMergerCalculator");
+    projected_world_landmarks >> world_landmark_merger.In("LANDMARKS");
+    hand_presence_score >> world_landmark_merger.In("CONFIDENCE");
+    auto merged_world_landmarks = world_landmark_merger[Output<LandmarkList>("LANDMARKS")];
+
     return {{
-        /* hand_landmarks= */ projected_landmarks,
-        /* world_hand_landmarks= */ projected_world_landmarks,
+        /* hand_landmarks= */ merged_landmarks,
+        /* world_hand_landmarks= */ merged_world_landmarks,
         /* hand_rect_next_frame= */ hand_rect_next_frame,
         /* hand_presence= */ hand_presence,
         /* hand_presence_score= */ hand_presence_score,
