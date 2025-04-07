@@ -84,6 +84,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libopencv-features2d-dev \
     libopencv-imgproc-dev \
     libopencv-video-dev \
+    linux-libc-dev \
     build-essential \
     unzip
 
@@ -228,7 +229,8 @@ RUN apt-get update && apt-get install --no-install-recommends -y ffmpeg
 RUN apt-get update && apt-get install --no-install-recommends -y \
     python3 \
     python3-opencv \
-    python3-pip
+    python3-pip \
+    linux-libc-dev
 
 RUN pip3 install attrs matplotlib protobuf==3.20.2 numpy==1.24.4
 RUN ln -s /usr/bin/python3 /usr/bin/python
