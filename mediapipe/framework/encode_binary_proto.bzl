@@ -147,7 +147,6 @@ _encode_binary_proto = rule(
         "deps": attr.label_list(
             providers = [
                 [ProtoInfo],
-                ["proto"],
             ],
         ),
         "input": attr.label(
@@ -224,7 +223,6 @@ generate_proto_descriptor_set = rule(
         "deps": attr.label_list(
             providers = [
                 [ProtoInfo],
-                ["proto"],
             ],
         ),
     },

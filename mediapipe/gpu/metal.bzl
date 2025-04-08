@@ -171,7 +171,7 @@ def _metal_library_impl(ctx):
 METAL_LIBRARY_ATTRS = dicts.add(apple_support.action_required_attrs(), {
     "srcs": attr.label_list(allow_files = [".metal"], allow_empty = False),
     "hdrs": attr.label_list(allow_files = [".h"]),
-    "deps": attr.label_list(providers = [["objc", CcInfo], [apple_common.Objc, CcInfo]]),
+    "deps": attr.label_list(providers = [[apple_common.Objc, CcInfo]]),
     "copts": attr.string_list(),
     "minimum_os_version": attr.string(),
 })
