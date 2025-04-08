@@ -3,23 +3,6 @@
   "version": "0.0.0-alpha",
   "description": "MediaPipe GitHub repo",
   "devDependencies": {
-    "@bazel/jasmine": "^5.7.2",
-    "@bazel/rollup": "^5.7.1",
-    "@bazel/typescript": "^5.8.1",
-    "@rollup/plugin-commonjs": "^23.0.2",
-    "@rollup/plugin-node-resolve": "^15.0.1",
-    "@rollup/plugin-terser": "^0.1.0",
-    "@types/google-protobuf": "^3.15.6",
-    "@types/jasmine": "^4.3.1",
-    "@types/node": "^18.11.11",
-    "@types/offscreencanvas": "^2019.7.0",
-    "@webgpu/types": "^0.1.40",
-    "google-protobuf": "^3.21.2",
-    "jasmine": "^4.5.0",
-    "jasmine-core": "^4.5.0",
-    "protobufjs": "^7.2.5",
-    "rollup": "^2.79.2",
-    "ts-protoc-gen": "^0.15.0",
-    "typescript": "^5.3.3"
+    "@bazel/typescript": "^5.8.1"
   }
 }
