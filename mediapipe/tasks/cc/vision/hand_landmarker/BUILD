@@ -228,4 +228,9 @@ cc_test(
         "//mediapipe/framework/port:status_matchers",
         "@com_google_googletest//:gtest_main"
     ],
+    data = [
+        "//mediapipe/tasks/testdata/vision:test_protos",
+        "//mediapipe/tasks/testdata/vision:test_models",
+        "//mediapipe/tasks/testdata/vision:test_images"
+    ]
 )
