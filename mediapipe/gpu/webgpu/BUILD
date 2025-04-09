@@ -172,6 +172,7 @@ cc_library(
         "//mediapipe/gpu/webgpu:webgpu_texture_buffer",
         "//mediapipe/gpu/webgpu:webgpu_texture_buffer_3d",
         "//mediapipe/gpu/webgpu:webgpu_texture_view",
+        "//mediapipe/gpu/webgpu:webgpu_utils",
         "//mediapipe/util:resource_util",
         "@com_google_absl//absl/strings:str_format",
     ],

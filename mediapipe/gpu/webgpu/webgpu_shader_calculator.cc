@@ -35,6 +35,7 @@
 #include "mediapipe/gpu/webgpu/webgpu_shader_calculator.pb.h"
 #include "mediapipe/gpu/webgpu/webgpu_texture_buffer_3d.h"
 #include "mediapipe/gpu/webgpu/webgpu_texture_view.h"
+#include "mediapipe/gpu/webgpu/webgpu_utils.h"
 
 namespace mediapipe {
 
@@ -492,19 +493,20 @@ class WebGpuShaderCalculator
   static absl::Status UpdateContract(mediapipe::CalculatorContract* cc);
   absl::Status Open(CalculatorContext* cc) override;
   absl::Status Process(CalculatorContext* cc) override;
+  absl::Status Close(CalculatorContext* cc) override;
 
  private:
   absl::Status InitWebGpuShader();
   void InitProfiling();
   absl::Status WebGpuBindAndRender(
-      CalculatorContext* cc, int width, int height, int depth,
-      const std::vector<WebGpuTextureView>& src_textures,
+      CalculatorContext* cc, const wgpu::ComputePipeline& pipeline, int width,
+      int height, int depth, const std::vector<WebGpuTextureView>& src_textures,
       const std::vector<WebGpuTextureView>& src_textures_3d,
       const std::vector<float>& src_floats,
       const std::vector<std::vector<float>>& src_float_vecs);
   absl::Status WebGpuBindAndRenderToView(
-      CalculatorContext* cc, int width, int height, int depth,
-      const std::vector<WebGpuTextureView>& src_textures,
+      CalculatorContext* cc, const wgpu::ComputePipeline& pipeline, int width,
+      int height, int depth, const std::vector<WebGpuTextureView>& src_textures,
       const std::vector<WebGpuTextureView>& src_textures_3d,
       const std::vector<float>& src_floats,
       const std::vector<std::vector<float>>& src_float_vecs,
@@ -538,7 +540,7 @@ class WebGpuShaderCalculator
   bool passthrough_first_buffer_on_empty_packets_ = true;
 
   WebGpuService* service_ = nullptr;
-  wgpu::ComputePipeline pipeline_;
+  WebGpuAsyncFuture<wgpu::ComputePipeline> pipeline_future_;
   wgpu::Buffer params_;
   wgpu::Sampler sampler_;
 
@@ -737,10 +739,8 @@ absl::Status WebGpuShaderCalculator::InitWebGpuShader() {
               .constants = nullptr,
           },
   };
-  pipeline_ = service_->device().CreateComputePipeline(&pipeline_desc);
-  if (!pipeline_) {
-    return absl::InternalError("Failed to create compute pipeline.");
-  }
+  pipeline_future_ =
+      WebGpuCreateComputePipelineAsync(service_->device(), &pipeline_desc);
 
   // Create a uniform buffer for the parameters
   wgpu::BufferDescriptor buffer_desc = {
@@ -789,6 +789,11 @@ void WebGpuShaderCalculator::HandleEmptyPacket(
 absl::Status WebGpuShaderCalculator::Process(CalculatorContext* cc) {
   ScopedWebGpuErrorHandler scoped_error_handler(
       service_, "WebGpuShaderCalculator::Process", cc->InputTimestamp());
+
+  MP_ASSIGN_OR_RETURN(wgpu::ComputePipeline * pipeline, pipeline_future_.Get(),
+                      _.SetCode(absl::StatusCode::kInternal).SetPrepend()
+                          << "Failed to create pipeline: ");
+
   if (kInputWidth(cc).IsConnected() && !kInputWidth(cc).IsEmpty()) {
     output_width_ = kInputWidth(cc).Get();
   }
@@ -888,15 +893,15 @@ absl::Status WebGpuShaderCalculator::Process(CalculatorContext* cc) {
         << "are rendering to a 2D texture, not a 3D texture.";
   }
 
-  MP_RETURN_IF_ERROR(WebGpuBindAndRender(cc, width, height, depth, src_textures,
-                                         src_textures_3d, src_floats,
-                                         src_float_vecs));
+  MP_RETURN_IF_ERROR(WebGpuBindAndRender(cc, *pipeline, width, height, depth,
+                                         src_textures, src_textures_3d,
+                                         src_floats, src_float_vecs));
   return absl::OkStatus();
 }
 
 absl::Status WebGpuShaderCalculator::WebGpuBindAndRender(
-    CalculatorContext* cc, int width, int height, int depth,
-    const std::vector<WebGpuTextureView>& src_textures,
+    CalculatorContext* cc, const wgpu::ComputePipeline& pipeline, int width,
+    int height, int depth, const std::vector<WebGpuTextureView>& src_textures,
     const std::vector<WebGpuTextureView>& src_textures_3d,
     const std::vector<float>& src_floats,
     const std::vector<std::vector<float>>& src_float_vecs) {
@@ -910,8 +915,8 @@ absl::Status WebGpuShaderCalculator::WebGpuBindAndRender(
     GpuBuffer out_buffer(width, height, output_format_);
     WebGpuTextureView out_view = out_buffer.GetWriteView<WebGpuTextureView>();
     MP_RETURN_IF_ERROR(WebGpuBindAndRenderToView(
-        cc, width, height, depth, src_textures, src_textures_3d, src_floats,
-        src_float_vecs, out_view));
+        cc, pipeline, width, height, depth, src_textures, src_textures_3d,
+        src_floats, src_float_vecs, out_view));
     kOutput(cc).Send(std::move(out_buffer));
   } else {
     // Special 3d texture rendering
@@ -919,16 +924,16 @@ absl::Status WebGpuShaderCalculator::WebGpuBindAndRender(
         width, height, depth, WebGpuTextureFormat3d::kRG32Uint);
     WebGpuTextureView out_view = out_buffer->GetWriteView();
     MP_RETURN_IF_ERROR(WebGpuBindAndRenderToView(
-        cc, width, height, depth, src_textures, src_textures_3d, src_floats,
-        src_float_vecs, out_view));
+        cc, pipeline, width, height, depth, src_textures, src_textures_3d,
+        src_floats, src_float_vecs, out_view));
     kOutput3d(cc).Send(std::move(out_buffer));
   }
   return absl::OkStatus();
 }
 
 absl::Status WebGpuShaderCalculator::WebGpuBindAndRenderToView(
-    CalculatorContext* cc, int width, int height, int depth,
-    const std::vector<WebGpuTextureView>& src_textures,
+    CalculatorContext* cc, const wgpu::ComputePipeline& pipeline, int width,
+    int height, int depth, const std::vector<WebGpuTextureView>& src_textures,
     const std::vector<WebGpuTextureView>& src_textures_3d,
     const std::vector<float>& src_floats,
     const std::vector<std::vector<float>>& src_float_vecs,
@@ -1027,7 +1032,7 @@ absl::Status WebGpuShaderCalculator::WebGpuBindAndRenderToView(
   }
 
   wgpu::BindGroupDescriptor bind_group_desc = {
-      .layout = pipeline_.GetBindGroupLayout(0),
+      .layout = pipeline.GetBindGroupLayout(0),
       .entryCount = num_entries,
       .entries = entries.data(),
   };
@@ -1061,7 +1066,7 @@ absl::Status WebGpuShaderCalculator::WebGpuBindAndRenderToView(
     auto pass_encoder = (profile_ && i == skip_starting_frames_)
                             ? command_encoder.BeginComputePass(&pass_descriptor)
                             : command_encoder.BeginComputePass();
-    pass_encoder.SetPipeline(pipeline_);
+    pass_encoder.SetPipeline(pipeline);
     pass_encoder.SetBindGroup(0, bind_group);
     pass_encoder.DispatchWorkgroups(num_groups_x, num_groups_y, num_groups_z);
     pass_encoder.End();
@@ -1081,6 +1086,12 @@ absl::Status WebGpuShaderCalculator::WebGpuBindAndRenderToView(
     ExposeProfilingResults(cc->NodeName().c_str(), dst_buffer_.Get(),
                            repetitions_);
   }
+  return absl::OkStatus();
+}
+
+absl::Status WebGpuShaderCalculator::Close(CalculatorContext* cc) {
+  service_ = nullptr;
+  pipeline_future_.Reset();
   return absl::OkStatus();
 }
 
