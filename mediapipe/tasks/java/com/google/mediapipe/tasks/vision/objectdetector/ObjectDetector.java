@@ -439,6 +439,12 @@ public final class ObjectDetector extends BaseVisionTaskApi {
       public abstract Builder setCategoryDenylist(List<String> value);
 
       /**
+       * Sets whether to use multiclass NMS. When true, each category processes non-maximum-suppression 
+       * separately. Defaults to false.
+       */
+      public abstract Builder setMulticlassNms(Boolean value);
+
+      /**
        * Sets the {@link ResultListener} to receive the detection results asynchronously when the
        * object detector is in the live stream mode.
        */
@@ -494,6 +500,8 @@ public final class ObjectDetector extends BaseVisionTaskApi {
 
     abstract Optional<ErrorListener> errorListener();
 
+    abstract Optional<Boolean> multiclassNms();
+
     public static Builder builder() {
       return new AutoValue_ObjectDetector_ObjectDetectorOptions.Builder()
           .setRunningMode(RunningMode.IMAGE)
@@ -520,6 +528,7 @@ public final class ObjectDetector extends BaseVisionTaskApi {
       if (!categoryDenylist().isEmpty()) {
         taskOptionsBuilder.addAllCategoryDenylist(categoryDenylist());
       }
+      multiclassNms().ifPresent(taskOptionsBuilder::setMulticlassNms);
       return CalculatorOptions.newBuilder()
           .setExtension(
               ObjectDetectorOptionsProto.ObjectDetectorOptions.ext, taskOptionsBuilder.build())
