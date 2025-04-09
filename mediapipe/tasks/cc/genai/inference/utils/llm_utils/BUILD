@@ -70,6 +70,24 @@ cc_library(
     ],
 )
 
+# Utility library for constrained decoding.
+
+cc_library(
+    name = "bitmap",
+    hdrs = ["bitmap.h"],
+)
+
+cc_library(
+    name = "constraint_utils",
+    hdrs = ["constraint_utils.h"],
+    deps = [
+        ":bitmap",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
 cc_library(
     name = "model_data",
     srcs = ["model_data.cc"],

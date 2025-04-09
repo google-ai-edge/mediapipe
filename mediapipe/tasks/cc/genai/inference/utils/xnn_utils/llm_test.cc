@@ -28,7 +28,6 @@
 #include <vector>
 
 #include "absl/flags/flag.h"
-#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/match.h"
@@ -59,6 +58,10 @@ ABSL_FLAG(std::string, model_type, "GEMMA_2B",
 
 ABSL_FLAG(int, num_threads, 4, "The number of threads to use");
 
+ABSL_FLAG(
+    std::string, xnn_profile_csv, "",
+    "Path at which to dump a CSV file with per-op profiling information.");
+
 namespace mediapipe::tasks::genai::xnn_utils {
 namespace {
 
@@ -73,8 +76,8 @@ constexpr ::absl::string_view kXnnProfileCsvFile{
 std::unique_ptr<RuntimeConfigs> GetRunTimeConfigsForBenchmark() {
   auto runtime_config = std::make_unique<RuntimeConfigs>();
   runtime_config->xnn_num_threads = absl::GetFlag(FLAGS_num_threads);
-  runtime_config->xnn_profile = false;
-  runtime_config->xnn_profile_csv = std::string(kXnnProfileCsvFile);
+  runtime_config->xnn_profile = !absl::GetFlag(FLAGS_xnn_profile_csv).empty();
+  runtime_config->xnn_profile_csv = absl::GetFlag(FLAGS_xnn_profile_csv);
   return runtime_config;
 }
 
@@ -86,7 +89,6 @@ GetLlmBuilderAndParamsForBenchmark(size_t seq_size) {
         LlmParams::FromLLMParametersProto(llm_utils::GetFalconRW1BParams());
     params.seq_size_T = seq_size;
     params.enable_kv_cache = true;
-    params.enable_dynamic_shape = true;
     return {std::make_unique<FalconRW1BBuilder>(
                 params, GetRunTimeConfigsForBenchmark()),
             params};
@@ -95,7 +97,14 @@ GetLlmBuilderAndParamsForBenchmark(size_t seq_size) {
         LlmParams::FromLLMParametersProto(llm_utils::GetGemma2BParams());
     params.seq_size_T = seq_size;
     params.enable_kv_cache = true;
-    params.enable_dynamic_shape = true;
+    return {
+        std::make_unique<LlmBuilder>(params, GetRunTimeConfigsForBenchmark()),
+        params};
+  } else if (absl::EqualsIgnoreCase(model_type_string, "GEMMA2_2B")) {
+    LlmParams params =
+        LlmParams::FromLLMParametersProto(llm_utils::GetGemma2_2BParams());
+    params.seq_size_T = seq_size;
+    params.enable_kv_cache = true;
     return {
         std::make_unique<LlmBuilder>(params, GetRunTimeConfigsForBenchmark()),
         params};
@@ -104,7 +113,6 @@ GetLlmBuilderAndParamsForBenchmark(size_t seq_size) {
         LlmParams::FromLLMParametersProto(llm_utils::GetStablelm4E1T3BParams());
     params.seq_size_T = seq_size;
     params.enable_kv_cache = true;
-    params.enable_dynamic_shape = true;
     return {std::make_unique<Stablelm4E1T3BBuilder>(
                 params, GetRunTimeConfigsForBenchmark()),
             params};
@@ -113,7 +121,6 @@ GetLlmBuilderAndParamsForBenchmark(size_t seq_size) {
         LlmParams::FromLLMParametersProto(llm_utils::GetPhi2Params());
     params.seq_size_T = seq_size;
     params.enable_kv_cache = true;
-    params.enable_dynamic_shape = true;
     return {
         std::make_unique<Phi2Builder>(params, GetRunTimeConfigsForBenchmark()),
         params};

@@ -52,7 +52,7 @@ http_archive(
     url = "https://github.com/bazelbuild/rules_android_ndk/archive/d5c9d46a471e8fcd80e7ec5521b78bb2df48f4e0.zip",
 )
 
-load("@rules_android_ndk//:rules.bzl", "android_ndk_repository")
+load("@rules_android_ndk//:rules.bzl", "android_ndk_repository")  # @unused
 
 http_archive(
     name = "build_bazel_rules_apple",
@@ -228,13 +228,13 @@ http_archive(
     ],
 )
 
-# XNNPACK on 2024-11-18
+# XNNPACK from 2025-04-02
 http_archive(
     name = "XNNPACK",
     # `curl -L <url> | shasum -a 256`
-    sha256 = "af30fe2b301330a7e19cd422acf22991de3c1f5d91dda58e9ee67544d608fa51",
-    strip_prefix = "XNNPACK-dc1549a7141c7a9496ae160bb27b8700f0f6e1f1",
-    url = "https://github.com/google/XNNPACK/archive/dc1549a7141c7a9496ae160bb27b8700f0f6e1f1.zip",
+    sha256 = "72549a5af09ee22204904fc93d35d2a19351e32a46f26c4838dda005824e3576",
+    strip_prefix = "XNNPACK-5ff876e4f88f4bec7a3ec853c366a33c8f797fb5",
+    url = "https://github.com/google/XNNPACK/archive/5ff876e4f88f4bec7a3ec853c366a33c8f797fb5.zip",
 )
 
 # 2020-07-09
@@ -265,13 +265,13 @@ http_archive(
     ],
 )
 
-# KleidiAI is needed to get the best possible performance out of XNNPack
+# KleidiAI is needed to get the best possible performance out of XNNPack, from 2025-04-02
 http_archive(
     name = "KleidiAI",
-    sha256 = "ad37707084a6d4ff41be10cbe8540c75bea057ba79d0de6c367c1bfac6ba0852",
-    strip_prefix = "kleidiai-40a926833857fb64786e02f97703e42b1537cb57",
+    sha256 = "ca8b8ee0c3dd2284c1eae3ac07f7064ce92317ac7c3cfcd1d511662e0594cdb8",
+    strip_prefix = "kleidiai-fb4caf0937a45002861cc12788b6018bfb89ae58",
     urls = [
-        "https://gitlab.arm.com/kleidi/kleidiai/-/archive/40a926833857fb64786e02f97703e42b1537cb57/kleidiai-40a926833857fb64786e02f97703e42b1537cb57.zip",
+        "https://gitlab.arm.com/kleidi/kleidiai/-/archive/fb4caf0937a45002861cc12788b6018bfb89ae58/kleidiai-fb4caf0937a45002861cc12788b6018bfb89ae58.zip",
     ],
 )
 
@@ -282,6 +282,15 @@ http_archive(
     urls = [
         "https://github.com/pytorch/cpuinfo/archive/8df44962d437a0477f07ba6b8843d0b6a48646a4.zip",
     ],
+)
+
+# pthreadpool is a dependency of XNNPACK, from 2025-04-02
+http_archive(
+    name = "pthreadpool",
+    # `curl -L <url> | shasum -a 256`
+    sha256 = "745e56516d6a58d183eb33d9017732d87cff43ce9f78908906f9faa52633e421",
+    strip_prefix = "pthreadpool-b92447772365661680f486e39a91dfe6675adafc",
+    urls = ["https://github.com/google/pthreadpool/archive/b92447772365661680f486e39a91dfe6675adafc.zip"],
 )
 
 # TF on 2024-09-24
@@ -385,14 +394,6 @@ rules_foreign_cc_dependencies()
 load("@bazel_features//:deps.bzl", "bazel_features_deps")
 
 bazel_features_deps()
-
-# TODO: This is an are indirect dependency. We should factor it out.
-http_archive(
-    name = "pthreadpool",
-    sha256 = "a4cf06de57bfdf8d7b537c61f1c3071bce74e57524fe053e0bbd2332feca7f95",
-    strip_prefix = "pthreadpool-4fe0e1e183925bf8cfa6aae24237e724a96479b8",
-    urls = ["https://github.com/Maratyszcza/pthreadpool/archive/4fe0e1e183925bf8cfa6aae24237e724a96479b8.zip"],
-)
 
 load(
     "@build_bazel_rules_apple//apple:repositories.bzl",

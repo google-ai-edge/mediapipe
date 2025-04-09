@@ -207,7 +207,7 @@ class XnnGraphBuilder {
   }
 
   absl::StatusOr<std::shared_ptr<Tensor>> BatchMatMul(
-      std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> weight,
+      std::shared_ptr<Tensor> lhs, std::shared_ptr<Tensor> rhs,
       FullConnParams params = FullConnParams());
 
   absl::StatusOr<std::shared_ptr<Tensor>> FullConn(

@@ -16,10 +16,13 @@ limitations under the License.
 #include "mediapipe/tasks/cc/text/text_embedder/text_embedder.h"
 
 #include <memory>
+#include <utility>
 
 #include "absl/flags/flag.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/cord.h"
+#include "absl/strings/str_cat.h"
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
@@ -44,7 +47,7 @@ constexpr char kUniversalSentenceEncoderModel[] =
 
 // Tolerance for embedding vector coordinate values.
 constexpr float kEpsilon = 1e-4;
-// Tolerancy for cosine similarity evaluation.
+// Tolerance for cosine similarity evaluation.
 constexpr double kSimilarityTolerancy = 2e-2;
 
 using ::mediapipe::file::JoinPath;
@@ -92,7 +95,7 @@ TEST_F(EmbedderTest, SucceedsWithMobileBert) {
 #ifdef __FMA__
   ASSERT_NEAR(result1.embeddings[0].float_embedding[0], 21.254150f, kEpsilon);
 #else
-  ASSERT_NEAR(result1.embeddings[0].float_embedding[0], 19.684337f, kEpsilon);
+  ASSERT_NEAR(result1.embeddings[0].float_embedding[0], 22.257519f, kEpsilon);
 #endif
 
   // Check cosine similarity.

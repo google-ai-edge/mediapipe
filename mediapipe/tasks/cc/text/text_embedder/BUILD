@@ -92,7 +92,8 @@ cc_test(
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
-        "@com_google_sentencepiece//:sentencepiece_processor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:cord",
         "@org_tensorflow//tensorflow/lite:test_util",
     ],
 )
