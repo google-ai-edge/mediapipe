@@ -103,6 +103,12 @@ NS_SWIFT_NAME(ObjectDetectorOptions)
 @property(nonatomic) float scoreThreshold;
 
 /**
+ * Whether to use multiclass NMS. When true, each category performs non-maximum-suppression 
+ * separately. Defaults to false.
+ */
+ @property(nonatomic) bool multiclassNms;
+
+/**
  * The allowlist of category names. If non-empty, detection results whose category name is not in
  * this set will be filtered out. Duplicate or unknown category names are ignored. Mutually
  * exclusive with categoryDenylist.
