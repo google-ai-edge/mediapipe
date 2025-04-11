@@ -108,14 +108,14 @@ GetMatElementAccessor(const cv::Mat& mat) {
 
 std::tuple<int, int, int> GetRGB(
     const std::function<double(const uint8_t*, int)>& accessor,
-    const uint8_t* ptr, int x, int num_channels) {
+    const uint8_t* ptr, int x, int y, int num_channels) {
   if (!ptr) {
     return std::make_tuple(0, 0, 0);
   }
 
   double r, g, b;
   if (num_channels == 1) {
-    r = g = b = accessor(ptr, x) * 255.0;
+    r = g = b = accessor(ptr, x);
   }
 
   if (num_channels == 2) {
@@ -128,6 +128,20 @@ std::tuple<int, int, int> GetRGB(
     r = accessor(ptr, x * 3 + 0);
     g = accessor(ptr, x * 3 + 1);
     b = accessor(ptr, x * 3 + 2);
+  }
+
+  if (num_channels == 4) {
+    r = accessor(ptr, x * 4 + 0);
+    g = accessor(ptr, x * 4 + 1);
+    b = accessor(ptr, x * 4 + 2);
+    double a = accessor(ptr, x * 4 + 3);
+
+    // Make a checkerboard.
+    bool is_odd = (x / 2 + y / 2) & 1;
+    double checker = is_odd ? 0.25 : 0.75;
+    r = r * a + checker * (1.0 - a);
+    g = g * a + checker * (1.0 - a);
+    b = b * a + checker * (1.0 - a);
   }
 
   return std::make_tuple(static_cast<int>(r * 255.0),
@@ -186,8 +200,8 @@ void LogMatImpl(const cv::Mat& mat, absl::string_view name) {
           y + 1 < small_height ? small_mat.ptr<uint8_t>(y + 1) : nullptr;
       for (int x = 0; x < small_width; ++x) {
         int rt, gt, bt, rb, gb, bb;
-        std::tie(rt, gt, bt) = GetRGB(accessor, top, x, num_channels);
-        std::tie(rb, gb, bb) = GetRGB(accessor, bottom, x, num_channels);
+        std::tie(rt, gt, bt) = GetRGB(accessor, top, x, y, num_channels);
+        std::tie(rb, gb, bb) = GetRGB(accessor, bottom, x, y + 1, num_channels);
         row += absl::StrFormat("\033[48;2;%d;%d;%dm\033[38;2;%d;%d;%dm\u2584",
                                rt, gt, bt, rb, gb, bb);
       }

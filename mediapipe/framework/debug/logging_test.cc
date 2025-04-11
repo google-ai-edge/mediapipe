@@ -1,5 +1,7 @@
 #include "mediapipe/framework/debug/logging.h"
 
+#include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <cstdlib>
 #include <string>
@@ -443,7 +445,7 @@ TEST_F(LoggingTest, LogImageGrayscale) {
 ****=:::::::::::::::::-:. .:..... -=============================---::::::::::.::..:::::::::::::::::::::-::::::::::::----)"));
 }
 
-TEST_F(LoggingTest, LogImageColor) {
+TEST_F(LoggingTest, LogImageRGB) {
   std::string path =
       file::JoinPath(GetTestRootDir(), kTestDataPath, kTestImageFilename);
   MP_ASSERT_OK_AND_ASSIGN(auto image, LoadTestImage(path, ImageFormat::SRGB));
@@ -511,6 +513,34 @@ TEST_F(LoggingTest, LogImageColor) {
 ********+------------.....:..... =================================================::::::::::::::::::-::---------#%######
 ******=---:::-:::--::: . .:..... :-============================================-:::::::::::::::::--:-::-----:-:----=+###
 ****=:::::::::::::::-:-:. .:..... --============================---::::::::::.::..:::::::::::::::::::::-::::::-:-:::----)"));
+}
+
+TEST_F(LoggingTest, LogImageRGBAColor) {
+  std::string path =
+      file::JoinPath(GetTestRootDir(), kTestDataPath, kTestImageFilename);
+  MP_ASSERT_OK_AND_ASSIGN(auto image, LoadTestImage(path, ImageFormat::SRGBA));
+  EXPECT_EQ(image->Format(), ImageFormat::SRGBA);
+
+  // Add some transparency (circle with soft fade-out).
+  float R = image->Width() * 0.45f;
+  float dR = R * 0.1f;
+  int cx = image->Width() / 2;
+  int cy = image->Height() / 2;
+  for (int y = 0; y < image->Height(); ++y) {
+    for (int x = 0; x < image->Width(); ++x) {
+      float r = sqrtf((x - cx) * (x - cx) + (y - cy) * (y - cy));
+      float alpha = std::clamp((R - r) / dR, 0.0f, 1.0f);
+      image->MutablePixelData()[y * image->WidthStep() + x * 4 + 3] =
+          static_cast<uint8_t>(alpha * 255.0f);
+    }
+  }
+
+  // CiderV's terminal actually supports true color, so that the image shows up
+  // correctly. Unfortunately, the editor doesn't.
+  setenv(kColorTerm, "truecolor", 1);
+  LogImage(*image);
+  EXPECT_THAT(log_lines(),
+              HasSubstr("\xE2\x95\x94\xE2\x95\x90\xE2\x95\x90\xE2\x95\x90"));
 }
 
 TEST_F(LoggingTest, LogMat) {
