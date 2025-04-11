@@ -87,6 +87,18 @@ public class LlmInferenceSession implements AutoCloseable {
     if (options.constraintHandle().isPresent()) {
       sessionConfig.setConstraintHandle(options.constraintHandle().get());
     }
+    if (options.promptTemplates().isPresent()) {
+      LlmSessionConfig.PromptTemplates promptTemplates =
+          LlmSessionConfig.PromptTemplates.newBuilder()
+              .setUserPrefix(options.promptTemplates().get().userPrefix())
+              .setUserSuffix(options.promptTemplates().get().userSuffix())
+              .setModelPrefix(options.promptTemplates().get().modelPrefix())
+              .setModelSuffix(options.promptTemplates().get().modelSuffix())
+              .setSystemPrefix(options.promptTemplates().get().systemPrefix())
+              .setSystemSuffix(options.promptTemplates().get().systemSuffix())
+              .build();
+      sessionConfig.setPromptTemplates(promptTemplates);
+    }
     return sessionConfig.build();
   }
 
@@ -357,6 +369,9 @@ public class LlmInferenceSession implements AutoCloseable {
       /** Sets the handle to the constraint. */
       public abstract Builder setConstraintHandle(long constraintHandle);
 
+      /** Sets the prompt templates. */
+      public abstract Builder setPromptTemplates(PromptTemplates promptTemplates);
+
       abstract LlmInferenceSessionOptions autoBuild();
 
       /** Validates and builds the {@link LlmInferenceSessionOptions} instance. */
@@ -394,6 +409,9 @@ public class LlmInferenceSession implements AutoCloseable {
 
     /** Returns the handle to the constraint. */
     public abstract Optional<Long> constraintHandle();
+
+    /** Returns the prompt templates. */
+    public abstract Optional<PromptTemplates> promptTemplates();
 
     /** Returns a builder with the current options. */
     public abstract Builder toBuilder();

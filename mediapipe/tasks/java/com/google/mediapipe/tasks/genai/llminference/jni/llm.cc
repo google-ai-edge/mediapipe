@@ -133,7 +133,36 @@ LlmSessionConfig ParseSessionConfig(void* bytes, int size) {
           ? input.graph_config().include_token_cost_calculator()
           : kDefaultIncludeTokenCostCalculator;
   output.enable_vision_modality = input.graph_config().enable_vision_modality();
-  output.prompt_templates = nullptr;
+  if (input.has_prompt_templates()) {
+    LlmPromptTemplates* prompt_templates = new LlmPromptTemplates();
+    if (input.prompt_templates().has_user_prefix()) {
+      prompt_templates->user_prefix =
+          strdup(input.prompt_templates().user_prefix().c_str());
+    }
+    if (input.prompt_templates().has_user_suffix()) {
+      prompt_templates->user_suffix =
+          strdup(input.prompt_templates().user_suffix().c_str());
+    }
+    if (input.prompt_templates().has_model_prefix()) {
+      prompt_templates->model_prefix =
+          strdup(input.prompt_templates().model_prefix().c_str());
+    }
+    if (input.prompt_templates().has_model_suffix()) {
+      prompt_templates->model_suffix =
+          strdup(input.prompt_templates().model_suffix().c_str());
+    }
+    if (input.prompt_templates().has_system_prefix()) {
+      prompt_templates->system_prefix =
+          strdup(input.prompt_templates().system_prefix().c_str());
+    }
+    if (input.prompt_templates().has_system_suffix()) {
+      prompt_templates->system_suffix =
+          strdup(input.prompt_templates().system_suffix().c_str());
+    }
+    output.prompt_templates = prompt_templates;
+  } else {
+    output.prompt_templates = nullptr;
+  }
   return output;
 }
 
@@ -145,6 +174,34 @@ void FreeModelSettings(LlmModelSettings* model_settings) {
   delete[] model_settings->supported_lora_ranks;
   model_settings->model_path = nullptr;
   model_settings->cache_dir = nullptr;
+}
+
+void FreeSessionConfig(LlmSessionConfig* session_config) {
+  // Release optional resources because they are initialized with strdup or new.
+  if (session_config->lora_path != nullptr) {
+    delete session_config->lora_path;
+  }
+  if (session_config->prompt_templates != nullptr) {
+    if (session_config->prompt_templates->user_prefix != nullptr) {
+      delete session_config->prompt_templates->user_prefix;
+    }
+    if (session_config->prompt_templates->user_suffix != nullptr) {
+      delete session_config->prompt_templates->user_suffix;
+    }
+    if (session_config->prompt_templates->model_prefix != nullptr) {
+      delete session_config->prompt_templates->model_prefix;
+    }
+    if (session_config->prompt_templates->model_suffix != nullptr) {
+      delete session_config->prompt_templates->model_suffix;
+    }
+    if (session_config->prompt_templates->system_prefix != nullptr) {
+      delete session_config->prompt_templates->system_prefix;
+    }
+    if (session_config->prompt_templates->system_suffix != nullptr) {
+      delete session_config->prompt_templates->system_suffix;
+    }
+    delete session_config->prompt_templates;
+  }
 }
 
 jbyteArray ToByteArray(JNIEnv* env, const LlmResponseContext& context) {
@@ -239,6 +296,7 @@ JNIEXPORT jlong JNICALL JNI_METHOD(nativeCreateSession)(
                           "Failed to initialize session: %s", error_msg)));
     free(error_msg);
   }
+  FreeSessionConfig(&session_config);
   return reinterpret_cast<jlong>(session);
 }
 

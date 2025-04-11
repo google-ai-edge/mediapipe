@@ -55,6 +55,29 @@ message LlmSessionConfig {
 
   // The handle to the constraint.
   optional uint64 constraint_handle = 7;
+
+  // PromptTemplates defines the prompt templates for the session.
+  message PromptTemplates {
+    // The prompt prefix for the user role.
+    optional string user_prefix = 1;
+
+    // The prompt suffix for the user role.
+    optional string user_suffix = 2;
+
+    // The prompt prefix for the model role.
+    optional string model_prefix = 3;
+
+    // The prompt suffix for the model role.
+    optional string model_suffix = 4;
+
+    // The prompt prefix for the system role.
+    optional string system_prefix = 5;
+
+    // The prompt suffix for the system role.
+    optional string system_suffix = 6;
+  }
+
+  optional PromptTemplates prompt_templates = 8;
 }
 
 // Configurable model parameters for creating an LLM inference engine.
