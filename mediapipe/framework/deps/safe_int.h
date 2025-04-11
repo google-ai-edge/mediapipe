@@ -63,9 +63,9 @@ namespace intops {
 //   https://www.securecoding.cert.org/confluence/display/seccode/INT32-C.+Ensure+that+operations+on+signed+integers+do+not+result+in+overflow?showComments=false
 template <typename ErrorType>
 class SafeIntStrongIntValidator {
- private:
-  template <typename T>
-  static void SanityCheck() {
+ public:
+  template <typename T, typename U>
+  static void ValidateInit(U arg) {
     // Check that the underlying integral type provides a range that is
     // compatible with two's complement.
     static_assert(
@@ -73,13 +73,6 @@ class SafeIntStrongIntValidator {
             (std::numeric_limits<T>::min() + std::numeric_limits<T>::max() ==
              -1),
         "unexpected integral bounds");
-  }
-
- public:
-  template <typename T, typename U>
-  static void ValidateInit(U arg) {
-    // Do some sanity checks before proceeding.
-    SanityCheck<T>();
 
     // If the argument is floating point, we can do a simple check to make
     // sure the value is in range.  It is undefined behavior to convert to int
