@@ -14,11 +14,10 @@
 
 """MediaPipe Tasks GenAI Converter API."""
 
-import mediapipe.tasks.python.genai.converter.llm_converter
+import mediapipe.tasks.python.genai.converter.llm_converter as llm_converter
 
 ConversionConfig = llm_converter.ConversionConfig
 convert_checkpoint = llm_converter.convert_checkpoint
 
 # Remove unnecessary modules to avoid duplication in API docs.
-del mediapipe
 del llm_converter

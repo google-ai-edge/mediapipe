@@ -43,7 +43,7 @@ def get_test_data_path(test_srcdir, file_or_dirname_path: str) -> str:
       if path.endswith(file_or_dirname_path):
         return path
   raise ValueError(
-      "No %s in test directory: %s." % (file_or_dirname_path, test_srcdir)
+      f"No {file_or_dirname_path} in test directory: {test_srcdir}."
   )
 
 
@@ -57,14 +57,14 @@ def get_model_path(custom_model, default_model_path):
   Returns:
       The path to the model to be used.
   """
-  if custom_model is not None and os.path.exists(custom_model):
-    print(f"Using provided model: {custom_model}")
-    return custom_model
-  else:
-    if custom_model is not None:
-      print(
-          f"Warning: Provided model '{custom_model}' not found. "
-          "Using default model instead."
-      )
-    print(f"Using default model: {default_model_path}")
-    return default_model_path
+  if custom_model is not None:
+    if os.path.exists(custom_model):
+      print(f"Using provided model: {custom_model}")
+      return custom_model
+    print(
+        f"Warning: Provided model '{custom_model}' not found. "
+        "Using default model instead."
+    )
+
+  print(f"Using default model: {default_model_path}")
+  return default_model_path
