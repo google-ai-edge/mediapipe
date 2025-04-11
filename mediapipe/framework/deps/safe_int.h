@@ -73,13 +73,6 @@ class SafeIntStrongIntValidator {
             (std::numeric_limits<T>::min() + std::numeric_limits<T>::max() ==
              -1),
         "unexpected integral bounds");
-
-    // Check that division truncates towards 0 (implementation defined in
-    // C++'03, but standard in C++'11).
-    static_assert(127 / 10 == 12, "division does not truncate towards 0");
-    static_assert(-127 / 10 == -12, "division does not truncate towards 0");
-    static_assert(127 / -10 == -12, "division does not truncate towards 0");
-    static_assert(-127 / -10 == 12, "division does not truncate towards 0");
   }
 
  public:
