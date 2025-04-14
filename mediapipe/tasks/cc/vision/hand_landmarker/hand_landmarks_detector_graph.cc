@@ -345,9 +345,7 @@ class SingleHandLandmarksDetectorGraph : public core::ModelTaskGraph {
     landmark_letterbox_removal.Out("LANDMARKS") >>
         landmark_projection.In("NORM_LANDMARKS");
     hand_rect >> landmark_projection.In("NORM_RECT");
-    auto projected_landmarks = AllowIf(
-        landmark_projection[Output<NormalizedLandmarkList>("NORM_LANDMARKS")],
-        hand_presence, graph);
+    auto projected_landmarks = AllowIf(landmark_projection[Output<NormalizedLandmarkList>("NORM_LANDMARKS")], hand_presence, graph);
 
     // Projects the world landmarks from the cropped hand image to the
     // corresponding locations on the full image before cropping (input to the
@@ -357,9 +355,7 @@ class SingleHandLandmarksDetectorGraph : public core::ModelTaskGraph {
     tensors_to_world_landmarks.Out("LANDMARKS") >>
         world_landmark_projection.In("LANDMARKS");
     hand_rect >> world_landmark_projection.In("NORM_RECT");
-    auto projected_world_landmarks =
-        AllowIf(world_landmark_projection[Output<LandmarkList>("LANDMARKS")],
-                hand_presence, graph);
+    auto projected_world_landmarks = AllowIf(world_landmark_projection[Output<LandmarkList>("LANDMARKS")], hand_presence, graph);
 
     // Converts the hand landmarks into a rectangle (normalized by image size)
     // that encloses the hand.
@@ -381,8 +377,6 @@ class SingleHandLandmarksDetectorGraph : public core::ModelTaskGraph {
     auto hand_rect_next_frame =
         AllowIf(hand_rect_transformation[Output<NormalizedRect>("")],
                 hand_presence, graph);
-
-
 
     auto& landmark_merger = graph.AddNode("ConfidenceNormalizedLandmarkMergerCalculator");
     projected_landmarks >> landmark_merger.In("LANDMARKS");
@@ -583,3 +577,4 @@ REGISTER_MEDIAPIPE_GRAPH(
 }  // namespace vision
 }  // namespace tasks
 }  // namespace mediapipe
+
