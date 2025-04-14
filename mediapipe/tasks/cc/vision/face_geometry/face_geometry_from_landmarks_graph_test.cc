@@ -42,7 +42,7 @@ namespace vision {
 namespace face_geometry {
 namespace {
 
-using ::file::Defaults;
+using mediapipe::file::Defaults;
 using ::mediapipe::tasks::vision::face_geometry::proto::Environment;
 // using ::mediapipe::face_geometry::Environment;
 using ::mediapipe::tasks::vision::face_geometry::proto::FaceGeometry;

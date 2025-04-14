@@ -402,7 +402,7 @@ TEST_P(SmokeTest, Succeeds) {
 
   proto::HolisticResult holistic_result;
   MP_ASSERT_OK(GetTextProto(GetFilePath(kHolisticResultFile), &holistic_result,
-                            ::file::Defaults()));
+                            mediapipe::file::Defaults()));
   RemoveUncheckedResult(holistic_result);
 
   MP_ASSERT_OK_AND_ASSIGN(auto task_runner,
