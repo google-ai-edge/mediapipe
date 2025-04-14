@@ -335,7 +335,7 @@ export class LlmInference extends TaskRunner {
         `The WebGPU device is unable to execute LLM tasks, because the ` +
           `required maxStorageBufferBindingSize is at least ` +
           `${MAX_STORAGE_BUFFER_BINDING_SIZE_FOR_LLM} but your device only ` +
-          `supports maxStorageBufferBindingSize of ${systemBufferSizeLimit}`,
+          `supports maxStorageBufferBindingSize of ${systemStorageBufferBindingSizeLimit}`,
       );
     }
 
