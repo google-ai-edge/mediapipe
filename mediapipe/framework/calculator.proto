@@ -438,7 +438,7 @@ message CalculatorGraphConfig {
   // The namespace used for class name lookup within this graph.
   // An unqualified or partially qualified class name is looked up in
   // this namespace first and then in enclosing namespaces.
-  string package = 19;
+ string package = 19;
 
   // The type name for the graph config, used for registering and referencing
   // the graph config.

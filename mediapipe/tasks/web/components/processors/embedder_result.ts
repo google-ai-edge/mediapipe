@@ -14,8 +14,15 @@
  * limitations under the License.
  */
 
-import {Embedding as EmbeddingProto, EmbeddingResult as EmbeddingResultProto} from '../../../../tasks/cc/components/containers/proto/embeddings_pb';
-import {Embedding, EmbeddingResult} from '../../../../tasks/web/components/containers/embedding_result';
+import {
+  Embedding as EmbeddingProto,
+  EmbeddingResult as EmbeddingResultProto,
+} from '../../../../tasks/cc/components/containers/proto/embeddings_pb';
+import {
+  Embedding,
+  EmbeddingResult,
+} from '../../../../tasks/web/components/containers/embedding_result';
+import {asLegacyNumberOrString} from '../../../../tasks/web/components/utils/numeric_conversion';
 
 const DEFAULT_INDEX = -1;
 
@@ -29,8 +36,10 @@ function convertFromEmbeddingsProto(source: EmbeddingProto): Embedding {
   };
 
   if (source.hasFloatEmbedding()) {
-    embedding.floatEmbedding =
-        source.getFloatEmbedding()!.getValuesList().slice();
+    embedding.floatEmbedding = source
+      .getFloatEmbedding()!
+      .getValuesList()
+      .slice();
   } else {
       const encodedValue = source.getQuantizedEmbedding()?.getValues() ?? '';
       embedding.quantizedEmbedding = typeof encodedValue == 'string' ?
@@ -44,11 +53,13 @@ function convertFromEmbeddingsProto(source: EmbeddingProto): Embedding {
  * Converts an EmbedderResult proto to an EmbeddingResult object.
  */
 export function convertFromEmbeddingResultProto(
-    embeddingResult: EmbeddingResultProto): EmbeddingResult {
+  embeddingResult: EmbeddingResultProto,
+): EmbeddingResult {
   const result: EmbeddingResult = {
-    embeddings: embeddingResult.getEmbeddingsList().map(
-        e => convertFromEmbeddingsProto(e)),
-    timestampMs: embeddingResult.getTimestampMs(),
+    embeddings: embeddingResult
+      .getEmbeddingsList()
+      .map((e) => convertFromEmbeddingsProto(e)),
+    timestampMs: asLegacyNumberOrString(embeddingResult.getTimestampMs()),
   };
   return result;
 }

@@ -37,6 +37,7 @@ mediapipe_ts_library(
         "//mediapipe/framework/formats:classification_jspb_proto",
         "//mediapipe/tasks/cc/components/containers/proto:classifications_jspb_proto",
         "//mediapipe/tasks/web/components/containers:classification_result",
+        "//mediapipe/tasks/web/components/utils:numeric_conversion",
     ],
 )
 
@@ -83,6 +84,7 @@ mediapipe_ts_library(
     deps = [
         "//mediapipe/tasks/cc/components/containers/proto:embeddings_jspb_proto",
         "//mediapipe/tasks/web/components/containers:embedding_result",
+        "//mediapipe/tasks/web/components/utils:numeric_conversion",
     ],
 )
 
