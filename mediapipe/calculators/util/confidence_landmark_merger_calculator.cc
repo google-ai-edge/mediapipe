@@ -6,89 +6,49 @@
 namespace mediapipe {
 namespace api2 {
 
-class ConfidenceNormalizedLandmarkMergerCalculator : public CalculatorBase {
+template <typename LandmarkType>
+class ConfidenceMergerCalculator : public CalculatorBase {
  public:
-  static constexpr Input<NormalizedLandmarkList> kInLandmarks{"LANDMARKS"};
+  static constexpr Input<LandmarkType> kInLandmarks{"LANDMARKS"};
   static constexpr Input<float> kInConfidence{"CONFIDENCE"};
-  static constexpr Output<NormalizedLandmarkList> kOutLandmarks{"LANDMARKS"};
+  static constexpr Output<LandmarkType> kOutLandmarks{"LANDMARKS"};
 
-  static absl::Status GetContract(CalculatorContract* cc);
-  absl::Status Process(CalculatorContext* cc) override;
-};
-
-absl::Status ConfidenceNormalizedLandmarkMergerCalculator::GetContract(
-    CalculatorContract* cc) {
-  cc->Inputs().Tag(kInLandmarks.Tag()).Set<NormalizedLandmarkList>();
-  cc->Inputs().Tag(kInConfidence.Tag()).Set<float>();
-  cc->Outputs().Tag(kOutLandmarks.Tag()).Set<NormalizedLandmarkList>();
-  return absl::OkStatus();
-}
-
-absl::Status ConfidenceNormalizedLandmarkMergerCalculator::Process(
-    CalculatorContext* cc) {
-  if (cc->Inputs().Tag(kInLandmarks.Tag()).IsEmpty() ||
-      cc->Inputs().Tag(kInConfidence.Tag()).IsEmpty()) {
+  static absl::Status GetContract(CalculatorContract* cc) {
+    cc->Inputs().Tag(kInLandmarks.Tag()).template Set<LandmarkType>();
+    cc->Inputs().Tag(kInConfidence.Tag()).template Set<float>();
+    cc->Outputs().Tag(kOutLandmarks.Tag()).template Set<LandmarkType>();
     return absl::OkStatus();
   }
-
-  const auto& input_landmarks = 
-      cc->Inputs().Tag(kInLandmarks.Tag()).Get<NormalizedLandmarkList>();
-  const float confidence = 
-      cc->Inputs().Tag(kInConfidence.Tag()).Get<float>();
-
-  auto output_landmarks = 
-      absl::make_unique<NormalizedLandmarkList>(input_landmarks);
-  output_landmarks->set_detection_confidence(confidence);
-
-  cc->Outputs()
-      .Tag(kOutLandmarks.Tag())
-      .Add(output_landmarks.release(), cc->InputTimestamp());
-
-  return absl::OkStatus();
-}
-
-// Calculator for LandmarkList
-class ConfidenceLandmarkMergerCalculator : public CalculatorBase {
- public:
-  static constexpr Input<LandmarkList> kInLandmarks{"LANDMARKS"};
-  static constexpr Input<float> kInConfidence{"CONFIDENCE"};
-  static constexpr Output<LandmarkList> kOutLandmarks{"LANDMARKS"};
-
-  static absl::Status GetContract(CalculatorContract* cc);
-  absl::Status Process(CalculatorContext* cc) override;
-};
-
-absl::Status ConfidenceLandmarkMergerCalculator::GetContract(
-    CalculatorContract* cc) {
-  cc->Inputs().Tag(kInLandmarks.Tag()).Set<LandmarkList>();
-  cc->Inputs().Tag(kInConfidence.Tag()).Set<float>();
-  cc->Outputs().Tag(kOutLandmarks.Tag()).Set<LandmarkList>();
-  return absl::OkStatus();
-}
-
-absl::Status ConfidenceLandmarkMergerCalculator::Process(
-    CalculatorContext* cc) {
-  if (cc->Inputs().Tag(kInLandmarks.Tag()).IsEmpty() ||
-      cc->Inputs().Tag(kInConfidence.Tag()).IsEmpty()) {
+  absl::Status Open(CalculatorContext* cc) final {
+    cc->SetOffset(TimestampDiff(0));
     return absl::OkStatus();
   }
+  absl::Status Process(CalculatorContext* cc) override {
+    if (cc -> Inputs().Tag(kInLandmarks.Tag()).IsEmpty()|| cc -> Inputs().Tag(kInConfidence.Tag()).IsEmpty()) {
+    } else {
+      const auto& input_landmarks = 
+          cc->Inputs().Tag(kInLandmarks.Tag()).template Get<LandmarkType>();
+      const float confidence = 
+          cc->Inputs().Tag(kInConfidence.Tag()).template Get<float>();
+        
+      auto output_landmarks = 
+          absl::make_unique<LandmarkType>(input_landmarks);
 
-  const auto& input_landmarks = 
-      cc->Inputs().Tag(kInLandmarks.Tag()).Get<LandmarkList>();
-  const float confidence = 
-      cc->Inputs().Tag(kInConfidence.Tag()).Get<float>();
+      output_landmarks->set_detection_confidence(confidence);
+      output_landmarks->set_has_detection_confidence_set(true);
 
-  auto output_landmarks = absl::make_unique<LandmarkList>(input_landmarks);
-  output_landmarks->set_detection_confidence(confidence);
+      cc->Outputs()
+          .Tag(kOutLandmarks.Tag())
+          .Add(output_landmarks.release(), cc->InputTimestamp()); 
+    }
+    return absl::OkStatus();
 
-  cc->Outputs()
-      .Tag(kOutLandmarks.Tag())
-      .Add(output_landmarks.release(), cc->InputTimestamp());
+  }
+};
 
-  return absl::OkStatus();
-}
+using ConfidenceNormalizedLandmarkMergerCalculator = ConfidenceMergerCalculator<NormalizedLandmarkList>;
+using ConfidenceLandmarkMergerCalculator = ConfidenceMergerCalculator<LandmarkList>;
 
-// Registration for both calculators
 REGISTER_CALCULATOR(ConfidenceNormalizedLandmarkMergerCalculator);
 REGISTER_CALCULATOR(ConfidenceLandmarkMergerCalculator);
 
