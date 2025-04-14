@@ -94,18 +94,11 @@ const DEFAULT_RANDOM_SEED = 0;
 const DEFAULT_SAMPLER_TYPE = SamplerParameters.Type.TOP_P;
 const DEFAULT_NUM_RESPONSES = 1;
 
-// Amount of the max WebGPU buffer size required for the 7B LLM with int8
-// quantization model. If the requested maxBufferSize is smaller than the
-// number, WebGPU will warn in console and the computation results will be
-// wrong.
-const MAX_BUFFER_SIZE_FOR_LLM_7B = 786825216;
 // Amount of the max WebGPU buffer size required for the smaller LLM models
 // (such as the Gemma2B, Falcon) with int8 quantization.
-const MAX_BUFFER_SIZE_FOR_LLM = 524550144;
+const RECOMMENDED_MAX_BUFFER_SIZE_FOR_LLM = 524550144;
 // Amount of the max WebGPU buffer binding size required for LLM models.
-const MAX_STORAGE_BUFFER_BINDING_SIZE_FOR_LLM = 524550144;
-// We request this limit if possible, for a few experimental large models.
-const MAX_STORAGE_BUFFER_BINDING_SIZE_FOR_LLM_EXPERIMENTAL = 671252480;
+const RECOMMENDED_MAX_STORAGE_BUFFER_BINDING_SIZE_FOR_LLM = 524550144;
 
 /**
  * The LoRA model to be used for `generateResponse()` of a LLM Inference task.
@@ -189,22 +182,24 @@ export class LlmInference extends TaskRunner {
    * into error message, if it's known by the task.
    */
   private readonly wgpuErrorHandler = (event: Event) => {
-    let error = (event as GPUUncapturedErrorEvent).error;
-    const bufferSizeError = error.message.match(
-      /exceeds the max buffer size limit \(([0-9]+)\)\./,
-    );
-    if (
-      bufferSizeError &&
-      Number(bufferSizeError[1]) > MAX_BUFFER_SIZE_FOR_LLM
-    ) {
-      error = new Error(
-        `Failed to run this LLM model, but you could try a smaller LLM ` +
-          `model. WebGPU throws: "${error.message}"`,
+    const error = (event as GPUUncapturedErrorEvent).error;
+    if (error.message.match(/exceeds the max buffer size limit/)) {
+      throw new Error(
+        `Failed to run this LLM model because it requires a buffer size that ` +
+          `exceeds the maximum size your device supports, but you could try ` +
+          `a smaller LLM model or different device.\nWebGPU throws: ` +
+          `"${error.message}"`,
       );
-    } else if (error.message.match(/is larger than the maximum binding size/)) {
-      error = new Error(
-        `Failed to run LLM inference, the supported max binding size is ` +
-          `smaller than the required size. WebGPU throws: "${error.message}"`,
+    } else if (
+      error.message.match(
+        /is larger than the maximum storage buffer binding size/,
+      )
+    ) {
+      throw new Error(
+        `Failed to run this LLM model because it requires a storage buffer ` +
+          `binding size that exceeds the maximum size your device supports, ` +
+          `but you could try a smaller LLM model or different device.\n` +
+          `WebGPU throws: "${error.message}"`,
       );
     }
     this.wgpuErrors.push(error);
@@ -320,43 +315,32 @@ export class LlmInference extends TaskRunner {
     const systemBufferSizeLimit = adapter.limits.maxBufferSize;
     const systemStorageBufferBindingSizeLimit =
       adapter.limits.maxStorageBufferBindingSize;
-    let maxStorageBufferBindingSize = MAX_STORAGE_BUFFER_BINDING_SIZE_FOR_LLM;
-    if (
-      systemStorageBufferBindingSizeLimit >=
-      MAX_STORAGE_BUFFER_BINDING_SIZE_FOR_LLM_EXPERIMENTAL
-    ) {
-      maxStorageBufferBindingSize =
-        MAX_STORAGE_BUFFER_BINDING_SIZE_FOR_LLM_EXPERIMENTAL;
-    } else if (
-      systemStorageBufferBindingSizeLimit <
-      MAX_STORAGE_BUFFER_BINDING_SIZE_FOR_LLM
-    ) {
-      throw new Error(
-        `The WebGPU device is unable to execute LLM tasks, because the ` +
-          `required maxStorageBufferBindingSize is at least ` +
-          `${MAX_STORAGE_BUFFER_BINDING_SIZE_FOR_LLM} but your device only ` +
-          `supports maxStorageBufferBindingSize of ${systemBufferSizeLimit}`,
+    if (systemBufferSizeLimit < RECOMMENDED_MAX_BUFFER_SIZE_FOR_LLM) {
+      console.warn(
+        `This WebGPU device is unable to execute most LLM tasks, because the ` +
+          `required maxBufferSize is usually at least ` +
+          `${RECOMMENDED_MAX_BUFFER_SIZE_FOR_LLM}, but your device only ` +
+          `supports maxBufferSize of ${systemBufferSizeLimit}`,
       );
     }
-
-    let maxBufferSize;
-    if (systemBufferSizeLimit >= MAX_BUFFER_SIZE_FOR_LLM_7B) {
-      maxBufferSize = MAX_BUFFER_SIZE_FOR_LLM_7B;
-    } else if (systemBufferSizeLimit >= MAX_BUFFER_SIZE_FOR_LLM) {
-      maxBufferSize = MAX_BUFFER_SIZE_FOR_LLM;
-    } else {
-      throw new Error(
+    if (
+      systemStorageBufferBindingSizeLimit <
+      RECOMMENDED_MAX_STORAGE_BUFFER_BINDING_SIZE_FOR_LLM
+    ) {
+      console.warn(
         `The WebGPU device is unable to execute LLM tasks, because the ` +
-          `required maxBufferSize is at least ${MAX_BUFFER_SIZE_FOR_LLM} but ` +
-          `your device only supports maxBufferSize of ${systemBufferSizeLimit}`,
+          `required maxStorageBufferBindingSize is usually at least ` +
+          `${RECOMMENDED_MAX_STORAGE_BUFFER_BINDING_SIZE_FOR_LLM}, but your ` +
+          `device only supports maxStorageBufferBindingSize of ` +
+          `${systemStorageBufferBindingSizeLimit}`,
       );
     }
 
     const deviceDescriptor: GPUDeviceDescriptor = {
       requiredFeatures: ['shader-f16'],
       requiredLimits: {
-        'maxStorageBufferBindingSize': maxStorageBufferBindingSize,
-        'maxBufferSize': maxBufferSize,
+        'maxStorageBufferBindingSize': systemStorageBufferBindingSizeLimit,
+        'maxBufferSize': systemBufferSizeLimit,
         'maxStorageBuffersPerShaderStage':
           adapter.limits.maxStorageBuffersPerShaderStage,
       },
