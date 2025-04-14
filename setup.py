@@ -228,6 +228,7 @@ class GeneratePyProtos(build_ext.build_ext):
       sys.stderr.write('generating proto file: %s\n' % output)
       protoc_command = [
           self._protoc, '-I.',
+          '--experimental_allow_proto3_optional',
           '--python_out=' + os.path.abspath(self.build_lib), source
       ]
       _invoke_shell_command(protoc_command)
