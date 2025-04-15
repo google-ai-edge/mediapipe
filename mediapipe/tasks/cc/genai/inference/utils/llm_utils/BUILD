@@ -17,7 +17,9 @@
 package(default_visibility = [
     "//mediapipe/tasks/cc:__subpackages__",
     "//third_party/odml/infra/genai/inference:__subpackages__",
+    # TODO: Remove this once the litert code is moved to litert_lm.
     "//third_party/odml/litert:__subpackages__",
+    "//third_party/odml/litert_lm:__subpackages__",
 ])
 
 cc_library(
