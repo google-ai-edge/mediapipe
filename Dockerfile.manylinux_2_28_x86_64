@@ -77,6 +77,7 @@ RUN cd /tmp/bazel_build/opencv && git checkout 4.10.0 && cd release && cmake .. 
 RUN cd /tmp/bazel_build/opencv/release && make -j 16 && make install
 
 COPY . /mediapipe/
+COPY third_party/mediapipe_python_build.diff /mediapipe/
 WORKDIR /mediapipe
 
 # Set version number
