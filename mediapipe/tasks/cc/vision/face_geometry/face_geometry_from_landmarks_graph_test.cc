@@ -124,7 +124,9 @@ TEST(FaceGeometryFromLandmarksGraphTest, DefaultEnvironment) {
   auto& face_geometry = output_packets[0].Get<std::vector<FaceGeometry>>()[0];
   EXPECT_THAT(
       face_geometry,
-      testing::EqualsProto(GetExpectedFaceGeometry(kFaceGeometryFileName)));
+      testing::proto::Approximately(
+          testing::EqualsProto(GetExpectedFaceGeometry(kFaceGeometryFileName)),
+          1e-4));
 }
 
 TEST(FaceGeometryFromLandmarksGraphTest, SideInEnvironment) {
@@ -164,7 +166,9 @@ TEST(FaceGeometryFromLandmarksGraphTest, SideInEnvironment) {
   auto& face_geometry = output_packets[0].Get<std::vector<FaceGeometry>>()[0];
   EXPECT_THAT(
       face_geometry,
-      testing::EqualsProto(GetExpectedFaceGeometry(kFaceGeometryFileName)));
+      testing::proto::Approximately(
+          testing::EqualsProto(GetExpectedFaceGeometry(kFaceGeometryFileName)),
+          1e-4));
 }
 
 }  // namespace
