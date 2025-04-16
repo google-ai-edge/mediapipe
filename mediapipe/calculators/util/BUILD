@@ -1860,4 +1860,5 @@ cc_library(
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/api2:node",
     ],
+    alwayslink=1
 )
