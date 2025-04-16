@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 
+#include "HalideBuffer.h"
 #include "absl/base/log_severity.h"
 #include "absl/log/absl_check.h"
 #include "absl/log/scoped_mock_log.h"
@@ -331,7 +332,7 @@ TEST_F(LoggingTest, LogTensorChannel) {
 
 TEST_F(LoggingTest, LogTensorChannelWithOutOfBoundsChannelFails) {
   EXPECT_CALL(log(), Log(absl::LogSeverity::kWarning, _,
-                         HasSubstr("Cannot log channel")));
+                         HasSubstr("cannot log channel")));
   Tensor tensor =
       MakeTensor<float>(/*width=*/10, /*height=*/10, /*num_channels=*/2);
   debug::LogTensorChannel(tensor, 2);
@@ -339,14 +340,14 @@ TEST_F(LoggingTest, LogTensorChannelWithOutOfBoundsChannelFails) {
 
 TEST_F(LoggingTest, LogTensorWithBadDimensionsFails) {
   EXPECT_CALL(log(), Log(absl::LogSeverity::kWarning, _,
-                         HasSubstr("Cannot log tensor with shape")));
+                         HasSubstr("cannot log tensor with shape")));
   Tensor tensor(Tensor::ElementType::kFloat32, {1, 2, 3});
   debug::LogTensor(tensor);
 }
 
 TEST_F(LoggingTest, LogTensorWithBadElementTypeFails) {
   EXPECT_CALL(log(), Log(absl::LogSeverity::kWarning, _,
-                         HasSubstr("Cannot log tensor of type")));
+                         HasSubstr("cannot log tensor of type")));
   Tensor tensor =
       MakeTensor<int>(/*width=*/10, /*height=*/10, /*num_channels=*/2);
   debug::LogTensor(tensor);
@@ -381,7 +382,7 @@ TEST_F(LoggingTest, LogImageGrayscale) {
 
   LogImage(*image);
 
-  EXPECT_THAT(log_lines(), HasSubstr("image[600 600]"));
+  EXPECT_THAT(log_lines(), HasSubstr("image[600 600 1]"));
   EXPECT_THAT(log_lines(), HasConsecutiveLines(R"(
 %%%%%%%%%%%%%%%%%%%%%%%%%%###+::....  ........ . . .                    ... ..  ...:.:=*=+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%*-:-..:....  ...         ..      .           .          ...:::-==**%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -452,6 +453,7 @@ TEST_F(LoggingTest, LogImageRGB) {
   EXPECT_EQ(image->Format(), ImageFormat::SRGB);
 
   LogImage(*image);
+  EXPECT_THAT(log_lines(), HasSubstr("image[600 600 3]"));
   EXPECT_THAT(log_lines(), HasConsecutiveLines(R"(
 %%%%%%%%%%%%%%%%%%%%%%%%%%###+::....  ........ . . .                    ... .. . ..:.:=*=+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%*-:-..:....  ..          ..      .           .          ...:::-==**%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -553,13 +555,92 @@ TEST_F(LoggingTest, LogMat) {
   }
   LogMat(mat);
 
-  EXPECT_THAT(log_lines(), HasSubstr("mat[10 10]"));
+  EXPECT_THAT(log_lines(), HasSubstr("mat[10 10 2]"));
   EXPECT_THAT(log_lines(), HasConsecutiveLines(R"(
  ..::--==+
 .::--==++*
 :--==++**#
 -==++**##%
 =++**##%%@)"));
+}
+
+TEST_F(LoggingTest, LogHalideBufferGrayscale) {
+  Halide::Runtime::Buffer<uint8_t> buffer(10, 10);
+  buffer.for_each_element([&](int x, int y) {
+    buffer(x, y) = static_cast<uint8_t>((x + 0.5f + y + 0.5f) * 255 / 20);
+  });
+  LogHalideBuffer(buffer);
+
+  EXPECT_THAT(log_lines(), HasSubstr("buffer[10 10]"));
+  EXPECT_THAT(log_lines(), HasConsecutiveLines(R"(
+ ..::--==+
+.::--==++*
+:--==++**#
+-==++**##%
+=++**##%%@)"));
+}
+
+TEST_F(LoggingTest, LogHalideBufferRGBInterleaved) {
+  auto buffer = Halide::Runtime::Buffer<uint8_t>::make_interleaved(10, 10, 3);
+  buffer.for_each_element([&](int x, int y) {
+    buffer(x, y, 0) = x < 5 ? 255 : 0;
+    buffer(x, y, 1) = y < 5 ? 255 : 0;
+    buffer(x, y, 2) = x < 5 && y < 5 ? 255 : 0;
+  });
+  LogHalideBuffer(buffer);
+
+  EXPECT_THAT(log_lines(), HasSubstr("buffer[10 10 3]"));
+  EXPECT_THAT(log_lines(), HasConsecutiveLines(R"(
+@@@@@-----
+@@@@@-----
+*****.....
+-----
+-----     )"));
+}
+
+TEST_F(LoggingTest, LogHalideBufferRGBPlanar) {
+  auto buffer = Halide::Runtime::Buffer<uint8_t>(10, 10, 3);
+  buffer.for_each_element([&](int x, int y) {
+    buffer(x, y, 0) = x < 5 ? 255 : 0;
+    buffer(x, y, 1) = y < 5 ? 255 : 0;
+    buffer(x, y, 2) = x < 5 && y < 5 ? 255 : 0;
+  });
+  LogHalideBuffer(buffer);
+
+  EXPECT_THAT(log_lines(), HasSubstr("buffer[10 10 3]"));
+  EXPECT_THAT(log_lines(), HasConsecutiveLines(R"(
+@@@@@-----
+@@@@@-----
+*****.....
+-----
+-----     )"));
+}
+
+TEST_F(LoggingTest, LogHalideBufferOneDimensional) {
+  auto buffer = Halide::Runtime::Buffer<uint8_t>(10);
+  buffer.for_each_element(
+      [&](int x) { buffer(x) = static_cast<uint8_t>((x + 0.5f) * 255 / 10); });
+  LogHalideBuffer(buffer);
+
+  EXPECT_THAT(log_lines(), HasSubstr("buffer[10]"));
+  EXPECT_THAT(log_lines(), HasSubstr(" .:-=+*#%@"));
+}
+
+TEST_F(LoggingTest, LogHalideBufferFourDimensional) {
+  EXPECT_CALL(log(),
+              Log(absl::LogSeverity::kWarning, _, HasSubstr("cannot log")));
+  auto buffer = Halide::Runtime::Buffer<uint8_t>(1, 2, 3, 4);
+  buffer.for_each_element(
+      [&](int x, int y, int z, int w) { buffer(x, y, z, w) = 0; });
+  LogHalideBuffer(buffer);
+}
+
+TEST_F(LoggingTest, LogHalideBufferEmpty) {
+  Halide::Runtime::Buffer<uint8_t> buffer;
+  LogHalideBuffer(buffer);
+
+  EXPECT_THAT(log_lines(), HasSubstr("buffer[]"));
+  EXPECT_THAT(log_lines(), HasSubstr("<empty>"));
 }
 
 }  // namespace

@@ -15,6 +15,7 @@
 #ifndef MEDIAPIPE_FRAMEWORK_DEBUG_LOGGING_H_
 #define MEDIAPIPE_FRAMEWORK_DEBUG_LOGGING_H_
 
+#include "HalideBuffer.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/tensor.h"
@@ -47,6 +48,11 @@ void LogImage(const mediapipe::ImageFrame& image,
 // Logs the given mat as a color or ASCII image, depending on terminal
 // capabilities.
 void LogMat(const cv::Mat& mat, absl::string_view name = "mat");
+
+// Logs the given Halide buffer as a color or ASCII image, depending on terminal
+// capabilities.
+void LogHalideBuffer(Halide::Runtime::Buffer<const uint8_t> buffer,
+                     absl::string_view name = "buffer");
 
 }  // namespace mediapipe::debug
 

@@ -24,6 +24,7 @@
 #include <tuple>
 #include <vector>
 
+#include "HalideBuffer.h"
 #include "absl/functional/any_invocable.h"
 #include "absl/log/absl_log.h"
 #include "absl/log/check.h"
@@ -162,7 +163,7 @@ void LogMatImpl(const cv::Mat& mat, absl::string_view name) {
   // Use half as many rows than cols since ASCII chars are higher than wide.
   int small_width = std::min(kMaxCharsX, width);
   int divisor = is_true_color_term ? 1 : 2;
-  int small_height = small_width * height / (divisor * width);
+  int small_height = std::max(small_width * height / (divisor * width), 1);
   if (small_height > kMaxCharsY) {
     small_height = kMaxCharsY;
     small_width = small_height * width * divisor / height;
@@ -233,9 +234,9 @@ void LogTensorImpl(const Tensor& tensor, float min_range, float max_range,
                    int num_output_channels, ChannelMapper mapper,
                    absl::string_view name) {
   if (tensor.element_type() != Tensor::ElementType::kFloat32) {
-    ABSL_LOG(WARNING) << "Cannot log tensor of type "
+    ABSL_LOG(WARNING) << "  <cannot log tensor of type "
                       << static_cast<int>(tensor.element_type())
-                      << ". Required: float";
+                      << ", required: float>";
     return;
   }
 
@@ -245,7 +246,7 @@ void LogTensorImpl(const Tensor& tensor, float min_range, float max_range,
 
   if (tensor.shape().dims[0] == 0 || width == 0 || height == 0 ||
       num_channels == 0) {
-    ABSL_LOG(WARNING) << "  <empty>";
+    ABSL_LOG(INFO) << "  <empty>";
     return;
   }
 
@@ -273,15 +274,15 @@ void LogTensorImpl(const Tensor& tensor, float min_range, float max_range,
 
 void LogTensorChannel(const Tensor& tensor, int channel, absl::string_view name,
                       float min_range, float max_range) {
-  if (tensor.shape().dims.size() != 4 || tensor.shape().dims[0] != 1 ||
-      channel < 0 || channel >= tensor.shape().dims[3]) {
-    ABSL_LOG(WARNING) << "Cannot log channel " << channel
-                      << " of tensor with shape " << tensor.shape().dims;
-    return;
-  }
-
   ABSL_LOG(INFO) << name << "[" << tensor.shape().dims << "], channel "
                  << channel << " =";
+
+  if (tensor.shape().dims.size() != 4 || tensor.shape().dims[0] != 1 ||
+      channel < 0 || channel >= tensor.shape().dims[3]) {
+    ABSL_LOG(WARNING) << "  <cannot log channel " << channel
+                      << " of tensor with shape " << tensor.shape().dims << ">";
+    return;
+  }
 
   LogTensorImpl(
       tensor, min_range, max_range, /*num_output_channels=*/1,
@@ -293,7 +294,9 @@ void LogTensorChannel(const Tensor& tensor, int channel, absl::string_view name,
 void LogTensor(const Tensor& tensor, absl::string_view name, float min_range,
                float max_range) {
   if (tensor.shape().dims.size() != 4 || tensor.shape().dims[0] != 1) {
-    ABSL_LOG(WARNING) << "Cannot log tensor with shape " << tensor.shape().dims;
+    ABSL_LOG(INFO) << name << "[" << tensor.shape().dims << "] = ";
+    ABSL_LOG(WARNING) << "  <cannot log tensor with shape "
+                      << tensor.shape().dims << ", required: [1, h, w, c]>";
     return;
   }
 
@@ -334,13 +337,48 @@ void LogMat(const cv::Mat& mat, absl::string_view name) {
   int height = mat.rows;
   int num_channels = mat.channels();
 
-  ABSL_LOG(INFO) << name << "[" << width << " " << height << "] =";
+  ABSL_LOG(INFO) << name << "[" << width << " " << height << " " << num_channels
+                 << "] =";
 
   if (width == 0 || height == 0 || num_channels == 0) {
-    ABSL_LOG(WARNING) << "  <empty>";
+    ABSL_LOG(INFO) << "  <empty>";
     return;
   }
 
+  LogMatImpl(mat, name);
+}
+
+void LogHalideBuffer(Halide::Runtime::Buffer<const uint8_t> buffer,
+                     absl::string_view name) {
+  std::vector<int> dims(buffer.dimensions());
+  for (int i = 0; i < buffer.dimensions(); ++i) {
+    dims[i] = buffer.extent(i);
+  }
+  ABSL_LOG(INFO) << name << "[" << dims << "] =";
+
+  if (buffer.dimensions() > 3) {
+    ABSL_LOG(WARNING) << "  <cannot log Halide buffer with "
+                      << buffer.dimensions() << " dimensions, required: <= 3>";
+    return;
+  }
+  if (buffer.dimensions() == 0) {
+    ABSL_LOG(INFO) << "  <empty>";
+    return;
+  }
+
+  // cv::Mat only supports mapping to interleaved buffers (channels must be
+  // consecutive).
+  bool is_interleaved = buffer.dimensions() < 3 || buffer.stride(2) == 1;
+  if (!is_interleaved) {
+    buffer = buffer.copy_to_interleaved();
+  }
+
+  const int sizes[] = {buffer.height(), buffer.width()};
+  const int type = CV_MAKETYPE(CV_8U, buffer.channels());
+  const size_t steps[] = {
+      static_cast<size_t>(buffer.dimensions() > 1 ? buffer.stride(1) : 1),
+      static_cast<size_t>(buffer.stride(0))};
+  cv::Mat mat(2, sizes, type, const_cast<unsigned char*>(buffer.data()), steps);
   LogMatImpl(mat, name);
 }
 

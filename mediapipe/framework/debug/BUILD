@@ -34,6 +34,7 @@ cc_library(
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/strings:string_view",
+        "@halide//:runtime",
     ],
 )
 
@@ -54,5 +55,6 @@ cc_test(
         "@com_google_absl//absl/log:scoped_mock_log",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
+        "@halide//:runtime",
     ],
 )
