@@ -19,4 +19,10 @@ import {VisionTaskOptions} from '../../../../tasks/web/vision/core/vision_task_o
 
 /** Options to configure the MediaPipe Object Detector Task */
 export declare interface ObjectDetectorOptions extends VisionTaskOptions,
-                                                       ClassifierOptions {}
+                                                     ClassifierOptions {
+  /**
+   * Whether to use multiclass non-maximum suppression. That is, each category
+   * processes non-maximum-suppression separately.
+   */
+  multiclassNms?: boolean;
+}
