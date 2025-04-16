@@ -6,7 +6,7 @@
 #
 # EXAMPLE:
 #   node {
-#     calculator: "FaceDetectionShortRange"
+#     calculator: "FaceDetectionFullRange"
 #     input_stream: "IMAGE:image_frame"
 #     output_stream: "DETECTIONS:face_detections"
 #   }

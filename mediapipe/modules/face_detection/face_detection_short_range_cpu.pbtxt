@@ -1,5 +1,11 @@
 # MediaPipe graph to detect faces. (CPU input and inference.)
-
+#
+# EXAMPLE:
+#   node {
+#     calculator: "FaceDetectionShortRangeCpu"
+#     input_stream: "IMAGE:image"
+#     output_stream: "DETECTIONS:face_detections"
+#   }
 type: "FaceDetectionShortRangeCpu"
 
 # The input image, either ImageFrame, or (multi-backend) Image.
