@@ -607,6 +607,7 @@ class SafetensorsCkptLoader(converter_base.CkptLoaderBase):
         "GEMMA3_1B",
         "GEMMA3_4B",
         "GEMMA3_12B",
+        "GEMMA3_27B",
     ]:
       self.mapper = GemmaMapper(
           is_symmetric,
