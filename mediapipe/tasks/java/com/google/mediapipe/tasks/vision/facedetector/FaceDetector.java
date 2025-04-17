@@ -19,6 +19,7 @@ import android.os.ParcelFileDescriptor;
 import com.google.auto.value.AutoValue;
 import com.google.mediapipe.proto.CalculatorOptionsProto.CalculatorOptions;
 import com.google.mediapipe.framework.AndroidPacketGetter;
+import com.google.mediapipe.framework.MediaPipeException;
 import com.google.mediapipe.framework.Packet;
 import com.google.mediapipe.framework.PacketGetter;
 import com.google.mediapipe.framework.image.BitmapImageBuilder;
@@ -164,9 +165,20 @@ public final class FaceDetector extends BaseVisionTaskApi {
 
           @Override
           public MPImage convertToTaskInput(List<Packet> packets) {
-            return new BitmapImageBuilder(
-                    AndroidPacketGetter.getBitmapFromRgb(packets.get(IMAGE_OUT_STREAM_INDEX)))
-                .build();
+            Packet currentPacket = packets.get(IMAGE_OUT_STREAM_INDEX);
+            int numChannels = PacketGetter.getImageNumChannels(currentPacket);
+            switch (numChannels) {
+              case 1:
+                return new BitmapImageBuilder(AndroidPacketGetter.getBitmapFromAlpha(currentPacket)).build();
+              case 3:
+                return new BitmapImageBuilder(AndroidPacketGetter.getBitmapFromRgb(currentPacket)).build();
+              case 4:
+                return new BitmapImageBuilder(AndroidPacketGetter.getBitmapFromRgba(currentPacket)).build();
+              default:
+                throw new MediaPipeException(
+                  MediaPipeException.StatusCode.INVALID_ARGUMENT.ordinal(),
+                  "Channels should be: 1, 3, or 4, but is " + numChannels);
+            }
           }
         });
     detectorOptions.resultListener().ifPresent(handler::setResultListener);
