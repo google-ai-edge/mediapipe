@@ -62,6 +62,7 @@ NormalizedLandmarks ConvertToNormalizedLandmarks(
     landmarks.landmarks.push_back(ConvertToNormalizedLandmark(landmark));
   }
   landmarks.detection_confidence = proto.detection_confidence();
+  landmarks.has_detection_confidence_set = proto.has_detection_confidence_set();
   return landmarks;
 }
 
