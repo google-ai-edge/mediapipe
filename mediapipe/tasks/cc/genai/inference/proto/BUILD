@@ -20,7 +20,6 @@ package(default_visibility = [
     "//mediapipe/web/graph_runner:__subpackages__",
     "//third_party/odml/infra/genai/inference:__subpackages__",
     # TODO: Remove this once the litert code is moved to litert_lm.
-    "//third_party/odml/litert/llm:__subpackages__",
     "//third_party/odml/litert_lm:__subpackages__",
 ])
 
