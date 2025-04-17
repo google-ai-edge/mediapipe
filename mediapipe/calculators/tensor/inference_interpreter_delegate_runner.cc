@@ -118,8 +118,8 @@ class InferenceInterpreterDelegateRunner : public InferenceRunner {
       std::unique_ptr<InferenceFeedbackManager> feedback_manager,
       bool enable_zero_copy_tensor_io)
       : model_(std::move(model)),
-        interpreter_(std::move(interpreter)),
         delegate_(std::move(delegate)),
+        interpreter_(std::move(interpreter)),
         input_output_tensor_names_(std::move(input_output_tensor_names)),
         feedback_manager_(std::move(feedback_manager)),
         enable_zero_copy_tensor_io_(enable_zero_copy_tensor_io) {}
@@ -133,8 +133,8 @@ class InferenceInterpreterDelegateRunner : public InferenceRunner {
 
  private:
   api2::Packet<TfLiteModelPtr> model_;
-  std::unique_ptr<Interpreter> interpreter_;
   TfLiteDelegatePtr delegate_;
+  std::unique_ptr<Interpreter> interpreter_;
   InputOutputTensorNames input_output_tensor_names_;
   std::unique_ptr<InferenceFeedbackManager> feedback_manager_;
   bool enable_zero_copy_tensor_io_ = false;
