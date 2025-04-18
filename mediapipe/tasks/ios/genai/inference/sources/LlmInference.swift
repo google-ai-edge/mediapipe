@@ -61,28 +61,23 @@ import MediaPipeTasksGenAIC
     llmTaskRunner = try options.modelPath.withCString { modelPath in
       try cacheDirectory.withCString { cacheDirectory in
         try options.supportedLoraRanks.withUnsafeMutableBufferPointer { supportedLoraRanks in
-          try options.visionEncoderPath.withCString { visionEncoderPath in
-            try options.visionAdapterPath.withCString { visionAdapterPath in
-              let modelSetting = LlmModelSettings(
-                model_path: modelPath,
-                vision_encoder_path: (options.visionEncoderPath.isEmpty ? nil : visionEncoderPath),
-                vision_adapter_path: (options.visionAdapterPath.isEmpty ? nil : visionAdapterPath),
-                cache_dir: cacheDirectory,
-                max_num_tokens: options.maxTokens,
-                max_num_images: options.maxImages,
-                num_decode_steps_per_sync: numberOfDecodeStepsPerSync,
-                sequence_batch_size: options.sequenceBatchSize,
-                number_of_supported_lora_ranks: supportedLoraRanks.count,
-                supported_lora_ranks: supportedLoraRanks.baseAddress,
-                max_top_k: options.maxTopk,
-                llm_activation_data_type: kLlmActivationDataTypeDefault,
-                num_draft_tokens: 0,
-                wait_for_weight_uploads: options.waitForWeightUploads,
-                use_submodel: options.useSubmodel,
-                preferred_backend: kLlmPreferredBackendDefault)
-              return try LlmTaskRunner(modelSettings: modelSetting)
-            }
-          }
+          let modelSetting = LlmModelSettings(
+            model_path: modelPath,
+            vision_encoder_path: nil,
+            vision_adapter_path: nil,
+            cache_dir: cacheDirectory,
+            max_num_tokens: options.maxTokens,
+            num_decode_steps_per_sync: numberOfDecodeStepsPerSync,
+            sequence_batch_size: options.sequenceBatchSize,
+            number_of_supported_lora_ranks: supportedLoraRanks.count,
+            supported_lora_ranks: supportedLoraRanks.baseAddress,
+            max_top_k: options.maxTopk,
+            llm_activation_data_type: kLlmActivationDataTypeDefault,
+            num_draft_tokens: 0,
+            wait_for_weight_uploads: options.waitForWeightUploads,
+            use_submodel: options.useSubmodel,
+            preferred_backend: kLlmPreferredBackendDefault)
+          return try LlmTaskRunner(modelSettings: modelSetting)
         }
       }
     }
@@ -227,18 +222,9 @@ extension LlmInference {
     /// The absolute path to the model asset bundle stored locally on the device.
     @objc public var modelPath: String
 
-    /// Path to the vision encoder to use for vision modality. Optional.
-    @objc public var visionEncoderPath: String = ""
-
-    /// Path to the vision adapter to use for vision modality. Optional.
-    @objc public var visionAdapterPath: String = ""
-
     /// The total length of the kv-cache. In other words, this is the total number of input + output
     /// tokens the model needs to handle.
     @objc public var maxTokens: Int = 512
-
-    /// Maximum number of images to be used for vision modality.
-    @objc public var maxImages: Int = 0
 
     /// Maximum top k, which is the max Top-K value supported for all sessions created with the
     /// `LlmInference`, used by GPU only. If a session with Top-K value larger than this is being

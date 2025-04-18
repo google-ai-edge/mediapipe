@@ -84,7 +84,6 @@ LlmModelSettings ParseModelSettings(void* bytes, int size) {
   output.sequence_batch_size = input.sequence_batch_size();
   output.num_decode_steps_per_sync = input.num_decode_steps_per_sync();
   output.max_num_tokens = input.max_tokens();
-  output.max_num_images = input.max_num_images();
   output.max_top_k = input.max_top_k();
   output.number_of_supported_lora_ranks =
       input.number_of_supported_lora_ranks();

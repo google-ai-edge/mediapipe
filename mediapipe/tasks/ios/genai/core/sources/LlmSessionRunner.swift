@@ -12,16 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import CoreGraphics
 import Foundation
 import MediaPipeTasksGenAIC
-import third_party_mediapipe_tasks_ios_genai_core_SkImageConverter
 
 /// This class is used to create and call appropriate methods on the C `LlmInferenceEngine_Session`
 /// to initialize, execute and terminate any MediaPipe `LlmInference.Session`.
 final class LlmSessionRunner {
   typealias CLlmSession = UnsafeMutableRawPointer
-  typealias CSkBitmap = UnsafeMutableRawPointer
 
   /// The underlying C LLM session managed by this `LlmSessionRunner`.
   private var cLlmSession: CLlmSession?
@@ -52,12 +49,6 @@ final class LlmSessionRunner {
       throw GenAiInferenceError.failedToAddQueryToSession(
         inputText, String(allocatedCErrorMessage: cErrorMessage))
     }
-  }
-
-  func addImage(image: CGImage) throws {
-    var cErrorMessage: UnsafeMutablePointer<CChar>? = nil
-    let cSkBitmap: CSkBitmap = SkImageConverter.skBitmap(from: image)
-    LlmInferenceEngine_Session_AddImage(cLlmSession, cSkBitmap, &cErrorMessage)
   }
 
   /// Invokes the C LLM session with the previously added query chunks synchronously to generate an
@@ -109,9 +100,7 @@ final class LlmSessionRunner {
     let callbackInfo = CallbackInfo(progress: progress, completion: completion)
     let callbackContext = UnsafeMutableRawPointer(Unmanaged.passRetained(callbackInfo).toOpaque())
 
-    let errorCode = LlmInferenceEngine_Session_PredictAsync(
-      cLlmSession, callbackContext, &cErrorMessage
-    ) {
+    let errorCode = LlmInferenceEngine_Session_PredictAsync(cLlmSession, callbackContext, &cErrorMessage) {
       context, responseContext in
       guard let cContext = context else {
         return

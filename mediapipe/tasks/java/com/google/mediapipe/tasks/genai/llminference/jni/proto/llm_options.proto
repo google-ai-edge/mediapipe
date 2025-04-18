@@ -81,7 +81,6 @@ message LlmSessionConfig {
 }
 
 // Configurable model parameters for creating an LLM inference engine.
-// Next ID: 13
 message LlmModelSettings {
   // Path to the tflite model file.
   string model_path = 1;
@@ -103,9 +102,6 @@ message LlmModelSettings {
   // The total number of tokens for kv-cache. In other words, this is the total
   // number of input + output tokens the model needs to handle.
   uint32 max_tokens = 5;
-
-  // Maximum number of images to be used for vision modality.
-  uint32 max_num_images = 12;
 
   // Number of supported lora ranks for the base model. Used by GPU only.
   uint32 number_of_supported_lora_ranks = 6;

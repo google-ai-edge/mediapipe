@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import CoreGraphics
 import Foundation
 import MediaPipeTasksGenAIC
 
@@ -57,7 +56,7 @@ extension LlmInference {
         random_seed: options.randomSeed,
         lora_path: nil,
         include_token_cost_calculator: true,
-        enable_vision_modality: options.enableVisionModality,
+        enable_vision_modality: false,
         prompt_templates: nil)
 
       /// If `loraPath` is != nil, modify session config with the corresponding C string and invoke
@@ -113,10 +112,6 @@ extension LlmInference {
     /// - Throws: An error if adding a query chunk to the session fails.
     @objc public func addQueryChunk(inputText: String) throws {
       try llmSessionRunner.addQueryChunk(inputText: inputText)
-    }
-
-    @objc public func addImage(image: CGImage) throws {
-      try llmSessionRunner.addImage(image: image)
     }
 
     /// Generates a response based on the previously added query chunks synchronously. Use
@@ -307,9 +302,6 @@ extension LlmInference.Session {
     /// The optional absolute path to the LoRA model asset bundle stored locally on the device.
     /// This is only compatible with GPU models.
     @objc public var loraPath: String?
-
-    /// Whether to enable vision modality.
-    @objc public var enableVisionModality: Bool = false
   }
 }
 
