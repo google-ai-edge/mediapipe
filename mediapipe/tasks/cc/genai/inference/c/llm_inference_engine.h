@@ -113,6 +113,9 @@ typedef struct {
   // Maximum number of tokens for input and output.
   size_t max_num_tokens;
 
+  // Maximum number of images to be used for vision modality.
+  size_t max_num_images;
+
   // Number of decode steps per sync. Used by GPU only. The default value is 3.
   size_t num_decode_steps_per_sync;
 

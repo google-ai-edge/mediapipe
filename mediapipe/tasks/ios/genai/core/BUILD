@@ -35,7 +35,26 @@ swift_library(
     # This target is only here for compilation checks.
     visibility = ["//visibility:private"],
     deps = [
+        ":SkImageConverter",
         "//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu",
+        "//third_party/apple_frameworks:CoreGraphics",
         "//third_party/apple_frameworks:Foundation",
+    ],
+)
+
+objc_library(
+    name = "SkImageConverter",
+    srcs = [
+        "sources/SkImageConverter.mm",
+    ],
+    hdrs = [
+        "sources/SkImageConverter.h",
+    ],
+    aspect_hints = ["//tools/build_defs/swift:auto_module"],
+    deps = [
+        "//third_party/apple_frameworks:CoreGraphics",
+        "//third_party/apple_frameworks:Foundation",
+        "@skia//:core",
+        "@skia//:mac_utils",
     ],
 )
