@@ -918,7 +918,7 @@ class DetectionOutputTensorsMd:
 
   _LOCATION_NAME = "location"
   _LOCATION_DESCRIPTION = "The locations of the detected boxes."
-  _CATRGORY_NAME = "category"
+  _CATEGORY_NAME = "category"
   _CATEGORY_DESCRIPTION = "The categories of the detected boxes."
   _SCORE_NAME = "score"
   _SCORE_DESCRIPTION = "The scores of the detected boxes."
@@ -954,7 +954,7 @@ class DetectionOutputTensorsMd:
         content_range_md=content_range_md,
     )
     category_md = CategoryTensorMd(
-        name=self._CATRGORY_NAME,
+        name=self._CATEGORY_NAME,
         description=self._CATEGORY_DESCRIPTION,
         label_files=label_files,
         content_range_md=content_range_md,
