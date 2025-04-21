@@ -429,7 +429,7 @@ apple_static_xcframework(
         "ios": MPP_TASK_MINIMUM_OS_VERSION,
     },
     public_hdrs = [
-        ":llm_inference_engine.h",
+        "//mediapipe/tasks/cc/genai/inference/c:llm_inference_engine.h",
     ],
     # Including here the deps that were in avoid_deps in MediaPipeTasksGenAI_library.
     deps = TENSORFLOW_LITE_C_DEPS + [
@@ -437,12 +437,24 @@ apple_static_xcframework(
     ],
 )
 
-apple_static_library(
-    name = "MediaPipeTasksGenAI_library",
+apple_static_xcframework(
+    name = "MediaPipeTasksGenAIC_library",
     # Excluding these to avoid duplicate symbols.
     avoid_deps = TENSORFLOW_LITE_C_DEPS + [
         "//mediapipe/gpu:metal_shared_resources",
     ],
-    minimum_os_version = MPP_TASK_MINIMUM_OS_VERSION,
-    platform_type = "ios",
+    bundle_name = "MediaPipeTasksGenAIC_library",
+    ios = {
+        "simulator": [
+            "arm64",
+            "x86_64",
+        ],
+        "device": ["arm64"],
+    },
+    minimum_os_versions = {
+        "ios": MPP_TASK_MINIMUM_OS_VERSION,
+    },
+    deps = [
+        ":empty.plist",
+    ],
 )
