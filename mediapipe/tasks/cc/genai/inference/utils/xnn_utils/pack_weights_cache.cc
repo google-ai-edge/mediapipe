@@ -35,14 +35,18 @@
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
-#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/memory_mapped_file.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/named_buffer_generated.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/xnn_tensor.h"
 #include "xnnpack.h"  // from @XNNPACK
+// clang-format off
+#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/memory_mapped_file.h",
+// clang-format on
 
 namespace mediapipe::tasks::genai::xnn_utils {
 
 namespace {
+
+using ::mediapipe::tasks::genai::llm_utils::MemoryMappedFile;
 
 bool operator==(const xnn_weights_cache_look_up_key& lhs,
                 const xnn_weights_cache_look_up_key& rhs) {
@@ -158,16 +162,15 @@ bool PackWeightsCache::ShouldDoubleCheckCompatibility(
   return false;
 }
 
-std::shared_ptr<llm_utils::MemoryMappedFile> PackWeightsCache::GetMmapFile(
+std::shared_ptr<MemoryMappedFile> PackWeightsCache::GetMmapFile(
     absl::string_view filename) {
   return mediapipe::file::Exists(filename).ok()
-             ? llm_utils::MemoryMappedFile::CreateMutable(filename).value_or(
-                   nullptr)
+             ? MemoryMappedFile::CreateMutable(filename).value_or(nullptr)
              : nullptr;
 }
 
 absl::Status PackWeightsCache::InitializeFromCache(
-    std::shared_ptr<llm_utils::MemoryMappedFile> mmap_cache) {
+    std::shared_ptr<MemoryMappedFile> mmap_cache) {
   name_to_offset_size_.clear();
   named_buffers_ = std::shared_ptr<const NamedBuffers>(
       mmap_cache, GetNamedBuffers(mmap_cache->data()));

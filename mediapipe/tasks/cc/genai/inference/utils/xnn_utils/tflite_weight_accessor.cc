@@ -29,12 +29,16 @@
 #include "flatbuffers/buffer.h"
 #include "flatbuffers/vector.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/memory_mapped_file.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/xnn_tensor.h"
-#include "tensorflow/lite/schema/schema_generated.h"
 #include "xnnpack.h"  // from @XNNPACK
+// clang-format off
+#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/memory_mapped_file.h",
+// clang-format on
+#include "tensorflow/lite/schema/schema_generated.h"
 
 namespace mediapipe::tasks::genai::xnn_utils {
+
+using ::mediapipe::tasks::genai::llm_utils::MemoryMappedFile;
 
 TfLiteWeightAccessor::TfLiteWeightAccessor(
     std::shared_ptr<const tflite::Model> tflite_model, char* data)
@@ -43,8 +47,8 @@ TfLiteWeightAccessor::TfLiteWeightAccessor(
 }
 
 TfLiteWeightAccessor::TfLiteWeightAccessor(absl::string_view filename) {
-  std::shared_ptr<llm_utils::MemoryMappedFile> mmap_file =
-      llm_utils::MemoryMappedFile::Create(filename).value_or(nullptr);
+  std::shared_ptr<MemoryMappedFile> mmap_file =
+      MemoryMappedFile::Create(filename).value_or(nullptr);
   if (mmap_file) {
     tflite_model_ = std::shared_ptr<const ::tflite::Model>(
         mmap_file, ::tflite::GetModel(mmap_file->data()));

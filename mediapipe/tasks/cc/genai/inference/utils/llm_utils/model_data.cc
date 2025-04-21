@@ -39,14 +39,19 @@
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/tasks/cc/genai/inference/proto/llm_file_metadata.pb.h"
 #include "mediapipe/tasks/cc/genai/inference/proto/llm_params.pb.h"
-#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/memory_mapped_file.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/metadata_utils.h"
-#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/scoped_file.h"
+// clang-format off
+#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/memory_mapped_file.h",
+#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/scoped_file.h",
+// clang-format on
 #include "tensorflow/lite/model_builder.h"
 #include "tensorflow/lite/schema/schema_generated.h"
 
 namespace mediapipe::tasks::genai::llm_utils {
 namespace {
+
+using ::mediapipe::tasks::genai::llm_utils::MemoryMappedFile;
+using ::mediapipe::tasks::genai::llm_utils::ScopedFile;
 
 // The maximum size of the tflite::Model (excluding buffers).
 constexpr uint64_t kTfliteBaseSize = 1024 * 1024;

@@ -29,10 +29,13 @@
 #include "absl/types/span.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/memory_mapped_file.h"
-
+// clang-format off
+#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/memory_mapped_file.h",
+// clang-format on
 namespace mediapipe::tasks::genai {
 namespace xnn_utils {
+
+using ::mediapipe::tasks::genai::llm_utils::MemoryMappedFile;
 
 static constexpr absl::string_view kKeySelfAttentionReshapedWeight{
     "self_attention_reshaped_weight_N"};
@@ -50,8 +53,7 @@ static absl::StatusOr<std::shared_ptr<element_type>> LoadBufferFromFile(
     size_t expect_size_bytes = 0) {
   RET_CHECK(buffer_size);
   if (use_mmap) {
-    MP_ASSIGN_OR_RETURN(auto mapped_file,
-                        llm_utils::MemoryMappedFile::Create(file_path));
+    MP_ASSIGN_OR_RETURN(auto mapped_file, MemoryMappedFile::Create(file_path));
     if (expect_size_bytes) {
       RET_CHECK_EQ(expect_size_bytes, mapped_file->length())
           << "File size " << mapped_file->length() << ", expected "
@@ -63,9 +65,8 @@ static absl::StatusOr<std::shared_ptr<element_type>> LoadBufferFromFile(
     // shared_ptr deleter must be copy constructible, so wrap the unique_ptr in
     // another shared_ptr.
     void* data = mapped_file->data();
-    auto file_deleter =
-        std::make_shared<std::unique_ptr<llm_utils::MemoryMappedFile>>(
-            std::move(mapped_file));
+    auto file_deleter = std::make_shared<std::unique_ptr<MemoryMappedFile>>(
+        std::move(mapped_file));
     return std::shared_ptr<element_type>(
         static_cast<element_type*>(data),
         [file_deleter](auto* p) { file_deleter->reset(); });

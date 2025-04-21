@@ -47,11 +47,13 @@
 #include "mediapipe/tasks/cc/genai/inference/proto/transformer_params.pb.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/metadata_utils.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/model_data.h"
-#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/scoped_file.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/graph_builder.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/llm.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/llm_builder_factory.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/llm_weights.h"
+// clang-format off
+#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/scoped_file.h",
+// clang-format on
 #include "sentencepiece/src/sentencepiece_processor.h"  // from @com_google_sentencepiece
 #include "sentencepiece/src/util.h"  // from @com_google_sentencepiece
 #include "tensorflow/lite/c/common.h"
@@ -63,6 +65,8 @@
 #include "tensorflow/lite/model_builder.h"
 
 namespace {
+
+using ::mediapipe::tasks::genai::llm_utils::ScopedFile;
 
 constexpr int kCheckLastKChars = 10;
 
@@ -318,8 +322,7 @@ void* start_llm_function(void* args) {
 absl::StatusOr<std::unique_ptr<LlmInferenceEngineCpu_Engine>>
 CreateXnnLlmCpuEngine(const LlmModelSettings* model_settings) {
   MP_ASSIGN_OR_RETURN(auto model_file,
-                      mediapipe::tasks::genai::llm_utils::ScopedFile::Open(
-                          model_settings->model_path));
+                      ScopedFile::Open(model_settings->model_path));
   MP_ASSIGN_OR_RETURN(auto model_data,
                       mediapipe::tasks::genai::llm_utils::ModelData::Create(
                           std::move(model_file)));

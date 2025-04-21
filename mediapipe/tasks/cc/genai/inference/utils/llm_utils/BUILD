@@ -22,6 +22,8 @@ package(default_visibility = [
     "//third_party/odml/litert_lm:__subpackages__",
 ])
 
+# TODO: Remove this once the litert_lm code is OSS and supported in mediapipe.
+# Deprecated. Use //third_party/odml/litert_lm/runtime/util:memory_mapped_file instead.
 cc_library(
     name = "memory_mapped_file",
     srcs = select({
@@ -42,6 +44,8 @@ cc_library(
     ],
 )
 
+# TODO: Remove this once the litert_lm code is OSS and supported in mediapipe.
+# Deprecated. Use //third_party/odml/litert_lm/runtime/util:scoped_file instead.
 cc_library(
     name = "scoped_file",
     srcs = select({
@@ -55,6 +59,8 @@ cc_library(
         "@com_google_absl//absl/strings:string_view",
     ],
 )
+
+# TODO: Remove this once the litert_lm code is OSS and supported in mediapipe.
 
 cc_library(
     name = "metadata_utils",
@@ -84,7 +90,6 @@ cc_library(
     hdrs = ["constraint_utils.h"],
     deps = [
         ":bitmap",
-        "//mediapipe/framework/port:status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
     ],

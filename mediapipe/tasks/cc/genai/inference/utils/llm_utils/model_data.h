@@ -27,11 +27,17 @@
 #include "absl/types/span.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/tasks/cc/genai/inference/proto/llm_params.pb.h"
-#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/memory_mapped_file.h"
-#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/scoped_file.h"
+
+// clang-format off
+#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/memory_mapped_file.h",
+#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/scoped_file.h",
+// clang-format on
 #include "tensorflow/lite/model_builder.h"
 
 namespace mediapipe::tasks::genai::llm_utils {
+
+using ::mediapipe::tasks::genai::llm_utils::MemoryMappedFile;
+using ::mediapipe::tasks::genai::llm_utils::ScopedFile;
 
 // Provides access to data tied to an underlying resource. The resource may be
 // released when this object is destroyed and spans previously returned from
@@ -52,7 +58,8 @@ struct OffsetAndSize {
   uint64_t offset = 0;
   uint64_t size = 0;
 };
-// Gets an offset and size which will be valid to pass to MemoryMappedFile.
+// Gets an offset and size which will be valid to pass to
+// MemoryMappedFile.
 OffsetAndSize GetAlignedOffsetAndSize(uint64_t base_offset, uint64_t base_size);
 
 // Creates a DataHolder by memory mapping `file`. `key` can be passed as an
