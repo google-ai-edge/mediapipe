@@ -275,8 +275,8 @@ class TfLiteInferenceCalculator : public CalculatorBase {
   }
 
   Packet model_packet_;
-  std::unique_ptr<tflite::Interpreter> interpreter_;
   TfLiteDelegatePtr delegate_;
+  std::unique_ptr<tflite::Interpreter> interpreter_;
 
 #if MEDIAPIPE_TFLITE_GL_INFERENCE
   mediapipe::GlCalculatorHelper gpu_helper_;
