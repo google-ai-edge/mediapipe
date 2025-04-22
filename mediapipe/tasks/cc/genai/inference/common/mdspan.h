@@ -59,7 +59,7 @@ struct DeleteHelper {
 }  // namespace mdspan_internal
 
 template <typename T>
-MdSpan<T, 1> MakeMdSpan(absl::Nonnull<T*> data, size_t d1,
+MdSpan<T, 1> MakeMdSpan(T* /*absl_nonnull - not yet supported*/ data, size_t d1,
                         std::function<void()> deleter = nullptr) {
   auto delete_helper =
       deleter
@@ -68,8 +68,8 @@ MdSpan<T, 1> MakeMdSpan(absl::Nonnull<T*> data, size_t d1,
   return MdSpan<T, 1>(data, {d1}, delete_helper);
 }
 template <typename T>
-MdSpan<T, 2> MakeMdSpan(absl::Nonnull<T*> data, size_t d1, size_t d2,
-                        std::function<void()> deleter = nullptr) {
+MdSpan<T, 2> MakeMdSpan(T* /*absl_nonnull - not yet supported*/ data, size_t d1,
+                        size_t d2, std::function<void()> deleter = nullptr) {
   auto delete_helper =
       deleter
           ? std::make_shared<mdspan_internal::DeleteHelper>(std::move(deleter))
@@ -77,7 +77,8 @@ MdSpan<T, 2> MakeMdSpan(absl::Nonnull<T*> data, size_t d1, size_t d2,
   return MdSpan<T, 2>(data, {d1, d2}, delete_helper);
 }
 template <typename T>
-MdSpan<T, 3> MakeMdSpan(absl::Nonnull<T*> data, size_t d1, size_t d2, size_t d3,
+MdSpan<T, 3> MakeMdSpan(T* /*absl_nonnull - not yet supported*/ data, size_t d1,
+                        size_t d2, size_t d3,
                         std::function<void()> deleter = nullptr) {
   auto delete_helper =
       deleter
@@ -86,8 +87,9 @@ MdSpan<T, 3> MakeMdSpan(absl::Nonnull<T*> data, size_t d1, size_t d2, size_t d3,
   return MdSpan<T, 3>(data, {d1, d2, d3}, delete_helper);
 }
 template <typename T>
-MdSpan<T, 4> MakeMdSpan(absl::Nonnull<T*> data, size_t d1, size_t d2, size_t d3,
-                        size_t d4, std::function<void()> deleter = nullptr) {
+MdSpan<T, 4> MakeMdSpan(T* /*absl_nonnull - not yet supported*/ data, size_t d1,
+                        size_t d2, size_t d3, size_t d4,
+                        std::function<void()> deleter = nullptr) {
   auto delete_helper =
       deleter
           ? std::make_shared<mdspan_internal::DeleteHelper>(std::move(deleter))
@@ -95,7 +97,7 @@ MdSpan<T, 4> MakeMdSpan(absl::Nonnull<T*> data, size_t d1, size_t d2, size_t d3,
   return MdSpan<T, 4>(data, {d1, d2, d3, d4}, delete_helper);
 }
 template <typename T, typename D, typename... Sizes>
-auto MakeMdSpan(absl::Nonnull<D*> data, Sizes... sizes) {
+auto MakeMdSpan(D* /*absl_nonnull - not yet supported*/ data, Sizes... sizes) {
   return MakeMdSpan(static_cast<T*>(data), sizes...);
 }
 
@@ -178,17 +180,19 @@ struct MdSpan {
 
  private:
   template <typename U>
-  friend MdSpan<U, 1> MakeMdSpan(absl::Nonnull<U*> data, size_t d1,
+  friend MdSpan<U, 1> MakeMdSpan(U* /*absl_nonnull - not yet supported*/ data,
+                                 size_t d1, std::function<void()> deleter);
+  template <typename U>
+  friend MdSpan<U, 2> MakeMdSpan(U* /*absl_nonnull - not yet supported*/ data,
+                                 size_t d1, size_t d2,
                                  std::function<void()> deleter);
   template <typename U>
-  friend MdSpan<U, 2> MakeMdSpan(absl::Nonnull<U*> data, size_t d1, size_t d2,
+  friend MdSpan<U, 3> MakeMdSpan(U* /*absl_nonnull - not yet supported*/ data,
+                                 size_t d1, size_t d2, size_t d3,
                                  std::function<void()> deleter);
   template <typename U>
-  friend MdSpan<U, 3> MakeMdSpan(absl::Nonnull<U*> data, size_t d1, size_t d2,
-                                 size_t d3, std::function<void()> deleter);
-  template <typename U>
-  friend MdSpan<U, 4> MakeMdSpan(absl::Nonnull<U*> data, size_t d1, size_t d2,
-                                 size_t d3, size_t d4,
+  friend MdSpan<U, 4> MakeMdSpan(U* /*absl_nonnull - not yet supported*/ data,
+                                 size_t d1, size_t d2, size_t d3, size_t d4,
                                  std::function<void()> deleter);
   // MdSpan with arbitrary type/rank.
   template <typename U, size_t K>
@@ -228,7 +232,8 @@ struct MdSpan {
     }
   }
 
-  MdSpan(absl::Nonnull<T*> data, std::array<size_t, Rank> shape,
+  MdSpan(T* /*absl_nonnull - not yet supported*/ data,
+         std::array<size_t, Rank> shape,
          std::shared_ptr<mdspan_internal::DeleteHelper> deleter)
       : shape_internal(std::move(shape)), delete_helper(std::move(deleter)) {
     flattened = absl::MakeSpan(data, size());

@@ -143,7 +143,7 @@ class Llm : protected xnn_utils::XnnGraph {
   // If `context` is non-null, and different from existing context_, load the
   // context into the model.
   virtual absl::Status LoadContext(
-      absl::Nullable<std::shared_ptr<Context>> context);
+      /*absl_nullable - not yet supported*/ std::shared_ptr<Context> context);
 
   // protected:
   friend class PrefixDecodeLlm;

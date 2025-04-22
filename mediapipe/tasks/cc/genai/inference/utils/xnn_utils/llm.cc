@@ -255,7 +255,7 @@ absl::StatusOr<Llm::Context> Llm::NewContext() const {
 }
 
 absl::Status Llm::LoadContext(
-    absl::Nullable<std::shared_ptr<Context>> context) {
+    /*absl_nullable - not yet supported*/ std::shared_ptr<Context> context) {
   if (!context || (context_ == context)) return absl::OkStatus();
   // There are some metadata we'd like to keep with existing context, also we'd
   // like to use pointer address to distinguish context. So the following logic
