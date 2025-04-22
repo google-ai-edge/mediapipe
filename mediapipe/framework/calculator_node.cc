@@ -14,11 +14,12 @@
 
 #include "mediapipe/framework/calculator_node.h"
 
+#include <cstdint>
+#include <map>
 #include <memory>
 #include <set>
 #include <string>
 #include <tuple>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -28,7 +29,6 @@
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "absl/strings/substitute.h"
@@ -46,7 +46,6 @@
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/packet_set.h"
 #include "mediapipe/framework/packet_type.h"
-#include "mediapipe/framework/port.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/proto_ns.h"
 #include "mediapipe/framework/port/ret_check.h"
@@ -56,7 +55,6 @@
 #include "mediapipe/framework/tool/name_util.h"
 #include "mediapipe/framework/tool/status_util.h"
 #include "mediapipe/framework/tool/tag_map.h"
-#include "mediapipe/framework/tool/validate_name.h"
 
 namespace mediapipe {
 
