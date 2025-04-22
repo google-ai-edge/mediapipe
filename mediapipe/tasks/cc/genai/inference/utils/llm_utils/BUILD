@@ -130,3 +130,14 @@ cc_library(
         "//mediapipe/tasks/cc/genai/inference/proto:transformer_params_cc_proto",
     ],
 )
+
+cc_library(
+    name = "prompt_utils",
+    srcs = ["prompt_utils.cc"],
+    hdrs = ["prompt_utils.h"],
+    deps = [
+        "//mediapipe/tasks/cc/genai/inference/proto:prompt_template_cc_proto",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/status:statusor",
+    ],
+)
