@@ -35,7 +35,8 @@ objc_library(
     hdrs = ["sources/NSString+Helpers.h"],
     copts = [
         "-ObjC++",
-        "-std=c++17",
+        "-std=c++20",
+        "-Xclang=-fno-cxx-modules",
     ],
     deps = ["//third_party/apple_frameworks:Foundation"],
 )

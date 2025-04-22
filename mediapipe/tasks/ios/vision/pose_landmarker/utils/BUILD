@@ -22,7 +22,8 @@ objc_library(
     hdrs = ["sources/MPPPoseLandmarkerOptions+Helpers.h"],
     copts = [
         "-ObjC++",
-        "-std=c++17",
+        "-std=c++20",
+        "-Xclang=-fno-cxx-modules",
         "-x objective-c++",
     ],
     deps = [
@@ -43,7 +44,8 @@ objc_library(
     hdrs = ["sources/MPPPoseLandmarkerResult+Helpers.h"],
     copts = [
         "-ObjC++",
-        "-std=c++17",
+        "-std=c++20",
+        "-Xclang=-fno-cxx-modules",
         "-x objective-c++",
     ],
     deps = [

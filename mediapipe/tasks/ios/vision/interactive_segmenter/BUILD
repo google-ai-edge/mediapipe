@@ -43,7 +43,8 @@ objc_library(
     hdrs = ["sources/MPPInteractiveSegmenter.h"],
     copts = [
         "-ObjC++",
-        "-std=c++17",
+        "-std=c++20",
+        "-Xclang=-fno-cxx-modules",
         "-x objective-c++",
     ],
     module_name = "MPPInteractiveSegmenter",
