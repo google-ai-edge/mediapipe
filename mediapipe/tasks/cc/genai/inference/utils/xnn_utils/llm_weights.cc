@@ -188,6 +188,8 @@ LlmParams LlmParams::FromLLMParametersProto(
           transformer_params.post_norm());
   params.sa_params.soft_cap_value =
       transformer_params.self_attention_parameters().soft_cap_value();
+  params.sa_params.qk_norm =
+      transformer_params.self_attention_parameters().qk_norm();
   params.ff_params.pre_norm =
       TransformerParametersProtoNormTypeToLlmParamsNormType(
           transformer_params.feed_forward_parameters().pre_norm());
@@ -381,6 +383,25 @@ absl::StatusOr<SelfAttentionWeights> LlmWeightsLoader::LoadSelfAttention(
                       *weight_accessor_));
 
   absl::StrAppend(&sa_file_prefix, ".self_attention.");
+
+  if (params.sa_params.qk_norm) {
+    MP_ASSIGN_OR_RETURN(self_attention.q_norm_weight,
+                        LoadNormWeights(LlmParams::Norm::RMS_NORM,
+                                        std::vector<size_t>{params.head_dim_H},
+                                        absl::StrCat(sa_file_prefix, "q_norm"),
+                                        *weight_accessor_));
+    MP_ASSIGN_OR_RETURN(self_attention.k_norm_weight,
+                        LoadNormWeights(LlmParams::Norm::RMS_NORM,
+                                        std::vector<size_t>{params.head_dim_H},
+                                        absl::StrCat(sa_file_prefix, "k_norm"),
+                                        *weight_accessor_));
+    RET_CHECK(std::get<RMSNormWeights>(self_attention.q_norm_weight.value())
+                  .norm_weight &&
+              std::get<RMSNormWeights>(self_attention.k_norm_weight.value())
+                  .norm_weight)
+        << "Expected qk_norm weights " << absl::StrCat(sa_file_prefix, "q_norm")
+        << " and " << absl::StrCat(sa_file_prefix, "k_norm") << " not found.";
+  }
 
   MP_ASSIGN_OR_RETURN(
       self_attention.k_weight,

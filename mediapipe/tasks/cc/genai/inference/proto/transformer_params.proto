@@ -156,7 +156,14 @@ message TransformerParameters {
     // Multi-Head-Attention by default.
     optional AttentionScaleType attention_scale_type = 5;
 
-    reserved 6, 7;
+    // If set, determines how many tokens in the context history (before the
+    // current time step) are used for the self-attention calculation.
+    // Otherwise, the full context history is used.
+    optional int32 sliding_window_size = 6;
+
+    // If set, enables separate q and k weighted norms in the attention layer
+    // (used for Gemma3).
+    optional bool qk_norm = 7;
   }
 
   SelfAttentionParameters self_attention_parameters = 16;
@@ -167,7 +174,21 @@ message TransformerParameters {
   // before the attention.
   bool skip_absolute_positional_embeddings = 18;
 
-  reserved 19, 20, 21, 23, 24, 32, 33;
+  reserved 20, 21, 23, 24;
+
+  // If set, will override the default RoPE scaling factor to be the specified
+  // value for all global layers (but will not change local attention layers).
+  optional float global_rope_scaling = 33;
+
+  // The number of local attention layers for each global attention layer. For
+  // example, if the value is 3, then the stacked transformer will have the
+  // pattern L-L-L-G-L-L-L-G- ... Note that if the value is 0, then the stacked
+  // transformer will only have global attention layers.
+  int32 num_local_layers_per_global = 19;
+
+  // If set, will override the default RoPE wavelength to be the specified
+  // value for all global layers (but will not change local attention layers).
+  optional float global_rope_wavelength = 32;
 
   // Audio parameters
   // Describes where to interleave residual adapters with transformer layers.

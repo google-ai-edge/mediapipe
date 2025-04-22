@@ -18,6 +18,7 @@
 #include <sys/types.h>
 
 #include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <limits>
 #include <memory>
@@ -28,12 +29,12 @@
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
-#include "absl/log/absl_check.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/xnn_tensor.h"
-#include "xnnpack.h"  // from @XNNPACK
+#include "pthreadpool.h"  // from @pthreadpool
+#include "xnnpack.h"      // from @XNNPACK
 
 namespace mediapipe::tasks::genai {
 namespace xnn_utils {

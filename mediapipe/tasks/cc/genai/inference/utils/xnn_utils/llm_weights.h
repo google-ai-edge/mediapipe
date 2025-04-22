@@ -111,6 +111,10 @@ struct LlmParams {
     // applied.
     float soft_cap_value = 0.0f;
 
+    // If `true`, apply a scaled RMS normalization to the projected queries and
+    // keys.
+    bool qk_norm = false;
+
     // Attention scale type to be applied within the transformer.
     AttentionScaleType attention_scale_type;
   } sa_params;
@@ -172,6 +176,9 @@ struct LlmWeights {
     std::shared_ptr<Tensor> per_dim_scale;
     std::shared_ptr<Tensor> post_proj_weight;
     std::shared_ptr<Tensor> post_proj_bias;
+
+    std::optional<NormWeights> q_norm_weight;
+    std::optional<NormWeights> k_norm_weight;
 
     std::optional<NormWeights> post_norm_weight;
   };

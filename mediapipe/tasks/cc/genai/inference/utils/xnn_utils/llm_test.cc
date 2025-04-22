@@ -58,20 +58,21 @@ ABSL_FLAG(std::string, model_type, "GEMMA_2B",
 
 ABSL_FLAG(int, num_threads, 4, "The number of threads to use");
 
+namespace {
+static const char* const kXnnProfileCsvFile =
+#if __ANDROID__
+    "/data/local/tmp/xnn_profile.csv";
+#else
+    "/tmp/xnn_profile.csv";
+#endif
+}  // namespace
+
 ABSL_FLAG(
-    std::string, xnn_profile_csv, "",
+    std::string, xnn_profile_csv, kXnnProfileCsvFile,
     "Path at which to dump a CSV file with per-op profiling information.");
 
 namespace mediapipe::tasks::genai::xnn_utils {
 namespace {
-
-constexpr ::absl::string_view kXnnProfileCsvFile{
-#if __ANDROID__
-    "/data/local/tmp/xnn_profile.csv"
-#else
-    "/tmp/xnn_profile.csv"
-#endif
-};
 
 std::unique_ptr<RuntimeConfigs> GetRunTimeConfigsForBenchmark() {
   auto runtime_config = std::make_unique<RuntimeConfigs>();
@@ -103,6 +104,14 @@ GetLlmBuilderAndParamsForBenchmark(size_t seq_size) {
   } else if (absl::EqualsIgnoreCase(model_type_string, "GEMMA2_2B")) {
     LlmParams params =
         LlmParams::FromLLMParametersProto(llm_utils::GetGemma2_2BParams());
+    params.seq_size_T = seq_size;
+    params.enable_kv_cache = true;
+    return {
+        std::make_unique<LlmBuilder>(params, GetRunTimeConfigsForBenchmark()),
+        params};
+  } else if (absl::EqualsIgnoreCase(model_type_string, "GEMMA3_1B")) {
+    LlmParams params =
+        LlmParams::FromLLMParametersProto(llm_utils::GetGemma3_1BParams());
     params.seq_size_T = seq_size;
     params.enable_kv_cache = true;
     return {
@@ -239,6 +248,18 @@ void BM_Llm_QCINT8(benchmark::State& state) {
   RunBenchmark(*llm, state);
 }
 
+void BM_Llm_QCINT4(benchmark::State& state) {
+  auto [builder, params] = GetLlmBuilderAndParamsForBenchmark(state.range(0));
+  auto weights_loader =
+      std::make_unique<BenchmarkLlmWeightsLoader>(params, xnn_datatype_qcint4);
+
+  MP_ASSERT_OK_AND_ASSIGN(
+      auto llm, Llm::CreateLlm(std::move(weights_loader), std::move(builder)));
+  MP_ASSERT_OK(llm->AddInputTokens({{0}}));
+
+  RunBenchmark(*llm, state);
+}
+
 // Benchmark LLM model specified by --model_type flag (Mixed 4/8-bit weights,
 // all default optimization)
 void BM_Llm_Mixed_INT48(benchmark::State& state) {
@@ -255,6 +276,28 @@ void BM_Llm_Mixed_INT48(benchmark::State& state) {
 
 // Run benchmark for three different cache sizes: 64, 512, 1024.
 BENCHMARK(BM_Llm_QCINT8)
+    ->UseRealTime()
+    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
+            /*batch_size=*/1})
+    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
+            /*batch_size=*/4})
+    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
+            /*batch_size=*/7})
+    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
+            /*batch_size=*/8})
+    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
+            /*batch_size=*/14})
+    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
+            /*batch_size=*/16})
+    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
+            /*batch_size=*/28})
+    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
+            /*batch_size=*/32})
+    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
+            /*batch_size=*/48})
+    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
+            /*batch_size=*/64});
+BENCHMARK(BM_Llm_QCINT4)
     ->UseRealTime()
     ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
             /*batch_size=*/1})

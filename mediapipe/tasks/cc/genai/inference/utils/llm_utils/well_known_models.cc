@@ -174,6 +174,229 @@ LlmParameters GetGemma2_2BParams() {
   return llm_params;
 }
 
+LlmParameters GetGemma3_1BParams() {
+  LlmParameters llm_params;
+  llm_params.set_start_token_id(2);
+  llm_params.add_stop_tokens("<eos>");
+  llm_params.add_stop_tokens("<end_of_turn>");
+
+  // New tokenizer
+  llm_params.set_vocab_size(262144);
+
+  TransformerParameters& transformer_params =
+      *llm_params.mutable_transformer_parameters();
+  transformer_params.set_batch_size(kBatchSize);
+  transformer_params.set_embedding_dim(1152);
+  transformer_params.set_hidden_dimension(6 * 1152);
+  transformer_params.set_head_dimension(256);
+  transformer_params.set_num_heads(4);
+  transformer_params.set_num_stacks(26);
+  transformer_params.set_num_kv_heads(1);
+
+  transformer_params.set_pre_norm(TransformerParameters::RMS_NORM);
+  transformer_params.set_post_norm(TransformerParameters::RMS_NORM);
+  transformer_params.set_final_norm(TransformerParameters::RMS_NORM);
+  transformer_params.set_skip_absolute_positional_embeddings(true);
+  // LLLLLGLLLLLG...
+  transformer_params.set_num_local_layers_per_global(5);
+  transformer_params.set_global_rope_wavelength(1000000.0f);
+
+  TransformerParameters::SelfAttentionParameters& sa_params =
+      *transformer_params.mutable_self_attention_parameters();
+  sa_params.set_attention_mask_type(TransformerParameters::CAUSAL);
+  sa_params.set_qkv_no_bias(true);
+  sa_params.set_post_proj_no_bias(true);
+  sa_params.set_attention_scale_type(
+      TransformerParameters::SCALE_TYPE_INV_SQRT_HEAD_DIM);
+  // Disable softcap
+  sa_params.set_soft_cap_value(0.0f);
+  // Enable qk norms
+  sa_params.set_qk_norm(true);
+  sa_params.set_sliding_window_size(512);
+
+  TransformerParameters::FeedForwardParameters& ff_params =
+      *transformer_params.mutable_feed_forward_parameters();
+  ff_params.set_no_bias(true);
+  ff_params.set_activation(TransformerParameters::GELU);
+  ff_params.set_pre_norm(TransformerParameters::RMS_NORM);
+  ff_params.set_post_norm(TransformerParameters::RMS_NORM);
+
+  TransformerParameters::FinalProjectParameters& fp_params =
+      *transformer_params.mutable_final_project_parameters();
+  fp_params.set_no_bias(true);
+  // Disable soft cap.
+  fp_params.set_soft_cap_value(0.0f);
+
+  return llm_params;
+}
+
+LlmParameters GetGemma3_4BParams() {
+  LlmParameters llm_params;
+  llm_params.set_start_token_id(2);
+  llm_params.add_stop_tokens("<eos>");
+  llm_params.add_stop_tokens("<end_of_turn>");
+  // Vocab is 262144, but with MM tokens, our embedding tensors are size 262208
+  llm_params.set_vocab_size(262208);
+
+  TransformerParameters& transformer_params =
+      *llm_params.mutable_transformer_parameters();
+  transformer_params.set_batch_size(kBatchSize);
+  transformer_params.set_embedding_dim(2560);
+  transformer_params.set_hidden_dimension(2560 * 4);
+  transformer_params.set_head_dimension(256);
+  transformer_params.set_num_heads(8);
+  transformer_params.set_num_stacks(34);
+  transformer_params.set_num_kv_heads(4);
+
+  transformer_params.set_pre_norm(TransformerParameters::RMS_NORM);
+  transformer_params.set_post_norm(TransformerParameters::RMS_NORM);
+  transformer_params.set_final_norm(TransformerParameters::RMS_NORM);
+  transformer_params.set_skip_absolute_positional_embeddings(true);
+  // LLLLLGLLLLLG...
+  transformer_params.set_num_local_layers_per_global(5);
+  transformer_params.set_global_rope_wavelength(1000000.0f);
+  transformer_params.set_global_rope_scaling(8.0f);
+
+  TransformerParameters::SelfAttentionParameters& sa_params =
+      *transformer_params.mutable_self_attention_parameters();
+  sa_params.set_attention_mask_type(TransformerParameters::CAUSAL);
+  sa_params.set_qkv_no_bias(true);
+  sa_params.set_post_proj_no_bias(true);
+  sa_params.set_attention_scale_type(
+      TransformerParameters::SCALE_TYPE_INV_SQRT_HEAD_DIM);
+  // Disable softcap
+  sa_params.set_soft_cap_value(0.0f);
+  // Enable qk norms
+  sa_params.set_qk_norm(true);
+  sa_params.set_sliding_window_size(1024);
+
+  TransformerParameters::FeedForwardParameters& ff_params =
+      *transformer_params.mutable_feed_forward_parameters();
+  ff_params.set_no_bias(true);
+  ff_params.set_activation(TransformerParameters::GELU);
+  ff_params.set_pre_norm(TransformerParameters::RMS_NORM);
+  ff_params.set_post_norm(TransformerParameters::RMS_NORM);
+
+  TransformerParameters::FinalProjectParameters& fp_params =
+      *transformer_params.mutable_final_project_parameters();
+  fp_params.set_no_bias(true);
+  // Disable soft cap.
+  fp_params.set_soft_cap_value(0.0f);
+  return llm_params;
+}
+
+LlmParameters GetGemma3_12BParams() {
+  LlmParameters llm_params;
+  llm_params.set_start_token_id(2);
+  llm_params.add_stop_tokens("<eos>");
+  llm_params.add_stop_tokens("<end_of_turn>");
+  // Vocab is 262144, but with MM tokens, our embedding tensors are size 262208
+  llm_params.set_vocab_size(262208);
+
+  TransformerParameters& transformer_params =
+      *llm_params.mutable_transformer_parameters();
+  transformer_params.set_batch_size(kBatchSize);
+  transformer_params.set_embedding_dim(3840);
+  transformer_params.set_hidden_dimension(15360);  // 3840 * 4
+  transformer_params.set_head_dimension(256);
+  transformer_params.set_num_heads(16);
+  transformer_params.set_num_stacks(48);
+  transformer_params.set_num_kv_heads(8);
+
+  transformer_params.set_pre_norm(TransformerParameters::RMS_NORM);
+  transformer_params.set_post_norm(TransformerParameters::RMS_NORM);
+  transformer_params.set_final_norm(TransformerParameters::RMS_NORM);
+  transformer_params.set_skip_absolute_positional_embeddings(true);
+  // LLLLLGLLLLLG...
+  transformer_params.set_num_local_layers_per_global(5);
+  transformer_params.set_global_rope_wavelength(1000000.0f);
+  transformer_params.set_global_rope_scaling(8.0f);
+
+  TransformerParameters::SelfAttentionParameters& sa_params =
+      *transformer_params.mutable_self_attention_parameters();
+  sa_params.set_attention_mask_type(TransformerParameters::CAUSAL);
+  sa_params.set_qkv_no_bias(true);
+  sa_params.set_post_proj_no_bias(true);
+  sa_params.set_attention_scale_type(
+      TransformerParameters::SCALE_TYPE_INV_SQRT_HEAD_DIM);
+  // Disable softcap
+  sa_params.set_soft_cap_value(0.0f);
+  // Enable qk norms
+  sa_params.set_qk_norm(true);
+  sa_params.set_sliding_window_size(1024);
+
+  TransformerParameters::FeedForwardParameters& ff_params =
+      *transformer_params.mutable_feed_forward_parameters();
+  ff_params.set_no_bias(true);
+  ff_params.set_activation(TransformerParameters::GELU);
+  ff_params.set_pre_norm(TransformerParameters::RMS_NORM);
+  ff_params.set_post_norm(TransformerParameters::RMS_NORM);
+
+  TransformerParameters::FinalProjectParameters& fp_params =
+      *transformer_params.mutable_final_project_parameters();
+  fp_params.set_no_bias(true);
+  // Disable soft cap.
+  fp_params.set_soft_cap_value(0.0f);
+  return llm_params;
+}
+
+LlmParameters GetGemma3_27BParams() {
+  LlmParameters llm_params;
+  llm_params.set_start_token_id(2);
+  llm_params.add_stop_tokens("<eos>");
+  llm_params.add_stop_tokens("<end_of_turn>");
+  // Vocab is 262144, but with MM tokens, our embedding tensors are size 262208
+  llm_params.set_vocab_size(262208);
+
+  TransformerParameters& transformer_params =
+      *llm_params.mutable_transformer_parameters();
+  transformer_params.set_batch_size(kBatchSize);
+  transformer_params.set_embedding_dim(5376);
+  transformer_params.set_hidden_dimension(21504);  // 5376 * 4
+  transformer_params.set_head_dimension(128);      // Not 256!
+  transformer_params.set_num_heads(32);
+  transformer_params.set_num_stacks(62);
+  transformer_params.set_num_kv_heads(16);
+
+  transformer_params.set_pre_norm(TransformerParameters::RMS_NORM);
+  transformer_params.set_post_norm(TransformerParameters::RMS_NORM);
+  transformer_params.set_final_norm(TransformerParameters::RMS_NORM);
+  transformer_params.set_skip_absolute_positional_embeddings(true);
+  // LLLLLGLLLLLG...
+  transformer_params.set_num_local_layers_per_global(5);
+  transformer_params.set_global_rope_wavelength(1000000.0f);
+  transformer_params.set_global_rope_scaling(8.0f);
+
+  TransformerParameters::SelfAttentionParameters& sa_params =
+      *transformer_params.mutable_self_attention_parameters();
+  sa_params.set_attention_mask_type(TransformerParameters::CAUSAL);
+  sa_params.set_qkv_no_bias(true);
+  sa_params.set_post_proj_no_bias(true);
+  // NOTE: This is different from previous Gemma3 models!
+  // It corresponds to `query_pre_attn_scalar = 168`, since 5376/32 = 168.
+  sa_params.set_attention_scale_type(
+      TransformerParameters::SCALE_TYPE_INV_SQRT_D_MODEL_DIV_NUM_HEADS);
+  // Disable softcap
+  sa_params.set_soft_cap_value(0.0f);
+  // Enable qk norms
+  sa_params.set_qk_norm(true);
+  sa_params.set_sliding_window_size(1024);
+
+  TransformerParameters::FeedForwardParameters& ff_params =
+      *transformer_params.mutable_feed_forward_parameters();
+  ff_params.set_no_bias(true);
+  ff_params.set_activation(TransformerParameters::GELU);
+  ff_params.set_pre_norm(TransformerParameters::RMS_NORM);
+  ff_params.set_post_norm(TransformerParameters::RMS_NORM);
+
+  TransformerParameters::FinalProjectParameters& fp_params =
+      *transformer_params.mutable_final_project_parameters();
+  fp_params.set_no_bias(true);
+  // Disable soft cap.
+  fp_params.set_soft_cap_value(0.0f);
+  return llm_params;
+}
+
 LlmParameters GetFalconRW1BParams() {
   LlmParameters llm_params;
   llm_params.set_start_token_id(1);

@@ -558,6 +558,14 @@ absl::StatusOr<std::shared_ptr<Tensor>> LlmBuilder::SelfAttentionExcludeNorm(
   MP_ASSIGN_OR_RETURN(auto v_proj,
                       SelfAttentionProj(input, sa_weights.v_weight));
 
+  // Apply QK-Normalization.
+  if (llm_params_.sa_params.qk_norm) {
+    MP_ASSIGN_OR_RETURN(q_proj, ApplyNorm(q_proj, sa_weights.q_norm_weight,
+                                          LlmParams::Norm::RMS_NORM));
+    MP_ASSIGN_OR_RETURN(k_proj, ApplyNorm(k_proj, sa_weights.k_norm_weight,
+                                          LlmParams::Norm::RMS_NORM));
+  }
+
   MP_ASSIGN_OR_RETURN(auto query_proj_after_rope,
                       Rope(q_proj, resource.segment_pos));
   MP_ASSIGN_OR_RETURN(auto key_proj_after_rope,
@@ -875,6 +883,7 @@ absl::StatusOr<std::shared_ptr<Tensor>> LlmBuilder::DotAttention(
                       Permute(query_after_scale, {0, 2, 1, 3}));
   // BSN'H -> BN'SH
   MP_ASSIGN_OR_RETURN(auto key_permuted, Permute(key_proj, {0, 2, 1, 3}));
+
   // einsum(BNTH.BN'SH -> BNTS)
   MP_ASSIGN_OR_RETURN(auto logits, QKVAttention(query_permuted, key_permuted,
                                                 {0, llm_params_.head_dim_H}));
