@@ -818,14 +818,14 @@ http_archive(
 
 http_archive(
     name = "skia",
-    sha256 = "038d4a21f9c72d71ab49e3a7d7677b39585329465d093a4260b6c73d2f3984d6",
-    strip_prefix = "skia-ac75382cb971d2f5465b4608a74561ecb68599c5",
-    urls = ["https://github.com/google/skia/archive/ac75382cb971d2f5465b4608a74561ecb68599c5.zip"],
+    sha256 = "2fe28173428f8eebf2aa8a665bad32136086cc065f50c7154678a96250d1cde1",
+    strip_prefix = "skia-226ae9d866748a2e68b6dbf114b37129c380a298",
+    urls = ["https://github.com/google/skia/archive/226ae9d866748a2e68b6dbf114b37129c380a298.zip"],
 )
 
 http_archive(
     name = "skia_user_config",
-    sha256 = "038d4a21f9c72d71ab49e3a7d7677b39585329465d093a4260b6c73d2f3984d6",
-    strip_prefix = "skia-ac75382cb971d2f5465b4608a74561ecb68599c5/include/config",
-    urls = ["https://github.com/google/skia/archive/ac75382cb971d2f5465b4608a74561ecb68599c5.zip"],
+    sha256 = "2fe28173428f8eebf2aa8a665bad32136086cc065f50c7154678a96250d1cde1",
+    strip_prefix = "skia-226ae9d866748a2e68b6dbf114b37129c380a298/include/config",
+    urls = ["https://github.com/google/skia/archive/226ae9d866748a2e68b6dbf114b37129c380a298.zip"],
 )
