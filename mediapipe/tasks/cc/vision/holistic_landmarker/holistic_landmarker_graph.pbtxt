@@ -1,0 +1,36 @@
+type: "HolisticLandmarkerGraph"
+input_stream: "IMAGE:image"
+output_stream: "HOLISTIC_RESULT:holistic_result"
+
+node {
+  calculator: "PoseLandmarkerGraph"
+  input_stream: "IMAGE:image"
+  output_stream: "LANDMARKS:pose_landmarks"
+  output_stream: "WORLD_LANDMARKS:pose_world_landmarks"
+  input_side_packet: "TASK_GRAPH_CONFIG:options.pose_landmarker_graph_options"
+}
+
+node {
+  calculator: "FaceLandmarkerGraph"
+  input_stream: "IMAGE:image"
+  output_stream: "LANDMARKS:face_landmarks"
+  input_side_packet: "TASK_GRAPH_CONFIG:options.face_landmarker_graph_options"
+}
+
+node {
+  calculator: "HandLandmarkerGraph"
+  input_stream: "IMAGE:image"
+  output_stream: "LEFT_HAND_LANDMARKS:left_hand_landmarks"
+  output_stream: "RIGHT_HAND_LANDMARKS:right_hand_landmarks"
+  input_side_packet: "TASK_GRAPH_CONFIG:options.hand_landmarker_graph_options"
+}
+
+node {
+  calculator: "HolisticResultCalculator"
+  input_stream: "POSE_LANDMARKS:pose_landmarks"
+  input_stream: "POSE_WORLD_LANDMARKS:pose_world_landmarks"
+  input_stream: "FACE_LANDMARKS:face_landmarks"
+  input_stream: "LEFT_HAND_LANDMARKS:left_hand_landmarks"
+  input_stream: "RIGHT_HAND_LANDMARKS:right_hand_landmarks"
+  output_stream: "HOLISTIC_RESULT:holistic_result"
+}
