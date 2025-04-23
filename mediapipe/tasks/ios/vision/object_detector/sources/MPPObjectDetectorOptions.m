@@ -21,6 +21,7 @@
   if (self) {
     _maxResults = -1;
     _scoreThreshold = 0;
+    _multiclassNms = NO;
   }
   return self;
 }
@@ -34,6 +35,7 @@
   objectDetectorOptions.categoryDenylist = self.categoryDenylist;
   objectDetectorOptions.categoryAllowlist = self.categoryAllowlist;
   objectDetectorOptions.displayNamesLocale = self.displayNamesLocale;
+  objectDetectorOptions.multiclassNms = self.multiclassNms;
   objectDetectorOptions.objectDetectorLiveStreamDelegate = self.objectDetectorLiveStreamDelegate;
 
   return objectDetectorOptions;
