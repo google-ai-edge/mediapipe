@@ -154,12 +154,14 @@ cc_test(
 cc_library(
     name = "classification_result",
     hdrs = ["classification_result.h"],
+    visibility = ["//visibility:public"],
 )
 
 cc_library(
     name = "classification_result_converter",
     srcs = ["classification_result_converter.cc"],
     hdrs = ["classification_result_converter.h"],
+    visibility = ["//visibility:public"],
     deps = [
         ":category",
         ":category_converter",
