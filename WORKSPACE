@@ -271,7 +271,7 @@ http_archive(
     sha256 = "ca8b8ee0c3dd2284c1eae3ac07f7064ce92317ac7c3cfcd1d511662e0594cdb8",
     strip_prefix = "kleidiai-fb4caf0937a45002861cc12788b6018bfb89ae58",
     urls = [
-        "https://gitlab.arm.com/kleidi/kleidiai/-/archive/fb4caf0937a45002861cc12788b6018bfb89ae58/kleidiai-fb4caf0937a45002861cc12788b6018bfb89ae58.zip",
+        "https://github.com/ARM-software/kleidiai/archive/fb4caf0937a45002861cc12788b6018bfb89ae58.zip",
     ],
 )
 
