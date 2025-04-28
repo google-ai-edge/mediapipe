@@ -353,14 +353,16 @@ absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::FullConn(
     }
   }
 
+  // Maybe quantize the inputs.
   std::shared_ptr<Tensor> qd_input;
-  bool use_dynamic_quantization = false;
+  bool use_dynamic_quantization = (input->datatype == xnn_datatype_fp16 ||
+                                   input->datatype == xnn_datatype_fp32) &&
+                                  (weight->datatype == xnn_datatype_qcint8 ||
+                                   weight->datatype == xnn_datatype_qcint4);
   if (runtime_configs_->use_dynamic_quantization.has_value()) {
     use_dynamic_quantization =
+        use_dynamic_quantization &&
         runtime_configs_->use_dynamic_quantization.value();
-  } else if (weight->datatype == xnn_datatype_qcint8 ||
-             weight->datatype == xnn_datatype_qcint4) {
-    use_dynamic_quantization = true;
   }
   VLOG(3) << "use_dynamic_quantization: " << use_dynamic_quantization;
   if (use_dynamic_quantization) {
@@ -397,13 +399,11 @@ absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::FullConn(
   build_steps_.push_back([input, weight, bias, params, output,
                           qd_input](xnn_subgraph_t subgraph) -> absl::Status {
     if (qd_input) {
-      // Set XNN_FLAG_MAYBE_PACK_FOR_GEMM if the weights are 4 bit.
-      uint32_t flags = weight->datatype == xnn_datatype_qcint4 ? 0x00000080 : 0;
       RET_CHECK_EQ(
           xnn_status_success,
           xnn_define_unary(subgraph, xnn_unary_convert, /*params=*/nullptr,
                            input->tensor_id(subgraph),
-                           qd_input->tensor_id(subgraph), flags));
+                           qd_input->tensor_id(subgraph), /*flags=*/0));
       RET_CHECK_EQ(
           xnn_status_success,
           xnn_define_fully_connected(

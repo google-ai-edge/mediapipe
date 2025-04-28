@@ -74,6 +74,8 @@ ABSL_FLAG(
 namespace mediapipe::tasks::genai::xnn_utils {
 namespace {
 
+using ::benchmark::internal::Benchmark;
+
 std::unique_ptr<RuntimeConfigs> GetRunTimeConfigsForBenchmark() {
   auto runtime_config = std::make_unique<RuntimeConfigs>();
   runtime_config->xnn_num_threads = absl::GetFlag(FLAGS_num_threads);
@@ -232,6 +234,12 @@ class BenchmarkLlmMixedInt48WeightsLoader : public LlmWeightsLoader {
   }
 };
 
+static void BenchmarLlmSizes(Benchmark* b) {
+  for (const int& batch_size : {1, 4, 7, 8, 14, 16, 28, 32, 48, 64}) {
+    b->Args({/*sequence_length=*/512, /*prompt_size=*/128, batch_size});
+  }
+}
+
 }  // namespace
 
 // Benchmark LLM model specified by --model_type flag (QC8 weights, all
@@ -275,71 +283,8 @@ void BM_Llm_Mixed_INT48(benchmark::State& state) {
 }
 
 // Run benchmark for three different cache sizes: 64, 512, 1024.
-BENCHMARK(BM_Llm_QCINT8)
-    ->UseRealTime()
-    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
-            /*batch_size=*/1})
-    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
-            /*batch_size=*/4})
-    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
-            /*batch_size=*/7})
-    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
-            /*batch_size=*/8})
-    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
-            /*batch_size=*/14})
-    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
-            /*batch_size=*/16})
-    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
-            /*batch_size=*/28})
-    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
-            /*batch_size=*/32})
-    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
-            /*batch_size=*/48})
-    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
-            /*batch_size=*/64});
-BENCHMARK(BM_Llm_QCINT4)
-    ->UseRealTime()
-    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
-            /*batch_size=*/1})
-    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
-            /*batch_size=*/4})
-    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
-            /*batch_size=*/7})
-    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
-            /*batch_size=*/8})
-    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
-            /*batch_size=*/14})
-    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
-            /*batch_size=*/16})
-    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
-            /*batch_size=*/28})
-    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
-            /*batch_size=*/32})
-    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
-            /*batch_size=*/48})
-    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
-            /*batch_size=*/64});
-BENCHMARK(BM_Llm_Mixed_INT48)
-    ->UseRealTime()
-    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
-            /*batch_size=*/1})
-    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
-            /*batch_size=*/4})
-    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
-            /*batch_size=*/7})
-    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
-            /*batch_size=*/8})
-    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
-            /*batch_size=*/14})
-    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
-            /*batch_size=*/16})
-    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
-            /*batch_size=*/28})
-    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
-            /*batch_size=*/32})
-    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
-            /*batch_size=*/48})
-    ->Args({/*sequence_length=*/512, /*prompt_size=*/128,
-            /*batch_size=*/64});
+BENCHMARK(BM_Llm_QCINT8)->UseRealTime()->Apply(BenchmarLlmSizes);
+BENCHMARK(BM_Llm_QCINT4)->UseRealTime()->Apply(BenchmarLlmSizes);
+BENCHMARK(BM_Llm_Mixed_INT48)->UseRealTime()->Apply(BenchmarLlmSizes);
 
 }  // namespace mediapipe::tasks::genai::xnn_utils
