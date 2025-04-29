@@ -656,8 +656,9 @@ cc_test(
     name = "tensor_test",
     srcs = ["tensor_test.cc"],
     tags = [
-        "noasan",
-        "not_run:arm",  # TODO: Remove noasan tag when SwiftShader supports sanitizers
+        "angle",
+        "not_run:arm",
+        "requires-gpu-nvidia",
     ],
     deps = [
         ":tensor",
