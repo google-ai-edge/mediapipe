@@ -104,4 +104,18 @@ message SpectrogramCalculatorOptions {
     RESET = 1;
   }
   optional SampleBufferMode sample_buffer_mode = 11 [default = NONE];
+
+  enum OutputLayout {
+    OUTPUT_LAYOUT_UNSPECIFIED = 0;
+    // Output is a matrix or a vector of matrices. Within the matrix, each
+    // column represents the spectrogram for a frame. If the input has multiple
+    // channels, the output will be a vector of matrices, each matrix
+    // corresponding to a channel.
+    SPECTROGRAM_FRAMES_IN_COLUMNS = 1;
+    // Output is a one matrix per packet. Within the matrix, each row represents
+    // a channel.
+    SPECTROGRAM_CHANNELS_IN_ROWS = 2;
+  }
+  optional OutputLayout output_layout = 13
+      [default = SPECTROGRAM_FRAMES_IN_COLUMNS];
 }
