@@ -82,24 +82,8 @@ class InferenceCalculatorGlImpl
     std::shared_ptr<GlContext> init_gl_context_;
     TfLiteDelegatePtr delegate_;
     std::unique_ptr<tflite::Interpreter> interpreter_;
-
-    // Below tensors and write views are used internally in the calculator only
-    // to integrate with tflite:
-    // - calculator input tensors -> gpu_buffers_in_ through write views
-    // - inference invocation
-    // - gpu_buffers_out_ -> calculator output tensors
-    //
-    // So, even though tensor is designed for a single write, here specifically
-    // multiple writes are happening and hence write views are "cached".
-    //
-    // NOTE: the initial implementation could use raw GL buffers to achieve the
-    // same without going into read/write views, but, assumingly, it is handy to
-    // use Tensor type here and the requirement for Tensor to be a single write
-    // only was not enforced at that time.
     std::vector<std::unique_ptr<Tensor>> gpu_buffers_in_;
-    std::vector<Tensor::OpenGlBufferView> gpu_buffers_in_write_views_;
     std::vector<std::unique_ptr<Tensor>> gpu_buffers_out_;
-
     size_t output_size_ = 0;
     InputOutputTensorNames input_output_tensor_names_;
   };
@@ -115,7 +99,6 @@ class InferenceCalculatorGlImpl
 
 InferenceCalculatorGlImpl::GpuInferenceRunner::~GpuInferenceRunner() {
   init_gl_context_->Run([this]() {
-    gpu_buffers_in_write_views_.clear();
     gpu_buffers_in_.clear();
     gpu_buffers_out_.clear();
     // Delegate must outlive the interpreter, hence the order is important.
@@ -217,10 +200,9 @@ absl::Status InferenceCalculatorGlImpl::GpuInferenceRunner::LoadDelegate(
         Tensor::ElementType::kFloat32,
         Tensor::Shape{std::vector<int>{
             tensor->dims->data, tensor->dims->data + tensor->dims->size}}));
-    gpu_buffers_in_write_views_.emplace_back(
-        gpu_buffers_in_.back()->GetOpenGlBufferWriteView());
     RET_CHECK_EQ(TfLiteGpuDelegateBindBufferToTensor(
-                     delegate_.get(), gpu_buffers_in_write_views_.back().name(),
+                     delegate_.get(),
+                     gpu_buffers_in_.back()->GetOpenGlBufferWriteView().name(),
                      interpreter_->inputs()[i]),
                  kTfLiteOk);
   }
@@ -257,9 +239,10 @@ absl::Status InferenceCalculatorGlImpl::GpuInferenceRunner::Process(
     std::vector<Tensor>& output_tensors) {
   // Explicitly copy input.
   for (int i = 0; i < input_tensors.size(); ++i) {
-    auto read_view = input_tensors[i].GetOpenGlBufferReadView();
-    glBindBuffer(GL_COPY_READ_BUFFER, read_view.name());
-    glBindBuffer(GL_COPY_WRITE_BUFFER, gpu_buffers_in_write_views_[i].name());
+    glBindBuffer(GL_COPY_READ_BUFFER,
+                 input_tensors[i].GetOpenGlBufferReadView().name());
+    glBindBuffer(GL_COPY_WRITE_BUFFER,
+                 gpu_buffers_in_[i]->GetOpenGlBufferWriteView().name());
     glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0,
                         input_tensors[i].bytes());
   }
@@ -273,9 +256,10 @@ absl::Status InferenceCalculatorGlImpl::GpuInferenceRunner::Process(
   output_tensors.reserve(output_size_);
   for (int i = 0; i < output_size_; ++i) {
     const auto& t = gpu_buffers_out_[i];
+    output_tensors.emplace_back(Tensor::ElementType::kFloat32,
+                                gpu_buffers_out_[i]->shape());
     auto read_view = t->GetOpenGlBufferReadView();
     glBindBuffer(GL_COPY_READ_BUFFER, read_view.name());
-    output_tensors.emplace_back(Tensor::ElementType::kFloat32, t->shape());
     auto write_view = output_tensors.back().GetOpenGlBufferWriteView();
     glBindBuffer(GL_COPY_WRITE_BUFFER, write_view.name());
     glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0,
