@@ -199,7 +199,11 @@ cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
-    ],
+    ] + select({
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/genai:exclude_internal_names_from_llm_inference_engine_g3_build": [],
+        "//conditions:default": [
+        ],
+    }),
 )
 
 cc_library(
