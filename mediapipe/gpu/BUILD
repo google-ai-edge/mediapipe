@@ -1167,6 +1167,77 @@ cc_library(
     alwayslink = 1,
 )
 
+mediapipe_proto_library(
+    name = "gl_shader_calculator_proto",
+    srcs = ["gl_shader_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
+cc_library(
+    name = "gl_shader_calculator",
+    srcs = ["gl_shader_calculator.cc"],
+    deps = [
+        ":gl_shader_calculator_cc_proto",
+        "//mediapipe/framework:calculator_context",
+        "//mediapipe/framework:calculator_contract",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_options_cc_proto",
+        "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/api2:packet",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/gpu:gl_calculator_helper",
+        "//mediapipe/gpu:gl_simple_shaders",
+        "//mediapipe/gpu:gpu_buffer",
+        "//mediapipe/gpu:gpu_buffer_format",
+        "//mediapipe/gpu:shader_util",
+        "//mediapipe/util:resource_util",
+        "//third_party/GL:GLES2_headers",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/types:span",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "gl_shader_calculator_test",
+    size = "small",
+    timeout = "moderate",
+    srcs = ["gl_shader_calculator_test.cc"],
+    data = [
+        ":testdata/googlelogo_color_272x92dp.png",
+    ] + glob(["testdata/scuba_goldens/*.png"]),
+    deps = [
+        ":gl_shader_calculator",
+        ":gl_shader_calculator_cc_proto",
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/api2:packet",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/port:gtest",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/tool:test_util",
+        "//mediapipe/gpu:gl_simple_shaders",
+        "//mediapipe/gpu:gpu_buffer_to_image_frame_calculator",
+        "//mediapipe/gpu:image_frame_to_gpu_buffer_calculator",
+        "@com_google_absl//absl/functional:function_ref",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "gl_surface_sink_calculator",
     srcs = ["gl_surface_sink_calculator.cc"],
