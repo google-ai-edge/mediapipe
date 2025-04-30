@@ -20,6 +20,7 @@ option java_package = "com.google.odml.infra.proto";
 option java_outer_classname = "TransformerParametersProto";
 
 // The parameters of transformer (https://arxiv.org/pdf/1706.03762.pdf)
+// Next ID: 35
 message TransformerParameters {
   // Batch size of tensors.
   int32 batch_size = 1;
@@ -228,4 +229,15 @@ message TransformerParameters {
   int32 audio_vocab_extra_dim = 30;
   // Dimension which we embed audio hard tokens to.
   int32 audio_input_embedding_dim = 31;
+
+  // Laurel configs.
+  message LaurelConfig {
+    // The embedding w/ shape [B, L, d_model] will first be projected to
+    // [B, L, laurel_rank] and then projected to [B, L, d_model].
+    optional int32 laurel_rank = 1;
+    // The scale shift for the post laurel rms normalization. The default value
+    // is 0.0f, which means no scale shift.
+    optional float post_laurel_norm_scale_shift = 2;
+  }
+  optional LaurelConfig laurel_config = 34;
 }
