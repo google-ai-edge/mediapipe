@@ -159,7 +159,7 @@ export class LlmInference extends TaskRunner {
   // TODO: Move options and samplerParams to LlmInferenceSupportedGraphRunner
   // class once LlmInferenceSupportedGraphRunner becomes the only entry point
   // for LLM inference.
-  private readonly options: LlmInferenceGraphOptions;
+  readonly options: LlmInferenceGraphOptions;
   private readonly samplerParams: SamplerParameters;
   private isProcessing = false;
   private isMultiResponseGeneration?: boolean;
