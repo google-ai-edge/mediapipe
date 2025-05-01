@@ -66,6 +66,10 @@ cc_library(
     name = "metadata_utils",
     srcs = ["metadata_utils.cc"],
     hdrs = ["metadata_utils.h"],
+    defines = select({
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/genai:exclude_internal_names_from_llm_inference_engine_g3_build": ["EXCLUDE_INTERNAL_NAMES_FROM_LLM_INFERENCE_ENGINE_G3_BUILD"],
+        "//conditions:default": [],
+    }),
     deps = [
         "//mediapipe/tasks/cc/genai/inference/proto:llm_params_cc_proto",
         "@com_google_absl//absl/algorithm:container",
@@ -125,6 +129,10 @@ cc_library(
     name = "well_known_models",
     srcs = ["well_known_models.cc"],
     hdrs = ["well_known_models.h"],
+    defines = select({
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/genai:exclude_internal_names_from_llm_inference_engine_g3_build": ["EXCLUDE_INTERNAL_NAMES_FROM_LLM_INFERENCE_ENGINE_G3_BUILD"],
+        "//conditions:default": [],
+    }),
     deps = [
         "//mediapipe/tasks/cc/genai/inference/proto:llm_params_cc_proto",
         "//mediapipe/tasks/cc/genai/inference/proto:transformer_params_cc_proto",
