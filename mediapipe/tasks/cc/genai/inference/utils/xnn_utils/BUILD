@@ -274,6 +274,7 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "//mediapipe/tasks/cc/genai/inference/utils/llm_utils:memory_mapped_file",
+        "//mediapipe/tasks/cc/genai/inference/utils/llm_utils:scoped_file",
         "@XNNPACK",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/log:absl_check",

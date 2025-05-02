@@ -14,7 +14,12 @@
 
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/pack_weights_cache.h"
 
+#if defined(_WIN32)
+#include <Windows.h>
+#endif
+
 #include <algorithm>
+#include <cerrno>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
@@ -22,6 +27,7 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include "absl/log/absl_check.h"
@@ -40,6 +46,7 @@
 #include "xnnpack.h"  // from @XNNPACK
 // clang-format off
 #include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/memory_mapped_file.h",
+#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/scoped_file.h"
 // clang-format on
 
 namespace mediapipe::tasks::genai::xnn_utils {
@@ -54,17 +61,55 @@ bool operator==(const xnn_weights_cache_look_up_key& lhs,
          lhs.seed == rhs.seed;
 }
 
+// Writes `data` to the platform file descriptor. Returns the number of bytes
+// written or an error if the write failed.
+absl::StatusOr<size_t> WriteToPlatformFile(ScopedFile::PlatformFile file,
+                                           absl::string_view data) {
+#if defined(_WIN32)
+  DWORD bytes_written;
+  DWORD size = static_cast<DWORD>(data.size());
+  BOOL result = ::WriteFile(file, data.data(), size, &bytes_written, nullptr);
+  if (!result) {
+    return absl::UnknownError("Failed to write to file");
+  }
+#else
+  ssize_t bytes_written = -1;
+  do {
+    bytes_written = write(file, data.data(), data.size());
+  } while (bytes_written == -1 && errno == EINTR);
+  if (bytes_written < 0) {
+    return absl::ErrnoToStatus(errno, "Failed to write to file");
+  }
+#endif
+  return bytes_written;
+}
+
+absl::Status AppendToFileDescriptor(const ScopedFile& scoped_file,
+                                    absl::string_view data) {
+  while (!data.empty()) {
+    MP_ASSIGN_OR_RETURN(size_t bytes_written,
+                        WriteToPlatformFile(scoped_file.file(), data));
+    data = data.substr(bytes_written);
+  }
+  return absl::OkStatus();
+}
+
 }  // namespace
 
 PackWeightsCache::PackWeightsCache(absl::string_view cache_path)
-    : cache_path_(cache_path) {
+    : cache_file_(std::string(cache_path)) {
+  xnn_weights_cache = &cache_provider_;
+}
+
+PackWeightsCache::PackWeightsCache(std::shared_ptr<ScopedFile> scoped_file)
+    : cache_file_(std::move(scoped_file)) {
   xnn_weights_cache = &cache_provider_;
 }
 
 PackWeightsCache::~PackWeightsCache() { xnn_weights_cache = nullptr; }
 
 absl::Status PackWeightsCache::Initialize() {
-  mmap_file_ = GetMmapFile(cache_path_);
+  mmap_file_ = GetMmapFile();
   if (mmap_file_) {
     MP_RETURN_IF_ERROR(InitializeFromCache(mmap_file_));
   } else {
@@ -137,7 +182,7 @@ absl::Status PackWeightsCache::Finalize() {
   MP_RETURN_IF_ERROR(Prepend(serialized));
   builder_.reset();
 
-  mmap_file_ = GetMmapFile(cache_path_);
+  mmap_file_ = GetMmapFile();
   RET_CHECK(mmap_file_);
 
   return InitializeFromCache(mmap_file_);
@@ -162,15 +207,26 @@ bool PackWeightsCache::ShouldDoubleCheckCompatibility(
   return false;
 }
 
-std::shared_ptr<MemoryMappedFile> PackWeightsCache::GetMmapFile(
-    absl::string_view filename) {
-  return mediapipe::file::Exists(filename).ok()
-             ? MemoryMappedFile::CreateMutable(filename).value_or(nullptr)
-             : nullptr;
+std::shared_ptr<MemoryMappedFile> PackWeightsCache::GetMmapFile() {
+  switch (cache_file_.index()) {
+    case 0:  // std::string filename
+      return mediapipe::file::Exists(std::get<0>(cache_file_)).ok()
+                 ? MemoryMappedFile::CreateMutable(std::get<0>(cache_file_))
+                       .value_or(nullptr)
+                 : nullptr;
+    case 1:  // std::shared_ptr<ScopedFile> scoped_file
+      return MemoryMappedFile::CreateMutable(std::get<1>(cache_file_)->file())
+          .value_or(nullptr);
+    default:
+      ABSL_CHECK(false);
+      return nullptr;
+  }
 }
 
 absl::Status PackWeightsCache::InitializeFromCache(
     std::shared_ptr<MemoryMappedFile> mmap_cache) {
+  // TODO: b/401011041 - Gracefully handle the case where the cache file is
+  // filled with junk and needs to be rebuilt.
   name_to_offset_size_.clear();
   named_buffers_ = std::shared_ptr<const NamedBuffers>(
       mmap_cache, GetNamedBuffers(mmap_cache->data()));
@@ -184,18 +240,25 @@ absl::Status PackWeightsCache::InitializeFromCache(
   return absl::OkStatus();
 }
 
-absl::Status PackWeightsCache::Append(absl::string_view filename,
-                                      absl::string_view data) {
-  return mediapipe::file::AppendStringToFile(filename, data);
+absl::Status PackWeightsCache::Append(absl::string_view data) {
+  switch (cache_file_.index()) {
+    case 0:  // std::string filename
+      return mediapipe::file::AppendStringToFile(std::get<0>(cache_file_),
+                                                 data);
+    case 1:  // std::shared_ptr<ScopedFile> scoped_file
+      return AppendToFileDescriptor(*std::get<1>(cache_file_), data);
+    default:
+      ABSL_CHECK(false);
+      return absl::InternalError("Unreachable code: invalid cache file type");
+  }
 }
 
-absl::Status PackWeightsCache::Prepend(absl::string_view filename,
-                                       absl::string_view data) {
+absl::Status PackWeightsCache::Prepend(absl::string_view data) {
   // Append `data` to the end of the file to ensure the file is large enough.
   // Then move chunk_size of bytes towards the end of the file each time.
   // Finally copy `data` to position 0 of the file.
-  MP_RETURN_IF_ERROR(Append(filename, data));
-  auto mmap_file = GetMmapFile(filename);
+  MP_RETURN_IF_ERROR(Append(data));
+  auto mmap_file = GetMmapFile();
   RET_CHECK(mmap_file);
   size_t src_offset = mmap_file->length() - data.size();
   do {
@@ -206,14 +269,6 @@ absl::Status PackWeightsCache::Prepend(absl::string_view filename,
   } while (src_offset > 0);
   memcpy(mmap_file->data(), data.data(), data.size());
   return absl::OkStatus();
-}
-
-absl::Status PackWeightsCache::Append(absl::string_view data) {
-  return Append(cache_path_, data);
-}
-
-absl::Status PackWeightsCache::Prepend(absl::string_view data) {
-  return Prepend(cache_path_, data);
 }
 
 size_t PackWeightsCache::look_up(
