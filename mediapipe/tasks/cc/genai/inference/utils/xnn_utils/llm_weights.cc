@@ -62,6 +62,8 @@ LlmParams::Norm TransformerParametersProtoNormTypeToLlmParamsNormType(
       return LlmParams::Norm::RMS_NORM;
     case TransformerParameters::LAYER_NORM:
       return LlmParams::Norm::LAYER_NORM;
+    case TransformerParameters::RMS_NORM_NO_SCALE:
+      return LlmParams::Norm::RMS_NORM_NO_SCALE;
     default:
       ABSL_LOG(DFATAL) << "Unknown norm type: " << norm_type;
   }
@@ -85,6 +87,9 @@ absl::StatusOr<std::optional<LlmWeights::NormWeights>> LoadNormWeights(
           rms_norm_weights.norm_weight,
           weight_accessor.LoadWeight(absl::StrCat(basename, ".scale"), dims));
       return rms_norm_weights;
+    }
+    case LlmParams::Norm::RMS_NORM_NO_SCALE: {
+      break;
     }
     case LlmParams::Norm::LAYER_NORM: {
       RET_CHECK_EQ(dims.size(), 1);

@@ -961,6 +961,10 @@ absl::StatusOr<std::shared_ptr<Tensor>> LlmBuilder::ApplyNorm(
       MP_ASSIGN_OR_RETURN(output, RmsNorm(input, weights_val));
       break;
     }
+    case LlmParams::Norm::RMS_NORM_NO_SCALE: {
+      MP_ASSIGN_OR_RETURN(output, RmsNorm(input, nullptr));
+      break;
+    }
     case LlmParams::Norm::LAYER_NORM: {
       const auto& layer_norm_weights =
           std::get<LayerNormWeights>(weights.value());

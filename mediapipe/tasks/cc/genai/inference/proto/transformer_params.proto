@@ -90,6 +90,8 @@ message TransformerParameters {
     // LAYERNORM stands for Layer Normalization, see
     // https://arxiv.org/pdf/1607.06450v1.pdf for details.
     LAYER_NORM = 3;
+    // RMSNORM without scale. This is equivalent to setting all scales to 0.
+    RMS_NORM_NO_SCALE = 4;
   }
 
   message FeedForwardParameters {

@@ -85,6 +85,7 @@ struct LlmParams {
     NO_NORM = 1,
     RMS_NORM = 2,
     LAYER_NORM = 3,
+    RMS_NORM_NO_SCALE = 4,
   };
 
   enum class AttentionScaleType {
