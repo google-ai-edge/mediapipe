@@ -632,8 +632,12 @@ cc_library(
             ":ahwb_gpu_releaser",
             ":hardware_buffer",
             ":hardware_buffer_pool",
+            ":shared_fd",
             ":tensor_ahwb_usage",
             ":unique_fd",
+            "//mediapipe/util:sync_wait",
+            "@com_google_absl//absl/base:log_severity",
+            "@com_google_absl//absl/time",
         ],
         ":android_link_native_window": [
             ":ahwb_gpu_releaser",
@@ -650,6 +654,18 @@ cc_library(
             "//mediapipe/gpu:gl_context",
         ],
     }),
+)
+
+cc_library(
+    name = "tensor_fd_finished_func",
+    hdrs = ["tensor_fd_finished_func.h"],
+    deps = [
+        ":shared_fd",
+        ":unique_fd",
+        "//mediapipe/util:sync_wait",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/time",
+    ],
 )
 
 cc_test(
