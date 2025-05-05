@@ -20,7 +20,7 @@ option java_package = "com.google.odml.infra.proto";
 option java_outer_classname = "TransformerParametersProto";
 
 // The parameters of transformer (https://arxiv.org/pdf/1706.03762.pdf)
-// Next ID: 35
+// Next ID: 36
 message TransformerParameters {
   // Batch size of tensors.
   int32 batch_size = 1;
@@ -242,4 +242,7 @@ message TransformerParameters {
     optional float post_laurel_norm_scale_shift = 2;
   }
   optional LaurelConfig laurel_config = 34;
+
+  // The start layer of the kv cache that is shared from the previous layers.
+  optional int32 kv_cache_shared_start_layer = 35;
 }
