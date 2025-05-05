@@ -32,7 +32,7 @@
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/xnn_tensor.h"
 #include "xnnpack.h"  // from @XNNPACK
 // clang-format off
-#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/memory_mapped_file.h",
+#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/memory_mapped_file.h"
 // clang-format on
 #include "tensorflow/lite/schema/schema_generated.h"
 

@@ -52,7 +52,7 @@
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/llm_builder_factory.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/llm_weights.h"
 // clang-format off
-#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/scoped_file.h",
+#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/scoped_file.h"
 // clang-format on
 #include "sentencepiece/src/sentencepiece_processor.h"  // from @com_google_sentencepiece
 #include "sentencepiece/src/util.h"  // from @com_google_sentencepiece

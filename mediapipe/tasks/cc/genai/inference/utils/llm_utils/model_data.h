@@ -29,8 +29,8 @@
 #include "mediapipe/tasks/cc/genai/inference/proto/llm_params.pb.h"
 
 // clang-format off
-#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/memory_mapped_file.h",
-#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/scoped_file.h",
+#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/memory_mapped_file.h"
+#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/scoped_file.h"
 // clang-format on
 #include "tensorflow/lite/model_builder.h"
 

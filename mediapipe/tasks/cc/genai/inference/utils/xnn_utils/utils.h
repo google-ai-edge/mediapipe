@@ -30,7 +30,7 @@
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/ret_check.h"
 // clang-format off
-#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/memory_mapped_file.h",
+#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/memory_mapped_file.h"
 // clang-format on
 namespace mediapipe::tasks::genai {
 namespace xnn_utils {
