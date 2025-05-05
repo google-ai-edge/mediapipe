@@ -781,8 +781,9 @@ void WebGpuShaderCalculator::HandleEmptyPacket(
       kOutput3d(cc).Send(*kInputBuffers3d(cc).begin());
     }
   } else {
-    ABSL_LOG(WARNING) << stream_debug_name << " input stream at id: " << index
-                      << " was empty. Skipping frame.";
+    ABSL_LOG_EVERY_N(WARNING, 100)
+        << stream_debug_name << " input stream at id: " << index
+        << " was empty. Skipping frame.";
   }
 }
 
@@ -812,8 +813,9 @@ absl::Status WebGpuShaderCalculator::Process(CalculatorContext* cc) {
     auto packet_stream = *it;
     if (packet_stream.IsEmpty()) {
       if (it == kInputBuffers(cc).begin()) {
-        ABSL_LOG(WARNING) << "GPU buffer input stream first packet was empty. "
-                          << "Skipping frame.";
+        ABSL_LOG_EVERY_N(WARNING, 100)
+            << "GPU buffer input stream first packet was empty. "
+            << "Skipping frame.";
       } else {
         HandleEmptyPacket(cc, std::distance(kInputBuffers(cc).begin(), it),
                           has_gpu_buffer_input, "GPU buffer");
@@ -830,7 +832,7 @@ absl::Status WebGpuShaderCalculator::Process(CalculatorContext* cc) {
     auto packet_stream = *it;
     if (packet_stream.IsEmpty()) {
       if (it == kInputBuffers3d(cc).begin() && !has_gpu_buffer_input) {
-        ABSL_LOG(WARNING)
+        ABSL_LOG_EVERY_N(WARNING, 100)
             << "3D texture buffer input stream first packet was empty,"
             << "and no GPU buffer input stream attached. Skipping "
             << "frame.";
