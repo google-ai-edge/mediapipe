@@ -487,7 +487,6 @@ _gengen = rule(
         ),
         "halide_target_map": attr.string_list_dict(),
         "requested_outputs": attr.string_list(),
-        "_cc_toolchain": attr.label(default = "@bazel_tools//tools/cpp:current_cc_toolchain"),
     },
     fragments = ["cpp"],
     toolchains = use_cpp_toolchain(),
