@@ -658,6 +658,7 @@ cc_library(
 
 cc_library(
     name = "tensor_fd_finished_func",
+    srcs = ["tensor_fd_finished_func.cc"],
     hdrs = ["tensor_fd_finished_func.h"],
     deps = [
         ":shared_fd",
