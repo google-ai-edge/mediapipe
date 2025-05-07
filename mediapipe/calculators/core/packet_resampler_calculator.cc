@@ -182,6 +182,13 @@ absl::Status PacketResamplerCalculator::Process(CalculatorContext* cc) {
       return absl::OkStatus();
     }
   }
+  if (!header_sent_ && cc->Outputs().UsesTags() &&
+      cc->Outputs().HasTag(kVideoHeaderTag)) {
+    cc->Outputs()
+        .Tag(kVideoHeaderTag)
+        .Add(new VideoHeader(video_header_), Timestamp::PreStream());
+    header_sent_ = true;
+  }
 
   MP_RETURN_IF_ERROR(strategy_->Process(cc));
 
@@ -670,12 +677,6 @@ absl::Status NoJitterStrategy::Process(CalculatorContext* cc) {
       calculator_->first_timestamp_ =
           base_timestamp_ +
           TimestampDiffFromSeconds(first_index / calculator_->frame_rate_);
-    }
-    if (cc->Outputs().UsesTags() && cc->Outputs().HasTag(kVideoHeaderTag)) {
-      cc->Outputs()
-          .Tag(kVideoHeaderTag)
-          .Add(new VideoHeader(calculator_->video_header_),
-               Timestamp::PreStream());
     }
   }
   const Timestamp received_timestamp = cc->InputTimestamp();
