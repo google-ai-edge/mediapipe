@@ -68,7 +68,7 @@ cc_library(
     srcs = ["metadata_utils.cc"],
     hdrs = ["metadata_utils.h"],
     defines = select({
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/genai:exclude_internal_names_from_llm_inference_engine_g3_build": ["EXCLUDE_INTERNAL_NAMES_FROM_LLM_INFERENCE_ENGINE_G3_BUILD"],
+        "//mediapipe/tasks:build_for_3p": ["BUILD_FOR_3P"],
         "//conditions:default": [],
     }),
     deps = [
@@ -131,7 +131,7 @@ cc_library(
     srcs = ["well_known_models.cc"],
     hdrs = ["well_known_models.h"],
     defines = select({
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/genai:exclude_internal_names_from_llm_inference_engine_g3_build": ["EXCLUDE_INTERNAL_NAMES_FROM_LLM_INFERENCE_ENGINE_G3_BUILD"],
+        "//mediapipe/tasks:build_for_3p": ["BUILD_FOR_3P"],
         "//conditions:default": [],
     }),
     deps = [

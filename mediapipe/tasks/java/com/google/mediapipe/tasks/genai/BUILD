@@ -18,14 +18,6 @@ licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
-config_setting(
-    name = "exclude_internal_names_from_llm_inference_engine_g3_build",
-    define_values = {
-        "EXCLUDE_INTERNAL_NAMES_FROM_LLM_INFERENCE_ENGINE_G3_BUILD": "1",
-    },
-    visibility = ["//visibility:public"],
-)
-
 cc_binary(
     name = "libllm_inference_engine_jni.so",
     linkopts = [

@@ -183,7 +183,7 @@ cc_library(
     srcs = ["llm_builder_factory.cc"],
     hdrs = ["llm_builder_factory.h"],
     defines = select({
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/genai:exclude_internal_names_from_llm_inference_engine_g3_build": ["EXCLUDE_INTERNAL_NAMES_FROM_LLM_INFERENCE_ENGINE_G3_BUILD"],
+        "//mediapipe/tasks:build_for_3p": ["BUILD_FOR_3P"],
         "//conditions:default": [],
     }),
     deps = [
@@ -200,7 +200,7 @@ cc_library(
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
     ] + select({
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/genai:exclude_internal_names_from_llm_inference_engine_g3_build": [],
+        "//mediapipe/tasks:build_for_3p": [],
         "//conditions:default": [
         ],
     }),

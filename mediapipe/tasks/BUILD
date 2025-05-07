@@ -14,6 +14,14 @@
 
 package(default_visibility = ["//visibility:public"])
 
+config_setting(
+    name = "build_for_3p",
+    define_values = {
+        "BUILD_FOR_3P": "1",
+    },
+    visibility = ["//visibility:public"],
+)
+
 package_group(
     name = "internal",
     packages = [
