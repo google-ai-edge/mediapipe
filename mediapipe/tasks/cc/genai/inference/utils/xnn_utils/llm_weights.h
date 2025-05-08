@@ -269,7 +269,8 @@ class DefaultLlmWeightsLoader : public LlmWeightsLoader {
       : LlmWeightsLoader(std::move(weight_accessor), params) {}
   DefaultLlmWeightsLoader(
       absl::string_view weight_path, const LlmParams& params,
-      std::shared_ptr<tflite::FlatBufferModel> flat_buffer_model = nullptr);
+      std::shared_ptr<tflite::FlatBufferModel> flat_buffer_model = nullptr,
+      std::shared_ptr<ScopedFile> scoped_cache_file = nullptr);
 
  private:
   std::shared_ptr<PackWeightsCache> xnn_weights_cache_;
