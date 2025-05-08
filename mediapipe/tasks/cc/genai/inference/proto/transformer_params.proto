@@ -20,7 +20,7 @@ option java_package = "com.google.odml.infra.proto";
 option java_outer_classname = "TransformerParametersProto";
 
 // The parameters of transformer (https://arxiv.org/pdf/1706.03762.pdf)
-// Next ID: 37
+// Next ID: 38
 message TransformerParameters {
   // Batch size of tensors.
   int32 batch_size = 1;
@@ -251,4 +251,15 @@ message TransformerParameters {
   // models, like 4B+). Thus, to ensure correct behavior for these models when
   // not forcing fp32 precision, we allow for applying a special workaround.
   optional bool gemma3_bfloat16_fix = 36;
+
+  // Altup configs.
+  message AltupConfig {
+    // The number of modalities for altup.
+    optional int32 altup_num_modalities = 1;
+    // The index of the active modality for altup.
+    optional int32 altup_active_idx = 2;
+    // Number of inputs.
+    optional int32 altup_num_inputs = 3;
+  }
+  optional AltupConfig altup_config = 37;
 }
