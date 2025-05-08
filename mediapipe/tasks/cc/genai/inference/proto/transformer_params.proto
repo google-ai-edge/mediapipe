@@ -20,7 +20,7 @@ option java_package = "com.google.odml.infra.proto";
 option java_outer_classname = "TransformerParametersProto";
 
 // The parameters of transformer (https://arxiv.org/pdf/1706.03762.pdf)
-// Next ID: 39
+// Next ID: 41
 message TransformerParameters {
   // Batch size of tensors.
   int32 batch_size = 1;
@@ -171,6 +171,8 @@ message TransformerParameters {
 
   SelfAttentionParameters self_attention_parameters = 16;
 
+  reserved 39;
+
   reserved 17;
   // Whether to skip absolute positional embeddings. If the value is false, then
   // the absolute positional embeddings will be applied to the token embeddings
@@ -192,6 +194,8 @@ message TransformerParameters {
   // If set, will override the default RoPE wavelength to be the specified
   // value for all global layers (but will not change local attention layers).
   optional float global_rope_wavelength = 32;
+
+  reserved 40;
 
   // Audio parameters
   // Describes where to interleave residual adapters with transformer layers.

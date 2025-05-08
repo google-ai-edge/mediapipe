@@ -28,7 +28,7 @@ enum LlmModelType {
   LLM_MODEL_TYPE_UNKNOWN = 0;
 
   reserved 1, 2, 3, 4, 7, 9, 10, 13, 14, 15, 16, 17, 19, 21, 22, 23, 24, 25, 26,
-      31;
+      31, 33;
 
   // FALCON RefinedWeb with 1B parameters.
   // https://huggingface.co/tiiuae/falcon-rw-1b
