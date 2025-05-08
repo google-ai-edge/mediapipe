@@ -20,7 +20,7 @@ option java_package = "com.google.odml.infra.proto";
 option java_outer_classname = "TransformerParametersProto";
 
 // The parameters of transformer (https://arxiv.org/pdf/1706.03762.pdf)
-// Next ID: 38
+// Next ID: 39
 message TransformerParameters {
   // Batch size of tensors.
   int32 batch_size = 1;
@@ -262,4 +262,10 @@ message TransformerParameters {
     optional int32 altup_num_inputs = 3;
   }
   optional AltupConfig altup_config = 37;
+
+  // Activation sparsity stddev multiplier. It depends on the specified sparsity
+  // probability. In particular, stddev_multiplier = cdf^{-1}(sparsity_prob),
+  // where cdf is the cumulative distribution function of the Gaussian
+  // distribution.
+  optional float activation_sparsity_stddev_multiplier = 38;
 }
