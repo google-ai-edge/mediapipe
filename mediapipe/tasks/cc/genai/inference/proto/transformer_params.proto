@@ -20,7 +20,7 @@ option java_package = "com.google.odml.infra.proto";
 option java_outer_classname = "TransformerParametersProto";
 
 // The parameters of transformer (https://arxiv.org/pdf/1706.03762.pdf)
-// Next ID: 36
+// Next ID: 37
 message TransformerParameters {
   // Batch size of tensors.
   int32 batch_size = 1;
@@ -245,4 +245,10 @@ message TransformerParameters {
 
   // The start layer of the kv cache that is shared from the previous layers.
   optional int32 kv_cache_shared_start_layer = 35;
+
+  // Gemma3 models are trained from bf16, so they are susceptible to overflow
+  // when run in environments without native bf16 support (especially for larger
+  // models, like 4B+). Thus, to ensure correct behavior for these models when
+  // not forcing fp32 precision, we allow for applying a special workaround.
+  optional bool gemma3_bfloat16_fix = 36;
 }

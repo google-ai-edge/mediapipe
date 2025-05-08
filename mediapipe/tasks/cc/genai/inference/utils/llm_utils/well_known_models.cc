@@ -183,6 +183,9 @@ LlmParameters GetGemma3_1BParams() {
   // New tokenizer
   llm_params.set_vocab_size(262144);
 
+  // We don't use gemma3_bfloat16_fix for the 1B variant because the maximum
+  // activations so far seem to stay below the f16 max cap.
+
   TransformerParameters& transformer_params =
       *llm_params.mutable_transformer_parameters();
   transformer_params.set_batch_size(kBatchSize);
@@ -257,6 +260,9 @@ LlmParameters GetGemma3_4BParams() {
   transformer_params.set_global_rope_wavelength(1000000.0f);
   transformer_params.set_global_rope_scaling(8.0f);
 
+  // To allow fp16 usage when bf16 trained
+  transformer_params.set_gemma3_bfloat16_fix(true);
+
   TransformerParameters::SelfAttentionParameters& sa_params =
       *transformer_params.mutable_self_attention_parameters();
   sa_params.set_attention_mask_type(TransformerParameters::CAUSAL);
@@ -312,6 +318,9 @@ LlmParameters GetGemma3_12BParams() {
   transformer_params.set_global_rope_wavelength(1000000.0f);
   transformer_params.set_global_rope_scaling(8.0f);
 
+  // To allow fp16 usage when bf16 trained
+  transformer_params.set_gemma3_bfloat16_fix(true);
+
   TransformerParameters::SelfAttentionParameters& sa_params =
       *transformer_params.mutable_self_attention_parameters();
   sa_params.set_attention_mask_type(TransformerParameters::CAUSAL);
@@ -366,6 +375,9 @@ LlmParameters GetGemma3_27BParams() {
   transformer_params.set_num_local_layers_per_global(5);
   transformer_params.set_global_rope_wavelength(1000000.0f);
   transformer_params.set_global_rope_scaling(8.0f);
+
+  // To allow fp16 usage when bf16 trained
+  transformer_params.set_gemma3_bfloat16_fix(true);
 
   TransformerParameters::SelfAttentionParameters& sa_params =
       *transformer_params.mutable_self_attention_parameters();
