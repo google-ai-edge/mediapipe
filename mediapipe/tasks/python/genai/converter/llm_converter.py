@@ -121,7 +121,15 @@ class ConversionConfig(object):
     if self.lora_rank is not None:
       if backend == 'cpu':
         raise ValueError('LoRA is not supported for CPU backend.')
-      lora_applicable_models = ['GEMMA_2B', 'GEMMA2_2B', 'PHI_2']
+      lora_applicable_models = [
+          'GEMMA_2B',
+          'GEMMA2_2B',
+          'PHI_2',
+          'GEMMA3_1B',
+          'GEMMA3_4B',
+          'GEMMA3_12B',
+          'GEMMA3_27B',
+      ]
       if model_type not in lora_applicable_models:
         raise ValueError(
             'LoRA is only applicable for the model_type:'
