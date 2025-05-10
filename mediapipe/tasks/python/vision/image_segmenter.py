@@ -124,7 +124,7 @@ class ImageSegmenter(base_vision_task_api.BaseVisionTaskApi):
     (kTfLiteUInt8/kTfLiteFloat32)
     - image input of size `[batch x height x width x channels]`.
     - batch inference is not supported (`batch` is required to be 1).
-    - RGB and greyscale inputs are supported (`channels` is required to be
+    - RGB and grayscale inputs are supported (`channels` is required to be
       1 or 3).
     - if type is kTfLiteFloat32, NormalizationOptions are required to be
       attached to the metadata for input normalization.
@@ -391,7 +391,7 @@ class ImageSegmenter(base_vision_task_api.BaseVisionTaskApi):
     input images if needed. In other words, it's not guaranteed to have output
     per input image.
 
-    The `result_callback` prvoides:
+    The `result_callback` provides:
       - A segmentation result object that contains a list of segmentation masks
         as images.
       - The input image that the image segmenter runs on.
