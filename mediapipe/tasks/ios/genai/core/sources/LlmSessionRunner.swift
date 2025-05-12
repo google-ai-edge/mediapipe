@@ -14,7 +14,6 @@
 
 import CoreGraphics
 import Foundation
-import MediaPipeSKImageConverter
 import MediaPipeTasksGenAIC
 
 /// This class is used to create and call appropriate methods on the C `LlmInferenceEngine_Session`
@@ -56,8 +55,7 @@ final class LlmSessionRunner {
 
   func addImage(image: CGImage) throws {
     var cErrorMessage: UnsafeMutablePointer<CChar>? = nil
-    let cSkBitmap: CSkBitmap = SkImageConverter.skBitmap(from: image)
-    LlmInferenceEngine_Session_AddImage(cLlmSession, cSkBitmap, &cErrorMessage)
+    LlmInferenceEngine_Session_AddCgImage(cLlmSession, image, &cErrorMessage)
   }
 
   /// Invokes the C LLM session with the previously added query chunks synchronously to generate an

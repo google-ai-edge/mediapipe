@@ -430,6 +430,7 @@ apple_static_xcframework(
     },
     public_hdrs = [
         "//mediapipe/tasks/cc/genai/inference/c:llm_inference_engine.h",
+        "//mediapipe/tasks/cc/genai/inference/c:llm_inference_engine_ios.h",
     ],
     # Including here the deps that were in avoid_deps in MediaPipeTasksGenAI_library.
     deps = TENSORFLOW_LITE_C_DEPS + [

@@ -36,7 +36,6 @@ swift_library(
     module_name = "MediaPipeTasksGenAI",
     deps = [
         "//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu",
-        "//mediapipe/tasks/ios/genai/core:SkImageConverter",
         "//third_party/apple_frameworks:CoreGraphics",
         "//third_party/apple_frameworks:Foundation",
     ],
