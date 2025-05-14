@@ -308,6 +308,10 @@ ODML_EXPORT int LlmInferenceEngine_Session_PredictAsync(
     void (*callback)(void* callback_context,
                      LlmResponseContext* response_context));
 
+// Request cancellation for pending processes.
+ODML_EXPORT int LlmInferenceEngine_Session_PendingProcessCancellation(
+    LlmInferenceEngine_Session* session, char** error_msg);
+
 // Clone the provided session.
 ODML_EXPORT int LlmInferenceEngine_Session_Clone(
     LlmInferenceEngine_Session* session,

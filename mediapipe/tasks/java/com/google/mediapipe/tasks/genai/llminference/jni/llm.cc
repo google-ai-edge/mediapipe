@@ -396,6 +396,20 @@ JNIEXPORT void JNICALL JNI_METHOD(nativePredictAsync)(JNIEnv* env, jclass thiz,
   }
 }
 
+JNIEXPORT void JNICALL JNI_METHOD(nativePendingProcessCancellation)(
+    JNIEnv* env, jclass, jlong session_handle) {
+  char* error_msg = nullptr;
+  int error_code = LlmInferenceEngine_Session_PendingProcessCancellation(
+      reinterpret_cast<LlmInferenceEngine_Session*>(session_handle),
+      &error_msg);
+  if (error_code) {
+    ThrowIfError(env,
+                 absl::InternalError(absl::StrCat(
+                     "Failed to cancel pending processes: %s", error_msg)));
+    free(error_msg);
+  }
+}
+
 JNIEXPORT jint JNICALL JNI_METHOD(nativeSizeInTokens)(JNIEnv* env, jclass thiz,
                                                       jlong session_handle,
                                                       jstring input) {

@@ -210,6 +210,11 @@ public final class LlmTaskRunner implements AutoCloseable {
     nativePredictAsync(session.sessionHandle, callbackHandle);
   }
 
+  /** Cancels pending processes in the session. */
+  public void pendingProcessCancellation(LlmSession session) {
+    nativePendingProcessCancellation(session.sessionHandle);
+  }
+
   /** Invokes the native token cost calculator and returns the size of the string in tokens. */
   public int sizeInTokens(LlmSession session, String text) {
     return nativeSizeInTokens(session.sessionHandle, text);
@@ -365,6 +370,8 @@ public final class LlmTaskRunner implements AutoCloseable {
   private static native void nativeRemoveCallback(long callbackHandle);
 
   private static native void nativePredictAsync(long sessionPointer, long callbackContextHandle);
+
+  private static native void nativePendingProcessCancellation(long sessionPointer);
 
   private static native int nativeSizeInTokens(long sessionPointer, String input);
 

@@ -683,6 +683,12 @@ int LlmInferenceEngine_Session_PredictAsync(
   return 0;
 }
 
+int LlmInferenceEngine_Session_PendingProcessCancellation(
+    LlmInferenceEngine_Session* session, char** error_msg) {
+  *error_msg = strdup("Not implemented");
+  return 12;
+}
+
 int LlmInferenceEngine_Session_Clone(
     LlmInferenceEngine_Session* session,
     LlmInferenceEngine_Session** cloned_session, char** error_msg) {

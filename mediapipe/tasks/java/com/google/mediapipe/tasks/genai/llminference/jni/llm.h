@@ -111,6 +111,15 @@ JNIEXPORT void JNICALL JNI_METHOD(nativePredictAsync)(JNIEnv *, jclass, jlong,
 
 /*
  * Class:     com_google_mediapipe_tasks_genai_llminference_LlmTaskRunner
+ * Method:    nativePendingProcessCancellation
+ * Signature: (JL)V
+ */
+JNIEXPORT void JNICALL JNI_METHOD(nativePendingProcessCancellation)(JNIEnv *,
+                                                                    jclass,
+                                                                    jlong);
+
+/*
+ * Class:     com_google_mediapipe_tasks_genai_llminference_LlmTaskRunner
  * Method:    nativeSizeInTokens
  * Signature: (JLjava/lang/String;)I
  */
