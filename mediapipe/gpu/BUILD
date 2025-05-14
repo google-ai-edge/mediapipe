@@ -1362,7 +1362,6 @@ objc_library(
 objc_library(
     name = "mps_sobel_calculator",
     srcs = ["MPSSobelCalculator.mm"],
-    copts = ["-std=c++17"],
     features = ["-layering_check"],
     visibility = ["//visibility:public"],
     deps = [
