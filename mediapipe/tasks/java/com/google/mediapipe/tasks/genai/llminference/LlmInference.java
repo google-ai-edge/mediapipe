@@ -49,6 +49,7 @@ public class LlmInference implements AutoCloseable {
             .setNumDecodeStepsPerSync(NUM_DECODE_STEPS_PER_SYNC)
             .setMaxTokens(options.maxTokens())
             .setMaxTopK(options.maxTopK())
+            .setMaxNumImages(options.maxNumImages())
             .setNumberOfSupportedLoraRanks(options.supportedLoraRanks().size())
             .addAllSupportedLoraRanks(options.supportedLoraRanks());
 
@@ -216,6 +217,9 @@ public class LlmInference implements AutoCloseable {
       /** Configures the total number of tokens for input and output). */
       public abstract Builder setMaxTokens(int maxTokens);
 
+      /** Configures the maximum number of images to process. Default is 0. */
+      public abstract Builder setMaxNumImages(int maxNumImages);
+
       /**
        * Configures the maximum Top-K value, which is the max Top-K value supported for all sessions
        * created with the engine, used by GPU only. If a session with Top-K value larger than this
@@ -249,6 +253,9 @@ public class LlmInference implements AutoCloseable {
      */
     public abstract int maxTokens();
 
+    /** The maximum number of images to process. */
+    public abstract int maxNumImages();
+
     /**
      * Returns the maximum Top-K value, which is the max Top-K value supported for all sessions
      * created with the engine, used by GPU only. If a session with Top-K value larger than this is
@@ -273,6 +280,7 @@ public class LlmInference implements AutoCloseable {
       return new AutoValue_LlmInference_LlmInferenceOptions.Builder()
           .setMaxTokens(512)
           .setMaxTopK(40)
+          .setMaxNumImages(0)
           .setSupportedLoraRanks(Collections.emptyList());
     }
   }
