@@ -52,13 +52,13 @@ Tip: Use command `deactivate` to later exit the Python virtual environment.
 To learn more about configuration options and usage examples, please find
 details in each solution via the links below:
 
-*   [MediaPipe Face Detection](../solutions/face_detection#python-solution-api)
-*   [MediaPipe Face Mesh](../solutions/face_mesh#python-solution-api)
-*   [MediaPipe Hands](../solutions/hands#python-solution-api)
-*   [MediaPipe Holistic](../solutions/holistic#python-solution-api)
-*   [MediaPipe Objectron](../solutions/objectron#python-solution-api)
-*   [MediaPipe Pose](../solutions/pose#python-solution-api)
-*   [MediaPipe Selfie Segmentation](../solutions/selfie_segmentation#python-solution-api)
+*   [MediaPipe Face Detection](../solutions/face_detection.md#python-solution-api)
+*   [MediaPipe Face Mesh](../solutions/face_mesh.md#python-solution-api)
+*   [MediaPipe Hands](../solutions/hands.md#python-solution-api)
+*   [MediaPipe Holistic](../solutions/holistic.md#python-solution-api)
+*   [MediaPipe Objectron](../solutions/objectron.md#python-solution-api)
+*   [MediaPipe Pose](../solutions/pose.md#python-solution-api)
+*   [MediaPipe Selfie Segmentation](../solutions/selfie_segmentation.md#python-solution-api)
 
 ## MediaPipe on Google Colab
 
