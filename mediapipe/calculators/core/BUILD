@@ -680,14 +680,20 @@ cc_library(
     alwayslink = 1,
 )
 
+mediapipe_proto_library(
+    name = "immediate_mux_calculator_proto",
+    srcs = ["immediate_mux_calculator.proto"],
+)
+
 cc_library(
     name = "immediate_mux_calculator",
     srcs = ["immediate_mux_calculator.cc"],
     deps = [
+        ":immediate_mux_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/port:ret_check",
-        "//mediapipe/framework/port:status",
         "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/status",
     ],
     alwayslink = 1,
 )
@@ -812,16 +818,17 @@ cc_test(
         ":round_robin_demux_calculator",
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:executor",
         "//mediapipe/framework:test_calculators",
         "//mediapipe/framework/port:gtest_main",
-        "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:logging",
-        "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:threadpool",
         "//mediapipe/framework/stream_handler:immediate_input_stream_handler",
         "//mediapipe/framework/tool:sink",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
+        "@com_google_protobuf//:protobuf",
     ],
 )
 
