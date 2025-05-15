@@ -994,9 +994,18 @@ export class LlmInference extends TaskRunner {
     this.graphRunner.attachBoolListener(
       OUTPUT_END_STREAM,
       (bool, timestamp) => {
-        this.isProcessing = false;
         this.setLatestOutputTimestamp(timestamp);
-        this.checkWgpuErrors();
+        // If there are any WebGPU errors, we want to release our isProcessing
+        // lock, but otherwise we want to keep the lock until we're about to
+        // leave the WebAssembly stack, which means waiting until *after* the
+        // userProgressListener is called, since that callback is still
+        // happening from within the Wasm VM.
+        try {
+          this.checkWgpuErrors();
+        } catch (e) {
+          this.isProcessing = false;
+          throw e;
+        }
         if (this.resultDeferred) {
           this.resultDeferred.resolve(
             this.generationResults.map((result) => result.join('')),
@@ -1020,6 +1029,7 @@ export class LlmInference extends TaskRunner {
             );
           }
         }
+        this.isProcessing = false;
         this.isMultiResponseGeneration = undefined;
       },
     );
