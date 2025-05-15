@@ -466,6 +466,7 @@ cc_library(
     hdrs = ["status_util.h"],
     visibility = ["//visibility:public"],
     deps = [
+        "//mediapipe/framework/deps:no_destructor",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/log:absl_check",
