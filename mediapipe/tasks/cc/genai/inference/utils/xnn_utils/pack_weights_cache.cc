@@ -30,6 +30,7 @@
 #include <variant>
 #include <vector>
 
+#include "absl/functional/overload.h"
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/status/status.h"
@@ -208,19 +209,19 @@ bool PackWeightsCache::ShouldDoubleCheckCompatibility(
 }
 
 std::shared_ptr<MemoryMappedFile> PackWeightsCache::GetMmapFile() {
-  switch (cache_file_.index()) {
-    case 0:  // std::string filename
-      return mediapipe::file::Exists(std::get<0>(cache_file_)).ok()
-                 ? MemoryMappedFile::CreateMutable(std::get<0>(cache_file_))
-                       .value_or(nullptr)
-                 : nullptr;
-    case 1:  // std::shared_ptr<ScopedFile> scoped_file
-      return MemoryMappedFile::CreateMutable(std::get<1>(cache_file_)->file())
-          .value_or(nullptr);
-    default:
-      ABSL_CHECK(false);
-      return nullptr;
-  }
+  return std::visit(
+      absl::Overload(
+          [](const std::string& filename) {
+            return mediapipe::file::Exists(filename).ok()
+                       ? MemoryMappedFile::CreateMutable(filename).value_or(
+                             nullptr)
+                       : nullptr;
+          },
+          [](const std::shared_ptr<ScopedFile>& scoped_file) {
+            return MemoryMappedFile::CreateMutable(scoped_file->file())
+                .value_or(nullptr);
+          }),
+      cache_file_);
 }
 
 absl::Status PackWeightsCache::InitializeFromCache(
@@ -241,16 +242,15 @@ absl::Status PackWeightsCache::InitializeFromCache(
 }
 
 absl::Status PackWeightsCache::Append(absl::string_view data) {
-  switch (cache_file_.index()) {
-    case 0:  // std::string filename
-      return mediapipe::file::AppendStringToFile(std::get<0>(cache_file_),
-                                                 data);
-    case 1:  // std::shared_ptr<ScopedFile> scoped_file
-      return AppendToFileDescriptor(*std::get<1>(cache_file_), data);
-    default:
-      ABSL_CHECK(false);
-      return absl::InternalError("Unreachable code: invalid cache file type");
-  }
+  return std::visit(
+      absl::Overload(
+          [&data](const std::string& filename) {
+            return mediapipe::file::AppendStringToFile(filename, data);
+          },
+          [&data](const std::shared_ptr<ScopedFile>& scoped_file) {
+            return AppendToFileDescriptor(*scoped_file, data);
+          }),
+      cache_file_);
 }
 
 absl::Status PackWeightsCache::Prepend(absl::string_view data) {

@@ -277,6 +277,7 @@ cc_library(
         "//mediapipe/tasks/cc/genai/inference/utils/llm_utils:scoped_file",
         "@XNNPACK",
         "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/functional:overload",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
