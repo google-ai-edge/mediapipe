@@ -88,4 +88,10 @@ export declare interface LlmInferenceOptions extends TaskRunnerOptions {
    * the top result.
    */
   numResponses?: number;
+
+  /**
+   * When set to true, will force inference to be performed with F32 precision.
+   * Useful for debugging F16 precision-related errors.
+   */
+  forceF32?: boolean;
 }

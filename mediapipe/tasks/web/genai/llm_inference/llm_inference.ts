@@ -510,6 +510,9 @@ export class LlmInference extends TaskRunner {
         );
       }
     }
+    if ('forceF32' in options && options.forceF32 !== undefined) {
+      this.options.setForceF32(options.forceF32);
+    }
 
     // If the model is a converted LLM, use LlmInferenceSupportedGraphRunner's
     // members for the functionality support.
