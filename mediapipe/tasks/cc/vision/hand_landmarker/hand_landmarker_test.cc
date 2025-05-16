@@ -43,6 +43,10 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 #include "tensorflow/lite/test_util.h"
 
+#include "mediapipe/framework/port/parse_text_proto.h"
+#include "mediapipe/framework/port/status_macros.h"
+#include "mediapipe/framework/port/status_matchers.h"
+
 namespace mediapipe {
 namespace tasks {
 namespace vision {
@@ -50,7 +54,8 @@ namespace hand_landmarker {
 
 namespace {
 
-using ::file::Defaults;
+using mediapipe::file::Defaults; 
+
 using ::mediapipe::file::JoinPath;
 using ::mediapipe::tasks::components::containers::ConvertToClassifications;
 using ::mediapipe::tasks::components::containers::ConvertToNormalizedLandmarks;
@@ -77,12 +82,25 @@ constexpr char kNoHandsImage[] = "cats_and_dogs.jpg";
 constexpr float kLandmarksAbsMargin = 0.03;
 constexpr float kHandednessMargin = 0.05;
 
+template <typename ProtoT>
+absl::Status GetTextProto(absl::string_view file_path,
+  ProtoT* result,
+  const mediapipe::file::Options& options) {
+  std::string proto_text;
+  MP_RETURN_IF_ERROR(mediapipe::file::GetContents(file_path, &proto_text));
+  if(!proto_ns::TextFormat::ParseFromString(proto_text, result)) {
+    return absl::InvalidArgumentError("Invalid Text Proto");
+  }
+  return absl::OkStatus();
+}
+
 LandmarksDetectionResult GetLandmarksDetectionResult(
     absl::string_view landmarks_file_name) {
   LandmarksDetectionResult result;
   MP_EXPECT_OK(GetTextProto(
-      file::JoinPath("./", kTestDataDirectory, landmarks_file_name), &result,
+      file::JoinPath("./", kTestDataDirectory, landmarks_file_name), &result, 
       Defaults()));
+
   // Remove z position of landmarks, because they are not used in correctness
   // testing. For video or live stream mode, the z positions varies a lot during
   // tracking from frame to frame.
@@ -157,6 +175,22 @@ void ExpectHandLandmarkerResultsCorrect(
   }
   ASSERT_GE(actual_landmarks.size(), 1);
 
+  // The min detection confidence is 0.5, so each detection confidence should be > 0.5 
+  // otherwise mediapipe would not have let the landmark output
+  for (int i = 0; i < actual_landmarks.size(); i++) {
+    if (actual_landmarks[i].has_detection_confidence_set) {
+      ASSERT_GE(actual_landmarks[i].detection_confidence, 0.5);
+    }
+  }
+
+  // it seems that there are no checks for world landmarks here, going to still
+  // just check the detection confidence
+  for (int i = 0; i < actual_results.hand_world_landmarks.size(); i++) {
+    if (actual_results.hand_world_landmarks[i].has_detection_confidence_set) {
+      ASSERT_GE(actual_results.hand_world_landmarks[i].detection_confidence, 0.5);
+    }
+  }
+
   EXPECT_THAT(actual_handedness,
               HandednessMatches(expected_handedness, kHandednessMargin));
   EXPECT_THAT(actual_landmarks,
@@ -177,6 +211,8 @@ struct TestParams {
   int rotation;
   // Expected results from the hand landmarker model output.
   HandLandmarkerResult expected_results;
+
+  bool is_no_hands = false;
 };
 
 class ImageModeTest : public testing::TestWithParam<TestParams> {};
@@ -294,6 +330,7 @@ INSTANTIATE_TEST_SUITE_P(
                /* rotation= */ 0,
                /* expected_results = */
                {{}, {}, {}},
+               /* is_no_hands = */ true
            }),
     [](const TestParamInfo<ImageModeTest::ParamType>& info) {
       return info.param.test_name;
@@ -395,6 +432,7 @@ INSTANTIATE_TEST_SUITE_P(
                /* rotation= */ 0,
                /* expected_results = */
                {{}, {}, {}},
+               /* is_no_hands = */ true
            }),
     [](const TestParamInfo<ImageModeTest::ParamType>& info) {
       return info.param.test_name;
@@ -524,6 +562,7 @@ INSTANTIATE_TEST_SUITE_P(
                /* rotation= */ 0,
                /* expected_results = */
                {{}, {}, {}},
+               /* is_no_hands = */ true
            }),
     [](const TestParamInfo<ImageModeTest::ParamType>& info) {
       return info.param.test_name;

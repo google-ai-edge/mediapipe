@@ -248,5 +248,6 @@ filegroup(
         "thumb_up_landmarks.pbtxt",
         "thumb_up_rotated_landmarks.pbtxt",
         "victory_landmarks.pbtxt",
+        "portrait_expected_blendshapes.pbtxt"
     ],
 )

@@ -367,8 +367,13 @@ class SingleFaceLandmarksDetectorGraph : public core::ModelTaskGraph {
         AllowIf(face_rect_transformation.Out("").Cast<NormalizedRect>(),
                 presence, graph);
 
+    auto& landmark_merger = graph.AddNode("ConfidenceNormalizedLandmarkMergerCalculator");
+    projected_landmarks >> landmark_merger.In("LANDMARKS");
+    presence_score >> landmark_merger.In("CONFIDENCE");
+    auto merged_landmarks = landmark_merger[Output<NormalizedLandmarkList>("LANDMARKS")];
+
     return {{
-        /* landmarks= */ projected_landmarks,
+        /* landmarks= */ merged_landmarks,
         /* rect_next_frame= */ face_rect_next_frame,
         /* presence= */ presence,
         /* presence_score= */ presence_score,
