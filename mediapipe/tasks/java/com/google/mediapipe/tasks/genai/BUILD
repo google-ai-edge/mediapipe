@@ -46,6 +46,7 @@ android_library(
             target = "//mediapipe/tasks/java/com/google/mediapipe/tasks/genai/llminference/jni/proto:llm_response_context_java_proto_lite",
         ),
     ],
+    exports_manifest = 1,
     manifest = "AndroidManifest.xml",
     deps = [
         ":libllm_inference_engine_jni_lib",
