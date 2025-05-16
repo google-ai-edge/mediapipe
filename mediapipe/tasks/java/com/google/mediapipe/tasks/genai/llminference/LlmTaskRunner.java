@@ -179,10 +179,6 @@ public final class LlmTaskRunner implements AutoCloseable {
   public void addImage(LlmSession session, MPImage input) {
     long imageHandle = createImage(input);
     try {
-      // TODO: Remove this dummy chunk.
-      // Since AddImage cannot distinguish if start_id is being added,
-      // use a dummy chunk to make sure the start_id is being added properly.
-      nativeAddQueryChunk(session.sessionHandle, "");
       nativeAddImage(session.sessionHandle, imageHandle);
     } finally {
       nativeDeleteSkBitmap(imageHandle);
