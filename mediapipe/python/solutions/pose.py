@@ -39,6 +39,7 @@ from mediapipe.calculators.util import local_file_contents_calculator_pb2
 from mediapipe.calculators.util import logic_calculator_pb2
 from mediapipe.calculators.util import non_max_suppression_calculator_pb2
 from mediapipe.calculators.util import rect_transformation_calculator_pb2
+from mediapipe.calculators.util import refine_landmarks_from_heatmap_calculator_pb2
 from mediapipe.calculators.util import thresholding_calculator_pb2
 from mediapipe.calculators.util import visibility_smoothing_calculator_pb2
 from mediapipe.framework.tool import switch_container_pb2
