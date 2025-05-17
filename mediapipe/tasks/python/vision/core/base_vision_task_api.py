@@ -140,7 +140,7 @@ class BaseVisionTaskApi(object):
 
   def convert_to_normalized_rect(
       self,
-      options: _ImageProcessingOptions,
+      options: Optional[_ImageProcessingOptions],
       image: image_module.Image,
       roi_allowed: bool = True,
   ) -> _NormalizedRect:

@@ -14,9 +14,8 @@
 
 """Defines a couple base classes for the conversion/quantization process."""
 
-from typing import Iterator
 import os
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Iterator
 import numpy as np
 
 
