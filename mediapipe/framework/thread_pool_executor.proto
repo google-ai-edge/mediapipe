@@ -22,6 +22,9 @@ package mediapipe;
 
 import "mediapipe/framework/mediapipe_options.proto";
 
+option java_package = "com.google.mediapipe.proto";
+option java_outer_classname = "ThreadPoolExecutorOptionsProto";
+
 message ThreadPoolExecutorOptions {
   extend MediaPipeOptions {
     optional ThreadPoolExecutorOptions ext = 157116819;
