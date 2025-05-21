@@ -26,6 +26,37 @@ cc_test(
 )
 
 cc_library(
+    name = "contract_validator",
+    hdrs = ["contract_validator.h"],
+    deps = [
+        ":contract_fields",
+        ":contract_to_tuple",
+        ":dependent_false",
+        ":specializers",
+        "//mediapipe/framework/api3:calculator_contract",
+        "//mediapipe/framework/deps:registration",
+        "//mediapipe/framework/tool:status_util",
+        "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
+    ],
+)
+
+cc_test(
+    name = "contract_validator_test",
+    srcs = ["contract_validator_test.cc"],
+    deps = [
+        ":contract_validator",
+        "//mediapipe/framework/api3:contract",
+        "//mediapipe/framework/api3/testing:foo_cc_proto",
+        "//mediapipe/framework/port:gtest_main",
+        "@com_google_absl//absl/status",
+    ],
+)
+
+cc_library(
     name = "has_update_contract",
     hdrs = ["has_update_contract.h"],
 )

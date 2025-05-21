@@ -149,6 +149,7 @@ cc_library(
         ":calculator_contract",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/api3/internal:contract_validator",
         "//mediapipe/framework/api3/internal:has_update_contract",
         "@com_google_absl//absl/status",
     ],

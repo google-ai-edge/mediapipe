@@ -8,6 +8,7 @@
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/api3/calculator_context.h"
 #include "mediapipe/framework/api3/calculator_contract.h"
+#include "mediapipe/framework/api3/internal/contract_validator.h"
 #include "mediapipe/framework/api3/internal/has_update_contract.h"
 #include "mediapipe/framework/calculator_framework.h"
 
@@ -205,7 +206,8 @@ namespace mediapipe::api3 {
 // TODO: get rid of api2 usage.
 template <typename NodeT, typename ImplT>
 class Calculator : public CalculatorBase,
-                   private api2::internal::NodeRegistrator<ImplT> {
+                   private api2::internal::NodeRegistrator<ImplT>,
+                   private ContractValidator<NodeT::template Contract> {
  public:
   // Invoked once to initialize the calculator. (More details available in
   // `Calculator` class documentation.)
