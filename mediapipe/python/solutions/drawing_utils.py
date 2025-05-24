@@ -70,7 +70,7 @@ def draw_detection(
     detection: detection_pb2.Detection,
     keypoint_drawing_spec: DrawingSpec = DrawingSpec(color=RED_COLOR),
     bbox_drawing_spec: DrawingSpec = DrawingSpec()):
-  """Draws the detction bounding box and keypoints on the image.
+  """Draws the detection bounding box and keypoints on the image.
 
   Args:
     image: A three channel BGR image represented as numpy ndarray.
