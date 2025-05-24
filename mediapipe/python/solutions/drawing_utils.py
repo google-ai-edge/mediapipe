@@ -318,3 +318,4 @@ def plot_landmarks(landmark_list: landmark_pb2.NormalizedLandmarkList,
             color=_normalize_color(connection_drawing_spec.color[::-1]),
             linewidth=connection_drawing_spec.thickness)
   plt.show()
+  plt.close()
