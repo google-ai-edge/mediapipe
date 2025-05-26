@@ -73,10 +73,9 @@ TEST(KeypointDetectionCalculatorTest, TestDetection) {
   ASSERT_EQ(1, output_packets.size());
 
   auto result = output_packets[0].Get<geti::InferenceResult>();
-  std::vector<geti::DetectedKeypointsWithLabels> poses = result.poses;
+  std::vector<geti::DetectedKeypoints> poses = result.poses;
 
-  ASSERT_EQ(poses.size(), 1);
-  ASSERT_EQ(poses[0].keypoints.size(), 17);
+  ASSERT_EQ(poses.size(), 17);
 
   cv::Point3f expected[17] = {
       {246.7f, 101.8f, 0.985f}, {238.3f, 83.6f, 1.058f},
@@ -90,9 +89,9 @@ TEST(KeypointDetectionCalculatorTest, TestDetection) {
       {185.0f, 298.6f, 0.810f}};
 
   for (int i = 0; i < 17; i++) {
-    ASSERT_NEAR(poses[0].keypoints[i].x, expected[i].x, 0.1f);
-    ASSERT_NEAR(poses[0].keypoints[i].y, expected[i].y, 0.1f);
-    ASSERT_NEAR(poses[0].keypoints[i].score, expected[i].z, 0.001f);
+    ASSERT_NEAR(poses[i].shape.x, expected[i].x, 0.1f);
+    ASSERT_NEAR(poses[i].shape.y, expected[i].y, 0.1f);
+    ASSERT_NEAR(poses[i].labels[0].probability, expected[i].z, 0.001f);
   }
 }
 
