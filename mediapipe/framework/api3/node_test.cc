@@ -1,5 +1,6 @@
 #include "mediapipe/framework/api3/node_test.h"
 
+#include "mediapipe/framework/api3/node.h"
 #include "mediapipe/framework/port/gtest.h"
 
 namespace mediapipe::api3 {
