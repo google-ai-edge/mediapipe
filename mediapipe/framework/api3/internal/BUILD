@@ -112,3 +112,45 @@ cc_library(
         "@com_google_absl//absl/strings:string_view",
     ],
 )
+
+cc_library(
+    name = "graph_builder",
+    hdrs = ["graph_builder.h"],
+    visibility = [
+        "//mediapipe/framework/api2:__subpackages__",
+        "//mediapipe/framework/api3:__subpackages__",
+    ],
+    deps = [
+        "//mediapipe/framework:calculator_base",
+        "//mediapipe/framework:calculator_contract",
+        "//mediapipe/framework:mediapipe_options_cc_proto",
+        "//mediapipe/framework:stream_handler_cc_proto",
+        "//mediapipe/framework/port:any_proto",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/tool:type_util",
+        "@com_google_absl//absl/container:btree",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_protobuf//:protobuf",
+    ],
+)
+
+cc_test(
+    name = "graph_builder_test",
+    srcs = ["graph_builder_test.cc"],
+    deps = [
+        ":graph_builder",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/stream_handler:fixed_size_input_stream_handler_cc_proto",
+        "//mediapipe/framework/testdata:night_light_calculator_cc_proto",
+        "//mediapipe/framework/testdata:sky_light_calculator_cc_proto",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+    ],
+)
