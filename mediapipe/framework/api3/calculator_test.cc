@@ -17,6 +17,7 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
@@ -126,7 +127,7 @@ TEST(CalculatorTest, CanReadWritePortsAndUseServices) {
   ASSERT_FALSE(out.IsEmpty());
   EXPECT_EQ(out.Get<int>(), 42);
 
-  // Cleanuper.
+  // Cleanup.
   MP_ASSERT_OK(graph.CloseAllInputStreams());
   MP_ASSERT_OK(graph.WaitUntilDone());
 }
@@ -290,7 +291,136 @@ TEST(CalculatorTest, CanUseSharedContract) {
   ASSERT_FALSE(out_b.IsEmpty());
   EXPECT_EQ(out_b.Get<int>(), 42);
 
-  // Cleanuper.
+  // Cleanup.
+  MP_ASSERT_OK(graph.CloseAllInputStreams());
+  MP_ASSERT_OK(graph.WaitUntilDone());
+}
+
+inline constexpr absl::string_view kNoOpNodeName = "NoOpNode";
+struct NoOpNode : Node<kNoOpNodeName> {
+  template <typename S>
+  struct Contract {
+    Input<S, int> input{"IN"};
+    Output<S, int> output{"OUT"};
+  };
+};
+
+class NoOpNodeImpl : public Calculator<NoOpNode, NoOpNodeImpl> {
+ public:
+  absl::Status Process(CalculatorContext<NoOpNode>& cc) override {
+    // Not outputting anything should result in timestamp bound update by
+    // default.
+    return absl::OkStatus();
+  }
+};
+
+TEST(CalculatorTest, TimestampOffsetZeroIsTheDefault) {
+  CalculatorGraphConfig config =
+      ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        input_stream: "in"
+        output_stream: "out"
+        node {
+          calculator: "NoOpNode"
+          input_stream: "IN:in"
+          output_stream: "OUT:out"
+        }
+      )pb");
+
+  CalculatorGraph graph;
+  MP_ASSERT_OK(graph.Initialize(std::move(config)));
+  std::vector<mediapipe::Packet> output_packets;
+  MP_ASSERT_OK(graph.ObserveOutputStream(
+      "out",
+      [&output_packets](const mediapipe::Packet& p) {
+        output_packets.push_back(p);
+        return absl::OkStatus();
+      },
+      /*observe_timestamp_bounds=*/true));
+  MP_ASSERT_OK(graph.StartRun({}));
+
+  // Send inputs.
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
+      "in", mediapipe::MakePacket<int>(42).At(Timestamp(0))));
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
+      "in", mediapipe::MakePacket<int>(43).At(Timestamp(1))));
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+
+  // Verify outputs.
+  ASSERT_EQ(output_packets.size(), 2);
+  for (const auto& packet : output_packets) {
+    EXPECT_TRUE(packet.IsEmpty());
+  }
+
+  // Cleanup.
+  MP_ASSERT_OK(graph.CloseAllInputStreams());
+  MP_ASSERT_OK(graph.WaitUntilDone());
+}
+
+inline constexpr absl::string_view kNoOpNodeUnsetOffsetName =
+    "NoOpNodeUnsetOffset";
+struct NoOpNodeUnsetOffset : Node<kNoOpNodeUnsetOffsetName> {
+  template <typename S>
+  struct Contract {
+    Input<S, int> input{"IN"};
+    Output<S, int> output{"OUT"};
+
+    static absl::Status UpdateContract(
+        CalculatorContract<NoOpNodeUnsetOffset>& cc) {
+      cc.SetTimestampOffset(TimestampDiff::Unset());
+      return absl::OkStatus();
+    }
+  };
+};
+
+class NoOpNodeUnsetOffsetImpl
+    : public Calculator<NoOpNodeUnsetOffset, NoOpNodeUnsetOffsetImpl> {
+ public:
+  absl::Status Process(CalculatorContext<NoOpNodeUnsetOffset>& cc) override {
+    // Not outputting anything should result in timestamp bound update by
+    // default.
+    return absl::OkStatus();
+  }
+};
+
+TEST(CalculatorTest, DefaultTimestampOffsetCanBeUnset) {
+  CalculatorGraphConfig config =
+      ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        input_stream: "in"
+        output_stream: "out"
+        node {
+          calculator: "NoOpNodeUnsetOffset"
+          input_stream: "IN:in"
+          output_stream: "OUT:out"
+        }
+      )pb");
+
+  CalculatorGraph graph;
+  MP_ASSERT_OK(graph.Initialize(std::move(config)));
+  std::vector<mediapipe::Packet> output_packets;
+  MP_ASSERT_OK(graph.ObserveOutputStream(
+      "out",
+      [&output_packets](const mediapipe::Packet& p) {
+        output_packets.push_back(p);
+        return absl::OkStatus();
+      },
+      /*observe_timestamp_bounds=*/true));
+  MP_ASSERT_OK(graph.StartRun({}));
+
+  // Send inputs.
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
+      "in", mediapipe::MakePacket<int>(42).At(Timestamp(0))));
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
+      "in", mediapipe::MakePacket<int>(43).At(Timestamp(1))));
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+
+  // Verify outputs.
+  EXPECT_TRUE(output_packets.empty());
+
+  // Cleanup.
   MP_ASSERT_OK(graph.CloseAllInputStreams());
   MP_ASSERT_OK(graph.WaitUntilDone());
 }

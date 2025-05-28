@@ -266,6 +266,17 @@ class Calculator : public CalculatorBase,
 
     CalculatorContract<NodeT> specialized_contract(*cc, store_status);
 
+    // Default to SetOffset(0);
+    cc->SetTimestampOffset(TimestampDiff(0));
+
+    // Optional contract update from node (interface) - e.g. unsetting 0
+    // timestamp offset.
+    if constexpr (kHasUpdateContract<CalculatorContract<NodeT>,
+                                     CalculatorContract<NodeT>>) {
+      store_status(
+          CalculatorContract<NodeT>::UpdateContract(specialized_contract));
+    }
+
     // Optional contract update from implementation - e.g. Web implementation
     // requesting WebGpuService, Android implementation requesting GpuService.
     if constexpr (kHasUpdateContract<ImplT, CalculatorContract<NodeT>>) {
