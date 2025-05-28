@@ -16,6 +16,13 @@ licenses(["notice"])
 
 package(default_visibility = ["//mediapipe/examples:__subpackages__"])
 
+# BUILD:
+# bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 \
+#   //mediapipe/examples/desktop/template_matching:template_matching_tflite
+# RUN:
+# bazel-bin/mediapipe/examples/desktop/template_matching/template_matching_tflite \
+#   --calculator_graph_config_file=<.../template_matching_desktop.pbtxt> \
+#   --input_side_packets=input_video_path=<input video path>,output_video_path=<output video path>
 cc_binary(
     name = "template_matching_tflite",
     deps = [

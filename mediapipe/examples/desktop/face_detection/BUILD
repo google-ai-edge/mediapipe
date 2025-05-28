@@ -25,6 +25,14 @@ cc_binary(
     ],
 )
 
+# BUILD:
+# bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 \
+#   //mediapipe/examples/desktop/face_detection:face_detection_cpu
+# RUN:
+# bazel-bin/mediapipe/examples/desktop/face_detection/face_detection_cpu \
+#   --calculator_graph_config_file=<.../face_detection_desktop_live.pbtxt> \
+#   --input_video_path=<input video path> \
+#   --output_video_path=<output video path>
 cc_binary(
     name = "face_detection_cpu",
     data = ["//mediapipe/modules/face_detection:face_detection_short_range.tflite"],

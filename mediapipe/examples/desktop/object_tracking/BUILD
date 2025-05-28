@@ -16,6 +16,14 @@ licenses(["notice"])
 
 package(default_visibility = ["//mediapipe/examples:__subpackages__"])
 
+# BUILD:
+# bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 \
+#   //mediapipe/examples/desktop/object_tracking:object_tracking_cpu
+# RUN:
+# bazel-bin/mediapipe/examples/desktop/object_tracking/object_tracking_cpu \
+#   --calculator_graph_config_file=<.../object_detection_tracking_desktop_live.pbtxt.pbtxt> \
+#   --input_video_path=<input video path> \
+#   --output_video_path=<output video path>
 cc_binary(
     name = "object_tracking_cpu",
     data = [
