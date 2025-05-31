@@ -53,6 +53,9 @@ class ConversionConfig(object):
     submodel_type: Name of submodel, e.g. GEMMA_2B.
     use_fake_weights: Whether to use fake weights. If set to True, the weights
       will be filled with zeros.
+    use_dynamic_ple: Whether any PLE embeddings should be loaded dynamically.
+      Default is true, which will cause embeddings to only be loaded into VRAM
+      on demand.
   """
 
   def __init__(
@@ -78,6 +81,7 @@ class ConversionConfig(object):
       image_adapter_file: Optional[str] = None,
       submodel_type: Optional[str] = None,
       use_fake_weights: bool = False,
+      use_dynamic_ple: bool = True,
   ):
     self.input_ckpt = input_ckpt
     self.ckpt_format = ckpt_format
@@ -100,6 +104,7 @@ class ConversionConfig(object):
     self.image_adapter_file = image_adapter_file
     self.submodel_type = submodel_type
     self.use_fake_weights = use_fake_weights
+    self.use_dynamic_ple = use_dynamic_ple
     if output_tflite_file:
       parent_dir = os.path.dirname(output_tflite_file)
       if not os.path.isdir(parent_dir):
@@ -232,6 +237,7 @@ def combined_weight_bins_to_tflite(
     image_encoder_file: Optional[str] = None,
     image_adapter_file: Optional[str] = None,
     submodel_type: Optional[str] = None,
+    use_dynamic_ple: Optional[bool] = None,
 ):
   """Combines weight files to tflite file."""
   if backend == 'cpu':
@@ -258,6 +264,7 @@ def combined_weight_bins_to_tflite(
         '' if image_encoder_file is None else image_encoder_file,
         '' if image_adapter_file is None else image_adapter_file,
         '' if submodel_type is None else submodel_type,
+        True if use_dynamic_ple is None else use_dynamic_ple,
     )
   else:
     raise ValueError('Unsupported backend: %s' % backend)
@@ -379,4 +386,5 @@ def convert_checkpoint(config: ConversionConfig) -> None:
       image_encoder_file=config.image_encoder_file,
       image_adapter_file=config.image_adapter_file,
       submodel_type=config.submodel_type,
+      use_dynamic_ple=config.use_dynamic_ple,
   )
