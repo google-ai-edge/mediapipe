@@ -26,6 +26,7 @@
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/api3/internal/contract_fields.h"
 #include "mediapipe/framework/api3/internal/dependent_false.h"
+#include "mediapipe/framework/api3/internal/graph_builder.h"
 #include "mediapipe/framework/api3/internal/specializers.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_contract.h"
@@ -111,14 +112,20 @@ void SetCalculatorContract(V& v, CC& contract) {
 
 template <typename V, typename G>
 void SetGraph(V& v, G& graph) {
-  ABSL_CHECK(v.graph_ == nullptr);
-  v.graph_ = &graph;
+  ABSL_CHECK(v.graph_builder_ == nullptr);
+  v.graph_builder_ = &graph;
 }
 
 template <typename V, typename N>
 void SetNode(V& v, N& node) {
-  ABSL_CHECK(v.node_ == nullptr);
-  v.node_ = &node;
+  ABSL_CHECK(v.node_builder_ == nullptr);
+  v.node_builder_ = &node;
+}
+
+template <typename V, typename G>
+void SetPacketGenerator(V& v, G& generator) {
+  ABSL_CHECK(v.generator_builder_ == nullptr);
+  v.generator_builder_ = &generator;
 }
 
 template <typename V, typename CC>
@@ -198,6 +205,51 @@ class Port<ContextSpecializer, FieldT> : public TagAndIndex {
   mediapipe::CalculatorContext* context_ = nullptr;
 };
 
+template <typename FieldT>
+class Port<GraphSpecializer, FieldT> : public TagAndIndex {
+ public:
+  using Field = FieldT;
+  using Specializer = GraphSpecializer;
+  using TagAndIndex::TagAndIndex;
+
+ protected:
+  template <typename V, typename G>
+  friend void SetGraph(V& v, G& graph);
+
+  // Not owned, set by the framework.
+  builder::GraphBuilder* graph_builder_ = nullptr;
+};
+
+template <typename FieldT>
+class Port<GraphNodeSpecializer, FieldT> : public TagAndIndex {
+ public:
+  using Field = FieldT;
+  using Specializer = GraphNodeSpecializer;
+  using TagAndIndex::TagAndIndex;
+
+ protected:
+  template <typename V, typename N>
+  friend void SetNode(V& v, N& node);
+
+  // Not owned, set by the framework.
+  builder::NodeBuilder* node_builder_ = nullptr;
+};
+
+template <typename FieldT>
+class Port<GraphGeneratorSpecializer, FieldT> : public TagAndIndex {
+ public:
+  using Field = FieldT;
+  using Specializer = GraphGeneratorSpecializer;
+  using TagAndIndex::TagAndIndex;
+
+ protected:
+  template <typename V, typename N>
+  friend void SetPacketGenerator(V& v, N& node);
+
+  // Not owned, set by the framework.
+  builder::PacketGeneratorBuilder* generator_builder_ = nullptr;
+};
+
 template <typename SpecializerT, typename FieldT>
 class RepeatedBase;
 
@@ -262,6 +314,63 @@ class RepeatedBase<ContextSpecializer, FieldT> : public TagAndIndex {
 
   // Not owned, set by the framework.
   mediapipe::CalculatorContext* context_ = nullptr;
+};
+
+template <typename FieldT>
+class RepeatedBase<GraphSpecializer, FieldT> : public TagAndIndex {
+ public:
+  using Field = FieldT;
+  using Specializer = GraphSpecializer;
+  using TagAndIndex::TagAndIndex;
+
+ protected:
+  void InitPort(Port<GraphSpecializer, FieldT>& p) const {
+    SetGraph(p, *graph_builder_);
+  }
+
+  template <typename V, typename G>
+  friend void SetGraph(V& v, G& graph);
+
+  // Not owned, set by the framework.
+  builder::GraphBuilder* graph_builder_ = nullptr;
+};
+
+template <typename FieldT>
+class RepeatedBase<GraphNodeSpecializer, FieldT> : public TagAndIndex {
+ public:
+  using Field = FieldT;
+  using Specializer = GraphNodeSpecializer;
+  using TagAndIndex::TagAndIndex;
+
+ protected:
+  void InitPort(Port<GraphNodeSpecializer, FieldT>& p) const {
+    SetNode(p, *node_builder_);
+  }
+
+  template <typename V, typename N>
+  friend void SetNode(V& v, N& node);
+
+  // Not owned, set by the framework.
+  builder::NodeBuilder* node_builder_ = nullptr;
+};
+
+template <typename FieldT>
+class RepeatedBase<GraphGeneratorSpecializer, FieldT> : public TagAndIndex {
+ public:
+  using Field = FieldT;
+  using Specializer = GraphGeneratorSpecializer;
+  using TagAndIndex::TagAndIndex;
+
+ protected:
+  void InitPort(Port<GraphGeneratorSpecializer, FieldT>& p) const {
+    SetPacketGenerator(p, *generator_builder_);
+  }
+
+  template <typename V, typename N>
+  friend void SetPacketGenerator(V& v, N& node);
+
+  // Not owned, set by the framework.
+  builder::PacketGeneratorBuilder* generator_builder_ = nullptr;
 };
 
 // Adds `port` to the generic `contract`.

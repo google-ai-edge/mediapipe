@@ -111,6 +111,7 @@ cc_library(
     deps = [
         "//mediapipe/framework/api3/internal:contract_fields",
         "//mediapipe/framework/api3/internal:port_base",
+        "//mediapipe/framework/api3/internal:specializers",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/log:absl_log",
@@ -137,6 +138,50 @@ cc_test(
         "//mediapipe/framework/api3/testing:bar_cc_proto",
         "//mediapipe/framework/api3/testing:foo_cc_proto",
         "//mediapipe/framework/port:gtest_main",
+        "@com_google_absl//absl/strings:string_view",
+    ],
+)
+
+cc_library(
+    name = "graph",
+    hdrs = ["graph.h"],
+    deps = [
+        ":contract",
+        ":side_packet",
+        ":stream",
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework/api3/internal:contract_fields",
+        "//mediapipe/framework/api3/internal:contract_to_tuple",
+        "//mediapipe/framework/api3/internal:contract_validator",
+        "//mediapipe/framework/api3/internal:graph_builder",
+        "//mediapipe/framework/api3/internal:port_base",
+        "//mediapipe/framework/api3/internal:specializers",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings:string_view",
+    ],
+)
+
+cc_test(
+    name = "graph_test",
+    srcs = [
+        "graph_test.cc",
+    ],
+    deps = [
+        ":contract",
+        ":graph",
+        ":node",
+        ":side_packet",
+        ":stream",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api3/testing:generator_cc_proto",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/stream_handler:fixed_size_input_stream_handler_cc_proto",
+        "//mediapipe/framework/testdata:night_light_calculator_cc_proto",
+        "//mediapipe/framework/testdata:sky_light_calculator_cc_proto",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings:string_view",
     ],
 )
@@ -189,5 +234,23 @@ cc_library(
         ":contract",
         ":node",
         "@com_google_absl//absl/strings:string_view",
+    ],
+)
+
+cc_library(
+    name = "stream",
+    hdrs = ["stream.h"],
+    deps = [
+        ":node",
+        "//mediapipe/framework/api3/internal:graph_builder",
+    ],
+)
+
+cc_library(
+    name = "side_packet",
+    hdrs = ["side_packet.h"],
+    deps = [
+        ":node",
+        "//mediapipe/framework/api3/internal:graph_builder",
     ],
 )

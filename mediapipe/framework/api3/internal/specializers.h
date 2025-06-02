@@ -58,6 +58,17 @@ struct ContractSpecializer {};
 // Specializer for contract fields used for `CalculatorContext`.
 struct ContextSpecializer {};
 
+// Specializer for contract fields used for `Graph`.
+struct GraphSpecializer {};
+
+// Specializer for contract fields used for `Graph` packet generators returned
+// by `Graph::AddLegacyPacketGenerator<...>()`
+struct GraphGeneratorSpecializer {};
+
+// Specializer for contract fields used for `Graph` nodes returned by
+// `Graph::AddNode<...>()`
+struct GraphNodeSpecializer {};
+
 }  // namespace mediapipe::api3
 
 #endif  // MEDIAPIPE_FRAMEWORK_API3_INTERNAL_SPECIALIZERS_H_

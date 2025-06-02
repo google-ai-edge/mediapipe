@@ -25,6 +25,7 @@
 #include "absl/log/absl_log.h"
 #include "mediapipe/framework/api3/internal/contract_fields.h"
 #include "mediapipe/framework/api3/internal/port_base.h"
+#include "mediapipe/framework/api3/internal/specializers.h"
 
 namespace mediapipe::api3 {
 
@@ -194,7 +195,7 @@ class SideOutput;
 // ```
 //   Repeated<Input<S, int>> repeated_input{"REPEATED_IN"};
 // ```
-template <typename P>
+template <typename P, typename = void>
 class Repeated;
 
 // TODO: rename to OptionalConnection ? (cc.image.IsConnected())
@@ -255,7 +256,7 @@ struct GenericContract {};
 
 // Repeated / Optional template implementation
 
-template <typename P>
+template <typename P, typename>
 class Repeated : public internal_port::RepeatedBase<typename P::Specializer,
                                                     typename P::Field> {
  public:
@@ -343,11 +344,34 @@ class Optional : public P {
                 "`Optional` doesn't accept `Repeated` ports as `Repeated` is "
                 "already optional.");
 
+  static_assert(
+      !std::is_same_v<typename P::Specializer, GraphNodeSpecializer> &&
+          !std::is_same_v<typename P::Specializer, GraphSpecializer>,
+      "Incorrect `Optional` specialization.");
+
   using Field = OptionalField;
   using Contained = P;
   using P::P;
 
   using P::IsConnected;
+};
+
+// `Optional` connection for `Graph` or `Graph` node doesn't have `IsConnected`
+// and only indicates that it's optional to connect.
+template <typename P>
+class Optional<
+    P, std::enable_if_t<
+           std::is_same_v<typename P::Specializer, GraphNodeSpecializer> ||
+           std::is_same_v<typename P::Specializer, GraphSpecializer>>>
+    : public P {
+ public:
+  static_assert(!std::is_same_v<typename P::Field, RepeatedField>,
+                "`Optional` doesn't accept `Repeated` ports as `Repeated` is "
+                "already optional.");
+
+  using Field = OptionalField;
+  using Contained = P;
+  using P::P;
 };
 
 }  // namespace mediapipe::api3

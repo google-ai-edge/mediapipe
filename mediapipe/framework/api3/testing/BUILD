@@ -17,6 +17,15 @@ mediapipe_proto_library(
 )
 
 mediapipe_proto_library(
+    name = "generator_proto",
+    srcs = ["generator.proto"],
+    visibility = ["//mediapipe:__subpackages__"],
+    deps = [
+        "//mediapipe/framework:packet_generator_proto",
+    ],
+)
+
+mediapipe_proto_library(
     name = "multiplier_proto",
     testonly = True,
     srcs = ["multiplier.proto"],
