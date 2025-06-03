@@ -671,16 +671,16 @@ class PackMediaSequenceCalculator : public CalculatorBase {
         std::vector<int> predicted_label_ids;
         for (auto& detection :
              cc->Inputs().Tag(tag).Get<std::vector<Detection>>()) {
-          if (detection.location_data().format() ==
-                  LocationData::BOUNDING_BOX ||
-              detection.location_data().format() ==
-                  LocationData::RELATIVE_BOUNDING_BOX) {
+          auto location_format = detection.location_data().format();
+          if (location_format == LocationData::BOUNDING_BOX ||
+              location_format == LocationData::RELATIVE_BOUNDING_BOX) {
             if (mpms::HasImageHeight(*sequence_) &&
                 mpms::HasImageWidth(*sequence_)) {
               image_height = mpms::GetImageHeight(*sequence_);
               image_width = mpms::GetImageWidth(*sequence_);
             }
-            if (image_height == -1 || image_width == -1) {
+            if (location_format != LocationData::RELATIVE_BOUNDING_BOX &&
+                (image_height == -1 || image_width == -1)) {
               return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
                      << "Images must be provided with bounding boxes or the "
                         "image "
