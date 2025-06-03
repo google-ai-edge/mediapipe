@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *
  * @hide
  */
-public final class LlmTaskRunner implements AutoCloseable {
+final class LlmTaskRunner implements AutoCloseable {
   private final long engineHandle;
   private final AtomicBoolean isLocked = new AtomicBoolean(false);
 
