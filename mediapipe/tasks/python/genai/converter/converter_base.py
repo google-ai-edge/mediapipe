@@ -38,6 +38,8 @@ class QuantizationAction:
       currently only supports either 8 or 4 bits.
     pack_dim: An integer specifying which dimension to pack the quantized bits.
       This is only applicable when the quantize_bits == 4.
+    is_quantized: A boolean indicating whether the tensor is already quantized
+      in the checkpoint. Default to False.
   """
 
   def __init__(
@@ -48,6 +50,7 @@ class QuantizationAction:
       quantize_axis: Optional[List[int]] = None,
       quantize_bits: Optional[int] = None,
       pack_dim: Optional[int] = 0,
+      is_quantized: bool = False,
   ):
     """Initializes the model attributes."""
     self.tensor_name = tensor_name
@@ -56,6 +59,7 @@ class QuantizationAction:
     self.quantize_axis = quantize_axis
     self.quantize_bits = quantize_bits
     self.pack_dim = pack_dim
+    self.is_quantized = is_quantized
 
   def __str__(self) -> str:
     output_string = "QuantizationAction(\n"
@@ -64,6 +68,7 @@ class QuantizationAction:
     output_string += f"  quantize_axis: {self.quantize_axis}\n"
     output_string += f"  quantize_bits: {self.quantize_bits}\n"
     output_string += f"  pack_dim: {self.pack_dim}\n"
+    output_string += f"  is_quantized: {self.is_quantized}\n"
     if self.tensor_value is not None:
       output_string += f"  tensor_value: {self.tensor_value.shape}\n"
     output_string += ")\n"
