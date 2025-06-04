@@ -169,7 +169,8 @@ export class LlmInference extends TaskRunner {
     | ProgressListener
     | MultiResponseProgressListener;
   private streamingReader?: StreamingReader;
-  private isConvertedLlmModel = false;
+  private useLlmEngine = false;
+  private isConvertedModel = false;
 
   // The WebGPU device used for LLM inference.
   private wgpuDevice?: GPUDevice;
@@ -439,11 +440,19 @@ export class LlmInference extends TaskRunner {
       const modelFormat = await getModelFormatAndClose(
         modelStreamForFormatTest,
       );
-      if (modelFormat === ModelFormat.CONVERTED) {
-        this.isConvertedLlmModel = true;
+      this.isConvertedModel = modelFormat === ModelFormat.CONVERTED;
+
+      // LLM Engine must be used for converted models and multi-modality.
+      const maxNumImages =
+        'maxNumImages' in options && options.maxNumImages
+          ? (options.maxNumImages as number)
+          : 0;
+
+      if (this.isConvertedModel || maxNumImages > 0) {
+        this.useLlmEngine = true;
         modelStream = modelStreamForLoading;
       } else {
-        this.isConvertedLlmModel = false;
+        this.useLlmEngine = false;
         this.streamingReader = StreamingReader.loadFromReader(
           modelStreamForLoading,
           onFinishedLoadingData,
@@ -491,7 +500,7 @@ export class LlmInference extends TaskRunner {
       if (numResponsesToSet < 1) {
         throw new Error(`'numResponses' must be at least 1.`);
       }
-      if (this.isConvertedLlmModel && numResponsesToSet > 1) {
+      if (this.useLlmEngine && numResponsesToSet > 1) {
         throw new Error(
           `'numResponses > 1' is not supported for converted LLM models yet.`,
         );
@@ -514,17 +523,28 @@ export class LlmInference extends TaskRunner {
       this.options.setForceF32(options.forceF32);
     }
 
-    // If the model is a converted LLM, use LlmInferenceSupportedGraphRunner's
-    // members for the functionality support.
-    if (this.isConvertedLlmModel) {
+    // If the model is a converted LLM or we're using multimodality, use
+    // LlmInferenceSupportedGraphRunner's members for the functionality support.
+    if (this.useLlmEngine) {
       (
         this.graphRunner as unknown as LlmGraphRunner
       ).deleteLlmInferenceEngine();
-      return (this.graphRunner as unknown as LlmGraphRunner)
-        .createLlmInferenceEngine(modelStream, this.options)
-        .then(() => {
-          this.checkWgpuErrors();
-        });
+      if (this.isConvertedModel) {
+        // Converted models can't use streaming loading or advanced features.
+        return (this.graphRunner as unknown as LlmGraphRunner)
+          .createLlmInferenceEngineConverted(modelStream, this.options)
+          .then(() => {
+            this.checkWgpuErrors();
+          });
+      } else {
+        // We use streaming loading by default, and enable all features from
+        // options.
+        return (this.graphRunner as unknown as LlmGraphRunner)
+          .createLlmInferenceEngine(modelStream, this.options)
+          .then(() => {
+            this.checkWgpuErrors();
+          });
+      }
     }
 
     // If the model is a handwritten LLM, construct the MediaPipe graph to
@@ -725,7 +745,7 @@ export class LlmInference extends TaskRunner {
       typeof loraModelOrProgressListener === 'function'
         ? loraModelOrProgressListener
         : progressListener;
-    if (this.isConvertedLlmModel) {
+    if (this.useLlmEngine) {
       // TODO: b/398949555 - Support multi-response generation for converted LLM
       // models (.task format).
       if (
@@ -815,7 +835,7 @@ export class LlmInference extends TaskRunner {
    *         May return undefined if an error occurred.
    */
   sizeInTokens(text: string): number | undefined {
-    if (this.isConvertedLlmModel) {
+    if (this.useLlmEngine) {
       return (this.graphRunner as unknown as LlmGraphRunner).sizeInTokens(text);
     }
     if (this.isProcessing) {
@@ -847,7 +867,7 @@ export class LlmInference extends TaskRunner {
     modelAsset: string | Uint8Array | Blob,
   ): Promise<LoraModel> {
     // TODO: b/398858769 - Support LoRA for converted LLM models (.task format).
-    if (this.isConvertedLlmModel) {
+    if (this.useLlmEngine) {
       throw new Error(
         'LoRA is not supported for converted LLM models (.task format) yet. ' +
           'Please use the old foramat (.bin) to use LoRA.',
@@ -1272,7 +1292,7 @@ export class LlmInference extends TaskRunner {
   }
 
   override close() {
-    if (this.isConvertedLlmModel) {
+    if (this.useLlmEngine) {
       (
         this.graphRunner as unknown as LlmGraphRunner
       ).deleteLlmInferenceEngine();

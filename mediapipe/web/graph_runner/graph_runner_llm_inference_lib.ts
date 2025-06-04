@@ -1,7 +1,16 @@
 import {streamToUint8Array} from '../../tasks/web/genai/llm_inference/model_loading_utils';
 import {LlmInferenceGraphOptions} from '../../tasks/web/genai/llm_inference/proto/llm_inference_graph_options_pb';
 import {GraphRunner} from '../../web/graph_runner/graph_runner';
+import {
+  ReadMode,
+  StreamingReader,
+} from '../../web/graph_runner/graph_runner_streaming_reader';
 import {SamplerParameters} from '../../tasks/cc/genai/inference/proto/sampler_params_pb';
+
+const DEFAULT_MAX_TOKENS = 512;
+const DEFAULT_TOP_K = 40;
+const DEFAULT_FORCE_F32 = false;
+const DEFAULT_MAX_NUM_IMAGES = 0;
 
 /**
  * We extend from a GraphRunner constructor. This ensures our mixin has
@@ -45,6 +54,13 @@ export declare interface WasmLlmInferenceModule {
     outParams: unknown,
     options: unknown,
   ) => Promise<void>;
+  createLlmInferenceEngine: (
+    maxTokens: number,
+    topK: number,
+    forceF32: boolean,
+    maxNumImages: number,
+    readBufferCallback: (offset: number, size: number, mode: number) => void,
+  ) => Promise<void>;
 }
 
 /**
@@ -79,13 +95,60 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
     }
 
     /**
-     * Create LLM Inference Engine for text generation.
+     * Create LLM Inference Engine for text generation using streaming loading.
+     * This version cannot support converted models, but can support large ones,
+     * via streaming loading, as well as advanced features, like multimodality.
+     *
+     * @param modelStream The stream object for the model to be loaded.
+     * @param llmInferenceGraphOptions The settings for the LLM Inference
+     *     Engine.
+     */
+    async createLlmInferenceEngine(
+      modelStream: ReadableStreamDefaultReader,
+      llmInferenceGraphOptions: LlmInferenceGraphOptions,
+    ) {
+      this._startLlmEngineProcessing();
+      try {
+        const streamingReader = StreamingReader.loadFromReader(
+          modelStream,
+          () => {}, // onFinished callback, if we need it
+        );
+        const readBufferCallback = (
+          offset: number,
+          size: number,
+          mode: number,
+        ) => {
+          return streamingReader.addToHeap(
+            this.wasmModule,
+            offset,
+            size,
+            mode as ReadMode,
+          );
+        };
+        await (
+          this.wasmModule as unknown as WasmLlmInferenceModule
+        ).createLlmInferenceEngine(
+          llmInferenceGraphOptions.getMaxTokens() ?? DEFAULT_MAX_TOKENS,
+          llmInferenceGraphOptions.getSamplerParams()?.getK() ?? DEFAULT_TOP_K,
+          llmInferenceGraphOptions.getForceF32() ?? DEFAULT_FORCE_F32,
+          llmInferenceGraphOptions.getMaxNumImages() ?? DEFAULT_MAX_NUM_IMAGES,
+          readBufferCallback,
+        );
+      } finally {
+        this._endLlmEngineProcessing();
+      }
+    }
+
+    /**
+     * Create LLM Inference Engine for text generation. This version can be used
+     * with AI Edge converted models, but as such it does not support streaming
+     * loading, nor some of the advanced features like multimodality.
      *
      * @param modelStream The stream object for the model to be loaded.
      * @param llmInferenceGraphOptions The settings for the LLM Inference
      *    Engine.
      */
-    async createLlmInferenceEngine(
+    async createLlmInferenceEngineConverted(
       modelStream: ReadableStreamDefaultReader,
       llmInferenceGraphOptions: LlmInferenceGraphOptions,
     ) {
@@ -94,13 +157,14 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
         await this.uploadToWasmFileSystem(modelStream);
         // TODO: b/398858545 - Pass llmInferenceGraphOptions to the C function.
         await (this.wasmModule as unknown as WasmLlmInferenceModule).ccall(
-          'CreateLlmInferenceEngine',
+          'CreateLlmInferenceEngineConverted',
           'void',
           ['number', 'number', 'boolean'],
           [
-            llmInferenceGraphOptions.getMaxTokens() ?? 512,
-            llmInferenceGraphOptions.getSamplerParams()?.getK() ?? 40,
-            llmInferenceGraphOptions.getForceF32() ?? false,
+            llmInferenceGraphOptions.getMaxTokens() ?? DEFAULT_MAX_TOKENS,
+            llmInferenceGraphOptions.getSamplerParams()?.getK() ??
+              DEFAULT_TOP_K,
+            llmInferenceGraphOptions.getForceF32() ?? DEFAULT_FORCE_F32,
           ],
           {async: true},
         );
@@ -143,6 +207,8 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
       userProgressListener?: ProgressListener,
     ): Promise<string> {
       this._startLlmEngineProcessing();
+      // TODO: Allow for vision modality usage.
+      const useVision = false;
       try {
         const result: string[] = [];
         // This additional wrapper on top of userProgressListener is to collect
@@ -174,8 +240,8 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
           return (this.wasmModule as unknown as WasmLlmInferenceModule).ccall(
             'GenerateResponse',
             'void',
-            ['number', 'number', 'number'],
-            [textPtr, samplerParamsPtr, samplerParamsBin.length],
+            ['number', 'number', 'number', 'boolean'],
+            [textPtr, samplerParamsPtr, samplerParamsBin.length, useVision],
             {async: true},
           );
         });
