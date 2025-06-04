@@ -20,7 +20,7 @@ option java_package = "com.google.odml.infra.proto";
 option java_outer_classname = "TransformerParametersProto";
 
 // The parameters of transformer (https://arxiv.org/pdf/1706.03762.pdf)
-// Next ID: 41
+// Next ID: 42
 message TransformerParameters {
   // Batch size of tensors.
   int32 batch_size = 1;
@@ -272,4 +272,9 @@ message TransformerParameters {
   // where cdf is the cumulative distribution function of the Gaussian
   // distribution.
   optional float activation_sparsity_stddev_multiplier = 38;
+
+  // Whether to apply SRQ. If true, depending on the model setup, static
+  // range quantization will be applied to the corresponding layers, e.g.,
+  // attn_vec_einsum, kv_einsum, q_einsum, mlp/gating_einsum and mlp/linear.
+  optional bool apply_srq = 41;
 }
