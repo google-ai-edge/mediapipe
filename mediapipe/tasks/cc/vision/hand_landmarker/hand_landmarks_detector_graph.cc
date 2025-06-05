@@ -345,9 +345,7 @@ class SingleHandLandmarksDetectorGraph : public core::ModelTaskGraph {
     landmark_letterbox_removal.Out("LANDMARKS") >>
         landmark_projection.In("NORM_LANDMARKS");
     hand_rect >> landmark_projection.In("NORM_RECT");
-    auto projected_landmarks = AllowIf(
-        landmark_projection[Output<NormalizedLandmarkList>("NORM_LANDMARKS")],
-        hand_presence, graph);
+    auto projected_landmarks = AllowIf(landmark_projection[Output<NormalizedLandmarkList>("NORM_LANDMARKS")], hand_presence, graph);
 
     // Projects the world landmarks from the cropped hand image to the
     // corresponding locations on the full image before cropping (input to the
@@ -357,9 +355,7 @@ class SingleHandLandmarksDetectorGraph : public core::ModelTaskGraph {
     tensors_to_world_landmarks.Out("LANDMARKS") >>
         world_landmark_projection.In("LANDMARKS");
     hand_rect >> world_landmark_projection.In("NORM_RECT");
-    auto projected_world_landmarks =
-        AllowIf(world_landmark_projection[Output<LandmarkList>("LANDMARKS")],
-                hand_presence, graph);
+    auto projected_world_landmarks = AllowIf(world_landmark_projection[Output<LandmarkList>("LANDMARKS")], hand_presence, graph);
 
     // Converts the hand landmarks into a rectangle (normalized by image size)
     // that encloses the hand.
@@ -382,9 +378,19 @@ class SingleHandLandmarksDetectorGraph : public core::ModelTaskGraph {
         AllowIf(hand_rect_transformation[Output<NormalizedRect>("")],
                 hand_presence, graph);
 
+    auto& landmark_merger = graph.AddNode("ConfidenceNormalizedLandmarkMergerCalculator");
+    projected_landmarks >> landmark_merger.In("LANDMARKS");
+    hand_presence_score >> landmark_merger.In("CONFIDENCE");
+    auto merged_landmarks = landmark_merger[Output<NormalizedLandmarkList>("LANDMARKS")];
+    
+    auto& world_landmark_merger = graph.AddNode("ConfidenceLandmarkMergerCalculator");
+    projected_world_landmarks >> world_landmark_merger.In("LANDMARKS");
+    hand_presence_score >> world_landmark_merger.In("CONFIDENCE");
+    auto merged_world_landmarks = world_landmark_merger[Output<LandmarkList>("LANDMARKS")];
+
     return {{
-        /* hand_landmarks= */ projected_landmarks,
-        /* world_hand_landmarks= */ projected_world_landmarks,
+        /* hand_landmarks= */ merged_landmarks,
+        /* world_hand_landmarks= */ merged_world_landmarks,
         /* hand_rect_next_frame= */ hand_rect_next_frame,
         /* hand_presence= */ hand_presence,
         /* hand_presence_score= */ hand_presence_score,
@@ -571,3 +577,4 @@ REGISTER_MEDIAPIPE_GRAPH(
 }  // namespace vision
 }  // namespace tasks
 }  // namespace mediapipe
+

@@ -48,7 +48,7 @@ namespace vision {
 namespace hand_landmarker {
 namespace {
 
-using ::file::Defaults;
+using mediapipe::file::Defaults;
 using ::file::GetTextProto;
 using ::mediapipe::NormalizedRect;
 using ::mediapipe::api2::Input;
