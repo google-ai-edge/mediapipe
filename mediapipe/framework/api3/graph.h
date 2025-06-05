@@ -207,6 +207,14 @@ class GraphLegacyPacketGenerator
 // See documentation in forward declaration above.
 class GenericGraph {
  public:
+  GenericGraph() = default;
+  ~GenericGraph() = default;
+  GenericGraph(GenericGraph&&) = default;
+  GenericGraph& operator=(GenericGraph&&) = default;
+  // Explicitly delete copies to improve error messages.
+  GenericGraph(const GenericGraph&) = delete;
+  GenericGraph& operator=(const GenericGraph&) = delete;
+
   // Adds a node of a specific type (NodeT as described per node.h) to the
   // graph.
   //

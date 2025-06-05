@@ -53,7 +53,9 @@ class /*ABSL_ATTRIBUTE_VIEW*/ Stream {
 
   const std::string& Name() const { return source_->name; }
 
- private:
+ protected:
+  builder::Source* GetBase() const { return source_; }
+
   // Never nullptr.
   builder::Source* source_;
 

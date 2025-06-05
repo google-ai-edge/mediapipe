@@ -56,7 +56,9 @@ class /*ABSL_ATTRIBUTE_VIEW*/ SidePacket {
 
   const std::string& Name() const { return side_source_->name; }
 
- private:
+ protected:
+  builder::SideSource* GetBase() const { return side_source_; }
+
   // Never nullptr.
   builder::SideSource* side_source_;
 

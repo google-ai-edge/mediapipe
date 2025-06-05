@@ -12,7 +12,10 @@
 #include "google/protobuf/message_lite.h"
 #include "mediapipe/framework/api2/packet.h"
 #include "mediapipe/framework/api2/port.h"
+#include "mediapipe/framework/api3/graph.h"
 #include "mediapipe/framework/api3/internal/graph_builder.h"
+#include "mediapipe/framework/api3/side_packet.h"
+#include "mediapipe/framework/api3/stream.h"
 #include "mediapipe/framework/calculator_base.h"
 #include "mediapipe/framework/calculator_contract.h"
 #include "mediapipe/framework/deps/registration.h"
@@ -160,7 +163,12 @@ class DestinationImpl</*IsSide=*/true, T> {
 };
 
 template <bool IsSide, typename T>
-class SourceImpl {
+using SourceImplBase =
+    std::conditional_t<IsSide, mediapipe::api3::SidePacket<T>,
+                       mediapipe::api3::Stream<T>>;
+
+template <bool IsSide, typename T>
+class SourceImpl : public SourceImplBase<IsSide, T> {
  public:
   using Base = std::conditional_t<IsSide, api3::builder::SideSource,
                                   api3::builder::Source>;
@@ -182,7 +190,9 @@ class SourceImpl {
 
   explicit SourceImpl(api3::builder::Multi<Base> src)
       : SourceImpl(&src.At(0)) {}
-  explicit SourceImpl(Base* base) : base_(base) {}
+  explicit SourceImpl(Base* base) : SourceImplBase<IsSide, T>(*base) {}
+  explicit SourceImpl(SourceImplBase<IsSide, T> source_base)
+      : SourceImplBase<IsSide, T>(source_base) {}
 
   // Connects MediaPipe stream or side packet to a destination:
   // - node input (input stream) / side input (input side packet)
@@ -194,7 +204,7 @@ class SourceImpl {
   template <typename U,
             typename std::enable_if<AllowConnection<U>{}, int>::type = 0>
   Src& ConnectTo(const Dst<U>& dest) {
-    base_->ConnectTo(dest.base_);
+    SourceImplBase<IsSide, T>::GetBase()->ConnectTo(dest.base_);
     return *this;
   }
 
@@ -214,7 +224,7 @@ class SourceImpl {
 
   template <typename U>
   bool operator==(const SourceImpl<IsSide, U>& other) {
-    return base_ == other.base_;
+    return SourceImplBase<IsSide, T>::GetBase() == other.GetBase();
   }
 
   template <typename U>
@@ -222,35 +232,34 @@ class SourceImpl {
     return !(*this == other);
   }
 
-  const std::string& Name() const { return base_->name; }
+  const std::string& Name() const {
+    return SourceImplBase<IsSide, T>::GetBase()->name;
+  }
 
   Src& SetName(const char* name) {
-    base_->name = std::string(name);
+    SourceImplBase<IsSide, T>::GetBase()->name = std::string(name);
     return *this;
   }
 
   Src& SetName(absl::string_view name) {
-    base_->name = std::string(name);
+    SourceImplBase<IsSide, T>::GetBase()->name = std::string(name);
     return *this;
   }
 
   Src& SetName(std::string name) {
-    base_->name = std::move(name);
+    SourceImplBase<IsSide, T>::GetBase()->name = std::move(name);
     return *this;
   }
 
   template <typename U,
             std::enable_if_t<internal_builder::AllowCast<T, U>{}, int> = 0>
   SourceImpl<IsSide, U> Cast() {
-    return SourceImpl<IsSide, U>(base_);
+    return SourceImpl<IsSide, U>(SourceImplBase<IsSide, T>::GetBase());
   }
 
  private:
   template <bool, typename U>
   friend class SourceImpl;
-
-  // Never null.
-  Base* base_;
 };
 
 // A source and a destination correspond to an output/input stream on a node,
@@ -564,7 +573,7 @@ class PacketGenerator {
   friend class Graph;
 };
 
-class Graph {
+class Graph : public mediapipe::api3::GenericGraph {
  public:
   Graph() = default;
   ~Graph() = default;
@@ -574,16 +583,19 @@ class Graph {
   Graph(const Graph&) = delete;
   Graph& operator=(const Graph&) = delete;
 
-  void SetType(std::string type) { graph_builder_.SetType(std::move(type)); }
+  void SetType(std::string type) {
+    mediapipe::api3::GenericGraph::graph_.SetType(std::move(type));
+  }
 
   // Creates a node of a specific type. Should be used for calculators whose
   // contract is available.
   template <class Calc>
   Node<Calc>& AddNode() {
-    auto node = std::make_unique<Node<Calc>>(graph_builder_.AddNode(
-        FunctionRegistry<NodeBase>::GetLookupName(Calc::kCalculatorName)));
+    auto node = std::make_unique<Node<Calc>>(
+        mediapipe::api3::GenericGraph::graph_.AddNode(
+            FunctionRegistry<NodeBase>::GetLookupName(Calc::kCalculatorName)));
     auto node_p = node.get();
-    nodes_.emplace_back(std::move(node));
+    api2_nodes_.emplace_back(std::move(node));
     return *node_p;
   }
 
@@ -593,9 +605,10 @@ class Graph {
   template <class Calc>
   Node<Calc>& AddNode(absl::string_view type) {
     auto node = std::make_unique<Node<Calc>>(
-        graph_builder_.AddNode(std::string(type.data(), type.size())));
+        mediapipe::api3::GenericGraph::graph_.AddNode(
+            std::string(type.data(), type.size())));
     auto node_p = node.get();
-    nodes_.emplace_back(std::move(node));
+    api2_nodes_.emplace_back(std::move(node));
     return *node_p;
   }
 
@@ -604,41 +617,45 @@ class Graph {
   // `type` is a calculator type-name with dot-separated namespaces.
   GenericNode& AddNode(absl::string_view type) {
     auto node = std::make_unique<GenericNode>(
-        graph_builder_.AddNode(std::string(type.data(), type.size())));
+        mediapipe::api3::GenericGraph::graph_.AddNode(
+            std::string(type.data(), type.size())));
     auto node_p = node.get();
-    nodes_.emplace_back(std::move(node));
+    api2_nodes_.emplace_back(std::move(node));
     return *node_p;
   }
 
   // For legacy PacketGenerators.
   PacketGenerator& AddPacketGenerator(absl::string_view type) {
-    auto node =
-        std::make_unique<PacketGenerator>(graph_builder_.AddPacketGenerator(
+    auto node = std::make_unique<PacketGenerator>(
+        mediapipe::api3::GenericGraph::graph_.AddPacketGenerator(
             std::string(type.data(), type.size())));
     auto node_p = node.get();
-    packet_gens_.emplace_back(std::move(node));
+    api2_packet_gens_.emplace_back(std::move(node));
     return *node_p;
   }
 
   Executor& AddExecutor(absl::string_view type) {
-    return graph_builder_.AddExecutor(type);
+    return mediapipe::api3::GenericGraph::graph_.AddExecutor(type);
   }
 
   // Graph ports, non-typed.
   MultiSource<> In(absl::string_view graph_input) {
-    return MultiSource<>(graph_builder_.In(graph_input));
+    return MultiSource<>(mediapipe::api3::GenericGraph::graph_.In(graph_input));
   }
 
   MultiDestination<> Out(absl::string_view graph_output) {
-    return MultiDestination<>(graph_builder_.Out(graph_output));
+    return MultiDestination<>(
+        mediapipe::api3::GenericGraph::graph_.Out(graph_output));
   }
 
   MultiSideSource<> SideIn(absl::string_view graph_input) {
-    return MultiSideSource<>(graph_builder_.SideIn(graph_input));
+    return MultiSideSource<>(
+        mediapipe::api3::GenericGraph::graph_.SideIn(graph_input));
   }
 
   MultiSideDestination<> SideOut(absl::string_view graph_output) {
-    return MultiSideDestination<>(graph_builder_.SideOut(graph_output));
+    return MultiSideDestination<>(
+        mediapipe::api3::GenericGraph::graph_.SideOut(graph_output));
   }
 
   // Convenience methods for accessing purely index-based ports.
@@ -677,28 +694,28 @@ class Graph {
     using PayloadT =
         typename PortCommon<B, T, kIsOptional, kIsMultiple>::PayloadT;
     if constexpr (std::is_same_v<B, OutputBase>) {
-      auto base = graph_builder_.Out(port.Tag());
+      auto base = mediapipe::api3::GenericGraph::graph_.Out(port.Tag());
       if constexpr (kIsMultiple) {
         return MultiDestination<PayloadT>(base);
       } else {
         return Destination<PayloadT>(base);
       }
     } else if constexpr (std::is_same_v<B, InputBase>) {
-      auto base = graph_builder_.In(port.Tag());
+      auto base = mediapipe::api3::GenericGraph::graph_.In(port.Tag());
       if constexpr (kIsMultiple) {
         return MultiSource<PayloadT>(base);
       } else {
         return Source<PayloadT>(base);
       }
     } else if constexpr (std::is_same_v<B, SideOutputBase>) {
-      auto base = graph_builder_.SideOut(port.Tag());
+      auto base = mediapipe::api3::GenericGraph::graph_.SideOut(port.Tag());
       if constexpr (kIsMultiple) {
         return MultiSideDestination<PayloadT>(base);
       } else {
         return SideDestination<PayloadT>(base);
       }
     } else if constexpr (std::is_same_v<B, SideInputBase>) {
-      auto base = graph_builder_.SideIn(port.Tag());
+      auto base = mediapipe::api3::GenericGraph::graph_.SideIn(port.Tag());
       if constexpr (kIsMultiple) {
         return MultiSideSource<PayloadT>(base);
       } else {
@@ -712,16 +729,15 @@ class Graph {
   // Returns the graph config. This can be used to instantiate and run the
   // graph.
   CalculatorGraphConfig GetConfig() {
-    auto config = graph_builder_.GetConfig();
+    auto config = mediapipe::api3::GenericGraph::graph_.GetConfig();
     ABSL_CHECK_OK(config);
     return std::move(config).value();
   }
 
  private:
-  mediapipe::api3::builder::GraphBuilder graph_builder_;
-  std::vector<std::unique_ptr<Executor>> executors_;
-  std::vector<std::unique_ptr<NodeBase>> nodes_;
-  std::vector<std::unique_ptr<PacketGenerator>> packet_gens_;
+  std::vector<std::unique_ptr<Executor>> api2_executors_;
+  std::vector<std::unique_ptr<NodeBase>> api2_nodes_;
+  std::vector<std::unique_ptr<PacketGenerator>> api2_packet_gens_;
 };
 
 }  // namespace builder

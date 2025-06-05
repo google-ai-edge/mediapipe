@@ -186,6 +186,29 @@ cc_test(
     ],
 )
 
+cc_test(
+    name = "graph_interop_test",
+    srcs = [
+        "graph_interop_test.cc",
+    ],
+    deps = [
+        ":contract",
+        ":graph",
+        ":port_test_nodes",
+        ":side_packet",
+        ":stream",
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/api3/testing:generator_cc_proto",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/stream_handler:fixed_size_input_stream_handler_cc_proto",
+        "//mediapipe/framework/testdata:night_light_calculator_cc_proto",
+        "//mediapipe/framework/testdata:sky_light_calculator_cc_proto",
+    ],
+)
+
 cc_library(
     name = "calculator",
     hdrs = ["calculator.h"],
