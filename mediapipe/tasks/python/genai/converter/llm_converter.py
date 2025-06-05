@@ -195,6 +195,9 @@ def quantize_by_actions(
       pack = action.tensor_value.dtype == jnp.int4
       if qvalue_suffix in action.target_name:
         target_name = action.target_name[: -len(qvalue_suffix)]
+        # Stores the quantized value in int8 for 4-bit quantization.
+        if pack:
+          action.tensor_value = action.tensor_value.astype(jnp.int8)
         output_tensors[target_name] = (action.tensor_value, pack)
       elif (
           scale_suffix in action.target_name or zp_suffix in action.target_name
