@@ -265,6 +265,7 @@ def combined_weight_bins_to_tflite(
     image_adapter_file: Optional[str] = None,
     submodel_type: Optional[str] = None,
     use_dynamic_ple: Optional[bool] = None,
+    apply_srq: Optional[bool] = None,
 ):
   """Combines weight files to tflite file."""
   if backend == 'cpu':
@@ -292,6 +293,7 @@ def combined_weight_bins_to_tflite(
         '' if image_adapter_file is None else image_adapter_file,
         '' if submodel_type is None else submodel_type,
         True if use_dynamic_ple is None else use_dynamic_ple,
+        False if apply_srq is None else apply_srq,
     )
   else:
     raise ValueError('Unsupported backend: %s' % backend)
@@ -416,4 +418,6 @@ def convert_checkpoint(config: ConversionConfig) -> None:
       image_adapter_file=config.image_adapter_file,
       submodel_type=config.submodel_type,
       use_dynamic_ple=config.use_dynamic_ple,
+      # Fow now, any pre-quantized model is assumed to require SRQ support.
+      apply_srq=config.is_quantized,
   )
