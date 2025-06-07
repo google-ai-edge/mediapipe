@@ -82,7 +82,7 @@ mode) or not (synchronous mode).)doc");
 #if !MEDIAPIPE_DISABLE_GPU
         auto gpu_resources_ = mediapipe::GpuResources::Create();
         if (!gpu_resources_.ok()) {
-          ABSL_LOG(INFO) << "GPU suport is not available: "
+          ABSL_LOG(INFO) << "GPU support is not available: "
                          << gpu_resources_.status();
           gpu_resources_ = nullptr;
         }
