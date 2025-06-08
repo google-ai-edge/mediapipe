@@ -1,0 +1,18 @@
+file_name: "custom_pose_landmarker_full_nofilter.task"
+
+# Main pose detector model
+model_asset {
+  file_name: "models/full/pose_detector.tflite"
+}
+
+# Pose landmarks detector model (full version)
+model_asset {
+  file_name: "models/full/pose_landmarks_detector.tflite"
+}
+
+# Graph configuration
+graph_options {
+  use_gpu: false  # Set to true for GPU version
+  enable_segmentation: false
+  model_complexity: 1  # Full version
+} 

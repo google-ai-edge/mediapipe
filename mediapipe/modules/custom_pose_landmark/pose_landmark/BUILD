@@ -20,6 +20,10 @@ load(
     "//mediapipe/framework/tool:mediapipe_graph.bzl",
     "mediapipe_simple_subgraph",
 )
+load(
+    "//mediapipe/tasks:mediapipe_task.bzl",
+    "mediapipe_task",
+)
 
 licenses(["notice"])
 
@@ -202,4 +206,20 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/util:landmarks_to_detection_calculator",
         "//mediapipe/calculators/util:rect_transformation_calculator",
     ],
+)
+
+# Custom MediaPipe Task - CPU version with no temporal filtering
+mediapipe_task(
+    name = "custom_pose_landmarker_cpu_nofilter",
+    graph = ":pose_landmark_filtering_nofilter_subgraph", 
+    base_options_file = "custom_pose_landmark_base_options.textproto",
+    runtime = "cpu",
+)
+
+# Custom MediaPipe Task - GPU version with no temporal filtering  
+mediapipe_task(
+    name = "custom_pose_landmarker_gpu_nofilter",
+    graph = ":pose_landmark_filtering_nofilter_subgraph",
+    base_options_file = "custom_pose_landmark_base_options.textproto", 
+    runtime = "gpu",
 )

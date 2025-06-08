@@ -1,0 +1,6 @@
+file_name: "custom_pose_landmarker_nofilter.task"
+model_asset {
+  file_name: "pose_landmark_lite.tflite"
+  # Path is relative to the WORKSPACE root when the task runs.
+  # Uses the existing MediaPipe model from the standard pose_landmark module
+} 
