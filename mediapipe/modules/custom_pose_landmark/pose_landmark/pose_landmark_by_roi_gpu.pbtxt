@@ -1,0 +1,174 @@
+# MediaPipe graph to detect/predict pose landmarks and optionally segmentation
+# within an ROI. (GPU input, and inference is executed on GPU.)
+#
+# It is required that "pose_landmark_lite.tflite" or
+# "pose_landmark_full.tflite" or "pose_landmark_heavy.tflite" is available at
+# "mediapipe/modules/pose_landmark/pose_landmark_lite.tflite" or
+# "mediapipe/modules/pose_landmark/pose_landmark_full.tflite" or
+# "mediapipe/modules/pose_landmark/pose_landmark_heavy.tflite"
+# path respectively during execution, depending on the specification in the
+# MODEL_COMPLEXITY input side packet.
+#
+# EXAMPLE:
+#   node {
+#     calculator: "PoseLandmarkByRoiGpu"
+#     input_side_packet: "MODEL_COMPLEXITY:model_complexity"
+#     input_side_packet: "ENABLE_SEGMENTATION:enable_segmentation"
+#     input_stream: "IMAGE:image"
+#     input_stream: "ROI:roi"
+#     output_stream: "LANDMARKS:landmarks"
+#     output_stream: "SEGMENTATION_MASK:segmentation_mask"
+#   }
+
+type: "PoseLandmarkByRoiGpu"
+
+# GPU image. (GpuBuffer)
+input_stream: "IMAGE:image"
+# ROI (region of interest) within the given image where a pose is located.
+# (NormalizedRect)
+input_stream: "ROI:roi"
+
+# Whether to predict the segmentation mask. If unspecified, functions as set to
+# false. (bool)
+input_side_packet: "ENABLE_SEGMENTATION:enable_segmentation"
+
+# Complexity of the pose landmark model: 0, 1 or 2. Landmark accuracy as well as
+# inference latency generally go up with the model complexity. If unspecified,
+# functions as set to 1. (int)
+input_side_packet: "MODEL_COMPLEXITY:model_complexity"
+
+# Pose landmarks within the given ROI. (NormalizedLandmarkList)
+# We have 33 landmarks (see pose_landmark_topology.svg), and there are other
+# auxiliary key points.
+# 0 - nose
+# 1 - left eye (inner)
+# 2 - left eye
+# 3 - left eye (outer)
+# 4 - right eye (inner)
+# 5 - right eye
+# 6 - right eye (outer)
+# 7 - left ear
+# 8 - right ear
+# 9 - mouth (left)
+# 10 - mouth (right)
+# 11 - left shoulder
+# 12 - right shoulder
+# 13 - left elbow
+# 14 - right elbow
+# 15 - left wrist
+# 16 - right wrist
+# 17 - left pinky
+# 18 - right pinky
+# 19 - left index
+# 20 - right index
+# 21 - left thumb
+# 22 - right thumb
+# 23 - left hip
+# 24 - right hip
+# 25 - left knee
+# 26 - right knee
+# 27 - left ankle
+# 28 - right ankle
+# 29 - left heel
+# 30 - right heel
+# 31 - left foot index
+# 32 - right foot index
+#
+# NOTE: If a pose is not present within the given ROI, for this particular
+# timestamp there will not be an output packet in the LANDMARKS stream. However,
+# the MediaPipe framework will internally inform the downstream calculators of
+# the absence of this packet so that they don't wait for it unnecessarily.
+output_stream: "LANDMARKS:landmarks"
+# Auxiliary landmarks for deriving the ROI in the subsequent image.
+# (NormalizedLandmarkList)
+output_stream: "AUXILIARY_LANDMARKS:auxiliary_landmarks"
+
+# Pose world landmarks within the given ROI. (LandmarkList)
+# World landmarks are real-world 3D coordinates in meters with the origin at the
+# center between hips. WORLD_LANDMARKS shares the same landmark topology as
+# LANDMARKS. However, LANDMARKS provides coordinates (in pixels) of a 3D object
+# projected onto the 2D image surface, while WORLD_LANDMARKS provides
+# coordinates (in meters) of the 3D object itself.
+output_stream: "WORLD_LANDMARKS:world_landmarks"
+
+# Segmentation mask on GPU in RGBA with the same mask values in R and A. (Image)
+output_stream: "SEGMENTATION_MASK:segmentation_mask"
+
+# Retrieves the image size.
+node {
+  calculator: "ImagePropertiesCalculator"
+  input_stream: "IMAGE_GPU:image"
+  output_stream: "SIZE:image_size"
+}
+
+# Crops and transforms the specified ROI in the input image into an image patch
+# represented as a tensor of dimension expected by the corresponding ML model,
+# while maintaining the aspect ratio of the ROI (which can be different from
+# that of the image patch). Therefore, there can be letterboxing around the ROI
+# in the generated tensor representation.
+node: {
+  calculator: "ImageToTensorCalculator"
+  input_stream: "IMAGE_GPU:image"
+  input_stream: "NORM_RECT:roi"
+  output_stream: "TENSORS:input_tensors"
+  output_stream: "LETTERBOX_PADDING:letterbox_padding"
+  output_stream: "MATRIX:transformation_matrix"
+  options: {
+    [mediapipe.ImageToTensorCalculatorOptions.ext] {
+      output_tensor_width: 256
+      output_tensor_height: 256
+      keep_aspect_ratio: true
+      output_tensor_float_range {
+        min: 0.0
+        max: 1.0
+      }
+      gpu_origin: TOP_LEFT
+    }
+  }
+}
+
+# Loads the pose landmark TF Lite model.
+node {
+  calculator: "PoseLandmarkModelLoader"
+  input_side_packet: "MODEL_COMPLEXITY:model_complexity"
+  output_side_packet: "MODEL:model"
+}
+
+# Runs model inference on GPU.
+node {
+  calculator: "InferenceCalculator"
+  input_side_packet: "MODEL:model"
+  input_stream: "TENSORS:input_tensors"
+  output_stream: "TENSORS:output_tensors"
+}
+
+# Decodes the tensors into the corresponding landmark and segmentation mask
+# representation.
+node {
+  calculator: "TensorsToPoseLandmarksAndSegmentation"
+  input_side_packet: "ENABLE_SEGMENTATION:enable_segmentation"
+  input_stream: "TENSORS:output_tensors"
+  output_stream: "LANDMARKS:roi_landmarks"
+  output_stream: "AUXILIARY_LANDMARKS:roi_auxiliary_landmarks"
+  output_stream: "WORLD_LANDMARKS:roi_world_landmarks"
+  output_stream: "SEGMENTATION_MASK:roi_segmentation_mask"
+}
+
+# Projects the landmarks and segmentation mask in the local coordinates of the
+# (potentially letterboxed) ROI back to the global coordinates of the full input
+# image.
+node {
+  calculator: "PoseLandmarksAndSegmentationInverseProjection"
+  input_stream: "IMAGE_SIZE:image_size"
+  input_stream: "NORM_RECT:roi"
+  input_stream: "LETTERBOX_PADDING:letterbox_padding"
+  input_stream: "MATRIX:transformation_matrix"
+  input_stream: "LANDMARKS:roi_landmarks"
+  input_stream: "AUXILIARY_LANDMARKS:roi_auxiliary_landmarks"
+  input_stream: "WORLD_LANDMARKS:roi_world_landmarks"
+  input_stream: "SEGMENTATION_MASK:roi_segmentation_mask"
+  output_stream: "LANDMARKS:landmarks"
+  output_stream: "AUXILIARY_LANDMARKS:auxiliary_landmarks"
+  output_stream: "WORLD_LANDMARKS:world_landmarks"
+  output_stream: "SEGMENTATION_MASK:segmentation_mask"
+}

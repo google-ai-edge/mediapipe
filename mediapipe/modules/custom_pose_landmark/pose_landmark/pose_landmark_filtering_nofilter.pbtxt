@@ -1,0 +1,134 @@
+# MediaPipe graph for pose landmarks WITHOUT temporal filtering/smoothing.
+# This version passes landmarks through without any temporal smoothing to reduce
+# processing latency and provide raw landmark positions.
+#
+# EXAMPLE:
+#   node {
+#     calculator: "PoseLandmarkFiltering"
+#     input_stream: "IMAGE_SIZE:image_size"
+#     input_stream: "NORM_LANDMARKS:landmarks"
+#     input_stream: "AUX_NORM_LANDMARKS:aux_landmarks"
+#     input_stream: "WORLD_LANDMARKS:world_landmarks"
+#     output_stream: "FILTERED_NORM_LANDMARKS:filtered_landmarks"
+#     output_stream: "FILTERED_AUX_NORM_LANDMARKS:filtered_aux_landmarks"
+#     output_stream: "FILTERED_WORLD_LANDMARKS:filtered_world_landmarks"
+#   }
+
+type: "PoseLandmarkFiltering"
+
+# Temporal smoothing disabled - no filtering applied
+
+# Size of the image (width & height) where the landmarks are estimated from.
+# (std::pair<int, int>)
+input_stream: "IMAGE_SIZE:image_size"
+# Normalized landmarks. (NormalizedLandmarkList)
+input_stream: "NORM_LANDMARKS:landmarks"
+# Auxiliary set of normalized landmarks. (NormalizedLandmarkList)
+input_stream: "AUX_NORM_LANDMARKS:aux_landmarks"
+# World landmarks. (LandmarkList)
+input_stream: "WORLD_LANDMARKS:world_landmarks"
+# Filtered normalized landmarks. (NormalizedLandmarkList)
+output_stream: "FILTERED_NORM_LANDMARKS:filtered_landmarks"
+# Filtered auxiliary set of normalized landmarks. (NormalizedLandmarkList)
+output_stream: "FILTERED_AUX_NORM_LANDMARKS:filtered_aux_landmarks"
+# Filtered world landmarks. (LandmarkList)
+output_stream: "FILTERED_WORLD_LANDMARKS:filtered_world_landmarks"
+
+# Converts landmarks to a detection that tightly encloses all landmarks.
+node {
+  calculator: "LandmarksToDetectionCalculator"
+  input_stream: "NORM_LANDMARKS:aux_landmarks"
+  output_stream: "DETECTION:aux_detection"
+}
+
+# Converts detection into a rectangle based on center and scale alignment
+# points.
+node {
+  calculator: "AlignmentPointsRectsCalculator"
+  input_stream: "DETECTION:aux_detection"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "NORM_RECT:roi"
+  options: {
+    [mediapipe.DetectionsToRectsCalculatorOptions.ext] {
+      rotation_vector_start_keypoint_index: 0
+      rotation_vector_end_keypoint_index: 1
+      rotation_vector_target_angle_degrees: 90
+    }
+  }
+}
+
+# Pose landmark visibilities - no filtering applied.
+node {
+  calculator: "VisibilitySmoothingCalculator"
+  input_stream: "NORM_LANDMARKS:landmarks"
+  output_stream: "NORM_FILTERED_LANDMARKS:filtered_visibility"
+  options: {
+    [mediapipe.VisibilitySmoothingCalculatorOptions.ext] {
+      no_filter: {}
+    }
+  }
+}
+
+# Pose landmark coordinates - no filtering applied.
+node {
+  calculator: "LandmarksSmoothingCalculator"
+  input_stream: "NORM_LANDMARKS:filtered_visibility"
+  input_stream: "IMAGE_SIZE:image_size"
+  input_stream: "OBJECT_SCALE_ROI:roi"
+  output_stream: "NORM_FILTERED_LANDMARKS:filtered_landmarks"
+  options: {
+    [mediapipe.LandmarksSmoothingCalculatorOptions.ext] {
+      no_filter: {}
+    }
+  }
+}
+
+# World landmark visibilities - no filtering applied.
+node {
+  calculator: "VisibilitySmoothingCalculator"
+  input_stream: "LANDMARKS:world_landmarks"
+  output_stream: "FILTERED_LANDMARKS:filtered_world_visibility"
+  options: {
+    [mediapipe.VisibilitySmoothingCalculatorOptions.ext] {
+      no_filter: {}
+    }
+  }
+}
+
+# World landmark coordinates - no filtering applied.
+node {
+  calculator: "LandmarksSmoothingCalculator"
+  input_stream: "LANDMARKS:filtered_world_visibility"
+  output_stream: "FILTERED_LANDMARKS:filtered_world_landmarks"
+  options: {
+    [mediapipe.LandmarksSmoothingCalculatorOptions.ext] {
+      no_filter: {}
+    }
+  }
+}
+
+# Auxiliary landmark visibilities - no filtering applied.
+node {
+  calculator: "VisibilitySmoothingCalculator"
+  input_stream: "NORM_LANDMARKS:aux_landmarks"
+  output_stream: "NORM_FILTERED_LANDMARKS:filtered_aux_visibility"
+  options: {
+    [mediapipe.VisibilitySmoothingCalculatorOptions.ext] {
+      no_filter: {}
+    }
+  }
+}
+
+# Auxiliary landmarks - no filtering applied.
+node {
+  calculator: "LandmarksSmoothingCalculator"
+  input_stream: "NORM_LANDMARKS:filtered_aux_visibility"
+  input_stream: "IMAGE_SIZE:image_size"
+  input_stream: "OBJECT_SCALE_ROI:roi"
+  output_stream: "NORM_FILTERED_LANDMARKS:filtered_aux_landmarks"
+  options: {
+    [mediapipe.LandmarksSmoothingCalculatorOptions.ext] {
+      no_filter: {}
+    }
+  }
+} 

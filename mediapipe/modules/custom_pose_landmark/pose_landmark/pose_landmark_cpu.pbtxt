@@ -1,0 +1,268 @@
+# MediaPipe graph to detect/predict pose landmarks. (CPU input, and inference is
+# executed on CPU.) This graph tries to skip pose detection as much as possible
+# by using previously detected/predicted landmarks for new images.
+#
+# It is required that "pose_detection.tflite" is available at
+# "mediapipe/modules/pose_detection/pose_detection.tflite"
+# path during execution.
+#
+# It is required that "pose_landmark_lite.tflite" or
+# "pose_landmark_full.tflite" or "pose_landmark_heavy.tflite" is available at
+# "mediapipe/modules/pose_landmark/pose_landmark_lite.tflite" or
+# "mediapipe/modules/pose_landmark/pose_landmark_full.tflite" or
+# "mediapipe/modules/pose_landmark/pose_landmark_heavy.tflite"
+# path respectively during execution, depending on the specification in the
+# MODEL_COMPLEXITY input side packet.
+#
+# EXAMPLE:
+#   node {
+#     calculator: "PoseLandmarkCpu"
+#     input_side_packet: "MODEL_COMPLEXITY:model_complexity"
+#     input_side_packet: "SMOOTH_LANDMARKS:smooth_landmarks"
+#     input_side_packet: "ENABLE_SEGMENTATION:enable_segmentation"
+#     input_side_packet: "SMOOTH_SEGMENTATION:smooth_segmentation"
+#     input_side_packet: "USE_PREV_LANDMARKS:use_prev_landmarks"
+#     input_stream: "IMAGE:image"
+#     output_stream: "LANDMARKS:pose_landmarks"
+#     output_stream: "SEGMENTATION_MASK:segmentation_mask"
+#   }
+
+type: "PoseLandmarkCpu"
+
+# CPU image. (ImageFrame)
+input_stream: "IMAGE:image"
+
+# Whether to filter landmarks across different input images to reduce jitter.
+# If unspecified, functions as set to true. (bool)
+input_side_packet: "SMOOTH_LANDMARKS:smooth_landmarks"
+
+# Whether to predict the segmentation mask. If unspecified, functions as set to
+# false. (bool)
+input_side_packet: "ENABLE_SEGMENTATION:enable_segmentation"
+
+# Whether to filter segmentation mask across different input images to reduce
+# jitter. If unspecified, functions as set to true. (bool)
+input_side_packet: "SMOOTH_SEGMENTATION:smooth_segmentation"
+
+# Complexity of the pose landmark model: 0, 1 or 2. Landmark accuracy as well as
+# inference latency generally go up with the model complexity. If unspecified,
+# functions as set to 1. (int)
+input_side_packet: "MODEL_COMPLEXITY:model_complexity"
+
+# Whether landmarks on the previous image should be used to help localize
+# landmarks on the current image. (bool)
+input_side_packet: "USE_PREV_LANDMARKS:use_prev_landmarks"
+
+# Pose landmarks. (NormalizedLandmarkList)
+# We have 33 landmarks (see pose_landmark_topology.svg), and there are other
+# auxiliary key points.
+# 0 - nose
+# 1 - left eye (inner)
+# 2 - left eye
+# 3 - left eye (outer)
+# 4 - right eye (inner)
+# 5 - right eye
+# 6 - right eye (outer)
+# 7 - left ear
+# 8 - right ear
+# 9 - mouth (left)
+# 10 - mouth (right)
+# 11 - left shoulder
+# 12 - right shoulder
+# 13 - left elbow
+# 14 - right elbow
+# 15 - left wrist
+# 16 - right wrist
+# 17 - left pinky
+# 18 - right pinky
+# 19 - left index
+# 20 - right index
+# 21 - left thumb
+# 22 - right thumb
+# 23 - left hip
+# 24 - right hip
+# 25 - left knee
+# 26 - right knee
+# 27 - left ankle
+# 28 - right ankle
+# 29 - left heel
+# 30 - right heel
+# 31 - left foot index
+# 32 - right foot index
+#
+# NOTE: if a pose is not present within the given ROI, for this particular
+# timestamp there will not be an output packet in the LANDMARKS stream. However,
+# the MediaPipe framework will internally inform the downstream calculators of
+# the absence of this packet so that they don't wait for it unnecessarily.
+output_stream: "LANDMARKS:pose_landmarks"
+
+# Pose world landmarks. (LandmarkList)
+# World landmarks are real-world 3D coordinates in meters with the origin at the
+# center between hips. WORLD_LANDMARKS shares the same landmark topology as
+# LANDMARKS. However, LANDMARKS provides coordinates (in pixels) of a 3D object
+# projected onto the 2D image surface, while WORLD_LANDMARKS provides
+# coordinates (in meters) of the 3D object itself.
+output_stream: "WORLD_LANDMARKS:pose_world_landmarks"
+
+# Segmentation mask. (ImageFrame in ImageFormat::VEC32F1)
+output_stream: "SEGMENTATION_MASK:segmentation_mask"
+
+# Extra outputs (for debugging, for instance).
+# Detected poses. (Detection)
+output_stream: "DETECTION:pose_detection"
+# Regions of interest calculated based on landmarks. (NormalizedRect)
+output_stream: "ROI_FROM_LANDMARKS:pose_rect_from_landmarks"
+# Regions of interest calculated based on pose detections. (NormalizedRect)
+output_stream: "ROI_FROM_DETECTION:pose_rect_from_detection"
+
+# When the optional input side packet "use_prev_landmarks" is either absent or
+# set to true, uses the landmarks on the previous image to help localize
+# landmarks on the current image.
+node {
+  calculator: "GateCalculator"
+  input_side_packet: "ALLOW:use_prev_landmarks"
+  input_stream: "prev_pose_rect_from_landmarks"
+  output_stream: "gated_prev_pose_rect_from_landmarks"
+  options: {
+    [mediapipe.GateCalculatorOptions.ext] {
+      allow: true
+    }
+  }
+}
+
+# Checks if there's previous pose rect calculated from landmarks.
+node: {
+  calculator: "PacketPresenceCalculator"
+  input_stream: "PACKET:gated_prev_pose_rect_from_landmarks"
+  output_stream: "PRESENCE:prev_pose_rect_from_landmarks_is_present"
+}
+
+# Calculates size of the image.
+node {
+  calculator: "ImagePropertiesCalculator"
+  input_stream: "IMAGE_CPU:image"
+  output_stream: "SIZE:image_size"
+}
+
+# Drops the incoming image if the pose has already been identified from the
+# previous image. Otherwise, passes the incoming image through to trigger a new
+# round of pose detection.
+node {
+  calculator: "GateCalculator"
+  input_stream: "image"
+  input_stream: "image_size"
+  input_stream: "DISALLOW:prev_pose_rect_from_landmarks_is_present"
+  output_stream: "image_for_pose_detection"
+  output_stream: "image_size_for_pose_detection"
+  options: {
+    [mediapipe.GateCalculatorOptions.ext] {
+      empty_packets_as_allow: true
+    }
+  }
+}
+
+# Detects poses.
+node {
+  calculator: "PoseDetectionCpu"
+  input_stream: "IMAGE:image_for_pose_detection"
+  output_stream: "DETECTIONS:pose_detections"
+}
+
+# Gets the very first detection from "pose_detections" vector.
+node {
+  calculator: "SplitDetectionVectorCalculator"
+  input_stream: "pose_detections"
+  output_stream: "pose_detection"
+  options: {
+    [mediapipe.SplitVectorCalculatorOptions.ext] {
+      ranges: { begin: 0 end: 1 }
+      element_only: true
+    }
+  }
+}
+
+# Calculates region of interest based on pose detection, so that can be used
+# to detect landmarks.
+node {
+  calculator: "PoseDetectionToRoi"
+  input_stream: "DETECTION:pose_detection"
+  input_stream: "IMAGE_SIZE:image_size_for_pose_detection"
+  output_stream: "ROI:pose_rect_from_detection"
+}
+
+# Selects either pose rect (or ROI) calculated from detection or from previously
+# detected landmarks if available (in this case, calculation of pose rect from
+# detection is skipped).
+node {
+  calculator: "MergeCalculator"
+  input_stream: "pose_rect_from_detection"
+  input_stream: "gated_prev_pose_rect_from_landmarks"
+  output_stream: "pose_rect"
+}
+
+# Detects pose landmarks within specified region of interest of the image.
+node {
+  calculator: "PoseLandmarkByRoiCpu"
+  input_side_packet: "MODEL_COMPLEXITY:model_complexity"
+  input_side_packet: "ENABLE_SEGMENTATION:enable_segmentation"
+  input_stream: "IMAGE:image"
+  input_stream: "ROI:pose_rect"
+  output_stream: "LANDMARKS:unfiltered_pose_landmarks"
+  output_stream: "AUXILIARY_LANDMARKS:unfiltered_auxiliary_landmarks"
+  output_stream: "WORLD_LANDMARKS:unfiltered_world_landmarks"
+  output_stream: "SEGMENTATION_MASK:unfiltered_segmentation_mask"
+}
+
+# Smoothes landmarks to reduce jitter.
+node {
+  calculator: "PoseLandmarkFiltering"
+  input_side_packet: "ENABLE:smooth_landmarks"
+  input_stream: "IMAGE_SIZE:image_size"
+  input_stream: "NORM_LANDMARKS:unfiltered_pose_landmarks"
+  input_stream: "AUX_NORM_LANDMARKS:unfiltered_auxiliary_landmarks"
+  input_stream: "WORLD_LANDMARKS:unfiltered_world_landmarks"
+  output_stream: "FILTERED_NORM_LANDMARKS:pose_landmarks"
+  output_stream: "FILTERED_AUX_NORM_LANDMARKS:auxiliary_landmarks"
+  output_stream: "FILTERED_WORLD_LANDMARKS:pose_world_landmarks"
+}
+
+# Calculates region of interest based on the auxiliary landmarks, to be used in
+# the subsequent image.
+node {
+  calculator: "PoseLandmarksToRoi"
+  input_stream: "LANDMARKS:auxiliary_landmarks"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "ROI:pose_rect_from_landmarks"
+}
+
+# Caches pose rects calculated from landmarks, and upon the arrival of the next
+# input image, sends out the cached rects with timestamps replaced by that of
+# the input image, essentially generating a packet that carries the previous
+# pose rects. Note that upon the arrival of the very first input image, a
+# timestamp bound update occurs to jump start the feedback loop.
+node {
+  calculator: "PreviousLoopbackCalculator"
+  input_stream: "MAIN:image"
+  input_stream: "LOOP:pose_rect_from_landmarks"
+  input_stream_info: {
+    tag_index: "LOOP"
+    back_edge: true
+  }
+  output_stream: "PREV_LOOP:prev_pose_rect_from_landmarks"
+}
+
+# Smoothes segmentation to reduce jitter.
+node {
+  calculator: "PoseSegmentationFiltering"
+  input_side_packet: "ENABLE:smooth_segmentation"
+  input_stream: "SEGMENTATION_MASK:unfiltered_segmentation_mask"
+  output_stream: "FILTERED_SEGMENTATION_MASK:filtered_segmentation_mask"
+}
+
+# Converts the incoming segmentation mask represented as an Image into the
+# corresponding ImageFrame type.
+node: {
+  calculator: "FromImageCalculator"
+  input_stream: "IMAGE:filtered_segmentation_mask"
+  output_stream: "IMAGE_CPU:segmentation_mask"
+}

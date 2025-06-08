@@ -1,0 +1,68 @@
+# MediaPipe graph to load a selected pose landmark TF Lite model.
+
+type: "PoseLandmarkModelLoader"
+
+# Complexity of the pose landmark model: 0, 1 or 2. Landmark accuracy as well as
+# inference latency generally go up with the model complexity. If unspecified,
+# functions as set to 1. (int)
+input_side_packet: "MODEL_COMPLEXITY:model_complexity"
+
+# TF Lite model represented as a FlatBuffer.
+# (std::unique_ptr<tflite::FlatBufferModel, std::function<void(tflite::FlatBufferModel*)>>)
+output_side_packet: "MODEL:model"
+
+# Determines path to the desired pose landmark model file.
+node {
+  calculator: "SwitchContainer"
+  input_side_packet: "SELECT:model_complexity"
+  output_side_packet: "PACKET:model_path"
+  options: {
+    [mediapipe.SwitchContainerOptions.ext] {
+      select: 1
+      contained_node: {
+        calculator: "ConstantSidePacketCalculator"
+        options: {
+          [mediapipe.ConstantSidePacketCalculatorOptions.ext]: {
+            packet {
+              string_value: "mediapipe/modules/pose_landmark/pose_landmark_lite.tflite"
+            }
+          }
+        }
+      }
+      contained_node: {
+        calculator: "ConstantSidePacketCalculator"
+        options: {
+          [mediapipe.ConstantSidePacketCalculatorOptions.ext]: {
+            packet {
+              string_value: "mediapipe/modules/pose_landmark/pose_landmark_full.tflite"
+            }
+          }
+        }
+      }
+      contained_node: {
+        calculator: "ConstantSidePacketCalculator"
+        options: {
+          [mediapipe.ConstantSidePacketCalculatorOptions.ext]: {
+            packet {
+              string_value: "mediapipe/modules/pose_landmark/pose_landmark_heavy.tflite"
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# Loads the file in the specified path as a resource.
+node {
+  calculator: "ResourceProviderCalculator"
+  input_side_packet: "RESOURCE_ID:model_path"
+  output_side_packet: "RESOURCE:model_resource"
+}
+
+# Converts the provided resource into a TF Lite model.
+node {
+  calculator: "TfLiteModelCalculator"
+  input_side_packet: "MODEL_RESOURCE:model_resource"
+  output_side_packet: "MODEL:model"
+}

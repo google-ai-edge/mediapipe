@@ -1,0 +1,61 @@
+# MediaPipe graph to filter segmentation masks temporally (across packets with
+# incremental timestamps) to reduce jitter.
+#
+# EXAMPLE:
+#   node {
+#     calculator: "PoseSegmentationFiltering"
+#     input_side_packet: "ENABLE:enable"
+#     input_stream: "SEGMENTATION_MASK:segmentation_mask"
+#     output_stream: "FILTERED_SEGMENTATION_MASK:filtered_segmentation_mask"
+#   }
+
+type: "PoseSegmentationFiltering"
+
+# Whether to enable filtering. If unspecified, functions as enabled. (bool)
+input_side_packet: "ENABLE:enable"
+
+# Segmentation mask. (Image)
+input_stream: "SEGMENTATION_MASK:segmentation_mask"
+
+# Filtered segmentation mask. (Image)
+output_stream: "FILTERED_SEGMENTATION_MASK:filtered_segmentation_mask"
+
+# Drops the filtered segmentation mask from the previous frame if filtering is
+# not enabled. In that case, the downstream SegmentationSmoothingCalculator
+# becomes a simple passthrough.
+node {
+  calculator: "GateCalculator"
+  input_side_packet: "ALLOW:enable"
+  input_stream: "prev_filtered_segmentation_mask"
+  output_stream: "gated_prev_filtered_segmentation_mask"
+  options: {
+    [mediapipe.GateCalculatorOptions.ext] {
+      allow: true
+    }
+  }
+}
+
+# Smoothes segmentation to reduce jitter.
+node {
+  calculator: "SegmentationSmoothingCalculator"
+  input_stream: "MASK:segmentation_mask"
+  input_stream: "MASK_PREVIOUS:gated_prev_filtered_segmentation_mask"
+  output_stream: "MASK_SMOOTHED:filtered_segmentation_mask"
+  options {
+    [mediapipe.SegmentationSmoothingCalculatorOptions.ext] {
+      combine_with_previous_ratio: 0.7
+    }
+  }
+}
+
+# Caches the filtered segmentation mask, similar to above for the pose rect.
+node {
+  calculator: "PreviousLoopbackCalculator"
+  input_stream: "MAIN:segmentation_mask"
+  input_stream: "LOOP:filtered_segmentation_mask"
+  input_stream_info: {
+    tag_index: "LOOP"
+    back_edge: true
+  }
+  output_stream: "PREV_LOOP:prev_filtered_segmentation_mask"
+}

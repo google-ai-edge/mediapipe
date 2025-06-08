@@ -1,0 +1,247 @@
+# MediaPipe graph to filter landmarks temporally (across packets with
+# incremental timestamps) to reduce jitter.
+#
+# EXAMPLE:
+#   node {
+#     calculator: "PoseLandmarkFiltering"
+#     input_side_packet: "ENABLE:enable"
+#     input_stream: "IMAGE_SIZE:image_size"
+#     input_stream: "NORM_LANDMARKS:landmarks"
+#     input_stream: "AUX_NORM_LANDMARKS:aux_landmarks"
+#     input_stream: "WORLD_LANDMARKS:world_landmarks"
+#     output_stream: "FILTERED_NORM_LANDMARKS:filtered_landmarks"
+#     output_stream: "FILTERED_AUX_NORM_LANDMARKS:filtered_aux_landmarks"
+#     output_stream: "FILTERED_WORLD_LANDMARKS:filtered_world_landmarks"
+#   }
+
+type: "PoseLandmarkFiltering"
+
+# Whether to enable filtering. If unspecified, functions as enabled. (bool)
+input_side_packet: "ENABLE:enable"
+
+# Size of the image (width & height) where the landmarks are estimated from.
+# (std::pair<int, int>)
+input_stream: "IMAGE_SIZE:image_size"
+# Normalized landmarks. (NormalizedLandmarkList)
+input_stream: "NORM_LANDMARKS:landmarks"
+# Auxiliary set of normalized landmarks. (NormalizedLandmarkList)
+input_stream: "AUX_NORM_LANDMARKS:aux_landmarks"
+# World landmarks. (LandmarkList)
+input_stream: "WORLD_LANDMARKS:world_landmarks"
+# Filtered normalized landmarks. (NormalizedLandmarkList)
+output_stream: "FILTERED_NORM_LANDMARKS:filtered_landmarks"
+# Filtered auxiliary set of normalized landmarks. (NormalizedLandmarkList)
+output_stream: "FILTERED_AUX_NORM_LANDMARKS:filtered_aux_landmarks"
+# Filtered world landmarks. (LandmarkList)
+output_stream: "FILTERED_WORLD_LANDMARKS:filtered_world_landmarks"
+
+# Converts landmarks to a detection that tightly encloses all landmarks.
+node {
+  calculator: "LandmarksToDetectionCalculator"
+  input_stream: "NORM_LANDMARKS:aux_landmarks"
+  output_stream: "DETECTION:aux_detection"
+}
+
+# Converts detection into a rectangle based on center and scale alignment
+# points.
+node {
+  calculator: "AlignmentPointsRectsCalculator"
+  input_stream: "DETECTION:aux_detection"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "NORM_RECT:roi"
+  options: {
+    [mediapipe.DetectionsToRectsCalculatorOptions.ext] {
+      rotation_vector_start_keypoint_index: 0
+      rotation_vector_end_keypoint_index: 1
+      rotation_vector_target_angle_degrees: 90
+    }
+  }
+}
+
+# Smoothes pose landmark visibilities to reduce jitter.
+node {
+  calculator: "SwitchContainer"
+  input_side_packet: "ENABLE:enable"
+  input_stream: "NORM_LANDMARKS:landmarks"
+  output_stream: "NORM_FILTERED_LANDMARKS:filtered_visibility"
+  options: {
+    [mediapipe.SwitchContainerOptions.ext] {
+      enable: true
+      contained_node: {
+        calculator: "VisibilitySmoothingCalculator"
+        options: {
+          [mediapipe.VisibilitySmoothingCalculatorOptions.ext] {
+            no_filter: {}
+          }
+        }
+      }
+      contained_node: {
+        calculator: "VisibilitySmoothingCalculator"
+        options: {
+          [mediapipe.VisibilitySmoothingCalculatorOptions.ext] {
+            low_pass_filter {
+              alpha: 0.1
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# Smoothes pose landmark coordinates to reduce jitter.
+node {
+  calculator: "SwitchContainer"
+  input_side_packet: "ENABLE:enable"
+  input_stream: "NORM_LANDMARKS:filtered_visibility"
+  input_stream: "IMAGE_SIZE:image_size"
+  input_stream: "OBJECT_SCALE_ROI:roi"
+  output_stream: "NORM_FILTERED_LANDMARKS:filtered_landmarks"
+  options: {
+    [mediapipe.SwitchContainerOptions.ext] {
+      enable: true
+      contained_node: {
+        calculator: "LandmarksSmoothingCalculator"
+        options: {
+          [mediapipe.LandmarksSmoothingCalculatorOptions.ext] {
+            no_filter: {}
+          }
+        }
+      }
+      contained_node: {
+        calculator: "LandmarksSmoothingCalculator"
+        options: {
+          [mediapipe.LandmarksSmoothingCalculatorOptions.ext] {
+            one_euro_filter {
+              # Min cutoff 0.1 results into ~0.01 alpha in landmark EMA filter
+              # when landmark is static.
+              min_cutoff: 0.05
+              # Beta 80.0 in combintation with min_cutoff 0.05 results into
+              # ~0.94 alpha in landmark EMA filter when landmark is moving fast.
+              beta: 80.0
+              # Derivative cutoff 1.0 results into ~0.17 alpha in landmark
+              # velocity EMA filter.
+              derivate_cutoff: 1.0
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# Smoothes world landmark visibilities to reduce jitter.
+node {
+  calculator: "SwitchContainer"
+  input_side_packet: "ENABLE:enable"
+  input_stream: "LANDMARKS:world_landmarks"
+  output_stream: "FILTERED_LANDMARKS:filtered_world_visibility"
+  options: {
+    [mediapipe.SwitchContainerOptions.ext] {
+      enable: true
+      contained_node: {
+        calculator: "VisibilitySmoothingCalculator"
+        options: {
+          [mediapipe.VisibilitySmoothingCalculatorOptions.ext] {
+            no_filter: {}
+          }
+        }
+      }
+      contained_node: {
+        calculator: "VisibilitySmoothingCalculator"
+        options: {
+          [mediapipe.VisibilitySmoothingCalculatorOptions.ext] {
+            low_pass_filter {
+              alpha: 0.1
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# Smoothes world landmark coordinates to reduce jitter.
+node {
+  calculator: "SwitchContainer"
+  input_side_packet: "ENABLE:enable"
+  input_stream: "LANDMARKS:filtered_world_visibility"
+  output_stream: "FILTERED_LANDMARKS:filtered_world_landmarks"
+  options: {
+    [mediapipe.SwitchContainerOptions.ext] {
+      enable: true
+      contained_node: {
+        calculator: "LandmarksSmoothingCalculator"
+        options: {
+          [mediapipe.LandmarksSmoothingCalculatorOptions.ext] {
+            no_filter: {}
+          }
+        }
+      }
+      contained_node: {
+        calculator: "LandmarksSmoothingCalculator"
+        options: {
+          [mediapipe.LandmarksSmoothingCalculatorOptions.ext] {
+            one_euro_filter {
+              # Min cutoff 0.1 results into ~ 0.02 alpha in landmark EMA filter
+              # when landmark is static.
+              min_cutoff: 0.1
+              # Beta 40.0 in combintation with min_cutoff 0.1 results into ~0.8
+              # alpha in landmark EMA filter when landmark is moving fast.
+              beta: 40.0
+              # Derivative cutoff 1.0 results into ~0.17 alpha in landmark
+              # velocity EMA filter.
+              derivate_cutoff: 1.0
+              # As world landmdarks are predicted in real world 3D coordintates
+              # in meters (rather than in pixels of input image) prediction
+              # scale does not depend on the pose size in the image.
+              disable_value_scaling: true
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# Smoothes auxiliary landmark visibilities to reduce jitter.
+node {
+  calculator: "VisibilitySmoothingCalculator"
+  input_stream: "NORM_LANDMARKS:aux_landmarks"
+  output_stream: "NORM_FILTERED_LANDMARKS:filtered_aux_visibility"
+  options: {
+    [mediapipe.VisibilitySmoothingCalculatorOptions.ext] {
+      low_pass_filter {
+        alpha: 0.1
+      }
+    }
+  }
+}
+
+# Smoothes auxiliary landmarks to reduce jitter.
+node {
+  calculator: "LandmarksSmoothingCalculator"
+  input_stream: "NORM_LANDMARKS:filtered_aux_visibility"
+  input_stream: "IMAGE_SIZE:image_size"
+  input_stream: "OBJECT_SCALE_ROI:roi"
+  output_stream: "NORM_FILTERED_LANDMARKS:filtered_aux_landmarks"
+  options: {
+    [mediapipe.LandmarksSmoothingCalculatorOptions.ext] {
+      # Auxiliary landmarks are smoothed heavier than main landmarks to
+      # make ROI crop for pose landmarks prediction very stable when
+      # object is not moving but responsive enough in case of sudden
+      # movements.
+      one_euro_filter {
+        # Min cutoff 0.01 results into ~0.002 alpha in landmark EMA
+        # filter when landmark is static.
+        min_cutoff: 0.01
+        # Beta 10.0 in combintation with min_cutoff 0.01 results into ~0.68
+        # alpha in landmark EMA filter when landmark is moving fast.
+        beta: 10.0
+        # Derivative cutoff 1.0 results into ~0.17 alpha in landmark
+        # velocity EMA filter.
+        derivate_cutoff: 1.0
+      }
+    }
+  }
+}
