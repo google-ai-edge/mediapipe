@@ -248,7 +248,8 @@ cc_library(
         ],
         "//mediapipe:ios": [
         ],
-        "//mediapipe:emscripten": [],
+        "//mediapipe:emscripten": [
+        ],
         "//mediapipe:macos": [
         ],
     }),
