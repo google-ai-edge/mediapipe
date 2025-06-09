@@ -16,25 +16,19 @@ limitations under the License.
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
-#include <limits>
+#include <functional>
 #include <memory>
-#include <ostream>
-#include <string>
 #include <utility>
 #include <vector>
 
 #include "absl/status/status.h"
-#include "absl/strings/str_format.h"
 #include "absl/types/span.h"
 #include "mediapipe/framework/api2/node.h"
-#include "mediapipe/framework/api2/packet.h"
 #include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame_opencv.h"
 #include "mediapipe/framework/formats/tensor.h"
-#include "mediapipe/framework/port/canonical_errors.h"
-#include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/tasks/cc/vision/image_segmenter/calculators/tensors_to_segmentation_calculator.pb.h"
@@ -308,7 +302,7 @@ class TensorsToSegmentationCalculator : public Node {
 
   static absl::Status UpdateContract(CalculatorContract* cc);
 
-  absl::Status Open(CalculatorContext* cc);
+  absl::Status Open(CalculatorContext* cc) override;
   absl::Status Process(CalculatorContext* cc);
 
  private:
@@ -362,7 +356,8 @@ absl::Status TensorsToSegmentationCalculator::Process(
     return absl::InvalidArgumentError(
         "Expect input tensor vector of size 1 or 2.");
   }
-  const auto& input_tensor = *input_tensors.rbegin();
+  const auto& input_tensor =
+      input_tensors.size() == 1 ? input_tensors[0] : input_tensors[1];
   MP_ASSIGN_OR_RETURN(const Shape input_shape,
                       GetImageLikeTensorShape(input_tensor));
 
