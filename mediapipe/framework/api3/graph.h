@@ -553,9 +553,8 @@ class Options<GraphNodeSpecializer, ProtoT> {
   using Specializer = GraphNodeSpecializer;
   using Payload = ProtoT;
 
-  void Set(ProtoT&& proto) {
-    node_builder_->GetOptions<ProtoT>() = std::move(proto);
-  }
+  // Returns node options pointer (never null) for population.
+  ProtoT* Mutable() { return &node_builder_->GetOptions<ProtoT>(); }
 
  protected:
   template <typename V, typename N>
@@ -667,9 +666,8 @@ class Options<GraphGeneratorSpecializer, ProtoT> {
   using Specializer = GraphGeneratorSpecializer;
   using Payload = ProtoT;
 
-  void Set(ProtoT&& proto) {
-    generator_builder_->GetOptions<ProtoT>() = std::move(proto);
-  }
+  // Returns generator options pointer (never null) for population.
+  ProtoT* Mutable() { return &generator_builder_->GetOptions<ProtoT>(); }
 
  protected:
   template <typename V, typename N>

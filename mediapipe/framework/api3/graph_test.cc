@@ -610,11 +610,7 @@ TEST(GenericGraphTest, CanAddLegacyPacketGenerator) {
   SidePacket<float> side_in = graph.side_in.Get();
 
   auto& generator = graph.AddLegacyPacketGenerator<FloatGenerator>();
-  generator.options.Set([]() {
-    mediapipe::GeneratorOptions options;
-    options.set_value(42);
-    return options;
-  }());
+  generator.options.Mutable()->set_value(42);
   generator.side_in.Set(side_in);
   SidePacket<float> side_out = generator.side_out.Get();
 
@@ -774,11 +770,7 @@ TEST(GetOptionsTest, CanAddProto3Options) {
 
   // Node.
   auto& foo = graph.AddNode<SkyLightProto3Node>();
-  foo.options.Set([]() {
-    mediapipe::SkyLightCalculatorOptions opts;
-    opts.set_sky_color("blue");
-    return opts;
-  }());
+  foo.options.Mutable()->set_sky_color("blue");
   foo.base.Set(base);
   foo.side.Set(side);
   Stream<float> foo_out = foo.out.Get();
@@ -828,11 +820,7 @@ TEST(GetOptionsTest, CanAddProto2Options) {
 
   // Node.
   auto& foo = graph.AddNode<NightLightProto2Node>();
-  foo.options.Set([]() {
-    mediapipe::NightLightCalculatorOptions opts;
-    opts.add_num_lights(1);
-    return opts;
-  }());
+  foo.options.Mutable()->add_num_lights(1);
   foo.base.Set(base);
   foo.side.Set(side);
   Stream<float> foo_out = foo.out.Get();
@@ -880,16 +868,8 @@ TEST(GetOptionsTest, AddBothProto23Options) {
   SidePacket<float> side = graph.side.Get().SetName("side");
 
   auto& foo = graph.AddNode<Proto2And3Node>();
-  foo.proto2_options.Set([]() {
-    mediapipe::NightLightCalculatorOptions opts;
-    opts.add_num_lights(1);
-    return opts;
-  }());
-  foo.proto3_options.Set([]() {
-    mediapipe::SkyLightCalculatorOptions opts;
-    opts.set_sky_color("blue");
-    return opts;
-  }());
+  foo.proto2_options.Mutable()->add_num_lights(1);
+  foo.proto3_options.Mutable()->set_sky_color("blue");
   foo.base.Set(base);
   foo.side.Set(side);
   Stream<float> foo_out = foo.out.Get();
