@@ -20,7 +20,7 @@ option java_package = "com.google.odml.infra.proto";
 option java_outer_classname = "TransformerParametersProto";
 
 // The parameters of transformer (https://arxiv.org/pdf/1706.03762.pdf)
-// Next ID: 42
+// Next ID: 45
 message TransformerParameters {
   // Batch size of tensors.
   int32 batch_size = 1;
@@ -277,4 +277,12 @@ message TransformerParameters {
   // range quantization will be applied to the corresponding layers, e.g.,
   // attn_vec_einsum, kv_einsum, q_einsum, mlp/gating_einsum and mlp/linear.
   optional bool apply_srq = 41;
+
+  // Params for skipping layers, used by the submodel.
+  optional int32 layer_skip_start = 42;
+  optional int32 num_layers_skipped = 43;
+
+  // The factor to use when scaling for matformer. A factor of 2 means the layer
+  // will be cut in half.
+  optional int32 matform_factor = 44;
 }
