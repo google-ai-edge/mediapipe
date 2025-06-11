@@ -47,6 +47,18 @@ export declare interface WasmLlmInferenceModule {
   // models (.task format).
   _userProgressListener: ProgressListener | undefined;
   _GetSizeInTokens: (textPtr: number) => number;
+  _MakeSessionForPredict: (
+    samplerParamsPtr: number,
+    samplerParamsSize: number,
+    useVision: boolean,
+  ) => number;
+  _AddTextQueryChunk: (session: number, textPtr: number) => void;
+  _AddImageQueryChunk: (
+    session: number,
+    imageDataPtr: number,
+    width: number,
+    height: number,
+  ) => void;
   ccall: (
     name: string,
     type: string,
@@ -154,7 +166,7 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
     ) {
       this._startLlmEngineProcessing();
       try {
-        await this.uploadToWasmFileSystem(modelStream);
+        await this.uploadToWasmFileSystem(modelStream, 'llm.task');
         // TODO: b/398858545 - Pass llmInferenceGraphOptions to the C function.
         await (this.wasmModule as unknown as WasmLlmInferenceModule).ccall(
           'CreateLlmInferenceEngineConverted',
@@ -207,8 +219,6 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
       userProgressListener?: ProgressListener,
     ): Promise<string> {
       this._startLlmEngineProcessing();
-      // TODO: Allow for vision modality usage.
-      const useVision = false;
       try {
         const result: string[] = [];
         // This additional wrapper on top of userProgressListener is to collect
@@ -224,27 +234,103 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
             userProgressListener(partialResult, done);
           }
         };
-        (
-          this.wasmModule as unknown as WasmLlmInferenceModule
-        )._userProgressListener = progressListener;
+        const llmWasm = this.wasmModule as unknown as WasmLlmInferenceModule;
+        llmWasm._userProgressListener = progressListener;
         // Sampler params
         // OSS build does not support SamplerParameters.serializeBinary(...).
         // tslint:disable-next-line:deprecation
         const samplerParamsBin = samplerParameters.serializeBinary();
-        const samplerParamsPtr = this.wasmModule._malloc(
-          samplerParamsBin.length,
-        );
+        const samplerParamsSize = samplerParamsBin.length;
+        const samplerParamsPtr = this.wasmModule._malloc(samplerParamsSize);
         this.wasmModule.HEAPU8.set(samplerParamsBin, samplerParamsPtr);
-        await this.wrapStringPtrAsync(text, (textPtr: number) => {
-          // TODO: b/398858545 - Pass samplerParameters to the C function.
-          return (this.wasmModule as unknown as WasmLlmInferenceModule).ccall(
-            'GenerateResponse',
-            'void',
-            ['number', 'number', 'number', 'boolean'],
-            [textPtr, samplerParamsPtr, samplerParamsBin.length, useVision],
-            {async: true},
-          );
-        });
+
+        // We break up prompt into text and image chunks based on finding tags
+        // that look like this: <image>'http://some.url/image.ext'</image>. We
+        // split such that it will always alternate between text and image,
+        // starting and ending with text.
+        // TODO: b/424014728 - Design and implement a full vision modality API,
+        // or at the very least, allow for a little more customizability.
+        const promptSplit = text.split(/<image>|<\/image>/);
+
+        // For running a query: we first create our session.
+        const useVision = promptSplit.length > 1;
+        const session = llmWasm._MakeSessionForPredict(
+          samplerParamsPtr,
+          samplerParamsSize,
+          useVision,
+        );
+        const imagesToFree: number[] = [];
+
+        // Then we add all the query chunks in order (text, audio, video)
+        for (let i = 0; i < promptSplit.length; i++) {
+          // This logic only works while we support just text and vision
+          // modalities, since we know we must alternate between them. Adding
+          // audio support will necessitate changing this.
+          if (i % 2 === 0) {
+            // Add text chunk to query
+            this.wrapStringPtr(promptSplit[i], (textPtr: number) => {
+              llmWasm._AddTextQueryChunk(session, textPtr);
+            });
+          } else {
+            // Load image from the given url. Note that we currently must wait
+            // for our image to load so we can pass its bytes into the session
+            // API in order to preserve chunk ordering. This could be made more
+            // efficient in the future.
+            const image = new Image();
+            image.src = promptSplit[i];
+            image.crossOrigin = 'Anonymous';
+
+            // TODO: b/424014728 - Wrap below in try/catch block so we can make
+            // failures more user-friendly.
+            await image.decode();
+
+            // Now we extract the bytes. TODO: b/424221732 - This should also be
+            // made more efficient in the future, ideally by keeping on the GPU.
+            const width = image.width;
+            const height = image.height;
+            const canvas =
+              typeof OffscreenCanvas !== 'undefined'
+                ? new OffscreenCanvas(width, height)
+                : document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d')!;
+            ctx.drawImage(image, 0, 0);
+            const imageData = ctx.getImageData(0, 0, width, height);
+
+            // Next we copy the bytes into C++ heap.
+            const imageDataPtr = this.wasmModule._malloc(
+              imageData.width * imageData.height * 4,
+            );
+            this.wasmModule.HEAPU8.set(imageData.data, imageDataPtr);
+
+            // Add image chunk to query
+            llmWasm._AddImageQueryChunk(
+              session,
+              imageDataPtr,
+              imageData.width,
+              imageData.height,
+            );
+            imagesToFree.push(imageDataPtr);
+          }
+        }
+
+        // And finally we asynchronously run the request processing
+        await llmWasm.ccall(
+          'PredictAndFreeSession',
+          'void',
+          ['number'],
+          [session],
+          {async: true},
+        );
+
+        // After our query has finished, we free all image memory we were
+        // holding.
+        for (const imageDataPtr of imagesToFree) {
+          this.wasmModule._free(imageDataPtr);
+        }
+        imagesToFree.length = 0;
+
         // TODO: b/399215600 - Remove the following trigger of the user progress
         // listener when the underlying LLM Inference Engine is fixed to trigger
         // it at the end of the generation.
@@ -252,10 +338,7 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
           userProgressListener(/* partialResult= */ '', /* done= */ true);
         }
         this.wasmModule._free(samplerParamsPtr);
-
-        (
-          this.wasmModule as unknown as WasmLlmInferenceModule
-        )._userProgressListener = undefined;
+        llmWasm._userProgressListener = undefined;
         // TODO: b/398880215 - return the generated string from the C function.
         return result.join('');
       } finally {
@@ -289,19 +372,21 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
      * Upload the LLM asset to the wasm file system.
      *
      * @param modelStream The stream object for the model to be uploaded.
+     * @param filename The name in the file system where the model will be put.
      */
     async uploadToWasmFileSystem(
       modelStream: ReadableStreamDefaultReader,
+      filename: string,
     ): Promise<void> {
       const fileContent = await streamToUint8Array(modelStream);
       try {
         // Try to delete file as we cannot overwrite an existing file
         // using our current API.
-        this.wasmModule.FS_unlink('llm.task');
+        this.wasmModule.FS_unlink(filename);
       } catch {}
       this.wasmModule.FS_createDataFile(
         '/',
-        'llm.task',
+        filename,
         fileContent,
         /* canRead= */ true,
         /* canWrite= */ false,
