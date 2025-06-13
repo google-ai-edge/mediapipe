@@ -61,7 +61,7 @@ namespace holistic_landmarker {
 
 namespace {
 
-using ::file::Defaults;
+using mediapipe::file::Defaults;
 using ::file::GetTextProto;
 using ::mediapipe::Image;
 using ::mediapipe::api2::builder::GetImageSize;
