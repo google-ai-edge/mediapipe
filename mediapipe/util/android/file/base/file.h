@@ -22,26 +22,8 @@
 
 namespace mediapipe {
 namespace file {
-
-class Options;
-
 bool IsAbsolutePath(const std::string& path);
 Options CreationMode(mode_t permissions);
-
-class Options {
- public:
-  Options() = default;
-
-  void set_permissions(mode_t permissions) { permissions_ = permissions; }
-
-  mode_t permissions() const { return permissions_; }
-
- private:
-  mode_t permissions_ = S_IRWXU | S_IRWXG | S_IRWXO;
-};
-
-inline Options Defaults() { return Options(); }
-
 }  // namespace file
 
 class File {
