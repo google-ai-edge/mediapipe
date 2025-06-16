@@ -33,17 +33,21 @@ using ::tflite::FlatBufferModel;
 
 absl::StatusOr<api2::Packet<TfLiteModelPtr>> TfLiteModelLoader::LoadFromPath(
     const Resources& resources, const std::string& path, bool try_mmap) {
+  return LoadFromPath(
+      resources, path,
+      try_mmap ? std::make_optional(MMapMode::kMMapOrRead) : std::nullopt);
+}
+
+absl::StatusOr<api2::Packet<TfLiteModelPtr>> TfLiteModelLoader::LoadFromPath(
+    const Resources& resources, const std::string& path,
+    std::optional<MMapMode> mmap_mode) {
   std::string model_path = path;
 
   // Load model resource.
   MP_ASSIGN_OR_RETURN(
       std::unique_ptr<Resource> model_resource,
-      resources.Get(
-          model_path,
-          Resources::Options{/* read_as_binary= */ true,
-                             /* mmap_mode= */ try_mmap
-                                 ? std::make_optional(MMapMode::kMMapOrRead)
-                                 : std::nullopt}));
+      resources.Get(model_path,
+                    Resources::Options{/* read_as_binary= */ true, mmap_mode}));
   absl::string_view model_view = model_resource->ToStringView();
   auto model = FlatBufferModel::VerifyAndBuildFromBuffer(model_view.data(),
                                                          model_view.size());

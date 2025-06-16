@@ -17,6 +17,7 @@
 
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string>
 
 #include "absl/status/status.h"
@@ -43,6 +44,11 @@ class TfLiteModelLoader {
   static absl::StatusOr<api2::Packet<TfLiteModelPtr>> LoadFromPath(
       const Resources& resources, const std::string& path,
       bool try_mmap = false);
+
+  // Same as above, but allows to specify the memory mapping mode.
+  static absl::StatusOr<api2::Packet<TfLiteModelPtr>> LoadFromPath(
+      const Resources& resources, const std::string& path,
+      std::optional<MMapMode> mmap_mode);
 };
 
 }  // namespace mediapipe
