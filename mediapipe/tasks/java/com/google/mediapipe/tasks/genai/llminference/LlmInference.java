@@ -64,6 +64,14 @@ public class LlmInference implements AutoCloseable {
       modelSettings.setVisionModelSettings(visionModelSettings.build());
     }
 
+    if (options.audioModelOptions().isPresent()) {
+      AudioModelOptions audioModelOptions = options.audioModelOptions().get();
+      LlmModelSettings.AudioModelSettings.Builder audioModelSettings =
+          LlmModelSettings.AudioModelSettings.newBuilder()
+              .setMaxAudioSequenceLength(audioModelOptions.maxAudioSequenceLength());
+      modelSettings.setAudioModelSettings(audioModelSettings.build());
+    }
+
     if (options.preferredBackend().isPresent()) {
       switch (options.preferredBackend().get()) {
         case DEFAULT:
@@ -233,6 +241,9 @@ public class LlmInference implements AutoCloseable {
       /** Sets the model options to use for vision modality. */
       public abstract Builder setVisionModelOptions(VisionModelOptions visionModelOptions);
 
+      /** Sets the model options to use for audio modality. */
+      public abstract Builder setAudioModelOptions(AudioModelOptions audioModelOptions);
+
       /** Sets the preferred backend to use for inference. */
       public abstract Builder setPreferredBackend(Backend preferredBackend);
 
@@ -268,6 +279,9 @@ public class LlmInference implements AutoCloseable {
 
     /** The model options to for vision modality. */
     public abstract Optional<VisionModelOptions> visionModelOptions();
+
+    /** The model options to for audio modality. */
+    public abstract Optional<AudioModelOptions> audioModelOptions();
 
     /** Returns the preferred backend to use for inference. */
     public abstract Optional<Backend> preferredBackend();

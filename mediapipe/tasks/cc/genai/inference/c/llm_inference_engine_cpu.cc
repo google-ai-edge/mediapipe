@@ -595,6 +595,13 @@ ODML_EXPORT int LlmInferenceEngine_Session_AddImage(
   return 12;
 }
 
+ODML_EXPORT int LlmInferenceEngine_Session_AddAudio(
+    LlmInferenceEngine_Engine* engine, LlmInferenceEngine_Session* session,
+    const char* audio_bytes, int audio_bytes_size, char** error_msg) {
+  *error_msg = strdup("Not implemented");
+  return 12;
+}
+
 int LlmInferenceEngine_Session_PredictSync(LlmInferenceEngine_Session* session,
                                            LlmResponseContext* response_context,
                                            char** error_msg) {

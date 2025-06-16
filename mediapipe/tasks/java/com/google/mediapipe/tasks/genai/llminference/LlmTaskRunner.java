@@ -186,6 +186,20 @@ final class LlmTaskRunner implements AutoCloseable {
   }
 
   /**
+   * Adds a new audio to the session context.
+   *
+   * @param session The LlmSession to add the audio spectrum to.
+   * @param rawAudioData A array of byte values representing the audio data.
+   */
+  public void addAudio(LlmSession session, byte[] rawAudioData) {
+    if (rawAudioData == null) {
+      throw new IllegalArgumentException("Audio data cannot be null.");
+    }
+
+    nativeAddAudio(engineHandle, session.sessionHandle, rawAudioData);
+  }
+
+  /**
    * Returns the SentencePieceProcessor associated with the LLM engine.
    *
    * <p>The returned SentencePieceProcessor is owned by the LLM engine and should not be deleted by
@@ -381,4 +395,7 @@ final class LlmTaskRunner implements AutoCloseable {
   private static native long nativeGetSentencePieceProcessor(long enginePointer);
 
   private static native void nativeUpdateSessionConfig(long sessionPointer, byte[] config);
+
+  private static native void nativeAddAudio(
+      long enginePointer, long sessionPointer, byte[] rawAudioData);
 }

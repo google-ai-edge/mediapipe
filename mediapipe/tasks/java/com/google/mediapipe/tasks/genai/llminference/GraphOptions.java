@@ -15,11 +15,15 @@ public abstract class GraphOptions {
   /** Returns whether to configure the graph to include the vision modality. */
   public abstract boolean enableVisionModality();
 
+  /** Returns whether to configure the graph to include the audio modality. */
+  public abstract boolean enableAudioModality();
+
   /** Returns a new {@link Builder} instance. */
   public static Builder builder() {
     return new AutoValue_GraphOptions.Builder()
         .setIncludeTokenCostCalculator(true)
-        .setEnableVisionModality(false);
+        .setEnableVisionModality(false)
+        .setEnableAudioModality(false);
   }
 
   /** Builder for {@link GraphConfig}. */
@@ -30,6 +34,9 @@ public abstract class GraphOptions {
 
     /** Sets whether to configure the graph to include the vision modality. */
     public abstract Builder setEnableVisionModality(boolean enableVisionModality);
+
+    /** Sets whether to configure the graph to include the audio modality. */
+    public abstract Builder setEnableAudioModality(boolean enableAudioModality);
 
     /** AutoValue generated builder method. */
     abstract GraphOptions autoBuild();

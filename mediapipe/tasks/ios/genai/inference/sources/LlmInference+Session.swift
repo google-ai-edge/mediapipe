@@ -58,6 +58,7 @@ extension LlmInference {
         lora_path: nil,
         include_token_cost_calculator: true,
         enable_vision_modality: options.enableVisionModality,
+        enable_audio_modality: false,
         prompt_templates: nil)
 
       /// If `loraPath` is != nil, modify session config with the corresponding C string and invoke

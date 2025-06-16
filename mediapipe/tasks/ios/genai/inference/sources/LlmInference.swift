@@ -79,7 +79,9 @@ import MediaPipeTasksGenAIC
                 num_draft_tokens: 0,
                 wait_for_weight_uploads: options.waitForWeightUploads,
                 use_submodel: options.useSubmodel,
-                preferred_backend: kLlmPreferredBackendDefault)
+                preferred_backend: kLlmPreferredBackendDefault,
+                enable_audio_modality: false,
+                max_audio_sequence_length: 0)
               return try LlmTaskRunner(modelSettings: modelSetting)
             }
           }

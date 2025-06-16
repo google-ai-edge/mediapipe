@@ -79,6 +79,14 @@ JNIEXPORT void JNICALL JNI_METHOD(nativeAddImage)(JNIEnv *, jclass, jlong,
 
 /*
  * Class:     com_google_mediapipe_tasks_genai_llminference_LlmTaskRunner
+ * Method:    nativeAddAudio
+ * Signature: (JLL[B)V
+ */
+JNIEXPORT void JNICALL JNI_METHOD(nativeAddAudio)(JNIEnv *, jclass, jlong,
+                                                  jlong, jbyteArray);
+
+/*
+ * Class:     com_google_mediapipe_tasks_genai_llminference_LlmTaskRunner
  * Method:    nativePredictSync
  * Signature: (JL)[B
  */

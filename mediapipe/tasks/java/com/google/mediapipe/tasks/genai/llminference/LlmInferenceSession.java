@@ -81,6 +81,7 @@ public class LlmInferenceSession implements AutoCloseable {
           LlmSessionConfig.GraphConfig.newBuilder()
               .setIncludeTokenCostCalculator(graphOptions.includeTokenCostCalculator())
               .setEnableVisionModality(graphOptions.enableVisionModality())
+              .setEnableAudioModality(graphOptions.enableAudioModality())
               .build();
       sessionConfig.setGraphConfig(graphConfig);
     }
@@ -125,6 +126,19 @@ public class LlmInferenceSession implements AutoCloseable {
   public void addImage(MPImage image) {
     validateState();
     taskRunner.addImage(session, image);
+  }
+
+  /**
+   * Add an audio to the session.
+   *
+   * <p>Note: Only mono channel .wav audio is supported.
+   *
+   * @param audioData a byte array of audio data.
+   * @throws IllegalStateException if there is an internal error.
+   */
+  public void addAudio(byte[] audioData) {
+    validateState();
+    taskRunner.addAudio(session, audioData);
   }
 
   /**
