@@ -36,7 +36,7 @@ namespace vision {
 namespace face_detector {
 namespace {
 
-using ::file::Defaults;
+using mediapipe::file::Defaults;
 using ::mediapipe::file::JoinPath;
 using ::mediapipe::tasks::components::containers::NormalizedKeypoint;
 using ::mediapipe::tasks::vision::core::ImageProcessingOptions;
