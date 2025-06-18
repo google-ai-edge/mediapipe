@@ -20,7 +20,7 @@ option java_package = "com.google.odml.infra.proto";
 option java_outer_classname = "TransformerParametersProto";
 
 // The parameters of transformer (https://arxiv.org/pdf/1706.03762.pdf)
-// Next ID: 45
+// Next ID: 46
 message TransformerParameters {
   // Batch size of tensors.
   int32 batch_size = 1;
@@ -285,4 +285,7 @@ message TransformerParameters {
   // The factor to use when scaling for matformer. A factor of 2 means the layer
   // will be cut in half.
   optional int32 matform_factor = 44;
+
+  // Whether to scale all LoRA weights by their inverse rank.
+  optional bool scale_lora = 45;
 }
