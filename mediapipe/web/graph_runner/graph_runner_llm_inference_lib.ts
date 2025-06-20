@@ -52,6 +52,7 @@ export declare interface WasmLlmInferenceModule {
     samplerParamsSize: number,
     useVision: boolean,
   ) => number;
+  _FreeSession: (session: number) => void;
   _AddTextQueryChunk: (session: number, textPtr: number) => void;
   _AddImageQueryChunk: (
     session: number,
@@ -89,6 +90,8 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
     // old-style '_' to indicate private.
     // tslint:disable-next-line:enforce-name-casing
     _isLlmEngineProcessing = false;
+    // tslint:disable-next-line:enforce-name-casing
+    _visionKeepaliveSession = 0;
 
     // tslint:disable-next-line:enforce-name-casing
     _startLlmEngineProcessing() {
@@ -254,6 +257,7 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
 
         // For running a query: we first create our session.
         const useVision = promptSplit.length > 1;
+
         const session = llmWasm._MakeSessionForPredict(
           samplerParamsPtr,
           samplerParamsSize,
@@ -316,13 +320,23 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
         }
 
         // And finally we asynchronously run the request processing
-        await llmWasm.ccall(
-          'PredictAndFreeSession',
-          'void',
-          ['number'],
-          [session],
-          {async: true},
-        );
+        await llmWasm.ccall('PredictSession', 'void', ['number'], [session], {
+          async: true,
+        });
+
+        // Vision runners are lazily loaded during the first query that uses
+        // them, and are freed automatically afterwards. We cannot afford to
+        // reload them though (especially the vision encoder, see b/422851454
+        // and b/425860520), so we intentionally leave the last used vision
+        // session alive and unfreed. TODO: b/424014728 - Fix this.
+        if (useVision) {
+          if (this._visionKeepaliveSession !== 0) {
+            llmWasm._FreeSession(this._visionKeepaliveSession);
+          }
+          this._visionKeepaliveSession = session;
+        } else {
+          llmWasm._FreeSession(session);
+        }
 
         // After our query has finished, we free all image memory we were
         // holding.
