@@ -22,6 +22,7 @@
 
 // TODO: Move protos in another CL after the C++ code migration.
 #include "absl/container/flat_hash_map.h"
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/graph_service.h"
@@ -60,6 +61,11 @@ class CalculatorContract {
 
   // Returns the name given to this node.
   const std::string& GetNodeName() const { return node_name_; }
+
+  // Returns the maximum number of invocations that can be executed in parallel.
+  int GetMaxInFlight() const {
+    return max_in_flight_ == 0 ? 1 : max_in_flight_;
+  }
 
   // Returns the options given to this calculator.  Template argument T must
   // be the type of the protobuf extension message or the protobuf::Any
@@ -209,6 +215,7 @@ class CalculatorContract {
   std::string node_name_;
   ServiceReqMap service_requests_;
   bool process_timestamps_ = false;
+  int max_in_flight_ = 0;
   TimestampDiff timestamp_offset_ = TimestampDiff::Unset();
 
   friend class CalculatorNode;

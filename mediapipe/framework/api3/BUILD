@@ -17,6 +17,7 @@ cc_library(
         "//mediapipe/framework/api3/internal:contract_to_tuple",
         "//mediapipe/framework/api3/internal:port_base",
         "//mediapipe/framework/api3/internal:specializers",
+        "@com_google_absl//absl/log:absl_log",
     ],
 )
 
@@ -219,6 +220,7 @@ cc_library(
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/api3/internal:contract_validator",
         "//mediapipe/framework/api3/internal:has_update_contract",
+        "//mediapipe/framework/port:ret_check",
         "@com_google_absl//absl/status",
     ],
 )
@@ -245,7 +247,9 @@ cc_test(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/tool:options_map",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/strings:string_view",
+        "@com_google_absl//absl/synchronization",
     ],
 )
 

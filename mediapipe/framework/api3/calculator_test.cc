@@ -499,4 +499,22 @@ TEST(CalculatorTest, FailsProperlyForInvalidGeneratorCalculator) {
                        testing::HasSubstr("`Process` must be implemented")));
 }
 
+TEST(CalculatorTest, FailsOnMaxInFlightConfigForSimultaneousRuns) {
+  CalculatorGraphConfig config = ParseTextProtoOrDie<CalculatorGraphConfig>(
+      R"pb(
+        input_stream: "IN:in"
+        node {
+          calculator: "PassThrough"
+          input_stream: "IN:in"
+          output_stream: "OUT:out"
+          max_in_flight: 20
+        }
+      )pb");
+
+  CalculatorGraph graph;
+  EXPECT_THAT(graph.Initialize(std::move(config)),
+              StatusIs(absl::StatusCode::kInternal,
+                       testing::HasSubstr("single invocation")));
+}
+
 }  // namespace mediapipe::api3

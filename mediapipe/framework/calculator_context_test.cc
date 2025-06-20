@@ -18,10 +18,10 @@
 #include <string>
 
 // TODO: Move protos in another CL after the C++ code migration.
-#include "absl/strings/ascii.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_state.h"
+#include "mediapipe/framework/deps/no_destructor.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
@@ -35,8 +35,8 @@ namespace mediapipe {
 
 namespace test_ns {
 
-std::string Proto3GraphStr() {
-  static std::string kProto3GraphStr = R"(
+const std::string& Proto3GraphStr() {
+  static NoDestructor<std::string> kProto3GraphStr(R"(
       node {
         calculator: "NightLightCalculator"
         input_side_packet: "input_value"
@@ -74,6 +74,7 @@ std::string Proto3GraphStr() {
         input_side_packet: "label"
         input_stream: "values"
         output_stream: "labelled_timestamps"
+        max_in_flight: 10
         node_options: {
           [type.googleapis.com/mediapipe.SkyLightCalculatorOptions] {
             sky_color: "light_blue"
@@ -88,14 +89,16 @@ std::string Proto3GraphStr() {
         input_stream: "labelled_timestamps"
         output_stream: "timestamp_vectors"
       }
-  )";
-  return kProto3GraphStr;
+  )");
+  return *kProto3GraphStr;
 }
 
 std::unique_ptr<CalculatorState> MakeCalculatorState(
-    const CalculatorGraphConfig::Node& node_config, int node_id) {
+    const CalculatorGraphConfig::Node& node_config, int node_id,
+    std::string node_name = "Node") {
   auto result = std::make_unique<CalculatorState>(
-      "Node", node_id, "Calculator", node_config, /*profiling_context=*/nullptr,
+      node_name, node_id, "Calculator", node_config,
+      /*profiling_context=*/nullptr,
       /*graph_service_manager=*/nullptr);
   return result;
 }
@@ -107,20 +110,31 @@ std::unique_ptr<CalculatorContext> MakeCalculatorContext(
                                              tool::CreateTagMap({}).value());
 }
 
-TEST(CalculatorTest, NodeId) {
+TEST(CalculatorTest, NodeMethods) {
   mediapipe::CalculatorGraphConfig config =
       ParseTextProtoOrDie<mediapipe::CalculatorGraphConfig>(Proto3GraphStr());
 
-  auto calculator_state_0 = MakeCalculatorState(config.node(0), 0);
+  auto calculator_state_0 =
+      MakeCalculatorState(config.node(0), /*node_id=*/0, /*node_name=*/"Node0");
   auto cc_0 = MakeCalculatorContext(&*calculator_state_0);
-  auto calculator_state_1 = MakeCalculatorState(config.node(1), 1);
+  auto calculator_state_1 =
+      MakeCalculatorState(config.node(1), /*node_id=*/1, /*node_name=*/"Node1");
   auto cc_1 = MakeCalculatorContext(&*calculator_state_1);
-  auto calculator_state_3 = MakeCalculatorState(config.node(3), 3);
+  auto calculator_state_3 =
+      MakeCalculatorState(config.node(3), /*node_id=*/3, /*node_name=*/"Node3");
   auto cc_3 = MakeCalculatorContext(&*calculator_state_3);
 
-  EXPECT_EQ(cc_0->NodeId(), calculator_state_0->NodeId());
-  EXPECT_EQ(cc_1->NodeId(), calculator_state_1->NodeId());
-  EXPECT_EQ(cc_3->NodeId(), calculator_state_3->NodeId());
+  EXPECT_EQ(cc_0->NodeId(), 0);
+  EXPECT_EQ(cc_0->NodeName(), "Node0");
+  EXPECT_EQ(cc_0->NodeMaxInFlight(), 0);
+
+  EXPECT_EQ(cc_1->NodeId(), 1);
+  EXPECT_EQ(cc_1->NodeName(), "Node1");
+  EXPECT_EQ(cc_1->NodeMaxInFlight(), 0);
+
+  EXPECT_EQ(cc_3->NodeId(), 3);
+  EXPECT_EQ(cc_3->NodeName(), "Node3");
+  EXPECT_EQ(cc_3->NodeMaxInFlight(), 10);
 }
 
 TEST(CalculatorTest, GetOptions) {

@@ -161,8 +161,7 @@ absl::Status CalculatorNode::Initialize(
         "node_ref is not a calculator or packet generator");
   }
 
-  max_in_flight_ = node_config->max_in_flight();
-  max_in_flight_ = max_in_flight_ ? max_in_flight_ : 1;
+  max_in_flight_ = node_type_info_->Contract().GetMaxInFlight();
   if (!node_config->executor().empty()) {
     executor_ = node_config->executor();
   }

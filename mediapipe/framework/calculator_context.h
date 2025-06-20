@@ -59,6 +59,7 @@ class CalculatorContext {
 
   const std::string& NodeName() const;
   int NodeId() const;
+  int NodeMaxInFlight() const;
   const std::string& CalculatorType() const;
   // Returns the options given to this calculator. The Calculator or
   // CalculatorBase implementation may get its options by calling

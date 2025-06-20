@@ -207,7 +207,9 @@ cc_library(
     ],
     deps = [
         ":calculator_state",
+        ":collection_item_id",
         ":counter",
+        ":counter_factory",
         ":graph_service",
         ":graph_service_manager",
         ":input_stream_shard",
@@ -264,6 +266,7 @@ cc_library(
         "//mediapipe/framework/tool:tag_map",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -1603,12 +1606,12 @@ cc_test(
         ":calculator_context",
         ":calculator_state",
         ":resources",
+        "//mediapipe/framework/deps:no_destructor",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/testdata:night_light_calculator_cc_proto",
         "//mediapipe/framework/testdata:sky_light_calculator_cc_proto",
         "//mediapipe/framework/tool:tag_map_helper",
-        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
     ],
 )

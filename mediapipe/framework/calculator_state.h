@@ -74,7 +74,8 @@ class CalculatorState {
     return options_.Has<T>();
   }
   const std::string& NodeName() const { return node_name_; }
-  const int& NodeId() const { return node_id_; }
+  int NodeId() const { return node_id_; }
+  int NodeMaxInFlight() const { return node_config_.max_in_flight(); }
 
   ////////////////////////////////////////
   // Interface for Calculator.

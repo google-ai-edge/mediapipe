@@ -15,6 +15,7 @@
 #ifndef MEDIAPIPE_FRAMEWORK_API3_CALCULATOR_H_
 #define MEDIAPIPE_FRAMEWORK_API3_CALCULATOR_H_
 
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -25,6 +26,7 @@
 #include "mediapipe/framework/api3/internal/contract_validator.h"
 #include "mediapipe/framework/api3/internal/has_update_contract.h"
 #include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/port/ret_check.h"
 
 namespace mediapipe::api3 {
 
@@ -259,6 +261,9 @@ class Calculator : public CalculatorBase,
   static constexpr auto kCalculatorName = NodeT::GetRegistrationName();
 
   static absl::Status GetContract(mediapipe::CalculatorContract* cc) {
+    RET_CHECK_EQ(cc->GetMaxInFlight(), 1)
+        << "Only single invocation in flight is allowed.";
+
     std::vector<absl::Status> statuses;
     auto store_status = [&statuses](absl::Status status) {
       if (!status.ok()) statuses.push_back(std::move(status));
@@ -289,19 +294,30 @@ class Calculator : public CalculatorBase,
   }
 
   absl::Status Open(mediapipe::CalculatorContext* cc) final {
-    CalculatorContext<NodeT> specialized_context(*cc);
-    return Open(specialized_context);
+    context_.emplace(*cc);
+    absl::Status status = Open(*context_);
+    context_->Clear();
+    return status;
   }
 
   absl::Status Process(mediapipe::CalculatorContext* cc) final {
-    CalculatorContext<NodeT> specialized_context(*cc);
-    return Process(specialized_context);
+    context_->Reset(*cc);
+    absl::Status status = Process(*context_);
+    context_->Clear();
+    return status;
   }
 
   absl::Status Close(mediapipe::CalculatorContext* cc) final {
-    CalculatorContext<NodeT> specialized_context(*cc);
-    return Close(specialized_context);
+    context_->Reset(*cc);
+    absl::Status status = Close(*context_);
+    context_->Clear();
+    return status;
   }
+
+ private:
+  // Specialized `CalculatorContext<...>` to enable reuse across repeated
+  // `Process` invocations.
+  std::optional<CalculatorContext<NodeT>> context_;
 };
 
 }  // namespace mediapipe::api3

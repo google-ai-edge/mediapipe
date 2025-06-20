@@ -128,10 +128,14 @@ void SetPacketGenerator(V& v, G& generator) {
   v.generator_builder_ = &generator;
 }
 
-template <typename V, typename CC>
-void SetCalculatorContext(V& v, CC& context) {
-  ABSL_CHECK(v.context_ == nullptr);
-  v.context_ = &context;
+struct CalculatorContextHolder {
+  mediapipe::CalculatorContext* context = nullptr;
+};
+
+template <typename V, typename H>
+void SetCalculatorContextHolder(V& v, H& holder) {
+  ABSL_CHECK(v.holder_ == nullptr);
+  v.holder_ = &holder;
 }
 
 template <typename V>
@@ -186,23 +190,23 @@ class Port<ContextSpecializer, FieldT> : public TagAndIndex {
   // IsConnected should be only public for "Optional" ports.
   bool IsConnected() const {
     if constexpr (std::is_same_v<FieldT, InputStreamField>) {
-      return HasTagAndIndex(context_->Inputs(), *this);
+      return HasTagAndIndex(holder_->context->Inputs(), *this);
     } else if constexpr (std::is_same_v<FieldT, OutputStreamField>) {
-      return HasTagAndIndex(context_->Outputs(), *this);
+      return HasTagAndIndex(holder_->context->Outputs(), *this);
     } else if constexpr (std::is_same_v<FieldT, InputSidePacketField>) {
-      return HasTagAndIndex(context_->InputSidePackets(), *this);
+      return HasTagAndIndex(holder_->context->InputSidePackets(), *this);
     } else if constexpr (std::is_same_v<FieldT, OutputSidePacketField>) {
-      return HasTagAndIndex(context_->OutputSidePackets(), *this);
+      return HasTagAndIndex(holder_->context->OutputSidePackets(), *this);
     } else {
       static_assert(dependent_false<FieldT>::value, "Unexpected field type.");
     }
   }
 
-  template <typename V, typename CC>
-  friend void SetCalculatorContext(V& v, CC& context);
+  template <typename V, typename H>
+  friend void SetCalculatorContextHolder(V& v, H& holder);
 
   // Not owned, set by the framework.
-  mediapipe::CalculatorContext* context_ = nullptr;
+  CalculatorContextHolder* holder_ = nullptr;
 };
 
 template <typename FieldT>
@@ -292,13 +296,13 @@ class RepeatedBase<ContextSpecializer, FieldT> : public TagAndIndex {
 
   int Count() const {
     if constexpr (std::is_same_v<FieldT, InputStreamField>) {
-      return context_->Inputs().NumEntries(Tag());
+      return holder_->context->Inputs().NumEntries(Tag());
     } else if constexpr (std::is_same_v<FieldT, OutputStreamField>) {
-      return context_->Outputs().NumEntries(Tag());
+      return holder_->context->Outputs().NumEntries(Tag());
     } else if constexpr (std::is_same_v<FieldT, InputSidePacketField>) {
-      return context_->InputSidePackets().NumEntries(Tag());
+      return holder_->context->InputSidePackets().NumEntries(Tag());
     } else if constexpr (std::is_same_v<FieldT, OutputSidePacketField>) {
-      return context_->OutputSidePackets().NumEntries(Tag());
+      return holder_->context->OutputSidePackets().NumEntries(Tag());
     } else {
       static_assert(dependent_false<FieldT>::value, "Unexpected field type.");
     }
@@ -306,14 +310,14 @@ class RepeatedBase<ContextSpecializer, FieldT> : public TagAndIndex {
 
  protected:
   void InitPort(Port<ContextSpecializer, FieldT>& p) const {
-    SetCalculatorContext(p, *context_);
+    SetCalculatorContextHolder(p, *holder_);
   }
 
-  template <typename V, typename CC>
-  friend void SetCalculatorContext(V& v, CC& context);
+  template <typename V, typename H>
+  friend void SetCalculatorContextHolder(V& v, H& holder);
 
   // Not owned, set by the framework.
-  mediapipe::CalculatorContext* context_ = nullptr;
+  CalculatorContextHolder* holder_ = nullptr;
 };
 
 template <typename FieldT>
