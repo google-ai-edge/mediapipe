@@ -775,9 +775,20 @@ cc_library(
     deps = [
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/port:ret_check",
-        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/status",
     ],
     alwayslink = 1,
+)
+
+cc_test(
+    name = "default_side_packet_calculator_test",
+    srcs = ["default_side_packet_calculator_test.cc"],
+    deps = [
+        ":default_side_packet_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+    ],
 )
 
 cc_library(
