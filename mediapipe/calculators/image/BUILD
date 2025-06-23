@@ -621,6 +621,33 @@ cc_library(
     alwayslink = 1,
 )
 
+cc_test(
+    name = "mask_overlay_calculator_test",
+    srcs = ["mask_overlay_calculator_test.cc"],
+    data = ["//mediapipe/calculators/image/testdata:test_images"],
+    tags = [
+        "angle",
+        "requires-gpu-nvidia",
+    ],
+    deps = [
+        ":mask_overlay_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/port:gtest",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/tool:test_util",
+        "//mediapipe/gpu:gpu_buffer_to_image_frame_calculator",
+        "//mediapipe/gpu:image_frame_to_gpu_buffer_calculator",
+        "//third_party:opencv",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
 cc_library(
     name = "feature_detector_calculator",
     srcs = ["feature_detector_calculator.cc"],
