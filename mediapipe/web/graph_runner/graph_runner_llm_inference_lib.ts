@@ -12,6 +12,8 @@ const DEFAULT_TOP_K = 40;
 const DEFAULT_FORCE_F32 = false;
 const DEFAULT_MAX_NUM_IMAGES = 0;
 
+const TOKENS_PER_IMAGE = 260;
+
 /**
  * We extend from a GraphRunner constructor. This ensures our mixin has
  * access to the wasmModule, among other things. The `any` type is required for
@@ -369,14 +371,32 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
      */
     sizeInTokens(text: string): number {
       this._startLlmEngineProcessing();
+      // First we chop out all image pieces. Since there's only one supported
+      // vision model, which uses a fixed number of tokens per image, we simply
+      // add that to our count manually. But once the engine supports
+      // GetSizeInTokens for non-text modalities, this should be fixed.
+      // TODO: b/426691212 - Remove this workaround once that functionality
+      // exists.
+      const promptSplit = text.split(/<image>|<\/image>/);
+      let tokensFromImages = 0;
+      let promptWithoutImages = '';
+      for (let i = 0; i < promptSplit.length; i++) {
+        // This only works while we support just image+text modalities. See
+        // above comments.
+        if (i % 2 === 0) {
+          promptWithoutImages += promptSplit[i];
+        } else {
+          tokensFromImages += TOKENS_PER_IMAGE;
+        }
+      }
       try {
         let result: number;
-        this.wrapStringPtr(text, (textPtr: number) => {
+        this.wrapStringPtr(promptWithoutImages, (textPtr: number) => {
           result = (
             this.wasmModule as unknown as WasmLlmInferenceModule
           )._GetSizeInTokens(textPtr);
         });
-        return result!;
+        return tokensFromImages + result!;
       } finally {
         this._endLlmEngineProcessing();
       }
