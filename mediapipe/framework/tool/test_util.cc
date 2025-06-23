@@ -57,8 +57,7 @@ bool EqualWithTolerance(const T value1, const T value2, const T max_diff) {
 
 template <typename T>
 absl::Status CompareDiff(const ImageFrame& image1, const ImageFrame& image2,
-                         const T max_color_diff, const T max_alpha_diff,
-                         const float max_avg_diff,
+                         const ImageFrameComparisonOptions& options,
                          std::unique_ptr<ImageFrame>& diff_image) {
   // Verify image byte depth matches expected byte depth.
   ABSL_CHECK_EQ(sizeof(T), image1.ByteDepth());
@@ -101,11 +100,11 @@ absl::Status CompareDiff(const ImageFrame& image1, const ImageFrame& image2,
         const float diff =
             std::abs(static_cast<float>(value1) - static_cast<float>(value2));
         if (channel < 3) {
-          different_color_components += diff > max_color_diff;
+          different_color_components += diff > options.max_color_diff;
           max_color_diff_found = std::max(max_color_diff_found, diff);
           pixel_diff[channel] = diff;
         } else {
-          different_alpha_components += diff > max_alpha_diff;
+          different_alpha_components += diff > options.max_alpha_diff;
           max_alpha_diff_found = std::max(max_alpha_diff_found, diff);
           pixel_diff[channel] = 255;  // opaque to see color difference
         }
@@ -122,18 +121,20 @@ absl::Status CompareDiff(const ImageFrame& image1, const ImageFrame& image2,
   }
 
   std::vector<std::string> errors;
-  if (different_color_components)
+  if (different_color_components > options.max_num_pixels_above_limit)
     errors.push_back(absl::Substitute(
         "$0 color components differences above limit of $1, max found was $2",
-        different_color_components, max_color_diff, max_color_diff_found));
-  if (different_alpha_components)
+        different_color_components, options.max_color_diff,
+        max_color_diff_found));
+  if (different_alpha_components > options.max_num_pixels_above_limit)
     errors.push_back(absl::Substitute(
         "$0 alpha components differences above limit of $1, max found was $2",
-        different_alpha_components, max_alpha_diff, max_alpha_diff_found));
-  if (avg_diff > max_avg_diff)
+        different_alpha_components, options.max_alpha_diff,
+        max_alpha_diff_found));
+  if (avg_diff > options.max_avg_diff)
     errors.push_back(
         absl::Substitute("the average component difference is $0 (limit: $1)",
-                         avg_diff, max_avg_diff));
+                         avg_diff, options.max_avg_diff));
 
   if (!errors.empty())
     return absl::InternalError(
@@ -156,9 +157,7 @@ std::string GetBinaryDirectory() {
 
 absl::Status CompareImageFrames(const ImageFrame& image1,
                                 const ImageFrame& image2,
-                                const float max_color_diff,
-                                const float max_alpha_diff,
-                                const float max_avg_diff,
+                                const ImageFrameComparisonOptions& options,
                                 std::unique_ptr<ImageFrame>& diff_image) {
   auto IsSupportedImageFormatComparison = [](ImageFormat::Format one,
                                              ImageFormat::Format two) {
@@ -186,29 +185,48 @@ absl::Status CompareImageFrames(const ImageFrame& image1,
     case ImageFormat::SRGB:
     case ImageFormat::SRGBA:
     case ImageFormat::LAB8:
-      return CompareDiff<uint8_t>(image1, image2, max_color_diff,
-                                  max_alpha_diff, max_avg_diff, diff_image);
+      return CompareDiff<uint8_t>(image1, image2, options, diff_image);
     case ImageFormat::GRAY16:
     case ImageFormat::SRGB48:
     case ImageFormat::SRGBA64:
-      return CompareDiff<uint16_t>(image1, image2, max_color_diff,
-                                   max_alpha_diff, max_avg_diff, diff_image);
+      return CompareDiff<uint16_t>(image1, image2, options, diff_image);
     case ImageFormat::VEC32F1:
     case ImageFormat::VEC32F2:
     case ImageFormat::VEC32F4:
-      return CompareDiff<float>(image1, image2, max_color_diff, max_alpha_diff,
-                                max_avg_diff, diff_image);
+      return CompareDiff<float>(image1, image2, options, diff_image);
     default:
       ABSL_LOG(FATAL) << ImageFrame::InvalidFormatString(image1.Format());
   }
+}
+
+absl::Status CompareImageFrames(const ImageFrame& image1,
+                                const ImageFrame& image2,
+                                const float max_color_diff,
+                                const float max_alpha_diff,
+                                const float max_avg_diff,
+                                std::unique_ptr<ImageFrame>& diff_image) {
+  return CompareImageFrames(image1, image2,
+                            ImageFrameComparisonOptions{
+                                .max_color_diff = max_color_diff,
+                                .max_alpha_diff = max_alpha_diff,
+                                .max_avg_diff = max_avg_diff,
+                                .max_num_pixels_above_limit = 0,
+                            },
+                            diff_image);
 }
 
 bool CompareImageFrames(const ImageFrame& image1, const ImageFrame& image2,
                         const float max_color_diff, const float max_alpha_diff,
                         const float max_avg_diff, std::string* error_message) {
   std::unique_ptr<ImageFrame> diff_image;
-  auto status = CompareImageFrames(image1, image2, max_color_diff,
-                                   max_alpha_diff, max_avg_diff, diff_image);
+  auto status = CompareImageFrames(image1, image2,
+                                   {
+                                       .max_color_diff = max_color_diff,
+                                       .max_alpha_diff = max_alpha_diff,
+                                       .max_avg_diff = max_avg_diff,
+                                       .max_num_pixels_above_limit = 0,
+                                   },
+                                   diff_image);
   if (status.ok()) return true;
   if (error_message) *error_message = std::string(status.message());
   return false;
@@ -229,9 +247,7 @@ absl::Status CompareAndSaveImageOutput(
                       SavePngTestOutput(**expected, "expected"));
 
   std::unique_ptr<ImageFrame> diff_img;
-  auto status = CompareImageFrames(**expected, actual, options.max_color_diff,
-                                   options.max_alpha_diff, options.max_avg_diff,
-                                   diff_img);
+  auto status = CompareImageFrames(**expected, actual, options, diff_img);
   if (diff_img) {
     MP_ASSIGN_OR_RETURN(auto diff_img_path,
                         SavePngTestOutput(*diff_img, "diff"));
