@@ -464,6 +464,18 @@ cc_library(
     alwayslink = 1,
 )
 
+cc_test(
+    name = "counting_source_calculator_test",
+    srcs = ["counting_source_calculator_test.cc"],
+    deps = [
+        ":counting_source_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "@com_google_absl//absl/status",
+    ],
+)
+
 cc_library(
     name = "make_pair_calculator",
     srcs = ["make_pair_calculator.cc"],
@@ -1336,7 +1348,6 @@ cc_test(
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
         "@com_google_absl//absl/strings:str_format",
-        "@com_google_googletest//:gtest_main",
     ],
 )
 
