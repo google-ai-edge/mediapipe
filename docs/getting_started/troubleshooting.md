@@ -411,7 +411,7 @@ applications, and these tensors may be upside-down on some platforms, see
 (https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/gpu/gpu_origin.proto).
 
 The file [mediapipe/framework/debug/logging.h]
-(https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/gpu/gpu_origin.proto) contains useful
+(https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/debug/logging.h) contains useful
 tools to quickly and easily visualize tensors in the command line terminal. As
 this is a text-based visualization, no graphical user interface is needed, so it
 even works over SSH. The command
