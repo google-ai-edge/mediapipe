@@ -19,7 +19,6 @@ import static java.lang.Math.max;
 import android.graphics.SurfaceTexture;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
-import android.os.SystemClock;
 import android.util.Log;
 import com.google.mediapipe.framework.AppTextureFrame;
 import com.google.mediapipe.framework.GlSyncToken;
@@ -211,25 +210,6 @@ public class ExternalTextureConverter implements TextureFrameProducer {
     thread.setTimestampOffsetNanos(offsetInNanos);
   }
 
-  /**
-   * Enable overriding the frame timestamps with system time (including deep sleep time). he default
-   * behavior is false. If set to {@code true}, both {@code setShouldAdjustTimestamps} and {@code
-   * setTimestampOffsetNanos} will be ignored.
-   *
-   * @param overrideTimestampOffset Sets a time offset relative to system time.
-   */
-  public void enableOverrideTimestampWithSystemTime(Duration overrideTimestampOffset) {
-    thread.enableOverrideTimestampWithSystemTime(overrideTimestampOffset);
-  }
-
-  /**
-   * Disable overriding the frame timestamps with system time. The previously set override timestamp
-   * offset will be set to 0.
-   */
-  public void disableOverrideTimestampWithSystemTime() {
-    thread.disableOverrideTimestampWithSystemTime();
-  }
-
   public ExternalTextureConverter(EGLContext parentContext) {
     this(parentContext, DEFAULT_NUM_BUFFERS);
   }
@@ -347,8 +327,6 @@ public class ExternalTextureConverter implements TextureFrameProducer {
 
     private ExternalTextureRenderer renderer = null;
     private boolean shouldAdjustTimestamps = true;
-    private boolean shouldOverrideTimestampWithSystemTime = false;
-    private Duration overrideTimestampOffset = Duration.ZERO;
     private long nextFrameTimestampOffset = 0;
     private long timestampOffsetNanos = 0;
     private long previousTimestamp = 0;
@@ -500,16 +478,6 @@ public class ExternalTextureConverter implements TextureFrameProducer {
       timestampOffsetNanos = offsetInNanos;
     }
 
-    public void enableOverrideTimestampWithSystemTime(Duration overrideTimestampOffset) {
-      this.shouldOverrideTimestampWithSystemTime = true;
-      this.overrideTimestampOffset = overrideTimestampOffset;
-    }
-
-    public void disableOverrideTimestampWithSystemTime() {
-      shouldOverrideTimestampWithSystemTime = false;
-      overrideTimestampOffset = Duration.ZERO;
-    }
-
     protected void renderNext(SurfaceTexture fromTexture) {
       if (fromTexture != surfaceTexture) {
         // Although the setSurfaceTexture and renderNext methods are correctly sequentialized on
@@ -574,21 +542,17 @@ public class ExternalTextureConverter implements TextureFrameProducer {
       // TODO: b/408046935 - Move necessary timestamp calculation information into the default
       // implementation of the TimestampComputer.
       return (currentFrameTimestamp) -> {
-        if (shouldOverrideTimestampWithSystemTime) {
-          return Duration.ofNanos(getElapsedRealtimeNanos() + overrideTimestampOffset.toNanos());
-        } else {
-          // Populate frame timestamp with surface texture timestamp after render() as renderer
-          // ensures that surface texture has the up-to-date timestamp. (Also adjust
-          // |nextFrameTimestampOffset| to ensure that timestamps increase monotonically.)
-          long textureTimestamp =
-              (currentFrameTimestamp.toNanos() + timestampOffsetNanos) / NANOS_PER_MICRO;
-          if (shouldAdjustTimestamps
-              && previousTimestampValid
-              && textureTimestamp + nextFrameTimestampOffset <= previousTimestamp) {
-            nextFrameTimestampOffset = previousTimestamp + 1 - textureTimestamp;
-          }
-          return Duration.ofNanos((textureTimestamp + nextFrameTimestampOffset) * NANOS_PER_MICRO);
+        // Populate frame timestamp with surface texture timestamp after render() as renderer
+        // ensures that surface texture has the up-to-date timestamp. (Also adjust
+        // |nextFrameTimestampOffset| to ensure that timestamps increase monotonically.)
+        long textureTimestamp =
+            (currentFrameTimestamp.toNanos() + timestampOffsetNanos) / NANOS_PER_MICRO;
+        if (shouldAdjustTimestamps
+            && previousTimestampValid
+            && textureTimestamp + nextFrameTimestampOffset <= previousTimestamp) {
+          nextFrameTimestampOffset = previousTimestamp + 1 - textureTimestamp;
         }
+        return Duration.ofNanos((textureTimestamp + nextFrameTimestampOffset) * NANOS_PER_MICRO);
       };
     }
 
@@ -642,10 +606,6 @@ public class ExternalTextureConverter implements TextureFrameProducer {
         PoolTextureFrame textureFrameToRemove = framesAvailable.remove();
         handler.post(() -> teardownFrame(textureFrameToRemove));
       }
-    }
-
-    protected long getElapsedRealtimeNanos() {
-      return SystemClock.elapsedRealtimeNanos();
     }
 
     /**
