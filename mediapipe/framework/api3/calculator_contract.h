@@ -149,6 +149,10 @@ class CalculatorContract
     return generic_contract_.GetTimestampOffset();
   }
 
+  mediapipe::CalculatorContract& GetGenericContract() {
+    return generic_contract_;
+  }
+
  private:
   mediapipe::CalculatorContract& generic_contract_;
 };

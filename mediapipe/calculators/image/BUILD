@@ -826,12 +826,18 @@ cc_library(
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/api3:calculator",
+        "//mediapipe/framework/api3:calculator_context",
+        "//mediapipe/framework/api3:calculator_contract",
+        "//mediapipe/framework/api3:contract",
+        "//mediapipe/framework/api3:node",
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings:string_view",
     ] + select({
         "//mediapipe/gpu:disable_gpu": [],
         "//conditions:default": [

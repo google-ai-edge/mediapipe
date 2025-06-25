@@ -78,6 +78,10 @@ class CalculatorContext : public NodeT::template Contract<ContextSpecializer> {
     return holder_->context->GetResources();
   }
 
+  mediapipe::CalculatorContext& GetGenericContext() {
+    return *holder_->context;
+  }
+
  private:
   void Reset(mediapipe::CalculatorContext& generic_context) {
     if (holder_->context != nullptr) {
