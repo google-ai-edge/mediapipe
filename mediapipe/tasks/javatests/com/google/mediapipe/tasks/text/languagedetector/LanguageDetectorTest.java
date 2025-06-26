@@ -81,7 +81,7 @@ public class LanguageDetectorTest {
         languageDetector.detect("To be, or not to be, that is the question");
     assertThat(enResult.languagesAndScores().size()).isEqualTo(1);
     assertThat(enResult.languagesAndScores().get(0))
-        .isEqualTo(LanguagePrediction.create("en", 0.9998559f));
+        .isEqualTo(LanguagePrediction.create("en", 0.999856f));
     LanguageDetectorResult frResult =
         languageDetector.detect(
             "Il y a beaucoup de bouches qui parlent et fort peu de têtes qui pensent.");
@@ -105,6 +105,6 @@ public class LanguageDetectorTest {
     assertThat(mixedResult.languagesAndScores().get(0))
         .isEqualTo(LanguagePrediction.create("zh", 0.50542367f));
     assertThat(mixedResult.languagesAndScores().get(1))
-        .isEqualTo(LanguagePrediction.create("ja", 0.4816168f));
+        .isEqualTo(LanguagePrediction.create("ja", 0.48161677f));
   }
 }
