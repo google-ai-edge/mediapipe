@@ -271,20 +271,17 @@ TEST(GenericGraphTest, CanUseBackEdges) {
   // Graph inputs.
   auto& image = graph.In("IMAGE").At(0).SetName("image");
 
-  auto [prev_detections, set_prev_detections_fn] = [&]() {
-    auto* loopback_node = &graph.AddNode("PreviousLoopbackCalculator");
-    image.ConnectTo(loopback_node->In("MAIN").At(0));
-    auto set_loop_fn = [loopback_node](Source& value) {
-      value.ConnectTo(loopback_node->In("LOOP").At(0).AsBackEdge());
-    };
-    auto* prev_loop = &loopback_node->Out("PREV_LOOP").At(0);
-    return std::pair(prev_loop, set_loop_fn);
-  }();
+  auto& loopback_node = graph.AddNode("PreviousLoopbackCalculator");
+  image.ConnectTo(loopback_node.In("MAIN").At(0));
+  auto set_prev_detections_fn = [&loopback_node](Source& value) {
+    value.ConnectTo(loopback_node.In("LOOP").At(0).AsBackEdge());
+  };
+  auto& prev_detections = loopback_node.Out("PREV_LOOP").At(0);
 
   auto& detections = [&]() -> Source& {
     auto& detection_node = graph.AddNode("ObjectDetectionCalculator");
     image.ConnectTo(detection_node.In("IMAGE").At(0));
-    prev_detections->ConnectTo(detection_node.In("PREV_DETECTIONS").At(0));
+    prev_detections.ConnectTo(detection_node.In("PREV_DETECTIONS").At(0));
     return detection_node.Out("DETECTIONS").At(0);
   }();
 
@@ -320,22 +317,19 @@ TEST(GenericGraphTest, CanUseBackEdgesWithIndex) {
   // Graph inputs.
   auto& image = graph.In("IN").At(0).SetName("in_data");
 
-  auto [processed_data, set_back_edge_fn] = [&]() {
-    auto* back_edge_node = &graph.AddNode("SomeBackEdgeCalculator");
-    image.ConnectTo(back_edge_node->In("DATA").At(0));
-    auto set_back_edge_fn = [back_edge_node](Source& value) {
-      auto& loop = back_edge_node->In("DATA").At(1);
-      loop.back_edge = true;
-      value.ConnectTo(loop);
-    };
-    auto* processed_data = &back_edge_node->Out("PROCESSED_DATA").At(0);
-    return std::pair(processed_data, set_back_edge_fn);
-  }();
+  auto& back_edge_node = graph.AddNode("SomeBackEdgeCalculator");
+  image.ConnectTo(back_edge_node.In("DATA").At(0));
+  auto set_back_edge_fn = [&back_edge_node](Source& value) {
+    auto& loop = back_edge_node.In("DATA").At(1);
+    loop.back_edge = true;
+    value.ConnectTo(loop);
+  };
+  auto& processed_data = back_edge_node.Out("PROCESSED_DATA").At(0);
 
   auto& output_data = [&]() -> Source& {
     auto& detection_node = graph.AddNode("SomeOutputDataCalculator");
     image.ConnectTo(detection_node.In("IMAGE").At(0));
-    processed_data->ConnectTo(detection_node.In("PROCESSED_DATA").At(0));
+    processed_data.ConnectTo(detection_node.In("PROCESSED_DATA").At(0));
     return detection_node.Out("OUTPUT_DATA").At(0);
   }();
 
@@ -371,20 +365,17 @@ TEST(GenericGraphTest, CanUseBackEdgesWithIndexAndNoTag) {
   // Graph inputs.
   auto& image = graph.In("IN").At(0).SetName("in_data");
 
-  auto [processed_data, set_back_edge_fn] = [&]() {
-    auto* back_edge_node = &graph.AddNode("SomeBackEdgeCalculator");
-    image.ConnectTo(back_edge_node->In("").At(0));
-    auto set_back_edge_fn = [back_edge_node](Source& loop) {
-      loop.ConnectTo(back_edge_node->In("").At(1).AsBackEdge());
-    };
-    auto* processed_data = &back_edge_node->Out("PROCESSED_DATA").At(0);
-    return std::pair(processed_data, set_back_edge_fn);
-  }();
+  auto& back_edge_node = graph.AddNode("SomeBackEdgeCalculator");
+  image.ConnectTo(back_edge_node.In("").At(0));
+  auto set_back_edge_fn = [&back_edge_node](Source& loop) {
+    loop.ConnectTo(back_edge_node.In("").At(1).AsBackEdge());
+  };
+  auto& processed_data = back_edge_node.Out("PROCESSED_DATA").At(0);
 
   auto& output_data = [&]() -> Source& {
     auto& detection_node = graph.AddNode("SomeOutputDataCalculator");
     image.ConnectTo(detection_node.In("IMAGE").At(0));
-    processed_data->ConnectTo(detection_node.In("PROCESSED_DATA").At(0));
+    processed_data.ConnectTo(detection_node.In("PROCESSED_DATA").At(0));
     return detection_node.Out("OUTPUT_DATA").At(0);
   }();
 

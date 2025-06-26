@@ -113,7 +113,7 @@ absl::Status ValidateContract() {
   std::apply(
       [&](auto&... field) {
         (([&] {
-           using FieldT = std::decay_t<decltype(*field)>::Field;
+           using FieldT = typename std::decay_t<decltype(*field)>::Field;
            absl::Status status;
            if constexpr (std::is_same_v<FieldT, RepeatedField> ||
                          std::is_same_v<FieldT, OptionalField>) {
