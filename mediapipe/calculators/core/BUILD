@@ -1390,6 +1390,18 @@ cc_library(
     alwayslink = 1,
 )
 
+cc_test(
+    name = "vector_size_calculator_test",
+    srcs = ["vector_size_calculator_test.cc"],
+    deps = [
+        ":vector_size_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+    ],
+)
+
 cc_library(
     name = "packet_sequencer_calculator",
     srcs = ["packet_sequencer_calculator.cc"],
