@@ -1,7 +1,10 @@
+#include "mediapipe/calculators/util/landmark_projection_calculator.h"
+
 #include <array>
 #include <utility>
 #include <vector>
 
+#include "absl/status/statusor.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_utils.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -12,6 +15,7 @@
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/ret_check.h"
+#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/port/status_matchers.h"
 
 namespace mediapipe {
@@ -334,6 +338,11 @@ TEST(LandmarkProjectionCalculatorTest, ProjectingWithRotationMatrix) {
       EqualsProto(ParseTextProtoOrDie<mediapipe::NormalizedLandmarkList>(R"pb(
         landmark { x: 0, y: 4, z: -0.5 }
       )pb")));
+}
+
+TEST(LandmarkProjectionCalculatorTest, HasCorrectRegistrationName) {
+  EXPECT_EQ(api3::LandmarkProjectionNode::GetRegistrationName(),
+            "LandmarkProjectionCalculator");
 }
 
 }  // namespace
