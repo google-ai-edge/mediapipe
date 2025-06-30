@@ -535,6 +535,24 @@ cc_library(
 )
 
 cc_test(
+    name = "image_properties_calculator_test",
+    srcs = ["image_properties_calculator_test.cc"],
+    data = ["//mediapipe/calculators/image/testdata:test_images"],
+    deps = [
+        ":image_properties_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/tool:test_util",
+        "//mediapipe/gpu:gpu_buffer_to_image_frame_calculator",
+        "//mediapipe/gpu:image_frame_to_gpu_buffer_calculator",
+    ],
+)
+
+cc_test(
     name = "opencv_encoded_image_to_image_frame_calculator_test",
     srcs = ["opencv_encoded_image_to_image_frame_calculator_test.cc"],
     data = ["//mediapipe/calculators/image/testdata:test_images"],
