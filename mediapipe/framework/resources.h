@@ -7,6 +7,7 @@
 #include <string>
 
 #include "absl/container/flat_hash_map.h"
+#include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 
@@ -39,6 +40,11 @@ class Resource {
   //
   virtual std::string ReleaseOrCopyAsString() && {
     return std::string(static_cast<const char*>(data()), length());
+  }
+
+  // Returns a managed file descriptor which backs the resource if available.
+  virtual absl::StatusOr<int> TryGetFd() const {
+    return absl::UnavailableError("FD is unavailable.");
   }
 
  protected:

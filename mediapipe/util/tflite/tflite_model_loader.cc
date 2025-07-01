@@ -17,6 +17,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
@@ -41,11 +42,20 @@ absl::StatusOr<api2::Packet<TfLiteModelPtr>> TfLiteModelLoader::LoadFromPath(
 absl::StatusOr<api2::Packet<TfLiteModelPtr>> TfLiteModelLoader::LoadFromPath(
     const Resources& resources, const std::string& path,
     std::optional<MMapMode> mmap_mode) {
+  MP_ASSIGN_OR_RETURN(auto tflite_model_with_resource,
+                      LoadFromPathAndGetResource(resources, path, mmap_mode));
+  return std::move(tflite_model_with_resource.model_packet);
+}
+
+absl::StatusOr<TfLiteModelWithResource>
+TfLiteModelLoader::LoadFromPathAndGetResource(
+    const Resources& resources, const std::string& path,
+    std::optional<MMapMode> mmap_mode) {
   std::string model_path = path;
 
   // Load model resource.
   MP_ASSIGN_OR_RETURN(
-      std::unique_ptr<Resource> model_resource,
+      std::shared_ptr<Resource> model_resource,
       resources.Get(model_path,
                     Resources::Options{/* read_as_binary= */ true, mmap_mode}));
   absl::string_view model_view = model_resource->ToStringView();
@@ -54,13 +64,14 @@ absl::StatusOr<api2::Packet<TfLiteModelPtr>> TfLiteModelLoader::LoadFromPath(
 
   RET_CHECK(model) << "Failed to load model from path (resource ID) "
                    << model_path;
-  return api2::MakePacket<TfLiteModelPtr>(
-      model.release(), [model_resource = model_resource.release()](
-                           FlatBufferModel* model) mutable {
+  auto model_packet = api2::MakePacket<TfLiteModelPtr>(
+      model.release(), [res = model_resource](FlatBufferModel* model) mutable {
         // It's required that model resource, used for model creation, outlives
         // the created model.
         delete model;
-        delete model_resource;
+        res.reset();
       });
+  return TfLiteModelWithResource{.model_packet = std::move(model_packet),
+                                 .resource = std::move(model_resource)};
 }
 }  // namespace mediapipe

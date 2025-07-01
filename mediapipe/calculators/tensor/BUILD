@@ -445,6 +445,7 @@ cc_library_with_tflite(
         ":tensor_span",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:port",
+        "//mediapipe/framework:resources",
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/api2:packet",
         "//mediapipe/framework/api2:port",

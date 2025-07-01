@@ -15,6 +15,7 @@
 #include "mediapipe/calculators/tensor/inference_calculator.h"
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -33,6 +34,7 @@
 #include "mediapipe/framework/port.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
+#include "mediapipe/framework/resources.h"
 #include "mediapipe/framework/tool/subgraph_expansion.h"
 #include "mediapipe/util/tflite/tflite_model_loader.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
@@ -133,6 +135,25 @@ absl::StatusOr<Packet<TfLiteModelPtr>> InferenceCalculator::GetModelAsPacket(
     return model;
   }
   if (!kSideInModel(cc).IsEmpty()) return kSideInModel(cc);
+  return absl::Status(absl::StatusCode::kNotFound,
+                      "Must specify TFLite model as path or loaded model.");
+}
+
+absl::StatusOr<TfLiteModelWithResource>
+InferenceCalculator::GetModelPacketWithResource(
+    CalculatorContext* cc, std::optional<MMapMode> mmap_mode) {
+  const auto& options = cc->Options<mediapipe::InferenceCalculatorOptions>();
+  if (!options.model_path().empty()) {
+    MP_ASSIGN_OR_RETURN(
+        auto model, TfLiteModelLoader::LoadFromPathAndGetResource(
+                        cc->GetResources(), options.model_path(), mmap_mode));
+    ABSL_CHECK(!model.model_packet.IsEmpty());
+    VLOG(1) << absl::StrFormat(
+        "GetModelPacketWithResource successfully loaded model "
+        "(path: %s, size: %ld bytes)",
+        options.model_path(), model.model_packet.Get()->allocation()->bytes());
+    return model;
+  }
   return absl::Status(absl::StatusCode::kNotFound,
                       "Must specify TFLite model as path or loaded model.");
 }

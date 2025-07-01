@@ -48,6 +48,10 @@ class MMapResource : public Resource {
         mmapped_file_(std::move(mmapped_file)),
         mlocked_(mlocked) {}
 
+  absl::StatusOr<int> TryGetFd() const override {
+    return mmapped_file_->TryGetFd();
+  }
+
   ~MMapResource() override {
     if (mlocked_) {
       auto status =

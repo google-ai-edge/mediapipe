@@ -28,6 +28,11 @@ class MemoryMappedFile {
   MemoryMappedFile(std::string path, const void* base_address, size_t length)
       : path_(std::move(path)), base_address_(base_address), length_(length) {}
 
+  // Returns a managed file descriptor which backs the resource if available.
+  virtual absl::StatusOr<int> TryGetFd() const {
+    return absl::UnavailableError("FD is unavailable.");
+  }
+
   virtual absl::Status Close() = 0;
 
   virtual ~MemoryMappedFile() = default;
