@@ -134,7 +134,7 @@ template class WebGpuAsyncFuture<wgpu::RenderPipeline>;
 
 wgpu::ShaderModule CreateWgslShader(wgpu::Device device, const char* const code,
                                     const char* label) {
-  wgpu::ShaderModuleWGSLDescriptor wgsl;
+  wgpu::ShaderSourceWGSL wgsl;
   wgsl.code = code;
   wgpu::ShaderModuleDescriptor desc;
   desc.nextInChain = &wgsl;

@@ -717,10 +717,10 @@ absl::Status WebGpuShaderCalculator::InitWebGpuShader() {
   params_size_ = param_offsets_.num_params * sizeof(float);
 
   // Create the shader module.
-  wgpu::ShaderModuleWGSLDescriptor wgsl_desc = {};
-  wgsl_desc.code = shader_source_.c_str();
+  wgpu::ShaderSourceWGSL wgsl = {};
+  wgsl.code = shader_source_.c_str();
   wgpu::ShaderModuleDescriptor shader_desc = {
-      .nextInChain = &wgsl_desc,
+      .nextInChain = &wgsl,
   };
   wgpu::ShaderModule module =
       service_->device().CreateShaderModule(&shader_desc);
