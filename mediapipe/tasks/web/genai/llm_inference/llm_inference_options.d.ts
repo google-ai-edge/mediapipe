@@ -94,4 +94,10 @@ export declare interface LlmInferenceOptions extends TaskRunnerOptions {
    * Useful for debugging F16 precision-related errors.
    */
   forceF32?: boolean;
+
+  /**
+   * When set > 0, will enable vision modality usage. Will also enable streaming
+   * loading, and therefore is not compatible with "converted" models.
+   */
+  maxNumImages?: number;
 }

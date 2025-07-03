@@ -30,6 +30,7 @@ import {WasmModule} from '../../../../web/graph_runner/graph_runner';
 import {
   MultiResponseProgressListener,
   ProgressListener,
+  Prompt,
   SupportLlmInference,
 } from '../../../../web/graph_runner/graph_runner_llm_inference_lib';
 import {
@@ -58,8 +59,10 @@ import {
 } from './model_loading_utils';
 
 export type {
+  Image,
   MultiResponseProgressListener,
   ProgressListener,
+  Prompt,
 } from '../../../../web/graph_runner/graph_runner_llm_inference_lib';
 export * from './llm_inference_options';
 
@@ -592,61 +595,61 @@ export class LlmInference extends TaskRunner {
   }
 
   /**
-   * Performs LLM Inference on the provided text and waits
+   * Performs LLM Inference on the provided prompt and waits
    * asynchronously for the response. Only one call to `generateResponse()` can
    * run at a time.
    *
    * @export
-   * @param text The text to process.
+   * @param query The prompt to process.
    * @return The generated text result.
    */
-  generateResponse(text: string): Promise<string>;
+  generateResponse(query: Prompt): Promise<string>;
   /**
-   * Performs LLM Inference on the provided text and waits
+   * Performs LLM Inference on the provided prompt and waits
    * asynchronously for the response. Only one call to `generateResponse()` can
    * run at a time.
    *
    * @export
-   * @param text The text to process.
+   * @param query The prompt to process.
    * @param progressListener A listener that will be triggered when the task has
    *     new partial response generated.
    * @return The generated text result.
    */
   generateResponse(
-    text: string,
+    query: Prompt,
     progressListener?: ProgressListener,
   ): Promise<string>;
   /**
-   * Performs LLM Inference on the provided text and waits
+   * Performs LLM Inference on the provided prompt and waits
    * asynchronously for the response. Only one call to `generateResponse()` can
    * run at a time.
    *
    * @export
-   * @param text The text to process.
+   * @param query The prompt to process.
    * @param loraModel The LoRA model to apply on the text generation.
    * @return The generated text result.
    */
-  generateResponse(text: string, loraModel?: LoraModel): Promise<string>;
+  generateResponse(query: Prompt, loraModel?: LoraModel): Promise<string>;
   /**
-   * Performs LLM Inference on the provided text and waits
+   * Performs LLM Inference on the provided prompt and waits
    * asynchronously for the response. Only one call to `generateResponse()` can
    * run at a time.
    *
    * @export
-   * @param text The text to process.
+   * @param query The prompt to process.
    * @param loraModel The LoRA model to apply on the text generation.
    * @param progressListener A listener that will be triggered when the task has
    *     new partial response generated.
    * @return The generated text result.
    */
   generateResponse(
-    text: string,
+    query: Prompt,
     loraModel?: LoraModel,
     progressListener?: ProgressListener,
   ): Promise<string>;
   /** @export */
   generateResponse(
-    text: string,
+    query: Prompt,
     loraModelOrProgressListener?: ProgressListener | LoraModel,
     progressListener?: ProgressListener,
   ): Promise<string> {
@@ -660,7 +663,7 @@ export class LlmInference extends TaskRunner {
     }
     this.isMultiResponseGeneration = false;
     return this.generateResponsesInternal(
-      text,
+      query,
       loraModelOrProgressListener,
       progressListener,
     ).then((responses) => responses[0]);
@@ -672,23 +675,23 @@ export class LlmInference extends TaskRunner {
    * greater than 1.
    *
    * @export
-   * @param text The text to process.
+   * @param query The prompt to process.
    * @return The generated results.
    */
-  generateResponses(text: string): Promise<string[]>;
+  generateResponses(query: Prompt): Promise<string[]>;
   /**
    * Similar to `generateResponse()` but can return multiple responses for the
    * given prompt if the task is initialized with a value for `numResponses`
    * greater than 1.
    *
    * @export
-   * @param text The text to process.
+   * @param query The prompt to process.
    * @param progressListener A listener that will be triggered when the task has
    *     new partial response generated.
    * @return The generated results.
    */
   generateResponses(
-    text: string,
+    query: Prompt,
     progressListener: MultiResponseProgressListener,
   ): Promise<string[]>;
   /**
@@ -697,44 +700,44 @@ export class LlmInference extends TaskRunner {
    * greater than 1.
    *
    * @export
-   * @param text The text to process.
+   * @param query The prompt to process.
    * @param loraModel The LoRA model to apply on the text generation.
    * @return The generated results.
    */
-  generateResponses(text: string, loraModel: LoraModel): Promise<string[]>;
+  generateResponses(query: Prompt, loraModel: LoraModel): Promise<string[]>;
   /**
    * Similar to `generateResponse()` but can return multiple responses for the
    * given prompt if the task is initialized with a value for `numResponses`
    * greater than 1.
    *
    * @export
-   * @param text The text to process.
+   * @param query The prompt to process.
    * @param loraModel The LoRA model to apply on the text generation.
    * @param progressListener A listener that will be triggered when the task has
    *     new partial response generated.
    * @return The generated results.
    */
   generateResponses(
-    text: string,
+    query: Prompt,
     loraModel: LoraModel,
     progressListener: MultiResponseProgressListener,
   ): Promise<string[]>;
   /** @export */
   generateResponses(
-    text: string,
+    query: Prompt,
     loraModelOrProgressListener?: MultiResponseProgressListener | LoraModel,
     progressListener?: MultiResponseProgressListener,
   ): Promise<string[]> {
     this.isMultiResponseGeneration = true;
     return this.generateResponsesInternal(
-      text,
+      query,
       loraModelOrProgressListener,
       progressListener,
     );
   }
 
   private generateResponsesInternal(
-    text: string,
+    query: Prompt,
     loraModelOrProgressListener?:
       | MultiResponseProgressListener
       | ProgressListener
@@ -745,6 +748,25 @@ export class LlmInference extends TaskRunner {
       typeof loraModelOrProgressListener === 'function'
         ? loraModelOrProgressListener
         : progressListener;
+    // If prompt contains a multi-modal piece, ensure options are set properly.
+    const queryAsArray = Array.isArray(query) ? query : [query];
+    const numImages = queryAsArray.filter(
+      (elem) => typeof elem !== 'string',
+    ).length;
+    // For now MM is only vision.
+    if (
+      numImages > 0 &&
+      (!this.options.hasMaxNumImages() ||
+        this.options.getMaxNumImages() < numImages)
+    ) {
+      throw new Error(
+        `maxNumImages is set to ` +
+          `${
+            this.options.hasMaxNumImages() ? this.options.getMaxNumImages() : 0
+          }` +
+          `, but the query included ${numImages} images.`,
+      );
+    }
     if (this.useLlmEngine) {
       // TODO: b/398949555 - Support multi-response generation for converted LLM
       // models (.task format).
@@ -766,25 +788,29 @@ export class LlmInference extends TaskRunner {
       // TODO: b/398904237 - Support streaming generation by passing the
       // progress listener.
       return (this.graphRunner as unknown as LlmGraphRunner)
-        .generateResponse(text, this.samplerParams, (partialResult, done) => {
-          // Don't trigger the user progress listener if there are WebGPU
-          // errors.
-          if (this.wgpuErrors.length === 0 && this.userProgressListener) {
-            // TODO: b/398949555 - Support multi-response generation for
-            // converted LLM models (.task format).
-            if (this.isMultiResponseGeneration) {
-              (this.userProgressListener as MultiResponseProgressListener)(
-                /* partialResult= */ [partialResult],
-                /* done= */ done,
-              );
-            } else {
-              (this.userProgressListener as ProgressListener)(
-                /* partialResult= */ partialResult,
-                /* done= */ done,
-              );
+        .generateResponse(
+          queryAsArray,
+          this.samplerParams,
+          (partialResult, done) => {
+            // Don't trigger the user progress listener if there are WebGPU
+            // errors.
+            if (this.wgpuErrors.length === 0 && this.userProgressListener) {
+              // TODO: b/398949555 - Support multi-response generation for
+              // converted LLM models (.task format).
+              if (this.isMultiResponseGeneration) {
+                (this.userProgressListener as MultiResponseProgressListener)(
+                  /* partialResult= */ [partialResult],
+                  /* done= */ done,
+                );
+              } else {
+                (this.userProgressListener as ProgressListener)(
+                  /* partialResult= */ partialResult,
+                  /* done= */ done,
+                );
+              }
             }
-          }
-        })
+          },
+        )
         .then((responses) => {
           this.checkWgpuErrors();
           return [responses];
@@ -799,6 +825,10 @@ export class LlmInference extends TaskRunner {
       this.generationResults[i] = [];
     }
     const timeStamp = this.getSynctheticTimestamp();
+
+    // This code is only run when the prompt is text-only, so condense into a
+    // single string.
+    const text = queryAsArray.join('');
     this.graphRunner.addStringToStream(text, INPUT_STREAM, timeStamp);
     if (loraModelOrProgressListener instanceof LoraModel) {
       if (loraModelOrProgressListener.owner !== this) {
@@ -830,17 +860,24 @@ export class LlmInference extends TaskRunner {
    * a `generateResponse()` query is active. Runs synchronously.
    *
    * @export
-   * @param text The text to tokenize.
+   * @param query The prompt to tokenize.
    * @return The number of tokens in the resulting tokenization of the text.
    *         May return undefined if an error occurred.
    */
-  sizeInTokens(text: string): number | undefined {
+  sizeInTokens(query: Prompt): number | undefined {
+    const queryAsArray = Array.isArray(query) ? query : [query];
     if (this.useLlmEngine) {
-      return (this.graphRunner as unknown as LlmGraphRunner).sizeInTokens(text);
+      return (this.graphRunner as unknown as LlmGraphRunner).sizeInTokens(
+        queryAsArray,
+      );
     }
     if (this.isProcessing) {
       throw new Error('Previous invocation or loading is still ongoing.');
     }
+    if (queryAsArray.some((elem) => typeof elem !== 'string')) {
+      throw new Error('sizeInTokens requires maxNumImages > 0 for images.');
+    }
+    const text = queryAsArray.join('');
     this.isProcessing = true;
     this.latestTokenCostQueryResult = undefined;
     this.graphRunner.addStringToStream(

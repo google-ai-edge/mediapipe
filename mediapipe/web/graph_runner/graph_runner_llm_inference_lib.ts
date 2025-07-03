@@ -15,6 +15,33 @@ const DEFAULT_MAX_NUM_IMAGES = 0;
 const TOKENS_PER_IMAGE = 260;
 
 /**
+ * Image type for use in multi-modal LLM queries.
+ */
+export declare interface Image {
+  source: ImageSource;
+}
+
+/**
+ * Type for a piece of an LLM query.
+ */
+export type PromptPart = string | Image;
+
+/**
+ * Type for an LLM query; may be multi-modal.
+ */
+export type Prompt = PromptPart | PromptPart[];
+
+// The allowable types for image sources to be used for mixed vision+text LLM
+// queries.
+declare type ImageSource = Exclude<CanvasImageSource, SVGElement> | string;
+
+declare interface ImageByteSource {
+  image: Exclude<CanvasImageSource, SVGElement>;
+  width: number;
+  height: number;
+}
+
+/**
  * We extend from a GraphRunner constructor. This ensures our mixin has
  * access to the wasmModule, among other things. The `any` type is required for
  * mixin constructors.
@@ -209,15 +236,15 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
     }
 
     /**
-     * Create LLM Inference Engine for text generation.
+     * Process a query using LLM Inference Engine for text generation.
      *
-     * @param text The text to process.
+     * @param query The prompt to process.
      * @param samplerParameters The settings for sampler, used to configure the
      *     LLM Inference sessions.
      * @return The generated text result.
      */
     async generateResponse(
-      text: string,
+      query: PromptPart[],
       samplerParameters: SamplerParameters,
       // TODO: b/398949555 - Support multi-response generation for converted LLM
       // models (.task format).
@@ -249,16 +276,8 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
         const samplerParamsPtr = this.wasmModule._malloc(samplerParamsSize);
         this.wasmModule.HEAPU8.set(samplerParamsBin, samplerParamsPtr);
 
-        // We break up prompt into text and image chunks based on finding tags
-        // that look like this: <image>'http://some.url/image.ext'</image>. We
-        // split such that it will always alternate between text and image,
-        // starting and ending with text.
-        // TODO: b/424014728 - Design and implement a full vision modality API,
-        // or at the very least, allow for a little more customizability.
-        const promptSplit = text.split(/<image>|<\/image>/);
-
         // For running a query: we first create our session.
-        const useVision = promptSplit.length > 1;
+        const useVision = query.some((elem) => typeof elem !== 'string');
 
         const session = llmWasm._MakeSessionForPredict(
           samplerParamsPtr,
@@ -267,40 +286,30 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
         );
         const imagesToFree: number[] = [];
 
-        // Then we add all the query chunks in order (text, audio, video)
-        for (let i = 0; i < promptSplit.length; i++) {
-          // This logic only works while we support just text and vision
-          // modalities, since we know we must alternate between them. Adding
-          // audio support will necessitate changing this.
-          if (i % 2 === 0) {
+        // Then we add all the query chunks in order
+        for (const chunk of query) {
+          if (typeof chunk === 'string') {
             // Add text chunk to query
-            this.wrapStringPtr(promptSplit[i], (textPtr: number) => {
+            this.wrapStringPtr(chunk, (textPtr: number) => {
               llmWasm._AddTextQueryChunk(session, textPtr);
             });
           } else {
-            // Load image from the given url. Note that we currently must wait
-            // for our image to load so we can pass its bytes into the session
-            // API in order to preserve chunk ordering. This could be made more
-            // efficient in the future.
-            const image = new Image();
-            image.src = promptSplit[i];
-            image.crossOrigin = 'Anonymous';
-
-            // TODO: b/424014728 - Wrap below in try/catch block so we can make
-            // failures more user-friendly.
-            await image.decode();
+            // We load image data from whatever source type is given.
+            const {image, width, height} = await this.getImageFromSource(
+              chunk.source,
+            );
 
             // Now we extract the bytes. TODO: b/424221732 - This should also be
             // made more efficient in the future, ideally by keeping on the GPU.
-            const width = image.width;
-            const height = image.height;
             const canvas =
               typeof OffscreenCanvas !== 'undefined'
                 ? new OffscreenCanvas(width, height)
                 : document.createElement('canvas');
             canvas.width = width;
             canvas.height = height;
-            const ctx = canvas.getContext('2d')!;
+            const ctx = canvas.getContext('2d') as
+              | CanvasRenderingContext2D
+              | OffscreenCanvasRenderingContext2D;
             ctx.drawImage(image, 0, 0);
             const imageData = ctx.getImageData(0, 0, width, height);
 
@@ -366,10 +375,10 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
      * Runs an invocation of *only* the tokenization for the LLM, and returns
      * the size (in tokens) of the result. Runs synchronously.
      *
-     * @param text The text to tokenize.
+     * @param query The prompt to tokenize.
      * @return The number of tokens in the resulting tokenization of the text.
      */
-    sizeInTokens(text: string): number {
+    sizeInTokens(query: PromptPart[]): number {
       this._startLlmEngineProcessing();
       // First we chop out all image pieces. Since there's only one supported
       // vision model, which uses a fixed number of tokens per image, we simply
@@ -377,14 +386,12 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
       // GetSizeInTokens for non-text modalities, this should be fixed.
       // TODO: b/426691212 - Remove this workaround once that functionality
       // exists.
-      const promptSplit = text.split(/<image>|<\/image>/);
       let tokensFromImages = 0;
       let promptWithoutImages = '';
-      for (let i = 0; i < promptSplit.length; i++) {
-        // This only works while we support just image+text modalities. See
-        // above comments.
-        if (i % 2 === 0) {
-          promptWithoutImages += promptSplit[i];
+      for (const chunk of query) {
+        // For now, just text and images to handle.
+        if (typeof chunk === 'string') {
+          promptWithoutImages += chunk;
         } else {
           tokensFromImages += TOKENS_PER_IMAGE;
         }
@@ -426,6 +433,51 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
         /* canWrite= */ false,
         /* canOwn= */ false,
       );
+    }
+
+    /**
+     * Parse an image source into an Image, along with its width and height, for
+     * extracting the raw bytes.
+     *
+     * @param image The image source.
+     * @return The image, ready to be drawn, along with its width and height.
+     */
+    async getImageFromSource(image: ImageSource): Promise<ImageByteSource> {
+      if (typeof image === 'string') {
+        // Load image from the given url. Note that we currently must wait for
+        // our image to load so we can pass its bytes into the session API in
+        // order to preserve chunk ordering. This could be made more efficient
+        // in the future.
+        const imageElement = new Image();
+        imageElement.src = image;
+        imageElement.crossOrigin = 'Anonymous';
+
+        // TODO: b/424014728 - Wrap below in try/catch block so we can make
+        // failures more user-friendly.
+        try {
+          await imageElement.decode();
+        } catch {
+          throw new Error(`Image from URL ${image} failed to load`);
+        }
+        return {
+          image: imageElement,
+          width: imageElement.naturalWidth,
+          height: imageElement.naturalHeight,
+        };
+      } else if (image instanceof HTMLImageElement) {
+        try {
+          await image.decode();
+        } catch {
+          throw new Error(`Image from HTMLImageElement failed to load`);
+        }
+        return {image, width: image.naturalWidth, height: image.naturalHeight};
+      } else if (image instanceof HTMLVideoElement) {
+        return {image, width: image.videoWidth, height: image.videoHeight};
+      } else if (image instanceof VideoFrame) {
+        return {image, width: image.displayWidth, height: image.displayHeight};
+      } else {
+        return {image, width: image.width, height: image.height};
+      }
     }
   };
 }
