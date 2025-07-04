@@ -39,7 +39,7 @@ namespace vision {
 namespace face_landmarker {
 namespace {
 
-using ::file::Defaults;
+using mediapipe::file::Defaults;
 using ::mediapipe::api2::Input;
 using ::mediapipe::api2::Output;
 using ::mediapipe::api2::builder::Graph;

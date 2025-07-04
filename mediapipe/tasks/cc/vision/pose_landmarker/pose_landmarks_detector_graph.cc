@@ -573,10 +573,27 @@ class SinglePoseLandmarksDetectorGraph : public core::ModelTaskGraph {
     raw_pose_rects >> rect_transformation.In("NORM_RECT");
     auto pose_rect_next_frame = rect_transformation[Output<NormalizedRect>("")];
 
+
+
+    auto& landmark_merger = graph.AddNode("ConfidenceNormalizedLandmarkMergerCalculator");
+    projected_landmarks >> landmark_merger.In("LANDMARKS");
+    pose_presence_score >> landmark_merger.In("CONFIDENCE");
+    auto merged_landmarks = landmark_merger[Output<NormalizedLandmarkList>("LANDMARKS")];
+
+    auto& auxiliary_landmark_merger = graph.AddNode("ConfidenceNormalizedLandmarkMergerCalculator");
+    auxiliary_projected_landmarks >> auxiliary_landmark_merger.In("LANDMARKS");
+    pose_presence_score >> auxiliary_landmark_merger.In("CONFIDENCE");
+    auto auxiliary_merged_landmarks = auxiliary_landmark_merger[Output<NormalizedLandmarkList>("LANDMARKS")];
+    
+    auto& world_landmark_merger = graph.AddNode("ConfidenceLandmarkMergerCalculator");
+    world_projected_landmarks >> world_landmark_merger.In("LANDMARKS");
+    pose_presence_score >> world_landmark_merger.In("CONFIDENCE");
+    auto merged_world_landmarks = world_landmark_merger[Output<LandmarkList>("LANDMARKS")];
+
     return {{
-        /* pose_landmarks= */ projected_landmarks,
-        /* world_pose_landmarks= */ world_projected_landmarks,
-        /* auxiliary_pose_landmarks= */ auxiliary_projected_landmarks,
+        /* pose_landmarks= */ merged_landmarks,
+        /* world_pose_landmarks= */ merged_world_landmarks,
+        /* auxiliary_pose_landmarks= */ auxiliary_merged_landmarks,
         /* pose_rect_next_frame= */ pose_rect_next_frame,
         /* pose_presence= */ pose_presence,
         /* pose_presence_score= */ pose_presence_score,
