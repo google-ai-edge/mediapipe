@@ -162,7 +162,7 @@ class LandmarksRefinementCalculatorImpl
       refined_landmarks->add_landmark();
     }
 
-    // Apply input landmarks to outpu refined landmarks in provided order.
+    // Apply input landmarks to output refined landmarks in provided order.
     for (int i = 0; i < kLandmarks(cc).Count(); ++i) {
       const auto& landmarks = kLandmarks(cc)[i].Get();
       const auto& refinement = options_.refinement(i);
