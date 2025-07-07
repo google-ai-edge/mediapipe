@@ -17,7 +17,7 @@
 # Script to setup Android SDK and NDK.
 # usage:
 # $ cd <mediapipe root dir>
-# $ bash ./setup_android_sdk_and_ndk.sh ~/Android/Sdk ~/Android/Ndk r26d [--accept-licenses]
+# $ bash ./setup_android_sdk_and_ndk.sh ~/Android/Sdk ~/Android/Ndk r28b [--accept-licenses]
 
 set -e
 
@@ -55,8 +55,8 @@ fi
 
 if [ -z $3 ]
 then
-  echo "Warning: ndk_version (argument 3) is not specified. Fallback to r26d."
-  ndk_version="r26d"
+  echo "Warning: ndk_version (argument 3) is not specified. Fallback to r28c."
+  ndk_version="r28c"
 fi
 
 if [ -d "$android_sdk_path" ]
@@ -65,7 +65,7 @@ then
 else
   rm -rf /tmp/android_sdk/
   mkdir  /tmp/android_sdk/
-  curl https://dl.google.com/android/repository/commandlinetools-${platform_android_sdk}-7583922_latest.zip -o /tmp/android_sdk/commandline_tools.zip
+  curl https://dl.google.com/android/repository/commandlinetools-${platform_android_sdk}-13114758_latest.zip -o /tmp/android_sdk/commandline_tools.zip
   unzip /tmp/android_sdk/commandline_tools.zip -d /tmp/android_sdk/
   mkdir -p $android_sdk_path
   /tmp/android_sdk/cmdline-tools/bin/sdkmanager --update --sdk_root=${android_sdk_path}
@@ -73,7 +73,7 @@ else
   then
     yes | /tmp/android_sdk/cmdline-tools/bin/sdkmanager --licenses --sdk_root=${android_sdk_path}
   fi
-  /tmp/android_sdk/cmdline-tools/bin/sdkmanager "build-tools;30.0.3" "platform-tools" "platforms;android-30" "extras;android;m2repository" --sdk_root=${android_sdk_path}
+  /tmp/android_sdk/cmdline-tools/bin/sdkmanager "build-tools;35.0.0" "platform-tools" "platforms;android-36" "extras;android;m2repository" --sdk_root=${android_sdk_path}
   rm -rf /tmp/android_sdk/
   echo "Android SDK is now installed. Consider setting \$ANDROID_HOME environment variable to be ${android_sdk_path}"
 fi
@@ -94,7 +94,7 @@ fi
 echo "Set android_ndk_repository and android_sdk_repository in WORKSPACE"
 workspace_file="$( cd "$(dirname "$0")" ; pwd -P )"/WORKSPACE
 echo "android_sdk_repository(name = \"androidsdk\", path = \"${android_sdk_path}\")" >> $workspace_file
-echo "android_ndk_repository(name = \"androidndk\", api_level=21, path = \"${android_ndk_path}/android-ndk-${ndk_version}\")" >> $workspace_file
+echo "android_ndk_repository(name = \"androidndk\", api_level = 21, path = \"${android_ndk_path}/android-ndk-${ndk_version}\")" >> $workspace_file
 # See https://github.com/bazelbuild/rules_android_ndk/issues/31#issuecomment-1396182185
 echo "bind(name = \"android/crosstool\", actual = \"@androidndk//:toolchain\")" >> $workspace_file
 echo "Done"
