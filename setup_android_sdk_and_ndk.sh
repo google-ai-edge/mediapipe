@@ -55,8 +55,8 @@ fi
 
 if [ -z $3 ]
 then
-  echo "Warning: ndk_version (argument 3) is not specified. Fallback to r28c."
-  ndk_version="r28c"
+  echo "Warning: ndk_version (argument 3) is not specified. Fallback to r28b."
+  ndk_version="r28b"
 fi
 
 if [ -d "$android_sdk_path" ]
