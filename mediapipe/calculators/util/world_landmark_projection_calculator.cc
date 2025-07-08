@@ -12,82 +12,36 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <cmath>
-#include <vector>
+#include "mediapipe/calculators/util/world_landmark_projection_calculator.h"
 
-#include "mediapipe/framework/calculator_framework.h"
+#include <cmath>
+#include <functional>
+#include <utility>
+
+#include "absl/status/status.h"
+#include "mediapipe/framework/api3/calculator.h"
+#include "mediapipe/framework/api3/calculator_context.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"
-#include "mediapipe/framework/port/ret_check.h"
 
-namespace mediapipe {
+namespace mediapipe::api3 {
 
-using ::mediapipe::NormalizedRect;
-
-namespace {
-
-constexpr char kLandmarksTag[] = "LANDMARKS";
-constexpr char kRectTag[] = "NORM_RECT";
-
-}  // namespace
-
-// Projects world landmarks from the rectangle to original coordinates.
-//
-// World landmarks are predicted in meters rather than in pixels of the image
-// and have origin in the middle of the hips rather than in the corner of the
-// pose image (cropped with given rectangle). Thus only rotation (but not scale
-// and translation) is applied to the landmarks to transform them back to
-// original coordinates.
-//
-// Input:
-//   LANDMARKS: A LandmarkList representing world landmarks in the rectangle.
-//   NORM_RECT: An NormalizedRect representing a normalized rectangle in image
-//              coordinates. (Optional)
-//
-// Output:
-//   LANDMARKS: A LandmarkList representing world landmarks projected (rotated
-//              but not scaled or translated) from the rectangle to original
-//              coordinates.
-//
-// Usage example:
-// node {
-//   calculator: "WorldLandmarkProjectionCalculator"
-//   input_stream: "LANDMARKS:landmarks"
-//   input_stream: "NORM_RECT:rect"
-//   output_stream: "LANDMARKS:projected_landmarks"
-// }
-//
-class WorldLandmarkProjectionCalculator : public CalculatorBase {
+class WorldLandmarkProjectionNodeImpl
+    : public Calculator<WorldLandmarkProjectionNode,
+                        WorldLandmarkProjectionNodeImpl> {
  public:
-  static absl::Status GetContract(CalculatorContract* cc) {
-    cc->Inputs().Tag(kLandmarksTag).Set<LandmarkList>();
-    if (cc->Inputs().HasTag(kRectTag)) {
-      cc->Inputs().Tag(kRectTag).Set<NormalizedRect>();
-    }
-    cc->Outputs().Tag(kLandmarksTag).Set<LandmarkList>();
-
-    return absl::OkStatus();
-  }
-
-  absl::Status Open(CalculatorContext* cc) override {
-    cc->SetOffset(TimestampDiff(0));
-
-    return absl::OkStatus();
-  }
-
-  absl::Status Process(CalculatorContext* cc) override {
-    // Check that landmarks and rect are not empty.
-    if (cc->Inputs().Tag(kLandmarksTag).IsEmpty() ||
-        (cc->Inputs().HasTag(kRectTag) &&
-         cc->Inputs().Tag(kRectTag).IsEmpty())) {
+  absl::Status Process(
+      CalculatorContext<WorldLandmarkProjectionNode>& cc) final {
+    // Check that landmarks and rect (if connected) are not empty.
+    if (!cc.input_landmarks ||
+        (cc.input_rect.IsConnected() && !cc.input_rect)) {
       return absl::OkStatus();
     }
 
-    const auto& in_landmarks =
-        cc->Inputs().Tag(kLandmarksTag).Get<LandmarkList>();
+    const auto& in_landmarks = cc.input_landmarks.GetOrDie();
     std::function<void(const Landmark&, Landmark*)> rotate_fn;
-    if (cc->Inputs().HasTag(kRectTag)) {
-      const auto& in_rect = cc->Inputs().Tag(kRectTag).Get<NormalizedRect>();
+    if (cc.input_rect) {
+      const auto& in_rect = cc.input_rect.GetOrDie();
       const float cosa = std::cos(in_rect.rotation());
       const float sina = std::sin(in_rect.rotation());
       rotate_fn = [cosa, sina](const Landmark& in_landmark,
@@ -97,11 +51,11 @@ class WorldLandmarkProjectionCalculator : public CalculatorBase {
       };
     }
 
-    auto out_landmarks = absl::make_unique<LandmarkList>();
+    LandmarkList out_landmarks;
     for (int i = 0; i < in_landmarks.landmark_size(); ++i) {
       const auto& in_landmark = in_landmarks.landmark(i);
 
-      Landmark* out_landmark = out_landmarks->add_landmark();
+      Landmark* out_landmark = out_landmarks.add_landmark();
       *out_landmark = in_landmark;
 
       if (rotate_fn) {
@@ -109,13 +63,9 @@ class WorldLandmarkProjectionCalculator : public CalculatorBase {
       }
     }
 
-    cc->Outputs()
-        .Tag(kLandmarksTag)
-        .Add(out_landmarks.release(), cc->InputTimestamp());
-
+    cc.output_landmarks.Send(std::move(out_landmarks));
     return absl::OkStatus();
   }
 };
-REGISTER_CALCULATOR(WorldLandmarkProjectionCalculator);
 
-}  // namespace mediapipe
+}  // namespace mediapipe::api3

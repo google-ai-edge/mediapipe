@@ -955,14 +955,37 @@ cc_test(
 cc_library(
     name = "world_landmark_projection_calculator",
     srcs = ["world_landmark_projection_calculator.cc"],
+    hdrs = ["world_landmark_projection_calculator.h"],
     deps = [
-        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api3:calculator",
+        "//mediapipe/framework/api3:calculator_context",
+        "//mediapipe/framework/api3:contract",
+        "//mediapipe/framework/api3:node",
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/formats:rect_cc_proto",
-        "//mediapipe/framework/port:ret_check",
-        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
+)
+
+cc_test(
+    name = "world_landmark_projection_calculator_test",
+    srcs = ["world_landmark_projection_calculator_test.cc"],
+    deps = [
+        ":world_landmark_projection_calculator",
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/api3:graph",
+        "//mediapipe/framework/api3:stream",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/util:packet_test_util",
+        "@com_google_absl//absl/status",
+        "@com_google_googletest//:gtest_main",
+    ],
 )
 
 mediapipe_proto_library(
