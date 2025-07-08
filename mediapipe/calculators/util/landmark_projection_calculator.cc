@@ -151,12 +151,11 @@ class LandmarkProjectionNodeImpl
 
       const NormalizedLandmarkList& input_landmarks = input.GetOrDie();
       NormalizedLandmarkList output_landmarks;
-      for (int i = 0; i < input_landmarks.landmark_size(); ++i) {
-        const NormalizedLandmark& landmark = input_landmarks.landmark(i);
+      for (int j = 0; j < input_landmarks.landmark_size(); ++j) {
+        const NormalizedLandmark& landmark = input_landmarks.landmark(j);
         NormalizedLandmark* new_landmark = output_landmarks.add_landmark();
         project_fn(landmark, new_landmark);
       }
-
       cc.output_landmarks.At(i).Send(std::move(output_landmarks));
     }
     return absl::OkStatus();
