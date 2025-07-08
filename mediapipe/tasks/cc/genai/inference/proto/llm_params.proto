@@ -67,6 +67,7 @@ enum LlmModelType {
 }
 
 // Parameters for Large Language Models (LLM).
+// Next ID: 19
 message LlmParameters {
   TransformerParameters transformer_parameters = 1;
 
@@ -85,6 +86,12 @@ message LlmParameters {
 
   // Stop tokens to determine the end of output stream.
   repeated string stop_tokens = 5;
+
+  // Stop token id to determine the end of output stream. Not used in the LLM
+  // engine but used in the LiteRT LM engine. Basically it is used to streamline
+  // the .litertlm file generation from .task file. One id should be matching
+  // one stop token string.
+  repeated int32 stop_token_ids = 18;
 
   enum InputOutputNormalization {
     INPUT_OUTPUT_NORMALIZATION_UNKNOWN = 0;
