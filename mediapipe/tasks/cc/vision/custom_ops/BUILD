@@ -25,7 +25,7 @@ cc_library(
     ],
     deps =
         [
-            "@eigen_archive//:eigen3",
+            "@eigen//:eigen3",
             "@org_tensorflow//tensorflow/lite:framework",
             "@org_tensorflow//tensorflow/lite/c:common",
             "@org_tensorflow//tensorflow/lite/core/c:private_common",

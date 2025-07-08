@@ -802,7 +802,7 @@ cc_library(
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
-        "@eigen_archive//:eigen3",
+        "@eigen//:eigen3",
     ],
 )
 
@@ -820,7 +820,7 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status:statusor",
-        "@eigen_archive//:eigen3",
+        "@eigen//:eigen3",
     ],
 )
 

@@ -1109,7 +1109,7 @@ cc_library(
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
-        "@eigen_archive//:eigen3",
+        "@eigen//:eigen3",
     ],
     alwayslink = 1,
 )
@@ -1643,7 +1643,7 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings:string_view",
-        "@eigen_archive//:eigen3",
+        "@eigen//:eigen3",
     ],
     alwayslink = True,
 )

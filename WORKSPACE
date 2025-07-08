@@ -768,6 +768,19 @@ load("@//third_party:wasm_files.bzl", "wasm_files")
 
 wasm_files()
 
+# Eigen
+EIGEN_COMMIT = "33d0937c6bdf5ec999939fb17f2a553183d14a74"
+
+EIGEN_SHA256 = "1f4babf536ce8fc2129dbf92ff3be54cd18ffb2171e9eb40edd00f0a045a54fa"
+
+http_archive(
+    name = "eigen",
+    build_file = "@//third_party:eigen.BUILD",
+    sha256 = EIGEN_SHA256,
+    strip_prefix = "eigen-{commit}".format(commit = EIGEN_COMMIT),
+    urls = ["https://gitlab.com/libeigen/eigen/-/archive/{commit}/eigen-{commit}.tar.gz".format(commit = EIGEN_COMMIT)],
+)
+
 # Halide
 
 new_local_repository(

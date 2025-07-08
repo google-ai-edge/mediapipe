@@ -212,7 +212,7 @@ objc_library(
         "//third_party/apple_frameworks:AVFoundation",
         "//third_party/apple_frameworks:CoreAudio",
         "//third_party/apple_frameworks:CoreMedia",
-        "@eigen_archive//:eigen3",
+        "@eigen//:eigen3",
     ],
 )
 

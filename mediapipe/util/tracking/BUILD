@@ -146,7 +146,7 @@ cc_library(
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/strings:str_format",
-        "@eigen_archive//:eigen3",
+        "@eigen//:eigen3",
     ],
 )
 
@@ -295,7 +295,7 @@ cc_library(
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/strings",
-        "@eigen_archive//:eigen3",
+        "@eigen//:eigen3",
     ],
 )
 
@@ -398,7 +398,7 @@ cc_library(
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
-        "@eigen_archive//:eigen3",
+        "@eigen//:eigen3",
     ],
 )
 
@@ -502,7 +502,7 @@ cc_library(
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
-        "@eigen_archive//:eigen3",
+        "@eigen//:eigen3",
     ],
     alwayslink = 1,
 )

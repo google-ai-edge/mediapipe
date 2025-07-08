@@ -120,7 +120,7 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/log:absl_check",
-        "@eigen_archive//:eigen3",
+        "@eigen//:eigen3",
     ],
 )
 

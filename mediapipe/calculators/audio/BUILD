@@ -147,7 +147,7 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/util:time_series_util",
         "@com_google_absl//absl/strings",
-        "@eigen_archive//:eigen3",
+        "@eigen//:eigen3",
     ],
     alwayslink = 1,
 )
@@ -167,7 +167,7 @@ cc_library(
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/strings",
         "@com_google_audio_tools//audio/dsp/mfcc",
-        "@eigen_archive//:eigen3",
+        "@eigen//:eigen3",
     ],
     alwayslink = 1,
 )
@@ -189,7 +189,7 @@ cc_library(
         "@com_google_absl//absl/strings",
         "@com_google_audio_tools//audio/dsp:resampler",
         "@com_google_audio_tools//audio/dsp:resampler_q",
-        "@eigen_archive//:eigen3",
+        "@eigen//:eigen3",
     ],
     alwayslink = 1,
 )
@@ -216,7 +216,7 @@ cc_library(
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/status",
         "@com_google_audio_tools//audio/dsp:resampler_q",
-        "@eigen_archive//:eigen3",
+        "@eigen//:eigen3",
     ],
     alwayslink = 1,
 )
@@ -254,7 +254,7 @@ cc_library(
         "@com_google_absl//absl/strings",
         "@com_google_audio_tools//audio/dsp:window_functions",
         "@com_google_audio_tools//audio/dsp/spectrogram",
-        "@eigen_archive//:eigen3",
+        "@eigen//:eigen3",
     ],
     alwayslink = 1,
 )
@@ -273,7 +273,7 @@ cc_library(
         "//mediapipe/util:time_series_util",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_audio_tools//audio/dsp:window_functions",
-        "@eigen_archive//:eigen3",
+        "@eigen//:eigen3",
     ],
     alwayslink = 1,
 )
@@ -310,7 +310,7 @@ cc_library(
         "//mediapipe/util:time_series_util",
         "@com_google_absl//absl/status",
         "@com_google_audio_tools//audio/linear_filters:two_tap_fir_filter",
-        "@eigen_archive//:eigen3",
+        "@eigen//:eigen3",
     ],
     alwayslink = 1,
 )
@@ -336,7 +336,7 @@ cc_test(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_audio_tools//audio/dsp:number_util",
-        "@eigen_archive//:eigen3",
+        "@eigen//:eigen3",
     ],
 )
 
@@ -369,7 +369,7 @@ cc_test(
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/util:time_series_test_util",
-        "@eigen_archive//:eigen3",
+        "@eigen//:eigen3",
     ],
 )
 
@@ -385,7 +385,7 @@ cc_test(
         "//mediapipe/framework/port:status",
         "//mediapipe/util:time_series_test_util",
         "@com_google_audio_tools//audio/dsp/mfcc",
-        "@eigen_archive//:eigen3",
+        "@eigen//:eigen3",
     ],
 )
 
@@ -406,7 +406,7 @@ cc_test(
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
         "@com_google_audio_tools//audio/dsp:number_util",
-        "@eigen_archive//:eigen3",
+        "@eigen//:eigen3",
     ],
 )
 
@@ -424,7 +424,7 @@ cc_test(
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:status",
         "//mediapipe/util:time_series_test_util",
-        "@eigen_archive//:eigen3",
+        "@eigen//:eigen3",
     ],
 )
 
@@ -459,7 +459,7 @@ cc_test(
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
         "@com_google_audio_tools//audio/dsp:window_functions",
-        "@eigen_archive//:eigen3",
+        "@eigen//:eigen3",
     ],
 )
 
@@ -480,7 +480,7 @@ cc_test(
         "@com_google_audio_tools//audio/dsp:resampler",
         "@com_google_audio_tools//audio/dsp:resampler_q",
         "@com_google_audio_tools//audio/dsp:signal_vector_util",
-        "@eigen_archive//:eigen3",
+        "@eigen//:eigen3",
     ],
 )
 
@@ -500,6 +500,6 @@ cc_test(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/types:span",
         "@com_google_audio_tools//audio/dsp:resampler_q",
-        "@eigen_archive//:eigen3",
+        "@eigen//:eigen3",
     ],
 )

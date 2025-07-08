@@ -60,7 +60,7 @@ cc_test(
         "//mediapipe/tasks/cc/components/containers:landmark",
         "//mediapipe/tasks/cc/vision/face_landmarker:face_landmarker_result",
         "@com_google_googletest//:gtest_main",
-        "@eigen_archive//:eigen3",
+        "@eigen//:eigen3",
     ],
 )
 
