@@ -335,6 +335,9 @@ cc_library(
     hdrs = [
         "re2.h",
     ],
+    deps = [
+        "@com_google_absl//absl/base",
+    ],
 )
 
 cc_library(
