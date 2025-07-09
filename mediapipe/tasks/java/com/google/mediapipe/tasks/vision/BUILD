@@ -462,6 +462,12 @@ android_library(
     ],
 )
 
+OPENCV_DEPS = select({
+    "//conditions:default": ["//third_party:android_jni_opencv_cc_lib"],
+    "//mediapipe/framework/port:disable_opencv": [],
+    "//third_party:exclude_opencv_so_lib": [],
+})
+
 android_library(
     name = "tasks_vision_aar_library",
     srcs = glob(
@@ -526,7 +532,7 @@ android_library(
         "//third_party:autovalue",
         "@maven//:androidx_annotation_annotation",
         "@maven//:com_google_guava_guava",
-    ],
+    ] + OPENCV_DEPS,
 )
 
 mediapipe_build_aar_with_jni(

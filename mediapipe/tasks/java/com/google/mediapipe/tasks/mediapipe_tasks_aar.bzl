@@ -207,60 +207,6 @@ def mediapipe_tasks_core_aar(name, srcs, manifest):
                }),
     )
 
-def _mediapipe_tasks_aar(name, srcs, manifest, java_proto_lite_targets, native_library):
-    """Builds medaipipe tasks AAR."""
-    deps = java_proto_lite_targets + [native_library] + [
-        "//mediapipe/java/com/google/mediapipe/framework:android_framework",
-        "//mediapipe/java/com/google/mediapipe/framework/image",
-        "//mediapipe/framework:calculator_options_java_proto_lite",
-        "//mediapipe/framework:calculator_java_proto_lite",
-        "//mediapipe/framework/formats:classification_java_proto_lite",
-        "//mediapipe/framework/formats:detection_java_proto_lite",
-        "//mediapipe/framework/formats:landmark_java_proto_lite",
-        "//mediapipe/framework/formats:location_data_java_proto_lite",
-        "//mediapipe/framework/formats:matrix_data_java_proto_lite",
-        "//mediapipe/framework/formats:rect_java_proto_lite",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:audiodata",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:detection",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:category",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:classificationresult",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:classifications",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:connection",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:embedding",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:embeddingresult",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:landmark",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:normalizedkeypoint",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:normalized_landmark",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/processors:classifieroptions",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/utils:cosinesimilarity",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core:logging",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
-        "//mediapipe/util:color_java_proto_lite",
-        "//mediapipe/util:label_map_java_proto_lite",
-        "//mediapipe/util:render_data_java_proto_lite",
-        "//third_party:autovalue",
-        "@maven//:androidx_annotation_annotation",
-        "@maven//:com_google_guava_guava",
-        "@com_google_protobuf//:protobuf_javalite",
-        "//third_party:any_java_proto",
-    ]
-
-    deps += select({
-        "//conditions:default": ["//third_party:android_jni_opencv_cc_lib"],
-        "//mediapipe/framework/port:disable_opencv": [],
-        "//third_party:exclude_opencv_so_lib": [],
-    })
-
-    android_library(
-        name = name + "_android_lib",
-        srcs = srcs,
-        manifest = manifest,
-        proguard_specs = ["//mediapipe/java/com/google/mediapipe/framework:proguard.pgcfg"],
-        deps = deps,
-    )
-
-    mediapipe_build_aar_with_jni(name, name + "_android_lib")
-
 def _mediapipe_tasks_java_proto_src_extractor(target):
     proto_path = "com/google/" + target.split(":")[0].replace("cc/", "").replace("//", "").replace("third_party/", "").replace("_", "") + "/"
     proto_name = target.split(":")[-1].replace("_java_proto_lite", "").replace("_", " ").title().replace(" ", "") + "Proto.java"
