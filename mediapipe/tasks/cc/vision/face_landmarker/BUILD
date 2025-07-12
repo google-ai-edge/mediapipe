@@ -95,6 +95,7 @@ cc_library(
         "//mediapipe/calculators/util:rect_transformation_calculator_cc_proto",
         "//mediapipe/calculators/util:thresholding_calculator",
         "//mediapipe/calculators/util:thresholding_calculator_cc_proto",
+        "//mediapipe/calculators/util:confidence_landmark_merger_calculator",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_options_cc_proto",
         "//mediapipe/framework/api2:builder",
@@ -222,4 +223,34 @@ cc_library(
 cc_library(
     name = "face_landmarks_connections",
     hdrs = ["face_landmarks_connections.h"],
+)
+
+
+cc_test(
+    name = "face_landmarker_test",
+    srcs = ["face_landmarker_test.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "face_landmarker",
+        "//mediapipe/tasks/cc/components/processors/proto:classifier_options_cc_proto",
+        "//mediapipe/tasks/cc/components/containers/proto:landmarks_detection_result_cc_proto",
+        "//mediapipe/tasks/cc/vision/utils:image_utils",
+        "@org_tensorflow//tensorflow/lite:test_util",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:opencv_core",
+        "//mediapipe/framework/port:opencv_imgproc",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/port:status_matchers",
+        "@com_google_googletest//:gtest_main"
+    ],
+    data = [
+        "//mediapipe/tasks/testdata/vision:test_protos",
+        "//mediapipe/tasks/testdata/vision:test_models",
+        "//mediapipe/tasks/testdata/vision:test_images"
+    ]
 )
