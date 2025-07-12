@@ -25,13 +25,9 @@ namespace {
 
 static absl::NoDestructor<wgpu::Instance> kWebGpuInstance([] {
   wgpu::InstanceDescriptor instance_desc = {};
-#ifdef WGPU_BREAKING_CHANGE_INSTANCE_FEATURES_LIMITS
   static const auto kTimedWaitAny = wgpu::InstanceFeatureName::TimedWaitAny;
   instance_desc.requiredFeatureCount = 1;
   instance_desc.requiredFeatures = &kTimedWaitAny;
-#else
-  instance_desc.capabilities.timedWaitAnyEnable = true;
-#endif
   return wgpu::CreateInstance(&instance_desc);
 }());
 
