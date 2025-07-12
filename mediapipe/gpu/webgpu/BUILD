@@ -95,6 +95,14 @@ cc_library(
     name = "webgpu_texture_view",
     hdrs = ["webgpu_texture_view.h"],
     visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/gpu:gpu_buffer_storage",
+    ] + select({
+        "//mediapipe:emscripten": [],
+        "//conditions:default": [
+            "//third_party/dawn:webgpu_headers",
+        ],
+    }),
 )
 
 cc_library(
