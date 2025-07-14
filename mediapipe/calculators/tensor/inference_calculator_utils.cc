@@ -16,12 +16,10 @@
 
 #include <cstdint>
 #include <cstring>
-#include <ostream>
 #include <string>
 #include <vector>
 
 #include "absl/flags/flag.h"
-#include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
@@ -114,6 +112,28 @@ std::string GetTensorTypeString(const Tensor::ElementType& tensor_type) {
     default:
       return "Unknown";
   }
+}
+
+// Helper function to get the tensor shape without leading or trailing ones.
+absl::Span<const int> GetTensorDimensionsWithoutLeadingOrTrailingOnes(
+    absl::Span<const int> tensor_shape) {
+  if (tensor_shape.size() <= 1) {
+    // Skip if the tensor has no dimensions or only one dimension.
+    return tensor_shape;
+  }
+  auto begin_itr = tensor_shape.begin();
+  while (begin_itr != tensor_shape.end() && *begin_itr == 1) {
+    ++begin_itr;
+  }
+  if (begin_itr == tensor_shape.end()) {
+    // Return [1], if the tensor has only ones.
+    return absl::MakeConstSpan(tensor_shape.begin(), tensor_shape.begin() + 1);
+  }
+  auto end_itr = tensor_shape.end();
+  while (end_itr != begin_itr && *(end_itr - 1) == 1) {
+    --end_itr;
+  }
+  return absl::MakeConstSpan(begin_itr, end_itr);
 }
 
 std::string GetTfLiteTensorDebugInfo(const TfLiteTensor& tflite_tensor) {
@@ -235,7 +255,6 @@ absl::Status CopyCpuInputIntoTfLiteTensor(const Tensor& input_tensor,
              GetTensorTypeString(input_tensor_type),
              TfLiteTypeGetName(interpreter_tensor_type));
   switch (interpreter_tensor_type) {
-    case TfLiteType::kTfLiteFloat16:
     case TfLiteType::kTfLiteFloat32: {
       MP_RETURN_IF_ERROR(
           CopyTensorToTfLiteTensor<float>(input_tensor, tflite_tensor));
@@ -327,9 +346,17 @@ absl::Status CopyTfLiteTensorIntoCpuOutput(const TfLiteTensor& tflite_tensor,
 
 absl::StatusOr<Tensor> ConvertTfLiteTensorToTensor(
     const TfLiteTensor& tflite_tensor) {
-  Tensor::Shape shape(
-      std::vector<int>(tflite_tensor.dims->data,
-                       tflite_tensor.dims->data + tflite_tensor.dims->size));
+  std::vector<int> dims;
+  if (tflite_tensor.dims->size > 0) {
+    dims =
+        std::vector<int>(tflite_tensor.dims->data,
+                         tflite_tensor.dims->data + tflite_tensor.dims->size);
+  } else {
+    // Scalar tensors have no dimensions in TfLite, but have a single
+    // dimension in MP tensors.
+    dims = std::vector<int>({1});
+  }
+  Tensor::Shape shape(dims);
   switch (tflite_tensor.type) {
     case TfLiteType::kTfLiteFloat16:
     case TfLiteType::kTfLiteFloat32: {
@@ -344,6 +371,24 @@ absl::StatusOr<Tensor> ConvertTfLiteTensorToTensor(
           CopyTfLiteTensorToTensor<int32_t>(tflite_tensor, output_tensor));
       return output_tensor;
     }
+    case TfLiteType::kTfLiteBool: {
+      Tensor output_tensor(Tensor::ElementType::kBool, shape);
+      MP_RETURN_IF_ERROR(
+          CopyTfLiteTensorToTensor<bool>(tflite_tensor, output_tensor));
+      return output_tensor;
+    }
+    case TfLiteType::kTfLiteUInt8: {
+      Tensor output_tensor(Tensor::ElementType::kUInt8, shape);
+      MP_RETURN_IF_ERROR(
+          CopyTfLiteTensorToTensor<uint8_t>(tflite_tensor, output_tensor));
+      return output_tensor;
+    }
+    case TfLiteType::kTfLiteInt8: {
+      Tensor output_tensor(Tensor::ElementType::kInt8, shape);
+      MP_RETURN_IF_ERROR(
+          CopyTfLiteTensorToTensor<int8_t>(tflite_tensor, output_tensor));
+      return output_tensor;
+    }
     default:
       return absl::InvalidArgumentError(
           absl::StrCat("Unsupported output data type: ", tflite_tensor.type));
@@ -354,19 +399,14 @@ absl::StatusOr<Tensor> CreateTensorWithTfLiteTensorSpecs(
     const TfLiteTensor& reference_tflite_tensor, MemoryManager* memory_manager,
     int alignment) {
   Tensor::Shape shape;
-  if (reference_tflite_tensor.dims->size > 0) {
+  if (reference_tflite_tensor.dims->size == 0) {
+    // Scalar tensors have no dimensions in TfLite, but have a single
+    // dimension in MP tensors.
+    shape = std::vector<int>({1});
+  } else {
     shape = std::vector<int>(reference_tflite_tensor.dims->data,
                              reference_tflite_tensor.dims->data +
                                  reference_tflite_tensor.dims->size);
-  } else {
-    ABSL_LOG(ERROR) << "TfLite tensor with empty dimensions: "
-                    << GetTfLiteTensorDebugInfo(reference_tflite_tensor)
-                    << ", likely due to malformed model signature.";
-    // TODO b/362911393 - remove hack once hades tests are fixed.
-    if (reference_tflite_tensor.type == TfLiteType::kTfLiteUInt8) {
-      shape = std::vector<int>(
-          {1, static_cast<int>(reference_tflite_tensor.bytes)});
-    }
   }
 
   switch (reference_tflite_tensor.type) {
@@ -415,19 +455,22 @@ absl::Status TensorDimsAndTypeEqual(const Tensor& mp_tensor,
   RET_CHECK(output_tensor_type == tflite_tensor.type)
           .SetCode(absl::StatusCode::kInvalidArgument)
       << absl::StrFormat(
-             "MediaPipe and TfLite tensor type do not match: MediaPipe tensor "
-             "type %s vs TfLite tensor type %s.",
+             "MediaPipe and TfLite tensor type do not match: MediaPipe "
+             "tensor type %s vs TfLite tensor type %s.",
              GetTensorTypeString(output_tensor_type),
              TfLiteTypeGetName(tflite_tensor.type));
 
   // Scalar input in TensorFlow is described by an empty shape.
   // In MediaPipe, we represent it as a shape with one element.
-  // For more details, see https://www.tensorflow.org/api_docs/python/tf/shape.
+  // For more details, see
+  // https://www.tensorflow.org/api_docs/python/tf/shape.
   const bool is_scalar_input =
       tflite_tensor.dims->size == 0 && mp_tensor.shape().num_elements() == 1;
-  if (!is_scalar_input && !TfLiteIntArrayEqualsArray(
-                              tflite_tensor.dims, mp_tensor.shape().dims.size(),
-                              mp_tensor.shape().dims.data())) {
+  const bool are_dims_equal =
+      GetTensorDimensionsWithoutLeadingOrTrailingOnes(absl::MakeConstSpan(
+          tflite_tensor.dims->data, tflite_tensor.dims->size)) ==
+      GetTensorDimensionsWithoutLeadingOrTrailingOnes(mp_tensor.shape().dims);
+  if (!is_scalar_input && !are_dims_equal) {
     return absl::InvalidArgumentError(
         absl::StrCat("TfLiteTensor and Tensor shape do not match: ",
                      GetTfLiteTensorDebugInfo(tflite_tensor), " vs. ",
