@@ -47,4 +47,7 @@ message LlmInferenceGraphOptions {
   // The maximum number of images we can handle with MM LLMs. Enables vision
   // modality when set > 0.
   optional uint32 max_num_images = 7;
+
+  // Enables audio modality when set to true for MM LLMs.
+  optional bool support_audio = 8;
 }

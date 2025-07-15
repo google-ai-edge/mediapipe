@@ -100,4 +100,10 @@ export declare interface LlmInferenceOptions extends TaskRunnerOptions {
    * loading, and therefore is not compatible with "converted" models.
    */
   maxNumImages?: number;
+
+  /**
+   * When set to true, will enable audio modality usage. Will also enable
+   * streaming loading, and therefore is not compatible with "converted" models.
+   */
+  supportAudio?: boolean;
 }

@@ -28,6 +28,8 @@ import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {LlmInferenceGraphOptions} from '../../../../tasks/web/genai/llm_inference/proto/llm_inference_graph_options_pb';
 import {WasmModule} from '../../../../web/graph_runner/graph_runner';
 import {
+  instanceOfAudio,
+  instanceOfImage,
   MultiResponseProgressListener,
   ProgressListener,
   Prompt,
@@ -52,13 +54,14 @@ import {TransformerParameters} from '../../../../tasks/cc/genai/inference/proto/
 
 import {LlmInferenceOptions} from './llm_inference_options';
 import {
-  ModelFormat,
   getModelFormatAndClose,
+  ModelFormat,
   tee,
   uint8ArrayToStream,
 } from './model_loading_utils';
 
 export type {
+  Audio,
   Image,
   MultiResponseProgressListener,
   ProgressListener,
@@ -450,8 +453,12 @@ export class LlmInference extends TaskRunner {
         'maxNumImages' in options && options.maxNumImages
           ? (options.maxNumImages as number)
           : 0;
+      this.options.setMaxNumImages(maxNumImages);
 
-      if (this.isConvertedModel || maxNumImages > 0) {
+      const supportAudio = 'supportAudio' in options && !!options.supportAudio;
+      this.options.setSupportAudio(supportAudio);
+
+      if (this.isConvertedModel || maxNumImages > 0 || supportAudio) {
         this.useLlmEngine = true;
         modelStream = modelStreamForLoading;
       } else {
@@ -750,10 +757,9 @@ export class LlmInference extends TaskRunner {
         : progressListener;
     // If prompt contains a multi-modal piece, ensure options are set properly.
     const queryAsArray = Array.isArray(query) ? query : [query];
-    const numImages = queryAsArray.filter(
-      (elem) => typeof elem !== 'string',
+    const numImages = queryAsArray.filter((elem) =>
+      instanceOfImage(elem),
     ).length;
-    // For now MM is only vision.
     if (
       numImages > 0 &&
       (!this.options.hasMaxNumImages() ||
@@ -765,6 +771,18 @@ export class LlmInference extends TaskRunner {
             this.options.hasMaxNumImages() ? this.options.getMaxNumImages() : 0
           }` +
           `, but the query included ${numImages} images.`,
+      );
+    }
+    const numAudios = queryAsArray.filter((elem) =>
+      instanceOfAudio(elem),
+    ).length;
+    if (
+      numAudios > 0 &&
+      (!this.options.hasSupportAudio() || !this.options.getSupportAudio())
+    ) {
+      throw new Error(
+        `supportAudio was not enabled, but the query included ${numAudios} ` +
+          `audio chunks.`,
       );
     }
     if (this.useLlmEngine) {
@@ -874,8 +892,11 @@ export class LlmInference extends TaskRunner {
     if (this.isProcessing) {
       throw new Error('Previous invocation or loading is still ongoing.');
     }
-    if (queryAsArray.some((elem) => typeof elem !== 'string')) {
+    if (queryAsArray.some(instanceOfImage)) {
       throw new Error('sizeInTokens requires maxNumImages > 0 for images.');
+    }
+    if (queryAsArray.some(instanceOfAudio)) {
+      throw new Error('sizeInTokens requires supportAudio for audio.');
     }
     const text = queryAsArray.join('');
     this.isProcessing = true;

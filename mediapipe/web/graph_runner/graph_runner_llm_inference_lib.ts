@@ -11,6 +11,7 @@ const DEFAULT_MAX_TOKENS = 512;
 const DEFAULT_TOP_K = 40;
 const DEFAULT_FORCE_F32 = false;
 const DEFAULT_MAX_NUM_IMAGES = 0;
+const DEFAULT_SUPPORT_AUDIO = false;
 
 const TOKENS_PER_IMAGE = 260;
 
@@ -18,21 +19,44 @@ const TOKENS_PER_IMAGE = 260;
  * Image type for use in multi-modal LLM queries.
  */
 export declare interface Image {
-  source: ImageSource;
+  imageSource: ImageSource;
+}
+
+/**
+ * Type check for Image.
+ */
+export function instanceOfImage(obj: unknown): obj is Image {
+  // tslint:disable-next-line:ban-unsafe-reflection
+  return typeof obj === 'object' && obj != null && 'imageSource' in obj;
+}
+
+/**
+ * Audio type for use in multi-modal LLM queries.
+ */
+export declare interface Audio {
+  audioSource: AudioSource;
+}
+
+/**
+ * Type check for Audio.
+ */
+export function instanceOfAudio(obj: unknown): obj is Audio {
+  // tslint:disable-next-line:ban-unsafe-reflection
+  return typeof obj === 'object' && obj != null && 'audioSource' in obj;
 }
 
 /**
  * Type for a piece of an LLM query.
  */
-export type PromptPart = string | Image;
+export type PromptPart = string | Image | Audio;
 
 /**
  * Type for an LLM query; may be multi-modal.
  */
 export type Prompt = PromptPart | PromptPart[];
 
-// The allowable types for image sources to be used for mixed vision+text LLM
-// queries.
+// The allowable types for image sources to be used for mixed audio/text/vision
+// LLM queries.
 declare type ImageSource = Exclude<CanvasImageSource, SVGElement> | string;
 
 declare interface ImageByteSource {
@@ -40,6 +64,11 @@ declare interface ImageByteSource {
   width: number;
   height: number;
 }
+
+// The allowable types for audio sources to be used for mixed audio/text/vision
+// LLM queries. For now, we only support URLs for single mono .wav files, but
+// we should expand this in the future.
+declare type AudioSource = string;
 
 /**
  * We extend from a GraphRunner constructor. This ensures our mixin has
@@ -76,11 +105,6 @@ export declare interface WasmLlmInferenceModule {
   // models (.task format).
   _userProgressListener: ProgressListener | undefined;
   _GetSizeInTokens: (textPtr: number) => number;
-  _MakeSessionForPredict: (
-    samplerParamsPtr: number,
-    samplerParamsSize: number,
-    useVision: boolean,
-  ) => number;
   _FreeSession: (session: number) => void;
   _AddTextQueryChunk: (session: number, textPtr: number) => void;
   _AddImageQueryChunk: (
@@ -89,6 +113,11 @@ export declare interface WasmLlmInferenceModule {
     width: number,
     height: number,
   ) => void;
+  _AddAudioQueryChunk: (
+    session: number,
+    audioDataPtr: number,
+    audioDataSize: number,
+  ) => void;
   ccall: (
     name: string,
     type: string,
@@ -96,11 +125,19 @@ export declare interface WasmLlmInferenceModule {
     outParams: unknown,
     options: unknown,
   ) => Promise<void>;
+  ccallNum: (
+    name: string,
+    type: string,
+    inParams: unknown,
+    outParams: unknown,
+    options: unknown,
+  ) => Promise<number>;
   createLlmInferenceEngine: (
     maxTokens: number,
     topK: number,
     forceF32: boolean,
     maxNumImages: number,
+    useAudio: boolean,
     readBufferCallback: (offset: number, size: number, mode: number) => void,
   ) => Promise<void>;
 }
@@ -119,6 +156,8 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
     // old-style '_' to indicate private.
     // tslint:disable-next-line:enforce-name-casing
     _isLlmEngineProcessing = false;
+    // tslint:disable-next-line:enforce-name-casing
+    _audioKeepaliveSession = 0;
     // tslint:disable-next-line:enforce-name-casing
     _visionKeepaliveSession = 0;
 
@@ -176,6 +215,7 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
           llmInferenceGraphOptions.getSamplerParams()?.getK() ?? DEFAULT_TOP_K,
           llmInferenceGraphOptions.getForceF32() ?? DEFAULT_FORCE_F32,
           llmInferenceGraphOptions.getMaxNumImages() ?? DEFAULT_MAX_NUM_IMAGES,
+          llmInferenceGraphOptions.getSupportAudio() ?? DEFAULT_SUPPORT_AUDIO,
           readBufferCallback,
         );
       } finally {
@@ -223,13 +263,22 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
     deleteLlmInferenceEngine() {
       this._startLlmEngineProcessing();
       try {
-        (this.wasmModule as unknown as WasmLlmInferenceModule).ccall(
-          'DeleteLlmInferenceEngine',
-          'void',
-          [],
-          [],
-          {async: false},
-        );
+        const llmWasm = this.wasmModule as unknown as WasmLlmInferenceModule;
+        llmWasm.ccall('DeleteLlmInferenceEngine', 'void', [], [], {
+          async: false,
+        });
+        if (this._audioKeepaliveSession) {
+          llmWasm._FreeSession(this._audioKeepaliveSession);
+          // Don't double-free
+          if (this._visionKeepaliveSession === this._audioKeepaliveSession) {
+            this._visionKeepaliveSession = 0;
+          }
+          this._audioKeepaliveSession = 0;
+        }
+        if (this._visionKeepaliveSession) {
+          llmWasm._FreeSession(this._visionKeepaliveSession);
+          this._visionKeepaliveSession = 0;
+        }
       } finally {
         this._endLlmEngineProcessing();
       }
@@ -277,14 +326,26 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
         this.wasmModule.HEAPU8.set(samplerParamsBin, samplerParamsPtr);
 
         // For running a query: we first create our session.
-        const useVision = query.some((elem) => typeof elem !== 'string');
-
-        const session = llmWasm._MakeSessionForPredict(
-          samplerParamsPtr,
-          samplerParamsSize,
-          useVision,
+        const useAudio = query.some(instanceOfAudio);
+        const useVision = query.some(instanceOfImage);
+        llmWasm.ccallNum = llmWasm.ccall as unknown as (
+          name: string,
+          type: string,
+          inParams: unknown,
+          outParams: unknown,
+          options: unknown,
+        ) => Promise<number>;
+        const session = await llmWasm.ccallNum(
+          'MakeSessionForPredict',
+          'number',
+          ['number', 'number', 'boolean', 'boolean'],
+          [samplerParamsPtr, samplerParamsSize, useVision, useAudio],
+          {
+            async: true,
+          },
         );
-        const imagesToFree: number[] = [];
+
+        const mediaToFree: number[] = [];
 
         // Then we add all the query chunks in order
         for (const chunk of query) {
@@ -293,10 +354,10 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
             this.wrapStringPtr(chunk, (textPtr: number) => {
               llmWasm._AddTextQueryChunk(session, textPtr);
             });
-          } else {
+          } else if (instanceOfImage(chunk)) {
             // We load image data from whatever source type is given.
             const {image, width, height} = await this.getImageFromSource(
-              chunk.source,
+              chunk.imageSource,
             );
 
             // Now we extract the bytes. TODO: b/424221732 - This should also be
@@ -326,7 +387,33 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
               imageData.width,
               imageData.height,
             );
-            imagesToFree.push(imageDataPtr);
+            mediaToFree.push(imageDataPtr);
+          } else if (instanceOfAudio(chunk)) {
+            // The audio API is very different from the vision API, and expects
+            // a mono-channel .wav file as raw data.
+            // TODO: Update this code if and when audio API support is upgraded.
+            const response = await fetch(chunk.audioSource);
+            if (!response.ok) {
+              throw new Error(
+                `Audio fetch for ${chunk.audioSource} had ` +
+                  `error: ${response.status}`,
+              );
+            }
+            const audioBuffer = await response.arrayBuffer();
+            const audioBytes = new Uint8Array(audioBuffer);
+            // Copy into wasm heap
+            const audioDataPtr = this.wasmModule._malloc(audioBytes.length);
+            this.wasmModule.HEAPU8.set(audioBytes, audioDataPtr);
+
+            // Add audio chunk to query
+            llmWasm._AddAudioQueryChunk(
+              session,
+              audioDataPtr,
+              audioBytes.length,
+            );
+            mediaToFree.push(audioDataPtr);
+          } else {
+            throw new Error('Unsupported PromptPart type in query.');
           }
         }
 
@@ -335,26 +422,30 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
           async: true,
         });
 
-        // Vision runners are lazily loaded during the first query that uses
-        // them, and are freed automatically afterwards. We cannot afford to
-        // reload them though (especially the vision encoder, see b/422851454
-        // and b/425860520), so we intentionally leave the last used vision
-        // session alive and unfreed. TODO: b/424014728 - Fix this.
-        if (useVision) {
-          if (this._visionKeepaliveSession !== 0) {
-            llmWasm._FreeSession(this._visionKeepaliveSession);
-          }
+        // Vision and audio runners are lazily loaded during the first query
+        // that uses them, and are freed automatically afterwards. We cannot
+        // afford to reload them though, so we intentionally leave our first
+        // vision and/or audio session(s) alive and unfreed.
+        // TODO: b/431095215 - Fix this.
+        let freeSession = true;
+        if (useVision && this._visionKeepaliveSession === 0) {
           this._visionKeepaliveSession = session;
-        } else {
+          freeSession = false;
+        }
+        if (useAudio && this._audioKeepaliveSession === 0) {
+          this._audioKeepaliveSession = session;
+          freeSession = false;
+        }
+        if (freeSession) {
           llmWasm._FreeSession(session);
         }
 
         // After our query has finished, we free all image memory we were
         // holding.
-        for (const imageDataPtr of imagesToFree) {
-          this.wasmModule._free(imageDataPtr);
+        for (const mediaDataPtr of mediaToFree) {
+          this.wasmModule._free(mediaDataPtr);
         }
-        imagesToFree.length = 0;
+        mediaToFree.length = 0;
 
         // TODO: b/399215600 - Remove the following trigger of the user progress
         // listener when the underlying LLM Inference Engine is fixed to trigger
@@ -392,8 +483,13 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
         // For now, just text and images to handle.
         if (typeof chunk === 'string') {
           promptWithoutImages += chunk;
-        } else {
+        } else if (instanceOfImage(chunk)) {
           tokensFromImages += TOKENS_PER_IMAGE;
+        } else if (instanceOfAudio(chunk)) {
+          // TODO: Add tokens from audio to count when possible.
+          console.warn(
+            'sizeInTokens is not yet implemented for audio; audio tokens will not be counted',
+          );
         }
       }
       try {
