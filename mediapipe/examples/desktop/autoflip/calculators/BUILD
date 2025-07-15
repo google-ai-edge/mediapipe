@@ -19,7 +19,6 @@ licenses(["notice"])
 package(default_visibility = [
     "//buzz/diffractor/mediapipe:__subpackages__",
     "//mediapipe/examples:__subpackages__",
-    "//mediapipe/viz:__subpackages__",
     "//mediapipe/web/solutions:__subpackages__",
 ])
 
