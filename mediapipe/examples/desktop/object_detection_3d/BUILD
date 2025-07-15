@@ -14,8 +14,6 @@
 
 licenses(["notice"])
 
-package(default_visibility = ["//mediapipe/examples:__subpackages__"])
-
 # bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 mediapipe/examples/desktop/object_detection_3d:objectron_cpu
 # To run 3D object detection for shoes,
 # bazel-bin/mediapipe/examples/desktop/object_detection_3d/objectron_cpu \
