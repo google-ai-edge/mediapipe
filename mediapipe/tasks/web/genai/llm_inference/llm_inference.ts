@@ -512,7 +512,8 @@ export class LlmInference extends TaskRunner {
       }
       if (this.useLlmEngine && numResponsesToSet > 1) {
         throw new Error(
-          `'numResponses > 1' is not supported for converted LLM models yet.`,
+          `'numResponses > 1' is not supported for converted LLM models yet, ` +
+            `and is also not supported with multimodality.`,
         );
       }
       this.options.setNumResponses(numResponsesToSet);
@@ -794,13 +795,16 @@ export class LlmInference extends TaskRunner {
       ) {
         throw new Error(
           'Multi-response generation is not supported for converted LLM ' +
-            'models (.task format) yet. Please use the .bin format.',
+            'models (.task format) yet, nor is it supported for ' +
+            'multimodality. Please use the .bin format without multimodality ' +
+            'or request only one response.',
         );
       }
       if (loraModelOrProgressListener instanceof LoraModel) {
         throw new Error(
           'LoRA is not supported for converted LLM models (.task format) ' +
-            'yet. Please use the .bin format.',
+            'yet, nor is it supported for multimodality. Please use the .bin ' +
+            'format without multimodality to use LoRA.',
         );
       }
       // TODO: b/398904237 - Support streaming generation by passing the
@@ -927,8 +931,9 @@ export class LlmInference extends TaskRunner {
     // TODO: b/398858769 - Support LoRA for converted LLM models (.task format).
     if (this.useLlmEngine) {
       throw new Error(
-        'LoRA is not supported for converted LLM models (.task format) yet. ' +
-          'Please use the old foramat (.bin) to use LoRA.',
+        'LoRA is not supported for converted LLM models (.task format) yet, ' +
+          'nor is it supported for multimodality. Please use the old format ' +
+          '(.bin) without multimodality to use LoRA.',
       );
     }
     if (this.isProcessing) {
