@@ -2,8 +2,6 @@
 
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_library")
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
-
 licenses(["notice"])
 
 mediapipe_ts_library(
