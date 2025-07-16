@@ -218,6 +218,7 @@ class FaceDetectorGraph : public core::ModelTaskGraph {
   std::string GetImagePreprocessingGraphName() {
     return "mediapipe.tasks.components.processors.ImagePreprocessingGraph";
   }
+
   absl::StatusOr<FaceDetectionOuts> BuildFaceDetectionSubgraph(
       const FaceDetectorGraphOptions& subgraph_options,
       const core::ModelResources& model_resources, Source<Image> image_in,

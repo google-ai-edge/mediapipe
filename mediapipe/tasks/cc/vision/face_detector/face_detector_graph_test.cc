@@ -169,15 +169,14 @@ TEST_P(FaceDetectorGraphTest, Succeed) {
 
 INSTANTIATE_TEST_SUITE_P(
     FaceDetectorGraphTest, FaceDetectorGraphTest,
-    Values(
-        TestParams{
-            .test_name = "ShortRange",
-            .face_detection_model_name = kShortRangeBlazeFaceModel,
-            .test_image_name = kPortraitImage,
-            .expected_result = {GetExpectedFaceDetectionResult(
-                kPortraitExpectedDetection)},
-            .graph_name =
-                "mediapipe.tasks.vision.face_detector.FaceDetectorGraph"}, ),
+    Values(TestParams{
+        .test_name = "ShortRange",
+        .face_detection_model_name = kShortRangeBlazeFaceModel,
+        .test_image_name = kPortraitImage,
+        .expected_result = {GetExpectedFaceDetectionResult(
+            kPortraitExpectedDetection)},
+        .graph_name =
+            "mediapipe.tasks.vision.face_detector.FaceDetectorGraph"}),
     [](const TestParamInfo<FaceDetectorGraphTest::ParamType>& info) {
       return info.param.test_name;
     });
