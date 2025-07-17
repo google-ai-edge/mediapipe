@@ -167,6 +167,11 @@ message TransformerParameters {
     // If set, enables separate q and k weighted norms in the attention layer
     // (used for Gemma3).
     optional bool qk_norm = 7;
+
+    // For architectures which support qk norms being either weighted or
+    // unweighted, (like Gemma 3n), setting this determines which of those is
+    // the case.
+    optional bool qk_norm_has_scale = 8;
   }
 
   SelfAttentionParameters self_attention_parameters = 16;
