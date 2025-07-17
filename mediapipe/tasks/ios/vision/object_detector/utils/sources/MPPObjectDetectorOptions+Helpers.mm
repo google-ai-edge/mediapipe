@@ -41,6 +41,7 @@ using ObjectDetectorOptionsProto =
 
   graphOptions->set_max_results((int)self.maxResults);
   graphOptions->set_score_threshold(self.scoreThreshold);
+  graphOptions->set_multiclass_nms(self.multiclassNms);
 
   for (NSString *category in self.categoryAllowlist) {
     graphOptions->add_category_allowlist(category.cppString);
