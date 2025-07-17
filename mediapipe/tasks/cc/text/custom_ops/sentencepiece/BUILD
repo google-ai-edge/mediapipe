@@ -14,7 +14,7 @@
 
 load("@flatbuffers//:build_defs.bzl", "flatbuffer_cc_library")
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
+package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
@@ -131,9 +131,6 @@ cc_library(
     name = "sentencepiece_tokenizer_tflite",
     srcs = ["sentencepiece_tokenizer_tflite.cc"],
     hdrs = ["sentencepiece_tokenizer_tflite.h"],
-    visibility = [
-        "//visibility:public",
-    ],
     deps =
         [
             ":optimized_encoder",

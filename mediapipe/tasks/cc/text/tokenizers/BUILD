@@ -12,9 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-default_visibility = ["//mediapipe/calculators/tensor:__subpackages__"]
-
-package(default_visibility = default_visibility)
+package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
@@ -22,8 +20,6 @@ cc_library(
     name = "tokenizer",
     hdrs = [
         "tokenizer.h",
-    ],
-    visibility = default_visibility + [
     ],
     deps = [
         "@com_google_absl//absl/strings",
@@ -37,9 +33,6 @@ cc_library(
     ],
     hdrs = [
         "bert_tokenizer.h",
-    ],
-    visibility = default_visibility + [
-        "//mediapipe/tasks:users",
     ],
     deps = [
         ":tokenizer",
