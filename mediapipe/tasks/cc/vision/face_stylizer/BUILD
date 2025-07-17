@@ -12,9 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package(default_visibility = [
-    "//mediapipe/tasks:internal",
-])
+package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
@@ -61,7 +59,6 @@ cc_library(
     name = "face_stylizer",
     srcs = ["face_stylizer.cc"],
     hdrs = ["face_stylizer.h"],
-    visibility = ["//visibility:public"],
     deps = [
         ":face_stylizer_graph",  # buildcleaner:keep
         "//mediapipe/framework/api2:builder",

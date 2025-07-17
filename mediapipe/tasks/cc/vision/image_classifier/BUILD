@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
+package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
@@ -22,7 +22,6 @@ cc_library(
     name = "image_classifier",
     srcs = ["image_classifier.cc"],
     hdrs = ["image_classifier.h"],
-    visibility = ["//visibility:public"],
     deps = [
         ":image_classifier_graph",
         "//mediapipe/framework:packet",

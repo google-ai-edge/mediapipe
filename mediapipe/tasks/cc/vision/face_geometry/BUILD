@@ -14,7 +14,9 @@
 
 licenses(["notice"])
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
+package(
+    default_visibility = ["//visibility:public"],
+)
 
 cc_library(
     name = "face_geometry_from_landmarks_graph",

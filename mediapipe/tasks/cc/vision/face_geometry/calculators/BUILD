@@ -16,7 +16,9 @@ load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 
 licenses(["notice"])
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
+package(
+    default_visibility = ["//visibility:public"],
+)
 
 mediapipe_proto_library(
     name = "env_generator_calculator_proto",

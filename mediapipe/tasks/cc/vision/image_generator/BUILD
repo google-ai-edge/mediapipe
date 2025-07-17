@@ -14,7 +14,7 @@
 
 licenses(["notice"])
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
+package(default_visibility = ["//visibility:public"])
 
 cc_library(
     name = "conditioned_image_graph",

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
+package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
@@ -20,9 +20,6 @@ cc_library(
     name = "fused_batch_norm",
     srcs = ["fused_batch_norm.cc"],
     hdrs = ["fused_batch_norm.h"],
-    visibility = [
-        "//visibility:public",
-    ],
     deps =
         [
             "@eigen//:eigen3",

@@ -12,14 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
+package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
 cc_library(
     name = "image_segmenter_result",
     hdrs = ["image_segmenter_result.h"],
-    visibility = ["//visibility:public"],
     deps = ["//mediapipe/framework/formats:image"],
 )
 
@@ -29,7 +28,6 @@ cc_library(
     name = "image_segmenter",
     srcs = ["image_segmenter.cc"],
     hdrs = ["image_segmenter.h"],
-    visibility = ["//visibility:public"],
     deps = [
         ":image_segmenter_graph",
         ":image_segmenter_result",

@@ -12,9 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package(default_visibility = [
-    "//mediapipe/tasks:internal",
-])
+package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
@@ -63,7 +61,6 @@ cc_library(
     name = "face_detector",
     srcs = ["face_detector.cc"],
     hdrs = ["face_detector.h"],
-    visibility = ["//visibility:public"],
     deps = [
         ":face_detector_graph",
         "//mediapipe/framework/api2:builder",
