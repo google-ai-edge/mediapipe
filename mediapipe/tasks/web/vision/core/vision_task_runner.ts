@@ -82,6 +82,11 @@ export abstract class VisionTaskRunner extends TaskRunner {
     super(graphRunner);
   }
 
+  override setAutoResizeCanvas(
+      isAutoResizeCanvas: boolean): void {
+        this.graphRunner.setAutoResizeCanvas(isAutoResizeCanvas);
+  }
+
   /**
    * Configures the shared options of a vision task.
    *
