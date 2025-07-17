@@ -307,6 +307,8 @@ http_archive(
 )
 
 # TF on 2024-09-24
+# org_tensorflow depends on Eigen, MediaPipe - as well and has explicit dependency in this WORKSPACE.
+# If updating tensorflow version, make sure to bump Eigen version as well and vice versa.
 _TENSORFLOW_GIT_COMMIT = "5329ec8dd396487982ef3e743f98c0195af39a6b"
 
 # curl -L https://github.com/tensorflow/tensorflow/archive/<COMMIT>.tar.gz | shasum -a 256
@@ -769,6 +771,8 @@ load("@//third_party:wasm_files.bzl", "wasm_files")
 wasm_files()
 
 # Eigen
+# org_tensorflow depends on Eigen. If updating tensorflow version,
+# make sure to bump Eigen version as well and vice versa.
 EIGEN_COMMIT = "33d0937c6bdf5ec999939fb17f2a553183d14a74"
 
 EIGEN_SHA256 = "1f4babf536ce8fc2129dbf92ff3be54cd18ffb2171e9eb40edd00f0a045a54fa"
