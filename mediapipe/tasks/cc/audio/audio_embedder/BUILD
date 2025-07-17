@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
+package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
@@ -22,7 +22,6 @@ cc_library(
     name = "audio_embedder",
     srcs = ["audio_embedder.cc"],
     hdrs = ["audio_embedder.h"],
-    visibility = ["//visibility:public"],
     deps = [
         ":audio_embedder_graph",
         "//mediapipe/framework/api2:builder",
