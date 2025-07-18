@@ -76,11 +76,15 @@ inline bool operator==(const NormalizedLandmark& lhs,
 // A list of Landmarks.
 struct Landmarks {
   std::vector<Landmark> landmarks;
+  std::optional<float> detection_confidence;
+  std::optional<bool> has_detection_confidence_set;
 };
 
 // A list of NormalizedLandmarks.
 struct NormalizedLandmarks {
   std::vector<NormalizedLandmark> landmarks;
+  std::optional<float> detection_confidence;
+  std::optional<bool> has_detection_confidence_set;
 };
 
 // Utility function to convert from Landmark proto to Landmark struct.
