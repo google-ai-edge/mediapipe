@@ -70,4 +70,7 @@ message LlmGpuCalculatorOptions {
 
   // Whether the audio model is loaded in streaming mode or not.
   bool audio_streaming_enabled = 32;
+
+  // The number of tokens per chunk.
+  int32 audio_tokens_per_chunk = 33;
 }
