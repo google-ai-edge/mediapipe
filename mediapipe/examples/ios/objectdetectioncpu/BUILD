@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# load("@rules_cc//cc:objc_library.bzl", "objc_library")
 load(
     "@build_bazel_rules_apple//apple:ios.bzl",
     "ios_application",
