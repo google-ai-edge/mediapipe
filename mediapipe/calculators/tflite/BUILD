@@ -13,6 +13,8 @@
 # limitations under the License.
 #
 
+# load("@rules_cc//cc:cc_library.bzl", "cc_library")
+# load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@org_tensorflow//tensorflow/lite/core/shims:cc_library_with_tflite.bzl", "cc_library_with_tflite")
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")

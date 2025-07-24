@@ -14,6 +14,9 @@
 #
 
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library", "mediapipe_proto_library")
+
+# load("@rules_cc//cc:cc_library.bzl", "cc_library")
+# load("@rules_cc//cc:cc_test.bzl", "cc_test")
 # Placeholder: load py_proto_library
 # Placeholder: load proto_library
 
