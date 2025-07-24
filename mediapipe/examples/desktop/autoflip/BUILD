@@ -1,4 +1,5 @@
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
+# load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 
 # Copyright 2019 The MediaPipe Authors.
 #
