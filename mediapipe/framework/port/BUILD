@@ -15,6 +15,8 @@
 # Description:
 #  Port of various libraries and utilities.
 
+# load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
 licenses(["notice"])
 
 package(

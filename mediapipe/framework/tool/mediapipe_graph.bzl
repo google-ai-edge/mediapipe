@@ -15,6 +15,8 @@ Example:
 
 """
 
+# load("@rules_cc//cc:cc_library.bzl", "cc_library")
+# load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("//mediapipe/framework:encode_binary_proto.bzl", "encode_binary_proto", "generate_proto_descriptor_set")
 load("//mediapipe/framework:transitive_protos.bzl", "transitive_protos")
 load("//mediapipe/framework/deps:expand_template.bzl", "expand_template")
@@ -41,7 +43,7 @@ def mediapipe_binary_graph(name, graph = None, output_name = None, deps = [], te
     )
 
     # Compile a simple proto parser binary using the deps.
-    native.cc_binary(
+    cc_binary(
         name = name + "_text_to_binary_graph",
         visibility = ["//visibility:private"],
         deps = [
@@ -148,7 +150,7 @@ def mediapipe_simple_subgraph(
         testonly = testonly,
     )
     if not tflite_deps:
-        native.cc_library(
+        cc_library(
             name = name,
             srcs = [
                 name + "_linked.cc",
@@ -201,7 +203,7 @@ def mediapipe_reexport_library(
       actual: the targets to combine and export together.
       **kwargs: Remaining keyword args, forwarded to cc_library.
     """
-    native.cc_library(
+    cc_library(
         name = name,
         textual_hdrs = actual,
         deps = actual,
@@ -270,7 +272,7 @@ def mediapipe_options_library(
         testonly = testonly,
         compatible_with = compatible_with,
     )
-    native.cc_library(
+    cc_library(
         name = proto_lib.replace("_proto", "_options_registry"),
         srcs = [
             name + ".cc",
