@@ -13,6 +13,8 @@
 # limitations under the License.
 #
 
+# load("@rules_cc//cc:cc_library.bzl", "cc_library")
+# load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("@bazel_skylib//lib:selects.bzl", "selects")
 load("//mediapipe/framework:mediapipe_register_type.bzl", "mediapipe_register_type")
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")

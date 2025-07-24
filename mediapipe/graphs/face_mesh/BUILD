@@ -16,6 +16,7 @@ load(
     "//mediapipe/framework/tool:mediapipe_graph.bzl",
     "mediapipe_binary_graph",
 )
+# load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
 licenses(["notice"])
 

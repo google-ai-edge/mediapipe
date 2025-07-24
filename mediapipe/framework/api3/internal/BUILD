@@ -1,3 +1,6 @@
+# load("@rules_cc//cc:cc_library.bzl", "cc_library")
+# load("@rules_cc//cc:cc_test.bzl", "cc_test")
+
 package(default_visibility = ["//mediapipe/framework/api3:__subpackages__"])
 
 licenses(["notice"])

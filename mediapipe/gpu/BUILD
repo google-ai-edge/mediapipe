@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# load("@rules_cc//cc:cc_test.bzl", "cc_test")
+# load("@rules_cc//cc:objc_library.bzl", "objc_library")
+# load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
 load("@bazel_skylib//lib:selects.bzl", "selects")  # buildifier: disable=out-of-order-load
 load("//mediapipe/gpu:metal.bzl", "metal_library")
 load("@build_bazel_rules_apple//apple:ios.bzl", "ios_unit_test")
