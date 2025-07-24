@@ -16,6 +16,8 @@
 
 load("@bazel_skylib//lib:collections.bzl", "collections")
 load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "use_cpp_toolchain")
+# load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+# load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
 def halide_language_copts():
     _common_opts = [
@@ -589,7 +591,7 @@ def _define_halide_library_runtime(
             condition_deps[cfg] = [":%s" % gengen_name]
 
     deps = []
-    native.cc_library(
+    cc_library(
         name = target_name,
         compatible_with = compatible_with,
         srcs = select(condition_deps),
@@ -644,7 +646,7 @@ def halide_generator(
     # majority of users. Unless you are writing a custom Bazel rule that
     # involves Halide generation, you most probably won't need to depend on
     # this rule.
-    native.cc_binary(
+    cc_binary(
         name = name,
         copts = copts + halide_language_copts(),
         linkopts = halide_language_linkopts(),
@@ -795,8 +797,7 @@ def halide_library_from_generator(
         tags = tags,
         testonly = testonly,
     )
-
-    native.cc_library(
+    cc_library(
         name = name,
         srcs = ["%s_object" % name],
         hdrs = [
