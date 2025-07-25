@@ -109,6 +109,7 @@ cc_library_with_tflite(
         "//mediapipe/framework:subgraph",
         "//mediapipe/framework/api2:builder",
         "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/port:status",
         "//mediapipe/tasks/cc:common",
         "//mediapipe/tasks/cc/core/proto:acceleration_cc_proto",
         "//mediapipe/tasks/cc/core/proto:base_options_cc_proto",
