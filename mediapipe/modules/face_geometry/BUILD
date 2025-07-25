@@ -14,7 +14,6 @@
 
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 load("//mediapipe/framework/tool:mediapipe_graph.bzl", "mediapipe_simple_subgraph")
-# load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
 licenses(["notice"])
 

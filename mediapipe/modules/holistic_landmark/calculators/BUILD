@@ -13,7 +13,6 @@
 # limitations under the License.
 
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
-# load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
 licenses(["notice"])
 

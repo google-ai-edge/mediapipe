@@ -14,8 +14,6 @@
 
 load("//mediapipe/framework:mediapipe_register_type.bzl", "mediapipe_register_type")
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
-# load("@rules_cc//cc:cc_library.bzl", "cc_library")
-# load("@rules_cc//cc:cc_test.bzl", "cc_test")
 
 licenses(["notice"])
 
