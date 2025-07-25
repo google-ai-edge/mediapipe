@@ -14,9 +14,9 @@
 
 """MediaPipe Tasks Audio API."""
 
-import mediapipe.tasks.python.audio.core
-import mediapipe.tasks.python.audio.audio_classifier
-import mediapipe.tasks.python.audio.audio_embedder
+from mediapipe.tasks.python.audio import audio_classifier
+from mediapipe.tasks.python.audio import audio_embedder
+from mediapipe.tasks.python.audio import core
 
 AudioClassifier = audio_classifier.AudioClassifier
 AudioClassifierOptions = audio_classifier.AudioClassifierOptions
