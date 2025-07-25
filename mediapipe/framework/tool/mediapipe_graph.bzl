@@ -15,8 +15,8 @@ Example:
 
 """
 
-# load("@rules_cc//cc:cc_library.bzl", "cc_library")
-# load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("//mediapipe/framework:encode_binary_proto.bzl", "encode_binary_proto", "generate_proto_descriptor_set")
 load("//mediapipe/framework:transitive_protos.bzl", "transitive_protos")
 load("//mediapipe/framework/deps:expand_template.bzl", "expand_template")

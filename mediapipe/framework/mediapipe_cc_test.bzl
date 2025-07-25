@@ -2,8 +2,8 @@
 
 # buildifier: disable=out-of-order-load
 
-# load("@rules_cc//cc:cc_test.bzl", "cc_test")
-# load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
 DEFAULT_ADDITIONAL_TEST_DEPS = []
 

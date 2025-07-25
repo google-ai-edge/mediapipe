@@ -16,9 +16,9 @@
 # Description:
 #   Working with dense optical flow in mediapipe.
 
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
-# load("@rules_cc//cc:cc_library.bzl", "cc_library")
-# load("@rules_cc//cc:cc_test.bzl", "cc_test")
 
 licenses(["notice"])
 

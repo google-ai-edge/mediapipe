@@ -13,11 +13,11 @@
 # limitations under the License.
 #
 
-# load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
-# load("@rules_cc//cc:cc_library.bzl", "cc_library")
-# load("@rules_cc//cc:cc_test.bzl", "cc_test")
-# load("@rules_cc//cc:objc_library.bzl", "objc_library")
 load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("@rules_cc//cc:objc_library.bzl", "objc_library")
 load("//mediapipe/framework:mediapipe_cc_test.bzl", "mediapipe_cc_test")
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 load(
@@ -48,8 +48,8 @@ bzl_library(
         "//mediapipe/framework:transitive_protos_bzl",
         "//mediapipe/framework/deps:descriptor_set_bzl",
         "//mediapipe/framework/deps:expand_template_bzl",
-        "//third_party/bazel_rules/rules_cc/cc:core_rules",
         "@org_tensorflow//tensorflow/lite/core/shims:cc_library_with_tflite_bzl",
+        "@rules_cc//cc:core_rules",
     ],
 )
 

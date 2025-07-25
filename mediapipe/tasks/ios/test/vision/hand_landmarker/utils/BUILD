@@ -1,4 +1,4 @@
-# load("@rules_cc//cc:objc_library.bzl", "objc_library")
+load("@rules_cc//cc:objc_library.bzl", "objc_library")
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 

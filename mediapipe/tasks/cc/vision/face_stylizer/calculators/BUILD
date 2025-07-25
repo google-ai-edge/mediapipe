@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@bazel_skylib//lib:selects.bzl", "selects")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("//mediapipe/framework:more_selects.bzl", "more_selects")
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 

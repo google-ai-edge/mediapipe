@@ -13,7 +13,7 @@
 # limitations under the License.
 #
 
-# load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
 licenses(["notice"])
 

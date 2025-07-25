@@ -40,6 +40,15 @@ http_archive(
 )
 
 http_archive(
+    name = "rules_cc",
+    patch_args = ["-p1"],
+    patches = ["@//third_party:rules_cc.diff"],
+    sha256 = "0d3b4f984c4c2e1acfd1378e0148d35caf2ef1d9eb95b688f8e19ce0c41bdf5b",
+    strip_prefix = "rules_cc-0.1.4",
+    url = "https://github.com/bazelbuild/rules_cc/releases/download/0.1.4/rules_cc-0.1.4.tar.gz",
+)
+
+http_archive(
     name = "rules_java",
     sha256 = "c73336802d0b4882e40770666ad055212df4ea62cfa6edf9cb0f9d29828a0934",
     url = "https://github.com/bazelbuild/rules_java/releases/download/5.3.5/rules_java-5.3.5.tar.gz",
