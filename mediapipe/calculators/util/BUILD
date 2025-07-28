@@ -1118,13 +1118,18 @@ mediapipe_proto_library(
 cc_library(
     name = "visibility_copy_calculator",
     srcs = ["visibility_copy_calculator.cc"],
+    hdrs = ["visibility_copy_calculator.h"],
     deps = [
         ":visibility_copy_calculator_cc_proto",
-        "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/api3:calculator",
+        "//mediapipe/framework/api3:calculator_context",
+        "//mediapipe/framework/api3:calculator_contract",
+        "//mediapipe/framework/api3:contract",
+        "//mediapipe/framework/api3:node",
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/port:ret_check",
-        "@com_google_absl//absl/algorithm:container",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
