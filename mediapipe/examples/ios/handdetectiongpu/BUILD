@@ -61,7 +61,6 @@ objc_library(
     deps = [
         "//mediapipe/examples/ios/common:CommonMediaPipeAppLibrary",
     ] + select({
-        "//mediapipe:ios_i386": [],
         "//mediapipe:ios_x86_64": [],
         "//conditions:default": [
             "//mediapipe/graphs/hand_tracking:detection_mobile_calculators",

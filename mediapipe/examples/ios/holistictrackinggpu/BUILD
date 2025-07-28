@@ -68,7 +68,6 @@ objc_library(
     deps = [
         "//mediapipe/examples/ios/common:CommonMediaPipeAppLibrary",
     ] + select({
-        "//mediapipe:ios_i386": [],
         "//mediapipe:ios_x86_64": [],
         "//conditions:default": [
             "//mediapipe/graphs/holistic_tracking:holistic_tracking_gpu_deps",

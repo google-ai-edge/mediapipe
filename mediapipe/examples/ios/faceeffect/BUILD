@@ -84,7 +84,6 @@ objc_library(
         "//third_party/apple_frameworks:CoreMedia",
         "//third_party/apple_frameworks:UIKit",
     ] + select({
-        "//mediapipe:ios_i386": [],
         "//mediapipe:ios_x86_64": [],
         "//conditions:default": [
             "//mediapipe/graphs/face_effect:face_effect_gpu_deps",

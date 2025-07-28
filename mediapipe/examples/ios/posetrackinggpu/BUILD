@@ -69,7 +69,6 @@ objc_library(
         "//mediapipe/examples/ios/common:CommonMediaPipeAppLibrary",
         "//mediapipe/framework/formats:landmark_cc_proto",
     ] + select({
-        "//mediapipe:ios_i386": [],
         "//mediapipe:ios_x86_64": [],
         "//conditions:default": [
             "//mediapipe/graphs/pose_tracking:pose_tracking_gpu_deps",

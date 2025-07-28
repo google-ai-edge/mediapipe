@@ -1430,7 +1430,6 @@ objc_library(
         "//mediapipe/objc:mediapipe_framework_ios",
         "@com_google_absl//absl/memory",
     ] + select({
-        "//mediapipe:ios_i386": [],
         "//mediapipe:ios_x86_64": [],
         "//conditions:default": [
             ":metal_rgb_weight_calculator",

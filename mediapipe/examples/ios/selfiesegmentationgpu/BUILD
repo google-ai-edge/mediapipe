@@ -61,7 +61,6 @@ objc_library(
     deps = [
         "//mediapipe/examples/ios/common:CommonMediaPipeAppLibrary",
     ] + select({
-        "//mediapipe:ios_i386": [],
         "//mediapipe:ios_x86_64": [],
         "//conditions:default": [
             "//mediapipe/graphs/selfie_segmentation:selfie_segmentation_gpu_deps",
