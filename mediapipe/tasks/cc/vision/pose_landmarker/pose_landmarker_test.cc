@@ -40,7 +40,24 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/pose_landmarker/pose_landmarker_result.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 #include "tensorflow/lite/test_util.h"
-#include "util/tuple/dump_vars.h"
+// #include "util/tuple/dump_vars.h"
+
+
+#include "mediapipe/framework/port/parse_text_proto.h"
+#include "mediapipe/framework/port/status_macros.h"
+#include "mediapipe/framework/port/status_matchers.h"
+
+
+template <typename ProtoT>
+absl::Status GetTextProto(absl::string_view file_path,
+  ProtoT* result,
+  const mediapipe::file::Options& options) {
+  std::string proto_text;
+  MP_RETURN_IF_ERROR(mediapipe::file::GetContents(file_path, &proto_text));
+  ABSL_CHECK(mediapipe::ParseTextProto(proto_text, result));
+  return absl::OkStatus();
+}
+
 
 namespace mediapipe {
 namespace tasks {
@@ -49,7 +66,7 @@ namespace pose_landmarker {
 
 namespace {
 
-using ::file::Defaults;
+using mediapipe::file::Defaults;
 using ::mediapipe::file::JoinPath;
 using ::mediapipe::tasks::components::containers::ConvertToLandmarks;
 using ::mediapipe::tasks::components::containers::ConvertToNormalizedLandmarks;
@@ -113,10 +130,10 @@ MATCHER_P2(LandmarksMatches, expected_landmarks, toleration, "") {
                    expected_landmarks[i].landmarks[j].x) > toleration ||
           std::abs(arg[i].landmarks[j].y -
                    expected_landmarks[i].landmarks[j].y) > toleration) {
-        ABSL_LOG(INFO) << DUMP_VARS(arg[i].landmarks[j].x,
-                                    expected_landmarks[i].landmarks[j].x);
-        ABSL_LOG(INFO) << DUMP_VARS(arg[i].landmarks[j].y,
-                                    expected_landmarks[i].landmarks[j].y);
+        // ABSL_LOG(INFO) << DUMP_VARS(arg[i].landmarks[j].x,
+        //                             expected_landmarks[i].landmarks[j].x);
+        // ABSL_LOG(INFO) << DUMP_VARS(arg[i].landmarks[j].y,
+        //                             expected_landmarks[i].landmarks[j].y);
         return false;
       }
     }
@@ -139,6 +156,26 @@ void ExpectPoseLandmarkerResultsCorrect(
 
   ASSERT_GE(actual_landmarks.size(), 1);
   EXPECT_THAT(actual_landmarks, LandmarksMatches(expected_landmarks, margin));
+
+
+  // The min detection confidence is 0.5, so each detection confidence should be > 0.5 
+  // otherwise mediapipe would not have let the landmark output
+  for (int i = 0; i < actual_landmarks.size(); i++) {
+    if (actual_landmarks[i].has_detection_confidence_set) {
+      ASSERT_GE(actual_landmarks[i].detection_confidence, 0.5);
+    }
+  }
+
+  // it seems that there are no checks for world landmarks here, going to still
+  // just check the detection confidence
+  // THIS TEST FAILS - I think there is smoothing applied and have not checked how it copies over data
+  // But it also does the check meaning that the landmark had the "has_detection_confidence_set" value set
+  // which is weird then.
+  // for (int i = 0; i < actual_results.pose_world_landmarks.size(); i++) {
+  //   if (actual_results.pose_world_landmarks[i].has_detection_confidence_set) {
+  //     ASSERT_GE(actual_results.pose_world_landmarks[i].detection_confidence, 0.5);
+  //   }
+  // }
 }
 
 }  // namespace

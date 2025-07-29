@@ -1900,3 +1900,14 @@ cc_test(
         "@com_google_absl//absl/status",
     ],
 )
+
+cc_library(
+    name = "confidence_landmark_merger_calculator",
+    srcs = ["confidence_landmark_merger_calculator.cc"],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/api2:node",
+    ],
+    alwayslink=1
+)

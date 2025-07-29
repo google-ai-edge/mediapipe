@@ -49,6 +49,8 @@ Landmarks ConvertToLandmarks(const mediapipe::LandmarkList& proto) {
   for (const auto& landmark : proto.landmark()) {
     landmarks.landmarks.push_back(ConvertToLandmark(landmark));
   }
+  landmarks.detection_confidence = proto.detection_confidence();
+  landmarks.has_detection_confidence_set = proto.has_detection_confidence_set();
   return landmarks;
 }
 
@@ -59,6 +61,8 @@ NormalizedLandmarks ConvertToNormalizedLandmarks(
   for (const auto& landmark : proto.landmark()) {
     landmarks.landmarks.push_back(ConvertToNormalizedLandmark(landmark));
   }
+  landmarks.detection_confidence = proto.detection_confidence();
+  landmarks.has_detection_confidence_set = proto.has_detection_confidence_set();
   return landmarks;
 }
 

@@ -88,6 +88,7 @@ cc_library(
         "//mediapipe/calculators/util:visibility_copy_calculator",
         "//mediapipe/calculators/util:visibility_copy_calculator_cc_proto",
         "//mediapipe/calculators/util:world_landmark_projection_calculator",
+        "//mediapipe/calculators/util:confidence_landmark_merger_calculator",
         "//mediapipe/framework:subgraph",
         "//mediapipe/framework/api2:builder",
         "//mediapipe/framework/api2:port",
@@ -169,4 +170,34 @@ cc_library(
 cc_library(
     name = "pose_topology",
     hdrs = ["pose_topology.h"],
+)
+
+
+
+cc_test(
+    name = "pose_landmarker_test",
+    srcs = ["pose_landmarker_test.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "pose_landmarker",
+        "//mediapipe/tasks/cc/components/containers/proto:landmarks_detection_result_cc_proto",
+        "//mediapipe/tasks/cc/vision/utils:image_utils",
+        "@org_tensorflow//tensorflow/lite:test_util",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:opencv_core",
+        "//mediapipe/framework/port:opencv_imgproc",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/port:status_matchers",
+        "@com_google_googletest//:gtest_main"
+    ],
+    data = [
+        "//mediapipe/tasks/testdata/vision:test_protos",
+        "//mediapipe/tasks/testdata/vision:test_models",
+        "//mediapipe/tasks/testdata/vision:test_images"
+    ]
 )

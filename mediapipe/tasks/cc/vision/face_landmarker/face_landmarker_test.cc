@@ -47,13 +47,17 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/face_landmarker/face_landmarker_result.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 
+#include "mediapipe/framework/port/parse_text_proto.h"
+#include "mediapipe/framework/port/status_macros.h"
+#include "mediapipe/framework/port/status_matchers.h"
+
 namespace mediapipe {
 namespace tasks {
 namespace vision {
 namespace face_landmarker {
 namespace {
 
-using ::file::Defaults;
+using mediapipe::file::Defaults;
 using ::mediapipe::tasks::vision::core::ImageProcessingOptions;
 using ::testing::TestParamInfo;
 using ::testing::TestWithParam;
@@ -75,9 +79,22 @@ constexpr float kBlendshapesDiffMargin = 0.12;
 constexpr float kFacialTransformationMatrixDiffMargin = 0.02;
 
 template <typename ProtoT>
+absl::Status GetTextProto(absl::string_view file_path,
+  ProtoT* result,
+  const mediapipe::file::Options& options) {
+  std::string proto_text;
+  MP_RETURN_IF_ERROR(mediapipe::file::GetContents(file_path, &proto_text));
+  if(!proto_ns::TextFormat::ParseFromString(proto_text, result)) {
+    return absl::InvalidArgumentError("Invalid Text Proto");
+  }
+  return absl::OkStatus();
+}
+
+
+template <typename ProtoT>
 ProtoT GetExpectedProto(absl::string_view filename) {
   ProtoT expected_proto;
-  MP_EXPECT_OK(GetTextProto(file::JoinPath("./", kTestDataDirectory, filename),
+  MP_EXPECT_OK(GetTextProto<ProtoT>(file::JoinPath("./", kTestDataDirectory, filename),
                             &expected_proto, Defaults()));
   return expected_proto;
 }
@@ -125,6 +142,9 @@ void ExpectLandmarksCorrect(
     for (int j = 0; j < actual_landmarks[i].landmarks.size(); ++j) {
       EXPECT_THAT(actual_landmarks[i].landmarks[j],
                   LandmarkIs(expected_landmarks[i].landmarks[j]));
+    }
+    if (actual_landmarks[i].has_detection_confidence_set) {
+      ASSERT_GE(actual_landmarks[i].detection_confidence, 0.5);
     }
   }
 }

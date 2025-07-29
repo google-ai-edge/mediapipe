@@ -45,6 +45,8 @@ message Landmark {
 // Group of Landmark protos.
 message LandmarkList {
   repeated Landmark landmark = 1;
+  optional float detection_confidence = 2;
+  optional bool has_detection_confidence_set = 3;
 }
 
 // Group of LandmarkList protos.
@@ -65,6 +67,8 @@ message NormalizedLandmark {
 // Group of NormalizedLandmark protos.
 message NormalizedLandmarkList {
   repeated NormalizedLandmark landmark = 1;
+  optional float detection_confidence = 2;
+  optional bool has_detection_confidence_set = 3;
 }
 
 // Group of NormalizedLandmarkList protos.

@@ -68,13 +68,22 @@ RUN ln -s /usr/bin/python3 /usr/bin/python
 
 # Install bazel
 ARG BAZEL_VERSION=6.5.0
+ARG TARGET_ARCH=x86_64
 RUN mkdir /bazel && \
-    wget --no-check-certificate -O /bazel/installer.sh "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/b\
-azel-${BAZEL_VERSION}-installer-linux-x86_64.sh" && \
-    wget --no-check-certificate -O  /bazel/LICENSE.txt "https://raw.githubusercontent.com/bazelbuild/bazel/master/LICENSE" && \
-    chmod +x /bazel/installer.sh && \
-    /bazel/installer.sh  && \
-    rm -f /bazel/installer.sh
+    if [ "$TARGET_ARCH" = "arm64" ]; then \
+        wget --no-check-certificate -O /bazel/bazel \
+            "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel-${BAZEL_VERSION}-linux-${TARGET_ARCH}" && \
+        chmod +x /bazel/bazel && \
+        ln -s /bazel/bazel /usr/bin/bazel; \
+    else \
+        wget --no-check-certificate -O /bazel/installer.sh \
+            "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel-${BAZEL_VERSION}-installer-linux-${TARGET_ARCH}.sh" && \
+        chmod +x /bazel/installer.sh && \
+        /bazel/installer.sh && \
+        rm -f /bazel/installer.sh; \
+    fi && \
+    wget --no-check-certificate -O /bazel/LICENSE.txt \
+        "https://raw.githubusercontent.com/bazelbuild/bazel/master/LICENSE"
 
 COPY . /mediapipe/
 

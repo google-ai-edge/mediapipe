@@ -191,7 +191,7 @@ TEST_F(HolisticFaceTrackingTest, SmokeTest) {
 
   proto::HolisticResult holistic_result;
   MP_ASSERT_OK(GetTextProto(GetFilePath(kHolisticResultFile), &holistic_result,
-                            ::file::Defaults()));
+                            mediapipe::file::Defaults()));
   MP_ASSERT_OK_AND_ASSIGN(auto task_runner, CreateTaskRunner());
   MP_ASSERT_OK_AND_ASSIGN(
       auto output_packets,

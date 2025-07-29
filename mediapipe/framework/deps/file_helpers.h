@@ -20,6 +20,8 @@
 #include "absl/strings/match.h"
 #include "mediapipe/framework/deps/mmapped_file.h"
 
+#include <sys/stat.h>
+
 namespace mediapipe {
 namespace file {
 absl::Status GetContents(absl::string_view file_name, std::string* output,
@@ -50,6 +52,24 @@ absl::Status Exists(absl::string_view file_name);
 absl::Status IsDirectory(absl::string_view file_name);
 
 absl::Status RecursivelyCreateDir(absl::string_view path);
+
+
+// moved from android files since it seems like tests also require these options 
+// - not sure why
+// This exposes it to all platforms not just android files
+class Options {
+    public:
+     Options() = default;
+   
+     void set_permissions(mode_t permissions) { permissions_ = permissions; }
+   
+     mode_t permissions() const { return permissions_; }
+   
+    private:
+     mode_t permissions_ = S_IRWXU | S_IRWXG | S_IRWXO;
+   };
+   
+   inline Options Defaults() { return Options(); }
 
 }  // namespace file
 }  // namespace mediapipe

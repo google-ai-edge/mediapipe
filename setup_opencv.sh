@@ -19,11 +19,11 @@
 #
 # To have a full installation:
 # $ cd <mediapipe root dir>
-# $ sh ./setup_opencv.sh
+# $ bash ./setup_opencv.sh
 #
 # To only modify the mediapipe config for opencv:
 # $ cd <mediapipe root dir>
-# $ sh ./setup_opencv.sh config_only
+# $ bash ./setup_opencv.sh config_only
 
 set -e
 if [ "$1" ] && [ "$1" != "config_only" ]
@@ -32,6 +32,8 @@ if [ "$1" ] && [ "$1" != "config_only" ]
     exit 0
 fi
 
+SUDO_CMD=$(command -v sudo || true)
+
 opencv_build_file="$( cd "$(dirname "$0")" ; pwd -P )"/third_party/opencv_linux.BUILD
 workspace_file="$( cd "$(dirname "$0")" ; pwd -P )"/WORKSPACE
 
@@ -39,13 +41,13 @@ if [ -z "$1" ]
   then
     echo "Installing OpenCV from source"
     if [[ -x "$(command -v apt)" ]]; then
-      sudo apt update && sudo apt install build-essential git
-      sudo apt install cmake ffmpeg libavformat-dev libdc1394-22-dev libgtk2.0-dev \
+      $SUDO_CMD apt update && $SUDO_CMD apt install -y build-essential git
+      $SUDO_CMD apt install -y cmake ffmpeg libavformat-dev libdc1394-dev libgtk2.0-dev \
                        libjpeg-dev libpng-dev libswscale-dev libtbb2 libtbb-dev \
                        libtiff-dev
     elif [[ -x "$(command -v dnf)" ]]; then
-      sudo dnf update && sudo dnf install cmake gcc gcc-c git
-      sudo dnf install ffmpeg-devel libdc1394-devel gtk2-devel \
+      $SUDO_CMD dnf update && $SUDO_CMD dnf install -y cmake gcc gcc-c git
+      $SUDO_CMD dnf install -y ffmpeg-devel libdc1394-devel gtk2-devel \
                        libjpeg-turbo-devel libpng-devel tbb-devel \
                        libtiff-devel
     fi
@@ -75,14 +77,14 @@ if [ -z "$1" ]
           -DCV_ENABLE_INTRINSICS=ON -DWITH_EIGEN=ON -DWITH_PTHREADS=ON -DWITH_PTHREADS_PF=ON \
           -DWITH_JPEG=ON -DWITH_PNG=ON -DWITH_TIFF=ON
     make -j 16
-    sudo make install
+    $SUDO_CMD make install
     rm -rf /tmp/build_opencv
     echo "OpenCV has been built. You can find the header files and libraries in /usr/local/include/opencv2/ and /usr/local/lib"
 
     # https://github.com/cggos/dip_cvqt/issues/1#issuecomment-284103343
-    sudo touch /etc/ld.so.conf.d/mp_opencv.conf
-    sudo bash -c  "echo /usr/local/lib >> /etc/ld.so.conf.d/mp_opencv.conf"
-    sudo ldconfig -v
+    $SUDO_CMD touch /etc/ld.so.conf.d/mp_opencv.conf
+    $SUDO_CMD bash -c  "echo /usr/local/lib >> /etc/ld.so.conf.d/mp_opencv.conf"
+    $SUDO_CMD ldconfig -v
 fi
 
 # Modify the build file.
