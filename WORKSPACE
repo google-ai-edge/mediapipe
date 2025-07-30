@@ -10,10 +10,10 @@ bind(
 
 http_archive(
     name = "bazel_skylib",
-    sha256 = "74d544d96f4a5bb630d465ca8bbcfe231e3594e5aae57e1edbf17a6eb3ca2506",
+    sha256 = "bc283cdfcd526a52c3201279cda4bc298652efa898b10b4db0837dc51652756f",
     urls = [
-        "https://storage.googleapis.com/mirror.tensorflow.org/github.com/bazelbuild/bazel-skylib/releases/download/1.3.0/bazel-skylib-1.3.0.tar.gz",
-        "https://github.com/bazelbuild/bazel-skylib/releases/download/1.3.0/bazel-skylib-1.3.0.tar.gz",
+        "https://mirror.bazel.build/github.com/bazelbuild/bazel-skylib/releases/download/1.7.1/bazel-skylib-1.7.1.tar.gz",
+        "https://github.com/bazelbuild/bazel-skylib/releases/download/1.7.1/bazel-skylib-1.7.1.tar.gz",
     ],
 )
 
@@ -55,10 +55,23 @@ http_archive(
 )
 
 http_archive(
+    name = "com_google_protobuf",
+    patch_args = [
+        "-p1",
+    ],
+    patches = [
+        "@//third_party:com_google_protobuf_fixes.diff",
+    ],
+    sha256 = "f645e6e42745ce922ca5388b1883ca583bafe4366cc74cf35c3c9299005136e2",
+    strip_prefix = "protobuf-5.28.3",
+    urls = ["https://github.com/protocolbuffers/protobuf/archive/refs/tags/v5.28.3.zip"],
+)
+
+http_archive(
     name = "rules_android_ndk",
-    sha256 = "d230a980e0d3a42b85d5fce2cb17ec3ac52b88d2cff5aaf86bae0f05b48adc55",
-    strip_prefix = "rules_android_ndk-d5c9d46a471e8fcd80e7ec5521b78bb2df48f4e0",
-    url = "https://github.com/bazelbuild/rules_android_ndk/archive/d5c9d46a471e8fcd80e7ec5521b78bb2df48f4e0.zip",
+    sha256 = "89bf5012567a5bade4c78eac5ac56c336695c3bfd281a9b0894ff6605328d2d5",
+    strip_prefix = "rules_android_ndk-0.1.3",
+    url = "https://github.com/bazelbuild/rules_android_ndk/releases/download/v0.1.3/rules_android_ndk-v0.1.3.tar.gz",
 )
 
 http_archive(
@@ -89,19 +102,6 @@ http_archive(
     ],
     sha256 = "3e2c7ae0ddd181c4053b6491dad1d01ae29011bc322ca87eea45957c76d3a0c3",
     url = "https://github.com/bazelbuild/rules_apple/releases/download/2.1.0/rules_apple.2.1.0.tar.gz",
-)
-
-http_archive(
-    name = "com_google_protobuf",
-    patch_args = [
-        "-p1",
-    ],
-    patches = [
-        "@//third_party:com_google_protobuf_fixes.diff",
-    ],
-    sha256 = "87407cd28e7a9c95d9f61a098a53cf031109d451a7763e7dd1253abf8b4df422",
-    strip_prefix = "protobuf-3.19.1",
-    urls = ["https://github.com/protocolbuffers/protobuf/archive/v3.19.1.tar.gz"],
 )
 
 # GoogleTest/GoogleMock framework. Used by most unit-tests.
@@ -183,15 +183,15 @@ http_archive(
 )
 
 # Maven dependencies.
-RULES_JVM_EXTERNAL_TAG = "4.0"
+RULES_JVM_EXTERNAL_TAG = "5.2"
 
-RULES_JVM_EXTERNAL_SHA = "31701ad93dbfe544d597dbe62c9a1fdd76d81d8a9150c2bf1ecf928ecdf97169"
+RULES_JVM_EXTERNAL_SHA = "f86fd42a809e1871ca0aabe89db0d440451219c3ce46c58da240c7dcdc00125f"
 
 http_archive(
     name = "rules_jvm_external",
     sha256 = RULES_JVM_EXTERNAL_SHA,
     strip_prefix = "rules_jvm_external-%s" % RULES_JVM_EXTERNAL_TAG,
-    url = "https://github.com/bazelbuild/rules_jvm_external/archive/%s.zip" % RULES_JVM_EXTERNAL_TAG,
+    url = "https://github.com/bazelbuild/rules_jvm_external/releases/download/%s/rules_jvm_external-%s.tar.gz" % (RULES_JVM_EXTERNAL_TAG, RULES_JVM_EXTERNAL_TAG),
 )
 
 load("@rules_jvm_external//:defs.bzl", "maven_install")
@@ -250,13 +250,15 @@ http_archive(
     ],
 )
 
-# XNNPACK from 2025-04-02
+# XNNPACK
+# org_tensorflow depends on XNNPACK. If updating tensorflow version,
+# make sure to bump XNNPACK version as well and vice versa.
 http_archive(
     name = "XNNPACK",
     # `curl -L <url> | shasum -a 256`
-    sha256 = "72549a5af09ee22204904fc93d35d2a19351e32a46f26c4838dda005824e3576",
-    strip_prefix = "XNNPACK-5ff876e4f88f4bec7a3ec853c366a33c8f797fb5",
-    url = "https://github.com/google/XNNPACK/archive/5ff876e4f88f4bec7a3ec853c366a33c8f797fb5.zip",
+    sha256 = "763f32eed3520cdb2fc906555315701ac4cc92e3d77acd4a3eafd8a553996d63",
+    strip_prefix = "XNNPACK-0a655ef53812ce9bd8ce2628757cc0f476efcf51",
+    url = "https://github.com/google/XNNPACK/archive/0a655ef53812ce9bd8ce2628757cc0f476efcf51.zip",
 )
 
 # 2020-07-09
@@ -287,41 +289,42 @@ http_archive(
     ],
 )
 
-# KleidiAI is needed to get the best possible performance out of XNNPack, from 2025-04-02
+# KleidiAI is needed to get the best possible performance out of XNNPack, from 2025-06-16
 http_archive(
     name = "KleidiAI",
-    sha256 = "ca8b8ee0c3dd2284c1eae3ac07f7064ce92317ac7c3cfcd1d511662e0594cdb8",
-    strip_prefix = "kleidiai-fb4caf0937a45002861cc12788b6018bfb89ae58",
+    sha256 = "439926527fca9405ae90b602a3938d3435751ec78492e5f1c62d85f5df8c2784",
+    strip_prefix = "kleidiai-dc69e899945c412a8ce39ccafd25139f743c60b1",
     urls = [
-        "https://github.com/ARM-software/kleidiai/archive/fb4caf0937a45002861cc12788b6018bfb89ae58.zip",
+        "https://github.com/ARM-software/kleidiai/archive/dc69e899945c412a8ce39ccafd25139f743c60b1.zip",
     ],
 )
 
+# 2025-05-22
 http_archive(
     name = "cpuinfo",
-    sha256 = "e2bd8049d29dfbed675a0bc7c01947f8b8bd3f17f706b827d3f6c1e5c64dd8c3",
-    strip_prefix = "cpuinfo-8df44962d437a0477f07ba6b8843d0b6a48646a4",
+    sha256 = "ae356c4c0c841e20711b5e111a1ccdec9c2f3c1dd7bde7cfba1bed18d6d02459",
+    strip_prefix = "cpuinfo-de0ce7c7251372892e53ce9bc891750d2c9a4fd8",
     urls = [
-        "https://github.com/pytorch/cpuinfo/archive/8df44962d437a0477f07ba6b8843d0b6a48646a4.zip",
+        "https://github.com/pytorch/cpuinfo/archive/de0ce7c7251372892e53ce9bc891750d2c9a4fd8.zip",
     ],
 )
 
-# pthreadpool is a dependency of XNNPACK, from 2025-04-02
+# pthreadpool is a dependency of XNNPACK, from 2025-06-15
 http_archive(
     name = "pthreadpool",
     # `curl -L <url> | shasum -a 256`
-    sha256 = "745e56516d6a58d183eb33d9017732d87cff43ce9f78908906f9faa52633e421",
-    strip_prefix = "pthreadpool-b92447772365661680f486e39a91dfe6675adafc",
-    urls = ["https://github.com/google/pthreadpool/archive/b92447772365661680f486e39a91dfe6675adafc.zip"],
+    sha256 = "516ba8d05c30e016d7fd7af6a7fc74308273883f857faf92bc9bb630ab6dba2c",
+    strip_prefix = "pthreadpool-c2ba5c50bb58d1397b693740cf75fad836a0d1bf",
+    urls = ["https://github.com/google/pthreadpool/archive/c2ba5c50bb58d1397b693740cf75fad836a0d1bf.zip"],
 )
 
-# TF on 2024-09-24
-# org_tensorflow depends on Eigen, MediaPipe - as well and has explicit dependency in this WORKSPACE.
-# If updating tensorflow version, make sure to bump Eigen version as well and vice versa.
-_TENSORFLOW_GIT_COMMIT = "5329ec8dd396487982ef3e743f98c0195af39a6b"
+# TF on 2025-07-01
+# org_tensorflow depends on Eigen, XNNPACK, MediaPipe - as well and has explicit dependency in this
+# WORKSPACE. If updating tensorflow version, make sure to bump Eigen version as well and vice versa.
+_TENSORFLOW_GIT_COMMIT = "fad6b3cf5a7d51a437bd01ee929853bc8554b618"
 
 # curl -L https://github.com/tensorflow/tensorflow/archive/<COMMIT>.tar.gz | shasum -a 256
-_TENSORFLOW_SHA256 = "eb1f8d740d59ea3dee91108ab1fc19d91c4e9ac2fd17d9ab86d865c3c43d81c9"
+_TENSORFLOW_SHA256 = "2b5028c480ea8029701056f8ddb80ce12ba31c9cf402183107cbb34d2db899e8"
 
 http_archive(
     name = "org_tensorflow",
@@ -383,6 +386,14 @@ install_deps()
 load("@org_tensorflow//tensorflow:workspace2.bzl", "tf_workspace2")
 
 tf_workspace2()
+
+load("@rules_pkg//:deps.bzl", "rules_pkg_dependencies")
+
+rules_pkg_dependencies()
+
+load("@rules_python//python:repositories.bzl", "py_repositories")
+
+py_repositories()
 
 load("@rules_python//python:pip.bzl", "pip_parse")
 
@@ -479,9 +490,9 @@ http_archive(
 # ...but the Java download is currently broken, so we use the "source" download.
 http_archive(
     name = "com_google_protobuf_javalite",
-    sha256 = "87407cd28e7a9c95d9f61a098a53cf031109d451a7763e7dd1253abf8b4df422",
-    strip_prefix = "protobuf-3.19.1",
-    urls = ["https://github.com/protocolbuffers/protobuf/archive/v3.19.1.tar.gz"],
+    sha256 = "f645e6e42745ce922ca5388b1883ca583bafe4366cc74cf35c3c9299005136e2",
+    strip_prefix = "protobuf-5.28.3",
+    urls = ["https://github.com/protocolbuffers/protobuf/archive/refs/tags/v5.28.3.zip"],
 )
 
 load("@//third_party/flatbuffers:workspace.bzl", flatbuffers = "repo")
@@ -670,9 +681,25 @@ http_archive(
     url = "https://github.com/google/google-toolbox-for-mac/archive/v2.2.1.zip",
 )
 
+http_archive(
+    name = "rules_ml_toolchain",
+    sha256 = "de3b14418657eeacd8afc2aa89608be6ec8d66cd6a5de81c4f693e77bc41bee1",
+    strip_prefix = "rules_ml_toolchain-5653e5a0ca87c1272069b4b24864e55ce7f129a1",
+    urls = [
+        "https://github.com/google-ml-infra/rules_ml_toolchain/archive/5653e5a0ca87c1272069b4b24864e55ce7f129a1.tar.gz",
+    ],
+)
+
+load(
+    "@org_tensorflow//third_party/xla/third_party/py:python_wheel.bzl",
+    "python_wheel_version_suffix_repository",
+)
+
+python_wheel_version_suffix_repository(name = "tf_wheel_version_suffix")
+
 # Hermetic CUDA
 load(
-    "@org_tensorflow//third_party/gpus/cuda/hermetic:cuda_json_init_repository.bzl",
+    "@rules_ml_toolchain//third_party/gpus/cuda/hermetic:cuda_json_init_repository.bzl",
     "cuda_json_init_repository",
 )
 
@@ -684,7 +711,7 @@ load(
     "CUDNN_REDISTRIBUTIONS",
 )
 load(
-    "@org_tensorflow//third_party/gpus/cuda/hermetic:cuda_redist_init_repositories.bzl",
+    "@rules_ml_toolchain//third_party/gpus/cuda/hermetic:cuda_redist_init_repositories.bzl",
     "cuda_redist_init_repositories",
     "cudnn_redist_init_repository",
 )
@@ -698,11 +725,18 @@ cudnn_redist_init_repository(
 )
 
 load(
-    "@org_tensorflow//third_party/gpus/cuda/hermetic:cuda_configure.bzl",
+    "@rules_ml_toolchain//third_party/gpus/cuda/hermetic:cuda_configure.bzl",
     "cuda_configure",
 )
 
 cuda_configure(name = "local_config_cuda")
+
+load(
+    "@rules_ml_toolchain//cc_toolchain/deps:cc_toolchain_deps.bzl",
+    "cc_toolchain_deps",
+)
+
+cc_toolchain_deps()
 
 # Edge TPU
 http_archive(
@@ -754,9 +788,9 @@ http_archive(
 
 http_archive(
     name = "com_google_protobuf_javascript",
-    sha256 = "35bca1729532b0a77280bf28ab5937438e3dcccd6b31a282d9ae84c896b6f6e3",
-    strip_prefix = "protobuf-javascript-3.21.2",
-    urls = ["https://github.com/protocolbuffers/protobuf-javascript/archive/refs/tags/v3.21.2.tar.gz"],
+    sha256 = "8cef92b4c803429af0c11c4090a76b6a931f82d21e0830760a17f9c6cb358150",
+    strip_prefix = "protobuf-javascript-3.21.4",
+    urls = ["https://github.com/protocolbuffers/protobuf-javascript/archive/refs/tags/v3.21.4.tar.gz"],
 )
 
 load("@rules_proto_grpc//:repositories.bzl", "rules_proto_grpc_repos", "rules_proto_grpc_toolchains")
@@ -782,9 +816,9 @@ wasm_files()
 # Eigen
 # org_tensorflow depends on Eigen. If updating tensorflow version,
 # make sure to bump Eigen version as well and vice versa.
-EIGEN_COMMIT = "33d0937c6bdf5ec999939fb17f2a553183d14a74"
+EIGEN_COMMIT = "4c38131a16803130b66266a912029504f2cf23cd"
 
-EIGEN_SHA256 = "1f4babf536ce8fc2129dbf92ff3be54cd18ffb2171e9eb40edd00f0a045a54fa"
+EIGEN_SHA256 = "1a432ccbd597ea7b9faa1557b1752328d6adc1a3db8969f6fe793ff704be3bf0"
 
 http_archive(
     name = "eigen",

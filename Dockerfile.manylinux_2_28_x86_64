@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # A docker image that contains the PyPA manylinux2014 toolchain and
-# bazel 6.5.0 and opencv 4.10 static libraries. The image produces MediaPipe
+# bazel 7.4.1 and opencv 4.10 static libraries. The image produces MediaPipe
 # manylinux wheels and puts the output wheel files in /wheelhouse/.
 #
 # Usage:
@@ -31,7 +31,7 @@ ENV MEDIAPIPE_DISABLE_GPU=${MEDIAPIPE_DISABLE_GPU}
 
 RUN yum install -y java-11-openjdk-devel zip
 WORKDIR /tmp/bazel_build
-ADD https://github.com/bazelbuild/bazel/releases/download/6.5.0/bazel-6.5.0-dist.zip bazel.zip
+ADD https://github.com/bazelbuild/bazel/releases/download/7.4.1/bazel-7.4.1-dist.zip bazel.zip
 RUN unzip bazel.zip
 RUN rm -f bazel.zip
 ENV PATH="/opt/python/cp36-cp36m/bin:${PATH}"

@@ -91,7 +91,7 @@ TEST(TextEmbedderTest, SucceedsWithCosineSimilarity) {
   double similarity;
   text_embedder_cosine_similarity(&result0.embeddings[0],
                                   &result1.embeddings[0], &similarity, nullptr);
-  double expected_similarity = 0.9903823;
+  double expected_similarity = 0.95016;
   EXPECT_NEAR(similarity, expected_similarity, kPrecision);
 
   text_embedder_close_result(&result0);

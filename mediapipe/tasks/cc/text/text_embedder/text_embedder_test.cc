@@ -95,7 +95,7 @@ TEST_F(EmbedderTest, SucceedsWithMobileBert) {
 #ifdef __FMA__
   ASSERT_NEAR(result1.embeddings[0].float_embedding[0], 21.254150f, kEpsilon);
 #else
-  ASSERT_NEAR(result1.embeddings[0].float_embedding[0], 22.257519f, kEpsilon);
+  ASSERT_NEAR(result1.embeddings[0].float_embedding[0], 22.387123f, kEpsilon);
 #endif
 
   // Check cosine similarity.
@@ -212,7 +212,7 @@ TEST_F(EmbedderTest, SucceedsWithMobileBertAndDifferentThemes) {
 #ifdef _WIN32
   EXPECT_NEAR(similarity, 0.98152, kSimilarityTolerancy);
 #else
-  EXPECT_NEAR(similarity, 0.98088, kSimilarityTolerancy);
+  EXPECT_NEAR(similarity, 0.95016, kSimilarityTolerancy);
 #endif  // _WIN32
 
   MP_ASSERT_OK(text_embedder->Close());

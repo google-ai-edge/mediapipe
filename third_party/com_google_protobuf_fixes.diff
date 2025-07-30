@@ -1,44 +1,36 @@
-diff --git a/BUILD b/BUILD
-index 1690d4219..e13ca8338 100644
---- a/BUILD
-+++ b/BUILD
-@@ -19,7 +19,7 @@ exports_files(["LICENSE"])
- # ZLIB configuration
- ################################################################################
-
--ZLIB_DEPS = ["@zlib//:zlib"]
-+ZLIB_DEPS = ["@zlib"]
-
- ################################################################################
- # Protobuf Runtime Library
-@@ -197,6 +197,7 @@ cc_library(
-     includes = ["src/"],
-     linkopts = LINK_OPTS,
-     visibility = ["//visibility:public"],
+diff --git a/src/google/protobuf/BUILD.bazel b/src/google/protobuf/BUILD.bazel
+index 381e0e24e..9e682e77d 100644
+--- a/src/google/protobuf/BUILD.bazel
++++ b/src/google/protobuf/BUILD.bazel
+@@ -556,6 +556,7 @@ cc_library(
+         "@com_google_absl//absl/types:span",
+         "@com_google_absl//absl/utility:if_constexpr",
+     ],
 +    alwayslink = 1,
  )
-
- PROTOBUF_DEPS = select({
-@@ -271,6 +272,7 @@ cc_library(
-     linkopts = LINK_OPTS,
-     visibility = ["//visibility:public"],
-     deps = [":protobuf_lite"] + PROTOBUF_DEPS,
+ 
+ PROTOBUF_HEADERS = [
+@@ -657,6 +658,7 @@ cc_library(
+         "@com_google_absl//absl/types:span",
+         "@com_google_absl//absl/types:variant",
+     ],
 +    alwayslink = 1,
  )
-
- # This provides just the header files for use in projects that need to build
+ 
+ # This target exposes the headers for the protobuf runtime, and additionally
 diff --git a/src/google/protobuf/io/gzip_stream.h b/src/google/protobuf/io/gzip_stream.h
-index f0283e86f..436c6ce4b 100644
+index 1644949fa..6fc58972c 100644
 --- a/src/google/protobuf/io/gzip_stream.h
 +++ b/src/google/protobuf/io/gzip_stream.h
-@@ -47,10 +47,13 @@
- #include <google/protobuf/stubs/common.h>
- #include <google/protobuf/io/zero_copy_stream.h>
- #include <google/protobuf/port.h>
+@@ -23,11 +23,14 @@
+ #include "google/protobuf/stubs/common.h"
+ #include "google/protobuf/io/zero_copy_stream.h"
+ #include "google/protobuf/port.h"
 -#include <zlib.h>
-
- #include <google/protobuf/port_def.inc>
-
+ 
+ // Must be included last.
+ #include "google/protobuf/port_def.inc"
+ 
 +#if HAVE_ZLIB
 +#include <zlib.h>
 +#endif  // HAVE_ZLIB
@@ -46,47 +38,47 @@ index f0283e86f..436c6ce4b 100644
  namespace google {
  namespace protobuf {
  namespace io {
-@@ -76,8 +79,10 @@ class PROTOBUF_EXPORT GzipInputStream : public ZeroCopyInputStream {
-   virtual ~GzipInputStream();
-
+@@ -55,8 +58,10 @@ class PROTOBUF_EXPORT GzipInputStream final : public ZeroCopyInputStream {
+   ~GzipInputStream() override;
+ 
    // Return last error message or NULL if no error.
 +  #if HAVE_ZLIB
    inline const char* ZlibErrorMessage() const { return zcontext_.msg; }
    inline int ZlibErrorCode() const { return zerror_; }
 +  #endif  // HAVE_ZLIB
-
+ 
    // implements ZeroCopyInputStream ----------------------------------
    bool Next(const void** data, int* size) override;
-@@ -90,8 +95,10 @@ class PROTOBUF_EXPORT GzipInputStream : public ZeroCopyInputStream {
-
+@@ -69,8 +74,10 @@ class PROTOBUF_EXPORT GzipInputStream final : public ZeroCopyInputStream {
+ 
    ZeroCopyInputStream* sub_stream_;
-
+ 
 +  #if HAVE_ZLIB
    z_stream zcontext_;
    int zerror_;
 +  #endif  // HAVE_ZLIB
-
+ 
    void* output_buffer_;
    void* output_position_;
-@@ -143,8 +150,10 @@ class PROTOBUF_EXPORT GzipOutputStream : public ZeroCopyOutputStream {
-   virtual ~GzipOutputStream();
-
+@@ -122,8 +129,10 @@ class PROTOBUF_EXPORT GzipOutputStream final : public ZeroCopyOutputStream {
+   ~GzipOutputStream() override;
+ 
    // Return last error message or NULL if no error.
 +  #if HAVE_ZLIB
    inline const char* ZlibErrorMessage() const { return zcontext_.msg; }
    inline int ZlibErrorCode() const { return zerror_; }
 +  #endif  // HAVE_ZLIB
-
+ 
    // Flushes data written so far to zipped data in the underlying stream.
    // It is the caller's responsibility to flush the underlying stream if
-@@ -177,8 +186,10 @@ class PROTOBUF_EXPORT GzipOutputStream : public ZeroCopyOutputStream {
+@@ -156,8 +165,10 @@ class PROTOBUF_EXPORT GzipOutputStream final : public ZeroCopyOutputStream {
    void* sub_data_;
    int sub_data_size_;
-
+ 
 +  #if HAVE_ZLIB
    z_stream zcontext_;
    int zerror_;
 +  #endif // HAVE_ZLIB
    void* input_buffer_;
    size_t input_buffer_length_;
-
+ 

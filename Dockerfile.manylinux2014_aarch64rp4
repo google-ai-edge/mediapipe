@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # A docker image that contains the PyPA aarch64rp4 manylinux2014 toolchain and
-# bazel 6.5.0. The image produces MediaPipe rasberryPi wheels for Python 3.12.
+# bazel 7.4.1. The image produces MediaPipe rasberryPi wheels for Python 3.12.
 # and puts the output wheel files in /wheelhouse/.
 #
 # Usage:
@@ -25,13 +25,13 @@
 FROM quay.io/pypa/manylinux2014_aarch64
 
 # Install Bazel
-RUN curl -L -o bazel https://github.com/bazelbuild/bazel/releases/download/6.5.0/bazel-6.5.0-linux-arm64
+RUN curl -L -o bazel https://github.com/bazelbuild/bazel/releases/download/7.4.1/bazel-7.4.1-linux-arm64
 RUN chmod +x bazel
 RUN mv ./bazel /usr/local/bin
 
 # Copy Protobuf Compiler binary
-ARG PROTOC_ZIP=protoc-3.19.1-linux-aarch_64.zip
-RUN curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v3.19.1/$PROTOC_ZIP
+ARG PROTOC_ZIP=protoc-5.28.3-linux-aarch_64.zip
+RUN curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v5.28.3/$PROTOC_ZIP
 RUN unzip -o $PROTOC_ZIP -d /usr/local bin/protoc
 RUN unzip -o $PROTOC_ZIP -d /usr/local 'include/*'
 RUN rm -f $PROTOC_ZIP
