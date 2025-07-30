@@ -16,8 +16,6 @@ load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 
 licenses(["notice"])
 
-package(default_visibility = ["//mediapipe/examples:__subpackages__"])
-
 # BUILD:
 # bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 \
 #   //mediapipe/examples/desktop/object_tracking:object_tracking_cpu
