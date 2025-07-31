@@ -12,9 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
-load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl", "mediapipe_build_aar_with_jni")
+load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl", "mediapipe_build_aar_with_jni", "mediapipe_jni_binary")
 
 licenses(["notice"])
 
@@ -36,19 +35,12 @@ android_library(
 )
 
 # The native library of all MediaPipe audio tasks.
-cc_binary(
-    name = "libmediapipe_tasks_audio_jni.so",
-    linkopts = [
-        "-Wl,--no-undefined",
-        "-Wl,--version-script,$(location //mediapipe/tasks/java:version_script.lds)",
-    ],
-    linkshared = 1,
-    linkstatic = 1,
+mediapipe_jni_binary(
+    name = "mediapipe_tasks_audio_jni",
     deps = [
         "//mediapipe/java/com/google/mediapipe/framework/jni:mediapipe_framework_jni",
         "//mediapipe/tasks/cc/audio/audio_classifier:audio_classifier_graph",
         "//mediapipe/tasks/cc/audio/audio_embedder:audio_embedder_graph",
-        "//mediapipe/tasks/java:version_script.lds",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:model_resources_cache_jni",
     ],
 )

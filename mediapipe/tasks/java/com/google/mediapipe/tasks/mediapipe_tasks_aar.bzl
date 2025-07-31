@@ -92,6 +92,52 @@ _TEXT_TASKS_JAVA_PROTO_LITE_TARGETS = [
     "//mediapipe/tasks/cc/text/text_embedder/proto:text_embedder_graph_options_java_proto_lite",
 ]
 
+def mediapipe_jni_binary(name, deps, uses_explicit_exports = False):
+    """Builds MediaPipe JNI library.
+
+    Args:
+      name: The name of the library group.
+      deps: The cc_binary dependencies.
+      uses_explicit_exports: Whethe this library uses JNIEXPORT to mark exported symbols.
+    """
+    extra_linkopts = []
+    if not uses_explicit_exports:
+        extra_linkopts = [
+            "-Wl,--version-script,$(location //mediapipe/tasks/java:version_script.lds)",
+        ]
+
+    native.cc_binary(
+        name = "lib" + name + ".so",
+        defines = [
+            "EXCLUDE_OPENCV_SO_LIB=1",
+            "ABSL_MIN_LOG_LEVEL=2",
+            "libunwind=true",
+            "xnnpack_use_latest_ops=true",
+            "xnnpack_enable_subgraph_reshaping=true",
+        ],
+        features = ["-legacy_whole_archive"],
+        copts = [
+            "-c opt",
+            "-fvisibility=hidden",
+            "-ffunction-sections",
+            "-fdata-sections",
+            "-fstack-protector",
+            "-Oz",
+            "-fomit-frame-pointer",
+        ],
+        linkopts = [
+            "-Wl,-soname=lib" + name + ".so",
+            "-Wl,--no-undefined",
+            "-Wl,--strip-all",
+            "-Wl,--gc-sections",
+            "-Wl,-z,max-page-size=16384",
+        ] + extra_linkopts,
+        linkshared = 1,
+        deps = deps + [
+            "//mediapipe/tasks/java:version_script.lds",
+        ],
+    )
+
 def mediapipe_tasks_core_aar(name, srcs, manifest):
     """Builds medaipipe tasks core AAR.
 
