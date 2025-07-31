@@ -171,6 +171,7 @@ class ModelData {
   struct ModelWithData {
     std::unique_ptr<tflite::FlatBufferModel> model;
     std::unique_ptr<DataHolder<uint8_t>> data;
+    std::shared_ptr<ScopedFile> cache_file;
   };
   // Reads a tflite model from the main model.
   virtual absl::StatusOr<ModelWithData> ReadModel(absl::string_view name) = 0;
