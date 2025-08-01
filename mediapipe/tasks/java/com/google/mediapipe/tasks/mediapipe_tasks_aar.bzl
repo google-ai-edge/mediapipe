@@ -117,13 +117,10 @@ def mediapipe_jni_binary(name, deps, uses_explicit_exports = False):
         ],
         features = ["-legacy_whole_archive"],
         copts = [
-            "-c opt",
             "-fvisibility=hidden",
             "-ffunction-sections",
             "-fdata-sections",
             "-fstack-protector",
-            "-Oz",
-            "-fomit-frame-pointer",
         ],
         linkopts = [
             "-Wl,-soname=lib" + name + ".so",
