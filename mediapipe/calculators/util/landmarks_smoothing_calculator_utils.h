@@ -15,27 +15,32 @@
 #ifndef MEDIAPIPE_CALCULATORS_UTIL_LANDMARKS_SMOOTHING_CALCULATOR_UTILS_H_
 #define MEDIAPIPE_CALCULATORS_UTIL_LANDMARKS_SMOOTHING_CALCULATOR_UTILS_H_
 
+#include <cstdint>
+#include <map>
+#include <memory>
+#include <optional>
+#include <vector>
+
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
+#include "absl/time/time.h"
 #include "mediapipe/calculators/util/landmarks_smoothing_calculator.pb.h"
-#include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"
-#include "mediapipe/util/filtering/one_euro_filter.h"
-#include "mediapipe/util/filtering/relative_velocity_filter.h"
 
 namespace mediapipe {
 namespace landmarks_smoothing {
 
 void NormalizedLandmarksToLandmarks(
-    const mediapipe::NormalizedLandmarkList& norm_landmarks,
-    const int image_width, const int image_height,
-    mediapipe::LandmarkList& landmarks);
+    const mediapipe::NormalizedLandmarkList& norm_landmarks, int image_width,
+    int image_height, mediapipe::LandmarkList& landmarks);
 
 void LandmarksToNormalizedLandmarks(
-    const mediapipe::LandmarkList& landmarks, const int image_width,
-    const int image_height, mediapipe::NormalizedLandmarkList& norm_landmarks);
+    const mediapipe::LandmarkList& landmarks, int image_width, int image_height,
+    mediapipe::NormalizedLandmarkList& norm_landmarks);
 
-float GetObjectScale(const NormalizedRect& roi, const int image_width,
-                     const int image_height);
+float GetObjectScale(const NormalizedRect& roi, int image_width,
+                     int image_height);
 
 float GetObjectScale(const Rect& roi);
 
@@ -48,7 +53,7 @@ class LandmarksFilter {
 
   virtual absl::Status Apply(const mediapipe::LandmarkList& in_landmarks,
                              const absl::Duration& timestamp,
-                             const absl::optional<float> object_scale_opt,
+                             std::optional<float> object_scale_opt,
                              mediapipe::LandmarkList& out_landmarks) = 0;
 };
 
@@ -60,7 +65,7 @@ class MultiLandmarkFilters {
   virtual ~MultiLandmarkFilters() = default;
 
   virtual absl::StatusOr<LandmarksFilter*> GetOrCreate(
-      const int64_t tracking_id,
+      int64_t tracking_id,
       const mediapipe::LandmarksSmoothingCalculatorOptions& options);
 
   virtual void ClearUnused(const std::vector<int64_t>& tracking_ids);

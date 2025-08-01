@@ -1027,12 +1027,16 @@ cc_library(
     hdrs = ["landmarks_smoothing_calculator_utils.h"],
     deps = [
         ":landmarks_smoothing_calculator_cc_proto",
-        "//mediapipe/framework:calculator_context",
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
         "//mediapipe/util/filtering:one_euro_filter",
         "//mediapipe/util/filtering:relative_velocity_filter",
+        "@com_google_absl//absl/algorithm:container",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/time",
     ],
     alwayslink = 1,
 )
