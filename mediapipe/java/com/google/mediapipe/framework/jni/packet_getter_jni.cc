@@ -511,6 +511,41 @@ JNIEXPORT jboolean JNICALL PACKET_GETTER_METHOD(nativeGetRgbaFromRgb)(
   return true;
 }
 
+JNIEXPORT jboolean JNICALL PACKET_GETTER_METHOD(nativeGetRgbaFromAlpha)(
+    JNIEnv* env, jobject thiz, jlong packet, jobject byte_buffer) {
+  mediapipe::Packet mediapipe_packet =
+      mediapipe::android::Graph::GetPacketFromHandle(packet);
+  const bool is_image =
+      mediapipe_packet.ValidateAsType<mediapipe::Image>().ok();
+  const mediapipe::ImageFrame& image =
+      is_image ? *GetFromNativeHandle<mediapipe::Image>(packet)
+                      .GetImageFrameSharedPtr()
+                      .get()
+               : GetFromNativeHandle<mediapipe::ImageFrame>(packet);
+  uint8_t* rgba_data =
+      static_cast<uint8_t*>(env->GetDirectBufferAddress(byte_buffer));
+  int64_t buffer_size = env->GetDirectBufferCapacity(byte_buffer);
+  if (rgba_data == nullptr || buffer_size < 0) {
+    ThrowIfError(env, absl::InvalidArgumentError(
+                          "input buffer does not support direct access"));
+    return false;
+  }
+  if (buffer_size != image.Width() * image.Height() * 4) {
+    ThrowIfError(env,
+                 absl::InvalidArgumentError(absl::StrCat(
+                     "Buffer size has to be width*height*4\n"
+                     "Image width: ",
+                     image.Width(), ", Image height: ", image.Height(),
+                     ", Buffer size: ", buffer_size, ", Buffer size needed: ",
+                     image.Width() * image.Height() * 4)));
+    return false;
+  }
+  mediapipe::android::AlphaToRgba(image.PixelData(), image.WidthStep(),
+                                  image.Width(), image.Height(), rgba_data,
+                                  image.Width() * 4);
+  return true;
+}
+
 JNIEXPORT jint JNICALL PACKET_GETTER_METHOD(nativeGetVideoHeaderWidth)(
     JNIEnv* env, jobject thiz, jlong packet) {
   return GetFromNativeHandle<mediapipe::VideoHeader>(packet).width;
