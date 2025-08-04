@@ -36,8 +36,12 @@ import com.google.mediapipe.components.ExternalTextureConverter;
 import com.google.mediapipe.components.FrameProcessor;
 import com.google.mediapipe.components.PermissionHelper;
 import com.google.mediapipe.framework.AndroidAssetUtil;
+import com.google.mediapipe.framework.ResourcesService;
+import com.google.mediapipe.framework.ResourcesWithMapping;
 import com.google.mediapipe.glutil.EglManager;
 import java.lang.ref.WeakReference;
+import java.util.HashMap;
+import java.util.Map;
 
 /** Main activity of MediaPipe basic app. */
 public class MainActivity extends AppCompatActivity {
@@ -88,6 +92,10 @@ public class MainActivity extends AppCompatActivity {
   // Progress dialog to show for the actions that must be executed on non-UI thread.
   private ProgressDialog progressDialog;
 
+  protected Map<String, String> getResourcesMapping() {
+    return new HashMap<>();
+  }
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -120,6 +128,11 @@ public class MainActivity extends AppCompatActivity {
             applicationInfo.metaData.getBoolean("flipFramesVertically", FLIP_FRAMES_VERTICALLY));
 
     PermissionHelper.checkAndRequestCameraPermissions(this);
+    Map<String, String> resourcesMapping = getResourcesMapping();
+    if (!resourcesMapping.isEmpty()) {
+      processor.setServiceObject(
+          new ResourcesService(), new ResourcesWithMapping(resourcesMapping));
+    }
   }
 
   // Used to obtain the content view for this application. If you are extending this class, and
