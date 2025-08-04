@@ -50,6 +50,8 @@ android_library(
         "AssetCache.java",
         "AssetCacheDbHelper.java",
         "MediaPipeRunner.java",
+        "ResourcesService.java",
+        "ResourcesWithMapping.java",
     ],
     visibility = [
         "//mediapipe/java/com/google/mediapipe:__subpackages__",
@@ -88,6 +90,8 @@ android_library(
             "TypeNameRegistryLite.java",
             "TypeNameRegistryFull.java",
             "MediaPipeException.java",
+            "ResourcesWithMapping.java",
+            "ResourcesService.java",
         ],
     ),
     exports = [

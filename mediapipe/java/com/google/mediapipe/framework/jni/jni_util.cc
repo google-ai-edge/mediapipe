@@ -14,8 +14,10 @@
 
 #include "mediapipe/java/com/google/mediapipe/framework/jni/jni_util.h"
 
+#include <jni.h>
 #include <pthread.h>
 
+#include "absl/container/flat_hash_map.h"
 #include "absl/log/absl_log.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/class_registry.h"
@@ -125,6 +127,60 @@ std::vector<std::string> JavaListToStdStringVector(JNIEnv* env, jobject from) {
   }
   env->DeleteLocalRef(cls);
   return result;
+}
+
+absl::flat_hash_map<std::string, std::string> JMapToAbslStringMap(
+    JNIEnv* env, jobject from) {
+  // Class references.
+  jclass mapClass = env->FindClass("java/util/Map");
+  jclass setClass = env->FindClass("java/util/Set");
+  jclass iteratorClass = env->FindClass("java/util/Iterator");
+  jclass mapEntryClass = env->FindClass("java/util/Map$Entry");
+  // Method IDs
+  jmethodID entrySetMethod =
+      env->GetMethodID(mapClass, "entrySet", "()Ljava/util/Set;");
+  jmethodID iteratorMethod =
+      env->GetMethodID(setClass, "iterator", "()Ljava/util/Iterator;");
+  jmethodID hasNextMethod = env->GetMethodID(iteratorClass, "hasNext", "()Z");
+  jmethodID nextMethod =
+      env->GetMethodID(iteratorClass, "next", "()Ljava/lang/Object;");
+  jmethodID getKeyMethod =
+      env->GetMethodID(mapEntryClass, "getKey", "()Ljava/lang/Object;");
+  jmethodID getValueMethod =
+      env->GetMethodID(mapEntryClass, "getValue", "()Ljava/lang/Object;");
+
+  absl::flat_hash_map<std::string, std::string> mapping;
+
+  // Get entry set from the map.
+  jobject entrySet = env->CallObjectMethod(from, entrySetMethod);
+  jobject iterator = env->CallObjectMethod(entrySet, iteratorMethod);
+  while (env->CallBooleanMethod(iterator, hasNextMethod)) {
+    jobject entry = env->CallObjectMethod(iterator, nextMethod);
+
+    // Get key and value
+    jstring javaKey = (jstring)env->CallObjectMethod(entry, getKeyMethod);
+    jstring javaValue = (jstring)env->CallObjectMethod(entry, getValueMethod);
+
+    // Add to the mapping.
+    std::string key = mediapipe::android::JStringToStdString(env, javaKey);
+    std::string value = mediapipe::android::JStringToStdString(env, javaValue);
+    mapping[key] = value;
+
+    // Release local references.
+    env->DeleteLocalRef(javaKey);
+    env->DeleteLocalRef(javaValue);
+    env->DeleteLocalRef(entry);
+  }
+
+  // Release remaining local references
+  env->DeleteLocalRef(entrySet);
+  env->DeleteLocalRef(iterator);
+  env->DeleteLocalRef(mapClass);
+  env->DeleteLocalRef(setClass);
+  env->DeleteLocalRef(iteratorClass);
+  env->DeleteLocalRef(mapEntryClass);
+
+  return mapping;
 }
 
 jthrowable CreateMediaPipeException(JNIEnv* env, absl::Status status) {

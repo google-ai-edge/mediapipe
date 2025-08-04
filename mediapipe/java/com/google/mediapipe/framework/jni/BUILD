@@ -42,6 +42,7 @@ cc_library(
         "//mediapipe:android": [
             "android_asset_util_jni.cc",
             "android_packet_creator_jni.cc",
+            "resources_jni.cc",
         ],
     }) + select({
         "//conditions:default": [
@@ -66,6 +67,7 @@ cc_library(
         "//mediapipe:android": [
             "android_asset_util_jni.h",
             "android_packet_creator_jni.h",
+            "resources_jni.h",
         ],
     }) + select({
         "//conditions:default": [
@@ -150,6 +152,7 @@ cc_library(
     deps = [
         ":class_registry",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/synchronization",
     ] + select({
@@ -209,6 +212,7 @@ cc_library(
     textual_hdrs = [
         "android_asset_util_jni.h",
         "android_packet_creator_jni.h",
+        "resources_jni.h",
     ],
     visibility = ["//visibility:private"],
 )
