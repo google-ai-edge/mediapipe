@@ -16,8 +16,6 @@ load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 
 licenses(["notice"])
 
-package(default_visibility = ["//mediapipe/examples:__subpackages__"])
-
 cc_binary(
     name = "face_detection_full_range_cpu",
     data = ["//mediapipe/modules/face_detection:face_detection_full_range.tflite"],
