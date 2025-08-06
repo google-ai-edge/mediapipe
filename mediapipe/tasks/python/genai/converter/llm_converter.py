@@ -52,6 +52,8 @@ class ConversionConfig(object):
     lora_output_tflite_file: A string indicating the name of the generated
       tflite file for the LoRA weight. Only applicable when the lora_rank is not
       zero.
+    lora_main_model_type: If the LoRA will be applied to a submodel packaged
+      with a main model, what the main model type is.
     image_encoder_file: A string with the name of the image encoder tflite file.
     image_adapter_file: A string with the name of the image adapter tflite file.
     submodel_type: Name of submodel, e.g. GEMMA_2B.
@@ -82,6 +84,7 @@ class ConversionConfig(object):
       lora_ckpt: Optional[str] = None,
       lora_rank: Optional[int] = None,
       lora_output_tflite_file: Optional[str] = None,
+      lora_main_model_type: Optional[str] = None,
       image_encoder_file: Optional[str] = None,
       image_adapter_file: Optional[str] = None,
       submodel_type: Optional[str] = None,
@@ -124,6 +127,7 @@ class ConversionConfig(object):
     self.lora_ckpt = lora_ckpt
     self.lora_rank = lora_rank
     self.lora_output_tflite_file = lora_output_tflite_file
+    self.lora_main_model_type = lora_main_model_type
     if (self.lora_ckpt is None) ^ (self.lora_rank is None):
       raise ValueError(
           'lora_ckpt and lora_rank must be either both provided or both not'
@@ -261,6 +265,7 @@ def combined_weight_bins_to_tflite(
     lora_rank: Optional[int] = None,
     lora_weight_path: Optional[str] = None,
     lora_output_tflite_file: Optional[str] = None,
+    lora_main_model_type: Optional[str] = None,
     image_encoder_file: Optional[str] = None,
     image_adapter_file: Optional[str] = None,
     submodel_type: Optional[str] = None,
@@ -289,6 +294,7 @@ def combined_weight_bins_to_tflite(
         0 if lora_rank is None else lora_rank,
         '' if lora_weight_path is None else lora_weight_path,
         '' if lora_output_tflite_file is None else lora_output_tflite_file,
+        '' if lora_main_model_type is None else lora_main_model_type,
         '' if image_encoder_file is None else image_encoder_file,
         '' if image_adapter_file is None else image_adapter_file,
         '' if submodel_type is None else submodel_type,
@@ -414,6 +420,7 @@ def convert_checkpoint(config: ConversionConfig) -> None:
       lora_rank=config.lora_rank,
       lora_weight_path=config.output_dir,
       lora_output_tflite_file=config.lora_output_tflite_file,
+      lora_main_model_type=config.lora_main_model_type,
       image_encoder_file=config.image_encoder_file,
       image_adapter_file=config.image_adapter_file,
       submodel_type=config.submodel_type,
