@@ -16,7 +16,6 @@ package(default_visibility = [
     "//mediapipe/tasks/ios:__subpackages__",
     "//mediapipe/tasks/java/com/google/mediapipe/tasks:__subpackages__",
     "//mediapipe/tasks/web/genai:__subpackages__",
-    "//research/xeno/labs:__subpackages__",
     "//third_party/odml/litert:__subpackages__",
 ])
 
