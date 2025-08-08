@@ -19,6 +19,7 @@
 
 #include "absl/functional/any_invocable.h"
 #include "absl/status/status.h"
+#include "mediapipe/framework/api3/any.h"
 #include "mediapipe/framework/api3/contract.h"
 #include "mediapipe/framework/api3/internal/contract_fields.h"
 #include "mediapipe/framework/api3/internal/contract_to_tuple.h"
@@ -187,12 +188,47 @@ class Output<ContractSpecializer, PayloadT>
   using internal_port::Port<ContractSpecializer, OutputStreamField>::Port;
 };
 
+template <>
+class Output<ContractSpecializer, Any>
+    : public internal_port::Port<ContractSpecializer, OutputStreamField> {
+ public:
+  using Payload = Any;
+  using internal_port::Port<ContractSpecializer, OutputStreamField>::Port;
+
+  // SetSameAs should be available only in the cases when node's input is Any,
+  // output is Any, but input & output should have the same type.
+  void SetSameAs(const Input<ContractSpecializer, Any>& input) {
+    contract_->Outputs()
+        .Get(this->Tag(), this->Index())
+        .SetSameAs(
+            contract_->Inputs().Get(input.Tag(), input.Index()).GetSameAs());
+  }
+};
+
 template <typename PayloadT>
 class SideOutput<ContractSpecializer, PayloadT>
     : public internal_port::Port<ContractSpecializer, OutputSidePacketField> {
  public:
   using Payload = PayloadT;
   using internal_port::Port<ContractSpecializer, OutputSidePacketField>::Port;
+};
+
+template <>
+class SideOutput<ContractSpecializer, Any>
+    : public internal_port::Port<ContractSpecializer, OutputSidePacketField> {
+ public:
+  using Payload = Any;
+  using internal_port::Port<ContractSpecializer, OutputSidePacketField>::Port;
+
+  // SetSameAs should be available only in the cases when node's input is Any,
+  // output is Any, but input & output should have the same type.
+  void SetSameAs(const SideInput<ContractSpecializer, Any>& side_input) {
+    contract_->OutputSidePackets()
+        .Get(this->Tag(), this->Index())
+        .SetSameAs(contract_->InputSidePackets()
+                       .Get(side_input.Tag(), side_input.Index())
+                       .GetSameAs());
+  }
 };
 
 template <typename ProtoT>

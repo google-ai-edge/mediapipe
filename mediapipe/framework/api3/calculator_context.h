@@ -190,6 +190,12 @@ class Output<ContextSpecializer, PayloadT>
                        .At(holder_->context->InputTimestamp()));
   }
 
+  void Send(Packet<PayloadT> packet) const {
+    holder_->context->Outputs()
+        .Get(Tag(), Index())
+        .AddPacket(std::move(packet).AsLegacyPacket());
+  }
+
   Timestamp NextTimestampBound() const {
     return holder_->context->Outputs().Get(Tag(), Index()).NextTimestampBound();
   }
@@ -226,6 +232,12 @@ class SideOutput<ContextSpecializer, PayloadT>
     holder_->context->OutputSidePackets()
         .Get(Tag(), Index())
         .Set(mediapipe::MakePacket<PayloadT>(std::forward<PayloadT>(payload)));
+  }
+
+  void Set(Packet<PayloadT> packet) const {
+    holder_->context->OutputSidePackets()
+        .Get(Tag(), Index())
+        .Set(std::move(packet).AsLegacyPacket());
   }
 };
 

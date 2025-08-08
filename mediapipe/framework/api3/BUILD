@@ -45,6 +45,7 @@ cc_library(
     name = "calculator_contract",
     hdrs = ["calculator_contract.h"],
     deps = [
+        ":any",
         ":contract",
         "//mediapipe/framework:calculator_contract",
         "//mediapipe/framework:calculator_framework",
@@ -272,7 +273,7 @@ cc_library(
     name = "stream",
     hdrs = ["stream.h"],
     deps = [
-        ":node",
+        ":any",
         "//mediapipe/framework/api3/internal:graph_builder",
     ],
 )
@@ -281,7 +282,37 @@ cc_library(
     name = "side_packet",
     hdrs = ["side_packet.h"],
     deps = [
-        ":node",
+        ":any",
         "//mediapipe/framework/api3/internal:graph_builder",
+    ],
+)
+
+cc_library(
+    name = "any",
+    hdrs = ["any.h"],
+)
+
+cc_test(
+    name = "any_test",
+    srcs = [
+        "any_test.cc",
+    ],
+    deps = [
+        ":any",
+        ":calculator",
+        ":calculator_context",
+        ":calculator_contract",
+        ":contract",
+        ":graph",
+        ":node",
+        ":side_packet",
+        ":stream",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/tool:options_map",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )

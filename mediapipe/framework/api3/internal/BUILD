@@ -109,6 +109,7 @@ cc_library(
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:calculator_contract",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api3:any",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/log:absl_check",

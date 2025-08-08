@@ -24,6 +24,7 @@
 #include "absl/log/absl_check.h"
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
+#include "mediapipe/framework/api3/any.h"
 #include "mediapipe/framework/api3/internal/contract_fields.h"
 #include "mediapipe/framework/api3/internal/dependent_false.h"
 #include "mediapipe/framework/api3/internal/graph_builder.h"
@@ -358,6 +359,15 @@ class RepeatedBase<GraphNodeSpecializer, FieldT> : public TagAndIndex {
   builder::NodeBuilder* node_builder_ = nullptr;
 };
 
+template <typename T, typename P>
+void SetType(P& p) {
+  if constexpr (std::is_same_v<T, Any>) {
+    p.SetAny();
+  } else {
+    p.template Set<T>();
+  }
+};
+
 template <typename FieldT>
 class RepeatedBase<GraphGeneratorSpecializer, FieldT> : public TagAndIndex {
  public:
@@ -384,28 +394,28 @@ absl::Status AddToContract(P& port, CC& contract, bool optional = false) {
   if constexpr (std::is_same_v<Field, InputStreamField>) {
     using Payload = typename std::remove_const_t<P>::Payload;
     auto& v = contract.Inputs().Get(port.Tag(), port.Index());
-    v.template Set<Payload>();
+    SetType<Payload>(v);
     if (optional) {
       v.Optional();
     }
   } else if constexpr (std::is_same_v<Field, OutputStreamField>) {
     using Payload = typename std::remove_const_t<P>::Payload;
     auto& v = contract.Outputs().Get(port.Tag(), port.Index());
-    v.template Set<Payload>();
+    SetType<Payload>(v);
     if (optional) {
       v.Optional();
     }
   } else if constexpr (std::is_same_v<Field, InputSidePacketField>) {
     using Payload = typename std::remove_const_t<P>::Payload;
     auto& v = contract.InputSidePackets().Get(port.Tag(), port.Index());
-    v.template Set<Payload>();
+    SetType<Payload>(v);
     if (optional) {
       v.Optional();
     }
   } else if constexpr (std::is_same_v<Field, OutputSidePacketField>) {
     using Payload = typename std::remove_const_t<P>::Payload;
     auto& v = contract.OutputSidePackets().Get(port.Tag(), port.Index());
-    v.template Set<Payload>();
+    SetType<Payload>(v);
     if (optional) {
       v.Optional();
     }
