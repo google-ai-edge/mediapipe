@@ -107,8 +107,9 @@ class LlmBundlerTest(absltest.TestCase):
         stop_tokens=[self.EOS],
         output_filename=output_file,
         enable_bytes_to_unicode_mapping=True,
-        prompt_prefix="<start_of_turn>user\n ",
-        prompt_suffix="<end_of_turn>\n<start_of_turn>model\n",
+        prompt_prefix_user="<start_of_turn>user\n ",
+        prompt_suffix_user="<end_of_turn>\n",
+        prompt_prefix_model="<start_of_turn>model\n",
     )
     llm_bundler.create_bundle(config)
     self.assertTrue(os.path.exists(output_file))
@@ -162,6 +163,62 @@ class LlmBundlerTest(absltest.TestCase):
         "Failed to load tokenizer model from",
     ):
       llm_bundler.create_bundle(config)
+
+  def test_system_prompt_and_affixes_raises_value_error(self):
+    tempdir = self.create_tempdir()
+    sp_file_path = self._create_sp_model(tempdir.full_path)
+    tflite_file_path = self._create_tflite_model(tempdir.full_path)
+    output_file = os.path.join(tempdir, "test.task")
+    config = llm_bundler.BundleConfig(
+        tflite_model=tflite_file_path,
+        tokenizer_model=sp_file_path,
+        start_token=self.BOS,
+        stop_tokens=[self.EOS],
+        output_filename=output_file,
+        system_prompt="you are a an invalid chat bot",
+        prompt_prefix_system="<system>\n",
+    )
+    with self.assertRaisesRegex(
+        ValueError,
+        "system_prompt and prompt_\\*_system are mutually exclusive",
+    ):
+      llm_bundler.create_bundle(config)
+
+  def test_prompt_suffix_includes_model_prefix(self):
+    tempdir = self.create_tempdir()
+    sp_file_path = self._create_sp_model(tempdir.full_path)
+    tflite_file_path = self._create_tflite_model(tempdir.full_path)
+    output_file = os.path.join(tempdir, "test.task")
+    config = llm_bundler.BundleConfig(
+        tflite_model=tflite_file_path,
+        tokenizer_model=sp_file_path,
+        start_token=self.BOS,
+        stop_tokens=[self.EOS],
+        output_filename=output_file,
+        prompt_prefix_model="<model>\n",
+        prompt_suffix_model="<end_of_turn>\n",
+        prompt_prefix_user="<user>\n",
+        prompt_suffix_user="<end_of_turn>\n",
+    )
+    metadata = llm_bundler.create_metadata_pb(config)
+    self.assertEqual(metadata.prompt_template.prompt_prefix, "<user>\n")
+    self.assertEqual(
+        metadata.prompt_template.prompt_suffix, "<end_of_turn>\n<model>\n"
+    )
+    self.assertEqual(
+        metadata.prompt_templates.user_template.prompt_prefix, "<user>\n"
+    )
+    self.assertEqual(
+        metadata.prompt_templates.user_template.prompt_suffix,
+        "<end_of_turn>\n",
+    )
+    self.assertEqual(
+        metadata.prompt_templates.model_template.prompt_prefix, "<model>\n"
+    )
+    self.assertEqual(
+        metadata.prompt_templates.model_template.prompt_suffix,
+        "<end_of_turn>\n",
+    )
 
 
 if __name__ == "__main__":
