@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 
-#include "http_payload.h"
+#include "http_payload.hpp"
 #include "third_party/cpp-base64/base64.h"
 using InputDataType = ovms::HttpPayload;
 

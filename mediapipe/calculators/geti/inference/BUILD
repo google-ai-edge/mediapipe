@@ -60,8 +60,6 @@ cc_library(
         "segmentation_calculator.h",
         "model_infer_request_image_calculator.h",
         "model_infer_http_request_calculator.h",
-        "http_payload.h",
-        "client_connection.h"
     ],
     deps = [
         ":openvino_inference_adapter_calculator_cc_proto",
@@ -77,7 +75,9 @@ cc_library(
         ":geti_calculator_base",
         "@com_github_tencent_rapidjson//:rapidjson",
         "//third_party/cpp-base64:cpp-base64",
+        "@ovms//src:httppayload",
     ],
+    copts = ["-Iexternal/ovms/src","-Isrc"],
     defines = [
         "USE_MODELADAPTER",
     ],
@@ -172,7 +172,8 @@ cc_test(
     ],
     deps = [
         ":inference_calculators",
-        ":test_deps"
+        ":test_deps",
+        "@ovms//src:httppayload",
     ],
     defines = [
         "USE_MODELADAPTER",

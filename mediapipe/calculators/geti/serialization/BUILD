@@ -29,8 +29,10 @@ cc_library(
         "//mediapipe/calculators/geti/inference:inference_calculators",
         "//mediapipe/calculators/geti/inference:geti_calculator_base",
         "//mediapipe/calculators/geti/inference:inference_utils",
-        ":serialization"
+        ":serialization",
+        "@ovms//src:httppayload",
     ],
+    copts = ["-Iexternal/ovms/src","-Isrc"],
     visibility = [
         "//visibility:public",
     ],

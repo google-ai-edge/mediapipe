@@ -21,7 +21,7 @@
 #include <nlohmann/json_fwd.hpp>
 #include <string>
 
-#include "../inference/http_payload.h"
+#include "http_payload.hpp"
 #include "../inference/utils.h"
 #include "../serialization/result_serialization.h"
 #include "../utils/data_structures.h"

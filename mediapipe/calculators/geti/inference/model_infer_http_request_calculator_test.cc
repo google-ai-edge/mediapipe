@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 
-#include "../inference/http_payload.h"
+#include "http_payload.hpp"
 #include "../inference/test_utils.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
