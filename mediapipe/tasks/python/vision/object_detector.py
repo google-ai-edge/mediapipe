@@ -66,6 +66,8 @@ class ObjectDetectorOptions:
       return.
     score_threshold: Overrides the ones provided in the model metadata. Results
       below this value are rejected.
+    multiclass_nms: Whether to use multiclass NMS. That is, each category processes
+      non-maximum-suppression separately.
     category_allowlist: Allowlist of category names. If non-empty, detection
       results whose category name is not in this set will be filtered out.
       Duplicate or unknown category names are ignored. Mutually exclusive with
@@ -84,6 +86,7 @@ class ObjectDetectorOptions:
   display_names_locale: Optional[str] = None
   max_results: Optional[int] = None
   score_threshold: Optional[float] = None
+  multiclass_nms: Optional[bool] = None
   category_allowlist: Optional[List[str]] = None
   category_denylist: Optional[List[str]] = None
   result_callback: Optional[
@@ -102,6 +105,7 @@ class ObjectDetectorOptions:
         display_names_locale=self.display_names_locale,
         max_results=self.max_results,
         score_threshold=self.score_threshold,
+        multiclass_nms=self.multiclass_nms,
         category_allowlist=self.category_allowlist,
         category_denylist=self.category_denylist,
     )
