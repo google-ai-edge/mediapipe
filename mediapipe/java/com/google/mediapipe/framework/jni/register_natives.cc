@@ -284,6 +284,9 @@ void RegisterPacketGetterNatives(JNIEnv *env) {
   AddJNINativeMethod(&packet_getter_methods, packet_getter,
                      "nativeGetRgbaFromRgb", "(JLjava/nio/ByteBuffer;)Z",
                      (void *)&PACKET_GETTER_METHOD(nativeGetRgbaFromRgb));
+  AddJNINativeMethod(&packet_getter_methods, packet_getter,
+                     "nativeGetRgbaFromA", "(JLjava/nio/ByteBuffer;)Z",
+                     (void *)&PACKET_GETTER_METHOD(nativeGetRgbaFromAlpha));
   RegisterNativesVector(env, packet_getter_class, packet_getter_methods);
   env->DeleteLocalRef(packet_getter_class);
 }
