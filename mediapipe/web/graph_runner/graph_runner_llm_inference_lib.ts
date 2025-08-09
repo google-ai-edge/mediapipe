@@ -45,6 +45,16 @@ export function instanceOfAudio(obj: unknown): obj is Audio {
   return typeof obj === 'object' && obj != null && 'audioSource' in obj;
 }
 
+function instanceOfAudioChunk(obj: unknown): obj is AudioChunk {
+  // tslint:disable-next-line:ban-unsafe-reflection
+  return (
+    typeof obj === 'object' &&
+    obj != null &&
+    'audioSamples' in obj &&
+    'audioSampleRateHz' in obj
+  );
+}
+
 /**
  * Type for a piece of an LLM query.
  */
@@ -65,10 +75,15 @@ declare interface ImageByteSource {
   height: number;
 }
 
+declare interface AudioChunk {
+  audioSampleRateHz: number;
+  audioSamples: Float32Array;
+}
+
 // The allowable types for audio sources to be used for mixed audio/text/vision
-// LLM queries. For now, we only support URLs for single mono .wav files, but
-// we should expand this in the future.
-declare type AudioSource = string;
+// LLM queries. For now, we only support URLs for mono-channel audio files and
+// single-channel AudioBuffer objects. We should expand this in the future.
+declare type AudioSource = string | AudioBuffer | AudioChunk;
 
 /**
  * We extend from a GraphRunner constructor. This ensures our mixin has
@@ -115,6 +130,7 @@ export declare interface WasmLlmInferenceModule {
   ) => void;
   _AddAudioQueryChunk: (
     session: number,
+    audioSampleRateHz: number,
     audioDataPtr: number,
     audioDataSize: number,
   ) => void;
@@ -389,27 +405,24 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
             );
             mediaToFree.push(imageDataPtr);
           } else if (instanceOfAudio(chunk)) {
-            // The audio API is very different from the vision API, and expects
-            // a mono-channel .wav file as raw data.
-            // TODO: Update this code if and when audio API support is upgraded.
-            const response = await fetch(chunk.audioSource);
-            if (!response.ok) {
-              throw new Error(
-                `Audio fetch for ${chunk.audioSource} had ` +
-                  `error: ${response.status}`,
-              );
-            }
-            const audioBuffer = await response.arrayBuffer();
-            const audioBytes = new Uint8Array(audioBuffer);
-            // Copy into wasm heap
-            const audioDataPtr = this.wasmModule._malloc(audioBytes.length);
-            this.wasmModule.HEAPU8.set(audioBytes, audioDataPtr);
-
-            // Add audio chunk to query
+            const audioSource = await this.getAudioFromSource(
+              chunk.audioSource,
+            );
+            // We use C++ API for passing a raw audio chunk. Can be used for
+            // generic audio streams, like microphone data. But it will error
+            // out currently if the segment is too small.
+            const audioDataPtr = this.wasmModule._malloc(
+              audioSource.audioSamples.byteLength,
+            );
+            this.wasmModule.HEAPF32.set(
+              audioSource.audioSamples,
+              audioDataPtr / 4,
+            );
             llmWasm._AddAudioQueryChunk(
               session,
+              audioSource.audioSampleRateHz,
               audioDataPtr,
-              audioBytes.length,
+              audioSource.audioSamples.length,
             );
             mediaToFree.push(audioDataPtr);
           } else {
@@ -573,6 +586,39 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
         return {image, width: image.displayWidth, height: image.displayHeight};
       } else {
         return {image, width: image.width, height: image.height};
+      }
+    }
+
+    /**
+     * Parse an audio source into an Audio, along with its sample rate, for
+     * extracting the raw bytes.
+     *
+     * @param audio The audio source.
+     * @return The audio, ready to be ingested by the LLM, along with its sample
+     *   rate.
+     */
+    async getAudioFromSource(audio: AudioSource): Promise<AudioChunk> {
+      if (typeof audio === 'string') {
+        const response = await fetch(audio);
+        if (!response.ok) {
+          throw new Error(
+            `Audio fetch for ${audio} had error: ${response.status}`,
+          );
+        }
+        const arrayBuffer = await response.arrayBuffer();
+        const audioContext = new AudioContext({sampleRate: 16000});
+        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+        return {
+          audioSamples: audioBuffer.getChannelData(0),
+          audioSampleRateHz: audioBuffer.sampleRate,
+        };
+      } else if (instanceOfAudioChunk(audio)) {
+        return audio;
+      } else {
+        return {
+          audioSamples: audio.getChannelData(0),
+          audioSampleRateHz: audio.sampleRate,
+        };
       }
     }
   };
