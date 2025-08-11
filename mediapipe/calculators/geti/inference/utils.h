@@ -29,6 +29,22 @@ extern const std::string GETI_EMPTY_LABEL;
 extern const std::string GETI_NOCLASS_LABEL;
 extern const std::string GETI_NOOBJECT_LABEL;
 
+static inline bool get_hierarchical(ov::AnyMap configuration) {
+  auto iter = configuration.find("hierarchical");
+  if (iter != configuration.end()) {
+    return iter->second.as<bool>();
+  }
+  return false;
+}
+
+static inline std::string get_label_info(ov::AnyMap configuration) {
+  auto iter = configuration.find("label_info");
+  if (iter != configuration.end()) {
+    return iter->second.as<std::string>();
+  }
+  return "";
+}
+
 static inline std::vector<Label> get_labels_from_configuration(
     ov::AnyMap configuration) {
   auto labels_iter = configuration.find("labels");

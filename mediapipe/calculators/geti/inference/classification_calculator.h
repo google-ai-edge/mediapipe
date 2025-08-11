@@ -26,12 +26,12 @@
 
 #include "../inference/geti_calculator_base.h"
 #include "../inference/utils.h"
+#include "../utils/data_structures.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/image_frame_opencv.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/status.h"
-#include "../utils/data_structures.h"
 
 namespace mediapipe {
 
@@ -58,6 +58,10 @@ class ClassificationCalculator : public GetiCalculatorBase {
   std::shared_ptr<InferenceAdapter> ia;
   std::unique_ptr<ClassificationModel> model;
   std::vector<geti::Label> labels;
+  std::vector<geti::Label> ordered_labels;
+
+  bool is_hierarchical;
+  std::string label_info;
 };
 
 }  // namespace mediapipe
