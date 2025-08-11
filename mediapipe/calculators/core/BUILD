@@ -676,11 +676,37 @@ cc_test(
 cc_library(
     name = "pass_through_calculator",
     srcs = ["pass_through_calculator.cc"],
+    hdrs = ["pass_through_calculator.h"],
     deps = [
         "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework/port:status",
+        "//mediapipe/framework:collection_item_id",
+        "//mediapipe/framework/api3:any",
+        "//mediapipe/framework/api3:contract",
+        "//mediapipe/framework/api3:node",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
+)
+
+cc_test(
+    name = "pass_through_calculator_test",
+    srcs = ["pass_through_calculator_test.cc"],
+    deps = [
+        ":pass_through_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/api3:any",
+        "//mediapipe/framework/api3:contract",
+        "//mediapipe/framework/api3:graph",
+        "//mediapipe/framework/api3:stream",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:status_matchers",
+        "//mediapipe/framework/tool:options_map",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings:string_view",
+    ],
 )
 
 cc_library(
