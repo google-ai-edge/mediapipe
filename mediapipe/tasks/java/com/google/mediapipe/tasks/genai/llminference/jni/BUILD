@@ -16,10 +16,8 @@ load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
 package(default_visibility = [
-    "//java/com/google/android/apps/inputmethod/latin:__subpackages__",
     "//javatests/com/google/android/apps/inputmethod:__subpackages__",
     "//mediapipe/tasks:internal",
-    "//third_party/generative_computing:__subpackages__",
 ])
 
 licenses(["notice"])
