@@ -1226,12 +1226,19 @@ cc_test(
 cc_library(
     name = "merge_calculator",
     srcs = ["merge_calculator.cc"],
+    hdrs = ["merge_calculator.h"],
     deps = [
         "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/api3:any",
+        "//mediapipe/framework/api3:calculator",
+        "//mediapipe/framework/api3:calculator_context",
+        "//mediapipe/framework/api3:calculator_contract",
+        "//mediapipe/framework/api3:contract",
+        "//mediapipe/framework/api3:node",
         "//mediapipe/framework/port:ret_check",
-        "//mediapipe/framework/port:status",
         "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -1243,9 +1250,11 @@ cc_test(
         ":merge_calculator",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/api3:any",
+        "//mediapipe/framework/api3:graph",
+        "//mediapipe/framework/api3:stream",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
-        "//mediapipe/framework/port:status",
     ],
 )
 
