@@ -24,15 +24,15 @@ extern "C" {
 #define GRAPH_GL_SYNC_TOKEN_METHOD(METHOD_NAME) \
   Java_com_google_mediapipe_framework_GraphGlSyncToken_##METHOD_NAME
 
-JNIEXPORT void JNICALL GRAPH_GL_SYNC_TOKEN_METHOD(nativeWaitOnCpu)(JNIEnv *,
+JNIEXPORT void JNICALL GRAPH_GL_SYNC_TOKEN_METHOD(nativeWaitOnCpu)(JNIEnv*,
                                                                    jclass,
                                                                    jlong);
 
-JNIEXPORT void JNICALL GRAPH_GL_SYNC_TOKEN_METHOD(nativeWaitOnGpu)(JNIEnv *,
+JNIEXPORT void JNICALL GRAPH_GL_SYNC_TOKEN_METHOD(nativeWaitOnGpu)(JNIEnv*,
                                                                    jclass,
                                                                    jlong);
 
-JNIEXPORT void JNICALL GRAPH_GL_SYNC_TOKEN_METHOD(nativeRelease)(JNIEnv *,
+JNIEXPORT void JNICALL GRAPH_GL_SYNC_TOKEN_METHOD(nativeRelease)(JNIEnv*,
                                                                  jclass, jlong);
 
 #ifdef __cplusplus

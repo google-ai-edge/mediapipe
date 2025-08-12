@@ -132,10 +132,10 @@ class GlAnimationOverlayCalculator : public CalculatorBase {
   GlAnimationOverlayCalculator() {}
   ~GlAnimationOverlayCalculator();
 
-  static absl::Status GetContract(CalculatorContract *cc);
+  static absl::Status GetContract(CalculatorContract* cc);
 
-  absl::Status Open(CalculatorContext *cc) override;
-  absl::Status Process(CalculatorContext *cc) override;
+  absl::Status Open(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
 
  private:
   bool has_video_stream_ = false;
@@ -171,38 +171,38 @@ class GlAnimationOverlayCalculator : public CalculatorBase {
   float perspective_matrix_[kNumMatrixEntries];
 
   void ComputeAspectRatioAndFovFromCameraParameters(
-      const CameraParametersProto &camera_parameters, float *aspect_ratio,
-      float *vertical_fov_degrees);
+      const CameraParametersProto& camera_parameters, float* aspect_ratio,
+      float* vertical_fov_degrees);
 
   int GetAnimationFrameIndex(Timestamp timestamp);
   absl::Status GlSetup();
-  absl::Status GlBind(const TriangleMesh &triangle_mesh,
-                      const GlTexture &texture);
-  absl::Status GlRender(const TriangleMesh &triangle_mesh,
-                        const float *model_matrix);
+  absl::Status GlBind(const TriangleMesh& triangle_mesh,
+                      const GlTexture& texture);
+  absl::Status GlRender(const TriangleMesh& triangle_mesh,
+                        const float* model_matrix);
   void InitializePerspectiveMatrix(float aspect_ratio,
                                    float vertical_fov_degrees, float z_near,
                                    float z_far);
-  void LoadModelMatrices(const TimedModelMatrixProtoList &model_matrices,
-                         std::vector<ModelMatrix> *current_model_matrices);
+  void LoadModelMatrices(const TimedModelMatrixProtoList& model_matrices,
+                         std::vector<ModelMatrix>* current_model_matrices);
   void CalculateTriangleMeshNormals(int normals_len,
-                                    TriangleMesh *triangle_mesh);
+                                    TriangleMesh* triangle_mesh);
   void Normalize3f(float input[3]);
 
 #if !defined(__ANDROID__)
   // Asset loading routine for all non-Android platforms.
-  bool LoadAnimation(const std::string &filename);
+  bool LoadAnimation(const std::string& filename);
 #else
   // Asset loading for all Android platforms.
-  bool LoadAnimationAndroid(const std::string &filename,
-                            std::vector<TriangleMesh> *mesh);
-  bool ReadBytesFromAsset(AAsset *asset, void *buffer, int num_bytes_to_read);
+  bool LoadAnimationAndroid(const std::string& filename,
+                            std::vector<TriangleMesh>* mesh);
+  bool ReadBytesFromAsset(AAsset* asset, void* buffer, int num_bytes_to_read);
 #endif
 };
 REGISTER_CALCULATOR(GlAnimationOverlayCalculator);
 
 // static
-absl::Status GlAnimationOverlayCalculator::GetContract(CalculatorContract *cc) {
+absl::Status GlAnimationOverlayCalculator::GetContract(CalculatorContract* cc) {
   MP_RETURN_IF_ERROR(
       GlCalculatorHelper::SetupInputSidePackets(&(cc->InputSidePackets())));
   if (cc->Inputs().HasTag("VIDEO")) {
@@ -243,7 +243,7 @@ absl::Status GlAnimationOverlayCalculator::GetContract(CalculatorContract *cc) {
 }
 
 void GlAnimationOverlayCalculator::CalculateTriangleMeshNormals(
-    int normals_len, TriangleMesh *triangle_mesh) {
+    int normals_len, TriangleMesh* triangle_mesh) {
   // Set triangle_mesh normals for shader usage
   triangle_mesh->normals.reset(new float[normals_len]);
   // Used for storing the vertex normals prior to averaging
@@ -338,8 +338,8 @@ void GlAnimationOverlayCalculator::InitializePerspectiveMatrix(
 #if defined(__ANDROID__)
 // Helper function for reading in a specified number of bytes from an Android
 // asset.  Returns true if successfully reads in all bytes into buffer.
-bool GlAnimationOverlayCalculator::ReadBytesFromAsset(AAsset *asset,
-                                                      void *buffer,
+bool GlAnimationOverlayCalculator::ReadBytesFromAsset(AAsset* asset,
+                                                      void* buffer,
                                                       int num_bytes_to_read) {
   // Most file systems use block sizes of 4KB or 8KB; ideally we'd choose a
   // small multiple of the block size for best input streaming performance, so
@@ -350,9 +350,9 @@ bool GlAnimationOverlayCalculator::ReadBytesFromAsset(AAsset *asset,
   int bytes_read = 1;  // any value > 0 here just to start looping.
 
   // Treat as uint8_t array so we can deal in single byte arithmetic easily.
-  uint8_t *currBufferIndex = reinterpret_cast<uint8_t *>(buffer);
+  uint8_t* currBufferIndex = reinterpret_cast<uint8_t*>(buffer);
   while (bytes_read > 0 && bytes_left > 0) {
-    bytes_read = AAsset_read(asset, (void *)currBufferIndex,
+    bytes_read = AAsset_read(asset, (void*)currBufferIndex,
                              std::min(bytes_left, kMaxChunkSize));
     bytes_left -= bytes_read;
     currBufferIndex += bytes_read;
@@ -374,17 +374,17 @@ bool GlAnimationOverlayCalculator::ReadBytesFromAsset(AAsset *asset,
 // The below asset streaming code is Android-only, making use of the platform
 // JNI helper classes AAssetManager and AAsset.
 bool GlAnimationOverlayCalculator::LoadAnimationAndroid(
-    const std::string &filename, std::vector<TriangleMesh> *meshes) {
-  mediapipe::AssetManager *mediapipe_asset_manager =
+    const std::string& filename, std::vector<TriangleMesh>* meshes) {
+  mediapipe::AssetManager* mediapipe_asset_manager =
       Singleton<mediapipe::AssetManager>::get();
-  AAssetManager *asset_manager = mediapipe_asset_manager->GetAssetManager();
+  AAssetManager* asset_manager = mediapipe_asset_manager->GetAssetManager();
   if (!asset_manager) {
     ABSL_LOG(ERROR) << "Failed to access Android asset manager.";
     return false;
   }
 
   // New read-bytes stuff here!  First we open file for streaming.
-  AAsset *asset = AAssetManager_open(asset_manager, filename.c_str(),
+  AAsset* asset = AAssetManager_open(asset_manager, filename.c_str(),
                                      AASSET_MODE_STREAMING);
   if (!asset) {
     ABSL_LOG(ERROR) << "Failed to open animation asset: " << filename;
@@ -394,23 +394,23 @@ bool GlAnimationOverlayCalculator::LoadAnimationAndroid(
   // And now, while we are able to stream in more frames, we do so.
   frame_count_ = 0;
   int32_t lengths[3];
-  while (ReadBytesFromAsset(asset, (void *)lengths, sizeof(lengths[0]) * 3)) {
+  while (ReadBytesFromAsset(asset, (void*)lengths, sizeof(lengths[0]) * 3)) {
     // About to start reading the next animation frame.  Stream it in here.
     // Each frame stores first the object counts of its three arrays
     // (vertices, texture coordinates, triangle indices; respectively), and
     // then stores each of those arrays as a byte dump, in order.
     meshes->emplace_back();
-    TriangleMesh &triangle_mesh = meshes->back();
+    TriangleMesh& triangle_mesh = meshes->back();
     // Try to read in vertices (4-byte floats)
     triangle_mesh.vertices.reset(new float[lengths[0]]);
-    if (!ReadBytesFromAsset(asset, (void *)triangle_mesh.vertices.get(),
+    if (!ReadBytesFromAsset(asset, (void*)triangle_mesh.vertices.get(),
                             sizeof(float) * lengths[0])) {
       ABSL_LOG(ERROR) << "Failed to read vertices for frame " << frame_count_;
       return false;
     }
     // Try to read in texture coordinates (4-byte floats)
     triangle_mesh.texture_coords.reset(new float[lengths[1]]);
-    if (!ReadBytesFromAsset(asset, (void *)triangle_mesh.texture_coords.get(),
+    if (!ReadBytesFromAsset(asset, (void*)triangle_mesh.texture_coords.get(),
                             sizeof(float) * lengths[1])) {
       ABSL_LOG(ERROR) << "Failed to read tex-coords for frame " << frame_count_;
       return false;
@@ -418,7 +418,7 @@ bool GlAnimationOverlayCalculator::LoadAnimationAndroid(
     // Try to read in indices (2-byte shorts)
     triangle_mesh.index_count = lengths[2];
     triangle_mesh.triangle_indices.reset(new int16_t[lengths[2]]);
-    if (!ReadBytesFromAsset(asset, (void *)triangle_mesh.triangle_indices.get(),
+    if (!ReadBytesFromAsset(asset, (void*)triangle_mesh.triangle_indices.get(),
                             sizeof(int16_t) * lengths[2])) {
       ABSL_LOG(ERROR) << "Failed to read indices for frame " << frame_count_;
       return false;
@@ -442,7 +442,7 @@ bool GlAnimationOverlayCalculator::LoadAnimationAndroid(
 
 #else  // defined(__ANDROID__)
 
-bool GlAnimationOverlayCalculator::LoadAnimation(const std::string &filename) {
+bool GlAnimationOverlayCalculator::LoadAnimation(const std::string& filename) {
   std::ifstream infile(filename.c_str(), std::ifstream::binary);
   if (!infile) {
     ABSL_LOG(ERROR) << "Error opening asset with filename: " << filename;
@@ -453,7 +453,7 @@ bool GlAnimationOverlayCalculator::LoadAnimation(const std::string &filename) {
   int32_t lengths[3];
   while (true) {
     // See if we have more initial size counts to read in.
-    infile.read((char *)(lengths), sizeof(lengths[0]) * 3);
+    infile.read((char*)(lengths), sizeof(lengths[0]) * 3);
     if (!infile) {
       // No more frames to read.  Close out.
       infile.close();
@@ -461,11 +461,11 @@ bool GlAnimationOverlayCalculator::LoadAnimation(const std::string &filename) {
     }
 
     triangle_meshes_.emplace_back();
-    TriangleMesh &triangle_mesh = triangle_meshes_.back();
+    TriangleMesh& triangle_mesh = triangle_meshes_.back();
 
     // Try to read in vertices (4-byte floats).
     triangle_mesh.vertices.reset(new float[lengths[0]]);
-    infile.read((char *)(triangle_mesh.vertices.get()),
+    infile.read((char*)(triangle_mesh.vertices.get()),
                 sizeof(float) * lengths[0]);
     if (!infile) {
       ABSL_LOG(ERROR) << "Failed to read vertices for frame " << frame_count_;
@@ -474,7 +474,7 @@ bool GlAnimationOverlayCalculator::LoadAnimation(const std::string &filename) {
 
     // Try to read in texture coordinates (4-byte floats)
     triangle_mesh.texture_coords.reset(new float[lengths[1]]);
-    infile.read((char *)(triangle_mesh.texture_coords.get()),
+    infile.read((char*)(triangle_mesh.texture_coords.get()),
                 sizeof(float) * lengths[1]);
     if (!infile) {
       ABSL_LOG(ERROR) << "Failed to read texture coordinates for frame "
@@ -485,7 +485,7 @@ bool GlAnimationOverlayCalculator::LoadAnimation(const std::string &filename) {
     // Try to read in the triangle indices (2-byte shorts)
     triangle_mesh.index_count = lengths[2];
     triangle_mesh.triangle_indices.reset(new int16_t[lengths[2]]);
-    infile.read((char *)(triangle_mesh.triangle_indices.get()),
+    infile.read((char*)(triangle_mesh.triangle_indices.get()),
                 sizeof(int16_t) * lengths[2]);
     if (!infile) {
       ABSL_LOG(ERROR) << "Failed to read triangle indices for frame "
@@ -511,8 +511,8 @@ bool GlAnimationOverlayCalculator::LoadAnimation(const std::string &filename) {
 #endif
 
 void GlAnimationOverlayCalculator::ComputeAspectRatioAndFovFromCameraParameters(
-    const CameraParametersProto &camera_parameters, float *aspect_ratio,
-    float *vertical_fov_degrees) {
+    const CameraParametersProto& camera_parameters, float* aspect_ratio,
+    float* vertical_fov_degrees) {
   ABSL_CHECK(aspect_ratio != nullptr);
   ABSL_CHECK(vertical_fov_degrees != nullptr);
   *aspect_ratio =
@@ -521,11 +521,11 @@ void GlAnimationOverlayCalculator::ComputeAspectRatioAndFovFromCameraParameters(
       std::atan(camera_parameters.portrait_height() * 0.5f) * 2 * 180 / M_PI;
 }
 
-absl::Status GlAnimationOverlayCalculator::Open(CalculatorContext *cc) {
+absl::Status GlAnimationOverlayCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
   MP_RETURN_IF_ERROR(helper_.Open(cc));
 
-  const auto &options = cc->Options<GlAnimationOverlayCalculatorOptions>();
+  const auto& options = cc->Options<GlAnimationOverlayCalculatorOptions>();
 
   animation_speed_fps_ = options.animation_speed_fps();
 
@@ -533,7 +533,7 @@ absl::Status GlAnimationOverlayCalculator::Open(CalculatorContext *cc) {
   float aspect_ratio;
   float vertical_fov_degrees;
   if (cc->InputSidePackets().HasTag("CAMERA_PARAMETERS_PROTO_STRING")) {
-    const std::string &camera_parameters_proto_string =
+    const std::string& camera_parameters_proto_string =
         cc->InputSidePackets()
             .Tag("CAMERA_PARAMETERS_PROTO_STRING")
             .Get<std::string>();
@@ -557,13 +557,13 @@ absl::Status GlAnimationOverlayCalculator::Open(CalculatorContext *cc) {
   has_mask_model_matrix_stream_ = cc->Inputs().HasTag("MASK_MODEL_MATRICES");
 
   // Try to load in the animation asset in a platform-specific manner.
-  const std::string &asset_name =
+  const std::string& asset_name =
       cc->InputSidePackets().Tag("ANIMATION_ASSET").Get<std::string>();
   bool loaded_animation = false;
 #if defined(__ANDROID__)
   if (cc->InputSidePackets().HasTag("MASK_ASSET")) {
     has_occlusion_mask_ = true;
-    const std::string &mask_asset_name =
+    const std::string& mask_asset_name =
         cc->InputSidePackets().Tag("MASK_ASSET").Get<std::string>();
     loaded_animation = LoadAnimationAndroid(mask_asset_name, &mask_meshes_);
     if (!loaded_animation) {
@@ -582,14 +582,14 @@ absl::Status GlAnimationOverlayCalculator::Open(CalculatorContext *cc) {
 
   return helper_.RunInGlContext([this, &cc]() -> absl::Status {
     if (cc->InputSidePackets().HasTag("MASK_TEXTURE")) {
-      const auto &mask_texture =
+      const auto& mask_texture =
           cc->InputSidePackets().Tag("MASK_TEXTURE").Get<AssetTextureFormat>();
       mask_texture_ = helper_.CreateSourceTexture(mask_texture);
     }
 
     // Load in all static texture data if it exists
     if (cc->InputSidePackets().HasTag("TEXTURE")) {
-      const auto &input_texture =
+      const auto& input_texture =
           cc->InputSidePackets().Tag("TEXTURE").Get<AssetTextureFormat>();
       texture_ = helper_.CreateSourceTexture(input_texture);
     }
@@ -610,15 +610,15 @@ int GlAnimationOverlayCalculator::GetAnimationFrameIndex(Timestamp timestamp) {
 }
 
 void GlAnimationOverlayCalculator::LoadModelMatrices(
-    const TimedModelMatrixProtoList &model_matrices,
-    std::vector<ModelMatrix> *current_model_matrices) {
+    const TimedModelMatrixProtoList& model_matrices,
+    std::vector<ModelMatrix>* current_model_matrices) {
   current_model_matrices->clear();
   for (int i = 0; i < model_matrices.model_matrix_size(); ++i) {
-    const auto &model_matrix = model_matrices.model_matrix(i);
+    const auto& model_matrix = model_matrices.model_matrix(i);
     ABSL_CHECK(model_matrix.matrix_entries_size() == kNumMatrixEntries)
         << "Invalid Model Matrix";
     current_model_matrices->emplace_back();
-    ModelMatrix &new_matrix = current_model_matrices->back();
+    ModelMatrix& new_matrix = current_model_matrices->back();
     new_matrix.reset(new float[kNumMatrixEntries]);
     for (int j = 0; j < kNumMatrixEntries; j++) {
       // Model matrices streamed in using ROW-MAJOR format, but we want
@@ -630,7 +630,7 @@ void GlAnimationOverlayCalculator::LoadModelMatrices(
   }
 }
 
-absl::Status GlAnimationOverlayCalculator::Process(CalculatorContext *cc) {
+absl::Status GlAnimationOverlayCalculator::Process(CalculatorContext* cc) {
   return helper_.RunInGlContext([this, &cc]() -> absl::Status {
     if (!initialized_) {
       MP_RETURN_IF_ERROR(GlSetup());
@@ -643,7 +643,7 @@ absl::Status GlAnimationOverlayCalculator::Process(CalculatorContext *cc) {
     current_model_matrices_.clear();
     if (has_model_matrix_stream_ &&
         !cc->Inputs().Tag("MODEL_MATRICES").IsEmpty()) {
-      const TimedModelMatrixProtoList &model_matrices =
+      const TimedModelMatrixProtoList& model_matrices =
           cc->Inputs().Tag("MODEL_MATRICES").Get<TimedModelMatrixProtoList>();
       LoadModelMatrices(model_matrices, &current_model_matrices_);
     }
@@ -651,7 +651,7 @@ absl::Status GlAnimationOverlayCalculator::Process(CalculatorContext *cc) {
     current_mask_model_matrices_.clear();
     if (has_mask_model_matrix_stream_ &&
         !cc->Inputs().Tag("MASK_MODEL_MATRICES").IsEmpty()) {
-      const TimedModelMatrixProtoList &model_matrices =
+      const TimedModelMatrixProtoList& model_matrices =
           cc->Inputs()
               .Tag("MASK_MODEL_MATRICES")
               .Get<TimedModelMatrixProtoList>();
@@ -712,21 +712,21 @@ absl::Status GlAnimationOverlayCalculator::Process(CalculatorContext *cc) {
 
     if (has_occlusion_mask_) {
       glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-      const TriangleMesh &mask_frame = mask_meshes_.front();
+      const TriangleMesh& mask_frame = mask_meshes_.front();
       MP_RETURN_IF_ERROR(GlBind(mask_frame, mask_texture_));
       // Draw objects using our latest model matrix stream packet.
-      for (const ModelMatrix &model_matrix : current_mask_model_matrices_) {
+      for (const ModelMatrix& model_matrix : current_mask_model_matrices_) {
         MP_RETURN_IF_ERROR(GlRender(mask_frame, model_matrix.get()));
       }
     }
 
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     int frame_index = GetAnimationFrameIndex(cc->InputTimestamp());
-    const TriangleMesh &current_frame = triangle_meshes_[frame_index];
+    const TriangleMesh& current_frame = triangle_meshes_[frame_index];
 
     // Load dynamic texture if it exists
     if (cc->Inputs().HasTag("TEXTURE")) {
-      const auto &input_texture =
+      const auto& input_texture =
           cc->Inputs().Tag("TEXTURE").Get<AssetTextureFormat>();
       texture_ = helper_.CreateSourceTexture(input_texture);
     }
@@ -734,7 +734,7 @@ absl::Status GlAnimationOverlayCalculator::Process(CalculatorContext *cc) {
     MP_RETURN_IF_ERROR(GlBind(current_frame, texture_));
     if (has_model_matrix_stream_) {
       // Draw objects using our latest model matrix stream packet.
-      for (const ModelMatrix &model_matrix : current_model_matrices_) {
+      for (const ModelMatrix& model_matrix : current_model_matrices_) {
         MP_RETURN_IF_ERROR(GlRender(current_frame, model_matrix.get()));
       }
     } else {
@@ -775,13 +775,13 @@ absl::Status GlAnimationOverlayCalculator::GlSetup() {
       ATTRIB_TEXTURE_POSITION,
       ATTRIB_NORMAL,
   };
-  const GLchar *attr_name[NUM_ATTRIBUTES] = {
+  const GLchar* attr_name[NUM_ATTRIBUTES] = {
       "position",
       "texture_coordinate",
       "normal",
   };
 
-  const GLchar *vert_src = R"(
+  const GLchar* vert_src = R"(
     // Perspective projection matrix for rendering / clipping
     uniform mat4 perspectiveMatrix;
 
@@ -813,7 +813,7 @@ absl::Status GlAnimationOverlayCalculator::GlSetup() {
     }
   )";
 
-  const GLchar *frag_src = R"(
+  const GLchar* frag_src = R"(
     precision mediump float;
 
     varying vec2 sampleCoordinate;  // texture coordinate (0..1)
@@ -878,7 +878,7 @@ absl::Status GlAnimationOverlayCalculator::GlSetup() {
 
   // Shader program
   GLCHECK(GlhCreateProgram(vert_src, frag_src, NUM_ATTRIBUTES,
-                           (const GLchar **)&attr_name[0], attr_location,
+                           (const GLchar**)&attr_name[0], attr_location,
                            &program_));
   RET_CHECK(program_) << "Problem initializing the program.";
   texture_uniform_ = GLCHECK(glGetUniformLocation(program_, "texture"));
@@ -890,7 +890,7 @@ absl::Status GlAnimationOverlayCalculator::GlSetup() {
 }
 
 absl::Status GlAnimationOverlayCalculator::GlBind(
-    const TriangleMesh &triangle_mesh, const GlTexture &texture) {
+    const TriangleMesh& triangle_mesh, const GlTexture& texture) {
   GLCHECK(glUseProgram(program_));
 
   // Disable backface culling to allow occlusion effects.
@@ -924,7 +924,7 @@ absl::Status GlAnimationOverlayCalculator::GlBind(
 }
 
 absl::Status GlAnimationOverlayCalculator::GlRender(
-    const TriangleMesh &triangle_mesh, const float *model_matrix) {
+    const TriangleMesh& triangle_mesh, const float* model_matrix) {
   GLCHECK(glUniformMatrix4fv(model_matrix_uniform_, 1, GL_FALSE, model_matrix));
   GLCHECK(glDrawElements(GL_TRIANGLES, triangle_mesh.index_count,
                          GL_UNSIGNED_SHORT,

@@ -29,8 +29,8 @@ CVPixelBufferPoolRef CreateCVPixelBufferPool(int width, int height,
                                              CFTimeInterval maxAge) {
   CVPixelBufferPoolRef pool = NULL;
 
-  NSMutableDictionary *sourcePixelBufferOptions =
-      [(__bridge NSDictionary *)GetCVPixelBufferAttributesForGlCompatibility()
+  NSMutableDictionary* sourcePixelBufferOptions =
+      [(__bridge NSDictionary*)GetCVPixelBufferAttributesForGlCompatibility()
           mutableCopy];
   [sourcePixelBufferOptions addEntriesFromDictionary:@{
     (id)kCVPixelBufferPixelFormatTypeKey : @(pixelFormat),
@@ -38,7 +38,7 @@ CVPixelBufferPoolRef CreateCVPixelBufferPool(int width, int height,
     (id)kCVPixelBufferHeightKey : @(height),
   }];
 
-  NSMutableDictionary *pixelBufferPoolOptions =
+  NSMutableDictionary* pixelBufferPoolOptions =
       [[NSMutableDictionary alloc] init];
   pixelBufferPoolOptions[(id)kCVPixelBufferPoolMinimumBufferCountKey] =
       @(keepCount);
@@ -58,7 +58,7 @@ OSStatus PreallocateCVPixelBufferPoolBuffers(CVPixelBufferPoolRef pool,
                                              int count,
                                              CFDictionaryRef auxAttributes) {
   CVReturn err = kCVReturnSuccess;
-  NSMutableArray *pixelBuffers = [[NSMutableArray alloc] init];
+  NSMutableArray* pixelBuffers = [[NSMutableArray alloc] init];
   for (int i = 0; i < count && err == kCVReturnSuccess; i++) {
     CVPixelBufferRef pixelBuffer = NULL;
     err = CVPixelBufferPoolCreatePixelBufferWithAuxAttributes(
@@ -87,7 +87,7 @@ CFDictionaryRef CreateCVPixelBufferPoolAuxiliaryAttributesForThreshold(
 CVReturn CreateCVPixelBufferWithPool(CVPixelBufferPoolRef pool,
                                      CFDictionaryRef auxAttributes,
                                      CVTextureCacheType textureCache,
-                                     CVPixelBufferRef *outBuffer) {
+                                     CVPixelBufferRef* outBuffer) {
   return CreateCVPixelBufferWithPool(
       pool, auxAttributes,
       [textureCache]() {
@@ -103,7 +103,7 @@ CVReturn CreateCVPixelBufferWithPool(CVPixelBufferPoolRef pool,
 CVReturn CreateCVPixelBufferWithPool(CVPixelBufferPoolRef pool,
                                      CFDictionaryRef auxAttributes,
                                      std::function<void(void)> flush,
-                                     CVPixelBufferRef *outBuffer) {
+                                     CVPixelBufferRef* outBuffer) {
   CVReturn err = CVPixelBufferPoolCreatePixelBufferWithAuxAttributes(
       kCFAllocatorDefault, pool, auxAttributes, outBuffer);
   if (err == kCVReturnWouldExceedAllocationThreshold) {
@@ -123,7 +123,7 @@ CVReturn CreateCVPixelBufferWithPool(CVPixelBufferPoolRef pool,
           @"Using more buffers than expected! This is a debug-only warning, "
            "you can ignore it if your app works fine otherwise.");
 #ifdef DEBUG
-      NSLog(@"Pool status: %@", ((__bridge NSObject *)pool).description);
+      NSLog(@"Pool status: %@", ((__bridge NSObject*)pool).description);
 #endif  // DEBUG
 #endif  // defined(ENABLE_MEDIAPIPE_GPU_BUFFER_THRESHOLD_CHECK)
       // Try again and ignore threshold.
