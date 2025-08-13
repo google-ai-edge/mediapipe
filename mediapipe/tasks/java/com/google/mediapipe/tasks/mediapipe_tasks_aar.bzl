@@ -93,7 +93,7 @@ _TEXT_TASKS_JAVA_PROTO_LITE_TARGETS = [
 ]
 
 def mediapipe_jni_binary(name, deps, uses_explicit_exports = False):
-    """Builds MediaPipe JNI library.
+    """Builds MediaPipe JNI library. Uses prebuilt libraries if available.
 
     Args:
       name: The name of the library group.
@@ -106,8 +106,9 @@ def mediapipe_jni_binary(name, deps, uses_explicit_exports = False):
             "-Wl,--version-script,$(location //mediapipe/tasks/java:version_script.lds)",
         ]
 
+    # Target to build the JNI library from source.
     native.cc_binary(
-        name = "lib" + name + ".so",
+        name = "lib" + name + "_src",
         defines = [
             "EXCLUDE_OPENCV_SO_LIB=1",
             "ABSL_MIN_LOG_LEVEL=2",
@@ -133,6 +134,24 @@ def mediapipe_jni_binary(name, deps, uses_explicit_exports = False):
         deps = deps + [
             "//mediapipe/tasks/java:version_script.lds",
         ],
+    )
+
+    native.filegroup(
+        name = "lib" + name,
+        srcs = select({
+            "@platforms//cpu:armv7": native.glob(["armeabi-v7a/lib" + name + ".so"]) or [":lib" + name + "_src"],
+            "@platforms//cpu:arm64": native.glob(["arm64-v8a/lib" + name + ".so"]) or [":lib" + name + "_src"],
+            "@platforms//cpu:x86_32": native.glob(["x86/lib" + name + ".so"]) or [":lib" + name + "_src"],
+            "@platforms//cpu:x86_64": native.glob(["x86_64/lib" + name + ".so"]) or [":lib" + name + "_src"],
+            "//conditions:default": [":lib" + name + "_src"],
+        }),
+    )
+
+    native.genrule(
+        name = "lib" + name + "_rename",
+        srcs = ["lib" + name],
+        outs = ["lib" + name + ".so"],
+        cmd = "cp $< $@",
     )
 
 def mediapipe_tasks_core_aar(name, srcs, manifest):
