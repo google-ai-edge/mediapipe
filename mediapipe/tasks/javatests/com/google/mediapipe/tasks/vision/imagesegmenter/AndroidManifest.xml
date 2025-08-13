@@ -7,14 +7,15 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 
-    <uses-sdk android:minSdkVersion="24"
-        android:targetSdkVersion="34" />
+    <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="34" />
 
     <application
         android:label="imagesegmentertest"
         android:name="android.support.multidex.MultiDexApplication"
         android:taskAffinity="">
-        <uses-library android:name="android.test.runner" />
+
+      <!-- Required to access Qualcomm NPU -->
+      <uses-native-library android:name="libcdsprpc.so" android:required="false" />
     </application>
 
     <instrumentation
