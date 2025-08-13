@@ -261,31 +261,32 @@ http_archive(
     url = "https://github.com/google/XNNPACK/archive/0a655ef53812ce9bd8ce2628757cc0f476efcf51.zip",
 )
 
-# 2020-07-09
 http_archive(
     name = "pybind11_bazel",
-    sha256 = "75922da3a1bdb417d820398eb03d4e9bd067c4905a4246d35a44c01d62154d91",
-    strip_prefix = "pybind11_bazel-203508e14aab7309892a1c5f7dd05debda22d9a5",
-    urls = ["https://github.com/pybind/pybind11_bazel/archive/203508e14aab7309892a1c5f7dd05debda22d9a5.zip"],
+    sha256 = "9df284330336958c837fb70dc34c0a6254dac52a5c983b3373a8c2bbb79ac35e",
+    strip_prefix = "pybind11_bazel-2.13.6",
+    urls = ["https://github.com/pybind/pybind11_bazel/archive/v2.13.6.zip"],
 )
 
-# 2022-10-20
 http_archive(
     name = "pybind11",
-    build_file = "@pybind11_bazel//:pybind11.BUILD",
-    sha256 = "fcf94065efcfd0a7a828bacf118fa11c43f6390d0c805e3e6342ac119f2e9976",
-    strip_prefix = "pybind11-2.10.1",
+    build_file = "@pybind11_bazel//:pybind11-BUILD.bazel",
+    sha256 = "d0a116e91f64a4a2d8fb7590c34242df92258a61ec644b79127951e821b47be6",
+    strip_prefix = "pybind11-2.13.6",
     urls = [
-        "https://github.com/pybind/pybind11/archive/v2.10.1.zip",
+        "https://github.com/pybind/pybind11/archive/v2.13.6.zip",
     ],
 )
 
+# 2025-02-10
+# org_tensorflow depends on pybind11_protobuf. If updating tensorflow version,
+# make sure to bump pybind11_protobuf version as well and vice versa.
 http_archive(
     name = "pybind11_protobuf",
-    sha256 = "baa1f53568283630a5055c85f0898b8810f7a6431bd01bbaedd32b4c1defbcb1",
-    strip_prefix = "pybind11_protobuf-3594106f2df3d725e65015ffb4c7886d6eeee683",
+    sha256 = "3cf7bf0f23954c5ce6c37f0a215f506efa3035ca06e3b390d67f4cbe684dce23",
+    strip_prefix = "pybind11_protobuf-f02a2b7653bc50eb5119d125842a3870db95d251",
     urls = [
-        "https://github.com/pybind/pybind11_protobuf/archive/3594106f2df3d725e65015ffb4c7886d6eeee683.tar.gz",
+        "https://github.com/pybind/pybind11_protobuf/archive/f02a2b7653bc50eb5119d125842a3870db95d251.zip",
     ],
 )
 
@@ -621,6 +622,13 @@ new_local_repository(
     name = "windows_opencv",
     build_file = "@//third_party:opencv_windows.BUILD",
     path = "C:\\opencv\\build",
+)
+
+# protobuf requires @system_python in WORKSPACE
+new_local_repository(
+    name = "system_python",
+    build_file = "@//third_party:python_runtime.BUILD",
+    path = ".",
 )
 
 http_archive(

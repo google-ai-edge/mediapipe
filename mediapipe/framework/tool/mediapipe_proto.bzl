@@ -377,13 +377,25 @@ def mediapipe_py_proto_library(
     """
     _ignore = [api_version, srcs]
 
-    py_proto_library(**provided_args(
-        name = name,
-        visibility = visibility,
+    # py_proto_library requires extra py_library to combine the generated Python code with the
+    # Protobuf runtime library to bring PyInfo or CcInfo.
+    temp_name = replace_suffix(name, "_py_pb2", "_py")
+    py_proto_library(
+        name = temp_name,
         deps = proto_deps,
+        visibility = visibility,
         testonly = testonly,
         compatible_with = compatible_with,
-    ))
+    )
+
+    native.py_library(
+        name = name,
+        srcs = [temp_name],
+        deps = ["@com_google_protobuf//:protobuf_python"],  # add protobuf python runtime
+        visibility = visibility,
+        testonly = testonly,
+        compatible_with = compatible_with,
+    )
 
 def mediapipe_cc_proto_library(
         name,
