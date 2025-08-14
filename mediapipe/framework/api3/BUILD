@@ -259,6 +259,62 @@ cc_test(
 )
 
 cc_library(
+    name = "function_runner",
+    srcs = [
+        "function_runner_internal.cc",
+        "function_runner_internal.h",
+    ],
+    hdrs = ["function_runner.h"],
+    deps = [
+        ":graph",
+        ":packet",
+        ":stream",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:executor",
+        "//mediapipe/framework:graph_service",
+        "//mediapipe/framework:output_stream_poller",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework:thread_pool_executor",
+        "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/synchronization",
+    ],
+)
+
+cc_test(
+    name = "function_runner_test",
+    srcs = ["function_runner_test.cc"],
+    deps = [
+        ":calculator",
+        ":calculator_context",
+        ":calculator_contract",
+        ":contract",
+        ":function_runner",
+        ":graph",
+        ":node",
+        ":packet",
+        ":stream",
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:graph_service",
+        "//mediapipe/framework:thread_pool_executor",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:ret_check",
+        "@com_google_absl//absl/functional:any_invocable",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings:string_view",
+    ],
+)
+
+cc_library(
     name = "port_test_nodes",
     testonly = True,
     hdrs = ["port_test_nodes.h"],

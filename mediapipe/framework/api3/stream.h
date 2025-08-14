@@ -71,6 +71,10 @@ class /*ABSL_ATTRIBUTE_VIEW*/ Stream {
   friend class Input;
   template <typename S, typename PayloadT>
   friend class Output;
+
+  // For access to `GetBase` in order to define graph outputs on generic graph.
+  template <typename BuildGraphFnT>
+  friend class FunctionRunnerBuilder;
 };
 
 }  // namespace mediapipe::api3

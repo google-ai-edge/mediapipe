@@ -584,7 +584,7 @@ class Graph : public mediapipe::api3::GenericGraph {
   Graph& operator=(const Graph&) = delete;
 
   void SetType(std::string type) {
-    mediapipe::api3::GenericGraph::graph_.SetType(std::move(type));
+    mediapipe::api3::GenericGraph::builder_.SetType(std::move(type));
   }
 
   // Creates a node of a specific type. Should be used for calculators whose
@@ -592,7 +592,7 @@ class Graph : public mediapipe::api3::GenericGraph {
   template <class Calc>
   Node<Calc>& AddNode() {
     auto node = std::make_unique<Node<Calc>>(
-        mediapipe::api3::GenericGraph::graph_.AddNode(
+        mediapipe::api3::GenericGraph::builder_.AddNode(
             FunctionRegistry<NodeBase>::GetLookupName(Calc::kCalculatorName)));
     auto node_p = node.get();
     api2_nodes_.emplace_back(std::move(node));
@@ -605,7 +605,7 @@ class Graph : public mediapipe::api3::GenericGraph {
   template <class Calc>
   Node<Calc>& AddNode(absl::string_view type) {
     auto node = std::make_unique<Node<Calc>>(
-        mediapipe::api3::GenericGraph::graph_.AddNode(
+        mediapipe::api3::GenericGraph::builder_.AddNode(
             std::string(type.data(), type.size())));
     auto node_p = node.get();
     api2_nodes_.emplace_back(std::move(node));
@@ -617,7 +617,7 @@ class Graph : public mediapipe::api3::GenericGraph {
   // `type` is a calculator type-name with dot-separated namespaces.
   GenericNode& AddNode(absl::string_view type) {
     auto node = std::make_unique<GenericNode>(
-        mediapipe::api3::GenericGraph::graph_.AddNode(
+        mediapipe::api3::GenericGraph::builder_.AddNode(
             std::string(type.data(), type.size())));
     auto node_p = node.get();
     api2_nodes_.emplace_back(std::move(node));
@@ -627,7 +627,7 @@ class Graph : public mediapipe::api3::GenericGraph {
   // For legacy PacketGenerators.
   PacketGenerator& AddPacketGenerator(absl::string_view type) {
     auto node = std::make_unique<PacketGenerator>(
-        mediapipe::api3::GenericGraph::graph_.AddPacketGenerator(
+        mediapipe::api3::GenericGraph::builder_.AddPacketGenerator(
             std::string(type.data(), type.size())));
     auto node_p = node.get();
     api2_packet_gens_.emplace_back(std::move(node));
@@ -635,27 +635,28 @@ class Graph : public mediapipe::api3::GenericGraph {
   }
 
   Executor& AddExecutor(absl::string_view type) {
-    return mediapipe::api3::GenericGraph::graph_.AddExecutor(type);
+    return mediapipe::api3::GenericGraph::builder_.AddExecutor(type);
   }
 
   // Graph ports, non-typed.
   MultiSource<> In(absl::string_view graph_input) {
-    return MultiSource<>(mediapipe::api3::GenericGraph::graph_.In(graph_input));
+    return MultiSource<>(
+        mediapipe::api3::GenericGraph::builder_.In(graph_input));
   }
 
   MultiDestination<> Out(absl::string_view graph_output) {
     return MultiDestination<>(
-        mediapipe::api3::GenericGraph::graph_.Out(graph_output));
+        mediapipe::api3::GenericGraph::builder_.Out(graph_output));
   }
 
   MultiSideSource<> SideIn(absl::string_view graph_input) {
     return MultiSideSource<>(
-        mediapipe::api3::GenericGraph::graph_.SideIn(graph_input));
+        mediapipe::api3::GenericGraph::builder_.SideIn(graph_input));
   }
 
   MultiSideDestination<> SideOut(absl::string_view graph_output) {
     return MultiSideDestination<>(
-        mediapipe::api3::GenericGraph::graph_.SideOut(graph_output));
+        mediapipe::api3::GenericGraph::builder_.SideOut(graph_output));
   }
 
   // Convenience methods for accessing purely index-based ports.
@@ -694,28 +695,28 @@ class Graph : public mediapipe::api3::GenericGraph {
     using PayloadT =
         typename PortCommon<B, T, kIsOptional, kIsMultiple>::PayloadT;
     if constexpr (std::is_same_v<B, OutputBase>) {
-      auto base = mediapipe::api3::GenericGraph::graph_.Out(port.Tag());
+      auto base = mediapipe::api3::GenericGraph::builder_.Out(port.Tag());
       if constexpr (kIsMultiple) {
         return MultiDestination<PayloadT>(base);
       } else {
         return Destination<PayloadT>(base);
       }
     } else if constexpr (std::is_same_v<B, InputBase>) {
-      auto base = mediapipe::api3::GenericGraph::graph_.In(port.Tag());
+      auto base = mediapipe::api3::GenericGraph::builder_.In(port.Tag());
       if constexpr (kIsMultiple) {
         return MultiSource<PayloadT>(base);
       } else {
         return Source<PayloadT>(base);
       }
     } else if constexpr (std::is_same_v<B, SideOutputBase>) {
-      auto base = mediapipe::api3::GenericGraph::graph_.SideOut(port.Tag());
+      auto base = mediapipe::api3::GenericGraph::builder_.SideOut(port.Tag());
       if constexpr (kIsMultiple) {
         return MultiSideDestination<PayloadT>(base);
       } else {
         return SideDestination<PayloadT>(base);
       }
     } else if constexpr (std::is_same_v<B, SideInputBase>) {
-      auto base = mediapipe::api3::GenericGraph::graph_.SideIn(port.Tag());
+      auto base = mediapipe::api3::GenericGraph::builder_.SideIn(port.Tag());
       if constexpr (kIsMultiple) {
         return MultiSideSource<PayloadT>(base);
       } else {
@@ -729,7 +730,7 @@ class Graph : public mediapipe::api3::GenericGraph {
   // Returns the graph config. This can be used to instantiate and run the
   // graph.
   CalculatorGraphConfig GetConfig() {
-    auto config = mediapipe::api3::GenericGraph::graph_.GetConfig();
+    auto config = mediapipe::api3::GenericGraph::builder_.GetConfig();
     ABSL_CHECK_OK(config);
     return std::move(config).value();
   }
