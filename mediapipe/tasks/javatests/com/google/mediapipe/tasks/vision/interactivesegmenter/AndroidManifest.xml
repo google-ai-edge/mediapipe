@@ -15,6 +15,9 @@
         android:name="android.support.multidex.MultiDexApplication"
         android:taskAffinity="">
         <uses-library android:name="android.test.runner" />
+
+        <!-- Required to access Qualcomm NPU -->
+        <uses-native-library android:name="libcdsprpc.so" android:required="false" />
     </application>
 
     <instrumentation

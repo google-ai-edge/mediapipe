@@ -113,6 +113,18 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_cat_large_jpg",
+        sha256 = "f5e8996df94e2257cd92838954f57ac5e07bef1238228e518c893f0878511f96",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/cat_large.jpg?generation=1755013693080046"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_cat_large_mask_png",
+        sha256 = "16b6398efc3835403e2d20c101014ba47f47595ec51f2ea0da8bf402d1019c37",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/cat_large_mask.png?generation=1755013694926267"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_cat_mask_jpg",
         sha256 = "bae065a685f2d32f1856151b5181671aa4d09925b55766935a30bbc8dafadcd0",
         urls = ["https://storage.googleapis.com/mediapipe-assets/cat_mask.jpg?generation=1661875677203533"],
@@ -720,8 +732,8 @@ def external_files():
 
     http_file(
         name = "com_google_mediapipe_libimagegenerator_gpu_so",
-        sha256 = "e4407c7c0a2559b168a0f76cda6eb23ce2d167fa757a0d4887ccf57af70c0179",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/libimagegenerator_gpu.so?generation=1728509649298093"],
+        sha256 = "6ee232fed2a44b9448a73db2601f845552978cc1dfcaba7623e8abe5474229a5",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/libimagegenerator_gpu.so?generation=1755013698249183"],
     )
 
     http_file(
@@ -752,6 +764,12 @@ def external_files():
         name = "com_google_mediapipe_living_room_jpg",
         sha256 = "8d74535dfe58e7d62dee99df5ab7741ad373a456797cf4d99048dfd17ccb0d6c",
         urls = ["https://storage.googleapis.com/mediapipe-assets/living_room.jpg?generation=1699635092884512"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_magic_touch_tflite",
+        sha256 = "e24338a717c1b7ad8d159666677ef400babb7f33b8ad60c4d96db4ecf694cd25",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/magic_touch.tflite?generation=1755013700527059"],
     )
 
     http_file(
