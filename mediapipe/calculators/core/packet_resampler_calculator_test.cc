@@ -14,7 +14,7 @@
 
 #include "mediapipe/calculators/core/packet_resampler_calculator.h"
 
-#include <cmath>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
