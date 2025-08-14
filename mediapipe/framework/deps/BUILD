@@ -350,8 +350,10 @@ cc_library(
     # Use this library through "mediapipe/framework/port:gtest_main".
     visibility = ["//mediapipe/framework/port:__pkg__"],
     deps = [
-        "//mediapipe/framework/port:statusor",
+        "//mediapipe/framework/port:status",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest",
     ],
 )

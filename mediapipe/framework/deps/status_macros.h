@@ -23,7 +23,11 @@
 #ifndef MEDIAPIPE_DEPS_STATUS_MACROS_H_
 #define MEDIAPIPE_DEPS_STATUS_MACROS_H_
 
-#include "mediapipe/framework/deps/status.h"
+#include <utility>
+
+#include "absl/base/optimization.h"
+#include "absl/status/status.h"
+#include "mediapipe/framework/deps/source_location.h"
 #include "mediapipe/framework/deps/status_builder.h"
 
 // Evaluates an expression that produces a `absl::Status`. If the status
@@ -157,6 +161,7 @@
           std::move(MP_STATUS_MACROS_IMPL_CONCAT_(_status_or_value, __LINE__)) \
               .status(),                                                       \
           MEDIAPIPE_LOC))
+
 #define MP_STATUS_MACROS_IMPL_MP_ASSIGN_OR_RETURN_3_(lhs, rexpr,               \
                                                      error_expression)         \
   MP_STATUS_MACROS_IMPL_MP_ASSIGN_OR_RETURN_(                                  \
@@ -173,7 +178,45 @@
   if (ABSL_PREDICT_FALSE(!statusor.ok())) {                              \
     error_expression;                                                    \
   }                                                                      \
-  lhs = std::move(statusor).value()
+  MP_STATUS_MACROS_IMPL_UNPARENTHESIZE_IF_PARENTHESIZED(lhs) =           \
+      std::move(statusor).value()
+
+// Internal helpers for macro expansion.
+#define MP_STATUS_MACROS_IMPL_EAT(...)
+#define MP_STATUS_MACROS_IMPL_REM(...) __VA_ARGS__
+#define MP_STATUS_MACROS_IMPL_EMPTY()
+
+// Internal helpers for emptiness arguments check.
+#define MP_STATUS_MACROS_IMPL_IS_EMPTY_INNER(...) \
+  MP_STATUS_MACROS_IMPL_IS_EMPTY_INNER_HELPER((__VA_ARGS__, 0, 1))
+// MSVC expands variadic macros incorrectly, so we need this extra indirection
+// to work around that.
+#define MP_STATUS_MACROS_IMPL_IS_EMPTY_INNER_HELPER(args) \
+  MP_STATUS_MACROS_IMPL_IS_EMPTY_INNER_I args
+#define MP_STATUS_MACROS_IMPL_IS_EMPTY_INNER_I(e0, e1, is_empty, ...) is_empty
+
+#define MP_STATUS_MACROS_IMPL_IS_EMPTY(...) \
+  MP_STATUS_MACROS_IMPL_IS_EMPTY_I(__VA_ARGS__)
+#define MP_STATUS_MACROS_IMPL_IS_EMPTY_I(...) \
+  MP_STATUS_MACROS_IMPL_IS_EMPTY_INNER(_ __VA_OPT__(, )##__VA_ARGS__)
+
+// Internal helpers for if statement.
+#define MP_STATUS_MACROS_IMPL_IF_1(_Then, _Else) _Then
+#define MP_STATUS_MACROS_IMPL_IF_0(_Then, _Else) _Else
+#define MP_STATUS_MACROS_IMPL_IF(_Cond, _Then, _Else) \
+  MP_STATUS_MACROS_IMPL_CONCAT_(MP_STATUS_MACROS_IMPL_IF_, _Cond)(_Then, _Else)
+
+// Expands to 1 if the input is parenthesized. Otherwise expands to 0.
+#define MP_STATUS_MACROS_IMPL_IS_PARENTHESIZED(...) \
+  MP_STATUS_MACROS_IMPL_IS_EMPTY(MP_STATUS_MACROS_IMPL_EAT __VA_ARGS__)
+
+// If the input is parenthesized, removes the parentheses. Otherwise expands to
+// the input unchanged.
+#define MP_STATUS_MACROS_IMPL_UNPARENTHESIZE_IF_PARENTHESIZED(...) \
+  MP_STATUS_MACROS_IMPL_IF(                                        \
+      MP_STATUS_MACROS_IMPL_IS_PARENTHESIZED(__VA_ARGS__),         \
+      MP_STATUS_MACROS_IMPL_REM, MP_STATUS_MACROS_IMPL_EMPTY())    \
+  __VA_ARGS__
 
 // Internal helper for concatenating macro values.
 #define MP_STATUS_MACROS_IMPL_CONCAT_INNER_(x, y) x##y
