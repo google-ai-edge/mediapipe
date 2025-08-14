@@ -17,8 +17,12 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include <algorithm>
+#include <cstdlib>
+#include <limits>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "absl/cleanup/cleanup.h"
 #include "absl/container/flat_hash_set.h"
@@ -26,6 +30,7 @@
 #include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
@@ -36,6 +41,7 @@
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/deps/no_destructor.h"
 #include "mediapipe/framework/formats/image_format.pb.h"
+#include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/port/advanced_proto_inc.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/proto_ns.h"
@@ -91,6 +97,11 @@ absl::Status CompareDiff(const ImageFrame& image1, const ImageFrame& image2,
   float max_color_diff_found = 0;
   int different_alpha_components = 0;
   float max_alpha_diff_found = 0;
+  // Amplify diffs to make them more visible.
+  constexpr float kDiffFactor = 20.0f;
+  constexpr float kTMin = std::numeric_limits<T>::lowest();
+  constexpr float kTMax = std::numeric_limits<T>::max();
+  constexpr float kTMid = (kTMax + kTMin) / 2;
   for (int row = 0; row < height; ++row) {
     for (int col = 0; col < width; ++col) {
       for (int channel = 0; channel < num_channels; ++channel) {
@@ -98,18 +109,20 @@ absl::Status CompareDiff(const ImageFrame& image1, const ImageFrame& image2,
         const T value1 = pixel1[channel];
         const T value2 = pixel2[channel];
         const float diff =
-            std::abs(static_cast<float>(value1) - static_cast<float>(value2));
+            static_cast<float>(value1) - static_cast<float>(value2);
+        const float abs_diff = std::abs(diff);
         if (channel < 3) {
-          different_color_components += diff > options.max_color_diff;
-          max_color_diff_found = std::max(max_color_diff_found, diff);
-          pixel_diff[channel] = diff;
+          different_color_components += abs_diff > options.max_color_diff;
+          max_color_diff_found = std::max(max_color_diff_found, abs_diff);
+          pixel_diff[channel] =
+              std::clamp(kTMid + diff * kDiffFactor, kTMin, kTMax);
         } else {
-          different_alpha_components += diff > options.max_alpha_diff;
-          max_alpha_diff_found = std::max(max_alpha_diff_found, diff);
-          pixel_diff[channel] = 255;  // opaque to see color difference
+          different_alpha_components += abs_diff > options.max_alpha_diff;
+          max_alpha_diff_found = std::max(max_alpha_diff_found, abs_diff);
+          pixel_diff[channel] = kTMax;  // opaque to see color difference
         }
         // Check global average difference.
-        avg_diff += (diff - avg_diff) / ++total_count;
+        avg_diff += (abs_diff - avg_diff) / ++total_count;
       }
       pixel1 += channels1;
       pixel2 += channels2;
