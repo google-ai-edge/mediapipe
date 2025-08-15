@@ -16,81 +16,40 @@
 
 #include <string>
 #include <tuple>
-#include <utility>
 
-#include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "mediapipe/framework/api3/any.h"
 #include "mediapipe/framework/api3/contract.h"
+#include "mediapipe/framework/api3/function_runner.h"
 #include "mediapipe/framework/api3/graph.h"
+#include "mediapipe/framework/api3/packet.h"
 #include "mediapipe/framework/api3/stream.h"
-#include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/status_matchers.h"
-#include "mediapipe/framework/timestamp.h"
-#include "mediapipe/framework/tool/options_map.h"
 
 namespace mediapipe::api3 {
 namespace {
 
-template <typename S>
-struct PassThroughGraphContract {
-  Input<S, int> in_a{"A"};
-  Input<S, std::string> in_b{"B"};
-  Output<S, int> out_a{"PASSED_A"};
-  Output<S, std::string> out_b{"PASSED_B"};
-};
-
-TEST(AnyTest, CalculatorsCanSupportSameAsAny) {
+TEST(PassThroughCalculatorTest, PassesPackets) {
   MP_ASSERT_OK_AND_ASSIGN(
-      CalculatorGraphConfig config, ([]() {
-        Graph<PassThroughGraphContract> graph;
+      auto runner,
+      Runner::For([](GenericGraph& graph, Stream<int> a, Stream<std::string> b)
+                      -> std::tuple<Stream<int>, Stream<std::string>> {
+        auto& node = graph.AddNode<PassThroughNode>();
+        node.in.Add(a.Cast<Any>());
+        node.in.Add(b.Cast<Any>());
+        return std::tuple(node.out.Add().Cast<int>(),
+                          node.out.Add().Cast<std::string>());
+      }).Create());
 
-        Stream<int> a = graph.in_a.Get().SetName("a");
-        Stream<std::string> b = graph.in_b.Get().SetName("b");
+  MP_ASSERT_OK_AND_ASSIGN(
+      (auto [output_a, output_b]),
+      runner.Run(MakePacket<int>(42), MakePacket<std::string>("str")));
 
-        auto [passed_a, passed_b] = [&]() {
-          auto& node = graph.AddNode<PassThroughNode>();
-          node.in.Add(a.Cast<Any>());
-          node.in.Add(b.Cast<Any>());
-          return std::tuple(node.out.Add().Cast<int>(),
-                            node.out.Add().Cast<std::string>());
-        }();
-
-        graph.out_a.Set(passed_a.SetName("passed_a"));
-        graph.out_b.Set(passed_b.SetName("passed_b"));
-
-        return graph.GetConfig();
-      }()));
-
-  CalculatorGraph calculator_graph;
-  MP_ASSERT_OK(calculator_graph.Initialize(std::move(config)));
-  mediapipe::Packet output_a;
-  MP_ASSERT_OK(calculator_graph.ObserveOutputStream(
-      "passed_a", [&](const mediapipe::Packet& p) {
-        output_a = p;
-        return absl::OkStatus();
-      }));
-  mediapipe::Packet output_b;
-  MP_ASSERT_OK(calculator_graph.ObserveOutputStream(
-      "passed_b", [&](const mediapipe::Packet& p) {
-        output_b = p;
-        return absl::OkStatus();
-      }));
-  MP_ASSERT_OK(calculator_graph.StartRun({}));
-
-  // Using input of the same type as in the graph builder.
-  MP_ASSERT_OK(calculator_graph.AddPacketToInputStream(
-      "a", mediapipe::MakePacket<int>(42).At(Timestamp(1000))));
-  MP_ASSERT_OK(calculator_graph.AddPacketToInputStream(
-      "b", mediapipe::MakePacket<std::string>("str").At(Timestamp(1000))));
-  MP_ASSERT_OK(calculator_graph.WaitUntilIdle());
-
-  ASSERT_FALSE(output_a.IsEmpty());
-  EXPECT_EQ(output_a.Get<int>(), 42);
-  ASSERT_FALSE(output_b.IsEmpty());
-  EXPECT_EQ(output_b.Get<std::string>(), "str");
+  ASSERT_TRUE(output_a);
+  EXPECT_EQ(output_a.GetOrDie(), 42);
+  ASSERT_TRUE(output_b);
+  EXPECT_EQ(output_b.GetOrDie(), "str");
 }
 
 }  // namespace

@@ -695,17 +695,14 @@ cc_test(
     srcs = ["pass_through_calculator_test.cc"],
     deps = [
         ":pass_through_calculator",
-        "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework:timestamp",
         "//mediapipe/framework/api3:any",
         "//mediapipe/framework/api3:contract",
+        "//mediapipe/framework/api3:function_runner",
         "//mediapipe/framework/api3:graph",
+        "//mediapipe/framework/api3:packet",
         "//mediapipe/framework/api3:stream",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:status_matchers",
-        "//mediapipe/framework/tool:options_map",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
