@@ -97,7 +97,7 @@ class FunctionRunner<OutputPacketT, std::tuple<InputPacketTs...>>
                                        inputs...));
     MP_ASSIGN_OR_RETURN(OutputStreamPoller * poller, this->GetOutputPoller(0));
     MP_ASSIGN_OR_RETURN(mediapipe::Packet packet,
-                        GetOutputPacket(*poller, *error_callback_));
+                        GetOutputPacket(*poller, *this->calculator_graph_));
     return OutputPacketT(std::move(packet));
   }
 
@@ -138,8 +138,9 @@ class FunctionRunner<std::tuple<OutputPacketTs...>,
          [&]() -> absl::Status {
            MP_ASSIGN_OR_RETURN(OutputStreamPoller * poller,
                                this->GetOutputPoller(Is));
-           MP_ASSIGN_OR_RETURN(mediapipe::Packet packet,
-                               GetOutputPacket(*poller, *error_callback_));
+           MP_ASSIGN_OR_RETURN(
+               mediapipe::Packet packet,
+               GetOutputPacket(*poller, *this->calculator_graph_));
            std::get<Is>(output) = OutputPacketTs(std::move(packet));
            return absl::OkStatus();
          }(),
@@ -236,12 +237,6 @@ class FunctionRunnerBuilder {
 
     auto calculator_graph = std::make_unique<CalculatorGraph>();
 
-    auto error_callback = std::make_shared<ErrorCallback>();
-    calculator_graph->SetErrorCallback(
-        [error_callback](const absl::Status& error_status) {
-          error_callback->OnError(error_status);
-        });
-
     // Default to a single thread execution.
     std::shared_ptr<Executor> default_executor = std::move(default_executor_);
     if (!default_executor) {
@@ -272,7 +267,7 @@ class FunctionRunnerBuilder {
                           ToPacketType<typename RawSignatureT::In>>(
         std::move(graph), std::move(calculator_graph),
         std::move(input_names_map), std::move(output_names_map),
-        std::move(output_pollers), std::move(error_callback));
+        std::move(output_pollers));
   }
 
  private:

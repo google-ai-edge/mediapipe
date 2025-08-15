@@ -170,49 +170,25 @@ struct BuildGraphFnRawSignature<std::function<R(Args...)>> {
   using In = UnwrapStreamType<RemoveGenericGraphArgType<std::tuple<Args...>>>;
 };
 
-class ErrorCallback {
- public:
-  void OnError(const absl::Status& error_status) {
-    absl::MutexLock lock(&mutex_);
-    errors_.push_back(error_status);
-  }
-
-  bool HasErrors() const {
-    absl::MutexLock lock(&mutex_);
-    return !errors_.empty();
-  }
-
-  std::vector<absl::Status> GetErrors() const {
-    absl::MutexLock lock(&mutex_);
-    return errors_;
-  }
-
- private:
-  mutable absl::Mutex mutex_;
-  std::vector<absl::Status> errors_ ABSL_GUARDED_BY(mutex_);
-};
-
 class FunctionRunnerBase {
  public:
   FunctionRunnerBase(
       GenericGraph graph, std::unique_ptr<CalculatorGraph> calculator_graph,
       absl::flat_hash_map<int, std::string> input_names_map,
       absl::flat_hash_map<int, std::string> output_names_map,
-      absl::flat_hash_map<int, OutputStreamPoller> output_pollers,
-      std::shared_ptr<ErrorCallback> error_callback)
+      absl::flat_hash_map<int, OutputStreamPoller> output_pollers)
       : graph_(std::move(graph)),
         calculator_graph_(std::move(calculator_graph)),
         input_names_map_(std::move(input_names_map)),
         output_names_map_(std::move(output_names_map)),
-        output_pollers_(std::move(output_pollers)),
-        error_callback_(std::move(error_callback)) {}
+        output_pollers_(std::move(output_pollers)) {}
 
   FunctionRunnerBase(FunctionRunnerBase&& other) = default;
   FunctionRunnerBase& operator=(FunctionRunnerBase&& other) = delete;
 
   ~FunctionRunnerBase() {
     if (calculator_graph_) {
-      if (error_callback_->HasErrors()) {
+      if (calculator_graph_->HasError()) {
         calculator_graph_->Cancel();
       } else {
         absl::Status status = calculator_graph_->CloseAllPacketSources();
@@ -237,7 +213,6 @@ class FunctionRunnerBase {
   absl::flat_hash_map<int, std::string> input_names_map_;
   absl::flat_hash_map<int, std::string> output_names_map_;
   absl::flat_hash_map<int, OutputStreamPoller> output_pollers_;
-  std::shared_ptr<ErrorCallback> error_callback_;
   mediapipe::Timestamp timestamp_ = mediapipe::Timestamp(0);
 };
 
@@ -267,8 +242,8 @@ absl::Status AddInputPackets(
   return status;
 }
 
-absl::StatusOr<mediapipe::Packet> GetOutputPacket(
-    OutputStreamPoller& poller, const ErrorCallback& error_callback);
+absl::StatusOr<mediapipe::Packet> GetOutputPacket(OutputStreamPoller& poller,
+                                                  CalculatorGraph& graph);
 
 }  // namespace mediapipe::api3
 
