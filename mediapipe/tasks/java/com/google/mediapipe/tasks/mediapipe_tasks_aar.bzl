@@ -114,7 +114,6 @@ def mediapipe_jni_binary(name, deps, uses_explicit_exports = False):
             "ABSL_MIN_LOG_LEVEL=2",
             "libunwind=true",
             "xnnpack_use_latest_ops=true",
-            "xnnpack_enable_subgraph_reshaping=true",
         ],
         features = ["-legacy_whole_archive"],
         copts = [
