@@ -272,7 +272,7 @@ TEST(PacketResamplerCalculatorTest, TwoPacketsInStream) {
   }
 }
 
-TEST(PacketResamplerCalculatorTest, UseInputFrameRate_HeaderHasSameFramerate) {
+TEST(PacketResamplerCalculatorTest, UseInputFrameRateHeaderHasSameFramerate) {
   CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
     calculator: "PacketResamplerCalculator"
     input_stream: "DATA:in_data"
@@ -320,7 +320,7 @@ TEST(PacketResamplerCalculatorTest, UseInputFrameRate_HeaderHasSameFramerate) {
 }
 
 TEST(PacketResamplerCalculatorTest,
-     UseInputFrameRate_HeaderHasSmallerFramerate) {
+     UseInputFrameRateHeaderHasSmallerFramerate) {
   CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
     calculator: "PacketResamplerCalculator"
     input_stream: "DATA:in_data"
@@ -368,7 +368,7 @@ TEST(PacketResamplerCalculatorTest,
 }
 
 TEST(PacketResamplerCalculatorTest,
-     UseInputFrameRate_MaxFrameRateSmallerThanInput) {
+     UseInputFrameRateMaxFrameRateSmallerThanInput) {
   CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
     calculator: "PacketResamplerCalculator"
     input_stream: "DATA:in_data"
@@ -414,6 +414,66 @@ TEST(PacketResamplerCalculatorTest,
               packet_contents);
     ++count;
   }
+}
+
+TEST(PacketResamplerCalculatorTest, MaxFrameRateOutputHeader) {
+  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
+    calculator: "PacketResamplerCalculator"
+    input_stream: "DATA:in_data"
+    input_stream: "VIDEO_HEADER:in_video_header"
+    output_stream: "DATA:out_data"
+    output_stream: "VIDEO_HEADER:out_video_header"
+    options {
+      [mediapipe.PacketResamplerCalculatorOptions.ext] {
+        use_input_frame_rate: true
+        frame_rate: 1000.0
+        max_frame_rate: 50.0
+      }
+    }
+  )pb"));
+
+  for (const int64_t ts : {0, 5000, 10010, 15001, 20010}) {
+    runner.MutableInputs()->Tag(kDataTag).packets.push_back(
+        Adopt(new std::string(absl::StrCat("Frame #", ts))).At(Timestamp(ts)));
+  }
+  VideoHeader video_header_in;
+  video_header_in.width = 10;
+  video_header_in.height = 200;
+  video_header_in.frame_rate = 100.0;
+  video_header_in.duration = 1.0;
+  video_header_in.format = ImageFormat::SRGB;
+  runner.MutableInputs()
+      ->Tag(kVideoHeaderTag)
+      .packets.push_back(
+          Adopt(new VideoHeader(video_header_in)).At(Timestamp::PreStream()));
+  MP_ASSERT_OK(runner.Run());
+
+  std::vector<int64_t> expected_frames = {0, 20010};
+  std::vector<int64_t> expected_timestamps = {0, 20000};
+  EXPECT_EQ(expected_frames.size(),
+            runner.Outputs().Tag(kDataTag).packets.size());
+  EXPECT_EQ(expected_timestamps.size(),
+            runner.Outputs().Tag(kDataTag).packets.size());
+
+  int count = 0;
+  for (const Packet& packet : runner.Outputs().Tag(kDataTag).packets) {
+    EXPECT_EQ(Timestamp(expected_timestamps[count]), packet.Timestamp());
+    const std::string& packet_contents = packet.Get<std::string>();
+    EXPECT_EQ(std::string(absl::StrCat("Frame #", expected_frames[count])),
+              packet_contents);
+    ++count;
+  }
+
+  ASSERT_EQ(1, runner.Outputs().Tag(kVideoHeaderTag).packets.size());
+  EXPECT_EQ(Timestamp::PreStream(),
+            runner.Outputs().Tag(kVideoHeaderTag).packets[0].Timestamp());
+  const VideoHeader& video_header_out =
+      runner.Outputs().Tag(kVideoHeaderTag).packets[0].Get<VideoHeader>();
+  EXPECT_EQ(video_header_in.width, video_header_out.width);
+  EXPECT_EQ(video_header_in.height, video_header_out.height);
+  EXPECT_DOUBLE_EQ(50.0, video_header_out.frame_rate);
+  EXPECT_FLOAT_EQ(video_header_in.duration, video_header_out.duration);
+  EXPECT_EQ(video_header_in.format, video_header_out.format);
 }
 
 TEST(PacketResamplerCalculatorTest, InputAtExactFrequencyMiddlepoints) {
