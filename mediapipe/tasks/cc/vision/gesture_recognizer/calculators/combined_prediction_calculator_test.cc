@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors.
+/* Copyright 2025 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
+#include "mediapipe/tasks/cc/vision/gesture_recognizer/calculators/combined_prediction_calculator.h"
 
 #include <cmath>
 #include <cstdint>
@@ -314,6 +315,11 @@ INSTANTIATE_TEST_CASE_P(
         CombinedPredictionCalculatorTest::ParamType>& info) {
       return info.param.test_name;
     });
+
+TEST(CombinedPredictionCalculatorTest, HasCorrectRegistrationName) {
+  EXPECT_EQ(api3::CombinedPredictionNode::GetRegistrationName(),
+            "CombinedPredictionCalculator");
+}
 
 }  // namespace
 
