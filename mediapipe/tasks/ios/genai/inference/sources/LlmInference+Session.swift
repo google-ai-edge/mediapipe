@@ -281,6 +281,12 @@ extension LlmInference {
       return llmResponse.humanReadableString(stripLeadingWhitespaces: stripLeadingWhitespaces)
     }
 
+    /// Cancels the current asynchronous response generation.
+    /// - Throws: An error if cancelling the current asynchronous response generation fails.
+    public func cancelGenerateResponseAsync() throws {
+      try llmSessionRunner.cancelGenerateResponseAsync()
+    }
+
   }
 }
 

@@ -158,6 +158,17 @@ final class LlmSessionRunner {
     }
   }
 
+  /// Signals the C LLM session to cancel the pending asynchronous prediction.
+  /// - Throws: An error if the C LLM session could not be cancelled.
+  func cancelGenerateResponseAsync() throws {
+    var cErrorMessage: UnsafeMutablePointer<CChar>? = nil
+    LlmInferenceEngine_Session_PendingProcessCancellation(cLlmSession, &cErrorMessage)
+    if let cErrorMessage {
+      throw GenAiInferenceError.failedToCancelAsyncPrediction(
+        String(allocatedCErrorMessage: cErrorMessage))
+    }
+  }
+
   /// Invokes the C LLM session to tokenize an input prompt using a pre-existing processor and
   /// returns its length in tokens.
   ///
