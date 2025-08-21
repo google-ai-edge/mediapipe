@@ -1,0 +1,99 @@
+// Copyright 2025 The MediaPipe Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+namespace mediapipe.tasks;
+
+// FaceDetectorOptions.min_parser_version indicates the minimum necessary
+// face detector metadata parser version to fully understand all fields in a
+// given metadata flatbuffer. This min_parser_version is specific for the
+// face detector metadata defined in this schema file.
+//
+// Schema Semantic version: 1.0.0
+
+file_identifier "FD01";
+
+
+// History:
+// 1.0.0 - Initial version.
+
+table AnchorConfig {
+  // SSD style anchor fields.
+  num_layers: int;
+  // The list of anchor scales, ordered from min_level to max_level and the
+  // length should match max_level - min_level + 1 of features, thus each
+  // feature level has a single anchor scale.
+  scales: [float];
+  // If `scales` is None, both `min_scale`` and `max_scale need to be specified.
+  // The scales are then computed based on `min_level` and `max_level` of
+  // features, where each feature level has a single anchor scale.
+  min_scale: float;
+  max_scale: float;
+  // The offset of the anchor in the x and y directions.
+  anchor_offset_x: float;
+  anchor_offset_y: float;
+  strides: [int];
+  // The list of aspect ratios.
+  aspect_ratios: [float];
+  fixed_anchor_size: bool;
+  interpolated_scale_aspect_ratio: float;
+}
+
+// The options for decoding the raw model output tensors. The options are mostly
+// used in TensorsToDetectionsCalculatorOptions.
+table TensorsDecodingConfig {
+  // The number of output classes predicted by the detection model.
+  num_classes: int;
+  // The number of output boxes predicted by the detection model.
+  num_boxes: int;
+  // The number of output values per boxes predicted by the detection
+  // model. The values contain bounding boxes, keypoints, etc.
+  num_coords: int;
+  // The offset of box coordinates in the location tensor.
+  box_coord_offset: int;
+  // The offset of keypoint coordinates in the location tensor.
+  keypoint_coord_offset: int;
+  // The number of predicted keypoints.
+  num_keypoints: int;
+  // The dimension of each keypoint, e.g. number of values predicted for each
+  // keypoint.
+  num_values_per_keypoint: int;
+  // Parameters for decoding SSD detection model.
+  x_scale: float;
+  y_scale: float;
+  w_scale: float;
+  h_scale: float;
+  // The threshold to clip the score.
+  score_clipping_thresh: float;
+  // Whether to reverse the output order.
+  reverse_output_order: bool;
+  // Whether to apply sigmod function on the score.
+  sigmoid_score: bool;
+}
+
+table FaceDetectorOptions {
+  // The minimum necessary face detector metadata parser version to fully
+  // understand all fields in a given metadata flatbuffer. This field is
+  // automatically populated by the MetadataPopulator when the metadata is
+  // populated into a TFLite model. This min_parser_version is specific for the
+  // face detector metadata defined in this schema file.
+  min_parser_version:string;
+
+  // The options of ssd anchors configs used by the detection model.
+  anchor_config:AnchorConfig;
+
+  // The tensors decoding options to convert raw tensors to detection results.
+  tensors_decoding_config:TensorsDecodingConfig;
+}
+
+root_type FaceDetectorOptions;
