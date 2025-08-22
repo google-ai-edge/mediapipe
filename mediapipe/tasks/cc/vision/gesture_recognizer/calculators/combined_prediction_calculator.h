@@ -84,11 +84,6 @@ struct CombinedPredictionNode : Node<kCombinedPredictionNodeName> {
     // `CombinedPredictionCalculatorOptions`, along with a default global
     // threshold.
     Options<S, CombinedPredictionCalculatorOptions> options;
-
-    static absl::Status UpdateContract(
-        CalculatorContract<CombinedPredictionNode>& cc) {
-      return absl::OkStatus();
-    }
   };
 };
 
