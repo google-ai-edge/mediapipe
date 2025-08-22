@@ -26,18 +26,27 @@ package com.google.mediapipe.framework;
  * MediaPipe).
  */
 public class AppTextureFrame implements TextureFrame {
-  private int textureName;
-  private int width;
-  private int height;
+   /** Default format for textures (GL_RGBA). */
+  private static final int DEFAULT_FORMAT = 0x1908;
+
+  private final int textureName;
+  private final int width;
+  private final int height;
+  private final int format;
   private long timestamp = Long.MIN_VALUE;
   private boolean inUse = false;
   private boolean legacyInUse = false;  // This ignores GL context sync.
   private GlSyncToken releaseSyncToken = null;
 
   public AppTextureFrame(int textureName, int width, int height) {
+    this(textureName, width, height, DEFAULT_FORMAT);
+  }
+
+  public AppTextureFrame(int textureName, int width, int height, int format) {
     this.textureName = textureName;
     this.width = width;
     this.height = height;
+    this.format = format;
   }
 
   public void setTimestamp(long timestamp) {
@@ -62,6 +71,11 @@ public class AppTextureFrame implements TextureFrame {
   @Override
   public long getTimestamp() {
     return timestamp;
+  }
+
+  @Override
+  public int getFormat() {
+    return format;
   }
 
   /** Returns true if a call to waitUntilReleased() would block waiting for release. */

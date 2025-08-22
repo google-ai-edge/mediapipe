@@ -19,9 +19,13 @@
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gl_context.h"
 #include "mediapipe/gpu/gl_texture_buffer.h"
+#include "mediapipe/gpu/gpu_buffer_format.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/jni_util.h"
 
-using mediapipe::GlTextureBufferSharedPtr;
+using ::mediapipe::GlTextureBufferSharedPtr;
+using ::mediapipe::GlTextureInfoForGpuBufferFormat;
+using ::mediapipe::GlVersion;
+using ::mediapipe::GpuBufferFormat;
 
 JNIEXPORT void JNICALL GRAPH_TEXTURE_FRAME_METHOD(nativeReleaseBuffer)(
     JNIEnv* env, jobject thiz, jlong nativeHandle) {
@@ -56,6 +60,15 @@ JNIEXPORT jint JNICALL GRAPH_TEXTURE_FRAME_METHOD(nativeGetHeight)(
   GlTextureBufferSharedPtr* buffer =
       reinterpret_cast<GlTextureBufferSharedPtr*>(nativeHandle);
   return (*buffer)->height();
+}
+
+JNIEXPORT jint JNICALL GRAPH_TEXTURE_FRAME_METHOD(nativeGetFormat)(
+    JNIEnv* env, jobject thiz, jlong nativeHandle) {
+  GlTextureBufferSharedPtr* buffer =
+      reinterpret_cast<GlTextureBufferSharedPtr*>(nativeHandle);
+  GpuBufferFormat format = (*buffer)->format();
+  return GlTextureInfoForGpuBufferFormat(format, /*plane=*/0, GlVersion::kGLES3)
+      .gl_format;
 }
 
 JNIEXPORT jlong JNICALL GRAPH_TEXTURE_FRAME_METHOD(

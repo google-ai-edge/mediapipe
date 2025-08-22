@@ -37,6 +37,7 @@
 #if !MEDIAPIPE_DISABLE_GPU
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gpu_buffer.h"
+#include "mediapipe/gpu/gpu_buffer_format.h"
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
 namespace {
@@ -63,7 +64,7 @@ int64_t CreatePacketWithContext(jlong context,
 #if !MEDIAPIPE_DISABLE_GPU
 absl::StatusOr<mediapipe::GpuBuffer> CreateGpuBuffer(
     JNIEnv* env, jobject thiz, jlong context, jint name, jint width,
-    jint height, jobject texture_release_callback) {
+    jint height, jint format, jobject texture_release_callback) {
   mediapipe::android::Graph* mediapipe_graph =
       reinterpret_cast<mediapipe::android::Graph*>(context);
   auto* gpu_resources = mediapipe_graph->GetGpuResources();
@@ -103,8 +104,14 @@ absl::StatusOr<mediapipe::GpuBuffer> CreateGpuBuffer(
       env->DeleteGlobalRef(packet_creator);
     };
   }
+  mediapipe::GpuBufferFormat gpu_buffer_format =
+      mediapipe::GpuBufferFormatForGlFormat(format);
+  if (gpu_buffer_format == mediapipe::GpuBufferFormat::kUnknown) {
+    return absl::InvalidArgumentError(
+        absl::StrCat("Unsupported OpenGL texture format: ", format));
+  }
   return mediapipe::GpuBuffer(mediapipe::GlTextureBuffer::Wrap(
-      GL_TEXTURE_2D, name, width, height, mediapipe::GpuBufferFormat::kBGRA32,
+      GL_TEXTURE_2D, name, width, height, gpu_buffer_format,
       gpu_resources->gl_context(), cc_callback));
 }
 #endif  // !MEDIAPIPE_DISABLE_GPU
@@ -406,9 +413,9 @@ JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateCpuImage)(
 
 JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateGpuImage)(
     JNIEnv* env, jobject thiz, jlong context, jint name, jint width,
-    jint height, jobject texture_release_callback) {
+    jint height, jint format, jobject texture_release_callback) {
   auto buffer_or = CreateGpuBuffer(env, thiz, context, name, width, height,
-                                   texture_release_callback);
+                                   format, texture_release_callback);
   if (ThrowIfError(env, buffer_or.status())) return 0L;
   mediapipe::Packet packet =
       mediapipe::MakePacket<mediapipe::Image>(std::move(buffer_or).value());
@@ -417,9 +424,9 @@ JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateGpuImage)(
 
 JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateGpuBuffer)(
     JNIEnv* env, jobject thiz, jlong context, jint name, jint width,
-    jint height, jobject texture_release_callback) {
+    jint height, jint format, jobject texture_release_callback) {
   auto buffer_or = CreateGpuBuffer(env, thiz, context, name, width, height,
-                                   texture_release_callback);
+                                   format, texture_release_callback);
   if (ThrowIfError(env, buffer_or.status())) return 0L;
   mediapipe::Packet packet =
       mediapipe::MakePacket<mediapipe::GpuBuffer>(std::move(buffer_or).value());

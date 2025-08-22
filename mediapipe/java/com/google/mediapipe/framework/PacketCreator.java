@@ -26,6 +26,8 @@ import java.nio.FloatBuffer;
  * <p>This class provides a set of functions to create basic mediapipe packet types.
  */
 public class PacketCreator {
+  // Locally declared GL constant so that we do not have any platform dependencies.
+  private static final int GL_RGBA = 0x1908;
   protected Graph mediapipeGraph;
 
   public PacketCreator(Graph context) {
@@ -301,6 +303,23 @@ public class PacketCreator {
   }
 
   /**
+   * Creates a mediapipe::GpuBuffer with the specified texture name, dimensions, and format.
+   *
+   * @param name the OpenGL texture name.
+   * @param width the width in pixels.
+   * @param height the height in pixels.
+   * @param format the OpenGL texture format.
+   * @param releaseCallback a callback to be invoked when the mediapipe::GpuBuffer is released. Can be
+   *     null.
+   */
+  public Packet createGpuBuffer(
+      int name, int width, int height, int format, TextureReleaseCallback releaseCallback) {
+    return Packet.create(
+        nativeCreateGpuBuffer(
+            mediapipeGraph.getNativeHandle(), name, width, height, format, releaseCallback));
+  }
+
+  /**
    * Creates a mediapipe::GpuBuffer with the specified texture name and dimensions.
    *
    * @param name the OpenGL texture name.
@@ -311,9 +330,7 @@ public class PacketCreator {
    */
   public Packet createGpuBuffer(
       int name, int width, int height, TextureReleaseCallback releaseCallback) {
-    return Packet.create(
-        nativeCreateGpuBuffer(
-            mediapipeGraph.getNativeHandle(), name, width, height, releaseCallback));
+    return createGpuBuffer(name, width, height, GL_RGBA, releaseCallback);
   }
 
   /**
@@ -327,7 +344,9 @@ public class PacketCreator {
   @Deprecated
   public Packet createGpuBuffer(int name, int width, int height) {
     return Packet.create(
-        nativeCreateGpuBuffer(mediapipeGraph.getNativeHandle(), name, width, height, null));
+        nativeCreateGpuBuffer(
+            mediapipeGraph.getNativeHandle(),
+            name, width, height, GL_RGBA, null));
   }
 
   /**
@@ -345,6 +364,7 @@ public class PacketCreator {
             frame.getTextureName(),
             frame.getWidth(),
             frame.getHeight(),
+            frame.getFormat(),
             frame));
   }
 
@@ -363,6 +383,7 @@ public class PacketCreator {
             frame.getTextureName(),
             frame.getWidth(),
             frame.getHeight(),
+            frame.getFormat(),
             frame));
   }
 
@@ -443,10 +464,12 @@ public class PacketCreator {
   private native long nativeCreateMatrix(long context, int rows, int cols, float[] data);
 
   private native long nativeCreateGpuBuffer(
-      long context, int name, int width, int height, TextureReleaseCallback releaseCallback);
+      long context, int name, int width, int height, int format,
+      TextureReleaseCallback releaseCallback);
 
   private native long nativeCreateGpuImage(
-      long context, int name, int width, int height, TextureReleaseCallback releaseCallback);
+      long context, int name, int width, int height, int format,
+      TextureReleaseCallback releaseCallback);
 
   private native long nativeCreateCpuImage(
       long context, ByteBuffer buffer, int width, int height, int rowBytes, int numChannels);
