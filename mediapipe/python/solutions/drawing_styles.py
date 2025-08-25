@@ -6,7 +6,7 @@
 #
 #      http://www.apache.org/licenses/LICENSE-2.0
 #
-# Unless requi_RED by applicable law or agreed to in writing, software
+# Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
@@ -43,7 +43,7 @@ _PALM_LANDMARKS = (HandLandmark.WRIST, HandLandmark.THUMB_CMC,
                    HandLandmark.INDEX_FINGER_MCP,
                    HandLandmark.MIDDLE_FINGER_MCP, HandLandmark.RING_FINGER_MCP,
                    HandLandmark.PINKY_MCP)
-_THUMP_LANDMARKS = (HandLandmark.THUMB_MCP, HandLandmark.THUMB_IP,
+_THUMB_LANDMARKS = (HandLandmark.THUMB_MCP, HandLandmark.THUMB_IP,
                     HandLandmark.THUMB_TIP)
 _INDEX_FINGER_LANDMARKS = (HandLandmark.INDEX_FINGER_PIP,
                            HandLandmark.INDEX_FINGER_DIP,
@@ -60,7 +60,7 @@ _HAND_LANDMARK_STYLE = {
     _PALM_LANDMARKS:
         DrawingSpec(
             color=_RED, thickness=_THICKNESS_DOT, circle_radius=_RADIUS),
-    _THUMP_LANDMARKS:
+    _THUMB_LANDMARKS:
         DrawingSpec(
             color=_PEACH, thickness=_THICKNESS_DOT, circle_radius=_RADIUS),
     _INDEX_FINGER_LANDMARKS:
