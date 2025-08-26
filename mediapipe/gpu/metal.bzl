@@ -35,6 +35,8 @@ load(
     "@build_bazel_rules_apple//apple/internal:resources.bzl",
     "resources",
 )
+load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
+load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
 
 def _metal_compiler_args(ctx, src, obj, minimum_os_version, copts, diagnostics, deps_dump):
     """Returns arguments for metal compiler."""

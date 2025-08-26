@@ -1,5 +1,7 @@
 """Rules implementation for mediapipe_proto_alias.bzl, do not load directly."""
 
+load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
+
 def _copy_header_impl(ctx):
     source = ctx.attr.source.replace("//", "").replace(":", "/")
     files = []

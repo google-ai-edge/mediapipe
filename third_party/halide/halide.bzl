@@ -16,6 +16,7 @@
 
 load("@bazel_skylib//lib:collections.bzl", "collections")
 load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "use_cpp_toolchain")
+load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
 
 def halide_language_copts():
     _common_opts = [
