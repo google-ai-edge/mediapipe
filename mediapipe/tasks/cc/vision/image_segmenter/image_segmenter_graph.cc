@@ -230,12 +230,14 @@ absl::Status ConfigureTensorsToSegmentationCalculator(
         "Segmentation tflite models are assumed to have a single subgraph.",
         MediaPipeTasksStatus::kInvalidArgumentError);
   }
-  MP_ASSIGN_OR_RETURN(
-      *options->mutable_label_items(),
-      GetLabelItemsIfAny(
-          *metadata_extractor,
-          **metadata_extractor->GetOutputTensorMetadata()->crbegin(),
-          segmenter_option.display_names_locale()));
+  if (metadata_extractor->GetOutputTensorMetadata()) {
+    MP_ASSIGN_OR_RETURN(
+        *options->mutable_label_items(),
+        GetLabelItemsIfAny(
+            *metadata_extractor,
+            **metadata_extractor->GetOutputTensorMetadata()->crbegin(),
+            segmenter_option.display_names_locale()));
+  }
   return absl::OkStatus();
 }
 

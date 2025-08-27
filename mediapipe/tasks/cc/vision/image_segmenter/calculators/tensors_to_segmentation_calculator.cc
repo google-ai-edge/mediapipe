@@ -392,7 +392,6 @@ absl::Status TensorsToSegmentationCalculator::Process(
   if (cc->Inputs().HasTag("OUTPUT_SIZE")) {
     std::tie(output_width, output_height) = kOutputSizeIn(cc).Get();
   }
-
   // Use GPU postprocessing on web when Tensor is there already.
 #ifdef TASK_SEGMENTATION_USE_GL_POSTPROCESSING
   Shape output_shape = {/* height= */ output_height,
@@ -406,6 +405,7 @@ absl::Status TensorsToSegmentationCalculator::Process(
         options_.segmenter_options().output_type() ==
             SegmenterOptions::CONFIDENCE_MASK ||
         cc->Outputs().HasTag("CONFIDENCE_MASK");
+
     std::vector<std::unique_ptr<Image>> segmented_masks =
         postprocessor_.GetSegmentationResultGpu(
             input_shape, output_shape, input_tensor, produce_confidence_masks,
