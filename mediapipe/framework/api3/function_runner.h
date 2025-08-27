@@ -255,7 +255,8 @@ class FunctionRunnerBuilder {
     absl::flat_hash_map<int, OutputStreamPoller> output_pollers;
     for (const auto& [index, name] : output_names_map) {
       MP_ASSIGN_OR_RETURN(OutputStreamPoller poller,
-                          calculator_graph->AddOutputStreamPoller(name));
+                          calculator_graph->AddOutputStreamPoller(
+                              name, /*observe_timestamp_bounds=*/true));
       const bool inserted =
           output_pollers.try_emplace(index, std::move(poller)).second;
       RET_CHECK(inserted);

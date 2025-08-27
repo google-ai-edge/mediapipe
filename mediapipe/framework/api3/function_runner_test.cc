@@ -414,5 +414,36 @@ TEST(FunctionRunnerTest, ReturnsCorrectFailureStatus) {
                        testing::HasSubstr("unimplemented is expected")));
 }
 
+constexpr absl::string_view kTimestampBoundNode = "TimestampBoundNode";
+struct TimestampBoundNode : Node<kTimestampBoundNode> {
+  template <typename S>
+  struct Contract {
+    Input<S, int> tick{"TICK"};
+    Output<S, int> output{"UNUSED"};
+  };
+};
+
+class TimestampBoundNodeImpl
+    : public Calculator<TimestampBoundNode, TimestampBoundNodeImpl> {
+ public:
+  absl::Status Process(CalculatorContext<TimestampBoundNode>& cc) final {
+    // Timestamp bound update.
+    return absl::OkStatus();
+  }
+};
+
+TEST(FunctionRunnerTest, ReturnsTimestampBoundUpdate) {
+  MP_ASSERT_OK_AND_ASSIGN(
+      auto runner,
+      Runner::For([](GenericGraph& graph, Stream<int> tick) -> Stream<int> {
+        auto& node = graph.AddNode<TimestampBoundNode>();
+        node.tick.Set(tick);
+        return node.output.Get();
+      }).Create());
+
+  MP_ASSERT_OK_AND_ASSIGN(Packet<int> output, runner.Run(MakePacket<int>(42)));
+  EXPECT_FALSE(output);
+}
+
 }  // namespace
 }  // namespace mediapipe::api3
