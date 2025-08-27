@@ -42,6 +42,8 @@ Finally, imports the aar into Android Studio.
 """
 
 load("@build_bazel_rules_android//android:rules.bzl", "android_binary", "android_library")
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
 def mediapipe_aar(
         name,
@@ -171,7 +173,7 @@ def _mediapipe_jni(name, gen_libmediapipe, calculators = []):
       calculators: the calculator libraries to be compiled into the jni library.
     """
     if gen_libmediapipe:
-        native.cc_binary(
+        cc_binary(
             name = "libmediapipe_jni.so",
             linkshared = 1,
             linkstatic = 1,
@@ -179,8 +181,7 @@ def _mediapipe_jni(name, gen_libmediapipe, calculators = []):
                 "//mediapipe/java/com/google/mediapipe/framework/jni:mediapipe_framework_jni",
             ] + calculators,
         )
-
-    native.cc_library(
+    cc_library(
         name = name + "_cc_lib",
         srcs = [":libmediapipe_jni.so"],
         alwayslink = 1,
