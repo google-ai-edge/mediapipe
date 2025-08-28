@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors.
+/* Copyright 2025 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -13,16 +13,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#include "mediapipe/tasks/cc/vision/image_segmenter/calculators/tensors_to_segmentation_calculator.h"
+
 #include <algorithm>
 #include <cstdint>
 #include <memory>
-#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "absl/status/status.h"
-#include "absl/strings/str_format.h"
 #include "absl/types/span.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
@@ -359,6 +359,11 @@ TEST(TensorsToSegmentationCalculatorTest, SucceedsCategoryMaskResize) {
   EXPECT_THAT(packets, testing::ElementsAre(
                            Uint8ImagePacket(output_height, output_width,
                                             expected_index, buffer_indices)));
+}
+
+TEST(TensorsToSegmentationCalculatorTest, HasCorrectRegistrationName) {
+  EXPECT_EQ(tasks::TensorsToSegmentationNode::GetRegistrationName(),
+            "::mediapipe::tasks::TensorsToSegmentationCalculator");
 }
 
 }  // namespace mediapipe
