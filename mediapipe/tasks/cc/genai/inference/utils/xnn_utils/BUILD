@@ -15,6 +15,9 @@
 # Utilities needed to interacte with XNNPACK.
 
 load("@flatbuffers//:build_defs.bzl", "flatbuffer_cc_library")
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
 
 DEFAULT_VISIBILITY = [
     "//mediapipe/tasks/cc/genai:__subpackages__",
