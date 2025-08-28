@@ -151,5 +151,6 @@ cc_library(
         "//mediapipe/tasks/cc/genai/inference/proto:prompt_template_cc_proto",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
     ],
 )
