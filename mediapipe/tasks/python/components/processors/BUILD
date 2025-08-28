@@ -28,3 +28,11 @@ py_library(
         "//mediapipe/tasks/python/core:optional_dependencies",
     ],
 )
+
+py_library(
+    name = "classifier_options_c",
+    srcs = ["classifier_options_c.py"],
+    deps = [
+        ":classifier_options",
+    ],
+)

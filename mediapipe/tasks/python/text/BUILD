@@ -19,21 +19,29 @@ package(default_visibility = ["//visibility:public"])
 licenses(["notice"])
 
 py_library(
+    name = "text_c",
+    srcs = [
+        "text_c.py",
+    ],
+    data = [
+        "//mediapipe/tasks/c:libmediapipe.so",
+    ],
+)
+
+py_library(
     name = "text_classifier",
     srcs = [
         "text_classifier.py",
     ],
     deps = [
-        "//mediapipe/python:packet_creator",
-        "//mediapipe/python:packet_getter",
-        "//mediapipe/tasks/cc/components/containers/proto:classifications_py_pb2",
-        "//mediapipe/tasks/cc/components/processors/proto:classifier_options_py_pb2",
-        "//mediapipe/tasks/cc/text/text_classifier/proto:text_classifier_graph_options_py_pb2",
+        ":text_c",
+        "//mediapipe/tasks/python/components/containers:category",
         "//mediapipe/tasks/python/components/containers:classification_result",
+        "//mediapipe/tasks/python/components/containers:classification_result_c",
+        "//mediapipe/tasks/python/components/processors:classifier_options",
+        "//mediapipe/tasks/python/components/processors:classifier_options_c",
         "//mediapipe/tasks/python/core:base_options",
-        "//mediapipe/tasks/python/core:optional_dependencies",
-        "//mediapipe/tasks/python/core:task_info",
-        "//mediapipe/tasks/python/text/core:base_text_task_api",
+        "//mediapipe/tasks/python/core:base_options_c",
     ],
 )
 

@@ -13,31 +13,30 @@
 # limitations under the License.
 """MediaPipe text classifier task."""
 
+import ctypes
 import dataclasses
-from typing import Optional, List
-
-from mediapipe.python import packet_creator
-from mediapipe.python import packet_getter
-from mediapipe.tasks.cc.components.containers.proto import classifications_pb2
-from mediapipe.tasks.cc.components.processors.proto import classifier_options_pb2
-from mediapipe.tasks.cc.text.text_classifier.proto import text_classifier_graph_options_pb2
+from typing import List, Optional
+from mediapipe.tasks.python.components.containers import category as category_module
 from mediapipe.tasks.python.components.containers import classification_result as classification_result_module
+from mediapipe.tasks.python.components.containers import classification_result_c as classification_result_c_module
+from mediapipe.tasks.python.components.processors import classifier_options as classifier_options_module
+from mediapipe.tasks.python.components.processors import classifier_options_c as classifier_options_c_module
 from mediapipe.tasks.python.core import base_options as base_options_module
-from mediapipe.tasks.python.core import task_info as task_info_module
-from mediapipe.tasks.python.core.optional_dependencies import doc_controls
-from mediapipe.tasks.python.text.core import base_text_task_api
+from mediapipe.tasks.python.core import base_options_c as base_options_c_module
+from mediapipe.tasks.python.text import text_c as text_c_module
 
-TextClassifierResult = classification_result_module.ClassificationResult
 _BaseOptions = base_options_module.BaseOptions
-_TextClassifierGraphOptionsProto = text_classifier_graph_options_pb2.TextClassifierGraphOptions
-_ClassifierOptionsProto = classifier_options_pb2.ClassifierOptions
-_TaskInfo = task_info_module.TaskInfo
+Category = category_module.Category
+Classifications = classification_result_module.Classifications
+TextClassifierResult = classification_result_module.ClassificationResult
+ClassifierOptions = classifier_options_module.ClassifierOptions
 
-_CLASSIFICATIONS_STREAM_NAME = 'classifications_out'
-_CLASSIFICATIONS_TAG = 'CLASSIFICATIONS'
-_TEXT_IN_STREAM_NAME = 'text_in'
-_TEXT_TAG = 'TEXT'
-_TASK_GRAPH_NAME = 'mediapipe.tasks.text.text_classifier.TextClassifierGraph'
+
+class TextClassifierOptionsC(ctypes.Structure):
+  _fields_ = [
+      ("base_options", base_options_c_module.BaseOptionsC),
+      ("classifier_options", classifier_options_c_module.ClassifierOptionsC),
+  ]
 
 
 @dataclasses.dataclass
@@ -68,23 +67,55 @@ class TextClassifierOptions:
   category_allowlist: Optional[List[str]] = None
   category_denylist: Optional[List[str]] = None
 
-  @doc_controls.do_not_generate_docs
-  def to_pb2(self) -> _TextClassifierGraphOptionsProto:
-    """Generates an TextClassifierOptions protobuf object."""
-    base_options_proto = self.base_options.to_pb2()
-    classifier_options_proto = _ClassifierOptionsProto(
-        score_threshold=self.score_threshold,
-        category_allowlist=self.category_allowlist,
-        category_denylist=self.category_denylist,
-        display_names_locale=self.display_names_locale,
-        max_results=self.max_results)
+  def to_ctypes(self) -> TextClassifierOptionsC:
+    """Generates a ctypes TextClassifierOptionsC."""
+    base_options_c = base_options_c_module.create_base_options_c(
+        self.base_options
+    )
+    classifier_options_c = (
+        classifier_options_c_module.convert_to_classifier_options_c(
+            classifier_options_module.ClassifierOptions(
+                display_names_locale=self.display_names_locale,
+                max_results=self.max_results,
+                score_threshold=self.score_threshold,
+                category_allowlist=self.category_allowlist,
+                category_denylist=self.category_denylist,
+            )
+        )
+    )
 
-    return _TextClassifierGraphOptionsProto(
-        base_options=base_options_proto,
-        classifier_options=classifier_options_proto)
+    c_options = TextClassifierOptionsC()
+    c_options.base_options = base_options_c
+    c_options.classifier_options = classifier_options_c
+    return c_options
 
 
-class TextClassifier(base_text_task_api.BaseTextTaskApi):
+def _register_ctypes_signatures(lib: ctypes.CDLL):
+  """Defines the ctypes signatures for the TextClassifier C API."""
+  lib.text_classifier_create.argtypes = [
+      ctypes.POINTER(TextClassifierOptionsC),
+      ctypes.POINTER(ctypes.c_char_p),
+  ]
+  lib.text_classifier_create.restype = ctypes.c_void_p
+  lib.text_classifier_classify.argtypes = [
+      ctypes.c_void_p,
+      ctypes.c_char_p,
+      ctypes.POINTER(classification_result_c_module.ClassificationResultC),
+      ctypes.POINTER(ctypes.c_char_p),
+  ]
+  lib.text_classifier_classify.restype = ctypes.c_int
+  lib.text_classifier_close.argtypes = [
+      ctypes.c_void_p,
+      ctypes.POINTER(ctypes.c_char_p),
+  ]
+  lib.text_classifier_close.restype = ctypes.c_int
+  lib.text_classifier_close_result.argtypes = [
+      ctypes.POINTER(classification_result_c_module.ClassificationResultC)
+  ]
+  lib.text_classifier_close_result.restype = None
+
+
+class TextClassifier:
   """Class that performs classification on text.
 
   This API expects a TFLite model with (optional) TFLite Model Metadata that
@@ -117,9 +148,15 @@ class TextClassifier(base_text_task_api.BaseTextTaskApi):
       English). If none of these are available, only the `index` field of the
       results will be filled.
   """
+  _lib: ctypes.CDLL
+  _handle: ctypes.c_void_p
+
+  def __init__(self, lib: ctypes.CDLL, handle: ctypes.c_void_p):
+    self._lib = lib
+    self._classifier_handle = handle
 
   @classmethod
-  def create_from_model_path(cls, model_path: str) -> 'TextClassifier':
+  def create_from_model_path(cls, model_path: str) -> "TextClassifier":
     """Creates an `TextClassifier` object from a TensorFlow Lite model and the default `TextClassifierOptions`.
 
     Args:
@@ -134,13 +171,16 @@ class TextClassifier(base_text_task_api.BaseTextTaskApi):
         file such as invalid file path.
       RuntimeError: If other types of error occurred.
     """
-    base_options = _BaseOptions(model_asset_path=model_path)
-    options = TextClassifierOptions(base_options=base_options)
-    return cls.create_from_options(options)
+    return cls.create_from_options(
+        TextClassifierOptions(
+            base_options=_BaseOptions(model_asset_path=model_path)
+        )
+    )
 
   @classmethod
-  def create_from_options(cls,
-                          options: TextClassifierOptions) -> 'TextClassifier':
+  def create_from_options(
+      cls, options: TextClassifierOptions
+  ) -> "TextClassifier":
     """Creates the `TextClassifier` object from text classifier options.
 
     Args:
@@ -154,14 +194,25 @@ class TextClassifier(base_text_task_api.BaseTextTaskApi):
         `TextClassifierOptions` such as missing the model.
       RuntimeError: If other types of error occurred.
     """
-    task_info = _TaskInfo(
-        task_graph=_TASK_GRAPH_NAME,
-        input_streams=[':'.join([_TEXT_TAG, _TEXT_IN_STREAM_NAME])],
-        output_streams=[
-            ':'.join([_CLASSIFICATIONS_TAG, _CLASSIFICATIONS_STREAM_NAME])
-        ],
-        task_options=options)
-    return cls(task_info.generate_graph_config())
+    lib = text_c_module.load_shared_library()  # pylint: disable=protected-access
+    _register_ctypes_signatures(lib)
+
+    ctypes_options = options.to_ctypes()
+
+    error_msg_ptr = ctypes.c_char_p()
+    classifier_handle = lib.text_classifier_create(
+        ctypes.byref(ctypes_options),
+        ctypes.byref(error_msg_ptr),
+    )
+
+    if classifier_handle is None or classifier_handle == 0:
+      if error_msg_ptr.value:  # pylint: disable=using-constant-test
+        error_message = error_msg_ptr.value.decode("utf-8")
+        raise RuntimeError(error_message)
+      else:
+        raise RuntimeError("Failed to create TextClassifier object.")
+
+    return TextClassifier(lib=lib, handle=classifier_handle)
 
   def classify(self, text: str) -> TextClassifierResult:
     """Performs classification on the input `text`.
@@ -177,11 +228,54 @@ class TextClassifier(base_text_task_api.BaseTextTaskApi):
       ValueError: If any of the input arguments is invalid.
       RuntimeError: If text classification failed to run.
     """
-    output_packets = self._runner.process(
-        {_TEXT_IN_STREAM_NAME: packet_creator.create_string(text)})
+    ctypes_result = classification_result_c_module.ClassificationResultC()
+    error_msg_ptr = ctypes.c_char_p()
 
-    classification_result_proto = classifications_pb2.ClassificationResult()
-    classification_result_proto.CopyFrom(
-        packet_getter.get_proto(output_packets[_CLASSIFICATIONS_STREAM_NAME]))
+    ret_code = self._lib.text_classifier_classify(
+        self._classifier_handle,
+        text.encode("utf-8"),
+        ctypes.byref(ctypes_result),
+        ctypes.byref(error_msg_ptr),
+    )
 
-    return TextClassifierResult.create_from_pb2(classification_result_proto)
+    if ret_code != 0:
+      if error_msg_ptr.value is not None:
+        error_message = error_msg_ptr.value.decode("utf-8")
+        raise RuntimeError(error_message)
+      else:
+        raise RuntimeError("Classification failed: Unknown error.")
+
+    python_result = (
+        classification_result_c_module.convert_to_python_classification_result(
+            ctypes_result
+        )
+    )
+    self._lib.text_classifier_close_result(ctypes.byref(ctypes_result))
+    return python_result
+
+  def close(self):
+    """Shuts down the MediaPipe task instance."""
+    if self._classifier_handle:
+      error_msg_ptr = ctypes.c_char_p()
+      ret_code = self._lib.text_classifier_close(
+          self._classifier_handle, ctypes.byref(error_msg_ptr)
+      )
+      if ret_code != 0:
+        if error_msg_ptr.value is not None:
+          error_message = error_msg_ptr.value.decode("utf-8")
+          raise RuntimeError(error_message)
+        else:
+          raise RuntimeError("Failed to close TextClassifier object.")
+      self._classifier_handle = None
+
+  def __enter__(self):
+    """Returns `self` upon entering the runtime context."""
+    return self
+
+  def __exit__(self, unused_exc_type, unused_exc_value, unused_traceback):
+    """Shuts down the MediaPipe task instance on exit of the context manager.
+
+    Raises:
+      RuntimeError: If the MediaPipe TextClassifier task failed to close.
+    """
+    self.close()

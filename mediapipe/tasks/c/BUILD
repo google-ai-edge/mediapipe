@@ -1,4 +1,4 @@
-# Copyright 2023 The MediaPipe Authors.
+# Copyright 2025 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,42 +18,22 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
 
-TEXT_LIBRARIES = [
-    "//mediapipe/tasks/c/text/language_detector:language_detector_lib",
-    "//mediapipe/tasks/c/text/text_classifier:text_classifier_lib",
-    "//mediapipe/tasks/c/text/text_embedder:text_embedder_lib",
-]
-
 # bazel build -c opt --linkopt -s --strip always --define MEDIAPIPE_DISABLE_GPU=1 \
-# //mediapipe/tasks/c/text:libtext.so
+# //mediapipe/tasks/c:libmediapipe.so
 cc_binary(
-    name = "libtext.so",
+    name = "libmediapipe.so",
     linkopts = [
         "-Wl,-soname=libtext.so",
         "-fvisibility=hidden",
     ],
     linkshared = True,
+    linkstatic = False,
     tags = [
         "manual",
         "nobuilder",
         "notap",
     ],
-    deps = TEXT_LIBRARIES,
-)
-
-# bazel build --config darwin_arm64 -c opt --strip always --define MEDIAPIPE_DISABLE_GPU=1 \
-# //mediapipe/tasks/c/text:libtext:.dylib
-cc_binary(
-    name = "libtext.dylib",
-    linkopts = [
-        "-Wl,-install_name,libtext.dylib",
-        "-fvisibility=hidden",
+    deps = [
+        "//mediapipe/tasks/c/text/text_classifier:text_classifier_lib",
     ],
-    linkshared = True,
-    tags = [
-        "manual",
-        "nobuilder",
-        "notap",
-    ],
-    deps = TEXT_LIBRARIES,
 )

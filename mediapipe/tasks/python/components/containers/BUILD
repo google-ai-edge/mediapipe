@@ -75,6 +75,11 @@ py_library(
 )
 
 py_library(
+    name = "category_c",
+    srcs = ["category_c.py"],
+)
+
+py_library(
     name = "keypoint",
     srcs = ["keypoint.py"],
     deps = [
@@ -104,6 +109,16 @@ py_library(
         "//mediapipe/framework/formats:classification_py_pb2",
         "//mediapipe/tasks/cc/components/containers/proto:classifications_py_pb2",
         "//mediapipe/tasks/python/core:optional_dependencies",
+    ],
+)
+
+py_library(
+    name = "classification_result_c",
+    srcs = ["classification_result_c.py"],
+    deps = [
+        ":category",
+        ":category_c",
+        ":classification_result",
     ],
 )
 

@@ -162,6 +162,30 @@ class TextClassifierTest(parameterized.TestCase):
       classifier = _TextClassifier.create_from_options(options)
       self.assertIsInstance(classifier, _TextClassifier)
 
+  def test_create_from_options_succeeds_with_allow_list(self):
+    base_options = _BaseOptions(model_asset_path=self.model_path)
+    options = _TextClassifierOptions(
+        base_options=base_options, category_allowlist=['positive']
+    )
+    with _TextClassifier.create_from_options(options) as classifier:
+      self.assertIsInstance(classifier, _TextClassifier)
+
+  def test_create_from_options_succeeds_with_deny_list(self):
+    base_options = _BaseOptions(model_asset_path=self.model_path)
+    options = _TextClassifierOptions(
+        base_options=base_options, category_denylist=['negative']
+    )
+    with _TextClassifier.create_from_options(options) as classifier:
+      self.assertIsInstance(classifier, _TextClassifier)
+
+  def test_create_from_options_succeeds_with_display_names_locale(self):
+    base_options = _BaseOptions(model_asset_path=self.model_path)
+    options = _TextClassifierOptions(
+        base_options=base_options, display_names_locale='en'
+    )
+    with _TextClassifier.create_from_options(options) as classifier:
+      self.assertIsInstance(classifier, _TextClassifier)
+
   @parameterized.parameters(
       (ModelFileType.FILE_NAME, _BERT_MODEL_FILE, _NEGATIVE_TEXT,
        _BERT_NEGATIVE_RESULTS), (ModelFileType.FILE_CONTENT, _BERT_MODEL_FILE,
