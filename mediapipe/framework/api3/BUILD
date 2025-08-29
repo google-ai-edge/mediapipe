@@ -11,6 +11,7 @@ cc_library(
     hdrs = ["calculator_context.h"],
     deps = [
         ":contract",
+        ":one_of",
         ":packet",
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:calculator_framework",
@@ -22,6 +23,7 @@ cc_library(
         "//mediapipe/framework/api3/internal:port_base",
         "//mediapipe/framework/api3/internal:specializers",
         "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/meta:type_traits",
     ],
 )
 
@@ -153,6 +155,7 @@ cc_library(
     hdrs = ["graph.h"],
     deps = [
         ":contract",
+        ":one_of",
         ":side_packet",
         ":stream",
         "//mediapipe/framework:calculator_cc_proto",
@@ -369,6 +372,34 @@ cc_test(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/tool:options_map",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings:string_view",
+    ],
+)
+
+cc_library(
+    name = "one_of",
+    hdrs = ["one_of.h"],
+)
+
+cc_test(
+    name = "one_of_test",
+    srcs = [
+        "one_of_test.cc",
+    ],
+    deps = [
+        ":calculator",
+        ":calculator_context",
+        ":contract",
+        ":function_runner",
+        ":graph",
+        ":node",
+        ":one_of",
+        ":packet",
+        ":stream",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:ret_check",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/strings:string_view",
     ],
 )

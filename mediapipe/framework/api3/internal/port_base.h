@@ -29,6 +29,7 @@
 #include "mediapipe/framework/api3/internal/dependent_false.h"
 #include "mediapipe/framework/api3/internal/graph_builder.h"
 #include "mediapipe/framework/api3/internal/specializers.h"
+#include "mediapipe/framework/api3/one_of.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_contract.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -359,10 +360,17 @@ class RepeatedBase<GraphNodeSpecializer, FieldT> : public TagAndIndex {
   builder::NodeBuilder* node_builder_ = nullptr;
 };
 
+template <typename P, typename... Vs>
+void SetTypeOneOf(P& p, OneOf<Vs...>*) {
+  p.template SetOneOf<Vs...>();
+}
+
 template <typename T, typename P>
 void SetType(P& p) {
   if constexpr (std::is_same_v<T, Any>) {
     p.SetAny();
+  } else if constexpr (IsOneOf<T>{}) {
+    SetTypeOneOf(p, static_cast<T*>(nullptr));
   } else {
     p.template Set<T>();
   }

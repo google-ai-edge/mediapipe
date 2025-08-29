@@ -18,11 +18,13 @@
 #include <memory>
 
 #include "absl/log/absl_log.h"
+#include "absl/meta/type_traits.h"
 #include "mediapipe/framework/api3/contract.h"
 #include "mediapipe/framework/api3/internal/contract_fields.h"
 #include "mediapipe/framework/api3/internal/contract_to_tuple.h"
 #include "mediapipe/framework/api3/internal/port_base.h"
 #include "mediapipe/framework/api3/internal/specializers.h"
+#include "mediapipe/framework/api3/one_of.h"
 #include "mediapipe/framework/api3/packet.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -133,6 +135,101 @@ class Input<ContextSpecializer, PayloadT>
   mediapipe::api3::Packet<PayloadT> Packet() const {
     return mediapipe::api3::Packet<PayloadT>(
         holder_->context->Inputs().Get(Tag(), Index()).Value());
+  }
+};
+
+namespace internal {
+
+template <class... F>
+struct Overload : F... {
+  using F::operator()...;
+};
+template <class... F>
+explicit Overload(F...) -> Overload<F...>;
+
+template <class T, class... U>
+struct First {
+  using type = T;
+};
+
+}  // namespace internal
+
+template <typename... PayloadTs>
+class Input<ContextSpecializer, OneOf<PayloadTs...>>
+    : public internal_port::Port<ContextSpecializer, InputStreamField> {
+ public:
+  using Payload = OneOf<PayloadTs...>;
+  using internal_port::Port<ContextSpecializer, InputStreamField>::Port;
+
+  explicit operator bool() const {
+    auto id = holder_->context->Inputs().GetId(Tag(), Index());
+    return id.IsValid() &&
+           !holder_->context->Inputs().Get(id).Value().IsEmpty();
+  }
+
+  template <typename T>
+  bool Has() const {
+    static_assert((std::is_same_v<T, PayloadTs> || ...),
+                  "Stream type must be one of the types in OneOf");
+    return holder_->context->Inputs()
+        .Get(Tag(), Index())
+        .Value()
+        .template ValidateAsType<T>()
+        .ok();
+  }
+
+  template <typename T>
+  const T& GetOrDie() const {
+    static_assert((std::is_same_v<T, PayloadTs> || ...),
+                  "Stream type must be one of the types in OneOf");
+    return holder_->context->Inputs()
+        .Get(Tag(), Index())
+        .Value()
+        .template Get<T>();
+  }
+
+  // Visits the value in the input with the given visitor lambdas.
+  // There must be one lambda provided for each type in PayloadTs.
+  //
+  // Example:
+  // ```
+  //   input.Visit(
+  //     [&](const TypeA& a) { ... },
+  //     [&](const TypeB& b) { ... }
+  //   );
+  // ```
+  template <class... F>
+  auto VisitOrDie(const F&... visitors) const {
+    // Check that the number of functors matches the number of types.
+    static_assert(sizeof...(F) == sizeof...(PayloadTs),
+                  "The number of provided visitors must match the number of "
+                  "types in the OneOf");
+    // Check that the overload set `f` is callable with each type in PayloadTs.
+    static_assert(
+        (std::is_invocable_v<decltype(visitors), const PayloadTs&> && ...),
+        "The provided visitors must be able to handle all types in the OneOf "
+        "in the same order as types listed in the OneOf");
+
+    auto f = internal::Overload{visitors...};
+    using FirstT = typename internal::First<PayloadTs...>::type;
+    using ResultType = absl::result_of_t<decltype(f)(const FirstT&)>;
+    static_assert(
+        (std::is_same_v<ResultType,
+                        absl::result_of_t<decltype(f)(const PayloadTs&)>> &&
+         ...),
+        "All visitor overloads must have the same return type");
+    return Invoke<decltype(f), PayloadTs...>(f);
+  }
+
+ private:
+  template <class F, class U>
+  auto Invoke(const F& f) const {
+    return f(this->GetOrDie<U>());
+  }
+
+  template <class F, class U, class V, class... W>
+  auto Invoke(const F& f) const {
+    return this->Has<U>() ? f(this->GetOrDie<U>()) : Invoke<F, V, W...>(f);
   }
 };
 

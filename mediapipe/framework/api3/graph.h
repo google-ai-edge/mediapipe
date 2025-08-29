@@ -31,6 +31,7 @@
 #include "mediapipe/framework/api3/internal/graph_builder.h"
 #include "mediapipe/framework/api3/internal/port_base.h"
 #include "mediapipe/framework/api3/internal/specializers.h"
+#include "mediapipe/framework/api3/one_of.h"
 #include "mediapipe/framework/api3/side_packet.h"
 #include "mediapipe/framework/api3/stream.h"
 #include "mediapipe/framework/calculator.pb.h"
@@ -505,6 +506,22 @@ class Input<GraphNodeSpecializer, PayloadT>
   using internal_port::Port<GraphNodeSpecializer, InputStreamField>::Port;
 
   void Set(Stream<PayloadT> stream, bool back_edge = false) {
+    auto& in = node_builder_->In(Tag()).At(Index());
+    stream.source_->ConnectTo(back_edge ? in.AsBackEdge() : in);
+  }
+};
+
+template <typename... PayloadTs>
+class Input<GraphNodeSpecializer, OneOf<PayloadTs...>>
+    : public internal_port::Port<GraphNodeSpecializer, InputStreamField> {
+ public:
+  using Payload = OneOf<PayloadTs...>;
+  using internal_port::Port<GraphNodeSpecializer, InputStreamField>::Port;
+
+  template <typename T>
+  void Set(Stream<T> stream, bool back_edge = false) {
+    static_assert((std::is_same_v<T, PayloadTs> || ...),
+                  "Stream type must be one of the types in OneOf");
     auto& in = node_builder_->In(Tag()).At(Index());
     stream.source_->ConnectTo(back_edge ? in.AsBackEdge() : in);
   }
