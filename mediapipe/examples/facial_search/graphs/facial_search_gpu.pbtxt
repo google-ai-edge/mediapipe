@@ -1,0 +1,47 @@
+input_stream: "input_frame"
+output_stream: "embeddings"
+output_stream: "embeddings_presence"
+output_stream: "memes"
+
+node {
+  calculator: "FlowLimiterCalculator"
+  input_stream: "input_frame"
+  input_stream: "FINISHED:embeddings"
+  input_stream_info: {
+    tag_index: "FINISHED"
+    back_edge: true
+  }
+  output_stream: "input_frame_throttled"
+}
+
+node {
+  calculator: "FaceDetectionShortRangeGpu"
+  input_stream: "IMAGE:input_frame_throttled"
+  output_stream: "DETECTIONS:head_detections"
+}
+
+node {
+  calculator: "FaceEmbeddingsSubgraph"
+  input_stream: "IMAGE:input_frame_throttled"
+  input_stream: "DETECTIONS:head_detections"
+  output_stream: "FLOATS:embeddings"
+}
+
+node {
+  calculator: "PacketPresenceCalculator"
+  input_stream: "PACKET:embeddings"
+  output_stream: "PRESENCE:embeddings_presence"
+}
+
+node {
+  calculator: "ClosestEmbeddingsCalculator"
+  input_side_packet: "COLLECTION:embeddings_collection"
+  input_side_packet: "LABELS:collection_labels"
+  input_stream: "FLOATS:embeddings"
+  output_stream: "CLASSIFICATIONS:memes"
+  node_options: {
+    [type.googleapis.com/mediapipe.ClosestEmbeddingsCalculatorOptions] {
+      top_k: 3
+    }
+  }
+}
