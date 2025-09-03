@@ -54,7 +54,7 @@ packaging==24.1
     # via matplotlib
 pillow==10.4.0
     # via matplotlib
-protobuf==4.25.5
+protobuf==4.25.8
     # via -r mediapipe/opensource_only/requirements.txt
 pycparser==2.22
     # via cffi
