@@ -1,4 +1,4 @@
-/* Copyright 2023 The MediaPipe Authors.
+/* Copyright 2025 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -32,14 +32,16 @@ limitations under the License.
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/formats/tensor.h"
-#include "mediapipe/tasks/cc/common.h"
+#include "mediapipe/framework/port/ret_check.h"
+#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/tasks/cc/components/processors/image_preprocessing_graph.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
 #include "mediapipe/tasks/cc/core/proto/inference_subgraph.pb.h"
-#include "mediapipe/tasks/cc/core/utils.h"
+#include "mediapipe/tasks/cc/metadata/metadata_extractor.h"
 #include "mediapipe/tasks/cc/vision/face_detector/proto/face_detector_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/utils/image_tensor_specs.h"
+#include "mediapipe/tasks/metadata/face_detector_metadata_schema_generated.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -52,6 +54,7 @@ using ::mediapipe::api2::Input;
 using ::mediapipe::api2::Output;
 using ::mediapipe::api2::builder::Graph;
 using ::mediapipe::api2::builder::Source;
+using ::mediapipe::tasks::vision::BuildInputImageTensorSpecs;
 using ::mediapipe::tasks::vision::face_detector::proto::
     FaceDetectorGraphOptions;
 
@@ -68,6 +71,7 @@ constexpr char kMatrixTag[] = "MATRIX";
 constexpr char kFaceRectsTag[] = "FACE_RECTS";
 constexpr char kExpandedFaceRectsTag[] = "EXPANDED_FACE_RECTS";
 constexpr char kPixelDetectionsTag[] = "PIXEL_DETECTIONS";
+constexpr char kDetectorMetadataName[] = "FACE_DETECTOR_METADATA";
 
 struct FaceDetectionOuts {
   Source<std::vector<Detection>> face_detections;
@@ -76,44 +80,113 @@ struct FaceDetectionOuts {
   Source<Image> image;
 };
 
-void ConfigureSsdAnchorsCalculator(
-    mediapipe::SsdAnchorsCalculatorOptions* options) {
-  // TODO config SSD anchors parameters from metadata.
-  options->set_num_layers(4);
-  options->set_min_scale(0.1484375);
-  options->set_max_scale(0.75);
-  options->set_input_size_height(128);
-  options->set_input_size_width(128);
-  options->set_anchor_offset_x(0.5);
-  options->set_anchor_offset_y(0.5);
-  options->add_strides(8);
-  options->add_strides(16);
-  options->add_strides(16);
-  options->add_strides(16);
-  options->add_aspect_ratios(1.0);
-  options->set_fixed_anchor_size(true);
-  options->set_interpolated_scale_aspect_ratio(1.0);
+// Get FaceDetectorOptions from the model metadata extractor, if not found,
+// return nullptr.
+const FaceDetectorOptions* GetFaceDetectorOptionsFromMetadata(
+    const core::ModelResources& model_resources) {
+  const auto* metadata_extractor = model_resources.GetMetadataExtractor();
+  if (metadata_extractor->GetCustomMetadataList() != nullptr &&
+      metadata_extractor->GetCustomMetadataList()->size() > 0) {
+    for (const auto* custom_metadata :
+         *metadata_extractor->GetCustomMetadataList()) {
+      if (custom_metadata->name()->str() == kDetectorMetadataName) {
+        return GetFaceDetectorOptions(custom_metadata->data()->data());
+      }
+    }
+  }
+  return nullptr;
 }
 
-void ConfigureTensorsToDetectionsCalculator(
+absl::Status ConfigureSsdAnchorsCalculator(
+    const FaceDetectorOptions* face_detector_options, const int image_width,
+    const int image_height, mediapipe::SsdAnchorsCalculatorOptions* options) {
+  if (face_detector_options != nullptr) {
+    // For models with metadata.
+    const auto* ssd_anchors_options = face_detector_options->anchor_config();
+    RET_CHECK(ssd_anchors_options);
+    options->set_num_layers(ssd_anchors_options->num_layers());
+    options->set_min_scale(ssd_anchors_options->min_scale());
+    options->set_max_scale(ssd_anchors_options->max_scale());
+    options->set_input_size_height(image_height);
+    options->set_input_size_width(image_width);
+    options->set_anchor_offset_x(ssd_anchors_options->anchor_offset_x());
+    options->set_anchor_offset_y(ssd_anchors_options->anchor_offset_y());
+    for (int i = 0; i < ssd_anchors_options->strides()->size(); ++i) {
+      options->add_strides(ssd_anchors_options->strides()->Get(i));
+    }
+    for (int i = 0; i < ssd_anchors_options->aspect_ratios()->size(); ++i) {
+      options->add_aspect_ratios(ssd_anchors_options->aspect_ratios()->Get(i));
+    }
+    options->set_fixed_anchor_size(ssd_anchors_options->fixed_anchor_size());
+    options->set_interpolated_scale_aspect_ratio(
+        ssd_anchors_options->interpolated_scale_aspect_ratio());
+  } else {
+    // Default settings for legacy model without metadata.
+    options->set_num_layers(4);
+    options->set_min_scale(0.1484375);
+    options->set_max_scale(0.75);
+    options->set_input_size_height(128);
+    options->set_input_size_width(128);
+    options->set_anchor_offset_x(0.5);
+    options->set_anchor_offset_y(0.5);
+    options->add_strides(8);
+    options->add_strides(16);
+    options->add_strides(16);
+    options->add_strides(16);
+    options->add_aspect_ratios(1.0);
+    options->set_fixed_anchor_size(true);
+    options->set_interpolated_scale_aspect_ratio(1.0);
+  }
+  return absl::OkStatus();
+}
+
+absl::Status ConfigureTensorsToDetectionsCalculator(
+    const FaceDetectorOptions* face_detector_options,
     const FaceDetectorGraphOptions& tasks_options,
     mediapipe::TensorsToDetectionsCalculatorOptions* options) {
-  // TODO use metadata to configure these fields.
-  options->set_num_classes(1);
-  options->set_num_boxes(896);
-  options->set_num_coords(16);
-  options->set_box_coord_offset(0);
-  options->set_keypoint_coord_offset(4);
-  options->set_num_keypoints(6);
-  options->set_num_values_per_keypoint(2);
-  options->set_sigmoid_score(true);
-  options->set_score_clipping_thresh(100.0);
-  options->set_reverse_output_order(true);
-  options->set_min_score_thresh(tasks_options.min_detection_confidence());
-  options->set_x_scale(128.0);
-  options->set_y_scale(128.0);
-  options->set_w_scale(128.0);
-  options->set_h_scale(128.0);
+  if (face_detector_options != nullptr) {
+    // For models with metadata.
+    const auto* tensors_decoding_options =
+        face_detector_options->tensors_decoding_config();
+    RET_CHECK(tensors_decoding_options);
+    options->set_num_classes(tensors_decoding_options->num_classes());
+    options->set_num_boxes(tensors_decoding_options->num_boxes());
+    options->set_num_coords(tensors_decoding_options->num_coords());
+    options->set_box_coord_offset(tensors_decoding_options->box_coord_offset());
+    options->set_keypoint_coord_offset(
+        tensors_decoding_options->keypoint_coord_offset());
+    options->set_num_keypoints(tensors_decoding_options->num_keypoints());
+    options->set_num_values_per_keypoint(
+        tensors_decoding_options->num_values_per_keypoint());
+    options->set_x_scale(tensors_decoding_options->x_scale());
+    options->set_y_scale(tensors_decoding_options->y_scale());
+    options->set_w_scale(tensors_decoding_options->w_scale());
+    options->set_h_scale(tensors_decoding_options->h_scale());
+    options->set_min_score_thresh(tasks_options.min_detection_confidence());
+    options->set_sigmoid_score(tensors_decoding_options->sigmoid_score());
+    options->set_score_clipping_thresh(
+        tensors_decoding_options->score_clipping_thresh());
+    options->set_reverse_output_order(
+        tensors_decoding_options->reverse_output_order());
+  } else {
+    // Default settings for legacy model without metadata.
+    options->set_num_classes(1);
+    options->set_num_boxes(896);
+    options->set_num_coords(16);
+    options->set_box_coord_offset(0);
+    options->set_keypoint_coord_offset(4);
+    options->set_num_keypoints(6);
+    options->set_num_values_per_keypoint(2);
+    options->set_sigmoid_score(true);
+    options->set_score_clipping_thresh(100.0);
+    options->set_reverse_output_order(true);
+    options->set_min_score_thresh(tasks_options.min_detection_confidence());
+    options->set_x_scale(128.0);
+    options->set_y_scale(128.0);
+    options->set_w_scale(128.0);
+    options->set_h_scale(128.0);
+  }
+  return absl::OkStatus();
 }
 
 void ConfigureNonMaxSuppressionCalculator(
@@ -198,7 +271,7 @@ class FaceDetectorGraph : public core::ModelTaskGraph {
     MP_ASSIGN_OR_RETURN(const auto* model_resources,
                         CreateModelResources<FaceDetectorGraphOptions>(sc));
     Graph graph;
-    MP_ASSIGN_OR_RETURN(auto outs,
+    MP_ASSIGN_OR_RETURN(FaceDetectionOuts outs,
                         BuildFaceDetectionSubgraph(
                             sc->Options<FaceDetectorGraphOptions>(),
                             *model_resources, graph[Input<Image>(kImageTag)],
@@ -223,6 +296,12 @@ class FaceDetectorGraph : public core::ModelTaskGraph {
       const FaceDetectorGraphOptions& subgraph_options,
       const core::ModelResources& model_resources, Source<Image> image_in,
       Source<NormalizedRect> norm_rect_in, Graph& graph) {
+    // Prepare face detector options and image tensor specs from model.
+    const FaceDetectorOptions* face_detector_options =
+        GetFaceDetectorOptionsFromMetadata(model_resources);
+    MP_ASSIGN_OR_RETURN(ImageTensorSpecs input_specs,
+                        BuildInputImageTensorSpecs(model_resources));
+
     // Image preprocessing subgraph to convert image to tensor for the tflite
     // model.
     auto& preprocessing = graph.AddNode(GetImagePreprocessingGraphName());
@@ -256,17 +335,19 @@ class FaceDetectorGraph : public core::ModelTaskGraph {
 
     // Generates a single side packet containing a vector of SSD anchors.
     auto& ssd_anchor = graph.AddNode("SsdAnchorsCalculator");
-    ConfigureSsdAnchorsCalculator(
-        &ssd_anchor.GetOptions<mediapipe::SsdAnchorsCalculatorOptions>());
+    MP_RETURN_IF_ERROR(ConfigureSsdAnchorsCalculator(
+        face_detector_options, input_specs.image_width,
+        input_specs.image_height,
+        &ssd_anchor.GetOptions<mediapipe::SsdAnchorsCalculatorOptions>()));
     auto anchors = ssd_anchor.SideOut("");
 
     // Converts output tensors to Detections.
     auto& tensors_to_detections =
         graph.AddNode("TensorsToDetectionsCalculator");
-    ConfigureTensorsToDetectionsCalculator(
-        subgraph_options,
+    MP_RETURN_IF_ERROR(ConfigureTensorsToDetectionsCalculator(
+        face_detector_options, subgraph_options,
         &tensors_to_detections
-             .GetOptions<mediapipe::TensorsToDetectionsCalculatorOptions>());
+             .GetOptions<mediapipe::TensorsToDetectionsCalculatorOptions>()));
     model_output_tensors >> tensors_to_detections.In(kTensorsTag);
     anchors >> tensors_to_detections.SideIn(kAnchorsTag);
     auto detections = tensors_to_detections.Out(kDetectionsTag);
