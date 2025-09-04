@@ -63,9 +63,14 @@ cc_test(
 cc_library(
     name = "landmarks_to_matrix_calculator",
     srcs = ["landmarks_to_matrix_calculator.cc"],
+    hdrs = ["landmarks_to_matrix_calculator.h"],
     deps = [
         ":landmarks_to_matrix_calculator_cc_proto",
-        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api3:calculator",
+        "//mediapipe/framework/api3:calculator_context",
+        "//mediapipe/framework/api3:calculator_contract",
+        "//mediapipe/framework/api3:contract",
+        "//mediapipe/framework/api3:node",
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/framework/formats:rect_cc_proto",
@@ -82,13 +87,14 @@ cc_test(
     srcs = ["landmarks_to_matrix_calculator_test.cc"],
     deps = [
         ":landmarks_to_matrix_calculator",
-        "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/api3:function_runner",
+        "//mediapipe/framework/api3:graph",
+        "//mediapipe/framework/api3:packet",
+        "//mediapipe/framework/api3:stream",
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework/port:gtest_main",
-        "//mediapipe/framework/port:parse_text_proto",
         "@com_google_absl//absl/strings",
     ],
 )
