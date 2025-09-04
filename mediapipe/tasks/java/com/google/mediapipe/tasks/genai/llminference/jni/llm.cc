@@ -358,7 +358,6 @@ JNIEXPORT void JNICALL JNI_METHOD(nativeAddImage)(JNIEnv* env, jclass thiz,
 }
 
 JNIEXPORT void JNICALL JNI_METHOD(nativeAddAudio)(JNIEnv* env, jclass thiz,
-                                                  jlong engine_handle,
                                                   jlong session_handle,
                                                   jbyteArray audio_bytes) {
   char* error_msg = nullptr;
@@ -372,7 +371,6 @@ JNIEXPORT void JNICALL JNI_METHOD(nativeAddAudio)(JNIEnv* env, jclass thiz,
   jsize array_len_bytes = env->GetArrayLength(audio_bytes);
 
   int error_code = LlmInferenceEngine_Session_AddAudio(
-      reinterpret_cast<void*>(engine_handle),
       reinterpret_cast<void*>(session_handle),
       reinterpret_cast<const char*>(audio_elements_ptr),
       static_cast<int>(array_len_bytes), &error_msg);

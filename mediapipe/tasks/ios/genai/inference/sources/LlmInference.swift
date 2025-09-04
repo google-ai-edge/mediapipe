@@ -90,8 +90,8 @@ import MediaPipeTasksGenAIC
                 wait_for_weight_uploads: options.waitForWeightUploads,
                 use_submodel: options.useSubmodel,
                 preferred_backend: preferredBackend,
-                enable_audio_modality: false,
-                max_audio_sequence_length: 0)
+                enable_audio_modality: options.enableAudioModality,
+                max_audio_sequence_length: options.maxAudioSequenceLength)
               return try LlmTaskRunner(modelSettings: modelSetting)
             }
           }
@@ -291,6 +291,12 @@ extension LlmInference {
     /// of 1. Setting this value to 0 means the batch size will be optimized
     /// programmatically.
     @objc public var sequenceBatchSize: Int = 0
+
+    /// Maximum audio sequence length in tokens, used by audio modality.
+    @objc public var maxAudioSequenceLength: Int = 0
+
+    /// Whether to enable audio modality.
+    @objc public var enableAudioModality: Bool = false
 
     /// Creates a new instance of `Options` with the given `modelPath` and default values of
     /// `maxTokens`, `maxTopk`, `supportedLoraRanks`.

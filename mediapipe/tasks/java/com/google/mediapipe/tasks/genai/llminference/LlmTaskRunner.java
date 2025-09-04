@@ -196,7 +196,7 @@ final class LlmTaskRunner implements AutoCloseable {
       throw new IllegalArgumentException("Audio data cannot be null.");
     }
 
-    nativeAddAudio(engineHandle, session.sessionHandle, rawAudioData);
+    nativeAddAudio(session.sessionHandle, rawAudioData);
   }
 
   /**
@@ -396,6 +396,5 @@ final class LlmTaskRunner implements AutoCloseable {
 
   private static native void nativeUpdateSessionConfig(long sessionPointer, byte[] config);
 
-  private static native void nativeAddAudio(
-      long enginePointer, long sessionPointer, byte[] rawAudioData);
+  private static native void nativeAddAudio(long sessionPointer, byte[] rawAudioData);
 }

@@ -58,6 +58,26 @@ final class LlmSessionRunner {
     LlmInferenceEngine_Session_AddCgImage(cLlmSession, image, &cErrorMessage)
   }
 
+  func addAudio(audio: Data) throws {
+    var cErrorMessage: UnsafeMutablePointer<CChar>? = nil
+
+    let statusCode = audio.withUnsafeBytes({ (buffer: UnsafeRawBufferPointer) -> Int32 in
+      let rawPointer = buffer.baseAddress?.assumingMemoryBound(to: CChar.self)
+
+      return LlmInferenceEngine_Session_AddAudio(
+        cLlmSession,
+        rawPointer,
+        Int32(buffer.count),
+        &cErrorMessage
+      )
+    })
+
+    guard statusCode == StatusCode.success.rawValue else {
+      throw GenAiInferenceError.failedToAddAudioToSession(
+        String(allocatedCErrorMessage: cErrorMessage))
+    }
+  }
+
   /// Invokes the C LLM session with the previously added query chunks synchronously to generate an
   /// array of `String` responses from the LLM.
   ///

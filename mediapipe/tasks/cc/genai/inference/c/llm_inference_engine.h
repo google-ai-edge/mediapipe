@@ -333,8 +333,8 @@ ODML_EXPORT int LlmInferenceEngine_Session_SizeInTokens(
 // Adds an audio to the session.
 // The audio_bytes is expected to be the raw data of a mono .wav file.
 ODML_EXPORT int LlmInferenceEngine_Session_AddAudio(
-    LlmInferenceEngine_Engine* engine, LlmInferenceEngine_Session* session,
-    const char* audio_bytes, int audio_bytes_size, char** error_msg);
+    LlmInferenceEngine_Session* session, const char* audio_bytes,
+    int audio_bytes_size, char** error_msg);
 
 #ifdef __cplusplus
 }  // extern C
