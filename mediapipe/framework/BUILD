@@ -1176,6 +1176,7 @@ cc_library(
         "//mediapipe/framework:__subpackages__",
         "//mediapipe/framework/port:__pkg__",
         "//mediapipe/gpu:__pkg__",
+        "//mediapipe/tasks:__subpackages__",
         "//mediapipe/util:__subpackages__",
     ],
 )
