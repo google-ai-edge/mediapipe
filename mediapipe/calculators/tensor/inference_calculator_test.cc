@@ -12,16 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "mediapipe/calculators/tensor/inference_calculator.h"
+
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/log/absl_check.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_replace.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
 #include "mediapipe/calculators/tensor/inference_calculator_test_base.h"
+#include "mediapipe/framework/api3/function_runner.h"
+#include "mediapipe/framework/api3/graph.h"
+#include "mediapipe/framework/api3/packet.h"
+#include "mediapipe/framework/api3/stream.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
 #include "mediapipe/framework/deps/file_path.h"
@@ -95,25 +103,32 @@ constexpr char kGraphWithModelAsInputSidePacket[] = R"(
     }
   )";
 
-std::vector<Tensor> CreateInputs(bool apply_default_tflite_tensor_alignment) {
-  std::vector<Tensor> input_vec;
+Tensor CreateInputTensor(bool apply_default_tflite_tensor_alignment,
+                         float fill_value) {
   // Prepare input tensor.
-  input_vec.emplace_back(
-      Tensor::ElementType::kFloat32,
-      Tensor::Shape{1, kTensorHeight, kTensorWidth, kTensorChannels},
-      /*memory_manager=*/nullptr,
-      apply_default_tflite_tensor_alignment ? tflite::kDefaultTensorAlignment
-                                            : 0);
+  Tensor tensor(Tensor::ElementType::kFloat32,
+                Tensor::Shape{1, kTensorHeight, kTensorWidth, kTensorChannels},
+                /*memory_manager=*/nullptr,
+                apply_default_tflite_tensor_alignment
+                    ? tflite::kDefaultTensorAlignment
+                    : 0);
   {
-    auto view = input_vec.back().GetCpuWriteView();
-    auto num_elements = input_vec.back().shape().num_elements();
+    auto view = tensor.GetCpuWriteView();
+    auto num_elements = tensor.shape().num_elements();
     auto tensor_buffer = view.buffer<float>();
     for (int i = 0; i < num_elements; i++) {
-      tensor_buffer[i] = 1;
+      tensor_buffer[i] = fill_value;
     }
   }
 
-  return input_vec;
+  return tensor;
+}
+
+std::vector<Tensor> CreateInputs(bool apply_default_tflite_tensor_alignment) {
+  std::vector<Tensor> result;
+  result.push_back(CreateInputTensor(apply_default_tflite_tensor_alignment,
+                                     /*fill_value*/ 1.0f));
+  return result;
 }
 
 void RunGraphThenClose(CalculatorGraph& graph, std::vector<Tensor> input_vec) {
@@ -146,7 +161,8 @@ void RunGraphOnUnwrappedTensorThenClose(CalculatorGraph& graph,
 
 void DoSmokeTest(const std::string& graph_proto, bool use_vectors,
                  bool apply_default_tflite_tensor_alignment) {
-  auto input_vec = CreateInputs(apply_default_tflite_tensor_alignment);
+  std::vector<Tensor> input_vec =
+      CreateInputs(apply_default_tflite_tensor_alignment);
 
   // Prepare single calculator graph to and wait for packets.
   CalculatorGraphConfig graph_config =
@@ -169,7 +185,7 @@ void DoSmokeTest(const std::string& graph_proto, bool use_vectors,
   if (use_vectors) {
     const std::vector<Tensor>& result_vec =
         output_packets[0].Get<std::vector<Tensor>>();
-    ASSERT_EQ(1, result_vec.size());
+    ASSERT_EQ(result_vec.size(), 1);
     result = &(result_vec[0]);
   } else {
     result = &(output_packets[0].Get<Tensor>());
@@ -179,7 +195,38 @@ void DoSmokeTest(const std::string& graph_proto, bool use_vectors,
   auto result_buffer = view.buffer<float>();
   ASSERT_NE(result_buffer, nullptr);
   for (int i = 0; i < result->shape().num_elements(); i++) {
-    ASSERT_EQ(3, result_buffer[i]);
+    ASSERT_EQ(result_buffer[i], 3);
+  }
+}
+
+TEST(InferenceCalculatorTest, SmokeTestWithFunctionRunner) {
+  MP_ASSERT_OK_AND_ASSIGN(
+      auto runner,
+      api3::Runner::For([](api3::GenericGraph& graph,
+                           api3::Stream<Tensor> in) -> api3::Stream<Tensor> {
+        auto& node = graph.AddNode<api3::InferenceNode>();
+        auto& opts = *node.options.Mutable();
+        {
+          opts.set_model_path("mediapipe/calculators/tensor/testdata/add.bin");
+        }
+        node.in_tensor.Add(in);
+        return node.out_tensor.Add();
+      }).Create());
+
+  constexpr float kTensorElement = 1.0f;
+  MP_ASSERT_OK_AND_ASSIGN(api3::Packet<Tensor> output_packet,
+                          runner.Run(api3::MakePacket<Tensor>(CreateInputTensor(
+                              /*apply_default_tflite_tensor_alignment=*/true,
+                              /*fill_value=*/kTensorElement))));
+
+  ASSERT_TRUE(output_packet);
+  const Tensor& output = output_packet.GetOrDie();
+  {
+    Tensor::CpuReadView view = output.GetCpuReadView();
+    absl::Span<const float> result_buffer(view.buffer<float>(),
+                                          output.shape().num_elements());
+    constexpr float kExpectedTensorElement = 3.0f;  // add.bin has two add ops.
+    EXPECT_THAT(result_buffer, testing::Each(kExpectedTensorElement));
   }
 }
 

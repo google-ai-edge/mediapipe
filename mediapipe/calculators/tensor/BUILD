@@ -451,6 +451,8 @@ cc_library_with_tflite(
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/api2:packet",
         "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/api3:contract",
+        "//mediapipe/framework/api3:node",
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",

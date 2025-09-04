@@ -25,12 +25,15 @@
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/string_view.h"
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
 #include "mediapipe/calculators/tensor/inference_io_mapper.h"
 #include "mediapipe/calculators/tensor/tensor_span.h"
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/api2/packet.h"
 #include "mediapipe/framework/api2/port.h"
+#include "mediapipe/framework/api3/contract.h"
+#include "mediapipe/framework/api3/node.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/status_macros.h"
@@ -40,6 +43,43 @@
 #include "tensorflow/lite/kernels/register.h"
 
 namespace mediapipe {
+
+namespace api3 {
+
+// TODO: migrate InferenceCalculator implementations to API3.
+inline constexpr absl::string_view kInferenceNodeName = "InferenceCalculator";
+struct InferenceNode : Node<kInferenceNodeName> {
+  template <typename S>
+  struct Contract {
+    // Default API: inputs and outputs will be passed as a single vector.
+    Optional<Input<S, std::vector<Tensor>>> in_tensors{"TENSORS"};
+    Optional<Output<S, std::vector<Tensor>>> out_tensors{"TENSORS"};
+
+    // New API (not yet supported by all subclasses): inputs and outputs will be
+    // passed as multiple (ordered) Tensor streams. Only one of the two APIs can
+    // be used, so TENSORS and TENSOR are mutually exclusive.
+    Repeated<Input<S, Tensor>> in_tensor{"TENSOR"};
+    Repeated<Output<S, Tensor>> out_tensor{"TENSOR"};
+
+    // Deprecated. Prefer to use "OP_RESOLVER" input side packet instead.
+    // TODO: Removes the "CUSTOM_OP_RESOLVER" side input after the
+    // migration.
+    Optional<SideInput<S, tflite::ops::builtin::BuiltinOpResolver>>
+        custom_op_resolver{"CUSTOM_OP_RESOLVER"};
+    Optional<SideInput<S, tflite::OpResolver>> op_resolver{"OP_RESOLVER"};
+    Optional<SideInput<S, TfLiteModelPtr>> model{"MODEL"};
+    Optional<SideInput<S, mediapipe::InferenceCalculatorOptions::Delegate>>
+        delegate{"DELEGATE"};
+    Optional<
+        SideInput<S, mediapipe::InferenceCalculatorOptions::InputOutputConfig>>
+        io_map{"IO_CONFIG"};
+
+    Options<S, mediapipe::InferenceCalculatorOptions> options;
+  };
+};
+
+}  // namespace api3
+
 namespace api2 {
 
 // Runs inference on the provided input Tensors and TFLite model.
