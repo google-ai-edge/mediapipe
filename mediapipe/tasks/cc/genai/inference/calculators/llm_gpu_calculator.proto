@@ -73,4 +73,7 @@ message LlmGpuCalculatorOptions {
 
   // The number of tokens per chunk.
   int32 audio_tokens_per_chunk = 33;
+
+  // Whether speculative decoding is enabled.
+  bool enable_speculative_decoding = 34;
 }
