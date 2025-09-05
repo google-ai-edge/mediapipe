@@ -82,7 +82,7 @@ JNIEXPORT void JNICALL JNI_METHOD(nativeAddImage)(JNIEnv*, jclass, jlong,
  * Method:    nativeAddAudio
  * Signature: (JLL[B)V
  */
-JNIEXPORT void JNICALL JNI_METHOD(nativeAddAudio)(JNIEnv*, jclass, jlong, jlong,
+JNIEXPORT void JNICALL JNI_METHOD(nativeAddAudio)(JNIEnv*, jclass, jlong,
                                                   jbyteArray);
 
 /*
