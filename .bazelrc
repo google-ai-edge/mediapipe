@@ -19,34 +19,34 @@ build --enable_platform_specific_config
 test --test_env="GTEST_INSTALL_FAILURE_SIGNAL_HANDLER=1"
 
 # Android
-build:android --cxxopt=-std=c++17
-build:android --host_cxxopt=-std=c++17
+build:android --cxxopt=-std=c++20
+build:android --host_cxxopt=-std=c++20
 
 # Linux
-build:linux --cxxopt=-std=c++17
-build:linux --host_cxxopt=-std=c++17
+build:linux --cxxopt=-std=c++20
+build:linux --host_cxxopt=-std=c++20
 build:linux --copt=-w
 build:linux --define=xnn_enable_avx512amx=false
 
 # windows
-build:windows --cxxopt=/std:c++17
-build:windows --host_cxxopt=/std:c++17
+build:windows --cxxopt=/std:c++20
+build:windows --host_cxxopt=/std:c++20
 build:windows --copt=/w
 # For using M_* math constants on Windows with MSVC.
 build:windows --copt=/D_USE_MATH_DEFINES
 build:windows --host_copt=/D_USE_MATH_DEFINES
 
 # macOS
-build:macos --cxxopt=-std=c++17
-build:macos --host_cxxopt=-std=c++17
+build:macos --cxxopt=-std=c++20
+build:macos --host_cxxopt=-std=c++20
 build:macos --copt=-w
 build:macos --define=xnn_enable_avx512amx=false
 
 # Sets the default Apple platform to macOS.
 build --apple_platform_type=macos
 
-# Compile ObjC++ files with C++17
-build --per_file_copt=.*\.mm\$@-std=c++17
+# Compile ObjC++ files with C++20
+build --per_file_copt=.*\.mm\$@-std=c++20
 
 # Allow debugging with XCODE
 build --apple_generate_dsym

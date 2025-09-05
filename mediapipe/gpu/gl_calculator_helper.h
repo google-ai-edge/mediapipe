@@ -15,10 +15,15 @@
 #ifndef MEDIAPIPE_GPU_GL_CALCULATOR_HELPER_H_
 #define MEDIAPIPE_GPU_GL_CALCULATOR_HELPER_H_
 
+#include <functional>
 #include <memory>
+#include <string>
+#include <type_traits>
+#include <utility>
 
 #include "absl/base/attributes.h"
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_contract.h"
 #include "mediapipe/framework/formats/image.h"
@@ -98,8 +103,8 @@ class GlCalculatorHelper {
   //
   // Therefore, instead of using std::function<void(void)>, we use a template
   // that only accepts arguments with a void result type.
-  template <typename T, typename = typename std::enable_if<std::is_void<
-                            typename std::result_of<T()>::type>::value>::type>
+  template <typename T, typename = typename std::enable_if<
+                            std::is_void<std::invoke_result_t<T>>::value>::type>
   void RunInGlContext(T f) {
     RunInGlContext([f] {
       f();
