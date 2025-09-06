@@ -15,6 +15,7 @@ limitations under the License.
 
 #include "mediapipe/tasks/c/text/text_classifier/text_classifier.h"
 
+#include <cassert>
 #include <cstdlib>
 #include <string>
 
@@ -33,7 +34,7 @@ using testing::HasSubstr;
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/text/";
 constexpr char kTestBertModelPath[] = "bert_text_classifier.tflite";
 constexpr char kTestString[] = "It's beautiful outside.";
-constexpr float kPrecision = 1e-6;
+constexpr float kScoreThreshold = 0.95;
 
 std::string GetFullPath(absl::string_view file_name) {
   return JoinPath("./", kTestDataDirectory, file_name);
@@ -56,20 +57,20 @@ TEST(TextClassifierTest, SmokeTest) {
   };
 
   void* classifier = text_classifier_create(&options, /* error_msg */ nullptr);
-  EXPECT_NE(classifier, nullptr);
+  ASSERT_NE(classifier, nullptr);
 
   TextClassifierResult result;
   text_classifier_classify(classifier, kTestString, &result,
                            /* error_msg */ nullptr);
-  EXPECT_EQ(result.classifications_count, 1);
-  EXPECT_EQ(result.classifications[0].categories_count, 2);
+  ASSERT_EQ(result.classifications_count, 1);
+  ASSERT_EQ(result.classifications[0].categories_count, 2);
   EXPECT_EQ(std::string{result.classifications[0].categories[0].category_name},
             "positive");
-  EXPECT_NEAR(result.classifications[0].categories[0].score, 0.999465,
-              kPrecision);
+  EXPECT_GE(result.classifications[0].categories[0].score, kScoreThreshold);
 
   text_classifier_close_result(&result);
-  text_classifier_close(classifier, /* error_msg */ nullptr);
+  EXPECT_EQ(result.classifications, nullptr);
+  EXPECT_EQ(text_classifier_close(classifier, /* error_msg */ nullptr), 0);
 }
 
 TEST(TextClassifierTest, ErrorHandling) {

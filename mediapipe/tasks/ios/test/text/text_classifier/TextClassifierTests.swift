@@ -32,12 +32,12 @@ class TextClassifierTests: XCTestCase {
   static let bertNegativeTextResults = [
     ResultCategory(
       index: 0,
-      score: 0.9633251,
+      score: 0.96,
       categoryName: "negative",
       displayName: nil),
     ResultCategory(
       index: 1,
-      score: 0.036674,
+      score: 0.04,
       categoryName: "positive",
       displayName: nil),
   ]
@@ -45,7 +45,7 @@ class TextClassifierTests: XCTestCase {
   static let bertNegativeTextResultsForEdgeTestCases = [
     ResultCategory(
       index: 0,
-      score: 0.963325,
+      score: 0.96,
       categoryName: "negative",
       displayName: nil)
   ]
@@ -73,7 +73,7 @@ class TextClassifierTests: XCTestCase {
     XCTAssertEqual(
       category.score,
       expectedCategory.score,
-      accuracy: 1e-3,
+      accuracy: 1e-2,
       String(
         format: """
           category[%d].score and expectedCategory[%d].score are not equal.

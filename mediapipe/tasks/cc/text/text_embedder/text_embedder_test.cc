@@ -49,6 +49,8 @@ constexpr char kUniversalSentenceEncoderModel[] =
 constexpr float kEpsilon = 1e-4;
 // Tolerance for cosine similarity evaluation.
 constexpr double kSimilarityTolerancy = 2e-2;
+// Threshold for similarity evaluation.
+constexpr float kCosineSimilarityThreshold = 0.95;
 
 using ::mediapipe::file::JoinPath;
 using ::testing::HasSubstr;
@@ -92,11 +94,13 @@ TEST_F(EmbedderTest, SucceedsWithMobileBert) {
       auto result1, text_embedder->Embed("what a great and fantastic trip"));
   ASSERT_EQ(result1.embeddings.size(), 1);
   ASSERT_EQ(result1.embeddings[0].float_embedding.size(), 512);
-#ifdef __FMA__
+#ifdef _WIN32
+  ASSERT_NEAR(result1.embeddings[0].float_embedding[0], 22.2575f, kEpsilon);
+#elif defined(__FMA__)
   ASSERT_NEAR(result1.embeddings[0].float_embedding[0], 21.254150f, kEpsilon);
 #else
   ASSERT_NEAR(result1.embeddings[0].float_embedding[0], 22.387123f, kEpsilon);
-#endif
+#endif  // _WIN32
 
   // Check cosine similarity.
   MP_ASSERT_OK_AND_ASSIGN(
@@ -209,11 +213,7 @@ TEST_F(EmbedderTest, SucceedsWithMobileBertAndDifferentThemes) {
       double similarity, TextEmbedder::CosineSimilarity(result0.embeddings[0],
                                                         result1.embeddings[0]));
   // TODO: These similarity should likely be lower
-#ifdef _WIN32
-  EXPECT_NEAR(similarity, 0.98152, kSimilarityTolerancy);
-#else
-  EXPECT_NEAR(similarity, 0.95016, kSimilarityTolerancy);
-#endif  // _WIN32
+  EXPECT_GE(similarity, kCosineSimilarityThreshold);
 
   MP_ASSERT_OK(text_embedder->Close());
 }

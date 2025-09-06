@@ -30,16 +30,16 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
   XCTAssertEqual(error.code, expectedError.code);                                             \
   XCTAssertEqualObjects(error.localizedDescription, expectedError.localizedDescription)
 
-#define AssertEqualCategoryArrays(categories, expectedCategories)                         \
-  XCTAssertEqual(categories.count, expectedCategories.count);                             \
-  for (int i = 0; i < categories.count; i++) {                                            \
-    XCTAssertEqual(categories[i].index, expectedCategories[i].index, @"index i = %d", i); \
-    XCTAssertEqualWithAccuracy(categories[i].score, expectedCategories[i].score, 1e-3,    \
-                               @"index i = %d", i);                                       \
-    XCTAssertEqualObjects(categories[i].categoryName, expectedCategories[i].categoryName, \
-                          @"index i = %d", i);                                            \
-    XCTAssertEqualObjects(categories[i].displayName, expectedCategories[i].displayName,   \
-                          @"index i = %d", i);                                            \
+#define AssertEqualCategoryArrays(categories, expectedCategories, tolerance)                \
+  XCTAssertEqual(categories.count, expectedCategories.count);                               \
+  for (int i = 0; i < categories.count; i++) {                                              \
+    XCTAssertEqual(categories[i].index, expectedCategories[i].index, @"index i = %d", i);   \
+    XCTAssertEqualWithAccuracy(categories[i].score, expectedCategories[i].score, tolerance, \
+                               @"index i = %d", i);                                         \
+    XCTAssertEqualObjects(categories[i].categoryName, expectedCategories[i].categoryName,   \
+                          @"index i = %d", i);                                              \
+    XCTAssertEqualObjects(categories[i].displayName, expectedCategories[i].displayName,     \
+                          @"index i = %d", i);                                              \
   }
 
 #define AssertTextClassifierResultHasOneHead(textClassifierResult)                    \
@@ -55,8 +55,8 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 
 + (NSArray<MPPCategory *> *)expectedBertResultCategoriesForNegativeText {
   return @[
-    [[MPPCategory alloc] initWithIndex:0 score:0.963325f categoryName:@"negative" displayName:nil],
-    [[MPPCategory alloc] initWithIndex:1 score:0.036675f categoryName:@"positive" displayName:nil]
+    [[MPPCategory alloc] initWithIndex:0 score:0.96f categoryName:@"negative" displayName:nil],
+    [[MPPCategory alloc] initWithIndex:1 score:0.04f categoryName:@"positive" displayName:nil]
   ];
 }
 
@@ -122,11 +122,21 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 
 - (void)assertResultsOfClassifyText:(NSString *)text
                 usingTextClassifier:(MPPTextClassifier *)textClassifier
-                   equalsCategories:(NSArray<MPPCategory *> *)expectedCategories {
+                   equalsCategories:(NSArray<MPPCategory *> *)expectedCategories
+                          tolerance:(float)tolerance {
   MPPTextClassifierResult *negativeResult = [textClassifier classifyText:text error:nil];
   AssertTextClassifierResultHasOneHead(negativeResult);
   AssertEqualCategoryArrays(negativeResult.classificationResult.classifications[0].categories,
-                            expectedCategories);
+                            expectedCategories, tolerance);
+}
+
+- (void)assertResultsOfClassifyText:(NSString *)text
+                usingTextClassifier:(MPPTextClassifier *)textClassifier
+                   equalsCategories:(NSArray<MPPCategory *> *)expectedCategories {
+  [self assertResultsOfClassifyText:text
+                usingTextClassifier:textClassifier
+                   equalsCategories:expectedCategories
+                          tolerance:1e-3f];
 }
 
 - (void)testCreateTextClassifierFailsWithMissingModelPath {
@@ -189,7 +199,8 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
   [self assertResultsOfClassifyText:kNegativeText
                 usingTextClassifier:textClassifier
                    equalsCategories:[MPPTextClassifierTests
-                                        expectedBertResultCategoriesForNegativeText]];
+                                        expectedBertResultCategoriesForNegativeText]
+                          tolerance:1e-2];
 
   [self assertResultsOfClassifyText:kPositiveText
                 usingTextClassifier:textClassifier

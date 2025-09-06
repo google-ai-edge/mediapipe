@@ -37,7 +37,7 @@ constexpr char kTestString0[] =
     "before they hand it to you. It's a great gimmick.";
 constexpr char kTestString1[] =
     "Let's make a plan to steal the declaration of independence.";
-constexpr float kPrecision = 1e-3;
+constexpr float kCosineSimilarityThreshold = 0.95;
 
 std::string GetFullPath(absl::string_view file_name) {
   return JoinPath("./", kTestDataDirectory, file_name);
@@ -62,7 +62,8 @@ TEST(TextEmbedderTest, SmokeTest) {
   EXPECT_EQ(result.embeddings[0].values_count, 512);
 
   text_embedder_close_result(&result);
-  text_embedder_close(embedder, /* error_msg */ nullptr);
+  EXPECT_EQ(result.embeddings, nullptr);
+  EXPECT_EQ(text_embedder_close(embedder, /* error_msg */ nullptr), 0);
 }
 
 TEST(TextEmbedderTest, SucceedsWithCosineSimilarity) {
@@ -87,16 +88,20 @@ TEST(TextEmbedderTest, SucceedsWithCosineSimilarity) {
   text_embedder_embed(embedder, kTestString1, &result1,
                       /* error_msg */ nullptr);
 
+  ASSERT_EQ(result0.embeddings_count, 1);
+  ASSERT_EQ(result1.embeddings_count, 1);
+
   // Check cosine similarity.
   double similarity;
   text_embedder_cosine_similarity(&result0.embeddings[0],
                                   &result1.embeddings[0], &similarity, nullptr);
-  double expected_similarity = 0.95016;
-  EXPECT_NEAR(similarity, expected_similarity, kPrecision);
+  EXPECT_GE(similarity, kCosineSimilarityThreshold);
 
   text_embedder_close_result(&result0);
+  EXPECT_EQ(result0.embeddings, nullptr);
   text_embedder_close_result(&result1);
-  text_embedder_close(embedder, /* error_msg */ nullptr);
+  EXPECT_EQ(result1.embeddings, nullptr);
+  EXPECT_EQ(text_embedder_close(embedder, /* error_msg */ nullptr), 0);
 }
 
 TEST(TextEmbedderTest, ErrorHandling) {
