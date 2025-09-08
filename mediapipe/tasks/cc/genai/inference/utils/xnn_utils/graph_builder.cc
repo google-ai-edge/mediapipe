@@ -588,52 +588,38 @@ absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::SquareRoot(
   return output;
 }
 
-absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::AvgLastDim(
-    std::shared_ptr<Tensor> input) {
+absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::ReduceLastDim(
+    std::shared_ptr<Tensor> input, xnn_reduce_operator reduce_operator) {
   Tensor::DimsType output_dims(input->dims);
   output_dims.back() = 1;
-  MP_ASSIGN_OR_RETURN(auto output, IntermediateTensor(std::move(output_dims),
-                                                      "avg_last_dim_output"));
-  // TODO: b/149120844 - Remove the following messy code once we have settled
-  // which flag to use.
-#if defined(XNN_FLAG_KEEP_DIMS)
-  build_steps_.push_back(
-      [input, output](xnn_subgraph_t subgraph) -> absl::Status {
-        size_t reduction_axis = input->dims.size() - 1;
-        RET_CHECK_EQ(xnn_status_success,
-                     xnn_define_static_reduce(
-                         subgraph, xnn_reduce_mean, /*num_reduction_axes=*/1,
-                         &reduction_axis, input->tensor_id(subgraph),
-                         output->tensor_id(subgraph),
-                         /*flags=*/XNN_FLAG_KEEP_DIMS));
-        return absl::OkStatus();
-      });
-#elif defined(XNN_FLAG_REDUCE_DIMS)
-  build_steps_.push_back(
-      [input, output](xnn_subgraph_t subgraph) -> absl::Status {
-        size_t reduction_axis = input->dims.size() - 1;
-        RET_CHECK_EQ(xnn_status_success,
-                     xnn_define_static_reduce(
-                         subgraph, xnn_reduce_mean, /*num_reduction_axes=*/1,
-                         &reduction_axis, input->tensor_id(subgraph),
-                         output->tensor_id(subgraph),
-                         /*flags=*/0));
-        return absl::OkStatus();
-      });
-#else
-#error one of the above flag should be defined.
-#endif  // XNN_FLAG_KEEP_DIMS
+  MP_ASSIGN_OR_RETURN(
+      auto output,
+      IntermediateTensor(std::move(output_dims), "reduce_last_dim_output"));
+  build_steps_.push_back([input, output, reduce_operator](
+                             xnn_subgraph_t subgraph) -> absl::Status {
+    size_t reduction_axis = input->dims.size() - 1;
+    RET_CHECK_EQ(xnn_status_success,
+                 xnn_define_static_reduce(
+                     subgraph, reduce_operator, /*num_reduction_axes=*/1,
+                     &reduction_axis, input->tensor_id(subgraph),
+                     output->tensor_id(subgraph),
+                     /*flags=*/XNN_FLAG_KEEP_DIMS));
+    return absl::OkStatus();
+  });
 
   return output;
 }
 
+absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::AvgLastDim(
+    std::shared_ptr<Tensor> input) {
+  return ReduceLastDim(input, xnn_reduce_mean);
+}
+
 absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::Rms(
     std::shared_ptr<Tensor> input) {
-  MP_ASSIGN_OR_RETURN(auto sqr_out, Square(input));
-
-  MP_ASSIGN_OR_RETURN(auto mean_out, AvgLastDim(sqr_out));
-
-  return SquareRoot(mean_out);
+  MP_ASSIGN_OR_RETURN(auto mean_squared,
+                      ReduceLastDim(input, xnn_reduce_mean_squared));
+  return SquareRoot(mean_squared);
 }
 
 absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::RmsNorm(
