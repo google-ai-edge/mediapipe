@@ -11,19 +11,22 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+#include "mediapipe/calculators/tensor/image_to_tensor_calculator.h"
 
 #include <array>
 #include <memory>
+#include <optional>
 #include <utility>
 #include <vector>
 
 #include "absl/log/absl_log.h"
+#include "absl/status/status.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_calculator.pb.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_converter.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_utils.h"
-#include "mediapipe/framework/api2/node.h"
-#include "mediapipe/framework/api2/packet.h"
-#include "mediapipe/framework/api2/port.h"
+#include "mediapipe/framework/api3/calculator.h"
+#include "mediapipe/framework/api3/calculator_context.h"
+#include "mediapipe/framework/api3/calculator_contract.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame.h"
@@ -69,138 +72,65 @@
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
 namespace mediapipe {
-namespace api2 {
+namespace api3 {
 
-// Converts image into Tensor, possibly with cropping, resizing and
-// normalization, according to specified inputs and options.
-//
-// Inputs:
-//   IMAGE - Image[ImageFormat::SRGB / SRGBA, GpuBufferFormat::kBGRA32] or
-//           ImageFrame [ImageFormat::SRGB/SRGBA] (for backward compatibility
-//           with existing graphs that use IMAGE for ImageFrame input)
-//   IMAGE_GPU - GpuBuffer [GpuBufferFormat::kBGRA32]
-//     Image to extract from.
-//
-//   Note:
-//   - One and only one of IMAGE and IMAGE_GPU should be specified.
-//   - IMAGE input of type Image is processed on GPU if the data is already on
-//     GPU (i.e., Image::UsesGpu() returns true), or otherwise processed on CPU.
-//   - IMAGE input of type ImageFrame is always processed on CPU.
-//   - IMAGE_GPU input (of type GpuBuffer) is always processed on GPU.
-//
-//   NORM_RECT - NormalizedRect @Optional
-//     Describes region of image to extract.
-//     @Optional: rect covering the whole image is used if not specified.
-//
-// Outputs:
-//   TENSORS - std::vector<Tensor>
-//     Vector containing a single Tensor populated with an extracted RGB image.
-//   MATRIX - std::array<float, 16> @Optional
-//     An std::array<float, 16> representing a 4x4 row-major-order matrix that
-//     maps a point on the input image to a point on the output tensor, and
-//     can be used to reverse the mapping by inverting the matrix.
-//   LETTERBOX_PADDING - std::array<float, 4> @Optional
-//     An std::array<float, 4> representing the letterbox padding from the 4
-//     sides ([left, top, right, bottom]) of the output image, normalized to
-//     [0.f, 1.f] by the output dimensions. The padding values are non-zero only
-//     when the "keep_aspect_ratio" is true.
-//
-//     For instance, when the input image is 10x10 (width x height) and the
-//     output dimensions specified in the calculator option are 20x40 and
-//     "keep_aspect_ratio" is true, the calculator scales the input image to
-//     20x20 and places it in the middle of the output image with an equal
-//     padding of 10 pixels at the top and the bottom. The resulting array is
-//     therefore [0.f, 0.25f, 0.f, 0.25f] (10/40 = 0.25f).
-//
-// Example:
-// node {
-//   calculator: "ImageToTensorCalculator"
-//   input_stream: "IMAGE:image"  # or "IMAGE_GPU:image"
-//   input_stream: "NORM_RECT:roi"
-//   output_stream: "TENSORS:tensors"
-//   output_stream: "MATRIX:matrix"
-//   options {
-//     [mediapipe.ImageToTensorCalculatorOptions.ext] {
-//       output_tensor_width: 256
-//       output_tensor_height: 256
-//       keep_aspect_ratio: false
-//       output_tensor_float_range {
-//         min: 0.0
-//         max: 1.0
-//       }
-//       # gpu_origin: CONVENTIONAL # or TOP_LEFT
-//     }
-//   }
-// }
-class ImageToTensorCalculator : public Node {
+class ImageToTensorNodeImpl
+    : public Calculator<ImageToTensorNode, ImageToTensorNodeImpl> {
  public:
-  static constexpr Input<
-      OneOf<mediapipe::Image, mediapipe::ImageFrame>>::Optional kIn{"IMAGE"};
-  static constexpr Input<GpuBuffer>::Optional kInGpu{"IMAGE_GPU"};
-  static constexpr Input<mediapipe::NormalizedRect>::Optional kInNormRect{
-      "NORM_RECT"};
-  static constexpr Output<std::vector<Tensor>>::Optional kOutTensors{"TENSORS"};
-  static constexpr Output<Tensor>::Optional kOutTensor{"TENSOR"};
-  static constexpr Output<std::array<float, 4>>::Optional kOutLetterboxPadding{
-      "LETTERBOX_PADDING"};
-  static constexpr Output<std::array<float, 16>>::Optional kOutMatrix{"MATRIX"};
-
-  MEDIAPIPE_NODE_CONTRACT(kIn, kInGpu, kInNormRect, kOutTensors, kOutTensor,
-                          kOutLetterboxPadding, kOutMatrix);
-
-  static absl::Status UpdateContract(CalculatorContract* cc) {
-    const auto& options =
-        cc->Options<mediapipe::ImageToTensorCalculatorOptions>();
+  static absl::Status UpdateContract(
+      CalculatorContract<ImageToTensorNode>& cc) {
+    const auto& options = cc.options.Get();
 
     RET_CHECK_OK(ValidateOptionOutputDims(options));
-    RET_CHECK(kIn(cc).IsConnected() ^ kInGpu(cc).IsConnected())
+    RET_CHECK(cc.in.IsConnected() ^ cc.in_gpu.IsConnected())
         << "One and only one of IMAGE and IMAGE_GPU input is expected.";
-    RET_CHECK(kOutTensors(cc).IsConnected() ^ kOutTensor(cc).IsConnected())
+    RET_CHECK(cc.out_tensors.IsConnected() ^ cc.out_tensor.IsConnected())
         << "One and only one of TENSORS and TENSOR output is supported.";
 
 #if MEDIAPIPE_DISABLE_GPU
-    if (kInGpu(cc).IsConnected()) {
+    if (cc.in_gpu.IsConnected()) {
       return absl::UnimplementedError(
           "GPU processing is disabled in build flags");
     }
 #else  // !MEDIAPIPE_DISABLE_GPU
 #if MEDIAPIPE_METAL_ENABLED
-    MP_RETURN_IF_ERROR([MPPMetalHelper updateContract:cc]);
+    MP_RETURN_IF_ERROR(
+        [MPPMetalHelper updateContract:&cc.GetGenericContract()]);
 #else
-    cc->UseService(kGpuService).Optional();
+
+    cc.UseService(kGpuService).Optional();
 #if MEDIAPIPE_USE_WEBGPU
-    cc->UseService(kWebGpuService).Optional();
+    cc.UseService(kWebGpuService).Optional();
 #endif  // MEDIAPIPE_USE_WEBGPU
 #endif  // MEDIAPIPE_METAL_ENABLED
 #endif  // MEDIAPIPE_DISABLE_GPU
 
-    cc->UseService(kMemoryManagerService).Optional();
+    cc.UseService(kMemoryManagerService).Optional();
     return absl::OkStatus();
   }
 
-  absl::Status Open(CalculatorContext* cc) {
-    if (cc->Service(kMemoryManagerService).IsAvailable()) {
-      memory_manager_ = &cc->Service(kMemoryManagerService).GetObject();
+  absl::Status Open(CalculatorContext<ImageToTensorNode>& cc) final {
+    if (cc.Service(kMemoryManagerService).IsAvailable()) {
+      memory_manager_ = &cc.Service(kMemoryManagerService).GetObject();
     }
-    options_ = cc->Options<mediapipe::ImageToTensorCalculatorOptions>();
+    options_ = cc.options.Get();
     params_ = GetOutputTensorParams(options_);
     return absl::OkStatus();
   }
 
-  absl::Status Process(CalculatorContext* cc) {
-    if ((kIn(cc).IsConnected() && kIn(cc).IsEmpty()) ||
-        (kInGpu(cc).IsConnected() && kInGpu(cc).IsEmpty())) {
+  absl::Status Process(CalculatorContext<ImageToTensorNode>& cc) final {
+    if (!cc.in && !cc.in_gpu) {
       // Timestamp bound update happens automatically.
       return absl::OkStatus();
     }
 
-    absl::optional<mediapipe::NormalizedRect> norm_rect;
-    if (kInNormRect(cc).IsConnected()) {
-      if (kInNormRect(cc).IsEmpty()) {
+    std::optional<mediapipe::NormalizedRect> norm_rect;
+    if (cc.in_norm_rect.IsConnected()) {
+      if (!cc.in_norm_rect) {
         // Timestamp bound update happens automatically. (See Open().)
         return absl::OkStatus();
       }
-      norm_rect = *kInNormRect(cc);
+      norm_rect = cc.in_norm_rect.GetOrDie();
       if (norm_rect->width() == 0 && norm_rect->height() == 0) {
         // WORKAROUND: some existing graphs may use sentinel rects {width=0,
         // height=0, ...} quite often and calculator has to handle them
@@ -213,13 +143,25 @@ class ImageToTensorCalculator : public Node {
       }
     }
 
-#if MEDIAPIPE_DISABLE_GPU
-    MP_ASSIGN_OR_RETURN(auto image, GetInputImage(kIn(cc)));
-#else
-    const bool is_input_gpu = kInGpu(cc).IsConnected();
-    MP_ASSIGN_OR_RETURN(auto image, is_input_gpu ? GetInputImage(kInGpu(cc))
-                                                 : GetInputImage(kIn(cc)));
-#endif  // MEDIAPIPE_DISABLE_GPU
+    std::shared_ptr<const Image> image;
+    if (cc.in.IsConnected()) {
+      image = cc.in.VisitOrDie(
+          [](const Image& image) {
+            return std::shared_ptr<const Image>(
+                &image, [](const Image* image) { /*do nothing*/ });
+          },
+          [](const ImageFrame& image_frame) {
+            return std::make_shared<const Image>(std::shared_ptr<ImageFrame>(
+                const_cast<ImageFrame*>(&image_frame),
+                [](ImageFrame* image) { /*do nothing*/ }));
+          });
+    }
+#if !MEDIAPIPE_DISABLE_GPU
+    if (cc.in_gpu.IsConnected()) {
+      image = std::make_shared<const Image>(cc.in_gpu.GetOrDie());
+    }
+#endif  // !MEDIAPIPE_DISABLE_GPU
+    RET_CHECK(image) << "Input image is missing.";
 
     RotatedRect roi = GetRoi(image->width(), image->height(), norm_rect);
     const int tensor_width = params_.output_width.value_or(image->width());
@@ -227,19 +169,20 @@ class ImageToTensorCalculator : public Node {
     MP_ASSIGN_OR_RETURN(auto padding,
                         PadRoi(tensor_width, tensor_height,
                                options_.keep_aspect_ratio(), &roi));
-    if (kOutLetterboxPadding(cc).IsConnected()) {
-      kOutLetterboxPadding(cc).Send(padding);
+    if (cc.out_letterbox_padding.IsConnected()) {
+      cc.out_letterbox_padding.Send(padding);
     }
-    if (kOutMatrix(cc).IsConnected()) {
+    if (cc.out_matrix.IsConnected()) {
       std::array<float, 16> matrix;
       GetRotatedSubRectToRectTransformMatrix(
           roi, image->width(), image->height(),
           /*flip_horizontally=*/false, &matrix);
-      kOutMatrix(cc).Send(std::move(matrix));
+      cc.out_matrix.Send(std::move(matrix));
     }
 
     // Lazy initialization of the GPU or CPU converter.
-    MP_RETURN_IF_ERROR(InitConverterIfNecessary(cc, *image.get()));
+    MP_RETURN_IF_ERROR(
+        InitConverterIfNecessary(&cc.GetGenericContext(), *image));
 
     Tensor::ElementType output_tensor_type =
         GetOutputTensorType(image->UsesGpu(), params_);
@@ -252,18 +195,18 @@ class ImageToTensorCalculator : public Node {
                                      params_.range_max,
                                      /*tensor_buffer_offset=*/0, tensor));
 
-    if (kOutTensors(cc).IsConnected()) {
+    if (cc.out_tensors.IsConnected()) {
       auto result = std::make_unique<std::vector<Tensor>>();
       result->push_back(std::move(tensor));
-      kOutTensors(cc).Send(std::move(result));
+      cc.out_tensors.Send(std::move(result));
     } else {
-      kOutTensor(cc).Send(std::move(tensor));
+      cc.out_tensor.Send(std::move(tensor));
     }
     return absl::OkStatus();
   }
 
  private:
-  absl::Status InitConverterIfNecessary(CalculatorContext* cc,
+  absl::Status InitConverterIfNecessary(mediapipe::CalculatorContext* cc,
                                         const Image& image) {
     // Lazy initialization of the GPU or CPU converter.
     if (image.UsesGpu()) {
@@ -343,7 +286,5 @@ class ImageToTensorCalculator : public Node {
   MemoryManager* memory_manager_ = nullptr;
 };
 
-MEDIAPIPE_REGISTER_NODE(ImageToTensorCalculator);
-
-}  // namespace api2
+}  // namespace api3
 }  // namespace mediapipe
