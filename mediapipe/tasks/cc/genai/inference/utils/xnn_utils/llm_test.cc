@@ -58,6 +58,10 @@ ABSL_FLAG(std::string, model_type, "GEMMA_2B",
 
 ABSL_FLAG(int, num_threads, 4, "The number of threads to use");
 
+ABSL_FLAG(std::string, activation_precision, "",
+          "The datatype to use for the activations, i.e. 'fp32' (default) or "
+          "'fp16'.");
+
 namespace {
 static const char* const kXnnProfileCsvFile =
 #if __ANDROID__
@@ -81,6 +85,18 @@ std::unique_ptr<RuntimeConfigs> GetRunTimeConfigsForBenchmark() {
   runtime_config->xnn_num_threads = absl::GetFlag(FLAGS_num_threads);
   runtime_config->xnn_profile = !absl::GetFlag(FLAGS_xnn_profile_csv).empty();
   runtime_config->xnn_profile_csv = absl::GetFlag(FLAGS_xnn_profile_csv);
+  const std::string activation_precision =
+      absl::GetFlag(FLAGS_activation_precision);
+  if (activation_precision.empty() || activation_precision == "fp32") {
+    runtime_config->activation_precision =
+        RuntimeConfigs::ActivationPrecision::kFP32;
+  } else if (activation_precision == "fp16") {
+    runtime_config->activation_precision =
+        RuntimeConfigs::ActivationPrecision::kFP16;
+  } else {
+    ABSL_LOG(FATAL) << "Unsupported activation_precision: "
+                    << activation_precision;
+  }
   return runtime_config;
 }
 
