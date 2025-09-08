@@ -256,9 +256,9 @@ http_archive(
 http_archive(
     name = "XNNPACK",
     # `curl -L <url> | shasum -a 256`
-    sha256 = "763f32eed3520cdb2fc906555315701ac4cc92e3d77acd4a3eafd8a553996d63",
-    strip_prefix = "XNNPACK-0a655ef53812ce9bd8ce2628757cc0f476efcf51",
-    url = "https://github.com/google/XNNPACK/archive/0a655ef53812ce9bd8ce2628757cc0f476efcf51.zip",
+    sha256 = "7235b2b55fbf11b64f38db130efae0f293d2d6d6fd90613221b598a8847f41c5",
+    strip_prefix = "XNNPACK-68167d1fefa50296f0588ec280f48c58357ca898",
+    url = "https://github.com/google/XNNPACK/archive/68167d1fefa50296f0588ec280f48c58357ca898.zip",
 )
 
 http_archive(
@@ -290,33 +290,33 @@ http_archive(
     ],
 )
 
-# KleidiAI is needed to get the best possible performance out of XNNPack, from 2025-06-16
+# KleidiAI is needed to get the best possible performance out of XNNPack, from 2025-09-08
 http_archive(
     name = "KleidiAI",
-    sha256 = "439926527fca9405ae90b602a3938d3435751ec78492e5f1c62d85f5df8c2784",
-    strip_prefix = "kleidiai-dc69e899945c412a8ce39ccafd25139f743c60b1",
+    sha256 = "42155cfc084bf1f80e9ef486470f949502ea8d1b845b2f1bebd58978a1b540aa",
+    strip_prefix = "kleidiai-8ca226712975f24f13f71d04cda039a0ee9f9e2f",
     urls = [
-        "https://github.com/ARM-software/kleidiai/archive/dc69e899945c412a8ce39ccafd25139f743c60b1.zip",
+        "https://github.com/ARM-software/kleidiai/archive/8ca226712975f24f13f71d04cda039a0ee9f9e2f.zip",
     ],
 )
 
-# 2025-05-22
+# 2025-09-08
 http_archive(
     name = "cpuinfo",
-    sha256 = "ae356c4c0c841e20711b5e111a1ccdec9c2f3c1dd7bde7cfba1bed18d6d02459",
-    strip_prefix = "cpuinfo-de0ce7c7251372892e53ce9bc891750d2c9a4fd8",
+    sha256 = "c0254ce97f7abc778dd2df0aaca1e0506dba1cd514fdb9fe88c07849393f8ef4",
+    strip_prefix = "cpuinfo-8a9210069b5a37dd89ed118a783945502a30a4ae",
     urls = [
-        "https://github.com/pytorch/cpuinfo/archive/de0ce7c7251372892e53ce9bc891750d2c9a4fd8.zip",
+        "https://github.com/pytorch/cpuinfo/archive/8a9210069b5a37dd89ed118a783945502a30a4ae.zip",
     ],
 )
 
-# pthreadpool is a dependency of XNNPACK, from 2025-06-15
+# pthreadpool is a dependency of XNNPACK, from 2025-09-08
 http_archive(
     name = "pthreadpool",
     # `curl -L <url> | shasum -a 256`
-    sha256 = "516ba8d05c30e016d7fd7af6a7fc74308273883f857faf92bc9bb630ab6dba2c",
-    strip_prefix = "pthreadpool-c2ba5c50bb58d1397b693740cf75fad836a0d1bf",
-    urls = ["https://github.com/google/pthreadpool/archive/c2ba5c50bb58d1397b693740cf75fad836a0d1bf.zip"],
+    sha256 = "d5a78b017839ee0474e6aef6e21742b03f641b260f29faf9538a0a6b8fae0704",
+    strip_prefix = "pthreadpool-995229919303dd98c0f1b3b585b54527067ef893",
+    urls = ["https://github.com/google/pthreadpool/archive/995229919303dd98c0f1b3b585b54527067ef893.zip"],
 )
 
 # TF on 2025-07-01
