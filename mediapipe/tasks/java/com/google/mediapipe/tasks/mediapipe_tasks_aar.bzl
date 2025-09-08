@@ -15,6 +15,7 @@
 """Building MediaPipe Tasks AARs."""
 
 load("@build_bazel_rules_android//android:rules.bzl", "android_binary", "android_library")
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 
 _CORE_TASKS_JAVA_PROTO_LITE_TARGETS = [
     "//mediapipe/gpu:gpu_origin_java_proto_lite",
@@ -107,7 +108,7 @@ def mediapipe_jni_binary(name, deps, uses_explicit_exports = False):
         ]
 
     # Target to build the JNI library from source.
-    native.cc_binary(
+    cc_binary(
         name = "lib" + name + "_src",
         defines = [
             "EXCLUDE_OPENCV_SO_LIB=1",
