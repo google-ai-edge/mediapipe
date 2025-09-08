@@ -31,13 +31,17 @@ mediapipe_proto_library(
 cc_library(
     name = "handedness_to_matrix_calculator",
     srcs = ["handedness_to_matrix_calculator.cc"],
+    hdrs = ["handedness_to_matrix_calculator.h"],
     deps = [
-        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api3:calculator",
+        "//mediapipe/framework/api3:calculator_context",
+        "//mediapipe/framework/api3:contract",
+        "//mediapipe/framework/api3:node",
         "//mediapipe/framework/formats:classification_cc_proto",
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
         "//mediapipe/tasks/cc/vision/gesture_recognizer:handedness_util",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
@@ -50,13 +54,15 @@ cc_test(
     srcs = ["handedness_to_matrix_calculator_test.cc"],
     deps = [
         ":handedness_to_matrix_calculator",
-        "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/api3:function_runner",
+        "//mediapipe/framework/api3:graph",
+        "//mediapipe/framework/api3:packet",
+        "//mediapipe/framework/api3:stream",
         "//mediapipe/framework/formats:classification_cc_proto",
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/framework/port:gtest_main",
-        "//mediapipe/framework/port:parse_text_proto",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status:statusor",
     ],
 )
 
