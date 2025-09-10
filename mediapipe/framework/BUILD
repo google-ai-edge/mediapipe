@@ -1515,15 +1515,13 @@ cc_test(
         ":calculator_framework",
         ":calculator_graph",
         "//mediapipe/calculators/core:pass_through_calculator",
-        "//mediapipe/framework/port:core_proto",
         "//mediapipe/framework/port:gtest_main",
-        "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:logging",
-        "//mediapipe/framework/port:status",
         "//mediapipe/framework/tool:sink",
         "//mediapipe/framework/tool:status_util",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/time",
+        "@com_google_absl//absl/synchronization",
     ],
 )
 
