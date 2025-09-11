@@ -131,3 +131,12 @@ py_library(
         "@mediapipe_pip_deps_numpy//:pkg",
     ],
 )
+
+py_library(
+    name = "embedding_result_c",
+    srcs = ["embedding_result_c.py"],
+    deps = [
+        ":embedding_result",
+        "@mediapipe_pip_deps_numpy//:pkg",
+    ],
+)

@@ -36,5 +36,6 @@ cc_binary(
     deps = [
         "//mediapipe/tasks/c/text/language_detector:language_detector_lib",
         "//mediapipe/tasks/c/text/text_classifier:text_classifier_lib",
+        "//mediapipe/tasks/c/text/text_embedder:text_embedder_lib",
     ],
 )
