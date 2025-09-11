@@ -27,5 +27,11 @@ TEST(NodeTest, NameIsRequiredAndCanBeSpecified) {
   EXPECT_EQ(BarBNode::GetRegistrationName(), "BarB");
 }
 
+struct CompileTimeNameNode : Node<"CompileTimeNameNode"> {};
+
+TEST(NodeTest, CanSpecifyNodeNameWithCompileTimeString) {
+  EXPECT_EQ(CompileTimeNameNode::GetRegistrationName(), "CompileTimeNameNode");
+}
+
 }  // namespace
 }  // namespace mediapipe::api3

@@ -17,7 +17,6 @@
 
 #include <string>
 
-#include "absl/strings/string_view.h"
 #include "mediapipe/framework/api3/contract.h"
 #include "mediapipe/framework/api3/node.h"
 #include "mediapipe/framework/api3/testing/bar.pb.h"
@@ -25,8 +24,7 @@
 
 namespace mediapipe::api3 {
 
-inline constexpr absl::string_view kFooName = "Foo";
-struct FooNode : Node<kFooName> {
+struct FooNode : Node<"Foo"> {
   template <typename S>
   struct Contract {
     Input<S, int> in{"IN"};
@@ -49,8 +47,7 @@ struct FooNode : Node<kFooName> {
   };
 };
 
-inline constexpr absl::string_view kBarName = "Bar";
-struct BarNode : Node<kBarName> {
+struct BarNode : Node<"Bar"> {
   template <typename S>
   struct Contract {
     Input<S, int> in{"IN"};
@@ -97,14 +94,12 @@ struct Bar {
 };
 
 // Nodes sharing the same split/external contract.
-inline constexpr absl::string_view kBarAName = "BarA";
-struct BarANode : Node<kBarAName> {
+struct BarANode : Node<"BarA"> {
   template <typename S>
   using Contract = Bar<S>;
 };
 
-inline constexpr absl::string_view kBarBName = "BarB";
-struct BarBNode : Node<kBarBName> {
+struct BarBNode : Node<"BarB"> {
   template <typename S>
   using Contract = Bar<S>;
 };

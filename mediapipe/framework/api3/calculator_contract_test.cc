@@ -17,7 +17,6 @@
 #include <string>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "mediapipe/framework/api3/contract.h"
 #include "mediapipe/framework/api3/internal/specializers.h"
 #include "mediapipe/framework/api3/node.h"
@@ -270,8 +269,7 @@ struct OptionalFoo {
   Optional<SideOutput<S, float>> side_output{"SIDE_OUTPUT"};
 };
 
-/*inline*/ constexpr absl::string_view kOptionalFooName = "OptionalFoo";
-struct OptionalFooNode : Node<kOptionalFooName> {
+struct OptionalFooNode : Node<"OptionalFoo"> {
   template <typename S>
   using Contract = OptionalFoo<S>;
 };

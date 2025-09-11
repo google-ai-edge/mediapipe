@@ -20,7 +20,6 @@
 #include <vector>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "mediapipe/framework/api3/calculator_context.h"
 #include "mediapipe/framework/api3/calculator_contract.h"
 #include "mediapipe/framework/api3/calculator_test.h"
@@ -296,8 +295,7 @@ TEST(CalculatorTest, CanUseSharedContract) {
   MP_ASSERT_OK(graph.WaitUntilDone());
 }
 
-inline constexpr absl::string_view kNoOpNodeName = "NoOpNode";
-struct NoOpNode : Node<kNoOpNodeName> {
+struct NoOpNode : Node<"NoOpNode"> {
   template <typename S>
   struct Contract {
     Input<S, int> input{"IN"};
@@ -358,9 +356,7 @@ TEST(CalculatorTest, TimestampOffsetZeroIsTheDefault) {
   MP_ASSERT_OK(graph.WaitUntilDone());
 }
 
-inline constexpr absl::string_view kNoOpNodeUnsetOffsetName =
-    "NoOpNodeUnsetOffset";
-struct NoOpNodeUnsetOffset : Node<kNoOpNodeUnsetOffsetName> {
+struct NoOpNodeUnsetOffset : Node<"NoOpNodeUnsetOffset"> {
   template <typename S>
   struct Contract {
     Input<S, int> input{"IN"};
@@ -425,8 +421,7 @@ TEST(CalculatorTest, DefaultTimestampOffsetCanBeUnset) {
   MP_ASSERT_OK(graph.WaitUntilDone());
 }
 
-inline constexpr absl::string_view kGeneratorNodeName = "GeneratorNode";
-struct GeneratorNode : Node<kGeneratorNodeName> {
+struct GeneratorNode : Node<"GeneratorNode"> {
   template <typename S>
   struct Contract {
     SideOutput<S, int> side_output{"INT"};
@@ -461,9 +456,7 @@ TEST(CalculatorTest, CanRunGeneratorCalculator) {
   EXPECT_EQ(value.Get<int>(), 42);
 }
 
-inline constexpr absl::string_view kInvalidGeneratorNodeName =
-    "InvalidGeneratorNode";
-struct InvalidGeneratorNode : Node<kInvalidGeneratorNodeName> {
+struct InvalidGeneratorNode : Node<"InvalidGeneratorNode"> {
   template <typename S>
   struct Contract {
     SideOutput<S, int> side_output{"INT"};

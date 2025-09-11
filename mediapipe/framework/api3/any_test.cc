@@ -19,7 +19,6 @@
 #include <utility>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "mediapipe/framework/api3/calculator.h"
 #include "mediapipe/framework/api3/calculator_context.h"
 #include "mediapipe/framework/api3/calculator_contract.h"
@@ -39,11 +38,10 @@
 namespace mediapipe::api3 {
 namespace {
 
-constexpr absl::string_view kTickNodeName = "TemplatedTickNode";
 // Intentionally using template for Tick. For all types, the implementation will
 // be the same - through Any type.
 template <typename TickT>
-struct TemplatedTickNode : Node<kTickNodeName> {
+struct TemplatedTickNode : Node<"TemplatedTickNode"> {
   template <typename S>
   struct Contract {
     Input<S, TickT> tick{"TICK"};
@@ -112,8 +110,7 @@ TEST(AnyTest, CanUseAnyForNodeTickInputImplementation) {
   EXPECT_EQ(output.Get<int>(), 42);
 }
 
-constexpr absl::string_view kAnyTickNodeName = "AnyTickNode";
-struct AnyTickNode : Node<kAnyTickNodeName> {
+struct AnyTickNode : Node<"AnyTickNode"> {
   template <typename S>
   struct Contract {
     Input<S, Any> tick{"TICK"};
@@ -186,9 +183,7 @@ TEST(AnyTest, CanUseAnyForNodeTickInputInterfaceAndImplementation) {
   EXPECT_EQ(output.Get<int>(), 42);
 }
 
-constexpr absl::string_view kPassThroughNode = "PassThroughNode";
-
-struct PassThroughNode : Node<kPassThroughNode> {
+struct PassThroughNode : Node<"PassThroughNode"> {
   template <typename S>
   struct Contract {
     Repeated<Input<S, Any>> in{"IN"};

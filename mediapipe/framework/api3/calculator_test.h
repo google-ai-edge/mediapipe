@@ -18,7 +18,6 @@
 #include <string>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "mediapipe/framework/api3/calculator.h"
 #include "mediapipe/framework/api3/calculator_context.h"
 #include "mediapipe/framework/api3/calculator_contract.h"
@@ -35,8 +34,7 @@ namespace mediapipe::api3 {
 inline constexpr GraphService<std::string> kTestStringService(
     "kTestService", GraphServiceBase::kDisallowDefaultInitialization);
 
-inline constexpr absl::string_view kPassThroughName = "PassThrough";
-struct PassThroughNode : Node<kPassThroughName> {
+struct PassThroughNode : Node<"PassThrough"> {
   template <typename S>
   struct Contract {
     Input<S, int> in{"IN"};
@@ -85,14 +83,12 @@ struct PassThrough {
   }
 };
 
-inline constexpr absl::string_view kSharedPassThroughA = "SharedPassThroughA";
-struct SharedPassThroughANode : Node<kSharedPassThroughA> {
+struct SharedPassThroughANode : Node<"SharedPassThroughA"> {
   template <typename S>
   using Contract = PassThrough<S>;
 };
 
-inline constexpr absl::string_view kSharedPassThroughB = "SharedPassThroughB";
-struct SharedPassThroughBNode : Node<kSharedPassThroughB> {
+struct SharedPassThroughBNode : Node<"SharedPassThroughB"> {
   template <typename S>
   using Contract = PassThrough<S>;
 };

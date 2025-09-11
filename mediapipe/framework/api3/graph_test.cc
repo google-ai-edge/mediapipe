@@ -39,8 +39,7 @@ namespace {
 struct Image {};
 struct Tensor {};
 
-constexpr absl::string_view kFooNodeName = "Foo";
-struct FooNode : Node<kFooNodeName> {
+struct FooNode : Node<"Foo"> {
   template <typename S>
   struct Contract {
     Input<S, Image> base{"BASE"};
@@ -49,8 +48,7 @@ struct FooNode : Node<kFooNodeName> {
   };
 };
 
-constexpr absl::string_view kBarNodeName = "Bar";
-struct BarNode : Node<kBarNodeName> {
+struct BarNode : Node<"Bar"> {
   template <typename S>
   struct Contract {
     Input<S, Tensor> in{"IN"};
@@ -310,9 +308,7 @@ TEST(GenericGraphTest, BuildGraphSettingSourceLayer) {
 
 struct Detection {};
 
-constexpr absl::string_view kPreviousLoopbackNodeName =
-    "PreviousLoopbackCalculator";
-struct PreviousLoopbackNode : Node<kPreviousLoopbackNodeName> {
+struct PreviousLoopbackNode : Node<"PreviousLoopbackCalculator"> {
   template <typename S>
   struct Contract {
     Input<S, Image> main{"MAIN"};
@@ -321,9 +317,7 @@ struct PreviousLoopbackNode : Node<kPreviousLoopbackNodeName> {
   };
 };
 
-constexpr absl::string_view kObjectDetectionNodeName =
-    "ObjectDetectionCalculator";
-struct ObjectDetectionNode : Node<kObjectDetectionNodeName> {
+struct ObjectDetectionNode : Node<"ObjectDetectionCalculator"> {
   template <typename S>
   struct Contract {
     Input<S, Image> image{"IMAGE"};
@@ -390,8 +384,7 @@ TEST(GenericGraphTest, CanUseBackEdges) {
 
 struct Data {};
 
-constexpr absl::string_view kSomeBackEdgeNodeName = "SomeBackEdgeCalculator";
-struct SomeBackEdgeNode : Node<kSomeBackEdgeNodeName> {
+struct SomeBackEdgeNode : Node<"SomeBackEdgeCalculator"> {
   template <typename S>
   struct Contract {
     Repeated<Input<S, Data>> data{"DATA"};
@@ -399,9 +392,7 @@ struct SomeBackEdgeNode : Node<kSomeBackEdgeNodeName> {
   };
 };
 
-constexpr absl::string_view kSomeOutputDataNodeName =
-    "SomeOutputDataCalculator";
-struct SomeOutputDataNode : Node<kSomeOutputDataNodeName> {
+struct SomeOutputDataNode : Node<"SomeOutputDataCalculator"> {
   template <typename S>
   struct Contract {
     Input<S, Data> data{"DATA"};
@@ -465,9 +456,7 @@ TEST(GenericGraphTest, CanUseBackEdgesWithRepeated) {
   EXPECT_THAT(config, EqualsProto(expected_config));
 }
 
-constexpr absl::string_view kSomeBackEdgeNoInputTagsNodeName =
-    "SomeBackEdgeNoInputTagsCalculator";
-struct SomeBackEdgeNoInputTagsNode : Node<kSomeBackEdgeNoInputTagsNodeName> {
+struct SomeBackEdgeNoInputTagsNode : Node<"SomeBackEdgeNoInputTagsCalculator"> {
   template <typename S>
   struct Contract {
     Repeated<Input<S, Data>> data{""};
@@ -525,8 +514,7 @@ TEST(GenericGraphTest, CanUseBackEdgesWithRepeatedAndNoTag) {
   EXPECT_THAT(config, EqualsProto(expected_config));
 }
 
-constexpr absl::string_view kFloatFooNodeName = "FloatFoo";
-struct FloatFooNode : Node<kFloatFooNodeName> {
+struct FloatFooNode : Node<"FloatFoo"> {
   template <typename S>
   struct Contract {
     Input<S, float> base{"BASE"};
@@ -534,8 +522,7 @@ struct FloatFooNode : Node<kFloatFooNodeName> {
   };
 };
 
-constexpr absl::string_view kFloatAdderNodeName = "FloatAdder";
-struct FloatAdderNode : Node<kFloatAdderNodeName> {
+struct FloatAdderNode : Node<"FloatAdder"> {
   template <typename S>
   struct Contract {
     Repeated<Input<S, float>> in{"IN"};
@@ -587,8 +574,7 @@ TEST(GenericGraphTest, FanOut) {
 }
 
 // Still using Node to describe the generator.
-constexpr absl::string_view kFloatGeneratorName = "FloatGenerator";
-struct FloatGenerator : Node<kFloatGeneratorName> {
+struct FloatGenerator : Node<"FloatGenerator"> {
   template <typename S>
   struct Contract {
     SideInput<S, float> side_in{"IN"};
@@ -635,9 +621,7 @@ TEST(GenericGraphTest, CanAddLegacyPacketGenerator) {
 }
 
 // Still using Node to describe the generator.
-constexpr absl::string_view kRepeatedFloatGeneratorName =
-    "RepeatedFloatGenerator";
-struct RepeatedFloatGenerator : Node<kRepeatedFloatGeneratorName> {
+struct RepeatedFloatGenerator : Node<"RepeatedFloatGenerator"> {
   template <typename S>
   struct Contract {
     Repeated<SideInput<S, float>> side_in{"IN"};
@@ -686,8 +670,7 @@ TEST(GenericGraphTest, CanAddLegacyPacketGeneratorWithRepeatedFields) {
   EXPECT_THAT(config, EqualsProto(expected_config));
 }
 
-constexpr absl::string_view kFooEmptyTagsNodeName = "FooEmptyTags";
-struct FooEmptyTagsNode : Node<kFooEmptyTagsNodeName> {
+struct FooEmptyTagsNode : Node<"FooEmptyTags"> {
   template <typename S>
   struct Contract {
     Repeated<Input<S, int>> in{""};
@@ -742,8 +725,7 @@ TEST(GenericGraphTest, SupportsEmptyTags) {
   EXPECT_THAT(config, EqualsProto(expected_config));
 }
 
-constexpr absl::string_view kSkyLightProto3NodeName = "SkyLightProto3Node";
-struct SkyLightProto3Node : Node<kSkyLightProto3NodeName> {
+struct SkyLightProto3Node : Node<"SkyLightProto3Node"> {
   template <typename S>
   struct Contract {
     Input<S, float> base{"BASE"};
@@ -799,8 +781,7 @@ TEST(GetOptionsTest, CanAddProto3Options) {
   EXPECT_THAT(config, EqualsProto(expected_config));
 }
 
-constexpr absl::string_view kNightLightProto3NodeName = "NightLightProto2Node";
-struct NightLightProto2Node : Node<kNightLightProto3NodeName> {
+struct NightLightProto2Node : Node<"NightLightProto2Node"> {
   template <typename S>
   struct Contract {
     Input<S, float> base{"BASE"};
@@ -847,8 +828,7 @@ TEST(GetOptionsTest, CanAddProto2Options) {
   EXPECT_THAT(config, EqualsProto(expected_config));
 }
 
-constexpr absl::string_view kProto2And3NodeName = "Proto2And3Node";
-struct Proto2And3Node : Node<kProto2And3NodeName> {
+struct Proto2And3Node : Node<"Proto2And3Node"> {
   template <typename S>
   struct Contract {
     Input<S, float> base{"BASE"};

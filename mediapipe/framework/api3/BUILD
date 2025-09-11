@@ -77,7 +77,6 @@ cc_test(
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/port:status_matchers",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -130,6 +129,7 @@ cc_library(
     name = "node",
     hdrs = ["node.h"],
     deps = [
+        "//mediapipe/framework/port:compile_time_string",
         "@com_google_absl//absl/strings:string_view",
     ],
 )
@@ -146,7 +146,6 @@ cc_test(
         "//mediapipe/framework/api3/testing:bar_cc_proto",
         "//mediapipe/framework/api3/testing:foo_cc_proto",
         "//mediapipe/framework/port:gtest_main",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -190,7 +189,6 @@ cc_test(
         "//mediapipe/framework/stream_handler:fixed_size_input_stream_handler_cc_proto",
         "//mediapipe/framework/testdata:night_light_calculator_cc_proto",
         "//mediapipe/framework/testdata:sky_light_calculator_cc_proto",
-        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings:string_view",
     ],
 )
@@ -255,9 +253,6 @@ cc_test(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/tool:options_map",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings:str_format",
-        "@com_google_absl//absl/strings:string_view",
-        "@com_google_absl//absl/synchronization",
     ],
 )
 
@@ -324,7 +319,6 @@ cc_library(
     deps = [
         ":contract",
         ":node",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -372,7 +366,6 @@ cc_test(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/tool:options_map",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -400,6 +393,5 @@ cc_test(
         "//mediapipe/framework/port:ret_check",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings:str_format",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )

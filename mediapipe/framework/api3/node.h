@@ -16,6 +16,7 @@
 #define MEDIAPIPE_FRAMEWORK_API3_NODE_H_
 
 #include "absl/strings/string_view.h"
+#include "mediapipe/framework/port/compile_time_string.h"
 
 namespace mediapipe::api3 {
 
@@ -30,8 +31,7 @@ namespace mediapipe::api3 {
 //
 // foo_node.h:
 // ```
-//   inline constexpr absl::string_view kFooNodeName = "Foo";
-//   struct FooNode : Node<kFooNodeName> {
+//   struct FooNode : Node<"Foo"> {
 //     template <typename S>
 //     struct Contract {
 //       Input<S, int> input{"INPUT"};
@@ -52,8 +52,7 @@ namespace mediapipe::api3 {
 //
 // foo_node.h
 // ```
-//   inline constexpr absl::string_view kFooNodeName = "Foo";
-//   struct FooNode : Node<kFooName> {
+//   struct FooNode : Node<"Foo"> {
 //     template <typename S>
 //     struct Contract {
 //       // ...
@@ -162,8 +161,7 @@ namespace mediapipe::api3 {
 //
 // foo_a_node.h:
 // ```
-//   inline constexpr absl::string_view kFooANodeName = "FooA";
-//   struct FooANode : Node<kFooANodeName> {
+//   struct FooANode : Node<"FooA"> {
 //     template <typename S>
 //     using Contract = Foo<S>;
 //   };
@@ -171,8 +169,7 @@ namespace mediapipe::api3 {
 //
 // foo_b_node.h
 // ```
-//   inline constexpr absl::string_view kFooBNodeName = "FooB";
-//   struct FooBNode : Node<kFooBNodeName> {
+//   struct FooBNode : Node<"FooB"> {
 //     template <typename S>
 //     using Contract = Foo<S>;
 //   };
@@ -199,10 +196,10 @@ namespace mediapipe::api3 {
 //     absl::Status Close(CalculatorContext<FooBNode>& cc) final ...
 //   };
 // ```
-template <const absl::string_view& kRegistrationName>
+template <CompileTimeString kRegistrationName>
 struct Node {
   static constexpr absl::string_view GetRegistrationName() {
-    return kRegistrationName;
+    return kRegistrationName.AsStringView();
   }
 };
 

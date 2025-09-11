@@ -18,7 +18,6 @@
 
 #include "absl/status/status.h"
 #include "absl/strings/str_format.h"
-#include "absl/strings/string_view.h"
 #include "mediapipe/framework/api3/calculator.h"
 #include "mediapipe/framework/api3/calculator_context.h"
 #include "mediapipe/framework/api3/contract.h"
@@ -35,8 +34,7 @@
 namespace mediapipe::api3 {
 namespace {
 
-constexpr absl::string_view kToStringNode = "ToStringNode";
-struct ToStringNode : Node<kToStringNode> {
+struct ToStringNode : Node<"ToStringNode"> {
   template <typename S>
   struct Contract {
     Input<S, OneOf<int, float>> in{"IN"};
@@ -86,8 +84,7 @@ TEST(OneOfTest, CanUseOneOfForCalculatorInputs) {
   }
 }
 
-constexpr absl::string_view kToStringWithVisitNode = "ToStringWithVisitNode";
-struct ToStringWithVisitNode : Node<kToStringWithVisitNode> {
+struct ToStringWithVisitNode : Node<"ToStringWithVisitNode"> {
   template <typename S>
   struct Contract {
     Input<S, OneOf<int, float, double>> in{"IN"};

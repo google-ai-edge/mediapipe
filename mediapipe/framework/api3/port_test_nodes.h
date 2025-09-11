@@ -17,14 +17,12 @@
 
 #include <string>
 
-#include "absl/strings/string_view.h"
 #include "mediapipe/framework/api3/contract.h"
 #include "mediapipe/framework/api3/node.h"
 
 namespace mediapipe::api3 {
 
-inline constexpr absl::string_view kFooName = "Foo";
-struct FooNode : Node<kFooName> {
+struct FooNode : Node<"Foo"> {
   template <typename S>
   struct Contract {
     Input<S, int> input{"INPUT"};
@@ -34,8 +32,7 @@ struct FooNode : Node<kFooName> {
   };
 };
 
-inline constexpr absl::string_view kRepeatedFooName = "RepeatedFoo";
-struct RepeatedFooNode : Node<kRepeatedFooName> {
+struct RepeatedFooNode : Node<"RepeatedFoo"> {
   template <typename S>
   struct Contract {
     Repeated<Input<S, int>> input{"INPUT"};

@@ -526,3 +526,9 @@ cc_test(
         "@com_google_absl//absl/synchronization",
     ],
 )
+
+cc_library(
+    name = "compile_time_string",
+    hdrs = ["compile_time_string.h"],
+    deps = ["@com_google_absl//absl/strings:string_view"],
+)

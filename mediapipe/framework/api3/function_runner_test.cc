@@ -43,8 +43,7 @@
 namespace mediapipe::api3 {
 namespace {
 
-constexpr absl::string_view kMultiplyBy2NodeName = "MultiplyBy2";
-struct MultiplyBy2Node : Node<kMultiplyBy2NodeName> {
+struct MultiplyBy2Node : Node<"MultiplyBy2"> {
   template <typename S>
   struct Contract {
     Input<S, int> in{"IN"};
@@ -62,8 +61,7 @@ class MultiplyBy2NodeImpl
   }
 };
 
-constexpr absl::string_view kAdd10Node = "Add10";
-struct Add10Node : Node<kAdd10Node> {
+struct Add10Node : Node<"Add10"> {
   template <typename S>
   struct Contract {
     Input<S, int> in{"IN"};
@@ -221,9 +219,7 @@ TEST(FunctionRunnerTest, WorksForMultipleInputsAndOutputs) {
 
 constexpr GraphService<std::string> kTestService{"kTestService"};
 
-constexpr absl::string_view kServiceValueOnTickNodeName =
-    "ServiceValueOnTickNode";
-struct ServiceValueOnTickNode : Node<kServiceValueOnTickNodeName> {
+struct ServiceValueOnTickNode : Node<"ServiceValueOnTickNode"> {
   template <typename S>
   struct Contract {
     Input<S, int> tick{"TICK"};
@@ -383,8 +379,7 @@ TEST(FunctionRunnerTest,
       StatusIs(absl::StatusCode::kInternal, testing::HasSubstr("expected")));
 }
 
-constexpr absl::string_view kAlwaysFailingNode = "AlwaysFailingNode";
-struct AlwaysFailingNode : Node<kAlwaysFailingNode> {
+struct AlwaysFailingNode : Node<"AlwaysFailingNode"> {
   template <typename S>
   struct Contract {
     Input<S, int> tick{"TICK"};
@@ -414,8 +409,7 @@ TEST(FunctionRunnerTest, ReturnsCorrectFailureStatus) {
                        testing::HasSubstr("unimplemented is expected")));
 }
 
-constexpr absl::string_view kTimestampBoundNode = "TimestampBoundNode";
-struct TimestampBoundNode : Node<kTimestampBoundNode> {
+struct TimestampBoundNode : Node<"TimestampBoundNode"> {
   template <typename S>
   struct Contract {
     Input<S, int> tick{"TICK"};
