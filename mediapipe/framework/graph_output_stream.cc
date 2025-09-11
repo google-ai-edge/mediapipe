@@ -159,16 +159,14 @@ void OutputStreamPollerImpl::PrepareForRun(
   input_stream_handler_->PrepareForRun(
       /*headers_ready_callback=*/[] {}, std::move(notification_callback),
       /*schedule_callback=*/nullptr, std::move(error_callback));
-  mutex_.Lock();
+  absl::MutexLock l(&mutex_);
   graph_has_error_ = false;
-  mutex_.Unlock();
 }
 
 void OutputStreamPollerImpl::Reset() {
-  mutex_.Lock();
+  absl::MutexLock l(&mutex_);
   graph_has_error_ = false;
   input_stream_->PrepareForRun();
-  mutex_.Unlock();
 }
 
 void OutputStreamPollerImpl::SetMaxQueueSize(int queue_size) {
@@ -180,17 +178,15 @@ void OutputStreamPollerImpl::SetMaxQueueSize(int queue_size) {
 int OutputStreamPollerImpl::QueueSize() { return input_stream_->QueueSize(); }
 
 absl::Status OutputStreamPollerImpl::Notify() {
-  mutex_.Lock();
+  absl::MutexLock l(&mutex_);
   handler_condvar_.Signal();
-  mutex_.Unlock();
   return absl::OkStatus();
 }
 
 void OutputStreamPollerImpl::NotifyError() {
-  mutex_.Lock();
+  absl::MutexLock l(&mutex_);
   graph_has_error_ = true;
   handler_condvar_.Signal();
-  mutex_.Unlock();
 }
 
 bool OutputStreamPollerImpl::Next(Packet* packet) {
@@ -198,31 +194,32 @@ bool OutputStreamPollerImpl::Next(Packet* packet) {
   bool empty_queue = true;
   bool timestamp_bound_changed = false;
   Timestamp min_timestamp = Timestamp::Unset();
-  mutex_.Lock();
-  while (true) {
-    min_timestamp = input_stream_->MinTimestampOrBound(&empty_queue);
+  {
+    absl::MutexLock l(&mutex_);
+    while (true) {
+      min_timestamp = input_stream_->MinTimestampOrBound(&empty_queue);
+      if (empty_queue) {
+        timestamp_bound_changed =
+            input_stream_handler_->ProcessTimestampBounds() &&
+            output_timestamp_ < min_timestamp.PreviousAllowedInStream();
+      }
+      if (graph_has_error_ || !empty_queue || timestamp_bound_changed ||
+          min_timestamp == Timestamp::Done()) {
+        break;
+      } else {
+        handler_condvar_.Wait(&mutex_);
+      }
+    }
+    if (graph_has_error_ && empty_queue) {
+      return false;
+    }
     if (empty_queue) {
-      timestamp_bound_changed =
-          input_stream_handler_->ProcessTimestampBounds() &&
-          output_timestamp_ < min_timestamp.PreviousAllowedInStream();
-    }
-    if (graph_has_error_ || !empty_queue || timestamp_bound_changed ||
-        min_timestamp == Timestamp::Done()) {
-      break;
+      output_timestamp_ = min_timestamp.PreviousAllowedInStream();
     } else {
-      handler_condvar_.Wait(&mutex_);
+      output_timestamp_ = min_timestamp;
     }
   }
-  if (graph_has_error_ && empty_queue) {
-    mutex_.Unlock();
-    return false;
-  }
-  if (empty_queue) {
-    output_timestamp_ = min_timestamp.PreviousAllowedInStream();
-  } else {
-    output_timestamp_ = min_timestamp;
-  }
-  mutex_.Unlock();
+
   if (min_timestamp == Timestamp::Done()) {
     return false;
   }
