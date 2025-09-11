@@ -645,6 +645,7 @@ cc_library(
         ":mediapipe_internal",
     ],
     deps = [
+        ":collection_item_id",
         ":input_stream_handler",
         ":input_stream_manager",
         ":output_stream_manager",
@@ -652,13 +653,18 @@ cc_library(
         ":packet_set",
         ":packet_type",
         ":timestamp",
+        "//mediapipe/framework/port:core_proto",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "//mediapipe/framework/tool:tag_map",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
+        "@com_google_protobuf//:protobuf",
     ],
 )
 
