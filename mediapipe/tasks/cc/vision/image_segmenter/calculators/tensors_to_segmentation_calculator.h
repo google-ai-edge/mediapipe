@@ -29,9 +29,6 @@ limitations under the License.
 namespace mediapipe {
 namespace tasks {
 
-inline constexpr absl::string_view kTensorsToSegmentationCalculatorNodeName =
-    "::mediapipe::tasks::TensorsToSegmentationCalculator";
-
 // Converts Tensors from a vector of Tensor to Segmentation masks. The
 // calculator can output optional confidence masks if CONFIDENCE_MASK is
 // connected, and an optional category mask if CATEGORY_MASK is connected. At
@@ -57,7 +54,7 @@ inline constexpr absl::string_view kTensorsToSegmentationCalculatorNodeName =
 //    }
 //  }
 struct TensorsToSegmentationNode
-    : api3::Node<kTensorsToSegmentationCalculatorNodeName> {
+    : api3::Node<"::mediapipe::tasks::TensorsToSegmentationCalculator"> {
   template <typename S>
   struct Contract {
     // Vector containing a single KTfLiteFloat32 Tensor to be converted

@@ -15,16 +15,12 @@
 #ifndef MEDIAPIPE_CALCULATORS_UTIL_WORLD_LANDMARK_PROJECTION_CALCULATOR_H_
 #define MEDIAPIPE_CALCULATORS_UTIL_WORLD_LANDMARK_PROJECTION_CALCULATOR_H_
 
-#include "absl/strings/string_view.h"
 #include "mediapipe/framework/api3/contract.h"
 #include "mediapipe/framework/api3/node.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 
 namespace mediapipe::api3 {
-
-inline constexpr absl::string_view kWorldLandmarkProjectionNodeName =
-    "WorldLandmarkProjectionCalculator";
 
 // Projects world landmarks from the rectangle to original coordinates.
 //
@@ -42,7 +38,7 @@ inline constexpr absl::string_view kWorldLandmarkProjectionNodeName =
 //   output_stream: "LANDMARKS:projected_landmarks"
 // }
 //
-struct WorldLandmarkProjectionNode : Node<kWorldLandmarkProjectionNodeName> {
+struct WorldLandmarkProjectionNode : Node<"WorldLandmarkProjectionCalculator"> {
   template <typename S>
   struct Contract {
     // A LandmarkList representing world landmarks in the rectangle.

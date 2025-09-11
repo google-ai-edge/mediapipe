@@ -25,7 +25,6 @@
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
-#include "absl/strings/string_view.h"
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
 #include "mediapipe/calculators/tensor/inference_io_mapper.h"
 #include "mediapipe/calculators/tensor/tensor_span.h"
@@ -47,8 +46,7 @@ namespace mediapipe {
 namespace api3 {
 
 // TODO: migrate InferenceCalculator implementations to API3.
-inline constexpr absl::string_view kInferenceNodeName = "InferenceCalculator";
-struct InferenceNode : Node<kInferenceNodeName> {
+struct InferenceNode : Node<"InferenceCalculator"> {
   template <typename S>
   struct Contract {
     // Default API: inputs and outputs will be passed as a single vector.

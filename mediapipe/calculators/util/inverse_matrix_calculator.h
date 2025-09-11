@@ -17,14 +17,10 @@
 
 #include <array>
 
-#include "absl/strings/string_view.h"
 #include "mediapipe/framework/api3/contract.h"
 #include "mediapipe/framework/api3/node.h"
 
 namespace mediapipe::api3 {
-
-inline constexpr absl::string_view kInverseMatrixNodeName =
-    "InverseMatrixCalculator";
 
 // Inverses a row-major 4x4 matrix.
 //
@@ -34,7 +30,7 @@ inline constexpr absl::string_view kInverseMatrixNodeName =
 //     input_stream: "MATRIX:input_matrix"
 //     output_stream: "MATRIX:output_matrix"
 //   }
-struct InverseMatrixNode : Node<kInverseMatrixNodeName> {
+struct InverseMatrixNode : Node<"InverseMatrixCalculator"> {
   template <typename S>
   struct Contract {
     // Row major 4x4 matrix to inverse.

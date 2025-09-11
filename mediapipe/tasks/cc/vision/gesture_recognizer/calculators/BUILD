@@ -120,17 +120,13 @@ cc_library(
     hdrs = ["combined_prediction_calculator.h"],
     deps = [
         ":combined_prediction_calculator_cc_proto",
-        "//mediapipe/framework:collection",
         "//mediapipe/framework/api3:calculator",
         "//mediapipe/framework/api3:calculator_context",
-        "//mediapipe/framework/api3:calculator_contract",
         "//mediapipe/framework/api3:contract",
         "//mediapipe/framework/api3:node",
         "//mediapipe/framework/formats:classification_cc_proto",
         "@com_google_absl//absl/container:btree",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
 )

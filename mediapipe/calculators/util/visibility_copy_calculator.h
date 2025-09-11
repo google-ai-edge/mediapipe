@@ -16,7 +16,6 @@
 // limitations under the License.
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "mediapipe/calculators/util/visibility_copy_calculator.pb.h"
 #include "mediapipe/framework/api3/calculator_contract.h"
 #include "mediapipe/framework/api3/contract.h"
@@ -25,9 +24,6 @@
 #include "mediapipe/framework/port/ret_check.h"
 
 namespace mediapipe::api3 {
-
-inline constexpr absl::string_view kVisibilityCopyNodeName =
-    "VisibilityCopyCalculator";
 
 // A calculator to copy visibility and presence between landmarks.
 //
@@ -51,9 +47,9 @@ inline constexpr absl::string_view kVisibilityCopyNodeName =
 //   }
 //
 // WARNING: the fact that every input/output is optional is an unfortunate
-// design choice at the time of calculator creation - this should habe been
+// design choice at the time of calculator creation - this should have been
 // distinct calculators.
-struct VisibilityCopyNode : Node<kVisibilityCopyNodeName> {
+struct VisibilityCopyNode : Node<"VisibilityCopyCalculator"> {
   template <typename S>
   struct Contract {
     // A LandmarkList of landmarks to copy from.

@@ -15,20 +15,16 @@
 #ifndef MEDIAPIPE_CALCULATORS_CORE_PASS_THROUGH_CALCULATOR_H_
 #define MEDIAPIPE_CALCULATORS_CORE_PASS_THROUGH_CALCULATOR_H_
 
-#include "absl/strings/string_view.h"
 #include "mediapipe/framework/api3/any.h"
 #include "mediapipe/framework/api3/contract.h"
 #include "mediapipe/framework/api3/node.h"
 
 namespace mediapipe::api3 {
 
-inline constexpr absl::string_view kPassThroughNodeName =
-    "PassThroughCalculator";
-
 // Calculator that simply passes its input Packets through unchanged.
 //
 // Indices for corresponding inputs and outputs must match.
-struct PassThroughNode : Node<kPassThroughNodeName> {
+struct PassThroughNode : Node<"PassThroughCalculator"> {
   template <typename S>
   struct Contract {
     Repeated<Input<S, Any>> in{""};

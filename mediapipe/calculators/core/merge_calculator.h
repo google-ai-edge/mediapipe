@@ -15,14 +15,11 @@
 #ifndef MEDIAPIPE_CALCULATORS_CORE_MERGE_CALCULATOR_H_
 #define MEDIAPIPE_CALCULATORS_CORE_MERGE_CALCULATOR_H_
 
-#include "absl/strings/string_view.h"
 #include "mediapipe/framework/api3/any.h"
 #include "mediapipe/framework/api3/contract.h"
 #include "mediapipe/framework/api3/node.h"
 
 namespace mediapipe::api3 {
-
-inline constexpr absl::string_view kMergeNodeName = "MergeCalculator";
 
 // This calculator takes a set of input streams and combines them into a single
 // output stream. The packets from different streams do not need to contain the
@@ -46,7 +43,7 @@ inline constexpr absl::string_view kMergeNodeName = "MergeCalculator";
 //   input_stream: "shot_info3"
 //   output_stream: "merged_shot_infos"
 // }
-struct MergeNode : Node<kMergeNodeName> {
+struct MergeNode : Node<"MergeCalculator"> {
   template <typename S>
   struct Contract {
     Repeated<Input<S, Any>> in{""};

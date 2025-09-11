@@ -16,9 +16,6 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_CC_VISION_GESTURE_RECOGNIZER_CALCULATORS_COMBINED_PREDICTION_CALCULATOR_H_
 #define MEDIAPIPE_TASKS_CC_VISION_GESTURE_RECOGNIZER_CALCULATORS_COMBINED_PREDICTION_CALCULATOR_H_
 
-#include "absl/status/status.h"
-#include "absl/strings/string_view.h"
-#include "mediapipe/framework/api3/calculator_contract.h"
 #include "mediapipe/framework/api3/contract.h"
 #include "mediapipe/framework/api3/node.h"
 #include "mediapipe/framework/formats/classification.pb.h"
@@ -26,9 +23,6 @@ limitations under the License.
 
 namespace mediapipe {
 namespace api3 {
-
-inline constexpr absl::string_view kCombinedPredictionNodeName =
-    "CombinedPredictionCalculator";
 
 // This calculator accepts multiple ClassificationList input streams. Each
 // ClassificationList should contain classifications with labels and
@@ -39,10 +33,6 @@ inline constexpr absl::string_view kCombinedPredictionNodeName =
 // different, but the background class name has to be the same. This background
 // label name can be set via `background_label` in
 // `CombinedPredictionCalculatorOptions`.
-// Input:
-//   At least one stream with ClassificationList.
-// Output:
-//  PREDICTION - A ClassificationList with the winning label as the only item.
 //
 // Usage example:
 // node {
@@ -61,13 +51,14 @@ inline constexpr absl::string_view kCombinedPredictionNodeName =
 //     }
 //   }
 // }
-
-struct CombinedPredictionNode : Node<kCombinedPredictionNodeName> {
+struct CombinedPredictionNode : Node<"CombinedPredictionCalculator"> {
   template <typename S>
   struct Contract {
     // Repeated ClassificationList input streams. Each ClassificationList should
     // contain classifications with labels and corresponding softmax scores.
-    Repeated<Input<S, ClassificationList>> classification_list_in{""};
+    // NOTE: At least one input is expected.
+    Repeated<Input<S, mediapipe::ClassificationList>> classification_list_in{
+        ""};
 
     // The ClassificationList in the PREDICTION output stream contains the label
     // of the winning class and corresponding softmax score. If none of the
@@ -78,12 +69,12 @@ struct CombinedPredictionNode : Node<kCombinedPredictionNodeName> {
     // from the ClassificationList with the highest priority. Priority is in
     // decreasing order of input streams to the graph node using this
     // calculator.
-    Output<S, ClassificationList> prediction_out{"PREDICTION"};
+    Output<S, mediapipe::ClassificationList> prediction_out{"PREDICTION"};
 
     // Thresholds for all classes can be specified in the
     // `CombinedPredictionCalculatorOptions`, along with a default global
     // threshold.
-    Options<S, CombinedPredictionCalculatorOptions> options;
+    Options<S, mediapipe::CombinedPredictionCalculatorOptions> options;
   };
 };
 

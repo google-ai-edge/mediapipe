@@ -15,16 +15,12 @@
 #ifndef MEDIAPIPE_CALCULATORS_UTIL_LANDMARKS_REFINEMENT_CALCULATOR_H_
 #define MEDIAPIPE_CALCULATORS_UTIL_LANDMARKS_REFINEMENT_CALCULATOR_H_
 
-#include "absl/strings/string_view.h"
 #include "mediapipe/calculators/util/landmarks_refinement_calculator.pb.h"
 #include "mediapipe/framework/api3/contract.h"
 #include "mediapipe/framework/api3/node.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 
 namespace mediapipe::api3 {
-
-inline constexpr absl::string_view kLandmarksRefinementNodeName =
-    "LandmarksRefinementCalculator";
 
 // A calculator to refine one set of landmarks with another.
 //
@@ -58,7 +54,7 @@ inline constexpr absl::string_view kLandmarksRefinementNodeName =
 //     }
 //   }
 //
-struct LandmarksRefinementNode : Node<kLandmarksRefinementNodeName> {
+struct LandmarksRefinementNode : Node<"LandmarksRefinementCalculator"> {
   template <typename S>
   struct Contract {
     // Multiple NormalizedLandmarkList to use for

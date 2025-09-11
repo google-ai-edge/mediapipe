@@ -685,7 +685,6 @@ cc_library(
         "//mediapipe/framework/api3:node",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -1235,7 +1234,6 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )

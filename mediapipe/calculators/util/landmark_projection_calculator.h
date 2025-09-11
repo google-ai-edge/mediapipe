@@ -19,7 +19,6 @@
 #include <utility>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "mediapipe/calculators/util/landmark_projection_calculator.pb.h"
 #include "mediapipe/framework/api3/calculator_contract.h"
 #include "mediapipe/framework/api3/contract.h"
@@ -29,9 +28,6 @@
 #include "mediapipe/framework/port/ret_check.h"
 
 namespace mediapipe::api3 {
-
-inline constexpr absl::string_view kLandmarkProjectionNodeName =
-    "LandmarkProjectionCalculator";
 
 // Projects normalized landmarks to its original coordinates.
 //
@@ -71,7 +67,7 @@ inline constexpr absl::string_view kLandmarkProjectionNodeName =
 //   output_stream: "NORM_LANDMARKS:0:projected_landmarks_0"
 //   output_stream: "NORM_LANDMARKS:1:projected_landmarks_1"
 // }
-struct LandmarkProjectionNode : Node<kLandmarkProjectionNodeName> {
+struct LandmarkProjectionNode : Node<"LandmarkProjectionCalculator"> {
   template <typename S>
   struct Contract {
     // Represents landmarks in a normalized rectangle if NORM_RECT is specified

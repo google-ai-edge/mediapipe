@@ -17,7 +17,6 @@ limitations under the License.
 
 #include <utility>
 
-#include "absl/strings/string_view.h"
 #include "mediapipe/framework/api3/contract.h"
 #include "mediapipe/framework/api3/node.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
@@ -27,9 +26,6 @@ limitations under the License.
 
 namespace mediapipe {
 namespace tasks {
-
-inline constexpr absl::string_view klandmarksToMatrixNodeName =
-    "LandmarksToMatrixCalculator";
 
 // Convert landmarks into a matrix. The landmarks are normalized
 // w.r.t. the image's aspect ratio (if they are NormalizedLandmarksList)
@@ -49,8 +45,7 @@ inline constexpr absl::string_view klandmarksToMatrixNodeName =
 //     }
 //   }
 // }
-
-struct LandmarksToMatrixNode : api3::Node<klandmarksToMatrixNodeName> {
+struct LandmarksToMatrixNode : api3::Node<"LandmarksToMatrixCalculator"> {
   template <typename S>
   struct Contract {
     // Landmarks of one object.

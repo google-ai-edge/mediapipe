@@ -917,8 +917,6 @@ cc_library(
     deps = [
         ":landmark_projection_calculator_cc_proto",
         "//mediapipe/calculators/tensor:image_to_tensor_utils",
-        "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework:collection_item_id",
         "//mediapipe/framework/api3:calculator",
         "//mediapipe/framework/api3:calculator_context",
         "//mediapipe/framework/api3:calculator_contract",
@@ -929,7 +927,6 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -973,7 +970,6 @@ cc_library(
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/formats:rect_cc_proto",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -1135,7 +1131,6 @@ cc_library(
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/port:ret_check",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -1663,7 +1658,6 @@ cc_library(
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -1688,7 +1682,6 @@ cc_library(
         "//mediapipe/framework/api3:node",
         "//mediapipe/framework/port:ret_check",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings:string_view",
         "@eigen//:eigen3",
     ],
     alwayslink = True,
