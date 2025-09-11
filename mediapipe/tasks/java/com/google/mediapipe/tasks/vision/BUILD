@@ -56,9 +56,8 @@ filegroup(
     ],
 )
 
-# The native library of all MediaPipe vision tasks.
-mediapipe_jni_binary(
-    name = "mediapipe_tasks_vision_jni",
+cc_library(
+    name = "mediapipe_tasks_vision_oss_deps",
     deps = [
         "//mediapipe/calculators/core:flow_limiter_calculator",
         "//mediapipe/java/com/google/mediapipe/framework/jni:mediapipe_framework_jni",
@@ -75,6 +74,12 @@ mediapipe_jni_binary(
         "//mediapipe/tasks/cc/vision/pose_landmarker:pose_landmarker_graph",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:model_resources_cache_jni",
     ],
+)
+
+# The native library of all 3P MediaPipe vision tasks.
+mediapipe_jni_binary(
+    name = "mediapipe_tasks_vision_jni",
+    deps = [":mediapipe_tasks_vision_oss_deps"],
 )
 
 cc_library(
