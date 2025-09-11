@@ -49,6 +49,7 @@ class ConversionConfig(object):
     lora_rank: An integer representing the rank of LoRA. Required in order to
       convert the lora weights.If not provided, then the converter assumes there
       is no LoRA weights. Note that only the GPU backend supports LoRA.
+    lora_alpha: A float representing the scale of LoRA weights.
     lora_output_tflite_file: A string indicating the name of the generated
       tflite file for the LoRA weight. Only applicable when the lora_rank is not
       zero.
@@ -83,6 +84,7 @@ class ConversionConfig(object):
       fp16_scale: Optional[float] = None,
       lora_ckpt: Optional[str] = None,
       lora_rank: Optional[int] = None,
+      lora_alpha: Optional[float] = None,
       lora_output_tflite_file: Optional[str] = None,
       lora_main_model_type: Optional[str] = None,
       image_encoder_file: Optional[str] = None,
@@ -126,6 +128,7 @@ class ConversionConfig(object):
     self.fp16_scale = None
     self.lora_ckpt = lora_ckpt
     self.lora_rank = lora_rank
+    self.lora_alpha = lora_alpha
     self.lora_output_tflite_file = lora_output_tflite_file
     self.lora_main_model_type = lora_main_model_type
     if (self.lora_ckpt is None) ^ (self.lora_rank is None):
