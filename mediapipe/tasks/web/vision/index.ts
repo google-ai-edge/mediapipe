@@ -20,7 +20,6 @@ import {MPImage as MPImageImpl} from '../../../tasks/web/vision/core/image';
 import {MPMask as MPMaskImpl} from '../../../tasks/web/vision/core/mask';
 import {FaceDetector as FaceDetectorImpl} from '../../../tasks/web/vision/face_detector/face_detector';
 import {FaceLandmarker as FaceLandmarkerImpl} from '../../../tasks/web/vision/face_landmarker/face_landmarker';
-import {FaceStylizer as FaceStylizerImpl} from '../../../tasks/web/vision/face_stylizer/face_stylizer';
 import {GestureRecognizer as GestureRecognizerImpl} from '../../../tasks/web/vision/gesture_recognizer/gesture_recognizer';
 import {HandLandmarker as HandLandmarkerImpl} from '../../../tasks/web/vision/hand_landmarker/hand_landmarker';
 import {HolisticLandmarker as HolisticLandmarkerImpl} from '../../../tasks/web/vision/holistic_landmarker/holistic_landmarker';
@@ -39,7 +38,6 @@ const MPImage = MPImageImpl;
 const MPMask = MPMaskImpl;
 const FaceDetector = FaceDetectorImpl;
 const FaceLandmarker = FaceLandmarkerImpl;
-const FaceStylizer = FaceStylizerImpl;
 const GestureRecognizer = GestureRecognizerImpl;
 const HandLandmarker = HandLandmarkerImpl;
 const HolisticLandmarker = HolisticLandmarkerImpl;
@@ -52,12 +50,9 @@ const PoseLandmarker = PoseLandmarkerImpl;
 
 export {
   DrawingUtils,
-  FilesetResolver,
-  MPImage,
-  MPMask,
   FaceDetector,
   FaceLandmarker,
-  FaceStylizer,
+  FilesetResolver,
   GestureRecognizer,
   HandLandmarker,
   HolisticLandmarker,
@@ -65,6 +60,8 @@ export {
   ImageEmbedder,
   ImageSegmenter,
   InteractiveSegmenter,
+  MPImage,
+  MPMask,
   ObjectDetector,
-  PoseLandmarker
+  PoseLandmarker,
 };

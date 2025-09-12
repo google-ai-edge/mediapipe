@@ -96,7 +96,6 @@ cc_library(
         "//mediapipe/tasks/cc/text/text_embedder:text_embedder_graph",
         "//mediapipe/tasks/cc/vision/face_detector:face_detector_graph",
         "//mediapipe/tasks/cc/vision/face_landmarker:face_landmarker_graph",
-        "//mediapipe/tasks/cc/vision/face_stylizer:face_stylizer_graph",
         "//mediapipe/tasks/cc/vision/gesture_recognizer:gesture_recognizer_graph",
         "//mediapipe/tasks/cc/vision/holistic_landmarker:holistic_landmarker_graph",
         "//mediapipe/tasks/cc/vision/image_classifier:image_classifier_graph",

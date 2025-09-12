@@ -18,7 +18,6 @@ import mediapipe.tasks.python.vision.core
 import mediapipe.tasks.python.vision.face_aligner
 import mediapipe.tasks.python.vision.face_detector
 import mediapipe.tasks.python.vision.face_landmarker
-import mediapipe.tasks.python.vision.face_stylizer
 import mediapipe.tasks.python.vision.gesture_recognizer
 import mediapipe.tasks.python.vision.hand_landmarker
 import mediapipe.tasks.python.vision.holistic_landmarker
@@ -38,8 +37,6 @@ FaceLandmarker = face_landmarker.FaceLandmarker
 FaceLandmarkerOptions = face_landmarker.FaceLandmarkerOptions
 FaceLandmarkerResult = face_landmarker.FaceLandmarkerResult
 FaceLandmarksConnections = face_landmarker.FaceLandmarksConnections
-FaceStylizer = face_stylizer.FaceStylizer
-FaceStylizerOptions = face_stylizer.FaceStylizerOptions
 GestureRecognizer = gesture_recognizer.GestureRecognizer
 GestureRecognizerOptions = gesture_recognizer.GestureRecognizerOptions
 GestureRecognizerResult = gesture_recognizer.GestureRecognizerResult
@@ -77,7 +74,6 @@ del core
 del face_aligner
 del face_detector
 del face_landmarker
-del face_stylizer
 del gesture_recognizer
 del hand_landmarker
 del holistic_landmarker

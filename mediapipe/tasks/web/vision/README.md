@@ -39,21 +39,6 @@ const landmarks = faceLandmarker.detect(image);
 
 For more information, refer to the [Face Landmarker](https://developers.google.com/mediapipe/solutions/vision/face_landmarker/web_js) documentation.
 
-## Face Stylizer
-
-The MediaPipe Face Stylizer lets you perform face stylization on images.
-
-```
-const vision = await FilesetResolver.forVisionTasks(
-    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm"
-);
-const faceStylizer = await FaceStylizer.createFromModelPath(vision,
-    "https://storage.googleapis.com/mediapipe-models/face_stylizer/blaze_face_stylizer/float32/1/blaze_face_stylizer.task"
-);
-const image = document.getElementById("image") as HTMLImageElement;
-const stylizedImage = faceStylizer.stylize(image);
-```
-
 ## Gesture Recognizer
 
 The MediaPipe Gesture Recognizer task lets you recognize hand gestures in real
