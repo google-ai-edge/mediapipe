@@ -94,7 +94,7 @@ class HandLandmarksConnections:
 
   HAND_PALM_CONNECTIONS: List[Connection] = [
       Connection(0, 1),
-      Connection(1, 5),
+      Connection(0, 5),
       Connection(9, 13),
       Connection(13, 17),
       Connection(5, 9),
