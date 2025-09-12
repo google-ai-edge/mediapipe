@@ -45,3 +45,19 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
+
+cc_library(
+    name = "mp_status",
+    hdrs = ["mp_status.h"],
+)
+
+cc_library(
+    name = "mp_status_converter",
+    srcs = ["mp_status_converter.cc"],
+    hdrs = ["mp_status_converter.h"],
+    deps = [
+        ":mp_status",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/status",
+    ],
+)

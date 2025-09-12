@@ -25,16 +25,15 @@ limitations under the License.
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/formats/image.h"
-#include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/tasks/c/components/containers/detection_result_converter.h"
 #include "mediapipe/tasks/c/core/base_options_converter.h"
-#include "mediapipe/tasks/c/vision/core/common.h"
+#include "mediapipe/tasks/c/vision/core/image.h"
+#include "mediapipe/tasks/c/vision/core/image_frame_util.h"
 #include "mediapipe/tasks/c/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/c/vision/core/image_processing_options_converter.h"
 #include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
 #include "mediapipe/tasks/cc/vision/face_detector/face_detector.h"
-#include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 
 namespace mediapipe::tasks::c::vision::face_detector {
 
@@ -44,7 +43,6 @@ using ::mediapipe::tasks::c::components::containers::CppCloseDetectionResult;
 using ::mediapipe::tasks::c::components::containers::
     CppConvertToDetectionResult;
 using ::mediapipe::tasks::c::core::CppConvertToBaseOptions;
-using ::mediapipe::tasks::vision::CreateImageFromBuffer;
 using ::mediapipe::tasks::vision::core::RunningMode;
 using ::mediapipe::tasks::vision::face_detector::FaceDetector;
 typedef ::mediapipe::tasks::vision::face_detector::FaceDetectorResult
@@ -56,6 +54,8 @@ int CppProcessError(absl::Status status, char** error_msg) {
   }
   return status.raw_code();
 }
+
+const Image& ToImage(const MpImagePtr mp_image) { return mp_image->image; }
 
 }  // namespace
 
@@ -105,15 +105,7 @@ FaceDetector* CppFaceDetectorCreate(const FaceDetectorOptions& options,
           auto result = std::make_unique<FaceDetectorResult>();
           CppConvertToDetectionResult(*cpp_result, result.get());
 
-          const auto& image_frame = image.GetImageFrameSharedPtr();
-          MpImage mp_image = {
-              .type = MpImage::IMAGE_FRAME,
-              .image_frame = {
-                  .format = static_cast<::ImageFormat>(image_frame->Format()),
-                  .image_buffer = image_frame->PixelData(),
-                  .width = image_frame->Width(),
-                  .height = image_frame->Height()}};
-
+          MpImageInternal mp_image = {.image = image};
           result_callback(result.release(), &mp_image, timestamp,
                           /* error_msg= */ nullptr);
         };
@@ -129,30 +121,12 @@ FaceDetector* CppFaceDetectorCreate(const FaceDetectorOptions& options,
 }
 
 int CppFaceDetectorDetect(
-    void* detector, const MpImage* image,
+    void* detector, const MpImagePtr image,
     std::optional<mediapipe::tasks::vision::core::ImageProcessingOptions>
         options,
     FaceDetectorResult* result, char** error_msg) {
-  if (image->type == MpImage::GPU_BUFFER) {
-    const absl::Status status =
-        absl::InvalidArgumentError("GPU Buffer not supported yet.");
-
-    ABSL_LOG(ERROR) << "Detection failed: " << status.message();
-    return CppProcessError(status, error_msg);
-  }
-
-  const auto img = CreateImageFromBuffer(
-      static_cast<ImageFormat::Format>(image->image_frame.format),
-      image->image_frame.image_buffer, image->image_frame.width,
-      image->image_frame.height);
-
-  if (!img.ok()) {
-    ABSL_LOG(ERROR) << "Failed to create Image: " << img.status();
-    return CppProcessError(img.status(), error_msg);
-  }
-
   auto cpp_detector = static_cast<FaceDetector*>(detector);
-  auto cpp_result = cpp_detector->Detect(*img, options);
+  auto cpp_result = cpp_detector->Detect(ToImage(image), options);
   if (!cpp_result.ok()) {
     ABSL_LOG(ERROR) << "Detection failed: " << cpp_result.status();
     return CppProcessError(cpp_result.status(), error_msg);
@@ -162,30 +136,13 @@ int CppFaceDetectorDetect(
 }
 
 int CppFaceDetectorDetectForVideo(
-    void* detector, const MpImage* image,
+    void* detector, const MpImagePtr image,
     std::optional<mediapipe::tasks::vision::core::ImageProcessingOptions>
         options,
     int64_t timestamp_ms, FaceDetectorResult* result, char** error_msg) {
-  if (image->type == MpImage::GPU_BUFFER) {
-    absl::Status status =
-        absl::InvalidArgumentError("GPU Buffer not supported yet");
-
-    ABSL_LOG(ERROR) << "Detection failed: " << status.message();
-    return CppProcessError(status, error_msg);
-  }
-
-  const auto img = CreateImageFromBuffer(
-      static_cast<ImageFormat::Format>(image->image_frame.format),
-      image->image_frame.image_buffer, image->image_frame.width,
-      image->image_frame.height);
-
-  if (!img.ok()) {
-    ABSL_LOG(ERROR) << "Failed to create Image: " << img.status();
-    return CppProcessError(img.status(), error_msg);
-  }
-
   auto cpp_detector = static_cast<FaceDetector*>(detector);
-  auto cpp_result = cpp_detector->DetectForVideo(*img, timestamp_ms, options);
+  auto cpp_result =
+      cpp_detector->DetectForVideo(ToImage(image), timestamp_ms, options);
   if (!cpp_result.ok()) {
     ABSL_LOG(ERROR) << "Detection failed: " << cpp_result.status();
     return CppProcessError(cpp_result.status(), error_msg);
@@ -195,30 +152,13 @@ int CppFaceDetectorDetectForVideo(
 }
 
 int CppFaceDetectorDetectAsync(
-    void* detector, const MpImage* image,
+    void* detector, const MpImagePtr image,
     std::optional<mediapipe::tasks::vision::core::ImageProcessingOptions>
         options,
     int64_t timestamp_ms, char** error_msg) {
-  if (image->type == MpImage::GPU_BUFFER) {
-    absl::Status status =
-        absl::InvalidArgumentError("GPU Buffer not supported yet");
-
-    ABSL_LOG(ERROR) << "Detection failed: " << status.message();
-    return CppProcessError(status, error_msg);
-  }
-
-  const auto img = CreateImageFromBuffer(
-      static_cast<ImageFormat::Format>(image->image_frame.format),
-      image->image_frame.image_buffer, image->image_frame.width,
-      image->image_frame.height);
-
-  if (!img.ok()) {
-    ABSL_LOG(ERROR) << "Failed to create Image: " << img.status();
-    return CppProcessError(img.status(), error_msg);
-  }
-
   auto cpp_detector = static_cast<FaceDetector*>(detector);
-  auto cpp_result = cpp_detector->DetectAsync(*img, timestamp_ms, options);
+  auto cpp_result =
+      cpp_detector->DetectAsync(ToImage(image), timestamp_ms, options);
   if (!cpp_result.ok()) {
     ABSL_LOG(ERROR) << "Data preparation for the landmark detection failed: "
                     << cpp_result;
@@ -252,14 +192,14 @@ void* face_detector_create(struct FaceDetectorOptions* options,
       *options, error_msg);
 }
 
-int face_detector_detect_image(void* detector, const MpImage* image,
+int face_detector_detect_image(void* detector, const MpImagePtr image,
                                FaceDetectorResult* result, char** error_msg) {
   return mediapipe::tasks::c::vision::face_detector::CppFaceDetectorDetect(
       detector, image, /* options= */ std::nullopt, result, error_msg);
 }
 
 int face_detector_detect_image_with_options(
-    void* detector, const MpImage* image,
+    void* detector, const MpImagePtr image,
     struct ImageProcessingOptions* options, FaceDetectorResult* result,
     char** error_msg) {
   mediapipe::tasks::vision::core::ImageProcessingOptions cpp_options;
@@ -269,7 +209,7 @@ int face_detector_detect_image_with_options(
       detector, image, std::move(cpp_options), result, error_msg);
 }
 
-int face_detector_detect_for_video(void* detector, const MpImage* image,
+int face_detector_detect_for_video(void* detector, const MpImagePtr image,
                                    int64_t timestamp_ms,
                                    FaceDetectorResult* result,
                                    char** error_msg) {
@@ -280,7 +220,7 @@ int face_detector_detect_for_video(void* detector, const MpImage* image,
 }
 
 int face_detector_detect_for_video_with_options(
-    void* detector, const MpImage* image,
+    void* detector, const MpImagePtr image,
     struct ImageProcessingOptions* options, int64_t timestamp_ms,
     FaceDetectorResult* result, char** error_msg) {
   mediapipe::tasks::vision::core::ImageProcessingOptions cpp_options;
@@ -291,14 +231,14 @@ int face_detector_detect_for_video_with_options(
                                     timestamp_ms, result, error_msg);
 }
 
-int face_detector_detect_async(void* detector, const MpImage* image,
+int face_detector_detect_async(void* detector, const MpImagePtr image,
                                int64_t timestamp_ms, char** error_msg) {
   return mediapipe::tasks::c::vision::face_detector::CppFaceDetectorDetectAsync(
       detector, image, /* options= */ std::nullopt, timestamp_ms, error_msg);
 }
 
 int face_detector_detect_async_with_options(
-    void* detector, const MpImage* image,
+    void* detector, const MpImagePtr image,
     struct ImageProcessingOptions* options, int64_t timestamp_ms,
     char** error_msg) {
   mediapipe::tasks::vision::core::ImageProcessingOptions cpp_options;

@@ -25,6 +25,62 @@ cc_library(
 )
 
 cc_library(
+    name = "image_hdr",
+    hdrs = ["image.h"],
+    visibility = ["//visibility:private"],
+    deps = ["//mediapipe/tasks/c/core:mp_status"],
+)
+
+cc_library(
+    name = "image",
+    srcs = ["image.cc"],
+    hdrs = ["image.h"],
+    deps = [
+        ":image_frame_util",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/tasks/c/core:mp_status",
+        "//mediapipe/tasks/c/core:mp_status_converter",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings:str_format",
+        "@stblib//:stb_image",
+    ],
+)
+
+cc_test(
+    name = "image_test",
+    srcs = ["image_test.cc"],
+    data = [
+        "//mediapipe/tasks/testdata/vision:test_images",
+    ],
+    deps = [
+        ":image",
+        "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/port:gtest",
+        "//mediapipe/tasks/c/core:mp_status",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "image_frame_util",
+    hdrs = ["image_frame_util.h"],
+    deps = [
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:image_format_cc_proto",
+        "//mediapipe/framework/formats:image_frame",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library(
     name = "image_processing_options",
     hdrs = ["image_processing_options.h"],
     deps = [
