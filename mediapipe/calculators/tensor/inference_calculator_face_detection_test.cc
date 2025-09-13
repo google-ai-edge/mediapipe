@@ -83,7 +83,7 @@ const std::vector<Param>& GetParams() {
         InferenceCalculatorOptions_Delegate::Gpu::OPENGL);
 #endif  // !defined(__ANDROID__) && !defined(__EMSCRIPTEN__) &&
         // !defined(TARGET_OS_IPHONE)
-    p.push_back({"XnnPack", "Cpu", "face_detection_expected.png"});
+    p.push_back({"XnnPack", "Xnnpack", "face_detection_expected.png"});
     p.back().delegate.mutable_xnnpack();
     return p;
   }();

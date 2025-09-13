@@ -77,8 +77,15 @@ class InferenceCalculatorSelectorImpl
       }
     }
 #endif  // !MEDIAPIPE_FORCE_CPU_INFERENCE
-    impls.emplace_back("Cpu");
-    impls.emplace_back("Xnnpack");
+    const bool should_use_xnnpack =
+        options.has_delegate() && options.delegate().has_xnnpack();
+    if (!should_use_xnnpack) {
+      impls.emplace_back("Cpu");
+      impls.emplace_back("Xnnpack");
+    } else {
+      impls.emplace_back("Xnnpack");
+      impls.emplace_back("Cpu");
+    }
     std::vector<std::string> missing_impls;
     for (const auto& suffix : impls) {
       const auto impl = absl::StrCat("InferenceCalculator", suffix);

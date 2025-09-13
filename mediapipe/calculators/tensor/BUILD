@@ -569,6 +569,7 @@ cc_test(
     data = [
         ":testdata/feedback_tensor_test_model.tflite",
         ":testdata/feedback_tensor_with_state_copy_model.tflite",
+        ":testdata/feedback_tensor_without_passthrough_model.tflite",
     ],
     deps = [
         ":inference_calculator",
@@ -937,6 +938,7 @@ cc_library(
     deps = [
         ":inference_calculator_cpu",
         ":inference_calculator_interface",
+        ":inference_calculator_xnnpack",
     ] + select({
         "//conditions:default": [":inference_calculator_gl_if_compute_shader_available"],
         ":platform_apple_with_gpu": [":inference_calculator_metal"],

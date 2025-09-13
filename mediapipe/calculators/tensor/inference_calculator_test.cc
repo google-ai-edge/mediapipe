@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "absl/log/absl_check.h"
+#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_replace.h"
 #include "absl/strings/string_view.h"
@@ -159,8 +160,23 @@ void RunGraphOnUnwrappedTensorThenClose(CalculatorGraph& graph,
   MP_ASSERT_OK(graph.WaitUntilDone());
 }
 
+void CheckExactInferenceCalculator(
+    const CalculatorGraphConfig& graph_config,
+    std::string expected_inference_calculator = "") {
+  if (expected_inference_calculator.empty()) {
+    return;
+  }
+  for (const auto& node : graph_config.node()) {
+    if (absl::StrContains(node.calculator(), "InferenceCalculator")) {
+      ASSERT_EQ(node.calculator(), expected_inference_calculator);
+      break;
+    }
+  }
+}
+
 void DoSmokeTest(const std::string& graph_proto, bool use_vectors,
-                 bool apply_default_tflite_tensor_alignment) {
+                 bool apply_default_tflite_tensor_alignment,
+                 std::string expected_inference_calculator = "") {
   std::vector<Tensor> input_vec =
       CreateInputs(apply_default_tflite_tensor_alignment);
 
@@ -170,6 +186,8 @@ void DoSmokeTest(const std::string& graph_proto, bool use_vectors,
   std::vector<Packet> output_packets;
   tool::AddVectorSink("tensor_out", &graph_config, &output_packets);
   CalculatorGraph graph(graph_config);
+
+  CheckExactInferenceCalculator(graph.Config(), expected_inference_calculator);
 
   if (use_vectors) {
     RunGraphThenClose(graph, std::move(input_vec));
@@ -237,7 +255,8 @@ TEST(InferenceCalculatorTest, SmokeTestTflite) {
       /*graph_proto=*/absl::StrReplaceAll(
           kGraphWithModelPathInOption,
           {{"$delegate", "delegate { tflite {} }"}, {"$mmap", "false"}}),
-      /*use_vectors=*/true, /*apply_default_tflite_tensor_alignment=*/false);
+      /*use_vectors=*/true, /*apply_default_tflite_tensor_alignment=*/false,
+      /*expected_inference_calculator=*/"InferenceCalculatorCpu");
 }
 TEST(InferenceCalculatorTest, SmokeTestTfliteMmap) {
   DoSmokeTest(
@@ -248,10 +267,11 @@ TEST(InferenceCalculatorTest, SmokeTestTfliteMmap) {
 }
 TEST(InferenceCalculatorTest, SmokeTestXnnpack) {
   DoSmokeTest(
-      absl::StrReplaceAll(
+      /*graph_proto=*/absl::StrReplaceAll(
           kGraphWithModelPathInOption,
           {{"$delegate", "delegate { xnnpack {} }"}, {"$mmap", "false"}}),
-      /*use_vectors=*/true, /*apply_default_tflite_tensor_alignment=*/false);
+      /*use_vectors=*/true, /*apply_default_tflite_tensor_alignment=*/false,
+      /*expected_inference_calculator=*/"InferenceCalculatorXnnpack");
 }
 TEST(InferenceCalculatorTest, SmokeTestXnnpackMultithread) {
   DoSmokeTest(absl::StrReplaceAll(
