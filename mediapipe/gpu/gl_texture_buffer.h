@@ -141,7 +141,7 @@ class GlTextureBuffer
   void WaitForConsumersOnGpu();
 
   // Returns the GL context this buffer was created with.
-  const std::shared_ptr<GlContext>& GetProducerContext() {
+  const std::shared_ptr<GlContext>& GetProducerContext() const {
     return producer_context_;
   }
 
@@ -156,7 +156,10 @@ class GlTextureBuffer
   // Returns true on success.
   bool CreateInternal(const void* data, int alignment = 4);
 
-  void ViewDoneWriting(const GlTextureView& view);
+  void ViewDoneReading(const GlTextureView& view,
+                       bool sync_with_external_context) const;
+  void ViewDoneWriting(const GlTextureView& view,
+                       bool sync_with_external_context);
 
   friend class GlCalculatorHelperImpl;
 

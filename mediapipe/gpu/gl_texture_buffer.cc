@@ -283,6 +283,15 @@ void GlTextureBuffer::WaitForConsumersOnGpu() {
 GlTextureView GlTextureBuffer::GetReadView(internal::types<GlTextureView>,
                                            int plane) const {
   auto gl_context = GlContext::GetCurrent();
+  bool sync_with_external_context = false;
+  if (!gl_context) {
+    // There's no current Mediapipe context, but there may be an external
+    // context (e.g. we're in the app render thread), so try to sync the native
+    // and the producer context.
+    ABSL_CHECK(GlContext::IsAnyContextCurrent());
+    gl_context = GetProducerContext();
+    sync_with_external_context = true;
+  }
   ABSL_CHECK(gl_context);
   ABSL_CHECK_EQ(plane, 0);
   // Note that this method is only supposed to be called by GpuBuffer, which
@@ -292,11 +301,11 @@ GlTextureView GlTextureBuffer::GetReadView(internal::types<GlTextureView>,
   // Insert wait call to sync with the producer.
   WaitOnGpu();
   GlTextureView::DetachFn detach =
-      [texbuf = shared_from_this()](GlTextureView& texture) {
-        // Inform the GlTextureBuffer that we have finished accessing its
-        // contents, and create a consumer sync point.
-        texbuf->DidRead(texture.gl_context()->CreateSyncToken());
+      [texbuf = shared_from_this(),
+       sync_with_external_context](GlTextureView& texture) {
+        texbuf->ViewDoneReading(texture, sync_with_external_context);
       };
+
   return GlTextureView(gl_context.get(), target(), name(), width(), height(),
                        plane, std::move(detach), nullptr);
 }
@@ -304,6 +313,15 @@ GlTextureView GlTextureBuffer::GetReadView(internal::types<GlTextureView>,
 GlTextureView GlTextureBuffer::GetWriteView(internal::types<GlTextureView>,
                                             int plane) {
   auto gl_context = GlContext::GetCurrent();
+  bool sync_with_external_context = false;
+  if (!gl_context) {
+    // There's no current Mediapipe context, but there may be an external
+    // context (e.g. we're in the app render thread), so try to sync the native
+    // and the producer context.
+    ABSL_CHECK(GlContext::IsAnyContextCurrent());
+    gl_context = GetProducerContext();
+    sync_with_external_context = true;
+  }
   ABSL_CHECK(gl_context);
   ABSL_CHECK_EQ(plane, 0);
   // Note that this method is only supposed to be called by GpuBuffer, which
@@ -315,17 +333,42 @@ GlTextureView GlTextureBuffer::GetWriteView(internal::types<GlTextureView>,
   Reuse();  // TODO: the producer wait should probably be part of Reuse in the
             // case when there are no consumers.
   GlTextureView::DoneWritingFn done_writing =
-      [texbuf = shared_from_this()](const GlTextureView& texture) {
-        texbuf->ViewDoneWriting(texture);
+      [texbuf = shared_from_this(),
+       sync_with_external_context](const GlTextureView& texture) {
+        texbuf->ViewDoneWriting(texture, sync_with_external_context);
       };
   return GlTextureView(gl_context.get(), target(), name(), width(), height(),
                        plane, nullptr, std::move(done_writing));
 }
 
-void GlTextureBuffer::ViewDoneWriting(const GlTextureView& view) {
+void GlTextureBuffer::ViewDoneReading(const GlTextureView& view,
+                                      bool sync_with_external_context) const {
+  // Inform the GlTextureBuffer that we have finished accessing its
+  // contents, and create a consumer sync point.
+  if (sync_with_external_context) {
+    auto sync = GlContext::CreateSyncTokenForCurrentExternalContext(
+        view.gl_context()->shared_from_this());
+    if (sync) {
+      DidRead(std::move(sync));
+    }
+  } else {
+    DidRead(view.gl_context()->CreateSyncToken());
+  }
+}
+
+void GlTextureBuffer::ViewDoneWriting(const GlTextureView& view,
+                                      bool sync_with_external_context) {
   // Inform the GlTextureBuffer that we have produced new content, and create
   // a producer sync point.
-  Updated(view.gl_context()->CreateSyncToken());
+  if (sync_with_external_context) {
+    auto sync = GlContext::CreateSyncTokenForCurrentExternalContext(
+        view.gl_context()->shared_from_this());
+    if (sync) {
+      Updated(std::move(sync));
+    }
+  } else {
+    Updated(view.gl_context()->CreateSyncToken());
+  }
 
 #ifdef __ANDROID__
   // On (some?) Android devices, the texture may need to be explicitly
