@@ -23,6 +23,8 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
+#include "mediapipe/calculators/core/pass_through_calculator.h"
+#include "mediapipe/framework/api3/any.h"
 #include "mediapipe/framework/api3/calculator.h"
 #include "mediapipe/framework/api3/calculator_context.h"
 #include "mediapipe/framework/api3/calculator_contract.h"
@@ -437,6 +439,55 @@ TEST(FunctionRunnerTest, ReturnsTimestampBoundUpdate) {
 
   MP_ASSERT_OK_AND_ASSIGN(Packet<int> output, runner.Run(MakePacket<int>(42)));
   EXPECT_FALSE(output);
+}
+
+TEST(FunnctionRunnerTest, HandlingEmptyPacketInputs) {
+  MP_ASSERT_OK_AND_ASSIGN(
+      auto runner,
+      Runner::For([](GenericGraph& graph, Stream<int> a, Stream<std::string> b)
+                      -> std::tuple<Stream<int>, Stream<std::string>> {
+        auto& node = graph.AddNode<PassThroughNode>();
+        node.in.Add(a.Cast<Any>());
+        node.in.Add(b.Cast<Any>());
+        return {node.out.Add().Cast<int>(), node.out.Add().Cast<std::string>()};
+      }).Create());
+  {
+    // Check first we can pass through non empty packets.
+    MP_ASSERT_OK_AND_ASSIGN(
+        (auto [a, b]),
+        runner.Run(MakePacket<int>(42), MakePacket<std::string>("lorem")));
+    ASSERT_TRUE(a);
+    EXPECT_EQ(a.GetOrDie(), 42);
+    ASSERT_TRUE(b);
+    EXPECT_EQ(b.GetOrDie(), "lorem");
+  }
+
+  {
+    // Second input is empty.
+    MP_ASSERT_OK_AND_ASSIGN(
+        (auto [a, b]), runner.Run(MakePacket<int>(42), Packet<std::string>()));
+    ASSERT_TRUE(a);
+    EXPECT_EQ(a.GetOrDie(), 42);
+    ASSERT_FALSE(b);
+  }
+
+  {
+    // First input is empty.
+    MP_ASSERT_OK_AND_ASSIGN(
+        (auto [a, b]),
+        runner.Run(Packet<int>(), MakePacket<std::string>("lorem")));
+    ASSERT_FALSE(a);
+    ASSERT_TRUE(b);
+    EXPECT_EQ(b.GetOrDie(), "lorem");
+  }
+
+  {
+    // Both inputs empty.
+    MP_ASSERT_OK_AND_ASSIGN((auto [a, b]),
+                            runner.Run(Packet<int>(), Packet<std::string>()));
+    ASSERT_FALSE(a);
+    ASSERT_FALSE(b);
+  }
 }
 
 }  // namespace

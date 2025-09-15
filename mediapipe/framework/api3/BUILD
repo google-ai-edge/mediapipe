@@ -290,6 +290,7 @@ cc_test(
     name = "function_runner_test",
     srcs = ["function_runner_test.cc"],
     deps = [
+        ":any",
         ":calculator",
         ":calculator_context",
         ":calculator_contract",
@@ -299,6 +300,7 @@ cc_test(
         ":node",
         ":packet",
         ":stream",
+        "//mediapipe/calculators/core:pass_through_calculator",
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:graph_service",
