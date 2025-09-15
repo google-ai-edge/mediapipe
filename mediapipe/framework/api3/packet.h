@@ -51,8 +51,13 @@ class Packet {
   Packet(Packet&& p) = default;
   Packet& operator=(Packet&& p) = default;
 
+  // Checks if packet is not empty.
   explicit operator bool() const { return !packet_.IsEmpty(); }
 
+  // Returns the payload.
+  //
+  // NOTE: Dies if packet is not empty, so must be checked before accessing the
+  //   value, e.g. RET_CHECK(packet);
   const T& GetOrDie() const { return packet_.Get<T>(); }
 
   Packet<T> At(Timestamp timestamp) const {
@@ -63,6 +68,7 @@ class Packet {
 
   const mediapipe::Packet& AsLegacyPacket() const { return packet_; }
 
+  // Debug info about the packet (type, timestamp).
   std::string DebugString() const { return packet_.DebugString(); }
 
  private:

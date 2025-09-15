@@ -119,12 +119,17 @@ class Input<ContextSpecializer, PayloadT>
   using Payload = PayloadT;
   using internal_port::Port<ContextSpecializer, InputStreamField>::Port;
 
+  // Checks if payload can be accessed - valid input & non empty packet.
   explicit operator bool() const {
     auto id = holder_->context->Inputs().GetId(Tag(), Index());
     return id.IsValid() &&
            !holder_->context->Inputs().Get(id).Value().IsEmpty();
   }
 
+  // Returns the payload of the packet for this particular input.
+  //
+  // NOTE: Dies if input packet is missing, input must be checked before
+  //   accessing the payload, e.g. `RET_CHECK(cc.input)`
   const PayloadT& GetOrDie() const {
     return holder_->context->Inputs()
         .Get(Tag(), Index())
@@ -132,6 +137,8 @@ class Input<ContextSpecializer, PayloadT>
         .template Get<PayloadT>();
   }
 
+  // Returns the packet for this particular input or empty packet if it's
+  // missing.
   mediapipe::api3::Packet<PayloadT> Packet() const {
     return mediapipe::api3::Packet<PayloadT>(
         holder_->context->Inputs().Get(Tag(), Index()).Value());
@@ -161,12 +168,14 @@ class Input<ContextSpecializer, OneOf<PayloadTs...>>
   using Payload = OneOf<PayloadTs...>;
   using internal_port::Port<ContextSpecializer, InputStreamField>::Port;
 
+  // Checks if payload can be accessed - valid input & non empty packet.
   explicit operator bool() const {
     auto id = holder_->context->Inputs().GetId(Tag(), Index());
     return id.IsValid() &&
            !holder_->context->Inputs().Get(id).Value().IsEmpty();
   }
 
+  // Checks if input holds a packet of a specific type.
   template <typename T>
   bool Has() const {
     static_assert((std::is_same_v<T, PayloadTs> || ...),
@@ -178,6 +187,10 @@ class Input<ContextSpecializer, OneOf<PayloadTs...>>
         .ok();
   }
 
+  // Returns the payload of the packet for this particular input.
+  //
+  // NOTE: Dies if input packet is missing, input must be checked before
+  //   accessing the payload, e.g. `RET_CHECK(cc.input)`
   template <typename T>
   const T& GetOrDie() const {
     static_assert((std::is_same_v<T, PayloadTs> || ...),
@@ -191,9 +204,12 @@ class Input<ContextSpecializer, OneOf<PayloadTs...>>
   // Visits the value in the input with the given visitor lambdas.
   // There must be one lambda provided for each type in PayloadTs.
   //
+  // NOTE: Dies if input packet is missing, input must be checked before
+  //   accessing the payload, e.g. `RET_CHECK(cc.input)`
+  //
   // Example:
   // ```
-  //   input.Visit(
+  //   input.VisitOrDie(
   //     [&](const TypeA& a) { ... },
   //     [&](const TypeB& b) { ... }
   //   );
@@ -240,12 +256,17 @@ class SideInput<ContextSpecializer, PayloadT>
   using Payload = PayloadT;
   using internal_port::Port<ContextSpecializer, InputSidePacketField>::Port;
 
+  // Checks if payload can be accessed - valid side input & non empty packet.
   virtual explicit operator bool() const {
     auto id = holder_->context->InputSidePackets().GetId(Tag(), Index());
     return id.IsValid() &&
            !holder_->context->InputSidePackets().Get(id).IsEmpty();
   }
 
+  // Returns the payload of the packet for this particular input.
+  //
+  // NOTE: Dies if input packet is missing, side input must be checked before
+  //   accessing the payload, e.g. `RET_CHECK(cc.input)`
   const PayloadT& GetOrDie() const {
     return holder_->context->InputSidePackets()
         .Get(Tag(), Index())
