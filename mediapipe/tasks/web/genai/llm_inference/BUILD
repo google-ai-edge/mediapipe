@@ -3,9 +3,10 @@
 # This task takes text input and performs text generation
 #
 
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_declaration", "mediapipe_ts_library")
-
 # TODO: See if we can migrate to the new js_test_* rules eventually
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_declaration", "mediapipe_ts_library")
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
