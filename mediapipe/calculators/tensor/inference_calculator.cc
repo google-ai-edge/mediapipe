@@ -95,9 +95,9 @@ class InferenceCalculatorSelectorImpl
       };
 
       if (!missing_impls.empty()) {
-        ABSL_LOG(WARNING) << absl::StrFormat(
+        VLOG(1) << absl::StrFormat(
             "Missing InferenceCalculator registration for %s. Falling back to "
-            "%s, Check if the build dependency is present.",
+            "%s.",
             absl::StrJoin(missing_impls, ", "), impl);
       }
 
