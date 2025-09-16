@@ -18,16 +18,18 @@ limitations under the License.
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <memory>
 #include <string>
 
 #include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/deps/file_path.h"
-#include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/c/components/containers/landmark.h"
+#include "mediapipe/tasks/c/core/mp_status.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
+#include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/c/vision/face_landmarker/face_landmarker_result.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
@@ -49,6 +51,23 @@ constexpr int kIterations = 100;
 
 std::string GetFullPath(absl::string_view file_name) {
   return JoinPath("./", kTestDataDirectory, file_name);
+}
+
+struct MpImageDeleter {
+  void operator()(MpImagePtr image) const {
+    if (image) {
+      MpImageFree(image);
+    }
+  }
+};
+using ScopedMpImage = std::unique_ptr<MpImageInternal, MpImageDeleter>;
+
+ScopedMpImage GetImage(const std::string& file_name) {
+  MpImagePtr image_ptr = nullptr;
+  MpStatus status = MpImageCreateFromFile(file_name.c_str(), &image_ptr);
+  EXPECT_EQ(status, kMpOk);
+  EXPECT_NE(image_ptr, nullptr);
+  return ScopedMpImage(image_ptr);
 }
 
 void AssertFaceLandmarkerResult(const FaceLandmarkerResult* result,
@@ -122,8 +141,7 @@ void AssertRotatedFaceLandmarkerResult(const FaceLandmarkerResult* result,
 }
 
 TEST(FaceLandmarkerTest, ImageModeTest) {
-  const auto image = DecodeImageFromFile(GetFullPath(kImageFile));
-  ASSERT_TRUE(image.ok());
+  const auto image = GetImage(GetFullPath(kImageFile));
 
   const std::string model_path = GetFullPath(kModelName);
   FaceLandmarkerOptions options = {
@@ -142,16 +160,8 @@ TEST(FaceLandmarkerTest, ImageModeTest) {
   void* landmarker = face_landmarker_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(landmarker, nullptr);
 
-  const auto& image_frame = image->GetImageFrameSharedPtr();
-  const MpImage mp_image = {
-      .type = MpImage::IMAGE_FRAME,
-      .image_frame = {.format = static_cast<ImageFormat>(image_frame->Format()),
-                      .image_buffer = image_frame->PixelData(),
-                      .width = image_frame->Width(),
-                      .height = image_frame->Height()}};
-
   FaceLandmarkerResult result;
-  face_landmarker_detect_image(landmarker, &mp_image, &result,
+  face_landmarker_detect_image(landmarker, image.get(), &result,
                                /* error_msg */ nullptr);
   AssertFaceLandmarkerResult(&result, kBlendshapesPrecision,
                              kLandmarksPrecision,
@@ -161,8 +171,7 @@ TEST(FaceLandmarkerTest, ImageModeTest) {
 }
 
 TEST(FaceLandmarkerTest, ImageModeWithOptionsTest) {
-  const auto image = DecodeImageFromFile(GetFullPath(kImageRotatedFile));
-  ASSERT_TRUE(image.ok());
+  const auto image = GetImage(GetFullPath(kImageRotatedFile));
 
   const std::string model_path = GetFullPath(kModelName);
   FaceLandmarkerOptions options = {
@@ -181,20 +190,12 @@ TEST(FaceLandmarkerTest, ImageModeWithOptionsTest) {
   void* landmarker = face_landmarker_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(landmarker, nullptr);
 
-  const auto& image_frame = image->GetImageFrameSharedPtr();
-  const MpImage mp_image = {
-      .type = MpImage::IMAGE_FRAME,
-      .image_frame = {.format = static_cast<ImageFormat>(image_frame->Format()),
-                      .image_buffer = image_frame->PixelData(),
-                      .width = image_frame->Width(),
-                      .height = image_frame->Height()}};
-
   ImageProcessingOptions image_processing_options;
   image_processing_options.has_region_of_interest = 0;
   image_processing_options.rotation_degrees = -90;
 
   FaceLandmarkerResult result;
-  face_landmarker_detect_image_with_options(landmarker, &mp_image,
+  face_landmarker_detect_image_with_options(landmarker, image.get(),
                                             &image_processing_options, &result,
                                             /* error_msg */ nullptr);
   AssertRotatedFaceLandmarkerResult(&result, kBlendshapesPrecision,
@@ -205,8 +206,7 @@ TEST(FaceLandmarkerTest, ImageModeWithOptionsTest) {
 }
 
 TEST(FaceLandmarkerTest, VideoModeTest) {
-  const auto image = DecodeImageFromFile(GetFullPath(kImageFile));
-  ASSERT_TRUE(image.ok());
+  const auto image = GetImage(GetFullPath(kImageFile));
 
   const std::string model_path = GetFullPath(kModelName);
   FaceLandmarkerOptions options = {
@@ -226,17 +226,9 @@ TEST(FaceLandmarkerTest, VideoModeTest) {
                                             /* error_msg */ nullptr);
   EXPECT_NE(landmarker, nullptr);
 
-  const auto& image_frame = image->GetImageFrameSharedPtr();
-  const MpImage mp_image = {
-      .type = MpImage::IMAGE_FRAME,
-      .image_frame = {.format = static_cast<ImageFormat>(image_frame->Format()),
-                      .image_buffer = image_frame->PixelData(),
-                      .width = image_frame->Width(),
-                      .height = image_frame->Height()}};
-
   for (int i = 0; i < kIterations; ++i) {
     FaceLandmarkerResult result;
-    face_landmarker_detect_for_video(landmarker, &mp_image, i, &result,
+    face_landmarker_detect_for_video(landmarker, image.get(), i, &result,
                                      /* error_msg */ nullptr);
 
     AssertFaceLandmarkerResult(&result, kBlendshapesPrecision,
@@ -254,15 +246,15 @@ TEST(FaceLandmarkerTest, VideoModeTest) {
 // timestamp is greater than the previous one.
 struct LiveStreamModeCallback {
   static int64_t last_timestamp;
-  static void Fn(FaceLandmarkerResult* landmarker_result, const MpImage* image,
+  static void Fn(FaceLandmarkerResult* landmarker_result, MpImagePtr image,
                  int64_t timestamp, char* error_msg) {
     ASSERT_NE(landmarker_result, nullptr);
     ASSERT_EQ(error_msg, nullptr);
     AssertFaceLandmarkerResult(landmarker_result, kBlendshapesPrecision,
                                kLandmarksPrecision,
                                kFacialTransformationMatrixPrecision);
-    EXPECT_GT(image->image_frame.width, 0);
-    EXPECT_GT(image->image_frame.height, 0);
+    EXPECT_GT(MpImageGetWidth(image), 0);
+    EXPECT_GT(MpImageGetHeight(image), 0);
     EXPECT_GT(timestamp, last_timestamp);
     ++last_timestamp;
 
@@ -273,8 +265,7 @@ int64_t LiveStreamModeCallback::last_timestamp = -1;
 
 // TODO: Await the callbacks and re-enable test
 TEST(FaceLandmarkerTest, DISABLED_LiveStreamModeTest) {
-  const auto image = DecodeImageFromFile(GetFullPath(kImageFile));
-  ASSERT_TRUE(image.ok());
+  const auto image = GetImage(GetFullPath(kImageFile));
 
   const std::string model_path = GetFullPath(kModelName);
 
@@ -296,16 +287,8 @@ TEST(FaceLandmarkerTest, DISABLED_LiveStreamModeTest) {
                                             nullptr);
   EXPECT_NE(landmarker, nullptr);
 
-  const auto& image_frame = image->GetImageFrameSharedPtr();
-  const MpImage mp_image = {
-      .type = MpImage::IMAGE_FRAME,
-      .image_frame = {.format = static_cast<ImageFormat>(image_frame->Format()),
-                      .image_buffer = image_frame->PixelData(),
-                      .width = image_frame->Width(),
-                      .height = image_frame->Height()}};
-
   for (int i = 0; i < kIterations; ++i) {
-    EXPECT_GE(face_landmarker_detect_async(landmarker, &mp_image, i,
+    EXPECT_GE(face_landmarker_detect_async(landmarker, image.get(), i,
                                            /* error_msg */ nullptr),
               0);
   }
@@ -343,34 +326,6 @@ TEST(FaceLandmarkerTest, InvalidArgumentHandling) {
                 "is set: false [MediaPipeTasksStatus='601']"));
 
   free(error_msg);
-}
-
-TEST(FaceLandmarkerTest, FailedRecognitionHandling) {
-  const std::string model_path = GetFullPath(kModelName);
-  FaceLandmarkerOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::IMAGE,
-      /* num_faces= */ 1,
-      /* min_face_detection_confidence= */ 0.5,
-      /* min_face_presence_confidence= */ 0.5,
-      /* min_tracking_confidence= */ 0.5,
-      /* output_face_blendshapes = */ true,
-      /* output_facial_transformation_matrixes = */ true,
-  };
-
-  void* landmarker = face_landmarker_create(&options, /* error_msg */
-                                            nullptr);
-  EXPECT_NE(landmarker, nullptr);
-
-  const MpImage mp_image = {.type = MpImage::GPU_BUFFER, .gpu_buffer = {}};
-  FaceLandmarkerResult result;
-  char* error_msg;
-  face_landmarker_detect_image(landmarker, &mp_image, &result, &error_msg);
-  EXPECT_THAT(error_msg, HasSubstr("GPU Buffer not supported yet"));
-  free(error_msg);
-  face_landmarker_close(landmarker, /* error_msg */ nullptr);
 }
 
 }  // namespace
