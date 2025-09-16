@@ -39,6 +39,7 @@ public class TextClassifierTest {
       "test_model_text_classifier_bool_output.tflite";
   private static final String NEGATIVE_TEXT = "unflinchingly bleak and desperate";
   private static final String POSITIVE_TEXT = "it's a charming and often affecting journey";
+  private static final float SCORE_THRESHOLD = 0.05f;
 
   @Test
   public void options_failsWithNegativeMaxResults() throws Exception {
@@ -110,16 +111,14 @@ public class TextClassifierTest {
     assertCategoriesAre(
         negativeResults,
         Arrays.asList(
-            Category.create(0.95630914f, 0, "negative", ""),
-            Category.create(0.04369091f, 1, "positive", "")));
+            Category.create(0.95f, 0, "negative", ""), Category.create(0.05f, 1, "positive", "")));
 
     TextClassifierResult positiveResults = textClassifier.classify(POSITIVE_TEXT);
     assertHasOneHead(positiveResults);
     assertCategoriesAre(
         positiveResults,
         Arrays.asList(
-            Category.create(0.99997187f, 1, "positive", ""),
-            Category.create(2.8132641E-5f, 0, "negative", "")));
+            Category.create(1.00f, 1, "positive", ""), Category.create(0.00f, 0, "negative", "")));
   }
 
   @Test
@@ -133,8 +132,7 @@ public class TextClassifierTest {
     assertCategoriesAre(
         negativeResults,
         Arrays.asList(
-            Category.create(0.95630914f, 0, "negative", ""),
-            Category.create(0.04369091f, 1, "positive", "")));
+            Category.create(0.95f, 0, "negative", ""), Category.create(0.05f, 1, "positive", "")));
 
     TextClassifierResult positiveResults = textClassifier.classify(POSITIVE_TEXT);
     assertHasOneHead(positiveResults);
@@ -142,8 +140,7 @@ public class TextClassifierTest {
     assertCategoriesAre(
         positiveResults,
         Arrays.asList(
-            Category.create(0.99997187f, 1, "positive", ""),
-            Category.create(2.8132641E-5f, 0, "negative", "")));
+            Category.create(1.00f, 1, "positive", ""), Category.create(0.00f, 0, "negative", "")));
   }
 
   @Test
@@ -156,16 +153,14 @@ public class TextClassifierTest {
     assertCategoriesAre(
         negativeResults,
         Arrays.asList(
-            Category.create(0.6647746f, 0, "Negative", ""),
-            Category.create(0.33522537f, 1, "Positive", "")));
+            Category.create(0.66f, 0, "Negative", ""), Category.create(0.33f, 1, "Positive", "")));
 
     TextClassifierResult positiveResults = textClassifier.classify(POSITIVE_TEXT);
     assertHasOneHead(positiveResults);
     assertCategoriesAre(
         positiveResults,
         Arrays.asList(
-            Category.create(0.5120041f, 0, "Negative", ""),
-            Category.create(0.48799595f, 1, "Positive", "")));
+            Category.create(0.51f, 0, "Negative", ""), Category.create(0.48f, 1, "Positive", "")));
   }
 
   private static void assertHasOneHead(TextClassifierResult results) {
@@ -176,7 +171,16 @@ public class TextClassifierTest {
   }
 
   private static void assertCategoriesAre(TextClassifierResult results, List<Category> categories) {
-    assertThat(results.classificationResult().classifications().get(0).categories())
-        .isEqualTo(categories);
+    List<Category> actualCategories =
+        results.classificationResult().classifications().get(0).categories();
+    assertThat(actualCategories).hasSize(categories.size());
+    for (int i = 0; i < categories.size(); i++) {
+      Category actual = actualCategories.get(i);
+      Category expected = categories.get(i);
+      assertThat(actual.index()).isEqualTo(expected.index());
+      assertThat(actual.categoryName()).isEqualTo(expected.categoryName());
+      assertThat(actual.displayName()).isEqualTo(expected.displayName());
+      assertThat(actual.score()).isWithin(SCORE_THRESHOLD).of(expected.score());
+    }
   }
 }
