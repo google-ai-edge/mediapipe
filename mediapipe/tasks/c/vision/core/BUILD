@@ -49,6 +49,12 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "image_c_lib",
+    deps = [":image"],
+    alwayslink = 1,
+)
+
 cc_test(
     name = "image_test",
     srcs = ["image_test.cc"],

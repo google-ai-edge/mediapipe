@@ -19,22 +19,11 @@ package(default_visibility = ["//visibility:public"])
 licenses(["notice"])
 
 py_library(
-    name = "text_c",
-    srcs = [
-        "text_c.py",
-    ],
-    data = [
-        "//mediapipe/tasks/c:libmediapipe.so",
-    ],
-)
-
-py_library(
     name = "text_classifier",
     srcs = [
         "text_classifier.py",
     ],
     deps = [
-        ":text_c",
         "//mediapipe/tasks/python/components/containers:category",
         "//mediapipe/tasks/python/components/containers:classification_result",
         "//mediapipe/tasks/python/components/containers:classification_result_c",
@@ -42,6 +31,7 @@ py_library(
         "//mediapipe/tasks/python/components/processors:classifier_options_c",
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/core:base_options_c",
+        "//mediapipe/tasks/python/core:mediapipe_c_bindings",
     ],
 )
 
@@ -51,12 +41,12 @@ py_library(
         "text_embedder.py",
     ],
     deps = [
-        ":text_c",
         "//mediapipe/tasks/python/components/containers:embedding_result",
         "//mediapipe/tasks/python/components/containers:embedding_result_c",
         "//mediapipe/tasks/python/components/utils:cosine_similarity",
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/core:base_options_c",
+        "//mediapipe/tasks/python/core:mediapipe_c_bindings",
         "@mediapipe_pip_deps_numpy//:pkg",
     ],
 )
@@ -67,7 +57,6 @@ py_library(
         "language_detector.py",
     ],
     deps = [
-        ":text_c",
         "//mediapipe/tasks/python/components/containers:category",
         "//mediapipe/tasks/python/components/containers:classification_result",
         "//mediapipe/tasks/python/components/containers:classification_result_c",
@@ -75,5 +64,6 @@ py_library(
         "//mediapipe/tasks/python/components/processors:classifier_options_c",
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/core:base_options_c",
+        "//mediapipe/tasks/python/core:mediapipe_c_bindings",
     ],
 )

@@ -33,6 +33,14 @@ cc_library(
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
     ],
+)
+
+cc_library(
+    name = "language_detector_c_lib",
+    visibility = ["//mediapipe/tasks/c:__subpackages__"],
+    deps = [
+        ":language_detector_lib",
+    ],
     alwayslink = 1,
 )
 

@@ -21,7 +21,7 @@ from mediapipe.tasks.python.components.containers import embedding_result_c as e
 from mediapipe.tasks.python.components.utils import cosine_similarity
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.core import base_options_c as base_options_c_module
-from mediapipe.tasks.python.text import text_c as text_c_module
+from mediapipe.tasks.python.core import mediapipe_c_bindings as mediapipe_c_bindings_c_module
 
 TextEmbedderResult = embedding_result_module.EmbeddingResult
 _BaseOptions = base_options_module.BaseOptions
@@ -169,7 +169,7 @@ class TextEmbedder:
         `TextEmbedderOptions` such as missing the model.
       RuntimeError: If other types of error occurred.
     """
-    lib = text_c_module.load_shared_library()
+    lib = mediapipe_c_bindings_c_module.load_shared_library()
     _register_ctypes_signatures(lib)
     ctypes_options = options.to_ctypes()
     error_msg_ptr = ctypes.c_char_p()

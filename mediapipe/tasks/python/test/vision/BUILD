@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Placeholder: load py_test
 # Placeholder for internal Python strict test compatibility macro.
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
@@ -251,5 +252,19 @@ py_test(
         "//mediapipe/tasks/python/vision:face_aligner",
         "//mediapipe/tasks/python/vision/core:image_processing_options",
         "@mediapipe_pip_deps_absl_py//:pkg",
+    ],
+)
+
+py_test(
+    name = "image_test",
+    srcs = ["image_test.py"],
+    data = [
+        "//mediapipe/tasks/testdata/vision:test_images",
+    ],
+    deps = [
+        "//mediapipe/tasks/python/test:test_utils",
+        "//mediapipe/tasks/python/vision/core:image",
+        "@mediapipe_pip_deps_absl_py//:pkg",
+        "@mediapipe_pip_deps_numpy//:pkg",
     ],
 )

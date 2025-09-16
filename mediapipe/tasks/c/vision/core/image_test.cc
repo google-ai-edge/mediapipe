@@ -198,4 +198,55 @@ TEST(ImageTest, CreateFromUint8DataError) {
   EXPECT_EQ(image_ptr, nullptr);
 }
 
+struct ImageFormatTestData {
+  MpImageFormat format;
+  int channels;
+  int byte_depth;
+};
+
+TEST(ImageTest, ImageFormatRoundtrip) {
+  const int width = 1;
+  const int height = 1;
+
+  const std::vector<ImageFormatTestData> test_data = {
+      {kMpImageFormatSrgb, 3, 1},    {kMpImageFormatSrgba, 4, 1},
+      {kMpImageFormatGray8, 1, 1},   {kMpImageFormatGray16, 1, 2},
+      {kMpImageFormatSrgb48, 3, 2},  {kMpImageFormatSrgba64, 4, 2},
+      {kMpImageFormatVec32F1, 1, 4}, {kMpImageFormatVec32F2, 2, 4},
+      {kMpImageFormatVec32F4, 4, 4},
+  };
+
+  for (const auto& data : test_data) {
+    SCOPED_TRACE(data.format);
+    MpImagePtr image_ptr = nullptr;
+    MpStatus status;
+    int pixel_data_size = width * height * data.channels * data.byte_depth;
+
+    if (data.byte_depth == 1) {
+      std::vector<uint8_t> pixel_data(width * height * data.channels, 0);
+      status = MpImageCreateFromUint8Data(data.format, width, height,
+                                          pixel_data.data(), pixel_data_size,
+                                          &image_ptr);
+    } else if (data.byte_depth == 2) {
+      std::vector<uint16_t> pixel_data(width * height * data.channels, 0);
+      status = MpImageCreateFromUint16Data(data.format, width, height,
+                                           pixel_data.data(), pixel_data_size,
+                                           &image_ptr);
+    } else if (data.byte_depth == 4) {
+      std::vector<float> pixel_data(width * height * data.channels, 0.0f);
+      status = MpImageCreateFromFloatData(data.format, width, height,
+                                          pixel_data.data(), pixel_data_size,
+                                          &image_ptr);
+    } else {
+      FAIL() << "Unsupported byte depth: " << data.byte_depth;
+    }
+
+    ASSERT_EQ(status, kMpOk);
+    auto image = ScopedMpImage{image_ptr};
+    EXPECT_EQ(MpImageGetFormat(image.get()), data.format);
+    EXPECT_EQ(MpImageGetByteDepth(image.get()), data.byte_depth);
+    EXPECT_EQ(MpImageGetChannels(image.get()), data.channels);
+  }
+}
+
 }  // namespace

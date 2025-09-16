@@ -23,7 +23,7 @@ from mediapipe.tasks.python.components.processors import classifier_options as c
 from mediapipe.tasks.python.components.processors import classifier_options_c as classifier_options_c_module
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.core import base_options_c as base_options_c_module
-from mediapipe.tasks.python.text import text_c as text_c_module
+from mediapipe.tasks.python.core import mediapipe_c_bindings as mediapipe_c_bindings_c_module
 
 _BaseOptions = base_options_module.BaseOptions
 Category = category_module.Category
@@ -194,7 +194,7 @@ class TextClassifier:
         `TextClassifierOptions` such as missing the model.
       RuntimeError: If other types of error occurred.
     """
-    lib = text_c_module.load_shared_library()  # pylint: disable=protected-access
+    lib = mediapipe_c_bindings_c_module.load_shared_library()  # pylint: disable=protected-access
     _register_ctypes_signatures(lib)
 
     ctypes_options = options.to_ctypes()

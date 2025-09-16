@@ -92,6 +92,8 @@ std::string ToString(MpImageFormat format) {
       return "VEC32F2";
     case kMpImageFormatVec32F4:
       return "VEC32F4";
+    default:
+      return "UNKNOWN";
   }
 }
 

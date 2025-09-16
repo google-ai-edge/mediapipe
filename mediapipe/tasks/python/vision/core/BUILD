@@ -45,3 +45,12 @@ py_library(
         "//mediapipe/tasks/python/core:optional_dependencies",
     ],
 )
+
+py_library(
+    name = "image",
+    srcs = ["image.py"],
+    deps = [
+        "//mediapipe/tasks/python/core:mediapipe_c_bindings",
+        "@mediapipe_pip_deps_numpy//:pkg",
+    ],
+)

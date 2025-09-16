@@ -34,10 +34,10 @@ typedef enum MpImageFormat {
   kMpImageFormatSrgba = 2,
   kMpImageFormatGray8 = 3,
   kMpImageFormatGray16 = 4,
-  kMpImageFormatSrgb48 = 5,
+  kMpImageFormatSrgb48 = 7,
   kMpImageFormatSrgba64 = 8,
   kMpImageFormatVec32F1 = 9,
-  kMpImageFormatVec32F2 = 11,
+  kMpImageFormatVec32F2 = 12,
   kMpImageFormatVec32F4 = 13,
 } MpImageFormat;
 
