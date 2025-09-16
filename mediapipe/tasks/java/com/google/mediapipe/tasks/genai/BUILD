@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl", "mediapipe_build_aar_with_jni", "mediapipe_java_proto_src_extractor", "mediapipe_jni_binary")
 
 licenses(["notice"])
@@ -23,12 +22,6 @@ mediapipe_jni_binary(
     name = "llm_inference_engine_jni",
     uses_explicit_exports = True,
     deps = ["//mediapipe/tasks/java/com/google/mediapipe/tasks/genai/llminference/jni:llm"],
-)
-
-cc_library(
-    name = "libllm_inference_engine_jni_lib",
-    srcs = [":libllm_inference_engine_jni.so"],
-    alwayslink = 1,
 )
 
 android_library(

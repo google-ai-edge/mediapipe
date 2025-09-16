@@ -16,6 +16,7 @@
 
 load("@build_bazel_rules_android//android:rules.bzl", "android_binary", "android_library")
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
 _CORE_TASKS_JAVA_PROTO_LITE_TARGETS = [
     "//mediapipe/gpu:gpu_origin_java_proto_lite",
@@ -92,13 +93,15 @@ _TEXT_TASKS_JAVA_PROTO_LITE_TARGETS = [
     "//mediapipe/tasks/cc/text/text_embedder/proto:text_embedder_graph_options_java_proto_lite",
 ]
 
-def mediapipe_jni_binary(name, deps, uses_explicit_exports = False):
+def mediapipe_jni_binary(name, deps, uses_explicit_exports = False, shared_lib_name = None):
     """Builds MediaPipe JNI library. Uses prebuilt libraries if available.
 
     Args:
       name: The name of the library group.
       deps: The cc_binary dependencies.
       uses_explicit_exports: Whethe this library uses JNIEXPORT to mark exported symbols.
+      shared_lib_name: The name of the shared library. If not provided, it will be inferred from
+        the name argument.
     """
     extra_linkopts = []
     if not uses_explicit_exports:
@@ -136,7 +139,7 @@ def mediapipe_jni_binary(name, deps, uses_explicit_exports = False):
     )
 
     native.filegroup(
-        name = "lib" + name,
+        name = "lib" + name + "_files",
         srcs = select({
             "@platforms//cpu:armv7": native.glob(["armeabi-v7a/lib" + name + ".so"]) or [":lib" + name + "_src"],
             "@platforms//cpu:arm64": native.glob(["arm64-v8a/lib" + name + ".so"]) or [":lib" + name + "_src"],
@@ -146,11 +149,18 @@ def mediapipe_jni_binary(name, deps, uses_explicit_exports = False):
         }),
     )
 
+    shared_lib_name = shared_lib_name or "lib" + name + ".so"
     native.genrule(
         name = "lib" + name + "_rename",
-        srcs = ["lib" + name],
-        outs = ["lib" + name + ".so"],
+        srcs = ["lib" + name + "_files"],
+        outs = [name + "/" + shared_lib_name],
         cmd = "cp $< $@",
+    )
+
+    cc_library(
+        name = "lib" + name + "_lib",
+        srcs = [name + "/" + shared_lib_name],
+        alwayslink = 1,
     )
 
 def mediapipe_tasks_core_aar(name, srcs, manifest):

@@ -81,12 +81,6 @@ mediapipe_jni_binary(
     deps = [":mediapipe_tasks_vision_oss_deps"],
 )
 
-cc_library(
-    name = "libmediapipe_tasks_vision_jni_lib",
-    srcs = [":libmediapipe_tasks_vision_jni.so"],
-    alwayslink = 1,
-)
-
 android_library(
     name = "objectdetector",
     srcs = [
@@ -133,29 +127,6 @@ android_library(
         "//mediapipe/tasks/cc/core/proto:base_options_java_proto_lite",
         "//mediapipe/tasks/cc/vision/image_classifier/proto:image_classifier_graph_options_java_proto_lite",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:classificationresult",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
-        "//third_party:autovalue",
-        "@maven//:com_google_guava_guava",
-    ],
-)
-
-android_library(
-    name = "facestylizer",
-    srcs = [
-        "facestylizer/FaceStylizer.java",
-        "facestylizer/FaceStylizerResult.java",
-    ],
-    javacopts = [
-        "-Xep:AndroidJdkLibsChecker:OFF",
-    ],
-    manifest = "imagesegmenter/AndroidManifest.xml",
-    deps = [
-        ":core",
-        "//mediapipe/framework:calculator_options_java_proto_lite",
-        "//mediapipe/java/com/google/mediapipe/framework:android_framework",
-        "//mediapipe/java/com/google/mediapipe/framework/image",
-        "//mediapipe/tasks/cc/core/proto:base_options_java_proto_lite",
-        "//mediapipe/tasks/cc/vision/face_stylizer/proto:face_stylizer_graph_options_java_proto_lite",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",

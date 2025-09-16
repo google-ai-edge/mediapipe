@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl", "mediapipe_build_aar_with_jni", "mediapipe_jni_binary")
 
 licenses(["notice"])
@@ -28,12 +27,6 @@ mediapipe_jni_binary(
         "//mediapipe/tasks/cc/text/text_embedder:text_embedder_graph",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:model_resources_cache_jni",
     ],
-)
-
-cc_library(
-    name = "libmediapipe_tasks_text_jni_lib",
-    srcs = [":libmediapipe_tasks_text_jni.so"],
-    alwayslink = 1,
 )
 
 android_library(
