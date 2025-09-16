@@ -19,7 +19,15 @@
 
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
+#include "mediapipe/framework/api3/any.h"
+#include "mediapipe/framework/api3/calculator.h"
+#include "mediapipe/framework/api3/contract.h"
+#include "mediapipe/framework/api3/function_runner.h"
+#include "mediapipe/framework/api3/graph.h"
+#include "mediapipe/framework/api3/node.h"
+#include "mediapipe/framework/api3/packet.h"
 #include "mediapipe/framework/api3/port_test_nodes.h"
+#include "mediapipe/framework/api3/stream.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
@@ -332,6 +340,37 @@ TEST(PortContextTest, CanReadInputWriteOutputRepeatedPortsWhenManySpecified) {
 
   MP_ASSERT_OK(graph.CloseAllInputStreams());
   MP_ASSERT_OK(graph.WaitUntilDone());
+}
+
+struct GetNodeNameNode : Node<"GetNodeNameNodeName"> {
+  template <typename S>
+  struct Contract {
+    Input<S, Any> trigger{"TRIGGER"};
+    Output<S, std::string> name{"NAME"};
+  };
+};
+
+class GetNodeNameNodeImpl
+    : public Calculator<GetNodeNameNode, GetNodeNameNodeImpl> {
+ public:
+  absl::Status Process(CalculatorContext<GetNodeNameNode>& cc) final {
+    cc.name.Send(cc.NodeName());
+    return absl::OkStatus();
+  }
+};
+
+TEST(CalculatorContextTest, CanGetNodeName) {
+  MP_ASSERT_OK_AND_ASSIGN(
+      auto runner, Runner::For([](GenericGraph& graph,
+                                  Stream<int> trigger) -> Stream<std::string> {
+                     auto& node = graph.AddNode<GetNodeNameNode>();
+                     node.trigger.Set(trigger.Cast<Any>());
+                     return node.name.Get();
+                   }).Create());
+  MP_ASSERT_OK_AND_ASSIGN(Packet<std::string> name,
+                          runner.Run(MakePacket<int>(0)));
+  ASSERT_TRUE(name);
+  EXPECT_EQ(name.GetOrDie(), "GetNodeNameNodeName");
 }
 
 }  // namespace
