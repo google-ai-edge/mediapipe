@@ -14,6 +14,16 @@
 """The running mode of MediaPipe Vision Tasks."""
 
 import enum
+import types
+
+from mediapipe.tasks.python.core.optional_dependencies import doc_controls
+
+# The C API constants that map to the Python enum values.
+_CTYPE_VALUE_MAP = types.MappingProxyType({
+    'IMAGE': 1,
+    'VIDEO': 2,
+    'LIVE_STREAM': 3,
+})
 
 
 class VisionTaskRunningMode(enum.Enum):
@@ -29,3 +39,13 @@ class VisionTaskRunningMode(enum.Enum):
   IMAGE = 'IMAGE'
   VIDEO = 'VIDEO'
   LIVE_STREAM = 'LIVE_STREAM'
+
+  @property
+  @doc_controls.do_not_generate_docs
+  def ctype(self) -> int:
+    """Generates a C API int object."""
+    ctype_value = _CTYPE_VALUE_MAP.get(self.value)
+    assert (
+        ctype_value is not None
+    ), f'Unsupported vision task running mode: {self}'
+    return ctype_value

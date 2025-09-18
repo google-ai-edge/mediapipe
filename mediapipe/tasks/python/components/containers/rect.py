@@ -17,6 +17,7 @@ import dataclasses
 from typing import Any, Optional
 
 from mediapipe.framework.formats import rect_pb2
+from mediapipe.tasks.python.components.containers import rect_c as rect_c_module
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 
 _NormalizedRectProto = rect_pb2.NormalizedRect
@@ -33,14 +34,21 @@ class Rect:
   Attributes:
     left: The X coordinate of the left side of the rectangle.
     top: The Y coordinate of the top of the rectangle.
-    right: The X coordinate of the right side of the rectangle.
     bottom: The Y coordinate of the bottom of the rectangle.
+    right: The X coordinate of the right side of the rectangle.
   """
 
   left: float
   top: float
-  right: float
   bottom: float
+  right: float
+
+  @doc_controls.do_not_generate_docs
+  def to_ctypes(self) -> rect_c_module.RectC:
+    """Generates a C API RectC object."""
+    return rect_c_module.RectC(
+        left=self.left, top=self.top, bottom=self.bottom, right=self.right
+    )
 
 
 @dataclasses.dataclass

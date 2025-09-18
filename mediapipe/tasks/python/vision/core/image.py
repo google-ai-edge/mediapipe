@@ -20,6 +20,7 @@ from typing import Any
 import numpy as np
 
 from mediapipe.tasks.python.core import mediapipe_c_bindings as mediapipe_c_bindings_c_module
+from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 
 
 class ImageFormat(enum.IntEnum):
@@ -61,7 +62,6 @@ class ImageFormat(enum.IntEnum):
 
 def _register_ctypes_signatures(lib: ctypes.CDLL):
   """Registers C function signatures for the given library."""
-
   lib.MpImageCreateFromUint8Data.argtypes = [
       ctypes.c_int,
       ctypes.c_int,
@@ -187,6 +187,7 @@ class Image:
 
   _lib: ctypes.CDLL
   _image_ptr: ctypes.c_void_p
+  _owned: bool
 
   def __init__(self, image_format: ImageFormat, data: np.ndarray):
     """Creates an Image object from a numpy ndarray.
@@ -205,6 +206,7 @@ class Image:
 
     height, width, _ = data.shape
     self._image_ptr = ctypes.c_void_p()
+    self._owned = True
 
     if data.dtype == np.uint8:
       status = lib.MpImageCreateFromUint8Data(
@@ -264,6 +266,19 @@ class Image:
     new_image = cls.__new__(cls)
     new_image._lib = lib
     new_image._image_ptr = image_ptr
+    new_image._owned = True
+    return new_image
+
+  @classmethod
+  @doc_controls.do_not_generate_docs
+  def create_from_ctypes(
+      cls, image_ptr: ctypes.c_void_p, lib: ctypes.CDLL
+  ) -> 'Image':
+    """Creates an `Image` object from a ctypes pointer."""
+    new_image = cls.__new__(cls)
+    new_image._image_ptr = image_ptr
+    new_image._lib = lib
+    new_image._owned = False
     return new_image
 
   def numpy_view(self) -> np.ndarray:
@@ -432,5 +447,5 @@ class Image:
 
   def __del__(self):
     """Frees the internal C Image object."""
-    if hasattr(self, '_image_ptr') and self._image_ptr:
+    if self._owned and self._image_ptr:
       self._lib.MpImageFree(self._image_ptr)

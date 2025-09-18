@@ -21,13 +21,17 @@ licenses(["notice"])
 py_library(
     name = "vision_task_running_mode",
     srcs = ["vision_task_running_mode.py"],
+    deps = ["//mediapipe/tasks/python/core:optional_dependencies"],
 )
 
 py_library(
     name = "image_processing_options",
     srcs = ["image_processing_options.py"],
     deps = [
+        ":image_processing_options_c",
         "//mediapipe/tasks/python/components/containers:rect",
+        "//mediapipe/tasks/python/components/containers:rect_c",
+        "//mediapipe/tasks/python/core:optional_dependencies",
     ],
 )
 
@@ -47,10 +51,19 @@ py_library(
 )
 
 py_library(
+    name = "image_processing_options_c",
+    srcs = ["image_processing_options_c.py"],
+    deps = [
+        "//mediapipe/tasks/python/components/containers:rect_c",
+    ],
+)
+
+py_library(
     name = "image",
     srcs = ["image.py"],
     deps = [
         "//mediapipe/tasks/python/core:mediapipe_c_bindings",
+        "//mediapipe/tasks/python/core:optional_dependencies",
         "@mediapipe_pip_deps_numpy//:pkg",
     ],
 )

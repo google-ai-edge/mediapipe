@@ -37,9 +37,16 @@ py_library(
     name = "rect",
     srcs = ["rect.py"],
     deps = [
+        ":rect_c",
         "//mediapipe/framework/formats:rect_py_pb2",
         "//mediapipe/tasks/python/core:optional_dependencies",
     ],
+)
+
+py_library(
+    name = "rect_c",
+    srcs = ["rect_c.py"],
+    deps = [":bounding_box"],
 )
 
 py_library(
@@ -77,6 +84,7 @@ py_library(
 py_library(
     name = "category_c",
     srcs = ["category_c.py"],
+    deps = [":category"],
 )
 
 py_library(
@@ -85,6 +93,14 @@ py_library(
     deps = [
         "//mediapipe/framework/formats:location_data_py_pb2",
         "//mediapipe/tasks/python/core:optional_dependencies",
+    ],
+)
+
+py_library(
+    name = "keypoint_c",
+    srcs = ["keypoint_c.py"],
+    deps = [
+        ":keypoint",
     ],
 )
 
@@ -98,6 +114,19 @@ py_library(
         "//mediapipe/framework/formats:detection_py_pb2",
         "//mediapipe/framework/formats:location_data_py_pb2",
         "//mediapipe/tasks/python/core:optional_dependencies",
+    ],
+)
+
+py_library(
+    name = "detections_c",
+    srcs = ["detections_c.py"],
+    deps = [
+        ":category",
+        ":category_c",
+        ":detections",
+        ":keypoint",
+        ":keypoint_c",
+        ":rect_c",
     ],
 )
 

@@ -41,6 +41,12 @@ cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
     ],
+)
+
+cc_library(
+    name = "face_detector_c_lib",
+    visibility = ["//mediapipe/tasks/c:__subpackages__"],
+    deps = [":face_detector_lib"],
     alwayslink = 1,
 )
 

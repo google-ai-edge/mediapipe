@@ -56,17 +56,7 @@ class BaseVisionTaskApi(object):
       ValueError: The packet callback is not properly set based on the task's
       running mode.
     """
-    if running_mode == _RunningMode.LIVE_STREAM:
-      if packet_callback is None:
-        raise ValueError(
-            'The vision task is in live stream mode, a user-defined result '
-            'callback must be provided.'
-        )
-    elif packet_callback:
-      raise ValueError(
-          'The vision task is in image or video mode, a user-defined result '
-          'callback should not be provided.'
-      )
+    validate_running_mode(running_mode, packet_callback)
     self._runner = _TaskRunner.create(graph_config, packet_callback)
     self._running_mode = running_mode
 
@@ -224,3 +214,23 @@ class BaseVisionTaskApi(object):
       RuntimeError: If the mediapipe vision task failed to close.
     """
     self.close()
+
+
+def validate_running_mode(
+    running_mode: _RunningMode,
+    packet_callback: Optional[
+        Callable[[Mapping[str, packet_module.Packet]], None]
+    ] = None,
+) -> None:
+  """Validates the running mode of the mediapipe vision task."""
+  if running_mode == _RunningMode.LIVE_STREAM:
+    if packet_callback is None:
+      raise ValueError(
+          'The vision task is in live stream mode, a user-defined result '
+          'callback must be provided.'
+      )
+  elif packet_callback:
+    raise ValueError(
+        'The vision task is in image or video mode, a user-defined result '
+        'callback should not be provided.'
+    )

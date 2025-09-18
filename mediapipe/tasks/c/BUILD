@@ -38,5 +38,6 @@ cc_binary(
         "//mediapipe/tasks/c/text/text_classifier:text_classifier_c_lib",
         "//mediapipe/tasks/c/text/text_embedder:text_embedder_c_lib",
         "//mediapipe/tasks/c/vision/core:image_c_lib",
+        "//mediapipe/tasks/c/vision/face_detector:face_detector_c_lib",
     ],
 )

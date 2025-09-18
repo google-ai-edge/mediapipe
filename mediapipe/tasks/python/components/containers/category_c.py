@@ -16,6 +16,8 @@
 
 import ctypes
 
+from mediapipe.tasks.python.components.containers import category as category_lib
+
 
 class CategoryC(ctypes.Structure):
   _fields_ = [
@@ -24,3 +26,16 @@ class CategoryC(ctypes.Structure):
       ("category_name", ctypes.c_char_p),
       ("display_name", ctypes.c_char_p),
   ]
+
+  def to_python_category(self) -> category_lib.Category:
+    """Converts a ctypes CategoryC to a Python Category object."""
+    return category_lib.Category(
+        index=self.index,
+        score=self.score,
+        category_name=(
+            self.category_name.decode("utf-8") if self.category_name else None
+        ),
+        display_name=(
+            self.display_name.decode("utf-8") if self.display_name else None
+        ),
+    )
