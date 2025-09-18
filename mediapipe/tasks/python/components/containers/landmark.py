@@ -17,6 +17,7 @@ import dataclasses
 from typing import Optional
 
 from mediapipe.framework.formats import landmark_pb2
+from mediapipe.tasks.python.components.containers import landmark_c as landmark_c_module
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 
 _LandmarkProto = landmark_pb2.Landmark
@@ -91,6 +92,7 @@ class NormalizedLandmark:
       of whether landmark is present on the scene (located within scene bounds).
       Depending on the model, presence value is either a result of sigmoid or an
       argument of sigmoid function to get landmark presence probability.
+    name: The name of the landmark.
   """
 
   x: Optional[float] = None
@@ -98,6 +100,7 @@ class NormalizedLandmark:
   z: Optional[float] = None
   visibility: Optional[float] = None
   presence: Optional[float] = None
+  name: Optional[str] = None
 
   @doc_controls.do_not_generate_docs
   def to_pb2(self) -> _NormalizedLandmarkProto:
@@ -120,3 +123,18 @@ class NormalizedLandmark:
         z=pb2_obj.z,
         visibility=pb2_obj.visibility,
         presence=pb2_obj.presence)
+
+  @classmethod
+  @doc_controls.do_not_generate_docs
+  def from_ctypes(
+      cls, c_struct: landmark_c_module.NormalizedLandmarkC
+  ) -> 'NormalizedLandmark':
+    """Creates a `NormalizedLandmark` object from the given ctypes struct."""
+    return NormalizedLandmark(
+        x=c_struct.x,
+        y=c_struct.y,
+        z=c_struct.z,
+        visibility=c_struct.visibility if c_struct.has_visibility else None,
+        presence=c_struct.presence if c_struct.has_presence else None,
+        name=c_struct.name.decode('utf-8') if c_struct.name else None,
+    )

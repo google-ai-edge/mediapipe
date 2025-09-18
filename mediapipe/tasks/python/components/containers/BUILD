@@ -53,9 +53,15 @@ py_library(
     name = "landmark",
     srcs = ["landmark.py"],
     deps = [
+        ":landmark_c",
         "//mediapipe/framework/formats:landmark_py_pb2",
         "//mediapipe/tasks/python/core:optional_dependencies",
     ],
+)
+
+py_library(
+    name = "landmark_c",
+    srcs = ["landmark_c.py"],
 )
 
 py_library(
