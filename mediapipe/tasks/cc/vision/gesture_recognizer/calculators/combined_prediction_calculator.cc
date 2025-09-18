@@ -26,8 +26,11 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/gesture_recognizer/calculators/combined_prediction_calculator.pb.h"
 
 namespace mediapipe {
-namespace api3 {
+namespace tasks {
 namespace {
+
+using ::mediapipe::api3::Calculator;
+using ::mediapipe::api3::CalculatorContext;
 
 Classification GetMaxScoringClassification(
     const ClassificationList& classifications) {
@@ -133,5 +136,5 @@ class CombinedPredictionNodeImpl
   absl::btree_map<std::string, float> classwise_thresholds_;
 };
 
-}  // namespace api3
+}  // namespace tasks
 }  // namespace mediapipe

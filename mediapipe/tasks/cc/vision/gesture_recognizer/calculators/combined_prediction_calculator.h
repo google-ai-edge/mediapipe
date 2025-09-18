@@ -22,7 +22,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/gesture_recognizer/calculators/combined_prediction_calculator.pb.h"
 
 namespace mediapipe {
-namespace api3 {
+namespace tasks {
 
 // This calculator accepts multiple ClassificationList input streams. Each
 // ClassificationList should contain classifications with labels and
@@ -51,14 +51,14 @@ namespace api3 {
 //     }
 //   }
 // }
-struct CombinedPredictionNode : Node<"CombinedPredictionCalculator"> {
+struct CombinedPredictionNode : api3::Node<"CombinedPredictionCalculator"> {
   template <typename S>
   struct Contract {
     // Repeated ClassificationList input streams. Each ClassificationList should
     // contain classifications with labels and corresponding softmax scores.
     // NOTE: At least one input is expected.
-    Repeated<Input<S, mediapipe::ClassificationList>> classification_list_in{
-        ""};
+    api3::Repeated<api3::Input<S, mediapipe::ClassificationList>>
+        classification_list_in{""};
 
     // The ClassificationList in the PREDICTION output stream contains the label
     // of the winning class and corresponding softmax score. If none of the
@@ -69,16 +69,16 @@ struct CombinedPredictionNode : Node<"CombinedPredictionCalculator"> {
     // from the ClassificationList with the highest priority. Priority is in
     // decreasing order of input streams to the graph node using this
     // calculator.
-    Output<S, mediapipe::ClassificationList> prediction_out{"PREDICTION"};
+    api3::Output<S, mediapipe::ClassificationList> prediction_out{"PREDICTION"};
 
     // Thresholds for all classes can be specified in the
     // `CombinedPredictionCalculatorOptions`, along with a default global
     // threshold.
-    Options<S, mediapipe::CombinedPredictionCalculatorOptions> options;
+    api3::Options<S, mediapipe::CombinedPredictionCalculatorOptions> options;
   };
 };
 
-}  // namespace api3
+}  // namespace tasks
 }  // namespace mediapipe
 
 #endif  // MEDIAPIPE_TASKS_CC_VISION_GESTURE_RECOGNIZER_CALCULATORS_COMBINED_PREDICTION_CALCULATOR_H_

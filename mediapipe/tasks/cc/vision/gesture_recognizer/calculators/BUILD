@@ -136,12 +136,13 @@ cc_test(
     srcs = ["combined_prediction_calculator_test.cc"],
     deps = [
         ":combined_prediction_calculator",
-        "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/api3:function_runner",
+        "//mediapipe/framework/api3:graph",
+        "//mediapipe/framework/api3:packet",
+        "//mediapipe/framework/api3:stream",
         "//mediapipe/framework/formats:classification_cc_proto",
         "//mediapipe/framework/port:gtest",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:status",
-        "@com_google_absl//absl/strings",
     ],
 )
