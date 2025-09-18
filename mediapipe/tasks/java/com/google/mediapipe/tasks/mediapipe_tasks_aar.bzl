@@ -96,6 +96,10 @@ _TEXT_TASKS_JAVA_PROTO_LITE_TARGETS = [
 def mediapipe_jni_binary(name, deps, uses_explicit_exports = False, shared_lib_name = None):
     """Builds MediaPipe JNI library. Uses prebuilt libraries if available.
 
+    Creates an .so file at name/shared_lib_name. If shared_lib_name is not provided, it will be
+    set to lib{name}.so. Additionally, if shared_lib_name is not provided, this rule asssumes that
+    it should create a default library and creates a "lib{name}.so" file in the current package.
+
     Args:
       name: The name of the library group.
       deps: The cc_binary dependencies.
@@ -108,6 +112,8 @@ def mediapipe_jni_binary(name, deps, uses_explicit_exports = False, shared_lib_n
         extra_linkopts = [
             "-Wl,--version-script,$(location //mediapipe/tasks/java:version_script.lds)",
         ]
+
+    target_lib_name = shared_lib_name or "lib" + name + ".so"
 
     # Target to build the JNI library from source.
     cc_binary(
@@ -149,19 +155,26 @@ def mediapipe_jni_binary(name, deps, uses_explicit_exports = False, shared_lib_n
         }),
     )
 
-    shared_lib_name = shared_lib_name or "lib" + name + ".so"
     native.genrule(
         name = "lib" + name + "_rename",
         srcs = ["lib" + name + "_files"],
-        outs = [name + "/" + shared_lib_name],
+        outs = [name + "/" + target_lib_name],
         cmd = "cp $< $@",
     )
 
     cc_library(
         name = "lib" + name + "_lib",
-        srcs = [name + "/" + shared_lib_name],
+        srcs = [name + "/" + target_lib_name],
         alwayslink = 1,
     )
+
+    if not shared_lib_name:
+        native.genrule(
+            name = target_lib_name + "_copy",
+            srcs = [name + "/" + target_lib_name],
+            outs = [target_lib_name],
+            cmd = "cp $< $@",
+        )
 
 def mediapipe_tasks_core_aar(name, srcs, manifest):
     """Builds medaipipe tasks core AAR.
