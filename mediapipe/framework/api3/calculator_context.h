@@ -181,7 +181,9 @@ class Input<ContextSpecializer, OneOf<PayloadTs...>>
            !holder_->context->Inputs().Get(id).Value().IsEmpty();
   }
 
-  // Checks if input holds a packet of a specific type.
+  // Checks if input holds a packet of a specific type. Returns false if the
+  // payload can't be accessed (i.e. it is not required to check the input
+  // first).
   template <typename T>
   bool Has() const {
     static_assert((std::is_same_v<T, PayloadTs> || ...),
@@ -195,8 +197,8 @@ class Input<ContextSpecializer, OneOf<PayloadTs...>>
 
   // Returns the payload of the packet for this particular input.
   //
-  // NOTE: Dies if input packet is missing, input must be checked before
-  //   accessing the payload, e.g. `RET_CHECK(cc.input)`
+  // NOTE: Dies if input packet is missing or of the wrong type. Input must be
+  //   checked before accessing the payload, e.g. `RET_CHECK(cc.input.Has<T>())`
   template <typename T>
   const T& GetOrDie() const {
     static_assert((std::is_same_v<T, PayloadTs> || ...),
