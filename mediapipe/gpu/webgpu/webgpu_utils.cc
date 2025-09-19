@@ -1,10 +1,6 @@
 #include "mediapipe/gpu/webgpu/webgpu_utils.h"
 
 #include <webgpu/webgpu_cpp.h>
-#ifdef __EMSCRIPTEN__
-#include <emscripten/em_js.h>
-#include <emscripten/emscripten.h>
-#endif
 
 #include <cstdint>
 #include <memory>
@@ -17,7 +13,12 @@
 #include "absl/status/statusor.h"
 #include "absl/time/time.h"
 #include "mediapipe/framework/port/status_macros.h"
+
+#ifdef __EMSCRIPTEN__
+#include <emscripten/em_js.h>
+
 #include "mediapipe/web/jspi_check.h"
+#endif  // __EMSCRIPTEN__
 
 namespace mediapipe {
 
@@ -297,14 +298,12 @@ absl::StatusOr<wgpu::Texture> CreateWebGpuTexture2dAndUploadData(
   return texture;
 }
 
-#ifdef __EMSCRIPTEN__
-
-// TODO: Implement when not using emscripten.
 absl::Status GetTexture2dData(const wgpu::Device& device,
                               const wgpu::Queue& queue,
                               const wgpu::Texture& texture, uint32_t width,
                               uint32_t height, uint32_t bytes_per_row,
                               uint8_t* dst) {
+#ifdef __EMSCRIPTEN__
   if (!IsJspiAvailable()) {
     return absl::UnimplementedError("GetTexture2dData requires JSPI.");
   }
@@ -332,8 +331,10 @@ absl::Status GetTexture2dData(const wgpu::Device& device,
   webgpu_buffer.Destroy();
 
   return absl::OkStatus();
-}
-
+#else
+  // TODO: Implement when not using emscripten.
+  return absl::UnimplementedError("GetTexture2dData requires __EMSCRIPTEN__.");
 #endif  // __EMSCRIPTEN__
+}
 
 }  // namespace mediapipe

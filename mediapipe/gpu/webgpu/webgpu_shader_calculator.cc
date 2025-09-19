@@ -1,3 +1,5 @@
+#include "mediapipe/gpu/webgpu/webgpu_shader_calculator.h"
+
 #include <webgpu/webgpu_cpp.h>
 
 #include <algorithm>
@@ -20,9 +22,10 @@
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
-#include "mediapipe/framework/api2/node.h"
-#include "mediapipe/framework/api2/packet.h"
-#include "mediapipe/framework/api2/port.h"
+#include "mediapipe/framework/api3/calculator.h"
+#include "mediapipe/framework/api3/calculator_context.h"
+#include "mediapipe/framework/api3/calculator_contract.h"
+#include "mediapipe/framework/api3/contract.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_options.pb.h"
 #include "mediapipe/framework/deps/re2.h"
@@ -37,68 +40,9 @@
 #include "mediapipe/gpu/webgpu/webgpu_texture_view.h"
 #include "mediapipe/gpu/webgpu/webgpu_utils.h"
 
-namespace mediapipe {
-
-// Compiles a given WGSL shader, and runs it over the input WebGPU-backed
-// GpuBuffer streams to produce an output WebGPU-backed GpuBuffer stream.
-// We expect a "Params" struct in the shader for our uniforms. We will
-// automatically pipe in values for 'outputSize' and 'time' using the size of
-// the output texture and the timestamp in seconds, respectively. Otherwise, all
-// uniforms in Params are expected to be f32 or vectors of f32. We will bind all
-// f32 uniforms to INPUT_FLOAT streams, matching the order those streams are
-// are given to the order of f32 uniforms in the Params struct. And we will
-// bind all vec2<f32>, vec3<f32>, and vec4<f32> uniforms to INPUT_FLOAT_VEC
-// streams, matching the order those streams are given to the order of vec*<f32>
-// uniforms in the Params struct.
-// We bind all input buffers, matching the order they are given to the
-// calculator via INPUT_BUFFER, with the order they are listed in the shader
-// source code. We similarly bind all input 3d buffers (if any), matching the
-// order they are given to the calculator via INPUT_BUFFER_3D, with the order
-// they are listed in the shader source code.
-//
-// Inputs:
-//   TRIGGER (Any):
-//     Stream which is used (in the absence of INPUT_BUFFER and INPUT_FLOAT
-//     streams) to trigger output of an input-free shader.
-//   INPUT_BUFFER (GpuBuffer, repeated):
-//     List of input buffers. Must contain one for every 2d texture the shader
-//     code references.
-//   INPUT_BUFFER_3D (WebGpuTextureBuffer3d, repeated):
-//     List of 3d input buffers, for compute shaders. Must contain one for every
-//     3d texture the shader code references.
-//   INPUT_FLOAT (float, repeated):
-//     List of float value streams. Must contain one for every float uniform
-//     the shader code references.
-//   INPUT_FLOAT_VEC (vec<float>, repeated):
-//     List of float vector streams. Must contain one for every vec2, vec3, or
-//     vec4 uniform the shader code references.
-//   WIDTH (int32_t):
-//     Input stream which will dynamically set the rendering output width.
-//     Overrides other methods of setting this property.
-//   HEIGHT (int32_t):
-//     Input stream which will dynamically set the rendering output height.
-//     Overrides other methods of setting this property.
-//   DEPTH (int32_t):
-//     Input stream which will dynamically set the rendering output depth.
-//     This is unused for normal (2d) rendering, and if used will change the
-//     output type to be a WebGpuTextureBuffer3d. Overrides other methods of
-//     setting this property.
-//
-// Outputs:
-//   OUTPUT (GpuBuffer)
-//     Frames containing the result of the 2D rendering. This will be the output
-//     stream unless 3D compute shading is occurring.
-//   OUTPUT_3D (WebGpuTextureBuffer3d)
-//     Frames containing the result of the 3D compute shading, when an output
-//     depth has been specified.
+namespace mediapipe::api3 {
 
 namespace {
-
-using ::mediapipe::api2::AnyType;
-using ::mediapipe::api2::Input;
-using ::mediapipe::api2::NodeImpl;
-using ::mediapipe::api2::NodeIntf;
-using ::mediapipe::api2::Output;
 
 // One query for start time, one for end time.
 constexpr uint32_t kQueryBufferByteSize = 2 * sizeof(uint64_t);
@@ -464,54 +408,36 @@ std::string GetOutputFormat(const std::string& texture_type,
 }  // namespace
 
 class WebGpuShaderCalculator
-    : public NodeImpl<NodeIntf, WebGpuShaderCalculator> {
+    : public Calculator<WebGpuShaderNode, WebGpuShaderCalculator> {
  public:
   WebGpuShaderCalculator() = default;
   WebGpuShaderCalculator(const WebGpuShaderCalculator&) = delete;
   ~WebGpuShaderCalculator() override = default;
 
-  static constexpr auto kCalculatorName = "WebGpuShaderCalculator";
-
-  static constexpr Input<GpuBuffer>::Multiple kInputBuffers{"INPUT_BUFFER"};
-  static constexpr Input<WebGpuTextureBuffer3d>::Multiple kInputBuffers3d{
-      "INPUT_BUFFER_3D"};
-  static constexpr Input<float>::Multiple kInputFloats{"INPUT_FLOAT"};
-  static constexpr Input<std::vector<float>>::Multiple kInputFloatVecs{
-      "INPUT_FLOAT_VEC"};
-  static constexpr Input<int32_t>::Optional kInputWidth{"WIDTH"};
-  static constexpr Input<int32_t>::Optional kInputHeight{"HEIGHT"};
-  static constexpr Input<int32_t>::Optional kInputDepth{"DEPTH"};
-  static constexpr Input<AnyType>::Optional kInputTrigger{"TRIGGER"};
-  static constexpr Output<GpuBuffer>::Optional kOutput{"OUTPUT"};
-  static constexpr Output<WebGpuTextureBuffer3d>::Optional kOutput3d{
-      "OUTPUT_3D"};
-
-  MEDIAPIPE_NODE_CONTRACT(kInputBuffers, kInputBuffers3d, kInputFloats,
-                          kInputFloatVecs, kInputWidth, kInputHeight,
-                          kInputDepth, kInputTrigger, kOutput, kOutput3d);
-
-  static absl::Status UpdateContract(mediapipe::CalculatorContract* cc);
-  absl::Status Open(CalculatorContext* cc) override;
-  absl::Status Process(CalculatorContext* cc) override;
-  absl::Status Close(CalculatorContext* cc) override;
+  static absl::Status UpdateContract(CalculatorContract<WebGpuShaderNode>& cc);
+  absl::Status Open(CalculatorContext<WebGpuShaderNode>& cc) override;
+  absl::Status Process(CalculatorContext<WebGpuShaderNode>& cc) override;
+  absl::Status Close(CalculatorContext<WebGpuShaderNode>& cc) override;
 
  private:
   absl::Status InitWebGpuShader();
   void InitProfiling();
   absl::Status WebGpuBindAndRender(
-      CalculatorContext* cc, const wgpu::ComputePipeline& pipeline, int width,
-      int height, int depth, const std::vector<WebGpuTextureView>& src_textures,
+      CalculatorContext<WebGpuShaderNode>& cc,
+      const wgpu::ComputePipeline& pipeline, int width, int height, int depth,
+      const std::vector<WebGpuTextureView>& src_textures,
       const std::vector<WebGpuTextureView>& src_textures_3d,
       const std::vector<float>& src_floats,
       const std::vector<std::vector<float>>& src_float_vecs);
   absl::Status WebGpuBindAndRenderToView(
-      CalculatorContext* cc, const wgpu::ComputePipeline& pipeline, int width,
-      int height, int depth, const std::vector<WebGpuTextureView>& src_textures,
+      CalculatorContext<WebGpuShaderNode>& cc,
+      const wgpu::ComputePipeline& pipeline, int width, int height, int depth,
+      const std::vector<WebGpuTextureView>& src_textures,
       const std::vector<WebGpuTextureView>& src_textures_3d,
       const std::vector<float>& src_floats,
       const std::vector<std::vector<float>>& src_float_vecs,
       WebGpuTextureView& out_view);
-  void HandleEmptyPacket(CalculatorContext* cc, int index,
+  void HandleEmptyPacket(CalculatorContext<WebGpuShaderNode>& cc, int index,
                          bool has_gpu_buffer_input,
                          const std::string& stream_debug_name);
 
@@ -555,27 +481,27 @@ class WebGpuShaderCalculator
 };
 
 absl::Status WebGpuShaderCalculator::UpdateContract(
-    mediapipe::CalculatorContract* cc) {
-  RET_CHECK(kOutput(cc).IsConnected() || kOutput3d(cc).IsConnected())
+    CalculatorContract<WebGpuShaderNode>& cc) {
+  RET_CHECK(cc.output.IsConnected() || cc.output_3d.IsConnected())
       << "Output tag expected.";
-  RET_CHECK(kOutput(cc).IsConnected() != kOutput3d(cc).IsConnected())
+  RET_CHECK(cc.output.IsConnected() != cc.output_3d.IsConnected())
       << "Only one output tag expected.";
-  RET_CHECK(kInputBuffers(cc).Count() > 0 || kInputBuffers3d(cc).Count() > 0 ||
-            kInputTrigger(cc).IsConnected())
+  RET_CHECK(cc.input_buffers.Count() > 0 || cc.input_buffers_3d.Count() > 0 ||
+            cc.trigger.IsConnected())
       << "At least one input tag expected.";
-  cc->UseService(mediapipe::kWebGpuService);
+  cc.UseService(mediapipe::kWebGpuService);
   return absl::OkStatus();
 }
 
-absl::Status WebGpuShaderCalculator::Open(CalculatorContext* cc) {
+absl::Status WebGpuShaderCalculator::Open(
+    CalculatorContext<WebGpuShaderNode>& cc) {
   // Grab our shader sources from options, or default init them.
-  const mediapipe::WebGpuShaderCalculatorOptions& options =
-      cc->Options().GetExtension(mediapipe::WebGpuShaderCalculatorOptions::ext);
+  const mediapipe::WebGpuShaderCalculatorOptions& options = cc.options();
 
   if (options.has_shader_path()) {
     std::unique_ptr<Resource> resource_shader_source;
     MP_ASSIGN_OR_RETURN(resource_shader_source,
-                        cc->GetResources().Get(options.shader_path()));
+                        cc.GetResources().Get(options.shader_path()));
     shader_source_ = resource_shader_source->ToStringView();
   } else if (options.has_shader_source()) {
     shader_source_ = options.shader_source();
@@ -607,7 +533,7 @@ absl::Status WebGpuShaderCalculator::Open(CalculatorContext* cc) {
   }
 
   // Request WebGpu resources
-  service_ = &cc->Service(kWebGpuService).GetObject();
+  service_ = &cc.Service(kWebGpuService).GetObject();
   MP_RETURN_IF_ERROR(InitWebGpuShader());
   if (profile_) InitProfiling();
 
@@ -767,8 +693,8 @@ absl::Status WebGpuShaderCalculator::InitWebGpuShader() {
 // Helper function for when we encounter an empty packet in one of our expected
 // input sets.
 void WebGpuShaderCalculator::HandleEmptyPacket(
-    CalculatorContext* cc, int index, bool has_gpu_buffer_input,
-    const std::string& stream_debug_name) {
+    CalculatorContext<WebGpuShaderNode>& cc, int index,
+    bool has_gpu_buffer_input, const std::string& stream_debug_name) {
   if (passthrough_first_buffer_on_empty_packets_) {
     ABSL_LOG_EVERY_N(WARNING, 100)
         << stream_debug_name << " input stream at id: " << index
@@ -776,9 +702,9 @@ void WebGpuShaderCalculator::HandleEmptyPacket(
     // We pass through first normal input first if we have any streams for that,
     // and only otherwise pass through first 3d input.
     if (has_gpu_buffer_input) {
-      kOutput(cc).Send(*kInputBuffers(cc).begin());
+      cc.output.Send(cc.input_buffers[0].Packet());
     } else {
-      kOutput3d(cc).Send(*kInputBuffers3d(cc).begin());
+      cc.output_3d.Send(cc.input_buffers_3d[0].Packet());
     }
   } else {
     ABSL_LOG_EVERY_N(WARNING, 100)
@@ -787,86 +713,76 @@ void WebGpuShaderCalculator::HandleEmptyPacket(
   }
 }
 
-absl::Status WebGpuShaderCalculator::Process(CalculatorContext* cc) {
+absl::Status WebGpuShaderCalculator::Process(
+    CalculatorContext<WebGpuShaderNode>& cc) {
   ScopedWebGpuErrorHandler scoped_error_handler(
-      service_, "WebGpuShaderCalculator::Process", cc->InputTimestamp());
+      service_, "WebGpuShaderCalculator::Process", cc.InputTimestamp());
 
   MP_ASSIGN_OR_RETURN(wgpu::ComputePipeline * pipeline, pipeline_future_.Get(),
                       _.SetCode(absl::StatusCode::kInternal).SetPrepend()
                           << "Failed to create pipeline: ");
 
-  if (kInputWidth(cc).IsConnected() && !kInputWidth(cc).IsEmpty()) {
-    output_width_ = kInputWidth(cc).Get();
+  if (cc.width) {
+    output_width_ = cc.width.GetOrDie();
   }
-  if (kInputHeight(cc).IsConnected() && !kInputHeight(cc).IsEmpty()) {
-    output_height_ = kInputHeight(cc).Get();
+  if (cc.height) {
+    output_height_ = cc.height.GetOrDie();
   }
-  if (kInputDepth(cc).IsConnected() && !kInputDepth(cc).IsEmpty()) {
-    output_depth_ = kInputDepth(cc).Get();
+  if (cc.depth) {
+    output_depth_ = cc.depth.GetOrDie();
   }
 
   // Setup source textures from input gpu buffers
-  const bool has_gpu_buffer_input = kInputBuffers(cc).Count() > 0;
+  const bool has_gpu_buffer_input = cc.input_buffers.Count() > 0;
   std::vector<WebGpuTextureView> src_textures;
-  for (auto it = kInputBuffers(cc).begin(); it != kInputBuffers(cc).end();
-       ++it) {
-    auto packet_stream = *it;
-    if (packet_stream.IsEmpty()) {
-      if (it == kInputBuffers(cc).begin()) {
+  for (int i = 0; i < cc.input_buffers.Count(); ++i) {
+    if (!cc.input_buffers[i]) {
+      if (i == 0) {
         ABSL_LOG_EVERY_N(WARNING, 100)
             << "GPU buffer input stream first packet was empty. "
             << "Skipping frame.";
       } else {
-        HandleEmptyPacket(cc, std::distance(kInputBuffers(cc).begin(), it),
-                          has_gpu_buffer_input, "GPU buffer");
+        HandleEmptyPacket(cc, i, has_gpu_buffer_input, "GPU buffer");
       }
       return absl::OkStatus();
     }
-    const auto& gpu_buffer = packet_stream.Get();
+    const auto& gpu_buffer = cc.input_buffers[i].GetOrDie();
     src_textures.push_back(gpu_buffer.GetReadView<WebGpuTextureView>());
   }
 
   std::vector<WebGpuTextureView> src_textures_3d;
-  for (auto it = kInputBuffers3d(cc).begin(); it != kInputBuffers3d(cc).end();
-       ++it) {
-    auto packet_stream = *it;
-    if (packet_stream.IsEmpty()) {
-      if (it == kInputBuffers3d(cc).begin() && !has_gpu_buffer_input) {
+  for (int i = 0; i < cc.input_buffers_3d.Count(); ++i) {
+    if (!cc.input_buffers_3d[i]) {
+      if (i == 0 && !has_gpu_buffer_input) {
         ABSL_LOG_EVERY_N(WARNING, 100)
             << "3D texture buffer input stream first packet was empty,"
             << "and no GPU buffer input stream attached. Skipping "
             << "frame.";
       } else {
-        HandleEmptyPacket(cc, std::distance(kInputBuffers3d(cc).begin(), it),
-                          has_gpu_buffer_input, "3D texture buffer");
+        HandleEmptyPacket(cc, i, has_gpu_buffer_input, "3D texture buffer");
       }
       return absl::OkStatus();
     }
-    const auto& texture_3d = packet_stream.Get();
+    const auto& texture_3d = cc.input_buffers_3d[i].GetOrDie();
     src_textures_3d.push_back(texture_3d.GetReadView());
   }
 
   std::vector<float> src_floats;
-  for (auto it = kInputFloats(cc).begin(); it != kInputFloats(cc).end(); ++it) {
-    auto packet_stream = *it;
-    if (packet_stream.IsEmpty()) {
-      HandleEmptyPacket(cc, std::distance(kInputFloats(cc).begin(), it),
-                        has_gpu_buffer_input, "Float uniform");
+  for (int i = 0; i < cc.input_floats.Count(); ++i) {
+    if (!cc.input_floats[i]) {
+      HandleEmptyPacket(cc, i, has_gpu_buffer_input, "Float uniform");
       return absl::OkStatus();
     }
-    src_floats.push_back(packet_stream.Get());
+    src_floats.push_back(cc.input_floats[i].GetOrDie());
   }
 
   std::vector<std::vector<float>> src_float_vecs;
-  for (auto it = kInputFloatVecs(cc).begin(); it != kInputFloatVecs(cc).end();
-       ++it) {
-    auto packet_stream = *it;
-    if (packet_stream.IsEmpty()) {
-      HandleEmptyPacket(cc, std::distance(kInputFloatVecs(cc).begin(), it),
-                        has_gpu_buffer_input, "Float vector uniform");
+  for (int i = 0; i < cc.input_float_vecs.Count(); ++i) {
+    if (!cc.input_float_vecs[i]) {
+      HandleEmptyPacket(cc, i, has_gpu_buffer_input, "Float vector uniform");
       return absl::OkStatus();
     }
-    src_float_vecs.push_back(packet_stream.Get());
+    src_float_vecs.push_back(cc.input_float_vecs[i].GetOrDie());
   }
 
   // Destination size default is 640x480 if no inputs, and otherwise, we'll
@@ -888,7 +804,7 @@ absl::Status WebGpuShaderCalculator::Process(CalculatorContext* cc) {
   if (output_height_) height = output_height_.value();
   if (output_depth_) depth = output_depth_.value();
 
-  if (kOutput(cc).IsConnected() && depth > 0) {
+  if (cc.output.IsConnected() && depth > 0) {
     depth = 0;
     ABSL_LOG(WARNING)
         << "Forcing depth to 0 because output tag indicates that we "
@@ -902,14 +818,15 @@ absl::Status WebGpuShaderCalculator::Process(CalculatorContext* cc) {
 }
 
 absl::Status WebGpuShaderCalculator::WebGpuBindAndRender(
-    CalculatorContext* cc, const wgpu::ComputePipeline& pipeline, int width,
-    int height, int depth, const std::vector<WebGpuTextureView>& src_textures,
+    CalculatorContext<WebGpuShaderNode>& cc,
+    const wgpu::ComputePipeline& pipeline, int width, int height, int depth,
+    const std::vector<WebGpuTextureView>& src_textures,
     const std::vector<WebGpuTextureView>& src_textures_3d,
     const std::vector<float>& src_floats,
     const std::vector<std::vector<float>>& src_float_vecs) {
   ScopedWebGpuErrorHandler scoped_error_handler(
       service_, "WebGpuShaderCalculator::WebGpuBindAndRender",
-      cc->InputTimestamp());
+      cc.InputTimestamp());
   // Setup rendering to new destination GpuBuffer or WebGpuTextureBuffer3d, if
   // not rendering to screen. TODO: Allow for different output formats.
   if (depth == 0) {
@@ -919,7 +836,7 @@ absl::Status WebGpuShaderCalculator::WebGpuBindAndRender(
     MP_RETURN_IF_ERROR(WebGpuBindAndRenderToView(
         cc, pipeline, width, height, depth, src_textures, src_textures_3d,
         src_floats, src_float_vecs, out_view));
-    kOutput(cc).Send(std::move(out_buffer));
+    cc.output.Send(std::move(out_buffer));
   } else {
     // Special 3d texture rendering
     auto out_buffer = WebGpuTextureBuffer3d::Create(
@@ -928,21 +845,22 @@ absl::Status WebGpuShaderCalculator::WebGpuBindAndRender(
     MP_RETURN_IF_ERROR(WebGpuBindAndRenderToView(
         cc, pipeline, width, height, depth, src_textures, src_textures_3d,
         src_floats, src_float_vecs, out_view));
-    kOutput3d(cc).Send(std::move(out_buffer));
+    cc.output_3d.Send(std::move(out_buffer));
   }
   return absl::OkStatus();
 }
 
 absl::Status WebGpuShaderCalculator::WebGpuBindAndRenderToView(
-    CalculatorContext* cc, const wgpu::ComputePipeline& pipeline, int width,
-    int height, int depth, const std::vector<WebGpuTextureView>& src_textures,
+    CalculatorContext<WebGpuShaderNode>& cc,
+    const wgpu::ComputePipeline& pipeline, int width, int height, int depth,
+    const std::vector<WebGpuTextureView>& src_textures,
     const std::vector<WebGpuTextureView>& src_textures_3d,
     const std::vector<float>& src_floats,
     const std::vector<std::vector<float>>& src_float_vecs,
     WebGpuTextureView& out_view) {
   ScopedWebGpuErrorHandler scoped_error_handler(
       service_, "WebGpuShaderCalculator::WebGpuBindAndRenderToView",
-      cc->InputTimestamp());
+      cc.InputTimestamp());
   const wgpu::Device& device = service_->device();
 
   // Update Params struct
@@ -958,7 +876,7 @@ absl::Status WebGpuShaderCalculator::WebGpuBindAndRenderToView(
   }
   if (param_offsets_.time_offset) {
     params_data_[param_offsets_.time_offset.value()] =
-        cc->InputTimestamp().Seconds();
+        cc.InputTimestamp().Seconds();
   }
 
   RET_CHECK_LE(src_floats.size(), param_offsets_.float_offsets.size())
@@ -1085,16 +1003,17 @@ absl::Status WebGpuShaderCalculator::WebGpuBindAndRenderToView(
   device.GetQueue().Submit(std::size(command_buffers), command_buffers);
 
   if (profile_) {
-    ExposeProfilingResults(cc->NodeName().c_str(), dst_buffer_.Get(),
+    ExposeProfilingResults(cc.NodeName().c_str(), dst_buffer_.Get(),
                            repetitions_);
   }
   return absl::OkStatus();
 }
 
-absl::Status WebGpuShaderCalculator::Close(CalculatorContext* cc) {
+absl::Status WebGpuShaderCalculator::Close(
+    CalculatorContext<WebGpuShaderNode>& cc) {
   service_ = nullptr;
   pipeline_future_.Reset();
   return absl::OkStatus();
 }
 
-}  // namespace mediapipe
+}  // namespace mediapipe::api3
