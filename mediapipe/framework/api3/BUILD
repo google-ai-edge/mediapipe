@@ -1,5 +1,6 @@
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("//mediapipe/framework:mediapipe_cc_test.bzl", "mediapipe_cc_test")
 
 package(default_visibility = ["//mediapipe:__subpackages__"] + [
 ])

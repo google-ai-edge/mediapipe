@@ -107,6 +107,8 @@ TEST(FunctionRunnerTest, RunsSingleGraphToMultiplyBy2Add10) {
   }
 }
 
+#if !defined(__EMSCRIPTEN__)
+
 TEST(FunctionRunnerTest, WorksForMultiGraphUseCase) {
   auto shared_executor =
       std::make_shared<ThreadPoolExecutor>(/*num_threads*/ 1);
@@ -141,6 +143,8 @@ TEST(FunctionRunnerTest, WorksForMultiGraphUseCase) {
     EXPECT_EQ(p.GetOrDie(), value * 2 + kNumAdditions * 10);
   }
 }
+
+#endif  // !defined(__EMSCRIPTEN__)
 
 // The default mode is no timestamps.
 TEST(FunctionRunnerTest, FailsWhenTimestampIsProvided) {

@@ -95,6 +95,7 @@ class FunctionRunner<OutputPacketT, std::tuple<InputPacketTs...>>
     MP_RETURN_IF_ERROR(AddInputPackets(*this->calculator_graph_,
                                        this->input_names_map_, timestamp,
                                        inputs...));
+    MP_RETURN_IF_ERROR(this->calculator_graph_->WaitUntilIdle());
     MP_ASSIGN_OR_RETURN(OutputStreamPoller * poller, this->GetOutputPoller(0));
     MP_ASSIGN_OR_RETURN(mediapipe::Packet packet,
                         GetOutputPacket(*poller, *this->calculator_graph_));
@@ -121,7 +122,7 @@ class FunctionRunner<std::tuple<OutputPacketTs...>,
     MP_RETURN_IF_ERROR(AddInputPackets(*this->calculator_graph_,
                                        this->input_names_map_, timestamp,
                                        inputs...));
-
+    MP_RETURN_IF_ERROR(this->calculator_graph_->WaitUntilIdle());
     std::tuple<OutputPacketTs...> output;
     MP_RETURN_IF_ERROR(
         GetOutputPackets(std::index_sequence_for<OutputPacketTs...>(), output));
@@ -240,11 +241,20 @@ class FunctionRunnerBuilder {
     // Default to a single thread execution.
     std::shared_ptr<Executor> default_executor = std::move(default_executor_);
     if (!default_executor) {
+#ifdef __EMSCRIPTEN__
+      auto* executor = config.add_executor();
+      executor->set_type("ApplicationThreadExecutor");
+      executor->set_name("");
+#else
       default_executor =
           std::make_shared<ThreadPoolExecutor>(/*num_threads*/ 1);
+#endif
     }
-    MP_RETURN_IF_ERROR(calculator_graph->SetExecutor(
-        /*default executor name*/ "", std::move(default_executor)));
+
+    if (default_executor) {
+      MP_RETURN_IF_ERROR(calculator_graph->SetExecutor(
+          /*default executor name*/ "", std::move(default_executor)));
+    }
 
     for (const auto& [key, value] : services_) {
       MP_RETURN_IF_ERROR(calculator_graph->SetServicePacket(*key, value));
