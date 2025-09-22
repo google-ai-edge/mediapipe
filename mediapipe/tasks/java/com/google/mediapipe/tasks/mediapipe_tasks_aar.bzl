@@ -52,6 +52,7 @@ _VISION_TASKS_JAVA_PROTO_LITE_TARGETS = [
     "//mediapipe/tasks/cc/vision/hand_landmarker/proto:hand_landmarks_detector_graph_options_java_proto_lite",
     "//mediapipe/tasks/cc/vision/hand_landmarker/proto:hand_roi_refinement_graph_options_java_proto_lite",
     "//mediapipe/tasks/cc/vision/holistic_landmarker/proto:holistic_landmarker_graph_options_java_proto_lite",
+    "//mediapipe/tasks/cc/vision/interactive_segmenter/proto:region_of_interest_java_proto_lite",
     "//mediapipe/tasks/cc/vision/image_classifier/proto:image_classifier_graph_options_java_proto_lite",
     "//mediapipe/tasks/cc/vision/image_embedder/proto:image_embedder_graph_options_java_proto_lite",
     "//mediapipe/tasks/cc/vision/image_segmenter/proto:image_segmenter_graph_options_java_proto_lite",
