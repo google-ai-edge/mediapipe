@@ -22,6 +22,7 @@ from mediapipe.python import packet_getter
 from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.tasks.cc.vision.image_segmenter.proto import image_segmenter_graph_options_pb2
 from mediapipe.tasks.cc.vision.image_segmenter.proto import segmenter_options_pb2
+from mediapipe.tasks.cc.vision.interactive_segmenter.proto import region_of_interest_pb2
 from mediapipe.tasks.python.components.containers import keypoint as keypoint_module
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.core import task_info as task_info_module
@@ -29,10 +30,9 @@ from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 from mediapipe.tasks.python.vision.core import base_vision_task_api
 from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_module
 from mediapipe.tasks.python.vision.core import vision_task_running_mode
-from mediapipe.util import render_data_pb2
 
 _BaseOptions = base_options_module.BaseOptions
-_RenderDataProto = render_data_pb2.RenderData
+_RegionOfInterestProto = region_of_interest_pb2.RegionOfInterest
 _SegmenterOptionsProto = segmenter_options_pb2.SegmenterOptions
 _ImageSegmenterGraphOptionsProto = (
     image_segmenter_graph_options_pb2.ImageSegmenterGraphOptions
@@ -110,9 +110,11 @@ class RegionOfInterest:
   keypoint: Optional[keypoint_module.NormalizedKeypoint] = None
 
 
-def _convert_roi_to_render_data(roi: RegionOfInterest) -> _RenderDataProto:
+def _convert_roi_to_render_data(
+    roi: RegionOfInterest,
+) -> _RegionOfInterestProto:
   """Converts region of interest to render data proto."""
-  result = _RenderDataProto()
+  result = _RegionOfInterestProto()
 
   if roi is not None:
     if roi.format == RegionOfInterest.Format.UNSPECIFIED:
@@ -120,9 +122,7 @@ def _convert_roi_to_render_data(roi: RegionOfInterest) -> _RenderDataProto:
 
     elif roi.format == RegionOfInterest.Format.KEYPOINT:
       if roi.keypoint is not None:
-        annotation = result.render_annotations.add()
-        annotation.color.r = 255
-        point = annotation.point
+        point = result.keypoint
         point.normalized = True
         point.x = roi.keypoint.x
         point.y = roi.keypoint.y

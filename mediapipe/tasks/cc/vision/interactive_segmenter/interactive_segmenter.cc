@@ -22,9 +22,9 @@ limitations under the License.
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
-#include "absl/types/optional.h"
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/calculator.pb.h"
+#include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/tasks/cc/common.h"
@@ -36,6 +36,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/image_segmenter/image_segmenter_result.h"
 #include "mediapipe/tasks/cc/vision/image_segmenter/proto/image_segmenter_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/image_segmenter/proto/segmenter_options.pb.h"
+#include "mediapipe/tasks/cc/vision/interactive_segmenter/proto/region_of_interest.pb.h"
 #include "mediapipe/util/color.pb.h"
 #include "mediapipe/util/render_data.pb.h"
 
@@ -114,35 +115,33 @@ ConvertImageSegmenterOptionsToProto(InteractiveSegmenterOptions* options) {
   return options_proto;
 }
 
-// Converts the user-facing RegionOfInterest struct to the RenderData proto that
-// is used in subgraph.
-absl::StatusOr<RenderData> ConvertRoiToRenderData(const RegionOfInterest& roi) {
-  RenderData result;
+// Converts the user-facing RegionOfInterest struct to the RegionOfInterest
+// proto that is used in subgraph.
+absl::StatusOr<proto::RegionOfInterest> ConvertRoiToRegionOfInterestProto(
+    const RegionOfInterest& roi) {
+  proto::RegionOfInterest roi_proto;
   switch (roi.format) {
     case RegionOfInterest::Format::kUnspecified:
       return absl::InvalidArgumentError(
           "RegionOfInterest format not specified");
     case RegionOfInterest::Format::kKeyPoint: {
       RET_CHECK(roi.keypoint.has_value());
-      auto* annotation = result.add_render_annotations();
-      annotation->mutable_color()->set_r(255);
-      auto* point = annotation->mutable_point();
+      auto* point = roi_proto.mutable_keypoint();
       point->set_normalized(true);
       point->set_x(roi.keypoint->x);
       point->set_y(roi.keypoint->y);
-      return result;
+      return roi_proto;
     }
     case RegionOfInterest::Format::kScribble: {
       RET_CHECK(roi.scribble.has_value());
-      auto* annotation = result.add_render_annotations();
-      annotation->mutable_color()->set_r(255);
+      auto* scribble = roi_proto.mutable_scribble();
       for (const NormalizedKeypoint& keypoint : *(roi.scribble)) {
-        auto* point = annotation->mutable_scribble()->add_point();
+        auto* point = scribble->add_point();
         point->set_normalized(true);
         point->set_x(keypoint.x);
         point->set_y(keypoint.y);
       }
-      return result;
+      return roi_proto;
     }
   }
   return absl::UnimplementedError("Unrecognized format");
@@ -189,14 +188,14 @@ absl::StatusOr<ImageSegmenterResult> InteractiveSegmenter::Segment(
   MP_ASSIGN_OR_RETURN(NormalizedRect norm_rect,
                       ConvertToNormalizedRect(image_processing_options, image,
                                               /*roi_allowed=*/false));
-  MP_ASSIGN_OR_RETURN(RenderData roi_as_render_data,
-                      ConvertRoiToRenderData(roi));
+  MP_ASSIGN_OR_RETURN(proto::RegionOfInterest roi_data,
+                      ConvertRoiToRegionOfInterestProto(roi));
   MP_ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessImageData(
           {{kImageInStreamName, mediapipe::MakePacket<Image>(std::move(image))},
-           {kRoiStreamName,
-            mediapipe::MakePacket<RenderData>(std::move(roi_as_render_data))},
+           {kRoiStreamName, mediapipe::MakePacket<proto::RegionOfInterest>(
+                                std::move(roi_data))},
            {kNormRectStreamName,
             MakePacket<NormalizedRect>(std::move(norm_rect))}}));
   std::optional<std::vector<Image>> confidence_masks;

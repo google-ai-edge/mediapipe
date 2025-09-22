@@ -42,9 +42,7 @@ import com.google.mediapipe.tasks.vision.core.RunningMode;
 import com.google.mediapipe.tasks.vision.imagesegmenter.ImageSegmenterResult;
 import com.google.mediapipe.tasks.vision.imagesegmenter.proto.ImageSegmenterGraphOptionsProto;
 import com.google.mediapipe.tasks.vision.imagesegmenter.proto.SegmenterOptionsProto;
-import com.google.mediapipe.util.proto.ColorProto.Color;
-import com.google.mediapipe.util.proto.RenderDataProto.RenderAnnotation;
-import com.google.mediapipe.util.proto.RenderDataProto.RenderData;
+import com.google.mediapipe.tasks.vision.interactivesegmenter.proto.RegionOfInterestProto;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -103,7 +101,9 @@ public final class InteractiveSegmenter extends BaseVisionTaskApi {
 
   static {
     System.loadLibrary("mediapipe_tasks_vision_jni");
-    ProtoUtil.registerTypeName(RenderData.class, "mediapipe.RenderData");
+    ProtoUtil.registerTypeName(
+        RegionOfInterestProto.RegionOfInterest.class,
+        "mediapipe.tasks.vision.interactive_segmenter.proto.RegionOfInterest");
   }
 
   /**
@@ -542,36 +542,32 @@ public final class InteractiveSegmenter extends BaseVisionTaskApi {
   }
 
   /**
-   * Converts a {@link RegionOfInterest} instance into a {@link RenderData} protobuf message
+   * Converts a {@link RegionOfInterest} instance into a {@link
+   * RegionOfInterestProto.RegionOfInterest} protobuf message.
    *
    * @param roi a {@link RegionOfInterest} object to represent user interaction.
    * @throws IllegalArgumentException if {@link RegionOfInterest} does not represent a valid user
    *     interaction.
    */
-  private static RenderData convertToRenderData(RegionOfInterest roi) {
-    RenderData.Builder builder = RenderData.newBuilder();
+  private static RegionOfInterestProto.RegionOfInterest convertToRegionOfInterest(
+      RegionOfInterest roi) {
+    RegionOfInterestProto.RegionOfInterest.Builder builder =
+        RegionOfInterestProto.RegionOfInterest.newBuilder();
+    // TODO: Set "normalized=true" to match other platforms and update tests.
     if (roi.keypoint != null) {
       return builder
-          .addRenderAnnotations(
-              RenderAnnotation.newBuilder()
-                  .setColor(Color.newBuilder().setR(255))
-                  .setPoint(
-                      RenderAnnotation.Point.newBuilder()
-                          .setX(roi.keypoint.x())
-                          .setY(roi.keypoint.y())))
+          .setKeypoint(
+              RegionOfInterestProto.Point.newBuilder()
+                  .setX(roi.keypoint.x())
+                  .setY(roi.keypoint.y()))
           .build();
     } else if (roi.scribble != null) {
-      RenderAnnotation.Scribble.Builder scribbleBuilder = RenderAnnotation.Scribble.newBuilder();
+      RegionOfInterestProto.Scribble.Builder scribbleBuilder =
+          RegionOfInterestProto.Scribble.newBuilder();
       for (NormalizedKeypoint p : roi.scribble) {
-        scribbleBuilder.addPoint(RenderAnnotation.Point.newBuilder().setX(p.x()).setY(p.y()));
+        scribbleBuilder.addPoint(RegionOfInterestProto.Point.newBuilder().setX(p.x()).setY(p.y()));
       }
-
-      return builder
-          .addRenderAnnotations(
-              RenderAnnotation.newBuilder()
-                  .setColor(Color.newBuilder().setR(255))
-                  .setScribble(scribbleBuilder))
-          .build();
+      return builder.setScribble(scribbleBuilder).build();
     }
 
     throw new IllegalArgumentException(
@@ -601,7 +597,7 @@ public final class InteractiveSegmenter extends BaseVisionTaskApi {
     }
     Map<String, Packet> inputPackets = new HashMap<>();
     inputPackets.put(IMAGE_IN_STREAM_NAME, runner.getPacketCreator().createImage(image));
-    RenderData renderData = convertToRenderData(roi);
+    RegionOfInterestProto.RegionOfInterest renderData = convertToRegionOfInterest(roi);
     inputPackets.put(ROI_IN_STREAM_NAME, runner.getPacketCreator().createProto(renderData));
     inputPackets.put(
         NORM_RECT_IN_STREAM_NAME,

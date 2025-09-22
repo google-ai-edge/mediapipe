@@ -209,8 +209,8 @@ using ::mediapipe::tasks::core::PacketsCallback;
     return nil;
   }
   std::optional<Packet> renderDataPacket =
-      [MPPVisionPacketCreator createRenderDataPacketWithRegionOfInterest:regionOfInterest
-                                                                   error:error];
+      [MPPVisionPacketCreator createRegionOfInterestProtoPacketWithRegionOfInterest:regionOfInterest
+                                                                              error:error];
 
   if (!renderDataPacket.has_value()) {
     return nil;

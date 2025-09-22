@@ -118,6 +118,7 @@ py_library(
         "//mediapipe/python:packet_getter",
         "//mediapipe/tasks/cc/vision/image_segmenter/proto:image_segmenter_graph_options_py_pb2",
         "//mediapipe/tasks/cc/vision/image_segmenter/proto:segmenter_options_py_pb2",
+        "//mediapipe/tasks/cc/vision/interactive_segmenter/proto:region_of_interest_py_pb2",
         "//mediapipe/tasks/python/components/containers:keypoint",
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/core:optional_dependencies",
@@ -125,7 +126,6 @@ py_library(
         "//mediapipe/tasks/python/vision/core:base_vision_task_api",
         "//mediapipe/tasks/python/vision/core:image_processing_options",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
-        "//mediapipe/util:render_data_py_pb2",
     ],
 )
 

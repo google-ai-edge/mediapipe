@@ -21,6 +21,7 @@ mediapipe_ts_library(
         "//mediapipe/tasks/cc/core/proto:base_options_jspb_proto",
         "//mediapipe/tasks/cc/vision/image_segmenter/proto:image_segmenter_graph_options_jspb_proto",
         "//mediapipe/tasks/cc/vision/image_segmenter/proto:segmenter_options_jspb_proto",
+        "//mediapipe/tasks/cc/vision/interactive_segmenter/proto:region_of_interest_jspb_proto",
         "//mediapipe/tasks/web/components/containers:keypoint",
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/core:classifier_options",
@@ -29,7 +30,6 @@ mediapipe_ts_library(
         "//mediapipe/tasks/web/vision/core:types",
         "//mediapipe/tasks/web/vision/core:vision_task_runner",
         "//mediapipe/util:color_jspb_proto",
-        "//mediapipe/util:render_data_jspb_proto",
         "//mediapipe/web/graph_runner:graph_runner_ts",
     ],
 )
@@ -52,6 +52,7 @@ mediapipe_ts_library(
     deps = [
         ":interactive_segmenter",
         "//mediapipe/framework:calculator_jspb_proto",
+        "//mediapipe/tasks/cc/vision/interactive_segmenter/proto:region_of_interest_jspb_proto",
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/core:task_runner_test_utils",
         "//mediapipe/tasks/web/vision/core:mask",

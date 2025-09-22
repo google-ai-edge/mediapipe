@@ -16,19 +16,22 @@
 
 #import "mediapipe/tasks/ios/components/containers/sources/MPPRegionOfInterest.h"
 
+#include "mediapipe/tasks/cc/vision/interactive_segmenter/proto/region_of_interest.pb.h"
+
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MPPRegionOfInterest (Helpers)
 
 /**
- * Creates a `RenderData` from the region of interest.
+ * Creates a `RegionOfInterest` proto from the region of interest.
  *
  * @param error Pointer to the memory location where errors if any should be saved. If @c NULL, no
  * error will be saved.
  *
- * @return A `RenderData1 proto created from the region of interest.
+ * @return A `RegionOfInterest` proto created from the region of interest.
  */
-- (std::optional<mediapipe::RenderData>)getRenderDataWithError:(NSError **)error;
+- (std::optional<mediapipe::tasks::vision::interactive_segmenter::proto::RegionOfInterest>)
+    getRegionOfInteresProtoWithError:(NSError **)error;
 
 @end
 
