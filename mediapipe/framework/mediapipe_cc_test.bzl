@@ -49,4 +49,5 @@ def mediapipe_cc_test(
         size = size,
         timeout = timeout,
         deps = [":{}_lib".format(name)],
+        tags = tags + linux_tags,
     )
