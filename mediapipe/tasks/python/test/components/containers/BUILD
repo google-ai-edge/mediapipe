@@ -39,3 +39,13 @@ py_test(
         "@mediapipe_pip_deps_absl_py//:pkg",
     ],
 )
+
+py_test(
+    name = "bounding_box_test",
+    srcs = ["bounding_box_test.py"],
+    deps = [
+        "//mediapipe/tasks/python/components/containers:bounding_box",
+        "//mediapipe/tasks/python/components/containers:rect_c",
+        "@mediapipe_pip_deps_absl_py//:pkg",
+    ],
+)

@@ -28,6 +28,7 @@ py_library(
     name = "bounding_box",
     srcs = ["bounding_box.py"],
     deps = [
+        ":rect_c",
         "//mediapipe/framework/formats:location_data_py_pb2",
         "//mediapipe/tasks/python/core:optional_dependencies",
     ],
@@ -46,7 +47,6 @@ py_library(
 py_library(
     name = "rect_c",
     srcs = ["rect_c.py"],
-    deps = [":bounding_box"],
 )
 
 py_library(
@@ -127,6 +127,7 @@ py_library(
     name = "detections_c",
     srcs = ["detections_c.py"],
     deps = [
+        ":bounding_box",
         ":category",
         ":category_c",
         ":detections",

@@ -15,7 +15,6 @@
 
 
 import ctypes
-from mediapipe.tasks.python.components.containers import bounding_box as bounding_box_lib
 
 
 class RectC(ctypes.Structure):
@@ -27,15 +26,6 @@ class RectC(ctypes.Structure):
       ('bottom', ctypes.c_int),
       ('right', ctypes.c_int),
   ]
-
-  def to_python_bounding_box(self) -> bounding_box_lib.BoundingBox:
-    """Converts a ctypes RectC struct to a Python BoundingBox object."""
-    return bounding_box_lib.BoundingBox(
-        origin_x=self.left,
-        origin_y=self.top,
-        width=self.right - self.left,
-        height=self.bottom - self.top,
-    )
 
 
 class NormalizedRectC(ctypes.Structure):

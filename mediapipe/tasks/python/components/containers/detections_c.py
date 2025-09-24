@@ -15,6 +15,7 @@
 
 import ctypes
 
+from mediapipe.tasks.python.components.containers import bounding_box
 from mediapipe.tasks.python.components.containers import category as category_lib
 from mediapipe.tasks.python.components.containers import category_c
 from mediapipe.tasks.python.components.containers import detections as detections_lib
@@ -57,7 +58,9 @@ class DetectionResultC(ctypes.Structure):
         c_keypoint = c_detection.keypoints[j]
         py_keypoints.append(c_keypoint.to_python_normalized_keypoint())
 
-      py_bounding_box = c_detection.bounding_box.to_python_bounding_box()
+      py_bounding_box = bounding_box.BoundingBox.from_ctypes(
+          c_detection.bounding_box
+      )
       py_detections.append(
           detections_lib.Detection(
               bounding_box=py_bounding_box,

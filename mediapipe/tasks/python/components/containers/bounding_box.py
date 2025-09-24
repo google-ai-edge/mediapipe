@@ -17,6 +17,7 @@ import dataclasses
 from typing import Any
 
 from mediapipe.framework.formats import location_data_pb2
+from mediapipe.tasks.python.components.containers import rect_c as rect_c_lib
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 
 _BoundingBoxProto = location_data_pb2.LocationData.BoundingBox
@@ -57,6 +58,17 @@ class BoundingBox:
         origin_y=pb2_obj.ymin,
         width=pb2_obj.width,
         height=pb2_obj.height)
+
+  @classmethod
+  @doc_controls.do_not_generate_docs
+  def from_ctypes(cls, c_obj: rect_c_lib.RectC) -> 'BoundingBox':
+    """Creates a `BoundingBox` object from a ctypes RectC struct."""
+    return BoundingBox(
+        origin_x=c_obj.left,
+        origin_y=c_obj.top,
+        width=c_obj.right - c_obj.left,
+        height=c_obj.bottom - c_obj.top,
+    )
 
   def __eq__(self, other: Any) -> bool:
     """Checks if this object is equal to the given object.
