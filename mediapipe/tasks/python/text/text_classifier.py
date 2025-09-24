@@ -245,11 +245,7 @@ class TextClassifier:
       else:
         raise RuntimeError("Classification failed: Unknown error.")
 
-    python_result = (
-        classification_result_c_module.convert_to_python_classification_result(
-            ctypes_result
-        )
-    )
+    python_result = TextClassifierResult.from_ctypes(ctypes_result)
     self._lib.text_classifier_close_result(ctypes.byref(ctypes_result))
     return python_result
 

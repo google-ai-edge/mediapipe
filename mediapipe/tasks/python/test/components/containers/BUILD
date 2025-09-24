@@ -59,3 +59,15 @@ py_test(
         "@mediapipe_pip_deps_absl_py//:pkg",
     ],
 )
+
+py_test(
+    name = "classification_result_test",
+    srcs = ["classification_result_test.py"],
+    deps = [
+        "//mediapipe/tasks/python/components/containers:category",
+        "//mediapipe/tasks/python/components/containers:category_c",
+        "//mediapipe/tasks/python/components/containers:classification_result",
+        "//mediapipe/tasks/python/components/containers:classification_result_c",
+        "@mediapipe_pip_deps_absl_py//:pkg",
+    ],
+)

@@ -18,7 +18,8 @@ from typing import List, Optional
 
 from mediapipe.framework.formats import classification_pb2
 from mediapipe.tasks.cc.components.containers.proto import classifications_pb2
-from mediapipe.tasks.python.components.containers import category as category_module
+from mediapipe.tasks.python.components.containers import category as category_lib
+from mediapipe.tasks.python.components.containers import classification_result_c
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 
 _ClassificationProto = classification_pb2.Classification
@@ -40,9 +41,31 @@ class Classifications:
       tensor metadata name.
   """
 
-  categories: List[category_module.Category]
+  categories: List[category_lib.Category]
   head_index: int
   head_name: Optional[str] = None
+
+  @classmethod
+  @doc_controls.do_not_generate_docs
+  def from_ctypes(
+      cls, c_struct: classification_result_c.ClassificationsC
+  ) -> 'Classifications':
+    """Creates a `Classifications` object from the given ctypes struct."""
+    if c_struct.categories and c_struct.categories_count > 0:
+      categories = [
+          category_lib.Category.from_ctypes(c_struct.categories[i])
+          for i in range(c_struct.categories_count)
+      ]
+    else:
+      categories = []
+
+    return Classifications(
+        categories=categories,
+        head_index=c_struct.head_index,
+        head_name=(
+            c_struct.head_name.decode('utf-8') if c_struct.head_name else None
+        ),
+    )
 
   @doc_controls.do_not_generate_docs
   def to_pb2(self) -> _ClassificationsProto:
@@ -62,8 +85,7 @@ class Classifications:
     """Creates a `Classifications` object from the given protobuf object."""
     categories = []
     for classification in pb2_obj.classification_list.classification:
-      categories.append(
-          category_module.Category.create_from_pb2(classification))
+      categories.append(category_lib.Category.create_from_pb2(classification))
     return Classifications(
         categories=categories,
         head_index=pb2_obj.head_index,
@@ -109,3 +131,22 @@ class ClassificationResult:
             for classification in pb2_obj.classifications
         ],
         timestamp_ms=pb2_obj.timestamp_ms)
+
+  @classmethod
+  @doc_controls.do_not_generate_docs
+  def from_ctypes(
+      cls, c_struct: classification_result_c.ClassificationResultC
+  ) -> 'ClassificationResult':
+    """Creates a `ClassificationResult` object from a ctypes struct."""
+    if c_struct.classifications and c_struct.classifications_count > 0:
+      classifications = [
+          Classifications.from_ctypes(c_struct.classifications[i])
+          for i in range(c_struct.classifications_count)
+      ]
+    else:
+      classifications = []
+
+    timestamp_ms = c_struct.timestamp_ms if c_struct.has_timestamp_ms else None
+    return ClassificationResult(
+        classifications=classifications, timestamp_ms=timestamp_ms
+    )
