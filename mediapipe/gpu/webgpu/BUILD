@@ -131,6 +131,35 @@ cc_library(
     alwayslink = 1,
 )
 
+mediapipe_cc_test(
+    name = "webgpu_texture_buffer_test",
+    size = "small",
+    timeout = "short",
+    srcs = ["webgpu_texture_buffer_test.cc"],
+    browsers = ["//mediapipe/web:chrome-linux-hardware-gpu-webgpu"],
+    jspi = True,
+    platforms = ["wasm"],
+    wasm_tags = [
+        "requires-gpu-nvidia",
+    ],
+    deps = [
+        ":webgpu_service",
+        ":webgpu_texture_buffer",
+        "//mediapipe/framework:calculator_context",
+        "//mediapipe/framework:calculator_state",
+        "//mediapipe/framework:legacy_calculator_support",
+        "//mediapipe/framework/tool:tag_map_helper",
+        "//mediapipe/gpu:gpu_buffer_format",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_googletest//:gtest_main",
+    ] + select({
+        "//mediapipe:emscripten": [
+            "//mediapipe/gpu/webgpu:setup_test_webgpu",
+        ],
+        "//conditions:default": [],
+    }),
+)
+
 cc_library(
     name = "webgpu_utils",
     srcs = ["webgpu_utils.cc"],
