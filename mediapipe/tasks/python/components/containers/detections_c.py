@@ -15,6 +15,7 @@
 
 import ctypes
 
+from mediapipe.tasks.python.components.containers import category as category_lib
 from mediapipe.tasks.python.components.containers import category_c
 from mediapipe.tasks.python.components.containers import detections as detections_lib
 from mediapipe.tasks.python.components.containers import keypoint_c
@@ -49,7 +50,7 @@ class DetectionResultC(ctypes.Structure):
       py_categories = []
       for j in range(c_detection.categories_count):
         c_category = c_detection.categories[j]
-        py_categories.append(c_category.to_python_category())
+        py_categories.append(category_lib.Category.from_ctypes(c_category))
 
       py_keypoints = []
       for j in range(c_detection.keypoints_count):

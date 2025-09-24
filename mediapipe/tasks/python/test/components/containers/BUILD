@@ -19,6 +19,17 @@ package(default_visibility = ["//visibility:public"])
 licenses(["notice"])
 
 py_test(
+    name = "category_test",
+    srcs = ["category_test.py"],
+    deps = [
+        "//mediapipe/tasks/python/components/containers:category",
+        "//mediapipe/tasks/python/components/containers:category_c",
+        "//third_party/py/immutabledict",
+        "@mediapipe_pip_deps_absl_py//:pkg",
+    ],
+)
+
+py_test(
     name = "landmark_test",
     srcs = ["landmark_test.py"],
     deps = [

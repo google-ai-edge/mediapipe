@@ -17,6 +17,7 @@ import dataclasses
 from typing import Any, Optional
 
 from mediapipe.framework.formats import classification_pb2
+from mediapipe.tasks.python.components.containers import category_c as category_c_module
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 
 _ClassificationProto = classification_pb2.Classification
@@ -56,13 +57,28 @@ class Category:
 
   @classmethod
   @doc_controls.do_not_generate_docs
-  def create_from_pb2(cls, pb2_obj: _ClassificationProto) -> 'Category':
+  def create_from_pb2(cls, pb2_obj: _ClassificationProto) -> "Category":
     """Creates a `Category` object from the given protobuf object."""
     return Category(
         index=pb2_obj.index,
         score=pb2_obj.score,
         display_name=pb2_obj.display_name,
         category_name=pb2_obj.label)
+
+  @classmethod
+  @doc_controls.do_not_generate_docs
+  def from_ctypes(cls, c_obj: category_c_module.CategoryC) -> "Category":
+    """Creates a `Category` object from the given `CategoryC` object."""
+    return Category(
+        index=c_obj.index,
+        score=c_obj.score,
+        category_name=(
+            c_obj.category_name.decode("utf-8") if c_obj.category_name else None
+        ),
+        display_name=(
+            c_obj.display_name.decode("utf-8") if c_obj.display_name else None
+        ),
+    )
 
   def __eq__(self, other: Any) -> bool:
     """Checks if this object is equal to the given object.
@@ -77,3 +93,14 @@ class Category:
       return False
 
     return self.to_pb2().__eq__(other.to_pb2())
+
+
+@doc_controls.do_not_generate_docs
+def create_list_of_categories_from_ctypes(
+    c_obj: category_c_module.CategoriesC,
+) -> list[Category]:
+  """Creates a list of `Category` objects from a `CategoriesC` object."""
+  return [
+      Category.from_ctypes(c_obj.categories[i])
+      for i in range(c_obj.categories_count)
+  ]
