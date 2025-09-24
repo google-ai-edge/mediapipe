@@ -115,9 +115,7 @@ class LanguageDetectorOptions:
 
   def to_ctypes(self) -> LanguageDetectorOptionsC:
     """Generates a ctypes LanguageDetectorOptionsC."""
-    base_options_c = base_options_c_module.create_base_options_c(
-        self.base_options
-    )
+    base_options_c = self.base_options.to_ctypes()
     classifier_options_c = (
         classifier_options_c_module.convert_to_classifier_options_c(
             classifier_options_module.ClassifierOptions(
@@ -260,14 +258,14 @@ class LanguageDetector:
     ctypes_result = LanguageDetectorResultC()
     error_msg_ptr = ctypes.c_char_p()
 
-    ret_code = self._lib.language_detector_detect(
+    return_code = self._lib.language_detector_detect(
         self._detector_handle,
         text.encode("utf-8"),
         ctypes.byref(ctypes_result),
         ctypes.byref(error_msg_ptr),
     )
 
-    if ret_code != 0:
+    if return_code != 0:
       if error_msg_ptr.value is not None:
         error_message = error_msg_ptr.value.decode("utf-8")
         raise RuntimeError(error_message)
@@ -282,10 +280,10 @@ class LanguageDetector:
     """Shuts down the MediaPipe task instance."""
     if self._detector_handle:
       error_msg_ptr = ctypes.c_char_p()
-      ret_code = self._lib.language_detector_close(
+      return_code = self._lib.language_detector_close(
           self._detector_handle, ctypes.byref(error_msg_ptr)
       )
-      if ret_code != 0:
+      if return_code != 0:
         if error_msg_ptr.value is not None:
           error_message = error_msg_ptr.value.decode("utf-8")
           raise RuntimeError(error_message)

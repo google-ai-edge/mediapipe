@@ -13,54 +13,32 @@
 # limitations under the License.
 """MediaPipe face landmarker task."""
 
+import ctypes
 import dataclasses
 import enum
-from typing import Callable, Mapping, Optional, List
+import logging
+from typing import Callable, List, Optional
 
 import numpy as np
 
-from mediapipe.framework.formats import classification_pb2
-from mediapipe.framework.formats import landmark_pb2
-from mediapipe.framework.formats import matrix_data_pb2
-from mediapipe.python import packet_creator
-from mediapipe.python import packet_getter
-from mediapipe.python._framework_bindings import image as image_module
-from mediapipe.python._framework_bindings import packet as packet_module
-# pylint: disable=unused-import
-from mediapipe.tasks.cc.vision.face_geometry.proto import face_geometry_pb2
-# pylint: enable=unused-import
-from mediapipe.tasks.cc.vision.face_landmarker.proto import face_landmarker_graph_options_pb2
-from mediapipe.tasks.python.components.containers import category as category_module
-from mediapipe.tasks.python.components.containers import landmark as landmark_module
-from mediapipe.tasks.python.core import base_options as base_options_module
-from mediapipe.tasks.python.core import task_info as task_info_module
+from mediapipe.python._framework_bindings import image as image_lib
+from mediapipe.tasks.python.components.containers import category as category_lib
+from mediapipe.tasks.python.components.containers import category_c as category_c_lib
+from mediapipe.tasks.python.components.containers import landmark as landmark_lib
+from mediapipe.tasks.python.components.containers import landmark_c as landmark_c_lib
+from mediapipe.tasks.python.components.containers import matrix_c as matrix_c_lib
+from mediapipe.tasks.python.core import base_options as base_options_lib
+from mediapipe.tasks.python.core import base_options_c as base_options_c_lib
+from mediapipe.tasks.python.core import mediapipe_c_bindings as mediapipe_c_bindings_lib
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 from mediapipe.tasks.python.vision.core import base_vision_task_api
-from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_module
-from mediapipe.tasks.python.vision.core import vision_task_running_mode as running_mode_module
+from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_lib
+from mediapipe.tasks.python.vision.core import image_processing_options_c as image_processing_options_c_lib
+from mediapipe.tasks.python.vision.core import vision_task_running_mode as running_mode_lib
 
-_BaseOptions = base_options_module.BaseOptions
-_FaceLandmarkerGraphOptionsProto = (
-    face_landmarker_graph_options_pb2.FaceLandmarkerGraphOptions
-)
-_LayoutEnum = matrix_data_pb2.MatrixData.Layout
-_RunningMode = running_mode_module.VisionTaskRunningMode
-_ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
-_TaskInfo = task_info_module.TaskInfo
-
-_IMAGE_IN_STREAM_NAME = 'image_in'
-_IMAGE_OUT_STREAM_NAME = 'image_out'
-_IMAGE_TAG = 'IMAGE'
-_NORM_RECT_STREAM_NAME = 'norm_rect_in'
-_NORM_RECT_TAG = 'NORM_RECT'
-_NORM_LANDMARKS_STREAM_NAME = 'norm_landmarks'
-_NORM_LANDMARKS_TAG = 'NORM_LANDMARKS'
-_BLENDSHAPES_STREAM_NAME = 'blendshapes'
-_BLENDSHAPES_TAG = 'BLENDSHAPES'
-_FACE_GEOMETRY_STREAM_NAME = 'face_geometry'
-_FACE_GEOMETRY_TAG = 'FACE_GEOMETRY'
-_TASK_GRAPH_NAME = 'mediapipe.tasks.vision.face_landmarker.FaceLandmarkerGraph'
-_MICRO_SECONDS_PER_MILLISECOND = 1000
+_BaseOptions = base_options_lib.BaseOptions
+_RunningMode = running_mode_lib.VisionTaskRunningMode
+_ImageProcessingOptions = image_processing_options_lib.ImageProcessingOptions
 
 
 class Blendshapes(enum.IntEnum):
@@ -2855,6 +2833,19 @@ class FaceLandmarksConnections:
   ]
 
 
+class FaceLandmarkerResultC(ctypes.Structure):
+  """The ctypes struct for FaceLandmarkerResult."""
+
+  _fields_ = [
+      ('face_landmarks', ctypes.POINTER(landmark_c_lib.NormalizedLandmarksC)),
+      ('face_landmarks_count', ctypes.c_uint32),
+      ('face_blendshapes', ctypes.POINTER(category_c_lib.CategoriesC)),
+      ('face_blendshapes_count', ctypes.c_uint32),
+      ('facial_transformation_matrixes', ctypes.POINTER(matrix_c_lib.MatrixC)),
+      ('facial_transformation_matrixes_count', ctypes.c_uint32),
+  ]
+
+
 @dataclasses.dataclass
 class FaceLandmarkerResult:
   """The face landmarks detection result from FaceLandmarker, where each vector element represents a single face detected in the image.
@@ -2865,71 +2856,63 @@ class FaceLandmarkerResult:
     facial_transformation_matrixes: Optional facial transformation matrix.
   """
 
-  face_landmarks: List[List[landmark_module.NormalizedLandmark]]
-  face_blendshapes: List[List[category_module.Category]]
+  face_landmarks: List[List[landmark_lib.NormalizedLandmark]]
+  face_blendshapes: List[List[category_lib.Category]]
   facial_transformation_matrixes: List[np.ndarray]
 
+  @classmethod
+  @doc_controls.do_not_generate_docs
+  def from_ctypes(
+      cls, c_struct: FaceLandmarkerResultC
+  ) -> 'FaceLandmarkerResult':
+    """Creates a FaceLandmarkerResult from a ctypes struct."""
+    face_landmarks = []
+    for i in range(c_struct.face_landmarks_count):
+      landmarks_c = c_struct.face_landmarks[i]
+      face_landmarks.append([
+          landmark_lib.NormalizedLandmark.from_ctypes(landmarks_c.landmarks[j])
+          for j in range(landmarks_c.landmarks_count)
+      ])
 
-def _build_landmarker_result(
-    output_packets: Mapping[str, packet_module.Packet]
-) -> FaceLandmarkerResult:
-  """Constructs a `FaceLandmarkerResult` from output packets."""
-  face_landmarks_proto_list = packet_getter.get_proto_list(
-      output_packets[_NORM_LANDMARKS_STREAM_NAME]
-  )
+    face_blendshapes = []
+    for i in range(c_struct.face_blendshapes_count):
+      categories_c = c_struct.face_blendshapes[i]
+      face_blendshapes.append([
+          category_lib.Category.from_ctypes(categories_c.categories[j])
+          for j in range(categories_c.categories_count)
+      ])
 
-  face_landmarks_results = []
-  for proto in face_landmarks_proto_list:
-    face_landmarks = landmark_pb2.NormalizedLandmarkList()
-    face_landmarks.MergeFrom(proto)
-    face_landmarks_list = []
-    for face_landmark in face_landmarks.landmark:
-      face_landmarks_list.append(
-          landmark_module.NormalizedLandmark.create_from_pb2(face_landmark)
-      )
-    face_landmarks_results.append(face_landmarks_list)
+    facial_transformation_matrixes = []
+    for i in range(c_struct.facial_transformation_matrixes_count):
+      matrix_c = c_struct.facial_transformation_matrixes[i]
+      facial_transformation_matrixes.append(matrix_c.to_numpy())
 
-  face_blendshapes_results = []
-  if _BLENDSHAPES_STREAM_NAME in output_packets:
-    face_blendshapes_proto_list = packet_getter.get_proto_list(
-        output_packets[_BLENDSHAPES_STREAM_NAME]
-    )
-    for proto in face_blendshapes_proto_list:
-      face_blendshapes_categories = []
-      face_blendshapes_classifications = classification_pb2.ClassificationList()
-      face_blendshapes_classifications.MergeFrom(proto)
-      for face_blendshapes in face_blendshapes_classifications.classification:
-        face_blendshapes_categories.append(
-            category_module.Category(
-                index=face_blendshapes.index,
-                score=face_blendshapes.score,
-                display_name=face_blendshapes.display_name,
-                category_name=face_blendshapes.label,
-            )
-        )
-      face_blendshapes_results.append(face_blendshapes_categories)
+    return cls(face_landmarks, face_blendshapes, facial_transformation_matrixes)
 
-  facial_transformation_matrixes_results = []
-  if _FACE_GEOMETRY_STREAM_NAME in output_packets:
-    facial_transformation_matrixes_proto_list = packet_getter.get_proto_list(
-        output_packets[_FACE_GEOMETRY_STREAM_NAME]
-    )
-    for proto in facial_transformation_matrixes_proto_list:
-      if hasattr(proto, 'pose_transform_matrix'):
-        matrix_data = matrix_data_pb2.MatrixData()
-        matrix_data.MergeFrom(proto.pose_transform_matrix)
-        matrix = np.array(matrix_data.packed_data)
-        matrix = matrix.reshape((matrix_data.rows, matrix_data.cols))
-        matrix = (
-            matrix if matrix_data.layout == _LayoutEnum.ROW_MAJOR else matrix.T
-        )
-        facial_transformation_matrixes_results.append(matrix)
 
-  return FaceLandmarkerResult(
-      face_landmarks_results,
-      face_blendshapes_results,
-      facial_transformation_matrixes_results,
-  )
+class FaceLandmarkerOptionsC(ctypes.Structure):
+  """The ctypes struct for FaceLandmarkerOptions."""
+
+  _fields_ = [
+      ('base_options', base_options_c_lib.BaseOptionsC),
+      ('running_mode', ctypes.c_int),
+      ('num_faces', ctypes.c_int),
+      ('min_face_detection_confidence', ctypes.c_float),
+      ('min_face_presence_confidence', ctypes.c_float),
+      ('min_tracking_confidence', ctypes.c_float),
+      ('output_face_blendshapes', ctypes.c_bool),
+      ('output_facial_transformation_matrixes', ctypes.c_bool),
+      (
+          'result_callback',
+          ctypes.CFUNCTYPE(
+              None,
+              ctypes.POINTER(FaceLandmarkerResultC),
+              ctypes.c_void_p,
+              ctypes.c_int64,
+              ctypes.c_char_p,
+          ),
+      ),
+  ]
 
 
 @dataclasses.dataclass
@@ -2973,42 +2956,136 @@ class FaceLandmarkerOptions:
   output_face_blendshapes: bool = False
   output_facial_transformation_matrixes: bool = False
   result_callback: Optional[
-      Callable[[FaceLandmarkerResult, image_module.Image, int], None]
+      Callable[[FaceLandmarkerResult, image_lib.Image, int], None]
+  ] = None
+  _result_callback_c: Optional[
+      Callable[
+          [
+              FaceLandmarkerResultC,
+              ctypes.c_void_p,
+              int,
+              str,
+          ],
+          None,
+      ]
   ] = None
 
   @doc_controls.do_not_generate_docs
-  def to_pb2(self) -> _FaceLandmarkerGraphOptionsProto:
-    """Generates an FaceLandmarkerGraphOptions protobuf object."""
-    base_options_proto = self.base_options.to_pb2()
-    base_options_proto.use_stream_mode = (
-        False if self.running_mode == _RunningMode.IMAGE else True
+  def to_ctypes(self) -> FaceLandmarkerOptionsC:
+    """Generates an FaceLandmarkerOptionsC ctypes struct."""
+    options_c = FaceLandmarkerOptionsC()
+    options_c.base_options = self.base_options.to_ctypes()
+    options_c.running_mode = self.running_mode.ctype
+    options_c.num_faces = self.num_faces
+    options_c.min_face_detection_confidence = self.min_face_detection_confidence
+    options_c.min_face_presence_confidence = self.min_face_presence_confidence
+    options_c.min_tracking_confidence = self.min_tracking_confidence
+    options_c.output_face_blendshapes = self.output_face_blendshapes
+    options_c.output_facial_transformation_matrixes = (
+        self.output_facial_transformation_matrixes
     )
 
-    # Initialize the face landmarker options from base options.
-    face_landmarker_options_proto = _FaceLandmarkerGraphOptionsProto(
-        base_options=base_options_proto
-    )
+    if self._result_callback_c is None:
+      lib = mediapipe_c_bindings_lib.load_shared_library()
 
-    # Configure face detector options.
-    face_landmarker_options_proto.face_detector_graph_options.num_faces = (
-        self.num_faces
-    )
-    face_landmarker_options_proto.face_detector_graph_options.min_detection_confidence = (
-        self.min_face_detection_confidence
-    )
+      # The C callback function that will be called by the C code.
+      @ctypes.CFUNCTYPE(
+          None,
+          ctypes.POINTER(FaceLandmarkerResultC),
+          ctypes.c_void_p,
+          ctypes.c_int64,
+          ctypes.c_char_p,
+      )
+      def c_callback(result, image, timestamp_ms, error_msg):
+        if error_msg:
+          logging.error('Face detector error: %s', error_msg)
+          return
+        if self.result_callback is not None:
+          py_result = result.contents.to_python_detection_result()
+          py_image = image_lib.Image.create_from_ctypes(image, lib)
+          self.result_callback(py_result, py_image, timestamp_ms)
 
-    # Configure face landmark detector options.
-    face_landmarker_options_proto.min_tracking_confidence = (
-        self.min_tracking_confidence
-    )
-    face_landmarker_options_proto.face_landmarks_detector_graph_options.min_detection_confidence = (
-        self.min_face_detection_confidence
-    )
-    return face_landmarker_options_proto
+      # Keep callback from getting garbage collected.
+      self._result_callback_c = c_callback
+
+    options_c.result_callback = self._result_callback_c
+    return options_c
+
+
+def _register_ctypes_signatures(lib: ctypes.CDLL):
+  """Registers C function signatures for the given library."""
+  lib.face_landmarker_create.argtypes = [
+      ctypes.POINTER(FaceLandmarkerOptionsC),
+      ctypes.POINTER(ctypes.c_char_p),
+  ]
+  lib.face_landmarker_create.restype = ctypes.c_void_p
+  lib.face_landmarker_detect_image.argtypes = [
+      ctypes.c_void_p,
+      ctypes.c_void_p,
+      ctypes.POINTER(FaceLandmarkerResultC),
+      ctypes.POINTER(ctypes.c_char_p),
+  ]
+  lib.face_landmarker_detect_image.restype = ctypes.c_int
+  lib.face_landmarker_detect_image_with_options.argtypes = [
+      ctypes.c_void_p,
+      ctypes.c_void_p,
+      ctypes.POINTER(image_processing_options_c_lib.ImageProcessingOptionsC),
+      ctypes.POINTER(FaceLandmarkerResultC),
+      ctypes.POINTER(ctypes.c_char_p),
+  ]
+  lib.face_landmarker_detect_image_with_options.restype = ctypes.c_int
+  lib.face_landmarker_detect_for_video.argtypes = [
+      ctypes.c_void_p,
+      ctypes.c_void_p,
+      ctypes.c_int64,
+      ctypes.POINTER(FaceLandmarkerResultC),
+      ctypes.POINTER(ctypes.c_char_p),
+  ]
+  lib.face_landmarker_detect_for_video.restype = ctypes.c_int
+  lib.face_landmarker_detect_for_video_with_options.argtypes = [
+      ctypes.c_void_p,
+      ctypes.c_void_p,
+      ctypes.POINTER(image_processing_options_c_lib.ImageProcessingOptionsC),
+      ctypes.c_int64,
+      ctypes.POINTER(FaceLandmarkerResultC),
+      ctypes.POINTER(ctypes.c_char_p),
+  ]
+  lib.face_landmarker_detect_for_video_with_options.restype = ctypes.c_int
+  lib.face_landmarker_detect_async.argtypes = [
+      ctypes.c_void_p,
+      ctypes.c_void_p,
+      ctypes.c_int64,
+      ctypes.POINTER(ctypes.c_char_p),
+  ]
+  lib.face_landmarker_detect_async.restype = ctypes.c_int
+  lib.face_landmarker_detect_async_with_options.argtypes = [
+      ctypes.c_void_p,
+      ctypes.c_void_p,
+      ctypes.POINTER(image_processing_options_c_lib.ImageProcessingOptionsC),
+      ctypes.c_int64,
+      ctypes.POINTER(ctypes.c_char_p),
+  ]
+  lib.face_landmarker_detect_async_with_options.restype = ctypes.c_int
+  lib.face_landmarker_close_result.argtypes = [
+      ctypes.POINTER(FaceLandmarkerResultC)
+  ]
+  lib.face_landmarker_close_result.restype = None
+  lib.face_landmarker_close.argtypes = [
+      ctypes.c_void_p,
+      ctypes.POINTER(ctypes.c_char_p),
+  ]
+  lib.face_landmarker_close.restype = ctypes.c_int
 
 
 class FaceLandmarker(base_vision_task_api.BaseVisionTaskApi):
-  """Class that performs face landmarks detection on images."""
+  """Class that performs face landmark detection on images."""
+
+  _lib: ctypes.CDLL
+  _handle: ctypes.c_void_p
+
+  def __init__(self, lib: ctypes.CDLL, handle: ctypes.c_void_p):
+    self._lib = lib
+    self._handle = handle
 
   @classmethod
   def create_from_model_path(cls, model_path: str) -> 'FaceLandmarker':
@@ -3052,107 +3129,81 @@ class FaceLandmarker(base_vision_task_api.BaseVisionTaskApi):
         `FaceLandmarkerOptions` such as missing the model.
       RuntimeError: If other types of error occurred.
     """
-
-    def packets_callback(output_packets: Mapping[str, packet_module.Packet]):
-      if output_packets[_IMAGE_OUT_STREAM_NAME].is_empty():
-        return
-
-      image = packet_getter.get_image(output_packets[_IMAGE_OUT_STREAM_NAME])
-      if output_packets[_IMAGE_OUT_STREAM_NAME].is_empty():
-        return
-
-      if output_packets[_NORM_LANDMARKS_STREAM_NAME].is_empty():
-        empty_packet = output_packets[_NORM_LANDMARKS_STREAM_NAME]
-        options.result_callback(
-            FaceLandmarkerResult([], [], []),
-            image,
-            empty_packet.timestamp.value // _MICRO_SECONDS_PER_MILLISECOND,
-        )
-        return
-
-      face_landmarks_result = _build_landmarker_result(output_packets)
-      timestamp = output_packets[_NORM_LANDMARKS_STREAM_NAME].timestamp
-      options.result_callback(
-          face_landmarks_result,
-          image,
-          timestamp.value // _MICRO_SECONDS_PER_MILLISECOND,
-      )
-
-    output_streams = [
-        ':'.join([_NORM_LANDMARKS_TAG, _NORM_LANDMARKS_STREAM_NAME]),
-        ':'.join([_IMAGE_TAG, _IMAGE_OUT_STREAM_NAME]),
-    ]
-
-    if options.output_face_blendshapes:
-      output_streams.append(
-          ':'.join([_BLENDSHAPES_TAG, _BLENDSHAPES_STREAM_NAME])
-      )
-    if options.output_facial_transformation_matrixes:
-      output_streams.append(
-          ':'.join([_FACE_GEOMETRY_TAG, _FACE_GEOMETRY_STREAM_NAME])
-      )
-
-    task_info = _TaskInfo(
-        task_graph=_TASK_GRAPH_NAME,
-        input_streams=[
-            ':'.join([_IMAGE_TAG, _IMAGE_IN_STREAM_NAME]),
-            ':'.join([_NORM_RECT_TAG, _NORM_RECT_STREAM_NAME]),
-        ],
-        output_streams=output_streams,
-        task_options=options,
+    base_vision_task_api.validate_running_mode(
+        options.running_mode, options.result_callback
     )
-    return cls(
-        task_info.generate_graph_config(
-            enable_flow_limiting=options.running_mode
-            == _RunningMode.LIVE_STREAM
-        ),
-        options.running_mode,
-        packets_callback if options.result_callback else None,
+
+    lib = mediapipe_c_bindings_lib.load_shared_library()
+    _register_ctypes_signatures(lib)
+
+    options_c = options.to_ctypes()
+    error_msg = ctypes.c_char_p()
+    landmarker = lib.face_landmarker_create(
+        ctypes.byref(options_c), ctypes.byref(error_msg)
     )
+    if not landmarker:
+      error_string = (
+          error_msg.value.decode('utf-8')
+          if error_msg.value is not None
+          else 'Internal Error'
+      )
+      raise RuntimeError('Failed to create FaceLandmarker: %s' % error_string)
+
+    return FaceLandmarker(lib, landmarker)
 
   def detect(
       self,
-      image: image_module.Image,
+      image: image_lib.Image,
       image_processing_options: Optional[_ImageProcessingOptions] = None,
   ) -> FaceLandmarkerResult:
-    """Performs face landmarks detection on the given image.
+    """Performs face landmark detection on the provided MediaPipe Image.
 
     Only use this method when the FaceLandmarker is created with the image
     running mode.
-
-    The image can be of any size with format RGB or RGBA.
-    TODO: Describes how the input image will be preprocessed after the yuv
-    support is implemented.
 
     Args:
       image: MediaPipe Image.
       image_processing_options: Options for image processing.
 
     Returns:
-      The face landmarks detection results.
+      A face landmarker result object that contains a list of face landmarks.
 
     Raises:
       ValueError: If any of the input arguments is invalid.
-      RuntimeError: If face landmarker detection failed to run.
+      RuntimeError: If face landmark detection failed to run.
     """
-    normalized_rect = self.convert_to_normalized_rect(
-        image_processing_options, image, roi_allowed=False
+    c_image = image._image_ptr  # pylint: disable=protected-access
+    result_c = FaceLandmarkerResultC()
+    error_msg = ctypes.c_char_p()
+
+    if image_processing_options is not None:
+      options_c = image_processing_options.to_ctypes()
+      return_code = self._lib.face_landmarker_detect_image_with_options(
+          self._handle,
+          c_image,
+          ctypes.byref(options_c),
+          ctypes.byref(result_c),
+          ctypes.byref(error_msg),
+      )
+    else:
+      return_code = self._lib.face_landmarker_detect_image(
+          self._handle,
+          c_image,
+          ctypes.byref(result_c),
+          ctypes.byref(error_msg),
+      )
+
+    mediapipe_c_bindings_lib.handle_return_code(
+        return_code, 'Face landmark detection failed', error_msg
     )
-    output_packets = self._process_image_data({
-        _IMAGE_IN_STREAM_NAME: packet_creator.create_image(image),
-        _NORM_RECT_STREAM_NAME: packet_creator.create_proto(
-            normalized_rect.to_pb2()
-        ),
-    })
 
-    if output_packets[_NORM_LANDMARKS_STREAM_NAME].is_empty():
-      return FaceLandmarkerResult([], [], [])
-
-    return _build_landmarker_result(output_packets)
+    result = FaceLandmarkerResult.from_ctypes(result_c)
+    self._lib.face_landmarker_close_result(ctypes.byref(result_c))
+    return result
 
   def detect_for_video(
       self,
-      image: image_module.Image,
+      image: image_lib.Image,
       timestamp_ms: int,
       image_processing_options: Optional[_ImageProcessingOptions] = None,
   ) -> FaceLandmarkerResult:
@@ -3178,26 +3229,40 @@ class FaceLandmarker(base_vision_task_api.BaseVisionTaskApi):
       ValueError: If any of the input arguments is invalid.
       RuntimeError: If face landmarker detection failed to run.
     """
-    normalized_rect = self.convert_to_normalized_rect(
-        image_processing_options, image, roi_allowed=False
+    c_image = image._image_ptr  # pylint: disable=protected-access
+    result_c = FaceLandmarkerResultC()
+    error_msg = ctypes.c_char_p()
+
+    if image_processing_options:
+      options_c = image_processing_options.to_ctypes()
+      return_code = self._lib.face_landmarker_detect_for_video_with_options(
+          self._handle,
+          c_image,
+          ctypes.byref(options_c),
+          timestamp_ms,
+          ctypes.byref(result_c),
+          ctypes.byref(error_msg),
+      )
+    else:
+      return_code = self._lib.face_landmarker_detect_for_video(
+          self._handle,
+          c_image,
+          timestamp_ms,
+          ctypes.byref(result_c),
+          ctypes.byref(error_msg),
+      )
+
+    mediapipe_c_bindings_lib.handle_return_code(
+        return_code, 'Face landmark detection failed', error_msg
     )
-    output_packets = self._process_video_data({
-        _IMAGE_IN_STREAM_NAME: packet_creator.create_image(image).at(
-            timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND
-        ),
-        _NORM_RECT_STREAM_NAME: packet_creator.create_proto(
-            normalized_rect.to_pb2()
-        ).at(timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND),
-    })
 
-    if output_packets[_NORM_LANDMARKS_STREAM_NAME].is_empty():
-      return FaceLandmarkerResult([], [], [])
-
-    return _build_landmarker_result(output_packets)
+    result = FaceLandmarkerResult.from_ctypes(result_c)
+    self._lib.face_landmarker_close_result(ctypes.byref(result_c))
+    return result
 
   def detect_async(
       self,
-      image: image_module.Image,
+      image: image_lib.Image,
       timestamp_ms: int,
       image_processing_options: Optional[_ImageProcessingOptions] = None,
   ) -> None:
@@ -3229,16 +3294,56 @@ class FaceLandmarker(base_vision_task_api.BaseVisionTaskApi):
 
     Raises:
       ValueError: If the current input timestamp is smaller than what the
-      face landmarker has already processed.
+        face landmarker has already processed.
+      RuntimeError: If the face landmark detection failed to run.
     """
-    normalized_rect = self.convert_to_normalized_rect(
-        image_processing_options, image, roi_allowed=False
+    c_image = image._image_ptr  # pylint: disable=protected-access
+    error_msg = ctypes.c_char_p()
+
+    if image_processing_options:
+      options_c = image_processing_options.to_ctypes()
+      return_code = self._lib.face_landmarker_detect_async_with_options(
+          self._handle,
+          c_image,
+          ctypes.byref(options_c),
+          timestamp_ms,
+          ctypes.byref(error_msg),
+      )
+    else:
+      return_code = self._lib.face_landmarker_detect_async(
+          self._handle, c_image, timestamp_ms, ctypes.byref(error_msg)
+      )
+    mediapipe_c_bindings_lib.handle_return_code(
+        return_code, 'Face landmark detection failed', error_msg
     )
-    self._send_live_stream_data({
-        _IMAGE_IN_STREAM_NAME: packet_creator.create_image(image).at(
-            timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND
-        ),
-        _NORM_RECT_STREAM_NAME: packet_creator.create_proto(
-            normalized_rect.to_pb2()
-        ).at(timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND),
-    })
+
+  def close(self):
+    """Closes the FaceLandmarker."""
+    if self._handle:
+      error_msg = ctypes.c_char_p()
+      return_code = self._lib.face_landmarker_close(
+          self._handle, ctypes.byref(error_msg)
+      )
+      mediapipe_c_bindings_lib.handle_return_code(
+          return_code, 'Failed to close FaceLandmarker', error_msg
+      )
+    self._handle = None
+
+  def __enter__(self):
+    """Returns `self` upon entering the runtime context."""
+    return self
+
+  def __exit__(self, exc_type, exc_value, traceback):
+    """Shuts down the MediaPipe task instance on exit of the context manager.
+
+    Args:
+      exc_type: The exception type that caused the context manager to exit.
+      exc_value: The exception value that caused the context manager to exit.
+      traceback: The exception traceback that caused the context manager to
+        exit.
+
+    Raises:
+      RuntimeError: If the MediaPipe FaceDetector task failed to close.
+    """
+    del exc_type, exc_value, traceback  # Unused.
+    self.close()

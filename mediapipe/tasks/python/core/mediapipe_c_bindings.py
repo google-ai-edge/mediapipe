@@ -85,6 +85,21 @@ def handle_status(status: int):
     raise RuntimeError(f'Unexpected status: {status}')
 
 
+def handle_return_code(
+    return_code: int, error_msg_prefix: str, error_msg: ctypes.c_char_p
+):
+  """Checks the return code and raises an error if not 0."""
+  if return_code == 0:
+    return
+  elif error_msg.value is not None:
+    error_message = error_msg.value.decode('utf-8')
+    raise RuntimeError(f'{error_msg_prefix}: {error_message}')
+  else:
+    raise RuntimeError(
+        f'{error_msg_prefix}: Unexpected return code {return_code}'
+    )
+
+
 def load_shared_library():
   """Loads the shared library for text tasks."""
   global _shared_lib

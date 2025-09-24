@@ -69,9 +69,7 @@ class TextClassifierOptions:
 
   def to_ctypes(self) -> TextClassifierOptionsC:
     """Generates a ctypes TextClassifierOptionsC."""
-    base_options_c = base_options_c_module.create_base_options_c(
-        self.base_options
-    )
+    base_options_c = self.base_options.to_ctypes()
     classifier_options_c = (
         classifier_options_c_module.convert_to_classifier_options_c(
             classifier_options_module.ClassifierOptions(
@@ -231,14 +229,14 @@ class TextClassifier:
     ctypes_result = classification_result_c_module.ClassificationResultC()
     error_msg_ptr = ctypes.c_char_p()
 
-    ret_code = self._lib.text_classifier_classify(
+    return_code = self._lib.text_classifier_classify(
         self._classifier_handle,
         text.encode("utf-8"),
         ctypes.byref(ctypes_result),
         ctypes.byref(error_msg_ptr),
     )
 
-    if ret_code != 0:
+    if return_code != 0:
       if error_msg_ptr.value is not None:
         error_message = error_msg_ptr.value.decode("utf-8")
         raise RuntimeError(error_message)
@@ -253,10 +251,10 @@ class TextClassifier:
     """Shuts down the MediaPipe task instance."""
     if self._classifier_handle:
       error_msg_ptr = ctypes.c_char_p()
-      ret_code = self._lib.text_classifier_close(
+      return_code = self._lib.text_classifier_close(
           self._classifier_handle, ctypes.byref(error_msg_ptr)
       )
-      if ret_code != 0:
+      if return_code != 0:
         if error_msg_ptr.value is not None:
           error_message = error_msg_ptr.value.decode("utf-8")
           raise RuntimeError(error_message)

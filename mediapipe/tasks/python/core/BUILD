@@ -44,6 +44,7 @@ py_library(
         "//mediapipe/tasks:users",
     ],
     deps = [
+        ":base_options_c",
         ":optional_dependencies",
         "//mediapipe/calculators/tensor:inference_calculator_py_pb2",
         "//mediapipe/tasks/cc/core/proto:acceleration_py_pb2",
@@ -55,7 +56,6 @@ py_library(
 py_library(
     name = "base_options_c",
     srcs = ["base_options_c.py"],
-    deps = [":base_options"],
 )
 
 py_library(

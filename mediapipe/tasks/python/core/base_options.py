@@ -23,6 +23,7 @@ from mediapipe.calculators.tensor import inference_calculator_pb2
 from mediapipe.tasks.cc.core.proto import acceleration_pb2
 from mediapipe.tasks.cc.core.proto import base_options_pb2
 from mediapipe.tasks.cc.core.proto import external_file_pb2
+from mediapipe.tasks.python.core import base_options_c as base_options_c_lib
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 
 _DelegateProto = inference_calculator_pb2.InferenceCalculatorOptions.Delegate
@@ -105,6 +106,19 @@ class BaseOptions:
         model_asset_buffer=pb2_obj.model_asset.file_content,
         delegate=delegate,
     )
+
+  @doc_controls.do_not_generate_docs
+  def to_ctypes(self) -> base_options_c_lib.BaseOptionsC:
+    """Creates a BaseOptionsC struct from the BaseOptions object."""
+    options = base_options_c_lib.BaseOptionsC()
+    options.model_asset_buffer = self.model_asset_buffer
+    options.model_asset_buffer_count = (
+        len(self.model_asset_buffer) if self.model_asset_buffer else 0
+    )
+    options.model_asset_path = (
+        self.model_asset_path.encode('utf-8') if self.model_asset_path else None
+    )
+    return options
 
   def __eq__(self, other: Any) -> bool:
     """Checks if this object is equal to the given object.

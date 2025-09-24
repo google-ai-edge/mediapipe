@@ -91,9 +91,7 @@ class TextEmbedderOptions:
 
   def to_ctypes(self) -> _TextEmbedderOptionsC:
     """Generates a ctypes TextEmbedderOptionsC object."""
-    base_options_c = base_options_c_module.create_base_options_c(
-        self.base_options
-    )
+    base_options_c = self.base_options.to_ctypes()
     embedder_options_c = _EmbedderOptionsC(
         l2_normalize=self.l2_normalize
         if self.l2_normalize is not None
@@ -202,13 +200,13 @@ class TextEmbedder:
     """
     ctypes_result = embedding_result_c_module.EmbeddingResultC()
     error_msg_ptr = ctypes.c_char_p()
-    ret_code = self._lib.text_embedder_embed(
+    return_code = self._lib.text_embedder_embed(
         self._embedder_handle,
         text.encode('utf-8'),
         ctypes.byref(ctypes_result),
         ctypes.byref(error_msg_ptr),
     )
-    if ret_code != 0:
+    if return_code != 0:
       if error_msg_ptr.value is not None:
         error_message = error_msg_ptr.value.decode('utf-8')
         raise RuntimeError(error_message)
@@ -252,10 +250,10 @@ class TextEmbedder:
     """Shuts down the MediaPipe task instance."""
     if self._embedder_handle:
       error_msg_ptr = ctypes.c_char_p()
-      ret_code = self._lib.text_embedder_close(
+      return_code = self._lib.text_embedder_close(
           self._embedder_handle, ctypes.byref(error_msg_ptr)
       )
-      if ret_code != 0:
+      if return_code != 0:
         if error_msg_ptr.value is not None:
           error_message = error_msg_ptr.value.decode('utf-8')
           raise RuntimeError(error_message)

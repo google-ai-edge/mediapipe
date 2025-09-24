@@ -184,10 +184,7 @@ class FaceDetectorOptions:
       # Keep callback from getting garbage collected.
       self._result_callback_c = c_callback
 
-    base_options_c = base_options_c_module.create_base_options_c(
-        self.base_options
-    )
-
+    base_options_c = self.base_options.to_ctypes()
     return FaceDetectorOptionsC(
         base_options=base_options_c,
         running_mode=self.running_mode.ctype,
@@ -448,11 +445,11 @@ class FaceDetector:
     """Shuts down the MediaPipe task instance."""
     if self._handle:
       error_msg_ptr = ctypes.c_char_p()
-      ret_code = self._lib.face_detector_close(
+      return_code = self._lib.face_detector_close(
           self._handle, ctypes.byref(error_msg_ptr)
       )
       self._handle_status(
-          ret_code, error_msg_ptr, 'Failed to close FaceDetector object.'
+          return_code, error_msg_ptr, 'Failed to close FaceDetector object.'
       )
       self._handle = None
 

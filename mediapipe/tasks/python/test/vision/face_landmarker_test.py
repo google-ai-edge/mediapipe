@@ -14,6 +14,7 @@
 """Tests for face landmarker."""
 
 import enum
+import threading
 from unittest import mock
 
 from absl.testing import absltest
@@ -23,13 +24,13 @@ import numpy as np
 from google.protobuf import text_format
 from mediapipe.framework.formats import classification_pb2
 from mediapipe.framework.formats import landmark_pb2
-from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.tasks.python.components.containers import category as category_module
 from mediapipe.tasks.python.components.containers import landmark as landmark_module
 from mediapipe.tasks.python.components.containers import rect as rect_module
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.test import test_utils
 from mediapipe.tasks.python.vision import face_landmarker
+from mediapipe.tasks.python.vision.core import image as image_module
 from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_module
 from mediapipe.tasks.python.vision.core import vision_task_running_mode as running_mode_module
 
@@ -182,7 +183,8 @@ class FaceLandmarkerTest(parameterized.TestCase):
           model_asset_path='/path/to/invalid/model.tflite'
       )
       options = _FaceLandmarkerOptions(base_options=base_options)
-      _FaceLandmarker.create_from_options(options)
+      landmarker = _FaceLandmarker.create_from_options(options)
+      landmarker.close()
 
   def test_create_from_options_succeeds_with_valid_model_content(self):
     # Creates with options containing model content successfully.
@@ -191,6 +193,7 @@ class FaceLandmarkerTest(parameterized.TestCase):
       options = _FaceLandmarkerOptions(base_options=base_options)
       landmarker = _FaceLandmarker.create_from_options(options)
       self.assertIsInstance(landmarker, _FaceLandmarker)
+      landmarker.close()
 
   @parameterized.parameters(
       (
@@ -366,10 +369,11 @@ class FaceLandmarkerTest(parameterized.TestCase):
     )
     with _FaceLandmarker.create_from_options(options) as landmarker:
       with self.assertRaisesRegex(
-          ValueError, r'not initialized with the video mode'
+          RuntimeError, r'not initialized with the video mode'
       ):
         landmarker.detect_for_video(self.test_image, 0)
 
+  # TODO: Change the errors to ValueError once we return MpStatus.
   def test_calling_detect_async_in_image_mode(self):
     options = _FaceLandmarkerOptions(
         base_options=_BaseOptions(model_asset_path=self.model_path),
@@ -377,7 +381,7 @@ class FaceLandmarkerTest(parameterized.TestCase):
     )
     with _FaceLandmarker.create_from_options(options) as landmarker:
       with self.assertRaisesRegex(
-          ValueError, r'not initialized with the live stream mode'
+          RuntimeError, r'not initialized with the live stream mode'
       ):
         landmarker.detect_async(self.test_image, 0)
 
@@ -388,7 +392,7 @@ class FaceLandmarkerTest(parameterized.TestCase):
     )
     with _FaceLandmarker.create_from_options(options) as landmarker:
       with self.assertRaisesRegex(
-          ValueError, r'not initialized with the image mode'
+          RuntimeError, r'not initialized with the image mode'
       ):
         landmarker.detect(self.test_image)
 
@@ -399,7 +403,7 @@ class FaceLandmarkerTest(parameterized.TestCase):
     )
     with _FaceLandmarker.create_from_options(options) as landmarker:
       with self.assertRaisesRegex(
-          ValueError, r'not initialized with the live stream mode'
+          RuntimeError, r'not initialized with the live stream mode'
       ):
         landmarker.detect_async(self.test_image, 0)
 
@@ -411,7 +415,7 @@ class FaceLandmarkerTest(parameterized.TestCase):
     with _FaceLandmarker.create_from_options(options) as landmarker:
       unused_result = landmarker.detect_for_video(self.test_image, 1)
       with self.assertRaisesRegex(
-          ValueError, r'Input timestamp must be monotonically increasing'
+          RuntimeError, r'Input timestamp must be monotonically increasing'
       ):
         landmarker.detect_for_video(self.test_image, 0)
 
@@ -472,7 +476,7 @@ class FaceLandmarkerTest(parameterized.TestCase):
     )
     with _FaceLandmarker.create_from_options(options) as landmarker:
       with self.assertRaisesRegex(
-          ValueError, r'not initialized with the image mode'
+          RuntimeError, r'not initialized with the image mode'
       ):
         landmarker.detect(self.test_image)
 
@@ -484,7 +488,7 @@ class FaceLandmarkerTest(parameterized.TestCase):
     )
     with _FaceLandmarker.create_from_options(options) as landmarker:
       with self.assertRaisesRegex(
-          ValueError, r'not initialized with the video mode'
+          RuntimeError, r'not initialized with the video mode'
       ):
         landmarker.detect_for_video(self.test_image, 0)
 
@@ -497,7 +501,7 @@ class FaceLandmarkerTest(parameterized.TestCase):
     with _FaceLandmarker.create_from_options(options) as landmarker:
       landmarker.detect_async(self.test_image, 100)
       with self.assertRaisesRegex(
-          ValueError, r'Input timestamp must be monotonically increasing'
+          RuntimeError, r'Input timestamp must be monotonically increasing'
       ):
         landmarker.detect_async(self.test_image, 0)
 
@@ -521,30 +525,39 @@ class FaceLandmarkerTest(parameterized.TestCase):
     test_image = _Image.create_from_file(
         test_utils.get_test_data_path(image_path)
     )
+    callback_event = threading.Event()
+    callback_exception: None | Exception = None
     observed_timestamp_ms = -1
 
     def check_result(
         result: FaceLandmarkerResult, output_image: _Image, timestamp_ms: int
     ):
-      # Comparing results.
-      if expected_face_landmarks is not None:
-        self._expect_landmarks_correct(
-            result.face_landmarks, expected_face_landmarks
+      nonlocal callback_event, callback_exception, observed_timestamp_ms
+
+      try:
+        # Comparing results.
+        if expected_face_landmarks is not None:
+          self._expect_landmarks_correct(
+              result.face_landmarks, expected_face_landmarks
+          )
+        if expected_face_blendshapes is not None:
+          self._expect_blendshapes_correct(
+              result.face_blendshapes, expected_face_blendshapes
+          )
+        if expected_facial_transformation_matrixes is not None:
+          self._expect_facial_transformation_matrixes_correct(
+              result.facial_transformation_matrixes,
+              expected_facial_transformation_matrixes,
+          )
+        self.assertTrue(
+            np.array_equal(output_image.numpy_view(), test_image.numpy_view())
         )
-      if expected_face_blendshapes is not None:
-        self._expect_blendshapes_correct(
-            result.face_blendshapes, expected_face_blendshapes
-        )
-      if expected_facial_transformation_matrixes is not None:
-        self._expect_facial_transformation_matrixes_correct(
-            result.facial_transformation_matrixes,
-            expected_facial_transformation_matrixes,
-        )
-      self.assertTrue(
-          np.array_equal(output_image.numpy_view(), test_image.numpy_view())
-      )
-      self.assertLess(observed_timestamp_ms, timestamp_ms)
-      self.observed_timestamp_ms = timestamp_ms
+        self.assertLess(observed_timestamp_ms, timestamp_ms)
+        observed_timestamp_ms = timestamp_ms
+      except AssertionError as e:
+        callback_exception = e
+      finally:
+        callback_event.set()
 
     model_path = test_utils.get_test_data_path(model_name)
     options = _FaceLandmarkerOptions(
@@ -559,6 +572,10 @@ class FaceLandmarkerTest(parameterized.TestCase):
     with _FaceLandmarker.create_from_options(options) as landmarker:
       for timestamp in range(0, 300, 30):
         landmarker.detect_async(test_image, timestamp)
+        callback_event.wait(timeout=3.0)
+        if callback_exception is not None:
+          raise callback_exception
+        callback_event.clear()
 
 
 if __name__ == '__main__':

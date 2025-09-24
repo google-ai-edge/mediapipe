@@ -16,8 +16,6 @@
 
 import ctypes
 
-import mediapipe.tasks.python.core.base_options as base_options_module
-
 
 class BaseOptionsC(ctypes.Structure):
   _fields_ = [
@@ -25,18 +23,3 @@ class BaseOptionsC(ctypes.Structure):
       ("model_asset_buffer_count", ctypes.c_uint),
       ("model_asset_path", ctypes.c_char_p),
   ]
-
-
-def create_base_options_c(
-    src: base_options_module.BaseOptions,
-) -> BaseOptionsC:
-  """Creates a BaseOptionsC struct."""
-  options = BaseOptionsC()
-  options.model_asset_buffer = src.model_asset_buffer
-  options.model_asset_buffer_count = (
-      len(src.model_asset_buffer) if src.model_asset_buffer else 0
-  )
-  options.model_asset_path = (
-      src.model_asset_path.encode("utf-8") if src.model_asset_path else None
-  )
-  return options

@@ -91,6 +91,12 @@ cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
     ],
+)
+
+cc_library(
+    name = "face_landmarker_c_lib",
+    visibility = ["//mediapipe/tasks/c:__subpackages__"],
+    deps = [":face_landmarker_lib"],
     alwayslink = 1,
 )
 
