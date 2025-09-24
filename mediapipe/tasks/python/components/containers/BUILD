@@ -175,3 +175,12 @@ py_library(
         "@mediapipe_pip_deps_numpy//:pkg",
     ],
 )
+
+py_library(
+    name = "matrix_c",
+    srcs = ["matrix_c.py"],
+    deps = [
+        "//mediapipe/tasks/python/core:optional_dependencies",
+        "@mediapipe_pip_deps_numpy//:pkg",
+    ],
+)
