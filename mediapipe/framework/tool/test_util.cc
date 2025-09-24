@@ -166,6 +166,8 @@ std::string GetBinaryDirectory() {
 absl::Status CompareAndSaveOutputInternal(
     const ImageFrame& expected, const ImageFrame& actual,
     const ImageFrameComparisonOptions& options) {
+  MP_ASSIGN_OR_RETURN(auto output_img_path,
+                      SavePngTestOutput(actual, "output"));
   MP_ASSIGN_OR_RETURN(auto expected_img_path,
                       SavePngTestOutput(expected, "expected"));
 
