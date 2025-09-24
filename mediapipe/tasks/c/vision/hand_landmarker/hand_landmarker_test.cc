@@ -22,23 +22,36 @@ limitations under the License.
 #include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/deps/file_path.h"
+#include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/image.h"
+#include "mediapipe/framework/formats/landmark.pb.h"
+#include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
+#include "mediapipe/framework/port/parse_text_proto.h"
+#include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/tasks/c/components/containers/landmark.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
+#include "mediapipe/tasks/c/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/c/vision/hand_landmarker/hand_landmarker_result.h"
+#include "mediapipe/tasks/cc/components/containers/proto/landmarks_detection_result.pb.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 
 namespace {
 
+using ::mediapipe::file::GetContents;
 using ::mediapipe::file::JoinPath;
+using ::mediapipe::tasks::containers::proto::LandmarksDetectionResult;
 using ::mediapipe::tasks::vision::DecodeImageFromFile;
 using testing::HasSubstr;
 
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
 constexpr char kModelName[] = "hand_landmarker.task";
-constexpr char kImageFile[] = "fist.jpg";
+constexpr char kPointingUpImage[] = "pointing_up.jpg";
+constexpr char kPointingUpRotatedImage[] = "pointing_up_rotated.jpg";
+constexpr char kPointingUpLandmarksFilename[] = "pointing_up_landmarks.pbtxt";
+constexpr char kPointingUpRotatedLandmarksFilename[] =
+    "pointing_up_rotated_landmarks.pbtxt";
 constexpr float kScorePrecision = 1e-2;
 constexpr float kLandmarkPrecision = 1e-1;
 constexpr int kIterations = 100;
@@ -47,35 +60,54 @@ std::string GetFullPath(absl::string_view file_name) {
   return JoinPath("./", kTestDataDirectory, file_name);
 }
 
-void AssertHandLandmarkerResult(const HandLandmarkerResult* result,
-                                const float score_precision,
-                                const float landmark_precision) {
-  // Expects to have the same number of hands detected.
-  EXPECT_EQ(result->handedness_count, 1);
+LandmarksDetectionResult GetLandmarksDetectionResult(
+    absl::string_view landmarks_file_name) {
+  LandmarksDetectionResult result;
+  std::string contents;
+  MP_EXPECT_OK(GetContents(
+      JoinPath("./", kTestDataDirectory, landmarks_file_name), &contents));
+  EXPECT_TRUE(mediapipe::ParseTextProto(contents, &result))
+      << "Failed to parse landmarks from " << landmarks_file_name;
+  return result;
+}
 
-  // Actual handedness matches expected handedness.
-  EXPECT_EQ(std::string{result->handedness[0].categories[0].category_name},
-            "Right");
-  EXPECT_NEAR(result->handedness[0].categories[0].score, 0.9893f,
-              score_precision);
+void ExpectHandLandmarkerResultsCorrect(
+    const HandLandmarkerResult* actual,
+    const LandmarksDetectionResult& expected_proto,
+    const float landmark_precision, const float score_precision) {
+  ASSERT_EQ(actual->handedness_count, 1);
+  ASSERT_EQ(actual->hand_landmarks_count, 1);
 
-  // Actual landmarks match expected landmarks.
-  EXPECT_NEAR(result->hand_landmarks[0].landmarks[0].x, 0.477f,
-              landmark_precision);
-  EXPECT_NEAR(result->hand_landmarks[0].landmarks[0].y, 0.661f,
-              landmark_precision);
-  EXPECT_NEAR(result->hand_landmarks[0].landmarks[0].z, 0.0f,
-              landmark_precision);
-  EXPECT_NEAR(result->hand_world_landmarks[0].landmarks[0].x, -0.009f,
-              landmark_precision);
-  EXPECT_NEAR(result->hand_world_landmarks[0].landmarks[0].y, 0.082f,
-              landmark_precision);
-  EXPECT_NEAR(result->hand_world_landmarks[0].landmarks[0].z, 0.006f,
-              landmark_precision);
+  const auto& actual_handedness = actual->handedness[0];
+  const auto& expected_classification_list = expected_proto.classifications();
+  ASSERT_EQ(actual_handedness.categories_count,
+            expected_classification_list.classification_size());
+  for (int j = 0; j < actual_handedness.categories_count; ++j) {
+    const auto& actual_category = actual_handedness.categories[j];
+    const auto& expected_class = expected_classification_list.classification(j);
+    EXPECT_EQ(actual_category.index, expected_class.index());
+    EXPECT_EQ(std::string{actual_category.category_name},
+              expected_class.label());
+    EXPECT_NEAR(actual_category.score, expected_class.score(), score_precision);
+  }
+
+  const auto& actual_landmark_list = actual->hand_landmarks[0];
+  const auto& expected_landmark_list_proto = expected_proto.landmarks();
+  ASSERT_EQ(actual_landmark_list.landmarks_count,
+            expected_landmark_list_proto.landmark_size());
+  for (int j = 0; j < actual_landmark_list.landmarks_count; ++j) {
+    const auto& actual_landmark = actual_landmark_list.landmarks[j];
+    const auto& expected_landmark_proto =
+        expected_landmark_list_proto.landmark(j);
+    EXPECT_NEAR(actual_landmark.x, expected_landmark_proto.x(),
+                landmark_precision);
+    EXPECT_NEAR(actual_landmark.y, expected_landmark_proto.y(),
+                landmark_precision);
+  }
 }
 
 TEST(HandLandmarkerTest, ImageModeTest) {
-  const auto image = DecodeImageFromFile(GetFullPath(kImageFile));
+  const auto image = DecodeImageFromFile(GetFullPath(kPointingUpImage));
   ASSERT_TRUE(image.ok());
 
   const std::string model_path = GetFullPath(kModelName);
@@ -96,21 +128,71 @@ TEST(HandLandmarkerTest, ImageModeTest) {
   const auto& image_frame = image->GetImageFrameSharedPtr();
   const MpImage mp_image = {
       .type = MpImage::IMAGE_FRAME,
-      .image_frame = {.format = static_cast<ImageFormat>(image_frame->Format()),
-                      .image_buffer = image_frame->PixelData(),
-                      .width = image_frame->Width(),
-                      .height = image_frame->Height()}};
+      .image_frame = {
+          .format = static_cast<::ImageFormat>(image_frame->Format()),
+          .image_buffer = image_frame->PixelData(),
+          .width = image_frame->Width(),
+          .height = image_frame->Height()}};
 
   HandLandmarkerResult result;
   hand_landmarker_detect_image(landmarker, &mp_image, &result,
                                /* error_msg */ nullptr);
-  AssertHandLandmarkerResult(&result, kScorePrecision, kLandmarkPrecision);
+
+  LandmarksDetectionResult expected_landmarks =
+      GetLandmarksDetectionResult(kPointingUpLandmarksFilename);
+  ExpectHandLandmarkerResultsCorrect(&result, expected_landmarks,
+                                     kLandmarkPrecision, kScorePrecision);
+  hand_landmarker_close_result(&result);
+  hand_landmarker_close(landmarker, /* error_msg */ nullptr);
+}
+
+TEST(HandLandmarkerTest, ImageModeWithOptionsTest) {
+  const auto image = DecodeImageFromFile(GetFullPath(kPointingUpRotatedImage));
+  ASSERT_TRUE(image.ok());
+
+  const std::string model_path = GetFullPath(kModelName);
+  HandLandmarkerOptions options = {
+      /* base_options= */ {/* model_asset_buffer= */ nullptr,
+                           /* model_asset_buffer_count= */ 0,
+                           /* model_asset_path= */ model_path.c_str()},
+      /* running_mode= */ RunningMode::IMAGE,
+      /* num_hands= */ 1,
+      /* min_hand_detection_confidence= */ 0.5,
+      /* min_hand_presence_confidence= */ 0.5,
+      /* min_tracking_confidence= */ 0.5,
+  };
+
+  void* landmarker = hand_landmarker_create(&options, /* error_msg */ nullptr);
+  EXPECT_NE(landmarker, nullptr);
+
+  const auto& image_frame = image->GetImageFrameSharedPtr();
+  const MpImage mp_image = {
+      .type = MpImage::IMAGE_FRAME,
+      .image_frame = {
+          .format = static_cast<::ImageFormat>(image_frame->Format()),
+          .image_buffer = image_frame->PixelData(),
+          .width = image_frame->Width(),
+          .height = image_frame->Height()}};
+
+  ImageProcessingOptions image_processing_options;
+  image_processing_options.has_region_of_interest = 0;
+  image_processing_options.rotation_degrees = -90;
+
+  HandLandmarkerResult result;
+  hand_landmarker_detect_image_with_options(landmarker, &mp_image,
+                                            &image_processing_options, &result,
+                                            /* error_msg */ nullptr);
+
+  LandmarksDetectionResult expected_landmarks =
+      GetLandmarksDetectionResult(kPointingUpRotatedLandmarksFilename);
+  ExpectHandLandmarkerResultsCorrect(&result, expected_landmarks,
+                                     kLandmarkPrecision, kScorePrecision);
   hand_landmarker_close_result(&result);
   hand_landmarker_close(landmarker, /* error_msg */ nullptr);
 }
 
 TEST(HandLandmarkerTest, VideoModeTest) {
-  const auto image = DecodeImageFromFile(GetFullPath(kImageFile));
+  const auto image = DecodeImageFromFile(GetFullPath(kPointingUpImage));
   ASSERT_TRUE(image.ok());
 
   const std::string model_path = GetFullPath(kModelName);
@@ -131,17 +213,21 @@ TEST(HandLandmarkerTest, VideoModeTest) {
   const auto& image_frame = image->GetImageFrameSharedPtr();
   const MpImage mp_image = {
       .type = MpImage::IMAGE_FRAME,
-      .image_frame = {.format = static_cast<ImageFormat>(image_frame->Format()),
-                      .image_buffer = image_frame->PixelData(),
-                      .width = image_frame->Width(),
-                      .height = image_frame->Height()}};
+      .image_frame = {
+          .format = static_cast<::ImageFormat>(image_frame->Format()),
+          .image_buffer = image_frame->PixelData(),
+          .width = image_frame->Width(),
+          .height = image_frame->Height()}};
 
+  LandmarksDetectionResult expected_landmarks =
+      GetLandmarksDetectionResult(kPointingUpLandmarksFilename);
   for (int i = 0; i < kIterations; ++i) {
     HandLandmarkerResult result;
     hand_landmarker_detect_for_video(landmarker, &mp_image, i, &result,
                                      /* error_msg */ nullptr);
 
-    AssertHandLandmarkerResult(&result, kScorePrecision, kLandmarkPrecision);
+    ExpectHandLandmarkerResultsCorrect(&result, expected_landmarks,
+                                       kLandmarkPrecision, kScorePrecision);
     hand_landmarker_close_result(&result);
   }
   hand_landmarker_close(landmarker, /* error_msg */ nullptr);
@@ -158,8 +244,10 @@ struct LiveStreamModeCallback {
                  int64_t timestamp, char* error_msg) {
     ASSERT_NE(landmarker_result, nullptr);
     ASSERT_EQ(error_msg, nullptr);
-    AssertHandLandmarkerResult(landmarker_result, kScorePrecision,
-                               kLandmarkPrecision);
+    LandmarksDetectionResult expected_landmarks =
+        GetLandmarksDetectionResult(kPointingUpLandmarksFilename);
+    ExpectHandLandmarkerResultsCorrect(landmarker_result, expected_landmarks,
+                                       kLandmarkPrecision, kScorePrecision);
     EXPECT_GT(image->image_frame.width, 0);
     EXPECT_GT(image->image_frame.height, 0);
     EXPECT_GT(timestamp, last_timestamp);
@@ -170,7 +258,7 @@ int64_t LiveStreamModeCallback::last_timestamp = -1;
 
 // TODO: Await the callbacks and re-enable test
 TEST(HandLandmarkerTest, DISABLED_LiveStreamModeTest) {
-  const auto image = DecodeImageFromFile(GetFullPath(kImageFile));
+  const auto image = DecodeImageFromFile(GetFullPath(kPointingUpImage));
   ASSERT_TRUE(image.ok());
 
   const std::string model_path = GetFullPath(kModelName);
@@ -193,10 +281,11 @@ TEST(HandLandmarkerTest, DISABLED_LiveStreamModeTest) {
   const auto& image_frame = image->GetImageFrameSharedPtr();
   const MpImage mp_image = {
       .type = MpImage::IMAGE_FRAME,
-      .image_frame = {.format = static_cast<ImageFormat>(image_frame->Format()),
-                      .image_buffer = image_frame->PixelData(),
-                      .width = image_frame->Width(),
-                      .height = image_frame->Height()}};
+      .image_frame = {
+          .format = static_cast<::ImageFormat>(image_frame->Format()),
+          .image_buffer = image_frame->PixelData(),
+          .width = image_frame->Width(),
+          .height = image_frame->Height()}};
 
   for (int i = 0; i < kIterations; ++i) {
     EXPECT_GE(hand_landmarker_detect_async(landmarker, &mp_image, i,
