@@ -55,6 +55,14 @@ absl::Status CompareAndSaveImageOutput(
     absl::string_view golden_image_path, const ImageFrame& actual,
     const ImageFrameComparisonOptions& options);
 
+// Compares an output image with a golden output computed dynamically. Saves the
+// output and difference to the undeclared test outputs.
+//
+// Returns ok if they are equal within the tolerances specified in options.
+absl::Status CompareAndSaveImageOutputDynamic(
+    const mediapipe::ImageFrame& expected, const mediapipe::ImageFrame& actual,
+    const mediapipe::ImageFrameComparisonOptions& options = {});
+
 // Checks if two image frames are equal within the specified tolerance.
 // image1 and image2 may be of different-but-compatible image formats (e.g.,
 // SRGB and SRGBA); in that case, only the channels available in both are

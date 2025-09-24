@@ -828,6 +828,19 @@ cc_library(
     ],
 )
 
+mediapipe_cc_test(
+    name = "test_util_test",
+    srcs = ["test_util_test.cc"],
+    tags = ["nodocker"],  # TODO: b/445878970 - Re-enable on docker.
+    deps = [
+        ":test_util",
+        "//mediapipe/framework/formats:image_format_cc_proto",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/port:gtest_main",
+        "@com_google_absl//absl/status",
+    ],
+)
+
 cc_library(
     name = "container_util",
     srcs = ["container_util.cc"],

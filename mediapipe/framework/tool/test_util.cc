@@ -31,7 +31,6 @@
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
-#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
@@ -39,12 +38,10 @@
 #include "absl/strings/substitute.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/deps/file_path.h"
-#include "mediapipe/framework/deps/no_destructor.h"
 #include "mediapipe/framework/formats/image_format.pb.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/port/advanced_proto_inc.h"
 #include "mediapipe/framework/port/file_helpers.h"
-#include "mediapipe/framework/port/proto_ns.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "stb_image.h"
@@ -166,6 +163,22 @@ std::string GetBinaryDirectory() {
 }
 #endif
 
+absl::Status CompareAndSaveOutputInternal(
+    const ImageFrame& expected, const ImageFrame& actual,
+    const ImageFrameComparisonOptions& options) {
+  MP_ASSIGN_OR_RETURN(auto expected_img_path,
+                      SavePngTestOutput(expected, "expected"));
+
+  std::unique_ptr<ImageFrame> diff_img;
+  auto status = CompareImageFrames(expected, actual, options, diff_img);
+  if (diff_img) {
+    MP_ASSIGN_OR_RETURN(auto diff_img_path,
+                        SavePngTestOutput(*diff_img, "diff"));
+  }
+
+  return status;
+}
+
 }  // namespace
 
 absl::Status CompareImageFrames(const ImageFrame& image1,
@@ -248,25 +261,19 @@ bool CompareImageFrames(const ImageFrame& image1, const ImageFrame& image2,
 absl::Status CompareAndSaveImageOutput(
     absl::string_view golden_image_path, const ImageFrame& actual,
     const ImageFrameComparisonOptions& options) {
-  MP_ASSIGN_OR_RETURN(auto output_img_path,
-                      SavePngTestOutput(actual, "output"));
-
   auto expected =
       LoadTestImage(GetTestFilePath(golden_image_path), ImageFormat::UNKNOWN);
   if (!expected.ok()) {
     return expected.status();
   }
-  MP_ASSIGN_OR_RETURN(auto expected_img_path,
-                      SavePngTestOutput(**expected, "expected"));
 
-  std::unique_ptr<ImageFrame> diff_img;
-  auto status = CompareImageFrames(**expected, actual, options, diff_img);
-  if (diff_img) {
-    MP_ASSIGN_OR_RETURN(auto diff_img_path,
-                        SavePngTestOutput(*diff_img, "diff"));
-  }
+  return CompareAndSaveOutputInternal(**expected, actual, options);
+}
 
-  return status;
+absl::Status CompareAndSaveImageOutputDynamic(
+    const ImageFrame& expected, const ImageFrame& actual,
+    const ImageFrameComparisonOptions& options) {
+  return CompareAndSaveOutputInternal(expected, actual, options);
 }
 
 std::string GetTestRootDir() {
