@@ -23,7 +23,6 @@ limitations under the License.
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/formats/classification.pb.h"
-#include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/gmock.h"
@@ -31,7 +30,9 @@ limitations under the License.
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/tasks/c/components/containers/landmark.h"
+#include "mediapipe/tasks/c/core/mp_status.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
+#include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/c/vision/hand_landmarker/hand_landmarker_result.h"
 #include "mediapipe/tasks/cc/components/containers/proto/landmarks_detection_result.pb.h"
@@ -106,9 +107,25 @@ void ExpectHandLandmarkerResultsCorrect(
   }
 }
 
+struct MpImageDeleter {
+  void operator()(MpImagePtr image) const {
+    if (image) {
+      MpImageFree(image);
+    }
+  }
+};
+using ScopedMpImage = std::unique_ptr<MpImageInternal, MpImageDeleter>;
+
+ScopedMpImage GetImage(const std::string& file_name) {
+  MpImagePtr image_ptr = nullptr;
+  MpStatus status = MpImageCreateFromFile(file_name.c_str(), &image_ptr);
+  EXPECT_EQ(status, kMpOk);
+  EXPECT_NE(image_ptr, nullptr);
+  return ScopedMpImage(image_ptr);
+}
+
 TEST(HandLandmarkerTest, ImageModeTest) {
-  const auto image = DecodeImageFromFile(GetFullPath(kPointingUpImage));
-  ASSERT_TRUE(image.ok());
+  const auto image = GetImage(GetFullPath(kPointingUpImage));
 
   const std::string model_path = GetFullPath(kModelName);
   HandLandmarkerOptions options = {
@@ -125,17 +142,8 @@ TEST(HandLandmarkerTest, ImageModeTest) {
   void* landmarker = hand_landmarker_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(landmarker, nullptr);
 
-  const auto& image_frame = image->GetImageFrameSharedPtr();
-  const MpImage mp_image = {
-      .type = MpImage::IMAGE_FRAME,
-      .image_frame = {
-          .format = static_cast<::ImageFormat>(image_frame->Format()),
-          .image_buffer = image_frame->PixelData(),
-          .width = image_frame->Width(),
-          .height = image_frame->Height()}};
-
   HandLandmarkerResult result;
-  hand_landmarker_detect_image(landmarker, &mp_image, &result,
+  hand_landmarker_detect_image(landmarker, image.get(), &result,
                                /* error_msg */ nullptr);
 
   LandmarksDetectionResult expected_landmarks =
@@ -147,8 +155,7 @@ TEST(HandLandmarkerTest, ImageModeTest) {
 }
 
 TEST(HandLandmarkerTest, ImageModeWithOptionsTest) {
-  const auto image = DecodeImageFromFile(GetFullPath(kPointingUpRotatedImage));
-  ASSERT_TRUE(image.ok());
+  const auto image = GetImage(GetFullPath(kPointingUpRotatedImage));
 
   const std::string model_path = GetFullPath(kModelName);
   HandLandmarkerOptions options = {
@@ -165,21 +172,12 @@ TEST(HandLandmarkerTest, ImageModeWithOptionsTest) {
   void* landmarker = hand_landmarker_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(landmarker, nullptr);
 
-  const auto& image_frame = image->GetImageFrameSharedPtr();
-  const MpImage mp_image = {
-      .type = MpImage::IMAGE_FRAME,
-      .image_frame = {
-          .format = static_cast<::ImageFormat>(image_frame->Format()),
-          .image_buffer = image_frame->PixelData(),
-          .width = image_frame->Width(),
-          .height = image_frame->Height()}};
-
   ImageProcessingOptions image_processing_options;
   image_processing_options.has_region_of_interest = 0;
   image_processing_options.rotation_degrees = -90;
 
   HandLandmarkerResult result;
-  hand_landmarker_detect_image_with_options(landmarker, &mp_image,
+  hand_landmarker_detect_image_with_options(landmarker, image.get(),
                                             &image_processing_options, &result,
                                             /* error_msg */ nullptr);
 
@@ -192,8 +190,7 @@ TEST(HandLandmarkerTest, ImageModeWithOptionsTest) {
 }
 
 TEST(HandLandmarkerTest, VideoModeTest) {
-  const auto image = DecodeImageFromFile(GetFullPath(kPointingUpImage));
-  ASSERT_TRUE(image.ok());
+  const auto image = GetImage(GetFullPath(kPointingUpImage));
 
   const std::string model_path = GetFullPath(kModelName);
   HandLandmarkerOptions options = {
@@ -210,20 +207,11 @@ TEST(HandLandmarkerTest, VideoModeTest) {
   void* landmarker = hand_landmarker_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(landmarker, nullptr);
 
-  const auto& image_frame = image->GetImageFrameSharedPtr();
-  const MpImage mp_image = {
-      .type = MpImage::IMAGE_FRAME,
-      .image_frame = {
-          .format = static_cast<::ImageFormat>(image_frame->Format()),
-          .image_buffer = image_frame->PixelData(),
-          .width = image_frame->Width(),
-          .height = image_frame->Height()}};
-
   LandmarksDetectionResult expected_landmarks =
       GetLandmarksDetectionResult(kPointingUpLandmarksFilename);
   for (int i = 0; i < kIterations; ++i) {
     HandLandmarkerResult result;
-    hand_landmarker_detect_for_video(landmarker, &mp_image, i, &result,
+    hand_landmarker_detect_for_video(landmarker, image.get(), i, &result,
                                      /* error_msg */ nullptr);
 
     ExpectHandLandmarkerResultsCorrect(&result, expected_landmarks,
@@ -240,7 +228,7 @@ TEST(HandLandmarkerTest, VideoModeTest) {
 // timestamp is greater than the previous one.
 struct LiveStreamModeCallback {
   static int64_t last_timestamp;
-  static void Fn(HandLandmarkerResult* landmarker_result, const MpImage* image,
+  static void Fn(HandLandmarkerResult* landmarker_result, MpImagePtr image,
                  int64_t timestamp, char* error_msg) {
     ASSERT_NE(landmarker_result, nullptr);
     ASSERT_EQ(error_msg, nullptr);
@@ -248,8 +236,8 @@ struct LiveStreamModeCallback {
         GetLandmarksDetectionResult(kPointingUpLandmarksFilename);
     ExpectHandLandmarkerResultsCorrect(landmarker_result, expected_landmarks,
                                        kLandmarkPrecision, kScorePrecision);
-    EXPECT_GT(image->image_frame.width, 0);
-    EXPECT_GT(image->image_frame.height, 0);
+    EXPECT_GT(MpImageGetWidth(image), 0);
+    EXPECT_GT(MpImageGetHeight(image), 0);
     EXPECT_GT(timestamp, last_timestamp);
     ++last_timestamp;
   }
@@ -258,8 +246,7 @@ int64_t LiveStreamModeCallback::last_timestamp = -1;
 
 // TODO: Await the callbacks and re-enable test
 TEST(HandLandmarkerTest, DISABLED_LiveStreamModeTest) {
-  const auto image = DecodeImageFromFile(GetFullPath(kPointingUpImage));
-  ASSERT_TRUE(image.ok());
+  const auto image = GetImage(GetFullPath(kPointingUpImage));
 
   const std::string model_path = GetFullPath(kModelName);
 
@@ -278,17 +265,8 @@ TEST(HandLandmarkerTest, DISABLED_LiveStreamModeTest) {
   void* landmarker = hand_landmarker_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(landmarker, nullptr);
 
-  const auto& image_frame = image->GetImageFrameSharedPtr();
-  const MpImage mp_image = {
-      .type = MpImage::IMAGE_FRAME,
-      .image_frame = {
-          .format = static_cast<::ImageFormat>(image_frame->Format()),
-          .image_buffer = image_frame->PixelData(),
-          .width = image_frame->Width(),
-          .height = image_frame->Height()}};
-
   for (int i = 0; i < kIterations; ++i) {
-    EXPECT_GE(hand_landmarker_detect_async(landmarker, &mp_image, i,
+    EXPECT_GE(hand_landmarker_detect_async(landmarker, image.get(), i,
                                            /* error_msg */ nullptr),
               0);
   }
@@ -320,32 +298,6 @@ TEST(HandLandmarkerTest, InvalidArgumentHandling) {
   EXPECT_THAT(error_msg, HasSubstr("ExternalFile must specify"));
 
   free(error_msg);
-}
-
-TEST(HandLandmarkerTest, FailedRecognitionHandling) {
-  const std::string model_path = GetFullPath(kModelName);
-  HandLandmarkerOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::IMAGE,
-      /* num_hands= */ 1,
-      /* min_hand_detection_confidence= */ 0.5,
-      /* min_hand_presence_confidence= */ 0.5,
-      /* min_tracking_confidence= */ 0.5,
-  };
-
-  void* landmarker = hand_landmarker_create(&options, /* error_msg */
-                                            nullptr);
-  EXPECT_NE(landmarker, nullptr);
-
-  const MpImage mp_image = {.type = MpImage::GPU_BUFFER, .gpu_buffer = {}};
-  HandLandmarkerResult result;
-  char* error_msg;
-  hand_landmarker_detect_image(landmarker, &mp_image, &result, &error_msg);
-  EXPECT_THAT(error_msg, HasSubstr("GPU Buffer not supported yet"));
-  free(error_msg);
-  hand_landmarker_close(landmarker, /* error_msg */ nullptr);
 }
 
 }  // namespace
