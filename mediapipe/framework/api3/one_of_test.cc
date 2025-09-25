@@ -144,5 +144,64 @@ TEST(OneOfTest, CanUseOneOfWithVsitiForCalculatorInputs) {
   }
 }
 
+struct ToStringWithPacketOrDieNode : Node<"ToStringWithPacketOrDieNode"> {
+  template <typename S>
+  struct Contract {
+    Input<S, OneOf<int, float>> in{"IN"};
+    Output<S, std::string> str{"STR"};
+  };
+};
+
+class ToStringWithPacketOrDieImpl
+    : public Calculator<ToStringWithPacketOrDieNode,
+                        ToStringWithPacketOrDieImpl> {
+ public:
+  absl::Status Process(
+      CalculatorContext<ToStringWithPacketOrDieNode>& cc) final {
+    if (cc.in.Has<int>()) {
+      Packet<int> p = cc.in.PacketOrDie<int>();
+      RET_CHECK(p);
+      cc.str.Send(absl::StrFormat("%d", p.GetOrDie()));
+      return absl::OkStatus();
+    }
+    if (cc.in.Has<float>()) {
+      Packet<float> p = cc.in.PacketOrDie<float>();
+      RET_CHECK(p);
+      cc.str.Send(absl::StrFormat("%.3ff", p.GetOrDie()));
+      return absl::OkStatus();
+    }
+    return absl::InternalError("Input is missing.");
+  };
+};
+
+template <typename T>
+Stream<std::string> ToStringWithPacketOrDie(GenericGraph& graph, Stream<T> in) {
+  auto& node = graph.AddNode<ToStringWithPacketOrDieNode>();
+  node.in.Set(in);
+  return node.str.Get();
+}
+
+TEST(OneOfTest, CanUseOneOfWithPacketOrDieForCalculatorInputs) {
+  {
+    MP_ASSERT_OK_AND_ASSIGN(auto runner,
+                            Runner::For(ToStringWithPacketOrDie<int>).Create());
+    MP_ASSERT_OK_AND_ASSIGN(Packet<std::string> str,
+                            runner.Run(MakePacket<int>(42)));
+
+    ASSERT_TRUE(str);
+    EXPECT_EQ(str.GetOrDie(), "42");
+  }
+
+  {
+    MP_ASSERT_OK_AND_ASSIGN(
+        auto runner, Runner::For(ToStringWithPacketOrDie<float>).Create());
+    MP_ASSERT_OK_AND_ASSIGN(Packet<std::string> str,
+                            runner.Run(MakePacket<float>(0.5f)));
+
+    ASSERT_TRUE(str);
+    EXPECT_EQ(str.GetOrDie(), "0.500f");
+  }
+}
+
 }  // namespace
 }  // namespace mediapipe::api3

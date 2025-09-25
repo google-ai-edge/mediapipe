@@ -195,18 +195,30 @@ class Input<ContextSpecializer, OneOf<PayloadTs...>>
         .ok();
   }
 
-  // Returns the payload of the packet for this particular input.
+  // Returns the payload of the requested type for this particular input.
   //
   // NOTE: Dies if input packet is missing or of the wrong type. Input must be
   //   checked before accessing the payload, e.g. `RET_CHECK(cc.input.Has<T>())`
   template <typename T>
   const T& GetOrDie() const {
     static_assert((std::is_same_v<T, PayloadTs> || ...),
-                  "Stream type must be one of the types in OneOf");
+                  "Requested type must be one of the types in OneOf");
     return holder_->context->Inputs()
         .Get(Tag(), Index())
         .Value()
         .template Get<T>();
+  }
+
+  // Returns the packet of the requested type for this particular input.
+  //
+  // NOTE: Dies if input packet is missing or of the wrong type. Input must be
+  //   checked before accessing the packet, e.g. `cc.input.Has<T>()`.
+  template <typename T>
+  mediapipe::api3::Packet<T> PacketOrDie() const {
+    static_assert((std::is_same_v<T, PayloadTs> || ...),
+                  "Requested packet type must be one of the types in OneOf");
+    return mediapipe::api3::Packet<T>(
+        holder_->context->Inputs().Get(Tag(), Index()).Value());
   }
 
   // Visits the value in the input with the given visitor lambdas.
