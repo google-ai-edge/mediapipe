@@ -129,6 +129,7 @@ cc_library(
     }) + select({
         "//conditions:default": [
             "//mediapipe/gpu:egl_surface_holder",
+            "//mediapipe/gpu:gl_app_texture_support",
             "//mediapipe/gpu:gl_base",
             "//mediapipe/gpu:gl_calculator_helper",
             "//mediapipe/gpu:gl_context",

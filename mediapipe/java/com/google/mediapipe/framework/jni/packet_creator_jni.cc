@@ -14,8 +14,13 @@
 
 #include "mediapipe/java/com/google/mediapipe/framework/jni/packet_creator_jni.h"
 
+#include <jni.h>
+
+#include <cstdint>
 #include <cstring>
 #include <memory>
+#include <string>
+#include <type_traits>
 #include <utility>
 
 #include "absl/status/status.h"
@@ -31,18 +36,26 @@
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/core_proto_inc.h"
 #include "mediapipe/framework/port/logging.h"
+#include "mediapipe/framework/port/ret_check.h"
+#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/colorspace.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/graph.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/jni_util.h"
 #if !MEDIAPIPE_DISABLE_GPU
+#include "mediapipe/gpu/gl_app_texture_support.h"
 #include "mediapipe/gpu/gl_calculator_helper.h"
+#include "mediapipe/gpu/gl_context.h"
+#include "mediapipe/gpu/gl_texture_buffer.h"
 #include "mediapipe/gpu/gpu_buffer.h"
 #include "mediapipe/gpu/gpu_buffer_format.h"
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
 namespace {
-using mediapipe::android::SerializedMessageIds;
-using mediapipe::android::ThrowIfError;
+
+using ::mediapipe::WrapExternalGlTexture;
+using ::mediapipe::WrapExternalGlTextureSyncMode;
+using ::mediapipe::android::SerializedMessageIds;
+using ::mediapipe::android::ThrowIfError;
 
 template <class T>
 int64_t CreatePacketScalar(jlong context, const T& value) {
@@ -61,18 +74,32 @@ int64_t CreatePacketWithContext(jlong context,
   return mediapipe_graph->WrapPacketIntoContext(packet);
 }
 
+absl::StatusOr<WrapExternalGlTextureSyncMode> ParseSyncMode(jint sync_mode) {
+  switch (sync_mode) {
+    case 0:
+      return WrapExternalGlTextureSyncMode::kNoSync;
+    case 1:
+      return WrapExternalGlTextureSyncMode::kSync;
+    case 2:
+      return WrapExternalGlTextureSyncMode::kMaybeSyncOrFinish;
+  }
+  return absl::InvalidArgumentError(
+      absl::StrCat("Unexpected sync mode: ", sync_mode));
+}
+
 #if !MEDIAPIPE_DISABLE_GPU
 absl::StatusOr<mediapipe::GpuBuffer> CreateGpuBuffer(
     JNIEnv* env, jobject thiz, jlong context, jint name, jint width,
-    jint height, jint format, jobject texture_release_callback) {
+    jint height, jint format, jobject texture_release_callback,
+    jint sync_mode) {
   mediapipe::android::Graph* mediapipe_graph =
       reinterpret_cast<mediapipe::android::Graph*>(context);
   auto* gpu_resources = mediapipe_graph->GetGpuResources();
   RET_CHECK(gpu_resources)
       << "Cannot create a mediapipe::GpuBuffer packet on a "
          "graph without GPU support";
-  mediapipe::GlTextureBuffer::DeletionCallback cc_callback;
 
+  mediapipe::GlTextureBuffer::DeletionCallback cc_callback;
   if (texture_release_callback) {
     // TODO: see if this can be cached.
     // Note: we don't get this from the object because people may pass a
@@ -104,15 +131,20 @@ absl::StatusOr<mediapipe::GpuBuffer> CreateGpuBuffer(
       env->DeleteGlobalRef(packet_creator);
     };
   }
+
   mediapipe::GpuBufferFormat gpu_buffer_format =
       mediapipe::GpuBufferFormatForGlFormat(format);
   if (gpu_buffer_format == mediapipe::GpuBufferFormat::kUnknown) {
     return absl::InvalidArgumentError(
         absl::StrCat("Unsupported OpenGL texture format: ", format));
   }
-  return mediapipe::GpuBuffer(mediapipe::GlTextureBuffer::Wrap(
-      GL_TEXTURE_2D, name, width, height, gpu_buffer_format,
-      gpu_resources->gl_context(), cc_callback));
+
+  MP_ASSIGN_OR_RETURN(WrapExternalGlTextureSyncMode wrap_sync_mode,
+                      ParseSyncMode(sync_mode));
+
+  return WrapExternalGlTexture(*gpu_resources, GL_TEXTURE_2D, name, width,
+                               height, gpu_buffer_format,
+                               std::move(cc_callback), wrap_sync_mode);
 }
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
@@ -192,7 +224,7 @@ absl::StatusOr<std::unique_ptr<mediapipe::ImageFrame>> CreateRgbImageFromRgba(
       << "Input buffer size should be " << expected_buffer_size
       << " but is: " << buffer_size;
 
-  auto image_frame = absl::make_unique<mediapipe::ImageFrame>(
+  auto image_frame = std::make_unique<mediapipe::ImageFrame>(
       mediapipe::ImageFormat::SRGB, width, height,
       mediapipe::ImageFrame::kGlDefaultAlignmentBoundary);
   mediapipe::android::RgbaToRgb(rgba_data, width * 4, width, height,
@@ -414,8 +446,9 @@ JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateCpuImage)(
 JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateGpuImage)(
     JNIEnv* env, jobject thiz, jlong context, jint name, jint width,
     jint height, jint format, jobject texture_release_callback) {
-  auto buffer_or = CreateGpuBuffer(env, thiz, context, name, width, height,
-                                   format, texture_release_callback);
+  auto buffer_or =
+      CreateGpuBuffer(env, thiz, context, name, width, height, format,
+                      texture_release_callback, /*sync_mode=*/0);
   if (ThrowIfError(env, buffer_or.status())) return 0L;
   mediapipe::Packet packet =
       mediapipe::MakePacket<mediapipe::Image>(std::move(buffer_or).value());
@@ -424,9 +457,10 @@ JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateGpuImage)(
 
 JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateGpuBuffer)(
     JNIEnv* env, jobject thiz, jlong context, jint name, jint width,
-    jint height, jint format, jobject texture_release_callback) {
+    jint height, jint format, jobject texture_release_callback,
+    jint sync_mode) {
   auto buffer_or = CreateGpuBuffer(env, thiz, context, name, width, height,
-                                   format, texture_release_callback);
+                                   format, texture_release_callback, sync_mode);
   if (ThrowIfError(env, buffer_or.status())) return 0L;
   mediapipe::Packet packet =
       mediapipe::MakePacket<mediapipe::GpuBuffer>(std::move(buffer_or).value());
@@ -513,10 +547,10 @@ JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateCalculatorOptions)(
     JNIEnv* env, jobject thiz, jlong context, jbyteArray data) {
   jsize count = env->GetArrayLength(data);
   jbyte* data_ref = env->GetByteArrayElements(data, nullptr);
-  auto options = absl::make_unique<mediapipe::CalculatorOptions>();
+  auto options = std::make_unique<mediapipe::CalculatorOptions>();
   if (!options->ParseFromArray(data_ref, count)) {
-    ThrowIfError(env, absl::InvalidArgumentError(absl::StrCat(
-                          "Parsing binary-encoded CalculatorOptions failed.")));
+    ThrowIfError(env, absl::InvalidArgumentError(
+                          "Parsing binary-encoded CalculatorOptions failed."));
     return 0L;
   }
   mediapipe::Packet packet = mediapipe::Adopt(options.release());

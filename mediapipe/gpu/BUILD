@@ -672,6 +672,34 @@ cc_library(
     alwayslink = 1,
 )
 
+cc_library(
+    name = "gl_app_texture_support",
+    srcs = ["gl_app_texture_support.cc"],
+    hdrs = ["gl_app_texture_support.h"],
+    copts = select({
+        "//conditions:default": [],
+        "//mediapipe:macos": [
+            "-Wno-shorten-64-to-32",
+        ],
+    }),
+    deps = [
+        ":gl_base",
+        ":gl_context",
+        ":gl_texture_buffer",
+        ":gpu_buffer",
+        ":gpu_buffer_format",
+        ":gpu_shared_data_header",
+        ":multi_pool",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_graph",
+        "//mediapipe/framework:executor",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+    ],
+)
+
 mediapipe_proto_library(
     name = "gl_context_options_proto",
     srcs = ["gl_context_options.proto"],

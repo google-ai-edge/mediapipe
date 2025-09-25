@@ -107,7 +107,7 @@ JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateGpuImage)(
 
 JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateGpuBuffer)(
     JNIEnv* env, jobject thiz, jlong context, jint name, jint width,
-    jint height, jint format, jobject texture_release_callback);
+    jint height, jint format, jobject texture_release_callback, jint sync_mode);
 
 JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateFloat32Array)(
     JNIEnv* env, jobject thiz, jlong context, jfloatArray data);
