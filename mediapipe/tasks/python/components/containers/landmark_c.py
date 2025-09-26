@@ -17,6 +17,30 @@
 import ctypes
 
 
+class LandmarkC(ctypes.Structure):
+  """The ctypes struct for Landmark."""
+
+  _fields_ = [
+      ('x', ctypes.c_float),
+      ('y', ctypes.c_float),
+      ('z', ctypes.c_float),
+      ('has_visibility', ctypes.c_bool),
+      ('visibility', ctypes.c_float),
+      ('has_presence', ctypes.c_bool),
+      ('presence', ctypes.c_float),
+      ('name', ctypes.c_char_p),
+  ]
+
+
+class LandmarksC(ctypes.Structure):
+  """The ctypes struct for a list of Landmarks."""
+
+  _fields_ = [
+      ('landmarks', ctypes.POINTER(LandmarkC)),
+      ('landmarks_count', ctypes.c_uint32),
+  ]
+
+
 class NormalizedLandmarkC(ctypes.Structure):
   """The ctypes struct for NormalizedLandmark."""
 
@@ -33,7 +57,7 @@ class NormalizedLandmarkC(ctypes.Structure):
 
 
 class NormalizedLandmarksC(ctypes.Structure):
-  """The ctypes struct for NormalizedLandmarks."""
+  """The ctypes struct for a list of NormalizedLandmarks."""
 
   _fields_ = [
       ('landmarks', ctypes.POINTER(NormalizedLandmarkC)),

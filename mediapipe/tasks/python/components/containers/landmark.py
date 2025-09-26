@@ -43,6 +43,7 @@ class Landmark:
       of whether landmark is present on the scene (located within scene bounds).
       Depending on the model, presence value is either a result of sigmoid or an
       argument of sigmoid function to get landmark presence probability.
+    name: The name of the landmark.
   """
 
   x: Optional[float] = None
@@ -50,6 +51,7 @@ class Landmark:
   z: Optional[float] = None
   visibility: Optional[float] = None
   presence: Optional[float] = None
+  name: Optional[str] = None
 
   @doc_controls.do_not_generate_docs
   def to_pb2(self) -> _LandmarkProto:
@@ -71,6 +73,19 @@ class Landmark:
         z=pb2_obj.z,
         visibility=pb2_obj.visibility,
         presence=pb2_obj.presence)
+
+  @classmethod
+  @doc_controls.do_not_generate_docs
+  def from_ctypes(cls, c_struct: landmark_c_module.LandmarkC) -> 'Landmark':
+    """Creates a `Landmark` object from the given ctypes struct."""
+    return Landmark(
+        x=c_struct.x,
+        y=c_struct.y,
+        z=c_struct.z,
+        visibility=c_struct.visibility if c_struct.has_visibility else None,
+        presence=c_struct.presence if c_struct.has_presence else None,
+        name=c_struct.name.decode('utf-8') if c_struct.name else None,
+    )
 
 
 @dataclasses.dataclass
