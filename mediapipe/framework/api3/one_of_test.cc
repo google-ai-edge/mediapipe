@@ -203,5 +203,67 @@ TEST(OneOfTest, CanUseOneOfWithPacketOrDieForCalculatorInputs) {
   }
 }
 
+struct ToStringWithSingleVisitorNode : Node<"ToStringWithSingleVisitorNode"> {
+  template <typename S>
+  struct Contract {
+    Input<S, OneOf<int, float, double>> in{"IN"};
+    Output<S, std::string> str{"STR"};
+  };
+};
+
+class ToStringWithSingleVisitorNodeImpl
+    : public Calculator<ToStringWithSingleVisitorNode,
+                        ToStringWithSingleVisitorNodeImpl> {
+ public:
+  absl::Status Process(
+      CalculatorContext<ToStringWithSingleVisitorNode>& cc) final {
+    RET_CHECK(cc.in);
+    // We pass a single visitor covering all variants.
+    cc.str.Send(
+        cc.in.VisitOrDie([](auto value) { return absl::StrCat(value); }));
+    return absl::OkStatus();
+  };
+};
+
+template <typename T>
+Stream<std::string> ToStringWithSingleVisitor(GenericGraph& graph,
+                                              Stream<T> in) {
+  auto& node = graph.AddNode<ToStringWithSingleVisitorNode>();
+  node.in.Set(in);
+  return node.str.Get();
+}
+
+TEST(OneOfTest, CanUseOneOfWithSingleVisitorForCalculatorInputs) {
+  {
+    MP_ASSERT_OK_AND_ASSIGN(
+        auto runner, Runner::For(ToStringWithSingleVisitor<int>).Create());
+    MP_ASSERT_OK_AND_ASSIGN(Packet<std::string> str,
+                            runner.Run(MakePacket<int>(42)));
+
+    ASSERT_TRUE(str);
+    EXPECT_EQ(str.GetOrDie(), "42");
+  }
+
+  {
+    MP_ASSERT_OK_AND_ASSIGN(
+        auto runner, Runner::For(ToStringWithSingleVisitor<float>).Create());
+    MP_ASSERT_OK_AND_ASSIGN(Packet<std::string> str,
+                            runner.Run(MakePacket<float>(0.5f)));
+
+    ASSERT_TRUE(str);
+    EXPECT_EQ(str.GetOrDie(), "0.5");
+  }
+
+  {
+    MP_ASSERT_OK_AND_ASSIGN(
+        auto runner, Runner::For(ToStringWithSingleVisitor<double>).Create());
+    MP_ASSERT_OK_AND_ASSIGN(Packet<std::string> str,
+                            runner.Run(MakePacket<double>(0.001)));
+
+    ASSERT_TRUE(str);
+    EXPECT_EQ(str.GetOrDie(), "0.001");
+  }
+}
+
 }  // namespace
 }  // namespace mediapipe::api3
