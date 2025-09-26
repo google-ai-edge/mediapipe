@@ -13,10 +13,14 @@
 // limitations under the License.
 #include "mediapipe/framework/api3/one_of.h"
 
+#include <memory>
 #include <string>
+#include <tuple>
 #include <utility>
 
+#include "absl/functional/overload.h"
 #include "absl/status/status.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "mediapipe/framework/api3/calculator.h"
 #include "mediapipe/framework/api3/calculator_context.h"
@@ -33,6 +37,7 @@
 
 namespace mediapipe::api3 {
 namespace {
+using ::testing::Pointee;
 
 struct ToStringNode : Node<"ToStringNode"> {
   template <typename S>
@@ -262,6 +267,67 @@ TEST(OneOfTest, CanUseOneOfWithSingleVisitorForCalculatorInputs) {
 
     ASSERT_TRUE(str);
     EXPECT_EQ(str.GetOrDie(), "0.001");
+  }
+}
+
+struct DemuxWithVisitAsPacketNode : Node<"DemuxWithVisitAsPacketNode"> {
+  template <typename S>
+  struct Contract {
+    // We use `std::unique_ptr` to make sure the implementation does not copy
+    // the content but is efficiently using the underlying shared packet.
+    Input<S, OneOf<std::unique_ptr<int>, std::unique_ptr<float>>> in{"IN"};
+    Output<S, std::unique_ptr<int>> ints{"INTS"};
+    Output<S, std::unique_ptr<float>> floats{"FLOATS"};
+  };
+};
+
+class DemuxWithVisitAsPacketNodeImpl
+    : public Calculator<DemuxWithVisitAsPacketNode,
+                        DemuxWithVisitAsPacketNodeImpl> {
+ public:
+  absl::Status Process(
+      CalculatorContext<DemuxWithVisitAsPacketNode>& cc) final {
+    RET_CHECK(cc.in);
+    cc.in.VisitAsPacketOrDie(absl::Overload(
+        [&](Packet<std::unique_ptr<int>> packet) {
+          cc.ints.Send(std::move(packet));
+        },
+        [&](Packet<std::unique_ptr<float>> packet) {
+          cc.floats.Send(std::move(packet));
+        }));
+    return absl::OkStatus();
+  };
+};
+
+template <typename InputType>
+std::tuple<Stream<std::unique_ptr<int>>, Stream<std::unique_ptr<float>>>
+DemuxWithVisitAsPacket(GenericGraph& graph,
+                       Stream<std::unique_ptr<InputType>> in) {
+  auto& node = graph.AddNode<DemuxWithVisitAsPacketNode>();
+  node.in.Set(in);
+  return {node.ints.Get(), node.floats.Get()};
+}
+
+TEST(OneOfTest, VisitAsPacket) {
+  {
+    MP_ASSERT_OK_AND_ASSIGN(auto runner,
+                            Runner::For(DemuxWithVisitAsPacket<int>).Create());
+    MP_ASSERT_OK_AND_ASSIGN((auto [ints, floats]),
+                            runner.Run(MakePacket<std::unique_ptr<int>>(
+                                std::make_unique<int>(42))));
+    ASSERT_TRUE(ints);
+    EXPECT_THAT(ints.GetOrDie(), Pointee(42));
+    EXPECT_FALSE(floats);
+  }
+  {
+    MP_ASSERT_OK_AND_ASSIGN(
+        auto runner, Runner::For(DemuxWithVisitAsPacket<float>).Create());
+    MP_ASSERT_OK_AND_ASSIGN((auto [ints, floats]),
+                            runner.Run(MakePacket<std::unique_ptr<float>>(
+                                std::make_unique<float>(0.5f))));
+    ASSERT_TRUE(floats);
+    EXPECT_THAT(floats.GetOrDie(), Pointee(0.5f));
+    EXPECT_FALSE(ints);
   }
 }
 

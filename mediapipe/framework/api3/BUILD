@@ -23,8 +23,8 @@ cc_library(
         "//mediapipe/framework/api3/internal:contract_to_tuple",
         "//mediapipe/framework/api3/internal:port_base",
         "//mediapipe/framework/api3/internal:specializers",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
-        "@com_google_absl//absl/meta:type_traits",
     ],
 )
 
@@ -402,7 +402,9 @@ cc_test(
         ":stream",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:ret_check",
+        "@com_google_absl//absl/functional:overload",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ],
 )
