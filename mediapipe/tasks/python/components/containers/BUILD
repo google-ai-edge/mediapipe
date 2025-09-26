@@ -97,6 +97,7 @@ py_library(
     name = "keypoint",
     srcs = ["keypoint.py"],
     deps = [
+        ":keypoint_c",
         "//mediapipe/framework/formats:location_data_py_pb2",
         "//mediapipe/tasks/python/core:optional_dependencies",
     ],
@@ -105,9 +106,6 @@ py_library(
 py_library(
     name = "keypoint_c",
     srcs = ["keypoint_c.py"],
-    deps = [
-        ":keypoint",
-    ],
 )
 
 py_library(
@@ -131,6 +129,7 @@ py_library(
         ":category",
         ":category_c",
         ":detections",
+        ":keypoint",
         ":keypoint_c",
         ":rect_c",
     ],

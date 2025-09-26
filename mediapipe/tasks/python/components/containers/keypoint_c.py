@@ -15,8 +15,6 @@
 
 import ctypes
 
-from mediapipe.tasks.python.components.containers import keypoint as keypoint_lib
-
 
 class NormalizedKeypointC(ctypes.Structure):
   """A keypoint in normalized coordinates."""
@@ -27,12 +25,3 @@ class NormalizedKeypointC(ctypes.Structure):
       ('label', ctypes.c_char_p),
       ('score', ctypes.c_float),
   ]
-
-  def to_python_normalized_keypoint(self) -> keypoint_lib.NormalizedKeypoint:
-    """Converts a ctypes NormalizedKeypointC to a NormalizedKeypoint object."""
-    return keypoint_lib.NormalizedKeypoint(
-        x=self.x,
-        y=self.y,
-        label=self.label.decode('utf-8') if self.label else None,
-        score=self.score,
-    )

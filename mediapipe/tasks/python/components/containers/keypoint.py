@@ -17,6 +17,7 @@ import dataclasses
 from typing import Any, Optional
 
 from mediapipe.framework.formats import location_data_pb2
+from mediapipe.tasks.python.components.containers import keypoint_c as keypoint_c_lib
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 
 _RelativeKeypointProto = location_data_pb2.LocationData.RelativeKeypoint
@@ -60,6 +61,19 @@ class NormalizedKeypoint:
         y=pb2_obj.y,
         label=pb2_obj.keypoint_label,
         score=pb2_obj.score,
+    )
+
+  @classmethod
+  @doc_controls.do_not_generate_docs
+  def from_ctypes(
+      cls, c_obj: keypoint_c_lib.NormalizedKeypointC
+  ) -> 'NormalizedKeypoint':
+    """Creates a `NormalizedKeypoint` object from a `NormalizedKeypointC."""
+    return NormalizedKeypoint(
+        x=c_obj.x,
+        y=c_obj.y,
+        label=c_obj.label.decode('utf-8') if c_obj.label else None,
+        score=c_obj.score,
     )
 
   def __eq__(self, other: Any) -> bool:

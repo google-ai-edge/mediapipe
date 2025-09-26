@@ -71,3 +71,13 @@ py_test(
         "@mediapipe_pip_deps_absl_py//:pkg",
     ],
 )
+
+py_test(
+    name = "keypoint_test",
+    srcs = ["keypoint_test.py"],
+    deps = [
+        "//mediapipe/tasks/python/components/containers:keypoint",
+        "//mediapipe/tasks/python/components/containers:keypoint_c",
+        "@mediapipe_pip_deps_absl_py//:pkg",
+    ],
+)
