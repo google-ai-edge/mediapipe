@@ -149,4 +149,19 @@ GpuBuffer CreateTestRgb8GpuBuffer(int width, int height) {
   return buffer;
 }
 
+void FillImageFrameRGBA(ImageFrame& image, uint8_t r, uint8_t g, uint8_t b,
+                        uint8_t a) {
+  auto* data = image.MutablePixelData();
+  for (int y = 0; y < image.Height(); ++y) {
+    auto* row = data + image.WidthStep() * y;
+    for (int x = 0; x < image.Width(); ++x) {
+      auto* pixel = row + x * image.NumberOfChannels();
+      pixel[0] = r;
+      pixel[1] = g;
+      pixel[2] = b;
+      pixel[3] = a;
+    }
+  }
+}
+
 }  // namespace mediapipe
