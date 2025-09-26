@@ -27,7 +27,7 @@ iOS), web, desktop, edge devices, and IoT, effortlessly.
 
 ## Get started
 
-You can get started with MediaPipe Solutions by by checking out any of the
+You can get started with MediaPipe Solutions by checking out any of the
 developer guides for
 [vision](https://developers.google.com/mediapipe/solutions/vision/object_detector),
 [text](https://developers.google.com/mediapipe/solutions/text/text_classifier),
@@ -88,12 +88,11 @@ low-level component used to build efficient on-device machine learning
 pipelines, similar to the premade MediaPipe Solutions.
 
 Before using MediaPipe Framework, familiarize yourself with the following key
-[Framework
-concepts](https://developers.google.com/mediapipe/framework/framework_concepts/overview.md):
+[Framework concepts](https://developers.google.com/mediapipe/framework/framework_concepts/overview):
 
-*   [Packets](https://developers.google.com/mediapipe/framework/framework_concepts/packets.md)
-*   [Graphs](https://developers.google.com/mediapipe/framework/framework_concepts/graphs.md)
-*   [Calculators](https://developers.google.com/mediapipe/framework/framework_concepts/calculators.md)
+*   [Packets](https://developers.google.com/mediapipe/framework/framework_concepts/packets)
+*   [Graphs](https://developers.google.com/mediapipe/framework/framework_concepts/graphs)
+*   [Calculators](https://developers.google.com/mediapipe/framework/framework_concepts/calculators)
 
 ## Community
 
@@ -110,8 +109,8 @@ concepts](https://developers.google.com/mediapipe/framework/framework_concepts/o
 We welcome contributions. Please follow these
 [guidelines](https://github.com/google/mediapipe/blob/master/CONTRIBUTING.md).
 
-We use GitHub issues for tracking requests and bugs. Please post questions to
-the MediaPipe Stack Overflow with a `mediapipe` tag.
+We use GitHub issues for tracking requests and bugs. Please post questions on
+Stack Overflow with the [`mediapipe` tag](https://stackoverflow.com/questions/tagged/mediapipe).
 
 ## Resources
 
