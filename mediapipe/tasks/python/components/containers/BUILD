@@ -114,6 +114,8 @@ py_library(
     deps = [
         ":bounding_box",
         ":category",
+        ":category_c",
+        ":detections_c",
         ":keypoint",
         "//mediapipe/framework/formats:detection_py_pb2",
         "//mediapipe/framework/formats:location_data_py_pb2",
@@ -125,11 +127,7 @@ py_library(
     name = "detections_c",
     srcs = ["detections_c.py"],
     deps = [
-        ":bounding_box",
-        ":category",
         ":category_c",
-        ":detections",
-        ":keypoint",
         ":keypoint_c",
         ":rect_c",
     ],

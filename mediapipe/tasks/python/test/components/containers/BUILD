@@ -51,6 +51,23 @@ py_test(
 )
 
 py_test(
+    name = "detections_test",
+    srcs = ["detections_test.py"],
+    deps = [
+        "//mediapipe/tasks/python/components/containers:bounding_box",
+        "//mediapipe/tasks/python/components/containers:category",
+        "//mediapipe/tasks/python/components/containers:category_c",
+        "//mediapipe/tasks/python/components/containers:detections",
+        "//mediapipe/tasks/python/components/containers:detections_c",
+        "//mediapipe/tasks/python/components/containers:keypoint",
+        "//mediapipe/tasks/python/components/containers:keypoint_c",
+        "//mediapipe/tasks/python/components/containers:rect_c",
+        "//third_party/py/immutabledict",
+        "@mediapipe_pip_deps_absl_py//:pkg",
+    ],
+)
+
+py_test(
     name = "bounding_box_test",
     srcs = ["bounding_box_test.py"],
     deps = [

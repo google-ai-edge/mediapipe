@@ -3001,7 +3001,7 @@ class FaceLandmarkerOptions:
           logging.error('Face detector error: %s', error_msg)
           return
         if self.result_callback is not None:
-          py_result = result.contents.to_python_detection_result()
+          py_result = FaceLandmarkerResult.from_ctypes(result)
           py_image = image_lib.Image.create_from_ctypes(image, lib)
           self.result_callback(py_result, py_image, timestamp_ms)
 

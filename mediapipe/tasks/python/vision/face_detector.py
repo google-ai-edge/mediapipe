@@ -176,7 +176,7 @@ class FaceDetectorOptions:
           logging.error('Face detector error: %s', error_msg)
           return
 
-        py_result = result.contents.to_python_detection_result()
+        py_result = FaceDetectorResult.from_ctypes(result.contents)
         py_image = image_module.Image.create_from_ctypes(image, lib)
         if self.result_callback:
           self.result_callback(py_result, py_image, timestamp_ms)
@@ -317,7 +317,7 @@ class FaceDetector:
         status, error_msg_ptr, 'Failed to detect faces for image.'
     )
 
-    py_result = c_result.to_python_detection_result()
+    py_result = FaceDetectorResult.from_ctypes(c_result)
     self._lib.face_detector_close_result(ctypes.byref(c_result))
     return py_result
 
@@ -376,7 +376,7 @@ class FaceDetector:
         status, error_msg_ptr, 'Failed to detect faces from video.'
     )
 
-    py_result = c_result.to_python_detection_result()
+    py_result = FaceDetectorResult.from_ctypes(c_result)
     self._lib.face_detector_close_result(ctypes.byref(c_result))
     return py_result
 

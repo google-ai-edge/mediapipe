@@ -18,9 +18,11 @@ from typing import Any, List, Optional
 
 from mediapipe.framework.formats import detection_pb2
 from mediapipe.framework.formats import location_data_pb2
-from mediapipe.tasks.python.components.containers import bounding_box as bounding_box_module
-from mediapipe.tasks.python.components.containers import category as category_module
-from mediapipe.tasks.python.components.containers import keypoint as keypoint_module
+from mediapipe.tasks.python.components.containers import bounding_box as bounding_box_lib
+from mediapipe.tasks.python.components.containers import category as category_lib
+from mediapipe.tasks.python.components.containers import category_c as category_c_lib
+from mediapipe.tasks.python.components.containers import detections_c as detections_c_lib
+from mediapipe.tasks.python.components.containers import keypoint as keypoint_lib
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 
 _DetectionListProto = detection_pb2.DetectionList
@@ -38,9 +40,9 @@ class Detection:
     keypoints: A list of NormalizedKeypoint objects.
   """
 
-  bounding_box: bounding_box_module.BoundingBox
-  categories: List[category_module.Category]
-  keypoints: Optional[List[keypoint_module.NormalizedKeypoint]] = None
+  bounding_box: bounding_box_lib.BoundingBox
+  categories: List[category_lib.Category]
+  keypoints: Optional[List[keypoint_lib.NormalizedKeypoint]] = None
 
   @doc_controls.do_not_generate_docs
   def to_pb2(self) -> _DetectionProto:
@@ -94,7 +96,7 @@ class Detection:
 
     for idx, score in enumerate(pb2_obj.score):
       categories.append(
-          category_module.Category(
+          category_lib.Category(
               score=score,
               index=pb2_obj.label_id[idx]
               if idx < len(pb2_obj.label_id)
@@ -111,7 +113,7 @@ class Detection:
     if pb2_obj.location_data.relative_keypoints:
       for idx, elem in enumerate(pb2_obj.location_data.relative_keypoints):
         keypoints.append(
-            keypoint_module.NormalizedKeypoint(
+            keypoint_lib.NormalizedKeypoint(
                 x=elem.x,
                 y=elem.y,
                 label=elem.keypoint_label,
@@ -120,7 +122,7 @@ class Detection:
         )
 
     return Detection(
-        bounding_box=bounding_box_module.BoundingBox.create_from_pb2(
+        bounding_box=bounding_box_lib.BoundingBox.create_from_pb2(
             pb2_obj.location_data.bounding_box
         ),
         categories=categories,
@@ -140,6 +142,35 @@ class Detection:
       return False
 
     return self.to_pb2().__eq__(other.to_pb2())
+
+  @classmethod
+  @doc_controls.do_not_generate_docs
+  def from_ctypes(cls, c_obj: detections_c_lib.DetectionC) -> 'Detection':
+    """Creates a `Detection` object from the given `DetectionC` object."""
+    c_categories = category_c_lib.CategoriesC(
+        categories=c_obj.categories, categories_count=c_obj.categories_count
+    )
+
+    py_categories = category_lib.create_list_of_categories_from_ctypes(
+        c_categories
+    )
+    py_bounding_box = bounding_box_lib.BoundingBox.from_ctypes(
+        c_obj.bounding_box
+    )
+
+    if c_obj.keypoints and c_obj.keypoints_count > 0:
+      py_keypoints = [
+          keypoint_lib.NormalizedKeypoint.from_ctypes(c_obj.keypoints[i])
+          for i in range(c_obj.keypoints_count)
+      ]
+    else:
+      py_keypoints = None
+
+    return Detection(
+        bounding_box=py_bounding_box,
+        categories=py_categories,
+        keypoints=py_keypoints,
+    )
 
 
 @dataclasses.dataclass
@@ -179,3 +210,16 @@ class DetectionResult:
       return False
 
     return self.to_pb2().__eq__(other.to_pb2())
+
+  @classmethod
+  @doc_controls.do_not_generate_docs
+  def from_ctypes(
+      cls, c_obj: detections_c_lib.DetectionResultC
+  ) -> 'DetectionResult':
+    """Creates a `DetectionResult` object from a `DetectionResultC` object."""
+    return DetectionResult(
+        detections=[
+            Detection.from_ctypes(c_obj.detections[i])
+            for i in range(c_obj.detections_count)
+        ]
+    )
