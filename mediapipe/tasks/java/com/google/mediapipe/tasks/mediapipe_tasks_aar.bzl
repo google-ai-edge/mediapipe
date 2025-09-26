@@ -32,7 +32,6 @@ _CORE_TASKS_JAVA_PROTO_LITE_TARGETS = [
 
 _AUDIO_TASKS_JAVA_PROTO_LITE_TARGETS = [
     "//mediapipe/tasks/cc/audio/audio_classifier/proto:audio_classifier_graph_options_java_proto_lite",
-    "//mediapipe/tasks/cc/audio/audio_embedder/proto:audio_embedder_graph_options_java_proto_lite",
 ]
 
 _VISION_TASKS_JAVA_PROTO_LITE_TARGETS = [
