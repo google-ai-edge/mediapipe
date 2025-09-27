@@ -99,7 +99,8 @@ class FunctionRunner<OutputPacketT, std::tuple<InputPacketTs...>>
     MP_ASSIGN_OR_RETURN(OutputStreamPoller * poller, this->GetOutputPoller(0));
     MP_ASSIGN_OR_RETURN(mediapipe::Packet packet,
                         GetOutputPacket(*poller, *this->calculator_graph_));
-    return OutputPacketT(std::move(packet));
+    return WrapLegacyPacket<typename OutputPacketT::PayloadT>(
+        std::move(packet));
   }
 
  private:
@@ -142,7 +143,10 @@ class FunctionRunner<std::tuple<OutputPacketTs...>,
            MP_ASSIGN_OR_RETURN(
                mediapipe::Packet packet,
                GetOutputPacket(*poller, *this->calculator_graph_));
-           std::get<Is>(output) = OutputPacketTs(std::move(packet));
+           MP_ASSIGN_OR_RETURN(
+               std::get<Is>(output),
+               WrapLegacyPacket<typename OutputPacketTs::PayloadT>(
+                   std::move(packet)));
            return absl::OkStatus();
          }(),
          status.ok()) &&

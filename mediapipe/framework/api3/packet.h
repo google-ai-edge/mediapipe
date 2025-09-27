@@ -20,7 +20,10 @@
 #include <utility>
 
 #include "absl/functional/any_invocable.h"
+#include "absl/status/statusor.h"
+#include "mediapipe/framework/api3/any.h"
 #include "mediapipe/framework/packet.h"
+#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/timestamp.h"
 
 namespace mediapipe::api3 {
@@ -43,7 +46,6 @@ class Packet {
   using PayloadT = T;
 
   explicit Packet() = default;
-  explicit Packet(mediapipe::Packet p) : packet_(std::move(p)) {}
 
   Packet(const Packet& p) = default;
   Packet& operator=(const Packet& p) = default;
@@ -72,8 +74,37 @@ class Packet {
   std::string DebugString() const { return packet_.DebugString(); }
 
  private:
+  explicit Packet(mediapipe::Packet p) : packet_(std::move(p)) {}
+
+  // Either holds a payload of type T or packet is empty.
   mediapipe::Packet packet_;
+
+  template <typename V, typename... Args>
+  friend Packet<V> MakePacket(Args&&... args);
+  template <typename V>
+  friend Packet<V> MakePacket(std::unique_ptr<V> ptr);
+  template <typename V>
+  friend Packet<V> PointToForeign(const V* ptr,
+                                  absl::AnyInvocable<void()> cleanup);
+  template <typename V>
+  friend Packet<V> PointToForeign(const V* ptr);
+  template <typename V>
+  friend absl::StatusOr<Packet<V>> WrapLegacyPacket(mediapipe::Packet packet);
 };
+
+// Allows to wrap generic/legacy mediapipe::Packet into a typed Packet.
+//
+// NOTE: fails if `packet` holds a payload of type other than T, unless T is
+//   Any.
+template <typename T>
+absl::StatusOr<Packet<T>> WrapLegacyPacket(mediapipe::Packet packet) {
+  if constexpr (!std::is_same_v<T, Any>) {
+    if (!packet.IsEmpty()) {
+      MP_RETURN_IF_ERROR(packet.ValidateAsType<T>());
+    }
+  }
+  return Packet<T>(std::move(packet));
+}
 
 // Create a packet containing an object of type T initialized with the
 // provided arguments.
@@ -100,9 +131,12 @@ Packet<T> MakePacket(std::unique_ptr<T> ptr) {
 // The timestamp of the returned Packet is Timestamp::Unset(). To set the
 // timestamp, the caller should do PointToForeign(...).At(...).
 template <typename T>
-Packet<T> PointToForeign(const T* ptr,
-                         absl::AnyInvocable<void()> cleanup = nullptr) {
+Packet<T> PointToForeign(const T* ptr, absl::AnyInvocable<void()> cleanup) {
   return Packet<T>(mediapipe::PointToForeign(ptr, std::move(cleanup)));
+}
+template <typename T>
+Packet<T> PointToForeign(const T* ptr) {
+  return Packet<T>(mediapipe::PointToForeign(ptr));
 }
 
 }  // namespace mediapipe::api3

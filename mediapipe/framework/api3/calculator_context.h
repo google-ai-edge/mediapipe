@@ -147,8 +147,11 @@ class Input<ContextSpecializer, PayloadT>
   // Returns the packet for this particular input or empty packet if it's
   // missing.
   mediapipe::api3::Packet<PayloadT> Packet() const {
-    return mediapipe::api3::Packet<PayloadT>(
+    auto maybe_packet = WrapLegacyPacket<PayloadT>(
         holder_->context->Inputs().Get(Tag(), Index()).Value());
+    // Framework guarantees correct type (PayloadT) of the Input.
+    ABSL_CHECK_OK(maybe_packet);
+    return std::move(maybe_packet).value();
   }
 };
 
@@ -202,8 +205,11 @@ class Input<ContextSpecializer, OneOf<PayloadTs...>>
   mediapipe::api3::Packet<T> PacketOrDie() const {
     static_assert((std::is_same_v<T, PayloadTs> || ...),
                   "Requested packet type must be one of the types in OneOf");
-    return mediapipe::api3::Packet<T>(
+    auto maybe_packet = WrapLegacyPacket<T>(
         holder_->context->Inputs().Get(Tag(), Index()).Value());
+    // User is required to supply the correct T.
+    ABSL_CHECK_OK(maybe_packet);
+    return std::move(maybe_packet).value();
   }
 
   // Visits the value in the input with the given visitor lambdas.
@@ -288,8 +294,11 @@ class SideInput<ContextSpecializer, PayloadT>
   }
 
   mediapipe::api3::Packet<PayloadT> Packet() const {
-    return mediapipe::api3::Packet<PayloadT>(
+    auto maybe_packet = WrapLegacyPacket<PayloadT>(
         holder_->context->InputSidePackets().Get(Tag(), Index()));
+    // Framework guarantees correct type (PayloadT) of the side input.
+    ABSL_CHECK_OK(maybe_packet);
+    return std::move(maybe_packet).value();
   }
 };
 
@@ -426,14 +435,14 @@ auto VisitPacketOrDie(F&& visitor, const mediapipe::Packet& packet) {
 template <typename T, int&... DoNotSpecify, typename F>
 auto VisitPacketAsPacketOrDie(F&& visitor, const mediapipe::Packet& packet) {
   ABSL_CHECK_OK(packet.ValidateAsType<T>());
-  return std::forward<F>(visitor)(Packet<T>(packet));
+  return std::forward<F>(visitor)(WrapLegacyPacket<T>(packet).value());
 }
 
 template <typename T, typename U, typename... Rest, int&... DoNotSpecify,
           typename F>
 auto VisitPacketAsPacketOrDie(F&& visitor, const mediapipe::Packet& packet) {
   if (packet.ValidateAsType<T>().ok()) {
-    return std::forward<F>(visitor)(Packet<T>(packet));
+    return std::forward<F>(visitor)(WrapLegacyPacket<T>(packet).value());
   } else {
     return VisitPacketAsPacketOrDie<U, Rest...>(std::forward<F>(visitor),
                                                 packet);

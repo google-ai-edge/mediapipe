@@ -93,9 +93,12 @@ cc_library(
     name = "packet",
     hdrs = ["packet.h"],
     deps = [
+        ":any",
         "//mediapipe/framework:packet",
         "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/port:status",
         "@com_google_absl//absl/functional:any_invocable",
+        "@com_google_absl//absl/status:statusor",
     ],
 )
 
