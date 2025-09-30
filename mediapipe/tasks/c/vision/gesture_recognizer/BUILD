@@ -58,29 +58,39 @@ cc_test(
     ],
 )
 
+GESTURE_RECOGNIZER_DEPS = [
+    ":gesture_recognizer_result",
+    ":gesture_recognizer_result_converter",
+    "@com_google_absl//absl/log:absl_log",
+    "@com_google_absl//absl/status",
+    "@com_google_absl//absl/status:statusor",
+    "//mediapipe/framework/formats:image",
+    "//mediapipe/framework/formats:image_frame",
+    "//mediapipe/tasks/c/components/processors:classifier_options",
+    "//mediapipe/tasks/c/components/processors:classifier_options_converter",
+    "//mediapipe/tasks/c/core:base_options",
+    "//mediapipe/tasks/c/core:base_options_converter",
+    "//mediapipe/tasks/c/vision/core:common",
+    "//mediapipe/tasks/cc/vision/core:running_mode",
+    "//mediapipe/tasks/cc/vision/gesture_recognizer",
+    "//mediapipe/tasks/cc/vision/gesture_recognizer:gesture_recognizer_result",
+    "//mediapipe/tasks/cc/vision/utils:image_utils",
+]
+
 cc_library(
     name = "gesture_recognizer_lib",
     srcs = ["gesture_recognizer.cc"],
     hdrs = ["gesture_recognizer.h"],
     visibility = ["//visibility:public"],
-    deps = [
-        ":gesture_recognizer_result",
-        ":gesture_recognizer_result_converter",
-        "//mediapipe/framework/formats:image",
-        "//mediapipe/framework/formats:image_frame",
-        "//mediapipe/tasks/c/components/processors:classifier_options",
-        "//mediapipe/tasks/c/components/processors:classifier_options_converter",
-        "//mediapipe/tasks/c/core:base_options",
-        "//mediapipe/tasks/c/core:base_options_converter",
-        "//mediapipe/tasks/c/vision/core:common",
-        "//mediapipe/tasks/cc/vision/core:running_mode",
-        "//mediapipe/tasks/cc/vision/gesture_recognizer",
-        "//mediapipe/tasks/cc/vision/gesture_recognizer:gesture_recognizer_result",
-        "//mediapipe/tasks/cc/vision/utils:image_utils",
-        "@com_google_absl//absl/log:absl_log",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:statusor",
-    ],
+    deps = GESTURE_RECOGNIZER_DEPS,
+)
+
+cc_library(
+    name = "gesture_recognizer_c_lib",
+    srcs = ["gesture_recognizer.cc"],
+    hdrs = ["gesture_recognizer.h"],
+    visibility = ["//mediapipe/tasks/c:__subpackages__"],
+    deps = GESTURE_RECOGNIZER_DEPS,
     alwayslink = 1,
 )
 

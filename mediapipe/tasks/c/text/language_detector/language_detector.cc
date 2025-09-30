@@ -99,24 +99,25 @@ int CppLanguageDetectorClose(void* detector, char** error_msg) {
 
 extern "C" {
 
-void* language_detector_create(struct LanguageDetectorOptions* options,
-                               char** error_msg) {
+MP_EXPORT void* language_detector_create(
+    struct LanguageDetectorOptions* options, char** error_msg) {
   return mediapipe::tasks::c::text::language_detector::
       CppLanguageDetectorCreate(*options, error_msg);
 }
 
-int language_detector_detect(void* detector, const char* utf8_str,
-                             LanguageDetectorResult* result, char** error_msg) {
+MP_EXPORT int language_detector_detect(void* detector, const char* utf8_str,
+                                       LanguageDetectorResult* result,
+                                       char** error_msg) {
   return mediapipe::tasks::c::text::language_detector::
       CppLanguageDetectorDetect(detector, utf8_str, result, error_msg);
 }
 
-void language_detector_close_result(LanguageDetectorResult* result) {
+MP_EXPORT void language_detector_close_result(LanguageDetectorResult* result) {
   mediapipe::tasks::c::text::language_detector::CppLanguageDetectorCloseResult(
       result);
 }
 
-int language_detector_close(void* detector, char** error_ms) {
+MP_EXPORT int language_detector_close(void* detector, char** error_ms) {
   return mediapipe::tasks::c::text::language_detector::CppLanguageDetectorClose(
       detector, error_ms);
 }

@@ -31,27 +31,31 @@ cc_library(
     deps = ["//mediapipe/tasks/c/core:mp_status"],
 )
 
+IMAGE_DEPS = [
+    ":image_frame_util",
+    "@com_google_absl//absl/log:absl_log",
+    "@com_google_absl//absl/status",
+    "@com_google_absl//absl/status:statusor",
+    "@com_google_absl//absl/strings:str_format",
+    "//mediapipe/framework/formats:image",
+    "//mediapipe/framework/formats:image_frame",
+    "//mediapipe/tasks/c/core:mp_status",
+    "//mediapipe/tasks/c/core:mp_status_converter",
+    "@stblib//:stb_image",
+]
+
 cc_library(
     name = "image",
     srcs = ["image.cc"],
     hdrs = ["image.h"],
-    deps = [
-        ":image_frame_util",
-        "//mediapipe/framework/formats:image",
-        "//mediapipe/framework/formats:image_frame",
-        "//mediapipe/tasks/c/core:mp_status",
-        "//mediapipe/tasks/c/core:mp_status_converter",
-        "@com_google_absl//absl/log:absl_log",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:statusor",
-        "@com_google_absl//absl/strings:str_format",
-        "@stblib//:stb_image",
-    ],
+    deps = IMAGE_DEPS,
 )
 
 cc_library(
     name = "image_c_lib",
-    deps = [":image"],
+    srcs = ["image.cc"],
+    hdrs = ["image.h"],
+    deps = IMAGE_DEPS,
     alwayslink = 1,
 )
 

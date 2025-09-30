@@ -242,40 +242,44 @@ int CppPoseLandmarkerClose(void* landmarker, char** error_msg) {
 
 extern "C" {
 
-void* pose_landmarker_create(struct PoseLandmarkerOptions* options,
-                             char** error_msg) {
+MP_EXPORT void* pose_landmarker_create(struct PoseLandmarkerOptions* options,
+                                       char** error_msg) {
   return mediapipe::tasks::c::vision::pose_landmarker::CppPoseLandmarkerCreate(
       *options, error_msg);
 }
 
-int pose_landmarker_detect_image(void* landmarker, const MpImage* image,
-                                 PoseLandmarkerResult* result,
-                                 char** error_msg) {
+MP_EXPORT int pose_landmarker_detect_image(void* landmarker,
+                                           const MpImage* image,
+                                           PoseLandmarkerResult* result,
+                                           char** error_msg) {
   return mediapipe::tasks::c::vision::pose_landmarker::CppPoseLandmarkerDetect(
       landmarker, image, result, error_msg);
 }
 
-int pose_landmarker_detect_for_video(void* landmarker, const MpImage* image,
-                                     int64_t timestamp_ms,
-                                     PoseLandmarkerResult* result,
-                                     char** error_msg) {
+MP_EXPORT int pose_landmarker_detect_for_video(void* landmarker,
+                                               const MpImage* image,
+                                               int64_t timestamp_ms,
+                                               PoseLandmarkerResult* result,
+                                               char** error_msg) {
   return mediapipe::tasks::c::vision::pose_landmarker::
       CppPoseLandmarkerDetectForVideo(landmarker, image, timestamp_ms, result,
                                       error_msg);
 }
 
-int pose_landmarker_detect_async(void* landmarker, const MpImage* image,
-                                 int64_t timestamp_ms, char** error_msg) {
+MP_EXPORT int pose_landmarker_detect_async(void* landmarker,
+                                           const MpImage* image,
+                                           int64_t timestamp_ms,
+                                           char** error_msg) {
   return mediapipe::tasks::c::vision::pose_landmarker::
       CppPoseLandmarkerDetectAsync(landmarker, image, timestamp_ms, error_msg);
 }
 
-void pose_landmarker_close_result(PoseLandmarkerResult* result) {
+MP_EXPORT void pose_landmarker_close_result(PoseLandmarkerResult* result) {
   mediapipe::tasks::c::vision::pose_landmarker::CppPoseLandmarkerCloseResult(
       result);
 }
 
-int pose_landmarker_close(void* landmarker, char** error_ms) {
+MP_EXPORT int pose_landmarker_close(void* landmarker, char** error_ms) {
   return mediapipe::tasks::c::vision::pose_landmarker::CppPoseLandmarkerClose(
       landmarker, error_ms);
 }

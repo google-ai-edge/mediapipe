@@ -239,40 +239,44 @@ int CppImageSegmenterClose(void* segmenter, char** error_msg) {
 
 extern "C" {
 
-void* image_segmenter_create(struct ImageSegmenterOptions* options,
-                             char** error_msg) {
+MP_EXPORT void* image_segmenter_create(struct ImageSegmenterOptions* options,
+                                       char** error_msg) {
   return mediapipe::tasks::c::vision::image_segmenter::CppImageSegmenterCreate(
       *options, error_msg);
 }
 
-int image_segmenter_segment_image(void* segmenter, const MpImage* image,
-                                  ImageSegmenterResult* result,
-                                  char** error_msg) {
+MP_EXPORT int image_segmenter_segment_image(void* segmenter,
+                                            const MpImage* image,
+                                            ImageSegmenterResult* result,
+                                            char** error_msg) {
   return mediapipe::tasks::c::vision::image_segmenter::CppImageSegmenterSegment(
       segmenter, image, result, error_msg);
 }
 
-int image_segmenter_segment_for_video(void* segmenter, const MpImage* image,
-                                      int64_t timestamp_ms,
-                                      ImageSegmenterResult* result,
-                                      char** error_msg) {
+MP_EXPORT int image_segmenter_segment_for_video(void* segmenter,
+                                                const MpImage* image,
+                                                int64_t timestamp_ms,
+                                                ImageSegmenterResult* result,
+                                                char** error_msg) {
   return mediapipe::tasks::c::vision::image_segmenter::
       CppImageSegmenterSegmentForVideo(segmenter, image, timestamp_ms, result,
                                        error_msg);
 }
 
-int image_segmenter_segment_async(void* segmenter, const MpImage* image,
-                                  int64_t timestamp_ms, char** error_msg) {
+MP_EXPORT int image_segmenter_segment_async(void* segmenter,
+                                            const MpImage* image,
+                                            int64_t timestamp_ms,
+                                            char** error_msg) {
   return mediapipe::tasks::c::vision::image_segmenter::
       CppImageSegmenterSegmentAsync(segmenter, image, timestamp_ms, error_msg);
 }
 
-void image_segmenter_close_result(ImageSegmenterResult* result) {
+MP_EXPORT void image_segmenter_close_result(ImageSegmenterResult* result) {
   mediapipe::tasks::c::vision::image_segmenter::CppImageSegmenterCloseResult(
       result);
 }
 
-int image_segmenter_close(void* segmenter, char** error_ms) {
+MP_EXPORT int image_segmenter_close(void* segmenter, char** error_ms) {
   return mediapipe::tasks::c::vision::image_segmenter::CppImageSegmenterClose(
       segmenter, error_ms);
 }

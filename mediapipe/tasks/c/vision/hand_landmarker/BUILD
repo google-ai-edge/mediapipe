@@ -61,31 +61,41 @@ cc_test(
     ],
 )
 
+HAND_LANDMARKER_DEPS = [
+    ":hand_landmarker_result",
+    ":hand_landmarker_result_converter",
+    "@com_google_absl//absl/log:absl_log",
+    "@com_google_absl//absl/status",
+    "@com_google_absl//absl/status:statusor",
+    "//mediapipe/framework/formats:image",
+    "//mediapipe/tasks/c/core:base_options",
+    "//mediapipe/tasks/c/core:base_options_converter",
+    "//mediapipe/tasks/c/vision/core:common",
+    "//mediapipe/tasks/c/vision/core:image",
+    "//mediapipe/tasks/c/vision/core:image_frame_util",
+    "//mediapipe/tasks/c/vision/core:image_processing_options",
+    "//mediapipe/tasks/c/vision/core:image_processing_options_converter",
+    "//mediapipe/tasks/cc/vision/core:image_processing_options",
+    "//mediapipe/tasks/cc/vision/core:running_mode",
+    "//mediapipe/tasks/cc/vision/hand_landmarker",
+    "//mediapipe/tasks/cc/vision/hand_landmarker:hand_landmarker_result",
+    "//mediapipe/tasks/cc/vision/utils:image_utils",
+]
+
 cc_library(
     name = "hand_landmarker_lib",
     srcs = ["hand_landmarker.cc"],
     hdrs = ["hand_landmarker.h"],
     visibility = ["//visibility:public"],
-    deps = [
-        ":hand_landmarker_result",
-        ":hand_landmarker_result_converter",
-        "//mediapipe/framework/formats:image",
-        "//mediapipe/tasks/c/core:base_options",
-        "//mediapipe/tasks/c/core:base_options_converter",
-        "//mediapipe/tasks/c/vision/core:common",
-        "//mediapipe/tasks/c/vision/core:image",
-        "//mediapipe/tasks/c/vision/core:image_frame_util",
-        "//mediapipe/tasks/c/vision/core:image_processing_options",
-        "//mediapipe/tasks/c/vision/core:image_processing_options_converter",
-        "//mediapipe/tasks/cc/vision/core:image_processing_options",
-        "//mediapipe/tasks/cc/vision/core:running_mode",
-        "//mediapipe/tasks/cc/vision/hand_landmarker",
-        "//mediapipe/tasks/cc/vision/hand_landmarker:hand_landmarker_result",
-        "//mediapipe/tasks/cc/vision/utils:image_utils",
-        "@com_google_absl//absl/log:absl_log",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:statusor",
-    ],
+    deps = HAND_LANDMARKER_DEPS,
+)
+
+cc_library(
+    name = "hand_landmarker_c_lib",
+    srcs = ["hand_landmarker.cc"],
+    hdrs = ["hand_landmarker.h"],
+    visibility = ["//mediapipe/tasks/c:__subpackages__"],
+    deps = HAND_LANDMARKER_DEPS,
     alwayslink = 1,
 )
 

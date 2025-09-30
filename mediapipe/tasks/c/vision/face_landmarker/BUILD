@@ -66,37 +66,41 @@ cc_test(
     ],
 )
 
+FACE_LANDMARKER_DEPS = [
+    ":face_landmarker_result",
+    ":face_landmarker_result_converter",
+    "@com_google_absl//absl/log:absl_log",
+    "@com_google_absl//absl/status",
+    "@com_google_absl//absl/status:statusor",
+    "//mediapipe/framework/formats:image",
+    "//mediapipe/tasks/c/core:base_options",
+    "//mediapipe/tasks/c/core:base_options_converter",
+    "//mediapipe/tasks/c/vision/core:common",
+    "//mediapipe/tasks/c/vision/core:image",
+    "//mediapipe/tasks/c/vision/core:image_frame_util",
+    "//mediapipe/tasks/c/vision/core:image_processing_options",
+    "//mediapipe/tasks/c/vision/core:image_processing_options_converter",
+    "//mediapipe/tasks/cc/vision/core:image_processing_options",
+    "//mediapipe/tasks/cc/vision/core:running_mode",
+    "//mediapipe/tasks/cc/vision/face_landmarker",
+    "//mediapipe/tasks/cc/vision/face_landmarker:face_landmarker_result",
+    "//mediapipe/tasks/cc/vision/utils:image_utils",
+]
+
 cc_library(
     name = "face_landmarker_lib",
     srcs = ["face_landmarker.cc"],
     hdrs = ["face_landmarker.h"],
     visibility = ["//visibility:public"],
-    deps = [
-        ":face_landmarker_result",
-        ":face_landmarker_result_converter",
-        "//mediapipe/framework/formats:image",
-        "//mediapipe/tasks/c/core:base_options",
-        "//mediapipe/tasks/c/core:base_options_converter",
-        "//mediapipe/tasks/c/vision/core:common",
-        "//mediapipe/tasks/c/vision/core:image",
-        "//mediapipe/tasks/c/vision/core:image_frame_util",
-        "//mediapipe/tasks/c/vision/core:image_processing_options",
-        "//mediapipe/tasks/c/vision/core:image_processing_options_converter",
-        "//mediapipe/tasks/cc/vision/core:image_processing_options",
-        "//mediapipe/tasks/cc/vision/core:running_mode",
-        "//mediapipe/tasks/cc/vision/face_landmarker",
-        "//mediapipe/tasks/cc/vision/face_landmarker:face_landmarker_result",
-        "//mediapipe/tasks/cc/vision/utils:image_utils",
-        "@com_google_absl//absl/log:absl_log",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:statusor",
-    ],
+    deps = FACE_LANDMARKER_DEPS,
 )
 
 cc_library(
     name = "face_landmarker_c_lib",
+    srcs = ["face_landmarker.cc"],
+    hdrs = ["face_landmarker.h"],
     visibility = ["//mediapipe/tasks/c:__subpackages__"],
-    deps = [":face_landmarker_lib"],
+    deps = FACE_LANDMARKER_DEPS,
     alwayslink = 1,
 )
 

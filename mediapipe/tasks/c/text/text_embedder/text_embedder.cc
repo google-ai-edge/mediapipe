@@ -117,29 +117,32 @@ int CppTextEmbedderCosineSimilarity(const Embedding* u, const Embedding* v,
 
 extern "C" {
 
-void* text_embedder_create(struct TextEmbedderOptions* options,
-                           char** error_msg) {
+MP_EXPORT void* text_embedder_create(struct TextEmbedderOptions* options,
+                                     char** error_msg) {
   return mediapipe::tasks::c::text::text_embedder::CppTextEmbedderCreate(
       *options, error_msg);
 }
 
-int text_embedder_embed(void* embedder, const char* utf8_str,
-                        TextEmbedderResult* result, char** error_msg) {
+MP_EXPORT int text_embedder_embed(void* embedder, const char* utf8_str,
+                                  TextEmbedderResult* result,
+                                  char** error_msg) {
   return mediapipe::tasks::c::text::text_embedder::CppTextEmbedderEmbed(
       embedder, utf8_str, result, error_msg);
 }
 
-void text_embedder_close_result(TextEmbedderResult* result) {
+MP_EXPORT void text_embedder_close_result(TextEmbedderResult* result) {
   mediapipe::tasks::c::text::text_embedder::CppTextEmbedderCloseResult(result);
 }
 
-int text_embedder_close(void* embedder, char** error_ms) {
+MP_EXPORT int text_embedder_close(void* embedder, char** error_ms) {
   return mediapipe::tasks::c::text::text_embedder::CppTextEmbedderClose(
       embedder, error_ms);
 }
 
-int text_embedder_cosine_similarity(const Embedding* u, const Embedding* v,
-                                    double* similarity, char** error_msg) {
+MP_EXPORT int text_embedder_cosine_similarity(const Embedding* u,
+                                              const Embedding* v,
+                                              double* similarity,
+                                              char** error_msg) {
   return mediapipe::tasks::c::text::text_embedder::
       CppTextEmbedderCosineSimilarity(u, v, similarity, error_msg);
 }

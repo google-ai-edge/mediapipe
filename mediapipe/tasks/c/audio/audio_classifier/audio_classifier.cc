@@ -192,32 +192,34 @@ MpStatus MpAudioClassifierClose(MpAudioClassifierPtr classifier) {
 
 extern "C" {
 
-MpStatus MpAudioClassifierCreate(struct MpAudioClassifierOptions* options,
-                                 MpAudioClassifierPtr* classifier_out) {
+MP_EXPORT MpStatus
+MpAudioClassifierCreate(struct MpAudioClassifierOptions* options,
+                        MpAudioClassifierPtr* classifier_out) {
   return mediapipe::tasks::c::audio::audio_classifier::MpAudioClassifierCreate(
       options, classifier_out);
 }
 
-MpStatus MpAudioClassifierClassify(MpAudioClassifierPtr classifier,
-                                   const MpAudioData* audio_data,
-                                   MpAudioClassifierResult* result_out) {
+MP_EXPORT MpStatus MpAudioClassifierClassify(
+    MpAudioClassifierPtr classifier, const MpAudioData* audio_data,
+    MpAudioClassifierResult* result_out) {
   return mediapipe::tasks::c::audio::audio_classifier::
       MpAudioClassifierClassify(classifier, audio_data, result_out);
 }
 
-MpStatus MpAudioClassifierClassifyAsync(MpAudioClassifierPtr classifier,
-                                        const MpAudioData* audio_data,
-                                        int64_t timestamp_ms) {
+MP_EXPORT MpStatus MpAudioClassifierClassifyAsync(
+    MpAudioClassifierPtr classifier, const MpAudioData* audio_data,
+    int64_t timestamp_ms) {
   return mediapipe::tasks::c::audio::audio_classifier::
       MpAudioClassifierClassifyAsync(classifier, audio_data, timestamp_ms);
 }
 
-MpStatus MpAudioClassifierCloseResult(MpAudioClassifierResult* result) {
+MP_EXPORT MpStatus
+MpAudioClassifierCloseResult(MpAudioClassifierResult* result) {
   return mediapipe::tasks::c::audio::audio_classifier::
       MpAudioClassifierCloseResult(result);
 }
 
-MpStatus MpAudioClassifierClose(MpAudioClassifierPtr classifier) {
+MP_EXPORT MpStatus MpAudioClassifierClose(MpAudioClassifierPtr classifier) {
   return mediapipe::tasks::c::audio::audio_classifier::MpAudioClassifierClose(
       classifier);
 }

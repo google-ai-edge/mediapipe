@@ -252,42 +252,43 @@ int CppGestureRecognizerClose(void* recognizer, char** error_msg) {
 
 extern "C" {
 
-void* gesture_recognizer_create(struct GestureRecognizerOptions* options,
-                                char** error_msg) {
+MP_EXPORT void* gesture_recognizer_create(
+    struct GestureRecognizerOptions* options, char** error_msg) {
   return mediapipe::tasks::c::vision::gesture_recognizer::
       CppGestureRecognizerCreate(*options, error_msg);
 }
 
-int gesture_recognizer_recognize_image(void* recognizer, const MpImage* image,
-                                       GestureRecognizerResult* result,
-                                       char** error_msg) {
+MP_EXPORT int gesture_recognizer_recognize_image(
+    void* recognizer, const MpImage* image, GestureRecognizerResult* result,
+    char** error_msg) {
   return mediapipe::tasks::c::vision::gesture_recognizer::
       CppGestureRecognizerRecognize(recognizer, image, result, error_msg);
 }
 
-int gesture_recognizer_recognize_for_video(void* recognizer,
-                                           const MpImage* image,
-                                           int64_t timestamp_ms,
-                                           GestureRecognizerResult* result,
-                                           char** error_msg) {
+MP_EXPORT int gesture_recognizer_recognize_for_video(
+    void* recognizer, const MpImage* image, int64_t timestamp_ms,
+    GestureRecognizerResult* result, char** error_msg) {
   return mediapipe::tasks::c::vision::gesture_recognizer::
       CppGestureRecognizerRecognizeForVideo(recognizer, image, timestamp_ms,
                                             result, error_msg);
 }
 
-int gesture_recognizer_recognize_async(void* recognizer, const MpImage* image,
-                                       int64_t timestamp_ms, char** error_msg) {
+MP_EXPORT int gesture_recognizer_recognize_async(void* recognizer,
+                                                 const MpImage* image,
+                                                 int64_t timestamp_ms,
+                                                 char** error_msg) {
   return mediapipe::tasks::c::vision::gesture_recognizer::
       CppGestureRecognizerRecognizeAsync(recognizer, image, timestamp_ms,
                                          error_msg);
 }
 
-void gesture_recognizer_close_result(GestureRecognizerResult* result) {
+MP_EXPORT void gesture_recognizer_close_result(
+    GestureRecognizerResult* result) {
   mediapipe::tasks::c::vision::gesture_recognizer::
       CppGestureRecognizerCloseResult(result);
 }
 
-int gesture_recognizer_close(void* recognizer, char** error_ms) {
+MP_EXPORT int gesture_recognizer_close(void* recognizer, char** error_ms) {
   return mediapipe::tasks::c::vision::gesture_recognizer::
       CppGestureRecognizerClose(recognizer, error_ms);
 }

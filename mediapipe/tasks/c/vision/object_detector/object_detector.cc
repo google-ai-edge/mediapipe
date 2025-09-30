@@ -247,40 +247,42 @@ int CppObjectDetectorClose(void* detector, char** error_msg) {
 
 extern "C" {
 
-void* object_detector_create(struct ObjectDetectorOptions* options,
-                             char** error_msg) {
+MP_EXPORT void* object_detector_create(struct ObjectDetectorOptions* options,
+                                       char** error_msg) {
   return mediapipe::tasks::c::vision::object_detector::CppObjectDetectorCreate(
       *options, error_msg);
 }
 
-int object_detector_detect_image(void* detector, const MpImage* image,
-                                 ObjectDetectorResult* result,
-                                 char** error_msg) {
+MP_EXPORT int object_detector_detect_image(void* detector, const MpImage* image,
+                                           ObjectDetectorResult* result,
+                                           char** error_msg) {
   return mediapipe::tasks::c::vision::object_detector::CppObjectDetectorDetect(
       detector, image, result, error_msg);
 }
 
-int object_detector_detect_for_video(void* detector, const MpImage* image,
-                                     int64_t timestamp_ms,
-                                     ObjectDetectorResult* result,
-                                     char** error_msg) {
+MP_EXPORT int object_detector_detect_for_video(void* detector,
+                                               const MpImage* image,
+                                               int64_t timestamp_ms,
+                                               ObjectDetectorResult* result,
+                                               char** error_msg) {
   return mediapipe::tasks::c::vision::object_detector::
       CppObjectDetectorDetectForVideo(detector, image, timestamp_ms, result,
                                       error_msg);
 }
 
-int object_detector_detect_async(void* detector, const MpImage* image,
-                                 int64_t timestamp_ms, char** error_msg) {
+MP_EXPORT int object_detector_detect_async(void* detector, const MpImage* image,
+                                           int64_t timestamp_ms,
+                                           char** error_msg) {
   return mediapipe::tasks::c::vision::object_detector::
       CppObjectDetectorDetectAsync(detector, image, timestamp_ms, error_msg);
 }
 
-void object_detector_close_result(ObjectDetectorResult* result) {
+MP_EXPORT void object_detector_close_result(ObjectDetectorResult* result) {
   mediapipe::tasks::c::vision::object_detector::CppObjectDetectorCloseResult(
       result);
 }
 
-int object_detector_close(void* detector, char** error_ms) {
+MP_EXPORT int object_detector_close(void* detector, char** error_ms) {
   return mediapipe::tasks::c::vision::object_detector::CppObjectDetectorClose(
       detector, error_ms);
 }

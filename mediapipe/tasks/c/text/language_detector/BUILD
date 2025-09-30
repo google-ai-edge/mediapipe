@@ -18,29 +18,31 @@ load("@rules_cc//cc:cc_test.bzl", "cc_test")
 
 licenses(["notice"])
 
+LANGUAGE_DETECTOR_DEPS = [
+    ":language_detector_result_converter",
+    "@com_google_absl//absl/log:absl_log",
+    "@com_google_absl//absl/status",
+    "//mediapipe/tasks/c/components/processors:classifier_options",
+    "//mediapipe/tasks/c/components/processors:classifier_options_converter",
+    "//mediapipe/tasks/c/core:base_options",
+    "//mediapipe/tasks/c/core:base_options_converter",
+    "//mediapipe/tasks/cc/text/language_detector",
+]
+
 cc_library(
     name = "language_detector_lib",
     srcs = ["language_detector.cc"],
     hdrs = ["language_detector.h"],
     visibility = ["//visibility:public"],
-    deps = [
-        ":language_detector_result_converter",
-        "//mediapipe/tasks/c/components/processors:classifier_options",
-        "//mediapipe/tasks/c/components/processors:classifier_options_converter",
-        "//mediapipe/tasks/c/core:base_options",
-        "//mediapipe/tasks/c/core:base_options_converter",
-        "//mediapipe/tasks/cc/text/language_detector",
-        "@com_google_absl//absl/log:absl_log",
-        "@com_google_absl//absl/status",
-    ],
+    deps = LANGUAGE_DETECTOR_DEPS,
 )
 
 cc_library(
     name = "language_detector_c_lib",
+    srcs = ["language_detector.cc"],
+    hdrs = ["language_detector.h"],
     visibility = ["//mediapipe/tasks/c:__subpackages__"],
-    deps = [
-        ":language_detector_lib",
-    ],
+    deps = LANGUAGE_DETECTOR_DEPS,
     alwayslink = 1,
 )
 

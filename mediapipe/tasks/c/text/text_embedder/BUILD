@@ -20,31 +20,33 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
 
+TEXT_EMBEDDER_DEPS = [
+    "@com_google_absl//absl/log:absl_log",
+    "@com_google_absl//absl/status",
+    "//mediapipe/tasks/c/components/containers:embedding_result",
+    "//mediapipe/tasks/c/components/containers:embedding_result_converter",
+    "//mediapipe/tasks/c/components/processors:embedder_options",
+    "//mediapipe/tasks/c/components/processors:embedder_options_converter",
+    "//mediapipe/tasks/c/core:base_options",
+    "//mediapipe/tasks/c/core:base_options_converter",
+    "//mediapipe/tasks/cc/components/containers:embedding_result",
+    "//mediapipe/tasks/cc/text/text_embedder",
+]
+
 cc_library(
     name = "text_embedder_lib",
     srcs = ["text_embedder.cc"],
     hdrs = ["text_embedder.h"],
     visibility = ["//visibility:public"],
-    deps = [
-        "//mediapipe/tasks/c/components/containers:embedding_result",
-        "//mediapipe/tasks/c/components/containers:embedding_result_converter",
-        "//mediapipe/tasks/c/components/processors:embedder_options",
-        "//mediapipe/tasks/c/components/processors:embedder_options_converter",
-        "//mediapipe/tasks/c/core:base_options",
-        "//mediapipe/tasks/c/core:base_options_converter",
-        "//mediapipe/tasks/cc/components/containers:embedding_result",
-        "//mediapipe/tasks/cc/text/text_embedder",
-        "@com_google_absl//absl/log:absl_log",
-        "@com_google_absl//absl/status",
-    ],
+    deps = TEXT_EMBEDDER_DEPS,
 )
 
 cc_library(
     name = "text_embedder_c_lib",
+    srcs = ["text_embedder.cc"],
+    hdrs = ["text_embedder.h"],
     visibility = ["//mediapipe/tasks/c:__subpackages__"],
-    deps = [
-        ":text_embedder_lib",
-    ],
+    deps = TEXT_EMBEDDER_DEPS,
     alwayslink = 1,
 )
 

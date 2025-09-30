@@ -12,26 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_shared_library.bzl", "cc_shared_library")
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
 
+exports_files(["mediapipe_tasks_c_version_script.lds"])
+
 # bazel build -c opt --linkopt -s --strip always --define MEDIAPIPE_DISABLE_GPU=1 \
 # //mediapipe/tasks/c:libmediapipe.so
-cc_binary(
-    name = "libmediapipe.so",
-    linkopts = [
-        "-Wl,-soname=libmediapipe.so",
-        "-fvisibility=hidden",
+cc_shared_library(
+    name = "mediapipe",
+    additional_linker_inputs = [
+        "mediapipe_tasks_c_version_script.lds",
     ],
-    linkshared = True,
-    linkstatic = False,
     tags = [
         "manual",
         "nobuilder",
         "notap",
+    ],
+    user_link_flags = [
+        "-Wl,--version-script=$(location :mediapipe_tasks_c_version_script.lds)",
     ],
     deps = [
         "//mediapipe/tasks/c/text/language_detector:language_detector_c_lib",

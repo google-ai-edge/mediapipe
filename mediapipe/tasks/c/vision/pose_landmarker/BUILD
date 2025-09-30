@@ -68,27 +68,37 @@ cc_test(
     ],
 )
 
+POSE_LANDMARKER_DEPS = [
+    ":pose_landmarker_result",
+    ":pose_landmarker_result_converter",
+    "@com_google_absl//absl/log:absl_log",
+    "@com_google_absl//absl/status",
+    "@com_google_absl//absl/status:statusor",
+    "//mediapipe/framework/formats:image",
+    "//mediapipe/framework/formats:image_frame",
+    "//mediapipe/tasks/c/core:base_options",
+    "//mediapipe/tasks/c/core:base_options_converter",
+    "//mediapipe/tasks/c/vision/core:common",
+    "//mediapipe/tasks/cc/vision/core:running_mode",
+    "//mediapipe/tasks/cc/vision/pose_landmarker",
+    "//mediapipe/tasks/cc/vision/pose_landmarker:pose_landmarker_result",
+    "//mediapipe/tasks/cc/vision/utils:image_utils",
+]
+
 cc_library(
     name = "pose_landmarker_lib",
     srcs = ["pose_landmarker.cc"],
     hdrs = ["pose_landmarker.h"],
     visibility = ["//visibility:public"],
-    deps = [
-        ":pose_landmarker_result",
-        ":pose_landmarker_result_converter",
-        "//mediapipe/framework/formats:image",
-        "//mediapipe/framework/formats:image_frame",
-        "//mediapipe/tasks/c/core:base_options",
-        "//mediapipe/tasks/c/core:base_options_converter",
-        "//mediapipe/tasks/c/vision/core:common",
-        "//mediapipe/tasks/cc/vision/core:running_mode",
-        "//mediapipe/tasks/cc/vision/pose_landmarker",
-        "//mediapipe/tasks/cc/vision/pose_landmarker:pose_landmarker_result",
-        "//mediapipe/tasks/cc/vision/utils:image_utils",
-        "@com_google_absl//absl/log:absl_log",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:statusor",
-    ],
+    deps = POSE_LANDMARKER_DEPS,
+)
+
+cc_library(
+    name = "pose_landmarker_c_lib",
+    srcs = ["pose_landmarker.cc"],
+    hdrs = ["pose_landmarker.h"],
+    visibility = ["//mediapipe/tasks/c:__subpackages__"],
+    deps = POSE_LANDMARKER_DEPS,
     alwayslink = 1,
 )
 

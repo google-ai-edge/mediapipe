@@ -99,24 +99,25 @@ int CppTextClassifierClose(void* classifier, char** error_msg) {
 
 extern "C" {
 
-void* text_classifier_create(struct TextClassifierOptions* options,
-                             char** error_msg) {
+MP_EXPORT void* text_classifier_create(struct TextClassifierOptions* options,
+                                       char** error_msg) {
   return mediapipe::tasks::c::text::text_classifier::CppTextClassifierCreate(
       *options, error_msg);
 }
 
-int text_classifier_classify(void* classifier, const char* utf8_str,
-                             TextClassifierResult* result, char** error_msg) {
+MP_EXPORT int text_classifier_classify(void* classifier, const char* utf8_str,
+                                       TextClassifierResult* result,
+                                       char** error_msg) {
   return mediapipe::tasks::c::text::text_classifier::CppTextClassifierClassify(
       classifier, utf8_str, result, error_msg);
 }
 
-void text_classifier_close_result(TextClassifierResult* result) {
+MP_EXPORT void text_classifier_close_result(TextClassifierResult* result) {
   mediapipe::tasks::c::text::text_classifier::CppTextClassifierCloseResult(
       result);
 }
 
-int text_classifier_close(void* classifier, char** error_ms) {
+MP_EXPORT int text_classifier_close(void* classifier, char** error_ms) {
   return mediapipe::tasks::c::text::text_classifier::CppTextClassifierClose(
       classifier, error_ms);
 }

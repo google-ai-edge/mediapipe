@@ -169,26 +169,28 @@ int CppInteractiveSegmenterClose(void* segmenter, char** error_msg) {
 
 extern "C" {
 
-void* interactive_segmenter_create(struct InteractiveSegmenterOptions* options,
-                                   char** error_msg) {
+MP_EXPORT void* interactive_segmenter_create(
+    struct InteractiveSegmenterOptions* options, char** error_msg) {
   return mediapipe::tasks::c::vision::interactive_segmenter::
       CppInteractiveSegmenterCreate(*options, error_msg);
 }
 
-int interactive_segmenter_segment_image(void* segmenter, const MpImage* image,
-                                        const RegionOfInterest* roi,
-                                        ImageSegmenterResult* result,
-                                        char** error_msg) {
+MP_EXPORT int interactive_segmenter_segment_image(void* segmenter,
+                                                  const MpImage* image,
+                                                  const RegionOfInterest* roi,
+                                                  ImageSegmenterResult* result,
+                                                  char** error_msg) {
   return mediapipe::tasks::c::vision::interactive_segmenter::
       CppInteractiveSegmenterSegment(segmenter, image, roi, result, error_msg);
 }
 
-void interactive_segmenter_close_result(ImageSegmenterResult* result) {
+MP_EXPORT void interactive_segmenter_close_result(
+    ImageSegmenterResult* result) {
   mediapipe::tasks::c::vision::interactive_segmenter::
       CppImageSegmenterCloseResult(result);
 }
 
-int interactive_segmenter_close(void* segmenter, char** error_ms) {
+MP_EXPORT int interactive_segmenter_close(void* segmenter, char** error_ms) {
   return mediapipe::tasks::c::vision::interactive_segmenter::
       CppInteractiveSegmenterClose(segmenter, error_ms);
 }

@@ -217,36 +217,37 @@ int CppHandLandmarkerClose(void* landmarker, char** error_msg) {
 
 extern "C" {
 
-void* hand_landmarker_create(struct HandLandmarkerOptions* options,
-                             char** error_msg) {
+MP_EXPORT void* hand_landmarker_create(struct HandLandmarkerOptions* options,
+                                       char** error_msg) {
   return mediapipe::tasks::c::vision::hand_landmarker::CppHandLandmarkerCreate(
       *options, error_msg);
 }
 
-int hand_landmarker_detect_image(void* landmarker, MpImagePtr image,
-                                 HandLandmarkerResult* result,
-                                 char** error_msg) {
+MP_EXPORT int hand_landmarker_detect_image(void* landmarker, MpImagePtr image,
+                                           HandLandmarkerResult* result,
+                                           char** error_msg) {
   return mediapipe::tasks::c::vision::hand_landmarker::CppHandLandmarkerDetect(
       landmarker, image, /* options= */ nullptr, result, error_msg);
 }
 
-int hand_landmarker_detect_image_with_options(
+MP_EXPORT int hand_landmarker_detect_image_with_options(
     void* landmarker, MpImagePtr image, struct ImageProcessingOptions* options,
     HandLandmarkerResult* result, char** error_msg) {
   return mediapipe::tasks::c::vision::hand_landmarker::CppHandLandmarkerDetect(
       landmarker, image, options, result, error_msg);
 }
 
-int hand_landmarker_detect_for_video(void* landmarker, MpImagePtr image,
-                                     int64_t timestamp_ms,
-                                     HandLandmarkerResult* result,
-                                     char** error_msg) {
+MP_EXPORT int hand_landmarker_detect_for_video(void* landmarker,
+                                               MpImagePtr image,
+                                               int64_t timestamp_ms,
+                                               HandLandmarkerResult* result,
+                                               char** error_msg) {
   return mediapipe::tasks::c::vision::hand_landmarker::
       CppHandLandmarkerDetectForVideo(landmarker, image, /* options= */ nullptr,
                                       timestamp_ms, result, error_msg);
 }
 
-int hand_landmarker_detect_for_video_with_options(
+MP_EXPORT int hand_landmarker_detect_for_video_with_options(
     void* landmarker, MpImagePtr image, struct ImageProcessingOptions* options,
     int64_t timestamp_ms, HandLandmarkerResult* result, char** error_msg) {
   return mediapipe::tasks::c::vision::hand_landmarker::
@@ -254,14 +255,15 @@ int hand_landmarker_detect_for_video_with_options(
                                       result, error_msg);
 }
 
-int hand_landmarker_detect_async(void* landmarker, MpImagePtr image,
-                                 int64_t timestamp_ms, char** error_msg) {
+MP_EXPORT int hand_landmarker_detect_async(void* landmarker, MpImagePtr image,
+                                           int64_t timestamp_ms,
+                                           char** error_msg) {
   return mediapipe::tasks::c::vision::hand_landmarker::
       CppHandLandmarkerDetectAsync(landmarker, image, /* options= */ nullptr,
                                    timestamp_ms, error_msg);
 }
 
-int hand_landmarker_detect_async_with_options(
+MP_EXPORT int hand_landmarker_detect_async_with_options(
     void* landmarker, MpImagePtr image, struct ImageProcessingOptions* options,
     int64_t timestamp_ms, char** error_msg) {
   return mediapipe::tasks::c::vision::hand_landmarker::
@@ -269,12 +271,12 @@ int hand_landmarker_detect_async_with_options(
                                    error_msg);
 }
 
-void hand_landmarker_close_result(HandLandmarkerResult* result) {
+MP_EXPORT void hand_landmarker_close_result(HandLandmarkerResult* result) {
   mediapipe::tasks::c::vision::hand_landmarker::CppHandLandmarkerCloseResult(
       result);
 }
 
-int hand_landmarker_close(void* landmarker, char** error_ms) {
+MP_EXPORT int hand_landmarker_close(void* landmarker, char** error_ms) {
   return mediapipe::tasks::c::vision::hand_landmarker::CppHandLandmarkerClose(
       landmarker, error_ms);
 }

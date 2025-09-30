@@ -197,9 +197,11 @@ absl::Status CreateMpImageInternal(MpImageFormat format, int width, int height,
 
 extern "C" {
 
-MpStatus MpImageCreateFromUint8Data(MpImageFormat format, int width, int height,
-                                    const uint8_t* pixel_data,
-                                    int pixel_data_size, MpImagePtr* out) {
+MP_EXPORT MpStatus MpImageCreateFromUint8Data(MpImageFormat format, int width,
+                                              int height,
+                                              const uint8_t* pixel_data,
+                                              int pixel_data_size,
+                                              MpImagePtr* out) {
   if (!pixel_data) {
     ABSL_LOG(ERROR) << "Pixel data is null";
     return kMpInvalidArgument;
@@ -217,9 +219,11 @@ MpStatus MpImageCreateFromUint8Data(MpImageFormat format, int width, int height,
   return ToMpStatus(status);
 }
 
-MpStatus MpImageCreateFromUint16Data(MpImageFormat format, int width,
-                                     int height, const uint16_t* pixel_data,
-                                     int pixel_data_size, MpImagePtr* out) {
+MP_EXPORT MpStatus MpImageCreateFromUint16Data(MpImageFormat format, int width,
+                                               int height,
+                                               const uint16_t* pixel_data,
+                                               int pixel_data_size,
+                                               MpImagePtr* out) {
   if (!pixel_data) {
     ABSL_LOG(ERROR) << "Pixel data is null";
     return kMpInvalidArgument;
@@ -238,9 +242,11 @@ MpStatus MpImageCreateFromUint16Data(MpImageFormat format, int width,
   return ToMpStatus(status);
 }
 
-MpStatus MpImageCreateFromFloatData(MpImageFormat format, int width, int height,
-                                    const float* pixel_data,
-                                    int pixel_data_size, MpImagePtr* out) {
+MP_EXPORT MpStatus MpImageCreateFromFloatData(MpImageFormat format, int width,
+                                              int height,
+                                              const float* pixel_data,
+                                              int pixel_data_size,
+                                              MpImagePtr* out) {
   if (!pixel_data) {
     ABSL_LOG(ERROR) << "Pixel data is null";
     return kMpInvalidArgument;
@@ -259,7 +265,8 @@ MpStatus MpImageCreateFromFloatData(MpImageFormat format, int width, int height,
   return ToMpStatus(status);
 }
 
-MpStatus MpImageCreateFromFile(const char* file_name, MpImagePtr* out) {
+MP_EXPORT MpStatus MpImageCreateFromFile(const char* file_name,
+                                         MpImagePtr* out) {
   unsigned char* image_data = nullptr;
   int width = 0;
   int height = 0;
@@ -300,45 +307,49 @@ MpStatus MpImageCreateFromFile(const char* file_name, MpImagePtr* out) {
   return kMpOk;
 }
 
-bool MpImageUsesGpu(const MpImagePtr image) { return image->image.UsesGpu(); }
+MP_EXPORT bool MpImageUsesGpu(const MpImagePtr image) {
+  return image->image.UsesGpu();
+}
 
-bool MpImageIsContiguous(const MpImagePtr image) {
+MP_EXPORT bool MpImageIsContiguous(const MpImagePtr image) {
   return GetImageFrameSharedPtr(image)->IsContiguous();
 }
 
-bool MpImageIsEmpty(const MpImagePtr image) {
+MP_EXPORT bool MpImageIsEmpty(const MpImagePtr image) {
   return GetImageFrameSharedPtr(image)->IsEmpty();
 }
 
-bool MpImageIsAligned(const MpImagePtr image, uint32_t alignment_boundary) {
+MP_EXPORT bool MpImageIsAligned(const MpImagePtr image,
+                                uint32_t alignment_boundary) {
   return GetImageFrameSharedPtr(image)->IsAligned(alignment_boundary);
 }
 
-int MpImageGetWidth(const MpImagePtr image) {
+MP_EXPORT int MpImageGetWidth(const MpImagePtr image) {
   return GetImageFrameSharedPtr(image)->Width();
 }
 
-int MpImageGetHeight(const MpImagePtr image) {
+MP_EXPORT int MpImageGetHeight(const MpImagePtr image) {
   return GetImageFrameSharedPtr(image)->Height();
 }
 
-int MpImageGetChannels(const MpImagePtr image) {
+MP_EXPORT int MpImageGetChannels(const MpImagePtr image) {
   return GetImageFrameSharedPtr(image)->NumberOfChannels();
 }
 
-int MpImageGetByteDepth(const MpImagePtr image) {
+MP_EXPORT int MpImageGetByteDepth(const MpImagePtr image) {
   return GetImageFrameSharedPtr(image)->ByteDepth();
 }
 
-int MpImageGetWidthStep(const MpImagePtr image) {
+MP_EXPORT int MpImageGetWidthStep(const MpImagePtr image) {
   return GetImageFrameSharedPtr(image)->WidthStep();
 }
 
-MpImageFormat MpImageGetFormat(const MpImagePtr image) {
+MP_EXPORT MpImageFormat MpImageGetFormat(const MpImagePtr image) {
   return ToCImageFormat(GetImageFrameSharedPtr(image)->Format());
 }
 
-MpStatus MpImageDataUint8(const MpImagePtr image, const uint8_t** out) {
+MP_EXPORT MpStatus MpImageDataUint8(const MpImagePtr image,
+                                    const uint8_t** out) {
   auto data = GetCachedContiguousDataAttr<uint8_t>(image);
   if (data.ok()) {
     *out = *data;
@@ -346,7 +357,8 @@ MpStatus MpImageDataUint8(const MpImagePtr image, const uint8_t** out) {
   return ToMpStatus(data.status());
 }
 
-MpStatus MpImageDataUint16(const MpImagePtr image, const uint16_t** out) {
+MP_EXPORT MpStatus MpImageDataUint16(const MpImagePtr image,
+                                     const uint16_t** out) {
   auto data = GetCachedContiguousDataAttr<uint16_t>(image);
   if (data.ok()) {
     *out = *data;
@@ -354,7 +366,8 @@ MpStatus MpImageDataUint16(const MpImagePtr image, const uint16_t** out) {
   return ToMpStatus(data.status());
 }
 
-MpStatus MpImageDataFloat32(const MpImagePtr image, const float** out) {
+MP_EXPORT MpStatus MpImageDataFloat32(const MpImagePtr image,
+                                      const float** out) {
   auto data = GetCachedContiguousDataAttr<float>(image);
   if (data.ok()) {
     *out = *data;
@@ -362,8 +375,8 @@ MpStatus MpImageDataFloat32(const MpImagePtr image, const float** out) {
   return ToMpStatus(data.status());
 }
 
-MpStatus MpImageGetValueUint8(const MpImagePtr image, int* pos, int pos_size,
-                              uint8_t* out) {
+MP_EXPORT MpStatus MpImageGetValueUint8(const MpImagePtr image, int* pos,
+                                        int pos_size, uint8_t* out) {
   auto status = ValidateDimensions(image, pos_size);
   if (!status.ok()) {
     return ToMpStatus(status);
@@ -384,8 +397,8 @@ MpStatus MpImageGetValueUint8(const MpImagePtr image, int* pos, int pos_size,
   return ToMpStatus(value.status());
 }
 
-MpStatus MpImageGetValueUint16(const MpImagePtr image, int* pos, int pos_size,
-                               uint16_t* out) {
+MP_EXPORT MpStatus MpImageGetValueUint16(const MpImagePtr image, int* pos,
+                                         int pos_size, uint16_t* out) {
   auto status = ValidateDimensions(image, pos_size);
   if (!status.ok()) {
     return ToMpStatus(status);
@@ -406,8 +419,8 @@ MpStatus MpImageGetValueUint16(const MpImagePtr image, int* pos, int pos_size,
   return ToMpStatus(value.status());
 }
 
-MpStatus MpImageGetValueFloat32(const MpImagePtr image, int* pos, int pos_size,
-                                float* out) {
+MP_EXPORT MpStatus MpImageGetValueFloat32(const MpImagePtr image, int* pos,
+                                          int pos_size, float* out) {
   auto status = ValidateDimensions(image, pos_size);
   if (!status.ok()) {
     return ToMpStatus(status);
@@ -428,6 +441,6 @@ MpStatus MpImageGetValueFloat32(const MpImagePtr image, int* pos, int pos_size,
   return ToMpStatus(value.status());
 }
 
-void MpImageFree(MpImagePtr image) { delete image; }
+MP_EXPORT void MpImageFree(MpImagePtr image) { delete image; }
 
 }  // extern "C"

@@ -18,26 +18,36 @@ load("@rules_cc//cc:cc_test.bzl", "cc_test")
 
 licenses(["notice"])
 
+OBJECT_DETECTOR_DEPS = [
+    "@com_google_absl//absl/log:absl_log",
+    "@com_google_absl//absl/status",
+    "@com_google_absl//absl/status:statusor",
+    "//mediapipe/framework/formats:image",
+    "//mediapipe/framework/formats:image_frame",
+    "//mediapipe/tasks/c/components/containers:detection_result",
+    "//mediapipe/tasks/c/components/containers:detection_result_converter",
+    "//mediapipe/tasks/c/core:base_options",
+    "//mediapipe/tasks/c/core:base_options_converter",
+    "//mediapipe/tasks/c/vision/core:common",
+    "//mediapipe/tasks/cc/vision/core:running_mode",
+    "//mediapipe/tasks/cc/vision/object_detector",
+    "//mediapipe/tasks/cc/vision/utils:image_utils",
+]
+
 cc_library(
     name = "object_detector_lib",
     srcs = ["object_detector.cc"],
     hdrs = ["object_detector.h"],
     visibility = ["//visibility:public"],
-    deps = [
-        "//mediapipe/framework/formats:image",
-        "//mediapipe/framework/formats:image_frame",
-        "//mediapipe/tasks/c/components/containers:detection_result",
-        "//mediapipe/tasks/c/components/containers:detection_result_converter",
-        "//mediapipe/tasks/c/core:base_options",
-        "//mediapipe/tasks/c/core:base_options_converter",
-        "//mediapipe/tasks/c/vision/core:common",
-        "//mediapipe/tasks/cc/vision/core:running_mode",
-        "//mediapipe/tasks/cc/vision/object_detector",
-        "//mediapipe/tasks/cc/vision/utils:image_utils",
-        "@com_google_absl//absl/log:absl_log",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:statusor",
-    ],
+    deps = OBJECT_DETECTOR_DEPS,
+)
+
+cc_library(
+    name = "object_detector_c_lib",
+    srcs = ["object_detector.cc"],
+    hdrs = ["object_detector.h"],
+    visibility = ["//mediapipe/tasks/c:__subpackages__"],
+    deps = OBJECT_DETECTOR_DEPS,
     alwayslink = 1,
 )
 

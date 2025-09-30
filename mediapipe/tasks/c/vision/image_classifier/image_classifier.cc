@@ -234,41 +234,45 @@ int CppImageClassifierClose(void* classifier, char** error_msg) {
 
 extern "C" {
 
-void* image_classifier_create(struct ImageClassifierOptions* options,
-                              char** error_msg) {
+MP_EXPORT void* image_classifier_create(struct ImageClassifierOptions* options,
+                                        char** error_msg) {
   return mediapipe::tasks::c::vision::image_classifier::
       CppImageClassifierCreate(*options, error_msg);
 }
 
-int image_classifier_classify_image(void* classifier, const MpImage* image,
-                                    ImageClassifierResult* result,
-                                    char** error_msg) {
+MP_EXPORT int image_classifier_classify_image(void* classifier,
+                                              const MpImage* image,
+                                              ImageClassifierResult* result,
+                                              char** error_msg) {
   return mediapipe::tasks::c::vision::image_classifier::
       CppImageClassifierClassify(classifier, image, result, error_msg);
 }
 
-int image_classifier_classify_for_video(void* classifier, const MpImage* image,
-                                        int64_t timestamp_ms,
-                                        ImageClassifierResult* result,
-                                        char** error_msg) {
+MP_EXPORT int image_classifier_classify_for_video(void* classifier,
+                                                  const MpImage* image,
+                                                  int64_t timestamp_ms,
+                                                  ImageClassifierResult* result,
+                                                  char** error_msg) {
   return mediapipe::tasks::c::vision::image_classifier::
       CppImageClassifierClassifyForVideo(classifier, image, timestamp_ms,
                                          result, error_msg);
 }
 
-int image_classifier_classify_async(void* classifier, const MpImage* image,
-                                    int64_t timestamp_ms, char** error_msg) {
+MP_EXPORT int image_classifier_classify_async(void* classifier,
+                                              const MpImage* image,
+                                              int64_t timestamp_ms,
+                                              char** error_msg) {
   return mediapipe::tasks::c::vision::image_classifier::
       CppImageClassifierClassifyAsync(classifier, image, timestamp_ms,
                                       error_msg);
 }
 
-void image_classifier_close_result(ImageClassifierResult* result) {
+MP_EXPORT void image_classifier_close_result(ImageClassifierResult* result) {
   mediapipe::tasks::c::vision::image_classifier::CppImageClassifierCloseResult(
       result);
 }
 
-int image_classifier_close(void* classifier, char** error_ms) {
+MP_EXPORT int image_classifier_close(void* classifier, char** error_ms) {
   return mediapipe::tasks::c::vision::image_classifier::CppImageClassifierClose(
       classifier, error_ms);
 }

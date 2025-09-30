@@ -65,27 +65,37 @@ cc_test(
     ],
 )
 
+IMAGE_SEGMENTER_DEPS = [
+    ":image_segmenter_result",
+    ":image_segmenter_result_converter",
+    "@com_google_absl//absl/log",
+    "@com_google_absl//absl/status",
+    "@com_google_absl//absl/status:statusor",
+    "//mediapipe/framework/formats:image",
+    "//mediapipe/framework/formats:image_frame",
+    "//mediapipe/tasks/c/core:base_options",
+    "//mediapipe/tasks/c/core:base_options_converter",
+    "//mediapipe/tasks/c/vision/core:common",
+    "//mediapipe/tasks/cc/vision/core:running_mode",
+    "//mediapipe/tasks/cc/vision/image_segmenter",
+    "//mediapipe/tasks/cc/vision/image_segmenter:image_segmenter_result",
+    "//mediapipe/tasks/cc/vision/utils:image_utils",
+]
+
 cc_library(
     name = "image_segmenter_lib",
     srcs = ["image_segmenter.cc"],
     hdrs = ["image_segmenter.h"],
     visibility = ["//visibility:public"],
-    deps = [
-        ":image_segmenter_result",
-        ":image_segmenter_result_converter",
-        "//mediapipe/framework/formats:image",
-        "//mediapipe/framework/formats:image_frame",
-        "//mediapipe/tasks/c/core:base_options",
-        "//mediapipe/tasks/c/core:base_options_converter",
-        "//mediapipe/tasks/c/vision/core:common",
-        "//mediapipe/tasks/cc/vision/core:running_mode",
-        "//mediapipe/tasks/cc/vision/image_segmenter",
-        "//mediapipe/tasks/cc/vision/image_segmenter:image_segmenter_result",
-        "//mediapipe/tasks/cc/vision/utils:image_utils",
-        "@com_google_absl//absl/log",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:statusor",
-    ],
+    deps = IMAGE_SEGMENTER_DEPS,
+)
+
+cc_library(
+    name = "image_segmenter_c_lib",
+    srcs = ["image_segmenter.cc"],
+    hdrs = ["image_segmenter.h"],
+    visibility = ["//mediapipe/tasks/c:__subpackages__"],
+    deps = IMAGE_SEGMENTER_DEPS,
     alwayslink = 1,
 )
 
