@@ -21,7 +21,16 @@ licenses(["notice"])
 py_library(
     name = "audio_data",
     srcs = ["audio_data.py"],
-    deps = ["@mediapipe_pip_deps_numpy//:pkg"],
+    deps = [
+        ":audio_data_c",
+        "//mediapipe/tasks/python/core:optional_dependencies",
+        "@mediapipe_pip_deps_numpy//:pkg",
+    ],
+)
+
+py_library(
+    name = "audio_data_c",
+    srcs = ["audio_data_c.py"],
 )
 
 py_library(

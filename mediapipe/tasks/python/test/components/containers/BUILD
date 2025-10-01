@@ -1,4 +1,4 @@
-# Copyright 2025 The MediaPipe Authors.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,21 @@
 package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
+
+py_test(
+    name = "audio_data_test",
+    srcs = ["audio_data_test.py"],
+    data = [
+        "//mediapipe/tasks/testdata/audio:test_audio_clips",
+    ],
+    deps = [
+        "//mediapipe/tasks/python/components/containers:audio_data",
+        "//mediapipe/tasks/python/components/containers:audio_data_c",
+        "//mediapipe/tasks/python/test:test_utils",
+        "@mediapipe_pip_deps_absl_py//:pkg",
+        "@mediapipe_pip_deps_numpy//:pkg",
+    ],
+)
 
 py_test(
     name = "category_test",
