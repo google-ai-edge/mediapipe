@@ -132,6 +132,80 @@ Notes
 For iOS on Apple Silicon, see the docs in this repository:
 - `../docs/ios_handtrackinggpu_bazel_quickstart.md`
 - `../docs/README_ios_mediapipe_handtrackinggpu.md`
+
+## Examples (Bazel)
+
+This fork preserves the classic MediaPipe examples. Below are concise Bazel
+commands to build and run the Hand Tracking samples and related examples.
+
+### Hand Tracking — Desktop (CPU)
+
+Build and run the desktop CPU example with your Mac’s webcam:
+
+```bash
+# Build
+bazelisk build -c opt --define MEDIAPIPE_DISABLE_GPU=1 \
+  mediapipe/examples/desktop/hand_tracking:hand_tracking_cpu
+
+# Run (opens default webcam)
+GLOG_logtostderr=1 \
+  bazel-bin/mediapipe/examples/desktop/hand_tracking/hand_tracking_cpu \
+  --calculator_graph_config_file=mediapipe/graphs/hand_tracking/hand_tracking_desktop_live.pbtxt
+```
+
+Notes:
+- If OpenCV is not detected, install: `brew install opencv pkg-config`.
+- Grant Terminal camera permissions on first run (macOS privacy prompt).
+
+### Hand Tracking — Desktop (GPU)
+
+Desktop GPU example is supported on Linux per upstream docs. On macOS, prefer:
+- Desktop CPU example above, or
+- iOS HandTrackingGpu below (runs on-device using Apple GPU/Metal).
+
+### Hand Tracking — iOS (GPU)
+
+Build the iOS app with Bazelisk. You need a valid bundle ID and provisioning
+profile. See the linked docs for full setup.
+
+Device (arm64):
+
+```bash
+# Set a specific Bazel version if needed
+USE_BAZEL_VERSION=6.5.0 \
+bazelisk build -c opt --config=ios_arm64 \
+  //mediapipe/examples/ios/handtrackinggpu:handtrackinggpu
+
+# App bundle path (after build):
+# bazel-bin/mediapipe/examples/ios/handtrackinggpu/HandTrackingGpuApp_archive-root/Payload/HandTrackingGpuApp.app
+```
+
+Simulator (arm64):
+
+```bash
+USE_BAZEL_VERSION=6.5.0 \
+bazelisk build -c opt --config=ios_sim_arm64 \
+  //mediapipe/examples/ios/handtrackinggpu:HandTrackingGpuApp
+```
+
+Install/launch on a connected device via Xcode tools:
+
+```bash
+# Replace <UDID> with your device identifier
+xcrun devicectl device install app --device <UDID> \
+  bazel-bin/mediapipe/examples/ios/handtrackinggpu/HandTrackingGpuApp_archive-root/Payload/HandTrackingGpuApp.app
+
+xcrun devicectl device process launch --device <UDID> \
+  com.codexmp.mediapipe.examples.HandTrackingGpu
+```
+
+Where to set bundle ID and profiles:
+- Bundle ID prefix: `mediapipe/examples/ios/bundle_id.bzl`
+- Optional per-app profile: `mediapipe/examples/ios/handtrackinggpu/provisioning_profile.mobileprovision`
+
+More details and troubleshooting:
+- `../docs/ios_handtrackinggpu_bazel_quickstart.md`
+- `../docs/README_ios_mediapipe_handtrackinggpu.md`
 - `../docs/ios_tulsi_faq.md`
 
 ## Contributing
