@@ -15,7 +15,10 @@
 """Configuration helper for iOS app bundle ids and provisioning profiles.
 """
 
-BUNDLE_ID_PREFIX = "*SEE_IOS_INSTRUCTIONS*.mediapipe.examples"
+# Set a valid bundle identifier prefix for local builds.
+# For simulator builds, the provisioning profile is ignored, but a valid
+# bundle id format is still required by rules_apple.
+BUNDLE_ID_PREFIX = "com.codexmp.mediapipe.examples"
 
 # Look for a provisioning profile in the example's directory first,
 # otherwise look for a common one.

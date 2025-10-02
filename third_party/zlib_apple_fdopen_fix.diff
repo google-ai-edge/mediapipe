@@ -1,0 +1,18 @@
+diff -ruN a/zutil.h b/zutil.h
+--- a/zutil.h
++++ b/zutil.h
+@@ -143,9 +143,13 @@
+ #    if defined(__MWERKS__) && __dest_os != __be_os && __dest_os != __win32_os
+ #      include <unix.h> /* for fdopen */
+ #    else
+ #      ifndef fdopen
+-#        define fdopen(fd,mode) NULL /* No fdopen() */
++/* On Apple platforms (macOS/iOS/watchOS/tvOS), fdopen is provided by the
++ * system headers. Redefining it here breaks compilation with modern SDKs.
++ */
++#        if !defined(__APPLE__)
++#          define fdopen(fd,mode) NULL /* No fdopen() */
++#        endif
+ #      endif
+ #    endif
+ #  endif

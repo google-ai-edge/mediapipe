@@ -44,7 +44,12 @@ ios_application(
         "Info.plist",
     ],
     minimum_os_version = MIN_IOS_VERSION,
-    provisioning_profile = example_provisioning(),
+    # Only require a provisioning profile for device builds; simulators don't need one.
+    provisioning_profile = select({
+        "//mediapipe:ios_sim_arm64": None,
+        "//mediapipe:ios_x86_64": None,
+        "//conditions:default": example_provisioning(),
+    }),
     deps = [":HelloWorldAppLibrary"],
 )
 

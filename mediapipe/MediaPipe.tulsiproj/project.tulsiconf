@@ -1,8 +1,17 @@
 {
   "configDefaults" : {
     "optionSet" : {
+      "BazelBuildStartupOptionsDebug" : {
+        "p" : "--repo_env=HERMETIC_PYTHON_VERSION=3.12 --noenable_bzlmod"
+      },
+      "BazelBuildStartupOptionsRelease" : {
+        "p" : "--repo_env=HERMETIC_PYTHON_VERSION=3.12 --noenable_bzlmod"
+      },
       "CLANG_CXX_LANGUAGE_STANDARD" : {
         "p" : "c++14"
+      },
+      "ProjectGenerationBazelStartupOptions" : {
+        "p" : "--repo_env=HERMETIC_PYTHON_VERSION=3.12 --noenable_bzlmod"
       }
     }
   },
@@ -26,5 +35,5 @@
     "mediapipe/objc"
   ],
   "projectName" : "Mediapipe",
-  "workspaceRoot" : "../.."
+  "workspaceRoot" : ".."
 }

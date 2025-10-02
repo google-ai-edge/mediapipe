@@ -14,6 +14,12 @@ COPTS = select({
         "-Wno-incompatible-pointer-types-discards-qualifiers",
         "-Wno-parentheses",
         "-DIOAPI_NO_64",
+        # Work around zlib 1.2.13 redefining fdopen on Apple platforms.
+        # Undefine these macros so zutil.h does not take the MACOS/TARGET_OS_MAC branch.
+        "-U",
+        "TARGET_OS_MAC",
+        "-U",
+        "MACOS",
     ],
 })
 
