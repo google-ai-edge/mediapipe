@@ -105,6 +105,35 @@ concepts](https://developers.google.com/mediapipe/framework/framework_concepts/o
     curated list of awesome MediaPipe related frameworks, libraries and
     software.
 
+## Run on Apple Silicon (macOS)
+
+The following quick-start shows how to build and run a simple MediaPipe example
+on an Apple Silicon (arm64) Mac. These steps use native arm64 tooling.
+
+- Prerequisites: Xcode + CLT, Homebrew, Bazelisk
+  - Install Xcode CLT: `xcode-select --install`
+  - Install Homebrew: https://brew.sh
+  - Install tools: `brew install bazelisk cmake ninja protobuf opencv pkg-config python`
+
+- Clone your fork and enter the repo
+  - `git clone https://github.com/anooshm/mediapipe.git`
+  - `cd mediapipe`
+
+- Build and run the desktop Hello World (CPU)
+  - Build: `bazelisk build -c opt --define MEDIAPIPE_DISABLE_GPU=1 //mediapipe/examples/desktop/hello_world:hello_world`
+  - Run: `bazelisk run -c opt --define MEDIAPIPE_DISABLE_GPU=1 //mediapipe/examples/desktop/hello_world:hello_world`
+
+Notes
+- CPU-only avoids GPU/GL driver differences on macOS; add GPU back later if needed.
+- If Homebrew installs OpenCV to a non-standard path, `pkg-config` (installed above)
+  typically resolves includes and libs automatically.
+- Ensure you are using Apple Silicon-native Homebrew (no Rosetta) for consistent arm64 builds.
+
+For iOS on Apple Silicon, see the docs in this repository:
+- `../docs/ios_handtrackinggpu_bazel_quickstart.md`
+- `../docs/README_ios_mediapipe_handtrackinggpu.md`
+- `../docs/ios_tulsi_faq.md`
+
 ## Contributing
 
 We welcome contributions. Please follow these
