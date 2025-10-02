@@ -21,6 +21,7 @@
 
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/packet_type.h"
+#include "mediapipe/framework/port.h"
 #include "mediapipe/gpu/gpu_shared_data_internal.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -58,6 +59,7 @@ NS_ASSUME_NONNULL_BEGIN
 /// calculators.
 - (id<MTLCommandBuffer>)commandBuffer;
 
+#if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 /// Creates a CVMetalTextureRef linked to the provided GpuBuffer.
 /// Ownership follows the copy rule, so the caller is responsible for
 /// releasing the CVMetalTextureRef.
@@ -79,6 +81,7 @@ NS_ASSUME_NONNULL_BEGIN
 /// use it as a rendering target if the GpuBuffer was provided as an input.
 - (id<MTLTexture>)metalTextureWithGpuBuffer:(const mediapipe::GpuBuffer&)gpuBuffer
                                       plane:(size_t)plane;
+#endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 
 /// Obtains a new GpuBuffer to be used as an output destination.
 - (mediapipe::GpuBuffer)mediapipeGpuBufferWithWidth:(int)width height:(int)height;

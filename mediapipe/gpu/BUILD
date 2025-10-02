@@ -365,7 +365,7 @@ cc_library(
         ":disable_gpu": [],
     }) + select({
         "//conditions:default": [],
-        "//mediapipe:ios": [
+        "//mediapipe:apple": [
             "//mediapipe/objc:util",
         ],
     }),
@@ -1065,6 +1065,7 @@ cc_library(
         ":gpu_service",
         ":gpu_shared_data_internal",
         ":graph_support",
+        "//mediapipe/framework/port",
         "//mediapipe/objc:mediapipe_framework_ios",
         "//third_party/apple_frameworks:CoreVideo",
         "//third_party/apple_frameworks:Metal",

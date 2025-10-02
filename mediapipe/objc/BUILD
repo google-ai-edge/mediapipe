@@ -97,6 +97,7 @@ cc_library(
         "//mediapipe/util:cpu_util",
         "//third_party/apple_frameworks:AVFoundation",
         "//third_party/apple_frameworks:Accelerate",
+        "//third_party/apple_frameworks:CoreMedia",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",

@@ -134,6 +134,7 @@ class MetalHelperLegacySupport {
       [_gpuResources->metal_shared().resources().mtlCommandQueue commandBuffer];
 }
 
+#if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 - (CVMetalTextureRef)copyCVMetalTextureWithGpuBuffer:
                          (const mediapipe::GpuBuffer&)gpuBuffer
                                                plane:(size_t)plane {
@@ -208,6 +209,7 @@ class MetalHelperLegacySupport {
   cvTexture.adopt([self copyCVMetalTextureWithGpuBuffer:gpuBuffer plane:plane]);
   return CVMetalTextureGetTexture(*cvTexture);
 }
+#endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 
 - (mediapipe::GpuBuffer)mediapipeGpuBufferWithWidth:(int)width
                                              height:(int)height {
