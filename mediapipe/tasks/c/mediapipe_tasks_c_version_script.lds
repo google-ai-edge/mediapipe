@@ -6,6 +6,7 @@ VERS_1.0 {
     MpImage*;
     face_detector_*;
     face_landmarker_*;
+    hand_landmarker_*;
   local:
     *;
 };
