@@ -21,6 +21,7 @@ licenses(["notice"])
 py_library(
     name = "audio_task_running_mode",
     srcs = ["audio_task_running_mode.py"],
+    deps = ["//mediapipe/tasks/python/core:optional_dependencies"],
 )
 
 py_library(

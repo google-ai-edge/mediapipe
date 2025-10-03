@@ -184,6 +184,12 @@ MpStatus MpAudioClassifierClassifyAsync(MpAudioClassifierPtr classifier,
 }
 
 MpStatus MpAudioClassifierClose(MpAudioClassifierPtr classifier) {
+  auto* cpp_classifier = classifier->classifier.get();
+  auto cpp_status = cpp_classifier->Close();
+  if (!cpp_status.ok()) {
+    ABSL_LOG(ERROR) << "Failed to close AudioClassifier: " << cpp_status;
+    return ToMpStatus(cpp_status);
+  }
   delete classifier;
   return kMpOk;
 }

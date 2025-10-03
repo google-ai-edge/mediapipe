@@ -3,6 +3,7 @@ VERS_1.0 {
     language_detector_*;
     text_classifier_*;
     text_embedder_*;
+    MpAudioClassifier*;
     MpImage*;
     face_detector_*;
     face_landmarker_*;

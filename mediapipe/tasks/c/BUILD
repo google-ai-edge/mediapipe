@@ -36,6 +36,7 @@ cc_shared_library(
         "-Wl,--version-script=$(location :mediapipe_tasks_c_version_script.lds)",
     ],
     deps = [
+        "//mediapipe/tasks/c/audio/audio_classifier:audio_classifier_c_lib",
         "//mediapipe/tasks/c/text/language_detector:language_detector_c_lib",
         "//mediapipe/tasks/c/text/text_classifier:text_classifier_c_lib",
         "//mediapipe/tasks/c/text/text_embedder:text_embedder_c_lib",
