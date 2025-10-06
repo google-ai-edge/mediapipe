@@ -27,6 +27,8 @@ limitations under the License.
 extern "C" {
 #endif
 
+typedef struct MpLanguageDetectorInternal* MpLanguageDetectorPtr;
+
 // A language code and its probability.
 struct LanguageDetectorPrediction {
   // An i18n language / locale code, e.g. "en" for English, "uz" for Uzbek,
@@ -60,14 +62,15 @@ struct LanguageDetectorOptions {
 // If an error occurs, returns `nullptr` and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT void* language_detector_create(
+MP_EXPORT MpLanguageDetectorPtr language_detector_create(
     struct LanguageDetectorOptions* options, char** error_msg);
 
 // Performs language detection on the input `text`. Returns `0` on success.
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT int language_detector_detect(void* detector, const char* utf8_str,
+MP_EXPORT int language_detector_detect(MpLanguageDetectorPtr detector,
+                                       const char* utf8_str,
                                        struct LanguageDetectorResult* result,
                                        char** error_msg);
 
@@ -80,7 +83,8 @@ MP_EXPORT void language_detector_close_result(
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT int language_detector_close(void* detector, char** error_msg);
+MP_EXPORT int language_detector_close(MpLanguageDetectorPtr detector,
+                                      char** error_msg);
 
 #ifdef __cplusplus
 }  // extern C

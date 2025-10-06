@@ -33,6 +33,12 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/interactive_segmenter/interactive_segmenter.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 
+struct MpInteractiveSegmenterInternal {
+  std::unique_ptr<
+      ::mediapipe::tasks::vision::interactive_segmenter::InteractiveSegmenter>
+      segmenter;
+};
+
 namespace mediapipe::tasks::c::vision::interactive_segmenter {
 
 namespace {
@@ -96,7 +102,7 @@ void CppConvertToInteractiveSegmenterOptions(
   out->output_category_mask = in.output_category_mask;
 }
 
-InteractiveSegmenter* CppInteractiveSegmenterCreate(
+MpInteractiveSegmenterPtr CppInteractiveSegmenterCreate(
     const InteractiveSegmenterOptions& options, char** error_msg) {
   auto cpp_options =
       std::make_unique<::mediapipe::tasks::vision::interactive_segmenter::
@@ -112,10 +118,11 @@ InteractiveSegmenter* CppInteractiveSegmenterCreate(
     CppProcessError(segmenter.status(), error_msg);
     return nullptr;
   }
-  return segmenter->release();
+  return new MpInteractiveSegmenterInternal{.segmenter = std::move(*segmenter)};
 }
 
-int CppInteractiveSegmenterSegment(void* segmenter, const MpImage* image,
+int CppInteractiveSegmenterSegment(MpInteractiveSegmenterPtr segmenter,
+                                   const MpImage* image,
                                    const RegionOfInterest* region_of_interest,
                                    ImageSegmenterResult* result,
                                    char** error_msg) {
@@ -140,7 +147,7 @@ int CppInteractiveSegmenterSegment(void* segmenter, const MpImage* image,
     return CppProcessError(img.status(), error_msg);
   }
 
-  auto cpp_segmenter = static_cast<InteractiveSegmenter*>(segmenter);
+  auto cpp_segmenter = segmenter->segmenter.get();
   auto cpp_result = cpp_segmenter->Segment(*img, roi);
   if (!cpp_result.ok()) {
     ABSL_LOG(ERROR) << "Segmentation failed: " << cpp_result.status();
@@ -154,14 +161,15 @@ void CppImageSegmenterCloseResult(ImageSegmenterResult* result) {
   CppCloseImageSegmenterResult(result);
 }
 
-int CppInteractiveSegmenterClose(void* segmenter, char** error_msg) {
-  auto cpp_segmenter = static_cast<InteractiveSegmenter*>(segmenter);
+int CppInteractiveSegmenterClose(MpInteractiveSegmenterPtr segmenter,
+                                 char** error_msg) {
+  auto cpp_segmenter = segmenter->segmenter.get();
   auto result = cpp_segmenter->Close();
   if (!result.ok()) {
     ABSL_LOG(ERROR) << "Failed to close InteractiveSegmenter: " << result;
     return CppProcessError(result, error_msg);
   }
-  delete cpp_segmenter;
+  delete segmenter;
   return 0;
 }
 
@@ -169,17 +177,16 @@ int CppInteractiveSegmenterClose(void* segmenter, char** error_msg) {
 
 extern "C" {
 
-MP_EXPORT void* interactive_segmenter_create(
+MP_EXPORT MpInteractiveSegmenterPtr interactive_segmenter_create(
     struct InteractiveSegmenterOptions* options, char** error_msg) {
   return mediapipe::tasks::c::vision::interactive_segmenter::
       CppInteractiveSegmenterCreate(*options, error_msg);
 }
 
-MP_EXPORT int interactive_segmenter_segment_image(void* segmenter,
-                                                  const MpImage* image,
-                                                  const RegionOfInterest* roi,
-                                                  ImageSegmenterResult* result,
-                                                  char** error_msg) {
+MP_EXPORT int interactive_segmenter_segment_image(
+    MpInteractiveSegmenterPtr segmenter, const MpImage* image,
+    const RegionOfInterest* roi, ImageSegmenterResult* result,
+    char** error_msg) {
   return mediapipe::tasks::c::vision::interactive_segmenter::
       CppInteractiveSegmenterSegment(segmenter, image, roi, result, error_msg);
 }
@@ -190,7 +197,8 @@ MP_EXPORT void interactive_segmenter_close_result(
       CppImageSegmenterCloseResult(result);
 }
 
-MP_EXPORT int interactive_segmenter_close(void* segmenter, char** error_ms) {
+MP_EXPORT int interactive_segmenter_close(MpInteractiveSegmenterPtr segmenter,
+                                          char** error_ms) {
   return mediapipe::tasks::c::vision::interactive_segmenter::
       CppInteractiveSegmenterClose(segmenter, error_ms);
 }

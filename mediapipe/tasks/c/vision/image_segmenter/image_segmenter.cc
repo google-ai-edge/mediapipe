@@ -34,6 +34,11 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/image_segmenter/image_segmenter_result.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 
+struct MpImageSegmenterInternal {
+  std::unique_ptr<::mediapipe::tasks::vision::image_segmenter::ImageSegmenter>
+      segmenter;
+};
+
 namespace mediapipe::tasks::c::vision::image_segmenter {
 
 namespace {
@@ -66,8 +71,8 @@ void CppConvertToImageSegmenterOptions(
   out->output_category_mask = in.output_category_mask;
 }
 
-ImageSegmenter* CppImageSegmenterCreate(const ImageSegmenterOptions& options,
-                                        char** error_msg) {
+MpImageSegmenterPtr CppImageSegmenterCreate(
+    const ImageSegmenterOptions& options, char** error_msg) {
   auto cpp_options = std::make_unique<
       ::mediapipe::tasks::vision::image_segmenter::ImageSegmenterOptions>();
 
@@ -125,11 +130,12 @@ ImageSegmenter* CppImageSegmenterCreate(const ImageSegmenterOptions& options,
     CppProcessError(segmenter.status(), error_msg);
     return nullptr;
   }
-  return segmenter->release();
+  return new MpImageSegmenterInternal{.segmenter = std::move(*segmenter)};
 }
 
-int CppImageSegmenterSegment(void* segmenter, const MpImage* image,
-                             ImageSegmenterResult* result, char** error_msg) {
+int CppImageSegmenterSegment(MpImageSegmenterPtr segmenter,
+                             const MpImage* image, ImageSegmenterResult* result,
+                             char** error_msg) {
   if (image->type == MpImage::GPU_BUFFER) {
     const absl::Status status =
         absl::InvalidArgumentError("GPU Buffer not supported yet.");
@@ -148,7 +154,7 @@ int CppImageSegmenterSegment(void* segmenter, const MpImage* image,
     return CppProcessError(img.status(), error_msg);
   }
 
-  auto cpp_segmenter = static_cast<ImageSegmenter*>(segmenter);
+  auto cpp_segmenter = segmenter->segmenter.get();
   auto cpp_result = cpp_segmenter->Segment(*img);
   if (!cpp_result.ok()) {
     LOG(ERROR) << "Segmentation failed: " << cpp_result.status();
@@ -158,8 +164,8 @@ int CppImageSegmenterSegment(void* segmenter, const MpImage* image,
   return 0;
 }
 
-int CppImageSegmenterSegmentForVideo(void* segmenter, const MpImage* image,
-                                     int64_t timestamp_ms,
+int CppImageSegmenterSegmentForVideo(MpImageSegmenterPtr segmenter,
+                                     const MpImage* image, int64_t timestamp_ms,
                                      ImageSegmenterResult* result,
                                      char** error_msg) {
   if (image->type == MpImage::GPU_BUFFER) {
@@ -180,7 +186,7 @@ int CppImageSegmenterSegmentForVideo(void* segmenter, const MpImage* image,
     return CppProcessError(img.status(), error_msg);
   }
 
-  auto cpp_segmenter = static_cast<ImageSegmenter*>(segmenter);
+  auto cpp_segmenter = segmenter->segmenter.get();
   auto cpp_result = cpp_segmenter->SegmentForVideo(*img, timestamp_ms);
   if (!cpp_result.ok()) {
     LOG(ERROR) << "Segmentation failed: " << cpp_result.status();
@@ -190,8 +196,9 @@ int CppImageSegmenterSegmentForVideo(void* segmenter, const MpImage* image,
   return 0;
 }
 
-int CppImageSegmenterSegmentAsync(void* segmenter, const MpImage* image,
-                                  int64_t timestamp_ms, char** error_msg) {
+int CppImageSegmenterSegmentAsync(MpImageSegmenterPtr segmenter,
+                                  const MpImage* image, int64_t timestamp_ms,
+                                  char** error_msg) {
   if (image->type == MpImage::GPU_BUFFER) {
     absl::Status status =
         absl::InvalidArgumentError("GPU Buffer not supported yet");
@@ -210,7 +217,7 @@ int CppImageSegmenterSegmentAsync(void* segmenter, const MpImage* image,
     return CppProcessError(img.status(), error_msg);
   }
 
-  auto cpp_segmenter = static_cast<ImageSegmenter*>(segmenter);
+  auto cpp_segmenter = segmenter->segmenter.get();
   auto cpp_result = cpp_segmenter->SegmentAsync(*img, timestamp_ms);
   if (!cpp_result.ok()) {
     LOG(ERROR) << "Data preparation for the image segmentation failed: "
@@ -224,14 +231,14 @@ void CppImageSegmenterCloseResult(ImageSegmenterResult* result) {
   CppCloseImageSegmenterResult(result);
 }
 
-int CppImageSegmenterClose(void* segmenter, char** error_msg) {
-  auto cpp_segmenter = static_cast<ImageSegmenter*>(segmenter);
+int CppImageSegmenterClose(MpImageSegmenterPtr segmenter, char** error_msg) {
+  auto cpp_segmenter = segmenter->segmenter.get();
   auto result = cpp_segmenter->Close();
   if (!result.ok()) {
     LOG(ERROR) << "Failed to close ImageSegmenter: " << result;
     return CppProcessError(result, error_msg);
   }
-  delete cpp_segmenter;
+  delete segmenter;
   return 0;
 }
 
@@ -239,13 +246,13 @@ int CppImageSegmenterClose(void* segmenter, char** error_msg) {
 
 extern "C" {
 
-MP_EXPORT void* image_segmenter_create(struct ImageSegmenterOptions* options,
-                                       char** error_msg) {
+MP_EXPORT MpImageSegmenterPtr image_segmenter_create(
+    struct ImageSegmenterOptions* options, char** error_msg) {
   return mediapipe::tasks::c::vision::image_segmenter::CppImageSegmenterCreate(
       *options, error_msg);
 }
 
-MP_EXPORT int image_segmenter_segment_image(void* segmenter,
+MP_EXPORT int image_segmenter_segment_image(MpImageSegmenterPtr segmenter,
                                             const MpImage* image,
                                             ImageSegmenterResult* result,
                                             char** error_msg) {
@@ -253,7 +260,7 @@ MP_EXPORT int image_segmenter_segment_image(void* segmenter,
       segmenter, image, result, error_msg);
 }
 
-MP_EXPORT int image_segmenter_segment_for_video(void* segmenter,
+MP_EXPORT int image_segmenter_segment_for_video(MpImageSegmenterPtr segmenter,
                                                 const MpImage* image,
                                                 int64_t timestamp_ms,
                                                 ImageSegmenterResult* result,
@@ -263,7 +270,7 @@ MP_EXPORT int image_segmenter_segment_for_video(void* segmenter,
                                        error_msg);
 }
 
-MP_EXPORT int image_segmenter_segment_async(void* segmenter,
+MP_EXPORT int image_segmenter_segment_async(MpImageSegmenterPtr segmenter,
                                             const MpImage* image,
                                             int64_t timestamp_ms,
                                             char** error_msg) {
@@ -276,7 +283,8 @@ MP_EXPORT void image_segmenter_close_result(ImageSegmenterResult* result) {
       result);
 }
 
-MP_EXPORT int image_segmenter_close(void* segmenter, char** error_ms) {
+MP_EXPORT int image_segmenter_close(MpImageSegmenterPtr segmenter,
+                                    char** error_ms) {
   return mediapipe::tasks::c::vision::image_segmenter::CppImageSegmenterClose(
       segmenter, error_ms);
 }

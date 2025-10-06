@@ -66,7 +66,7 @@ TEST(InteractiveSegmenterTest,
       /* output_category_mask= */ true,
   };
 
-  void* segmenter =
+  MpInteractiveSegmenterPtr segmenter =
       interactive_segmenter_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(segmenter, nullptr);
 
@@ -121,7 +121,7 @@ TEST(InteractiveSegmenterTest,
       /* output_category_mask= */ true,
   };
 
-  void* segmenter =
+  MpInteractiveSegmenterPtr segmenter =
       interactive_segmenter_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(segmenter, nullptr);
 
@@ -173,7 +173,8 @@ TEST(InteractiveSegmenterTest, InvalidArgumentHandling) {
   };
 
   char* error_msg;
-  void* segmenter = interactive_segmenter_create(&options, &error_msg);
+  MpInteractiveSegmenterPtr segmenter =
+      interactive_segmenter_create(&options, &error_msg);
   EXPECT_EQ(segmenter, nullptr);
 
   EXPECT_THAT(error_msg, HasSubstr("ExternalFile must specify"));
@@ -191,8 +192,9 @@ TEST(InteractiveSegmenterTest, FailedRecognitionHandling) {
       /* output_category_mask= */ true,
   };
 
-  void* segmenter = interactive_segmenter_create(&options, /* error_msg */
-                                                 nullptr);
+  MpInteractiveSegmenterPtr segmenter =
+      interactive_segmenter_create(&options, /* error_msg */
+                                   nullptr);
   EXPECT_NE(segmenter, nullptr);
 
   const MpImage mp_image = {.type = MpImage::GPU_BUFFER, .gpu_buffer = {}};

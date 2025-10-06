@@ -139,7 +139,8 @@ TEST(HandLandmarkerTest, ImageModeTest) {
       /* min_tracking_confidence= */ 0.5,
   };
 
-  void* landmarker = hand_landmarker_create(&options, /* error_msg */ nullptr);
+  MpHandLandmarkerPtr landmarker =
+      hand_landmarker_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(landmarker, nullptr);
 
   HandLandmarkerResult result;
@@ -169,7 +170,8 @@ TEST(HandLandmarkerTest, ImageModeWithOptionsTest) {
       /* min_tracking_confidence= */ 0.5,
   };
 
-  void* landmarker = hand_landmarker_create(&options, /* error_msg */ nullptr);
+  MpHandLandmarkerPtr landmarker =
+      hand_landmarker_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(landmarker, nullptr);
 
   ImageProcessingOptions image_processing_options;
@@ -204,7 +206,8 @@ TEST(HandLandmarkerTest, VideoModeTest) {
       /* min_tracking_confidence= */ 0.5,
   };
 
-  void* landmarker = hand_landmarker_create(&options, /* error_msg */ nullptr);
+  MpHandLandmarkerPtr landmarker =
+      hand_landmarker_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(landmarker, nullptr);
 
   LandmarksDetectionResult expected_landmarks =
@@ -262,7 +265,8 @@ TEST(HandLandmarkerTest, DISABLED_LiveStreamModeTest) {
       /* result_callback_fn= */ LiveStreamModeCallback::Fn,
   };
 
-  void* landmarker = hand_landmarker_create(&options, /* error_msg */ nullptr);
+  MpHandLandmarkerPtr landmarker =
+      hand_landmarker_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(landmarker, nullptr);
 
   for (int i = 0; i < kIterations; ++i) {
@@ -292,7 +296,7 @@ TEST(HandLandmarkerTest, InvalidArgumentHandling) {
   };
 
   char* error_msg;
-  void* landmarker = hand_landmarker_create(&options, &error_msg);
+  MpHandLandmarkerPtr landmarker = hand_landmarker_create(&options, &error_msg);
   EXPECT_EQ(landmarker, nullptr);
 
   EXPECT_THAT(error_msg, HasSubstr("ExternalFile must specify"));

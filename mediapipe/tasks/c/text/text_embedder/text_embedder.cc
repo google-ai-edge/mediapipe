@@ -27,6 +27,11 @@ limitations under the License.
 #include "mediapipe/tasks/cc/components/containers/embedding_result.h"
 #include "mediapipe/tasks/cc/text/text_embedder/text_embedder.h"
 
+struct MpTextEmbedderInternal {
+  std::unique_ptr<::mediapipe::tasks::text::text_embedder::TextEmbedder>
+      embedder;
+};
+
 namespace mediapipe::tasks::c::text::text_embedder {
 
 namespace {
@@ -50,8 +55,8 @@ int CppProcessError(absl::Status status, char** error_msg) {
 
 }  // namespace
 
-TextEmbedder* CppTextEmbedderCreate(const TextEmbedderOptions& options,
-                                    char** error_msg) {
+MpTextEmbedderPtr CppTextEmbedderCreate(const TextEmbedderOptions& options,
+                                        char** error_msg) {
   auto cpp_options = std::make_unique<
       ::mediapipe::tasks::text::text_embedder::TextEmbedderOptions>();
 
@@ -65,12 +70,12 @@ TextEmbedder* CppTextEmbedderCreate(const TextEmbedderOptions& options,
     CppProcessError(embedder.status(), error_msg);
     return nullptr;
   }
-  return embedder->release();
+  return new MpTextEmbedderInternal{.embedder = std::move(*embedder)};
 }
 
-int CppTextEmbedderEmbed(void* embedder, const char* utf8_str,
+int CppTextEmbedderEmbed(MpTextEmbedderPtr embedder, const char* utf8_str,
                          TextEmbedderResult* result, char** error_msg) {
-  auto cpp_embedder = static_cast<TextEmbedder*>(embedder);
+  auto cpp_embedder = embedder->embedder.get();
   auto cpp_result = cpp_embedder->Embed(utf8_str);
   if (!cpp_result.ok()) {
     ABSL_LOG(ERROR) << "Embedding extraction failed: " << cpp_result.status();
@@ -84,14 +89,14 @@ void CppTextEmbedderCloseResult(TextEmbedderResult* result) {
   CppCloseEmbeddingResult(result);
 }
 
-int CppTextEmbedderClose(void* embedder, char** error_msg) {
-  auto cpp_embedder = static_cast<TextEmbedder*>(embedder);
+int CppTextEmbedderClose(MpTextEmbedderPtr embedder, char** error_msg) {
+  auto cpp_embedder = embedder->embedder.get();
   auto result = cpp_embedder->Close();
   if (!result.ok()) {
     ABSL_LOG(ERROR) << "Failed to close TextEmbedder: " << result;
     return CppProcessError(result, error_msg);
   }
-  delete cpp_embedder;
+  delete embedder;
   return 0;
 }
 
@@ -117,13 +122,14 @@ int CppTextEmbedderCosineSimilarity(const Embedding* u, const Embedding* v,
 
 extern "C" {
 
-MP_EXPORT void* text_embedder_create(struct TextEmbedderOptions* options,
-                                     char** error_msg) {
+MP_EXPORT MpTextEmbedderPtr
+text_embedder_create(struct TextEmbedderOptions* options, char** error_msg) {
   return mediapipe::tasks::c::text::text_embedder::CppTextEmbedderCreate(
       *options, error_msg);
 }
 
-MP_EXPORT int text_embedder_embed(void* embedder, const char* utf8_str,
+MP_EXPORT int text_embedder_embed(MpTextEmbedderPtr embedder,
+                                  const char* utf8_str,
                                   TextEmbedderResult* result,
                                   char** error_msg) {
   return mediapipe::tasks::c::text::text_embedder::CppTextEmbedderEmbed(
@@ -134,7 +140,7 @@ MP_EXPORT void text_embedder_close_result(TextEmbedderResult* result) {
   mediapipe::tasks::c::text::text_embedder::CppTextEmbedderCloseResult(result);
 }
 
-MP_EXPORT int text_embedder_close(void* embedder, char** error_ms) {
+MP_EXPORT int text_embedder_close(MpTextEmbedderPtr embedder, char** error_ms) {
   return mediapipe::tasks::c::text::text_embedder::CppTextEmbedderClose(
       embedder, error_ms);
 }

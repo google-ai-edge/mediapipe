@@ -28,6 +28,7 @@ limitations under the License.
 extern "C" {
 #endif
 
+typedef struct MpObjectDetectorInternal* MpObjectDetectorPtr;
 typedef DetectionResult ObjectDetectorResult;
 
 // The options for configuring a MediaPipe object detector task.
@@ -93,14 +94,15 @@ struct ObjectDetectorOptions {
 // If an error occurs, returns `nullptr` and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT void* object_detector_create(struct ObjectDetectorOptions* options,
-                                       char** error_msg);
+MP_EXPORT MpObjectDetectorPtr
+object_detector_create(struct ObjectDetectorOptions* options, char** error_msg);
 
 // Performs image detection on the input `image`. Returns `0` on success.
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT int object_detector_detect_image(void* detector, const MpImage* image,
+MP_EXPORT int object_detector_detect_image(MpObjectDetectorPtr detector,
+                                           const MpImage* image,
                                            ObjectDetectorResult* result,
                                            char** error_msg);
 
@@ -113,7 +115,7 @@ MP_EXPORT int object_detector_detect_image(void* detector, const MpImage* image,
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT int object_detector_detect_for_video(void* detector,
+MP_EXPORT int object_detector_detect_for_video(MpObjectDetectorPtr detector,
                                                const MpImage* image,
                                                int64_t timestamp_ms,
                                                ObjectDetectorResult* result,
@@ -139,7 +141,8 @@ MP_EXPORT int object_detector_detect_for_video(void* detector,
 // allocated for the error message.
 // You need to invoke `object_detector_close_result` after each invocation to
 // free memory.
-MP_EXPORT int object_detector_detect_async(void* detector, const MpImage* image,
+MP_EXPORT int object_detector_detect_async(MpObjectDetectorPtr detector,
+                                           const MpImage* image,
                                            int64_t timestamp_ms,
                                            char** error_msg);
 
@@ -151,7 +154,8 @@ MP_EXPORT void object_detector_close_result(ObjectDetectorResult* result);
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT int object_detector_close(void* detector, char** error_msg);
+MP_EXPORT int object_detector_close(MpObjectDetectorPtr detector,
+                                    char** error_msg);
 
 #ifdef __cplusplus
 }  // extern C

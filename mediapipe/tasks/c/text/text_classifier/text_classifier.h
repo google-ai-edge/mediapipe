@@ -28,6 +28,7 @@ limitations under the License.
 extern "C" {
 #endif
 
+typedef struct MpTextClassifierInternal* MpTextClassifierPtr;
 typedef struct ClassificationResult TextClassifierResult;
 
 // The options for configuring a MediaPipe text classifier task.
@@ -46,14 +47,15 @@ struct TextClassifierOptions {
 // If an error occurs, returns `nullptr` and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT void* text_classifier_create(struct TextClassifierOptions* options,
-                                       char** error_msg);
+MP_EXPORT MpTextClassifierPtr
+text_classifier_create(struct TextClassifierOptions* options, char** error_msg);
 
 // Performs classification on the input `text`. Returns `0` on success.
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT int text_classifier_classify(void* classifier, const char* utf8_str,
+MP_EXPORT int text_classifier_classify(MpTextClassifierPtr classifier,
+                                       const char* utf8_str,
                                        TextClassifierResult* result,
                                        char** error_msg);
 
@@ -65,7 +67,8 @@ MP_EXPORT void text_classifier_close_result(TextClassifierResult* result);
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT int text_classifier_close(void* classifier, char** error_msg);
+MP_EXPORT int text_classifier_close(MpTextClassifierPtr classifier,
+                                    char** error_msg);
 
 #ifdef __cplusplus
 }  // extern C

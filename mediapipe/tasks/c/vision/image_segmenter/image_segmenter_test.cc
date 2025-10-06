@@ -70,7 +70,8 @@ TEST(ImageSegmenterTest, ImageModeTestSucceedsWithCategoryMask) {
       /* output_category_mask= */ true,
   };
 
-  void* segmenter = image_segmenter_create(&options, /* error_msg */ nullptr);
+  MpImageSegmenterPtr segmenter =
+      image_segmenter_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(segmenter, nullptr);
 
   const auto& image_frame = image->GetImageFrameSharedPtr();
@@ -113,7 +114,8 @@ TEST(ImageSegmenterTest, VideoModeTest) {
       /* output_category_mask= */ true,
   };
 
-  void* segmenter = image_segmenter_create(&options, /* error_msg */ nullptr);
+  MpImageSegmenterPtr segmenter =
+      image_segmenter_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(segmenter, nullptr);
 
   const auto& image_frame = image->GetImageFrameSharedPtr();
@@ -189,7 +191,8 @@ TEST(ImageSegmenterTest, DISABLED_LiveStreamModeTest) {
       /* result_callback= */ LiveStreamModeCallback::Fn,
   };
 
-  void* segmenter = image_segmenter_create(&options, /* error_msg */ nullptr);
+  MpImageSegmenterPtr segmenter =
+      image_segmenter_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(segmenter, nullptr);
 
   const auto& image_frame = image->GetImageFrameSharedPtr();
@@ -226,7 +229,7 @@ TEST(ImageSegmenterTest, InvalidArgumentHandling) {
   };
 
   char* error_msg;
-  void* segmenter = image_segmenter_create(&options, &error_msg);
+  MpImageSegmenterPtr segmenter = image_segmenter_create(&options, &error_msg);
   EXPECT_EQ(segmenter, nullptr);
 
   EXPECT_THAT(error_msg, HasSubstr("ExternalFile must specify"));
@@ -246,8 +249,9 @@ TEST(ImageSegmenterTest, FailedRecognitionHandling) {
       /* output_category_mask= */ true,
   };
 
-  void* segmenter = image_segmenter_create(&options, /* error_msg */
-                                           nullptr);
+  MpImageSegmenterPtr segmenter =
+      image_segmenter_create(&options, /* error_msg */
+                             nullptr);
   EXPECT_NE(segmenter, nullptr);
 
   const MpImage mp_image = {.type = MpImage::GPU_BUFFER, .gpu_buffer = {}};

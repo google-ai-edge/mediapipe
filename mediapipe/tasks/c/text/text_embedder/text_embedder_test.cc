@@ -53,7 +53,8 @@ TEST(TextEmbedderTest, SmokeTest) {
       {/* l2_normalize= */ false, /* quantize= */ true},
   };
 
-  void* embedder = text_embedder_create(&options, /* error_msg */ nullptr);
+  MpTextEmbedderPtr embedder =
+      text_embedder_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(embedder, nullptr);
 
   TextEmbedderResult result;
@@ -76,8 +77,8 @@ TEST(TextEmbedderTest, SucceedsWithCosineSimilarity) {
       {/* l2_normalize= */ false,
        /* quantize= */ false}};
 
-  void* embedder = text_embedder_create(&options,
-                                        /* error_msg */ nullptr);
+  MpTextEmbedderPtr embedder = text_embedder_create(&options,
+                                                    /* error_msg */ nullptr);
   EXPECT_NE(embedder, nullptr);
 
   // Extract both embeddings.
@@ -114,7 +115,7 @@ TEST(TextEmbedderTest, ErrorHandling) {
   };
 
   char* error_msg;
-  void* embedder = text_embedder_create(&options, &error_msg);
+  MpTextEmbedderPtr embedder = text_embedder_create(&options, &error_msg);
   EXPECT_EQ(embedder, nullptr);
 
   EXPECT_THAT(error_msg, HasSubstr("INVALID_ARGUMENT"));

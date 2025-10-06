@@ -88,7 +88,8 @@ TEST(PoseLandmarkerTest, ImageModeTest) {
       /* output_segmentation_masks= */ true,
   };
 
-  void* landmarker = pose_landmarker_create(&options, /* error_msg */ nullptr);
+  MpPoseLandmarkerPtr landmarker =
+      pose_landmarker_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(landmarker, nullptr);
 
   const auto& image_frame = image->GetImageFrameSharedPtr();
@@ -124,7 +125,8 @@ TEST(PoseLandmarkerTest, VideoModeTest) {
       /* output_segmentation_masks= */ true,
   };
 
-  void* landmarker = pose_landmarker_create(&options, /* error_msg */ nullptr);
+  MpPoseLandmarkerPtr landmarker =
+      pose_landmarker_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(landmarker, nullptr);
 
   const auto& image_frame = image->GetImageFrameSharedPtr();
@@ -188,7 +190,8 @@ TEST(PoseLandmarkerTest, DISABLED_LiveStreamModeTest) {
       /* result_callback= */ LiveStreamModeCallback::Fn,
   };
 
-  void* landmarker = pose_landmarker_create(&options, /* error_msg */ nullptr);
+  MpPoseLandmarkerPtr landmarker =
+      pose_landmarker_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(landmarker, nullptr);
 
   const auto& image_frame = image->GetImageFrameSharedPtr();
@@ -227,7 +230,7 @@ TEST(PoseLandmarkerTest, InvalidArgumentHandling) {
   };
 
   char* error_msg;
-  void* landmarker = pose_landmarker_create(&options, &error_msg);
+  MpPoseLandmarkerPtr landmarker = pose_landmarker_create(&options, &error_msg);
   EXPECT_EQ(landmarker, nullptr);
 
   EXPECT_THAT(error_msg, HasSubstr("ExternalFile must specify"));
@@ -249,8 +252,9 @@ TEST(PoseLandmarkerTest, FailedRecognitionHandling) {
       /* output_segmentation_masks= */ true,
   };
 
-  void* landmarker = pose_landmarker_create(&options, /* error_msg */
-                                            nullptr);
+  MpPoseLandmarkerPtr landmarker =
+      pose_landmarker_create(&options, /* error_msg */
+                             nullptr);
   EXPECT_NE(landmarker, nullptr);
 
   const MpImage mp_image = {.type = MpImage::GPU_BUFFER, .gpu_buffer = {}};

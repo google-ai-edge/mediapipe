@@ -136,7 +136,8 @@ TEST(FaceDetectorTest, ImageModeTest) {
       /* min_suppression_threshold= */ 0.5,
   };
 
-  void* detector = face_detector_create(&options, /* error_msg */ nullptr);
+  MpFaceDetectorPtr detector =
+      face_detector_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(detector, nullptr);
 
   FaceDetectorResult result;
@@ -166,7 +167,8 @@ TEST(FaceDetectorTest, ImageModeWithImageProcessingOptionsTest) {
       /* min_suppression_threshold= */ 0.5,
   };
 
-  void* detector = face_detector_create(&options, /* error_msg */ nullptr);
+  MpFaceDetectorPtr detector =
+      face_detector_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(detector, nullptr);
 
   ImageProcessingOptions image_processing_options;
@@ -200,8 +202,8 @@ TEST(FaceDetectorTest, VideoModeTest) {
       /* min_suppression_threshold= */ 0.5,
   };
 
-  void* detector = face_detector_create(&options,
-                                        /* error_msg */ nullptr);
+  MpFaceDetectorPtr detector = face_detector_create(&options,
+                                                    /* error_msg */ nullptr);
   EXPECT_NE(detector, nullptr);
 
   Detection expected_detection = CreateExpectedDetection(
@@ -259,8 +261,8 @@ TEST(FaceDetectorTest, DISABLED_LiveStreamModeTest) {
       /* result_callback= */ LiveStreamModeCallback::Fn,
   };
 
-  void* detector = face_detector_create(&options, /* error_msg */
-                                        nullptr);
+  MpFaceDetectorPtr detector = face_detector_create(&options, /* error_msg */
+                                                    nullptr);
   EXPECT_NE(detector, nullptr);
 
   for (int i = 0; i < kIterations; ++i) {
@@ -288,7 +290,7 @@ TEST(FaceDetectorTest, InvalidArgumentHandling) {
   };
 
   char* error_msg;
-  void* detector = face_detector_create(&options, &error_msg);
+  MpFaceDetectorPtr detector = face_detector_create(&options, &error_msg);
   EXPECT_EQ(detector, nullptr);
 
   EXPECT_THAT(error_msg, HasSubstr("INVALID_ARGUMENT"));

@@ -29,6 +29,8 @@ limitations under the License.
 extern "C" {
 #endif
 
+typedef struct MpGestureRecognizerInternal* MpGestureRecognizerPtr;
+
 // The options for configuring a MediaPipe gesture recognizer task.
 struct GestureRecognizerOptions {
   // Base options for configuring MediaPipe Tasks, such as specifying the model
@@ -91,7 +93,7 @@ struct GestureRecognizerOptions {
 // If an error occurs, returns `nullptr` and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT void* gesture_recognizer_create(
+MP_EXPORT MpGestureRecognizerPtr gesture_recognizer_create(
     struct GestureRecognizerOptions* options, char** error_msg);
 
 // Performs gesture recognition on the input `image`. Returns `0` on success.
@@ -99,8 +101,8 @@ MP_EXPORT void* gesture_recognizer_create(
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
 MP_EXPORT int gesture_recognizer_recognize_image(
-    void* recognizer, const MpImage* image, GestureRecognizerResult* result,
-    char** error_msg);
+    MpGestureRecognizerPtr recognizer, const MpImage* image,
+    GestureRecognizerResult* result, char** error_msg);
 
 // Performs gesture recognition on the provided video frame.
 // Only use this method when the GestureRecognizer is created with the video
@@ -112,8 +114,8 @@ MP_EXPORT int gesture_recognizer_recognize_image(
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
 MP_EXPORT int gesture_recognizer_recognize_for_video(
-    void* recognizer, const MpImage* image, int64_t timestamp_ms,
-    GestureRecognizerResult* result, char** error_msg);
+    MpGestureRecognizerPtr recognizer, const MpImage* image,
+    int64_t timestamp_ms, GestureRecognizerResult* result, char** error_msg);
 
 // Sends live image data to gesture recognition, and the results will be
 // available via the `result_callback` provided in the GestureRecognizerOptions.
@@ -135,10 +137,9 @@ MP_EXPORT int gesture_recognizer_recognize_for_video(
 // allocated for the error message.
 // You need to invoke `gesture_recognizer_recognize_async` after each invocation
 // to free memory.
-MP_EXPORT int gesture_recognizer_recognize_async(void* recognizer,
-                                                 const MpImage* image,
-                                                 int64_t timestamp_ms,
-                                                 char** error_msg);
+MP_EXPORT int gesture_recognizer_recognize_async(
+    MpGestureRecognizerPtr recognizer, const MpImage* image,
+    int64_t timestamp_ms, char** error_msg);
 
 // Frees the memory allocated inside a GestureRecognizerResult result.
 // Does not free the result pointer itself.
@@ -148,7 +149,8 @@ MP_EXPORT void gesture_recognizer_close_result(GestureRecognizerResult* result);
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT int gesture_recognizer_close(void* recognizer, char** error_msg);
+MP_EXPORT int gesture_recognizer_close(MpGestureRecognizerPtr recognizer,
+                                       char** error_msg);
 
 #ifdef __cplusplus
 }  // extern C

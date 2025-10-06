@@ -31,6 +31,8 @@ limitations under the License.
 extern "C" {
 #endif
 
+typedef struct MpFaceLandmarkerInternal* MpFaceLandmarkerPtr;
+
 // The options for configuring a MediaPipe face landmarker task.
 struct FaceLandmarkerOptions {
   // Base options for configuring MediaPipe Tasks, such as specifying the model
@@ -93,14 +95,15 @@ struct FaceLandmarkerOptions {
 // If an error occurs, returns `nullptr` and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT void* face_landmarker_create(struct FaceLandmarkerOptions* options,
-                                       char** error_msg);
+MP_EXPORT MpFaceLandmarkerPtr
+face_landmarker_create(struct FaceLandmarkerOptions* options, char** error_msg);
 
 // Performs face landmark detection on the input `image`. Returns `0` on
 // success. If an error occurs, returns an error code and sets the error
 // parameter to an an error message (if `error_msg` is not `nullptr`). You must
 // free the memory allocated for the error message.
-MP_EXPORT int face_landmarker_detect_image(void* landmarker, MpImagePtr image,
+MP_EXPORT int face_landmarker_detect_image(MpFaceLandmarkerPtr landmarker,
+                                           MpImagePtr image,
                                            FaceLandmarkerResult* result,
                                            char** error_msg);
 
@@ -110,8 +113,9 @@ MP_EXPORT int face_landmarker_detect_image(void* landmarker, MpImagePtr image,
 // `error_msg` is not `nullptr`). You must free the memory allocated for the
 // error message.
 MP_EXPORT int face_landmarker_detect_image_with_options(
-    void* landmarker, MpImagePtr image, struct ImageProcessingOptions* options,
-    FaceLandmarkerResult* result, char** error_msg);
+    MpFaceLandmarkerPtr landmarker, MpImagePtr image,
+    struct ImageProcessingOptions* options, FaceLandmarkerResult* result,
+    char** error_msg);
 
 // Performs face landmark detection on the provided video frame.
 // Only use this method when the FaceLandmarker is created with the video
@@ -124,7 +128,7 @@ MP_EXPORT int face_landmarker_detect_image_with_options(
 // allocated for the error message.
 // You need to invoke `face_landmarker_detect_for_video` after each invocation
 // to free memory.
-MP_EXPORT int face_landmarker_detect_for_video(void* landmarker,
+MP_EXPORT int face_landmarker_detect_for_video(MpFaceLandmarkerPtr landmarker,
                                                MpImagePtr image,
                                                int64_t timestamp_ms,
                                                FaceLandmarkerResult* result,
@@ -143,8 +147,9 @@ MP_EXPORT int face_landmarker_detect_for_video(void* landmarker,
 // You need to invoke `face_landmarker_detect_for_video` after each invocation
 // to free memory.
 MP_EXPORT int face_landmarker_detect_for_video_with_options(
-    void* landmarker, MpImagePtr image, struct ImageProcessingOptions* options,
-    int64_t timestamp_ms, FaceLandmarkerResult* result, char** error_msg);
+    MpFaceLandmarkerPtr landmarker, MpImagePtr image,
+    struct ImageProcessingOptions* options, int64_t timestamp_ms,
+    FaceLandmarkerResult* result, char** error_msg);
 
 // Sends live image data to face landmark detection, and the results will be
 // available via the `result_callback` provided in the FaceLandmarkerOptions.
@@ -164,7 +169,8 @@ MP_EXPORT int face_landmarker_detect_for_video_with_options(
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT int face_landmarker_detect_async(void* landmarker, MpImagePtr image,
+MP_EXPORT int face_landmarker_detect_async(MpFaceLandmarkerPtr landmarker,
+                                           MpImagePtr image,
                                            int64_t timestamp_ms,
                                            char** error_msg);
 
@@ -186,8 +192,9 @@ MP_EXPORT int face_landmarker_detect_async(void* landmarker, MpImagePtr image,
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
 MP_EXPORT int face_landmarker_detect_async_with_options(
-    void* landmarker, MpImagePtr image, struct ImageProcessingOptions* options,
-    int64_t timestamp_ms, char** error_msg);
+    MpFaceLandmarkerPtr landmarker, MpImagePtr image,
+    struct ImageProcessingOptions* options, int64_t timestamp_ms,
+    char** error_msg);
 
 // Frees the memory allocated inside a FaceLandmarkerResult result.
 // Does not free the result pointer itself.
@@ -197,7 +204,8 @@ MP_EXPORT void face_landmarker_close_result(FaceLandmarkerResult* result);
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT int face_landmarker_close(void* landmarker, char** error_msg);
+MP_EXPORT int face_landmarker_close(MpFaceLandmarkerPtr landmarker,
+                                    char** error_msg);
 
 #ifdef __cplusplus
 }  // extern C

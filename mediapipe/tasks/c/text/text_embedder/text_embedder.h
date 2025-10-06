@@ -28,6 +28,7 @@ limitations under the License.
 extern "C" {
 #endif
 
+typedef struct MpTextEmbedderInternal* MpTextEmbedderPtr;
 typedef struct EmbeddingResult TextEmbedderResult;
 
 // The options for configuring a MediaPipe text embedder task.
@@ -46,14 +47,15 @@ struct TextEmbedderOptions {
 // If an error occurs, returns `nullptr` and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT void* text_embedder_create(struct TextEmbedderOptions* options,
-                                     char** error_msg);
+MP_EXPORT MpTextEmbedderPtr
+text_embedder_create(struct TextEmbedderOptions* options, char** error_msg);
 
 // Performs embedding extraction on the input `text`. Returns `0` on success.
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT int text_embedder_embed(void* embedder, const char* utf8_str,
+MP_EXPORT int text_embedder_embed(MpTextEmbedderPtr embedder,
+                                  const char* utf8_str,
                                   TextEmbedderResult* result, char** error_msg);
 
 // Frees the memory allocated inside a TextEmbedderResult result. Does not
@@ -64,7 +66,7 @@ MP_EXPORT void text_embedder_close_result(TextEmbedderResult* result);
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT int text_embedder_close(void* embedder, char** error_msg);
+MP_EXPORT int text_embedder_close(MpTextEmbedderPtr embedder, char** error_msg);
 
 // Utility function to compute cosine similarity [1] between two embeddings.
 // May return an InvalidArgumentError if e.g. the embeddings are of different

@@ -29,6 +29,8 @@ limitations under the License.
 extern "C" {
 #endif
 
+typedef struct MpHandLandmarkerInternal* MpHandLandmarkerPtr;
+
 // The options for configuring a MediaPipe hand landmarker task.
 struct HandLandmarkerOptions {
   // Base options for configuring MediaPipe Tasks, such as specifying the model
@@ -81,14 +83,15 @@ struct HandLandmarkerOptions {
 // If an error occurs, returns `nullptr` and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT void* hand_landmarker_create(struct HandLandmarkerOptions* options,
-                                       char** error_msg);
+MP_EXPORT MpHandLandmarkerPtr
+hand_landmarker_create(struct HandLandmarkerOptions* options, char** error_msg);
 
 // Performs hand landmark detection on the input `image`. Returns `0` on
 // success. If an error occurs, returns an error code and sets the error
 // parameter to an an error message (if `error_msg` is not `nullptr`). You must
 // free the memory allocated for the error message.
-MP_EXPORT int hand_landmarker_detect_image(void* landmarker, MpImagePtr image,
+MP_EXPORT int hand_landmarker_detect_image(MpHandLandmarkerPtr landmarker,
+                                           MpImagePtr image,
                                            HandLandmarkerResult* result,
                                            char** error_msg);
 
@@ -98,8 +101,9 @@ MP_EXPORT int hand_landmarker_detect_image(void* landmarker, MpImagePtr image,
 // `error_msg` is not `nullptr`). You must free the memory allocated for the
 // error message.
 MP_EXPORT int hand_landmarker_detect_image_with_options(
-    void* landmarker, MpImagePtr image, struct ImageProcessingOptions* options,
-    HandLandmarkerResult* result, char** error_msg);
+    MpHandLandmarkerPtr landmarker, MpImagePtr image,
+    struct ImageProcessingOptions* options, HandLandmarkerResult* result,
+    char** error_msg);
 
 // Performs hand landmark detection on the provided video frame.
 // Only use this method when the HandLandmarker is created with the video
@@ -110,7 +114,7 @@ MP_EXPORT int hand_landmarker_detect_image_with_options(
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT int hand_landmarker_detect_for_video(void* landmarker,
+MP_EXPORT int hand_landmarker_detect_for_video(MpHandLandmarkerPtr landmarker,
                                                MpImagePtr image,
                                                int64_t timestamp_ms,
                                                HandLandmarkerResult* result,
@@ -125,8 +129,9 @@ MP_EXPORT int hand_landmarker_detect_for_video(void* landmarker,
 // error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
 MP_EXPORT int hand_landmarker_detect_for_video_with_options(
-    void* landmarker, MpImagePtr image, struct ImageProcessingOptions* options,
-    int64_t timestamp_ms, HandLandmarkerResult* result, char** error_msg);
+    MpHandLandmarkerPtr landmarker, MpImagePtr image,
+    struct ImageProcessingOptions* options, int64_t timestamp_ms,
+    HandLandmarkerResult* result, char** error_msg);
 
 // Sends live image data to hand landmark detection, and the results will be
 // available via the `result_callback` provided in the HandLandmarkerOptions.
@@ -148,7 +153,8 @@ MP_EXPORT int hand_landmarker_detect_for_video_with_options(
 // allocated for the error message.
 // You need to invoke `hand_landmarker_detect_async` after each invocation to
 // free memory.
-MP_EXPORT int hand_landmarker_detect_async(void* landmarker, MpImagePtr image,
+MP_EXPORT int hand_landmarker_detect_async(MpHandLandmarkerPtr landmarker,
+                                           MpImagePtr image,
                                            int64_t timestamp_ms,
                                            char** error_msg);
 
@@ -172,8 +178,9 @@ MP_EXPORT int hand_landmarker_detect_async(void* landmarker, MpImagePtr image,
 // You need to invoke `hand_landmarker_detect_async` after each invocation to
 // free memory.
 MP_EXPORT int hand_landmarker_detect_async_with_options(
-    void* landmarker, MpImagePtr image, struct ImageProcessingOptions* options,
-    int64_t timestamp_ms, char** error_msg);
+    MpHandLandmarkerPtr landmarker, MpImagePtr image,
+    struct ImageProcessingOptions* options, int64_t timestamp_ms,
+    char** error_msg);
 
 // Frees the memory allocated inside a HandLandmarkerResult result.
 // Does not free the result pointer itself.
@@ -183,7 +190,8 @@ MP_EXPORT void hand_landmarker_close_result(HandLandmarkerResult* result);
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT int hand_landmarker_close(void* landmarker, char** error_msg);
+MP_EXPORT int hand_landmarker_close(MpHandLandmarkerPtr landmarker,
+                                    char** error_msg);
 
 #ifdef __cplusplus
 }  // extern C

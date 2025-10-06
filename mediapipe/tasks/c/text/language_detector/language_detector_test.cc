@@ -56,7 +56,8 @@ TEST(LanguageDetectorTest, SmokeTest) {
        /* category_denylist_count= */ 0},
   };
 
-  void* detector = language_detector_create(&options, /* error_msg */ nullptr);
+  MpLanguageDetectorPtr detector =
+      language_detector_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(detector, nullptr);
 
   LanguageDetectorResult result;
@@ -79,7 +80,8 @@ TEST(LanguageDetectorTest, ErrorHandling) {
   };
 
   char* error_msg;
-  void* detector = language_detector_create(&options, &error_msg);
+  MpLanguageDetectorPtr detector =
+      language_detector_create(&options, &error_msg);
   EXPECT_EQ(detector, nullptr);
 
   EXPECT_THAT(error_msg, HasSubstr("INVALID_ARGUMENT"));

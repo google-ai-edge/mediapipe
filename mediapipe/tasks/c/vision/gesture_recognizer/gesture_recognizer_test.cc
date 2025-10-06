@@ -108,7 +108,7 @@ TEST(GestureRecognizerTest, ImageModeTest) {
        /* category_denylist= */ nullptr,
        /* category_denylist_count= */ 0}};
 
-  void* recognizer =
+  MpGestureRecognizerPtr recognizer =
       gesture_recognizer_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(recognizer, nullptr);
 
@@ -157,7 +157,7 @@ TEST(GestureRecognizerTest, VideoModeTest) {
        /* category_denylist= */ nullptr,
        /* category_denylist_count= */ 0}};
 
-  void* recognizer =
+  MpGestureRecognizerPtr recognizer =
       gesture_recognizer_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(recognizer, nullptr);
 
@@ -235,7 +235,7 @@ TEST(GestureRecognizerTest, DISABLED_LiveStreamModeTest) {
       /* result_callback= */ LiveStreamModeCallback::Fn,
   };
 
-  void* recognizer =
+  MpGestureRecognizerPtr recognizer =
       gesture_recognizer_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(recognizer, nullptr);
 
@@ -275,7 +275,8 @@ TEST(GestureRecognizerTest, InvalidArgumentHandling) {
       {}};
 
   char* error_msg;
-  void* recognizer = gesture_recognizer_create(&options, &error_msg);
+  MpGestureRecognizerPtr recognizer =
+      gesture_recognizer_create(&options, &error_msg);
   EXPECT_EQ(recognizer, nullptr);
 
   EXPECT_THAT(error_msg, HasSubstr("ExternalFile must specify"));
@@ -310,8 +311,9 @@ TEST(GestureRecognizerTest, FailedRecognitionHandling) {
        /* category_denylist_count= */ 0},
   };
 
-  void* recognizer = gesture_recognizer_create(&options, /* error_msg */
-                                               nullptr);
+  MpGestureRecognizerPtr recognizer =
+      gesture_recognizer_create(&options, /* error_msg */
+                                nullptr);
   EXPECT_NE(recognizer, nullptr);
 
   const MpImage mp_image = {.type = MpImage::GPU_BUFFER, .gpu_buffer = {}};

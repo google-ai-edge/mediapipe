@@ -65,7 +65,8 @@ TEST(ObjectDetectorTest, ImageModeTest) {
       /* category_denylist_count= */ 0,
   };
 
-  void* detector = object_detector_create(&options, /* error_msg */ nullptr);
+  MpObjectDetectorPtr detector =
+      object_detector_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(detector, nullptr);
 
   const auto& image_frame = image->GetImageFrameSharedPtr();
@@ -107,7 +108,8 @@ TEST(ObjectDetectorTest, VideoModeTest) {
       /* category_denylist_count= */ 0,
   };
 
-  void* detector = object_detector_create(&options, /* error_msg */ nullptr);
+  MpObjectDetectorPtr detector =
+      object_detector_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(detector, nullptr);
 
   const auto& image_frame = image->GetImageFrameSharedPtr();
@@ -182,8 +184,9 @@ TEST(ObjectDetectorTest, DISABLED_LiveStreamModeTest) {
       /* result_callback= */ LiveStreamModeCallback::Fn,
   };
 
-  void* detector = object_detector_create(&options, /* error_msg */
-                                          nullptr);
+  MpObjectDetectorPtr detector =
+      object_detector_create(&options, /* error_msg */
+                             nullptr);
   EXPECT_NE(detector, nullptr);
 
   const auto& image_frame = image->GetImageFrameSharedPtr();
@@ -216,7 +219,7 @@ TEST(ObjectDetectorTest, InvalidArgumentHandling) {
   };
 
   char* error_msg;
-  void* detector = object_detector_create(&options, &error_msg);
+  MpObjectDetectorPtr detector = object_detector_create(&options, &error_msg);
   EXPECT_EQ(detector, nullptr);
 
   EXPECT_THAT(error_msg, HasSubstr("ExternalFile must specify"));
@@ -240,8 +243,9 @@ TEST(ObjectDetectorTest, FailedDetectionHandling) {
       /* category_denylist_count= */ 0,
   };
 
-  void* detector = object_detector_create(&options, /* error_msg */
-                                          nullptr);
+  MpObjectDetectorPtr detector =
+      object_detector_create(&options, /* error_msg */
+                             nullptr);
   EXPECT_NE(detector, nullptr);
 
   const MpImage mp_image = {.type = MpImage::GPU_BUFFER, .gpu_buffer = {}};

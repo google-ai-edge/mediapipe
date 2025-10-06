@@ -34,6 +34,8 @@ limitations under the License.
 extern "C" {
 #endif
 
+typedef struct MpInteractiveSegmenterInternal* MpInteractiveSegmenterPtr;
+
 // The options for configuring a mediapipe interactive segmenter task.
 struct InteractiveSegmenterOptions {
   // Base options for configuring MediaPipe Tasks, such as specifying the model
@@ -75,18 +77,17 @@ struct RegionOfInterest {
 // If an error occurs, returns `nullptr` and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT void* interactive_segmenter_create(
+MP_EXPORT MpInteractiveSegmenterPtr interactive_segmenter_create(
     struct InteractiveSegmenterOptions* options, char** error_msg);
 
 // Performs interactive segmentation on the input `image`. Returns `0` on
 // success. If an error occurs, returns an error code and sets the error
 // parameter to an an error message (if `error_msg` is not `nullptr`). You must
 // free the memory allocated for the error message.
-MP_EXPORT int interactive_segmenter_segment_image(void* segmenter,
-                                                  const MpImage* image,
-                                                  const RegionOfInterest* roi,
-                                                  ImageSegmenterResult* result,
-                                                  char** error_msg);
+MP_EXPORT int interactive_segmenter_segment_image(
+    MpInteractiveSegmenterPtr segmenter, const MpImage* image,
+    const RegionOfInterest* roi, ImageSegmenterResult* result,
+    char** error_msg);
 
 // Frees the memory allocated inside a ImageSegmenterResult result.
 // Does not free the result pointer itself.
@@ -96,7 +97,8 @@ MP_EXPORT void interactive_segmenter_close_result(ImageSegmenterResult* result);
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT int interactive_segmenter_close(void* segmenter, char** error_msg);
+MP_EXPORT int interactive_segmenter_close(MpInteractiveSegmenterPtr segmenter,
+                                          char** error_msg);
 
 #ifdef __cplusplus
 }  // extern C

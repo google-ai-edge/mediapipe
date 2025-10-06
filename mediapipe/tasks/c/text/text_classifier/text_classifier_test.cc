@@ -56,7 +56,8 @@ TEST(TextClassifierTest, SmokeTest) {
        /* category_denylist_count= */ 0},
   };
 
-  void* classifier = text_classifier_create(&options, /* error_msg */ nullptr);
+  MpTextClassifierPtr classifier =
+      text_classifier_create(&options, /* error_msg */ nullptr);
   ASSERT_NE(classifier, nullptr);
 
   TextClassifierResult result;
@@ -83,7 +84,7 @@ TEST(TextClassifierTest, ErrorHandling) {
   };
 
   char* error_msg;
-  void* classifier = text_classifier_create(&options, &error_msg);
+  MpTextClassifierPtr classifier = text_classifier_create(&options, &error_msg);
   EXPECT_EQ(classifier, nullptr);
 
   EXPECT_THAT(error_msg, HasSubstr("INVALID_ARGUMENT"));

@@ -68,7 +68,6 @@ cc_test(
     deps = [
         ":face_detector_lib",
         "//mediapipe/framework/deps:file_path",
-        "//mediapipe/framework/formats:image",
         "//mediapipe/framework/port:gtest",
         "//mediapipe/tasks/c/components/containers:detection_result",
         "//mediapipe/tasks/c/components/containers:keypoint",

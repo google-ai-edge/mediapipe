@@ -32,6 +32,11 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/image_classifier/image_classifier.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 
+struct MpImageClassifierInternal {
+  std::unique_ptr<::mediapipe::tasks::vision::image_classifier::ImageClassifier>
+      classifier;
+};
+
 namespace mediapipe::tasks::c::vision::image_classifier {
 
 namespace {
@@ -58,8 +63,8 @@ int CppProcessError(absl::Status status, char** error_msg) {
 
 }  // namespace
 
-ImageClassifier* CppImageClassifierCreate(const ImageClassifierOptions& options,
-                                          char** error_msg) {
+MpImageClassifierPtr CppImageClassifierCreate(
+    const ImageClassifierOptions& options, char** error_msg) {
   auto cpp_options = std::make_unique<
       ::mediapipe::tasks::vision::image_classifier::ImageClassifierOptions>();
 
@@ -119,10 +124,11 @@ ImageClassifier* CppImageClassifierCreate(const ImageClassifierOptions& options,
     CppProcessError(classifier.status(), error_msg);
     return nullptr;
   }
-  return classifier->release();
+  return new MpImageClassifierInternal{.classifier = std::move(*classifier)};
 }
 
-int CppImageClassifierClassify(void* classifier, const MpImage* image,
+int CppImageClassifierClassify(MpImageClassifierPtr classifier,
+                               const MpImage* image,
                                ImageClassifierResult* result,
                                char** error_msg) {
   if (image->type == MpImage::GPU_BUFFER) {
@@ -143,7 +149,7 @@ int CppImageClassifierClassify(void* classifier, const MpImage* image,
     return CppProcessError(img.status(), error_msg);
   }
 
-  auto cpp_classifier = static_cast<ImageClassifier*>(classifier);
+  auto cpp_classifier = classifier->classifier.get();
   auto cpp_result = cpp_classifier->Classify(*img);
   if (!cpp_result.ok()) {
     ABSL_LOG(ERROR) << "Classification failed: " << cpp_result.status();
@@ -153,7 +159,8 @@ int CppImageClassifierClassify(void* classifier, const MpImage* image,
   return 0;
 }
 
-int CppImageClassifierClassifyForVideo(void* classifier, const MpImage* image,
+int CppImageClassifierClassifyForVideo(MpImageClassifierPtr classifier,
+                                       const MpImage* image,
                                        int64_t timestamp_ms,
                                        ImageClassifierResult* result,
                                        char** error_msg) {
@@ -175,7 +182,7 @@ int CppImageClassifierClassifyForVideo(void* classifier, const MpImage* image,
     return CppProcessError(img.status(), error_msg);
   }
 
-  auto cpp_classifier = static_cast<ImageClassifier*>(classifier);
+  auto cpp_classifier = classifier->classifier.get();
   auto cpp_result = cpp_classifier->ClassifyForVideo(*img, timestamp_ms);
   if (!cpp_result.ok()) {
     ABSL_LOG(ERROR) << "Classification failed: " << cpp_result.status();
@@ -185,8 +192,9 @@ int CppImageClassifierClassifyForVideo(void* classifier, const MpImage* image,
   return 0;
 }
 
-int CppImageClassifierClassifyAsync(void* classifier, const MpImage* image,
-                                    int64_t timestamp_ms, char** error_msg) {
+int CppImageClassifierClassifyAsync(MpImageClassifierPtr classifier,
+                                    const MpImage* image, int64_t timestamp_ms,
+                                    char** error_msg) {
   if (image->type == MpImage::GPU_BUFFER) {
     absl::Status status =
         absl::InvalidArgumentError("GPU Buffer not supported yet");
@@ -205,7 +213,7 @@ int CppImageClassifierClassifyAsync(void* classifier, const MpImage* image,
     return CppProcessError(img.status(), error_msg);
   }
 
-  auto cpp_classifier = static_cast<ImageClassifier*>(classifier);
+  auto cpp_classifier = classifier->classifier.get();
   auto cpp_result = cpp_classifier->ClassifyAsync(*img, timestamp_ms);
   if (!cpp_result.ok()) {
     ABSL_LOG(ERROR) << "Data preparation for the image classification failed: "
@@ -219,14 +227,14 @@ void CppImageClassifierCloseResult(ImageClassifierResult* result) {
   CppCloseClassificationResult(result);
 }
 
-int CppImageClassifierClose(void* classifier, char** error_msg) {
-  auto cpp_classifier = static_cast<ImageClassifier*>(classifier);
+int CppImageClassifierClose(MpImageClassifierPtr classifier, char** error_msg) {
+  auto cpp_classifier = classifier->classifier.get();
   auto result = cpp_classifier->Close();
   if (!result.ok()) {
     ABSL_LOG(ERROR) << "Failed to close ImageClassifier: " << result;
     return CppProcessError(result, error_msg);
   }
-  delete cpp_classifier;
+  delete classifier;
   return 0;
 }
 
@@ -234,13 +242,13 @@ int CppImageClassifierClose(void* classifier, char** error_msg) {
 
 extern "C" {
 
-MP_EXPORT void* image_classifier_create(struct ImageClassifierOptions* options,
-                                        char** error_msg) {
+MP_EXPORT MpImageClassifierPtr image_classifier_create(
+    struct ImageClassifierOptions* options, char** error_msg) {
   return mediapipe::tasks::c::vision::image_classifier::
       CppImageClassifierCreate(*options, error_msg);
 }
 
-MP_EXPORT int image_classifier_classify_image(void* classifier,
+MP_EXPORT int image_classifier_classify_image(MpImageClassifierPtr classifier,
                                               const MpImage* image,
                                               ImageClassifierResult* result,
                                               char** error_msg) {
@@ -248,17 +256,15 @@ MP_EXPORT int image_classifier_classify_image(void* classifier,
       CppImageClassifierClassify(classifier, image, result, error_msg);
 }
 
-MP_EXPORT int image_classifier_classify_for_video(void* classifier,
-                                                  const MpImage* image,
-                                                  int64_t timestamp_ms,
-                                                  ImageClassifierResult* result,
-                                                  char** error_msg) {
+MP_EXPORT int image_classifier_classify_for_video(
+    MpImageClassifierPtr classifier, const MpImage* image, int64_t timestamp_ms,
+    ImageClassifierResult* result, char** error_msg) {
   return mediapipe::tasks::c::vision::image_classifier::
       CppImageClassifierClassifyForVideo(classifier, image, timestamp_ms,
                                          result, error_msg);
 }
 
-MP_EXPORT int image_classifier_classify_async(void* classifier,
+MP_EXPORT int image_classifier_classify_async(MpImageClassifierPtr classifier,
                                               const MpImage* image,
                                               int64_t timestamp_ms,
                                               char** error_msg) {
@@ -272,7 +278,8 @@ MP_EXPORT void image_classifier_close_result(ImageClassifierResult* result) {
       result);
 }
 
-MP_EXPORT int image_classifier_close(void* classifier, char** error_ms) {
+MP_EXPORT int image_classifier_close(MpImageClassifierPtr classifier,
+                                     char** error_ms) {
   return mediapipe::tasks::c::vision::image_classifier::CppImageClassifierClose(
       classifier, error_ms);
 }

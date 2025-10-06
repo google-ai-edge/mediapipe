@@ -31,6 +31,7 @@ limitations under the License.
 extern "C" {
 #endif
 
+typedef struct MpImageEmbedderInternal* MpImageEmbedderPtr;
 typedef EmbeddingResult ImageEmbedderResult;
 
 // The options for configuring a MediaPipe image embedder task.
@@ -73,14 +74,15 @@ struct ImageEmbedderOptions {
 // If an error occurs, returns `nullptr` and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT void* image_embedder_create(struct ImageEmbedderOptions* options,
-                                      char** error_msg);
+MP_EXPORT MpImageEmbedderPtr
+image_embedder_create(struct ImageEmbedderOptions* options, char** error_msg);
 
 // Performs embedding extraction on the input `image`. Returns `0` on success.
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT int image_embedder_embed_image(void* embedder, const MpImage* image,
+MP_EXPORT int image_embedder_embed_image(MpImageEmbedderPtr embedder,
+                                         const MpImage* image,
                                          ImageEmbedderResult* result,
                                          char** error_msg);
 
@@ -93,7 +95,7 @@ MP_EXPORT int image_embedder_embed_image(void* embedder, const MpImage* image,
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT int image_embedder_embed_for_video(void* embedder,
+MP_EXPORT int image_embedder_embed_for_video(MpImageEmbedderPtr embedder,
                                              const MpImage* image,
                                              int64_t timestamp_ms,
                                              ImageEmbedderResult* result,
@@ -119,7 +121,8 @@ MP_EXPORT int image_embedder_embed_for_video(void* embedder,
 // allocated for the error message.
 // You need to invoke `image_embedder_close_result` after each invocation to
 // free memory.
-MP_EXPORT int image_embedder_embed_async(void* embedder, const MpImage* image,
+MP_EXPORT int image_embedder_embed_async(MpImageEmbedderPtr embedder,
+                                         const MpImage* image,
                                          int64_t timestamp_ms,
                                          char** error_msg);
 
@@ -131,7 +134,8 @@ MP_EXPORT void image_embedder_close_result(ImageEmbedderResult* result);
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT int image_embedder_close(void* embedder, char** error_msg);
+MP_EXPORT int image_embedder_close(MpImageEmbedderPtr embedder,
+                                   char** error_msg);
 
 // Utility function to compute cosine similarity [1] between two embeddings.
 // May return an InvalidArgumentError if e.g. the embeddings are of different

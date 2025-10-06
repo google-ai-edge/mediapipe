@@ -74,8 +74,8 @@ TEST(ImageEmbedderTest, ImageModeTest) {
       {/* l2_normalize= */ true,
        /* quantize= */ false}};
 
-  void* embedder = image_embedder_create(&options,
-                                         /* error_msg */ nullptr);
+  MpImageEmbedderPtr embedder = image_embedder_create(&options,
+                                                      /* error_msg */ nullptr);
   EXPECT_NE(embedder, nullptr);
 
   const MpImage mp_image = {
@@ -112,8 +112,8 @@ TEST(ImageEmbedderTest, SucceedsWithCosineSimilarity) {
       {/* l2_normalize= */ true,
        /* quantize= */ false}};
 
-  void* embedder = image_embedder_create(&options,
-                                         /* error_msg */ nullptr);
+  MpImageEmbedderPtr embedder = image_embedder_create(&options,
+                                                      /* error_msg */ nullptr);
   EXPECT_NE(embedder, nullptr);
 
   const MpImage mp_image = {
@@ -171,8 +171,8 @@ TEST(ImageEmbedderTest, VideoModeTest) {
       {/* l2_normalize= */ true,
        /* quantize= */ false}};
 
-  void* embedder = image_embedder_create(&options,
-                                         /* error_msg */ nullptr);
+  MpImageEmbedderPtr embedder = image_embedder_create(&options,
+                                                      /* error_msg */ nullptr);
   EXPECT_NE(embedder, nullptr);
 
   const auto& image_frame = image->GetImageFrameSharedPtr();
@@ -235,8 +235,8 @@ TEST(ImageEmbedderTest, DISABLED_LiveStreamModeTest) {
       /* result_callback= */ LiveStreamModeCallback::Fn,
   };
 
-  void* embedder = image_embedder_create(&options,
-                                         /* error_msg */ nullptr);
+  MpImageEmbedderPtr embedder = image_embedder_create(&options,
+                                                      /* error_msg */ nullptr);
   EXPECT_NE(embedder, nullptr);
 
   const auto& image_frame = image->GetImageFrameSharedPtr();
@@ -270,7 +270,7 @@ TEST(ImageEmbedderTest, InvalidArgumentHandling) {
   };
 
   char* error_msg;
-  void* embedder = image_embedder_create(&options, &error_msg);
+  MpImageEmbedderPtr embedder = image_embedder_create(&options, &error_msg);
   EXPECT_EQ(embedder, nullptr);
 
   EXPECT_THAT(error_msg, HasSubstr("ExternalFile must specify"));
@@ -290,8 +290,8 @@ TEST(ImageEmbedderTest, FailedEmbeddingHandling) {
        /* quantize= */ false},
   };
 
-  void* embedder = image_embedder_create(&options,
-                                         /* error_msg */ nullptr);
+  MpImageEmbedderPtr embedder = image_embedder_create(&options,
+                                                      /* error_msg */ nullptr);
   EXPECT_NE(embedder, nullptr);
 
   const MpImage mp_image = {.type = MpImage::GPU_BUFFER, .gpu_buffer = {}};

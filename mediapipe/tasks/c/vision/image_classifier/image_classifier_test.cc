@@ -64,7 +64,8 @@ TEST(ImageClassifierTest, ImageModeTest) {
        /* category_denylist_count= */ 0},
   };
 
-  void* classifier = image_classifier_create(&options, /* error_msg */ nullptr);
+  MpImageClassifierPtr classifier =
+      image_classifier_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(classifier, nullptr);
 
   const auto& image_frame = image->GetImageFrameSharedPtr();
@@ -109,7 +110,8 @@ TEST(ImageClassifierTest, VideoModeTest) {
       /* result_callback= */ nullptr,
   };
 
-  void* classifier = image_classifier_create(&options, /* error_msg */ nullptr);
+  MpImageClassifierPtr classifier =
+      image_classifier_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(classifier, nullptr);
 
   const auto& image_frame = image->GetImageFrameSharedPtr();
@@ -184,7 +186,8 @@ TEST(ImageClassifierTest, DISABLED_LiveStreamModeTest) {
       /* result_callback= */ LiveStreamModeCallback::Fn,
   };
 
-  void* classifier = image_classifier_create(&options, /* error_msg */ nullptr);
+  MpImageClassifierPtr classifier =
+      image_classifier_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(classifier, nullptr);
 
   const auto& image_frame = image->GetImageFrameSharedPtr();
@@ -218,7 +221,8 @@ TEST(ImageClassifierTest, InvalidArgumentHandling) {
   };
 
   char* error_msg;
-  void* classifier = image_classifier_create(&options, &error_msg);
+  MpImageClassifierPtr classifier =
+      image_classifier_create(&options, &error_msg);
   EXPECT_EQ(classifier, nullptr);
 
   EXPECT_THAT(error_msg, HasSubstr("ExternalFile must specify"));
@@ -243,7 +247,8 @@ TEST(ImageClassifierTest, FailedClassificationHandling) {
        /* category_denylist_count= */ 0},
   };
 
-  void* classifier = image_classifier_create(&options, /* error_msg */ nullptr);
+  MpImageClassifierPtr classifier =
+      image_classifier_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(classifier, nullptr);
 
   const MpImage mp_image = {.type = MpImage::GPU_BUFFER, .gpu_buffer = {}};

@@ -157,7 +157,8 @@ TEST(FaceLandmarkerTest, ImageModeTest) {
       /* output_facial_transformation_matrixes = */ true,
   };
 
-  void* landmarker = face_landmarker_create(&options, /* error_msg */ nullptr);
+  MpFaceLandmarkerPtr landmarker =
+      face_landmarker_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(landmarker, nullptr);
 
   FaceLandmarkerResult result;
@@ -187,7 +188,8 @@ TEST(FaceLandmarkerTest, ImageModeWithOptionsTest) {
       /* output_facial_transformation_matrixes = */ true,
   };
 
-  void* landmarker = face_landmarker_create(&options, /* error_msg */ nullptr);
+  MpFaceLandmarkerPtr landmarker =
+      face_landmarker_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(landmarker, nullptr);
 
   ImageProcessingOptions image_processing_options;
@@ -222,8 +224,9 @@ TEST(FaceLandmarkerTest, VideoModeTest) {
       /* output_facial_transformation_matrixes = */ true,
   };
 
-  void* landmarker = face_landmarker_create(&options,
-                                            /* error_msg */ nullptr);
+  MpFaceLandmarkerPtr landmarker =
+      face_landmarker_create(&options,
+                             /* error_msg */ nullptr);
   EXPECT_NE(landmarker, nullptr);
 
   for (int i = 0; i < kIterations; ++i) {
@@ -283,8 +286,9 @@ TEST(FaceLandmarkerTest, DISABLED_LiveStreamModeTest) {
       /* result_callback= */ LiveStreamModeCallback::Fn,
   };
 
-  void* landmarker = face_landmarker_create(&options, /* error_msg */
-                                            nullptr);
+  MpFaceLandmarkerPtr landmarker =
+      face_landmarker_create(&options, /* error_msg */
+                             nullptr);
   EXPECT_NE(landmarker, nullptr);
 
   for (int i = 0; i < kIterations; ++i) {
@@ -316,7 +320,7 @@ TEST(FaceLandmarkerTest, InvalidArgumentHandling) {
   };
 
   char* error_msg;
-  void* landmarker = face_landmarker_create(&options, &error_msg);
+  MpFaceLandmarkerPtr landmarker = face_landmarker_create(&options, &error_msg);
   EXPECT_EQ(landmarker, nullptr);
 
   EXPECT_THAT(
