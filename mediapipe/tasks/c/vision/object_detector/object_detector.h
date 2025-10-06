@@ -19,6 +19,7 @@ limitations under the License.
 #include "mediapipe/tasks/c/components/containers/detection_result.h"
 #include "mediapipe/tasks/c/core/base_options.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
+#include "mediapipe/tasks/c/vision/core/image_processing_options.h"
 
 #ifndef MP_EXPORT
 #define MP_EXPORT __attribute__((visibility("default")))
@@ -106,6 +107,16 @@ MP_EXPORT int object_detector_detect_image(MpObjectDetectorPtr detector,
                                            ObjectDetectorResult* result,
                                            char** error_msg);
 
+// Performs image detection on the input `image` with the provided
+// image processing options. Returns `0` on success.
+// If an error occurs, returns an error code and sets the error parameter to an
+// an error message (if `error_msg` is not `nullptr`). You must free the memory
+// allocated for the error message.
+MP_EXPORT int object_detector_detect_image_with_options(
+    MpObjectDetectorPtr detector, const MpImage* image,
+    const ImageProcessingOptions* options, ObjectDetectorResult* result,
+    char** error_msg);
+
 // Performs image detection on the provided video frame.
 // Only use this method when the ObjectDetector is created with the video
 // running mode.
@@ -120,6 +131,21 @@ MP_EXPORT int object_detector_detect_for_video(MpObjectDetectorPtr detector,
                                                int64_t timestamp_ms,
                                                ObjectDetectorResult* result,
                                                char** error_msg);
+
+// Performs image detection on the provided video frame with the provided
+// image processing options.
+// Only use this method when the ObjectDetector is created with the video
+// running mode.
+// The image can be of any size with format RGB or RGBA. It's required to
+// provide the video frame's timestamp (in milliseconds). The input timestamps
+// must be monotonically increasing.
+// If an error occurs, returns an error code and sets the error parameter to an
+// an error message (if `error_msg` is not `nullptr`). You must free the memory
+// allocated for the error message.
+MP_EXPORT int object_detector_detect_for_video_with_options(
+    MpObjectDetectorPtr detector, const MpImage* image,
+    const ImageProcessingOptions* options, int64_t timestamp_ms,
+    ObjectDetectorResult* result, char** error_msg);
 
 // Sends live image data to image detection, and the results will be
 // available via the `result_callback` provided in the ObjectDetectorOptions.
@@ -145,6 +171,29 @@ MP_EXPORT int object_detector_detect_async(MpObjectDetectorPtr detector,
                                            const MpImage* image,
                                            int64_t timestamp_ms,
                                            char** error_msg);
+
+// Sends live image data to image detection after applying the image processing
+// options, and the results will be available via the `result_callback` provided
+// in the ObjectDetectorOptions. Only use this method when the ObjectDetector is
+// created with the live stream running mode. The image can be of any size with
+// format RGB or RGBA. It's required to provide a timestamp (in milliseconds) to
+// indicate when the input image is sent to the object detector. The input
+// timestamps must be monotonically increasing. The `result_callback` provides:
+//   - The detection results as an ObjectDetectorResult object.
+//   - The const reference to the corresponding input image that the image
+//     detector runs on. Note that the const reference to the image will no
+//     longer be valid when the callback returns. To access the image data
+//     outside of the callback, callers need to make a copy of the image.
+//   - The input timestamp in milliseconds.
+// If an error occurs, returns an error code and sets the error parameter to an
+// an error message (if `error_msg` is not `nullptr`). You must free the memory
+// allocated for the error message.
+// You need to invoke `object_detector_close_result` after each invocation to
+// free memory.
+MP_EXPORT int object_detector_detect_async_with_options(
+    MpObjectDetectorPtr detector, const MpImage* image,
+    const ImageProcessingOptions* options, int64_t timestamp_ms,
+    char** error_msg);
 
 // Frees the memory allocated inside a ObjectDetectorResult result.
 // Does not free the result pointer itself.

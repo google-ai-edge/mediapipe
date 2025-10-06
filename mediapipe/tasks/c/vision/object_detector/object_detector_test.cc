@@ -27,6 +27,7 @@ limitations under the License.
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/c/components/containers/category.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
+#include "mediapipe/tasks/c/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 
 namespace {
@@ -37,6 +38,7 @@ using testing::HasSubstr;
 
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
 constexpr char kImageFile[] = "cats_and_dogs.jpg";
+constexpr char kImageRotatedFile[] = "cats_and_dogs_rotated.jpg";
 constexpr char kModelName[] =
     "coco_ssd_mobilenet_v1_1.0_quant_2018_06_29.tflite";
 constexpr float kPrecision = 1e-4;
@@ -52,17 +54,17 @@ TEST(ObjectDetectorTest, ImageModeTest) {
 
   const std::string model_path = GetFullPath(kModelName);
   ObjectDetectorOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::IMAGE,
-      /* display_names_locale= */ nullptr,
-      /* max_results= */ -1,
-      /* score_threshold= */ 0.0,
-      /* category_allowlist= */ nullptr,
-      /* category_allowlist_count= */ 0,
-      /* category_denylist= */ nullptr,
-      /* category_denylist_count= */ 0,
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = model_path.c_str()},
+      .running_mode = RunningMode::IMAGE,
+      .display_names_locale = nullptr,
+      .max_results = -1,
+      .score_threshold = 0.0,
+      .category_allowlist = nullptr,
+      .category_allowlist_count = 0,
+      .category_denylist = nullptr,
+      .category_denylist_count = 0,
   };
 
   MpObjectDetectorPtr detector =
@@ -89,23 +91,71 @@ TEST(ObjectDetectorTest, ImageModeTest) {
   object_detector_close(detector, /* error_msg */ nullptr);
 }
 
+TEST(ObjectDetectorTest, ImageModeWithOptionsTest) {
+  const auto image = DecodeImageFromFile(GetFullPath(kImageRotatedFile));
+  ASSERT_TRUE(image.ok());
+
+  const std::string model_path = GetFullPath(kModelName);
+  ObjectDetectorOptions options = {
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = model_path.c_str()},
+      .running_mode = RunningMode::IMAGE,
+      .display_names_locale = nullptr,
+      .max_results = -1,
+      .score_threshold = 0.0,
+      .category_allowlist = nullptr,
+      .category_allowlist_count = 0,
+      .category_denylist = nullptr,
+      .category_denylist_count = 0,
+  };
+
+  MpObjectDetectorPtr detector =
+      object_detector_create(&options, /* error_msg */ nullptr);
+  EXPECT_NE(detector, nullptr);
+
+  const auto& image_frame = image->GetImageFrameSharedPtr();
+  const MpImage mp_image = {
+      .type = MpImage::IMAGE_FRAME,
+      .image_frame = {.format = static_cast<ImageFormat>(image_frame->Format()),
+                      .image_buffer = image_frame->PixelData(),
+                      .width = image_frame->Width(),
+                      .height = image_frame->Height()}};
+
+  ImageProcessingOptions image_processing_options;
+  image_processing_options.has_region_of_interest = 0;
+  image_processing_options.rotation_degrees = -90;
+
+  ObjectDetectorResult result;
+  object_detector_detect_image_with_options(detector, &mp_image,
+                                            &image_processing_options, &result,
+                                            /* error_msg */ nullptr);
+  EXPECT_EQ(result.detections_count, 10);
+  EXPECT_EQ(result.detections[0].categories_count, 1);
+  EXPECT_EQ(std::string{result.detections[0].categories[0].category_name},
+            "cat");
+  EXPECT_NEAR(result.detections[0].categories[0].score, 0.6992f, kPrecision);
+  object_detector_close_result(&result);
+  object_detector_close(detector, /* error_msg */ nullptr);
+}
+
 TEST(ObjectDetectorTest, VideoModeTest) {
   const auto image = DecodeImageFromFile(GetFullPath(kImageFile));
   ASSERT_TRUE(image.ok());
 
   const std::string model_path = GetFullPath(kModelName);
   ObjectDetectorOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::VIDEO,
-      /* display_names_locale= */ nullptr,
-      /* max_results= */ 3,
-      /* score_threshold= */ 0.0,
-      /* category_allowlist= */ nullptr,
-      /* category_allowlist_count= */ 0,
-      /* category_denylist= */ nullptr,
-      /* category_denylist_count= */ 0,
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = model_path.c_str()},
+      .running_mode = RunningMode::VIDEO,
+      .display_names_locale = nullptr,
+      .max_results = 3,
+      .score_threshold = 0.0,
+      .category_allowlist = nullptr,
+      .category_allowlist_count = 0,
+      .category_denylist = nullptr,
+      .category_denylist_count = 0,
   };
 
   MpObjectDetectorPtr detector =
@@ -170,18 +220,18 @@ TEST(ObjectDetectorTest, DISABLED_LiveStreamModeTest) {
   const std::string model_path = GetFullPath(kModelName);
 
   ObjectDetectorOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::LIVE_STREAM,
-      /* display_names_locale= */ nullptr,
-      /* max_results= */ 3,
-      /* score_threshold= */ 0.0,
-      /* category_allowlist= */ nullptr,
-      /* category_allowlist_count= */ 0,
-      /* category_denylist= */ nullptr,
-      /* category_denylist_count= */ 0,
-      /* result_callback= */ LiveStreamModeCallback::Fn,
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = model_path.c_str()},
+      .running_mode = RunningMode::LIVE_STREAM,
+      .display_names_locale = nullptr,
+      .max_results = 3,
+      .score_threshold = 0.0,
+      .category_allowlist = nullptr,
+      .category_allowlist_count = 0,
+      .category_denylist = nullptr,
+      .category_denylist_count = 0,
+      .result_callback = LiveStreamModeCallback::Fn,
   };
 
   MpObjectDetectorPtr detector =
@@ -213,9 +263,9 @@ TEST(ObjectDetectorTest, DISABLED_LiveStreamModeTest) {
 TEST(ObjectDetectorTest, InvalidArgumentHandling) {
   // It is an error to set neither the asset buffer nor the path.
   ObjectDetectorOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ nullptr},
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = nullptr},
   };
 
   char* error_msg;
@@ -230,17 +280,17 @@ TEST(ObjectDetectorTest, InvalidArgumentHandling) {
 TEST(ObjectDetectorTest, FailedDetectionHandling) {
   const std::string model_path = GetFullPath(kModelName);
   ObjectDetectorOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::IMAGE,
-      /* display_names_locale= */ nullptr,
-      /* max_results= */ -1,
-      /* score_threshold= */ 0.0,
-      /* category_allowlist= */ nullptr,
-      /* category_allowlist_count= */ 0,
-      /* category_denylist= */ nullptr,
-      /* category_denylist_count= */ 0,
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = model_path.c_str()},
+      .running_mode = RunningMode::IMAGE,
+      .display_names_locale = nullptr,
+      .max_results = -1,
+      .score_threshold = 0.0,
+      .category_allowlist = nullptr,
+      .category_allowlist_count = 0,
+      .category_denylist = nullptr,
+      .category_denylist_count = 0,
   };
 
   MpObjectDetectorPtr detector =
