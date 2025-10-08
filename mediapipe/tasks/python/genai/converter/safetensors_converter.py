@@ -65,7 +65,7 @@ class _SafetensorsShardReader:
       raw_tensor = torch.frombuffer(
           array.array("b", tensor_bytes), dtype=DTYPE_MAP[dtype]
       ).reshape(shape)
-      return raw_tensor.float().t().contiguous().numpy()
+      return raw.float().t().contiguous().numpy()
 
   def get_tensor_names(self) -> List[str]:
     names = list(self.layers_info.keys())
@@ -392,6 +392,7 @@ class GemmaMapper(converter_base.LayerActionMapperBase):
       backend: str,
       reader: _SafetensorsReader,
       is_v2: bool,
+      is_gemma3n: bool = False,
   ):
     super().__init__(
         is_symmetric=is_symmetric,
@@ -402,6 +403,7 @@ class GemmaMapper(converter_base.LayerActionMapperBase):
     )
     self._reader = reader
     self._is_v2 = is_v2
+    self._is_gemma3n = is_gemma3n
 
   def map_to_actions(
       self, layer_name: str
@@ -458,7 +460,8 @@ class GemmaMapper(converter_base.LayerActionMapperBase):
     """Updates the target name to match the tensor name convention."""
 
     # For removing multimodality stack from Gemma3-4B
-    target_name = target_name.replace("language_model.", "")
+    if self._is_gemma3n:
+        target_name = target_name.replace("language_model.", "")
 
     target_name = target_name.replace("base_model.model.", "")
     target_name = target_name.replace(
@@ -604,12 +607,15 @@ class SafetensorsCkptLoader(converter_base.CkptLoaderBase):
         "GEMMA_2B",
         "GEMMA_7B",
         "GEMMA2_2B",
-        "GEMMA3_1B",
-        "GEMMA3_4B",
-        "GEMMA3_12B",
-        "GEMMA3_27B",
-        "GEMMA3_300M",
+        "GEMMA2_9B",
+        "GEMMA2_27B",
+        "GEMMA3N_2B",
+        "GEMMA3N_4B",
+        "GEMMA3N_8B",
+        "GEMMA_3N_E2B_IT",
+        "GEMMA_3N_E4B_IT",
     ]:
+      is_gemma_3n = "3N" in special_model.upper()
       self.mapper = GemmaMapper(
           is_symmetric,
           attention_quant_bits,
@@ -617,7 +623,8 @@ class SafetensorsCkptLoader(converter_base.CkptLoaderBase):
           embedding_quant_bits,
           backend,
           self._reader,
-          False if special_model in ["GEMMA_2B", "GEMMA_7B"] else True,
+          is_v2=False if special_model in ["GEMMA_2B", "GEMMA_7B"] else True,
+          is_gemma3n=is_gemma_3n
       )
     else:
       raise ValueError(f"Unknown special model: {special_model}")
