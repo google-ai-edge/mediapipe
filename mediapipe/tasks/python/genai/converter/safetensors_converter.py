@@ -607,8 +607,6 @@ class SafetensorsCkptLoader(converter_base.CkptLoaderBase):
         "GEMMA_2B",
         "GEMMA_7B",
         "GEMMA2_2B",
-        "GEMMA2_9B",
-        "GEMMA2_27B",
         "GEMMA3_1B",
         "GEMMA3_4B",
         "GEMMA3_12B",
