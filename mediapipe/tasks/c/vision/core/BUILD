@@ -53,9 +53,8 @@ cc_library(
 
 cc_library(
     name = "image_c_lib",
-    srcs = ["image.cc"],
     hdrs = ["image.h"],
-    deps = IMAGE_DEPS,
+    deps = IMAGE_DEPS + [":image"],
     alwayslink = 1,
 )
 

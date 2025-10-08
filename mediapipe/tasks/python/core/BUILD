@@ -32,7 +32,7 @@ py_library(
         "mediapipe_c_bindings.py",
     ],
     data = [
-        "//mediapipe/tasks/c:mediapipe",
+        "//mediapipe/tasks/c:libmediapipe.so",
     ],
 )
 
