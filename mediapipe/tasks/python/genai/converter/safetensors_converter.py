@@ -392,7 +392,7 @@ class GemmaMapper(converter_base.LayerActionMapperBase):
       backend: str,
       reader: _SafetensorsReader,
       is_v2: bool,
-      is_gemma3n: bool = False,
+      is_nested: bool = False,
   ):
     super().__init__(
         is_symmetric=is_symmetric,
@@ -403,7 +403,7 @@ class GemmaMapper(converter_base.LayerActionMapperBase):
     )
     self._reader = reader
     self._is_v2 = is_v2
-    self._is_gemma3n = is_gemma3n
+    self._is_gemma3n = is_nested
 
   def map_to_actions(
       self, layer_name: str
@@ -460,7 +460,7 @@ class GemmaMapper(converter_base.LayerActionMapperBase):
     """Updates the target name to match the tensor name convention."""
 
     # For removing multimodality stack from Gemma3-4B
-    if self._is_gemma3n:
+    if self._is_nested:
         target_name = target_name.replace("language_model.", "")
 
     target_name = target_name.replace("base_model.model.", "")
@@ -618,7 +618,10 @@ class SafetensorsCkptLoader(converter_base.CkptLoaderBase):
         "GEMMA_3N_E2B_IT",
         "GEMMA_3N_E4B_IT",
     ]:
-      is_gemma_3n = "3N" in special_model.upper()
+      # Identify all models that have the nested 'language_model.' prefix
+      nested_models = ["GEMMA3-4B"] + [m for m in special_model if "3N" in m.upper()]
+      is_nested_model = special_model in nested_models
+
       self.mapper = GemmaMapper(
           is_symmetric,
           attention_quant_bits,
@@ -626,8 +629,8 @@ class SafetensorsCkptLoader(converter_base.CkptLoaderBase):
           embedding_quant_bits,
           backend,
           self._reader,
-          is_v2=False if special_model in ["GEMMA_2B", "GEMMA_7B"] else True,
-          is_gemma3n=is_gemma_3n
+          is_v2=(special_model not in ["GEMMA_2B", "GEMMA_7B"]),
+          is_nested=is_nested_model  # <-- Pass the corrected flag
       )
     else:
       raise ValueError(f"Unknown special model: {special_model}")
