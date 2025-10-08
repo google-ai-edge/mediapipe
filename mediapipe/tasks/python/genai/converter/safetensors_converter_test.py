@@ -80,11 +80,15 @@ class SafetensorsConverterTest(parameterized.TestCase):
     actions = loader.load_to_actions()
     self.assertLen(list(actions), 15)
 
+  @parameterized.named_parameters(
+      ('gemma_3n_nested', 'GEMMA3N_4B'),
+      ('gemma_3_4b_nested', 'GEMMA3-4B'),
+  )
   @mock.patch.object(safetensors_converter, '_SafetensorsReader')
-  def testGemma3NConversion(self, MockReader):
-    """Tests the conversion of a Gemma 3N model."""
+  def testNestedGemmaConversion(self, model_name, MockReader):
+    """Tests that nested Gemma models have their prefixes stripped."""
     mock_reader_instance = MockReader.return_value
-    gemma_3n_variable_names = [
+    gemma_nested_variable_names = [
         # Standard language model layers with the 'language_model.' prefix
         'language_model.model.embed_tokens.weight',
         'language_model.model.layers.0.input_layernorm.weight',
@@ -95,7 +99,7 @@ class SafetensorsConverterTest(parameterized.TestCase):
         'vision_tower.vision_tower.encoder.layers.0.blocks.0.attn.qkv.weight',
         'multi_modal_projector.linear_1.weight',
     ]
-    mock_reader_instance.get_tensor_names.return_value = gemma_3n_variable_names
+    mock_reader_instance.get_tensor_names.return_value = gemma_nested_variable_names
     mock_reader_instance.read_tensor_as_numpy.return_value = np.zeros(
         (1, 1), dtype=np.float32
     )
@@ -106,7 +110,7 @@ class SafetensorsConverterTest(parameterized.TestCase):
         attention_quant_bits=8,
         feedforward_quant_bits=8,
         embedding_quant_bits=8,
-        special_model='GEMMA3N_4B',
+        special_model=model_name, # Use the parameterized model name
         backend='gpu',
     )
     actions_list = list(loader.load_to_actions())
