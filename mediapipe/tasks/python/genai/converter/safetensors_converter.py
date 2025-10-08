@@ -65,7 +65,7 @@ class _SafetensorsShardReader:
       raw_tensor = torch.frombuffer(
           array.array("b", tensor_bytes), dtype=DTYPE_MAP[dtype]
       ).reshape(shape)
-      return raw.float().t().contiguous().numpy()
+      return raw_tensor.float().t().contiguous().numpy()
 
   def get_tensor_names(self) -> List[str]:
     names = list(self.layers_info.keys())
@@ -609,6 +609,11 @@ class SafetensorsCkptLoader(converter_base.CkptLoaderBase):
         "GEMMA2_2B",
         "GEMMA2_9B",
         "GEMMA2_27B",
+        "GEMMA3_1B",
+        "GEMMA3_4B",
+        "GEMMA3_12B",
+        "GEMMA3_27B",
+        "GEMMA3_300M",
         "GEMMA3N_2B",
         "GEMMA3N_4B",
         "GEMMA3N_8B",
