@@ -19,6 +19,7 @@ limitations under the License.
 #include "mediapipe/tasks/c/components/containers/detection_result.h"
 #include "mediapipe/tasks/c/core/base_options.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
+#include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/core/image_processing_options.h"
 
 #ifndef MP_EXPORT
@@ -85,8 +86,8 @@ struct ObjectDetectorOptions {
   // The passed `image` is only valid for the lifetime of the call. A caller is
   // responsible for closing the object detector result.
   typedef void (*result_callback_fn)(ObjectDetectorResult* result,
-                                     const MpImage* image, int64_t timestamp_ms,
-                                     char* error_msg);
+                                     const MpImagePtr image,
+                                     int64_t timestamp_ms, char* error_msg);
   result_callback_fn result_callback;
 };
 
@@ -103,7 +104,7 @@ object_detector_create(struct ObjectDetectorOptions* options, char** error_msg);
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
 MP_EXPORT int object_detector_detect_image(MpObjectDetectorPtr detector,
-                                           const MpImage* image,
+                                           MpImagePtr image,
                                            ObjectDetectorResult* result,
                                            char** error_msg);
 
@@ -113,7 +114,7 @@ MP_EXPORT int object_detector_detect_image(MpObjectDetectorPtr detector,
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
 MP_EXPORT int object_detector_detect_image_with_options(
-    MpObjectDetectorPtr detector, const MpImage* image,
+    MpObjectDetectorPtr detector, MpImagePtr image,
     const ImageProcessingOptions* options, ObjectDetectorResult* result,
     char** error_msg);
 
@@ -127,7 +128,7 @@ MP_EXPORT int object_detector_detect_image_with_options(
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
 MP_EXPORT int object_detector_detect_for_video(MpObjectDetectorPtr detector,
-                                               const MpImage* image,
+                                               MpImagePtr image,
                                                int64_t timestamp_ms,
                                                ObjectDetectorResult* result,
                                                char** error_msg);
@@ -143,7 +144,7 @@ MP_EXPORT int object_detector_detect_for_video(MpObjectDetectorPtr detector,
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
 MP_EXPORT int object_detector_detect_for_video_with_options(
-    MpObjectDetectorPtr detector, const MpImage* image,
+    MpObjectDetectorPtr detector, MpImagePtr image,
     const ImageProcessingOptions* options, int64_t timestamp_ms,
     ObjectDetectorResult* result, char** error_msg);
 
@@ -168,7 +169,7 @@ MP_EXPORT int object_detector_detect_for_video_with_options(
 // You need to invoke `object_detector_close_result` after each invocation to
 // free memory.
 MP_EXPORT int object_detector_detect_async(MpObjectDetectorPtr detector,
-                                           const MpImage* image,
+                                           MpImagePtr image,
                                            int64_t timestamp_ms,
                                            char** error_msg);
 
@@ -191,7 +192,7 @@ MP_EXPORT int object_detector_detect_async(MpObjectDetectorPtr detector,
 // You need to invoke `object_detector_close_result` after each invocation to
 // free memory.
 MP_EXPORT int object_detector_detect_async_with_options(
-    MpObjectDetectorPtr detector, const MpImage* image,
+    MpObjectDetectorPtr detector, MpImagePtr image,
     const ImageProcessingOptions* options, int64_t timestamp_ms,
     char** error_msg);
 

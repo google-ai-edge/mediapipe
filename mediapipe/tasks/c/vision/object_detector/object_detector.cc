@@ -25,16 +25,15 @@ limitations under the License.
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/formats/image.h"
-#include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/tasks/c/components/containers/detection_result_converter.h"
 #include "mediapipe/tasks/c/core/base_options_converter.h"
-#include "mediapipe/tasks/c/vision/core/common.h"
+#include "mediapipe/tasks/c/vision/core/image.h"
+#include "mediapipe/tasks/c/vision/core/image_frame_util.h"
 #include "mediapipe/tasks/c/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/c/vision/core/image_processing_options_converter.h"
 #include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
 #include "mediapipe/tasks/cc/vision/object_detector/object_detector.h"
-#include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 
 struct MpObjectDetectorInternal {
   std::unique_ptr<::mediapipe::tasks::vision::ObjectDetector> detector;
@@ -49,7 +48,6 @@ using ::mediapipe::tasks::c::components::containers::
     CppConvertToDetectionResult;
 using ::mediapipe::tasks::c::core::CppConvertToBaseOptions;
 using ::mediapipe::tasks::c::vision::core::CppConvertToImageProcessingOptions;
-using ::mediapipe::tasks::vision::CreateImageFromBuffer;
 using ::mediapipe::tasks::vision::ObjectDetector;
 using ::mediapipe::tasks::vision::core::RunningMode;
 typedef ::mediapipe::tasks::vision::ObjectDetectorResult
@@ -63,6 +61,8 @@ int CppProcessError(absl::Status status, char** error_msg) {
 }
 
 }  // namespace
+
+const Image& ToImage(const MpImagePtr mp_image) { return mp_image->image; }
 
 void CppConvertToDetectorOptions(
     const ObjectDetectorOptions& in,
@@ -121,14 +121,7 @@ MpObjectDetectorPtr CppObjectDetectorCreate(
           ObjectDetectorResult result;
           CppConvertToDetectionResult(*cpp_result, &result);
 
-          const auto& image_frame = image.GetImageFrameSharedPtr();
-          const MpImage mp_image = {
-              .type = MpImage::IMAGE_FRAME,
-              .image_frame = {
-                  .format = static_cast<::ImageFormat>(image_frame->Format()),
-                  .image_buffer = image_frame->PixelData(),
-                  .width = image_frame->Width(),
-                  .height = image_frame->Height()}};
+          MpImageInternal mp_image = {.image = image};
 
           result_callback(&result, &mp_image, timestamp,
                           /* error_msg= */ nullptr);
@@ -144,36 +137,19 @@ MpObjectDetectorPtr CppObjectDetectorCreate(
   return new MpObjectDetectorInternal{.detector = std::move(*detector)};
 }
 
-int CppObjectDetectorDetect(MpObjectDetectorPtr detector, const MpImage* image,
+int CppObjectDetectorDetect(MpObjectDetectorPtr detector,
+                            const MpImagePtr image,
                             const ImageProcessingOptions* options,
                             ObjectDetectorResult* result, char** error_msg) {
-  if (image->type == MpImage::GPU_BUFFER) {
-    const absl::Status status =
-        absl::InvalidArgumentError("GPU Buffer not supported yet.");
-
-    ABSL_LOG(ERROR) << "Detection failed: " << status.message();
-    return CppProcessError(status, error_msg);
-  }
-
-  const auto img = CreateImageFromBuffer(
-      static_cast<ImageFormat::Format>(image->image_frame.format),
-      image->image_frame.image_buffer, image->image_frame.width,
-      image->image_frame.height);
-
-  if (!img.ok()) {
-    ABSL_LOG(ERROR) << "Failed to create Image: " << img.status();
-    return CppProcessError(img.status(), error_msg);
-  }
-
   auto cpp_detector = detector->detector.get();
   absl::StatusOr<CppObjectDetectorResult> cpp_result;
 
   if (options) {
     ::mediapipe::tasks::vision::core::ImageProcessingOptions cpp_options;
     CppConvertToImageProcessingOptions(*options, &cpp_options);
-    cpp_result = cpp_detector->Detect(*img, cpp_options);
+    cpp_result = cpp_detector->Detect(ToImage(image), cpp_options);
   } else {
-    cpp_result = cpp_detector->Detect(*img);
+    cpp_result = cpp_detector->Detect(ToImage(image));
   }
 
   if (!cpp_result.ok()) {
@@ -185,38 +161,21 @@ int CppObjectDetectorDetect(MpObjectDetectorPtr detector, const MpImage* image,
 }
 
 int CppObjectDetectorDetectForVideo(MpObjectDetectorPtr detector,
-                                    const MpImage* image,
+                                    const MpImagePtr image,
                                     const ImageProcessingOptions* options,
                                     int64_t timestamp_ms,
                                     ObjectDetectorResult* result,
                                     char** error_msg) {
-  if (image->type == MpImage::GPU_BUFFER) {
-    absl::Status status =
-        absl::InvalidArgumentError("GPU Buffer not supported yet");
-
-    ABSL_LOG(ERROR) << "Detection failed: " << status.message();
-    return CppProcessError(status, error_msg);
-  }
-
-  const auto img = CreateImageFromBuffer(
-      static_cast<ImageFormat::Format>(image->image_frame.format),
-      image->image_frame.image_buffer, image->image_frame.width,
-      image->image_frame.height);
-
-  if (!img.ok()) {
-    ABSL_LOG(ERROR) << "Failed to create Image: " << img.status();
-    return CppProcessError(img.status(), error_msg);
-  }
-
   auto cpp_detector = detector->detector.get();
   absl::StatusOr<CppObjectDetectorResult> cpp_result;
 
   if (options) {
     ::mediapipe::tasks::vision::core::ImageProcessingOptions cpp_options;
     CppConvertToImageProcessingOptions(*options, &cpp_options);
-    cpp_result = cpp_detector->DetectForVideo(*img, timestamp_ms, cpp_options);
+    cpp_result =
+        cpp_detector->DetectForVideo(ToImage(image), timestamp_ms, cpp_options);
   } else {
-    cpp_result = cpp_detector->DetectForVideo(*img, timestamp_ms);
+    cpp_result = cpp_detector->DetectForVideo(ToImage(image), timestamp_ms);
   }
 
   if (!cpp_result.ok()) {
@@ -228,36 +187,19 @@ int CppObjectDetectorDetectForVideo(MpObjectDetectorPtr detector,
 }
 
 int CppObjectDetectorDetectAsync(MpObjectDetectorPtr detector,
-                                 const MpImage* image,
+                                 const MpImagePtr image,
                                  const ImageProcessingOptions* options,
                                  int64_t timestamp_ms, char** error_msg) {
-  if (image->type == MpImage::GPU_BUFFER) {
-    absl::Status status =
-        absl::InvalidArgumentError("GPU Buffer not supported yet");
-
-    ABSL_LOG(ERROR) << "Detection failed: " << status.message();
-    return CppProcessError(status, error_msg);
-  }
-
-  const auto img = CreateImageFromBuffer(
-      static_cast<ImageFormat::Format>(image->image_frame.format),
-      image->image_frame.image_buffer, image->image_frame.width,
-      image->image_frame.height);
-
-  if (!img.ok()) {
-    ABSL_LOG(ERROR) << "Failed to create Image: " << img.status();
-    return CppProcessError(img.status(), error_msg);
-  }
-
   auto cpp_detector = detector->detector.get();
   absl::Status cpp_result;
 
   if (options) {
     ::mediapipe::tasks::vision::core::ImageProcessingOptions cpp_options;
     CppConvertToImageProcessingOptions(*options, &cpp_options);
-    cpp_result = cpp_detector->DetectAsync(*img, timestamp_ms, cpp_options);
+    cpp_result =
+        cpp_detector->DetectAsync(ToImage(image), timestamp_ms, cpp_options);
   } else {
-    cpp_result = cpp_detector->DetectAsync(*img, timestamp_ms);
+    cpp_result = cpp_detector->DetectAsync(ToImage(image), timestamp_ms);
   }
 
   if (!cpp_result.ok()) {
@@ -294,7 +236,7 @@ MP_EXPORT MpObjectDetectorPtr object_detector_create(
 }
 
 MP_EXPORT int object_detector_detect_image(MpObjectDetectorPtr detector,
-                                           const MpImage* image,
+                                           const MpImagePtr image,
                                            ObjectDetectorResult* result,
                                            char** error_msg) {
   return mediapipe::tasks::c::vision::object_detector::CppObjectDetectorDetect(
@@ -302,7 +244,7 @@ MP_EXPORT int object_detector_detect_image(MpObjectDetectorPtr detector,
 }
 
 MP_EXPORT int object_detector_detect_image_with_options(
-    MpObjectDetectorPtr detector, const MpImage* image,
+    MpObjectDetectorPtr detector, const MpImagePtr image,
     const ImageProcessingOptions* options, ObjectDetectorResult* result,
     char** error_msg) {
   return mediapipe::tasks::c::vision::object_detector::CppObjectDetectorDetect(
@@ -310,7 +252,7 @@ MP_EXPORT int object_detector_detect_image_with_options(
 }
 
 MP_EXPORT int object_detector_detect_for_video(MpObjectDetectorPtr detector,
-                                               const MpImage* image,
+                                               const MpImagePtr image,
                                                int64_t timestamp_ms,
                                                ObjectDetectorResult* result,
                                                char** error_msg) {
@@ -320,7 +262,7 @@ MP_EXPORT int object_detector_detect_for_video(MpObjectDetectorPtr detector,
 }
 
 MP_EXPORT int object_detector_detect_for_video_with_options(
-    MpObjectDetectorPtr detector, const MpImage* image,
+    MpObjectDetectorPtr detector, const MpImagePtr image,
     const ImageProcessingOptions* options, int64_t timestamp_ms,
     ObjectDetectorResult* result, char** error_msg) {
   return mediapipe::tasks::c::vision::object_detector::
@@ -329,7 +271,7 @@ MP_EXPORT int object_detector_detect_for_video_with_options(
 }
 
 MP_EXPORT int object_detector_detect_async(MpObjectDetectorPtr detector,
-                                           const MpImage* image,
+                                           const MpImagePtr image,
                                            int64_t timestamp_ms,
                                            char** error_msg) {
   return mediapipe::tasks::c::vision::object_detector::
@@ -338,7 +280,7 @@ MP_EXPORT int object_detector_detect_async(MpObjectDetectorPtr detector,
 }
 
 MP_EXPORT int object_detector_detect_async_with_options(
-    MpObjectDetectorPtr detector, const MpImage* image,
+    MpObjectDetectorPtr detector, const MpImagePtr image,
     const ImageProcessingOptions* options, int64_t timestamp_ms,
     char** error_msg) {
   return mediapipe::tasks::c::vision::object_detector::
