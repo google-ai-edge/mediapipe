@@ -212,7 +212,7 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
           @Override
           public MPImage convertToTaskInput(List<Packet> packets) {
             return new BitmapImageBuilder(
-                    AndroidPacketGetter.getBitmapFromRgb(packets.get(imageOutStreamIndex)))
+                    AndroidPacketGetter.getBitmapFromRgba(packets.get(imageOutStreamIndex)))
                 .build();
           }
         });
