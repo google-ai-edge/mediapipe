@@ -190,8 +190,14 @@ cc_library(
         ":webgpu_texture_view",
         ":webgpu_utils",
         "//mediapipe/calculators/tensor:image_to_tensor_converter",
+        "//mediapipe/calculators/tensor:image_to_tensor_utils",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/port:statusor",
+        "//mediapipe/gpu:gpu_buffer",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )
 

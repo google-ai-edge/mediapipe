@@ -1778,7 +1778,7 @@ cc_library(
     name = "image_to_tensor_converter_gl_texture",
     srcs = ["image_to_tensor_converter_gl_texture.cc"],
     hdrs = ["image_to_tensor_converter_gl_texture.h"],
-    visibility = ["//visibility:private"],
+    visibility = ["//mediapipe/gpu/webgpu:__subpackages__"],
     deps = ["//mediapipe/framework:port"] + select({
         "//mediapipe/gpu:disable_gpu": [],
         "//conditions:default": [
