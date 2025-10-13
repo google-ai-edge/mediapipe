@@ -46,5 +46,6 @@ cc_binary(
         "//mediapipe/tasks/c/vision/face_detector:face_detector_c_lib",
         "//mediapipe/tasks/c/vision/face_landmarker:face_landmarker_c_lib",
         "//mediapipe/tasks/c/vision/hand_landmarker:hand_landmarker_c_lib",
+        "//mediapipe/tasks/c/vision/object_detector:object_detector_c_lib",
     ],
 )

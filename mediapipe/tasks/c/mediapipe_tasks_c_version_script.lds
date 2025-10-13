@@ -8,6 +8,7 @@ VERS_1.0 {
     face_detector_*;
     face_landmarker_*;
     hand_landmarker_*;
+    object_detector_*;
   local:
     *;
 };

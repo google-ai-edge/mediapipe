@@ -16,6 +16,7 @@
 import ctypes
 import enum
 import os
+from typing import Any, List, Optional
 
 # resources dependency
 
@@ -114,3 +115,24 @@ def load_shared_library():
 
   _shared_lib = lib
   return _shared_lib
+
+
+def convert_strings_to_ctypes_array(
+    str_list: Optional[List[str]],
+) -> Optional[Any]:
+  """Converts a list of Python strings to a ctypes array of c_char_p.
+
+  Args:
+      str_list: A list of strings, or None.
+
+  Returns:
+      A ctypes array of c_char_p, or None if the input is None or empty.
+  """
+  if not str_list:  # Handles None and empty list
+    return None
+  num_elements = len(str_list)
+  c_array = (ctypes.c_char_p * num_elements)()
+  encoded_strings = [s.encode('utf-8') for s in str_list]
+  c_array[:] = encoded_strings
+
+  return c_array
