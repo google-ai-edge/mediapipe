@@ -68,9 +68,19 @@ class Category:
   @classmethod
   @doc_controls.do_not_generate_docs
   def from_ctypes(cls, c_obj: category_c_module.CategoryC) -> "Category":
-    """Creates a `Category` object from the given `CategoryC` object."""
+    """Creates a `Category` object from the given `CategoryC` object.
+
+    This function converts the `CategoryC` index of -1 to a Python value of None
+    to retain the same semantic meaning. All other values are converted as-is.
+
+    Args:
+      c_obj: The `CategoryC` object to be converted.
+
+    Returns:
+      A `Category` object.
+    """
     return Category(
-        index=c_obj.index,
+        index=c_obj.index if c_obj.index != -1 else None,
         score=c_obj.score,
         category_name=(
             c_obj.category_name.decode("utf-8") if c_obj.category_name else None

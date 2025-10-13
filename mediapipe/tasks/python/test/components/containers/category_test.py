@@ -25,26 +25,26 @@ from mediapipe.tasks.python.components.containers import category_c as category_
 _CATEGORY_WITH_NAMES = category_c_lib.CategoryC(
     index=1,
     score=0.9,
-    category_name=b'test_category_WITH_NAMES',
+    category_name=b'test_category_with_names',
     display_name=b'Test Category 1',
 )
 _DICT_WITH_NAMES = immutabledict.immutabledict({
     'index': 1,
     'score': 0.9,
-    'category_name': 'test_category_WITH_NAMES',
+    'category_name': 'test_category_with_names',
     'display_name': 'Test Category 1',
 })
 _CATEGORY_WITHOUT_NAMES = category_c_lib.CategoryC(
     index=2,
     score=0.8,
-    category_name=b'test_category_WITHOUT_NAMES',
-    display_name=b'Test Category 2',
+    category_name=None,
+    display_name=None,
 )
 _DICT_WITHOUT_NAMES = immutabledict.immutabledict({
     'index': 2,
     'score': 0.8,
-    'category_name': 'test_category_WITHOUT_NAMES',
-    'display_name': 'Test Category 2',
+    'category_name': None,
+    'display_name': None,
 })
 
 
@@ -63,10 +63,26 @@ class CategoryTest(absltest.TestCase):
 
     self._expect_category_equal(actual_category, _DICT_WITH_NAMES)
 
-  def test_create_category_from_ctypes_without_optional_fields(self):
+  def test_create_category_from_ctypes_without_name_fields(self):
     actual_category = category_lib.Category.from_ctypes(_CATEGORY_WITHOUT_NAMES)
 
     self._expect_category_equal(actual_category, _DICT_WITHOUT_NAMES)
+
+  def test_create_category_from_ctypes_with_unknown_index(self):
+    values = category_c_lib.CategoryC(
+        index=-1,
+        score=0.8,
+        category_name=None,
+        display_name=None,
+    )
+    category = category_lib.Category.from_ctypes(values)
+
+    self._expect_category_equal(category, {
+        'index': None,
+        'score': 0.8,
+        'category_name': None,
+        'display_name': None,
+    })
 
   def test_create_categories_from_ctypes(self):
     c_categories = (category_c_lib.CategoryC * 2)(
