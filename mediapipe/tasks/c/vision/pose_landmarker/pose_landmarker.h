@@ -20,6 +20,7 @@ limitations under the License.
 
 #include "mediapipe/tasks/c/core/base_options.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
+#include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/c/vision/pose_landmarker/pose_landmarker_result.h"
 
@@ -78,8 +79,8 @@ struct PoseLandmarkerOptions {
   //  The passed `image` is only valid for the lifetime of the call. A caller is
   //  responsible for closing the pose landmarker result.
   typedef void (*result_callback_fn)(PoseLandmarkerResult* result,
-                                     const MpImage* image, int64_t timestamp_ms,
-                                     char* error_msg);
+                                     const MpImagePtr image,
+                                     int64_t timestamp_ms, char* error_msg);
   result_callback_fn result_callback;
 };
 
@@ -96,7 +97,7 @@ pose_landmarker_create(struct PoseLandmarkerOptions* options, char** error_msg);
 // parameter to an an error message (if `error_msg` is not `nullptr`). You must
 // free the memory allocated for the error message.
 MP_EXPORT int pose_landmarker_detect_image(MpPoseLandmarkerPtr landmarker,
-                                           const MpImage* image,
+                                           MpImagePtr image,
                                            PoseLandmarkerResult* result,
                                            char** error_msg);
 
@@ -105,7 +106,7 @@ MP_EXPORT int pose_landmarker_detect_image(MpPoseLandmarkerPtr landmarker,
 // and sets the error parameter to an an error message (if `error_msg` is not
 // `nullptr`). You must free the memory allocated for the error message.
 MP_EXPORT int pose_landmarker_detect_image_with_options(
-    MpPoseLandmarkerPtr landmarker, const MpImage* image,
+    MpPoseLandmarkerPtr landmarker, MpImagePtr image,
     const ImageProcessingOptions* options, PoseLandmarkerResult* result,
     char** error_msg);
 
@@ -119,7 +120,7 @@ MP_EXPORT int pose_landmarker_detect_image_with_options(
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
 MP_EXPORT int pose_landmarker_detect_for_video(MpPoseLandmarkerPtr landmarker,
-                                               const MpImage* image,
+                                               MpImagePtr image,
                                                int64_t timestamp_ms,
                                                PoseLandmarkerResult* result,
                                                char** error_msg);
@@ -133,7 +134,7 @@ MP_EXPORT int pose_landmarker_detect_for_video(MpPoseLandmarkerPtr landmarker,
 // and sets the error parameter to an an error message (if `error_msg` is not
 // `nullptr`). You must free the memory allocated for the error message.
 MP_EXPORT int pose_landmarker_detect_for_video_with_options(
-    MpPoseLandmarkerPtr landmarker, const MpImage* image,
+    MpPoseLandmarkerPtr landmarker, MpImagePtr image,
     const ImageProcessingOptions* options, int64_t timestamp_ms,
     PoseLandmarkerResult* result, char** error_msg);
 
@@ -158,7 +159,7 @@ MP_EXPORT int pose_landmarker_detect_for_video_with_options(
 // You need to invoke `pose_landmarker_close_result` after each invocation to
 // free memory.
 MP_EXPORT int pose_landmarker_detect_async(MpPoseLandmarkerPtr landmarker,
-                                           const MpImage* image,
+                                           MpImagePtr image,
                                            int64_t timestamp_ms,
                                            char** error_msg);
 
@@ -179,7 +180,7 @@ MP_EXPORT int pose_landmarker_detect_async(MpPoseLandmarkerPtr landmarker,
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated
 MP_EXPORT int pose_landmarker_detect_async_with_options(
-    MpPoseLandmarkerPtr landmarker, const MpImage* image,
+    MpPoseLandmarkerPtr landmarker, MpImagePtr image,
     const ImageProcessingOptions* options, int64_t timestamp_ms,
     char** error_msg);
 
