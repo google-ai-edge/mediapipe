@@ -194,7 +194,6 @@ py_test(
     ],
     tags = ["not_run:arm"],
     deps = [
-        "//mediapipe/python:_framework_bindings",
         "//mediapipe/tasks/cc/components/containers/proto:landmarks_detection_result_py_pb2",
         "//mediapipe/tasks/python/components/containers:landmark",
         "//mediapipe/tasks/python/components/containers:landmark_detection_result",
@@ -202,6 +201,7 @@ py_test(
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/test:test_utils",
         "//mediapipe/tasks/python/vision:pose_landmarker",
+        "//mediapipe/tasks/python/vision/core:image",
         "//mediapipe/tasks/python/vision/core:image_processing_options",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
         "@com_google_protobuf//:protobuf_python",

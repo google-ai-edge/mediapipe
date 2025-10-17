@@ -14,6 +14,7 @@
 """Tests for pose landmarker."""
 
 import enum
+import threading
 from typing import List
 from unittest import mock
 
@@ -22,7 +23,6 @@ from absl.testing import parameterized
 import numpy as np
 
 from google.protobuf import text_format
-from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.tasks.cc.components.containers.proto import landmarks_detection_result_pb2
 from mediapipe.tasks.python.components.containers import landmark as landmark_module
 from mediapipe.tasks.python.components.containers import landmark_detection_result as landmark_detection_result_module
@@ -30,6 +30,7 @@ from mediapipe.tasks.python.components.containers import rect as rect_module
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.test import test_utils
 from mediapipe.tasks.python.vision import pose_landmarker
+from mediapipe.tasks.python.vision.core import image as image_module
 from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_module
 from mediapipe.tasks.python.vision.core import vision_task_running_mode as running_mode_module
 
@@ -142,7 +143,8 @@ class PoseLandmarkerTest(parameterized.TestCase):
           model_asset_path='/path/to/invalid/model.tflite'
       )
       options = _PoseLandmarkerOptions(base_options=base_options)
-      _PoseLandmarker.create_from_options(options)
+      landmarker = _PoseLandmarker.create_from_options(options)
+      landmarker.close()
 
   def test_create_from_options_succeeds_with_valid_model_content(self):
     # Creates with options containing model content successfully.
@@ -151,6 +153,7 @@ class PoseLandmarkerTest(parameterized.TestCase):
       options = _PoseLandmarkerOptions(base_options=base_options)
       landmarker = _PoseLandmarker.create_from_options(options)
       self.assertIsInstance(landmarker, _PoseLandmarker)
+      landmarker.close()
 
   @parameterized.parameters(
       (
@@ -271,7 +274,7 @@ class PoseLandmarkerTest(parameterized.TestCase):
     base_options = _BaseOptions(model_asset_path=self.model_path)
     options = _PoseLandmarkerOptions(base_options=base_options)
     with self.assertRaisesRegex(
-        ValueError, "This task doesn't support region-of-interest."
+        RuntimeError, "This task doesn't support region-of-interest."
     ):
       with _PoseLandmarker.create_from_options(options) as landmarker:
         # Set the `region_of_interest` parameter using `ImageProcessingOptions`.
@@ -327,7 +330,7 @@ class PoseLandmarkerTest(parameterized.TestCase):
     )
     with _PoseLandmarker.create_from_options(options) as landmarker:
       with self.assertRaisesRegex(
-          ValueError, r'not initialized with the video mode'
+          RuntimeError, r'not initialized with the video mode'
       ):
         landmarker.detect_for_video(self.test_image, 0)
 
@@ -338,7 +341,7 @@ class PoseLandmarkerTest(parameterized.TestCase):
     )
     with _PoseLandmarker.create_from_options(options) as landmarker:
       with self.assertRaisesRegex(
-          ValueError, r'not initialized with the live stream mode'
+          RuntimeError, r'not initialized with the live stream mode'
       ):
         landmarker.detect_async(self.test_image, 0)
 
@@ -349,7 +352,7 @@ class PoseLandmarkerTest(parameterized.TestCase):
     )
     with _PoseLandmarker.create_from_options(options) as landmarker:
       with self.assertRaisesRegex(
-          ValueError, r'not initialized with the image mode'
+          RuntimeError, r'not initialized with the image mode'
       ):
         landmarker.detect(self.test_image)
 
@@ -360,7 +363,7 @@ class PoseLandmarkerTest(parameterized.TestCase):
     )
     with _PoseLandmarker.create_from_options(options) as landmarker:
       with self.assertRaisesRegex(
-          ValueError, r'not initialized with the live stream mode'
+          RuntimeError, r'not initialized with the live stream mode'
       ):
         landmarker.detect_async(self.test_image, 0)
 
@@ -372,7 +375,7 @@ class PoseLandmarkerTest(parameterized.TestCase):
     with _PoseLandmarker.create_from_options(options) as landmarker:
       unused_result = landmarker.detect_for_video(self.test_image, 1)
       with self.assertRaisesRegex(
-          ValueError, r'Input timestamp must be monotonically increasing'
+          RuntimeError, r'Input timestamp must be monotonically increasing'
       ):
         landmarker.detect_for_video(self.test_image, 0)
 
@@ -429,7 +432,7 @@ class PoseLandmarkerTest(parameterized.TestCase):
     )
     with _PoseLandmarker.create_from_options(options) as landmarker:
       with self.assertRaisesRegex(
-          ValueError, r'not initialized with the image mode'
+          RuntimeError, r'not initialized with the image mode'
       ):
         landmarker.detect(self.test_image)
 
@@ -441,7 +444,7 @@ class PoseLandmarkerTest(parameterized.TestCase):
     )
     with _PoseLandmarker.create_from_options(options) as landmarker:
       with self.assertRaisesRegex(
-          ValueError, r'not initialized with the video mode'
+          RuntimeError, r'not initialized with the video mode'
       ):
         landmarker.detect_for_video(self.test_image, 0)
 
@@ -454,7 +457,7 @@ class PoseLandmarkerTest(parameterized.TestCase):
     with _PoseLandmarker.create_from_options(options) as landmarker:
       landmarker.detect_async(self.test_image, 100)
       with self.assertRaisesRegex(
-          ValueError, r'Input timestamp must be monotonically increasing'
+          RuntimeError, r'Input timestamp must be monotonically increasing'
       ):
         landmarker.detect_async(self.test_image, 0)
 
@@ -479,6 +482,8 @@ class PoseLandmarkerTest(parameterized.TestCase):
     test_image = _Image.create_from_file(
         test_utils.get_test_data_path(image_path)
     )
+    callback_event = threading.Event()
+    callback_exception: Exception | None
     # Set rotation parameters using ImageProcessingOptions.
     image_processing_options = _ImageProcessingOptions(
         rotation_degrees=rotation
@@ -488,20 +493,26 @@ class PoseLandmarkerTest(parameterized.TestCase):
     def check_result(
         result: PoseLandmarkerResult, output_image: _Image, timestamp_ms: int
     ):
-      if result.pose_landmarks:
-        self._expect_pose_landmarker_results_correct(
-            result,
-            expected_result,
-            output_segmentation_masks,
-            _LANDMARKS_MARGIN,
+      nonlocal callback_exception, observed_timestamp_ms
+      try:
+        if result.pose_landmarks:
+          self._expect_pose_landmarker_results_correct(
+              result,
+              expected_result,
+              output_segmentation_masks,
+              _LANDMARKS_MARGIN,
+          )
+        else:
+          self.assertEqual(result, expected_result)
+        self.assertTrue(
+            np.array_equal(output_image.numpy_view(), test_image.numpy_view())
         )
-      else:
-        self.assertEqual(result, expected_result)
-      self.assertTrue(
-          np.array_equal(output_image.numpy_view(), test_image.numpy_view())
-      )
-      self.assertLess(observed_timestamp_ms, timestamp_ms)
-      self.observed_timestamp_ms = timestamp_ms
+        self.assertLess(observed_timestamp_ms, timestamp_ms)
+        self.observed_timestamp_ms = timestamp_ms
+      except AssertionError as e:
+        callback_exception = e
+      finally:
+        callback_event.set()
 
     options = _PoseLandmarkerOptions(
         base_options=_BaseOptions(model_asset_path=self.model_path),
