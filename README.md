@@ -129,14 +129,12 @@ Notes
   typically resolves includes and libs automatically.
 - Ensure you are using Apple Silicon-native Homebrew (no Rosetta) for consistent arm64 builds.
 
-For iOS on Apple Silicon, see the docs in this repository:
-- `../docs/ios_handtrackinggpu_bazel_quickstart.md`
-- `../docs/README_ios_mediapipe_handtrackinggpu.md`
+For iOS (device) quick start, see the iOS section below.
 
 ## Examples (Bazel)
 
 This fork preserves the classic MediaPipe examples. Below are concise Bazel
-commands to build and run the Hand Tracking samples and related examples.
+commands to build and run the iOS GPU examples on a physical device.
 
 ### Hand Tracking — Desktop (CPU)
 
@@ -165,48 +163,78 @@ Desktop GPU example is supported on Linux per upstream docs. On macOS, prefer:
 
 ### Hand Tracking — iOS (GPU)
 
+### Hand Tracking — iOS (GPU)
+
 Build the iOS app with Bazelisk. You need a valid bundle ID and provisioning
-profile. See the linked docs for full setup.
+profile (wildcard profiles like `com.yourco.*` are fine).
+
+- Bundle ID prefix: `mediapipe/examples/ios/bundle_id.bzl` (`BUNDLE_ID_PREFIX`)
+- Provisioning profile search order:
+  - Per‑app: `mediapipe/examples/ios/<app>/provisioning_profile.mobileprovision`
+  - Fallback: `mediapipe/provisioning_profile.mobileprovision`
 
 Device (arm64):
 
 ```bash
-# Set a specific Bazel version if needed
-USE_BAZEL_VERSION=6.5.0 \
+# Pin Bazel if needed
+export USE_BAZEL_VERSION=6.5.0
+
+# Build device app (codesigns using your provisioning profile)
 bazelisk build -c opt --config=ios_arm64 \
-  //mediapipe/examples/ios/handtrackinggpu:handtrackinggpu
-
-# App bundle path (after build):
-# bazel-bin/mediapipe/examples/ios/handtrackinggpu/HandTrackingGpuApp_archive-root/Payload/HandTrackingGpuApp.app
-```
-
-Simulator (arm64):
-
-```bash
-USE_BAZEL_VERSION=6.5.0 \
-bazelisk build -c opt --config=ios_sim_arm64 \
   //mediapipe/examples/ios/handtrackinggpu:HandTrackingGpuApp
+
+# Resulting artifacts
+ls bazel-bin/mediapipe/examples/ios/handtrackinggpu/
+# -> HandTrackingGpuApp.ipa, HandTrackingGpuApp.app.dSYM
 ```
 
-Install/launch on a connected device via Xcode tools:
+Install and launch on a connected device using Xcode tooling:
 
 ```bash
-# Replace <UDID> with your device identifier
-xcrun devicectl device install app --device <UDID> \
-  bazel-bin/mediapipe/examples/ios/handtrackinggpu/HandTrackingGpuApp_archive-root/Payload/HandTrackingGpuApp.app
+# Find device UDID
+xcrun xctrace list devices | sed -n 's/.*(\([0-9A-F-]\{25,\}\)).*/\1/p' | head -n1
 
+# Install the .app from the .ipa payload
+TMPDIR=$(mktemp -d)
+unzip -q bazel-bin/mediapipe/examples/ios/handtrackinggpu/HandTrackingGpuApp.ipa -d "$TMPDIR"
+xcrun devicectl device install app --device <UDID> \
+  "$TMPDIR/Payload/HandTrackingGpuApp.app"
+
+# Launch
 xcrun devicectl device process launch --device <UDID> \
-  com.codexmp.mediapipe.examples.HandTrackingGpu
+  com.codexmp.mediapipe.examples.HandTrackingGpu --console --terminate-existing
 ```
 
-Where to set bundle ID and profiles:
-- Bundle ID prefix: `mediapipe/examples/ios/bundle_id.bzl`
-- Optional per-app profile: `mediapipe/examples/ios/handtrackinggpu/provisioning_profile.mobileprovision`
+Troubleshooting (device):
+- Provisioning errors: update the provisioning profile at one of the paths above and
+  ensure the bundle ID prefix matches your profile.
 
-More details and troubleshooting:
-- `../docs/ios_handtrackinggpu_bazel_quickstart.md`
-- `../docs/README_ios_mediapipe_handtrackinggpu.md`
-- `../docs/ios_tulsi_faq.md`
+## iOS (Device) — Holistic Tracking (GPU)
+
+Build, install and launch similarly to Hand Tracking:
+
+```bash
+export USE_BAZEL_VERSION=6.5.0
+
+# Build (device)
+bazelisk build -c opt --config=ios_arm64 \
+  //mediapipe/examples/ios/holistictrackinggpu:HolisticTrackingGpuApp
+
+# Install
+UDID=$(xcrun xctrace list devices | sed -n 's/.*(\([0-9A-F-]\{25,\}\)).*/\1/p' | head -n1)
+TMPDIR=$(mktemp -d)
+unzip -q bazel-bin/mediapipe/examples/ios/holistictrackinggpu/HolisticTrackingGpuApp.ipa -d "$TMPDIR"
+xcrun devicectl device install app --device "$UDID" \
+  "$TMPDIR/Payload/HolisticTrackingGpuApp.app"
+
+# Launch
+xcrun devicectl device process launch --device "$UDID" \
+  com.codexmp.mediapipe.examples.HolisticTrackingGpu --console --terminate-existing
+```
+
+Notes:
+- OpenCV is bundled for device builds; no extra setup is required.
+- Ensure your provisioning profile covers the Bundle ID prefix set in `bundle_id.bzl`.
 
 ## Contributing
 

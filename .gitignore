@@ -2,6 +2,9 @@ bazel-*
 mediapipe/MediaPipe.xcodeproj
 mediapipe/MediaPipe.tulsiproj/*.tulsiconf-user
 mediapipe/provisioning_profile.mobileprovision
+# Ignore any provisioning profiles checked into subfolders
+*.mobileprovision
+mediapipe/examples/ios/**/provisioning_profile.mobileprovision
 node_modules/
 .configure.bazelrc
 .user.bazelrc

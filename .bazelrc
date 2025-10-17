@@ -97,6 +97,10 @@ build:ios_sim_fat --ios_multi_cpus=x86_64,sim_arm64
 build:ios_sim_device_fat --config=ios
 build:ios_sim_device_fat --ios_multi_cpus=x86_64,sim_arm64,arm64
 
+# iOS simulator ARM64 only (Apple Silicon simulators)
+build:ios_sim_arm64 --config=ios
+build:ios_sim_arm64 --ios_multi_cpus=sim_arm64
+
 build:darwin_x86_64 --apple_platform_type=macos
 build:darwin_x86_64 --macos_minimum_os=10.12
 build:darwin_x86_64 --cpu=darwin_x86_64
