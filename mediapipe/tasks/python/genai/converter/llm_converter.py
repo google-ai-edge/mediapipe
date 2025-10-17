@@ -63,6 +63,7 @@ class ConversionConfig(object):
     use_dynamic_ple: Whether any PLE embeddings should be loaded dynamically.
       Default is true, which will cause embeddings to only be loaded into VRAM
       on demand.
+    use_mse_quant: Whether to use MSE quantization for recomputing scales.
   """
 
   def __init__(
@@ -92,6 +93,7 @@ class ConversionConfig(object):
       submodel_type: Optional[str] = None,
       use_fake_weights: bool = False,
       use_dynamic_ple: bool = True,
+      use_mse_quant: bool = False,
   ):
     self.input_ckpt = input_ckpt
     self.ckpt_format = ckpt_format
@@ -116,6 +118,7 @@ class ConversionConfig(object):
     self.submodel_type = submodel_type
     self.use_fake_weights = use_fake_weights
     self.use_dynamic_ple = use_dynamic_ple
+    self.use_mse_quant = use_mse_quant
     if output_tflite_file:
       parent_dir = os.path.dirname(output_tflite_file)
       if not os.path.isdir(parent_dir):
@@ -161,6 +164,7 @@ def quantize_by_actions(
     actions: List[converter_base.QuantizationAction],
     backend: str,
     is_symmetric: bool,
+    use_mse_quant: bool = False,
 ):
   """Quantizes the weights by actions.
 
@@ -169,6 +173,7 @@ def quantize_by_actions(
       tensor values to be quantized.
     backend: Target backend to run the model. Can be either "cpu" or "gpu".
     is_symmetric: Whether to quantize symmetrically.
+    use_mse_quant: Whether to use MSE quantization for recomputing scales.
 
   Returns:
     A dictionary that maps from the updated tensor names to the quantized
@@ -232,6 +237,7 @@ def quantize_by_actions(
               axis=action.quantize_axis,
               sym=is_symmetric,
               number_bits=action.quantize_bits,
+              use_mse_quant=use_mse_quant,
           )
           output_tensors[action.target_name] = (target_var, pack)
           output_tensors[action.target_name + scale_suffix] = (
@@ -245,6 +251,7 @@ def quantize_by_actions(
               axis=action.quantize_axis,
               sym=is_symmetric,
               number_bits=action.quantize_bits,
+              use_mse_quant=use_mse_quant,
           )
         if backend == 'cpu' and pack:
           target_var, scale, zp = quantization_util.update_to_uint4(
@@ -355,7 +362,7 @@ def maybe_quantize_and_write_tensors_to_bins(
   for action in actions:
     # Quantize the weight
     quantized_tensors = quantize_by_actions(
-        action, config.backend, config.is_symmetric
+        action, config.backend, config.is_symmetric, config.use_mse_quant
     )
     del action
     # Write the tensors into file(s).

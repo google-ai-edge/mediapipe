@@ -255,5 +255,38 @@ class QuantizationUtilTest(TestCase):
     np.testing.assert_allclose(dequant_from_uint4, expected_dequant, rtol=1e-05)
 
 
+class QuantizeMseTest(TestCase):
+
+  def test_mse_reduce_precision_4bit(self):
+    inputs = np.array([[-1.0, 1.0, 0.0], [1.0, 2.0, 3.0]], dtype=np.float32)
+    qx, scale = quantization_util.quantize_tensor(
+        inputs, axis=[1], number_bits=4, use_mse_quant=True
+    )
+
+    # For 4 bits, maxq = 15, zero_mse_quant = (15 - 1) / 2 = 7.
+    # The scale multiplier is 0.37755.
+
+    # For inputs row 1 ([-1.0, 1.0, 0.0]):
+    # rms = sqrt(mean((-1)^2 + 1^2 + 0^2)) = sqrt(2/3) approx 0.8164966
+    # scale = 0.37755 * 0.8164966 = 0.3079979
+    # t_shifted(-1.0) = -1.0 / 0.3079979 + 7 = -3.2461 + 7 = 3.7539
+    #   -> round 4 -> qvar = -3
+    # t_shifted(1.0) = 1.0 / 0.3079979 + 7 = 3.2461 + 7 = 10.2461
+    #   -> round 10 -> qvar = 3
+    # t_shifted(0.0) = 0.0 / 0.3079979 + 7 = 7.0 -> round 7 -> qvar = 0
+
+    # For inputs row 2 ([1.0, 2.0, 3.0]):
+    # rms = sqrt(mean(1^2 + 2^2 + 3^2)) = sqrt(14/3) approx 2.1602469
+    # scale = 0.37755 * 2.1602469 = 0.8159988
+    # t_shifted(1.0) = 1.0 / 0.8159988 + 7 = 1.2255 + 7 = 8.2255
+    #   -> round 8 -> qvar = 1
+    # t_shifted(2.0) = 2.0 / 0.8159988 + 7 = 2.4509 + 7 = 9.4509
+    #   -> round 9 -> qvar = 2
+    # t_shifted(3.0) = 3.0 / 0.8159988 + 7 = 3.6764 + 7 = 10.6764
+    #   -> round 11 -> qvar = 4
+    self.assertAllClose(qx, np.array([[-3, 3, 0], [1, 2, 4]], dtype=np.int8))
+    self.assertAllClose(scale, np.array([0.308268, 0.815601], dtype=np.float32))
+
+
 if __name__ == '__main__':
   absltest.main()
