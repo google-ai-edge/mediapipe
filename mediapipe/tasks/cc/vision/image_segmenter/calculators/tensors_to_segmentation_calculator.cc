@@ -371,9 +371,12 @@ absl::Status TensorsToSegmentationNodeImpl::Process(
                      (cc.confidence_mask_out.Count() > 0);
     if (new_style) {
       if (produce_confidence_masks) {
-        RET_CHECK_EQ(segmented_masks.size(), input_shape.channels)
+        int category_mask_count = produce_category_mask ? 1 : 0;
+        RET_CHECK_EQ(segmented_masks.size(),
+                     input_shape.channels + category_mask_count)
             << "Confidence mask count mismatch.";
-        RET_CHECK_EQ(cc.confidence_mask_out.Count(), segmented_masks.size())
+        RET_CHECK_EQ(cc.confidence_mask_out.Count(),
+                     segmented_masks.size() - category_mask_count)
             << "Confidence mask output count mismatch.";
         for (int i = 0; i < input_shape.channels; ++i) {
           cc.confidence_mask_out.At(i).Send(std::move(segmented_masks[i]));
