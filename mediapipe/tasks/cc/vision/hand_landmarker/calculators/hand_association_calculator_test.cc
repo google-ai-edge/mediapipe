@@ -12,6 +12,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
+#include "mediapipe/tasks/cc/vision/hand_landmarker/calculators/hand_association_calculator.h"
 
 #include <memory>
 #include <vector>
@@ -350,6 +351,11 @@ TEST_F(HandAssociationCalculatorTest, NormRectAssocSingleInputStream) {
   nr_3_.set_rect_id(1);
   nr_5_.set_rect_id(2);
   EXPECT_THAT(assoc_rects, ElementsAre(EqualsProto(nr_3_), EqualsProto(nr_5_)));
+}
+
+TEST_F(HandAssociationCalculatorTest, HasCorrectRegistrationName) {
+  EXPECT_EQ(tasks::HandAssociationNode::GetRegistrationName(),
+            "HandAssociationCalculator");
 }
 
 }  // namespace
