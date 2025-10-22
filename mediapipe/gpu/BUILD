@@ -1182,17 +1182,52 @@ mediapipe_cc_test(
 cc_library(
     name = "image_frame_to_gpu_buffer_calculator",
     srcs = ["image_frame_to_gpu_buffer_calculator.cc"],
+    hdrs = ["image_frame_to_gpu_buffer_calculator.h"],
     visibility = ["//visibility:public"],
     deps = [
         ":gl_calculator_helper",
+        ":gpu_buffer",
+        ":gpu_buffer_format",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api3:calculator",
+        "//mediapipe/framework/api3:calculator_context",
+        "//mediapipe/framework/api3:calculator_contract",
+        "//mediapipe/framework/api3:contract",
+        "//mediapipe/framework/api3:node",
         "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/status",
     ] + select({
         "//conditions:default": [],
         "//mediapipe:apple": ["//mediapipe/objc:util"],
     }),
     alwayslink = 1,
+)
+
+mediapipe_cc_test(
+    name = "image_frame_to_gpu_buffer_calculator_test",
+    size = "small",
+    timeout = "long",
+    srcs = ["image_frame_to_gpu_buffer_calculator_test.cc"],
+    tags = [
+        "noasan",  # TODO: Remove noasan tag when SwiftShader supports sanitizers
+    ],
+    test_host = None,
+    deps = [
+        ":gpu_buffer",
+        ":gpu_service",
+        ":gpu_test_base",
+        ":image_frame_to_gpu_buffer_calculator",
+        "//mediapipe/framework/api3:function_runner",
+        "//mediapipe/framework/api3:graph",
+        "//mediapipe/framework/api3:packet",
+        "//mediapipe/framework/api3:stream",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/tool:test_util",
+        "//mediapipe/util:image_test_utils",
+    ],
 )
 
 ### Simple calculators
