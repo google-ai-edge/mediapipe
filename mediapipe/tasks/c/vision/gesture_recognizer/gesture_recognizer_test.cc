@@ -27,6 +27,7 @@ limitations under the License.
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/c/components/containers/landmark.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
+#include "mediapipe/tasks/c/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/c/vision/gesture_recognizer/gesture_recognizer_result.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 
@@ -110,7 +111,7 @@ TEST(GestureRecognizerTest, ImageModeTest) {
 
   MpGestureRecognizerPtr recognizer =
       gesture_recognizer_create(&options, /* error_msg */ nullptr);
-  EXPECT_NE(recognizer, nullptr);
+  ASSERT_NE(recognizer, nullptr);
 
   const auto& image_frame = image->GetImageFrameSharedPtr();
   const MpImage mp_image = {
@@ -121,7 +122,9 @@ TEST(GestureRecognizerTest, ImageModeTest) {
                       .height = image_frame->Height()}};
 
   GestureRecognizerResult result;
-  gesture_recognizer_recognize_image(recognizer, &mp_image, &result,
+  gesture_recognizer_recognize_image(recognizer, &mp_image,
+                                     /* image_processing_options */ nullptr,
+                                     &result,
                                      /* error_msg */ nullptr);
   MatchesGestureRecognizerResult(&result, kScorePrecision, kLandmarkPrecision);
   gesture_recognizer_close_result(&result);
@@ -159,7 +162,7 @@ TEST(GestureRecognizerTest, VideoModeTest) {
 
   MpGestureRecognizerPtr recognizer =
       gesture_recognizer_create(&options, /* error_msg */ nullptr);
-  EXPECT_NE(recognizer, nullptr);
+  ASSERT_NE(recognizer, nullptr);
 
   const auto& image_frame = image->GetImageFrameSharedPtr();
   const MpImage mp_image = {
@@ -171,13 +174,77 @@ TEST(GestureRecognizerTest, VideoModeTest) {
 
   for (int i = 0; i < kIterations; ++i) {
     GestureRecognizerResult result;
-    gesture_recognizer_recognize_for_video(recognizer, &mp_image, i, &result,
-                                           /* error_msg */ nullptr);
+    gesture_recognizer_recognize_for_video(
+        recognizer, &mp_image, /* image_processing_options */ nullptr, i,
+        &result,
+        /* error_msg */ nullptr);
 
     MatchesGestureRecognizerResult(&result, kScorePrecision,
                                    kLandmarkPrecision);
     gesture_recognizer_close_result(&result);
   }
+  gesture_recognizer_close(recognizer, /* error_msg */ nullptr);
+}
+
+TEST(GestureRecognizerTest, ImageModeTestWithRotation) {
+  const auto image =
+      DecodeImageFromFile(GetFullPath("pointing_up_rotated.jpg"));
+  ASSERT_TRUE(image.ok());
+
+  const std::string model_path = GetFullPath(kModelName);
+  GestureRecognizerOptions options = {
+      /* base_options= */ {/* model_asset_buffer= */ nullptr,
+                           /* model_asset_buffer_count= */ 0,
+                           /* model_asset_path= */ model_path.c_str()},
+      /* running_mode= */ RunningMode::IMAGE,
+      /* num_hands= */ 1,
+      /* min_hand_detection_confidence= */ 0.5,
+      /* min_hand_presence_confidence= */ 0.5,
+      /* min_tracking_confidence= */ 0.5,
+      {/* display_names_locale= */ nullptr,
+       /* max_results= */ -1,
+       /* score_threshold= */ 0.0,
+       /* category_allowlist= */ nullptr,
+       /* category_allowlist_count= */ 0,
+       /* category_denylist= */ nullptr,
+       /* category_denylist_count= */ 0},
+      {/* display_names_locale= */ nullptr,
+       /* max_results= */ -1,
+       /* score_threshold= */ 0.0,
+       /* category_allowlist= */ nullptr,
+       /* category_allowlist_count= */ 0,
+       /* category_denylist= */ nullptr,
+       /* category_denylist_count= */ 0}};
+
+  MpGestureRecognizerPtr recognizer =
+      gesture_recognizer_create(&options, /* error_msg */ nullptr);
+  ASSERT_NE(recognizer, nullptr);
+
+  const auto& image_frame = image->GetImageFrameSharedPtr();
+  const MpImage mp_image = {
+      .type = MpImage::IMAGE_FRAME,
+      .image_frame = {.format = static_cast<ImageFormat>(image_frame->Format()),
+                      .image_buffer = image_frame->PixelData(),
+                      .width = image_frame->Width(),
+                      .height = image_frame->Height()}};
+
+  ImageProcessingOptions image_processing_options;
+  image_processing_options.has_region_of_interest = 0;
+  image_processing_options.rotation_degrees = -90;
+
+  GestureRecognizerResult result;
+  gesture_recognizer_recognize_image(recognizer, &mp_image,
+                                     &image_processing_options, &result,
+                                     /* error_msg */ nullptr);
+
+  ASSERT_EQ(result.gestures_count, 1);
+  EXPECT_EQ(std::string{result.gestures[0].categories[0].category_name},
+            "Pointing_Up");
+  ASSERT_EQ(result.handedness_count, 1);
+  EXPECT_EQ(std::string{result.handedness[0].categories[0].category_name},
+            "Right");
+
+  gesture_recognizer_close_result(&result);
   gesture_recognizer_close(recognizer, /* error_msg */ nullptr);
 }
 
@@ -237,7 +304,7 @@ TEST(GestureRecognizerTest, DISABLED_LiveStreamModeTest) {
 
   MpGestureRecognizerPtr recognizer =
       gesture_recognizer_create(&options, /* error_msg */ nullptr);
-  EXPECT_NE(recognizer, nullptr);
+  ASSERT_NE(recognizer, nullptr);
 
   const auto& image_frame = image->GetImageFrameSharedPtr();
   const MpImage mp_image = {
@@ -248,9 +315,11 @@ TEST(GestureRecognizerTest, DISABLED_LiveStreamModeTest) {
                       .height = image_frame->Height()}};
 
   for (int i = 0; i < kIterations; ++i) {
-    EXPECT_GE(gesture_recognizer_recognize_async(recognizer, &mp_image, i,
-                                                 /* error_msg */ nullptr),
-              0);
+    EXPECT_GE(
+        gesture_recognizer_recognize_async(
+            recognizer, &mp_image, /* image_processing_options */ nullptr, i,
+            /* error_msg */ nullptr),
+        0);
   }
   gesture_recognizer_close(recognizer, /* error_msg */ nullptr);
 
@@ -314,13 +383,14 @@ TEST(GestureRecognizerTest, FailedRecognitionHandling) {
   MpGestureRecognizerPtr recognizer =
       gesture_recognizer_create(&options, /* error_msg */
                                 nullptr);
-  EXPECT_NE(recognizer, nullptr);
+  ASSERT_NE(recognizer, nullptr);
 
   const MpImage mp_image = {.type = MpImage::GPU_BUFFER, .gpu_buffer = {}};
   GestureRecognizerResult result;
   char* error_msg;
-  gesture_recognizer_recognize_image(recognizer, &mp_image, &result,
-                                     &error_msg);
+  gesture_recognizer_recognize_image(recognizer, &mp_image,
+                                     /* image_processing_options */ nullptr,
+                                     &result, &error_msg);
   EXPECT_THAT(error_msg, HasSubstr("GPU Buffer not supported yet"));
   free(error_msg);
   gesture_recognizer_close(recognizer, /* error_msg */ nullptr);

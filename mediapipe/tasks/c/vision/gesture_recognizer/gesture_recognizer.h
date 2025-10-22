@@ -16,9 +16,12 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_C_VISION_GESTURE_RECOGNIZER_GESTURE_RECOGNIZER_H_
 #define MEDIAPIPE_TASKS_C_VISION_GESTURE_RECOGNIZER_GESTURE_RECOGNIZER_H_
 
+#include <cstdint>
+
 #include "mediapipe/tasks/c/components/processors/classifier_options.h"
 #include "mediapipe/tasks/c/core/base_options.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
+#include "mediapipe/tasks/c/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/c/vision/gesture_recognizer/gesture_recognizer_result.h"
 
 #ifndef MP_EXPORT
@@ -102,6 +105,7 @@ MP_EXPORT MpGestureRecognizerPtr gesture_recognizer_create(
 // allocated for the error message.
 MP_EXPORT int gesture_recognizer_recognize_image(
     MpGestureRecognizerPtr recognizer, const MpImage* image,
+    const ImageProcessingOptions* image_processing_options,
     GestureRecognizerResult* result, char** error_msg);
 
 // Performs gesture recognition on the provided video frame.
@@ -115,6 +119,7 @@ MP_EXPORT int gesture_recognizer_recognize_image(
 // allocated for the error message.
 MP_EXPORT int gesture_recognizer_recognize_for_video(
     MpGestureRecognizerPtr recognizer, const MpImage* image,
+    const ImageProcessingOptions* image_processing_options,
     int64_t timestamp_ms, GestureRecognizerResult* result, char** error_msg);
 
 // Sends live image data to gesture recognition, and the results will be
@@ -139,6 +144,7 @@ MP_EXPORT int gesture_recognizer_recognize_for_video(
 // to free memory.
 MP_EXPORT int gesture_recognizer_recognize_async(
     MpGestureRecognizerPtr recognizer, const MpImage* image,
+    const ImageProcessingOptions* image_processing_options,
     int64_t timestamp_ms, char** error_msg);
 
 // Frees the memory allocated inside a GestureRecognizerResult result.

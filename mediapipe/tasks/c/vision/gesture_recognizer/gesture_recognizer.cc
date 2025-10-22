@@ -18,6 +18,7 @@ limitations under the License.
 #include <cstdint>
 #include <cstdlib>
 #include <memory>
+#include <optional>
 #include <utility>
 
 #include "absl/log/absl_log.h"
@@ -28,8 +29,11 @@ limitations under the License.
 #include "mediapipe/tasks/c/components/processors/classifier_options_converter.h"
 #include "mediapipe/tasks/c/core/base_options_converter.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
+#include "mediapipe/tasks/c/vision/core/image_processing_options.h"
+#include "mediapipe/tasks/c/vision/core/image_processing_options_converter.h"
 #include "mediapipe/tasks/c/vision/gesture_recognizer/gesture_recognizer_result.h"
 #include "mediapipe/tasks/c/vision/gesture_recognizer/gesture_recognizer_result_converter.h"
+#include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
 #include "mediapipe/tasks/cc/vision/gesture_recognizer/gesture_recognizer.h"
 #include "mediapipe/tasks/cc/vision/gesture_recognizer/gesture_recognizer_result.h"
@@ -52,11 +56,14 @@ using ::mediapipe::tasks::c::components::containers::
 using ::mediapipe::tasks::c::components::processors::
     CppConvertToClassifierOptions;
 using ::mediapipe::tasks::c::core::CppConvertToBaseOptions;
+using ::mediapipe::tasks::c::vision::core::CppConvertToImageProcessingOptions;
 using ::mediapipe::tasks::vision::CreateImageFromBuffer;
 using ::mediapipe::tasks::vision::core::RunningMode;
 using ::mediapipe::tasks::vision::gesture_recognizer::GestureRecognizer;
-typedef ::mediapipe::tasks::vision::gesture_recognizer::GestureRecognizerResult
-    CppGestureRecognizerResult;
+using CppGestureRecognizerResult =
+    ::mediapipe::tasks::vision::gesture_recognizer::GestureRecognizerResult;
+using CppImageProcessingOptions =
+    ::mediapipe::tasks::vision::core::ImageProcessingOptions;
 
 int CppProcessError(absl::Status status, char** error_msg) {
   if (error_msg) {
@@ -145,10 +152,10 @@ MpGestureRecognizerPtr CppGestureRecognizerCreate(
   return new MpGestureRecognizerInternal{.recognizer = std::move(*recognizer)};
 }
 
-int CppGestureRecognizerRecognize(MpGestureRecognizerPtr recognizer,
-                                  const MpImage* image,
-                                  GestureRecognizerResult* result,
-                                  char** error_msg) {
+int CppGestureRecognizerRecognize(
+    MpGestureRecognizerPtr recognizer, const MpImage* image,
+    const ImageProcessingOptions* image_processing_options,
+    GestureRecognizerResult* result, char** error_msg) {
   if (image->type == MpImage::GPU_BUFFER) {
     const absl::Status status =
         absl::InvalidArgumentError("GPU Buffer not supported yet.");
@@ -167,8 +174,15 @@ int CppGestureRecognizerRecognize(MpGestureRecognizerPtr recognizer,
     return CppProcessError(img.status(), error_msg);
   }
 
-  auto cpp_recognizer = recognizer->recognizer.get();
-  auto cpp_result = cpp_recognizer->Recognize(*img);
+  std::optional<CppImageProcessingOptions> cpp_image_processing_options;
+  if (image_processing_options) {
+    CppImageProcessingOptions options;
+    CppConvertToImageProcessingOptions(*image_processing_options, &options);
+    cpp_image_processing_options = options;
+  }
+  GestureRecognizer* cpp_recognizer = recognizer->recognizer.get();
+  auto cpp_result =
+      cpp_recognizer->Recognize(*img, cpp_image_processing_options);
   if (!cpp_result.ok()) {
     ABSL_LOG(ERROR) << "Recognition failed: " << cpp_result.status();
     return CppProcessError(cpp_result.status(), error_msg);
@@ -177,11 +191,10 @@ int CppGestureRecognizerRecognize(MpGestureRecognizerPtr recognizer,
   return 0;
 }
 
-int CppGestureRecognizerRecognizeForVideo(MpGestureRecognizerPtr recognizer,
-                                          const MpImage* image,
-                                          int64_t timestamp_ms,
-                                          GestureRecognizerResult* result,
-                                          char** error_msg) {
+int CppGestureRecognizerRecognizeForVideo(
+    MpGestureRecognizerPtr recognizer, const MpImage* image,
+    const ImageProcessingOptions* image_processing_options,
+    int64_t timestamp_ms, GestureRecognizerResult* result, char** error_msg) {
   if (image->type == MpImage::GPU_BUFFER) {
     absl::Status status =
         absl::InvalidArgumentError("GPU Buffer not supported yet");
@@ -200,8 +213,15 @@ int CppGestureRecognizerRecognizeForVideo(MpGestureRecognizerPtr recognizer,
     return CppProcessError(img.status(), error_msg);
   }
 
-  auto cpp_recognizer = recognizer->recognizer.get();
-  auto cpp_result = cpp_recognizer->RecognizeForVideo(*img, timestamp_ms);
+  std::optional<CppImageProcessingOptions> cpp_image_processing_options;
+  if (image_processing_options) {
+    CppImageProcessingOptions options;
+    CppConvertToImageProcessingOptions(*image_processing_options, &options);
+    cpp_image_processing_options = options;
+  }
+  GestureRecognizer* cpp_recognizer = recognizer->recognizer.get();
+  auto cpp_result = cpp_recognizer->RecognizeForVideo(
+      *img, timestamp_ms, cpp_image_processing_options);
   if (!cpp_result.ok()) {
     ABSL_LOG(ERROR) << "Recognition failed: " << cpp_result.status();
     return CppProcessError(cpp_result.status(), error_msg);
@@ -210,9 +230,10 @@ int CppGestureRecognizerRecognizeForVideo(MpGestureRecognizerPtr recognizer,
   return 0;
 }
 
-int CppGestureRecognizerRecognizeAsync(MpGestureRecognizerPtr recognizer,
-                                       const MpImage* image,
-                                       int64_t timestamp_ms, char** error_msg) {
+int CppGestureRecognizerRecognizeAsync(
+    MpGestureRecognizerPtr recognizer, const MpImage* image,
+    const ImageProcessingOptions* image_processing_options,
+    int64_t timestamp_ms, char** error_msg) {
   if (image->type == MpImage::GPU_BUFFER) {
     absl::Status status =
         absl::InvalidArgumentError("GPU Buffer not supported yet");
@@ -231,8 +252,15 @@ int CppGestureRecognizerRecognizeAsync(MpGestureRecognizerPtr recognizer,
     return CppProcessError(img.status(), error_msg);
   }
 
-  auto cpp_recognizer = recognizer->recognizer.get();
-  auto cpp_result = cpp_recognizer->RecognizeAsync(*img, timestamp_ms);
+  std::optional<CppImageProcessingOptions> cpp_image_processing_options;
+  if (image_processing_options) {
+    CppImageProcessingOptions options;
+    CppConvertToImageProcessingOptions(*image_processing_options, &options);
+    cpp_image_processing_options = options;
+  }
+  GestureRecognizer* cpp_recognizer = recognizer->recognizer.get();
+  auto cpp_result = cpp_recognizer->RecognizeAsync(
+      *img, timestamp_ms, cpp_image_processing_options);
   if (!cpp_result.ok()) {
     ABSL_LOG(ERROR) << "Data preparation for the gesture recognition failed: "
                     << cpp_result;
@@ -269,25 +297,30 @@ MP_EXPORT MpGestureRecognizerPtr gesture_recognizer_create(
 
 MP_EXPORT int gesture_recognizer_recognize_image(
     MpGestureRecognizerPtr recognizer, const MpImage* image,
+    const ImageProcessingOptions* image_processing_options,
     GestureRecognizerResult* result, char** error_msg) {
   return mediapipe::tasks::c::vision::gesture_recognizer::
-      CppGestureRecognizerRecognize(recognizer, image, result, error_msg);
+      CppGestureRecognizerRecognize(recognizer, image, image_processing_options,
+                                    result, error_msg);
 }
 
 MP_EXPORT int gesture_recognizer_recognize_for_video(
     MpGestureRecognizerPtr recognizer, const MpImage* image,
+    const ImageProcessingOptions* image_processing_options,
     int64_t timestamp_ms, GestureRecognizerResult* result, char** error_msg) {
   return mediapipe::tasks::c::vision::gesture_recognizer::
-      CppGestureRecognizerRecognizeForVideo(recognizer, image, timestamp_ms,
-                                            result, error_msg);
+      CppGestureRecognizerRecognizeForVideo(recognizer, image,
+                                            image_processing_options,
+                                            timestamp_ms, result, error_msg);
 }
 
 MP_EXPORT int gesture_recognizer_recognize_async(
     MpGestureRecognizerPtr recognizer, const MpImage* image,
+    const ImageProcessingOptions* image_processing_options,
     int64_t timestamp_ms, char** error_msg) {
   return mediapipe::tasks::c::vision::gesture_recognizer::
-      CppGestureRecognizerRecognizeAsync(recognizer, image, timestamp_ms,
-                                         error_msg);
+      CppGestureRecognizerRecognizeAsync(
+          recognizer, image, image_processing_options, timestamp_ms, error_msg);
 }
 
 MP_EXPORT void gesture_recognizer_close_result(
