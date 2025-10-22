@@ -17,25 +17,28 @@ limitations under the License.
 
 #include <cstdint>
 #include <cstdlib>
+#include <memory>
 #include <string>
 
 #include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/deps/file_path.h"
-#include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/c/components/containers/landmark.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
+#include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/core/image_processing_options.h"
+#include "mediapipe/tasks/c/vision/core/image_test_util.h"
 #include "mediapipe/tasks/c/vision/gesture_recognizer/gesture_recognizer_result.h"
-#include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 
 namespace {
 
 using ::mediapipe::file::JoinPath;
-using ::mediapipe::tasks::vision::DecodeImageFromFile;
-using testing::HasSubstr;
+using ::mediapipe::tasks::vision::core::CreateEmptyGpuMpImage;
+using ::mediapipe::tasks::vision::core::GetImage;
+using ::mediapipe::tasks::vision::core::ScopedMpImage;
+using ::testing::HasSubstr;
 
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
 constexpr char kModelName[] = "gesture_recognizer.task";
@@ -81,8 +84,7 @@ void MatchesGestureRecognizerResult(const GestureRecognizerResult* result,
 }
 
 TEST(GestureRecognizerTest, ImageModeTest) {
-  const auto image = DecodeImageFromFile(GetFullPath(kImageFile));
-  ASSERT_TRUE(image.ok());
+  const auto image = GetImage(GetFullPath(kImageFile));
 
   const std::string model_path = GetFullPath(kModelName);
   GestureRecognizerOptions options = {
@@ -113,16 +115,8 @@ TEST(GestureRecognizerTest, ImageModeTest) {
       gesture_recognizer_create(&options, /* error_msg */ nullptr);
   ASSERT_NE(recognizer, nullptr);
 
-  const auto& image_frame = image->GetImageFrameSharedPtr();
-  const MpImage mp_image = {
-      .type = MpImage::IMAGE_FRAME,
-      .image_frame = {.format = static_cast<ImageFormat>(image_frame->Format()),
-                      .image_buffer = image_frame->PixelData(),
-                      .width = image_frame->Width(),
-                      .height = image_frame->Height()}};
-
   GestureRecognizerResult result;
-  gesture_recognizer_recognize_image(recognizer, &mp_image,
+  gesture_recognizer_recognize_image(recognizer, image.get(),
                                      /* image_processing_options */ nullptr,
                                      &result,
                                      /* error_msg */ nullptr);
@@ -132,8 +126,7 @@ TEST(GestureRecognizerTest, ImageModeTest) {
 }
 
 TEST(GestureRecognizerTest, VideoModeTest) {
-  const auto image = DecodeImageFromFile(GetFullPath(kImageFile));
-  ASSERT_TRUE(image.ok());
+  const auto image = GetImage(GetFullPath(kImageFile));
 
   const std::string model_path = GetFullPath(kModelName);
   GestureRecognizerOptions options = {
@@ -164,18 +157,10 @@ TEST(GestureRecognizerTest, VideoModeTest) {
       gesture_recognizer_create(&options, /* error_msg */ nullptr);
   ASSERT_NE(recognizer, nullptr);
 
-  const auto& image_frame = image->GetImageFrameSharedPtr();
-  const MpImage mp_image = {
-      .type = MpImage::IMAGE_FRAME,
-      .image_frame = {.format = static_cast<ImageFormat>(image_frame->Format()),
-                      .image_buffer = image_frame->PixelData(),
-                      .width = image_frame->Width(),
-                      .height = image_frame->Height()}};
-
   for (int i = 0; i < kIterations; ++i) {
     GestureRecognizerResult result;
     gesture_recognizer_recognize_for_video(
-        recognizer, &mp_image, /* image_processing_options */ nullptr, i,
+        recognizer, image.get(), /* image_processing_options */ nullptr, i,
         &result,
         /* error_msg */ nullptr);
 
@@ -187,9 +172,7 @@ TEST(GestureRecognizerTest, VideoModeTest) {
 }
 
 TEST(GestureRecognizerTest, ImageModeTestWithRotation) {
-  const auto image =
-      DecodeImageFromFile(GetFullPath("pointing_up_rotated.jpg"));
-  ASSERT_TRUE(image.ok());
+  const ScopedMpImage image = GetImage(GetFullPath("pointing_up_rotated.jpg"));
 
   const std::string model_path = GetFullPath(kModelName);
   GestureRecognizerOptions options = {
@@ -220,20 +203,12 @@ TEST(GestureRecognizerTest, ImageModeTestWithRotation) {
       gesture_recognizer_create(&options, /* error_msg */ nullptr);
   ASSERT_NE(recognizer, nullptr);
 
-  const auto& image_frame = image->GetImageFrameSharedPtr();
-  const MpImage mp_image = {
-      .type = MpImage::IMAGE_FRAME,
-      .image_frame = {.format = static_cast<ImageFormat>(image_frame->Format()),
-                      .image_buffer = image_frame->PixelData(),
-                      .width = image_frame->Width(),
-                      .height = image_frame->Height()}};
-
   ImageProcessingOptions image_processing_options;
   image_processing_options.has_region_of_interest = 0;
   image_processing_options.rotation_degrees = -90;
 
   GestureRecognizerResult result;
-  gesture_recognizer_recognize_image(recognizer, &mp_image,
+  gesture_recognizer_recognize_image(recognizer, image.get(),
                                      &image_processing_options, &result,
                                      /* error_msg */ nullptr);
 
@@ -256,13 +231,13 @@ TEST(GestureRecognizerTest, ImageModeTestWithRotation) {
 struct LiveStreamModeCallback {
   static int64_t last_timestamp;
   static void Fn(GestureRecognizerResult* recognizer_result,
-                 const MpImage* image, int64_t timestamp, char* error_msg) {
+                 const MpImagePtr image, int64_t timestamp, char* error_msg) {
     ASSERT_NE(recognizer_result, nullptr);
     ASSERT_EQ(error_msg, nullptr);
     MatchesGestureRecognizerResult(recognizer_result, kScorePrecision,
                                    kLandmarkPrecision);
-    EXPECT_GT(image->image_frame.width, 0);
-    EXPECT_GT(image->image_frame.height, 0);
+    EXPECT_GT(MpImageGetWidth(image), 0);
+    EXPECT_GT(MpImageGetHeight(image), 0);
     EXPECT_GT(timestamp, last_timestamp);
     last_timestamp++;
   }
@@ -271,8 +246,7 @@ int64_t LiveStreamModeCallback::last_timestamp = -1;
 
 // TODO: Await the callbacks and re-enable test
 TEST(GestureRecognizerTest, DISABLED_LiveStreamModeTest) {
-  const auto image = DecodeImageFromFile(GetFullPath(kImageFile));
-  ASSERT_TRUE(image.ok());
+  const ScopedMpImage image = GetImage(GetFullPath(kImageFile));
 
   const std::string model_path = GetFullPath(kModelName);
 
@@ -306,18 +280,10 @@ TEST(GestureRecognizerTest, DISABLED_LiveStreamModeTest) {
       gesture_recognizer_create(&options, /* error_msg */ nullptr);
   ASSERT_NE(recognizer, nullptr);
 
-  const auto& image_frame = image->GetImageFrameSharedPtr();
-  const MpImage mp_image = {
-      .type = MpImage::IMAGE_FRAME,
-      .image_frame = {.format = static_cast<ImageFormat>(image_frame->Format()),
-                      .image_buffer = image_frame->PixelData(),
-                      .width = image_frame->Width(),
-                      .height = image_frame->Height()}};
-
   for (int i = 0; i < kIterations; ++i) {
     EXPECT_GE(
         gesture_recognizer_recognize_async(
-            recognizer, &mp_image, /* image_processing_options */ nullptr, i,
+            recognizer, image.get(), /* image_processing_options */ nullptr, i,
             /* error_msg */ nullptr),
         0);
   }
@@ -385,13 +351,14 @@ TEST(GestureRecognizerTest, FailedRecognitionHandling) {
                                 nullptr);
   ASSERT_NE(recognizer, nullptr);
 
-  const MpImage mp_image = {.type = MpImage::GPU_BUFFER, .gpu_buffer = {}};
+  const ScopedMpImage image = CreateEmptyGpuMpImage();
   GestureRecognizerResult result;
   char* error_msg;
-  gesture_recognizer_recognize_image(recognizer, &mp_image,
+  gesture_recognizer_recognize_image(recognizer, image.get(),
                                      /* image_processing_options */ nullptr,
                                      &result, &error_msg);
-  EXPECT_THAT(error_msg, HasSubstr("GPU Buffer not supported yet"));
+  EXPECT_THAT(error_msg,
+              HasSubstr("GPU input images are currently not supported"));
   free(error_msg);
   gesture_recognizer_close(recognizer, /* error_msg */ nullptr);
 }

@@ -121,3 +121,18 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
+
+cc_library(
+    name = "image_test_util",
+    testonly = True,
+    srcs = ["image_test_util.cc"],
+    hdrs = ["image_test_util.h"],
+    deps = [
+        ":image_frame_util",
+        ":image_hdr",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/gpu:gpu_buffer",
+        "//mediapipe/tasks/c/core:mp_status",
+        "@com_google_absl//absl/log:absl_check",
+    ],
+)
