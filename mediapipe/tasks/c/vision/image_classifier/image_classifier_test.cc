@@ -27,6 +27,7 @@ limitations under the License.
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/c/components/containers/category.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
+#include "mediapipe/tasks/c/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 
 namespace {
@@ -66,7 +67,7 @@ TEST(ImageClassifierTest, ImageModeTest) {
 
   MpImageClassifierPtr classifier =
       image_classifier_create(&options, /* error_msg */ nullptr);
-  EXPECT_NE(classifier, nullptr);
+  ASSERT_NE(classifier, nullptr);
 
   const auto& image_frame = image->GetImageFrameSharedPtr();
   const MpImage mp_image = {
@@ -77,13 +78,64 @@ TEST(ImageClassifierTest, ImageModeTest) {
                       .height = image_frame->Height()}};
 
   ImageClassifierResult result;
-  image_classifier_classify_image(classifier, &mp_image, &result,
-                                  /* error_msg */ nullptr);
+  image_classifier_classify_image(classifier, &mp_image,
+                                  /* image_processing_options */ nullptr,
+                                  &result, /* error_msg */ nullptr);
   EXPECT_EQ(result.classifications_count, 1);
   EXPECT_EQ(result.classifications[0].categories_count, 1001);
   EXPECT_EQ(std::string{result.classifications[0].categories[0].category_name},
             "cheeseburger");
   EXPECT_NEAR(result.classifications[0].categories[0].score, 0.7939f,
+              kPrecision);
+  image_classifier_close_result(&result);
+  image_classifier_close(classifier, /* error_msg */ nullptr);
+}
+
+TEST(ImageClassifierTest, ImageModeTestWithRotation) {
+  const auto image = DecodeImageFromFile(GetFullPath("burger_rotated.jpg"));
+  ASSERT_TRUE(image.ok());
+
+  const std::string model_path = GetFullPath(kModelName);
+  ImageClassifierOptions options = {
+      /* base_options= */ {/* model_asset_buffer= */ nullptr,
+                           /* model_asset_buffer_count= */ 0,
+                           /* model_asset_path= */ model_path.c_str()},
+      /* running_mode= */ RunningMode::IMAGE,
+      /* classifier_options= */
+      {/* display_names_locale= */ nullptr,
+       /* max_results= */ -1,
+       /* score_threshold= */ 0.0,
+       /* category_allowlist= */ nullptr,
+       /* category_allowlist_count= */ 0,
+       /* category_denylist= */ nullptr,
+       /* category_denylist_count= */ 0},
+  };
+
+  MpImageClassifierPtr classifier =
+      image_classifier_create(&options, /* error_msg */ nullptr);
+  ASSERT_NE(classifier, nullptr);
+
+  const auto& image_frame = image->GetImageFrameSharedPtr();
+  const MpImage mp_image = {
+      .type = MpImage::IMAGE_FRAME,
+      .image_frame = {.format = static_cast<ImageFormat>(image_frame->Format()),
+                      .image_buffer = image_frame->PixelData(),
+                      .width = image_frame->Width(),
+                      .height = image_frame->Height()}};
+
+  ImageProcessingOptions image_processing_options;
+  image_processing_options.has_region_of_interest = 0;
+  image_processing_options.rotation_degrees = -90;
+
+  ImageClassifierResult result;
+  image_classifier_classify_image(classifier, &mp_image,
+                                  &image_processing_options, &result,
+                                  /* error_msg */ nullptr);
+  EXPECT_EQ(result.classifications_count, 1);
+  EXPECT_EQ(result.classifications[0].categories_count, 1001);
+  EXPECT_EQ(std::string{result.classifications[0].categories[0].category_name},
+            "cheeseburger");
+  EXPECT_NEAR(result.classifications[0].categories[0].score, 0.7545f,
               kPrecision);
   image_classifier_close_result(&result);
   image_classifier_close(classifier, /* error_msg */ nullptr);
@@ -112,7 +164,7 @@ TEST(ImageClassifierTest, VideoModeTest) {
 
   MpImageClassifierPtr classifier =
       image_classifier_create(&options, /* error_msg */ nullptr);
-  EXPECT_NE(classifier, nullptr);
+  ASSERT_NE(classifier, nullptr);
 
   const auto& image_frame = image->GetImageFrameSharedPtr();
   const MpImage mp_image = {
@@ -124,8 +176,9 @@ TEST(ImageClassifierTest, VideoModeTest) {
 
   for (int i = 0; i < kIterations; ++i) {
     ImageClassifierResult result;
-    image_classifier_classify_for_video(classifier, &mp_image, i, &result,
-                                        /* error_msg */ nullptr);
+    image_classifier_classify_for_video(classifier, &mp_image,
+                                        /* image_processing_options */ nullptr,
+                                        i, &result, /* error_msg */ nullptr);
     EXPECT_EQ(result.classifications_count, 1);
     EXPECT_EQ(result.classifications[0].categories_count, 3);
     EXPECT_EQ(
@@ -188,7 +241,7 @@ TEST(ImageClassifierTest, DISABLED_LiveStreamModeTest) {
 
   MpImageClassifierPtr classifier =
       image_classifier_create(&options, /* error_msg */ nullptr);
-  EXPECT_NE(classifier, nullptr);
+  ASSERT_NE(classifier, nullptr);
 
   const auto& image_frame = image->GetImageFrameSharedPtr();
   const MpImage mp_image = {
@@ -199,8 +252,9 @@ TEST(ImageClassifierTest, DISABLED_LiveStreamModeTest) {
                       .height = image_frame->Height()}};
 
   for (int i = 0; i < kIterations; ++i) {
-    EXPECT_GE(image_classifier_classify_async(classifier, &mp_image, i,
-                                              /* error_msg */ nullptr),
+    EXPECT_GE(image_classifier_classify_async(
+                  classifier, &mp_image, /* image_processing_options */ nullptr,
+                  i, /* error_msg */ nullptr),
               0);
   }
   image_classifier_close(classifier, /* error_msg */ nullptr);
@@ -249,12 +303,14 @@ TEST(ImageClassifierTest, FailedClassificationHandling) {
 
   MpImageClassifierPtr classifier =
       image_classifier_create(&options, /* error_msg */ nullptr);
-  EXPECT_NE(classifier, nullptr);
+  ASSERT_NE(classifier, nullptr);
 
   const MpImage mp_image = {.type = MpImage::GPU_BUFFER, .gpu_buffer = {}};
   ImageClassifierResult result;
   char* error_msg;
-  image_classifier_classify_image(classifier, &mp_image, &result, &error_msg);
+  image_classifier_classify_image(classifier, &mp_image,
+                                  /* image_processing_options */ nullptr,
+                                  &result, &error_msg);
   EXPECT_THAT(error_msg, HasSubstr("GPU Buffer not supported yet"));
   free(error_msg);
   image_classifier_close(classifier, /* error_msg */ nullptr);
