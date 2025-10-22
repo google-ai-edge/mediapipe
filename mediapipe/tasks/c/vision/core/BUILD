@@ -66,6 +66,7 @@ cc_test(
     ],
     deps = [
         ":image",
+        ":image_test_util",
         "//mediapipe/framework/deps:file_path",
         "//mediapipe/framework/port:gtest",
         "//mediapipe/tasks/c/core:mp_status",

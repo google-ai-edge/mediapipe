@@ -10,8 +10,11 @@
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
+#include "mediapipe/tasks/c/vision/core/image_test_util.h"
 
 namespace {
+
+using ::mediapipe::tasks::vision::core::ScopedMpImage;
 
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
 constexpr char kImageFile[] = "portrait.jpg";
@@ -19,15 +22,6 @@ constexpr char kImageFile[] = "portrait.jpg";
 std::string GetFullPath(absl::string_view file_name) {
   return mediapipe::file::JoinPath("./", kTestDataDirectory, file_name);
 }
-
-struct MpImageDeleter {
-  void operator()(MpImagePtr image) const {
-    if (image) {
-      MpImageFree(image);
-    }
-  }
-};
-using ScopedMpImage = std::unique_ptr<MpImageInternal, MpImageDeleter>;
 
 TEST(ImageTest, CreateFromUint8Data) {
   const int width = 10;

@@ -26,16 +26,17 @@ limitations under the License.
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/c/components/containers/category.h"
-#include "mediapipe/tasks/c/core/mp_status.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
-#include "mediapipe/tasks/c/vision/core/image_frame_util.h"
 #include "mediapipe/tasks/c/vision/core/image_processing_options.h"
+#include "mediapipe/tasks/c/vision/core/image_test_util.h"
 
 namespace {
 
 using ::mediapipe::file::JoinPath;
-using testing::HasSubstr;
+using ::mediapipe::tasks::vision::core::GetImage;
+using ::mediapipe::tasks::vision::core::ScopedMpImage;
+using ::testing::HasSubstr;
 
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
 constexpr char kImageFile[] = "cats_and_dogs.jpg";
@@ -47,23 +48,6 @@ constexpr int kIterations = 100;
 
 std::string GetFullPath(absl::string_view file_name) {
   return JoinPath("./", kTestDataDirectory, file_name);
-}
-
-struct MpImageDeleter {
-  void operator()(MpImagePtr image) const {
-    if (image) {
-      MpImageFree(image);
-    }
-  }
-};
-using ScopedMpImage = std::unique_ptr<MpImageInternal, MpImageDeleter>;
-
-ScopedMpImage GetImage(const std::string& file_name) {
-  MpImagePtr image_ptr = nullptr;
-  MpStatus status = MpImageCreateFromFile(file_name.c_str(), &image_ptr);
-  EXPECT_EQ(status, kMpOk);
-  EXPECT_NE(image_ptr, nullptr);
-  return ScopedMpImage(image_ptr);
 }
 
 TEST(ObjectDetectorTest, ImageModeTest) {

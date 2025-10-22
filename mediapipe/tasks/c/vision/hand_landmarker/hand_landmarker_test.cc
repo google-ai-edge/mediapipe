@@ -30,21 +30,21 @@ limitations under the License.
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/tasks/c/components/containers/landmark.h"
-#include "mediapipe/tasks/c/core/mp_status.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/core/image_processing_options.h"
+#include "mediapipe/tasks/c/vision/core/image_test_util.h"
 #include "mediapipe/tasks/c/vision/hand_landmarker/hand_landmarker_result.h"
 #include "mediapipe/tasks/cc/components/containers/proto/landmarks_detection_result.pb.h"
-#include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 
 namespace {
 
 using ::mediapipe::file::GetContents;
 using ::mediapipe::file::JoinPath;
 using ::mediapipe::tasks::containers::proto::LandmarksDetectionResult;
-using ::mediapipe::tasks::vision::DecodeImageFromFile;
-using testing::HasSubstr;
+using ::mediapipe::tasks::vision::core::GetImage;
+using ::mediapipe::tasks::vision::core::ScopedMpImage;
+using ::testing::HasSubstr;
 
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
 constexpr char kModelName[] = "hand_landmarker.task";
@@ -105,23 +105,6 @@ void ExpectHandLandmarkerResultsCorrect(
     EXPECT_NEAR(actual_landmark.y, expected_landmark_proto.y(),
                 landmark_precision);
   }
-}
-
-struct MpImageDeleter {
-  void operator()(MpImagePtr image) const {
-    if (image) {
-      MpImageFree(image);
-    }
-  }
-};
-using ScopedMpImage = std::unique_ptr<MpImageInternal, MpImageDeleter>;
-
-ScopedMpImage GetImage(const std::string& file_name) {
-  MpImagePtr image_ptr = nullptr;
-  MpStatus status = MpImageCreateFromFile(file_name.c_str(), &image_ptr);
-  EXPECT_EQ(status, kMpOk);
-  EXPECT_NE(image_ptr, nullptr);
-  return ScopedMpImage(image_ptr);
 }
 
 TEST(HandLandmarkerTest, ImageModeTest) {
