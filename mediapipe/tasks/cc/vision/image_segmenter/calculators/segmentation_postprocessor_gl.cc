@@ -62,8 +62,12 @@ void main() {
 })";
 
 // Trivial passthrough fragment shader; do splitting in a custom vertex shader.
+// It's important to use highp here since otherwise we might sample from
+// neighboring chunk texels.
+// TODO: tmullen - Consider using texelFetch and integer texture coordinates to
+// avoid relying on highp.
 static constexpr char kPassthroughShader[] = R"(
-DEFAULT_PRECISION(mediump, float)
+DEFAULT_PRECISION(highp, float)
 in vec2 sample_coordinate;
 uniform sampler2D input_texture;
 
@@ -553,6 +557,7 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(
     // We disable blending or else our alpha channel may destroy our other
     // channels' data.
     glDisable(GL_BLEND);
+    glClearColor(0.0, 0.0, 0.0, 0.0);
 
     // Step 0: bind buffers / textures
     glBindBuffer(GL_ARRAY_BUFFER, square_vertices_);
@@ -582,7 +587,6 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(
 #endif  // TASK_SEGMENTATION_USE_GLES_31_POSTPROCESSING
 
     // Render
-    glClear(GL_COLOR_BUFFER_BIT);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
     // Step 2: split megatexture into 4-chunks (assume kLayoutAligned for now).
@@ -609,7 +613,6 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
       // Render
-      glClear(GL_COLOR_BUFFER_BIT);
       glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     }
 
@@ -638,14 +641,7 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(
           helper_.CreateDestinationTexture(width, height, final_output_format);
       helper_.BindFramebuffer(max_texture);
 
-      // We clear our newly-created destination texture to a reasonable minimum.
-      glClearColor(0.0, 0.0, 0.0, 0.0);
-      glClear(GL_COLOR_BUFFER_BIT);
-
-      // We will use hardware GPU blending to apply max to all our writes.
-      glEnable(GL_BLEND);
-      glBlendEquation(GL_MAX);
-
+      // For the first chunk, just write the max value without blending.
       glActiveTexture(GL_TEXTURE1);
       for (int i = 0; i < num_chunks; i++) {
         int num_channels = 4;
@@ -653,6 +649,12 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(
         glUniform1i(softmax_max_shader_.uniforms["num_channels"], num_channels);
         glBindTexture(GL_TEXTURE_2D, chunks[i].name());
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+        if (i == 0) {
+          // Use hardware GPU blending to apply max subsequent chunks.
+          glEnable(GL_BLEND);
+          glBlendEquation(GL_MAX);
+        }
       }
 
       // Transform & Sum
@@ -724,7 +726,6 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(
             width, height, chunk_output_format));
         helper_.BindFramebuffer(softmax_chunks.back());
         glBindTexture(GL_TEXTURE_2D, unnormalized_softmax_chunks[i].name());
-        glClear(GL_COLOR_BUFFER_BIT);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
       }
 
@@ -757,7 +758,6 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(
           glBindTexture(GL_TEXTURE_2D, chunks[i / 4].name());
         }
 
-        glClear(GL_COLOR_BUFFER_BIT);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
       }
     }
@@ -775,7 +775,6 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(
         // Only one chunk, and softmax cannot be applied to 1-class models
         // anyways.
         glBindTexture(GL_TEXTURE_2D, chunks[0].name());
-        glClear(GL_COLOR_BUFFER_BIT);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
       } else {
         // Step 4, N > 1: For CATEGORY with N classes, apply argmax shader
@@ -813,8 +812,6 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(
           glBindTexture(GL_TEXTURE_2D, max_texture.name());
           glActiveTexture(GL_TEXTURE1);
           glBindTexture(GL_TEXTURE_2D, chunks[i].name());
-          // TODO: We probably don't actually need all these clears.
-          glClear(GL_COLOR_BUFFER_BIT);
           glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
           // Put results into max_texture, so we can repeat the process easily.
@@ -834,7 +831,6 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(
         // interpolation there for this upsampling step.
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glClear(GL_COLOR_BUFFER_BIT);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
       }
     }
