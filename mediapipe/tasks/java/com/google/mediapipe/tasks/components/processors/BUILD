@@ -19,9 +19,6 @@ licenses(["notice"])
 android_library(
     name = "classifieroptions",
     srcs = ["ClassifierOptions.java"],
-    javacopts = [
-        "-Xep:AndroidJdkLibsChecker:OFF",
-    ],
     deps = [
         "//mediapipe/tasks/cc/components/processors/proto:classifier_options_java_proto_lite",
         "//third_party:autovalue",

@@ -245,9 +245,6 @@ def mediapipe_tasks_core_aar(name, srcs, manifest):
                    "//conditions:default": [],
                    "//mediapipe/tasks/java/com/google/mediapipe/tasks/core:enable_tasks_usage_logging": mediapipe_logging_java_proto_srcs(),
                }),
-        javacopts = [
-            "-Xep:AndroidJdkLibsChecker:OFF",
-        ],
         manifest = manifest,
         deps = [
                    "//third_party:any_java_proto",

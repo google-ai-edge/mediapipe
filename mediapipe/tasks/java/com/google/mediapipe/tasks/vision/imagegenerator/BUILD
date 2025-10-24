@@ -61,9 +61,6 @@ android_library(
         "ImageGenerator.java",
         "ImageGeneratorResult.java",
     ],
-    javacopts = [
-        "-Xep:AndroidJdkLibsChecker:OFF",
-    ],
     manifest = "AndroidManifest.xml",
     deps = [
         "//mediapipe/framework:calculator_options_java_proto_lite",

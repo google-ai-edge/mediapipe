@@ -21,9 +21,6 @@ package(default_visibility = ["//visibility:public"])
 android_library(
     name = "core",
     srcs = glob(["core/*.java"]),
-    javacopts = [
-        "-Xep:AndroidJdkLibsChecker:OFF",
-    ],
     deps = [
         ":libmediapipe_tasks_audio_jni_lib",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework_no_mff",
@@ -48,9 +45,6 @@ android_library(
     srcs = [
         "audioclassifier/AudioClassifier.java",
         "audioclassifier/AudioClassifierResult.java",
-    ],
-    javacopts = [
-        "-Xep:AndroidJdkLibsChecker:OFF",
     ],
     manifest = "audioclassifier/AndroidManifest.xml",
     deps = [

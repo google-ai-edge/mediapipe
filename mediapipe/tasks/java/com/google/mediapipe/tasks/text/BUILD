@@ -35,9 +35,6 @@ android_library(
         "textclassifier/TextClassifier.java",
         "textclassifier/TextClassifierResult.java",
     ],
-    javacopts = [
-        "-Xep:AndroidJdkLibsChecker:OFF",
-    ],
     manifest = "textclassifier/AndroidManifest.xml",
     deps = [
         "//mediapipe/framework:calculator_options_java_proto_lite",
@@ -59,9 +56,6 @@ android_library(
     srcs = [
         "textembedder/TextEmbedder.java",
         "textembedder/TextEmbedderResult.java",
-    ],
-    javacopts = [
-        "-Xep:AndroidJdkLibsChecker:OFF",
     ],
     manifest = "textembedder/AndroidManifest.xml",
     deps = [
@@ -87,9 +81,6 @@ android_library(
         "languagedetector/LanguageDetector.java",
         "languagedetector/LanguageDetectorResult.java",
         "languagedetector/LanguagePrediction.java",
-    ],
-    javacopts = [
-        "-Xep:AndroidJdkLibsChecker:OFF",
     ],
     manifest = "textembedder/AndroidManifest.xml",
     deps = [

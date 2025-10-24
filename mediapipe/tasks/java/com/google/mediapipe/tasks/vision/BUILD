@@ -21,9 +21,6 @@ package(default_visibility = ["//visibility:public"])
 
 android_library(
     name = "core",
-    javacopts = [
-        "-Xep:AndroidJdkLibsChecker:OFF",
-    ],
     exports = [
         ":core_java",
         ":libmediapipe_tasks_vision_jni_lib",
@@ -34,9 +31,6 @@ android_library(
 android_library(
     name = "core_java",
     srcs = glob(["core/*.java"]),
-    javacopts = [
-        "-Xep:AndroidJdkLibsChecker:OFF",
-    ],
     deps = [
         "//mediapipe/framework/formats:rect_java_proto_lite",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework_no_mff",
@@ -88,9 +82,6 @@ android_library(
         "objectdetector/ObjectDetector.java",
         "objectdetector/ObjectDetectorResult.java",
     ],
-    javacopts = [
-        "-Xep:AndroidJdkLibsChecker:OFF",
-    ],
     manifest = "objectdetector/AndroidManifest.xml",
     deps = [
         ":core",
@@ -112,9 +103,6 @@ android_library(
     srcs = [
         "imageclassifier/ImageClassifier.java",
         "imageclassifier/ImageClassifierResult.java",
-    ],
-    javacopts = [
-        "-Xep:AndroidJdkLibsChecker:OFF",
     ],
     manifest = "imageclassifier/AndroidManifest.xml",
     deps = [
@@ -138,9 +126,6 @@ android_library(
     srcs = [
         "gesturerecognizer/GestureRecognizer.java",
         "gesturerecognizer/GestureRecognizerResult.java",
-    ],
-    javacopts = [
-        "-Xep:AndroidJdkLibsChecker:OFF",
     ],
     manifest = "gesturerecognizer/AndroidManifest.xml",
     deps = [
@@ -175,9 +160,6 @@ android_library(
         "poselandmarker/PoseLandmarkerResult.java",
         "poselandmarker/PoseLandmarksConnections.java",
     ],
-    javacopts = [
-        "-Xep:AndroidJdkLibsChecker:OFF",
-    ],
     manifest = "poselandmarker/AndroidManifest.xml",
     deps = [
         ":core",
@@ -206,9 +188,6 @@ android_library(
         "handlandmarker/HandLandmarkerResult.java",
         "handlandmarker/HandLandmarksConnections.java",
     ],
-    javacopts = [
-        "-Xep:AndroidJdkLibsChecker:OFF",
-    ],
     manifest = "handlandmarker/AndroidManifest.xml",
     deps = [
         ":core",
@@ -234,9 +213,6 @@ android_library(
 
 android_library(
     name = "imagesegmenter",
-    javacopts = [
-        "-Xep:AndroidJdkLibsChecker:OFF",
-    ],
     manifest = "imagesegmenter/AndroidManifest.xml",
     exports = [
         ":core",
@@ -251,9 +227,6 @@ android_library(
     srcs = [
         "imagesegmenter/ImageSegmenter.java",
         "imagesegmenter/ImageSegmenterResult.java",
-    ],
-    javacopts = [
-        "-Xep:AndroidJdkLibsChecker:OFF",
     ],
     manifest = "imagesegmenter/AndroidManifest.xml",
     deps = [
@@ -284,9 +257,6 @@ android_library(
         "imagesegmenter/ImageSegmenterResult.java",
         "interactivesegmenter/InteractiveSegmenter.java",
     ],
-    javacopts = [
-        "-Xep:AndroidJdkLibsChecker:OFF",
-    ],
     manifest = "interactivesegmenter/AndroidManifest.xml",
     deps = [
         ":core",
@@ -313,9 +283,6 @@ android_library(
         "imageembedder/ImageEmbedder.java",
         "imageembedder/ImageEmbedderResult.java",
     ],
-    javacopts = [
-        "-Xep:AndroidJdkLibsChecker:OFF",
-    ],
     manifest = "imageembedder/AndroidManifest.xml",
     deps = [
         ":core",
@@ -341,9 +308,6 @@ android_library(
         "facedetector/FaceDetector.java",
         "facedetector/FaceDetectorResult.java",
     ],
-    javacopts = [
-        "-Xep:AndroidJdkLibsChecker:OFF",
-    ],
     manifest = "facedetector/AndroidManifest.xml",
     deps = [
         ":core",
@@ -366,9 +330,6 @@ android_library(
         "facelandmarker/FaceLandmarker.java",
         "facelandmarker/FaceLandmarkerResult.java",
         "facelandmarker/FaceLandmarksConnections.java",
-    ],
-    javacopts = [
-        "-Xep:AndroidJdkLibsChecker:OFF",
     ],
     manifest = "facedetector/AndroidManifest.xml",
     deps = [
@@ -405,9 +366,6 @@ android_library(
     srcs = [
         "holisticlandmarker/HolisticLandmarker.java",
         "holisticlandmarker/HolisticLandmarkerResult.java",
-    ],
-    javacopts = [
-        "-Xep:AndroidJdkLibsChecker:OFF",
     ],
     manifest = "facedetector/AndroidManifest.xml",
     deps = [

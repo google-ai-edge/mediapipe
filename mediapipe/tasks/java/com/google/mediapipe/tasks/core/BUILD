@@ -18,9 +18,6 @@ package(default_visibility = ["//visibility:public"])
 
 android_library(
     name = "core",
-    javacopts = [
-        "-Xep:AndroidJdkLibsChecker:OFF",
-    ],
     manifest = "AndroidManifest.xml",
     exports = [
         ":core_java",
@@ -33,9 +30,6 @@ android_library(
 android_library(
     name = "core_java",
     srcs = glob(["*.java"]),
-    javacopts = [
-        "-Xep:AndroidJdkLibsChecker:OFF",
-    ],
     manifest = "AndroidManifest.xml",
     deps = [
         ":logging",
