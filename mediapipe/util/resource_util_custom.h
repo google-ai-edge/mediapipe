@@ -7,7 +7,7 @@
 
 namespace mediapipe {
 
-typedef std::function<absl::Status(const std::string&, std::string*)>
+typedef std::function<absl::Status(const std::string&, std::string*, bool)>
     ResourceProviderFn;
 
 // Returns true if files are provided via a custom resource provider.
