@@ -46,6 +46,7 @@ namespace mediapipe {
 namespace {
 
 constexpr int kDefaultNumXnnpackThreads = 1;
+constexpr int kDefaultNumCpuThreads = 1;
 
 using ElementType = ::mediapipe::Tensor::ElementType;
 using ::testing::ElementsAreArray;
@@ -171,6 +172,10 @@ class InferenceCalculatorUtilsTest : public ::testing::Test {
     absl::SetFlag(&FLAGS_xnnpack_default_num_threads, 0);
   }
 };
+
+TEST_F(InferenceCalculatorUtilsTest, GetCpuDefaultNumThreadsReturnsDefault) {
+  EXPECT_EQ(GetCpuDefaultNumThreads(), kDefaultNumCpuThreads);
+}
 
 TEST_F(InferenceCalculatorUtilsTest, GetXnnpackNumThreadsReturnsDefault) {
   EXPECT_EQ(GetXnnpackNumThreads(/*opts_has_delegate=*/false,

@@ -48,22 +48,6 @@ ABSL_FLAG(int, xnnpack_default_num_threads, 0,
 namespace mediapipe {
 namespace {
 
-int GetXnnpackDefaultNumThreads() {
-  int default_from_flag = absl::GetFlag(FLAGS_xnnpack_default_num_threads);
-  if (default_from_flag > 0) {
-    return default_from_flag;
-  }
-#if defined(MEDIAPIPE_ANDROID) || defined(MEDIAPIPE_IOS) || \
-    defined(__EMSCRIPTEN_PTHREADS__)
-  constexpr int kMinNumThreadsByDefault = 1;
-  constexpr int kMaxNumThreadsByDefault = 4;
-  return std::clamp(NumCPUCores() / 2, kMinNumThreadsByDefault,
-                    kMaxNumThreadsByDefault);
-#else
-  return 1;
-#endif  // MEDIAPIPE_ANDROID || MEDIAPIPE_IOS || __EMSCRIPTEN_PTHREADS__
-}
-
 // Checks if a MediaPipe Tensor's type matches a TfLite's data type.
 bool operator==(Tensor::ElementType tensor_type, TfLiteType tflite_type) {
   switch (tensor_type) {
@@ -231,6 +215,26 @@ absl::Status CopyTfLiteTensorToTensor<char>(const TfLiteTensor& tflite_tensor,
 }
 
 }  // namespace
+
+int GetCpuDefaultNumThreads() {
+#if defined(MEDIAPIPE_ANDROID) || defined(MEDIAPIPE_IOS) || \
+    defined(__EMSCRIPTEN_PTHREADS__)
+  constexpr int kMinNumThreadsByDefault = 1;
+  constexpr int kMaxNumThreadsByDefault = 4;
+  return std::clamp(NumCPUCores() / 2, kMinNumThreadsByDefault,
+                    kMaxNumThreadsByDefault);
+#else
+  return 1;
+#endif  // MEDIAPIPE_ANDROID || MEDIAPIPE_IOS || __EMSCRIPTEN_PTHREADS__
+}
+
+int GetXnnpackDefaultNumThreads() {
+  int default_from_flag = absl::GetFlag(FLAGS_xnnpack_default_num_threads);
+  if (default_from_flag > 0) {
+    return default_from_flag;
+  }
+  return GetCpuDefaultNumThreads();
+}
 
 int GetXnnpackNumThreads(
     bool opts_has_delegate,
