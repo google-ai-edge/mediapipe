@@ -108,6 +108,7 @@ mediapipe_files(srcs = [
     "selfie_segmentation.tflite",
     "selfie_segmentation_landscape.tflite",
     "thumb_up.jpg",
+    "thumb_up_rgba.png",
     "victory.jpg",
 ])
 
@@ -175,6 +176,7 @@ filegroup(
         "selfie_segm_128_128_3_expected_mask.jpg",
         "selfie_segm_144_256_3_expected_mask.jpg",
         "thumb_up.jpg",
+        "thumb_up_rgba.png",
         "victory.jpg",
     ],
 )

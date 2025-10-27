@@ -31,6 +31,79 @@ import java.util.Locale;
  * <p>This class contains methods that are Android-specific.
  */
 public final class AndroidPacketGetter {
+
+  /**
+   * Gets a {@link Bitmap} from a mediapipe image packet, using the number of channels of the input
+   * image.
+   *
+   * @param packet mediapipe packet a RGB, RGBA or Gray8 image
+   * @throws UnsupportedOperationException if the packet does not contain an image in the supported
+   *     formats.
+   * @return {@link Bitmap} with pixels copied from the packet
+   */
+  public static Bitmap getBitmap(Packet packet) {
+    // Note that instead of using the image format, we use the number of channels to determine the
+    // format. This avoids the need to have a dependency on  `MpImage` in the core MediaPipe
+    // framework and allows us to use the same logic we use in
+    // `nativeCreateCpuImage`.
+    int channels = PacketGetter.getImageNumChannels(packet);
+    switch (channels) {
+      case 1:
+        return getBitmapFromGray8(packet);
+      case 3:
+        return getBitmapFromRgb(packet);
+      case 4:
+        return getBitmapFromRgba(packet);
+      default:
+        throw new UnsupportedOperationException("Unsupported number of channels: " + channels);
+    }
+  }
+
+  /**
+   * Gets an {@code ALPHA_8} bitmap from an 8-bit single channel mediapipe image frame packet.
+   *
+   * @param packet mediapipe packet
+   * @return {@link Bitmap} with pixels copied from the packet
+   */
+  public static Bitmap getBitmapFromGray8(Packet packet) {
+    int width = PacketGetter.getImageWidth(packet);
+    int height = PacketGetter.getImageHeight(packet);
+    Bitmap bitmap = Bitmap.createBitmap(width, height, Config.ALPHA_8);
+    copyGray8ToBitmap(packet, bitmap, width, height);
+    return bitmap;
+  }
+
+  /**
+   * Copies data from an 8-bit alpha mediapipe image frame packet to {@code ALPHA_8} bitmap.
+   *
+   * @param packet mediapipe packet
+   * @param inBitmap mutable {@link Bitmap} of same dimension and config as the expected output, the
+   *     image would be copied to this {@link Bitmap}
+   */
+  public static void copyGray8ToBitmap(Packet packet, Bitmap inBitmap) {
+    checkArgument(inBitmap.isMutable(), "Input bitmap should be mutable.");
+    checkArgument(
+        inBitmap.getConfig() == Config.ALPHA_8, "Input bitmap should be of type ALPHA_8.");
+    int width = PacketGetter.getImageWidth(packet);
+    int height = PacketGetter.getImageHeight(packet);
+    checkArgument(inBitmap.getByteCount() == width * height, "Input bitmap size mismatch.");
+    copyGray8ToBitmap(packet, inBitmap, width, height);
+  }
+
+  private static void copyGray8ToBitmap(
+      Packet packet, Bitmap mutableBitmap, int width, int height) {
+    ByteBuffer buffer = ByteBuffer.allocateDirect(width * height);
+    boolean status = PacketGetter.getImageData(packet, buffer);
+    checkState(
+        status,
+        String.format(
+            Locale.getDefault(),
+            "Got error from getImageData, returning null Bitmap. Image width %d, height %d",
+            width,
+            height));
+    mutableBitmap.copyPixelsFromBuffer(buffer);
+  }
+
   /**
    * Gets an {@code ARGB_8888} bitmap from an RGB mediapipe image frame packet.
    *
@@ -40,7 +113,7 @@ public final class AndroidPacketGetter {
   public static Bitmap getBitmapFromRgb(Packet packet) {
     int width = PacketGetter.getImageWidth(packet);
     int height = PacketGetter.getImageHeight(packet);
-    Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+    Bitmap bitmap = Bitmap.createBitmap(width, height, Config.ARGB_8888);
     copyRgbToBitmap(packet, bitmap, width, height);
     return bitmap;
   }
@@ -79,7 +152,7 @@ public final class AndroidPacketGetter {
   public static Bitmap getBitmapFromRgba(Packet packet) {
     int width = PacketGetter.getImageWidth(packet);
     int height = PacketGetter.getImageHeight(packet);
-    Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+    Bitmap bitmap = Bitmap.createBitmap(width, height, Config.ARGB_8888);
     copyRgbaToBitmap(packet, bitmap, width, height);
     return bitmap;
   }

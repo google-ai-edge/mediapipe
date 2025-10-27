@@ -147,7 +147,7 @@ public final class ImageGenerator extends BaseVisionTaskApi {
             if (showResult) {
               Log.i("ImageGenerator", "processing generated image");
               Packet packet = packets.get(GENERATED_IMAGE_OUT_STREAM_INDEX);
-              Bitmap generatedBitmap = AndroidPacketGetter.getBitmapFromRgb(packet);
+              Bitmap generatedBitmap = AndroidPacketGetter.getBitmap(packet);
               BitmapImageBuilder bitmapImageBuilder = new BitmapImageBuilder(generatedBitmap);
               return ImageGeneratorResult.create(
                   bitmapImageBuilder.build(), packet.getTimestamp() / MICROSECONDS_PER_MILLISECOND);

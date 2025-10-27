@@ -223,7 +223,7 @@ public final class InteractiveSegmenter extends BaseVisionTaskApi {
           @Override
           public MPImage convertToTaskInput(List<Packet> packets) {
             return new BitmapImageBuilder(
-                    AndroidPacketGetter.getBitmapFromRgb(packets.get(imageOutStreamIndex)))
+                    AndroidPacketGetter.getBitmap(packets.get(imageOutStreamIndex)))
                 .build();
           }
         });
