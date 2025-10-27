@@ -63,15 +63,17 @@ TEST_P(WorldLandmarkProjectionTest, Passes) {
   CalculatorGraph graph;
   MP_ASSERT_OK(graph.Initialize(std::move(config)));
   mediapipe::Packet out_packet;
-  MP_ASSERT_OK(graph.ObserveOutputStream("out_landmarks", [&](const Packet& p) {
-    out_packet = p;
-    return absl::OkStatus();
-  }));
+  MP_ASSERT_OK(graph.ObserveOutputStream("out_landmarks",
+                                         [&](const mediapipe::Packet& p) {
+                                           out_packet = p;
+                                           return absl::OkStatus();
+                                         }));
   MP_ASSERT_OK(graph.StartRun({}));
 
   MP_ASSERT_OK(graph.AddPacketToInputStream(
       "in_landmarks",
-      MakePacket<LandmarkList>(GetParam().input_landmarks).At(Timestamp(0))));
+      mediapipe::MakePacket<LandmarkList>(GetParam().input_landmarks)
+          .At(Timestamp(0))));
   MP_ASSERT_OK(graph.WaitUntilIdle());
 
   EXPECT_THAT(out_packet, mediapipe::PacketContains<LandmarkList>(EqualsProto(

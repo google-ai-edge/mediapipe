@@ -97,7 +97,8 @@ TEST(MergeCalculatorTest, TestMergingTwoStreams) {
   MP_ASSERT_OK(runner.Run());
 
   // Expected combined_output: 5.5, 10, 20, 30, 35.5 at times 5, 10, 20, 30, 35.
-  const std::vector<Packet>& actual_output = runner.Outputs().Index(0).packets;
+  const std::vector<mediapipe::Packet>& actual_output =
+      runner.Outputs().Index(0).packets;
   ASSERT_EQ(actual_output.size(), 5);
   EXPECT_EQ(actual_output[0].Timestamp(), Timestamp(5));
   EXPECT_EQ(actual_output[0].Get<float>(), 5.5);
@@ -150,7 +151,8 @@ TEST(MergeCalculatorTest, TestMergingThreeStreams) {
   MP_ASSERT_OK(runner.Run());
 
   // Expected combined_output: 'c', 20.5, 30 at times 10, 20, 30.
-  const std::vector<Packet>& actual_output = runner.Outputs().Index(0).packets;
+  const std::vector<mediapipe::Packet>& actual_output =
+      runner.Outputs().Index(0).packets;
   ASSERT_EQ(actual_output.size(), 3);
   EXPECT_EQ(actual_output[0].Timestamp(), Timestamp(10));
   EXPECT_EQ(actual_output[0].Get<char>(), 'c');
