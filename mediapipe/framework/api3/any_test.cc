@@ -61,12 +61,12 @@ class TickNodeImpl : public Calculator<TemplatedTickNode<Any>, TickNodeImpl> {
 struct SomeTick {};
 
 TEST(AnyTest, CanUseAnyForNodeTickInputImplementation) {
-  MP_ASSERT_OK_AND_ASSIGN(CalculatorGraphConfig config, []() {
+  MP_ASSERT_OK_AND_ASSIGN(CalculatorGraphConfig config, [] {
     Graph<TemplatedTickNode<SomeTick>::Contract> graph;
 
     Stream<SomeTick> tick = graph.tick.Get().SetName("tick");
 
-    Stream<int> out = [&]() {
+    Stream<int> out = [&] {
       auto& node = graph.AddNode<TemplatedTickNode<SomeTick>>();
       node.tick.Set(tick);
       return node.out.Get();
@@ -134,12 +134,12 @@ struct SomeTickGraphContract {
 };
 
 TEST(AnyTest, CanUseAnyForNodeTickInputInterfaceAndImplementation) {
-  MP_ASSERT_OK_AND_ASSIGN(CalculatorGraphConfig config, []() {
+  MP_ASSERT_OK_AND_ASSIGN(CalculatorGraphConfig config, [] {
     Graph<SomeTickGraphContract> graph;
 
     Stream<SomeTick> tick = graph.tick.Get().SetName("tick");
 
-    Stream<int> out = [&]() {
+    Stream<int> out = [&] {
       auto& node = graph.AddNode<AnyTickNode>();
       node.tick.Set(tick.Cast<Any>());
       return node.out.Get();
@@ -239,14 +239,14 @@ struct PassThroughGraphContract {
 
 TEST(AnyTest, CalculatorsCanSupportSameAsAny) {
   MP_ASSERT_OK_AND_ASSIGN(
-      CalculatorGraphConfig config, ([]() {
+      CalculatorGraphConfig config, ([] {
         Graph<PassThroughGraphContract> graph;
 
         Stream<int> a = graph.in_a.Get().SetName("a");
         Stream<std::string> b = graph.in_b.Get().SetName("b");
         SidePacket<int> side = graph.in_side.Get().SetName("side");
 
-        auto [passed_side, passed_a, passed_b] = [&]() {
+        auto [passed_side, passed_a, passed_b] = [&] {
           auto& node = graph.AddNode<PassThroughNode>();
           node.side_in.Add(side.Cast<Any>());
           node.in.Add(a.Cast<Any>());

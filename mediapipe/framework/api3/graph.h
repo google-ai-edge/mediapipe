@@ -63,7 +63,7 @@ namespace mediapipe::api3 {
 //
 //   Stream<Image> input_image = graph.image.Get();
 //
-//   Stream<Tensor> input_tensor = [&]() {
+//   Stream<Tensor> input_tensor = [&] {
 //     auto& node = graph.AddNode<ImageToTensorNode>();
 //     node.image.Set(input_image);
 //     return node.tensor.Get();
@@ -239,7 +239,7 @@ class GenericGraph {
   //   ```
   // - Use lambdas:
   //   ```
-  //     Stream<Tensor> input_tensor = [&]() {
+  //     Stream<Tensor> input_tensor = [&] {
   //       auto& node = graph.AddNode<ImageToTensorNode>();
   //       node.image.Set(image);
   //       return node.tensor.Get();

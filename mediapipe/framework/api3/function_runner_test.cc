@@ -84,13 +84,13 @@ TEST(FunctionRunnerTest, RunsSingleGraphToMultiplyBy2Add10) {
   MP_ASSERT_OK_AND_ASSIGN(
       auto runner,
       Runner::For([](GenericGraph& graph, Stream<int> in) -> Stream<int> {
-        Stream<int> multiplication = [&]() {
+        Stream<int> multiplication = [&] {
           auto& node = graph.AddNode<MultiplyBy2Node>();
           node.in.Set(in);
           return node.out.Get();
         }();
 
-        Stream<int> addition = [&]() {
+        Stream<int> addition = [&] {
           auto& node = graph.AddNode<Add10Node>();
           node.in.Set(multiplication);
           return node.out.Get();
@@ -166,13 +166,13 @@ TEST(FunctionRunnerTest, WorksForMultipleOutputs) {
       auto runner,
       Runner::For([](GenericGraph& graph,
                      Stream<int> x) -> std::tuple<Stream<int>, Stream<int>> {
-        Stream<int> multiplication = [&]() {
+        Stream<int> multiplication = [&] {
           auto& node = graph.AddNode<MultiplyBy2Node>();
           node.in.Set(x);
           return node.out.Get();
         }();
 
-        Stream<int> addition = [&]() {
+        Stream<int> addition = [&] {
           auto& node = graph.AddNode<Add10Node>();
           node.in.Set(x);
           return node.out.Get();
@@ -198,13 +198,13 @@ TEST(FunctionRunnerTest, WorksForMultipleInputsAndOutputs) {
         a.SetName("a");
         b.SetName("b");
 
-        Stream<int> multiplied_a = [&]() {
+        Stream<int> multiplied_a = [&] {
           auto& node = graph.AddNode<MultiplyBy2Node>();
           node.in.Set(a);
           return node.out.Get();
         }();
 
-        Stream<int> adjusted_b = [&]() {
+        Stream<int> adjusted_b = [&] {
           auto& node = graph.AddNode<Add10Node>();
           node.in.Set(b);
           return node.out.Get();
@@ -346,13 +346,13 @@ TEST(FunctionRunnerTest, SupportsStatusOrMultiOutputBuilderFunctions) {
           [](GenericGraph& graph, Stream<int> tick)
               -> absl::StatusOr<
                   std::tuple<Stream<std::string>, Stream<std::string>>> {
-            Stream<std::string> service_value1 = [&]() {
+            Stream<std::string> service_value1 = [&] {
               auto& node = graph.AddNode<ServiceValueOnTickNode>();
               node.tick.Set(tick);
               return node.service_value.Get();
             }();
 
-            Stream<std::string> service_value2 = [&]() {
+            Stream<std::string> service_value2 = [&] {
               auto& node = graph.AddNode<ServiceValueOnTickNode>();
               node.tick.Set(tick);
               return node.service_value.Get();

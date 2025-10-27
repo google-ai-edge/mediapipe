@@ -338,7 +338,7 @@ TEST(GenericGraphTest, CanUseBackEdges) {
   auto image = graph.image.Get().SetName("image");
 
   // Nodes.
-  auto [prev_detections, set_prev_detections_fn] = [&]() {
+  auto [prev_detections, set_prev_detections_fn] = [&] {
     auto* loopback_node = &graph.AddNode<PreviousLoopbackNode>();
     loopback_node->main.Set(image);
     auto set_loop_fn = [loopback_node](auto value) {
@@ -348,7 +348,7 @@ TEST(GenericGraphTest, CanUseBackEdges) {
     return std::pair(prev_loop, set_loop_fn);
   }();
 
-  Stream<std::vector<Detection>> detections = [&]() {
+  Stream<std::vector<Detection>> detections = [&] {
     auto& detection_node = graph.AddNode<ObjectDetectionNode>();
     detection_node.image.Set(image);
     detection_node.prev_detections.Set(prev_detections);
@@ -412,7 +412,7 @@ TEST(GenericGraphTest, CanUseBackEdgesWithRepeated) {
   // Graph inputs.
   auto in_data = graph.in.Get().SetName("in_data");
 
-  auto [processed_data, add_back_edge_fn] = [&]() {
+  auto [processed_data, add_back_edge_fn] = [&] {
     auto* back_edge_node = &graph.AddNode<SomeBackEdgeNode>();
     back_edge_node->data.Add(in_data);
     auto set_back_edge_fn = [back_edge_node](auto value) {
@@ -422,7 +422,7 @@ TEST(GenericGraphTest, CanUseBackEdgesWithRepeated) {
     return std::pair(processed_data, set_back_edge_fn);
   }();
 
-  auto output_data = [&]() {
+  auto output_data = [&] {
     auto& detection_node = graph.AddNode<SomeOutputDataNode>();
     detection_node.data.Set(in_data);
     detection_node.processed_data.Set(processed_data);
@@ -470,7 +470,7 @@ TEST(GenericGraphTest, CanUseBackEdgesWithRepeatedAndNoTag) {
   // Graph inputs.
   auto in_data = graph.in.Get().SetName("in_data");
 
-  auto [processed_data, add_back_edge_fn] = [&]() {
+  auto [processed_data, add_back_edge_fn] = [&] {
     auto* back_edge_node = &graph.AddNode<SomeBackEdgeNoInputTagsNode>();
     back_edge_node->data.Add(in_data);
     auto add_back_edge_fn = [back_edge_node](auto value) {
@@ -480,7 +480,7 @@ TEST(GenericGraphTest, CanUseBackEdgesWithRepeatedAndNoTag) {
     return std::pair(processed_data, add_back_edge_fn);
   }();
 
-  Stream<Data> output_data = [&]() {
+  Stream<Data> output_data = [&] {
     auto& detection_node = graph.AddNode<SomeOutputDataNode>();
     detection_node.data.Set(in_data);
     detection_node.processed_data.Set(processed_data);
@@ -948,19 +948,19 @@ TEST(GraphTest, CanAccessGraphInputsOutputs) {
   Graph<FaceDetection> graph;
   Stream<Image> in = graph.image.Get();
 
-  Stream<Tensor> image_tensor = [&]() {
+  Stream<Tensor> image_tensor = [&] {
     auto& node = graph.AddNode<ImageToTensorNode<Tensor>>();
     node.image.Set(in);
     return node.tensor.Get();
   }();
 
-  auto [boxes_tensor, scores_tensor] = [&]() {
+  auto [boxes_tensor, scores_tensor] = [&] {
     auto& node = graph.AddNode<InferenceNode<Tensor>>();
     node.in_tensor.Add(image_tensor);
     return std::pair(node.out_tensor.Add(), node.out_tensor.Add());
   }();
 
-  Stream<std::vector<Detection>> detections = [&]() {
+  Stream<std::vector<Detection>> detections = [&] {
     auto& node = graph.AddNode<TensorToDetectionsNode<Tensor>>();
     node.boxes_tensor.Set(boxes_tensor);
     node.scores_tensor.Set(scores_tensor);
@@ -999,21 +999,21 @@ TEST(GraphTest, CanAddNodesByContract) {
   Graph<FaceDetection> graph;
   Stream<Image> in = graph.image.Get();
 
-  Stream<Tensor> image_tensor = [&]() {
+  Stream<Tensor> image_tensor = [&] {
     auto& node = graph.AddNodeByContract<ImageToTensorNode<Tensor>::Contract>(
         ImageToTensorNode<Tensor>::GetRegistrationName());
     node.image.Set(in);
     return node.tensor.Get();
   }();
 
-  auto [boxes_tensor, scores_tensor] = [&]() {
+  auto [boxes_tensor, scores_tensor] = [&] {
     auto& node = graph.AddNodeByContract<InferenceNode<Tensor>::Contract>(
         InferenceNode<Tensor>::GetRegistrationName());
     node.in_tensor.Add(image_tensor);
     return std::pair(node.out_tensor.Add(), node.out_tensor.Add());
   }();
 
-  Stream<std::vector<Detection>> detections = [&]() {
+  Stream<std::vector<Detection>> detections = [&] {
     auto& node =
         graph.AddNodeByContract<TensorToDetectionsNode<Tensor>::Contract>(
             TensorToDetectionsNode<Tensor>::GetRegistrationName());

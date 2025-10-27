@@ -52,7 +52,7 @@ namespace mediapipe::api3 {
 //      auto runner,
 //      Runner::For([](GenericGraph& graph,
 //                     Stream<ImageFrame> input_image) -> Stream<ImageFrame> {
-//        Stream<Tensor> input_tensor = [&]() {
+//        Stream<Tensor> input_tensor = [&] {
 //          auto& node = graph.AddNode<ImageToTensorNode>();
 //          node.image.Set(input_image);
 //          return node.tensor.Get();
