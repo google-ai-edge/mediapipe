@@ -24,6 +24,7 @@ limitations under the License.
 #include <vector>
 
 #include "absl/status/status.h"
+#include "absl/strings/str_cat.h"
 #include "absl/types/span.h"
 #include "mediapipe/framework/api3/calculator.h"
 #include "mediapipe/framework/api3/calculator_context.h"
@@ -309,7 +310,8 @@ absl::Status TensorsToSegmentationNodeImpl::Process(
   const std::vector<Tensor>& input_tensors = cc.tensors_in.GetOrDie();
   if (input_tensors.size() != 1 && input_tensors.size() != 2) {
     return absl::InvalidArgumentError(
-        "Expect input tensor vector of size 1 or 2.");
+        absl::StrCat("Expect input tensor vector of size 1 or 2, but size=",
+                     input_tensors.size()));
   }
   const auto& input_tensor =
       input_tensors.size() == 1 ? input_tensors[0] : input_tensors[1];
