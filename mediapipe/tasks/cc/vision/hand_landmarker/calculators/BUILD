@@ -36,7 +36,6 @@ cc_library(
     deps = [
         ":hand_association_calculator_cc_proto",
         "//mediapipe/calculators/util:association_calculator",
-        "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/api3:calculator",
         "//mediapipe/framework/api3:calculator_context",
         "//mediapipe/framework/api3:contract",

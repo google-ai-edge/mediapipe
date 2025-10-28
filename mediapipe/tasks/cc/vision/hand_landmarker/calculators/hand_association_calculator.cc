@@ -23,7 +23,6 @@ limitations under the License.
 #include "absl/status/status.h"
 #include "mediapipe/framework/api3/calculator.h"
 #include "mediapipe/framework/api3/calculator_context.h"
-#include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/tasks/cc/vision/hand_landmarker/calculators/hand_association_calculator.pb.h"
 #include "mediapipe/util/rectangle_util.h"
@@ -42,8 +41,6 @@ class HandAssociationNodeImpl
     : public Calculator<HandAssociationNode, HandAssociationNodeImpl> {
  public:
   absl::Status Open(CalculatorContext<HandAssociationNode>& cc) override {
-    cc.GetGenericContext().SetOffset(TimestampDiff(0));
-
     options_ = cc.options.Get();
     ABSL_CHECK_GT(options_.min_similarity_threshold(), 0.0);
     ABSL_CHECK_LE(options_.min_similarity_threshold(), 1.0);
@@ -62,7 +59,14 @@ class HandAssociationNodeImpl
   }
 
  private:
+  // HandAssociationCalculatorOptions from the calculator options.
   HandAssociationCalculatorOptions options_;
+
+  // Each NormalizedRect processed by the calculator will be assigned
+  // an unique id, if it does not already have an ID. The starting ID will be
+  // 1. Note: This rect_id_ is local to an instance of this calculator. And it
+  // is expected that the hand tracking graph to have only one instance of this
+  // association calculator.
   int64_t rect_id_ = 1;
 
   inline int GetNextRectId() { return rect_id_++; }
