@@ -22,18 +22,20 @@ limitations under the License.
 #include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/deps/file_path.h"
-#include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/c/components/containers/category.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
+#include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/core/image_processing_options.h"
-#include "mediapipe/tasks/cc/vision/utils/image_utils.h"
+#include "mediapipe/tasks/c/vision/core/image_test_util.h"
 
 namespace {
 
 using ::mediapipe::file::JoinPath;
-using ::mediapipe::tasks::vision::DecodeImageFromFile;
+using ::mediapipe::tasks::vision::core::CreateEmptyGpuMpImage;
+using ::mediapipe::tasks::vision::core::GetImage;
+using ::mediapipe::tasks::vision::core::ScopedMpImage;
 using testing::HasSubstr;
 
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
@@ -46,8 +48,7 @@ std::string GetFullPath(absl::string_view file_name) {
 }
 
 TEST(ImageClassifierTest, ImageModeTest) {
-  const auto image = DecodeImageFromFile(GetFullPath("burger.jpg"));
-  ASSERT_TRUE(image.ok());
+  const ScopedMpImage image = GetImage(GetFullPath("burger.jpg"));
 
   const std::string model_path = GetFullPath(kModelName);
   ImageClassifierOptions options = {
@@ -69,18 +70,11 @@ TEST(ImageClassifierTest, ImageModeTest) {
       image_classifier_create(&options, /* error_msg */ nullptr);
   ASSERT_NE(classifier, nullptr);
 
-  const auto& image_frame = image->GetImageFrameSharedPtr();
-  const MpImage mp_image = {
-      .type = MpImage::IMAGE_FRAME,
-      .image_frame = {.format = static_cast<ImageFormat>(image_frame->Format()),
-                      .image_buffer = image_frame->PixelData(),
-                      .width = image_frame->Width(),
-                      .height = image_frame->Height()}};
-
   ImageClassifierResult result;
-  image_classifier_classify_image(classifier, &mp_image,
-                                  /* image_processing_options */ nullptr,
-                                  &result, /* error_msg */ nullptr);
+  const int success = image_classifier_classify_image(
+      classifier, image.get(),
+      /* image_processing_options */ nullptr, &result, /* error_msg */ nullptr);
+  ASSERT_EQ(success, 0);
   EXPECT_EQ(result.classifications_count, 1);
   EXPECT_EQ(result.classifications[0].categories_count, 1001);
   EXPECT_EQ(std::string{result.classifications[0].categories[0].category_name},
@@ -92,8 +86,7 @@ TEST(ImageClassifierTest, ImageModeTest) {
 }
 
 TEST(ImageClassifierTest, ImageModeTestWithRotation) {
-  const auto image = DecodeImageFromFile(GetFullPath("burger_rotated.jpg"));
-  ASSERT_TRUE(image.ok());
+  const ScopedMpImage image = GetImage(GetFullPath("burger_rotated.jpg"));
 
   const std::string model_path = GetFullPath(kModelName);
   ImageClassifierOptions options = {
@@ -115,22 +108,15 @@ TEST(ImageClassifierTest, ImageModeTestWithRotation) {
       image_classifier_create(&options, /* error_msg */ nullptr);
   ASSERT_NE(classifier, nullptr);
 
-  const auto& image_frame = image->GetImageFrameSharedPtr();
-  const MpImage mp_image = {
-      .type = MpImage::IMAGE_FRAME,
-      .image_frame = {.format = static_cast<ImageFormat>(image_frame->Format()),
-                      .image_buffer = image_frame->PixelData(),
-                      .width = image_frame->Width(),
-                      .height = image_frame->Height()}};
-
   ImageProcessingOptions image_processing_options;
   image_processing_options.has_region_of_interest = 0;
   image_processing_options.rotation_degrees = -90;
 
   ImageClassifierResult result;
-  image_classifier_classify_image(classifier, &mp_image,
-                                  &image_processing_options, &result,
-                                  /* error_msg */ nullptr);
+  const int success = image_classifier_classify_image(
+      classifier, image.get(), &image_processing_options, &result,
+      /* error_msg */ nullptr);
+  ASSERT_EQ(success, 0);
   EXPECT_EQ(result.classifications_count, 1);
   EXPECT_EQ(result.classifications[0].categories_count, 1001);
   EXPECT_EQ(std::string{result.classifications[0].categories[0].category_name},
@@ -142,8 +128,7 @@ TEST(ImageClassifierTest, ImageModeTestWithRotation) {
 }
 
 TEST(ImageClassifierTest, VideoModeTest) {
-  const auto image = DecodeImageFromFile(GetFullPath("burger.jpg"));
-  ASSERT_TRUE(image.ok());
+  const ScopedMpImage image = GetImage(GetFullPath("burger.jpg"));
 
   const std::string model_path = GetFullPath(kModelName);
   ImageClassifierOptions options = {
@@ -166,19 +151,13 @@ TEST(ImageClassifierTest, VideoModeTest) {
       image_classifier_create(&options, /* error_msg */ nullptr);
   ASSERT_NE(classifier, nullptr);
 
-  const auto& image_frame = image->GetImageFrameSharedPtr();
-  const MpImage mp_image = {
-      .type = MpImage::IMAGE_FRAME,
-      .image_frame = {.format = static_cast<ImageFormat>(image_frame->Format()),
-                      .image_buffer = image_frame->PixelData(),
-                      .width = image_frame->Width(),
-                      .height = image_frame->Height()}};
-
   for (int i = 0; i < kIterations; ++i) {
     ImageClassifierResult result;
-    image_classifier_classify_for_video(classifier, &mp_image,
-                                        /* image_processing_options */ nullptr,
-                                        i, &result, /* error_msg */ nullptr);
+    const int success = image_classifier_classify_for_video(
+        classifier, image.get(),
+        /* image_processing_options */ nullptr, i, &result,
+        /* error_msg */ nullptr);
+    ASSERT_EQ(success, 0);
     EXPECT_EQ(result.classifications_count, 1);
     EXPECT_EQ(result.classifications[0].categories_count, 3);
     EXPECT_EQ(
@@ -198,8 +177,8 @@ TEST(ImageClassifierTest, VideoModeTest) {
 // timestamp is greater than the previous one.
 struct LiveStreamModeCallback {
   static int64_t last_timestamp;
-  static void Fn(ImageClassifierResult* classifier_result, const MpImage* image,
-                 int64_t timestamp, char* error_msg) {
+  static void Fn(ImageClassifierResult* classifier_result,
+                 const MpImagePtr image, int64_t timestamp, char* error_msg) {
     ASSERT_NE(classifier_result, nullptr);
     ASSERT_EQ(error_msg, nullptr);
     EXPECT_EQ(
@@ -208,8 +187,8 @@ struct LiveStreamModeCallback {
         "cheeseburger");
     EXPECT_NEAR(classifier_result->classifications[0].categories[0].score,
                 0.7939f, kPrecision);
-    EXPECT_GT(image->image_frame.width, 0);
-    EXPECT_GT(image->image_frame.height, 0);
+    EXPECT_GT(MpImageGetWidth(image), 0);
+    EXPECT_GT(MpImageGetHeight(image), 0);
     EXPECT_GT(timestamp, last_timestamp);
     last_timestamp++;
   }
@@ -218,8 +197,7 @@ int64_t LiveStreamModeCallback::last_timestamp = -1;
 
 // TODO: Await the callbacks and re-enable test
 TEST(ImageClassifierTest, DISABLED_LiveStreamModeTest) {
-  const auto image = DecodeImageFromFile(GetFullPath("burger.jpg"));
-  ASSERT_TRUE(image.ok());
+  const ScopedMpImage image = GetImage(GetFullPath("burger.jpg"));
 
   const std::string model_path = GetFullPath(kModelName);
 
@@ -243,19 +221,12 @@ TEST(ImageClassifierTest, DISABLED_LiveStreamModeTest) {
       image_classifier_create(&options, /* error_msg */ nullptr);
   ASSERT_NE(classifier, nullptr);
 
-  const auto& image_frame = image->GetImageFrameSharedPtr();
-  const MpImage mp_image = {
-      .type = MpImage::IMAGE_FRAME,
-      .image_frame = {.format = static_cast<ImageFormat>(image_frame->Format()),
-                      .image_buffer = image_frame->PixelData(),
-                      .width = image_frame->Width(),
-                      .height = image_frame->Height()}};
-
   for (int i = 0; i < kIterations; ++i) {
-    EXPECT_GE(image_classifier_classify_async(
-                  classifier, &mp_image, /* image_processing_options */ nullptr,
-                  i, /* error_msg */ nullptr),
-              0);
+    EXPECT_GE(
+        image_classifier_classify_async(classifier, image.get(),
+                                        /* image_processing_options */ nullptr,
+                                        i, /* error_msg */ nullptr),
+        0);
   }
   image_classifier_close(classifier, /* error_msg */ nullptr);
 
@@ -305,13 +276,15 @@ TEST(ImageClassifierTest, FailedClassificationHandling) {
       image_classifier_create(&options, /* error_msg */ nullptr);
   ASSERT_NE(classifier, nullptr);
 
-  const MpImage mp_image = {.type = MpImage::GPU_BUFFER, .gpu_buffer = {}};
+  const ScopedMpImage image = CreateEmptyGpuMpImage();
   ImageClassifierResult result;
   char* error_msg;
-  image_classifier_classify_image(classifier, &mp_image,
-                                  /* image_processing_options */ nullptr,
-                                  &result, &error_msg);
-  EXPECT_THAT(error_msg, HasSubstr("GPU Buffer not supported yet"));
+  const int success = image_classifier_classify_image(
+      classifier, image.get(),
+      /* image_processing_options */ nullptr, &result, &error_msg);
+  ASSERT_GT(success, 0);
+  EXPECT_THAT(error_msg,
+              HasSubstr("GPU input images are currently not supported"));
   free(error_msg);
   image_classifier_close(classifier, /* error_msg */ nullptr);
 }

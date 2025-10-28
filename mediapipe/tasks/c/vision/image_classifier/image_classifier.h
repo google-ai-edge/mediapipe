@@ -22,6 +22,7 @@ limitations under the License.
 #include "mediapipe/tasks/c/components/processors/classifier_options.h"
 #include "mediapipe/tasks/c/core/base_options.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
+#include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/core/image_processing_options.h"
 
 #ifndef MP_EXPORT
@@ -65,7 +66,7 @@ struct ImageClassifierOptions {
   // The passed `image` is only valid for the lifetime of the call.  A caller is
   // responsible for closing image classifier result.
   typedef void (*result_callback_fn)(ImageClassifierResult* result,
-                                     const MpImage* image, int64_t timestamp_ms,
+                                     MpImagePtr image, int64_t timestamp_ms,
                                      char* error_msg);
   result_callback_fn result_callback;
 };
@@ -83,7 +84,7 @@ MP_EXPORT MpImageClassifierPtr image_classifier_create(
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
 MP_EXPORT int image_classifier_classify_image(
-    MpImageClassifierPtr classifier, const MpImage* image,
+    MpImageClassifierPtr classifier, MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
     ImageClassifierResult* result, char** error_msg);
 
@@ -97,7 +98,7 @@ MP_EXPORT int image_classifier_classify_image(
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
 MP_EXPORT int image_classifier_classify_for_video(
-    MpImageClassifierPtr classifier, const MpImage* image,
+    MpImageClassifierPtr classifier, MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
     int64_t timestamp_ms, ImageClassifierResult* result, char** error_msg);
 
@@ -122,7 +123,7 @@ MP_EXPORT int image_classifier_classify_for_video(
 // You need to invoke `image_classifier_classify_async` after each invocation to
 // free memory.
 MP_EXPORT int image_classifier_classify_async(
-    MpImageClassifierPtr classifier, const MpImage* image,
+    MpImageClassifierPtr classifier, MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
     int64_t timestamp_ms, char** error_msg);
 
