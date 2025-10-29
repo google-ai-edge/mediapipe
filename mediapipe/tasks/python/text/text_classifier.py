@@ -24,12 +24,14 @@ from mediapipe.tasks.python.components.processors import classifier_options_c as
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.core import base_options_c as base_options_c_module
 from mediapipe.tasks.python.core import mediapipe_c_bindings as mediapipe_c_bindings_c_module
+from mediapipe.tasks.python.core import serial_dispatcher
 
 _BaseOptions = base_options_module.BaseOptions
 Category = category_module.Category
 Classifications = classification_result_module.Classifications
 TextClassifierResult = classification_result_module.ClassificationResult
 ClassifierOptions = classifier_options_module.ClassifierOptions
+_CFunction = mediapipe_c_bindings_c_module.CFunction
 
 
 class TextClassifierOptionsC(ctypes.Structure):
@@ -88,29 +90,41 @@ class TextClassifierOptions:
     return c_options
 
 
-def _register_ctypes_signatures(lib: ctypes.CDLL):
-  """Defines the ctypes signatures for the TextClassifier C API."""
-  lib.text_classifier_create.argtypes = [
-      ctypes.POINTER(TextClassifierOptionsC),
-      ctypes.POINTER(ctypes.c_char_p),
-  ]
-  lib.text_classifier_create.restype = ctypes.c_void_p
-  lib.text_classifier_classify.argtypes = [
-      ctypes.c_void_p,
-      ctypes.c_char_p,
-      ctypes.POINTER(classification_result_c_module.ClassificationResultC),
-      ctypes.POINTER(ctypes.c_char_p),
-  ]
-  lib.text_classifier_classify.restype = ctypes.c_int
-  lib.text_classifier_close.argtypes = [
-      ctypes.c_void_p,
-      ctypes.POINTER(ctypes.c_char_p),
-  ]
-  lib.text_classifier_close.restype = ctypes.c_int
-  lib.text_classifier_close_result.argtypes = [
-      ctypes.POINTER(classification_result_c_module.ClassificationResultC)
-  ]
-  lib.text_classifier_close_result.restype = None
+_CTYPES_SIGNATURES = (
+    _CFunction(
+        "text_classifier_create",
+        [
+            ctypes.POINTER(TextClassifierOptionsC),
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
+        ctypes.c_void_p,
+    ),
+    _CFunction(
+        "text_classifier_classify",
+        [
+            ctypes.c_void_p,
+            ctypes.c_char_p,
+            ctypes.POINTER(
+                classification_result_c_module.ClassificationResultC
+            ),
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
+        ctypes.c_int,
+    ),
+    _CFunction(
+        "text_classifier_close",
+        [
+            ctypes.c_void_p,
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
+        ctypes.c_int,
+    ),
+    _CFunction(
+        "text_classifier_close_result",
+        [ctypes.POINTER(classification_result_c_module.ClassificationResultC)],
+        None,
+    ),
+)
 
 
 class TextClassifier:
@@ -146,10 +160,14 @@ class TextClassifier:
       English). If none of these are available, only the `index` field of the
       results will be filled.
   """
-  _lib: ctypes.CDLL
+  _lib: serial_dispatcher.SerialDispatcher
   _handle: ctypes.c_void_p
 
-  def __init__(self, lib: ctypes.CDLL, handle: ctypes.c_void_p):
+  def __init__(
+      self,
+      lib: serial_dispatcher.SerialDispatcher,
+      handle: ctypes.c_void_p,
+  ):
     self._lib = lib
     self._classifier_handle = handle
 
@@ -192,8 +210,7 @@ class TextClassifier:
         `TextClassifierOptions` such as missing the model.
       RuntimeError: If other types of error occurred.
     """
-    lib = mediapipe_c_bindings_c_module.load_shared_library()  # pylint: disable=protected-access
-    _register_ctypes_signatures(lib)
+    lib = mediapipe_c_bindings_c_module.load_shared_library(_CTYPES_SIGNATURES)
 
     ctypes_options = options.to_ctypes()
 
@@ -261,6 +278,7 @@ class TextClassifier:
         else:
           raise RuntimeError("Failed to close TextClassifier object.")
       self._classifier_handle = None
+      self._lib.close()
 
   def __enter__(self):
     """Returns `self` upon entering the runtime context."""

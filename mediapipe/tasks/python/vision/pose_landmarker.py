@@ -23,6 +23,7 @@ from mediapipe.tasks.python.components.containers import landmark_c as landmark_
 from mediapipe.tasks.python.core import base_options as base_options_lib
 from mediapipe.tasks.python.core import base_options_c as base_options_c_lib
 from mediapipe.tasks.python.core import mediapipe_c_bindings as mediapipe_c_bindings_lib
+from mediapipe.tasks.python.core import serial_dispatcher
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 from mediapipe.tasks.python.vision.core import base_vision_task_api
 from mediapipe.tasks.python.vision.core import image as image_lib
@@ -33,6 +34,7 @@ from mediapipe.tasks.python.vision.core import vision_task_running_mode as runni
 _BaseOptions = base_options_lib.BaseOptions
 _RunningMode = running_mode_lib.VisionTaskRunningMode
 _ImageProcessingOptions = image_processing_options_lib.ImageProcessingOptions
+_CFunction = mediapipe_c_bindings_lib.CFunction
 
 
 class PoseLandmarkerResultC(ctypes.Structure):
@@ -68,7 +70,6 @@ class PoseLandmarkerResult:
       cls, c_struct: PoseLandmarkerResultC
   ) -> 'PoseLandmarkerResult':
     """Creates a PoseLandmarkerResult from a ctypes struct."""
-    lib = mediapipe_c_bindings_lib.load_shared_library()
     pose_landmarks = []
     for i in range(c_struct.pose_landmarks_count):
       landmarks_c = c_struct.pose_landmarks[i]
@@ -88,9 +89,7 @@ class PoseLandmarkerResult:
     segmentation_masks = []
     for i in range(c_struct.segmentation_masks_count):
       image_c = c_struct.segmentation_masks[i]
-      segmentation_masks.append(
-          image_lib.Image.create_from_ctypes(image_c, lib)
-      )
+      segmentation_masks.append(image_lib.Image.create_from_ctypes(image_c))
 
     segmentation_masks = (
         None if c_struct.segmentation_masks_count == 0 else segmentation_masks
@@ -233,8 +232,6 @@ class PoseLandmarkerOptions:
     options_c.output_segmentation_masks = self.output_segmentation_masks
 
     if self._result_callback_c is None:
-      lib = mediapipe_c_bindings_lib.load_shared_library()
-
       # The C callback function that will be called by the C code.
       @ctypes.CFUNCTYPE(
           None,
@@ -249,7 +246,7 @@ class PoseLandmarkerOptions:
           return
         if self.result_callback is not None:
           py_result = PoseLandmarkerResult.from_ctypes(result)
-          py_image = image_lib.Image.create_from_ctypes(image, lib)
+          py_image = image_lib.Image.create_from_ctypes(image)
           self.result_callback(py_result, py_image, timestamp_ms)
 
       # Keep callback from getting garbage collected.
@@ -259,77 +256,111 @@ class PoseLandmarkerOptions:
     return options_c
 
 
-def _register_ctypes_signatures(lib: ctypes.CDLL):
-  """Registers C function signatures for the given library."""
-  lib.pose_landmarker_create.argtypes = [
-      ctypes.POINTER(PoseLandmarkerOptionsC),
-      ctypes.POINTER(ctypes.c_char_p),
-  ]
-  lib.pose_landmarker_create.restype = ctypes.c_void_p
-  lib.pose_landmarker_detect_image.argtypes = [
-      ctypes.c_void_p,
-      ctypes.c_void_p,
-      ctypes.POINTER(PoseLandmarkerResultC),
-      ctypes.POINTER(ctypes.c_char_p),
-  ]
-  lib.pose_landmarker_detect_image.restype = ctypes.c_int
-  lib.pose_landmarker_detect_image_with_options.argtypes = [
-      ctypes.c_void_p,
-      ctypes.c_void_p,
-      ctypes.POINTER(image_processing_options_c_lib.ImageProcessingOptionsC),
-      ctypes.POINTER(PoseLandmarkerResultC),
-      ctypes.POINTER(ctypes.c_char_p),
-  ]
-  lib.pose_landmarker_detect_image_with_options.restype = ctypes.c_int
-  lib.pose_landmarker_detect_for_video.argtypes = [
-      ctypes.c_void_p,
-      ctypes.c_void_p,
-      ctypes.c_int64,
-      ctypes.POINTER(PoseLandmarkerResultC),
-      ctypes.POINTER(ctypes.c_char_p),
-  ]
-  lib.pose_landmarker_detect_for_video.restype = ctypes.c_int
-  lib.pose_landmarker_detect_for_video_with_options.argtypes = [
-      ctypes.c_void_p,
-      ctypes.c_void_p,
-      ctypes.POINTER(image_processing_options_c_lib.ImageProcessingOptionsC),
-      ctypes.c_int64,
-      ctypes.POINTER(PoseLandmarkerResultC),
-      ctypes.POINTER(ctypes.c_char_p),
-  ]
-  lib.pose_landmarker_detect_for_video_with_options.restype = ctypes.c_int
-  lib.pose_landmarker_detect_async.argtypes = [
-      ctypes.c_void_p,
-      ctypes.c_void_p,
-      ctypes.c_int64,
-      ctypes.POINTER(ctypes.c_char_p),
-  ]
-  lib.pose_landmarker_detect_async.restype = ctypes.c_int
-  lib.pose_landmarker_detect_async_with_options.argtypes = [
-      ctypes.c_void_p,
-      ctypes.c_void_p,
-      ctypes.POINTER(image_processing_options_c_lib.ImageProcessingOptionsC),
-      ctypes.c_int64,
-      ctypes.POINTER(ctypes.c_char_p),
-  ]
-  lib.pose_landmarker_detect_async_with_options.restype = ctypes.c_int
-  lib.pose_landmarker_close_result.argtypes = [
-      ctypes.POINTER(PoseLandmarkerResultC)
-  ]
-  lib.pose_landmarker_close_result.restype = None
-  lib.pose_landmarker_close.argtypes = [
-      ctypes.c_void_p,
-      ctypes.POINTER(ctypes.c_char_p),
-  ]
+_CTYPES_SIGNATURES = (
+    _CFunction(
+        'pose_landmarker_create',
+        [
+            ctypes.POINTER(PoseLandmarkerOptionsC),
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
+        ctypes.c_void_p,
+    ),
+    _CFunction(
+        'pose_landmarker_detect_image',
+        [
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.POINTER(PoseLandmarkerResultC),
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
+        ctypes.c_int,
+    ),
+    _CFunction(
+        'pose_landmarker_detect_image_with_options',
+        [
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.POINTER(
+                image_processing_options_c_lib.ImageProcessingOptionsC
+            ),
+            ctypes.POINTER(PoseLandmarkerResultC),
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
+        ctypes.c_int,
+    ),
+    _CFunction(
+        'pose_landmarker_detect_for_video',
+        [
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.c_int64,
+            ctypes.POINTER(PoseLandmarkerResultC),
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
+        ctypes.c_int,
+    ),
+    _CFunction(
+        'pose_landmarker_detect_for_video_with_options',
+        [
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.POINTER(
+                image_processing_options_c_lib.ImageProcessingOptionsC
+            ),
+            ctypes.c_int64,
+            ctypes.POINTER(PoseLandmarkerResultC),
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
+        ctypes.c_int,
+    ),
+    _CFunction(
+        'pose_landmarker_detect_async',
+        [
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.c_int64,
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
+        ctypes.c_int,
+    ),
+    _CFunction(
+        'pose_landmarker_detect_async_with_options',
+        [
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.POINTER(
+                image_processing_options_c_lib.ImageProcessingOptionsC
+            ),
+            ctypes.c_int64,
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
+        ctypes.c_int,
+    ),
+    _CFunction(
+        'pose_landmarker_close_result',
+        [ctypes.POINTER(PoseLandmarkerResultC)],
+        None,
+    ),
+    _CFunction(
+        'pose_landmarker_close',
+        [
+            ctypes.c_void_p,
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
+        ctypes.c_int,
+    ),
+)
 
 
 class PoseLandmarker(base_vision_task_api.BaseVisionTaskApi):
   """Class that performs pose landmarks detection on images."""
 
-  _lib: ctypes.CDLL
+  _lib: serial_dispatcher.SerialDispatcher
   _handle: ctypes.c_void_p
 
-  def __init__(self, lib: ctypes.CDLL, handle: ctypes.c_void_p):
+  def __init__(
+      self, lib: serial_dispatcher.SerialDispatcher, handle: ctypes.c_void_p
+  ):
     self._lib = lib
     self._handle = handle
 
@@ -379,8 +410,7 @@ class PoseLandmarker(base_vision_task_api.BaseVisionTaskApi):
         options.running_mode, options.result_callback
     )
 
-    lib = mediapipe_c_bindings_lib.load_shared_library()
-    _register_ctypes_signatures(lib)
+    lib = mediapipe_c_bindings_lib.load_shared_library(_CTYPES_SIGNATURES)
 
     options_c = options.to_ctypes()
     error_msg = ctypes.c_char_p()
@@ -573,6 +603,7 @@ class PoseLandmarker(base_vision_task_api.BaseVisionTaskApi):
           return_code, 'Failed to close PoseLandmarker', error_msg
       )
     self._handle = None
+    self._lib.close()
 
   def __enter__(self):
     """Returns `self` upon entering the runtime context."""

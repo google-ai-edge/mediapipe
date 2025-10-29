@@ -16,12 +16,15 @@
 import ctypes
 import enum
 import os
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Sequence
 
 # resources dependency
+from mediapipe.tasks.python.core import mediapipe_c_types
+from mediapipe.tasks.python.core import serial_dispatcher
 
 _BASE_LIB_PATH = 'mediapipe/tasks/c/'
 _shared_lib = None
+CFunction = mediapipe_c_types.CFunction
 
 
 class MpStatus(enum.IntEnum):
@@ -48,42 +51,43 @@ class MpStatus(enum.IntEnum):
 
 def handle_status(status: int):
   """Checks the MpStatus and raises an error if not MP_OK."""
-  if status == MpStatus.MP_OK:
-    return
-  elif status == MpStatus.MP_CANCELLED:
-    raise RuntimeError('Cancelled')
-  elif status == MpStatus.MP_UNKNOWN:
-    raise RuntimeError('Unknown error')
-  elif status == MpStatus.MP_INVALID_ARGUMENT:
-    raise ValueError('Invalid argument')
-  elif status == MpStatus.MP_DEADLINE_EXCEEDED:
-    raise RuntimeError('Deadline exceeded')
-  elif status == MpStatus.MP_NOT_FOUND:
-    raise RuntimeError('Not found')
-  elif status == MpStatus.MP_ALREADY_EXISTS:
-    raise RuntimeError('Already exists')
-  elif status == MpStatus.MP_PERMISSION_DENIED:
-    raise RuntimeError('Permission denied')
-  elif status == MpStatus.MP_RESOURCE_EXHAUSTED:
-    raise RuntimeError('Resource exhausted')
-  elif status == MpStatus.MP_FAILED_PRECONDITION:
-    raise RuntimeError('Failed precondition')
-  elif status == MpStatus.MP_ABORTED:
-    raise RuntimeError('Aborted')
-  elif status == MpStatus.MP_OUT_OF_RANGE:
-    raise ValueError('Out of range')
-  elif status == MpStatus.MP_UNIMPLEMENTED:
-    raise RuntimeError('Unimplemented')
-  elif status == MpStatus.MP_INTERNAL:
-    raise RuntimeError('Internal error')
-  elif status == MpStatus.MP_UNAVAILABLE:
-    raise RuntimeError('Unavailable')
-  elif status == MpStatus.MP_DATA_LOSS:
-    raise RuntimeError('Data loss')
-  elif status == MpStatus.MP_UNAUTHENTICATED:
-    raise RuntimeError('Unauthenticated')
-  else:
-    raise RuntimeError(f'Unexpected status: {status}')
+  match status:
+    case MpStatus.MP_OK:
+      return
+    case MpStatus.MP_CANCELLED:
+      raise RuntimeError('Cancelled')
+    case MpStatus.MP_UNKNOWN:
+      raise RuntimeError('Unknown error')
+    case MpStatus.MP_INVALID_ARGUMENT:
+      raise ValueError('Invalid argument')
+    case MpStatus.MP_DEADLINE_EXCEEDED:
+      raise RuntimeError('Deadline exceeded')
+    case MpStatus.MP_NOT_FOUND:
+      raise RuntimeError('Not found')
+    case MpStatus.MP_ALREADY_EXISTS:
+      raise RuntimeError('Already exists')
+    case MpStatus.MP_PERMISSION_DENIED:
+      raise RuntimeError('Permission denied')
+    case MpStatus.MP_RESOURCE_EXHAUSTED:
+      raise RuntimeError('Resource exhausted')
+    case MpStatus.MP_FAILED_PRECONDITION:
+      raise RuntimeError('Failed precondition')
+    case MpStatus.MP_ABORTED:
+      raise RuntimeError('Aborted')
+    case MpStatus.MP_OUT_OF_RANGE:
+      raise ValueError('Out of range')
+    case MpStatus.MP_UNIMPLEMENTED:
+      raise RuntimeError('Unimplemented')
+    case MpStatus.MP_INTERNAL:
+      raise RuntimeError('Internal error')
+    case MpStatus.MP_UNAVAILABLE:
+      raise RuntimeError('Unavailable')
+    case MpStatus.MP_DATA_LOSS:
+      raise RuntimeError('Data loss')
+    case MpStatus.MP_UNAUTHENTICATED:
+      raise RuntimeError('Unauthenticated')
+    case _:
+      raise RuntimeError(f'Unexpected status: {status}')
 
 
 def handle_return_code(
@@ -101,20 +105,52 @@ def handle_return_code(
     )
 
 
-def load_shared_library():
-  """Loads the shared library for text tasks."""
+def load_raw_library(signatures: Sequence[CFunction] = ()) -> ctypes.CDLL:
+  """Loads the raw ctypes.CDLL shared library and registers signatures.
+
+  This function loads the raw ctypes.CDLL shared library if it hasn't been
+  loaded yet, otherwise it re-uses the existing instance. It attaches the
+  provided signatures and makes them available across all callsites.
+
+  Args:
+    signatures: The ctypes function signatures to register in the library.
+
+  Returns:
+    The ctypes shared library.
+  """
   global _shared_lib
-  if _shared_lib is not None:
-    return _shared_lib
+  if _shared_lib is None:
+    if os.name == 'posix':  # Linux or macOS
+      lib_path = _BASE_LIB_PATH + 'libmediapipe.so'
+    else:  # Windows
+      lib_path = _BASE_LIB_PATH + 'libmediapipe.dll'
+    _shared_lib = ctypes.CDLL(resources.GetResourceFilename(lib_path))
 
-  if os.name == 'posix':  # Linux or macOS
-    lib_path = _BASE_LIB_PATH + 'libmediapipe.so'
-  else:  # Windows
-    lib_path = _BASE_LIB_PATH + 'libmediapipe.dll'
-  lib = ctypes.CDLL(resources.GetResourceFilename(lib_path))
+  for signature in signatures:
+    c_func = getattr(_shared_lib, signature.func_name)
+    c_func.argtypes = signature.argtypes
+    c_func.restype = signature.restype
 
-  _shared_lib = lib
   return _shared_lib
+
+
+def load_shared_library(
+    signatures: Sequence[CFunction] = (),
+) -> serial_dispatcher.SerialDispatcher:
+  """Loads the shared library in a SerialDispatcher and registers signatures.
+
+  This function creates a thread-safe wrapper for the shared library that
+  dispatches all calls through a single dedicated thread. Every call to this
+  function uses a different dispatch library with its own thread.
+
+  Args:
+    signatures: The ctypes function signatures to register in the library.
+
+  Returns:
+    A thread-safe wrapper for the ctypes shared library.
+  """
+  raw_lib = load_raw_library()
+  return serial_dispatcher.SerialDispatcher(raw_lib, signatures)
 
 
 def convert_strings_to_ctypes_array(

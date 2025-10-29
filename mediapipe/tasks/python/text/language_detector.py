@@ -23,11 +23,13 @@ from mediapipe.tasks.python.components.processors import classifier_options_c as
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.core import base_options_c as base_options_c_module
 from mediapipe.tasks.python.core import mediapipe_c_bindings as mediapipe_c_bindings_module
+from mediapipe.tasks.python.core import serial_dispatcher
 
 _BaseOptions = base_options_module.BaseOptions
 Category = category_module.Category
 Classifications = classification_result_module.Classifications
 ClassifierOptions = classifier_options_module.ClassifierOptions
+_CFunction = mediapipe_c_bindings_module.CFunction
 
 
 @dataclasses.dataclass
@@ -134,29 +136,39 @@ class LanguageDetectorOptions:
     return c_options
 
 
-def _register_ctypes_signatures(lib: ctypes.CDLL):
-  """Defines the ctypes signatures for the LanguageDetector C API."""
-  lib.language_detector_create.argtypes = [
-      ctypes.POINTER(LanguageDetectorOptionsC),
-      ctypes.POINTER(ctypes.c_char_p),
-  ]
-  lib.language_detector_create.restype = ctypes.c_void_p
-  lib.language_detector_detect.argtypes = [
-      ctypes.c_void_p,
-      ctypes.c_char_p,
-      ctypes.POINTER(LanguageDetectorResultC),
-      ctypes.POINTER(ctypes.c_char_p),
-  ]
-  lib.language_detector_detect.restype = ctypes.c_int
-  lib.language_detector_close.argtypes = [
-      ctypes.c_void_p,
-      ctypes.POINTER(ctypes.c_char_p),
-  ]
-  lib.language_detector_close.restype = ctypes.c_int
-  lib.language_detector_close_result.argtypes = [
-      ctypes.POINTER(LanguageDetectorResultC)
-  ]
-  lib.language_detector_close_result.restype = None
+_CTYPES_SIGNATURES = (
+    _CFunction(
+        "language_detector_create",
+        [
+            ctypes.POINTER(LanguageDetectorOptionsC),
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
+        ctypes.c_void_p,
+    ),
+    _CFunction(
+        "language_detector_detect",
+        [
+            ctypes.c_void_p,
+            ctypes.c_char_p,
+            ctypes.POINTER(LanguageDetectorResultC),
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
+        ctypes.c_int,
+    ),
+    _CFunction(
+        "language_detector_close",
+        [
+            ctypes.c_void_p,
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
+        ctypes.c_int,
+    ),
+    _CFunction(
+        "language_detector_close_result",
+        [ctypes.POINTER(LanguageDetectorResultC)],
+        None,
+    ),
+)
 
 
 class LanguageDetector:
@@ -174,10 +186,12 @@ class LanguageDetector:
     (kTfLiteFloat32)
     - 1 output tensor of shape`[1 x N]` where `N` is the number of languages.
   """
-  _lib: ctypes.CDLL
+  _lib: serial_dispatcher.SerialDispatcher
   _handle: ctypes.c_void_p
 
-  def __init__(self, lib: ctypes.CDLL, handle: ctypes.c_void_p):
+  def __init__(
+      self, lib: serial_dispatcher.SerialDispatcher, handle: ctypes.c_void_p
+  ):
     self._lib = lib
     self._detector_handle = handle
 
@@ -221,8 +235,7 @@ class LanguageDetector:
         `LanguageDetectorOptions` such as missing the model.
       RuntimeError: If other types of error occurred.
     """
-    lib = mediapipe_c_bindings_module.load_shared_library()
-    _register_ctypes_signatures(lib)
+    lib = mediapipe_c_bindings_module.load_shared_library(_CTYPES_SIGNATURES)
 
     ctypes_options = options.to_ctypes()
 
@@ -290,6 +303,7 @@ class LanguageDetector:
         else:
           raise RuntimeError("Failed to close LanguageDetector object.")
       self._detector_handle = None
+      self._lib.close()
 
   def __enter__(self):
     """Returns `self` upon entering the runtime context."""

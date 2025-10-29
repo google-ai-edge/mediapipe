@@ -28,6 +28,8 @@ from mediapipe.tasks.python.components.processors import classifier_options_c
 from mediapipe.tasks.python.core import base_options as base_options_lib
 from mediapipe.tasks.python.core import base_options_c
 from mediapipe.tasks.python.core import mediapipe_c_bindings
+from mediapipe.tasks.python.core import mediapipe_c_types
+from mediapipe.tasks.python.core import serial_dispatcher
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 
 AudioClassifierResult = classification_result.ClassificationResult
@@ -35,35 +37,7 @@ _AudioData = audio_data.AudioData
 _BaseOptions = base_options_lib.BaseOptions
 _RunningMode = audio_task_running_mode.AudioTaskRunningMode
 _MICRO_SECONDS_PER_MILLISECOND = 1000
-
-
-def _register_ctypes_signatures(lib: ctypes.CDLL) -> None:
-  """Registers C function signatures for the audio classifier."""
-  lib.MpAudioClassifierCreate.argtypes = [
-      ctypes.POINTER(AudioClassifierOptionsC),
-      ctypes.POINTER(ctypes.c_void_p),
-  ]
-  lib.MpAudioClassifierCreate.restype = ctypes.c_int
-  lib.MpAudioClassifierClassify.argtypes = [
-      ctypes.c_void_p,
-      ctypes.POINTER(audio_data_c.AudioDataC),
-      ctypes.POINTER(AudioClassifierResultC),
-  ]
-  lib.MpAudioClassifierClassify.restype = ctypes.c_int
-  lib.MpAudioClassifierClassifyAsync.argtypes = [
-      ctypes.c_void_p,
-      ctypes.POINTER(audio_data_c.AudioDataC),
-      ctypes.c_int64,
-  ]
-  lib.MpAudioClassifierClassifyAsync.restype = ctypes.c_int
-  lib.MpAudioClassifierCloseResult.argtypes = [
-      ctypes.POINTER(AudioClassifierResultC)
-  ]
-  lib.MpAudioClassifierCloseResult.restype = None
-  lib.MpAudioClassifierClose.argtypes = [
-      ctypes.c_void_p,
-  ]
-  lib.MpAudioClassifierClose.restype = ctypes.c_int
+_CFunction = mediapipe_c_types.CFunction
 
 
 class AudioClassifierResultC(ctypes.Structure):
@@ -94,6 +68,47 @@ class AudioClassifierOptionsC(ctypes.Structure):
           ),
       ),
   ]
+
+_CTYPES_SIGNATURES = (
+    _CFunction(
+        'MpAudioClassifierCreate',
+        [
+            ctypes.POINTER(AudioClassifierOptionsC),
+            ctypes.POINTER(ctypes.c_void_p),
+        ],
+        ctypes.c_int,
+    ),
+    _CFunction(
+        'MpAudioClassifierClassify',
+        [
+            ctypes.c_void_p,
+            ctypes.POINTER(audio_data_c.AudioDataC),
+            ctypes.POINTER(AudioClassifierResultC),
+        ],
+        ctypes.c_int,
+    ),
+    _CFunction(
+        'MpAudioClassifierClassifyAsync',
+        [
+            ctypes.c_void_p,
+            ctypes.POINTER(audio_data_c.AudioDataC),
+            ctypes.c_int64,
+        ],
+        ctypes.c_int,
+    ),
+    _CFunction(
+        'MpAudioClassifierCloseResult',
+        [ctypes.POINTER(AudioClassifierResultC)],
+        None,
+    ),
+    _CFunction(
+        'MpAudioClassifierClose',
+        [
+            ctypes.c_void_p,
+        ],
+        ctypes.c_int,
+    ),
+)
 
 
 @dataclasses.dataclass
@@ -210,10 +225,12 @@ class AudioClassifier(base_audio_task_api.BaseAudioTaskApi):
       English). If none of these are available, only the `index` field of the
       results will be filled.
   """
-  _lib: ctypes.CDLL
+  _lib: serial_dispatcher.SerialDispatcher
   _handle: ctypes.c_void_p
 
-  def __init__(self, lib: ctypes.CDLL, handle: ctypes.c_void_p):
+  def __init__(
+      self, lib: serial_dispatcher.SerialDispatcher, handle: ctypes.c_void_p
+  ):
     self._lib = lib
     self._handle = handle
 
@@ -259,8 +276,7 @@ class AudioClassifier(base_audio_task_api.BaseAudioTaskApi):
         `AudioClassifierOptions` such as missing the model.
       RuntimeError: If other types of error occurred.
     """
-    lib = mediapipe_c_bindings.load_shared_library()
-    _register_ctypes_signatures(lib)
+    lib = mediapipe_c_bindings.load_shared_library(_CTYPES_SIGNATURES)
 
     ctypes_options = options.to_ctypes()
     classifier_handle_ptr = ctypes.c_void_p()
@@ -383,6 +399,7 @@ class AudioClassifier(base_audio_task_api.BaseAudioTaskApi):
       status = self._lib.MpAudioClassifierClose(self._handle)
       mediapipe_c_bindings.handle_status(status)
       self._handle = None
+      self._lib.close()
 
   def __enter__(self):
     """Returns `self` upon entering the runtime context."""

@@ -19,8 +19,10 @@ from typing import Any
 
 import numpy as np
 
-from mediapipe.tasks.python.core import mediapipe_c_bindings as mediapipe_c_bindings_c_module
+from mediapipe.tasks.python.core import mediapipe_c_bindings
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
+
+_CFunction = mediapipe_c_bindings.CFunction
 
 
 class ImageFormat(enum.IntEnum):
@@ -59,99 +61,110 @@ class ImageFormat(enum.IntEnum):
   VEC32F2 = 12
   VEC32F4 = 13
 
-
-def _register_ctypes_signatures(lib: ctypes.CDLL):
-  """Registers C function signatures for the given library."""
-  lib.MpImageCreateFromUint8Data.argtypes = [
-      ctypes.c_int,
-      ctypes.c_int,
-      ctypes.c_int,
-      ctypes.POINTER(ctypes.c_uint8),
-      ctypes.c_int,
-      ctypes.POINTER(ctypes.c_void_p),
-  ]
-  lib.MpImageCreateFromUint8Data.restype = ctypes.c_int
-  lib.MpImageCreateFromUint16Data.argtypes = [
-      ctypes.c_int,
-      ctypes.c_int,
-      ctypes.c_int,
-      ctypes.POINTER(ctypes.c_uint16),
-      ctypes.c_int,
-      ctypes.POINTER(ctypes.c_void_p),
-  ]
-  lib.MpImageCreateFromUint16Data.restype = ctypes.c_int
-  lib.MpImageCreateFromFloatData.argtypes = [
-      ctypes.c_int,
-      ctypes.c_int,
-      ctypes.c_int,
-      ctypes.POINTER(ctypes.c_float),
-      ctypes.c_int,
-      ctypes.POINTER(ctypes.c_void_p),
-  ]
-  lib.MpImageCreateFromFloatData.restype = ctypes.c_int
-  lib.MpImageCreateFromFile.argtypes = [
-      ctypes.c_char_p,
-      ctypes.POINTER(ctypes.c_void_p),
-  ]
-  lib.MpImageCreateFromFile.restype = ctypes.c_int
-  lib.MpImageIsContiguous.argtypes = [ctypes.c_void_p]
-  lib.MpImageIsContiguous.restype = ctypes.c_bool
-  lib.MpImageUsesGpu.argtypes = [ctypes.c_void_p]
-  lib.MpImageUsesGpu.restype = ctypes.c_bool
-  lib.MpImageIsEmpty.argtypes = [ctypes.c_void_p]
-  lib.MpImageIsEmpty.restype = ctypes.c_bool
-  lib.MpImageIsAligned.argtypes = [ctypes.c_void_p, ctypes.c_uint32]
-  lib.MpImageIsAligned.restype = ctypes.c_bool
-  lib.MpImageGetWidth.argtypes = [ctypes.c_void_p]
-  lib.MpImageGetWidth.restype = ctypes.c_int
-  lib.MpImageGetHeight.argtypes = [ctypes.c_void_p]
-  lib.MpImageGetHeight.restype = ctypes.c_int
-  lib.MpImageGetChannels.argtypes = [ctypes.c_void_p]
-  lib.MpImageGetChannels.restype = ctypes.c_int
-  lib.MpImageGetByteDepth.argtypes = [ctypes.c_void_p]
-  lib.MpImageGetByteDepth.restype = ctypes.c_int
-  lib.MpImageGetWidthStep.argtypes = [ctypes.c_void_p]
-  lib.MpImageGetWidthStep.restype = ctypes.c_int
-  lib.MpImageGetFormat.argtypes = [ctypes.c_void_p]
-  lib.MpImageGetFormat.restype = ctypes.c_int
-  lib.MpImageDataUint8.argtypes = [
-      ctypes.c_void_p,
-      ctypes.POINTER(ctypes.POINTER(ctypes.c_uint8)),
-  ]
-  lib.MpImageDataUint8.restype = ctypes.c_int
-  lib.MpImageDataUint16.argtypes = [
-      ctypes.c_void_p,
-      ctypes.POINTER(ctypes.POINTER(ctypes.c_uint16)),
-  ]
-  lib.MpImageDataUint16.restype = ctypes.c_int
-  lib.MpImageDataFloat32.argtypes = [
-      ctypes.c_void_p,
-      ctypes.POINTER(ctypes.POINTER(ctypes.c_float)),
-  ]
-  lib.MpImageDataFloat32.restype = ctypes.c_int
-  lib.MpImageGetValueUint8.argtypes = [
-      ctypes.c_void_p,
-      ctypes.POINTER(ctypes.c_int),
-      ctypes.c_int,
-      ctypes.POINTER(ctypes.c_uint8),
-  ]
-  lib.MpImageGetValueUint8.restype = ctypes.c_int
-  lib.MpImageGetValueUint16.argtypes = [
-      ctypes.c_void_p,
-      ctypes.POINTER(ctypes.c_int),
-      ctypes.c_int,
-      ctypes.POINTER(ctypes.c_uint16),
-  ]
-  lib.MpImageGetValueUint16.restype = ctypes.c_int
-  lib.MpImageGetValueFloat32.argtypes = [
-      ctypes.c_void_p,
-      ctypes.POINTER(ctypes.c_int),
-      ctypes.c_int,
-      ctypes.POINTER(ctypes.c_float),
-  ]
-  lib.MpImageGetValueFloat32.restype = ctypes.c_int
-  lib.MpImageFree.argtypes = [ctypes.c_void_p]
-  lib.MpImageFree.restype = None
+_CTYPES_SIGNATURES = (
+    _CFunction(
+        "MpImageCreateFromUint8Data",
+        [
+            ctypes.c_int,
+            ctypes.c_int,
+            ctypes.c_int,
+            ctypes.POINTER(ctypes.c_uint8),
+            ctypes.c_int,
+            ctypes.POINTER(ctypes.c_void_p),
+        ],
+        ctypes.c_int,
+    ),
+    _CFunction(
+        "MpImageCreateFromUint16Data",
+        [
+            ctypes.c_int,
+            ctypes.c_int,
+            ctypes.c_int,
+            ctypes.POINTER(ctypes.c_uint16),
+            ctypes.c_int,
+            ctypes.POINTER(ctypes.c_void_p),
+        ],
+        ctypes.c_int,
+    ),
+    _CFunction(
+        "MpImageCreateFromFloatData",
+        [
+            ctypes.c_int,
+            ctypes.c_int,
+            ctypes.c_int,
+            ctypes.POINTER(ctypes.c_float),
+            ctypes.c_int,
+            ctypes.POINTER(ctypes.c_void_p),
+        ],
+        ctypes.c_int,
+    ),
+    _CFunction(
+        "MpImageCreateFromFile",
+        [
+            ctypes.c_char_p,
+            ctypes.POINTER(ctypes.c_void_p),
+        ],
+        ctypes.c_int,
+    ),
+    _CFunction("MpImageIsContiguous", [ctypes.c_void_p], ctypes.c_bool),
+    _CFunction("MpImageUsesGpu", [ctypes.c_void_p], ctypes.c_bool),
+    _CFunction("MpImageIsEmpty", [ctypes.c_void_p], ctypes.c_bool),
+    _CFunction(
+        "MpImageIsAligned", [ctypes.c_void_p, ctypes.c_uint32], ctypes.c_bool
+    ),
+    _CFunction("MpImageGetWidth", [ctypes.c_void_p], ctypes.c_int),
+    _CFunction("MpImageGetHeight", [ctypes.c_void_p], ctypes.c_int),
+    _CFunction("MpImageGetChannels", [ctypes.c_void_p], ctypes.c_int),
+    _CFunction("MpImageGetByteDepth", [ctypes.c_void_p], ctypes.c_int),
+    _CFunction("MpImageGetWidthStep", [ctypes.c_void_p], ctypes.c_int),
+    _CFunction("MpImageGetFormat", [ctypes.c_void_p], ctypes.c_int),
+    _CFunction(
+        "MpImageDataUint8",
+        [ctypes.c_void_p, ctypes.POINTER(ctypes.POINTER(ctypes.c_uint8))],
+        ctypes.c_int,
+    ),
+    _CFunction(
+        "MpImageDataUint16",
+        [ctypes.c_void_p, ctypes.POINTER(ctypes.POINTER(ctypes.c_uint16))],
+        ctypes.c_int,
+    ),
+    _CFunction(
+        "MpImageDataFloat32",
+        [ctypes.c_void_p, ctypes.POINTER(ctypes.POINTER(ctypes.c_float))],
+        ctypes.c_int,
+    ),
+    _CFunction(
+        "MpImageGetValueUint8",
+        [
+            ctypes.c_void_p,
+            ctypes.POINTER(ctypes.c_int),
+            ctypes.c_int,
+            ctypes.POINTER(ctypes.c_uint8),
+        ],
+        ctypes.c_int,
+    ),
+    _CFunction(
+        "MpImageGetValueUint16",
+        [
+            ctypes.c_void_p,
+            ctypes.POINTER(ctypes.c_int),
+            ctypes.c_int,
+            ctypes.POINTER(ctypes.c_uint16),
+        ],
+        ctypes.c_int,
+    ),
+    _CFunction(
+        "MpImageGetValueFloat32",
+        [
+            ctypes.c_void_p,
+            ctypes.POINTER(ctypes.c_int),
+            ctypes.c_int,
+            ctypes.POINTER(ctypes.c_float),
+        ],
+        ctypes.c_int,
+    ),
+    _CFunction("MpImageFree", [ctypes.c_void_p], None),
+)
 
 
 class Image:
@@ -200,16 +213,14 @@ class Image:
       image_format: The format of the image data.
       data: A numpy ndarray containing the image data.
     """
-    lib = mediapipe_c_bindings_c_module.load_shared_library()
-    _register_ctypes_signatures(lib)
-    self._lib = lib
+    self._lib = mediapipe_c_bindings.load_raw_library(_CTYPES_SIGNATURES)
 
     height, width, _ = data.shape
     self._image_ptr = ctypes.c_void_p()
     self._owned = True
 
     if data.dtype == np.uint8:
-      status = lib.MpImageCreateFromUint8Data(
+      status = self._lib.MpImageCreateFromUint8Data(
           image_format,
           width,
           height,
@@ -218,7 +229,7 @@ class Image:
           ctypes.byref(self._image_ptr),
       )
     elif data.dtype == np.uint16:
-      status = lib.MpImageCreateFromUint16Data(
+      status = self._lib.MpImageCreateFromUint16Data(
           image_format,
           width,
           height,
@@ -227,7 +238,7 @@ class Image:
           ctypes.byref(self._image_ptr),
       )
     elif data.dtype == np.float32:
-      status = lib.MpImageCreateFromFloatData(
+      status = self._lib.MpImageCreateFromFloatData(
           image_format,
           width,
           height,
@@ -236,12 +247,12 @@ class Image:
           ctypes.byref(self._image_ptr),
       )
     else:
-      raise ValueError(f'Unsupported numpy data type: {data.dtype}')
+      raise ValueError(f"Unsupported numpy data type: {data.dtype}")
 
-    mediapipe_c_bindings_c_module.handle_status(status)
+    mediapipe_c_bindings.handle_status(status)
 
   @classmethod
-  def create_from_file(cls, file_name: str) -> 'Image':
+  def create_from_file(cls, file_name: str) -> "Image":
     """Creates an `Image` object from an image file.
 
     Args:
@@ -253,14 +264,13 @@ class Image:
     Raises:
       RuntimeError: If the image file cannot be decoded.
     """
-    lib = mediapipe_c_bindings_c_module.load_shared_library()
-    _register_ctypes_signatures(lib)
+    lib = mediapipe_c_bindings.load_raw_library(_CTYPES_SIGNATURES)
 
     image_ptr = ctypes.c_void_p()
     status = lib.MpImageCreateFromFile(
-        file_name.encode('utf-8'), ctypes.byref(image_ptr)
+        file_name.encode("utf-8"), ctypes.byref(image_ptr)
     )
-    mediapipe_c_bindings_c_module.handle_status(status)
+    mediapipe_c_bindings.handle_status(status)
 
     # Create an empty Image object and then populate it.
     new_image = cls.__new__(cls)
@@ -271,10 +281,9 @@ class Image:
 
   @classmethod
   @doc_controls.do_not_generate_docs
-  def create_from_ctypes(
-      cls, image_ptr: ctypes.c_void_p, lib: ctypes.CDLL
-  ) -> 'Image':
+  def create_from_ctypes(cls, image_ptr: ctypes.c_void_p) -> "Image":
     """Creates an `Image` object from a ctypes pointer."""
+    lib = mediapipe_c_bindings.load_raw_library(_CTYPES_SIGNATURES)
     new_image = cls.__new__(cls)
     new_image._image_ptr = image_ptr
     new_image._lib = lib
@@ -327,9 +336,9 @@ class Image:
       )
       numpy_ptr = ctypes.cast(data_ptr, ctypes.POINTER(ctypes.c_float))
     else:
-      raise ValueError(f'Unsupported image format: {image_format}')
+      raise ValueError(f"Unsupported image format: {image_format}")
 
-    mediapipe_c_bindings_c_module.handle_status(status)
+    mediapipe_c_bindings.handle_status(status)
 
     shape = (self.height, self.width, self.channels)
     array = np.ctypeslib.as_array(
@@ -387,9 +396,9 @@ class Image:
           self._image_ptr, pos_array, len(key), ctypes.byref(value_ptr)
       )
     else:
-      raise ValueError(f'Unsupported image format: {image_format}')
+      raise ValueError(f"Unsupported image format: {image_format}")
 
-    mediapipe_c_bindings_c_module.handle_status(status)
+    mediapipe_c_bindings.handle_status(status)
     return value_ptr.value
 
   def uses_gpu(self) -> bool:

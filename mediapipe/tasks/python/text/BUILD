@@ -32,6 +32,7 @@ py_library(
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/core:base_options_c",
         "//mediapipe/tasks/python/core:mediapipe_c_bindings",
+        "//mediapipe/tasks/python/core:serial_dispatcher",
     ],
 )
 
@@ -47,7 +48,7 @@ py_library(
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/core:base_options_c",
         "//mediapipe/tasks/python/core:mediapipe_c_bindings",
-        "@mediapipe_pip_deps_numpy//:pkg",
+        "//mediapipe/tasks/python/core:serial_dispatcher",
     ],
 )
 
@@ -59,11 +60,11 @@ py_library(
     deps = [
         "//mediapipe/tasks/python/components/containers:category",
         "//mediapipe/tasks/python/components/containers:classification_result",
-        "//mediapipe/tasks/python/components/containers:classification_result_c",
         "//mediapipe/tasks/python/components/processors:classifier_options",
         "//mediapipe/tasks/python/components/processors:classifier_options_c",
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/core:base_options_c",
         "//mediapipe/tasks/python/core:mediapipe_c_bindings",
+        "//mediapipe/tasks/python/core:serial_dispatcher",
     ],
 )

@@ -35,6 +35,8 @@ py_library(
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/core:base_options_c",
         "//mediapipe/tasks/python/core:mediapipe_c_bindings",
+        "//mediapipe/tasks/python/core:mediapipe_c_types",
         "//mediapipe/tasks/python/core:optional_dependencies",
+        "//mediapipe/tasks/python/core:serial_dispatcher",
     ],
 )

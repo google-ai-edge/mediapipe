@@ -26,6 +26,7 @@ from mediapipe.tasks.python.components.containers import landmark_c
 from mediapipe.tasks.python.core import base_options
 from mediapipe.tasks.python.core import base_options_c
 from mediapipe.tasks.python.core import mediapipe_c_bindings
+from mediapipe.tasks.python.core import serial_dispatcher
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 from mediapipe.tasks.python.vision.core import base_vision_task_api
 from mediapipe.tasks.python.vision.core import image as image_lib
@@ -36,71 +37,7 @@ from mediapipe.tasks.python.vision.core import vision_task_running_mode
 _BaseOptions = base_options.BaseOptions
 _RunningMode = vision_task_running_mode.VisionTaskRunningMode
 _ImageProcessingOptions = image_processing_options_lib.ImageProcessingOptions
-
-
-def _register_ctypes_signatures(lib: ctypes.CDLL):
-  """Registers C function signatures for the HandLandmarker."""
-  lib.hand_landmarker_create.argtypes = [
-      ctypes.POINTER(HandLandmarkerOptionsC),
-      ctypes.POINTER(ctypes.c_char_p),
-  ]
-  lib.hand_landmarker_create.restype = ctypes.c_void_p
-  lib.hand_landmarker_detect_image.argtypes = [
-      ctypes.c_void_p,
-      ctypes.c_void_p,
-      ctypes.POINTER(HandLandmarkerResultC),
-      ctypes.POINTER(ctypes.c_char_p),
-  ]
-  lib.hand_landmarker_detect_image.restype = ctypes.c_int
-  lib.hand_landmarker_detect_image_with_options.argtypes = [
-      ctypes.c_void_p,
-      ctypes.c_void_p,
-      ctypes.POINTER(image_processing_options_c.ImageProcessingOptionsC),
-      ctypes.POINTER(HandLandmarkerResultC),
-      ctypes.POINTER(ctypes.c_char_p),
-  ]
-  lib.hand_landmarker_detect_image_with_options.restype = ctypes.c_int
-  lib.hand_landmarker_detect_for_video.argtypes = [
-      ctypes.c_void_p,
-      ctypes.c_void_p,
-      ctypes.c_int64,
-      ctypes.POINTER(HandLandmarkerResultC),
-      ctypes.POINTER(ctypes.c_char_p),
-  ]
-  lib.hand_landmarker_detect_for_video.restype = ctypes.c_int
-  lib.hand_landmarker_detect_for_video_with_options.argtypes = [
-      ctypes.c_void_p,
-      ctypes.c_void_p,
-      ctypes.POINTER(image_processing_options_c.ImageProcessingOptionsC),
-      ctypes.c_int64,
-      ctypes.POINTER(HandLandmarkerResultC),
-      ctypes.POINTER(ctypes.c_char_p),
-  ]
-  lib.hand_landmarker_detect_for_video_with_options.restype = ctypes.c_int
-  lib.hand_landmarker_detect_async.argtypes = [
-      ctypes.c_void_p,
-      ctypes.c_void_p,
-      ctypes.c_int64,
-      ctypes.POINTER(ctypes.c_char_p),
-  ]
-  lib.hand_landmarker_detect_async.restype = ctypes.c_int
-  lib.hand_landmarker_detect_async_with_options.argtypes = [
-      ctypes.c_void_p,
-      ctypes.c_void_p,
-      ctypes.POINTER(image_processing_options_c.ImageProcessingOptionsC),
-      ctypes.c_int64,
-      ctypes.POINTER(ctypes.c_char_p),
-  ]
-  lib.hand_landmarker_detect_async_with_options.restype = ctypes.c_int
-  lib.hand_landmarker_close_result.argtypes = [
-      ctypes.POINTER(HandLandmarkerResultC)
-  ]
-  lib.hand_landmarker_close_result.restype = None
-  lib.hand_landmarker_close.argtypes = [
-      ctypes.c_void_p,
-      ctypes.POINTER(ctypes.c_char_p),
-  ]
-  lib.hand_landmarker_close.restype = ctypes.c_int
+_CFunction = mediapipe_c_bindings.CFunction
 
 
 class HandLandmarkerResultC(ctypes.Structure):
@@ -140,6 +77,96 @@ class HandLandmarkerOptionsC(ctypes.Structure):
           ),
       ),
   ]
+
+
+_CTYPES_SIGNATURES = (
+    _CFunction(
+        'hand_landmarker_create',
+        [
+            ctypes.POINTER(HandLandmarkerOptionsC),
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
+        ctypes.c_void_p,
+    ),
+    _CFunction(
+        'hand_landmarker_detect_image',
+        [
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.POINTER(HandLandmarkerResultC),
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
+        ctypes.c_int,
+    ),
+    _CFunction(
+        'hand_landmarker_detect_image_with_options',
+        [
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.POINTER(image_processing_options_c.ImageProcessingOptionsC),
+            ctypes.POINTER(HandLandmarkerResultC),
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
+        ctypes.c_int,
+    ),
+    _CFunction(
+        'hand_landmarker_detect_for_video',
+        [
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.c_int64,
+            ctypes.POINTER(HandLandmarkerResultC),
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
+        ctypes.c_int,
+    ),
+    _CFunction(
+        'hand_landmarker_detect_for_video_with_options',
+        [
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.POINTER(image_processing_options_c.ImageProcessingOptionsC),
+            ctypes.c_int64,
+            ctypes.POINTER(HandLandmarkerResultC),
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
+        ctypes.c_int,
+    ),
+    _CFunction(
+        'hand_landmarker_detect_async',
+        [
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.c_int64,
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
+        ctypes.c_int,
+    ),
+    _CFunction(
+        'hand_landmarker_detect_async_with_options',
+        [
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.POINTER(image_processing_options_c.ImageProcessingOptionsC),
+            ctypes.c_int64,
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
+        ctypes.c_int,
+    ),
+    _CFunction(
+        'hand_landmarker_close_result',
+        [ctypes.POINTER(HandLandmarkerResultC)],
+        None,
+    ),
+    _CFunction(
+        'hand_landmarker_close',
+        [
+            ctypes.c_void_p,
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
+        ctypes.c_int,
+    ),
+)
 
 
 class HandLandmark(enum.IntEnum):
@@ -326,8 +353,6 @@ class HandLandmarkerOptions:
   def to_ctypes(self) -> HandLandmarkerOptionsC:
     """Generates a HandLandmarkerOptionsC object."""
     if self._result_callback_c is None:
-      lib = mediapipe_c_bindings.load_shared_library()
-
       # The C callback function that will be called by the C code.
       @ctypes.CFUNCTYPE(
           None,
@@ -343,7 +368,7 @@ class HandLandmarkerOptions:
 
         if self.result_callback:
           py_result = HandLandmarkerResult.from_ctypes(result.contents)
-          py_image = image_lib.Image.create_from_ctypes(image, lib)
+          py_image = image_lib.Image.create_from_ctypes(image)
           self.result_callback(py_result, py_image, timestamp_ms)
 
       # Keep callback from getting garbage collected.
@@ -363,10 +388,12 @@ class HandLandmarkerOptions:
 class HandLandmarker:
   """Class that performs hand landmarks detection on images."""
 
-  _lib: ctypes.CDLL
+  _lib: serial_dispatcher.SerialDispatcher
   _handle: ctypes.c_void_p
 
-  def __init__(self, lib: ctypes.CDLL, handle: ctypes.c_void_p):
+  def __init__(
+      self, lib: serial_dispatcher.SerialDispatcher, handle: ctypes.c_void_p
+  ):
     self._lib = lib
     self._handle = handle
 
@@ -416,8 +443,7 @@ class HandLandmarker:
         options.running_mode, options.result_callback
     )
 
-    lib = mediapipe_c_bindings.load_shared_library()
-    _register_ctypes_signatures(lib)
+    lib = mediapipe_c_bindings.load_shared_library(_CTYPES_SIGNATURES)
 
     ctypes_options = options.to_ctypes()
 
@@ -620,6 +646,7 @@ class HandLandmarker:
           return_code, 'Failed to close hand landmarker', error_msg_ptr
       )
       self._handle = None
+      self._lib.close()
 
   def __enter__(self):
     """Returns `self` upon entering the runtime context."""

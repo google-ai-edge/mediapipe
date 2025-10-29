@@ -23,6 +23,7 @@ from mediapipe.tasks.python.components.containers import detections_c as detecti
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.core import base_options_c as base_options_c_module
 from mediapipe.tasks.python.core import mediapipe_c_bindings as mediapipe_c_bindings_c_module
+from mediapipe.tasks.python.core import serial_dispatcher
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 from mediapipe.tasks.python.vision.core import base_vision_task_api
 from mediapipe.tasks.python.vision.core import image as image_module
@@ -34,71 +35,7 @@ ObjectDetectorResult = detections_module.DetectionResult
 _BaseOptions = base_options_module.BaseOptions
 _RunningMode = running_mode_module.VisionTaskRunningMode
 _ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
-
-
-def _register_ctypes_signatures(lib: ctypes.CDLL):
-  """Registers C function signatures for the ObjectDetector."""
-  lib.object_detector_create.argtypes = [
-      ctypes.POINTER(ObjectDetectorOptionsC),
-      ctypes.POINTER(ctypes.c_char_p),
-  ]
-  lib.object_detector_create.restype = ctypes.c_void_p
-  lib.object_detector_detect_image.argtypes = [
-      ctypes.c_void_p,
-      ctypes.c_void_p,
-      ctypes.POINTER(detections_c_module.DetectionResultC),
-      ctypes.POINTER(ctypes.c_char_p),
-  ]
-  lib.object_detector_detect_image.restype = ctypes.c_int
-  lib.object_detector_detect_image_with_options.argtypes = [
-      ctypes.c_void_p,
-      ctypes.c_void_p,
-      ctypes.POINTER(image_processing_options_c_module.ImageProcessingOptionsC),
-      ctypes.POINTER(detections_c_module.DetectionResultC),
-      ctypes.POINTER(ctypes.c_char_p),
-  ]
-  lib.object_detector_detect_image_with_options.restype = ctypes.c_int
-  lib.object_detector_detect_for_video.argtypes = [
-      ctypes.c_void_p,
-      ctypes.c_void_p,
-      ctypes.c_int64,
-      ctypes.POINTER(detections_c_module.DetectionResultC),
-      ctypes.POINTER(ctypes.c_char_p),
-  ]
-  lib.object_detector_detect_for_video.restype = ctypes.c_int
-  lib.object_detector_detect_for_video_with_options.argtypes = [
-      ctypes.c_void_p,
-      ctypes.c_void_p,
-      ctypes.POINTER(image_processing_options_c_module.ImageProcessingOptionsC),
-      ctypes.c_int64,
-      ctypes.POINTER(detections_c_module.DetectionResultC),
-      ctypes.POINTER(ctypes.c_char_p),
-  ]
-  lib.object_detector_detect_for_video_with_options.restype = ctypes.c_int
-  lib.object_detector_detect_async.argtypes = [
-      ctypes.c_void_p,
-      ctypes.c_void_p,
-      ctypes.c_int64,
-      ctypes.POINTER(ctypes.c_char_p),
-  ]
-  lib.object_detector_detect_async.restype = ctypes.c_int
-  lib.object_detector_detect_async_with_options.argtypes = [
-      ctypes.c_void_p,
-      ctypes.c_void_p,
-      ctypes.POINTER(image_processing_options_c_module.ImageProcessingOptionsC),
-      ctypes.c_int64,
-      ctypes.POINTER(ctypes.c_char_p),
-  ]
-  lib.object_detector_detect_async_with_options.restype = ctypes.c_int
-  lib.object_detector_close_result.argtypes = [
-      ctypes.POINTER(detections_c_module.DetectionResultC)
-  ]
-  lib.object_detector_close_result.restype = None
-  lib.object_detector_close.argtypes = [
-      ctypes.c_void_p,
-      ctypes.POINTER(ctypes.c_char_p),
-  ]
-  lib.object_detector_close.restype = ctypes.c_int
+_CFunction = mediapipe_c_bindings_c_module.CFunction
 
 
 class ObjectDetectorOptionsC(ctypes.Structure):
@@ -125,6 +62,102 @@ class ObjectDetectorOptionsC(ctypes.Structure):
           ),
       ),
   ]
+
+
+_CTYPES_SIGNATURES = (
+    _CFunction(
+        'object_detector_create',
+        [
+            ctypes.POINTER(ObjectDetectorOptionsC),
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
+        ctypes.c_void_p,
+    ),
+    _CFunction(
+        'object_detector_detect_image',
+        [
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.POINTER(detections_c_module.DetectionResultC),
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
+        ctypes.c_int,
+    ),
+    _CFunction(
+        'object_detector_detect_image_with_options',
+        [
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.POINTER(
+                image_processing_options_c_module.ImageProcessingOptionsC
+            ),
+            ctypes.POINTER(detections_c_module.DetectionResultC),
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
+        ctypes.c_int,
+    ),
+    _CFunction(
+        'object_detector_detect_for_video',
+        [
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.c_int64,
+            ctypes.POINTER(detections_c_module.DetectionResultC),
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
+        ctypes.c_int,
+    ),
+    _CFunction(
+        'object_detector_detect_for_video_with_options',
+        [
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.POINTER(
+                image_processing_options_c_module.ImageProcessingOptionsC
+            ),
+            ctypes.c_int64,
+            ctypes.POINTER(detections_c_module.DetectionResultC),
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
+        ctypes.c_int,
+    ),
+    _CFunction(
+        'object_detector_detect_async',
+        [
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.c_int64,
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
+        ctypes.c_int,
+    ),
+    _CFunction(
+        'object_detector_detect_async_with_options',
+        [
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.POINTER(
+                image_processing_options_c_module.ImageProcessingOptionsC
+            ),
+            ctypes.c_int64,
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
+        ctypes.c_int,
+    ),
+    _CFunction(
+        'object_detector_close_result',
+        [ctypes.POINTER(detections_c_module.DetectionResultC)],
+        None,
+    ),
+    _CFunction(
+        'object_detector_close',
+        [
+            ctypes.c_void_p,
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
+        ctypes.c_int,
+    ),
+)
 
 
 @dataclasses.dataclass
@@ -181,8 +214,6 @@ class ObjectDetectorOptions:
   def to_ctypes(self) -> ObjectDetectorOptionsC:
     """Generates a ObjectDetectorOptionsC object."""
     if self._result_callback_c is None:
-      lib = mediapipe_c_bindings_c_module.load_shared_library()
-
       # The C callback function that will be called by the C code.
       @ctypes.CFUNCTYPE(
           None,
@@ -198,7 +229,7 @@ class ObjectDetectorOptions:
 
         if self.result_callback:
           py_result = detections_module.DetectionResult.from_ctypes(result)
-          py_image = image_module.Image.create_from_ctypes(image, lib)
+          py_image = image_module.Image.create_from_ctypes(image)
           self.result_callback(py_result, py_image, timestamp_ms)
 
       # Keep callback from getting garbage collected.
@@ -282,10 +313,14 @@ class ObjectDetector:
   https://github.com/google/mediapipe/blob/6cdc6443b6a7ed662744e2a2ce2d58d9c83e6d6f/mediapipe/tasks/metadata/metadata_schema.fbs#L456
   """
 
-  _lib: ctypes.CDLL
+  _lib: serial_dispatcher.SerialDispatcher
   _handle: ctypes.c_void_p
 
-  def __init__(self, lib: ctypes.CDLL, handle: ctypes.c_void_p):
+  def __init__(
+      self,
+      lib: serial_dispatcher.SerialDispatcher,
+      handle: ctypes.c_void_p,
+  ):
     self._lib = lib
     self._handle = handle
 
@@ -336,8 +371,7 @@ class ObjectDetector:
         options.running_mode, options.result_callback
     )
 
-    lib = mediapipe_c_bindings_c_module.load_shared_library()
-    _register_ctypes_signatures(lib)
+    lib = mediapipe_c_bindings_c_module.load_shared_library(_CTYPES_SIGNATURES)
 
     ctypes_options = options.to_ctypes()
 
@@ -541,6 +575,7 @@ class ObjectDetector:
           ret_code, error_msg_ptr, 'Failed to close ObjectDetector object.'
       )
       self._handle = None
+      self._lib.close()
 
   def _handle_status(
       self, status: int, error_msg_ptr: ctypes.c_char_p, default_error_msg: str
