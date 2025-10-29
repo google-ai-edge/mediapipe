@@ -29,6 +29,7 @@
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
@@ -73,6 +74,8 @@
 #include "mediapipe/framework/thread_pool_executor.pb.h"
 #include "mediapipe/framework/timestamp.h"
 #include "mediapipe/framework/tool/fill_packet_set.h"
+#include "mediapipe/framework/tool/graph_runtime_info_logger.h"  // IWYU pragma: keep
+#include "mediapipe/framework/tool/graph_runtime_info_utils.h"  // IWYU pragma: keep
 #include "mediapipe/framework/tool/status_util.h"
 #include "mediapipe/framework/tool/tag_map.h"
 #include "mediapipe/framework/tool/validate.h"
@@ -502,14 +505,6 @@ absl::Status CalculatorGraph::Initialize(
     MP_RETURN_IF_ERROR(graph_runtime_info_logger_.StartInBackground(
         runtime_info_logger_config,
         [this]() { return GetGraphRuntimeInfo(); }));
-  }
-#else
-  const auto& runtime_info_logger_config =
-      validated_graph_->Config().runtime_info();
-  // TODO - remove once graph runtime infos are supported in
-  // Emscripten.
-  if (runtime_info_logger_config.enable_graph_runtime_info()) {
-    ABSL_LOG(WARNING) << "Graph runtime infos are not supported in Emscripten.";
   }
 #endif  // defined(__EMSCRIPTEN__)
   return absl::OkStatus();
@@ -953,6 +948,26 @@ absl::Status CalculatorGraph::WaitUntilIdle() {
   if (GetCombinedErrors(&status)) {
     ABSL_LOG(ERROR) << status.ToString(kStatusLogFlags);
   }
+
+#if defined(__EMSCRIPTEN__)
+  // Since emscripten runs single-threaded, we use the WaitUntilIdle call to
+  // output the graph runtime info at the configured interval.
+  const auto& runtime_info_logger_config =
+      validated_graph_->Config().runtime_info();
+  if (runtime_info_logger_config.enable_graph_runtime_info()) {
+    const int log_interval_sec =
+        runtime_info_logger_config.capture_period_msec() / 1000;
+    const auto get_graph_runtime_info = [&]() -> std::string {
+      const auto graph_runtime_info = GetGraphRuntimeInfo();
+      ABSL_CHECK_OK(graph_runtime_info);
+      const auto graph_runtime_info_str =
+          tool::GetGraphRuntimeInfoString(*graph_runtime_info);
+      ABSL_CHECK_OK(graph_runtime_info_str);
+      return *graph_runtime_info_str;
+    };
+    ABSL_LOG_EVERY_N_SEC(INFO, log_interval_sec) << get_graph_runtime_info();
+  }
+#endif  // defined(__EMSCRIPTEN__)
   return status;
 }
 
