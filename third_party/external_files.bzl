@@ -1331,6 +1331,12 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_segmentation_input_rotation90_jpg",
+        sha256 = "5289212cc399dd1d3e0589f36b46f65891b21606ab5a73f677a1baee3890fbe8",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/segmentation_input_rotation90.jpg?generation=1761759098652131"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_segmentation_mask_meta_json",
         sha256 = "4294d53b309c1fbe38a5184de4057576c3dec14e07d16491f1dd459ac9116ab3",
         urls = ["https://storage.googleapis.com/mediapipe-assets/segmentation_mask_meta.json?generation=1678818065134737"],

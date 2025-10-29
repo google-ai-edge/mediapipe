@@ -27,6 +27,7 @@ limitations under the License.
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/c/test/test_utils.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
+#include "mediapipe/tasks/c/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/c/vision/image_segmenter/image_segmenter_result.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 
@@ -42,8 +43,11 @@ constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
 constexpr char kModelName[] = "deeplabv3.tflite";
 constexpr char kImageFile[] = "segmentation_input_rotation0.jpg";
 constexpr char kMaskImageFile[] = "segmentation_golden_rotation0.png";
+constexpr char kImageRotatedFile[] = "segmentation_input_rotation90.jpg";
 constexpr int kIterations = 5;
 constexpr float kGoldenMaskSimilarity = 0.98;
+// Image rotation slightly lossy, so reduce golden similarity threshold a little
+constexpr float kGoldenMaskSimilarityRotated = 0.96;
 
 // Magnification factor used when creating the golden category masks to make
 // them more human-friendly. Each pixel in the golden masks has its value
@@ -61,13 +65,13 @@ TEST(ImageSegmenterTest, ImageModeTestSucceedsWithCategoryMask) {
 
   const std::string model_path = GetFullPath(kModelName);
   ImageSegmenterOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::IMAGE,
-      /* display_names_locale= */ "en",
-      /* output_confidence_masks= */ false,
-      /* output_category_mask= */ true,
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = model_path.c_str()},
+      .running_mode = RunningMode::IMAGE,
+      .display_names_locale = "en",
+      .output_confidence_masks = false,
+      .output_category_mask = true,
   };
 
   MpImageSegmenterPtr segmenter =
@@ -99,19 +103,68 @@ TEST(ImageSegmenterTest, ImageModeTestSucceedsWithCategoryMask) {
   delete[] expected_mask.image_frame.image_buffer;
 }
 
+TEST(ImageSegmenterTest, ImageModeWithOptionsTestSucceedsWithCategoryMask) {
+  const auto image = DecodeImageFromFile(GetFullPath(kImageRotatedFile));
+  ASSERT_TRUE(image.ok());
+
+  const std::string model_path = GetFullPath(kModelName);
+  ImageSegmenterOptions options = {
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = model_path.c_str()},
+      .running_mode = RunningMode::IMAGE,
+      .display_names_locale = "en",
+      .output_confidence_masks = false,
+      .output_category_mask = true,
+  };
+
+  MpImageSegmenterPtr segmenter =
+      image_segmenter_create(&options, /* error_msg */ nullptr);
+  EXPECT_NE(segmenter, nullptr);
+
+  const auto& image_frame = image->GetImageFrameSharedPtr();
+  const MpImage mp_image = {
+      .type = MpImage::IMAGE_FRAME,
+      .image_frame = {.format = static_cast<ImageFormat>(image_frame->Format()),
+                      .image_buffer = image_frame->PixelData(),
+                      .width = image_frame->Width(),
+                      .height = image_frame->Height()}};
+
+  ImageProcessingOptions image_processing_options;
+  image_processing_options.has_region_of_interest = 0;
+  image_processing_options.rotation_degrees = 90;
+
+  ImageSegmenterResult result;
+  const int error = image_segmenter_segment_image_with_options(
+      segmenter, &mp_image, &image_processing_options, &result,
+      /* error_msg */ nullptr);
+  EXPECT_EQ(error, 0);
+
+  auto expected_mask_image = DecodeImageFromFile(GetFullPath(kMaskImageFile));
+  const MpMask expected_mask = CreateCategoryMaskFromImage(expected_mask_image);
+  const MpMask actual_mask = result.category_mask;
+  EXPECT_GT(SimilarToUint8Mask(&actual_mask, &expected_mask,
+                               kGoldenMaskMagnificationFactor),
+            kGoldenMaskSimilarityRotated);
+  image_segmenter_close_result(&result);
+  image_segmenter_close(segmenter, /* error_msg */ nullptr);
+
+  delete[] expected_mask.image_frame.image_buffer;
+}
+
 TEST(ImageSegmenterTest, VideoModeTest) {
   const auto image = DecodeImageFromFile(GetFullPath(kImageFile));
   ASSERT_TRUE(image.ok());
 
   const std::string model_path = GetFullPath(kModelName);
   ImageSegmenterOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::VIDEO,
-      /* display_names_locale= */ "en",
-      /* output_confidence_masks= */ false,
-      /* output_category_mask= */ true,
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = model_path.c_str()},
+      .running_mode = RunningMode::VIDEO,
+      .display_names_locale = "en",
+      .output_confidence_masks = false,
+      .output_category_mask = true,
   };
 
   MpImageSegmenterPtr segmenter =
@@ -181,14 +234,14 @@ TEST(ImageSegmenterTest, DISABLED_LiveStreamModeTest) {
   const std::string model_path = GetFullPath(kModelName);
 
   ImageSegmenterOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::LIVE_STREAM,
-      /* display_names_locale= */ "en",
-      /* output_confidence_masks= */ false,
-      /* output_category_mask= */ true,
-      /* result_callback= */ LiveStreamModeCallback::Fn,
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = model_path.c_str()},
+      .running_mode = RunningMode::LIVE_STREAM,
+      .display_names_locale = "en",
+      .output_confidence_masks = false,
+      .output_category_mask = true,
+      .result_callback = LiveStreamModeCallback::Fn,
   };
 
   MpImageSegmenterPtr segmenter =
@@ -219,13 +272,13 @@ TEST(ImageSegmenterTest, DISABLED_LiveStreamModeTest) {
 TEST(ImageSegmenterTest, InvalidArgumentHandling) {
   // It is an error to set neither the asset buffer nor the path.
   ImageSegmenterOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ nullptr},
-      /* running_mode= */ RunningMode::IMAGE,
-      /* display_names_locale= */ "en",
-      /* output_confidence_masks= */ false,
-      /* output_category_mask= */ true,
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = nullptr},
+      .running_mode = RunningMode::IMAGE,
+      .display_names_locale = "en",
+      .output_confidence_masks = false,
+      .output_category_mask = true,
   };
 
   char* error_msg;
@@ -240,13 +293,13 @@ TEST(ImageSegmenterTest, InvalidArgumentHandling) {
 TEST(ImageSegmenterTest, FailedRecognitionHandling) {
   const std::string model_path = GetFullPath(kModelName);
   ImageSegmenterOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::IMAGE,
-      /* display_names_locale= */ "en",
-      /* output_confidence_masks= */ false,
-      /* output_category_mask= */ true,
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = model_path.c_str()},
+      .running_mode = RunningMode::IMAGE,
+      .display_names_locale = "en",
+      .output_confidence_masks = false,
+      .output_category_mask = true,
   };
 
   MpImageSegmenterPtr segmenter =

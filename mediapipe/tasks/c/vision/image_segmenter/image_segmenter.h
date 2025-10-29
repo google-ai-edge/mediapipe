@@ -22,6 +22,7 @@ limitations under the License.
 
 #include "mediapipe/tasks/c/core/base_options.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
+#include "mediapipe/tasks/c/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/c/vision/image_segmenter/image_segmenter_result.h"
 
 #ifndef MP_EXPORT
@@ -101,6 +102,15 @@ MP_EXPORT int image_segmenter_segment_image(MpImageSegmenterPtr segmenter,
                                             ImageSegmenterResult* result,
                                             char** error_msg);
 
+// Performs image segmentation on the input `image`. Returns `0` on
+// success. If an error occurs, returns an error code and sets the error
+// parameter to an an error message (if `error_msg` is not `nullptr`). You must
+// free the memory allocated for the error message.
+MP_EXPORT int image_segmenter_segment_image_with_options(
+    MpImageSegmenterPtr segmenter, const MpImage* image,
+    const ImageProcessingOptions* options, ImageSegmenterResult* result,
+    char** error_msg);
+
 // Performs image segmentation on the provided video frame.
 // Only use this method when the ImageSegmenter is created with the video
 // running mode.
@@ -115,6 +125,20 @@ MP_EXPORT int image_segmenter_segment_for_video(MpImageSegmenterPtr segmenter,
                                                 int64_t timestamp_ms,
                                                 ImageSegmenterResult* result,
                                                 char** error_msg);
+
+// Performs image segmentation on the provided video frame.
+// Only use this method when the ImageSegmenter is created with the video
+// running mode.
+// The image can be of any size with format RGB or RGBA. It's required to
+// provide the video frame's timestamp (in milliseconds). The input timestamps
+// must be monotonically increasing.
+// If an error occurs, returns an error code and sets the error parameter to an
+// an error message (if `error_msg` is not `nullptr`). You must free the memory
+// allocated for the error message.
+MP_EXPORT int image_segmenter_segment_for_video_with_options(
+    MpImageSegmenterPtr segmenter, const MpImage* image,
+    const ImageProcessingOptions* options, int64_t timestamp_ms,
+    ImageSegmenterResult* result, char** error_msg);
 
 // Sends live image data to image segmentation, and the results will be
 // available via the `result_callback` provided in the ImageSegmenterOptions.
@@ -140,6 +164,31 @@ MP_EXPORT int image_segmenter_segment_async(MpImageSegmenterPtr segmenter,
                                             const MpImage* image,
                                             int64_t timestamp_ms,
                                             char** error_msg);
+
+// Sends live image data to image segmentation, and the results will be
+// available via the `result_callback` provided in the ImageSegmenterOptions.
+// Only use this method when the ImageSegmenter is created with the live
+// stream running mode.
+// The image can be of any size with format RGB or RGBA. It's required to
+// provide a timestamp (in milliseconds) to indicate when the input image is
+// sent to the image segmenter. The input timestamps must be monotonically
+// increasing.
+// The `result_callback` provides:
+//   - The recognition results as an ImageSegmenterResult object.
+//   - The const reference to the corresponding input image that the image
+//     segmenter runs on. Note that the const reference to the image will no
+//     longer be valid when the callback returns. To access the image data
+//     outside of the callback, callers need to make a copy of the image.
+//   - The input timestamp in milliseconds.
+// If an error occurs, returns an error code and sets the error parameter to an
+// an error message (if `error_msg` is not `nullptr`). You must free the memory
+// allocated for the error message.
+// You need to invoke `image_segmenter_close_result` after each invocation to
+// free memory.
+MP_EXPORT int image_segmenter_segment_async_with_options(
+    MpImageSegmenterPtr segmenter, const MpImage* image,
+    const ImageProcessingOptions* options, int64_t timestamp_ms,
+    char** error_msg);
 
 // Frees the memory allocated inside a ImageSegmenterResult result.
 // Does not free the result pointer itself.
