@@ -1923,6 +1923,7 @@ mediapipe_proto_library(
 cc_library(
     name = "tensors_to_segmentation_calculator",
     srcs = ["tensors_to_segmentation_calculator.cc"],
+    hdrs = ["tensors_to_segmentation_calculator.h"],
     copts = select({
         "//mediapipe:apple": [
             "-x objective-c++",
@@ -1938,8 +1939,9 @@ cc_library(
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:port",
-        "//mediapipe/framework/api2:node",
-        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/api3:calculator",
+        "//mediapipe/framework/api3:contract",
+        "//mediapipe/framework/api3:node",
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:ret_check",
@@ -2178,6 +2180,10 @@ cc_test(
         "//mediapipe/framework:calculator_runner",
         "//mediapipe/framework:packet",
         "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/api3:function_runner",
+        "//mediapipe/framework/api3:graph",
+        "//mediapipe/framework/api3:packet",
+        "//mediapipe/framework/api3:stream",
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:image_format_cc_proto",
         "//mediapipe/framework/formats:image_opencv",

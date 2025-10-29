@@ -11,7 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+#include "mediapipe/calculators/tensor/tensors_to_segmentation_calculator.h"
 
+#include <cstring>
 #include <memory>
 #include <string>
 #include <utility>
@@ -19,6 +21,10 @@
 
 #include "mediapipe/calculators/tensor/tensors_to_segmentation_calculator.pb.h"
 #include "mediapipe/calculators/tensor/tensors_to_segmentation_calculator_test_utils.h"
+#include "mediapipe/framework/api3/function_runner.h"
+#include "mediapipe/framework/api3/graph.h"
+#include "mediapipe/framework/api3/packet.h"
+#include "mediapipe/framework/api3/stream.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
 #include "mediapipe/framework/formats/image.h"
@@ -39,6 +45,65 @@ using ::testing::TestWithParam;
 using Options = mediapipe::TensorsToSegmentationCalculatorOptions;
 namespace test_utils = ::mediapipe::tensors_to_segmentation_utils;
 
+struct Dims {
+  int height;
+  int width;
+  int channels;
+};
+
+Tensor CreateTensor(const Dims& dims, const std::vector<float>& values) {
+  Tensor tensor(Tensor::ElementType::kFloat32,
+                Tensor::Shape{1, dims.height, dims.width, dims.channels});
+  Tensor::CpuWriteView view = tensor.GetCpuWriteView();
+  float* tensor_buffer = view.buffer<float>();
+  std::memcpy(tensor_buffer, values.data(), values.size() * sizeof(float));
+  return tensor;
+}
+
+void MatchesExpected(const Image& image, const Dims& expected_dims,
+                     const std::vector<float>& expected_values,
+                     double max_diff) {
+  std::shared_ptr<cv::Mat> result_mat = formats::MatView(&image);
+  ASSERT_EQ(result_mat->rows, expected_dims.height);
+  ASSERT_EQ(result_mat->cols, expected_dims.width);
+  ASSERT_EQ(expected_dims.channels, 1);
+  ASSERT_EQ(result_mat->channels(), expected_dims.channels);
+
+  // Compare the real result with the expected result.
+
+  cv::Mat expected_result(expected_dims.height, expected_dims.width, CV_32FC1,
+                          const_cast<float*>(expected_values.data()));
+  cv::Mat diff;
+  cv::absdiff(*result_mat, expected_result, diff);
+  double max_val;
+  cv::minMaxLoc(diff, nullptr, &max_val);
+
+  // The max allowable diff between output and expected output varies between
+  // tests.
+  EXPECT_LE(max_val, max_diff);
+}
+
+TEST(TensorsToSegmentationCalculatorTest, RunsWithFunctionRunner) {
+  auto builder_fn = [](api3::GenericGraph& graph,
+                       api3::Stream<Tensor> tensor) -> api3::Stream<Image> {
+    auto& node = graph.AddNode<api3::TensorsToSegmentationNode>();
+    node.tensor_in.Set(tensor);
+    return node.mask_out.Get();
+  };
+  MP_ASSERT_OK_AND_ASSIGN(auto runner, api3::Runner::For(builder_fn).Create());
+
+  Tensor tensor = CreateTensor({.height = 2, .width = 2, .channels = 1},
+                               {1.0f, 2.0f, 3.0f, 4.0f});
+  MP_ASSERT_OK_AND_ASSIGN(
+      api3::Packet<Image> output_packet,
+      runner.Run(api3::MakePacket<Tensor>(std::move(tensor))));
+  ASSERT_TRUE(output_packet);
+  const Image& image = output_packet.GetOrDie();
+  EXPECT_FALSE(image.UsesGpu());
+  MatchesExpected(image, {.height = 2, .width = 2, .channels = 1},
+                  {1.0f, 2.0f, 3.0f, 4.0f}, /*max_diff*/ 1e-6);
+}
+
 using TensorsToSegmentationCalculatorTest =
     TestWithParam<test_utils::FormattingTestCase>;
 
@@ -57,18 +122,8 @@ TEST_P(TensorsToSegmentationCalculatorTest, ParameterizedTests) {
   MP_ASSERT_OK(graph.Initialize(graph_config));
   MP_ASSERT_OK(graph.StartRun({}));
 
-  Tensor tensor = Tensor(Tensor::ElementType::kFloat32,
-                         Tensor::Shape{1, rows, cols, channels});
-
-  // We scope the tensor's GetCpuWriteView() call so that its lock is released
-  // before we pass it into the graph.
-  {
-    auto view = tensor.GetCpuWriteView();
-    float* tensor_buffer = view.buffer<float>();
-    for (int i = 0; i < inputs.size(); ++i) {
-      tensor_buffer[i] = inputs[i];
-    }
-  }
+  Tensor tensor = CreateTensor(
+      {.height = rows, .width = cols, .channels = channels}, inputs);
 
   MP_ASSERT_OK(
       test_utils::AddTensorInput(std::move(tensor), use_single_tensor, graph));
@@ -83,23 +138,9 @@ TEST_P(TensorsToSegmentationCalculatorTest, ParameterizedTests) {
   const Image& image_as_mask = output_packets[0].Get<Image>();
   EXPECT_FALSE(image_as_mask.UsesGpu());
 
-  std::shared_ptr<cv::Mat> result_mat = formats::MatView(&image_as_mask);
-  EXPECT_EQ(result_mat->rows, rows_new);
-  EXPECT_EQ(result_mat->cols, cols_new);
-  EXPECT_EQ(result_mat->channels(), 1);
-
-  // Compare the real result with the expected result.
-  cv::Mat expected_result =
-      cv::Mat(rows_new, cols_new, CV_32FC1,
-              const_cast<float*>(expected_outputs.data()));
-  cv::Mat diff;
-  cv::absdiff(*result_mat, expected_result, diff);
-  double max_val;
-  cv::minMaxLoc(diff, nullptr, &max_val);
-
-  // The max allowable diff between output and expected output varies between
-  // tests.
-  EXPECT_LE(max_val, max_abs_diff);
+  MatchesExpected(image_as_mask,
+                  {.height = rows_new, .width = cols_new, .channels = 1},
+                  expected_outputs, max_abs_diff);
 
   MP_ASSERT_OK(graph.CloseAllInputStreams());
   MP_ASSERT_OK(graph.WaitUntilDone());
