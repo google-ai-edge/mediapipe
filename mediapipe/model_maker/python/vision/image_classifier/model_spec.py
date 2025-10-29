@@ -94,11 +94,11 @@ efficientnet_lite4_spec = functools.partial(
 class SupportedModels(enum.Enum):
   """Image classifier model supported by model maker."""
 
-  MOBILENET_V2 = mobilenet_v2_spec
-  MOBILENET_V2_KERAS = mobilenet_v2_keras_spec
-  EFFICIENTNET_LITE0 = efficientnet_lite0_spec
-  EFFICIENTNET_LITE2 = efficientnet_lite2_spec
-  EFFICIENTNET_LITE4 = efficientnet_lite4_spec
+  MOBILENET_V2 = enum.member(mobilenet_v2_spec)
+  MOBILENET_V2_KERAS = enum.member(mobilenet_v2_keras_spec)
+  EFFICIENTNET_LITE0 = enum.member(efficientnet_lite0_spec)
+  EFFICIENTNET_LITE2 = enum.member(efficientnet_lite2_spec)
+  EFFICIENTNET_LITE4 = enum.member(efficientnet_lite4_spec)
 
   @classmethod
   def get(cls, spec: 'SupportedModels') -> 'ModelSpec':
