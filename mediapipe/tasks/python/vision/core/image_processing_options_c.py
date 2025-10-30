@@ -23,6 +23,6 @@ class ImageProcessingOptionsC(ctypes.Structure):
 
   _fields_ = [
       ('has_region_of_interest', ctypes.c_bool),
-      ('region_of_interest', rect_c.RectC),
+      ('region_of_interest', rect_c.RectFC),
       ('rotation_degrees', ctypes.c_int),
   ]

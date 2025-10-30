@@ -19,13 +19,12 @@ from unittest import mock
 
 from absl.testing import absltest
 from absl.testing import parameterized
-
 import numpy as np
 
 from mediapipe.python._framework_bindings import image
 from mediapipe.tasks.python.components.containers import category as category_module
 from mediapipe.tasks.python.components.containers import classification_result as classification_result_module
-from mediapipe.tasks.python.components.containers import rect
+from mediapipe.tasks.python.components.containers import rect as rect_module
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.test import test_utils
 from mediapipe.tasks.python.vision import image_classifier
@@ -33,7 +32,7 @@ from mediapipe.tasks.python.vision.core import image_processing_options as image
 from mediapipe.tasks.python.vision.core import vision_task_running_mode
 
 ImageClassifierResult = classification_result_module.ClassificationResult
-_Rect = rect.Rect
+_RectF = rect_module.RectF
 _BaseOptions = base_options_module.BaseOptions
 _Category = category_module.Category
 _Classifications = classification_result_module.Classifications
@@ -237,7 +236,7 @@ class ImageClassifierTest(parameterized.TestCase):
           )
       )
       # Region-of-interest around the soccer ball.
-      roi = _Rect(left=0.45, top=0.3075, right=0.614, bottom=0.7345)
+      roi = _RectF(left=0.45, top=0.3075, right=0.614, bottom=0.7345)
       image_processing_options = _ImageProcessingOptions(roi)
       # Performs image classification on the input.
       image_result = classifier.classify(test_image, image_processing_options)
@@ -306,7 +305,7 @@ class ImageClassifierTest(parameterized.TestCase):
       )
       # Region-of-interest around the soccer ball, with 90° anti-clockwise
       # rotation.
-      roi = _Rect(left=0.2655, top=0.45, right=0.6925, bottom=0.614)
+      roi = _RectF(left=0.2655, top=0.45, right=0.6925, bottom=0.614)
       image_processing_options = _ImageProcessingOptions(roi, -90)
       # Performs image classification on the input.
       image_result = classifier.classify(test_image, image_processing_options)
@@ -540,7 +539,7 @@ class ImageClassifierTest(parameterized.TestCase):
           )
       )
       # Region-of-interest around the soccer ball.
-      roi = _Rect(left=0.45, top=0.3075, right=0.614, bottom=0.7345)
+      roi = _RectF(left=0.45, top=0.3075, right=0.614, bottom=0.7345)
       image_processing_options = _ImageProcessingOptions(roi)
       for timestamp in range(0, 300, 30):
         classification_result = classifier.classify_for_video(
@@ -628,7 +627,7 @@ class ImageClassifierTest(parameterized.TestCase):
         )
     )
     # Region-of-interest around the soccer ball.
-    roi = _Rect(left=0.45, top=0.3075, right=0.614, bottom=0.7345)
+    roi = _RectF(left=0.45, top=0.3075, right=0.614, bottom=0.7345)
     image_processing_options = _ImageProcessingOptions(roi)
     observed_timestamp_ms = -1
 

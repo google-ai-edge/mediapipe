@@ -36,7 +36,7 @@ from mediapipe.tasks.python.vision.core import vision_task_running_mode as runni
 _LandmarksDetectionResultProto = (
     landmarks_detection_result_pb2.LandmarksDetectionResult)
 _BaseOptions = base_options_module.BaseOptions
-_Rect = rect_module.Rect
+_RectF = rect_module.RectF
 _Landmark = landmark_module.Landmark
 _NormalizedLandmark = landmark_module.NormalizedLandmark
 _LandmarksDetectionResult = (
@@ -260,7 +260,8 @@ class HandLandmarkerTest(parameterized.TestCase):
       with _HandLandmarker.create_from_options(options) as landmarker:
         # Set the `region_of_interest` parameter using `ImageProcessingOptions`.
         image_processing_options = _ImageProcessingOptions(
-            region_of_interest=_Rect(0, 0, 1, 1))
+            region_of_interest=_RectF(0.0, 0.0, 1.0, 1.0)
+        )
         # Attempt to perform hand landmarks detection on the cropped input.
         landmarker.detect(self.test_image, image_processing_options)
 

@@ -28,6 +28,17 @@ class RectC(ctypes.Structure):
   ]
 
 
+class RectFC(ctypes.Structure):
+  """A rectangle (operating on floats), used as part of processing options."""
+
+  _fields_ = [
+      ('left', ctypes.c_float),
+      ('top', ctypes.c_float),
+      ('bottom', ctypes.c_float),
+      ('right', ctypes.c_float),
+  ]
+
+
 class NormalizedRectC(ctypes.Structure):
   """A rectangle with rotation in normalized coordinates."""
 

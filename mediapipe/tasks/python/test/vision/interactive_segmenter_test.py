@@ -24,7 +24,7 @@ import numpy as np
 from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.python._framework_bindings import image_frame
 from mediapipe.tasks.python.components.containers import keypoint as keypoint_module
-from mediapipe.tasks.python.components.containers import rect
+from mediapipe.tasks.python.components.containers import rect as rect_module
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.test import test_utils
 from mediapipe.tasks.python.vision import interactive_segmenter
@@ -35,7 +35,7 @@ _BaseOptions = base_options_module.BaseOptions
 _Image = image_module.Image
 _ImageFormat = image_frame.ImageFormat
 _NormalizedKeypoint = keypoint_module.NormalizedKeypoint
-_Rect = rect.Rect
+_RectF = rect_module.RectF
 _InteractiveSegmenter = interactive_segmenter.InteractiveSegmenter
 _InteractiveSegmenterOptions = interactive_segmenter.InteractiveSegmenterOptions
 _RegionOfInterest = interactive_segmenter.RegionOfInterest
@@ -332,7 +332,7 @@ class InteractiveSegmenterTest(parameterized.TestCase):
       with _InteractiveSegmenter.create_from_options(options) as segmenter:
         # Perform segmentation
         image_processing_options = _ImageProcessingOptions(
-            _Rect(left=0.1, top=0, right=0.9, bottom=1)
+            _RectF(left=0.1, top=0.0, right=0.9, bottom=1.0)
         )
         segmenter.segment(self.test_image, roi, image_processing_options)
 

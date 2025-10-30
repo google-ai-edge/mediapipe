@@ -23,14 +23,14 @@ import numpy as np
 
 from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.tasks.python.components.containers import embedding_result as embedding_result_module
-from mediapipe.tasks.python.components.containers import rect
+from mediapipe.tasks.python.components.containers import rect as rect_module
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.test import test_utils
 from mediapipe.tasks.python.vision import image_embedder
 from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_module
 from mediapipe.tasks.python.vision.core import vision_task_running_mode as running_mode_module
 
-_Rect = rect.Rect
+_RectF = rect_module.RectF
 _BaseOptions = base_options_module.BaseOptions
 _Embedding = embedding_result_module.Embedding
 _Image = image_module.Image
@@ -176,7 +176,7 @@ class ImageEmbedderTest(parameterized.TestCase):
     image_processing_options = None
     if with_roi:
       # Region-of-interest in "burger.jpg" corresponding to "burger_crop.jpg".
-      roi = _Rect(left=0, top=0, right=0.833333, bottom=1)
+      roi = _RectF(left=0.0, top=0.0, right=0.833333, bottom=1.0)
       image_processing_options = _ImageProcessingOptions(roi)
 
     # Extracts both embeddings.
@@ -311,7 +311,7 @@ class ImageEmbedderTest(parameterized.TestCase):
     with _ImageEmbedder.create_from_options(options) as embedder0, \
          _ImageEmbedder.create_from_options(options) as embedder1:
       # Region-of-interest in "burger.jpg" corresponding to "burger_crop.jpg".
-      roi = _Rect(left=0, top=0, right=0.833333, bottom=1)
+      roi = _RectF(left=0.0, top=0.0, right=0.833333, bottom=1.0)
       image_processing_options = _ImageProcessingOptions(roi)
 
       for timestamp in range(0, 300, 30):
@@ -394,7 +394,7 @@ class ImageEmbedderTest(parameterized.TestCase):
       crop_result = embedder.embed(self.test_cropped_image)
 
     # Region-of-interest in "burger.jpg" corresponding to "burger_crop.jpg".
-    roi = _Rect(left=0, top=0, right=0.833333, bottom=1)
+    roi = _RectF(left=0.0, top=0.0, right=0.833333, bottom=1.0)
     image_processing_options = _ImageProcessingOptions(roi)
     observed_timestamp_ms = -1
 

@@ -25,7 +25,33 @@ _NormalizedRectProto = rect_pb2.NormalizedRect
 
 @dataclasses.dataclass
 class Rect:
-  """A rectangle, used as part of detection results or as input region-of-interest.
+  """A rectangle, used as part of detection results.
+
+  Absolute coordinates. The origin is on the top-left corner of the image.
+
+  Attributes:
+    left: The X coordinate of the left side of the rectangle.
+    top: The Y coordinate of the top of the rectangle.
+    bottom: The Y coordinate of the bottom of the rectangle.
+    right: The X coordinate of the right side of the rectangle.
+  """
+
+  left: int
+  top: int
+  bottom: int
+  right: int
+
+  @doc_controls.do_not_generate_docs
+  def to_ctypes(self) -> rect_c_module.RectC:
+    """Generates a C API RectC object."""
+    return rect_c_module.RectC(
+        left=self.left, top=self.top, bottom=self.bottom, right=self.right
+    )
+
+
+@dataclasses.dataclass
+class RectF:
+  """A rectangle, used as part as input region-of-interest.
 
   The coordinates are normalized wrt the image dimensions, i.e. generally in
   [0,1] but they may exceed these bounds if describing a region overlapping the
@@ -44,9 +70,9 @@ class Rect:
   right: float
 
   @doc_controls.do_not_generate_docs
-  def to_ctypes(self) -> rect_c_module.RectC:
-    """Generates a C API RectC object."""
-    return rect_c_module.RectC(
+  def to_ctypes(self) -> rect_c_module.RectFC:
+    """Generates a C API RectFC object."""
+    return rect_c_module.RectFC(
         left=self.left, top=self.top, bottom=self.bottom, right=self.right
     )
 
