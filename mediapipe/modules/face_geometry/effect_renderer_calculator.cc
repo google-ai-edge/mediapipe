@@ -260,7 +260,7 @@ class EffectRendererCalculator : public CalculatorBase {
     absl::string_view mesh_str = mesh_3d_blob->ToStringView();
 
     face_geometry::Mesh3d mesh_3d;
-    RET_CHECK(mesh_3d.ParseFromArray(mesh_str.data(), mesh_str.size()))
+    RET_CHECK(mesh_3d.ParseFromString(mesh_str))
         << "Failed to parse a mesh 3D proto from a binary blob!";
 
     return mesh_3d;
