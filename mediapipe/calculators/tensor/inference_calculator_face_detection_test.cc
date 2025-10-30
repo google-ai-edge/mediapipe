@@ -156,7 +156,7 @@ TEST_P(InferenceCalculatorTest, TestFaceDetection) {
                                        "mediapipe/calculators/tensor/"
                                        "testdata/expected_detection.binarypb"),
                         &binary));
-  expected_detection.ParseFromArray(binary.data(), binary.size());
+  expected_detection.ParseFromString(binary);
 
   // Prepare test inputs.
   std::unordered_map<std::string, std::unique_ptr<ImageFrame>> input_streams;
