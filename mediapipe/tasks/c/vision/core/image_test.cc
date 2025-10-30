@@ -3,17 +3,21 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/deps/file_path.h"
+#include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
+#include "mediapipe/tasks/c/vision/core/image_frame_util.h"
 #include "mediapipe/tasks/c/vision/core/image_test_util.h"
 
 namespace {
 
+using ::mediapipe::Image;
 using ::mediapipe::tasks::vision::core::ScopedMpImage;
 
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
@@ -67,6 +71,27 @@ TEST(ImageTest, CreateFromFile) {
   EXPECT_EQ(MpImageGetHeight(image.get()), 1024);
   EXPECT_EQ(MpImageGetChannels(image.get()), 3);
   EXPECT_EQ(MpImageGetFormat(image.get()), kMpImageFormatSrgb);
+}
+
+TEST(ImageTest, CreateFromImageFrame) {
+  const std::string image_path = GetFullPath(kImageFile);
+  MpImagePtr original_image_ptr = nullptr;
+  MpStatus status =
+      MpImageCreateFromFile(image_path.c_str(), &original_image_ptr);
+  ASSERT_EQ(status, kMpOk);
+  auto original_image = ScopedMpImage{original_image_ptr};
+
+  MpImagePtr copied_image_ptr = nullptr;
+  status = MpImageCreateFromImageFrame(original_image.get(), &copied_image_ptr);
+  ASSERT_EQ(status, kMpOk);
+  ASSERT_NE(copied_image_ptr, nullptr);
+
+  // portrait.jpg is 820x1024, 3 channels (SRGB)
+  auto copied_image = ScopedMpImage{copied_image_ptr};
+  EXPECT_EQ(MpImageGetWidth(copied_image.get()), 820);
+  EXPECT_EQ(MpImageGetHeight(copied_image.get()), 1024);
+  EXPECT_EQ(MpImageGetChannels(copied_image.get()), 3);
+  EXPECT_EQ(MpImageGetFormat(copied_image.get()), kMpImageFormatSrgb);
 }
 
 TEST(ImageTest, GetValueUint8) {

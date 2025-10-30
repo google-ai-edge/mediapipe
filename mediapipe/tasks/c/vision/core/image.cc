@@ -307,6 +307,14 @@ MP_EXPORT MpStatus MpImageCreateFromFile(const char* file_name,
   return kMpOk;
 }
 
+MP_EXPORT MpStatus MpImageCreateFromImageFrame(MpImagePtr image,
+                                               MpImagePtr* out) {
+  auto mp_image = std::make_unique<MpImageInternal>();
+  mp_image->image = Image(image->image.GetImageFrameSharedPtr());
+  *out = mp_image.release();
+  return kMpOk;
+}
+
 MP_EXPORT bool MpImageUsesGpu(const MpImagePtr image) {
   return image->image.UsesGpu();
 }

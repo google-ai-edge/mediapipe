@@ -66,14 +66,20 @@ cc_test(
     ],
     deps = [
         ":image",
+        ":image_frame_util",
         ":image_test_util",
         "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/formats:image",
         "//mediapipe/framework/port:gtest",
         "//mediapipe/tasks/c/core:mp_status",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
-    ],
+    ] + select({
+        "//mediapipe/gpu:disable_gpu": [],
+        "//conditions:default": [
+        ],
+    }),
 )
 
 cc_library(

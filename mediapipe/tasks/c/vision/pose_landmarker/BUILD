@@ -25,6 +25,7 @@ cc_library(
     deps = [
         "//mediapipe/tasks/c/components/containers:landmark",
         "//mediapipe/tasks/c/vision/core:common",
+        "//mediapipe/tasks/c/vision/core:image",
     ],
 )
 
@@ -34,9 +35,11 @@ cc_library(
     hdrs = ["pose_landmarker_result_converter.h"],
     deps = [
         ":pose_landmarker_result",
+        "//mediapipe/framework/formats:image",
         "//mediapipe/tasks/c/components/containers:landmark",
         "//mediapipe/tasks/c/components/containers:landmark_converter",
-        "//mediapipe/tasks/c/vision/core:common",
+        "//mediapipe/tasks/c/vision/core:image",
+        "//mediapipe/tasks/c/vision/core:image_frame_util",
         "//mediapipe/tasks/cc/components/containers:landmark",
         "//mediapipe/tasks/cc/vision/pose_landmarker:pose_landmarker_result",
     ],

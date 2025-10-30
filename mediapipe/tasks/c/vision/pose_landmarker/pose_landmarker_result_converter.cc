@@ -18,9 +18,11 @@ limitations under the License.
 #include <cstdint>
 #include <vector>
 
+#include "mediapipe/framework/formats/image.h"
 #include "mediapipe/tasks/c/components/containers/landmark.h"
 #include "mediapipe/tasks/c/components/containers/landmark_converter.h"
-#include "mediapipe/tasks/c/vision/core/common.h"
+#include "mediapipe/tasks/c/vision/core/image.h"
+#include "mediapipe/tasks/c/vision/core/image_frame_util.h"
 #include "mediapipe/tasks/c/vision/pose_landmarker/pose_landmarker_result.h"
 #include "mediapipe/tasks/cc/components/containers/landmark.h"
 #include "mediapipe/tasks/cc/vision/pose_landmarker/pose_landmarker_result.h"
@@ -36,18 +38,11 @@ void CppConvertToPoseLandmarkerResult(
     PoseLandmarkerResult* out) {
   if (in.segmentation_masks.has_value()) {
     out->segmentation_masks_count = in.segmentation_masks.value().size();
-    out->segmentation_masks = new MpMask[out->segmentation_masks_count];
+    out->segmentation_masks = new MpImagePtr[out->segmentation_masks_count];
     for (uint32_t i = 0; i < out->segmentation_masks_count; ++i) {
-      const auto& image_frame =
-          in.segmentation_masks.value()[i].GetImageFrameSharedPtr();
-
-      MpMask mp_mask = {
-          .type = MpMask::IMAGE_FRAME,
-          .image_frame = {.mask_format = MaskFormat::FLOAT,
-                          .image_buffer = image_frame->PixelData(),
-                          .width = image_frame->Width(),
-                          .height = image_frame->Height()}};
-      out->segmentation_masks[i] = mp_mask;
+      mediapipe::Image mp_image = in.segmentation_masks.value()[i];
+      out->segmentation_masks[i] =
+          new MpImageInternal{.image = mp_image, .cached_contiguous_data = {}};
     }
   } else {
     out->segmentation_masks_count = 0;
@@ -80,6 +75,9 @@ void CppConvertToPoseLandmarkerResult(
 
 void CppClosePoseLandmarkerResult(PoseLandmarkerResult* result) {
   if (result->segmentation_masks) {
+    for (uint32_t i = 0; i < result->segmentation_masks_count; ++i) {
+      MpImageFree(result->segmentation_masks[i]);
+    }
     delete[] result->segmentation_masks;
     result->segmentation_masks = nullptr;
     result->segmentation_masks_count = 0;

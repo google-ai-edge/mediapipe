@@ -72,8 +72,8 @@ void MatchesPoseLandmarkerResult(const PoseLandmarkerResult* result,
 
   // Expects to have the same number of segmentation_masks detected.
   EXPECT_EQ(result->segmentation_masks_count, 1);
-  EXPECT_EQ(result->segmentation_masks->image_frame.width, 1000);
-  EXPECT_EQ(result->segmentation_masks->image_frame.height, 667);
+  EXPECT_EQ(MpImageGetWidth(result->segmentation_masks[0]), 1000);
+  EXPECT_EQ(MpImageGetHeight(result->segmentation_masks[0]), 667);
 
   // Actual landmarks match expected landmarks.
   EXPECT_NEAR(result->pose_landmarks[0].landmarks[0].x, 0.4649f,

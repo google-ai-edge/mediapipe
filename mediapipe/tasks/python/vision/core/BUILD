@@ -64,7 +64,6 @@ py_library(
     deps = [
         "//mediapipe/tasks/python/core:mediapipe_c_bindings",
         "//mediapipe/tasks/python/core:optional_dependencies",
-        "//mediapipe/tasks/python/core:serial_dispatcher",
         "@mediapipe_pip_deps_numpy//:pkg",
     ],
 )

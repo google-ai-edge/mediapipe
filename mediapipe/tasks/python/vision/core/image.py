@@ -99,6 +99,14 @@ _CTYPES_SIGNATURES = (
         ctypes.c_int,
     ),
     _CFunction(
+        "MpImageCreateFromImageFrame",
+        [
+            ctypes.c_void_p,
+            ctypes.POINTER(ctypes.c_void_p),
+        ],
+        ctypes.c_int,
+    ),
+    _CFunction(
         "MpImageCreateFromFile",
         [
             ctypes.c_char_p,
@@ -200,7 +208,6 @@ class Image:
 
   _lib: ctypes.CDLL
   _image_ptr: ctypes.c_void_p
-  _owned: bool
 
   def __init__(self, image_format: ImageFormat, data: np.ndarray):
     """Creates an Image object from a numpy ndarray.
@@ -217,7 +224,6 @@ class Image:
 
     height, width, _ = data.shape
     self._image_ptr = ctypes.c_void_p()
-    self._owned = True
 
     if data.dtype == np.uint8:
       status = self._lib.MpImageCreateFromUint8Data(
@@ -276,18 +282,36 @@ class Image:
     new_image = cls.__new__(cls)
     new_image._lib = lib
     new_image._image_ptr = image_ptr
-    new_image._owned = True
     return new_image
 
   @classmethod
   @doc_controls.do_not_generate_docs
   def create_from_ctypes(cls, image_ptr: ctypes.c_void_p) -> "Image":
-    """Creates an `Image` object from a ctypes pointer."""
+    """Creates an `Image` object from a ctypes pointer.
+
+    This methods creates a copy of the Image object, which points to the same
+    underlying image data and extends its lifetime until the returned object
+    gets garbage collected. If the original image is on GPU, the copy will
+    allocate the pixel data on the CPU.
+
+    Args:
+      image_ptr: A ctypes pointer to the image data.
+
+    Returns:
+      An `Image` object.
+    """
     lib = mediapipe_c_bindings.load_raw_library(_CTYPES_SIGNATURES)
+
+    output_image_ptr = ctypes.c_void_p()
+    status = lib.MpImageCreateFromImageFrame(
+        image_ptr, ctypes.byref(output_image_ptr)
+    )
+    mediapipe_c_bindings.handle_status(status)
+
+    # Create an empty Image object and then populate it.
     new_image = cls.__new__(cls)
-    new_image._image_ptr = image_ptr
     new_image._lib = lib
-    new_image._owned = False
+    new_image._image_ptr = output_image_ptr
     return new_image
 
   def numpy_view(self) -> np.ndarray:
@@ -456,5 +480,5 @@ class Image:
 
   def __del__(self):
     """Frees the internal C Image object."""
-    if self._owned and self._image_ptr:
+    if self._image_ptr:
       self._lib.MpImageFree(self._image_ptr)

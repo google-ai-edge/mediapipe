@@ -47,7 +47,7 @@ typedef struct MpImageInternal* MpImagePtr;
 // into the new MpImage. The caller retains ownership of the buffer.
 //
 // If successful, returns MP_OK and sets `out` to the new MpImage. You must free
-// the image must with mp_image_free().
+// the image with mp_image_free().
 MP_EXPORT MpStatus MpImageCreateFromUint8Data(MpImageFormat format, int width,
                                               int height,
                                               const uint8_t* pixel_data,
@@ -58,7 +58,7 @@ MP_EXPORT MpStatus MpImageCreateFromUint8Data(MpImageFormat format, int width,
 // into the new MpImage. The caller retains ownership of the buffer.
 //
 // If successful, returns MP_OK and sets `out` to the new MpImage. You must free
-// the image must with mp_image_free().
+// the image with mp_image_free().
 MP_EXPORT MpStatus MpImageCreateFromUint16Data(MpImageFormat format, int width,
                                                int height,
                                                const uint16_t* pixel_data,
@@ -69,17 +69,28 @@ MP_EXPORT MpStatus MpImageCreateFromUint16Data(MpImageFormat format, int width,
 // into the new MpImage. The caller retains ownership of the buffer.
 //
 // If successful, returns MP_OK and sets `out` to the new MpImage. You must free
-// the image must with mp_image_free().
+// the image with mp_image_free().
 MP_EXPORT MpStatus MpImageCreateFromFloatData(MpImageFormat format, int width,
                                               int height,
                                               const float* pixel_data,
                                               int pixel_data_size,
                                               MpImagePtr* out);
 
+// Creates an MpImage from an ImageFrame.
+//
+// The new MpImage will point to the same data as pixel data, extending the
+// lifetime of the underlying ImageFrame. If the original image is on the GPU,
+// the data will be transferred to the CPU first.
+//
+// If successful, returns MP_OK and sets `out` to the new MpImage. You must free
+// the image must with mp_image_free().
+MP_EXPORT MpStatus MpImageCreateFromImageFrame(MpImagePtr image,
+                                               MpImagePtr* out);
+
 // Creates an MpImage from a file.
 //
 // If successful, returns MP_OK and sets `out` to a new Image. You must free
-// the image must with mp_image_free().
+// the image with mp_image_free().
 MP_EXPORT MpStatus MpImageCreateFromFile(const char* file_name,
                                          MpImagePtr* out);
 
