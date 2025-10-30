@@ -7,6 +7,7 @@ VERS_1.0 {
     MpImage*;
     face_detector_*;
     face_landmarker_*;
+    gesture_recognizer_*;
     hand_landmarker_*;
     object_detector_*;
     pose_landmarker_*;

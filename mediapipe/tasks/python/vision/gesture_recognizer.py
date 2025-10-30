@@ -13,151 +13,129 @@
 # limitations under the License.
 """MediaPipe gesture recognizer task."""
 
+import ctypes
 import dataclasses
-from typing import Callable, Mapping, Optional, List
+import logging
+from typing import Callable
 
-from mediapipe.framework.formats import classification_pb2
-from mediapipe.framework.formats import landmark_pb2
-from mediapipe.python import packet_creator
-from mediapipe.python import packet_getter
-from mediapipe.python._framework_bindings import image as image_module
-from mediapipe.python._framework_bindings import packet as packet_module
-from mediapipe.tasks.cc.vision.gesture_recognizer.proto import gesture_recognizer_graph_options_pb2
-from mediapipe.tasks.python.components.containers import category as category_module
-from mediapipe.tasks.python.components.containers import landmark as landmark_module
 from mediapipe.tasks.python.components.processors import classifier_options
+from mediapipe.tasks.python.components.processors import classifier_options_c
 from mediapipe.tasks.python.core import base_options as base_options_module
-from mediapipe.tasks.python.core import task_info as task_info_module
+from mediapipe.tasks.python.core import base_options_c
+from mediapipe.tasks.python.core import mediapipe_c_bindings
+from mediapipe.tasks.python.core import serial_dispatcher
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
+from mediapipe.tasks.python.vision import gesture_recognizer_result as gesture_recognizer_result_module
+# C-bindings
+from mediapipe.tasks.python.vision import gesture_recognizer_result_c
 from mediapipe.tasks.python.vision.core import base_vision_task_api
-from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_module
+from mediapipe.tasks.python.vision.core import image as image_lib
+from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_lib
+from mediapipe.tasks.python.vision.core import image_processing_options_c
 from mediapipe.tasks.python.vision.core import vision_task_running_mode as running_mode_module
 
 _BaseOptions = base_options_module.BaseOptions
-_GestureRecognizerGraphOptionsProto = (
-    gesture_recognizer_graph_options_pb2.GestureRecognizerGraphOptions
-)
 _ClassifierOptions = classifier_options.ClassifierOptions
 _RunningMode = running_mode_module.VisionTaskRunningMode
-_ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
-_TaskInfo = task_info_module.TaskInfo
-
-_IMAGE_IN_STREAM_NAME = 'image_in'
-_IMAGE_OUT_STREAM_NAME = 'image_out'
-_IMAGE_TAG = 'IMAGE'
-_NORM_RECT_STREAM_NAME = 'norm_rect_in'
-_NORM_RECT_TAG = 'NORM_RECT'
-_HAND_GESTURE_STREAM_NAME = 'hand_gestures'
-_HAND_GESTURE_TAG = 'HAND_GESTURES'
-_HANDEDNESS_STREAM_NAME = 'handedness'
-_HANDEDNESS_TAG = 'HANDEDNESS'
-_HAND_LANDMARKS_STREAM_NAME = 'landmarks'
-_HAND_LANDMARKS_TAG = 'LANDMARKS'
-_HAND_WORLD_LANDMARKS_STREAM_NAME = 'world_landmarks'
-_HAND_WORLD_LANDMARKS_TAG = 'WORLD_LANDMARKS'
-_TASK_GRAPH_NAME = (
-    'mediapipe.tasks.vision.gesture_recognizer.GestureRecognizerGraph'
+_ImageProcessingOptions = image_processing_options_lib.ImageProcessingOptions
+_GestureRecognizerResult = (
+    gesture_recognizer_result_module.GestureRecognizerResult
 )
-_MICRO_SECONDS_PER_MILLISECOND = 1000
-_GESTURE_DEFAULT_INDEX = -1
+_CFunction = mediapipe_c_bindings.CFunction
 
 
-@dataclasses.dataclass
-class GestureRecognizerResult:
-  """The gesture recognition result from GestureRecognizer, where each vector element represents a single hand detected in the image.
+class GestureRecognizerOptionsC(ctypes.Structure):
+  _fields_ = [
+      ('base_options', base_options_c.BaseOptionsC),
+      ('running_mode', ctypes.c_int),
+      ('num_hands', ctypes.c_int),
+      ('min_hand_detection_confidence', ctypes.c_float),
+      ('min_hand_presence_confidence', ctypes.c_float),
+      ('min_tracking_confidence', ctypes.c_float),
+      (
+          'canned_gestures_classifier_options',
+          classifier_options_c.ClassifierOptionsC,
+      ),
+      (
+          'custom_gestures_classifier_options',
+          classifier_options_c.ClassifierOptionsC,
+      ),
+      (
+          'result_callback',
+          ctypes.CFUNCTYPE(
+              None,
+              ctypes.POINTER(
+                  gesture_recognizer_result_c.GestureRecognizerResultC
+              ),
+              ctypes.c_void_p,
+              ctypes.c_int64,
+              ctypes.c_char_p,
+          ),
+      ),
+  ]
 
-  Attributes:
-    gestures: Recognized hand gestures of detected hands. Note that the index of
-      the gesture is always -1, because the raw indices from multiple gesture
-      classifiers cannot consolidate to a meaningful index.
-    handedness: Classification of handedness.
-    hand_landmarks: Detected hand landmarks in normalized image coordinates.
-    hand_world_landmarks: Detected hand landmarks in world coordinates.
-  """
 
-  gestures: List[List[category_module.Category]]
-  handedness: List[List[category_module.Category]]
-  hand_landmarks: List[List[landmark_module.NormalizedLandmark]]
-  hand_world_landmarks: List[List[landmark_module.Landmark]]
-
-
-def _build_recognition_result(
-    output_packets: Mapping[str, packet_module.Packet]
-) -> GestureRecognizerResult:
-  """Constructs a `GestureRecognizerResult` from output packets."""
-  gestures_proto_list = packet_getter.get_proto_list(
-      output_packets[_HAND_GESTURE_STREAM_NAME]
-  )
-  handedness_proto_list = packet_getter.get_proto_list(
-      output_packets[_HANDEDNESS_STREAM_NAME]
-  )
-  hand_landmarks_proto_list = packet_getter.get_proto_list(
-      output_packets[_HAND_LANDMARKS_STREAM_NAME]
-  )
-  hand_world_landmarks_proto_list = packet_getter.get_proto_list(
-      output_packets[_HAND_WORLD_LANDMARKS_STREAM_NAME]
-  )
-
-  gesture_results = []
-  for proto in gestures_proto_list:
-    gesture_categories = []
-    gesture_classifications = classification_pb2.ClassificationList()
-    gesture_classifications.MergeFrom(proto)
-    for gesture in gesture_classifications.classification:
-      gesture_categories.append(
-          category_module.Category(
-              index=_GESTURE_DEFAULT_INDEX,
-              score=gesture.score,
-              display_name=gesture.display_name,
-              category_name=gesture.label,
-          )
-      )
-    gesture_results.append(gesture_categories)
-
-  handedness_results = []
-  for proto in handedness_proto_list:
-    handedness_categories = []
-    handedness_classifications = classification_pb2.ClassificationList()
-    handedness_classifications.MergeFrom(proto)
-    for handedness in handedness_classifications.classification:
-      handedness_categories.append(
-          category_module.Category(
-              index=handedness.index,
-              score=handedness.score,
-              display_name=handedness.display_name,
-              category_name=handedness.label,
-          )
-      )
-    handedness_results.append(handedness_categories)
-
-  hand_landmarks_results = []
-  for proto in hand_landmarks_proto_list:
-    hand_landmarks = landmark_pb2.NormalizedLandmarkList()
-    hand_landmarks.MergeFrom(proto)
-    hand_landmarks_list = []
-    for hand_landmark in hand_landmarks.landmark:
-      hand_landmarks_list.append(
-          landmark_module.NormalizedLandmark.create_from_pb2(hand_landmark)
-      )
-    hand_landmarks_results.append(hand_landmarks_list)
-
-  hand_world_landmarks_results = []
-  for proto in hand_world_landmarks_proto_list:
-    hand_world_landmarks = landmark_pb2.LandmarkList()
-    hand_world_landmarks.MergeFrom(proto)
-    hand_world_landmarks_list = []
-    for hand_world_landmark in hand_world_landmarks.landmark:
-      hand_world_landmarks_list.append(
-          landmark_module.Landmark.create_from_pb2(hand_world_landmark)
-      )
-    hand_world_landmarks_results.append(hand_world_landmarks_list)
-
-  return GestureRecognizerResult(
-      gesture_results,
-      handedness_results,
-      hand_landmarks_results,
-      hand_world_landmarks_results,
-  )
+_CTYPES_SIGNATURES = (
+    _CFunction(
+        'gesture_recognizer_create',
+        [
+            ctypes.POINTER(GestureRecognizerOptionsC),
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
+        ctypes.c_void_p,
+    ),
+    _CFunction(
+        'gesture_recognizer_recognize_image',
+        [
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.POINTER(image_processing_options_c.ImageProcessingOptionsC),
+            ctypes.POINTER(
+                gesture_recognizer_result_c.GestureRecognizerResultC
+            ),
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
+        ctypes.c_int,
+    ),
+    _CFunction(
+        'gesture_recognizer_recognize_for_video',
+        [
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.POINTER(image_processing_options_c.ImageProcessingOptionsC),
+            ctypes.c_int64,
+            ctypes.POINTER(
+                gesture_recognizer_result_c.GestureRecognizerResultC
+            ),
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
+        ctypes.c_int,
+    ),
+    _CFunction(
+        'gesture_recognizer_recognize_async',
+        [
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.POINTER(image_processing_options_c.ImageProcessingOptionsC),
+            ctypes.c_int64,
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
+        ctypes.c_int,
+    ),
+    _CFunction(
+        'gesture_recognizer_close_result',
+        [ctypes.POINTER(gesture_recognizer_result_c.GestureRecognizerResultC)],
+        None,
+    ),
+    _CFunction(
+        'gesture_recognizer_close',
+        [
+            ctypes.c_void_p,
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
+        ctypes.c_int,
+    ),
+)
 
 
 @dataclasses.dataclass
@@ -204,55 +182,75 @@ class GestureRecognizerOptions:
   custom_gesture_classifier_options: _ClassifierOptions = dataclasses.field(
       default_factory=_ClassifierOptions
   )
-  result_callback: Optional[
-      Callable[[GestureRecognizerResult, image_module.Image, int], None]
-  ] = None
+  result_callback: (
+      Callable[[_GestureRecognizerResult, image_lib.Image, int], None] | None
+  ) = None
+
+  _result_callback_c: (
+      Callable[
+          [
+              gesture_recognizer_result_c.GestureRecognizerResultC,
+              ctypes.c_void_p,
+              int,
+              str,
+          ],
+          None,
+      ]
+      | None
+  ) = None
 
   @doc_controls.do_not_generate_docs
-  def to_pb2(self) -> _GestureRecognizerGraphOptionsProto:
-    """Generates an GestureRecognizerOptions protobuf object."""
-    base_options_proto = self.base_options.to_pb2()
-    base_options_proto.use_stream_mode = (
-        False if self.running_mode == _RunningMode.IMAGE else True
+  def to_ctypes(self) -> GestureRecognizerOptionsC:
+    """Generates a GestureRecognizerOptionsC ctypes struct."""
+    if self._result_callback_c is None:
+      result_callback_fn = ctypes.CFUNCTYPE(
+          None,
+          ctypes.POINTER(gesture_recognizer_result_c.GestureRecognizerResultC),
+          ctypes.c_void_p,
+          ctypes.c_int64,
+          ctypes.c_char_p,
+      )
+
+      @result_callback_fn
+      def c_callback(result, image, timestamp_ms, error_msg):
+        if self.result_callback:
+          if error_msg:
+            logging.error('Gesture recognizer error: %s', error_msg.decode())
+            return
+          py_result = _GestureRecognizerResult.from_ctypes(result.contents)
+          py_image = image_lib.Image.create_from_ctypes(image)
+          self.result_callback(py_result, py_image, timestamp_ms)
+
+      self._result_callback_c = c_callback
+
+    return GestureRecognizerOptionsC(
+        base_options=self.base_options.to_ctypes(),
+        running_mode=self.running_mode.ctype,
+        num_hands=self.num_hands,
+        min_hand_detection_confidence=self.min_hand_detection_confidence,
+        min_hand_presence_confidence=self.min_hand_presence_confidence,
+        min_tracking_confidence=self.min_tracking_confidence,
+        canned_gestures_classifier_options=classifier_options_c.convert_to_classifier_options_c(
+            self.canned_gesture_classifier_options
+        ),
+        custom_gestures_classifier_options=classifier_options_c.convert_to_classifier_options_c(
+            self.custom_gesture_classifier_options
+        ),
+        result_callback=self._result_callback_c,
     )
 
-    # Initialize gesture recognizer options from base options.
-    gesture_recognizer_options_proto = _GestureRecognizerGraphOptionsProto(
-        base_options=base_options_proto
-    )
-    # Configure hand detector and hand landmarker options.
-    hand_landmarker_options_proto = (
-        gesture_recognizer_options_proto.hand_landmarker_graph_options
-    )
-    hand_landmarker_options_proto.min_tracking_confidence = (
-        self.min_tracking_confidence
-    )
-    hand_landmarker_options_proto.hand_detector_graph_options.num_hands = (
-        self.num_hands
-    )
-    hand_landmarker_options_proto.hand_detector_graph_options.min_detection_confidence = (
-        self.min_hand_detection_confidence
-    )
-    hand_landmarker_options_proto.hand_landmarks_detector_graph_options.min_detection_confidence = (
-        self.min_hand_presence_confidence
-    )
 
-    # Configure hand gesture recognizer options.
-    hand_gesture_recognizer_options_proto = (
-        gesture_recognizer_options_proto.hand_gesture_recognizer_graph_options
-    )
-    hand_gesture_recognizer_options_proto.canned_gesture_classifier_graph_options.classifier_options.CopyFrom(
-        self.canned_gesture_classifier_options.to_pb2()
-    )
-    hand_gesture_recognizer_options_proto.custom_gesture_classifier_graph_options.classifier_options.CopyFrom(
-        self.custom_gesture_classifier_options.to_pb2()
-    )
-
-    return gesture_recognizer_options_proto
-
-
-class GestureRecognizer(base_vision_task_api.BaseVisionTaskApi):
+class GestureRecognizer:
   """Class that performs gesture recognition on images."""
+
+  _lib: serial_dispatcher.SerialDispatcher
+  _handle: ctypes.c_void_p
+
+  def __init__(
+      self, lib: serial_dispatcher.SerialDispatcher, handle: ctypes.c_void_p
+  ):
+    self._lib = lib
+    self._handle = handle
 
   @classmethod
   def create_from_model_path(cls, model_path: str) -> 'GestureRecognizer':
@@ -296,61 +294,32 @@ class GestureRecognizer(base_vision_task_api.BaseVisionTaskApi):
         `GestureRecognizerOptions` such as missing the model.
       RuntimeError: If other types of error occurred.
     """
-
-    def packets_callback(output_packets: Mapping[str, packet_module.Packet]):
-      if output_packets[_IMAGE_OUT_STREAM_NAME].is_empty():
-        return
-
-      image = packet_getter.get_image(output_packets[_IMAGE_OUT_STREAM_NAME])
-
-      if output_packets[_HAND_GESTURE_STREAM_NAME].is_empty():
-        empty_packet = output_packets[_HAND_GESTURE_STREAM_NAME]
-        options.result_callback(
-            GestureRecognizerResult([], [], [], []),
-            image,
-            empty_packet.timestamp.value // _MICRO_SECONDS_PER_MILLISECOND,
-        )
-        return
-
-      gesture_recognizer_result = _build_recognition_result(output_packets)
-      timestamp = output_packets[_HAND_GESTURE_STREAM_NAME].timestamp
-      options.result_callback(
-          gesture_recognizer_result,
-          image,
-          timestamp.value // _MICRO_SECONDS_PER_MILLISECOND,
-      )
-
-    task_info = _TaskInfo(
-        task_graph=_TASK_GRAPH_NAME,
-        input_streams=[
-            ':'.join([_IMAGE_TAG, _IMAGE_IN_STREAM_NAME]),
-            ':'.join([_NORM_RECT_TAG, _NORM_RECT_STREAM_NAME]),
-        ],
-        output_streams=[
-            ':'.join([_HAND_GESTURE_TAG, _HAND_GESTURE_STREAM_NAME]),
-            ':'.join([_HANDEDNESS_TAG, _HANDEDNESS_STREAM_NAME]),
-            ':'.join([_HAND_LANDMARKS_TAG, _HAND_LANDMARKS_STREAM_NAME]),
-            ':'.join(
-                [_HAND_WORLD_LANDMARKS_TAG, _HAND_WORLD_LANDMARKS_STREAM_NAME]
-            ),
-            ':'.join([_IMAGE_TAG, _IMAGE_OUT_STREAM_NAME]),
-        ],
-        task_options=options,
+    base_vision_task_api.validate_running_mode(
+        options.running_mode, options.result_callback
     )
-    return cls(
-        task_info.generate_graph_config(
-            enable_flow_limiting=options.running_mode
-            == _RunningMode.LIVE_STREAM
-        ),
-        options.running_mode,
-        packets_callback if options.result_callback else None,
+
+    lib = mediapipe_c_bindings.load_shared_library(_CTYPES_SIGNATURES)
+
+    options_c = options.to_ctypes()
+    error_msg_ptr = ctypes.c_char_p()
+    recognizer_handle = lib.gesture_recognizer_create(
+        ctypes.byref(options_c), ctypes.byref(error_msg_ptr)
     )
+
+    if not recognizer_handle:
+      if error_msg_ptr.value is not None:
+        error_message = error_msg_ptr.value.decode('utf-8')
+        raise RuntimeError(error_message)
+      else:
+        raise RuntimeError('Failed to create GestureRecognizer object.')
+
+    return cls(lib=lib, handle=recognizer_handle)
 
   def recognize(
       self,
-      image: image_module.Image,
-      image_processing_options: Optional[_ImageProcessingOptions] = None,
-  ) -> GestureRecognizerResult:
+      image: image_lib.Image,
+      image_processing_options: _ImageProcessingOptions | None = None,
+  ) -> _GestureRecognizerResult:
     """Performs hand gesture recognition on the given image.
 
     Only use this method when the GestureRecognizer is created with the image
@@ -371,27 +340,36 @@ class GestureRecognizer(base_vision_task_api.BaseVisionTaskApi):
       ValueError: If any of the input arguments is invalid.
       RuntimeError: If gesture recognition failed to run.
     """
-    normalized_rect = self.convert_to_normalized_rect(
-        image_processing_options, image, roi_allowed=False
+    c_image = image._image_ptr  # pylint: disable=protected-access
+    c_result = gesture_recognizer_result_c.GestureRecognizerResultC()
+    error_msg = ctypes.c_char_p()
+    options_c = (
+        ctypes.byref(image_processing_options.to_ctypes())
+        if image_processing_options
+        else None
     )
-    output_packets = self._process_image_data({
-        _IMAGE_IN_STREAM_NAME: packet_creator.create_image(image),
-        _NORM_RECT_STREAM_NAME: packet_creator.create_proto(
-            normalized_rect.to_pb2()
-        ),
-    })
+    status = self._lib.gesture_recognizer_recognize_image(
+        self._handle,
+        c_image,
+        options_c,
+        ctypes.byref(c_result),
+        ctypes.byref(error_msg),
+    )
 
-    if output_packets[_HAND_GESTURE_STREAM_NAME].is_empty():
-      return GestureRecognizerResult([], [], [], [])
+    mediapipe_c_bindings.handle_return_code(
+        status, 'Failed to recognize gesture', error_msg
+    )
 
-    return _build_recognition_result(output_packets)
+    result = _GestureRecognizerResult.from_ctypes(c_result)
+    self._lib.gesture_recognizer_close_result(ctypes.byref(c_result))
+    return result
 
   def recognize_for_video(
       self,
-      image: image_module.Image,
+      image: image_lib.Image,
       timestamp_ms: int,
-      image_processing_options: Optional[_ImageProcessingOptions] = None,
-  ) -> GestureRecognizerResult:
+      image_processing_options: _ImageProcessingOptions | None = None,
+  ) -> _GestureRecognizerResult:
     """Performs gesture recognition on the provided video frame.
 
     Only use this method when the GestureRecognizer is created with the video
@@ -414,28 +392,36 @@ class GestureRecognizer(base_vision_task_api.BaseVisionTaskApi):
       ValueError: If any of the input arguments is invalid.
       RuntimeError: If gesture recognition failed to run.
     """
-    normalized_rect = self.convert_to_normalized_rect(
-        image_processing_options, image, roi_allowed=False
+    c_image = image._image_ptr  # pylint: disable=protected-access
+    c_result = gesture_recognizer_result_c.GestureRecognizerResultC()
+    error_msg = ctypes.c_char_p()
+    options_c = (
+        ctypes.byref(image_processing_options.to_ctypes())
+        if image_processing_options
+        else None
     )
-    output_packets = self._process_video_data({
-        _IMAGE_IN_STREAM_NAME: packet_creator.create_image(image).at(
-            timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND
-        ),
-        _NORM_RECT_STREAM_NAME: packet_creator.create_proto(
-            normalized_rect.to_pb2()
-        ).at(timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND),
-    })
+    status = self._lib.gesture_recognizer_recognize_for_video(
+        self._handle,
+        c_image,
+        options_c,
+        timestamp_ms,
+        ctypes.byref(c_result),
+        ctypes.byref(error_msg),
+    )
 
-    if output_packets[_HAND_GESTURE_STREAM_NAME].is_empty():
-      return GestureRecognizerResult([], [], [], [])
+    mediapipe_c_bindings.handle_return_code(
+        status, 'Failed to recognize gesture for video', error_msg
+    )
 
-    return _build_recognition_result(output_packets)
+    result = _GestureRecognizerResult.from_ctypes(c_result)
+    self._lib.gesture_recognizer_close_result(ctypes.byref(c_result))
+    return result
 
   def recognize_async(
       self,
-      image: image_module.Image,
+      image: image_lib.Image,
       timestamp_ms: int,
-      image_processing_options: Optional[_ImageProcessingOptions] = None,
+      image_processing_options: _ImageProcessingOptions | None = None,
   ) -> None:
     """Sends live image data to perform gesture recognition.
 
@@ -467,14 +453,53 @@ class GestureRecognizer(base_vision_task_api.BaseVisionTaskApi):
       ValueError: If the current input timestamp is smaller than what the
       gesture recognizer has already processed.
     """
-    normalized_rect = self.convert_to_normalized_rect(
-        image_processing_options, image, roi_allowed=False
+    c_image = image._image_ptr  # pylint: disable=protected-access
+    error_msg = ctypes.c_char_p()
+    options_c = (
+        ctypes.byref(image_processing_options.to_ctypes())
+        if image_processing_options
+        else None
     )
-    self._send_live_stream_data({
-        _IMAGE_IN_STREAM_NAME: packet_creator.create_image(image).at(
-            timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND
-        ),
-        _NORM_RECT_STREAM_NAME: packet_creator.create_proto(
-            normalized_rect.to_pb2()
-        ).at(timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND),
-    })
+    status = self._lib.gesture_recognizer_recognize_async(
+        self._handle,
+        c_image,
+        options_c,
+        timestamp_ms,
+        ctypes.byref(error_msg),
+    )
+
+    mediapipe_c_bindings.handle_return_code(
+        status, 'Failed to recognize gesture asynchronously', error_msg
+    )
+
+  def close(self):
+    """Closes GestureRecognizer."""
+    if self._handle:
+      error_msg = ctypes.c_char_p()
+      status = self._lib.gesture_recognizer_close(
+          self._handle, ctypes.byref(error_msg)
+      )
+      mediapipe_c_bindings.handle_return_code(
+          status, 'Failed to close GestureRecognizer', error_msg
+      )
+    self._handle = None
+    self._lib.close()
+
+  def __enter__(self):
+    """Returns `self` upon entering the runtime context."""
+    return self
+
+  def __exit__(self, exc_type, exc_value, traceback):
+    """Closes GestureRecognizers and exits the context manager.
+
+    Args:
+      exc_type: The exception type that caused the context manager to exit.
+      exc_value: The exception value that caused the context manager to exit.
+      traceback: The exception traceback that caused the context manager to
+        exit.
+
+    Raises:
+      RuntimeError: If the MediaPipe Gesture Recognizer task failed to
+      close.
+    """
+    self.close()

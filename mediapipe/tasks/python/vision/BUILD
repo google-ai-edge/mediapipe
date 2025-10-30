@@ -130,25 +130,44 @@ py_library(
 )
 
 py_library(
+    name = "gesture_recognizer_result",
+    srcs = ["gesture_recognizer_result.py"],
+    deps = [
+        ":gesture_recognizer_result_c",
+        "//mediapipe/tasks/python/components/containers:category",
+        "//mediapipe/tasks/python/components/containers:landmark",
+        "//mediapipe/tasks/python/core:optional_dependencies",
+    ],
+)
+
+py_library(
+    name = "gesture_recognizer_result_c",
+    srcs = ["gesture_recognizer_result_c.py"],
+    deps = [
+        "//mediapipe/tasks/python/components/containers:category_c",
+        "//mediapipe/tasks/python/components/containers:landmark_c",
+    ],
+)
+
+py_library(
     name = "gesture_recognizer",
     srcs = [
         "gesture_recognizer.py",
     ],
     deps = [
-        "//mediapipe/framework/formats:classification_py_pb2",
-        "//mediapipe/framework/formats:landmark_py_pb2",
-        "//mediapipe/python:_framework_bindings",
-        "//mediapipe/python:packet_creator",
-        "//mediapipe/python:packet_getter",
-        "//mediapipe/tasks/cc/vision/gesture_recognizer/proto:gesture_recognizer_graph_options_py_pb2",
-        "//mediapipe/tasks/python/components/containers:category",
-        "//mediapipe/tasks/python/components/containers:landmark",
+        ":gesture_recognizer_result",
+        ":gesture_recognizer_result_c",
         "//mediapipe/tasks/python/components/processors:classifier_options",
+        "//mediapipe/tasks/python/components/processors:classifier_options_c",
         "//mediapipe/tasks/python/core:base_options",
+        "//mediapipe/tasks/python/core:base_options_c",
+        "//mediapipe/tasks/python/core:mediapipe_c_bindings",
         "//mediapipe/tasks/python/core:optional_dependencies",
-        "//mediapipe/tasks/python/core:task_info",
+        "//mediapipe/tasks/python/core:serial_dispatcher",
         "//mediapipe/tasks/python/vision/core:base_vision_task_api",
+        "//mediapipe/tasks/python/vision/core:image",
         "//mediapipe/tasks/python/vision/core:image_processing_options",
+        "//mediapipe/tasks/python/vision/core:image_processing_options_c",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
     ],
 )
