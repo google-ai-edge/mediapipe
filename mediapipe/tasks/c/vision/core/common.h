@@ -18,6 +18,10 @@ limitations under the License.
 
 #include <cstdint>
 
+#ifndef MP_EXPORT
+#define MP_EXPORT __attribute__((visibility("default")))
+#endif  // MP_EXPORT
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -83,6 +87,17 @@ struct MpMask {
     struct GpuBufferMask gpu_buffer;
   };
 };
+
+// Represents a list of strings.
+typedef struct {
+  // The array of strings.
+  char** strings;
+  // The number of strings in the array.
+  int num_strings;
+} MpStringList;
+
+// Frees an MpStringList.
+MP_EXPORT void MpStringListFree(MpStringList* string_list);
 
 #ifdef __cplusplus
 }  // extern C

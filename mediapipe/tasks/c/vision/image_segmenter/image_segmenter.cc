@@ -25,6 +25,8 @@ limitations under the License.
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/tasks/c/core/base_options_converter.h"
+#include "mediapipe/tasks/c/core/mp_status.h"
+#include "mediapipe/tasks/c/vision/core/common.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/core/image_frame_util.h"
 #include "mediapipe/tasks/c/vision/core/image_processing_options.h"
@@ -214,6 +216,23 @@ int CppImageSegmenterClose(MpImageSegmenterPtr segmenter, char** error_msg) {
   return 0;
 }
 
+MpStatus CppImageSegmenterGetLabels(MpImageSegmenterPtr segmenter,
+                                    MpStringList* label_list) {
+  const auto& cpp_labels = segmenter->segmenter->GetLabels();
+  if (cpp_labels.empty()) {
+    label_list->strings = nullptr;
+    label_list->num_strings = 0;
+    return kMpOk;
+  }
+
+  label_list->num_strings = cpp_labels.size();
+  label_list->strings = (char**)malloc(sizeof(char*) * label_list->num_strings);
+  for (int i = 0; i < label_list->num_strings; ++i) {
+    label_list->strings[i] = strdup(cpp_labels[i].c_str());
+  }
+  return kMpOk;
+}
+
 }  // namespace mediapipe::tasks::c::vision::image_segmenter
 
 extern "C" {
@@ -286,6 +305,12 @@ MP_EXPORT int image_segmenter_close(MpImageSegmenterPtr segmenter,
                                     char** error_ms) {
   return mediapipe::tasks::c::vision::image_segmenter::CppImageSegmenterClose(
       segmenter, error_ms);
+}
+
+MP_EXPORT MpStatus image_segmenter_get_labels(MpImageSegmenterPtr segmenter,
+                                              MpStringList* label_list) {
+  return mediapipe::tasks::c::vision::image_segmenter::
+      CppImageSegmenterGetLabels(segmenter, label_list);
 }
 
 }  // extern "C"

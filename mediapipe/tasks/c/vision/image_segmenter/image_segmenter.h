@@ -21,6 +21,7 @@ limitations under the License.
 #include <cstdint>
 
 #include "mediapipe/tasks/c/core/base_options.h"
+#include "mediapipe/tasks/c/core/mp_status.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/core/image_processing_options.h"
@@ -201,6 +202,16 @@ MP_EXPORT void image_segmenter_close_result(ImageSegmenterResult* result);
 // allocated for the error message.
 MP_EXPORT int image_segmenter_close(MpImageSegmenterPtr segmenter,
                                     char** error_msg);
+
+// Gets the category label list of the ImageSegmenter can recognize.
+// The index in the category mask corresponds to the category in the label list.
+// The output mask list at index corresponds to the category in the label list.
+// If there is no label map provided in the model file, an empty label list is
+// returned.
+// The caller is responsible for freeing the memory of the `label_list`
+// by calling `MpStringListFree`.
+MP_EXPORT MpStatus image_segmenter_get_labels(MpImageSegmenterPtr segmenter,
+                                              MpStringList* label_list);
 
 #ifdef __cplusplus
 }  // extern C

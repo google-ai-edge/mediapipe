@@ -19,12 +19,14 @@ limitations under the License.
 #include <cstdlib>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
+#include "mediapipe/tasks/c/core/mp_status.h"
 #include "mediapipe/tasks/c/test/test_utils.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
@@ -287,6 +289,42 @@ TEST(ImageSegmenterTest, FailedRecognitionHandling) {
       error_msg,
       HasSubstr("Both output_width and output_height must be larger than 0."));
   free(error_msg);
+  image_segmenter_close(segmenter, /* error_msg */ nullptr);
+}
+
+TEST(ImageSegmenterTest, GetLabelsSucceeds) {
+  const std::string model_path = GetFullPath(kModelName);
+  ImageSegmenterOptions options = {
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = model_path.c_str()},
+      .running_mode = RunningMode::IMAGE,
+      .display_names_locale = "en",
+      .output_confidence_masks = false,
+      .output_category_mask = true,
+  };
+
+  MpImageSegmenterPtr segmenter =
+      image_segmenter_create(&options, /* error_msg */ nullptr);
+  EXPECT_NE(segmenter, nullptr);
+
+  MpStringList labels;
+  MpStatus status = image_segmenter_get_labels(segmenter, &labels);
+  EXPECT_EQ(status, kMpOk);
+
+  const std::vector<std::string> expected_labels = {
+      "background", "aeroplane",    "bicycle", "bird",  "boat",
+      "bottle",     "bus",          "car",     "cat",   "chair",
+      "cow",        "dining table", "dog",     "horse", "motorbike",
+      "person",     "potted plant", "sheep",   "sofa",  "train",
+      "tv"};
+
+  EXPECT_EQ(labels.num_strings, expected_labels.size());
+  for (int i = 0; i < expected_labels.size(); ++i) {
+    EXPECT_STREQ(labels.strings[i], expected_labels[i].c_str());
+  }
+
+  MpStringListFree(&labels);
   image_segmenter_close(segmenter, /* error_msg */ nullptr);
 }
 

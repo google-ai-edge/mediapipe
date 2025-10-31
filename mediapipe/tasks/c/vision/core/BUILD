@@ -21,6 +21,7 @@ licenses(["notice"])
 
 cc_library(
     name = "common",
+    srcs = ["common.cc"],
     hdrs = ["common.h"],
 )
 

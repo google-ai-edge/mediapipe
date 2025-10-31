@@ -5,6 +5,7 @@ VERS_1.0 {
     text_embedder_*;
     MpAudioClassifier*;
     MpImage*;
+    MpStringList*;
     face_detector_*;
     face_landmarker_*;
     gesture_recognizer_*;
