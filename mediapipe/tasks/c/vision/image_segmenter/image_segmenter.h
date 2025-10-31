@@ -22,6 +22,7 @@ limitations under the License.
 
 #include "mediapipe/tasks/c/core/base_options.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
+#include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/c/vision/image_segmenter/image_segmenter_result.h"
 
@@ -71,7 +72,7 @@ struct ImageSegmenterOptions {
   //  The passed `image` is only valid for the lifetime of the call. A caller is
   //  responsible for closing the image segmenter result.
   typedef void (*result_callback_fn)(ImageSegmenterResult* result,
-                                     const MpImage* image, int64_t timestamp_ms,
+                                     MpImagePtr image, int64_t timestamp_ms,
                                      char* error_msg);
   result_callback_fn result_callback;
 };
@@ -98,7 +99,7 @@ image_segmenter_create(struct ImageSegmenterOptions* options, char** error_msg);
 // parameter to an an error message (if `error_msg` is not `nullptr`). You must
 // free the memory allocated for the error message.
 MP_EXPORT int image_segmenter_segment_image(MpImageSegmenterPtr segmenter,
-                                            const MpImage* image,
+                                            MpImagePtr image,
                                             ImageSegmenterResult* result,
                                             char** error_msg);
 
@@ -107,7 +108,7 @@ MP_EXPORT int image_segmenter_segment_image(MpImageSegmenterPtr segmenter,
 // parameter to an an error message (if `error_msg` is not `nullptr`). You must
 // free the memory allocated for the error message.
 MP_EXPORT int image_segmenter_segment_image_with_options(
-    MpImageSegmenterPtr segmenter, const MpImage* image,
+    MpImageSegmenterPtr segmenter, MpImagePtr image,
     const ImageProcessingOptions* options, ImageSegmenterResult* result,
     char** error_msg);
 
@@ -121,7 +122,7 @@ MP_EXPORT int image_segmenter_segment_image_with_options(
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
 MP_EXPORT int image_segmenter_segment_for_video(MpImageSegmenterPtr segmenter,
-                                                const MpImage* image,
+                                                MpImagePtr image,
                                                 int64_t timestamp_ms,
                                                 ImageSegmenterResult* result,
                                                 char** error_msg);
@@ -136,7 +137,7 @@ MP_EXPORT int image_segmenter_segment_for_video(MpImageSegmenterPtr segmenter,
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
 MP_EXPORT int image_segmenter_segment_for_video_with_options(
-    MpImageSegmenterPtr segmenter, const MpImage* image,
+    MpImageSegmenterPtr segmenter, MpImagePtr image,
     const ImageProcessingOptions* options, int64_t timestamp_ms,
     ImageSegmenterResult* result, char** error_msg);
 
@@ -161,7 +162,7 @@ MP_EXPORT int image_segmenter_segment_for_video_with_options(
 // You need to invoke `image_segmenter_close_result` after each invocation to
 // free memory.
 MP_EXPORT int image_segmenter_segment_async(MpImageSegmenterPtr segmenter,
-                                            const MpImage* image,
+                                            MpImagePtr image,
                                             int64_t timestamp_ms,
                                             char** error_msg);
 
@@ -186,7 +187,7 @@ MP_EXPORT int image_segmenter_segment_async(MpImageSegmenterPtr segmenter,
 // You need to invoke `image_segmenter_close_result` after each invocation to
 // free memory.
 MP_EXPORT int image_segmenter_segment_async_with_options(
-    MpImageSegmenterPtr segmenter, const MpImage* image,
+    MpImageSegmenterPtr segmenter, MpImagePtr image,
     const ImageProcessingOptions* options, int64_t timestamp_ms,
     char** error_msg);
 
