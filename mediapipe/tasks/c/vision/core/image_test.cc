@@ -217,6 +217,45 @@ TEST(ImageTest, CreateFromUint8DataError) {
   EXPECT_EQ(image_ptr, nullptr);
 }
 
+TEST(ImageTest, GetDataFromContiguousImageFrame) {
+  const std::string filename = mediapipe::file::JoinPath(
+      "./", "mediapipe/tasks/testdata/vision/burger.jpg");
+  MpImagePtr image_ptr = nullptr;
+  MpStatus status = MpImageCreateFromFile(filename.c_str(), &image_ptr);
+  ASSERT_NE(image_ptr, nullptr);
+
+  auto image = ScopedMpImage{image_ptr};
+  EXPECT_TRUE(MpImageIsContiguous(image.get()));
+
+  const uint8_t* result_data = nullptr;
+  status = MpImageDataUint8(image.get(), &result_data);
+
+  ASSERT_EQ(status, kMpOk);
+  ASSERT_NE(result_data, nullptr);
+}
+
+TEST(ImageTest, GetDataFromNonContiguousImageFrame) {
+  const int width = 10;
+  const int height = 20;
+  const int channels = 3;
+  const int pixel_data_size = width * height * channels;
+  const std::vector<uint8_t> pixel_data(pixel_data_size, 128);
+  MpImagePtr image_ptr = nullptr;
+  MpStatus status = MpImageCreateFromUint8Data(kMpImageFormatSrgb, width,
+                                               height, pixel_data.data(),
+                                               pixel_data.size(), &image_ptr);
+  ASSERT_EQ(status, kMpOk);
+
+  auto image = ScopedMpImage{image_ptr};
+  EXPECT_FALSE(MpImageIsContiguous(image.get()));
+
+  const uint8_t* result_data = nullptr;
+  status = MpImageDataUint8(image.get(), &result_data);
+  ASSERT_EQ(status, kMpOk);
+  ASSERT_EQ(std::vector<uint8_t>(result_data, result_data + pixel_data_size),
+            pixel_data);
+}
+
 struct ImageFormatTestData {
   MpImageFormat format;
   int channels;

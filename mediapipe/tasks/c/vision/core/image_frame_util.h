@@ -97,22 +97,20 @@ inline absl::StatusOr<const T*> GenerateDataArrayOnDemand(
   return GenerateContiguousDataArray<T>(image);
 }
 
-// Gets the cached contiguous data array from the "__contiguous_data" attribute.
-// If the attribute doesn't exist, the function calls
-// GenerateContiguousDataArray() to generate the contiguous data pyarray object,
-// which realigns and copies the data from the original image frame object.
-// Then, the data array object is cached in the "__contiguous_data" attribute.
-// This function only accepts an image frame object that stores non-contiguous
-// data.
+// Gets the a pointer to a contiguous data array that stores the image data.
+//
+// If the image frame is already contiguous, the function returns a pointer to
+// the raw pixel data array of the image frame object directly. Otherwise, the
+// function returns a pointer to the cached contiguous data array or generates
+// the contiguous data array and stores the result for efficient access in
+// future calls
 template <typename T>
-inline absl::StatusOr<T*> GetCachedContiguousDataAttr(
+inline absl::StatusOr<const T*> GetCachedContiguousDataAttr(
     const MpImageInternal* image) {
   std::shared_ptr<ImageFrame> image_frame =
       image->image.GetImageFrameSharedPtr();
   if (image_frame->IsContiguous()) {
-    return absl::InvalidArgumentError(
-        "GetCachedContiguousDataAttr must take an ImageFrame "
-        "object that stores non-contiguous data.");
+    return reinterpret_cast<const T*>(image_frame->PixelData());
   }
   if (image_frame->IsEmpty()) {
     return absl::InvalidArgumentError("ImageFrame is unallocated.");
@@ -122,7 +120,7 @@ inline absl::StatusOr<T*> GetCachedContiguousDataAttr(
   if (image->cached_contiguous_data.empty()) {
     GenerateContiguousDataArray<T>(image);
   }
-  return reinterpret_cast<T*>(image->cached_contiguous_data.data());
+  return reinterpret_cast<const T*>(image->cached_contiguous_data.data());
 }
 
 template <typename T>
