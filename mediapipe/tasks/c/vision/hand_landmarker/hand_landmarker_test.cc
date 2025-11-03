@@ -127,7 +127,8 @@ TEST(HandLandmarkerTest, ImageModeTest) {
   EXPECT_NE(landmarker, nullptr);
 
   HandLandmarkerResult result;
-  hand_landmarker_detect_image(landmarker, image.get(), &result,
+  hand_landmarker_detect_image(landmarker, image.get(),
+                               /* image_processing_options= */ nullptr, &result,
                                /* error_msg */ nullptr);
 
   LandmarksDetectionResult expected_landmarks =
@@ -138,7 +139,7 @@ TEST(HandLandmarkerTest, ImageModeTest) {
   hand_landmarker_close(landmarker, /* error_msg */ nullptr);
 }
 
-TEST(HandLandmarkerTest, ImageModeWithOptionsTest) {
+TEST(HandLandmarkerTest, ImageModeWithRotationTest) {
   const auto image = GetImage(GetFullPath(kPointingUpRotatedImage));
 
   const std::string model_path = GetFullPath(kModelName);
@@ -162,9 +163,9 @@ TEST(HandLandmarkerTest, ImageModeWithOptionsTest) {
   image_processing_options.rotation_degrees = -90;
 
   HandLandmarkerResult result;
-  hand_landmarker_detect_image_with_options(landmarker, image.get(),
-                                            &image_processing_options, &result,
-                                            /* error_msg */ nullptr);
+  hand_landmarker_detect_image(landmarker, image.get(),
+                               &image_processing_options, &result,
+                               /* error_msg */ nullptr);
 
   LandmarksDetectionResult expected_landmarks =
       GetLandmarksDetectionResult(kPointingUpRotatedLandmarksFilename);
@@ -197,8 +198,9 @@ TEST(HandLandmarkerTest, VideoModeTest) {
       GetLandmarksDetectionResult(kPointingUpLandmarksFilename);
   for (int i = 0; i < kIterations; ++i) {
     HandLandmarkerResult result;
-    hand_landmarker_detect_for_video(landmarker, image.get(), i, &result,
-                                     /* error_msg */ nullptr);
+    hand_landmarker_detect_for_video(landmarker, image.get(),
+                                     /* image_processing_options= */ nullptr, i,
+                                     &result, /* error_msg */ nullptr);
 
     ExpectHandLandmarkerResultsCorrect(&result, expected_landmarks,
                                        kLandmarkPrecision, kScorePrecision);
@@ -253,9 +255,11 @@ TEST(HandLandmarkerTest, DISABLED_LiveStreamModeTest) {
   EXPECT_NE(landmarker, nullptr);
 
   for (int i = 0; i < kIterations; ++i) {
-    EXPECT_GE(hand_landmarker_detect_async(landmarker, image.get(), i,
-                                           /* error_msg */ nullptr),
-              0);
+    EXPECT_GE(
+        hand_landmarker_detect_async(landmarker, image.get(),
+                                     /* image_processing_options= */ nullptr, i,
+                                     /* error_msg */ nullptr),
+        0);
   }
   hand_landmarker_close(landmarker, /* error_msg */ nullptr);
 

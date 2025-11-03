@@ -93,16 +93,6 @@ _CTYPES_SIGNATURES = (
         [
             ctypes.c_void_p,
             ctypes.c_void_p,
-            ctypes.POINTER(HandLandmarkerResultC),
-            ctypes.POINTER(ctypes.c_char_p),
-        ],
-        ctypes.c_int,
-    ),
-    _CFunction(
-        'hand_landmarker_detect_image_with_options',
-        [
-            ctypes.c_void_p,
-            ctypes.c_void_p,
             ctypes.POINTER(image_processing_options_c.ImageProcessingOptionsC),
             ctypes.POINTER(HandLandmarkerResultC),
             ctypes.POINTER(ctypes.c_char_p),
@@ -111,17 +101,6 @@ _CTYPES_SIGNATURES = (
     ),
     _CFunction(
         'hand_landmarker_detect_for_video',
-        [
-            ctypes.c_void_p,
-            ctypes.c_void_p,
-            ctypes.c_int64,
-            ctypes.POINTER(HandLandmarkerResultC),
-            ctypes.POINTER(ctypes.c_char_p),
-        ],
-        ctypes.c_int,
-    ),
-    _CFunction(
-        'hand_landmarker_detect_for_video_with_options',
         [
             ctypes.c_void_p,
             ctypes.c_void_p,
@@ -134,16 +113,6 @@ _CTYPES_SIGNATURES = (
     ),
     _CFunction(
         'hand_landmarker_detect_async',
-        [
-            ctypes.c_void_p,
-            ctypes.c_void_p,
-            ctypes.c_int64,
-            ctypes.POINTER(ctypes.c_char_p),
-        ],
-        ctypes.c_int,
-    ),
-    _CFunction(
-        'hand_landmarker_detect_async_with_options',
         [
             ctypes.c_void_p,
             ctypes.c_void_p,
@@ -491,22 +460,18 @@ class HandLandmarker:
     c_result = HandLandmarkerResultC()
     error_msg_ptr = ctypes.c_char_p()
 
-    if image_processing_options is not None:
-      c_image_processing_options = image_processing_options.to_ctypes()
-      status = self._lib.hand_landmarker_detect_image_with_options(
-          self._handle,
-          c_image,
-          ctypes.byref(c_image_processing_options),
-          ctypes.byref(c_result),
-          ctypes.byref(error_msg_ptr),
-      )
-    else:
-      status = self._lib.hand_landmarker_detect_image(
-          self._handle,
-          c_image,
-          ctypes.byref(c_result),
-          ctypes.byref(error_msg_ptr),
-      )
+    c_image_processing_options = (
+        ctypes.byref(image_processing_options.to_ctypes())
+        if image_processing_options
+        else None
+    )
+    status = self._lib.hand_landmarker_detect_image(
+        self._handle,
+        c_image,
+        c_image_processing_options,
+        ctypes.byref(c_result),
+        ctypes.byref(error_msg_ptr),
+    )
 
     mediapipe_c_bindings.handle_return_code(
         status, 'Failed to detect hand landmarks for image', error_msg_ptr
@@ -548,24 +513,19 @@ class HandLandmarker:
     c_result = HandLandmarkerResultC()
     error_msg_ptr = ctypes.c_char_p()
 
-    if image_processing_options is not None:
-      c_image_processing_options = image_processing_options.to_ctypes()
-      status = self._lib.hand_landmarker_detect_for_video_with_options(
-          self._handle,
-          c_image,
-          ctypes.byref(c_image_processing_options),
-          timestamp_ms,
-          ctypes.byref(c_result),
-          ctypes.byref(error_msg_ptr),
-      )
-    else:
-      status = self._lib.hand_landmarker_detect_for_video(
-          self._handle,
-          c_image,
-          timestamp_ms,
-          ctypes.byref(c_result),
-          ctypes.byref(error_msg_ptr),
-      )
+    c_image_processing_options = (
+        ctypes.byref(image_processing_options.to_ctypes())
+        if image_processing_options
+        else None
+    )
+    status = self._lib.hand_landmarker_detect_for_video(
+        self._handle,
+        c_image,
+        c_image_processing_options,
+        timestamp_ms,
+        ctypes.byref(c_result),
+        ctypes.byref(error_msg_ptr),
+    )
 
     mediapipe_c_bindings.handle_return_code(
         status, 'Failed to detect hand landmarks from video', error_msg_ptr
@@ -614,22 +574,18 @@ class HandLandmarker:
     c_image = image._image_ptr  # pylint: disable=protected-access
     error_msg_ptr = ctypes.c_char_p()
 
-    if image_processing_options is not None:
-      c_image_processing_options = image_processing_options.to_ctypes()
-      status = self._lib.hand_landmarker_detect_async_with_options(
-          self._handle,
-          c_image,
-          ctypes.byref(c_image_processing_options),
-          timestamp_ms,
-          ctypes.byref(error_msg_ptr),
-      )
-    else:
-      status = self._lib.hand_landmarker_detect_async(
-          self._handle,
-          c_image,
-          timestamp_ms,
-          ctypes.byref(error_msg_ptr),
-      )
+    c_image_processing_options = (
+        ctypes.byref(image_processing_options.to_ctypes())
+        if image_processing_options
+        else None
+    )
+    status = self._lib.hand_landmarker_detect_async(
+        self._handle,
+        c_image,
+        c_image_processing_options,
+        timestamp_ms,
+        ctypes.byref(error_msg_ptr),
+    )
 
     mediapipe_c_bindings.handle_return_code(
         status, 'Failed to detect hand landmarks asynchronously', error_msg_ptr
