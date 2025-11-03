@@ -159,25 +159,19 @@ class UnpackMediaSequenceCalculator : public CalculatorBase {
     }
     for (const auto& tag : cc->Outputs().GetTags()) {
       if (absl::StartsWith(tag, kImageTag)) {
-        std::string key = "";
         if (tag != kImageTag) {
           int tag_length = sizeof(kImageTag) / sizeof(*kImageTag) - 1;
-          if (tag[tag_length] == '_') {
-            key = tag.substr(tag_length + 1);
-          } else {
-            continue;  // Skip keys that don't match "(kImageTag)_?"
+          if (tag[tag_length] != '_') {
+            continue;  // Skip keys that don't match "{kImageTag}_*"
           }
         }
         cc->Outputs().Tag(tag).Set<std::string>();
       }
       if (absl::StartsWith(tag, kBBoxTag)) {
-        std::string key = "";
         if (tag != kBBoxTag) {
           int tag_length = sizeof(kBBoxTag) / sizeof(*kBBoxTag) - 1;
-          if (tag[tag_length] == '_') {
-            key = tag.substr(tag_length + 1);
-          } else {
-            continue;  // Skip keys that don't match "(kBBoxTag)_?"
+          if (tag[tag_length] != '_') {
+            continue;  // Skip keys that don't match "{kBBoxTag}_*"
           }
         }
         cc->Outputs().Tag(tag).Set<std::vector<Location>>();
