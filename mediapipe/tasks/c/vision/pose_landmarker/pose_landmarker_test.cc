@@ -31,7 +31,6 @@ limitations under the License.
 #include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/core/image_frame_util.h"
 #include "mediapipe/tasks/c/vision/pose_landmarker/pose_landmarker_result.h"
-#include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 
 namespace {
 
@@ -111,9 +110,10 @@ TEST(PoseLandmarkerTest, ImageModeTest) {
   EXPECT_NE(landmarker, nullptr);
 
   PoseLandmarkerResult result;
-  int error_code =
-      pose_landmarker_detect_image(landmarker, image.get(), &result,
-                                   /* error_msg */ nullptr);
+  int error_code = pose_landmarker_detect_image(
+      landmarker, image.get(),
+      /* image_processing_options= */ nullptr, &result,
+      /* error_msg */ nullptr);
   EXPECT_EQ(error_code, 0);
   MatchesPoseLandmarkerResult(&result, kLandmarkPrecision);
   pose_landmarker_close_result(&result);
@@ -142,8 +142,9 @@ TEST(PoseLandmarkerTest, VideoModeTest) {
 
   for (int i = 0; i < kIterations; ++i) {
     PoseLandmarkerResult result;
-    pose_landmarker_detect_for_video(landmarker, image.get(), i, &result,
-                                     /* error_msg */ nullptr);
+    pose_landmarker_detect_for_video(landmarker, image.get(),
+                                     /* image_processing_options= */ nullptr, i,
+                                     &result, /* error_msg */ nullptr);
 
     MatchesPoseLandmarkerResult(&result, kLandmarkPrecision);
     pose_landmarker_close_result(&result);
@@ -197,9 +198,11 @@ TEST(PoseLandmarkerTest, DISABLED_LiveStreamModeTest) {
   EXPECT_NE(landmarker, nullptr);
 
   for (int i = 0; i < kIterations; ++i) {
-    EXPECT_GE(pose_landmarker_detect_async(landmarker, image.get(), i,
-                                           /* error_msg */ nullptr),
-              0);
+    EXPECT_GE(
+        pose_landmarker_detect_async(landmarker, image.get(),
+                                     /* image_processing_options= */ nullptr, i,
+                                     /* error_msg */ nullptr),
+        0);
   }
   pose_landmarker_close(landmarker, /* error_msg */ nullptr);
 

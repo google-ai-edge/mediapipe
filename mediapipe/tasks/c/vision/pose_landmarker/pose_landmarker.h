@@ -18,6 +18,8 @@ limitations under the License.
 
 #include <stdbool.h>
 
+#include <cstdint>
+
 #include "mediapipe/tasks/c/core/base_options.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
@@ -96,16 +98,7 @@ pose_landmarker_create(struct PoseLandmarkerOptions* options, char** error_msg);
 // success. If an error occurs, returns an error code and sets the error
 // parameter to an an error message (if `error_msg` is not `nullptr`). You must
 // free the memory allocated for the error message.
-MP_EXPORT int pose_landmarker_detect_image(MpPoseLandmarkerPtr landmarker,
-                                           MpImagePtr image,
-                                           PoseLandmarkerResult* result,
-                                           char** error_msg);
-
-// Performs pose landmark detection on the input `image` after applying the
-// `options`. Returns `0` on success. If an error occurs, returns an error code
-// and sets the error parameter to an an error message (if `error_msg` is not
-// `nullptr`). You must free the memory allocated for the error message.
-MP_EXPORT int pose_landmarker_detect_image_with_options(
+MP_EXPORT int pose_landmarker_detect_image(
     MpPoseLandmarkerPtr landmarker, MpImagePtr image,
     const ImageProcessingOptions* options, PoseLandmarkerResult* result,
     char** error_msg);
@@ -119,21 +112,7 @@ MP_EXPORT int pose_landmarker_detect_image_with_options(
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT int pose_landmarker_detect_for_video(MpPoseLandmarkerPtr landmarker,
-                                               MpImagePtr image,
-                                               int64_t timestamp_ms,
-                                               PoseLandmarkerResult* result,
-                                               char** error_msg);
-
-// Performs pose landmark detection on the provided video frame after applying
-// the `options`. Only use this method when the PoseLandmarker is created
-// with the video running mode.
-// The image can be of any size with format RGB or RGBA. It's required to
-// provide the video frame's timestamp (in milliseconds). The input timestamps
-// must be monotonically increasing. If an error occurs, returns an error code
-// and sets the error parameter to an an error message (if `error_msg` is not
-// `nullptr`). You must free the memory allocated for the error message.
-MP_EXPORT int pose_landmarker_detect_for_video_with_options(
+MP_EXPORT int pose_landmarker_detect_for_video(
     MpPoseLandmarkerPtr landmarker, MpImagePtr image,
     const ImageProcessingOptions* options, int64_t timestamp_ms,
     PoseLandmarkerResult* result, char** error_msg);
@@ -158,28 +137,7 @@ MP_EXPORT int pose_landmarker_detect_for_video_with_options(
 // allocated for the error message.
 // You need to invoke `pose_landmarker_close_result` after each invocation to
 // free memory.
-MP_EXPORT int pose_landmarker_detect_async(MpPoseLandmarkerPtr landmarker,
-                                           MpImagePtr image,
-                                           int64_t timestamp_ms,
-                                           char** error_msg);
-
-// Send live image data to pose landmark detection after applying the `options`,
-// and the results will be available via the `result_callback` provided in the
-// PoseLandmarkerOptions. Only use this method when the PoseLandmarker is
-// created with the live stream running mode. The image can be of any size with
-// format RGB or RGBA. It's required to provide a timestamp (in milliseconds)
-// to indicate when the input image is sent to the pose landmarker. The input
-// timestamps must be monotonically increasing. The `result_callback` provides:
-//   - The recognition results as an PoseLandmarkerResult object.
-//   - The const reference to the corresponding input image that the pose
-//     landmarker runs on. Note that the const reference to the image will no
-//     longer be valid when the callback returns. To access the image data
-//     outside of the callback, callers need to make a copy of the image.
-//   - The input timestamp in milliseconds.
-// If an error occurs, returns an error code and sets the error parameter to an
-// an error message (if `error_msg` is not `nullptr`). You must free the memory
-// allocated
-MP_EXPORT int pose_landmarker_detect_async_with_options(
+MP_EXPORT int pose_landmarker_detect_async(
     MpPoseLandmarkerPtr landmarker, MpImagePtr image,
     const ImageProcessingOptions* options, int64_t timestamp_ms,
     char** error_msg);

@@ -18,6 +18,7 @@ limitations under the License.
 #include <cstdint>
 #include <cstdlib>
 #include <memory>
+#include <optional>
 #include <utility>
 
 #include "absl/log/absl_log.h"
@@ -25,6 +26,7 @@ limitations under the License.
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/tasks/c/core/base_options_converter.h"
+#include "mediapipe/tasks/c/vision/core/common.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/core/image_frame_util.h"
 #include "mediapipe/tasks/c/vision/core/image_processing_options.h"
@@ -53,8 +55,10 @@ using ::mediapipe::tasks::c::core::CppConvertToBaseOptions;
 using ::mediapipe::tasks::c::vision::core::CppConvertToImageProcessingOptions;
 using ::mediapipe::tasks::vision::core::RunningMode;
 using ::mediapipe::tasks::vision::pose_landmarker::PoseLandmarker;
-typedef ::mediapipe::tasks::vision::pose_landmarker::PoseLandmarkerResult
-    CppPoseLandmarkerResult;
+using CppPoseLandmarkerResult =
+    ::mediapipe::tasks::vision::pose_landmarker::PoseLandmarkerResult;
+using CppImageProcessingOptions =
+    ::mediapipe::tasks::vision::core::ImageProcessingOptions;
 
 int CppProcessError(absl::Status status, char** error_msg) {
   if (error_msg) {
@@ -133,20 +137,19 @@ MpPoseLandmarkerPtr CppPoseLandmarkerCreate(
   return new MpPoseLandmarkerInternal{.landmarker = std::move(*landmarker)};
 }
 
-int CppPoseLandmarkerDetect(MpPoseLandmarkerPtr landmarker,
-                            const MpImagePtr image,
-                            const ImageProcessingOptions* options,
-                            PoseLandmarkerResult* result, char** error_msg) {
+int CppPoseLandmarkerDetect(
+    MpPoseLandmarkerPtr landmarker, const MpImagePtr image,
+    const ImageProcessingOptions* image_processing_options,
+    PoseLandmarkerResult* result, char** error_msg) {
   auto cpp_landmarker = landmarker->landmarker.get();
-  absl::StatusOr<CppPoseLandmarkerResult> cpp_result;
-
-  if (options) {
-    ::mediapipe::tasks::vision::core::ImageProcessingOptions cpp_options;
-    CppConvertToImageProcessingOptions(*options, &cpp_options);
-    cpp_result = cpp_landmarker->Detect(ToImage(image), cpp_options);
-  } else {
-    cpp_result = cpp_landmarker->Detect(ToImage(image));
+  std::optional<CppImageProcessingOptions> cpp_image_processing_options;
+  if (image_processing_options) {
+    CppImageProcessingOptions options;
+    CppConvertToImageProcessingOptions(*image_processing_options, &options);
+    cpp_image_processing_options = options;
   }
+  auto cpp_result =
+      cpp_landmarker->Detect(ToImage(image), cpp_image_processing_options);
 
   if (!cpp_result.ok()) {
     ABSL_LOG(ERROR) << "Detection failed: " << cpp_result.status();
@@ -156,23 +159,19 @@ int CppPoseLandmarkerDetect(MpPoseLandmarkerPtr landmarker,
   return 0;
 }
 
-int CppPoseLandmarkerDetectForVideo(MpPoseLandmarkerPtr landmarker,
-                                    const MpImagePtr image,
-                                    const ImageProcessingOptions* options,
-                                    int64_t timestamp_ms,
-                                    PoseLandmarkerResult* result,
-                                    char** error_msg) {
+int CppPoseLandmarkerDetectForVideo(
+    MpPoseLandmarkerPtr landmarker, const MpImagePtr image,
+    const ImageProcessingOptions* image_processing_options,
+    int64_t timestamp_ms, PoseLandmarkerResult* result, char** error_msg) {
   auto cpp_landmarker = landmarker->landmarker.get();
-  absl::StatusOr<CppPoseLandmarkerResult> cpp_result;
-
-  if (options) {
-    ::mediapipe::tasks::vision::core::ImageProcessingOptions cpp_options;
-    CppConvertToImageProcessingOptions(*options, &cpp_options);
-    cpp_result = cpp_landmarker->DetectForVideo(ToImage(image), timestamp_ms,
-                                                cpp_options);
-  } else {
-    cpp_result = cpp_landmarker->DetectForVideo(ToImage(image), timestamp_ms);
+  std::optional<CppImageProcessingOptions> cpp_image_processing_options;
+  if (image_processing_options) {
+    CppImageProcessingOptions options;
+    CppConvertToImageProcessingOptions(*image_processing_options, &options);
+    cpp_image_processing_options = options;
   }
+  auto cpp_result = cpp_landmarker->DetectForVideo(
+      ToImage(image), timestamp_ms, cpp_image_processing_options);
 
   if (!cpp_result.ok()) {
     ABSL_LOG(ERROR) << "Detection failed: " << cpp_result.status();
@@ -182,21 +181,19 @@ int CppPoseLandmarkerDetectForVideo(MpPoseLandmarkerPtr landmarker,
   return 0;
 }
 
-int CppPoseLandmarkerDetectAsync(MpPoseLandmarkerPtr landmarker,
-                                 const MpImagePtr image,
-                                 const ImageProcessingOptions* options,
-                                 int64_t timestamp_ms, char** error_msg) {
+int CppPoseLandmarkerDetectAsync(
+    MpPoseLandmarkerPtr landmarker, const MpImagePtr image,
+    const ImageProcessingOptions* image_processing_options,
+    int64_t timestamp_ms, char** error_msg) {
   auto cpp_landmarker = landmarker->landmarker.get();
-  absl::Status cpp_result;
-
-  if (options) {
-    ::mediapipe::tasks::vision::core::ImageProcessingOptions cpp_options;
-    CppConvertToImageProcessingOptions(*options, &cpp_options);
-    cpp_result =
-        cpp_landmarker->DetectAsync(ToImage(image), timestamp_ms, cpp_options);
-  } else {
-    cpp_result = cpp_landmarker->DetectAsync(ToImage(image), timestamp_ms);
+  std::optional<CppImageProcessingOptions> cpp_image_processing_options;
+  if (image_processing_options) {
+    CppImageProcessingOptions options;
+    CppConvertToImageProcessingOptions(*image_processing_options, &options);
+    cpp_image_processing_options = options;
   }
+  auto cpp_result = cpp_landmarker->DetectAsync(ToImage(image), timestamp_ms,
+                                                cpp_image_processing_options);
 
   if (!cpp_result.ok()) {
     ABSL_LOG(ERROR) << "Data preparation for the landmark detection failed: "
@@ -231,15 +228,7 @@ MP_EXPORT MpPoseLandmarkerPtr pose_landmarker_create(
       *options, error_msg);
 }
 
-MP_EXPORT int pose_landmarker_detect_image(MpPoseLandmarkerPtr landmarker,
-                                           const MpImagePtr image,
-                                           PoseLandmarkerResult* result,
-                                           char** error_msg) {
-  return mediapipe::tasks::c::vision::pose_landmarker::CppPoseLandmarkerDetect(
-      landmarker, image, /*options=*/nullptr, result, error_msg);
-}
-
-MP_EXPORT int pose_landmarker_detect_image_with_options(
+MP_EXPORT int pose_landmarker_detect_image(
     MpPoseLandmarkerPtr landmarker, const MpImagePtr image,
     const ImageProcessingOptions* options, PoseLandmarkerResult* result,
     char** error_msg) {
@@ -247,17 +236,7 @@ MP_EXPORT int pose_landmarker_detect_image_with_options(
       landmarker, image, options, result, error_msg);
 }
 
-MP_EXPORT int pose_landmarker_detect_for_video(MpPoseLandmarkerPtr landmarker,
-                                               const MpImagePtr image,
-                                               int64_t timestamp_ms,
-                                               PoseLandmarkerResult* result,
-                                               char** error_msg) {
-  return mediapipe::tasks::c::vision::pose_landmarker::
-      CppPoseLandmarkerDetectForVideo(landmarker, image, /*options=*/nullptr,
-                                      timestamp_ms, result, error_msg);
-}
-
-MP_EXPORT int pose_landmarker_detect_for_video_with_options(
+MP_EXPORT int pose_landmarker_detect_for_video(
     MpPoseLandmarkerPtr landmarker, const MpImagePtr image,
     const ImageProcessingOptions* options, int64_t timestamp_ms,
     PoseLandmarkerResult* result, char** error_msg) {
@@ -266,16 +245,7 @@ MP_EXPORT int pose_landmarker_detect_for_video_with_options(
                                       result, error_msg);
 }
 
-MP_EXPORT int pose_landmarker_detect_async(MpPoseLandmarkerPtr landmarker,
-                                           const MpImagePtr image,
-                                           int64_t timestamp_ms,
-                                           char** error_msg) {
-  return mediapipe::tasks::c::vision::pose_landmarker::
-      CppPoseLandmarkerDetectAsync(landmarker, image, /*options=*/nullptr,
-                                   timestamp_ms, error_msg);
-}
-
-MP_EXPORT int pose_landmarker_detect_async_with_options(
+MP_EXPORT int pose_landmarker_detect_async(
     MpPoseLandmarkerPtr landmarker, const MpImagePtr image,
     const ImageProcessingOptions* options, int64_t timestamp_ms,
     char** error_msg) {
