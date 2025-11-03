@@ -33,6 +33,7 @@ cc_library(
 )
 
 IMAGE_DEPS = [
+    ":common",
     ":image_frame_util",
     "@com_google_absl//absl/log:absl_log",
     "@com_google_absl//absl/status",

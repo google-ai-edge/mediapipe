@@ -19,6 +19,7 @@ limitations under the License.
 #include <cstdint>
 
 #include "mediapipe/tasks/c/vision/core/common.h"
+#include "mediapipe/tasks/c/vision/core/image.h"
 
 #ifndef MP_EXPORT
 #define MP_EXPORT __attribute__((visibility("default")))
@@ -31,7 +32,7 @@ extern "C" {
 struct ImageSegmenterResult {
   // Multiple masks of float image in VEC32F1 format where, for each mask, each
   // pixel represents the prediction confidence, usually in the [0, 1] range.
-  MpMask* confidence_masks;
+  MpImagePtr* confidence_masks;
 
   // Number of elements in the array `confidence_masks`.
   uint32_t confidence_masks_count;  // Number of elements in the array
@@ -41,7 +42,7 @@ struct ImageSegmenterResult {
 
   // A category mask of uint8 image in GRAY8 format where each pixel represents
   // the class which the pixel in the original image was predicted to belong to.
-  MpMask category_mask;
+  MpImagePtr category_mask;
 
   // Flag to indicate presence of category mask (0 for no, 1 for yes).
   uint32_t has_category_mask;

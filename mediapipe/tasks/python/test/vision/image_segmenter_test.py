@@ -15,6 +15,7 @@
 
 import enum
 import os
+import threading
 from unittest import mock
 
 from absl.testing import absltest
@@ -22,17 +23,16 @@ from absl.testing import parameterized
 import cv2
 import numpy as np
 
-from mediapipe.python._framework_bindings import image as image_module
-from mediapipe.python._framework_bindings import image_frame
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.test import test_utils
 from mediapipe.tasks.python.vision import image_segmenter
+from mediapipe.tasks.python.vision.core import image as image_module
 from mediapipe.tasks.python.vision.core import vision_task_running_mode
 
 ImageSegmenterResult = image_segmenter.ImageSegmenterResult
 _BaseOptions = base_options_module.BaseOptions
 _Image = image_module.Image
-_ImageFormat = image_frame.ImageFormat
+_ImageFormat = image_module.ImageFormat
 _ImageSegmenter = image_segmenter.ImageSegmenter
 _ImageSegmenterOptions = image_segmenter.ImageSegmenterOptions
 _RUNNING_MODE = vision_task_running_mode.VisionTaskRunningMode
@@ -81,6 +81,8 @@ def _calculate_soft_iou(m1, m2):
 
 
 def _similar_to_float_mask(actual_mask, expected_mask, similarity_threshold):
+  if not actual_mask:
+    raise ValueError('Result mask used for comparison was None')
   actual_mask = actual_mask.numpy_view()
   expected_mask = expected_mask.numpy_view() / 255.0
 
@@ -91,6 +93,8 @@ def _similar_to_float_mask(actual_mask, expected_mask, similarity_threshold):
 
 
 def _similar_to_uint8_mask(actual_mask, expected_mask):
+  if not actual_mask:
+    raise ValueError('Result mask used for comparison was None')
   actual_mask_pixels = actual_mask.numpy_view().flatten()
   expected_mask_pixels = expected_mask.numpy_view().flatten()
 
@@ -159,7 +163,8 @@ class ImageSegmenterTest(parameterized.TestCase):
           model_asset_path='/path/to/invalid/model.tflite'
       )
       options = _ImageSegmenterOptions(base_options=base_options)
-      _ImageSegmenter.create_from_options(options)
+      segmenter = _ImageSegmenter.create_from_options(options)
+      segmenter.close()
 
   def test_create_from_options_succeeds_with_valid_model_content(self):
     # Creates with options containing model content successfully.
@@ -168,6 +173,7 @@ class ImageSegmenterTest(parameterized.TestCase):
       options = _ImageSegmenterOptions(base_options=base_options)
       segmenter = _ImageSegmenter.create_from_options(options)
       self.assertIsInstance(segmenter, _ImageSegmenter)
+      segmenter.close()
 
   @parameterized.parameters(
       (ModelFileType.FILE_NAME,), (ModelFileType.FILE_CONTENT,)
@@ -194,6 +200,8 @@ class ImageSegmenterTest(parameterized.TestCase):
     # Performs image segmentation on the input.
     segmentation_result = segmenter.segment(self.test_image)
     category_mask = segmentation_result.category_mask
+    if not category_mask:
+      raise ValueError('Result category mask was None')
     result_pixels = category_mask.numpy_view().flatten()
 
     # Check if data type of `category_mask` is correct.
@@ -292,7 +300,7 @@ class ImageSegmenterTest(parameterized.TestCase):
     )
     with _ImageSegmenter.create_from_options(options) as segmenter:
       with self.assertRaisesRegex(
-          ValueError, r'not initialized with the video mode'
+          RuntimeError, r'not initialized with the video mode'
       ):
         segmenter.segment_for_video(self.test_image, 0)
 
@@ -303,7 +311,7 @@ class ImageSegmenterTest(parameterized.TestCase):
     )
     with _ImageSegmenter.create_from_options(options) as segmenter:
       with self.assertRaisesRegex(
-          ValueError, r'not initialized with the live stream mode'
+          RuntimeError, r'not initialized with the live stream mode'
       ):
         segmenter.segment_async(self.test_image, 0)
 
@@ -314,7 +322,7 @@ class ImageSegmenterTest(parameterized.TestCase):
     )
     with _ImageSegmenter.create_from_options(options) as segmenter:
       with self.assertRaisesRegex(
-          ValueError, r'not initialized with the image mode'
+          RuntimeError, r'not initialized with the image mode'
       ):
         segmenter.segment(self.test_image)
 
@@ -325,7 +333,7 @@ class ImageSegmenterTest(parameterized.TestCase):
     )
     with _ImageSegmenter.create_from_options(options) as segmenter:
       with self.assertRaisesRegex(
-          ValueError, r'not initialized with the live stream mode'
+          RuntimeError, r'not initialized with the live stream mode'
       ):
         segmenter.segment_async(self.test_image, 0)
 
@@ -337,7 +345,7 @@ class ImageSegmenterTest(parameterized.TestCase):
     with _ImageSegmenter.create_from_options(options) as segmenter:
       unused_result = segmenter.segment_for_video(self.test_image, 1)
       with self.assertRaisesRegex(
-          ValueError, r'Input timestamp must be monotonically increasing'
+          RuntimeError, r'Input timestamp must be monotonically increasing'
       ):
         segmenter.segment_for_video(self.test_image, 0)
 
@@ -402,7 +410,7 @@ class ImageSegmenterTest(parameterized.TestCase):
     )
     with _ImageSegmenter.create_from_options(options) as segmenter:
       with self.assertRaisesRegex(
-          ValueError, r'not initialized with the image mode'
+          RuntimeError, r'not initialized with the image mode'
       ):
         segmenter.segment(self.test_image)
 
@@ -414,7 +422,7 @@ class ImageSegmenterTest(parameterized.TestCase):
     )
     with _ImageSegmenter.create_from_options(options) as segmenter:
       with self.assertRaisesRegex(
-          ValueError, r'not initialized with the video mode'
+          RuntimeError, r'not initialized with the video mode'
       ):
         segmenter.segment_for_video(self.test_image, 0)
 
@@ -427,31 +435,39 @@ class ImageSegmenterTest(parameterized.TestCase):
     with _ImageSegmenter.create_from_options(options) as segmenter:
       segmenter.segment_async(self.test_image, 100)
       with self.assertRaisesRegex(
-          ValueError, r'Input timestamp must be monotonically increasing'
+          RuntimeError, r'Input timestamp must be monotonically increasing'
       ):
         segmenter.segment_async(self.test_image, 0)
 
   def test_segment_async_calls_in_category_mask_mode(self):
     observed_timestamp_ms = -1
+    callback_event = threading.Event()
+    callback_exception = None
 
     def check_result(
         result: ImageSegmenterResult, output_image: _Image, timestamp_ms: int
     ):
-      # Get the output category mask.
-      category_mask = result.category_mask
-      self.assertEqual(output_image.width, self.test_image.width)
-      self.assertEqual(output_image.height, self.test_image.height)
-      self.assertEqual(output_image.width, self.test_seg_image.width)
-      self.assertEqual(output_image.height, self.test_seg_image.height)
-      self.assertTrue(
-          _similar_to_uint8_mask(category_mask, self.test_seg_image),
-          (
-              'Number of pixels in the candidate mask differing from that of'
-              f' the ground truth mask exceeds {_MASK_SIMILARITY_THRESHOLD}.'
-          ),
-      )
-      self.assertLess(observed_timestamp_ms, timestamp_ms)
-      self.observed_timestamp_ms = timestamp_ms
+      nonlocal callback_exception, observed_timestamp_ms
+      try:
+        # Get the output category mask.
+        category_mask = result.category_mask
+        self.assertEqual(output_image.width, self.test_image.width)
+        self.assertEqual(output_image.height, self.test_image.height)
+        self.assertEqual(output_image.width, self.test_seg_image.width)
+        self.assertEqual(output_image.height, self.test_seg_image.height)
+        self.assertTrue(
+            _similar_to_uint8_mask(category_mask, self.test_seg_image),
+            (
+                'Number of pixels in the candidate mask differing from that of'
+                f' the ground truth mask exceeds {_MASK_SIMILARITY_THRESHOLD}.'
+            ),
+        )
+        self.assertLess(observed_timestamp_ms, timestamp_ms)
+        self.observed_timestamp_ms = timestamp_ms
+      except AssertionError as e:
+        callback_exception = e
+      finally:
+        callback_event.set()
 
     options = _ImageSegmenterOptions(
         base_options=_BaseOptions(model_asset_path=self.model_path),
@@ -463,6 +479,10 @@ class ImageSegmenterTest(parameterized.TestCase):
     with _ImageSegmenter.create_from_options(options) as segmenter:
       for timestamp in range(0, 300, 30):
         segmenter.segment_async(self.test_image, timestamp)
+        callback_event.wait(3)
+        if callback_exception is not None:
+          raise callback_exception
+        callback_event.clear()
 
   def test_segment_async_calls_in_confidence_mask_mode(self):
     # Load the cat image.
@@ -473,28 +493,36 @@ class ImageSegmenterTest(parameterized.TestCase):
     # Loads ground truth segmentation file.
     expected_mask = self._load_segmentation_mask(_CAT_MASK)
     observed_timestamp_ms = -1
+    callback_event = threading.Event()
+    callback_exception = None
 
     def check_result(
         result: ImageSegmenterResult, output_image: _Image, timestamp_ms: int
     ):
-      # Get the output category mask.
-      confidence_masks = result.confidence_masks
+      nonlocal callback_exception, observed_timestamp_ms
+      try:
+        # Get the output category mask.
+        confidence_masks = result.confidence_masks
 
-      # Check if confidence mask shape is correct.
-      self.assertLen(
-          confidence_masks,
-          21,
-          'Number of confidence masks must match with number of categories.',
-      )
-      self.assertEqual(output_image.width, test_image.width)
-      self.assertEqual(output_image.height, test_image.height)
-      self.assertTrue(
-          _similar_to_float_mask(
-              confidence_masks[8], expected_mask, _MASK_SIMILARITY_THRESHOLD
-          )
-      )
-      self.assertLess(observed_timestamp_ms, timestamp_ms)
-      self.observed_timestamp_ms = timestamp_ms
+        # Check if confidence mask shape is correct.
+        self.assertLen(
+            confidence_masks,
+            21,
+            'Number of confidence masks must match with number of categories.',
+        )
+        self.assertEqual(output_image.width, test_image.width)
+        self.assertEqual(output_image.height, test_image.height)
+        self.assertTrue(
+            _similar_to_float_mask(
+                confidence_masks[8], expected_mask, _MASK_SIMILARITY_THRESHOLD
+            )
+        )
+        self.assertLess(observed_timestamp_ms, timestamp_ms)
+        self.observed_timestamp_ms = timestamp_ms
+      except AssertionError as e:
+        callback_exception = e
+      finally:
+        callback_event.set()
 
     options = _ImageSegmenterOptions(
         base_options=_BaseOptions(model_asset_path=self.model_path),
@@ -506,6 +534,10 @@ class ImageSegmenterTest(parameterized.TestCase):
     with _ImageSegmenter.create_from_options(options) as segmenter:
       for timestamp in range(0, 300, 30):
         segmenter.segment_async(test_image, timestamp)
+        callback_event.wait(3)
+        if callback_exception is not None:
+          raise callback_exception
+        callback_event.clear()
 
 
 if __name__ == '__main__':

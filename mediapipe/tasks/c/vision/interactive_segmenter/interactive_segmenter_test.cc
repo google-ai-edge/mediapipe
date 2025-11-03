@@ -27,6 +27,7 @@ limitations under the License.
 #include "mediapipe/tasks/c/components/containers/keypoint.h"
 #include "mediapipe/tasks/c/test/test_utils.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
+#include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/image_segmenter/image_segmenter_result.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 
@@ -96,8 +97,8 @@ TEST(InteractiveSegmenterTest,
 
   auto expected_mask_image = DecodeImageFromFile(GetFullPath(kMaskImageFile));
   const MpMask expected_mask = CreateCategoryMaskFromImage(expected_mask_image);
-  const MpMask actual_mask = result.category_mask;
-  EXPECT_GT(SimilarToUint8Mask(&actual_mask, &expected_mask,
+  const MpImagePtr actual_mask = result.category_mask;
+  EXPECT_GT(SimilarToUint8Mask(actual_mask, &expected_mask,
                                kGoldenMaskMagnificationFactor),
             0.9f);
   interactive_segmenter_close_result(&result);
@@ -152,8 +153,8 @@ TEST(InteractiveSegmenterTest,
 
   auto expected_mask_image = DecodeImageFromFile(GetFullPath(kMaskImageFile));
   const MpMask expected_mask = CreateCategoryMaskFromImage(expected_mask_image);
-  const MpMask actual_mask = result.category_mask;
-  EXPECT_GT(SimilarToUint8Mask(&actual_mask, &expected_mask,
+  const MpImagePtr actual_mask = result.category_mask;
+  EXPECT_GT(SimilarToUint8Mask(actual_mask, &expected_mask,
                                kGoldenMaskMagnificationFactor),
             0.84f);
   interactive_segmenter_close_result(&result);

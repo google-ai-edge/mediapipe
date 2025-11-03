@@ -17,9 +17,13 @@ limitations under the License.
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include <vector>
 
+#include "mediapipe/framework/formats/image.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
+#include "mediapipe/tasks/c/vision/core/image.h"
+#include "mediapipe/tasks/c/vision/core/image_frame_util.h"
 #include "mediapipe/tasks/c/vision/image_segmenter/image_segmenter_result.h"
 #include "mediapipe/tasks/cc/vision/image_segmenter/image_segmenter_result.h"
 
@@ -31,17 +35,11 @@ void CppConvertToImageSegmenterResult(
   // Convert confidence_masks
   if (in.confidence_masks.has_value()) {
     out->confidence_masks_count = in.confidence_masks->size();
-    out->confidence_masks = new MpMask[out->confidence_masks_count];
+    out->confidence_masks = new MpImagePtr[out->confidence_masks_count];
     for (size_t i = 0; i < out->confidence_masks_count; ++i) {
-      const auto& image_frame =
-          in.confidence_masks.value()[i].GetImageFrameSharedPtr();
-      MpMask mp_mask = {
-          .type = MpMask::IMAGE_FRAME,
-          .image_frame = {.mask_format = MaskFormat::FLOAT,
-                          .image_buffer = image_frame->PixelData(),
-                          .width = image_frame->Width(),
-                          .height = image_frame->Height()}};
-      out->confidence_masks[i] = mp_mask;
+      mediapipe::Image mp_image = in.confidence_masks.value()[i];
+      out->confidence_masks[i] =
+          new MpImageInternal{.image = mp_image, .cached_contiguous_data = {}};
     }
     out->has_confidence_masks = 1;
   } else {
@@ -52,13 +50,9 @@ void CppConvertToImageSegmenterResult(
 
   // Convert category_mask
   if (in.category_mask.has_value()) {
-    const auto& image_frame = in.category_mask.value().GetImageFrameSharedPtr();
-    MpMask mp_mask = {.type = MpMask::IMAGE_FRAME,
-                      .image_frame = {.mask_format = MaskFormat::UINT8,
-                                      .image_buffer = image_frame->PixelData(),
-                                      .width = image_frame->Width(),
-                                      .height = image_frame->Height()}};
-    out->category_mask = mp_mask;
+    mediapipe::Image mp_image = in.category_mask.value();
+    out->category_mask =
+        new MpImageInternal{.image = mp_image, .cached_contiguous_data = {}};
     out->has_category_mask = 1;
   } else {
     out->has_category_mask = 0;
@@ -73,6 +67,9 @@ void CppConvertToImageSegmenterResult(
 
 void CppCloseImageSegmenterResult(ImageSegmenterResult* result) {
   if (result->has_confidence_masks) {
+    for (uint32_t i = 0; i < result->confidence_masks_count; ++i) {
+      MpImageFree(result->confidence_masks[i]);
+    }
     delete[] result->confidence_masks;
     result->confidence_masks = nullptr;
     result->confidence_masks_count = 0;
@@ -80,6 +77,7 @@ void CppCloseImageSegmenterResult(ImageSegmenterResult* result) {
   }
 
   if (result->has_category_mask) {
+    MpImageFree(result->category_mask);
     result->category_mask = {};
     result->has_category_mask = 0;
   }
