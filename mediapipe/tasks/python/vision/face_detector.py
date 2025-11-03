@@ -71,16 +71,6 @@ _CTYPES_SIGNATURES = (
         [
             ctypes.c_void_p,
             ctypes.c_void_p,
-            ctypes.POINTER(detections_c_module.DetectionResultC),
-            ctypes.POINTER(ctypes.c_char_p),
-        ],
-        ctypes.c_int,
-    ),
-    _CFunction(
-        'face_detector_detect_image_with_options',
-        [
-            ctypes.c_void_p,
-            ctypes.c_void_p,
             ctypes.POINTER(
                 image_processing_options_c_module.ImageProcessingOptionsC
             ),
@@ -91,17 +81,6 @@ _CTYPES_SIGNATURES = (
     ),
     _CFunction(
         'face_detector_detect_for_video',
-        [
-            ctypes.c_void_p,
-            ctypes.c_void_p,
-            ctypes.c_int64,
-            ctypes.POINTER(detections_c_module.DetectionResultC),
-            ctypes.POINTER(ctypes.c_char_p),
-        ],
-        ctypes.c_int,
-    ),
-    _CFunction(
-        'face_detector_detect_for_video_with_options',
         [
             ctypes.c_void_p,
             ctypes.c_void_p,
@@ -116,16 +95,6 @@ _CTYPES_SIGNATURES = (
     ),
     _CFunction(
         'face_detector_detect_async',
-        [
-            ctypes.c_void_p,
-            ctypes.c_void_p,
-            ctypes.c_int64,
-            ctypes.POINTER(ctypes.c_char_p),
-        ],
-        ctypes.c_int,
-    ),
-    _CFunction(
-        'face_detector_detect_async_with_options',
         [
             ctypes.c_void_p,
             ctypes.c_void_p,
@@ -330,22 +299,18 @@ class FaceDetector:
     c_result = detections_c_module.DetectionResultC()
     error_msg_ptr = ctypes.c_char_p()
 
-    if image_processing_options:
-      c_image_processing_options = image_processing_options.to_ctypes()
-      status = self._lib.face_detector_detect_image_with_options(
-          self._handle,
-          c_image,
-          ctypes.byref(c_image_processing_options),
-          ctypes.byref(c_result),
-          ctypes.byref(error_msg_ptr),
-      )
-    else:
-      status = self._lib.face_detector_detect_image(
-          self._handle,
-          c_image,
-          ctypes.byref(c_result),
-          ctypes.byref(error_msg_ptr),
-      )
+    c_image_processing_options = (
+        ctypes.byref(image_processing_options.to_ctypes())
+        if image_processing_options
+        else None
+    )
+    status = self._lib.face_detector_detect_image(
+        self._handle,
+        c_image,
+        c_image_processing_options,
+        ctypes.byref(c_result),
+        ctypes.byref(error_msg_ptr),
+    )
 
     self._handle_status(
         status, error_msg_ptr, 'Failed to detect faces for image.'
@@ -387,24 +352,19 @@ class FaceDetector:
     c_result = detections_c_module.DetectionResultC()
     error_msg_ptr = ctypes.c_char_p()
 
-    if image_processing_options:
-      c_image_processing_options = image_processing_options.to_ctypes()
-      status = self._lib.face_detector_detect_for_video_with_options(
-          self._handle,
-          c_image,
-          ctypes.byref(c_image_processing_options),
-          timestamp_ms,
-          ctypes.byref(c_result),
-          ctypes.byref(error_msg_ptr),
-      )
-    else:
-      status = self._lib.face_detector_detect_for_video(
-          self._handle,
-          c_image,
-          timestamp_ms,
-          ctypes.byref(c_result),
-          ctypes.byref(error_msg_ptr),
-      )
+    c_image_processing_options = (
+        ctypes.byref(image_processing_options.to_ctypes())
+        if image_processing_options
+        else None
+    )
+    status = self._lib.face_detector_detect_for_video(
+        self._handle,
+        c_image,
+        c_image_processing_options,
+        timestamp_ms,
+        ctypes.byref(c_result),
+        ctypes.byref(error_msg_ptr),
+    )
 
     self._handle_status(
         status, error_msg_ptr, 'Failed to detect faces from video.'
@@ -454,22 +414,18 @@ class FaceDetector:
     c_image = image._image_ptr  # pylint: disable=protected-access
     error_msg_ptr = ctypes.c_char_p()
 
-    if image_processing_options:
-      c_image_processing_options = image_processing_options.to_ctypes()
-      status = self._lib.face_detector_detect_async_with_options(
-          self._handle,
-          c_image,
-          ctypes.byref(c_image_processing_options),
-          timestamp_ms,
-          ctypes.byref(error_msg_ptr),
-      )
-    else:
-      status = self._lib.face_detector_detect_async(
-          self._handle,
-          c_image,
-          timestamp_ms,
-          ctypes.byref(error_msg_ptr),
-      )
+    c_image_processing_options = (
+        ctypes.byref(image_processing_options.to_ctypes())
+        if image_processing_options
+        else None
+    )
+    status = self._lib.face_detector_detect_async(
+        self._handle,
+        c_image,
+        c_image_processing_options,
+        timestamp_ms,
+        ctypes.byref(error_msg_ptr),
+    )
 
     self._handle_status(
         status, error_msg_ptr, 'Failed to detect faces asynchronously.'

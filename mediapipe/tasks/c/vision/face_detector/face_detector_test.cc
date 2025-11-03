@@ -126,8 +126,10 @@ TEST(FaceDetectorTest, ImageModeTest) {
   EXPECT_NE(detector, nullptr);
 
   FaceDetectorResult result;
-  int error_code = face_detector_detect_image(detector, image.get(), &result,
-                                              /* error_msg */ nullptr);
+  int error_code = face_detector_detect_image(
+      detector, image.get(),
+      /* image_processing_options */ nullptr, &result,
+      /* error_msg */ nullptr);
 
   Detection expected_detection = CreateExpectedDetection(
       kExpectedBoundingBox, kExpectedKeypoints, kKeypointCount);
@@ -139,7 +141,7 @@ TEST(FaceDetectorTest, ImageModeTest) {
   face_detector_close(detector, /* error_msg */ nullptr);
 }
 
-TEST(FaceDetectorTest, ImageModeWithImageProcessingOptionsTest) {
+TEST(FaceDetectorTest, ImageModeWithRotationTest) {
   const auto image = GetImage(GetFullPath(kImageRotatedFile));
 
   const std::string model_path = GetFullPath(kModelName);
@@ -161,7 +163,7 @@ TEST(FaceDetectorTest, ImageModeWithImageProcessingOptionsTest) {
   image_processing_options.rotation_degrees = -90;
 
   FaceDetectorResult result;
-  int error_code = face_detector_detect_image_with_options(
+  int error_code = face_detector_detect_image(
       detector, image.get(), &image_processing_options, &result,
       /* error_msg */ nullptr);
 
@@ -195,9 +197,10 @@ TEST(FaceDetectorTest, VideoModeTest) {
       kExpectedBoundingBox, kExpectedKeypoints, kKeypointCount);
   for (int i = 0; i < kIterations; ++i) {
     FaceDetectorResult result;
-    int error_code =
-        face_detector_detect_for_video(detector, image.get(), i, &result,
-                                       /* error_msg */ nullptr);
+    int error_code = face_detector_detect_for_video(
+        detector, image.get(), /* image_processing_options */ nullptr, i,
+        &result,
+        /* error_msg */ nullptr);
     AssertFaceDetectorResult(&result, error_code, expected_detection,
                              kPixelDiffTolerance, kKeypointErrorThreshold);
     face_detector_close_result(&result);
@@ -251,9 +254,11 @@ TEST(FaceDetectorTest, DISABLED_LiveStreamModeTest) {
   EXPECT_NE(detector, nullptr);
 
   for (int i = 0; i < kIterations; ++i) {
-    EXPECT_GE(face_detector_detect_async(detector, image.get(), i,
-                                         /* error_msg */ nullptr),
-              0);
+    EXPECT_GE(
+        face_detector_detect_async(detector, image.get(),
+                                   /* image_processing_options */ nullptr, i,
+                                   /* error_msg */ nullptr),
+        0);
   }
   face_detector_close(detector, /* error_msg */ nullptr);
 
