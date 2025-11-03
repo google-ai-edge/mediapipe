@@ -18,6 +18,7 @@ limitations under the License.
 #include <cstdint>
 #include <cstdlib>
 #include <memory>
+#include <optional>
 #include <utility>
 
 #include "absl/log/absl_log.h"
@@ -55,8 +56,11 @@ using ::mediapipe::tasks::c::vision::core::CppConvertToImageProcessingOptions;
 using ::mediapipe::tasks::vision::CreateImageFromBuffer;
 using ::mediapipe::tasks::vision::core::RunningMode;
 using ::mediapipe::tasks::vision::face_landmarker::FaceLandmarker;
-typedef ::mediapipe::tasks::vision::face_landmarker::FaceLandmarkerResult
-    CppFaceLandmarkerResult;
+using CppFaceLandmarkerResult =
+    ::mediapipe::tasks::vision::face_landmarker::FaceLandmarkerResult;
+using CppImageProcessingOptions =
+    ::mediapipe::tasks::vision::core::ImageProcessingOptions;
+using ::mediapipe::tasks::c::vision::core::CppConvertToImageProcessingOptions;
 
 int CppProcessError(absl::Status status, char** error_msg) {
   if (error_msg) {
@@ -135,19 +139,19 @@ MpFaceLandmarkerPtr CppFaceLandmarkerCreate(
   return new MpFaceLandmarkerInternal{.landmarker = std::move(*landmarker)};
 }
 
-int CppFaceLandmarkerDetect(MpFaceLandmarkerPtr landmarker, MpImagePtr image,
-                            const ImageProcessingOptions* options,
-                            FaceLandmarkerResult* result, char** error_msg) {
+int CppFaceLandmarkerDetect(
+    MpFaceLandmarkerPtr landmarker, MpImagePtr image,
+    const ImageProcessingOptions* image_processing_options,
+    FaceLandmarkerResult* result, char** error_msg) {
   auto cpp_landmarker = landmarker->landmarker.get();
-  absl::StatusOr<CppFaceLandmarkerResult> cpp_result;
-
-  if (options) {
-    ::mediapipe::tasks::vision::core::ImageProcessingOptions cpp_options;
-    CppConvertToImageProcessingOptions(*options, &cpp_options);
-    cpp_result = cpp_landmarker->Detect(ToImage(image), cpp_options);
-  } else {
-    cpp_result = cpp_landmarker->Detect(ToImage(image));
+  std::optional<CppImageProcessingOptions> cpp_image_processing_options;
+  if (image_processing_options) {
+    CppImageProcessingOptions options;
+    CppConvertToImageProcessingOptions(*image_processing_options, &options);
+    cpp_image_processing_options = options;
   }
+  auto cpp_result =
+      cpp_landmarker->Detect(ToImage(image), cpp_image_processing_options);
 
   if (!cpp_result.ok()) {
     ABSL_LOG(ERROR) << "Detection failed: " << cpp_result.status();
@@ -157,23 +161,19 @@ int CppFaceLandmarkerDetect(MpFaceLandmarkerPtr landmarker, MpImagePtr image,
   return 0;
 }
 
-int CppFaceLandmarkerDetectForVideo(MpFaceLandmarkerPtr landmarker,
-                                    MpImagePtr image,
-                                    const ImageProcessingOptions* options,
-                                    int64_t timestamp_ms,
-                                    FaceLandmarkerResult* result,
-                                    char** error_msg) {
+int CppFaceLandmarkerDetectForVideo(
+    MpFaceLandmarkerPtr landmarker, MpImagePtr image,
+    const ImageProcessingOptions* image_processing_options,
+    int64_t timestamp_ms, FaceLandmarkerResult* result, char** error_msg) {
   auto cpp_landmarker = landmarker->landmarker.get();
-  absl::StatusOr<CppFaceLandmarkerResult> cpp_result;
-
-  if (options) {
-    ::mediapipe::tasks::vision::core::ImageProcessingOptions cpp_options;
-    CppConvertToImageProcessingOptions(*options, &cpp_options);
-    cpp_result = cpp_landmarker->DetectForVideo(ToImage(image), timestamp_ms,
-                                                cpp_options);
-  } else {
-    cpp_result = cpp_landmarker->DetectForVideo(ToImage(image), timestamp_ms);
+  std::optional<CppImageProcessingOptions> cpp_image_processing_options;
+  if (image_processing_options) {
+    CppImageProcessingOptions options;
+    CppConvertToImageProcessingOptions(*image_processing_options, &options);
+    cpp_image_processing_options = options;
   }
+  auto cpp_result = cpp_landmarker->DetectForVideo(
+      ToImage(image), timestamp_ms, cpp_image_processing_options);
 
   if (!cpp_result.ok()) {
     ABSL_LOG(ERROR) << "Detection failed: " << cpp_result.status();
@@ -183,21 +183,19 @@ int CppFaceLandmarkerDetectForVideo(MpFaceLandmarkerPtr landmarker,
   return 0;
 }
 
-int CppFaceLandmarkerDetectAsync(MpFaceLandmarkerPtr landmarker,
-                                 MpImagePtr image,
-                                 const ImageProcessingOptions* options,
-                                 int64_t timestamp_ms, char** error_msg) {
+int CppFaceLandmarkerDetectAsync(
+    MpFaceLandmarkerPtr landmarker, MpImagePtr image,
+    const ImageProcessingOptions* image_processing_options,
+    int64_t timestamp_ms, char** error_msg) {
   auto cpp_landmarker = landmarker->landmarker.get();
-  absl::Status cpp_result;
-
-  if (options) {
-    ::mediapipe::tasks::vision::core::ImageProcessingOptions cpp_options;
-    CppConvertToImageProcessingOptions(*options, &cpp_options);
-    cpp_result =
-        cpp_landmarker->DetectAsync(ToImage(image), timestamp_ms, cpp_options);
-  } else {
-    cpp_result = cpp_landmarker->DetectAsync(ToImage(image), timestamp_ms);
+  std::optional<CppImageProcessingOptions> cpp_image_processing_options;
+  if (image_processing_options) {
+    CppImageProcessingOptions options;
+    CppConvertToImageProcessingOptions(*image_processing_options, &options);
+    cpp_image_processing_options = options;
   }
+  auto cpp_result = cpp_landmarker->DetectAsync(ToImage(image), timestamp_ms,
+                                                cpp_image_processing_options);
 
   if (!cpp_result.ok()) {
     ABSL_LOG(ERROR) << "Data preparation for the landmark detection failed: "
@@ -232,66 +230,39 @@ MP_EXPORT MpFaceLandmarkerPtr face_landmarker_create(
       *options, error_msg);
 }
 
-MP_EXPORT int face_landmarker_detect_image(MpFaceLandmarkerPtr landmarker,
-                                           MpImagePtr image,
-                                           FaceLandmarkerResult* result,
-                                           char** error_msg) {
-  return mediapipe::tasks::c::vision::face_landmarker::CppFaceLandmarkerDetect(
-      landmarker, image, /* options= */ nullptr, result, error_msg);
-}
-
-MP_EXPORT int face_landmarker_detect_image_with_options(
+int face_landmarker_detect_image(
     MpFaceLandmarkerPtr landmarker, MpImagePtr image,
-    struct ImageProcessingOptions* options, FaceLandmarkerResult* result,
-    char** error_msg) {
-  return mediapipe::tasks::c::vision::face_landmarker::CppFaceLandmarkerDetect(
-      landmarker, image, options, result, error_msg);
-}
-
-MP_EXPORT int face_landmarker_detect_for_video(MpFaceLandmarkerPtr landmarker,
-                                               MpImagePtr image,
-                                               int64_t timestamp_ms,
-                                               FaceLandmarkerResult* result,
-                                               char** error_msg) {
-  return mediapipe::tasks::c::vision::face_landmarker::
-      CppFaceLandmarkerDetectForVideo(landmarker, image, /* options= */ nullptr,
-                                      timestamp_ms, result, error_msg);
-}
-
-MP_EXPORT int face_landmarker_detect_for_video_with_options(
-    MpFaceLandmarkerPtr landmarker, MpImagePtr image,
-    struct ImageProcessingOptions* options, int64_t timestamp_ms,
+    const struct ImageProcessingOptions* image_processing_options,
     FaceLandmarkerResult* result, char** error_msg) {
+  return mediapipe::tasks::c::vision::face_landmarker::CppFaceLandmarkerDetect(
+      landmarker, image, image_processing_options, result, error_msg);
+}
+
+int face_landmarker_detect_for_video(
+    MpFaceLandmarkerPtr landmarker, MpImagePtr image,
+    const struct ImageProcessingOptions* image_processing_options,
+    int64_t timestamp_ms, FaceLandmarkerResult* result, char** error_msg) {
   return mediapipe::tasks::c::vision::face_landmarker::
-      CppFaceLandmarkerDetectForVideo(landmarker, image, options, timestamp_ms,
+      CppFaceLandmarkerDetectForVideo(landmarker, image,
+                                      image_processing_options, timestamp_ms,
                                       result, error_msg);
 }
 
-MP_EXPORT int face_landmarker_detect_async(MpFaceLandmarkerPtr landmarker,
-                                           MpImagePtr image,
-                                           int64_t timestamp_ms,
-                                           char** error_msg) {
+int face_landmarker_detect_async(
+    MpFaceLandmarkerPtr landmarker, MpImagePtr image,
+    const struct ImageProcessingOptions* image_processing_options,
+    int64_t timestamp_ms, char** error_msg) {
   return mediapipe::tasks::c::vision::face_landmarker::
-      CppFaceLandmarkerDetectAsync(landmarker, image, /* options= */ nullptr,
+      CppFaceLandmarkerDetectAsync(landmarker, image, image_processing_options,
                                    timestamp_ms, error_msg);
 }
 
-MP_EXPORT int face_landmarker_detect_async_with_options(
-    MpFaceLandmarkerPtr landmarker, MpImagePtr image,
-    struct ImageProcessingOptions* options, int64_t timestamp_ms,
-    char** error_msg) {
-  return mediapipe::tasks::c::vision::face_landmarker::
-      CppFaceLandmarkerDetectAsync(landmarker, image, options, timestamp_ms,
-                                   error_msg);
-}
-
-MP_EXPORT void face_landmarker_close_result(FaceLandmarkerResult* result) {
+void face_landmarker_close_result(FaceLandmarkerResult* result) {
   mediapipe::tasks::c::vision::face_landmarker::CppFaceLandmarkerCloseResult(
       result);
 }
 
-MP_EXPORT int face_landmarker_close(MpFaceLandmarkerPtr landmarker,
-                                    char** error_ms) {
+int face_landmarker_close(MpFaceLandmarkerPtr landmarker, char** error_ms) {
   return mediapipe::tasks::c::vision::face_landmarker::CppFaceLandmarkerClose(
       landmarker, error_ms);
 }

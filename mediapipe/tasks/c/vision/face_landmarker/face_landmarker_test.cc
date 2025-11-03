@@ -145,7 +145,8 @@ TEST(FaceLandmarkerTest, ImageModeTest) {
   EXPECT_NE(landmarker, nullptr);
 
   FaceLandmarkerResult result;
-  face_landmarker_detect_image(landmarker, image.get(), &result,
+  face_landmarker_detect_image(landmarker, image.get(),
+                               /* image_processing_options= */ nullptr, &result,
                                /* error_msg */ nullptr);
   AssertFaceLandmarkerResult(&result, kBlendshapesPrecision,
                              kLandmarksPrecision,
@@ -154,7 +155,7 @@ TEST(FaceLandmarkerTest, ImageModeTest) {
   face_landmarker_close(landmarker, /* error_msg */ nullptr);
 }
 
-TEST(FaceLandmarkerTest, ImageModeWithOptionsTest) {
+TEST(FaceLandmarkerTest, ImageModeWithRotationTest) {
   const auto image = GetImage(GetFullPath(kImageRotatedFile));
 
   const std::string model_path = GetFullPath(kModelName);
@@ -180,9 +181,9 @@ TEST(FaceLandmarkerTest, ImageModeWithOptionsTest) {
   image_processing_options.rotation_degrees = -90;
 
   FaceLandmarkerResult result;
-  face_landmarker_detect_image_with_options(landmarker, image.get(),
-                                            &image_processing_options, &result,
-                                            /* error_msg */ nullptr);
+  face_landmarker_detect_image(landmarker, image.get(),
+                               &image_processing_options, &result,
+                               /* error_msg */ nullptr);
   AssertRotatedFaceLandmarkerResult(&result, kBlendshapesPrecision,
                                     kLandmarksPrecision,
                                     kFacialTransformationMatrixPrecision);
@@ -214,8 +215,9 @@ TEST(FaceLandmarkerTest, VideoModeTest) {
 
   for (int i = 0; i < kIterations; ++i) {
     FaceLandmarkerResult result;
-    face_landmarker_detect_for_video(landmarker, image.get(), i, &result,
-                                     /* error_msg */ nullptr);
+    face_landmarker_detect_for_video(landmarker, image.get(),
+                                     /* image_processing_options= */ nullptr, i,
+                                     &result, /* error_msg */ nullptr);
 
     AssertFaceLandmarkerResult(&result, kBlendshapesPrecision,
                                kLandmarksPrecision,
@@ -275,9 +277,11 @@ TEST(FaceLandmarkerTest, DISABLED_LiveStreamModeTest) {
   EXPECT_NE(landmarker, nullptr);
 
   for (int i = 0; i < kIterations; ++i) {
-    EXPECT_GE(face_landmarker_detect_async(landmarker, image.get(), i,
-                                           /* error_msg */ nullptr),
-              0);
+    EXPECT_GE(
+        face_landmarker_detect_async(landmarker, image.get(),
+                                     /* image_processing_options= */ nullptr, i,
+                                     /* error_msg */ nullptr),
+        0);
   }
   face_landmarker_close(landmarker, /* error_msg */ nullptr);
 
