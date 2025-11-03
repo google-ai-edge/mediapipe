@@ -73,8 +73,9 @@ TEST(ObjectDetectorTest, ImageModeTest) {
   EXPECT_NE(detector, nullptr);
 
   ObjectDetectorResult result;
-  int error_code = object_detector_detect_image(detector, image.get(), &result,
-                                                /* error_msg */ nullptr);
+  int error_code = object_detector_detect_image(
+      detector, image.get(), /* image_processing_options= */ nullptr, &result,
+      /* error_msg */ nullptr);
   EXPECT_EQ(error_code, 0);
   EXPECT_EQ(result.detections_count, 10);
   EXPECT_EQ(result.detections[0].categories_count, 1);
@@ -85,7 +86,7 @@ TEST(ObjectDetectorTest, ImageModeTest) {
   object_detector_close(detector, /* error_msg */ nullptr);
 }
 
-TEST(ObjectDetectorTest, ImageModeWithOptionsTest) {
+TEST(ObjectDetectorTest, ImageModeWithRotationTest) {
   const auto image = GetImage(GetFullPath(kImageRotatedFile));
 
   const std::string model_path = GetFullPath(kModelName);
@@ -112,7 +113,7 @@ TEST(ObjectDetectorTest, ImageModeWithOptionsTest) {
   image_processing_options.rotation_degrees = -90;
 
   ObjectDetectorResult result;
-  int error_code = object_detector_detect_image_with_options(
+  int error_code = object_detector_detect_image(
       detector, image.get(), &image_processing_options, &result,
       /* error_msg */ nullptr);
   EXPECT_EQ(error_code, 0);
@@ -149,9 +150,10 @@ TEST(ObjectDetectorTest, VideoModeTest) {
 
   for (int i = 0; i < kIterations; ++i) {
     ObjectDetectorResult result;
-    int error_code =
-        object_detector_detect_for_video(detector, image.get(), i, &result,
-                                         /* error_msg */ nullptr);
+    int error_code = object_detector_detect_for_video(
+        detector, image.get(), /* image_processing_options= */ nullptr, i,
+        &result,
+        /* error_msg */ nullptr);
     EXPECT_EQ(error_code, 0);
     EXPECT_EQ(result.detections_count, 3);
     EXPECT_EQ(result.detections[0].categories_count, 1);
@@ -218,9 +220,11 @@ TEST(ObjectDetectorTest, DISABLED_LiveStreamModeTest) {
   EXPECT_NE(detector, nullptr);
 
   for (int i = 0; i < kIterations; ++i) {
-    EXPECT_GE(object_detector_detect_async(detector, image.get(), i,
-                                           /* error_msg */ nullptr),
-              0);
+    EXPECT_GE(
+        object_detector_detect_async(detector, image.get(),
+                                     /* image_processing_options= */ nullptr, i,
+                                     /* error_msg */ nullptr),
+        0);
   }
   object_detector_close(detector, /* error_msg */ nullptr);
 
