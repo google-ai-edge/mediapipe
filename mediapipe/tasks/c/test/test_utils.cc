@@ -20,8 +20,6 @@ limitations under the License.
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
-#include "mediapipe/tasks/c/vision/core/image.h"
-#include "mediapipe/tasks/c/vision/core/image_frame_util.h"
 
 namespace mediapipe::tasks::c::test {
 
@@ -41,23 +39,21 @@ MpMask CreateCategoryMaskFromImage(absl::StatusOr<Image>& image) {
   return mask;
 }
 
-float SimilarToUint8Mask(MpImageInternal* actual_mask,
-                         const MpMask* expected_mask,
+float SimilarToUint8Mask(const MpMask* actual_mask, const MpMask* expected_mask,
                          int magnification_factor) {
   // Validate that both images are of the same size and type
-  if (MpImageGetWidth(actual_mask) != expected_mask->image_frame.width ||
-      MpImageGetHeight(actual_mask) != expected_mask->image_frame.height ||
-      MpImageGetFormat(actual_mask) != MpImageFormat::kMpImageFormatGray8 ||
+  if (actual_mask->image_frame.width != expected_mask->image_frame.width ||
+      actual_mask->image_frame.height != expected_mask->image_frame.height ||
+      actual_mask->image_frame.mask_format != MaskFormat::UINT8 ||
       expected_mask->image_frame.mask_format != MaskFormat::UINT8) {
     return 0;  // Not similar
   }
 
   int consistent_pixels = 0;
   int total_pixels =
-      MpImageGetWidth(actual_mask) * MpImageGetHeight(actual_mask);
+      actual_mask->image_frame.width * actual_mask->image_frame.height;
 
-  const uint8_t* buffer_actual;
-  MpImageDataUint8(actual_mask, &buffer_actual);
+  const uint8_t* buffer_actual = actual_mask->image_frame.image_buffer;
   const uint8_t* buffer_expected = expected_mask->image_frame.image_buffer;
 
   for (int i = 0; i < total_pixels; ++i) {

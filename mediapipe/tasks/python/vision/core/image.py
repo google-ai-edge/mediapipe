@@ -222,13 +222,7 @@ class Image:
     """
     self._lib = mediapipe_c_bindings.load_raw_library(_CTYPES_SIGNATURES)
 
-    if data.ndim == 2:
-      height, width = data.shape
-    elif data.ndim == 3:
-      height, width, _ = data.shape
-    else:
-      raise ValueError(f"Unsupported number of dimensions:{data.ndim}")
-
+    height, width, _ = data.shape
     self._image_ptr = ctypes.c_void_p()
 
     if data.dtype == np.uint8:

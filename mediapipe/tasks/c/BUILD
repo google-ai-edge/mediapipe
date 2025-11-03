@@ -47,7 +47,6 @@ cc_binary(
         "//mediapipe/tasks/c/vision/face_landmarker:face_landmarker_c_lib",
         "//mediapipe/tasks/c/vision/gesture_recognizer:gesture_recognizer_c_lib",
         "//mediapipe/tasks/c/vision/hand_landmarker:hand_landmarker_c_lib",
-        "//mediapipe/tasks/c/vision/image_segmenter:image_segmenter_c_lib",
         "//mediapipe/tasks/c/vision/object_detector:object_detector_c_lib",
         "//mediapipe/tasks/c/vision/pose_landmarker:pose_landmarker_c_lib",
     ],

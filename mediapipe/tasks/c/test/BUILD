@@ -26,8 +26,6 @@ cc_library(
     deps = [
         "//mediapipe/framework/formats:image",
         "//mediapipe/tasks/c/vision/core:common",
-        "//mediapipe/tasks/c/vision/core:image",
-        "//mediapipe/tasks/c/vision/core:image_frame_util",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status:statusor",
     ],

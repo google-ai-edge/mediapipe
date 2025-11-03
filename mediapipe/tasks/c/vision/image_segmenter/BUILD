@@ -26,7 +26,6 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/tasks/c/vision/core:common",
-        "//mediapipe/tasks/c/vision/core:image",
     ],
 )
 
@@ -36,10 +35,7 @@ cc_library(
     hdrs = ["image_segmenter_result_converter.h"],
     deps = [
         ":image_segmenter_result",
-        "//mediapipe/framework/formats:image",
         "//mediapipe/tasks/c/vision/core:common",
-        "//mediapipe/tasks/c/vision/core:image",
-        "//mediapipe/tasks/c/vision/core:image_frame_util",
         "//mediapipe/tasks/cc/vision/image_segmenter:image_segmenter_result",
     ],
 )
@@ -62,7 +58,6 @@ cc_test(
         "//mediapipe/framework/port:gtest",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/tasks/c/vision/core:common",
-        "//mediapipe/tasks/c/vision/core:image",
         "//mediapipe/tasks/cc/vision/image_segmenter:image_segmenter_result",
         "//mediapipe/tasks/cc/vision/utils:image_utils",
         "@com_google_absl//absl/flags:flag",
@@ -129,7 +124,6 @@ cc_test(
         "//mediapipe/tasks/c/test:test_utils",
         "//mediapipe/tasks/c/vision/core:common",
         "//mediapipe/tasks/c/vision/core:image",
-        "//mediapipe/tasks/c/vision/core:image_frame_util",
         "//mediapipe/tasks/c/vision/core:image_processing_options",
         "//mediapipe/tasks/c/vision/core:image_test_util",
         "//mediapipe/tasks/cc/vision/utils:image_utils",
