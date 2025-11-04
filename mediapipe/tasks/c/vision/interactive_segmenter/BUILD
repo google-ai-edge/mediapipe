@@ -72,6 +72,7 @@ cc_test(
         "//mediapipe/tasks/c/components/containers:keypoint",
         "//mediapipe/tasks/c/test:test_utils",
         "//mediapipe/tasks/c/vision/core:common",
+        "//mediapipe/tasks/c/vision/core:image",
         "//mediapipe/tasks/c/vision/image_segmenter:image_segmenter_result",
         "//mediapipe/tasks/cc/vision/utils:image_utils",
         "@com_google_absl//absl/flags:flag",
