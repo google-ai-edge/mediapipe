@@ -163,11 +163,7 @@ TEST_F(HandAssociationCalculatorTest, NormRectAssocTestWithTrackedHands) {
                       Stream<std::vector<NormalizedRect>> rects0)
                       -> Stream<std::vector<NormalizedRect>> {
         auto& node = graph.AddNode<tasks::HandAssociationNode>();
-        {
-          mediapipe::HandAssociationCalculatorOptions& options =
-              *node.options.Mutable();
-          options.set_min_similarity_threshold(kMinThreadHold);
-        }
+        node.options.Mutable()->set_min_similarity_threshold(kMinThreadHold);
         node.base_rects.Add(base_rects);
         node.rects.Add(rects0);
         return node.output_rects.Get();
@@ -216,11 +212,7 @@ TEST_F(HandAssociationCalculatorTest, NormRectAssocTestReverse) {
                       Stream<std::vector<NormalizedRect>> rects1)
                       -> Stream<std::vector<NormalizedRect>> {
         auto& node = graph.AddNode<tasks::HandAssociationNode>();
-        {
-          mediapipe::HandAssociationCalculatorOptions& options =
-              *node.options.Mutable();
-          options.set_min_similarity_threshold(kMinThreadHold);
-        }
+        node.options.Mutable()->set_min_similarity_threshold(kMinThreadHold);
         node.base_rects.Add(base_rects);
         node.rects.Add(rects0);
         node.rects.Add(rects1);
@@ -278,11 +270,7 @@ TEST_F(HandAssociationCalculatorTest, NormRectAssocTestReservesBaseRects) {
                       Stream<std::vector<NormalizedRect>> rects1)
                       -> Stream<std::vector<NormalizedRect>> {
         auto& node = graph.AddNode<tasks::HandAssociationNode>();
-        {
-          mediapipe::HandAssociationCalculatorOptions& options =
-              *node.options.Mutable();
-          options.set_min_similarity_threshold(kMinThreadHold);
-        }
+        node.options.Mutable()->set_min_similarity_threshold(kMinThreadHold);
         node.base_rects.Add(base_rects);
         node.rects.Add(rects0);
         node.rects.Add(rects1);
@@ -339,11 +327,7 @@ TEST_F(HandAssociationCalculatorTest, NormRectAssocSingleInputStream) {
                       Stream<std::vector<NormalizedRect>> base_rects)
                       -> Stream<std::vector<NormalizedRect>> {
         auto& node = graph.AddNode<tasks::HandAssociationNode>();
-        {
-          mediapipe::HandAssociationCalculatorOptions& options =
-              *node.options.Mutable();
-          options.set_min_similarity_threshold(kMinThreadHold);
-        }
+        node.options.Mutable()->set_min_similarity_threshold(kMinThreadHold);
         node.base_rects.Add(base_rects);
         return node.output_rects.Get();
       }).Create());
