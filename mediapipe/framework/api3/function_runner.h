@@ -43,6 +43,76 @@
 
 namespace mediapipe::api3 {
 
+template <typename BuildGraphFnT>
+class FunctionRunnerBuilder;
+
+namespace internal_function_runner {
+
+// `FunctionRunnerImpl` is used to implement the `Run` method.
+// This indirection is necessary to allow specializing on the variadic input
+// types (`InputPacketTs...`) which are part of a class template parameter
+// (`InputT`), rather than trying to deduce them within the `Run` method itself.
+template <typename BuildGraphFnT, typename OutputT, typename InputT>
+class FunctionRunnerImpl;
+
+template <typename BuildGraphFnT, typename OutputT, typename... InputPacketTs>
+class FunctionRunnerImpl<BuildGraphFnT, OutputT, std::tuple<InputPacketTs...>>
+    : public FunctionRunnerBase {
+ public:
+  // - Adds all provided input packets
+  // - Waits for graph work completion
+  // - Polls and returns the output packet(s)
+  absl::StatusOr<OutputT> Run(InputPacketTs... inputs) {
+    mediapipe::Timestamp timestamp = this->NextTimestamp();
+    MP_RETURN_IF_ERROR(AddInputPackets(*this->calculator_graph_,
+                                       this->input_names_map_, timestamp,
+                                       inputs...));
+    MP_RETURN_IF_ERROR(this->calculator_graph_->WaitUntilIdle());
+
+    if constexpr (kIsTupleV<OutputT>) {
+      OutputT output;
+      MP_RETURN_IF_ERROR(GetOutputPackets(
+          std::make_index_sequence<std::tuple_size_v<OutputT>>(), output));
+      return output;
+    } else {
+      MP_ASSIGN_OR_RETURN(OutputStreamPoller * poller,
+                          this->GetOutputPoller(0));
+      MP_ASSIGN_OR_RETURN(mediapipe::Packet packet,
+                          GetOutputPacket(*poller, *this->calculator_graph_));
+      return WrapLegacyPacket<typename OutputT::PayloadT>(std::move(packet));
+    }
+  }
+
+ private:
+  using FunctionRunnerBase::FunctionRunnerBase;
+
+  template <size_t... Is, typename TupleT>
+  absl::Status GetOutputPackets(std::index_sequence<Is...>, TupleT& output) {
+    absl::Status status = absl::OkStatus();
+    ((
+         status = [&]() -> absl::Status {
+           MP_ASSIGN_OR_RETURN(OutputStreamPoller * poller,
+                               this->GetOutputPoller(Is));
+           MP_ASSIGN_OR_RETURN(
+               mediapipe::Packet packet,
+               GetOutputPacket(*poller, *this->calculator_graph_));
+           using CurrentOutputPacketT = std::tuple_element_t<Is, OutputT>;
+           MP_ASSIGN_OR_RETURN(
+               std::get<Is>(output),
+               WrapLegacyPacket<typename CurrentOutputPacketT::PayloadT>(
+                   std::move(packet)));
+           return absl::OkStatus();
+         }(),
+         status.ok()) &&
+     ...);
+    return status;
+  }
+
+  friend class FunctionRunnerBuilder<BuildGraphFnT>;
+};
+
+}  // namespace internal_function_runner
+
 // This runner enables running MediaPipe graph as a function.
 //
 // The intended usage is:
@@ -72,6 +142,20 @@ namespace mediapipe::api3 {
 //                   runner.Run(MakePacket<ImageFrame>(...)));
 // ```
 //
+// If you need to keep runner across invocations.
+// ```
+//   MP_ASSIGN_OR_RETURN(FunctionRunner<decltype(lambda)>, Runner::For...);
+//   MP_ASSIGN_OR_RETURN(FunctionRunner<decltype(&FreeFunction)>,
+//   Runner::For...); MP_ASSIGN_OR_RETURN(FunctionRunner<GraphBuilderObject>,
+//   Runner::For...);
+//
+//   // Where GraphBuilderObject can be
+//   struct GraphBuilderObject {
+//     Stream<GpuBuffer> operator()(GenericGraph& graph,
+//                                  Stream<GpuBuffer> input) { ... }
+//   };
+// ```
+//
 // - `Runner::For(...)` returns a `FunctionRunnerBuilder` that allows fine
 //   tuning your runner.
 // - `FunctionRunnerBuilder::Create()` returns the runner.
@@ -79,83 +163,15 @@ namespace mediapipe::api3 {
 //   returns output packet(s).
 //
 // More details in `Runner` and `FunctionRunnerBuilder` classes.
-template <typename OutputT, typename InputT>
-class FunctionRunner;
-
-// Function runner for graph with 1 output and 1 or more inputs.
-template <typename OutputPacketT, typename... InputPacketTs>
-class FunctionRunner<OutputPacketT, std::tuple<InputPacketTs...>>
-    : public FunctionRunnerBase {
- public:
-  // - Adds all provided input packets
-  // - Waits for graph work completion
-  // - Polls and returns the output packet
-  absl::StatusOr<OutputPacketT> Run(InputPacketTs... inputs) {
-    mediapipe::Timestamp timestamp = this->NextTimestamp();
-    MP_RETURN_IF_ERROR(AddInputPackets(*this->calculator_graph_,
-                                       this->input_names_map_, timestamp,
-                                       inputs...));
-    MP_RETURN_IF_ERROR(this->calculator_graph_->WaitUntilIdle());
-    MP_ASSIGN_OR_RETURN(OutputStreamPoller * poller, this->GetOutputPoller(0));
-    MP_ASSIGN_OR_RETURN(mediapipe::Packet packet,
-                        GetOutputPacket(*poller, *this->calculator_graph_));
-    return WrapLegacyPacket<typename OutputPacketT::PayloadT>(
-        std::move(packet));
-  }
-
+template <
+    typename BuildGraphFnT,
+    typename BaseT = internal_function_runner::FunctionRunnerImpl<
+        BuildGraphFnT,
+        ToPacketType<typename BuildGraphFnRawSignature<BuildGraphFnT>::Out>,
+        ToPacketType<typename BuildGraphFnRawSignature<BuildGraphFnT>::In>>>
+class FunctionRunner : public BaseT {
  private:
-  using FunctionRunnerBase::FunctionRunnerBase;
-
-  template <typename BuildGraphFnT>
-  friend class FunctionRunnerBuilder;
-};
-
-// Function runner for graph with multiple outputs and 1 or more inputs.
-template <typename... OutputPacketTs, typename... InputPacketTs>
-class FunctionRunner<std::tuple<OutputPacketTs...>,
-                     std::tuple<InputPacketTs...>> : public FunctionRunnerBase {
- public:
-  // - Adds all provided input packets
-  // - Waits for graph work completion
-  // - Polls and returns all output packets
-  absl::StatusOr<std::tuple<OutputPacketTs...>> Run(InputPacketTs... inputs) {
-    mediapipe::Timestamp timestamp = this->NextTimestamp();
-    MP_RETURN_IF_ERROR(AddInputPackets(*this->calculator_graph_,
-                                       this->input_names_map_, timestamp,
-                                       inputs...));
-    MP_RETURN_IF_ERROR(this->calculator_graph_->WaitUntilIdle());
-    std::tuple<OutputPacketTs...> output;
-    MP_RETURN_IF_ERROR(
-        GetOutputPackets(std::index_sequence_for<OutputPacketTs...>(), output));
-    return output;
-  }
-
- private:
-  using FunctionRunnerBase::FunctionRunnerBase;
-
-  template <size_t... Is, typename TupleT>
-  absl::Status GetOutputPackets(std::index_sequence<Is...>, TupleT& output) {
-    absl::Status status = absl::OkStatus();
-    ((
-         [&]() -> absl::Status {
-           MP_ASSIGN_OR_RETURN(OutputStreamPoller * poller,
-                               this->GetOutputPoller(Is));
-           MP_ASSIGN_OR_RETURN(
-               mediapipe::Packet packet,
-               GetOutputPacket(*poller, *this->calculator_graph_));
-           MP_ASSIGN_OR_RETURN(
-               std::get<Is>(output),
-               WrapLegacyPacket<typename OutputPacketTs::PayloadT>(
-                   std::move(packet)));
-           return absl::OkStatus();
-         }(),
-         status.ok()) &&
-     ...);
-    return status;
-  }
-
-  template <typename BuildGraphFnT>
-  friend class FunctionRunnerBuilder;
+  using BaseT::BaseT;
 };
 
 template <typename BuildGraphFnT>
@@ -196,9 +212,7 @@ class FunctionRunnerBuilder {
   //
   // Refer `Runner::For` for more details on builder graph function and
   // corresponding runners.
-  absl::StatusOr<FunctionRunner<ToPacketType<typename RawSignatureT::Out>,
-                                ToPacketType<typename RawSignatureT::In>>>
-  Create() {
+  absl::StatusOr<FunctionRunner<BuildGraphFnT>> Create() {
     // Build the graph using provided build graph function.
     // (The function can return StatusOr or not, std::tuple or not.)
     GenericGraph graph;
@@ -278,8 +292,7 @@ class FunctionRunnerBuilder {
 
     MP_RETURN_IF_ERROR(calculator_graph->StartRun({}));
 
-    return FunctionRunner<ToPacketType<typename RawSignatureT::Out>,
-                          ToPacketType<typename RawSignatureT::In>>(
+    return FunctionRunner<BuildGraphFnT>(
         std::move(graph), std::move(calculator_graph),
         std::move(input_names_map), std::move(output_names_map),
         std::move(output_pollers));

@@ -277,10 +277,11 @@ TEST(FunctionRunnerTest, SupportsAnyInvocableAsBuildGraphFunction) {
     return node.service_value.Get();
   };
   MP_ASSERT_OK_AND_ASSIGN(
-      auto runner, Runner::For(std::move(build_graph_fn))
-                       .SetService(kTestService,
-                                   std::make_shared<std::string>(kServiceValue))
-                       .Create());
+      FunctionRunner<decltype(build_graph_fn)> runner,
+      Runner::For(std::move(build_graph_fn))
+          .SetService(kTestService,
+                      std::make_shared<std::string>(kServiceValue))
+          .Create());
 
   Packet<std::string> service_value;
   MP_ASSERT_OK_AND_ASSIGN(service_value, runner.Run(MakePacket<int>(0)));
@@ -296,10 +297,34 @@ Stream<std::string> GetServiceValue(GenericGraph& graph, Stream<int> tick) {
 TEST(FunctionRunnerTest, SupportsFreeGraphBuilderFunction) {
   constexpr absl::string_view kServiceValue = "service_value";
   MP_ASSERT_OK_AND_ASSIGN(
-      auto runner, Runner::For(GetServiceValue)
-                       .SetService(kTestService,
-                                   std::make_shared<std::string>(kServiceValue))
-                       .Create());
+      FunctionRunner<decltype(&GetServiceValue)> runner,
+      Runner::For(GetServiceValue)
+          .SetService(kTestService,
+                      std::make_shared<std::string>(kServiceValue))
+          .Create());
+
+  Packet<std::string> service_value;
+  MP_ASSERT_OK_AND_ASSIGN(service_value, runner.Run(MakePacket<int>(0)));
+  EXPECT_EQ(service_value.GetOrDie(), kServiceValue);
+}
+
+struct GetServiceValueGraphBuilder {
+  Stream<std::string> operator()(GenericGraph& graph, Stream<int> tick) {
+    auto& node = graph.AddNode<ServiceValueOnTickNode>();
+    node.tick.Set(tick);
+    return node.service_value.Get();
+  }
+};
+
+TEST(FunctionRunnerTest, SupportsGraphBuilderObject) {
+  constexpr absl::string_view kServiceValue = "service_value";
+  GetServiceValueGraphBuilder builder{};
+  MP_ASSERT_OK_AND_ASSIGN(
+      FunctionRunner<GetServiceValueGraphBuilder> runner,
+      Runner::For(std::move(builder))
+          .SetService(kTestService,
+                      std::make_shared<std::string>(kServiceValue))
+          .Create());
 
   Packet<std::string> service_value;
   MP_ASSERT_OK_AND_ASSIGN(service_value, runner.Run(MakePacket<int>(0)));

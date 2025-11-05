@@ -23,15 +23,12 @@
 #include <tuple>
 #include <type_traits>
 #include <utility>
-#include <vector>
 
-#include "absl/base/thread_annotations.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
-#include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/api3/graph.h"
 #include "mediapipe/framework/api3/packet.h"
 #include "mediapipe/framework/api3/stream.h"
