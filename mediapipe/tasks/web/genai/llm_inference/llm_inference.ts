@@ -69,6 +69,10 @@ export type {
 } from '../../../../web/graph_runner/graph_runner_llm_inference_lib';
 export * from './llm_inference_options';
 
+declare interface CancelModule {
+  LLM_CANCEL_FLAG: number | undefined;
+}
+
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern
 
@@ -807,6 +811,7 @@ export class LlmInference extends TaskRunner {
             'format without multimodality to use LoRA.',
         );
       }
+      this.clearCancelSignals();
       // TODO: b/398904237 - Support streaming generation by passing the
       // progress listener.
       return (this.graphRunner as unknown as LlmGraphRunner)
@@ -842,6 +847,7 @@ export class LlmInference extends TaskRunner {
       throw new Error('Previous invocation or loading is still ongoing.');
     }
     this.isProcessing = true;
+    this.clearCancelSignals();
     this.generationResults.length = 0;
     for (let i = 0; i < this.options.getNumResponses(); i++) {
       this.generationResults[i] = [];
@@ -913,6 +919,30 @@ export class LlmInference extends TaskRunner {
     this.finishProcessing();
     this.isProcessing = false;
     return this.latestTokenCostQueryResult;
+  }
+
+  /**
+   * Sends a signal to cancel any current decoding when the engine is able to.
+   * Does not cancel initialization or prefilling yet.
+   * @export
+   */
+  cancelProcessing() {
+    // It would be nice to return a Promise here to allow the user to wait until
+    // processing has been successfully canceled. For now, the cancel signal
+    // will be sent immediately, but the client must use other mechanisms to
+    // check when the processing has actually finished (like the "done"
+    // parameter of the UserProgressListener).
+    const cancelModule = this.graphRunner.wasmModule as unknown as CancelModule;
+    if (this.useLlmEngine || this.isProcessing) {
+      cancelModule.LLM_CANCEL_FLAG = 1;
+    }
+  }
+
+  // Internal-only helper to clear any pending cancellation signals which were
+  // sent in before the `generateResponse(s)` call was actually made.
+  clearCancelSignals() {
+    const cancelModule = this.graphRunner.wasmModule as unknown as CancelModule;
+    cancelModule.LLM_CANCEL_FLAG = undefined;
   }
 
   /**
