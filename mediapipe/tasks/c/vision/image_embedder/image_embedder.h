@@ -22,6 +22,7 @@ limitations under the License.
 #include "mediapipe/tasks/c/components/processors/embedder_options.h"
 #include "mediapipe/tasks/c/core/base_options.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
+#include "mediapipe/tasks/c/vision/core/image.h"
 
 #ifndef MP_EXPORT
 #define MP_EXPORT __attribute__((visibility("default")))
@@ -64,7 +65,7 @@ struct ImageEmbedderOptions {
   // The passed `image` is only valid for the lifetime of the call. A caller is
   // responsible for closing the image embedder result.
   typedef void (*result_callback_fn)(ImageEmbedderResult* result,
-                                     const MpImage* image, int64_t timestamp_ms,
+                                     MpImagePtr image, int64_t timestamp_ms,
                                      char* error_msg);
   result_callback_fn result_callback;
 };
@@ -82,7 +83,7 @@ image_embedder_create(struct ImageEmbedderOptions* options, char** error_msg);
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
 MP_EXPORT int image_embedder_embed_image(MpImageEmbedderPtr embedder,
-                                         const MpImage* image,
+                                         MpImagePtr image,
                                          ImageEmbedderResult* result,
                                          char** error_msg);
 
@@ -96,7 +97,7 @@ MP_EXPORT int image_embedder_embed_image(MpImageEmbedderPtr embedder,
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
 MP_EXPORT int image_embedder_embed_for_video(MpImageEmbedderPtr embedder,
-                                             const MpImage* image,
+                                             MpImagePtr image,
                                              int64_t timestamp_ms,
                                              ImageEmbedderResult* result,
                                              char** error_msg);
@@ -122,8 +123,7 @@ MP_EXPORT int image_embedder_embed_for_video(MpImageEmbedderPtr embedder,
 // You need to invoke `image_embedder_close_result` after each invocation to
 // free memory.
 MP_EXPORT int image_embedder_embed_async(MpImageEmbedderPtr embedder,
-                                         const MpImage* image,
-                                         int64_t timestamp_ms,
+                                         MpImagePtr image, int64_t timestamp_ms,
                                          char** error_msg);
 
 // Frees the memory allocated inside a ImageEmbedderResult result.

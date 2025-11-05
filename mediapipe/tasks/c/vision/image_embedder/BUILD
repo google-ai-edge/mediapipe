@@ -23,7 +23,6 @@ IMAGE_EMBEDDER_DEPS = [
     "@com_google_absl//absl/status",
     "@com_google_absl//absl/status:statusor",
     "//mediapipe/framework/formats:image",
-    "//mediapipe/framework/formats:image_frame",
     "//mediapipe/tasks/c/components/containers:embedding_result",
     "//mediapipe/tasks/c/components/containers:embedding_result_converter",
     "//mediapipe/tasks/c/components/processors:embedder_options",
@@ -31,10 +30,11 @@ IMAGE_EMBEDDER_DEPS = [
     "//mediapipe/tasks/c/core:base_options",
     "//mediapipe/tasks/c/core:base_options_converter",
     "//mediapipe/tasks/c/vision/core:common",
+    "//mediapipe/tasks/c/vision/core:image",
+    "//mediapipe/tasks/c/vision/core:image_frame_util",
     "//mediapipe/tasks/cc/components/containers:embedding_result",
     "//mediapipe/tasks/cc/vision/core:running_mode",
     "//mediapipe/tasks/cc/vision/image_embedder",
-    "//mediapipe/tasks/cc/vision/utils:image_utils",
 ]
 
 cc_library(
@@ -68,11 +68,11 @@ cc_test(
     deps = [
         ":image_embedder_lib",
         "//mediapipe/framework/deps:file_path",
-        "//mediapipe/framework/formats:image",
         "//mediapipe/framework/port:gtest",
         "//mediapipe/tasks/c/components/containers:embedding_result",
         "//mediapipe/tasks/c/vision/core:common",
-        "//mediapipe/tasks/cc/vision/utils:image_utils",
+        "//mediapipe/tasks/c/vision/core:image",
+        "//mediapipe/tasks/c/vision/core:image_test_util",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",

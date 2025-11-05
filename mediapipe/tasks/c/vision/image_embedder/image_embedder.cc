@@ -24,16 +24,16 @@ limitations under the License.
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/formats/image.h"
-#include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/tasks/c/components/containers/embedding_result.h"
 #include "mediapipe/tasks/c/components/containers/embedding_result_converter.h"
 #include "mediapipe/tasks/c/components/processors/embedder_options_converter.h"
 #include "mediapipe/tasks/c/core/base_options_converter.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
+#include "mediapipe/tasks/c/vision/core/image.h"
+#include "mediapipe/tasks/c/vision/core/image_frame_util.h"
 #include "mediapipe/tasks/cc/components/containers/embedding_result.h"
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
 #include "mediapipe/tasks/cc/vision/image_embedder/image_embedder.h"
-#include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 
 struct MpImageEmbedderInternal {
   std::unique_ptr<::mediapipe::tasks::vision::image_embedder::ImageEmbedder>
@@ -51,7 +51,6 @@ using ::mediapipe::tasks::c::components::containers::
 using ::mediapipe::tasks::c::components::processors::
     CppConvertToEmbedderOptions;
 using ::mediapipe::tasks::c::core::CppConvertToBaseOptions;
-using ::mediapipe::tasks::vision::CreateImageFromBuffer;
 using ::mediapipe::tasks::vision::core::RunningMode;
 using ::mediapipe::tasks::vision::image_embedder::ImageEmbedder;
 typedef ::mediapipe::tasks::components::containers::Embedding CppEmbedding;
@@ -64,6 +63,8 @@ int CppProcessError(absl::Status status, char** error_msg) {
   }
   return status.raw_code();
 }
+
+const Image& ToImage(const MpImagePtr mp_image) { return mp_image->image; }
 
 }  // namespace
 
@@ -94,12 +95,12 @@ MpImageEmbedderPtr CppImageEmbedderCreate(const ImageEmbedderOptions& options,
         [result_callback](absl::StatusOr<CppImageEmbedderResult> cpp_result,
                           const Image& image, int64_t timestamp) {
           char* error_msg = nullptr;
-
+          MpImageInternal mp_image({.image = image});
           if (!cpp_result.ok()) {
             ABSL_LOG(ERROR)
                 << "Embedding extraction failed: " << cpp_result.status();
             CppProcessError(cpp_result.status(), &error_msg);
-            result_callback(nullptr, nullptr, timestamp, error_msg);
+            result_callback(nullptr, &mp_image, timestamp, error_msg);
             free(error_msg);
             return;
           }
@@ -107,16 +108,6 @@ MpImageEmbedderPtr CppImageEmbedderCreate(const ImageEmbedderOptions& options,
           // Result is valid for the lifetime of the callback function.
           auto result = std::make_unique<ImageEmbedderResult>();
           CppConvertToEmbeddingResult(*cpp_result, result.get());
-
-          const auto& image_frame = image.GetImageFrameSharedPtr();
-          const MpImage mp_image = {
-              .type = MpImage::IMAGE_FRAME,
-              .image_frame = {
-                  .format = static_cast<::ImageFormat>(image_frame->Format()),
-                  .image_buffer = image_frame->PixelData(),
-                  .width = image_frame->Width(),
-                  .height = image_frame->Height()}};
-
           result_callback(result.release(), &mp_image, timestamp,
                           /* error_msg= */ nullptr);
         };
@@ -131,28 +122,10 @@ MpImageEmbedderPtr CppImageEmbedderCreate(const ImageEmbedderOptions& options,
   return new MpImageEmbedderInternal{.embedder = std::move(*embedder)};
 }
 
-int CppImageEmbedderEmbed(MpImageEmbedderPtr embedder, const MpImage* image,
+int CppImageEmbedderEmbed(MpImageEmbedderPtr embedder, MpImagePtr image,
                           ImageEmbedderResult* result, char** error_msg) {
-  if (image->type == MpImage::GPU_BUFFER) {
-    const absl::Status status =
-        absl::InvalidArgumentError("GPU Buffer not supported yet.");
-
-    ABSL_LOG(ERROR) << "Embedding extraction failed: " << status.message();
-    return CppProcessError(status, error_msg);
-  }
-
-  const auto img = CreateImageFromBuffer(
-      static_cast<ImageFormat::Format>(image->image_frame.format),
-      image->image_frame.image_buffer, image->image_frame.width,
-      image->image_frame.height);
-
-  if (!img.ok()) {
-    ABSL_LOG(ERROR) << "Failed to create Image: " << img.status();
-    return CppProcessError(img.status(), error_msg);
-  }
-
   auto cpp_embedder = embedder->embedder.get();
-  auto cpp_result = cpp_embedder->Embed(*img);
+  auto cpp_result = cpp_embedder->Embed(ToImage(image));
   if (!cpp_result.ok()) {
     ABSL_LOG(ERROR) << "Embedding extraction failed: " << cpp_result.status();
     return CppProcessError(cpp_result.status(), error_msg);
@@ -161,30 +134,12 @@ int CppImageEmbedderEmbed(MpImageEmbedderPtr embedder, const MpImage* image,
   return 0;
 }
 
-int CppImageEmbedderEmbedForVideo(MpImageEmbedderPtr embedder,
-                                  const MpImage* image, int64_t timestamp_ms,
+int CppImageEmbedderEmbedForVideo(MpImageEmbedderPtr embedder, MpImagePtr image,
+                                  int64_t timestamp_ms,
                                   ImageEmbedderResult* result,
                                   char** error_msg) {
-  if (image->type == MpImage::GPU_BUFFER) {
-    absl::Status status =
-        absl::InvalidArgumentError("GPU Buffer not supported yet");
-
-    ABSL_LOG(ERROR) << "Embedding extraction failed: " << status.message();
-    return CppProcessError(status, error_msg);
-  }
-
-  const auto img = CreateImageFromBuffer(
-      static_cast<ImageFormat::Format>(image->image_frame.format),
-      image->image_frame.image_buffer, image->image_frame.width,
-      image->image_frame.height);
-
-  if (!img.ok()) {
-    ABSL_LOG(ERROR) << "Failed to create Image: " << img.status();
-    return CppProcessError(img.status(), error_msg);
-  }
-
   auto cpp_embedder = embedder->embedder.get();
-  auto cpp_result = cpp_embedder->EmbedForVideo(*img, timestamp_ms);
+  auto cpp_result = cpp_embedder->EmbedForVideo(ToImage(image), timestamp_ms);
   if (!cpp_result.ok()) {
     ABSL_LOG(ERROR) << "Embedding extraction failed: " << cpp_result.status();
     return CppProcessError(cpp_result.status(), error_msg);
@@ -193,29 +148,10 @@ int CppImageEmbedderEmbedForVideo(MpImageEmbedderPtr embedder,
   return 0;
 }
 
-int CppImageEmbedderEmbedAsync(MpImageEmbedderPtr embedder,
-                               const MpImage* image, int64_t timestamp_ms,
-                               char** error_msg) {
-  if (image->type == MpImage::GPU_BUFFER) {
-    absl::Status status =
-        absl::InvalidArgumentError("GPU Buffer not supported yet");
-
-    ABSL_LOG(ERROR) << "Embedding extraction failed: " << status.message();
-    return CppProcessError(status, error_msg);
-  }
-
-  const auto img = CreateImageFromBuffer(
-      static_cast<ImageFormat::Format>(image->image_frame.format),
-      image->image_frame.image_buffer, image->image_frame.width,
-      image->image_frame.height);
-
-  if (!img.ok()) {
-    ABSL_LOG(ERROR) << "Failed to create Image: " << img.status();
-    return CppProcessError(img.status(), error_msg);
-  }
-
+int CppImageEmbedderEmbedAsync(MpImageEmbedderPtr embedder, MpImagePtr image,
+                               int64_t timestamp_ms, char** error_msg) {
   auto cpp_embedder = embedder->embedder.get();
-  auto cpp_result = cpp_embedder->EmbedAsync(*img, timestamp_ms);
+  auto cpp_result = cpp_embedder->EmbedAsync(ToImage(image), timestamp_ms);
   if (!cpp_result.ok()) {
     ABSL_LOG(ERROR) << "Data preparation for the embedding extraction failed: "
                     << cpp_result;
@@ -268,7 +204,7 @@ image_embedder_create(struct ImageEmbedderOptions* options, char** error_msg) {
 }
 
 MP_EXPORT int image_embedder_embed_image(MpImageEmbedderPtr embedder,
-                                         const MpImage* image,
+                                         MpImagePtr image,
                                          ImageEmbedderResult* result,
                                          char** error_msg) {
   return mediapipe::tasks::c::vision::image_embedder::CppImageEmbedderEmbed(
@@ -276,7 +212,7 @@ MP_EXPORT int image_embedder_embed_image(MpImageEmbedderPtr embedder,
 }
 
 MP_EXPORT int image_embedder_embed_for_video(MpImageEmbedderPtr embedder,
-                                             const MpImage* image,
+                                             MpImagePtr image,
                                              int64_t timestamp_ms,
                                              ImageEmbedderResult* result,
                                              char** error_msg) {
@@ -286,8 +222,7 @@ MP_EXPORT int image_embedder_embed_for_video(MpImageEmbedderPtr embedder,
 }
 
 MP_EXPORT int image_embedder_embed_async(MpImageEmbedderPtr embedder,
-                                         const MpImage* image,
-                                         int64_t timestamp_ms,
+                                         MpImagePtr image, int64_t timestamp_ms,
                                          char** error_msg) {
   return mediapipe::tasks::c::vision::image_embedder::
       CppImageEmbedderEmbedAsync(embedder, image, timestamp_ms, error_msg);
