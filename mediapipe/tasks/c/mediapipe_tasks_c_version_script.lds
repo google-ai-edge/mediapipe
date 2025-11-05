@@ -9,6 +9,7 @@ VERS_1.0 {
     face_detector_*;
     face_landmarker_*;
     gesture_recognizer_*;
+    image_classifier_*;
     hand_landmarker_*;
     image_segmenter_*;
     object_detector_*;

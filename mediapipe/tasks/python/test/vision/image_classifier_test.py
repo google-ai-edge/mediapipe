@@ -15,19 +15,20 @@
 
 import enum
 import os
+import threading
 from unittest import mock
 
 from absl.testing import absltest
 from absl.testing import parameterized
 import numpy as np
 
-from mediapipe.python._framework_bindings import image
 from mediapipe.tasks.python.components.containers import category as category_module
 from mediapipe.tasks.python.components.containers import classification_result as classification_result_module
 from mediapipe.tasks.python.components.containers import rect as rect_module
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.test import test_utils
 from mediapipe.tasks.python.vision import image_classifier
+from mediapipe.tasks.python.vision.core import image as image_module
 from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_module
 from mediapipe.tasks.python.vision.core import vision_task_running_mode
 
@@ -36,7 +37,7 @@ _RectF = rect_module.RectF
 _BaseOptions = base_options_module.BaseOptions
 _Category = category_module.Category
 _Classifications = classification_result_module.Classifications
-_Image = image.Image
+_Image = image_module.Image
 _ImageClassifier = image_classifier.ImageClassifier
 _ImageClassifierOptions = image_classifier.ImageClassifierOptions
 _RUNNING_MODE = vision_task_running_mode.VisionTaskRunningMode
@@ -161,8 +162,8 @@ class ImageClassifierTest(parameterized.TestCase):
     with open(self.model_path, 'rb') as f:
       base_options = _BaseOptions(model_asset_buffer=f.read())
       options = _ImageClassifierOptions(base_options=base_options)
-      classifier = _ImageClassifier.create_from_options(options)
-      self.assertIsInstance(classifier, _ImageClassifier)
+      with _ImageClassifier.create_from_options(options) as classifier:
+        self.assertIsInstance(classifier, _ImageClassifier)
 
   @parameterized.parameters(
       (ModelFileType.FILE_NAME, 4, _generate_burger_results()),
@@ -406,7 +407,7 @@ class ImageClassifierTest(parameterized.TestCase):
   def test_combined_allowlist_and_denylist(self):
     # Fails with combined allowlist and denylist
     with self.assertRaisesRegex(
-        ValueError,
+        RuntimeError,
         r'`category_allowlist` and `category_denylist` are mutually '
         r'exclusive options.',
     ):
@@ -459,7 +460,7 @@ class ImageClassifierTest(parameterized.TestCase):
     )
     with _ImageClassifier.create_from_options(options) as classifier:
       with self.assertRaisesRegex(
-          ValueError, r'not initialized with the video mode'
+          RuntimeError, r'not initialized with the video mode'
       ):
         classifier.classify_for_video(self.test_image, 0)
 
@@ -470,7 +471,7 @@ class ImageClassifierTest(parameterized.TestCase):
     )
     with _ImageClassifier.create_from_options(options) as classifier:
       with self.assertRaisesRegex(
-          ValueError, r'not initialized with the live stream mode'
+          RuntimeError, r'not initialized with the live stream mode'
       ):
         classifier.classify_async(self.test_image, 0)
 
@@ -481,7 +482,7 @@ class ImageClassifierTest(parameterized.TestCase):
     )
     with _ImageClassifier.create_from_options(options) as classifier:
       with self.assertRaisesRegex(
-          ValueError, r'not initialized with the image mode'
+          RuntimeError, r'not initialized with the image mode'
       ):
         classifier.classify(self.test_image)
 
@@ -492,7 +493,7 @@ class ImageClassifierTest(parameterized.TestCase):
     )
     with _ImageClassifier.create_from_options(options) as classifier:
       with self.assertRaisesRegex(
-          ValueError, r'not initialized with the live stream mode'
+          RuntimeError, r'not initialized with the live stream mode'
       ):
         classifier.classify_async(self.test_image, 0)
 
@@ -504,7 +505,7 @@ class ImageClassifierTest(parameterized.TestCase):
     with _ImageClassifier.create_from_options(options) as classifier:
       unused_result = classifier.classify_for_video(self.test_image, 1)
       with self.assertRaisesRegex(
-          ValueError, r'Input timestamp must be monotonically increasing'
+          RuntimeError, r'Input timestamp must be monotonically increasing'
       ):
         classifier.classify_for_video(self.test_image, 0)
 
@@ -559,7 +560,7 @@ class ImageClassifierTest(parameterized.TestCase):
     )
     with _ImageClassifier.create_from_options(options) as classifier:
       with self.assertRaisesRegex(
-          ValueError, r'not initialized with the image mode'
+          RuntimeError, r'not initialized with the image mode'
       ):
         classifier.classify(self.test_image)
 
@@ -571,7 +572,7 @@ class ImageClassifierTest(parameterized.TestCase):
     )
     with _ImageClassifier.create_from_options(options) as classifier:
       with self.assertRaisesRegex(
-          ValueError, r'not initialized with the video mode'
+          RuntimeError, r'not initialized with the video mode'
       ):
         classifier.classify_for_video(self.test_image, 0)
 
@@ -585,7 +586,7 @@ class ImageClassifierTest(parameterized.TestCase):
     with _ImageClassifier.create_from_options(options) as classifier:
       classifier.classify_async(self.test_image, 100)
       with self.assertRaisesRegex(
-          ValueError, r'Input timestamp must be monotonically increasing'
+          RuntimeError, r'Input timestamp must be monotonically increasing'
       ):
         classifier.classify_async(self.test_image, 0)
 
@@ -594,20 +595,28 @@ class ImageClassifierTest(parameterized.TestCase):
   )
   def test_classify_async_calls(self, threshold, expected_result):
     observed_timestamp_ms = -1
+    callback_event = threading.Event()
+    callback_exception = None
 
     def check_result(
         result: ImageClassifierResult, output_image: _Image, timestamp_ms: int
     ):
-      test_utils.assert_proto_equals(
-          self, result.to_pb2(), expected_result.to_pb2()
-      )
-      self.assertTrue(
-          np.array_equal(
-              output_image.numpy_view(), self.test_image.numpy_view()
-          )
-      )
-      self.assertLess(observed_timestamp_ms, timestamp_ms)
-      self.observed_timestamp_ms = timestamp_ms
+      nonlocal callback_exception, observed_timestamp_ms
+      try:
+        test_utils.assert_proto_equals(
+            self, result.to_pb2(), expected_result.to_pb2()
+        )
+        self.assertTrue(
+            np.array_equal(
+                output_image.numpy_view(), self.test_image.numpy_view()
+            )
+        )
+        self.assertLess(observed_timestamp_ms, timestamp_ms)
+        observed_timestamp_ms = timestamp_ms
+      except AssertionError as e:
+        callback_exception = e
+      finally:
+        callback_event.set()
 
     options = _ImageClassifierOptions(
         base_options=_BaseOptions(model_asset_path=self.model_path),
@@ -618,6 +627,10 @@ class ImageClassifierTest(parameterized.TestCase):
     )
     with _ImageClassifier.create_from_options(options) as classifier:
       classifier.classify_async(self.test_image, 0)
+      callback_event.wait(3)
+      if callback_exception is not None:
+        raise callback_exception
+      callback_event.clear()
 
   def test_classify_async_succeeds_with_region_of_interest(self):
     # Load the test image.
@@ -630,17 +643,25 @@ class ImageClassifierTest(parameterized.TestCase):
     roi = _RectF(left=0.45, top=0.3075, right=0.614, bottom=0.7345)
     image_processing_options = _ImageProcessingOptions(roi)
     observed_timestamp_ms = -1
+    callback_event = threading.Event()
+    callback_exception = None
 
     def check_result(
         result: ImageClassifierResult, output_image: _Image, timestamp_ms: int
     ):
-      test_utils.assert_proto_equals(
-          self, result.to_pb2(), _generate_soccer_ball_results(100).to_pb2()
-      )
-      self.assertEqual(output_image.width, test_image.width)
-      self.assertEqual(output_image.height, test_image.height)
-      self.assertLess(observed_timestamp_ms, timestamp_ms)
-      self.observed_timestamp_ms = timestamp_ms
+      nonlocal callback_exception, observed_timestamp_ms
+      try:
+        test_utils.assert_proto_equals(
+            self, result.to_pb2(), _generate_soccer_ball_results(100).to_pb2()
+        )
+        self.assertEqual(output_image.width, test_image.width)
+        self.assertEqual(output_image.height, test_image.height)
+        self.assertLess(observed_timestamp_ms, timestamp_ms)
+        observed_timestamp_ms = timestamp_ms
+      except AssertionError as e:
+        callback_exception = e
+      finally:
+        callback_event.set()
 
     options = _ImageClassifierOptions(
         base_options=_BaseOptions(model_asset_path=self.model_path),
@@ -650,6 +671,10 @@ class ImageClassifierTest(parameterized.TestCase):
     )
     with _ImageClassifier.create_from_options(options) as classifier:
       classifier.classify_async(test_image, 100, image_processing_options)
+      callback_event.wait(3)
+      if callback_exception is not None:
+        raise callback_exception
+      callback_event.clear()
 
 
 if __name__ == '__main__':
