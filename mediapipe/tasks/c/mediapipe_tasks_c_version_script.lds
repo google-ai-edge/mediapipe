@@ -1,19 +1,19 @@
 VERS_1.0 {
   global:
-    language_detector_*;
-    text_classifier_*;
-    text_embedder_*;
     MpAudioClassifier*;
     MpImage*;
     MpStringList*;
     face_detector_*;
     face_landmarker_*;
     gesture_recognizer_*;
-    image_classifier_*;
     hand_landmarker_*;
+    image_classifier_*;
     image_segmenter_*;
+    language_detector_*;
     object_detector_*;
     pose_landmarker_*;
+    text_classifier_*;
+    text_embedder_*;
   local:
     *;
 };
