@@ -19,9 +19,11 @@
 #include <utility>
 
 #include "absl/base/attributes.h"
+#include "absl/base/thread_annotations.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/deps/no_destructor.h"
 #include "mediapipe/framework/graph_service.h"
 #include "mediapipe/gpu/attachments.h"
@@ -100,6 +102,7 @@ class WebGpuDeviceAttachmentManager {
   // TOOD: const result?
   template <class T>
   T& GetCachedAttachment(const WebGpuDeviceAttachment<T>& attachment) {
+    absl::MutexLock lock(attachments_mutex_);
     internal::AttachmentPtr<void>& entry = attachments_[&attachment];
     if (entry == nullptr) {
       entry = attachment.factory()(device_);
@@ -111,8 +114,9 @@ class WebGpuDeviceAttachmentManager {
 
  private:
   wgpu::Device device_;
+  absl::Mutex attachments_mutex_;
   absl::flat_hash_map<const AttachmentBase<wgpu::Device>*, AttachmentPtr<void>>
-      attachments_;
+      attachments_ ABSL_GUARDED_BY(attachments_mutex_);
 };
 
 #ifdef __EMSCRIPTEN__
