@@ -50,6 +50,7 @@ cc_binary(
         "//mediapipe/calculators/image:image_transformation_calculator",
         "//mediapipe/examples/coral:demo_run_graph_main",
         "//mediapipe/graphs/object_detection:desktop_tflite_calculators",
+        "//security/restricted_deps/ffmpeg:allow",
     ],
 )
 
@@ -64,5 +65,6 @@ cc_binary(
         "//mediapipe/calculators/util:detection_letterbox_removal_calculator",
         "//mediapipe/examples/coral:demo_run_graph_main",
         "//mediapipe/graphs/face_detection:desktop_live_calculators",
+        "//security/restricted_deps/ffmpeg:allow",
     ],
 )

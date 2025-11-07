@@ -32,6 +32,7 @@ cc_binary(
     deps = [
         "//mediapipe/examples/desktop:simple_run_graph_main",
         "//mediapipe/graphs/hand_tracking:desktop_tflite_calculators",
+        "//security/restricted_deps/ffmpeg:allow",
     ],
 )
 
@@ -52,6 +53,7 @@ cc_binary(
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main",
         "//mediapipe/graphs/hand_tracking:desktop_tflite_calculators",
+        "//security/restricted_deps/ffmpeg:allow",
     ],
 )
 
@@ -65,5 +67,6 @@ cc_binary(
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main_gpu",
         "//mediapipe/graphs/hand_tracking:mobile_calculators",
+        "//security/restricted_deps/ffmpeg:allow",
     ],
 )

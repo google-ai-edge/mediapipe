@@ -30,6 +30,7 @@ cc_binary(
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main",
         "//mediapipe/graphs/selfie_segmentation:selfie_segmentation_cpu_deps",
+        "//security/restricted_deps/ffmpeg:allow",
     ],
 )
 
@@ -40,5 +41,6 @@ cc_binary(
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main_gpu",
         "//mediapipe/graphs/selfie_segmentation:selfie_segmentation_gpu_deps",
+        "//security/restricted_deps/ffmpeg:allow",
     ],
 )

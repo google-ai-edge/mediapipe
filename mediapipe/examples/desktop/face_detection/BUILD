@@ -22,6 +22,7 @@ cc_binary(
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main",
         "//mediapipe/graphs/face_detection:face_detection_full_range_desktop_live_deps",
+        "//security/restricted_deps/ffmpeg:allow",
     ],
 )
 
@@ -39,6 +40,7 @@ cc_binary(
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main",
         "//mediapipe/graphs/face_detection:desktop_live_calculators",
+        "//security/restricted_deps/ffmpeg:allow",
     ],
 )
 
@@ -49,5 +51,6 @@ cc_binary(
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main_gpu",
         "//mediapipe/graphs/face_detection:desktop_live_gpu_calculators",
+        "//security/restricted_deps/ffmpeg:allow",
     ],
 )

@@ -33,6 +33,7 @@ cc_binary(
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main",
         "//mediapipe/graphs/pose_tracking:pose_tracking_cpu_deps",
+        "//security/restricted_deps/ffmpeg:allow",
     ],
 )
 
@@ -46,5 +47,6 @@ cc_binary(
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main_gpu",
         "//mediapipe/graphs/pose_tracking:pose_tracking_gpu_deps",
+        "//security/restricted_deps/ffmpeg:allow",
     ],
 )
