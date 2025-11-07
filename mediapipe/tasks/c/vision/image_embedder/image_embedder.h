@@ -21,6 +21,7 @@ limitations under the License.
 #include "mediapipe/tasks/c/components/containers/embedding_result.h"
 #include "mediapipe/tasks/c/components/processors/embedder_options.h"
 #include "mediapipe/tasks/c/core/base_options.h"
+#include "mediapipe/tasks/c/core/mp_status.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
 
@@ -62,11 +63,10 @@ struct ImageEmbedderOptions {
   // error message in case of any failure. The validity of the passed arguments
   // is true for the lifetime of the callback function.
   //
-  // The passed `image` is only valid for the lifetime of the call. A caller is
-  // responsible for closing the image embedder result.
-  typedef void (*result_callback_fn)(ImageEmbedderResult* result,
-                                     MpImagePtr image, int64_t timestamp_ms,
-                                     char* error_msg);
+  // The passed arguments are only valid for the lifetime of the callback.
+  typedef void (*result_callback_fn)(MpStatus status,
+                                     const ImageEmbedderResult* result,
+                                     MpImagePtr image, int64_t timestamp_ms);
   result_callback_fn result_callback;
 };
 
@@ -120,8 +120,6 @@ MP_EXPORT int image_embedder_embed_for_video(MpImageEmbedderPtr embedder,
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-// You need to invoke `image_embedder_close_result` after each invocation to
-// free memory.
 MP_EXPORT int image_embedder_embed_async(MpImageEmbedderPtr embedder,
                                          MpImagePtr image, int64_t timestamp_ms,
                                          char** error_msg);

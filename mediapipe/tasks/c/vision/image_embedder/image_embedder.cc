@@ -28,6 +28,8 @@ limitations under the License.
 #include "mediapipe/tasks/c/components/containers/embedding_result_converter.h"
 #include "mediapipe/tasks/c/components/processors/embedder_options_converter.h"
 #include "mediapipe/tasks/c/core/base_options_converter.h"
+#include "mediapipe/tasks/c/core/mp_status.h"
+#include "mediapipe/tasks/c/core/mp_status_converter.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/core/image_frame_util.h"
@@ -51,6 +53,7 @@ using ::mediapipe::tasks::c::components::containers::
 using ::mediapipe::tasks::c::components::processors::
     CppConvertToEmbedderOptions;
 using ::mediapipe::tasks::c::core::CppConvertToBaseOptions;
+using ::mediapipe::tasks::c::core::ToMpStatus;
 using ::mediapipe::tasks::vision::core::RunningMode;
 using ::mediapipe::tasks::vision::image_embedder::ImageEmbedder;
 typedef ::mediapipe::tasks::components::containers::Embedding CppEmbedding;
@@ -94,22 +97,16 @@ MpImageEmbedderPtr CppImageEmbedderCreate(const ImageEmbedderOptions& options,
     cpp_options->result_callback =
         [result_callback](absl::StatusOr<CppImageEmbedderResult> cpp_result,
                           const Image& image, int64_t timestamp) {
-          char* error_msg = nullptr;
           MpImageInternal mp_image({.image = image});
           if (!cpp_result.ok()) {
-            ABSL_LOG(ERROR)
-                << "Embedding extraction failed: " << cpp_result.status();
-            CppProcessError(cpp_result.status(), &error_msg);
-            result_callback(nullptr, &mp_image, timestamp, error_msg);
-            free(error_msg);
+            result_callback(ToMpStatus(cpp_result.status()), nullptr, &mp_image,
+                            timestamp);
             return;
           }
-
-          // Result is valid for the lifetime of the callback function.
-          auto result = std::make_unique<ImageEmbedderResult>();
-          CppConvertToEmbeddingResult(*cpp_result, result.get());
-          result_callback(result.release(), &mp_image, timestamp,
-                          /* error_msg= */ nullptr);
+          ImageEmbedderResult result;
+          CppConvertToEmbeddingResult(*cpp_result, &result);
+          result_callback(kMpOk, &result, &mp_image, timestamp);
+          CppCloseEmbeddingResult(&result);
         };
   }
 

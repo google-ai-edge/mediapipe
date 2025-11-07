@@ -84,11 +84,10 @@ struct FaceLandmarkerOptions {
   // message in case of any failure. The validity of the passed arguments is
   // true for the lifetime of the callback function.
   //
-  // The passed `image` is only valid for the lifetime of the call. A caller is
-  // responsible for closing the face landmarker result.
-  typedef void (*result_callback_fn)(FaceLandmarkerResult* result,
-                                     MpImagePtr image, int64_t timestamp_ms,
-                                     char* error_msg);
+  // The passed arguments are only valid for the lifetime of the callback.
+  typedef void (*result_callback_fn)(MpStatus status,
+                                     const FaceLandmarkerResult* result,
+                                     MpImagePtr image, int64_t timestamp_ms);
   result_callback_fn result_callback;
 };
 
@@ -118,7 +117,7 @@ MP_EXPORT int face_landmarker_detect_image(
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-// You need to invoke `face_landmarker_detect_for_video` after each invocation
+// You need to invoke `face_landmarker_close_result` after each invocation
 // to free memory.
 MP_EXPORT int face_landmarker_detect_for_video(
     MpFaceLandmarkerPtr landmarker, MpImagePtr image,

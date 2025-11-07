@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MEDIAPIPE_PYTHON_PYBIND_IMAGE_FRAME_UTIL_H_
-#define MEDIAPIPE_PYTHON_PYBIND_IMAGE_FRAME_UTIL_H_
+#ifndef MEDIAPIPE_TASKS_C_VISION_CORE_IMAGE_FRAME_UTIL_H_
+#define MEDIAPIPE_TASKS_C_VISION_CORE_IMAGE_FRAME_UTIL_H_
 
 #include <cstddef>
 #include <cstdint>
@@ -150,4 +150,4 @@ absl::StatusOr<T> GetValue(const MpImageInternal* image,
 }  // namespace tasks
 }  // namespace mediapipe
 
-#endif  // MEDIAPIPE_PYTHON_PYBIND_IMAGE_FRAME_UTIL_H_
+#endif  // MEDIAPIPE_TASKS_C_VISION_CORE_IMAGE_FRAME_UTIL_H_

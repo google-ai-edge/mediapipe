@@ -15,7 +15,6 @@
 
 import ctypes
 import dataclasses
-import logging
 from typing import Callable
 
 from mediapipe.tasks.python.components.processors import classifier_options
@@ -64,12 +63,12 @@ class GestureRecognizerOptionsC(ctypes.Structure):
           'result_callback',
           ctypes.CFUNCTYPE(
               None,
+              ctypes.c_int32,  # MpStatus
               ctypes.POINTER(
                   gesture_recognizer_result_c.GestureRecognizerResultC
               ),
               ctypes.c_void_p,
               ctypes.c_int64,
-              ctypes.c_char_p,
           ),
       ),
   ]
@@ -189,10 +188,10 @@ class GestureRecognizerOptions:
   _result_callback_c: (
       Callable[
           [
+              ctypes.c_int32,  # MpStatus
               gesture_recognizer_result_c.GestureRecognizerResultC,
               ctypes.c_void_p,
               int,
-              str,
           ],
           None,
       ]
@@ -205,18 +204,16 @@ class GestureRecognizerOptions:
     if self._result_callback_c is None:
       result_callback_fn = ctypes.CFUNCTYPE(
           None,
+          ctypes.c_int32,  # MpStatus
           ctypes.POINTER(gesture_recognizer_result_c.GestureRecognizerResultC),
           ctypes.c_void_p,
           ctypes.c_int64,
-          ctypes.c_char_p,
       )
 
       @result_callback_fn
-      def c_callback(result, image, timestamp_ms, error_msg):
+      def c_callback(status_code, result, image, timestamp_ms):
+        mediapipe_c_bindings.handle_status(status_code)
         if self.result_callback:
-          if error_msg:
-            logging.error('Gesture recognizer error: %s', error_msg.decode())
-            return
           py_result = _GestureRecognizerResult.from_ctypes(result.contents)
           py_image = image_lib.Image.create_from_ctypes(image)
           self.result_callback(py_result, py_image, timestamp_ms)

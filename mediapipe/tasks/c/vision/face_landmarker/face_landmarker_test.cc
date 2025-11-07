@@ -23,10 +23,14 @@ limitations under the License.
 
 #include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
+#include "absl/synchronization/blocking_counter.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/c/components/containers/landmark.h"
+#include "mediapipe/tasks/c/core/mp_status.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/core/image_processing_options.h"
@@ -47,7 +51,8 @@ constexpr char kImageRotatedFile[] = "portrait_rotated.jpg";
 constexpr float kLandmarksPrecision = 0.03;
 constexpr float kBlendshapesPrecision = 0.12;
 constexpr float kFacialTransformationMatrixPrecision = 0.05;
-constexpr int kIterations = 100;
+constexpr int kIterations = 5;
+constexpr int kSleepBetweenFramesMilliseconds = 100;
 
 std::string GetFullPath(absl::string_view file_name) {
   return JoinPath("./", kTestDataDirectory, file_name);
@@ -234,10 +239,11 @@ TEST(FaceLandmarkerTest, VideoModeTest) {
 // timestamp is greater than the previous one.
 struct LiveStreamModeCallback {
   static int64_t last_timestamp;
-  static void Fn(FaceLandmarkerResult* landmarker_result, MpImagePtr image,
-                 int64_t timestamp, char* error_msg) {
+  static absl::BlockingCounter* blocking_counter;
+  static void Fn(MpStatus status, const FaceLandmarkerResult* landmarker_result,
+                 MpImagePtr image, int64_t timestamp) {
+    ASSERT_EQ(status, kMpOk);
     ASSERT_NE(landmarker_result, nullptr);
-    ASSERT_EQ(error_msg, nullptr);
     AssertFaceLandmarkerResult(landmarker_result, kBlendshapesPrecision,
                                kLandmarksPrecision,
                                kFacialTransformationMatrixPrecision);
@@ -246,13 +252,15 @@ struct LiveStreamModeCallback {
     EXPECT_GT(timestamp, last_timestamp);
     ++last_timestamp;
 
-    face_landmarker_close_result(landmarker_result);
+    if (blocking_counter) {
+      blocking_counter->DecrementCount();
+    }
   }
 };
 int64_t LiveStreamModeCallback::last_timestamp = -1;
+absl::BlockingCounter* LiveStreamModeCallback::blocking_counter = nullptr;
 
-// TODO: Await the callbacks and re-enable test
-TEST(FaceLandmarkerTest, DISABLED_LiveStreamModeTest) {
+TEST(FaceLandmarkerTest, LiveStreamModeTest) {
   const auto image = GetImage(GetFullPath(kImageFile));
 
   const std::string model_path = GetFullPath(kModelName);
@@ -276,13 +284,23 @@ TEST(FaceLandmarkerTest, DISABLED_LiveStreamModeTest) {
                              nullptr);
   EXPECT_NE(landmarker, nullptr);
 
+  absl::BlockingCounter counter(kIterations);
+  LiveStreamModeCallback::blocking_counter = &counter;
+
   for (int i = 0; i < kIterations; ++i) {
     EXPECT_GE(
         face_landmarker_detect_async(landmarker, image.get(),
                                      /* image_processing_options= */ nullptr, i,
                                      /* error_msg */ nullptr),
         0);
+    // Short sleep so that MediaPipe does not drop frames.
+    absl::SleepFor(absl::Milliseconds(kSleepBetweenFramesMilliseconds));
   }
+
+  // Wait for all callbacks to be invoked.
+  counter.Wait();
+  LiveStreamModeCallback::blocking_counter = nullptr;
+
   face_landmarker_close(landmarker, /* error_msg */ nullptr);
 
   // Due to the flow limiter, the total of outputs might be smaller than the

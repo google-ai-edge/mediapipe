@@ -15,7 +15,6 @@
 
 import ctypes
 import dataclasses
-import logging
 from typing import Callable, Optional
 
 from mediapipe.tasks.python.core import base_options as base_options_module
@@ -65,10 +64,10 @@ class ImageSegmenterOptionsC(ctypes.Structure):
           'result_callback',
           ctypes.CFUNCTYPE(
               None,
+              ctypes.c_int32,  # MpStatus
               ctypes.POINTER(ImageSegmenterResultC),
               ctypes.c_void_p,
               ctypes.c_int64,
-              ctypes.c_char_p,
           ),
       ),
   ]
@@ -218,10 +217,10 @@ class ImageSegmenterOptions:
   _result_callback_c: (
       Callable[
           [
+              ctypes.c_int32,  # MpStatus
               ImageSegmenterResultC,
               ctypes.c_void_p,
-              int,
-              str,
+              ctypes.c_int64,
           ],
           None,
       ]
@@ -234,18 +233,16 @@ class ImageSegmenterOptions:
     if not self._result_callback_c:
       result_callback_fn = ctypes.CFUNCTYPE(
           None,
+          ctypes.c_int32,  # MpStatus
           ctypes.POINTER(ImageSegmenterResultC),
           ctypes.c_void_p,
           ctypes.c_int64,
-          ctypes.c_char_p,
       )
 
       @result_callback_fn
-      def c_callback(result, image, timestamp_ms, error_msg):
+      def c_callback(status_code, result, image, timestamp_ms):
+        mediapipe_c_bindings.handle_status(status_code)
         if self.result_callback:
-          if error_msg:
-            logging.error('Image segmenter error: %s', error_msg.decode())
-            return
           py_result = ImageSegmenterResult.from_ctypes(result.contents)
           py_image = image_module.Image.create_from_ctypes(image)
           self.result_callback(py_result, py_image, timestamp_ms)

@@ -15,7 +15,6 @@
 
 import ctypes
 import dataclasses
-import logging
 from typing import Callable, List, Optional
 
 from mediapipe.tasks.python.components.containers import classification_result as classification_result_module
@@ -55,10 +54,10 @@ class ImageClassifierOptionsC(ctypes.Structure):
           "result_callback",
           ctypes.CFUNCTYPE(
               None,
+              ctypes.c_int32,  # MpStatus
               ctypes.POINTER(classification_result_c.ClassificationResultC),
-              ctypes.c_void_p,
-              ctypes.c_int64,
-              ctypes.c_char_p,
+              ctypes.c_void_p,  # Image
+              ctypes.c_int64,  # Timestamp
           ),
       ),
   ]
@@ -182,23 +181,19 @@ class ImageClassifierOptions:
     if self._result_callback_c is None:
       result_callback_fn = ctypes.CFUNCTYPE(
           None,
+          ctypes.c_int32,  # MpStatus
           ctypes.POINTER(classification_result_c.ClassificationResultC),
-          ctypes.c_void_p,
-          ctypes.c_int64,
-          ctypes.c_char_p,
+          ctypes.c_void_p,  # Image
+          ctypes.c_int64,  # Timestamp
       )
 
       @result_callback_fn
-      def c_callback(result, image, timestamp_ms, error_msg):
-        if not self.result_callback:
-          return
-        if error_msg:
-          logging.error("Image classifier error: %s", error_msg.decode())
-          return
-
-        py_result = ImageClassifierResult.from_ctypes(result.contents)
-        py_image = image_lib.Image.create_from_ctypes(image)
-        self.result_callback(py_result, py_image, timestamp_ms)
+      def c_callback(status_code, result, image, timestamp_ms):
+        mediapipe_c_bindings.handle_status(status_code)
+        if self.result_callback:
+          py_result = ImageClassifierResult.from_ctypes(result.contents)
+          py_image = image_lib.Image.create_from_ctypes(image)
+          self.result_callback(py_result, py_image, timestamp_ms)
 
       self._result_callback_c = c_callback
 

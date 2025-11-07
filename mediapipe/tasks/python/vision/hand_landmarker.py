@@ -16,7 +16,6 @@
 import ctypes
 import dataclasses
 import enum
-import logging
 from typing import Callable, List, Optional
 
 from mediapipe.tasks.python.components.containers import category
@@ -70,10 +69,10 @@ class HandLandmarkerOptionsC(ctypes.Structure):
           'result_callback',
           ctypes.CFUNCTYPE(
               None,
+              ctypes.c_int32,  # MpStatus
               ctypes.POINTER(HandLandmarkerResultC),
               ctypes.c_void_p,  # image
               ctypes.c_int64,  # timestamp_ms
-              ctypes.c_char_p,  # error_msg
           ),
       ),
   ]
@@ -308,10 +307,10 @@ class HandLandmarkerOptions:
   _result_callback_c: (
       Callable[
           [
+              ctypes.c_int32,  # MpStatus
               HandLandmarkerResultC,
               ctypes.c_void_p,  # image
               int,  # timestamp_ms
-              str,  # error_msg
           ],
           None,
       ]
@@ -325,16 +324,13 @@ class HandLandmarkerOptions:
       # The C callback function that will be called by the C code.
       @ctypes.CFUNCTYPE(
           None,
+          ctypes.c_int32,  # MpStatus
           ctypes.POINTER(HandLandmarkerResultC),
           ctypes.c_void_p,
           ctypes.c_int64,
-          ctypes.c_char_p,
       )
-      def c_callback(result, image, timestamp_ms, error_msg):
-        if error_msg:
-          logging.error('Hand landmarker error: %s', error_msg)
-          return
-
+      def c_callback(status_code, result, image, timestamp_ms):
+        mediapipe_c_bindings.handle_status(status_code)
         if self.result_callback:
           py_result = HandLandmarkerResult.from_ctypes(result.contents)
           py_image = image_lib.Image.create_from_ctypes(image)

@@ -22,12 +22,16 @@ limitations under the License.
 
 #include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
+#include "absl/synchronization/blocking_counter.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/c/components/containers/detection_result.h"
 #include "mediapipe/tasks/c/components/containers/keypoint.h"
 #include "mediapipe/tasks/c/components/containers/rect.h"
+#include "mediapipe/tasks/c/core/mp_status.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/core/image_processing_options.h"
@@ -46,8 +50,9 @@ constexpr char kImageFile[] = "portrait.jpg";
 constexpr char kImageRotatedFile[] = "portrait_rotated.jpg";
 constexpr int kPixelDiffTolerance = 5;
 constexpr float kKeypointErrorThreshold = 0.02;
-constexpr int kIterations = 100;
+constexpr int kIterations = 5;
 constexpr int kKeypointCount = 2;
+constexpr int kSleepBetweenFramesMilliseconds = 100;
 
 // Expected results for portrait.jpg
 const NormalizedKeypoint kExpectedKeypoints[] = {
@@ -215,10 +220,11 @@ TEST(FaceDetectorTest, VideoModeTest) {
 // timestamp is greater than the previous one.
 struct LiveStreamModeCallback {
   static int64_t last_timestamp;
-  static void Fn(FaceDetectorResult* detector_result, const MpImagePtr image,
-                 int64_t timestamp, char* error_msg) {
+  static absl::BlockingCounter* blocking_counter;
+  static void Fn(MpStatus status, const FaceDetectorResult* detector_result,
+                 const MpImagePtr image, int64_t timestamp) {
+    ASSERT_EQ(status, kMpOk);
     ASSERT_NE(detector_result, nullptr);
-    ASSERT_EQ(error_msg, nullptr);
     Detection expected_detection = CreateExpectedDetection(
         kExpectedBoundingBox, kExpectedKeypoints, kKeypointCount);
     AssertFaceDetectorResult(detector_result, expected_detection,
@@ -228,13 +234,15 @@ struct LiveStreamModeCallback {
     EXPECT_GT(timestamp, last_timestamp);
     ++last_timestamp;
 
-    face_detector_close_result(detector_result);
+    if (blocking_counter) {
+      blocking_counter->DecrementCount();
+    }
   }
 };
 int64_t LiveStreamModeCallback::last_timestamp = -1;
+absl::BlockingCounter* LiveStreamModeCallback::blocking_counter = nullptr;
 
-// TODO: Await the callbacks and re-enable test
-TEST(FaceDetectorTest, DISABLED_LiveStreamModeTest) {
+TEST(FaceDetectorTest, LiveStreamModeTest) {
   const auto image = GetImage(GetFullPath(kImageFile));
 
   const std::string model_path = GetFullPath(kModelName);
@@ -253,13 +261,23 @@ TEST(FaceDetectorTest, DISABLED_LiveStreamModeTest) {
                                                     nullptr);
   EXPECT_NE(detector, nullptr);
 
+  absl::BlockingCounter counter(kIterations);
+  LiveStreamModeCallback::blocking_counter = &counter;
+
   for (int i = 0; i < kIterations; ++i) {
-    EXPECT_GE(
-        face_detector_detect_async(detector, image.get(),
-                                   /* image_processing_options */ nullptr, i,
-                                   /* error_msg */ nullptr),
-        0);
+    EXPECT_GE(face_detector_detect_async(detector, image.get(),
+                                         /* image_processing_options */ nullptr,
+                                         /* timestamp_ms= */ i,
+                                         /* error_msg */ nullptr),
+              0);
+    // Short sleep so that MediaPipe does not drop frames.
+    absl::SleepFor(absl::Milliseconds(kSleepBetweenFramesMilliseconds));
   }
+
+  // Wait for all callbacks to be invoked.
+  counter.Wait();
+  LiveStreamModeCallback::blocking_counter = nullptr;
+
   face_detector_close(detector, /* error_msg */ nullptr);
 
   // Due to the flow limiter, the total of outputs might be smaller than the

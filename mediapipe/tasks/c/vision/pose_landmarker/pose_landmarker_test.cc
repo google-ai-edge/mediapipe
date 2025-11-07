@@ -22,6 +22,9 @@ limitations under the License.
 
 #include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
+#include "absl/synchronization/blocking_counter.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
@@ -42,6 +45,7 @@ constexpr char kModelName[] = "pose_landmarker.task";
 constexpr char kImageFile[] = "pose.jpg";
 constexpr float kLandmarkPrecision = 1e-1;
 constexpr int kIterations = 5;
+constexpr int kSleepBetweenFramesMilliseconds = 100;
 
 std::string GetFullPath(absl::string_view file_name) {
   return JoinPath("./", kTestDataDirectory, file_name);
@@ -159,23 +163,26 @@ TEST(PoseLandmarkerTest, VideoModeTest) {
 // timestamp is greater than the previous one.
 struct LiveStreamModeCallback {
   static int64_t last_timestamp;
-  static void Fn(PoseLandmarkerResult* landmarker_result,
-                 const MpImagePtr image, int64_t timestamp, char* error_msg) {
+  static absl::BlockingCounter* blocking_counter;
+  static void Fn(MpStatus status, const PoseLandmarkerResult* landmarker_result,
+                 const MpImagePtr image, int64_t timestamp) {
+    ASSERT_EQ(status, kMpOk);
     ASSERT_NE(landmarker_result, nullptr);
-    ASSERT_EQ(error_msg, nullptr);
     MatchesPoseLandmarkerResult(landmarker_result, kLandmarkPrecision);
     EXPECT_GT(MpImageGetWidth(image), 0);
     EXPECT_GT(MpImageGetHeight(image), 0);
     EXPECT_GT(timestamp, last_timestamp);
     ++last_timestamp;
 
-    pose_landmarker_close_result(landmarker_result);
+    if (blocking_counter) {
+      blocking_counter->DecrementCount();
+    }
   }
 };
 int64_t LiveStreamModeCallback::last_timestamp = -1;
+absl::BlockingCounter* LiveStreamModeCallback::blocking_counter = nullptr;
 
-// TODO: Await the callbacks and re-enable test
-TEST(PoseLandmarkerTest, DISABLED_LiveStreamModeTest) {
+TEST(PoseLandmarkerTest, LiveStreamModeTest) {
   const auto image = GetImage(GetFullPath(kImageFile));
 
   const std::string model_path = GetFullPath(kModelName);
@@ -197,13 +204,23 @@ TEST(PoseLandmarkerTest, DISABLED_LiveStreamModeTest) {
       pose_landmarker_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(landmarker, nullptr);
 
+  absl::BlockingCounter counter(kIterations);
+  LiveStreamModeCallback::blocking_counter = &counter;
+
   for (int i = 0; i < kIterations; ++i) {
     EXPECT_GE(
         pose_landmarker_detect_async(landmarker, image.get(),
                                      /* image_processing_options= */ nullptr, i,
                                      /* error_msg */ nullptr),
         0);
+    // Short sleep so that MediaPipe does not drop frames.
+    absl::SleepFor(absl::Milliseconds(kSleepBetweenFramesMilliseconds));
   }
+
+  // Wait for all callbacks to be invoked.
+  counter.Wait();
+  LiveStreamModeCallback::blocking_counter = nullptr;
+
   pose_landmarker_close(landmarker, /* error_msg */ nullptr);
 
   // Due to the flow limiter, the total of outputs might be smaller than the

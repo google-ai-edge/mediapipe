@@ -27,6 +27,8 @@ limitations under the License.
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/tasks/c/components/containers/detection_result_converter.h"
 #include "mediapipe/tasks/c/core/base_options_converter.h"
+#include "mediapipe/tasks/c/core/mp_status.h"
+#include "mediapipe/tasks/c/core/mp_status_converter.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/core/image_frame_util.h"
 #include "mediapipe/tasks/c/vision/core/image_processing_options.h"
@@ -54,6 +56,7 @@ using CppFaceDetectorResult =
     ::mediapipe::tasks::vision::face_detector::FaceDetectorResult;
 using CppImageProcessingOptions =
     ::mediapipe::tasks::vision::core::ImageProcessingOptions;
+using ::mediapipe::tasks::c::core::ToMpStatus;
 using ::mediapipe::tasks::c::vision::core::CppConvertToImageProcessingOptions;
 
 int CppProcessError(absl::Status status, char** error_msg) {
@@ -99,23 +102,16 @@ MpFaceDetectorPtr CppFaceDetectorCreate(const FaceDetectorOptions& options,
     cpp_options->result_callback =
         [result_callback](absl::StatusOr<CppFaceDetectorResult> cpp_result,
                           const Image& image, int64_t timestamp) {
-          char* error_msg = nullptr;
-
+          MpImageInternal mp_image({.image = image});
           if (!cpp_result.ok()) {
-            ABSL_LOG(ERROR) << "Detection failed: " << cpp_result.status();
-            CppProcessError(cpp_result.status(), &error_msg);
-            result_callback(nullptr, nullptr, timestamp, error_msg);
-            free(error_msg);
+            result_callback(ToMpStatus(cpp_result.status()), nullptr, &mp_image,
+                            timestamp);
             return;
           }
-
-          // Result is valid for the lifetime of the callback function.
-          auto result = std::make_unique<FaceDetectorResult>();
-          CppConvertToDetectionResult(*cpp_result, result.get());
-
-          MpImageInternal mp_image = {.image = image};
-          result_callback(result.release(), &mp_image, timestamp,
-                          /* error_msg= */ nullptr);
+          FaceDetectorResult result;
+          CppConvertToDetectionResult(*cpp_result, &result);
+          result_callback(kMpOk, &result, &mp_image, timestamp);
+          CppCloseDetectionResult(&result);
         };
   }
 

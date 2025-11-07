@@ -16,7 +16,6 @@
 import ctypes
 import dataclasses
 import enum
-import logging
 from typing import Callable, List, Optional
 
 import numpy as np
@@ -2908,10 +2907,10 @@ class FaceLandmarkerOptionsC(ctypes.Structure):
           'result_callback',
           ctypes.CFUNCTYPE(
               None,
+              ctypes.c_int32,  # MpStatus
               ctypes.POINTER(FaceLandmarkerResultC),
               ctypes.c_void_p,
               ctypes.c_int64,
-              ctypes.c_char_p,
           ),
       ),
   ]
@@ -2963,10 +2962,10 @@ class FaceLandmarkerOptions:
   _result_callback_c: Optional[
       Callable[
           [
+              ctypes.c_int32,  # MpStatus
               FaceLandmarkerResultC,
               ctypes.c_void_p,
               int,
-              str,
           ],
           None,
       ]
@@ -2991,15 +2990,13 @@ class FaceLandmarkerOptions:
       # The C callback function that will be called by the C code.
       @ctypes.CFUNCTYPE(
           None,
+          ctypes.c_int32,  # MpStatus
           ctypes.POINTER(FaceLandmarkerResultC),
           ctypes.c_void_p,
           ctypes.c_int64,
-          ctypes.c_char_p,
       )
-      def c_callback(result, image, timestamp_ms, error_msg):
-        if error_msg:
-          logging.error('Face detector error: %s', error_msg)
-          return
+      def c_callback(status_code, result, image, timestamp_ms):
+        mediapipe_c_bindings_lib.handle_status(status_code)
         if self.result_callback is not None:
           py_result = FaceLandmarkerResult.from_ctypes(result)
           py_image = image_lib.Image.create_from_ctypes(image)

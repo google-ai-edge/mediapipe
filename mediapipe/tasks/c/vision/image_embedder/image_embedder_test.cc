@@ -23,10 +23,14 @@ limitations under the License.
 
 #include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
+#include "absl/synchronization/blocking_counter.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/c/components/containers/embedding_result.h"
+#include "mediapipe/tasks/c/core/mp_status.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/core/image_test_util.h"
@@ -43,7 +47,8 @@ constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
 constexpr char kModelName[] = "mobilenet_v3_small_100_224_embedder.tflite";
 constexpr char kImageFile[] = "burger.jpg";
 constexpr float kPrecision = 1e-6;
-constexpr int kIterations = 100;
+constexpr int kIterations = 5;
+constexpr int kSleepBetweenFramesMilliseconds = 100;
 
 std::string GetFullPath(absl::string_view file_name) {
   return JoinPath("./", kTestDataDirectory, file_name);
@@ -165,10 +170,11 @@ TEST(ImageEmbedderTest, VideoModeTest) {
 // timestamp is greater than the previous one.
 struct LiveStreamModeCallback {
   static int64_t last_timestamp;
-  static void Fn(EmbeddingResult* embedder_result, MpImagePtr image,
-                 int64_t timestamp, char* error_msg) {
+  static absl::BlockingCounter* blocking_counter;
+  static void Fn(MpStatus status, const EmbeddingResult* embedder_result,
+                 MpImagePtr image, int64_t timestamp) {
+    ASSERT_EQ(status, kMpOk);
     ASSERT_NE(embedder_result, nullptr);
-    ASSERT_EQ(error_msg, nullptr);
     CheckMobileNetV3Result(*embedder_result, false);
     EXPECT_NEAR(embedder_result->embeddings[0].float_embedding[0], -0.0142344,
                 kPrecision);
@@ -176,12 +182,16 @@ struct LiveStreamModeCallback {
     EXPECT_GT(MpImageGetHeight(image), 0);
     EXPECT_GT(timestamp, last_timestamp);
     last_timestamp++;
+
+    if (blocking_counter) {
+      blocking_counter->DecrementCount();
+    }
   }
 };
 int64_t LiveStreamModeCallback::last_timestamp = -1;
+absl::BlockingCounter* LiveStreamModeCallback::blocking_counter = nullptr;
 
-// TODO: Await the callbacks and re-enable test
-TEST(ImageEmbedderTest, DISABLED_LiveStreamModeTest) {
+TEST(ImageEmbedderTest, LiveStreamModeTest) {
   const ScopedMpImage image = GetImage(GetFullPath(kImageFile));
 
   const std::string model_path = GetFullPath(kModelName);
@@ -201,11 +211,21 @@ TEST(ImageEmbedderTest, DISABLED_LiveStreamModeTest) {
                                                       /* error_msg */ nullptr);
   EXPECT_NE(embedder, nullptr);
 
+  absl::BlockingCounter counter(kIterations);
+  LiveStreamModeCallback::blocking_counter = &counter;
+
   for (int i = 0; i < kIterations; ++i) {
     EXPECT_GE(image_embedder_embed_async(embedder, image.get(), i,
                                          /* error_msg */ nullptr),
               0);
+    // Short sleep so that MediaPipe does not drop frames.
+    absl::SleepFor(absl::Milliseconds(kSleepBetweenFramesMilliseconds));
   }
+
+  // Wait for all callbacks to be invoked.
+  counter.Wait();
+  LiveStreamModeCallback::blocking_counter = nullptr;
+
   image_embedder_close(embedder, /* error_msg */ nullptr);
 
   // Due to the flow limiter, the total of outputs might be smaller than the

@@ -15,7 +15,6 @@
 
 import ctypes
 import dataclasses
-import logging
 from typing import Callable, List, Optional
 
 from mediapipe.tasks.python.components.containers import detections as detections_module
@@ -55,10 +54,10 @@ class ObjectDetectorOptionsC(ctypes.Structure):
           'result_callback',
           ctypes.CFUNCTYPE(
               None,
+              ctypes.c_int32,  # MpStatus.code
               ctypes.POINTER(detections_c_module.DetectionResultC),
               ctypes.c_void_p,  # image
               ctypes.c_int64,  # timestamp_ms
-              ctypes.c_char_p,  # error_msg
           ),
       ),
   ]
@@ -174,7 +173,12 @@ class ObjectDetectorOptions:
 
   _result_callback_c: Optional[
       Callable[
-          [detections_c_module.DetectionResultC, ctypes.c_void_p, int, str],
+          [
+              ctypes.c_int32,
+              detections_c_module.DetectionResultC,
+              ctypes.c_void_p,
+              int,
+          ],
           None,
       ]
   ] = None
@@ -186,16 +190,13 @@ class ObjectDetectorOptions:
       # The C callback function that will be called by the C code.
       @ctypes.CFUNCTYPE(
           None,
+          ctypes.c_int32,  # MpStatus
           ctypes.POINTER(detections_c_module.DetectionResultC),
           ctypes.c_void_p,
           ctypes.c_int64,
-          ctypes.c_char_p,
       )
-      def c_callback(result, image, timestamp_ms, error_msg):
-        if error_msg:
-          logging.error('Object detector error: %s', error_msg)
-          return
-
+      def c_callback(status_code, result, image, timestamp_ms):
+        mediapipe_c_bindings_c_module.handle_status(status_code)
         if self.result_callback:
           py_result = detections_module.DetectionResult.from_ctypes(result)
           py_image = image_module.Image.create_from_ctypes(image)
