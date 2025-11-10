@@ -18,11 +18,13 @@
 #include <cstring>
 #endif  // __EMSCRIPTEN__
 
+#include "absl/base/attributes.h"
 #include "mediapipe/framework/graph_service.h"
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
 #include <emscripten/em_js.h>
+#include <webgpu/webgpu.h>
 #include <webgpu/webgpu_cpp.h>
 
 EM_JS_DEPS(webgpu_service_deps, "$stringToNewUTF8")
@@ -67,7 +69,8 @@ EM_JS(char*, GetAdapterVendor, (), {
 #ifdef __EMSCRIPTEN__
 WebGpuService::WebGpuService()
     : canvas_selector_("canvas_webgpu"),
-      device_(wgpu::Device::Acquire(emscripten_webgpu_get_device())) {
+      device_(wgpu::Device::Acquire(emscripten_webgpu_get_device())),
+      attachment_manager_(internal::WebGpuDeviceAttachmentManager(device_)) {
   adapter_info_.architecture.data = GetAdapterArchitecture();
   adapter_info_.architecture.length = strlen(adapter_info_.architecture.data);
   adapter_info_.description.data = GetAdapterDescription();
@@ -80,7 +83,8 @@ WebGpuService::WebGpuService()
 #else
 WebGpuService::WebGpuService()
     : canvas_selector_(""),
-      device_(WebGpuDeviceRegistration::GetInstance().GetWebGpuDevice()) {}
+      device_(WebGpuDeviceRegistration::GetInstance().GetWebGpuDevice()),
+      attachment_manager_(internal::WebGpuDeviceAttachmentManager(device_)) {}
 #endif  // __EMSCRIPTEN__
 
 ABSL_CONST_INIT const GraphService<WebGpuService> kWebGpuService(
