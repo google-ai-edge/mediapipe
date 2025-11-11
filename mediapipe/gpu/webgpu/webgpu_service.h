@@ -102,6 +102,11 @@ class WebGpuService {
     }
   }
 
+  static absl::StatusOr<std::shared_ptr<WebGpuService>> Create(
+      wgpu::Device device) {
+    return std::shared_ptr<WebGpuService>(new WebGpuService(std::move(device)));
+  }
+
   // Note: some clients set DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR=0, so
   // we have to use ids rather than selectors for now.
   // However, note that if we transition to selectors, we will need to change
@@ -124,6 +129,7 @@ class WebGpuService {
 
  private:
   WebGpuService();
+  explicit WebGpuService(wgpu::Device device);
 
   const char* canvas_selector_;
   wgpu::Device device_;

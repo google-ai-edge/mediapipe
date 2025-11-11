@@ -87,6 +87,11 @@ WebGpuService::WebGpuService()
       attachment_manager_(internal::WebGpuDeviceAttachmentManager(device_)) {}
 #endif  // __EMSCRIPTEN__
 
+WebGpuService::WebGpuService(wgpu::Device device)
+    : canvas_selector_(""),
+      device_(device),
+      attachment_manager_(internal::WebGpuDeviceAttachmentManager(device)) {}
+
 ABSL_CONST_INIT const GraphService<WebGpuService> kWebGpuService(
     "kWebGpuService", GraphServiceBase::kAllowDefaultInitialization);
 
