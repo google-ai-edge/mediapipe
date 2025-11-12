@@ -651,10 +651,6 @@ absl::Status WebGpuShaderCalculator::InitWebGpuShader() {
   wgpu::ShaderModule module =
       service_->device().CreateShaderModule(&shader_desc);
 
-  if (!module) {
-    return absl::InternalError("Failed to create shader module.");
-  }
-
   // Create the compute pipeline
   wgpu::ComputePipelineDescriptor pipeline_desc = {
       .compute =
@@ -674,9 +670,6 @@ absl::Status WebGpuShaderCalculator::InitWebGpuShader() {
       .size = params_size_,
   };
   params_ = service_->device().CreateBuffer(&buffer_desc);
-  if (!params_) {
-    return absl::InternalError("Failed to create params buffer.");
-  }
 
   // And a default sampler in case we need that too
   wgpu::SamplerDescriptor sampler_desc = {
@@ -684,9 +677,6 @@ absl::Status WebGpuShaderCalculator::InitWebGpuShader() {
       .minFilter = wgpu::FilterMode::Linear,
   };
   sampler_ = service_->device().CreateSampler(&sampler_desc);
-  if (!sampler_) {
-    return absl::InternalError("Failed to create sampler.");
-  }
   return absl::OkStatus();
 }
 
@@ -957,9 +947,6 @@ absl::Status WebGpuShaderCalculator::WebGpuBindAndRenderToView(
       .entries = entries.data(),
   };
   wgpu::BindGroup bind_group = device.CreateBindGroup(&bind_group_desc);
-  if (!bind_group) {
-    return absl::InternalError("Failed to create bind group.");
-  }
 
   // Round up the number of workgroups to cover the whole texture.
   const uint32_t num_groups_x =
