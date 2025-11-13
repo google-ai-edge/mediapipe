@@ -1,6 +1,7 @@
 VERS_1.0 {
   global:
     MpAudioClassifier*;
+    MpLanguageDetector*;
     MpImage*;
     MpStringList*;
     MpTextEmbedder*;
@@ -11,7 +12,6 @@ VERS_1.0 {
     hand_landmarker_*;
     image_classifier_*;
     image_segmenter_*;
-    language_detector_*;
     object_detector_*;
     pose_landmarker_*;
   local:

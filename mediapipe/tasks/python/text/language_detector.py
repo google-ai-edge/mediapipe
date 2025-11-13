@@ -138,33 +138,31 @@ class LanguageDetectorOptions:
 
 _CTYPES_SIGNATURES = (
     _CFunction(
-        "language_detector_create",
+        "MpLanguageDetectorCreate",
         [
             ctypes.POINTER(LanguageDetectorOptionsC),
-            ctypes.POINTER(ctypes.c_char_p),
+            ctypes.POINTER(ctypes.c_void_p),
         ],
-        ctypes.c_void_p,
+        ctypes.c_int,
     ),
     _CFunction(
-        "language_detector_detect",
+        "MpLanguageDetectorDetect",
         [
             ctypes.c_void_p,
             ctypes.c_char_p,
             ctypes.POINTER(LanguageDetectorResultC),
-            ctypes.POINTER(ctypes.c_char_p),
         ],
         ctypes.c_int,
     ),
     _CFunction(
-        "language_detector_close",
+        "MpLanguageDetectorClose",
         [
             ctypes.c_void_p,
-            ctypes.POINTER(ctypes.c_char_p),
         ],
         ctypes.c_int,
     ),
     _CFunction(
-        "language_detector_close_result",
+        "MpLanguageDetectorCloseResult",
         [ctypes.POINTER(LanguageDetectorResultC)],
         None,
     ),
@@ -239,20 +237,13 @@ class LanguageDetector:
 
     ctypes_options = options.to_ctypes()
 
-    error_msg_ptr = ctypes.c_char_p()
-    classifier_handle = lib.language_detector_create(
+    detector_handle = ctypes.c_void_p()
+    status = lib.MpLanguageDetectorCreate(
         ctypes.byref(ctypes_options),
-        ctypes.byref(error_msg_ptr),
+        ctypes.byref(detector_handle),
     )
-
-    if classifier_handle is None or classifier_handle == 0:
-      if error_msg_ptr.value:  # pylint: disable=using-constant-test
-        error_message = error_msg_ptr.value.decode("utf-8")
-        raise RuntimeError(error_message)
-      else:
-        raise RuntimeError("Failed to create LanguageDetector object.")
-
-    return LanguageDetector(lib=lib, handle=classifier_handle)
+    mediapipe_c_bindings_module.handle_status(status)
+    return LanguageDetector(lib=lib, handle=detector_handle)
 
   def detect(self, text: str) -> LanguageDetectorResult:
     """Predicts the language of the input `text`.
@@ -269,39 +260,22 @@ class LanguageDetector:
       RuntimeError: If language detection failed to run.
     """
     ctypes_result = LanguageDetectorResultC()
-    error_msg_ptr = ctypes.c_char_p()
 
-    return_code = self._lib.language_detector_detect(
+    status = self._lib.MpLanguageDetectorDetect(
         self._detector_handle,
         text.encode("utf-8"),
         ctypes.byref(ctypes_result),
-        ctypes.byref(error_msg_ptr),
     )
-
-    if return_code != 0:
-      if error_msg_ptr.value is not None:
-        error_message = error_msg_ptr.value.decode("utf-8")
-        raise RuntimeError(error_message)
-      else:
-        raise RuntimeError("Classification failed: Unknown error.")
-
+    mediapipe_c_bindings_module.handle_status(status)
     python_result = _convert_to_python_language_detector_result(ctypes_result)
-    self._lib.language_detector_close_result(ctypes.byref(ctypes_result))
+    self._lib.MpLanguageDetectorCloseResult(ctypes.byref(ctypes_result))
     return python_result
 
   def close(self):
     """Shuts down the MediaPipe task instance."""
     if self._detector_handle:
-      error_msg_ptr = ctypes.c_char_p()
-      return_code = self._lib.language_detector_close(
-          self._detector_handle, ctypes.byref(error_msg_ptr)
-      )
-      if return_code != 0:
-        if error_msg_ptr.value is not None:
-          error_message = error_msg_ptr.value.decode("utf-8")
-          raise RuntimeError(error_message)
-        else:
-          raise RuntimeError("Failed to close LanguageDetector object.")
+      status = self._lib.MpLanguageDetectorClose(self._detector_handle)
+      mediapipe_c_bindings_module.handle_status(status)
       self._detector_handle = None
       self._lib.close()
 

@@ -26,6 +26,8 @@ LANGUAGE_DETECTOR_DEPS = [
     "//mediapipe/tasks/c/components/processors:classifier_options_converter",
     "//mediapipe/tasks/c/core:base_options",
     "//mediapipe/tasks/c/core:base_options_converter",
+    "//mediapipe/tasks/c/core:mp_status",
+    "//mediapipe/tasks/c/core:mp_status_converter",
     "//mediapipe/tasks/cc/text/language_detector",
 ]
 
@@ -86,6 +88,7 @@ cc_library(
     deps = [
         "//mediapipe/tasks/c/components/processors:classifier_options",
         "//mediapipe/tasks/c/core:base_options",
+        "//mediapipe/tasks/c/core:mp_status",
     ],
 )
 
@@ -121,6 +124,7 @@ cc_test(
         ":language_detector_lib",
         "//mediapipe/framework/deps:file_path",
         "//mediapipe/framework/port:gtest",
+        "//mediapipe/tasks/c/core:mp_status",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
