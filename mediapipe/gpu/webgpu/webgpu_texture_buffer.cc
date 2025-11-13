@@ -1,6 +1,5 @@
 #include "mediapipe/gpu/webgpu/webgpu_texture_buffer.h"
 
-#include <webgpu/webgpu.h>
 #include <webgpu/webgpu_cpp.h>
 
 #include <cstdint>
