@@ -23,7 +23,7 @@ from mediapipe.tasks.python.components.processors import classifier_options as c
 from mediapipe.tasks.python.components.processors import classifier_options_c as classifier_options_c_module
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.core import base_options_c as base_options_c_module
-from mediapipe.tasks.python.core import mediapipe_c_bindings as mediapipe_c_bindings_c_module
+from mediapipe.tasks.python.core import mediapipe_c_bindings
 from mediapipe.tasks.python.core import serial_dispatcher
 
 _BaseOptions = base_options_module.BaseOptions
@@ -31,7 +31,7 @@ Category = category_module.Category
 Classifications = classification_result_module.Classifications
 TextClassifierResult = classification_result_module.ClassificationResult
 ClassifierOptions = classifier_options_module.ClassifierOptions
-_CFunction = mediapipe_c_bindings_c_module.CFunction
+_CFunction = mediapipe_c_bindings.CFunction
 
 
 class TextClassifierOptionsC(ctypes.Structure):
@@ -92,35 +92,33 @@ class TextClassifierOptions:
 
 _CTYPES_SIGNATURES = (
     _CFunction(
-        "text_classifier_create",
+        "MpTextClassifierCreate",
         [
             ctypes.POINTER(TextClassifierOptionsC),
-            ctypes.POINTER(ctypes.c_char_p),
+            ctypes.POINTER(ctypes.c_void_p),
         ],
-        ctypes.c_void_p,
+        ctypes.c_int,
     ),
     _CFunction(
-        "text_classifier_classify",
+        "MpTextClassifierClassify",
         [
             ctypes.c_void_p,
             ctypes.c_char_p,
             ctypes.POINTER(
                 classification_result_c_module.ClassificationResultC
             ),
-            ctypes.POINTER(ctypes.c_char_p),
         ],
         ctypes.c_int,
     ),
     _CFunction(
-        "text_classifier_close",
+        "MpTextClassifierClose",
         [
             ctypes.c_void_p,
-            ctypes.POINTER(ctypes.c_char_p),
         ],
         ctypes.c_int,
     ),
     _CFunction(
-        "text_classifier_close_result",
+        "MpTextClassifierCloseResult",
         [ctypes.POINTER(classification_result_c_module.ClassificationResultC)],
         None,
     ),
@@ -210,23 +208,16 @@ class TextClassifier:
         `TextClassifierOptions` such as missing the model.
       RuntimeError: If other types of error occurred.
     """
-    lib = mediapipe_c_bindings_c_module.load_shared_library(_CTYPES_SIGNATURES)
+    lib = mediapipe_c_bindings.load_shared_library(_CTYPES_SIGNATURES)
 
     ctypes_options = options.to_ctypes()
 
-    error_msg_ptr = ctypes.c_char_p()
-    classifier_handle = lib.text_classifier_create(
+    classifier_handle = ctypes.c_void_p()
+    status = lib.MpTextClassifierCreate(
         ctypes.byref(ctypes_options),
-        ctypes.byref(error_msg_ptr),
+        ctypes.byref(classifier_handle),
     )
-
-    if classifier_handle is None or classifier_handle == 0:
-      if error_msg_ptr.value:  # pylint: disable=using-constant-test
-        error_message = error_msg_ptr.value.decode("utf-8")
-        raise RuntimeError(error_message)
-      else:
-        raise RuntimeError("Failed to create TextClassifier object.")
-
+    mediapipe_c_bindings.handle_status(status)
     return TextClassifier(lib=lib, handle=classifier_handle)
 
   def classify(self, text: str) -> TextClassifierResult:
@@ -244,39 +235,22 @@ class TextClassifier:
       RuntimeError: If text classification failed to run.
     """
     ctypes_result = classification_result_c_module.ClassificationResultC()
-    error_msg_ptr = ctypes.c_char_p()
 
-    return_code = self._lib.text_classifier_classify(
+    status = self._lib.MpTextClassifierClassify(
         self._classifier_handle,
         text.encode("utf-8"),
         ctypes.byref(ctypes_result),
-        ctypes.byref(error_msg_ptr),
     )
-
-    if return_code != 0:
-      if error_msg_ptr.value is not None:
-        error_message = error_msg_ptr.value.decode("utf-8")
-        raise RuntimeError(error_message)
-      else:
-        raise RuntimeError("Classification failed: Unknown error.")
-
+    mediapipe_c_bindings.handle_status(status)
     python_result = TextClassifierResult.from_ctypes(ctypes_result)
-    self._lib.text_classifier_close_result(ctypes.byref(ctypes_result))
+    self._lib.MpTextClassifierCloseResult(ctypes.byref(ctypes_result))
     return python_result
 
   def close(self):
     """Shuts down the MediaPipe task instance."""
     if self._classifier_handle:
-      error_msg_ptr = ctypes.c_char_p()
-      return_code = self._lib.text_classifier_close(
-          self._classifier_handle, ctypes.byref(error_msg_ptr)
-      )
-      if return_code != 0:
-        if error_msg_ptr.value is not None:
-          error_message = error_msg_ptr.value.decode("utf-8")
-          raise RuntimeError(error_message)
-        else:
-          raise RuntimeError("Failed to close TextClassifier object.")
+      status = self._lib.MpTextClassifierClose(self._classifier_handle)
+      mediapipe_c_bindings.handle_status(status)
       self._classifier_handle = None
       self._lib.close()
 

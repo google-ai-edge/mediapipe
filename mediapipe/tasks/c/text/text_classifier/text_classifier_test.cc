@@ -16,20 +16,18 @@ limitations under the License.
 #include "mediapipe/tasks/c/text/text_classifier/text_classifier.h"
 
 #include <cassert>
-#include <cstdlib>
 #include <string>
 
 #include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/deps/file_path.h"
-#include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/c/components/containers/category.h"
+#include "mediapipe/tasks/c/core/mp_status.h"
 
 namespace {
 
 using ::mediapipe::file::JoinPath;
-using testing::HasSubstr;
 
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/text/";
 constexpr char kTestBertModelPath[] = "bert_text_classifier.tflite";
@@ -43,53 +41,36 @@ std::string GetFullPath(absl::string_view file_name) {
 TEST(TextClassifierTest, SmokeTest) {
   std::string model_path = GetFullPath(kTestBertModelPath);
   TextClassifierOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ model_path.c_str()},
-      /* classifier_options= */
-      {/* display_names_locale= */ nullptr,
-       /* max_results= */ -1,
-       /* score_threshold= */ 0.0,
-       /* category_allowlist= */ nullptr,
-       /* category_allowlist_count= */ 0,
-       /* category_denylist= */ nullptr,
-       /* category_denylist_count= */ 0},
+      .base_options = {.model_asset_path = model_path.c_str()},
+      .classifier_options = {.max_results = -1, .score_threshold = 0.0},
   };
 
-  MpTextClassifierPtr classifier =
-      text_classifier_create(&options, /* error_msg */ nullptr);
-  ASSERT_NE(classifier, nullptr);
+  MpTextClassifierPtr classifier;
+  EXPECT_EQ(MpTextClassifierCreate(&options, &classifier), kMpOk);
+  EXPECT_NE(classifier, nullptr);
 
   TextClassifierResult result;
-  text_classifier_classify(classifier, kTestString, &result,
-                           /* error_msg */ nullptr);
+  EXPECT_EQ(MpTextClassifierClassify(classifier, kTestString, &result), kMpOk);
   ASSERT_EQ(result.classifications_count, 1);
   ASSERT_EQ(result.classifications[0].categories_count, 2);
   EXPECT_EQ(std::string{result.classifications[0].categories[0].category_name},
             "positive");
   EXPECT_GE(result.classifications[0].categories[0].score, kScoreThreshold);
 
-  text_classifier_close_result(&result);
+  MpTextClassifierCloseResult(&result);
   EXPECT_EQ(result.classifications, nullptr);
-  EXPECT_EQ(text_classifier_close(classifier, /* error_msg */ nullptr), 0);
+  EXPECT_EQ(MpTextClassifierClose(classifier), kMpOk);
 }
 
 TEST(TextClassifierTest, ErrorHandling) {
   // It is an error to set neither the asset buffer nor the path.
   TextClassifierOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ nullptr},
-      /* classifier_options= */ {},
+      .base_options = {.model_asset_path = nullptr},
+      .classifier_options = {},
   };
 
-  char* error_msg;
-  MpTextClassifierPtr classifier = text_classifier_create(&options, &error_msg);
-  EXPECT_EQ(classifier, nullptr);
-
-  EXPECT_THAT(error_msg, HasSubstr("INVALID_ARGUMENT"));
-
-  free(error_msg);
+  MpTextClassifierPtr classifier;
+  EXPECT_EQ(MpTextClassifierCreate(&options, &classifier), kMpInvalidArgument);
 }
 
 }  // namespace
