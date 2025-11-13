@@ -25,10 +25,11 @@ from mediapipe.tasks.python.components.containers import classification_result
 from mediapipe.tasks.python.components.containers import classification_result_c
 from mediapipe.tasks.python.components.processors import classifier_options as classifier_options_lib
 from mediapipe.tasks.python.components.processors import classifier_options_c
+from mediapipe.tasks.python.core import async_result_dispatcher
 from mediapipe.tasks.python.core import base_options as base_options_lib
 from mediapipe.tasks.python.core import base_options_c
 from mediapipe.tasks.python.core import mediapipe_c_bindings
-from mediapipe.tasks.python.core import mediapipe_c_types
+from mediapipe.tasks.python.core import mediapipe_c_utils
 from mediapipe.tasks.python.core import serial_dispatcher
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 
@@ -37,7 +38,9 @@ _AudioData = audio_data.AudioData
 _BaseOptions = base_options_lib.BaseOptions
 _RunningMode = audio_task_running_mode.AudioTaskRunningMode
 _MICRO_SECONDS_PER_MILLISECOND = 1000
-_CFunction = mediapipe_c_types.CFunction
+_AsyncResultDispatcher = async_result_dispatcher.AsyncResultDispatcher
+_LiveStreamPacket = async_result_dispatcher.LiveStreamPacket
+_CFunction = mediapipe_c_utils.CFunction
 
 
 class AudioClassifierResultC(ctypes.Structure):
@@ -51,6 +54,10 @@ class AudioClassifierResultC(ctypes.Structure):
       ('results_count', ctypes.c_int),
   ]
 
+_C_TYPES_RESULT_CALLBACK = ctypes.CFUNCTYPE(
+    None, ctypes.c_int32, ctypes.POINTER(AudioClassifierResultC)
+)
+
 
 class AudioClassifierOptionsC(ctypes.Structure):
   """The audio classifier options used in the C API."""
@@ -59,15 +66,26 @@ class AudioClassifierOptionsC(ctypes.Structure):
       ('base_options', base_options_c.BaseOptionsC),
       ('classifier_options', classifier_options_c.ClassifierOptionsC),
       ('running_mode', ctypes.c_int),
-      (
-          'result_callback',
-          ctypes.CFUNCTYPE(
-              None,
-              ctypes.c_int32,
-              ctypes.POINTER(AudioClassifierResultC),
-          ),
-      ),
+      ('result_callback', _C_TYPES_RESULT_CALLBACK),
   ]
+
+  @classmethod
+  @doc_controls.do_not_generate_docs
+  def from_c_options(
+      cls,
+      base_options: base_options_c.BaseOptionsC,
+      classifier_options: classifier_options_c.ClassifierOptionsC,
+      running_mode: _RunningMode,
+      result_callback: _C_TYPES_RESULT_CALLBACK,
+  ) -> 'AudioClassifierOptionsC':
+    """Creates an AudioClassifierOptionsC object from the given options."""
+    return cls(
+        base_options=base_options,
+        classifier_options=classifier_options,
+        running_mode=running_mode.ctype,
+        result_callback=result_callback,
+    )
+
 
 _CTYPES_SIGNATURES = (
     _CFunction(
@@ -150,55 +168,6 @@ class AudioClassifierOptions:
   category_denylist: Optional[list[str]] = None
   result_callback: Optional[Callable[[AudioClassifierResult, int], None]] = None
 
-  _result_callback_c: (
-      Callable[
-          [ctypes.c_int32, AudioClassifierResultC],
-          None,
-      ]
-      | None
-  ) = None
-
-  @doc_controls.do_not_generate_docs
-  def to_ctypes(self) -> AudioClassifierOptionsC:
-    """Generates an AudioClassifierOptionsC object."""
-
-    # Set up the C callback function callback.
-    result_callback_fn = ctypes.CFUNCTYPE(
-        None, ctypes.c_int32, ctypes.POINTER(AudioClassifierResultC)
-    )
-    if self.result_callback and self._result_callback_c is None:
-
-      @result_callback_fn
-      def c_callback(status_code, c_result):
-        mediapipe_c_bindings.handle_status(status_code)
-        if c_result.contents.results_count == 0:
-          raise RuntimeError('No results returned from audio classifier.')
-        py_result = AudioClassifierResult.from_ctypes(
-            c_result.contents.results[0]
-        )
-        self.result_callback(py_result, py_result.timestamp_ms)
-
-      self._result_callback_c = c_callback
-    elif not self.result_callback:
-      self._result_callback_c = result_callback_fn()
-
-    classifier_options = classifier_options_c.convert_to_classifier_options_c(
-        classifier_options_lib.ClassifierOptions(
-            score_threshold=self.score_threshold,
-            category_allowlist=self.category_allowlist,
-            category_denylist=self.category_denylist,
-            display_names_locale=self.display_names_locale,
-            max_results=self.max_results,
-        )
-    )
-
-    return AudioClassifierOptionsC(
-        base_options=self.base_options.to_ctypes(),
-        classifier_options=classifier_options,
-        running_mode=self.running_mode.ctype,
-        result_callback=self._result_callback_c,
-    )
-
 
 class AudioClassifier(base_audio_task_api.BaseAudioTaskApi):
   """Class that performs audio classification on audio data.
@@ -227,12 +196,28 @@ class AudioClassifier(base_audio_task_api.BaseAudioTaskApi):
   """
   _lib: serial_dispatcher.SerialDispatcher
   _handle: ctypes.c_void_p
+  _dispatcher: _AsyncResultDispatcher
+  _async_callback: _C_TYPES_RESULT_CALLBACK
 
   def __init__(
-      self, lib: serial_dispatcher.SerialDispatcher, handle: ctypes.c_void_p
+      self,
+      lib: serial_dispatcher.SerialDispatcher,
+      handle: ctypes.c_void_p,
+      dispatcher: _AsyncResultDispatcher,
+      async_callback: _C_TYPES_RESULT_CALLBACK,
   ):
+    """Initializes the AudioClassifier instance.
+
+    Args:
+      lib: The serial dispatcher for the audio classifier task.
+      handle: The handle to the audio classifier task.
+      dispatcher: The async result dispatcher for the audio classifier task.
+      async_callback: The C callback for processing audio stream data.
+    """
     self._lib = lib
     self._handle = handle
+    self._dispatcher = dispatcher
+    self._async_callback = async_callback
 
   @classmethod
   def create_from_model_path(cls, model_path: str) -> 'AudioClassifier':
@@ -278,14 +263,44 @@ class AudioClassifier(base_audio_task_api.BaseAudioTaskApi):
     """
     lib = mediapipe_c_bindings.load_shared_library(_CTYPES_SIGNATURES)
 
-    ctypes_options = options.to_ctypes()
+    def convert_result(c_result_ptr: ctypes.POINTER(AudioClassifierResultC)):
+      c_result = c_result_ptr[0]
+      if c_result.results_count == 0:
+        raise RuntimeError('No results returned from audio classifier.')
+      py_result = AudioClassifierResult.from_ctypes(c_result.results[0])
+      return (py_result, py_result.timestamp_ms)
+
+    dispatcher = _AsyncResultDispatcher(converter=convert_result)
+
+    c_callback = dispatcher.wrap_callback(
+        options.result_callback, _C_TYPES_RESULT_CALLBACK
+    )
+    ctypes_options = AudioClassifierOptionsC.from_c_options(
+        base_options=options.base_options.to_ctypes(),
+        classifier_options=classifier_options_c.convert_to_classifier_options_c(
+            classifier_options_lib.ClassifierOptions(
+                score_threshold=options.score_threshold,
+                category_allowlist=options.category_allowlist,
+                category_denylist=options.category_denylist,
+                display_names_locale=options.display_names_locale,
+                max_results=options.max_results,
+            )
+        ),
+        running_mode=options.running_mode,
+        result_callback=c_callback,
+    )
+
     classifier_handle_ptr = ctypes.c_void_p()
     status = lib.MpAudioClassifierCreate(
         ctypes.byref(ctypes_options), ctypes.byref(classifier_handle_ptr)
     )
     mediapipe_c_bindings.handle_status(status)
-
-    return AudioClassifier(lib=lib, handle=classifier_handle_ptr)
+    return AudioClassifier(
+        lib=lib,
+        handle=classifier_handle_ptr,
+        dispatcher=dispatcher,
+        async_callback=c_callback,
+    )
 
   def classify(self, audio_clip: _AudioData) -> list[AudioClassifierResult]:
     """Performs audio classification on the provided audio clip.
@@ -399,6 +414,7 @@ class AudioClassifier(base_audio_task_api.BaseAudioTaskApi):
       status = self._lib.MpAudioClassifierClose(self._handle)
       mediapipe_c_bindings.handle_status(status)
       self._handle = None
+      self._dispatcher.close()
       self._lib.close()
 
   def __enter__(self):

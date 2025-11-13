@@ -22,7 +22,7 @@ py_test(
     name = "serial_dispatcher_test",
     srcs = ["serial_dispatcher_test.py"],
     deps = [
-        "//mediapipe/tasks/python/core:mediapipe_c_types",
+        "//mediapipe/tasks/python/core:mediapipe_c_utils",
         "//mediapipe/tasks/python/core:serial_dispatcher",
         "//testing/pybase",
         "@mediapipe_pip_deps_absl_py//:pkg",
@@ -36,6 +36,16 @@ py_test(
         "//mediapipe/tasks/python/core:mediapipe_c_bindings",
         "//testing/pybase",
         "//testing/pybase:parameterized",
+        "@mediapipe_pip_deps_absl_py//:pkg",
+    ],
+)
+
+py_test(
+    name = "async_result_dispatcher_test",
+    srcs = ["async_result_dispatcher_test.py"],
+    deps = [
+        "//mediapipe/tasks/python/core:async_result_dispatcher",
+        "//mediapipe/tasks/python/core:mediapipe_c_bindings",
         "@mediapipe_pip_deps_absl_py//:pkg",
     ],
 )

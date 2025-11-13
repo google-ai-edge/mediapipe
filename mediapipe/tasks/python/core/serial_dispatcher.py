@@ -14,34 +14,13 @@
 
 """A thread-safe dispatcher for a ctypes."""
 
-import atexit
 import concurrent.futures
 import ctypes
 import functools
 import threading
 from typing import Sequence
 
-from mediapipe.tasks.python.core import mediapipe_c_types
-
-# Global shutdown state to ignore calls during Python shutdown. This is used to
-# prevent forwarding calls to the underlying executor, which prints warning logs
-# to the console after shutdown.
-_shutdown = False
-_global_shutdown_lock = threading.Lock()
-
-
-def _python_exit():
-  global _shutdown
-  with _global_shutdown_lock:
-    _shutdown = True
-
-
-def _is_shutdown():
-  with _global_shutdown_lock:
-    return _shutdown
-
-
-atexit.register(_python_exit)
+from mediapipe.tasks.python.core import mediapipe_c_utils
 
 
 class SerialDispatcher:
@@ -57,7 +36,7 @@ class SerialDispatcher:
   _HAS_DYNAMIC_ATTRIBUTES = True
 
   def __init__(
-      self, lib: ctypes.CDLL, signatures: Sequence[mediapipe_c_types.CFunction]
+      self, lib: ctypes.CDLL, signatures: Sequence[mediapipe_c_utils.CFunction]
   ):
     """Initializes the SerialDispatcher.
 
@@ -73,7 +52,7 @@ class SerialDispatcher:
     for signature in signatures:
       self._register_signature(signature)
 
-  def _register_signature(self, signature: mediapipe_c_types.CFunction):
+  def _register_signature(self, signature: mediapipe_c_utils.CFunction):
     """Registers a wrapped C function as a method on the SerialDispatcher.
 
     This method attaches a wrapper method to this class that dispatches all
@@ -91,7 +70,7 @@ class SerialDispatcher:
 
     @functools.wraps(c_func)
     def dispatcher_wrapper(*args, **kwargs):
-      if self._is_closed or _is_shutdown():
+      if self._is_closed or mediapipe_c_utils.is_shutdown():
         # Ignore calls after during Python shutdown (e.g. calls to free C++
         # resources, which might fail if the ctypes object is no longer loaded)
         # TODO: b/456183832 - Return 0 once all APIs return MpStatus.

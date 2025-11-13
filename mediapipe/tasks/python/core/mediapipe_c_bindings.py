@@ -19,12 +19,12 @@ import os
 from typing import Any, List, Optional, Sequence
 
 # resources dependency
-from mediapipe.tasks.python.core import mediapipe_c_types
+from mediapipe.tasks.python.core import mediapipe_c_utils
 from mediapipe.tasks.python.core import serial_dispatcher
 
 _BASE_LIB_PATH = 'mediapipe/tasks/c/'
 _shared_lib = None
-CFunction = mediapipe_c_types.CFunction
+CFunction = mediapipe_c_utils.CFunction
 
 
 class MpStatus(enum.IntEnum):
@@ -49,17 +49,17 @@ class MpStatus(enum.IntEnum):
   MP_UNAUTHENTICATED = 16
 
 
-def handle_status(status: int):
-  """Checks the MpStatus and raises an error if not MP_OK."""
+def convert_to_exception(status: int) -> Exception | None:
+  """Returns an exception based on the MpStatus code, or None if MP_OK."""
   match status:
     case MpStatus.MP_OK:
-      return
+      return None
     case MpStatus.MP_CANCELLED:
       raise TimeoutError('Cancelled')
     case MpStatus.MP_UNKNOWN:
-      raise RuntimeError('Unknown error')
+      return RuntimeError('Unknown error')
     case MpStatus.MP_INVALID_ARGUMENT:
-      raise ValueError('Invalid argument')
+      return ValueError('Invalid argument')
     case MpStatus.MP_DEADLINE_EXCEEDED:
       raise TimeoutError('Deadline exceeded')
     case MpStatus.MP_NOT_FOUND:
@@ -69,25 +69,32 @@ def handle_status(status: int):
     case MpStatus.MP_PERMISSION_DENIED:
       raise PermissionError('Permission denied')
     case MpStatus.MP_RESOURCE_EXHAUSTED:
-      raise RuntimeError('Resource exhausted')
+      return RuntimeError('Resource exhausted')
     case MpStatus.MP_FAILED_PRECONDITION:
-      raise RuntimeError('Failed precondition')
+      return RuntimeError('Failed precondition')
     case MpStatus.MP_ABORTED:
-      raise RuntimeError('Aborted')
+      return RuntimeError('Aborted')
     case MpStatus.MP_OUT_OF_RANGE:
       raise IndexError('Out of range')
     case MpStatus.MP_UNIMPLEMENTED:
       raise NotImplementedError('Unimplemented')
     case MpStatus.MP_INTERNAL:
-      raise RuntimeError('Internal error')
+      return RuntimeError('Internal error')
     case MpStatus.MP_UNAVAILABLE:
       raise ConnectionError('Unavailable')
     case MpStatus.MP_DATA_LOSS:
-      raise RuntimeError('Data loss')
+      return RuntimeError('Data loss')
     case MpStatus.MP_UNAUTHENTICATED:
       raise PermissionError('Unauthenticated')
     case _:
-      raise RuntimeError(f'Unexpected status: {status}')
+      return RuntimeError(f'Unexpected status: {status}')
+
+
+def handle_status(status: int):
+  """Checks the MpStatus and raises an error if not MP_OK."""
+  exception = convert_to_exception(status)
+  if exception:
+    raise exception
 
 
 def handle_return_code(

@@ -19,7 +19,7 @@ from unittest import mock
 
 from absl.testing import absltest
 
-from mediapipe.tasks.python.core import mediapipe_c_types
+from mediapipe.tasks.python.core import mediapipe_c_utils
 from mediapipe.tasks.python.core import serial_dispatcher
 
 
@@ -27,7 +27,7 @@ def _register_func(
     func_name, argtypes: list[Any] | None = None, return_type=ctypes.c_void_p
 ):
   """Creates the signature of a function to register in the dispatcher."""
-  return mediapipe_c_types.CFunction(
+  return mediapipe_c_utils.CFunction(
       func_name=func_name,
       argtypes=argtypes if argtypes else [],
       restype=return_type,

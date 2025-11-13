@@ -28,7 +28,7 @@ py_library(
 py_library(
     name = "serial_dispatcher",
     srcs = ["serial_dispatcher.py"],
-    deps = [":mediapipe_c_types"],
+    deps = [":mediapipe_c_utils"],
 )
 
 # Foreign Function Interface (FFI) defintion for the MediaPipe Tasks C API.
@@ -41,7 +41,7 @@ py_library(
         "//mediapipe/tasks/c:libmediapipe.so",
     ],
     deps = [
-        ":mediapipe_c_types",
+        ":mediapipe_c_utils",
         ":serial_dispatcher",
     ],
 )
@@ -81,6 +81,12 @@ py_library(
 )
 
 py_library(
-    name = "mediapipe_c_types",
-    srcs = ["mediapipe_c_types.py"],
+    name = "mediapipe_c_utils",
+    srcs = ["mediapipe_c_utils.py"],
+)
+
+py_library(
+    name = "async_result_dispatcher",
+    srcs = ["async_result_dispatcher.py"],
+    deps = [":mediapipe_c_bindings"],
 )
