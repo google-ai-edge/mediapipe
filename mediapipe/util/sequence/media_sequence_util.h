@@ -105,8 +105,15 @@ namespace mediasequence {
 // Returns true if the key is in the sequence's context.
 inline const bool HasContext(const tensorflow::SequenceExample& sequence,
                              const std::string& key) {
-  return (sequence.context().feature().find(key) !=
-          sequence.context().feature().end());
+  const auto it = sequence.context().feature().find(key);
+  if (it == sequence.context().feature().end()) {
+    return false;
+  }
+
+  const tensorflow::Feature& feature = it->second;
+  return !feature.bytes_list().value().empty() ||
+         !feature.float_list().value().empty() ||
+         !feature.int64_list().value().empty();
 }
 
 inline const std::string merge_prefix(const std::string& prefix,
