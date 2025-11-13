@@ -16,13 +16,14 @@
 import ctypes
 import dataclasses
 import enum
-from typing import Callable, List, Optional
+from typing import Callable, List, Optional, Tuple
 
 from mediapipe.tasks.python.components.containers import category
 from mediapipe.tasks.python.components.containers import category_c
 from mediapipe.tasks.python.components.containers import landmark
 from mediapipe.tasks.python.components.containers import landmark_c
-from mediapipe.tasks.python.core import base_options
+from mediapipe.tasks.python.core import async_result_dispatcher
+from mediapipe.tasks.python.core import base_options as base_options_lib
 from mediapipe.tasks.python.core import base_options_c
 from mediapipe.tasks.python.core import mediapipe_c_bindings
 from mediapipe.tasks.python.core import serial_dispatcher
@@ -33,10 +34,12 @@ from mediapipe.tasks.python.vision.core import image_processing_options as image
 from mediapipe.tasks.python.vision.core import image_processing_options_c
 from mediapipe.tasks.python.vision.core import vision_task_running_mode
 
-_BaseOptions = base_options.BaseOptions
+_BaseOptions = base_options_lib.BaseOptions
 _RunningMode = vision_task_running_mode.VisionTaskRunningMode
 _ImageProcessingOptions = image_processing_options_lib.ImageProcessingOptions
 _CFunction = mediapipe_c_bindings.CFunction
+_AsyncResultDispatcher = async_result_dispatcher.AsyncResultDispatcher
+_LiveStreamPacket = async_result_dispatcher.LiveStreamPacket
 
 
 class HandLandmarkerResultC(ctypes.Structure):
@@ -54,6 +57,14 @@ class HandLandmarkerResultC(ctypes.Structure):
       ('hand_world_landmarks_count', ctypes.c_uint32),
   ]
 
+_C_TYPES_RESULT_CALLBACK = ctypes.CFUNCTYPE(
+    None,
+    ctypes.c_int32,  # MpStatus
+    ctypes.POINTER(HandLandmarkerResultC),
+    ctypes.c_void_p,  # MpImage
+    ctypes.c_int64,  # timestamp_ms
+)
+
 
 class HandLandmarkerOptionsC(ctypes.Structure):
   """The hand landmarker options used in the C API."""
@@ -65,17 +76,31 @@ class HandLandmarkerOptionsC(ctypes.Structure):
       ('min_hand_detection_confidence', ctypes.c_float),
       ('min_hand_presence_confidence', ctypes.c_float),
       ('min_tracking_confidence', ctypes.c_float),
-      (
-          'result_callback',
-          ctypes.CFUNCTYPE(
-              None,
-              ctypes.c_int32,  # MpStatus
-              ctypes.POINTER(HandLandmarkerResultC),
-              ctypes.c_void_p,  # image
-              ctypes.c_int64,  # timestamp_ms
-          ),
-      ),
+      ('result_callback', _C_TYPES_RESULT_CALLBACK),
   ]
+
+  @classmethod
+  @doc_controls.do_not_generate_docs
+  def from_c_options(
+      cls,
+      base_options: base_options_c.BaseOptionsC,
+      running_mode: _RunningMode,
+      num_hands: int,
+      min_hand_detection_confidence: float,
+      min_hand_presence_confidence: float,
+      min_tracking_confidence: float,
+      result_callback: _C_TYPES_RESULT_CALLBACK,
+  ) -> 'HandLandmarkerOptionsC':
+    """Creates a HandLandmarkerOptionsC object from the given options."""
+    return cls(
+        base_options=base_options,
+        running_mode=running_mode.ctype,
+        num_hands=num_hands,
+        min_hand_detection_confidence=min_hand_detection_confidence,
+        min_hand_presence_confidence=min_hand_presence_confidence,
+        min_tracking_confidence=min_tracking_confidence,
+        result_callback=result_callback,
+    )
 
 
 _CTYPES_SIGNATURES = (
@@ -304,63 +329,34 @@ class HandLandmarkerOptions:
       Callable[[HandLandmarkerResult, image_lib.Image, int], None]
   ] = None
 
-  _result_callback_c: (
-      Callable[
-          [
-              ctypes.c_int32,  # MpStatus
-              HandLandmarkerResultC,
-              ctypes.c_void_p,  # image
-              int,  # timestamp_ms
-          ],
-          None,
-      ]
-      | None
-  ) = None
-
-  @doc_controls.do_not_generate_docs
-  def to_ctypes(self) -> HandLandmarkerOptionsC:
-    """Generates a HandLandmarkerOptionsC object."""
-    if self._result_callback_c is None:
-      # The C callback function that will be called by the C code.
-      @ctypes.CFUNCTYPE(
-          None,
-          ctypes.c_int32,  # MpStatus
-          ctypes.POINTER(HandLandmarkerResultC),
-          ctypes.c_void_p,
-          ctypes.c_int64,
-      )
-      def c_callback(status_code, result, image, timestamp_ms):
-        mediapipe_c_bindings.handle_status(status_code)
-        if self.result_callback:
-          py_result = HandLandmarkerResult.from_ctypes(result.contents)
-          py_image = image_lib.Image.create_from_ctypes(image)
-          self.result_callback(py_result, py_image, timestamp_ms)
-
-      # Keep callback from getting garbage collected.
-      self._result_callback_c = c_callback
-
-    return HandLandmarkerOptionsC(
-        base_options=self.base_options.to_ctypes(),
-        running_mode=self.running_mode.ctype,
-        num_hands=self.num_hands,
-        min_hand_detection_confidence=self.min_hand_detection_confidence,
-        min_hand_presence_confidence=self.min_hand_presence_confidence,
-        min_tracking_confidence=self.min_tracking_confidence,
-        result_callback=self._result_callback_c,
-    )
-
 
 class HandLandmarker:
   """Class that performs hand landmarks detection on images."""
 
   _lib: serial_dispatcher.SerialDispatcher
   _handle: ctypes.c_void_p
+  _dispatcher: _AsyncResultDispatcher
+  _async_callback: _C_TYPES_RESULT_CALLBACK
 
   def __init__(
-      self, lib: serial_dispatcher.SerialDispatcher, handle: ctypes.c_void_p
+      self,
+      lib: serial_dispatcher.SerialDispatcher,
+      handle: ctypes.c_void_p,
+      dispatcher: _AsyncResultDispatcher,
+      async_callback: _C_TYPES_RESULT_CALLBACK,
   ):
+    """Initializes the hand landmarker.
+
+    Args:
+      lib: The dispatch library to use for the hand landmarker.
+      handle: The C pointer to the hand landmarker.
+      dispatcher: The async result handler for the hand landmarker.
+      async_callback: The c callback for the hand landmarker.
+    """
     self._lib = lib
     self._handle = handle
+    self._dispatcher = dispatcher
+    self._async_callback = async_callback
 
   @classmethod
   def create_from_model_path(cls, model_path: str) -> 'HandLandmarker':
@@ -410,7 +406,29 @@ class HandLandmarker:
 
     lib = mediapipe_c_bindings.load_shared_library(_CTYPES_SIGNATURES)
 
-    ctypes_options = options.to_ctypes()
+    def convert_result(
+        c_result_ptr: ctypes.POINTER(HandLandmarkerResultC),
+        image_ptr: ctypes.c_void_p,
+        timestamp_ms: int,
+    ) -> Tuple[HandLandmarkerResult, image_lib.Image, int]:
+      c_result = c_result_ptr[0]
+      py_result = HandLandmarkerResult.from_ctypes(c_result)
+      py_image = image_lib.Image.create_from_ctypes(image_ptr)
+      return (py_result, py_image, timestamp_ms)
+
+    dispatcher = _AsyncResultDispatcher(converter=convert_result)
+    c_callback = dispatcher.wrap_callback(
+        options.result_callback, _C_TYPES_RESULT_CALLBACK
+    )
+    ctypes_options = HandLandmarkerOptionsC.from_c_options(
+        base_options=options.base_options.to_ctypes(),
+        running_mode=options.running_mode,
+        num_hands=options.num_hands,
+        min_hand_detection_confidence=options.min_hand_detection_confidence,
+        min_hand_presence_confidence=options.min_hand_presence_confidence,
+        min_tracking_confidence=options.min_tracking_confidence,
+        result_callback=c_callback,
+    )
 
     error_msg_ptr = ctypes.c_char_p()
     detector_handle = lib.hand_landmarker_create(
@@ -425,7 +443,12 @@ class HandLandmarker:
       else:
         raise RuntimeError('Failed to create HandLandmarker object.')
 
-    return HandLandmarker(lib=lib, handle=detector_handle)
+    return HandLandmarker(
+        lib=lib,
+        handle=detector_handle,
+        dispatcher=dispatcher,
+        async_callback=c_callback,
+    )
 
   def detect(
       self,
@@ -598,6 +621,7 @@ class HandLandmarker:
           return_code, 'Failed to close hand landmarker', error_msg_ptr
       )
       self._handle = None
+      self._dispatcher.close()
       self._lib.close()
 
   def __enter__(self):

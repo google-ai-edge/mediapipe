@@ -15,10 +15,11 @@
 
 import ctypes
 import dataclasses
-from typing import Callable, Optional
+from typing import Callable, Optional, Tuple
 
 from mediapipe.tasks.python.components.containers import detections as detections_module
 from mediapipe.tasks.python.components.containers import detections_c as detections_c_module
+from mediapipe.tasks.python.core import async_result_dispatcher
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.core import base_options_c as base_options_c_module
 from mediapipe.tasks.python.core import mediapipe_c_bindings as mediapipe_c_bindings_c_module
@@ -37,23 +38,43 @@ _ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
 _CFunction = mediapipe_c_bindings_c_module.CFunction
 
 
+_C_TYPES_RESULT_CALLBACK = ctypes.CFUNCTYPE(
+    None,
+    ctypes.c_int32,  # MpStatus
+    ctypes.POINTER(detections_c_module.DetectionResultC),
+    ctypes.c_void_p,  # MpImage
+    ctypes.c_int64,  # timestamp_ms
+)
+
+
 class FaceDetectorOptionsC(ctypes.Structure):
+  """C types for FaceDetectorOptions."""
   _fields_ = [
       ('base_options', base_options_c_module.BaseOptionsC),
       ('running_mode', ctypes.c_int),
       ('min_detection_confidence', ctypes.c_float),
       ('min_suppression_threshold', ctypes.c_float),
-      (
-          'result_callback',
-          ctypes.CFUNCTYPE(
-              None,
-              ctypes.c_int32,  # MpStatus
-              ctypes.POINTER(detections_c_module.DetectionResultC),
-              ctypes.c_void_p,  # image
-              ctypes.c_int64,  # timestamp_ms
-          ),
-      ),
+      ('result_callback', _C_TYPES_RESULT_CALLBACK),
   ]
+
+  @classmethod
+  @doc_controls.do_not_generate_docs
+  def from_c_options(
+      cls,
+      base_options: base_options_c_module.BaseOptionsC,
+      running_mode: _RunningMode,
+      min_detection_confidence: float,
+      min_suppression_threshold: float,
+      result_callback: _C_TYPES_RESULT_CALLBACK,
+  ) -> 'FaceDetectorOptionsC':
+    """Creates a FaceDetectorOptionsC object from the given options."""
+    return cls(
+        base_options=base_options,
+        running_mode=running_mode.ctype,
+        min_detection_confidence=min_detection_confidence,
+        min_suppression_threshold=min_suppression_threshold,
+        result_callback=result_callback,
+    )
 
 
 _CTYPES_SIGNATURES = (
@@ -152,63 +173,34 @@ class FaceDetectorOptions:
       | None
   ) = None
 
-  _result_callback_c: Optional[
-      Callable[
-          [
-              int,
-              detections_c_module.DetectionResultC,
-              ctypes.c_void_p,
-              int,
-          ],
-          None,
-      ]
-  ] = None
-
-  @doc_controls.do_not_generate_docs
-  def to_ctypes(self) -> FaceDetectorOptionsC:
-    """Generates a FaceDetectorOptionsC object."""
-    if self._result_callback_c is None:
-      # The C callback function that will be called by the C code.
-      @ctypes.CFUNCTYPE(
-          None,
-          ctypes.c_int32,  # MpStatus
-          ctypes.POINTER(detections_c_module.DetectionResultC),
-          ctypes.c_void_p,
-          ctypes.c_int64,
-      )
-      def c_callback(status_code, result, image, timestamp_ms):
-        mediapipe_c_bindings_c_module.handle_status(status_code)
-        if self.result_callback:
-          py_result = FaceDetectorResult.from_ctypes(result.contents)
-          py_image = image_module.Image.create_from_ctypes(image)
-          self.result_callback(py_result, py_image, timestamp_ms)
-
-      # Keep callback from getting garbage collected.
-      self._result_callback_c = c_callback
-
-    base_options_c = self.base_options.to_ctypes()
-    return FaceDetectorOptionsC(
-        base_options=base_options_c,
-        running_mode=self.running_mode.ctype,
-        min_detection_confidence=self.min_detection_confidence,
-        min_suppression_threshold=self.min_suppression_threshold,
-        result_callback=self._result_callback_c,
-    )
-
 
 class FaceDetector:
   """Class that performs face detection on images."""
 
   _lib: serial_dispatcher.SerialDispatcher
   _handle: ctypes.c_void_p
+  _dispatcher: async_result_dispatcher.AsyncResultDispatcher
+  _async_callback: _C_TYPES_RESULT_CALLBACK
 
   def __init__(
       self,
       lib: serial_dispatcher.SerialDispatcher,
       handle: ctypes.c_void_p,
+      dispatcher: async_result_dispatcher.AsyncResultDispatcher,
+      async_callback: _C_TYPES_RESULT_CALLBACK,
   ):
+    """Initializes the face detector.
+
+    Args:
+      lib: The dispatch library to use for the face detector.
+      handle: The C pointer to the face detector.
+      dispatcher: The async result handler for the face detector.
+      async_callback: The c callback for the face detector.
+    """
     self._lib = lib
     self._handle = handle
+    self._dispatcher = dispatcher
+    self._async_callback = async_callback
 
   @classmethod
   def create_from_model_path(cls, model_path: str) -> 'FaceDetector':
@@ -256,7 +248,29 @@ class FaceDetector:
 
     lib = mediapipe_c_bindings_c_module.load_shared_library(_CTYPES_SIGNATURES)
 
-    ctypes_options = options.to_ctypes()
+    def convert_result(
+        c_result_ptr: ctypes.POINTER(detections_c_module.DetectionResultC),
+        image_ptr: ctypes.c_void_p,
+        timestamp_ms: int,
+    ) -> Tuple[FaceDetectorResult, image_module.Image, int]:
+      c_result = c_result_ptr[0]
+      py_result = FaceDetectorResult.from_ctypes(c_result)
+      py_image = image_module.Image.create_from_ctypes(image_ptr)
+      return (py_result, py_image, timestamp_ms)
+
+    dispatcher = async_result_dispatcher.AsyncResultDispatcher(
+        converter=convert_result
+    )
+    c_callback = dispatcher.wrap_callback(
+        options.result_callback, _C_TYPES_RESULT_CALLBACK
+    )
+    ctypes_options = FaceDetectorOptionsC.from_c_options(
+        base_options=options.base_options.to_ctypes(),
+        running_mode=options.running_mode,
+        min_detection_confidence=options.min_detection_confidence,
+        min_suppression_threshold=options.min_suppression_threshold,
+        result_callback=c_callback,
+    )
 
     error_msg_ptr = ctypes.c_char_p()
     detector_handle = lib.face_detector_create(
@@ -271,7 +285,12 @@ class FaceDetector:
       else:
         raise RuntimeError('Failed to create FaceDetector object.')
 
-    return FaceDetector(lib=lib, handle=detector_handle)
+    return FaceDetector(
+        lib=lib,
+        handle=detector_handle,
+        dispatcher=dispatcher,
+        async_callback=c_callback,
+    )
 
   def detect(
       self,
@@ -444,6 +463,7 @@ class FaceDetector:
           return_code, error_msg_ptr, 'Failed to close FaceDetector object.'
       )
       self._handle = None
+      self._dispatcher.close()
       self._lib.close()
 
   def _handle_status(

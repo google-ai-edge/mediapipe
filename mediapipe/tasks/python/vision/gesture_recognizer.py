@@ -15,10 +15,11 @@
 
 import ctypes
 import dataclasses
-from typing import Callable
+from typing import Callable, Tuple
 
 from mediapipe.tasks.python.components.processors import classifier_options
 from mediapipe.tasks.python.components.processors import classifier_options_c
+from mediapipe.tasks.python.core import async_result_dispatcher
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.core import base_options_c
 from mediapipe.tasks.python.core import mediapipe_c_bindings
@@ -43,7 +44,17 @@ _GestureRecognizerResult = (
 _CFunction = mediapipe_c_bindings.CFunction
 
 
+_C_TYPES_RESULT_CALLBACK = ctypes.CFUNCTYPE(
+    None,
+    ctypes.c_int32,  # MpStatus
+    ctypes.POINTER(gesture_recognizer_result_c.GestureRecognizerResultC),
+    ctypes.c_void_p,  # MpImage
+    ctypes.c_int64,  # timestamp_ms
+)
+
+
 class GestureRecognizerOptionsC(ctypes.Structure):
+  """C types for GestureRecognizerOptions."""
   _fields_ = [
       ('base_options', base_options_c.BaseOptionsC),
       ('running_mode', ctypes.c_int),
@@ -59,19 +70,35 @@ class GestureRecognizerOptionsC(ctypes.Structure):
           'custom_gestures_classifier_options',
           classifier_options_c.ClassifierOptionsC,
       ),
-      (
-          'result_callback',
-          ctypes.CFUNCTYPE(
-              None,
-              ctypes.c_int32,  # MpStatus
-              ctypes.POINTER(
-                  gesture_recognizer_result_c.GestureRecognizerResultC
-              ),
-              ctypes.c_void_p,
-              ctypes.c_int64,
-          ),
-      ),
+      ('result_callback', _C_TYPES_RESULT_CALLBACK),
   ]
+
+  @classmethod
+  @doc_controls.do_not_generate_docs
+  def from_c_options(
+      cls,
+      base_options: base_options_c.BaseOptionsC,
+      running_mode: _RunningMode,
+      num_hands: int,
+      min_hand_detection_confidence: float,
+      min_hand_presence_confidence: float,
+      min_tracking_confidence: float,
+      canned_gestures_classifier_options: classifier_options_c.ClassifierOptionsC,
+      custom_gestures_classifier_options: classifier_options_c.ClassifierOptionsC,
+      result_callback: '_C_TYPES_RESULT_CALLBACK',
+  ) -> 'GestureRecognizerOptionsC':
+    """Creates a GestureRecognizerOptionsC object from the given options."""
+    return cls(
+        base_options=base_options,
+        running_mode=running_mode.ctype,
+        num_hands=num_hands,
+        min_hand_detection_confidence=min_hand_detection_confidence,
+        min_hand_presence_confidence=min_hand_presence_confidence,
+        min_tracking_confidence=min_tracking_confidence,
+        canned_gestures_classifier_options=canned_gestures_classifier_options,
+        custom_gestures_classifier_options=custom_gestures_classifier_options,
+        result_callback=result_callback,
+    )
 
 
 _CTYPES_SIGNATURES = (
@@ -185,69 +212,34 @@ class GestureRecognizerOptions:
       Callable[[_GestureRecognizerResult, image_lib.Image, int], None] | None
   ) = None
 
-  _result_callback_c: (
-      Callable[
-          [
-              ctypes.c_int32,  # MpStatus
-              gesture_recognizer_result_c.GestureRecognizerResultC,
-              ctypes.c_void_p,
-              int,
-          ],
-          None,
-      ]
-      | None
-  ) = None
-
-  @doc_controls.do_not_generate_docs
-  def to_ctypes(self) -> GestureRecognizerOptionsC:
-    """Generates a GestureRecognizerOptionsC ctypes struct."""
-    if self._result_callback_c is None:
-      result_callback_fn = ctypes.CFUNCTYPE(
-          None,
-          ctypes.c_int32,  # MpStatus
-          ctypes.POINTER(gesture_recognizer_result_c.GestureRecognizerResultC),
-          ctypes.c_void_p,
-          ctypes.c_int64,
-      )
-
-      @result_callback_fn
-      def c_callback(status_code, result, image, timestamp_ms):
-        mediapipe_c_bindings.handle_status(status_code)
-        if self.result_callback:
-          py_result = _GestureRecognizerResult.from_ctypes(result.contents)
-          py_image = image_lib.Image.create_from_ctypes(image)
-          self.result_callback(py_result, py_image, timestamp_ms)
-
-      self._result_callback_c = c_callback
-
-    return GestureRecognizerOptionsC(
-        base_options=self.base_options.to_ctypes(),
-        running_mode=self.running_mode.ctype,
-        num_hands=self.num_hands,
-        min_hand_detection_confidence=self.min_hand_detection_confidence,
-        min_hand_presence_confidence=self.min_hand_presence_confidence,
-        min_tracking_confidence=self.min_tracking_confidence,
-        canned_gestures_classifier_options=classifier_options_c.convert_to_classifier_options_c(
-            self.canned_gesture_classifier_options
-        ),
-        custom_gestures_classifier_options=classifier_options_c.convert_to_classifier_options_c(
-            self.custom_gesture_classifier_options
-        ),
-        result_callback=self._result_callback_c,
-    )
-
 
 class GestureRecognizer:
   """Class that performs gesture recognition on images."""
 
   _lib: serial_dispatcher.SerialDispatcher
   _handle: ctypes.c_void_p
+  _dispatcher: async_result_dispatcher.AsyncResultDispatcher
+  _async_callback: _C_TYPES_RESULT_CALLBACK
 
   def __init__(
-      self, lib: serial_dispatcher.SerialDispatcher, handle: ctypes.c_void_p
+      self,
+      lib: serial_dispatcher.SerialDispatcher,
+      handle: ctypes.c_void_p,
+      dispatcher: async_result_dispatcher.AsyncResultDispatcher,
+      async_callback: _C_TYPES_RESULT_CALLBACK,
   ):
+    """Initializes the gesture recognizer.
+
+    Args:
+      lib: The dispatch library to use for the gesture recognizer.
+      handle: The C pointer to the gesture recognizer.
+      dispatcher: The async result handler for the gesture recognizer.
+      async_callback: The c callback for the gesture recognizer.
+    """
     self._lib = lib
     self._handle = handle
+    self._dispatcher = dispatcher
+    self._async_callback = async_callback
 
   @classmethod
   def create_from_model_path(cls, model_path: str) -> 'GestureRecognizer':
@@ -297,7 +289,39 @@ class GestureRecognizer:
 
     lib = mediapipe_c_bindings.load_shared_library(_CTYPES_SIGNATURES)
 
-    options_c = options.to_ctypes()
+    def convert_result(
+        c_result_ptr: ctypes.POINTER(
+            gesture_recognizer_result_c.GestureRecognizerResultC
+        ),
+        image_ptr: ctypes.c_void_p,
+        timestamp_ms: int,
+    ) -> Tuple[_GestureRecognizerResult, image_lib.Image, int]:
+      c_result = c_result_ptr[0]
+      py_result = _GestureRecognizerResult.from_ctypes(c_result)
+      py_image = image_lib.Image.create_from_ctypes(image_ptr)
+      return (py_result, py_image, timestamp_ms)
+
+    dispatcher = async_result_dispatcher.AsyncResultDispatcher(
+        converter=convert_result
+    )
+    c_callback = dispatcher.wrap_callback(
+        options.result_callback, _C_TYPES_RESULT_CALLBACK
+    )
+    options_c = GestureRecognizerOptionsC.from_c_options(
+        base_options=options.base_options.to_ctypes(),
+        running_mode=options.running_mode,
+        num_hands=options.num_hands,
+        min_hand_detection_confidence=options.min_hand_detection_confidence,
+        min_hand_presence_confidence=options.min_hand_presence_confidence,
+        min_tracking_confidence=options.min_tracking_confidence,
+        canned_gestures_classifier_options=classifier_options_c.convert_to_classifier_options_c(
+            options.canned_gesture_classifier_options
+        ),
+        custom_gestures_classifier_options=classifier_options_c.convert_to_classifier_options_c(
+            options.custom_gesture_classifier_options
+        ),
+        result_callback=c_callback,
+    )
     error_msg_ptr = ctypes.c_char_p()
     recognizer_handle = lib.gesture_recognizer_create(
         ctypes.byref(options_c), ctypes.byref(error_msg_ptr)
@@ -310,7 +334,12 @@ class GestureRecognizer:
       else:
         raise RuntimeError('Failed to create GestureRecognizer object.')
 
-    return cls(lib=lib, handle=recognizer_handle)
+    return cls(
+        lib=lib,
+        handle=recognizer_handle,
+        dispatcher=dispatcher,
+        async_callback=c_callback,
+    )
 
   def recognize(
       self,
@@ -479,8 +508,9 @@ class GestureRecognizer:
       mediapipe_c_bindings.handle_return_code(
           status, 'Failed to close GestureRecognizer', error_msg
       )
-    self._handle = None
-    self._lib.close()
+      self._handle = None
+      self._dispatcher.close()
+      self._lib.close()
 
   def __enter__(self):
     """Returns `self` upon entering the runtime context."""

@@ -16,22 +16,23 @@
 import ctypes
 import dataclasses
 import enum
-from typing import Callable, List, Optional
+from typing import Callable, List, Optional, Tuple
 
 import numpy as np
 
-from mediapipe.python._framework_bindings import image as image_lib
 from mediapipe.tasks.python.components.containers import category as category_lib
 from mediapipe.tasks.python.components.containers import category_c as category_c_lib
 from mediapipe.tasks.python.components.containers import landmark as landmark_lib
 from mediapipe.tasks.python.components.containers import landmark_c as landmark_c_lib
 from mediapipe.tasks.python.components.containers import matrix_c as matrix_c_lib
+from mediapipe.tasks.python.core import async_result_dispatcher
 from mediapipe.tasks.python.core import base_options as base_options_lib
 from mediapipe.tasks.python.core import base_options_c as base_options_c_lib
 from mediapipe.tasks.python.core import mediapipe_c_bindings as mediapipe_c_bindings_lib
 from mediapipe.tasks.python.core import serial_dispatcher
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 from mediapipe.tasks.python.vision.core import base_vision_task_api
+from mediapipe.tasks.python.vision.core import image as image_lib
 from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_lib
 from mediapipe.tasks.python.vision.core import image_processing_options_c as image_processing_options_c_lib
 from mediapipe.tasks.python.vision.core import vision_task_running_mode as running_mode_lib
@@ -40,6 +41,8 @@ _BaseOptions = base_options_lib.BaseOptions
 _RunningMode = running_mode_lib.VisionTaskRunningMode
 _ImageProcessingOptions = image_processing_options_lib.ImageProcessingOptions
 _CFunction = mediapipe_c_bindings_lib.CFunction
+_AsyncResultDispatcher = async_result_dispatcher.AsyncResultDispatcher
+_LiveStreamPacket = async_result_dispatcher.LiveStreamPacket
 
 
 class Blendshapes(enum.IntEnum):
@@ -2846,6 +2849,14 @@ class FaceLandmarkerResultC(ctypes.Structure):
       ('facial_transformation_matrixes_count', ctypes.c_uint32),
   ]
 
+_C_TYPES_RESULT_CALLBACK = ctypes.CFUNCTYPE(
+    None,
+    ctypes.c_int32,  # MpStatus
+    ctypes.POINTER(FaceLandmarkerResultC),
+    ctypes.c_void_p,  # MpImage
+    ctypes.c_int64,  # timestamp_ms
+)
+
 
 @dataclasses.dataclass
 class FaceLandmarkerResult:
@@ -2903,17 +2914,35 @@ class FaceLandmarkerOptionsC(ctypes.Structure):
       ('min_tracking_confidence', ctypes.c_float),
       ('output_face_blendshapes', ctypes.c_bool),
       ('output_facial_transformation_matrixes', ctypes.c_bool),
-      (
-          'result_callback',
-          ctypes.CFUNCTYPE(
-              None,
-              ctypes.c_int32,  # MpStatus
-              ctypes.POINTER(FaceLandmarkerResultC),
-              ctypes.c_void_p,
-              ctypes.c_int64,
-          ),
-      ),
+      ('result_callback', _C_TYPES_RESULT_CALLBACK),
   ]
+
+  @classmethod
+  @doc_controls.do_not_generate_docs
+  def from_c_options(
+      cls,
+      base_options: base_options_c_lib.BaseOptionsC,
+      running_mode: _RunningMode,
+      num_faces: int,
+      min_face_detection_confidence: float,
+      min_face_presence_confidence: float,
+      min_tracking_confidence: float,
+      output_face_blendshapes: bool,
+      output_facial_transformation_matrixes: bool,
+      result_callback: '_C_TYPES_RESULT_CALLBACK',
+  ) -> 'FaceLandmarkerOptionsC':
+    """Creates a FaceLandmarkerOptionsC object from the given options."""
+    return cls(
+        base_options=base_options,
+        running_mode=running_mode.ctype,
+        num_faces=num_faces,
+        min_face_detection_confidence=min_face_detection_confidence,
+        min_face_presence_confidence=min_face_presence_confidence,
+        min_tracking_confidence=min_tracking_confidence,
+        output_face_blendshapes=output_face_blendshapes,
+        output_facial_transformation_matrixes=output_facial_transformation_matrixes,
+        result_callback=result_callback,
+    )
 
 
 @dataclasses.dataclass
@@ -2959,54 +2988,6 @@ class FaceLandmarkerOptions:
   result_callback: Optional[
       Callable[[FaceLandmarkerResult, image_lib.Image, int], None]
   ] = None
-  _result_callback_c: Optional[
-      Callable[
-          [
-              ctypes.c_int32,  # MpStatus
-              FaceLandmarkerResultC,
-              ctypes.c_void_p,
-              int,
-          ],
-          None,
-      ]
-  ] = None
-
-  @doc_controls.do_not_generate_docs
-  def to_ctypes(self) -> FaceLandmarkerOptionsC:
-    """Generates an FaceLandmarkerOptionsC ctypes struct."""
-    options_c = FaceLandmarkerOptionsC()
-    options_c.base_options = self.base_options.to_ctypes()
-    options_c.running_mode = self.running_mode.ctype
-    options_c.num_faces = self.num_faces
-    options_c.min_face_detection_confidence = self.min_face_detection_confidence
-    options_c.min_face_presence_confidence = self.min_face_presence_confidence
-    options_c.min_tracking_confidence = self.min_tracking_confidence
-    options_c.output_face_blendshapes = self.output_face_blendshapes
-    options_c.output_facial_transformation_matrixes = (
-        self.output_facial_transformation_matrixes
-    )
-
-    if self._result_callback_c is None:
-      # The C callback function that will be called by the C code.
-      @ctypes.CFUNCTYPE(
-          None,
-          ctypes.c_int32,  # MpStatus
-          ctypes.POINTER(FaceLandmarkerResultC),
-          ctypes.c_void_p,
-          ctypes.c_int64,
-      )
-      def c_callback(status_code, result, image, timestamp_ms):
-        mediapipe_c_bindings_lib.handle_status(status_code)
-        if self.result_callback is not None:
-          py_result = FaceLandmarkerResult.from_ctypes(result)
-          py_image = image_lib.Image.create_from_ctypes(image)
-          self.result_callback(py_result, py_image, timestamp_ms)
-
-      # Keep callback from getting garbage collected.
-      self._result_callback_c = c_callback
-
-    options_c.result_callback = self._result_callback_c
-    return options_c
 
 
 _CTYPES_SIGNATURES = (
@@ -3079,12 +3060,28 @@ class FaceLandmarker(base_vision_task_api.BaseVisionTaskApi):
 
   _lib: serial_dispatcher.SerialDispatcher
   _handle: ctypes.c_void_p
+  _dispatcher: _AsyncResultDispatcher
+  _async_callback: _C_TYPES_RESULT_CALLBACK
 
   def __init__(
-      self, lib: serial_dispatcher.SerialDispatcher, handle: ctypes.c_void_p
+      self,
+      lib: serial_dispatcher.SerialDispatcher,
+      handle: ctypes.c_void_p,
+      dispatcher: _AsyncResultDispatcher,
+      async_callback: _C_TYPES_RESULT_CALLBACK,
   ):
+    """Initializes the face landmarker.
+
+    Args:
+      lib: The dispatch library to use for the face landmarker.
+      handle: The C pointer to the face landmarker.
+      dispatcher: The async result handler for the face landmarker.
+      async_callback: The c callback for the face landmarker.
+    """
     self._lib = lib
     self._handle = handle
+    self._dispatcher = dispatcher
+    self._async_callback = async_callback
 
   @classmethod
   def create_from_model_path(cls, model_path: str) -> 'FaceLandmarker':
@@ -3134,7 +3131,32 @@ class FaceLandmarker(base_vision_task_api.BaseVisionTaskApi):
 
     lib = mediapipe_c_bindings_lib.load_shared_library(_CTYPES_SIGNATURES)
 
-    options_c = options.to_ctypes()
+    def convert_result(
+        c_result_ptr: ctypes.POINTER(FaceLandmarkerResultC),
+        image_ptr: ctypes.c_void_p,
+        timestamp_ms: int,
+    ) -> Tuple[FaceLandmarkerResult, image_lib.Image, int]:
+      c_result = c_result_ptr[0]
+      py_result = FaceLandmarkerResult.from_ctypes(c_result)
+      py_image = image_lib.Image.create_from_ctypes(image_ptr)
+      return (py_result, py_image, timestamp_ms)
+
+    dispatcher = _AsyncResultDispatcher(converter=convert_result)
+    c_callback = dispatcher.wrap_callback(
+        options.result_callback, _C_TYPES_RESULT_CALLBACK
+    )
+    options_c = FaceLandmarkerOptionsC.from_c_options(
+        base_options=options.base_options.to_ctypes(),
+        running_mode=options.running_mode,
+        num_faces=options.num_faces,
+        min_face_detection_confidence=options.min_face_detection_confidence,
+        min_face_presence_confidence=options.min_face_presence_confidence,
+        min_tracking_confidence=options.min_tracking_confidence,
+        output_face_blendshapes=options.output_face_blendshapes,
+        output_facial_transformation_matrixes=options.output_facial_transformation_matrixes,
+        result_callback=c_callback,
+    )
+
     error_msg = ctypes.c_char_p()
     landmarker = lib.face_landmarker_create(
         ctypes.byref(options_c), ctypes.byref(error_msg)
@@ -3147,7 +3169,9 @@ class FaceLandmarker(base_vision_task_api.BaseVisionTaskApi):
       )
       raise RuntimeError('Failed to create FaceLandmarker: %s' % error_string)
 
-    return FaceLandmarker(lib, landmarker)
+    return FaceLandmarker(
+        lib, landmarker, dispatcher=dispatcher, async_callback=c_callback
+    )
 
   def detect(
       self,
@@ -3315,8 +3339,9 @@ class FaceLandmarker(base_vision_task_api.BaseVisionTaskApi):
       mediapipe_c_bindings_lib.handle_return_code(
           return_code, 'Failed to close FaceLandmarker', error_msg
       )
-    self._handle = None
-    self._lib.close()
+      self._handle = None
+      self._dispatcher.close()
+      self._lib.close()
 
   def __enter__(self):
     """Returns `self` upon entering the runtime context."""

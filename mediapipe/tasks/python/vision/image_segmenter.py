@@ -15,8 +15,9 @@
 
 import ctypes
 import dataclasses
-from typing import Callable, Optional
+from typing import Callable, Optional, Tuple
 
+from mediapipe.tasks.python.core import async_result_dispatcher
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.core import base_options_c
 from mediapipe.tasks.python.core import mediapipe_c_bindings
@@ -32,6 +33,7 @@ _BaseOptions = base_options_module.BaseOptions
 _ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
 _RunningMode = vision_task_running_mode.VisionTaskRunningMode
 _CFunction = mediapipe_c_bindings.CFunction
+_AsyncResultDispatcher = async_result_dispatcher.AsyncResultDispatcher
 
 
 class MpStringListC(ctypes.Structure):
@@ -52,25 +54,46 @@ class ImageSegmenterResultC(ctypes.Structure):
       ('quality_scores_count', ctypes.c_uint32),
   ]
 
+_C_TYPES_RESULT_CALLBACK = ctypes.CFUNCTYPE(
+    None,
+    ctypes.c_int32,  # MpStatus
+    ctypes.POINTER(ImageSegmenterResultC),
+    ctypes.c_void_p,  # MpImage
+    ctypes.c_int64,  # timestamp_ms
+)
+
 
 class ImageSegmenterOptionsC(ctypes.Structure):
+  """C types for ImageSegmenterOptions."""
   _fields_ = [
       ('base_options', base_options_c.BaseOptionsC),
       ('running_mode', ctypes.c_int),
       ('display_names_locale', ctypes.c_char_p),
       ('output_confidence_masks', ctypes.c_bool),
       ('output_category_mask', ctypes.c_bool),
-      (
-          'result_callback',
-          ctypes.CFUNCTYPE(
-              None,
-              ctypes.c_int32,  # MpStatus
-              ctypes.POINTER(ImageSegmenterResultC),
-              ctypes.c_void_p,
-              ctypes.c_int64,
-          ),
-      ),
+      ('result_callback', _C_TYPES_RESULT_CALLBACK),
   ]
+
+  @classmethod
+  @doc_controls.do_not_generate_docs
+  def from_c_options(
+      cls,
+      base_options: base_options_c.BaseOptionsC,
+      running_mode: _RunningMode,
+      output_confidence_masks: bool,
+      output_category_mask: bool,
+      result_callback: _C_TYPES_RESULT_CALLBACK,
+  ) -> 'ImageSegmenterOptionsC':
+    """Creates an ImageSegmenterOptionsC object from the given options."""
+    empty_string = ctypes.c_char_p(b'')
+    return cls(
+        base_options=base_options,
+        running_mode=running_mode.ctype,
+        display_names_locale=empty_string,
+        output_confidence_masks=output_confidence_masks,
+        output_category_mask=output_category_mask,
+        result_callback=result_callback,
+    )
 
 
 _CTYPES_SIGNATURES = (
@@ -214,51 +237,6 @@ class ImageSegmenterOptions:
       Callable[[ImageSegmenterResult, image_module.Image, int], None] | None
   ) = None
 
-  _result_callback_c: (
-      Callable[
-          [
-              ctypes.c_int32,  # MpStatus
-              ImageSegmenterResultC,
-              ctypes.c_void_p,
-              ctypes.c_int64,
-          ],
-          None,
-      ]
-      | None
-  ) = None
-
-  @doc_controls.do_not_generate_docs
-  def to_ctypes(self) -> ImageSegmenterOptionsC:
-    """Generates an ImageSegmenterOptionsC ctypes struct."""
-    if not self._result_callback_c:
-      result_callback_fn = ctypes.CFUNCTYPE(
-          None,
-          ctypes.c_int32,  # MpStatus
-          ctypes.POINTER(ImageSegmenterResultC),
-          ctypes.c_void_p,
-          ctypes.c_int64,
-      )
-
-      @result_callback_fn
-      def c_callback(status_code, result, image, timestamp_ms):
-        mediapipe_c_bindings.handle_status(status_code)
-        if self.result_callback:
-          py_result = ImageSegmenterResult.from_ctypes(result.contents)
-          py_image = image_module.Image.create_from_ctypes(image)
-          self.result_callback(py_result, py_image, timestamp_ms)
-
-      self._result_callback_c = c_callback
-
-    empty_string = ctypes.c_char_p(b'')
-    return ImageSegmenterOptionsC(
-        base_options=self.base_options.to_ctypes(),
-        running_mode=self.running_mode.ctype,
-        display_names_locale=empty_string,
-        output_confidence_masks=self.output_confidence_masks,
-        output_category_mask=self.output_category_mask,
-        result_callback=self._result_callback_c,
-    )
-
 
 class ImageSegmenter:
   """Class that performs image segmentation on images.
@@ -287,13 +265,28 @@ class ImageSegmenter:
 
   _lib: serial_dispatcher.SerialDispatcher
   _handle: ctypes.c_void_p
+  _dispatcher: _AsyncResultDispatcher
+  _async_callback: _C_TYPES_RESULT_CALLBACK
 
   def __init__(
-      self, lib: serial_dispatcher.SerialDispatcher, handle: ctypes.c_void_p
+      self,
+      lib: serial_dispatcher.SerialDispatcher,
+      handle: ctypes.c_void_p,
+      dispatcher: _AsyncResultDispatcher,
+      async_callback: _C_TYPES_RESULT_CALLBACK,
   ) -> None:
-    """Initializes the `ImageSegmenter` object."""
+    """Initializes the `ImageSegmenter` object.
+
+    Args:
+      lib: The dispatch library to use for the image segmenter.
+      handle: The C pointer to the image segmenter.
+      dispatcher: The async result handler for the image segmenter.
+      async_callback: The c callback for the image segmenter.
+    """
     self._lib = lib
     self._handle = handle
+    self._dispatcher = dispatcher
+    self._async_callback = async_callback
     self._labels = None
 
   @classmethod
@@ -345,7 +338,27 @@ class ImageSegmenter:
 
     lib = mediapipe_c_bindings.load_shared_library(_CTYPES_SIGNATURES)
 
-    options_c = options.to_ctypes()
+    def convert_result(
+        c_result_ptr: ctypes.POINTER(ImageSegmenterResultC),
+        image_ptr: ctypes.c_void_p,
+        timestamp_ms: int,
+    ) -> Tuple[ImageSegmenterResult, image_module.Image, int]:
+      c_result = c_result_ptr[0]
+      py_result = ImageSegmenterResult.from_ctypes(c_result)
+      py_image = image_module.Image.create_from_ctypes(image_ptr)
+      return (py_result, py_image, timestamp_ms)
+
+    dispatcher = _AsyncResultDispatcher(converter=convert_result)
+    c_callback = dispatcher.wrap_callback(
+        options.result_callback, _C_TYPES_RESULT_CALLBACK
+    )
+    options_c = ImageSegmenterOptionsC.from_c_options(
+        base_options=options.base_options.to_ctypes(),
+        running_mode=options.running_mode,
+        output_confidence_masks=options.output_confidence_masks,
+        output_category_mask=options.output_category_mask,
+        result_callback=c_callback,
+    )
     error_msg_ptr = ctypes.c_char_p()
     segmenter_handle = lib.image_segmenter_create(
         ctypes.byref(options_c), ctypes.byref(error_msg_ptr)
@@ -356,7 +369,12 @@ class ImageSegmenter:
         raise RuntimeError('Failed to create ImageSegmenter object.')
       error_message = error_msg_ptr.value.decode('utf-8')
       raise RuntimeError(error_message)
-    return cls(lib=lib, handle=segmenter_handle)
+    return cls(
+        lib=lib,
+        handle=segmenter_handle,
+        dispatcher=dispatcher,
+        async_callback=c_callback,
+    )
 
   def segment(
       self,
@@ -542,6 +560,7 @@ class ImageSegmenter:
           status, 'Failed to close ImageSegmenter', error_msg
       )
     self._handle = None
+    self._dispatcher.close()
     self._lib.close()
 
   def __enter__(self):
