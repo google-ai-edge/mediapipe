@@ -21,12 +21,8 @@ from mediapipe.tasks.python.components.containers import embedding_result_c as e
 from mediapipe.tasks.python.components.utils import cosine_similarity
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.core import base_options_c as base_options_c_module
-from mediapipe.tasks.python.core import mediapipe_c_bindings as mediapipe_c_bindings_c_module
+from mediapipe.tasks.python.core import mediapipe_c_bindings
 from mediapipe.tasks.python.core import serial_dispatcher
-
-TextEmbedderResult = embedding_result_module.EmbeddingResult
-_BaseOptions = base_options_module.BaseOptions
-_CFunction = mediapipe_c_bindings_c_module.CFunction
 
 
 class _EmbedderOptionsC(ctypes.Structure):
@@ -48,34 +44,32 @@ class _TextEmbedderOptionsC(ctypes.Structure):
 
 
 _CTYPES_SIGNATURES = (
-    _CFunction(
-        'text_embedder_create',
+    mediapipe_c_bindings.CFunction(
+        'MpTextEmbedderCreate',
         [
             ctypes.POINTER(_TextEmbedderOptionsC),
-            ctypes.POINTER(ctypes.c_char_p),
+            ctypes.POINTER(ctypes.c_void_p),
         ],
-        ctypes.c_void_p,
+        ctypes.c_int,
     ),
-    _CFunction(
-        'text_embedder_embed',
+    mediapipe_c_bindings.CFunction(
+        'MpTextEmbedderEmbed',
         [
             ctypes.c_void_p,
             ctypes.c_char_p,
             ctypes.POINTER(embedding_result_c_module.EmbeddingResultC),
-            ctypes.POINTER(ctypes.c_char_p),
         ],
         ctypes.c_int,
     ),
-    _CFunction(
-        'text_embedder_close',
+    mediapipe_c_bindings.CFunction(
+        'MpTextEmbedderClose',
         [
             ctypes.c_void_p,
-            ctypes.POINTER(ctypes.c_char_p),
         ],
         ctypes.c_int,
     ),
-    _CFunction(
-        'text_embedder_close_result',
+    mediapipe_c_bindings.CFunction(
+        'MpTextEmbedderCloseResult',
         [ctypes.POINTER(embedding_result_c_module.EmbeddingResultC)],
         None,
     ),
@@ -97,7 +91,7 @@ class TextEmbedderOptions:
       therefore any dimension is guaranteed to have a value in [-1.0, 1.0]. Use
       the l2_normalize option if this is not the case.
   """
-  base_options: _BaseOptions
+  base_options: base_options_module.BaseOptions
   l2_normalize: Optional[bool] = None
   quantize: Optional[bool] = None
 
@@ -164,7 +158,7 @@ class TextEmbedder:
         file such as invalid file path.
       RuntimeError: If other types of error occurred.
     """
-    base_options = _BaseOptions(model_asset_path=model_path)
+    base_options = base_options_module.BaseOptions(model_asset_path=model_path)
     options = TextEmbedderOptions(base_options=base_options)
     return cls.create_from_options(options)
 
@@ -183,24 +177,19 @@ class TextEmbedder:
         `TextEmbedderOptions` such as missing the model.
       RuntimeError: If other types of error occurred.
     """
-    lib = mediapipe_c_bindings_c_module.load_shared_library(_CTYPES_SIGNATURES)
+    lib = mediapipe_c_bindings.load_shared_library(_CTYPES_SIGNATURES)
     ctypes_options = options.to_ctypes()
-    error_msg_ptr = ctypes.c_char_p()
-    embedder_handle = lib.text_embedder_create(
-        ctypes.byref(ctypes_options), ctypes.byref(error_msg_ptr)
+    embedder_handle = ctypes.c_void_p()
+    status = lib.MpTextEmbedderCreate(
+        ctypes.byref(ctypes_options), ctypes.byref(embedder_handle)
     )
-    if embedder_handle is None or embedder_handle == 0:
-      if error_msg_ptr.value:  # pylint:disable=using-constant-test
-        error_message = error_msg_ptr.value.decode('utf-8')
-        raise RuntimeError(error_message)
-      else:
-        raise RuntimeError('Failed to create TextEmbedder object.')
+    mediapipe_c_bindings.handle_status(status)
     return TextEmbedder(lib=lib, handle=embedder_handle)
 
   def embed(
       self,
       text: str,
-  ) -> TextEmbedderResult:
+  ) -> embedding_result_module.EmbeddingResult:
     """Performs text embedding extraction on the provided text.
 
     Args:
@@ -214,25 +203,18 @@ class TextEmbedder:
       RuntimeError: If text embedder failed to run.
     """
     ctypes_result = embedding_result_c_module.EmbeddingResultC()
-    error_msg_ptr = ctypes.c_char_p()
-    return_code = self._lib.text_embedder_embed(
+    status = self._lib.MpTextEmbedderEmbed(
         self._embedder_handle,
         text.encode('utf-8'),
         ctypes.byref(ctypes_result),
-        ctypes.byref(error_msg_ptr),
     )
-    if return_code != 0:
-      if error_msg_ptr.value is not None:
-        error_message = error_msg_ptr.value.decode('utf-8')
-        raise RuntimeError(error_message)
-      else:
-        raise RuntimeError('Text embedding failed: Unknown error.')
+    mediapipe_c_bindings.handle_status(status)
     python_result = (
         embedding_result_c_module.convert_to_python_embedding_result(
             ctypes_result
         )
     )
-    self._lib.text_embedder_close_result(ctypes.byref(ctypes_result))
+    self._lib.MpTextEmbedderCloseResult(ctypes.byref(ctypes_result))
     return python_result
 
   @classmethod
@@ -264,16 +246,8 @@ class TextEmbedder:
   def close(self):
     """Shuts down the MediaPipe task instance."""
     if self._embedder_handle:
-      error_msg_ptr = ctypes.c_char_p()
-      return_code = self._lib.text_embedder_close(
-          self._embedder_handle, ctypes.byref(error_msg_ptr)
-      )
-      if return_code != 0:
-        if error_msg_ptr.value is not None:
-          error_message = error_msg_ptr.value.decode('utf-8')
-          raise RuntimeError(error_message)
-        else:
-          raise RuntimeError('Failed to close TextEmbedder object.')
+      status = self._lib.MpTextEmbedderClose(self._embedder_handle)
+      mediapipe_c_bindings.handle_status(status)
       self._embedder_handle = None
       self._lib.close()
 

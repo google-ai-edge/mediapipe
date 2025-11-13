@@ -3,6 +3,7 @@ VERS_1.0 {
     MpAudioClassifier*;
     MpImage*;
     MpStringList*;
+    MpTextEmbedder*;
     MpTextClassifier*;
     face_detector_*;
     face_landmarker_*;
@@ -13,7 +14,6 @@ VERS_1.0 {
     language_detector_*;
     object_detector_*;
     pose_landmarker_*;
-    text_embedder_*;
   local:
     *;
 };
