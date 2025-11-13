@@ -14,10 +14,12 @@
 """Embeddings data class."""
 
 import dataclasses
-from typing import Optional, List
+from typing import List, Optional
 
 import numpy as np
+
 from mediapipe.tasks.cc.components.containers.proto import embeddings_pb2
+from mediapipe.tasks.python.components.containers import embedding_result_c
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 
 _FloatEmbeddingProto = embeddings_pb2.FloatEmbedding
@@ -87,3 +89,39 @@ class EmbeddingResult:
     return EmbeddingResult(embeddings=[
         Embedding.create_from_pb2(embedding) for embedding in pb2_obj.embeddings
     ])
+
+  @classmethod
+  @doc_controls.do_not_generate_docs
+  def from_ctypes(
+      cls, c_result: embedding_result_c.EmbeddingResultC
+  ) -> 'EmbeddingResult':
+    """Converts a C EmbeddingResult to a Python EmbeddingResult."""
+    python_embeddings = []
+    for i in range(c_result.embeddings_count):
+      c_embedding = c_result.embeddings[i]
+      embedding = None
+      if c_embedding.float_embedding:
+        embedding_array = list(
+            c_embedding.float_embedding[: c_embedding.values_count]
+        )
+        embedding = np.array(embedding_array, dtype=float)
+      if c_embedding.quantized_embedding:
+        embedding_array = list(
+            c_embedding.quantized_embedding[: c_embedding.values_count]
+        )
+        embedding = np.array(embedding_array, dtype=np.uint8)
+
+      python_embedding = Embedding(
+          embedding=embedding,
+          head_index=c_embedding.head_index,
+          head_name=(
+              c_embedding.head_name.decode('utf-8')
+              if c_embedding.head_name
+              else None
+          ),
+      )
+      python_embeddings.append(python_embedding)
+    timestamp_ms = c_result.timestamp_ms if c_result.has_timestamp_ms else None
+    return EmbeddingResult(
+        embeddings=python_embeddings, timestamp_ms=timestamp_ms
+    )

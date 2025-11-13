@@ -57,15 +57,11 @@ std::string GetFullPath(absl::string_view file_name) {
 
 // Utility function to check the sizes, head_index and head_names of a result
 // produced by kMobileNetV3Embedder.
-void CheckMobileNetV3Result(const ImageEmbedderResult& result, bool quantized) {
+void CheckMobileNetV3Result(const ImageEmbedderResult& result) {
   EXPECT_EQ(result.embeddings_count, 1);
   EXPECT_EQ(result.embeddings[0].head_index, 0);
   EXPECT_EQ(std::string{result.embeddings[0].head_name}, "feature");
-  if (quantized) {
-    EXPECT_EQ(result.embeddings[0].values_count, 1024);
-  } else {
-    EXPECT_EQ(result.embeddings[0].values_count, 1024);
-  }
+  EXPECT_EQ(result.embeddings[0].values_count, 1024);
 }
 
 TEST(ImageEmbedderTest, ImageModeTest) {
@@ -87,8 +83,33 @@ TEST(ImageEmbedderTest, ImageModeTest) {
   image_embedder_embed_image(embedder, image.get(),
                              /* image_processing_options= */ nullptr, &result,
                              /* error_msg */ nullptr);
-  CheckMobileNetV3Result(result, false);
+  CheckMobileNetV3Result(result);
   EXPECT_NEAR(result.embeddings[0].float_embedding[0], -0.0142344, kPrecision);
+  image_embedder_close_result(&result);
+  image_embedder_close(embedder, /* error_msg */ nullptr);
+}
+
+TEST(ImageEmbedderTest, ImageModeTestWithQuantization) {
+  const ScopedMpImage image = GetImage(GetFullPath(kImageFile));
+
+  const std::string model_path = GetFullPath(kModelName);
+  ImageEmbedderOptions options = {
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = model_path.c_str()},
+      .running_mode = RunningMode::IMAGE,
+      .embedder_options = {.l2_normalize = false, .quantize = true}};
+
+  MpImageEmbedderPtr embedder = image_embedder_create(&options,
+                                                      /* error_msg */ nullptr);
+  ASSERT_NE(embedder, nullptr);
+
+  ImageEmbedderResult result;
+  image_embedder_embed_image(embedder, image.get(),
+                             /* image_processing_options= */ nullptr, &result,
+                             /* error_msg */ nullptr);
+  CheckMobileNetV3Result(result);
+  EXPECT_EQ(result.embeddings[0].quantized_embedding[0], '\xE5');
   image_embedder_close_result(&result);
   image_embedder_close(embedder, /* error_msg */ nullptr);
 }
@@ -117,7 +138,7 @@ TEST(ImageEmbedderTest, ImageModeTestWithRotation) {
   image_embedder_embed_image(embedder, image.get(), &image_processing_options,
                              &result,
                              /* error_msg */ nullptr);
-  CheckMobileNetV3Result(result, false);
+  CheckMobileNetV3Result(result);
   EXPECT_NEAR(result.embeddings[0].float_embedding[0], -0.0149445, kPrecision);
   image_embedder_close_result(&result);
   image_embedder_close(embedder, /* error_msg */ nullptr);
@@ -152,8 +173,8 @@ TEST(ImageEmbedderTest, SucceedsWithCosineSimilarity) {
                              /* error_msg */ nullptr);
 
   // Check results.
-  CheckMobileNetV3Result(image_result, false);
-  CheckMobileNetV3Result(crop_result, false);
+  CheckMobileNetV3Result(image_result);
+  CheckMobileNetV3Result(crop_result);
   // Check cosine similarity.
   double similarity;
   image_embedder_cosine_similarity(image_result.embeddings[0],
@@ -187,7 +208,7 @@ TEST(ImageEmbedderTest, VideoModeTest) {
                                    /* image_processing_options= */ nullptr, i,
                                    &result,
                                    /* error_msg */ nullptr);
-    CheckMobileNetV3Result(result, false);
+    CheckMobileNetV3Result(result);
     EXPECT_NEAR(result.embeddings[0].float_embedding[0], -0.0142344,
                 kPrecision);
     image_embedder_close_result(&result);
@@ -207,7 +228,7 @@ struct LiveStreamModeCallback {
                  MpImagePtr image, int64_t timestamp) {
     ASSERT_EQ(status, kMpOk);
     ASSERT_NE(embedder_result, nullptr);
-    CheckMobileNetV3Result(*embedder_result, false);
+    CheckMobileNetV3Result(*embedder_result);
     EXPECT_NEAR(embedder_result->embeddings[0].float_embedding[0], -0.0142344,
                 kPrecision);
     EXPECT_GT(MpImageGetWidth(image), 0);

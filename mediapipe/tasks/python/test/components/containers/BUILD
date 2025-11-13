@@ -13,7 +13,6 @@
 # limitations under the License.
 
 # Placeholder: load py_test
-# Placeholder for internal Python strict test compatibility macro.
 
 package(default_visibility = ["//visibility:public"])
 
@@ -61,6 +60,17 @@ py_test(
     srcs = ["matrix_test.py"],
     deps = [
         "//mediapipe/tasks/python/components/containers:matrix_c",
+        "@mediapipe_pip_deps_numpy//:pkg",
+    ],
+)
+
+py_test(
+    name = "embedding_result_test",
+    srcs = ["embedding_result_test.py"],
+    deps = [
+        "//mediapipe/tasks/python/components/containers:embedding_result",
+        "//mediapipe/tasks/python/components/containers:embedding_result_c",
+        "@mediapipe_pip_deps_absl_py//:pkg",
         "@mediapipe_pip_deps_numpy//:pkg",
     ],
 )

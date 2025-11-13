@@ -167,6 +167,7 @@ py_library(
     name = "embedding_result",
     srcs = ["embedding_result.py"],
     deps = [
+        ":embedding_result_c",
         "//mediapipe/tasks/cc/components/containers/proto:embeddings_py_pb2",
         "//mediapipe/tasks/python/core:optional_dependencies",
         "@mediapipe_pip_deps_numpy//:pkg",
@@ -176,10 +177,6 @@ py_library(
 py_library(
     name = "embedding_result_c",
     srcs = ["embedding_result_c.py"],
-    deps = [
-        ":embedding_result",
-        "@mediapipe_pip_deps_numpy//:pkg",
-    ],
 )
 
 py_library(
