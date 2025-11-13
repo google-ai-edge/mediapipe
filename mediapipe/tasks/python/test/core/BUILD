@@ -28,3 +28,14 @@ py_test(
         "@mediapipe_pip_deps_absl_py//:pkg",
     ],
 )
+
+py_test(
+    name = "mediapipe_c_bindings_test",
+    srcs = ["mediapipe_c_bindings_test.py"],
+    deps = [
+        "//mediapipe/tasks/python/core:mediapipe_c_bindings",
+        "//testing/pybase",
+        "//testing/pybase:parameterized",
+        "@mediapipe_pip_deps_absl_py//:pkg",
+    ],
+)

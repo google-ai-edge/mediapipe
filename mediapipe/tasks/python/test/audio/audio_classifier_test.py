@@ -173,7 +173,7 @@ class AudioClassifierTest(parameterized.TestCase):
       self.assertIsInstance(classifier, _AudioClassifier)
 
   def test_create_from_options_fails_with_invalid_model_path(self):
-    with self.assertRaisesRegex(RuntimeError, 'Not found'):
+    with self.assertRaisesRegex(FileNotFoundError, 'Not found'):
       base_options = _BaseOptions(
           model_asset_path='/path/to/invalid/model.tflite')
       options = _AudioClassifierOptions(base_options=base_options)

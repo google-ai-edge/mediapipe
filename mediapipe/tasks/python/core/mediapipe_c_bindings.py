@@ -55,19 +55,19 @@ def handle_status(status: int):
     case MpStatus.MP_OK:
       return
     case MpStatus.MP_CANCELLED:
-      raise RuntimeError('Cancelled')
+      raise TimeoutError('Cancelled')
     case MpStatus.MP_UNKNOWN:
       raise RuntimeError('Unknown error')
     case MpStatus.MP_INVALID_ARGUMENT:
       raise ValueError('Invalid argument')
     case MpStatus.MP_DEADLINE_EXCEEDED:
-      raise RuntimeError('Deadline exceeded')
+      raise TimeoutError('Deadline exceeded')
     case MpStatus.MP_NOT_FOUND:
-      raise RuntimeError('Not found')
+      raise FileNotFoundError('Not found')
     case MpStatus.MP_ALREADY_EXISTS:
-      raise RuntimeError('Already exists')
+      raise FileExistsError('Already exists')
     case MpStatus.MP_PERMISSION_DENIED:
-      raise RuntimeError('Permission denied')
+      raise PermissionError('Permission denied')
     case MpStatus.MP_RESOURCE_EXHAUSTED:
       raise RuntimeError('Resource exhausted')
     case MpStatus.MP_FAILED_PRECONDITION:
@@ -75,17 +75,17 @@ def handle_status(status: int):
     case MpStatus.MP_ABORTED:
       raise RuntimeError('Aborted')
     case MpStatus.MP_OUT_OF_RANGE:
-      raise ValueError('Out of range')
+      raise IndexError('Out of range')
     case MpStatus.MP_UNIMPLEMENTED:
-      raise RuntimeError('Unimplemented')
+      raise NotImplementedError('Unimplemented')
     case MpStatus.MP_INTERNAL:
       raise RuntimeError('Internal error')
     case MpStatus.MP_UNAVAILABLE:
-      raise RuntimeError('Unavailable')
+      raise ConnectionError('Unavailable')
     case MpStatus.MP_DATA_LOSS:
       raise RuntimeError('Data loss')
     case MpStatus.MP_UNAUTHENTICATED:
-      raise RuntimeError('Unauthenticated')
+      raise PermissionError('Unauthenticated')
     case _:
       raise RuntimeError(f'Unexpected status: {status}')
 
