@@ -13,44 +13,132 @@
 # limitations under the License.
 """MediaPipe image embedder task."""
 
+import ctypes
 import dataclasses
-from typing import Callable, Mapping, Optional
+from typing import Callable, Optional
 
-from mediapipe.python import packet_creator
-from mediapipe.python import packet_getter
-from mediapipe.python._framework_bindings import image as image_module
-from mediapipe.python._framework_bindings import packet as packet_module
-from mediapipe.tasks.cc.components.containers.proto import embeddings_pb2
-from mediapipe.tasks.cc.components.processors.proto import embedder_options_pb2
-from mediapipe.tasks.cc.vision.image_embedder.proto import image_embedder_graph_options_pb2
 from mediapipe.tasks.python.components.containers import embedding_result as embedding_result_module
+from mediapipe.tasks.python.components.containers import embedding_result_c as embedding_result_c_module
 from mediapipe.tasks.python.components.utils import cosine_similarity
+from mediapipe.tasks.python.core import async_result_dispatcher
 from mediapipe.tasks.python.core import base_options as base_options_module
-from mediapipe.tasks.python.core import task_info as task_info_module
+from mediapipe.tasks.python.core import base_options_c as base_options_c_module
+from mediapipe.tasks.python.core import mediapipe_c_bindings
+from mediapipe.tasks.python.core import mediapipe_c_utils
+from mediapipe.tasks.python.core import serial_dispatcher
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 from mediapipe.tasks.python.vision.core import base_vision_task_api
+from mediapipe.tasks.python.vision.core import image as image_module
 from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_module
+from mediapipe.tasks.python.vision.core import image_processing_options_c as image_processing_options_c_module
 from mediapipe.tasks.python.vision.core import vision_task_running_mode as running_mode_module
 
 ImageEmbedderResult = embedding_result_module.EmbeddingResult
 _BaseOptions = base_options_module.BaseOptions
-_ImageEmbedderGraphOptionsProto = (
-    image_embedder_graph_options_pb2.ImageEmbedderGraphOptions
-)
-_EmbedderOptionsProto = embedder_options_pb2.EmbedderOptions
 _RunningMode = running_mode_module.VisionTaskRunningMode
-_TaskInfo = task_info_module.TaskInfo
 _ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
+_CFunction = mediapipe_c_utils.CFunction
+_AsyncResultDispatcher = async_result_dispatcher.AsyncResultDispatcher
+_LiveStreamPacket = async_result_dispatcher.LiveStreamPacket
 
-_EMBEDDINGS_OUT_STREAM_NAME = 'embeddings_out'
-_EMBEDDINGS_TAG = 'EMBEDDINGS'
-_IMAGE_IN_STREAM_NAME = 'image_in'
-_IMAGE_OUT_STREAM_NAME = 'image_out'
-_IMAGE_TAG = 'IMAGE'
-_NORM_RECT_STREAM_NAME = 'norm_rect_in'
-_NORM_RECT_TAG = 'NORM_RECT'
-_TASK_GRAPH_NAME = 'mediapipe.tasks.vision.image_embedder.ImageEmbedderGraph'
-_MICRO_SECONDS_PER_MILLISECOND = 1000
+
+class _EmbedderOptionsC(ctypes.Structure):
+  """C struct for embedder options."""
+
+  _fields_ = [
+      ('l2_normalize', ctypes.c_bool),
+      ('quantize', ctypes.c_bool),
+  ]
+
+
+class ImageEmbedderOptionsC(ctypes.Structure):
+  """The MediaPipe Tasks ImageEmbedderOptions CTypes struct."""
+
+  _fields_ = [
+      ('base_options', base_options_c_module.BaseOptionsC),
+      ('running_mode', ctypes.c_int),
+      ('embedder_options', _EmbedderOptionsC),
+      (
+          'result_callback',
+          ctypes.CFUNCTYPE(
+              None,
+              ctypes.c_int32,  # MpStatus
+              ctypes.POINTER(embedding_result_c_module.EmbeddingResultC),
+              ctypes.c_void_p,  # image
+              ctypes.c_int64,  # timestamp_ms
+          ),
+      ),
+  ]
+
+
+_CTYPES_SIGNATURES = (
+    _CFunction(
+        func_name='image_embedder_create',
+        argtypes=[
+            ctypes.POINTER(ImageEmbedderOptionsC),
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
+        restype=ctypes.c_void_p,
+    ),
+    _CFunction(
+        func_name='image_embedder_embed_image',
+        argtypes=[
+            ctypes.c_void_p,
+            ctypes.c_void_p,  # image
+            ctypes.POINTER(
+                image_processing_options_c_module.ImageProcessingOptionsC
+            ),
+            ctypes.POINTER(embedding_result_c_module.EmbeddingResultC),
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
+        restype=ctypes.c_int32,
+    ),
+    _CFunction(
+        func_name='image_embedder_embed_for_video',
+        argtypes=[
+            ctypes.c_void_p,
+            ctypes.c_void_p,  # image
+            ctypes.POINTER(
+                image_processing_options_c_module.ImageProcessingOptionsC
+            ),
+            ctypes.c_int64,  # timestamp_ms
+            ctypes.POINTER(embedding_result_c_module.EmbeddingResultC),
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
+        restype=ctypes.c_int32,
+    ),
+    _CFunction(
+        func_name='image_embedder_embed_async',
+        argtypes=[
+            ctypes.c_void_p,
+            ctypes.c_void_p,  # image
+            ctypes.POINTER(
+                image_processing_options_c_module.ImageProcessingOptionsC
+            ),
+            ctypes.c_int64,  # timestamp_ms
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
+        restype=ctypes.c_int32,
+    ),
+    _CFunction(
+        func_name='image_embedder_close_result',
+        argtypes=[ctypes.POINTER(embedding_result_c_module.EmbeddingResultC)],
+        restype=None,
+    ),
+    _CFunction(
+        func_name='image_embedder_close',
+        argtypes=[ctypes.c_void_p, ctypes.POINTER(ctypes.c_char_p)],
+        restype=ctypes.c_int32,
+    ),
+)
+
+C_TYPES_RESULT_CALLBACK = ctypes.CFUNCTYPE(
+    None,
+    ctypes.c_int32,  # MpStatus
+    ctypes.POINTER(embedding_result_c_module.EmbeddingResultC),
+    ctypes.c_void_p,  # MpImage
+    ctypes.c_int64,  # timestamp_ms
+)
 
 
 @dataclasses.dataclass
@@ -85,23 +173,39 @@ class ImageEmbedderOptions:
       Callable[[ImageEmbedderResult, image_module.Image, int], None]
   ] = None
 
+  _result_callback_c: Optional[
+      Callable[
+          [
+              ctypes.c_int32,  # MpStatus
+              ctypes.c_void_p,  # EmbeddingResultC
+              ctypes.c_void_p,  # MpImage
+              ctypes.c_int64,  # timestamp_ms
+          ],
+          None,
+      ]
+  ] = None
+
   @doc_controls.do_not_generate_docs
-  def to_pb2(self) -> _ImageEmbedderGraphOptionsProto:
-    """Generates an ImageEmbedderOptions protobuf object."""
-    base_options_proto = self.base_options.to_pb2()
-    base_options_proto.use_stream_mode = (
-        False if self.running_mode == _RunningMode.IMAGE else True
+  def to_ctypes(
+      self, dispatcher: async_result_dispatcher.AsyncResultDispatcher
+  ) -> ImageEmbedderOptionsC:
+    """Generates an ImageEmbedderOptionsC object."""
+    self._result_callback_c = dispatcher.wrap_callback(
+        self.result_callback, C_TYPES_RESULT_CALLBACK
     )
-    embedder_options_proto = _EmbedderOptionsProto(
+    base_options_c = self.base_options.to_ctypes()
+    embedder_options_c = _EmbedderOptionsC(
         l2_normalize=self.l2_normalize, quantize=self.quantize
     )
-
-    return _ImageEmbedderGraphOptionsProto(
-        base_options=base_options_proto, embedder_options=embedder_options_proto
+    return ImageEmbedderOptionsC(
+        base_options=base_options_c,
+        running_mode=self.running_mode.ctype,
+        embedder_options=embedder_options_c,
+        result_callback=self._result_callback_c,
     )
 
 
-class ImageEmbedder(base_vision_task_api.BaseVisionTaskApi):
+class ImageEmbedder:
   """Class that performs embedding extraction on images.
 
   The API expects a TFLite model with optional, but strongly recommended,
@@ -120,6 +224,27 @@ class ImageEmbedder(base_vision_task_api.BaseVisionTaskApi):
       feature vector for this output layer.
     - Either 2 or 4 dimensions, i.e. `[1 x N]` or `[1 x 1 x 1 x N]`.
   """
+
+  _lib: serial_dispatcher.SerialDispatcher
+  _handle: ctypes.c_void_p
+  _dispatcher: async_result_dispatcher.AsyncResultDispatcher
+
+  def __init__(
+      self,
+      lib: serial_dispatcher.SerialDispatcher,
+      handle: ctypes.c_void_p,
+      dispatcher: async_result_dispatcher.AsyncResultDispatcher,
+  ):
+    """Initializes a new ImageEmbedder instance.
+
+    Args:
+      lib: The dispatcher to use for all C function calls.
+      handle: The C pointer to the underlying image embedder.
+      dispatcher: The handler for async results.
+    """
+    self._lib = lib
+    self._handle = handle
+    self._dispatcher = dispatcher
 
   @classmethod
   def create_from_model_path(cls, model_path: str) -> 'ImageEmbedder':
@@ -163,44 +288,49 @@ class ImageEmbedder(base_vision_task_api.BaseVisionTaskApi):
         `ImageEmbedderOptions` such as missing the model.
       RuntimeError: If other types of error occurred.
     """
-
-    def packets_callback(output_packets: Mapping[str, packet_module.Packet]):
-      if output_packets[_IMAGE_OUT_STREAM_NAME].is_empty():
-        return
-
-      embedding_result_proto = embeddings_pb2.EmbeddingResult()
-      embedding_result_proto.CopyFrom(
-          packet_getter.get_proto(output_packets[_EMBEDDINGS_OUT_STREAM_NAME])
-      )
-
-      image = packet_getter.get_image(output_packets[_IMAGE_OUT_STREAM_NAME])
-      timestamp = output_packets[_IMAGE_OUT_STREAM_NAME].timestamp
-      options.result_callback(
-          ImageEmbedderResult.create_from_pb2(embedding_result_proto),
-          image,
-          timestamp.value // _MICRO_SECONDS_PER_MILLISECOND,
-      )
-
-    task_info = _TaskInfo(
-        task_graph=_TASK_GRAPH_NAME,
-        input_streams=[
-            ':'.join([_IMAGE_TAG, _IMAGE_IN_STREAM_NAME]),
-            ':'.join([_NORM_RECT_TAG, _NORM_RECT_STREAM_NAME]),
-        ],
-        output_streams=[
-            ':'.join([_EMBEDDINGS_TAG, _EMBEDDINGS_OUT_STREAM_NAME]),
-            ':'.join([_IMAGE_TAG, _IMAGE_OUT_STREAM_NAME]),
-        ],
-        task_options=options,
+    base_vision_task_api.validate_running_mode(
+        options.running_mode, options.result_callback
     )
-    return cls(
-        task_info.generate_graph_config(
-            enable_flow_limiting=options.running_mode
-            == _RunningMode.LIVE_STREAM
+    lib = mediapipe_c_bindings.load_shared_library(_CTYPES_SIGNATURES)
+
+    def convert_result(
+        c_result_ptr: ctypes.POINTER(
+            embedding_result_c_module.EmbeddingResultC
         ),
-        options.running_mode,
-        packets_callback if options.result_callback else None,
+        image_ptr: ctypes.c_void_p,
+        timestamp_ms: int,
+    ) -> tuple[ImageEmbedderResult, image_module.Image, int]:
+      """Converts an async C++ result to Python objects.
+
+      Args:
+        c_result_ptr: The pointer to the C result object.
+        image_ptr: The pointer to the C input image.
+        timestamp_ms: The timestamp of the input image in milliseconds.
+
+      Returns:
+       The connverted Python objects as a tuple.
+      """
+      c_result = c_result_ptr[0]
+      py_result = embedding_result_module.EmbeddingResult.from_ctypes(c_result)
+      py_image = image_module.Image.create_from_ctypes(image_ptr)
+      return (py_result, py_image, timestamp_ms)
+
+    dispatcher = _AsyncResultDispatcher(converter=convert_result)
+    ctypes_options = options.to_ctypes(dispatcher)
+
+    error_msg_ptr = ctypes.c_char_p()
+    embedder_handle = lib.image_embedder_create(
+        ctypes.byref(ctypes_options), ctypes.byref(error_msg_ptr)
     )
+    if not embedder_handle:
+      error_string = (
+          error_msg_ptr.value.decode('utf-8')
+          if error_msg_ptr.value is not None
+          else None
+      )
+      raise RuntimeError(f'Failed to create ImageEmbedder: {error_string}')
+
+    return cls(lib, embedder_handle, dispatcher=dispatcher)
 
   def embed(
       self,
@@ -223,22 +353,28 @@ class ImageEmbedder(base_vision_task_api.BaseVisionTaskApi):
       ValueError: If any of the input arguments is invalid.
       RuntimeError: If image embedder failed to run.
     """
-    normalized_rect = self.convert_to_normalized_rect(
-        image_processing_options, image
+    c_image = image._image_ptr  # pylint: disable=protected-access
+    c_result = embedding_result_c_module.EmbeddingResultC()
+    error_msg = ctypes.c_char_p()
+    options_c = (
+        ctypes.byref(image_processing_options.to_ctypes())
+        if image_processing_options
+        else None
     )
-    output_packets = self._process_image_data({
-        _IMAGE_IN_STREAM_NAME: packet_creator.create_image(image),
-        _NORM_RECT_STREAM_NAME: packet_creator.create_proto(
-            normalized_rect.to_pb2()
-        ),
-    })
-
-    embedding_result_proto = embeddings_pb2.EmbeddingResult()
-    embedding_result_proto.CopyFrom(
-        packet_getter.get_proto(output_packets[_EMBEDDINGS_OUT_STREAM_NAME])
+    status = self._lib.image_embedder_embed_image(
+        self._handle,
+        c_image,
+        options_c,
+        ctypes.byref(c_result),
+        ctypes.byref(error_msg),
     )
 
-    return ImageEmbedderResult.create_from_pb2(embedding_result_proto)
+    mediapipe_c_bindings.handle_return_code(
+        status, 'Failed to embed image', error_msg
+    )
+    py_result = embedding_result_module.EmbeddingResult.from_ctypes(c_result)
+    self._lib.image_embedder_close_result(ctypes.byref(c_result))
+    return py_result
 
   def embed_for_video(
       self,
@@ -268,23 +404,29 @@ class ImageEmbedder(base_vision_task_api.BaseVisionTaskApi):
       ValueError: If any of the input arguments is invalid.
       RuntimeError: If image embedder failed to run.
     """
-    normalized_rect = self.convert_to_normalized_rect(
-        image_processing_options, image
+    c_image = image._image_ptr  # pylint: disable=protected-access
+    c_result = embedding_result_c_module.EmbeddingResultC()
+    error_msg = ctypes.c_char_p()
+    options_c = (
+        ctypes.byref(image_processing_options.to_ctypes())
+        if image_processing_options
+        else None
     )
-    output_packets = self._process_video_data({
-        _IMAGE_IN_STREAM_NAME: packet_creator.create_image(image).at(
-            timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND
-        ),
-        _NORM_RECT_STREAM_NAME: packet_creator.create_proto(
-            normalized_rect.to_pb2()
-        ).at(timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND),
-    })
-    embedding_result_proto = embeddings_pb2.EmbeddingResult()
-    embedding_result_proto.CopyFrom(
-        packet_getter.get_proto(output_packets[_EMBEDDINGS_OUT_STREAM_NAME])
+    status = self._lib.image_embedder_embed_for_video(
+        self._handle,
+        c_image,
+        options_c,
+        timestamp_ms,
+        ctypes.byref(c_result),
+        ctypes.byref(error_msg),
     )
 
-    return ImageEmbedderResult.create_from_pb2(embedding_result_proto)
+    mediapipe_c_bindings.handle_return_code(
+        status, 'Failed to embed image', error_msg
+    )
+    py_result = embedding_result_module.EmbeddingResult.from_ctypes(c_result)
+    self._lib.image_embedder_close_result(ctypes.byref(c_result))
+    return py_result
 
   def embed_async(
       self,
@@ -323,17 +465,37 @@ class ImageEmbedder(base_vision_task_api.BaseVisionTaskApi):
       ValueError: If the current input timestamp is smaller than what the image
         embedder has already processed.
     """
-    normalized_rect = self.convert_to_normalized_rect(
-        image_processing_options, image
+    c_image = image._image_ptr  # pylint: disable=protected-access
+    error_msg = ctypes.c_char_p()
+    options_c = (
+        ctypes.byref(image_processing_options.to_ctypes())
+        if image_processing_options
+        else None
     )
-    self._send_live_stream_data({
-        _IMAGE_IN_STREAM_NAME: packet_creator.create_image(image).at(
-            timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND
-        ),
-        _NORM_RECT_STREAM_NAME: packet_creator.create_proto(
-            normalized_rect.to_pb2()
-        ).at(timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND),
-    })
+    status = self._lib.image_embedder_embed_async(
+        self._handle,
+        c_image,
+        options_c,
+        timestamp_ms,
+        ctypes.byref(error_msg),
+    )
+    mediapipe_c_bindings.handle_return_code(
+        status, 'Failed to embed image', error_msg
+    )
+
+  def close(self):
+    """Closes the ImageEmbedder."""
+    if self._handle:
+      error_msg_ptr = ctypes.c_char_p()
+      status = self._lib.image_embedder_close(
+          self._handle, ctypes.byref(error_msg_ptr)
+      )
+      mediapipe_c_bindings.handle_return_code(
+          status, 'Failed to close ImageEmbedder', error_msg_ptr
+      )
+      self._handle = None
+      self._dispatcher.close()
+      self._lib.close()
 
   @classmethod
   def cosine_similarity(
@@ -360,3 +522,12 @@ class ImageEmbedder(base_vision_task_api.BaseVisionTaskApi):
         an L2-norm of 0.
     """
     return cosine_similarity.cosine_similarity(u, v)
+
+  def __enter__(self):
+    """Returns `self` upon entering the runtime context."""
+    return self
+
+  def __exit__(self, exc_type, exc_value, traceback):
+    """Shuts down the MediaPipe task instance on exit of the context manager."""
+    del exc_type, exc_value, traceback
+    self.close()

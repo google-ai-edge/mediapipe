@@ -74,12 +74,12 @@ py_test(
     ],
     tags = ["not_run:arm"],
     deps = [
-        "//mediapipe/python:_framework_bindings",
         "//mediapipe/tasks/python/components/containers:embedding_result",
         "//mediapipe/tasks/python/components/containers:rect",
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/test:test_utils",
         "//mediapipe/tasks/python/vision:image_embedder",
+        "//mediapipe/tasks/python/vision/core:image",
         "//mediapipe/tasks/python/vision/core:image_processing_options",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
         "@mediapipe_pip_deps_absl_py//:pkg",

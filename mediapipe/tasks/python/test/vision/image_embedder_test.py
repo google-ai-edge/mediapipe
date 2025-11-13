@@ -15,18 +15,19 @@
 
 import enum
 import os
+import threading
 from unittest import mock
 
 from absl.testing import absltest
 from absl.testing import parameterized
 import numpy as np
 
-from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.tasks.python.components.containers import embedding_result as embedding_result_module
 from mediapipe.tasks.python.components.containers import rect as rect_module
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.test import test_utils
 from mediapipe.tasks.python.vision import image_embedder
+from mediapipe.tasks.python.vision.core import image as image_module
 from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_module
 from mediapipe.tasks.python.vision.core import vision_task_running_mode as running_mode_module
 
@@ -86,7 +87,8 @@ class ImageEmbedderTest(parameterized.TestCase):
       base_options = _BaseOptions(
           model_asset_path='/path/to/invalid/model.tflite')
       options = _ImageEmbedderOptions(base_options=base_options)
-      _ImageEmbedder.create_from_options(options)
+      embedder = _ImageEmbedder.create_from_options(options)
+      embedder.close()
 
   def test_create_from_options_succeeds_with_valid_model_content(self):
     # Creates with options containing model content successfully.
@@ -95,6 +97,7 @@ class ImageEmbedderTest(parameterized.TestCase):
       options = _ImageEmbedderOptions(base_options=base_options)
       embedder = _ImageEmbedder.create_from_options(options)
       self.assertIsInstance(embedder, _ImageEmbedder)
+      embedder.close()
 
   def _check_embedding_value(self, result, expected_first_value):
     # Check embedding first value.
@@ -248,8 +251,9 @@ class ImageEmbedderTest(parameterized.TestCase):
         base_options=_BaseOptions(model_asset_path=self.model_path),
         running_mode=_RUNNING_MODE.IMAGE)
     with _ImageEmbedder.create_from_options(options) as embedder:
-      with self.assertRaisesRegex(ValueError,
-                                  r'not initialized with the video mode'):
+      with self.assertRaisesRegex(
+          RuntimeError, r'not initialized with the video mode'
+      ):
         embedder.embed_for_video(self.test_image, 0)
 
   def test_calling_embed_async_in_image_mode(self):
@@ -257,8 +261,9 @@ class ImageEmbedderTest(parameterized.TestCase):
         base_options=_BaseOptions(model_asset_path=self.model_path),
         running_mode=_RUNNING_MODE.IMAGE)
     with _ImageEmbedder.create_from_options(options) as embedder:
-      with self.assertRaisesRegex(ValueError,
-                                  r'not initialized with the live stream mode'):
+      with self.assertRaisesRegex(
+          RuntimeError, r'not initialized with the live stream mode'
+      ):
         embedder.embed_async(self.test_image, 0)
 
   def test_calling_embed_in_video_mode(self):
@@ -266,8 +271,9 @@ class ImageEmbedderTest(parameterized.TestCase):
         base_options=_BaseOptions(model_asset_path=self.model_path),
         running_mode=_RUNNING_MODE.VIDEO)
     with _ImageEmbedder.create_from_options(options) as embedder:
-      with self.assertRaisesRegex(ValueError,
-                                  r'not initialized with the image mode'):
+      with self.assertRaisesRegex(
+          RuntimeError, r'not initialized with the image mode'
+      ):
         embedder.embed(self.test_image)
 
   def test_calling_embed_async_in_video_mode(self):
@@ -275,8 +281,9 @@ class ImageEmbedderTest(parameterized.TestCase):
         base_options=_BaseOptions(model_asset_path=self.model_path),
         running_mode=_RUNNING_MODE.VIDEO)
     with _ImageEmbedder.create_from_options(options) as embedder:
-      with self.assertRaisesRegex(ValueError,
-                                  r'not initialized with the live stream mode'):
+      with self.assertRaisesRegex(
+          RuntimeError, r'not initialized with the live stream mode'
+      ):
         embedder.embed_async(self.test_image, 0)
 
   def test_embed_for_video_with_out_of_order_timestamp(self):
@@ -286,7 +293,8 @@ class ImageEmbedderTest(parameterized.TestCase):
     with _ImageEmbedder.create_from_options(options) as embedder:
       unused_result = embedder.embed_for_video(self.test_image, 1)
       with self.assertRaisesRegex(
-          ValueError, r'Input timestamp must be monotonically increasing'):
+          RuntimeError, r'Input timestamp must be monotonically increasing'
+      ):
         embedder.embed_for_video(self.test_image, 0)
 
   def test_embed_for_video(self):
@@ -331,8 +339,9 @@ class ImageEmbedderTest(parameterized.TestCase):
         running_mode=_RUNNING_MODE.LIVE_STREAM,
         result_callback=mock.MagicMock())
     with _ImageEmbedder.create_from_options(options) as embedder:
-      with self.assertRaisesRegex(ValueError,
-                                  r'not initialized with the image mode'):
+      with self.assertRaisesRegex(
+          RuntimeError, r'not initialized with the image mode'
+      ):
         embedder.embed(self.test_image)
 
   def test_calling_embed_for_video_in_live_stream_mode(self):
@@ -341,8 +350,9 @@ class ImageEmbedderTest(parameterized.TestCase):
         running_mode=_RUNNING_MODE.LIVE_STREAM,
         result_callback=mock.MagicMock())
     with _ImageEmbedder.create_from_options(options) as embedder:
-      with self.assertRaisesRegex(ValueError,
-                                  r'not initialized with the video mode'):
+      with self.assertRaisesRegex(
+          RuntimeError, r'not initialized with the video mode'
+      ):
         embedder.embed_for_video(self.test_image, 0)
 
   def test_embed_async_calls_with_illegal_timestamp(self):
@@ -353,7 +363,8 @@ class ImageEmbedderTest(parameterized.TestCase):
     with _ImageEmbedder.create_from_options(options) as embedder:
       embedder.embed_async(self.test_image, 100)
       with self.assertRaisesRegex(
-          ValueError, r'Input timestamp must be monotonically increasing'):
+          RuntimeError, r'Input timestamp must be monotonically increasing'
+      ):
         embedder.embed_async(self.test_image, 0)
 
   def test_embed_async_calls(self):
@@ -364,18 +375,29 @@ class ImageEmbedderTest(parameterized.TestCase):
     with _ImageEmbedder.create_from_options(options) as embedder:
       crop_result = embedder.embed(self.test_cropped_image)
 
+    callback_event = threading.Event()
+    callback_exception: None | Exception = None
     observed_timestamp_ms = -1
 
     def check_result(result: _ImageEmbedderResult, output_image: _Image,
                      timestamp_ms: int):
-      # Checks cosine similarity.
-      self._check_cosine_similarity(
-          result, crop_result, expected_similarity=0.925519)
-      self.assertTrue(
-          np.array_equal(output_image.numpy_view(),
-                         self.test_image.numpy_view()))
-      self.assertLess(observed_timestamp_ms, timestamp_ms)
-      self.observed_timestamp_ms = timestamp_ms
+      nonlocal callback_exception, observed_timestamp_ms
+      try:
+        # Checks cosine similarity.
+        self._check_cosine_similarity(
+            result, crop_result, expected_similarity=0.925519
+        )
+        self.assertTrue(
+            np.array_equal(
+                output_image.numpy_view(), self.test_image.numpy_view()
+            )
+        )
+        self.assertLess(observed_timestamp_ms, timestamp_ms)
+        observed_timestamp_ms = timestamp_ms
+      except AssertionError as e:
+        callback_exception = e
+      finally:
+        callback_event.set()
 
     options = _ImageEmbedderOptions(
         base_options=_BaseOptions(model_asset_path=self.model_path),
@@ -384,6 +406,10 @@ class ImageEmbedderTest(parameterized.TestCase):
     with _ImageEmbedder.create_from_options(options) as embedder:
       for timestamp in range(0, 300, 30):
         embedder.embed_async(self.test_image, timestamp)
+        callback_event.wait()
+        if callback_exception is not None:
+          raise callback_exception
+        callback_event.clear()
 
   def test_embed_async_succeeds_with_region_of_interest(self):
     # Get the embedding result for the cropped image.
@@ -396,18 +422,29 @@ class ImageEmbedderTest(parameterized.TestCase):
     # Region-of-interest in "burger.jpg" corresponding to "burger_crop.jpg".
     roi = _RectF(left=0.0, top=0.0, right=0.833333, bottom=1.0)
     image_processing_options = _ImageProcessingOptions(roi)
+    callback_event = threading.Event()
+    callback_exception: None | Exception = None
     observed_timestamp_ms = -1
 
     def check_result(result: _ImageEmbedderResult, output_image: _Image,
                      timestamp_ms: int):
-      # Checks cosine similarity.
-      self._check_cosine_similarity(
-          result, crop_result, expected_similarity=0.999931)
-      self.assertTrue(
-          np.array_equal(output_image.numpy_view(),
-                         self.test_image.numpy_view()))
-      self.assertLess(observed_timestamp_ms, timestamp_ms)
-      self.observed_timestamp_ms = timestamp_ms
+      nonlocal callback_exception, observed_timestamp_ms
+      try:
+        # Checks cosine similarity.
+        self._check_cosine_similarity(
+            result, crop_result, expected_similarity=0.999931
+        )
+        self.assertTrue(
+            np.array_equal(
+                output_image.numpy_view(), self.test_image.numpy_view()
+            )
+        )
+        self.assertLess(observed_timestamp_ms, timestamp_ms)
+        observed_timestamp_ms = timestamp_ms
+      except AssertionError as e:
+        callback_exception = e
+      finally:
+        callback_event.set()
 
     options = _ImageEmbedderOptions(
         base_options=_BaseOptions(model_asset_path=self.model_path),
@@ -417,6 +454,10 @@ class ImageEmbedderTest(parameterized.TestCase):
       for timestamp in range(0, 300, 30):
         embedder.embed_async(self.test_image, timestamp,
                              image_processing_options)
+        callback_event.wait()
+        if callback_exception is not None:
+          raise callback_exception
+        callback_event.clear()
 
 
 if __name__ == '__main__':
