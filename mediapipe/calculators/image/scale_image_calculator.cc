@@ -21,6 +21,7 @@
 
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/substitute.h"
 #include "libyuv/scale.h"
@@ -39,6 +40,7 @@
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/util/image_frame_util.h"
+#include "third_party/OpenCV/imgproc.hpp"
 
 namespace mediapipe {
 
@@ -448,9 +450,14 @@ absl::Status ScaleImageCalculator::ValidateImageFormats() const {
             (input_format_ == ImageFormat::YCBCR420P &&
              output_format_ == ImageFormat::SRGB) ||
             (input_format_ == ImageFormat::SRGB &&
-             output_format_ == ImageFormat::SRGBA))
-      << "Conversion of the color space (except from "
-         "YCbCr420P to SRGB or SRGB to SRBGA) is not yet supported.";
+             output_format_ == ImageFormat::SRGBA) ||
+            (input_format_ == ImageFormat::SRGBA &&
+             output_format_ == ImageFormat::SRGB))
+      << "Conversion of the color space from "
+      << ImageFormat::Format_Name(input_format_) << " to "
+      << ImageFormat::Format_Name(output_format_)
+      << " (except from YCbCr420P to SRGB or SRGB to SRBGA or SRGBA to SRGB) "
+         "is not yet supported.";
   return absl::OkStatus();
 }
 
@@ -627,7 +634,18 @@ absl::Status ScaleImageCalculator::Process(CalculatorContext* cc) {
     converted_image_frame.Reset(ImageFormat::SRGBA, image_frame->Width(),
                                 image_frame->Height(), alignment_boundary_);
     cv::Mat output_mat = ::mediapipe::formats::MatView(&converted_image_frame);
-    cv::cvtColor(input_mat, output_mat, cv::COLOR_RGB2RGBA, 4);
+    cv::cvtColor(input_mat, output_mat, cv::COLOR_RGB2RGBA,
+                 /*num_output_channels=*/4);
+    image_frame = &converted_image_frame;
+  } else if (input_format_ == ImageFormat::SRGBA &&
+             output_format_ == ImageFormat::SRGB) {
+    image_frame = &cc->Inputs().Get(input_data_id_).Get<ImageFrame>();
+    cv::Mat input_mat = ::mediapipe::formats::MatView(image_frame);
+    converted_image_frame.Reset(ImageFormat::SRGB, image_frame->Width(),
+                                image_frame->Height(), alignment_boundary_);
+    cv::Mat output_mat = ::mediapipe::formats::MatView(&converted_image_frame);
+    cv::cvtColor(input_mat, output_mat, cv::COLOR_RGBA2RGB,
+                 /*num_output_channels=*/3);
     image_frame = &converted_image_frame;
   } else {
     image_frame = &cc->Inputs().Get(input_data_id_).Get<ImageFrame>();
