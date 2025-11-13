@@ -24,6 +24,7 @@ limitations under the License.
 #include "mediapipe/tasks/c/core/mp_status.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
+#include "mediapipe/tasks/c/vision/core/image_processing_options.h"
 
 #ifndef MP_EXPORT
 #define MP_EXPORT __attribute__((visibility("default")))
@@ -82,10 +83,10 @@ image_embedder_create(struct ImageEmbedderOptions* options, char** error_msg);
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT int image_embedder_embed_image(MpImageEmbedderPtr embedder,
-                                         MpImagePtr image,
-                                         ImageEmbedderResult* result,
-                                         char** error_msg);
+MP_EXPORT int image_embedder_embed_image(
+    MpImageEmbedderPtr embedder, MpImagePtr image,
+    const ImageProcessingOptions* image_processing_options,
+    ImageEmbedderResult* result, char** error_msg);
 
 // Performs embedding extraction on the provided video frame.
 // Only use this method when the ImageEmbedder is created with the video
@@ -96,11 +97,10 @@ MP_EXPORT int image_embedder_embed_image(MpImageEmbedderPtr embedder,
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT int image_embedder_embed_for_video(MpImageEmbedderPtr embedder,
-                                             MpImagePtr image,
-                                             int64_t timestamp_ms,
-                                             ImageEmbedderResult* result,
-                                             char** error_msg);
+MP_EXPORT int image_embedder_embed_for_video(
+    MpImageEmbedderPtr embedder, MpImagePtr image,
+    const ImageProcessingOptions* image_processing_options,
+    int64_t timestamp_ms, ImageEmbedderResult* result, char** error_msg);
 
 // Sends live image data to embedder, and the results will be available via
 // the `result_callback` provided in the ImageEmbedderOptions.
@@ -120,9 +120,10 @@ MP_EXPORT int image_embedder_embed_for_video(MpImageEmbedderPtr embedder,
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT int image_embedder_embed_async(MpImageEmbedderPtr embedder,
-                                         MpImagePtr image, int64_t timestamp_ms,
-                                         char** error_msg);
+MP_EXPORT int image_embedder_embed_async(
+    MpImageEmbedderPtr embedder, MpImagePtr image,
+    const ImageProcessingOptions* image_processing_options,
+    int64_t timestamp_ms, char** error_msg);
 
 // Frees the memory allocated inside a ImageEmbedderResult result.
 // Does not free the result pointer itself.

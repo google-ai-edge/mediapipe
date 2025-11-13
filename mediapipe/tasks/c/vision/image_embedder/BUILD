@@ -34,7 +34,10 @@ IMAGE_EMBEDDER_DEPS = [
     "//mediapipe/tasks/c/vision/core:common",
     "//mediapipe/tasks/c/vision/core:image",
     "//mediapipe/tasks/c/vision/core:image_frame_util",
+    "//mediapipe/tasks/c/vision/core:image_processing_options",
+    "//mediapipe/tasks/c/vision/core:image_processing_options_converter",
     "//mediapipe/tasks/cc/components/containers:embedding_result",
+    "//mediapipe/tasks/cc/vision/core:image_processing_options",
     "//mediapipe/tasks/cc/vision/core:running_mode",
     "//mediapipe/tasks/cc/vision/image_embedder",
 ]
@@ -75,6 +78,7 @@ cc_test(
         "//mediapipe/tasks/c/core:mp_status",
         "//mediapipe/tasks/c/vision/core:common",
         "//mediapipe/tasks/c/vision/core:image",
+        "//mediapipe/tasks/c/vision/core:image_processing_options",
         "//mediapipe/tasks/c/vision/core:image_test_util",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",

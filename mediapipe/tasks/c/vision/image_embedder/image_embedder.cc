@@ -18,6 +18,7 @@ limitations under the License.
 #include <cstdint>
 #include <cstdlib>
 #include <memory>
+#include <optional>
 #include <utility>
 
 #include "absl/log/absl_log.h"
@@ -33,7 +34,10 @@ limitations under the License.
 #include "mediapipe/tasks/c/vision/core/common.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/core/image_frame_util.h"
+#include "mediapipe/tasks/c/vision/core/image_processing_options.h"
+#include "mediapipe/tasks/c/vision/core/image_processing_options_converter.h"
 #include "mediapipe/tasks/cc/components/containers/embedding_result.h"
+#include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
 #include "mediapipe/tasks/cc/vision/image_embedder/image_embedder.h"
 
@@ -54,11 +58,14 @@ using ::mediapipe::tasks::c::components::processors::
     CppConvertToEmbedderOptions;
 using ::mediapipe::tasks::c::core::CppConvertToBaseOptions;
 using ::mediapipe::tasks::c::core::ToMpStatus;
+using ::mediapipe::tasks::c::vision::core::CppConvertToImageProcessingOptions;
 using ::mediapipe::tasks::vision::core::RunningMode;
 using ::mediapipe::tasks::vision::image_embedder::ImageEmbedder;
 typedef ::mediapipe::tasks::components::containers::Embedding CppEmbedding;
 typedef ::mediapipe::tasks::vision::image_embedder::ImageEmbedderResult
     CppImageEmbedderResult;
+using CppImageProcessingOptions =
+    ::mediapipe::tasks::vision::core::ImageProcessingOptions;
 
 int CppProcessError(absl::Status status, char** error_msg) {
   if (error_msg) {
@@ -119,10 +126,19 @@ MpImageEmbedderPtr CppImageEmbedderCreate(const ImageEmbedderOptions& options,
   return new MpImageEmbedderInternal{.embedder = std::move(*embedder)};
 }
 
-int CppImageEmbedderEmbed(MpImageEmbedderPtr embedder, MpImagePtr image,
-                          ImageEmbedderResult* result, char** error_msg) {
-  auto cpp_embedder = embedder->embedder.get();
-  auto cpp_result = cpp_embedder->Embed(ToImage(image));
+int CppImageEmbedderEmbed(
+    MpImageEmbedderPtr embedder, MpImagePtr image,
+    const ImageProcessingOptions* image_processing_options,
+    ImageEmbedderResult* result, char** error_msg) {
+  ImageEmbedder* cpp_embedder = embedder->embedder.get();
+  std::optional<CppImageProcessingOptions> cpp_image_processing_options;
+  if (image_processing_options) {
+    CppImageProcessingOptions options;
+    CppConvertToImageProcessingOptions(*image_processing_options, &options);
+    cpp_image_processing_options = options;
+  }
+  auto cpp_result =
+      cpp_embedder->Embed(ToImage(image), cpp_image_processing_options);
   if (!cpp_result.ok()) {
     ABSL_LOG(ERROR) << "Embedding extraction failed: " << cpp_result.status();
     return CppProcessError(cpp_result.status(), error_msg);
@@ -131,12 +147,19 @@ int CppImageEmbedderEmbed(MpImageEmbedderPtr embedder, MpImagePtr image,
   return 0;
 }
 
-int CppImageEmbedderEmbedForVideo(MpImageEmbedderPtr embedder, MpImagePtr image,
-                                  int64_t timestamp_ms,
-                                  ImageEmbedderResult* result,
-                                  char** error_msg) {
-  auto cpp_embedder = embedder->embedder.get();
-  auto cpp_result = cpp_embedder->EmbedForVideo(ToImage(image), timestamp_ms);
+int CppImageEmbedderEmbedForVideo(
+    MpImageEmbedderPtr embedder, MpImagePtr image,
+    const ImageProcessingOptions* image_processing_options,
+    int64_t timestamp_ms, ImageEmbedderResult* result, char** error_msg) {
+  ImageEmbedder* cpp_embedder = embedder->embedder.get();
+  std::optional<CppImageProcessingOptions> cpp_image_processing_options;
+  if (image_processing_options) {
+    CppImageProcessingOptions options;
+    CppConvertToImageProcessingOptions(*image_processing_options, &options);
+    cpp_image_processing_options = options;
+  }
+  auto cpp_result = cpp_embedder->EmbedForVideo(ToImage(image), timestamp_ms,
+                                                cpp_image_processing_options);
   if (!cpp_result.ok()) {
     ABSL_LOG(ERROR) << "Embedding extraction failed: " << cpp_result.status();
     return CppProcessError(cpp_result.status(), error_msg);
@@ -145,10 +168,19 @@ int CppImageEmbedderEmbedForVideo(MpImageEmbedderPtr embedder, MpImagePtr image,
   return 0;
 }
 
-int CppImageEmbedderEmbedAsync(MpImageEmbedderPtr embedder, MpImagePtr image,
-                               int64_t timestamp_ms, char** error_msg) {
-  auto cpp_embedder = embedder->embedder.get();
-  auto cpp_result = cpp_embedder->EmbedAsync(ToImage(image), timestamp_ms);
+int CppImageEmbedderEmbedAsync(
+    MpImageEmbedderPtr embedder, MpImagePtr image,
+    const ImageProcessingOptions* image_processing_options,
+    int64_t timestamp_ms, char** error_msg) {
+  ImageEmbedder* cpp_embedder = embedder->embedder.get();
+  std::optional<CppImageProcessingOptions> cpp_image_processing_options;
+  if (image_processing_options) {
+    CppImageProcessingOptions options;
+    CppConvertToImageProcessingOptions(*image_processing_options, &options);
+    cpp_image_processing_options = options;
+  }
+  auto cpp_result = cpp_embedder->EmbedAsync(ToImage(image), timestamp_ms,
+                                             cpp_image_processing_options);
   if (!cpp_result.ok()) {
     ABSL_LOG(ERROR) << "Data preparation for the embedding extraction failed: "
                     << cpp_result;
@@ -200,29 +232,30 @@ image_embedder_create(struct ImageEmbedderOptions* options, char** error_msg) {
       *options, error_msg);
 }
 
-MP_EXPORT int image_embedder_embed_image(MpImageEmbedderPtr embedder,
-                                         MpImagePtr image,
-                                         ImageEmbedderResult* result,
-                                         char** error_msg) {
+MP_EXPORT int image_embedder_embed_image(
+    MpImageEmbedderPtr embedder, MpImagePtr image,
+    const ImageProcessingOptions* image_processing_options,
+    ImageEmbedderResult* result, char** error_msg) {
   return mediapipe::tasks::c::vision::image_embedder::CppImageEmbedderEmbed(
-      embedder, image, result, error_msg);
+      embedder, image, image_processing_options, result, error_msg);
 }
 
-MP_EXPORT int image_embedder_embed_for_video(MpImageEmbedderPtr embedder,
-                                             MpImagePtr image,
-                                             int64_t timestamp_ms,
-                                             ImageEmbedderResult* result,
-                                             char** error_msg) {
+MP_EXPORT int image_embedder_embed_for_video(
+    MpImageEmbedderPtr embedder, MpImagePtr image,
+    const ImageProcessingOptions* image_processing_options,
+    int64_t timestamp_ms, ImageEmbedderResult* result, char** error_msg) {
   return mediapipe::tasks::c::vision::image_embedder::
-      CppImageEmbedderEmbedForVideo(embedder, image, timestamp_ms, result,
-                                    error_msg);
+      CppImageEmbedderEmbedForVideo(embedder, image, image_processing_options,
+                                    timestamp_ms, result, error_msg);
 }
 
-MP_EXPORT int image_embedder_embed_async(MpImageEmbedderPtr embedder,
-                                         MpImagePtr image, int64_t timestamp_ms,
-                                         char** error_msg) {
+MP_EXPORT int image_embedder_embed_async(
+    MpImageEmbedderPtr embedder, MpImagePtr image,
+    const ImageProcessingOptions* image_processing_options,
+    int64_t timestamp_ms, char** error_msg) {
   return mediapipe::tasks::c::vision::image_embedder::
-      CppImageEmbedderEmbedAsync(embedder, image, timestamp_ms, error_msg);
+      CppImageEmbedderEmbedAsync(embedder, image, image_processing_options,
+                                 timestamp_ms, error_msg);
 }
 
 MP_EXPORT void image_embedder_close_result(ImageEmbedderResult* result) {
