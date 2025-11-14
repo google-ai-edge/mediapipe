@@ -156,9 +156,7 @@ class ImageSegmenterTest(parameterized.TestCase):
       self.assertIsInstance(segmenter, _ImageSegmenter)
 
   def test_create_from_options_fails_with_invalid_model_path(self):
-    with self.assertRaisesRegex(
-        RuntimeError, 'Unable to open file at /path/to/invalid/model.tflite'
-    ):
+    with self.assertRaises(FileNotFoundError):
       base_options = _BaseOptions(
           model_asset_path='/path/to/invalid/model.tflite'
       )
@@ -299,9 +297,7 @@ class ImageSegmenterTest(parameterized.TestCase):
         running_mode=_RUNNING_MODE.IMAGE,
     )
     with _ImageSegmenter.create_from_options(options) as segmenter:
-      with self.assertRaisesRegex(
-          RuntimeError, r'not initialized with the video mode'
-      ):
+      with self.assertRaises(ValueError):
         segmenter.segment_for_video(self.test_image, 0)
 
   def test_calling_segment_async_in_image_mode(self):
@@ -310,9 +306,7 @@ class ImageSegmenterTest(parameterized.TestCase):
         running_mode=_RUNNING_MODE.IMAGE,
     )
     with _ImageSegmenter.create_from_options(options) as segmenter:
-      with self.assertRaisesRegex(
-          RuntimeError, r'not initialized with the live stream mode'
-      ):
+      with self.assertRaises(ValueError):
         segmenter.segment_async(self.test_image, 0)
 
   def test_calling_segment_in_video_mode(self):
@@ -321,9 +315,7 @@ class ImageSegmenterTest(parameterized.TestCase):
         running_mode=_RUNNING_MODE.VIDEO,
     )
     with _ImageSegmenter.create_from_options(options) as segmenter:
-      with self.assertRaisesRegex(
-          RuntimeError, r'not initialized with the image mode'
-      ):
+      with self.assertRaises(ValueError):
         segmenter.segment(self.test_image)
 
   def test_calling_segment_async_in_video_mode(self):
@@ -332,9 +324,7 @@ class ImageSegmenterTest(parameterized.TestCase):
         running_mode=_RUNNING_MODE.VIDEO,
     )
     with _ImageSegmenter.create_from_options(options) as segmenter:
-      with self.assertRaisesRegex(
-          RuntimeError, r'not initialized with the live stream mode'
-      ):
+      with self.assertRaises(ValueError):
         segmenter.segment_async(self.test_image, 0)
 
   def test_segment_for_video_with_out_of_order_timestamp(self):
@@ -344,9 +334,7 @@ class ImageSegmenterTest(parameterized.TestCase):
     )
     with _ImageSegmenter.create_from_options(options) as segmenter:
       unused_result = segmenter.segment_for_video(self.test_image, 1)
-      with self.assertRaisesRegex(
-          RuntimeError, r'Input timestamp must be monotonically increasing'
-      ):
+      with self.assertRaises(ValueError):
         segmenter.segment_for_video(self.test_image, 0)
 
   def test_segment_for_video_in_category_mask_mode(self):
@@ -409,9 +397,7 @@ class ImageSegmenterTest(parameterized.TestCase):
         result_callback=mock.MagicMock(),
     )
     with _ImageSegmenter.create_from_options(options) as segmenter:
-      with self.assertRaisesRegex(
-          RuntimeError, r'not initialized with the image mode'
-      ):
+      with self.assertRaises(ValueError):
         segmenter.segment(self.test_image)
 
   def test_calling_segment_for_video_in_live_stream_mode(self):
@@ -421,9 +407,7 @@ class ImageSegmenterTest(parameterized.TestCase):
         result_callback=mock.MagicMock(),
     )
     with _ImageSegmenter.create_from_options(options) as segmenter:
-      with self.assertRaisesRegex(
-          RuntimeError, r'not initialized with the video mode'
-      ):
+      with self.assertRaises(ValueError):
         segmenter.segment_for_video(self.test_image, 0)
 
   def test_segment_async_calls_with_illegal_timestamp(self):
@@ -434,9 +418,7 @@ class ImageSegmenterTest(parameterized.TestCase):
     )
     with _ImageSegmenter.create_from_options(options) as segmenter:
       segmenter.segment_async(self.test_image, 100)
-      with self.assertRaisesRegex(
-          RuntimeError, r'Input timestamp must be monotonically increasing'
-      ):
+      with self.assertRaises(ValueError):
         segmenter.segment_async(self.test_image, 0)
 
   def test_segment_async_calls_in_category_mask_mode(self):

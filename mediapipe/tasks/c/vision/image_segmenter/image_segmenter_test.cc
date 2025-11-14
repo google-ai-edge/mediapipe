@@ -84,15 +84,12 @@ TEST(ImageSegmenterTest, ImageModeTestSucceedsWithCategoryMask) {
       .output_category_mask = true,
   };
 
-  MpImageSegmenterPtr segmenter =
-      image_segmenter_create(&options, /* error_msg */ nullptr);
-  EXPECT_NE(segmenter, nullptr);
+  MpImageSegmenterPtr segmenter;
+  EXPECT_EQ(MpImageSegmenterCreate(&options, &segmenter), kMpOk);
 
   ImageSegmenterResult result;
-  const int error =
-      image_segmenter_segment_image(segmenter, image.get(), &result,
-                                    /* error_msg */ nullptr);
-  EXPECT_EQ(error, 0);
+  EXPECT_EQ(MpImageSegmenterSegmentImage(segmenter, image.get(), &result),
+            kMpOk);
 
   auto expected_mask_image = DecodeImageFromFile(GetFullPath(kMaskImageFile));
   const MpMask expected_mask = CreateCategoryMaskFromImage(expected_mask_image);
@@ -100,8 +97,8 @@ TEST(ImageSegmenterTest, ImageModeTestSucceedsWithCategoryMask) {
   EXPECT_GT(SimilarToUint8Mask(actual_mask, &expected_mask,
                                kGoldenMaskMagnificationFactor),
             kGoldenMaskSimilarity);
-  image_segmenter_close_result(&result);
-  image_segmenter_close(segmenter, /* error_msg */ nullptr);
+  MpImageSegmenterCloseResult(&result);
+  EXPECT_EQ(MpImageSegmenterClose(segmenter), kMpOk);
 
   delete[] expected_mask.image_frame.image_buffer;
 }
@@ -120,19 +117,17 @@ TEST(ImageSegmenterTest, ImageModeWithOptionsTestSucceedsWithCategoryMask) {
       .output_category_mask = true,
   };
 
-  MpImageSegmenterPtr segmenter =
-      image_segmenter_create(&options, /* error_msg */ nullptr);
-  EXPECT_NE(segmenter, nullptr);
+  MpImageSegmenterPtr segmenter;
+  EXPECT_EQ(MpImageSegmenterCreate(&options, &segmenter), kMpOk);
 
   ImageProcessingOptions image_processing_options;
   image_processing_options.has_region_of_interest = 0;
   image_processing_options.rotation_degrees = 90;
 
   ImageSegmenterResult result;
-  const int error = image_segmenter_segment_image_with_options(
-      segmenter, image.get(), &image_processing_options, &result,
-      /* error_msg */ nullptr);
-  EXPECT_EQ(error, 0);
+  EXPECT_EQ(MpImageSegmenterSegmentImageWithOptions(
+                segmenter, image.get(), &image_processing_options, &result),
+            kMpOk);
 
   auto expected_mask_image = DecodeImageFromFile(GetFullPath(kMaskImageFile));
   const MpMask expected_mask = CreateCategoryMaskFromImage(expected_mask_image);
@@ -140,8 +135,8 @@ TEST(ImageSegmenterTest, ImageModeWithOptionsTestSucceedsWithCategoryMask) {
   EXPECT_GT(SimilarToUint8Mask(actual_mask, &expected_mask,
                                kGoldenMaskMagnificationFactor),
             kGoldenMaskSimilarityRotated);
-  image_segmenter_close_result(&result);
-  image_segmenter_close(segmenter, /* error_msg */ nullptr);
+  MpImageSegmenterCloseResult(&result);
+  EXPECT_EQ(MpImageSegmenterClose(segmenter), kMpOk);
 
   delete[] expected_mask.image_frame.image_buffer;
 }
@@ -160,25 +155,25 @@ TEST(ImageSegmenterTest, VideoModeTest) {
       .output_category_mask = true,
   };
 
-  MpImageSegmenterPtr segmenter =
-      image_segmenter_create(&options, /* error_msg */ nullptr);
-  EXPECT_NE(segmenter, nullptr);
+  MpImageSegmenterPtr segmenter;
+  EXPECT_EQ(MpImageSegmenterCreate(&options, &segmenter), kMpOk);
 
   auto expected_mask_image = DecodeImageFromFile(GetFullPath(kMaskImageFile));
   const MpMask expected_mask = CreateCategoryMaskFromImage(expected_mask_image);
 
   for (int i = 0; i < kIterations; ++i) {
     ImageSegmenterResult result;
-    image_segmenter_segment_for_video(segmenter, image.get(), i, &result,
-                                      /* error_msg */ nullptr);
+    EXPECT_EQ(
+        MpImageSegmenterSegmentForVideo(segmenter, image.get(), i, &result),
+        kMpOk);
     const MpImagePtr actual_mask = result.category_mask;
     EXPECT_GT(SimilarToUint8Mask(actual_mask, &expected_mask,
                                  kGoldenMaskMagnificationFactor),
               kGoldenMaskSimilarity);
 
-    image_segmenter_close_result(&result);
+    MpImageSegmenterCloseResult(&result);
   }
-  image_segmenter_close(segmenter, /* error_msg */ nullptr);
+  EXPECT_EQ(MpImageSegmenterClose(segmenter), kMpOk);
 
   delete[] expected_mask.image_frame.image_buffer;
 }
@@ -232,17 +227,14 @@ TEST(ImageSegmenterTest, LiveStreamModeTest) {
       .result_callback = LiveStreamModeCallback::Fn,
   };
 
-  MpImageSegmenterPtr segmenter =
-      image_segmenter_create(&options, /* error_msg */ nullptr);
-  EXPECT_NE(segmenter, nullptr);
+  MpImageSegmenterPtr segmenter;
+  EXPECT_EQ(MpImageSegmenterCreate(&options, &segmenter), kMpOk);
 
   absl::BlockingCounter counter(kIterations);
   LiveStreamModeCallback::blocking_counter = &counter;
 
   for (int i = 0; i < kIterations; ++i) {
-    EXPECT_GE(image_segmenter_segment_async(segmenter, image.get(), i,
-                                            /* error_msg */ nullptr),
-              0);
+    EXPECT_EQ(MpImageSegmenterSegmentAsync(segmenter, image.get(), i), kMpOk);
     // Short sleep so that MediaPipe does not drop frames.
     absl::SleepFor(absl::Milliseconds(kSleepBetweenFramesMilliseconds));
   }
@@ -251,7 +243,7 @@ TEST(ImageSegmenterTest, LiveStreamModeTest) {
   counter.Wait();
   LiveStreamModeCallback::blocking_counter = nullptr;
 
-  image_segmenter_close(segmenter, /* error_msg */ nullptr);
+  EXPECT_EQ(MpImageSegmenterClose(segmenter), kMpOk);
 
   // Due to the flow limiter, the total of outputs might be smaller than the
   // number of iterations.
@@ -271,13 +263,10 @@ TEST(ImageSegmenterTest, InvalidArgumentHandling) {
       .output_category_mask = true,
   };
 
-  char* error_msg;
-  MpImageSegmenterPtr segmenter = image_segmenter_create(&options, &error_msg);
+  MpImageSegmenterPtr segmenter = nullptr;
+  MpStatus status = MpImageSegmenterCreate(&options, &segmenter);
   EXPECT_EQ(segmenter, nullptr);
-
-  EXPECT_THAT(error_msg, HasSubstr("ExternalFile must specify"));
-
-  free(error_msg);
+  EXPECT_EQ(status, kMpInvalidArgument);
 }
 
 TEST(ImageSegmenterTest, FailedRecognitionHandling) {
@@ -292,22 +281,15 @@ TEST(ImageSegmenterTest, FailedRecognitionHandling) {
       .output_category_mask = true,
   };
 
-  MpImageSegmenterPtr segmenter =
-      image_segmenter_create(&options, /* error_msg */
-                             nullptr);
+  MpImageSegmenterPtr segmenter;
+  EXPECT_EQ(MpImageSegmenterCreate(&options, &segmenter), kMpOk);
   EXPECT_NE(segmenter, nullptr);
 
   const ScopedMpImage image = CreateEmptyGpuMpImage();
   ImageSegmenterResult result;
-  char* error_msg;
-  image_segmenter_segment_image(segmenter, image.get(), &result, &error_msg);
-  // Image segmenter validates SegmentationOptions before checking if input is
-  // GPU, unlike some of the other vision APIs.
-  EXPECT_THAT(
-      error_msg,
-      HasSubstr("Both output_width and output_height must be larger than 0."));
-  free(error_msg);
-  image_segmenter_close(segmenter, /* error_msg */ nullptr);
+  EXPECT_EQ(MpImageSegmenterSegmentImage(segmenter, image.get(), &result),
+            kMpInvalidArgument);
+  EXPECT_EQ(MpImageSegmenterClose(segmenter), kMpOk);
 }
 
 TEST(ImageSegmenterTest, GetLabelsSucceeds) {
@@ -322,13 +304,12 @@ TEST(ImageSegmenterTest, GetLabelsSucceeds) {
       .output_category_mask = true,
   };
 
-  MpImageSegmenterPtr segmenter =
-      image_segmenter_create(&options, /* error_msg */ nullptr);
+  MpImageSegmenterPtr segmenter;
+  EXPECT_EQ(MpImageSegmenterCreate(&options, &segmenter), kMpOk);
   EXPECT_NE(segmenter, nullptr);
 
   MpStringList labels;
-  MpStatus status = image_segmenter_get_labels(segmenter, &labels);
-  EXPECT_EQ(status, kMpOk);
+  EXPECT_EQ(MpImageSegmenterGetLabels(segmenter, &labels), kMpOk);
 
   const std::vector<std::string> expected_labels = {
       "background", "aeroplane",    "bicycle", "bird",  "boat",
@@ -343,7 +324,7 @@ TEST(ImageSegmenterTest, GetLabelsSucceeds) {
   }
 
   MpStringListFree(&labels);
-  image_segmenter_close(segmenter, /* error_msg */ nullptr);
+  EXPECT_EQ(MpImageSegmenterClose(segmenter), kMpOk);
 }
 
 }  // namespace

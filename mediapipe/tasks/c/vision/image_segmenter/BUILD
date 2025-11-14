@@ -73,7 +73,7 @@ cc_test(
 IMAGE_SEGMENTER_DEPS = [
     ":image_segmenter_result",
     ":image_segmenter_result_converter",
-    "@com_google_absl//absl/log",
+    "@com_google_absl//absl/log:absl_log",
     "@com_google_absl//absl/status",
     "@com_google_absl//absl/status:statusor",
     "//mediapipe/framework/formats:image",

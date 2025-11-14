@@ -20,7 +20,7 @@ limitations under the License.
 #include <memory>
 #include <utility>
 
-#include "absl/log/log.h"
+#include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/formats/image.h"
@@ -60,13 +60,6 @@ using ::mediapipe::tasks::vision::image_segmenter::ImageSegmenter;
 typedef ::mediapipe::tasks::vision::image_segmenter::ImageSegmenterResult
     CppImageSegmenterResult;
 
-int CppProcessError(absl::Status status, char** error_msg) {
-  if (error_msg) {
-    *error_msg = strdup(status.ToString().c_str());
-  }
-  return status.raw_code();
-}
-
 const Image& ToImage(const MpImagePtr mp_image) { return mp_image->image; }
 
 }  // namespace
@@ -79,8 +72,8 @@ void CppConvertToImageSegmenterOptions(
   out->output_category_mask = in.output_category_mask;
 }
 
-MpImageSegmenterPtr CppImageSegmenterCreate(
-    const ImageSegmenterOptions& options, char** error_msg) {
+MpStatus CppImageSegmenterCreate(const ImageSegmenterOptions& options,
+                                 MpImageSegmenterPtr* segmenter) {
   auto cpp_options = std::make_unique<
       ::mediapipe::tasks::vision::image_segmenter::ImageSegmenterOptions>();
 
@@ -94,9 +87,8 @@ MpImageSegmenterPtr CppImageSegmenterCreate(
     if (options.result_callback == nullptr) {
       const absl::Status status = absl::InvalidArgumentError(
           "Provided null pointer to callback function.");
-      LOG(ERROR) << "Failed to create ImageSegmenter: " << status;
-      CppProcessError(status, error_msg);
-      return nullptr;
+      ABSL_LOG(ERROR) << "Failed to create ImageSegmenter: " << status;
+      return ToMpStatus(status);
     }
 
     ImageSegmenterOptions::result_callback_fn result_callback =
@@ -117,18 +109,21 @@ MpImageSegmenterPtr CppImageSegmenterCreate(
         };
   }
 
-  auto segmenter = ImageSegmenter::Create(std::move(cpp_options));
-  if (!segmenter.ok()) {
-    LOG(ERROR) << "Failed to create ImageSegmenter: " << segmenter.status();
-    CppProcessError(segmenter.status(), error_msg);
-    return nullptr;
+  auto cpp_segmenter = ImageSegmenter::Create(std::move(cpp_options));
+  if (!cpp_segmenter.ok()) {
+    ABSL_LOG(ERROR) << "Failed to create ImageSegmenter: "
+                    << cpp_segmenter.status();
+    return ToMpStatus(cpp_segmenter.status());
   }
-  return new MpImageSegmenterInternal{.segmenter = std::move(*segmenter)};
+  *segmenter =
+      new MpImageSegmenterInternal{.segmenter = std::move(*cpp_segmenter)};
+  return kMpOk;
 }
 
-int CppImageSegmenterSegment(MpImageSegmenterPtr segmenter, MpImagePtr image,
-                             const ImageProcessingOptions* options,
-                             ImageSegmenterResult* result, char** error_msg) {
+MpStatus CppImageSegmenterSegment(MpImageSegmenterPtr segmenter,
+                                  MpImagePtr image,
+                                  const ImageProcessingOptions* options,
+                                  ImageSegmenterResult* result) {
   auto cpp_segmenter = segmenter->segmenter.get();
   absl::StatusOr<CppImageSegmenterResult> cpp_result;
   if (options) {
@@ -140,19 +135,18 @@ int CppImageSegmenterSegment(MpImageSegmenterPtr segmenter, MpImagePtr image,
   }
 
   if (!cpp_result.ok()) {
-    LOG(ERROR) << "Segmentation failed: " << cpp_result.status();
-    return CppProcessError(cpp_result.status(), error_msg);
+    ABSL_LOG(ERROR) << "Segmentation failed: " << cpp_result.status();
+    return ToMpStatus(cpp_result.status());
   }
   CppConvertToImageSegmenterResult(*cpp_result, result);
-  return 0;
+  return kMpOk;
 }
 
-int CppImageSegmenterSegmentForVideo(MpImageSegmenterPtr segmenter,
-                                     MpImagePtr image,
-                                     const ImageProcessingOptions* options,
-                                     int64_t timestamp_ms,
-                                     ImageSegmenterResult* result,
-                                     char** error_msg) {
+MpStatus CppImageSegmenterSegmentForVideo(MpImageSegmenterPtr segmenter,
+                                          MpImagePtr image,
+                                          const ImageProcessingOptions* options,
+                                          int64_t timestamp_ms,
+                                          ImageSegmenterResult* result) {
   auto cpp_segmenter = segmenter->segmenter.get();
   absl::StatusOr<CppImageSegmenterResult> cpp_result;
   if (options) {
@@ -166,16 +160,16 @@ int CppImageSegmenterSegmentForVideo(MpImageSegmenterPtr segmenter,
 
   if (!cpp_result.ok()) {
     LOG(ERROR) << "Segmentation failed: " << cpp_result.status();
-    return CppProcessError(cpp_result.status(), error_msg);
+    return ToMpStatus(cpp_result.status());
   }
   CppConvertToImageSegmenterResult(*cpp_result, result);
-  return 0;
+  return kMpOk;
 }
 
-int CppImageSegmenterSegmentAsync(MpImageSegmenterPtr segmenter,
-                                  MpImagePtr image,
-                                  const ImageProcessingOptions* options,
-                                  int64_t timestamp_ms, char** error_msg) {
+MpStatus CppImageSegmenterSegmentAsync(MpImageSegmenterPtr segmenter,
+                                       MpImagePtr image,
+                                       const ImageProcessingOptions* options,
+                                       int64_t timestamp_ms) {
   auto cpp_segmenter = segmenter->segmenter.get();
   absl::Status cpp_result;
   if (options) {
@@ -190,24 +184,24 @@ int CppImageSegmenterSegmentAsync(MpImageSegmenterPtr segmenter,
   if (!cpp_result.ok()) {
     LOG(ERROR) << "Data preparation for the image segmentation failed: "
                << cpp_result;
-    return CppProcessError(cpp_result, error_msg);
+    return ToMpStatus(cpp_result);
   }
-  return 0;
+  return kMpOk;
 }
 
 void CppImageSegmenterCloseResult(ImageSegmenterResult* result) {
   CppCloseImageSegmenterResult(result);
 }
 
-int CppImageSegmenterClose(MpImageSegmenterPtr segmenter, char** error_msg) {
+MpStatus CppImageSegmenterClose(MpImageSegmenterPtr segmenter) {
   auto cpp_segmenter = segmenter->segmenter.get();
   auto result = cpp_segmenter->Close();
   if (!result.ok()) {
     LOG(ERROR) << "Failed to close ImageSegmenter: " << result;
-    return CppProcessError(result, error_msg);
+    return ToMpStatus(result);
   }
   delete segmenter;
-  return 0;
+  return kMpOk;
 }
 
 MpStatus CppImageSegmenterGetLabels(MpImageSegmenterPtr segmenter,
@@ -231,78 +225,70 @@ MpStatus CppImageSegmenterGetLabels(MpImageSegmenterPtr segmenter,
 
 extern "C" {
 
-MP_EXPORT MpImageSegmenterPtr image_segmenter_create(
-    struct ImageSegmenterOptions* options, char** error_msg) {
+MP_EXPORT MpStatus MpImageSegmenterCreate(struct ImageSegmenterOptions* options,
+                                          MpImageSegmenterPtr* segmenter) {
   return mediapipe::tasks::c::vision::image_segmenter::CppImageSegmenterCreate(
-      *options, error_msg);
+      *options, segmenter);
 }
 
-MP_EXPORT int image_segmenter_segment_image(MpImageSegmenterPtr segmenter,
-                                            MpImagePtr image,
-                                            ImageSegmenterResult* result,
-                                            char** error_msg) {
-  return mediapipe::tasks::c::vision::image_segmenter::CppImageSegmenterSegment(
-      segmenter, image, /*options=*/nullptr, result, error_msg);
-}
-
-MP_EXPORT int image_segmenter_segment_image_with_options(
-    MpImageSegmenterPtr segmenter, MpImagePtr image,
-    const ImageProcessingOptions* options, ImageSegmenterResult* result,
-    char** error_msg) {
-  return mediapipe::tasks::c::vision::image_segmenter::CppImageSegmenterSegment(
-      segmenter, image, options, result, error_msg);
-}
-
-MP_EXPORT int image_segmenter_segment_for_video(MpImageSegmenterPtr segmenter,
+MP_EXPORT MpStatus MpImageSegmenterSegmentImage(MpImageSegmenterPtr segmenter,
                                                 MpImagePtr image,
-                                                int64_t timestamp_ms,
-                                                ImageSegmenterResult* result,
-                                                char** error_msg) {
+                                                ImageSegmenterResult* result) {
+  return mediapipe::tasks::c::vision::image_segmenter::CppImageSegmenterSegment(
+      segmenter, image, /*options=*/nullptr, result);
+}
+
+MP_EXPORT MpStatus MpImageSegmenterSegmentImageWithOptions(
+    MpImageSegmenterPtr segmenter, MpImagePtr image,
+    const ImageProcessingOptions* options, ImageSegmenterResult* result) {
+  return mediapipe::tasks::c::vision::image_segmenter::CppImageSegmenterSegment(
+      segmenter, image, options, result);
+}
+
+MP_EXPORT MpStatus MpImageSegmenterSegmentForVideo(
+    MpImageSegmenterPtr segmenter, MpImagePtr image, int64_t timestamp_ms,
+    ImageSegmenterResult* result) {
   return mediapipe::tasks::c::vision::image_segmenter::
       CppImageSegmenterSegmentForVideo(segmenter, image, /*options=*/nullptr,
-                                       timestamp_ms, result, error_msg);
+                                       timestamp_ms, result);
 }
 
-MP_EXPORT int image_segmenter_segment_for_video_with_options(
+MP_EXPORT MpStatus MpImageSegmenterSegmentForVideoWithOptions(
     MpImageSegmenterPtr segmenter, MpImagePtr image,
     const ImageProcessingOptions* options, int64_t timestamp_ms,
-    ImageSegmenterResult* result, char** error_msg) {
+    ImageSegmenterResult* result) {
   return mediapipe::tasks::c::vision::image_segmenter::
       CppImageSegmenterSegmentForVideo(segmenter, image, options, timestamp_ms,
-                                       result, error_msg);
+                                       result);
 }
 
-MP_EXPORT int image_segmenter_segment_async(MpImageSegmenterPtr segmenter,
-                                            MpImagePtr image,
-                                            int64_t timestamp_ms,
-                                            char** error_msg) {
+MP_EXPORT MpStatus MpImageSegmenterSegmentAsync(MpImageSegmenterPtr segmenter,
+                                                MpImagePtr image,
+                                                int64_t timestamp_ms) {
   return mediapipe::tasks::c::vision::image_segmenter::
       CppImageSegmenterSegmentAsync(segmenter, image, /*options=*/nullptr,
-                                    timestamp_ms, error_msg);
+                                    timestamp_ms);
 }
 
-MP_EXPORT int image_segmenter_segment_async_with_options(
+MP_EXPORT MpStatus MpImageSegmenterSegmentAsyncWithOptions(
     MpImageSegmenterPtr segmenter, MpImagePtr image,
-    const ImageProcessingOptions* options, int64_t timestamp_ms,
-    char** error_msg) {
+    const ImageProcessingOptions* options, int64_t timestamp_ms) {
   return mediapipe::tasks::c::vision::image_segmenter::
-      CppImageSegmenterSegmentAsync(segmenter, image, options, timestamp_ms,
-                                    error_msg);
+      CppImageSegmenterSegmentAsync(segmenter, image, options, timestamp_ms);
 }
 
-MP_EXPORT void image_segmenter_close_result(ImageSegmenterResult* result) {
+MP_EXPORT void MpImageSegmenterCloseResult(ImageSegmenterResult* result) {
   mediapipe::tasks::c::vision::image_segmenter::CppImageSegmenterCloseResult(
       result);
 }
 
-MP_EXPORT int image_segmenter_close(MpImageSegmenterPtr segmenter,
-                                    char** error_ms) {
+MP_EXPORT MpStatus MpImageSegmenterClose(MpImageSegmenterPtr segmenter) {
   return mediapipe::tasks::c::vision::image_segmenter::CppImageSegmenterClose(
-      segmenter, error_ms);
+      segmenter);
 }
 
-MP_EXPORT MpStatus image_segmenter_get_labels(MpImageSegmenterPtr segmenter,
-                                              MpStringList* label_list) {
+MP_EXPORT MpStatus MpImageSegmenterGetLabels(MpImageSegmenterPtr segmenter,
+                                             MpStringList* label_list) {
   return mediapipe::tasks::c::vision::image_segmenter::
       CppImageSegmenterGetLabels(segmenter, label_list);
 }
