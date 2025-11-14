@@ -623,7 +623,9 @@ cc_library(
     ],
     deps = [
         "//mediapipe/framework/profiler:graph_profiler",
-    ],
+    ] + select({
+        "//conditions:default": [],
+    }),
 )
 
 cc_library(
