@@ -101,6 +101,7 @@ absl::Status CompareDiff(const ImageFrame& image1, const ImageFrame& image2,
   constexpr float kTMid = (kTMax + kTMin) / 2;
   for (int row = 0; row < height; ++row) {
     for (int col = 0; col < width; ++col) {
+      bool any_color_diff_above_max = false;
       for (int channel = 0; channel < num_channels; ++channel) {
         // Check local difference.
         const T value1 = pixel1[channel];
@@ -109,7 +110,7 @@ absl::Status CompareDiff(const ImageFrame& image1, const ImageFrame& image2,
             static_cast<float>(value1) - static_cast<float>(value2);
         const float abs_diff = std::abs(diff);
         if (channel < 3) {
-          different_color_components += abs_diff > options.max_color_diff;
+          any_color_diff_above_max |= abs_diff > options.max_color_diff;
           max_color_diff_found = std::max(max_color_diff_found, abs_diff);
           pixel_diff[channel] =
               std::clamp(kTMid + diff * kDiffFactor, kTMin, kTMax);
@@ -124,6 +125,7 @@ absl::Status CompareDiff(const ImageFrame& image1, const ImageFrame& image2,
       pixel1 += channels1;
       pixel2 += channels2;
       pixel_diff += channels1;
+      different_color_components += any_color_diff_above_max ? 1 : 0;
     }
     pixel1 += width_padding1;
     pixel2 += width_padding2;
@@ -133,12 +135,12 @@ absl::Status CompareDiff(const ImageFrame& image1, const ImageFrame& image2,
   std::vector<std::string> errors;
   if (different_color_components > options.max_num_pixels_above_limit)
     errors.push_back(absl::Substitute(
-        "$0 color components differences above limit of $1, max found was $2",
+        "$0 pixels with color differences above limit of $1, max found was $2",
         different_color_components, options.max_color_diff,
         max_color_diff_found));
   if (different_alpha_components > options.max_num_pixels_above_limit)
     errors.push_back(absl::Substitute(
-        "$0 alpha components differences above limit of $1, max found was $2",
+        "$0 pixels with alpha differences above limit of $1, max found was $2",
         different_alpha_components, options.max_alpha_diff,
         max_alpha_diff_found));
   if (avg_diff > options.max_avg_diff)
