@@ -21,19 +21,18 @@ from absl.testing import parameterized
 import cv2
 import numpy as np
 
-from mediapipe.python._framework_bindings import image as image_module
-from mediapipe.python._framework_bindings import image_frame
 from mediapipe.tasks.python.components.containers import keypoint as keypoint_module
 from mediapipe.tasks.python.components.containers import rect as rect_module
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.test import test_utils
 from mediapipe.tasks.python.vision import interactive_segmenter
+from mediapipe.tasks.python.vision.core import image as image_module
 from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_module
 
 InteractiveSegmenterResult = interactive_segmenter.InteractiveSegmenterResult
 _BaseOptions = base_options_module.BaseOptions
 _Image = image_module.Image
-_ImageFormat = image_frame.ImageFormat
+_ImageFormat = image_module.ImageFormat
 _NormalizedKeypoint = keypoint_module.NormalizedKeypoint
 _RectF = rect_module.RectF
 _InteractiveSegmenter = interactive_segmenter.InteractiveSegmenter
@@ -61,7 +60,9 @@ def _calculate_soft_iou(m1, m2):
     return 0
 
 
-def _similar_to_float_mask(actual_mask, expected_mask, similarity_threshold):
+def _similar_to_float_mask(
+    actual_mask: _Image, expected_mask: _Image, similarity_threshold: float
+):
   actual_mask = actual_mask.numpy_view()
   expected_mask = expected_mask.numpy_view() / 255.0
 
@@ -71,7 +72,9 @@ def _similar_to_float_mask(actual_mask, expected_mask, similarity_threshold):
   )
 
 
-def _similar_to_uint8_mask(actual_mask, expected_mask, similarity_threshold):
+def _similar_to_uint8_mask(
+    actual_mask: _Image, expected_mask: _Image, similarity_threshold: float
+):
   actual_mask_pixels = actual_mask.numpy_view().flatten()
   expected_mask_pixels = expected_mask.numpy_view().flatten()
 
@@ -140,7 +143,8 @@ class InteractiveSegmenterTest(parameterized.TestCase):
           model_asset_path='/path/to/invalid/model.tflite'
       )
       options = _InteractiveSegmenterOptions(base_options=base_options)
-      _InteractiveSegmenter.create_from_options(options)
+      segmenter = _InteractiveSegmenter.create_from_options(options)
+      segmenter.close()
 
   def test_create_from_options_succeeds_with_valid_model_content(self):
     # Creates with options containing model content successfully.
@@ -149,6 +153,7 @@ class InteractiveSegmenterTest(parameterized.TestCase):
       options = _InteractiveSegmenterOptions(base_options=base_options)
       segmenter = _InteractiveSegmenter.create_from_options(options)
       self.assertIsInstance(segmenter, _InteractiveSegmenter)
+      segmenter.close()
 
   @parameterized.parameters(
       (
@@ -210,6 +215,7 @@ class InteractiveSegmenterTest(parameterized.TestCase):
     roi = _RegionOfInterest(format=roi_format, keypoint=keypoint)
     segmentation_result = segmenter.segment(self.test_image, roi)
     category_mask = segmentation_result.category_mask
+    assert category_mask is not None, 'Category mask was None'
     result_pixels = category_mask.numpy_view().flatten()
 
     # Check if data type of `category_mask` is correct.
@@ -327,7 +333,7 @@ class InteractiveSegmenterTest(parameterized.TestCase):
     )
 
     with self.assertRaisesRegex(
-        ValueError, "This task doesn't support region-of-interest."
+        RuntimeError, "This task doesn't support region-of-interest."
     ):
       with _InteractiveSegmenter.create_from_options(options) as segmenter:
         # Perform segmentation

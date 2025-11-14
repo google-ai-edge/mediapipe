@@ -13,47 +13,90 @@
 # limitations under the License.
 """MediaPipe interactive segmenter task."""
 
+import ctypes
 import dataclasses
 import enum
 from typing import List, Optional
 
-from mediapipe.python import packet_creator
-from mediapipe.python import packet_getter
-from mediapipe.python._framework_bindings import image as image_module
-from mediapipe.tasks.cc.vision.image_segmenter.proto import image_segmenter_graph_options_pb2
-from mediapipe.tasks.cc.vision.image_segmenter.proto import segmenter_options_pb2
-from mediapipe.tasks.cc.vision.interactive_segmenter.proto import region_of_interest_pb2
 from mediapipe.tasks.python.components.containers import keypoint as keypoint_module
+from mediapipe.tasks.python.components.containers import keypoint_c as keypoint_c_module
+from mediapipe.tasks.python.core import async_result_dispatcher
 from mediapipe.tasks.python.core import base_options as base_options_module
-from mediapipe.tasks.python.core import task_info as task_info_module
+from mediapipe.tasks.python.core import base_options_c as base_options_c_module
+from mediapipe.tasks.python.core import mediapipe_c_bindings
+from mediapipe.tasks.python.core import mediapipe_c_utils
+from mediapipe.tasks.python.core import serial_dispatcher
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
-from mediapipe.tasks.python.vision.core import base_vision_task_api
+from mediapipe.tasks.python.vision import image_segmenter
+from mediapipe.tasks.python.vision.core import image as image_module
 from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_module
-from mediapipe.tasks.python.vision.core import vision_task_running_mode
+from mediapipe.tasks.python.vision.core import image_processing_options_c as image_processing_options_c_module
 
 _BaseOptions = base_options_module.BaseOptions
-_RegionOfInterestProto = region_of_interest_pb2.RegionOfInterest
-_SegmenterOptionsProto = segmenter_options_pb2.SegmenterOptions
-_ImageSegmenterGraphOptionsProto = (
-    image_segmenter_graph_options_pb2.ImageSegmenterGraphOptions
-)
-_RunningMode = vision_task_running_mode.VisionTaskRunningMode
 _ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
-_TaskInfo = task_info_module.TaskInfo
+_CFunction = mediapipe_c_utils.CFunction
+_AsyncResultDispatcher = async_result_dispatcher.AsyncResultDispatcher
 
-_CONFIDENCE_MASKS_STREAM_NAME = 'confidence_masks'
-_CONFIDENCE_MASKS_TAG = 'CONFIDENCE_MASKS'
-_CATEGORY_MASK_STREAM_NAME = 'category_mask'
-_CATEGORY_MASK_TAG = 'CATEGORY_MASK'
-_IMAGE_IN_STREAM_NAME = 'image_in'
-_IMAGE_OUT_STREAM_NAME = 'image_out'
-_ROI_STREAM_NAME = 'roi_in'
-_ROI_TAG = 'ROI'
-_NORM_RECT_STREAM_NAME = 'norm_rect_in'
-_NORM_RECT_TAG = 'NORM_RECT'
-_IMAGE_TAG = 'IMAGE'
-_TASK_GRAPH_NAME = (
-    'mediapipe.tasks.vision.interactive_segmenter.InteractiveSegmenterGraph'
+
+class RegionOfInterestC(ctypes.Structure):
+  """The Region-Of-Interest (ROI) to interact with."""
+
+  class Format(enum.IntEnum):
+    UNSPECIFIED = 0
+    KEYPOINT = 1
+    SCRIBBLE = 2
+
+  _fields_ = [
+      ('format', ctypes.c_int),
+      ('keypoint', ctypes.POINTER(keypoint_c_module.NormalizedKeypointC)),
+      ('scribble', ctypes.POINTER(keypoint_c_module.NormalizedKeypointC)),
+      ('scribble_count', ctypes.c_uint32),
+  ]
+
+
+class InteractiveSegmenterOptionsC(ctypes.Structure):
+  """The MediaPipe Tasks InteractiveSegmenterOptions CTypes struct."""
+
+  _fields_ = [
+      ('base_options', base_options_c_module.BaseOptionsC),
+      ('output_confidence_masks', ctypes.c_bool),
+      ('output_category_mask', ctypes.c_bool),
+  ]
+
+
+_CTYPES_SIGNATURES = (
+    _CFunction(
+        func_name='interactive_segmenter_create',
+        argtypes=[
+            ctypes.POINTER(InteractiveSegmenterOptionsC),
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
+        restype=ctypes.c_void_p,
+    ),
+    _CFunction(
+        func_name='interactive_segmenter_segment_image',
+        argtypes=[
+            ctypes.c_void_p,
+            ctypes.c_void_p,  # image
+            ctypes.POINTER(RegionOfInterestC),
+            ctypes.POINTER(
+                image_processing_options_c_module.ImageProcessingOptionsC
+            ),
+            ctypes.POINTER(image_segmenter.ImageSegmenterResultC),
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
+        restype=ctypes.c_int32,
+    ),
+    _CFunction(
+        func_name='interactive_segmenter_close_result',
+        argtypes=[ctypes.POINTER(image_segmenter.ImageSegmenterResultC)],
+        restype=None,
+    ),
+    _CFunction(
+        func_name='interactive_segmenter_close',
+        argtypes=[ctypes.c_void_p, ctypes.POINTER(ctypes.c_char_p)],
+        restype=ctypes.c_int32,
+    ),
 )
 
 
@@ -71,6 +114,18 @@ class InteractiveSegmenterResult:
   confidence_masks: Optional[List[image_module.Image]] = None
   category_mask: Optional[image_module.Image] = None
 
+  @classmethod
+  @doc_controls.do_not_generate_docs
+  def from_ctypes(
+      cls, c_result: image_segmenter.ImageSegmenterResultC
+  ) -> 'InteractiveSegmenterResult':
+    """Converts a C ImageSegmenterResult to a Python InteractiveSegmenterResult."""
+    base_result = image_segmenter.ImageSegmenterResult.from_ctypes(c_result)
+    return cls(
+        confidence_masks=base_result.confidence_masks,
+        category_mask=base_result.category_mask,
+    )
+
 
 @dataclasses.dataclass
 class InteractiveSegmenterOptions:
@@ -78,8 +133,11 @@ class InteractiveSegmenterOptions:
 
   Attributes:
     base_options: Base options for the interactive segmenter task.
+    running_mode: The running mode of the task.
     output_confidence_masks: Whether to output confidence masks.
     output_category_mask: Whether to output category mask.
+    result_callback: The callback function that is invoked synchronously when
+      the current thread is idle.
   """
 
   base_options: _BaseOptions
@@ -87,14 +145,12 @@ class InteractiveSegmenterOptions:
   output_category_mask: bool = False
 
   @doc_controls.do_not_generate_docs
-  def to_pb2(self) -> _ImageSegmenterGraphOptionsProto:
-    """Generates an ImageSegmenterGraphOptions protobuf object."""
-    base_options_proto = self.base_options.to_pb2()
-    base_options_proto.use_stream_mode = False
-    segmenter_options_proto = _SegmenterOptionsProto()
-    return _ImageSegmenterGraphOptionsProto(
-        base_options=base_options_proto,
-        segmenter_options=segmenter_options_proto,
+  def to_ctypes(self) -> InteractiveSegmenterOptionsC:
+    """Generates an InteractiveSegmenterOptionsC ctypes struct."""
+    return InteractiveSegmenterOptionsC(
+        base_options=self.base_options.to_ctypes(),
+        output_confidence_masks=self.output_confidence_masks,
+        output_category_mask=self.output_category_mask,
     )
 
 
@@ -109,31 +165,28 @@ class RegionOfInterest:
   format: Format
   keypoint: Optional[keypoint_module.NormalizedKeypoint] = None
 
+  @doc_controls.do_not_generate_docs
+  def to_ctypes(self) -> RegionOfInterestC:
+    """Converts a Python RegionOfInterest to a C RegionOfInterestC."""
+    if self.keypoint is not None:
+      if self.format == RegionOfInterest.Format.UNSPECIFIED:
+        raise ValueError('RegionOfInterest format not specified.')
+      elif self.format == RegionOfInterest.Format.KEYPOINT:
+        c_roi = RegionOfInterestC(format=self.format.value)
+        c_keypoint = keypoint_c_module.NormalizedKeypointC(
+            x=self.keypoint.x, y=self.keypoint.y
+        )
+        c_roi.keypoint = ctypes.pointer(c_keypoint)
+        return c_roi
+      else:
+        raise ValueError(
+            'Please specify the Region-of-interest for segmentation.'
+        )
 
-def _convert_roi_to_render_data(
-    roi: RegionOfInterest,
-) -> _RegionOfInterestProto:
-  """Converts region of interest to render data proto."""
-  result = _RegionOfInterestProto()
-
-  if roi is not None:
-    if roi.format == RegionOfInterest.Format.UNSPECIFIED:
-      raise ValueError('RegionOfInterest format not specified.')
-
-    elif roi.format == RegionOfInterest.Format.KEYPOINT:
-      if roi.keypoint is not None:
-        point = result.keypoint
-        point.normalized = True
-        point.x = roi.keypoint.x
-        point.y = roi.keypoint.y
-        return result
-  else:
-    raise ValueError('Please specify the Region-of-interest for segmentation.')
-
-  raise ValueError('Unrecognized format.')
+    raise ValueError('Unrecognized format.')
 
 
-class InteractiveSegmenter(base_vision_task_api.BaseVisionTaskApi):
+class InteractiveSegmenter:
   """Class that performs interactive segmentation on images.
 
   Users can represent user interaction through `RegionOfInterest`, which gives
@@ -161,6 +214,21 @@ class InteractiveSegmenter(base_vision_task_api.BaseVisionTaskApi):
   An example of such model can be found at:
   https://tfhub.dev/tensorflow/lite-model/deeplabv3/1/metadata/2
   """
+
+  _lib: serial_dispatcher.SerialDispatcher
+  _handle: ctypes.c_void_p
+  _dispatcher: async_result_dispatcher.AsyncResultDispatcher
+
+  def __init__(
+      self,
+      lib: serial_dispatcher.SerialDispatcher,
+      handle: ctypes.c_void_p,
+      dispatcher: async_result_dispatcher.AsyncResultDispatcher,
+  ):
+    """Initializes the `InteractiveSegmenter` object."""
+    self._lib = lib
+    self._handle = handle
+    self._dispatcher = dispatcher
 
   @classmethod
   def create_from_model_path(cls, model_path: str) -> 'InteractiveSegmenter':
@@ -202,36 +270,26 @@ class InteractiveSegmenter(base_vision_task_api.BaseVisionTaskApi):
         `InteractiveSegmenterOptions` such as missing the model.
       RuntimeError: If other types of error occurred.
     """
+    lib = mediapipe_c_bindings.load_shared_library(_CTYPES_SIGNATURES)
+    dispatcher = _AsyncResultDispatcher(converter=lambda x: x)
+    ctypes_options = options.to_ctypes()
 
-    output_streams = [
-        ':'.join([_IMAGE_TAG, _IMAGE_OUT_STREAM_NAME]),
-    ]
-
-    if options.output_confidence_masks:
-      output_streams.append(
-          ':'.join([_CONFIDENCE_MASKS_TAG, _CONFIDENCE_MASKS_STREAM_NAME])
+    error_msg_ptr = ctypes.c_char_p()
+    segmenter_handle = lib.interactive_segmenter_create(
+        ctypes.byref(ctypes_options), ctypes.byref(error_msg_ptr)
+    )
+    if not segmenter_handle:
+      error_string = (
+          error_msg_ptr.value.decode('utf-8')
+          if error_msg_ptr.value is not None
+          else None
+      )
+      # TODO: b/456183832 - Ensure that we return a more specific error here.
+      raise RuntimeError(
+          f'Failed to create InteractiveSegmenter: {error_string}'
       )
 
-    if options.output_category_mask:
-      output_streams.append(
-          ':'.join([_CATEGORY_MASK_TAG, _CATEGORY_MASK_STREAM_NAME])
-      )
-
-    task_info = _TaskInfo(
-        task_graph=_TASK_GRAPH_NAME,
-        input_streams=[
-            ':'.join([_IMAGE_TAG, _IMAGE_IN_STREAM_NAME]),
-            ':'.join([_ROI_TAG, _ROI_STREAM_NAME]),
-            ':'.join([_NORM_RECT_TAG, _NORM_RECT_STREAM_NAME]),
-        ],
-        output_streams=output_streams,
-        task_options=options,
-    )
-    return cls(
-        task_info.generate_graph_config(enable_flow_limiting=False),
-        _RunningMode.IMAGE,
-        None,
-    )
+    return cls(lib, segmenter_handle, dispatcher)
 
   def segment(
       self,
@@ -259,27 +317,50 @@ class InteractiveSegmenter(base_vision_task_api.BaseVisionTaskApi):
       ValueError: If any of the input arguments is invalid.
       RuntimeError: If image segmentation failed to run.
     """
-    normalized_rect = self.convert_to_normalized_rect(
-        image_processing_options, image, roi_allowed=False
+    c_image = image._image_ptr  # pylint: disable=protected-access
+    c_roi = roi.to_ctypes()
+    c_result = image_segmenter.ImageSegmenterResultC()
+    error_msg = ctypes.c_char_p()
+    options_c = (
+        ctypes.byref(image_processing_options.to_ctypes())
+        if image_processing_options
+        else None
     )
-    render_data_proto = _convert_roi_to_render_data(roi)
-    output_packets = self._process_image_data({
-        _IMAGE_IN_STREAM_NAME: packet_creator.create_image(image),
-        _ROI_STREAM_NAME: packet_creator.create_proto(render_data_proto),
-        _NORM_RECT_STREAM_NAME: packet_creator.create_proto(
-            normalized_rect.to_pb2()
-        ),
-    })
-    segmentation_result = InteractiveSegmenterResult()
+    status = self._lib.interactive_segmenter_segment_image(
+        self._handle,
+        c_image,
+        ctypes.byref(c_roi),
+        options_c,
+        ctypes.byref(c_result),
+        ctypes.byref(error_msg),
+    )
 
-    if _CONFIDENCE_MASKS_STREAM_NAME in output_packets:
-      segmentation_result.confidence_masks = packet_getter.get_image_list(
-          output_packets[_CONFIDENCE_MASKS_STREAM_NAME]
+    mediapipe_c_bindings.handle_return_code(
+        status, 'Failed to segment image', error_msg
+    )
+    py_result = InteractiveSegmenterResult.from_ctypes(c_result)
+    self._lib.interactive_segmenter_close_result(ctypes.byref(c_result))
+    return py_result
+
+  def close(self):
+    """Closes the InteractiveSegmenter."""
+    if self._handle:
+      error_msg_ptr = ctypes.c_char_p()
+      status = self._lib.interactive_segmenter_close(
+          self._handle, ctypes.byref(error_msg_ptr)
       )
-
-    if _CATEGORY_MASK_STREAM_NAME in output_packets:
-      segmentation_result.category_mask = packet_getter.get_image(
-          output_packets[_CATEGORY_MASK_STREAM_NAME]
+      mediapipe_c_bindings.handle_return_code(
+          status, 'Failed to close InteractiveSegmenter', error_msg_ptr
       )
+      self._handle = None
+      self._dispatcher.close()
+      self._lib.close()
 
-    return segmentation_result
+  def __enter__(self):
+    """Returns `self` upon entering the runtime context."""
+    return self
+
+  def __exit__(self, exc_type, exc_value, traceback):
+    """Shuts down the MediaPipe task instance on exit of the context manager."""
+    del exc_type, exc_value, traceback
+    self.close()

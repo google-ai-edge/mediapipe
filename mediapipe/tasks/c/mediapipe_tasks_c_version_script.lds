@@ -13,6 +13,7 @@ VERS_1.0 {
     image_classifier_*;
     image_embedder_*;
     image_segmenter_*;
+    interactive_segmenter_*;
     object_detector_*;
     pose_landmarker_*;
   local:
