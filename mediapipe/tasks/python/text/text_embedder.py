@@ -210,7 +210,7 @@ class TextEmbedder:
     )
     mediapipe_c_bindings.handle_status(status)
     python_result = (
-        embedding_result_c_module.convert_to_python_embedding_result(
+        embedding_result_module.EmbeddingResult.from_ctypes(
             ctypes_result
         )
     )
