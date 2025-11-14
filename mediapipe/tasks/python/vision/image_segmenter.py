@@ -15,7 +15,7 @@
 
 import ctypes
 import dataclasses
-from typing import Callable, Optional, Tuple
+from typing import Callable, Optional
 
 from mediapipe.tasks.python.core import async_result_dispatcher
 from mediapipe.tasks.python.core import base_options as base_options_module
@@ -338,7 +338,8 @@ class ImageSegmenter:
         c_result_ptr: ctypes.POINTER(ImageSegmenterResultC),
         image_ptr: ctypes.c_void_p,
         timestamp_ms: int,
-    ) -> Tuple[ImageSegmenterResult, image_module.Image, int]:
+    ) -> tuple[ImageSegmenterResult, image_module.Image, int]:
+      """Converts the C data types to the desired Python data types."""
       c_result = c_result_ptr[0]
       py_result = ImageSegmenterResult.from_ctypes(c_result)
       py_image = image_module.Image.create_from_ctypes(image_ptr)
@@ -348,7 +349,7 @@ class ImageSegmenter:
     c_callback = dispatcher.wrap_callback(
         options.result_callback, _C_TYPES_RESULT_CALLBACK
     )
-    options_c = ImageSegmenterOptionsC.from_c_options(
+    c_options = ImageSegmenterOptionsC.from_c_options(
         base_options=options.base_options.to_ctypes(),
         running_mode=options.running_mode,
         output_confidence_masks=options.output_confidence_masks,
@@ -357,7 +358,7 @@ class ImageSegmenter:
     )
     error_msg_ptr = ctypes.c_char_p()
     segmenter_handle = lib.image_segmenter_create(
-        ctypes.byref(options_c), ctypes.byref(error_msg_ptr)
+        ctypes.byref(c_options), ctypes.byref(error_msg_ptr)
     )
 
     if not segmenter_handle:
