@@ -84,57 +84,53 @@ class ImageClassifierOptionsC(ctypes.Structure):
 
 _CTYPES_SIGNATURES = (
     _CFunction(
-        "image_classifier_create",
+        "MpImageClassifierCreate",
         [
             ctypes.POINTER(ImageClassifierOptionsC),
-            ctypes.POINTER(ctypes.c_char_p),
+            ctypes.POINTER(ctypes.c_void_p),
         ],
-        ctypes.c_void_p,
+        ctypes.c_int,
     ),
     _CFunction(
-        "image_classifier_classify_image",
+        "MpImageClassifierClassifyImage",
         [
             ctypes.c_void_p,
             ctypes.c_void_p,
             ctypes.POINTER(image_processing_options_c.ImageProcessingOptionsC),
             ctypes.POINTER(classification_result_c.ClassificationResultC),
-            ctypes.POINTER(ctypes.c_char_p),
         ],
         ctypes.c_int,
     ),
     _CFunction(
-        "image_classifier_classify_for_video",
+        "MpImageClassifierClassifyForVideo",
         [
             ctypes.c_void_p,
             ctypes.c_void_p,
             ctypes.POINTER(image_processing_options_c.ImageProcessingOptionsC),
             ctypes.c_int64,
             ctypes.POINTER(classification_result_c.ClassificationResultC),
-            ctypes.POINTER(ctypes.c_char_p),
         ],
         ctypes.c_int,
     ),
     _CFunction(
-        "image_classifier_classify_async",
+        "MpImageClassifierClassifyAsync",
         [
             ctypes.c_void_p,
             ctypes.c_void_p,
             ctypes.POINTER(image_processing_options_c.ImageProcessingOptionsC),
             ctypes.c_int64,
-            ctypes.POINTER(ctypes.c_char_p),
         ],
         ctypes.c_int,
     ),
     _CFunction(
-        "image_classifier_close_result",
+        "MpImageClassifierCloseResult",
         [ctypes.POINTER(classification_result_c.ClassificationResultC)],
         None,
     ),
     _CFunction(
-        "image_classifier_close",
+        "MpImageClassifierClose",
         [
             ctypes.c_void_p,
-            ctypes.POINTER(ctypes.c_char_p),
         ],
         ctypes.c_int,
     ),
@@ -322,23 +318,17 @@ class ImageClassifier:
         ),
         result_callback=c_callback,
     )
-    error_msg_ptr = ctypes.c_char_p()
-    classifier_handle = lib.image_classifier_create(
-        ctypes.byref(options_c), ctypes.byref(error_msg_ptr)
+    classifier_handle = ctypes.c_void_p()
+    status = lib.MpImageClassifierCreate(
+        ctypes.byref(options_c), ctypes.byref(classifier_handle)
     )
-
-    if classifier_handle:
-      return cls(
-          lib=lib,
-          handle=classifier_handle,
-          dispatcher=dispatcher,
-          async_callback=c_callback,
-      )
-
-    if error_msg_ptr.value is not None:
-      error_message = error_msg_ptr.value.decode("utf-8")
-      raise RuntimeError(error_message)
-    raise RuntimeError("Failed to create ImageClassifier object.")
+    mediapipe_c_bindings.handle_status(status)
+    return cls(
+        lib=lib,
+        handle=classifier_handle,
+        dispatcher=dispatcher,
+        async_callback=c_callback,
+    )
 
   def classify(
       self,
@@ -363,26 +353,21 @@ class ImageClassifier:
     """
     c_image = image._image_ptr  # pylint: disable=protected-access
     c_result = classification_result_c.ClassificationResultC()
-    error_msg = ctypes.c_char_p()
     options_c = (
         ctypes.byref(image_processing_options.to_ctypes())
         if image_processing_options
         else None
     )
-    status = self._lib.image_classifier_classify_image(
+    status = self._lib.MpImageClassifierClassifyImage(
         self._handle,
         c_image,
         options_c,
         ctypes.byref(c_result),
-        ctypes.byref(error_msg),
     )
-
-    mediapipe_c_bindings.handle_return_code(
-        status, "Failed to classify image", error_msg
-    )
+    mediapipe_c_bindings.handle_status(status)
 
     result = ImageClassifierResult.from_ctypes(c_result)
-    self._lib.image_classifier_close_result(ctypes.byref(c_result))
+    self._lib.MpImageClassifierCloseResult(ctypes.byref(c_result))
     return result
 
   def classify_for_video(
@@ -412,27 +397,22 @@ class ImageClassifier:
     """
     c_image = image._image_ptr  # pylint: disable=protected-access
     c_result = classification_result_c.ClassificationResultC()
-    error_msg = ctypes.c_char_p()
     options_c = (
         ctypes.byref(image_processing_options.to_ctypes())
         if image_processing_options
         else None
     )
-    status = self._lib.image_classifier_classify_for_video(
+    status = self._lib.MpImageClassifierClassifyForVideo(
         self._handle,
         c_image,
         options_c,
         timestamp_ms,
         ctypes.byref(c_result),
-        ctypes.byref(error_msg),
     )
-
-    mediapipe_c_bindings.handle_return_code(
-        status, "Failed to classify image for video", error_msg
-    )
+    mediapipe_c_bindings.handle_status(status)
 
     result = ImageClassifierResult.from_ctypes(c_result)
-    self._lib.image_classifier_close_result(ctypes.byref(c_result))
+    self._lib.MpImageClassifierCloseResult(ctypes.byref(c_result))
     return result
 
   def classify_async(
@@ -468,37 +448,27 @@ class ImageClassifier:
         classifier has already processed.
     """
     c_image = image._image_ptr  # pylint: disable=protected-access
-    error_msg = ctypes.c_char_p()
     options_c = (
         ctypes.byref(image_processing_options.to_ctypes())
         if image_processing_options
         else None
     )
-    status = self._lib.image_classifier_classify_async(
+    status = self._lib.MpImageClassifierClassifyAsync(
         self._handle,
         c_image,
         options_c,
         timestamp_ms,
-        ctypes.byref(error_msg),
     )
-
-    mediapipe_c_bindings.handle_return_code(
-        status, "Failed to classify image asynchronously", error_msg
-    )
+    mediapipe_c_bindings.handle_status(status)
 
   def close(self):
     """Closes ImageClassifier."""
     if self._handle:
-      error_msg = ctypes.c_char_p()
-      status = self._lib.image_classifier_close(
-          self._handle, ctypes.byref(error_msg)
-      )
-      mediapipe_c_bindings.handle_return_code(
-          status, "Failed to close ImageClassifier", error_msg
-      )
-    self._handle = None
-    self._dispatcher.close()
-    self._lib.close()
+      status = self._lib.MpImageClassifierClose(self._handle)
+      mediapipe_c_bindings.handle_status(status)
+      self._handle = None
+      self._dispatcher.close()
+      self._lib.close()
 
   def __enter__(self):
     """Returns `self` upon entering the runtime context."""

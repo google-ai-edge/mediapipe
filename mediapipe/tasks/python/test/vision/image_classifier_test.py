@@ -148,9 +148,7 @@ class ImageClassifierTest(parameterized.TestCase):
       self.assertIsInstance(classifier, _ImageClassifier)
 
   def test_create_from_options_fails_with_invalid_model_path(self):
-    with self.assertRaisesRegex(
-        RuntimeError, 'Unable to open file at /path/to/invalid/model.tflite'
-    ):
+    with self.assertRaisesRegex(FileNotFoundError, 'Not found'):
       base_options = _BaseOptions(
           model_asset_path='/path/to/invalid/model.tflite'
       )
@@ -406,11 +404,7 @@ class ImageClassifierTest(parameterized.TestCase):
 
   def test_combined_allowlist_and_denylist(self):
     # Fails with combined allowlist and denylist
-    with self.assertRaisesRegex(
-        RuntimeError,
-        r'`category_allowlist` and `category_denylist` are mutually '
-        r'exclusive options.',
-    ):
+    with self.assertRaises(ValueError):
       options = _ImageClassifierOptions(
           base_options=_BaseOptions(model_asset_path=self.model_path),
           category_allowlist=['foo'],
@@ -459,9 +453,7 @@ class ImageClassifierTest(parameterized.TestCase):
         running_mode=_RUNNING_MODE.IMAGE,
     )
     with _ImageClassifier.create_from_options(options) as classifier:
-      with self.assertRaisesRegex(
-          RuntimeError, r'not initialized with the video mode'
-      ):
+      with self.assertRaises(ValueError):
         classifier.classify_for_video(self.test_image, 0)
 
   def test_calling_classify_async_in_image_mode(self):
@@ -470,9 +462,7 @@ class ImageClassifierTest(parameterized.TestCase):
         running_mode=_RUNNING_MODE.IMAGE,
     )
     with _ImageClassifier.create_from_options(options) as classifier:
-      with self.assertRaisesRegex(
-          RuntimeError, r'not initialized with the live stream mode'
-      ):
+      with self.assertRaises(ValueError):
         classifier.classify_async(self.test_image, 0)
 
   def test_calling_classify_in_video_mode(self):
@@ -481,9 +471,7 @@ class ImageClassifierTest(parameterized.TestCase):
         running_mode=_RUNNING_MODE.VIDEO,
     )
     with _ImageClassifier.create_from_options(options) as classifier:
-      with self.assertRaisesRegex(
-          RuntimeError, r'not initialized with the image mode'
-      ):
+      with self.assertRaises(ValueError):
         classifier.classify(self.test_image)
 
   def test_calling_classify_async_in_video_mode(self):
@@ -492,9 +480,7 @@ class ImageClassifierTest(parameterized.TestCase):
         running_mode=_RUNNING_MODE.VIDEO,
     )
     with _ImageClassifier.create_from_options(options) as classifier:
-      with self.assertRaisesRegex(
-          RuntimeError, r'not initialized with the live stream mode'
-      ):
+      with self.assertRaises(ValueError):
         classifier.classify_async(self.test_image, 0)
 
   def test_classify_for_video_with_out_of_order_timestamp(self):
@@ -504,9 +490,7 @@ class ImageClassifierTest(parameterized.TestCase):
     )
     with _ImageClassifier.create_from_options(options) as classifier:
       unused_result = classifier.classify_for_video(self.test_image, 1)
-      with self.assertRaisesRegex(
-          RuntimeError, r'Input timestamp must be monotonically increasing'
-      ):
+      with self.assertRaises(ValueError):
         classifier.classify_for_video(self.test_image, 0)
 
   def test_classify_for_video(self):
@@ -559,9 +543,7 @@ class ImageClassifierTest(parameterized.TestCase):
         result_callback=mock.MagicMock(),
     )
     with _ImageClassifier.create_from_options(options) as classifier:
-      with self.assertRaisesRegex(
-          RuntimeError, r'not initialized with the image mode'
-      ):
+      with self.assertRaises(ValueError):
         classifier.classify(self.test_image)
 
   def test_calling_classify_for_video_in_live_stream_mode(self):
@@ -571,9 +553,7 @@ class ImageClassifierTest(parameterized.TestCase):
         result_callback=mock.MagicMock(),
     )
     with _ImageClassifier.create_from_options(options) as classifier:
-      with self.assertRaisesRegex(
-          RuntimeError, r'not initialized with the video mode'
-      ):
+      with self.assertRaises(ValueError):
         classifier.classify_for_video(self.test_image, 0)
 
   def test_classify_async_calls_with_illegal_timestamp(self):
@@ -585,9 +565,7 @@ class ImageClassifierTest(parameterized.TestCase):
     )
     with _ImageClassifier.create_from_options(options) as classifier:
       classifier.classify_async(self.test_image, 100)
-      with self.assertRaisesRegex(
-          RuntimeError, r'Input timestamp must be monotonically increasing'
-      ):
+      with self.assertRaises(ValueError):
         classifier.classify_async(self.test_image, 0)
 
   @parameterized.parameters(

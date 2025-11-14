@@ -20,9 +20,6 @@
 namespace mediapipe::tasks::c::core {
 
 MpStatus ToMpStatus(absl::Status status) {
-  if (!status.ok()) {
-    ABSL_LOG(ERROR) << status.message();
-  }
   switch (status.code()) {
     case absl::StatusCode::kOk:
       return kMpOk;
