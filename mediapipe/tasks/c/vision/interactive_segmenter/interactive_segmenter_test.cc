@@ -28,6 +28,8 @@ limitations under the License.
 #include "mediapipe/tasks/c/test/test_utils.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
+#include "mediapipe/tasks/c/vision/core/image_processing_options.h"
+#include "mediapipe/tasks/c/vision/core/image_test_util.h"
 #include "mediapipe/tasks/c/vision/image_segmenter/image_segmenter_result.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 
@@ -37,6 +39,9 @@ using ::mediapipe::file::JoinPath;
 using ::mediapipe::tasks::c::test::CreateCategoryMaskFromImage;
 using ::mediapipe::tasks::c::test::SimilarToUint8Mask;
 using ::mediapipe::tasks::vision::DecodeImageFromFile;
+using ::mediapipe::tasks::vision::core::CreateEmptyGpuMpImage;
+using ::mediapipe::tasks::vision::core::GetImage;
+using ::mediapipe::tasks::vision::core::ScopedMpImage;
 using testing::HasSubstr;
 
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
@@ -55,34 +60,26 @@ std::string GetFullPath(absl::string_view file_name) {
 
 TEST(InteractiveSegmenterTest,
      ImageModeTestSucceedsWithCategoryMaskAndKeypoint) {
-  const auto image = DecodeImageFromFile(GetFullPath(kImageFile));
-  ASSERT_TRUE(image.ok());
+  const ScopedMpImage image = GetImage(GetFullPath(kImageFile));
+  ASSERT_NE(image, nullptr);
 
   const std::string model_path = GetFullPath(kModelName);
   InteractiveSegmenterOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ model_path.c_str()},
-      /* output_confidence_masks= */ false,
-      /* output_category_mask= */ true,
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = model_path.c_str()},
+      .output_confidence_masks = false,
+      .output_category_mask = true,
   };
 
   MpInteractiveSegmenterPtr segmenter =
       interactive_segmenter_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(segmenter, nullptr);
 
-  const auto& image_frame = image->GetImageFrameSharedPtr();
-  const MpImage mp_image = {
-      .type = MpImage::IMAGE_FRAME,
-      .image_frame = {.format = static_cast<ImageFormat>(image_frame->Format()),
-                      .image_buffer = image_frame->PixelData(),
-                      .width = image_frame->Width(),
-                      .height = image_frame->Height()}};
-
   ImageSegmenterResult result;
 
   // Initialize the keypoint
-  NormalizedKeypoint keypoint = {0.329f, 0.545f, nullptr, 0.0f, false};
+  NormalizedKeypoint keypoint = {.x = 0.329f, .y = 0.545f};
 
   // Initialize the ROI using brace initialization
   RegionOfInterest roi = {.format = RegionOfInterest::kKeypoint,
@@ -90,9 +87,10 @@ TEST(InteractiveSegmenterTest,
                           .scribble = nullptr,
                           .scribble_count = 0};
 
-  const int error =
-      interactive_segmenter_segment_image(segmenter, &mp_image, &roi, &result,
-                                          /* error_msg */ nullptr);
+  const int error = interactive_segmenter_segment_image(
+      segmenter, image.get(), &roi, /* image_processing_options= */ nullptr,
+      &result,
+      /* error_msg */ nullptr);
   EXPECT_EQ(error, 0);
 
   auto expected_mask_image = DecodeImageFromFile(GetFullPath(kMaskImageFile));
@@ -110,35 +108,27 @@ TEST(InteractiveSegmenterTest,
 // Test here fails since the model metadata has no Activation type.
 TEST(InteractiveSegmenterTest,
      ImageModeTestSucceedsWithCategoryMaskAndScribble) {
-  const auto image = DecodeImageFromFile(GetFullPath(kImageFile));
-  ASSERT_TRUE(image.ok());
+  const ScopedMpImage image = GetImage(GetFullPath(kImageFile));
+  ASSERT_NE(image, nullptr);
 
   const std::string model_path = GetFullPath(kModelName);
   InteractiveSegmenterOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ model_path.c_str()},
-      /* output_confidence_masks= */ false,
-      /* output_category_mask= */ true,
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = model_path.c_str()},
+      .output_confidence_masks = false,
+      .output_category_mask = true,
   };
 
   MpInteractiveSegmenterPtr segmenter =
       interactive_segmenter_create(&options, /* error_msg */ nullptr);
   EXPECT_NE(segmenter, nullptr);
 
-  const auto& image_frame = image->GetImageFrameSharedPtr();
-  const MpImage mp_image = {
-      .type = MpImage::IMAGE_FRAME,
-      .image_frame = {.format = static_cast<ImageFormat>(image_frame->Format()),
-                      .image_buffer = image_frame->PixelData(),
-                      .width = image_frame->Width(),
-                      .height = image_frame->Height()}};
-
   ImageSegmenterResult result;
 
-  NormalizedKeypoint keypoints[3] = {{0.44f, 0.70f, nullptr, 0.0f, false},
-                                     {0.44f, 0.71f, nullptr, 0.0f, false},
-                                     {0.44f, 0.72f, nullptr, 0.0f, false}};
+  NormalizedKeypoint keypoints[3] = {{.x = 0.44f, .y = 0.70f},
+                                     {.x = 0.44f, .y = 0.71f},
+                                     {.x = 0.44f, .y = 0.72f}};
 
   // Initialize RegionOfInterestC
   RegionOfInterest roi = {.format = RegionOfInterest::kScribble,
@@ -146,9 +136,10 @@ TEST(InteractiveSegmenterTest,
                           .scribble = keypoints,
                           .scribble_count = 3};
 
-  const int error =
-      interactive_segmenter_segment_image(segmenter, &mp_image, &roi, &result,
-                                          /* error_msg */ nullptr);
+  const int error = interactive_segmenter_segment_image(
+      segmenter, image.get(), &roi, /* image_processing_options= */ nullptr,
+      &result,
+      /* error_msg */ nullptr);
   EXPECT_EQ(error, 0);
 
   auto expected_mask_image = DecodeImageFromFile(GetFullPath(kMaskImageFile));
@@ -163,14 +154,62 @@ TEST(InteractiveSegmenterTest,
   delete[] expected_mask.image_frame.image_buffer;
 }
 
+TEST(InteractiveSegmenterTest, ImageModeTestWithRotation) {
+  const ScopedMpImage image = GetImage(GetFullPath(kImageFile));
+  ASSERT_NE(image, nullptr);
+
+  const std::string model_path = GetFullPath(kModelName);
+  InteractiveSegmenterOptions options = {
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = model_path.c_str()},
+      .output_confidence_masks = false,
+      .output_category_mask = true,
+  };
+
+  MpInteractiveSegmenterPtr segmenter =
+      interactive_segmenter_create(&options, /* error_msg */ nullptr);
+  EXPECT_NE(segmenter, nullptr);
+
+  ImageSegmenterResult result;
+
+  // Initialize the keypoint
+  NormalizedKeypoint keypoint = {.x = 0.329f, .y = 0.545f};
+
+  // Initialize the ROI using brace initialization
+  RegionOfInterest roi = {.format = RegionOfInterest::kKeypoint,
+                          .keypoint = &keypoint,
+                          .scribble = nullptr,
+                          .scribble_count = 0};
+
+  ImageProcessingOptions image_processing_options = {
+      .has_region_of_interest = false, .rotation_degrees = -90};
+
+  const int error = interactive_segmenter_segment_image(
+      segmenter, image.get(), &roi, &image_processing_options, &result,
+      /* error_msg */ nullptr);
+  EXPECT_EQ(error, 0);
+
+  auto expected_mask_image = DecodeImageFromFile(GetFullPath(kMaskImageFile));
+  const MpMask expected_mask = CreateCategoryMaskFromImage(expected_mask_image);
+  const MpImagePtr actual_mask = result.category_mask;
+  EXPECT_GT(SimilarToUint8Mask(actual_mask, &expected_mask,
+                               kGoldenMaskMagnificationFactor),
+            0.9f);
+  interactive_segmenter_close_result(&result);
+  interactive_segmenter_close(segmenter, /* error_msg */ nullptr);
+
+  delete[] expected_mask.image_frame.image_buffer;
+}
+
 TEST(InteractiveSegmenterTest, InvalidArgumentHandling) {
   // It is an error to set neither the asset buffer nor the path.
   InteractiveSegmenterOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ nullptr},
-      /* output_confidence_masks= */ false,
-      /* output_category_mask= */ true,
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = nullptr},
+      .output_confidence_masks = false,
+      .output_category_mask = true,
   };
 
   char* error_msg;
@@ -186,11 +225,11 @@ TEST(InteractiveSegmenterTest, InvalidArgumentHandling) {
 TEST(InteractiveSegmenterTest, FailedRecognitionHandling) {
   const std::string model_path = GetFullPath(kModelName);
   InteractiveSegmenterOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ model_path.c_str()},
-      /* output_confidence_masks= */ false,
-      /* output_category_mask= */ true,
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = model_path.c_str()},
+      .output_confidence_masks = false,
+      .output_category_mask = true,
   };
 
   MpInteractiveSegmenterPtr segmenter =
@@ -198,20 +237,22 @@ TEST(InteractiveSegmenterTest, FailedRecognitionHandling) {
                                    nullptr);
   EXPECT_NE(segmenter, nullptr);
 
-  const MpImage mp_image = {.type = MpImage::GPU_BUFFER, .gpu_buffer = {}};
+  const ScopedMpImage mp_image = CreateEmptyGpuMpImage();
   ImageSegmenterResult result;
   char* error_msg;
 
-  NormalizedKeypoint keypoint = {0.0f, 0.0f, nullptr, 0.0f, false};
+  NormalizedKeypoint keypoint = {.x = 0.0f, .y = 0.0f};
 
   RegionOfInterest roi = {.format = RegionOfInterest::kKeypoint,
                           .keypoint = &keypoint,
                           .scribble = nullptr,
                           .scribble_count = 0};
 
-  interactive_segmenter_segment_image(segmenter, &mp_image, &roi, &result,
-                                      &error_msg);
-  EXPECT_THAT(error_msg, HasSubstr("GPU Buffer not supported yet"));
+  interactive_segmenter_segment_image(segmenter, mp_image.get(), &roi,
+                                      /* image_processing_options= */ nullptr,
+                                      &result, &error_msg);
+  EXPECT_THAT(error_msg,
+              HasSubstr("GPU input images are currently not supported."));
   free(error_msg);
   interactive_segmenter_close(segmenter, /* error_msg */ nullptr);
 }

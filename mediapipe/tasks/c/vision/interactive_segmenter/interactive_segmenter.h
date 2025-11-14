@@ -24,6 +24,7 @@ limitations under the License.
 #include "mediapipe/tasks/c/components/containers/keypoint.h"
 #include "mediapipe/tasks/c/core/base_options.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
+#include "mediapipe/tasks/c/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/c/vision/image_segmenter/image_segmenter_result.h"
 
 #ifndef MP_EXPORT
@@ -85,9 +86,10 @@ MP_EXPORT MpInteractiveSegmenterPtr interactive_segmenter_create(
 // parameter to an an error message (if `error_msg` is not `nullptr`). You must
 // free the memory allocated for the error message.
 MP_EXPORT int interactive_segmenter_segment_image(
-    MpInteractiveSegmenterPtr segmenter, const MpImage* image,
-    const RegionOfInterest* roi, ImageSegmenterResult* result,
-    char** error_msg);
+    MpInteractiveSegmenterPtr segmenter, MpImagePtr image,
+    const RegionOfInterest* roi,
+    const ImageProcessingOptions* image_processing_options,
+    ImageSegmenterResult* result, char** error_msg);
 
 // Frees the memory allocated inside a ImageSegmenterResult result.
 // Does not free the result pointer itself.
