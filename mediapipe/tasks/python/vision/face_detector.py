@@ -22,7 +22,7 @@ from mediapipe.tasks.python.components.containers import detections_c as detecti
 from mediapipe.tasks.python.core import async_result_dispatcher
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.core import base_options_c as base_options_c_module
-from mediapipe.tasks.python.core import mediapipe_c_bindings as mediapipe_c_bindings_c_module
+from mediapipe.tasks.python.core import mediapipe_c_bindings
 from mediapipe.tasks.python.core import serial_dispatcher
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 from mediapipe.tasks.python.vision.core import base_vision_task_api
@@ -35,7 +35,7 @@ FaceDetectorResult = detections_module.DetectionResult
 _RunningMode = running_mode_module.VisionTaskRunningMode
 _BaseOptions = base_options_module.BaseOptions
 _ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
-_CFunction = mediapipe_c_bindings_c_module.CFunction
+_CFunction = mediapipe_c_bindings.CFunction
 
 
 _C_TYPES_RESULT_CALLBACK = ctypes.CFUNCTYPE(
@@ -79,15 +79,15 @@ class FaceDetectorOptionsC(ctypes.Structure):
 
 _CTYPES_SIGNATURES = (
     _CFunction(
-        'face_detector_create',
+        'MpFaceDetectorCreate',
         [
             ctypes.POINTER(FaceDetectorOptionsC),
-            ctypes.POINTER(ctypes.c_char_p),
+            ctypes.POINTER(ctypes.c_void_p),
         ],
-        ctypes.c_void_p,
+        ctypes.c_int,
     ),
     _CFunction(
-        'face_detector_detect_image',
+        'MpFaceDetectorDetectImage',
         [
             ctypes.c_void_p,
             ctypes.c_void_p,
@@ -95,12 +95,11 @@ _CTYPES_SIGNATURES = (
                 image_processing_options_c_module.ImageProcessingOptionsC
             ),
             ctypes.POINTER(detections_c_module.DetectionResultC),
-            ctypes.POINTER(ctypes.c_char_p),
         ],
         ctypes.c_int,
     ),
     _CFunction(
-        'face_detector_detect_for_video',
+        'MpFaceDetectorDetectForVideo',
         [
             ctypes.c_void_p,
             ctypes.c_void_p,
@@ -109,12 +108,11 @@ _CTYPES_SIGNATURES = (
             ),
             ctypes.c_int64,
             ctypes.POINTER(detections_c_module.DetectionResultC),
-            ctypes.POINTER(ctypes.c_char_p),
         ],
         ctypes.c_int,
     ),
     _CFunction(
-        'face_detector_detect_async',
+        'MpFaceDetectorDetectAsync',
         [
             ctypes.c_void_p,
             ctypes.c_void_p,
@@ -122,20 +120,18 @@ _CTYPES_SIGNATURES = (
                 image_processing_options_c_module.ImageProcessingOptionsC
             ),
             ctypes.c_int64,
-            ctypes.POINTER(ctypes.c_char_p),
         ],
         ctypes.c_int,
     ),
     _CFunction(
-        'face_detector_close_result',
+        'MpFaceDetectorCloseResult',
         [ctypes.POINTER(detections_c_module.DetectionResultC)],
         None,
     ),
     _CFunction(
-        'face_detector_close',
+        'MpFaceDetectorClose',
         [
             ctypes.c_void_p,
-            ctypes.POINTER(ctypes.c_char_p),
         ],
         ctypes.c_int,
     ),
@@ -246,7 +242,7 @@ class FaceDetector:
         options.running_mode, options.result_callback
     )
 
-    lib = mediapipe_c_bindings_c_module.load_shared_library(_CTYPES_SIGNATURES)
+    lib = mediapipe_c_bindings.load_shared_library(_CTYPES_SIGNATURES)
 
     def convert_result(
         c_result_ptr: ctypes.POINTER(detections_c_module.DetectionResultC),
@@ -272,18 +268,12 @@ class FaceDetector:
         result_callback=c_callback,
     )
 
-    error_msg_ptr = ctypes.c_char_p()
-    detector_handle = lib.face_detector_create(
+    detector_handle = ctypes.c_void_p()
+    status = lib.MpFaceDetectorCreate(
         ctypes.byref(ctypes_options),
-        ctypes.byref(error_msg_ptr),
+        ctypes.byref(detector_handle),
     )
-
-    if not detector_handle:
-      if error_msg_ptr.value is not None:
-        error_message = error_msg_ptr.value.decode('utf-8')
-        raise RuntimeError(error_message)
-      else:
-        raise RuntimeError('Failed to create FaceDetector object.')
+    mediapipe_c_bindings.handle_status(status)
 
     return FaceDetector(
         lib=lib,
@@ -318,27 +308,22 @@ class FaceDetector:
     """
     c_image = image._image_ptr  # pylint: disable=protected-access
     c_result = detections_c_module.DetectionResultC()
-    error_msg_ptr = ctypes.c_char_p()
 
     c_image_processing_options = (
         ctypes.byref(image_processing_options.to_ctypes())
         if image_processing_options
         else None
     )
-    status = self._lib.face_detector_detect_image(
+    status = self._lib.MpFaceDetectorDetectImage(
         self._handle,
         c_image,
         c_image_processing_options,
         ctypes.byref(c_result),
-        ctypes.byref(error_msg_ptr),
     )
-
-    self._handle_status(
-        status, error_msg_ptr, 'Failed to detect faces for image.'
-    )
+    mediapipe_c_bindings.handle_status(status)
 
     py_result = FaceDetectorResult.from_ctypes(c_result)
-    self._lib.face_detector_close_result(ctypes.byref(c_result))
+    self._lib.MpFaceDetectorCloseResult(ctypes.byref(c_result))
     return py_result
 
   def detect_for_video(
@@ -371,28 +356,23 @@ class FaceDetector:
     """
     c_image = image._image_ptr  # pylint: disable=protected-access
     c_result = detections_c_module.DetectionResultC()
-    error_msg_ptr = ctypes.c_char_p()
 
     c_image_processing_options = (
         ctypes.byref(image_processing_options.to_ctypes())
         if image_processing_options
         else None
     )
-    status = self._lib.face_detector_detect_for_video(
+    status = self._lib.MpFaceDetectorDetectForVideo(
         self._handle,
         c_image,
         c_image_processing_options,
         timestamp_ms,
         ctypes.byref(c_result),
-        ctypes.byref(error_msg_ptr),
     )
-
-    self._handle_status(
-        status, error_msg_ptr, 'Failed to detect faces from video.'
-    )
+    mediapipe_c_bindings.handle_status(status)
 
     py_result = FaceDetectorResult.from_ctypes(c_result)
-    self._lib.face_detector_close_result(ctypes.byref(c_result))
+    self._lib.MpFaceDetectorCloseResult(ctypes.byref(c_result))
     return py_result
 
   def detect_async(
@@ -433,48 +413,28 @@ class FaceDetector:
       RuntimeError: If face detection failed to initialize.
     """
     c_image = image._image_ptr  # pylint: disable=protected-access
-    error_msg_ptr = ctypes.c_char_p()
 
     c_image_processing_options = (
         ctypes.byref(image_processing_options.to_ctypes())
         if image_processing_options
         else None
     )
-    status = self._lib.face_detector_detect_async(
+    status = self._lib.MpFaceDetectorDetectAsync(
         self._handle,
         c_image,
         c_image_processing_options,
         timestamp_ms,
-        ctypes.byref(error_msg_ptr),
     )
-
-    self._handle_status(
-        status, error_msg_ptr, 'Failed to detect faces asynchronously.'
-    )
+    mediapipe_c_bindings.handle_status(status)
 
   def close(self):
     """Shuts down the MediaPipe task instance."""
     if self._handle:
-      error_msg_ptr = ctypes.c_char_p()
-      return_code = self._lib.face_detector_close(
-          self._handle, ctypes.byref(error_msg_ptr)
-      )
-      self._handle_status(
-          return_code, error_msg_ptr, 'Failed to close FaceDetector object.'
-      )
+      status = self._lib.MpFaceDetectorClose(self._handle)
+      mediapipe_c_bindings.handle_status(status)
       self._handle = None
       self._dispatcher.close()
       self._lib.close()
-
-  def _handle_status(
-      self, status: int, error_msg_ptr: ctypes.c_char_p, default_error_msg: str
-  ):
-    if status != 0:
-      if error_msg_ptr.value is not None:
-        error_message = error_msg_ptr.value.decode('utf-8')
-        raise RuntimeError(error_message)
-      else:
-        raise RuntimeError(default_error_msg)
 
   def __enter__(self):
     """Returns `self` upon entering the runtime context."""

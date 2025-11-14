@@ -100,9 +100,7 @@ class FaceDetectorTest(parameterized.TestCase):
       self.assertIsInstance(detector, _FaceDetector)
 
   def test_create_from_options_fails_with_invalid_model_path(self):
-    with self.assertRaisesRegex(
-        RuntimeError, 'Unable to open file at /path/to/invalid/model.tflite'
-    ):
+    with self.assertRaisesRegex(FileNotFoundError, 'Not found'):
       base_options = _BaseOptions(
           model_asset_path='/path/to/invalid/model.tflite'
       )
@@ -269,16 +267,13 @@ class FaceDetectorTest(parameterized.TestCase):
       with _FaceDetector.create_from_options(options) as unused_detector:
         pass
 
-  # TODO: Change the errors to ValueError once we return MpStatus.
   def test_calling_detect_for_video_in_image_mode(self):
     options = _FaceDetectorOptions(
         base_options=_BaseOptions(model_asset_path=self.model_path),
         running_mode=_RUNNING_MODE.IMAGE,
     )
     with _FaceDetector.create_from_options(options) as detector:
-      with self.assertRaisesRegex(
-          RuntimeError, r'not initialized with the video mode'
-      ):
+      with self.assertRaises(ValueError):
         detector.detect_for_video(self.test_image, 0)
 
   def test_calling_detect_async_in_image_mode(self):
@@ -287,9 +282,7 @@ class FaceDetectorTest(parameterized.TestCase):
         running_mode=_RUNNING_MODE.IMAGE,
     )
     with _FaceDetector.create_from_options(options) as detector:
-      with self.assertRaisesRegex(
-          RuntimeError, r'not initialized with the live stream mode'
-      ):
+      with self.assertRaises(ValueError):
         detector.detect_async(self.test_image, 0)
 
   def test_calling_detect_in_video_mode(self):
@@ -298,9 +291,7 @@ class FaceDetectorTest(parameterized.TestCase):
         running_mode=_RUNNING_MODE.VIDEO,
     )
     with _FaceDetector.create_from_options(options) as detector:
-      with self.assertRaisesRegex(
-          RuntimeError, r'not initialized with the image mode'
-      ):
+      with self.assertRaises(ValueError):
         detector.detect(self.test_image)
 
   def test_calling_detect_async_in_video_mode(self):
@@ -309,9 +300,7 @@ class FaceDetectorTest(parameterized.TestCase):
         running_mode=_RUNNING_MODE.VIDEO,
     )
     with _FaceDetector.create_from_options(options) as detector:
-      with self.assertRaisesRegex(
-          RuntimeError, r'not initialized with the live stream mode'
-      ):
+      with self.assertRaises(ValueError):
         detector.detect_async(self.test_image, 0)
 
   def test_detect_for_video_with_out_of_order_timestamp(self):
@@ -321,9 +310,7 @@ class FaceDetectorTest(parameterized.TestCase):
     )
     with _FaceDetector.create_from_options(options) as detector:
       unused_result = detector.detect_for_video(self.test_image, 1)
-      with self.assertRaisesRegex(
-          RuntimeError, r'Input timestamp must be monotonically increasing'
-      ):
+      with self.assertRaises(ValueError):
         detector.detect_for_video(self.test_image, 0)
 
   @parameterized.parameters(
@@ -408,9 +395,7 @@ class FaceDetectorTest(parameterized.TestCase):
         result_callback=mock.MagicMock(),
     )
     with _FaceDetector.create_from_options(options) as detector:
-      with self.assertRaisesRegex(
-          RuntimeError, r'not initialized with the image mode'
-      ):
+      with self.assertRaises(ValueError):
         detector.detect(self.test_image)
 
   def test_calling_detect_for_video_in_live_stream_mode(self):
@@ -420,9 +405,7 @@ class FaceDetectorTest(parameterized.TestCase):
         result_callback=mock.MagicMock(),
     )
     with _FaceDetector.create_from_options(options) as detector:
-      with self.assertRaisesRegex(
-          RuntimeError, r'not initialized with the video mode'
-      ):
+      with self.assertRaises(ValueError):
         detector.detect_for_video(self.test_image, 0)
 
   def test_detect_async_calls_with_illegal_timestamp(self):
@@ -433,9 +416,7 @@ class FaceDetectorTest(parameterized.TestCase):
     )
     with _FaceDetector.create_from_options(options) as detector:
       detector.detect_async(self.test_image, 100)
-      with self.assertRaisesRegex(
-          RuntimeError, r'Input timestamp must be monotonically increasing'
-      ):
+      with self.assertRaises(ValueError):
         detector.detect_async(self.test_image, 0)
 
   @parameterized.parameters(

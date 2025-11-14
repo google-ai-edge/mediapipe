@@ -1,12 +1,12 @@
 VERS_1.0 {
   global:
     MpAudioClassifier*;
+    MpFaceDetector*;
     MpLanguageDetector*;
     MpImage*;
     MpStringList*;
     MpTextEmbedder*;
     MpTextClassifier*;
-    face_detector_*;
     face_landmarker_*;
     gesture_recognizer_*;
     hand_landmarker_*;
