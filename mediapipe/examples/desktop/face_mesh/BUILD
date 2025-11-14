@@ -25,7 +25,10 @@ licenses(["notice"])
 #   --input_side_packets=input_video_path=<input video path>,output_video_path=<output video path>
 cc_binary(
     name = "face_mesh_tflite",
-    data = ["//mediapipe/modules/face_landmark:face_landmark_with_attention.tflite"],
+    data = [
+        "//mediapipe/modules/face_detection:face_detection_short_range.tflite",
+        "//mediapipe/modules/face_landmark:face_landmark_with_attention.tflite",
+    ],
     deps = [
         "//mediapipe/examples/desktop:simple_run_graph_main",
         "//mediapipe/graphs/face_mesh:desktop_calculators",
@@ -43,7 +46,10 @@ cc_binary(
 #   --output_video_path=<output video path>
 cc_binary(
     name = "face_mesh_cpu",
-    data = ["//mediapipe/modules/face_landmark:face_landmark_with_attention.tflite"],
+    data = [
+        "//mediapipe/modules/face_detection:face_detection_short_range.tflite",
+        "//mediapipe/modules/face_landmark:face_landmark_with_attention.tflite",      
+    ],
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main",
         "//mediapipe/graphs/face_mesh:desktop_live_calculators",
@@ -54,7 +60,10 @@ cc_binary(
 # Linux only
 cc_binary(
     name = "face_mesh_gpu",
-    data = ["//mediapipe/modules/face_landmark:face_landmark_with_attention.tflite"],
+    data = [
+        "//mediapipe/modules/face_detection:face_detection_short_range.tflite",
+        "//mediapipe/modules/face_landmark:face_landmark_with_attention.tflite",
+    ],
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main_gpu",
         "//mediapipe/graphs/face_mesh:desktop_live_gpu_calculators",
