@@ -47,7 +47,6 @@ class ImageSegmenterResultC(ctypes.Structure):
   _fields_ = [
       ('confidence_masks', ctypes.POINTER(ctypes.c_void_p)),
       ('confidence_masks_count', ctypes.c_uint32),
-      ('has_confidence_masks', ctypes.c_uint32),
       ('category_mask', ctypes.c_void_p),
       ('has_category_mask', ctypes.c_uint32),
       ('quality_scores', ctypes.POINTER(ctypes.c_float)),
@@ -192,10 +191,7 @@ class ImageSegmenterResult:
     """Creates an `ImageSegmenterResult` object from the given ctypes struct."""
     confidence_masks = None
     category_mask = None
-    if (
-        c_result.has_confidence_masks > 0
-        and c_result.confidence_masks_count > 0
-    ):
+    if (c_result.confidence_masks_count > 0):
       confidence_masks = [
           image_module.Image.create_from_ctypes(c_result.confidence_masks[i])
           for i in range(c_result.confidence_masks_count)

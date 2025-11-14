@@ -41,11 +41,9 @@ void CppConvertToImageSegmenterResult(
       out->confidence_masks[i] =
           new MpImageInternal{.image = mp_image, .cached_contiguous_data = {}};
     }
-    out->has_confidence_masks = 1;
   } else {
     out->confidence_masks = nullptr;
     out->confidence_masks_count = 0;
-    out->has_confidence_masks = 0;
   }
 
   // Convert category_mask
@@ -66,14 +64,13 @@ void CppConvertToImageSegmenterResult(
 }
 
 void CppCloseImageSegmenterResult(ImageSegmenterResult* result) {
-  if (result->has_confidence_masks) {
+  if (result->confidence_masks_count > 0) {
     for (uint32_t i = 0; i < result->confidence_masks_count; ++i) {
       MpImageFree(result->confidence_masks[i]);
     }
     delete[] result->confidence_masks;
     result->confidence_masks = nullptr;
     result->confidence_masks_count = 0;
-    result->has_confidence_masks = 0;
   }
 
   if (result->has_category_mask) {

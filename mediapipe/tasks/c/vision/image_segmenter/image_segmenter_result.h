@@ -37,9 +37,6 @@ struct ImageSegmenterResult {
   // Number of elements in the array `confidence_masks`.
   uint32_t confidence_masks_count;  // Number of elements in the array
 
-  // Flag to indicate presence of confidence masks (0 for no, 1 for yes).
-  uint32_t has_confidence_masks;
-
   // A category mask of uint8 image in GRAY8 format where each pixel represents
   // the class which the pixel in the original image was predicted to belong to.
   MpImagePtr category_mask;
