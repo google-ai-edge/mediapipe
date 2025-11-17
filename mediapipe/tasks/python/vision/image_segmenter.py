@@ -105,7 +105,7 @@ _CTYPES_SIGNATURES = (
         ctypes.c_int,  # MpStatus
     ),
     _CFunction(
-        'MpImageSegmenterSegmentImageWithOptions',
+        'MpImageSegmenterSegmentImage',
         [
             ctypes.c_void_p,
             ctypes.c_void_p,
@@ -115,7 +115,7 @@ _CTYPES_SIGNATURES = (
         ctypes.c_int,  # MpStatus
     ),
     _CFunction(
-        'MpImageSegmenterSegmentForVideoWithOptions',
+        'MpImageSegmenterSegmentForVideo',
         [
             ctypes.c_void_p,
             ctypes.c_void_p,
@@ -126,7 +126,7 @@ _CTYPES_SIGNATURES = (
         ctypes.c_int,  # MpStatus
     ),
     _CFunction(
-        'MpImageSegmenterSegmentAsyncWithOptions',
+        'MpImageSegmenterSegmentAsync',
         [
             ctypes.c_void_p,
             ctypes.c_void_p,
@@ -393,7 +393,7 @@ class ImageSegmenter:
         if image_processing_options
         else None
     )
-    status = self._lib.MpImageSegmenterSegmentImageWithOptions(
+    status = self._lib.MpImageSegmenterSegmentImage(
         self._handle,
         c_image,
         options_c,
@@ -440,7 +440,7 @@ class ImageSegmenter:
         if image_processing_options
         else None
     )
-    status = self._lib.MpImageSegmenterSegmentForVideoWithOptions(
+    status = self._lib.MpImageSegmenterSegmentForVideo(
         self._handle,
         c_image,
         options_c,
@@ -491,7 +491,7 @@ class ImageSegmenter:
         if image_processing_options
         else None
     )
-    status = self._lib.MpImageSegmenterSegmentAsyncWithOptions(
+    status = self._lib.MpImageSegmenterSegmentAsync(
         self._handle,
         c_image,
         options_c,

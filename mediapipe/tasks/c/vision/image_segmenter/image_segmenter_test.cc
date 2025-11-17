@@ -88,7 +88,9 @@ TEST(ImageSegmenterTest, ImageModeTestSucceedsWithCategoryMask) {
   EXPECT_EQ(MpImageSegmenterCreate(&options, &segmenter), kMpOk);
 
   ImageSegmenterResult result;
-  EXPECT_EQ(MpImageSegmenterSegmentImage(segmenter, image.get(), &result),
+  EXPECT_EQ(MpImageSegmenterSegmentImage(
+                segmenter, image.get(), /* image_processing_options= */ nullptr,
+                &result),
             kMpOk);
 
   auto expected_mask_image = DecodeImageFromFile(GetFullPath(kMaskImageFile));
@@ -103,7 +105,7 @@ TEST(ImageSegmenterTest, ImageModeTestSucceedsWithCategoryMask) {
   delete[] expected_mask.image_frame.image_buffer;
 }
 
-TEST(ImageSegmenterTest, ImageModeWithOptionsTestSucceedsWithCategoryMask) {
+TEST(ImageSegmenterTest, ImageModeWithRotationTestSucceedsWithCategoryMask) {
   const auto image = GetImage(GetFullPath(kImageRotatedFile));
 
   const std::string model_path = GetFullPath(kModelName);
@@ -125,8 +127,8 @@ TEST(ImageSegmenterTest, ImageModeWithOptionsTestSucceedsWithCategoryMask) {
   image_processing_options.rotation_degrees = 90;
 
   ImageSegmenterResult result;
-  EXPECT_EQ(MpImageSegmenterSegmentImageWithOptions(
-                segmenter, image.get(), &image_processing_options, &result),
+  EXPECT_EQ(MpImageSegmenterSegmentImage(segmenter, image.get(),
+                                         &image_processing_options, &result),
             kMpOk);
 
   auto expected_mask_image = DecodeImageFromFile(GetFullPath(kMaskImageFile));
@@ -163,9 +165,10 @@ TEST(ImageSegmenterTest, VideoModeTest) {
 
   for (int i = 0; i < kIterations; ++i) {
     ImageSegmenterResult result;
-    EXPECT_EQ(
-        MpImageSegmenterSegmentForVideo(segmenter, image.get(), i, &result),
-        kMpOk);
+    EXPECT_EQ(MpImageSegmenterSegmentForVideo(
+                  segmenter, image.get(),
+                  /* image_processing_options= */ nullptr, i, &result),
+              kMpOk);
     const MpImagePtr actual_mask = result.category_mask;
     EXPECT_GT(SimilarToUint8Mask(actual_mask, &expected_mask,
                                  kGoldenMaskMagnificationFactor),
@@ -234,7 +237,10 @@ TEST(ImageSegmenterTest, LiveStreamModeTest) {
   LiveStreamModeCallback::blocking_counter = &counter;
 
   for (int i = 0; i < kIterations; ++i) {
-    EXPECT_EQ(MpImageSegmenterSegmentAsync(segmenter, image.get(), i), kMpOk);
+    EXPECT_EQ(
+        MpImageSegmenterSegmentAsync(
+            segmenter, image.get(), /* image_processing_options= */ nullptr, i),
+        kMpOk);
     // Short sleep so that MediaPipe does not drop frames.
     absl::SleepFor(absl::Milliseconds(kSleepBetweenFramesMilliseconds));
   }
@@ -287,7 +293,9 @@ TEST(ImageSegmenterTest, FailedRecognitionHandling) {
 
   const ScopedMpImage image = CreateEmptyGpuMpImage();
   ImageSegmenterResult result;
-  EXPECT_EQ(MpImageSegmenterSegmentImage(segmenter, image.get(), &result),
+  EXPECT_EQ(MpImageSegmenterSegmentImage(
+                segmenter, image.get(), /* image_processing_options= */ nullptr,
+                &result),
             kMpInvalidArgument);
   EXPECT_EQ(MpImageSegmenterClose(segmenter), kMpOk);
 }

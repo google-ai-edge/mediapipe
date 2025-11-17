@@ -95,15 +95,7 @@ MP_EXPORT MpStatus MpImageSegmenterCreate(struct ImageSegmenterOptions* options,
 // Performs image segmentation on the input `image`.
 // Returns 'kMpOk' on success and sets `result` to the segmentation result.
 // You must call `MpImageSegmenterCloseResult` to free its memory.
-MP_EXPORT MpStatus MpImageSegmenterSegmentImage(MpImageSegmenterPtr segmenter,
-                                                MpImagePtr image,
-                                                ImageSegmenterResult* result);
-
-// Performs image segmentation on the input `image` with image processing
-// options.
-// Returns 'kMpOk' on success and sets `result` to the segmentation result.
-// You must call `MpImageSegmenterCloseResult` to free its memory.
-MP_EXPORT MpStatus MpImageSegmenterSegmentImageWithOptions(
+MP_EXPORT MpStatus MpImageSegmenterSegmentImage(
     MpImageSegmenterPtr segmenter, MpImagePtr image,
     const ImageProcessingOptions* options, ImageSegmenterResult* result);
 
@@ -116,19 +108,6 @@ MP_EXPORT MpStatus MpImageSegmenterSegmentImageWithOptions(
 // Returns 'kMpOk' on success and sets `result` to the segmentation result.
 // You must call `MpImageSegmenterCloseResult` to free its memory.
 MP_EXPORT MpStatus MpImageSegmenterSegmentForVideo(
-    MpImageSegmenterPtr segmenter, MpImagePtr image, int64_t timestamp_ms,
-    ImageSegmenterResult* result);
-
-// Performs image segmentation on the provided video frame with image processing
-// options.
-// Only use this method when the ImageSegmenter is created with the video
-// running mode.
-// The image can be of any size with format RGB or RGBA. It's required to
-// provide the video frame's timestamp (in milliseconds). The input timestamps
-// must be monotonically increasing.
-// Returns 'kMpOk' on success and sets `result` to the segmentation result.
-// You must call `MpImageSegmenterCloseResult` to free its memory.
-MP_EXPORT MpStatus MpImageSegmenterSegmentForVideoWithOptions(
     MpImageSegmenterPtr segmenter, MpImagePtr image,
     const ImageProcessingOptions* options, int64_t timestamp_ms,
     ImageSegmenterResult* result);
@@ -149,29 +128,7 @@ MP_EXPORT MpStatus MpImageSegmenterSegmentForVideoWithOptions(
 //     outside of the callback, callers need to make a copy of the image.
 //   - The input timestamp in milliseconds.
 // Returns 'kMpOk' on success.
-MP_EXPORT MpStatus MpImageSegmenterSegmentAsync(MpImageSegmenterPtr segmenter,
-                                                MpImagePtr image,
-                                                int64_t timestamp_ms);
-
-// Sends live image data to image segmentation, and the results will be
-// available via the `result_callback` provided in the ImageSegmenterOptions.
-// Only use this method when the ImageSegmenter is created with the live
-// stream running mode.
-// The image can be of any size with format RGB or RGBA. It's required to
-// provide a timestamp (in milliseconds) to indicate when the input image is
-// sent to the image segmenter. The input timestamps must be monotonically
-// increasing.
-// The `result_callback` provides:
-//   - The recognition results as an ImageSegmenterResult object.
-//   - The const reference to the corresponding input image that the image
-//     segmenter runs on. Note that the const reference to the image will no
-//     longer be valid when the callback returns. To access the image data
-//     outside of the callback, callers need to make a copy of the image.
-//   - The input timestamp in milliseconds.
-// You need to invoke `MpImageSegmenterCloseResult` after each invocation to
-// free memory.
-// Returns 'kMpOk' on success.
-MP_EXPORT MpStatus MpImageSegmenterSegmentAsyncWithOptions(
+MP_EXPORT MpStatus MpImageSegmenterSegmentAsync(
     MpImageSegmenterPtr segmenter, MpImagePtr image,
     const ImageProcessingOptions* options, int64_t timestamp_ms);
 

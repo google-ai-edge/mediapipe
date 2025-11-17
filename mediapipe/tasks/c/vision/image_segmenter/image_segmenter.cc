@@ -18,6 +18,7 @@ limitations under the License.
 #include <cstdint>
 #include <cstdlib>
 #include <memory>
+#include <optional>
 #include <utility>
 
 #include "absl/log/absl_log.h"
@@ -57,8 +58,10 @@ using ::mediapipe::tasks::c::core::ToMpStatus;
 using ::mediapipe::tasks::c::vision::core::CppConvertToImageProcessingOptions;
 using ::mediapipe::tasks::vision::core::RunningMode;
 using ::mediapipe::tasks::vision::image_segmenter::ImageSegmenter;
-typedef ::mediapipe::tasks::vision::image_segmenter::ImageSegmenterResult
-    CppImageSegmenterResult;
+using CppImageSegmenterResult =
+    ::mediapipe::tasks::vision::image_segmenter::ImageSegmenterResult;
+using CppImageProcessingOptions =
+    ::mediapipe::tasks::vision::core::ImageProcessingOptions;
 
 const Image& ToImage(const MpImagePtr mp_image) { return mp_image->image; }
 
@@ -120,19 +123,19 @@ MpStatus CppImageSegmenterCreate(const ImageSegmenterOptions& options,
   return kMpOk;
 }
 
-MpStatus CppImageSegmenterSegment(MpImageSegmenterPtr segmenter,
-                                  MpImagePtr image,
-                                  const ImageProcessingOptions* options,
-                                  ImageSegmenterResult* result) {
+MpStatus CppImageSegmenterSegment(
+    MpImageSegmenterPtr segmenter, MpImagePtr image,
+    const ImageProcessingOptions* image_processing_options,
+    ImageSegmenterResult* result) {
   auto cpp_segmenter = segmenter->segmenter.get();
-  absl::StatusOr<CppImageSegmenterResult> cpp_result;
-  if (options) {
-    ::mediapipe::tasks::vision::core::ImageProcessingOptions cpp_options;
-    CppConvertToImageProcessingOptions(*options, &cpp_options);
-    cpp_result = cpp_segmenter->Segment(ToImage(image), cpp_options);
-  } else {
-    cpp_result = cpp_segmenter->Segment(ToImage(image));
+  std::optional<CppImageProcessingOptions> cpp_image_processing_options;
+  if (image_processing_options) {
+    CppImageProcessingOptions options;
+    CppConvertToImageProcessingOptions(*image_processing_options, &options);
+    cpp_image_processing_options = options;
   }
+  auto cpp_result =
+      cpp_segmenter->Segment(ToImage(image), cpp_image_processing_options);
 
   if (!cpp_result.ok()) {
     ABSL_LOG(ERROR) << "Segmentation failed: " << cpp_result.status();
@@ -142,21 +145,19 @@ MpStatus CppImageSegmenterSegment(MpImageSegmenterPtr segmenter,
   return kMpOk;
 }
 
-MpStatus CppImageSegmenterSegmentForVideo(MpImageSegmenterPtr segmenter,
-                                          MpImagePtr image,
-                                          const ImageProcessingOptions* options,
-                                          int64_t timestamp_ms,
-                                          ImageSegmenterResult* result) {
+MpStatus CppImageSegmenterSegmentForVideo(
+    MpImageSegmenterPtr segmenter, MpImagePtr image,
+    const ImageProcessingOptions* image_processing_options,
+    int64_t timestamp_ms, ImageSegmenterResult* result) {
   auto cpp_segmenter = segmenter->segmenter.get();
-  absl::StatusOr<CppImageSegmenterResult> cpp_result;
-  if (options) {
-    ::mediapipe::tasks::vision::core::ImageProcessingOptions cpp_options;
-    CppConvertToImageProcessingOptions(*options, &cpp_options);
-    cpp_result = cpp_segmenter->SegmentForVideo(ToImage(image), timestamp_ms,
-                                                cpp_options);
-  } else {
-    cpp_result = cpp_segmenter->SegmentForVideo(ToImage(image), timestamp_ms);
+  std::optional<CppImageProcessingOptions> cpp_image_processing_options;
+  if (image_processing_options) {
+    CppImageProcessingOptions options;
+    CppConvertToImageProcessingOptions(*image_processing_options, &options);
+    cpp_image_processing_options = options;
   }
+  auto cpp_result = cpp_segmenter->SegmentForVideo(
+      ToImage(image), timestamp_ms, cpp_image_processing_options);
 
   if (!cpp_result.ok()) {
     LOG(ERROR) << "Segmentation failed: " << cpp_result.status();
@@ -166,20 +167,19 @@ MpStatus CppImageSegmenterSegmentForVideo(MpImageSegmenterPtr segmenter,
   return kMpOk;
 }
 
-MpStatus CppImageSegmenterSegmentAsync(MpImageSegmenterPtr segmenter,
-                                       MpImagePtr image,
-                                       const ImageProcessingOptions* options,
-                                       int64_t timestamp_ms) {
+MpStatus CppImageSegmenterSegmentAsync(
+    MpImageSegmenterPtr segmenter, MpImagePtr image,
+    const ImageProcessingOptions* image_processing_options,
+    int64_t timestamp_ms) {
   auto cpp_segmenter = segmenter->segmenter.get();
-  absl::Status cpp_result;
-  if (options) {
-    ::mediapipe::tasks::vision::core::ImageProcessingOptions cpp_options;
-    CppConvertToImageProcessingOptions(*options, &cpp_options);
-    cpp_result =
-        cpp_segmenter->SegmentAsync(ToImage(image), timestamp_ms, cpp_options);
-  } else {
-    cpp_result = cpp_segmenter->SegmentAsync(ToImage(image), timestamp_ms);
+  std::optional<CppImageProcessingOptions> cpp_image_processing_options;
+  if (image_processing_options) {
+    CppImageProcessingOptions options;
+    CppConvertToImageProcessingOptions(*image_processing_options, &options);
+    cpp_image_processing_options = options;
   }
+  auto cpp_result = cpp_segmenter->SegmentAsync(ToImage(image), timestamp_ms,
+                                                cpp_image_processing_options);
 
   if (!cpp_result.ok()) {
     LOG(ERROR) << "Data preparation for the image segmentation failed: "
@@ -231,14 +231,7 @@ MP_EXPORT MpStatus MpImageSegmenterCreate(struct ImageSegmenterOptions* options,
       *options, segmenter);
 }
 
-MP_EXPORT MpStatus MpImageSegmenterSegmentImage(MpImageSegmenterPtr segmenter,
-                                                MpImagePtr image,
-                                                ImageSegmenterResult* result) {
-  return mediapipe::tasks::c::vision::image_segmenter::CppImageSegmenterSegment(
-      segmenter, image, /*options=*/nullptr, result);
-}
-
-MP_EXPORT MpStatus MpImageSegmenterSegmentImageWithOptions(
+MP_EXPORT MpStatus MpImageSegmenterSegmentImage(
     MpImageSegmenterPtr segmenter, MpImagePtr image,
     const ImageProcessingOptions* options, ImageSegmenterResult* result) {
   return mediapipe::tasks::c::vision::image_segmenter::CppImageSegmenterSegment(
@@ -246,14 +239,6 @@ MP_EXPORT MpStatus MpImageSegmenterSegmentImageWithOptions(
 }
 
 MP_EXPORT MpStatus MpImageSegmenterSegmentForVideo(
-    MpImageSegmenterPtr segmenter, MpImagePtr image, int64_t timestamp_ms,
-    ImageSegmenterResult* result) {
-  return mediapipe::tasks::c::vision::image_segmenter::
-      CppImageSegmenterSegmentForVideo(segmenter, image, /*options=*/nullptr,
-                                       timestamp_ms, result);
-}
-
-MP_EXPORT MpStatus MpImageSegmenterSegmentForVideoWithOptions(
     MpImageSegmenterPtr segmenter, MpImagePtr image,
     const ImageProcessingOptions* options, int64_t timestamp_ms,
     ImageSegmenterResult* result) {
@@ -262,15 +247,7 @@ MP_EXPORT MpStatus MpImageSegmenterSegmentForVideoWithOptions(
                                        result);
 }
 
-MP_EXPORT MpStatus MpImageSegmenterSegmentAsync(MpImageSegmenterPtr segmenter,
-                                                MpImagePtr image,
-                                                int64_t timestamp_ms) {
-  return mediapipe::tasks::c::vision::image_segmenter::
-      CppImageSegmenterSegmentAsync(segmenter, image, /*options=*/nullptr,
-                                    timestamp_ms);
-}
-
-MP_EXPORT MpStatus MpImageSegmenterSegmentAsyncWithOptions(
+MP_EXPORT MpStatus MpImageSegmenterSegmentAsync(
     MpImageSegmenterPtr segmenter, MpImagePtr image,
     const ImageProcessingOptions* options, int64_t timestamp_ms) {
   return mediapipe::tasks::c::vision::image_segmenter::
