@@ -3361,3 +3361,6 @@ class FaceLandmarker(base_vision_task_api.BaseVisionTaskApi):
     """
     del exc_type, exc_value, traceback  # Unused.
     self.close()
+
+  def __del__(self):
+    self.close()

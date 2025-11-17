@@ -488,3 +488,6 @@ class ImageClassifier:
       close.
     """
     self.close()
+
+  def __del__(self):
+    self.close()

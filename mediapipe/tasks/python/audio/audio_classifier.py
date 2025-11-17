@@ -434,3 +434,6 @@ class AudioClassifier(base_audio_task_api.BaseAudioTaskApi):
     """
     del exc_type, exc_value, traceback  # Unused.
     self.close()
+
+  def __del__(self):
+    self.close()

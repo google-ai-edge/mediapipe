@@ -364,3 +364,6 @@ class InteractiveSegmenter:
     """Shuts down the MediaPipe task instance on exit of the context manager."""
     del exc_type, exc_value, traceback
     self.close()
+
+  def __del__(self):
+    self.close()

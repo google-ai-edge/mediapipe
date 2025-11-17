@@ -265,3 +265,6 @@ class TextClassifier:
       RuntimeError: If the MediaPipe TextClassifier task failed to close.
     """
     self.close()
+
+  def __del__(self):
+    self.close()

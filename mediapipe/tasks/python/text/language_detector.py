@@ -290,3 +290,6 @@ class LanguageDetector:
       RuntimeError: If the MediaPipe LanguageDetector task failed to close.
     """
     self.close()
+
+  def __del__(self):
+    self.close()

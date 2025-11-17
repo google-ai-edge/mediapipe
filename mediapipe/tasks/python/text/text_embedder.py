@@ -258,3 +258,6 @@ class TextEmbedder:
   def __exit__(self, unused_exc_type, unused_exc_value, unused_traceback):
     """Shuts down the MediaPipe task instance on exit of the context manager."""
     self.close()
+
+  def __del__(self):
+    self.close()
