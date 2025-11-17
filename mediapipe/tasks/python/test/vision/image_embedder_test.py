@@ -82,8 +82,7 @@ class ImageEmbedderTest(parameterized.TestCase):
       self.assertIsInstance(embedder, _ImageEmbedder)
 
   def test_create_from_options_fails_with_invalid_model_path(self):
-    with self.assertRaisesRegex(
-        RuntimeError, 'Unable to open file at /path/to/invalid/model.tflite'):
+    with self.assertRaises(FileNotFoundError):
       base_options = _BaseOptions(
           model_asset_path='/path/to/invalid/model.tflite')
       options = _ImageEmbedderOptions(base_options=base_options)
@@ -251,9 +250,7 @@ class ImageEmbedderTest(parameterized.TestCase):
         base_options=_BaseOptions(model_asset_path=self.model_path),
         running_mode=_RUNNING_MODE.IMAGE)
     with _ImageEmbedder.create_from_options(options) as embedder:
-      with self.assertRaisesRegex(
-          RuntimeError, r'not initialized with the video mode'
-      ):
+      with self.assertRaises(ValueError):
         embedder.embed_for_video(self.test_image, 0)
 
   def test_calling_embed_async_in_image_mode(self):
@@ -261,9 +258,7 @@ class ImageEmbedderTest(parameterized.TestCase):
         base_options=_BaseOptions(model_asset_path=self.model_path),
         running_mode=_RUNNING_MODE.IMAGE)
     with _ImageEmbedder.create_from_options(options) as embedder:
-      with self.assertRaisesRegex(
-          RuntimeError, r'not initialized with the live stream mode'
-      ):
+      with self.assertRaises(ValueError):
         embedder.embed_async(self.test_image, 0)
 
   def test_calling_embed_in_video_mode(self):
@@ -271,9 +266,7 @@ class ImageEmbedderTest(parameterized.TestCase):
         base_options=_BaseOptions(model_asset_path=self.model_path),
         running_mode=_RUNNING_MODE.VIDEO)
     with _ImageEmbedder.create_from_options(options) as embedder:
-      with self.assertRaisesRegex(
-          RuntimeError, r'not initialized with the image mode'
-      ):
+      with self.assertRaises(ValueError):
         embedder.embed(self.test_image)
 
   def test_calling_embed_async_in_video_mode(self):
@@ -281,9 +274,7 @@ class ImageEmbedderTest(parameterized.TestCase):
         base_options=_BaseOptions(model_asset_path=self.model_path),
         running_mode=_RUNNING_MODE.VIDEO)
     with _ImageEmbedder.create_from_options(options) as embedder:
-      with self.assertRaisesRegex(
-          RuntimeError, r'not initialized with the live stream mode'
-      ):
+      with self.assertRaises(ValueError):
         embedder.embed_async(self.test_image, 0)
 
   def test_embed_for_video_with_out_of_order_timestamp(self):
@@ -292,9 +283,7 @@ class ImageEmbedderTest(parameterized.TestCase):
         running_mode=_RUNNING_MODE.VIDEO)
     with _ImageEmbedder.create_from_options(options) as embedder:
       unused_result = embedder.embed_for_video(self.test_image, 1)
-      with self.assertRaisesRegex(
-          RuntimeError, r'Input timestamp must be monotonically increasing'
-      ):
+      with self.assertRaises(ValueError):
         embedder.embed_for_video(self.test_image, 0)
 
   def test_embed_for_video(self):
@@ -339,9 +328,7 @@ class ImageEmbedderTest(parameterized.TestCase):
         running_mode=_RUNNING_MODE.LIVE_STREAM,
         result_callback=mock.MagicMock())
     with _ImageEmbedder.create_from_options(options) as embedder:
-      with self.assertRaisesRegex(
-          RuntimeError, r'not initialized with the image mode'
-      ):
+      with self.assertRaises(ValueError):
         embedder.embed(self.test_image)
 
   def test_calling_embed_for_video_in_live_stream_mode(self):
@@ -350,9 +337,7 @@ class ImageEmbedderTest(parameterized.TestCase):
         running_mode=_RUNNING_MODE.LIVE_STREAM,
         result_callback=mock.MagicMock())
     with _ImageEmbedder.create_from_options(options) as embedder:
-      with self.assertRaisesRegex(
-          RuntimeError, r'not initialized with the video mode'
-      ):
+      with self.assertRaises(ValueError):
         embedder.embed_for_video(self.test_image, 0)
 
   def test_embed_async_calls_with_illegal_timestamp(self):
@@ -362,9 +347,7 @@ class ImageEmbedderTest(parameterized.TestCase):
         result_callback=mock.MagicMock())
     with _ImageEmbedder.create_from_options(options) as embedder:
       embedder.embed_async(self.test_image, 100)
-      with self.assertRaisesRegex(
-          RuntimeError, r'Input timestamp must be monotonically increasing'
-      ):
+      with self.assertRaises(ValueError):
         embedder.embed_async(self.test_image, 0)
 
   def test_embed_async_calls(self):

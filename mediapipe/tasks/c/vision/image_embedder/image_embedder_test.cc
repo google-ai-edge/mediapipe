@@ -27,7 +27,6 @@ limitations under the License.
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "mediapipe/framework/deps/file_path.h"
-#include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/c/components/containers/embedding_result.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
@@ -42,7 +41,6 @@ using ::mediapipe::file::JoinPath;
 using ::mediapipe::tasks::vision::core::CreateEmptyGpuMpImage;
 using ::mediapipe::tasks::vision::core::GetImage;
 using ::mediapipe::tasks::vision::core::ScopedMpImage;
-using testing::HasSubstr;
 
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
 constexpr char kModelName[] = "mobilenet_v3_small_100_224_embedder.tflite";
@@ -75,18 +73,19 @@ TEST(ImageEmbedderTest, ImageModeTest) {
       .running_mode = RunningMode::IMAGE,
       .embedder_options = {.l2_normalize = true, .quantize = false}};
 
-  MpImageEmbedderPtr embedder = image_embedder_create(&options,
-                                                      /* error_msg */ nullptr);
+  MpImageEmbedderPtr embedder;
+  ASSERT_EQ(MpImageEmbedderCreate(&options, &embedder), kMpOk);
   ASSERT_NE(embedder, nullptr);
 
   ImageEmbedderResult result;
-  image_embedder_embed_image(embedder, image.get(),
-                             /* image_processing_options= */ nullptr, &result,
-                             /* error_msg */ nullptr);
+  ASSERT_EQ(MpImageEmbedderEmbedImage(embedder, image.get(),
+                                      /* image_processing_options= */ nullptr,
+                                      &result),
+            kMpOk);
   CheckMobileNetV3Result(result);
   EXPECT_NEAR(result.embeddings[0].float_embedding[0], -0.0142344, kPrecision);
-  image_embedder_close_result(&result);
-  image_embedder_close(embedder, /* error_msg */ nullptr);
+  MpImageEmbedderCloseResult(&result);
+  ASSERT_EQ(MpImageEmbedderClose(embedder), kMpOk);
 }
 
 TEST(ImageEmbedderTest, ImageModeTestWithQuantization) {
@@ -100,18 +99,19 @@ TEST(ImageEmbedderTest, ImageModeTestWithQuantization) {
       .running_mode = RunningMode::IMAGE,
       .embedder_options = {.l2_normalize = false, .quantize = true}};
 
-  MpImageEmbedderPtr embedder = image_embedder_create(&options,
-                                                      /* error_msg */ nullptr);
+  MpImageEmbedderPtr embedder;
+  ASSERT_EQ(MpImageEmbedderCreate(&options, &embedder), kMpOk);
   ASSERT_NE(embedder, nullptr);
 
   ImageEmbedderResult result;
-  image_embedder_embed_image(embedder, image.get(),
-                             /* image_processing_options= */ nullptr, &result,
-                             /* error_msg */ nullptr);
+  ASSERT_EQ(MpImageEmbedderEmbedImage(embedder, image.get(),
+                                      /* image_processing_options= */ nullptr,
+                                      &result),
+            kMpOk);
   CheckMobileNetV3Result(result);
   EXPECT_EQ(result.embeddings[0].quantized_embedding[0], '\xE5');
-  image_embedder_close_result(&result);
-  image_embedder_close(embedder, /* error_msg */ nullptr);
+  MpImageEmbedderCloseResult(&result);
+  ASSERT_EQ(MpImageEmbedderClose(embedder), kMpOk);
 }
 
 TEST(ImageEmbedderTest, ImageModeTestWithRotation) {
@@ -126,8 +126,8 @@ TEST(ImageEmbedderTest, ImageModeTestWithRotation) {
       .running_mode = RunningMode::IMAGE,
       .embedder_options = {.l2_normalize = true, .quantize = false}};
 
-  MpImageEmbedderPtr embedder = image_embedder_create(&options,
-                                                      /* error_msg */ nullptr);
+  MpImageEmbedderPtr embedder;
+  ASSERT_EQ(MpImageEmbedderCreate(&options, &embedder), kMpOk);
   ASSERT_NE(embedder, nullptr);
 
   ImageProcessingOptions image_processing_options;
@@ -135,13 +135,13 @@ TEST(ImageEmbedderTest, ImageModeTestWithRotation) {
   image_processing_options.rotation_degrees = -90;
 
   ImageEmbedderResult result;
-  image_embedder_embed_image(embedder, image.get(), &image_processing_options,
-                             &result,
-                             /* error_msg */ nullptr);
+  ASSERT_EQ(MpImageEmbedderEmbedImage(embedder, image.get(),
+                                      &image_processing_options, &result),
+            kMpOk);
   CheckMobileNetV3Result(result);
   EXPECT_NEAR(result.embeddings[0].float_embedding[0], -0.0149445, kPrecision);
-  image_embedder_close_result(&result);
-  image_embedder_close(embedder, /* error_msg */ nullptr);
+  MpImageEmbedderCloseResult(&result);
+  ASSERT_EQ(MpImageEmbedderClose(embedder), kMpOk);
 }
 
 TEST(ImageEmbedderTest, SucceedsWithCosineSimilarity) {
@@ -156,35 +156,36 @@ TEST(ImageEmbedderTest, SucceedsWithCosineSimilarity) {
       .running_mode = RunningMode::IMAGE,
       .embedder_options = {.l2_normalize = true, .quantize = false}};
 
-  MpImageEmbedderPtr embedder = image_embedder_create(&options,
-                                                      /* error_msg */ nullptr);
+  MpImageEmbedderPtr embedder;
+  ASSERT_EQ(MpImageEmbedderCreate(&options, &embedder), kMpOk);
   EXPECT_NE(embedder, nullptr);
 
   // Extract both embeddings.
   ImageEmbedderResult image_result;
-  image_embedder_embed_image(embedder, image.get(),
-                             /* image_processing_options= */ nullptr,
-                             &image_result,
-                             /* error_msg */ nullptr);
+  ASSERT_EQ(MpImageEmbedderEmbedImage(embedder, image.get(),
+                                      /* image_processing_options= */ nullptr,
+                                      &image_result),
+            kMpOk);
   ImageEmbedderResult crop_result;
-  image_embedder_embed_image(embedder, crop.get(),
-                             /* image_processing_options= */ nullptr,
-                             &crop_result,
-                             /* error_msg */ nullptr);
+  ASSERT_EQ(MpImageEmbedderEmbedImage(embedder, crop.get(),
+                                      /* image_processing_options= */ nullptr,
+                                      &crop_result),
+            kMpOk);
 
   // Check results.
   CheckMobileNetV3Result(image_result);
   CheckMobileNetV3Result(crop_result);
   // Check cosine similarity.
   double similarity;
-  image_embedder_cosine_similarity(image_result.embeddings[0],
-                                   crop_result.embeddings[0], &similarity,
-                                   /* error_msg */ nullptr);
+  ASSERT_EQ(
+      MpImageEmbedderCosineSimilarity(image_result.embeddings[0],
+                                      crop_result.embeddings[0], &similarity),
+      kMpOk);
   double expected_similarity = 0.925519;
   EXPECT_LE(abs(similarity - expected_similarity), kPrecision);
-  image_embedder_close_result(&image_result);
-  image_embedder_close_result(&crop_result);
-  image_embedder_close(embedder, /* error_msg */ nullptr);
+  MpImageEmbedderCloseResult(&image_result);
+  MpImageEmbedderCloseResult(&crop_result);
+  ASSERT_EQ(MpImageEmbedderClose(embedder), kMpOk);
 }
 
 TEST(ImageEmbedderTest, VideoModeTest) {
@@ -198,22 +199,22 @@ TEST(ImageEmbedderTest, VideoModeTest) {
       .running_mode = RunningMode::VIDEO,
       .embedder_options = {.l2_normalize = true, .quantize = false}};
 
-  MpImageEmbedderPtr embedder = image_embedder_create(&options,
-                                                      /* error_msg */ nullptr);
+  MpImageEmbedderPtr embedder;
+  ASSERT_EQ(MpImageEmbedderCreate(&options, &embedder), kMpOk);
   ASSERT_NE(embedder, nullptr);
 
   for (int i = 0; i < kIterations; ++i) {
     ImageEmbedderResult result;
-    image_embedder_embed_for_video(embedder, image.get(),
-                                   /* image_processing_options= */ nullptr, i,
-                                   &result,
-                                   /* error_msg */ nullptr);
+    ASSERT_EQ(MpImageEmbedderEmbedForVideo(
+                  embedder, image.get(),
+                  /* image_processing_options= */ nullptr, i, &result),
+              kMpOk);
     CheckMobileNetV3Result(result);
     EXPECT_NEAR(result.embeddings[0].float_embedding[0], -0.0142344,
                 kPrecision);
-    image_embedder_close_result(&result);
+    MpImageEmbedderCloseResult(&result);
   }
-  image_embedder_close(embedder, /* error_msg */ nullptr);
+  ASSERT_EQ(MpImageEmbedderClose(embedder), kMpOk);
 }
 
 // A structure to support LiveStreamModeTest below. This structure holds a
@@ -258,19 +259,18 @@ TEST(ImageEmbedderTest, LiveStreamModeTest) {
       .result_callback = LiveStreamModeCallback::Fn,
   };
 
-  MpImageEmbedderPtr embedder = image_embedder_create(&options,
-                                                      /* error_msg */ nullptr);
+  MpImageEmbedderPtr embedder;
+  ASSERT_EQ(MpImageEmbedderCreate(&options, &embedder), kMpOk);
   ASSERT_NE(embedder, nullptr);
 
   absl::BlockingCounter counter(kIterations);
   LiveStreamModeCallback::blocking_counter = &counter;
 
   for (int i = 0; i < kIterations; ++i) {
-    EXPECT_GE(
-        image_embedder_embed_async(embedder, image.get(),
-                                   /* image_processing_options= */ nullptr, i,
-                                   /* error_msg */ nullptr),
-        0);
+    ASSERT_EQ(
+        MpImageEmbedderEmbedAsync(embedder, image.get(),
+                                  /* image_processing_options= */ nullptr, i),
+        kMpOk);
     // Short sleep so that MediaPipe does not drop frames.
     absl::SleepFor(absl::Milliseconds(kSleepBetweenFramesMilliseconds));
   }
@@ -279,7 +279,7 @@ TEST(ImageEmbedderTest, LiveStreamModeTest) {
   counter.Wait();
   LiveStreamModeCallback::blocking_counter = nullptr;
 
-  image_embedder_close(embedder, /* error_msg */ nullptr);
+  ASSERT_EQ(MpImageEmbedderClose(embedder), kMpOk);
 
   // Due to the flow limiter, the total of outputs might be smaller than the
   // number of iterations.
@@ -296,13 +296,9 @@ TEST(ImageEmbedderTest, InvalidArgumentHandling) {
       .embedder_options = {},
   };
 
-  char* error_msg;
-  MpImageEmbedderPtr embedder = image_embedder_create(&options, &error_msg);
+  MpImageEmbedderPtr embedder = nullptr;
+  EXPECT_EQ(MpImageEmbedderCreate(&options, &embedder), kMpInvalidArgument);
   EXPECT_EQ(embedder, nullptr);
-
-  EXPECT_THAT(error_msg, HasSubstr("ExternalFile must specify"));
-
-  free(error_msg);
 }
 
 TEST(ImageEmbedderTest, FailedEmbeddingHandling) {
@@ -314,20 +310,17 @@ TEST(ImageEmbedderTest, FailedEmbeddingHandling) {
       .running_mode = RunningMode::IMAGE,
       .embedder_options = {.l2_normalize = false, .quantize = false}};
 
-  MpImageEmbedderPtr embedder = image_embedder_create(&options,
-                                                      /* error_msg */ nullptr);
+  MpImageEmbedderPtr embedder;
+  ASSERT_EQ(MpImageEmbedderCreate(&options, &embedder), kMpOk);
   EXPECT_NE(embedder, nullptr);
 
   const ScopedMpImage image = CreateEmptyGpuMpImage();
   ImageEmbedderResult result;
-  char* error_msg;
-  image_embedder_embed_image(embedder, image.get(),
-                             /* image_processing_options= */ nullptr, &result,
-                             &error_msg);
-  EXPECT_THAT(error_msg,
-              HasSubstr("GPU input images are currently not supported."));
-  free(error_msg);
-  image_embedder_close(embedder, /* error_msg */ nullptr);
+  EXPECT_EQ(MpImageEmbedderEmbedImage(embedder, image.get(),
+                                      /* image_processing_options= */ nullptr,
+                                      &result),
+            kMpInvalidArgument);
+  ASSERT_EQ(MpImageEmbedderClose(embedder), kMpOk);
 }
 
 }  // namespace

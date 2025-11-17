@@ -73,15 +73,15 @@ class ImageEmbedderOptionsC(ctypes.Structure):
 
 _CTYPES_SIGNATURES = (
     _CFunction(
-        func_name='image_embedder_create',
+        func_name='MpImageEmbedderCreate',
         argtypes=[
             ctypes.POINTER(ImageEmbedderOptionsC),
-            ctypes.POINTER(ctypes.c_char_p),
+            ctypes.POINTER(ctypes.c_void_p),
         ],
-        restype=ctypes.c_void_p,
+        restype=ctypes.c_int32,  # MpStatus
     ),
     _CFunction(
-        func_name='image_embedder_embed_image',
+        func_name='MpImageEmbedderEmbedImage',
         argtypes=[
             ctypes.c_void_p,
             ctypes.c_void_p,  # image
@@ -89,12 +89,11 @@ _CTYPES_SIGNATURES = (
                 image_processing_options_c_module.ImageProcessingOptionsC
             ),
             ctypes.POINTER(embedding_result_c_module.EmbeddingResultC),
-            ctypes.POINTER(ctypes.c_char_p),
         ],
-        restype=ctypes.c_int32,
+        restype=ctypes.c_int32,  # MpStatus
     ),
     _CFunction(
-        func_name='image_embedder_embed_for_video',
+        func_name='MpImageEmbedderEmbedForVideo',
         argtypes=[
             ctypes.c_void_p,
             ctypes.c_void_p,  # image
@@ -103,12 +102,11 @@ _CTYPES_SIGNATURES = (
             ),
             ctypes.c_int64,  # timestamp_ms
             ctypes.POINTER(embedding_result_c_module.EmbeddingResultC),
-            ctypes.POINTER(ctypes.c_char_p),
         ],
-        restype=ctypes.c_int32,
+        restype=ctypes.c_int32,  # MpStatus
     ),
     _CFunction(
-        func_name='image_embedder_embed_async',
+        func_name='MpImageEmbedderEmbedAsync',
         argtypes=[
             ctypes.c_void_p,
             ctypes.c_void_p,  # image
@@ -116,19 +114,18 @@ _CTYPES_SIGNATURES = (
                 image_processing_options_c_module.ImageProcessingOptionsC
             ),
             ctypes.c_int64,  # timestamp_ms
-            ctypes.POINTER(ctypes.c_char_p),
         ],
-        restype=ctypes.c_int32,
+        restype=ctypes.c_int32,  # MpStatus
     ),
     _CFunction(
-        func_name='image_embedder_close_result',
+        func_name='MpImageEmbedderCloseResult',
         argtypes=[ctypes.POINTER(embedding_result_c_module.EmbeddingResultC)],
         restype=None,
     ),
     _CFunction(
-        func_name='image_embedder_close',
-        argtypes=[ctypes.c_void_p, ctypes.POINTER(ctypes.c_char_p)],
-        restype=ctypes.c_int32,
+        func_name='MpImageEmbedderClose',
+        argtypes=[ctypes.c_void_p],
+        restype=ctypes.c_int32,  # MpStatus
     ),
 )
 
@@ -318,18 +315,11 @@ class ImageEmbedder:
     dispatcher = _AsyncResultDispatcher(converter=convert_result)
     ctypes_options = options.to_ctypes(dispatcher)
 
-    error_msg_ptr = ctypes.c_char_p()
-    embedder_handle = lib.image_embedder_create(
-        ctypes.byref(ctypes_options), ctypes.byref(error_msg_ptr)
+    embedder_handle = ctypes.c_void_p()
+    status = lib.MpImageEmbedderCreate(
+        ctypes.byref(ctypes_options), ctypes.byref(embedder_handle)
     )
-    if not embedder_handle:
-      error_string = (
-          error_msg_ptr.value.decode('utf-8')
-          if error_msg_ptr.value is not None
-          else None
-      )
-      raise RuntimeError(f'Failed to create ImageEmbedder: {error_string}')
-
+    mediapipe_c_bindings.handle_status(status)
     return cls(lib, embedder_handle, dispatcher=dispatcher)
 
   def embed(
@@ -355,25 +345,20 @@ class ImageEmbedder:
     """
     c_image = image._image_ptr  # pylint: disable=protected-access
     c_result = embedding_result_c_module.EmbeddingResultC()
-    error_msg = ctypes.c_char_p()
     options_c = (
         ctypes.byref(image_processing_options.to_ctypes())
         if image_processing_options
         else None
     )
-    status = self._lib.image_embedder_embed_image(
+    status = self._lib.MpImageEmbedderEmbedImage(
         self._handle,
         c_image,
         options_c,
         ctypes.byref(c_result),
-        ctypes.byref(error_msg),
     )
-
-    mediapipe_c_bindings.handle_return_code(
-        status, 'Failed to embed image', error_msg
-    )
+    mediapipe_c_bindings.handle_status(status)
     py_result = embedding_result_module.EmbeddingResult.from_ctypes(c_result)
-    self._lib.image_embedder_close_result(ctypes.byref(c_result))
+    self._lib.MpImageEmbedderCloseResult(ctypes.byref(c_result))
     return py_result
 
   def embed_for_video(
@@ -406,26 +391,23 @@ class ImageEmbedder:
     """
     c_image = image._image_ptr  # pylint: disable=protected-access
     c_result = embedding_result_c_module.EmbeddingResultC()
-    error_msg = ctypes.c_char_p()
     options_c = (
         ctypes.byref(image_processing_options.to_ctypes())
         if image_processing_options
         else None
     )
-    status = self._lib.image_embedder_embed_for_video(
+    status = self._lib.MpImageEmbedderEmbedForVideo(
         self._handle,
         c_image,
         options_c,
         timestamp_ms,
         ctypes.byref(c_result),
-        ctypes.byref(error_msg),
     )
 
-    mediapipe_c_bindings.handle_return_code(
-        status, 'Failed to embed image', error_msg
-    )
+    mediapipe_c_bindings.handle_status(status)
+
     py_result = embedding_result_module.EmbeddingResult.from_ctypes(c_result)
-    self._lib.image_embedder_close_result(ctypes.byref(c_result))
+    self._lib.MpImageEmbedderCloseResult(ctypes.byref(c_result))
     return py_result
 
   def embed_async(
@@ -466,36 +448,28 @@ class ImageEmbedder:
         embedder has already processed.
     """
     c_image = image._image_ptr  # pylint: disable=protected-access
-    error_msg = ctypes.c_char_p()
     options_c = (
         ctypes.byref(image_processing_options.to_ctypes())
         if image_processing_options
         else None
     )
-    status = self._lib.image_embedder_embed_async(
+    status = self._lib.MpImageEmbedderEmbedAsync(
         self._handle,
         c_image,
         options_c,
         timestamp_ms,
-        ctypes.byref(error_msg),
     )
-    mediapipe_c_bindings.handle_return_code(
-        status, 'Failed to embed image', error_msg
-    )
+    mediapipe_c_bindings.handle_status(status)
 
   def close(self):
     """Closes the ImageEmbedder."""
-    if self._handle:
-      error_msg_ptr = ctypes.c_char_p()
-      status = self._lib.image_embedder_close(
-          self._handle, ctypes.byref(error_msg_ptr)
-      )
-      mediapipe_c_bindings.handle_return_code(
-          status, 'Failed to close ImageEmbedder', error_msg_ptr
-      )
-      self._handle = None
-      self._dispatcher.close()
-      self._lib.close()
+    if not self._handle:
+      return
+    status = self._lib.MpImageEmbedderClose(self._handle)
+    mediapipe_c_bindings.handle_status(status)
+    self._handle = None
+    self._dispatcher.close()
+    self._lib.close()
 
   @classmethod
   def cosine_similarity(
