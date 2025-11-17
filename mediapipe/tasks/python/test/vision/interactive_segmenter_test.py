@@ -136,9 +136,7 @@ class InteractiveSegmenterTest(parameterized.TestCase):
       self.assertIsInstance(segmenter, _InteractiveSegmenter)
 
   def test_create_from_options_fails_with_invalid_model_path(self):
-    with self.assertRaisesRegex(
-        RuntimeError, 'Unable to open file at /path/to/invalid/model.tflite'
-    ):
+    with self.assertRaises(FileNotFoundError):
       base_options = _BaseOptions(
           model_asset_path='/path/to/invalid/model.tflite'
       )
@@ -332,9 +330,7 @@ class InteractiveSegmenterTest(parameterized.TestCase):
         output_confidence_masks=True,
     )
 
-    with self.assertRaisesRegex(
-        RuntimeError, "This task doesn't support region-of-interest."
-    ):
+    with self.assertRaises(ValueError):
       with _InteractiveSegmenter.create_from_options(options) as segmenter:
         # Perform segmentation
         image_processing_options = _ImageProcessingOptions(

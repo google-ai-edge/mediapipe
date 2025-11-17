@@ -66,15 +66,15 @@ class InteractiveSegmenterOptionsC(ctypes.Structure):
 
 _CTYPES_SIGNATURES = (
     _CFunction(
-        func_name='interactive_segmenter_create',
+        func_name='MpInteractiveSegmenterCreate',
         argtypes=[
             ctypes.POINTER(InteractiveSegmenterOptionsC),
-            ctypes.POINTER(ctypes.c_char_p),
+            ctypes.POINTER(ctypes.c_void_p),
         ],
-        restype=ctypes.c_void_p,
+        restype=ctypes.c_int32,  # MpStatus
     ),
     _CFunction(
-        func_name='interactive_segmenter_segment_image',
+        func_name='MpInteractiveSegmenterSegmentImage',
         argtypes=[
             ctypes.c_void_p,
             ctypes.c_void_p,  # image
@@ -83,19 +83,18 @@ _CTYPES_SIGNATURES = (
                 image_processing_options_c_module.ImageProcessingOptionsC
             ),
             ctypes.POINTER(image_segmenter.ImageSegmenterResultC),
-            ctypes.POINTER(ctypes.c_char_p),
         ],
-        restype=ctypes.c_int32,
+        restype=ctypes.c_int32,  # MpStatus
     ),
     _CFunction(
-        func_name='interactive_segmenter_close_result',
+        func_name='MpInteractiveSegmenterCloseResult',
         argtypes=[ctypes.POINTER(image_segmenter.ImageSegmenterResultC)],
         restype=None,
     ),
     _CFunction(
-        func_name='interactive_segmenter_close',
-        argtypes=[ctypes.c_void_p, ctypes.POINTER(ctypes.c_char_p)],
-        restype=ctypes.c_int32,
+        func_name='MpInteractiveSegmenterClose',
+        argtypes=[ctypes.c_void_p],
+        restype=ctypes.c_int32,  # MpStatus
     ),
 )
 
@@ -274,20 +273,11 @@ class InteractiveSegmenter:
     dispatcher = _AsyncResultDispatcher(converter=lambda x: x)
     ctypes_options = options.to_ctypes()
 
-    error_msg_ptr = ctypes.c_char_p()
-    segmenter_handle = lib.interactive_segmenter_create(
-        ctypes.byref(ctypes_options), ctypes.byref(error_msg_ptr)
+    segmenter_handle = ctypes.c_void_p()
+    status = lib.MpInteractiveSegmenterCreate(
+        ctypes.byref(ctypes_options), ctypes.byref(segmenter_handle)
     )
-    if not segmenter_handle:
-      error_string = (
-          error_msg_ptr.value.decode('utf-8')
-          if error_msg_ptr.value is not None
-          else None
-      )
-      # TODO: b/456183832 - Ensure that we return a more specific error here.
-      raise RuntimeError(
-          f'Failed to create InteractiveSegmenter: {error_string}'
-      )
+    mediapipe_c_bindings.handle_status(status)
 
     return cls(lib, segmenter_handle, dispatcher)
 
@@ -320,38 +310,29 @@ class InteractiveSegmenter:
     c_image = image._image_ptr  # pylint: disable=protected-access
     c_roi = roi.to_ctypes()
     c_result = image_segmenter.ImageSegmenterResultC()
-    error_msg = ctypes.c_char_p()
     options_c = (
         ctypes.byref(image_processing_options.to_ctypes())
         if image_processing_options
         else None
     )
-    status = self._lib.interactive_segmenter_segment_image(
+    status = self._lib.MpInteractiveSegmenterSegmentImage(
         self._handle,
         c_image,
         ctypes.byref(c_roi),
         options_c,
         ctypes.byref(c_result),
-        ctypes.byref(error_msg),
     )
 
-    mediapipe_c_bindings.handle_return_code(
-        status, 'Failed to segment image', error_msg
-    )
+    mediapipe_c_bindings.handle_status(status)
     py_result = InteractiveSegmenterResult.from_ctypes(c_result)
-    self._lib.interactive_segmenter_close_result(ctypes.byref(c_result))
+    self._lib.MpInteractiveSegmenterCloseResult(ctypes.byref(c_result))
     return py_result
 
   def close(self):
     """Closes the InteractiveSegmenter."""
     if self._handle:
-      error_msg_ptr = ctypes.c_char_p()
-      status = self._lib.interactive_segmenter_close(
-          self._handle, ctypes.byref(error_msg_ptr)
-      )
-      mediapipe_c_bindings.handle_return_code(
-          status, 'Failed to close InteractiveSegmenter', error_msg_ptr
-      )
+      status = self._lib.MpInteractiveSegmenterClose(self._handle)
+      mediapipe_c_bindings.handle_status(status)
       self._handle = None
       self._dispatcher.close()
       self._lib.close()
