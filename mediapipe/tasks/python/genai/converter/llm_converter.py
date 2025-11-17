@@ -1,17 +1,67 @@
 """Functions to perform the checkpoint conversion."""
 
 import contextlib
+import ctypes
 import os
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from absl import logging
 from jax import numpy as jnp
 import numpy as np
 
-from mediapipe.python._framework_bindings import model_ckpt_util
+from mediapipe.tasks.python.core import mediapipe_c_bindings
 from mediapipe.tasks.python.genai.converter import converter_base
 from mediapipe.tasks.python.genai.converter import converter_factory
 from mediapipe.tasks.python.genai.converter import quantization_util
+
+
+_CTYPES_SIGNATURES = (
+    mediapipe_c_bindings.CFunction(
+        func_name='MpLlmConverterGenerateCpuTfLite',
+        argtypes=[
+            ctypes.c_char_p,  # model_type
+            ctypes.c_char_p,  # weight_path
+            ctypes.c_char_p,  # vocab_model_file
+            ctypes.c_bool,  # is_quantized
+            ctypes.c_char_p,  # output_tflite_file
+        ],
+        restype=mediapipe_c_bindings.MpStatus,
+    ),
+    mediapipe_c_bindings.CFunction(
+        func_name='MpLlmConverterGenerateGpuTfLite',
+        argtypes=[
+            ctypes.c_char_p,  # model_type
+            ctypes.c_char_p,  # weight_path
+            ctypes.c_char_p,  # vocab_model_file
+            ctypes.c_bool,  # is_quantized
+            ctypes.c_bool,  # obfuscate
+            ctypes.c_char_p,  # output_tflite_file
+            ctypes.c_int,  # lora_rank
+            ctypes.c_char_p,  # lora_weight_path
+            ctypes.c_char_p,  # lora_output_tflite_file
+            ctypes.c_char_p,  # lora_main_model_type
+            ctypes.c_char_p,  # image_encoder_file
+            ctypes.c_char_p,  # image_adapter_file
+            ctypes.c_char_p,  # submodel_type
+            ctypes.c_bool,  # use_dynamic_ple
+            ctypes.c_bool,  # apply_srq
+        ],
+        restype=mediapipe_c_bindings.MpStatus,
+    ),
+    mediapipe_c_bindings.CFunction(
+        func_name='MpLlmConverterConvertHfTokenizer',
+        argtypes=[
+            ctypes.c_char_p,  # vocab_model_file
+            ctypes.c_char_p,  # output_vocab_file
+        ],
+        restype=mediapipe_c_bindings.MpStatus,
+    ),
+)
+
+
+def _safe_encode_str(value: str | None) -> bytes:
+  """Encodes a string to bytes, returning an empty byte string if None."""
+  return value.encode('utf-8') if value is not None else b''
 
 
 class ConversionConfig(object):
@@ -172,6 +222,9 @@ def filemanager(filename: str, mode: str):
 class _LlmConverter:
   """Bundles all conversion logic for LLM models."""
 
+  def __init__(self, lib: Any):
+    self._lib = lib
+
   def quantize_by_actions(
       self,
       actions: List[converter_base.QuantizationAction],
@@ -302,42 +355,57 @@ class _LlmConverter:
     if backend == 'cpu':
       if lora_rank is not None:
         logging.fatal('LoRA is not supported for CPU backend.')
-      model_ckpt_util.GenerateCpuTfLite(
-          model_type,
-          weight_path,
-          vocab_model_file,
+      status = self._lib.MpLlmConverterGenerateCpuTfLite(
+          model_type.encode('utf-8'),
+          weight_path.encode('utf-8'),
+          vocab_model_file.encode('utf-8'),
           True,
-          output_tflite_file,
+          output_tflite_file.encode('utf-8'),
       )
+      mediapipe_c_bindings.handle_status(status)
     elif backend == 'gpu':
-      model_ckpt_util.GenerateGpuTfLite(
-          model_type,
-          weight_path,
-          vocab_model_file,
+      status = self._lib.MpLlmConverterGenerateGpuTfLite(
+          model_type.encode('utf-8'),
+          weight_path.encode('utf-8'),
+          vocab_model_file.encode('utf-8'),
           True,
           obfuscate,
-          output_tflite_file,
+          output_tflite_file.encode('utf-8'),
           0 if lora_rank is None else lora_rank,
-          '' if lora_weight_path is None else lora_weight_path,
-          '' if lora_output_tflite_file is None else lora_output_tflite_file,
-          '' if lora_main_model_type is None else lora_main_model_type,
-          '' if image_encoder_file is None else image_encoder_file,
-          '' if image_adapter_file is None else image_adapter_file,
-          '' if submodel_type is None else submodel_type,
+          _safe_encode_str(lora_weight_path),
+          _safe_encode_str(lora_output_tflite_file),
+          _safe_encode_str(lora_main_model_type),
+          _safe_encode_str(image_encoder_file),
+          _safe_encode_str(image_adapter_file),
+          _safe_encode_str(submodel_type),
           True if use_dynamic_ple is None else use_dynamic_ple,
           False if apply_srq is None else apply_srq,
       )
+      mediapipe_c_bindings.handle_status(status)
     else:
-      raise ValueError('Unsupported backend: %s' % backend)
+      raise ValueError(f'Unsupported backend: {backend}')
 
   def convert_bpe_vocab(self, vocab_model_file: str, output_dir: str) -> str:
+    """Converts the BPE vocab model file to SPM format.
+
+    Args:
+      vocab_model_file: The input BPE vocab model file path.
+      output_dir: The output directory to store the SPM vocab model file.
+
+    Returns:
+      The path to the output SPM vocab model file.
+    """
     if not os.path.isdir(vocab_model_file):
       raise ValueError(
           'The input BPE vocab model file path is expected to be a directory'
           ' that contains both tokenizer.json and tokenizer_config.json files.'
       )
     output_vocab_file = os.path.join(output_dir, 'spm.model')
-    model_ckpt_util.ConvertHfTokenizer(vocab_model_file, output_vocab_file)
+    status = self._lib.MpLlmConverterConvertHfTokenizer(
+        vocab_model_file.encode('utf-8'),
+        output_vocab_file.encode('utf-8'),
+    )
+    mediapipe_c_bindings.handle_status(status)
     return output_vocab_file
 
   def sort_layer_info(self, layer_info_file: str) -> None:
@@ -446,8 +514,9 @@ class _LlmConverter:
 
 def convert_checkpoint(config: ConversionConfig) -> None:
   """Converts the checkpoint to tflite file."""
-  converter = _LlmConverter()
-  converter.convert_checkpoint(config)
+  with mediapipe_c_bindings.load_shared_library(_CTYPES_SIGNATURES) as lib:
+    converter = _LlmConverter(lib)
+    converter.convert_checkpoint(config)
 
 
 def quantize_by_actions(
@@ -470,7 +539,8 @@ def quantize_by_actions(
     tensor values + a boolean that indicates whether the tensor values need to
     be packed (only applicable for the 4-bit quantized weights).
   """
-  converter = _LlmConverter()
-  return converter.quantize_by_actions(
-      actions, backend, is_symmetric, use_mse_quant
-  )
+  with mediapipe_c_bindings.load_shared_library(_CTYPES_SIGNATURES) as lib:
+    converter = _LlmConverter(lib)
+    return converter.quantize_by_actions(
+        actions, backend, is_symmetric, use_mse_quant
+    )

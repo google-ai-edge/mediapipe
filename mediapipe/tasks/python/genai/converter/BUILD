@@ -43,7 +43,7 @@ py_library(
         ":converter_base",
         ":converter_factory",
         ":quantization_util",
-        "//mediapipe/python:_framework_bindings",
+        "//mediapipe/tasks/python/core:mediapipe_c_bindings",
         "//third_party/py/jax",
         "@mediapipe_pip_deps_numpy//:pkg",
     ],

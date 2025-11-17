@@ -4,6 +4,7 @@ VERS_1.0 {
     MpFaceDetector*;
     MpLanguageDetector*;
     MpImage*;
+    MpLlmConverter*;
     MpInteractiveSegmenter*;
     MpStringList*;
     MpTextEmbedder*;
