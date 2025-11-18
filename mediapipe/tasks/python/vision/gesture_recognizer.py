@@ -103,15 +103,15 @@ class GestureRecognizerOptionsC(ctypes.Structure):
 
 _CTYPES_SIGNATURES = (
     _CFunction(
-        'gesture_recognizer_create',
+        'MpGestureRecognizerCreate',
         [
             ctypes.POINTER(GestureRecognizerOptionsC),
-            ctypes.POINTER(ctypes.c_char_p),
+            ctypes.POINTER(ctypes.c_void_p),
         ],
-        ctypes.c_void_p,
+        ctypes.c_int,
     ),
     _CFunction(
-        'gesture_recognizer_recognize_image',
+        'MpGestureRecognizerRecognizeImage',
         [
             ctypes.c_void_p,
             ctypes.c_void_p,
@@ -119,12 +119,11 @@ _CTYPES_SIGNATURES = (
             ctypes.POINTER(
                 gesture_recognizer_result_c.GestureRecognizerResultC
             ),
-            ctypes.POINTER(ctypes.c_char_p),
         ],
         ctypes.c_int,
     ),
     _CFunction(
-        'gesture_recognizer_recognize_for_video',
+        'MpGestureRecognizerRecognizeForVideo',
         [
             ctypes.c_void_p,
             ctypes.c_void_p,
@@ -133,31 +132,28 @@ _CTYPES_SIGNATURES = (
             ctypes.POINTER(
                 gesture_recognizer_result_c.GestureRecognizerResultC
             ),
-            ctypes.POINTER(ctypes.c_char_p),
         ],
         ctypes.c_int,
     ),
     _CFunction(
-        'gesture_recognizer_recognize_async',
+        'MpGestureRecognizerRecognizeAsync',
         [
             ctypes.c_void_p,
             ctypes.c_void_p,
             ctypes.POINTER(image_processing_options_c.ImageProcessingOptionsC),
             ctypes.c_int64,
-            ctypes.POINTER(ctypes.c_char_p),
         ],
         ctypes.c_int,
     ),
     _CFunction(
-        'gesture_recognizer_close_result',
+        'MpGestureRecognizerCloseResult',
         [ctypes.POINTER(gesture_recognizer_result_c.GestureRecognizerResultC)],
         None,
     ),
     _CFunction(
-        'gesture_recognizer_close',
+        'MpGestureRecognizerClose',
         [
             ctypes.c_void_p,
-            ctypes.POINTER(ctypes.c_char_p),
         ],
         ctypes.c_int,
     ),
@@ -322,18 +318,11 @@ class GestureRecognizer:
         ),
         result_callback=c_callback,
     )
-    error_msg_ptr = ctypes.c_char_p()
-    recognizer_handle = lib.gesture_recognizer_create(
-        ctypes.byref(options_c), ctypes.byref(error_msg_ptr)
+    recognizer_handle = ctypes.c_void_p()
+    status = lib.MpGestureRecognizerCreate(
+        ctypes.byref(options_c), ctypes.byref(recognizer_handle)
     )
-
-    if not recognizer_handle:
-      if error_msg_ptr.value is not None:
-        error_message = error_msg_ptr.value.decode('utf-8')
-        raise RuntimeError(error_message)
-      else:
-        raise RuntimeError('Failed to create GestureRecognizer object.')
-
+    mediapipe_c_bindings.handle_status(status)
     return cls(
         lib=lib,
         handle=recognizer_handle,
@@ -368,26 +357,21 @@ class GestureRecognizer:
     """
     c_image = image._image_ptr  # pylint: disable=protected-access
     c_result = gesture_recognizer_result_c.GestureRecognizerResultC()
-    error_msg = ctypes.c_char_p()
     options_c = (
         ctypes.byref(image_processing_options.to_ctypes())
         if image_processing_options
         else None
     )
-    status = self._lib.gesture_recognizer_recognize_image(
+    status = self._lib.MpGestureRecognizerRecognizeImage(
         self._handle,
         c_image,
         options_c,
         ctypes.byref(c_result),
-        ctypes.byref(error_msg),
     )
-
-    mediapipe_c_bindings.handle_return_code(
-        status, 'Failed to recognize gesture', error_msg
-    )
+    mediapipe_c_bindings.handle_status(status)
 
     result = _GestureRecognizerResult.from_ctypes(c_result)
-    self._lib.gesture_recognizer_close_result(ctypes.byref(c_result))
+    self._lib.MpGestureRecognizerCloseResult(ctypes.byref(c_result))
     return result
 
   def recognize_for_video(
@@ -420,27 +404,22 @@ class GestureRecognizer:
     """
     c_image = image._image_ptr  # pylint: disable=protected-access
     c_result = gesture_recognizer_result_c.GestureRecognizerResultC()
-    error_msg = ctypes.c_char_p()
     options_c = (
         ctypes.byref(image_processing_options.to_ctypes())
         if image_processing_options
         else None
     )
-    status = self._lib.gesture_recognizer_recognize_for_video(
+    status = self._lib.MpGestureRecognizerRecognizeForVideo(
         self._handle,
         c_image,
         options_c,
         timestamp_ms,
         ctypes.byref(c_result),
-        ctypes.byref(error_msg),
     )
-
-    mediapipe_c_bindings.handle_return_code(
-        status, 'Failed to recognize gesture for video', error_msg
-    )
+    mediapipe_c_bindings.handle_status(status)
 
     result = _GestureRecognizerResult.from_ctypes(c_result)
-    self._lib.gesture_recognizer_close_result(ctypes.byref(c_result))
+    self._lib.MpGestureRecognizerCloseResult(ctypes.byref(c_result))
     return result
 
   def recognize_async(
@@ -480,34 +459,24 @@ class GestureRecognizer:
       gesture recognizer has already processed.
     """
     c_image = image._image_ptr  # pylint: disable=protected-access
-    error_msg = ctypes.c_char_p()
     options_c = (
         ctypes.byref(image_processing_options.to_ctypes())
         if image_processing_options
         else None
     )
-    status = self._lib.gesture_recognizer_recognize_async(
+    status = self._lib.MpGestureRecognizerRecognizeAsync(
         self._handle,
         c_image,
         options_c,
         timestamp_ms,
-        ctypes.byref(error_msg),
     )
-
-    mediapipe_c_bindings.handle_return_code(
-        status, 'Failed to recognize gesture asynchronously', error_msg
-    )
+    mediapipe_c_bindings.handle_status(status)
 
   def close(self):
     """Closes GestureRecognizer."""
     if self._handle:
-      error_msg = ctypes.c_char_p()
-      status = self._lib.gesture_recognizer_close(
-          self._handle, ctypes.byref(error_msg)
-      )
-      mediapipe_c_bindings.handle_return_code(
-          status, 'Failed to close GestureRecognizer', error_msg
-      )
+      status = self._lib.MpGestureRecognizerClose(self._handle)
+      mediapipe_c_bindings.handle_status(status)
       self._handle = None
       self._dispatcher.close()
       self._lib.close()

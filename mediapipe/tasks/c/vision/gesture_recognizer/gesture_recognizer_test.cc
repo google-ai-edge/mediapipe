@@ -16,7 +16,6 @@ limitations under the License.
 #include "mediapipe/tasks/c/vision/gesture_recognizer/gesture_recognizer.h"
 
 #include <cstdint>
-#include <cstdlib>
 #include <memory>
 #include <string>
 
@@ -26,7 +25,6 @@ limitations under the License.
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "mediapipe/framework/deps/file_path.h"
-#include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/c/components/containers/landmark.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
@@ -42,7 +40,6 @@ using ::mediapipe::file::JoinPath;
 using ::mediapipe::tasks::vision::core::CreateEmptyGpuMpImage;
 using ::mediapipe::tasks::vision::core::GetImage;
 using ::mediapipe::tasks::vision::core::ScopedMpImage;
-using ::testing::HasSubstr;
 
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
 constexpr char kModelName[] = "gesture_recognizer.task";
@@ -93,41 +90,29 @@ TEST(GestureRecognizerTest, ImageModeTest) {
 
   const std::string model_path = GetFullPath(kModelName);
   GestureRecognizerOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::IMAGE,
-      /* num_hands= */ 1,
-      /* min_hand_detection_confidence= */ 0.5,
-      /* min_hand_presence_confidence= */ 0.5,
-      /* min_tracking_confidence= */ 0.5,
-      {/* display_names_locale= */ nullptr,
-       /* max_results= */ -1,
-       /* score_threshold= */ 0.0,
-       /* category_allowlist= */ nullptr,
-       /* category_allowlist_count= */ 0,
-       /* category_denylist= */ nullptr,
-       /* category_denylist_count= */ 0},
-      {/* display_names_locale= */ nullptr,
-       /* max_results= */ -1,
-       /* score_threshold= */ 0.0,
-       /* category_allowlist= */ nullptr,
-       /* category_allowlist_count= */ 0,
-       /* category_denylist= */ nullptr,
-       /* category_denylist_count= */ 0}};
+      .base_options = {.model_asset_path = model_path.c_str()},
+      .running_mode = RunningMode::IMAGE,
+      .num_hands = 1,
+      .min_hand_detection_confidence = 0.5,
+      .min_hand_presence_confidence = 0.5,
+      .min_tracking_confidence = 0.5,
+      .canned_gestures_classifier_options = {.max_results = -1,
+                                             .score_threshold = 0.0},
+      .custom_gestures_classifier_options = {.max_results = -1,
+                                             .score_threshold = 0.0}};
 
-  MpGestureRecognizerPtr recognizer =
-      gesture_recognizer_create(&options, /* error_msg */ nullptr);
+  MpGestureRecognizerPtr recognizer;
+  EXPECT_EQ(MpGestureRecognizerCreate(&options, &recognizer), kMpOk);
   ASSERT_NE(recognizer, nullptr);
 
   GestureRecognizerResult result;
-  gesture_recognizer_recognize_image(recognizer, image.get(),
-                                     /* image_processing_options */ nullptr,
-                                     &result,
-                                     /* error_msg */ nullptr);
+  EXPECT_EQ(MpGestureRecognizerRecognizeImage(
+                recognizer, image.get(),
+                /* image_processing_options */ nullptr, &result),
+            kMpOk);
   MatchesGestureRecognizerResult(&result, kScorePrecision, kLandmarkPrecision);
-  gesture_recognizer_close_result(&result);
-  gesture_recognizer_close(recognizer, /* error_msg */ nullptr);
+  MpGestureRecognizerCloseResult(&result);
+  EXPECT_EQ(MpGestureRecognizerClose(recognizer), kMpOk);
 }
 
 TEST(GestureRecognizerTest, VideoModeTest) {
@@ -135,45 +120,33 @@ TEST(GestureRecognizerTest, VideoModeTest) {
 
   const std::string model_path = GetFullPath(kModelName);
   GestureRecognizerOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::VIDEO,
-      /* num_hands= */ 1,
-      /* min_hand_detection_confidence= */ 0.5,
-      /* min_hand_presence_confidence= */ 0.5,
-      /* min_tracking_confidence= */ 0.5,
-      {/* display_names_locale= */ nullptr,
-       /* max_results= */ -1,
-       /* score_threshold= */ 0.0,
-       /* category_allowlist= */ nullptr,
-       /* category_allowlist_count= */ 0,
-       /* category_denylist= */ nullptr,
-       /* category_denylist_count= */ 0},
-      {/* display_names_locale= */ nullptr,
-       /* max_results= */ -1,
-       /* score_threshold= */ 0.0,
-       /* category_allowlist= */ nullptr,
-       /* category_allowlist_count= */ 0,
-       /* category_denylist= */ nullptr,
-       /* category_denylist_count= */ 0}};
+      .base_options = {.model_asset_path = model_path.c_str()},
+      .running_mode = RunningMode::VIDEO,
+      .num_hands = 1,
+      .min_hand_detection_confidence = 0.5,
+      .min_hand_presence_confidence = 0.5,
+      .min_tracking_confidence = 0.5,
+      .canned_gestures_classifier_options = {.max_results = -1,
+                                             .score_threshold = 0.0},
+      .custom_gestures_classifier_options = {.max_results = -1,
+                                             .score_threshold = 0.0}};
 
-  MpGestureRecognizerPtr recognizer =
-      gesture_recognizer_create(&options, /* error_msg */ nullptr);
+  MpGestureRecognizerPtr recognizer;
+  EXPECT_EQ(MpGestureRecognizerCreate(&options, &recognizer), kMpOk);
   ASSERT_NE(recognizer, nullptr);
 
   for (int i = 0; i < kIterations; ++i) {
     GestureRecognizerResult result;
-    gesture_recognizer_recognize_for_video(
-        recognizer, image.get(), /* image_processing_options */ nullptr, i,
-        &result,
-        /* error_msg */ nullptr);
+    EXPECT_EQ(MpGestureRecognizerRecognizeForVideo(
+                  recognizer, image.get(),
+                  /* image_processing_options */ nullptr, i, &result),
+              kMpOk);
 
     MatchesGestureRecognizerResult(&result, kScorePrecision,
                                    kLandmarkPrecision);
-    gesture_recognizer_close_result(&result);
+    MpGestureRecognizerCloseResult(&result);
   }
-  gesture_recognizer_close(recognizer, /* error_msg */ nullptr);
+  EXPECT_EQ(MpGestureRecognizerClose(recognizer), kMpOk);
 }
 
 TEST(GestureRecognizerTest, ImageModeTestWithRotation) {
@@ -181,31 +154,19 @@ TEST(GestureRecognizerTest, ImageModeTestWithRotation) {
 
   const std::string model_path = GetFullPath(kModelName);
   GestureRecognizerOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::IMAGE,
-      /* num_hands= */ 1,
-      /* min_hand_detection_confidence= */ 0.5,
-      /* min_hand_presence_confidence= */ 0.5,
-      /* min_tracking_confidence= */ 0.5,
-      {/* display_names_locale= */ nullptr,
-       /* max_results= */ -1,
-       /* score_threshold= */ 0.0,
-       /* category_allowlist= */ nullptr,
-       /* category_allowlist_count= */ 0,
-       /* category_denylist= */ nullptr,
-       /* category_denylist_count= */ 0},
-      {/* display_names_locale= */ nullptr,
-       /* max_results= */ -1,
-       /* score_threshold= */ 0.0,
-       /* category_allowlist= */ nullptr,
-       /* category_allowlist_count= */ 0,
-       /* category_denylist= */ nullptr,
-       /* category_denylist_count= */ 0}};
+      .base_options = {.model_asset_path = model_path.c_str()},
+      .running_mode = RunningMode::IMAGE,
+      .num_hands = 1,
+      .min_hand_detection_confidence = 0.5,
+      .min_hand_presence_confidence = 0.5,
+      .min_tracking_confidence = 0.5,
+      .canned_gestures_classifier_options = {.max_results = -1,
+                                             .score_threshold = 0.0},
+      .custom_gestures_classifier_options = {.max_results = -1,
+                                             .score_threshold = 0.0}};
 
-  MpGestureRecognizerPtr recognizer =
-      gesture_recognizer_create(&options, /* error_msg */ nullptr);
+  MpGestureRecognizerPtr recognizer;
+  EXPECT_EQ(MpGestureRecognizerCreate(&options, &recognizer), kMpOk);
   ASSERT_NE(recognizer, nullptr);
 
   ImageProcessingOptions image_processing_options;
@@ -213,9 +174,9 @@ TEST(GestureRecognizerTest, ImageModeTestWithRotation) {
   image_processing_options.rotation_degrees = -90;
 
   GestureRecognizerResult result;
-  gesture_recognizer_recognize_image(recognizer, image.get(),
-                                     &image_processing_options, &result,
-                                     /* error_msg */ nullptr);
+  EXPECT_EQ(MpGestureRecognizerRecognizeImage(
+                recognizer, image.get(), &image_processing_options, &result),
+            kMpOk);
 
   ASSERT_EQ(result.gestures_count, 1);
   EXPECT_EQ(std::string{result.gestures[0].categories[0].category_name},
@@ -224,8 +185,8 @@ TEST(GestureRecognizerTest, ImageModeTestWithRotation) {
   EXPECT_EQ(std::string{result.handedness[0].categories[0].category_name},
             "Right");
 
-  gesture_recognizer_close_result(&result);
-  gesture_recognizer_close(recognizer, /* error_msg */ nullptr);
+  MpGestureRecognizerCloseResult(&result);
+  EXPECT_EQ(MpGestureRecognizerClose(recognizer), kMpOk);
 }
 
 // A structure to support LiveStreamModeTest below. This structure holds a
@@ -262,44 +223,31 @@ TEST(GestureRecognizerTest, LiveStreamModeTest) {
   const std::string model_path = GetFullPath(kModelName);
 
   GestureRecognizerOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::LIVE_STREAM,
-      /* num_hands= */ 1,
-      /* min_hand_detection_confidence= */ 0.5,
-      /* min_hand_presence_confidence= */ 0.5,
-      /* min_tracking_confidence= */ 0.5,
-      {/* display_names_locale= */ nullptr,
-       /* max_results= */ -1,
-       /* score_threshold= */ 0.0,
-       /* category_allowlist= */ nullptr,
-       /* category_allowlist_count= */ 0,
-       /* category_denylist= */ nullptr,
-       /* category_denylist_count= */ 0},
-      {/* display_names_locale= */ nullptr,
-       /* max_results= */ -1,
-       /* score_threshold= */ 0.0,
-       /* category_allowlist= */ nullptr,
-       /* category_allowlist_count= */ 0,
-       /* category_denylist= */ nullptr,
-       /* category_denylist_count= */ 0},
-      /* result_callback= */ LiveStreamModeCallback::Fn,
+      .base_options = {.model_asset_path = model_path.c_str()},
+      .running_mode = RunningMode::LIVE_STREAM,
+      .num_hands = 1,
+      .min_hand_detection_confidence = 0.5,
+      .min_hand_presence_confidence = 0.5,
+      .min_tracking_confidence = 0.5,
+      .canned_gestures_classifier_options = {.max_results = -1,
+                                             .score_threshold = 0.0},
+      .custom_gestures_classifier_options = {.max_results = -1,
+                                             .score_threshold = 0.0},
+      .result_callback = LiveStreamModeCallback::Fn,
   };
 
-  MpGestureRecognizerPtr recognizer =
-      gesture_recognizer_create(&options, /* error_msg */ nullptr);
+  MpGestureRecognizerPtr recognizer;
+  EXPECT_EQ(MpGestureRecognizerCreate(&options, &recognizer), kMpOk);
   ASSERT_NE(recognizer, nullptr);
 
   absl::BlockingCounter counter(kIterations);
   LiveStreamModeCallback::blocking_counter = &counter;
 
   for (int i = 0; i < kIterations; ++i) {
-    EXPECT_GE(
-        gesture_recognizer_recognize_async(
-            recognizer, image.get(), /* image_processing_options */ nullptr, i,
-            /* error_msg */ nullptr),
-        0);
+    EXPECT_EQ(
+        MpGestureRecognizerRecognizeAsync(
+            recognizer, image.get(), /* image_processing_options */ nullptr, i),
+        kMpOk);
     // Short sleep so that MediaPipe does not drop frames.
     absl::SleepFor(absl::Milliseconds(kSleepBetweenFramesMilliseconds));
   }
@@ -308,7 +256,7 @@ TEST(GestureRecognizerTest, LiveStreamModeTest) {
   counter.Wait();
   LiveStreamModeCallback::blocking_counter = nullptr;
 
-  gesture_recognizer_close(recognizer, /* error_msg */ nullptr);
+  EXPECT_EQ(MpGestureRecognizerClose(recognizer), kMpOk);
 
   // Due to the flow limiter, the total of outputs might be smaller than the
   // number of iterations.
@@ -319,69 +267,47 @@ TEST(GestureRecognizerTest, LiveStreamModeTest) {
 TEST(GestureRecognizerTest, InvalidArgumentHandling) {
   // It is an error to set neither the asset buffer nor the path.
   GestureRecognizerOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ nullptr},
-      /* running_mode= */ RunningMode::IMAGE,
-      /* num_hands= */ 1,
-      /* min_hand_detection_confidence= */ 0.5,
-      /* min_hand_presence_confidence= */ 0.5,
-      /* min_tracking_confidence= */ 0.5,
-      {},
-      {}};
+      .base_options = {.model_asset_path = nullptr},
+      .running_mode = RunningMode::IMAGE,
+      .num_hands = 1,
+      .min_hand_detection_confidence = 0.5,
+      .min_hand_presence_confidence = 0.5,
+      .min_tracking_confidence = 0.5,
+      .canned_gestures_classifier_options = {},
+      .custom_gestures_classifier_options = {}};
 
-  char* error_msg;
-  MpGestureRecognizerPtr recognizer =
-      gesture_recognizer_create(&options, &error_msg);
+  MpGestureRecognizerPtr recognizer = nullptr;
+  EXPECT_EQ(MpGestureRecognizerCreate(&options, &recognizer),
+            kMpInvalidArgument);
   EXPECT_EQ(recognizer, nullptr);
-
-  EXPECT_THAT(error_msg, HasSubstr("ExternalFile must specify"));
-
-  free(error_msg);
 }
 
 TEST(GestureRecognizerTest, FailedRecognitionHandling) {
   const std::string model_path = GetFullPath(kModelName);
   GestureRecognizerOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::IMAGE,
-      /* num_hands= */ 1,
-      /* min_hand_detection_confidence= */ 0.5,
-      /* min_hand_presence_confidence= */ 0.5,
-      /* min_tracking_confidence= */ 0.5,
-      {/* display_names_locale= */ nullptr,
-       /* max_results= */ -1,
-       /* score_threshold= */ 0.0,
-       /* category_allowlist= */ nullptr,
-       /* category_allowlist_count= */ 0,
-       /* category_denylist= */ nullptr,
-       /* category_denylist_count= */ 0},
-      {/* display_names_locale= */ nullptr,
-       /* max_results= */ -1,
-       /* score_threshold= */ 0.0,
-       /* category_allowlist= */ nullptr,
-       /* category_allowlist_count= */ 0,
-       /* category_denylist= */ nullptr,
-       /* category_denylist_count= */ 0},
+      .base_options = {.model_asset_path = model_path.c_str()},
+      .running_mode = RunningMode::IMAGE,
+      .num_hands = 1,
+      .min_hand_detection_confidence = 0.5,
+      .min_hand_presence_confidence = 0.5,
+      .min_tracking_confidence = 0.5,
+      .canned_gestures_classifier_options = {.max_results = -1,
+                                             .score_threshold = 0.0},
+      .custom_gestures_classifier_options = {.max_results = -1,
+                                             .score_threshold = 0.0},
   };
 
-  MpGestureRecognizerPtr recognizer =
-      gesture_recognizer_create(&options, /* error_msg */
-                                nullptr);
+  MpGestureRecognizerPtr recognizer;
+  EXPECT_EQ(MpGestureRecognizerCreate(&options, &recognizer), kMpOk);
   ASSERT_NE(recognizer, nullptr);
 
   const ScopedMpImage image = CreateEmptyGpuMpImage();
   GestureRecognizerResult result;
-  char* error_msg;
-  gesture_recognizer_recognize_image(recognizer, image.get(),
-                                     /* image_processing_options */ nullptr,
-                                     &result, &error_msg);
-  EXPECT_THAT(error_msg,
-              HasSubstr("GPU input images are currently not supported"));
-  free(error_msg);
-  gesture_recognizer_close(recognizer, /* error_msg */ nullptr);
+  EXPECT_EQ(MpGestureRecognizerRecognizeImage(
+                recognizer, image.get(),
+                /* image_processing_options */ nullptr, &result),
+            kMpInvalidArgument);
+  EXPECT_EQ(MpGestureRecognizerClose(recognizer), kMpOk);
 }
 
 }  // namespace

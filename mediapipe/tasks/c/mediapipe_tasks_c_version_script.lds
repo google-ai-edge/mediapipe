@@ -3,6 +3,7 @@ VERS_1.0 {
     MpAudioClassifier*;
     MpFaceDetector*;
     MpLanguageDetector*;
+    MpGestureRecognizer*;
     MpImage*;
     MpLlmConverter*;
     MpInteractiveSegmenter*;
@@ -10,7 +11,6 @@ VERS_1.0 {
     MpTextEmbedder*;
     MpTextClassifier*;
     face_landmarker_*;
-    gesture_recognizer_*;
     hand_landmarker_*;
     object_detector_*;
     pose_landmarker_*;

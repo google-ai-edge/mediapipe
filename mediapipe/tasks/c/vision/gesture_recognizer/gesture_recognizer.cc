@@ -29,6 +29,7 @@ limitations under the License.
 #include "mediapipe/tasks/c/core/base_options_converter.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
 #include "mediapipe/tasks/c/core/mp_status_converter.h"
+#include "mediapipe/tasks/c/vision/core/common.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/core/image_frame_util.h"
 #include "mediapipe/tasks/c/vision/core/image_processing_options.h"
@@ -66,13 +67,6 @@ using CppGestureRecognizerResult =
 using CppImageProcessingOptions =
     ::mediapipe::tasks::vision::core::ImageProcessingOptions;
 
-int CppProcessError(absl::Status status, char** error_msg) {
-  if (error_msg) {
-    *error_msg = strdup(status.ToString().c_str());
-  }
-  return status.raw_code();
-}
-
 const Image& ToImage(const MpImagePtr mp_image) { return mp_image->image; }
 
 }  // namespace
@@ -91,8 +85,8 @@ void CppConvertToGestureRecognizerOptions(
                                 &out->custom_gestures_classifier_options);
 }
 
-MpGestureRecognizerPtr CppGestureRecognizerCreate(
-    const GestureRecognizerOptions& options, char** error_msg) {
+MpStatus CppMpGestureRecognizerCreate(const GestureRecognizerOptions& options,
+                                      MpGestureRecognizerPtr* recognizer) {
   auto cpp_options =
       std::make_unique<::mediapipe::tasks::vision::gesture_recognizer::
                            GestureRecognizerOptions>();
@@ -108,8 +102,7 @@ MpGestureRecognizerPtr CppGestureRecognizerCreate(
       const absl::Status status = absl::InvalidArgumentError(
           "Provided null pointer to callback function.");
       ABSL_LOG(ERROR) << "Failed to create GestureRecognizer: " << status;
-      CppProcessError(status, error_msg);
-      return nullptr;
+      return ToMpStatus(status);
     }
 
     GestureRecognizerOptions::result_callback_fn result_callback =
@@ -119,6 +112,7 @@ MpGestureRecognizerPtr CppGestureRecognizerCreate(
                           const Image& image, int64_t timestamp) {
           MpImageInternal mp_image({.image = image});
           if (!cpp_result.ok()) {
+            ABSL_LOG(ERROR) << "Recognition failed: " << cpp_result.status();
             result_callback(ToMpStatus(cpp_result.status()), nullptr, &mp_image,
                             timestamp);
             return;
@@ -131,20 +125,21 @@ MpGestureRecognizerPtr CppGestureRecognizerCreate(
         };
   }
 
-  auto recognizer = GestureRecognizer::Create(std::move(cpp_options));
-  if (!recognizer.ok()) {
+  auto cpp_recognizer = GestureRecognizer::Create(std::move(cpp_options));
+  if (!cpp_recognizer.ok()) {
     ABSL_LOG(ERROR) << "Failed to create GestureRecognizer: "
-                    << recognizer.status();
-    CppProcessError(recognizer.status(), error_msg);
-    return nullptr;
+                    << cpp_recognizer.status();
+    return ToMpStatus(cpp_recognizer.status());
   }
-  return new MpGestureRecognizerInternal{.recognizer = std::move(*recognizer)};
+  *recognizer =
+      new MpGestureRecognizerInternal{.recognizer = std::move(*cpp_recognizer)};
+  return kMpOk;
 }
 
-int CppGestureRecognizerRecognize(
+MpStatus CppMpGestureRecognizerRecognizeImage(
     MpGestureRecognizerPtr recognizer, const MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
-    GestureRecognizerResult* result, char** error_msg) {
+    GestureRecognizerResult* result) {
   std::optional<CppImageProcessingOptions> cpp_image_processing_options;
   if (image_processing_options) {
     CppImageProcessingOptions options;
@@ -156,16 +151,16 @@ int CppGestureRecognizerRecognize(
       cpp_recognizer->Recognize(ToImage(image), cpp_image_processing_options);
   if (!cpp_result.ok()) {
     ABSL_LOG(ERROR) << "Recognition failed: " << cpp_result.status();
-    return CppProcessError(cpp_result.status(), error_msg);
+    return ToMpStatus(cpp_result.status());
   }
   CppConvertToGestureRecognizerResult(*cpp_result, result);
-  return 0;
+  return kMpOk;
 }
 
-int CppGestureRecognizerRecognizeForVideo(
+MpStatus CppMpGestureRecognizerRecognizeForVideo(
     MpGestureRecognizerPtr recognizer, const MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
-    int64_t timestamp_ms, GestureRecognizerResult* result, char** error_msg) {
+    int64_t timestamp_ms, GestureRecognizerResult* result) {
   std::optional<CppImageProcessingOptions> cpp_image_processing_options;
   if (image_processing_options) {
     CppImageProcessingOptions options;
@@ -177,16 +172,16 @@ int CppGestureRecognizerRecognizeForVideo(
       ToImage(image), timestamp_ms, cpp_image_processing_options);
   if (!cpp_result.ok()) {
     ABSL_LOG(ERROR) << "Recognition failed: " << cpp_result.status();
-    return CppProcessError(cpp_result.status(), error_msg);
+    return ToMpStatus(cpp_result.status());
   }
   CppConvertToGestureRecognizerResult(*cpp_result, result);
-  return 0;
+  return kMpOk;
 }
 
-int CppGestureRecognizerRecognizeAsync(
+MpStatus CppMpGestureRecognizerRecognizeAsync(
     MpGestureRecognizerPtr recognizer, const MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
-    int64_t timestamp_ms, char** error_msg) {
+    int64_t timestamp_ms) {
   std::optional<CppImageProcessingOptions> cpp_image_processing_options;
   if (image_processing_options) {
     CppImageProcessingOptions options;
@@ -199,75 +194,72 @@ int CppGestureRecognizerRecognizeAsync(
   if (!cpp_result.ok()) {
     ABSL_LOG(ERROR) << "Data preparation for the gesture recognition failed: "
                     << cpp_result;
-    return CppProcessError(cpp_result, error_msg);
+    return ToMpStatus(cpp_result);
   }
-  return 0;
+  return kMpOk;
 }
 
-void CppGestureRecognizerCloseResult(GestureRecognizerResult* result) {
+void CppMpGestureRecognizerCloseResult(GestureRecognizerResult* result) {
   CppCloseGestureRecognizerResult(result);
 }
 
-int CppGestureRecognizerClose(MpGestureRecognizerPtr recognizer,
-                              char** error_msg) {
+MpStatus CppMpGestureRecognizerClose(MpGestureRecognizerPtr recognizer) {
   auto cpp_recognizer = recognizer->recognizer.get();
   auto result = cpp_recognizer->Close();
   if (!result.ok()) {
     ABSL_LOG(ERROR) << "Failed to close GestureRecognizer: " << result;
-    return CppProcessError(result, error_msg);
+    return ToMpStatus(result);
   }
   delete recognizer;
-  return 0;
+  return kMpOk;
 }
 
 }  // namespace mediapipe::tasks::c::vision::gesture_recognizer
 
 extern "C" {
 
-MP_EXPORT MpGestureRecognizerPtr gesture_recognizer_create(
-    struct GestureRecognizerOptions* options, char** error_msg) {
+MP_EXPORT MpStatus
+MpGestureRecognizerCreate(const struct GestureRecognizerOptions* options,
+                          MpGestureRecognizerPtr* recognizer) {
   return mediapipe::tasks::c::vision::gesture_recognizer::
-      CppGestureRecognizerCreate(*options, error_msg);
+      CppMpGestureRecognizerCreate(*options, recognizer);
 }
 
-MP_EXPORT int gesture_recognizer_recognize_image(
+MP_EXPORT MpStatus MpGestureRecognizerRecognizeImage(
     MpGestureRecognizerPtr recognizer, MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
-    GestureRecognizerResult* result, char** error_msg) {
-  return mediapipe::tasks::c::vision::gesture_recognizer::
-      CppGestureRecognizerRecognize(recognizer, image, image_processing_options,
-                                    result, error_msg);
-}
-
-MP_EXPORT int gesture_recognizer_recognize_for_video(
-    MpGestureRecognizerPtr recognizer, MpImagePtr image,
-    const ImageProcessingOptions* image_processing_options,
-    int64_t timestamp_ms, GestureRecognizerResult* result, char** error_msg) {
-  return mediapipe::tasks::c::vision::gesture_recognizer::
-      CppGestureRecognizerRecognizeForVideo(recognizer, image,
-                                            image_processing_options,
-                                            timestamp_ms, result, error_msg);
-}
-
-MP_EXPORT int gesture_recognizer_recognize_async(
-    MpGestureRecognizerPtr recognizer, MpImagePtr image,
-    const ImageProcessingOptions* image_processing_options,
-    int64_t timestamp_ms, char** error_msg) {
-  return mediapipe::tasks::c::vision::gesture_recognizer::
-      CppGestureRecognizerRecognizeAsync(
-          recognizer, image, image_processing_options, timestamp_ms, error_msg);
-}
-
-MP_EXPORT void gesture_recognizer_close_result(
     GestureRecognizerResult* result) {
-  mediapipe::tasks::c::vision::gesture_recognizer::
-      CppGestureRecognizerCloseResult(result);
+  return mediapipe::tasks::c::vision::gesture_recognizer::
+      CppMpGestureRecognizerRecognizeImage(recognizer, image,
+                                           image_processing_options, result);
 }
 
-MP_EXPORT int gesture_recognizer_close(MpGestureRecognizerPtr recognizer,
-                                       char** error_ms) {
+MP_EXPORT MpStatus MpGestureRecognizerRecognizeForVideo(
+    MpGestureRecognizerPtr recognizer, MpImagePtr image,
+    const ImageProcessingOptions* image_processing_options,
+    int64_t timestamp_ms, GestureRecognizerResult* result) {
   return mediapipe::tasks::c::vision::gesture_recognizer::
-      CppGestureRecognizerClose(recognizer, error_ms);
+      CppMpGestureRecognizerRecognizeForVideo(
+          recognizer, image, image_processing_options, timestamp_ms, result);
+}
+
+MP_EXPORT MpStatus MpGestureRecognizerRecognizeAsync(
+    MpGestureRecognizerPtr recognizer, MpImagePtr image,
+    const ImageProcessingOptions* image_processing_options,
+    int64_t timestamp_ms) {
+  return mediapipe::tasks::c::vision::gesture_recognizer::
+      CppMpGestureRecognizerRecognizeAsync(
+          recognizer, image, image_processing_options, timestamp_ms);
+}
+
+MP_EXPORT void MpGestureRecognizerCloseResult(GestureRecognizerResult* result) {
+  mediapipe::tasks::c::vision::gesture_recognizer::
+      CppMpGestureRecognizerCloseResult(result);
+}
+
+MP_EXPORT MpStatus MpGestureRecognizerClose(MpGestureRecognizerPtr recognizer) {
+  return mediapipe::tasks::c::vision::gesture_recognizer::
+      CppMpGestureRecognizerClose(recognizer);
 }
 
 }  // extern "C"
