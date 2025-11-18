@@ -22,7 +22,7 @@
 namespace mediapipe {
 
 // The AudioDecoderCalculator decodes an audio stream of the media file. It
-// produces two output streams contain audio packets and the header infomation.
+// produces two output streams contain audio packets and the header information.
 //
 // Output Streams:
 //   AUDIO: Output audio frames (Matrix).
