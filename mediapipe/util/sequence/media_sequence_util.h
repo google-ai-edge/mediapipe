@@ -102,7 +102,17 @@
 namespace mediapipe {
 namespace mediasequence {
 
-// Returns true if the key is in the sequence's context.
+// Returns true if the key is in the sequence's context. To be used by vector
+// elements who already provide a GetMyFeatureSize() function that can be used
+// to check if the feature value is empty.
+inline const bool HasContextKey(const tensorflow::SequenceExample& sequence,
+                                const std::string& key) {
+  return (sequence.context().feature().find(key) !=
+          sequence.context().feature().end());
+}
+
+// Returns true if the key is in the sequence's context and the feature has at
+// least one value.
 inline const bool HasContext(const tensorflow::SequenceExample& sequence,
                              const std::string& key) {
   const auto it = sequence.context().feature().find(key);
@@ -468,7 +478,7 @@ void AddBytesContainer(const std::string& key, const TContainer& bytes_list,
   inline const bool CONCAT_STR2(Has, name)(                                    \
       const std::string& prefix,                                               \
       const tensorflow::SequenceExample& sequence) {                           \
-    return HasContext(sequence, merge_prefix(prefix, key));                    \
+    return HasContextKey(sequence, merge_prefix(prefix, key));                 \
   }                                                                            \
   inline const int CONCAT_STR3(Get, name, Size)(                               \
       const std::string& prefix,                                               \
@@ -572,7 +582,7 @@ void AddBytesContainer(const std::string& key, const TContainer& bytes_list,
   inline const bool CONCAT_STR2(Has, name)(                                   \
       const std::string& prefix,                                              \
       const tensorflow::SequenceExample& sequence) {                          \
-    return HasContext(sequence, merge_prefix(prefix, key));                   \
+    return HasContextKey(sequence, merge_prefix(prefix, key));                \
   }                                                                           \
   inline const int CONCAT_STR3(Get, name, Size)(                              \
       const std::string& prefix,                                              \
@@ -676,7 +686,7 @@ void AddBytesContainer(const std::string& key, const TContainer& bytes_list,
   inline const bool CONCAT_STR2(Has, name)(                                   \
       const std::string& prefix,                                              \
       const tensorflow::SequenceExample& sequence) {                          \
-    return HasContext(sequence, merge_prefix(prefix, key));                   \
+    return HasContextKey(sequence, merge_prefix(prefix, key));                \
   }                                                                           \
   inline const int CONCAT_STR3(Get, name, Size)(                              \
       const std::string& prefix,                                              \
