@@ -99,13 +99,11 @@ absl::StatusOr<TextModelType::ModelType> GetModelType(
       *(*model_resources.GetTfLiteModel()->subgraphs())[0];
   bool all_int32_tensors =
       absl::c_all_of(*model_graph.inputs(), [&model_graph](int i) {
-        return (*model_graph.tensors())[i] -> type() ==
-                                                  tflite::TensorType_INT32;
+        return (*model_graph.tensors())[i]->type() == tflite::TensorType_INT32;
       });
   bool all_string_tensors =
       absl::c_all_of(*model_graph.inputs(), [&model_graph](int i) {
-        return (*model_graph.tensors())[i] -> type() ==
-                                                  tflite::TensorType_STRING;
+        return (*model_graph.tensors())[i]->type() == tflite::TensorType_STRING;
       });
   if (!all_int32_tensors && !all_string_tensors) {
     return CreateStatusWithPayload(

@@ -163,15 +163,17 @@ void CallFrameDelegate(void* wrapperVoid, const std::string& streamName,
                       @"CVPixelBufferUnlockBaseAddress failed: %d", error);
 
         if ([wrapper.delegate
-                respondsToSelector:@selector
-                (mediapipeGraph:didOutputPixelBuffer:fromStream:timestamp:)]) {
+                respondsToSelector:@selector(
+                                       mediapipeGraph:didOutputPixelBuffer:
+                                       fromStream:timestamp:)]) {
           [wrapper.delegate mediapipeGraph:wrapper
                       didOutputPixelBuffer:pixelBuffer
                                 fromStream:streamName
                                  timestamp:packet.Timestamp()];
         } else if ([wrapper.delegate
-                       respondsToSelector:@selector
-                       (mediapipeGraph:didOutputPixelBuffer:fromStream:)]) {
+                       respondsToSelector:
+                           @selector(mediapipeGraph:didOutputPixelBuffer:
+                                     fromStream:)]) {
           [wrapper.delegate mediapipeGraph:wrapper
                       didOutputPixelBuffer:pixelBuffer
                                 fromStream:streamName];
@@ -191,15 +193,16 @@ void CallFrameDelegate(void* wrapperVoid, const std::string& streamName,
       else
         pixelBuffer = packet.Get<mediapipe::Image>().GetCVPixelBufferRef();
       if ([wrapper.delegate
-              respondsToSelector:@selector
-              (mediapipeGraph:didOutputPixelBuffer:fromStream:timestamp:)]) {
+              respondsToSelector:@selector(mediapipeGraph:didOutputPixelBuffer:
+                                           fromStream:timestamp:)]) {
         [wrapper.delegate mediapipeGraph:wrapper
                     didOutputPixelBuffer:pixelBuffer
                               fromStream:streamName
                                timestamp:packet.Timestamp()];
       } else if ([wrapper.delegate
-                     respondsToSelector:@selector
-                     (mediapipeGraph:didOutputPixelBuffer:fromStream:)]) {
+                     respondsToSelector:@selector(
+                                            mediapipeGraph:didOutputPixelBuffer:
+                                            fromStream:)]) {
         [wrapper.delegate mediapipeGraph:wrapper
                     didOutputPixelBuffer:pixelBuffer
                               fromStream:streamName];
