@@ -24,8 +24,8 @@ py_library(
         "audio_classifier.py",
     ],
     deps = [
+        "//mediapipe/tasks/python/audio/core:audio_record",
         "//mediapipe/tasks/python/audio/core:audio_task_running_mode",
-        "//mediapipe/tasks/python/audio/core:base_audio_task_api",
         "//mediapipe/tasks/python/components/containers:audio_data",
         "//mediapipe/tasks/python/components/containers:audio_data_c",
         "//mediapipe/tasks/python/components/containers:classification_result",

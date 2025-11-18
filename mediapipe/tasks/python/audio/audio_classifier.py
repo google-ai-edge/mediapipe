@@ -17,8 +17,8 @@ import ctypes
 import dataclasses
 from typing import Callable, Optional
 
+from mediapipe.tasks.python.audio.core import audio_record
 from mediapipe.tasks.python.audio.core import audio_task_running_mode
-from mediapipe.tasks.python.audio.core import base_audio_task_api
 from mediapipe.tasks.python.components.containers import audio_data
 from mediapipe.tasks.python.components.containers import audio_data_c
 from mediapipe.tasks.python.components.containers import classification_result
@@ -169,7 +169,7 @@ class AudioClassifierOptions:
   result_callback: Optional[Callable[[AudioClassifierResult, int], None]] = None
 
 
-class AudioClassifier(base_audio_task_api.BaseAudioTaskApi):
+class AudioClassifier:
   """Class that performs audio classification on audio data.
 
   This API expects a TFLite model with mandatory TFLite Model Metadata that
@@ -407,6 +407,34 @@ class AudioClassifier(base_audio_task_api.BaseAudioTaskApi):
         timestamp_ms,
     )
     mediapipe_c_bindings.handle_status(status)
+
+  def create_audio_record(
+      self, num_channels: int, sample_rate: int, required_input_buffer_size: int
+  ) -> audio_record.AudioRecord:
+    """Creates an AudioRecord instance to record audio stream.
+
+    The returned AudioRecord instance is initialized and client needs to call
+    the appropriate method to start recording.
+
+    Note that MediaPipe Audio tasks will up/down sample automatically to fit the
+    sample rate required by the model. The default sample rate of the MediaPipe
+    pretrained audio model, Yamnet is 16kHz.
+
+    Args:
+      num_channels: The number of audio channels.
+      sample_rate: The audio sample rate.
+      required_input_buffer_size: The required input buffer size in number of
+        float elements.
+
+    Returns:
+      An AudioRecord instance.
+
+    Raises:
+      ValueError: If there's a problem creating the AudioRecord instance.
+    """
+    return audio_record.AudioRecord(
+        num_channels, sample_rate, required_input_buffer_size
+    )
 
   def close(self):
     """Shuts down the MediaPipe task instance."""

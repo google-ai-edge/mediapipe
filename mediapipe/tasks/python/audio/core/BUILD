@@ -31,18 +31,3 @@ py_library(
         "@mediapipe_pip_deps_numpy//:pkg",
     ],
 )
-
-py_library(
-    name = "base_audio_task_api",
-    srcs = [
-        "base_audio_task_api.py",
-    ],
-    deps = [
-        ":audio_record",
-        ":audio_task_running_mode",
-        "//mediapipe/framework:calculator_py_pb2",
-        "//mediapipe/python:_framework_bindings",
-        "//mediapipe/python:packet_creator",
-        "//mediapipe/tasks/python/core:optional_dependencies",
-    ],
-)
