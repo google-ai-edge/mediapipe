@@ -51,7 +51,7 @@ const ROI_IN_STREAM = 'roi_in';
 const CONFIDENCE_MASKS_STREAM = 'confidence_masks';
 const CATEGORY_MASK_STREAM = 'category_mask';
 const QUALITY_SCORES_STREAM = 'quality_scores';
-const IMAGEA_SEGMENTER_GRAPH =
+const IMAGE_SEGMENTER_GRAPH =
   'mediapipe.tasks.vision.interactive_segmenter.InteractiveSegmenterGraph';
 const DEFAULT_OUTPUT_CATEGORY_MASK = false;
 const DEFAULT_OUTPUT_CONFIDENCE_MASKS = true;
@@ -359,7 +359,7 @@ export class InteractiveSegmenter extends VisionTaskRunner {
     );
 
     const segmenterNode = new CalculatorGraphConfig.Node();
-    segmenterNode.setCalculator(IMAGEA_SEGMENTER_GRAPH);
+    segmenterNode.setCalculator(IMAGE_SEGMENTER_GRAPH);
     segmenterNode.addInputStream('IMAGE:' + IMAGE_IN_STREAM);
     segmenterNode.addInputStream('ROI:' + ROI_IN_STREAM);
     segmenterNode.addInputStream('NORM_RECT:' + NORM_RECT_IN_STREAM);
