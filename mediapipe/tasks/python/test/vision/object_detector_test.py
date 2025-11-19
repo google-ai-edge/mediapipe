@@ -151,9 +151,7 @@ class ObjectDetectorTest(parameterized.TestCase):
       self.assertIsInstance(detector, _ObjectDetector)
 
   def test_create_from_options_fails_with_invalid_model_path(self):
-    with self.assertRaisesRegex(
-        RuntimeError, 'Unable to open file at /path/to/invalid/model.tflite'
-    ):
+    with self.assertRaisesRegex(FileNotFoundError, 'Not found'):
       base_options = _BaseOptions(
           model_asset_path='/path/to/invalid/model.tflite'
       )
@@ -296,9 +294,8 @@ class ObjectDetectorTest(parameterized.TestCase):
   def test_combined_allowlist_and_denylist(self):
     # Fails with combined allowlist and denylist
     with self.assertRaisesRegex(
-        RuntimeError,
-        r'`category_allowlist` and `category_denylist` are mutually '
-        r'exclusive options.',
+        ValueError,
+        'Invalid argument',
     ):
       options = _ObjectDetectorOptions(
           base_options=_BaseOptions(model_asset_path=self.model_path),
@@ -363,9 +360,7 @@ class ObjectDetectorTest(parameterized.TestCase):
         running_mode=_RUNNING_MODE.IMAGE,
     )
     with _ObjectDetector.create_from_options(options) as detector:
-      with self.assertRaisesRegex(
-          RuntimeError, r'not initialized with the video mode'
-      ):
+      with self.assertRaisesRegex(ValueError, 'Invalid argument'):
         detector.detect_for_video(self.test_image, 0)
 
   def test_calling_detect_async_in_image_mode(self):
@@ -374,9 +369,7 @@ class ObjectDetectorTest(parameterized.TestCase):
         running_mode=_RUNNING_MODE.IMAGE,
     )
     with _ObjectDetector.create_from_options(options) as detector:
-      with self.assertRaisesRegex(
-          RuntimeError, r'not initialized with the live stream mode'
-      ):
+      with self.assertRaisesRegex(ValueError, 'Invalid argument'):
         detector.detect_async(self.test_image, 0)
 
   def test_calling_detect_in_video_mode(self):
@@ -385,9 +378,7 @@ class ObjectDetectorTest(parameterized.TestCase):
         running_mode=_RUNNING_MODE.VIDEO,
     )
     with _ObjectDetector.create_from_options(options) as detector:
-      with self.assertRaisesRegex(
-          RuntimeError, r'not initialized with the image mode'
-      ):
+      with self.assertRaisesRegex(ValueError, 'Invalid argument'):
         detector.detect(self.test_image)
 
   def test_calling_detect_async_in_video_mode(self):
@@ -396,9 +387,7 @@ class ObjectDetectorTest(parameterized.TestCase):
         running_mode=_RUNNING_MODE.VIDEO,
     )
     with _ObjectDetector.create_from_options(options) as detector:
-      with self.assertRaisesRegex(
-          RuntimeError, r'not initialized with the live stream mode'
-      ):
+      with self.assertRaisesRegex(ValueError, 'Invalid argument'):
         detector.detect_async(self.test_image, 0)
 
   def test_detect_for_video_with_out_of_order_timestamp(self):
@@ -408,9 +397,7 @@ class ObjectDetectorTest(parameterized.TestCase):
     )
     with _ObjectDetector.create_from_options(options) as detector:
       unused_result = detector.detect_for_video(self.test_image, 1)
-      with self.assertRaisesRegex(
-          RuntimeError, r'Input timestamp must be monotonically increasing'
-      ):
+      with self.assertRaisesRegex(ValueError, 'Invalid argument'):
         detector.detect_for_video(self.test_image, 0)
 
   # TODO: Tests how `detect_for_video` handles the temporal data
@@ -433,9 +420,7 @@ class ObjectDetectorTest(parameterized.TestCase):
         result_callback=mock.MagicMock(),
     )
     with _ObjectDetector.create_from_options(options) as detector:
-      with self.assertRaisesRegex(
-          RuntimeError, r'not initialized with the image mode'
-      ):
+      with self.assertRaisesRegex(ValueError, 'Invalid argument'):
         detector.detect(self.test_image)
 
   def test_calling_detect_for_video_in_live_stream_mode(self):
@@ -445,9 +430,7 @@ class ObjectDetectorTest(parameterized.TestCase):
         result_callback=mock.MagicMock(),
     )
     with _ObjectDetector.create_from_options(options) as detector:
-      with self.assertRaisesRegex(
-          RuntimeError, r'not initialized with the video mode'
-      ):
+      with self.assertRaisesRegex(ValueError, 'Invalid argument'):
         detector.detect_for_video(self.test_image, 0)
 
   def test_detect_async_calls_with_illegal_timestamp(self):
@@ -459,9 +442,7 @@ class ObjectDetectorTest(parameterized.TestCase):
     )
     with _ObjectDetector.create_from_options(options) as detector:
       detector.detect_async(self.test_image, 100)
-      with self.assertRaisesRegex(
-          RuntimeError, r'Input timestamp must be monotonically increasing'
-      ):
+      with self.assertRaisesRegex(ValueError, 'Invalid argument'):
         detector.detect_async(self.test_image, 0)
 
   @parameterized.parameters(

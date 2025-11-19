@@ -92,6 +92,12 @@ cc_binary(
     linkopts = [
         "-Wl,-soname=libobject_detector.so",
         "-fvisibility=hidden",
+        "-Wl,--export-dynamic-symbol=MpObjectDetectorCreate",
+        "-Wl,--export-dynamic-symbol=MpObjectDetectorDetectImage",
+        "-Wl,--export-dynamic-symbol=MpObjectDetectorDetectForVideo",
+        "-Wl,--export-dynamic-symbol=MpObjectDetectorDetectAsync",
+        "-Wl,--export-dynamic-symbol=MpObjectDetectorCloseResult",
+        "-Wl,--export-dynamic-symbol=MpObjectDetectorClose",
     ],
     linkshared = True,
     tags = [
@@ -109,6 +115,12 @@ cc_binary(
     linkopts = [
         "-Wl,-install_name,libobject_detector.dylib",
         "-fvisibility=hidden",
+        "-Wl,-export_symbol,_MpObjectDetectorCreate",
+        "-Wl,-export_symbol,_MpObjectDetectorDetectImage",
+        "-Wl,-export_symbol,_MpObjectDetectorDetectForVideo",
+        "-Wl,-export_symbol,_MpObjectDetectorDetectAsync",
+        "-Wl,-export_symbol,_MpObjectDetectorCloseResult",
+        "-Wl,-export_symbol,_MpObjectDetectorClose",
     ],
     linkshared = True,
     tags = [

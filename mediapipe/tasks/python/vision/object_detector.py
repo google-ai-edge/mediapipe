@@ -112,15 +112,15 @@ class ObjectDetectorOptionsC(ctypes.Structure):
 
 _CTYPES_SIGNATURES = (
     _CFunction(
-        'object_detector_create',
+        'MpObjectDetectorCreate',
         [
             ctypes.POINTER(ObjectDetectorOptionsC),
-            ctypes.POINTER(ctypes.c_char_p),
+            ctypes.POINTER(ctypes.c_void_p),
         ],
-        ctypes.c_void_p,
+        ctypes.c_int32,
     ),
     _CFunction(
-        'object_detector_detect_image',
+        'MpObjectDetectorDetectImage',
         [
             ctypes.c_void_p,
             ctypes.c_void_p,
@@ -128,12 +128,11 @@ _CTYPES_SIGNATURES = (
                 image_processing_options_c_module.ImageProcessingOptionsC
             ),
             ctypes.POINTER(detections_c_module.DetectionResultC),
-            ctypes.POINTER(ctypes.c_char_p),
         ],
-        ctypes.c_int,
+        ctypes.c_int32,
     ),
     _CFunction(
-        'object_detector_detect_for_video',
+        'MpObjectDetectorDetectForVideo',
         [
             ctypes.c_void_p,
             ctypes.c_void_p,
@@ -142,12 +141,11 @@ _CTYPES_SIGNATURES = (
             ),
             ctypes.c_int64,
             ctypes.POINTER(detections_c_module.DetectionResultC),
-            ctypes.POINTER(ctypes.c_char_p),
         ],
-        ctypes.c_int,
+        ctypes.c_int32,
     ),
     _CFunction(
-        'object_detector_detect_async',
+        'MpObjectDetectorDetectAsync',
         [
             ctypes.c_void_p,
             ctypes.c_void_p,
@@ -155,22 +153,20 @@ _CTYPES_SIGNATURES = (
                 image_processing_options_c_module.ImageProcessingOptionsC
             ),
             ctypes.c_int64,
-            ctypes.POINTER(ctypes.c_char_p),
         ],
-        ctypes.c_int,
+        ctypes.c_int32,
     ),
     _CFunction(
-        'object_detector_close_result',
+        'MpObjectDetectorCloseResult',
         [ctypes.POINTER(detections_c_module.DetectionResultC)],
         None,
     ),
     _CFunction(
-        'object_detector_close',
+        'MpObjectDetectorClose',
         [
             ctypes.c_void_p,
-            ctypes.POINTER(ctypes.c_char_p),
         ],
-        ctypes.c_int,
+        ctypes.c_int32,
     ),
 )
 
@@ -363,18 +359,12 @@ class ObjectDetector:
         result_callback=c_callback,
     )
 
-    error_msg_ptr = ctypes.c_char_p()
-    detector_handle = lib.object_detector_create(
+    detector_handle = ctypes.c_void_p()
+    status = lib.MpObjectDetectorCreate(
         ctypes.byref(ctypes_options),
-        ctypes.byref(error_msg_ptr),
+        ctypes.byref(detector_handle),
     )
-
-    if not detector_handle:
-      if error_msg_ptr.value is not None:
-        error_message = error_msg_ptr.value.decode('utf-8')
-        raise RuntimeError(error_message)
-      else:
-        raise RuntimeError('Failed to create ObjectDetector object.')
+    mediapipe_c_bindings_c_module.handle_status(status)
 
     return ObjectDetector(
         lib=lib,
@@ -411,27 +401,22 @@ class ObjectDetector:
 
     c_image = image._image_ptr  # pylint: disable=protected-access
     c_result = detections_c_module.DetectionResultC()
-    error_msg_ptr = ctypes.c_char_p()
 
     c_image_processing_options = (
         ctypes.byref(image_processing_options.to_ctypes())
         if image_processing_options
         else None
     )
-    status = self._lib.object_detector_detect_image(
+    status = self._lib.MpObjectDetectorDetectImage(
         self._handle,
         c_image,
         c_image_processing_options,
         ctypes.byref(c_result),
-        ctypes.byref(error_msg_ptr),
     )
-
-    self._handle_status(
-        status, error_msg_ptr, 'Failed to detect objects from image.'
-    )
+    mediapipe_c_bindings_c_module.handle_status(status)
 
     py_result = ObjectDetectorResult.from_ctypes(c_result)
-    self._lib.object_detector_close_result(ctypes.byref(c_result))
+    self._lib.MpObjectDetectorCloseResult(ctypes.byref(c_result))
     return py_result
 
   def detect_for_video(
@@ -464,28 +449,23 @@ class ObjectDetector:
     """
     c_image = image._image_ptr  # pylint: disable=protected-access
     c_result = detections_c_module.DetectionResultC()
-    error_msg_ptr = ctypes.c_char_p()
 
     c_image_processing_options = (
         ctypes.byref(image_processing_options.to_ctypes())
         if image_processing_options
         else None
     )
-    status = self._lib.object_detector_detect_for_video(
+    status = self._lib.MpObjectDetectorDetectForVideo(
         self._handle,
         c_image,
         c_image_processing_options,
         timestamp_ms,
         ctypes.byref(c_result),
-        ctypes.byref(error_msg_ptr),
     )
-
-    self._handle_status(
-        status, error_msg_ptr, 'Failed to detect objects from video.'
-    )
+    mediapipe_c_bindings_c_module.handle_status(status)
 
     py_result = ObjectDetectorResult.from_ctypes(c_result)
-    self._lib.object_detector_close_result(ctypes.byref(c_result))
+    self._lib.MpObjectDetectorCloseResult(ctypes.byref(c_result))
     return py_result
 
   def detect_async(
@@ -525,48 +505,28 @@ class ObjectDetector:
       RuntimeError: If object detection failed to run.
     """
     c_image = image._image_ptr  # pylint: disable=protected-access
-    error_msg_ptr = ctypes.c_char_p()
 
     c_image_processing_options = (
         ctypes.byref(image_processing_options.to_ctypes())
         if image_processing_options
         else None
     )
-    status = self._lib.object_detector_detect_async(
+    status = self._lib.MpObjectDetectorDetectAsync(
         self._handle,
         c_image,
         c_image_processing_options,
         timestamp_ms,
-        ctypes.byref(error_msg_ptr),
     )
-
-    self._handle_status(
-        status, error_msg_ptr, 'Failed to detect objects asynchronously.'
-    )
+    mediapipe_c_bindings_c_module.handle_status(status)
 
   def close(self):
     """Shuts down the MediaPipe task instance."""
     if self._handle:
-      error_msg_ptr = ctypes.c_char_p()
-      ret_code = self._lib.object_detector_close(
-          self._handle, ctypes.byref(error_msg_ptr)
-      )
-      self._handle_status(
-          ret_code, error_msg_ptr, 'Failed to close ObjectDetector object.'
-      )
+      ret_code = self._lib.MpObjectDetectorClose(self._handle)
+      mediapipe_c_bindings_c_module.handle_status(ret_code)
       self._handle = None
       self._dispatcher.close()
       self._lib.close()
-
-  def _handle_status(
-      self, status: int, error_msg_ptr: ctypes.c_char_p, default_error_msg: str
-  ):
-    if status != 0:
-      if error_msg_ptr.value is not None:
-        error_message = error_msg_ptr.value.decode('utf-8')
-        raise RuntimeError(error_message)
-      else:
-        raise RuntimeError(default_error_msg)
 
   def __enter__(self):
     """Returns `self` upon entering the runtime context."""

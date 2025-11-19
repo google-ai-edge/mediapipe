@@ -9,10 +9,10 @@ VERS_1.0 {
     MpInteractiveSegmenter*;
     MpStringList*;
     MpTextEmbedder*;
+    MpObjectDetector*;
     MpTextClassifier*;
     face_landmarker_*;
     hand_landmarker_*;
-    object_detector_*;
     pose_landmarker_*;
   local:
     *;
