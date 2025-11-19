@@ -127,21 +127,22 @@ TEST(HandLandmarkerTest, ImageModeTest) {
       /* min_tracking_confidence= */ 0.5,
   };
 
-  MpHandLandmarkerPtr landmarker =
-      hand_landmarker_create(&options, /* error_msg */ nullptr);
+  MpHandLandmarkerPtr landmarker;
+  EXPECT_EQ(MpHandLandmarkerCreate(&options, &landmarker), kMpOk);
   EXPECT_NE(landmarker, nullptr);
 
   HandLandmarkerResult result;
-  hand_landmarker_detect_image(landmarker, image.get(),
-                               /* image_processing_options= */ nullptr, &result,
-                               /* error_msg */ nullptr);
+  EXPECT_EQ(MpHandLandmarkerDetectImage(landmarker, image.get(),
+                                        /* image_processing_options= */ nullptr,
+                                        &result),
+            kMpOk);
 
   LandmarksDetectionResult expected_landmarks =
       GetLandmarksDetectionResult(kPointingUpLandmarksFilename);
   ExpectHandLandmarkerResultsCorrect(&result, expected_landmarks,
                                      kLandmarkPrecision, kScorePrecision);
-  hand_landmarker_close_result(&result);
-  hand_landmarker_close(landmarker, /* error_msg */ nullptr);
+  MpHandLandmarkerCloseResult(&result);
+  EXPECT_EQ(MpHandLandmarkerClose(landmarker), kMpOk);
 }
 
 TEST(HandLandmarkerTest, ImageModeWithRotationTest) {
@@ -159,8 +160,8 @@ TEST(HandLandmarkerTest, ImageModeWithRotationTest) {
       /* min_tracking_confidence= */ 0.5,
   };
 
-  MpHandLandmarkerPtr landmarker =
-      hand_landmarker_create(&options, /* error_msg */ nullptr);
+  MpHandLandmarkerPtr landmarker;
+  EXPECT_EQ(MpHandLandmarkerCreate(&options, &landmarker), kMpOk);
   EXPECT_NE(landmarker, nullptr);
 
   ImageProcessingOptions image_processing_options;
@@ -168,16 +169,16 @@ TEST(HandLandmarkerTest, ImageModeWithRotationTest) {
   image_processing_options.rotation_degrees = -90;
 
   HandLandmarkerResult result;
-  hand_landmarker_detect_image(landmarker, image.get(),
-                               &image_processing_options, &result,
-                               /* error_msg */ nullptr);
+  EXPECT_EQ(MpHandLandmarkerDetectImage(landmarker, image.get(),
+                                        &image_processing_options, &result),
+            kMpOk);
 
   LandmarksDetectionResult expected_landmarks =
       GetLandmarksDetectionResult(kPointingUpRotatedLandmarksFilename);
   ExpectHandLandmarkerResultsCorrect(&result, expected_landmarks,
                                      kLandmarkPrecision, kScorePrecision);
-  hand_landmarker_close_result(&result);
-  hand_landmarker_close(landmarker, /* error_msg */ nullptr);
+  MpHandLandmarkerCloseResult(&result);
+  EXPECT_EQ(MpHandLandmarkerClose(landmarker), kMpOk);
 }
 
 TEST(HandLandmarkerTest, VideoModeTest) {
@@ -195,23 +196,24 @@ TEST(HandLandmarkerTest, VideoModeTest) {
       /* min_tracking_confidence= */ 0.5,
   };
 
-  MpHandLandmarkerPtr landmarker =
-      hand_landmarker_create(&options, /* error_msg */ nullptr);
+  MpHandLandmarkerPtr landmarker;
+  EXPECT_EQ(MpHandLandmarkerCreate(&options, &landmarker), kMpOk);
   EXPECT_NE(landmarker, nullptr);
 
   LandmarksDetectionResult expected_landmarks =
       GetLandmarksDetectionResult(kPointingUpLandmarksFilename);
   for (int i = 0; i < kIterations; ++i) {
     HandLandmarkerResult result;
-    hand_landmarker_detect_for_video(landmarker, image.get(),
-                                     /* image_processing_options= */ nullptr, i,
-                                     &result, /* error_msg */ nullptr);
+    EXPECT_EQ(MpHandLandmarkerDetectForVideo(
+                  landmarker, image.get(),
+                  /* image_processing_options= */ nullptr, i, &result),
+              kMpOk);
 
     ExpectHandLandmarkerResultsCorrect(&result, expected_landmarks,
                                        kLandmarkPrecision, kScorePrecision);
-    hand_landmarker_close_result(&result);
+    MpHandLandmarkerCloseResult(&result);
   }
-  hand_landmarker_close(landmarker, /* error_msg */ nullptr);
+  EXPECT_EQ(MpHandLandmarkerClose(landmarker), kMpOk);
 }
 
 // A structure to support LiveStreamModeTest below. This structure holds a
@@ -260,19 +262,18 @@ TEST(HandLandmarkerTest, LiveStreamModeTest) {
       /* result_callback_fn= */ LiveStreamModeCallback::Fn,
   };
 
-  MpHandLandmarkerPtr landmarker =
-      hand_landmarker_create(&options, /* error_msg */ nullptr);
+  MpHandLandmarkerPtr landmarker;
+  EXPECT_EQ(MpHandLandmarkerCreate(&options, &landmarker), kMpOk);
   EXPECT_NE(landmarker, nullptr);
 
   absl::BlockingCounter counter(kIterations);
   LiveStreamModeCallback::blocking_counter = &counter;
 
   for (int i = 0; i < kIterations; ++i) {
-    EXPECT_GE(
-        hand_landmarker_detect_async(landmarker, image.get(),
-                                     /* image_processing_options= */ nullptr, i,
-                                     /* error_msg */ nullptr),
-        0);
+    EXPECT_EQ(
+        MpHandLandmarkerDetectAsync(landmarker, image.get(),
+                                    /* image_processing_options= */ nullptr, i),
+        kMpOk);
     // Short sleep so that MediaPipe does not drop frames.
     absl::SleepFor(absl::Milliseconds(kSleepBetweenFramesMilliseconds));
   }
@@ -281,7 +282,7 @@ TEST(HandLandmarkerTest, LiveStreamModeTest) {
   counter.Wait();
   LiveStreamModeCallback::blocking_counter = nullptr;
 
-  hand_landmarker_close(landmarker, /* error_msg */ nullptr);
+  EXPECT_EQ(MpHandLandmarkerClose(landmarker), kMpOk);
 
   // Due to the flow limiter, the total of outputs might be smaller than the
   // number of iterations.
@@ -302,13 +303,9 @@ TEST(HandLandmarkerTest, InvalidArgumentHandling) {
       /* min_tracking_confidence= */ 0.5,
   };
 
-  char* error_msg;
-  MpHandLandmarkerPtr landmarker = hand_landmarker_create(&options, &error_msg);
+  MpHandLandmarkerPtr landmarker = nullptr;
+  EXPECT_EQ(MpHandLandmarkerCreate(&options, &landmarker), kMpInvalidArgument);
   EXPECT_EQ(landmarker, nullptr);
-
-  EXPECT_THAT(error_msg, HasSubstr("ExternalFile must specify"));
-
-  free(error_msg);
 }
 
 }  // namespace

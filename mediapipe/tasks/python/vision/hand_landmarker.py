@@ -105,57 +105,53 @@ class HandLandmarkerOptionsC(ctypes.Structure):
 
 _CTYPES_SIGNATURES = (
     _CFunction(
-        'hand_landmarker_create',
+        'MpHandLandmarkerCreate',
         [
             ctypes.POINTER(HandLandmarkerOptionsC),
-            ctypes.POINTER(ctypes.c_char_p),
+            ctypes.POINTER(ctypes.c_void_p),
         ],
-        ctypes.c_void_p,
+        ctypes.c_int,
     ),
     _CFunction(
-        'hand_landmarker_detect_image',
+        'MpHandLandmarkerDetectImage',
         [
             ctypes.c_void_p,
             ctypes.c_void_p,
             ctypes.POINTER(image_processing_options_c.ImageProcessingOptionsC),
             ctypes.POINTER(HandLandmarkerResultC),
-            ctypes.POINTER(ctypes.c_char_p),
         ],
         ctypes.c_int,
     ),
     _CFunction(
-        'hand_landmarker_detect_for_video',
+        'MpHandLandmarkerDetectForVideo',
         [
             ctypes.c_void_p,
             ctypes.c_void_p,
             ctypes.POINTER(image_processing_options_c.ImageProcessingOptionsC),
             ctypes.c_int64,
             ctypes.POINTER(HandLandmarkerResultC),
-            ctypes.POINTER(ctypes.c_char_p),
         ],
         ctypes.c_int,
     ),
     _CFunction(
-        'hand_landmarker_detect_async',
+        'MpHandLandmarkerDetectAsync',
         [
             ctypes.c_void_p,
             ctypes.c_void_p,
             ctypes.POINTER(image_processing_options_c.ImageProcessingOptionsC),
             ctypes.c_int64,
-            ctypes.POINTER(ctypes.c_char_p),
         ],
         ctypes.c_int,
     ),
     _CFunction(
-        'hand_landmarker_close_result',
+        'MpHandLandmarkerCloseResult',
         [ctypes.POINTER(HandLandmarkerResultC)],
         None,
     ),
     _CFunction(
-        'hand_landmarker_close',
+        'MpHandLandmarkerClose',
         [
             ctypes.c_void_p,
-            ctypes.POINTER(ctypes.c_char_p),
         ],
         ctypes.c_int,
     ),
@@ -430,22 +426,15 @@ class HandLandmarker:
         result_callback=c_callback,
     )
 
-    error_msg_ptr = ctypes.c_char_p()
-    detector_handle = lib.hand_landmarker_create(
+    landmarker_handle = ctypes.c_void_p()
+    status = lib.MpHandLandmarkerCreate(
         ctypes.byref(ctypes_options),
-        ctypes.byref(error_msg_ptr),
+        ctypes.byref(landmarker_handle),
     )
-
-    if not detector_handle:
-      if error_msg_ptr.value is not None:
-        error_message = error_msg_ptr.value.decode('utf-8')
-        raise RuntimeError(error_message)
-      else:
-        raise RuntimeError('Failed to create HandLandmarker object.')
-
+    mediapipe_c_bindings.handle_status(status)
     return HandLandmarker(
         lib=lib,
-        handle=detector_handle,
+        handle=landmarker_handle,
         dispatcher=dispatcher,
         async_callback=c_callback,
     )
@@ -477,27 +466,22 @@ class HandLandmarker:
     """
     c_image = image._image_ptr  # pylint: disable=protected-access
     c_result = HandLandmarkerResultC()
-    error_msg_ptr = ctypes.c_char_p()
 
     c_image_processing_options = (
         ctypes.byref(image_processing_options.to_ctypes())
         if image_processing_options
         else None
     )
-    status = self._lib.hand_landmarker_detect_image(
+    status = self._lib.MpHandLandmarkerDetectImage(
         self._handle,
         c_image,
         c_image_processing_options,
         ctypes.byref(c_result),
-        ctypes.byref(error_msg_ptr),
     )
-
-    mediapipe_c_bindings.handle_return_code(
-        status, 'Failed to detect hand landmarks for image', error_msg_ptr
-    )
+    mediapipe_c_bindings.handle_status(status)
 
     py_result = HandLandmarkerResult.from_ctypes(c_result)
-    self._lib.hand_landmarker_close_result(ctypes.byref(c_result))
+    self._lib.MpHandLandmarkerCloseResult(ctypes.byref(c_result))
     return py_result
 
   def detect_for_video(
@@ -530,27 +514,23 @@ class HandLandmarker:
     """
     c_image = image._image_ptr  # pylint: disable=protected-access
     c_result = HandLandmarkerResultC()
-    error_msg_ptr = ctypes.c_char_p()
 
     c_image_processing_options = (
         ctypes.byref(image_processing_options.to_ctypes())
         if image_processing_options
         else None
     )
-    status = self._lib.hand_landmarker_detect_for_video(
+    status = self._lib.MpHandLandmarkerDetectForVideo(
         self._handle,
         c_image,
         c_image_processing_options,
         timestamp_ms,
         ctypes.byref(c_result),
-        ctypes.byref(error_msg_ptr),
     )
+    mediapipe_c_bindings.handle_status(status)
 
-    mediapipe_c_bindings.handle_return_code(
-        status, 'Failed to detect hand landmarks from video', error_msg_ptr
-    )
     py_result = HandLandmarkerResult.from_ctypes(c_result)
-    self._lib.hand_landmarker_close_result(ctypes.byref(c_result))
+    self._lib.MpHandLandmarkerCloseResult(ctypes.byref(c_result))
     return py_result
 
   def detect_async(
@@ -591,35 +571,25 @@ class HandLandmarker:
       RuntimeError: If hand landmarker detection failed to initialize.
     """
     c_image = image._image_ptr  # pylint: disable=protected-access
-    error_msg_ptr = ctypes.c_char_p()
 
     c_image_processing_options = (
         ctypes.byref(image_processing_options.to_ctypes())
         if image_processing_options
         else None
     )
-    status = self._lib.hand_landmarker_detect_async(
+    status = self._lib.MpHandLandmarkerDetectAsync(
         self._handle,
         c_image,
         c_image_processing_options,
         timestamp_ms,
-        ctypes.byref(error_msg_ptr),
     )
-
-    mediapipe_c_bindings.handle_return_code(
-        status, 'Failed to detect hand landmarks asynchronously', error_msg_ptr
-    )
+    mediapipe_c_bindings.handle_status(status)
 
   def close(self):
     """Shuts down the MediaPipe task instance."""
     if self._handle:
-      error_msg_ptr = ctypes.c_char_p()
-      return_code = self._lib.hand_landmarker_close(
-          self._handle, ctypes.byref(error_msg_ptr)
-      )
-      mediapipe_c_bindings.handle_return_code(
-          return_code, 'Failed to close hand landmarker', error_msg_ptr
-      )
+      status = self._lib.MpHandLandmarkerClose(self._handle)
+      mediapipe_c_bindings.handle_status(status)
       self._handle = None
       self._dispatcher.close()
       self._lib.close()
