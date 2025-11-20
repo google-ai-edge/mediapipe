@@ -38,7 +38,6 @@ cc_binary(
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/port:status",
         "//mediapipe/graphs/iris_tracking:iris_depth_cpu_deps",
-        "//security/restricted_deps/ffmpeg:allow",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
         "@com_google_absl//absl/log:absl_log",
@@ -58,7 +57,6 @@ cc_binary(
     deps = [
         "//mediapipe/examples/desktop:simple_run_graph_main",
         "//mediapipe/graphs/iris_tracking:iris_tracking_cpu_video_input_deps",
-        "//security/restricted_deps/ffmpeg:allow",
     ],
 )
 
@@ -76,7 +74,6 @@ cc_binary(
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main",
         "//mediapipe/graphs/iris_tracking:iris_tracking_cpu_deps",
-        "//security/restricted_deps/ffmpeg:allow",
     ],
 )
 
@@ -87,6 +84,5 @@ cc_binary(
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main_gpu",
         "//mediapipe/graphs/iris_tracking:iris_tracking_gpu_deps",
-        "//security/restricted_deps/ffmpeg:allow",
     ],
 )

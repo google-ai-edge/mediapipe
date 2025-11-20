@@ -21,7 +21,6 @@ cc_binary(
     name = "extract_yt8m_features",
     srcs = ["extract_yt8m_features.cc"],
     deps = [
-        "//security/restricted_deps/ffmpeg:allow",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
         "@com_google_absl//absl/log:absl_log",
@@ -42,7 +41,6 @@ cc_binary(
 cc_binary(
     name = "model_inference",
     deps = [
-        "//security/restricted_deps/ffmpeg:allow",
         "//mediapipe/examples/desktop:simple_run_graph_main",
         "//mediapipe/graphs/youtube8m:yt8m_inference_calculators_deps",
         # TODO: Figure out the minimum set of the kernels needed by this example.

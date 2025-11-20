@@ -33,6 +33,5 @@ cc_binary(
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main",
         "//mediapipe/graphs/tracking:desktop_calculators",
-        "//security/restricted_deps/ffmpeg:allow",
     ],
 )

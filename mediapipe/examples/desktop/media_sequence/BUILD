@@ -41,6 +41,5 @@ cc_binary(
         ":run_graph_file_io_main",
         "//mediapipe/graphs/media_sequence:clipped_images_from_file_at_24fps_calculators",
         "//mediapipe/graphs/media_sequence:tvl1_flow_and_rgb_from_file_calculators",
-        "//security/restricted_deps/ffmpeg:allow",
     ],
 )

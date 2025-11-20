@@ -23,7 +23,6 @@ cc_binary(
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main_gpu",
         "//mediapipe/graphs/hair_segmentation:mobile_calculators",
-        "//security/restricted_deps/ffmpeg:allow",
     ],
 )
 
@@ -40,7 +39,6 @@ cc_binary(
     data = ["//mediapipe/models:hair_segmentation.tflite"],
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main",
-        "//security/restricted_deps/ffmpeg:allow",
     ] + select({
         "//mediapipe/gpu:disable_gpu": [
             "//mediapipe/graphs/hair_segmentation:desktop_calculators",
