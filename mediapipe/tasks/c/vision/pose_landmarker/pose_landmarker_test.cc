@@ -98,30 +98,30 @@ TEST(PoseLandmarkerTest, ImageModeTest) {
 
   const std::string model_path = GetFullPath(kModelName);
   PoseLandmarkerOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::IMAGE,
-      /* num_poses= */ 1,
-      /* min_pose_detection_confidence= */ 0.5,
-      /* min_pose_presence_confidence= */ 0.5,
-      /* min_tracking_confidence= */ 0.5,
-      /* output_segmentation_masks= */ true,
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = model_path.c_str()},
+      .running_mode = RunningMode::IMAGE,
+      .num_poses = 1,
+      .min_pose_detection_confidence = 0.5,
+      .min_pose_presence_confidence = 0.5,
+      .min_tracking_confidence = 0.5,
+      .output_segmentation_masks = true,
   };
 
-  MpPoseLandmarkerPtr landmarker =
-      pose_landmarker_create(&options, /* error_msg */ nullptr);
+  MpPoseLandmarkerPtr landmarker;
+  MpStatus status = MpPoseLandmarkerCreate(&options, &landmarker);
+  EXPECT_EQ(status, kMpOk);
   EXPECT_NE(landmarker, nullptr);
 
   PoseLandmarkerResult result;
-  int error_code = pose_landmarker_detect_image(
-      landmarker, image.get(),
-      /* image_processing_options= */ nullptr, &result,
-      /* error_msg */ nullptr);
-  EXPECT_EQ(error_code, 0);
+  status = MpPoseLandmarkerDetectImage(landmarker, image.get(),
+                                       /* image_processing_options= */ nullptr,
+                                       &result);
+  EXPECT_EQ(status, kMpOk);
   MatchesPoseLandmarkerResult(&result, kLandmarkPrecision);
-  pose_landmarker_close_result(&result);
-  pose_landmarker_close(landmarker, /* error_msg */ nullptr);
+  MpPoseLandmarkerCloseResult(&result);
+  EXPECT_EQ(MpPoseLandmarkerClose(landmarker), kMpOk);
 }
 
 TEST(PoseLandmarkerTest, VideoModeTest) {
@@ -129,31 +129,33 @@ TEST(PoseLandmarkerTest, VideoModeTest) {
 
   const std::string model_path = GetFullPath(kModelName);
   PoseLandmarkerOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::VIDEO,
-      /* num_poses= */ 1,
-      /* min_pose_detection_confidence= */ 0.5,
-      /* min_pose_presence_confidence= */ 0.5,
-      /* min_tracking_confidence= */ 0.5,
-      /* output_segmentation_masks= */ true,
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = model_path.c_str()},
+      .running_mode = RunningMode::VIDEO,
+      .num_poses = 1,
+      .min_pose_detection_confidence = 0.5,
+      .min_pose_presence_confidence = 0.5,
+      .min_tracking_confidence = 0.5,
+      .output_segmentation_masks = true,
   };
 
-  MpPoseLandmarkerPtr landmarker =
-      pose_landmarker_create(&options, /* error_msg */ nullptr);
+  MpPoseLandmarkerPtr landmarker;
+  MpStatus status = MpPoseLandmarkerCreate(&options, &landmarker);
+  EXPECT_EQ(status, kMpOk);
   EXPECT_NE(landmarker, nullptr);
 
   for (int i = 0; i < kIterations; ++i) {
     PoseLandmarkerResult result;
-    pose_landmarker_detect_for_video(landmarker, image.get(),
-                                     /* image_processing_options= */ nullptr, i,
-                                     &result, /* error_msg */ nullptr);
+    status = MpPoseLandmarkerDetectForVideo(
+        landmarker, image.get(),
+        /* image_processing_options= */ nullptr, i, &result);
+    EXPECT_EQ(status, kMpOk);
 
     MatchesPoseLandmarkerResult(&result, kLandmarkPrecision);
-    pose_landmarker_close_result(&result);
+    MpPoseLandmarkerCloseResult(&result);
   }
-  pose_landmarker_close(landmarker, /* error_msg */ nullptr);
+  EXPECT_EQ(MpPoseLandmarkerClose(landmarker), kMpOk);
 }
 
 // A structure to support LiveStreamModeTest below. This structure holds a
@@ -188,31 +190,31 @@ TEST(PoseLandmarkerTest, LiveStreamModeTest) {
   const std::string model_path = GetFullPath(kModelName);
 
   PoseLandmarkerOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::LIVE_STREAM,
-      /* num_poses= */ 1,
-      /* min_pose_detection_confidence= */ 0.5,
-      /* min_pose_presence_confidence= */ 0.5,
-      /* min_tracking_confidence= */ 0.5,
-      /* output_segmentation_masks= */ true,
-      /* result_callback= */ LiveStreamModeCallback::Fn,
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = model_path.c_str()},
+      .running_mode = RunningMode::LIVE_STREAM,
+      .num_poses = 1,
+      .min_pose_detection_confidence = 0.5,
+      .min_pose_presence_confidence = 0.5,
+      .min_tracking_confidence = 0.5,
+      .output_segmentation_masks = true,
+      .result_callback = LiveStreamModeCallback::Fn,
   };
 
-  MpPoseLandmarkerPtr landmarker =
-      pose_landmarker_create(&options, /* error_msg */ nullptr);
+  MpPoseLandmarkerPtr landmarker;
+  MpStatus status = MpPoseLandmarkerCreate(&options, &landmarker);
+  EXPECT_EQ(status, kMpOk);
   EXPECT_NE(landmarker, nullptr);
 
   absl::BlockingCounter counter(kIterations);
   LiveStreamModeCallback::blocking_counter = &counter;
 
   for (int i = 0; i < kIterations; ++i) {
-    EXPECT_GE(
-        pose_landmarker_detect_async(landmarker, image.get(),
-                                     /* image_processing_options= */ nullptr, i,
-                                     /* error_msg */ nullptr),
-        0);
+    EXPECT_EQ(
+        MpPoseLandmarkerDetectAsync(landmarker, image.get(),
+                                    /* image_processing_options= */ nullptr, i),
+        kMpOk);
     // Short sleep so that MediaPipe does not drop frames.
     absl::SleepFor(absl::Milliseconds(kSleepBetweenFramesMilliseconds));
   }
@@ -221,7 +223,7 @@ TEST(PoseLandmarkerTest, LiveStreamModeTest) {
   counter.Wait();
   LiveStreamModeCallback::blocking_counter = nullptr;
 
-  pose_landmarker_close(landmarker, /* error_msg */ nullptr);
+  EXPECT_EQ(MpPoseLandmarkerClose(landmarker), kMpOk);
 
   // Due to the flow limiter, the total of outputs might be smaller than the
   // number of iterations.
@@ -232,24 +234,21 @@ TEST(PoseLandmarkerTest, LiveStreamModeTest) {
 TEST(PoseLandmarkerTest, InvalidArgumentHandling) {
   // It is an error to set neither the asset buffer nor the path.
   PoseLandmarkerOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ nullptr},
-      /* running_mode= */ RunningMode::IMAGE,
-      /* num_poses= */ 1,
-      /* min_pose_detection_confidence= */ 0.5,
-      /* min_pose_presence_confidence= */ 0.5,
-      /* min_tracking_confidence= */ 0.5,
-      /* output_segmentation_masks= */ true,
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = nullptr},
+      .running_mode = RunningMode::IMAGE,
+      .num_poses = 1,
+      .min_pose_detection_confidence = 0.5,
+      .min_pose_presence_confidence = 0.5,
+      .min_tracking_confidence = 0.5,
+      .output_segmentation_masks = true,
   };
 
-  char* error_msg;
-  MpPoseLandmarkerPtr landmarker = pose_landmarker_create(&options, &error_msg);
+  MpPoseLandmarkerPtr landmarker = nullptr;
+  MpStatus status = MpPoseLandmarkerCreate(&options, &landmarker);
+  EXPECT_EQ(status, kMpInvalidArgument);
   EXPECT_EQ(landmarker, nullptr);
-
-  EXPECT_THAT(error_msg, HasSubstr("ExternalFile must specify"));
-
-  free(error_msg);
 }
 
 }  // namespace

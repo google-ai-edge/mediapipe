@@ -240,15 +240,15 @@ class PoseLandmarkerOptions:
 
 _CTYPES_SIGNATURES = (
     _CFunction(
-        'pose_landmarker_create',
+        'MpPoseLandmarkerCreate',
         [
             ctypes.POINTER(PoseLandmarkerOptionsC),
-            ctypes.POINTER(ctypes.c_char_p),
+            ctypes.POINTER(ctypes.c_void_p),
         ],
-        ctypes.c_void_p,
+        ctypes.c_int32,
     ),
     _CFunction(
-        'pose_landmarker_detect_image',
+        'MpPoseLandmarkerDetectImage',
         [
             ctypes.c_void_p,
             ctypes.c_void_p,
@@ -256,12 +256,11 @@ _CTYPES_SIGNATURES = (
                 image_processing_options_c_lib.ImageProcessingOptionsC
             ),
             ctypes.POINTER(PoseLandmarkerResultC),
-            ctypes.POINTER(ctypes.c_char_p),
         ],
-        ctypes.c_int,
+        ctypes.c_int32,
     ),
     _CFunction(
-        'pose_landmarker_detect_for_video',
+        'MpPoseLandmarkerDetectForVideo',
         [
             ctypes.c_void_p,
             ctypes.c_void_p,
@@ -270,12 +269,11 @@ _CTYPES_SIGNATURES = (
             ),
             ctypes.c_int64,
             ctypes.POINTER(PoseLandmarkerResultC),
-            ctypes.POINTER(ctypes.c_char_p),
         ],
-        ctypes.c_int,
+        ctypes.c_int32,
     ),
     _CFunction(
-        'pose_landmarker_detect_async',
+        'MpPoseLandmarkerDetectAsync',
         [
             ctypes.c_void_p,
             ctypes.c_void_p,
@@ -283,22 +281,20 @@ _CTYPES_SIGNATURES = (
                 image_processing_options_c_lib.ImageProcessingOptionsC
             ),
             ctypes.c_int64,
-            ctypes.POINTER(ctypes.c_char_p),
         ],
-        ctypes.c_int,
+        ctypes.c_int32,
     ),
     _CFunction(
-        'pose_landmarker_close_result',
+        'MpPoseLandmarkerCloseResult',
         [ctypes.POINTER(PoseLandmarkerResultC)],
         None,
     ),
     _CFunction(
-        'pose_landmarker_close',
+        'MpPoseLandmarkerClose',
         [
             ctypes.c_void_p,
-            ctypes.POINTER(ctypes.c_char_p),
         ],
-        ctypes.c_int,
+        ctypes.c_int32,
     ),
 )
 
@@ -404,17 +400,11 @@ class PoseLandmarker(base_vision_task_api.BaseVisionTaskApi):
         output_segmentation_masks=options.output_segmentation_masks,
         result_callback=c_callback,
     )
-    error_msg = ctypes.c_char_p()
-    landmarker = lib.pose_landmarker_create(
-        ctypes.byref(ctypes_options), ctypes.byref(error_msg)
+    landmarker = ctypes.c_void_p()
+    status = lib.MpPoseLandmarkerCreate(
+        ctypes.byref(ctypes_options), ctypes.byref(landmarker)
     )
-    if not landmarker:
-      error_string = (
-          error_msg.value.decode('utf-8')
-          if error_msg.value is not None
-          else 'Internal Error'
-      )
-      raise RuntimeError(f'Failed to create PoseLandmarker: {error_string}')
+    mediapipe_c_bindings_lib.handle_status(status)
 
     return PoseLandmarker(
         lib, landmarker, dispatcher=dispatcher, async_callback=c_callback
@@ -443,27 +433,23 @@ class PoseLandmarker(base_vision_task_api.BaseVisionTaskApi):
     """
     c_image = image._image_ptr  # pylint: disable=protected-access
     result_c = PoseLandmarkerResultC()
-    error_msg = ctypes.c_char_p()
 
     c_image_processing_options = (
         ctypes.byref(image_processing_options.to_ctypes())
         if image_processing_options
         else None
     )
-    return_code = self._lib.pose_landmarker_detect_image(
+    status = self._lib.MpPoseLandmarkerDetectImage(
         self._handle,
         c_image,
         c_image_processing_options,
         ctypes.byref(result_c),
-        ctypes.byref(error_msg),
     )
 
-    mediapipe_c_bindings_lib.handle_return_code(
-        return_code, 'Pose landmark detection failed', error_msg
-    )
+    mediapipe_c_bindings_lib.handle_status(status)
 
     result = PoseLandmarkerResult.from_ctypes(result_c)
-    self._lib.pose_landmarker_close_result(ctypes.byref(result_c))
+    self._lib.MpPoseLandmarkerCloseResult(ctypes.byref(result_c))
     return result
 
   def detect_for_video(
@@ -496,28 +482,24 @@ class PoseLandmarker(base_vision_task_api.BaseVisionTaskApi):
     """
     c_image = image._image_ptr  # pylint: disable=protected-access
     result_c = PoseLandmarkerResultC()
-    error_msg = ctypes.c_char_p()
 
     c_image_processing_options = (
         ctypes.byref(image_processing_options.to_ctypes())
         if image_processing_options
         else None
     )
-    return_code = self._lib.pose_landmarker_detect_for_video(
+    status = self._lib.MpPoseLandmarkerDetectForVideo(
         self._handle,
         c_image,
         c_image_processing_options,
         timestamp_ms,
         ctypes.byref(result_c),
-        ctypes.byref(error_msg),
     )
 
-    mediapipe_c_bindings_lib.handle_return_code(
-        return_code, 'Pose landmark detection failed', error_msg
-    )
+    mediapipe_c_bindings_lib.handle_status(status)
 
     result = PoseLandmarkerResult.from_ctypes(result_c)
-    self._lib.pose_landmarker_close_result(ctypes.byref(result_c))
+    self._lib.MpPoseLandmarkerCloseResult(ctypes.byref(result_c))
     return result
 
   def detect_async(
@@ -557,29 +539,25 @@ class PoseLandmarker(base_vision_task_api.BaseVisionTaskApi):
       pose landmarker has already processed.
     """
     c_image = image._image_ptr  # pylint: disable=protected-access
-    error_msg = ctypes.c_char_p()
 
     c_image_processing_options = (
         ctypes.byref(image_processing_options.to_ctypes())
         if image_processing_options
         else None
     )
-    return_code = self._lib.pose_landmarker_detect_async(
+    status = self._lib.MpPoseLandmarkerDetectAsync(
         self._handle,
         c_image,
         c_image_processing_options,
         timestamp_ms,
-        ctypes.byref(error_msg),
     )
-    mediapipe_c_bindings_lib.handle_return_code(
-        return_code, 'Pose landmark detection failed', error_msg
-    )
+    mediapipe_c_bindings_lib.handle_status(status)
 
   def close(self):
     """Closes the PoseLandmarker."""
     if self._handle:
       error_msg = ctypes.c_char_p()
-      return_code = self._lib.pose_landmarker_close(
+      return_code = self._lib.MpPoseLandmarkerClose(
           self._handle, ctypes.byref(error_msg)
       )
       mediapipe_c_bindings_lib.handle_return_code(

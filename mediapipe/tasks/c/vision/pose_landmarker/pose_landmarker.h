@@ -92,17 +92,16 @@ struct PoseLandmarkerOptions {
 // If an error occurs, returns `nullptr` and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT MpPoseLandmarkerPtr
-pose_landmarker_create(struct PoseLandmarkerOptions* options, char** error_msg);
+MP_EXPORT MpStatus MpPoseLandmarkerCreate(struct PoseLandmarkerOptions* options,
+                                          MpPoseLandmarkerPtr* landmarker_out);
 
 // Performs pose landmark detection on the input `image`. Returns `0` on
 // success. If an error occurs, returns an error code and sets the error
 // parameter to an an error message (if `error_msg` is not `nullptr`). You must
 // free the memory allocated for the error message.
-MP_EXPORT int pose_landmarker_detect_image(
+MP_EXPORT MpStatus MpPoseLandmarkerDetectImage(
     MpPoseLandmarkerPtr landmarker, MpImagePtr image,
-    const ImageProcessingOptions* options, PoseLandmarkerResult* result,
-    char** error_msg);
+    const ImageProcessingOptions* options, PoseLandmarkerResult* result);
 
 // Performs pose landmark detection on the provided video frame.
 // Only use this method when the PoseLandmarker is created with the video
@@ -113,10 +112,10 @@ MP_EXPORT int pose_landmarker_detect_image(
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT int pose_landmarker_detect_for_video(
+MP_EXPORT MpStatus MpPoseLandmarkerDetectForVideo(
     MpPoseLandmarkerPtr landmarker, MpImagePtr image,
     const ImageProcessingOptions* options, int64_t timestamp_ms,
-    PoseLandmarkerResult* result, char** error_msg);
+    PoseLandmarkerResult* result);
 
 // Sends live image data to pose landmark detection, and the results will be
 // available via the `result_callback` provided in the PoseLandmarkerOptions.
@@ -136,21 +135,19 @@ MP_EXPORT int pose_landmarker_detect_for_video(
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT int pose_landmarker_detect_async(
+MP_EXPORT MpStatus MpPoseLandmarkerDetectAsync(
     MpPoseLandmarkerPtr landmarker, MpImagePtr image,
-    const ImageProcessingOptions* options, int64_t timestamp_ms,
-    char** error_msg);
+    const ImageProcessingOptions* options, int64_t timestamp_ms);
 
 // Frees the memory allocated inside a PoseLandmarkerResult result.
 // Does not free the result pointer itself.
-MP_EXPORT void pose_landmarker_close_result(PoseLandmarkerResult* result);
+MP_EXPORT void MpPoseLandmarkerCloseResult(PoseLandmarkerResult* result);
 
 // Frees pose landmarker.
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT int pose_landmarker_close(MpPoseLandmarkerPtr landmarker,
-                                    char** error_msg);
+MP_EXPORT MpStatus MpPoseLandmarkerClose(MpPoseLandmarkerPtr landmarker);
 
 #ifdef __cplusplus
 }  // extern C

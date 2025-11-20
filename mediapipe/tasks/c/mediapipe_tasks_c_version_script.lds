@@ -8,12 +8,12 @@ VERS_1.0 {
     MpImage*;
     MpLlmConverter*;
     MpInteractiveSegmenter*;
+    MpPoseLandmarker*;
     MpStringList*;
     MpTextEmbedder*;
     MpObjectDetector*;
     MpTextClassifier*;
     face_landmarker_*;
-    pose_landmarker_*;
   local:
     *;
 };
