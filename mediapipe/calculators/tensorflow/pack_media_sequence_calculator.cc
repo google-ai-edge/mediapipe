@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>// to keep the calculator buildable with newer Abseil/toolchains
 #include <cstdint>
 #include <limits>
 #include <optional>
@@ -52,6 +53,8 @@ const char kBBoxTag[] = "BBOX";
 const char kKeypointsTag[] = "KEYPOINTS";
 const char kSegmentationMaskTag[] = "CLASS_SEGMENTATION";
 const char kClipMediaIdTag[] = "CLIP_MEDIA_ID";
+const char kEncodedMediaStartTimestamp[] = "ENCODED_MEDIA_START_TIMESTAMP";//encoded-media tag constants 
+const char kEncodedMediaBytes[] = "ENCODED_MEDIA";
 
 namespace tf = ::tensorflow;
 namespace mpms = mediapipe::mediasequence;
