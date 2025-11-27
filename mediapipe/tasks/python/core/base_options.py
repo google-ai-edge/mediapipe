@@ -81,7 +81,15 @@ class BaseOptions:
       acceleration_proto = _AccelerationProto(tflite=_DelegateProto.TfLite())
     else:
       acceleration_proto = None
-
+    
+    if platform_name == 'Windows' and full_path is not None:
+      try:
+        with open(full_path, "rb") as f:
+          self.model_asset_buffer = f.read()
+          self.model_asset_path = None
+      except FileNotFoundError:
+        raise RuntimeError(f"Unable to open file at {full_path}.")
+    
     return _BaseOptionsProto(
         model_asset=_ExternalFileProto(
             file_name=full_path, file_content=self.model_asset_buffer
