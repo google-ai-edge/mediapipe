@@ -23,15 +23,14 @@ from mediapipe.tasks.python.core import base_options_c
 from mediapipe.tasks.python.core import mediapipe_c_bindings
 from mediapipe.tasks.python.core import serial_dispatcher
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
-from mediapipe.tasks.python.vision.core import base_vision_task_api
 from mediapipe.tasks.python.vision.core import image as image_module
 from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_module
 from mediapipe.tasks.python.vision.core import image_processing_options_c
-from mediapipe.tasks.python.vision.core import vision_task_running_mode
+from mediapipe.tasks.python.vision.core import vision_task_running_mode as running_mode_module
 
 _BaseOptions = base_options_module.BaseOptions
 _ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
-_RunningMode = vision_task_running_mode.VisionTaskRunningMode
+_RunningMode = running_mode_module.VisionTaskRunningMode
 _CFunction = mediapipe_c_bindings.CFunction
 _AsyncResultDispatcher = async_result_dispatcher.AsyncResultDispatcher
 
@@ -324,7 +323,7 @@ class ImageSegmenter:
       RuntimeError: If other types of error occurred.
     """
 
-    base_vision_task_api.validate_running_mode(
+    running_mode_module.validate_running_mode(
         options.running_mode, options.result_callback
     )
 

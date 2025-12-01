@@ -25,7 +25,6 @@ from mediapipe.tasks.python.core import base_options_c as base_options_c_lib
 from mediapipe.tasks.python.core import mediapipe_c_bindings as mediapipe_c_bindings_lib
 from mediapipe.tasks.python.core import serial_dispatcher
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
-from mediapipe.tasks.python.vision.core import base_vision_task_api
 from mediapipe.tasks.python.vision.core import image as image_lib
 from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_lib
 from mediapipe.tasks.python.vision.core import image_processing_options_c as image_processing_options_c_lib
@@ -299,7 +298,7 @@ _CTYPES_SIGNATURES = (
 )
 
 
-class PoseLandmarker(base_vision_task_api.BaseVisionTaskApi):
+class PoseLandmarker:
   """Class that performs pose landmarks detection on images."""
 
   _lib: serial_dispatcher.SerialDispatcher
@@ -369,7 +368,7 @@ class PoseLandmarker(base_vision_task_api.BaseVisionTaskApi):
         `PoseLandmarkerOptions` such as missing the model.
       RuntimeError: If other types of error occurred.
     """
-    base_vision_task_api.validate_running_mode(
+    running_mode_lib.validate_running_mode(
         options.running_mode, options.result_callback
     )
 

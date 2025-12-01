@@ -28,7 +28,6 @@ from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 from mediapipe.tasks.python.vision import gesture_recognizer_result as gesture_recognizer_result_module
 # C-bindings
 from mediapipe.tasks.python.vision import gesture_recognizer_result_c
-from mediapipe.tasks.python.vision.core import base_vision_task_api
 from mediapipe.tasks.python.vision.core import image as image_lib
 from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_lib
 from mediapipe.tasks.python.vision.core import image_processing_options_c
@@ -279,7 +278,7 @@ class GestureRecognizer:
         `GestureRecognizerOptions` such as missing the model.
       RuntimeError: If other types of error occurred.
     """
-    base_vision_task_api.validate_running_mode(
+    running_mode_module.validate_running_mode(
         options.running_mode, options.result_callback
     )
 

@@ -25,7 +25,6 @@ from mediapipe.tasks.python.core import base_options_c as base_options_c_module
 from mediapipe.tasks.python.core import mediapipe_c_bindings as mediapipe_c_bindings_c_module
 from mediapipe.tasks.python.core import serial_dispatcher
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
-from mediapipe.tasks.python.vision.core import base_vision_task_api
 from mediapipe.tasks.python.vision.core import image as image_module
 from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_module
 from mediapipe.tasks.python.vision.core import image_processing_options_c as image_processing_options_c_module
@@ -328,7 +327,7 @@ class ObjectDetector:
       RuntimeError: If other types of error occurred.
     """
 
-    base_vision_task_api.validate_running_mode(
+    running_mode_module.validate_running_mode(
         options.running_mode, options.result_callback
     )
 
