@@ -1,5 +1,8 @@
 # The bazelrc file for MediaPipe OSS.
 
+# Python version set to 12
+common --repo_env=HERMETIC_PYTHON_VERSION=3.12
+
 # Tensorflow needs remote repo
 common --experimental_repo_remote_exec
 
@@ -79,6 +82,7 @@ build:android_arm64 --platforms=@//third_party/android:arm64-v8a
 # iOS configs.
 build:ios --apple_platform_type=ios
 build:ios --copt=-fno-aligned-allocation
+build:ios --incompatible_enable_cc_toolchain_resolution
 
 build:ios_i386 --config=ios
 build:ios_i386 --cpu=ios_i386
@@ -87,7 +91,7 @@ build:ios_i386 --watchos_cpus=i386
 build:ios_x86_64 --config=ios
 build:ios_x86_64 --cpu=ios_x86_64
 build:ios_x86_64 --watchos_cpus=i386
-build:ios_x86_64 --platforms=@build_bazel_apple_support//configs/platforms:ios_x86_64
+build:ios_x86_64 --platforms=@build_bazel_apple_support//platforms:ios_x86_64
 
 build:ios_armv7 --config=ios
 build:ios_armv7 --cpu=ios_armv7
@@ -97,12 +101,12 @@ build:ios_armv7 --platforms=@//third_party/ios:ios_armv7
 build:ios_arm64 --config=ios
 build:ios_arm64 --cpu=ios_arm64
 build:ios_arm64 --watchos_cpus=armv7k
-build:ios_arm64 --platforms=@build_bazel_apple_support//configs/platforms:ios_arm64
+build:ios_arm64 --platforms=@build_bazel_apple_support//platforms:ios_arm64
 
 build:ios_arm64e --config=ios
 build:ios_arm64e --cpu=ios_arm64e
 build:ios_arm64e --watchos_cpus=armv7k
-build:ios_arm64e --platforms=@build_bazel_apple_support//configs/platforms:ios_arm64e
+build:ios_arm64e --platforms=@build_bazel_apple_support//platforms:ios_arm64e
 
 build:ios_fat --config=ios
 build:ios_fat --ios_multi_cpus=armv7,arm64

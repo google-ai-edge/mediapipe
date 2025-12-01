@@ -105,7 +105,7 @@ function build_ios_frameworks_and_libraries {
   # the order of a few MBs.
 
   # Build Task Library xcframework.
-  local FRAMEWORK_CQUERY_COMMAND="-c opt --config=ios_sim_device_fat --apple_generate_dsym=false --define OPENCV=source ${FULL_FRAMEWORK_TARGET}"
+  local FRAMEWORK_CQUERY_COMMAND="-c opt --config=ios_sim_device_fat --apple_generate_dsym=false ${FULL_FRAMEWORK_TARGET}"
 
   ${BAZEL} build ${FRAMEWORK_CQUERY_COMMAND}
   IOS_FRAMEWORK_PATH="$(get_output_file_path "${FRAMEWORK_CQUERY_COMMAND}")"
@@ -115,13 +115,13 @@ function build_ios_frameworks_and_libraries {
   # are to be force loaded. Hence the graph libraies are only built if the framework
   # name is `MediaPipeTasksCommon`.`
     "MediaPipeTasksCommon")
-      local IOS_SIM_FAT_LIBRARY_CQUERY_COMMAND="-c opt --config=ios_sim_fat --apple_generate_dsym=false --define OPENCV=source //mediapipe/tasks/ios:MediaPipeTaskGraphs_library"
+      local IOS_SIM_FAT_LIBRARY_CQUERY_COMMAND="-c opt --config=ios_sim_fat --apple_generate_dsym=false //mediapipe/tasks/ios:MediaPipeTaskGraphs_library"
       ${BAZEL} build ${IOS_SIM_FAT_LIBRARY_CQUERY_COMMAND}
       IOS_GRAPHS_SIMULATOR_LIBRARY_PATH="$(get_output_file_path "${IOS_SIM_FAT_LIBRARY_CQUERY_COMMAND}")"
 
       # Build static library for iOS devices with arch ios_arm64. We don't need to build for armv7 since
       # our deployment target is iOS 12.0. iOS 12.0 and upwards is not supported by old armv7 devices.
-      local IOS_DEVICE_LIBRARY_CQUERY_COMMAND="-c opt --config=ios_arm64 --apple_generate_dsym=false --define OPENCV=source //mediapipe/tasks/ios:MediaPipeTaskGraphs_library"
+      local IOS_DEVICE_LIBRARY_CQUERY_COMMAND="-c opt --config=ios_arm64 --apple_generate_dsym=false //mediapipe/tasks/ios:MediaPipeTaskGraphs_library"
       ${BAZEL} build ${IOS_DEVICE_LIBRARY_CQUERY_COMMAND}
       IOS_GRAPHS_DEVICE_LIBRARY_PATH="$(get_output_file_path "${IOS_DEVICE_LIBRARY_CQUERY_COMMAND}")"
       ;;
