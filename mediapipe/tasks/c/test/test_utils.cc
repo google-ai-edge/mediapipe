@@ -17,38 +17,40 @@ limitations under the License.
 
 #include <cstdint>
 
+#include "absl/log/absl_log.h"
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/formats/image.h"
-#include "mediapipe/tasks/c/vision/core/common.h"
+#include "mediapipe/tasks/c/core/mp_status.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/core/image_frame_util.h"
 
 namespace mediapipe::tasks::c::test {
 
-MpMask CreateCategoryMaskFromImage(absl::StatusOr<Image>& image) {
+MpImagePtr CreateCategoryMaskFromImage(absl::StatusOr<Image>& image) {
   const auto& image_frame = image->GetImageFrameSharedPtr();
 
   const int pixel_data_size = image_frame->PixelDataSizeStoredContiguously();
-  auto* pixel_data = new uint8_t[pixel_data_size];
-  image_frame->CopyToBuffer(pixel_data, pixel_data_size);
+  const uint8_t* pixel_data = image_frame->PixelData();
 
-  MpMask mask = {.type = MpMask::IMAGE_FRAME,
-                 .image_frame = {.mask_format = MaskFormat::UINT8,
-                                 .image_buffer = pixel_data,
-                                 .width = image_frame->Width(),
-                                 .height = image_frame->Height()}};
-
-  return mask;
+  MpImagePtr mp_image;
+  MpStatus status = MpImageCreateFromUint8Data(
+      MpImageFormat::kMpImageFormatGray8, image_frame->Width(),
+      image_frame->Height(), pixel_data, pixel_data_size, &mp_image);
+  if (status != kMpOk) {
+    ABSL_LOG(ERROR) << "Failed to create MP Image: " << status;
+    return nullptr;
+  }
+  return mp_image;
 }
 
 float SimilarToUint8Mask(MpImageInternal* actual_mask,
-                         const MpMask* expected_mask,
+                         MpImageInternal* expected_mask,
                          int magnification_factor) {
   // Validate that both images are of the same size and type
-  if (MpImageGetWidth(actual_mask) != expected_mask->image_frame.width ||
-      MpImageGetHeight(actual_mask) != expected_mask->image_frame.height ||
+  if (MpImageGetWidth(actual_mask) != MpImageGetWidth(expected_mask) ||
+      MpImageGetHeight(actual_mask) != MpImageGetHeight(expected_mask) ||
       MpImageGetFormat(actual_mask) != MpImageFormat::kMpImageFormatGray8 ||
-      expected_mask->image_frame.mask_format != MaskFormat::UINT8) {
+      MpImageGetFormat(expected_mask) != MpImageFormat::kMpImageFormatGray8) {
     return 0;  // Not similar
   }
 
@@ -58,7 +60,8 @@ float SimilarToUint8Mask(MpImageInternal* actual_mask,
 
   const uint8_t* buffer_actual;
   MpImageDataUint8(actual_mask, &buffer_actual);
-  const uint8_t* buffer_expected = expected_mask->image_frame.image_buffer;
+  const uint8_t* buffer_expected;
+  MpImageDataUint8(expected_mask, &buffer_expected);
 
   for (int i = 0; i < total_pixels; ++i) {
     // Apply magnification factor and compare

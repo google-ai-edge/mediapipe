@@ -26,66 +26,11 @@ limitations under the License.
 extern "C" {
 #endif
 
-// Supported image formats.
-enum ImageFormat {
-  UNKNOWN = 0,
-  SRGB = 1,
-  SRGBA = 2,
-  GRAY8 = 3,
-  SBGRA = 11  // compatible with Flutter `bgra8888` format.
-};
-
 // Supported processing modes.
 enum RunningMode {
   IMAGE = 1,
   VIDEO = 2,
   LIVE_STREAM = 3,
-};
-
-// Structure to hold image frame.
-struct ImageFrame {
-  enum ImageFormat format;
-  const uint8_t* image_buffer;
-  int width;
-  int height;
-};
-
-// TODO: Add GPU buffer declaration and processing logic for it.
-struct GpuBuffer {
-  int width;
-  int height;
-};
-
-// The object to contain an image, realizes `OneOf` concept.
-struct MpImage {
-  enum { IMAGE_FRAME, GPU_BUFFER } type;
-  union {
-    struct ImageFrame image_frame;
-    struct GpuBuffer gpu_buffer;
-  };
-};
-
-enum MaskFormat { UINT8, FLOAT };
-
-struct ImageFrameMask {
-  enum MaskFormat mask_format;
-  const uint8_t* image_buffer;
-  int width;
-  int height;
-};
-
-// TODO: Add GPU buffer declaration and processing logic for it.
-struct GpuBufferMask {
-  int width;
-  int height;
-};
-
-struct MpMask {
-  enum { IMAGE_FRAME, GPU_BUFFER } type;
-  union {
-    struct ImageFrameMask image_frame;
-    struct GpuBufferMask gpu_buffer;
-  };
 };
 
 // Represents a list of strings.
