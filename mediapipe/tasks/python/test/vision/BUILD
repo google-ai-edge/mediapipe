@@ -13,7 +13,6 @@
 # limitations under the License.
 
 # Placeholder: load py_test
-# Placeholder for internal Python strict test compatibility macro.
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
