@@ -47,7 +47,7 @@ struct PerspectiveCameraFrustum {
     static constexpr float kDegreesToRadians = 3.14159265358979323846f / 180.f;
 
     const float height_at_near =
-        2.f * perspective_camera.near() *
+        2.f * perspective_camera.near_plane() *
         std::tan(0.5f * kDegreesToRadians *
                  perspective_camera.vertical_fov_degrees());
 
@@ -57,16 +57,16 @@ struct PerspectiveCameraFrustum {
     right = 0.5f * width_at_near;
     bottom = -0.5f * height_at_near;
     top = 0.5f * height_at_near;
-    near = perspective_camera.near();
-    far = perspective_camera.far();
+    near_plane = perspective_camera.near_plane();
+    far_plane = perspective_camera.far_plane();
   }
 
   float left;
   float right;
   float bottom;
   float top;
-  float near;
-  float far;
+  float near_plane;
+  float far_plane;
 };
 
 class ScreenToMetricSpaceConverter {
@@ -243,15 +243,15 @@ class ScreenToMetricSpaceConverter {
                               float depth_offset, float scale,
                               Eigen::Matrix3Xf& landmarks) {
     landmarks.row(2) =
-        (landmarks.array().row(2) - depth_offset + pcf.near) / scale;
+        (landmarks.array().row(2) - depth_offset + pcf.near_plane) / scale;
   }
 
   static void UnprojectXY(const PerspectiveCameraFrustum& pcf,
                           Eigen::Matrix3Xf& landmarks) {
     landmarks.row(0) =
-        landmarks.row(0).cwiseProduct(landmarks.row(2)) / pcf.near;
+        landmarks.row(0).cwiseProduct(landmarks.row(2)) / pcf.near_plane;
     landmarks.row(1) =
-        landmarks.row(1).cwiseProduct(landmarks.row(2)) / pcf.near;
+        landmarks.row(1).cwiseProduct(landmarks.row(2)) / pcf.near_plane;
   }
 
   static void ChangeHandedness(Eigen::Matrix3Xf& landmarks) {

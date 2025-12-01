@@ -33,7 +33,6 @@ cc_library(
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:subgraph",
         "//mediapipe/framework/api2:builder",
-        "//mediapipe/framework/api2:port",
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/tasks/cc/vision/face_geometry/calculators:env_generator_calculator",
         "//mediapipe/tasks/cc/vision/face_geometry/calculators:env_generator_calculator_cc_proto",

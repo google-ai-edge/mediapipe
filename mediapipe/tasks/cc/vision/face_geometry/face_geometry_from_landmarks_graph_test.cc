@@ -75,8 +75,8 @@ Environment CreateEnvironment() {
       proto::OriginPointLocation::TOP_LEFT_CORNER);
   auto& perspective_camera = *environment.mutable_perspective_camera();
   perspective_camera.set_vertical_fov_degrees(63.0 /*degrees*/);
-  perspective_camera.set_near(1.0 /* 1cm */);
-  perspective_camera.set_far(10000.0 /* 100m */);
+  perspective_camera.set_near_plane(1.0 /* 1cm */);
+  perspective_camera.set_far_plane(10000.0 /* 100m */);
   return environment;
 }
 

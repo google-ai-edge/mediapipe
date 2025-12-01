@@ -24,11 +24,14 @@ exports_files(["mediapipe_tasks_c_version_script.lds"])
 # //mediapipe/tasks/c:libmediapipe.so
 cc_binary(
     name = "libmediapipe.so",
-    linkopts = [
-        "-Wl,-soname=libmediapipe.so",
-        "-Wl,--version-script=$(location :mediapipe_tasks_c_version_script.lds)",
-        "-fvisibility=hidden",
-    ],
+    linkopts = select({
+        "@platforms//os:linux": [
+            "-Wl,-soname=libmediapipe.so",
+            "-Wl,--version-script=$(location :mediapipe_tasks_c_version_script.lds)",
+            "-fvisibility=hidden",
+        ],
+        "//conditions:default": [],
+    }),
     linkshared = True,
     linkstatic = True,
     tags = [
