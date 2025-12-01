@@ -16,11 +16,8 @@
 import dataclasses
 from typing import Any, Optional
 
-from mediapipe.framework.formats import classification_pb2
 from mediapipe.tasks.python.components.containers import category_c as category_c_module
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
-
-_ClassificationProto = classification_pb2.Classification
 
 
 @dataclasses.dataclass
@@ -44,26 +41,6 @@ class Category:
   score: Optional[float] = None
   display_name: Optional[str] = None
   category_name: Optional[str] = None
-
-  @doc_controls.do_not_generate_docs
-  def to_pb2(self) -> _ClassificationProto:
-    """Generates a Category protobuf object."""
-    return _ClassificationProto(
-        index=self.index,
-        score=self.score,
-        label=self.category_name,
-        display_name=self.display_name if self.display_name else None,
-    )
-
-  @classmethod
-  @doc_controls.do_not_generate_docs
-  def create_from_pb2(cls, pb2_obj: _ClassificationProto) -> "Category":
-    """Creates a `Category` object from the given protobuf object."""
-    return Category(
-        index=pb2_obj.index,
-        score=pb2_obj.score,
-        display_name=pb2_obj.display_name,
-        category_name=pb2_obj.label)
 
   @classmethod
   @doc_controls.do_not_generate_docs
@@ -101,8 +78,12 @@ class Category:
     """
     if not isinstance(other, Category):
       return False
-
-    return self.to_pb2().__eq__(other.to_pb2())
+    return (
+        self.index == other.index
+        and self.score == other.score
+        and self.display_name == other.display_name
+        and self.category_name == other.category_name
+    )
 
 
 @doc_controls.do_not_generate_docs

@@ -18,14 +18,8 @@ from typing import List, Optional
 
 import numpy as np
 
-from mediapipe.tasks.cc.components.containers.proto import embeddings_pb2
 from mediapipe.tasks.python.components.containers import embedding_result_c
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
-
-_FloatEmbeddingProto = embeddings_pb2.FloatEmbedding
-_QuantizedEmbeddingProto = embeddings_pb2.QuantizedEmbedding
-_EmbeddingProto = embeddings_pb2.Embedding
-_EmbeddingResultProto = embeddings_pb2.EmbeddingResult
 
 
 @dataclasses.dataclass
@@ -44,26 +38,6 @@ class Embedding:
   head_index: Optional[int] = None
   head_name: Optional[str] = None
 
-  @classmethod
-  @doc_controls.do_not_generate_docs
-  def create_from_pb2(cls, pb2_obj: _EmbeddingProto) -> 'Embedding':
-    """Creates a `Embedding` object from the given protobuf object."""
-
-    quantized_embedding = np.array(
-        bytearray(pb2_obj.quantized_embedding.values))
-    float_embedding = np.array(pb2_obj.float_embedding.values, dtype=float)
-
-    if not pb2_obj.quantized_embedding.values:
-      return Embedding(
-          embedding=float_embedding,
-          head_index=pb2_obj.head_index,
-          head_name=pb2_obj.head_name)
-    else:
-      return Embedding(
-          embedding=quantized_embedding,
-          head_index=pb2_obj.head_index,
-          head_name=pb2_obj.head_name)
-
 
 @dataclasses.dataclass
 class EmbeddingResult:
@@ -81,14 +55,6 @@ class EmbeddingResult:
 
   embeddings: List[Embedding]
   timestamp_ms: Optional[int] = None
-
-  @classmethod
-  @doc_controls.do_not_generate_docs
-  def create_from_pb2(cls, pb2_obj: _EmbeddingResultProto) -> 'EmbeddingResult':
-    """Creates a `EmbeddingResult` object from the given protobuf object."""
-    return EmbeddingResult(embeddings=[
-        Embedding.create_from_pb2(embedding) for embedding in pb2_obj.embeddings
-    ])
 
   @classmethod
   @doc_controls.do_not_generate_docs

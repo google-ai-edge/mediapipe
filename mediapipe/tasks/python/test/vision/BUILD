@@ -12,11 +12,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Placeholder: load py_test
+# Placeholder for internal Python strict contrib test macro and library compatibility macro.
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
+
+py_library(
+    name = "proto_utils",
+    testonly = True,
+    srcs = ["proto_utils.py"],
+    deps = [
+        "//mediapipe/framework/formats:classification_py_pb2",
+        "//mediapipe/framework/formats:detection_py_pb2",
+        "//mediapipe/framework/formats:landmark_py_pb2",
+        "//mediapipe/framework/formats:location_data_py_pb2",
+        "//mediapipe/tasks/cc/components/containers/proto:landmarks_detection_result_py_pb2",
+        "//mediapipe/tasks/python/components/containers:bounding_box",
+        "//mediapipe/tasks/python/components/containers:category",
+        "//mediapipe/tasks/python/components/containers:detections",
+        "//mediapipe/tasks/python/components/containers:keypoint",
+        "//mediapipe/tasks/python/components/containers:landmark",
+        "//mediapipe/tasks/python/components/containers:landmark_detection_result",
+        "//mediapipe/tasks/python/components/containers:rect",
+        "//mediapipe/tasks/python/test:test_utils",
+        "//mediapipe/tasks/python/vision:hand_landmarker",
+        "//mediapipe/tasks/python/vision:pose_landmarker",
+        "@com_google_protobuf//:protobuf_python",
+    ],
+)
 
 py_test(
     name = "object_detector_test",
@@ -115,6 +139,7 @@ py_test(
     ],
     tags = ["not_run:arm"],
     deps = [
+        ":proto_utils",
         "//mediapipe/framework/formats:detection_py_pb2",
         "//mediapipe/tasks/python/components/containers:bounding_box",
         "//mediapipe/tasks/python/components/containers:category",
@@ -140,6 +165,7 @@ py_test(
     ],
     tags = ["not_run:arm"],
     deps = [
+        ":proto_utils",
         "//mediapipe/framework/formats:classification_py_pb2",
         "//mediapipe/framework/formats:landmark_py_pb2",
         "//mediapipe/tasks/python/components/containers:category",
@@ -167,6 +193,7 @@ py_test(
     ],
     tags = ["not_run:arm"],
     deps = [
+        ":proto_utils",
         "//mediapipe/tasks/cc/components/containers/proto:landmarks_detection_result_py_pb2",
         "//mediapipe/tasks/python/components/containers:landmark",
         "//mediapipe/tasks/python/components/containers:landmark_detection_result",
@@ -193,6 +220,7 @@ py_test(
     ],
     tags = ["not_run:arm"],
     deps = [
+        ":proto_utils",
         "//mediapipe/tasks/cc/components/containers/proto:landmarks_detection_result_py_pb2",
         "//mediapipe/tasks/python/components/containers:landmark",
         "//mediapipe/tasks/python/components/containers:landmark_detection_result",

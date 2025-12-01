@@ -16,12 +16,8 @@
 import dataclasses
 from typing import Optional
 
-from mediapipe.framework.formats import landmark_pb2
 from mediapipe.tasks.python.components.containers import landmark_c as landmark_c_module
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
-
-_LandmarkProto = landmark_pb2.Landmark
-_NormalizedLandmarkProto = landmark_pb2.NormalizedLandmark
 
 
 @dataclasses.dataclass
@@ -52,27 +48,6 @@ class Landmark:
   visibility: Optional[float] = None
   presence: Optional[float] = None
   name: Optional[str] = None
-
-  @doc_controls.do_not_generate_docs
-  def to_pb2(self) -> _LandmarkProto:
-    """Generates a Landmark protobuf object."""
-    return _LandmarkProto(
-        x=self.x,
-        y=self.y,
-        z=self.z,
-        visibility=self.visibility,
-        presence=self.presence)
-
-  @classmethod
-  @doc_controls.do_not_generate_docs
-  def create_from_pb2(cls, pb2_obj: _LandmarkProto) -> 'Landmark':
-    """Creates a `Landmark` object from the given protobuf object."""
-    return Landmark(
-        x=pb2_obj.x,
-        y=pb2_obj.y,
-        z=pb2_obj.z,
-        visibility=pb2_obj.visibility,
-        presence=pb2_obj.presence)
 
   @classmethod
   @doc_controls.do_not_generate_docs
@@ -116,28 +91,6 @@ class NormalizedLandmark:
   visibility: Optional[float] = None
   presence: Optional[float] = None
   name: Optional[str] = None
-
-  @doc_controls.do_not_generate_docs
-  def to_pb2(self) -> _NormalizedLandmarkProto:
-    """Generates a NormalizedLandmark protobuf object."""
-    return _NormalizedLandmarkProto(
-        x=self.x,
-        y=self.y,
-        z=self.z,
-        visibility=self.visibility,
-        presence=self.presence)
-
-  @classmethod
-  @doc_controls.do_not_generate_docs
-  def create_from_pb2(
-      cls, pb2_obj: _NormalizedLandmarkProto) -> 'NormalizedLandmark':
-    """Creates a `NormalizedLandmark` object from the given protobuf object."""
-    return NormalizedLandmark(
-        x=pb2_obj.x,
-        y=pb2_obj.y,
-        z=pb2_obj.z,
-        visibility=pb2_obj.visibility,
-        presence=pb2_obj.presence)
 
   @classmethod
   @doc_controls.do_not_generate_docs

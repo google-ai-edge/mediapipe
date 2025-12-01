@@ -28,6 +28,7 @@ from mediapipe.tasks.python.components.containers import landmark_detection_resu
 from mediapipe.tasks.python.components.containers import rect as rect_module
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.test import test_utils
+from mediapipe.tasks.python.test.vision import proto_utils
 from mediapipe.tasks.python.vision import hand_landmarker
 from mediapipe.tasks.python.vision.core import image as image_module
 from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_module
@@ -70,8 +71,11 @@ def _get_expected_hand_landmarker_result(
     # Use this if a .pb file is available.
     # landmarks_detection_result_proto.ParseFromString(f.read())
     text_format.Parse(f.read(), landmarks_detection_result_proto)
-    landmarks_detection_result = _LandmarksDetectionResult.create_from_pb2(
-        landmarks_detection_result_proto)
+    landmarks_detection_result = (
+        proto_utils.create_landmarks_detection_result_from_proto(
+            landmarks_detection_result_proto
+        )
+    )
   return _HandLandmarkerResult(
       handedness=[landmarks_detection_result.categories],
       hand_landmarks=[landmarks_detection_result.landmarks],

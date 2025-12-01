@@ -24,8 +24,6 @@ pybind_library(
     hdrs = ["task_runner.h"],
     deps = [
         "//mediapipe/framework:calculator_cc_proto",
-        "//mediapipe/framework/api2:builder",
-        "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/gpu:gpu_shared_data_internal",
         "//mediapipe/python/pybind:util",
         "//mediapipe/tasks/cc/core:mediapipe_builtin_op_resolver",

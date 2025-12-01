@@ -56,10 +56,6 @@ py_library(
     deps = [
         ":base_options_c",
         ":optional_dependencies",
-        "//mediapipe/calculators/tensor:inference_calculator_py_pb2",
-        "//mediapipe/tasks/cc/core/proto:acceleration_py_pb2",
-        "//mediapipe/tasks/cc/core/proto:base_options_py_pb2",
-        "//mediapipe/tasks/cc/core/proto:external_file_py_pb2",
     ],
 )
 
