@@ -25,6 +25,7 @@ from mediapipe.tasks.python.core import async_result_dispatcher
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.core import base_options_c
 from mediapipe.tasks.python.core import mediapipe_c_bindings
+from mediapipe.tasks.python.core import mediapipe_c_utils
 from mediapipe.tasks.python.core import serial_dispatcher
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 from mediapipe.tasks.python.vision.core import image as image_lib
@@ -37,7 +38,7 @@ _BaseOptions = base_options_module.BaseOptions
 _ClassifierOptions = classifier_options_module.ClassifierOptions
 _RunningMode = running_mode_module.VisionTaskRunningMode
 _ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
-_CFunction = mediapipe_c_bindings.CFunction
+_CFunction = mediapipe_c_utils.CFunction
 _AsyncResultDispatcher = async_result_dispatcher.AsyncResultDispatcher
 
 
@@ -321,7 +322,7 @@ class ImageClassifier:
     status = lib.MpImageClassifierCreate(
         ctypes.byref(options_c), ctypes.byref(classifier_handle)
     )
-    mediapipe_c_bindings.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
     return cls(
         lib=lib,
         handle=classifier_handle,
@@ -363,7 +364,7 @@ class ImageClassifier:
         options_c,
         ctypes.byref(c_result),
     )
-    mediapipe_c_bindings.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
 
     result = ImageClassifierResult.from_ctypes(c_result)
     self._lib.MpImageClassifierCloseResult(ctypes.byref(c_result))
@@ -408,7 +409,7 @@ class ImageClassifier:
         timestamp_ms,
         ctypes.byref(c_result),
     )
-    mediapipe_c_bindings.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
 
     result = ImageClassifierResult.from_ctypes(c_result)
     self._lib.MpImageClassifierCloseResult(ctypes.byref(c_result))
@@ -458,13 +459,13 @@ class ImageClassifier:
         options_c,
         timestamp_ms,
     )
-    mediapipe_c_bindings.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
 
   def close(self):
     """Closes ImageClassifier."""
     if self._handle:
       status = self._lib.MpImageClassifierClose(self._handle)
-      mediapipe_c_bindings.handle_status(status)
+      mediapipe_c_utils.handle_status(status)
       self._handle = None
       self._dispatcher.close()
       self._lib.close()

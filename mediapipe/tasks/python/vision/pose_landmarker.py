@@ -23,6 +23,7 @@ from mediapipe.tasks.python.core import async_result_dispatcher
 from mediapipe.tasks.python.core import base_options as base_options_lib
 from mediapipe.tasks.python.core import base_options_c as base_options_c_lib
 from mediapipe.tasks.python.core import mediapipe_c_bindings as mediapipe_c_bindings_lib
+from mediapipe.tasks.python.core import mediapipe_c_utils
 from mediapipe.tasks.python.core import serial_dispatcher
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 from mediapipe.tasks.python.vision.core import image as image_lib
@@ -33,7 +34,7 @@ from mediapipe.tasks.python.vision.core import vision_task_running_mode as runni
 _BaseOptions = base_options_lib.BaseOptions
 _RunningMode = running_mode_lib.VisionTaskRunningMode
 _ImageProcessingOptions = image_processing_options_lib.ImageProcessingOptions
-_CFunction = mediapipe_c_bindings_lib.CFunction
+_CFunction = mediapipe_c_utils.CFunction
 _AsyncResultDispatcher = async_result_dispatcher.AsyncResultDispatcher
 _LiveStreamPacket = async_result_dispatcher.LiveStreamPacket
 
@@ -403,7 +404,7 @@ class PoseLandmarker:
     status = lib.MpPoseLandmarkerCreate(
         ctypes.byref(ctypes_options), ctypes.byref(landmarker)
     )
-    mediapipe_c_bindings_lib.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
 
     return PoseLandmarker(
         lib, landmarker, dispatcher=dispatcher, async_callback=c_callback
@@ -445,7 +446,7 @@ class PoseLandmarker:
         ctypes.byref(result_c),
     )
 
-    mediapipe_c_bindings_lib.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
 
     result = PoseLandmarkerResult.from_ctypes(result_c)
     self._lib.MpPoseLandmarkerCloseResult(ctypes.byref(result_c))
@@ -495,7 +496,7 @@ class PoseLandmarker:
         ctypes.byref(result_c),
     )
 
-    mediapipe_c_bindings_lib.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
 
     result = PoseLandmarkerResult.from_ctypes(result_c)
     self._lib.MpPoseLandmarkerCloseResult(ctypes.byref(result_c))
@@ -550,7 +551,7 @@ class PoseLandmarker:
         c_image_processing_options,
         timestamp_ms,
     )
-    mediapipe_c_bindings_lib.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
 
   def close(self):
     """Closes the PoseLandmarker."""

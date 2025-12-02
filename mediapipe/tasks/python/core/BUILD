@@ -72,5 +72,5 @@ py_library(
 py_library(
     name = "async_result_dispatcher",
     srcs = ["async_result_dispatcher.py"],
-    deps = [":mediapipe_c_bindings"],
+    deps = [":mediapipe_c_utils"],
 )

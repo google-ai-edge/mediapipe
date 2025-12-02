@@ -14,7 +14,6 @@
 """MediaPipe Text tasks shared library."""
 
 import ctypes
-import enum
 import os
 from typing import Any, List, Optional, Sequence
 
@@ -24,77 +23,7 @@ from mediapipe.tasks.python.core import serial_dispatcher
 
 _BASE_LIB_PATH = 'mediapipe/tasks/c/'
 _shared_lib = None
-CFunction = mediapipe_c_utils.CFunction
-
-
-class MpStatus(enum.IntEnum):
-  """Status codes for MediaPipe C API functions."""
-
-  MP_OK = 0
-  MP_CANCELLED = 1
-  MP_UNKNOWN = 2
-  MP_INVALID_ARGUMENT = 3
-  MP_DEADLINE_EXCEEDED = 4
-  MP_NOT_FOUND = 5
-  MP_ALREADY_EXISTS = 6
-  MP_PERMISSION_DENIED = 7
-  MP_RESOURCE_EXHAUSTED = 8
-  MP_FAILED_PRECONDITION = 9
-  MP_ABORTED = 10
-  MP_OUT_OF_RANGE = 11
-  MP_UNIMPLEMENTED = 12
-  MP_INTERNAL = 13
-  MP_UNAVAILABLE = 14
-  MP_DATA_LOSS = 15
-  MP_UNAUTHENTICATED = 16
-
-
-def convert_to_exception(status: int) -> Exception | None:
-  """Returns an exception based on the MpStatus code, or None if MP_OK."""
-  match status:
-    case MpStatus.MP_OK:
-      return None
-    case MpStatus.MP_CANCELLED:
-      raise TimeoutError('Cancelled')
-    case MpStatus.MP_UNKNOWN:
-      return RuntimeError('Unknown error')
-    case MpStatus.MP_INVALID_ARGUMENT:
-      return ValueError('Invalid argument')
-    case MpStatus.MP_DEADLINE_EXCEEDED:
-      raise TimeoutError('Deadline exceeded')
-    case MpStatus.MP_NOT_FOUND:
-      raise FileNotFoundError('Not found')
-    case MpStatus.MP_ALREADY_EXISTS:
-      raise FileExistsError('Already exists')
-    case MpStatus.MP_PERMISSION_DENIED:
-      raise PermissionError('Permission denied')
-    case MpStatus.MP_RESOURCE_EXHAUSTED:
-      return RuntimeError('Resource exhausted')
-    case MpStatus.MP_FAILED_PRECONDITION:
-      return RuntimeError('Failed precondition')
-    case MpStatus.MP_ABORTED:
-      return RuntimeError('Aborted')
-    case MpStatus.MP_OUT_OF_RANGE:
-      raise IndexError('Out of range')
-    case MpStatus.MP_UNIMPLEMENTED:
-      raise NotImplementedError('Unimplemented')
-    case MpStatus.MP_INTERNAL:
-      return RuntimeError('Internal error')
-    case MpStatus.MP_UNAVAILABLE:
-      raise ConnectionError('Unavailable')
-    case MpStatus.MP_DATA_LOSS:
-      return RuntimeError('Data loss')
-    case MpStatus.MP_UNAUTHENTICATED:
-      raise PermissionError('Unauthenticated')
-    case _:
-      return RuntimeError(f'Unexpected status: {status}')
-
-
-def handle_status(status: int):
-  """Checks the MpStatus and raises an error if not MP_OK."""
-  exception = convert_to_exception(status)
-  if exception:
-    raise exception
+_CFunction = mediapipe_c_utils.CFunction
 
 
 def handle_return_code(
@@ -112,7 +41,7 @@ def handle_return_code(
     )
 
 
-def load_raw_library(signatures: Sequence[CFunction] = ()) -> ctypes.CDLL:
+def load_raw_library(signatures: Sequence[_CFunction] = ()) -> ctypes.CDLL:
   """Loads the raw ctypes.CDLL shared library and registers signatures.
 
   This function loads the raw ctypes.CDLL shared library if it hasn't been
@@ -142,7 +71,7 @@ def load_raw_library(signatures: Sequence[CFunction] = ()) -> ctypes.CDLL:
 
 
 def load_shared_library(
-    signatures: Sequence[CFunction] = (),
+    signatures: Sequence[_CFunction] = (),
 ) -> serial_dispatcher.SerialDispatcher:
   """Loads the shared library in a SerialDispatcher and registers signatures.
 

@@ -34,6 +34,7 @@ from mediapipe.tasks.cc.metadata.python import _pywrap_metadata_version
 from mediapipe.tasks.metadata import metadata_schema_py_generated as _metadata_fb
 from mediapipe.tasks.metadata import schema_py_generated as _schema_fb
 from mediapipe.tasks.python.core import mediapipe_c_bindings
+from mediapipe.tasks.python.core import mediapipe_c_utils
 
 try:
   # If exists, optionally use TensorFlow to open and check files. Used to
@@ -100,22 +101,22 @@ _FLATC_TFLITE_METADATA_SCHEMA_FILE = get_path_to_datafile(
     "../../metadata/metadata_schema.fbs")
 
 _FLATBUFFERS_C_API_SIGNATURES = (
-    mediapipe_c_bindings.CFunction(
+    mediapipe_c_utils.CFunction(
         func_name="MpFlatbufferParserCreate",
         argtypes=[ctypes.c_bool, ctypes.POINTER(ctypes.c_void_p)],
         restype=ctypes.c_int,
     ),
-    mediapipe_c_bindings.CFunction(
+    mediapipe_c_utils.CFunction(
         func_name="MpFlatbufferParserParse",
         argtypes=[ctypes.c_void_p, ctypes.c_char_p],
         restype=ctypes.c_int,
     ),
-    mediapipe_c_bindings.CFunction(
+    mediapipe_c_utils.CFunction(
         func_name="MpFlatbufferParserGetError",
         argtypes=[ctypes.c_void_p],
         restype=ctypes.c_char_p,
     ),
-    mediapipe_c_bindings.CFunction(
+    mediapipe_c_utils.CFunction(
         func_name="MpFlatbufferGenerateText",
         argtypes=[
             ctypes.c_void_p,
@@ -124,12 +125,12 @@ _FLATBUFFERS_C_API_SIGNATURES = (
         ],
         restype=ctypes.c_int,
     ),
-    mediapipe_c_bindings.CFunction(
+    mediapipe_c_utils.CFunction(
         func_name="MpFlatbufferFreeString",
         argtypes=[ctypes.c_char_p],
         restype=None,
     ),
-    mediapipe_c_bindings.CFunction(
+    mediapipe_c_utils.CFunction(
         func_name="MpFlatbufferParserDelete",
         argtypes=[ctypes.c_void_p],
         restype=None,

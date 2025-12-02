@@ -20,9 +20,10 @@ from typing import Any
 import numpy as np
 
 from mediapipe.tasks.python.core import mediapipe_c_bindings
+from mediapipe.tasks.python.core import mediapipe_c_utils
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 
-_CFunction = mediapipe_c_bindings.CFunction
+_CFunction = mediapipe_c_utils.CFunction
 
 
 class ImageFormat(enum.IntEnum):
@@ -261,7 +262,7 @@ class Image:
     else:
       raise ValueError(f"Unsupported numpy data type: {data.dtype}")
 
-    mediapipe_c_bindings.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
 
   @classmethod
   def create_from_file(cls, file_name: str) -> "Image":
@@ -282,7 +283,7 @@ class Image:
     status = lib.MpImageCreateFromFile(
         file_name.encode("utf-8"), ctypes.byref(image_ptr)
     )
-    mediapipe_c_bindings.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
 
     # Create an empty Image object and then populate it.
     new_image = cls.__new__(cls)
@@ -312,7 +313,7 @@ class Image:
     status = lib.MpImageCreateFromImageFrame(
         image_ptr, ctypes.byref(output_image_ptr)
     )
-    mediapipe_c_bindings.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
 
     # Create an empty Image object and then populate it.
     new_image = cls.__new__(cls)
@@ -368,7 +369,7 @@ class Image:
     else:
       raise ValueError(f"Unsupported image format: {image_format}")
 
-    mediapipe_c_bindings.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
 
     shape = (self.height, self.width, self.channels)
     array = np.ctypeslib.as_array(
@@ -428,7 +429,7 @@ class Image:
     else:
       raise ValueError(f"Unsupported image format: {image_format}")
 
-    mediapipe_c_bindings.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
     return value_ptr.value
 
   def uses_gpu(self) -> bool:

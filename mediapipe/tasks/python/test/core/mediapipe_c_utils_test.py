@@ -14,9 +14,9 @@
 
 from absl.testing import absltest
 from absl.testing import parameterized
-from mediapipe.tasks.python.core import mediapipe_c_bindings
+from mediapipe.tasks.python.core import mediapipe_c_utils
 
-MpStatus = mediapipe_c_bindings.MpStatus
+MpStatus = mediapipe_c_utils.MpStatus
 
 
 class MediapipeCBindingsTest(parameterized.TestCase):
@@ -79,10 +79,10 @@ class MediapipeCBindingsTest(parameterized.TestCase):
       self, status, expected_exception
   ):
     with self.assertRaises(expected_exception):
-      mediapipe_c_bindings.handle_status(status)
+      mediapipe_c_utils.handle_status(status)
 
   def test_handle_status_ok(self):
-    self.assertIsNone(mediapipe_c_bindings.handle_status(MpStatus.MP_OK))
+    self.assertIsNone(mediapipe_c_utils.handle_status(MpStatus.MP_OK))
 
 
 if __name__ == "__main__":

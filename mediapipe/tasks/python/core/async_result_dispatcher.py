@@ -22,7 +22,7 @@ import queue
 import threading
 from typing import Any, Callable, TypeVar
 
-from mediapipe.tasks.python.core import mediapipe_c_bindings
+from mediapipe.tasks.python.core import mediapipe_c_utils
 
 CCallbackType = TypeVar("CCallbackType", bound=Callable[..., Any])
 
@@ -151,7 +151,7 @@ class AsyncResultDispatcher:
         *args: Any additional arguments passed to the C library callback.
       """
       if status_code != 0:
-        exception = mediapipe_c_bindings.convert_to_exception(status_code)
+        exception = mediapipe_c_utils.convert_to_exception(status_code)
         self._put_packet(_ExceptionPacket(exception=exception))
         return
 

@@ -318,7 +318,7 @@ class ImageEmbedder:
     status = lib.MpImageEmbedderCreate(
         ctypes.byref(ctypes_options), ctypes.byref(embedder_handle)
     )
-    mediapipe_c_bindings.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
     return cls(lib, embedder_handle, dispatcher=dispatcher)
 
   def embed(
@@ -355,7 +355,7 @@ class ImageEmbedder:
         options_c,
         ctypes.byref(c_result),
     )
-    mediapipe_c_bindings.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
     py_result = embedding_result_module.EmbeddingResult.from_ctypes(c_result)
     self._lib.MpImageEmbedderCloseResult(ctypes.byref(c_result))
     return py_result
@@ -403,7 +403,7 @@ class ImageEmbedder:
         ctypes.byref(c_result),
     )
 
-    mediapipe_c_bindings.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
 
     py_result = embedding_result_module.EmbeddingResult.from_ctypes(c_result)
     self._lib.MpImageEmbedderCloseResult(ctypes.byref(c_result))
@@ -458,14 +458,14 @@ class ImageEmbedder:
         options_c,
         timestamp_ms,
     )
-    mediapipe_c_bindings.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
 
   def close(self):
     """Closes the ImageEmbedder."""
     if not self._handle:
       return
     status = self._lib.MpImageEmbedderClose(self._handle)
-    mediapipe_c_bindings.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
     self._handle = None
     self._dispatcher.close()
     self._lib.close()

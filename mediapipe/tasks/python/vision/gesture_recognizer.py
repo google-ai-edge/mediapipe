@@ -23,6 +23,7 @@ from mediapipe.tasks.python.core import async_result_dispatcher
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.core import base_options_c
 from mediapipe.tasks.python.core import mediapipe_c_bindings
+from mediapipe.tasks.python.core import mediapipe_c_utils
 from mediapipe.tasks.python.core import serial_dispatcher
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 from mediapipe.tasks.python.vision import gesture_recognizer_result as gesture_recognizer_result_module
@@ -40,7 +41,7 @@ _ImageProcessingOptions = image_processing_options_lib.ImageProcessingOptions
 _GestureRecognizerResult = (
     gesture_recognizer_result_module.GestureRecognizerResult
 )
-_CFunction = mediapipe_c_bindings.CFunction
+_CFunction = mediapipe_c_utils.CFunction
 
 
 _C_TYPES_RESULT_CALLBACK = ctypes.CFUNCTYPE(
@@ -321,7 +322,7 @@ class GestureRecognizer:
     status = lib.MpGestureRecognizerCreate(
         ctypes.byref(options_c), ctypes.byref(recognizer_handle)
     )
-    mediapipe_c_bindings.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
     return cls(
         lib=lib,
         handle=recognizer_handle,
@@ -367,7 +368,7 @@ class GestureRecognizer:
         options_c,
         ctypes.byref(c_result),
     )
-    mediapipe_c_bindings.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
 
     result = _GestureRecognizerResult.from_ctypes(c_result)
     self._lib.MpGestureRecognizerCloseResult(ctypes.byref(c_result))
@@ -415,7 +416,7 @@ class GestureRecognizer:
         timestamp_ms,
         ctypes.byref(c_result),
     )
-    mediapipe_c_bindings.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
 
     result = _GestureRecognizerResult.from_ctypes(c_result)
     self._lib.MpGestureRecognizerCloseResult(ctypes.byref(c_result))
@@ -469,13 +470,13 @@ class GestureRecognizer:
         options_c,
         timestamp_ms,
     )
-    mediapipe_c_bindings.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
 
   def close(self):
     """Closes GestureRecognizer."""
     if self._handle:
       status = self._lib.MpGestureRecognizerClose(self._handle)
-      mediapipe_c_bindings.handle_status(status)
+      mediapipe_c_utils.handle_status(status)
       self._handle = None
       self._dispatcher.close()
       self._lib.close()

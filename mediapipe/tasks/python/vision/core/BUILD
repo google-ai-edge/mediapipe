@@ -48,6 +48,7 @@ py_library(
     srcs = ["image.py"],
     deps = [
         "//mediapipe/tasks/python/core:mediapipe_c_bindings",
+        "//mediapipe/tasks/python/core:mediapipe_c_utils",
         "//mediapipe/tasks/python/core:optional_dependencies",
         "@mediapipe_pip_deps_numpy//:pkg",
     ],

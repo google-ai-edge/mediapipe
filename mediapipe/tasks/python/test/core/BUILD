@@ -30,12 +30,11 @@ py_test(
 )
 
 py_test(
-    name = "mediapipe_c_bindings_test",
-    srcs = ["mediapipe_c_bindings_test.py"],
+    name = "mediapipe_c_utils_test",
+    srcs = ["mediapipe_c_utils_test.py"],
     deps = [
-        "//mediapipe/tasks/python/core:mediapipe_c_bindings",
+        "//mediapipe/tasks/python/core:mediapipe_c_utils",
         "//testing/pybase",
-        "//testing/pybase:parameterized",
         "@mediapipe_pip_deps_absl_py//:pkg",
     ],
 )
@@ -45,7 +44,7 @@ py_test(
     srcs = ["async_result_dispatcher_test.py"],
     deps = [
         "//mediapipe/tasks/python/core:async_result_dispatcher",
-        "//mediapipe/tasks/python/core:mediapipe_c_bindings",
+        "//mediapipe/tasks/python/core:mediapipe_c_utils",
         "@mediapipe_pip_deps_absl_py//:pkg",
     ],
 )

@@ -23,6 +23,7 @@ from mediapipe.tasks.python.core import async_result_dispatcher
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.core import base_options_c as base_options_c_module
 from mediapipe.tasks.python.core import mediapipe_c_bindings as mediapipe_c_bindings_c_module
+from mediapipe.tasks.python.core import mediapipe_c_utils
 from mediapipe.tasks.python.core import serial_dispatcher
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 from mediapipe.tasks.python.vision.core import image as image_module
@@ -34,7 +35,7 @@ ObjectDetectorResult = detections_module.DetectionResult
 _BaseOptions = base_options_module.BaseOptions
 _RunningMode = running_mode_module.VisionTaskRunningMode
 _ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
-_CFunction = mediapipe_c_bindings_c_module.CFunction
+_CFunction = mediapipe_c_utils.CFunction
 _AsyncResultDispatcher = async_result_dispatcher.AsyncResultDispatcher
 _LiveStreamPacket = async_result_dispatcher.LiveStreamPacket
 
@@ -363,7 +364,7 @@ class ObjectDetector:
         ctypes.byref(ctypes_options),
         ctypes.byref(detector_handle),
     )
-    mediapipe_c_bindings_c_module.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
 
     return ObjectDetector(
         lib=lib,
@@ -412,7 +413,7 @@ class ObjectDetector:
         c_image_processing_options,
         ctypes.byref(c_result),
     )
-    mediapipe_c_bindings_c_module.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
 
     py_result = ObjectDetectorResult.from_ctypes(c_result)
     self._lib.MpObjectDetectorCloseResult(ctypes.byref(c_result))
@@ -461,7 +462,7 @@ class ObjectDetector:
         timestamp_ms,
         ctypes.byref(c_result),
     )
-    mediapipe_c_bindings_c_module.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
 
     py_result = ObjectDetectorResult.from_ctypes(c_result)
     self._lib.MpObjectDetectorCloseResult(ctypes.byref(c_result))
@@ -516,13 +517,13 @@ class ObjectDetector:
         c_image_processing_options,
         timestamp_ms,
     )
-    mediapipe_c_bindings_c_module.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
 
   def close(self):
     """Shuts down the MediaPipe task instance."""
     if self._handle:
       ret_code = self._lib.MpObjectDetectorClose(self._handle)
-      mediapipe_c_bindings_c_module.handle_status(ret_code)
+      mediapipe_c_utils.handle_status(ret_code)
       self._handle = None
       self._dispatcher.close()
       self._lib.close()
