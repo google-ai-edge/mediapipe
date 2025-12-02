@@ -1,6 +1,6 @@
+# Placeholder for internal Python strict library and test compatibility macro.
 load("//mediapipe/tasks/metadata:build_defs.bzl", "stamp_metadata_parser_version")
 # Placeholder: load py_binary
-# Placeholder: load py_library
 
 package(
     licenses = ["notice"],  # Apache 2.0
@@ -24,7 +24,8 @@ py_library(
         "//mediapipe/tasks/cc/metadata/python:_pywrap_metadata_version",
         "//mediapipe/tasks/metadata:metadata_schema_py",
         "//mediapipe/tasks/metadata:schema_py",
-        "//mediapipe/tasks/python/metadata/flatbuffers_lib:_pywrap_flatbuffers",
+        "//mediapipe/tasks/python/core:mediapipe_c_bindings",
+        "//third_party/py/tensorflow:tensorflow_no_contrib",
         "@flatbuffers//:runtime_py",
         "@mediapipe_pip_deps_numpy//:pkg",
     ],
