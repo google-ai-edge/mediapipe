@@ -56,28 +56,12 @@ py_library(
     deps = [
         ":base_options_c",
         ":optional_dependencies",
-        "//mediapipe/calculators/tensor:inference_calculator_py_pb2",
-        "//mediapipe/tasks/cc/core/proto:acceleration_py_pb2",
-        "//mediapipe/tasks/cc/core/proto:base_options_py_pb2",
-        "//mediapipe/tasks/cc/core/proto:external_file_py_pb2",
     ],
 )
 
 py_library(
     name = "base_options_c",
     srcs = ["base_options_c.py"],
-)
-
-py_library(
-    name = "task_info",
-    srcs = ["task_info.py"],
-    deps = [
-        ":optional_dependencies",
-        "//mediapipe/calculators/core:flow_limiter_calculator_py_pb2",
-        "//mediapipe/framework:calculator_options_py_pb2",
-        "//mediapipe/framework:calculator_py_pb2",
-        "@com_google_protobuf//:protobuf_python",
-    ],
 )
 
 py_library(
@@ -88,5 +72,5 @@ py_library(
 py_library(
     name = "async_result_dispatcher",
     srcs = ["async_result_dispatcher.py"],
-    deps = [":mediapipe_c_bindings"],
+    deps = [":mediapipe_c_utils"],
 )

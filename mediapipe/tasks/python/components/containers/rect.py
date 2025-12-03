@@ -16,11 +16,8 @@
 import dataclasses
 from typing import Any, Optional
 
-from mediapipe.framework.formats import rect_pb2
 from mediapipe.tasks.python.components.containers import rect_c as rect_c_module
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
-
-_NormalizedRectProto = rect_pb2.NormalizedRect
 
 
 @dataclasses.dataclass
@@ -105,29 +102,6 @@ class NormalizedRect:
   rotation: Optional[float] = 0.0
   rect_id: Optional[int] = None
 
-  @doc_controls.do_not_generate_docs
-  def to_pb2(self) -> _NormalizedRectProto:
-    """Generates a NormalizedRect protobuf object."""
-    return _NormalizedRectProto(
-        x_center=self.x_center,
-        y_center=self.y_center,
-        width=self.width,
-        height=self.height,
-        rotation=self.rotation,
-        rect_id=self.rect_id)
-
-  @classmethod
-  @doc_controls.do_not_generate_docs
-  def create_from_pb2(cls, pb2_obj: _NormalizedRectProto) -> 'NormalizedRect':
-    """Creates a `NormalizedRect` object from the given protobuf object."""
-    return NormalizedRect(
-        x_center=pb2_obj.x_center,
-        y_center=pb2_obj.y_center,
-        width=pb2_obj.width,
-        height=pb2_obj.height,
-        rotation=pb2_obj.rotation,
-        rect_id=pb2_obj.rect_id)
-
   def __eq__(self, other: Any) -> bool:
     """Checks if this object is equal to the given object.
 
@@ -139,5 +113,11 @@ class NormalizedRect:
     """
     if not isinstance(other, NormalizedRect):
       return False
-
-    return self.to_pb2().__eq__(other.to_pb2())
+    return (
+        self.x_center == other.x_center
+        and self.y_center == other.y_center
+        and self.width == other.width
+        and self.height == other.height
+        and self.rotation == other.rotation
+        and self.rect_id == other.rect_id
+    )

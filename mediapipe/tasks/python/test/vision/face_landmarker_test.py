@@ -24,11 +24,9 @@ import numpy as np
 from google.protobuf import text_format
 from mediapipe.framework.formats import classification_pb2
 from mediapipe.framework.formats import landmark_pb2
-from mediapipe.tasks.python.components.containers import category as category_module
-from mediapipe.tasks.python.components.containers import landmark as landmark_module
-from mediapipe.tasks.python.components.containers import rect as rect_module
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.test import test_utils
+from mediapipe.tasks.python.test.vision import proto_utils
 from mediapipe.tasks.python.vision import face_landmarker
 from mediapipe.tasks.python.vision.core import image as image_module
 from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_module
@@ -37,10 +35,6 @@ from mediapipe.tasks.python.vision.core import vision_task_running_mode as runni
 
 FaceLandmarkerResult = face_landmarker.FaceLandmarkerResult
 _BaseOptions = base_options_module.BaseOptions
-_Category = category_module.Category
-_Rect = rect_module.Rect
-_Landmark = landmark_module.Landmark
-_NormalizedLandmark = landmark_module.NormalizedLandmark
 _Image = image_module.Image
 _FaceLandmarker = face_landmarker.FaceLandmarker
 _FaceLandmarkerOptions = face_landmarker.FaceLandmarkerOptions
@@ -63,9 +57,9 @@ def _get_expected_face_landmarks(file_path: str):
   with open(proto_file_path, 'rb') as f:
     proto = landmark_pb2.NormalizedLandmarkList()
     text_format.Parse(f.read(), proto)
-    face_landmarks = []
-    for landmark in proto.landmark:
-      face_landmarks.append(_NormalizedLandmark.create_from_pb2(landmark))
+    face_landmarks = proto_utils.create_normalized_landmark_list_from_proto(
+        proto
+    )
   face_landmarks_results.append(face_landmarks)
   return face_landmarks_results
 
@@ -76,18 +70,9 @@ def _get_expected_face_blendshapes(file_path: str):
   with open(proto_file_path, 'rb') as f:
     proto = classification_pb2.ClassificationList()
     text_format.Parse(f.read(), proto)
-    face_blendshapes_categories = []
-    face_blendshapes_classifications = classification_pb2.ClassificationList()
-    face_blendshapes_classifications.MergeFrom(proto)
-    for face_blendshapes in face_blendshapes_classifications.classification:
-      face_blendshapes_categories.append(
-          category_module.Category(
-              index=face_blendshapes.index,
-              score=face_blendshapes.score,
-              display_name=face_blendshapes.display_name,
-              category_name=face_blendshapes.label,
-          )
-      )
+    face_blendshapes_categories = (
+        proto_utils.create_classification_list_from_proto(proto)
+    )
   face_blendshapes_results.append(face_blendshapes_categories)
   return face_blendshapes_results
 

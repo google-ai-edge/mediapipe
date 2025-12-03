@@ -94,15 +94,14 @@ TEST(ImageSegmenterTest, ImageModeTestSucceedsWithCategoryMask) {
             kMpOk);
 
   auto expected_mask_image = DecodeImageFromFile(GetFullPath(kMaskImageFile));
-  const MpMask expected_mask = CreateCategoryMaskFromImage(expected_mask_image);
+  const ScopedMpImage expected_mask(
+      CreateCategoryMaskFromImage(expected_mask_image));
   const MpImagePtr actual_mask = result.category_mask;
-  EXPECT_GT(SimilarToUint8Mask(actual_mask, &expected_mask,
+  EXPECT_GT(SimilarToUint8Mask(actual_mask, expected_mask.get(),
                                kGoldenMaskMagnificationFactor),
             kGoldenMaskSimilarity);
   MpImageSegmenterCloseResult(&result);
   EXPECT_EQ(MpImageSegmenterClose(segmenter), kMpOk);
-
-  delete[] expected_mask.image_frame.image_buffer;
 }
 
 TEST(ImageSegmenterTest, ImageModeWithRotationTestSucceedsWithCategoryMask) {
@@ -132,15 +131,14 @@ TEST(ImageSegmenterTest, ImageModeWithRotationTestSucceedsWithCategoryMask) {
             kMpOk);
 
   auto expected_mask_image = DecodeImageFromFile(GetFullPath(kMaskImageFile));
-  const MpMask expected_mask = CreateCategoryMaskFromImage(expected_mask_image);
+  const ScopedMpImage expected_mask(
+      CreateCategoryMaskFromImage(expected_mask_image));
   const MpImagePtr actual_mask = result.category_mask;
-  EXPECT_GT(SimilarToUint8Mask(actual_mask, &expected_mask,
+  EXPECT_GT(SimilarToUint8Mask(actual_mask, expected_mask.get(),
                                kGoldenMaskMagnificationFactor),
             kGoldenMaskSimilarityRotated);
   MpImageSegmenterCloseResult(&result);
   EXPECT_EQ(MpImageSegmenterClose(segmenter), kMpOk);
-
-  delete[] expected_mask.image_frame.image_buffer;
 }
 
 TEST(ImageSegmenterTest, VideoModeTest) {
@@ -161,7 +159,8 @@ TEST(ImageSegmenterTest, VideoModeTest) {
   EXPECT_EQ(MpImageSegmenterCreate(&options, &segmenter), kMpOk);
 
   auto expected_mask_image = DecodeImageFromFile(GetFullPath(kMaskImageFile));
-  const MpMask expected_mask = CreateCategoryMaskFromImage(expected_mask_image);
+  const ScopedMpImage expected_mask(
+      CreateCategoryMaskFromImage(expected_mask_image));
 
   for (int i = 0; i < kIterations; ++i) {
     ImageSegmenterResult result;
@@ -170,15 +169,13 @@ TEST(ImageSegmenterTest, VideoModeTest) {
                   /* image_processing_options= */ nullptr, i, &result),
               kMpOk);
     const MpImagePtr actual_mask = result.category_mask;
-    EXPECT_GT(SimilarToUint8Mask(actual_mask, &expected_mask,
+    EXPECT_GT(SimilarToUint8Mask(actual_mask, expected_mask.get(),
                                  kGoldenMaskMagnificationFactor),
               kGoldenMaskSimilarity);
 
     MpImageSegmenterCloseResult(&result);
   }
   EXPECT_EQ(MpImageSegmenterClose(segmenter), kMpOk);
-
-  delete[] expected_mask.image_frame.image_buffer;
 }
 
 // A structure to support LiveStreamModeTest below. This structure holds a
@@ -196,16 +193,15 @@ struct LiveStreamModeCallback {
     EXPECT_GT(MpImageGetWidth(image), 0);
     EXPECT_GT(MpImageGetHeight(image), 0);
     auto expected_mask_image = DecodeImageFromFile(GetFullPath(kMaskImageFile));
-    const MpMask expected_mask =
-        CreateCategoryMaskFromImage(expected_mask_image);
+    const ScopedMpImage expected_mask(
+        CreateCategoryMaskFromImage(expected_mask_image));
     const MpImagePtr actual_mask = segmenter_result->category_mask;
-    EXPECT_GT(SimilarToUint8Mask(actual_mask, &expected_mask,
+    EXPECT_GT(SimilarToUint8Mask(actual_mask, expected_mask.get(),
                                  kGoldenMaskMagnificationFactor),
               kGoldenMaskSimilarity);
     EXPECT_GT(timestamp, last_timestamp);
     ++last_timestamp;
 
-    delete[] expected_mask.image_frame.image_buffer;
     if (blocking_counter) {
       blocking_counter->DecrementCount();
     }

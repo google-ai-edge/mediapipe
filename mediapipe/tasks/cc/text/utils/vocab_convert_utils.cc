@@ -100,7 +100,7 @@ absl::Status ConvertHfTokenizer(const std::string& hf_tokenizer,
   const auto& added_tokens = configs.second["added_tokens"];
   for (int i = 0; i < added_tokens.size(); ++i) {
     if (added_tokens[i]["normalized"]) {
-      auto vocab = added_tokens[i]["content"];
+      std::string vocab = added_tokens[i]["content"];
       auto* sp = model_proto.add_pieces();
       sp->set_type(ModelProto::SentencePiece::USER_DEFINED);
       sp->set_piece(vocab);

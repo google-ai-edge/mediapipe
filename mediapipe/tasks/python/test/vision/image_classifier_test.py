@@ -135,6 +135,33 @@ class ImageClassifierTest(parameterized.TestCase):
         os.path.join(_TEST_DATA_DIR, _MODEL_FILE)
     )
 
+  def assertCategoryAlmostEqual(
+      self, actual: _Category, expected: _Category, delta: float = 1e-6
+  ):
+    self.assertEqual(actual.index, expected.index)
+    self.assertAlmostEqual(actual.score, expected.score, delta=delta)
+    self.assertEqual(actual.display_name or '', expected.display_name)
+    self.assertEqual(actual.category_name, expected.category_name)
+
+  def assertClassificationsAlmostEqual(
+      self, actual: _Classifications, expected: _Classifications
+  ):
+    self.assertEqual(actual.head_index, expected.head_index)
+    self.assertEqual(actual.head_name, expected.head_name)
+    self.assertLen(actual.categories, len(expected.categories))
+    for i, actual_category in enumerate(actual.categories):
+      self.assertCategoryAlmostEqual(actual_category, expected.categories[i])
+
+  def assertClassificationResultCorrect(
+      self, actual: ImageClassifierResult, expected: ImageClassifierResult
+  ):
+    self.assertEqual(actual.timestamp_ms, expected.timestamp_ms)
+    self.assertLen(actual.classifications, len(expected.classifications))
+    for i, actual_classifications in enumerate(actual.classifications):
+      self.assertClassificationsAlmostEqual(
+          actual_classifications, expected.classifications[i]
+      )
+
   def test_create_from_file_succeeds_with_valid_model_path(self):
     # Creates with default option and valid model file successfully.
     with _ImageClassifier.create_from_model_path(self.model_path) as classifier:
@@ -189,8 +216,8 @@ class ImageClassifierTest(parameterized.TestCase):
     # Performs image classification on the input.
     image_result = classifier.classify(self.test_image)
     # Comparing results.
-    test_utils.assert_proto_equals(
-        self, image_result.to_pb2(), expected_classification_result.to_pb2()
+    self.assertClassificationResultCorrect(
+        image_result, expected_classification_result
     )
     # Closes the classifier explicitly when the classifier is not used in
     # a context.
@@ -220,8 +247,8 @@ class ImageClassifierTest(parameterized.TestCase):
       # Performs image classification on the input.
       image_result = classifier.classify(self.test_image)
       # Comparing results.
-      test_utils.assert_proto_equals(
-          self, image_result.to_pb2(), expected_classification_result.to_pb2()
+      self.assertClassificationResultCorrect(
+          image_result, expected_classification_result
       )
 
   def test_classify_succeeds_with_region_of_interest(self):
@@ -240,8 +267,8 @@ class ImageClassifierTest(parameterized.TestCase):
       # Performs image classification on the input.
       image_result = classifier.classify(test_image, image_processing_options)
       # Comparing results.
-      test_utils.assert_proto_equals(
-          self, image_result.to_pb2(), _generate_soccer_ball_results().to_pb2()
+      self.assertClassificationResultCorrect(
+          image_result, _generate_soccer_ball_results()
       )
 
   def test_classify_succeeds_with_rotation(self):
@@ -288,9 +315,7 @@ class ImageClassifierTest(parameterized.TestCase):
           ],
           timestamp_ms=0,
       )
-      test_utils.assert_proto_equals(
-          self, image_result.to_pb2(), expected.to_pb2()
-      )
+      self.assertClassificationResultCorrect(image_result, expected)
 
   def test_classify_succeeds_with_region_of_interest_and_rotation(self):
     base_options = _BaseOptions(model_asset_path=self.model_path)
@@ -326,9 +351,7 @@ class ImageClassifierTest(parameterized.TestCase):
           ],
           timestamp_ms=0,
       )
-      test_utils.assert_proto_equals(
-          self, image_result.to_pb2(), expected.to_pb2()
-      )
+      self.assertClassificationResultCorrect(image_result, expected)
 
   def test_score_threshold_option(self):
     options = _ImageClassifierOptions(
@@ -504,10 +527,8 @@ class ImageClassifierTest(parameterized.TestCase):
         classification_result = classifier.classify_for_video(
             self.test_image, timestamp
         )
-        test_utils.assert_proto_equals(
-            self,
-            classification_result.to_pb2(),
-            _generate_burger_results(timestamp).to_pb2(),
+        self.assertClassificationResultCorrect(
+            classification_result, _generate_burger_results(timestamp)
         )
 
   def test_classify_for_video_succeeds_with_region_of_interest(self):
@@ -530,10 +551,8 @@ class ImageClassifierTest(parameterized.TestCase):
         classification_result = classifier.classify_for_video(
             test_image, timestamp, image_processing_options
         )
-        test_utils.assert_proto_equals(
-            self,
-            classification_result.to_pb2(),
-            _generate_soccer_ball_results(timestamp).to_pb2(),
+        self.assertClassificationResultCorrect(
+            classification_result, _generate_soccer_ball_results(timestamp)
         )
 
   def test_calling_classify_in_live_stream_mode(self):
@@ -581,9 +600,7 @@ class ImageClassifierTest(parameterized.TestCase):
     ):
       nonlocal callback_exception, observed_timestamp_ms
       try:
-        test_utils.assert_proto_equals(
-            self, result.to_pb2(), expected_result.to_pb2()
-        )
+        self.assertClassificationResultCorrect(result, expected_result)
         self.assertTrue(
             np.array_equal(
                 output_image.numpy_view(), self.test_image.numpy_view()
@@ -629,8 +646,8 @@ class ImageClassifierTest(parameterized.TestCase):
     ):
       nonlocal callback_exception, observed_timestamp_ms
       try:
-        test_utils.assert_proto_equals(
-            self, result.to_pb2(), _generate_soccer_ball_results(100).to_pb2()
+        self.assertClassificationResultCorrect(
+            result, _generate_soccer_ball_results(100)
         )
         self.assertEqual(output_image.width, test_image.width)
         self.assertEqual(output_image.height, test_image.height)

@@ -89,15 +89,14 @@ TEST(InteractiveSegmenterTest,
             kMpOk);
 
   auto expected_mask_image = DecodeImageFromFile(GetFullPath(kMaskImageFile));
-  const MpMask expected_mask = CreateCategoryMaskFromImage(expected_mask_image);
+  const ScopedMpImage expected_mask{
+      CreateCategoryMaskFromImage(expected_mask_image)};
   const MpImagePtr actual_mask = result.category_mask;
-  EXPECT_GT(SimilarToUint8Mask(actual_mask, &expected_mask,
+  EXPECT_GT(SimilarToUint8Mask(actual_mask, expected_mask.get(),
                                kGoldenMaskMagnificationFactor),
             0.9f);
   MpInteractiveSegmenterCloseResult(&result);
   ASSERT_EQ(MpInteractiveSegmenterClose(segmenter), kMpOk);
-
-  delete[] expected_mask.image_frame.image_buffer;
 }
 
 // Test here fails since the model metadata has no Activation type.
@@ -136,15 +135,14 @@ TEST(InteractiveSegmenterTest,
             kMpOk);
 
   auto expected_mask_image = DecodeImageFromFile(GetFullPath(kMaskImageFile));
-  const MpMask expected_mask = CreateCategoryMaskFromImage(expected_mask_image);
+  const ScopedMpImage expected_mask(
+      CreateCategoryMaskFromImage(expected_mask_image));
   const MpImagePtr actual_mask = result.category_mask;
-  EXPECT_GT(SimilarToUint8Mask(actual_mask, &expected_mask,
+  EXPECT_GT(SimilarToUint8Mask(actual_mask, expected_mask.get(),
                                kGoldenMaskMagnificationFactor),
             0.84f);
   MpInteractiveSegmenterCloseResult(&result);
   ASSERT_EQ(MpInteractiveSegmenterClose(segmenter), kMpOk);
-
-  delete[] expected_mask.image_frame.image_buffer;
 }
 
 TEST(InteractiveSegmenterTest, ImageModeTestWithRotation) {
@@ -183,15 +181,14 @@ TEST(InteractiveSegmenterTest, ImageModeTestWithRotation) {
       kMpOk);
 
   auto expected_mask_image = DecodeImageFromFile(GetFullPath(kMaskImageFile));
-  const MpMask expected_mask = CreateCategoryMaskFromImage(expected_mask_image);
+  const ScopedMpImage expected_mask(
+      CreateCategoryMaskFromImage(expected_mask_image));
   const MpImagePtr actual_mask = result.category_mask;
-  EXPECT_GT(SimilarToUint8Mask(actual_mask, &expected_mask,
+  EXPECT_GT(SimilarToUint8Mask(actual_mask, expected_mask.get(),
                                kGoldenMaskMagnificationFactor),
             0.9f);
   MpInteractiveSegmenterCloseResult(&result);
   ASSERT_EQ(MpInteractiveSegmenterClose(segmenter), kMpOk);
-
-  delete[] expected_mask.image_frame.image_buffer;
 }
 
 TEST(InteractiveSegmenterTest, InvalidArgumentHandling) {

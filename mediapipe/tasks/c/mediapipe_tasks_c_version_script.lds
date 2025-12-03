@@ -7,6 +7,7 @@ VERS_1.0 {
     MpHandLandmarker*;
     MpImage*;
     MpLlmConverter*;
+    MpFlatbuffer*;
     MpInteractiveSegmenter*;
     MpPoseLandmarker*;
     MpStringList*;

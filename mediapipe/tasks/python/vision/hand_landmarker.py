@@ -26,9 +26,9 @@ from mediapipe.tasks.python.core import async_result_dispatcher
 from mediapipe.tasks.python.core import base_options as base_options_lib
 from mediapipe.tasks.python.core import base_options_c
 from mediapipe.tasks.python.core import mediapipe_c_bindings
+from mediapipe.tasks.python.core import mediapipe_c_utils
 from mediapipe.tasks.python.core import serial_dispatcher
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
-from mediapipe.tasks.python.vision.core import base_vision_task_api
 from mediapipe.tasks.python.vision.core import image as image_lib
 from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_lib
 from mediapipe.tasks.python.vision.core import image_processing_options_c
@@ -37,9 +37,8 @@ from mediapipe.tasks.python.vision.core import vision_task_running_mode
 _BaseOptions = base_options_lib.BaseOptions
 _RunningMode = vision_task_running_mode.VisionTaskRunningMode
 _ImageProcessingOptions = image_processing_options_lib.ImageProcessingOptions
-_CFunction = mediapipe_c_bindings.CFunction
+_CFunction = mediapipe_c_utils.CFunction
 _AsyncResultDispatcher = async_result_dispatcher.AsyncResultDispatcher
-_LiveStreamPacket = async_result_dispatcher.LiveStreamPacket
 
 
 class HandLandmarkerResultC(ctypes.Structure):
@@ -396,7 +395,7 @@ class HandLandmarker:
         `HandLandmarkerOptions` such as missing the model.
       RuntimeError: If other types of error occurred.
     """
-    base_vision_task_api.validate_running_mode(
+    vision_task_running_mode.validate_running_mode(
         options.running_mode, options.result_callback
     )
 
@@ -431,7 +430,7 @@ class HandLandmarker:
         ctypes.byref(ctypes_options),
         ctypes.byref(landmarker_handle),
     )
-    mediapipe_c_bindings.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
     return HandLandmarker(
         lib=lib,
         handle=landmarker_handle,
@@ -478,7 +477,7 @@ class HandLandmarker:
         c_image_processing_options,
         ctypes.byref(c_result),
     )
-    mediapipe_c_bindings.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
 
     py_result = HandLandmarkerResult.from_ctypes(c_result)
     self._lib.MpHandLandmarkerCloseResult(ctypes.byref(c_result))
@@ -527,7 +526,7 @@ class HandLandmarker:
         timestamp_ms,
         ctypes.byref(c_result),
     )
-    mediapipe_c_bindings.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
 
     py_result = HandLandmarkerResult.from_ctypes(c_result)
     self._lib.MpHandLandmarkerCloseResult(ctypes.byref(c_result))
@@ -583,13 +582,13 @@ class HandLandmarker:
         c_image_processing_options,
         timestamp_ms,
     )
-    mediapipe_c_bindings.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
 
   def close(self):
     """Shuts down the MediaPipe task instance."""
     if self._handle:
       status = self._lib.MpHandLandmarkerClose(self._handle)
-      mediapipe_c_bindings.handle_status(status)
+      mediapipe_c_utils.handle_status(status)
       self._handle = None
       self._dispatcher.close()
       self._lib.close()

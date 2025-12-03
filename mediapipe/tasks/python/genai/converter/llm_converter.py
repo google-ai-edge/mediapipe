@@ -10,13 +10,14 @@ from jax import numpy as jnp
 import numpy as np
 
 from mediapipe.tasks.python.core import mediapipe_c_bindings
+from mediapipe.tasks.python.core import mediapipe_c_utils
 from mediapipe.tasks.python.genai.converter import converter_base
 from mediapipe.tasks.python.genai.converter import converter_factory
 from mediapipe.tasks.python.genai.converter import quantization_util
 
 
 _CTYPES_SIGNATURES = (
-    mediapipe_c_bindings.CFunction(
+    mediapipe_c_utils.CFunction(
         func_name='MpLlmConverterGenerateCpuTfLite',
         argtypes=[
             ctypes.c_char_p,  # model_type
@@ -25,9 +26,9 @@ _CTYPES_SIGNATURES = (
             ctypes.c_bool,  # is_quantized
             ctypes.c_char_p,  # output_tflite_file
         ],
-        restype=mediapipe_c_bindings.MpStatus,
+        restype=mediapipe_c_utils.MpStatus,
     ),
-    mediapipe_c_bindings.CFunction(
+    mediapipe_c_utils.CFunction(
         func_name='MpLlmConverterGenerateGpuTfLite',
         argtypes=[
             ctypes.c_char_p,  # model_type
@@ -46,15 +47,15 @@ _CTYPES_SIGNATURES = (
             ctypes.c_bool,  # use_dynamic_ple
             ctypes.c_bool,  # apply_srq
         ],
-        restype=mediapipe_c_bindings.MpStatus,
+        restype=mediapipe_c_utils.MpStatus,
     ),
-    mediapipe_c_bindings.CFunction(
+    mediapipe_c_utils.CFunction(
         func_name='MpLlmConverterConvertHfTokenizer',
         argtypes=[
             ctypes.c_char_p,  # vocab_model_file
             ctypes.c_char_p,  # output_vocab_file
         ],
-        restype=mediapipe_c_bindings.MpStatus,
+        restype=mediapipe_c_utils.MpStatus,
     ),
 )
 
@@ -362,7 +363,7 @@ class _LlmConverter:
           True,
           output_tflite_file.encode('utf-8'),
       )
-      mediapipe_c_bindings.handle_status(status)
+      mediapipe_c_utils.handle_status(status)
     elif backend == 'gpu':
       status = self._lib.MpLlmConverterGenerateGpuTfLite(
           model_type.encode('utf-8'),
@@ -381,7 +382,7 @@ class _LlmConverter:
           True if use_dynamic_ple is None else use_dynamic_ple,
           False if apply_srq is None else apply_srq,
       )
-      mediapipe_c_bindings.handle_status(status)
+      mediapipe_c_utils.handle_status(status)
     else:
       raise ValueError(f'Unsupported backend: {backend}')
 
@@ -405,7 +406,7 @@ class _LlmConverter:
         vocab_model_file.encode('utf-8'),
         output_vocab_file.encode('utf-8'),
     )
-    mediapipe_c_bindings.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
     return output_vocab_file
 
   def sort_layer_info(self, layer_info_file: str) -> None:

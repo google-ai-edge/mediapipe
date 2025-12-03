@@ -44,6 +44,7 @@ py_library(
         ":converter_factory",
         ":quantization_util",
         "//mediapipe/tasks/python/core:mediapipe_c_bindings",
+        "//mediapipe/tasks/python/core:mediapipe_c_utils",
         "//third_party/py/jax",
         "@mediapipe_pip_deps_numpy//:pkg",
     ],

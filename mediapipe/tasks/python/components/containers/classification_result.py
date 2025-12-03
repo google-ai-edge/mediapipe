@@ -16,16 +16,9 @@
 import dataclasses
 from typing import List, Optional
 
-from mediapipe.framework.formats import classification_pb2
-from mediapipe.tasks.cc.components.containers.proto import classifications_pb2
 from mediapipe.tasks.python.components.containers import category as category_lib
 from mediapipe.tasks.python.components.containers import classification_result_c
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
-
-_ClassificationProto = classification_pb2.Classification
-_ClassificationListProto = classification_pb2.ClassificationList
-_ClassificationsProto = classifications_pb2.Classifications
-_ClassificationResultProto = classifications_pb2.ClassificationResult
 
 
 @dataclasses.dataclass
@@ -67,30 +60,6 @@ class Classifications:
         ),
     )
 
-  @doc_controls.do_not_generate_docs
-  def to_pb2(self) -> _ClassificationsProto:
-    """Generates a Classifications protobuf object."""
-    classification_list_proto = _ClassificationListProto()
-    for category in self.categories:
-      classification_proto = category.to_pb2()
-      classification_list_proto.classification.append(classification_proto)
-    return _ClassificationsProto(
-        classification_list=classification_list_proto,
-        head_index=self.head_index,
-        head_name=self.head_name)
-
-  @classmethod
-  @doc_controls.do_not_generate_docs
-  def create_from_pb2(cls, pb2_obj: _ClassificationsProto) -> 'Classifications':
-    """Creates a `Classifications` object from the given protobuf object."""
-    categories = []
-    for classification in pb2_obj.classification_list.classification:
-      categories.append(category_lib.Category.create_from_pb2(classification))
-    return Classifications(
-        categories=categories,
-        head_index=pb2_obj.head_index,
-        head_name=pb2_obj.head_name)
-
 
 @dataclasses.dataclass
 class ClassificationResult:
@@ -109,28 +78,6 @@ class ClassificationResult:
 
   classifications: List[Classifications]
   timestamp_ms: Optional[int] = None
-
-  @doc_controls.do_not_generate_docs
-  def to_pb2(self) -> _ClassificationResultProto:
-    """Generates a ClassificationResult protobuf object."""
-    return _ClassificationResultProto(
-        classifications=[
-            classification.to_pb2() for classification in self.classifications
-        ],
-        timestamp_ms=self.timestamp_ms)
-
-  @classmethod
-  @doc_controls.do_not_generate_docs
-  def create_from_pb2(
-      cls, pb2_obj: _ClassificationResultProto) -> 'ClassificationResult':
-    """Creates a `ClassificationResult` object from the given protobuf object.
-    """
-    return ClassificationResult(
-        classifications=[
-            Classifications.create_from_pb2(classification)
-            for classification in pb2_obj.classifications
-        ],
-        timestamp_ms=pb2_obj.timestamp_ms)
 
   @classmethod
   @doc_controls.do_not_generate_docs

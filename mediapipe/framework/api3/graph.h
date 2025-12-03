@@ -105,6 +105,7 @@ class Graph;
 //   graph.detections.Set(detections);
 // ```
 class GenericGraph;
+class FunctionGraphBuilder;
 
 // `GraphNode` is returned by `Graph<...>::AddNode<...>()` function.
 //
@@ -315,8 +316,12 @@ class GenericGraph {
   std::vector<std::unique_ptr<internal_graph::GraphLegacyPacketGeneratorBase>>
       generators_;
 
+  // To access `builder_` in order to add inputs/outputs to a generic graph.
   template <typename BuildGraphFnT>
   friend class FunctionRunnerBuilder;
+  // To access `builder_` in order to add input side packets to a generic graph.
+  // Used in conjunction with FunctionRunnerBuilder.
+  friend class FunctionGraphBuilder;
 };
 
 template <template <typename, typename...> typename ContractT, typename... Ts>

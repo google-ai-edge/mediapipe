@@ -32,11 +32,11 @@ absl::Status ValidatePerspectiveCamera(
     const proto::PerspectiveCamera& perspective_camera) {
   static constexpr float kAbsoluteErrorEps = 1e-9f;
 
-  RET_CHECK_GT(perspective_camera.near(), kAbsoluteErrorEps)
+  RET_CHECK_GT(perspective_camera.near_plane(), kAbsoluteErrorEps)
       << "Near Z must be greater than 0 with a margin of 10^{-9}!";
 
-  RET_CHECK_GT(perspective_camera.far(),
-               perspective_camera.near() + kAbsoluteErrorEps)
+  RET_CHECK_GT(perspective_camera.far_plane(),
+               perspective_camera.near_plane() + kAbsoluteErrorEps)
       << "Far Z must be greater than Near Z with a margin of 10^{-9}!";
 
   RET_CHECK_GT(perspective_camera.vertical_fov_degrees(), kAbsoluteErrorEps)

@@ -21,18 +21,18 @@ from mediapipe.tasks.python.core import async_result_dispatcher
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.core import base_options_c
 from mediapipe.tasks.python.core import mediapipe_c_bindings
+from mediapipe.tasks.python.core import mediapipe_c_utils
 from mediapipe.tasks.python.core import serial_dispatcher
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
-from mediapipe.tasks.python.vision.core import base_vision_task_api
 from mediapipe.tasks.python.vision.core import image as image_module
 from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_module
 from mediapipe.tasks.python.vision.core import image_processing_options_c
-from mediapipe.tasks.python.vision.core import vision_task_running_mode
+from mediapipe.tasks.python.vision.core import vision_task_running_mode as running_mode_module
 
 _BaseOptions = base_options_module.BaseOptions
 _ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
-_RunningMode = vision_task_running_mode.VisionTaskRunningMode
-_CFunction = mediapipe_c_bindings.CFunction
+_RunningMode = running_mode_module.VisionTaskRunningMode
+_CFunction = mediapipe_c_utils.CFunction
 _AsyncResultDispatcher = async_result_dispatcher.AsyncResultDispatcher
 
 
@@ -324,7 +324,7 @@ class ImageSegmenter:
       RuntimeError: If other types of error occurred.
     """
 
-    base_vision_task_api.validate_running_mode(
+    running_mode_module.validate_running_mode(
         options.running_mode, options.result_callback
     )
 
@@ -356,7 +356,7 @@ class ImageSegmenter:
     status = lib.MpImageSegmenterCreate(
         ctypes.byref(c_options), ctypes.byref(segmenter_handle)
     )
-    mediapipe_c_bindings.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
     return cls(
         lib=lib,
         handle=segmenter_handle,
@@ -399,7 +399,7 @@ class ImageSegmenter:
         options_c,
         ctypes.byref(c_result),
     )
-    mediapipe_c_bindings.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
     result = ImageSegmenterResult.from_ctypes(c_result)
     self._lib.MpImageSegmenterCloseResult(ctypes.byref(c_result))
     return result
@@ -447,7 +447,7 @@ class ImageSegmenter:
         timestamp_ms,
         ctypes.byref(c_result),
     )
-    mediapipe_c_bindings.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
     result = ImageSegmenterResult.from_ctypes(c_result)
     self._lib.MpImageSegmenterCloseResult(ctypes.byref(c_result))
     return result
@@ -497,7 +497,7 @@ class ImageSegmenter:
         options_c,
         timestamp_ms,
     )
-    mediapipe_c_bindings.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
 
   @property
   def labels(self) -> list[str]:
@@ -517,7 +517,7 @@ class ImageSegmenter:
           self._handle,
           ctypes.byref(c_labels),
       )
-      mediapipe_c_bindings.handle_status(status)
+      mediapipe_c_utils.handle_status(status)
       self._labels = []
       for i in range(c_labels.num_strings):
         c_label = c_labels.strings[i]
@@ -530,7 +530,7 @@ class ImageSegmenter:
     """Closes ImageSegmenter."""
     if self._handle:
       status = self._lib.MpImageSegmenterClose(self._handle)
-      mediapipe_c_bindings.handle_status(status)
+      mediapipe_c_utils.handle_status(status)
     self._handle = None
     self._dispatcher.close()
     self._lib.close()

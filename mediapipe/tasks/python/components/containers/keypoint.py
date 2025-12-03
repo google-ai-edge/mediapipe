@@ -16,11 +16,8 @@
 import dataclasses
 from typing import Any, Optional
 
-from mediapipe.framework.formats import location_data_pb2
 from mediapipe.tasks.python.components.containers import keypoint_c as keypoint_c_lib
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
-
-_RelativeKeypointProto = location_data_pb2.LocationData.RelativeKeypoint
 
 
 @dataclasses.dataclass
@@ -42,26 +39,6 @@ class NormalizedKeypoint:
   y: Optional[float] = None
   label: Optional[str] = None
   score: Optional[float] = None
-
-  @doc_controls.do_not_generate_docs
-  def to_pb2(self) -> _RelativeKeypointProto:
-    """Generates a RelativeKeypoint protobuf object."""
-    return _RelativeKeypointProto(
-        x=self.x, y=self.y, keypoint_label=self.label, score=self.score
-    )
-
-  @classmethod
-  @doc_controls.do_not_generate_docs
-  def create_from_pb2(
-      cls, pb2_obj: _RelativeKeypointProto
-  ) -> 'NormalizedKeypoint':
-    """Creates a `NormalizedKeypoint` object from the given protobuf object."""
-    return NormalizedKeypoint(
-        x=pb2_obj.x,
-        y=pb2_obj.y,
-        label=pb2_obj.keypoint_label,
-        score=pb2_obj.score,
-    )
 
   @classmethod
   @doc_controls.do_not_generate_docs
@@ -87,5 +64,9 @@ class NormalizedKeypoint:
     """
     if not isinstance(other, NormalizedKeypoint):
       return False
-
-    return self.to_pb2().__eq__(other.to_pb2())
+    return (
+        self.x == other.x
+        and self.y == other.y
+        and self.label == other.label
+        and self.score == other.score
+    )

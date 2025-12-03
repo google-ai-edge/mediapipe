@@ -294,7 +294,7 @@ class AudioClassifier:
     status = lib.MpAudioClassifierCreate(
         ctypes.byref(ctypes_options), ctypes.byref(classifier_handle_ptr)
     )
-    mediapipe_c_bindings.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
     return AudioClassifier(
         lib=lib,
         handle=classifier_handle_ptr,
@@ -358,7 +358,7 @@ class AudioClassifier:
         audio_clip.to_ctypes(),
         ctypes.byref(c_result),
     )
-    mediapipe_c_bindings.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
     py_result = [
         AudioClassifierResult.from_ctypes(c_result.results[i])
         for i in range(c_result.results_count)
@@ -406,7 +406,7 @@ class AudioClassifier:
         audio_block.to_ctypes(),
         timestamp_ms,
     )
-    mediapipe_c_bindings.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
 
   def create_audio_record(
       self, num_channels: int, sample_rate: int, required_input_buffer_size: int
@@ -440,7 +440,7 @@ class AudioClassifier:
     """Shuts down the MediaPipe task instance."""
     if self._handle:
       status = self._lib.MpAudioClassifierClose(self._handle)
-      mediapipe_c_bindings.handle_status(status)
+      mediapipe_c_utils.handle_status(status)
       self._handle = None
       self._dispatcher.close()
       self._lib.close()

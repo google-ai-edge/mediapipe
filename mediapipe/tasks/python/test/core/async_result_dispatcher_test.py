@@ -19,10 +19,10 @@ from unittest import mock
 from absl.testing import absltest
 
 from mediapipe.tasks.python.core import async_result_dispatcher
-from mediapipe.tasks.python.core import mediapipe_c_bindings
+from mediapipe.tasks.python.core import mediapipe_c_utils
 
 _AsyncResultDispatcher = async_result_dispatcher.AsyncResultDispatcher
-_MpStatus = mediapipe_c_bindings.MpStatus
+_MpStatus = mediapipe_c_utils.MpStatus
 
 _MP_STATUS_OK = _MpStatus.MP_OK.value
 _C_CALLBACK_TYPE = ctypes.CFUNCTYPE(

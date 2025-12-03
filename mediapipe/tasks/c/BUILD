@@ -24,11 +24,14 @@ exports_files(["mediapipe_tasks_c_version_script.lds"])
 # //mediapipe/tasks/c:libmediapipe.so
 cc_binary(
     name = "libmediapipe.so",
-    linkopts = [
-        "-Wl,-soname=libmediapipe.so",
-        "-Wl,--version-script=$(location :mediapipe_tasks_c_version_script.lds)",
-        "-fvisibility=hidden",
-    ],
+    linkopts = select({
+        "@platforms//os:linux": [
+            "-Wl,-soname=libmediapipe.so",
+            "-Wl,--version-script=$(location :mediapipe_tasks_c_version_script.lds)",
+            "-fvisibility=hidden",
+        ],
+        "//conditions:default": [],
+    }),
     linkshared = True,
     linkstatic = True,
     tags = [
@@ -39,6 +42,8 @@ cc_binary(
     deps = [
         ":mediapipe_tasks_c_version_script.lds",
         "//mediapipe/tasks/c/audio/audio_classifier:audio_classifier_c_lib",
+        "//mediapipe/tasks/c/genai/converter:llm_converter_c_lib",
+        "//mediapipe/tasks/c/metadata:flatbuffer_api_c_lib",
         "//mediapipe/tasks/c/text/language_detector:language_detector_c_lib",
         "//mediapipe/tasks/c/text/text_classifier:text_classifier_c_lib",
         "//mediapipe/tasks/c/text/text_embedder:text_embedder_c_lib",

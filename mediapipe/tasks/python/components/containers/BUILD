@@ -38,7 +38,6 @@ py_library(
     srcs = ["bounding_box.py"],
     deps = [
         ":rect_c",
-        "//mediapipe/framework/formats:location_data_py_pb2",
         "//mediapipe/tasks/python/core:optional_dependencies",
     ],
 )
@@ -48,7 +47,6 @@ py_library(
     srcs = ["rect.py"],
     deps = [
         ":rect_c",
-        "//mediapipe/framework/formats:rect_py_pb2",
         "//mediapipe/tasks/python/core:optional_dependencies",
     ],
 )
@@ -63,7 +61,6 @@ py_library(
     srcs = ["landmark.py"],
     deps = [
         ":landmark_c",
-        "//mediapipe/framework/formats:landmark_py_pb2",
         "//mediapipe/tasks/python/core:optional_dependencies",
     ],
 )
@@ -77,13 +74,9 @@ py_library(
     name = "landmark_detection_result",
     srcs = ["landmark_detection_result.py"],
     deps = [
+        ":category",
         ":landmark",
         ":rect",
-        "//mediapipe/framework/formats:classification_py_pb2",
-        "//mediapipe/framework/formats:landmark_py_pb2",
-        "//mediapipe/tasks/cc/components/containers/proto:landmarks_detection_result_py_pb2",
-        "//mediapipe/tasks/python/components/containers:category",
-        "//mediapipe/tasks/python/core:optional_dependencies",
     ],
 )
 
@@ -92,7 +85,6 @@ py_library(
     srcs = ["category.py"],
     deps = [
         ":category_c",
-        "//mediapipe/framework/formats:classification_py_pb2",
         "//mediapipe/tasks/python/core:optional_dependencies",
     ],
 )
@@ -107,7 +99,6 @@ py_library(
     srcs = ["keypoint.py"],
     deps = [
         ":keypoint_c",
-        "//mediapipe/framework/formats:location_data_py_pb2",
         "//mediapipe/tasks/python/core:optional_dependencies",
     ],
 )
@@ -126,8 +117,6 @@ py_library(
         ":category_c",
         ":detections_c",
         ":keypoint",
-        "//mediapipe/framework/formats:detection_py_pb2",
-        "//mediapipe/framework/formats:location_data_py_pb2",
         "//mediapipe/tasks/python/core:optional_dependencies",
     ],
 )
@@ -148,8 +137,6 @@ py_library(
     deps = [
         ":category",
         ":classification_result_c",
-        "//mediapipe/framework/formats:classification_py_pb2",
-        "//mediapipe/tasks/cc/components/containers/proto:classifications_py_pb2",
         "//mediapipe/tasks/python/core:optional_dependencies",
     ],
 )
@@ -168,7 +155,6 @@ py_library(
     srcs = ["embedding_result.py"],
     deps = [
         ":embedding_result_c",
-        "//mediapipe/tasks/cc/components/containers/proto:embeddings_py_pb2",
         "//mediapipe/tasks/python/core:optional_dependencies",
         "@mediapipe_pip_deps_numpy//:pkg",
     ],

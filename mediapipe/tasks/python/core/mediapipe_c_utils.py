@@ -15,8 +15,9 @@
 
 import atexit
 import dataclasses
+import enum
 import threading
-from typing import Any
+from typing import Any, Optional
 
 
 # Global shutdown state to ignore calls during Python shutdown. This is used to
@@ -53,3 +54,84 @@ class CFunction:
   func_name: str
   argtypes: list[Any]
   restype: Any
+
+
+class MpStatus(enum.IntEnum):
+  """Status codes for MediaPipe C API functions."""
+
+  MP_OK = 0
+  MP_CANCELLED = 1
+  MP_UNKNOWN = 2
+  MP_INVALID_ARGUMENT = 3
+  MP_DEADLINE_EXCEEDED = 4
+  MP_NOT_FOUND = 5
+  MP_ALREADY_EXISTS = 6
+  MP_PERMISSION_DENIED = 7
+  MP_RESOURCE_EXHAUSTED = 8
+  MP_FAILED_PRECONDITION = 9
+  MP_ABORTED = 10
+  MP_OUT_OF_RANGE = 11
+  MP_UNIMPLEMENTED = 12
+  MP_INTERNAL = 13
+  MP_UNAVAILABLE = 14
+  MP_DATA_LOSS = 15
+  MP_UNAUTHENTICATED = 16
+
+
+def convert_to_exception(
+    status: int, error_message: Optional[str] = None
+) -> Exception | None:
+  """Returns an exception based on the MpStatus code, or None if MP_OK."""
+  match status:
+    case MpStatus.MP_OK:
+      return None
+    case MpStatus.MP_CANCELLED:
+      return TimeoutError(error_message or 'Cancelled')
+    case MpStatus.MP_UNKNOWN:
+      return RuntimeError(error_message or 'Unknown error')
+    case MpStatus.MP_INVALID_ARGUMENT:
+      return ValueError(error_message or 'Invalid argument')
+    case MpStatus.MP_DEADLINE_EXCEEDED:
+      return TimeoutError(error_message or 'Deadline exceeded')
+    case MpStatus.MP_NOT_FOUND:
+      return FileNotFoundError(error_message or 'Not found')
+    case MpStatus.MP_ALREADY_EXISTS:
+      return FileExistsError(error_message or 'Already exists')
+    case MpStatus.MP_PERMISSION_DENIED:
+      return PermissionError(error_message or 'Permission denied')
+    case MpStatus.MP_RESOURCE_EXHAUSTED:
+      return RuntimeError(error_message or 'Resource exhausted')
+    case MpStatus.MP_FAILED_PRECONDITION:
+      return RuntimeError(error_message or 'Failed precondition')
+    case MpStatus.MP_ABORTED:
+      return RuntimeError(error_message or 'Aborted')
+    case MpStatus.MP_OUT_OF_RANGE:
+      return IndexError(error_message or 'Out of range')
+    case MpStatus.MP_UNIMPLEMENTED:
+      return NotImplementedError(error_message or 'Unimplemented')
+    case MpStatus.MP_INTERNAL:
+      return RuntimeError(error_message or 'Internal error')
+    case MpStatus.MP_UNAVAILABLE:
+      return ConnectionError(error_message or 'Unavailable')
+    case MpStatus.MP_DATA_LOSS:
+      return RuntimeError(error_message or 'Data loss')
+    case MpStatus.MP_UNAUTHENTICATED:
+      return PermissionError(error_message or 'Unauthenticated')
+    case _:
+      return RuntimeError(error_message or f'Unexpected status: {status}')
+
+
+def handle_status(status: int, error_message: Optional[str] = None) -> None:
+  """Checks the MpStatus and raises an error if not kMpOk.
+
+  Args:
+    status: The MpStatus code to check.
+    error_message: The error message to use if an exception is raised. Uses a
+      default error message if None.
+
+  Raises:
+    An error if the MpStatus is not kMpOk.
+  """
+  exception = convert_to_exception(status, error_message)
+  if exception:
+    raise exception

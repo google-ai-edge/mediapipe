@@ -277,7 +277,7 @@ class InteractiveSegmenter:
     status = lib.MpInteractiveSegmenterCreate(
         ctypes.byref(ctypes_options), ctypes.byref(segmenter_handle)
     )
-    mediapipe_c_bindings.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
 
     return cls(lib, segmenter_handle, dispatcher)
 
@@ -323,7 +323,7 @@ class InteractiveSegmenter:
         ctypes.byref(c_result),
     )
 
-    mediapipe_c_bindings.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
     py_result = InteractiveSegmenterResult.from_ctypes(c_result)
     self._lib.MpInteractiveSegmenterCloseResult(ctypes.byref(c_result))
     return py_result
@@ -332,7 +332,7 @@ class InteractiveSegmenter:
     """Closes the InteractiveSegmenter."""
     if self._handle:
       status = self._lib.MpInteractiveSegmenterClose(self._handle)
-      mediapipe_c_bindings.handle_status(status)
+      mediapipe_c_utils.handle_status(status)
       self._handle = None
       self._dispatcher.close()
       self._lib.close()

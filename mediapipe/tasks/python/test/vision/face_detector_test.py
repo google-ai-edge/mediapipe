@@ -23,11 +23,10 @@ from absl.testing import parameterized
 
 from google.protobuf import text_format
 from mediapipe.framework.formats import detection_pb2
-from mediapipe.tasks.python.components.containers import bounding_box as bounding_box_module
-from mediapipe.tasks.python.components.containers import category as category_module
 from mediapipe.tasks.python.components.containers import detections as detections_module
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.test import test_utils
+from mediapipe.tasks.python.test.vision import proto_utils
 from mediapipe.tasks.python.vision import face_detector
 from mediapipe.tasks.python.vision.core import image as image_module
 from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_module
@@ -35,9 +34,6 @@ from mediapipe.tasks.python.vision.core import vision_task_running_mode as runni
 
 FaceDetectorResult = detections_module.DetectionResult
 _BaseOptions = base_options_module.BaseOptions
-_Category = category_module.Category
-_BoundingBox = bounding_box_module.BoundingBox
-_Detection = detections_module.Detection
 _Image = image_module.Image
 _FaceDetector = face_detector.FaceDetector
 _FaceDetectorOptions = face_detector.FaceDetectorOptions
@@ -63,9 +59,7 @@ def _get_expected_face_detector_result(file_name: str) -> FaceDetectorResult:
   with open(face_detection_result_file_path, 'rb') as f:
     face_detection_proto = detection_pb2.Detection()
     text_format.Parse(f.read(), face_detection_proto)
-  face_detection = detections_module.Detection.create_from_pb2(
-      face_detection_proto
-  )
+  face_detection = proto_utils.create_detection_from_proto(face_detection_proto)
   return FaceDetectorResult(detections=[face_detection])
 
 

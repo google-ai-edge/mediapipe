@@ -1,4 +1,4 @@
-# Copyright 2024 The MediaPipe Authors.
+# Copyright 2025 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,16 +19,15 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 licenses(["notice"])
 
 cc_library(
-    name = "test_utils",
-    srcs = ["test_utils.cc"],
-    hdrs = ["test_utils.h"],
-    linkstatic = 1,
+    name = "flatbuffer_api_c_lib",
+    srcs = ["flatbuffer_api.cc"],
+    hdrs = ["flatbuffer_api.h"],
     deps = [
-        "//mediapipe/framework/formats:image",
         "//mediapipe/tasks/c/core:mp_status",
-        "//mediapipe/tasks/c/vision/core:image",
-        "//mediapipe/tasks/c/vision/core:image_frame_util",
+        "//mediapipe/tasks/c/core:mp_status_converter",
         "@com_google_absl//absl/log:absl_log",
-        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/status",
+        "@flatbuffers",
     ],
+    alwayslink = 1,
 )

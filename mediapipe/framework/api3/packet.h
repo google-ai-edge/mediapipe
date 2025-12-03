@@ -70,6 +70,8 @@ class Packet {
 
   const mediapipe::Packet& AsLegacyPacket() const { return packet_; }
 
+  mediapipe::Packet ConsumeAsLegacyPacket() && { return std::move(packet_); }
+
   // Debug info about the packet (type, timestamp).
   std::string DebugString() const { return packet_.DebugString(); }
 

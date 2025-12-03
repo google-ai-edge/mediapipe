@@ -24,6 +24,7 @@ from mediapipe.tasks.python.components.processors import classifier_options_c as
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.core import base_options_c as base_options_c_module
 from mediapipe.tasks.python.core import mediapipe_c_bindings
+from mediapipe.tasks.python.core import mediapipe_c_utils
 from mediapipe.tasks.python.core import serial_dispatcher
 
 _BaseOptions = base_options_module.BaseOptions
@@ -31,7 +32,7 @@ Category = category_module.Category
 Classifications = classification_result_module.Classifications
 TextClassifierResult = classification_result_module.ClassificationResult
 ClassifierOptions = classifier_options_module.ClassifierOptions
-_CFunction = mediapipe_c_bindings.CFunction
+_CFunction = mediapipe_c_utils.CFunction
 
 
 class TextClassifierOptionsC(ctypes.Structure):
@@ -217,7 +218,7 @@ class TextClassifier:
         ctypes.byref(ctypes_options),
         ctypes.byref(classifier_handle),
     )
-    mediapipe_c_bindings.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
     return TextClassifier(lib=lib, handle=classifier_handle)
 
   def classify(self, text: str) -> TextClassifierResult:
@@ -241,7 +242,7 @@ class TextClassifier:
         text.encode("utf-8"),
         ctypes.byref(ctypes_result),
     )
-    mediapipe_c_bindings.handle_status(status)
+    mediapipe_c_utils.handle_status(status)
     python_result = TextClassifierResult.from_ctypes(ctypes_result)
     self._lib.MpTextClassifierCloseResult(ctypes.byref(ctypes_result))
     return python_result
@@ -250,7 +251,7 @@ class TextClassifier:
     """Shuts down the MediaPipe task instance."""
     if self._classifier_handle:
       status = self._lib.MpTextClassifierClose(self._classifier_handle)
-      mediapipe_c_bindings.handle_status(status)
+      mediapipe_c_utils.handle_status(status)
       self._classifier_handle = None
       self._lib.close()
 

@@ -23,10 +23,6 @@ licenses(["notice"])
 py_library(
     name = "classifier_options",
     srcs = ["classifier_options.py"],
-    deps = [
-        "//mediapipe/tasks/cc/components/processors/proto:classifier_options_py_pb2",
-        "//mediapipe/tasks/python/core:optional_dependencies",
-    ],
 )
 
 py_library(
