@@ -90,6 +90,13 @@ create_spm_archive() {
         echo "  Extracting framework from tar.gz..."
         tar -xzf "$tar_file" -C "$temp_extract_dir"
 
+        # Add Info.plist files to framework bundles (required by Xcode)
+        echo "  Adding Info.plist files..."
+        ./spm/add_info_plists.sh \
+            "$temp_extract_dir/frameworks/${framework_name}.xcframework" \
+            "$framework_name" \
+            "$MPP_BUILD_VERSION"
+
         # Create ZIP archive (SPM prefers ZIP format)
         local zip_file="$SPM_OUTPUT_DIR/archives/${framework_name}.xcframework.zip"
         echo "  Creating ZIP archive..."

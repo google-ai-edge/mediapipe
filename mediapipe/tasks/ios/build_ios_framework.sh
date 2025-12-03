@@ -224,7 +224,8 @@ function create_framework_archive {
     # Zip up the framework and move to the archive directory.
     pushd "${MPP_TMPDIR}"
     local MPP_ARCHIVE_FILE="${ARCHIVE_NAME}.tar.gz"
-    tar -cvzf "${MPP_ARCHIVE_FILE}" .
+
+    tar -cvzf "${MPP_ARCHIVE_FILE}" --exclude="${MPP_ARCHIVE_FILE}" .
     mv "${MPP_ARCHIVE_FILE}" "${FRAMEWORK_ARCHIVE_DIR}"
     popd
 

@@ -377,7 +377,11 @@ apple_static_xcframework(
     # `xcframeworks`. Including them with task graphs causes duplicate symbols
     # when installed alongside the respective frameworks since task graphs are
     # built as static libraries and force loaded.
-    deps = MEDIAPIPE_TASKS_COMMON_DEPS + select(OPENCV_DEPS),
+    #
+    # FOR SPM: Including CALCULATORS_AND_GRAPHS directly in MediaPipeTasksCommon
+    # to avoid undefined symbols. Vision/Audio/Text frameworks use avoid_deps
+    # to prevent duplicating these, so using multiple frameworks together is safe.
+    deps = MEDIAPIPE_TASKS_COMMON_DEPS + CALCULATORS_AND_GRAPHS + select(OPENCV_DEPS),
 )
 
 apple_static_xcframework(
