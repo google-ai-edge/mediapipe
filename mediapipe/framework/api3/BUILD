@@ -278,6 +278,7 @@ cc_library(
     deps = [
         ":graph",
         ":packet",
+        ":side_packet",
         ":stream",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:executor",
@@ -309,6 +310,7 @@ cc_test(
         ":graph",
         ":node",
         ":packet",
+        ":side_packet",
         ":stream",
         "//mediapipe/calculators/core:pass_through_calculator",
         "//mediapipe/framework:calculator_cc_proto",

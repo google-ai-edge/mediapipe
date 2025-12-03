@@ -17,10 +17,12 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <map>
 #include <memory>
 #include <string>
 #include <tuple>
 #include <utility>
+#include <vector>
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/log/absl_log.h"
@@ -30,6 +32,8 @@
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/api3/function_runner_internal.h"
 #include "mediapipe/framework/api3/graph.h"
+#include "mediapipe/framework/api3/packet.h"
+#include "mediapipe/framework/api3/side_packet.h"
 #include "mediapipe/framework/api3/stream.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/executor.h"
@@ -174,6 +178,46 @@ class FunctionRunner : public BaseT {
   using BaseT::BaseT;
 };
 
+// A dedicated class which can be used in graph builder classes / functions in
+// place of `GenericGraph` to enable input side packets to the graph.
+//
+// For example:
+// ```
+//   [](FunctionGraphBuilder& builder, Stream<...> in) -> Stream<...> {
+//     SidePacket<int> side_in =
+//         builder.side_packets.AddSidePacket(MakePacket<int>(...));
+//     GenericGraph& graph = builder.graph;
+//     ...
+//   }
+// ```
+struct FunctionGraphBuilder {
+  class SidePackets {
+   public:
+    SidePackets(GenericGraph& graph,
+                std::vector<mediapipe::Packet>& side_packets)
+        : graph_(graph), side_packets_(side_packets) {};
+
+    template <typename T>
+    SidePacket<T> AddSidePacket(Packet<T> packet) {
+      int index = side_packets_.size();
+      auto& side_source = graph_.builder_.SideIn("").At(index);
+      side_packets_.push_back(std::move(packet).ConsumeAsLegacyPacket());
+      return SidePacket<T>(side_source);
+    }
+
+   private:
+    GenericGraph& graph_;
+    std::vector<mediapipe::Packet>& side_packets_;
+  };
+
+  FunctionGraphBuilder(GenericGraph& graph,
+                       std::vector<mediapipe::Packet>& side_packets)
+      : graph(graph), side_packets(SidePackets(graph, side_packets)) {};
+
+  GenericGraph& graph;
+  SidePackets side_packets;
+};
+
 template <typename BuildGraphFnT>
 class FunctionRunnerBuilder {
  public:
@@ -216,9 +260,10 @@ class FunctionRunnerBuilder {
     // Build the graph using provided build graph function.
     // (The function can return StatusOr or not, std::tuple or not.)
     GenericGraph graph;
-    MP_ASSIGN_OR_RETURN(
-        auto raw_output,
-        AsStatusOr(InvokeBuildGraphFn(std::move(build_graph_fn_), graph)));
+    std::vector<mediapipe::Packet> side_packets;
+    FunctionGraphBuilder builder(graph, side_packets);
+    MP_ASSIGN_OR_RETURN(auto raw_output,
+                        AsStatusOr(InvokeBuildGraphFn(builder)));
     auto output = AsTuple(std::move(raw_output));
 
     // Connect output stream(s) to graph outputs, generate/collect output stream
@@ -244,10 +289,22 @@ class FunctionRunnerBuilder {
     for (int i = 0; i < num_inputs; ++i) {
       auto& input = graph.builder_.In(/*empty input tag*/ "").At(i);
       if (input.name.empty()) {
-        std::string name = absl::StrCat(kInputPrefix, i);
-        input.SetName(name);
+        input.SetName(absl::StrCat(kInputPrefix, i));
       }
       input_names_map[i] = input.name;
+    }
+
+    std::map<std::string, mediapipe::Packet> side_packets_mapping;
+    if (!side_packets.empty()) {
+      static constexpr absl::string_view kSideInputPrefix = "__runner_side_in_";
+      for (int i = 0; i < side_packets.size(); ++i) {
+        auto& side_in =
+            graph.builder_.SideIn(/*empty side input tag*/ "").At(i);
+        if (side_in.name.empty()) {
+          side_in.SetName(absl::StrCat(kSideInputPrefix, i));
+        }
+        side_packets_mapping[side_in.name] = side_packets[i];
+      }
     }
 
     // Create graph config and ensure sync execution.
@@ -290,7 +347,8 @@ class FunctionRunnerBuilder {
       RET_CHECK(inserted);
     }
 
-    MP_RETURN_IF_ERROR(calculator_graph->StartRun({}));
+    MP_RETURN_IF_ERROR(
+        calculator_graph->StartRun(std::move(side_packets_mapping)));
 
     return FunctionRunner<BuildGraphFnT>(
         std::move(graph), std::move(calculator_graph),
@@ -302,21 +360,30 @@ class FunctionRunnerBuilder {
   explicit FunctionRunnerBuilder(BuildGraphFnT fn)
       : build_graph_fn_(std::move(fn)) {}
 
-  static auto InvokeBuildGraphFn(BuildGraphFnT build_graph_fn,
-                                 GenericGraph& graph) {
+  auto InvokeBuildGraphFn(FunctionGraphBuilder& builder) {
     using InputsT = typename RawSignatureT::In;
     return InvokeBuildGraphFnImpl<InputsT>(
-        std::move(build_graph_fn), graph,
+        build_graph_fn_, builder,
         std::make_index_sequence<std::tuple_size_v<InputsT>>());
   }
 
   template <typename InputsT, size_t... Indices>
-  static auto InvokeBuildGraphFnImpl(BuildGraphFnT build_graph_fn,
-                                     GenericGraph& graph,
-                                     std::index_sequence<Indices...>) {
-    return build_graph_fn(
-        graph, Stream<std::tuple_element_t<Indices, InputsT>>(
-                   graph.builder_.In(/*empty input tag*/ "").At(Indices))...);
+  auto InvokeBuildGraphFnImpl(BuildGraphFnT& build_graph_fn,
+                              FunctionGraphBuilder& builder,
+                              std::index_sequence<Indices...>) {
+    if constexpr (std::is_invocable_v<
+                      BuildGraphFnT&, FunctionGraphBuilder&,
+                      Stream<std::tuple_element_t<Indices, InputsT>>...>) {
+      return build_graph_fn(
+          builder, Stream<std::tuple_element_t<Indices, InputsT>>(
+                       builder.graph.builder_.In(/*empty input tag*/ "")
+                           .At(Indices))...);
+    } else {
+      return build_graph_fn(
+          builder.graph, Stream<std::tuple_element_t<Indices, InputsT>>(
+                             builder.graph.builder_.In(/*empty input tag*/ "")
+                                 .At(Indices))...);
+    }
   }
 
   BuildGraphFnT build_graph_fn_;
@@ -329,7 +396,7 @@ class FunctionRunnerBuilder {
 class Runner {
  public:
   // Creates a builder for synchronous runner according to the provided graph
-  // builder function.
+  // builder function/object.
   //
   // For example:
   //
@@ -343,6 +410,14 @@ class Runner {
   // ```
   //   [](GenericGraph& graph, Stream<int> input) -> Stream<int> {
   //       ...
+  //   }
+  // ```
+  // Graph builder object is:
+  // ```
+  //   struct GraphBuilder {
+  //     [](GenericGraph& graph, Stream<int> input) -> Stream<int> {
+  //       ...
+  //     }
   //   }
   // ```
   //
@@ -386,10 +461,42 @@ class Runner {
   // ```
   //   absl::StatusOr<std::tuple<Packet<int>, Packet<float>> Run(...);
   // ```
+  // +----------------------------------------------------------------------+
+  // |                                                                      |
+  // |   4. Input side packets                                              |
+  // |                                                                      |
+  // +----------------------------------------------------------------------+
+  //
+  // Input side packets are supported by using `FunctionGraphBuilder&` instead
+  // of `GenericGraph&` as the first argument in builder function/object:
+  // ```
+  //   [](FunctionGraphBuilder& builder, Stream<...> in) -> Stream<...> {
+  //     SidePacket<int> side_in =
+  //         builder.side_packets.AddSidePacket(MakePacket<int>(...));
+  //     GenericGraph& graph = builder.graph;
+  //     ...
+  //   }
+  // ```
+  // or for builder objects:
+  // ```
+  //   struct GraphBuilder {
+  //     Stream<...> operator()(FunctionGraphBuilder& builder, Stream<...> in) {
+  //       SidePacket<int> side_in =
+  //           builder.side_packets.AddSidePacket(MakePacket<int>(...));
+  //       GenericGraph& graph = builder.graph;
+  //       ...
+  //     }
+  //   }
+  // ```
+  //
+  // Returns builder for the runner with `Run` function:
+  // ```
+  //   absl::StatusOr<std::tuple<Packet<int>, Packet<float>> Run(...);
+  // ```
   //
   // +----------------------------------------------------------------------+
   // |                                                                      |
-  // |   3. absl::StatusOr<> support.                                       |
+  // |   5. absl::StatusOr<> support.                                       |
   // |                                                                      |
   // +----------------------------------------------------------------------+
   //

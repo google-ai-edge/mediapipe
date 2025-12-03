@@ -32,6 +32,7 @@
 #include "mediapipe/framework/api3/graph.h"
 #include "mediapipe/framework/api3/node.h"
 #include "mediapipe/framework/api3/packet.h"
+#include "mediapipe/framework/api3/side_packet.h"
 #include "mediapipe/framework/api3/stream.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -45,53 +46,71 @@
 namespace mediapipe::api3 {
 namespace {
 
-struct MultiplyBy2Node : Node<"MultiplyBy2"> {
+struct MultiplicationNode : Node<"Multiplication"> {
   template <typename S>
   struct Contract {
     Input<S, int> in{"IN"};
+    Optional<SideInput<S, int>> multiplier{"MULTIPLIER"};
     Output<S, int> out{"OUT"};
   };
 };
 
-class MultiplyBy2NodeImpl
-    : public Calculator<MultiplyBy2Node, MultiplyBy2NodeImpl> {
+class MultiplicationNodeImpl
+    : public Calculator<MultiplicationNode, MultiplicationNodeImpl> {
  public:
-  absl::Status Process(CalculatorContext<MultiplyBy2Node>& cc) final {
-    RET_CHECK(cc.in);
-    cc.out.Send(cc.in.GetOrDie() * 2);
+  absl::Status Open(CalculatorContext<MultiplicationNode>& cc) final {
+    multiplier_ = cc.multiplier ? cc.multiplier.GetOrDie() : 2;
     return absl::OkStatus();
   }
+
+  absl::Status Process(CalculatorContext<MultiplicationNode>& cc) final {
+    RET_CHECK(cc.in);
+    cc.out.Send(cc.in.GetOrDie() * multiplier_);
+    return absl::OkStatus();
+  }
+
+ private:
+  int multiplier_ = 0;
 };
 
-struct Add10Node : Node<"Add10"> {
+struct AdditionNode : Node<"Addition"> {
   template <typename S>
   struct Contract {
     Input<S, int> in{"IN"};
+    Optional<SideInput<S, int>> addend{"ADDEND"};
     Output<S, int> out{"OUT"};
   };
 };
 
-class Add10NodeImpl : public Calculator<Add10Node, Add10NodeImpl> {
+class AdditionNodeImpl : public Calculator<AdditionNode, AdditionNodeImpl> {
  public:
-  absl::Status Process(CalculatorContext<Add10Node>& cc) final {
-    RET_CHECK(cc.in);
-    cc.out.Send(cc.in.GetOrDie() + 10);
+  absl::Status Open(CalculatorContext<AdditionNode>& cc) final {
+    addend_ = cc.addend ? cc.addend.GetOrDie() : 10;
     return absl::OkStatus();
   }
+
+  absl::Status Process(CalculatorContext<AdditionNode>& cc) final {
+    RET_CHECK(cc.in);
+    cc.out.Send(cc.in.GetOrDie() + addend_);
+    return absl::OkStatus();
+  }
+
+ private:
+  int addend_ = 0;
 };
 
-TEST(FunctionRunnerTest, RunsSingleGraphToMultiplyBy2Add10) {
+TEST(FunctionRunnerTest, CanRunMultiplicationAndAdditionGraph) {
   MP_ASSERT_OK_AND_ASSIGN(
       auto runner,
       Runner::For([](GenericGraph& graph, Stream<int> in) -> Stream<int> {
         Stream<int> multiplication = [&] {
-          auto& node = graph.AddNode<MultiplyBy2Node>();
+          auto& node = graph.AddNode<MultiplicationNode>();
           node.in.Set(in);
           return node.out.Get();
         }();
 
         Stream<int> addition = [&] {
-          auto& node = graph.AddNode<Add10Node>();
+          auto& node = graph.AddNode<AdditionNode>();
           node.in.Set(multiplication);
           return node.out.Get();
         }();
@@ -107,6 +126,42 @@ TEST(FunctionRunnerTest, RunsSingleGraphToMultiplyBy2Add10) {
   }
 }
 
+TEST(FunctionRunnerTest,
+     CanRunMultiplicationAndAdditionGraphWithConfigSidePackets) {
+  auto build_graph_fn = [](FunctionGraphBuilder& builder,
+                           Stream<int> in) -> Stream<int> {
+    GenericGraph& graph = builder.graph;
+    auto& side_packets = builder.side_packets;
+    SidePacket<int> multiplier = side_packets.AddSidePacket(MakePacket<int>(4));
+    SidePacket<int> addend = side_packets.AddSidePacket(MakePacket<int>(1));
+
+    Stream<int> multiplication = [&] {
+      auto& node = graph.AddNode<MultiplicationNode>();
+      node.in.Set(in);
+      node.multiplier.Set(multiplier);
+      return node.out.Get();
+    }();
+
+    Stream<int> sum = [&] {
+      auto& node = graph.AddNode<AdditionNode>();
+      node.in.Set(multiplication);
+      node.addend.Set(addend);
+      return node.out.Get();
+    }();
+
+    return sum;
+  };
+  MP_ASSERT_OK_AND_ASSIGN(auto runner,
+                          Runner::For(std::move(build_graph_fn)).Create());
+
+  for (auto [input, expected] :
+       {std::pair(20, 81), std::pair(40, 161), std::pair(100, 401)}) {
+    MP_ASSERT_OK_AND_ASSIGN(Packet<int> output,
+                            runner.Run(MakePacket<int>(input)));
+    EXPECT_EQ(output.GetOrDie(), expected);
+  }
+}
+
 #if !defined(__EMSCRIPTEN__)
 
 TEST(FunctionRunnerTest, WorksForMultiGraphUseCase) {
@@ -116,7 +171,7 @@ TEST(FunctionRunnerTest, WorksForMultiGraphUseCase) {
   MP_ASSERT_OK_AND_ASSIGN(
       auto multiply_by_2,
       Runner::For([](GenericGraph& graph, Stream<int> in) -> Stream<int> {
-        auto& node = graph.AddNode<MultiplyBy2Node>();
+        auto& node = graph.AddNode<MultiplicationNode>();
         node.in.Set(in);
         return node.out.Get();
       })
@@ -126,7 +181,7 @@ TEST(FunctionRunnerTest, WorksForMultiGraphUseCase) {
   MP_ASSERT_OK_AND_ASSIGN(
       auto add_10,
       Runner::For([](GenericGraph& graph, Stream<int> in) -> Stream<int> {
-        auto& node = graph.AddNode<Add10Node>();
+        auto& node = graph.AddNode<AdditionNode>();
         node.in.Set(in);
         return node.out.Get();
       })
@@ -151,7 +206,7 @@ TEST(FunctionRunnerTest, FailsWhenTimestampIsProvided) {
   MP_ASSERT_OK_AND_ASSIGN(
       auto runner,
       Runner::For([](GenericGraph& graph, Stream<int> in) -> Stream<int> {
-        auto& node = graph.AddNode<MultiplyBy2Node>();
+        auto& node = graph.AddNode<MultiplicationNode>();
         node.in.Set(in);
         return node.out.Get();
       }).Create());
@@ -167,13 +222,13 @@ TEST(FunctionRunnerTest, WorksForMultipleOutputs) {
       Runner::For([](GenericGraph& graph,
                      Stream<int> x) -> std::tuple<Stream<int>, Stream<int>> {
         Stream<int> multiplication = [&] {
-          auto& node = graph.AddNode<MultiplyBy2Node>();
+          auto& node = graph.AddNode<MultiplicationNode>();
           node.in.Set(x);
           return node.out.Get();
         }();
 
         Stream<int> addition = [&] {
-          auto& node = graph.AddNode<Add10Node>();
+          auto& node = graph.AddNode<AdditionNode>();
           node.in.Set(x);
           return node.out.Get();
         }();
@@ -199,13 +254,13 @@ TEST(FunctionRunnerTest, WorksForMultipleInputsAndOutputs) {
         b.SetName("b");
 
         Stream<int> multiplied_a = [&] {
-          auto& node = graph.AddNode<MultiplyBy2Node>();
+          auto& node = graph.AddNode<MultiplicationNode>();
           node.in.Set(a);
           return node.out.Get();
         }();
 
         Stream<int> adjusted_b = [&] {
-          auto& node = graph.AddNode<Add10Node>();
+          auto& node = graph.AddNode<AdditionNode>();
           node.in.Set(b);
           return node.out.Get();
         }();
