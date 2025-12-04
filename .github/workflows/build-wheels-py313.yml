@@ -55,7 +55,7 @@ jobs:
         with:
           path: |
             ~/Library/Caches/Homebrew
-            /opt/homebrew/Cellar/bazel
+            /opt/homebrew/Cellar/bazelisk
             /opt/homebrew/Cellar/opencv
             /opt/homebrew/Cellar/protobuf@${{ env.PROTOBUF_VERSION }}
           key: ${{ runner.os }}-brew-${{ hashFiles('.github/workflows/build-wheels-py313.yml') }}
@@ -64,7 +64,8 @@ jobs:
 
       - name: Install system dependencies
         run: |
-          brew install bazel opencv protobuf@${{ env.PROTOBUF_VERSION }}
+          # Use bazelisk instead of bazel for automatic version management
+          brew install bazelisk opencv protobuf@${{ env.PROTOBUF_VERSION }}
 
       - name: Verify system dependencies
         id: verify-deps
