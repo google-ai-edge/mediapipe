@@ -155,6 +155,8 @@ jobs:
           pip install --upgrade pip
           pip install dist/*.whl
 
+          # Change to a different directory to avoid importing from source
+          cd /tmp
           echo "::group::Test imports"
           python -c "import mediapipe; print(f'MediaPipe version: {mediapipe.__version__}')"
           python -c "import mediapipe.tasks.python.vision as vision; print('Vision tasks: OK')"
