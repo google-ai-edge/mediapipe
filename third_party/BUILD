@@ -30,6 +30,7 @@ exports_files([
     "requirements_lock_3_10.txt",
     "requirements_lock_3_11.txt",
     "requirements_lock_3_12.txt",
+    "requirements_lock_3_13.txt",
 ])
 
 mediapipe_files(srcs = [
@@ -202,9 +203,9 @@ OPENCV_MODULES = [
 # still only builds the shared libraries, so we have to choose one or the
 # other. We build shared libraries by default, but this variable can be used
 # to switch to static libraries.
-OPENCV_SHARED_LIBS = True
+OPENCV_SHARED_LIBS = False
 
-OPENCV_SO_VERSION = "3.4"
+OPENCV_SO_VERSION = "4.12"
 
 cmake(
     name = "opencv_cmake",
@@ -231,6 +232,14 @@ cmake(
         "WITH_EIGEN": "ON",
         "WITH_PTHREADS": "ON",
         "WITH_PTHREADS_PF": "ON",
+        # Disable modules that require internet downloads
+        "BUILD_opencv_gapi": "OFF",
+        "WITH_ADE": "OFF",
+        "OPENCV_GAPI_KERNELS_DIR": "",
+        "WITH_OBSENSOR": "OFF",
+        "ENABLE_OBSENSOR": "OFF",
+        # Disable FFmpeg to avoid incompatibility with newer FFmpeg versions
+        "WITH_FFMPEG": "OFF",
         # When building tests, by default Bazel builds them in dynamic mode.
         # See https://docs.bazel.build/versions/master/be/c-cpp.html#cc_binary.linkstatic
         # For example, when building //mediapipe/calculators/video:opencv_video_encoder_calculator_test,
@@ -254,6 +263,7 @@ cmake(
         "ENABLE_CCACHE": "OFF",
     },
     lib_source = "@opencv//:all",
+    out_include_dir = "include/opencv4",
     linkopts = [] if OPENCV_SHARED_LIBS else [
         # When using static libraries, the binary that eventually depends on the
         # libraries also needs to link in their dependencies, which therefore
@@ -283,7 +293,7 @@ cmake(
         "-lrt",
     ],
     out_shared_libs = select({
-        "@bazel_tools//src/conditions:darwin": ["libopencv_%s.%s.dylib" % (module, OPENCV_SO_VERSION) for module in OPENCV_MODULES],
+        "@bazel_tools//src/conditions:darwin": ["libopencv_%s.%s.0.dylib" % (module, OPENCV_SO_VERSION) for module in OPENCV_MODULES],
         # Only the shared objects listed here will be linked in the directory
         # that Bazel adds to the RUNPATH of dependent executables. You cannot
         # list both the versioned and unversioned name of the .so, and the

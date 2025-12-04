@@ -118,15 +118,9 @@ http_archive(
 http_archive(
     name = "zlib",
     build_file = "@//third_party:zlib.BUILD",
-    patch_args = [
-        "-p1",
-    ],
-    patches = [
-        "@//third_party:zlib.diff",
-    ],
-    sha256 = "b3a24de97a8fdbc835b9833169501030b8977031bcb54b3b3ac13740f846ab30",
-    strip_prefix = "zlib-1.2.13",
-    url = "http://zlib.net/fossils/zlib-1.2.13.tar.gz",
+    sha256 = "9a93b2b7dfdac77ceba5a558a580e74667dd6fede4585b91eefb60f03b72df23",
+    strip_prefix = "zlib-1.3.1",
+    url = "https://zlib.net/fossils/zlib-1.3.1.tar.gz",
 )
 
 # gflags needed by glog
@@ -588,8 +582,8 @@ http_archive(
 http_archive(
     name = "opencv",
     build_file_content = all_content,
-    strip_prefix = "opencv-3.4.11",
-    urls = ["https://github.com/opencv/opencv/archive/3.4.11.tar.gz"],
+    strip_prefix = "opencv-4.10.0",
+    urls = ["https://github.com/opencv/opencv/archive/4.10.0.tar.gz"],
 )
 
 new_local_repository(
@@ -607,10 +601,10 @@ new_local_repository(
 new_local_repository(
     name = "macos_opencv",
     build_file = "@//third_party:opencv_macos.BUILD",
-    # For local MacOS builds, the path should point to an opencv@3 installation.
+    # For local MacOS builds, the path should point to an opencv installation.
     # If you edit the path here, you will also need to update the corresponding
     # prefix in "opencv_macos.BUILD".
-    path = "/usr/local",  # e.g. /usr/local/Cellar for HomeBrew
+    path = "/opt/homebrew/Cellar",
 )
 
 new_local_repository(

@@ -5,3 +5,20 @@ mediapipe/provisioning_profile.mobileprovision
 node_modules/
 .configure.bazelrc
 .user.bazelrc
+
+# Python build artifacts
+build/
+dist/
+*.egg-info/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+venv_py*/
+*.so
+*.dylib
+mediapipe/__init__.py.backup
+__init__.py
+build.log

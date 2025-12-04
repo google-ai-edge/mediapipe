@@ -30,7 +30,7 @@ from setuptools.command import build_ext
 from setuptools.command import build_py
 from setuptools.command import install
 
-__version__ = 'dev'
+__version__ = '0.10.14'
 MP_DISABLE_GPU = os.environ.get('MEDIAPIPE_DISABLE_GPU') != '0'
 IS_WINDOWS = (platform.system() == 'Windows')
 IS_MAC = (platform.system() == 'Darwin')
@@ -140,9 +140,9 @@ def _add_mp_init_files():
   mp_dir_init_file.writelines([
       '\n', 'from mediapipe.python import *\n',
       'import mediapipe.python.solutions as solutions \n',
-      'import mediapipe.tasks.python as tasks\n', '\n\n', 'del framework\n',
-      'del gpu\n', 'del modules\n', 'del python\n', 'del mediapipe\n',
-      'del util\n', '__version__ = \'{}\''.format(__version__), '\n'
+      'import mediapipe.tasks as tasks\n', '\n\n', 'del framework\n',
+      'del gpu\n', 'del modules\n',
+      '__version__ = \'{}\''.format(__version__), '\n'
   ])
   mp_dir_init_file.close()
 
@@ -305,12 +305,16 @@ class BuildModules(build_ext.build_ext):
         'build',
         '--compilation_mode=opt',
         '--copt=-DNDEBUG',
-        '--action_env=PYTHON_BIN_PATH=' + _normalize_path(sys.executable),
         binary_graph_target,
     ] + GPU_OPTIONS
 
-    if not self.link_opencv and not IS_WINDOWS:
-      bazel_command.append('--define=OPENCV=source')
+    # Don't override PYTHON_BIN_PATH if HERMETIC_PYTHON_VERSION is set
+    if not os.environ.get('HERMETIC_PYTHON_VERSION'):
+      bazel_command.insert(4, '--action_env=PYTHON_BIN_PATH=' + _normalize_path(sys.executable))
+
+    # Using system OpenCV instead of building from source
+    # if not self.link_opencv and not IS_WINDOWS:
+    #   bazel_command.append('--define=OPENCV=source')
 
     _invoke_shell_command(bazel_command)
     _copy_to_build_lib_dir(self.build_lib, binary_graph_target)
@@ -379,37 +383,9 @@ class BuildExtension(build_ext.build_ext):
 
   def run(self):
     _check_bazel()
-    if IS_MAC:
-      for ext in self.extensions:
-        target_name = self.get_ext_fullpath(ext.name)
-        # Build x86
-        self._build_binary(
-            ext,
-            ['--cpu=darwin', '--ios_multi_cpus=i386,x86_64,armv7,arm64'],
-        )
-        x86_name = self.get_ext_fullpath(ext.name)
-        # Build Arm64
-        ext.name = ext.name + '.arm64'
-        self._build_binary(
-            ext,
-            ['--cpu=darwin_arm64', '--ios_multi_cpus=i386,x86_64,armv7,arm64'],
-        )
-        arm64_name = self.get_ext_fullpath(ext.name)
-        # Merge architectures
-        lipo_command = [
-            'lipo',
-            '-create',
-            '-output',
-            target_name,
-            x86_name,
-            arm64_name,
-        ]
-        _invoke_shell_command(lipo_command)
-        # Delete the arm64 file (the x86 file was overwritten by lipo)
-        _invoke_shell_command(['rm', arm64_name])
-    else:
-      for ext in self.extensions:
-        self._build_binary(ext)
+    # Simplified for arm64-only build
+    for ext in self.extensions:
+      self._build_binary(ext)
     build_ext.build_ext.run(self)
 
   def _build_binary(self, ext, extra_args=None):
@@ -421,14 +397,18 @@ class BuildExtension(build_ext.build_ext):
         '--compilation_mode=opt',
         '--copt=-DNDEBUG',
         '--keep_going',
-        '--action_env=PYTHON_BIN_PATH=' + _normalize_path(sys.executable),
         str(ext.bazel_target + '.so'),
     ] + GPU_OPTIONS
 
+    # Don't override PYTHON_BIN_PATH if HERMETIC_PYTHON_VERSION is set
+    if not os.environ.get('HERMETIC_PYTHON_VERSION'):
+      bazel_command.insert(5, '--action_env=PYTHON_BIN_PATH=' + _normalize_path(sys.executable))
+
     if extra_args:
       bazel_command += extra_args
-    if not self.link_opencv and not IS_WINDOWS:
-      bazel_command.append('--define=OPENCV=source')
+    # Using system OpenCV instead of building from source
+    # if not self.link_opencv and not IS_WINDOWS:
+    #   bazel_command.append('--define=OPENCV=source')
 
     _invoke_shell_command(bazel_command)
     ext_bazel_bin_path = os.path.join('bazel-bin', ext.relpath,
@@ -543,9 +523,6 @@ setuptools.setup(
         BazelExtension('//mediapipe/python:_framework_bindings'),
         BazelExtension(
             '//mediapipe/tasks/cc/metadata/python:_pywrap_metadata_version'),
-        BazelExtension(
-            '//mediapipe/tasks/python/metadata/flatbuffers_lib:_pywrap_flatbuffers'
-        ),
     ],
     zip_safe=False,
     include_package_data=True,

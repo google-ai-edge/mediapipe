@@ -32,6 +32,9 @@ pybind_extension(
             "-lopencv_calib3d",
             "-lopencv_imgcodecs",
         ],
+    }) + select({
+        "@bazel_tools//src/conditions:darwin": ["-undefined", "dynamic_lookup"],
+        "//conditions:default": [],
     }),
     module_name = "_framework_bindings",
     deps = [
@@ -48,7 +51,6 @@ pybind_extension(
         "//mediapipe/python/pybind:resource_util",
         "//mediapipe/python/pybind:timestamp",
         "//mediapipe/python/pybind:validated_graph_config",
-        "//mediapipe/tasks/python/core/pybind:task_runner",
         "@com_google_absl//absl/strings:str_format",
         "@stblib//:stb_image",
         # Type registration.
