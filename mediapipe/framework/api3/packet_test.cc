@@ -52,5 +52,15 @@ TEST(PacketTest, PointToForeignWorks) {
   p = Packet<int>();
 }
 
+TEST(PacketTest, PacketValidationWorks) {
+  Packet<int> p;
+  EXPECT_FALSE(p);
+  EXPECT_TRUE(p.IsEmpty());
+
+  p = MakePacket<int>(42);
+  EXPECT_TRUE(p);
+  EXPECT_FALSE(p.IsEmpty());
+}
+
 }  // namespace
 }  // namespace mediapipe::api3
