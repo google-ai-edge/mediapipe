@@ -148,10 +148,12 @@ class FunctionRunnerImpl<BuildGraphFnT, OutputT, std::tuple<InputPacketTs...>>
 //
 // If you need to keep runner across invocations.
 // ```
-//   MP_ASSIGN_OR_RETURN(FunctionRunner<decltype(lambda)>, Runner::For...);
-//   MP_ASSIGN_OR_RETURN(FunctionRunner<decltype(&FreeFunction)>,
-//   Runner::For...); MP_ASSIGN_OR_RETURN(FunctionRunner<GraphBuilderObject>,
-//   Runner::For...);
+//   MP_ASSIGN_OR_RETURN(FunctionRunner<decltype(lambda)> runner,
+//                    Runner::For(std::move(lambda)));
+//   MP_ASSIGN_OR_RETURN(FunctionRunner<decltype(&FreeFunction)> runner,
+//                    Runner::For(FreeFunction));
+//   MP_ASSIGN_OR_RETURN(FunctionRunner<GraphBuilderObject> runner,
+//                    Runner::For(GraphBuilderObject()));
 //
 //   // Where GraphBuilderObject can be
 //   struct GraphBuilderObject {
