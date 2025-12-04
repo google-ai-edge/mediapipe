@@ -36,11 +36,11 @@
 #include "mediapipe/framework/port/image_resizer.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
+#include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/framework/port/proto_ns.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/util/image_frame_util.h"
-#include "third_party/OpenCV/imgproc.hpp"
 
 namespace mediapipe {
 
