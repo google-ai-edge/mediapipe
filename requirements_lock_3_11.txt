@@ -42,7 +42,7 @@ numpy==1.26.4
     #   ml-dtypes
     #   opencv-contrib-python
     #   scipy
-opencv-contrib-python==4.10.0.84
+opencv-contrib-python==4.12.0.88
     # via -r mediapipe/opensource_only/requirements.txt
 opt-einsum==3.4.0
     # via jax
@@ -50,7 +50,7 @@ packaging==24.1
     # via matplotlib
 pillow==10.4.0
     # via matplotlib
-protobuf==4.25.5
+protobuf==5.29.5
     # via -r mediapipe/opensource_only/requirements.txt
 pycparser==2.22
     # via cffi
