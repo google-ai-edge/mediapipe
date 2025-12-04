@@ -123,7 +123,9 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip setuptools wheel
-          pip install -r "requirements_lock_${{ matrix.python-version }}.txt"
+          # Convert python-version from "3.9" to "3_9" format for lock file
+          LOCK_VERSION=$(echo "${{ matrix.python-version }}" | tr '.' '_')
+          pip install -r "requirements_lock_${LOCK_VERSION}.txt"
 
       - name: Build wheel
         env:
