@@ -123,15 +123,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip setuptools wheel
-
-          # Use appropriate requirements lock file if available
-          if [ -f "requirements_lock_${{ matrix.python-version }}.txt" ]; then
-            echo "Using requirements_lock_${{ matrix.python-version }}.txt"
-            pip install -r "requirements_lock_${{ matrix.python-version }}.txt"
-          else
-            echo "Using requirements.txt"
-            pip install -r requirements.txt
-          fi
+          pip install -r "requirements_lock_${{ matrix.python-version }}.txt"
 
       - name: Build wheel
         env:
