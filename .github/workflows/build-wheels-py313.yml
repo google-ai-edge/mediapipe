@@ -54,16 +54,21 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            ~/Library/Caches/Homebrew
-            /opt/homebrew/Cellar/bazelisk
-            /opt/homebrew/Cellar/opencv
-            /opt/homebrew/Cellar/protobuf@${{ env.PROTOBUF_VERSION }}
+            ~/Library/Caches/Homebrew/bazelisk--*
+            ~/Library/Caches/Homebrew/opencv--*
+            ~/Library/Caches/Homebrew/protobuf@${{ env.PROTOBUF_VERSION }}--*
+            ~/Library/Caches/Homebrew/downloads/*--bazelisk-*
+            ~/Library/Caches/Homebrew/downloads/*--opencv-*
+            ~/Library/Caches/Homebrew/downloads/*--protobuf@${{ env.PROTOBUF_VERSION }}-*
           key: ${{ runner.os }}-brew-${{ hashFiles('.github/workflows/build-wheels-py313.yml') }}
           restore-keys: |
             ${{ runner.os }}-brew-
 
       - name: Install system dependencies
         run: |
+          # Disable auto-update for faster installs
+          export HOMEBREW_NO_AUTO_UPDATE=1
+
           # Use bazelisk instead of bazel for automatic version management
           brew install bazelisk opencv protobuf@${{ env.PROTOBUF_VERSION }}
 
