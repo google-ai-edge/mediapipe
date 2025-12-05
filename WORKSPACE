@@ -358,7 +358,7 @@ python_init_repositories(
     local_wheel_inclusion_list = ["mediapipe*"],
     local_wheel_workspaces = ["//:WORKSPACE"],
     requirements = {
-        "3.9": "//:requirements_lock.txt",
+        "3.9": "//:requirements_lock_3_9.txt",
         "3.10": "//:requirements_lock_3_10.txt",
         "3.11": "//:requirements_lock_3_11.txt",
         "3.12": "//:requirements_lock_3_12.txt",
@@ -395,7 +395,7 @@ load("@rules_python//python:pip.bzl", "pip_parse")
 
 pip_parse(
     name = "mediapipe_pip_deps",
-    requirements_lock = "@//:requirements_lock.txt",
+    requirements_lock = "@//:requirements_lock_3_9.txt",
 )
 
 load("@mediapipe_pip_deps//:requirements.bzl", mp_install_deps = "install_deps")
