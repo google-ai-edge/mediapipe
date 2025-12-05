@@ -25,6 +25,8 @@ from mediapipe.tasks.python.core import mediapipe_c_bindings
 from mediapipe.tasks.python.core import mediapipe_c_utils
 from mediapipe.tasks.python.core import serial_dispatcher
 
+TextEmbedderResult = embedding_result_module.EmbeddingResult
+
 
 class _EmbedderOptionsC(ctypes.Structure):
   """C struct for embedder options."""

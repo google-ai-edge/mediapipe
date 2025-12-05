@@ -17,7 +17,7 @@ import atexit
 import dataclasses
 import enum
 import threading
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 
 # Global shutdown state to ignore calls during Python shutdown. This is used to
@@ -80,45 +80,44 @@ class MpStatus(enum.IntEnum):
 
 def convert_to_exception(
     status: int, error_message: Optional[str] = None
-) -> Exception | None:
+) -> Union[Exception, None]:
   """Returns an exception based on the MpStatus code, or None if MP_OK."""
-  match status:
-    case MpStatus.MP_OK:
-      return None
-    case MpStatus.MP_CANCELLED:
-      return TimeoutError(error_message or 'Cancelled')
-    case MpStatus.MP_UNKNOWN:
-      return RuntimeError(error_message or 'Unknown error')
-    case MpStatus.MP_INVALID_ARGUMENT:
-      return ValueError(error_message or 'Invalid argument')
-    case MpStatus.MP_DEADLINE_EXCEEDED:
-      return TimeoutError(error_message or 'Deadline exceeded')
-    case MpStatus.MP_NOT_FOUND:
-      return FileNotFoundError(error_message or 'Not found')
-    case MpStatus.MP_ALREADY_EXISTS:
-      return FileExistsError(error_message or 'Already exists')
-    case MpStatus.MP_PERMISSION_DENIED:
-      return PermissionError(error_message or 'Permission denied')
-    case MpStatus.MP_RESOURCE_EXHAUSTED:
-      return RuntimeError(error_message or 'Resource exhausted')
-    case MpStatus.MP_FAILED_PRECONDITION:
-      return RuntimeError(error_message or 'Failed precondition')
-    case MpStatus.MP_ABORTED:
-      return RuntimeError(error_message or 'Aborted')
-    case MpStatus.MP_OUT_OF_RANGE:
-      return IndexError(error_message or 'Out of range')
-    case MpStatus.MP_UNIMPLEMENTED:
-      return NotImplementedError(error_message or 'Unimplemented')
-    case MpStatus.MP_INTERNAL:
-      return RuntimeError(error_message or 'Internal error')
-    case MpStatus.MP_UNAVAILABLE:
-      return ConnectionError(error_message or 'Unavailable')
-    case MpStatus.MP_DATA_LOSS:
-      return RuntimeError(error_message or 'Data loss')
-    case MpStatus.MP_UNAUTHENTICATED:
-      return PermissionError(error_message or 'Unauthenticated')
-    case _:
-      return RuntimeError(error_message or f'Unexpected status: {status}')
+  if status == MpStatus.MP_OK:
+    return None
+  elif status == MpStatus.MP_CANCELLED:
+    return TimeoutError(error_message or 'Cancelled')
+  elif status == MpStatus.MP_UNKNOWN:
+    return RuntimeError(error_message or 'Unknown error')
+  elif status == MpStatus.MP_INVALID_ARGUMENT:
+    return ValueError(error_message or 'Invalid argument')
+  elif status == MpStatus.MP_DEADLINE_EXCEEDED:
+    return TimeoutError(error_message or 'Deadline exceeded')
+  elif status == MpStatus.MP_NOT_FOUND:
+    return FileNotFoundError(error_message or 'Not found')
+  elif status == MpStatus.MP_ALREADY_EXISTS:
+    return FileExistsError(error_message or 'Already exists')
+  elif status == MpStatus.MP_PERMISSION_DENIED:
+    return PermissionError(error_message or 'Permission denied')
+  elif status == MpStatus.MP_RESOURCE_EXHAUSTED:
+    return RuntimeError(error_message or 'Resource exhausted')
+  elif status == MpStatus.MP_FAILED_PRECONDITION:
+    return RuntimeError(error_message or 'Failed precondition')
+  elif status == MpStatus.MP_ABORTED:
+    return RuntimeError(error_message or 'Aborted')
+  elif status == MpStatus.MP_OUT_OF_RANGE:
+    return IndexError(error_message or 'Out of range')
+  elif status == MpStatus.MP_UNIMPLEMENTED:
+    return NotImplementedError(error_message or 'Unimplemented')
+  elif status == MpStatus.MP_INTERNAL:
+    return RuntimeError(error_message or 'Internal error')
+  elif status == MpStatus.MP_UNAVAILABLE:
+    return ConnectionError(error_message or 'Unavailable')
+  elif status == MpStatus.MP_DATA_LOSS:
+    return RuntimeError(error_message or 'Data loss')
+  elif status == MpStatus.MP_UNAUTHENTICATED:
+    return PermissionError(error_message or 'Unauthenticated')
+  else:
+    return RuntimeError(error_message or f'Unexpected status: {status}')
 
 
 def handle_status(status: int, error_message: Optional[str] = None) -> None:

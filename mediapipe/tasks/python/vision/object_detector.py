@@ -71,11 +71,11 @@ class ObjectDetectorOptionsC(ctypes.Structure):
       cls,
       base_options: base_options_c_module.BaseOptionsC,
       running_mode: _RunningMode,
-      display_names_locale: str | None,
-      max_results: int | None,
-      score_threshold: float | None,
-      category_allowlist: List[str] | None,
-      category_denylist: List[str] | None,
+      display_names_locale: Optional[str],
+      max_results: Optional[int],
+      score_threshold: Optional[float],
+      category_allowlist: Optional[List[str]],
+      category_denylist: Optional[List[str]],
       result_callback: _C_TYPES_RESULT_CALLBACK,
   ) -> 'ObjectDetectorOptionsC':
     """Creates an ObjectDetectorOptionsC object from the given options."""
@@ -109,6 +109,7 @@ class ObjectDetectorOptionsC(ctypes.Structure):
         category_denylist_count=category_denylist_count_c,
         result_callback=result_callback,
     )
+
 
 _CTYPES_SIGNATURES = (
     _CFunction(
@@ -423,7 +424,7 @@ class ObjectDetector:
       self,
       image: image_module.Image,
       timestamp_ms: int,
-      image_processing_options: _ImageProcessingOptions | None = None,
+      image_processing_options: Optional[_ImageProcessingOptions] = None,
   ) -> ObjectDetectorResult:
     """Performs object detection on the provided video frames.
 

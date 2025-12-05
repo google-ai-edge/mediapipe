@@ -15,9 +15,10 @@
 
 import ctypes
 import os
+import platform
 from typing import Any, List, Optional, Sequence
 
-# resources dependency
+from importlib import resources
 from mediapipe.tasks.python.core import mediapipe_c_utils
 from mediapipe.tasks.python.core import serial_dispatcher
 
@@ -56,11 +57,16 @@ def load_raw_library(signatures: Sequence[_CFunction] = ()) -> ctypes.CDLL:
   """
   global _shared_lib
   if _shared_lib is None:
-    if os.name == 'posix':  # Linux or macOS
-      lib_path = _BASE_LIB_PATH + 'libmediapipe.so'
+    if os.name == 'posix':
+      if platform.system() == 'Darwin':  # macOS
+        lib_filename = 'libmediapipe.dylib'
+      else:  # Linux
+        lib_filename = 'libmediapipe.so'
     else:  # Windows
-      lib_path = _BASE_LIB_PATH + 'libmediapipe.dll'
-    _shared_lib = ctypes.CDLL(resources.GetResourceFilename(lib_path))
+      lib_filename = 'libmediapipe.dll'
+    lib_path_context = resources.files('mediapipe.tasks.c')
+    absolute_lib_path = str(lib_path_context / lib_filename)
+    _shared_lib = ctypes.CDLL(absolute_lib_path)
 
   for signature in signatures:
     c_func = getattr(_shared_lib, signature.func_name)
