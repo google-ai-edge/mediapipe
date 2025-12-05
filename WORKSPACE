@@ -582,8 +582,8 @@ http_archive(
 http_archive(
     name = "opencv",
     build_file_content = all_content,
-    strip_prefix = "opencv-4.10.0",
-    urls = ["https://github.com/opencv/opencv/archive/4.10.0.tar.gz"],
+    strip_prefix = "opencv-3.4.11",
+    urls = ["https://github.com/opencv/opencv/archive/3.4.11.tar.gz"],
 )
 
 new_local_repository(
