@@ -500,12 +500,23 @@ void GraphProfiler::AddTimeSample(int64_t start_time_usec,
     return;
   }
 
+  // Compute time and interval index.
   int64_t time_usec = end_time_usec - start_time_usec;
-  histogram->set_total(histogram->total() + time_usec);
   int64_t interval_index = time_usec / histogram->interval_size_usec();
   if (interval_index > histogram->num_intervals() - 1) {
     interval_index = histogram->num_intervals() - 1;
   }
+
+  // Check if interval_index is valid.
+  if (interval_index < 0 || interval_index >= histogram->count_size()) {
+    ABSL_LOG(ERROR) << absl::Substitute(
+        "interval_index ($0) is out of count's range [0, $1)", interval_index,
+        histogram->count_size());
+    return;
+  }
+
+  // Everything looks good, update the histogram.
+  histogram->set_total(histogram->total() + time_usec);
   histogram->set_count(interval_index, histogram->count(interval_index) + 1);
 }
 
