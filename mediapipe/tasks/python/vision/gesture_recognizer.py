@@ -15,7 +15,7 @@
 
 import ctypes
 import dataclasses
-from typing import Callable, Tuple
+from typing import Callable, Optional, Tuple
 
 from mediapipe.tasks.python.components.processors import classifier_options
 from mediapipe.tasks.python.components.processors import classifier_options_c
@@ -204,9 +204,9 @@ class GestureRecognizerOptions:
   custom_gesture_classifier_options: _ClassifierOptions = dataclasses.field(
       default_factory=_ClassifierOptions
   )
-  result_callback: (
-      Callable[[GestureRecognizerResult, image_lib.Image, int], None] | None
-  ) = None
+  result_callback: Optional[
+      Callable[[GestureRecognizerResult, image_lib.Image, int], None]
+  ] = None
 
 
 class GestureRecognizer:
@@ -333,7 +333,7 @@ class GestureRecognizer:
   def recognize(
       self,
       image: image_lib.Image,
-      image_processing_options: _ImageProcessingOptions | None = None,
+      image_processing_options: Optional[_ImageProcessingOptions] = None,
   ) -> GestureRecognizerResult:
     """Performs hand gesture recognition on the given image.
 
@@ -378,7 +378,7 @@ class GestureRecognizer:
       self,
       image: image_lib.Image,
       timestamp_ms: int,
-      image_processing_options: _ImageProcessingOptions | None = None,
+      image_processing_options: Optional[_ImageProcessingOptions] = None,
   ) -> GestureRecognizerResult:
     """Performs gesture recognition on the provided video frame.
 
@@ -426,7 +426,7 @@ class GestureRecognizer:
       self,
       image: image_lib.Image,
       timestamp_ms: int,
-      image_processing_options: _ImageProcessingOptions | None = None,
+      image_processing_options: Optional[_ImageProcessingOptions] = None,
   ) -> None:
     """Sends live image data to perform gesture recognition.
 

@@ -20,7 +20,7 @@ import logging
 import os
 import queue
 import threading
-from typing import Any, Callable, TypeVar
+from typing import Any, Callable, Optional, TypeVar, Union
 
 from mediapipe.tasks.python.core import mediapipe_c_utils
 
@@ -49,7 +49,7 @@ class _ExceptionPacket:
   exception: Exception
 
 
-_AsyncResultPacket = LiveStreamPacket | _ExceptionPacket
+_AsyncResultPacket = Union[LiveStreamPacket, _ExceptionPacket]
 
 
 class _DispatcherState(enum.Enum):
@@ -99,12 +99,12 @@ class AsyncResultDispatcher:
   ```
   """
 
-  _callback: Callable[..., None] | None = None
+  _callback: Optional[Callable[..., None]] = None
   _data_queue: queue.Queue[_AsyncResultPacket]
   _pipe_read_fd: int = _PIPE_NOT_INITIALIZED
   _pipe_write_fd: int = _PIPE_NOT_INITIALIZED
   _state: _DispatcherState = _DispatcherState.NOT_STARTED
-  _dispatcher_thread: threading.Thread | None = None
+  _dispatcher_thread: Optional[threading.Thread] = None
 
   def __init__(self, converter: Callable[..., Any]):
     """Initializes the AsyncResultDispatcher.
@@ -118,7 +118,7 @@ class AsyncResultDispatcher:
 
   def wrap_callback(
       self,
-      python_callback: Callable[..., None] | None,
+      python_callback: Optional[Callable[..., None]],
       c_callback_type: type[CCallbackType],
   ) -> CCallbackType:
     """Returns a ctypes callback function that can be passed to a C library.
