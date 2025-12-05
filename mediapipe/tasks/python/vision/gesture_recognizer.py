@@ -38,7 +38,7 @@ _BaseOptions = base_options_module.BaseOptions
 _ClassifierOptions = classifier_options.ClassifierOptions
 _RunningMode = running_mode_module.VisionTaskRunningMode
 _ImageProcessingOptions = image_processing_options_lib.ImageProcessingOptions
-_GestureRecognizerResult = (
+GestureRecognizerResult = (
     gesture_recognizer_result_module.GestureRecognizerResult
 )
 _CFunction = mediapipe_c_utils.CFunction
@@ -205,7 +205,7 @@ class GestureRecognizerOptions:
       default_factory=_ClassifierOptions
   )
   result_callback: (
-      Callable[[_GestureRecognizerResult, image_lib.Image, int], None] | None
+      Callable[[GestureRecognizerResult, image_lib.Image, int], None] | None
   ) = None
 
 
@@ -291,9 +291,9 @@ class GestureRecognizer:
         ),
         image_ptr: ctypes.c_void_p,
         timestamp_ms: int,
-    ) -> Tuple[_GestureRecognizerResult, image_lib.Image, int]:
+    ) -> Tuple[GestureRecognizerResult, image_lib.Image, int]:
       c_result = c_result_ptr[0]
-      py_result = _GestureRecognizerResult.from_ctypes(c_result)
+      py_result = GestureRecognizerResult.from_ctypes(c_result)
       py_image = image_lib.Image.create_from_ctypes(image_ptr)
       return (py_result, py_image, timestamp_ms)
 
@@ -334,7 +334,7 @@ class GestureRecognizer:
       self,
       image: image_lib.Image,
       image_processing_options: _ImageProcessingOptions | None = None,
-  ) -> _GestureRecognizerResult:
+  ) -> GestureRecognizerResult:
     """Performs hand gesture recognition on the given image.
 
     Only use this method when the GestureRecognizer is created with the image
@@ -370,7 +370,7 @@ class GestureRecognizer:
     )
     mediapipe_c_utils.handle_status(status)
 
-    result = _GestureRecognizerResult.from_ctypes(c_result)
+    result = GestureRecognizerResult.from_ctypes(c_result)
     self._lib.MpGestureRecognizerCloseResult(ctypes.byref(c_result))
     return result
 
@@ -379,7 +379,7 @@ class GestureRecognizer:
       image: image_lib.Image,
       timestamp_ms: int,
       image_processing_options: _ImageProcessingOptions | None = None,
-  ) -> _GestureRecognizerResult:
+  ) -> GestureRecognizerResult:
     """Performs gesture recognition on the provided video frame.
 
     Only use this method when the GestureRecognizer is created with the video
@@ -418,7 +418,7 @@ class GestureRecognizer:
     )
     mediapipe_c_utils.handle_status(status)
 
-    result = _GestureRecognizerResult.from_ctypes(c_result)
+    result = GestureRecognizerResult.from_ctypes(c_result)
     self._lib.MpGestureRecognizerCloseResult(ctypes.byref(c_result))
     return result
 
