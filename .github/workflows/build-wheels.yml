@@ -3,14 +3,12 @@ name: Build Python Wheels
 on:
   push:
     branches:
-      - add-python-3.13-support
-      - main
+      - master
     tags:
       - 'v*'
   pull_request:
     branches:
-      - add-python-3.13-support
-      - main
+      - master
   workflow_dispatch:
 
 env:
