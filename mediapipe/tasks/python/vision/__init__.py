@@ -18,8 +18,8 @@ import mediapipe.tasks.python.vision.core
 import mediapipe.tasks.python.vision.face_detector
 import mediapipe.tasks.python.vision.face_landmarker
 import mediapipe.tasks.python.vision.gesture_recognizer
+import mediapipe.tasks.python.vision.gesture_recognizer_result
 import mediapipe.tasks.python.vision.hand_landmarker
-import mediapipe.tasks.python.vision.holistic_landmarker
 import mediapipe.tasks.python.vision.image_classifier
 import mediapipe.tasks.python.vision.image_embedder
 import mediapipe.tasks.python.vision.image_segmenter
@@ -36,7 +36,7 @@ FaceLandmarkerResult = face_landmarker.FaceLandmarkerResult
 FaceLandmarksConnections = face_landmarker.FaceLandmarksConnections
 GestureRecognizer = gesture_recognizer.GestureRecognizer
 GestureRecognizerOptions = gesture_recognizer.GestureRecognizerOptions
-GestureRecognizerResult = gesture_recognizer.GestureRecognizerResult
+GestureRecognizerResult = gesture_recognizer_result.GestureRecognizerResult
 HandLandmarker = hand_landmarker.HandLandmarker
 HandLandmarkerOptions = hand_landmarker.HandLandmarkerOptions
 HandLandmarkerResult = hand_landmarker.HandLandmarkerResult
@@ -60,9 +60,6 @@ PoseLandmarker = pose_landmarker.PoseLandmarker
 PoseLandmarkerOptions = pose_landmarker.PoseLandmarkerOptions
 PoseLandmarkerResult = pose_landmarker.PoseLandmarkerResult
 PoseLandmarksConnections = pose_landmarker.PoseLandmarksConnections
-HolisticLandmarker = holistic_landmarker.HolisticLandmarker
-HolisticLandmarkerOptions = holistic_landmarker.HolisticLandmarkerOptions
-HolisticLandmarkerResult = holistic_landmarker.HolisticLandmarkerResult
 
 RunningMode = core.vision_task_running_mode.VisionTaskRunningMode
 
@@ -71,8 +68,8 @@ del core
 del face_detector
 del face_landmarker
 del gesture_recognizer
+del gesture_recognizer_result
 del hand_landmarker
-del holistic_landmarker
 del image_classifier
 del image_embedder
 del image_segmenter
