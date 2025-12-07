@@ -126,12 +126,15 @@ class Input<ContextSpecializer, PayloadT>
   using Payload = PayloadT;
   using internal_port::Port<ContextSpecializer, InputStreamField>::Port;
 
-  // Checks if payload can be accessed - valid input & non empty packet.
-  explicit operator bool() const {
+  // Checks if input is empty - invalid input or input packet is missing.
+  bool IsEmpty() const {
     auto id = holder_->context->Inputs().GetId(Tag(), Index());
-    return id.IsValid() &&
-           !holder_->context->Inputs().Get(id).Value().IsEmpty();
+    return !id.IsValid() ||
+           holder_->context->Inputs().Get(id).Value().IsEmpty();
   }
+
+  // Checks if payload can be accessed.
+  explicit operator bool() const { return !IsEmpty(); }
 
   // Returns the payload of the packet for this particular input.
   //
@@ -162,12 +165,15 @@ class Input<ContextSpecializer, OneOf<PayloadTs...>>
   using Payload = OneOf<PayloadTs...>;
   using internal_port::Port<ContextSpecializer, InputStreamField>::Port;
 
-  // Checks if payload can be accessed - valid input & non empty packet.
-  explicit operator bool() const {
+  // Checks if input is empty - invalid input or input packet is missing.
+  bool IsEmpty() const {
     auto id = holder_->context->Inputs().GetId(Tag(), Index());
-    return id.IsValid() &&
-           !holder_->context->Inputs().Get(id).Value().IsEmpty();
+    return !id.IsValid() ||
+           holder_->context->Inputs().Get(id).Value().IsEmpty();
   }
+
+  // Checks if payload can be accessed.
+  explicit operator bool() const { return !IsEmpty(); }
 
   // Checks if input holds a packet of a specific type. Returns false if the
   // payload can't be accessed (i.e. it is not required to check the input
@@ -276,12 +282,15 @@ class SideInput<ContextSpecializer, PayloadT>
   using Payload = PayloadT;
   using internal_port::Port<ContextSpecializer, InputSidePacketField>::Port;
 
-  // Checks if payload can be accessed - valid side input & non empty packet.
-  virtual explicit operator bool() const {
+  // Checks if side input is empty - invalid input or input packet is missing.
+  bool IsEmpty() const {
     auto id = holder_->context->InputSidePackets().GetId(Tag(), Index());
-    return id.IsValid() &&
-           !holder_->context->InputSidePackets().Get(id).IsEmpty();
+    return !id.IsValid() ||
+           holder_->context->InputSidePackets().Get(id).IsEmpty();
   }
+
+  // Checks if payload can be accessed.
+  explicit operator bool() const { return !IsEmpty(); }
 
   // Returns the payload of the packet for this particular input.
   //

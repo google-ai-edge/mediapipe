@@ -225,9 +225,9 @@ class ImageSegmenterOptions:
   running_mode: _RunningMode = _RunningMode.IMAGE
   output_confidence_masks: bool = True
   output_category_mask: bool = False
-  result_callback: (
-      Callable[[ImageSegmenterResult, image_module.Image, int], None] | None
-  ) = None
+  result_callback: Optional[
+      Callable[[ImageSegmenterResult, image_module.Image, int], None]
+  ] = None
 
 
 class ImageSegmenter:
@@ -408,7 +408,7 @@ class ImageSegmenter:
       self,
       image: image_module.Image,
       timestamp_ms: int,
-      image_processing_options: _ImageProcessingOptions | None = None,
+      image_processing_options: Optional[_ImageProcessingOptions] = None,
   ) -> ImageSegmenterResult:
     """Performs segmentation on the provided video frames.
 
@@ -456,7 +456,7 @@ class ImageSegmenter:
       self,
       image: image_module.Image,
       timestamp_ms: int,
-      image_processing_options: _ImageProcessingOptions | None = None,
+      image_processing_options: Optional[_ImageProcessingOptions] = None,
   ) -> None:
     """Sends live image data (an Image with a unique timestamp) to perform image segmentation.
 
