@@ -35,4 +35,45 @@ message TensorsToSegmentationCalculatorOptions {
 
   // Identifying information for each classification label.
   map<int64, mediapipe.LabelMapItem> label_items = 2;
+
+  // Options used for confidence masks only. Ignored for category masks.
+  //
+  // Example: Assume there are 6 input channels.
+  // By default, 6 output streams are generated and input channel n goes to
+  // output stream n.
+  // For
+  //   confidence_mask_options {
+  //     output_channels: 2
+  //     output_channels: 3
+  //     output_channels: 4
+  //     pack4: true
+  //     output_format: OUTPUT_FORMAT_UINT8
+  //   }
+  // only one uint8 RGBA output stream is generated, with channels 2, 3 and 4
+  // packed into the RGB channels of the output stream. The A channel is left
+  // blank (zero).
+  message ConfidenceMaskOptions {
+    // Specifies which channels to send to the output. The number of
+    // output_channels determines the number of output streams. Channels that
+    // are not specified will be discarded (but used for intermediate math like
+    // SOFTMAX). If unset, all input channels are sent to the output.
+    repeated int32 output_channels = 1 [packed = true];
+
+    // If false (default), outputs one mask for each channel. If true, packs 4
+    // consecutive output channels into a single image.
+    optional bool pack4 = 2;
+
+    enum OutputFormat {
+      OUTPUT_FORMAT_UNSPECIFIED = 0;  // Default is FLOAT.
+      OUTPUT_FORMAT_FLOAT = 1;  // Float32 or Half16, depending on GPU support.
+      OUTPUT_FORMAT_UINT8 = 2;  // Uint8.
+    }
+
+    // Specifies the format of the output images.
+    // Note that OUTPUT_FORMAT_UINT8 with pack4==false (single channel 8 bit)
+    // output with GPU processing may not be supported on all platforms.
+    optional OutputFormat output_format = 3;
+  }
+
+  optional ConfidenceMaskOptions confidence_mask_options = 3;
 }
