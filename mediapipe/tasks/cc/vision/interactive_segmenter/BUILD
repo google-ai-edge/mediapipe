@@ -26,7 +26,6 @@ cc_library(
     srcs = ["interactive_segmenter.cc"],
     hdrs = ["interactive_segmenter.h"],
     deps = [
-        ":interactive_segmenter_graph",
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/api2:builder",
@@ -50,8 +49,11 @@ cc_library(
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:optional",
     ] + select({
-        "//mediapipe/gpu:disable_gpu": [],
+        "//mediapipe/gpu:disable_gpu": [
+            ":interactive_segmenter_graph",
+        ],
         "//conditions:default": [
+            ":interactive_segmenter_graph",
         ],
     }),
 )

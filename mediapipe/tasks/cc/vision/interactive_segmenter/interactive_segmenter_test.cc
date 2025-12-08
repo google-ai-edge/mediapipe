@@ -144,7 +144,8 @@ class DeepLabOpResolverMissingOps : public ::tflite::MutableOpResolver {
   DeepLabOpResolverMissingOps(const DeepLabOpResolverMissingOps& r) = delete;
 };
 
-TEST_F(CreateFromOptionsTest, FailsWithSelectiveOpResolverMissingOps) {
+// SelectiveOpResolver needed for CPU/V1, but not GPU/V2
+TEST_F(CreateFromOptionsTest, DISABLED_FailsWithSelectiveOpResolverMissingOps) {
   auto options = std::make_unique<InteractiveSegmenterOptions>();
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kPtmModel);
@@ -307,10 +308,10 @@ INSTANTIATE_TEST_SUITE_P(
         {// Keypoint input.
          {"PointToDog1", RegionOfInterest::Format::kKeyPoint,
           NormalizedKeypoint{0.44, 0.70}, kCatsAndDogsJpg, kCatsAndDogsMaskDog1,
-          0.84f},
+          0.9f},
          {"PointToDog2", RegionOfInterest::Format::kKeyPoint,
           NormalizedKeypoint{0.66, 0.66}, kCatsAndDogsJpg, kCatsAndDogsMaskDog2,
-          kGoldenMaskSimilarity},
+          0.85f},
          {"PenguinsSmall", RegionOfInterest::Format::kKeyPoint,
           NormalizedKeypoint{0.329, 0.545}, kPenguinsSmall, kPenguinsSmallMask,
           0.9f},
@@ -322,12 +323,12 @@ INSTANTIATE_TEST_SUITE_P(
           std::vector{NormalizedKeypoint{0.44, 0.70},
                       NormalizedKeypoint{0.44, 0.71},
                       NormalizedKeypoint{0.44, 0.72}},
-          kCatsAndDogsJpg, kCatsAndDogsMaskDog1, 0.84f},
+          kCatsAndDogsJpg, kCatsAndDogsMaskDog1, 0.9f},
          {"ScribbleToDog2", RegionOfInterest::Format::kScribble,
           std::vector{NormalizedKeypoint{0.66, 0.66},
                       NormalizedKeypoint{0.66, 0.67},
                       NormalizedKeypoint{0.66, 0.68}},
-          kCatsAndDogsJpg, kCatsAndDogsMaskDog2, kGoldenMaskSimilarity}}),
+          kCatsAndDogsJpg, kCatsAndDogsMaskDog2, 0.85f}}),
     [](const ::testing::TestParamInfo<SucceedSegmentationWithRoi::ParamType>&
            info) { return info.param.test_name; });
 

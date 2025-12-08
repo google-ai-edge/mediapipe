@@ -93,7 +93,8 @@ public final class InteractiveSegmenter extends BaseVisionTaskApi {
               "ROI:" + ROI_IN_STREAM_NAME,
               "NORM_RECT:" + NORM_RECT_IN_STREAM_NAME));
   private static final String TASK_GRAPH_NAME =
-      "mediapipe.tasks.vision.interactive_segmenter.InteractiveSegmenterGraph";
+  "mediapipe.tasks.vision.interactive_segmenter.InteractiveSegmenterGraph";
+
   private static final String TENSORS_TO_SEGMENTATION_CALCULATOR_NAME =
       "mediapipe.tasks.TensorsToSegmentationCalculator";
   private boolean hasResultListener = false;

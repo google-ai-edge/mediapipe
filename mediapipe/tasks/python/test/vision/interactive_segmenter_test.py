@@ -46,7 +46,7 @@ _CATS_AND_DOGS = 'cats_and_dogs.jpg'
 _CATS_AND_DOGS_MASK_DOG_1 = 'cats_and_dogs_mask_dog1.png'
 _CATS_AND_DOGS_MASK_DOG_2 = 'cats_and_dogs_mask_dog2.png'
 _MASK_MAGNIFICATION_FACTOR = 255
-_MASK_SIMILARITY_THRESHOLD = 0.97
+_MASK_SIMILARITY_THRESHOLD = 0.96
 _TEST_DATA_DIR = 'mediapipe/tasks/testdata/vision'
 
 

@@ -42,6 +42,7 @@ using ::mediapipe::tasks::vision::core::GetImage;
 using ::mediapipe::tasks::vision::core::ScopedMpImage;
 
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
+
 constexpr char kModelName[] = "ptm_512_hdt_ptm_woid.tflite";
 constexpr char kImageFile[] = "penguins_large.jpg";
 constexpr char kMaskImageFile[] = "penguins_large_mask.png";
