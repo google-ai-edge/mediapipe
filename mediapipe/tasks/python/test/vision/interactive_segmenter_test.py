@@ -247,7 +247,7 @@ class InteractiveSegmenterTest(parameterized.TestCase):
           _RegionOfInterest.Format.KEYPOINT,
           _NormalizedKeypoint(0.66, 0.66),
           _CATS_AND_DOGS_MASK_DOG_2,
-          _MASK_SIMILARITY_THRESHOLD,
+          0.84,
       ),
   )
   def test_segment_succeeds_with_confidence_mask(
