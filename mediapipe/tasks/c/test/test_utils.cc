@@ -26,6 +26,17 @@ limitations under the License.
 
 namespace mediapipe::tasks::c::test {
 
+testing::AssertionResult AssertMpStatusOk(const char* expr,
+                                          const MpStatus& status) {
+  if (status == kMpOk) {
+    return testing::AssertionSuccess();
+  }
+
+  return testing::AssertionFailure()
+         << "Expected '" << expr << "' to be kMpOk.\n"
+         << "  Actual Code: " << status << "\n";
+}
+
 MpImagePtr CreateCategoryMaskFromImage(absl::StatusOr<Image>& image) {
   const auto& image_frame = image->GetImageFrameSharedPtr();
 

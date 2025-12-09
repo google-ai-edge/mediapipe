@@ -20,11 +20,13 @@ licenses(["notice"])
 
 cc_library(
     name = "test_utils",
+    testonly = 1,
     srcs = ["test_utils.cc"],
     hdrs = ["test_utils.h"],
     linkstatic = 1,
     deps = [
         "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/port:gtest",
         "//mediapipe/tasks/c/core:mp_status",
         "//mediapipe/tasks/c/vision/core:image",
         "//mediapipe/tasks/c/vision/core:image_frame_util",

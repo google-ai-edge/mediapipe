@@ -13,7 +13,6 @@
 
 #include "mediapipe/tasks/c/core/mp_status_converter.h"
 
-#include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
 
@@ -58,6 +57,15 @@ MpStatus ToMpStatus(absl::Status status) {
     default:
       return kMpUnknown;
   }
+}
+
+MpStatus HandleStatus(absl::Status status, char** error_msg) {
+  if (!status.ok()) {
+    if (error_msg != nullptr) {
+      *error_msg = strdup(status.message().data());
+    }
+  }
+  return ToMpStatus(status);
 }
 
 }  // namespace mediapipe::tasks::c::core

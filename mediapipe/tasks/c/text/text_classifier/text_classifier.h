@@ -50,22 +50,35 @@ struct TextClassifierOptions {
 // Creates a TextClassifier from the provided `options`.
 // If successful, returns `kMpOk` and sets `*classifier` to the new
 // `MpTextClassifierPtr`.
+// To obtain a detailed error, error_msg must be non-null pointer to a char*,
+// which will be populated with a newly-allocated error message upon failure.
+// It's the caller responsibility to free the error message with free().
 MP_EXPORT MpStatus MpTextClassifierCreate(struct TextClassifierOptions* options,
-                                          MpTextClassifierPtr* classifier);
+                                          MpTextClassifierPtr* classifier,
+                                          char** error_msg);
 
 // Performs classification on the input `utf8_str`.
 // If successful, returns `kMpOk` and sets `*result` to the new
 // `TextClassifierResult`.
+// To obtain a detailed error, error_msg must be non-null pointer to a char*,
+// which will be populated with a newly-allocated error message upon failure.
+// It's the caller responsibility to free the error message with free().
 MP_EXPORT MpStatus MpTextClassifierClassify(MpTextClassifierPtr classifier,
                                             const char* utf8_str,
-                                            TextClassifierResult* result);
+                                            TextClassifierResult* result,
+                                            char** error_msg);
 
 // Frees the memory allocated inside a TextClassifierResult result. Does not
 // free the result pointer itself.
 MP_EXPORT void MpTextClassifierCloseResult(TextClassifierResult* result);
 
 // Shuts down the TextClassifier when all the work is done. Frees all memory.
-MP_EXPORT MpStatus MpTextClassifierClose(MpTextClassifierPtr classifier);
+//
+// To obtain a detailed error, error_msg must be non-null pointer to a char*,
+// which will be populated with a newly-allocated error message upon failure.
+// It's the caller responsibility to free the error message with free().
+MP_EXPORT MpStatus MpTextClassifierClose(MpTextClassifierPtr classifier,
+                                         char** error_msg);
 
 #ifdef __cplusplus
 }  // extern C

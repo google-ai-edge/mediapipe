@@ -57,7 +57,6 @@ cc_library(
     hdrs = ["mp_status_converter.h"],
     deps = [
         ":mp_status",
-        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
     ],
 )
