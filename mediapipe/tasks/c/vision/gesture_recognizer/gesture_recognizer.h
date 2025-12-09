@@ -27,9 +27,12 @@ limitations under the License.
 #include "mediapipe/tasks/c/vision/gesture_recognizer/gesture_recognizer_result.h"
 
 #ifndef MP_EXPORT
+#if defined(_MSC_VER)
+#define MP_EXPORT __declspec(dllexport)
+#else
 #define MP_EXPORT __attribute__((visibility("default")))
+#endif  // _MSC_VER
 #endif  // MP_EXPORT
-
 #ifdef __cplusplus
 extern "C" {
 #endif

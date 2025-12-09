@@ -23,7 +23,11 @@ limitations under the License.
 #include "mediapipe/tasks/c/vision/core/image.h"
 
 #ifndef MP_EXPORT
+#if defined(_WIN32)
+#define MP_EXPORT __declspec(dllexport)
+#else
 #define MP_EXPORT __attribute__((visibility("default")))
+#endif  // _WIN32
 #endif  // MP_EXPORT
 
 #ifdef __cplusplus
