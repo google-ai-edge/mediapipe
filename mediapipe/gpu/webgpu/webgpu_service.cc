@@ -20,12 +20,11 @@
 
 #include "absl/base/attributes.h"
 #include "mediapipe/framework/graph_service.h"
+#include "mediapipe/gpu/webgpu/webgpu_headers.h"
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
 #include <emscripten/em_js.h>
-#include <webgpu/webgpu.h>
-#include <webgpu/webgpu_cpp.h>
 
 EM_JS_DEPS(webgpu_service_deps, "$stringToNewUTF8")
 #else

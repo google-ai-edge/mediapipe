@@ -1,7 +1,5 @@
 #include "mediapipe/gpu/webgpu/webgpu_shader_calculator.h"
 
-#include <webgpu/webgpu_cpp.h>
-
 #include <algorithm>
 #include <cstdint>
 #include <cstring>
@@ -34,6 +32,7 @@
 #include "mediapipe/framework/resources.h"
 #include "mediapipe/gpu/gpu_buffer.h"
 #include "mediapipe/gpu/gpu_buffer_format.h"
+#include "mediapipe/gpu/webgpu/webgpu_headers.h"
 #include "mediapipe/gpu/webgpu/webgpu_service.h"
 #include "mediapipe/gpu/webgpu/webgpu_shader_calculator.pb.h"
 #include "mediapipe/gpu/webgpu/webgpu_texture_buffer_3d.h"

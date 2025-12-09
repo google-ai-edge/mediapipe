@@ -1,8 +1,6 @@
 #ifndef MEDIAPIPE_GPU_WEBGPU_WEBGPU_UTILS_H_
 #define MEDIAPIPE_GPU_WEBGPU_WEBGPU_UTILS_H_
 
-#include <webgpu/webgpu_cpp.h>
-
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -10,6 +8,7 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/time/time.h"
+#include "mediapipe/gpu/webgpu/webgpu_headers.h"
 
 namespace mediapipe {
 
