@@ -13,6 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#include "mediapipe/tasks/cc/vision/interactive_segmenter/interactive_segmenter_graph.h"
+
 #include <memory>
 #include <utility>
 #include <vector>
@@ -225,75 +227,70 @@ Source<> RoiToAlpha(Source<Image> image, Source<RegionOfInterest> roi,
 //     }
 //   }
 // }
-class InteractiveSegmenterGraph : public core::ModelTaskGraph {
- public:
-  absl::StatusOr<mediapipe::CalculatorGraphConfig> GetConfig(
-      mediapipe::SubgraphContext* sc) override {
-    Graph graph;
-    const auto& task_options = sc->Options<ImageSegmenterGraphOptions>();
-    bool use_gpu =
-        components::processors::DetermineImagePreprocessingGpuBackend(
-            task_options.base_options().acceleration());
+absl::StatusOr<mediapipe::CalculatorGraphConfig>
+InteractiveSegmenterGraph::GetConfig(mediapipe::SubgraphContext* sc) {
+  Graph graph;
+  const auto& task_options = sc->Options<ImageSegmenterGraphOptions>();
+  bool use_gpu = components::processors::DetermineImagePreprocessingGpuBackend(
+      task_options.base_options().acceleration());
 
-    Source<Image> image = graph[Input<Image>(kImageTag)];
-    Source<RegionOfInterest> roi = graph[Input<RegionOfInterest>(kRoiTag)];
-    Source<NormalizedRect> norm_rect =
-        graph[Input<NormalizedRect>(kNormRectTag)];
-    const absl::string_view image_tag_with_suffix =
-        use_gpu ? kImageGpuTag : kImageCpuTag;
-    const absl::string_view alpha_tag_with_suffix =
-        use_gpu ? kAlphaGpuTag : kAlphaTag;
+  Source<Image> image = graph[Input<Image>(kImageTag)];
+  Source<RegionOfInterest> roi = graph[Input<RegionOfInterest>(kRoiTag)];
+  Source<NormalizedRect> norm_rect = graph[Input<NormalizedRect>(kNormRectTag)];
+  const absl::string_view image_tag_with_suffix =
+      use_gpu ? kImageGpuTag : kImageCpuTag;
+  const absl::string_view alpha_tag_with_suffix =
+      use_gpu ? kAlphaGpuTag : kAlphaTag;
 
-    auto& from_mp_image = graph.AddNode("FromImageCalculator");
-    image >> from_mp_image.In(kImageTag);
-    auto image_in_cpu_or_gpu = from_mp_image.Out(image_tag_with_suffix);
+  auto& from_mp_image = graph.AddNode("FromImageCalculator");
+  image >> from_mp_image.In(kImageTag);
+  auto image_in_cpu_or_gpu = from_mp_image.Out(image_tag_with_suffix);
 
-    // Creates an RGBA image with model input tensor size.
-    auto alpha_in_cpu_or_gpu = RoiToAlpha(image, roi, use_gpu, graph);
+  // Creates an RGBA image with model input tensor size.
+  auto alpha_in_cpu_or_gpu = RoiToAlpha(image, roi, use_gpu, graph);
 
-    auto& set_alpha = graph.AddNode("SetAlphaCalculator");
-    image_in_cpu_or_gpu >> set_alpha.In(use_gpu ? kImageGpuTag : kImageTag);
-    alpha_in_cpu_or_gpu >> set_alpha.In(alpha_tag_with_suffix);
-    auto image_in_cpu_or_gpu_with_set_alpha =
-        set_alpha.Out(use_gpu ? kImageGpuTag : kImageTag);
+  auto& set_alpha = graph.AddNode("SetAlphaCalculator");
+  image_in_cpu_or_gpu >> set_alpha.In(use_gpu ? kImageGpuTag : kImageTag);
+  alpha_in_cpu_or_gpu >> set_alpha.In(alpha_tag_with_suffix);
+  auto image_in_cpu_or_gpu_with_set_alpha =
+      set_alpha.Out(use_gpu ? kImageGpuTag : kImageTag);
 
-    auto& to_mp_image = graph.AddNode("ToImageCalculator");
-    image_in_cpu_or_gpu_with_set_alpha >> to_mp_image.In(image_tag_with_suffix);
-    auto image_with_set_alpha = to_mp_image.Out(kImageTag);
+  auto& to_mp_image = graph.AddNode("ToImageCalculator");
+  image_in_cpu_or_gpu_with_set_alpha >> to_mp_image.In(image_tag_with_suffix);
+  auto image_with_set_alpha = to_mp_image.Out(kImageTag);
 
-    auto& image_segmenter = graph.AddNode(
-        "mediapipe.tasks.vision.image_segmenter.ImageSegmenterGraph");
-    image_segmenter.GetOptions<ImageSegmenterGraphOptions>() = task_options;
-    image_with_set_alpha >> image_segmenter.In(kImageTag);
-    norm_rect >> image_segmenter.In(kNormRectTag);
+  auto& image_segmenter = graph.AddNode(
+      "mediapipe.tasks.vision.image_segmenter.ImageSegmenterGraph");
+  image_segmenter.GetOptions<ImageSegmenterGraphOptions>() = task_options;
+  image_with_set_alpha >> image_segmenter.In(kImageTag);
+  norm_rect >> image_segmenter.In(kNormRectTag);
 
-    // TODO: remove deprecated output type support.
-    if (task_options.segmenter_options().has_output_type()) {
-      image_segmenter.Out(kSegmentationTag) >>
-          graph[Output<Image>(kSegmentationTag)];
-      image_segmenter.Out(kGroupedSegmentationTag) >>
-          graph[Output<std::vector<Image>>(kGroupedSegmentationTag)];
-    } else {
-      if (HasOutput(sc->OriginalNode(), kConfidenceMaskTag)) {
-        image_segmenter.Out(kConfidenceMaskTag) >>
-            graph[Output<Image>(kConfidenceMaskTag)];
-      }
-      if (HasOutput(sc->OriginalNode(), kConfidenceMasksTag)) {
-        image_segmenter.Out(kConfidenceMasksTag) >>
-            graph[Output<Image>(kConfidenceMasksTag)];
-      }
-      if (HasOutput(sc->OriginalNode(), kCategoryMaskTag)) {
-        image_segmenter.Out(kCategoryMaskTag) >>
-            graph[Output<Image>(kCategoryMaskTag)];
-      }
+  // TODO: remove deprecated output type support.
+  if (task_options.segmenter_options().has_output_type()) {
+    image_segmenter.Out(kSegmentationTag) >>
+        graph[Output<Image>(kSegmentationTag)];
+    image_segmenter.Out(kGroupedSegmentationTag) >>
+        graph[Output<std::vector<Image>>(kGroupedSegmentationTag)];
+  } else {
+    if (HasOutput(sc->OriginalNode(), kConfidenceMaskTag)) {
+      image_segmenter.Out(kConfidenceMaskTag) >>
+          graph[Output<Image>(kConfidenceMaskTag)];
     }
-    image_segmenter.Out(kQualityScoresTag) >>
-        graph[Output<std::vector<float>>::Optional(kQualityScoresTag)];
-    image_segmenter.Out(kImageTag) >> graph[Output<Image>(kImageTag)];
-
-    return graph.GetConfig();
+    if (HasOutput(sc->OriginalNode(), kConfidenceMasksTag)) {
+      image_segmenter.Out(kConfidenceMasksTag) >>
+          graph[Output<Image>(kConfidenceMasksTag)];
+    }
+    if (HasOutput(sc->OriginalNode(), kCategoryMaskTag)) {
+      image_segmenter.Out(kCategoryMaskTag) >>
+          graph[Output<Image>(kCategoryMaskTag)];
+    }
   }
-};
+  image_segmenter.Out(kQualityScoresTag) >>
+      graph[Output<std::vector<float>>::Optional(kQualityScoresTag)];
+  image_segmenter.Out(kImageTag) >> graph[Output<Image>(kImageTag)];
+
+  return graph.GetConfig();
+}
 
 // REGISTER_MEDIAPIPE_GRAPH argument has to fit on one line to work properly.
 // clang-format off

@@ -61,6 +61,7 @@ cc_library(
 cc_library(
     name = "interactive_segmenter_graph",
     srcs = ["interactive_segmenter_graph.cc"],
+    hdrs = ["interactive_segmenter_graph.h"],
     deps = [
         "//mediapipe/calculators/image:image_transformation_calculator",
         "//mediapipe/calculators/image:set_alpha_calculator",
