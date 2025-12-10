@@ -21,9 +21,9 @@ licenses(["notice"])
 exports_files(["mediapipe_tasks_c_version_script.lds"])
 
 # bazel build -c opt --linkopt -s --strip always --define MEDIAPIPE_DISABLE_GPU=1 \
-# //mediapipe/tasks/c:libmediapipe.so
+# //mediapipe/tasks/c:libmediapipe
 cc_binary(
-    name = "libmediapipe.so",
+    name = "libmediapipe",
     linkopts = select({
         "@platforms//os:linux": [
             "-Wl,-soname=libmediapipe.so",
@@ -47,6 +47,7 @@ cc_binary(
         "//mediapipe/tasks/c/text/language_detector:language_detector_c_lib",
         "//mediapipe/tasks/c/text/text_classifier:text_classifier_c_lib",
         "//mediapipe/tasks/c/text/text_embedder:text_embedder_c_lib",
+        "//mediapipe/tasks/c/vision/core:common",
         "//mediapipe/tasks/c/vision/core:image_c_lib",
         "//mediapipe/tasks/c/vision/face_detector:face_detector_c_lib",
         "//mediapipe/tasks/c/vision/face_landmarker:face_landmarker_c_lib",
@@ -59,4 +60,18 @@ cc_binary(
         "//mediapipe/tasks/c/vision/object_detector:object_detector_c_lib",
         "//mediapipe/tasks/c/vision/pose_landmarker:pose_landmarker_c_lib",
     ],
+)
+
+# Genrule to provide a consistent libmediapipe.so output in bazel-bin.
+# buildifier: disable=constant-glob
+genrule(
+    name = "libmediapipe_c_lib",
+    srcs = select({
+        "@platforms//os:linux": glob(["prebuilts/manylinux/libmediapipe.so"]) or [":libmediapipe"],
+        "@platforms//os:windows": glob(["prebuilts/windows_x86_64/libmediapipe.dll"]) or [":libmediapipe"],
+        "@platforms//os:macos": glob(["prebuilts/darwin_arm64/libmediapipe.dylib"]) or [":libmediapipe"],
+        "//conditions:default": [":libmediapipe"],
+    }),
+    outs = ["libmediapipe.so"],
+    cmd = "cp $< $@",
 )

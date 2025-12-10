@@ -20,8 +20,8 @@
 #include "mediapipe/tasks/c/core/mp_status_converter.h"
 #include "mediapipe/tasks/cc/text/utils/vocab_convert_utils.h"
 #ifdef ENABLE_ODML_CONVERTER
-#include "mediapipe/tasks/cc/genai/inference/ml_drift/llm/tensor_loaders/model_ckpt_util.h"
-#include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/model_ckpt_util.h"
+#include "odml/infra/genai/inference/ml_drift/llm/tensor_loaders/model_ckpt_util.h"
+#include "odml/infra/genai/inference/utils/xnn_utils/model_ckpt_util.h"
 #endif  // ENABLE_ODML_CONVERTER
 
 extern "C" {
@@ -33,7 +33,7 @@ MpStatus MpLlmConverterGenerateCpuTfLite(const char* model_type,
                                          const char* output_tflite_file,
                                          char** error_message) {
 #ifdef ENABLE_ODML_CONVERTER
-  absl::Status status = mediapipe::tasks::genai::xnn_utils::GenerateTfLite(
+  absl::Status status = odml::infra::xnn_utils::GenerateTfLite(
       model_type, weight_path, vocab_model_file, is_quantized,
       output_tflite_file);
   return mediapipe::tasks::c::core::HandleStatus(status, error_message);
@@ -52,11 +52,16 @@ MpStatus MpLlmConverterGenerateGpuTfLite(
     const char* submodel_type, bool use_dynamic_ple, bool apply_srq,
     char** error_message) {
 #ifdef ENABLE_ODML_CONVERTER
-  absl::Status status = mediapipe::tasks::genai::gpu::GenerateTfLite(
+  // TODO: Update the converter code base
+  if (image_encoder_file || image_adapter_file) {
+    return mediapipe::tasks::c::core::HandleStatus(
+        absl::UnimplementedError("Image encoder not supported in this "
+                                 "build."),
+        error_message);
+  }
+  absl::Status status = odml::infra::gpu::GenerateTfLite(
       model_type, weight_path, vocab_model_file, is_quantized, obfuscate,
-      output_tflite_file, lora_rank, lora_weight_path, lora_output_tflite_file,
-      lora_main_model_type, image_encoder_file, image_adapter_file,
-      submodel_type, use_dynamic_ple, apply_srq);
+      output_tflite_file, lora_rank, lora_weight_path, lora_output_tflite_file);
   return mediapipe::tasks::c::core::HandleStatus(status, error_message);
 #else
   return mediapipe::tasks::c::core::HandleStatus(

@@ -41,8 +41,8 @@ cc_library(
         "@com_google_absl//absl/status",
     ] + select({
         ":enable_odml_converter": [
-            "//mediapipe/tasks/cc/genai/inference/ml_drift/llm/tensor_loaders:model_ckpt_util",
-            "//mediapipe/tasks/cc/genai/inference/utils/xnn_utils:model_ckpt_util",
+            "@odml//odml/infra/genai/inference/ml_drift/llm/tensor_loaders:model_ckpt_util",
+            "@odml//odml/infra/genai/inference/utils/xnn_utils:model_ckpt_util",
         ],
         "//conditions:default": [],
     }),
