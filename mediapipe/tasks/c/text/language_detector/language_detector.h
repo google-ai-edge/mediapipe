@@ -65,15 +65,26 @@ struct LanguageDetectorOptions {
 // Creates a LanguageDetector from the provided `options`.
 // If successful, returns `kMpOk` and sets `*detector` to the new
 // `MpLanguageDetectorPtr`.
-MP_EXPORT MpStatus MpLanguageDetectorCreate(
-    struct LanguageDetectorOptions* options, MpLanguageDetectorPtr* detector);
+//
+// To obtain a detailed error, `error_msg` must be non-null pointer to a
+// `char*`, which will be populated with a newly-allocated error message upon
+// failure. It's the caller responsibility to free the error message with
+// `free()`.
+MP_EXPORT MpStatus
+MpLanguageDetectorCreate(struct LanguageDetectorOptions* options,
+                         MpLanguageDetectorPtr* detector, char** error_msg);
 
 // Performs language detection on the input `utf8_str`.
 // If successful, returns `kMpOk` and sets `*result` to the new
 // `LanguageDetectorResult`.
-MP_EXPORT MpStatus
-MpLanguageDetectorDetect(MpLanguageDetectorPtr detector, const char* utf8_str,
-                         struct LanguageDetectorResult* result);
+//
+// To obtain a detailed error, `error_msg` must be non-null pointer to a
+// `char*`, which will be populated with a newly-allocated error message upon
+// failure. It's the caller responsibility to free the error message with
+// `free()`.
+MP_EXPORT MpStatus MpLanguageDetectorDetect(
+    MpLanguageDetectorPtr detector, const char* utf8_str,
+    struct LanguageDetectorResult* result, char** error_msg);
 
 // Frees the memory allocated inside a LanguageDetectorResult result. Does not
 // free the result pointer itself.
@@ -82,7 +93,13 @@ MP_EXPORT void MpLanguageDetectorCloseResult(
 
 // Shuts down the LanguageDetector when all the work is done. Frees all memory.
 // Returns `kMpOk` on success.
-MP_EXPORT MpStatus MpLanguageDetectorClose(MpLanguageDetectorPtr detector);
+//
+// To obtain a detailed error, `error_msg` must be non-null pointer to a
+// `char*`, which will be populated with a newly-allocated error message upon
+// failure. It's the caller responsibility to free the error message with
+// `free()`.
+MP_EXPORT MpStatus MpLanguageDetectorClose(MpLanguageDetectorPtr detector,
+                                           char** error_msg);
 
 #ifdef __cplusplus
 }  // extern C
