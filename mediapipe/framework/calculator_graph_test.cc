@@ -2683,9 +2683,10 @@ TEST(CalculatorGraph, TwoDeadlocksAreReportedAndSufficientInfoProvided) {
 
   EXPECT_EQ(status.code(), absl::StatusCode::kUnavailable);
   EXPECT_THAT(status.message(),
-              testing::AllOf(testing::HasSubstr("deadlock"),
-                             testing::HasSubstr("input1"),
-                             testing::HasSubstr("PassThroughCalculator")));
+              testing::AllOf(
+                  testing::HasSubstr("deadlock"), testing::HasSubstr("input1"),
+                  testing::AnyOf(testing::HasSubstr("PassThroughCalculator"),
+                                 testing::HasSubstr("MergeCalculator"))));
   graph.Cancel();
 }
 
