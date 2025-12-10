@@ -38,9 +38,6 @@ cc_library(
         "//mediapipe/tasks/c/core:mp_status",
         "//mediapipe/tasks/c/core:mp_status_converter",
         "//mediapipe/tasks/cc/text/utils:vocab_convert_utils",
-        "@com_google_absl//absl/flags:parse",
-        "@com_google_absl//absl/log:absl_log",
-        "@com_google_absl//absl/log:initialize",
         "@com_google_absl//absl/status",
     ] + select({
         ":enable_odml_converter": [

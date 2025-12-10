@@ -1,3 +1,17 @@
+# Copyright 2024 The MediaPipe Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """Functions to perform the checkpoint conversion."""
 
 import contextlib
@@ -11,26 +25,26 @@ import numpy as np
 
 from mediapipe.tasks.python.core import mediapipe_c_bindings
 from mediapipe.tasks.python.core import mediapipe_c_utils
+from mediapipe.tasks.python.core import serial_dispatcher
 from mediapipe.tasks.python.genai.converter import converter_base
 from mediapipe.tasks.python.genai.converter import converter_factory
 from mediapipe.tasks.python.genai.converter import quantization_util
 
 
 _CTYPES_SIGNATURES = (
-    mediapipe_c_utils.CFunction(
+    mediapipe_c_utils.CStatusFunction(
         func_name='MpLlmConverterGenerateCpuTfLite',
-        argtypes=[
+        core_argtypes=(
             ctypes.c_char_p,  # model_type
             ctypes.c_char_p,  # weight_path
             ctypes.c_char_p,  # vocab_model_file
             ctypes.c_bool,  # is_quantized
             ctypes.c_char_p,  # output_tflite_file
-        ],
-        restype=mediapipe_c_utils.MpStatus,
+        ),
     ),
-    mediapipe_c_utils.CFunction(
+    mediapipe_c_utils.CStatusFunction(
         func_name='MpLlmConverterGenerateGpuTfLite',
-        argtypes=[
+        core_argtypes=(
             ctypes.c_char_p,  # model_type
             ctypes.c_char_p,  # weight_path
             ctypes.c_char_p,  # vocab_model_file
@@ -46,16 +60,14 @@ _CTYPES_SIGNATURES = (
             ctypes.c_char_p,  # submodel_type
             ctypes.c_bool,  # use_dynamic_ple
             ctypes.c_bool,  # apply_srq
-        ],
-        restype=mediapipe_c_utils.MpStatus,
+        ),
     ),
-    mediapipe_c_utils.CFunction(
+    mediapipe_c_utils.CStatusFunction(
         func_name='MpLlmConverterConvertHfTokenizer',
-        argtypes=[
+        core_argtypes=(
             ctypes.c_char_p,  # vocab_model_file
             ctypes.c_char_p,  # output_vocab_file
-        ],
-        restype=mediapipe_c_utils.MpStatus,
+        ),
     ),
 )
 
@@ -224,7 +236,7 @@ class _LlmConverter:
   """Bundles all conversion logic for LLM models."""
 
   def __init__(self, lib: Any):
-    self._lib = lib
+    self._lib = serial_dispatcher.SerialDispatcher(lib, _CTYPES_SIGNATURES)
 
   def quantize_by_actions(
       self,
@@ -356,16 +368,15 @@ class _LlmConverter:
     if backend == 'cpu':
       if lora_rank is not None:
         logging.fatal('LoRA is not supported for CPU backend.')
-      status = self._lib.MpLlmConverterGenerateCpuTfLite(
+      self._lib.MpLlmConverterGenerateCpuTfLite(
           model_type.encode('utf-8'),
           weight_path.encode('utf-8'),
           vocab_model_file.encode('utf-8'),
           True,
           output_tflite_file.encode('utf-8'),
       )
-      mediapipe_c_utils.handle_status(status)
     elif backend == 'gpu':
-      status = self._lib.MpLlmConverterGenerateGpuTfLite(
+      self._lib.MpLlmConverterGenerateGpuTfLite(
           model_type.encode('utf-8'),
           weight_path.encode('utf-8'),
           vocab_model_file.encode('utf-8'),
@@ -382,7 +393,6 @@ class _LlmConverter:
           True if use_dynamic_ple is None else use_dynamic_ple,
           False if apply_srq is None else apply_srq,
       )
-      mediapipe_c_utils.handle_status(status)
     else:
       raise ValueError(f'Unsupported backend: {backend}')
 
@@ -402,11 +412,10 @@ class _LlmConverter:
           ' that contains both tokenizer.json and tokenizer_config.json files.'
       )
     output_vocab_file = os.path.join(output_dir, 'spm.model')
-    status = self._lib.MpLlmConverterConvertHfTokenizer(
+    self._lib.MpLlmConverterConvertHfTokenizer(
         vocab_model_file.encode('utf-8'),
         output_vocab_file.encode('utf-8'),
     )
-    mediapipe_c_utils.handle_status(status)
     return output_vocab_file
 
   def sort_layer_info(self, layer_info_file: str) -> None:
@@ -512,11 +521,26 @@ class _LlmConverter:
         apply_srq=config.is_quantized,
     )
 
+  def __enter__(self) -> '_LlmConverter':
+    """Returns `self` upon entering the runtime context."""
+    return self
+
+  def __exit__(self, *args) -> None:
+    """Shuts down the LlmConverter on exit of the context manager.
+
+    Args:
+      *args: Unused.
+    Raises:
+      RuntimeError: If the LLM converter failed to close.
+    """
+    del args  # Unused.
+    self._lib.close()
+
 
 def convert_checkpoint(config: ConversionConfig) -> None:
   """Converts the checkpoint to tflite file."""
-  with mediapipe_c_bindings.load_shared_library(_CTYPES_SIGNATURES) as lib:
-    converter = _LlmConverter(lib)
+  lib = mediapipe_c_bindings.load_raw_library(_CTYPES_SIGNATURES)
+  with _LlmConverter(lib) as converter:
     converter.convert_checkpoint(config)
 
 
@@ -540,8 +564,8 @@ def quantize_by_actions(
     tensor values + a boolean that indicates whether the tensor values need to
     be packed (only applicable for the 4-bit quantized weights).
   """
-  with mediapipe_c_bindings.load_shared_library(_CTYPES_SIGNATURES) as lib:
-    converter = _LlmConverter(lib)
+  lib = mediapipe_c_bindings.load_raw_library(_CTYPES_SIGNATURES)
+  with _LlmConverter(lib) as converter:
     return converter.quantize_by_actions(
         actions, backend, is_symmetric, use_mse_quant
     )

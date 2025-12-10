@@ -45,6 +45,7 @@ py_library(
         ":quantization_util",
         "//mediapipe/tasks/python/core:mediapipe_c_bindings",
         "//mediapipe/tasks/python/core:mediapipe_c_utils",
+        "//mediapipe/tasks/python/core:serial_dispatcher",
         "//third_party/py/jax",
         "@mediapipe_pip_deps_numpy//:pkg",
     ],

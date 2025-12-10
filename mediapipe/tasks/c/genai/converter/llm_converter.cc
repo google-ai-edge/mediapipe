@@ -15,7 +15,6 @@
 
 #include <string>
 
-#include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
 #include "mediapipe/tasks/c/core/mp_status_converter.h"
@@ -31,19 +30,16 @@ MpStatus MpLlmConverterGenerateCpuTfLite(const char* model_type,
                                          const char* weight_path,
                                          const char* vocab_model_file,
                                          bool is_quantized,
-                                         const char* output_tflite_file) {
+                                         const char* output_tflite_file,
+                                         char** error_message) {
 #ifdef ENABLE_ODML_CONVERTER
   absl::Status status = mediapipe::tasks::genai::xnn_utils::GenerateTfLite(
       model_type, weight_path, vocab_model_file, is_quantized,
       output_tflite_file);
-  if (!status.ok()) {
-    ABSL_LOG(ERROR) << "MpLlmConverterGenerateCpuTfLite failed: " << status;
-    return mediapipe::tasks::c::core::ToMpStatus(status);
-  }
-  return kMpOk;
+  return mediapipe::tasks::c::core::HandleStatus(status, error_message);
 #else
-  ABSL_LOG(ERROR) << "LLM converter is not enabled.";
-  return kMpUnimplemented;
+  return mediapipe::tasks::c::core::HandleStatus(
+      absl::UnimplementedError("LLM converter is not enabled."), error_message);
 #endif  // ENABLE_ODML_CONVERTER
 }
 
@@ -53,33 +49,27 @@ MpStatus MpLlmConverterGenerateGpuTfLite(
     const char* output_tflite_file, int lora_rank, const char* lora_weight_path,
     const char* lora_output_tflite_file, const char* lora_main_model_type,
     const char* image_encoder_file, const char* image_adapter_file,
-    const char* submodel_type, bool use_dynamic_ple, bool apply_srq) {
+    const char* submodel_type, bool use_dynamic_ple, bool apply_srq,
+    char** error_message) {
 #ifdef ENABLE_ODML_CONVERTER
   absl::Status status = mediapipe::tasks::genai::gpu::GenerateTfLite(
       model_type, weight_path, vocab_model_file, is_quantized, obfuscate,
       output_tflite_file, lora_rank, lora_weight_path, lora_output_tflite_file,
       lora_main_model_type, image_encoder_file, image_adapter_file,
       submodel_type, use_dynamic_ple, apply_srq);
-  if (!status.ok()) {
-    ABSL_LOG(ERROR) << "MpLlmConverterGenerateGpuTfLite failed: " << status;
-    return mediapipe::tasks::c::core::ToMpStatus(status);
-  }
-  return kMpOk;
+  return mediapipe::tasks::c::core::HandleStatus(status, error_message);
 #else
-  ABSL_LOG(ERROR) << "LLM converter is not enabled.";
-  return kMpUnimplemented;
+  return mediapipe::tasks::c::core::HandleStatus(
+      absl::UnimplementedError("LLM converter is not enabled."), error_message);
 #endif  // ENABLE_ODML_CONVERTER
 }
 
 MpStatus MpLlmConverterConvertHfTokenizer(const char* vocab_model_file,
-                                          const char* output_vocab_file) {
+                                          const char* output_vocab_file,
+                                          char** error_message) {
   absl::Status status = mediapipe::tasks::text::ConvertHfTokenizer(
       vocab_model_file, output_vocab_file);
-  if (!status.ok()) {
-    ABSL_LOG(ERROR) << "MpLlmConverterConvertHfTokenizer failed: " << status;
-    return mediapipe::tasks::c::core::ToMpStatus(status);
-  }
-  return kMpOk;
+  return mediapipe::tasks::c::core::HandleStatus(status, error_message);
 }
 
 }  // extern "C"
