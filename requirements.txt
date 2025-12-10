@@ -4,8 +4,11 @@ flatbuffers>=2.0
 jax
 jaxlib
 matplotlib
-numpy<2
-opencv-contrib-python
-protobuf>=4.25.3,<5
+numpy<2; python_version < "3.13"
+numpy; python_version >= "3.13"
+opencv-contrib-python<4.12; python_version < "3.13"
+opencv-contrib-python; python_version >= "3.13"
+protobuf>=5.29.3,<6
 sounddevice>=0.4.4
-sentencepiece
+sentencepiece>=0.2.1; python_version >= "3.13"
+sentencepiece; python_version < "3.13"
