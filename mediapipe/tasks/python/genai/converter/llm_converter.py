@@ -20,7 +20,6 @@ import os
 from typing import Any, List, Optional
 
 from absl import logging
-from jax import numpy as jnp
 import numpy as np
 
 from mediapipe.tasks.python.core import mediapipe_c_bindings
@@ -28,8 +27,10 @@ from mediapipe.tasks.python.core import mediapipe_c_utils
 from mediapipe.tasks.python.core import serial_dispatcher
 from mediapipe.tasks.python.genai.converter import converter_base
 from mediapipe.tasks.python.genai.converter import converter_factory
+from mediapipe.tasks.python.genai.converter import external_dependencies
 from mediapipe.tasks.python.genai.converter import quantization_util
 
+jnp = external_dependencies.jnp
 
 _CTYPES_SIGNATURES = (
     mediapipe_c_utils.CStatusFunction(

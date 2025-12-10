@@ -18,9 +18,11 @@ import dataclasses
 import enum
 from typing import List, Optional
 
+from mediapipe.tasks.python.genai.converter import external_dependencies
 from mediapipe.tasks.python.metadata.metadata_writers import model_asset_bundle_utils
 from mediapipe.tasks.cc.genai.inference.proto import llm_params_pb2
-import sentencepiece
+
+sentencepiece = external_dependencies.sentencepiece
 
 
 @dataclasses.dataclass(frozen=True)
