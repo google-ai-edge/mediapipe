@@ -41,7 +41,6 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class InteractiveSegmenterNpuTest {
   private static final String MAGIC_TOUCH_MODEL_FILE = "magic_touch_npu_s24.tflite";
-
   private static final float GOLDEN_MASK_SIMILARITY = 0.94f;
 
   @Test
@@ -89,9 +88,9 @@ public class InteractiveSegmenterNpuTest {
     actualMaskBuffer.rewind();
     for (int y = 0; y < actualMask.getHeight(); y++) {
       for (int x = 0; x < actualMask.getWidth(); x++) {
-        boolean actualForground = actualMaskBuffer.get() != 0;
-        boolean goldenForeground = goldenMaskBitmap.getPixel(x, y) != Color.BLACK;
-        if (actualForground == goldenForeground) {
+        boolean actualForeground = actualMaskBuffer.get() != 0;
+        boolean goldenForeground = goldenMaskBitmap.getPixel(x, y) == Color.BLACK;
+        if (actualForeground == goldenForeground) {
           ++consistentPixels;
         }
       }
