@@ -162,7 +162,8 @@ class FaceLandmarkerTest(parameterized.TestCase):
   def test_create_from_options_fails_with_invalid_model_path(self):
     # Invalid empty model path.
     with self.assertRaisesRegex(
-        RuntimeError, 'Unable to open file at /path/to/invalid/model.tflite'
+        FileNotFoundError,
+        'Unable to open file at /path/to/invalid/model.tflite',
     ):
       base_options = _BaseOptions(
           model_asset_path='/path/to/invalid/model.tflite'
@@ -354,7 +355,7 @@ class FaceLandmarkerTest(parameterized.TestCase):
     )
     with _FaceLandmarker.create_from_options(options) as landmarker:
       with self.assertRaisesRegex(
-          RuntimeError, r'not initialized with the video mode'
+          ValueError, r'not initialized with the video mode'
       ):
         landmarker.detect_for_video(self.test_image, 0)
 
@@ -366,7 +367,7 @@ class FaceLandmarkerTest(parameterized.TestCase):
     )
     with _FaceLandmarker.create_from_options(options) as landmarker:
       with self.assertRaisesRegex(
-          RuntimeError, r'not initialized with the live stream mode'
+          ValueError, r'not initialized with the live stream mode'
       ):
         landmarker.detect_async(self.test_image, 0)
 
@@ -377,7 +378,7 @@ class FaceLandmarkerTest(parameterized.TestCase):
     )
     with _FaceLandmarker.create_from_options(options) as landmarker:
       with self.assertRaisesRegex(
-          RuntimeError, r'not initialized with the image mode'
+          ValueError, r'not initialized with the image mode'
       ):
         landmarker.detect(self.test_image)
 
@@ -388,7 +389,7 @@ class FaceLandmarkerTest(parameterized.TestCase):
     )
     with _FaceLandmarker.create_from_options(options) as landmarker:
       with self.assertRaisesRegex(
-          RuntimeError, r'not initialized with the live stream mode'
+          ValueError, r'not initialized with the live stream mode'
       ):
         landmarker.detect_async(self.test_image, 0)
 
@@ -400,7 +401,7 @@ class FaceLandmarkerTest(parameterized.TestCase):
     with _FaceLandmarker.create_from_options(options) as landmarker:
       unused_result = landmarker.detect_for_video(self.test_image, 1)
       with self.assertRaisesRegex(
-          RuntimeError, r'Input timestamp must be monotonically increasing'
+          ValueError, r'Input timestamp must be monotonically increasing'
       ):
         landmarker.detect_for_video(self.test_image, 0)
 
@@ -461,7 +462,7 @@ class FaceLandmarkerTest(parameterized.TestCase):
     )
     with _FaceLandmarker.create_from_options(options) as landmarker:
       with self.assertRaisesRegex(
-          RuntimeError, r'not initialized with the image mode'
+          ValueError, r'not initialized with the image mode'
       ):
         landmarker.detect(self.test_image)
 
@@ -473,7 +474,7 @@ class FaceLandmarkerTest(parameterized.TestCase):
     )
     with _FaceLandmarker.create_from_options(options) as landmarker:
       with self.assertRaisesRegex(
-          RuntimeError, r'not initialized with the video mode'
+          ValueError, r'not initialized with the video mode'
       ):
         landmarker.detect_for_video(self.test_image, 0)
 
@@ -486,7 +487,7 @@ class FaceLandmarkerTest(parameterized.TestCase):
     with _FaceLandmarker.create_from_options(options) as landmarker:
       landmarker.detect_async(self.test_image, 100)
       with self.assertRaisesRegex(
-          RuntimeError, r'Input timestamp must be monotonically increasing'
+          ValueError, r'Input timestamp must be monotonically increasing'
       ):
         landmarker.detect_async(self.test_image, 0)
 
