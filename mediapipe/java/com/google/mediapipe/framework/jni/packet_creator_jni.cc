@@ -469,8 +469,6 @@ JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateGpuBuffer)(
 
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
-// TODO: Add vector creators.
-
 JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateFloat32Array)(
     JNIEnv* env, jobject thiz, jlong context, jfloatArray data) {
   jsize count = env->GetArrayLength(data);
@@ -491,6 +489,45 @@ JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateFloat32Array)(
   return CreatePacketWithContext(context, packet);
 }
 
+JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateInt16Vector)(
+        JNIEnv* env, jobject thiz, jlong context, jshortArray data) {
+  jsize count = env->GetArrayLength(data);
+  jshort* data_ref = env->GetShortArrayElements(data, nullptr);
+  static_assert(std::is_same<int16_t, jshort>::value, "jshort must be int16_t");
+  std::unique_ptr<std::vector<int16_t>> shorts =
+          absl::make_unique<std::vector<int16_t>>(data_ref, data_ref + count);
+
+  env->ReleaseShortArrayElements(data, data_ref, JNI_ABORT);
+  mediapipe::Packet packet = mediapipe::Adopt(shorts.release());
+  return CreatePacketWithContext(context, packet);
+}
+
+JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateInt32Vector)(
+        JNIEnv* env, jobject thiz, jlong context, jintArray data) {
+  jsize count = env->GetArrayLength(data);
+  jint* data_ref = env->GetIntArrayElements(data, nullptr);
+  static_assert(std::is_same<int32_t, jint>::value, "jint must be int32_t");
+  std::unique_ptr<std::vector<int32_t>> ints =
+          absl::make_unique<std::vector<int32_t>>(data_ref, data_ref + count);
+
+  env->ReleaseIntArrayElements(data, data_ref, JNI_ABORT);
+  mediapipe::Packet packet = mediapipe::Adopt(ints.release());
+  return CreatePacketWithContext(context, packet);
+}
+
+JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateInt64Vector)(
+        JNIEnv* env, jobject thiz, jlong context, jlongArray data) {
+  jsize count = env->GetArrayLength(data);
+  jlong* data_ref = env->GetLongArrayElements(data, nullptr);
+  static_assert(std::is_same<int64_t, jlong>::value, "jlong must be int64_t");
+  std::unique_ptr<std::vector<int64_t>> longs =
+          absl::make_unique<std::vector<int64_t>>(data_ref, data_ref + count);
+
+  env->ReleaseLongArrayElements(data, data_ref, JNI_ABORT);
+  mediapipe::Packet packet = mediapipe::Adopt(longs.release());
+  return CreatePacketWithContext(context, packet);
+}
+
 JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateFloat32Vector)(
     JNIEnv* env, jobject thiz, jlong context, jfloatArray data) {
   jsize count = env->GetArrayLength(data);
@@ -505,6 +542,19 @@ JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateFloat32Vector)(
 
   env->ReleaseFloatArrayElements(data, data_ref, JNI_ABORT);
   mediapipe::Packet packet = mediapipe::Adopt(floats.release());
+  return CreatePacketWithContext(context, packet);
+}
+
+JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateFloat64Vector)(
+        JNIEnv* env, jobject thiz, jlong context, jdoubleArray data) {
+  jsize count = env->GetArrayLength(data);
+  jdouble* data_ref = env->GetDoubleArrayElements(data, nullptr);
+  static_assert(std::is_same<double, jdouble>::value, "jdouble must be double");
+  std::unique_ptr<std::vector<double>> doubles =
+          absl::make_unique<std::vector<double>>(data_ref, data_ref + count);
+
+  env->ReleaseDoubleArrayElements(data, data_ref, JNI_ABORT);
+  mediapipe::Packet packet = mediapipe::Adopt(doubles.release());
   return CreatePacketWithContext(context, packet);
 }
 
