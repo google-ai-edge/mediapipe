@@ -87,15 +87,27 @@ struct HandLandmarkerOptions {
 // Creates an HandLandmarker from the provided `options`.
 // If successful, returns `kMpOk` and sets `*landmarker` to the new
 // `MpHandLandmarkerPtr`.
+//
+// To obtain a detailed error, `error_msg` must be non-null pointer to a
+// `char*`, which will be populated with a newly-allocated error message upon
+// failure. It's the caller responsibility to free the error message with
+// `free()`.
 MP_EXPORT MpStatus MpHandLandmarkerCreate(struct HandLandmarkerOptions* options,
-                                          MpHandLandmarkerPtr* landmarker);
+                                          MpHandLandmarkerPtr* landmarker,
+                                          char** error_msg);
 
 // Performs hand landmark detection on the input `image`.
 // If successful, returns `kMpOk` and sets `*result` to the new
 // `HandLandmarkerResult`.
-MP_EXPORT MpStatus MpHandLandmarkerDetectImage(
-    MpHandLandmarkerPtr landmarker, MpImagePtr image,
-    const struct ImageProcessingOptions* options, HandLandmarkerResult* result);
+//
+// To obtain a detailed error, `error_msg` must be non-null pointer to a
+// `char*`, which will be populated with a newly-allocated error message upon
+// failure. It's the caller responsibility to free the error message with
+// `free()`.
+MP_EXPORT MpStatus
+MpHandLandmarkerDetectImage(MpHandLandmarkerPtr landmarker, MpImagePtr image,
+                            const struct ImageProcessingOptions* options,
+                            HandLandmarkerResult* result, char** error_msg);
 
 // Performs hand landmark detection on the provided video frame.
 // Only use this method when the HandLandmarker is created with the video
@@ -105,10 +117,15 @@ MP_EXPORT MpStatus MpHandLandmarkerDetectImage(
 // must be monotonically increasing.
 // If successful, returns `kMpOk` and sets `*result` to the new
 // `HandLandmarkerResult`.
+//
+// To obtain a detailed error, `error_msg` must be non-null pointer to a
+// `char*`, which will be populated with a newly-allocated error message upon
+// failure. It's the caller responsibility to free the error message with
+// `free()`.
 MP_EXPORT MpStatus MpHandLandmarkerDetectForVideo(
     MpHandLandmarkerPtr landmarker, MpImagePtr image,
     const struct ImageProcessingOptions* options, int64_t timestamp_ms,
-    HandLandmarkerResult* result);
+    HandLandmarkerResult* result, char** error_msg);
 
 // Sends live image data to hand landmark detection, and the results will be
 // available via the `result_callback` provided in the HandLandmarkerOptions.
@@ -125,17 +142,28 @@ MP_EXPORT MpStatus MpHandLandmarkerDetectForVideo(
 //     longer be valid when the callback returns. To access the image data
 //     outside of the callback, callers need to make a copy of the image.
 //   - The input timestamp in milliseconds.
-MP_EXPORT MpStatus MpHandLandmarkerDetectAsync(
-    MpHandLandmarkerPtr landmarker, MpImagePtr image,
-    const struct ImageProcessingOptions* options, int64_t timestamp_ms);
+//
+// Returns 'kMpOk' on success. To obtain a detailed error, `error_msg` must be
+// non-null pointer to a `char*`, which will be populated with a newly-allocated
+// error message upon failure. It's the caller responsibility to free the error
+// message with `free()`.
+MP_EXPORT MpStatus
+MpHandLandmarkerDetectAsync(MpHandLandmarkerPtr landmarker, MpImagePtr image,
+                            const struct ImageProcessingOptions* options,
+                            int64_t timestamp_ms, char** error_msg);
 
 // Frees the memory allocated inside a HandLandmarkerResult result.
 // Does not free the result pointer itself.
 MP_EXPORT void MpHandLandmarkerCloseResult(HandLandmarkerResult* result);
 
 // Frees hand landmarker.
-// Returns `kMpOk` on success.
-MP_EXPORT MpStatus MpHandLandmarkerClose(MpHandLandmarkerPtr landmarker);
+//
+// Returns 'kMpOk' on success. To obtain a detailed error, `error_msg` must be
+// non-null pointer to a `char*`, which will be populated with a newly-allocated
+// error message upon failure. It's the caller responsibility to free the error
+// message with `free()`.
+MP_EXPORT MpStatus MpHandLandmarkerClose(MpHandLandmarkerPtr landmarker,
+                                         char** error_msg);
 
 #ifdef __cplusplus
 }  // extern C

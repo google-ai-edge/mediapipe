@@ -148,7 +148,10 @@ class HandLandmarkerTest(parameterized.TestCase):
 
   def test_create_from_options_fails_with_invalid_model_path(self):
     # Invalid empty model path.
-    with self.assertRaises(FileNotFoundError):
+    with self.assertRaisesRegex(
+        FileNotFoundError,
+        'Unable to open file at /path/to/invalid/model.tflite',
+    ):
       base_options = _BaseOptions(
           model_asset_path='/path/to/invalid/model.tflite')
       options = _HandLandmarkerOptions(base_options=base_options)
