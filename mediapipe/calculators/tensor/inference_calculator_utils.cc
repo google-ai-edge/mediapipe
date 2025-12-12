@@ -157,15 +157,20 @@ absl::Status CopyTensorToTfLiteTensor(const Tensor& input_tensor,
 template <>
 absl::Status CopyTensorToTfLiteTensor<char>(const Tensor& input_tensor,
                                             TfLiteTensor& tflite_tensor) {
-  const char* input_tensor_buffer =
-      input_tensor.GetCpuReadView().buffer<char>();
-  RET_CHECK(input_tensor_buffer) << "Char-typed input tensor buffer is null.";
   RET_CHECK_EQ(tflite_tensor.type, TfLiteType::kTfLiteString)
           .SetCode(absl::StatusCode::kInvalidArgument)
       << "TfLiteTensor type is not kTfLiteString while Tensor type is kChar.";
   tflite::DynamicBuffer dynamic_buffer;
-  dynamic_buffer.AddString(input_tensor_buffer,
-                           input_tensor.shape().num_elements());
+
+  if (input_tensor.bytes() == 0) {
+    dynamic_buffer.AddString("", 0);
+  } else {
+    const char* input_tensor_buffer =
+        input_tensor.GetCpuReadView().buffer<char>();
+    RET_CHECK(input_tensor_buffer) << "Char-typed input tensor buffer is null.";
+    dynamic_buffer.AddString(input_tensor_buffer,
+                             input_tensor.shape().num_elements());
+  }
   dynamic_buffer.WriteToTensorAsVector(&tflite_tensor);
   return absl::OkStatus();
 }
