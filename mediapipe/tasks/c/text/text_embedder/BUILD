@@ -21,6 +21,7 @@ licenses(["notice"])
 TEXT_EMBEDDER_DEPS = [
     "@com_google_absl//absl/log:absl_log",
     "@com_google_absl//absl/status",
+    "@com_google_absl//absl/log:absl_check",
     "//mediapipe/tasks/c/components/containers:embedding_result",
     "//mediapipe/tasks/c/components/containers:embedding_result_converter",
     "//mediapipe/tasks/c/components/processors:embedder_options",
