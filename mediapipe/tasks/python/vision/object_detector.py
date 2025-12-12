@@ -35,7 +35,6 @@ ObjectDetectorResult = detections_module.DetectionResult
 _BaseOptions = base_options_module.BaseOptions
 _RunningMode = running_mode_module.VisionTaskRunningMode
 _ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
-_CFunction = mediapipe_c_utils.CFunction
 _AsyncResultDispatcher = async_result_dispatcher.AsyncResultDispatcher
 _LiveStreamPacket = async_result_dispatcher.LiveStreamPacket
 
@@ -112,29 +111,27 @@ class ObjectDetectorOptionsC(ctypes.Structure):
 
 
 _CTYPES_SIGNATURES = (
-    _CFunction(
+    mediapipe_c_utils.CStatusFunction(
         'MpObjectDetectorCreate',
-        [
+        (
             ctypes.POINTER(ObjectDetectorOptionsC),
             ctypes.POINTER(ctypes.c_void_p),
-        ],
-        ctypes.c_int32,
+        ),
     ),
-    _CFunction(
+    mediapipe_c_utils.CStatusFunction(
         'MpObjectDetectorDetectImage',
-        [
+        (
             ctypes.c_void_p,
             ctypes.c_void_p,
             ctypes.POINTER(
                 image_processing_options_c_module.ImageProcessingOptionsC
             ),
             ctypes.POINTER(detections_c_module.DetectionResultC),
-        ],
-        ctypes.c_int32,
+        ),
     ),
-    _CFunction(
+    mediapipe_c_utils.CStatusFunction(
         'MpObjectDetectorDetectForVideo',
-        [
+        (
             ctypes.c_void_p,
             ctypes.c_void_p,
             ctypes.POINTER(
@@ -142,32 +139,27 @@ _CTYPES_SIGNATURES = (
             ),
             ctypes.c_int64,
             ctypes.POINTER(detections_c_module.DetectionResultC),
-        ],
-        ctypes.c_int32,
+        ),
     ),
-    _CFunction(
+    mediapipe_c_utils.CStatusFunction(
         'MpObjectDetectorDetectAsync',
-        [
+        (
             ctypes.c_void_p,
             ctypes.c_void_p,
             ctypes.POINTER(
                 image_processing_options_c_module.ImageProcessingOptionsC
             ),
             ctypes.c_int64,
-        ],
-        ctypes.c_int32,
+        ),
     ),
-    _CFunction(
+    mediapipe_c_utils.CFunction(
         'MpObjectDetectorCloseResult',
         [ctypes.POINTER(detections_c_module.DetectionResultC)],
         None,
     ),
-    _CFunction(
+    mediapipe_c_utils.CStatusFunction(
         'MpObjectDetectorClose',
-        [
-            ctypes.c_void_p,
-        ],
-        ctypes.c_int32,
+        (ctypes.c_void_p,),
     ),
 )
 
@@ -361,11 +353,10 @@ class ObjectDetector:
     )
 
     detector_handle = ctypes.c_void_p()
-    status = lib.MpObjectDetectorCreate(
+    lib.MpObjectDetectorCreate(
         ctypes.byref(ctypes_options),
         ctypes.byref(detector_handle),
     )
-    mediapipe_c_utils.handle_status(status)
 
     return ObjectDetector(
         lib=lib,
@@ -408,13 +399,12 @@ class ObjectDetector:
         if image_processing_options
         else None
     )
-    status = self._lib.MpObjectDetectorDetectImage(
+    self._lib.MpObjectDetectorDetectImage(
         self._handle,
         c_image,
         c_image_processing_options,
         ctypes.byref(c_result),
     )
-    mediapipe_c_utils.handle_status(status)
 
     py_result = ObjectDetectorResult.from_ctypes(c_result)
     self._lib.MpObjectDetectorCloseResult(ctypes.byref(c_result))
@@ -456,14 +446,13 @@ class ObjectDetector:
         if image_processing_options
         else None
     )
-    status = self._lib.MpObjectDetectorDetectForVideo(
+    self._lib.MpObjectDetectorDetectForVideo(
         self._handle,
         c_image,
         c_image_processing_options,
         timestamp_ms,
         ctypes.byref(c_result),
     )
-    mediapipe_c_utils.handle_status(status)
 
     py_result = ObjectDetectorResult.from_ctypes(c_result)
     self._lib.MpObjectDetectorCloseResult(ctypes.byref(c_result))
@@ -512,19 +501,17 @@ class ObjectDetector:
         if image_processing_options
         else None
     )
-    status = self._lib.MpObjectDetectorDetectAsync(
+    self._lib.MpObjectDetectorDetectAsync(
         self._handle,
         c_image,
         c_image_processing_options,
         timestamp_ms,
     )
-    mediapipe_c_utils.handle_status(status)
 
   def close(self):
     """Shuts down the MediaPipe task instance."""
     if self._handle:
-      ret_code = self._lib.MpObjectDetectorClose(self._handle)
-      mediapipe_c_utils.handle_status(ret_code)
+      self._lib.MpObjectDetectorClose(self._handle)
       self._handle = None
       self._dispatcher.close()
       self._lib.close()

@@ -16,6 +16,7 @@ limitations under the License.
 #include "mediapipe/tasks/c/vision/object_detector/object_detector.h"
 
 #include <cstdint>
+#include <cstdlib>
 #include <memory>
 #include <string>
 
@@ -29,6 +30,7 @@ limitations under the License.
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/c/components/containers/category.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
+#include "mediapipe/tasks/c/test/test_utils.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/core/image_processing_options.h"
@@ -72,21 +74,21 @@ TEST(ObjectDetectorTest, ImageModeTest) {
   };
 
   MpObjectDetectorPtr detector;
-  EXPECT_EQ(MpObjectDetectorCreate(&options, &detector), kMpOk);
+  MP_ASSERT_OK(
+      MpObjectDetectorCreate(&options, &detector, /*error_msg=*/nullptr));
   EXPECT_NE(detector, nullptr);
 
   ObjectDetectorResult result;
-  EXPECT_EQ(MpObjectDetectorDetectImage(detector, image.get(),
-                                        /* image_processing_options= */ nullptr,
-                                        &result),
-            kMpOk);
+  MP_ASSERT_OK(MpObjectDetectorDetectImage(
+      detector, image.get(),
+      /* image_processing_options= */ nullptr, &result, /*error_msg=*/nullptr));
   EXPECT_EQ(result.detections_count, 10);
   EXPECT_EQ(result.detections[0].categories_count, 1);
   EXPECT_EQ(std::string{result.detections[0].categories[0].category_name},
             "cat");
   EXPECT_NEAR(result.detections[0].categories[0].score, 0.6992f, kPrecision);
   MpObjectDetectorCloseResult(&result);
-  EXPECT_EQ(MpObjectDetectorClose(detector), kMpOk);
+  MP_EXPECT_OK(MpObjectDetectorClose(detector, /*error_msg=*/nullptr));
 }
 
 TEST(ObjectDetectorTest, ImageModeWithRotationTest) {
@@ -108,7 +110,8 @@ TEST(ObjectDetectorTest, ImageModeWithRotationTest) {
   };
 
   MpObjectDetectorPtr detector;
-  EXPECT_EQ(MpObjectDetectorCreate(&options, &detector), kMpOk);
+  MP_ASSERT_OK(
+      MpObjectDetectorCreate(&options, &detector, /*error_msg=*/nullptr));
   EXPECT_NE(detector, nullptr);
 
   ImageProcessingOptions image_processing_options;
@@ -116,16 +119,16 @@ TEST(ObjectDetectorTest, ImageModeWithRotationTest) {
   image_processing_options.rotation_degrees = -90;
 
   ObjectDetectorResult result;
-  EXPECT_EQ(MpObjectDetectorDetectImage(detector, image.get(),
-                                        &image_processing_options, &result),
-            kMpOk);
+  MP_ASSERT_OK(MpObjectDetectorDetectImage(detector, image.get(),
+                                           &image_processing_options, &result,
+                                           /*error_msg=*/nullptr));
   EXPECT_EQ(result.detections_count, 10);
   EXPECT_EQ(result.detections[0].categories_count, 1);
   EXPECT_EQ(std::string{result.detections[0].categories[0].category_name},
             "cat");
   EXPECT_NEAR(result.detections[0].categories[0].score, 0.6992f, kPrecision);
   MpObjectDetectorCloseResult(&result);
-  EXPECT_EQ(MpObjectDetectorClose(detector), kMpOk);
+  MP_EXPECT_OK(MpObjectDetectorClose(detector, /*error_msg=*/nullptr));
 }
 
 TEST(ObjectDetectorTest, VideoModeTest) {
@@ -147,15 +150,16 @@ TEST(ObjectDetectorTest, VideoModeTest) {
   };
 
   MpObjectDetectorPtr detector;
-  EXPECT_EQ(MpObjectDetectorCreate(&options, &detector), kMpOk);
+  MP_ASSERT_OK(
+      MpObjectDetectorCreate(&options, &detector, /*error_msg=*/nullptr));
   EXPECT_NE(detector, nullptr);
 
   for (int i = 0; i < kIterations; ++i) {
     ObjectDetectorResult result;
-    EXPECT_EQ(MpObjectDetectorDetectForVideo(
-                  detector, image.get(),
-                  /* image_processing_options= */ nullptr, i, &result),
-              kMpOk);
+    MP_ASSERT_OK(
+        MpObjectDetectorDetectForVideo(detector, image.get(),
+                                       /* image_processing_options= */ nullptr,
+                                       i, &result, /*error_msg=*/nullptr));
     EXPECT_EQ(result.detections_count, 3);
     EXPECT_EQ(result.detections[0].categories_count, 1);
     EXPECT_EQ(std::string{result.detections[0].categories[0].category_name},
@@ -163,7 +167,7 @@ TEST(ObjectDetectorTest, VideoModeTest) {
     EXPECT_NEAR(result.detections[0].categories[0].score, 0.6992f, kPrecision);
     MpObjectDetectorCloseResult(&result);
   }
-  EXPECT_EQ(MpObjectDetectorClose(detector), kMpOk);
+  MP_EXPECT_OK(MpObjectDetectorClose(detector, /*error_msg=*/nullptr));
 }
 
 // A structure to support LiveStreamModeTest below. This structure holds a
@@ -219,17 +223,17 @@ TEST(ObjectDetectorTest, LiveStreamModeTest) {
   };
 
   MpObjectDetectorPtr detector;
-  EXPECT_EQ(MpObjectDetectorCreate(&options, &detector), kMpOk);
+  MP_ASSERT_OK(
+      MpObjectDetectorCreate(&options, &detector, /*error_msg=*/nullptr));
   EXPECT_NE(detector, nullptr);
 
   absl::BlockingCounter counter(kIterations);
   LiveStreamModeCallback::blocking_counter = &counter;
 
   for (int i = 0; i < kIterations; ++i) {
-    EXPECT_EQ(
-        MpObjectDetectorDetectAsync(detector, image.get(),
-                                    /* image_processing_options= */ nullptr, i),
-        kMpOk);
+    MP_ASSERT_OK(MpObjectDetectorDetectAsync(
+        detector, image.get(),
+        /* image_processing_options= */ nullptr, i, /*error_msg=*/nullptr));
     // Short sleep so that MediaPipe does not drop frames.
     absl::SleepFor(absl::Milliseconds(kSleepBetweenFramesMilliseconds));
   }
@@ -238,7 +242,7 @@ TEST(ObjectDetectorTest, LiveStreamModeTest) {
   counter.Wait();
   LiveStreamModeCallback::blocking_counter = nullptr;
 
-  EXPECT_EQ(MpObjectDetectorClose(detector), kMpOk);
+  MP_EXPECT_OK(MpObjectDetectorClose(detector, /*error_msg=*/nullptr));
 
   // Due to the flow limiter, the total of outputs might be smaller than the
   // number of iterations.
@@ -254,9 +258,14 @@ TEST(ObjectDetectorTest, InvalidArgumentHandling) {
                        .model_asset_path = nullptr},
   };
 
-  MpObjectDetectorPtr detector;
-  EXPECT_EQ(MpObjectDetectorCreate(&options, &detector), kMpInvalidArgument);
+  char* error_msg = nullptr;
+  MpObjectDetectorPtr detector = nullptr;
+  MpStatus status = MpObjectDetectorCreate(&options, &detector, &error_msg);
+  EXPECT_EQ(status, kMpInvalidArgument);
   EXPECT_EQ(detector, nullptr);
+  EXPECT_THAT(error_msg,
+              testing::HasSubstr("ExternalFile must specify at least one"));
+  free(error_msg);
 }
 
 }  // namespace
