@@ -26,7 +26,7 @@ namespace mediapipe::tasks::c::test {
 testing::AssertionResult AssertMpStatusOk(const char* expr,
                                           const MpStatus& status);
 
-MpImagePtr CreateCategoryMaskFromImage(absl::StatusOr<Image>& image);
+MpImagePtr CreateCategoryMaskFromImage(const Image& image);
 
 float SimilarToUint8Mask(MpImageInternal* actual_mask,
                          MpImageInternal* expected_mask,

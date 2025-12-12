@@ -21,6 +21,7 @@ limitations under the License.
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/port/gtest.h"
+#include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/tasks/c/components/containers/keypoint.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
 #include "mediapipe/tasks/c/test/test_utils.h"
@@ -89,7 +90,8 @@ TEST(InteractiveSegmenterTest,
                 /* image_processing_options= */ nullptr, &result),
             kMpOk);
 
-  auto expected_mask_image = DecodeImageFromFile(GetFullPath(kMaskImageFile));
+  MP_ASSERT_OK_AND_ASSIGN(auto expected_mask_image,
+                          DecodeImageFromFile(GetFullPath(kMaskImageFile)));
   const ScopedMpImage expected_mask{
       CreateCategoryMaskFromImage(expected_mask_image)};
   const MpImagePtr actual_mask = result.category_mask;
@@ -135,7 +137,8 @@ TEST(InteractiveSegmenterTest,
                 /* image_processing_options= */ nullptr, &result),
             kMpOk);
 
-  auto expected_mask_image = DecodeImageFromFile(GetFullPath(kMaskImageFile));
+  MP_ASSERT_OK_AND_ASSIGN(auto expected_mask_image,
+                          DecodeImageFromFile(GetFullPath(kMaskImageFile)));
   const ScopedMpImage expected_mask(
       CreateCategoryMaskFromImage(expected_mask_image));
   const MpImagePtr actual_mask = result.category_mask;
@@ -181,7 +184,8 @@ TEST(InteractiveSegmenterTest, ImageModeTestWithRotation) {
                                          &image_processing_options, &result),
       kMpOk);
 
-  auto expected_mask_image = DecodeImageFromFile(GetFullPath(kMaskImageFile));
+  MP_ASSERT_OK_AND_ASSIGN(auto expected_mask_image,
+                          DecodeImageFromFile(GetFullPath(kMaskImageFile)));
   const ScopedMpImage expected_mask(
       CreateCategoryMaskFromImage(expected_mask_image));
   const MpImagePtr actual_mask = result.category_mask;
