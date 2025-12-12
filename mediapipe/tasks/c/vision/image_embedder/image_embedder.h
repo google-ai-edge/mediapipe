@@ -77,16 +77,27 @@ struct ImageEmbedderOptions {
 
 // Creates an ImageEmbedder from the provided `options`.
 // Returns kMpOk on success and sets `embedder` to the new ImageEmbedder.
+//
+// To obtain a detailed error, `error_msg` must be non-null pointer to a
+// `char*`, which will be populated with a newly-allocated error message upon
+// failure. It's the caller responsibility to free the error message with
+// `free()`.
 MP_EXPORT MpStatus MpImageEmbedderCreate(struct ImageEmbedderOptions* options,
-                                         MpImageEmbedderPtr* embedder);
+                                         MpImageEmbedderPtr* embedder,
+                                         char** error_msg);
 
 // Performs embedding extraction on the input `image`.
+//
 // Returns kMpOk on success and sets `result` to the embedding result.
 // You must free its memory by calling `MpImageEmbedderCloseResult`.
+// To obtain a detailed error, `error_msg` must be non-null pointer to a
+// `char*`, which will be populated with a newly-allocated error message upon
+// failure. It's the caller responsibility to free the error message with
+// `free()`.
 MP_EXPORT MpStatus MpImageEmbedderEmbedImage(
     MpImageEmbedderPtr embedder, MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
-    ImageEmbedderResult* result);
+    ImageEmbedderResult* result, char** error_msg);
 
 // Performs embedding extraction on the provided video frame.
 // Only use this method when the ImageEmbedder is created with the video
@@ -94,12 +105,17 @@ MP_EXPORT MpStatus MpImageEmbedderEmbedImage(
 // The image can be of any size with format RGB or RGBA. It's required to
 // provide the video frame's timestamp (in milliseconds). The input timestamps
 // must be monotonically increasing.
+//
 // Returns kMpOk on success and sets `result` to the embedding result.
 // You must free its memory by calling `MpImageEmbedderCloseResult`.
+// To obtain a detailed error, `error_msg` must be non-null pointer to a
+// `char*`, which will be populated with a newly-allocated error message upon
+// failure. It's the caller responsibility to free the error message with
+// `free()`.
 MP_EXPORT MpStatus MpImageEmbedderEmbedForVideo(
     MpImageEmbedderPtr embedder, MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
-    int64_t timestamp_ms, ImageEmbedderResult* result);
+    int64_t timestamp_ms, ImageEmbedderResult* result, char** error_msg);
 
 // Sends live image data to embedder, and the results will be available via
 // the `result_callback` provided in the ImageEmbedderOptions.
@@ -116,25 +132,41 @@ MP_EXPORT MpStatus MpImageEmbedderEmbedForVideo(
 //     longer be valid when the callback returns. To access the image data
 //     outside of the callback, callers need to make a copy of the image.
 //   - The input timestamp in milliseconds.
-// Returns kMpOk on success.
+//
+// Returns kMpOk on success. To obtain a detailed error, `error_msg` must be
+// non-null pointer to a `char*`, which will be populated with a newly-allocated
+// error message upon failure. It's the caller responsibility to free the error
+// message with `free()`.
 MP_EXPORT MpStatus MpImageEmbedderEmbedAsync(
     MpImageEmbedderPtr embedder, MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
-    int64_t timestamp_ms);
+    int64_t timestamp_ms, char** error_msg);
 
 // Frees the memory allocated inside a ImageEmbedderResult result.
 // Does not free the result pointer itself.
 MP_EXPORT void MpImageEmbedderCloseResult(ImageEmbedderResult* result);
 
 // Frees image embedder.
-MP_EXPORT MpStatus MpImageEmbedderClose(MpImageEmbedderPtr embedder);
+//
+// To obtain a detailed error, `error_msg` must be non-null pointer to a
+// `char*`, which will be populated with a newly-allocated error message upon
+// failure. It's the caller responsibility to free the error message with
+// `free()`.
+MP_EXPORT MpStatus MpImageEmbedderClose(MpImageEmbedderPtr embedder,
+                                        char** error_msg);
 
 // Utility function to compute cosine similarity [1] between two embeddings.
 // Returns kMpOk on success and sets `similarity` to the computed similarity.
 // [1]: https://en.wikipedia.org/wiki/Cosine_similarity
+//
+// To obtain a detailed error, `error_msg` must be non-null pointer to a
+// `char*`, which will be populated with a newly-allocated error message upon
+// failure. It's the caller responsibility to free the error message with
+// `free()`.
 MP_EXPORT MpStatus MpImageEmbedderCosineSimilarity(const Embedding& u,
                                                    const Embedding& v,
-                                                   double* similarity);
+                                                   double* similarity,
+                                                   char** error_msg);
 
 #ifdef __cplusplus
 }  // extern C
