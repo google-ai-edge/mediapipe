@@ -62,7 +62,8 @@ using ScopedMpImage = std::unique_ptr<MpImageInternal, MpImageDeleter>;
 
 ScopedMpImage GetImage(const std::string& file_name) {
   MpImagePtr image_ptr = nullptr;
-  MpStatus status = MpImageCreateFromFile(file_name.c_str(), &image_ptr);
+  MpStatus status = MpImageCreateFromFile(file_name.c_str(), &image_ptr,
+                                          /* error_msg= */ nullptr);
   EXPECT_EQ(status, kMpOk);
   EXPECT_NE(image_ptr, nullptr);
   return ScopedMpImage(image_ptr);

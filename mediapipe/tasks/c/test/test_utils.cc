@@ -44,11 +44,13 @@ MpImagePtr CreateCategoryMaskFromImage(const Image& image) {
   const uint8_t* pixel_data = image_frame->PixelData();
 
   MpImagePtr mp_image;
+  char* error_msg = nullptr;
   MpStatus status = MpImageCreateFromUint8Data(
       MpImageFormat::kMpImageFormatGray8, image_frame->Width(),
-      image_frame->Height(), pixel_data, pixel_data_size, &mp_image);
+      image_frame->Height(), pixel_data, pixel_data_size, &mp_image,
+      &error_msg);
   if (status != kMpOk) {
-    ABSL_LOG(ERROR) << "Failed to create MP Image: " << status;
+    ABSL_LOG(ERROR) << "Failed to create MP Image: " << error_msg;
     return nullptr;
   }
   return mp_image;
@@ -70,9 +72,9 @@ float SimilarToUint8Mask(MpImageInternal* actual_mask,
       MpImageGetWidth(actual_mask) * MpImageGetHeight(actual_mask);
 
   const uint8_t* buffer_actual;
-  MpImageDataUint8(actual_mask, &buffer_actual);
+  MpImageDataUint8(actual_mask, &buffer_actual, /*error_msg=*/nullptr);
   const uint8_t* buffer_expected;
-  MpImageDataUint8(expected_mask, &buffer_expected);
+  MpImageDataUint8(expected_mask, &buffer_expected, /*error_msg=*/nullptr);
 
   for (int i = 0; i < total_pixels; ++i) {
     // Apply magnification factor and compare

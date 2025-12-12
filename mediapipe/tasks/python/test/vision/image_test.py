@@ -105,7 +105,7 @@ class ImageTest(parameterized.TestCase):
   def test_create_from_numpy_error(self):
     # SRGB expects 3 channels, but the array has 2.
     np_array = np.zeros((3, 4, 2), dtype=np.uint8)
-    with self.assertRaisesRegex(ValueError, 'Invalid argument'):
+    with self.assertRaisesRegex(ValueError, 'Pixel data size is too small'):
       image.Image(image.ImageFormat.SRGB, np_array)
 
 
