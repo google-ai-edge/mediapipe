@@ -21,6 +21,7 @@ limitations under the License.
 #include <optional>
 #include <utility>
 
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
@@ -42,7 +43,7 @@ limitations under the License.
 
 struct MpPoseLandmarkerInternal {
   std::unique_ptr<::mediapipe::tasks::vision::pose_landmarker::PoseLandmarker>
-      landmarker;
+      instance;
 };
 
 namespace mediapipe::tasks::c::vision::pose_landmarker {
@@ -63,6 +64,11 @@ using CppPoseLandmarkerResult =
 using CppImageProcessingOptions =
     ::mediapipe::tasks::vision::core::ImageProcessingOptions;
 
+PoseLandmarker* GetCppLandmarker(MpPoseLandmarkerPtr landmarker) {
+  ABSL_CHECK(landmarker != nullptr) << "PoseLandmarker is null.";
+  return landmarker->instance.get();
+}
+
 }  // namespace
 
 const Image& ToImage(const MpImagePtr mp_image) { return mp_image->image; }
@@ -77,8 +83,8 @@ void CppConvertToPoseLandmarkerOptions(
   out->output_segmentation_masks = in.output_segmentation_masks;
 }
 
-MpStatus CppPoseLandmarkerCreate(const PoseLandmarkerOptions& options,
-                                 MpPoseLandmarkerPtr* landmarker_out) {
+absl::Status CppPoseLandmarkerCreate(const PoseLandmarkerOptions& options,
+                                     MpPoseLandmarkerPtr* landmarker_out) {
   auto cpp_options = std::make_unique<
       ::mediapipe::tasks::vision::pose_landmarker::PoseLandmarkerOptions>();
 
@@ -90,10 +96,8 @@ MpStatus CppPoseLandmarkerCreate(const PoseLandmarkerOptions& options,
   // set to RunningMode::LIVE_STREAM.
   if (cpp_options->running_mode == RunningMode::LIVE_STREAM) {
     if (options.result_callback == nullptr) {
-      const absl::Status status = absl::InvalidArgumentError(
+      return absl::InvalidArgumentError(
           "Provided null pointer to callback function.");
-      ABSL_LOG(ERROR) << "Failed to create PoseLandmarker: " << status;
-      return ToMpStatus(status);
     }
 
     PoseLandmarkerOptions::result_callback_fn result_callback =
@@ -116,21 +120,18 @@ MpStatus CppPoseLandmarkerCreate(const PoseLandmarkerOptions& options,
 
   auto landmarker = PoseLandmarker::Create(std::move(cpp_options));
   if (!landmarker.ok()) {
-    ABSL_LOG(ERROR) << "Failed to create PoseLandmarker: "
-                    << landmarker.status();
-    *landmarker_out = nullptr;
-    return ToMpStatus(landmarker.status());
+    return landmarker.status();
   }
   *landmarker_out =
-      new MpPoseLandmarkerInternal{.landmarker = std::move(*landmarker)};
-  return kMpOk;
+      new MpPoseLandmarkerInternal{.instance = std::move(*landmarker)};
+  return absl::OkStatus();
 }
 
-MpStatus CppPoseLandmarkerDetect(
-    MpPoseLandmarkerPtr landmarker, const MpImagePtr image,
+absl::Status CppPoseLandmarkerDetect(
+    MpPoseLandmarkerPtr landmarker_ptr, const MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
     PoseLandmarkerResult* result) {
-  auto cpp_landmarker = landmarker->landmarker.get();
+  auto cpp_landmarker = GetCppLandmarker(landmarker_ptr);
   std::optional<CppImageProcessingOptions> cpp_image_processing_options;
   if (image_processing_options) {
     CppImageProcessingOptions options;
@@ -141,18 +142,17 @@ MpStatus CppPoseLandmarkerDetect(
       cpp_landmarker->Detect(ToImage(image), cpp_image_processing_options);
 
   if (!cpp_result.ok()) {
-    ABSL_LOG(ERROR) << "Detection failed: " << cpp_result.status();
-    return ToMpStatus(cpp_result.status());
+    return cpp_result.status();
   }
   CppConvertToPoseLandmarkerResult(*cpp_result, result);
-  return kMpOk;
+  return absl::OkStatus();
 }
 
-MpStatus CppPoseLandmarkerDetectForVideo(
-    MpPoseLandmarkerPtr landmarker, const MpImagePtr image,
+absl::Status CppPoseLandmarkerDetectForVideo(
+    MpPoseLandmarkerPtr landmarker_ptr, const MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
     int64_t timestamp_ms, PoseLandmarkerResult* result) {
-  auto cpp_landmarker = landmarker->landmarker.get();
+  auto cpp_landmarker = GetCppLandmarker(landmarker_ptr);
   std::optional<CppImageProcessingOptions> cpp_image_processing_options;
   if (image_processing_options) {
     CppImageProcessingOptions options;
@@ -163,48 +163,39 @@ MpStatus CppPoseLandmarkerDetectForVideo(
       ToImage(image), timestamp_ms, cpp_image_processing_options);
 
   if (!cpp_result.ok()) {
-    ABSL_LOG(ERROR) << "Detection failed: " << cpp_result.status();
-    return ToMpStatus(cpp_result.status());
+    return cpp_result.status();
   }
   CppConvertToPoseLandmarkerResult(*cpp_result, result);
-  return kMpOk;
+  return absl::OkStatus();
 }
 
-MpStatus CppPoseLandmarkerDetectAsync(
-    MpPoseLandmarkerPtr landmarker, const MpImagePtr image,
+absl::Status CppPoseLandmarkerDetectAsync(
+    MpPoseLandmarkerPtr landmarker_ptr, const MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
     int64_t timestamp_ms) {
-  auto cpp_landmarker = landmarker->landmarker.get();
+  auto cpp_landmarker = GetCppLandmarker(landmarker_ptr);
   std::optional<CppImageProcessingOptions> cpp_image_processing_options;
   if (image_processing_options) {
     CppImageProcessingOptions options;
     CppConvertToImageProcessingOptions(*image_processing_options, &options);
     cpp_image_processing_options = options;
   }
-  auto cpp_result = cpp_landmarker->DetectAsync(ToImage(image), timestamp_ms,
-                                                cpp_image_processing_options);
-
-  if (!cpp_result.ok()) {
-    ABSL_LOG(ERROR) << "Data preparation for the landmark detection failed: "
-                    << cpp_result;
-    return ToMpStatus(cpp_result);
-  }
-  return kMpOk;
+  return cpp_landmarker->DetectAsync(ToImage(image), timestamp_ms,
+                                     cpp_image_processing_options);
 }
 
 void CppPoseLandmarkerCloseResult(PoseLandmarkerResult* result) {
   CppClosePoseLandmarkerResult(result);
 }
 
-MpStatus CppPoseLandmarkerClose(MpPoseLandmarkerPtr landmarker) {
-  auto cpp_landmarker = landmarker->landmarker.get();
+absl::Status CppPoseLandmarkerClose(MpPoseLandmarkerPtr landmarker) {
+  auto cpp_landmarker = GetCppLandmarker(landmarker);
   auto result = cpp_landmarker->Close();
   if (!result.ok()) {
-    ABSL_LOG(ERROR) << "Failed to close PoseLandmarker: " << result;
-    return ToMpStatus(result);
+    return result;
   }
   delete landmarker;
-  return kMpOk;
+  return absl::OkStatus();
 }
 
 }  // namespace mediapipe::tasks::c::vision::pose_landmarker
@@ -212,35 +203,44 @@ MpStatus CppPoseLandmarkerClose(MpPoseLandmarkerPtr landmarker) {
 extern "C" {
 
 MpStatus MpPoseLandmarkerCreate(struct PoseLandmarkerOptions* options,
-                                MpPoseLandmarkerPtr* landmarker_out) {
-  return mediapipe::tasks::c::vision::pose_landmarker::CppPoseLandmarkerCreate(
-      *options, landmarker_out);
+                                MpPoseLandmarkerPtr* landmarker_out,
+                                char** error_msg) {
+  absl::Status status =
+      mediapipe::tasks::c::vision::pose_landmarker::CppPoseLandmarkerCreate(
+          *options, landmarker_out);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
 MpStatus MpPoseLandmarkerDetectImage(MpPoseLandmarkerPtr landmarker,
                                      const MpImagePtr image,
                                      const ImageProcessingOptions* options,
-                                     PoseLandmarkerResult* result) {
-  return mediapipe::tasks::c::vision::pose_landmarker::CppPoseLandmarkerDetect(
-      landmarker, image, options, result);
+                                     PoseLandmarkerResult* result,
+                                     char** error_msg) {
+  absl::Status status =
+      mediapipe::tasks::c::vision::pose_landmarker::CppPoseLandmarkerDetect(
+          landmarker, image, options, result);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
 MpStatus MpPoseLandmarkerDetectForVideo(MpPoseLandmarkerPtr landmarker,
                                         const MpImagePtr image,
                                         const ImageProcessingOptions* options,
                                         int64_t timestamp_ms,
-                                        PoseLandmarkerResult* result) {
-  return mediapipe::tasks::c::vision::pose_landmarker::
+                                        PoseLandmarkerResult* result,
+                                        char** error_msg) {
+  absl::Status status = mediapipe::tasks::c::vision::pose_landmarker::
       CppPoseLandmarkerDetectForVideo(landmarker, image, options, timestamp_ms,
                                       result);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
 MpStatus MpPoseLandmarkerDetectAsync(MpPoseLandmarkerPtr landmarker,
                                      const MpImagePtr image,
                                      const ImageProcessingOptions* options,
-                                     int64_t timestamp_ms) {
-  return mediapipe::tasks::c::vision::pose_landmarker::
+                                     int64_t timestamp_ms, char** error_msg) {
+  absl::Status status = mediapipe::tasks::c::vision::pose_landmarker::
       CppPoseLandmarkerDetectAsync(landmarker, image, options, timestamp_ms);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
 void MpPoseLandmarkerCloseResult(PoseLandmarkerResult* result) {
@@ -248,9 +248,12 @@ void MpPoseLandmarkerCloseResult(PoseLandmarkerResult* result) {
       result);
 }
 
-MpStatus MpPoseLandmarkerClose(MpPoseLandmarkerPtr landmarker) {
-  return mediapipe::tasks::c::vision::pose_landmarker::CppPoseLandmarkerClose(
-      landmarker);
+MpStatus MpPoseLandmarkerClose(MpPoseLandmarkerPtr landmarker,
+                               char** error_msg) {
+  absl::Status status =
+      mediapipe::tasks::c::vision::pose_landmarker::CppPoseLandmarkerClose(
+          landmarker);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
 }  // extern "C"

@@ -110,18 +110,19 @@ TEST(PoseLandmarkerTest, ImageModeTest) {
   };
 
   MpPoseLandmarkerPtr landmarker;
-  MpStatus status = MpPoseLandmarkerCreate(&options, &landmarker);
+  MpStatus status =
+      MpPoseLandmarkerCreate(&options, &landmarker, /* error_msg= */ nullptr);
   EXPECT_EQ(status, kMpOk);
   EXPECT_NE(landmarker, nullptr);
 
   PoseLandmarkerResult result;
   status = MpPoseLandmarkerDetectImage(landmarker, image.get(),
                                        /* image_processing_options= */ nullptr,
-                                       &result);
+                                       &result, /* error_msg= */ nullptr);
   EXPECT_EQ(status, kMpOk);
   MatchesPoseLandmarkerResult(&result, kLandmarkPrecision);
   MpPoseLandmarkerCloseResult(&result);
-  EXPECT_EQ(MpPoseLandmarkerClose(landmarker), kMpOk);
+  EXPECT_EQ(MpPoseLandmarkerClose(landmarker, /* error_msg= */ nullptr), kMpOk);
 }
 
 TEST(PoseLandmarkerTest, VideoModeTest) {
@@ -141,21 +142,23 @@ TEST(PoseLandmarkerTest, VideoModeTest) {
   };
 
   MpPoseLandmarkerPtr landmarker;
-  MpStatus status = MpPoseLandmarkerCreate(&options, &landmarker);
+  MpStatus status =
+      MpPoseLandmarkerCreate(&options, &landmarker, /* error_msg= */ nullptr);
   EXPECT_EQ(status, kMpOk);
   EXPECT_NE(landmarker, nullptr);
 
   for (int i = 0; i < kIterations; ++i) {
     PoseLandmarkerResult result;
-    status = MpPoseLandmarkerDetectForVideo(
-        landmarker, image.get(),
-        /* image_processing_options= */ nullptr, i, &result);
+    status =
+        MpPoseLandmarkerDetectForVideo(landmarker, image.get(),
+                                       /* image_processing_options= */ nullptr,
+                                       i, &result, /* error_msg= */ nullptr);
     EXPECT_EQ(status, kMpOk);
 
     MatchesPoseLandmarkerResult(&result, kLandmarkPrecision);
     MpPoseLandmarkerCloseResult(&result);
   }
-  EXPECT_EQ(MpPoseLandmarkerClose(landmarker), kMpOk);
+  EXPECT_EQ(MpPoseLandmarkerClose(landmarker, /* error_msg= */ nullptr), kMpOk);
 }
 
 // A structure to support LiveStreamModeTest below. This structure holds a
@@ -203,7 +206,8 @@ TEST(PoseLandmarkerTest, LiveStreamModeTest) {
   };
 
   MpPoseLandmarkerPtr landmarker;
-  MpStatus status = MpPoseLandmarkerCreate(&options, &landmarker);
+  MpStatus status =
+      MpPoseLandmarkerCreate(&options, &landmarker, /* error_msg= */ nullptr);
   EXPECT_EQ(status, kMpOk);
   EXPECT_NE(landmarker, nullptr);
 
@@ -213,7 +217,8 @@ TEST(PoseLandmarkerTest, LiveStreamModeTest) {
   for (int i = 0; i < kIterations; ++i) {
     EXPECT_EQ(
         MpPoseLandmarkerDetectAsync(landmarker, image.get(),
-                                    /* image_processing_options= */ nullptr, i),
+                                    /* image_processing_options= */ nullptr, i,
+                                    /* error_msg= */ nullptr),
         kMpOk);
     // Short sleep so that MediaPipe does not drop frames.
     absl::SleepFor(absl::Milliseconds(kSleepBetweenFramesMilliseconds));
@@ -223,7 +228,7 @@ TEST(PoseLandmarkerTest, LiveStreamModeTest) {
   counter.Wait();
   LiveStreamModeCallback::blocking_counter = nullptr;
 
-  EXPECT_EQ(MpPoseLandmarkerClose(landmarker), kMpOk);
+  EXPECT_EQ(MpPoseLandmarkerClose(landmarker, /* error_msg= */ nullptr), kMpOk);
 
   // Due to the flow limiter, the total of outputs might be smaller than the
   // number of iterations.
@@ -245,10 +250,14 @@ TEST(PoseLandmarkerTest, InvalidArgumentHandling) {
       .output_segmentation_masks = true,
   };
 
+  char* error_msg = nullptr;
   MpPoseLandmarkerPtr landmarker = nullptr;
-  MpStatus status = MpPoseLandmarkerCreate(&options, &landmarker);
+  MpStatus status = MpPoseLandmarkerCreate(&options, &landmarker, &error_msg);
   EXPECT_EQ(status, kMpInvalidArgument);
   EXPECT_EQ(landmarker, nullptr);
+  EXPECT_THAT(error_msg,
+              testing::HasSubstr("ExternalFile must specify at least one"));
+  free(error_msg);
 }
 
 }  // namespace
