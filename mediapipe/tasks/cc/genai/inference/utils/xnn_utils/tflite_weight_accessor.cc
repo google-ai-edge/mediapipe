@@ -103,7 +103,11 @@ void TfLiteWeightAccessor::BuildWeightsMapFromTfliteModel(char* data) {
 absl::StatusOr<std::shared_ptr<Tensor>> TfLiteWeightAccessor::LoadWeight(
     absl::string_view tensor_name, Tensor::DimsType expected_dims,
     size_t dim_scale_if_any) const {
-  RET_CHECK(tflite_model_);
+  // FIX: Replaced RET_CHECK with proper Status return
+  if (!tflite_model_) {
+    return absl::InternalError("TfLiteWeightAccessor: TFLite model is not initialized.");
+  }
+
   if (!weights_.contains(tensor_name)) {
     ABSL_DLOG(WARNING) << "Tensor not found: " << tensor_name;
     return nullptr;
@@ -137,7 +141,15 @@ absl::StatusOr<std::shared_ptr<Tensor>> TfLiteWeightAccessor::LoadWeight(
         absl::StrCat("Scale tensor not found: ", scale_tensor_name));
   }
   std::shared_ptr<Tensor> scale_tensor = weights_.at(scale_tensor_name);
-  RET_CHECK_EQ(expected_dims[dim_scale_if_any], scale_tensor->num_elements);
+
+  // FIX: Replaced RET_CHECK_EQ with safe check
+  if (expected_dims[dim_scale_if_any] != scale_tensor->num_elements) {
+      return absl::InvalidArgumentError(absl::StrCat(
+          "Scale tensor dimension mismatch for ", scale_tensor_name,
+          ". Expected: ", expected_dims[dim_scale_if_any],
+          ", Actual: ", scale_tensor->num_elements));
+  }
+
   switch (qtensor->datatype) {
     case xnn_datatype_qcint8:
       result = std::make_shared<QCTensor>(
@@ -166,8 +178,16 @@ absl::StatusOr<std::shared_ptr<Tensor>>
 TfLiteWeightAccessor::LoadTransposedWeight(absl::string_view tensor_name,
                                            Tensor::DimsType expected_dims,
                                            size_t dim_scale_if_any) const {
-  RET_CHECK(tflite_model_);
-  RET_CHECK_EQ(expected_dims.size(), 2);
+  // FIX: Replaced RET_CHECK with proper Status return
+  if (!tflite_model_) {
+    return absl::InternalError("TfLiteWeightAccessor: TFLite model is not initialized.");
+  }
+  // FIX: Replaced RET_CHECK_EQ with proper Status return
+  if (expected_dims.size() != 2) {
+     return absl::InvalidArgumentError(absl::StrCat(
+         "LoadTransposedWeight expects 2 dimensions, got: ", expected_dims.size()));
+  }
+
   return LoadWeight(
       tensor_name,
       Tensor::DimsType(expected_dims.rbegin(), expected_dims.rend()),
