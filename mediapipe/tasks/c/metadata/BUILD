@@ -25,7 +25,6 @@ cc_library(
     deps = [
         "//mediapipe/tasks/c/core:mp_status",
         "//mediapipe/tasks/c/core:mp_status_converter",
-        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
         "@flatbuffers",
     ],

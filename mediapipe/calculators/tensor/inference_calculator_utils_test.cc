@@ -51,6 +51,7 @@ constexpr int kDefaultNumCpuThreads = 1;
 using ElementType = ::mediapipe::Tensor::ElementType;
 using ::testing::ElementsAreArray;
 using ::testing::HasSubstr;
+using ::testing::IsEmpty;
 using ::tflite::Interpreter;
 using ::tflite::TensorType_FLOAT32;
 using ::tflite::TensorType_INT32;
@@ -322,6 +323,22 @@ TEST_F(InferenceCalculatorUtilsTest,
   MP_EXPECT_OK(CopyCpuInputIntoTfLiteTensor(tensor, *tflite_tensor));
   EXPECT_THAT(TfLiteInputTensorData<char>(interpreter, tensor_index),
               ElementsAreArray(values));
+}
+
+TEST_F(InferenceCalculatorUtilsTest,
+       CopyCpuInputIntoInterpreterTensorWorksCorrectlyForEmptyString) {
+  // This tests that an issue in an older implementation of
+  // CopyCpuInputIntoTfLiteTensor on Mac OS X.
+  tflite::Interpreter interpreter;
+  int tensor_index, tensor_len = 0;
+  AddInterpreterInput(kTfLiteString, tensor_len, tensor_index,
+                      /*allocate_tensor=*/true, interpreter);
+  Tensor tensor(ElementType::kChar, Tensor::Shape({0}));
+  tensor.GetCpuWriteView();
+  TfLiteTensor* tflite_tensor = interpreter.input_tensor(tensor_index);
+  MP_EXPECT_OK(CopyCpuInputIntoTfLiteTensor(tensor, *tflite_tensor));
+  EXPECT_THAT(TfLiteInputTensorData<char>(interpreter, tensor_index),
+              IsEmpty());
 }
 
 TEST_F(InferenceCalculatorUtilsTest,

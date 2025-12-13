@@ -21,6 +21,7 @@ licenses(["notice"])
 IMAGE_EMBEDDER_DEPS = [
     "@com_google_absl//absl/log:absl_log",
     "@com_google_absl//absl/status",
+    "@com_google_absl//absl/log:absl_check",
     "@com_google_absl//absl/status:statusor",
     "//mediapipe/framework/formats:image",
     "//mediapipe/tasks/c/components/containers:embedding_result",

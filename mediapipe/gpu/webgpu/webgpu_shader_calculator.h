@@ -1,8 +1,6 @@
 #ifndef MEDIAPIPE_GPU_WEBGPU_WEBGPU_SHADER_CALCULATOR_H_
 #define MEDIAPIPE_GPU_WEBGPU_WEBGPU_SHADER_CALCULATOR_H_
 
-#include <webgpu/webgpu_cpp.h>
-
 #include <cstdint>
 #include <vector>
 
@@ -11,6 +9,7 @@
 #include "mediapipe/framework/api3/node.h"
 #include "mediapipe/framework/calculator_options.pb.h"
 #include "mediapipe/gpu/gpu_buffer.h"
+#include "mediapipe/gpu/webgpu/webgpu_headers.h"
 #include "mediapipe/gpu/webgpu/webgpu_shader_calculator.pb.h"
 #include "mediapipe/gpu/webgpu/webgpu_texture_buffer_3d.h"
 #include "mediapipe/gpu/webgpu/webgpu_texture_view.h"

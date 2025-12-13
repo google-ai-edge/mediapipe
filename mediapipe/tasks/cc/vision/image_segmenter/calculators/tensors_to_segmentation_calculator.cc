@@ -19,6 +19,7 @@ limitations under the License.
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <numeric>
 #include <tuple>
 #include <utility>
 #include <vector>
@@ -30,6 +31,7 @@ limitations under the License.
 #include "mediapipe/framework/api3/calculator_context.h"
 #include "mediapipe/framework/api3/calculator_contract.h"
 #include "mediapipe/framework/formats/image.h"
+#include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/image_frame_opencv.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
@@ -106,8 +108,15 @@ float BilinearInterpolate(float v00, float v10, float v01, float v11, float t0,
 
 float GetTensorElement(const Shape& input_shape, const float* tensors_buffer,
                        int x, int y, int c) {
-  return tensors_buffer[y * input_shape.channels * input_shape.width +
-                        x * input_shape.channels + c];
+  return tensors_buffer[(y * input_shape.width + x) * input_shape.channels + c];
+}
+
+ImageFormat::Format GetOutputFormat(bool use_uint8, bool pack4) {
+  if (use_uint8) {
+    return pack4 ? ImageFormat::SRGBA : ImageFormat::GRAY8;
+  } else {
+    return pack4 ? ImageFormat::VEC32F4 : ImageFormat::VEC32F1;
+  }
 }
 
 Image ProcessForCategoryMaskCpu(const Shape& input_shape,
@@ -178,10 +187,12 @@ Image ProcessForCategoryMaskCpu(const Shape& input_shape,
   return category_mask;
 }
 
-std::vector<Image> ProcessForConfidenceMaskCpu(const Shape& input_shape,
-                                               const Shape& output_shape,
-                                               const SegmenterOptions& options,
-                                               const float* tensors_buffer) {
+std::vector<Image> ProcessForConfidenceMaskCpu(
+    const Shape& input_shape, const Shape& output_shape,
+    const SegmenterOptions& options,
+    const TensorsToSegmentationCalculatorOptions::ConfidenceMaskOptions&
+        confidence_mask_options,
+    const float* tensors_buffer) {
   std::function<void(absl::Span<const float> values,
                      absl::Span<float> activated_values)>
       activation_fn;
@@ -201,19 +212,45 @@ std::vector<Image> ProcessForConfidenceMaskCpu(const Shape& input_shape,
       break;
   }
 
+  // Write the output streams.
+  bool use_uint8 = confidence_mask_options.output_format() ==
+                   TensorsToSegmentationCalculatorOptions::
+                       ConfidenceMaskOptions::OUTPUT_FORMAT_UINT8;
+  bool pack4 = confidence_mask_options.pack4();
+  std::vector<int> output_channels(
+      confidence_mask_options.output_channels().begin(),
+      confidence_mask_options.output_channels().end());
+  if (output_channels.empty()) {
+    output_channels.resize(input_shape.channels);
+    std::iota(output_channels.begin(), output_channels.end(), 0);
+  }
+  if (output_channels.empty()) {
+    return {};
+  }
+
+  int num_output_streams =
+      pack4 ? (output_channels.size() + 3) / 4 : output_channels.size();
+  ImageFormat::Format output_format = GetOutputFormat(use_uint8, pack4);
+
   // TODO Use libyuv for resizing instead.
   std::vector<Image> confidence_masks;
   std::vector<cv::Mat> confidence_mask_mats;
-  confidence_masks.reserve(input_shape.channels);
-  confidence_mask_mats.reserve(input_shape.channels);
-  for (int i = 0; i < input_shape.channels; ++i) {
+  confidence_masks.reserve(num_output_streams);
+  confidence_mask_mats.reserve(num_output_streams);
+  for (int i = 0; i < num_output_streams; ++i) {
     confidence_masks.push_back(Image(std::make_shared<ImageFrame>(
-        ImageFormat::VEC32F1, input_shape.width, input_shape.height, 1)));
+        output_format, input_shape.width, input_shape.height, 1)));
     confidence_mask_mats.push_back(mediapipe::formats::MatView(
         confidence_masks.back().GetImageFrameSharedPtr().get()));
   }
 
-  // Applies activation function.
+  if (pack4 && num_output_streams * 4 != output_channels.size()) {
+    // Wipe last stream so excessive channels are 0 as we don't write to them
+    // below.
+    confidence_masks.back().GetImageFrameSharedPtr()->SetToZero();
+  }
+
+  // Apply activation function and write output streams.
   const int tensor_size = input_shape.height * input_shape.width;
   std::vector<float> activated_values(input_shape.channels);
   absl::Span<float> activated_values_span(activated_values);
@@ -221,11 +258,31 @@ std::vector<Image> ProcessForConfidenceMaskCpu(const Shape& input_shape,
     activation_fn(absl::MakeConstSpan(&tensors_buffer[i * input_shape.channels],
                                       input_shape.channels),
                   activated_values_span);
-    for (int j = 0; j < input_shape.channels; ++j) {
-      confidence_mask_mats[j].at<float>(
-          i / input_shape.width, i % input_shape.width) = activated_values[j];
+
+    for (int j = 0; j < output_channels.size(); ++j) {
+      float value = activated_values[output_channels[j]];
+      if (use_uint8) {
+        uint8_t int_value = static_cast<uint8_t>(
+            std::clamp(value * 255.0f + 0.5f, 0.0f, 255.0f));
+        if (pack4) {
+          confidence_mask_mats[j / 4].ptr<uint8_t>(
+              i / input_shape.width, i % input_shape.width)[j & 3] = int_value;
+        } else {
+          confidence_mask_mats[j].at<uint8_t>(
+              i / input_shape.width, i % input_shape.width) = int_value;
+        }
+      } else {
+        if (pack4) {
+          confidence_mask_mats[j / 4].ptr<float>(
+              i / input_shape.width, i % input_shape.width)[j & 3] = value;
+        } else {
+          confidence_mask_mats[j].at<float>(i / input_shape.width,
+                                            i % input_shape.width) = value;
+        }
+      }
     }
   }
+
   if (output_shape.height == input_shape.height &&
       output_shape.width == input_shape.width) {
     return confidence_masks;
@@ -237,7 +294,7 @@ std::vector<Image> ProcessForConfidenceMaskCpu(const Shape& input_shape,
     // Pre-allocates ImageFrame memory to avoid copying from cv::Mat
     // afterward.
     ImageFrameSharedPtr image_frame_ptr = std::make_shared<ImageFrame>(
-        ImageFormat::VEC32F1, output_shape.width, output_shape.height, 1);
+        output_format, output_shape.width, output_shape.height, 1);
     cv::Mat resized_mask_mat_view =
         mediapipe::formats::MatView(image_frame_ptr.get());
     cv::resize(confidence_mask_mats[i], resized_mask_mat_view,
@@ -318,8 +375,20 @@ absl::Status TensorsToSegmentationNodeImpl::Process(
   MP_ASSIGN_OR_RETURN(const Shape input_shape,
                       GetImageLikeTensorShape(input_tensor));
 
-  // TODO: should use tensor signature to get the correct output
-  // tensor.
+  // Validate confidence mask output channels.
+  for (int n = 0; n < options_.confidence_mask_options().output_channels_size();
+       ++n) {
+    int channel = options_.confidence_mask_options().output_channels(n);
+    if (channel < 0 || channel >= input_shape.channels) {
+      return absl::InvalidArgumentError(
+          absl::StrCat("Category output channel ", channel, " at index ", n,
+                       " is out of bounds for input tensor with ",
+                       input_shape.channels, " channels."));
+    }
+  }
+
+  // TODO: should use tensor signature to get the correct
+  // output tensor.
   if (cc.quality_scores_out.IsConnected()) {
     if (input_tensors.size() == 2) {
       const auto& quality_tensor = input_tensors[0];
@@ -372,21 +441,30 @@ absl::Status TensorsToSegmentationNodeImpl::Process(
     bool new_style = cc.category_mask_out.IsConnected() ||
                      (cc.confidence_mask_out.Count() > 0);
     if (new_style) {
+      int confidence_mask_count =
+          options_.confidence_mask_options().output_channels().empty()
+              ? input_shape.channels
+              : options_.confidence_mask_options().output_channels_size();
+      if (options_.confidence_mask_options().pack4()) {
+        confidence_mask_count = (confidence_mask_count + 3) / 4;
+      }
+      int category_mask_count = produce_category_mask ? 1 : 0;
+
+      // segmented_masks = [confidence_masks if any, category_mask if any]
       if (produce_confidence_masks) {
-        int category_mask_count = produce_category_mask ? 1 : 0;
         RET_CHECK_EQ(segmented_masks.size(),
-                     input_shape.channels + category_mask_count)
+                     confidence_mask_count + category_mask_count)
             << "Confidence mask count mismatch.";
         RET_CHECK_EQ(cc.confidence_mask_out.Count(),
                      segmented_masks.size() - category_mask_count)
             << "Confidence mask output count mismatch.";
-        for (int i = 0; i < input_shape.channels; ++i) {
+        for (int i = 0; i < confidence_mask_count; ++i) {
           cc.confidence_mask_out.At(i).Send(std::move(segmented_masks[i]));
         }
       }
       if (produce_category_mask) {
         int category_mask_index =
-            produce_confidence_masks ? input_shape.channels : 0;
+            produce_confidence_masks ? confidence_mask_count : 0;
         cc.category_mask_out.Send(
             std::move(segmented_masks[category_mask_index]));
       }
@@ -430,7 +508,8 @@ absl::Status TensorsToSegmentationNodeImpl::Process(
         {/* height= */ output_height,
          /* width= */ output_width,
          /* channels= */ input_shape.channels},
-        options_.segmenter_options(), tensors_buffer);
+        options_.segmenter_options(), options_.confidence_mask_options(),
+        tensors_buffer);
     RET_CHECK_EQ(confidence_masks.size(), cc.confidence_mask_out.Count())
         << "Confidence mask count mismatch.";
     for (int i = 0; i < confidence_masks.size(); ++i) {
@@ -457,9 +536,9 @@ std::vector<Image> TensorsToSegmentationNodeImpl::GetSegmentationResultCpu(
                                       options_.segmenter_options(),
                                       tensors_buffer)};
   } else {
-    return ProcessForConfidenceMaskCpu(input_shape, output_shape,
-                                       options_.segmenter_options(),
-                                       tensors_buffer);
+    return ProcessForConfidenceMaskCpu(
+        input_shape, output_shape, options_.segmenter_options(),
+        options_.confidence_mask_options(), tensors_buffer);
   }
 }
 

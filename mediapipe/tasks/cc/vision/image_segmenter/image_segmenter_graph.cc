@@ -407,8 +407,9 @@ class ImageSegmenterGraph : public core::ModelTaskGraph {
  public:
   absl::StatusOr<mediapipe::CalculatorGraphConfig> GetConfig(
       mediapipe::SubgraphContext* sc) override {
-    MP_ASSIGN_OR_RETURN(const auto* model_resources,
-                        CreateModelResources<ImageSegmenterGraphOptions>(sc));
+    MP_ASSIGN_OR_RETURN(
+        const auto* model_resources,
+        GetOrCreateModelResources<ImageSegmenterGraphOptions>(sc));
     Graph graph;
     const auto& options = sc->Options<ImageSegmenterGraphOptions>();
     // TODO: remove deprecated output type support.

@@ -16,9 +16,8 @@
 
 import concurrent.futures
 import ctypes
-import functools
 import threading
-from typing import Sequence
+from typing import Any, Sequence
 
 from mediapipe.tasks.python.core import mediapipe_c_utils
 
@@ -29,6 +28,9 @@ class SerialDispatcher:
   This ensures that functions from a non-thread-safe C library are called
   sequentially from a single dedicated thread, preventing race conditions
   and segmentation faults.
+
+  If a function is a CStatusFunction, the dispatcher will raise a Python
+  exception if the returned MpStatus code is not kMpOk.
   """
 
   # Enable dynamic attributes as we register methods on this class via
@@ -64,21 +66,14 @@ class SerialDispatcher:
       signature: The CFunction object specifying the C function to wrap and
         register.
     """
-    c_func = getattr(self._lib, signature.func_name)
-    c_func.argtypes = signature.argtypes
-    c_func.restype = signature.restype
+    handler = signature.create_python_wrapper(self._lib, self._executor)
+    def shutdown_aware_handler(*args, **kwargs) -> Any:
+      with self._lock:
+        if self._is_closed:
+          return
+      return handler(*args, **kwargs)
 
-    @functools.wraps(c_func)
-    def dispatcher_wrapper(*args, **kwargs):
-      if self._is_closed or mediapipe_c_utils.is_shutdown():
-        # Ignore calls after during Python shutdown (e.g. calls to free C++
-        # resources, which might fail if the ctypes object is no longer loaded)
-        # TODO: b/456183832 - Return 0 once all APIs return MpStatus.
-        return None
-      future = self._executor.submit(c_func, *args, **kwargs)
-      return future.result()
-
-    setattr(self, signature.func_name, dispatcher_wrapper)
+    setattr(self, signature.func_name, shutdown_aware_handler)
 
   def close(self):
     """Shuts down the dispatcher and waits for pending tasks to complete."""

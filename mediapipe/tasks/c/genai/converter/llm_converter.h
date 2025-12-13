@@ -18,7 +18,11 @@
 #include "mediapipe/tasks/c/core/mp_status.h"
 
 #ifndef MP_EXPORT
+#if defined(_MSC_VER)
+#define MP_EXPORT __declspec(dllexport)
+#else
 #define MP_EXPORT __attribute__((visibility("default")))
+#endif  // _MSC_VER
 #endif  // MP_EXPORT
 
 #ifdef __cplusplus
@@ -33,12 +37,16 @@ extern "C" {
 //   vocab_model_file: The file path to the SentencePiece vocab model.
 //   is_quantized: Whether the checkpoint is already quantized.
 //   output_tflite_file: The output tflite filename.
+//   error_message: An optional pointer to an error message.  If provided, it
+//   will be populated with a newly-allocated error message upon
+//   failure. It's the caller responsibility to free the error message with
+//   `free()`.
 // Returns:
 //   kMpOk on success, otherwise an error code.
-MP_EXPORT MpStatus
-MpLlmConverterGenerateCpuTfLite(const char* model_type, const char* weight_path,
-                                const char* vocab_model_file, bool is_quantized,
-                                const char* output_tflite_file);
+MP_EXPORT MpStatus MpLlmConverterGenerateCpuTfLite(
+    const char* model_type, const char* weight_path,
+    const char* vocab_model_file, bool is_quantized,
+    const char* output_tflite_file, char** error_message);
 
 // Generates the TfLite flatbuffer file from the serialized weight files
 // for the GPU backend.
@@ -58,6 +66,10 @@ MpLlmConverterGenerateCpuTfLite(const char* model_type, const char* weight_path,
 //   submodel_type: Name of submodel, e.g. GEMMA_2B.
 //   use_dynamic_ple: Whether any PLE embeddings should be loaded dynamically.
 //   apply_srq: Whether to use SRQ.
+//   error_message: An optional pointer to an error message.  If provided, it
+//   will be populated with a newly-allocated error message upon
+//   failure. It's the caller responsibility to free the error message with
+//   `free()`.
 // Returns:
 //   kMpOk on success, otherwise an error code.
 MP_EXPORT MpStatus MpLlmConverterGenerateGpuTfLite(
@@ -66,7 +78,8 @@ MP_EXPORT MpStatus MpLlmConverterGenerateGpuTfLite(
     const char* output_tflite_file, int lora_rank, const char* lora_weight_path,
     const char* lora_output_tflite_file, const char* lora_main_model_type,
     const char* image_encoder_file, const char* image_adapter_file,
-    const char* submodel_type, bool use_dynamic_ple, bool apply_srq);
+    const char* submodel_type, bool use_dynamic_ple, bool apply_srq,
+    char** error_message);
 
 // Converts the Hugging Face BPE tokenizer to internal SentencePiece
 // vocab model.
@@ -74,10 +87,15 @@ MP_EXPORT MpStatus MpLlmConverterGenerateGpuTfLite(
 //   vocab_model_file: The directory containing tokenizer.json and
 //     tokenizer_config.json.
 //   output_vocab_file: The output file path for the SentencePiece model.
+//   error_message: An optional pointer to an error message.  If provided, it
+//   will be populated with a newly-allocated error message upon
+//   failure. It's the caller responsibility to free the error message with
+//   `free()`.
 // Returns:
 //   kMpOk on success, otherwise an error code.
 MP_EXPORT MpStatus MpLlmConverterConvertHfTokenizer(
-    const char* vocab_model_file, const char* output_vocab_file);
+    const char* vocab_model_file, const char* output_vocab_file,
+    char** error_message);
 
 #ifdef __cplusplus
 }  // extern "C"

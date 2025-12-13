@@ -1,11 +1,4 @@
-absl-py
-attrs>=19.1.0
-flatbuffers>=2.0
-jax
-jaxlib
-matplotlib
-numpy<2
-opencv-contrib-python
-protobuf>=4.25.3,<5
-sounddevice>=0.4.4
-sentencepiece
+absl-py~=2.3
+numpy
+sounddevice~=0.5
+flatbuffers~=25.9

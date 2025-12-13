@@ -40,7 +40,6 @@ _RunningMode = audio_task_running_mode.AudioTaskRunningMode
 _MICRO_SECONDS_PER_MILLISECOND = 1000
 _AsyncResultDispatcher = async_result_dispatcher.AsyncResultDispatcher
 _LiveStreamPacket = async_result_dispatcher.LiveStreamPacket
-_CFunction = mediapipe_c_utils.CFunction
 
 
 class AudioClassifierResultC(ctypes.Structure):
@@ -88,43 +87,37 @@ class AudioClassifierOptionsC(ctypes.Structure):
 
 
 _CTYPES_SIGNATURES = (
-    _CFunction(
+    mediapipe_c_utils.CStatusFunction(
         'MpAudioClassifierCreate',
-        [
+        (
             ctypes.POINTER(AudioClassifierOptionsC),
             ctypes.POINTER(ctypes.c_void_p),
-        ],
-        ctypes.c_int,
+        ),
     ),
-    _CFunction(
+    mediapipe_c_utils.CStatusFunction(
         'MpAudioClassifierClassify',
-        [
+        (
             ctypes.c_void_p,
             ctypes.POINTER(audio_data_c.AudioDataC),
             ctypes.POINTER(AudioClassifierResultC),
-        ],
-        ctypes.c_int,
+        ),
     ),
-    _CFunction(
+    mediapipe_c_utils.CStatusFunction(
         'MpAudioClassifierClassifyAsync',
-        [
+        (
             ctypes.c_void_p,
             ctypes.POINTER(audio_data_c.AudioDataC),
             ctypes.c_int64,
-        ],
-        ctypes.c_int,
+        ),
     ),
-    _CFunction(
+    mediapipe_c_utils.CFunction(
         'MpAudioClassifierCloseResult',
         [ctypes.POINTER(AudioClassifierResultC)],
         None,
     ),
-    _CFunction(
+    mediapipe_c_utils.CStatusFunction(
         'MpAudioClassifierClose',
-        [
-            ctypes.c_void_p,
-        ],
-        ctypes.c_int,
+        (ctypes.c_void_p,),
     ),
 )
 
@@ -291,10 +284,9 @@ class AudioClassifier:
     )
 
     classifier_handle_ptr = ctypes.c_void_p()
-    status = lib.MpAudioClassifierCreate(
+    lib.MpAudioClassifierCreate(
         ctypes.byref(ctypes_options), ctypes.byref(classifier_handle_ptr)
     )
-    mediapipe_c_utils.handle_status(status)
     return AudioClassifier(
         lib=lib,
         handle=classifier_handle_ptr,
@@ -353,12 +345,11 @@ class AudioClassifier:
       raise ValueError('Must provide the audio sample rate in audio data.')
 
     c_result = AudioClassifierResultC()
-    status = self._lib.MpAudioClassifierClassify(
+    self._lib.MpAudioClassifierClassify(
         self._handle,
         audio_clip.to_ctypes(),
         ctypes.byref(c_result),
     )
-    mediapipe_c_utils.handle_status(status)
     py_result = [
         AudioClassifierResult.from_ctypes(c_result.results[i])
         for i in range(c_result.results_count)
@@ -401,12 +392,11 @@ class AudioClassifier:
     if not audio_block.audio_format.sample_rate:
       raise ValueError('Must provide the audio sample rate in audio data.')
 
-    status = self._lib.MpAudioClassifierClassifyAsync(
+    self._lib.MpAudioClassifierClassifyAsync(
         self._handle,
         audio_block.to_ctypes(),
         timestamp_ms,
     )
-    mediapipe_c_utils.handle_status(status)
 
   def create_audio_record(
       self, num_channels: int, sample_rate: int, required_input_buffer_size: int
@@ -439,8 +429,7 @@ class AudioClassifier:
   def close(self):
     """Shuts down the MediaPipe task instance."""
     if self._handle:
-      status = self._lib.MpAudioClassifierClose(self._handle)
-      mediapipe_c_utils.handle_status(status)
+      self._lib.MpAudioClassifierClose(self._handle)
       self._handle = None
       self._dispatcher.close()
       self._lib.close()

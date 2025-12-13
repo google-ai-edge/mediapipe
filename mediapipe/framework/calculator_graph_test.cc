@@ -36,6 +36,8 @@
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 #include "absl/strings/substitute.h"
+#include "absl/synchronization/barrier.h"
+#include "absl/synchronization/notification.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -605,22 +607,29 @@ class DecimatorCalculator : public CalculatorBase {
 };
 REGISTER_CALCULATOR(DecimatorCalculator);
 
-// An error will be produced in Open() if ERROR_ON_OPEN is true. Otherwise,
+// An error will be produced in Open() if ERROR_ON_OPEN is non null. Otherwise,
 // this calculator simply passes its input packets through, unchanged.
+//
+// ERROR_ON_OPEN is a `absl::Barrier*`. This allows to avoid race conditions
+// when several ErrorOnOpenCalculators are used in a graph: if one fails too
+// fast, the second might never gets its Open method called.
 class ErrorOnOpenCalculator : public CalculatorBase {
  public:
   static absl::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).SetAny();
     cc->Outputs().Index(0).SetSameAs(&cc->Inputs().Index(0));
-    cc->InputSidePackets().Tag(kErrorOnOpenTag).Set<bool>();
+    cc->InputSidePackets().Tag(kErrorOnOpenTag).Set<absl::Barrier*>();
     return absl::OkStatus();
   }
 
   absl::Status Open(CalculatorContext* cc) final {
-    if (cc->InputSidePackets().Tag(kErrorOnOpenTag).Get<bool>()) {
-      return absl::NotFoundError("expected error");
+    absl::Barrier* barrier =
+        cc->InputSidePackets().Tag(kErrorOnOpenTag).Get<absl::Barrier*>();
+    if (barrier == nullptr) {
+      return absl::OkStatus();
     }
-    return absl::OkStatus();
+    barrier->Block();
+    return absl::NotFoundError("expected error");
   }
 
   absl::Status Process(CalculatorContext* cc) final {
@@ -2674,9 +2683,10 @@ TEST(CalculatorGraph, TwoDeadlocksAreReportedAndSufficientInfoProvided) {
 
   EXPECT_EQ(status.code(), absl::StatusCode::kUnavailable);
   EXPECT_THAT(status.message(),
-              testing::AllOf(testing::HasSubstr("deadlock"),
-                             testing::HasSubstr("input1"),
-                             testing::HasSubstr("PassThroughCalculator")));
+              testing::AllOf(
+                  testing::HasSubstr("deadlock"), testing::HasSubstr("input1"),
+                  testing::AnyOf(testing::HasSubstr("PassThroughCalculator"),
+                                 testing::HasSubstr("MergeCalculator"))));
   graph.Cancel();
 }
 
@@ -3865,7 +3875,7 @@ TEST(CalculatorGraph, GraphFinishesWhilePaused) {
 TEST(CalculatorGraph, ConstructAndDestruct) { CalculatorGraph graph; }
 
 // A regression test for b/36364314. UnitDelayCalculator outputs a packet in
-// Open(). ErrorOnOpenCalculator fails in Open() if ERROR_ON_OPEN is true.
+// Open(). ErrorOnOpenCalculator fails in Open() if ERROR_ON_OPEN is set.
 TEST(CalculatorGraph, RecoverAfterPreviousFailInOpen) {
   const int max_count = 10;
   CalculatorGraphConfig config =
@@ -3897,8 +3907,10 @@ TEST(CalculatorGraph, RecoverAfterPreviousFailInOpen) {
   MP_ASSERT_OK(
       graph.Initialize(config, {{"max_count", MakePacket<int>(max_count)}}));
   for (int i = 0; i < 2; ++i) {
-    EXPECT_FALSE(graph.Run({{"fail", MakePacket<bool>(true)}}).ok());
-    MP_EXPECT_OK(graph.Run({{"fail", MakePacket<bool>(false)}}));
+    MP_EXPECT_OK(graph.Run({{"fail", MakePacket<absl::Barrier*>(nullptr)}}));
+    absl::Barrier barrier(1);
+    EXPECT_FALSE(
+        graph.Run({{"fail", MakePacket<absl::Barrier*>(&barrier)}}).ok());
   }
 }
 

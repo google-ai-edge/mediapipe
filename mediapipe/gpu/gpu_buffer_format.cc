@@ -273,6 +273,7 @@ ImageFormat::Format ImageFormatForGpuBufferFormat(GpuBufferFormat format) {
     case GpuBufferFormat::kGrayFloat32:
       return ImageFormat::VEC32F1;
     case GpuBufferFormat::kOneComponent8:
+    case GpuBufferFormat::kOneComponent8Red:
       return ImageFormat::GRAY8;
     case GpuBufferFormat::kBiPlanar420YpCbCr8VideoRange:
     case GpuBufferFormat::kBiPlanar420YpCbCr8FullRange:
@@ -289,7 +290,6 @@ ImageFormat::Format ImageFormatForGpuBufferFormat(GpuBufferFormat format) {
       return ImageFormat::SRGBA;
     case GpuBufferFormat::kGrayHalf16:
     case GpuBufferFormat::kOneComponent8Alpha:
-    case GpuBufferFormat::kOneComponent8Red:
     case GpuBufferFormat::kTwoComponent8:
     case GpuBufferFormat::kTwoComponentHalf16:
     case GpuBufferFormat::kRGBAHalf64:

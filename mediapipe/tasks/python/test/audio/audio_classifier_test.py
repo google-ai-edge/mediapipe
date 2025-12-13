@@ -173,7 +173,10 @@ class AudioClassifierTest(parameterized.TestCase):
       self.assertIsInstance(classifier, _AudioClassifier)
 
   def test_create_from_options_fails_with_invalid_model_path(self):
-    with self.assertRaisesRegex(FileNotFoundError, 'Not found'):
+    with self.assertRaisesRegex(
+        FileNotFoundError,
+        'Unable to open file at /path/to/invalid/model.tflite',
+    ):
       base_options = _BaseOptions(
           model_asset_path='/path/to/invalid/model.tflite')
       options = _AudioClassifierOptions(base_options=base_options)
@@ -254,7 +257,11 @@ class AudioClassifierTest(parameterized.TestCase):
 
   def test_combined_allowlist_and_denylist(self):
     # Fails with combined allowlist and denylist
-    with self.assertRaisesRegex(ValueError, 'Invalid argument'):
+    with self.assertRaisesRegex(
+        ValueError,
+        '`category_allowlist` and `category_denylist` are mutually exclusive'
+        ' options',
+    ):
       options = _AudioClassifierOptions(
           base_options=_BaseOptions(model_asset_path=self.yamnet_model_path),
           category_allowlist=['foo'],
@@ -314,7 +321,11 @@ class AudioClassifierTest(parameterized.TestCase):
     options = _AudioClassifierOptions(
         base_options=_BaseOptions(model_asset_path=self.yamnet_model_path),
         running_mode=_RUNNING_MODE.AUDIO_STREAM)
-    with self.assertRaisesRegex(ValueError, 'Invalid argument'):
+    with self.assertRaisesRegex(
+        ValueError,
+        'The audio task is in audio stream mode, a user-defined result callback'
+        ' must be provided.',
+    ):
       with _AudioClassifier.create_from_options(options) as unused_classifier:
         pass
 
@@ -323,7 +334,11 @@ class AudioClassifierTest(parameterized.TestCase):
         base_options=_BaseOptions(model_asset_path=self.yamnet_model_path),
         running_mode=_RUNNING_MODE.AUDIO_CLIPS,
         result_callback=mock.MagicMock())
-    with self.assertRaisesRegex(ValueError, 'Invalid argument'):
+    with self.assertRaisesRegex(
+        ValueError,
+        'The audio task is in audio clips mode, a user-defined result callback'
+        " shouldn't be provided",
+    ):
       with _AudioClassifier.create_from_options(options) as unused_classifier:
         pass
 
@@ -333,7 +348,11 @@ class AudioClassifierTest(parameterized.TestCase):
         running_mode=_RUNNING_MODE.AUDIO_STREAM,
         result_callback=mock.MagicMock())
     with _AudioClassifier.create_from_options(options) as classifier:
-      with self.assertRaisesRegex(ValueError, 'Invalid argument'):
+      with self.assertRaisesRegex(
+          ValueError,
+          'Task is not initialized with the audio clips mode. Current running'
+          ' mode:audio stream mode',
+      ):
         classifier.classify(self._read_wav_file(_SPEECH_WAV_16K_MONO))
 
   def test_calling_classify_async_in_audio_clips_mode(self):
@@ -341,7 +360,11 @@ class AudioClassifierTest(parameterized.TestCase):
         base_options=_BaseOptions(model_asset_path=self.yamnet_model_path),
         running_mode=_RUNNING_MODE.AUDIO_CLIPS)
     with _AudioClassifier.create_from_options(options) as classifier:
-      with self.assertRaisesRegex(ValueError, 'Invalid argument'):
+      with self.assertRaisesRegex(
+          ValueError,
+          'Task is not initialized with the audio stream mode. Current running'
+          ' mode:audio clips mode',
+      ):
         classifier.classify_async(self._read_wav_file(_SPEECH_WAV_16K_MONO), 0)
 
   def test_classify_async_calls_with_illegal_timestamp(self):
@@ -351,7 +374,9 @@ class AudioClassifierTest(parameterized.TestCase):
         result_callback=mock.MagicMock())
     with _AudioClassifier.create_from_options(options) as classifier:
       classifier.classify_async(self._read_wav_file(_SPEECH_WAV_16K_MONO), 100)
-      with self.assertRaisesRegex(ValueError, 'Invalid argument'):
+      with self.assertRaisesRegex(
+          ValueError, 'Input timestamp must be monotonically increasing.'
+      ):
         classifier.classify_async(self._read_wav_file(_SPEECH_WAV_16K_MONO), 0)
 
   @parameterized.parameters((_SPEECH_WAV_16K_MONO), (_SPEECH_WAV_48K_MONO))

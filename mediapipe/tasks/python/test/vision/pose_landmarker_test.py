@@ -139,7 +139,10 @@ class PoseLandmarkerTest(parameterized.TestCase):
 
   def test_create_from_options_fails_with_invalid_model_path(self):
     # Invalid empty model path.
-    with self.assertRaises(FileNotFoundError):
+    with self.assertRaisesWithLiteralMatch(
+        FileNotFoundError,
+        'Unable to open file at /path/to/invalid/model.tflite',
+    ):
       base_options = _BaseOptions(
           model_asset_path='/path/to/invalid/model.tflite'
       )
@@ -274,7 +277,9 @@ class PoseLandmarkerTest(parameterized.TestCase):
     # Creates pose landmarker.
     base_options = _BaseOptions(model_asset_path=self.model_path)
     options = _PoseLandmarkerOptions(base_options=base_options)
-    with self.assertRaisesRegex(ValueError, r'Invalid argument'):
+    with self.assertRaisesWithLiteralMatch(
+        ValueError, "This task doesn't support region-of-interest."
+    ):
       with _PoseLandmarker.create_from_options(options) as landmarker:
         # Set the `region_of_interest` parameter using `ImageProcessingOptions`.
         image_processing_options = _ImageProcessingOptions(
@@ -418,7 +423,11 @@ class PoseLandmarkerTest(parameterized.TestCase):
         result_callback=mock.MagicMock(),
     )
     with _PoseLandmarker.create_from_options(options) as landmarker:
-      with self.assertRaisesRegex(ValueError, r'Invalid argument'):
+      with self.assertRaisesWithLiteralMatch(
+          ValueError,
+          'Task is not initialized with the image mode. Current running'
+          ' mode:live stream mode',
+      ):
         landmarker.detect(self.test_image)
 
   def test_calling_detect_for_video_in_live_stream_mode(self):
@@ -428,7 +437,11 @@ class PoseLandmarkerTest(parameterized.TestCase):
         result_callback=mock.MagicMock(),
     )
     with _PoseLandmarker.create_from_options(options) as landmarker:
-      with self.assertRaisesRegex(ValueError, r'Invalid argument'):
+      with self.assertRaisesWithLiteralMatch(
+          ValueError,
+          'Task is not initialized with the video mode. Current running'
+          ' mode:live stream mode',
+      ):
         landmarker.detect_for_video(self.test_image, 0)
 
   def test_detect_async_calls_with_illegal_timestamp(self):
@@ -439,7 +452,9 @@ class PoseLandmarkerTest(parameterized.TestCase):
     )
     with _PoseLandmarker.create_from_options(options) as landmarker:
       landmarker.detect_async(self.test_image, 100)
-      with self.assertRaisesRegex(ValueError, r'Invalid argument'):
+      with self.assertRaisesWithLiteralMatch(
+          ValueError, 'Input timestamp must be monotonically increasing.'
+      ):
         landmarker.detect_async(self.test_image, 0)
 
   @parameterized.parameters(

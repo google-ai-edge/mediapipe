@@ -74,7 +74,8 @@ cc_test(
     deps = [
         ":interactive_segmenter_lib",
         "//mediapipe/framework/deps:file_path",
-        "//mediapipe/framework/port:gtest",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:status_matchers",
         "//mediapipe/tasks/c/components/containers:keypoint",
         "//mediapipe/tasks/c/core:mp_status",
         "//mediapipe/tasks/c/test:test_utils",

@@ -32,7 +32,6 @@ Category = category_module.Category
 Classifications = classification_result_module.Classifications
 TextClassifierResult = classification_result_module.ClassificationResult
 ClassifierOptions = classifier_options_module.ClassifierOptions
-_CFunction = mediapipe_c_utils.CFunction
 
 
 class TextClassifierOptionsC(ctypes.Structure):
@@ -92,15 +91,14 @@ class TextClassifierOptions:
 
 
 _CTYPES_SIGNATURES = (
-    _CFunction(
+    mediapipe_c_utils.CStatusFunction(
         "MpTextClassifierCreate",
         [
             ctypes.POINTER(TextClassifierOptionsC),
             ctypes.POINTER(ctypes.c_void_p),
         ],
-        ctypes.c_int,
     ),
-    _CFunction(
+    mediapipe_c_utils.CStatusFunction(
         "MpTextClassifierClassify",
         [
             ctypes.c_void_p,
@@ -109,16 +107,14 @@ _CTYPES_SIGNATURES = (
                 classification_result_c_module.ClassificationResultC
             ),
         ],
-        ctypes.c_int,
     ),
-    _CFunction(
+    mediapipe_c_utils.CStatusFunction(
         "MpTextClassifierClose",
         [
             ctypes.c_void_p,
         ],
-        ctypes.c_int,
     ),
-    _CFunction(
+    mediapipe_c_utils.CFunction(
         "MpTextClassifierCloseResult",
         [ctypes.POINTER(classification_result_c_module.ClassificationResultC)],
         None,
@@ -214,11 +210,10 @@ class TextClassifier:
     ctypes_options = options.to_ctypes()
 
     classifier_handle = ctypes.c_void_p()
-    status = lib.MpTextClassifierCreate(
+    lib.MpTextClassifierCreate(
         ctypes.byref(ctypes_options),
         ctypes.byref(classifier_handle),
     )
-    mediapipe_c_utils.handle_status(status)
     return TextClassifier(lib=lib, handle=classifier_handle)
 
   def classify(self, text: str) -> TextClassifierResult:
@@ -237,12 +232,11 @@ class TextClassifier:
     """
     ctypes_result = classification_result_c_module.ClassificationResultC()
 
-    status = self._lib.MpTextClassifierClassify(
+    self._lib.MpTextClassifierClassify(
         self._classifier_handle,
         text.encode("utf-8"),
         ctypes.byref(ctypes_result),
     )
-    mediapipe_c_utils.handle_status(status)
     python_result = TextClassifierResult.from_ctypes(ctypes_result)
     self._lib.MpTextClassifierCloseResult(ctypes.byref(ctypes_result))
     return python_result
@@ -250,8 +244,7 @@ class TextClassifier:
   def close(self):
     """Shuts down the MediaPipe task instance."""
     if self._classifier_handle:
-      status = self._lib.MpTextClassifierClose(self._classifier_handle)
-      mediapipe_c_utils.handle_status(status)
+      self._lib.MpTextClassifierClose(self._classifier_handle)
       self._classifier_handle = None
       self._lib.close()
 

@@ -28,12 +28,10 @@
 #include "mediapipe/framework/graph_service.h"
 #include "mediapipe/gpu/attachments.h"
 #include "mediapipe/gpu/webgpu/webgpu_check.h"
+#include "mediapipe/gpu/webgpu/webgpu_headers.h"
 
-#ifdef __EMSCRIPTEN__
-#include <webgpu/webgpu_cpp.h>
-#else
+#ifndef __EMSCRIPTEN__
 #include "mediapipe/gpu/webgpu/webgpu_device_registration.h"
-#include "third_party/dawn/include/webgpu/webgpu_cpp.h"
 #endif  // __EMSCRIPTEN__
 
 namespace mediapipe {

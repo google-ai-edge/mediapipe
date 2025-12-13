@@ -21,6 +21,11 @@ namespace mediapipe::tasks::c::core {
 
 MpStatus ToMpStatus(absl::Status status);
 
+// Handles an absl::Status and returns an MpStatus.
+// If error_msg is not null, the error message is copied to the error_msg
+// buffer. Otherwise, the error message is logged.
+MpStatus HandleStatus(absl::Status status, char** error_msg);
+
 }  // namespace mediapipe::tasks::c::core
 
 #endif  // MEDIAPIPE_TASKS_C_CORE_MP_STATUS_COVERNTER_H_

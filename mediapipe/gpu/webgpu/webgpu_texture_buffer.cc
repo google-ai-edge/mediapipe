@@ -1,7 +1,5 @@
 #include "mediapipe/gpu/webgpu/webgpu_texture_buffer.h"
 
-#include <webgpu/webgpu_cpp.h>
-
 #include <cstdint>
 #include <cstring>
 #include <iterator>
@@ -16,6 +14,7 @@
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/gpu/gpu_buffer_format.h"
 #include "mediapipe/gpu/gpu_buffer_storage.h"
+#include "mediapipe/gpu/webgpu/webgpu_headers.h"
 #include "mediapipe/gpu/webgpu/webgpu_service.h"
 #include "mediapipe/gpu/webgpu/webgpu_texture_view.h"
 

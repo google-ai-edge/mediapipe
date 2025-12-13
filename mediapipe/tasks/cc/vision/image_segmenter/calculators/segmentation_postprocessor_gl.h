@@ -75,6 +75,7 @@ class SegmentationPostprocessorGl {
   GlShader argmax_shader_;
   GlShader argmax_one_class_shader_;
   GlShader channel_select_shader_;
+  GlShader multi_channel_select_shader_;
   GlShader softmax_max_shader_;
   GlShader softmax_transform_and_sum_shader_;
   GlShader softmax_normalization_shader_;

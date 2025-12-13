@@ -47,7 +47,15 @@ class SchedulerQueue : public TaskQueue {
    public:
     Item(CalculatorNode* node, CalculatorContext* cc);
     // A null CalculatorContext indicates the task should run OpenNode().
-    Item(CalculatorNode* node);
+    explicit Item(CalculatorNode* node);
+
+    // Not copyable.
+    Item(const Item&) = delete;
+    Item& operator=(const Item&) = delete;
+
+    // Movable.
+    Item(Item&&) = default;
+    Item& operator=(Item&&) = default;
 
     CalculatorNode* Node() const { return node_; }
 
@@ -108,12 +116,6 @@ class SchedulerQueue : public TaskQueue {
   // queue was not running.
   void SetRunning(bool running) ABSL_LOCKS_EXCLUDED(mutex_);
 
-  // Gets the number of tasks that need to be submitted to the executor, and
-  // updates num_pending_tasks_. If this method is called and returns a
-  // non-zero value, the executor's AddTask method *must* be called for each
-  // task returned, but it can be called without holding the lock.
-  int GetTasksToSubmitToExecutor() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_);
-
   // Submits tasks that are waiting (e.g. that were added while the queue was
   // not running) if the queue is running. The caller must not hold any mutex.
   void SubmitWaitingTasksToExecutor() ABSL_LOCKS_EXCLUDED(mutex_);
@@ -128,12 +130,18 @@ class SchedulerQueue : public TaskQueue {
   // Adds a node to the scheduler queue for an OpenNode() call.
   void AddNodeForOpen(CalculatorNode* node) ABSL_LOCKS_EXCLUDED(mutex_);
 
-  // Adds an Item to queue_.
-  void AddItemToQueue(Item&& item);
-
   void CleanupAfterRun() ABSL_LOCKS_EXCLUDED(mutex_);
 
  private:
+  // Gets the number of tasks that need to be submitted to the executor, and
+  // updates num_pending_tasks_. If this method is called and returns a
+  // non-zero value, the executor's AddTask method *must* be called for each
+  // task returned, but it can be called without holding the lock.
+  int GetTasksToSubmitToExecutor() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_);
+
+  // Adds an Item to queue_.
+  void AddItemToQueue(Item item);
+
   // Used internally by RunNextTask. Invokes ProcessNode or CloseNode, followed
   // by EndScheduling.
   void RunCalculatorNode(CalculatorNode* node, CalculatorContext* cc)

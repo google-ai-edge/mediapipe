@@ -51,17 +51,20 @@ TEST(TextEmbedderTest, SmokeTest) {
   };
 
   MpTextEmbedderPtr embedder;
-  EXPECT_EQ(MpTextEmbedderCreate(&options, &embedder), kMpOk);
+  ASSERT_EQ(MpTextEmbedderCreate(&options, &embedder, /* error_msg= */ nullptr),
+            kMpOk);
   EXPECT_NE(embedder, nullptr);
 
   TextEmbedderResult result;
-  EXPECT_EQ(MpTextEmbedderEmbed(embedder, kTestString0, &result), kMpOk);
+  EXPECT_EQ(MpTextEmbedderEmbed(embedder, kTestString0, &result,
+                                /* error_msg= */ nullptr),
+            kMpOk);
   EXPECT_EQ(result.embeddings_count, 1);
   EXPECT_EQ(result.embeddings[0].values_count, 512);
 
   MpTextEmbedderCloseResult(&result);
   EXPECT_EQ(result.embeddings, nullptr);
-  EXPECT_EQ(MpTextEmbedderClose(embedder), kMpOk);
+  EXPECT_EQ(MpTextEmbedderClose(embedder, /* error_msg= */ nullptr), kMpOk);
 }
 
 TEST(TextEmbedderTest, SucceedsWithCosineSimilarity) {
@@ -71,14 +74,19 @@ TEST(TextEmbedderTest, SucceedsWithCosineSimilarity) {
       .embedder_options = {.l2_normalize = false, .quantize = false}};
 
   MpTextEmbedderPtr embedder;
-  EXPECT_EQ(MpTextEmbedderCreate(&options, &embedder), kMpOk);
+  ASSERT_EQ(MpTextEmbedderCreate(&options, &embedder, /* error_msg= */ nullptr),
+            kMpOk);
   EXPECT_NE(embedder, nullptr);
 
   // Extract both embeddings.
   TextEmbedderResult result0;
-  EXPECT_EQ(MpTextEmbedderEmbed(embedder, kTestString0, &result0), kMpOk);
+  EXPECT_EQ(MpTextEmbedderEmbed(embedder, kTestString0, &result0,
+                                /* error_msg= */ nullptr),
+            kMpOk);
   TextEmbedderResult result1;
-  EXPECT_EQ(MpTextEmbedderEmbed(embedder, kTestString1, &result1), kMpOk);
+  EXPECT_EQ(MpTextEmbedderEmbed(embedder, kTestString1, &result1,
+                                /* error_msg= */ nullptr),
+            kMpOk);
 
   ASSERT_EQ(result0.embeddings_count, 1);
   ASSERT_EQ(result1.embeddings_count, 1);
@@ -86,7 +94,8 @@ TEST(TextEmbedderTest, SucceedsWithCosineSimilarity) {
   // Check cosine similarity.
   double similarity;
   EXPECT_EQ(MpTextEmbedderCosSimilarity(&result0.embeddings[0],
-                                        &result1.embeddings[0], &similarity),
+                                        &result1.embeddings[0], &similarity,
+                                        /* error_msg= */ nullptr),
             kMpOk);
   EXPECT_GE(similarity, kCosineSimilarityThreshold);
 
@@ -94,7 +103,7 @@ TEST(TextEmbedderTest, SucceedsWithCosineSimilarity) {
   EXPECT_EQ(result0.embeddings, nullptr);
   MpTextEmbedderCloseResult(&result1);
   EXPECT_EQ(result1.embeddings, nullptr);
-  EXPECT_EQ(MpTextEmbedderClose(embedder), kMpOk);
+  EXPECT_EQ(MpTextEmbedderClose(embedder, /* error_msg= */ nullptr), kMpOk);
 }
 
 TEST(TextEmbedderTest, ErrorHandling) {
@@ -105,7 +114,13 @@ TEST(TextEmbedderTest, ErrorHandling) {
   };
 
   MpTextEmbedderPtr embedder;
-  EXPECT_EQ(MpTextEmbedderCreate(&options, &embedder), kMpInvalidArgument);
+  char* error_msg = nullptr;
+  MpStatus status = MpTextEmbedderCreate(&options, &embedder, &error_msg);
+  EXPECT_EQ(status, kMpInvalidArgument);
+
+  EXPECT_THAT(error_msg,
+              testing::HasSubstr("ExternalFile must specify at least one"));
+  free(error_msg);
 }
 
 }  // namespace

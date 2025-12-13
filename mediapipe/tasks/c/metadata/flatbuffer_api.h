@@ -23,38 +23,62 @@ limitations under the License.
 
 #include "mediapipe/tasks/c/core/mp_status.h"
 
+#ifndef MP_EXPORT
+#if defined(_MSC_VER)
+#define MP_EXPORT __declspec(dllexport)
+#else
+#define MP_EXPORT __attribute__((visibility("default")))
+#endif  // _MSC_VER
+#endif  // MP_EXPORT
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#ifndef MP_EXPORT
-#define MP_EXPORT __attribute__((visibility("default")))
-#endif  // MP_EXPORT
 
 // Represents a Flatbuffer Parser.
 typedef struct MpFlatbufferParserInternal* MpFlatbufferParser;
 
 // Creates a new Flatbuffer Parser.
+//
+// To obtain a detailed error, `error_msg` must be non-null pointer to a
+// `char*`, which will be populated with a newly-allocated error message upon
+// failure. It's the caller responsibility to free the error message with
+// `free()`.
+//
 // Returns: kMpOk on success, otherwise an error code.
 MP_EXPORT MpStatus MpFlatbufferParserCreate(bool enable_strict_json,
-                                            MpFlatbufferParser* parser_out);
+                                            MpFlatbufferParser* parser_out,
+                                            char** error_msg);
 
 // Parses the Flatbuffer schema source.
+//
+// To obtain a detailed error, `error_msg` must be non-null pointer to a
+// `char*`, which will be populated with a newly-allocated error message upon
+// failure. It's the caller responsibility to free the error message with
+// `free()`.
+//
 // Returns: kMpOk on success, otherwise an error code.
 MP_EXPORT MpStatus MpFlatbufferParserParse(MpFlatbufferParser parser,
-                                           const char* source);
+                                           const char* source,
+                                           char** error_msg);
 
 // Gets the error message from the parser.
 // The returned string is owned by the Parser and should not be freed.
 MP_EXPORT const char* MpFlatbufferParserGetError(MpFlatbufferParser parser);
 
 // Generates JSON text from a Flatbuffer buffer.
+//
+// To obtain a detailed error, `error_msg` must be non-null pointer to a
+// `char*`, which will be populated with a newly-allocated error message upon
+// failure. It's the caller responsibility to free the error message with
+// `free()`.
+//
 // The caller is responsible for freeing the returned string using
 // MpFlatbufferFreeString.
 MP_EXPORT MpStatus MpFlatbufferGenerateText(MpFlatbufferParser parser,
                                             const uint8_t* buffer,
-                                            size_t buffer_size,
-                                            char** json_out);
+                                            size_t buffer_size, char** json_out,
+                                            char** error_msg);
 
 // Frees a string allocated by MpFlatbufferGenerateText.
 MP_EXPORT void MpFlatbufferFreeString(char* str);

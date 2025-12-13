@@ -24,6 +24,7 @@ from mediapipe.tasks.python.core import mediapipe_c_utils
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 
 _CFunction = mediapipe_c_utils.CFunction
+_CStatusFunction = mediapipe_c_utils.CStatusFunction
 
 
 class ImageFormat(enum.IntEnum):
@@ -72,6 +73,7 @@ _CTYPES_SIGNATURES = (
             ctypes.POINTER(ctypes.c_uint8),
             ctypes.c_int,
             ctypes.POINTER(ctypes.c_void_p),
+            ctypes.POINTER(ctypes.c_char_p),
         ],
         ctypes.c_int,
     ),
@@ -84,6 +86,7 @@ _CTYPES_SIGNATURES = (
             ctypes.POINTER(ctypes.c_uint16),
             ctypes.c_int,
             ctypes.POINTER(ctypes.c_void_p),
+            ctypes.POINTER(ctypes.c_char_p),
         ],
         ctypes.c_int,
     ),
@@ -96,6 +99,7 @@ _CTYPES_SIGNATURES = (
             ctypes.POINTER(ctypes.c_float),
             ctypes.c_int,
             ctypes.POINTER(ctypes.c_void_p),
+            ctypes.POINTER(ctypes.c_char_p),
         ],
         ctypes.c_int,
     ),
@@ -104,6 +108,7 @@ _CTYPES_SIGNATURES = (
         [
             ctypes.c_void_p,
             ctypes.POINTER(ctypes.c_void_p),
+            ctypes.POINTER(ctypes.c_char_p),
         ],
         ctypes.c_int,
     ),
@@ -112,6 +117,7 @@ _CTYPES_SIGNATURES = (
         [
             ctypes.c_char_p,
             ctypes.POINTER(ctypes.c_void_p),
+            ctypes.POINTER(ctypes.c_char_p),
         ],
         ctypes.c_int,
     ),
@@ -129,17 +135,29 @@ _CTYPES_SIGNATURES = (
     _CFunction("MpImageGetFormat", [ctypes.c_void_p], ctypes.c_int),
     _CFunction(
         "MpImageDataUint8",
-        [ctypes.c_void_p, ctypes.POINTER(ctypes.POINTER(ctypes.c_uint8))],
+        [
+            ctypes.c_void_p,
+            ctypes.POINTER(ctypes.POINTER(ctypes.c_uint8)),
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
         ctypes.c_int,
     ),
     _CFunction(
         "MpImageDataUint16",
-        [ctypes.c_void_p, ctypes.POINTER(ctypes.POINTER(ctypes.c_uint16))],
+        [
+            ctypes.c_void_p,
+            ctypes.POINTER(ctypes.POINTER(ctypes.c_uint16)),
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
         ctypes.c_int,
     ),
     _CFunction(
         "MpImageDataFloat32",
-        [ctypes.c_void_p, ctypes.POINTER(ctypes.POINTER(ctypes.c_float))],
+        [
+            ctypes.c_void_p,
+            ctypes.POINTER(ctypes.POINTER(ctypes.c_float)),
+            ctypes.POINTER(ctypes.c_char_p),
+        ],
         ctypes.c_int,
     ),
     _CFunction(
@@ -149,6 +167,7 @@ _CTYPES_SIGNATURES = (
             ctypes.POINTER(ctypes.c_int),
             ctypes.c_int,
             ctypes.POINTER(ctypes.c_uint8),
+            ctypes.POINTER(ctypes.c_char_p),
         ],
         ctypes.c_int,
     ),
@@ -159,6 +178,7 @@ _CTYPES_SIGNATURES = (
             ctypes.POINTER(ctypes.c_int),
             ctypes.c_int,
             ctypes.POINTER(ctypes.c_uint16),
+            ctypes.POINTER(ctypes.c_char_p),
         ],
         ctypes.c_int,
     ),
@@ -169,6 +189,7 @@ _CTYPES_SIGNATURES = (
             ctypes.POINTER(ctypes.c_int),
             ctypes.c_int,
             ctypes.POINTER(ctypes.c_float),
+            ctypes.POINTER(ctypes.c_char_p),
         ],
         ctypes.c_int,
     ),
@@ -232,6 +253,7 @@ class Image:
 
     self._image_ptr = ctypes.c_void_p()
 
+    error_msg = ctypes.c_char_p()
     if data.dtype == np.uint8:
       status = self._lib.MpImageCreateFromUint8Data(
           image_format,
@@ -240,6 +262,7 @@ class Image:
           data.ctypes.data_as(ctypes.POINTER(ctypes.c_uint8)),
           data.size,
           ctypes.byref(self._image_ptr),
+          ctypes.byref(error_msg),
       )
     elif data.dtype == np.uint16:
       status = self._lib.MpImageCreateFromUint16Data(
@@ -249,6 +272,7 @@ class Image:
           data.ctypes.data_as(ctypes.POINTER(ctypes.c_uint16)),
           data.size,
           ctypes.byref(self._image_ptr),
+          ctypes.byref(error_msg),
       )
     elif data.dtype == np.float32:
       status = self._lib.MpImageCreateFromFloatData(
@@ -258,11 +282,16 @@ class Image:
           data.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
           data.size,
           ctypes.byref(self._image_ptr),
+          ctypes.byref(error_msg),
       )
     else:
       raise ValueError(f"Unsupported numpy data type: {data.dtype}")
 
-    mediapipe_c_utils.handle_status(status)
+    try:
+      mediapipe_c_utils.handle_status(status, error_msg)
+    finally:
+      if error_msg.value is not None:
+        self._lib.free(error_msg)
 
   @classmethod
   def create_from_file(cls, file_name: str) -> "Image":
@@ -280,10 +309,17 @@ class Image:
     lib = mediapipe_c_bindings.load_raw_library(_CTYPES_SIGNATURES)
 
     image_ptr = ctypes.c_void_p()
+    error_msg = ctypes.c_char_p()
     status = lib.MpImageCreateFromFile(
-        file_name.encode("utf-8"), ctypes.byref(image_ptr)
+        file_name.encode("utf-8"),
+        ctypes.byref(image_ptr),
+        ctypes.byref(error_msg),
     )
-    mediapipe_c_utils.handle_status(status)
+    try:
+      mediapipe_c_utils.handle_status(status, error_msg)
+    finally:
+      if error_msg.value is not None:
+        lib.free(error_msg.value)
 
     # Create an empty Image object and then populate it.
     new_image = cls.__new__(cls)
@@ -310,10 +346,15 @@ class Image:
     lib = mediapipe_c_bindings.load_raw_library(_CTYPES_SIGNATURES)
 
     output_image_ptr = ctypes.c_void_p()
+    error_msg = ctypes.c_char_p()
     status = lib.MpImageCreateFromImageFrame(
-        image_ptr, ctypes.byref(output_image_ptr)
+        image_ptr, ctypes.byref(output_image_ptr), ctypes.byref(error_msg)
     )
-    mediapipe_c_utils.handle_status(status)
+    try:
+      mediapipe_c_utils.handle_status(status, error_msg)
+    finally:
+      if error_msg.value is not None:
+        lib.free(error_msg)
 
     # Create an empty Image object and then populate it.
     new_image = cls.__new__(cls)
@@ -339,11 +380,12 @@ class Image:
       ```
     """
     data_ptr = ctypes.POINTER(ctypes.c_uint8)()
+    error_msg = ctypes.c_char_p()
     image_format = self.image_format
 
     if image_format in (ImageFormat.GRAY8, ImageFormat.SRGB, ImageFormat.SRGBA):
       status = self._lib.MpImageDataUint8(
-          self._image_ptr, ctypes.byref(data_ptr)
+          self._image_ptr, ctypes.byref(data_ptr), ctypes.byref(error_msg)
       )
       numpy_ptr = ctypes.cast(data_ptr, ctypes.POINTER(ctypes.c_uint8))
     elif image_format in (
@@ -353,7 +395,7 @@ class Image:
     ):
       data_ptr = ctypes.POINTER(ctypes.c_uint16)()
       status = self._lib.MpImageDataUint16(
-          self._image_ptr, ctypes.byref(data_ptr)
+          self._image_ptr, ctypes.byref(data_ptr), ctypes.byref(error_msg)
       )
       numpy_ptr = ctypes.cast(data_ptr, ctypes.POINTER(ctypes.c_uint16))
     elif image_format in (
@@ -363,13 +405,17 @@ class Image:
     ):
       data_ptr = ctypes.POINTER(ctypes.c_float)()
       status = self._lib.MpImageDataFloat32(
-          self._image_ptr, ctypes.byref(data_ptr)
+          self._image_ptr, ctypes.byref(data_ptr), ctypes.byref(error_msg)
       )
       numpy_ptr = ctypes.cast(data_ptr, ctypes.POINTER(ctypes.c_float))
     else:
       raise ValueError(f"Unsupported image format: {image_format}")
 
-    mediapipe_c_utils.handle_status(status)
+    try:
+      mediapipe_c_utils.handle_status(status, error_msg)
+    finally:
+      if error_msg.value is not None:
+        self._lib.free(error_msg)
 
     shape = (self.height, self.width, self.channels)
     array = np.ctypeslib.as_array(
@@ -403,10 +449,15 @@ class Image:
     pos_array = (ctypes.c_int * len(key))(*key)
     image_format = self.image_format
     value_ptr = ctypes.c_uint8()
+    error_msg = ctypes.c_char_p()
 
     if image_format in (ImageFormat.GRAY8, ImageFormat.SRGB, ImageFormat.SRGBA):
       status = self._lib.MpImageGetValueUint8(
-          self._image_ptr, pos_array, len(key), ctypes.byref(value_ptr)
+          self._image_ptr,
+          pos_array,
+          len(key),
+          ctypes.byref(value_ptr),
+          ctypes.byref(error_msg),
       )
     elif image_format in (
         ImageFormat.GRAY16,
@@ -415,7 +466,11 @@ class Image:
     ):
       value_ptr = ctypes.c_uint16()
       status = self._lib.MpImageGetValueUint16(
-          self._image_ptr, pos_array, len(key), ctypes.byref(value_ptr)
+          self._image_ptr,
+          pos_array,
+          len(key),
+          ctypes.byref(value_ptr),
+          ctypes.byref(error_msg),
       )
     elif image_format in (
         ImageFormat.VEC32F1,
@@ -424,12 +479,20 @@ class Image:
     ):
       value_ptr = ctypes.c_float()
       status = self._lib.MpImageGetValueFloat32(
-          self._image_ptr, pos_array, len(key), ctypes.byref(value_ptr)
+          self._image_ptr,
+          pos_array,
+          len(key),
+          ctypes.byref(value_ptr),
+          ctypes.byref(error_msg),
       )
     else:
       raise ValueError(f"Unsupported image format: {image_format}")
 
-    mediapipe_c_utils.handle_status(status)
+    try:
+      mediapipe_c_utils.handle_status(status, error_msg)
+    finally:
+      if error_msg.value is not None:
+        self._lib.free(error_msg)
     return value_ptr.value
 
   def uses_gpu(self) -> bool:

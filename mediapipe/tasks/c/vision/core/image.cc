@@ -37,7 +37,7 @@ namespace {
 using ::mediapipe::Image;
 using ::mediapipe::ImageFormat;
 using ::mediapipe::ImageFrame;
-using ::mediapipe::tasks::c::core::ToMpStatus;
+using ::mediapipe::tasks::c::core::HandleStatus;
 using ::mediapipe::tasks::vision::core::GetCachedContiguousDataAttr;
 using ::mediapipe::tasks::vision::core::GetValue;
 
@@ -197,76 +197,75 @@ absl::Status CreateMpImageInternal(MpImageFormat format, int width, int height,
 
 extern "C" {
 
-MP_EXPORT MpStatus MpImageCreateFromUint8Data(MpImageFormat format, int width,
-                                              int height,
-                                              const uint8_t* pixel_data,
-                                              int pixel_data_size,
-                                              MpImagePtr* out) {
+MP_EXPORT MpStatus MpImageCreateFromUint8Data(
+    MpImageFormat format, int width, int height, const uint8_t* pixel_data,
+    int pixel_data_size, MpImagePtr* out, char** error_msg) {
   if (!pixel_data) {
-    ABSL_LOG(ERROR) << "Pixel data is null";
-    return kMpInvalidArgument;
+    return HandleStatus(absl::InvalidArgumentError("Pixel data is null"),
+                        error_msg);
   }
 
   if (format != kMpImageFormatGray8 && format != kMpImageFormatSrgb &&
       format != kMpImageFormatSrgba) {
-    ABSL_LOG(ERROR) << "Unsupported image format: " << ToString(format)
-                    << " (expected GRAY8, SRGB, or SRGBA for uint8_t data)";
-    return kMpInvalidArgument;
+    return HandleStatus(
+        absl::InvalidArgumentError(absl::StrFormat(
+            "Unsupported image format: %s (expected GRAY8, SRGB, or "
+            "SRGBA for uint8_t data)",
+            ToString(format))),
+        error_msg);
   }
 
   auto status = CreateMpImageInternal(format, width, height, pixel_data,
                                       pixel_data_size, out);
-  return ToMpStatus(status);
+  return HandleStatus(status, error_msg);
 }
 
-MP_EXPORT MpStatus MpImageCreateFromUint16Data(MpImageFormat format, int width,
-                                               int height,
-                                               const uint16_t* pixel_data,
-                                               int pixel_data_size,
-                                               MpImagePtr* out) {
+MP_EXPORT MpStatus MpImageCreateFromUint16Data(
+    MpImageFormat format, int width, int height, const uint16_t* pixel_data,
+    int pixel_data_size, MpImagePtr* out, char** error_msg) {
   if (!pixel_data) {
-    ABSL_LOG(ERROR) << "Pixel data is null";
-    return kMpInvalidArgument;
+    return HandleStatus(absl::InvalidArgumentError("Pixel data is null"),
+                        error_msg);
   }
 
   if (format != kMpImageFormatGray16 && format != kMpImageFormatSrgb48 &&
       format != kMpImageFormatSrgba64) {
-    ABSL_LOG(ERROR)
-        << "Unsupported image format: " << ToString(format)
-        << " (expected GRAY16, SRGB48, or SRGBA64 for uint16_t data)";
-    return kMpInvalidArgument;
+    return HandleStatus(absl::InvalidArgumentError(absl::StrFormat(
+                            "Unsupported image format: %s (expected GRAY16, "
+                            "SRGB48, or SRGBA64 for uint16_t data)",
+                            ToString(format))),
+                        error_msg);
   }
 
   auto status = CreateMpImageInternal(format, width, height, pixel_data,
                                       pixel_data_size * sizeof(uint16_t), out);
-  return ToMpStatus(status);
+  return HandleStatus(status, error_msg);
 }
 
-MP_EXPORT MpStatus MpImageCreateFromFloatData(MpImageFormat format, int width,
-                                              int height,
-                                              const float* pixel_data,
-                                              int pixel_data_size,
-                                              MpImagePtr* out) {
+MP_EXPORT MpStatus MpImageCreateFromFloatData(
+    MpImageFormat format, int width, int height, const float* pixel_data,
+    int pixel_data_size, MpImagePtr* out, char** error_msg) {
   if (!pixel_data) {
-    ABSL_LOG(ERROR) << "Pixel data is null";
-    return kMpInvalidArgument;
+    return HandleStatus(absl::InvalidArgumentError("Pixel data is null"),
+                        error_msg);
   }
 
   if (format != kMpImageFormatVec32F1 && format != kMpImageFormatVec32F2 &&
       format != kMpImageFormatVec32F4) {
-    ABSL_LOG(ERROR)
-        << "Unsupported image format: " << ToString(format)
-        << " (expected VEC32F1, VEC32F2, or VEC32F4 for float data)";
-    return kMpInvalidArgument;
+    return HandleStatus(absl::InvalidArgumentError(absl::StrFormat(
+                            "Unsupported image format: %s (expected VEC32F1, "
+                            "VEC32F2, or VEC32F4 for float data)",
+                            ToString(format))),
+                        error_msg);
   }
 
   auto status = CreateMpImageInternal(format, width, height, pixel_data,
                                       pixel_data_size * sizeof(float), out);
-  return ToMpStatus(status);
+  return HandleStatus(status, error_msg);
 }
 
-MP_EXPORT MpStatus MpImageCreateFromFile(const char* file_name,
-                                         MpImagePtr* out) {
+MP_EXPORT MpStatus MpImageCreateFromFile(const char* file_name, MpImagePtr* out,
+                                         char** error_msg) {
   unsigned char* image_data = nullptr;
   int width = 0;
   int height = 0;
@@ -287,15 +286,14 @@ MP_EXPORT MpStatus MpImageCreateFromFile(const char* file_name,
                          /*desired_channels=*/0);
 #endif  // TARGET_OS_OSX && !MEDIAPIPE_DISABLE_GPU
   if (image_data == nullptr) {
-    ABSL_LOG(ERROR) << "Failed to load image from file: " << file_name;
-    return kMpInternal;
+    return HandleStatus(absl::InternalError("Failed to load image from file"),
+                        error_msg);
   }
 
   auto format = GetImageFormatFromChannels(channels);
   if (!format.ok()) {
-    ABSL_LOG(ERROR) << "Unsupported image format: " << format.status();
     stbi_image_free(image_data);
-    return kMpInvalidArgument;
+    return HandleStatus(format.status(), error_msg);
   }
 
   auto image = std::make_shared<ImageFrame>(
@@ -308,7 +306,8 @@ MP_EXPORT MpStatus MpImageCreateFromFile(const char* file_name,
 }
 
 MP_EXPORT MpStatus MpImageCreateFromImageFrame(MpImagePtr image,
-                                               MpImagePtr* out) {
+                                               MpImagePtr* out,
+                                               char** error_ms) {
   auto mp_image = std::make_unique<MpImageInternal>();
   mp_image->image = Image(image->image.GetImageFrameSharedPtr());
   *out = mp_image.release();
@@ -356,45 +355,48 @@ MP_EXPORT MpImageFormat MpImageGetFormat(const MpImagePtr image) {
   return ToCImageFormat(GetImageFrameSharedPtr(image)->Format());
 }
 
-MP_EXPORT MpStatus MpImageDataUint8(const MpImagePtr image,
-                                    const uint8_t** out) {
+MP_EXPORT MpStatus MpImageDataUint8(const MpImagePtr image, const uint8_t** out,
+                                    char** error_msg) {
   auto data = GetCachedContiguousDataAttr<uint8_t>(image);
   if (data.ok()) {
     *out = *data;
   }
-  return ToMpStatus(data.status());
+  return HandleStatus(data.status(), error_msg);
 }
 
 MP_EXPORT MpStatus MpImageDataUint16(const MpImagePtr image,
-                                     const uint16_t** out) {
+                                     const uint16_t** out, char** error_msg) {
   auto data = GetCachedContiguousDataAttr<uint16_t>(image);
   if (data.ok()) {
     *out = *data;
   }
-  return ToMpStatus(data.status());
+  return HandleStatus(data.status(), error_msg);
 }
 
-MP_EXPORT MpStatus MpImageDataFloat32(const MpImagePtr image,
-                                      const float** out) {
+MP_EXPORT MpStatus MpImageDataFloat32(MpImagePtr image, const float** out,
+                                      char** error_msg) {
   auto data = GetCachedContiguousDataAttr<float>(image);
   if (data.ok()) {
     *out = *data;
   }
-  return ToMpStatus(data.status());
+  return HandleStatus(data.status(), error_msg);
 }
 
 MP_EXPORT MpStatus MpImageGetValueUint8(const MpImagePtr image, int* pos,
-                                        int pos_size, uint8_t* out) {
+                                        int pos_size, uint8_t* out,
+                                        char** error_msg) {
   auto status = ValidateDimensions(image, pos_size);
   if (!status.ok()) {
-    return ToMpStatus(status);
+    return HandleStatus(status, error_msg);
   }
 
   size_t byte_depth = GetImageFrameSharedPtr(image)->ByteDepth();
   if (byte_depth != 1) {
-    ABSL_LOG(ERROR) << "Unexpected image byte depth: " << byte_depth
-                    << " (expected 1 for uint8_t data)";
-    return kMpInvalidArgument;
+    return HandleStatus(absl::InvalidArgumentError(absl::StrFormat(
+                            "Unexpected image byte depth: %d (expected 1 for "
+                            "uint8_t data)",
+                            byte_depth)),
+                        error_msg);
   }
 
   std::vector<int> pos_vec(pos, pos + pos_size);
@@ -402,21 +404,24 @@ MP_EXPORT MpStatus MpImageGetValueUint8(const MpImagePtr image, int* pos,
   if (value.ok()) {
     *out = *value;
   }
-  return ToMpStatus(value.status());
+  return HandleStatus(value.status(), error_msg);
 }
 
 MP_EXPORT MpStatus MpImageGetValueUint16(const MpImagePtr image, int* pos,
-                                         int pos_size, uint16_t* out) {
+                                         int pos_size, uint16_t* out,
+                                         char** error_msg) {
   auto status = ValidateDimensions(image, pos_size);
   if (!status.ok()) {
-    return ToMpStatus(status);
+    return HandleStatus(status, error_msg);
   }
 
   size_t byte_depth = GetImageFrameSharedPtr(image)->ByteDepth();
   if (byte_depth != 2) {
-    ABSL_LOG(ERROR) << "Unexpected image byte depth: " << byte_depth
-                    << " (expected 2 for uint16_t data)";
-    return kMpInvalidArgument;
+    return HandleStatus(absl::InvalidArgumentError(absl::StrFormat(
+                            "Unexpected image byte depth: %d (expected 2 for "
+                            "uint16_t data)",
+                            byte_depth)),
+                        error_msg);
   }
 
   std::vector<int> pos_vec(pos, pos + pos_size);
@@ -424,21 +429,24 @@ MP_EXPORT MpStatus MpImageGetValueUint16(const MpImagePtr image, int* pos,
   if (value.ok()) {
     *out = *value;
   }
-  return ToMpStatus(value.status());
+  return HandleStatus(value.status(), error_msg);
 }
 
 MP_EXPORT MpStatus MpImageGetValueFloat32(const MpImagePtr image, int* pos,
-                                          int pos_size, float* out) {
+                                          int pos_size, float* out,
+                                          char** error_msg) {
   auto status = ValidateDimensions(image, pos_size);
   if (!status.ok()) {
-    return ToMpStatus(status);
+    return HandleStatus(status, error_msg);
   }
 
   size_t byte_depth = GetImageFrameSharedPtr(image)->ByteDepth();
   if (byte_depth != 4) {
-    ABSL_LOG(ERROR) << "Unexpected image byte depth: " << byte_depth
-                    << " (expected 4 for float data)";
-    return kMpInvalidArgument;
+    return HandleStatus(absl::InvalidArgumentError(absl::StrFormat(
+                            "Unexpected image byte depth: %d (expected 4 for "
+                            "float data)",
+                            byte_depth)),
+                        error_msg);
   }
 
   std::vector<int> pos_vec(pos, pos + pos_size);
@@ -446,7 +454,7 @@ MP_EXPORT MpStatus MpImageGetValueFloat32(const MpImagePtr image, int* pos,
   if (value.ok()) {
     *out = *value;
   }
-  return ToMpStatus(value.status());
+  return HandleStatus(value.status(), error_msg);
 }
 
 MP_EXPORT void MpImageFree(MpImagePtr image) { delete image; }

@@ -103,56 +103,49 @@ class HandLandmarkerOptionsC(ctypes.Structure):
 
 
 _CTYPES_SIGNATURES = (
-    _CFunction(
+    mediapipe_c_utils.CStatusFunction(
         'MpHandLandmarkerCreate',
-        [
+        (
             ctypes.POINTER(HandLandmarkerOptionsC),
             ctypes.POINTER(ctypes.c_void_p),
-        ],
-        ctypes.c_int,
+        ),
     ),
-    _CFunction(
+    mediapipe_c_utils.CStatusFunction(
         'MpHandLandmarkerDetectImage',
-        [
+        (
             ctypes.c_void_p,
             ctypes.c_void_p,
             ctypes.POINTER(image_processing_options_c.ImageProcessingOptionsC),
             ctypes.POINTER(HandLandmarkerResultC),
-        ],
-        ctypes.c_int,
+        ),
     ),
-    _CFunction(
+    mediapipe_c_utils.CStatusFunction(
         'MpHandLandmarkerDetectForVideo',
-        [
+        (
             ctypes.c_void_p,
             ctypes.c_void_p,
             ctypes.POINTER(image_processing_options_c.ImageProcessingOptionsC),
             ctypes.c_int64,
             ctypes.POINTER(HandLandmarkerResultC),
-        ],
-        ctypes.c_int,
+        ),
     ),
-    _CFunction(
+    mediapipe_c_utils.CStatusFunction(
         'MpHandLandmarkerDetectAsync',
-        [
+        (
             ctypes.c_void_p,
             ctypes.c_void_p,
             ctypes.POINTER(image_processing_options_c.ImageProcessingOptionsC),
             ctypes.c_int64,
-        ],
-        ctypes.c_int,
+        ),
     ),
     _CFunction(
         'MpHandLandmarkerCloseResult',
         [ctypes.POINTER(HandLandmarkerResultC)],
         None,
     ),
-    _CFunction(
+    mediapipe_c_utils.CStatusFunction(
         'MpHandLandmarkerClose',
-        [
-            ctypes.c_void_p,
-        ],
-        ctypes.c_int,
+        (ctypes.c_void_p,),
     ),
 )
 
@@ -426,11 +419,10 @@ class HandLandmarker:
     )
 
     landmarker_handle = ctypes.c_void_p()
-    status = lib.MpHandLandmarkerCreate(
+    lib.MpHandLandmarkerCreate(
         ctypes.byref(ctypes_options),
         ctypes.byref(landmarker_handle),
     )
-    mediapipe_c_utils.handle_status(status)
     return HandLandmarker(
         lib=lib,
         handle=landmarker_handle,
@@ -471,13 +463,12 @@ class HandLandmarker:
         if image_processing_options
         else None
     )
-    status = self._lib.MpHandLandmarkerDetectImage(
+    self._lib.MpHandLandmarkerDetectImage(
         self._handle,
         c_image,
         c_image_processing_options,
         ctypes.byref(c_result),
     )
-    mediapipe_c_utils.handle_status(status)
 
     py_result = HandLandmarkerResult.from_ctypes(c_result)
     self._lib.MpHandLandmarkerCloseResult(ctypes.byref(c_result))
@@ -519,14 +510,13 @@ class HandLandmarker:
         if image_processing_options
         else None
     )
-    status = self._lib.MpHandLandmarkerDetectForVideo(
+    self._lib.MpHandLandmarkerDetectForVideo(
         self._handle,
         c_image,
         c_image_processing_options,
         timestamp_ms,
         ctypes.byref(c_result),
     )
-    mediapipe_c_utils.handle_status(status)
 
     py_result = HandLandmarkerResult.from_ctypes(c_result)
     self._lib.MpHandLandmarkerCloseResult(ctypes.byref(c_result))
@@ -576,19 +566,17 @@ class HandLandmarker:
         if image_processing_options
         else None
     )
-    status = self._lib.MpHandLandmarkerDetectAsync(
+    self._lib.MpHandLandmarkerDetectAsync(
         self._handle,
         c_image,
         c_image_processing_options,
         timestamp_ms,
     )
-    mediapipe_c_utils.handle_status(status)
 
   def close(self):
     """Shuts down the MediaPipe task instance."""
     if self._handle:
-      status = self._lib.MpHandLandmarkerClose(self._handle)
-      mediapipe_c_utils.handle_status(status)
+      self._lib.MpHandLandmarkerClose(self._handle)
       self._handle = None
       self._dispatcher.close()
       self._lib.close()

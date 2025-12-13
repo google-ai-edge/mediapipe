@@ -21,7 +21,7 @@ limitations under the License.
 #include <optional>
 #include <utility>
 
-#include "absl/log/absl_log.h"
+#include "absl/log/absl_check.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/formats/image.h"
@@ -43,7 +43,7 @@ limitations under the License.
 
 struct MpImageEmbedderInternal {
   std::unique_ptr<::mediapipe::tasks::vision::image_embedder::ImageEmbedder>
-      embedder;
+      instance;
 };
 
 namespace mediapipe::tasks::c::vision::image_embedder {
@@ -69,10 +69,15 @@ using CppImageProcessingOptions =
 
 const Image& ToImage(const MpImagePtr mp_image) { return mp_image->image; }
 
+ImageEmbedder* GetCppEmbedder(MpImageEmbedderPtr embedder) {
+  ABSL_CHECK(embedder != nullptr) << "ImageEmbedder is null.";
+  return embedder->instance.get();
+}
+
 }  // namespace
 
-MpStatus CppImageEmbedderCreate(const ImageEmbedderOptions& options,
-                                MpImageEmbedderPtr* embedder) {
+absl::Status CppImageEmbedderCreate(const ImageEmbedderOptions& options,
+                                    MpImageEmbedderPtr* embedder) {
   auto cpp_options = std::make_unique<
       ::mediapipe::tasks::vision::image_embedder::ImageEmbedderOptions>();
 
@@ -85,10 +90,8 @@ MpStatus CppImageEmbedderCreate(const ImageEmbedderOptions& options,
   // set to RunningMode::LIVE_STREAM.
   if (cpp_options->running_mode == RunningMode::LIVE_STREAM) {
     if (options.result_callback == nullptr) {
-      const absl::Status status = absl::InvalidArgumentError(
+      return absl::InvalidArgumentError(
           "Provided null pointer to callback function.");
-      ABSL_LOG(ERROR) << "Failed to create ImageEmbedder: " << status;
-      return ToMpStatus(status);
     }
 
     ImageEmbedderOptions::result_callback_fn result_callback =
@@ -111,19 +114,17 @@ MpStatus CppImageEmbedderCreate(const ImageEmbedderOptions& options,
 
   auto cpp_embedder = ImageEmbedder::Create(std::move(cpp_options));
   if (!cpp_embedder.ok()) {
-    ABSL_LOG(ERROR) << "Failed to create ImageEmbedder: "
-                    << cpp_embedder.status();
-    return ToMpStatus(cpp_embedder.status());
+    return cpp_embedder.status();
   }
-  *embedder = new MpImageEmbedderInternal{.embedder = std::move(*cpp_embedder)};
-  return kMpOk;
+  *embedder = new MpImageEmbedderInternal{.instance = std::move(*cpp_embedder)};
+  return absl::OkStatus();
 }
 
-MpStatus CppImageEmbedderEmbed(
+absl::Status CppImageEmbedderEmbed(
     MpImageEmbedderPtr embedder, MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
     ImageEmbedderResult* result) {
-  ImageEmbedder* cpp_embedder = embedder->embedder.get();
+  ImageEmbedder* cpp_embedder = GetCppEmbedder(embedder);
   std::optional<CppImageProcessingOptions> cpp_image_processing_options;
   if (image_processing_options) {
     CppImageProcessingOptions options;
@@ -133,18 +134,17 @@ MpStatus CppImageEmbedderEmbed(
   auto cpp_result =
       cpp_embedder->Embed(ToImage(image), cpp_image_processing_options);
   if (!cpp_result.ok()) {
-    ABSL_LOG(ERROR) << "Embedding extraction failed: " << cpp_result.status();
-    return ToMpStatus(cpp_result.status());
+    return cpp_result.status();
   }
   CppConvertToEmbeddingResult(*cpp_result, result);
-  return kMpOk;
+  return absl::OkStatus();
 }
 
-MpStatus CppImageEmbedderEmbedForVideo(
+absl::Status CppImageEmbedderEmbedForVideo(
     MpImageEmbedderPtr embedder, MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
     int64_t timestamp_ms, ImageEmbedderResult* result) {
-  ImageEmbedder* cpp_embedder = embedder->embedder.get();
+  ImageEmbedder* cpp_embedder = GetCppEmbedder(embedder);
   std::optional<CppImageProcessingOptions> cpp_image_processing_options;
   if (image_processing_options) {
     CppImageProcessingOptions options;
@@ -154,52 +154,44 @@ MpStatus CppImageEmbedderEmbedForVideo(
   auto cpp_result = cpp_embedder->EmbedForVideo(ToImage(image), timestamp_ms,
                                                 cpp_image_processing_options);
   if (!cpp_result.ok()) {
-    ABSL_LOG(ERROR) << "Embedding extraction failed: " << cpp_result.status();
-    return ToMpStatus(cpp_result.status());
+    return cpp_result.status();
   }
   CppConvertToEmbeddingResult(*cpp_result, result);
-  return kMpOk;
+  return absl::OkStatus();
 }
 
-MpStatus CppImageEmbedderEmbedAsync(
+absl::Status CppImageEmbedderEmbedAsync(
     MpImageEmbedderPtr embedder, MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
     int64_t timestamp_ms) {
-  ImageEmbedder* cpp_embedder = embedder->embedder.get();
+  ImageEmbedder* cpp_embedder = GetCppEmbedder(embedder);
   std::optional<CppImageProcessingOptions> cpp_image_processing_options;
   if (image_processing_options) {
     CppImageProcessingOptions options;
     CppConvertToImageProcessingOptions(*image_processing_options, &options);
     cpp_image_processing_options = options;
   }
-  auto cpp_result = cpp_embedder->EmbedAsync(ToImage(image), timestamp_ms,
-                                             cpp_image_processing_options);
-  if (!cpp_result.ok()) {
-    ABSL_LOG(ERROR) << "Data preparation for the embedding extraction failed: "
-                    << cpp_result;
-    return ToMpStatus(cpp_result);
-  }
-  return kMpOk;
+  return cpp_embedder->EmbedAsync(ToImage(image), timestamp_ms,
+                                  cpp_image_processing_options);
 }
 
 void CppImageEmbedderCloseResult(ImageEmbedderResult* result) {
   CppCloseEmbeddingResult(result);
 }
 
-MpStatus CppImageEmbedderClose(MpImageEmbedderPtr embedder) {
-  auto cpp_embedder = embedder->embedder.get();
+absl::Status CppImageEmbedderClose(MpImageEmbedderPtr embedder) {
+  auto cpp_embedder = GetCppEmbedder(embedder);
   auto result = cpp_embedder->Close();
   if (!result.ok()) {
-    ABSL_LOG(ERROR) << "Failed to close ImageEmbedder: " << result;
-    return ToMpStatus(result);
+    return result;
   }
   delete embedder;
-  return kMpOk;
+  return absl::OkStatus();
 }
 
-MpStatus CppImageEmbedderCosineSimilarity(const Embedding& u,
-                                          const Embedding& v,
-                                          double* similarity) {
+absl::Status CppImageEmbedderCosineSimilarity(const Embedding& u,
+                                              const Embedding& v,
+                                              double* similarity) {
   CppEmbedding cpp_u;
   CppConvertToCppEmbedding(u, &cpp_u);
   CppEmbedding cpp_v;
@@ -208,12 +200,10 @@ MpStatus CppImageEmbedderCosineSimilarity(const Embedding& u,
       mediapipe::tasks::vision::image_embedder::ImageEmbedder::CosineSimilarity(
           cpp_u, cpp_v);
   if (!status_or_similarity.ok()) {
-    ABSL_LOG(ERROR) << "Cannot compute cosine similarity: "
-                    << status_or_similarity.status();
-    return ToMpStatus(status_or_similarity.status());
+    return status_or_similarity.status();
   }
   *similarity = status_or_similarity.value();
-  return kMpOk;
+  return absl::OkStatus();
 }
 
 }  // namespace mediapipe::tasks::c::vision::image_embedder
@@ -221,35 +211,42 @@ MpStatus CppImageEmbedderCosineSimilarity(const Embedding& u,
 extern "C" {
 
 MP_EXPORT MpStatus MpImageEmbedderCreate(struct ImageEmbedderOptions* options,
-                                         MpImageEmbedderPtr* embedder_out) {
-  return mediapipe::tasks::c::vision::image_embedder::CppImageEmbedderCreate(
-      *options, embedder_out);
+                                         MpImageEmbedderPtr* embedder_out,
+                                         char** error_msg) {
+  absl::Status status =
+      mediapipe::tasks::c::vision::image_embedder::CppImageEmbedderCreate(
+          *options, embedder_out);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
 MP_EXPORT MpStatus MpImageEmbedderEmbedImage(
     MpImageEmbedderPtr embedder, MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
-    ImageEmbedderResult* result) {
-  return mediapipe::tasks::c::vision::image_embedder::CppImageEmbedderEmbed(
-      embedder, image, image_processing_options, result);
+    ImageEmbedderResult* result, char** error_msg) {
+  absl::Status status =
+      mediapipe::tasks::c::vision::image_embedder::CppImageEmbedderEmbed(
+          embedder, image, image_processing_options, result);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
 MP_EXPORT MpStatus MpImageEmbedderEmbedForVideo(
     MpImageEmbedderPtr embedder, MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
-    int64_t timestamp_ms, ImageEmbedderResult* result) {
-  return mediapipe::tasks::c::vision::image_embedder::
+    int64_t timestamp_ms, ImageEmbedderResult* result, char** error_msg) {
+  absl::Status status = mediapipe::tasks::c::vision::image_embedder::
       CppImageEmbedderEmbedForVideo(embedder, image, image_processing_options,
                                     timestamp_ms, result);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
 MP_EXPORT MpStatus MpImageEmbedderEmbedAsync(
     MpImageEmbedderPtr embedder, MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
-    int64_t timestamp_ms) {
-  return mediapipe::tasks::c::vision::image_embedder::
-      CppImageEmbedderEmbedAsync(embedder, image, image_processing_options,
-                                 timestamp_ms);
+    int64_t timestamp_ms, char** error_msg) {
+  absl::Status status =
+      mediapipe::tasks::c::vision::image_embedder::CppImageEmbedderEmbedAsync(
+          embedder, image, image_processing_options, timestamp_ms);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
 MP_EXPORT void MpImageEmbedderCloseResult(ImageEmbedderResult* result) {
@@ -257,16 +254,21 @@ MP_EXPORT void MpImageEmbedderCloseResult(ImageEmbedderResult* result) {
       result);
 }
 
-MP_EXPORT MpStatus MpImageEmbedderClose(MpImageEmbedderPtr embedder) {
-  return mediapipe::tasks::c::vision::image_embedder::CppImageEmbedderClose(
-      embedder);
+MP_EXPORT MpStatus MpImageEmbedderClose(MpImageEmbedderPtr embedder,
+                                        char** error_msg) {
+  absl::Status status =
+      mediapipe::tasks::c::vision::image_embedder::CppImageEmbedderClose(
+          embedder);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
 MP_EXPORT MpStatus MpImageEmbedderCosineSimilarity(const Embedding& u,
                                                    const Embedding& v,
-                                                   double* similarity_out) {
-  return mediapipe::tasks::c::vision::image_embedder::
+                                                   double* similarity_out,
+                                                   char** error_msg) {
+  absl::Status status = mediapipe::tasks::c::vision::image_embedder::
       CppImageEmbedderCosineSimilarity(u, v, similarity_out);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
 }  // extern "C"

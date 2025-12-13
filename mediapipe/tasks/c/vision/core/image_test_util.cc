@@ -14,8 +14,6 @@
 
 #include "mediapipe/tasks/c/vision/core/image_test_util.h"
 
-#include <string>
-
 #include "absl/log/absl_check.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/gpu/gpu_buffer.h"
@@ -27,7 +25,8 @@ namespace mediapipe::tasks::vision::core {
 
 ScopedMpImage GetImage(const std::string& file_name) {
   MpImagePtr image_ptr = nullptr;
-  MpStatus status = MpImageCreateFromFile(file_name.c_str(), &image_ptr);
+  MpStatus status = MpImageCreateFromFile(file_name.c_str(), &image_ptr,
+                                          /*error_msg=*/nullptr);
   ABSL_CHECK_EQ(status, kMpOk);
   ABSL_CHECK_NE(image_ptr, nullptr);
   return ScopedMpImage(image_ptr);

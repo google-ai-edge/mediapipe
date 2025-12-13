@@ -1,8 +1,6 @@
 #ifndef MEDIAPIPE_GPU_WEBGPU_WEBGPU_TEXTURE_BUFFER_H_
 #define MEDIAPIPE_GPU_WEBGPU_WEBGPU_TEXTURE_BUFFER_H_
 
-#include <webgpu/webgpu_cpp.h>
-
 #include <cstdint>
 #include <memory>
 #include <utility>
@@ -15,6 +13,7 @@
 #include "mediapipe/gpu/gpu_buffer_storage.h"
 #include "mediapipe/gpu/multi_pool.h"
 #include "mediapipe/gpu/reusable_pool.h"
+#include "mediapipe/gpu/webgpu/webgpu_headers.h"
 #include "mediapipe/gpu/webgpu/webgpu_service.h"
 #include "mediapipe/gpu/webgpu/webgpu_texture_view.h"
 

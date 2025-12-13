@@ -1,7 +1,5 @@
 #include "mediapipe/gpu/webgpu/webgpu_utils.h"
 
-#include <webgpu/webgpu_cpp.h>
-
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -13,6 +11,7 @@
 #include "absl/status/statusor.h"
 #include "absl/time/time.h"
 #include "mediapipe/framework/port/status_macros.h"
+#include "mediapipe/gpu/webgpu/webgpu_headers.h"
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten/em_js.h>
