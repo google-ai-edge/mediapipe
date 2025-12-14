@@ -16,17 +16,19 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/image_segmenter/calculators/tensors_to_segmentation_calculator.h"
 
 #include <algorithm>
+#include <array>
 #include <cstdint>
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
+#include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/types/span.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
 #include "mediapipe/framework/formats/image.h"
+#include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/gmock.h"
@@ -42,14 +44,6 @@ namespace {
 using ::mediapipe::Image;
 using ::mediapipe::Tensor;
 using ::testing::HasSubstr;
-
-constexpr std::array<float, 4> kTestValues = {0.2, 1.5, -0.6, 3.4};
-
-constexpr std::array<float, 4> kExpectedSoftmaxValues = {0.03372, 0.12374,
-                                                         0.01515, 0.82737};
-
-constexpr std::array<float, 4> kExpectedSigmoidValues = {0.54983, 0.81757,
-                                                         0.35434, 0.96770};
 
 void PushTensorsToRunner(int tensor_height, int tensor_width,
                          const std::vector<float>& test_values,
@@ -70,7 +64,7 @@ void PushTensorsToRunner(int tensor_height, int tensor_width,
         absl::MakeSpan(tensor_buffer + i * channels, channels);
     std::copy(test_values.begin(), test_values.end(), channel_buffer.begin());
   }
-  // Pushs input to the runner.
+  // Push input to the runner.
   auto& input_stream_packets = runner->MutableInputs()->Tag("TENSORS").packets;
   input_stream_packets.push_back(
       mediapipe::Adopt(tensors.release()).At(Timestamp(0)));
@@ -86,29 +80,69 @@ std::vector<Packet> GetPackets(const CalculatorRunner& runner) {
   return mask_packets;
 }
 
-MATCHER_P4(FloatImagePacket, expected_height, expected_width, expected_value,
-           buffer_indices, "") {
+MATCHER_P5(FloatImagePacket, expected_height, expected_width, expected_format,
+           expected_value, buffer_indices, "") {
   const auto& segmented_mask = arg.template Get<Image>();
   auto image_frame_ptr = segmented_mask.GetImageFrameSharedPtr();
   const float* data_buffer =
       reinterpret_cast<const float*>(image_frame_ptr->PixelData());
-  return (segmented_mask.width() == expected_width &&
-          segmented_mask.height() == expected_height &&
-          std::all_of(buffer_indices.begin(), buffer_indices.end(), [&](int i) {
-            return std::abs(data_buffer[i] - expected_value) < 1e-5;
-          }));
+  if (segmented_mask.width() != expected_width ||
+      segmented_mask.height() != expected_height) {
+    *result_listener << "Expected image size: " << expected_width << "x"
+                     << expected_height
+                     << ", actual: " << segmented_mask.width() << "x"
+                     << segmented_mask.height();
+    return false;
+  }
+  if (image_frame_ptr->Format() != expected_format) {
+    *result_listener << "Expected image format: "
+                     << ImageFormat::Format_Name(expected_format)
+                     << ", actual: "
+                     << ImageFormat::Format_Name(image_frame_ptr->Format());
+    return false;
+  }
+  for (int i = 0; i < buffer_indices.size(); ++i) {
+    if (std::abs(data_buffer[buffer_indices[i]] - expected_value) > 1e-5) {
+      *result_listener << "Expected value at " << buffer_indices[i] << ": "
+                       << expected_value
+                       << ", actual: " << data_buffer[buffer_indices[i]];
+      return false;
+    }
+  }
+  return true;
 }
 
-MATCHER_P4(Uint8ImagePacket, expected_height, expected_width, expected_value,
-           buffer_indices, "") {
+MATCHER_P5(Uint8ImagePacket, expected_height, expected_width, expected_format,
+           expected_value, buffer_indices, "") {
   const auto& segmented_mask = arg.template Get<Image>();
   auto image_frame_ptr = segmented_mask.GetImageFrameSharedPtr();
+
   const uint8_t* data_buffer =
       reinterpret_cast<const uint8_t*>(image_frame_ptr->PixelData());
-  return (segmented_mask.width() == expected_width &&
-          segmented_mask.height() == expected_height &&
-          std::all_of(buffer_indices.begin(), buffer_indices.end(),
-                      [&](int i) { return data_buffer[i] == expected_value; }));
+  if (segmented_mask.width() != expected_width ||
+      segmented_mask.height() != expected_height) {
+    *result_listener << "Expected image size: " << expected_width << "x"
+                     << expected_height
+                     << ", actual: " << segmented_mask.width() << "x"
+                     << segmented_mask.height();
+    return false;
+  }
+  if (image_frame_ptr->Format() != expected_format) {
+    *result_listener << "Expected image format: "
+                     << ImageFormat::Format_Name(expected_format)
+                     << ", actual: "
+                     << ImageFormat::Format_Name(image_frame_ptr->Format());
+    return false;
+  }
+  for (int i = 0; i < buffer_indices.size(); ++i) {
+    if (data_buffer[buffer_indices[i]] != expected_value) {
+      *result_listener << "Expected value at " << buffer_indices[i] << ": "
+                       << static_cast<int>(expected_value) << ", actual: "
+                       << static_cast<int>(data_buffer[buffer_indices[i]]);
+      return false;
+    }
+  }
+  return true;
 }
 
 }  // namespace
@@ -179,6 +213,10 @@ TEST(TensorsToSegmentationCalculatorTest, SucceedsConfidenceMaskWithSoftmax) {
             }
           )pb"));
 
+  constexpr std::array<float, 4> kTestValues = {0.2, 1.5, -0.6, 3.4};
+  constexpr std::array<float, 4> kExpectedSoftmaxValues = {0.03372, 0.12374,
+                                                           0.01515, 0.82737};
+
   const int tensor_height = 2;
   const int tensor_width = 5;
   const int tensor_channels = kTestValues.size();
@@ -189,19 +227,17 @@ TEST(TensorsToSegmentationCalculatorTest, SucceedsConfidenceMaskWithSoftmax) {
   ASSERT_EQ(runner.Outputs().NumEntries(), tensor_channels);
   const std::vector<int> buffer_indices = {0};
   std::vector<Packet> packets = GetPackets(runner);
-  EXPECT_THAT(packets,
-              testing::ElementsAre(
-                  FloatImagePacket(tensor_height, tensor_width,
-                                   kExpectedSoftmaxValues[0], buffer_indices),
-                  FloatImagePacket(tensor_height, tensor_width,
-                                   kExpectedSoftmaxValues[1], buffer_indices),
-                  FloatImagePacket(tensor_height, tensor_width,
-                                   kExpectedSoftmaxValues[2], buffer_indices),
-                  FloatImagePacket(tensor_height, tensor_width,
-                                   kExpectedSoftmaxValues[3], buffer_indices)));
-
-  // VerifyRunnerResult<float>(tensor_height, tensor_width, tensor_channels,
-  // kExpectedSoftmaxValues, runner);
+  EXPECT_THAT(
+      packets,
+      testing::ElementsAre(
+          FloatImagePacket(tensor_height, tensor_width, ImageFormat::VEC32F1,
+                           kExpectedSoftmaxValues[0], buffer_indices),
+          FloatImagePacket(tensor_height, tensor_width, ImageFormat::VEC32F1,
+                           kExpectedSoftmaxValues[1], buffer_indices),
+          FloatImagePacket(tensor_height, tensor_width, ImageFormat::VEC32F1,
+                           kExpectedSoftmaxValues[2], buffer_indices),
+          FloatImagePacket(tensor_height, tensor_width, ImageFormat::VEC32F1,
+                           kExpectedSoftmaxValues[3], buffer_indices)));
 }
 
 TEST(TensorsToSegmentationCalculatorTest, SucceedsConfidenceMaskWithNone) {
@@ -221,6 +257,8 @@ TEST(TensorsToSegmentationCalculatorTest, SucceedsConfidenceMaskWithNone) {
             }
           )pb"));
 
+  constexpr std::array<float, 4> kTestValues = {0.2, 1.5, -0.6, 3.4};
+
   const int tensor_height = 3;
   const int tensor_width = 4;
   const int tensor_channels = kTestValues.size();
@@ -231,15 +269,17 @@ TEST(TensorsToSegmentationCalculatorTest, SucceedsConfidenceMaskWithNone) {
   ASSERT_EQ(runner.Outputs().NumEntries(), tensor_channels);
   const std::vector<int> buffer_indices = {0};
   std::vector<Packet> packets = GetPackets(runner);
-  EXPECT_THAT(packets, testing::ElementsAre(
-                           FloatImagePacket(tensor_height, tensor_width,
-                                            kTestValues[0], buffer_indices),
-                           FloatImagePacket(tensor_height, tensor_width,
-                                            kTestValues[1], buffer_indices),
-                           FloatImagePacket(tensor_height, tensor_width,
-                                            kTestValues[2], buffer_indices),
-                           FloatImagePacket(tensor_height, tensor_width,
-                                            kTestValues[3], buffer_indices)));
+  EXPECT_THAT(
+      packets,
+      testing::ElementsAre(
+          FloatImagePacket(tensor_height, tensor_width, ImageFormat::VEC32F1,
+                           kTestValues[0], buffer_indices),
+          FloatImagePacket(tensor_height, tensor_width, ImageFormat::VEC32F1,
+                           kTestValues[1], buffer_indices),
+          FloatImagePacket(tensor_height, tensor_width, ImageFormat::VEC32F1,
+                           kTestValues[2], buffer_indices),
+          FloatImagePacket(tensor_height, tensor_width, ImageFormat::VEC32F1,
+                           kTestValues[3], buffer_indices)));
 }
 
 TEST(TensorsToSegmentationCalculatorTest, SucceedsConfidenceMaskWithSigmoid) {
@@ -259,6 +299,10 @@ TEST(TensorsToSegmentationCalculatorTest, SucceedsConfidenceMaskWithSigmoid) {
             }
           )pb"));
 
+  constexpr std::array<float, 4> kTestValues = {0.2, 1.5, -0.6, 3.4};
+  constexpr std::array<float, 4> kExpectedSigmoidValues = {0.54983, 0.81757,
+                                                           0.35434, 0.96770};
+
   const int tensor_height = 4;
   const int tensor_width = 6;
   const int tensor_channels = kTestValues.size();
@@ -269,16 +313,216 @@ TEST(TensorsToSegmentationCalculatorTest, SucceedsConfidenceMaskWithSigmoid) {
   ASSERT_EQ(runner.Outputs().NumEntries(), tensor_channels);
   const std::vector<int> buffer_indices = {0};
   std::vector<Packet> packets = GetPackets(runner);
-  EXPECT_THAT(packets,
-              testing::ElementsAre(
-                  FloatImagePacket(tensor_height, tensor_width,
-                                   kExpectedSigmoidValues[0], buffer_indices),
-                  FloatImagePacket(tensor_height, tensor_width,
-                                   kExpectedSigmoidValues[1], buffer_indices),
-                  FloatImagePacket(tensor_height, tensor_width,
-                                   kExpectedSigmoidValues[2], buffer_indices),
-                  FloatImagePacket(tensor_height, tensor_width,
-                                   kExpectedSigmoidValues[3], buffer_indices)));
+  EXPECT_THAT(
+      packets,
+      testing::ElementsAre(
+          FloatImagePacket(tensor_height, tensor_width, ImageFormat::VEC32F1,
+                           kExpectedSigmoidValues[0], buffer_indices),
+          FloatImagePacket(tensor_height, tensor_width, ImageFormat::VEC32F1,
+                           kExpectedSigmoidValues[1], buffer_indices),
+          FloatImagePacket(tensor_height, tensor_width, ImageFormat::VEC32F1,
+                           kExpectedSigmoidValues[2], buffer_indices),
+          FloatImagePacket(tensor_height, tensor_width, ImageFormat::VEC32F1,
+                           kExpectedSigmoidValues[3], buffer_indices)));
+}
+
+TEST(TensorsToSegmentationCalculatorTest, SucceedsConfidenceMaskWithPack4) {
+  CalculatorRunner runner(
+      mediapipe::ParseTextProtoOrDie<mediapipe::CalculatorGraphConfig::Node>(
+          R"pb(
+            calculator: "mediapipe.tasks.TensorsToSegmentationCalculator"
+            input_stream: "TENSORS:tensors"
+            output_stream: "CONFIDENCE_MASK:0:segmented_mask_0"
+            options {
+              [mediapipe.tasks.TensorsToSegmentationCalculatorOptions.ext] {
+                segmenter_options { activation: NONE }
+                confidence_mask_options { pack4: true }
+              }
+            }
+          )pb"));
+
+  constexpr std::array<float, 4> kTestValues = {0.2, 1.5, -0.6, 3.4};
+
+  const int tensor_height = 3;
+  const int tensor_width = 4;
+  const int tensor_channels = kTestValues.size();
+  PushTensorsToRunner(
+      tensor_height, tensor_width,
+      std::vector<float>(kTestValues.begin(), kTestValues.end()), &runner);
+  MP_ASSERT_OK(runner.Run());
+  ASSERT_EQ(runner.Outputs().NumEntries(), (tensor_channels + 3) / 4);
+  std::vector<Packet> packets = GetPackets(runner);
+  for (int n = 0; n < kTestValues.size(); ++n) {
+    const std::vector<int> buffer_indices = {n};
+    EXPECT_THAT(packets, testing::ElementsAre(FloatImagePacket(
+                             tensor_height, tensor_width, ImageFormat::VEC32F4,
+                             kTestValues[n], buffer_indices)));
+  }
+}
+
+TEST(TensorsToSegmentationCalculatorTest, SucceedsConfidenceMaskWithUint8) {
+  CalculatorRunner runner(
+      mediapipe::ParseTextProtoOrDie<mediapipe::CalculatorGraphConfig::Node>(
+          R"pb(
+            calculator: "mediapipe.tasks.TensorsToSegmentationCalculator"
+            input_stream: "TENSORS:tensors"
+            output_stream: "CONFIDENCE_MASK:0:segmented_mask_0"
+            output_stream: "CONFIDENCE_MASK:1:segmented_mask_1"
+            output_stream: "CONFIDENCE_MASK:2:segmented_mask_2"
+            output_stream: "CONFIDENCE_MASK:3:segmented_mask_3"
+            options {
+              [mediapipe.tasks.TensorsToSegmentationCalculatorOptions.ext] {
+                segmenter_options { activation: NONE }
+                confidence_mask_options { output_format: OUTPUT_FORMAT_UINT8 }
+              }
+            }
+          )pb"));
+
+  constexpr std::array<float, 4> kNormalizedTestValues = {0.25, 0.5, 0.125,
+                                                          0.125};
+  constexpr std::array<int, 4> kExpectedUint8Values = {64, 128, 32, 32};
+
+  const int tensor_height = 3;
+  const int tensor_width = 4;
+  const int tensor_channels = kNormalizedTestValues.size();
+  PushTensorsToRunner(tensor_height, tensor_width,
+                      std::vector<float>(kNormalizedTestValues.begin(),
+                                         kNormalizedTestValues.end()),
+                      &runner);
+  MP_ASSERT_OK(runner.Run());
+  ASSERT_EQ(runner.Outputs().NumEntries(), tensor_channels);
+  const std::vector<int> buffer_indices = {0};
+  std::vector<Packet> packets = GetPackets(runner);
+
+  EXPECT_THAT(
+      packets,
+      testing::ElementsAre(
+          Uint8ImagePacket(tensor_height, tensor_width, ImageFormat::GRAY8,
+                           kExpectedUint8Values[0], buffer_indices),
+          Uint8ImagePacket(tensor_height, tensor_width, ImageFormat::GRAY8,
+                           kExpectedUint8Values[1], buffer_indices),
+          Uint8ImagePacket(tensor_height, tensor_width, ImageFormat::GRAY8,
+                           kExpectedUint8Values[2], buffer_indices),
+          Uint8ImagePacket(tensor_height, tensor_width, ImageFormat::GRAY8,
+                           kExpectedUint8Values[3], buffer_indices)));
+}
+
+TEST(TensorsToSegmentationCalculatorTest,
+     SucceedsConfidenceMaskWithPackedUint8) {
+  CalculatorRunner runner(
+      mediapipe::ParseTextProtoOrDie<mediapipe::CalculatorGraphConfig::Node>(
+          R"pb(
+            calculator: "mediapipe.tasks.TensorsToSegmentationCalculator"
+            input_stream: "TENSORS:tensors"
+            output_stream: "CONFIDENCE_MASK:0:segmented_mask_0"
+            options {
+              [mediapipe.tasks.TensorsToSegmentationCalculatorOptions.ext] {
+                segmenter_options { activation: NONE }
+                confidence_mask_options {
+                  pack4: true
+                  output_format: OUTPUT_FORMAT_UINT8
+                }
+              }
+            }
+          )pb"));
+
+  constexpr std::array<float, 4> kTestValues = {0.25, 0.5, 0.125, 0.125};
+  constexpr std::array<int, 4> kExpectedValues = {64, 128, 32, 32};
+
+  const int tensor_height = 3;
+  const int tensor_width = 4;
+  const int tensor_channels = kTestValues.size();
+  PushTensorsToRunner(
+      tensor_height, tensor_width,
+      std::vector<float>(kTestValues.begin(), kTestValues.end()), &runner);
+  MP_ASSERT_OK(runner.Run());
+  ASSERT_EQ(runner.Outputs().NumEntries(), (tensor_channels + 3) / 4);
+  std::vector<Packet> packets = GetPackets(runner);
+  for (int n = 0; n < kExpectedValues.size(); ++n) {
+    const std::vector<int> buffer_indices = {n};
+    EXPECT_THAT(packets, testing::ElementsAre(Uint8ImagePacket(
+                             tensor_height, tensor_width, ImageFormat::SRGBA,
+                             kExpectedValues[n], buffer_indices)));
+  }
+}
+
+TEST(TensorsToSegmentationCalculatorTest,
+     SucceedsConfidenceMaskWithPackedUint8WithChannelRemapping) {
+  CalculatorRunner runner(
+      mediapipe::ParseTextProtoOrDie<mediapipe::CalculatorGraphConfig::Node>(
+          R"pb(
+            calculator: "mediapipe.tasks.TensorsToSegmentationCalculator"
+            input_stream: "TENSORS:tensors"
+            output_stream: "CONFIDENCE_MASK:0:segmented_mask_0"
+            output_stream: "CONFIDENCE_MASK:1:segmented_mask_1"
+            options {
+              [mediapipe.tasks.TensorsToSegmentationCalculatorOptions.ext] {
+                segmenter_options { activation: NONE }
+                confidence_mask_options {
+                  pack4: true
+                  output_channels: 3  # Packet 0, R
+                  output_channels: 1  # Packet 0, G
+                  output_channels: 5  # Packet 0, B
+                  output_channels: 2  # Packet 0, A
+                  output_channels: 6  # Packet 1, R
+                  # Packet 1, GBA are discarded/zero.
+                  output_format: OUTPUT_FORMAT_UINT8
+                }
+              }
+            }
+          )pb"));
+
+  // Channel index:                      0   1   2   3    4    5    6
+  // Corresponding (rounded) int values: 0, 32, 64, 96, 128, 159, 191
+  constexpr std::array<float, 7> kTestValues = {0.0f, 0.125f, 0.25f, 0.375f,
+                                                0.5f, 0.625f, 0.75f};
+  constexpr std::array<int, 4> kExpectedValues0 = {96, 32, 159, 64};
+  constexpr std::array<int, 4> kExpectedValues1 = {191, 0, 0, 0};
+
+  const int tensor_height = 3;
+  const int tensor_width = 4;
+  PushTensorsToRunner(
+      tensor_height, tensor_width,
+      std::vector<float>(kTestValues.begin(), kTestValues.end()), &runner);
+  MP_ASSERT_OK(runner.Run());
+  ASSERT_EQ(runner.Outputs().NumEntries(), 2);
+  std::vector<Packet> packets = GetPackets(runner);
+  for (int n = 0; n < kExpectedValues1.size(); ++n) {
+    const std::vector<int> buffer_indices = {n};
+    EXPECT_THAT(
+        packets,
+        testing::ElementsAre(
+            Uint8ImagePacket(tensor_height, tensor_width, ImageFormat::SRGBA,
+                             kExpectedValues0[n], buffer_indices),
+            Uint8ImagePacket(tensor_height, tensor_width, ImageFormat::SRGBA,
+                             kExpectedValues1[n], buffer_indices)));
+  }
+}
+
+TEST(TensorsToSegmentationCalculatorTest,
+     FailsConfidenceMaskWithOutputChannelsOutOfBounds) {
+  CalculatorRunner runner(
+      mediapipe::ParseTextProtoOrDie<mediapipe::CalculatorGraphConfig::Node>(
+          R"pb(
+            calculator: "mediapipe.tasks.TensorsToSegmentationCalculator"
+            input_stream: "TENSORS:tensors"
+            output_stream: "CONFIDENCE_MASK:0:segmented_mask_0"
+            options {
+              [mediapipe.tasks.TensorsToSegmentationCalculatorOptions.ext] {
+                segmenter_options { activation: NONE }
+                confidence_mask_options { output_channels: 4 }  # >=4 = #inputs
+              }
+            }
+          )pb"));
+
+  constexpr std::array<float, 4> kTestValues = {0, 1, 2, 3};
+
+  const int tensor_height = 3;
+  const int tensor_width = 4;
+  PushTensorsToRunner(
+      tensor_height, tensor_width,
+      std::vector<float>(kTestValues.begin(), kTestValues.end()), &runner);
+  ASSERT_THAT(runner.Run(), StatusIs(absl::StatusCode::kInvalidArgument));
 }
 
 TEST(TensorsToSegmentationCalculatorTest, SucceedsCategoryMask) {
@@ -299,6 +543,9 @@ TEST(TensorsToSegmentationCalculatorTest, SucceedsCategoryMask) {
             }
           )pb"));
 
+  constexpr std::array<float, 4> kTestValues = {0.2, 1.5, -0.6, 3.4};
+  const int kExpectedIndex = 3;
+
   const int tensor_height = 2;
   const int tensor_width = 5;
   PushTensorsToRunner(
@@ -306,13 +553,11 @@ TEST(TensorsToSegmentationCalculatorTest, SucceedsCategoryMask) {
       std::vector<float>(kTestValues.begin(), kTestValues.end()), &runner);
   MP_ASSERT_OK(runner.Run());
   ASSERT_EQ(runner.Outputs().NumEntries(), 5);
-  // Largest element index is 3.
-  const int expected_index = 3;
   const std::vector<int> buffer_indices = {0};
   std::vector<Packet> packets = runner.Outputs().Tag("CATEGORY_MASK").packets;
-  EXPECT_THAT(packets, testing::ElementsAre(
-                           Uint8ImagePacket(tensor_height, tensor_width,
-                                            expected_index, buffer_indices)));
+  EXPECT_THAT(packets, testing::ElementsAre(Uint8ImagePacket(
+                           tensor_height, tensor_width, ImageFormat::GRAY8,
+                           kExpectedIndex, buffer_indices)));
 }
 
 TEST(TensorsToSegmentationCalculatorTest, SucceedsCategoryMaskResize) {
@@ -334,6 +579,9 @@ TEST(TensorsToSegmentationCalculatorTest, SucceedsCategoryMaskResize) {
             }
           )pb"));
 
+  constexpr std::array<float, 4> kTestValues = {0.2, 1.5, -0.6, 3.4};
+  constexpr int kExpectedIndex = 3;
+
   const int input_height = 1;
   const int input_width = 4;
   const int output_height = 2;
@@ -349,16 +597,14 @@ TEST(TensorsToSegmentationCalculatorTest, SucceedsCategoryMaskResize) {
                              .At(Timestamp(0)));
   MP_ASSERT_OK(runner.Run());
 
-  // Largest element index is 3.
   // Upscale x2, so the expected value should distribute to 4 elements.
-  const int expected_index = 3;
   const std::vector<int> buffer_indices = {
       0 * output_width + 0, 0 * output_width + 1, 1 * output_width + 0,
       1 * output_width + 1};
   std::vector<Packet> packets = runner.Outputs().Tag("CATEGORY_MASK").packets;
-  EXPECT_THAT(packets, testing::ElementsAre(
-                           Uint8ImagePacket(output_height, output_width,
-                                            expected_index, buffer_indices)));
+  EXPECT_THAT(packets, testing::ElementsAre(Uint8ImagePacket(
+                           output_height, output_width, ImageFormat::GRAY8,
+                           kExpectedIndex, buffer_indices)));
 }
 
 TEST(TensorsToSegmentationCalculatorTest, HasCorrectRegistrationName) {

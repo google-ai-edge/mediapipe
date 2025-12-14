@@ -16,6 +16,7 @@
 
 #include <cstdint>
 #include <queue>
+#include <utility>
 
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
@@ -129,14 +130,14 @@ void SchedulerQueue::AddNodeForOpen(CalculatorNode* node) {
   AddItemToQueue(Item(node));
 }
 
-void SchedulerQueue::AddItemToQueue(Item&& item) {
+void SchedulerQueue::AddItemToQueue(Item item) {
   const CalculatorNode* node = item.Node();
   bool was_idle;
   int tasks_to_add = 0;
   {
     absl::MutexLock lock(&mutex_);
     was_idle = IsIdle();
-    queue_.push(item);
+    queue_.push(std::move(item));
     ++num_tasks_to_add_;
     VLOG(4) << node->DebugName() << " was added to the scheduler queue ("
             << queue_name_ << ")";

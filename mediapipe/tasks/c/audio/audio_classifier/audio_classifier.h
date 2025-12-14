@@ -23,7 +23,11 @@ limitations under the License.
 #include "mediapipe/tasks/c/core/mp_status.h"
 
 #ifndef MP_EXPORT
+#if defined(_MSC_VER)
+#define MP_EXPORT __declspec(dllexport)
+#else
 #define MP_EXPORT __attribute__((visibility("default")))
+#endif  // _MSC_VER
 #endif  // MP_EXPORT
 
 #ifdef __cplusplus
@@ -70,12 +74,20 @@ struct MpAudioClassifierOptions {
 // The caller is responsible for calling `MpAudioClassifierClose` to release the
 // classifier.
 //
+// To obtain a detailed error, error_msg must be non-null pointer to a char*,
+// which will be populated with a newly-allocated error message upon failure.
+// It's the caller responsibility to free the error message with free().
+//
 // @param options The options for configuring the audio classifier.
 // @param classifier_out A pointer to receive the created audio classifier.
+// @param error_msg An optional pointer to receive the error message if the
+//     creation fails. If set, this will be populated with a newly-allocated
+//     error message upon failure. It's the caller responsibility to free the
+//     error message with `free()`.
 // @return An `MpStatus` indicating success or failure.
 MP_EXPORT MpStatus
 MpAudioClassifierCreate(struct MpAudioClassifierOptions* options,
-                        MpAudioClassifierPtr* classifier_out);
+                        MpAudioClassifierPtr* classifier_out, char** error_msg);
 
 // Performs audio classification on the provided audio clip. Only use this
 // method when the AudioClassifier is created with the audio clips running mode.
@@ -83,10 +95,14 @@ MpAudioClassifierCreate(struct MpAudioClassifierOptions* options,
 // @param classifier The audio classifier instance.
 // @param audio_data The audio data to be classified.
 // @param result_out A pointer to receive the classification result.
+// @param error_msg An optional pointer to receive the error message if the
+//     creation fails. If set, this will be populated with a newly-allocated
+//     error message upon failure. It's the caller responsibility to free the
+//     error message with `free()`.
 // @return An `MpStatus` indicating success or failure.
 MP_EXPORT MpStatus MpAudioClassifierClassify(
     MpAudioClassifierPtr classifier, const MpAudioData* audio_data,
-    MpAudioClassifierResult* result_out);
+    MpAudioClassifierResult* result_out, char** error_msg);
 
 // Sends audio data (a block in a continuous audio stream) to perform audio
 // classification. Only use this method when the AudioClassifier is created
@@ -94,25 +110,35 @@ MP_EXPORT MpStatus MpAudioClassifierClassify(
 //
 // @param classifier The audio classifier instance.
 // @param audio_data The audio data to be classified.
+// @param timestamp_ms The timestamp of the audio data in milliseconds.
+// @param error_msg An optional pointer to receive the error message if the
+//     creation fails. If set, this will be populated with a newly-allocated
+//     error message upon failure. It's the caller responsibility to free the
+//     error message with `free()`.
 // @return An `MpStatus` indicating whether the audio data was successfully sent
 //     for classification.
 MP_EXPORT MpStatus MpAudioClassifierClassifyAsync(
     MpAudioClassifierPtr classifier, const MpAudioData* audio_data,
-    int64_t timestamp_ms);
+    int64_t timestamp_ms, char** error_msg);
 
 // Frees the memory allocated inside a MpAudioClassifierResult result. Does not
 // free the result pointer itself.
 //
 // @param result A pointer to the classification result.
 // @return An `MpStatus` indicating success or failure.
-MP_EXPORT MpStatus
-MpAudioClassifierCloseResult(MpAudioClassifierResult* result);
+MP_EXPORT void MpAudioClassifierCloseResult(MpAudioClassifierResult* result);
 
 // Shuts down the AudioClassifier when all the work is done. Frees all memory.
 //
+//
 // @param classifier The audio classifier instance to be closed.
+// @param error_msg An optional pointer to receive the error message if the
+//     creation fails. If set, this will be populated with a newly-allocated
+//     error message upon failure. It's the caller responsibility to free the
+//     error message with `free()`.
 // @return An `MpStatus` indicating success or failure.
-MP_EXPORT MpStatus MpAudioClassifierClose(MpAudioClassifierPtr classifier);
+MP_EXPORT MpStatus MpAudioClassifierClose(MpAudioClassifierPtr classifier,
+                                          char** error_msg);
 
 #ifdef __cplusplus
 }  // extern C

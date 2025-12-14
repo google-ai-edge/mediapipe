@@ -23,6 +23,7 @@ cc_library(
     name = "common",
     srcs = ["common.cc"],
     hdrs = ["common.h"],
+    alwayslink = 1,
 )
 
 cc_library(

@@ -1,4 +1,16 @@
-"""Tests for llm_converter."""
+# Copyright 2025 The MediaPipe Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 from unittest import mock
 
@@ -9,6 +21,12 @@ import tensorflow as tf
 import unittest
 from mediapipe.tasks.python.genai.converter import converter_base
 from mediapipe.tasks.python.genai.converter import llm_converter
+
+_LLM_CONVERTER_FUNCTIONS = (
+    'MpLlmConverterGenerateCpuTfLite',
+    'MpLlmConverterGenerateGpuTfLite',
+    'MpLlmConverterConvertHfTokenizer',
+)
 
 
 class LlmConverterTest(googletest.TestCase, parameterized.TestCase):
@@ -61,7 +79,7 @@ class LlmConverterTest(googletest.TestCase, parameterized.TestCase):
       )
 
   def test_generate_cpu_tflite_receives_correct_args(self):
-    c_lib = mock.MagicMock()
+    c_lib = mock.MagicMock(spec_set=_LLM_CONVERTER_FUNCTIONS)
     c_lib.MpLlmConverterGenerateCpuTfLite.return_value = 0
 
     config = llm_converter.ConversionConfig(
@@ -90,10 +108,11 @@ class LlmConverterTest(googletest.TestCase, parameterized.TestCase):
         b'/tmp/vocab.model',
         True,
         b'/tmp/output.tflite',
+        mock.ANY,  # error_message
     )
 
   def test_generate_cpu_tflite_propagates_failure(self):
-    c_lib = mock.MagicMock(spec_set=['MpLlmConverterGenerateCpuTfLite'])
+    c_lib = mock.MagicMock(spec_set=_LLM_CONVERTER_FUNCTIONS)
     c_lib.MpLlmConverterGenerateCpuTfLite.return_value = 13  # Simulate failure
 
     config = llm_converter.ConversionConfig(
@@ -118,7 +137,7 @@ class LlmConverterTest(googletest.TestCase, parameterized.TestCase):
       )
 
   def test_generate_gpu_tflite_receives_correct_args(self):
-    c_lib = mock.MagicMock(spec_set=['MpLlmConverterGenerateGpuTfLite'])
+    c_lib = mock.MagicMock(spec_set=_LLM_CONVERTER_FUNCTIONS)
     c_lib.MpLlmConverterGenerateGpuTfLite.return_value = 0
 
     config = llm_converter.ConversionConfig(
@@ -167,10 +186,11 @@ class LlmConverterTest(googletest.TestCase, parameterized.TestCase):
         b'GEMMA_2B',
         True,
         False,
+        mock.ANY,  # error_message
     )
 
   def test_generate_gpu_tflite_propagates_failure(self):
-    c_lib = mock.MagicMock(spec_set=['MpLlmConverterGenerateGpuTfLite'])
+    c_lib = mock.MagicMock(spec_set=_LLM_CONVERTER_FUNCTIONS)
     c_lib.MpLlmConverterGenerateGpuTfLite.return_value = 13  # Simulate failure
 
     config = llm_converter.ConversionConfig(
@@ -211,7 +231,7 @@ class LlmConverterTest(googletest.TestCase, parameterized.TestCase):
   ):
     del mock_join, mock_isdir
 
-    c_lib = mock.MagicMock()
+    c_lib = mock.MagicMock(spec_set=_LLM_CONVERTER_FUNCTIONS)
     c_lib.MpLlmConverterConvertHfTokenizer.return_value = 0
 
     llm_converter_lib = llm_converter._LlmConverter(c_lib)
@@ -220,7 +240,7 @@ class LlmConverterTest(googletest.TestCase, parameterized.TestCase):
     )
 
     c_lib.MpLlmConverterConvertHfTokenizer.assert_called_once_with(
-        b'/tmp/hf_tokenizer', b'/tmp/spm.model'
+        b'/tmp/hf_tokenizer', b'/tmp/spm.model', mock.ANY
     )
     self.assertEqual(output_file, '/tmp/spm.model')
 
@@ -229,7 +249,7 @@ class LlmConverterTest(googletest.TestCase, parameterized.TestCase):
   def test_convert_hf_tokenizer_propagates_failure(self, mock_join, mock_isdir):
     del mock_join, mock_isdir
 
-    c_lib = mock.MagicMock()
+    c_lib = mock.MagicMock(spec_set=_LLM_CONVERTER_FUNCTIONS)
     c_lib.MpLlmConverterConvertHfTokenizer.return_value = 13  # Simulate failure
 
     llm_converter_lib = llm_converter._LlmConverter(c_lib)

@@ -19,7 +19,6 @@ limitations under the License.
 #include <cstdlib>
 #include <string>
 
-#include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "flatbuffers/idl.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
@@ -32,9 +31,11 @@ struct MpFlatbufferParserInternal {
 };
 
 MpStatus MpFlatbufferParserCreate(bool enable_strict_json,
-                                  MpFlatbufferParser* parser_out) {
+                                  MpFlatbufferParser* parser_out,
+                                  char** error_message) {
   if (!parser_out) {
-    return kMpInvalidArgument;
+    return mediapipe::tasks::c::core::HandleStatus(
+        absl::InvalidArgumentError("parser_out is null"), error_message);
   }
   flatbuffers::IDLOptions opts;
   opts.strict_json = enable_strict_json;
@@ -43,11 +44,11 @@ MpStatus MpFlatbufferParserCreate(bool enable_strict_json,
   return kMpOk;
 }
 
-MpStatus MpFlatbufferParserParse(MpFlatbufferParser parser,
-                                 const char* source) {
+MpStatus MpFlatbufferParserParse(MpFlatbufferParser parser, const char* source,
+                                 char** error_message) {
   if (!parser->parser.Parse(source)) {
-    return mediapipe::tasks::c::core::ToMpStatus(
-        absl::InvalidArgumentError(parser->parser.error_));
+    return mediapipe::tasks::c::core::HandleStatus(
+        absl::InvalidArgumentError(parser->parser.error_), error_message);
   }
   return kMpOk;
 }
@@ -58,14 +59,14 @@ const char* MpFlatbufferParserGetError(MpFlatbufferParser parser) {
 
 MpStatus MpFlatbufferGenerateText(MpFlatbufferParser parser,
                                   const uint8_t* buffer, size_t buffer_size,
-                                  char** json_out) {
+                                  char** json_out, char** error_message) {
   std::string text;
   const char* error_str = flatbuffers::GenText(
       parser->parser, reinterpret_cast<const void*>(buffer), &text);
   if (error_str) {
     *json_out = nullptr;
-    ABSL_LOG(ERROR) << "Failed to generate text from buffer: " << error_str;
-    return kMpInternal;
+    return mediapipe::tasks::c::core::HandleStatus(
+        absl::InternalError(error_str), error_message);
   }
   *json_out = strdup(text.c_str());
   return kMpOk;

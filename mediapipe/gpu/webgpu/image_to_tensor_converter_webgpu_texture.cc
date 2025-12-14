@@ -1,7 +1,5 @@
 #include "mediapipe/gpu/webgpu/image_to_tensor_converter_webgpu_texture.h"
 
-#include <webgpu/webgpu_cpp.h>
-
 #include <array>
 #include <cmath>
 #include <cstdint>
@@ -16,6 +14,7 @@
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/gpu/gpu_buffer.h"
+#include "mediapipe/gpu/webgpu/webgpu_headers.h"
 #include "mediapipe/gpu/webgpu/webgpu_service.h"
 #include "mediapipe/gpu/webgpu/webgpu_texture_view.h"
 #include "mediapipe/gpu/webgpu/webgpu_utils.h"

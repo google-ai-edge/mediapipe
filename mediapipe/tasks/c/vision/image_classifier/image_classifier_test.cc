@@ -16,6 +16,7 @@ limitations under the License.
 #include "mediapipe/tasks/c/vision/image_classifier/image_classifier.h"
 
 #include <cstdint>
+#include <cstdlib>
 
 #include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
@@ -23,6 +24,7 @@ limitations under the License.
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "mediapipe/framework/deps/file_path.h"
+#include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/c/components/containers/category.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
@@ -68,14 +70,17 @@ TEST(ImageClassifierTest, ImageModeTest) {
   };
 
   MpImageClassifierPtr classifier;
-  EXPECT_EQ(MpImageClassifierCreate(&options, &classifier), kMpOk);
+  ASSERT_EQ(
+      MpImageClassifierCreate(&options, &classifier, /* error_msg= */ nullptr),
+      kMpOk);
   ASSERT_NE(classifier, nullptr);
 
   ImageClassifierResult result;
-  EXPECT_EQ(MpImageClassifierClassifyImage(
-                classifier, image.get(),
-                /* image_processing_options */ nullptr, &result),
-            kMpOk);
+  EXPECT_EQ(
+      MpImageClassifierClassifyImage(classifier, image.get(),
+                                     /* image_processing_options */ nullptr,
+                                     &result, /* error_msg= */ nullptr),
+      kMpOk);
   EXPECT_EQ(result.classifications_count, 1);
   EXPECT_EQ(result.classifications[0].categories_count, 1001);
   EXPECT_EQ(std::string{result.classifications[0].categories[0].category_name},
@@ -83,7 +88,8 @@ TEST(ImageClassifierTest, ImageModeTest) {
   EXPECT_NEAR(result.classifications[0].categories[0].score, 0.7939f,
               kPrecision);
   MpImageClassifierCloseResult(&result);
-  EXPECT_EQ(MpImageClassifierClose(classifier), kMpOk);
+  EXPECT_EQ(MpImageClassifierClose(classifier, /* error_msg= */ nullptr),
+            kMpOk);
 }
 
 TEST(ImageClassifierTest, ImageModeTestWithRotation) {
@@ -106,7 +112,9 @@ TEST(ImageClassifierTest, ImageModeTestWithRotation) {
   };
 
   MpImageClassifierPtr classifier;
-  EXPECT_EQ(MpImageClassifierCreate(&options, &classifier), kMpOk);
+  ASSERT_EQ(
+      MpImageClassifierCreate(&options, &classifier, /* error_msg= */ nullptr),
+      kMpOk);
   ASSERT_NE(classifier, nullptr);
 
   ImageProcessingOptions image_processing_options;
@@ -115,7 +123,8 @@ TEST(ImageClassifierTest, ImageModeTestWithRotation) {
 
   ImageClassifierResult result;
   EXPECT_EQ(MpImageClassifierClassifyImage(classifier, image.get(),
-                                           &image_processing_options, &result),
+                                           &image_processing_options, &result,
+                                           /* error_msg= */ nullptr),
             kMpOk);
   EXPECT_EQ(result.classifications_count, 1);
   EXPECT_EQ(result.classifications[0].categories_count, 1001);
@@ -124,7 +133,8 @@ TEST(ImageClassifierTest, ImageModeTestWithRotation) {
   EXPECT_NEAR(result.classifications[0].categories[0].score, 0.7545f,
               kPrecision);
   MpImageClassifierCloseResult(&result);
-  EXPECT_EQ(MpImageClassifierClose(classifier), kMpOk);
+  EXPECT_EQ(MpImageClassifierClose(classifier, /* error_msg= */ nullptr),
+            kMpOk);
 }
 
 TEST(ImageClassifierTest, VideoModeTest) {
@@ -148,14 +158,17 @@ TEST(ImageClassifierTest, VideoModeTest) {
   };
 
   MpImageClassifierPtr classifier;
-  EXPECT_EQ(MpImageClassifierCreate(&options, &classifier), kMpOk);
+  ASSERT_EQ(
+      MpImageClassifierCreate(&options, &classifier, /* error_msg= */ nullptr),
+      kMpOk);
   ASSERT_NE(classifier, nullptr);
 
   for (int i = 0; i < kIterations; ++i) {
     ImageClassifierResult result;
     EXPECT_EQ(MpImageClassifierClassifyForVideo(
                   classifier, image.get(),
-                  /* image_processing_options */ nullptr, i, &result),
+                  /* image_processing_options */ nullptr, i, &result,
+                  /* error_msg= */ nullptr),
               kMpOk);
     EXPECT_EQ(result.classifications_count, 1);
     EXPECT_EQ(result.classifications[0].categories_count, 3);
@@ -166,7 +179,8 @@ TEST(ImageClassifierTest, VideoModeTest) {
                 kPrecision);
     MpImageClassifierCloseResult(&result);
   }
-  EXPECT_EQ(MpImageClassifierClose(classifier), kMpOk);
+  EXPECT_EQ(MpImageClassifierClose(classifier, /* error_msg= */ nullptr),
+            kMpOk);
 }
 
 // A structure to support LiveStreamModeTest below. This structure holds a
@@ -223,17 +237,20 @@ TEST(ImageClassifierTest, LiveStreamModeTest) {
   };
 
   MpImageClassifierPtr classifier;
-  EXPECT_EQ(MpImageClassifierCreate(&options, &classifier), kMpOk);
+  ASSERT_EQ(
+      MpImageClassifierCreate(&options, &classifier, /* error_msg= */ nullptr),
+      kMpOk);
   ASSERT_NE(classifier, nullptr);
 
   absl::BlockingCounter counter(kIterations);
   LiveStreamModeCallback::blocking_counter = &counter;
 
   for (int i = 0; i < kIterations; ++i) {
-    EXPECT_EQ(MpImageClassifierClassifyAsync(
-                  classifier, image.get(),
-                  /* image_processing_options */ nullptr, i),
-              kMpOk);
+    EXPECT_EQ(
+        MpImageClassifierClassifyAsync(classifier, image.get(),
+                                       /* image_processing_options */ nullptr,
+                                       i, /* error_msg= */ nullptr),
+        kMpOk);
     // Short sleep so that MediaPipe does not drop frames.
     absl::SleepFor(absl::Milliseconds(kSleepBetweenFramesMilliseconds));
   }
@@ -242,7 +259,8 @@ TEST(ImageClassifierTest, LiveStreamModeTest) {
   counter.Wait();
   LiveStreamModeCallback::blocking_counter = nullptr;
 
-  EXPECT_EQ(MpImageClassifierClose(classifier), kMpOk);
+  EXPECT_EQ(MpImageClassifierClose(classifier, /* error_msg= */ nullptr),
+            kMpOk);
 
   // Due to the flow limiter, the total of outputs might be smaller than the
   // number of iterations.
@@ -259,9 +277,14 @@ TEST(ImageClassifierTest, InvalidArgumentHandling) {
       /* classifier_options= */ {},
   };
 
+  char* error_msg = nullptr;
   MpImageClassifierPtr classifier = nullptr;
-  EXPECT_EQ(MpImageClassifierCreate(&options, &classifier), kMpInvalidArgument);
+  MpStatus status = MpImageClassifierCreate(&options, &classifier, &error_msg);
+  EXPECT_EQ(status, kMpInvalidArgument);
   EXPECT_EQ(classifier, nullptr);
+  EXPECT_THAT(error_msg,
+              testing::HasSubstr("ExternalFile must specify at least one"));
+  free(error_msg);
 }
 
 TEST(ImageClassifierTest, FailedClassificationHandling) {
@@ -282,16 +305,23 @@ TEST(ImageClassifierTest, FailedClassificationHandling) {
   };
 
   MpImageClassifierPtr classifier;
-  EXPECT_EQ(MpImageClassifierCreate(&options, &classifier), kMpOk);
+  ASSERT_EQ(
+      MpImageClassifierCreate(&options, &classifier, /* error_msg= */ nullptr),
+      kMpOk);
   ASSERT_NE(classifier, nullptr);
 
   const ScopedMpImage image = CreateEmptyGpuMpImage();
+  char* error_msg = nullptr;
   ImageClassifierResult result;
-  EXPECT_EQ(MpImageClassifierClassifyImage(
-                classifier, image.get(),
-                /* image_processing_options */ nullptr, &result),
-            kMpInvalidArgument);
-  EXPECT_EQ(MpImageClassifierClose(classifier), kMpOk);
+  MpStatus status = MpImageClassifierClassifyImage(
+      classifier, image.get(),
+      /* image_processing_options */ nullptr, &result, &error_msg);
+  EXPECT_EQ(status, kMpInvalidArgument);
+  EXPECT_THAT(error_msg, testing::HasSubstr(
+                             "GPU input images are currently not supported."));
+  free(error_msg);
+  EXPECT_EQ(MpImageClassifierClose(classifier, /* error_msg= */ nullptr),
+            kMpOk);
 }
 
 }  // namespace

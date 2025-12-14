@@ -22,8 +22,8 @@ py_library(
     srcs = ["llm_bundler.py"],
     deps = [
         "//mediapipe/tasks/cc/genai/inference/proto:llm_params_py_pb2",
+        "//mediapipe/tasks/python/genai/converter:external_dependencies",
         "//mediapipe/tasks/python/metadata/metadata_writers:model_asset_bundle_utils",
-        "@com_google_sentencepiece//python:sentencepiece_processor",
     ],
 )
 

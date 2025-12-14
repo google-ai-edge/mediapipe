@@ -24,6 +24,7 @@ AUDIO_CLASSIFIER_DEPS = [
     "@eigen//:eigen3",
     "//mediapipe/framework/formats:matrix",
     "//mediapipe/framework/port:status",
+    "@com_google_absl//absl/log:absl_check",
     "//mediapipe/tasks/c/audio/core:common",
     "//mediapipe/tasks/c/audio/core:running_mode_converter",
     "//mediapipe/tasks/c/components/containers:classification_result",

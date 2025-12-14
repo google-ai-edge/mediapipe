@@ -21,6 +21,7 @@ limitations under the License.
 #include <optional>
 #include <utility>
 
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
@@ -41,7 +42,7 @@ limitations under the License.
 
 struct MpImageClassifierInternal {
   std::unique_ptr<::mediapipe::tasks::vision::image_classifier::ImageClassifier>
-      classifier;
+      instance;
 };
 
 namespace mediapipe::tasks::c::vision::image_classifier {
@@ -66,10 +67,15 @@ using CppImageProcessingOptions =
 
 const Image& ToImage(const MpImagePtr mp_image) { return mp_image->image; }
 
+ImageClassifier* GetCppClassifier(MpImageClassifierPtr classifier) {
+  ABSL_CHECK(classifier != nullptr) << "ImageClassifier is null.";
+  return classifier->instance.get();
+}
+
 }  // namespace
 
-MpStatus CppMpImageClassifierCreate(const ImageClassifierOptions& options,
-                                    MpImageClassifierPtr* classifier) {
+absl::Status CppMpImageClassifierCreate(const ImageClassifierOptions& options,
+                                        MpImageClassifierPtr* classifier) {
   auto cpp_options = std::make_unique<
       ::mediapipe::tasks::vision::image_classifier::ImageClassifierOptions>();
 
@@ -82,10 +88,8 @@ MpStatus CppMpImageClassifierCreate(const ImageClassifierOptions& options,
   // set to RunningMode::LIVE_STREAM.
   if (cpp_options->running_mode == RunningMode::LIVE_STREAM) {
     if (options.result_callback == nullptr) {
-      const absl::Status status = absl::InvalidArgumentError(
+      return absl::InvalidArgumentError(
           "Provided null pointer to callback function.");
-      ABSL_LOG(ERROR) << "Failed to create ImageClassifier: " << status;
-      return ToMpStatus(status);
     }
 
     ImageClassifierOptions::result_callback_fn result_callback =
@@ -95,7 +99,6 @@ MpStatus CppMpImageClassifierCreate(const ImageClassifierOptions& options,
                           const Image& image, int64_t timestamp) {
           MpImageInternal mp_image({.image = image});
           if (!cpp_result.ok()) {
-            ABSL_LOG(ERROR) << "Classification failed: " << cpp_result.status();
             result_callback(ToMpStatus(cpp_result.status()), nullptr, &mp_image,
                             timestamp);
             return;
@@ -110,16 +113,14 @@ MpStatus CppMpImageClassifierCreate(const ImageClassifierOptions& options,
 
   auto cpp_classifier = ImageClassifier::Create(std::move(cpp_options));
   if (!cpp_classifier.ok()) {
-    ABSL_LOG(ERROR) << "Failed to create ImageClassifier: "
-                    << cpp_classifier.status();
-    return ToMpStatus(cpp_classifier.status());
+    return cpp_classifier.status();
   }
   *classifier =
-      new MpImageClassifierInternal{.classifier = std::move(*cpp_classifier)};
-  return kMpOk;
+      new MpImageClassifierInternal{.instance = std::move(*cpp_classifier)};
+  return absl::OkStatus();
 }
 
-MpStatus CppMpImageClassifierClassifyImage(
+absl::Status CppMpImageClassifierClassifyImage(
     MpImageClassifierPtr classifier, const MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
     ImageClassifierResult* result) {
@@ -129,18 +130,17 @@ MpStatus CppMpImageClassifierClassifyImage(
     CppConvertToImageProcessingOptions(*image_processing_options, &options);
     cpp_image_processing_options = options;
   }
-  ImageClassifier* cpp_classifier = classifier->classifier.get();
+  ImageClassifier* cpp_classifier = GetCppClassifier(classifier);
   auto cpp_result =
       cpp_classifier->Classify(ToImage(image), cpp_image_processing_options);
   if (!cpp_result.ok()) {
-    ABSL_LOG(ERROR) << "Classification failed: " << cpp_result.status();
-    return ToMpStatus(cpp_result.status());
+    return cpp_result.status();
   }
   CppConvertToClassificationResult(*cpp_result, result);
-  return kMpOk;
+  return absl::OkStatus();
 }
 
-MpStatus CppMpImageClassifierClassifyForVideo(
+absl::Status CppMpImageClassifierClassifyForVideo(
     MpImageClassifierPtr classifier, const MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
     int64_t timestamp_ms, ImageClassifierResult* result) {
@@ -150,18 +150,17 @@ MpStatus CppMpImageClassifierClassifyForVideo(
     CppConvertToImageProcessingOptions(*image_processing_options, &options);
     cpp_image_processing_options = options;
   }
-  ImageClassifier* cpp_classifier = classifier->classifier.get();
+  ImageClassifier* cpp_classifier = GetCppClassifier(classifier);
   auto cpp_result = cpp_classifier->ClassifyForVideo(
       ToImage(image), timestamp_ms, cpp_image_processing_options);
   if (!cpp_result.ok()) {
-    ABSL_LOG(ERROR) << "Classification failed: " << cpp_result.status();
-    return ToMpStatus(cpp_result.status());
+    return cpp_result.status();
   }
   CppConvertToClassificationResult(*cpp_result, result);
-  return kMpOk;
+  return absl::OkStatus();
 }
 
-MpStatus CppMpImageClassifierClassifyAsync(
+absl::Status CppMpImageClassifierClassifyAsync(
     MpImageClassifierPtr classifier, const MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
     int64_t timestamp_ms) {
@@ -171,67 +170,66 @@ MpStatus CppMpImageClassifierClassifyAsync(
     CppConvertToImageProcessingOptions(*image_processing_options, &options);
     cpp_image_processing_options = options;
   }
-  ImageClassifier* cpp_classifier = classifier->classifier.get();
-  auto cpp_result = cpp_classifier->ClassifyAsync(ToImage(image), timestamp_ms,
-                                                  cpp_image_processing_options);
-  if (!cpp_result.ok()) {
-    ABSL_LOG(ERROR) << "Data preparation for the image classification failed: "
-                    << cpp_result;
-    return ToMpStatus(cpp_result);
-  }
-  return kMpOk;
+  ImageClassifier* cpp_classifier = GetCppClassifier(classifier);
+  return cpp_classifier->ClassifyAsync(ToImage(image), timestamp_ms,
+                                       cpp_image_processing_options);
 }
 
 void CppMpImageClassifierCloseResult(ImageClassifierResult* result) {
   CppCloseClassificationResult(result);
 }
 
-MpStatus CppMpImageClassifierClose(MpImageClassifierPtr classifier) {
-  ImageClassifier* cpp_classifier = classifier->classifier.get();
+absl::Status CppMpImageClassifierClose(MpImageClassifierPtr classifier) {
+  ImageClassifier* cpp_classifier = GetCppClassifier(classifier);
   auto result = cpp_classifier->Close();
   if (!result.ok()) {
-    ABSL_LOG(ERROR) << "Failed to close ImageClassifier: " << result;
-    return ToMpStatus(result);
+    return result;
   }
   delete classifier;
-  return kMpOk;
+  return absl::OkStatus();
 }
 
 }  // namespace mediapipe::tasks::c::vision::image_classifier
 
 extern "C" {
 
-MP_EXPORT MpStatus MpImageClassifierCreate(
-    struct ImageClassifierOptions* options, MpImageClassifierPtr* classifier) {
-  return mediapipe::tasks::c::vision::image_classifier::
-      CppMpImageClassifierCreate(*options, classifier);
+MP_EXPORT MpStatus
+MpImageClassifierCreate(struct ImageClassifierOptions* options,
+                        MpImageClassifierPtr* classifier, char** error_msg) {
+  absl::Status status =
+      mediapipe::tasks::c::vision::image_classifier::CppMpImageClassifierCreate(
+          *options, classifier);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
 MP_EXPORT MpStatus MpImageClassifierClassifyImage(
     MpImageClassifierPtr classifier, MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
-    ImageClassifierResult* result) {
-  return mediapipe::tasks::c::vision::image_classifier::
+    ImageClassifierResult* result, char** error_msg) {
+  absl::Status status = mediapipe::tasks::c::vision::image_classifier::
       CppMpImageClassifierClassifyImage(classifier, image,
                                         image_processing_options, result);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
 MP_EXPORT MpStatus MpImageClassifierClassifyForVideo(
     MpImageClassifierPtr classifier, MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
-    int64_t timestamp_ms, ImageClassifierResult* result) {
-  return mediapipe::tasks::c::vision::image_classifier::
+    int64_t timestamp_ms, ImageClassifierResult* result, char** error_msg) {
+  absl::Status status = mediapipe::tasks::c::vision::image_classifier::
       CppMpImageClassifierClassifyForVideo(
           classifier, image, image_processing_options, timestamp_ms, result);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
 MP_EXPORT MpStatus MpImageClassifierClassifyAsync(
     MpImageClassifierPtr classifier, MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
-    int64_t timestamp_ms) {
-  return mediapipe::tasks::c::vision::image_classifier::
+    int64_t timestamp_ms, char** error_msg) {
+  absl::Status status = mediapipe::tasks::c::vision::image_classifier::
       CppMpImageClassifierClassifyAsync(classifier, image,
                                         image_processing_options, timestamp_ms);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
 MP_EXPORT void MpImageClassifierCloseResult(ImageClassifierResult* result) {
@@ -239,9 +237,12 @@ MP_EXPORT void MpImageClassifierCloseResult(ImageClassifierResult* result) {
       CppMpImageClassifierCloseResult(result);
 }
 
-MP_EXPORT MpStatus MpImageClassifierClose(MpImageClassifierPtr classifier) {
-  return mediapipe::tasks::c::vision::image_classifier::
-      CppMpImageClassifierClose(classifier);
+MP_EXPORT MpStatus MpImageClassifierClose(MpImageClassifierPtr classifier,
+                                          char** error_msg) {
+  absl::Status status =
+      mediapipe::tasks::c::vision::image_classifier::CppMpImageClassifierClose(
+          classifier);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
 }  // extern "C"

@@ -41,7 +41,6 @@ _ImageProcessingOptions = image_processing_options_lib.ImageProcessingOptions
 GestureRecognizerResult = (
     gesture_recognizer_result_module.GestureRecognizerResult
 )
-_CFunction = mediapipe_c_utils.CFunction
 
 
 _C_TYPES_RESULT_CALLBACK = ctypes.CFUNCTYPE(
@@ -102,29 +101,27 @@ class GestureRecognizerOptionsC(ctypes.Structure):
 
 
 _CTYPES_SIGNATURES = (
-    _CFunction(
+    mediapipe_c_utils.CStatusFunction(
         'MpGestureRecognizerCreate',
-        [
+        (
             ctypes.POINTER(GestureRecognizerOptionsC),
             ctypes.POINTER(ctypes.c_void_p),
-        ],
-        ctypes.c_int,
+        ),
     ),
-    _CFunction(
+    mediapipe_c_utils.CStatusFunction(
         'MpGestureRecognizerRecognizeImage',
-        [
+        (
             ctypes.c_void_p,
             ctypes.c_void_p,
             ctypes.POINTER(image_processing_options_c.ImageProcessingOptionsC),
             ctypes.POINTER(
                 gesture_recognizer_result_c.GestureRecognizerResultC
             ),
-        ],
-        ctypes.c_int,
+        ),
     ),
-    _CFunction(
+    mediapipe_c_utils.CStatusFunction(
         'MpGestureRecognizerRecognizeForVideo',
-        [
+        (
             ctypes.c_void_p,
             ctypes.c_void_p,
             ctypes.POINTER(image_processing_options_c.ImageProcessingOptionsC),
@@ -132,30 +129,25 @@ _CTYPES_SIGNATURES = (
             ctypes.POINTER(
                 gesture_recognizer_result_c.GestureRecognizerResultC
             ),
-        ],
-        ctypes.c_int,
+        ),
     ),
-    _CFunction(
+    mediapipe_c_utils.CStatusFunction(
         'MpGestureRecognizerRecognizeAsync',
-        [
+        (
             ctypes.c_void_p,
             ctypes.c_void_p,
             ctypes.POINTER(image_processing_options_c.ImageProcessingOptionsC),
             ctypes.c_int64,
-        ],
-        ctypes.c_int,
+        ),
     ),
-    _CFunction(
+    mediapipe_c_utils.CFunction(
         'MpGestureRecognizerCloseResult',
         [ctypes.POINTER(gesture_recognizer_result_c.GestureRecognizerResultC)],
         None,
     ),
-    _CFunction(
+    mediapipe_c_utils.CStatusFunction(
         'MpGestureRecognizerClose',
-        [
-            ctypes.c_void_p,
-        ],
-        ctypes.c_int,
+        (ctypes.c_void_p,),
     ),
 )
 
@@ -319,10 +311,10 @@ class GestureRecognizer:
         result_callback=c_callback,
     )
     recognizer_handle = ctypes.c_void_p()
-    status = lib.MpGestureRecognizerCreate(
-        ctypes.byref(options_c), ctypes.byref(recognizer_handle)
+    lib.MpGestureRecognizerCreate(
+        ctypes.byref(options_c),
+        ctypes.byref(recognizer_handle)
     )
-    mediapipe_c_utils.handle_status(status)
     return cls(
         lib=lib,
         handle=recognizer_handle,
@@ -362,13 +354,12 @@ class GestureRecognizer:
         if image_processing_options
         else None
     )
-    status = self._lib.MpGestureRecognizerRecognizeImage(
+    self._lib.MpGestureRecognizerRecognizeImage(
         self._handle,
         c_image,
         options_c,
         ctypes.byref(c_result),
     )
-    mediapipe_c_utils.handle_status(status)
 
     result = GestureRecognizerResult.from_ctypes(c_result)
     self._lib.MpGestureRecognizerCloseResult(ctypes.byref(c_result))
@@ -409,14 +400,13 @@ class GestureRecognizer:
         if image_processing_options
         else None
     )
-    status = self._lib.MpGestureRecognizerRecognizeForVideo(
+    self._lib.MpGestureRecognizerRecognizeForVideo(
         self._handle,
         c_image,
         options_c,
         timestamp_ms,
         ctypes.byref(c_result),
     )
-    mediapipe_c_utils.handle_status(status)
 
     result = GestureRecognizerResult.from_ctypes(c_result)
     self._lib.MpGestureRecognizerCloseResult(ctypes.byref(c_result))
@@ -464,22 +454,21 @@ class GestureRecognizer:
         if image_processing_options
         else None
     )
-    status = self._lib.MpGestureRecognizerRecognizeAsync(
+    self._lib.MpGestureRecognizerRecognizeAsync(
         self._handle,
         c_image,
         options_c,
         timestamp_ms,
     )
-    mediapipe_c_utils.handle_status(status)
 
   def close(self):
     """Closes GestureRecognizer."""
-    if self._handle:
-      status = self._lib.MpGestureRecognizerClose(self._handle)
-      mediapipe_c_utils.handle_status(status)
-      self._handle = None
-      self._dispatcher.close()
-      self._lib.close()
+    if not self._handle:
+      return
+    self._lib.MpGestureRecognizerClose(self._handle)
+    self._handle = None
+    self._dispatcher.close()
+    self._lib.close()
 
   def __enter__(self):
     """Returns `self` upon entering the runtime context."""

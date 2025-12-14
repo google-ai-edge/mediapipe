@@ -16,14 +16,17 @@ limitations under the License.
 #include "mediapipe/tasks/c/text/text_classifier/text_classifier.h"
 
 #include <cassert>
+#include <cstdlib>
 #include <string>
 
 #include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/deps/file_path.h"
+#include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/c/components/containers/category.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
+#include "mediapipe/tasks/c/test/test_utils.h"
 
 namespace {
 
@@ -39,18 +42,20 @@ std::string GetFullPath(absl::string_view file_name) {
 }
 
 TEST(TextClassifierTest, SmokeTest) {
-  std::string model_path = GetFullPath(kTestBertModelPath);
+  const std::string model_path = GetFullPath(kTestBertModelPath);
   TextClassifierOptions options = {
       .base_options = {.model_asset_path = model_path.c_str()},
       .classifier_options = {.max_results = -1, .score_threshold = 0.0},
   };
 
   MpTextClassifierPtr classifier;
-  EXPECT_EQ(MpTextClassifierCreate(&options, &classifier), kMpOk);
+  MP_ASSERT_OK(
+      MpTextClassifierCreate(&options, &classifier, /*error_msg=*/nullptr));
   EXPECT_NE(classifier, nullptr);
 
   TextClassifierResult result;
-  EXPECT_EQ(MpTextClassifierClassify(classifier, kTestString, &result), kMpOk);
+  MP_ASSERT_OK(MpTextClassifierClassify(classifier, kTestString, &result,
+                                        /*error_msg=*/nullptr));
   ASSERT_EQ(result.classifications_count, 1);
   ASSERT_EQ(result.classifications[0].categories_count, 2);
   EXPECT_EQ(std::string{result.classifications[0].categories[0].category_name},
@@ -59,7 +64,7 @@ TEST(TextClassifierTest, SmokeTest) {
 
   MpTextClassifierCloseResult(&result);
   EXPECT_EQ(result.classifications, nullptr);
-  EXPECT_EQ(MpTextClassifierClose(classifier), kMpOk);
+  MP_EXPECT_OK(MpTextClassifierClose(classifier, /*error_msg=*/nullptr));
 }
 
 TEST(TextClassifierTest, ErrorHandling) {
@@ -70,7 +75,13 @@ TEST(TextClassifierTest, ErrorHandling) {
   };
 
   MpTextClassifierPtr classifier;
-  EXPECT_EQ(MpTextClassifierCreate(&options, &classifier), kMpInvalidArgument);
+  char* error_msg;
+  MpStatus status = MpTextClassifierCreate(&options, &classifier, &error_msg);
+  EXPECT_EQ(status, kMpInvalidArgument);
+
+  EXPECT_THAT(error_msg,
+              testing::HasSubstr("ExternalFile must specify at least one"));
+  free(error_msg);
 }
 
 }  // namespace

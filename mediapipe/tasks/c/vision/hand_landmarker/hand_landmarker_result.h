@@ -21,10 +21,6 @@ limitations under the License.
 #include "mediapipe/tasks/c/components/containers/category.h"
 #include "mediapipe/tasks/c/components/containers/landmark.h"
 
-#ifndef MP_EXPORT
-#define MP_EXPORT __attribute__((visibility("default")))
-#endif  // MP_EXPORT
-
 #ifdef __cplusplus
 extern "C" {
 #endif

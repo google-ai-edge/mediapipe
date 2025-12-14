@@ -20,7 +20,7 @@ limitations under the License.
 #include <utility>
 
 #include "Eigen/Core"
-#include "absl/log/absl_log.h"
+#include "absl/log/absl_check.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/formats/matrix.h"
@@ -36,10 +36,11 @@ limitations under the License.
 #include "mediapipe/tasks/cc/audio/audio_classifier/audio_classifier.h"
 #include "mediapipe/tasks/cc/components/containers/classification_result.h"
 
+using ::mediapipe::tasks::audio::audio_classifier::AudioClassifier;
+
 // C API wrapper for the MediaPipe AudioClassifier.
 struct MpAudioClassifierInternal {
-  std::unique_ptr<::mediapipe::tasks::audio::audio_classifier::AudioClassifier>
-      classifier;
+  std::unique_ptr<AudioClassifier> instance;
 };
 
 namespace mediapipe::tasks::c::audio::audio_classifier {
@@ -59,6 +60,11 @@ using ::mediapipe::tasks::c::core::CppConvertToBaseOptions;
 using ::mediapipe::tasks::c::core::ToMpStatus;
 using ::mediapipe::tasks::components::containers::ClassificationResult;
 
+AudioClassifier* GetCppClassifier(MpAudioClassifierPtr wrapper) {
+  ABSL_CHECK(wrapper != nullptr) << "AudioClassifier is null.";
+  return wrapper->instance.get();
+}
+
 // A static result callback function that calls the provided C result callback.
 void CppResultCallback(
     absl::StatusOr<ClassificationResult> result,
@@ -76,10 +82,7 @@ void CppResultCallback(
   MpAudioClassifierResult c_result = {
       .results = classification_result.release(), .results_count = 1};
   c_callback(kMpOk, &c_result);
-  auto status = MpAudioClassifierCloseResult(&c_result);
-  if (status != kMpOk) {
-    ABSL_LOG(ERROR) << "Failed to close classification result: " << status;
-  }
+  MpAudioClassifierCloseResult(&c_result);
 }
 
 mediapipe::Matrix CppConvertToMatrix(const MpAudioData* audio_data) {
@@ -116,33 +119,30 @@ absl::StatusOr<std::unique_ptr<AudioClassifier>> CppCreateAudioClassifier(
 
 }  // namespace
 
-MpStatus MpAudioClassifierCreate(struct MpAudioClassifierOptions* options,
-                                 MpAudioClassifierPtr* classifier_out) {
+absl::Status MpAudioClassifierCreate(struct MpAudioClassifierOptions* options,
+                                     MpAudioClassifierPtr* classifier_out) {
   auto classifier = CppCreateAudioClassifier(*options);
   if (!classifier.ok()) {
-    ABSL_LOG(ERROR) << "Failed to create AudioClassifier: "
-                    << classifier.status();
-    return ToMpStatus(classifier.status());
+    return classifier.status();
   }
   *classifier_out = new MpAudioClassifierInternal(std::move(*classifier));
-  return kMpOk;
+  return absl::OkStatus();
 }
 
-MpStatus MpAudioClassifierClassify(MpAudioClassifierPtr classifier,
-                                   const MpAudioData* audio_data,
-                                   MpAudioClassifierResult* result_out) {
-  auto* cpp_classifier = classifier->classifier.get();
+absl::Status MpAudioClassifierClassify(MpAudioClassifierPtr classifier,
+                                       const MpAudioData* audio_data,
+                                       MpAudioClassifierResult* result_out) {
+  auto* cpp_classifier = GetCppClassifier(classifier);
   mediapipe::Matrix audio_matrix = CppConvertToMatrix(audio_data);
   auto cpp_result =
       cpp_classifier->Classify(audio_matrix, audio_data->sample_rate);
 
   if (!cpp_result.ok()) {
-    ABSL_LOG(ERROR) << "Classification failed: " << cpp_result.status();
-    return ToMpStatus(cpp_result.status());
+    return cpp_result.status();
   } else if (cpp_result->empty()) {
     result_out->results = nullptr;
     result_out->results_count = 0;
-    return kMpOk;
+    return absl::OkStatus();
   }
 
   auto c_classifications =
@@ -153,10 +153,10 @@ MpStatus MpAudioClassifierClassify(MpAudioClassifierPtr classifier,
                                      &(c_classifications.get()[i]));
   }
   result_out->results = c_classifications.release();
-  return kMpOk;
+  return absl::OkStatus();
 }
 
-MpStatus MpAudioClassifierCloseResult(MpAudioClassifierResult* result) {
+void MpAudioClassifierCloseResult(MpAudioClassifierResult* result) {
   if (result->results) {
     for (int i = 0; i < result->results_count; ++i) {
       CppCloseClassificationResult(&result->results[i]);
@@ -165,69 +165,69 @@ MpStatus MpAudioClassifierCloseResult(MpAudioClassifierResult* result) {
   }
   result->results = nullptr;
   result->results_count = 0;
-  return kMpOk;
 }
 
-MpStatus MpAudioClassifierClassifyAsync(MpAudioClassifierPtr classifier,
-                                        const MpAudioData* audio_data,
-                                        int64_t timestamp_ms) {
-  auto* cpp_classifier = classifier->classifier.get();
+absl::Status MpAudioClassifierClassifyAsync(MpAudioClassifierPtr classifier,
+                                            const MpAudioData* audio_data,
+                                            int64_t timestamp_ms) {
+  auto* cpp_classifier = GetCppClassifier(classifier);
   mediapipe::Matrix audio_matrix = CppConvertToMatrix(audio_data);
 
-  auto cpp_status = cpp_classifier->ClassifyAsync(
-      audio_matrix, audio_data->sample_rate, timestamp_ms);
-  if (!cpp_status.ok()) {
-    ABSL_LOG(ERROR) << "Classification failed: " << cpp_status;
-    return ToMpStatus(cpp_status);
-  }
-  return kMpOk;
+  return cpp_classifier->ClassifyAsync(audio_matrix, audio_data->sample_rate,
+                                       timestamp_ms);
 }
 
-MpStatus MpAudioClassifierClose(MpAudioClassifierPtr classifier) {
-  auto* cpp_classifier = classifier->classifier.get();
+absl::Status MpAudioClassifierClose(MpAudioClassifierPtr classifier) {
+  auto* cpp_classifier = GetCppClassifier(classifier);
   auto cpp_status = cpp_classifier->Close();
   if (!cpp_status.ok()) {
-    ABSL_LOG(ERROR) << "Failed to close AudioClassifier: " << cpp_status;
-    return ToMpStatus(cpp_status);
+    return cpp_status;
   }
   delete classifier;
-  return kMpOk;
+  return absl::OkStatus();
 }
 
 }  // namespace mediapipe::tasks::c::audio::audio_classifier
 
 extern "C" {
 
-MP_EXPORT MpStatus
-MpAudioClassifierCreate(struct MpAudioClassifierOptions* options,
-                        MpAudioClassifierPtr* classifier_out) {
-  return mediapipe::tasks::c::audio::audio_classifier::MpAudioClassifierCreate(
-      options, classifier_out);
+MP_EXPORT MpStatus MpAudioClassifierCreate(
+    struct MpAudioClassifierOptions* options,
+    MpAudioClassifierPtr* classifier_out, char** error_msg) {
+  absl::Status status =
+      mediapipe::tasks::c::audio::audio_classifier::MpAudioClassifierCreate(
+          options, classifier_out);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
 MP_EXPORT MpStatus MpAudioClassifierClassify(
     MpAudioClassifierPtr classifier, const MpAudioData* audio_data,
-    MpAudioClassifierResult* result_out) {
-  return mediapipe::tasks::c::audio::audio_classifier::
-      MpAudioClassifierClassify(classifier, audio_data, result_out);
+    MpAudioClassifierResult* result_out, char** error_msg) {
+  absl::Status status =
+      mediapipe::tasks::c::audio::audio_classifier::MpAudioClassifierClassify(
+          classifier, audio_data, result_out);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
 MP_EXPORT MpStatus MpAudioClassifierClassifyAsync(
     MpAudioClassifierPtr classifier, const MpAudioData* audio_data,
-    int64_t timestamp_ms) {
-  return mediapipe::tasks::c::audio::audio_classifier::
+    int64_t timestamp_ms, char** error_msg) {
+  absl::Status status = mediapipe::tasks::c::audio::audio_classifier::
       MpAudioClassifierClassifyAsync(classifier, audio_data, timestamp_ms);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
-MP_EXPORT MpStatus
-MpAudioClassifierCloseResult(MpAudioClassifierResult* result) {
-  return mediapipe::tasks::c::audio::audio_classifier::
-      MpAudioClassifierCloseResult(result);
+MP_EXPORT void MpAudioClassifierCloseResult(MpAudioClassifierResult* result) {
+  mediapipe::tasks::c::audio::audio_classifier::MpAudioClassifierCloseResult(
+      result);
 }
 
-MP_EXPORT MpStatus MpAudioClassifierClose(MpAudioClassifierPtr classifier) {
-  return mediapipe::tasks::c::audio::audio_classifier::MpAudioClassifierClose(
-      classifier);
+MP_EXPORT MpStatus MpAudioClassifierClose(MpAudioClassifierPtr classifier,
+                                          char** error_msg) {
+  absl::Status status =
+      mediapipe::tasks::c::audio::audio_classifier::MpAudioClassifierClose(
+          classifier);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
 }  // extern "C"

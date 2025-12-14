@@ -1,13 +1,12 @@
 #ifndef MEDIAPIPE_GPU_WEBGPU_WEBGPU_TEXTURE_VIEW_H_
 #define MEDIAPIPE_GPU_WEBGPU_WEBGPU_TEXTURE_VIEW_H_
 
-#include <webgpu/webgpu_cpp.h>
-
 #include <cstdint>
 #include <memory>
 #include <utility>
 
 #include "mediapipe/gpu/gpu_buffer_storage.h"
+#include "mediapipe/gpu/webgpu/webgpu_headers.h"
 
 namespace mediapipe {
 

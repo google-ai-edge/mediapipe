@@ -101,29 +101,26 @@ _FLATC_TFLITE_METADATA_SCHEMA_FILE = get_path_to_datafile(
     "../../metadata/metadata_schema.fbs")
 
 _FLATBUFFERS_C_API_SIGNATURES = (
-    mediapipe_c_utils.CFunction(
+    mediapipe_c_utils.CStatusFunction(
         func_name="MpFlatbufferParserCreate",
-        argtypes=[ctypes.c_bool, ctypes.POINTER(ctypes.c_void_p)],
-        restype=ctypes.c_int,
+        core_argtypes=(ctypes.c_bool, ctypes.POINTER(ctypes.c_void_p)),
     ),
-    mediapipe_c_utils.CFunction(
+    mediapipe_c_utils.CStatusFunction(
         func_name="MpFlatbufferParserParse",
-        argtypes=[ctypes.c_void_p, ctypes.c_char_p],
-        restype=ctypes.c_int,
+        core_argtypes=(ctypes.c_void_p, ctypes.c_char_p),
     ),
     mediapipe_c_utils.CFunction(
         func_name="MpFlatbufferParserGetError",
         argtypes=[ctypes.c_void_p],
         restype=ctypes.c_char_p,
     ),
-    mediapipe_c_utils.CFunction(
+    mediapipe_c_utils.CStatusFunction(
         func_name="MpFlatbufferGenerateText",
-        argtypes=[
+        core_argtypes=(
             ctypes.c_void_p,
             ctypes.POINTER(ctypes.c_uint8),
             ctypes.c_size_t,
-        ],
-        restype=ctypes.c_int,
+        ),
     ),
     mediapipe_c_utils.CFunction(
         func_name="MpFlatbufferFreeString",
@@ -147,12 +144,11 @@ class _FlatbuffersParser:
     )
     self._lib.__enter__()  # Enter the mediapipe_c_bindings context
     self._parser = ctypes.c_void_p()
-    status = self._lib.MpFlatbufferParserCreate(
-        True, ctypes.byref(self._parser)
-    )
-    if status != 0:
+    try:
+      self._lib.MpFlatbufferParserCreate(True, ctypes.byref(self._parser))
+    except Exception:
       self._lib.__exit__(None, None, None)
-      raise ValueError("Cannot create Flatbuffers Parser")
+      raise
     return self
 
   def __exit__(self, exc_type, exc_val, exc_tb):
@@ -162,23 +158,24 @@ class _FlatbuffersParser:
 
   def parse(self, source: bytes) -> None:
     """Parses the Flatbuffers schema source."""
-    status = self._lib.MpFlatbufferParserParse(self._parser, source)
-    if status != 0:
+    try:
+      self._lib.MpFlatbufferParserParse(self._parser, source)
+    except Exception as e:
       error_message = self._lib.MpFlatbufferParserGetError(self._parser).decode(
           "utf-8"
       )
-      raise ValueError(f"Cannot parse schema. Reason: {error_message}")
+      raise ValueError(f"Cannot parse schema. Reason: {error_message}") from e
 
   def generate_text(self, buffer: bytes) -> str:
     """Generates JSON text from a Flatbuffer buffer."""
     json_out = ctypes.c_char_p()
-    status = self._lib.MpFlatbufferGenerateText(
+    self._lib.MpFlatbufferGenerateText(
         self._parser,
         ctypes.cast(ctypes.c_char_p(buffer), ctypes.POINTER(ctypes.c_uint8)),
         len(buffer),
         ctypes.byref(json_out),
     )
-    if status != 0 or json_out.value is None:
+    if json_out.value is None:
       raise ValueError("Failed to generate text from buffer")
     try:
       raw_json_content = json_out.value.decode("utf-8")

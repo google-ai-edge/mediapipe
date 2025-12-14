@@ -1,8 +1,7 @@
-#include <webgpu/webgpu_cpp.h>
-
 #include <memory>
 
 #include "mediapipe/framework/formats/tensor.h"
+#include "mediapipe/gpu/webgpu/webgpu_headers.h"
 #include "mediapipe/gpu/webgpu/webgpu_service.h"
 #include "mediapipe/gpu/webgpu/webgpu_utils.h"
 

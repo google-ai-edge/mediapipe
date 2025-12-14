@@ -28,6 +28,7 @@ import com.google.mediapipe.framework.image.ByteBufferExtractor;
 import com.google.mediapipe.framework.image.MPImage;
 import com.google.mediapipe.tasks.components.containers.NormalizedKeypoint;
 import com.google.mediapipe.tasks.core.BaseOptions;
+import com.google.mediapipe.tasks.core.Delegate;
 import com.google.mediapipe.tasks.vision.imagesegmenter.ImageSegmenterResult;
 import com.google.mediapipe.tasks.vision.interactivesegmenter.InteractiveSegmenter.InteractiveSegmenterOptions;
 import java.io.InputStream;
@@ -48,6 +49,7 @@ import org.junit.runners.Suite.SuiteClasses;
 public class InteractiveSegmenterTest {
   private static final String DEEPLAB_MODEL_FILE = "ptm_512_hdt_ptm_woid.tflite";
   private static final String MAGIC_TOUCH_MODEL_FILE = "magic_touch.tflite";
+  //
   private static final String CATS_AND_DOGS_IMAGE = "cats_and_dogs.jpg";
   private static final String CAT_IMAGE = "cat_large.jpg";
   private static final float GOLDEN_MASK_SIMILARITY = 0.94f;
@@ -61,7 +63,11 @@ public class InteractiveSegmenterTest {
           InteractiveSegmenter.RegionOfInterest.create(NormalizedKeypoint.create(0.25f, 0.9f));
       InteractiveSegmenterOptions options =
           InteractiveSegmenterOptions.builder()
-              .setBaseOptions(BaseOptions.builder().setModelAssetPath(DEEPLAB_MODEL_FILE).build())
+              .setBaseOptions(
+                  BaseOptions.builder()
+                      .setModelAssetPath(DEEPLAB_MODEL_FILE)
+                      .setDelegate(Delegate.CPU)
+                      .build())
               .setOutputConfidenceMasks(false)
               .setOutputCategoryMask(true)
               .build();
@@ -80,7 +86,11 @@ public class InteractiveSegmenterTest {
           InteractiveSegmenter.RegionOfInterest.create(NormalizedKeypoint.create(0.3f, 0.4f));
       InteractiveSegmenterOptions options =
           InteractiveSegmenterOptions.builder()
-              .setBaseOptions(BaseOptions.builder().setModelAssetPath(DEEPLAB_MODEL_FILE).build())
+              .setBaseOptions(
+                  BaseOptions.builder()
+                      .setModelAssetPath(DEEPLAB_MODEL_FILE)
+                      .setDelegate(Delegate.CPU)
+                      .build())
               .setOutputConfidenceMasks(true)
               .setOutputCategoryMask(false)
               .build();
@@ -94,15 +104,17 @@ public class InteractiveSegmenterTest {
       assertThat(confidenceMasks.size()).isEqualTo(2);
     }
 
-    @Test
-    public void segment_successWithMagicTouch() throws Exception {
+    public void segmentSuccessWithMagicTouchHelper(boolean useGpu) throws Exception {
       final String inputImageName = CAT_IMAGE;
       final InteractiveSegmenter.RegionOfInterest roi =
           InteractiveSegmenter.RegionOfInterest.create(NormalizedKeypoint.create(0.30f, 0.4f));
       InteractiveSegmenterOptions options =
           InteractiveSegmenterOptions.builder()
               .setBaseOptions(
-                  BaseOptions.builder().setModelAssetPath(MAGIC_TOUCH_MODEL_FILE).build())
+                  BaseOptions.builder()
+                      .setModelAssetPath(MAGIC_TOUCH_MODEL_FILE)
+                      .setDelegate(useGpu ? Delegate.GPU : Delegate.CPU)
+                      .build())
               .setOutputConfidenceMasks(false)
               .setOutputCategoryMask(true)
               .build();
@@ -115,6 +127,16 @@ public class InteractiveSegmenterTest {
       MPImage actualMaskBuffer = actualResult.categoryMask().get();
       MPImage expectedMaskBuffer = getImageFromAsset("cat_large_mask.png");
       verifyCategoryMask(actualMaskBuffer, expectedMaskBuffer, GOLDEN_MASK_SIMILARITY);
+    }
+
+    @Test
+    public void segment_successWithMagicTouchCpu() throws Exception {
+      segmentSuccessWithMagicTouchHelper(/* useGpu= */ false);
+    }
+
+    @Test
+    public void segment_successWithMagicTouchGpu() throws Exception {
+      segmentSuccessWithMagicTouchHelper(/* useGpu= */ true);
     }
   }
 
@@ -131,7 +153,11 @@ public class InteractiveSegmenterTest {
           InteractiveSegmenter.RegionOfInterest.create(scribble);
       InteractiveSegmenterOptions options =
           InteractiveSegmenterOptions.builder()
-              .setBaseOptions(BaseOptions.builder().setModelAssetPath(DEEPLAB_MODEL_FILE).build())
+              .setBaseOptions(
+                  BaseOptions.builder()
+                      .setModelAssetPath(DEEPLAB_MODEL_FILE)
+                      .setDelegate(Delegate.CPU)
+                      .build())
               .setOutputConfidenceMasks(false)
               .setOutputCategoryMask(true)
               .build();
@@ -154,7 +180,11 @@ public class InteractiveSegmenterTest {
           InteractiveSegmenter.RegionOfInterest.create(scribble);
       InteractiveSegmenterOptions options =
           InteractiveSegmenterOptions.builder()
-              .setBaseOptions(BaseOptions.builder().setModelAssetPath(DEEPLAB_MODEL_FILE).build())
+              .setBaseOptions(
+                  BaseOptions.builder()
+                      .setModelAssetPath(DEEPLAB_MODEL_FILE)
+                      .setDelegate(Delegate.CPU)
+                      .build())
               .setOutputConfidenceMasks(true)
               .setOutputCategoryMask(false)
               .build();
@@ -180,9 +210,9 @@ public class InteractiveSegmenterTest {
     actualMaskBuffer.rewind();
     for (int y = 0; y < actualMask.getHeight(); y++) {
       for (int x = 0; x < actualMask.getWidth(); x++) {
-        boolean actualForground = actualMaskBuffer.get() != 0;
-        boolean goldenForeground = goldenMaskBitmap.getPixel(x, y) != Color.BLACK;
-        if (actualForground == goldenForeground) {
+        boolean actualForeground = actualMaskBuffer.get() != 0;
+        boolean goldenForeground = goldenMaskBitmap.getPixel(x, y) == Color.BLACK;
+        if (actualForeground == goldenForeground) {
           ++consistentPixels;
         }
       }

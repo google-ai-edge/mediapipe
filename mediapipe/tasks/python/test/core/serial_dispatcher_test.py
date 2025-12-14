@@ -18,6 +18,7 @@ from typing import Any
 from unittest import mock
 
 from absl.testing import absltest
+from absl.testing import parameterized
 
 from mediapipe.tasks.python.core import mediapipe_c_utils
 from mediapipe.tasks.python.core import serial_dispatcher
@@ -34,11 +35,10 @@ def _register_func(
   )
 
 
-class SerialDispatcherTest(absltest.TestCase):
+class SerialDispatcherTest(parameterized.TestCase):
 
   def test_delegates_to_registered_methods(self):
-    mock_lib = mock.MagicMock()
-    mock_lib.my_method = mock.MagicMock()
+    mock_lib = mock.MagicMock(spec_set=["my_method"])
     signatures = [_register_func("my_method")]
 
     with serial_dispatcher.SerialDispatcher(mock_lib, signatures) as dispatcher:
@@ -46,7 +46,7 @@ class SerialDispatcherTest(absltest.TestCase):
     mock_lib.my_method.assert_called_once()
 
   def test_method_calls_are_serialized(self):
-    mock_lib = mock.MagicMock()
+    mock_lib = mock.MagicMock(spec_set=["long_running_func", "queued_func"])
     mock_long_running_func = mock_lib.long_running_func
     mock_queued_func = mock_lib.queued_func
 
@@ -85,14 +85,14 @@ class SerialDispatcherTest(absltest.TestCase):
 
   def test_method_calls_are_invoked_from_same_thread(self):
     num_threads = 5
-    mock_lib = mock.MagicMock()
+    mock_lib = mock.MagicMock(spec_set=["write_thread_id"])
 
     thread_ids = set()
 
     def write_thread_id():
       thread_ids.add(threading.get_ident())
 
-    mock_lib.write_thread_id = write_thread_id
+    mock_lib.write_thread_id.side_effect = write_thread_id
     signatures = [_register_func("write_thread_id")]
 
     with serial_dispatcher.SerialDispatcher(mock_lib, signatures) as dispatcher:
@@ -108,7 +108,7 @@ class SerialDispatcherTest(absltest.TestCase):
       self.assertLen(thread_ids, 1)
 
   def test_returns_value(self):
-    mock_lib = mock.MagicMock()
+    mock_lib = mock.MagicMock(spec_set=["return_42"])
     mock_lib.return_42.return_value = 42
 
     signatures = [_register_func("return_42", return_type=ctypes.c_int)]
@@ -117,7 +117,7 @@ class SerialDispatcherTest(absltest.TestCase):
       self.assertEqual(dispatcher.return_42(), 42)
 
   def test_raises_error(self):
-    mock_lib = mock.MagicMock()
+    mock_lib = mock.MagicMock(spec_set=["error_func"])
     mock_lib.error_func.side_effect = ValueError("Test Error")
 
     signatures = [_register_func("error_func")]
@@ -127,7 +127,7 @@ class SerialDispatcherTest(absltest.TestCase):
         dispatcher.error_func()
 
   def test_continues_after_error(self):
-    mock_lib = mock.MagicMock()
+    mock_lib = mock.MagicMock(spec_set=["error_func", "return_42"])
     mock_lib.error_func.side_effect = ValueError("Test Error")
     mock_lib.return_42.return_value = 42
 
@@ -146,8 +146,8 @@ class SerialDispatcherTest(absltest.TestCase):
       self.assertEqual(dispatcher.return_42(), 42)
 
   def test_calls_after_close_are_not_dispatched(self):
-    mock_lib = mock.MagicMock()
-    mock_lib.some_func.returns_42 = 42
+    mock_lib = mock.MagicMock(spec_set=["returns_42"])
+    mock_lib.returns_42.return_value = 42
     signatures = [_register_func("returns_42")]
 
     dispatcher = serial_dispatcher.SerialDispatcher(mock_lib, signatures)
@@ -155,8 +155,57 @@ class SerialDispatcherTest(absltest.TestCase):
 
     # The dispatcher returns a default value of None for all calls after its
     # closed.
-    # TODO: b/456183832 - Return 0 once all APIs return MpStatus.
     self.assertIsNone(dispatcher.returns_42())
+
+  def test_calls_status_functions_with_error_argument(self):
+    mock_lib = mock.MagicMock(spec_set=["status_method"])
+    test_arg = 123
+
+    def status_method(arg, error_msg) -> int:
+      self.assertEqual(arg, test_arg)
+      self.assertIsInstance(error_msg._obj, ctypes.c_char_p)
+      return 0
+
+    mock_lib.status_method.side_effect = status_method
+
+    func_signatures = [
+        mediapipe_c_utils.CStatusFunction(
+            func_name="status_method",
+            core_argtypes=[ctypes.c_int],
+        )
+    ]
+    with serial_dispatcher.SerialDispatcher(
+        mock_lib, func_signatures
+    ) as dispatcher:
+      dispatcher.status_method(test_arg)
+
+    mock_lib.status_method.assert_called_once()
+
+  @parameterized.named_parameters(
+      ("ascii_error", "Test Error"),
+      ("utf8_error", "⚠️"),
+  )
+  def test_uses_error_message_for_status_functions(self, error_message):
+    mock_lib = mock.MagicMock(spec_set=["invalid_op", "free"])
+
+    def invalid_op(error_msg):
+      error_msg._obj.value = error_message.encode("utf-8")
+      return 13
+
+    mock_lib.invalid_op.side_effect = invalid_op
+
+    func_signatures = [
+        mediapipe_c_utils.CStatusFunction(
+            func_name="invalid_op",
+            core_argtypes=[],
+        )
+    ]
+    dispatcher = serial_dispatcher.SerialDispatcher(mock_lib, func_signatures)
+
+    with self.assertRaisesRegex(RuntimeError, error_message):
+      dispatcher.invalid_op()
+
+    dispatcher.close()
 
 
 if __name__ == "__main__":

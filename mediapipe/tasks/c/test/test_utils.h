@@ -17,16 +17,26 @@ limitations under the License.
 #define MEDIAPIPE_TASKS_C_TEST_TEST_UTILS_H_
 
 #include "mediapipe/framework/formats/image.h"
+#include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/core/image_frame_util.h"
 
 namespace mediapipe::tasks::c::test {
 
-MpImagePtr CreateCategoryMaskFromImage(absl::StatusOr<Image>& image);
+testing::AssertionResult AssertMpStatusOk(const char* expr,
+                                          const MpStatus& status);
+
+MpImagePtr CreateCategoryMaskFromImage(const Image& image);
 
 float SimilarToUint8Mask(MpImageInternal* actual_mask,
                          MpImageInternal* expected_mask,
                          int magnification_factor);
+
+#define MP_EXPECT_OK(expression) \
+  EXPECT_PRED_FORMAT1(mediapipe::tasks::c::test::AssertMpStatusOk, expression)
+
+#define MP_ASSERT_OK(expression) \
+  ASSERT_PRED_FORMAT1(mediapipe::tasks::c::test::AssertMpStatusOk, expression)
 
 }  // namespace mediapipe::tasks::c::test
 

@@ -38,14 +38,11 @@ cc_library(
         "//mediapipe/tasks/c/core:mp_status",
         "//mediapipe/tasks/c/core:mp_status_converter",
         "//mediapipe/tasks/cc/text/utils:vocab_convert_utils",
-        "@com_google_absl//absl/flags:parse",
-        "@com_google_absl//absl/log:absl_log",
-        "@com_google_absl//absl/log:initialize",
         "@com_google_absl//absl/status",
     ] + select({
         ":enable_odml_converter": [
-            "//mediapipe/tasks/cc/genai/inference/ml_drift/llm/tensor_loaders:model_ckpt_util",
-            "//mediapipe/tasks/cc/genai/inference/utils/xnn_utils:model_ckpt_util",
+            "@odml//odml/infra/genai/inference/ml_drift/llm/tensor_loaders:model_ckpt_util",
+            "@odml//odml/infra/genai/inference/utils/xnn_utils:model_ckpt_util",
         ],
         "//conditions:default": [],
     }),

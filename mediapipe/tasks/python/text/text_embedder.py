@@ -47,29 +47,26 @@ class _TextEmbedderOptionsC(ctypes.Structure):
 
 
 _CTYPES_SIGNATURES = (
-    mediapipe_c_utils.CFunction(
+    mediapipe_c_utils.CStatusFunction(
         'MpTextEmbedderCreate',
         [
             ctypes.POINTER(_TextEmbedderOptionsC),
             ctypes.POINTER(ctypes.c_void_p),
         ],
-        ctypes.c_int,
     ),
-    mediapipe_c_utils.CFunction(
+    mediapipe_c_utils.CStatusFunction(
         'MpTextEmbedderEmbed',
         [
             ctypes.c_void_p,
             ctypes.c_char_p,
             ctypes.POINTER(embedding_result_c_module.EmbeddingResultC),
         ],
-        ctypes.c_int,
     ),
-    mediapipe_c_utils.CFunction(
+    mediapipe_c_utils.CStatusFunction(
         'MpTextEmbedderClose',
         [
             ctypes.c_void_p,
         ],
-        ctypes.c_int,
     ),
     mediapipe_c_utils.CFunction(
         'MpTextEmbedderCloseResult',
@@ -183,10 +180,9 @@ class TextEmbedder:
     lib = mediapipe_c_bindings.load_shared_library(_CTYPES_SIGNATURES)
     ctypes_options = options.to_ctypes()
     embedder_handle = ctypes.c_void_p()
-    status = lib.MpTextEmbedderCreate(
+    lib.MpTextEmbedderCreate(
         ctypes.byref(ctypes_options), ctypes.byref(embedder_handle)
     )
-    mediapipe_c_utils.handle_status(status)
     return TextEmbedder(lib=lib, handle=embedder_handle)
 
   def embed(
@@ -206,12 +202,11 @@ class TextEmbedder:
       RuntimeError: If text embedder failed to run.
     """
     ctypes_result = embedding_result_c_module.EmbeddingResultC()
-    status = self._lib.MpTextEmbedderEmbed(
+    self._lib.MpTextEmbedderEmbed(
         self._embedder_handle,
         text.encode('utf-8'),
         ctypes.byref(ctypes_result),
     )
-    mediapipe_c_utils.handle_status(status)
     python_result = (
         embedding_result_module.EmbeddingResult.from_ctypes(
             ctypes_result
@@ -249,8 +244,7 @@ class TextEmbedder:
   def close(self):
     """Shuts down the MediaPipe task instance."""
     if self._embedder_handle:
-      status = self._lib.MpTextEmbedderClose(self._embedder_handle)
-      mediapipe_c_utils.handle_status(status)
+      self._lib.MpTextEmbedderClose(self._embedder_handle)
       self._embedder_handle = None
       self._lib.close()
 

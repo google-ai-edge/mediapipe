@@ -38,7 +38,6 @@ _BaseOptions = base_options_module.BaseOptions
 _ClassifierOptions = classifier_options_module.ClassifierOptions
 _RunningMode = running_mode_module.VisionTaskRunningMode
 _ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
-_CFunction = mediapipe_c_utils.CFunction
 _AsyncResultDispatcher = async_result_dispatcher.AsyncResultDispatcher
 
 
@@ -83,56 +82,49 @@ class ImageClassifierOptionsC(ctypes.Structure):
 
 
 _CTYPES_SIGNATURES = (
-    _CFunction(
+    mediapipe_c_utils.CStatusFunction(
         "MpImageClassifierCreate",
-        [
+        (
             ctypes.POINTER(ImageClassifierOptionsC),
             ctypes.POINTER(ctypes.c_void_p),
-        ],
-        ctypes.c_int,
+        ),
     ),
-    _CFunction(
+    mediapipe_c_utils.CStatusFunction(
         "MpImageClassifierClassifyImage",
-        [
+        (
             ctypes.c_void_p,
             ctypes.c_void_p,
             ctypes.POINTER(image_processing_options_c.ImageProcessingOptionsC),
             ctypes.POINTER(classification_result_c.ClassificationResultC),
-        ],
-        ctypes.c_int,
+        ),
     ),
-    _CFunction(
+    mediapipe_c_utils.CStatusFunction(
         "MpImageClassifierClassifyForVideo",
-        [
+        (
             ctypes.c_void_p,
             ctypes.c_void_p,
             ctypes.POINTER(image_processing_options_c.ImageProcessingOptionsC),
             ctypes.c_int64,
             ctypes.POINTER(classification_result_c.ClassificationResultC),
-        ],
-        ctypes.c_int,
+        ),
     ),
-    _CFunction(
+    mediapipe_c_utils.CStatusFunction(
         "MpImageClassifierClassifyAsync",
-        [
+        (
             ctypes.c_void_p,
             ctypes.c_void_p,
             ctypes.POINTER(image_processing_options_c.ImageProcessingOptionsC),
             ctypes.c_int64,
-        ],
-        ctypes.c_int,
+        ),
     ),
-    _CFunction(
+    mediapipe_c_utils.CFunction(
         "MpImageClassifierCloseResult",
         [ctypes.POINTER(classification_result_c.ClassificationResultC)],
         None,
     ),
-    _CFunction(
+    mediapipe_c_utils.CStatusFunction(
         "MpImageClassifierClose",
-        [
-            ctypes.c_void_p,
-        ],
-        ctypes.c_int,
+        (ctypes.c_void_p,),
     ),
 )
 
@@ -319,10 +311,9 @@ class ImageClassifier:
         result_callback=c_callback,
     )
     classifier_handle = ctypes.c_void_p()
-    status = lib.MpImageClassifierCreate(
+    lib.MpImageClassifierCreate(
         ctypes.byref(options_c), ctypes.byref(classifier_handle)
     )
-    mediapipe_c_utils.handle_status(status)
     return cls(
         lib=lib,
         handle=classifier_handle,
@@ -358,13 +349,12 @@ class ImageClassifier:
         if image_processing_options
         else None
     )
-    status = self._lib.MpImageClassifierClassifyImage(
+    self._lib.MpImageClassifierClassifyImage(
         self._handle,
         c_image,
         options_c,
         ctypes.byref(c_result),
     )
-    mediapipe_c_utils.handle_status(status)
 
     result = ImageClassifierResult.from_ctypes(c_result)
     self._lib.MpImageClassifierCloseResult(ctypes.byref(c_result))
@@ -402,14 +392,13 @@ class ImageClassifier:
         if image_processing_options
         else None
     )
-    status = self._lib.MpImageClassifierClassifyForVideo(
+    self._lib.MpImageClassifierClassifyForVideo(
         self._handle,
         c_image,
         options_c,
         timestamp_ms,
         ctypes.byref(c_result),
     )
-    mediapipe_c_utils.handle_status(status)
 
     result = ImageClassifierResult.from_ctypes(c_result)
     self._lib.MpImageClassifierCloseResult(ctypes.byref(c_result))
@@ -453,22 +442,21 @@ class ImageClassifier:
         if image_processing_options
         else None
     )
-    status = self._lib.MpImageClassifierClassifyAsync(
+    self._lib.MpImageClassifierClassifyAsync(
         self._handle,
         c_image,
         options_c,
         timestamp_ms,
     )
-    mediapipe_c_utils.handle_status(status)
 
   def close(self):
     """Closes ImageClassifier."""
-    if self._handle:
-      status = self._lib.MpImageClassifierClose(self._handle)
-      mediapipe_c_utils.handle_status(status)
-      self._handle = None
-      self._dispatcher.close()
-      self._lib.close()
+    if not self._handle:
+      return
+    self._lib.MpImageClassifierClose(self._handle)
+    self._handle = None
+    self._dispatcher.close()
+    self._lib.close()
 
   def __enter__(self):
     """Returns `self` upon entering the runtime context."""

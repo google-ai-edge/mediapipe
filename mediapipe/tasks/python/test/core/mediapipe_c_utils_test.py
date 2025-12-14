@@ -12,8 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import ctypes
+
 from absl.testing import absltest
 from absl.testing import parameterized
+
 from mediapipe.tasks.python.core import mediapipe_c_utils
 
 MpStatus = mediapipe_c_utils.MpStatus
@@ -66,7 +69,7 @@ class MediapipeCBindingsTest(parameterized.TestCase):
       (
           "unavailable",
           MpStatus.MP_UNAVAILABLE,
-          ConnectionError,
+          RuntimeError,
       ),
       ("data_loss", MpStatus.MP_DATA_LOSS, RuntimeError),
       (
@@ -78,11 +81,15 @@ class MediapipeCBindingsTest(parameterized.TestCase):
   def test_handle_status_raises_correct_errors(
       self, status, expected_exception
   ):
-    with self.assertRaises(expected_exception):
-      mediapipe_c_utils.handle_status(status)
+    expected_message = self._testMethodName
+    with self.assertRaisesRegex(expected_exception, expected_message):
+      encoded_message = expected_message.encode("utf-8")
+      mediapipe_c_utils.handle_status(status, ctypes.c_char_p(encoded_message))
 
   def test_handle_status_ok(self):
-    self.assertIsNone(mediapipe_c_utils.handle_status(MpStatus.MP_OK))
+    self.assertIsNone(
+        mediapipe_c_utils.handle_status(MpStatus.MP_OK, ctypes.c_char_p())
+    )
 
 
 if __name__ == "__main__":

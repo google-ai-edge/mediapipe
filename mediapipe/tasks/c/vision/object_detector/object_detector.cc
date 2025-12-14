@@ -23,7 +23,7 @@ limitations under the License.
 #include <utility>
 #include <vector>
 
-#include "absl/log/absl_log.h"
+#include "absl/log/absl_check.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/formats/image.h"
@@ -39,8 +39,10 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
 #include "mediapipe/tasks/cc/vision/object_detector/object_detector.h"
 
+using ::mediapipe::tasks::vision::ObjectDetector;
+
 struct MpObjectDetectorInternal {
-  std::unique_ptr<::mediapipe::tasks::vision::ObjectDetector> detector;
+  std::unique_ptr<ObjectDetector> instance;
 };
 
 namespace mediapipe::tasks::c::vision::object_detector {
@@ -60,9 +62,14 @@ using CppObjectDetectorResult =
 using CppImageProcessingOptions =
     ::mediapipe::tasks::vision::core::ImageProcessingOptions;
 
-}  // namespace
-
 const Image& ToImage(const MpImagePtr mp_image) { return mp_image->image; }
+
+ObjectDetector* GetCppDetector(MpObjectDetectorPtr wrapper) {
+  ABSL_CHECK(wrapper != nullptr) << "ObjectDetector is null.";
+  return wrapper->instance.get();
+}
+
+}  // namespace
 
 void CppConvertToDetectorOptions(
     const ObjectDetectorOptions& in,
@@ -82,8 +89,8 @@ void CppConvertToDetectorOptions(
   }
 }
 
-MpStatus CppObjectDetectorCreate(const ObjectDetectorOptions& options,
-                                 MpObjectDetectorPtr* detector_out) {
+absl::Status CppObjectDetectorCreate(const ObjectDetectorOptions& options,
+                                     MpObjectDetectorPtr* detector_out) {
   auto cpp_options =
       std::make_unique<::mediapipe::tasks::vision::ObjectDetectorOptions>();
 
@@ -95,11 +102,8 @@ MpStatus CppObjectDetectorCreate(const ObjectDetectorOptions& options,
   // set to RunningMode::LIVE_STREAM.
   if (cpp_options->running_mode == RunningMode::LIVE_STREAM) {
     if (options.result_callback == nullptr) {
-      const absl::Status status = absl::InvalidArgumentError(
+      return absl::InvalidArgumentError(
           "Provided null pointer to callback function.");
-      ABSL_LOG(ERROR) << "Failed to create ObjectDetector: " << status;
-      *detector_out = nullptr;
-      return ToMpStatus(status);
     }
 
     ObjectDetectorOptions::result_callback_fn result_callback =
@@ -122,20 +126,18 @@ MpStatus CppObjectDetectorCreate(const ObjectDetectorOptions& options,
 
   auto detector = ObjectDetector::Create(std::move(cpp_options));
   if (!detector.ok()) {
-    ABSL_LOG(ERROR) << "Failed to create ObjectDetector: " << detector.status();
-    *detector_out = nullptr;
-    return ToMpStatus(detector.status());
+    return detector.status();
   }
   *detector_out =
-      new MpObjectDetectorInternal{.detector = std::move(*detector)};
-  return kMpOk;
+      new MpObjectDetectorInternal{.instance = std::move(*detector)};
+  return absl::OkStatus();
 }
 
-MpStatus CppObjectDetectorDetect(
+absl::Status CppObjectDetectorDetect(
     MpObjectDetectorPtr detector, const MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
     ObjectDetectorResult* result) {
-  auto cpp_detector = detector->detector.get();
+  auto cpp_detector = GetCppDetector(detector);
   std::optional<CppImageProcessingOptions> cpp_image_processing_options;
   if (image_processing_options) {
     CppImageProcessingOptions options;
@@ -146,18 +148,17 @@ MpStatus CppObjectDetectorDetect(
       cpp_detector->Detect(ToImage(image), cpp_image_processing_options);
 
   if (!cpp_result.ok()) {
-    ABSL_LOG(ERROR) << "Detection failed: " << cpp_result.status();
-    return ToMpStatus(cpp_result.status());
+    return cpp_result.status();
   }
   CppConvertToDetectionResult(*cpp_result, result);
-  return kMpOk;
+  return absl::OkStatus();
 }
 
-MpStatus CppObjectDetectorDetectForVideo(
+absl::Status CppObjectDetectorDetectForVideo(
     MpObjectDetectorPtr detector, const MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
     int64_t timestamp_ms, ObjectDetectorResult* result) {
-  auto cpp_detector = detector->detector.get();
+  auto cpp_detector = GetCppDetector(detector);
   std::optional<CppImageProcessingOptions> cpp_image_processing_options;
   if (image_processing_options) {
     CppImageProcessingOptions options;
@@ -168,49 +169,39 @@ MpStatus CppObjectDetectorDetectForVideo(
                                                  cpp_image_processing_options);
 
   if (!cpp_result.ok()) {
-    ABSL_LOG(ERROR) << "Detection failed: " << cpp_result.status();
-    return ToMpStatus(cpp_result.status());
+    return cpp_result.status();
   }
   CppConvertToDetectionResult(*cpp_result, result);
-  return kMpOk;
+  return absl::OkStatus();
 }
 
-MpStatus CppObjectDetectorDetectAsync(
+absl::Status CppObjectDetectorDetectAsync(
     MpObjectDetectorPtr detector, const MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
     int64_t timestamp_ms) {
-  auto cpp_detector = detector->detector.get();
+  auto cpp_detector = GetCppDetector(detector);
   std::optional<CppImageProcessingOptions> cpp_image_processing_options;
   if (image_processing_options) {
     CppImageProcessingOptions options;
     CppConvertToImageProcessingOptions(*image_processing_options, &options);
     cpp_image_processing_options = options;
   }
-  auto cpp_result = cpp_detector->DetectAsync(ToImage(image), timestamp_ms,
-                                              cpp_image_processing_options);
-
-  if (!cpp_result.ok()) {
-    ABSL_LOG(ERROR) << "Data preparation for the object detection failed: "
-                    << cpp_result;
-    return ToMpStatus(cpp_result);
-  }
-  return kMpOk;
+  return cpp_detector->DetectAsync(ToImage(image), timestamp_ms,
+                                   cpp_image_processing_options);
 }
 
 void CppObjectDetectorCloseResult(ObjectDetectorResult* result) {
   CppCloseDetectionResult(result);
 }
 
-MpStatus CppObjectDetectorClose(MpObjectDetectorPtr detector) {
-  if (!detector) return kMpOk;
-  auto cpp_detector = detector->detector.get();
+absl::Status CppObjectDetectorClose(MpObjectDetectorPtr detector) {
+  auto cpp_detector = GetCppDetector(detector);
   auto result = cpp_detector->Close();
   if (!result.ok()) {
-    ABSL_LOG(ERROR) << "Failed to close ObjectDetector: " << result;
-    return ToMpStatus(result);
+    return result;
   }
   delete detector;
-  return kMpOk;
+  return absl::OkStatus();
 }
 
 }  // namespace mediapipe::tasks::c::vision::object_detector
@@ -218,35 +209,42 @@ MpStatus CppObjectDetectorClose(MpObjectDetectorPtr detector) {
 extern "C" {
 
 MpStatus MpObjectDetectorCreate(struct ObjectDetectorOptions* options,
-                                MpObjectDetectorPtr* detector_out) {
-  return mediapipe::tasks::c::vision::object_detector::CppObjectDetectorCreate(
-      *options, detector_out);
+                                MpObjectDetectorPtr* detector_out,
+                                char** error_msg) {
+  absl::Status status =
+      mediapipe::tasks::c::vision::object_detector::CppObjectDetectorCreate(
+          *options, detector_out);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
 MpStatus MpObjectDetectorDetectImage(
     MpObjectDetectorPtr detector, const MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
-    ObjectDetectorResult* result) {
-  return mediapipe::tasks::c::vision::object_detector::CppObjectDetectorDetect(
-      detector, image, image_processing_options, result);
+    ObjectDetectorResult* result, char** error_msg) {
+  absl::Status status =
+      mediapipe::tasks::c::vision::object_detector::CppObjectDetectorDetect(
+          detector, image, image_processing_options, result);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
 MpStatus MpObjectDetectorDetectForVideo(
     MpObjectDetectorPtr detector, const MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
-    int64_t timestamp_ms, ObjectDetectorResult* result) {
-  return mediapipe::tasks::c::vision::object_detector::
+    int64_t timestamp_ms, ObjectDetectorResult* result, char** error_msg) {
+  absl::Status status = mediapipe::tasks::c::vision::object_detector::
       CppObjectDetectorDetectForVideo(detector, image, image_processing_options,
                                       timestamp_ms, result);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
 MpStatus MpObjectDetectorDetectAsync(
     MpObjectDetectorPtr detector, const MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
-    int64_t timestamp_ms) {
-  return mediapipe::tasks::c::vision::object_detector::
+    int64_t timestamp_ms, char** error_msg) {
+  absl::Status status = mediapipe::tasks::c::vision::object_detector::
       CppObjectDetectorDetectAsync(detector, image, image_processing_options,
                                    timestamp_ms);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
 void MpObjectDetectorCloseResult(ObjectDetectorResult* result) {
@@ -254,9 +252,11 @@ void MpObjectDetectorCloseResult(ObjectDetectorResult* result) {
       result);
 }
 
-MpStatus MpObjectDetectorClose(MpObjectDetectorPtr detector) {
-  return mediapipe::tasks::c::vision::object_detector::CppObjectDetectorClose(
-      detector);
+MpStatus MpObjectDetectorClose(MpObjectDetectorPtr detector, char** error_msg) {
+  absl::Status status =
+      mediapipe::tasks::c::vision::object_detector::CppObjectDetectorClose(
+          detector);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
 }  // extern "C"

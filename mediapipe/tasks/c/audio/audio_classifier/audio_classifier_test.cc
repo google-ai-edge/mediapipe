@@ -18,6 +18,7 @@ limitations under the License.
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 #include <memory>
 #include <string>
 #include <utility>
@@ -27,11 +28,13 @@ limitations under the License.
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/notification.h"
 #include "mediapipe/framework/deps/file_path.h"
+#include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/c/audio/core/common.h"
 #include "mediapipe/tasks/c/components/containers/category.h"
 #include "mediapipe/tasks/c/components/containers/classification_result.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
+#include "mediapipe/tasks/c/test/test_utils.h"
 #include "mediapipe/tasks/cc/audio/utils/test_utils.h"
 
 namespace {
@@ -122,19 +125,17 @@ TEST(AudioClassifierTest, ClassifyAudioClip) {
       CreateAudioClassifierOptions(model_path.c_str());
 
   MpAudioClassifierPtr classifier;
-  MpStatus status = MpAudioClassifierCreate(&options, &classifier);
-  ASSERT_EQ(status, kMpOk);
+  MP_ASSERT_OK(
+      MpAudioClassifierCreate(&options, &classifier, /*error_msg=*/nullptr));
 
   MpAudioClassifierResult result;
-  status = MpAudioClassifierClassify(classifier, &audio_data.data, &result);
-  ASSERT_EQ(status, kMpOk);
+  MP_ASSERT_OK(MpAudioClassifierClassify(classifier, &audio_data.data, &result,
+                                         /*error_msg=*/nullptr));
 
   CheckSpeechResult(&result);
+  MpAudioClassifierCloseResult(&result);
 
-  status = MpAudioClassifierCloseResult(&result);
-  ASSERT_EQ(status, kMpOk);
-  status = MpAudioClassifierClose(classifier);
-  ASSERT_EQ(status, kMpOk);
+  MP_EXPECT_OK(MpAudioClassifierClose(classifier, /*error_msg=*/nullptr));
 }
 
 absl::Notification* result_notification_ptr = nullptr;
@@ -142,7 +143,7 @@ void ResultCallback(MpStatus status, MpAudioClassifierResult* result) {
   if (result_notification_ptr == nullptr) {
     return;
   }
-  ASSERT_EQ(status, kMpOk);
+  MP_ASSERT_OK(status);
   EXPECT_EQ(result->results_count, 1);
   CheckSingleResult(result->results[0], /*index=*/0);
   result_notification_ptr->Notify();
@@ -161,16 +162,15 @@ TEST(AudioClassifierTest, ClassifyAudioStream) {
       model_path.c_str(), kMpAudioRunningModeAudioStream, ResultCallback);
 
   MpAudioClassifierPtr classifier;
-  MpStatus status = MpAudioClassifierCreate(&options, &classifier);
-  ASSERT_EQ(status, kMpOk);
+  MP_ASSERT_OK(
+      MpAudioClassifierCreate(&options, &classifier, /*error_msg=*/nullptr));
 
-  status = MpAudioClassifierClassifyAsync(classifier, &audio_data.data, 0);
-  ASSERT_EQ(status, kMpOk);
+  MP_EXPECT_OK(MpAudioClassifierClassifyAsync(classifier, &audio_data.data, 0,
+                                              /*error_msg=*/nullptr));
 
   notification.WaitForNotification();
 
-  status = MpAudioClassifierClose(classifier);
-  ASSERT_EQ(status, kMpOk);
+  MP_EXPECT_OK(MpAudioClassifierClose(classifier, /*error_msg=*/nullptr));
 }
 
 TEST(AudioClassifierTest, CreateFailsWithUnnecessaryCallback) {
@@ -179,8 +179,14 @@ TEST(AudioClassifierTest, CreateFailsWithUnnecessaryCallback) {
       model_path.c_str(), kMpAudioRunningModeAudioClips, ResultCallback);
 
   MpAudioClassifierPtr classifier;
-  MpStatus status = MpAudioClassifierCreate(&options, &classifier);
+  char* error_msg = nullptr;
+  MpStatus status = MpAudioClassifierCreate(&options, &classifier, &error_msg);
   EXPECT_EQ(status, kMpInvalidArgument);
+  EXPECT_THAT(
+      error_msg,
+      testing::HasSubstr("The audio task is in audio clips mode, a user-defined"
+                         " result callback shouldn't be provided."));
+  free(error_msg);
 }
 
 TEST(AudioClassifierTest, CreateFailsWithMissingCallback) {
@@ -189,8 +195,14 @@ TEST(AudioClassifierTest, CreateFailsWithMissingCallback) {
       model_path.c_str(), kMpAudioRunningModeAudioStream, nullptr);
 
   MpAudioClassifierPtr classifier;
-  MpStatus status = MpAudioClassifierCreate(&options, &classifier);
-  EXPECT_NE(status, kMpOk);
+  char* error_msg = nullptr;
+  MpStatus status = MpAudioClassifierCreate(&options, &classifier, &error_msg);
+  EXPECT_EQ(status, kMpInvalidArgument);
+  EXPECT_THAT(error_msg,
+              testing::HasSubstr(
+                  "The audio task is in audio stream mode, a user-defined"
+                  " result callback must be provided."));
+  free(error_msg);
 }
 
 TEST(AudioClassifierTest, ClassifyFailsWithWrongRunningMode) {
@@ -202,15 +214,20 @@ TEST(AudioClassifierTest, ClassifyFailsWithWrongRunningMode) {
       model_path.c_str(), kMpAudioRunningModeAudioStream, ResultCallback);
 
   MpAudioClassifierPtr classifier;
-  MpStatus status = MpAudioClassifierCreate(&options, &classifier);
-  ASSERT_EQ(status, kMpOk);
+  char* error_msg = nullptr;
+  MP_ASSERT_OK(MpAudioClassifierCreate(&options, &classifier, &error_msg));
+  EXPECT_EQ(error_msg, nullptr);
 
   MpAudioClassifierResult result;
-  status = MpAudioClassifierClassify(classifier, &audio_data.data, &result);
+  MpStatus status = MpAudioClassifierClassify(classifier, &audio_data.data,
+                                              &result, &error_msg);
   EXPECT_EQ(status, kMpInvalidArgument);
+  EXPECT_THAT(error_msg, testing::HasSubstr(
+                             "Task is not initialized with the audio clips"
+                             " mode. Current running mode:audio stream mode"));
+  free(error_msg);
 
-  status = MpAudioClassifierClose(classifier);
-  ASSERT_EQ(status, kMpOk);
+  MP_EXPECT_OK(MpAudioClassifierClose(classifier, /*error_msg=*/nullptr));
 }
 
 TEST(AudioClassifierTest, ClassifyAsyncFailsWithWrongRunningMode) {
@@ -222,15 +239,20 @@ TEST(AudioClassifierTest, ClassifyAsyncFailsWithWrongRunningMode) {
       CreateAudioClassifierOptions(model_path.c_str());
 
   MpAudioClassifierPtr classifier;
-  MpStatus status = MpAudioClassifierCreate(&options, &classifier);
-  ASSERT_EQ(status, kMpOk);
+  MP_ASSERT_OK(
+      MpAudioClassifierCreate(&options, &classifier, /*error_msg=*/nullptr));
 
-  status = MpAudioClassifierClassifyAsync(classifier, &audio_data.data,
-                                          /*timestamp_ms=*/0);
+  char* error_msg = nullptr;
+  MpStatus status =
+      MpAudioClassifierClassifyAsync(classifier, &audio_data.data,
+                                     /*timestamp_ms=*/0, &error_msg);
   EXPECT_EQ(status, kMpInvalidArgument);
+  EXPECT_THAT(error_msg, testing::HasSubstr(
+                             "Task is not initialized with the audio stream"
+                             " mode. Current running mode:audio clips mode"));
+  free(error_msg);
 
-  status = MpAudioClassifierClose(classifier);
-  ASSERT_EQ(status, kMpOk);
+  MP_EXPECT_OK(MpAudioClassifierClose(classifier, /*error_msg=*/nullptr));
 }
 
 }  // namespace

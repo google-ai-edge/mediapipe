@@ -18,12 +18,7 @@ limitations under the License.
 
 #include <cstdint>
 
-#include "mediapipe/tasks/c/vision/core/common.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
-
-#ifndef MP_EXPORT
-#define MP_EXPORT __attribute__((visibility("default")))
-#endif  // MP_EXPORT
 
 #ifdef __cplusplus
 extern "C" {

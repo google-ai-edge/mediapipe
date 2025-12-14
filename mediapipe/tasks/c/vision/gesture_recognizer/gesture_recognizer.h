@@ -27,9 +27,12 @@ limitations under the License.
 #include "mediapipe/tasks/c/vision/gesture_recognizer/gesture_recognizer_result.h"
 
 #ifndef MP_EXPORT
+#if defined(_MSC_VER)
+#define MP_EXPORT __declspec(dllexport)
+#else
 #define MP_EXPORT __attribute__((visibility("default")))
+#endif  // _MSC_VER
 #endif  // MP_EXPORT
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -96,17 +99,27 @@ struct GestureRecognizerOptions {
 // Creates an GestureRecognizer from the provided `options`.
 // If successful, returns `kMpOk` and sets `*recognizer` to the new
 // `MpGestureRecognizerPtr`.
+//
+// To obtain a detailed error, `error_msg` must be non-null pointer to a
+// `char*`, which will be populated with a newly-allocated error message upon
+// failure. It's the caller responsibility to free the error message with
+// `free()`.
 MP_EXPORT MpStatus
 MpGestureRecognizerCreate(const struct GestureRecognizerOptions* options,
-                          MpGestureRecognizerPtr* recognizer);
+                          MpGestureRecognizerPtr* recognizer, char** error_msg);
 
 // Performs gesture recognition on the input `image`.
 // If successful, returns `kMpOk` and sets `*result` to the new
 // `GestureRecognizerResult`.
+//
+// To obtain a detailed error, `error_msg` must be non-null pointer to a
+// `char*`, which will be populated with a newly-allocated error message upon
+// failure. It's the caller responsibility to free the error message with
+// `free()`.
 MP_EXPORT MpStatus MpGestureRecognizerRecognizeImage(
     MpGestureRecognizerPtr recognizer, MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
-    GestureRecognizerResult* result);
+    GestureRecognizerResult* result, char** error_msg);
 
 // Performs gesture recognition on the provided video frame.
 // Only use this method when the GestureRecognizer is created with the video
@@ -115,11 +128,14 @@ MP_EXPORT MpStatus MpGestureRecognizerRecognizeImage(
 // provide the video frame's timestamp (in milliseconds). The input timestamps
 // must be monotonically increasing.
 // If successful, returns `kMpOk` and sets `*result` to the new
-// `GestureRecognizerResult`.
+// `GestureRecognizerResult`. To obtain a detailed error, `error_msg` must be
+// non-null pointer to a `char*`, which will be populated with a newly-allocated
+// error message upon failure. It's the caller responsibility to free the error
+// message with `free()`.
 MP_EXPORT MpStatus MpGestureRecognizerRecognizeForVideo(
     MpGestureRecognizerPtr recognizer, MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
-    int64_t timestamp_ms, GestureRecognizerResult* result);
+    int64_t timestamp_ms, GestureRecognizerResult* result, char** error_msg);
 
 // Sends live image data to gesture recognition, and the results will be
 // available via the `result_callback` provided in the GestureRecognizerOptions.
@@ -136,17 +152,28 @@ MP_EXPORT MpStatus MpGestureRecognizerRecognizeForVideo(
 //     longer be valid when the callback returns. To access the image data
 //     outside of the callback, callers need to make a copy of the image.
 //   - The input timestamp in milliseconds.
+//
+// To obtain a detailed error, `error_msg` must be non-null pointer to a
+// `char*`, which will be populated with a newly-allocated error message upon
+// failure. It's the caller responsibility to free the error message with
+// `free()`.
 MP_EXPORT MpStatus MpGestureRecognizerRecognizeAsync(
     MpGestureRecognizerPtr recognizer, MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
-    int64_t timestamp_ms);
+    int64_t timestamp_ms, char** error_msg);
 
 // Frees the memory allocated inside a GestureRecognizerResult result.
 // Does not free the result pointer itself.
 MP_EXPORT void MpGestureRecognizerCloseResult(GestureRecognizerResult* result);
 
 // Frees gesture recognizer.
-MP_EXPORT MpStatus MpGestureRecognizerClose(MpGestureRecognizerPtr recognizer);
+//
+// To obtain a detailed error, `error_msg` must be non-null pointer to a
+// `char*`, which will be populated with a newly-allocated error message upon
+// failure. It's the caller responsibility to free the error message with
+// 'free()`.
+MP_EXPORT MpStatus MpGestureRecognizerClose(MpGestureRecognizerPtr recognizer,
+                                            char** error_msg);
 
 #ifdef __cplusplus
 }  // extern C

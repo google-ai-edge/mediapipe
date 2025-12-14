@@ -1,5 +1,6 @@
 #include "mediapipe/tasks/cc/vision/image_segmenter/calculators/segmentation_postprocessor_gl.h"
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <utility>
@@ -8,14 +9,31 @@
 #include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_format.h"
+#include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/status_macros.h"
+#include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gl_simple_shaders.h"
+#include "mediapipe/gpu/gpu_buffer_format.h"
 #include "mediapipe/gpu/shader_util.h"
 #include "mediapipe/tasks/cc/vision/image_segmenter/proto/segmenter_options.pb.h"
 
 namespace mediapipe {
 namespace tasks {
 namespace {
+
+GpuBufferFormat GetOutputFormat(bool use_uint8, bool can_use_f32, bool pack4) {
+  if (use_uint8) {
+    // kOneComponent8 may not be supported on all platforms.
+    return pack4 ? GpuBufferFormat::kRGBA32 : GpuBufferFormat::kOneComponent8;
+  } else if (can_use_f32) {
+    // Output float32.
+    return pack4 ? GpuBufferFormat::kRGBAFloat128
+                 : GpuBufferFormat::kGrayFloat32;
+  } else {
+    // Output float16 or half16 RGBA.
+    return pack4 ? GpuBufferFormat::kRGBAHalf64 : GpuBufferFormat::kGrayHalf16;
+  }
+}
 
 // On most platforms, glGetUniformLocation returns -1 for an error status, but
 // on web we'll see 0 instead.
@@ -45,9 +63,9 @@ const GLchar* attr_name[NUM_ATTRIBUTES] = {
 
 // We assume ES3.0+ for some of our shaders here so we can make liberal use of
 // MRT easily.
-static constexpr char kEs30RequirementHeader[] = "#version 300 es\n";
+constexpr char kEs30RequirementHeader[] = "#version 300 es\n";
 
-static constexpr char kActivationFragmentShader[] = R"(
+constexpr char kActivationFragmentShader[] = R"glsl(
 DEFAULT_PRECISION(mediump, float)
 in vec2 sample_coordinate;
 uniform sampler2D input_texture;
@@ -59,24 +77,24 @@ void main() {
   %s
 
   gl_FragColor = out_value;
-})";
+})glsl";
 
 // Trivial passthrough fragment shader; do splitting in a custom vertex shader.
 // It's important to use highp here since otherwise we might sample from
 // neighboring chunk texels.
 // TODO: tmullen - Consider using texelFetch and integer texture coordinates to
 // avoid relying on highp.
-static constexpr char kPassthroughShader[] = R"(
+constexpr char kPassthroughShader[] = R"glsl(
 DEFAULT_PRECISION(highp, float)
 in vec2 sample_coordinate;
 uniform sampler2D input_texture;
 
 void main() {
   gl_FragColor = texture2D(input_texture, sample_coordinate);
-})";
+})glsl";
 
 // Vertex shader for splitting; kLayoutAligned means we just move across x-axis.
-static constexpr char kSplitVertexShader[] = R"(
+constexpr char kSplitVertexShader[] = R"glsl(
 DEFAULT_PRECISION(highp, float)
 attribute vec4 position;
 attribute vec4 texture_coordinate;
@@ -89,35 +107,59 @@ uniform float x_offset;
 void main() {
   sample_coordinate = vec2(texture_coordinate.x + x_offset, texture_coordinate.y);
   gl_Position = position;
-})";
+})glsl";
 
 // TODO: Consider using MRT to speed this up in the future.
-static constexpr char kChannelSelectShader[] = R"(
+constexpr char kChannelSelectShader[] = R"glsl(
 DEFAULT_PRECISION(mediump, float)
 in vec2 sample_coordinate;
 uniform sampler2D input_texture;
-uniform int channel_select;
+uniform vec4 channel_mask;
 
 void main() {
   vec4 in_value = texture2D(input_texture, sample_coordinate);
-  float out_value;
-  if (channel_select == 0) {
-    out_value = in_value.r;
-  } else if (channel_select == 1) {
-    out_value = in_value.g;
-  } else if (channel_select == 2) {
-    out_value = in_value.b;
-  } else {
-    out_value = in_value.a;
-  }
+  float out_value = dot(in_value, channel_mask);
   gl_FragColor = vec4(out_value, out_value, out_value, out_value);
-})";
+})glsl";
+
+constexpr char kMultiChannelSelectShader[] = R"glsl(
+DEFAULT_PRECISION(mediump, float)
+in vec2 sample_coordinate;
+
+uniform sampler2D input_texture_0;
+uniform sampler2D input_texture_1;
+uniform sampler2D input_texture_2;
+uniform sampler2D input_texture_3;
+
+uniform vec4 channel_mask_0;
+uniform vec4 channel_mask_1;
+uniform vec4 channel_mask_2;
+uniform vec4 channel_mask_3;
+
+void main() {
+  vec4 in_value_0 = texture2D(input_texture_0, sample_coordinate);
+  vec4 in_value_1 = texture2D(input_texture_1, sample_coordinate);
+  vec4 in_value_2 = texture2D(input_texture_2, sample_coordinate);
+  vec4 in_value_3 = texture2D(input_texture_3, sample_coordinate);
+
+  float out_value_0 = dot(in_value_0, channel_mask_0);
+  float out_value_1 = dot(in_value_1, channel_mask_1);
+  float out_value_2 = dot(in_value_2, channel_mask_2);
+  float out_value_3 = dot(in_value_3, channel_mask_3);
+
+  gl_FragColor = vec4(out_value_0, out_value_1, out_value_2, out_value_3);
+})glsl";
+
+constexpr char kMultiChannelSelectTextures[4][16] = {
+    "input_texture_0", "input_texture_1", "input_texture_2", "input_texture_3"};
+constexpr char kMultiChannelSelectMasks[4][15] = {
+    "channel_mask_0", "channel_mask_1", "channel_mask_2", "channel_mask_3"};
 
 // For our argmax shader, we use a simple iterative approach to avoid the extra
 // hassle that accompanies usage of depth buffer for this, since we're not as
 // concerned with performance. Since we run the shader chunk-by-chunk, we can
 // simply hard-code our different max comparisons.
-static constexpr char kArgmaxShader[] = R"(
+constexpr char kArgmaxShader[] = R"glsl(
 DEFAULT_PRECISION(highp, float)
 in vec2 sample_coordinate;
 uniform sampler2D prev_max_texture;  // prev_max_value, prev_max_arg, 0, 1
@@ -196,7 +238,7 @@ void main() {
     } else {
       gl_FragColor = vec4(max_value, prev_pixel.y, 0.0, 1.0);
     }
-})";
+})glsl";
 
 // Special argmax shader for N=1 classes. We don't need to worry about softmax
 // activation (it is assumed softmax requires N > 1 classes), but this should
@@ -204,7 +246,7 @@ void main() {
 // simply use 0.5 as the cutoff, assigning 0 (foreground) or 255 (background)
 // based on whether the confidence value reaches this cutoff or not,
 // respectively.
-static constexpr char kArgmaxOneClassShader[] = R"(
+constexpr char kArgmaxOneClassShader[] = R"glsl(
 DEFAULT_PRECISION(mediump, float)
 in vec2 sample_coordinate;
 uniform sampler2D input_texture;
@@ -218,7 +260,7 @@ void main() {
   // chosen, we add an extra clamp here, as performance hit is minimal.
   float category = clamp(floor(1.5 - input_val), 0.0, 1.0);
   gl_FragColor = vec4(category, 0.0, 0.0, 1.0);
-})";
+})glsl";
 
 // Softmax is in 3 steps:
 // - First we find max over all masks
@@ -229,7 +271,7 @@ void main() {
 // Part one: max shader
 // To start with, we just do this chunk by chunk, using GL_MAX blend mode so we
 // don't need to tap into the max-so-far texture.
-static constexpr char kMaxShader[] = R"(
+constexpr char kMaxShader[] = R"glsl(
 DEFAULT_PRECISION(mediump, float)
 in vec2 sample_coordinate;
 uniform sampler2D current_chunk;
@@ -257,12 +299,12 @@ void main() {
       new_max = max4(chunk_pixel);
     }
     gl_FragColor = vec4(new_max, 0.0, 0.0, 1.0);
-})";
+})glsl";
 
 // Part two: transform-and-sum shader
 // We use GL blending so we can more easily render a cumulative sum texture, and
 // this only costs us a glClear for the output chunk (needed since using MRT).
-static constexpr char kTransformAndSumShader[] = R"(
+constexpr char kTransformAndSumShader[] = R"glsl(
 DEFAULT_PRECISION(highp, float)
 in vec2 sample_coordinate;
 uniform sampler2D max_value_texture;
@@ -290,10 +332,10 @@ void main() {
 
     cumulative_sum_texture = vec4(sum_so_far, 0.0, 0.0, 1.0);
     out_chunk_texture = new_chunk_pixel;
-})";
+})glsl";
 
 // Part three: normalization shader
-static constexpr char kNormalizationShader[] = R"(
+constexpr char kNormalizationShader[] = R"glsl(
 DEFAULT_PRECISION(mediump, float)
 in vec2 sample_coordinate;
 uniform sampler2D sum_texture;  // cumulative summation value (to normalize by)
@@ -307,7 +349,19 @@ void main() {
     // result of an exp transform, but not if this shader is extended to other
     // uses.
     gl_FragColor = chunk_pixel / sum_pixel;
-})";
+})glsl";
+
+// Returns the number of tensor channels that should be packed into the chunk
+// with the given index, assuming each chunk contains 4 channels. For instance,
+// for 7 input channels, the first chunk contains channels 0-3 (4), the second
+// contains channels 4-6 (3).
+int GetNumChunkChannels(int chunk_index, int num_input_channels) {
+  int num_chunk_channels = 4;
+  if ((chunk_index + 1) * 4 > num_input_channels) {
+    num_chunk_channels = num_input_channels % 4;
+  }
+  return num_chunk_channels;
+}
 
 }  // namespace
 
@@ -406,7 +460,14 @@ absl::Status SegmentationPostprocessorGl::GlInit(
         &activation_shader_));
     MP_RETURN_IF_ERROR(CreateBasicFragmentShaderProgram(
         "channel select", kChannelSelectShader,
-        {"input_texture", "channel_select"}, &channel_select_shader_));
+        {"input_texture", "channel_mask"}, &channel_select_shader_));
+    MP_RETURN_IF_ERROR(CreateBasicFragmentShaderProgram(
+        "multi-channel select", kMultiChannelSelectShader,
+        {kMultiChannelSelectTextures[0], kMultiChannelSelectTextures[1],
+         kMultiChannelSelectTextures[2], kMultiChannelSelectTextures[3],
+         kMultiChannelSelectMasks[0], kMultiChannelSelectMasks[1],
+         kMultiChannelSelectMasks[2], kMultiChannelSelectMasks[3]},
+        &multi_channel_select_shader_));
 
     // Softmax shaders (Max, Transform+Sum, and Normalization)
     MP_RETURN_IF_ERROR(CreateBasicFragmentShaderProgram(
@@ -487,11 +548,16 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(
                                         produce_category_mask,
                                         &image_outputs]() -> absl::Status {
     // Get Tensor input and image output parameters
-    const int width = input_shape.width;           // Slice width from shape
-    const int height = input_shape.height;         // Slice height from chape
-    const int num_outputs = input_shape.channels;  // One output per channel
-    const int num_chunks = (input_shape.channels + 3) / 4;  // ceil(channels/4)
-    const int output_width = output_shape.width;    // Final output width
+    const int width = input_shape.width;    // Slice width from shape
+    const int height = input_shape.height;  // Slice height from chape
+    const int num_input_channels = input_shape.channels;
+    const int num_confidence_mask_output_channels =
+        options_.confidence_mask_options().output_channels().empty()
+            ? num_input_channels
+            : options_.confidence_mask_options().output_channels_size();
+    const int num_chunks =
+        (num_input_channels + 3) / 4;             // ceil(num_input_channels/4)
+    const int output_width = output_shape.width;  // Final output width
     const int output_height = output_shape.height;  // Final output height
     int input_width, input_height;
 
@@ -506,7 +572,7 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(
     GLuint ssbo_tex_id;
     MP_ASSIGN_OR_RETURN(ssbo_tex_id,
                         ssbo_to_texture_converter_.ConvertTensorToGlTexture(
-                            tensor, width, height, num_outputs));
+                            tensor, width, height, num_input_channels));
     std::tie(input_width, input_height) =
         ssbo_to_texture_converter_.GetTextureSize();
 #else
@@ -550,9 +616,19 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(
 
     // Uint8 pipeline and conversions are lacking, so for now we just use F32
     // textures even for category masks.
-    const GpuBufferFormat final_output_format =
+    const GpuBufferFormat intermediate_float_format =
         can_use_f32 ? GpuBufferFormat::kGrayFloat32
                     : GpuBufferFormat::kGrayHalf16;
+    const bool use_uint8_confidence_mask =
+        options_.confidence_mask_options().output_format() ==
+        TensorsToSegmentationCalculatorOptions::ConfidenceMaskOptions::
+            OUTPUT_FORMAT_UINT8;
+    const bool pack4_confidence_mask =
+        options_.confidence_mask_options().pack4();
+    const GpuBufferFormat confidence_mask_output_format = GetOutputFormat(
+        use_uint8_confidence_mask, can_use_f32, pack4_confidence_mask);
+    const GpuBufferFormat category_mask_output_format =
+        GetOutputFormat(/*use_uint8=*/false, can_use_f32, /*pack4=*/false);
 
     // We disable blending or else our alpha channel may destroy our other
     // channels' data.
@@ -637,16 +713,16 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(
 
       // We just need one channel, so format will match final output confidence
       // masks
-      auto max_texture =
-          helper_.CreateDestinationTexture(width, height, final_output_format);
+      auto max_texture = helper_.CreateDestinationTexture(
+          width, height, intermediate_float_format);
       helper_.BindFramebuffer(max_texture);
 
       // For the first chunk, just write the max value without blending.
       glActiveTexture(GL_TEXTURE1);
       for (int i = 0; i < num_chunks; i++) {
-        int num_channels = 4;
-        if ((i + 1) * 4 > num_outputs) num_channels = num_outputs % 4;
-        glUniform1i(softmax_max_shader_.uniforms["num_channels"], num_channels);
+        int num_chunk_channels = GetNumChunkChannels(i, num_input_channels);
+        glUniform1i(softmax_max_shader_.uniforms["num_channels"],
+                    num_chunk_channels);
         glBindTexture(GL_TEXTURE_2D, chunks[i].name());
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
@@ -665,8 +741,8 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(
       glUniform1i(
           softmax_transform_and_sum_shader_.uniforms["max_value_texture"], 2);
 
-      auto sum_texture =
-          helper_.CreateDestinationTexture(width, height, final_output_format);
+      auto sum_texture = helper_.CreateDestinationTexture(
+          width, height, intermediate_float_format);
       helper_.BindFramebuffer(sum_texture);
       glClear(GL_COLOR_BUFFER_BIT);
 
@@ -682,10 +758,9 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(
       GLuint both_attachments[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
       GLuint one_attachment[2] = {GL_NONE, GL_COLOR_ATTACHMENT1};
       for (int i = 0; i < num_chunks; i++) {
-        int num_channels = 4;
-        if ((i + 1) * 4 > num_outputs) num_channels = num_outputs % 4;
+        int num_chunk_channels = GetNumChunkChannels(i, num_input_channels);
         glUniform1i(softmax_transform_and_sum_shader_.uniforms["num_channels"],
-                    num_channels);
+                    num_chunk_channels);
         unnormalized_softmax_chunks.push_back(helper_.CreateDestinationTexture(
             width, height, chunk_output_format));
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1,
@@ -742,32 +817,89 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(
     if (produce_confidence_masks) {
       // Step 3: For CONFIDENCE, apply channel-select repeatedly to extract
       // final textures.
-      glUseProgram(channel_select_shader_.program);
-      glUniform1i(channel_select_shader_.uniforms["input_texture"], 1);
-      for (int i = 0; i < num_outputs; i++) {
-        glUniform1i(channel_select_shader_.uniforms["channel_select"], (i % 4));
-        outputs.push_back(helper_.CreateDestinationTexture(
-            output_width, output_height, final_output_format));
-        helper_.BindFramebuffer(outputs.back());
+      const std::vector<GlTexture>& source_chunks =
+          is_softmax ? softmax_chunks : chunks;
 
-        // We have to rebind constantly because BindFramebuffer seems to
-        // interfere with this.
-        if (is_softmax) {
-          glBindTexture(GL_TEXTURE_2D, softmax_chunks[i / 4].name());
-        } else {
-          glBindTexture(GL_TEXTURE_2D, chunks[i / 4].name());
+      if (pack4_confidence_mask) {
+        // Pack 4 consecutive channels into a single output texture.
+        glUseProgram(multi_channel_select_shader_.program);
+        for (int k = 0; k < 4; ++k) {
+          glUniform1i(multi_channel_select_shader_
+                          .uniforms[kMultiChannelSelectTextures[k]],
+                      k + 1);
         }
 
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        const int num_output_streams =
+            (num_confidence_mask_output_channels + 3) / 4;
+        for (int stream = 0; stream < num_output_streams; ++stream) {
+          outputs.push_back(helper_.CreateDestinationTexture(
+              output_width, output_height, confidence_mask_output_format));
+          helper_.BindFramebuffer(outputs.back());
+
+          // Pack 4 channels into the output texture.
+          for (int k = 0; k < 4; ++k) {
+            // If the channel is out of bounds, clamp to last in-bounds texture
+            // and set mask to all zeros.
+            int ch = stream * 4 + k;
+            bool drop_channel = ch >= num_confidence_mask_output_channels;
+            ch = std::min(ch, num_confidence_mask_output_channels - 1);
+            int input_channel =
+                ch < options_.confidence_mask_options().output_channels_size()
+                    ? options_.confidence_mask_options().output_channels(ch)
+                    : ch;
+
+            glActiveTexture(GL_TEXTURE1 + k);
+            glBindTexture(GL_TEXTURE_2D,
+                          source_chunks[input_channel / 4].name());
+
+            float channel_mask[4] = {0.0, 0.0, 0.0, 0.0};
+            if (!drop_channel) {
+              channel_mask[input_channel % 4] = 1.0;
+            }
+            glUniform4fv(multi_channel_select_shader_
+                             .uniforms[kMultiChannelSelectMasks[k]],
+                         1, channel_mask);
+          }
+          glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        }
+        // Unbind textures.
+        for (int k = 0; k < 4; ++k) {
+          glActiveTexture(GL_TEXTURE1 + k);
+          glBindTexture(GL_TEXTURE_2D, 0);
+        }
+      } else {
+        // Do not pack. In this case, use the one-channel select shader.
+        glUseProgram(channel_select_shader_.program);
+        glUniform1i(channel_select_shader_.uniforms["input_texture"], 1);
+        for (int stream = 0; stream < num_confidence_mask_output_channels;
+             stream++) {
+          outputs.push_back(helper_.CreateDestinationTexture(
+              output_width, output_height, confidence_mask_output_format));
+          helper_.BindFramebuffer(outputs.back());
+
+          int ch = stream;
+          int input_channel =
+              ch < options_.confidence_mask_options().output_channels_size()
+                  ? options_.confidence_mask_options().output_channels(ch)
+                  : ch;
+
+          glBindTexture(GL_TEXTURE_2D, source_chunks[input_channel / 4].name());
+          float channel_mask[4] = {0.0, 0.0, 0.0, 0.0};
+          channel_mask[input_channel % 4] = 1.0;
+          glUniform4fv(channel_select_shader_.uniforms["channel_mask"], 1,
+                       channel_mask);
+
+          glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        }
       }
     }
 
     if (produce_category_mask) {
       // Step 4, N = 1: For CATEGORY with 1 class, use special FG/BG argmax
       // shader instead of our usual N-class system.
-      if (num_outputs == 1) {
+      if (num_input_channels == 1) {
         outputs.push_back(helper_.CreateDestinationTexture(
-            output_width, output_height, final_output_format));
+            output_width, output_height, category_mask_output_format));
         helper_.BindFramebuffer(outputs.back());
         glUseProgram(argmax_one_class_shader_.program);
         glUniform1i(argmax_one_class_shader_.uniforms["input_texture"], 1);
@@ -803,9 +935,9 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(
         // Set our clear color back to a "normal" default.
         glClearColor(0.0, 0.0, 0.0, 0.0);
         for (int i = 0; i < num_chunks; ++i) {
-          int num_channels = 4;
-          if ((i + 1) * 4 > num_outputs) num_channels = num_outputs % 4;
-          glUniform1i(argmax_shader_.uniforms["num_channels"], num_channels);
+          int num_chunk_channels = GetNumChunkChannels(i, num_input_channels);
+          glUniform1i(argmax_shader_.uniforms["num_channels"],
+                      num_chunk_channels);
           glUniform1i(argmax_shader_.uniforms["argmax_offset"], i * 4);
           helper_.BindFramebuffer(next_max_texture);
           glActiveTexture(GL_TEXTURE2);
@@ -820,12 +952,14 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(
 
         // Do final channel-select on max_texture below, selecting for argmax
         outputs.push_back(helper_.CreateDestinationTexture(
-            output_width, output_height, final_output_format));
+            output_width, output_height, category_mask_output_format));
         helper_.BindFramebuffer(outputs.back());
         glUseProgram(channel_select_shader_.program);
         glUniform1i(channel_select_shader_.uniforms["input_texture"], 1);
         // 0:max_val, 1:argmax
-        glUniform1i(channel_select_shader_.uniforms["channel_select"], 1);
+        float channel_mask[4] = {0.0, 1.0, 0.0, 0.0};
+        glUniform4fv(channel_select_shader_.uniforms["channel_mask"], 1,
+                     channel_mask);
         glBindTexture(GL_TEXTURE_2D, max_texture.name());
         // We can't interpolate across argmax values, so we disable linear
         // interpolation there for this upsampling step.
@@ -871,6 +1005,7 @@ SegmentationPostprocessorGl::~SegmentationPostprocessorGl() {
     glDeleteProgram(argmax_shader_.program);
     glDeleteProgram(argmax_one_class_shader_.program);
     glDeleteProgram(channel_select_shader_.program);
+    glDeleteProgram(multi_channel_select_shader_.program);
     glDeleteProgram(softmax_max_shader_.program);
     glDeleteProgram(softmax_transform_and_sum_shader_.program);
     glDeleteProgram(softmax_normalization_shader_.program);

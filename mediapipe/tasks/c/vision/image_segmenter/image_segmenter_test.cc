@@ -19,7 +19,6 @@ limitations under the License.
 #include <cstdlib>
 #include <memory>
 #include <string>
-#include <vector>
 
 #include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
@@ -29,6 +28,7 @@ limitations under the License.
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
+#include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
 #include "mediapipe/tasks/c/test/test_utils.h"
 #include "mediapipe/tasks/c/vision/core/common.h"
@@ -85,15 +85,18 @@ TEST(ImageSegmenterTest, ImageModeTestSucceedsWithCategoryMask) {
   };
 
   MpImageSegmenterPtr segmenter;
-  EXPECT_EQ(MpImageSegmenterCreate(&options, &segmenter), kMpOk);
+  ASSERT_EQ(
+      MpImageSegmenterCreate(&options, &segmenter, /* error_msg= */ nullptr),
+      kMpOk);
 
   ImageSegmenterResult result;
-  EXPECT_EQ(MpImageSegmenterSegmentImage(
+  ASSERT_EQ(MpImageSegmenterSegmentImage(
                 segmenter, image.get(), /* image_processing_options= */ nullptr,
-                &result),
+                &result, /* error_msg= */ nullptr),
             kMpOk);
 
-  auto expected_mask_image = DecodeImageFromFile(GetFullPath(kMaskImageFile));
+  MP_ASSERT_OK_AND_ASSIGN(auto expected_mask_image,
+                          DecodeImageFromFile(GetFullPath(kMaskImageFile)));
   const ScopedMpImage expected_mask(
       CreateCategoryMaskFromImage(expected_mask_image));
   const MpImagePtr actual_mask = result.category_mask;
@@ -101,7 +104,7 @@ TEST(ImageSegmenterTest, ImageModeTestSucceedsWithCategoryMask) {
                                kGoldenMaskMagnificationFactor),
             kGoldenMaskSimilarity);
   MpImageSegmenterCloseResult(&result);
-  EXPECT_EQ(MpImageSegmenterClose(segmenter), kMpOk);
+  EXPECT_EQ(MpImageSegmenterClose(segmenter, /* error_msg= */ nullptr), kMpOk);
 }
 
 TEST(ImageSegmenterTest, ImageModeWithRotationTestSucceedsWithCategoryMask) {
@@ -119,18 +122,22 @@ TEST(ImageSegmenterTest, ImageModeWithRotationTestSucceedsWithCategoryMask) {
   };
 
   MpImageSegmenterPtr segmenter;
-  EXPECT_EQ(MpImageSegmenterCreate(&options, &segmenter), kMpOk);
+  ASSERT_EQ(
+      MpImageSegmenterCreate(&options, &segmenter, /* error_msg= */ nullptr),
+      kMpOk);
 
   ImageProcessingOptions image_processing_options;
   image_processing_options.has_region_of_interest = 0;
   image_processing_options.rotation_degrees = 90;
 
   ImageSegmenterResult result;
-  EXPECT_EQ(MpImageSegmenterSegmentImage(segmenter, image.get(),
-                                         &image_processing_options, &result),
+  ASSERT_EQ(MpImageSegmenterSegmentImage(segmenter, image.get(),
+                                         &image_processing_options, &result,
+                                         /* error_msg= */ nullptr),
             kMpOk);
 
-  auto expected_mask_image = DecodeImageFromFile(GetFullPath(kMaskImageFile));
+  MP_ASSERT_OK_AND_ASSIGN(auto expected_mask_image,
+                          DecodeImageFromFile(GetFullPath(kMaskImageFile)));
   const ScopedMpImage expected_mask(
       CreateCategoryMaskFromImage(expected_mask_image));
   const MpImagePtr actual_mask = result.category_mask;
@@ -138,7 +145,7 @@ TEST(ImageSegmenterTest, ImageModeWithRotationTestSucceedsWithCategoryMask) {
                                kGoldenMaskMagnificationFactor),
             kGoldenMaskSimilarityRotated);
   MpImageSegmenterCloseResult(&result);
-  EXPECT_EQ(MpImageSegmenterClose(segmenter), kMpOk);
+  EXPECT_EQ(MpImageSegmenterClose(segmenter, /* error_msg= */ nullptr), kMpOk);
 }
 
 TEST(ImageSegmenterTest, VideoModeTest) {
@@ -156,18 +163,22 @@ TEST(ImageSegmenterTest, VideoModeTest) {
   };
 
   MpImageSegmenterPtr segmenter;
-  EXPECT_EQ(MpImageSegmenterCreate(&options, &segmenter), kMpOk);
+  ASSERT_EQ(
+      MpImageSegmenterCreate(&options, &segmenter, /* error_msg= */ nullptr),
+      kMpOk);
 
-  auto expected_mask_image = DecodeImageFromFile(GetFullPath(kMaskImageFile));
+  MP_ASSERT_OK_AND_ASSIGN(auto expected_mask_image,
+                          DecodeImageFromFile(GetFullPath(kMaskImageFile)));
   const ScopedMpImage expected_mask(
       CreateCategoryMaskFromImage(expected_mask_image));
 
   for (int i = 0; i < kIterations; ++i) {
     ImageSegmenterResult result;
-    EXPECT_EQ(MpImageSegmenterSegmentForVideo(
-                  segmenter, image.get(),
-                  /* image_processing_options= */ nullptr, i, &result),
-              kMpOk);
+    ASSERT_EQ(
+        MpImageSegmenterSegmentForVideo(segmenter, image.get(),
+                                        /* image_processing_options= */ nullptr,
+                                        i, &result, /* error_msg= */ nullptr),
+        kMpOk);
     const MpImagePtr actual_mask = result.category_mask;
     EXPECT_GT(SimilarToUint8Mask(actual_mask, expected_mask.get(),
                                  kGoldenMaskMagnificationFactor),
@@ -175,7 +186,7 @@ TEST(ImageSegmenterTest, VideoModeTest) {
 
     MpImageSegmenterCloseResult(&result);
   }
-  EXPECT_EQ(MpImageSegmenterClose(segmenter), kMpOk);
+  EXPECT_EQ(MpImageSegmenterClose(segmenter, /* error_msg= */ nullptr), kMpOk);
 }
 
 // A structure to support LiveStreamModeTest below. This structure holds a
@@ -192,7 +203,8 @@ struct LiveStreamModeCallback {
     ASSERT_NE(segmenter_result, nullptr);
     EXPECT_GT(MpImageGetWidth(image), 0);
     EXPECT_GT(MpImageGetHeight(image), 0);
-    auto expected_mask_image = DecodeImageFromFile(GetFullPath(kMaskImageFile));
+    MP_ASSERT_OK_AND_ASSIGN(auto expected_mask_image,
+                            DecodeImageFromFile(GetFullPath(kMaskImageFile)));
     const ScopedMpImage expected_mask(
         CreateCategoryMaskFromImage(expected_mask_image));
     const MpImagePtr actual_mask = segmenter_result->category_mask;
@@ -227,15 +239,18 @@ TEST(ImageSegmenterTest, LiveStreamModeTest) {
   };
 
   MpImageSegmenterPtr segmenter;
-  EXPECT_EQ(MpImageSegmenterCreate(&options, &segmenter), kMpOk);
+  ASSERT_EQ(
+      MpImageSegmenterCreate(&options, &segmenter, /* error_msg= */ nullptr),
+      kMpOk);
 
   absl::BlockingCounter counter(kIterations);
   LiveStreamModeCallback::blocking_counter = &counter;
 
   for (int i = 0; i < kIterations; ++i) {
-    EXPECT_EQ(
-        MpImageSegmenterSegmentAsync(
-            segmenter, image.get(), /* image_processing_options= */ nullptr, i),
+    ASSERT_EQ(
+        MpImageSegmenterSegmentAsync(segmenter, image.get(),
+                                     /* image_processing_options= */ nullptr, i,
+                                     /* error_msg= */ nullptr),
         kMpOk);
     // Short sleep so that MediaPipe does not drop frames.
     absl::SleepFor(absl::Milliseconds(kSleepBetweenFramesMilliseconds));
@@ -245,7 +260,7 @@ TEST(ImageSegmenterTest, LiveStreamModeTest) {
   counter.Wait();
   LiveStreamModeCallback::blocking_counter = nullptr;
 
-  EXPECT_EQ(MpImageSegmenterClose(segmenter), kMpOk);
+  EXPECT_EQ(MpImageSegmenterClose(segmenter, /* error_msg= */ nullptr), kMpOk);
 
   // Due to the flow limiter, the total of outputs might be smaller than the
   // number of iterations.
@@ -265,10 +280,15 @@ TEST(ImageSegmenterTest, InvalidArgumentHandling) {
       .output_category_mask = true,
   };
 
+  char* error_msg = nullptr;
   MpImageSegmenterPtr segmenter = nullptr;
-  MpStatus status = MpImageSegmenterCreate(&options, &segmenter);
-  EXPECT_EQ(segmenter, nullptr);
+  MpStatus status = MpImageSegmenterCreate(&options, &segmenter, &error_msg);
   EXPECT_EQ(status, kMpInvalidArgument);
+  EXPECT_EQ(segmenter, nullptr);
+
+  EXPECT_THAT(error_msg,
+              testing::HasSubstr("ExternalFile must specify at least one"));
+  free(error_msg);
 }
 
 TEST(ImageSegmenterTest, FailedRecognitionHandling) {
@@ -284,16 +304,25 @@ TEST(ImageSegmenterTest, FailedRecognitionHandling) {
   };
 
   MpImageSegmenterPtr segmenter;
-  EXPECT_EQ(MpImageSegmenterCreate(&options, &segmenter), kMpOk);
-  EXPECT_NE(segmenter, nullptr);
+  ASSERT_EQ(
+      MpImageSegmenterCreate(&options, &segmenter, /* error_msg= */ nullptr),
+      kMpOk);
+  ASSERT_NE(segmenter, nullptr);
 
   const ScopedMpImage image = CreateEmptyGpuMpImage();
+  char* error_msg = nullptr;
   ImageSegmenterResult result;
-  EXPECT_EQ(MpImageSegmenterSegmentImage(
-                segmenter, image.get(), /* image_processing_options= */ nullptr,
-                &result),
-            kMpInvalidArgument);
-  EXPECT_EQ(MpImageSegmenterClose(segmenter), kMpOk);
+  MpStatus status = MpImageSegmenterSegmentImage(
+      segmenter, image.get(), /* image_processing_options= */ nullptr, &result,
+      &error_msg);
+  EXPECT_EQ(status, kMpInvalidArgument);
+  EXPECT_THAT(
+      error_msg,
+      testing::HasSubstr(
+          "Both output_width and output_height must be larger than 0."));
+  free(error_msg);
+
+  EXPECT_EQ(MpImageSegmenterClose(segmenter, /* error_msg= */ nullptr), kMpOk);
 }
 
 TEST(ImageSegmenterTest, GetLabelsSucceeds) {
@@ -309,11 +338,15 @@ TEST(ImageSegmenterTest, GetLabelsSucceeds) {
   };
 
   MpImageSegmenterPtr segmenter;
-  EXPECT_EQ(MpImageSegmenterCreate(&options, &segmenter), kMpOk);
-  EXPECT_NE(segmenter, nullptr);
+  ASSERT_EQ(
+      MpImageSegmenterCreate(&options, &segmenter, /* error_msg= */ nullptr),
+      kMpOk);
+  ASSERT_NE(segmenter, nullptr);
 
   MpStringList labels;
-  EXPECT_EQ(MpImageSegmenterGetLabels(segmenter, &labels), kMpOk);
+  ASSERT_EQ(
+      MpImageSegmenterGetLabels(segmenter, &labels, /* error_msg= */ nullptr),
+      kMpOk);
 
   const std::vector<std::string> expected_labels = {
       "background", "aeroplane",    "bicycle", "bird",  "boat",
@@ -322,13 +355,13 @@ TEST(ImageSegmenterTest, GetLabelsSucceeds) {
       "person",     "potted plant", "sheep",   "sofa",  "train",
       "tv"};
 
-  EXPECT_EQ(labels.num_strings, expected_labels.size());
+  ASSERT_EQ(labels.num_strings, expected_labels.size());
   for (int i = 0; i < expected_labels.size(); ++i) {
     EXPECT_STREQ(labels.strings[i], expected_labels[i].c_str());
   }
 
   MpStringListFree(&labels);
-  EXPECT_EQ(MpImageSegmenterClose(segmenter), kMpOk);
+  EXPECT_EQ(MpImageSegmenterClose(segmenter, /* error_msg= */ nullptr), kMpOk);
 }
 
 }  // namespace

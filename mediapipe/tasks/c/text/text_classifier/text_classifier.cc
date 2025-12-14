@@ -18,7 +18,7 @@ limitations under the License.
 #include <memory>
 #include <utility>
 
-#include "absl/log/absl_log.h"
+#include "absl/log/absl_check.h"
 #include "absl/status/status.h"
 #include "mediapipe/tasks/c/components/containers/classification_result_converter.h"
 #include "mediapipe/tasks/c/components/processors/classifier_options_converter.h"
@@ -27,9 +27,11 @@ limitations under the License.
 #include "mediapipe/tasks/c/core/mp_status_converter.h"
 #include "mediapipe/tasks/cc/text/text_classifier/text_classifier.h"
 
+using ::mediapipe::tasks::text::text_classifier::TextClassifier;
+
 struct MpTextClassifierInternal {
-  std::unique_ptr<::mediapipe::tasks::text::text_classifier::TextClassifier>
-      classifier;
+  // The actual C++ classifier. Null if not yet initialized.
+  std::unique_ptr<TextClassifier> instance{nullptr};
 };
 
 namespace mediapipe::tasks::c::text::text_classifier {
@@ -43,13 +45,17 @@ using ::mediapipe::tasks::c::components::containers::
 using ::mediapipe::tasks::c::components::processors::
     CppConvertToClassifierOptions;
 using ::mediapipe::tasks::c::core::CppConvertToBaseOptions;
-using ::mediapipe::tasks::c::core::ToMpStatus;
 using ::mediapipe::tasks::text::text_classifier::TextClassifier;
+
+TextClassifier* GetCppClassifier(MpTextClassifierInternal* wrapper) {
+  ABSL_CHECK(wrapper != nullptr) << "TextClassifier is null.";
+  return wrapper->instance.get();
+}
 
 }  // namespace
 
-MpStatus CppTextClassifierCreate(const TextClassifierOptions& options,
-                                 MpTextClassifierPtr* classifier) {
+absl::Status CppTextClassifierCreate(const TextClassifierOptions& options,
+                                     MpTextClassifierPtr* classifier) {
   auto cpp_options = std::make_unique<
       ::mediapipe::tasks::text::text_classifier::TextClassifierOptions>();
 
@@ -59,41 +65,37 @@ MpStatus CppTextClassifierCreate(const TextClassifierOptions& options,
 
   auto cpp_classifier = TextClassifier::Create(std::move(cpp_options));
   if (!cpp_classifier.ok()) {
-    ABSL_LOG(ERROR) << "Failed to create TextClassifier: "
-                    << cpp_classifier.status();
-    return ToMpStatus(cpp_classifier.status());
+    return cpp_classifier.status();
   }
   *classifier =
-      new MpTextClassifierInternal{.classifier = std::move(*cpp_classifier)};
-  return kMpOk;
+      new MpTextClassifierInternal{.instance = std::move(*cpp_classifier)};
+  return absl::OkStatus();
 }
 
-MpStatus CppTextClassifierClassify(MpTextClassifierPtr classifier,
-                                   const char* utf8_str,
-                                   TextClassifierResult* result) {
-  auto cpp_classifier = classifier->classifier.get();
+absl::Status CppTextClassifierClassify(MpTextClassifierPtr classifier,
+                                       const char* utf8_str,
+                                       TextClassifierResult* result) {
+  auto* cpp_classifier = GetCppClassifier(classifier);
   auto cpp_result = cpp_classifier->Classify(utf8_str);
   if (!cpp_result.ok()) {
-    ABSL_LOG(ERROR) << "Classification failed: " << cpp_result.status();
-    return ToMpStatus(cpp_result.status());
+    return cpp_result.status();
   }
   CppConvertToClassificationResult(*cpp_result, result);
-  return kMpOk;
+  return absl::OkStatus();
 }
 
 void CppTextClassifierCloseResult(TextClassifierResult* result) {
   CppCloseClassificationResult(result);
 }
 
-MpStatus CppTextClassifierClose(MpTextClassifierPtr classifier) {
-  auto cpp_classifier = classifier->classifier.get();
+absl::Status CppTextClassifierClose(MpTextClassifierPtr classifier) {
+  auto* cpp_classifier = GetCppClassifier(classifier);
   auto result = cpp_classifier->Close();
   if (!result.ok()) {
-    ABSL_LOG(ERROR) << "Failed to close TextClassifier: " << result;
-    return ToMpStatus(result);
+    return result;
   }
   delete classifier;
-  return kMpOk;
+  return absl::OkStatus();
 }
 
 }  // namespace mediapipe::tasks::c::text::text_classifier
@@ -101,16 +103,22 @@ MpStatus CppTextClassifierClose(MpTextClassifierPtr classifier) {
 extern "C" {
 
 MP_EXPORT MpStatus MpTextClassifierCreate(struct TextClassifierOptions* options,
-                                          MpTextClassifierPtr* classifier) {
-  return mediapipe::tasks::c::text::text_classifier::CppTextClassifierCreate(
-      *options, classifier);
+                                          MpTextClassifierPtr* classifier,
+                                          char** error_msg) {
+  auto status =
+      mediapipe::tasks::c::text::text_classifier::CppTextClassifierCreate(
+          *options, classifier);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
 MP_EXPORT MpStatus MpTextClassifierClassify(MpTextClassifierPtr classifier,
                                             const char* utf8_str,
-                                            TextClassifierResult* result) {
-  return mediapipe::tasks::c::text::text_classifier::CppTextClassifierClassify(
-      classifier, utf8_str, result);
+                                            TextClassifierResult* result,
+                                            char** error_msg) {
+  auto status =
+      mediapipe::tasks::c::text::text_classifier::CppTextClassifierClassify(
+          classifier, utf8_str, result);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
 MP_EXPORT void MpTextClassifierCloseResult(TextClassifierResult* result) {
@@ -118,9 +126,12 @@ MP_EXPORT void MpTextClassifierCloseResult(TextClassifierResult* result) {
       result);
 }
 
-MP_EXPORT MpStatus MpTextClassifierClose(MpTextClassifierPtr classifier) {
-  return mediapipe::tasks::c::text::text_classifier::CppTextClassifierClose(
-      classifier);
+MP_EXPORT MpStatus MpTextClassifierClose(MpTextClassifierPtr classifier,
+                                         char** error_msg) {
+  auto status =
+      mediapipe::tasks::c::text::text_classifier::CppTextClassifierClose(
+          classifier);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
 }  // extern "C"

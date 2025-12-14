@@ -19,7 +19,11 @@
 #include "mediapipe/tasks/c/core/mp_status.h"
 
 #ifndef MP_EXPORT
+#if defined(_MSC_VER)
+#define MP_EXPORT __declspec(dllexport)
+#else
 #define MP_EXPORT __attribute__((visibility("default")))
+#endif  // _MSC_VER
 #endif  // MP_EXPORT
 
 #ifdef __cplusplus
@@ -47,34 +51,37 @@ typedef struct MpImageInternal* MpImagePtr;
 // into the new MpImage. The caller retains ownership of the buffer.
 //
 // If successful, returns MP_OK and sets `out` to the new MpImage. You must free
-// the image with mp_image_free().
-MP_EXPORT MpStatus MpImageCreateFromUint8Data(MpImageFormat format, int width,
-                                              int height,
-                                              const uint8_t* pixel_data,
-                                              int pixel_data_size,
-                                              MpImagePtr* out);
+// the image with mp_image_free(). To obtain a detailed error, error_msg must be
+// non-null pointer to a char*, which will be populated with a newly-allocated
+// error message upon failure. It's the caller responsibility to free the error
+// message with free().
+MP_EXPORT MpStatus MpImageCreateFromUint8Data(
+    MpImageFormat format, int width, int height, const uint8_t* pixel_data,
+    int pixel_data_size, MpImagePtr* out, char** error_msg);
 
 // Creates an MpImage from a buffer of pixel data. The buffer is copied
 // into the new MpImage. The caller retains ownership of the buffer.
 //
 // If successful, returns MP_OK and sets `out` to the new MpImage. You must free
-// the image with mp_image_free().
-MP_EXPORT MpStatus MpImageCreateFromUint16Data(MpImageFormat format, int width,
-                                               int height,
-                                               const uint16_t* pixel_data,
-                                               int pixel_data_size,
-                                               MpImagePtr* out);
+// the image with mp_image_free(). To obtain a detailed error, error_msg must be
+// non-null pointer to a char*, which will be populated with a newly-allocated
+// error message upon failure. It's the caller responsibility to free the error
+// message with free().
+MP_EXPORT MpStatus MpImageCreateFromUint16Data(
+    MpImageFormat format, int width, int height, const uint16_t* pixel_data,
+    int pixel_data_size, MpImagePtr* out, char** error_msg);
 
 // Creates an MpImage from a buffer of pixel data. The buffer is copied
 // into the new MpImage. The caller retains ownership of the buffer.
 //
 // If successful, returns MP_OK and sets `out` to the new MpImage. You must free
-// the image with mp_image_free().
-MP_EXPORT MpStatus MpImageCreateFromFloatData(MpImageFormat format, int width,
-                                              int height,
-                                              const float* pixel_data,
-                                              int pixel_data_size,
-                                              MpImagePtr* out);
+// the image with mp_image_free(). To obtain a detailed error, error_msg must be
+// non-null pointer to a char*, which will be populated with a newly-allocated
+// error message upon failure. It's the caller responsibility to free the error
+// message with free().
+MP_EXPORT MpStatus MpImageCreateFromFloatData(
+    MpImageFormat format, int width, int height, const float* pixel_data,
+    int pixel_data_size, MpImagePtr* out, char** error_msg);
 
 // Creates an MpImage from an ImageFrame.
 //
@@ -83,16 +90,23 @@ MP_EXPORT MpStatus MpImageCreateFromFloatData(MpImageFormat format, int width,
 // the data will be transferred to the CPU first.
 //
 // If successful, returns MP_OK and sets `out` to the new MpImage. You must free
-// the image must with mp_image_free().
+// the image must with mp_image_free(). To obtain a detailed error, error_msg
+// must be non-null pointer to a char*, which will be populated with a
+// newly-allocated error message upon failure. It's the caller responsibility to
+// free the error message with free().
 MP_EXPORT MpStatus MpImageCreateFromImageFrame(MpImagePtr image,
-                                               MpImagePtr* out);
+                                               MpImagePtr* out,
+                                               char** error_msg);
 
 // Creates an MpImage from a file.
 //
 // If successful, returns MP_OK and sets `out` to a new Image. You must free
-// the image with mp_image_free().
-MP_EXPORT MpStatus MpImageCreateFromFile(const char* file_name,
-                                         MpImagePtr* out);
+// the image with mp_image_free(). To obtain a detailed error, error_msg must be
+// non-null pointer to a char*, which will be populated with a newly-allocated
+// error message upon failure. It's the caller responsibility to free the error
+// message with free().
+MP_EXPORT MpStatus MpImageCreateFromFile(const char* file_name, MpImagePtr* out,
+                                         char** error_msg);
 
 // Returns true if the pixel data is stored contiguously.
 MP_EXPORT bool MpImageIsContiguous(MpImagePtr image);
@@ -130,33 +144,51 @@ MP_EXPORT MpImageFormat MpImageGetFormat(MpImagePtr image);
 //
 // If the image is not contiguous, the data is first copied into a contiguous
 // buffer and cached internally for further access.
-MP_EXPORT MpStatus MpImageDataUint8(MpImagePtr image, const uint8_t** out);
+//
+// To obtain a detailed error, error_msg must be non-null pointer to a char*,
+// which will be populated with a newly-allocated error message upon failure.
+// It's the caller responsibility to free the error message with free().
+MP_EXPORT MpStatus MpImageDataUint8(MpImagePtr image, const uint8_t** out,
+                                    char** error_msg);
 
 // Sets `out` to point to the pixel data. The data is owned by the MpImage and
 // the pointer is valid until mp_image_free() is called.
 //
 // If the image is not contiguous, the data is first copied into a contiguous
 // buffer and cached internally for further access.
-MP_EXPORT MpStatus MpImageDataUint16(MpImagePtr image, const uint16_t** out);
+//
+// To obtain a detailed error, error_msg must be non-null pointer to a char*,
+// which will be populated with a newly-allocated error message upon failure.
+// It's the caller responsibility to free the error message with free().
+MP_EXPORT MpStatus MpImageDataUint16(MpImagePtr image, const uint16_t** out,
+                                     char** error_msg);
 
 // Sets `out` to point to the pixel data. The data is owned by the MpImage and
 // the pointer is valid until mp_image_free() is called.
 //
 // If the image is not contiguous, the data is first copied into a contiguous
 // buffer and cached internally for further access.
-MP_EXPORT MpStatus MpImageDataFloat32(MpImagePtr image, const float** out);
+//
+// To obtain a detailed error, error_msg must be non-null pointer to a char*,
+// which will be populated with a newly-allocated error message upon failure.
+// It's the caller responsibility to free the error message with free().
+MP_EXPORT MpStatus MpImageDataFloat32(MpImagePtr image, const float** out,
+                                      char** error_msg);
 
 // Sets `out` to the value at the given coordinate for uint8 images.
 MP_EXPORT MpStatus MpImageGetValueUint8(MpImagePtr image, int* pos,
-                                        int pos_size, uint8_t* out);
+                                        int pos_size, uint8_t* out,
+                                        char** error_msg);
 
 // Sets `out` to the value at the given coordinate for uint16 images.
 MP_EXPORT MpStatus MpImageGetValueUint16(MpImagePtr image, int* pos,
-                                         int pos_size, uint16_t* out);
+                                         int pos_size, uint16_t* out,
+                                         char** error_msg);
 
 // Sets `out` to the value at the given coordinate for float32 images.
 MP_EXPORT MpStatus MpImageGetValueFloat32(MpImagePtr image, int* pos,
-                                          int pos_size, float* out);
+                                          int pos_size, float* out,
+                                          char** error_msg);
 
 // Frees an MpImage.
 MP_EXPORT void MpImageFree(MpImagePtr image);

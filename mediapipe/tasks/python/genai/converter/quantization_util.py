@@ -20,11 +20,13 @@ self-contained library for packaging.
 
 from typing import Any, List, Optional, Sequence, Tuple, Union
 
-import jax
-from jax import lax
-from jax import numpy as jnp
 import numpy as np
 
+from mediapipe.tasks.python.genai.converter import external_dependencies
+
+jax = external_dependencies.jax
+jnp = external_dependencies.jnp
+lax = external_dependencies.lax
 
 JTensor = jax.Array
 _UINT4_ZP = 8  # Default zero point for unsigned 4-bit.
