@@ -154,6 +154,47 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksTwoImages) {
   }
 }
 
+TEST_F(PackMediaSequenceCalculatorTest,
+       PacksInputWithoutSequenceExampleSidePacket) {
+  SetUpCalculator({"IMAGE:images"}, {}, false, true, false, false, {});
+  auto input_sequence = ::absl::make_unique<tf::SequenceExample>();
+  std::string test_video_id = "test_video_id";
+  mpms::SetClipMediaId(test_video_id, input_sequence.get());
+  cv::Mat image(2, 3, CV_8UC3, cv::Scalar(0, 0, 255));
+  std::vector<uchar> bytes;
+  ASSERT_TRUE(
+      cv::imencode(".jpg", image, bytes, {cv::IMWRITE_HDR_COMPRESSION, 1}));
+  OpenCvImageEncoderCalculatorResults encoded_image;
+  encoded_image.set_encoded_image(bytes.data(), bytes.size());
+  encoded_image.set_width(2);
+  encoded_image.set_height(1);
+
+  int num_images = 2;
+  for (int i = 0; i < num_images; ++i) {
+    auto image_ptr =
+        ::absl::make_unique<OpenCvImageEncoderCalculatorResults>(encoded_image);
+    runner_->MutableInputs()->Tag(kImageTag).packets.push_back(
+        Adopt(image_ptr.release()).At(Timestamp(i)));
+  }
+
+  MP_ASSERT_OK(runner_->Run());
+
+  const std::vector<Packet>& output_packets =
+      runner_->Outputs().Tag(kSequenceExampleTag).packets;
+  ASSERT_EQ(1, output_packets.size());
+  const tf::SequenceExample& output_sequence =
+      output_packets[0].Get<tf::SequenceExample>();
+
+  ASSERT_FALSE(mpms::HasClipMediaId(output_sequence));
+  ASSERT_EQ(num_images, mpms::GetImageTimestampSize(output_sequence));
+  ASSERT_EQ(num_images, mpms::GetImageEncodedSize(output_sequence));
+  for (int i = 0; i < num_images; ++i) {
+    ASSERT_EQ(i, mpms::GetImageTimestampAt(output_sequence, i));
+    ASSERT_EQ(encoded_image.encoded_image(),
+              mpms::GetImageEncodedAt(output_sequence, i));
+  }
+}
+
 TEST_F(PackMediaSequenceCalculatorTest, PacksTwoPrefixedImages) {
   std::string prefix = "PREFIX";
   SetUpCalculator({"IMAGE_PREFIX:images"}, {}, false, true);
