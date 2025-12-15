@@ -94,7 +94,10 @@ class FaceDetectorTest(parameterized.TestCase):
       self.assertIsInstance(detector, _FaceDetector)
 
   def test_create_from_options_fails_with_invalid_model_path(self):
-    with self.assertRaisesRegex(FileNotFoundError, 'Not found'):
+    with self.assertRaisesRegex(
+        FileNotFoundError,
+        'Unable to open file at /path/to/invalid/model.tflite',
+    ):
       base_options = _BaseOptions(
           model_asset_path='/path/to/invalid/model.tflite'
       )

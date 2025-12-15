@@ -141,8 +141,6 @@ py_test(
     deps = [
         ":proto_utils",
         "//mediapipe/framework/formats:detection_py_pb2",
-        "//mediapipe/tasks/python/components/containers:bounding_box",
-        "//mediapipe/tasks/python/components/containers:category",
         "//mediapipe/tasks/python/components/containers:detections",
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/test:test_utils",

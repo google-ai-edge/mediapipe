@@ -21,7 +21,7 @@ limitations under the License.
 #include <optional>
 #include <utility>
 
-#include "absl/log/absl_log.h"
+#include "absl/log/absl_check.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/formats/image.h"
@@ -40,7 +40,7 @@ limitations under the License.
 
 struct MpFaceDetectorInternal {
   std::unique_ptr<::mediapipe::tasks::vision::face_detector::FaceDetector>
-      detector;
+      instance;
 };
 
 namespace mediapipe::tasks::c::vision::face_detector {
@@ -51,7 +51,6 @@ using ::mediapipe::tasks::c::components::containers::CppCloseDetectionResult;
 using ::mediapipe::tasks::c::components::containers::
     CppConvertToDetectionResult;
 using ::mediapipe::tasks::c::core::CppConvertToBaseOptions;
-using ::mediapipe::tasks::c::core::ToMpStatus;
 using ::mediapipe::tasks::vision::core::RunningMode;
 using ::mediapipe::tasks::vision::face_detector::FaceDetector;
 using CppFaceDetectorResult =
@@ -63,6 +62,11 @@ using ::mediapipe::tasks::c::vision::core::CppConvertToImageProcessingOptions;
 
 const Image& ToImage(const MpImagePtr mp_image) { return mp_image->image; }
 
+FaceDetector* GetCppDetector(MpFaceDetectorPtr wrapper) {
+  ABSL_CHECK(wrapper != nullptr) << "FaceDetector is null.";
+  return wrapper->instance.get();
+}
+
 }  // namespace
 
 void CppConvertToFaceDetectorOptions(
@@ -72,8 +76,8 @@ void CppConvertToFaceDetectorOptions(
   out->min_suppression_threshold = in.min_suppression_threshold;
 }
 
-MpStatus CppFaceDetectorCreate(const FaceDetectorOptions& options,
-                               MpFaceDetectorPtr* detector) {
+absl::Status CppFaceDetectorCreate(const FaceDetectorOptions& options,
+                                   MpFaceDetectorPtr* detector) {
   auto cpp_options = std::make_unique<
       ::mediapipe::tasks::vision::face_detector::FaceDetectorOptions>();
 
@@ -85,10 +89,8 @@ MpStatus CppFaceDetectorCreate(const FaceDetectorOptions& options,
   // set to RunningMode::LIVE_STREAM.
   if (cpp_options->running_mode == RunningMode::LIVE_STREAM) {
     if (options.result_callback == nullptr) {
-      const absl::Status status = absl::InvalidArgumentError(
+      return absl::InvalidArgumentError(
           "Provided null pointer to callback function.");
-      ABSL_LOG(ERROR) << "Failed to create FaceDetector: " << status;
-      return ToMpStatus(status);
     }
 
     FaceDetectorOptions::result_callback_fn result_callback =
@@ -111,19 +113,17 @@ MpStatus CppFaceDetectorCreate(const FaceDetectorOptions& options,
 
   auto cpp_detector = FaceDetector::Create(std::move(cpp_options));
   if (!cpp_detector.ok()) {
-    ABSL_LOG(ERROR) << "Failed to create FaceDetector: "
-                    << cpp_detector.status();
-    return ToMpStatus(cpp_detector.status());
+    return cpp_detector.status();
   }
-  *detector = new MpFaceDetectorInternal{.detector = std::move(*cpp_detector)};
-  return kMpOk;
+  *detector = new MpFaceDetectorInternal{.instance = std::move(*cpp_detector)};
+  return absl::OkStatus();
 }
 
-MpStatus CppFaceDetectorDetect(
+absl::Status CppFaceDetectorDetect(
     MpFaceDetectorPtr detector, const MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
     FaceDetectorResult* result) {
-  auto cpp_detector = detector->detector.get();
+  auto* cpp_detector = GetCppDetector(detector);
   std::optional<CppImageProcessingOptions> cpp_image_processing_options;
   if (image_processing_options) {
     CppImageProcessingOptions options;
@@ -133,18 +133,17 @@ MpStatus CppFaceDetectorDetect(
   auto cpp_result =
       cpp_detector->Detect(ToImage(image), cpp_image_processing_options);
   if (!cpp_result.ok()) {
-    ABSL_LOG(ERROR) << "Detection failed: " << cpp_result.status();
-    return ToMpStatus(cpp_result.status());
+    return cpp_result.status();
   }
   CppConvertToDetectionResult(*cpp_result, result);
-  return kMpOk;
+  return absl::OkStatus();
 }
 
-MpStatus CppFaceDetectorDetectForVideo(
+absl::Status CppFaceDetectorDetectForVideo(
     MpFaceDetectorPtr detector, const MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
     int64_t timestamp_ms, FaceDetectorResult* result) {
-  auto cpp_detector = detector->detector.get();
+  auto* cpp_detector = GetCppDetector(detector);
   std::optional<CppImageProcessingOptions> cpp_image_processing_options;
   if (image_processing_options) {
     CppImageProcessingOptions options;
@@ -154,47 +153,39 @@ MpStatus CppFaceDetectorDetectForVideo(
   auto cpp_result = cpp_detector->DetectForVideo(ToImage(image), timestamp_ms,
                                                  cpp_image_processing_options);
   if (!cpp_result.ok()) {
-    ABSL_LOG(ERROR) << "Detection failed: " << cpp_result.status();
-    return ToMpStatus(cpp_result.status());
+    return cpp_result.status();
   }
   CppConvertToDetectionResult(*cpp_result, result);
-  return kMpOk;
+  return absl::OkStatus();
 }
 
-MpStatus CppFaceDetectorDetectAsync(
+absl::Status CppFaceDetectorDetectAsync(
     MpFaceDetectorPtr detector, const MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
     int64_t timestamp_ms) {
-  auto cpp_detector = detector->detector.get();
+  auto* cpp_detector = GetCppDetector(detector);
   std::optional<CppImageProcessingOptions> cpp_image_processing_options;
   if (image_processing_options) {
     CppImageProcessingOptions options;
     CppConvertToImageProcessingOptions(*image_processing_options, &options);
     cpp_image_processing_options = options;
   }
-  auto cpp_result = cpp_detector->DetectAsync(ToImage(image), timestamp_ms,
-                                              cpp_image_processing_options);
-  if (!cpp_result.ok()) {
-    ABSL_LOG(ERROR) << "Data preparation for the landmark detection failed: "
-                    << cpp_result;
-    return ToMpStatus(cpp_result);
-  }
-  return kMpOk;
+  return cpp_detector->DetectAsync(ToImage(image), timestamp_ms,
+                                   cpp_image_processing_options);
 }
 
 void CppFaceDetectorCloseResult(FaceDetectorResult* result) {
   CppCloseDetectionResult(result);
 }
 
-MpStatus CppFaceDetectorClose(MpFaceDetectorPtr detector) {
-  auto cpp_detector = detector->detector.get();
+absl::Status CppFaceDetectorClose(MpFaceDetectorPtr detector) {
+  auto* cpp_detector = GetCppDetector(detector);
   auto result = cpp_detector->Close();
   if (!result.ok()) {
-    ABSL_LOG(ERROR) << "Failed to close FaceDetector: " << result;
-    return ToMpStatus(result);
+    return result;
   }
   delete detector;
-  return kMpOk;
+  return absl::OkStatus();
 }
 
 }  // namespace mediapipe::tasks::c::vision::face_detector
@@ -202,34 +193,42 @@ MpStatus CppFaceDetectorClose(MpFaceDetectorPtr detector) {
 extern "C" {
 
 MP_EXPORT MpStatus MpFaceDetectorCreate(struct FaceDetectorOptions* options,
-                                        MpFaceDetectorPtr* detector) {
-  return mediapipe::tasks::c::vision::face_detector::CppFaceDetectorCreate(
-      *options, detector);
+                                        MpFaceDetectorPtr* detector,
+                                        char** error_msg) {
+  absl::Status status =
+      mediapipe::tasks::c::vision::face_detector::CppFaceDetectorCreate(
+          *options, detector);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
 MP_EXPORT MpStatus MpFaceDetectorDetectImage(
     MpFaceDetectorPtr detector, const MpImagePtr image,
     const struct ImageProcessingOptions* image_processing_options,
-    FaceDetectorResult* result) {
-  return mediapipe::tasks::c::vision::face_detector::CppFaceDetectorDetect(
-      detector, image, image_processing_options, result);
+    FaceDetectorResult* result, char** error_msg) {
+  absl::Status status =
+      mediapipe::tasks::c::vision::face_detector::CppFaceDetectorDetect(
+          detector, image, image_processing_options, result);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
 MP_EXPORT MpStatus MpFaceDetectorDetectForVideo(
     MpFaceDetectorPtr detector, const MpImagePtr image,
     const struct ImageProcessingOptions* image_processing_options,
-    int64_t timestamp_ms, FaceDetectorResult* result) {
-  return mediapipe::tasks::c::vision::face_detector::
-      CppFaceDetectorDetectForVideo(detector, image, image_processing_options,
-                                    timestamp_ms, result);
+    int64_t timestamp_ms, FaceDetectorResult* result, char** error_msg) {
+  absl::Status status =
+      mediapipe::tasks::c::vision::face_detector::CppFaceDetectorDetectForVideo(
+          detector, image, image_processing_options, timestamp_ms, result);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
 MP_EXPORT MpStatus MpFaceDetectorDetectAsync(
     MpFaceDetectorPtr detector, const MpImagePtr image,
     const struct ImageProcessingOptions* image_processing_options,
-    int64_t timestamp_ms) {
-  return mediapipe::tasks::c::vision::face_detector::CppFaceDetectorDetectAsync(
-      detector, image, image_processing_options, timestamp_ms);
+    int64_t timestamp_ms, char** error_msg) {
+  absl::Status status =
+      mediapipe::tasks::c::vision::face_detector::CppFaceDetectorDetectAsync(
+          detector, image, image_processing_options, timestamp_ms);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
 MP_EXPORT void MpFaceDetectorCloseResult(FaceDetectorResult* result) {
@@ -237,9 +236,12 @@ MP_EXPORT void MpFaceDetectorCloseResult(FaceDetectorResult* result) {
       result);
 }
 
-MP_EXPORT MpStatus MpFaceDetectorClose(MpFaceDetectorPtr detector) {
-  return mediapipe::tasks::c::vision::face_detector::CppFaceDetectorClose(
-      detector);
+MP_EXPORT MpStatus MpFaceDetectorClose(MpFaceDetectorPtr detector,
+                                       char** error_msg) {
+  absl::Status status =
+      mediapipe::tasks::c::vision::face_detector::CppFaceDetectorClose(
+          detector);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
 }  // extern "C"
