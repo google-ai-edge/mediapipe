@@ -81,19 +81,29 @@ struct RegionOfInterest {
 // Creates an InteractiveSegmenter from the provided `options`.
 // Return kMpOk on success and sets `segmenter` to the created
 // InteractiveSegmenter.
-MP_EXPORT MpStatus
-MpInteractiveSegmenterCreate(struct InteractiveSegmenterOptions* options,
-                             MpInteractiveSegmenterPtr* segmenter);
+//
+// To obtain a detailed error, `error_msg` must be non-null pointer to a
+// `char*`, which will be populated with a newly-allocated error message upon
+// failure. It's the caller responsibility to free the error message with
+// `free()`.
+MP_EXPORT MpStatus MpInteractiveSegmenterCreate(
+    struct InteractiveSegmenterOptions* options,
+    MpInteractiveSegmenterPtr* segmenter, char** error_msg);
 
 // Performs interactive segmentation on the input `image`.
 // Return kMpOk on success and sets `result` to the segmentation result.
 // You must call `MpInteractiveSegmenterCloseResult` to free the result's
 // memory.
+//
+// To obtain a detailed error, `error_msg` must be non-null pointer to a
+// `char*`, which will be populated with a newly-allocated error message upon
+// failure. It's the caller responsibility to free the error message with
+// `free()`.
 MP_EXPORT MpStatus MpInteractiveSegmenterSegmentImage(
     MpInteractiveSegmenterPtr segmenter, MpImagePtr image,
     const RegionOfInterest* roi,
     const ImageProcessingOptions* image_processing_options,
-    ImageSegmenterResult* result);
+    ImageSegmenterResult* result, char** error_msg);
 
 // Frees the memory allocated inside a ImageSegmenterResult result.
 // Does not free the result pointer itself.
@@ -101,8 +111,13 @@ MP_EXPORT void MpInteractiveSegmenterCloseResult(ImageSegmenterResult* result);
 
 // Frees interactive segmenter.
 // Returns kMpOk on success.
-MP_EXPORT MpStatus
-MpInteractiveSegmenterClose(MpInteractiveSegmenterPtr segmenter);
+//
+// To obtain a detailed error, `error_msg` must be non-null pointer to a
+// `char*`, which will be populated with a newly-allocated error message upon
+// failure. It's the caller responsibility to free the error message with
+// `free()`.
+MP_EXPORT MpStatus MpInteractiveSegmenterClose(
+    MpInteractiveSegmenterPtr segmenter, char** error_msg);
 
 #ifdef __cplusplus
 }  // extern C
