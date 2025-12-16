@@ -560,9 +560,9 @@ def update_to_uint4(
       are hosted as int8 type. Note that if the first dimension is 3, it means
       the qkv matrices are concatenated together and should be treated
       differently.
-    scale: np.array of shape [1(3), channel] as np.float type, which are the
+    scale: np.array of shape [1(3), channel] as floating-point type, which are the
       scaling factors for dequantization per channel.
-    zp: (optional) np.array of shape [1 (or 3), channel] as np.float type, which
+    zp: (optional) np.array of shape [1 (or 3), channel] as floating-point type, which
       are the zero points for dequantization per channel.
 
   Returns:
