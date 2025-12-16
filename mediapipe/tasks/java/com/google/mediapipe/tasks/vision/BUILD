@@ -45,9 +45,7 @@ android_library(
 filegroup(
     name = "core_java_src",
     srcs = glob(["core/**/*.java"]),
-    visibility = [
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:__subpackages__",
-    ],
+    visibility = ["//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:__subpackages__"],
 )
 
 cc_library(
