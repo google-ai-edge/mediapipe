@@ -1,4 +1,4 @@
 absl-py~=2.3
-numpy
+numpy>=2.0
 sounddevice~=0.5
 flatbuffers~=25.9
