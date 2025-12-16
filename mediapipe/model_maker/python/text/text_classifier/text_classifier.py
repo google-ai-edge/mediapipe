@@ -19,7 +19,6 @@ import tempfile
 from typing import Any, Optional, Sequence, Tuple
 
 import tensorflow as tf
-from tensorflow_addons import optimizers as tfa_optimizers
 import tensorflow_hub as hub
 
 from mediapipe.model_maker.python.core.data import dataset as ds
@@ -479,11 +478,10 @@ class _BertClassifier(TextClassifier):
     with bert_classifier._hparams.get_strategy().scope():
       bert_classifier._create_model()
       # create dummy optimizer so model compiles
-      bert_classifier._optimizer = tfa_optimizers.LAMB(
-          3e-4,
-          weight_decay_rate=bert_classifier._hparams.weight_decay,
+      bert_classifier._optimizer = tf.keras.optimizers.Lamb(
+          learning_rate=3e-4,
+          weight_decay=bert_classifier._hparams.weight_decay,
           epsilon=1e-6,
-          exclude_from_weight_decay=["LayerNorm", "layer_norm", "bias"],
           global_clipnorm=1.0,
       )
       bert_classifier._model = tf.keras.models.load_model(
@@ -827,11 +825,10 @@ class _BertClassifier(TextClassifier):
           var_names=["LayerNorm", "layer_norm", "bias"]
       )
     elif self._hparams.optimizer == hp.BertOptimizer.LAMB:
-      self._optimizer = tfa_optimizers.LAMB(
-          lr_schedule,
-          weight_decay_rate=self._hparams.weight_decay,
+      self._optimizer = tf.keras.optimizers.Lamb(
+          learning_rate=lr_schedule,
+          weight_decay=self._hparams.weight_decay,
           epsilon=1e-6,
-          exclude_from_weight_decay=["LayerNorm", "layer_norm", "bias"],
           global_clipnorm=1.0,
       )
     else:
