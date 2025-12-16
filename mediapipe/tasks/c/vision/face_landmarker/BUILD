@@ -125,7 +125,6 @@ cc_test(
         "//mediapipe/framework/port:gtest",
         "//mediapipe/tasks/c/components/containers:landmark",
         "//mediapipe/tasks/c/core:mp_status",
-        "//mediapipe/tasks/c/test:test_utils",
         "//mediapipe/tasks/c/vision/core:common",
         "//mediapipe/tasks/c/vision/core:image",
         "//mediapipe/tasks/c/vision/core:image_processing_options",

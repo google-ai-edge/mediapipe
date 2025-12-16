@@ -95,7 +95,6 @@ cc_test(
         "//mediapipe/framework/port:gtest",
         "//mediapipe/tasks/c/components/containers:category",
         "//mediapipe/tasks/c/core:mp_status",
-        "//mediapipe/tasks/c/test:test_utils",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
