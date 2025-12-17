@@ -54,7 +54,7 @@ struct TextEmbedderOptions {
 // To obtain a detailed error, `error_msg` must be non-null pointer to a
 // `char*`, which will be populated with a newly-allocated error message upon
 // failure. It's the caller responsibility to free the error message with
-// `free()`.
+// `MpErrorFree()`.
 MP_EXPORT MpStatus MpTextEmbedderCreate(struct TextEmbedderOptions* options,
                                         MpTextEmbedderPtr* embedder,
                                         char** error_msg);
@@ -66,7 +66,7 @@ MP_EXPORT MpStatus MpTextEmbedderCreate(struct TextEmbedderOptions* options,
 // To obtain a detailed error, `error_msg` must be non-null pointer to a
 // `char*`, which will be populated with a newly-allocated error message upon
 // failure. It's the caller responsibility to free the error message with
-// `free()`.
+// `MpErrorFree()`.
 MP_EXPORT MpStatus MpTextEmbedderEmbed(MpTextEmbedderPtr embedder,
                                        const char* utf8_str,
                                        TextEmbedderResult* result,
@@ -81,7 +81,7 @@ MP_EXPORT void MpTextEmbedderCloseResult(TextEmbedderResult* result);
 // To obtain a detailed error, `error_msg` must be non-null pointer to a
 // `char*`, which will be populated with a newly-allocated error message upon
 // failure. It's the caller responsibility to free the error message with
-// `free()`.
+// `MpErrorFree()`.
 MP_EXPORT MpStatus MpTextEmbedderClose(MpTextEmbedderPtr embedder,
                                        char** error_msg);
 
@@ -93,7 +93,7 @@ MP_EXPORT MpStatus MpTextEmbedderClose(MpTextEmbedderPtr embedder,
 // To obtain a detailed error, `error_msg` must be non-null pointer to a
 // `char*`, which will be populated with a newly-allocated error message upon
 // failure. It's the caller responsibility to free the error message with
-// `free()`.
+// `MpErrorFree()`.
 //
 // [1]: https://en.wikipedia.org/wiki/Cosine_similarity
 MP_EXPORT MpStatus MpTextEmbedderCosSimilarity(const struct Embedding* u,

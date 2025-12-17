@@ -58,9 +58,9 @@ def load_raw_library(signatures: Sequence[_CFunction] = ()) -> ctypes.CDLL:
     c_func.argtypes = signature.argtypes
     c_func.restype = signature.restype
 
-  # Register "free()"
-  _shared_lib.free.argtypes = [ctypes.c_void_p]
-  _shared_lib.free.restype = None
+  # Register "MpErrorFree()"
+  _shared_lib.MpErrorFree.argtypes = [ctypes.c_void_p]
+  _shared_lib.MpErrorFree.restype = None
 
   return _shared_lib
 

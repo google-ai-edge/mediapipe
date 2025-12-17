@@ -31,8 +31,8 @@ limitations under the License.
 #include "mediapipe/tasks/c/components/containers/detection_result.h"
 #include "mediapipe/tasks/c/components/containers/keypoint.h"
 #include "mediapipe/tasks/c/components/containers/rect.h"
+#include "mediapipe/tasks/c/core/common.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
-#include "mediapipe/tasks/c/vision/core/common.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/c/vision/core/image_test_util.h"
@@ -289,7 +289,7 @@ TEST(FaceDetectorTest, InvalidArgumentHandling) {
 
   EXPECT_THAT(error_msg,
               testing::HasSubstr("ExternalFile must specify at least one"));
-  free(error_msg);
+  MpErrorFree(error_msg);
 }
 
 }  // namespace

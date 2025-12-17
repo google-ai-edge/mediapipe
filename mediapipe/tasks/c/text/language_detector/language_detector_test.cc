@@ -23,6 +23,7 @@ limitations under the License.
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
+#include "mediapipe/tasks/c/core/common.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
 
 namespace {
@@ -78,7 +79,7 @@ TEST(LanguageDetectorTest, ErrorHandling) {
 
   EXPECT_THAT(error_msg,
               testing::HasSubstr("ExternalFile must specify at least one"));
-  free(error_msg);
+  MpErrorFree(error_msg);
 }
 
 }  // namespace

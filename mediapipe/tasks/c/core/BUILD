@@ -25,6 +25,13 @@ cc_library(
 )
 
 cc_library(
+    name = "common",
+    srcs = ["common.cc"],
+    hdrs = ["common.h"],
+    alwayslink = 1,
+)
+
+cc_library(
     name = "base_options_converter",
     srcs = ["base_options_converter.cc"],
     hdrs = ["base_options_converter.h"],

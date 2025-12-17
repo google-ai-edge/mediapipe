@@ -21,8 +21,8 @@ limitations under the License.
 #include "mediapipe/tasks/c/components/containers/embedding_result.h"
 #include "mediapipe/tasks/c/components/processors/embedder_options.h"
 #include "mediapipe/tasks/c/core/base_options.h"
+#include "mediapipe/tasks/c/core/common.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
-#include "mediapipe/tasks/c/vision/core/common.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/core/image_processing_options.h"
 
@@ -81,7 +81,7 @@ struct ImageEmbedderOptions {
 // To obtain a detailed error, `error_msg` must be non-null pointer to a
 // `char*`, which will be populated with a newly-allocated error message upon
 // failure. It's the caller responsibility to free the error message with
-// `free()`.
+// `MpErrorFree()`.
 MP_EXPORT MpStatus MpImageEmbedderCreate(struct ImageEmbedderOptions* options,
                                          MpImageEmbedderPtr* embedder,
                                          char** error_msg);
@@ -93,7 +93,7 @@ MP_EXPORT MpStatus MpImageEmbedderCreate(struct ImageEmbedderOptions* options,
 // To obtain a detailed error, `error_msg` must be non-null pointer to a
 // `char*`, which will be populated with a newly-allocated error message upon
 // failure. It's the caller responsibility to free the error message with
-// `free()`.
+// `MpErrorFree()`.
 MP_EXPORT MpStatus MpImageEmbedderEmbedImage(
     MpImageEmbedderPtr embedder, MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
@@ -111,7 +111,7 @@ MP_EXPORT MpStatus MpImageEmbedderEmbedImage(
 // To obtain a detailed error, `error_msg` must be non-null pointer to a
 // `char*`, which will be populated with a newly-allocated error message upon
 // failure. It's the caller responsibility to free the error message with
-// `free()`.
+// `MpErrorFree()`.
 MP_EXPORT MpStatus MpImageEmbedderEmbedForVideo(
     MpImageEmbedderPtr embedder, MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
@@ -136,7 +136,7 @@ MP_EXPORT MpStatus MpImageEmbedderEmbedForVideo(
 // Returns kMpOk on success. To obtain a detailed error, `error_msg` must be
 // non-null pointer to a `char*`, which will be populated with a newly-allocated
 // error message upon failure. It's the caller responsibility to free the error
-// message with `free()`.
+// message with `MpErrorFree()`.
 MP_EXPORT MpStatus MpImageEmbedderEmbedAsync(
     MpImageEmbedderPtr embedder, MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
@@ -151,7 +151,7 @@ MP_EXPORT void MpImageEmbedderCloseResult(ImageEmbedderResult* result);
 // To obtain a detailed error, `error_msg` must be non-null pointer to a
 // `char*`, which will be populated with a newly-allocated error message upon
 // failure. It's the caller responsibility to free the error message with
-// `free()`.
+// `MpErrorFree()`.
 MP_EXPORT MpStatus MpImageEmbedderClose(MpImageEmbedderPtr embedder,
                                         char** error_msg);
 
@@ -162,7 +162,7 @@ MP_EXPORT MpStatus MpImageEmbedderClose(MpImageEmbedderPtr embedder,
 // To obtain a detailed error, `error_msg` must be non-null pointer to a
 // `char*`, which will be populated with a newly-allocated error message upon
 // failure. It's the caller responsibility to free the error message with
-// `free()`.
+// `MpErrorFree()`.
 MP_EXPORT MpStatus MpImageEmbedderCosineSimilarity(const Embedding& u,
                                                    const Embedding& v,
                                                    double* similarity,

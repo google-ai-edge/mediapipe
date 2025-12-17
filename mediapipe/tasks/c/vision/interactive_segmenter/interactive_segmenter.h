@@ -23,8 +23,8 @@ limitations under the License.
 
 #include "mediapipe/tasks/c/components/containers/keypoint.h"
 #include "mediapipe/tasks/c/core/base_options.h"
+#include "mediapipe/tasks/c/core/common.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
-#include "mediapipe/tasks/c/vision/core/common.h"
 #include "mediapipe/tasks/c/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/c/vision/image_segmenter/image_segmenter_result.h"
 
@@ -85,7 +85,7 @@ struct RegionOfInterest {
 // To obtain a detailed error, `error_msg` must be non-null pointer to a
 // `char*`, which will be populated with a newly-allocated error message upon
 // failure. It's the caller responsibility to free the error message with
-// `free()`.
+// `MpErrorFree()`.
 MP_EXPORT MpStatus MpInteractiveSegmenterCreate(
     struct InteractiveSegmenterOptions* options,
     MpInteractiveSegmenterPtr* segmenter, char** error_msg);
@@ -98,7 +98,7 @@ MP_EXPORT MpStatus MpInteractiveSegmenterCreate(
 // To obtain a detailed error, `error_msg` must be non-null pointer to a
 // `char*`, which will be populated with a newly-allocated error message upon
 // failure. It's the caller responsibility to free the error message with
-// `free()`.
+// `MpErrorFree()`.
 MP_EXPORT MpStatus MpInteractiveSegmenterSegmentImage(
     MpInteractiveSegmenterPtr segmenter, MpImagePtr image,
     const RegionOfInterest* roi,
@@ -115,7 +115,7 @@ MP_EXPORT void MpInteractiveSegmenterCloseResult(ImageSegmenterResult* result);
 // To obtain a detailed error, `error_msg` must be non-null pointer to a
 // `char*`, which will be populated with a newly-allocated error message upon
 // failure. It's the caller responsibility to free the error message with
-// `free()`.
+// `MpErrorFree()`.
 MP_EXPORT MpStatus MpInteractiveSegmenterClose(
     MpInteractiveSegmenterPtr segmenter, char** error_msg);
 

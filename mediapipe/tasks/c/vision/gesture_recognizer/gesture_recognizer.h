@@ -20,8 +20,8 @@ limitations under the License.
 
 #include "mediapipe/tasks/c/components/processors/classifier_options.h"
 #include "mediapipe/tasks/c/core/base_options.h"
+#include "mediapipe/tasks/c/core/common.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
-#include "mediapipe/tasks/c/vision/core/common.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/c/vision/gesture_recognizer/gesture_recognizer_result.h"
@@ -103,7 +103,7 @@ struct GestureRecognizerOptions {
 // To obtain a detailed error, `error_msg` must be non-null pointer to a
 // `char*`, which will be populated with a newly-allocated error message upon
 // failure. It's the caller responsibility to free the error message with
-// `free()`.
+// `MpErrorFree()`.
 MP_EXPORT MpStatus
 MpGestureRecognizerCreate(const struct GestureRecognizerOptions* options,
                           MpGestureRecognizerPtr* recognizer, char** error_msg);
@@ -115,7 +115,7 @@ MpGestureRecognizerCreate(const struct GestureRecognizerOptions* options,
 // To obtain a detailed error, `error_msg` must be non-null pointer to a
 // `char*`, which will be populated with a newly-allocated error message upon
 // failure. It's the caller responsibility to free the error message with
-// `free()`.
+// `MpErrorFree()`.
 MP_EXPORT MpStatus MpGestureRecognizerRecognizeImage(
     MpGestureRecognizerPtr recognizer, MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
@@ -131,7 +131,7 @@ MP_EXPORT MpStatus MpGestureRecognizerRecognizeImage(
 // `GestureRecognizerResult`. To obtain a detailed error, `error_msg` must be
 // non-null pointer to a `char*`, which will be populated with a newly-allocated
 // error message upon failure. It's the caller responsibility to free the error
-// message with `free()`.
+// message with `MpErrorFree()`.
 MP_EXPORT MpStatus MpGestureRecognizerRecognizeForVideo(
     MpGestureRecognizerPtr recognizer, MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
@@ -156,7 +156,7 @@ MP_EXPORT MpStatus MpGestureRecognizerRecognizeForVideo(
 // To obtain a detailed error, `error_msg` must be non-null pointer to a
 // `char*`, which will be populated with a newly-allocated error message upon
 // failure. It's the caller responsibility to free the error message with
-// `free()`.
+// `MpErrorFree()`.
 MP_EXPORT MpStatus MpGestureRecognizerRecognizeAsync(
     MpGestureRecognizerPtr recognizer, MpImagePtr image,
     const ImageProcessingOptions* image_processing_options,
@@ -171,7 +171,7 @@ MP_EXPORT void MpGestureRecognizerCloseResult(GestureRecognizerResult* result);
 // To obtain a detailed error, `error_msg` must be non-null pointer to a
 // `char*`, which will be populated with a newly-allocated error message upon
 // failure. It's the caller responsibility to free the error message with
-// 'free()`.
+// 'MpErrorFree()`.
 MP_EXPORT MpStatus MpGestureRecognizerClose(MpGestureRecognizerPtr recognizer,
                                             char** error_msg);
 

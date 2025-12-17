@@ -25,9 +25,9 @@ limitations under the License.
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/tasks/c/components/containers/keypoint.h"
+#include "mediapipe/tasks/c/core/common.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
 #include "mediapipe/tasks/c/test/test_utils.h"
-#include "mediapipe/tasks/c/vision/core/common.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/c/vision/core/image_test_util.h"
@@ -228,7 +228,7 @@ TEST(InteractiveSegmenterTest, InvalidArgumentHandling) {
 
   EXPECT_THAT(error_msg,
               testing::HasSubstr("ExternalFile must specify at least one"));
-  free(error_msg);
+  MpErrorFree(error_msg);
 }
 
 TEST(InteractiveSegmenterTest, FailedRecognitionHandling) {
@@ -264,7 +264,7 @@ TEST(InteractiveSegmenterTest, FailedRecognitionHandling) {
   EXPECT_THAT(error_msg,
               testing::HasSubstr("GPU input images are currently not "
                                  "supported."));
-  free(error_msg);
+  MpErrorFree(error_msg);
 
   EXPECT_EQ(MpInteractiveSegmenterClose(segmenter, /* error_msg= */ nullptr),
             kMpOk);

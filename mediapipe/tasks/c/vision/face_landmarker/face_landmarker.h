@@ -21,8 +21,8 @@ limitations under the License.
 #include <cstdint>
 
 #include "mediapipe/tasks/c/core/base_options.h"
+#include "mediapipe/tasks/c/core/common.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
-#include "mediapipe/tasks/c/vision/core/common.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/face_landmarker/face_landmarker_result.h"
 
@@ -102,7 +102,7 @@ struct FaceLandmarkerOptions {
 // `MpFaceLandmarkerPtr`. To obtain a detailed error, `error_msg` must be
 // non-null pointer to a `char*`, which will be populated with a newly-allocated
 // error message upon failure. It's the caller responsibility to free the error
-// message with `free()`.
+// message with `MpErrorFree()`.
 MP_EXPORT MpStatus MpFaceLandmarkerCreate(struct FaceLandmarkerOptions* options,
                                           MpFaceLandmarkerPtr* landmarker,
                                           char** error_msg);
@@ -112,7 +112,7 @@ MP_EXPORT MpStatus MpFaceLandmarkerCreate(struct FaceLandmarkerOptions* options,
 // `FaceLandmarkerResult`. To obtain a detailed error, `error_msg` must be
 // non-null pointer to a `char*`, which will be populated with a newly-allocated
 // error message upon failure. It's the caller responsibility to free the error
-// message with `free()`.
+// message with `MpErrorFree()`.
 MP_EXPORT MpStatus
 MpFaceLandmarkerDetectImage(MpFaceLandmarkerPtr landmarker, MpImagePtr image,
                             const struct ImageProcessingOptions* options,
@@ -130,7 +130,7 @@ MpFaceLandmarkerDetectImage(MpFaceLandmarkerPtr landmarker, MpImagePtr image,
 // Returns `kMpOk` on success. To obtain a detailed error, error_msg must be
 // non-null pointer to a char*, which will be populated with a newly-allocated
 // error message upon failure. It's the caller responsibility to free the error
-// message with free().
+// message with `MpErrorFree()`.
 MP_EXPORT MpStatus MpFaceLandmarkerDetectForVideo(
     MpFaceLandmarkerPtr landmarker, MpImagePtr image,
     const struct ImageProcessingOptions* options, int64_t timestamp_ms,
@@ -155,7 +155,7 @@ MP_EXPORT MpStatus MpFaceLandmarkerDetectForVideo(
 // Returns `kMpOk` on success. To obtain a detailed error, error_msg must be
 // non-null pointer to a char*, which will be populated with a newly-allocated
 // error message upon failure. It's the caller responsibility to free the error
-// message with free().
+// message with MpErrorFree().
 MP_EXPORT MpStatus
 MpFaceLandmarkerDetectAsync(MpFaceLandmarkerPtr landmarker, MpImagePtr image,
                             const struct ImageProcessingOptions* options,
@@ -169,7 +169,7 @@ MP_EXPORT void MpFaceLandmarkerCloseResult(FaceLandmarkerResult* result);
 // Returns `kMpOk` on success. To obtain a detailed error, error_msg must be
 // non-null pointer to a char*, which will be populated with a newly-allocated
 // error message upon failure. It's the caller responsibility to free the error
-// message with free().
+// message with MpErrorFree().
 MP_EXPORT MpStatus MpFaceLandmarkerClose(MpFaceLandmarkerPtr landmarker,
                                          char** error_msg);
 

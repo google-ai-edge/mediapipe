@@ -1,6 +1,7 @@
 VERS_1.0 {
   global:
     MpAudioClassifier*;
+    MpErrorFree;
     MpFaceDetector*;
     MpFaceLandmarker*;
     MpFlatbuffer*;

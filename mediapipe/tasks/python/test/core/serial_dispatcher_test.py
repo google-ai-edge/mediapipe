@@ -186,7 +186,7 @@ class SerialDispatcherTest(parameterized.TestCase):
       ("utf8_error", "⚠️"),
   )
   def test_uses_error_message_for_status_functions(self, error_message):
-    mock_lib = mock.MagicMock(spec_set=["invalid_op", "free"])
+    mock_lib = mock.MagicMock(spec_set=["invalid_op", "MpErrorFree"])
 
     def invalid_op(error_msg):
       error_msg._obj.value = error_message.encode("utf-8")

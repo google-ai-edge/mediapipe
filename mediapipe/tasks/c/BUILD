@@ -42,12 +42,12 @@ cc_binary(
     deps = [
         ":mediapipe_tasks_c_version_script.lds",
         "//mediapipe/tasks/c/audio/audio_classifier:audio_classifier_c_lib",
+        "//mediapipe/tasks/c/core:common",
         "//mediapipe/tasks/c/genai/converter:llm_converter_c_lib",
         "//mediapipe/tasks/c/metadata:flatbuffer_api_c_lib",
         "//mediapipe/tasks/c/text/language_detector:language_detector_c_lib",
         "//mediapipe/tasks/c/text/text_classifier:text_classifier_c_lib",
         "//mediapipe/tasks/c/text/text_embedder:text_embedder_c_lib",
-        "//mediapipe/tasks/c/vision/core:common",
         "//mediapipe/tasks/c/vision/core:image_c_lib",
         "//mediapipe/tasks/c/vision/face_detector:face_detector_c_lib",
         "//mediapipe/tasks/c/vision/face_landmarker:face_landmarker_c_lib",

@@ -13,13 +13,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#include "mediapipe/tasks/c/vision/core/common.h"
+#include "mediapipe/tasks/c/core/common.h"
 
 #include <stdlib.h>
 
 extern "C" {
 
-MP_EXPORT void MpStringListFree(MpStringList* string_list) {
+void MpStringListFree(MpStringList* string_list) {
   if (string_list == nullptr || string_list->strings == nullptr) {
     return;
   }
@@ -30,5 +30,7 @@ MP_EXPORT void MpStringListFree(MpStringList* string_list) {
   string_list->strings = nullptr;
   string_list->num_strings = 0;
 }
+
+void MpErrorFree(char* error_message) { free(error_message); }
 
 }  // extern "C"

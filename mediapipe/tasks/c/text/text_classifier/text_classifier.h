@@ -52,7 +52,7 @@ struct TextClassifierOptions {
 // `MpTextClassifierPtr`.
 // To obtain a detailed error, error_msg must be non-null pointer to a char*,
 // which will be populated with a newly-allocated error message upon failure.
-// It's the caller responsibility to free the error message with free().
+// It's the caller responsibility to free the error message with MpErrorFree().
 MP_EXPORT MpStatus MpTextClassifierCreate(struct TextClassifierOptions* options,
                                           MpTextClassifierPtr* classifier,
                                           char** error_msg);
@@ -62,7 +62,7 @@ MP_EXPORT MpStatus MpTextClassifierCreate(struct TextClassifierOptions* options,
 // `TextClassifierResult`.
 // To obtain a detailed error, error_msg must be non-null pointer to a char*,
 // which will be populated with a newly-allocated error message upon failure.
-// It's the caller responsibility to free the error message with free().
+// It's the caller responsibility to free the error message with MpErrorFree().
 MP_EXPORT MpStatus MpTextClassifierClassify(MpTextClassifierPtr classifier,
                                             const char* utf8_str,
                                             TextClassifierResult* result,
@@ -76,7 +76,7 @@ MP_EXPORT void MpTextClassifierCloseResult(TextClassifierResult* result);
 //
 // To obtain a detailed error, error_msg must be non-null pointer to a char*,
 // which will be populated with a newly-allocated error message upon failure.
-// It's the caller responsibility to free the error message with free().
+// It's the caller responsibility to free the error message with MpErrorFree().
 MP_EXPORT MpStatus MpTextClassifierClose(MpTextClassifierPtr classifier,
                                          char** error_msg);
 

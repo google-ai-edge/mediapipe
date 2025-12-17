@@ -19,7 +19,6 @@ limitations under the License.
 #include <cstdint>
 
 #include "mediapipe/tasks/c/components/containers/landmark.h"
-#include "mediapipe/tasks/c/vision/core/common.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
 
 #ifndef MP_EXPORT

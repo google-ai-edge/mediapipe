@@ -19,8 +19,8 @@ limitations under the License.
 #include <cstdint>
 
 #include "mediapipe/tasks/c/core/base_options.h"
+#include "mediapipe/tasks/c/core/common.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
-#include "mediapipe/tasks/c/vision/core/common.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/hand_landmarker/hand_landmarker_result.h"
 

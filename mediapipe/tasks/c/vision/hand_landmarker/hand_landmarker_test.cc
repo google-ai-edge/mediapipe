@@ -33,8 +33,8 @@ limitations under the License.
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/tasks/c/components/containers/landmark.h"
+#include "mediapipe/tasks/c/core/common.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
-#include "mediapipe/tasks/c/vision/core/common.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/c/vision/core/image_test_util.h"
@@ -321,7 +321,7 @@ TEST(HandLandmarkerTest, InvalidArgumentHandling) {
   EXPECT_EQ(landmarker, nullptr);
   EXPECT_THAT(error_msg,
               HasSubstr("ExternalFile must specify at least one of"));
-  free(error_msg);
+  MpErrorFree(error_msg);
 }
 
 }  // namespace

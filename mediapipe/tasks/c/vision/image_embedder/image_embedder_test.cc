@@ -30,8 +30,8 @@ limitations under the License.
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/c/components/containers/embedding_result.h"
+#include "mediapipe/tasks/c/core/common.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
-#include "mediapipe/tasks/c/vision/core/common.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/c/vision/core/image_test_util.h"
@@ -319,7 +319,7 @@ TEST(ImageEmbedderTest, InvalidArgumentHandling) {
 
   EXPECT_THAT(error_msg,
               testing::HasSubstr("ExternalFile must specify at least one"));
-  free(error_msg);
+  MpErrorFree(error_msg);
 }
 
 TEST(ImageEmbedderTest, FailedEmbeddingHandling) {
@@ -346,7 +346,7 @@ TEST(ImageEmbedderTest, FailedEmbeddingHandling) {
   EXPECT_EQ(status, kMpInvalidArgument);
   EXPECT_THAT(error_msg, testing::HasSubstr(
                              "GPU input images are currently not supported."));
-  free(error_msg);
+  MpErrorFree(error_msg);
 
   ASSERT_EQ(MpImageEmbedderClose(embedder, /* error_msg= */ nullptr), kMpOk);
 }

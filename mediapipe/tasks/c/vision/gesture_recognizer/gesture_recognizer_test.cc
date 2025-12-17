@@ -29,8 +29,8 @@ limitations under the License.
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/c/components/containers/landmark.h"
+#include "mediapipe/tasks/c/core/common.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
-#include "mediapipe/tasks/c/vision/core/common.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/c/vision/core/image_test_util.h"
@@ -302,7 +302,7 @@ TEST(GestureRecognizerTest, InvalidArgumentHandling) {
   EXPECT_EQ(recognizer, nullptr);
   EXPECT_THAT(error_msg,
               testing::HasSubstr("ExternalFile must specify at least one"));
-  free(error_msg);
+  MpErrorFree(error_msg);
 }
 
 TEST(GestureRecognizerTest, FailedRecognitionHandling) {
@@ -336,7 +336,7 @@ TEST(GestureRecognizerTest, FailedRecognitionHandling) {
   EXPECT_EQ(status, kMpInvalidArgument);
   EXPECT_THAT(error_msg, testing::HasSubstr(
                              "PU input images are currently not supported"));
-  free(error_msg);
+  MpErrorFree(error_msg);
 
   EXPECT_EQ(MpGestureRecognizerClose(recognizer, /* &error_msg= */ nullptr),
             kMpOk);

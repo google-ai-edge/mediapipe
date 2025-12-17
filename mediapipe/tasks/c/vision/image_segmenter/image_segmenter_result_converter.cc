@@ -21,7 +21,6 @@ limitations under the License.
 #include <vector>
 
 #include "mediapipe/framework/formats/image.h"
-#include "mediapipe/tasks/c/vision/core/common.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/core/image_frame_util.h"
 #include "mediapipe/tasks/c/vision/image_segmenter/image_segmenter_result.h"

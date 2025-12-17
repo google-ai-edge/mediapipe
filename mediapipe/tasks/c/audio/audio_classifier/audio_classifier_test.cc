@@ -33,6 +33,7 @@ limitations under the License.
 #include "mediapipe/tasks/c/audio/core/common.h"
 #include "mediapipe/tasks/c/components/containers/category.h"
 #include "mediapipe/tasks/c/components/containers/classification_result.h"
+#include "mediapipe/tasks/c/core/common.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
 #include "mediapipe/tasks/cc/audio/utils/test_utils.h"
 
@@ -189,7 +190,7 @@ TEST(AudioClassifierTest, CreateFailsWithUnnecessaryCallback) {
       error_msg,
       testing::HasSubstr("The audio task is in audio clips mode, a user-defined"
                          " result callback shouldn't be provided."));
-  free(error_msg);
+  MpErrorFree(error_msg);
 }
 
 TEST(AudioClassifierTest, CreateFailsWithMissingCallback) {
@@ -205,7 +206,7 @@ TEST(AudioClassifierTest, CreateFailsWithMissingCallback) {
               testing::HasSubstr(
                   "The audio task is in audio stream mode, a user-defined"
                   " result callback must be provided."));
-  free(error_msg);
+  MpErrorFree(error_msg);
 }
 
 TEST(AudioClassifierTest, ClassifyFailsWithWrongRunningMode) {
@@ -228,7 +229,7 @@ TEST(AudioClassifierTest, ClassifyFailsWithWrongRunningMode) {
   EXPECT_THAT(error_msg, testing::HasSubstr(
                              "Task is not initialized with the audio clips"
                              " mode. Current running mode:audio stream mode"));
-  free(error_msg);
+  MpErrorFree(error_msg);
 
   EXPECT_EQ(MpAudioClassifierClose(classifier, /*error_msg=*/nullptr), kMpOk);
 }
@@ -254,7 +255,7 @@ TEST(AudioClassifierTest, ClassifyAsyncFailsWithWrongRunningMode) {
   EXPECT_THAT(error_msg, testing::HasSubstr(
                              "Task is not initialized with the audio stream"
                              " mode. Current running mode:audio clips mode"));
-  free(error_msg);
+  MpErrorFree(error_msg);
 
   EXPECT_EQ(MpAudioClassifierClose(classifier, /*error_msg=*/nullptr), kMpOk);
 }

@@ -30,6 +30,13 @@
 extern "C" {
 #endif
 
+// Supported processing modes.
+enum RunningMode {
+  IMAGE = 1,
+  VIDEO = 2,
+  LIVE_STREAM = 3,
+};
+
 // An enum describing supported raw image formats.
 // Corresponds to mediapipe::ImageFormat::Format.
 typedef enum MpImageFormat {
