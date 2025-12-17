@@ -78,6 +78,10 @@ typedef absl::StatusOr<OutputStreamPoller> StatusOrPoller;
 // to do is run the graph (without pushing data in or extracting it as
 // the graph runs).
 //
+// NOTE: `CalculatorGraph` instance is stateful and not thread-safe in general.
+// (E.g. `AddPacketToInputStream`, `CloseInputStream` are particular examples
+// known to be not thread-safe.)
+//
 // Example:
 //   // Build dependency "//mediapipe/framework:calculator_framework".
 //
