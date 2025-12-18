@@ -28,6 +28,7 @@ odml::infra::proto::LlmParameters GetGemma3_1BParams();
 odml::infra::proto::LlmParameters GetGemma3_4BParams();
 odml::infra::proto::LlmParameters GetGemma3_12BParams();
 odml::infra::proto::LlmParameters GetGemma3_27BParams();
+odml::infra::proto::LlmParameters GetFunctionGemma3_300MParams();
 odml::infra::proto::LlmParameters GetStablelm4E1T3BParams();
 odml::infra::proto::LlmParameters GetPhi2Params();
 
