@@ -3,6 +3,7 @@ plugins {
 }
 
 android {
+    namespace = "com.google.mediapipe.examples.facedetection"
     compileSdkVersion 30
 
     defaultConfig {

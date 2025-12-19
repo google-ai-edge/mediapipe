@@ -3,6 +3,7 @@ plugins {
 }
 
 android {
+    namespace = "com.google.mediapipe.examples.hands"
     compileSdkVersion 30
 
     defaultConfig {
