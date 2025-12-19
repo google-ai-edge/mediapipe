@@ -50,7 +50,7 @@ MpStatus MpLlmConverterGenerateGpuTfLite(
     const char* lora_output_tflite_file, const char* lora_main_model_type,
     const char* image_encoder_file, const char* image_adapter_file,
     const char* submodel_type, bool use_dynamic_ple, bool apply_srq,
-    char** error_message) {
+    int block_size, char** error_message) {
 #ifdef ENABLE_ODML_CONVERTER
   // TODO: Update the converter code base
   if (image_encoder_file || image_adapter_file) {
