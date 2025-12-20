@@ -20,13 +20,6 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 licenses(["notice"])
 
 cc_library(
-    name = "common",
-    srcs = ["common.cc"],
-    hdrs = ["common.h"],
-    alwayslink = 1,
-)
-
-cc_library(
     name = "image_hdr",
     hdrs = ["image.h"],
     visibility = ["//visibility:private"],
@@ -34,7 +27,7 @@ cc_library(
 )
 
 IMAGE_DEPS = [
-    ":common",
+    "//mediapipe/tasks/c/core:common",
     ":image_frame_util",
     "@com_google_absl//absl/log:absl_log",
     "@com_google_absl//absl/status",
@@ -122,10 +115,10 @@ cc_test(
     name = "image_processing_options_converter_test",
     srcs = ["image_processing_options_converter_test.cc"],
     deps = [
-        ":common",
         ":image_processing_options",
         ":image_processing_options_converter",
         "//mediapipe/framework/port:gtest",
+        "//mediapipe/tasks/c/core:common",
         "//mediapipe/tasks/cc/components/containers:rect",
         "//mediapipe/tasks/cc/vision/core:image_processing_options",
         "@com_google_googletest//:gtest_main",

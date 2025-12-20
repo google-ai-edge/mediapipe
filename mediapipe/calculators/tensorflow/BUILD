@@ -389,6 +389,7 @@ cc_library(
         "//mediapipe/util/sequence:media_sequence",
         "//mediapipe/util/sequence:media_sequence_util",
         "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@org_tensorflow//tensorflow/core:protos_all_cc",

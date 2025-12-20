@@ -23,8 +23,8 @@ limitations under the License.
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
+#include "mediapipe/tasks/c/core/common.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
-#include "mediapipe/tasks/c/test/test_utils.h"
 
 namespace {
 
@@ -49,18 +49,20 @@ TEST(LanguageDetectorTest, SmokeTest) {
   };
 
   MpLanguageDetectorPtr detector;
-  MP_ASSERT_OK(
-      MpLanguageDetectorCreate(&options, &detector, /*error_msg=*/nullptr));
+  ASSERT_EQ(
+      MpLanguageDetectorCreate(&options, &detector, /*error_msg=*/nullptr),
+      kMpOk);
   EXPECT_NE(detector, nullptr);
 
   LanguageDetectorResult result;
-  MP_EXPECT_OK(MpLanguageDetectorDetect(detector, kTestString, &result,
-                                        /*error_msg=*/nullptr));
+  EXPECT_EQ(MpLanguageDetectorDetect(detector, kTestString, &result,
+                                     /*error_msg=*/nullptr),
+            kMpOk);
   EXPECT_EQ(std::string(result.predictions[0].language_code), "fr");
   EXPECT_NEAR(result.predictions[0].probability, 0.999781, kPrecision);
 
   MpLanguageDetectorCloseResult(&result);
-  MP_EXPECT_OK(MpLanguageDetectorClose(detector, /*error_msg=*/nullptr));
+  EXPECT_EQ(MpLanguageDetectorClose(detector, /*error_msg=*/nullptr), kMpOk);
 }
 
 TEST(LanguageDetectorTest, ErrorHandling) {
@@ -77,7 +79,7 @@ TEST(LanguageDetectorTest, ErrorHandling) {
 
   EXPECT_THAT(error_msg,
               testing::HasSubstr("ExternalFile must specify at least one"));
-  free(error_msg);
+  MpErrorFree(error_msg);
 }
 
 }  // namespace

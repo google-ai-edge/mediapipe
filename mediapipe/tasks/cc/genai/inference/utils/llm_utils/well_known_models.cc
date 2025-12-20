@@ -234,6 +234,15 @@ LlmParameters GetGemma3_300MParams() {
   return llm_params;
 }
 
+LlmParameters GetFunctionGemma3_300MParams() {
+  LlmParameters llm_params = GetGemma3_300MParams();
+  llm_params.clear_stop_tokens();
+  llm_params.add_stop_tokens("<eos>");
+  llm_params.add_stop_tokens("<end_of_turn>");
+  llm_params.add_stop_tokens("<start_function_response>");
+  return llm_params;
+}
+
 LlmParameters GetGemma3_1BParams() {
   LlmParameters llm_params;
   llm_params.set_start_token_id(2);

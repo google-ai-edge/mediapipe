@@ -18,24 +18,12 @@ limitations under the License.
 #include <cstdint>
 
 #include "absl/log/absl_log.h"
-#include "absl/status/statusor.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/core/image_frame_util.h"
 
 namespace mediapipe::tasks::c::test {
-
-testing::AssertionResult AssertMpStatusOk(const char* expr,
-                                          const MpStatus& status) {
-  if (status == kMpOk) {
-    return testing::AssertionSuccess();
-  }
-
-  return testing::AssertionFailure()
-         << "Expected '" << expr << "' to be kMpOk.\n"
-         << "  Actual Code: " << status << "\n";
-}
 
 MpImagePtr CreateCategoryMaskFromImage(const Image& image) {
   const auto& image_frame = image.GetImageFrameSharedPtr();

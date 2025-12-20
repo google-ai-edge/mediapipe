@@ -27,21 +27,6 @@ _shared_lib = None
 _CFunction = mediapipe_c_utils.CFunction
 
 
-def handle_return_code(
-    return_code: int, error_msg_prefix: str, error_msg: ctypes.c_char_p
-):
-  """Checks the return code and raises an error if not 0."""
-  if return_code == 0:
-    return
-  elif error_msg.value is not None:
-    error_message = error_msg.value.decode('utf-8')
-    raise RuntimeError(f'{error_msg_prefix}: {error_message}')
-  else:
-    raise RuntimeError(
-        f'{error_msg_prefix}: Unexpected return code {return_code}'
-    )
-
-
 def load_raw_library(signatures: Sequence[_CFunction] = ()) -> ctypes.CDLL:
   """Loads the raw ctypes.CDLL shared library and registers signatures.
 
@@ -73,9 +58,9 @@ def load_raw_library(signatures: Sequence[_CFunction] = ()) -> ctypes.CDLL:
     c_func.argtypes = signature.argtypes
     c_func.restype = signature.restype
 
-  # Register "free()"
-  _shared_lib.free.argtypes = [ctypes.c_void_p]
-  _shared_lib.free.restype = None
+  # Register "MpErrorFree()"
+  _shared_lib.MpErrorFree.argtypes = [ctypes.c_void_p]
+  _shared_lib.MpErrorFree.restype = None
 
   return _shared_lib
 

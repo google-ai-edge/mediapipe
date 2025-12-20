@@ -26,11 +26,9 @@ cc_library(
     linkstatic = 1,
     deps = [
         "//mediapipe/framework/formats:image",
-        "//mediapipe/framework/port:gtest",
         "//mediapipe/tasks/c/core:mp_status",
         "//mediapipe/tasks/c/vision/core:image",
         "//mediapipe/tasks/c/vision/core:image_frame_util",
         "@com_google_absl//absl/log:absl_log",
-        "@com_google_absl//absl/status:statusor",
     ],
 )

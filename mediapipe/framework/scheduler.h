@@ -16,18 +16,20 @@
 #define MEDIAPIPE_FRAMEWORK_SCHEDULER_H_
 
 #include <atomic>
+#include <deque>
 #include <functional>
 #include <map>
 #include <memory>
 #include <queue>
 #include <set>
-#include <utility>
+#include <string>
 #include <vector>
 
-#include "absl/base/macros.h"
+#include "absl/base/thread_annotations.h"
+#include "absl/status/status.h"
 #include "absl/synchronization/mutex.h"
+#include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_node.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/scheduler_queue.h"
 #include "mediapipe/framework/scheduler_shared.h"
 
@@ -176,7 +178,7 @@ class Scheduler {
   internal::SchedulerTimes GetSchedulerTimes();
 
  private:
-  // State of the scheduler. The figure shows the allowed state transitons.
+  // State of the scheduler. The figure shows the allowed state transitions.
   //
   //   NOT_STARTED
   //        |

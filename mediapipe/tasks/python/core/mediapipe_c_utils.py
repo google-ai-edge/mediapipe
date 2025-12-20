@@ -137,7 +137,7 @@ class CStatusFunction(CFunction):
           handle_status(status, error_msg)
         finally:
           if error_msg.value is not None:
-            lib.free(error_msg)
+            lib.MpErrorFree(error_msg)
 
       executor.submit(dispatch_and_free).result()
 

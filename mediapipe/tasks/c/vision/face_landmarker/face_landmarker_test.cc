@@ -30,9 +30,8 @@ limitations under the License.
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/c/components/containers/landmark.h"
+#include "mediapipe/tasks/c/core/common.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
-#include "mediapipe/tasks/c/test/test_utils.h"
-#include "mediapipe/tasks/c/vision/core/common.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/c/vision/core/image_test_util.h"
@@ -147,20 +146,22 @@ TEST(FaceLandmarkerTest, ImageModeTest) {
   };
 
   MpFaceLandmarkerPtr landmarker;
-  MP_ASSERT_OK(
-      MpFaceLandmarkerCreate(&options, &landmarker, /* error_msg= */ nullptr));
+  ASSERT_EQ(
+      MpFaceLandmarkerCreate(&options, &landmarker, /* error_msg= */ nullptr),
+      kMpOk);
   EXPECT_NE(landmarker, nullptr);
 
   FaceLandmarkerResult result;
-  MP_ASSERT_OK(MpFaceLandmarkerDetectImage(
-      landmarker, image.get(),
-      /* image_processing_options= */ nullptr, &result,
-      /* error_msg= */ nullptr));
+  ASSERT_EQ(MpFaceLandmarkerDetectImage(landmarker, image.get(),
+                                        /* image_processing_options= */ nullptr,
+                                        &result,
+                                        /* error_msg= */ nullptr),
+            kMpOk);
   AssertFaceLandmarkerResult(&result, kBlendshapesPrecision,
                              kLandmarksPrecision,
                              kFacialTransformationMatrixPrecision);
   MpFaceLandmarkerCloseResult(&result);
-  MP_EXPECT_OK(MpFaceLandmarkerClose(landmarker, /* error_msg= */ nullptr));
+  EXPECT_EQ(MpFaceLandmarkerClose(landmarker, /* error_msg= */ nullptr), kMpOk);
 }
 
 TEST(FaceLandmarkerTest, ImageModeWithRotationTest) {
@@ -181,8 +182,9 @@ TEST(FaceLandmarkerTest, ImageModeWithRotationTest) {
   };
 
   MpFaceLandmarkerPtr landmarker;
-  MP_ASSERT_OK(
-      MpFaceLandmarkerCreate(&options, &landmarker, /* error_msg= */ nullptr));
+  ASSERT_EQ(
+      MpFaceLandmarkerCreate(&options, &landmarker, /* error_msg= */ nullptr),
+      kMpOk);
   EXPECT_NE(landmarker, nullptr);
 
   ImageProcessingOptions image_processing_options;
@@ -190,14 +192,15 @@ TEST(FaceLandmarkerTest, ImageModeWithRotationTest) {
   image_processing_options.rotation_degrees = -90;
 
   FaceLandmarkerResult result;
-  MP_ASSERT_OK(MpFaceLandmarkerDetectImage(landmarker, image.get(),
-                                           &image_processing_options, &result,
-                                           /* error_msg= */ nullptr));
+  ASSERT_EQ(MpFaceLandmarkerDetectImage(landmarker, image.get(),
+                                        &image_processing_options, &result,
+                                        /* error_msg= */ nullptr),
+            kMpOk);
   AssertRotatedFaceLandmarkerResult(&result, kBlendshapesPrecision,
                                     kLandmarksPrecision,
                                     kFacialTransformationMatrixPrecision);
   MpFaceLandmarkerCloseResult(&result);
-  MP_EXPECT_OK(MpFaceLandmarkerClose(landmarker, /* error_msg= */ nullptr));
+  EXPECT_EQ(MpFaceLandmarkerClose(landmarker, /* error_msg= */ nullptr), kMpOk);
 }
 
 TEST(FaceLandmarkerTest, VideoModeTest) {
@@ -218,23 +221,25 @@ TEST(FaceLandmarkerTest, VideoModeTest) {
   };
 
   MpFaceLandmarkerPtr landmarker;
-  MP_ASSERT_OK(
-      MpFaceLandmarkerCreate(&options, &landmarker, /* error_msg= */ nullptr));
+  ASSERT_EQ(
+      MpFaceLandmarkerCreate(&options, &landmarker, /* error_msg= */ nullptr),
+      kMpOk);
   EXPECT_NE(landmarker, nullptr);
 
   for (int i = 0; i < kIterations; ++i) {
     FaceLandmarkerResult result;
-    MP_ASSERT_OK(
+    ASSERT_EQ(
         MpFaceLandmarkerDetectForVideo(landmarker, image.get(),
                                        /* image_processing_options= */ nullptr,
-                                       i, &result, /* error_msg= */ nullptr));
+                                       i, &result, /* error_msg= */ nullptr),
+        kMpOk);
 
     AssertFaceLandmarkerResult(&result, kBlendshapesPrecision,
                                kLandmarksPrecision,
                                kFacialTransformationMatrixPrecision);
     MpFaceLandmarkerCloseResult(&result);
   }
-  MP_EXPECT_OK(MpFaceLandmarkerClose(landmarker, /* error_msg= */ nullptr));
+  EXPECT_EQ(MpFaceLandmarkerClose(landmarker, /* error_msg= */ nullptr), kMpOk);
 }
 
 // A structure to support LiveStreamModeTest below. This structure holds a
@@ -285,18 +290,20 @@ TEST(FaceLandmarkerTest, LiveStreamModeTest) {
   };
 
   MpFaceLandmarkerPtr landmarker;
-  MP_ASSERT_OK(
-      MpFaceLandmarkerCreate(&options, &landmarker, /* error_msg= */ nullptr));
+  ASSERT_EQ(
+      MpFaceLandmarkerCreate(&options, &landmarker, /* error_msg= */ nullptr),
+      kMpOk);
   EXPECT_NE(landmarker, nullptr);
 
   absl::BlockingCounter counter(kIterations);
   LiveStreamModeCallback::blocking_counter = &counter;
 
   for (int i = 0; i < kIterations; ++i) {
-    MP_ASSERT_OK(
+    ASSERT_EQ(
         MpFaceLandmarkerDetectAsync(landmarker, image.get(),
                                     /* image_processing_options= */ nullptr, i,
-                                    /* error_msg= */ nullptr));
+                                    /* error_msg= */ nullptr),
+        kMpOk);
     // Short sleep so that MediaPipe does not drop frames.
     absl::SleepFor(absl::Milliseconds(kSleepBetweenFramesMilliseconds));
   }
@@ -305,7 +312,7 @@ TEST(FaceLandmarkerTest, LiveStreamModeTest) {
   counter.Wait();
   LiveStreamModeCallback::blocking_counter = nullptr;
 
-  MP_EXPECT_OK(MpFaceLandmarkerClose(landmarker, /* error_msg= */ nullptr));
+  EXPECT_EQ(MpFaceLandmarkerClose(landmarker, /* error_msg= */ nullptr), kMpOk);
 
   // Due to the flow limiter, the total of outputs might be smaller than the
   // number of iterations.
@@ -337,7 +344,7 @@ TEST(FaceLandmarkerTest, InvalidArgumentHandling) {
   EXPECT_THAT(error_msg,
               HasSubstr("ExternalFile must specify at least one of "));
 
-  free(error_msg);
+  MpErrorFree(error_msg);
 }
 
 }  // namespace

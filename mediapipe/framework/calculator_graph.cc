@@ -17,7 +17,6 @@
 #include <stdio.h>
 
 #include <algorithm>
-#include <cstdint>
 #include <functional>
 #include <map>
 #include <memory>
@@ -30,10 +29,8 @@
 #include "absl/log/absl_log.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
-#include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 #include "absl/strings/substitute.h"
@@ -53,13 +50,8 @@
 #include "mediapipe/framework/output_stream_manager.h"
 #include "mediapipe/framework/output_stream_poller.h"
 #include "mediapipe/framework/packet.h"
-#include "mediapipe/framework/packet_generator.h"
-#include "mediapipe/framework/packet_generator.pb.h"
 #include "mediapipe/framework/packet_set.h"
 #include "mediapipe/framework/packet_type.h"
-#include "mediapipe/framework/port.h"
-#include "mediapipe/framework/port/canonical_errors.h"
-#include "mediapipe/framework/port/core_proto_inc.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/map_util.h"
 #include "mediapipe/framework/port/ret_check.h"
@@ -78,8 +70,6 @@
 #include "mediapipe/framework/tool/graph_runtime_info_utils.h"  // IWYU pragma: keep
 #include "mediapipe/framework/tool/status_util.h"
 #include "mediapipe/framework/tool/tag_map.h"
-#include "mediapipe/framework/tool/validate.h"
-#include "mediapipe/framework/tool/validate_name.h"
 #include "mediapipe/framework/validated_graph_config.h"
 #include "mediapipe/framework/vlog_overrides.h"
 #include "mediapipe/gpu/gpu_service.h"
@@ -809,6 +799,7 @@ absl::Status CalculatorGraph::PrepareForRun(
 
   if (VLOG_IS_ON(1)) {
     std::vector<std::string> input_side_packet_names;
+    input_side_packet_names.reserve(current_run_side_packets_.size());
     for (const auto& item : current_run_side_packets_) {
       input_side_packet_names.push_back(item.first);
     }
@@ -1542,29 +1533,6 @@ std::string CalculatorGraph::GetParentNodeDebugName(
 
   return DebugName(config.node(node_index));
 }
-
-namespace {
-void PrintTimingToInfo(const std::string& label, int64_t timer_value) {
-  const int64_t total_seconds = timer_value / 1000000ll;
-  const int64_t days = total_seconds / (3600ll * 24ll);
-  const int64_t hours = (total_seconds / 3600ll) % 24ll;
-  const int64_t minutes = (total_seconds / 60ll) % 60ll;
-  const int64_t seconds = total_seconds % 60ll;
-  const int64_t milliseconds = (timer_value / 1000ll) % 1000ll;
-  ABSL_LOG(INFO)
-      << label << " took "
-      << absl::StrFormat(
-             "%02lld days, %02lld:%02lld:%02lld.%03lld (total seconds: "
-             "%lld.%06lld)",
-             days, hours, minutes, seconds, milliseconds, total_seconds,
-             timer_value % int64_t{1000000});
-}
-
-bool MetricElementComparator(const std::pair<std::string, int64_t>& e1,
-                             const std::pair<std::string, int64_t>& e2) {
-  return e1.second > e2.second;
-}
-}  // namespace
 
 absl::Status CalculatorGraph::GetCalculatorProfiles(
     std::vector<CalculatorProfile>* profiles) const {

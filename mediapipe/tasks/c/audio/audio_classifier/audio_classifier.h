@@ -83,7 +83,7 @@ struct MpAudioClassifierOptions {
 // @param error_msg An optional pointer to receive the error message if the
 //     creation fails. If set, this will be populated with a newly-allocated
 //     error message upon failure. It's the caller responsibility to free the
-//     error message with `free()`.
+//     error message with `MpErrorFree()`.
 // @return An `MpStatus` indicating success or failure.
 MP_EXPORT MpStatus
 MpAudioClassifierCreate(struct MpAudioClassifierOptions* options,
@@ -98,7 +98,7 @@ MpAudioClassifierCreate(struct MpAudioClassifierOptions* options,
 // @param error_msg An optional pointer to receive the error message if the
 //     creation fails. If set, this will be populated with a newly-allocated
 //     error message upon failure. It's the caller responsibility to free the
-//     error message with `free()`.
+//     error message with `MpErrorFree()`.
 // @return An `MpStatus` indicating success or failure.
 MP_EXPORT MpStatus MpAudioClassifierClassify(
     MpAudioClassifierPtr classifier, const MpAudioData* audio_data,
@@ -114,7 +114,7 @@ MP_EXPORT MpStatus MpAudioClassifierClassify(
 // @param error_msg An optional pointer to receive the error message if the
 //     creation fails. If set, this will be populated with a newly-allocated
 //     error message upon failure. It's the caller responsibility to free the
-//     error message with `free()`.
+//     error message with `MpErrorFree()`.
 // @return An `MpStatus` indicating whether the audio data was successfully sent
 //     for classification.
 MP_EXPORT MpStatus MpAudioClassifierClassifyAsync(
@@ -135,7 +135,7 @@ MP_EXPORT void MpAudioClassifierCloseResult(MpAudioClassifierResult* result);
 // @param error_msg An optional pointer to receive the error message if the
 //     creation fails. If set, this will be populated with a newly-allocated
 //     error message upon failure. It's the caller responsibility to free the
-//     error message with `free()`.
+//     error message with `MpErrorFree()`.
 // @return An `MpStatus` indicating success or failure.
 MP_EXPORT MpStatus MpAudioClassifierClose(MpAudioClassifierPtr classifier,
                                           char** error_msg);

@@ -25,8 +25,8 @@ limitations under the License.
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/c/components/containers/category.h"
+#include "mediapipe/tasks/c/core/common.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
-#include "mediapipe/tasks/c/test/test_utils.h"
 
 namespace {
 
@@ -49,14 +49,17 @@ TEST(TextClassifierTest, SmokeTest) {
   };
 
   MpTextClassifierPtr classifier;
-  MP_ASSERT_OK(
-      MpTextClassifierCreate(&options, &classifier, /*error_msg=*/nullptr));
-  EXPECT_NE(classifier, nullptr);
+  ASSERT_EQ(
+      MpTextClassifierCreate(&options, &classifier, /*error_msg=*/nullptr),
+      kMpOk);
+  ASSERT_NE(classifier, nullptr);
 
   TextClassifierResult result;
-  MP_ASSERT_OK(MpTextClassifierClassify(classifier, kTestString, &result,
-                                        /*error_msg=*/nullptr));
+  ASSERT_EQ(MpTextClassifierClassify(classifier, kTestString, &result,
+                                     /*error_msg=*/nullptr),
+            kMpOk);
   ASSERT_EQ(result.classifications_count, 1);
+  ASSERT_NE(result.classifications, nullptr);
   ASSERT_EQ(result.classifications[0].categories_count, 2);
   EXPECT_EQ(std::string{result.classifications[0].categories[0].category_name},
             "positive");
@@ -64,7 +67,7 @@ TEST(TextClassifierTest, SmokeTest) {
 
   MpTextClassifierCloseResult(&result);
   EXPECT_EQ(result.classifications, nullptr);
-  MP_EXPECT_OK(MpTextClassifierClose(classifier, /*error_msg=*/nullptr));
+  EXPECT_EQ(MpTextClassifierClose(classifier, /*error_msg=*/nullptr), kMpOk);
 }
 
 TEST(TextClassifierTest, ErrorHandling) {
@@ -81,7 +84,7 @@ TEST(TextClassifierTest, ErrorHandling) {
 
   EXPECT_THAT(error_msg,
               testing::HasSubstr("ExternalFile must specify at least one"));
-  free(error_msg);
+  MpErrorFree(error_msg);
 }
 
 }  // namespace

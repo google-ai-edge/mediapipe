@@ -35,7 +35,6 @@ FaceDetectorResult = detections_module.DetectionResult
 _RunningMode = running_mode_module.VisionTaskRunningMode
 _BaseOptions = base_options_module.BaseOptions
 _ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
-_CFunction = mediapipe_c_utils.CFunction
 
 
 _C_TYPES_RESULT_CALLBACK = ctypes.CFUNCTYPE(
@@ -78,29 +77,27 @@ class FaceDetectorOptionsC(ctypes.Structure):
 
 
 _CTYPES_SIGNATURES = (
-    _CFunction(
+    mediapipe_c_utils.CStatusFunction(
         'MpFaceDetectorCreate',
-        [
+        (
             ctypes.POINTER(FaceDetectorOptionsC),
             ctypes.POINTER(ctypes.c_void_p),
-        ],
-        ctypes.c_int,
+        ),
     ),
-    _CFunction(
+    mediapipe_c_utils.CStatusFunction(
         'MpFaceDetectorDetectImage',
-        [
+        (
             ctypes.c_void_p,
             ctypes.c_void_p,
             ctypes.POINTER(
                 image_processing_options_c_module.ImageProcessingOptionsC
             ),
             ctypes.POINTER(detections_c_module.DetectionResultC),
-        ],
-        ctypes.c_int,
+        ),
     ),
-    _CFunction(
+    mediapipe_c_utils.CStatusFunction(
         'MpFaceDetectorDetectForVideo',
-        [
+        (
             ctypes.c_void_p,
             ctypes.c_void_p,
             ctypes.POINTER(
@@ -108,32 +105,27 @@ _CTYPES_SIGNATURES = (
             ),
             ctypes.c_int64,
             ctypes.POINTER(detections_c_module.DetectionResultC),
-        ],
-        ctypes.c_int,
+        ),
     ),
-    _CFunction(
+    mediapipe_c_utils.CStatusFunction(
         'MpFaceDetectorDetectAsync',
-        [
+        (
             ctypes.c_void_p,
             ctypes.c_void_p,
             ctypes.POINTER(
                 image_processing_options_c_module.ImageProcessingOptionsC
             ),
             ctypes.c_int64,
-        ],
-        ctypes.c_int,
+        ),
     ),
-    _CFunction(
+    mediapipe_c_utils.CFunction(
         'MpFaceDetectorCloseResult',
         [ctypes.POINTER(detections_c_module.DetectionResultC)],
         None,
     ),
-    _CFunction(
+    mediapipe_c_utils.CStatusFunction(
         'MpFaceDetectorClose',
-        [
-            ctypes.c_void_p,
-        ],
-        ctypes.c_int,
+        (ctypes.c_void_p,),
     ),
 )
 
@@ -268,11 +260,10 @@ class FaceDetector:
     )
 
     detector_handle = ctypes.c_void_p()
-    status = lib.MpFaceDetectorCreate(
+    lib.MpFaceDetectorCreate(
         ctypes.byref(ctypes_options),
         ctypes.byref(detector_handle),
     )
-    mediapipe_c_utils.handle_status(status)
 
     return FaceDetector(
         lib=lib,
@@ -313,13 +304,12 @@ class FaceDetector:
         if image_processing_options
         else None
     )
-    status = self._lib.MpFaceDetectorDetectImage(
+    self._lib.MpFaceDetectorDetectImage(
         self._handle,
         c_image,
         c_image_processing_options,
         ctypes.byref(c_result),
     )
-    mediapipe_c_utils.handle_status(status)
 
     py_result = FaceDetectorResult.from_ctypes(c_result)
     self._lib.MpFaceDetectorCloseResult(ctypes.byref(c_result))
@@ -361,14 +351,13 @@ class FaceDetector:
         if image_processing_options
         else None
     )
-    status = self._lib.MpFaceDetectorDetectForVideo(
+    self._lib.MpFaceDetectorDetectForVideo(
         self._handle,
         c_image,
         c_image_processing_options,
         timestamp_ms,
         ctypes.byref(c_result),
     )
-    mediapipe_c_utils.handle_status(status)
 
     py_result = FaceDetectorResult.from_ctypes(c_result)
     self._lib.MpFaceDetectorCloseResult(ctypes.byref(c_result))
@@ -418,22 +407,21 @@ class FaceDetector:
         if image_processing_options
         else None
     )
-    status = self._lib.MpFaceDetectorDetectAsync(
+    self._lib.MpFaceDetectorDetectAsync(
         self._handle,
         c_image,
         c_image_processing_options,
         timestamp_ms,
     )
-    mediapipe_c_utils.handle_status(status)
 
   def close(self):
     """Shuts down the MediaPipe task instance."""
-    if self._handle:
-      status = self._lib.MpFaceDetectorClose(self._handle)
-      mediapipe_c_utils.handle_status(status)
-      self._handle = None
-      self._dispatcher.close()
-      self._lib.close()
+    if not self._handle:
+      return
+    self._lib.MpFaceDetectorClose(self._handle)
+    self._handle = None
+    self._dispatcher.close()
+    self._lib.close()
 
   def __enter__(self):
     """Returns `self` upon entering the runtime context."""

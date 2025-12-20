@@ -26,12 +26,13 @@ limitations under the License.
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "mediapipe/framework/deps/file_path.h"
+#include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/c/components/containers/detection_result.h"
 #include "mediapipe/tasks/c/components/containers/keypoint.h"
 #include "mediapipe/tasks/c/components/containers/rect.h"
+#include "mediapipe/tasks/c/core/common.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
-#include "mediapipe/tasks/c/vision/core/common.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/c/vision/core/image_test_util.h"
@@ -114,13 +115,14 @@ TEST(FaceDetectorTest, ImageModeTest) {
   };
 
   MpFaceDetectorPtr detector;
-  EXPECT_EQ(MpFaceDetectorCreate(&options, &detector), kMpOk);
+  EXPECT_EQ(MpFaceDetectorCreate(&options, &detector, /* error_msg= */ nullptr),
+            kMpOk);
   EXPECT_NE(detector, nullptr);
 
   FaceDetectorResult result;
   EXPECT_EQ(MpFaceDetectorDetectImage(detector, image.get(),
                                       /* image_processing_options */ nullptr,
-                                      &result),
+                                      &result, /* error_msg= */ nullptr),
             kMpOk);
 
   Detection expected_detection = CreateExpectedDetection(
@@ -130,7 +132,7 @@ TEST(FaceDetectorTest, ImageModeTest) {
                            kKeypointErrorThreshold);
 
   MpFaceDetectorCloseResult(&result);
-  EXPECT_EQ(MpFaceDetectorClose(detector), kMpOk);
+  EXPECT_EQ(MpFaceDetectorClose(detector, /* error_msg= */ nullptr), kMpOk);
 }
 
 TEST(FaceDetectorTest, ImageModeWithRotationTest) {
@@ -145,7 +147,8 @@ TEST(FaceDetectorTest, ImageModeWithRotationTest) {
   };
 
   MpFaceDetectorPtr detector;
-  EXPECT_EQ(MpFaceDetectorCreate(&options, &detector), kMpOk);
+  EXPECT_EQ(MpFaceDetectorCreate(&options, &detector, /* error_msg= */ nullptr),
+            kMpOk);
   EXPECT_NE(detector, nullptr);
 
   ImageProcessingOptions image_processing_options;
@@ -154,7 +157,8 @@ TEST(FaceDetectorTest, ImageModeWithRotationTest) {
 
   FaceDetectorResult result;
   EXPECT_EQ(MpFaceDetectorDetectImage(detector, image.get(),
-                                      &image_processing_options, &result),
+                                      &image_processing_options, &result,
+                                      /* error_msg= */ nullptr),
             kMpOk);
 
   Detection expected_detection = CreateExpectedDetection(
@@ -163,7 +167,7 @@ TEST(FaceDetectorTest, ImageModeWithRotationTest) {
                            kKeypointErrorThreshold);
 
   MpFaceDetectorCloseResult(&result);
-  EXPECT_EQ(MpFaceDetectorClose(detector), kMpOk);
+  EXPECT_EQ(MpFaceDetectorClose(detector, /* error_msg= */ nullptr), kMpOk);
 }
 
 TEST(FaceDetectorTest, VideoModeTest) {
@@ -178,22 +182,24 @@ TEST(FaceDetectorTest, VideoModeTest) {
   };
 
   MpFaceDetectorPtr detector;
-  EXPECT_EQ(MpFaceDetectorCreate(&options, &detector), kMpOk);
+  EXPECT_EQ(MpFaceDetectorCreate(&options, &detector, /* error_msg= */ nullptr),
+            kMpOk);
   EXPECT_NE(detector, nullptr);
 
   Detection expected_detection = CreateExpectedDetection(
       kExpectedBoundingBox, kExpectedKeypoints, kKeypointCount);
   for (int i = 0; i < kIterations; ++i) {
     FaceDetectorResult result;
-    EXPECT_EQ(MpFaceDetectorDetectForVideo(
-                  detector, image.get(),
-                  /* image_processing_options */ nullptr, i, &result),
-              kMpOk);
+    EXPECT_EQ(
+        MpFaceDetectorDetectForVideo(detector, image.get(),
+                                     /* image_processing_options */ nullptr, i,
+                                     &result, /* error_msg= */ nullptr),
+        kMpOk);
     AssertFaceDetectorResult(&result, expected_detection, kPixelDiffTolerance,
                              kKeypointErrorThreshold);
     MpFaceDetectorCloseResult(&result);
   }
-  EXPECT_EQ(MpFaceDetectorClose(detector), kMpOk);
+  EXPECT_EQ(MpFaceDetectorClose(detector, /* error_msg= */ nullptr), kMpOk);
 }
 
 // A structure to support LiveStreamModeTest below. This structure holds a
@@ -239,17 +245,18 @@ TEST(FaceDetectorTest, LiveStreamModeTest) {
   };
 
   MpFaceDetectorPtr detector;
-  EXPECT_EQ(MpFaceDetectorCreate(&options, &detector), kMpOk);
+  EXPECT_EQ(MpFaceDetectorCreate(&options, &detector, /* error_msg= */ nullptr),
+            kMpOk);
   EXPECT_NE(detector, nullptr);
 
   absl::BlockingCounter counter(kIterations);
   LiveStreamModeCallback::blocking_counter = &counter;
 
   for (int i = 0; i < kIterations; ++i) {
-    EXPECT_EQ(
-        MpFaceDetectorDetectAsync(detector, image.get(),
-                                  /* image_processing_options */ nullptr, i),
-        kMpOk);
+    EXPECT_EQ(MpFaceDetectorDetectAsync(detector, image.get(),
+                                        /* image_processing_options */ nullptr,
+                                        i, /* error_msg= */ nullptr),
+              kMpOk);
     // Short sleep so that MediaPipe does not drop frames.
     absl::SleepFor(absl::Milliseconds(kSleepBetweenFramesMilliseconds));
   }
@@ -258,7 +265,7 @@ TEST(FaceDetectorTest, LiveStreamModeTest) {
   counter.Wait();
   LiveStreamModeCallback::blocking_counter = nullptr;
 
-  EXPECT_EQ(MpFaceDetectorClose(detector), kMpOk);
+  EXPECT_EQ(MpFaceDetectorClose(detector, /* error_msg= */ nullptr), kMpOk);
 
   // Due to the flow limiter, the total of outputs might be smaller than the
   // number of iterations.
@@ -276,8 +283,13 @@ TEST(FaceDetectorTest, InvalidArgumentHandling) {
   };
 
   MpFaceDetectorPtr detector = nullptr;
-  EXPECT_EQ(MpFaceDetectorCreate(&options, &detector), kMpInvalidArgument);
-  EXPECT_EQ(detector, nullptr);
+  char* error_msg = nullptr;
+  MpStatus status = MpFaceDetectorCreate(&options, &detector, &error_msg);
+  EXPECT_EQ(status, kMpInvalidArgument);
+
+  EXPECT_THAT(error_msg,
+              testing::HasSubstr("ExternalFile must specify at least one"));
+  MpErrorFree(error_msg);
 }
 
 }  // namespace

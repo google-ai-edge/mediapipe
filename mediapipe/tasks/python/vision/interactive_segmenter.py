@@ -65,17 +65,16 @@ class InteractiveSegmenterOptionsC(ctypes.Structure):
 
 
 _CTYPES_SIGNATURES = (
-    _CFunction(
-        func_name='MpInteractiveSegmenterCreate',
-        argtypes=[
+    mediapipe_c_utils.CStatusFunction(
+        'MpInteractiveSegmenterCreate',
+        (
             ctypes.POINTER(InteractiveSegmenterOptionsC),
             ctypes.POINTER(ctypes.c_void_p),
-        ],
-        restype=ctypes.c_int32,  # MpStatus
+        ),
     ),
-    _CFunction(
-        func_name='MpInteractiveSegmenterSegmentImage',
-        argtypes=[
+    mediapipe_c_utils.CStatusFunction(
+        'MpInteractiveSegmenterSegmentImage',
+        (
             ctypes.c_void_p,
             ctypes.c_void_p,  # image
             ctypes.POINTER(RegionOfInterestC),
@@ -83,18 +82,16 @@ _CTYPES_SIGNATURES = (
                 image_processing_options_c_module.ImageProcessingOptionsC
             ),
             ctypes.POINTER(image_segmenter.ImageSegmenterResultC),
-        ],
-        restype=ctypes.c_int32,  # MpStatus
+        ),
     ),
-    _CFunction(
-        func_name='MpInteractiveSegmenterCloseResult',
-        argtypes=[ctypes.POINTER(image_segmenter.ImageSegmenterResultC)],
-        restype=None,
+    mediapipe_c_utils.CFunction(
+        'MpInteractiveSegmenterCloseResult',
+        [ctypes.POINTER(image_segmenter.ImageSegmenterResultC)],
+        None,
     ),
-    _CFunction(
-        func_name='MpInteractiveSegmenterClose',
-        argtypes=[ctypes.c_void_p],
-        restype=ctypes.c_int32,  # MpStatus
+    mediapipe_c_utils.CStatusFunction(
+        'MpInteractiveSegmenterClose',
+        (ctypes.c_void_p,),
     ),
 )
 
@@ -274,11 +271,9 @@ class InteractiveSegmenter:
     ctypes_options = options.to_ctypes()
 
     segmenter_handle = ctypes.c_void_p()
-    status = lib.MpInteractiveSegmenterCreate(
+    lib.MpInteractiveSegmenterCreate(
         ctypes.byref(ctypes_options), ctypes.byref(segmenter_handle)
     )
-    mediapipe_c_utils.handle_status(status)
-
     return cls(lib, segmenter_handle, dispatcher)
 
   def segment(
@@ -315,7 +310,7 @@ class InteractiveSegmenter:
         if image_processing_options
         else None
     )
-    status = self._lib.MpInteractiveSegmenterSegmentImage(
+    self._lib.MpInteractiveSegmenterSegmentImage(
         self._handle,
         c_image,
         ctypes.byref(c_roi),
@@ -323,19 +318,18 @@ class InteractiveSegmenter:
         ctypes.byref(c_result),
     )
 
-    mediapipe_c_utils.handle_status(status)
     py_result = InteractiveSegmenterResult.from_ctypes(c_result)
     self._lib.MpInteractiveSegmenterCloseResult(ctypes.byref(c_result))
     return py_result
 
   def close(self):
     """Closes the InteractiveSegmenter."""
-    if self._handle:
-      status = self._lib.MpInteractiveSegmenterClose(self._handle)
-      mediapipe_c_utils.handle_status(status)
-      self._handle = None
-      self._dispatcher.close()
-      self._lib.close()
+    if not self._handle:
+      return
+    self._lib.MpInteractiveSegmenterClose(self._handle)
+    self._handle = None
+    self._dispatcher.close()
+    self._lib.close()
 
   def __enter__(self):
     """Returns `self` upon entering the runtime context."""

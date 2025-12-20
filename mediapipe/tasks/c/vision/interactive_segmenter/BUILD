@@ -20,7 +20,7 @@ licenses(["notice"])
 
 INTERACTIVE_SEGMENTER_DEPS = [
     "@com_google_absl//absl/log",
-    "@com_google_absl//absl/log:absl_log",
+    "@com_google_absl//absl/log:absl_check",
     "@com_google_absl//absl/status",
     "@com_google_absl//absl/status:statusor",
     "//mediapipe/framework/formats:image",
@@ -30,7 +30,7 @@ INTERACTIVE_SEGMENTER_DEPS = [
     "//mediapipe/tasks/c/core:base_options_converter",
     "//mediapipe/tasks/c/core:mp_status",
     "//mediapipe/tasks/c/core:mp_status_converter",
-    "//mediapipe/tasks/c/vision/core:common",
+    "//mediapipe/tasks/c/core:common",
     "//mediapipe/tasks/c/vision/core:image",
     "//mediapipe/tasks/c/vision/core:image_frame_util",
     "//mediapipe/tasks/c/vision/core:image_processing_options",
@@ -77,9 +77,9 @@ cc_test(
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:status_matchers",
         "//mediapipe/tasks/c/components/containers:keypoint",
+        "//mediapipe/tasks/c/core:common",
         "//mediapipe/tasks/c/core:mp_status",
         "//mediapipe/tasks/c/test:test_utils",
-        "//mediapipe/tasks/c/vision/core:common",
         "//mediapipe/tasks/c/vision/core:image",
         "//mediapipe/tasks/c/vision/core:image_processing_options",
         "//mediapipe/tasks/c/vision/core:image_test_util",

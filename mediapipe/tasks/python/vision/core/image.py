@@ -291,7 +291,7 @@ class Image:
       mediapipe_c_utils.handle_status(status, error_msg)
     finally:
       if error_msg.value is not None:
-        self._lib.free(error_msg)
+        self._lib.MpErrorFree(error_msg)
 
   @classmethod
   def create_from_file(cls, file_name: str) -> "Image":
@@ -319,7 +319,7 @@ class Image:
       mediapipe_c_utils.handle_status(status, error_msg)
     finally:
       if error_msg.value is not None:
-        lib.free(error_msg.value)
+        lib.MpErrorFree(error_msg.value)
 
     # Create an empty Image object and then populate it.
     new_image = cls.__new__(cls)
@@ -354,7 +354,7 @@ class Image:
       mediapipe_c_utils.handle_status(status, error_msg)
     finally:
       if error_msg.value is not None:
-        lib.free(error_msg)
+        lib.MpErrorFree(error_msg)
 
     # Create an empty Image object and then populate it.
     new_image = cls.__new__(cls)
@@ -415,7 +415,7 @@ class Image:
       mediapipe_c_utils.handle_status(status, error_msg)
     finally:
       if error_msg.value is not None:
-        self._lib.free(error_msg)
+        self._lib.MpErrorFree(error_msg)
 
     shape = (self.height, self.width, self.channels)
     array = np.ctypeslib.as_array(
@@ -492,7 +492,7 @@ class Image:
       mediapipe_c_utils.handle_status(status, error_msg)
     finally:
       if error_msg.value is not None:
-        self._lib.free(error_msg)
+        self._lib.MpErrorFree(error_msg)
     return value_ptr.value
 
   def uses_gpu(self) -> bool:

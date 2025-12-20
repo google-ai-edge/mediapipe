@@ -60,6 +60,9 @@ enum LlmModelType {
   // GEMMA v3 with 300M parameters.
   LLM_MODEL_TYPE_GEMMA3_300M = 38;
 
+  // FUNCTIONGEMMA v3 with 300M parameters.
+  LLM_MODEL_TYPE_FUNCTIONGEMMA3_300M = 47;
+
   // StableLM 4E1T with 3B parameters
   LLM_MODEL_TYPE_STABLELM_4E1T_3B = 8;
 

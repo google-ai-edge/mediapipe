@@ -21,8 +21,8 @@ limitations under the License.
 #include <cstdint>
 
 #include "mediapipe/tasks/c/core/base_options.h"
+#include "mediapipe/tasks/c/core/common.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
-#include "mediapipe/tasks/c/vision/core/common.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/c/vision/image_segmenter/image_segmenter_result.h"
@@ -97,7 +97,7 @@ struct SegmentationOptions {
 // To obtain a detailed error, `error_msg` must be non-null pointer to a
 // `char*`, which will be populated with a newly-allocated error message upon
 // failure. It's the caller responsibility to free the error message with
-// `free()`.
+// `MpErrorFree()`.
 MP_EXPORT MpStatus MpImageSegmenterCreate(struct ImageSegmenterOptions* options,
                                           MpImageSegmenterPtr* segmenter,
                                           char** error_msg);
@@ -109,7 +109,7 @@ MP_EXPORT MpStatus MpImageSegmenterCreate(struct ImageSegmenterOptions* options,
 // To obtain a detailed error, `error_msg` must be non-null pointer to a
 // `char*`, which will be populated with a newly-allocated error message upon
 // failure. It's the caller responsibility to free the error message with
-// `free()`.
+// `MpErrorFree()`.
 MP_EXPORT MpStatus
 MpImageSegmenterSegmentImage(MpImageSegmenterPtr segmenter, MpImagePtr image,
                              const ImageProcessingOptions* options,
@@ -127,7 +127,7 @@ MpImageSegmenterSegmentImage(MpImageSegmenterPtr segmenter, MpImagePtr image,
 // To obtain a detailed error, `error_msg` must be non-null pointer to a
 // `char*`, which will be populated with a newly-allocated error message upon
 // failure. It's the caller responsibility to free the error message with
-// `free()`.
+// `MpErrorFree()`.
 MP_EXPORT MpStatus MpImageSegmenterSegmentForVideo(
     MpImageSegmenterPtr segmenter, MpImagePtr image,
     const ImageProcessingOptions* options, int64_t timestamp_ms,
@@ -152,7 +152,7 @@ MP_EXPORT MpStatus MpImageSegmenterSegmentForVideo(
 // Returns 'kMpOk' on success. To obtain a detailed error, `error_msg` must be
 // non-null pointer to a `char*`, which will be populated with a newly-allocated
 // error message upon failure. It's the caller responsibility to free the error
-// message with `free()`.sibility to free the error message with free().
+// message with `MpErrorFree()`.
 MP_EXPORT MpStatus
 MpImageSegmenterSegmentAsync(MpImageSegmenterPtr segmenter, MpImagePtr image,
                              const ImageProcessingOptions* options,
@@ -167,7 +167,7 @@ MP_EXPORT void MpImageSegmenterCloseResult(ImageSegmenterResult* result);
 // Returns 'kMpOk' on success. To obtain a detailed error, `error_msg` must be
 // non-null pointer to a `char*`, which will be populated with a newly-allocated
 // error message upon failure. It's the caller responsibility to free the error
-// message with `free()`.sibility to free the error message with free().
+// message with `MpErrorFree()`.
 MP_EXPORT MpStatus MpImageSegmenterClose(MpImageSegmenterPtr segmenter,
                                          char** error_msg);
 
@@ -179,10 +179,10 @@ MP_EXPORT MpStatus MpImageSegmenterClose(MpImageSegmenterPtr segmenter,
 //
 // Returns 'kMpOk' on success and sets `label_list` to the label list. The
 // caller is responsible for freeing the memory of the `label_list` by calling
-// `MpStringListFree`. To obtain a detailed error, `error_msg` must be non-null
-// pointer to a `char*`, which will be populated with a newly-allocated error
-// message upon failure. It's the caller responsibility to free the error
-// message with `free()`.sibility to free the error message with free().
+// `MpStringListFree()`. To obtain a detailed error, `error_msg` must be
+// non-null pointer to a `char*`, which will be populated with a newly-allocated
+// error message upon failure. It's the caller responsibility to free the error
+// message with `MpErrorFree()`.
 MP_EXPORT MpStatus MpImageSegmenterGetLabels(MpImageSegmenterPtr segmenter,
                                              MpStringList* label_list,
                                              char** error_msg);

@@ -186,6 +186,7 @@ class LlmConverterTest(googletest.TestCase, parameterized.TestCase):
         b'GEMMA_2B',
         True,
         False,
+        0,
         mock.ANY,  # error_message
     )
 
