@@ -1,0 +1,33 @@
+on: push
+name: FacialSearch iOS framework
+
+jobs:
+  ios:
+    name: run
+    runs-on: macos-latest
+    env:
+      BAZELISK_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Install dependencies
+      run: |
+        bazelisk version
+        brew install python opencv@3
+        brew uninstall --ignore-dependencies glog
+        sudo ln -s -f /usr/local/bin/python3.9 /usr/local/bin/python
+        pip3 install --user future six numpy
+
+    - name: Build
+      run: |
+        python mediapipe/examples/facial_search/images/download_images.py
+        bazelisk build --copt=-fembed-bitcode --apple_bitcode=embedded --config=ios_arm64 mediapipe/examples/facial_search/ios:FacialSearch
+        ./mediapipe/examples/facial_search/ios/patch_ios_framework.sh bazel-bin/mediapipe/examples/facial_search/ios/FacialSearch.zip ObjcppLib.h
+        mv -v bazel-bin/mediapipe/examples/facial_search/ios/FacialSearch.framework .
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v1
+      with:
+        name: FacialSearch.framework
+        path: FacialSearch.framework
