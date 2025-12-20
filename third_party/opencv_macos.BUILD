@@ -21,21 +21,26 @@ exports_files(["LICENSE"])
 # "opencv/3.4.16_10" for the example above).
 #
 # # OpenCV 4
-# To configure OpenCV 4, obtain the path of OpenCV 4 from Homebrew. The
-# following commands show the output of the command with version 4.10.0_12:
+# To configure OpenCV 4, first install it via Homebrew:
+#
+# $ brew install opencv
+#
+# Then obtain the version and path of OpenCV 4 from Homebrew:
 #
 # $ brew ls opencv | grep version.hpp
-# $ /opt/homebrew/Cellar/opencv/4.10.0_12/include/opencv4/opencv2/core/version.hpp
-# $ /opt/homebrew/Cellar/opencv/4.10.0_12/include/opencv4/opencv2/dnn/version.hpp
+# /opt/homebrew/Cellar/opencv/4.12.0_15/include/opencv4/opencv2/core/version.hpp
+# /opt/homebrew/Cellar/opencv/4.12.0_15/include/opencv4/opencv2/dnn/version.hpp
 #
-# Then set path in "macos_opencv" rule in the WORKSPACE file to
-# "/opt/homebrew/Cellar" and the PREFIX below to "opencv/<version>" (e.g.
-# "opencv/4.10.0_12" for the example above). For OpenCV 4, you will also need to
-# adjust the include paths. The header search path should be
-# "include/opencv4/opencv2/**/*.h*" and the include prefix needs to be set to
-# "include/opencv4".
+# Set the path in "macos_opencv" rule in the WORKSPACE file to
+# "/opt/homebrew/Cellar" and update the PREFIX below to "opencv/<version>" (e.g.
+# "opencv/4.12.0_15" for the example above).
+#
+# Note: OpenCV 4 has a different header structure than OpenCV 3:
+# - Headers are in "include/opencv4/opencv2/**/*.h*" (not "include/opencv2")
+# - The include prefix must be set to "include/opencv4" (not "include")
+# - This allows #include <opencv2/...> to resolve correctly
 
-PREFIX = "opt/opencv@3"
+PREFIX = "opencv/4.12.0_15"
 
 cc_library(
     name = "opencv",
@@ -51,8 +56,8 @@ cc_library(
             paths.join(PREFIX, "lib/libopencv_videoio.dylib"),
         ],
     ),
-    hdrs = glob([paths.join(PREFIX, "include/opencv2/**/*.h*")]),
-    includes = [paths.join(PREFIX, "include/")],
+    hdrs = glob([paths.join(PREFIX, "include/opencv4/opencv2/**/*.h*")]),
+    includes = [paths.join(PREFIX, "include/opencv4")],
     linkstatic = 1,
     visibility = ["//visibility:public"],
 )

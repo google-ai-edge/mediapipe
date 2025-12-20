@@ -256,10 +256,15 @@ class BuildExtension(build_ext.build_ext):
         str(ext.bazel_target),
     ] + GPU_OPTIONS
 
+    # Don't override PYTHON_BIN_PATH if HERMETIC_PYTHON_VERSION is set
+    if not os.environ.get('HERMETIC_PYTHON_VERSION'):
+      bazel_command.insert(5, '--action_env=PYTHON_BIN_PATH=' + _normalize_path(sys.executable))
+
     if extra_args:
       bazel_command += extra_args
-    if not self.link_opencv and not IS_WINDOWS:
-      bazel_command.append('--define=OPENCV=source')
+    # Using system OpenCV instead of building from source
+    # if not self.link_opencv and not IS_WINDOWS:
+    #   bazel_command.append('--define=OPENCV=source')
 
     _invoke_shell_command(bazel_command)
 
@@ -417,6 +422,7 @@ setuptools.setup(
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
         'Programming Language :: Python :: 3.12',
+        'Programming Language :: Python :: 3.13',
         'Programming Language :: Python :: 3 :: Only',
         'Topic :: Scientific/Engineering',
         'Topic :: Scientific/Engineering :: Artificial Intelligence',

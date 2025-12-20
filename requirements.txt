@@ -1,4 +1,14 @@
-absl-py~=2.3
-numpy
-sounddevice~=0.5
-flatbuffers~=25.9
+absl-py
+attrs>=19.1.0
+flatbuffers>=2.0
+jax
+jaxlib
+matplotlib
+numpy<2; python_version < "3.13"
+numpy; python_version >= "3.13"
+opencv-contrib-python<4.12; python_version < "3.13"
+opencv-contrib-python; python_version >= "3.13"
+protobuf>=5.29.3,<6
+sounddevice>=0.4.4
+sentencepiece>=0.2.1; python_version >= "3.13"
+sentencepiece; python_version < "3.13"
