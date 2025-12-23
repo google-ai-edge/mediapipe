@@ -23,14 +23,14 @@
 
 namespace mediapipe {
 
-// TODO Refactor common code from GpuBufferToImageFrameCalculator
+// TODO(b/168155197) Refactor common code from GpuBufferToImageFrameCalculator
 bool Image::ConvertToCpu() const {
   auto view = gpu_buffer_.GetReadView<ImageFrame>();
   use_gpu_ = false;
   return true;
 }
 
-// TODO Refactor common code from ImageFrameToGpuBufferCalculator
+// TODO(b/168155197) Refactor common code from ImageFrameToGpuBufferCalculator
 bool Image::ConvertToGpu() const {
 #if MEDIAPIPE_DISABLE_GPU
   return false;

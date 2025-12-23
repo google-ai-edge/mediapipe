@@ -52,7 +52,7 @@ absl::StatusOr<std::string> GetPromptPrefixFromPromptTemplates(
 // Predicts the prompt templates from the provided prompt template.
 // This is a temporary solution to support models with only prompt template.
 // Currently it only recognizes the prompt template for Gemma and Deepseek.
-// TODO: b/400470302 - Remove this once the prompt templates are bundled within
+// TODO: Remove this once the prompt templates are bundled within
 // the model.
 absl::StatusOr<odml::infra::proto::PromptTemplates>
 PredictPromptTemplatesFromPromptTemplate(

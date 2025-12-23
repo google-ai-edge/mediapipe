@@ -31,7 +31,7 @@ namespace mediapipe::api3 {
 
 // Projects normalized landmarks to its original coordinates.
 //
-// NOTE: landmark's Z is projected in a custom way - it's scaled by width of
+// NOTE: it's scaled by width of
 // the normalized region of interest used during landmarks detection.
 //
 // Usage examples (`CalculatorGraphConfig` proto):

@@ -52,7 +52,7 @@ class PackWeightsCache : public XnnWeightsCache {
   explicit PackWeightsCache(absl::string_view cache_path);
   // File descriptor to write cache data to or read cache data from. Must be
   // writable.
-  // TODO: b/401011041 - Consider supporting read-only file descriptors if the
+  // TODO: Consider supporting read-only file descriptors if the
   // cache has already been built.
   explicit PackWeightsCache(std::shared_ptr<ScopedFile> scoped_file);
   ~PackWeightsCache() override;
@@ -81,7 +81,7 @@ class PackWeightsCache : public XnnWeightsCache {
  private:
   // Returns writable mapped memory of the cache file. Returns nullptr in case
   // of any error.
-  // TODO: b/401011041 - Consider returning a readable memory mapping if the
+  // TODO: Consider returning a readable memory mapping if the
   // cache file has already been built.
   std::shared_ptr<MemoryMappedFile> GetMmapFile();
 

@@ -288,7 +288,7 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
    * Performs image segmentation on the provided single image with default image processing options,
    * i.e. without any rotation applied. The output mask has the same size as the input image. Only
    * use this method when the {@link ImageSegmenter} is created with {@link RunningMode.IMAGE}.
-   * TODO update java doc for input image format.
+   * TODO(b/253473397) update java doc for input image format.
    *
    * <p>{@link ImageSegmenter} supports the following color space types:
    *
@@ -307,7 +307,7 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
   /**
    * Performs image segmentation on the provided single image. The output mask has the same size as
    * the input image. Only use this method when the {@link ImageSegmenter} is created with {@link
-   * RunningMode.IMAGE}. TODO update java doc for input image format.
+   * RunningMode.IMAGE}. TODO(b/253473397) update java doc for input image format.
    *
    * <p>{@link ImageSegmenter} supports the following color space types:
    *
@@ -338,7 +338,7 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
 
   /**
    * Performs image segmentation on the provided single image. Only use this method when the {@link
-   * ImageSegmenter} is created with {@link RunningMode.IMAGE}. TODO update java doc
+   * ImageSegmenter} is created with {@link RunningMode.IMAGE}. TODO(b/253473397) update java doc
    * for input image format.
    *
    * <p>{@link ImageSegmenter} supports the following color space types:
@@ -369,7 +369,7 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
    * in {@link ImageSegmenterOptions}. The output mask has the same size as the input image. Only
    * use this method when the {@link ImageSegmenter} is created with {@link RunningMode.IMAGE}.
    *
-   * <p>TODO update java doc for input image format.
+   * <p>TODO(b/253473397) update java doc for input image format.
    *
    * <p>{@link ImageSegmenter} supports the following color space types:
    *
@@ -391,7 +391,7 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
    * the input image. Only use this method when the {@link ImageSegmenter} is created with {@link
    * RunningMode.IMAGE}.
    *
-   * <p>TODO update java doc for input image format.
+   * <p>TODO(b/253473397) update java doc for input image format.
    *
    * <p>{@link ImageSegmenter} supports the following color space types:
    *
@@ -425,7 +425,7 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
    * {@link ResultListener} in {@link ImageSegmenterOptions}. Only use this method when the {@link
    * ImageSegmenter} is created with {@link RunningMode.IMAGE}.
    *
-   * <p>TODO update java doc for input image format.
+   * <p>TODO(b/253473397) update java doc for input image format.
    *
    * <p>{@link ImageSegmenter} supports the following color space types:
    *

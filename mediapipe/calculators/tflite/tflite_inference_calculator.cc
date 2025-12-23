@@ -1005,7 +1005,7 @@ absl::Status TfLiteInferenceCalculator::LoadDelegate(CalculatorContext* cc) {
       const TfLiteTensor* tensor = interpreter_->tensor(output_indices[i]);
       gpu_data_out_[i] = absl::make_unique<GPUData>();
       gpu_data_out_[i]->elements = 1;
-      // TODO handle *2 properly on some dialated models
+      // TODO(b/131197512) handle *2 properly on some dialated models
       for (int d = 0; d < tensor->dims->size; ++d) {
         gpu_data_out_[i]->elements *= tensor->dims->data[d];
       }
@@ -1107,7 +1107,7 @@ absl::Status TfLiteInferenceCalculator::LoadDelegate(CalculatorContext* cc) {
       const TfLiteTensor* tensor = interpreter_->tensor(output_indices[i]);
       gpu_data_out_[i] = absl::make_unique<GPUData>();
       gpu_data_out_[i]->elements = 1;
-      // TODO handle *2 properly on some dialated models
+      // TODO(b/131197512) handle *2 properly on some dialated models
       for (int d = 0; d < tensor->dims->size; ++d) {
         // Pad each dim for BHWC4 conversion inside delegate.
         gpu_data_out_[i]->elements *= RoundUp(tensor->dims->data[d], 4);

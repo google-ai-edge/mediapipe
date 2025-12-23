@@ -94,7 +94,7 @@ class GlTextureWarpAffineRunner
             }
           )";
 
-      // TODO Move bicubic code to common shared place.
+      // TODO(b/272577610) Move bicubic code to common shared place.
       constexpr GLchar kFragShader[] = R"(
         DEFAULT_PRECISION(highp, float)
 

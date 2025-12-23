@@ -30,7 +30,7 @@ export declare interface WebGpuOptions {
    */
   device?: GPUDevice;
 
-  // TODO: b/327685206 - Fill Adapter infor for LLM Web task
+  // TODO: Fill Adapter infor for LLM Web task
   /**
    * The information of WebGPU adapter, which will be used to optimize the
    * performance for LLM Inference task.

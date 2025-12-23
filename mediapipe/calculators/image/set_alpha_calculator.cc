@@ -445,7 +445,7 @@ absl::Status SetAlphaCalculator::GlSetup(CalculatorContext* cc) {
   };
 
   // Shader to overlay a texture onto another when overlay is non-zero.
-  // TODO split into two shaders to handle alpha_value<0 separately
+  // TODO(cmcclanahan) split into two shaders to handle alpha_value<0 separately
   const GLchar* frag_src = GLES_VERSION_COMPAT
       R"(
   #if __VERSION__ < 130

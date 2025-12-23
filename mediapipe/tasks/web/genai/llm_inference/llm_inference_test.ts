@@ -283,7 +283,7 @@ describe('LlmInference', () => {
 
         it('throws an error when attempting to close while processing', async () => {
           if (caseName === 'handwritten') {
-            pending('TODO: msoulanille - Fix this test for handwritten model.');
+            pending('TODO: Fix this test for handwritten model.');
           }
           llmInference = await load();
 
@@ -375,7 +375,7 @@ describe('LlmInference', () => {
 
         it('throws an error if called while processing', async () => {
           if (caseName === 'handwritten') {
-            pending('TODO: msoulanille - Fix this test for handwritten model.');
+            pending('TODO: Fix this test for handwritten model.');
           }
           const prompt = 'What is 4 + 5?';
 

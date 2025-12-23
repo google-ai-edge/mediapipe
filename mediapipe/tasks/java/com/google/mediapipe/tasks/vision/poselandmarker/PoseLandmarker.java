@@ -55,7 +55,7 @@ import java.util.Set;
 /**
  * Performs pose landmarks detection on images.
  *
- * <p>This API expects a pre-trained pose landmarks model asset bundle. See <TODO link
+ * <p>This API expects a pre-trained pose landmarks model asset bundle. See <TODO (b/251816640)link
  * to the DevSite documentation page>.
  *
  * <ul>
@@ -229,7 +229,7 @@ public final class PoseLandmarker extends BaseVisionTaskApi {
   /**
    * Performs pose landmarks detection on the provided single image with default image processing
    * options, i.e. without any rotation applied. Only use this method when the {@link
-   * PoseLandmarker} is created with {@link RunningMode.IMAGE}. TODO update java doc
+   * PoseLandmarker} is created with {@link RunningMode.IMAGE}. TODO(b/253473397) update java doc
    * for input image format.
    *
    * <p>{@link PoseLandmarker} supports the following color space types:
@@ -247,7 +247,7 @@ public final class PoseLandmarker extends BaseVisionTaskApi {
 
   /**
    * Performs pose landmarks detection on the provided single image. Only use this method when the
-   * {@link PoseLandmarker} is created with {@link RunningMode.IMAGE}. TODO update java
+   * {@link PoseLandmarker} is created with {@link RunningMode.IMAGE}. TODO(b/253473397) update java
    * doc for input image format.
    *
    * <p>{@link PoseLandmarker} supports the following color space types:

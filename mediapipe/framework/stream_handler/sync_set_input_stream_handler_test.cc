@@ -77,7 +77,7 @@ absl::Status InputsToDebugString(const InputStreamShardSet& inputs,
     output_packet = MakePacket<std::string>(output).At(static_timestamp);
     ++static_timestamp;
   }
-  // TODO Output at output_timestamp once unordered output stream
+  // TODO(mgeorg) Output at output_timestamp once unordered output stream
   // handlers are allowed.
   outputs->Index(0).AddPacket(output_packet);
   return absl::OkStatus();
@@ -111,7 +111,7 @@ TEST(SyncSetInputStreamHandlerTest, OrdinaryOperation) {
             options {
               [mediapipe.SyncSetInputStreamHandlerOptions.ext] {
                 sync_set {
-                  # TODO Update this to use a mix of indexes
+                  # TODO(mgeorg) Update this to use a mix of indexes
                   # and tags once the framework supports it.
                   tag_index: ":0"
                   tag_index: ":2"
@@ -307,7 +307,7 @@ TEST(SyncSetInputStreamHandlerTest, OrdinaryOperation) {
 
       // Check the output strings (ignoring order, since calculator may
       // have run in parallel).
-      // TODO Actually enable parallel process calls.
+      // TODO(mgeorg) Actually enable parallel process calls.
       std::vector<std::string> actual_strings;
       for (const Packet& output : outputs) {
         actual_strings.push_back(output.Get<std::string>());

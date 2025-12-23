@@ -204,7 +204,7 @@ absl::Status GpuResources::PrepareGpuNode(CalculatorNode* node) {
   std::string context_key;
 
 #ifndef __EMSCRIPTEN__
-  // TODO Allow calculators to request a separate context.
+  // TODO(b/115536012) Allow calculators to request a separate context.
   // For now, allow a few calculators to run in their own context.
   bool gets_own_context = (node_type == "ImageFrameToGpuBufferCalculator") ||
                           (node_type == "GpuBufferToImageFrameCalculator") ||

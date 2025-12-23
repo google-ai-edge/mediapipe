@@ -394,8 +394,8 @@ class ValidatedGraphConfig {
   // header packet propagation.
   absl::Status TopologicalSortNodes();
 
-  // TODO Add InputStreamHandler.
-  // TODO Add OutputStreamHandler.
+  // TODO(mgeorg) Add InputStreamHandler.
+  // TODO(mgeorg) Add OutputStreamHandler.
 
   // Fill the "upstream" field for all back edges.
   absl::Status FillUpstreamFieldForBackEdges();
@@ -449,7 +449,7 @@ class ValidatedGraphConfig {
 
   // For each side packet which must still be supplied, a list of
   // input_side_packets_ indexes which must be validated against it.
-  // TODO Use the information stored here for more thorough
+  // TODO(mgeorg) Use the information stored here for more thorough
   // validation.
   std::map<std::string, std::vector<int>> required_side_packets_;
 

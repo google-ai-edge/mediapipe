@@ -468,7 +468,7 @@ absl::Status TfLiteConverterCalculator::ProcessGPU(CalculatorContext* cc) {
   [compute_encoder endEncoding];
 
   // Copy into outputs.
-  // TODO Avoid this copy.
+  // TODO(b/140827901) Avoid this copy.
   auto output_tensors = absl::make_unique<std::vector<GpuTensor>>();
   output_tensors->resize(1);
   id<MTLDevice> device = gpu_helper_.mtlDevice;

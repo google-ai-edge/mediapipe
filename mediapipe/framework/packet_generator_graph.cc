@@ -245,7 +245,7 @@ void GeneratorScheduler::GenerateAndScheduleNext(
   }
 
   // Check all generators and schedule any that have become runnable.
-  // TODO Instead of checking all of them, only check ones
+  // TODO(mgeorg) Instead of checking all of them, only check ones
   // that have input side packets which we have just produced.
   ScheduleAllRunnableGenerators(side_packets);
 }
@@ -260,7 +260,7 @@ void GeneratorScheduler::ScheduleAllRunnableGenerators(
       continue;
     }
     bool is_unrunnable = false;
-    // TODO Input side packet set should only be created once.
+    // TODO(mgeorg) Input side packet set should only be created once.
     auto input_side_packet_set =
         absl::make_unique<PacketSet>(validated_graph_->GeneratorInfos()[index]
                                          .InputSidePacketTypes()

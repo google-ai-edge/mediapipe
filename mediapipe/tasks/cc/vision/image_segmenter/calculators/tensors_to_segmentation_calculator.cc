@@ -232,7 +232,7 @@ std::vector<Image> ProcessForConfidenceMaskCpu(
       pack4 ? (output_channels.size() + 3) / 4 : output_channels.size();
   ImageFormat::Format output_format = GetOutputFormat(use_uint8, pack4);
 
-  // TODO Use libyuv for resizing instead.
+  // TODO(b/239436531) Use libyuv for resizing instead.
   std::vector<Image> confidence_masks;
   std::vector<cv::Mat> confidence_mask_mats;
   confidence_masks.reserve(num_output_streams);

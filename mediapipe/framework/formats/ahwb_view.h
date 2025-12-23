@@ -67,7 +67,7 @@ class AhwbView {
   //   automatically imports and inserts the fence as GL fence sync ensuring
   //   following GL operations wait for write completion.
   //
-  // TODO: b/376753887 - replace with a dedicated type (MP's Fence)
+  // TODO: replace with a dedicated type (MP's Fence)
   absl::Status SetUsageFence(SharedFd fence) {
     return set_usage_fence_fn_(std::move(fence));
   }

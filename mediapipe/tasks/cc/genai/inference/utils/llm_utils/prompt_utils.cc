@@ -83,7 +83,7 @@ absl::StatusOr<std::string> GetPromptPrefixFromPromptTemplates(
   return prompt_prefix;
 }
 
-// TODO: b/400470302 - Remove this once the prompt templates are bundled within
+// TODO: Remove this once the prompt templates are bundled within
 // the model.
 absl::StatusOr<odml::infra::proto::PromptTemplates>
 PredictPromptTemplatesFromPromptTemplate(

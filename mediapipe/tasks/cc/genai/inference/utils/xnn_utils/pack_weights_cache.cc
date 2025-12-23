@@ -226,7 +226,7 @@ std::shared_ptr<MemoryMappedFile> PackWeightsCache::GetMmapFile() {
 
 absl::Status PackWeightsCache::InitializeFromCache(
     std::shared_ptr<MemoryMappedFile> mmap_cache) {
-  // TODO: b/401011041 - Gracefully handle the case where the cache file is
+  // TODO: Gracefully handle the case where the cache file is
   // filled with junk and needs to be rebuilt.
   name_to_offset_size_.clear();
   named_buffers_ = std::shared_ptr<const NamedBuffers>(
@@ -275,7 +275,7 @@ size_t PackWeightsCache::look_up(
     PackWeightsCache* context, const xnn_weights_cache_look_up_key* cache_key) {
   ABSL_CHECK(cache_key);
 
-  // TODO: b/319561597 - take seed and bias into consideration.
+  // TODO: take seed and bias into consideration.
   if (auto entry = context->kernel_to_name_.find(cache_key->kernel);
       entry != context->kernel_to_name_.end()) {
     absl::string_view name = entry->second;

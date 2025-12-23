@@ -304,7 +304,7 @@ If the `options_lib` target is missing, you may see errors like
 
 ## Cycles
 
-<!-- TODO: add discussion of PreviousLoopbackCalculator -->
+<!-- TODO:->
 
 By default, MediaPipe requires calculator graphs to be acyclic and treats cycles
 in a graph as errors. If a graph is intended to have cycles, the cycles need to

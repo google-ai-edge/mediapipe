@@ -127,7 +127,7 @@ absl::Status OutputStreamShard::AddPacketInternal(T&& packet) {
   next_timestamp_bound_ = timestamp.NextAllowedInStream();
   updated_next_timestamp_bound_ = next_timestamp_bound_;
 
-  // TODO debug log?
+  // TODO(jqtang) debug log?
 
   return absl::OkStatus();
 }

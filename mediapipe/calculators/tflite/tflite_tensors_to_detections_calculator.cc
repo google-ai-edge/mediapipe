@@ -531,7 +531,7 @@ absl::Status TfLiteTensorsToDetectionsCalculator::ProcessGPU(
          num_boxes_ * 2 * sizeof(float));
 
   // Output detections.
-  // TODO Adjust shader to avoid copying shader output twice.
+  // TODO(b/138851969) Adjust shader to avoid copying shader output twice.
   std::vector<float> detection_scores(num_boxes_);
   std::vector<int> detection_classes(num_boxes_);
   for (int i = 0; i < num_boxes_; ++i) {
@@ -901,7 +901,7 @@ void main() {
                     &max_wg_size);  // y-dim
     ABSL_CHECK_LT(num_classes_, max_wg_size)
         << "# classes must be < " << max_wg_size;
-    // TODO support better filtering.
+    // TODO(132994497) support better filtering.
     ABSL_CHECK_LE(ignore_classes_.size(), 1)
         << "Only ignore class 0 is allowed";
 
@@ -1117,7 +1117,7 @@ kernel void scoreKernel(
                                            : 0,
       ignore_classes_.size() ? 1 : 0);
 
-  // TODO support better filtering.
+  // TODO(132994497) support better filtering.
   ABSL_CHECK_LE(ignore_classes_.size(), 1) << "Only ignore class 0 is allowed";
 
   {

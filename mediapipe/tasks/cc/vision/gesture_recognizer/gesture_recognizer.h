@@ -67,14 +67,14 @@ struct GestureRecognizerOptions {
   // successful.
   float min_tracking_confidence = 0.5;
 
-  // TODO  Note this option is subject to change.
+  // TODO (b/251816640) Note this option is subject to change.
   // Options for configuring the canned gestures classifier, such as score
   // threshold, allow list and deny list of gestures. The categories for canned
   // gesture classifiers are: ["None", "Closed_Fist", "Open_Palm",
   // "Pointing_Up", "Thumb_Down", "Thumb_Up", "Victory", "ILoveYou"]
   components::processors::ClassifierOptions canned_gestures_classifier_options;
 
-  // TODO  Note this option is subject to change.
+  // TODO (b/251816640) Note this option is subject to change.
   // Options for configuring the custom gestures classifier, such as score
   // threshold, allow list and deny list of gestures.
   components::processors::ClassifierOptions custom_gestures_classifier_options;
@@ -89,7 +89,7 @@ struct GestureRecognizerOptions {
 
 // Performs hand gesture recognition on the given image.
 //
-// TODO  add the link to DevSite.
+// TODO (b/251816640) add the link to DevSite.
 // This API expects a pre-trained hand gesture model asset bundle, or a custom
 // one created using Model Maker. See <link to the DevSite documentation page>.
 //

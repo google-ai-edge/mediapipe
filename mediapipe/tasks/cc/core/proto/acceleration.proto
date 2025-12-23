@@ -23,7 +23,7 @@ option java_package = "com.google.mediapipe.tasks.core.proto";
 option java_outer_classname = "AccelerationProto";
 
 message Acceleration {
-  // TODO Enable Automatic mode once it is ready.
+  // TODO(b/225237817) Enable Automatic mode once it is ready.
 
   // Chooses which delegate to use, and the detailed configuration is set by
   // Mediapipe Tasks by default.

@@ -100,7 +100,7 @@ Timestamp OutputStreamManager::NextTimestampBound() const {
   return next_timestamp_bound_;
 }
 
-// TODO Consider moving the output bound computing logic to
+// TODO(jqtang) Consider moving the output bound computing logic to
 // OutputStreamHandler.
 Timestamp OutputStreamManager::ComputeOutputTimestampBound(
     const OutputStreamShard& output_stream_shard,
@@ -165,7 +165,7 @@ Timestamp OutputStreamManager::ComputeOutputTimestampBound(
   return new_bound;
 }
 
-// TODO Consider moving the propagation logic to OutputStreamHandler.
+// TODO(jqtang) Consider moving the propagation logic to OutputStreamHandler.
 void OutputStreamManager::PropagateUpdatesToMirrors(
     Timestamp next_timestamp_bound, OutputStreamShard* output_stream_shard) {
   ABSL_CHECK(output_stream_shard);

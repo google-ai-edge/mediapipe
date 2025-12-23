@@ -440,7 +440,7 @@ absl::Status ScaleImageCalculator::ValidateImageFormats() const {
       << "The input image format was UNKNOWN.";
   RET_CHECK_NE(output_format_, ImageFormat::UNKNOWN)
       << "The output image format was set to UNKNOWN.";
-  // TODO Remove these conditions.
+  // TODO(wtc) Remove these conditions.
   RET_CHECK(output_format_ == ImageFormat::SRGB ||
             output_format_ == ImageFormat::SRGBA ||
             (input_format_ == output_format_ &&
@@ -655,7 +655,7 @@ absl::Status ScaleImageCalculator::Process(CalculatorContext* cc) {
   std::unique_ptr<ImageFrame> cropped_image;
   if (crop_width_ < input_width_ || crop_height_ < input_height_) {
     cc->GetCounter("Crops")->Increment();
-    // TODO Do the crop as a range restrict inside OpenCV code below.
+    // TODO(mgeorg) Do the crop as a range restrict inside OpenCV code below.
     cropped_image.reset(new ImageFrame(image_frame->Format(), crop_width_,
                                        crop_height_, alignment_boundary_));
     if (image_frame->ByteDepth() == 1 || image_frame->ByteDepth() == 2) {

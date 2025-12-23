@@ -65,7 +65,7 @@ std::string DebugEdgeNames(
   return absl::StrCat(edge_type, "s: <", absl::StrJoin(edges, ","), ">");
 }
 
-// TODO Shorten the debug name to identify the node with minimal
+// TODO(mgeorg) Shorten the debug name to identify the node with minimal
 // information.
 std::string DebugName(const CalculatorGraphConfig::Node& node_config) {
   const std::string& name = node_config.name();
@@ -462,7 +462,7 @@ absl::Status ValidatedGraphConfig::PerformBasicTransforms(
 
   // Populate each node with the graph level input stream handler if a
   // stream handler wasn't explicitly provided.
-  // TODO Instead of pre-populating, handle the graph level
+  // TODO(mgeorg) Instead of pre-populating, handle the graph level
   // default appropriately within CalculatorGraph.
   if (config_.has_input_stream_handler()) {
     const auto& graph_level_input_stream_handler =
@@ -897,7 +897,7 @@ absl::Status ValidatedGraphConfig::FillUpstreamFieldForBackEdges() {
 
 absl::Status ValidatedGraphConfig::ValidateSidePacketTypes() {
   for (const auto& side_packet : input_side_packets_) {
-    // TODO Add a check to ensure multiple input side packets
+    // TODO(mgeorg) Add a check to ensure multiple input side packets
     // connected to a side packet that will be provided later all have
     // consistent type.
     if (side_packet.upstream != -1 &&

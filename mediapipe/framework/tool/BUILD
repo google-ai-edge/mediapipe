@@ -673,7 +673,7 @@ cc_test(
 
 cc_library(
     name = "validate_type",
-    # TODO make this testonly.
+    # TODO(mgeorg) make this testonly.
     srcs = ["validate_type.cc"],
     hdrs = ["validate_type.h"],
     visibility = ["//visibility:public"],
@@ -831,7 +831,7 @@ cc_library(
 mediapipe_cc_test(
     name = "test_util_test",
     srcs = ["test_util_test.cc"],
-    tags = ["nodocker"],  # TODO: b/445878970 - Re-enable on docker.
+    tags = ["nodocker"],  # TODO: Re-enable on docker.
     deps = [
         ":test_util",
         "//mediapipe/framework/formats:image_format_cc_proto",

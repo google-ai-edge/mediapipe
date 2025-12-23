@@ -34,7 +34,7 @@ namespace image_frame_util {
 // Rescale an SRGB ImageFrame.  destination_frame will be Reset() by
 // this function (i.e. it will be deleted and reallocated if it already
 // contained data).  The rescaling is done in 16bit LinearRGB colorspace.
-// TODO Implement for other formats.
+// TODO(mgeorg) Implement for other formats.
 void RescaleImageFrame(const ImageFrame& source_frame, const int width,
                        const int height, const int alignment_boundary,
                        const int open_cv_interpolation_algorithm,

@@ -127,7 +127,7 @@ CVReturn CreateCVPixelBufferWithPool(CVPixelBufferPoolRef pool,
 #endif  // DEBUG
 #endif  // defined(ENABLE_MEDIAPIPE_GPU_BUFFER_THRESHOLD_CHECK)
       // Try again and ignore threshold.
-      // TODO drop a frame instead?
+      // TODO(camillol) drop a frame instead?
       err = CVPixelBufferPoolCreatePixelBufferWithAuxAttributes(
           kCFAllocatorDefault, pool, NULL, outBuffer);
     }

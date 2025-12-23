@@ -5,7 +5,7 @@
 
 #if defined(HAS_EGL)
 
-// TODO: b/377324183 - merge into gl_base.h
+// TODO: merge into gl_base.h
 
 #include <EGL/egl.h>
 #include <EGL/eglext.h>

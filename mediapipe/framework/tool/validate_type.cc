@@ -42,7 +42,7 @@ namespace mediapipe {
 namespace tool {
 absl::Status RunGeneratorFillExpectations(
     const PacketGeneratorConfig& input_config, const std::string& package) {
-  // TODO Remove conversion after everyone uses input/output
+  // TODO(mgeorg) Remove conversion after everyone uses input/output
   // side packet.
   PacketGeneratorConfig config = input_config;
 

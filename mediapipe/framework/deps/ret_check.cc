@@ -18,7 +18,7 @@ namespace mediapipe {
 
 mediapipe::StatusBuilder RetCheckFailSlowPath(
     mediapipe::source_location location) {
-  // TODO Implement LogWithStackTrace().
+  // TODO(jqtang) Implement LogWithStackTrace().
   return mediapipe::InternalErrorBuilder(location)
          << "RET_CHECK failure (" << location.file_name() << ":"
          << location.line() << ") ";

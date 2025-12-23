@@ -169,7 +169,7 @@ absl::Status CalculatorNode::Initialize(
 
   const CalculatorContract& contract = node_type_info_->Contract();
 
-  // TODO Propagate types between calculators when SetAny is used.
+  // TODO(mgeorg) Propagate types between calculators when SetAny is used.
 
   MP_RETURN_IF_ERROR(InitializeOutputSidePackets(
       node_type_info_->OutputSidePacketTypes(), output_side_packets));

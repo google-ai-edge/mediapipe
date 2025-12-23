@@ -392,7 +392,7 @@ TEST(CalculatorGraph, SharePacketGeneratorGraph) {
                     testing::Key("max_count5")));
     // Pass all the side packets prepared by generator_graph here.
     MP_ASSERT_OK(graphs[i]->Run(all_side_packets));
-    // TODO Verify the actual output.
+    // TODO(mgeorg) Verify the actual output.
   }
 
   // Destroy all the graphs.

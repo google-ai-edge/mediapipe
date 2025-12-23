@@ -525,7 +525,7 @@ class SidePacketToOutputPacketCalculator : public CalculatorBase {
 };
 REGISTER_CALCULATOR(SidePacketToOutputPacketCalculator);
 
-// TODO Remove copy of SidePacketToOutputPacketCalculator with
+// TODO(mgeorg) Remove copy of SidePacketToOutputPacketCalculator with
 // old name once all clients are updated.
 class ABSL_DEPRECATED("Use SidePacketToOutputPacketCalculator instead")
     ExternalInputToOutputPacketCalculator : public CalculatorBase {

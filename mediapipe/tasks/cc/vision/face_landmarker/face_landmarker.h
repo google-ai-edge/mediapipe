@@ -84,7 +84,7 @@ struct FaceLandmarkerOptions {
 
 // Performs face landmarks detection on the given image.
 //
-// TODO  add the link to DevSite.
+// TODO (b/251816640) add the link to DevSite.
 // This API expects a pre-trained face landmarker model asset bundle.
 //
 // Inputs:
