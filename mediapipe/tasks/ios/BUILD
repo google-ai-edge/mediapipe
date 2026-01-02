@@ -381,7 +381,10 @@ apple_static_xcframework(
     # FOR SPM: Including CALCULATORS_AND_GRAPHS directly in MediaPipeTasksCommon
     # to avoid undefined symbols. Vision/Audio/Text frameworks use avoid_deps
     # to prevent duplicating these, so using multiple frameworks together is safe.
-    deps = MEDIAPIPE_TASKS_COMMON_DEPS + CALCULATORS_AND_GRAPHS + select(OPENCV_DEPS),
+    # NOTE: conversion_data is required for ICU symbols when using -all_load.
+    deps = MEDIAPIPE_TASKS_COMMON_DEPS + CALCULATORS_AND_GRAPHS + [
+        "@org_tensorflow//third_party/icu/data:conversion_data",
+    ] + select(OPENCV_DEPS),
 )
 
 apple_static_xcframework(

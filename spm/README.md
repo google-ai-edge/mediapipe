@@ -290,6 +290,15 @@ let package = Package(
 )
 ```
 
+### Required Linker Flags                                                                                                                                                                      
+Add these flags to your app target's **Other Linker Flags** (Build Settings → Linking):                                                                                                        
+```                                                                                                                                                                                            
+-ObjC                                                                                                                                                                                          
+-all_load                                                                                                                                                                                      
+```                                                                                                                                                                                            
+
+These flags ensure MediaPipe's calculator registrations are preserved during linking.                                                                                                                            
+
 ### Build Requirements
 
 - macOS with Xcode 14+

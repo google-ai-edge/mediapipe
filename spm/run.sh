@@ -11,7 +11,7 @@ git add -A
 
 git commit -m "Update Package.swift"
 
-git push
+git push -f
 
 ./upload-release.sh
 
