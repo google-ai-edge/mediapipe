@@ -60,7 +60,7 @@ PacketType& PacketType::SetNone() {
 }
 
 PacketType& PacketType::SetSameAs(const PacketType* type) {
-  // TODO(mgeorg) Union sets together when SetSameAs is called multiple times.
+  // TODO Union sets together when SetSameAs is called multiple times.
   auto same_as = type->GetSameAs();
   if (same_as == this) {
     // We're the root of the union-find tree.  There's a cycle, which
@@ -96,7 +96,7 @@ PacketType* PacketType::GetSameAs() {
   //   same_as_ = same_as_->GetSameAs();
   // Note, we also don't do the "Union by rank" optimization.  We always
   // make the current set point to the root of the other tree.
-  // TODO(mgeorg) Remove const_cast by making SetSameAs take a non-const
+  // TODO Remove const_cast by making SetSameAs take a non-const
   // PacketType*.
   return const_cast<PacketType*>(same_as->GetSameAs());
 }

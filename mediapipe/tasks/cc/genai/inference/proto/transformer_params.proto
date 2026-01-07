@@ -25,7 +25,7 @@ message TransformerParameters {
   // Batch size of tensors.
   int32 batch_size = 1;
 
-  // TODO: Deprecate parameter.
+  // TODO: b/319312256 - Deprecate parameter.
   // Maximum sequence length of the input/output tensor.
   int32 max_seq_length = 2;
 

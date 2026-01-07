@@ -76,7 +76,7 @@ declare interface CancelModule {
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern
 
-// TODO: Use ReturnType patter to apply extensions to LLM Web API.
+// TODO: b/327515383 - Use ReturnType patter to apply extensions to LLM Web API.
 // tslint:disable-next-line:enforce-name-casing
 const LlmGraphRunnerType = SupportLlmInference(
   SupportWebGpu(
@@ -392,7 +392,7 @@ export class LlmInference extends TaskRunner {
    * @param options The options for the LLM Inference task.
    */
   override async setOptions(options: LlmInferenceOptions): Promise<void> {
-    // TODO: Support customizing config for Web task of LLM
+    // TODO: b/324482487 - Support customizing config for Web task of LLM
     // Inference.
     if (this.isProcessing) {
       throw new Error('Cannot set options while loading or processing.');
@@ -791,7 +791,7 @@ export class LlmInference extends TaskRunner {
       );
     }
     if (this.useLlmEngine) {
-      // TODO: Support multi-response generation for converted LLM
+      // TODO: b/398949555 - Support multi-response generation for converted LLM
       // models (.task format).
       if (
         this.isMultiResponseGeneration &&
@@ -812,7 +812,7 @@ export class LlmInference extends TaskRunner {
         );
       }
       this.clearCancelSignals();
-      // TODO: Support streaming generation by passing the
+      // TODO: b/398904237 - Support streaming generation by passing the
       // progress listener.
       return (this.graphRunner as unknown as LlmGraphRunner)
         .generateResponse(
@@ -822,7 +822,7 @@ export class LlmInference extends TaskRunner {
             // Don't trigger the user progress listener if there are WebGPU
             // errors.
             if (this.wgpuErrors.length === 0 && this.userProgressListener) {
-              // TODO: Support multi-response generation for
+              // TODO: b/398949555 - Support multi-response generation for
               // converted LLM models (.task format).
               if (this.isMultiResponseGeneration) {
                 (this.userProgressListener as MultiResponseProgressListener)(
@@ -958,7 +958,7 @@ export class LlmInference extends TaskRunner {
   async loadLoraModel(
     modelAsset: string | Uint8Array | Blob,
   ): Promise<LoraModel> {
-    // TODO: Support LoRA for converted LLM models (.task format).
+    // TODO: b/398858769 - Support LoRA for converted LLM models (.task format).
     if (this.useLlmEngine) {
       throw new Error(
         'LoRA is not supported for converted LLM models (.task format) yet, ' +
@@ -1059,7 +1059,7 @@ export class LlmInference extends TaskRunner {
     }
   }
 
-  // TODO: Add sync API for BYOM Web API when Chrome JSPI is
+  // TODO: b/324919242 - Add sync API for BYOM Web API when Chrome JSPI is
   // available
 
   /** Updates the MediaPipe graph configuration. */

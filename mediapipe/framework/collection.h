@@ -154,7 +154,7 @@ class Collection {
   const value_type* GetPtr(CollectionItemId id) const;
 
   // Returns true if the collection has a tag other than "".
-  // TODO(mgeorg) Deprecate and remove this function.
+  // TODO Deprecate and remove this function.
   bool UsesTags() const;
 
   // Returns a description of the collection.

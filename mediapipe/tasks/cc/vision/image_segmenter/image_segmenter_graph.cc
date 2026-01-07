@@ -296,7 +296,7 @@ absl::StatusOr<ImageAndTensorsOnDevice> ConvertImageToTensors(
     return {{preprocessing.Out(kImageTag).Cast<Image>(),
              preprocessing.Out(kTensorsTag).Cast<std::vector<Tensor>>()}};
   } else {
-    // TODO(b/271664437) Remove legacy preprocessing calculators.
+    // TODO Remove legacy preprocessing calculators.
     // For segmentation model with input Tensor with channel = 4, use legacy
     // TfLite preprocessing calculators
 

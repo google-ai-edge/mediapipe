@@ -77,7 +77,7 @@ struct HandLandmarkerOptions {
 
 // Performs hand landmarks detection on the given image.
 //
-// TODO (b/251816640) add the link to DevSite.
+// TODO  add the link to DevSite.
 // This API expects a pre-trained hand landmarker model asset bundle.
 //
 // Inputs:

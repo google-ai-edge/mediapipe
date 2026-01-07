@@ -74,7 +74,7 @@ struct HandDetectionOuts {
 void ConfigureTensorsToDetectionsCalculator(
     const HandDetectorGraphOptions& tasks_options,
     mediapipe::TensorsToDetectionsCalculatorOptions* options) {
-  // TODO(b/244445879) use metadata to configure these fields.
+  // TODO use metadata to configure these fields.
   options->set_num_classes(1);
   options->set_num_boxes(2016);
   options->set_num_coords(18);
@@ -99,14 +99,14 @@ void ConfigureNonMaxSuppressionCalculator(
       mediapipe::NonMaxSuppressionCalculatorOptions::INTERSECTION_OVER_UNION);
   options->set_algorithm(
       mediapipe::NonMaxSuppressionCalculatorOptions::WEIGHTED);
-  // TODO(b/244445879) "return_empty_detections" was removed from 1P graph,
+  // TODO "return_empty_detections" was removed from 1P graph,
   // consider setting it from metadata accordingly.
   options->set_return_empty_detections(true);
 }
 
 void ConfigureSsdAnchorsCalculator(
     mediapipe::SsdAnchorsCalculatorOptions* options) {
-  // TODO(b/244445879) config SSD anchors parameters from metadata.
+  // TODO config SSD anchors parameters from metadata.
   options->set_num_layers(4);
   options->set_min_scale(0.1484375);
   options->set_max_scale(0.75);
@@ -189,7 +189,7 @@ void ConfigureRectTransformationCalculator(
 //     }
 //   }
 // }
-// TODO(b/244447203) Decouple detection part and rects part.
+// TODO Decouple detection part and rects part.
 class HandDetectorGraph : public core::ModelTaskGraph {
  public:
   absl::StatusOr<CalculatorGraphConfig> GetConfig(

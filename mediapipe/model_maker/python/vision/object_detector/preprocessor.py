@@ -23,7 +23,7 @@ from official.vision.ops import box_ops
 from official.vision.ops import preprocess_ops
 
 
-# TODO(b/274001509) Combine preprocessing logic with image_preprocessor.
+# TODO Combine preprocessing logic with image_preprocessor.
 class Preprocessor(object):
   """Preprocessor for object detector."""
 

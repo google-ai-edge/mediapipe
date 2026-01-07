@@ -91,7 +91,7 @@ CalculatorGraphConfig AddFlowLimiterCalculator(
 }
 
 void FixGraphBackEdges(::mediapipe::CalculatorGraphConfig& graph_config) {
-  // TODO(b/175887687) remove when support is fixed.
+  // TODO remove when support is fixed.
   // As mediapipe GraphBuilder currently doesn't support configuring
   // InputStreamInfo, modifying the CalculatorGraphConfig proto directly.
   for (int i = 0; i < graph_config.node_size(); ++i) {

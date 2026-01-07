@@ -54,7 +54,7 @@ import java.util.Set;
 /**
  * Performs hand landmarks detection on images.
  *
- * <p>This API expects a pre-trained hand landmarks model asset bundle. See <TODO (b/251816640)link
+ * <p>This API expects a pre-trained hand landmarks model asset bundle. See <TODO link
  * to the DevSite documentation page>.
  *
  * <ul>
@@ -242,7 +242,7 @@ public final class HandLandmarker extends BaseVisionTaskApi {
   /**
    * Performs hand landmarks detection on the provided single image with default image processing
    * options, i.e. without any rotation applied. Only use this method when the {@link
-   * HandLandmarker} is created with {@link RunningMode.IMAGE}. TODO(b/253473397) update java doc
+   * HandLandmarker} is created with {@link RunningMode.IMAGE}. TODO update java doc
    * for input image format.
    *
    * <p>{@link HandLandmarker} supports the following color space types:
@@ -260,7 +260,7 @@ public final class HandLandmarker extends BaseVisionTaskApi {
 
   /**
    * Performs hand landmarks detection on the provided single image. Only use this method when the
-   * {@link HandLandmarker} is created with {@link RunningMode.IMAGE}. TODO(b/253473397) update java
+   * {@link HandLandmarker} is created with {@link RunningMode.IMAGE}. TODO update java
    * doc for input image format.
    *
    * <p>{@link HandLandmarker} supports the following color space types:

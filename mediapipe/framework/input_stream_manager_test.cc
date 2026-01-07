@@ -697,7 +697,7 @@ TEST_F(InputStreamManagerTest, TimestampBound) {
   EXPECT_EQ(0, num_packets_dropped_);
   EXPECT_FALSE(stream_is_done_);
 
-  // TODO(mgeorg) These notifications may be bad if they schedule a
+  // TODO These notifications may be bad if they schedule a
   // Calculator Process() call at times that are irrelevant.
   notify_ = false;
   MP_ASSERT_OK(input_stream_manager_->SetNextTimestampBound(

@@ -371,7 +371,7 @@ absl::StatusOr<std::shared_ptr<Tensor>> XnnGraphBuilder::FullConn(
                                      xnn_datatype_qdint8));
   }
 
-  // TODO: work around.
+  // TODO: b/295116789 - work around.
   if (!use_dynamic_quantization &&
       (input->datatype == xnn_datatype_fp32 &&
        (weight->datatype == xnn_datatype_qcint8 ||

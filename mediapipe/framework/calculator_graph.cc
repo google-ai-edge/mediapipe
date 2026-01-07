@@ -531,7 +531,7 @@ absl::Status CalculatorGraph::ObserveOutputStream(
     bool observe_timestamp_bounds) {
   RET_CHECK(initialized_).SetNoLogging()
       << "CalculatorGraph is not initialized.";
-  // TODO(mgeorg) Allow output observers to be attached by graph level
+  // TODO Allow output observers to be attached by graph level
   // tag/index.
   int output_stream_index = validated_graph_->OutputStreamIndex(stream_name);
   if (output_stream_index < 0) {
@@ -1246,13 +1246,13 @@ int CalculatorGraph::GetMaxInputStreamQueueSize() { return max_queue_size_; }
 
 void CalculatorGraph::UpdateThrottledNodes(InputStreamManager* stream,
                                            bool* stream_was_full) {
-  // TODO(mgeorg) Change the throttling code to use the index directly
+  // TODO Change the throttling code to use the index directly
   // rather than looking up a stream name.
   int node_index = validated_graph_->OutputStreamToNode(stream->Name());
   absl::flat_hash_set<int> owned_set;
   const absl::flat_hash_set<int>* upstream_nodes;
   if (node_index >= validated_graph_->CalculatorInfos().size()) {
-    // TODO(mgeorg) just create a NodeTypeInfo object for each virtual node.
+    // TODO just create a NodeTypeInfo object for each virtual node.
     owned_set.insert(node_index);
     upstream_nodes = &owned_set;
   } else {
@@ -1391,7 +1391,7 @@ void CalculatorGraph::SetGraphInputStreamAddMode(GraphInputStreamAddMode mode) {
 }
 
 void CalculatorGraph::Cancel() {
-  // TODO(mgeorg) This function should return absl::Status.
+  // TODO This function should return absl::Status.
   scheduler_.Cancel();
 }
 

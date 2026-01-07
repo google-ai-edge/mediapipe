@@ -57,7 +57,7 @@ import java.util.Optional;
  * Performs gesture recognition on images.
  *
  * <p>This API expects a pre-trained hand gesture model asset bundle, or a custom one created using
- * Model Maker. See <TODO (b/251816640)link to the DevSite documentation page>.
+ * Model Maker. See <TODO link to the DevSite documentation page>.
  *
  * <ul>
  *   <li>Input image {@link MPImage}
@@ -224,7 +224,7 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
   /**
    * Performs gesture recognition on the provided single image with default image processing
    * options, i.e. without any rotation applied. Only use this method when the {@link
-   * GestureRecognizer} is created with {@link RunningMode.IMAGE}. TODO(b/253473397) update java doc
+   * GestureRecognizer} is created with {@link RunningMode.IMAGE}. TODO update java doc
    * for input image format.
    *
    * <p>{@link GestureRecognizer} supports the following color space types:
@@ -242,7 +242,7 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
 
   /**
    * Performs gesture recognition on the provided single image. Only use this method when the {@link
-   * GestureRecognizer} is created with {@link RunningMode.IMAGE}. TODO(b/253473397) update java doc
+   * GestureRecognizer} is created with {@link RunningMode.IMAGE}. TODO update java doc
    * for input image format.
    *
    * <p>{@link GestureRecognizer} supports the following color space types:
@@ -412,7 +412,7 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
        * for canned gesture classifiers are: ["None", "Closed_Fist", "Open_Palm",
        * "Pointing_Up", "Thumb_Down", "Thumb_Up", "Victory", "ILoveYou"]
        *
-       * <p>TODO (b/251816640) Note this option is subject to change, after scoring merging
+       * <p>TODO  Note this option is subject to change, after scoring merging
        * calculator is implemented.
        */
       public abstract Builder setCannedGesturesClassifierOptions(
@@ -422,7 +422,7 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
        * Sets the optional {@link ClassifierOptions} controlling the custom gestures classifier,
        * such as score threshold, allow list and deny list of gestures.
        *
-       * <p>TODO (b/251816640) Note this option is subject to change, after scoring merging
+       * <p>TODO  Note this option is subject to change, after scoring merging
        * calculator is implemented.
        */
       public abstract Builder setCustomGesturesClassifierOptions(

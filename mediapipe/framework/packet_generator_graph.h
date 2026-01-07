@@ -60,7 +60,7 @@ class PacketGeneratorGraph {
   // Initialize the PacketGeneratorGraph with the validated graph config
   // and executor to use.  If executor is nullptr, then the application
   // thread is used.
-  // TODO(mgeorg) allow the use of more than one executor (done the same
+  // TODO allow the use of more than one executor (done the same
   // way as for CalculatorGraph).
   // Run the base level of packet generator graph.  This is the
   // portion of the graph which does not change with every call to
@@ -106,7 +106,7 @@ class PacketGeneratorGraph {
   // outlive this object.
   const ValidatedGraphConfig* validated_graph_ = nullptr;
   // An object to own the validated_graph_config if it needs to be deleted.
-  // TODO(mgeorg) Remove this after removing legacy functions.
+  // TODO Remove this after removing legacy functions.
   std::unique_ptr<ValidatedGraphConfig> validated_graph_owner_;
 
   // The executor to use for running the generators.  We do not own the

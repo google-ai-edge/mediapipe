@@ -82,7 +82,7 @@ void main() {
 // Trivial passthrough fragment shader; do splitting in a custom vertex shader.
 // It's important to use highp here since otherwise we might sample from
 // neighboring chunk texels.
-// TODO: Consider using texelFetch and integer texture coordinates to
+// TODO: tmullen - Consider using texelFetch and integer texture coordinates to
 // avoid relying on highp.
 constexpr char kPassthroughShader[] = R"glsl(
 DEFAULT_PRECISION(highp, float)

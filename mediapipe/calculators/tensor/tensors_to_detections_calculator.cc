@@ -661,7 +661,7 @@ absl::Status TensorsToDetectionsCalculator::ProcessGPU(
   }
 
   // Output detections.
-  // TODO(b/138851969) Adjust shader to avoid copying shader output twice.
+  // TODO Adjust shader to avoid copying shader output twice.
   std::vector<float> detection_scores(num_boxes_);
   std::vector<int> detection_classes(num_boxes_);
   {
@@ -793,7 +793,7 @@ absl::Status TensorsToDetectionsCalculator::DecodeBoxes(
     float x_center = 0.0;
     float h = 0.0;
     float w = 0.0;
-    // TODO(b/269354872)
+    // TODO
     switch (box_output_format_) {
       case mediapipe::TensorsToDetectionsCalculatorOptions::UNSPECIFIED:
       case mediapipe::TensorsToDetectionsCalculatorOptions::YXHW:
@@ -1177,7 +1177,7 @@ void main() {
           "num_classes %d exceeds the max work_group size %d.",
           num_classes_, max_wg_size));
     }
-    // TODO(b/132994497) support better filtering.
+    // TODO support better filtering.
     if (class_index_set_.is_allowlist) {
       ABSL_CHECK_EQ(class_index_set_.values.size(),
                     IsClassIndexAllowed(0) ? num_classes_ : num_classes_ - 1)
@@ -1403,7 +1403,7 @@ kernel void scoreKernel(
                                            : 0,
       !IsClassIndexAllowed(0));
 
-  // TODO(b/132994497) support better filtering.
+  // TODO support better filtering.
   if (class_index_set_.is_allowlist) {
     ABSL_CHECK_EQ(class_index_set_.values.size(),
                   IsClassIndexAllowed(0) ? num_classes_ : num_classes_ - 1)

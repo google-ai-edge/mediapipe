@@ -311,7 +311,7 @@ absl::Status TestCollectionWithPointers(const std::vector<T>& original_values,
     i = 0;
     for (CollectionItemId id = collection_ptr->BeginId();
          id < collection_ptr->EndId(); ++id) {
-      // TODO(mgeorg) Test that GetPtr() does not exist for
+      // TODO Test that GetPtr() does not exist for
       // storage == kStoreValue.
       EXPECT_EQ(&values[i], collection_ptr->GetPtr(id));
       EXPECT_EQ(values[i], *collection_ptr->GetPtr(id));

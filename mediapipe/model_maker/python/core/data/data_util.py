@@ -29,7 +29,7 @@ def load_image(path: str) -> np.ndarray:
     An RGB image in numpy.ndarray.
   """
   tf.compat.v1.logging.info('Loading RGB image %s', path)
-  # TODO(b/249185596) Replace the OpenCV image load and conversion library by
+  # TODO Replace the OpenCV image load and conversion library by
   # MediaPipe image utility library once it is ready.
   image = cv2.imread(path)
   return cv2.cvtColor(image, cv2.COLOR_BGR2RGB)

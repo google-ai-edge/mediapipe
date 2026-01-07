@@ -148,7 +148,7 @@ void AddCallbackWithHeaderCalculator(const std::string& stream_name,
                                      std::string* callback_side_packet_name,
                                      bool use_std_function = false);
 
-// TODO(jqtang) Move CallbackCalculator and CallbackWithHeaderCalculator to
+// TODO Move CallbackCalculator and CallbackWithHeaderCalculator to
 // a separate library, and the library will be alwayslink. Then, the "sink"
 // cc_library can depend on that library, and it does not need to be alwayslink.
 //

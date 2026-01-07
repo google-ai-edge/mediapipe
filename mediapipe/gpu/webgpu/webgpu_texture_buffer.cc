@@ -115,7 +115,7 @@ WebGpuTextureBufferPool::CreateBufferWithoutPool(
 static std::shared_ptr<WebGpuTextureBuffer> GetWebGpuTextureBufferFromPool(
     int width, int height, GpuBufferFormat format) {
   const auto cc = LegacyCalculatorSupport::Scoped<CalculatorContext>::current();
-  // TODO: consider converting to ABSL_CHECK or better convert the
+  // TODO: gkarpiak - consider converting to ABSL_CHECK or better convert the
   // function to return absl::StatusOr.
   if (!cc) return nullptr;
   auto& pool =

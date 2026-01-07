@@ -56,7 +56,7 @@ using ImageFrameSharedPtr = std::shared_ptr<ImageFrame>;
 //
 // Note: 'use_gpu_' flag is used to keep track of where data is (dirty bit).
 //
-// TODO(b/149260610) Refactor Image to use 'Impl' class delegation system.
+// TODO Refactor Image to use 'Impl' class delegation system.
 //
 class Image {
  public:

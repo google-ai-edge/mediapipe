@@ -28,7 +28,7 @@
 
 namespace mediapipe::tasks::genai::xnn_utils {
 
-// TODO: de-duplicate from
+// TODO: b/331677973 - de-duplicate from
 // third_party/odml/infra/genai/inference/calculators/top_p_sampler_impl.h
 class Sampler {
  public:

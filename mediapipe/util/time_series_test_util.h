@@ -401,7 +401,7 @@ class TimeSeriesCalculatorTest : public ::testing::Test {
   std::vector<std::string> input_stream_tags_;
   int num_output_streams_;
   std::vector<std::string> output_stream_tags_;
-  // TODO(mgeorg) For backwards compatibility, remove after all clients
+  // TODO For backwards compatibility, remove after all clients
   // are updated.
   int num_external_inputs_ = -1;
   int num_input_channels_;

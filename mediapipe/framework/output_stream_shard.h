@@ -59,7 +59,7 @@ class OutputStreamShard : public OutputStream {
 
   void SetSpec(OutputStreamSpec* output_stream_spec);
 
-  // TODO(jqtang) Remove this interface from OutputStream? No client is using
+  // TODO Remove this interface from OutputStream? No client is using
   // this API.
   const std::string& Name() const final;
 

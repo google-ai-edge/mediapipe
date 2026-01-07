@@ -294,7 +294,7 @@ public final class InteractiveSegmenter extends BaseVisionTaskApi {
 
   /**
    * Performs segmentation on the provided single image with default image processing options, given
-   * user's region-of-interest, i.e. without any rotation applied. TODO(b/253473397) update java doc
+   * user's region-of-interest, i.e. without any rotation applied. TODO update java doc
    * for input image format.
    *
    * <p>Users can represent user interaction through {@link RegionOfInterest}, which gives a hint to
@@ -317,7 +317,7 @@ public final class InteractiveSegmenter extends BaseVisionTaskApi {
 
   /**
    * Performs segmentation on the provided single image, given user's region-of-interest.
-   * TODO(b/253473397) update java doc for input image format.
+   * TODO update java doc for input image format.
    *
    * <p>Users can represent user interaction through {@link RegionOfInterest}, which gives a hint to
    * perform segmentation focusing on the given region of interest.
@@ -356,7 +356,7 @@ public final class InteractiveSegmenter extends BaseVisionTaskApi {
    * user's region-of-interest, i.e. without any rotation applied, and provides zero-copied results
    * via {@link ResultListener} in {@link InteractiveSegmenterOptions}.
    *
-   * <p>TODO(b/253473397) update java doc for input image format.
+   * <p>TODO update java doc for input image format.
    *
    * <p>Users can represent user interaction through {@link RegionOfInterest}, which gives a hint to
    * perform segmentation focusing on the given region of interest.
@@ -382,7 +382,7 @@ public final class InteractiveSegmenter extends BaseVisionTaskApi {
    * Performs segmentation on the provided single image given user's region-of-interest, and
    * provides zero-copied results via {@link ResultListener} in {@link InteractiveSegmenterOptions}.
    *
-   * <p>TODO(b/253473397) update java doc for input image format.
+   * <p>TODO update java doc for input image format.
    *
    * <p>Users can represent user interaction through {@link RegionOfInterest}, which gives a hint to
    * perform segmentation focusing on the given region of interest.

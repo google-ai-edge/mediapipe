@@ -123,7 +123,7 @@ NodeReadiness SyncSetInputStreamHandler::GetNodeReadiness(
     *min_stream_timestamp = Timestamp::Done();
     return NodeReadiness::kReadyForClose;
   }
-  // TODO(mgeorg) The value of *min_stream_timestamp is undefined in this case.
+  // TODO The value of *min_stream_timestamp is undefined in this case.
   return NodeReadiness::kNotReady;
 }
 

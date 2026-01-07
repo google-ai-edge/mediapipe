@@ -268,7 +268,7 @@ class Packet : public Packet<internal::Generic> {
 
   const T& Get() const {
     if (!payload_) {
-      // TODO(b/378538426) - Remove this check once stack trace symbolization
+      // TODO - Remove this check once stack trace symbolization
       // works on Android non-apk execution.
       const CalculatorContext* calculator_context =
           LegacyCalculatorSupport::Scoped<CalculatorContext>::current();

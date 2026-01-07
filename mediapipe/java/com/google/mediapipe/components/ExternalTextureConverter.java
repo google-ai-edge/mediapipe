@@ -539,7 +539,7 @@ public class ExternalTextureConverter implements TextureFrameProducer {
     }
 
     private TimestampComputer getDefaultTimestampComputer() {
-      // TODO: Move necessary timestamp calculation information into the default
+      // TODO: b/408046935 - Move necessary timestamp calculation information into the default
       // implementation of the TimestampComputer.
       return (currentFrameTimestamp) -> {
         // Populate frame timestamp with surface texture timestamp after render() as renderer

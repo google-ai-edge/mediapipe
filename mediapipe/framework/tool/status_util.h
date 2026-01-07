@@ -43,7 +43,7 @@ absl::Status StatusFail(absl::string_view error_message);
 
 // Prefixes the given string to the error message in status.
 // This function should be considered internal to the framework.
-// TODO(mgeorg) Replace usage of AddStatusPrefix with util::Annotate().
+// TODO Replace usage of AddStatusPrefix with util::Annotate().
 absl::Status AddStatusPrefix(absl::string_view prefix,
                              const absl::Status& status);
 
@@ -51,7 +51,7 @@ absl::Status AddStatusPrefix(absl::string_view prefix,
 // If statuses is empty or all statuses are OK then absl::OkStatus()
 // will be returned.
 // This function should be considered internal to the framework.
-// TODO(mgeorg) Move this function to somewhere with less visibility.
+// TODO Move this function to somewhere with less visibility.
 absl::Status CombinedStatus(absl::string_view general_comment,
                             const std::vector<absl::Status>& statuses);
 

@@ -399,7 +399,7 @@ absl::Status FindSolidBackgroundColor(
       const int64_t timestamp = static_features_timestamps[i];
       // BorderDetectionCalculator sets color assuming the input frame is
       // BGR, but in reality we have RGB, so we need to revert it here.
-      // TODO(ningj) remove this custom logic in BorderDetectionCalculator,
+      // TODO remove this custom logic in BorderDetectionCalculator,
       // original CroppingCalculator, and this calculator.
       cv::Mat3f rgb_mat(1, 1, cv::Vec3b(color.b(), color.g(), color.r()));
       // Necessary scaling of the RGB values from [0, 255] to [0, 1] based on:
@@ -407,7 +407,7 @@ absl::Status FindSolidBackgroundColor(
       rgb_mat *= 1.0 / 255;
       cv::Mat3f lab_mat(1, 1);
       cv::cvtColor(rgb_mat, lab_mat, cv::COLOR_RGB2Lab);
-      // TODO(ningj) change to piecewise constant interpolation if there is
+      // TODO change to piecewise constant interpolation if there is
       // visual artifact. We can simply add one more point right before the
       // next point with same value to mimic piecewise constant behavior.
       const auto lab = lab_mat.at<cv::Vec3f>(0, 0);

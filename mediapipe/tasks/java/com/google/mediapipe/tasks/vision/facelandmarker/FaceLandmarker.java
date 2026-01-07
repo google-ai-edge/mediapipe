@@ -55,7 +55,7 @@ import java.util.Set;
 /**
  * Performs face landmarks detection on images.
  *
- * <p>This API expects a pre-trained face landmarks model asset bundle. See <TODO (b/251816640)link
+ * <p>This API expects a pre-trained face landmarks model asset bundle. See <TODO link
  * to the DevSite documentation page>.
  *
  * <ul>
@@ -283,7 +283,7 @@ public final class FaceLandmarker extends BaseVisionTaskApi {
   /**
    * Performs face landmarks detection on the provided single image with default image processing
    * options, i.e. without any rotation applied. Only use this method when the {@link
-   * FaceLandmarker} is created with {@link RunningMode.IMAGE}. TODO(b/253473397) update java doc
+   * FaceLandmarker} is created with {@link RunningMode.IMAGE}. TODO update java doc
    * for input image format.
    *
    * <p>{@link FaceLandmarker} supports the following color space types:
@@ -301,7 +301,7 @@ public final class FaceLandmarker extends BaseVisionTaskApi {
 
   /**
    * Performs face landmarks detection on the provided single image. Only use this method when the
-   * {@link FaceLandmarker} is created with {@link RunningMode.IMAGE}. TODO(b/253473397) update java
+   * {@link FaceLandmarker} is created with {@link RunningMode.IMAGE}. TODO update java
    * doc for input image format.
    *
    * <p>{@link FaceLandmarker} supports the following color space types:

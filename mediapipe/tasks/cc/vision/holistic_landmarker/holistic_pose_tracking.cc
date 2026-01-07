@@ -189,7 +189,7 @@ TrackHolisticPoseUsingCustomPoseDetection(
 
   auto image_size = GetImageSize(image, graph);
 
-  // TODO: Apply adaptive crop by adding AdaptiveCropCalculator.
+  // TODO: b/305750053 - Apply adaptive crop by adding AdaptiveCropCalculator.
 
   // Calculate ROI from smoothed auxiliary landmarks.
   auto scale_roi = CalculateScaleRoiFromAuxiliaryLandmarks(auxiliary_landmarks,

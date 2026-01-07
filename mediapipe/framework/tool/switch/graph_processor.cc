@@ -96,15 +96,15 @@ absl::Status GraphProcessor::WaitUntilIdle() {
   return graph_->WaitUntilIdle();
 }
 
-// TODO(hadon)
+// TODO
 absl::Status GraphProcessor::SetSidePacket(CollectionItemId id, Packet packet) {
   return absl::OkStatus();
 }
-// TODO(hadon)
+// TODO
 std::shared_ptr<tool::TagMap> GraphProcessor::SideInputTags() {
   return nullptr;
 }
-// TODO(hadon)
+// TODO
 void GraphProcessor::SetSideConsumer(SidePacketConsumer* consumer) {}
 
 }  // namespace mediapipe

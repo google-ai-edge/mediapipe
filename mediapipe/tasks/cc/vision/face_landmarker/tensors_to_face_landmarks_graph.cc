@@ -51,7 +51,7 @@ constexpr int kEyeLandmarksNum = 71;
 constexpr int kIrisLandmarksNum = 5;
 constexpr int kContoursNumForIrisAvg = 16;
 
-// TODO(b/270446827) When model metadata for face detector is ready, move the
+// TODO When model metadata for face detector is ready, move the
 // index mapping to metadata.
 constexpr std::array<int, kMeshLandmarksNum> kMeshLandmarksIndicesMapping{
     0,   1,   2,   3,   4,   5,   6,   7,   8,   9,   10,  11,  12,  13,  14,

@@ -109,7 +109,7 @@ absl::Status TensorsToSegmentationOpenCvConverter::ApplyActivation(
   using Options = ::mediapipe::TensorsToSegmentationCalculatorOptions;
   const auto activation_fn = [&](const cv::Vec2f& mask_value) {
     float new_mask_value = 0;
-    // TODO(b/188915458) consider moving switch out of the loop,
+    // TODO consider moving switch out of the loop,
     // and also avoid float/Vec2f casting.
     switch (options_.activation()) {
       case Options::NONE: {

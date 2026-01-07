@@ -38,7 +38,7 @@ message SidePacketsToStreamsCalculatorOptions {
     // Timestamps are always set to PreStream.
     PRE_STREAM = 1;
     // Timestamps are always set to PostStream.
-    // TODO(mgeorg) Rename to POST_STREAM.
+    // TODO Rename to POST_STREAM.
     WHOLE_STREAM = 2;
     // Do not set timestamp.  Can only be used if vectors_of_packets is
     // true.  Will cause Timestamp::Unset() run-time errors if the inner

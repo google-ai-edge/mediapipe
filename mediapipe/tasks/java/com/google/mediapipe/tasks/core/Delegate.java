@@ -15,7 +15,7 @@
 package com.google.mediapipe.tasks.core;
 
 /** MediaPipe Tasks delegate. */
-// TODO(b/243447091) implement advanced delegate setting.
+// TODO implement advanced delegate setting.
 public enum Delegate {
   CPU,
   GPU,

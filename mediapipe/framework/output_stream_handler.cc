@@ -151,7 +151,7 @@ OutputStreamHandler::GetMonitoringInfo() {
 }
 
 void OutputStreamHandler::TryPropagateTimestampBound(Timestamp input_bound) {
-  // TODO(wtc) Some non-range values, such as PostStream(), should also be
+  // TODO Some non-range values, such as PostStream(), should also be
   // propagated.
   if (!input_bound.IsRangeValue()) {
     return;

@@ -116,7 +116,7 @@ export type MultiResponseProgressListener = (
  * doesn't break our JS/C++ bridge.
  */
 export declare interface WasmLlmInferenceModule {
-  // TODO: Support multi-response generation for converted LLM
+  // TODO: b/398949555 - Support multi-response generation for converted LLM
   // models (.task format).
   _userProgressListener: ProgressListener | undefined;
   _GetSizeInTokens: (textPtr: number) => number;
@@ -255,7 +255,7 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
       this._startLlmEngineProcessing();
       try {
         await this.uploadToWasmFileSystem(modelStream, 'llm.task');
-        // TODO: Pass llmInferenceGraphOptions to the C function.
+        // TODO: b/398858545 - Pass llmInferenceGraphOptions to the C function.
         await (this.wasmModule as unknown as WasmLlmInferenceModule).ccall(
           'CreateLlmInferenceEngineConverted',
           'void',
@@ -311,7 +311,7 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
     async generateResponse(
       query: PromptPart[],
       samplerParameters: SamplerParameters,
-      // TODO: Support multi-response generation for converted LLM
+      // TODO: b/398949555 - Support multi-response generation for converted LLM
       // models (.task format).
       userProgressListener?: ProgressListener,
     ): Promise<string> {
@@ -323,7 +323,7 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
         // result.
         const progressListener = (partialResult: string, done: boolean) => {
           if (partialResult) {
-            // TODO: Support streaming generation: use the done flag
+            // TODO: b/398904237 - Support streaming generation: use the done flag
             // to indicate the end of the generation.
             result.push(partialResult);
           }
@@ -376,7 +376,7 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
               chunk.imageSource,
             );
 
-            // Now we extract the bytes. TODO: This should also be
+            // Now we extract the bytes. TODO: b/424221732 - This should also be
             // made more efficient in the future, ideally by keeping on the GPU.
             const canvas =
               typeof OffscreenCanvas !== 'undefined'
@@ -439,7 +439,7 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
         // that uses them, and are freed automatically afterwards. We cannot
         // afford to reload them though, so we intentionally leave our first
         // vision and/or audio session(s) alive and unfreed.
-        // TODO: Fix this.
+        // TODO: b/431095215 - Fix this.
         let freeSession = true;
         if (useVision && this._visionKeepaliveSession === 0) {
           this._visionKeepaliveSession = session;
@@ -460,7 +460,7 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
         }
         mediaToFree.length = 0;
 
-        // TODO: Remove the following trigger of the user progress
+        // TODO: b/399215600 - Remove the following trigger of the user progress
         // listener when the underlying LLM Inference Engine is fixed to trigger
         // it at the end of the generation.
         if (userProgressListener) {
@@ -468,7 +468,7 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
         }
         this.wasmModule._free(samplerParamsPtr);
         llmWasm._userProgressListener = undefined;
-        // TODO: return the generated string from the C function.
+        // TODO: b/398880215 - return the generated string from the C function.
         return result.join('');
       } finally {
         this._endLlmEngineProcessing();
@@ -488,7 +488,7 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
       // vision model, which uses a fixed number of tokens per image, we simply
       // add that to our count manually. But once the engine supports
       // GetSizeInTokens for non-text modalities, this should be fixed.
-      // TODO: Remove this workaround once that functionality
+      // TODO: b/426691212 - Remove this workaround once that functionality
       // exists.
       let tokensFromImages = 0;
       let promptWithoutImages = '';
@@ -561,7 +561,7 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
         imageElement.src = image;
         imageElement.crossOrigin = 'Anonymous';
 
-        // TODO: Wrap below in try/catch block so we can make
+        // TODO: b/424014728 - Wrap below in try/catch block so we can make
         // failures more user-friendly.
         try {
           await imageElement.decode();

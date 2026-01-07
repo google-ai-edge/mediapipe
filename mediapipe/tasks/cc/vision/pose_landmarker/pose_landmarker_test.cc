@@ -324,8 +324,8 @@ TEST_P(VideoModeTest, Succeeds) {
   MP_ASSERT_OK(pose_landmarker->Close());
 }
 
-// TODO(b/274953340) Add additional tests for MP Tasks Pose Graphs
-// TODO(gcarranza) Investigate PoseLandmarker performance in VideoMode.
+// TODO Add additional tests for MP Tasks Pose Graphs
+// TODO Investigate PoseLandmarker performance in VideoMode.
 
 INSTANTIATE_TEST_SUITE_P(
     PoseTest, VideoModeTest,
@@ -440,7 +440,7 @@ TEST_P(LiveStreamModeTest, Succeeds) {
   }
 }
 
-// TODO(b/274953340) Add additional tests for MP Tasks Pose Graphs
+// TODO Add additional tests for MP Tasks Pose Graphs
 // Investigate PoseLandmarker performance in LiveStreamMode.
 
 INSTANTIATE_TEST_SUITE_P(
