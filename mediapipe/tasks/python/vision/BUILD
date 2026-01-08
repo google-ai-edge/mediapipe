@@ -19,6 +19,29 @@ package(default_visibility = ["//visibility:public"])
 licenses(["notice"])
 
 py_library(
+    name = "drawing_utils",
+    srcs = ["drawing_utils.py"],
+    deps = [
+        ":face_landmarker",
+        "//mediapipe/tasks/python/components/containers:detections",
+        "//mediapipe/tasks/python/components/containers:landmark",
+        "//third_party/py/matplotlib",
+        "@mediapipe_pip_deps_numpy//:pkg",
+    ],
+)
+
+py_library(
+    name = "drawing_styles",
+    srcs = ["drawing_styles.py"],
+    deps = [
+        ":drawing_utils",
+        ":face_landmarker",
+        ":hand_landmarker",
+        ":pose_landmarker",
+    ],
+)
+
+py_library(
     name = "object_detector",
     srcs = [
         "object_detector.py",

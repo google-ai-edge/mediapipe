@@ -15,6 +15,8 @@
 """MediaPipe Tasks Vision API."""
 
 import mediapipe.tasks.python.vision.core
+import mediapipe.tasks.python.vision.drawing_styles
+import mediapipe.tasks.python.vision.drawing_utils
 import mediapipe.tasks.python.vision.face_detector
 import mediapipe.tasks.python.vision.face_landmarker
 import mediapipe.tasks.python.vision.gesture_recognizer
@@ -26,6 +28,8 @@ import mediapipe.tasks.python.vision.interactive_segmenter
 import mediapipe.tasks.python.vision.object_detector
 import mediapipe.tasks.python.vision.pose_landmarker
 
+drawing_styles = drawing_styles
+drawing_utils = drawing_utils
 FaceDetector = face_detector.FaceDetector
 FaceDetectorOptions = face_detector.FaceDetectorOptions
 FaceDetectorResult = face_detector.FaceDetectorResult
@@ -55,6 +59,7 @@ InteractiveSegmenterRegionOfInterest = interactive_segmenter.RegionOfInterest
 ObjectDetector = object_detector.ObjectDetector
 ObjectDetectorOptions = object_detector.ObjectDetectorOptions
 ObjectDetectorResult = object_detector.ObjectDetectorResult
+PoseLandmark = pose_landmarker.PoseLandmark
 PoseLandmarker = pose_landmarker.PoseLandmarker
 PoseLandmarkerOptions = pose_landmarker.PoseLandmarkerOptions
 PoseLandmarkerResult = pose_landmarker.PoseLandmarkerResult

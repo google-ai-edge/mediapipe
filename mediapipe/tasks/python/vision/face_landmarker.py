@@ -268,6 +268,34 @@ class FaceLandmarksConnections:
       Connection(109, 10),
   ]
 
+  FACE_LANDMARKS_NOSE: List[Connection] = [
+      Connection(168, 6),
+      Connection(6, 197),
+      Connection(197, 195),
+      Connection(195, 5),
+      Connection(5, 4),
+      Connection(4, 1),
+      Connection(1, 19),
+      Connection(19, 94),
+      Connection(94, 2),
+      Connection(98, 97),
+      Connection(97, 2),
+      Connection(2, 326),
+      Connection(326, 327),
+      Connection(327, 294),
+      Connection(294, 278),
+      Connection(278, 344),
+      Connection(344, 440),
+      Connection(440, 275),
+      Connection(275, 4),
+      Connection(4, 45),
+      Connection(45, 220),
+      Connection(220, 115),
+      Connection(115, 48),
+      Connection(48, 64),
+      Connection(64, 98),
+  ]
+
   FACE_LANDMARKS_CONTOURS: List[Connection] = (
       FACE_LANDMARKS_LIPS
       + FACE_LANDMARKS_LEFT_EYE
