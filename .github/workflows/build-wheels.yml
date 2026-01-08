@@ -1,0 +1,182 @@
+name: Build Python Wheels
+
+on:
+  push:
+    branches:
+      - master
+      - add-python-3.13-support
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - master
+      - add-python-3.13-support
+  workflow_dispatch:
+
+env:
+  BAZEL_VERSION: '7.4.1'
+  PROTOBUF_VERSION: '29'
+
+jobs:
+  build-macos-arm64:
+    name: Build macOS ARM64 wheel (Python ${{ matrix.python-version }})
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Cache Bazel
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/bazel
+            ~/.cache/bazelisk
+          key: ${{ runner.os }}-bazel-${{ env.BAZEL_VERSION }}-py${{ matrix.python-version }}-${{ hashFiles('.bazelversion', 'WORKSPACE', '**/*.bzl') }}
+          restore-keys: |
+            ${{ runner.os }}-bazel-${{ env.BAZEL_VERSION }}-py${{ matrix.python-version }}-
+            ${{ runner.os }}-bazel-${{ env.BAZEL_VERSION }}-
+            ${{ runner.os }}-bazel-
+
+      - name: Cache Homebrew packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/Library/Caches/Homebrew/bazelisk--*
+            ~/Library/Caches/Homebrew/opencv--*
+            ~/Library/Caches/Homebrew/protobuf@${{ env.PROTOBUF_VERSION }}--*
+            ~/Library/Caches/Homebrew/downloads/*--bazelisk-*
+            ~/Library/Caches/Homebrew/downloads/*--opencv-*
+            ~/Library/Caches/Homebrew/downloads/*--protobuf@${{ env.PROTOBUF_VERSION }}-*
+          key: ${{ runner.os }}-brew-${{ hashFiles('.github/workflows/build-wheels-py313.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-brew-
+
+      - name: Install system dependencies
+        run: |
+          # Disable auto-update for faster installs
+          export HOMEBREW_NO_AUTO_UPDATE=1
+
+          # Use bazelisk instead of bazel for automatic version management
+          brew install bazelisk opencv protobuf@${{ env.PROTOBUF_VERSION }}
+
+      - name: Verify system dependencies
+        id: verify-deps
+        run: |
+          echo "=== Bazel ==="
+          bazel --version
+
+          echo "=== OpenCV ==="
+          OPENCV_VERSION=$(brew ls opencv | grep version.hpp | head -1 | sed -E 's|.*/opencv/([^/]+)/.*|\1|')
+          echo "version=$OPENCV_VERSION" >> $GITHUB_OUTPUT
+          echo "OpenCV version: $OPENCV_VERSION"
+
+          OPENCV_MAJOR_MINOR=$(echo $OPENCV_VERSION | sed -E 's/([0-9]+\.[0-9]+).*/\1/')
+          echo "major_minor=$OPENCV_MAJOR_MINOR" >> $GITHUB_OUTPUT
+          echo "OpenCV major.minor: $OPENCV_MAJOR_MINOR"
+
+          echo "=== Protobuf ==="
+          PROTOC_PATH=/opt/homebrew/opt/protobuf@${{ env.PROTOBUF_VERSION }}/bin/protoc
+          echo "path=$PROTOC_PATH" >> $GITHUB_OUTPUT
+          $PROTOC_PATH --version
+
+          echo "=== Python ==="
+          python --version
+          pip --version
+
+      - name: Set version
+        id: set-version
+        run: |
+          # Generate version from git commit and date
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            # If triggered by a tag, use the tag name (strip 'v' prefix)
+            VERSION="${{ github.ref_name }}"
+            VERSION="${VERSION#v}"
+          else
+            # Otherwise, use date-based version with short commit hash
+            VERSION="0.10.14.dev$(date +%Y%m%d)+g$(git rev-parse --short HEAD)"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Using version: $VERSION"
+
+      - name: Configure build environment
+        run: |
+          # Update OpenCV configuration
+          sed -i '' "s|PREFIX = \"opencv/.*\"|PREFIX = \"opencv/${{ steps.verify-deps.outputs.version }}\"|" third_party/opencv_macos.BUILD
+          sed -i '' "s|OPENCV_SO_VERSION = \".*\"|OPENCV_SO_VERSION = \"${{ steps.verify-deps.outputs.major_minor }}\"|" third_party/BUILD
+
+          # Update version in setup.py
+          sed -i '' "s|__version__ = '.*'|__version__ = '${{ steps.set-version.outputs.version }}'|" setup.py
+
+          echo "Configuration updated:"
+          grep "PREFIX = " third_party/opencv_macos.BUILD
+          grep "OPENCV_SO_VERSION = " third_party/BUILD
+          grep "__version__ = " setup.py
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          # Convert python-version from "3.9" to "3_9" format for lock file
+          LOCK_VERSION=$(echo "${{ matrix.python-version }}" | tr '.' '_')
+          pip install -r "requirements_lock_${LOCK_VERSION}.txt"
+
+      - name: Build wheel
+        env:
+          HERMETIC_PYTHON_VERSION: ${{ matrix.python-version }}
+          PROTOC: ${{ steps.verify-deps.outputs.path }}
+        run: |
+          echo "::group::Build MediaPipe wheel"
+          python setup.py bdist_wheel 2>&1 | tee build.log
+          echo "::endgroup::"
+
+      - name: Verify wheel
+        run: |
+          ls -lh dist/
+          file dist/*.whl
+          unzip -l dist/*.whl | head -50
+
+      - name: Test wheel installation
+        run: |
+          python -m venv test_env
+          source test_env/bin/activate
+          pip install --upgrade pip
+          pip install dist/*.whl
+
+          # Change to a different directory to avoid importing from source
+          cd /tmp
+          echo "::group::Test imports"
+          python -c "import mediapipe; print(f'MediaPipe version: {mediapipe.__version__}')"
+          python -c "import mediapipe.tasks.python.vision as vision; print('Vision tasks: OK')"
+          python -c "import mediapipe.tasks.python.text as text; print('Text tasks: OK')"
+          python -c "import mediapipe.tasks.python.audio as audio; print('Audio tasks: OK')"
+          echo "::endgroup::"
+
+          deactivate
+
+      - name: Upload wheel artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheel-macos-arm64-py${{ matrix.python-version }}
+          path: dist/*.whl
+          retention-days: 90
+          if-no-files-found: error
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log-macos-arm64-py${{ matrix.python-version }}
+          path: build.log
+          retention-days: 30

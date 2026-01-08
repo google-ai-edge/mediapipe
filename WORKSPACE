@@ -118,15 +118,9 @@ http_archive(
 http_archive(
     name = "zlib",
     build_file = "@//third_party:zlib.BUILD",
-    patch_args = [
-        "-p1",
-    ],
-    patches = [
-        "@//third_party:zlib.diff",
-    ],
-    sha256 = "b3a24de97a8fdbc835b9833169501030b8977031bcb54b3b3ac13740f846ab30",
-    strip_prefix = "zlib-1.2.13",
-    url = "http://zlib.net/fossils/zlib-1.2.13.tar.gz",
+    sha256 = "9a93b2b7dfdac77ceba5a558a580e74667dd6fede4585b91eefb60f03b72df23",
+    strip_prefix = "zlib-1.3.1",
+    url = "https://zlib.net/fossils/zlib-1.3.1.tar.gz",
 )
 
 # gflags needed by glog
@@ -364,10 +358,11 @@ python_init_repositories(
     local_wheel_inclusion_list = ["mediapipe*"],
     local_wheel_workspaces = ["//:WORKSPACE"],
     requirements = {
-        "3.9": "//:requirements_lock.txt",
+        "3.9": "//:requirements_lock_3_9.txt",
         "3.10": "//:requirements_lock_3_10.txt",
         "3.11": "//:requirements_lock_3_11.txt",
         "3.12": "//:requirements_lock_3_12.txt",
+        "3.13": "//:requirements_lock_3_13.txt",
     },
 )
 
@@ -400,7 +395,7 @@ load("@rules_python//python:pip.bzl", "pip_parse")
 
 pip_parse(
     name = "mediapipe_pip_deps",
-    requirements_lock = "@//:requirements_lock.txt",
+    requirements_lock = "@//:requirements_lock_3_9.txt",
 )
 
 load("@mediapipe_pip_deps//:requirements.bzl", mp_install_deps = "install_deps")
@@ -621,10 +616,10 @@ new_local_repository(
 new_local_repository(
     name = "macos_opencv",
     build_file = "@//third_party:opencv_macos.BUILD",
-    # For local MacOS builds, the path should point to an opencv@3 installation.
+    # For local MacOS builds, the path should point to an opencv installation.
     # If you edit the path here, you will also need to update the corresponding
     # prefix in "opencv_macos.BUILD".
-    path = "/usr/local",  # e.g. /usr/local/Cellar for HomeBrew
+    path = "/opt/homebrew/Cellar",
 )
 
 new_local_repository(

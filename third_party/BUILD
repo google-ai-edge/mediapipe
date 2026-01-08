@@ -26,10 +26,11 @@ package(default_visibility = ["//visibility:public"])
 
 exports_files([
     "LICENSE",
-    "requirements_lock.txt",
+    "requirements_lock_3_9.txt",
     "requirements_lock_3_10.txt",
     "requirements_lock_3_11.txt",
     "requirements_lock_3_12.txt",
+    "requirements_lock_3_13.txt",
 ])
 
 mediapipe_files(srcs = [
