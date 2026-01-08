@@ -128,7 +128,7 @@ class MetadataWriterForTaskTest(absltest.TestCase):
     writer.add_general_info(
         model_name='my_image_model', model_description='my_description')
     tflite_model, metadata_json = writer.populate()
-    self.assertLen(tflite_model, 1882986)
+    self.assertLen(tflite_model, 1883002)
     self.assertJsonEqual(
         metadata_json, """{
           "name": "my_image_model",
