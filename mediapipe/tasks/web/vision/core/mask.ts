@@ -331,7 +331,7 @@ export class MPMask {
     let uint8Array = this.getContainer(MPMaskType.UINT8_ARRAY);
     if (!uint8Array) {
       const floatArray = this.convertToFloat32Array();
-      uint8Array = new Uint8Array(floatArray.map(v => 255 * v));
+      uint8Array = new Uint8Array(floatArray.map(v => Math.round(255 * v)));
       this.containers.push(uint8Array);
     }
     return uint8Array;
