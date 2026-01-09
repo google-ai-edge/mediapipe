@@ -20,9 +20,13 @@ package(default_visibility = ["//visibility:public"])
 
 kt_jvm_library(
     name = "generator",
-    srcs = glob(["*.kt"]),
+    srcs = glob(
+        ["*.kt"],
+        exclude = ["CodeGeneratorMain.kt"],
+    ),
     deps = [
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/vision/provider:vision_model",
         "//third_party/java/gson",
+        "//third_party/kotlin/kotlinpoet",
     ],
 )
