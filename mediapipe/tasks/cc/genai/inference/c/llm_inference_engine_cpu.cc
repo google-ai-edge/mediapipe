@@ -482,8 +482,7 @@ CreateTfliteLlmCpuEngine(const LlmModelSettings* model_settings) {
   MP_RETURN_IF_ERROR(tokenizer->LoadFromSerializedProto(tokenizer_buffer));
 
   auto llm_parameters = odml::infra::proto::LlmParameters();
-  RET_CHECK(llm_parameters.ParseFromArray(params_buffer.data(),
-                                          params_buffer.size()));
+  RET_CHECK(llm_parameters.ParseFromString(params_buffer));
 
   auto start_token_id = tokenizer->PieceToId(llm_parameters.start_token());
 
