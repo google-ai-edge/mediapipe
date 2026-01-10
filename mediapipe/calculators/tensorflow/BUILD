@@ -94,6 +94,15 @@ proto_library(
     srcs = ["tensor_to_vector_string_calculator_options.proto"],
     deps = ["//mediapipe/framework:calculator_proto"],
 )
+# Added the missing proto target so Bazel can generate the C++ bindings for PackMediaSequenceCalculator.
+mediapipe_proto_library(
+    name = "pack_media_sequence_calculator_proto",
+    srcs = ["pack_media_sequence_calculator.proto"],
+    deps = [
+        "//mediapipe/framework:calculator_proto",
+        "@org_tensorflow//tensorflow/core:protos_all",
+    ],
+)
 
 mediapipe_proto_library(
     name = "unpack_media_sequence_calculator_proto",
