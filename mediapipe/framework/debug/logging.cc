@@ -166,7 +166,7 @@ void LogMatImpl(const cv::Mat& mat, absl::string_view name) {
   int small_height = std::max(small_width * height / (divisor * width), 1);
   if (small_height > kMaxCharsY) {
     small_height = kMaxCharsY;
-    small_width = small_height * width * divisor / height;
+    small_width = std::max(small_height * width * divisor / height, 1);
   }
   cv::Mat small_mat;
   if (small_width != width || small_height != height) {
