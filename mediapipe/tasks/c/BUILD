@@ -43,6 +43,7 @@ cc_binary(
         ":mediapipe_tasks_c_version_script.lds",
         "//mediapipe/tasks/c/audio/audio_classifier:audio_classifier_c_lib",
         "//mediapipe/tasks/c/core:common",
+        "//mediapipe/tasks/c/genai/bundler:llm_bundler_utils_c_lib",
         "//mediapipe/tasks/c/genai/converter:llm_converter_c_lib",
         "//mediapipe/tasks/c/metadata:flatbuffer_api_c_lib",
         "//mediapipe/tasks/c/text/language_detector:language_detector_c_lib",

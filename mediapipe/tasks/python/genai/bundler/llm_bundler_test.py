@@ -19,6 +19,7 @@ import zipfile
 from absl.testing import absltest
 
 from mediapipe.tasks.python.genai.bundler import llm_bundler
+from mediapipe.tasks.cc.genai.inference.proto import llm_params_pb2
 from sentencepiece import sentencepiece_model_pb2
 
 
@@ -119,6 +120,43 @@ class LlmBundlerTest(absltest.TestCase):
       self.assertEqual(zip_file.filelist[1].filename, "TOKENIZER_MODEL")
       self.assertEqual(zip_file.filelist[2].filename, "METADATA")
 
+  def test_create_bundle_includes_all_artifacts(self):
+    tempdir = self.create_tempdir()
+    sp_file_path = self._create_sp_model(tempdir.full_path)
+    tflite_file_path = self._create_tflite_model(tempdir.full_path)
+    output_file = os.path.join(tempdir, "test.task")
+    config = llm_bundler.BundleConfig(
+        tflite_model=tflite_file_path,
+        tokenizer_model=sp_file_path,
+        start_token=self.BOS,
+        stop_tokens=[self.EOS],
+        output_filename=output_file,
+        enable_bytes_to_unicode_mapping=True,
+        prompt_prefix_user="<start_of_turn>user\n ",
+        prompt_suffix_user="<end_of_turn>\n",
+        prompt_prefix_model="<start_of_turn>model\n",
+        tflite_embedder=tflite_file_path,
+        tflite_per_layer_embedder=tflite_file_path,
+        tflite_vision_encoder=tflite_file_path,
+        tflite_vision_adapter=tflite_file_path,
+    )
+    llm_bundler.create_bundle(config)
+    self.assertTrue(os.path.exists(output_file))
+    with zipfile.ZipFile(output_file) as zip_file:
+      filenames = [f.filename for f in zip_file.filelist]
+      self.assertCountEqual(
+          filenames,
+          [
+              "TF_LITE_PREFILL_DECODE",
+              "TOKENIZER_MODEL",
+              "METADATA",
+              "TF_LITE_EMBEDDER",
+              "TF_LITE_PER_LAYER_EMBEDDER",
+              "TF_LITE_VISION_ENCODER",
+              "TF_LITE_VISION_ADAPTER",
+          ],
+      )
+
   def test_invalid_stop_tokens_raises_value_error(self):
     tempdir = self.create_tempdir()
     sp_file_path = self._create_sp_model(tempdir.full_path)
@@ -200,7 +238,13 @@ class LlmBundlerTest(absltest.TestCase):
         prompt_prefix_user="<user>\n",
         prompt_suffix_user="<end_of_turn>\n",
     )
-    metadata = llm_bundler.create_metadata_pb(config)
+
+    llm_bundler.create_bundle(config)
+    self.assertTrue(os.path.exists(output_file))
+    with zipfile.ZipFile(output_file) as zip_file:
+      metadata_str = zip_file.read("METADATA")
+
+    metadata = llm_params_pb2.LlmParameters.FromString(metadata_str)
     self.assertEqual(metadata.prompt_template.prompt_prefix, "<user>\n")
     self.assertEqual(
         metadata.prompt_template.prompt_suffix, "<end_of_turn>\n<model>\n"
