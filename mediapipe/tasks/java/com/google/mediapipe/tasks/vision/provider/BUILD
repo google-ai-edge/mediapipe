@@ -40,8 +40,11 @@ kt_android_library(
     name = "provider",
     srcs = glob(["*.kt"]),
     deps = [
+        "//java/com/google/android/apps/play/store/sdk/aipacks:1p_client_ai_delivery",
         "//mediapipe/java/com/google/mediapipe/framework/image",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:imagesegmenter",
+        "//third_party/java/androidx/activity",
+        "@maven//:androidx_annotation_annotation",
     ],
 )

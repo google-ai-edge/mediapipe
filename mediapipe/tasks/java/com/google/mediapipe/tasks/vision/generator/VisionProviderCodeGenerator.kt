@@ -56,13 +56,25 @@ internal class VisionProviderCodeGenerator(private val visionProviderConfig: Vis
     val visionModelCn = ClassName(PACKAGE_NAME, "VisionModel")
     val visionTaskType = ClassName(PACKAGE_NAME, "VisionTask.Type")
     val quantizationCn = ClassName("com.google.mediapipe.tasks.vision.provider", "Quantization")
+    val aiPackManagerCn = ClassName("com.google.android.play.core.aipacks", "AiPackManager")
 
     val classBuilder =
       TypeSpec.classBuilder("VisionProvider")
         .addModifiers(KModifier.PUBLIC)
         .superclass(Constants.VISION_PROVIDER_BASE_CLASS)
-        .primaryConstructor(FunSpec.constructorBuilder().addParameter("context", contextCn).build())
-        .addSuperclassConstructorParameter("context")
+        .addFunction(
+          FunSpec.constructorBuilder()
+            .addParameter("context", contextCn)
+            .callSuperConstructor("context")
+            .build()
+        )
+        .addFunction(
+          FunSpec.constructorBuilder()
+            .addParameter("context", contextCn)
+            .addParameter("aiPackManager", aiPackManagerCn)
+            .callSuperConstructor("context", "aiPackManager")
+            .build()
+        )
         .addType(
           TypeSpec.companionObjectBuilder()
             .addFunction(
