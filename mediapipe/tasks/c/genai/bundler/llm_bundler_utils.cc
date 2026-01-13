@@ -15,13 +15,18 @@
 
 #include <string>
 
-#include "mediapipe/tasks/cc/genai/inference/proto/llm_params.pb.h"
-#include "mediapipe/tasks/cc/genai/inference/proto/prompt_template.pb.h"
+#ifdef ENABLE_ODML_CONVERTER
+#include "odml/infra/genai/inference/proto/llm_params.pb.h"
+#include "odml/infra/genai/inference/proto/prompt_template.pb.h"
+#else
+#include "absl/log/absl_log.h"
+#endif  // ENABLE_ODML_CONVERTER
 
 extern "C" {
 
 const char* MpLlmBundlerGenerateMetadata(
     const LlmBundlerMetadataOptions* options, int* metadata_buffer_size) {
+#ifdef ENABLE_ODML_CONVERTER
   odml::infra::proto::LlmParameters params;
   params.set_start_token(options->start_token);
   for (int i = 0; i < options->num_stop_tokens; ++i) {
@@ -92,6 +97,10 @@ const char* MpLlmBundlerGenerateMetadata(
   char* metadata_buffer = new char[*metadata_buffer_size];
   s.copy(metadata_buffer, *metadata_buffer_size);
   return metadata_buffer;
+#else
+  ABSL_LOG(ERROR) << "LLM bundler is not enabled.";
+  return nullptr;
+#endif  // ENABLE_ODML_CONVERTER
 }
 
 void MpLlmBundlerFreeMetadata(const char* metadata_buffer) {

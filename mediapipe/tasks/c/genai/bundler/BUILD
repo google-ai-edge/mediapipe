@@ -18,23 +18,29 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
 
-cc_library(
-    name = "llm_bundler_utils",
-    srcs = ["llm_bundler_utils.cc"],
-    hdrs = ["llm_bundler_utils.h"],
-    deps = [
-        "//mediapipe/tasks/cc/genai/inference/proto:llm_params_cc_proto",
-        "//mediapipe/tasks/cc/genai/inference/proto:prompt_template_cc_proto",
-    ],
+config_setting(
+    name = "enable_odml_converter",
+    define_values = {
+        "ENABLE_ODML_CONVERTER": "1",
+    },
 )
 
 cc_library(
     name = "llm_bundler_utils_c_lib",
     srcs = ["llm_bundler_utils.cc"],
     hdrs = ["llm_bundler_utils.h"],
+    copts = select({
+        ":enable_odml_converter": ["-DENABLE_ODML_CONVERTER"],
+        "//conditions:default": [],
+    }),
     deps = [
-        "//mediapipe/tasks/cc/genai/inference/proto:llm_params_cc_proto",
-        "//mediapipe/tasks/cc/genai/inference/proto:prompt_template_cc_proto",
-    ],
+        "@com_google_absl//absl/log:absl_log",
+    ] + select({
+        ":enable_odml_converter": [
+            "@odml//odml/infra/genai/inference/proto:llm_params_cc_proto",
+            "@odml//odml/infra/genai/inference/proto:prompt_template_cc_proto",
+        ],
+        "//conditions:default": [],
+    }),
     alwayslink = 1,
 )
