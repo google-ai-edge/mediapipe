@@ -41,6 +41,7 @@ kt_android_library(
     srcs = glob(["*.kt"]),
     deps = [
         "//java/com/google/android/apps/play/store/sdk/aipacks:1p_client_ai_delivery",
+        "//java/com/google/android/apps/play/store/sdk/splitinstall:1p_client_split_install",
         "//mediapipe/java/com/google/mediapipe/framework/image",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:imagesegmenter",

@@ -57,6 +57,12 @@ internal class VisionProviderCodeGenerator(private val visionProviderConfig: Vis
     val visionTaskType = ClassName(PACKAGE_NAME, "VisionTask.Type")
     val quantizationCn = ClassName("com.google.mediapipe.tasks.vision.provider", "Quantization")
     val aiPackManagerCn = ClassName("com.google.android.play.core.aipacks", "AiPackManager")
+    val aiPackManagerFactoryCn =
+      ClassName("com.google.android.play.core.aipacks", "AiPackManagerFactory")
+    val splitInstallManagerCn =
+      ClassName("com.google.android.play.core.splitinstall", "SplitInstallManager")
+    val splitInstallManagerFactoryCn =
+      ClassName("com.google.android.play.core.splitinstall", "SplitInstallManagerFactory")
 
     val classBuilder =
       TypeSpec.classBuilder("VisionProvider")
@@ -65,14 +71,17 @@ internal class VisionProviderCodeGenerator(private val visionProviderConfig: Vis
         .addFunction(
           FunSpec.constructorBuilder()
             .addParameter("context", contextCn)
-            .callSuperConstructor("context")
-            .build()
-        )
-        .addFunction(
-          FunSpec.constructorBuilder()
-            .addParameter("context", contextCn)
-            .addParameter("aiPackManager", aiPackManagerCn)
-            .callSuperConstructor("context", "aiPackManager")
+            .addParameter(
+              ParameterSpec.builder("aiPackManager", aiPackManagerCn)
+                .defaultValue("%T.getInstance(context)", aiPackManagerFactoryCn)
+                .build()
+            )
+            .addParameter(
+              ParameterSpec.builder("splitInstallManager", splitInstallManagerCn)
+                .defaultValue("%T.create(context)", splitInstallManagerFactoryCn)
+                .build()
+            )
+            .callSuperConstructor("context", "aiPackManager", "splitInstallManager")
             .build()
         )
         .addType(
