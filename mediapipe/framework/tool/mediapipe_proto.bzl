@@ -46,6 +46,7 @@ def mediapipe_proto_library_impl(
         name,
         srcs,
         deps = [],
+        option_deps = [],
         exports = None,
         visibility = None,
         testonly = None,
@@ -68,6 +69,7 @@ def mediapipe_proto_library_impl(
       name: the new proto_library target name.
       srcs: the ".proto" source files to compile.
       deps: the proto_library targets for all referenced protobufs.
+      option_deps: the proto_library option dependencies for all referenced protobufs (Bazel 8+).
       exports: deps that are published with "import public".
       visibility: visibility of this target.
       testonly: true means the proto can be used for testing only.
@@ -253,6 +255,7 @@ def mediapipe_proto_library(
         name,
         srcs,
         deps = [],
+        option_deps = [],
         exports = None,
         visibility = None,
         testonly = None,
@@ -278,6 +281,7 @@ def mediapipe_proto_library(
       name: the new proto_library target name.
       srcs: the ".proto" source files to compile.
       deps: the proto_library targets for all referenced protobufs.
+      option_deps: the proto_library option dependencies for all referenced protobufs (Bazel 8+).
       exports: deps that are published with "import public".
       portable_deps: ignored since portable protos are gone.
       visibility: visibility of this target.
@@ -304,6 +308,7 @@ def mediapipe_proto_library(
         name = name,
         srcs = srcs,
         deps = deps,
+        option_deps = option_deps,
         exports = exports,
         visibility = visibility,
         testonly = testonly,
@@ -335,6 +340,7 @@ def mediapipe_proto_library(
             name = mediapipe_proto_path(name),
             srcs = [rewrite_proto],
             deps = mediapipe_proto_paths(deps),
+            option_deps = mediapipe_proto_paths(option_deps),
             exports = mediapipe_proto_paths(exports),
             visibility = visibility,
             testonly = testonly,
