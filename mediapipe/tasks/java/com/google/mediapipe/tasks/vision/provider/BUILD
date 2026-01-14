@@ -44,6 +44,7 @@ kt_android_library(
         "//java/com/google/android/apps/play/store/sdk/splitinstall:1p_client_split_install",
         "//mediapipe/java/com/google/mediapipe/framework/image",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:facedetector",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:imagesegmenter",
         "//third_party/java/androidx/activity",
         "@maven//:androidx_annotation_annotation",

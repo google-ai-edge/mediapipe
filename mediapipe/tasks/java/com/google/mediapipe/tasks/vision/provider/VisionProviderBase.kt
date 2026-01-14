@@ -31,6 +31,7 @@ import com.google.android.play.core.splitinstall.model.SplitInstallErrorCode
 import com.google.android.play.core.splitinstall.model.SplitInstallSessionStatus
 import com.google.mediapipe.tasks.core.BaseOptions
 import com.google.mediapipe.tasks.core.Delegate
+import com.google.mediapipe.tasks.vision.facedetector.FaceDetector
 import com.google.mediapipe.tasks.vision.imagesegmenter.ImageSegmenter
 import java.io.File
 import java.io.FileInputStream
@@ -446,10 +447,43 @@ constructor(
    * @param settings The internal settings for [ImageSegmenter].
    * @return A [Future] that completes with the created [ImageSegmenter].
    */
-  fun createImageSegmenterImpl(
+  protected fun createImageSegmenterImpl(
     model: VisionModel,
     settings: ImageSegmenterSettingsInternal,
   ): Future<ImageSegmenter> = createTask(model, settings, ::createImageSegmenterImplHelper)
+
+  /**
+   * Creates a [FaceDetector] instance.
+   *
+   * @param context The application context.
+   * @param modelBuffer The [ByteBuffer] containings the model.
+   * @param dispatchLibraryPath The optional path to the NPU dispatch library. If null, no NPU
+   *   delegate is used.
+   * @param settings The internal settings for the [FaceDetector].
+   * @return A [FaceDetector] instance.
+   */
+  private fun createFaceDetectorImplHelper(
+    context: Context,
+    modelBuffer: ByteBuffer,
+    dispatchLibraryPath: String?,
+    settings: FaceDetectorSettingsInternal,
+  ): FaceDetector {
+    val baseOptions = createBaseOptions(modelBuffer, dispatchLibraryPath).build()
+    val options = settings.toOptions(baseOptions)
+    return FaceDetector.createFromOptions(context, options)
+  }
+
+  /**
+   * Creates an [FaceDetector] asynchronously.
+   *
+   * @param model The [VisionModel] to use.
+   * @param settings The internal settings for [FaceDetector].
+   * @return A [Future] that completes with the created [FaceDetector].
+   */
+  protected fun createFaceDetectorImpl(
+    model: VisionModel,
+    settings: FaceDetectorSettingsInternal,
+  ): Future<FaceDetector> = createTask(model, settings, ::createFaceDetectorImplHelper)
 
   /** Closes the VisionProvider and releases all resources. */
   override fun close() {

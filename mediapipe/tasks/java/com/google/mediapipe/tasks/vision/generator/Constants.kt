@@ -43,6 +43,7 @@ object Constants {
   val DEFAULT_OUTPUT_FACIAL_TRANSFORMATION_MATRIXES = CodeBlock.of("%L", false)
   val DEFAULT_DISPLAY_NAMES_LOCALE = CodeBlock.of("%S", "en")
   val DEFAULT_L2_NORMALIZE = CodeBlock.of("%L", false)
+  val DEFAULT_CONFIDENCE = CodeBlock.of("%Lf", 0.5f)
   val DEFAULT_QUANTIZE = CodeBlock.of("%L", false)
   val DEFAULT_OUTPUT_CONFIDENCE_MASKS = CodeBlock.of("%L", false)
   val DEFAULT_OUTPUT_CATEGORY_MASK = CodeBlock.of("%L", true)
