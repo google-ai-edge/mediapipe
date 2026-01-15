@@ -319,7 +319,7 @@ class Image:
       mediapipe_c_utils.handle_status(status, error_msg)
     finally:
       if error_msg.value is not None:
-        lib.MpErrorFree(error_msg.value)
+        lib.MpErrorFree(error_msg)
 
     # Create an empty Image object and then populate it.
     new_image = cls.__new__(cls)
