@@ -32,6 +32,7 @@ import com.google.android.play.core.splitinstall.model.SplitInstallSessionStatus
 import com.google.mediapipe.tasks.core.BaseOptions
 import com.google.mediapipe.tasks.core.Delegate
 import com.google.mediapipe.tasks.vision.facedetector.FaceDetector
+import com.google.mediapipe.tasks.vision.facelandmarker.FaceLandmarker
 import com.google.mediapipe.tasks.vision.imagesegmenter.ImageSegmenter
 import java.io.File
 import java.io.FileInputStream
@@ -484,6 +485,39 @@ constructor(
     model: VisionModel,
     settings: FaceDetectorSettingsInternal,
   ): Future<FaceDetector> = createTask(model, settings, ::createFaceDetectorImplHelper)
+
+  /**
+   * Creates a [FaceLandmarker] instance.
+   *
+   * @param context The application context.
+   * @param modelBuffer The [ByteBuffer] containings the model.
+   * @param dispatchLibraryPath The optional path to the NPU dispatch library. If null, no NPU
+   *   delegate is used.
+   * @param settings The internal settings for the [FaceLandmarker].
+   * @return A [FaceLandmarker] instance.
+   */
+  private fun createFaceLandmarkerImplHelper(
+    context: Context,
+    modelBuffer: ByteBuffer,
+    dispatchLibraryPath: String?,
+    settings: FaceLandmarkerSettingsInternal,
+  ): FaceLandmarker {
+    val baseOptions = createBaseOptions(modelBuffer, dispatchLibraryPath).build()
+    val options = settings.toOptions(baseOptions)
+    return FaceLandmarker.createFromOptions(context, options)
+  }
+
+  /**
+   * Creates an [FaceLandmarker] asynchronously.
+   *
+   * @param model The [VisionModel] to use.
+   * @param settings The internal settings for [FaceLandmarker].
+   * @return A [Future] that completes with the created [FaceLandmarker].
+   */
+  protected fun createFaceLandmarkerImpl(
+    model: VisionModel,
+    settings: FaceLandmarkerSettingsInternal,
+  ): Future<FaceLandmarker> = createTask(model, settings, ::createFaceLandmarkerImplHelper)
 
   /** Closes the VisionProvider and releases all resources. */
   override fun close() {

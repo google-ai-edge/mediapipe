@@ -45,6 +45,7 @@ internal class VisionProviderCodeGenerator(private val visionProviderConfig: Vis
       when (taskName) {
         "ImageSegmenter" -> ImageSegmenterSpec.getParams()
         "FaceDetector" -> FaceDetectorSpec.getParams()
+        "FaceLandmarker" -> FaceLandmarkerSpec.getParams()
         else -> throw IllegalArgumentException("Unknown task name: $taskName")
       }
   }
