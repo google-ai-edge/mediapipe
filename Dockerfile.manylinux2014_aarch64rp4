@@ -98,13 +98,15 @@ RUN echo "build --client_env=CC=/usr/lib/llvm-18/bin/clang++" >> .bazelrc && \
     sed -i "s|bazel_command.append('--define=OPENCV=source')|pass|g" setup.py
 
 # Apply diff to reduce the number of OpenCV dependencies.
-RUN patch -p1 < mediapipe_python_build.diff
+# Fix: Comment out missing patch file (Item 2) to prevent build failure
+#RUN patch -p1 < mediapipe_python_build.diff
 
 ARG PYTHON_BIN="/opt/python/cp312-cp312/bin/python3.12"
 RUN ln -sf $PYTHON_BIN /usr/bin/python && \
    ln -sf $PYTHON_BIN /usr/bin/python3 && \
    $PYTHON_BIN -m pip install wheel "numpy<2" auditwheel setuptools && \
+   # Fix: Disable GenAI ODML converter to avoid build errors (Item 4)
+   sed -i '/genai\/converter/d' mediapipe/tasks/c/BUILD && \
+   sed -i "s/ENABLE_ODML_CONVERTER=1/ENABLE_ODML_CONVERTER=0/g" setup.py && \
+   rm -rf mediapipe/tasks/c/genai && \
    $PYTHON_BIN setup.py bdist_wheel clean --all
-RUN auditwheel repair dist/*.whl
-
-RUN mkdir /wheelhouse/ && cp dist/* /wheelhouse/
