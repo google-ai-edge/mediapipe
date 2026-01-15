@@ -30,8 +30,10 @@ RUN chmod +x bazel
 RUN mv ./bazel /usr/local/bin
 
 # Copy Protobuf Compiler binary
-ARG PROTOC_ZIP=protoc-5.28.3-linux-aarch_64.zip
-RUN curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v5.28.3/$PROTOC_ZIP
+# Fix: Update to v28.3 to resolve 404 download error
+ARG PROTOC_VERSION=28.3
+ARG PROTOC_ZIP=protoc-${PROTOC_VERSION}-linux-aarch_64.zip
+RUN curl -fLo $PROTOC_ZIP https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/$PROTOC_ZIP
 RUN unzip -o $PROTOC_ZIP -d /usr/local bin/protoc
 RUN unzip -o $PROTOC_ZIP -d /usr/local 'include/*'
 RUN rm -f $PROTOC_ZIP
@@ -101,7 +103,7 @@ RUN patch -p1 < mediapipe_python_build.diff
 ARG PYTHON_BIN="/opt/python/cp312-cp312/bin/python3.12"
 RUN ln -sf $PYTHON_BIN /usr/bin/python && \
    ln -sf $PYTHON_BIN /usr/bin/python3 && \
-   $PYTHON_BIN -m pip install wheel "numpy<2" auditwheel && \
+   $PYTHON_BIN -m pip install wheel "numpy<2" auditwheel setuptools && \
    $PYTHON_BIN setup.py bdist_wheel clean --all
 RUN auditwheel repair dist/*.whl
 
